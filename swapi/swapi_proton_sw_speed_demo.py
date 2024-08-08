@@ -47,12 +47,12 @@ def get_center_of_mass_and_spin_angle_for_single_sweep(sweep_count_rates, sweep_
     left, right = get_peak_indices(sweep_count_rates, 4)
     energies = voltages * get_k_factor()
     center_of_mass_index = find_peak_center_of_mass_index(left, right, sweep_count_rates)
-    center_of_mass = interpolate_energy(center_of_mass_index, energies)
+    energy_at_center_of_mass = interpolate_energy(center_of_mass_index, energies)
     sweep_times = times_for_sweep(sweep_start_time)
     time_of_peak = np.interp(center_of_mass_index, np.arange(len(sweep_times)), sweep_times)
     spin_phase_angle = get_spin_phase_using_spice(time_of_peak)
 
-    return center_of_mass, spin_phase_angle
+    return energy_at_center_of_mass, spin_phase_angle
 
 
 def plot_swapi_sweeps(sweeps):
@@ -80,6 +80,7 @@ def run():
     a, phi, b = fit_energy_per_charge_peak_variations(centers_of_mass, spin_phase_angles)
 
     print(f"SW H+ speed: {calculate_sw_speed_h_plus(b)}")
+    print(f"SW H+ clock angle: {phi}")
 
     plt.scatter(spin_phase_angles, centers_of_mass)
 
