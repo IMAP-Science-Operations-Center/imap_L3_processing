@@ -4,8 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import scipy
 from spacepy.pycdf import CDF
-
-from swapi_proton_sw_speed_demo import get_center_of_mass_and_spin_angle_for_single_sweep
+from uncertainties.unumpy import uarray
 
 
 @dataclass
@@ -13,7 +12,7 @@ class SwapiL2Data:
     epoch: np.ndarray[float]
     energy: np.ndarray[float]
     coincidence_count_rate: np.ndarray[float]
-
+    coincidence_uncertainty: np.ndarray[float]
 
 def calculate_sw_speed_h_plus(energy):
     proton_charge = 1.602176634e-19
@@ -44,7 +43,7 @@ def fit_energy_per_charge_peak_variations(centers_of_mass, spin_phase_angles):
 
 
 def interpolate_energy(center_of_mass_index, energies):
-    return np.exp(np.interp(center_of_mass_index, np.arange(len(energies)), np.log(energies)))
+    return np.exp(np.interp(center_of_mass_index.nominal_value, np.arange(len(energies)), np.log(energies)))
 
 
 def times_for_sweep(start_time):
@@ -65,15 +64,15 @@ def get_center_of_mass_and_spin_angle_for_single_sweep(sweep_count_rates, sweep_
     center_of_mass_index = find_peak_center_of_mass_index(left, right, sweep_count_rates)
     energy_at_center_of_mass = interpolate_energy(center_of_mass_index, energies)
     sweep_times = times_for_sweep(sweep_start_time)
-    time_of_peak = np.interp(center_of_mass_index, np.arange(len(sweep_times)), sweep_times)
+    time_of_peak = np.interp(center_of_mass_index.nominal_value, np.arange(len(sweep_times)), sweep_times)
     spin_phase_angle = get_artificial_spin_phase(time_of_peak)
 
-    return energy_at_center_of_mass, spin_phase_angle
+    return np.array([energy_at_center_of_mass, spin_phase_angle])
 
 
 def read_l2_data(cdf_path: str) -> SwapiL2Data:
     cdf = CDF(cdf_path)
-    return SwapiL2Data(cdf.raw_var("epoch")[...], cdf["energy"][...], cdf["swp_coin_rate"][...])
+    return SwapiL2Data(cdf.raw_var("epoch")[...], cdf["energy"][...], cdf["swp_coin_rate"][...], cdf["swp_coin_unc"][...])
 
 
 fig, axes = plt.subplots(4)
@@ -100,9 +99,15 @@ def plot_variation_in_center_of_mass(a, phi, b, spin_angles, centers_of_mass):
 def main():
     data = read_l2_data("test_data/imap_swapi_l2_sci-1min_20100101_v001_EDITED.cdf")
 
+    coincidence_count_range_with_uncertainty = [uarray(data.coincidence_count_rate[i, :], data.coincidence_uncertainty[i, :]) for i in range(len(data.epoch))]
+
     plot_sweeps(data)
 
-    centers_of_mass, spin_angles = zip(*[get_center_of_mass_and_spin_angle_for_single_sweep(data.coincidence_count_rate[i, :], data.epoch[i], data.energy) for i in range(len(data.epoch))])
+    center_of_mass_and_spin = np.array([get_center_of_mass_and_spin_angle_for_single_sweep(
+        coincidence_count_range_with_uncertainty[i], data.epoch[i], data.energy) for i in range(len(data.epoch))])
+
+    centers_of_mass = center_of_mass_and_spin[:, 0]
+    spin_angles = center_of_mass_and_spin[:, 1]
 
     a, phi, b = fit_energy_per_charge_peak_variations(centers_of_mass, spin_angles)
 

@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy as scipy
 
-from fake_data_generator import get_sweep_voltages, get_k_factor, get_spin_phase_using_spice, generate_5_sweeps
+from fake_data_generator import get_sweep_voltages, get_k_factor, get_spin_phase_using_spice, generate_sweeps
 
 
 def times_for_sweep(start_time):
@@ -67,7 +67,7 @@ def plot_swapi_sweeps(sweeps):
 
 
 def run():
-    sweeps = generate_5_sweeps()
+    sweeps = generate_sweeps()
     plot_swapi_sweeps(sweeps)
 
     centers_of_mass = []

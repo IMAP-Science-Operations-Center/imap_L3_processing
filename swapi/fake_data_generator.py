@@ -1,3 +1,5 @@
+from random import random, randint
+
 import numpy as np
 
 
@@ -16,13 +18,19 @@ def generate_sweep_data(center):
     return proton_peak + alpha_peak + background
 
 
-def generate_5_sweeps():
-    time_base = 1000000
-    start_times_in_seconds = time_base + np.arange(5)*12
-    angles = [22 - 72*i for i in range(5)]
+def generate_sweeps(n=5):
+    time_base = 315576112184000000  # Jan 1, 2010 00:00:46
+    start_times_in_seconds = time_base + np.arange(n)*12
+    seed = randint(0, 359)
+    angles = [seed - 72*i for i in range(5)]
     center_points = 1050 + 20*np.sin(np.deg2rad(angles))
     sweeps = [generate_sweep_data(c) for c in center_points]
     return list(zip(start_times_in_seconds, sweeps))
+
+
+def generate_sweep_energies():
+    coarse_sweep_energies = np.geomspace(100, 19000, 62)
+    return np.concatenate((np.array([np.nan]), coarse_sweep_energies, np.array([np.nan] * 9)))
 
 
 # K Factor may come from a lookup table in the future
