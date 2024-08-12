@@ -4,9 +4,12 @@ import matplotlib.pyplot as plt
 
 import numpy as np
 import scipy
-from matplotlib.figure import Figure
 from spacepy.pycdf import CDF
 
+@dataclass
+class SwapiL3Data:
+    epoch: np.ndarray[float]
+    proton_sw_speed: np.ndarray[float]
 
 @dataclass
 class SwapiL2Data:
@@ -41,7 +44,8 @@ def sine_fit_function(spin_phase_angle, a, phi, b):
 
 
 def fit_energy_per_charge_peak_variations(centers_of_mass, spin_phase_angles):
-    values, _ = scipy.optimize.curve_fit(sine_fit_function, spin_phase_angles, centers_of_mass, bounds=([0, 0, 0], [np.inf, 360, np.inf]))
+    values, _ = scipy.optimize.curve_fit(sine_fit_function, spin_phase_angles, centers_of_mass,
+                                         bounds=([0, 0, 0], [np.inf, 360, np.inf]))
     return values
 
 
@@ -57,9 +61,9 @@ def times_for_sweep(start_time):
 def get_artificial_spin_phase(time):
     arbitrary_offset = 0.4
     rotation_time = 15 * 1_000_000_000
-    rotations = arbitrary_offset + time/rotation_time
+    rotations = arbitrary_offset + time / rotation_time
     fractional, integral = np.modf(rotations)
-    return fractional*360
+    return fractional * 360
 
 
 def get_center_of_mass_and_spin_angle_for_single_sweep(sweep_count_rates, spin_angles, energies):
@@ -79,11 +83,13 @@ def get_center_of_mass_and_spin_angle_for_single_sweep(sweep_count_rates, spin_a
 
     return np.array([energy_at_center_of_mass, interpolated_spin_angle_for_peak])
 
+
 def extract_course_sweep_energies(data: np.ndarray):
     if data.ndim > 1:
         return data[:, 1:63]
     else:
         return data[1:63]
+
 
 def read_l2_data(cdf_path: str) -> SwapiL2Data:
     cdf = CDF(cdf_path)
@@ -98,9 +104,10 @@ fig = plt.figure()
 
 def plot_sweeps(data):
     for i in range(len(data.epoch)):
-        axes = fig.add_subplot(len(data.epoch)+1, 1, i+1)
+        axes = fig.add_subplot(len(data.epoch) + 1, 1, i + 1)
         axes.loglog(data.energy, data.coincidence_count_rate[i, :], marker='.', linestyle="None")
         axes.set(xlabel="Energy", ylabel="Count Rate")
+
 
 def plot_variation_in_center_of_mass(a, phi, b, spin_angles, centers_of_mass):
     fit_xs = np.arange(0, 360, 3)
@@ -112,13 +119,8 @@ def plot_variation_in_center_of_mass(a, phi, b, spin_angles, centers_of_mass):
     plot.set(xlabel="Phase Angle", ylabel="Energy")
 
 
-def main():
-    try:
-        file_path = sys.argv[1]
-        data = read_l2_data(file_path)
-    except:
-        print(f"Incorrect file path. Example: python {sys.argv[0]} imap_swapi_l2_sci-1min_20100101_v001_EDITED.cdf")
-        exit()
+def main(file_path):
+    data = read_l2_data(file_path)
 
     plot_sweeps(data)
 
@@ -132,21 +134,31 @@ def main():
 
     plot_variation_in_center_of_mass(a, phi, b, spin_angles, centers_of_mass)
 
-    print(f"SW H+ speed: {calculate_sw_speed_h_plus(b)}")
+    proton_sw_speed = calculate_sw_speed_h_plus(b)
+    print(f"SW H+ speed: {proton_sw_speed}")
     print(f"SW H+ clock angle: {phi}")
     print(f"A {a}")
     print(f"B {b}")
-    print(f"A/B {a/b}")
+    print(f"A/B {a / b}")
 
-    fig.legend([f"SW H+ speed: {calculate_sw_speed_h_plus(b):.3f}",
-                f"SW H+ clock angle: {phi:.3f}",
-               f"A: {a:.3f}",
-               f"B: {b:.3f}",
-               f"A/B: {(a / b):.5f}"],
-               )
+    if __name__ == "__main__":
+        fig.legend([f"SW H+ speed: {proton_sw_speed :.3f}",
+                    f"SW H+ clock angle: {phi:.3f}",
+                    f"A: {a:.3f}",
+                    f"B: {b:.3f}",
+                    f"A/B: {(a / b):.5f}"],
+                   )
 
-    fig.set_figheight(10)
-    plt.show()
+        fig.set_figheight(10)
+        plt.show()
+
+    return SwapiL3Data(np.array([data.epoch[0]]), np.array([proton_sw_speed]))
 
 
-main()
+if __name__ == "__main__":
+    try:
+        file_path = sys.argv[1]
+        main(file_path)
+    except:
+        print(f"Incorrect file path. Example: python {sys.argv[0]} imap_swapi_l2_sci-1min_20100101_v001_EDITED.cdf")
+        exit()
