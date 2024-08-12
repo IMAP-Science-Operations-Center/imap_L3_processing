@@ -41,7 +41,7 @@ def sine_fit_function(spin_phase_angle, a, phi, b):
 
 
 def fit_energy_per_charge_peak_variations(centers_of_mass, spin_phase_angles):
-    values, _ = scipy.optimize.curve_fit(sine_fit_function, spin_phase_angles, centers_of_mass)
+    values, _ = scipy.optimize.curve_fit(sine_fit_function, spin_phase_angles, centers_of_mass, bounds=([0, 0, 0], [np.inf, 360, np.inf]))
     return values
 
 
@@ -79,21 +79,27 @@ def get_center_of_mass_and_spin_angle_for_single_sweep(sweep_count_rates, spin_a
 
     return np.array([energy_at_center_of_mass, interpolated_spin_angle_for_peak])
 
+def extract_course_sweep_energies(data: np.ndarray):
+    if data.ndim > 1:
+        return data[:, 1:63]
+    else:
+        return data[1:63]
 
 def read_l2_data(cdf_path: str) -> SwapiL2Data:
     cdf = CDF(cdf_path)
-    return SwapiL2Data(cdf.raw_var("epoch")[...], cdf["energy"][...], cdf["swp_coin_rate"][...],
-                       cdf["spin_angles"][...])
+    return SwapiL2Data(cdf.raw_var("epoch")[...],
+                       extract_course_sweep_energies(cdf["energy"][...]),
+                       extract_course_sweep_energies(cdf["swp_coin_rate"][...]),
+                       extract_course_sweep_energies(cdf["spin_angles"][...]))
 
 
 fig = plt.figure()
 
 
 def plot_sweeps(data):
-    not_nan = data.energy > 0
     for i in range(len(data.epoch)):
         axes = fig.add_subplot(len(data.epoch)+1, 1, i+1)
-        axes.loglog(data.energy[not_nan], data.coincidence_count_rate[:, not_nan][i, :], marker='.', linestyle="None")
+        axes.loglog(data.energy, data.coincidence_count_rate[i, :], marker='.', linestyle="None")
         axes.set(xlabel="Energy", ylabel="Count Rate")
 
 def plot_variation_in_center_of_mass(a, phi, b, spin_angles, centers_of_mass):
@@ -127,7 +133,17 @@ def main():
     plot_variation_in_center_of_mass(a, phi, b, spin_angles, centers_of_mass)
 
     print(f"SW H+ speed: {calculate_sw_speed_h_plus(b)}")
-    print(f"SW H+ clock angle: {phi % 360}")
+    print(f"SW H+ clock angle: {phi}")
+    print(f"A {a}")
+    print(f"B {b}")
+    print(f"A/B {a/b}")
+
+    fig.legend([f"SW H+ speed: {calculate_sw_speed_h_plus(b):.3f}",
+                f"SW H+ clock angle: {phi:.3f}",
+               f"A: {a:.3f}",
+               f"B: {b:.3f}",
+               f"A/B: {(a / b):.5f}"],
+               )
 
     fig.set_figheight(10)
     plt.show()
