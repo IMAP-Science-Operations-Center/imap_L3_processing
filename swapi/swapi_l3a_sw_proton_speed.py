@@ -1,15 +1,21 @@
+import os
 import sys
 from dataclasses import dataclass
+from datetime import datetime
+
 import matplotlib.pyplot as plt
 
 import numpy as np
 import scipy
 from spacepy.pycdf import CDF
+from spiceypy import spiceypy
+
 
 @dataclass
 class SwapiL3Data:
     epoch: np.ndarray[float]
     proton_sw_speed: np.ndarray[float]
+
 
 @dataclass
 class SwapiL2Data:
@@ -119,9 +125,17 @@ def plot_variation_in_center_of_mass(a, phi, b, spin_angles, centers_of_mass):
     plot.set(xlabel="Phase Angle", ylabel="Energy")
 
 
+def load_spice_kernels():
+    kernel_dir = "/mnt/spice"
+    kernel_paths = [os.path.join(kernel_dir, name) for name in os.listdir(kernel_dir)]
+    spiceypy.furnsh(kernel_paths)
+
+
 def main(file_path):
     data = read_l2_data(file_path)
 
+    load_spice_kernels()
+    print(spiceypy.datetime2et(datetime.now()))
     plot_sweeps(data)
 
     center_of_mass_and_spin = np.array([get_center_of_mass_and_spin_angle_for_single_sweep(
