@@ -49,7 +49,7 @@ def get_artificial_spin_phase(time):
     return fractional * 360
 
 
-def extract_course_sweep(data: np.ndarray):
+def extract_coarse_sweep(data: np.ndarray):
     if data.ndim > 1:
         return data[:, 1:63]
     else:
@@ -83,6 +83,11 @@ def calculate_proton_centers_of_mass(coincidence_count_rates, spin_angles, energ
 
 
 def calculate_proton_solar_wind_speed(coincidence_count_rates, spin_angles, energies, epoch):
+    epoch = extract_coarse_sweep(epoch)
+    energies = extract_coarse_sweep(energies)
+    coincidence_count_rates = extract_coarse_sweep(coincidence_count_rates)
+    spin_angles = extract_coarse_sweep(spin_angles)
+
     energies_at_center_of_mass, spin_angles_at_center_of_mass = calculate_proton_centers_of_mass(coincidence_count_rates, spin_angles, energies, epoch)
 
     a, phi, b = fit_energy_per_charge_peak_variations(energies_at_center_of_mass, spin_angles_at_center_of_mass)

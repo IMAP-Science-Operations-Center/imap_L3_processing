@@ -1,4 +1,5 @@
 import uuid
+from collections.abc import Iterable
 from datetime import datetime
 from pathlib import Path
 from typing import List
@@ -10,11 +11,12 @@ from spacepy.pycdf import CDF
 from imap_processing.constants import TEMP_CDF_FOLDER_PATH
 from imap_processing.models import UpstreamDataDependency
 from imap_processing.swapi.l3a.models import SwapiL2Data, SwapiL3Data
-from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_speed import extract_course_sweep, \
+from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_speed import extract_coarse_sweep, \
     calculate_proton_solar_wind_speed
 
 
 EPOCH_CDF_VAR_NAME = "epoch"
+EPOCH_DELTA_CDF_VAR_NAME = "epoch_delta"
 PROTON_SOLAR_WIND_SPEED_CDF_VAR_NAME = "proton_sw_speed"
 
 
@@ -36,7 +38,6 @@ class SwapiL3AProcessor:
         if len(dependencies) != 1:
             raise ValueError(f"Unexpected dependencies found for SWAPI L3:"
                     f"{dependencies}. Expected only one dependency.")
-
         files_to_download = [result['file_path'] for result in imap_data_access.query(instrument=dependencies[0].instrument,
                                                                           data_level=dependencies[0].data_level,
                                                                           descriptor=dependencies[0].descriptor,
@@ -57,22 +58,37 @@ class SwapiL3AProcessor:
                            cdf["swp_coin_rate"][...],
                            cdf["spin_angles"][...])
 
+    def chunk_l2_data(self, data: SwapiL2Data, chunk_size: int) -> Iterable[SwapiL2Data]:
+        i = 0
+        while i < len(data.epoch):
+            yield SwapiL2Data(
+                data.epoch[i:i+chunk_size],
+                data.energy,
+                data.coincidence_count_rate[i:i+chunk_size],
+                data.spin_angles[i:i+chunk_size],
+            )
+            i += chunk_size
+
     def process(self):
         downloaded_file_path = self.download_upstream_dependencies()
 
         data = self.read_l2_swapi_data(downloaded_file_path)
-        data.epoch = extract_course_sweep(data.epoch)
-        data.energy = extract_course_sweep(data.energy)
-        data.coincidence_count_rate = extract_course_sweep(data.coincidence_count_rate)
 
-        proton_solar_wind_speed, a, phi, b = calculate_proton_solar_wind_speed(data.coincidence_count_rate, data.spin_angles, data.energy, data.epoch)
+        epochs = []
+        proton_solar_wind_speeds = []
+        for data_chunk in self.chunk_l2_data(data, 5):
+            proton_solar_wind_speed, a, phi, b = calculate_proton_solar_wind_speed(
+                data_chunk.coincidence_count_rate, data_chunk.spin_angles, data_chunk.energy, data_chunk.epoch)
+            proton_solar_wind_speeds.append(proton_solar_wind_speed)
+            epochs.append(data_chunk.epoch[0]+30_000_000_000)
 
-        l3_data = SwapiL3Data(np.array([data.epoch[0]]), np.array([proton_solar_wind_speed]))
+        l3_data = SwapiL3Data(np.array(epochs), np.array(proton_solar_wind_speeds))
         l3_cdf_file_name = f'imap_{self.instrument}_{self.level}_fake-menlo-{uuid.uuid4()}_{self.start_date.strftime("%Y%d%m")}_{self.version}.cdf'
         l3_cdf_file_path = f'{TEMP_CDF_FOLDER_PATH}/{l3_cdf_file_name}'
         l3_cdf = CDF(l3_cdf_file_path, '')
         l3_cdf[EPOCH_CDF_VAR_NAME] = l3_data.epoch
         l3_cdf[PROTON_SOLAR_WIND_SPEED_CDF_VAR_NAME] = l3_data.proton_sw_speed
+        l3_cdf.new(EPOCH_DELTA_CDF_VAR_NAME, 30_000_000_000, recVary=False)
         l3_cdf.close()
         imap_data_access.upload(l3_cdf_file_path)
 

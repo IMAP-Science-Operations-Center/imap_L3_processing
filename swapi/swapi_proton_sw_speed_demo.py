@@ -6,15 +6,15 @@ from spacepy.pycdf import CDF
 
 from imap_processing.swapi.l3a.models import SwapiL2Data, SwapiL3Data
 from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_speed import sine_fit_function, \
-    calculate_proton_solar_wind_speed, calculate_proton_centers_of_mass, extract_course_sweep
+    calculate_proton_solar_wind_speed, calculate_proton_centers_of_mass, extract_coarse_sweep
 
 
 def read_l2_data(cdf_path: str) -> SwapiL2Data:
     cdf = CDF(cdf_path)
     return SwapiL2Data(cdf.raw_var("epoch")[...],
-                       extract_course_sweep(cdf["energy"][...]),
-                       extract_course_sweep(cdf["swp_coin_rate"][...]),
-                       extract_course_sweep(cdf["spin_angles"][...]))
+                       extract_coarse_sweep(cdf["energy"][...]),
+                       extract_coarse_sweep(cdf["swp_coin_rate"][...]),
+                       extract_coarse_sweep(cdf["spin_angles"][...]))
 
 
 fig = plt.figure()
