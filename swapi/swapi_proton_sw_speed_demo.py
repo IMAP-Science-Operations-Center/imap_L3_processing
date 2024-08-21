@@ -1,3 +1,4 @@
+import os
 import sys
 
 import numpy as np
@@ -36,7 +37,7 @@ def plot_variation_in_center_of_mass(a, phi, b, spin_angles, centers_of_mass):
     plot.set(xlabel="Phase Angle", ylabel="Energy")
 
 def main(file_path):
-    data = read_l2_data(file_path)
+    data = read_l2_data(os.path.abspath(file_path))
 
     plot_sweeps(data)
 
@@ -68,4 +69,4 @@ if __name__ == "__main__":
         file_path = sys.argv[1]
         main(file_path)
     except:
-        main("swapi/test_data/imap_swapi_l2_fake-menlo-5-sweeps_20100101_v001.cdf")
+        main(os.path.abspath("test_data/imap_swapi_l2_fake-menlo-5-sweeps_20100101_v001.cdf"))
