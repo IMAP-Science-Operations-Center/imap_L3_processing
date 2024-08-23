@@ -1,0 +1,53 @@
+name: Docker image build and publish
+on:
+  workflow_dispatch:
+    inputs:
+      instrument_name:
+        description: 'Instrument name'
+        required: true
+        type: string
+
+# concurrency required to avoid lock contention during ECR provisioning
+concurrency: ci-${{ github.repository }}-${{ inputs.instrument_name }}-docker-pipeline
+
+jobs:
+  deploy_containers:
+    runs-on: [ self-hosted, windows ]
+    # These permissions are needed to interact with GitHub's OIDC Token endpoint.
+    permissions:
+      id-token: write
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v3
+
+#      # https://github.com/aws-actions/configure-aws-credentials
+#      - name: Configure AWS credentials
+#        uses: aws-actions/configure-aws-credentials@v4
+#        with:
+#          role-to-assume: arn:aws:iam::449431850278:role/GitHubDeploy
+#          aws-region: us-west-2
+#
+#      - name: Login to Amazon ECR
+#        id: login-ecr
+#        uses: aws-actions/amazon-ecr-login@v2
+#        with:
+#         mask-password: "true" # see: https://github.com/aws-actions/amazon-ecr-login#docker-credentials
+
+      - name: 'Login to GitHub Container Registry'
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{github.actor}}
+          password: ${{secrets.GITHUB_TOKEN}}
+
+      - name: Build, tag, and push docker image to GitHub Registry
+        env:
+#          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+#          REGISTRY: ghcr.io/pleasant-menlo
+#          REPOSITORY: ${{ inputs.instrument_name}}
+          IMAGE_TAG: latest
+        run: |
+          docker build -t ghcr.io/pleasant-menlo/l3-data-processing-scratch:latest -f Dockerfile .
+          docker push ghcr.io/pleasant-menlo/l3-data-processing-scratch:latest
