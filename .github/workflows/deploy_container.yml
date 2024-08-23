@@ -41,5 +41,5 @@ jobs:
 #          REPOSITORY: ${{ inputs.instrument_name}}
           IMAGE_TAG: latest
         run: |
-          docker build -t ghcr.io/pleasant-menlo/swapi-repo:latest -f dockerfiles/Dockerfile .
+          docker build -t ghcr.io/pleasant-menlo/swapi-repo:latest -f Dockerfile .
           docker push ghcr.io/pleasant-menlo/swapi-repo:latest
