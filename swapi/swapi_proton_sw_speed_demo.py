@@ -4,6 +4,7 @@ import sys
 import numpy as np
 from matplotlib import pyplot as plt
 from spacepy.pycdf import CDF
+from uncertainties.unumpy import uarray, nominal_values, std_devs
 
 from imap_processing.swapi.l3a.models import SwapiL2Data, SwapiL3Data
 from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_speed import sine_fit_function, \
@@ -13,9 +14,10 @@ from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_speed import 
 def read_l2_data(cdf_path: str) -> SwapiL2Data:
     cdf = CDF(cdf_path)
     return SwapiL2Data(cdf.raw_var("epoch")[...],
-                       (cdf["energy"][...]),
-                       (cdf["swp_coin_rate"][...]),
-                       (cdf["spin_angles"][...]))
+                       cdf["energy"][...],
+                       cdf["swp_coin_rate"][...],
+                       cdf["spin_angles"][...],
+                       cdf["swp_coin_unc"][...])
 
 
 fig = plt.figure()
@@ -29,24 +31,27 @@ def plot_sweeps(data):
 
 def plot_variation_in_center_of_mass(a, phi, b, spin_angles, centers_of_mass):
     fit_xs = np.arange(0, 360, 3)
-    fit_ys = sine_fit_function(fit_xs, a, phi % 360, b)
+    fit_ys = sine_fit_function(fit_xs, a.n, phi.n % 360, b.n)
     plot = fig.add_subplot(len(spin_angles) + 1, 1, len(spin_angles) + 1)
 
-    plot.scatter(spin_angles, centers_of_mass)
+    plot.errorbar(spin_angles, nominal_values(centers_of_mass), yerr=std_devs(centers_of_mass), fmt=".")
+
     plot.plot(fit_xs, fit_ys)
     plot.set(xlabel="Phase Angle", ylabel="Energy")
 
 def main(file_path):
     data = read_l2_data(os.path.abspath(file_path))
 
+    coincident_count_rate = uarray(data.coincidence_count_rate, data.coincidence_count_rate_uncertainty)
+
     plot_sweeps(data)
 
     centers_of_mass, spin_angles = calculate_proton_centers_of_mass(
-        extract_coarse_sweep(data.coincidence_count_rate),
+        extract_coarse_sweep(coincident_count_rate),
         extract_coarse_sweep(data.spin_angles),
         extract_coarse_sweep(data.energy),
         data.epoch)
-    proton_sw_speed, a, phi, b = calculate_proton_solar_wind_speed(data.coincidence_count_rate, data.spin_angles, data.energy, data.epoch)
+    proton_sw_speed, a, phi, b = calculate_proton_solar_wind_speed(coincident_count_rate, data.spin_angles, data.energy, data.epoch)
 
     plot_variation_in_center_of_mass(a, phi, b, spin_angles, centers_of_mass)
 
@@ -73,4 +78,4 @@ if __name__ == "__main__":
         file_path = sys.argv[1]
         main(file_path)
     except:
-        main(os.path.abspath("test_data/imap_swapi_l2_fake-menlo-5-sweeps_20100101_v001.cdf"))
+        main(os.path.abspath("test_data/imap_swapi_l2_fake-menlo-5-sweeps_20100101_v001_with_unc.cdf"))
