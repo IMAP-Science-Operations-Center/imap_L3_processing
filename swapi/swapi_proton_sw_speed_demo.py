@@ -1,3 +1,4 @@
+import os
 import sys
 
 import numpy as np
@@ -6,15 +7,15 @@ from spacepy.pycdf import CDF
 
 from imap_processing.swapi.l3a.models import SwapiL2Data, SwapiL3Data
 from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_speed import sine_fit_function, \
-    calculate_proton_solar_wind_speed, calculate_proton_centers_of_mass, extract_course_sweep
+    calculate_proton_solar_wind_speed, calculate_proton_centers_of_mass, extract_coarse_sweep
 
 
 def read_l2_data(cdf_path: str) -> SwapiL2Data:
     cdf = CDF(cdf_path)
     return SwapiL2Data(cdf.raw_var("epoch")[...],
-                       extract_course_sweep(cdf["energy"][...]),
-                       extract_course_sweep(cdf["swp_coin_rate"][...]),
-                       extract_course_sweep(cdf["spin_angles"][...]))
+                       (cdf["energy"][...]),
+                       (cdf["swp_coin_rate"][...]),
+                       (cdf["spin_angles"][...]))
 
 
 fig = plt.figure()
@@ -36,11 +37,15 @@ def plot_variation_in_center_of_mass(a, phi, b, spin_angles, centers_of_mass):
     plot.set(xlabel="Phase Angle", ylabel="Energy")
 
 def main(file_path):
-    data = read_l2_data(file_path)
+    data = read_l2_data(os.path.abspath(file_path))
 
     plot_sweeps(data)
 
-    centers_of_mass, spin_angles = calculate_proton_centers_of_mass(data.coincidence_count_rate, data.spin_angles, data.energy, data.epoch)
+    centers_of_mass, spin_angles = calculate_proton_centers_of_mass(
+        extract_coarse_sweep(data.coincidence_count_rate),
+        extract_coarse_sweep(data.spin_angles),
+        extract_coarse_sweep(data.energy),
+        data.epoch)
     proton_sw_speed, a, phi, b = calculate_proton_solar_wind_speed(data.coincidence_count_rate, data.spin_angles, data.energy, data.epoch)
 
     plot_variation_in_center_of_mass(a, phi, b, spin_angles, centers_of_mass)
@@ -68,4 +73,4 @@ if __name__ == "__main__":
         file_path = sys.argv[1]
         main(file_path)
     except:
-        main("swapi/test_data/imap_swapi_l2_fake-menlo-5-sweeps_20100101_v001.cdf")
+        main(os.path.abspath("test_data/imap_swapi_l2_fake-menlo-5-sweeps_20100101_v001.cdf"))
