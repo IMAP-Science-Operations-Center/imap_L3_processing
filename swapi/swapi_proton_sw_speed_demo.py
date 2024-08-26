@@ -78,4 +78,4 @@ if __name__ == "__main__":
         file_path = sys.argv[1]
         main(file_path)
     except:
-        main(os.path.abspath("test_data/imap_swapi_l2_fake-menlo-5-sweeps_20100101_v001_with_unc.cdf"))
+        main(os.path.abspath("test_data/imap_swapi_l2_fake-menlo-5-sweeps_20100101_v002.cdf"))

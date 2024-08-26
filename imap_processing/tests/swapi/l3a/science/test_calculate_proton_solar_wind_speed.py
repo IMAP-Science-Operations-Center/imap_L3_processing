@@ -30,7 +30,7 @@ class TestCalculateProtonSolarWindSpeed(TestCase):
 
     def test_calculate_solar_wind_speed_from_model_data(self):
         file_path = Path(
-            imap_processing.__file__).parent.parent / 'swapi' / 'test_data' / 'imap_swapi_l2_fake-menlo-5-sweeps_20100101_v001_with_unc.cdf'
+            imap_processing.__file__).parent.parent / 'swapi' / 'test_data' / 'imap_swapi_l2_fake-menlo-5-sweeps_20100101_v002.cdf'
         with CDF(str(file_path)) as cdf:
             epoch = cdf.raw_var("epoch")[...]
             energy = cdf["energy"][...]

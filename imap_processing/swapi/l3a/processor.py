@@ -44,9 +44,9 @@ class SwapiL3AProcessor:
                                                                           data_level=dependencies[0].data_level,
                                                                           descriptor=dependencies[0].descriptor,
                                                                           start_date=self.start_date.strftime("%Y%d%m"),
-                                                                          end_date=self.end_date.strftime("%Y%d%m")
+                                                                          end_date=self.end_date.strftime("%Y%d%m"),
+                                                                          version='latest'
                                                                           )]
-
         if len(files_to_download) != 1:
             raise ValueError(f"Unexpected files found for SWAPI L3:"
                     f"{files_to_download}. Expected only one file to download.")
