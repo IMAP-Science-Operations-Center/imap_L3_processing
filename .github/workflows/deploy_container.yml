@@ -44,6 +44,6 @@ jobs:
 
       - name: Build, tag, and push docker image to GitHub Registry
         env:
-          REPOSITORY: l3-data-processing-scratch
+          IMAGE_TAG: latest
         run: |
-          docker build -t ghcr.io/pleasant-menlo/$REPOSITORY:latest-${{ inputs.instrument_name}} -f Dockerfile .
+          docker build -t ghcr.io/pleasant-menlo/l3-data-processing-scratch:$IMAGE_TAG-${{ inputs.instrument_name}} -f Dockerfile .
