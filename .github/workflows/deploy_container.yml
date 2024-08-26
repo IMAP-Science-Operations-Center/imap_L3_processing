@@ -43,7 +43,11 @@ jobs:
           password: ${{secrets.GITHUB_TOKEN}}
 
       - name: Build, tag, and push docker image to GitHub Registry
-        env:
-          IMAGE_TAG: latest
+#        env:
+          #REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+#          REGISTRY: ghcr.io/pleasant-menlo
+#          REPOSITORY: l3-data-processing-scratch
+#          IMAGE_TAG: latest-${{ inputs.instrument_name}}
         run: |
-          docker build -t ghcr.io/pleasant-menlo/l3-data-processing-scratch:$IMAGE_TAG-${{ inputs.instrument_name}} -f Dockerfile .
+          docker build -t ghcr.io/pleasant-menlo/l3-data-processing-scratch:latest-${{ inputs.instrument_name}} -f Dockerfile .
+#          docker push ghcr.io/pleasant-menlo/l3-data-processing-scratch:latest
