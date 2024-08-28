@@ -15,7 +15,8 @@ from imap_processing.constants import TEMP_CDF_FOLDER_PATH, THIRTY_SECONDS_IN_NA
 from imap_processing.models import UpstreamDataDependency
 from imap_processing.swapi.l3a.models import SwapiL2Data
 from imap_processing.swapi.l3a.processor import SwapiL3AProcessor, EPOCH_CDF_VAR_NAME, \
-    PROTON_SOLAR_WIND_SPEED_CDF_VAR_NAME, EPOCH_DELTA_CDF_VAR_NAME, ALPHA_SOLAR_WIND_SPEED_CDF_VAR_NAME
+    PROTON_SOLAR_WIND_SPEED_CDF_VAR_NAME, EPOCH_DELTA_CDF_VAR_NAME, ALPHA_SOLAR_WIND_SPEED_CDF_VAR_NAME, \
+    ALPHA_SOLAR_WIND_SPEED_UNCERTAINTY_CDF_VAR_NAME, PROTON_SOLAR_WIND_SPEED_UNCERTAINTY_CDF_VAR_NAME
 
 
 class TestProcessor(TestCase):
@@ -104,6 +105,7 @@ class TestProcessor(TestCase):
 
         np.testing.assert_array_equal(np.array([initial_epoch + THIRTY_SECONDS_IN_NANOSECONDS]), result_cdf[EPOCH_CDF_VAR_NAME])
         np.testing.assert_array_equal(np.array([400000]), result_cdf[PROTON_SOLAR_WIND_SPEED_CDF_VAR_NAME])
+        np.testing.assert_array_equal(np.array([2]), result_cdf[PROTON_SOLAR_WIND_SPEED_UNCERTAINTY_CDF_VAR_NAME])
         self.assertEqual(THIRTY_SECONDS_IN_NANOSECONDS,result_cdf[EPOCH_DELTA_CDF_VAR_NAME][...])
         self.assertFalse(result_cdf[EPOCH_DELTA_CDF_VAR_NAME].rv())
 
@@ -112,6 +114,7 @@ class TestProcessor(TestCase):
 
         np.testing.assert_array_equal(np.array([initial_epoch + THIRTY_SECONDS_IN_NANOSECONDS]), result_cdf[EPOCH_CDF_VAR_NAME])
         np.testing.assert_array_equal(np.array([450000]), result_cdf[ALPHA_SOLAR_WIND_SPEED_CDF_VAR_NAME])
+        np.testing.assert_array_equal(np.array([1000]), result_cdf[ALPHA_SOLAR_WIND_SPEED_UNCERTAINTY_CDF_VAR_NAME])
         self.assertEqual(THIRTY_SECONDS_IN_NANOSECONDS, result_cdf[EPOCH_DELTA_CDF_VAR_NAME][...])
         self.assertFalse(result_cdf[EPOCH_DELTA_CDF_VAR_NAME].rv())
         self.mock_imap_api.upload.assert_has_calls([call(proton_cdf_path), call(alpha_cdf_path)])

@@ -8,7 +8,7 @@ from typing import List
 import imap_data_access
 import numpy as np
 from spacepy.pycdf import CDF
-from uncertainties.unumpy import nominal_values, uarray
+from uncertainties.unumpy import nominal_values, uarray, std_devs
 
 from imap_processing.constants import TEMP_CDF_FOLDER_PATH, THIRTY_SECONDS_IN_NANOSECONDS
 from imap_processing.models import UpstreamDataDependency
@@ -21,7 +21,10 @@ from imap_processing.swapi.l3a.utils import read_l2_swapi_data, chunk_l2_data
 EPOCH_CDF_VAR_NAME = "epoch"
 EPOCH_DELTA_CDF_VAR_NAME = "epoch_delta"
 PROTON_SOLAR_WIND_SPEED_CDF_VAR_NAME = "proton_sw_speed"
+PROTON_SOLAR_WIND_SPEED_UNCERTAINTY_CDF_VAR_NAME = "proton_sw_speed_delta"
+
 ALPHA_SOLAR_WIND_SPEED_CDF_VAR_NAME = "alpha_sw_speed"
+ALPHA_SOLAR_WIND_SPEED_UNCERTAINTY_CDF_VAR_NAME = "alpha_sw_speed_delta"
 
 
 class SwapiL3AProcessor:
@@ -81,6 +84,7 @@ class SwapiL3AProcessor:
         with CDF(l3_cdf_file_path, '') as l3_cdf:
             l3_cdf[EPOCH_CDF_VAR_NAME] = l3_data.epoch
             l3_cdf[PROTON_SOLAR_WIND_SPEED_CDF_VAR_NAME] = nominal_values(l3_data.proton_sw_speed)
+            l3_cdf[PROTON_SOLAR_WIND_SPEED_UNCERTAINTY_CDF_VAR_NAME] = std_devs(l3_data.proton_sw_speed)
 
             l3_cdf.new(EPOCH_DELTA_CDF_VAR_NAME, THIRTY_SECONDS_IN_NANOSECONDS, recVary=False)
         imap_data_access.upload(l3_cdf_file_path)
@@ -91,6 +95,7 @@ class SwapiL3AProcessor:
         with CDF(l3_cdf_file_path, '') as l3_cdf:
             l3_cdf[EPOCH_CDF_VAR_NAME] = l3_data.epoch
             l3_cdf[ALPHA_SOLAR_WIND_SPEED_CDF_VAR_NAME] = nominal_values(l3_data.alpha_sw_speed)
+            l3_cdf[ALPHA_SOLAR_WIND_SPEED_UNCERTAINTY_CDF_VAR_NAME] = std_devs(l3_data.alpha_sw_speed)
 
             l3_cdf.new(EPOCH_DELTA_CDF_VAR_NAME, THIRTY_SECONDS_IN_NANOSECONDS, recVary=False)
         imap_data_access.upload(l3_cdf_file_path)
