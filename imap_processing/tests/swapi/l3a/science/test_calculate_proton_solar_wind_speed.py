@@ -10,7 +10,7 @@ from uncertainties.unumpy import uarray, std_devs, nominal_values
 import imap_processing
 from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_speed import calculate_proton_solar_wind_speed, \
     get_peak_indices, find_peak_center_of_mass_index, interpolate_energy, fit_energy_per_charge_peak_variations, \
-    calculate_sw_speed_h_plus
+    calculate_sw_speed_h_plus, get_proton_peak_indices
 
 
 class TestCalculateProtonSolarWindSpeed(TestCase):
@@ -63,6 +63,20 @@ class TestCalculateProtonSolarWindSpeed(TestCase):
                 extracted_peak = count_rates[peak_indices]
                 self.assertEqual(expected_peak_values, extracted_peak)
 
+
+    def test_get_proton_peak_indices(self):
+        test_cases = [
+            ("one clear peak", [0,0,0, 1, 0, 5, 10, 5, 0, 0, 1, 1, 1], [0, 1, 0, 5, 10, 5, 0, 0, 1]),
+            ("tied for peak", [0,0,0, 1, 0, 5, 10, 10, 0, 0, 1, 1, 1], [0, 1, 0, 5, 10, 10, 0, 0, 1, 1]),
+        ]
+
+        for name, count_rates, expected_peak_values in test_cases:
+            with self.subTest(name):
+                peak_indices = get_proton_peak_indices(count_rates)
+                extracted_peak = count_rates[peak_indices]
+                self.assertEqual(expected_peak_values, extracted_peak)
+
+
     def test_an_exception_is_raised_when_count_rates_contains_multiple_peaks(self):
         test_cases = [
             ("two clear peak", [0, 0, 5, 10, 5, 0, 0, 2, 10, 2, 0, 0]),
@@ -74,6 +88,7 @@ class TestCalculateProtonSolarWindSpeed(TestCase):
                 with self.assertRaises(Exception) as cm:
                     get_peak_indices(count_rates, 2)
                 self.assertEqual(str(cm.exception), "Count rates contains multiple distinct peaks")
+
 
     def test_find_peak_center_of_mass_index(self):
         test_cases = [
@@ -180,7 +195,3 @@ class TestCalculateProtonSolarWindSpeed(TestCase):
                 sw_speed = calculate_sw_speed_h_plus(ev_q)
                 self.assertAlmostEqual(expected_speed_m_s.n, sw_speed.n)
                 self.assertAlmostEqual(expected_speed_m_s.s, sw_speed.s)
-
-
-def _generate_coincidence_count_rates(self):
-    pass
