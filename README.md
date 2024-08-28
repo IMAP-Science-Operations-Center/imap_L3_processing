@@ -14,4 +14,4 @@ The remaining arguments match the inputs that we expect to receive from the SDC 
 
 `docker run --rm -it --volume="$(pwd)/spice_kernels:/mnt/spice" $(docker build -q .) --instrument swapi --level l3a --start_date 20240813 --end_date 20240813 --version v001 --dependency """[{'instrument':'swapi', 'data_level':'l2', 'descriptor':'fake-menlo-5-sweeps', 'version':'v001'}]"""`
 
-There is also a run_local.sh that will execute the above command for you.
+There is also a run_local_docker.sh that will execute the above command for you.
