@@ -12,7 +12,8 @@ from uncertainties.unumpy import nominal_values, uarray
 
 from imap_processing.constants import TEMP_CDF_FOLDER_PATH, THIRTY_SECONDS_IN_NANOSECONDS
 from imap_processing.models import UpstreamDataDependency
-from imap_processing.swapi.l3a.models import SwapiL2Data, SwapiL3Data
+from imap_processing.swapi.l3a.models import SwapiL2Data, SwapiL3ProtonSolarWindData, SwapiL3AlphaSolarWindData
+from imap_processing.swapi.l3a.science.calculate_alpha_solar_wind_speed import calculate_alpha_solar_wind_speed
 from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_speed import extract_coarse_sweep, \
     calculate_proton_solar_wind_speed
 from imap_processing.swapi.l3a.utils import read_l2_swapi_data, chunk_l2_data
@@ -20,6 +21,7 @@ from imap_processing.swapi.l3a.utils import read_l2_swapi_data, chunk_l2_data
 EPOCH_CDF_VAR_NAME = "epoch"
 EPOCH_DELTA_CDF_VAR_NAME = "epoch_delta"
 PROTON_SOLAR_WIND_SPEED_CDF_VAR_NAME = "proton_sw_speed"
+ALPHA_SOLAR_WIND_SPEED_CDF_VAR_NAME = "alpha_sw_speed"
 
 
 class SwapiL3AProcessor:
@@ -60,6 +62,7 @@ class SwapiL3AProcessor:
 
         epochs = []
         proton_solar_wind_speeds = []
+        alpha_solar_wind_speeds = []
         for data_chunk in chunk_l2_data(data, 5):
             proton_solar_wind_speed, a, phi, b = calculate_proton_solar_wind_speed(
                 uarray(data_chunk.coincidence_count_rate, data_chunk.coincidence_count_rate_uncertainty),
@@ -67,15 +70,29 @@ class SwapiL3AProcessor:
             proton_solar_wind_speeds.append(proton_solar_wind_speed)
             epochs.append(data_chunk.epoch[0]+THIRTY_SECONDS_IN_NANOSECONDS)
 
-        l3_data = SwapiL3Data(np.array(epochs), np.array(proton_solar_wind_speeds))
-        l3_cdf_file_name = f'imap_{self.instrument}_{self.level}_fake-menlo-{uuid.uuid4()}_{self.start_date.strftime("%Y%d%m")}_{self.version}.cdf'
-        l3_cdf_file_path = f'{TEMP_CDF_FOLDER_PATH}/{l3_cdf_file_name}'
-        l3_cdf = CDF(l3_cdf_file_path, '')
-        l3_cdf[EPOCH_CDF_VAR_NAME] = l3_data.epoch
-        l3_cdf[PROTON_SOLAR_WIND_SPEED_CDF_VAR_NAME] = nominal_values(l3_data.proton_sw_speed)
+            alpha_solar_wind_speeds.append(calculate_alpha_solar_wind_speed(
+                uarray(data_chunk.coincidence_count_rate, data_chunk.coincidence_count_rate_uncertainty),
+                data_chunk.energy
+            ))
 
-        l3_cdf.new(EPOCH_DELTA_CDF_VAR_NAME, THIRTY_SECONDS_IN_NANOSECONDS, recVary=False)
-        l3_cdf.close()
+        l3_data = SwapiL3ProtonSolarWindData(np.array(epochs), np.array(proton_solar_wind_speeds))
+        l3_cdf_file_name = f'imap_{self.instrument}_{self.level}_proton-solar-wind-fake-menlo-{uuid.uuid4()}_{self.start_date.strftime("%Y%d%m")}_{self.version}.cdf'
+        l3_cdf_file_path = f'{TEMP_CDF_FOLDER_PATH}/{l3_cdf_file_name}'
+        with CDF(l3_cdf_file_path, '') as l3_cdf:
+            l3_cdf[EPOCH_CDF_VAR_NAME] = l3_data.epoch
+            l3_cdf[PROTON_SOLAR_WIND_SPEED_CDF_VAR_NAME] = nominal_values(l3_data.proton_sw_speed)
+
+            l3_cdf.new(EPOCH_DELTA_CDF_VAR_NAME, THIRTY_SECONDS_IN_NANOSECONDS, recVary=False)
+        imap_data_access.upload(l3_cdf_file_path)
+
+        l3_data = SwapiL3AlphaSolarWindData(np.array(epochs), np.array(alpha_solar_wind_speeds))
+        l3_cdf_file_name = f'imap_{self.instrument}_{self.level}_alpha-solar-wind-fake-menlo-{uuid.uuid4()}_{self.start_date.strftime("%Y%d%m")}_{self.version}.cdf'
+        l3_cdf_file_path = f'{TEMP_CDF_FOLDER_PATH}/{l3_cdf_file_name}'
+        with CDF(l3_cdf_file_path, '') as l3_cdf:
+            l3_cdf[EPOCH_CDF_VAR_NAME] = l3_data.epoch
+            l3_cdf[ALPHA_SOLAR_WIND_SPEED_CDF_VAR_NAME] = nominal_values(l3_data.alpha_sw_speed)
+
+            l3_cdf.new(EPOCH_DELTA_CDF_VAR_NAME, THIRTY_SECONDS_IN_NANOSECONDS, recVary=False)
         imap_data_access.upload(l3_cdf_file_path)
 
         return

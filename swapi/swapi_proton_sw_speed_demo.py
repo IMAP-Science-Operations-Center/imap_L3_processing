@@ -6,7 +6,7 @@ from matplotlib import pyplot as plt
 from spacepy.pycdf import CDF
 from uncertainties.unumpy import uarray, nominal_values, std_devs
 
-from imap_processing.swapi.l3a.models import SwapiL2Data, SwapiL3Data
+from imap_processing.swapi.l3a.models import SwapiL2Data
 from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_speed import sine_fit_function, \
     calculate_proton_solar_wind_speed, calculate_proton_centers_of_mass, extract_coarse_sweep
 

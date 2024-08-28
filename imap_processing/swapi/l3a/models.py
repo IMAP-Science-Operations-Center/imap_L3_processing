@@ -4,9 +4,15 @@ import numpy as np
 
 
 @dataclass
-class SwapiL3Data:
+class SwapiL3ProtonSolarWindData:
     epoch: np.ndarray[float]
     proton_sw_speed: np.ndarray[float]
+
+
+@dataclass
+class SwapiL3AlphaSolarWindData:
+    epoch: np.ndarray[float]
+    alpha_sw_speed: np.ndarray[float]
 
 
 @dataclass
