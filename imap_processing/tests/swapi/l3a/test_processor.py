@@ -104,8 +104,21 @@ class TestProcessor(TestCase):
         result_cdf = pycdf.CDF(proton_cdf_path)
 
         np.testing.assert_array_equal(np.array([initial_epoch + THIRTY_SECONDS_IN_NANOSECONDS]), result_cdf[EPOCH_CDF_VAR_NAME])
+        self.assertEqual(EPOCH_DELTA_CDF_VAR_NAME, result_cdf[EPOCH_CDF_VAR_NAME].attrs["DELTA_PLUS_VAR"])
+        self.assertEqual(EPOCH_DELTA_CDF_VAR_NAME, result_cdf[EPOCH_CDF_VAR_NAME].attrs["DELTA_MINUS_VAR"])
+
         np.testing.assert_array_equal(np.array([400000]), result_cdf[PROTON_SOLAR_WIND_SPEED_CDF_VAR_NAME])
+        self.assertEqual(EPOCH_CDF_VAR_NAME,
+                         result_cdf[PROTON_SOLAR_WIND_SPEED_CDF_VAR_NAME].attrs["DEPEND_0"])
         np.testing.assert_array_equal(np.array([2]), result_cdf[PROTON_SOLAR_WIND_SPEED_UNCERTAINTY_CDF_VAR_NAME])
+        self.assertEqual(EPOCH_CDF_VAR_NAME,
+                         result_cdf[PROTON_SOLAR_WIND_SPEED_UNCERTAINTY_CDF_VAR_NAME].attrs["DEPEND_0"])
+
+        self.assertEqual(PROTON_SOLAR_WIND_SPEED_UNCERTAINTY_CDF_VAR_NAME,
+                         result_cdf[PROTON_SOLAR_WIND_SPEED_CDF_VAR_NAME].attrs["DELTA_PLUS_VAR"])
+        self.assertEqual(PROTON_SOLAR_WIND_SPEED_UNCERTAINTY_CDF_VAR_NAME,
+                         result_cdf[PROTON_SOLAR_WIND_SPEED_CDF_VAR_NAME].attrs["DELTA_MINUS_VAR"])
+
         self.assertEqual(THIRTY_SECONDS_IN_NANOSECONDS,result_cdf[EPOCH_DELTA_CDF_VAR_NAME][...])
         self.assertFalse(result_cdf[EPOCH_DELTA_CDF_VAR_NAME].rv())
 
@@ -113,10 +126,23 @@ class TestProcessor(TestCase):
         result_cdf = pycdf.CDF(alpha_cdf_path)
 
         np.testing.assert_array_equal(np.array([initial_epoch + THIRTY_SECONDS_IN_NANOSECONDS]), result_cdf[EPOCH_CDF_VAR_NAME])
+        self.assertEqual(EPOCH_DELTA_CDF_VAR_NAME, result_cdf[EPOCH_CDF_VAR_NAME].attrs["DELTA_PLUS_VAR"])
+        self.assertEqual(EPOCH_DELTA_CDF_VAR_NAME, result_cdf[EPOCH_CDF_VAR_NAME].attrs["DELTA_MINUS_VAR"])
+
         np.testing.assert_array_equal(np.array([450000]), result_cdf[ALPHA_SOLAR_WIND_SPEED_CDF_VAR_NAME])
+        self.assertEqual(EPOCH_CDF_VAR_NAME,
+                         result_cdf[ALPHA_SOLAR_WIND_SPEED_CDF_VAR_NAME].attrs["DEPEND_0"])
         np.testing.assert_array_equal(np.array([1000]), result_cdf[ALPHA_SOLAR_WIND_SPEED_UNCERTAINTY_CDF_VAR_NAME])
+        self.assertEqual(EPOCH_CDF_VAR_NAME,
+                         result_cdf[ALPHA_SOLAR_WIND_SPEED_UNCERTAINTY_CDF_VAR_NAME].attrs["DEPEND_0"])
+
+        self.assertEqual(ALPHA_SOLAR_WIND_SPEED_UNCERTAINTY_CDF_VAR_NAME, result_cdf[ALPHA_SOLAR_WIND_SPEED_CDF_VAR_NAME].attrs["DELTA_PLUS_VAR"])
+        self.assertEqual(ALPHA_SOLAR_WIND_SPEED_UNCERTAINTY_CDF_VAR_NAME, result_cdf[ALPHA_SOLAR_WIND_SPEED_CDF_VAR_NAME].attrs["DELTA_MINUS_VAR"])
+
         self.assertEqual(THIRTY_SECONDS_IN_NANOSECONDS, result_cdf[EPOCH_DELTA_CDF_VAR_NAME][...])
         self.assertFalse(result_cdf[EPOCH_DELTA_CDF_VAR_NAME].rv())
+
+
         self.mock_imap_api.upload.assert_has_calls([call(proton_cdf_path), call(alpha_cdf_path)])
 
 
