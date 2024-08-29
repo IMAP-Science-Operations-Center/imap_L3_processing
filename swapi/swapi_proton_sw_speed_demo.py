@@ -11,6 +11,28 @@ from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_speed import 
     calculate_proton_solar_wind_speed, calculate_proton_centers_of_mass, extract_coarse_sweep
 
 
+def read_l2_data_from_dat(file_path: str) -> SwapiL2Data:
+    data = np.loadtxt(file_path)
+    data = data.reshape((-1,72,8))
+
+    twelve_seconds_in_nanoseconds = 12_000_000_000
+    epochs = twelve_seconds_in_nanoseconds * np.arange(len(data))
+
+    energy_for_first_sweep = data[0, :, 2]
+    spin_angles = data[..., 3]
+    coarse_sweep_energies = data[:, 1:63, 2]
+    assert np.all(coarse_sweep_energies == coarse_sweep_energies[0])
+
+    coincident_count_rates = data[..., 7]
+
+    fake_coincident_count_rate_uncertainties = np.sqrt(6 * coincident_count_rates)
+    return SwapiL2Data(epochs,
+                       energy_for_first_sweep,
+                       coincident_count_rates,
+                       spin_angles,
+                       fake_coincident_count_rate_uncertainties)
+
+
 def read_l2_data(cdf_path: str) -> SwapiL2Data:
     cdf = CDF(cdf_path)
     return SwapiL2Data(cdf.raw_var("epoch")[...],
@@ -40,7 +62,12 @@ def plot_variation_in_center_of_mass(a, phi, b, spin_angles, centers_of_mass):
     plot.set(xlabel="Phase Angle", ylabel="Energy")
 
 def main(file_path):
-    data = read_l2_data(os.path.abspath(file_path))
+    if file_path[-4:] == ".dat":
+        data = read_l2_data_from_dat(file_path)
+    elif file_path[-4:] == ".cdf":
+        data = read_l2_data(os.path.abspath(file_path))
+    else:
+        raise Exception("The demo can only load data from .dat or .cdf files!")
 
     coincident_count_rate = uarray(data.coincidence_count_rate, data.coincidence_count_rate_uncertainty)
 
@@ -51,7 +78,8 @@ def main(file_path):
         extract_coarse_sweep(data.spin_angles),
         extract_coarse_sweep(data.energy),
         data.epoch)
-    proton_sw_speed, a, phi, b = calculate_proton_solar_wind_speed(coincident_count_rate, data.spin_angles, data.energy, data.epoch)
+    proton_sw_speed, a, phi, b = calculate_proton_solar_wind_speed(coincident_count_rate, data.spin_angles, data.energy,
+                                                                   data.epoch)
 
     plot_variation_in_center_of_mass(a, phi, b, spin_angles, centers_of_mass)
 
