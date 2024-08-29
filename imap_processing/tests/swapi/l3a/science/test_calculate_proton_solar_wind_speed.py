@@ -10,7 +10,7 @@ from uncertainties.unumpy import uarray, std_devs, nominal_values
 import imap_processing
 from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_speed import calculate_proton_solar_wind_speed, \
     get_peak_indices, find_peak_center_of_mass_index, interpolate_energy, fit_energy_per_charge_peak_variations, \
-    calculate_sw_speed_h_plus, get_proton_peak_indices
+    calculate_sw_speed_h_plus, get_proton_peak_indices, interpolate_angle
 
 
 class TestCalculateProtonSolarWindSpeed(TestCase):
@@ -137,6 +137,18 @@ class TestCalculateProtonSolarWindSpeed(TestCase):
         for name, center_of_mass_index, energies, expected_interpolated_energy in test_cases:
             with self.subTest(name):
                 self.assertAlmostEqual(expected_interpolated_energy, interpolate_energy(center_of_mass_index, energies))
+
+    def test_interpolates_to_find_angle_at_center_of_mass(self):
+        test_cases = [
+            ("interpolates", [110, 230, 350, 110], 1.5, 290),
+            ("interpolates correctly across period", [110, 230, 350, 110], 2.5, 50)
+        ]
+
+        for name, angles, center_of_mass_index, expected_interpolated_angle in test_cases:
+            with self.subTest(name):
+                angle = interpolate_angle(center_of_mass_index, angles)
+
+                self.assertAlmostEqual(angle, expected_interpolated_angle)
 
     def test_interpolates_with_uncertainty_to_find_energy_at_center_of_mass(self):
         test_cases = [

@@ -27,6 +27,11 @@ def fit_energy_per_charge_peak_variations(centers_of_mass, spin_phase_angles):
 def get_proton_peak_indices(count_rates):
     return get_peak_indices(count_rates, 4)
 
+def interpolate_angle(center_of_mass_index, spin_angles):
+    spin_angle = np.interp(center_of_mass_index, np.arange(len(spin_angles)), np.unwrap(spin_angles, period=360))
+    return np.mod(spin_angle, 360)
+
+
 def calculate_proton_centers_of_mass(coincidence_count_rates, spin_angles, energies, epoch):
     energies_at_center_of_mass = []
     energies_at_center_of_mass_uncertainties = []
@@ -46,7 +51,7 @@ def calculate_proton_centers_of_mass(coincidence_count_rates, spin_angles, energ
             time_of_peak = np.interp(center_of_mass_index, np.arange(len(sweep_times)), sweep_times)
             spin_phase_angle = get_spin_phase_from_spice(time_of_peak)
             """
-        spin_angle = np.interp(center_of_mass_index.nominal_value, np.arange(len(angles)), angles)
+        spin_angle = interpolate_angle(center_of_mass_index.nominal_value, angles)
         energies_at_center_of_mass.append(energy_at_center_of_mass.nominal_value)
         energies_at_center_of_mass_uncertainties.append(energy_at_center_of_mass.std_dev)
         spin_angles_at_center_of_mass.append(spin_angle)
