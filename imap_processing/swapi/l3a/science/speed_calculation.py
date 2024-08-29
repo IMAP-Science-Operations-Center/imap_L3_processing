@@ -23,13 +23,6 @@ def find_peak_center_of_mass_index(peak_slice, count_rates):
 def interpolate_energy(center_of_mass_index, energies):
     interpolate_lambda = lambda x: np.exp(np.interp(x, np.arange(len(energies)), np.log(energies)))
     interpolate = wrap(interpolate_lambda)
-    # center = interpolate_lambda(center_of_mass_index.n)
-    # left = interpolate_lambda(center_of_mass_index.n - center_of_mass_index.std_dev)
-    # right = interpolate_lambda(center_of_mass_index.n + center_of_mass_index.std_dev)
-    # print(left-center, center-right)
-    # print((left-right)/2) # (right-center  + center-left)/2
-    # print(interpolate(center_of_mass_index).s)
-    # print("------")
     return interpolate(center_of_mass_index)
 
 
