@@ -7,6 +7,7 @@ from unittest.mock import patch, sentinel, call
 
 import numpy as np
 from spacepy import pycdf
+from spacepy.pycdf import gAttr
 from uncertainties import ufloat
 from uncertainties.unumpy import uarray, nominal_values, std_devs
 
@@ -28,6 +29,8 @@ class TestProcessor(TestCase):
 
         self.mock_imap_patcher = patch('imap_processing.swapi.l3a.processor.imap_data_access')
         self.mock_imap_api = self.mock_imap_patcher.start()
+        self.mock_imap_api.query.return_value = [{'file_path':sentinel.file_path}]
+
 
     def tearDown(self) -> None:
         shutil.rmtree(self.temp_directory)
@@ -47,7 +50,6 @@ class TestProcessor(TestCase):
         mock_uuid_value = 123
         mock_uuid.uuid4.return_value = mock_uuid_value
 
-        self.mock_imap_api.query.return_value = [{'file_path':sentinel.file_path}]
         self.mock_imap_api.download.return_value = file_path
         instrument = 'swapi'
         incoming_data_level = 'l2'
@@ -166,3 +168,35 @@ class TestProcessor(TestCase):
         except ValueError as e:
             return
 
+    @patch('imap_processing.swapi.l3a.processor.SwapiL3AlphaSolarWindData.write_cdf')
+    @patch('imap_processing.swapi.l3a.processor.SwapiL3ProtonSolarWindData.write_cdf')
+    @patch('imap_processing.swapi.l3a.processor.uuid')
+    @patch('imap_processing.swapi.l3a.processor.chunk_l2_data', return_value=[])
+    @patch('imap_processing.swapi.l3a.processor.read_l2_swapi_data')
+    def test_processor_writes_cdf_and_uploads_it(self, _, __, mock_uuid, mock_swapi_l3_proton_sw_data_product, mock_swapi_l3_alpha_sw_data_product):
+        mock_uuid_value = 123
+        mock_uuid.uuid4.return_value = mock_uuid_value
+        instrument = 'swapi'
+        level = 'l3a'
+        start_date = datetime.now() - timedelta(days=1)
+        outgoing_version = "12345"
+        swapi_processor = SwapiL3AProcessor(
+            [UpstreamDataDependency(instrument, 'l2', 'c', start_date, datetime.now(),
+                                    'f')], 'swapi', level, start_date,
+            datetime.now(),
+            outgoing_version)
+
+        swapi_processor.process()
+
+        start_date_as_str = start_date.strftime("%Y%d%m")
+        expected_file_name = f"imap_swapi_l3a_proton-solar-wind-fake-menlo-{mock_uuid_value}_{start_date_as_str}_12345"
+        proton_cdf_path = f"{self.temp_directory}/{expected_file_name}.cdf"
+
+        mock_swapi_l3_proton_sw_data_product.assert_called_once_with(proton_cdf_path, outgoing_version)
+
+        expected_file_name = f"imap_swapi_l3a_alpha-solar-wind-fake-menlo-{mock_uuid_value}_{start_date_as_str}_12345"
+        alpha_cdf_path = f"{self.temp_directory}/{expected_file_name}.cdf"
+
+        mock_swapi_l3_alpha_sw_data_product.assert_called_once_with(alpha_cdf_path, outgoing_version)
+
+        self.mock_imap_api.upload.assert_has_calls([call(proton_cdf_path), call(alpha_cdf_path)])

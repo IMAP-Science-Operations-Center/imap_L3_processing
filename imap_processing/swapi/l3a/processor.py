@@ -7,21 +7,20 @@ from typing import List
 
 import imap_data_access
 import numpy as np
+from spacepy import pycdf
 from spacepy.pycdf import CDF
 from uncertainties.unumpy import nominal_values, uarray, std_devs
 
+from imap_processing.cdf.imap_attribute_manager import ImapAttributeManager
 from imap_processing.constants import TEMP_CDF_FOLDER_PATH, THIRTY_SECONDS_IN_NANOSECONDS
 from imap_processing.models import UpstreamDataDependency
-from imap_processing.swapi.l3a.models import SwapiL2Data, SwapiL3ProtonSolarWindData, SwapiL3AlphaSolarWindData
+from imap_processing.swapi.l3a.models import SwapiL2Data, SwapiL3ProtonSolarWindData, SwapiL3AlphaSolarWindData, \
+    EPOCH_CDF_VAR_NAME, PROTON_SOLAR_WIND_SPEED_CDF_VAR_NAME, PROTON_SOLAR_WIND_SPEED_UNCERTAINTY_CDF_VAR_NAME, \
+    EPOCH_DELTA_CDF_VAR_NAME
 from imap_processing.swapi.l3a.science.calculate_alpha_solar_wind_speed import calculate_alpha_solar_wind_speed
 from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_speed import extract_coarse_sweep, \
     calculate_proton_solar_wind_speed
 from imap_processing.swapi.l3a.utils import read_l2_swapi_data, chunk_l2_data
-
-EPOCH_CDF_VAR_NAME = "epoch"
-EPOCH_DELTA_CDF_VAR_NAME = "epoch_delta"
-PROTON_SOLAR_WIND_SPEED_CDF_VAR_NAME = "proton_sw_speed"
-PROTON_SOLAR_WIND_SPEED_UNCERTAINTY_CDF_VAR_NAME = "proton_sw_speed_delta"
 
 ALPHA_SOLAR_WIND_SPEED_CDF_VAR_NAME = "alpha_sw_speed"
 ALPHA_SOLAR_WIND_SPEED_UNCERTAINTY_CDF_VAR_NAME = "alpha_sw_speed_delta"
@@ -79,44 +78,17 @@ class SwapiL3AProcessor:
             ))
 
         l3_data = SwapiL3ProtonSolarWindData(np.array(epochs), np.array(proton_solar_wind_speeds))
-        l3_cdf_file_name = f'imap_{self.instrument}_{self.level}_proton-solar-wind-fake-menlo-{uuid.uuid4()}_{self.start_date.strftime("%Y%d%m")}_{self.version}.cdf'
-        l3_cdf_file_path = f'{TEMP_CDF_FOLDER_PATH}/{l3_cdf_file_name}'
-        with CDF(l3_cdf_file_path, '') as l3_cdf:
-            l3_cdf[EPOCH_CDF_VAR_NAME] = l3_data.epoch
-            l3_cdf[EPOCH_CDF_VAR_NAME].attrs["DELTA_PLUS_VAR"] = EPOCH_DELTA_CDF_VAR_NAME
-            l3_cdf[EPOCH_CDF_VAR_NAME].attrs["DELTA_MINUS_VAR"] = EPOCH_DELTA_CDF_VAR_NAME
 
-            l3_cdf[PROTON_SOLAR_WIND_SPEED_CDF_VAR_NAME] = nominal_values(l3_data.proton_sw_speed)
-            l3_cdf[PROTON_SOLAR_WIND_SPEED_CDF_VAR_NAME].attrs["DEPEND_0"] = EPOCH_CDF_VAR_NAME
+        l3_cdf_file_name = f'imap_{self.instrument}_{self.level}_proton-solar-wind-fake-menlo-{uuid.uuid4()}_{self.start_date.strftime("%Y%d%m")}_{self.version}'
+        l3_cdf_file_path = f'{TEMP_CDF_FOLDER_PATH}/{l3_cdf_file_name}.cdf'
+        l3_data.write_cdf(l3_cdf_file_path, self.version)
 
-            l3_cdf[PROTON_SOLAR_WIND_SPEED_UNCERTAINTY_CDF_VAR_NAME] = std_devs(l3_data.proton_sw_speed)
-            l3_cdf[PROTON_SOLAR_WIND_SPEED_UNCERTAINTY_CDF_VAR_NAME].attrs["DEPEND_0"] = EPOCH_CDF_VAR_NAME
-
-            l3_cdf[PROTON_SOLAR_WIND_SPEED_CDF_VAR_NAME].attrs[
-                "DELTA_PLUS_VAR"] = PROTON_SOLAR_WIND_SPEED_UNCERTAINTY_CDF_VAR_NAME
-            l3_cdf[PROTON_SOLAR_WIND_SPEED_CDF_VAR_NAME].attrs[
-                "DELTA_MINUS_VAR"] = PROTON_SOLAR_WIND_SPEED_UNCERTAINTY_CDF_VAR_NAME
-
-            l3_cdf.new(EPOCH_DELTA_CDF_VAR_NAME, THIRTY_SECONDS_IN_NANOSECONDS, recVary=False)
         imap_data_access.upload(l3_cdf_file_path)
 
         l3_data = SwapiL3AlphaSolarWindData(np.array(epochs), np.array(alpha_solar_wind_speeds))
         l3_cdf_file_name = f'imap_{self.instrument}_{self.level}_alpha-solar-wind-fake-menlo-{uuid.uuid4()}_{self.start_date.strftime("%Y%d%m")}_{self.version}.cdf'
         l3_cdf_file_path = f'{TEMP_CDF_FOLDER_PATH}/{l3_cdf_file_name}'
-        with CDF(l3_cdf_file_path, '') as l3_cdf:
-            l3_cdf[EPOCH_CDF_VAR_NAME] = l3_data.epoch
-            l3_cdf.new(EPOCH_DELTA_CDF_VAR_NAME, THIRTY_SECONDS_IN_NANOSECONDS, recVary=False)
-            l3_cdf[EPOCH_CDF_VAR_NAME].attrs["DELTA_PLUS_VAR"] = EPOCH_DELTA_CDF_VAR_NAME
-            l3_cdf[EPOCH_CDF_VAR_NAME].attrs["DELTA_MINUS_VAR"] = EPOCH_DELTA_CDF_VAR_NAME
-
-            l3_cdf[ALPHA_SOLAR_WIND_SPEED_CDF_VAR_NAME] = nominal_values(l3_data.alpha_sw_speed)
-            l3_cdf[ALPHA_SOLAR_WIND_SPEED_CDF_VAR_NAME].attrs["DEPEND_0"] = EPOCH_CDF_VAR_NAME
-
-            l3_cdf[ALPHA_SOLAR_WIND_SPEED_UNCERTAINTY_CDF_VAR_NAME] = std_devs(l3_data.alpha_sw_speed)
-            l3_cdf[ALPHA_SOLAR_WIND_SPEED_UNCERTAINTY_CDF_VAR_NAME].attrs["DEPEND_0"] = EPOCH_CDF_VAR_NAME
-
-            l3_cdf[ALPHA_SOLAR_WIND_SPEED_CDF_VAR_NAME].attrs["DELTA_PLUS_VAR"] = ALPHA_SOLAR_WIND_SPEED_UNCERTAINTY_CDF_VAR_NAME
-            l3_cdf[ALPHA_SOLAR_WIND_SPEED_CDF_VAR_NAME].attrs["DELTA_MINUS_VAR"] = ALPHA_SOLAR_WIND_SPEED_UNCERTAINTY_CDF_VAR_NAME
+        l3_data.write_cdf(l3_cdf_file_path, self.version)
 
         imap_data_access.upload(l3_cdf_file_path)
 
