@@ -1,6 +1,7 @@
 import math
 from pathlib import Path
 from unittest import TestCase
+from unittest.mock import patch, Mock
 
 import numpy as np
 from spacepy.pycdf import CDF
@@ -166,10 +167,42 @@ class TestCalculateProtonSolarWindSpeed(TestCase):
                 self.assertAlmostEqual(expected_interpolated_energy, result.n)
                 self.assertAlmostEqual(expected_uncertainty, result.std_dev, 3)
 
+    @patch('scipy.optimize.curve_fit')
+    def test_curve_fit_is_initialized_correctly(self, mock_curve_fit):
+        test_cases = [
+            ([30, 60, 90, 120], [1, 2, 3, 4], 1.5, -30, 2.5),
+            ([30, 60, 90, 120], [2, 4, 6, 4], 2, 0, 4),
+        ]
+
+        mock_curve_fit.return_value = ([30,370,1300], np.identity(3))
+
+        for angles, energies, expected_initial_a, expected_initial_phi, expected_initial_b in test_cases:
+            with self.subTest():
+                a,phi,b = fit_energy_per_charge_peak_variations(energies, angles)
+
+                curve_fit_parameters = mock_curve_fit.call_args.kwargs
+
+                self.assertEqual(expected_initial_a, curve_fit_parameters["p0"][0])
+                self.assertEqual(expected_initial_phi, curve_fit_parameters["p0"][1])
+                self.assertEqual(expected_initial_b, curve_fit_parameters["p0"][2])
+
+                a_lower_bound, phi_lower_bound, b_lower_bound = curve_fit_parameters["bounds"][0]
+                self.assertEqual(0, a_lower_bound)
+                self.assertEqual(-np.inf, phi_lower_bound)
+                self.assertEqual(0, b_lower_bound)
+
+                a_upper_bound, phi_upper_bound, b_upper_bound = curve_fit_parameters["bounds"][1]
+                self.assertEqual(np.inf, a_upper_bound)
+                self.assertEqual(np.inf, phi_upper_bound)
+                self.assertEqual(np.inf, b_upper_bound)
+
+                self.assertEqual(10, phi.nominal_value)
+
+
     def test_curve_fit(self):
         test_cases = [
             (10, 500, 25, 120),
-            (30, 1000, 270, 2),
+            (30, 1000, 270, 2)
         ]
 
         for a, b, phi, initial_angle in test_cases:

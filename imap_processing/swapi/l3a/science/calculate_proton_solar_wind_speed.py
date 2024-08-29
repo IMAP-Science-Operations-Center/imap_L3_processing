@@ -18,11 +18,21 @@ def sine_fit_function(spin_phase_angle, a, phi, b):
 
 
 def fit_energy_per_charge_peak_variations(centers_of_mass, spin_phase_angles):
-    values, pcov = scipy.optimize.curve_fit(sine_fit_function, spin_phase_angles, nominal_values(centers_of_mass), sigma=std_devs(centers_of_mass),
-                                         bounds=([0, 0, 0], [np.inf, 360, np.inf]),
-                                            absolute_sigma=True)
+    nominal_centers_of_mass = nominal_values(centers_of_mass)
+    min_mass_energy = np.min(nominal_centers_of_mass)
+    max_mass_energy = np.max(nominal_centers_of_mass)
+    peak_angle = spin_phase_angles[np.argmax(centers_of_mass)]
+
+    initial_parameter_guess = [(max_mass_energy-min_mass_energy)/ 2,90-peak_angle,np.mean(nominal_centers_of_mass)]
+
+    (a,phi,b), pcov = scipy.optimize.curve_fit(
+        sine_fit_function, spin_phase_angles, nominal_values(centers_of_mass),
+        sigma=std_devs(centers_of_mass), bounds=([0, -np.inf, 0], [np.inf, np.inf, np.inf]),
+        absolute_sigma=True,
+    p0=initial_parameter_guess)
+    phi = np.mod(phi,360)
     perr = np.sqrt(np.diag(pcov))
-    return uarray(values, perr)
+    return uarray((a,phi,b), perr)
 
 def get_proton_peak_indices(count_rates):
     return get_peak_indices(count_rates, 4)
