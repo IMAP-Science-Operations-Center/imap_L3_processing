@@ -1,7 +1,7 @@
 import math
 from pathlib import Path
 from unittest import TestCase
-from unittest.mock import patch, Mock
+from unittest.mock import patch
 
 import numpy as np
 from spacepy.pycdf import CDF
@@ -9,6 +9,7 @@ from uncertainties import ufloat
 from uncertainties.unumpy import uarray, std_devs, nominal_values
 
 import imap_processing
+from imap_processing.constants import METERS_PER_KILOMETER
 from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_speed import calculate_proton_solar_wind_speed, \
     get_peak_indices, find_peak_center_of_mass_index, interpolate_energy, fit_energy_per_charge_peak_variations, \
     calculate_sw_speed_h_plus, get_proton_peak_indices, interpolate_angle
@@ -26,7 +27,7 @@ class TestCalculateProtonSolarWindSpeed(TestCase):
 
         proton_charge = 1.602176634e-19
         proton_mass = 1.67262192595e-27
-        expected_speed = math.sqrt(2 * 750 * proton_charge / proton_mass)
+        expected_speed = math.sqrt(2 * 750 * proton_charge / proton_mass) / METERS_PER_KILOMETER
         self.assertAlmostEqual(speed.n, expected_speed, 0)
 
     def test_calculate_solar_wind_speed_from_model_data(self):
@@ -42,8 +43,8 @@ class TestCalculateProtonSolarWindSpeed(TestCase):
         speed, a, phi, b = calculate_proton_solar_wind_speed(uarray(count_rate, count_rate_delta), spin_angles, energy,
                                                              epoch)
 
-        self.assertAlmostEqual(speed.n, 497919, 0)
-        self.assertAlmostEqual(speed.s, 464, 0)
+        self.assertAlmostEqual(speed.n, 497.919, 3)
+        self.assertAlmostEqual(speed.s, 0.464, 3)
         self.assertAlmostEqual(a.n, 32.234, 3)
         self.assertAlmostEqual(a.s, 3.48, 2)
         self.assertAlmostEqual(phi.n, 252.2, 1)
@@ -56,6 +57,8 @@ class TestCalculateProtonSolarWindSpeed(TestCase):
             ("one clear peak", [0, 0, 5, 10, 5, 0, 0], 2, [0, 5, 10, 5, 0]),
             ("narrow width", [0, 0, 5, 10, 5, 0, 0], 1, [5, 10, 5]),
             ("wide peak", [0, 0, 5, 10, 10, 2, 0, 0], 2, [0, 5, 10, 10, 2, 0]),
+            ("At left edge", [5, 10, 5, 0, 0], 2, [5, 10, 5, 0]),
+            ("At right edge", [0, 0, 5, 10, ], 2, [0, 5, 10]),
         ]
 
         for name, count_rates, width, expected_peak_values in test_cases:
@@ -219,24 +222,24 @@ class TestCalculateProtonSolarWindSpeed(TestCase):
 
     def test_converts_proton_energies_to_speeds(self):
         test_cases = [
-            (1000, 437694.7142244463),
-            (800, 391486.05375928245),
-            (2000, 618993.801035228),
+            (1000, 437.6947142244463),
+            (800, 391.48605375928245),
+            (2000, 618.993801035228),
         ]
 
-        for ev_q, expected_speed_m_s in test_cases:
+        for ev_q, expected_speed_km_s in test_cases:
             with self.subTest(ev_q):
-                self.assertAlmostEqual(expected_speed_m_s, calculate_sw_speed_h_plus(ev_q))
+                self.assertAlmostEqual(expected_speed_km_s, calculate_sw_speed_h_plus(ev_q))
 
     def test_converts_proton_energies_with_uncertainties(self):
         test_cases = [
-            (ufloat(1000, 10), ufloat(437694.7142244463, 2188.4735711222315)),
-            (ufloat(800, 100), ufloat(391486.05375928245, 24467.87835995515)),
-            (ufloat(2000, 2), ufloat(618993.801035228, 309.49690051761405)),
+            (ufloat(1000, 10), ufloat(437.6947142244463, 2.1884735711222315)),
+            (ufloat(800, 100), ufloat(391.48605375928245, 24.46787835995515)),
+            (ufloat(2000, 2), ufloat(618.993801035228, 0.30949690051761405)),
         ]
 
-        for ev_q, expected_speed_m_s in test_cases:
+        for ev_q, expected_speed_km_s in test_cases:
             with self.subTest(ev_q):
                 sw_speed = calculate_sw_speed_h_plus(ev_q)
-                self.assertAlmostEqual(expected_speed_m_s.n, sw_speed.n)
-                self.assertAlmostEqual(expected_speed_m_s.s, sw_speed.s)
+                self.assertAlmostEqual(expected_speed_km_s.n, sw_speed.n)
+                self.assertAlmostEqual(expected_speed_km_s.s, sw_speed.s)

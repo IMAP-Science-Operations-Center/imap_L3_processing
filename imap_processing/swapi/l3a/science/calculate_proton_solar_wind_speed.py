@@ -1,14 +1,9 @@
-import math
-
-import matplotlib.pyplot as plt
 import numpy as np
 import scipy
-import uncertainties
-from uncertainties import ufloat, wrap, umath
+from uncertainties import umath
 from uncertainties.unumpy import uarray, nominal_values, std_devs
 
-from imap_processing.constants import PROTON_CHARGE_COULOMBS, PROTON_MASS_KG, ALPHA_PARTICLE_MASS_KG, \
-    ALPHA_PARTICLE_CHARGE_COULOMBS
+from imap_processing.constants import PROTON_CHARGE_COULOMBS, PROTON_MASS_KG, METERS_PER_KILOMETER
 from imap_processing.swapi.l3a.science.speed_calculation import get_peak_indices, find_peak_center_of_mass_index, \
     interpolate_energy, extract_coarse_sweep
 
@@ -70,7 +65,7 @@ def calculate_proton_centers_of_mass(coincidence_count_rates, spin_angles, energ
 
 
 def calculate_sw_speed_h_plus(energy):
-    return umath.sqrt(2 * energy * PROTON_CHARGE_COULOMBS / PROTON_MASS_KG)
+    return umath.sqrt(2 * energy * PROTON_CHARGE_COULOMBS / PROTON_MASS_KG) / METERS_PER_KILOMETER
 
 def calculate_proton_solar_wind_speed(coincidence_count_rates, spin_angles, energies, epoch):
     energies = extract_coarse_sweep(energies)

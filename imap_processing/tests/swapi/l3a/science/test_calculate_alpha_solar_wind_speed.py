@@ -2,7 +2,6 @@ from pathlib import Path
 from unittest import TestCase
 
 import numpy as np
-from matplotlib import pyplot as plt
 from spacepy.pycdf import CDF
 from uncertainties import ufloat
 from uncertainties.unumpy import uarray
@@ -15,43 +14,49 @@ from imap_processing.swapi.l3a.science.calculate_alpha_solar_wind_speed import c
 class TestCalculateAlphaSolarWindSpeed(TestCase):
     def test_get_alpha_peak_indices(self):
         test_cases = [
-            ("one clear peak", [0, 2, 3, 2, 0, 0, 0, 5, 10, 5, 0], [0, 2, 3, 2, 0]),
-            ("wide peak", [0, 2, 3, 3, 2, 0, 0, 0, 5, 10, 5, 0], [0, 2, 3, 3, 2, 0]),
+            ("one clear peak", [0, 2, 3, 2, 0, 0, 0, 5, 10, 5, 0], [12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2], [0, 2, 3, 2, 0]),
+            ("at edge", [3, 2, 0, 0, 0, 5, 10, 5, 0], [10, 9, 8, 7, 6, 5, 4, 3, 2], [3, 2, 0]),
+            ("wide peak", [0, 2, 3, 3, 2, 0, 0, 0, 5, 10, 5, 0], [13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2], [0, 2, 3, 3, 2, 0]),
+            ("ignores values past 4*proton peak", [9, 0, 0, 2, 3, 2, 0, 0, 0, 5, 10, 5, 0], [13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1],
+             [0, 2, 3, 2, 0]),
+
         ]
 
-        for name, count_rates, expected_peak_values in test_cases:
+        for name, count_rates, energies, expected_peak_values in test_cases:
             with self.subTest(name):
-                peak_indices = get_alpha_peak_indices(count_rates)
+                peak_indices = get_alpha_peak_indices(count_rates, energies)
                 extracted_peak = count_rates[peak_indices]
                 self.assertEqual(expected_peak_values, extracted_peak)
 
     def test_an_exception_is_raised_when_no_alpha_peak(self):
         test_cases = [
-            ("no clear peak", [0, 0, 1, 1, 1, 2,2 , 2, 10, 2, 0, 0], "Alpha peak not found"),
-            ("peak is too wide", [0, 4, 4, 4, 0, 0, 0, 0, 0, 5, 10, 10, 3, 2, 0, 0], "Count rates contains multiple distinct peaks"),
+            ("no clear peak", [0, 0, 1, 1, 1, 2,2 , 2, 10, 2, 0, 0],
+             [12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1], "Alpha peak not found"),
+            ("peak is too wide", [0, 4, 4, 4, 0, 0, 0, 0, 0, 5, 10, 10, 3, 2, 0, 0],
+             [16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1], "Count rates contains multiple distinct peaks"),
         ]
 
-        for name, count_rates, exception_text in test_cases:
+        for name, count_rates, energies, exception_text in test_cases:
             with self.subTest(name):
                 with self.assertRaises(Exception) as cm:
-                    get_alpha_peak_indices(count_rates)
+                    get_alpha_peak_indices(count_rates, energies)
                 self.assertEqual(str(cm.exception), exception_text)
 
     def test_convert_energy_to_alpha_solar_wind_speed(self):
         test_cases = [
-            (ufloat(1000, 200), 310562, 31056),
-            (ufloat(1300, 10), 354096, 1362),
-            (ufloat(1800, 5), 416663, 579),
-            (ufloat(2500, 600), 491042, 58925),
-            (ufloat(5000, 25), 694439, 1736)
+            (ufloat(1000, 200), 310.562, 31.056),
+            (ufloat(1300, 10), 354.096, 1.362),
+            (ufloat(1800, 5), 416.663, 0.579),
+            (ufloat(2500, 600), 491.042, 58.925),
+            (ufloat(5000, 25), 694.439, 1.736)
         ]
 
         for energy, expected_speed, expected_uncertainty in test_cases:
             with self.subTest(f"converting energy of {energy} to speed"):
                 alpha_sw_speed = calculate_sw_speed_alpha(energy)
 
-                self.assertAlmostEqual(expected_speed, alpha_sw_speed.n, 0)
-                self.assertAlmostEqual(expected_uncertainty, alpha_sw_speed.s, 0)
+                self.assertAlmostEqual(expected_speed, alpha_sw_speed.n, 3)
+                self.assertAlmostEqual(expected_uncertainty, alpha_sw_speed.s, 3)
 
     def test_calculate_alpha_solar_wind_speed(self):
         file_path = Path(
@@ -61,10 +66,10 @@ class TestCalculateAlphaSolarWindSpeed(TestCase):
             count_rate = cdf["swp_coin_rate"][...]
             count_rate_delta = cdf["swp_coin_unc"][...]
 
-        alpha_solar_wind_center_of_mass = calculate_alpha_solar_wind_speed(uarray(count_rate, count_rate_delta), energy)
+        alpha_solar_wind_speed = calculate_alpha_solar_wind_speed(uarray(count_rate, count_rate_delta), energy)
 
-        self.assertAlmostEqual(496490, alpha_solar_wind_center_of_mass.nominal_value, 0)
-        self.assertAlmostEqual(2811, alpha_solar_wind_center_of_mass.std_dev, 0)
+        self.assertAlmostEqual(496.490, alpha_solar_wind_speed.nominal_value, 3)
+        self.assertAlmostEqual(2.811, alpha_solar_wind_speed.std_dev, 3)
 
     def test_calculate_alpha_center_of_mass_with_fake_data(self):
         test_cases = [
