@@ -66,10 +66,10 @@ class TestCalculateAlphaSolarWindSpeed(TestCase):
             count_rate = cdf["swp_coin_rate"][...]
             count_rate_delta = cdf["swp_coin_unc"][...]
 
-        alpha_solar_wind_center_of_mass = calculate_alpha_solar_wind_speed(uarray(count_rate, count_rate_delta), energy)
+        alpha_solar_wind_speed = calculate_alpha_solar_wind_speed(uarray(count_rate, count_rate_delta), energy)
 
-        self.assertAlmostEqual(496.490, alpha_solar_wind_center_of_mass.nominal_value, 3)
-        self.assertAlmostEqual(2.811, alpha_solar_wind_center_of_mass.std_dev, 3)
+        self.assertAlmostEqual(496.490, alpha_solar_wind_speed.nominal_value, 3)
+        self.assertAlmostEqual(2.811, alpha_solar_wind_speed.std_dev, 3)
 
     def test_calculate_alpha_center_of_mass_with_fake_data(self):
         test_cases = [
