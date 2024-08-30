@@ -1,35 +1,24 @@
-import tempfile
 import uuid
-from collections.abc import Iterable
 from datetime import datetime
 from pathlib import Path
 from typing import List
 
 import imap_data_access
 import numpy as np
-from spacepy.pycdf import CDF
-from uncertainties.unumpy import nominal_values, uarray, std_devs
+from uncertainties.unumpy import uarray
 
 from imap_processing.constants import TEMP_CDF_FOLDER_PATH, THIRTY_SECONDS_IN_NANOSECONDS
 from imap_processing.models import UpstreamDataDependency
-from imap_processing.swapi.l3a.models import SwapiL2Data, SwapiL3ProtonSolarWindData, SwapiL3AlphaSolarWindData
+from imap_processing.swapi.l3a.models import SwapiL3ProtonSolarWindData, SwapiL3AlphaSolarWindData
 from imap_processing.swapi.l3a.science.calculate_alpha_solar_wind_speed import calculate_alpha_solar_wind_speed
-from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_speed import extract_coarse_sweep, \
-    calculate_proton_solar_wind_speed
+from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_speed import calculate_proton_solar_wind_speed
 from imap_processing.swapi.l3a.utils import read_l2_swapi_data, chunk_l2_data
-
-EPOCH_CDF_VAR_NAME = "epoch"
-EPOCH_DELTA_CDF_VAR_NAME = "epoch_delta"
-PROTON_SOLAR_WIND_SPEED_CDF_VAR_NAME = "proton_sw_speed"
-PROTON_SOLAR_WIND_SPEED_UNCERTAINTY_CDF_VAR_NAME = "proton_sw_speed_delta"
-
-ALPHA_SOLAR_WIND_SPEED_CDF_VAR_NAME = "alpha_sw_speed"
-ALPHA_SOLAR_WIND_SPEED_UNCERTAINTY_CDF_VAR_NAME = "alpha_sw_speed_delta"
 
 
 class SwapiL3AProcessor:
 
-    def __init__(self, dependencies: List[UpstreamDataDependency], instrument: str, level: str, start_date: datetime, end_date: datetime,
+    def __init__(self, dependencies: List[UpstreamDataDependency], instrument: str, level: str, start_date: datetime,
+                 end_date: datetime,
                  version: str):
         self.instrument = instrument
         self.level = level
@@ -40,21 +29,22 @@ class SwapiL3AProcessor:
 
     def download_upstream_dependencies(self) -> Path:
         dependencies = [d for d in self.dependencies if
-                        d.instrument == "swapi" and d.data_level == "l2"] # and d.start_date == self.start_date] # and d.end_date == self.end_date]
+                        d.instrument == "swapi" and d.data_level == "l2"]  # and d.start_date == self.start_date] # and d.end_date == self.end_date]
 
         if len(dependencies) != 1:
             raise ValueError(f"Unexpected dependencies found for SWAPI L3:"
-                    f"{dependencies}. Expected only one dependency.")
-        files_to_download = [result['file_path'] for result in imap_data_access.query(instrument=dependencies[0].instrument,
-                                                                          data_level=dependencies[0].data_level,
-                                                                          descriptor=dependencies[0].descriptor,
-                                                                          start_date=self.start_date.strftime("%Y%d%m"),
-                                                                          end_date=self.end_date.strftime("%Y%d%m"),
-                                                                          version='latest'
-                                                                          )]
+                             f"{dependencies}. Expected only one dependency.")
+        files_to_download = [result['file_path'] for result in
+                             imap_data_access.query(instrument=dependencies[0].instrument,
+                                                    data_level=dependencies[0].data_level,
+                                                    descriptor=dependencies[0].descriptor,
+                                                    start_date=self.start_date.strftime("%Y%d%m"),
+                                                    end_date=self.end_date.strftime("%Y%d%m"),
+                                                    version='latest'
+                                                    )]
         if len(files_to_download) != 1:
             raise ValueError(f"Unexpected files found for SWAPI L3:"
-                    f"{files_to_download}. Expected only one file to download.")
+                             f"{files_to_download}. Expected only one file to download.")
 
         return imap_data_access.download(files_to_download[0])
 
@@ -71,7 +61,7 @@ class SwapiL3AProcessor:
                 uarray(data_chunk.coincidence_count_rate, data_chunk.coincidence_count_rate_uncertainty),
                 data_chunk.spin_angles, data_chunk.energy, data_chunk.epoch)
             proton_solar_wind_speeds.append(proton_solar_wind_speed)
-            epochs.append(data_chunk.epoch[0]+THIRTY_SECONDS_IN_NANOSECONDS)
+            epochs.append(data_chunk.epoch[0] + THIRTY_SECONDS_IN_NANOSECONDS)
 
             alpha_solar_wind_speeds.append(calculate_alpha_solar_wind_speed(
                 uarray(data_chunk.coincidence_count_rate, data_chunk.coincidence_count_rate_uncertainty),
@@ -79,44 +69,17 @@ class SwapiL3AProcessor:
             ))
 
         l3_data = SwapiL3ProtonSolarWindData(np.array(epochs), np.array(proton_solar_wind_speeds))
-        l3_cdf_file_name = f'imap_{self.instrument}_{self.level}_proton-solar-wind-fake-menlo-{uuid.uuid4()}_{self.start_date.strftime("%Y%d%m")}_{self.version}.cdf'
-        l3_cdf_file_path = f'{TEMP_CDF_FOLDER_PATH}/{l3_cdf_file_name}'
-        with CDF(l3_cdf_file_path, '') as l3_cdf:
-            l3_cdf[EPOCH_CDF_VAR_NAME] = l3_data.epoch
-            l3_cdf[EPOCH_CDF_VAR_NAME].attrs["DELTA_PLUS_VAR"] = EPOCH_DELTA_CDF_VAR_NAME
-            l3_cdf[EPOCH_CDF_VAR_NAME].attrs["DELTA_MINUS_VAR"] = EPOCH_DELTA_CDF_VAR_NAME
 
-            l3_cdf[PROTON_SOLAR_WIND_SPEED_CDF_VAR_NAME] = nominal_values(l3_data.proton_sw_speed)
-            l3_cdf[PROTON_SOLAR_WIND_SPEED_CDF_VAR_NAME].attrs["DEPEND_0"] = EPOCH_CDF_VAR_NAME
+        l3_cdf_file_name = f'imap_{self.instrument}_{self.level}_proton-solar-wind-fake-menlo-{uuid.uuid4()}_{self.start_date.strftime("%Y%d%m")}_{self.version}'
+        l3_cdf_file_path = f'{TEMP_CDF_FOLDER_PATH}/{l3_cdf_file_name}.cdf'
+        l3_data.write_cdf(l3_cdf_file_path, self.version)
 
-            l3_cdf[PROTON_SOLAR_WIND_SPEED_UNCERTAINTY_CDF_VAR_NAME] = std_devs(l3_data.proton_sw_speed)
-            l3_cdf[PROTON_SOLAR_WIND_SPEED_UNCERTAINTY_CDF_VAR_NAME].attrs["DEPEND_0"] = EPOCH_CDF_VAR_NAME
-
-            l3_cdf[PROTON_SOLAR_WIND_SPEED_CDF_VAR_NAME].attrs[
-                "DELTA_PLUS_VAR"] = PROTON_SOLAR_WIND_SPEED_UNCERTAINTY_CDF_VAR_NAME
-            l3_cdf[PROTON_SOLAR_WIND_SPEED_CDF_VAR_NAME].attrs[
-                "DELTA_MINUS_VAR"] = PROTON_SOLAR_WIND_SPEED_UNCERTAINTY_CDF_VAR_NAME
-
-            l3_cdf.new(EPOCH_DELTA_CDF_VAR_NAME, THIRTY_SECONDS_IN_NANOSECONDS, recVary=False)
         imap_data_access.upload(l3_cdf_file_path)
 
         l3_data = SwapiL3AlphaSolarWindData(np.array(epochs), np.array(alpha_solar_wind_speeds))
         l3_cdf_file_name = f'imap_{self.instrument}_{self.level}_alpha-solar-wind-fake-menlo-{uuid.uuid4()}_{self.start_date.strftime("%Y%d%m")}_{self.version}.cdf'
         l3_cdf_file_path = f'{TEMP_CDF_FOLDER_PATH}/{l3_cdf_file_name}'
-        with CDF(l3_cdf_file_path, '') as l3_cdf:
-            l3_cdf[EPOCH_CDF_VAR_NAME] = l3_data.epoch
-            l3_cdf.new(EPOCH_DELTA_CDF_VAR_NAME, THIRTY_SECONDS_IN_NANOSECONDS, recVary=False)
-            l3_cdf[EPOCH_CDF_VAR_NAME].attrs["DELTA_PLUS_VAR"] = EPOCH_DELTA_CDF_VAR_NAME
-            l3_cdf[EPOCH_CDF_VAR_NAME].attrs["DELTA_MINUS_VAR"] = EPOCH_DELTA_CDF_VAR_NAME
-
-            l3_cdf[ALPHA_SOLAR_WIND_SPEED_CDF_VAR_NAME] = nominal_values(l3_data.alpha_sw_speed)
-            l3_cdf[ALPHA_SOLAR_WIND_SPEED_CDF_VAR_NAME].attrs["DEPEND_0"] = EPOCH_CDF_VAR_NAME
-
-            l3_cdf[ALPHA_SOLAR_WIND_SPEED_UNCERTAINTY_CDF_VAR_NAME] = std_devs(l3_data.alpha_sw_speed)
-            l3_cdf[ALPHA_SOLAR_WIND_SPEED_UNCERTAINTY_CDF_VAR_NAME].attrs["DEPEND_0"] = EPOCH_CDF_VAR_NAME
-
-            l3_cdf[ALPHA_SOLAR_WIND_SPEED_CDF_VAR_NAME].attrs["DELTA_PLUS_VAR"] = ALPHA_SOLAR_WIND_SPEED_UNCERTAINTY_CDF_VAR_NAME
-            l3_cdf[ALPHA_SOLAR_WIND_SPEED_CDF_VAR_NAME].attrs["DELTA_MINUS_VAR"] = ALPHA_SOLAR_WIND_SPEED_UNCERTAINTY_CDF_VAR_NAME
+        l3_data.write_cdf(l3_cdf_file_path, self.version)
 
         imap_data_access.upload(l3_cdf_file_path)
 

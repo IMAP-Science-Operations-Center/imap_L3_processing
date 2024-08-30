@@ -1,0 +1,76 @@
+default_attrs: &default_timeseries
+  # Assumed values for all variable attrs unless overwritten
+  FORMAT: F19.3
+  DEPEND_0: epoch
+  FILLVAL: -1e+31
+  VALIDMIN: 0
+  VALIDMAX: 9223372036854775807
+  UNITS: ' '
+
+proton_sw_speed:
+  <<: *default_timeseries
+  CATDESC: Speed of Proton Solar Wind
+  FIELDNAME: Proton_Solar_Wind_Speed
+  DELTA_MINUS_VAR: proton_sw_speed_delta
+  DELTA_PLUS_VAR: proton_sw_speed_delta
+  LABLAXIS: Proton Solar Wind Speed
+  UNITS: m/s
+  SCALETYPE: linear
+  VAR_TYPE: data
+  DISPLAY_TYPE: time_series
+
+proton_sw_speed_delta:
+  <<: *default_timeseries
+  VAR_TYPE: support_data
+  CATDESC: Proton Solar Wind Speed Uncertainty
+  FIELDNAME: Proton_Solar_Wind_Speed_Uncertainty
+  UNITS: m/s
+
+alpha_sw_speed:
+  <<: *default_timeseries
+  CATDESC: Speed of Alpha Solar Wind
+  FIELDNAME: Alpha_Solar_Wind_Speed
+  DELTA_MINUS_VAR: alpha_sw_speed_delta
+  DELTA_PLUS_VAR: alpha_sw_speed_delta
+  LABLAXIS: Alpha Solar Wind Speed
+  UNITS: m/s
+  SCALETYPE: linear
+  VAR_TYPE: data
+  DISPLAY_TYPE: time_series
+
+alpha_sw_speed_delta:
+  <<: *default_timeseries
+  VAR_TYPE: support_data
+  CATDESC: Alpha Solar Wind Speed Uncertainty
+  FIELDNAME: Alpha_Solar_Wind_Speed_Uncertainty
+  UNITS: m/s
+
+epoch:
+  CATDESC: Time, number of nanoseconds since J2000 with leap seconds included
+  FIELDNAM: epoch
+  LABLAXIS: epoch
+  UNITS: ns
+  VAR_TYPE: support_data
+  SCALETYP: linear
+  MONOTON: INCREASE
+  TIME_BASE: J2000
+  TIME_SCALE: Terrestrial Time
+  REFERENCE_POSITION: Rotating Earth Geoid
+  DISPLAY_TYPE: 'no_plot'
+  DELTA_MINUS_VAR: epoch_delta
+  DELTA_PLUS_VAR: epoch_delta
+
+epoch_delta:
+  CATDESC: epoch_DELTA
+  DEPEND_0: epoch
+  DISPLAY_TYPE: time_series
+  FIELDNAM: epoch_DELTA
+  FILLVAL: -9223372036854775808
+  VALIDMIN: 0
+  VALIDMAX: 86000000000000
+  SCALEMIN: 0
+  SCALEMAX: 86000000000000
+  SCALETYP: linear
+  UNITS: ns
+  VAR_TYPE: support_data
+  FORMAT: 19I
