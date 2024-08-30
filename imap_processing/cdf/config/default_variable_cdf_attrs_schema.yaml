@@ -1,4 +1,3 @@
-
 # Based on :  https://spdf.gsfc.nasa.gov/istp_guide/vattributes.html
 #             HERMES CDF Format Guide
 attribute_key:
@@ -7,7 +6,7 @@ attribute_key:
     description: >
       fixed (0AD, 1900, 1970 (POSIX), J2000 (used by CDF_TIME_TT2000),
       4714 BC (Julian)) or flexible (provider-defined)
-    required: true    # NOT Required in ISTP Guide
+    required: false    # NOT Required in ISTP Guide
     overwrite: false
     valid_values: null
     alternate: null
@@ -15,7 +14,7 @@ attribute_key:
     description: >
       Using ISO8601 relative time format, for example: "1s" = 1 second.
       Resolution provides the smallest change in time that is measured.
-    required: true    # NOT Required in ISTP Guide
+    required: false    # NOT Required in ISTP Guide
     overwrite: false
     valid_values: null
     alternate: null
@@ -23,7 +22,7 @@ attribute_key:
     description: >
       TT (same as TDT, used by CDF_TIME_TT2000), TAI (same as IAT, TT-32.184s),
       UTC (includes leap seconds), TDB (same as SPICE ET), EME1950 [default: UTC]
-    required: true    # NOT Required in ISTP Guide
+    required: false    # NOT Required in ISTP Guide
     overwrite: false
     valid_values: null
     alternate: null
@@ -35,7 +34,7 @@ attribute_key:
       TimeSystem attribute that defines mission-specific time scales where needed, such as
       UTC-at-STEREO-B, it's cleaner to keep them separate as Time_Scale=UTC and
       Reference_Position=STEREO-B.
-    required: true    # NOT Required in ISTP Guide
+    required: false    # NOT Required in ISTP Guide
     overwrite: false
     valid_values: null
     alternate: null
@@ -125,7 +124,7 @@ attribute_key:
     overwrite: false
     valid_values: null
     alternate: null
-  DEPEND_i:         # For i'th dimensional data variables
+  DEPEND_i: # For i'th dimensional data variables
     description: >
       Ties a dimensional data variable to a SUPPORT_DATA variable on which the i-th
       dimension of the data variable depends. The number of DEPEND attributes must match
@@ -141,7 +140,7 @@ attribute_key:
   DISPLAY_TYPE:
     description: >
       This tells automated software, such as CDAWeb, how the data should be displayed.
-    required: true
+    required: false
     overwrite: false
     valid_values:
       time_series
@@ -163,11 +162,11 @@ attribute_key:
       Identifies the fill value used where data values are known to be bad or missing.
       FILLVAL is required for time-varying variables. Fill data are always non-valid data. The
       ISTP standard fill values are listed in Table 5-4.
-    required: true
+    required: false
     overwrite: false
     valid_values: null
     alternate: null
-  FORMAT:           # NOTE Only one of FORMAT or FORM_PTR should be present
+  FORMAT: # NOTE Only one of FORMAT or FORM_PTR should be present
     description: >
       This field allows software to properly format the associated data when displayed on a
       screen or output to a file. Format can be specified using either Fortran or C format codes.
@@ -187,11 +186,11 @@ attribute_key:
     overwrite: false
     valid_values: null
     alternate: FORMAT
-  LABLAXIS:          # NOTE Only one of LABLAXIS or LABL_PTR_i should be present
+  LABLAXIS: # NOTE Only one of LABLAXIS or LABL_PTR_i should be present
     description: >
       Used to label a plot axis or to provide a heading for a data listing. This field is generally
       6-10 characters. Only one of LABLAXIS or LABL_PTR_i should be present.
-    required: true
+    required: false
     overwrite: false
     valid_values: null
     alternate: LABL_PTR_1
@@ -222,7 +221,7 @@ attribute_key:
     overwrite: false
     valid_values: null
     alternate: null
-  UNITS:            # NOTE Only one of UNITS or UNIT_PTR should be present
+  UNITS: # NOTE Only one of UNITS or UNIT_PTR should be present
     description: >
       A 6-20 character string that identifies the units of the variable (e.g. nT for magnetic
       field). Use a blank character, rather than "None" or "unitless", for variables that have no
@@ -250,7 +249,7 @@ attribute_key:
       The minimum value for a particular variable that is expected over the lifetime of the
       mission. Used by application software to filter out values that are out of range. The
       value must match the data type of the variable.
-    required: true
+    required: false
     overwrite: false
     valid_values: null
     alternate: null
@@ -259,7 +258,7 @@ attribute_key:
       The maximum value for a particular variable that is expected over the lifetime of the
       mission. Used by application software to filter out values that are out of range. The
       value must match the data type of the variable.
-    required: true
+    required: false
     overwrite: false
     valid_values: null
     alternate: null
@@ -269,10 +268,10 @@ attribute_key:
     required: true
     overwrite: false
     valid_values:
-        data
-        support_data
-        metadata
-        ignore_data
+      data
+      support_data
+      metadata
+      ignore_data
     alternate: null
   COORDINATE_SYSTEM:
     description: >
