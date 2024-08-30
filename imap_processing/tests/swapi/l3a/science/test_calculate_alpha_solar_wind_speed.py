@@ -2,7 +2,6 @@ from pathlib import Path
 from unittest import TestCase
 
 import numpy as np
-from matplotlib import pyplot as plt
 from spacepy.pycdf import CDF
 from uncertainties import ufloat
 from uncertainties.unumpy import uarray
@@ -45,19 +44,19 @@ class TestCalculateAlphaSolarWindSpeed(TestCase):
 
     def test_convert_energy_to_alpha_solar_wind_speed(self):
         test_cases = [
-            (ufloat(1000, 200), 310562, 31056),
-            (ufloat(1300, 10), 354096, 1362),
-            (ufloat(1800, 5), 416663, 579),
-            (ufloat(2500, 600), 491042, 58925),
-            (ufloat(5000, 25), 694439, 1736)
+            (ufloat(1000, 200), 310.562, 31.056),
+            (ufloat(1300, 10), 354.096, 1.362),
+            (ufloat(1800, 5), 416.663, 0.579),
+            (ufloat(2500, 600), 491.042, 58.925),
+            (ufloat(5000, 25), 694.439, 1.736)
         ]
 
         for energy, expected_speed, expected_uncertainty in test_cases:
             with self.subTest(f"converting energy of {energy} to speed"):
                 alpha_sw_speed = calculate_sw_speed_alpha(energy)
 
-                self.assertAlmostEqual(expected_speed, alpha_sw_speed.n, 0)
-                self.assertAlmostEqual(expected_uncertainty, alpha_sw_speed.s, 0)
+                self.assertAlmostEqual(expected_speed, alpha_sw_speed.n, 3)
+                self.assertAlmostEqual(expected_uncertainty, alpha_sw_speed.s, 3)
 
     def test_calculate_alpha_solar_wind_speed(self):
         file_path = Path(
@@ -69,8 +68,8 @@ class TestCalculateAlphaSolarWindSpeed(TestCase):
 
         alpha_solar_wind_center_of_mass = calculate_alpha_solar_wind_speed(uarray(count_rate, count_rate_delta), energy)
 
-        self.assertAlmostEqual(496490, alpha_solar_wind_center_of_mass.nominal_value, 0)
-        self.assertAlmostEqual(2811, alpha_solar_wind_center_of_mass.std_dev, 0)
+        self.assertAlmostEqual(496.490, alpha_solar_wind_center_of_mass.nominal_value, 3)
+        self.assertAlmostEqual(2.811, alpha_solar_wind_center_of_mass.std_dev, 3)
 
     def test_calculate_alpha_center_of_mass_with_fake_data(self):
         test_cases = [

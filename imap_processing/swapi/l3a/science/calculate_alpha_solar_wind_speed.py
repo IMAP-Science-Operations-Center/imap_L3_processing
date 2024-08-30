@@ -1,7 +1,7 @@
 import numpy as np
 from uncertainties import umath
 
-from imap_processing.constants import ALPHA_PARTICLE_CHARGE_COULOMBS, ALPHA_PARTICLE_MASS_KG
+from imap_processing.constants import ALPHA_PARTICLE_CHARGE_COULOMBS, ALPHA_PARTICLE_MASS_KG, METERS_PER_KILOMETER
 from imap_processing.swapi.l3a.science.speed_calculation import get_peak_indices, interpolate_energy, \
     find_peak_center_of_mass_index, extract_coarse_sweep
 
@@ -34,7 +34,7 @@ def calculate_alpha_center_of_mass(coincidence_count_rates, energies):
     return energy_at_center_of_mass
 
 def calculate_sw_speed_alpha(energy):
-    return umath.sqrt(2 * energy * ALPHA_PARTICLE_CHARGE_COULOMBS / ALPHA_PARTICLE_MASS_KG)
+    return umath.sqrt(2 * energy * ALPHA_PARTICLE_CHARGE_COULOMBS / ALPHA_PARTICLE_MASS_KG) / METERS_PER_KILOMETER
 
 def calculate_alpha_solar_wind_speed(coincidence_count_rates, energies):
     energies = extract_coarse_sweep(energies)
