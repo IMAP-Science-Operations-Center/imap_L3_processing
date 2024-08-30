@@ -26,6 +26,25 @@ proton_sw_speed_delta:
   FIELDNAME: Proton_Solar_Wind_Speed_Uncertainty
   UNITS: m/s
 
+alpha_sw_speed:
+  <<: *default_timeseries
+  CATDESC: Speed of Alpha Solar Wind
+  FIELDNAME: Alpha_Solar_Wind_Speed
+  DELTA_MINUS_VAR: alpha_sw_speed_delta
+  DELTA_PLUS_VAR: alpha_sw_speed_delta
+  LABLAXIS: Alpha Solar Wind Speed
+  UNITS: m/s
+  SCALETYPE: linear
+  VAR_TYPE: data
+  DISPLAY_TYPE: time_series
+
+alpha_sw_speed_delta:
+  <<: *default_timeseries
+  VAR_TYPE: support_data
+  CATDESC: Alpha Solar Wind Speed Uncertainty
+  FIELDNAME: Alpha_Solar_Wind_Speed_Uncertainty
+  UNITS: m/s
+
 epoch:
   CATDESC: Time, number of nanoseconds since J2000 with leap seconds included
   FIELDNAM: epoch
