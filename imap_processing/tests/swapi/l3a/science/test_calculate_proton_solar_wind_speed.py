@@ -56,6 +56,8 @@ class TestCalculateProtonSolarWindSpeed(TestCase):
             ("one clear peak", [0, 0, 5, 10, 5, 0, 0], 2, [0, 5, 10, 5, 0]),
             ("narrow width", [0, 0, 5, 10, 5, 0, 0], 1, [5, 10, 5]),
             ("wide peak", [0, 0, 5, 10, 10, 2, 0, 0], 2, [0, 5, 10, 10, 2, 0]),
+            ("At left edge", [5, 10, 5, 0, 0], 2, [5, 10, 5, 0]),
+            ("At right edge", [0, 0, 5, 10, ], 2, [0, 5, 10]),
         ]
 
         for name, count_rates, width, expected_peak_values in test_cases:

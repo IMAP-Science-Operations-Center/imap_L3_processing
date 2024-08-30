@@ -15,26 +15,32 @@ from imap_processing.swapi.l3a.science.calculate_alpha_solar_wind_speed import c
 class TestCalculateAlphaSolarWindSpeed(TestCase):
     def test_get_alpha_peak_indices(self):
         test_cases = [
-            ("one clear peak", [0, 2, 3, 2, 0, 0, 0, 5, 10, 5, 0], [0, 2, 3, 2, 0]),
-            ("wide peak", [0, 2, 3, 3, 2, 0, 0, 0, 5, 10, 5, 0], [0, 2, 3, 3, 2, 0]),
+            ("one clear peak", [0, 2, 3, 2, 0, 0, 0, 5, 10, 5, 0], [12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2], [0, 2, 3, 2, 0]),
+            ("at edge", [3, 2, 0, 0, 0, 5, 10, 5, 0], [10, 9, 8, 7, 6, 5, 4, 3, 2], [3, 2, 0]),
+            ("wide peak", [0, 2, 3, 3, 2, 0, 0, 0, 5, 10, 5, 0], [13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2], [0, 2, 3, 3, 2, 0]),
+            ("ignores values past 4*proton peak", [9, 0, 0, 2, 3, 2, 0, 0, 0, 5, 10, 5, 0], [13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1],
+             [0, 2, 3, 2, 0]),
+
         ]
 
-        for name, count_rates, expected_peak_values in test_cases:
+        for name, count_rates, energies, expected_peak_values in test_cases:
             with self.subTest(name):
-                peak_indices = get_alpha_peak_indices(count_rates)
+                peak_indices = get_alpha_peak_indices(count_rates, energies)
                 extracted_peak = count_rates[peak_indices]
                 self.assertEqual(expected_peak_values, extracted_peak)
 
     def test_an_exception_is_raised_when_no_alpha_peak(self):
         test_cases = [
-            ("no clear peak", [0, 0, 1, 1, 1, 2,2 , 2, 10, 2, 0, 0], "Alpha peak not found"),
-            ("peak is too wide", [0, 4, 4, 4, 0, 0, 0, 0, 0, 5, 10, 10, 3, 2, 0, 0], "Count rates contains multiple distinct peaks"),
+            ("no clear peak", [0, 0, 1, 1, 1, 2,2 , 2, 10, 2, 0, 0],
+             [12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1], "Alpha peak not found"),
+            ("peak is too wide", [0, 4, 4, 4, 0, 0, 0, 0, 0, 5, 10, 10, 3, 2, 0, 0],
+             [16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1], "Count rates contains multiple distinct peaks"),
         ]
 
-        for name, count_rates, exception_text in test_cases:
+        for name, count_rates, energies, exception_text in test_cases:
             with self.subTest(name):
                 with self.assertRaises(Exception) as cm:
-                    get_alpha_peak_indices(count_rates)
+                    get_alpha_peak_indices(count_rates, energies)
                 self.assertEqual(str(cm.exception), exception_text)
 
     def test_convert_energy_to_alpha_solar_wind_speed(self):
