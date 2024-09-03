@@ -59,7 +59,6 @@ epoch:
   TIME_BASE: J2000
   TIME_SCALE: Terrestrial Time
   REFERENCE_POSITION: Rotating Earth Geoid
-  DISPLAY_TYPE: 'no_plot'
   DELTA_MINUS_VAR: epoch_delta
   DELTA_PLUS_VAR: epoch_delta
   FILLVAL: 9999-12-31T23:59:59.999999999
