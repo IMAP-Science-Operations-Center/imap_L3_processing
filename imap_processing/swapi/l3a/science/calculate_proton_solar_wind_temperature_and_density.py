@@ -3,7 +3,7 @@ import scipy
 from matplotlib import pyplot as plt
 from scipy.special import erf
 from uncertainties import correlated_values
-from uncertainties.unumpy import uarray, nominal_values
+from uncertainties.unumpy import uarray, nominal_values, std_devs
 
 from imap_processing import constants
 from imap_processing.constants import PROTON_MASS_KG, BOLTZMANN_CONSTANT_JOULES_PER_KELVIN, METERS_PER_KILOMETER, \
@@ -40,7 +40,7 @@ def proton_count_rate_model(ev_per_q, density_per_cm3, temperature, bulk_flow_sp
     return result
 
 
-def calculate_proton_solar_wind_temperature_and_density(coincident_count_rates: uarray, energy):
+def calculate_proton_solar_wind_temperature_and_density_for_one_sweep(coincident_count_rates: uarray, energy):
     coincident_count_rates = extract_coarse_sweep(coincident_count_rates)
     energy = extract_coarse_sweep(energy)
     proton_peak_indices = get_proton_peak_indices(coincident_count_rates)
@@ -57,6 +57,19 @@ def calculate_proton_solar_wind_temperature_and_density(coincident_count_rates: 
     return temperature, density
 
 
+def calculate_proton_solar_wind_temperature_and_density(coincident_count_rates: uarray, energy):
+    temperatures_per_sweep = []
+    densities_per_sweep = []
+    for sweep in coincident_count_rates:
+        temperature, density = calculate_proton_solar_wind_temperature_and_density_for_one_sweep(sweep, energy)
+        temperatures_per_sweep.append(temperature)
+        densities_per_sweep.append(density)
+
+    # TODO: check plain or inverse variance average
+    average_temp = np.average(temperatures_per_sweep, weights=1 / std_devs(temperatures_per_sweep)**2)
+    average_density = np.average(densities_per_sweep, weights=1 / std_devs(densities_per_sweep)**2)
+
+    return average_temp, average_density
 def calculate_proton_speed_from_one_sweep(coincident_count_rates, energy, proton_peak_indices):
     center_of_mass_index = find_peak_center_of_mass_index(proton_peak_indices, coincident_count_rates)
     energy_at_com = interpolate_energy(center_of_mass_index, energy)
