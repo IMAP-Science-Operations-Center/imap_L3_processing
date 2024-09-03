@@ -25,7 +25,10 @@ class TestProcessor(TestCase):
 
         self.mock_imap_patcher = patch('imap_processing.swapi.l3a.processor.imap_data_access')
         self.mock_imap_api = self.mock_imap_patcher.start()
-        self.mock_imap_api.query.return_value = [{'file_path': sentinel.file_path}]
+        self.mock_imap_api.query.side_effect = [
+            [{'file_path': sentinel.data_file_path}],
+            [{'file_path': sentinel.lookup_table_file_path}]
+        ]
 
     def tearDown(self) -> None:
         shutil.rmtree(self.temp_directory)
@@ -40,18 +43,24 @@ class TestProcessor(TestCase):
     @patch('imap_processing.swapi.l3a.processor.read_l2_swapi_data')
     @patch('imap_processing.swapi.l3a.processor.calculate_proton_solar_wind_speed')
     @patch('imap_processing.swapi.l3a.processor.calculate_alpha_solar_wind_speed')
-    def test_processor(self, mock_calculate_alpha_solar_wind_speed, mock_calculate_proton_solar_wind_speed,
+    @patch('imap_processing.swapi.l3a.processor.TemperatureAndDensityCalibrationTable')
+    @patch('imap_processing.swapi.l3a.processor.calculate_proton_solar_wind_temperature_and_density')
+    def test_processor(self, mock_calculate_temperature_and_density, mock_temperature_and_density_calibrator_class,
+                       mock_calculate_alpha_solar_wind_speed,
+                       mock_calculate_proton_solar_wind_speed,
                        mock_read_l2_swapi_data, mock_chunk_l2_data, mock_uuid, mock_write_cdf,
                        mock_proton_solar_wind_data_constructor, mock_alpha_solar_wind_data_constructor,
                        mock_imap_attribute_manager):
 
-        file_path = Path(
+        data_file_path = Path(
             imap_processing.__file__).parent.parent / 'swapi/test_data/imap_swapi_l2_fake-menlo-5-sweeps_20100101_v002.cdf'
-
         mock_uuid_value = 123
         mock_uuid.uuid4.return_value = mock_uuid_value
 
-        self.mock_imap_api.download.return_value = file_path
+        self.mock_imap_api.download.side_effect = [
+            data_file_path,
+            sentinel.local_lookup_table_path,
+        ]
         instrument = 'swapi'
         incoming_data_level = 'l2'
         descriptor = 'c'
@@ -66,6 +75,11 @@ class TestProcessor(TestCase):
             returned_proton_sw_speed, sentinel.a, sentinel.phi, sentinel.b)
 
         mock_calculate_alpha_solar_wind_speed.return_value = ufloat(450000, 1000)
+
+        returned_proton_sw_temp = ufloat(99000, 1000)
+        returned_proton_sw_density = ufloat(4.97, 0.25)
+        mock_calculate_temperature_and_density.return_value = (
+            returned_proton_sw_temp, returned_proton_sw_density)
 
         initial_epoch = 10
 
@@ -92,10 +106,15 @@ class TestProcessor(TestCase):
 
         start_date_as_str = start_date.strftime("%Y%d%m")
         end_date_as_str = end_date.strftime("%Y%d%m")
-        self.mock_imap_api.query.assert_called_with(instrument=instrument, data_level=incoming_data_level,
-                                                    descriptor=descriptor, start_date=start_date_as_str,
-                                                    end_date=end_date_as_str, version='latest')
-        self.mock_imap_api.download.assert_called_with(sentinel.file_path)
+        self.mock_imap_api.query.assert_has_calls([call(instrument=instrument, data_level=incoming_data_level,
+                                                        descriptor=descriptor, start_date=start_date_as_str,
+                                                        end_date=end_date_as_str, version='latest'),
+                                                   call(instrument="swapi", data_level="l3a",
+                                                        descriptor="density-temperature-lut-text-not-cdf",
+                                                        version='latest')])
+        self.mock_imap_api.download.assert_has_calls(
+            [call(sentinel.data_file_path), call(sentinel.lookup_table_file_path)])
+        mock_temperature_and_density_calibrator_class.from_file.assert_called_with(sentinel.local_lookup_table_path)
         mock_chunk_l2_data.assert_called_with(mock_read_l2_swapi_data.return_value, 5)
 
         expected_count_rate_with_uncertainties = uarray(coincidence_count_rate, coincidence_count_rate_uncertainty)
@@ -107,16 +126,30 @@ class TestProcessor(TestCase):
         np.testing.assert_array_equal(energy, mock_calculate_proton_solar_wind_speed.call_args_list[0].args[2])
         np.testing.assert_array_equal(epoch, mock_calculate_proton_solar_wind_speed.call_args_list[0].args[3])
 
+        self.assertEqual(mock_temperature_and_density_calibrator_class.from_file.return_value,
+                         mock_calculate_temperature_and_density.call_args_list[0].args[0])
+        self.assert_ufloat_equal(returned_proton_sw_speed,
+                                 mock_calculate_temperature_and_density.call_args_list[0].args[1])
+        self.assert_ufloat_equal(ufloat(0.0, 1.0), mock_calculate_temperature_and_density.call_args_list[0].args[2])
+        self.assertEqual(sentinel.phi, mock_calculate_temperature_and_density.call_args_list[0].args[3])
+        np.testing.assert_array_equal(nominal_values(expected_count_rate_with_uncertainties),
+                                      nominal_values(mock_calculate_temperature_and_density.call_args_list[0].args[4]))
+        np.testing.assert_array_equal(std_devs(expected_count_rate_with_uncertainties),
+                                      std_devs(mock_calculate_temperature_and_density.call_args_list[0].args[4]))
+        np.testing.assert_array_equal(energy, mock_calculate_temperature_and_density.call_args_list[0].args[5])
+
         np.testing.assert_array_equal(nominal_values(expected_count_rate_with_uncertainties),
                                       nominal_values(mock_calculate_alpha_solar_wind_speed.call_args_list[0].args[0]))
         np.testing.assert_array_equal(std_devs(expected_count_rate_with_uncertainties),
                                       std_devs(mock_calculate_alpha_solar_wind_speed.call_args_list[0].args[0]))
         np.testing.assert_array_equal(energy, mock_calculate_alpha_solar_wind_speed.call_args_list[0].args[1])
 
-        actual_proton_epoch, actual_proton_sw_speed = mock_proton_solar_wind_data_constructor.call_args.args
+        actual_proton_epoch, actual_proton_sw_speed, actual_proton_sw_temperature, actual_proton_sw_density = mock_proton_solar_wind_data_constructor.call_args.args
 
         np.testing.assert_array_equal(np.array([initial_epoch + THIRTY_SECONDS_IN_NANOSECONDS]), actual_proton_epoch)
         np.testing.assert_array_equal(np.array([returned_proton_sw_speed]), actual_proton_sw_speed)
+        np.testing.assert_array_equal(np.array([returned_proton_sw_temp]), actual_proton_sw_temperature)
+        np.testing.assert_array_equal(np.array([returned_proton_sw_density]), actual_proton_sw_density)
 
         proton_cdf_path = f"{self.temp_directory}/imap_swapi_l3a_proton-sw-speed-fake-menlo-{mock_uuid_value}_{start_date_as_str}_12345.cdf"
         alpha_cdf_path = f"{self.temp_directory}/imap_swapi_l3a_alpha-sw-speed-fake-menlo-{mock_uuid_value}_{start_date_as_str}_12345.cdf"
@@ -143,6 +176,10 @@ class TestProcessor(TestCase):
             call(alpha_cdf_path, alpha_solar_wind_data, mock_manager)
         ])
         self.mock_imap_api.upload.assert_has_calls([call(proton_cdf_path), call(alpha_cdf_path)])
+
+    def assert_ufloat_equal(self, expected_ufloat, actual_ufloat):
+        self.assertEqual(expected_ufloat.n, actual_ufloat.n)
+        self.assertEqual(expected_ufloat.s, actual_ufloat.s)
 
     def test_processor_throws_exception_when_more_than_one_file_is_downloaded(self):
         file_path = Path(
