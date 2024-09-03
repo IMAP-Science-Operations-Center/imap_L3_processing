@@ -51,6 +51,7 @@ def calculate_proton_solar_wind_temperature_and_density_for_one_sweep(coincident
     values, covariance = scipy.optimize.curve_fit(proton_count_rate_model,
                                                   energy[proton_peak_indices],
                                                   nominal_values(coincident_count_rates[proton_peak_indices]),
+                                                  bounds=[[0, 0, 0], [np.inf, np.inf, np.inf]],
                                                   p0=initial_parameter_guess)
     density, temperature, speed = correlated_values(values, covariance)
 
