@@ -1,4 +1,5 @@
 FROM python:3.12-slim
+RUN apt-get update && apt-get install -y git
 RUN pip install --upgrade pip
 RUN mkdir temp_cdf_data
 RUN mkdir -p /mnt/spice

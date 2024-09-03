@@ -14,9 +14,11 @@ proton_sw_speed:
   DELTA_PLUS_VAR: proton_sw_speed_delta
   LABLAXIS: Proton Solar Wind Speed
   UNITS: km/s
-  SCALETYPE: linear
+  SCALETYP: linear
   VAR_TYPE: data
   DISPLAY_TYPE: time_series
+  SCALEMIN: 0
+  SCALEMAX: 1000
 
 proton_sw_speed_delta:
   <<: *default_timeseries
@@ -33,9 +35,11 @@ alpha_sw_speed:
   DELTA_PLUS_VAR: alpha_sw_speed_delta
   LABLAXIS: Alpha Solar Wind Speed
   UNITS: km/s
-  SCALETYPE: linear
+  SCALETYP: linear
   VAR_TYPE: data
   DISPLAY_TYPE: time_series
+  SCALEMIN: 0
+  SCALEMAX: 1000
 
 alpha_sw_speed_delta:
   <<: *default_timeseries

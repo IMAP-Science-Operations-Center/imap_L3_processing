@@ -262,6 +262,27 @@ attribute_key:
     overwrite: false
     valid_values: null
     alternate: null
+  SCALEMIN:
+    description: >
+      The minimum value to be used for plotting.
+    required: false
+    overwrite: false
+    valid_values: null
+    alternate: null
+  SCALEMAX:
+    description: >
+      The minimum value to be used for plotting.
+    required: false
+    overwrite: false
+    valid_values: null
+    alternate: null
+  SCALETYP:
+    description: >
+      Used to specific linear or log scale.
+    required: false
+    overwrite: false
+    valid_values: null
+    alternate: null
   VAR_TYPE:
     description: >
       Used in CDAWeb to indicate if the data should be used directly by users.
