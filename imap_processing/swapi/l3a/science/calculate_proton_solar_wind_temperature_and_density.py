@@ -1,6 +1,7 @@
 import numpy as np
 import scipy
 from matplotlib import pyplot as plt
+from numpy import ndarray
 from scipy.special import erf
 from uncertainties import correlated_values, wrap
 from uncertainties.unumpy import uarray, nominal_values, std_devs
@@ -40,7 +41,7 @@ def proton_count_rate_model(ev_per_q, density_per_cm3, temperature, bulk_flow_sp
     return result
 
 
-def calculate_proton_solar_wind_temperature_and_density_for_one_sweep(coincident_count_rates: uarray, energy):
+def calculate_proton_solar_wind_temperature_and_density_for_one_sweep(coincident_count_rates: uarray, energy: ndarray):
     coincident_count_rates = extract_coarse_sweep(coincident_count_rates)
     energy = extract_coarse_sweep(energy)
     proton_peak_indices = get_proton_peak_indices(coincident_count_rates)
@@ -58,7 +59,7 @@ def calculate_proton_solar_wind_temperature_and_density_for_one_sweep(coincident
     return temperature, density
 
 
-def calculate_proton_solar_wind_temperature_and_density(coincident_count_rates: uarray, energy):
+def calculate_uncalibrated_proton_solar_wind_temperature_and_density(coincident_count_rates: uarray, energy: ndarray):
     temperatures_per_sweep = []
     densities_per_sweep = []
     for sweep in coincident_count_rates:
@@ -80,36 +81,42 @@ def calculate_proton_speed_from_one_sweep(coincident_count_rates, energy, proton
     return initial_speed_guess
 
 
-def demo(density=5.0, temp=1e5, speed=450):
+class TemperatureAndDensityCalibrationTable:
+    def __init__(self, lookup_table_array: ndarray):
+        solar_wind_speed = np.unique(lookup_table_array[:, 0])
+        deflection_angle = np.unique(lookup_table_array[:, 1])
+        clock_angle = np.unique(lookup_table_array[:, 2])
+        fit_density = np.unique(lookup_table_array[:, 3])
+        fit_temperature = np.unique(lookup_table_array[:, 5])
+        grid = (solar_wind_speed, deflection_angle, clock_angle, fit_density, fit_temperature)
+        values_shape = tuple(len(x) for x in grid)
 
-def build_interpolation_functions_from_lut(lookup_table):
-    solar_wind_speed = np.unique(lookup_table[:, 0])
-    deflection_angle = np.unique(lookup_table[:, 1])
-    clock_angle = np.unique(lookup_table[:, 2])
-    fit_density = np.unique(lookup_table[:, 3])
-    fit_temperature = np.unique(lookup_table[:, 5])
+        density_grid = lookup_table_array[:, 4].reshape(values_shape)
+        temperature_grid = lookup_table_array[:, 6].reshape(values_shape)
+        self.calibrate_density = wrap(
+            lambda a, b, c, d, e:
+            scipy.interpolate.interpn(grid, density_grid, [a, b, c, d, e])[0])
+        self.calibrate_temperature = wrap(
+            lambda a, b, c, d, e:
+            scipy.interpolate.interpn(grid, temperature_grid, [a, b, c, d, e])[0])
 
-    density_and_temperature_values = lookup_table[:, (4, 6)]
-
-    values_shape = (
-        len(solar_wind_speed), len(deflection_angle), len(clock_angle), len(fit_density), len(fit_temperature), 2)
-    density_and_temperature_grid = density_and_temperature_values.reshape(values_shape)
-
-    grid = (solar_wind_speed, deflection_angle, clock_angle, fit_density, fit_temperature)
-
-    density = wrap(
-        lambda a, b, c, d, e: scipy.interpolate.interpn(grid, density_and_temperature_grid[..., 0], [a, b, c, d, e])[0])
-    temperature = wrap(
-        lambda a, b, c, d, e: scipy.interpolate.interpn(grid, density_and_temperature_grid[..., 1], [a, b, c, d, e])[0])
-
-    return np.vectorize(temperature), np.vectorize(density)
+    @classmethod
+    def from_file(cls, file_path):
+        lookup_table_array = np.loadtxt(file_path)
+        cls(lookup_table_array)
 
 
-def lookup_table_temperature_density(lookup_table, speeds, deflection_angles, clock_angles, densities, temperatures):
-    find_temperature, find_density = build_interpolation_functions_from_lut(lookup_table)
-    return \
-        find_temperature(speeds, deflection_angles, clock_angles, densities, temperatures), \
-            find_density(speeds, deflection_angles, clock_angles, densities, temperatures)
+def calculate_proton_solar_wind_temperature_and_density(lookup_table: TemperatureAndDensityCalibrationTable,
+                                                        proton_solar_wind_speed, deflection_angle,
+                                                        clock_angle, coincident_count_rates: uarray, energy: ndarray):
+    temperature, density = calculate_uncalibrated_proton_solar_wind_temperature_and_density(coincident_count_rates,
+                                                                                            energy)
+    calibrated_temperature = lookup_table.calibrate_temperature(proton_solar_wind_speed, deflection_angle, clock_angle,
+                                                                density,
+                                                                temperature)
+    calibrated_density = lookup_table.calibrate_density(proton_solar_wind_speed, deflection_angle, clock_angle, density,
+                                                        temperature)
+    return calibrated_temperature, calibrated_density
 
 
 def demo(density=5.0, temp=1e5, speed=450):
