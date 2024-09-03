@@ -118,12 +118,19 @@ class TestProcessor(TestCase):
         np.testing.assert_array_equal(np.array([initial_epoch + THIRTY_SECONDS_IN_NANOSECONDS]), actual_proton_epoch)
         np.testing.assert_array_equal(np.array([returned_proton_sw_speed]), actual_proton_sw_speed)
 
-        proton_cdf_path = f"{self.temp_directory}/imap_swapi_l3a_proton-solar-wind-fake-menlo-{mock_uuid_value}_{start_date_as_str}_12345.cdf"
-        alpha_cdf_path = f"{self.temp_directory}/imap_swapi_l3a_alpha-solar-wind-fake-menlo-{mock_uuid_value}_{start_date_as_str}_12345.cdf"
+        proton_cdf_path = f"{self.temp_directory}/imap_swapi_l3a_proton-sw-speed-fake-menlo-{mock_uuid_value}_{start_date_as_str}_12345.cdf"
+        alpha_cdf_path = f"{self.temp_directory}/imap_swapi_l3a_alpha-sw-speed-fake-menlo-{mock_uuid_value}_{start_date_as_str}_12345.cdf"
         mock_manager.add_global_attribute.assert_has_calls([call("Data_version", outgoing_version),
                                                             call("Generation_date", date.today().strftime("%Y%m%d")),
+                                                            call("Logical_source",
+                                                                 "imap_swapi_l3a_proton-sw-speed"),
                                                             call("Logical_file_id",
-                                                                 f"imap_swapi_l3a_proton-solar-wind-fake-menlo-{mock_uuid_value}_{start_date_as_str}_12345")])
+                                                                 f"imap_swapi_l3a_proton-sw-speed-fake-menlo-{mock_uuid_value}_{start_date_as_str}_12345"),
+                                                            call("Logical_source",
+                                                                 "imap_swapi_l3a_alpha-sw-speed"),
+                                                            call("Logical_file_id",
+                                                                 f"imap_swapi_l3a_alpha-sw-speed-fake-menlo-{mock_uuid_value}_{start_date_as_str}_12345"),
+                                                            ])
 
         actual_alpha_epoch, actual_alpha_sw_speed = mock_alpha_solar_wind_data_constructor.call_args.args
 
