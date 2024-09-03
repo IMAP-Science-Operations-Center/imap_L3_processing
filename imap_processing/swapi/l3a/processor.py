@@ -5,6 +5,7 @@ from typing import List
 
 import imap_data_access
 import numpy as np
+from uncertainties import ufloat
 from uncertainties.unumpy import uarray
 
 from imap_processing.cdf.cdf_utils import write_cdf
@@ -14,6 +15,8 @@ from imap_processing.models import UpstreamDataDependency
 from imap_processing.swapi.l3a.models import SwapiL3ProtonSolarWindData, SwapiL3AlphaSolarWindData
 from imap_processing.swapi.l3a.science.calculate_alpha_solar_wind_speed import calculate_alpha_solar_wind_speed
 from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_speed import calculate_proton_solar_wind_speed
+from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_temperature_and_density import \
+    TemperatureAndDensityCalibrationTable, calculate_proton_solar_wind_temperature_and_density
 from imap_processing.swapi.l3a.utils import read_l2_swapi_data, chunk_l2_data
 
 
@@ -50,23 +53,53 @@ class SwapiL3AProcessor:
 
         return imap_data_access.download(files_to_download[0])
 
+    def download_calibration_tables(self) -> Path:
+        density_temperature_files = [result["file_path"] for result in imap_data_access.query(instrument="swapi",
+                                                                                              data_level="l3a",
+                                                                                              descriptor="density-temperature-lut-text-not-cdf",
+                                                                                              version='latest')]
+        if len(density_temperature_files) != 1:
+            raise ValueError(f"Unexpected files found for SWAPI L3 density temperature calibration file query:"
+                             f"{density_temperature_files}. Expected only one file to download.")
+
+        return imap_data_access.download(density_temperature_files[0])
+
     def process(self):
         downloaded_file_path = self.download_upstream_dependencies()
+        density_temperature_calibration_file = self.download_calibration_tables()
+        temperature_and_density_calibrator = TemperatureAndDensityCalibrationTable.from_file(
+            density_temperature_calibration_file)
 
         data = read_l2_swapi_data(downloaded_file_path)
 
         epochs = []
+
         proton_solar_wind_speeds = []
+        proton_solar_wind_temperatures = []
+        proton_solar_wind_density = []
+
         alpha_solar_wind_speeds = []
+
         for data_chunk in chunk_l2_data(data, 5):
+            coincidence_count_rates_with_uncertainty = uarray(data_chunk.coincidence_count_rate,
+                                                              data_chunk.coincidence_count_rate_uncertainty)
             proton_solar_wind_speed, a, phi, b = calculate_proton_solar_wind_speed(
-                uarray(data_chunk.coincidence_count_rate, data_chunk.coincidence_count_rate_uncertainty),
+                coincidence_count_rates_with_uncertainty,
                 data_chunk.spin_angles, data_chunk.energy, data_chunk.epoch)
             proton_solar_wind_speeds.append(proton_solar_wind_speed)
+
+            temperature, density = calculate_proton_solar_wind_temperature_and_density(
+                temperature_and_density_calibrator,
+                proton_solar_wind_speed,
+                ufloat(0.0, 1.0),
+                phi,
+                coincidence_count_rates_with_uncertainty,
+                data_chunk.energy)
+
             epochs.append(data_chunk.epoch[0] + THIRTY_SECONDS_IN_NANOSECONDS)
 
             alpha_solar_wind_speeds.append(calculate_alpha_solar_wind_speed(
-                uarray(data_chunk.coincidence_count_rate, data_chunk.coincidence_count_rate_uncertainty),
+                coincidence_count_rates_with_uncertainty,
                 data_chunk.energy
             ))
 
