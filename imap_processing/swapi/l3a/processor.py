@@ -119,7 +119,7 @@ class SwapiL3AProcessor:
             temperature, density = calculate_proton_solar_wind_temperature_and_density(
                 temperature_and_density_calibrator,
                 proton_solar_wind_speed,
-                ufloat(0.0, 1.0),
+                ufloat(0.01, 1.0),
                 phi,
                 coincidence_count_rates_with_uncertainty,
                 data_chunk.energy)
