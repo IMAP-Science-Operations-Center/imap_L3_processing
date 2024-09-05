@@ -14,4 +14,13 @@ The remaining arguments match the inputs that we expect to receive from the SDC 
 
 `docker run --rm -it --volume="$(pwd)/spice_kernels:/mnt/spice" $(docker build -q .) --instrument swapi --level l3a --start_date 20240813 --end_date 20240813 --version v001 --dependency """[{'instrument':'swapi', 'data_level':'l2', 'descriptor':'fake-menlo-5-sweeps', 'version':'v001'}]"""`
 
-There is also a run_local_docker.sh that will execute the above command for you.
+Alternatively running run_local_docker.sh  will execute the above command for you:
+
+`./run_local_docker.sh`
+
+## Getting data from Dev data from SDC
+We created a tool to retrieve the latest data from the SDC to assist with testing. The tool takes in command line arguements the instrument level and number of files to retrieve. For example:
+
+`python fetch_latest_data.py --instrument swapi --level l3a --count 2`
+
+This will copy the cdf files into your repo folder under data folder. 
