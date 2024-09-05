@@ -1,7 +1,8 @@
 import uuid
+from dataclasses import dataclass
 from datetime import datetime, date
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 import imap_data_access
 import numpy as np
@@ -20,6 +21,15 @@ from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_temperature_a
 from imap_processing.swapi.l3a.utils import read_l2_swapi_data, chunk_l2_data
 
 
+@dataclass
+class SwapiL3ADependencies:
+    data_file: Path
+    temperature_density_calibration_file: Path
+
+
+TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR = "density-temperature-lut-text-not-cdf"
+
+
 class SwapiL3AProcessor:
 
     def __init__(self, dependencies: List[UpstreamDataDependency], instrument: str, level: str, start_date: datetime,
@@ -32,19 +42,38 @@ class SwapiL3AProcessor:
         self.start_date = start_date
         self.dependencies = dependencies
 
-    def download_upstream_dependencies(self) -> Path:
+    def download_upstream_dependencies(self) -> SwapiL3ADependencies:
         dependencies = [d for d in self.dependencies if
                         d.instrument == "swapi" and d.data_level == "l2"]  # and d.start_date == self.start_date] # and d.end_date == self.end_date]
 
-        if len(dependencies) != 1:
-            raise ValueError(f"Unexpected dependencies found for SWAPI L3:"
-                             f"{dependencies}. Expected only one dependency.")
+        if len(dependencies) != 2:
+            raise ValueError(f"Incorrect dependencies provided for SWAPI L3:"
+                             f"{dependencies}. Expected exactly two dependencies.")
+        try:
+            temperature_density_lut = next(
+                d for d in dependencies if d.descriptor == TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR)
+            dependencies.remove(temperature_density_lut)
+        except StopIteration:
+            raise ValueError(f"Missing {TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR} dependency.")
+
+        assert len(dependencies) == 1
+        data_dependency = dependencies[0]
+
+        return SwapiL3ADependencies(self._download_dependency(data_dependency),
+                                    self._download_dependency(temperature_density_lut))
+
+    def format_time(self, t: Optional[datetime]) -> Optional[str]:
+        if t is not None:
+            return t.strftime("%Y%d%m")
+        return None
+
+    def _download_dependency(self, dependency: UpstreamDataDependency) -> Path:
         files_to_download = [result['file_path'] for result in
-                             imap_data_access.query(instrument=dependencies[0].instrument,
-                                                    data_level=dependencies[0].data_level,
-                                                    descriptor=dependencies[0].descriptor,
-                                                    start_date=self.start_date.strftime("%Y%d%m"),
-                                                    end_date=self.end_date.strftime("%Y%d%m"),
+                             imap_data_access.query(instrument=dependency.instrument,
+                                                    data_level=dependency.data_level,
+                                                    descriptor=dependency.descriptor,
+                                                    start_date=self.format_time(dependency.start_date),
+                                                    end_date=self.format_time(dependency.end_date),
                                                     version='latest'
                                                     )]
         if len(files_to_download) != 1:
@@ -65,12 +94,11 @@ class SwapiL3AProcessor:
         return imap_data_access.download(density_temperature_files[0])
 
     def process(self):
-        downloaded_file_path = self.download_upstream_dependencies()
-        density_temperature_calibration_file = self.download_calibration_tables()
+        dependencies = self.download_upstream_dependencies()
         temperature_and_density_calibrator = TemperatureAndDensityCalibrationTable.from_file(
-            density_temperature_calibration_file)
+            dependencies.temperature_density_calibration_file)
 
-        data = read_l2_swapi_data(downloaded_file_path)
+        data = read_l2_swapi_data(dependencies.data_file)
 
         epochs = []
 
@@ -110,7 +138,7 @@ class SwapiL3AProcessor:
                                                                np.array(proton_solar_wind_temperatures),
                                                                np.array(proton_solar_wind_density))
 
-        formatted_start_date = self.start_date.strftime("%Y%d%m")
+        formatted_start_date = self.format_time(self.start_date)
         logical_file_id = f'imap_{self.instrument}_{self.level}_proton-sw-speed-fake-menlo-{uuid.uuid4()}_{formatted_start_date}_{self.version}'
         file_path = f'{TEMP_CDF_FOLDER_PATH}/{logical_file_id}.cdf'
         attribute_manager = ImapAttributeManager()
