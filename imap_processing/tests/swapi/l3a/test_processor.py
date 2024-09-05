@@ -145,11 +145,11 @@ class TestProcessor(TestCase):
         np.testing.assert_array_equal(energy, mock_calculate_alpha_solar_wind_speed.call_args_list[0].args[1])
 
         actual_proton_epoch, actual_proton_sw_speed, actual_proton_sw_temperature, actual_proton_sw_density = mock_proton_solar_wind_data_constructor.call_args.args
-
-        np.testing.assert_array_equal(np.array([initial_epoch + THIRTY_SECONDS_IN_NANOSECONDS]), actual_proton_epoch)
-        np.testing.assert_array_equal(np.array([returned_proton_sw_speed]), actual_proton_sw_speed)
-        np.testing.assert_array_equal(np.array([returned_proton_sw_temp]), actual_proton_sw_temperature)
-        np.testing.assert_array_equal(np.array([returned_proton_sw_density]), actual_proton_sw_density)
+        np.testing.assert_array_equal(np.array([initial_epoch + THIRTY_SECONDS_IN_NANOSECONDS]), actual_proton_epoch,
+                                      strict=True)
+        np.testing.assert_array_equal(np.array([returned_proton_sw_speed]), actual_proton_sw_speed, strict=True)
+        np.testing.assert_array_equal(np.array([returned_proton_sw_temp]), actual_proton_sw_temperature, strict=True)
+        np.testing.assert_array_equal(np.array([returned_proton_sw_density]), actual_proton_sw_density, strict=True)
 
         proton_cdf_path = f"{self.temp_directory}/imap_swapi_l3a_proton-sw-speed-fake-menlo-{mock_uuid_value}_{start_date_as_str}_12345.cdf"
         alpha_cdf_path = f"{self.temp_directory}/imap_swapi_l3a_alpha-sw-speed-fake-menlo-{mock_uuid_value}_{start_date_as_str}_12345.cdf"

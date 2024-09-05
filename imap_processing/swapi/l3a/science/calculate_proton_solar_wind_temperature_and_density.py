@@ -104,7 +104,7 @@ class TemperatureAndDensityCalibrationTable:
     @classmethod
     def from_file(cls, file_path):
         lookup_table_array = np.loadtxt(file_path)
-        cls(lookup_table_array)
+        return cls(lookup_table_array)
 
 
 def calculate_proton_solar_wind_temperature_and_density(lookup_table: TemperatureAndDensityCalibrationTable,

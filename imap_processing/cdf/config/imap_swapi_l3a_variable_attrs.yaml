@@ -27,6 +27,48 @@ proton_sw_speed_delta:
   FIELDNAM: proton_sw_speed_delta
   UNITS: km/s
 
+proton_sw_temperature:
+  <<: *default_timeseries
+  CATDESC: Temperature of Proton Solar Wind
+  FIELDNAM: proton_sw_temperature
+  DELTA_MINUS_VAR: proton_sw_temperature_delta
+  DELTA_PLUS_VAR: proton_sw_temperature_delta
+  LABLAXIS: Proton Solar Wind Temperature
+  UNITS: K
+  SCALETYP: linear
+  VAR_TYPE: data
+  DISPLAY_TYPE: time_series
+  SCALEMIN: 0
+  SCALEMAX: 100000
+
+proton_sw_temperature_delta:
+  <<: *default_timeseries
+  VAR_TYPE: support_data
+  CATDESC: Proton Solar Wind Temperature Uncertainty
+  FIELDNAM: proton_sw_temperature_delta
+  UNITS: K
+
+proton_sw_density:
+  <<: *default_timeseries
+  CATDESC: Density of Proton Solar Wind
+  FIELDNAM: proton_sw_density
+  DELTA_MINUS_VAR: proton_sw_density_delta
+  DELTA_PLUS_VAR: proton_sw_density_delta
+  LABLAXIS: Proton Solar Wind Density
+  UNITS: cm^-3
+  SCALETYP: linear
+  VAR_TYPE: data
+  DISPLAY_TYPE: time_series
+  SCALEMIN: 0
+  SCALEMAX: 10
+
+proton_sw_density_delta:
+  <<: *default_timeseries
+  VAR_TYPE: support_data
+  CATDESC: Proton Solar Wind Density Uncertainty
+  FIELDNAM: proton_sw_density_delta
+  UNITS: cm^-3
+
 alpha_sw_speed:
   <<: *default_timeseries
   CATDESC: Speed of Alpha Solar Wind

@@ -96,6 +96,9 @@ class SwapiL3AProcessor:
                 coincidence_count_rates_with_uncertainty,
                 data_chunk.energy)
 
+            proton_solar_wind_temperatures.append(temperature)
+            proton_solar_wind_density.append(density)
+
             epochs.append(data_chunk.epoch[0] + THIRTY_SECONDS_IN_NANOSECONDS)
 
             alpha_solar_wind_speeds.append(calculate_alpha_solar_wind_speed(
@@ -103,7 +106,9 @@ class SwapiL3AProcessor:
                 data_chunk.energy
             ))
 
-        proton_solar_wind_l3_data = SwapiL3ProtonSolarWindData(np.array(epochs), np.array(proton_solar_wind_speeds))
+        proton_solar_wind_l3_data = SwapiL3ProtonSolarWindData(np.array(epochs), np.array(proton_solar_wind_speeds),
+                                                               np.array(proton_solar_wind_temperatures),
+                                                               np.array(proton_solar_wind_density))
 
         formatted_start_date = self.start_date.strftime("%Y%d%m")
         logical_file_id = f'imap_{self.instrument}_{self.level}_proton-sw-speed-fake-menlo-{uuid.uuid4()}_{formatted_start_date}_{self.version}'
