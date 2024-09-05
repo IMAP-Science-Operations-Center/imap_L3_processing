@@ -1,6 +1,6 @@
 import numpy as np
 import scipy
-from uncertainties import umath
+from uncertainties import umath, correlated_values
 from uncertainties.unumpy import uarray, nominal_values, std_devs
 
 from imap_processing.constants import PROTON_CHARGE_COULOMBS, PROTON_MASS_KG, METERS_PER_KILOMETER
@@ -18,19 +18,22 @@ def fit_energy_per_charge_peak_variations(centers_of_mass, spin_phase_angles):
     max_mass_energy = np.max(nominal_centers_of_mass)
     peak_angle = spin_phase_angles[np.argmax(centers_of_mass)]
 
-    initial_parameter_guess = [(max_mass_energy-min_mass_energy)/ 2,90-peak_angle,np.mean(nominal_centers_of_mass)]
+    initial_parameter_guess = [(max_mass_energy - min_mass_energy) / 2, 90 - peak_angle,
+                               np.mean(nominal_centers_of_mass)]
 
-    (a,phi,b), pcov = scipy.optimize.curve_fit(
+    (a, phi, b), pcov = scipy.optimize.curve_fit(
         sine_fit_function, spin_phase_angles, nominal_values(centers_of_mass),
         sigma=std_devs(centers_of_mass), bounds=([0, -np.inf, 0], [np.inf, np.inf, np.inf]),
         absolute_sigma=True,
-    p0=initial_parameter_guess)
-    phi = np.mod(phi,360)
-    perr = np.sqrt(np.diag(pcov))
-    return uarray((a,phi,b), perr)
+        p0=initial_parameter_guess)
+    phi = np.mod(phi, 360)
+
+    return correlated_values((a, phi, b), pcov)
+
 
 def get_proton_peak_indices(count_rates):
     return get_peak_indices(count_rates, 4)
+
 
 def interpolate_angle(center_of_mass_index, spin_angles):
     spin_angle = np.interp(center_of_mass_index, np.arange(len(spin_angles)), np.unwrap(spin_angles, period=360))
@@ -67,17 +70,16 @@ def calculate_proton_centers_of_mass(coincidence_count_rates, spin_angles, energ
 def calculate_sw_speed_h_plus(energy):
     return umath.sqrt(2 * energy * PROTON_CHARGE_COULOMBS / PROTON_MASS_KG) / METERS_PER_KILOMETER
 
+
 def calculate_proton_solar_wind_speed(coincidence_count_rates, spin_angles, energies, epoch):
     energies = extract_coarse_sweep(energies)
     coincidence_count_rates = extract_coarse_sweep(coincidence_count_rates)
     spin_angles = extract_coarse_sweep(spin_angles)
 
-    energies_at_center_of_mass, spin_angles_at_center_of_mass = calculate_proton_centers_of_mass(coincidence_count_rates, spin_angles, energies, epoch)
+    energies_at_center_of_mass, spin_angles_at_center_of_mass = calculate_proton_centers_of_mass(
+        coincidence_count_rates, spin_angles, energies, epoch)
 
     a, phi, b = fit_energy_per_charge_peak_variations(energies_at_center_of_mass, spin_angles_at_center_of_mass)
 
     proton_sw_speed = calculate_sw_speed_h_plus(b)
     return proton_sw_speed, a, phi, b
-
-
-

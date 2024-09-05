@@ -28,10 +28,10 @@ class TestCalculateProtonSolarWindTemperatureAndDensity(TestCase):
         temperature, density = calculate_proton_solar_wind_temperature_and_density_for_one_sweep(
             uarray(count_rate, count_rate_delta)[4], energy)
 
-        self.assertAlmostEqual(101734, temperature.nominal_value, 0)
-        self.assertAlmostEqual(538, temperature.std_dev, 0)
+        self.assertAlmostEqual(102267, temperature.nominal_value, 0)
+        self.assertAlmostEqual(6376, temperature.std_dev, 0)
         self.assertAlmostEqual(3.76, density.nominal_value, 2)
-        self.assertAlmostEqual(8.64e-3, density.std_dev, 5)
+        self.assertAlmostEqual(0.1555, density.std_dev, 4)
 
     def test_uncalibrated_calculate_using_five_sweeps_from_example_file(self):
         file_path = Path(
@@ -44,15 +44,10 @@ class TestCalculateProtonSolarWindTemperatureAndDensity(TestCase):
         temperature, density = calculate_uncalibrated_proton_solar_wind_temperature_and_density(
             uarray(count_rate, count_rate_delta), energy)
 
-        # self.assertAlmostEqual(100476, temperature.nominal_value, 0)
-        # self.assertAlmostEqual(265, temperature.std_dev, 0)
-        # self.assertAlmostEqual(5.102, density.nominal_value, 3)
-        # self.assertAlmostEqual(6.15e-3, density.std_dev, 5)
-
-        self.assertAlmostEqual(100622, temperature.nominal_value, 0)
-        self.assertAlmostEqual(245, temperature.std_dev, 0)
-        self.assertAlmostEqual(4.674, density.nominal_value, 3)
-        self.assertAlmostEqual(5.00e-3, density.std_dev, 5)
+        self.assertAlmostEqual(100109, temperature.nominal_value, 0)
+        self.assertAlmostEqual(2379, temperature.std_dev, 0)
+        self.assertAlmostEqual(4.953, density.nominal_value, 3)
+        self.assertAlmostEqual(8.028e-2, density.std_dev, 5)
 
     def test_calibrate_density_and_temperature_using_lookup_table(self):
         speed_values = [250, 1000]
@@ -98,11 +93,11 @@ class TestCalculateProtonSolarWindTemperatureAndDensity(TestCase):
                                                                                    uarray(count_rate, count_rate_delta),
                                                                                    energy)
 
-        self.assertAlmostEqual(100622 * 0.97561, temperature.nominal_value, 0)
-        self.assertAlmostEqual(245 * 0.97561, temperature.std_dev, 0)
+        self.assertAlmostEqual(100109 * 0.97561, temperature.nominal_value, 0)
+        self.assertAlmostEqual(2379 * 0.97561, temperature.std_dev, 0)
 
-        self.assertAlmostEqual(4.6745 * 1.021, density.nominal_value, 3)
-        self.assertAlmostEqual(5.00e-3 * 1.021, density.std_dev, 5)
+        self.assertAlmostEqual(4.953 * 1.021, density.nominal_value, 3)
+        self.assertAlmostEqual(8.028e-2 * 1.021, density.std_dev, 5)
 
     def test_can_recover_density_and_temperature_from_model_data(self):
         test_cases = [

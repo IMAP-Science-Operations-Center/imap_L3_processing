@@ -13,7 +13,7 @@ from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_speed import 
 
 def read_l2_data_from_dat(file_path: str) -> SwapiL2Data:
     data = np.loadtxt(file_path)
-    data = data.reshape((-1,72,8))
+    data = data.reshape((-1, 72, 8))
 
     twelve_seconds_in_nanoseconds = 12_000_000_000
     epochs = twelve_seconds_in_nanoseconds * np.arange(len(data))
@@ -44,6 +44,7 @@ def read_l2_data(cdf_path: str) -> SwapiL2Data:
 
 fig = plt.figure()
 
+
 def plot_sweeps(data):
     for i in range(len(data.epoch)):
         axes = fig.add_subplot(len(data.epoch) + 1, 1, i + 1)
@@ -60,6 +61,7 @@ def plot_variation_in_center_of_mass(a, phi, b, spin_angles, centers_of_mass):
 
     plot.plot(fit_xs, fit_ys)
     plot.set(xlabel="Phase Angle", ylabel="Energy")
+
 
 def main(file_path):
     if file_path[-4:] == ".dat":

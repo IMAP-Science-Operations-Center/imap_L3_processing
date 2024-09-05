@@ -52,6 +52,8 @@ def calculate_proton_solar_wind_temperature_and_density_for_one_sweep(coincident
     values, covariance = scipy.optimize.curve_fit(proton_count_rate_model,
                                                   energy[proton_peak_indices],
                                                   nominal_values(coincident_count_rates[proton_peak_indices]),
+                                                  sigma=std_devs(coincident_count_rates[proton_peak_indices]),
+                                                  absolute_sigma=True,
                                                   bounds=[[0, 0, 0], [np.inf, np.inf, np.inf]],
                                                   p0=initial_parameter_guess)
     density, temperature, speed = correlated_values(values, covariance)
@@ -67,7 +69,6 @@ def calculate_uncalibrated_proton_solar_wind_temperature_and_density(coincident_
         temperatures_per_sweep.append(temperature)
         densities_per_sweep.append(density)
 
-    # TODO: check plain or inverse variance average
     average_temp = np.average(temperatures_per_sweep, weights=1 / std_devs(temperatures_per_sweep) ** 2)
     average_density = np.average(densities_per_sweep, weights=1 / std_devs(densities_per_sweep) ** 2)
 
