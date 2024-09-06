@@ -39,7 +39,7 @@ proton_sw_temperature:
   VAR_TYPE: data
   DISPLAY_TYPE: time_series
   SCALEMIN: 0
-  SCALEMAX: 100000
+  SCALEMAX: 240000
 
 proton_sw_temperature_delta:
   <<: *default_timeseries
@@ -60,7 +60,7 @@ proton_sw_density:
   VAR_TYPE: data
   DISPLAY_TYPE: time_series
   SCALEMIN: 0
-  SCALEMAX: 10
+  SCALEMAX: 16
 
 proton_sw_density_delta:
   <<: *default_timeseries
