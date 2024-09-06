@@ -139,20 +139,20 @@ class SwapiL3AProcessor:
                                                                np.array(proton_solar_wind_density))
 
         formatted_start_date = self.format_time(self.start_date)
-        logical_file_id = f'imap_{self.instrument}_{self.level}_proton-sw-speed-fake-menlo-{uuid.uuid4()}_{formatted_start_date}_{self.version}'
+        logical_file_id = f'imap_{self.instrument}_{self.level}_proton-sw-fake-menlo-{uuid.uuid4()}_{formatted_start_date}_{self.version}'
         file_path = f'{TEMP_CDF_FOLDER_PATH}/{logical_file_id}.cdf'
         attribute_manager = ImapAttributeManager()
         attribute_manager.add_global_attribute("Data_version", self.version)
         attribute_manager.add_instrument_attrs(self.instrument, self.level)
         attribute_manager.add_global_attribute("Generation_date", date.today().strftime("%Y%m%d"))
-        attribute_manager.add_global_attribute("Logical_source", 'imap_swapi_l3a_proton-sw-speed')
+        attribute_manager.add_global_attribute("Logical_source", 'imap_swapi_l3a_proton-sw')
         attribute_manager.add_global_attribute("Logical_file_id", logical_file_id)
         write_cdf(file_path, proton_solar_wind_l3_data, attribute_manager)
         imap_data_access.upload(file_path)
 
         alpha_solar_wind_l3_data = SwapiL3AlphaSolarWindData(np.array(epochs), np.array(alpha_solar_wind_speeds))
-        logical_file_id = f'imap_{self.instrument}_{self.level}_alpha-sw-speed-fake-menlo-{uuid.uuid4()}_{formatted_start_date}_{self.version}'
-        attribute_manager.add_global_attribute("Logical_source", 'imap_swapi_l3a_alpha-sw-speed')
+        logical_file_id = f'imap_{self.instrument}_{self.level}_alpha-sw-fake-menlo-{uuid.uuid4()}_{formatted_start_date}_{self.version}'
+        attribute_manager.add_global_attribute("Logical_source", 'imap_swapi_l3a_alpha-sw')
         attribute_manager.add_global_attribute("Logical_file_id", logical_file_id)
         file_path = f'{TEMP_CDF_FOLDER_PATH}/{logical_file_id}.cdf'
         write_cdf(file_path, alpha_solar_wind_l3_data, attribute_manager)
