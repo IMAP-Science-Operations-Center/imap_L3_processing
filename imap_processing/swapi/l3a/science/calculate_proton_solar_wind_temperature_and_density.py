@@ -49,13 +49,19 @@ def calculate_proton_solar_wind_temperature_and_density_for_one_sweep(coincident
     initial_speed_guess = calculate_proton_speed_from_one_sweep(coincident_count_rates, energy, proton_peak_indices)
 
     initial_parameter_guess = [5, 1e5, nominal_values(initial_speed_guess)]
+    peak_energies = energy[proton_peak_indices]
+    peak_count_rates = coincident_count_rates[proton_peak_indices]
     values, covariance = scipy.optimize.curve_fit(proton_count_rate_model,
-                                                  energy[proton_peak_indices],
-                                                  nominal_values(coincident_count_rates[proton_peak_indices]),
-                                                  sigma=std_devs(coincident_count_rates[proton_peak_indices]),
+                                                  peak_energies,
+                                                  nominal_values(peak_count_rates),
+                                                  sigma=std_devs(peak_count_rates),
                                                   absolute_sigma=True,
                                                   bounds=[[0, 0, 0], [np.inf, np.inf, np.inf]],
                                                   p0=initial_parameter_guess)
+    residual = abs(proton_count_rate_model(peak_energies, *values) - nominal_values(peak_count_rates))
+    reduced_chisq = np.sum(np.square(residual / std_devs(peak_count_rates))) / (len(peak_energies) - 3)
+    if reduced_chisq > 10:
+        raise ValueError("Failed to fit - chi-squared too large", reduced_chisq)
     density, temperature, speed = correlated_values(values, covariance)
 
     return temperature, density

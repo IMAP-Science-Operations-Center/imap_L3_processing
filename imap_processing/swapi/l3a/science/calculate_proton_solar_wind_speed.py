@@ -22,10 +22,15 @@ def fit_energy_per_charge_peak_variations(centers_of_mass, spin_phase_angles):
                                np.mean(nominal_centers_of_mass)]
 
     (a, phi, b), pcov = scipy.optimize.curve_fit(
-        sine_fit_function, spin_phase_angles, nominal_values(centers_of_mass),
+        sine_fit_function, spin_phase_angles, nominal_centers_of_mass,
         sigma=std_devs(centers_of_mass), bounds=([0, -np.inf, 0], [np.inf, np.inf, np.inf]),
         absolute_sigma=True,
         p0=initial_parameter_guess)
+    residual = abs(sine_fit_function(np.array(spin_phase_angles), a, phi, b) - nominal_centers_of_mass)
+    reduced_chisq = np.sum(np.square(residual / std_devs(centers_of_mass))) / (len(spin_phase_angles) - 3)
+
+    if reduced_chisq > 10:
+        raise ValueError("Failed to fit - chi-squared too large", reduced_chisq)
     phi = np.mod(phi, 360)
 
     return correlated_values((a, phi, b), pcov)

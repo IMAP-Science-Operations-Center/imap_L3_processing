@@ -67,11 +67,10 @@ class TestCalculateProtonSolarWindSpeed(TestCase):
                 extracted_peak = count_rates[peak_indices]
                 self.assertEqual(expected_peak_values, extracted_peak)
 
-
     def test_get_proton_peak_indices(self):
         test_cases = [
-            ("one clear peak", [0,0,0, 1, 0, 5, 10, 5, 0, 0, 1, 1, 1], [0, 1, 0, 5, 10, 5, 0, 0, 1]),
-            ("tied for peak", [0,0,0, 1, 0, 5, 10, 10, 0, 0, 1, 1, 1], [0, 1, 0, 5, 10, 10, 0, 0, 1, 1]),
+            ("one clear peak", [0, 0, 0, 1, 0, 5, 10, 5, 0, 0, 1, 1, 1], [0, 1, 0, 5, 10, 5, 0, 0, 1]),
+            ("tied for peak", [0, 0, 0, 1, 0, 5, 10, 10, 0, 0, 1, 1, 1], [0, 1, 0, 5, 10, 10, 0, 0, 1, 1]),
         ]
 
         for name, count_rates, expected_peak_values in test_cases:
@@ -79,7 +78,6 @@ class TestCalculateProtonSolarWindSpeed(TestCase):
                 peak_indices = get_proton_peak_indices(count_rates)
                 extracted_peak = count_rates[peak_indices]
                 self.assertEqual(expected_peak_values, extracted_peak)
-
 
     def test_an_exception_is_raised_when_count_rates_contains_multiple_peaks(self):
         test_cases = [
@@ -92,7 +90,6 @@ class TestCalculateProtonSolarWindSpeed(TestCase):
                 with self.assertRaises(Exception) as cm:
                     get_peak_indices(count_rates, 2)
                 self.assertEqual(str(cm.exception), "Count rates contains multiple distinct peaks")
-
 
     def test_find_peak_center_of_mass_index(self):
         test_cases = [
@@ -173,15 +170,18 @@ class TestCalculateProtonSolarWindSpeed(TestCase):
     @patch('scipy.optimize.curve_fit')
     def test_curve_fit_is_initialized_correctly(self, mock_curve_fit):
         test_cases = [
-            ([30, 60, 90, 120], [1, 2, 3, 4], 1.5, -30, 2.5),
-            ([30, 60, 90, 120], [2, 4, 6, 4], 2, 0, 4),
+            ([30, 60, 90, 120], uarray([1319, 1328, 1329, 1323], 1), 5, 0, 1324.75, 10),
+            ([30, 60, 90, 120], uarray([975, 956, 950, 957], 1), 12.5, 60, 959.5, 180),
         ]
 
-        mock_curve_fit.return_value = ([30,370,1300], np.identity(3))
+        mock_curve_fit.side_effect = [
+            [[30, 370, 1300], np.identity(3)],
+            [[50, 180, 1000], np.identity(3)]
+        ]
 
-        for angles, energies, expected_initial_a, expected_initial_phi, expected_initial_b in test_cases:
+        for angles, energies, expected_initial_a, expected_initial_phi, expected_initial_b, expected_phi in test_cases:
             with self.subTest():
-                a,phi,b = fit_energy_per_charge_peak_variations(energies, angles)
+                a, phi, b = fit_energy_per_charge_peak_variations(energies, angles)
 
                 curve_fit_parameters = mock_curve_fit.call_args.kwargs
 
@@ -199,8 +199,25 @@ class TestCalculateProtonSolarWindSpeed(TestCase):
                 self.assertEqual(np.inf, phi_upper_bound)
                 self.assertEqual(np.inf, b_upper_bound)
 
-                self.assertEqual(10, phi.nominal_value)
+                self.assertEqual(expected_phi, phi.nominal_value)
 
+    def test_throws_error_when_reduced_chi_squared_greater_than_10(self):
+        test_cases = [
+            ("throws error", [30, 60, 90, 120], uarray([1319, 1103, 1110, 1323], 1), True, 13.512723754922165),
+            ("doesn't throw error", [30, 60, 90, 120], uarray([975, 956, 950, 971], 1), False, 9.071796769724411),
+        ]
+
+        for name, angles, energies, error_flag, expected_chi_squared in test_cases:
+            with self.subTest(name):
+                try:
+                    fit_energy_per_charge_peak_variations(energies, angles)
+                    did_error = False
+                except ValueError as e:
+                    did_error = True
+                    exception = e
+                self.assertEqual(error_flag, did_error)
+                if did_error:
+                    self.assertEqual(("Failed to fit - chi-squared too large", expected_chi_squared), exception.args)
 
     def test_curve_fit(self):
         test_cases = [
