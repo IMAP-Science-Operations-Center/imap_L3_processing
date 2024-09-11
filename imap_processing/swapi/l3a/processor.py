@@ -13,6 +13,7 @@ from imap_processing.cdf.cdf_utils import write_cdf
 from imap_processing.cdf.imap_attribute_manager import ImapAttributeManager
 from imap_processing.constants import THIRTY_SECONDS_IN_NANOSECONDS, TEMP_CDF_FOLDER_PATH
 from imap_processing.models import UpstreamDataDependency
+from imap_processing.processor import Processor
 from imap_processing.swapi.l3a.models import SwapiL3ProtonSolarWindData, SwapiL3AlphaSolarWindData
 from imap_processing.swapi.l3a.science.calculate_alpha_solar_wind_speed import calculate_alpha_solar_wind_speed
 from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_speed import calculate_proton_solar_wind_speed
@@ -30,17 +31,7 @@ class SwapiL3ADependencies:
 TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR = "density-temperature-lut-text-not-cdf"
 
 
-class SwapiL3AProcessor:
-
-    def __init__(self, dependencies: List[UpstreamDataDependency], instrument: str, level: str, start_date: datetime,
-                 end_date: datetime,
-                 version: str):
-        self.instrument = instrument
-        self.level = level
-        self.version = version
-        self.end_date = end_date
-        self.start_date = start_date
-        self.dependencies = dependencies
+class SwapiL3AProcessor(Processor):
 
     def download_upstream_dependencies(self) -> SwapiL3ADependencies:
         dependencies = [d for d in self.dependencies if
@@ -61,11 +52,6 @@ class SwapiL3AProcessor:
 
         return SwapiL3ADependencies(self._download_dependency(data_dependency),
                                     self._download_dependency(temperature_density_lut))
-
-    def format_time(self, t: Optional[datetime]) -> Optional[str]:
-        if t is not None:
-            return t.strftime("%Y%d%m")
-        return None
 
     def _download_dependency(self, dependency: UpstreamDataDependency) -> Path:
         files_to_download = [result['file_path'] for result in

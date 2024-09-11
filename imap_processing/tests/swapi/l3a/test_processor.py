@@ -108,8 +108,8 @@ class TestProcessor(TestCase):
             outgoing_version)
         swapi_processor.process()
 
-        start_date_as_str = start_date.strftime("%Y%d%m")
-        end_date_as_str = end_date.strftime("%Y%d%m")
+        start_date_as_str = start_date.strftime("%Y%m%d")
+        end_date_as_str = end_date.strftime("%Y%m%d")
         self.mock_imap_api.query.assert_has_calls([call(instrument=instrument, data_level=incoming_data_level,
                                                         descriptor=descriptor, start_date=start_date_as_str,
                                                         end_date=end_date_as_str, version='latest'),
