@@ -8,7 +8,7 @@ from spacepy.pycdf import CDF
 
 from imap_processing.constants import TEMP_CDF_FOLDER_PATH
 from imap_processing.hit.l3.hit_processor import HITL3Processor
-from imap_processing.models import UpstreamDataDependency
+from imap_processing.models import UpstreamDataDependency, InputMetadata
 from imap_processing.tests.utils import get_test_data_path
 
 
@@ -43,10 +43,12 @@ class TestHITL3Processor(TestCase):
         data_processor_start = datetime(2024, 9, 10)
         data_processor_end = datetime(2024, 9, 11)
 
-        hit_l3_data_processor = HITL3Processor([upstream_l2_data_dependency, upstream_mag_data_dependency], "hit", "l3",
-                                               data_processor_start,
-                                               data_processor_end,
-                                               "v001")
+        input_metadata = InputMetadata("hit", "l3",
+                                       data_processor_start,
+                                       data_processor_end,
+                                       "v001")
+        hit_l3_data_processor = HITL3Processor([upstream_l2_data_dependency, upstream_mag_data_dependency],
+                                               input_metadata)
 
         hit_l3_data_processor.process()
 

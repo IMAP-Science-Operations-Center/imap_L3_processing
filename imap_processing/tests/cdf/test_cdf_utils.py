@@ -59,6 +59,9 @@ class TestCdfUtils(TempFileTestCase):
 
 
 class TestDataProduct(DataProduct):
+    def __init__(self):
+        pass
+    
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
             DataProductVariable("var1", np.arange(0, 10)),

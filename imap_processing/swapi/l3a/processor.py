@@ -1,27 +1,20 @@
 import dataclasses
-import uuid
 from dataclasses import dataclass
-from datetime import datetime, date
-from pathlib import Path
-from typing import List, Optional
-
-import imap_data_access
 import numpy as np
 from spacepy.pycdf import CDF
 from uncertainties import ufloat
 from uncertainties.unumpy import uarray
 
-from imap_processing.cdf.cdf_utils import write_cdf
-from imap_processing.cdf.imap_attribute_manager import ImapAttributeManager
-from imap_processing.constants import THIRTY_SECONDS_IN_NANOSECONDS, TEMP_CDF_FOLDER_PATH
-from imap_processing.models import UpstreamDataDependency, DataProduct
-from imap_processing.processor import Processor, download_dependency
+from imap_processing.constants import THIRTY_SECONDS_IN_NANOSECONDS
+from imap_processing.models import UpstreamDataDependency
+from imap_processing.processor import Processor
 from imap_processing.swapi.l3a.models import SwapiL3ProtonSolarWindData, SwapiL3AlphaSolarWindData
 from imap_processing.swapi.l3a.science.calculate_alpha_solar_wind_speed import calculate_alpha_solar_wind_speed
 from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_speed import calculate_proton_solar_wind_speed
 from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_temperature_and_density import \
     TemperatureAndDensityCalibrationTable, calculate_proton_solar_wind_temperature_and_density
 from imap_processing.swapi.l3a.utils import read_l2_swapi_data, chunk_l2_data
+from imap_processing.utils import download_dependency, upload_data
 
 SWAPI_L2_DESCRIPTOR = "fake-menlo-5-sweeps"
 TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR = "density-temperature-lut-text-not-cdf"
@@ -65,8 +58,10 @@ class SwapiL3ADependencies:
 class SwapiL3AProcessor(Processor):
 
     def process(self):
-        dependencies = [dataclasses.replace(dep, start_date=self.start_date, end_date=self.end_date) for dep in
-                        self.dependencies]
+        dependencies = [
+            dataclasses.replace(dep, start_date=self.input_metadata.start_date, end_date=self.input_metadata.end_date)
+            for dep in
+            self.dependencies]
         dependencies = SwapiL3ADependencies.fetch_dependencies(dependencies)
 
         data = read_l2_swapi_data(dependencies.data)
@@ -105,10 +100,14 @@ class SwapiL3AProcessor(Processor):
                 data_chunk.energy
             ))
 
-        proton_solar_wind_l3_data = SwapiL3ProtonSolarWindData(np.array(epochs), np.array(proton_solar_wind_speeds),
+        proton_solar_wind_speed_metadata = self.input_metadata.to_upstream_data_dependency("proton-sw")
+        proton_solar_wind_l3_data = SwapiL3ProtonSolarWindData(proton_solar_wind_speed_metadata, np.array(epochs),
+                                                               np.array(proton_solar_wind_speeds),
                                                                np.array(proton_solar_wind_temperatures),
                                                                np.array(proton_solar_wind_density))
-        self.upload_data(proton_solar_wind_l3_data, "proton-sw")
+        upload_data(proton_solar_wind_l3_data)
 
-        alpha_solar_wind_l3_data = SwapiL3AlphaSolarWindData(np.array(epochs), np.array(alpha_solar_wind_speeds))
-        self.upload_data(alpha_solar_wind_l3_data, "alpha-sw")
+        alpha_solar_wind_speed_metadata = self.input_metadata.to_upstream_data_dependency("alpha-sw")
+        alpha_solar_wind_l3_data = SwapiL3AlphaSolarWindData(alpha_solar_wind_speed_metadata, np.array(epochs),
+                                                             np.array(alpha_solar_wind_speeds))
+        upload_data(alpha_solar_wind_l3_data)

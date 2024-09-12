@@ -1,4 +1,5 @@
 from unittest import TestCase
+from unittest.mock import Mock
 
 import numpy as np
 from spacepy import pycdf
@@ -25,7 +26,7 @@ class TestModels(TestCase):
         expected_density_nominal_values = np.arange(3, 13, step=1)
         expected_density_std = np.arange(1, step=.1)
         density_data = uarray(expected_density_nominal_values, expected_density_std)
-        data = SwapiL3ProtonSolarWindData(epoch_data, proton_speed, temperature_data, density_data)
+        data = SwapiL3ProtonSolarWindData(Mock(), epoch_data, proton_speed, temperature_data, density_data)
         variables = data.to_data_product_variables()
 
         self._assert_variable_attributes(variables[0], epoch_data, EPOCH_CDF_VAR_NAME, pycdf.const.CDF_TIME_TT2000)
@@ -47,7 +48,7 @@ class TestModels(TestCase):
         expected_nominal_values = np.arange(10, step=1)
         expected_std = np.arange(5, step=.5)
         proton_speed = uarray(expected_nominal_values, expected_std)
-        data = SwapiL3AlphaSolarWindData(epoch_data, proton_speed)
+        data = SwapiL3AlphaSolarWindData(Mock(), epoch_data, proton_speed)
         variables = data.to_data_product_variables()
 
         self._assert_variable_attributes(variables[0], epoch_data, EPOCH_CDF_VAR_NAME, pycdf.const.CDF_TIME_TT2000)

@@ -8,13 +8,21 @@ import numpy as np
 
 
 @dataclass
-class UpstreamDataDependency:
+class InputMetadata:
     instrument: str
     data_level: str
-    descriptor: str
     start_date: datetime
     end_date: datetime
     version: str
+
+    def to_upstream_data_dependency(self, descriptor: str):
+        return UpstreamDataDependency(self.instrument, self.data_level, self.start_date, self.end_date, self.version,
+                                      descriptor)
+
+
+@dataclass
+class UpstreamDataDependency(InputMetadata):
+    descriptor: str
 
 
 @dataclass
@@ -25,7 +33,10 @@ class DataProductVariable:
     record_varying: bool = True
 
 
+@dataclass
 class DataProduct(metaclass=abc.ABCMeta):
+    input_metadata: UpstreamDataDependency
+
     @abc.abstractmethod
     def to_data_product_variables(self) -> list[DataProductVariable]:
         raise NotImplemented

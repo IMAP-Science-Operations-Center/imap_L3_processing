@@ -11,7 +11,7 @@ from uncertainties.unumpy import uarray, nominal_values, std_devs
 
 import imap_processing
 from imap_processing.constants import TEMP_CDF_FOLDER_PATH, THIRTY_SECONDS_IN_NANOSECONDS
-from imap_processing.models import UpstreamDataDependency
+from imap_processing.models import UpstreamDataDependency, InputMetadata
 from imap_processing.swapi.l3a.models import SwapiL2Data
 from imap_processing.swapi.l3a.processor import SwapiL3AProcessor, TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR, \
     SWAPI_L2_DESCRIPTOR
@@ -24,7 +24,7 @@ class TestProcessor(TestCase):
             shutil.rmtree(self.temp_directory)
         os.mkdir(self.temp_directory)
 
-        self.mock_imap_patcher = patch('imap_processing.processor.imap_data_access')
+        self.mock_imap_patcher = patch('imap_processing.utils.imap_data_access')
         self.mock_imap_api = self.mock_imap_patcher.start()
         self.mock_imap_api.query.side_effect = [
             [{'file_path': sentinel.data_file_path}],
@@ -35,11 +35,11 @@ class TestProcessor(TestCase):
         shutil.rmtree(self.temp_directory)
         self.mock_imap_patcher.stop()
 
-    @patch('imap_processing.processor.ImapAttributeManager')
+    @patch('imap_processing.utils.ImapAttributeManager')
     @patch('imap_processing.swapi.l3a.processor.SwapiL3AlphaSolarWindData')
     @patch('imap_processing.swapi.l3a.processor.SwapiL3ProtonSolarWindData')
-    @patch('imap_processing.processor.write_cdf')
-    @patch('imap_processing.processor.uuid')
+    @patch('imap_processing.utils.write_cdf')
+    @patch('imap_processing.utils.uuid')
     @patch('imap_processing.swapi.l3a.processor.chunk_l2_data')
     @patch('imap_processing.swapi.l3a.processor.read_l2_swapi_data')
     @patch('imap_processing.swapi.l3a.processor.calculate_proton_solar_wind_speed')
@@ -94,19 +94,27 @@ class TestProcessor(TestCase):
         mock_chunk_l2_data.return_value = [
             SwapiL2Data(epoch, energy, coincidence_count_rate, spin_angles, coincidence_count_rate_uncertainty)]
 
+        input_metadata = InputMetadata(instrument, outgoing_data_level, start_date, end_date,
+                                       outgoing_version)
+
         proton_solar_wind_data = mock_proton_solar_wind_data_constructor.return_value
+        expected_proton_metadata = input_metadata.to_upstream_data_dependency("proton-sw")
+        proton_solar_wind_data.input_metadata = expected_proton_metadata
+
         alpha_solar_wind_data = mock_alpha_solar_wind_data_constructor.return_value
+        expected_alpha_metadata = input_metadata.to_upstream_data_dependency("alpha-sw")
+        alpha_solar_wind_data.input_metadata = expected_alpha_metadata
+
         mock_manager = mock_imap_attribute_manager.return_value
 
         swapi_processor = SwapiL3AProcessor(
             [
-                UpstreamDataDependency(instrument, incoming_data_level, descriptor, start_date, end_date,
-                                       version),
-                UpstreamDataDependency(instrument, incoming_data_level, "density-temperature-lut-text-not-cdf",
+                UpstreamDataDependency(instrument, incoming_data_level, start_date, end_date,
+                                       version, descriptor),
+                UpstreamDataDependency(instrument, incoming_data_level,
                                        None, None,
-                                       version),
-            ], instrument, outgoing_data_level, start_date, end_date,
-            outgoing_version)
+                                       version, TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR),
+            ], input_metadata)
         swapi_processor.process()
 
         start_date_as_str = start_date.strftime("%Y%m%d")
@@ -151,7 +159,10 @@ class TestProcessor(TestCase):
                                       std_devs(mock_calculate_alpha_solar_wind_speed.call_args_list[0].args[0]))
         np.testing.assert_array_equal(energy, mock_calculate_alpha_solar_wind_speed.call_args_list[0].args[1])
 
-        actual_proton_epoch, actual_proton_sw_speed, actual_proton_sw_temperature, actual_proton_sw_density = mock_proton_solar_wind_data_constructor.call_args.args
+        actual_proton_metadata, actual_proton_epoch, actual_proton_sw_speed, actual_proton_sw_temperature, actual_proton_sw_density = mock_proton_solar_wind_data_constructor.call_args.args
+
+        self.assertEqual(expected_proton_metadata, actual_proton_metadata)
+
         np.testing.assert_array_equal(np.array([initial_epoch + THIRTY_SECONDS_IN_NANOSECONDS]), actual_proton_epoch,
                                       strict=True)
         np.testing.assert_array_equal(np.array([returned_proton_sw_speed]), actual_proton_sw_speed, strict=True)
@@ -174,7 +185,9 @@ class TestProcessor(TestCase):
                                                                  f"imap_swapi_l3a_alpha-sw-fake-menlo-{mock_uuid_value}_{start_date_as_str}_12345"),
                                                             ])
 
-        actual_alpha_epoch, actual_alpha_sw_speed = mock_alpha_solar_wind_data_constructor.call_args.args
+        actual_alpha_metadata, actual_alpha_epoch, actual_alpha_sw_speed = mock_alpha_solar_wind_data_constructor.call_args.args
+        expected_alpha_metadata = input_metadata.to_upstream_data_dependency("alpha-sw")
+        self.assertEqual(expected_alpha_metadata, actual_alpha_metadata)
 
         np.testing.assert_array_equal(np.array([initial_epoch + THIRTY_SECONDS_IN_NANOSECONDS]), actual_alpha_epoch)
         np.testing.assert_array_equal(np.array([mock_calculate_alpha_solar_wind_speed.return_value]),
@@ -201,17 +214,17 @@ class TestProcessor(TestCase):
             [{'file_path': '2 thing'}, {'file_path': '3 thing'}]
         ]
 
-        dependencies = [UpstreamDataDependency('swapi', 'l2', SWAPI_L2_DESCRIPTOR, datetime.now() - timedelta(days=1),
-                                               datetime.now(),
-                                               'f'),
-                        UpstreamDataDependency('swapi', 'l2', TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR,
-                                               datetime.now() - timedelta(days=1), datetime.now(),
-                                               'f')
+        input_metadata = InputMetadata('swapi', "l3a", datetime.now() - timedelta(days=1),
+                                       datetime.now(),
+                                       "12345")
+        dependencies = [UpstreamDataDependency('swapi', 'l2', datetime.now() - timedelta(days=1),
+                                               datetime.now(), 'f', SWAPI_L2_DESCRIPTOR),
+                        UpstreamDataDependency('swapi', 'l2',
+                                               datetime.now() - timedelta(days=1), datetime.now(), 'f',
+                                               TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR)
                         ]
         swapi_processor = SwapiL3AProcessor(
-            dependencies, 'swapi', "l3a", datetime.now() - timedelta(days=1),
-            datetime.now(),
-            "12345")
+            dependencies, input_metadata)
 
         with self.assertRaises(ValueError) as cm:
             swapi_processor.process()
@@ -222,14 +235,13 @@ class TestProcessor(TestCase):
 
     def test_processor_throws_exception_when_missing_temp_density_lookup_table(self):
         dependencies = [
-            UpstreamDataDependency('swapi', 'l2', SWAPI_L2_DESCRIPTOR, datetime.now() - timedelta(days=1),
+            UpstreamDataDependency('swapi', 'l2', datetime.now() - timedelta(days=1),
                                    datetime.now(),
-                                   'f'),
-            UpstreamDataDependency('swapi', 'l2', 'not-the-lut', datetime.now() - timedelta(days=1), datetime.now(),
-                                   'f')]
-        swapi_processor = SwapiL3AProcessor(dependencies, 'swapi', "l3a", datetime.now() - timedelta(days=1),
-                                            datetime.now(),
-                                            "12345")
+                                   'f', SWAPI_L2_DESCRIPTOR),
+            UpstreamDataDependency('swapi', 'l2', datetime.now() - timedelta(days=1), datetime.now(),
+                                   'f', 'not-the-lut')]
+        input_metadata = InputMetadata('swapi', "l3a", datetime.now() - timedelta(days=1), datetime.now(), "12345")
+        swapi_processor = SwapiL3AProcessor(dependencies, input_metadata)
         with self.assertRaises(ValueError) as cm:
             swapi_processor.process()
         exception = cm.exception
@@ -238,15 +250,12 @@ class TestProcessor(TestCase):
 
     def test_processor_throws_exception_when_missing_temp_density_lookup_table(self):
         dependencies = [
-            UpstreamDataDependency('swapi', 'l2', 'data', datetime.now() - timedelta(days=1),
-                                   datetime.now(),
-                                   'f'),
-            UpstreamDataDependency('swapi', 'l2', TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR,
-                                   datetime.now() - timedelta(days=1), datetime.now(),
-                                   'f')]
-        swapi_processor = SwapiL3AProcessor(dependencies, 'swapi', "l3a", datetime.now() - timedelta(days=1),
-                                            datetime.now(),
-                                            "12345")
+            UpstreamDataDependency('swapi', 'l2', datetime.now() - timedelta(days=1), datetime.now(), 'f', 'data'),
+            UpstreamDataDependency('swapi', 'l2',
+                                   datetime.now() - timedelta(days=1), datetime.now(), 'f',
+                                   TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR)]
+        input_metadata = InputMetadata('swapi', "l3a", datetime.now() - timedelta(days=1), datetime.now(), "12345")
+        swapi_processor = SwapiL3AProcessor(dependencies, input_metadata)
         with self.assertRaises(ValueError) as cm:
             swapi_processor.process()
         exception = cm.exception
