@@ -39,7 +39,7 @@ proton_sw_temperature:
   VAR_TYPE: data
   DISPLAY_TYPE: time_series
   SCALEMIN: 0
-  SCALEMAX: 100000
+  SCALEMAX: 240000
 
 proton_sw_temperature_delta:
   <<: *default_timeseries
@@ -55,19 +55,19 @@ proton_sw_density:
   DELTA_MINUS_VAR: proton_sw_density_delta
   DELTA_PLUS_VAR: proton_sw_density_delta
   LABLAXIS: Proton Solar Wind Density
-  UNITS: cm^-3
+  UNITS: cm!E-3!N
   SCALETYP: linear
   VAR_TYPE: data
   DISPLAY_TYPE: time_series
   SCALEMIN: 0
-  SCALEMAX: 10
+  SCALEMAX: 16
 
 proton_sw_density_delta:
   <<: *default_timeseries
   VAR_TYPE: support_data
   CATDESC: Proton Solar Wind Density Uncertainty
   FIELDNAM: proton_sw_density_delta
-  UNITS: cm^-3
+  UNITS: cm!E-3!N
 
 alpha_sw_speed:
   <<: *default_timeseries

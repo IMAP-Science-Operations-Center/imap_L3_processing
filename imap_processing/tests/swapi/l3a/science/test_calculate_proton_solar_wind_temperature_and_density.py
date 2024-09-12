@@ -121,6 +121,26 @@ class TestCalculateProtonSolarWindTemperatureAndDensity(TestCase):
                 self.assertAlmostEqual(density, fit_density.nominal_value, 6)
                 self.assertAlmostEqual(temperature, fit_temperature.nominal_value, 0)
 
+    def test_throws_error_when_chi_squared_over_ten(self):
+        test_cases = [
+            ["throws error", uarray([100, 200, 300, 150, 50], 8), np.array([1000, 900, 800, 700, 600]), True,
+             10.959014166245833],
+            ["does not throw error", uarray([100, 200, 300, 150, 50], 9), np.array([1000, 900, 800, 700, 600]), False,
+             8.658974156048295]
+        ]
+
+        for name, coincident_count_rates, energy, error_flag, expected_chi_squared in test_cases:
+            with self.subTest(name):
+                try:
+                    calculate_proton_solar_wind_temperature_and_density_for_one_sweep(coincident_count_rates, energy)
+                    did_error = False
+                except ValueError as e:
+                    did_error = True
+                    exception = e
+                if did_error:
+                    self.assertEqual(("Failed to fit - chi-squared too large", expected_chi_squared), exception.args)
+                self.assertEqual(error_flag, did_error)
+
     def generate_lookup_table(self, speed_values, deflection_angle_values, clock_angle_values, density_values,
                               temperature_values):
 

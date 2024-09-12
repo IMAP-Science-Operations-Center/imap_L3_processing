@@ -1,9 +1,10 @@
 import numpy as np
 import scipy
+import uncertainties
 from matplotlib import pyplot as plt
 from numpy import ndarray
 from scipy.special import erf
-from uncertainties import correlated_values, wrap
+from uncertainties import correlated_values
 from uncertainties.unumpy import uarray, nominal_values, std_devs
 
 from imap_processing import constants
@@ -21,7 +22,6 @@ def proton_count_rate_model(ev_per_q, density_per_cm3, temperature, bulk_flow_sp
     energy = ev_per_q * constants.PROTON_CHARGE_COULOMBS
     k = BOLTZMANN_CONSTANT_JOULES_PER_KELVIN
     a_eff_cm2 = 3.3e-2 / 1000
-    # TODO verify these units
     a_eff_m2 = a_eff_cm2 / CENTIMETERS_PER_METER ** 2
 
     delta_e_over_e = 0.085
@@ -49,13 +49,19 @@ def calculate_proton_solar_wind_temperature_and_density_for_one_sweep(coincident
     initial_speed_guess = calculate_proton_speed_from_one_sweep(coincident_count_rates, energy, proton_peak_indices)
 
     initial_parameter_guess = [5, 1e5, nominal_values(initial_speed_guess)]
+    peak_energies = energy[proton_peak_indices]
+    peak_count_rates = coincident_count_rates[proton_peak_indices]
     values, covariance = scipy.optimize.curve_fit(proton_count_rate_model,
-                                                  energy[proton_peak_indices],
-                                                  nominal_values(coincident_count_rates[proton_peak_indices]),
-                                                  sigma=std_devs(coincident_count_rates[proton_peak_indices]),
+                                                  peak_energies,
+                                                  nominal_values(peak_count_rates),
+                                                  sigma=std_devs(peak_count_rates),
                                                   absolute_sigma=True,
                                                   bounds=[[0, 0, 0], [np.inf, np.inf, np.inf]],
                                                   p0=initial_parameter_guess)
+    residual = abs(proton_count_rate_model(peak_energies, *values) - nominal_values(peak_count_rates))
+    reduced_chisq = np.sum(np.square(residual / std_devs(peak_count_rates))) / (len(peak_energies) - 3)
+    if reduced_chisq > 10:
+        raise ValueError("Failed to fit - chi-squared too large", reduced_chisq)
     density, temperature, speed = correlated_values(values, covariance)
 
     return temperature, density
@@ -89,17 +95,23 @@ class TemperatureAndDensityCalibrationTable:
         clock_angle = np.unique(lookup_table_array[:, 2])
         fit_density = np.unique(lookup_table_array[:, 3])
         fit_temperature = np.unique(lookup_table_array[:, 5])
-        grid = (solar_wind_speed, deflection_angle, clock_angle, fit_density, fit_temperature)
-        values_shape = tuple(len(x) for x in grid)
+        self.grid = (solar_wind_speed, deflection_angle, clock_angle, fit_density, fit_temperature)
+        values_shape = tuple(len(x) for x in self.grid)
 
-        density_grid = lookup_table_array[:, 4].reshape(values_shape)
-        temperature_grid = lookup_table_array[:, 6].reshape(values_shape)
-        self.calibrate_density = wrap(
-            lambda a, b, c, d, e:
-            scipy.interpolate.interpn(grid, density_grid, [a, b, c, d, e])[0])
-        self.calibrate_temperature = wrap(
-            lambda a, b, c, d, e:
-            scipy.interpolate.interpn(grid, temperature_grid, [a, b, c, d, e])[0])
+        self.density_grid = lookup_table_array[:, 4].reshape(values_shape)
+        self.temperature_grid = lookup_table_array[:, 6].reshape(values_shape)
+
+    @uncertainties.wrap
+    def calibrate_density(self, solar_wind_speed, deflection_angle, clock_angle, fit_density, fit_temperature):
+        return scipy.interpolate.interpn(self.grid, self.density_grid,
+                                         [solar_wind_speed, deflection_angle, clock_angle, fit_density,
+                                          fit_temperature])[0]
+
+    @uncertainties.wrap
+    def calibrate_temperature(self, solar_wind_speed, deflection_angle, clock_angle, fit_density, fit_temperature):
+        return scipy.interpolate.interpn(self.grid, self.temperature_grid,
+                                         [solar_wind_speed, deflection_angle, clock_angle, fit_density,
+                                          fit_temperature])[0]
 
     @classmethod
     def from_file(cls, file_path):
