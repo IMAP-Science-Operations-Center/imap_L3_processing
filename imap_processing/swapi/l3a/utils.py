@@ -6,8 +6,7 @@ from spacepy.pycdf import CDF
 from imap_processing.swapi.l3a.models import SwapiL2Data
 
 
-def read_l2_swapi_data(cdf_path: Path) -> SwapiL2Data:
-    cdf = CDF(str(cdf_path))
+def read_l2_swapi_data(cdf: CDF) -> SwapiL2Data:
     return SwapiL2Data(cdf.raw_var("epoch")[...],
                        cdf["energy"][...],
                        cdf["swp_coin_rate"][...],

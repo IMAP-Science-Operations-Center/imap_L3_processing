@@ -1,3 +1,4 @@
+import dataclasses
 import uuid
 from dataclasses import dataclass
 from datetime import datetime, date
@@ -6,6 +7,7 @@ from typing import List, Optional
 
 import imap_data_access
 import numpy as np
+from spacepy.pycdf import CDF
 from uncertainties import ufloat
 from uncertainties.unumpy import uarray
 
@@ -13,7 +15,7 @@ from imap_processing.cdf.cdf_utils import write_cdf
 from imap_processing.cdf.imap_attribute_manager import ImapAttributeManager
 from imap_processing.constants import THIRTY_SECONDS_IN_NANOSECONDS, TEMP_CDF_FOLDER_PATH
 from imap_processing.models import UpstreamDataDependency, DataProduct
-from imap_processing.processor import Processor
+from imap_processing.processor import Processor, download_dependency
 from imap_processing.swapi.l3a.models import SwapiL3ProtonSolarWindData, SwapiL3AlphaSolarWindData
 from imap_processing.swapi.l3a.science.calculate_alpha_solar_wind_speed import calculate_alpha_solar_wind_speed
 from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_speed import calculate_proton_solar_wind_speed
@@ -21,44 +23,53 @@ from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_temperature_a
     TemperatureAndDensityCalibrationTable, calculate_proton_solar_wind_temperature_and_density
 from imap_processing.swapi.l3a.utils import read_l2_swapi_data, chunk_l2_data
 
+SWAPI_L2_DESCRIPTOR = "fake-menlo-5-sweeps"
+TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR = "density-temperature-lut-text-not-cdf"
+
 
 @dataclass
 class SwapiL3ADependencies:
-    data_file: Path
-    temperature_density_calibration_file: Path
+    data: CDF
+    temperature_density_calibration_table: TemperatureAndDensityCalibrationTable
 
+    @classmethod
+    def fetch_dependencies(cls, dependencies: list[UpstreamDataDependency]):
+        try:
+            data_dependency = next(
+                dep for dep in dependencies if dep.descriptor == SWAPI_L2_DESCRIPTOR)
+            data_dependency_path = download_dependency(data_dependency)
+        except StopIteration:
+            raise ValueError(f"Missing {SWAPI_L2_DESCRIPTOR} dependency.")
+        except ValueError as e:
+            raise ValueError(f"Unexpected files found for SWAPI L3:"
+                             f"{e}")
 
-TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR = "density-temperature-lut-text-not-cdf"
+        try:
+            calibration_table_dependency = next(
+                dep for dep in dependencies if dep.descriptor == TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR)
+            calibration_table_dependency = dataclasses.replace(calibration_table_dependency, start_date=None,
+                                                               end_date=None)
+            calibration_table_dependency_path = download_dependency(calibration_table_dependency)
+        except StopIteration:
+            raise ValueError(f"Missing {TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR} dependency.")
+        except ValueError as e:
+            raise ValueError(f"Unexpected files found for SWAPI L3:"
+                             f"{e}")
+
+        temperature_and_density_calibration_file = TemperatureAndDensityCalibrationTable.from_file(
+            calibration_table_dependency_path)
+        data_file = CDF(str(data_dependency_path))
+        return cls(data_file, temperature_and_density_calibration_file)
 
 
 class SwapiL3AProcessor(Processor):
 
-    def download_upstream_dependencies(self) -> SwapiL3ADependencies:
-        dependencies = [d for d in self.dependencies if
-                        d.instrument == "swapi" and d.data_level == "l2"]  # and d.start_date == self.start_date] # and d.end_date == self.end_date]
-
-        if len(dependencies) != 2:
-            raise ValueError(f"Incorrect dependencies provided for SWAPI L3:"
-                             f"{dependencies}. Expected exactly two dependencies.")
-        try:
-            temperature_density_lut = next(
-                d for d in dependencies if d.descriptor == TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR)
-            dependencies.remove(temperature_density_lut)
-        except StopIteration:
-            raise ValueError(f"Missing {TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR} dependency.")
-
-        assert len(dependencies) == 1
-        data_dependency = dependencies[0]
-
-        return SwapiL3ADependencies(self._download_dependency(data_dependency),
-                                    self._download_dependency(temperature_density_lut))
-
     def process(self):
-        dependencies = self.download_upstream_dependencies()
-        temperature_and_density_calibrator = TemperatureAndDensityCalibrationTable.from_file(
-            dependencies.temperature_density_calibration_file)
+        dependencies = [dataclasses.replace(dep, start_date=self.start_date, end_date=self.end_date) for dep in
+                        self.dependencies]
+        dependencies = SwapiL3ADependencies.fetch_dependencies(dependencies)
 
-        data = read_l2_swapi_data(dependencies.data_file)
+        data = read_l2_swapi_data(dependencies.data)
 
         epochs = []
 
@@ -77,7 +88,7 @@ class SwapiL3AProcessor(Processor):
             proton_solar_wind_speeds.append(proton_solar_wind_speed)
 
             temperature, density = calculate_proton_solar_wind_temperature_and_density(
-                temperature_and_density_calibrator,
+                dependencies.temperature_density_calibration_table,
                 proton_solar_wind_speed,
                 ufloat(0.01, 1.0),
                 phi,
