@@ -12,7 +12,7 @@ from uncertainties.unumpy import uarray
 from imap_processing.cdf.cdf_utils import write_cdf
 from imap_processing.cdf.imap_attribute_manager import ImapAttributeManager
 from imap_processing.constants import THIRTY_SECONDS_IN_NANOSECONDS, TEMP_CDF_FOLDER_PATH
-from imap_processing.models import UpstreamDataDependency
+from imap_processing.models import UpstreamDataDependency, DataProduct
 from imap_processing.processor import Processor
 from imap_processing.swapi.l3a.models import SwapiL3ProtonSolarWindData, SwapiL3AlphaSolarWindData
 from imap_processing.swapi.l3a.science.calculate_alpha_solar_wind_speed import calculate_alpha_solar_wind_speed
@@ -52,32 +52,6 @@ class SwapiL3AProcessor(Processor):
 
         return SwapiL3ADependencies(self._download_dependency(data_dependency),
                                     self._download_dependency(temperature_density_lut))
-
-    def _download_dependency(self, dependency: UpstreamDataDependency) -> Path:
-        files_to_download = [result['file_path'] for result in
-                             imap_data_access.query(instrument=dependency.instrument,
-                                                    data_level=dependency.data_level,
-                                                    descriptor=dependency.descriptor,
-                                                    start_date=self.format_time(dependency.start_date),
-                                                    end_date=self.format_time(dependency.end_date),
-                                                    version='latest'
-                                                    )]
-        if len(files_to_download) != 1:
-            raise ValueError(f"Unexpected files found for SWAPI L3:"
-                             f"{files_to_download}. Expected only one file to download.")
-
-        return imap_data_access.download(files_to_download[0])
-
-    def download_calibration_tables(self) -> Path:
-        density_temperature_files = [result["file_path"] for result in imap_data_access.query(instrument="swapi",
-                                                                                              data_level="l3a",
-                                                                                              descriptor="density-temperature-lut-text-not-cdf",
-                                                                                              version='latest')]
-        if len(density_temperature_files) != 1:
-            raise ValueError(f"Unexpected files found for SWAPI L3 density temperature calibration file query:"
-                             f"{density_temperature_files}. Expected only one file to download.")
-
-        return imap_data_access.download(density_temperature_files[0])
 
     def process(self):
         dependencies = self.download_upstream_dependencies()
@@ -123,23 +97,7 @@ class SwapiL3AProcessor(Processor):
         proton_solar_wind_l3_data = SwapiL3ProtonSolarWindData(np.array(epochs), np.array(proton_solar_wind_speeds),
                                                                np.array(proton_solar_wind_temperatures),
                                                                np.array(proton_solar_wind_density))
-
-        formatted_start_date = self.format_time(self.start_date)
-        logical_file_id = f'imap_{self.instrument}_{self.level}_proton-sw-fake-menlo-{uuid.uuid4()}_{formatted_start_date}_{self.version}'
-        file_path = f'{TEMP_CDF_FOLDER_PATH}/{logical_file_id}.cdf'
-        attribute_manager = ImapAttributeManager()
-        attribute_manager.add_global_attribute("Data_version", self.version)
-        attribute_manager.add_instrument_attrs(self.instrument, self.level)
-        attribute_manager.add_global_attribute("Generation_date", date.today().strftime("%Y%m%d"))
-        attribute_manager.add_global_attribute("Logical_source", 'imap_swapi_l3a_proton-sw')
-        attribute_manager.add_global_attribute("Logical_file_id", logical_file_id)
-        write_cdf(file_path, proton_solar_wind_l3_data, attribute_manager)
-        imap_data_access.upload(file_path)
+        self.upload_data(proton_solar_wind_l3_data, "proton-sw")
 
         alpha_solar_wind_l3_data = SwapiL3AlphaSolarWindData(np.array(epochs), np.array(alpha_solar_wind_speeds))
-        logical_file_id = f'imap_{self.instrument}_{self.level}_alpha-sw-fake-menlo-{uuid.uuid4()}_{formatted_start_date}_{self.version}'
-        attribute_manager.add_global_attribute("Logical_source", 'imap_swapi_l3a_alpha-sw')
-        attribute_manager.add_global_attribute("Logical_file_id", logical_file_id)
-        file_path = f'{TEMP_CDF_FOLDER_PATH}/{logical_file_id}.cdf'
-        write_cdf(file_path, alpha_solar_wind_l3_data, attribute_manager)
-        imap_data_access.upload(file_path)
+        self.upload_data(alpha_solar_wind_l3_data, "alpha-sw")

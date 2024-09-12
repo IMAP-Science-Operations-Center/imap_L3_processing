@@ -23,7 +23,7 @@ class TestProcessor(TestCase):
             shutil.rmtree(self.temp_directory)
         os.mkdir(self.temp_directory)
 
-        self.mock_imap_patcher = patch('imap_processing.swapi.l3a.processor.imap_data_access')
+        self.mock_imap_patcher = patch('imap_processing.processor.imap_data_access')
         self.mock_imap_api = self.mock_imap_patcher.start()
         self.mock_imap_api.query.side_effect = [
             [{'file_path': sentinel.data_file_path}],
@@ -34,11 +34,11 @@ class TestProcessor(TestCase):
         shutil.rmtree(self.temp_directory)
         self.mock_imap_patcher.stop()
 
-    @patch('imap_processing.swapi.l3a.processor.ImapAttributeManager')
+    @patch('imap_processing.processor.ImapAttributeManager')
     @patch('imap_processing.swapi.l3a.processor.SwapiL3AlphaSolarWindData')
     @patch('imap_processing.swapi.l3a.processor.SwapiL3ProtonSolarWindData')
-    @patch('imap_processing.swapi.l3a.processor.write_cdf')
-    @patch('imap_processing.swapi.l3a.processor.uuid')
+    @patch('imap_processing.processor.write_cdf')
+    @patch('imap_processing.processor.uuid')
     @patch('imap_processing.swapi.l3a.processor.chunk_l2_data')
     @patch('imap_processing.swapi.l3a.processor.read_l2_swapi_data')
     @patch('imap_processing.swapi.l3a.processor.calculate_proton_solar_wind_speed')
@@ -165,6 +165,8 @@ class TestProcessor(TestCase):
                                                                  "imap_swapi_l3a_proton-sw"),
                                                             call("Logical_file_id",
                                                                  f"imap_swapi_l3a_proton-sw-fake-menlo-{mock_uuid_value}_{start_date_as_str}_12345"),
+                                                            call("Data_version", outgoing_version),
+                                                            call("Generation_date", date.today().strftime("%Y%m%d")),
                                                             call("Logical_source",
                                                                  "imap_swapi_l3a_alpha-sw"),
                                                             call("Logical_file_id",
@@ -176,7 +178,7 @@ class TestProcessor(TestCase):
         np.testing.assert_array_equal(np.array([initial_epoch + THIRTY_SECONDS_IN_NANOSECONDS]), actual_alpha_epoch)
         np.testing.assert_array_equal(np.array([mock_calculate_alpha_solar_wind_speed.return_value]),
                                       actual_alpha_sw_speed)
-        mock_manager.add_instrument_attrs.assert_called_once_with("swapi", "l3a")
+        mock_manager.add_instrument_attrs.assert_has_calls([call("swapi", "l3a"), call("swapi", "l3a")])
         mock_write_cdf.assert_has_calls([
             call(proton_cdf_path, proton_solar_wind_data, mock_manager),
             call(alpha_cdf_path, alpha_solar_wind_data, mock_manager)
