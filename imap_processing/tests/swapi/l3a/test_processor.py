@@ -13,7 +13,8 @@ import imap_processing
 from imap_processing.constants import TEMP_CDF_FOLDER_PATH, THIRTY_SECONDS_IN_NANOSECONDS
 from imap_processing.models import UpstreamDataDependency
 from imap_processing.swapi.l3a.models import SwapiL2Data
-from imap_processing.swapi.l3a.processor import SwapiL3AProcessor, TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR
+from imap_processing.swapi.l3a.processor import SwapiL3AProcessor, TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR, \
+    SWAPI_L2_DESCRIPTOR
 
 
 class TestProcessor(TestCase):
@@ -62,7 +63,7 @@ class TestProcessor(TestCase):
         ]
         instrument = 'swapi'
         incoming_data_level = 'l2'
-        descriptor = 'c'
+        descriptor = SWAPI_L2_DESCRIPTOR
         end_date = datetime.now()
         version = 'f'
         outgoing_data_level = "l3a"
@@ -200,7 +201,8 @@ class TestProcessor(TestCase):
             [{'file_path': '2 thing'}, {'file_path': '3 thing'}]
         ]
 
-        dependencies = [UpstreamDataDependency('swapi', 'l2', 'c', datetime.now() - timedelta(days=1), datetime.now(),
+        dependencies = [UpstreamDataDependency('swapi', 'l2', SWAPI_L2_DESCRIPTOR, datetime.now() - timedelta(days=1),
+                                               datetime.now(),
                                                'f'),
                         UpstreamDataDependency('swapi', 'l2', TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR,
                                                datetime.now() - timedelta(days=1), datetime.now(),
@@ -218,38 +220,10 @@ class TestProcessor(TestCase):
                          f"{['2 thing', '3 thing']}. Expected only one file to download.",
                          str(exception))
 
-    def test_processor_throws_exception_when_wrong_number_of_dependencies_are_passed_in(self):
-        test_cases = [
-            ("too many dependencies",
-             [
-                 UpstreamDataDependency('swapi', 'l2', 'data', datetime.now() - timedelta(days=1), datetime.now(),
-                                        'f'),
-                 UpstreamDataDependency('swapi', 'l2', 'sample-lut', datetime.now() - timedelta(days=1), datetime.now(),
-                                        'f'),
-                 UpstreamDataDependency('swapi', 'l2', 'something else', datetime.now() - timedelta(days=1),
-                                        datetime.now(),
-                                        'f')
-             ]),
-            ("too few dependencies",
-             [
-                 UpstreamDataDependency('swapi', 'l2', 'data', datetime.now() - timedelta(days=1), datetime.now(),
-                                        'f')
-             ])
-        ]
-        for name, dependencies in test_cases:
-            with self.subTest(name):
-                swapi_processor = SwapiL3AProcessor(dependencies, 'swapi', "l3a", datetime.now() - timedelta(days=1),
-                                                    datetime.now(),
-                                                    "12345")
-                with self.assertRaises(ValueError) as cm:
-                    swapi_processor.process()
-                exception = cm.exception
-                self.assertEqual(f"Incorrect dependencies provided for SWAPI L3:"
-                                 f"{dependencies}. Expected exactly two dependencies.", str(exception))
-
     def test_processor_throws_exception_when_missing_temp_density_lookup_table(self):
         dependencies = [
-            UpstreamDataDependency('swapi', 'l2', 'data', datetime.now() - timedelta(days=1), datetime.now(),
+            UpstreamDataDependency('swapi', 'l2', SWAPI_L2_DESCRIPTOR, datetime.now() - timedelta(days=1),
+                                   datetime.now(),
                                    'f'),
             UpstreamDataDependency('swapi', 'l2', 'not-the-lut', datetime.now() - timedelta(days=1), datetime.now(),
                                    'f')]
@@ -260,4 +234,21 @@ class TestProcessor(TestCase):
             swapi_processor.process()
         exception = cm.exception
         self.assertEqual(f"Missing {TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR} dependency.",
+                         str(exception))
+
+    def test_processor_throws_exception_when_missing_temp_density_lookup_table(self):
+        dependencies = [
+            UpstreamDataDependency('swapi', 'l2', 'data', datetime.now() - timedelta(days=1),
+                                   datetime.now(),
+                                   'f'),
+            UpstreamDataDependency('swapi', 'l2', TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR,
+                                   datetime.now() - timedelta(days=1), datetime.now(),
+                                   'f')]
+        swapi_processor = SwapiL3AProcessor(dependencies, 'swapi', "l3a", datetime.now() - timedelta(days=1),
+                                            datetime.now(),
+                                            "12345")
+        with self.assertRaises(ValueError) as cm:
+            swapi_processor.process()
+        exception = cm.exception
+        self.assertEqual(f"Missing {SWAPI_L2_DESCRIPTOR} dependency.",
                          str(exception))

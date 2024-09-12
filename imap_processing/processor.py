@@ -22,28 +22,8 @@ class Processor:
         self.start_date = start_date
         self.dependencies = dependencies
 
-    def format_time(self, t: Optional[datetime]) -> Optional[str]:
-        if t is not None:
-            return t.strftime("%Y%m%d")
-        return None
-
-    def _download_dependency(self, dependency: UpstreamDataDependency) -> Path:
-        files_to_download = [result['file_path'] for result in
-                             imap_data_access.query(instrument=dependency.instrument,
-                                                    data_level=dependency.data_level,
-                                                    descriptor=dependency.descriptor,
-                                                    start_date=self.format_time(dependency.start_date),
-                                                    end_date=self.format_time(dependency.end_date),
-                                                    version='latest'
-                                                    )]
-        if len(files_to_download) != 1:
-            raise ValueError(f"Unexpected files found for {self.instrument.upper()} L3:"
-                             f"{files_to_download}. Expected only one file to download.")
-
-        return imap_data_access.download(files_to_download[0])
-
     def upload_data(self, data: DataProduct, descriptor: str):
-        formatted_start_date = self.format_time(self.start_date)
+        formatted_start_date = format_time(self.start_date)
         logical_file_id = f'imap_{self.instrument}_{self.level}_{descriptor}-fake-menlo-{uuid.uuid4()}_{formatted_start_date}_{self.version}'
         file_path = f'{TEMP_CDF_FOLDER_PATH}/{logical_file_id}.cdf'
 
@@ -55,3 +35,25 @@ class Processor:
         attribute_manager.add_global_attribute("Logical_file_id", logical_file_id)
         write_cdf(file_path, data, attribute_manager)
         imap_data_access.upload(file_path)
+
+
+def format_time(t: Optional[datetime]) -> Optional[str]:
+    if t is not None:
+        return t.strftime("%Y%m%d")
+    return None
+
+
+def download_dependency(dependency: UpstreamDataDependency) -> Path:
+    print(dependency)
+    files_to_download = [result['file_path'] for result in
+                         imap_data_access.query(instrument=dependency.instrument,
+                                                data_level=dependency.data_level,
+                                                descriptor=dependency.descriptor,
+                                                start_date=format_time(dependency.start_date),
+                                                end_date=format_time(dependency.end_date),
+                                                version='latest'
+                                                )]
+    if len(files_to_download) != 1:
+        raise ValueError(f"{files_to_download}. Expected only one file to download.")
+
+    return imap_data_access.download(files_to_download[0])

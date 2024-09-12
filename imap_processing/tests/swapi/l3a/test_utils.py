@@ -51,22 +51,22 @@ class TestUtils(TestCase):
                                       second_chunk.coincidence_count_rate_uncertainty)
 
     def test_reading_l2_data_into_model(self):
-        cdf_path = Path('temp_cdf')
-        temp_cdf = CDF('temp_cdf','')
+        temp_cdf = CDF('temp_cdf', '')
         temp_cdf["epoch"] = np.array([datetime(2010, 1, 1, 0, 0, 46)])
-        temp_cdf["energy"] = np.array([1,2,3,4])
-        temp_cdf["swp_coin_rate"] = np.array([5,6,7,8])
-        temp_cdf["spin_angles"] = np.array([1,1,1,1,1,1,1])
-        temp_cdf["swp_coin_unc"] = np.array([2,2,2,2,2,2,2,2])
+        temp_cdf["energy"] = np.array([1, 2, 3, 4])
+        temp_cdf["swp_coin_rate"] = np.array([5, 6, 7, 8])
+        temp_cdf["spin_angles"] = np.array([1, 1, 1, 1, 1, 1, 1])
+        temp_cdf["swp_coin_unc"] = np.array([2, 2, 2, 2, 2, 2, 2, 2])
 
         temp_cdf.close()
 
-        actual_swapi_l2_data = read_l2_swapi_data(cdf_path)
+        actual_swapi_l2_data = read_l2_swapi_data(CDF("temp_cdf.cdf"))
 
         epoch_as_tt2000 = 315576112184000000
         np.testing.assert_array_equal(np.array(epoch_as_tt2000), actual_swapi_l2_data.epoch)
-        np.testing.assert_array_equal(np.array([1,2,3,4]),actual_swapi_l2_data.energy)
-        np.testing.assert_array_equal(np.array([5,6,7,8]),actual_swapi_l2_data.coincidence_count_rate)
-        np.testing.assert_array_equal(np.array([1,1,1,1,1,1,1]),actual_swapi_l2_data.spin_angles)
-        np.testing.assert_array_equal(np.array([2,2,2,2,2,2,2,2]),actual_swapi_l2_data.coincidence_count_rate_uncertainty)
+        np.testing.assert_array_equal(np.array([1, 2, 3, 4]), actual_swapi_l2_data.energy)
+        np.testing.assert_array_equal(np.array([5, 6, 7, 8]), actual_swapi_l2_data.coincidence_count_rate)
+        np.testing.assert_array_equal(np.array([1, 1, 1, 1, 1, 1, 1]), actual_swapi_l2_data.spin_angles)
+        np.testing.assert_array_equal(np.array([2, 2, 2, 2, 2, 2, 2, 2]),
+                                      actual_swapi_l2_data.coincidence_count_rate_uncertainty)
         os.remove('temp_cdf.cdf')
