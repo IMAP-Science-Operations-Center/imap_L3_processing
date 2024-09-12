@@ -217,7 +217,8 @@ class TestCalculateProtonSolarWindSpeed(TestCase):
                     exception = e
                 self.assertEqual(error_flag, did_error)
                 if did_error:
-                    self.assertEqual(("Failed to fit - chi-squared too large", expected_chi_squared), exception.args)
+                    self.assertEqual("Failed to fit - chi-squared too large", exception.args[0])
+                    self.assertAlmostEqual(expected_chi_squared, exception.args[1])
 
     def test_curve_fit(self):
         test_cases = [

@@ -138,7 +138,8 @@ class TestCalculateProtonSolarWindTemperatureAndDensity(TestCase):
                     did_error = True
                     exception = e
                 if did_error:
-                    self.assertEqual(("Failed to fit - chi-squared too large", expected_chi_squared), exception.args)
+                    self.assertEqual("Failed to fit - chi-squared too large", exception.args[0])
+                    self.assertAlmostEqual(expected_chi_squared, exception.args[1])
                 self.assertEqual(error_flag, did_error)
 
     def generate_lookup_table(self, speed_values, deflection_angle_values, clock_angle_values, density_values,
