@@ -4,12 +4,9 @@ from datetime import datetime
 from unittest import TestCase
 from unittest.mock import sentinel, patch, call
 
-from spacepy.pycdf import CDF
-
 from imap_processing.constants import TEMP_CDF_FOLDER_PATH
 from imap_processing.hit.l3.hit_processor import HITL3Processor
 from imap_processing.models import UpstreamDataDependency, InputMetadata
-from imap_processing.tests.utils import get_test_data_path
 
 
 class TestHITL3Processor(TestCase):
@@ -31,14 +28,14 @@ class TestHITL3Processor(TestCase):
         self.mock_imap_patcher.stop()
 
     def test_processor(self):
-        upstream_l2_data_dependency = UpstreamDataDependency("hit", "l2", "HIT_Flux_and_Count_Rate",
+        upstream_l2_data_dependency = UpstreamDataDependency("hit", "l2",
                                                              datetime(2024, 9, 8),
                                                              datetime(2024, 9, 9),
-                                                             "v001")
-        upstream_mag_data_dependency = UpstreamDataDependency("mag", "l2-pre", "mag_field",
+                                                             "v001","HIT_Flux_and_Count_Rate")
+        upstream_mag_data_dependency = UpstreamDataDependency("mag", "l2-pre",
                                                               datetime(2024, 9, 6),
                                                               datetime(2024, 9, 7),
-                                                              "v001")
+                                                              "v001", "mag_field")
 
         data_processor_start = datetime(2024, 9, 10)
         data_processor_end = datetime(2024, 9, 11)

@@ -1,17 +1,12 @@
-import os
-import shutil
-from pathlib import Path
-from unittest import TestCase
 from unittest.mock import Mock, call
 
 import numpy as np
 from spacepy import pycdf
 
-import imap_processing
 from imap_processing.cdf.cdf_utils import write_cdf
 from imap_processing.cdf.imap_attribute_manager import ImapAttributeManager
 from imap_processing.models import DataProduct, DataProductVariable
-from imap_processing.tests.temp_file_test_case import TempFileTestCase
+from tests.temp_file_test_case import TempFileTestCase
 
 
 class TestCdfUtils(TempFileTestCase):

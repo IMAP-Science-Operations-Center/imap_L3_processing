@@ -18,9 +18,9 @@ dependencies_list = json.loads(args.dependency.replace("'", '"'))
 
 if args.instrument == 'swapi':
     if args.level == 'l3a':
-        dependencies = [UpstreamDataDependency(d['instrument'], d['data_level'], d['descriptor'],
+        dependencies = [UpstreamDataDependency(d['instrument'], d['data_level'],
                                                None, None,
-                                               d['version']) for d in dependencies_list]
+                                               d['version'],  d['descriptor']) for d in dependencies_list]
         input_dependency = InputMetadata(args.instrument,
                                          args.level,
                                          datetime.strptime(args.start_date, '%Y%m%d'),

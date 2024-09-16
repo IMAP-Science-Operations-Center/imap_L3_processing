@@ -13,7 +13,7 @@ from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_temperature_a
     calculate_proton_solar_wind_temperature_and_density_for_one_sweep, TemperatureAndDensityCalibrationTable, \
     calculate_uncalibrated_proton_solar_wind_temperature_and_density, \
     calculate_proton_solar_wind_temperature_and_density
-from imap_processing.tests.swapi.l3a.science.test_calculate_alpha_solar_wind_speed import synthesize_uncertainties
+from tests.swapi.l3a.science.test_calculate_alpha_solar_wind_speed import synthesize_uncertainties
 
 
 class TestCalculateProtonSolarWindTemperatureAndDensity(TestCase):

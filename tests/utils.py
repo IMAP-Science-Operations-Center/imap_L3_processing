@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from imap_processing import tests
+import tests
 
 
 def get_test_data_path(filename: str) -> Path:
