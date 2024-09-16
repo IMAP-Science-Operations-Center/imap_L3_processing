@@ -43,5 +43,5 @@ jobs:
         run: |
           docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG \
             --build-arg GIT_URL=${{ inputs.git_url }} \
-            -f dockerfiles/Dockerfile.dev .
+            -f Dockerfile .
           docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
