@@ -11,6 +11,7 @@ from imap_processing.constants import TEMP_CDF_FOLDER_PATH
 from imap_processing.hit.l3.hit_processor import HITL3Processor, HIT_L2_DESCRIPTOR, MAG_L2_DESCRIPTOR
 from imap_processing.hit.l3.models import HitL2Data
 from imap_processing.models import UpstreamDataDependency, InputMetadata, MagL2Data
+from tests.test_helpers import NumpyArrayMatcher
 
 
 class TestHITL3Processor(TestCase):
@@ -34,8 +35,9 @@ class TestHITL3Processor(TestCase):
     @patch("imap_processing.hit.l3.hit_processor.CDF")
     @patch("imap_processing.hit.l3.hit_processor.read_l2_mag_data")
     @patch("imap_processing.hit.l3.hit_processor.read_l2_hit_data")
+    @patch("imap_processing.hit.l3.hit_processor.calculate_unit_vector")
     @patch('imap_processing.hit.l3.hit_processor.utils')
-    def test_processor(self, mock_utils, mock_read_hit_data, mock_read_mag_data, mock_cdf_constructor):
+    def test_processor(self, mock_utils, mock_calculate_unit_vector, mock_read_hit_data, mock_read_mag_data, mock_cdf_constructor):
         mock_cdf_constructor.side_effect = [sentinel.hit_cdf, sentinel.mag_cdf]
 
         hit_data = HitL2Data(
@@ -46,7 +48,7 @@ class TestHITL3Processor(TestCase):
             uncertainty=np.array([2, 2, 2, 2, 2, 2, 2, 2]),
         )
         mag_data = MagL2Data(
-            epoch=np.array([datetime(2010, 1, 1, 0, 0, 46)]),
+            epoch=np.array([datetime(2010, 1, 1, 0, 0, 46), datetime(2010, 1, 1, 0, 1, 46), datetime(2010, 1, 1, 0, 2, 46)]),
             mag_data=np.array([[0, 1, 2], [3, 4, 5], [6, 7, 8]])
         )
         mock_read_hit_data.return_value = hit_data
@@ -56,7 +58,7 @@ class TestHITL3Processor(TestCase):
                                                              datetime(2024, 9, 8),
                                                              datetime(2024, 9, 9),
                                                              "v001","let1-rates3600-fake-menlo")
-        upstream_mag_data_dependency = UpstreamDataDependency("mag", "l2-pre",
+        upstream_mag_data_dependency = UpstreamDataDependency("mag", "l2",
                                                               datetime(2024, 9, 6),
                                                               datetime(2024, 9, 7),
                                                               "v001", "fake-menlo-mag-SC-1min")
@@ -92,6 +94,12 @@ class TestHITL3Processor(TestCase):
 
         mock_read_hit_data.assert_called_with(sentinel.hit_cdf)
         mock_read_mag_data.assert_called_with(sentinel.mag_cdf)
+        mock_calculate_unit_vector.assert_has_calls([
+            call(NumpyArrayMatcher([0, 1, 2])),
+            call(NumpyArrayMatcher([3, 4, 5])),
+            call(NumpyArrayMatcher([6, 7, 8]))
+        ])
+
 
     def test_throws_value_error_if_dependency_not_found(self):
         upstream_l2_data_dependency = UpstreamDataDependency("hit", "l2",

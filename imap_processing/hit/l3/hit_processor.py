@@ -1,8 +1,9 @@
 import imap_data_access
 from spacepy.pycdf import CDF
+from spiceypy import spiceypy
 
 from imap_processing import utils
-from imap_processing.hit.l3.utils import read_l2_hit_data
+from imap_processing.hit.l3.utils import read_l2_hit_data, calculate_unit_vector
 from imap_processing.processor import Processor
 from imap_processing.utils import format_time, read_l2_mag_data
 
@@ -30,3 +31,6 @@ class HITL3Processor(Processor):
 
         hit_data = read_l2_hit_data(CDF(str(l2_data_dependency_path)))
         mag_data = read_l2_mag_data(CDF(str(l2_mag_dependency_path)))
+
+        mag_unit_vectors = [calculate_unit_vector(mag_data.mag_data[epoch_index]) for epoch_index in
+                            range(len(mag_data.epoch))]

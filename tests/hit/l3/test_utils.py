@@ -5,7 +5,7 @@ from unittest import TestCase
 import numpy as np
 from spacepy.pycdf import CDF
 
-from imap_processing.hit.l3.utils import read_l2_hit_data
+from imap_processing.hit.l3.utils import read_l2_hit_data, calculate_pitch_angle, calculate_unit_vector
 from imap_processing.utils import read_l2_mag_data
 
 
@@ -33,4 +33,26 @@ class TestUtils(TestCase):
         np.testing.assert_array_equal(hit_cdf["R26A_H_SECT_Flux"], results.flux)
         np.testing.assert_array_equal(hit_cdf["R26A_H_SECT_Rate"], results.count_rates)
         np.testing.assert_array_equal(hit_cdf["R26A_H_SECT_Uncertainty"], results.uncertainty)
+
+    def test_calculate_pitch_angle(self):
+        hit_unit_vector = np.array([-0.09362045,  0.8466484,  0.5238528])
+        mag_unit_vector = np.array([-0.42566603,  0.7890057,  0.44303328])
+
+        actual_pitch_angle = calculate_pitch_angle(hit_unit_vector, mag_unit_vector)
+        self.assertAlmostEqual(19.957563418693166, actual_pitch_angle)
+
+    def test_calculate_pitch_angle_throws_exception_if_inputs_of_unequal_length(self):
+        vector_a = np.array([1, 2, 3, 4, 5])
+        vector_b = np.array([6, 7])
+
+        with self.assertRaises(Exception) as cm:
+            calculate_pitch_angle(vector_a, vector_b)
+        self.assertEqual(str(cm.exception), "Input vectors are of unequal length 5 and 2")
+
+    def test_calculate_unit_vector(self):
+        vector = np.array([27, 34, 56])
+
+        unit_vector = calculate_unit_vector(vector)
+
+        np.testing.assert_array_almost_equal(np.array([0.38103832, 0.47982603, 0.7903017]), unit_vector)
 
