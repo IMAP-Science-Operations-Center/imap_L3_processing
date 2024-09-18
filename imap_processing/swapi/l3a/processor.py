@@ -18,8 +18,9 @@ from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_temperature_a
 from imap_processing.swapi.l3a.utils import read_l2_swapi_data, chunk_l2_data
 from imap_processing.utils import download_dependency, upload_data
 
-SWAPI_L2_DESCRIPTOR = "fake-menlo-5-sweeps"
+SWAPI_L2_DESCRIPTOR = "sci"
 TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR = "density-temperature-lut-text-not-cdf"
+CLOCK_ANGLE_AND_FLOW_DEFLECTION_LOOKUP_TABLE_DESCRIPTOR = "clock-angle-and-flow-deflection-lut-text-not-cdf"
 
 
 @dataclass
@@ -33,35 +34,32 @@ class SwapiL3ADependencies:
         try:
             data_dependency = next(
                 dep for dep in dependencies if dep.descriptor == SWAPI_L2_DESCRIPTOR)
-            data_dependency_path = download_dependency(data_dependency)
         except StopIteration:
             raise ValueError(f"Missing {SWAPI_L2_DESCRIPTOR} dependency.")
-        except ValueError as e:
-            raise ValueError(f"Unexpected files found for SWAPI L3:"
-                             f"{e}")
 
-        try:
-            calibration_table_dependency = next(
-                dep for dep in dependencies if dep.descriptor == TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR)
-            calibration_table_dependency = dataclasses.replace(calibration_table_dependency, start_date=None,
-                                                               end_date=None)
-            calibration_table_dependency_path = download_dependency(calibration_table_dependency)
-        except StopIteration:
-            raise ValueError(f"Missing {TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR} dependency.")
-        except ValueError as e:
-            raise ValueError(f"Unexpected files found for SWAPI L3:"
-                             f"{e}")
-
-        temperature_and_density_calibration_file = TemperatureAndDensityCalibrationTable.from_file(
-            calibration_table_dependency_path)
-        data_file = CDF(str(data_dependency_path))
+        density_and_temperature_calibration_file = UpstreamDataDependency("swapi", "l2", None, None,
+                                                                          "latest",
+                                                                          TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR)
 
         clock_angle_and_deflection_calibration_table_dependency = UpstreamDataDependency("swapi", "l2", None, None,
                                                                                          "latest",
-                                                                                         "clock-angle-and-flow-deflection-lut-text-not-cdf")
-        clock_and_deflection_file_path = download_dependency(clock_angle_and_deflection_calibration_table_dependency)
+                                                                                         CLOCK_ANGLE_AND_FLOW_DEFLECTION_LOOKUP_TABLE_DESCRIPTOR)
+        try:
+            data_dependency_path = download_dependency(data_dependency)
+            density_and_temperature_calibration_file_path = download_dependency(
+                density_and_temperature_calibration_file)
+            clock_and_deflection_file_path = download_dependency(
+                clock_angle_and_deflection_calibration_table_dependency)
+        except ValueError as e:
+            raise ValueError(f"Unexpected files found for SWAPI L3:"
+                             f"{e}")
+
+        data_file = CDF(str(data_dependency_path))
+        temperature_and_density_calibration_file = TemperatureAndDensityCalibrationTable.from_file(
+            density_and_temperature_calibration_file_path)
 
         clock_angle_calibration_file = ClockAngleCalibrationTable.from_file(clock_and_deflection_file_path)
+
         return cls(data_file, temperature_and_density_calibration_file, clock_angle_calibration_file)
 
 

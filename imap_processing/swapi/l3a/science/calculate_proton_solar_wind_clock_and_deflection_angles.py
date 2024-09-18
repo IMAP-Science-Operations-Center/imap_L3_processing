@@ -1,5 +1,6 @@
 import numpy as np
 import scipy
+import uncertainties
 
 from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_speed import calculate_proton_solar_wind_speed
 
@@ -15,10 +16,12 @@ class ClockAngleCalibrationTable:
         self.deflection_angle = calibration_table[:, 2].reshape(values_shape)
         self.phi_offset = calibration_table[:, 3].reshape(values_shape)
 
+    @uncertainties.wrap
     def lookup_clock_offset(self, sw_speed, a_over_b):
         return scipy.interpolate.interpn(self.grid, self.phi_offset,
                                          [sw_speed, a_over_b])[0]
 
+    @uncertainties.wrap
     def lookup_flow_deflection(self, sw_speed, a_over_b):
         return scipy.interpolate.interpn(self.grid, self.deflection_angle, [sw_speed, a_over_b])[0]
 
