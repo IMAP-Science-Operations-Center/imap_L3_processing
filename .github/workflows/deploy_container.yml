@@ -39,7 +39,7 @@ jobs:
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           REPOSITORY: ${{ inputs.instrument_name}}-l3-repo
-          IMAGE_TAG: latest-${{ inputs.instrument_name}}
+          IMAGE_TAG: latest
         run: |
           docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG \
             --build-arg GIT_URL=${{ inputs.git_url }} \
