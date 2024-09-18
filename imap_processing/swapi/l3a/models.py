@@ -25,6 +25,8 @@ class SwapiL3ProtonSolarWindData(DataProduct):
     proton_sw_speed: np.ndarray[float]
     proton_sw_temperature: np.ndarray[float]
     proton_sw_density: np.ndarray[float]
+    proton_sw_clock_angle: np.ndarray[float]
+    proton_sw_deflection_angle: np.ndarray[float]
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [

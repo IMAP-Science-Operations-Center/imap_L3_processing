@@ -26,7 +26,8 @@ class TestModels(TestCase):
         expected_density_nominal_values = np.arange(3, 13, step=1)
         expected_density_std = np.arange(1, step=.1)
         density_data = uarray(expected_density_nominal_values, expected_density_std)
-        data = SwapiL3ProtonSolarWindData(Mock(), epoch_data, proton_speed, temperature_data, density_data)
+        data = SwapiL3ProtonSolarWindData(Mock(), epoch_data, proton_speed, temperature_data, density_data, Mock(),
+                                          Mock())
         variables = data.to_data_product_variables()
 
         self._assert_variable_attributes(variables[0], epoch_data, EPOCH_CDF_VAR_NAME, pycdf.const.CDF_TIME_TT2000)
