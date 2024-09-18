@@ -27,7 +27,16 @@ class TestImapCdfManager(TestCase):
         base_manager.load_global_attributes('imap_swapi_l3a_global_cdf_attrs.yaml')
         base_manager.load_variable_attributes('imap_swapi_l3a_variable_attrs.yaml')
         self.assertEqual(base_manager.get_global_attributes(), manager.get_global_attributes())
-        self.assertEqual(base_manager.get_variable_attributes('epoch'),manager.get_variable_attributes('epoch'))
-        self.assertEqual(base_manager.get_variable_attributes('proton_sw_speed_delta'),manager.get_variable_attributes('proton_sw_speed_delta'))
-        self.assertEqual(base_manager.get_variable_attributes('proton_sw_speed'),manager.get_variable_attributes('proton_sw_speed'))
-
+        self.assertEqual(base_manager.get_variable_attributes('epoch'), manager.get_variable_attributes('epoch'))
+        self.assertEqual(base_manager.get_variable_attributes('proton_sw_speed_delta'),
+                         manager.get_variable_attributes('proton_sw_speed_delta'))
+        self.assertEqual(base_manager.get_variable_attributes('proton_sw_speed'),
+                         manager.get_variable_attributes('proton_sw_speed'))
+        self.assertEqual(base_manager.get_variable_attributes('proton_sw_clock_angle'),
+                         manager.get_variable_attributes('proton_sw_clock_angle'))
+        self.assertEqual(base_manager.get_variable_attributes('proton_sw_clock_angle_delta'),
+                         manager.get_variable_attributes('proton_sw_clock_angle_delta'))
+        self.assertEqual(base_manager.get_variable_attributes('proton_sw_flow_deflection'),
+                         manager.get_variable_attributes('proton_sw_flow_deflection'))
+        self.assertEqual(base_manager.get_variable_attributes('proton_sw_flow_deflection_delta'),
+                         manager.get_variable_attributes('proton_sw_flow_deflection_delta'))

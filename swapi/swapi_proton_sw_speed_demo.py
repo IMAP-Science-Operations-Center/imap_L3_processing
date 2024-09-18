@@ -7,6 +7,8 @@ from spacepy.pycdf import CDF
 from uncertainties.unumpy import uarray, nominal_values, std_devs
 
 from imap_processing.swapi.l3a.models import SwapiL2Data
+from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_clock_and_deflection_angles import \
+    calculate_clock_angle, calculate_deflection_angle
 from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_speed import sine_fit_function, \
     calculate_proton_solar_wind_speed, calculate_proton_centers_of_mass, extract_coarse_sweep
 
@@ -61,6 +63,20 @@ def plot_variation_in_center_of_mass(a, phi, b, spin_angles, centers_of_mass):
 
     plot.plot(fit_xs, fit_ys)
     plot.set(xlabel="Phase Angle", ylabel="Energy")
+
+
+def run_example_dat_files():
+    data = read_l2_data_from_dat("swapi/test_data/swapi_test_data_v2.dat")
+    coincident_count_rate = uarray(data.coincidence_count_rate, data.coincidence_count_rate_uncertainty)
+    proton_sw_speed, a, phi, b = calculate_proton_solar_wind_speed(coincident_count_rate, data.spin_angles, data.energy,
+                                                                   data.epoch)
+
+    clock_angle = calculate_clock_angle(proton_sw_speed, a, phi, b)
+
+    deflection_angle = calculate_deflection_angle(proton_sw_speed, a, phi, b)
+
+    print(f"clock: {clock_angle}")
+    print(f"deflection angle: {deflection_angle}")
 
 
 def main(file_path):

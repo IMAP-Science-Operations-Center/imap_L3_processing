@@ -69,6 +69,48 @@ proton_sw_density_delta:
   FIELDNAM: proton_sw_density_delta
   UNITS: cm!E-3!N
 
+proton_sw_clock_angle:
+  <<: *default_timeseries
+  CATDESC: Clock Angle of Proton Solar Wind
+  FIELDNAM: proton_sw_clock_angle
+  DELTA_MINUS_VAR: proton_sw_clock_angle_delta
+  DELTA_PLUS_VAR: proton_sw_clock_angle_delta
+  LABLAXIS: Proton Solar Wind Clock Angle
+  UNITS: Degrees
+  SCALETYP: linear
+  VAR_TYPE: data
+  DISPLAY_TYPE: time_series
+  SCALEMIN: 0
+  SCALEMAX: 360
+
+proton_sw_clock_angle_delta:
+  <<: *default_timeseries
+  VAR_TYPE: support_data
+  CATDESC: Proton Solar Wind Clock Angle Uncertainty
+  FIELDNAM: proton_sw_clock_angle_delta
+  UNITS: Degrees
+
+proton_sw_flow_deflection:
+  <<: *default_timeseries
+  CATDESC: Flow Deflection of Proton Solar Wind
+  FIELDNAM: proton_sw_flow_deflection
+  DELTA_MINUS_VAR: proton_sw_flow_deflection_delta
+  DELTA_PLUS_VAR: proton_sw_flow_deflection_delta
+  LABLAXIS: Proton Solar Wind Flow Deflection
+  UNITS: Degrees
+  SCALETYP: linear
+  VAR_TYPE: data
+  DISPLAY_TYPE: time_series
+  SCALEMIN: 0
+  SCALEMAX: 360
+
+proton_sw_flow_deflection_delta:
+  <<: *default_timeseries
+  VAR_TYPE: support_data
+  CATDESC: Proton Solar Wind Flow Deflection Uncertainty
+  FIELDNAM: proton_sw_flow_deflection_delta
+  UNITS: Degrees
+
 alpha_sw_speed:
   <<: *default_timeseries
   CATDESC: Speed of Alpha Solar Wind
@@ -89,6 +131,7 @@ alpha_sw_speed_delta:
   CATDESC: Alpha Solar Wind Speed Uncertainty
   FIELDNAM: alpha_sw_speed_delta
   UNITS: km/s
+
 
 epoch:
   CATDESC: Time, number of nanoseconds since J2000 with leap seconds included

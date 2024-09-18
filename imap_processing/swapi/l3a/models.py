@@ -15,6 +15,13 @@ PROTON_SOLAR_WIND_TEMPERATURE_CDF_VAR_NAME = "proton_sw_temperature"
 PROTON_SOLAR_WIND_TEMPERATURE_UNCERTAINTY_CDF_VAR_NAME = "proton_sw_temperature_delta"
 PROTON_SOLAR_WIND_DENSITY_CDF_VAR_NAME = "proton_sw_density"
 PROTON_SOLAR_WIND_DENSITY_UNCERTAINTY_CDF_VAR_NAME = "proton_sw_density_delta"
+
+PROTON_SOLAR_WIND_CLOCK_ANGLE_CDF_VAR_NAME = "proton_sw_clock_angle"
+PROTON_SOLAR_WIND_CLOCK_ANGLE_UNCERTAINTY_CDF_VAR_NAME = "proton_sw_clock_angle_delta"
+
+PROTON_SOLAR_WIND_FLOW_DEFLECTION_CDF_VAR_NAME = "proton_sw_flow_deflection"
+PROTON_SOLAR_WIND_FLOW_DEFLECTION_UNCERTAINTY_CDF_VAR_NAME = "proton_sw_flow_deflection_delta"
+
 ALPHA_SOLAR_WIND_SPEED_CDF_VAR_NAME = "alpha_sw_speed"
 ALPHA_SOLAR_WIND_SPEED_UNCERTAINTY_CDF_VAR_NAME = "alpha_sw_speed_delta"
 
@@ -40,6 +47,13 @@ class SwapiL3ProtonSolarWindData(DataProduct):
             DataProductVariable(PROTON_SOLAR_WIND_DENSITY_CDF_VAR_NAME, nominal_values(self.proton_sw_density)),
             DataProductVariable(PROTON_SOLAR_WIND_DENSITY_UNCERTAINTY_CDF_VAR_NAME,
                                 std_devs(self.proton_sw_density)),
+            DataProductVariable(PROTON_SOLAR_WIND_CLOCK_ANGLE_CDF_VAR_NAME, nominal_values(self.proton_sw_clock_angle)),
+            DataProductVariable(PROTON_SOLAR_WIND_CLOCK_ANGLE_UNCERTAINTY_CDF_VAR_NAME,
+                                std_devs(self.proton_sw_clock_angle)),
+            DataProductVariable(PROTON_SOLAR_WIND_FLOW_DEFLECTION_CDF_VAR_NAME,
+                                nominal_values(self.proton_sw_deflection_angle)),
+            DataProductVariable(PROTON_SOLAR_WIND_FLOW_DEFLECTION_UNCERTAINTY_CDF_VAR_NAME,
+                                std_devs(self.proton_sw_deflection_angle))
         ]
 
 
