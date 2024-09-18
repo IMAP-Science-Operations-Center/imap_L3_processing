@@ -5,12 +5,13 @@ from pathlib import Path
 from typing import Optional
 
 import imap_data_access
+from spacepy.pycdf import CDF
 from spiceypy import spiceypy
 
 from imap_processing.cdf.cdf_utils import write_cdf
 from imap_processing.cdf.imap_attribute_manager import ImapAttributeManager
 from imap_processing.constants import TEMP_CDF_FOLDER_PATH
-from imap_processing.models import UpstreamDataDependency, DataProduct
+from imap_processing.models import UpstreamDataDependency, DataProduct, MagL2Data
 
 
 def load_spice_kernels():
@@ -54,3 +55,9 @@ def download_dependency(dependency: UpstreamDataDependency) -> Path:
         raise ValueError(f"{files_to_download}. Expected only one file to download.")
 
     return imap_data_access.download(files_to_download[0])
+
+
+def read_l2_mag_data(cdf: CDF) -> MagL2Data:
+    return MagL2Data(
+        epoch=cdf.raw_var("epoch_mag_SC_1min")[...],
+        mag_data=cdf["psp_fld_l2_mag_SC_1min"][...])

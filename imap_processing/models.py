@@ -40,3 +40,9 @@ class DataProduct(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def to_data_product_variables(self) -> list[DataProductVariable]:
         raise NotImplemented
+
+
+@dataclass
+class MagL2Data:
+    epoch: np.ndarray[float]
+    mag_data: np.ndarray[float]

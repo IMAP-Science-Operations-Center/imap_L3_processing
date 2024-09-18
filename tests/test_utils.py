@@ -1,16 +1,26 @@
+import os
 from datetime import datetime, date
 from unittest import TestCase
 from unittest.mock import patch, call
 
 import numpy as np
+from spacepy.pycdf import CDF
 
 from imap_processing.constants import TEMP_CDF_FOLDER_PATH
 from imap_processing.models import UpstreamDataDependency
 from imap_processing.swapi.l3a.models import SwapiL3AlphaSolarWindData
-from imap_processing.utils import upload_data, format_time, download_dependency
+from imap_processing.utils import upload_data, format_time, download_dependency, read_l2_mag_data
 
 
 class TestUtils(TestCase):
+    def setUp(self) -> None:
+        if os.path.exists('test_cdf.cdf'):
+            os.remove('test_cdf.cdf')
+
+    def tearDown(self) -> None:
+        if os.path.exists('test_cdf.cdf'):
+            os.remove('test_cdf.cdf')
+
     @patch("imap_processing.utils.ImapAttributeManager")
     @patch("imap_processing.utils.date")
     @patch("imap_processing.utils.uuid.uuid4")
@@ -88,3 +98,14 @@ class TestUtils(TestCase):
             download_dependency(dependency)
 
         self.assertEqual("['imap_swapi_l2_descriptor-fake-menlo-444_20240917_v2.cdf', 'extra_value']. Expected only one file to download.", str(cm.exception))
+
+    def test_read_l2_mag_data(self):
+        mag_cdf = CDF("test_cdf", "")
+        mag_cdf["epoch_mag_SC_1min"] = np.array([datetime(2010, 1, 1, 0, 0, 46)])
+        mag_cdf["psp_fld_l2_mag_SC_1min"] = np.array([[0, 1, 2], [3, 4, 5], [6, 7, 8]])
+
+        results = read_l2_mag_data(mag_cdf)
+
+        epoch_as_tt2000 = 315576112184000000
+        np.testing.assert_array_equal([epoch_as_tt2000], results.epoch)
+        np.testing.assert_array_equal(mag_cdf["psp_fld_l2_mag_SC_1min"], results.mag_data)
