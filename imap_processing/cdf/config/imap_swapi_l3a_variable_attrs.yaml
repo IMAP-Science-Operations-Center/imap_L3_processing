@@ -90,13 +90,13 @@ proton_sw_clock_angle_delta:
   FIELDNAM: proton_sw_clock_angle_delta
   UNITS: Degrees
 
-proton_sw_flow_deflection:
+proton_sw_deflection_angle:
   <<: *default_timeseries
-  CATDESC: Flow Deflection of Proton Solar Wind
-  FIELDNAM: proton_sw_flow_deflection
-  DELTA_MINUS_VAR: proton_sw_flow_deflection_delta
-  DELTA_PLUS_VAR: proton_sw_flow_deflection_delta
-  LABLAXIS: Proton Solar Wind Flow Deflection
+  CATDESC: Deflection Angle of Proton Solar Wind
+  FIELDNAM: proton_sw_deflection_angle
+  DELTA_MINUS_VAR: proton_sw_deflection_angle_delta
+  DELTA_PLUS_VAR: proton_sw_deflection_angle_delta
+  LABLAXIS: Proton Solar Wind Deflection Angle
   UNITS: Degrees
   SCALETYP: linear
   VAR_TYPE: data
@@ -104,11 +104,11 @@ proton_sw_flow_deflection:
   SCALEMIN: 0
   SCALEMAX: 360
 
-proton_sw_flow_deflection_delta:
+proton_sw_deflection_angle_delta:
   <<: *default_timeseries
   VAR_TYPE: support_data
-  CATDESC: Proton Solar Wind Flow Deflection Uncertainty
-  FIELDNAM: proton_sw_flow_deflection_delta
+  CATDESC: Proton Solar Wind Deflection Angle Uncertainty
+  FIELDNAM: proton_sw_deflection_angle_delta
   UNITS: Degrees
 
 alpha_sw_speed:

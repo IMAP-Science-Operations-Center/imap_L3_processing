@@ -12,8 +12,8 @@ from imap_processing.swapi.l3a.models import SwapiL3ProtonSolarWindData, EPOCH_C
     ALPHA_SOLAR_WIND_SPEED_UNCERTAINTY_CDF_VAR_NAME, PROTON_SOLAR_WIND_TEMPERATURE_CDF_VAR_NAME, \
     PROTON_SOLAR_WIND_TEMPERATURE_UNCERTAINTY_CDF_VAR_NAME, PROTON_SOLAR_WIND_DENSITY_CDF_VAR_NAME, \
     PROTON_SOLAR_WIND_DENSITY_UNCERTAINTY_CDF_VAR_NAME, PROTON_SOLAR_WIND_CLOCK_ANGLE_CDF_VAR_NAME, \
-    PROTON_SOLAR_WIND_CLOCK_ANGLE_UNCERTAINTY_CDF_VAR_NAME, PROTON_SOLAR_WIND_FLOW_DEFLECTION_CDF_VAR_NAME, \
-    PROTON_SOLAR_WIND_FLOW_DEFLECTION_UNCERTAINTY_CDF_VAR_NAME
+    PROTON_SOLAR_WIND_CLOCK_ANGLE_UNCERTAINTY_CDF_VAR_NAME, PROTON_SOLAR_WIND_DEFLECTION_ANGLE_CDF_VAR_NAME, \
+    PROTON_SOLAR_WIND_DEFLECTION_ANGLE_UNCERTAINTY_CDF_VAR_NAME
 
 
 class TestModels(TestCase):
@@ -56,9 +56,9 @@ class TestModels(TestCase):
         self._assert_variable_attributes(variables[9], expected_clock_angle_std,
                                          PROTON_SOLAR_WIND_CLOCK_ANGLE_UNCERTAINTY_CDF_VAR_NAME)
         self._assert_variable_attributes(variables[10], expected_flow_deflection,
-                                         PROTON_SOLAR_WIND_FLOW_DEFLECTION_CDF_VAR_NAME)
+                                         PROTON_SOLAR_WIND_DEFLECTION_ANGLE_CDF_VAR_NAME)
         self._assert_variable_attributes(variables[11], expected_flow_deflection_std,
-                                         PROTON_SOLAR_WIND_FLOW_DEFLECTION_UNCERTAINTY_CDF_VAR_NAME)
+                                         PROTON_SOLAR_WIND_DEFLECTION_ANGLE_UNCERTAINTY_CDF_VAR_NAME)
 
     def test_getting_alpha_sw_data_product_variables(self):
         epoch_data = np.arange(20, step=2)

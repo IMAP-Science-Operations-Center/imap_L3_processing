@@ -92,8 +92,8 @@ class TestProcessor(TestCase):
         returned_proton_sw_clock_angle = ufloat(200, 0.25)
         mock_calculate_clock_angle.return_value = returned_proton_sw_clock_angle
 
-        returned_proton_sw_flow_deflection = ufloat(5, 0.001)
-        mock_calculate_deflection_angle.return_value = returned_proton_sw_flow_deflection
+        returned_proton_sw_deflection_angle = ufloat(5, 0.001)
+        mock_calculate_deflection_angle.return_value = returned_proton_sw_deflection_angle
 
         initial_epoch = 10
 
@@ -193,7 +193,9 @@ class TestProcessor(TestCase):
                                       std_devs(mock_calculate_alpha_solar_wind_speed.call_args_list[0].args[0]))
         np.testing.assert_array_equal(energy, mock_calculate_alpha_solar_wind_speed.call_args_list[0].args[1])
 
-        actual_proton_metadata, actual_proton_epoch, actual_proton_sw_speed, actual_proton_sw_temperature, actual_proton_sw_density, actual_proton_sw_clock_angle, actual_proton_sw_flow_deflection = mock_proton_solar_wind_data_constructor.call_args.args
+        (actual_proton_metadata, actual_proton_epoch, actual_proton_sw_speed, actual_proton_sw_temperature,
+         actual_proton_sw_density, actual_proton_sw_clock_angle,
+         actual_proton_sw_deflection_angle) = mock_proton_solar_wind_data_constructor.call_args.args
 
         self.assertEqual(expected_proton_metadata, actual_proton_metadata)
 
@@ -204,7 +206,8 @@ class TestProcessor(TestCase):
         np.testing.assert_array_equal(np.array([returned_proton_sw_density]), actual_proton_sw_density, strict=True)
         np.testing.assert_array_equal(np.array([returned_proton_sw_clock_angle]), actual_proton_sw_clock_angle,
                                       strict=True)
-        np.testing.assert_array_equal(np.array([returned_proton_sw_flow_deflection]), actual_proton_sw_flow_deflection,
+        np.testing.assert_array_equal(np.array([returned_proton_sw_deflection_angle]),
+                                      actual_proton_sw_deflection_angle,
                                       strict=True)
 
         proton_cdf_path = f"{self.temp_directory}/imap_swapi_l3a_proton-sw-fake-menlo-{mock_uuid_value}_{start_date_as_str}_12345.cdf"
