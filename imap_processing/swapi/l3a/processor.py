@@ -94,6 +94,8 @@ class SwapiL3AProcessor(Processor):
         proton_solar_wind_deflection_angles = []
 
         alpha_solar_wind_speeds = []
+        alpha_solar_wind_densities = []
+        alpha_solar_wind_temperatures = []
 
         for data_chunk in chunk_l2_data(data, 5):
             coincidence_count_rates_with_uncertainty = uarray(data_chunk.coincidence_count_rate,
@@ -134,7 +136,11 @@ class SwapiL3AProcessor(Processor):
                 coincidence_count_rates_with_uncertainty,
                 data_chunk.energy)
 
+            alpha_solar_wind_densities.append(alpha_density)
+            alpha_solar_wind_temperatures.append(alpha_temperature)
+
         proton_solar_wind_speed_metadata = self.input_metadata.to_upstream_data_dependency("proton-sw")
+
         proton_solar_wind_l3_data = SwapiL3ProtonSolarWindData(proton_solar_wind_speed_metadata, np.array(epochs),
                                                                np.array(proton_solar_wind_speeds),
                                                                np.array(proton_solar_wind_temperatures),
@@ -145,5 +151,7 @@ class SwapiL3AProcessor(Processor):
 
         alpha_solar_wind_speed_metadata = self.input_metadata.to_upstream_data_dependency("alpha-sw")
         alpha_solar_wind_l3_data = SwapiL3AlphaSolarWindData(alpha_solar_wind_speed_metadata, np.array(epochs),
-                                                             np.array(alpha_solar_wind_speeds))
+                                                             np.array(alpha_solar_wind_speeds),
+                                                             np.array(alpha_solar_wind_temperatures),
+                                                             np.array(alpha_solar_wind_densities))
         upload_data(alpha_solar_wind_l3_data)

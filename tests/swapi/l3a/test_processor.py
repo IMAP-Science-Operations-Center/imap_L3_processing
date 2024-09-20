@@ -255,13 +255,18 @@ class TestProcessor(TestCase):
                                                                  f"imap_swapi_l3a_alpha-sw-fake-menlo-{mock_uuid_value}_{start_date_as_str}_12345"),
                                                             ])
 
-        actual_alpha_metadata, actual_alpha_epoch, actual_alpha_sw_speed = mock_alpha_solar_wind_data_constructor.call_args.args
+        actual_alpha_metadata, actual_alpha_epoch, actual_alpha_sw_speed, actual_alpha_sw_temperature, actual_alpha_sw_density = mock_alpha_solar_wind_data_constructor.call_args.args
         expected_alpha_metadata = input_metadata.to_upstream_data_dependency("alpha-sw")
         self.assertEqual(expected_alpha_metadata, actual_alpha_metadata)
 
         np.testing.assert_array_equal(np.array([initial_epoch + THIRTY_SECONDS_IN_NANOSECONDS]), actual_alpha_epoch)
         np.testing.assert_array_equal(np.array([mock_calculate_alpha_solar_wind_speed.return_value]),
                                       actual_alpha_sw_speed)
+        np.testing.assert_array_equal(np.array([mock_alpha_calculate_temperature_and_density.return_value[0]]),
+                                      actual_alpha_sw_temperature)
+        np.testing.assert_array_equal(np.array([mock_alpha_calculate_temperature_and_density.return_value[1]]),
+                                      actual_alpha_sw_density)
+
         mock_manager.add_instrument_attrs.assert_has_calls([call("swapi", "l3a"), call("swapi", "l3a")])
         mock_write_cdf.assert_has_calls([
             call(proton_cdf_path, proton_solar_wind_data, mock_manager),

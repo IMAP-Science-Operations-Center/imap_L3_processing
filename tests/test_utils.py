@@ -34,9 +34,13 @@ class TestUtils(TestCase):
                                                 "descriptor")
         epoch = np.array([1, 2, 3])
         alpha_sw_speed = np.array([4, 5, 6])
+        alpha_sw_density = np.array([5, 5, 5])
+        alpha_sw_temperature = np.array([4, 3, 5])
 
         data_product = SwapiL3AlphaSolarWindData(input_metadata=input_metadata, epoch=epoch,
-                                                 alpha_sw_speed=alpha_sw_speed)
+                                                 alpha_sw_speed=alpha_sw_speed,
+                                                 alpha_sw_temperature=alpha_sw_temperature,
+                                                 alpha_sw_density=alpha_sw_density)
         upload_data(data_product)
 
         mock_write_cdf.assert_called_once()
