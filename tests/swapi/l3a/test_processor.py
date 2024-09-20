@@ -36,9 +36,6 @@ class TestProcessor(TestCase):
         shutil.rmtree(self.temp_directory)
         self.mock_imap_patcher.stop()
 
-    def test_output_cdf_has_clock_angle_and_flow_deflection(self):
-        pass
-
     @patch('imap_processing.utils.ImapAttributeManager')
     @patch('imap_processing.swapi.l3a.processor.SwapiL3AlphaSolarWindData')
     @patch('imap_processing.swapi.l3a.processor.SwapiL3ProtonSolarWindData')

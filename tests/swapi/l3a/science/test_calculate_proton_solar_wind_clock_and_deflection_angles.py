@@ -5,7 +5,7 @@ from uncertainties import ufloat
 
 import imap_processing
 from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_clock_and_deflection_angles import \
-    calculate_clock_angle, ClockAngleCalibrationTable
+    calculate_clock_angle, ClockAngleCalibrationTable, calculate_deflection_angle
 
 
 class TestCalculateProtonSolarWindClockAndDeflectionAngles(TestCase):
@@ -23,13 +23,22 @@ class TestCalculateProtonSolarWindClockAndDeflectionAngles(TestCase):
         self.assertAlmostEqual(0.1, clock_angle.s, 4)
 
     def test_calculate_clock_angle_with_interpolation(self):
-        proton_solar_wind_speed, a, phi, b = (ufloat(850.00, .1),
-                                              ufloat(48.75, .2),
+        proton_solar_wind_speed, a, phi, b = (ufloat(845.00, .1),
+                                              ufloat(31.25, .2),
                                               ufloat(33.3, .2),
                                               ufloat(1_000.0, .2))
         clock_angle = calculate_clock_angle(self.lookup_table, proton_solar_wind_speed, a, phi, b)
-        self.assertAlmostEqual(phi.n + 6.95, clock_angle.n, 4)
-        self.assertAlmostEqual(phi.s, clock_angle.s, 4)
+        self.assertAlmostEqual(phi.n + 6.39, clock_angle.n, 4)
+        self.assertAlmostEqual(phi.s, clock_angle.s, 3)
+
+    def test_calculate_deflection_angle_with_interpolation(self):
+        proton_solar_wind_speed, a, phi, b = (ufloat(845.00, .1),
+                                              ufloat(31.25, .2),
+                                              ufloat(33.3, .2),
+                                              ufloat(1_000.0, .2))
+        deflection_angle = calculate_deflection_angle(self.lookup_table, proton_solar_wind_speed, a, phi, b)
+        self.assertAlmostEqual(3.125, deflection_angle.n, 4)
+        self.assertAlmostEqual(0.02, deflection_angle.s, 4)
 
     def test_clock_angle_calibration_table_from_file(self):
         file_path = Path(
