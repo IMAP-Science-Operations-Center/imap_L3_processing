@@ -89,4 +89,7 @@ def calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps(
     if reduced_chisq > 10:
         raise ValueError("Failed to fit - chi-squared too large", reduced_chisq)
     density, temperature, speed = correlated_values(values, covariance)
+    density = table.lookup_density(speed, density, temperature)
+    temperature = table.lookup_temperature(speed, density, temperature)
+
     return temperature, density

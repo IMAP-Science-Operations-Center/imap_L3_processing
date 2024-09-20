@@ -39,10 +39,10 @@ class TestCalculateAlphaSolarWindTemperatureAndDensity(TestCase):
 
         sw_speed = ufloat(460, 10)
         density = ufloat(2.5, 0.5)
-        temperature = ufloat(6.0000e+04, 100)
+        temperature = ufloat(6.0000e+05, 100)
 
         self.assertEqual(2.5525, calibration_table.lookup_density(sw_speed, density, temperature).nominal_value)
-        self.assertEqual(5.8537e+04, calibration_table.lookup_temperature(sw_speed, density, temperature).nominal_value)
+        self.assertEqual(5.8537e+05, calibration_table.lookup_temperature(sw_speed, density, temperature).nominal_value)
 
     def test_calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps(self):
         speed = ufloat(496.490, 2.811)
@@ -51,12 +51,10 @@ class TestCalculateAlphaSolarWindTemperatureAndDensity(TestCase):
             self.calibration_table, speed,
             uarray(self.count_rate, self.count_rate_delta), self.energy)
 
-        self.count_rate
-
-        self.assertAlmostEqual(411405.2171052396, actual_temperature.nominal_value, 3)
-        self.assertAlmostEqual(130246.773340626, actual_temperature.std_dev, 2)
-        self.assertAlmostEqual(0.10300409775543028, actual_density.nominal_value, 3)
-        self.assertAlmostEqual(0.013108888715912525, actual_density.std_dev, 4)
+        self.assertAlmostEqual(401366.92980787175, actual_temperature.nominal_value, 3)
+        self.assertAlmostEqual(127068.75203093978, actual_temperature.std_dev, 2)
+        self.assertAlmostEqual(1.021, actual_density.nominal_value, 3)
+        self.assertAlmostEqual(2.3517189450599276e-9, actual_density.std_dev, 4)
 
     @patch(
         'imap_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density.get_alpha_peak_indices')
