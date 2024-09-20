@@ -10,6 +10,33 @@ from uncertainties.unumpy import uarray, nominal_values, std_devs
 
 from imap_processing.constants import BOLTZMANN_CONSTANT_JOULES_PER_KELVIN, METERS_PER_KILOMETER, \
     CENTIMETERS_PER_METER, ALPHA_PARTICLE_CHARGE_COULOMBS, ALPHA_PARTICLE_MASS_KG
+from imap_processing.swapi.l3a.science.calculate_alpha_solar_wind_speed import calculate_combined_sweeps, \
+    get_alpha_peak_indices
+
+
+class AlphaTemperatureDensityCalibrationTable:
+    def __init__(self, lookup_table_array: np.ndarray):
+        solar_wind_speed = np.unique(lookup_table_array[:, 0])
+        fit_density = np.unique(lookup_table_array[:, 1])
+        fit_temperature = np.unique(lookup_table_array[:, 3])
+        self.grid = (solar_wind_speed, fit_density, fit_temperature)
+        values_shape = tuple(len(x) for x in self.grid)
+
+        self.density_grid = lookup_table_array[:, 2].reshape(values_shape)
+        self.temperature_grid = lookup_table_array[:, 4].reshape(values_shape)
+
+    @classmethod
+    def from_file(cls, file_path: Path):
+        lookup_table = np.loadtxt(file_path)
+        return cls(lookup_table)
+
+    @uncertainties.wrap
+    def lookup_temperature(self, sw_speed, density, temperature):
+        return scipy.interpolate.interpn(self.grid, self.temperature_grid, [sw_speed, density, temperature])[0]
+
+    @uncertainties.wrap
+    def lookup_density(self, sw_speed, density, temperature):
+        return scipy.interpolate.interpn(self.grid, self.density_grid, [sw_speed, density, temperature])[0]
 
 
 def alpha_count_rate_model(ev_per_q, density_per_cm3, temperature, bulk_flow_speed_km_per_s):
@@ -37,45 +64,29 @@ def alpha_count_rate_model(ev_per_q, density_per_cm3, temperature, bulk_flow_spe
     return result
 
 
-def calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps(peak_count_rates: uarray,
-                                                                           peak_energies: ndarray,
-                                                                           alpha_sw_speed: ufloat):
+def calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps(
+        table: AlphaTemperatureDensityCalibrationTable, alpha_sw_speed: ufloat,
+        count_rates: uarray,
+        energies: ndarray,
+):
+    average_count_rates, energies = calculate_combined_sweeps(count_rates, energies)
+
+    alpha_particle_peak_slice = get_alpha_peak_indices(average_count_rates, energies)
+
+    peak_energies = energies[alpha_particle_peak_slice]
+    peak_average_alpha_count_rates = average_count_rates[alpha_particle_peak_slice]
+
     initial_parameter_guess = [0.15, 3.6e5, nominal_values(alpha_sw_speed)]
     values, covariance = scipy.optimize.curve_fit(alpha_count_rate_model,
                                                   peak_energies,
-                                                  nominal_values(peak_count_rates),
-                                                  sigma=std_devs(peak_count_rates),
+                                                  nominal_values(peak_average_alpha_count_rates),
+                                                  sigma=std_devs(peak_average_alpha_count_rates),
                                                   absolute_sigma=True,
                                                   bounds=[[0, 0, 0], [np.inf, np.inf, np.inf]],
                                                   p0=initial_parameter_guess)
-    residual = abs(alpha_count_rate_model(peak_energies, *values) - nominal_values(peak_count_rates))
-    reduced_chisq = np.sum(np.square(residual / std_devs(peak_count_rates))) / (len(peak_energies) - 3)
+    residual = abs(alpha_count_rate_model(peak_energies, *values) - nominal_values(peak_average_alpha_count_rates))
+    reduced_chisq = np.sum(np.square(residual / std_devs(peak_average_alpha_count_rates))) / (len(peak_energies) - 3)
     if reduced_chisq > 10:
         raise ValueError("Failed to fit - chi-squared too large", reduced_chisq)
     density, temperature, speed = correlated_values(values, covariance)
     return temperature, density
-
-
-class AlphaTemperatureDensityCalibrationTable:
-    def __init__(self, lookup_table_array: np.ndarray):
-        solar_wind_speed = np.unique(lookup_table_array[:, 0])
-        fit_density = np.unique(lookup_table_array[:, 1])
-        fit_temperature = np.unique(lookup_table_array[:, 3])
-        self.grid = (solar_wind_speed, fit_density, fit_temperature)
-        values_shape = tuple(len(x) for x in self.grid)
-
-        self.density_grid = lookup_table_array[:, 2].reshape(values_shape)
-        self.temperature_grid = lookup_table_array[:, 4].reshape(values_shape)
-
-    @classmethod
-    def from_file(cls, file_path: Path):
-        lookup_table = np.loadtxt(file_path)
-        return cls(lookup_table)
-
-    @uncertainties.wrap
-    def lookup_temperature(self, sw_speed, density, temperature):
-        return scipy.interpolate.interpn(self.grid, self.temperature_grid, [sw_speed, density, temperature])[0]
-
-    @uncertainties.wrap
-    def lookup_density(self, sw_speed, density, temperature):
-        return scipy.interpolate.interpn(self.grid, self.density_grid, [sw_speed, density, temperature])[0]
