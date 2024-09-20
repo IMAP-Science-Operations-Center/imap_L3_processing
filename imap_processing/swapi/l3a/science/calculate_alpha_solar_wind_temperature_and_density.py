@@ -37,17 +37,21 @@ def alpha_count_rate_model(ev_per_q, density_per_cm3, temperature, bulk_flow_spe
     return result
 
 
-def calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps(peak_coin_rates: uarray,
+def calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps(peak_count_rates: uarray,
                                                                            peak_energies: ndarray,
                                                                            alpha_sw_speed: ufloat):
     initial_parameter_guess = [0.15, 3.6e5, nominal_values(alpha_sw_speed)]
     values, covariance = scipy.optimize.curve_fit(alpha_count_rate_model,
                                                   peak_energies,
-                                                  nominal_values(peak_coin_rates),
-                                                  sigma=std_devs(peak_coin_rates),
+                                                  nominal_values(peak_count_rates),
+                                                  sigma=std_devs(peak_count_rates),
                                                   absolute_sigma=True,
                                                   bounds=[[0, 0, 0], [np.inf, np.inf, np.inf]],
                                                   p0=initial_parameter_guess)
+    residual = abs(alpha_count_rate_model(peak_energies, *values) - nominal_values(peak_count_rates))
+    reduced_chisq = np.sum(np.square(residual / std_devs(peak_count_rates))) / (len(peak_energies) - 3)
+    if reduced_chisq > 10:
+        raise ValueError("Failed to fit - chi-squared too large", reduced_chisq)
     density, temperature, speed = correlated_values(values, covariance)
     return temperature, density
 

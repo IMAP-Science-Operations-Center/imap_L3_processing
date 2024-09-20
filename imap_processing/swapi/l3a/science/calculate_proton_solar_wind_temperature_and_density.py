@@ -88,7 +88,7 @@ def calculate_proton_speed_from_one_sweep(coincident_count_rates, energy, proton
     return initial_speed_guess
 
 
-class TemperatureAndDensityCalibrationTable:
+class ProtonTemperatureAndDensityCalibrationTable:
     def __init__(self, lookup_table_array: ndarray):
         solar_wind_speed = np.unique(lookup_table_array[:, 0])
         deflection_angle = np.unique(lookup_table_array[:, 1])
@@ -119,7 +119,7 @@ class TemperatureAndDensityCalibrationTable:
         return cls(lookup_table_array)
 
 
-def calculate_proton_solar_wind_temperature_and_density(lookup_table: TemperatureAndDensityCalibrationTable,
+def calculate_proton_solar_wind_temperature_and_density(lookup_table: ProtonTemperatureAndDensityCalibrationTable,
                                                         proton_solar_wind_speed, deflection_angle,
                                                         clock_angle, coincident_count_rates: uarray, energy: ndarray):
     temperature, density = calculate_uncalibrated_proton_solar_wind_temperature_and_density(coincident_count_rates,

@@ -14,7 +14,7 @@ from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_clock_and_def
     ClockAngleCalibrationTable, calculate_deflection_angle, calculate_clock_angle
 from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_speed import calculate_proton_solar_wind_speed
 from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_temperature_and_density import \
-    TemperatureAndDensityCalibrationTable, calculate_proton_solar_wind_temperature_and_density
+    ProtonTemperatureAndDensityCalibrationTable, calculate_proton_solar_wind_temperature_and_density
 from imap_processing.swapi.l3a.utils import read_l2_swapi_data, chunk_l2_data
 from imap_processing.utils import download_dependency, upload_data
 
@@ -26,7 +26,7 @@ CLOCK_ANGLE_AND_FLOW_DEFLECTION_LOOKUP_TABLE_DESCRIPTOR = "clock-angle-and-flow-
 @dataclass
 class SwapiL3ADependencies:
     data: CDF
-    temperature_density_calibration_table: TemperatureAndDensityCalibrationTable
+    temperature_density_calibration_table: ProtonTemperatureAndDensityCalibrationTable
     clock_angle_and_flow_deflection_calibration_table: ClockAngleCalibrationTable
 
     @classmethod
@@ -55,7 +55,7 @@ class SwapiL3ADependencies:
                              f"{e}")
 
         data_file = CDF(str(data_dependency_path))
-        temperature_and_density_calibration_file = TemperatureAndDensityCalibrationTable.from_file(
+        temperature_and_density_calibration_file = ProtonTemperatureAndDensityCalibrationTable.from_file(
             density_and_temperature_calibration_file_path)
 
         clock_angle_calibration_file = ClockAngleCalibrationTable.from_file(clock_and_deflection_file_path)

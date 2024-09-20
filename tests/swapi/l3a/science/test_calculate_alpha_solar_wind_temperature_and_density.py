@@ -46,3 +46,19 @@ class TestCalculateAlphaSolarWindTemperatureAndDensity(TestCase):
         self.assertEqual(130246.773340626, actual_temperature.std_dev)
         self.assertEqual(0.10300409775543028, actual_density.nominal_value)
         self.assertEqual(0.013108888715912525, actual_density.std_dev)
+
+    def test_raises_error_when_chi_squared_over_ten(self):
+        peak_energies = np.array([2944, 2705, 2485, 2281, 2094])
+        speed = ufloat(496.490, 2.811)
+        peak_coincidence_rates = np.array([
+            ufloat(20.2, 4.2708313008125245),
+            ufloat(10.8, 5.5641710972974225),
+            ufloat(606.0, 5.585696017507577),
+            ufloat(10.4, 4.298837052040936),
+            ufloat(5.8, 2.638181191654584),
+        ])
+        with self.assertRaises(ValueError) as e:
+                calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps(
+                    peak_coincidence_rates, peak_energies, speed)
+        self.assertEqual(str(e.exception.args[0]), "Failed to fit - chi-squared too large")
+        self.assertAlmostEqual(e.exception.args[1], 13.6018326)

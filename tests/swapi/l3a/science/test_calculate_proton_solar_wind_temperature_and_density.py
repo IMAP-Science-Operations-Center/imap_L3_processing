@@ -10,7 +10,7 @@ from uncertainties.unumpy import uarray
 import imap_processing
 from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_temperature_and_density import \
     proton_count_rate_model, \
-    calculate_proton_solar_wind_temperature_and_density_for_one_sweep, TemperatureAndDensityCalibrationTable, \
+    calculate_proton_solar_wind_temperature_and_density_for_one_sweep, ProtonTemperatureAndDensityCalibrationTable, \
     calculate_uncalibrated_proton_solar_wind_temperature_and_density, \
     calculate_proton_solar_wind_temperature_and_density
 from tests.swapi.l3a.science.test_calculate_alpha_solar_wind_speed import synthesize_uncertainties
@@ -152,4 +152,4 @@ class TestCalculateProtonSolarWindTemperatureAndDensity(TestCase):
             output_density = 1.021 * density
             output_temperature = 0.97561 * temperature
             lut_rows.append([speed, deflection, clock_angle, density, output_density, temperature, output_temperature])
-        return TemperatureAndDensityCalibrationTable(np.array(lut_rows))
+        return ProtonTemperatureAndDensityCalibrationTable(np.array(lut_rows))
