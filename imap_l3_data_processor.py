@@ -7,24 +7,31 @@ import json
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--instrument")
-parser.add_argument("--level")
-parser.add_argument("--start_date")
-parser.add_argument("--end_date")
+parser.add_argument("--data-level")
+parser.add_argument("--descriptor")
+parser.add_argument("--start-date")
+parser.add_argument("--end-date", required=False)
 parser.add_argument("--version")
 parser.add_argument("--dependency")
+parser.add_argument(
+    "--upload-to-sdc",
+    action="store_true",
+    required=False,
+    help="Upload completed output files to the IMAP SDC.",
+)
 
 args = parser.parse_args()
 dependencies_list = json.loads(args.dependency.replace("'", '"'))
 
 if args.instrument == 'swapi':
-    if args.level == 'l3a':
+    if args.data_level == 'l3a':
         dependencies = [UpstreamDataDependency(d['instrument'], d['data_level'],
                                                None, None,
-                                               d['version'],  d['descriptor']) for d in dependencies_list]
+                                               d['version'], d['descriptor']) for d in dependencies_list]
         input_dependency = InputMetadata(args.instrument,
-                                         args.level,
+                                         args.data_level,
                                          datetime.strptime(args.start_date, '%Y%m%d'),
-                                         datetime.strptime(args.end_date, '%Y%m%d'),
+                                         None,
                                          args.version)
         processor = SwapiL3AProcessor(dependencies, input_dependency)
         processor.process()

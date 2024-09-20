@@ -1,6 +1,7 @@
 import itertools
 
 import numpy as np
+from dateutil.utils import today
 
 u_sw_values = np.arange(350, 875, 500)
 deflection_values = np.arange(0, 5.25, 5)
@@ -10,7 +11,7 @@ temps = np.arange(1e4, 1.6e5, 1e4)
 
 with open("imap_swapi_l2_alpha-density-temperature-lut-text-not-cdf_20240905_v002.cdf", 'w') as f:
     f.write("#\n")
-    f.write("# Created on: 2024-08-23T20:04:16.44396543502487Z\n")
+    f.write(f"# Created on: {today()}\n")
     f.write("#\n")
     f.write("# Example LUT for SW Density and Temperature:\n")
     f.write("#\n")

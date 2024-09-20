@@ -45,7 +45,7 @@ class TestProcessor(TestCase):
     @patch('imap_processing.swapi.l3a.processor.read_l2_swapi_data')
     @patch('imap_processing.swapi.l3a.processor.calculate_proton_solar_wind_speed')
     @patch('imap_processing.swapi.l3a.processor.calculate_alpha_solar_wind_speed')
-    @patch('imap_processing.swapi.l3a.processor.TemperatureAndDensityCalibrationTable')
+    @patch('imap_processing.swapi.l3a.processor.ProtonTemperatureAndDensityCalibrationTable')
     @patch('imap_processing.swapi.l3a.processor.calculate_proton_solar_wind_temperature_and_density')
     @patch('imap_processing.swapi.l3a.processor.calculate_clock_angle')
     @patch('imap_processing.swapi.l3a.processor.calculate_deflection_angle')
