@@ -29,11 +29,11 @@ This will copy the .cdf files into your repo folder under the data folder.
 ## Uploading an L2 cdf file to trigger the L3 pipeline:
 There is a program named `imap-data-access` which is used to upload and download cdf files from the SDC. Installation instructions are found at: https://github.com/IMAP-Science-Operations-Center/imap-data-access
 
-The SDC expects cdf files to follow a specific naming convention: imap_swapi_{data_level}_{descriptor}_{start_date}_{version}.cdf
+The SDC expects cdf files to follow a specific naming convention: `imap_swapi_{data_level}_{descriptor}_{start_date}_{version}.cdf`
 An example file would be called: `imap_swapi_l2_sci_20111231_v001.cdf`
 
 The command to upload a cdf file and trigger the pipeline is : `imap-data-access upload imap_swapi_l2_sci_20111231_v001.cdf`.
-The command to see the newly created L3a data files is : `imap-data-access query --insstrument swap --data-level l3a --version v001`
+The command to see the newly created L3a data files is : `imap-data-access query --instrument swapi --data-level l3a --version v001`
 
 You should see two L3a files:
 * imap_swapi_l3a_proton-sw-fake-menlo-{GUID}_20111231_v001.cdf 
