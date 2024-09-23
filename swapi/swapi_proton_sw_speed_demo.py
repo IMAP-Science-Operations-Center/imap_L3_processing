@@ -8,7 +8,7 @@ from uncertainties.unumpy import uarray, nominal_values, std_devs
 
 from imap_processing.swapi.l3a.models import SwapiL2Data
 from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_clock_and_deflection_angles import \
-    calculate_clock_angle, calculate_deflection_angle
+    calculate_clock_angle, calculate_deflection_angle, ClockAngleCalibrationTable
 from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_speed import sine_fit_function, \
     calculate_proton_solar_wind_speed, calculate_proton_centers_of_mass, extract_coarse_sweep
 
@@ -66,14 +66,16 @@ def plot_variation_in_center_of_mass(a, phi, b, spin_angles, centers_of_mass):
 
 
 def run_example_dat_files():
-    data = read_l2_data_from_dat("swapi/test_data/swapi_test_data_v2.dat")
+    data = read_l2_data_from_dat("test_data/swapi_test_data_v4.dat")
     coincident_count_rate = uarray(data.coincidence_count_rate, data.coincidence_count_rate_uncertainty)
     proton_sw_speed, a, phi, b = calculate_proton_solar_wind_speed(coincident_count_rate, data.spin_angles, data.energy,
                                                                    data.epoch)
 
-    clock_angle = calculate_clock_angle(proton_sw_speed, a, phi, b)
+    clock_angle_lut = ClockAngleCalibrationTable.from_file('test_data/example_LUT_flow_angle_v2.dat')
 
-    deflection_angle = calculate_deflection_angle(proton_sw_speed, a, phi, b)
+    clock_angle = calculate_clock_angle(clock_angle_lut, proton_sw_speed, a, phi, b)
+
+    deflection_angle = calculate_deflection_angle(clock_angle_lut, proton_sw_speed, a, phi, b)
 
     print(f"clock: {clock_angle}")
     print(f"deflection angle: {deflection_angle}")
@@ -120,8 +122,9 @@ def main(file_path):
 
 
 if __name__ == "__main__":
-    try:
-        file_path = sys.argv[1]
-        main(file_path)
-    except:
-        main(os.path.abspath("test_data/imap_swapi_l2_fake-menlo-5-sweeps_20100101_v002.cdf"))
+    run_example_dat_files()
+    # try:
+    #     file_path = sys.argv[1]
+    #     main(file_path)
+    # except:
+    #     main(os.path.abspath("test_data/imap_swapi_l2_fake-menlo-5-sweeps_20100101_v002.cdf"))
