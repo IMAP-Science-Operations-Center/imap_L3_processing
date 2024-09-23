@@ -1,8 +1,12 @@
+from _ast import Slice
 from pathlib import Path
 from unittest import TestCase
+from unittest.mock import patch
 
 import numpy as np
+from spacepy.pycdf import CDF
 from uncertainties import ufloat
+from uncertainties.unumpy import uarray
 
 import imap_processing
 from imap_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density import \
@@ -10,6 +14,18 @@ from imap_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_an
 
 
 class TestCalculateAlphaSolarWindTemperatureAndDensity(TestCase):
+    def setUp(self) -> None:
+        data_file_path = Path(
+            imap_processing.__file__).parent.parent / "swapi" / "test_data" / "imap_swapi_l2_fake-menlo-5-sweeps_20100101_v002.cdf"
+        with CDF(str(data_file_path)) as cdf:
+            self.energy = cdf["energy"][...]
+            self.count_rate = cdf["swp_coin_rate"][...]
+            self.count_rate_delta = cdf["swp_coin_unc"][...]
+
+        lookup_table_file_path = Path(
+            imap_processing.__file__).parent.parent / "swapi" / "test_data" / "imap_swapi_l2_alpha-density-temperature-lut-text-not-cdf_20240905_v002.cdf"
+        self.calibration_table = AlphaTemperatureDensityCalibrationTable.from_file(lookup_table_file_path)
+
     def test_temperature_and_density_calibration_table_from_file(self):
         file_path = Path(
             imap_processing.__file__).parent.parent / "swapi" / "test_data" / "imap_swapi_l2_alpha-density-temperature-lut-text-not-cdf_20240905_v002.cdf"
@@ -23,33 +39,30 @@ class TestCalculateAlphaSolarWindTemperatureAndDensity(TestCase):
 
         sw_speed = ufloat(460, 10)
         density = ufloat(2.5, 0.5)
-        temperature = ufloat(6.0000e+04, 100)
+        temperature = ufloat(6.0000e+05, 100)
 
         self.assertEqual(2.5525, calibration_table.lookup_density(sw_speed, density, temperature).nominal_value)
-        self.assertEqual(5.8537e+04, calibration_table.lookup_temperature(sw_speed, density, temperature).nominal_value)
+        self.assertEqual(5.8537e+05, calibration_table.lookup_temperature(sw_speed, density, temperature).nominal_value)
 
     def test_calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps(self):
-        peak_energies = np.array([2944, 2705, 2485, 2281, 2094])
         speed = ufloat(496.490, 2.811)
-        peak_coincidence_rates = np.array([
-            ufloat(15.2, 4.2708313008125245),
-            ufloat(25.8, 5.5641710972974225),
-            ufloat(26.0, 5.585696017507577),
-            ufloat(15.4, 4.298837052040936),
-            ufloat(5.8, 2.638181191654584),
-        ])
 
         actual_temperature, actual_density = calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps(
-            peak_coincidence_rates, peak_energies, speed)
+            self.calibration_table, speed,
+            uarray(self.count_rate, self.count_rate_delta), self.energy)
 
-        self.assertAlmostEqual(411405.2171052396, actual_temperature.nominal_value, 3)
-        self.assertAlmostEqual(130246.773340626, actual_temperature.std_dev, 2)
-        self.assertAlmostEqual(0.10300409775543028, actual_density.nominal_value, 3)
-        self.assertAlmostEqual(0.013108888715912525, actual_density.std_dev, 4)
+        self.assertAlmostEqual(401366.92980787175, actual_temperature.nominal_value, 3)
+        self.assertAlmostEqual(127068.75203093978, actual_temperature.std_dev, 2)
+        self.assertAlmostEqual(1.021, actual_density.nominal_value, 3)
+        self.assertAlmostEqual(2.3517189450599276e-9, actual_density.std_dev, 4)
 
-    def test_raises_error_when_chi_squared_over_ten(self):
-        peak_energies = np.array([2944, 2705, 2485, 2281, 2094])
+    @patch(
+        'imap_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density.get_alpha_peak_indices')
+    @patch(
+        'imap_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density.calculate_combined_sweeps')
+    def test_raises_error_when_chi_squared_over_ten(self, mock_calculate_combine_sweeps, mock_get_alpha_peak_indices):
         speed = ufloat(496.490, 2.811)
+        peak_energies = np.array([2944, 2705, 2485, 2281, 2094])
         peak_coincidence_rates = np.array([
             ufloat(20.2, 4.2708313008125245),
             ufloat(10.8, 5.5641710972974225),
@@ -57,8 +70,13 @@ class TestCalculateAlphaSolarWindTemperatureAndDensity(TestCase):
             ufloat(10.4, 4.298837052040936),
             ufloat(5.8, 2.638181191654584),
         ])
+
+        mock_calculate_combine_sweeps.return_value = peak_coincidence_rates, peak_energies
+        mock_get_alpha_peak_indices.return_value = slice(0, 5)
         with self.assertRaises(ValueError) as e:
-            calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps(
-                peak_coincidence_rates, peak_energies, speed)
+            calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps(self.calibration_table, speed,
+                                                                                   uarray(self.count_rate,
+                                                                                          self.count_rate_delta),
+                                                                                   self.energy)
         self.assertEqual(str(e.exception.args[0]), "Failed to fit - chi-squared too large")
         self.assertAlmostEqual(e.exception.args[1], 13.6018326)

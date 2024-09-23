@@ -52,7 +52,7 @@ def download_dependency(dependency: UpstreamDataDependency) -> Path:
                                                 version='latest'
                                                 )]
     if len(files_to_download) != 1:
-        raise ValueError(f"{files_to_download}. Expected only one file to download.")
+        raise ValueError(f"{files_to_download}. Expected one file to download, found {len(files_to_download)}.")
 
     return imap_data_access.download(files_to_download[0])
 

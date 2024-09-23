@@ -13,7 +13,7 @@ import imap_processing
 from imap_processing.constants import TEMP_CDF_FOLDER_PATH, THIRTY_SECONDS_IN_NANOSECONDS
 from imap_processing.models import UpstreamDataDependency, InputMetadata
 from imap_processing.swapi.l3a.models import SwapiL2Data
-from imap_processing.swapi.l3a.processor import SwapiL3AProcessor, TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR, \
+from imap_processing.swapi.l3a.processor import SwapiL3AProcessor, PROTON_TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR, \
     SWAPI_L2_DESCRIPTOR
 
 
@@ -28,7 +28,8 @@ class TestProcessor(TestCase):
         self.mock_imap_api = self.mock_imap_patcher.start()
         self.mock_imap_api.query.side_effect = [
             [{'file_path': sentinel.data_file_path}],
-            [{'file_path': sentinel.lookup_table_file_path}],
+            [{'file_path': sentinel.proton_lookup_table_file_path}],
+            [{'file_path': sentinel.alpha_lookup_table_file_path}],
             [{'file_path': sentinel.clock_and_deflection_table_file_path}]
         ]
 
@@ -47,12 +48,16 @@ class TestProcessor(TestCase):
     @patch('imap_processing.swapi.l3a.processor.calculate_alpha_solar_wind_speed')
     @patch('imap_processing.swapi.l3a.processor.ProtonTemperatureAndDensityCalibrationTable')
     @patch('imap_processing.swapi.l3a.processor.calculate_proton_solar_wind_temperature_and_density')
+    @patch('imap_processing.swapi.l3a.processor.calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps')
+    @patch('imap_processing.swapi.l3a.processor.AlphaTemperatureDensityCalibrationTable')
     @patch('imap_processing.swapi.l3a.processor.calculate_clock_angle')
     @patch('imap_processing.swapi.l3a.processor.calculate_deflection_angle')
     @patch('imap_processing.swapi.l3a.processor.ClockAngleCalibrationTable')
     def test_processor(self, mock_clock_angle_calibration_table_constructor, mock_calculate_deflection_angle,
-                       mock_calculate_clock_angle,
-                       mock_calculate_temperature_and_density, mock_temperature_and_density_calibrator_class,
+                       mock_calculate_clock_angle, mock_alpha_temperature_and_density_calibrator_class,
+                       mock_alpha_calculate_temperature_and_density,
+                       mock_proton_calculate_temperature_and_density,
+                       mock_proton_temperature_and_density_calibrator_class,
                        mock_calculate_alpha_solar_wind_speed,
                        mock_calculate_proton_solar_wind_speed,
                        mock_read_l2_swapi_data, mock_chunk_l2_data, mock_uuid, mock_write_cdf,
@@ -65,7 +70,8 @@ class TestProcessor(TestCase):
 
         self.mock_imap_api.download.side_effect = [
             data_file_path,
-            sentinel.density_temp_local_lookup_table_path,
+            sentinel.proton_density_temp_local_lookup_table_path,
+            sentinel.alpha_density_temp_local_lookup_table_path,
             sentinel.clock_deflection_angle_local_lookup_table_path,
 
         ]
@@ -82,11 +88,16 @@ class TestProcessor(TestCase):
         mock_calculate_proton_solar_wind_speed.return_value = (
             returned_proton_sw_speed, sentinel.a, sentinel.phi, sentinel.b)
 
+        returned_alpha_temperature = ufloat(400000, 2000)
+        returned_alpha_density = ufloat(0.15, 0.01)
+        mock_alpha_calculate_temperature_and_density.return_value = (returned_alpha_temperature, returned_alpha_density)
+
+        returned_alpha_speed = ufloat(450000, 1000)
         mock_calculate_alpha_solar_wind_speed.return_value = ufloat(450000, 1000)
 
         returned_proton_sw_temp = ufloat(99000, 1000)
         returned_proton_sw_density = ufloat(4.97, 0.25)
-        mock_calculate_temperature_and_density.return_value = (
+        mock_proton_calculate_temperature_and_density.return_value = (
             returned_proton_sw_temp, returned_proton_sw_density)
 
         returned_proton_sw_clock_angle = ufloat(200, 0.25)
@@ -125,9 +136,6 @@ class TestProcessor(TestCase):
             [
                 UpstreamDataDependency(instrument, incoming_data_level, start_date, end_date,
                                        version, descriptor),
-                UpstreamDataDependency(instrument, incoming_data_level,
-                                       None, None,
-                                       version, TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR),
             ], input_metadata)
         swapi_processor.process()
 
@@ -142,16 +150,24 @@ class TestProcessor(TestCase):
                                                         end_date=None,
                                                         version='latest'),
                                                    call(instrument=instrument, data_level=incoming_data_level,
+                                                        descriptor="alpha-density-temperature-lut-text-not-cdf",
+                                                        start_date=None,
+                                                        end_date=None,
+                                                        version='latest'),
+                                                   call(instrument=instrument, data_level=incoming_data_level,
                                                         descriptor="clock-angle-and-flow-deflection-lut-text-not-cdf",
                                                         start_date=None,
                                                         end_date=None,
                                                         version='latest')
                                                    ])
         self.mock_imap_api.download.assert_has_calls(
-            [call(sentinel.data_file_path), call(sentinel.lookup_table_file_path),
+            [call(sentinel.data_file_path), call(sentinel.proton_lookup_table_file_path),
+             call(sentinel.alpha_lookup_table_file_path),
              call(sentinel.clock_and_deflection_table_file_path)])
-        mock_temperature_and_density_calibrator_class.from_file.assert_called_with(
-            sentinel.density_temp_local_lookup_table_path)
+        mock_proton_temperature_and_density_calibrator_class.from_file.assert_called_with(
+            sentinel.proton_density_temp_local_lookup_table_path)
+        mock_alpha_temperature_and_density_calibrator_class.from_file.assert_called_with(
+            sentinel.alpha_density_temp_local_lookup_table_path)
         mock_clock_angle_calibration_table_constructor.from_file.assert_called_with(
             sentinel.clock_deflection_angle_local_lookup_table_path)
 
@@ -175,17 +191,30 @@ class TestProcessor(TestCase):
             call(expected_clock_angle_calibration_table, returned_proton_sw_speed, sentinel.a,
                  sentinel.phi, sentinel.b), mock_calculate_deflection_angle.call_args)
 
-        self.assertEqual(mock_temperature_and_density_calibrator_class.from_file.return_value,
-                         mock_calculate_temperature_and_density.call_args_list[0].args[0])
+        self.assertEqual(mock_proton_temperature_and_density_calibrator_class.from_file.return_value,
+                         mock_proton_calculate_temperature_and_density.call_args_list[0].args[0])
         self.assert_ufloat_equal(returned_proton_sw_speed,
-                                 mock_calculate_temperature_and_density.call_args_list[0].args[1])
-        self.assert_ufloat_equal(ufloat(0.01, 1.0), mock_calculate_temperature_and_density.call_args_list[0].args[2])
-        self.assertEqual(sentinel.phi, mock_calculate_temperature_and_density.call_args_list[0].args[3])
+                                 mock_proton_calculate_temperature_and_density.call_args_list[0].args[1])
+        self.assert_ufloat_equal(ufloat(0.01, 1.0),
+                                 mock_proton_calculate_temperature_and_density.call_args_list[0].args[2])
+        self.assertEqual(sentinel.phi, mock_proton_calculate_temperature_and_density.call_args_list[0].args[3])
         np.testing.assert_array_equal(nominal_values(expected_count_rate_with_uncertainties),
-                                      nominal_values(mock_calculate_temperature_and_density.call_args_list[0].args[4]))
+                                      nominal_values(
+                                          mock_proton_calculate_temperature_and_density.call_args_list[0].args[4]))
         np.testing.assert_array_equal(std_devs(expected_count_rate_with_uncertainties),
-                                      std_devs(mock_calculate_temperature_and_density.call_args_list[0].args[4]))
-        np.testing.assert_array_equal(energy, mock_calculate_temperature_and_density.call_args_list[0].args[5])
+                                      std_devs(mock_proton_calculate_temperature_and_density.call_args_list[0].args[4]))
+        np.testing.assert_array_equal(energy, mock_proton_calculate_temperature_and_density.call_args_list[0].args[5])
+
+        self.assertEqual(mock_alpha_temperature_and_density_calibrator_class.from_file.return_value,
+                         mock_alpha_calculate_temperature_and_density.call_args_list[0].args[0])
+        self.assert_ufloat_equal(returned_alpha_speed,
+                                 mock_alpha_calculate_temperature_and_density.call_args_list[0].args[1])
+        np.testing.assert_array_equal(nominal_values(expected_count_rate_with_uncertainties),
+                                      nominal_values(
+                                          mock_alpha_calculate_temperature_and_density.call_args_list[0].args[2]))
+        np.testing.assert_array_equal(std_devs(expected_count_rate_with_uncertainties),
+                                      std_devs(mock_alpha_calculate_temperature_and_density.call_args_list[0].args[2]))
+        np.testing.assert_array_equal(energy, mock_alpha_calculate_temperature_and_density.call_args_list[0].args[3])
 
         np.testing.assert_array_equal(nominal_values(expected_count_rate_with_uncertainties),
                                       nominal_values(mock_calculate_alpha_solar_wind_speed.call_args_list[0].args[0]))
@@ -226,13 +255,18 @@ class TestProcessor(TestCase):
                                                                  f"imap_swapi_l3a_alpha-sw-fake-menlo-{mock_uuid_value}_{start_date_as_str}_12345"),
                                                             ])
 
-        actual_alpha_metadata, actual_alpha_epoch, actual_alpha_sw_speed = mock_alpha_solar_wind_data_constructor.call_args.args
+        actual_alpha_metadata, actual_alpha_epoch, actual_alpha_sw_speed, actual_alpha_sw_temperature, actual_alpha_sw_density = mock_alpha_solar_wind_data_constructor.call_args.args
         expected_alpha_metadata = input_metadata.to_upstream_data_dependency("alpha-sw")
         self.assertEqual(expected_alpha_metadata, actual_alpha_metadata)
 
         np.testing.assert_array_equal(np.array([initial_epoch + THIRTY_SECONDS_IN_NANOSECONDS]), actual_alpha_epoch)
         np.testing.assert_array_equal(np.array([mock_calculate_alpha_solar_wind_speed.return_value]),
                                       actual_alpha_sw_speed)
+        np.testing.assert_array_equal(np.array([mock_alpha_calculate_temperature_and_density.return_value[0]]),
+                                      actual_alpha_sw_temperature)
+        np.testing.assert_array_equal(np.array([mock_alpha_calculate_temperature_and_density.return_value[1]]),
+                                      actual_alpha_sw_density)
+
         mock_manager.add_instrument_attrs.assert_has_calls([call("swapi", "l3a"), call("swapi", "l3a")])
         mock_write_cdf.assert_has_calls([
             call(proton_cdf_path, proton_solar_wind_data, mock_manager),
@@ -262,7 +296,7 @@ class TestProcessor(TestCase):
                                                datetime.now(), 'f', SWAPI_L2_DESCRIPTOR),
                         UpstreamDataDependency('swapi', 'l2',
                                                datetime.now() - timedelta(days=1), datetime.now(), 'f',
-                                               TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR)
+                                               PROTON_TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR)
                         ]
         swapi_processor = SwapiL3AProcessor(
             dependencies, input_metadata)
@@ -271,30 +305,15 @@ class TestProcessor(TestCase):
             swapi_processor.process()
         exception = cm.exception
         self.assertEqual(f"Unexpected files found for SWAPI L3:"
-                         f"{['2 thing', '3 thing']}. Expected only one file to download.",
+                         f"{['2 thing', '3 thing']}. Expected one file to download, found 2.",
                          str(exception))
 
-    def test_processor_throws_exception_when_missing_temp_density_lookup_table(self):
-        dependencies = [
-            UpstreamDataDependency('swapi', 'l2', datetime.now() - timedelta(days=1),
-                                   datetime.now(),
-                                   'f', SWAPI_L2_DESCRIPTOR),
-            UpstreamDataDependency('swapi', 'l2', datetime.now() - timedelta(days=1), datetime.now(),
-                                   'f', 'not-the-lut')]
-        input_metadata = InputMetadata('swapi', "l3a", datetime.now() - timedelta(days=1), datetime.now(), "12345")
-        swapi_processor = SwapiL3AProcessor(dependencies, input_metadata)
-        with self.assertRaises(ValueError) as cm:
-            swapi_processor.process()
-        exception = cm.exception
-        self.assertEqual(f"Missing {TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR} dependency.",
-                         str(exception))
-
-    def test_processor_throws_exception_when_missing_temp_density_lookup_table(self):
+    def test_processor_throws_exception_when_missing_swapi_data(self):
         dependencies = [
             UpstreamDataDependency('swapi', 'l2', datetime.now() - timedelta(days=1), datetime.now(), 'f', 'data'),
             UpstreamDataDependency('swapi', 'l2',
                                    datetime.now() - timedelta(days=1), datetime.now(), 'f',
-                                   TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR)]
+                                   PROTON_TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR)]
         input_metadata = InputMetadata('swapi', "l3a", datetime.now() - timedelta(days=1), datetime.now(), "12345")
         swapi_processor = SwapiL3AProcessor(dependencies, input_metadata)
         with self.assertRaises(ValueError) as cm:

@@ -4,20 +4,24 @@ from unittest import TestCase
 import numpy as np
 from spacepy.pycdf import CDF
 from uncertainties import ufloat
-from uncertainties.unumpy import uarray
+from uncertainties.unumpy import uarray, nominal_values, std_devs
 
 import imap_processing
 from imap_processing.swapi.l3a.science.calculate_alpha_solar_wind_speed import calculate_alpha_solar_wind_speed, \
-    calculate_alpha_center_of_mass, get_alpha_peak_indices, calculate_sw_speed_alpha
+    calculate_alpha_center_of_mass, get_alpha_peak_indices, calculate_sw_speed_alpha, calculate_combined_sweeps
+from imap_processing.swapi.l3a.science.speed_calculation import extract_coarse_sweep
 
 
 class TestCalculateAlphaSolarWindSpeed(TestCase):
     def test_get_alpha_peak_indices(self):
         test_cases = [
-            ("one clear peak", [0, 2, 3, 2, 0, 0, 0, 5, 10, 5, 0], [12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2], [0, 2, 3, 2, 0]),
+            ("one clear peak", [0, 2, 3, 2, 0, 0, 0, 5, 10, 5, 0], [12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2],
+             [0, 2, 3, 2, 0]),
             ("at edge", [3, 2, 0, 0, 0, 5, 10, 5, 0], [10, 9, 8, 7, 6, 5, 4, 3, 2], [3, 2, 0]),
-            ("wide peak", [0, 2, 3, 3, 2, 0, 0, 0, 5, 10, 5, 0], [13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2], [0, 2, 3, 3, 2, 0]),
-            ("ignores values past 4*proton peak", [9, 0, 0, 2, 3, 2, 0, 0, 0, 5, 10, 5, 0], [13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1],
+            ("wide peak", [0, 2, 3, 3, 2, 0, 0, 0, 5, 10, 5, 0], [13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2],
+             [0, 2, 3, 3, 2, 0]),
+            ("ignores values past 4*proton peak", [9, 0, 0, 2, 3, 2, 0, 0, 0, 5, 10, 5, 0],
+             [13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1],
              [0, 2, 3, 2, 0]),
 
         ]
@@ -30,7 +34,7 @@ class TestCalculateAlphaSolarWindSpeed(TestCase):
 
     def test_an_exception_is_raised_when_no_alpha_peak(self):
         test_cases = [
-            ("no clear peak", [0, 0, 1, 1, 1, 2,2 , 2, 10, 2, 0, 0],
+            ("no clear peak", [0, 0, 1, 1, 1, 2, 2, 2, 10, 2, 0, 0],
              [12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1], "Alpha peak not found"),
             ("peak is too wide", [0, 4, 4, 4, 0, 0, 0, 0, 0, 5, 10, 10, 3, 2, 0, 0],
              [16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1], "Count rates contains multiple distinct peaks"),
@@ -81,20 +85,57 @@ class TestCalculateAlphaSolarWindSpeed(TestCase):
         ]
         for modeled_proton_peak_energy, modeled_alpha_particle_peak_energy, expected_uncertainty in test_cases:
             with self.subTest(f"alpha particle peak energy is: {modeled_alpha_particle_peak_energy}"):
-                count_rates, energies = generate_sweep_data(modeled_proton_peak_energy, modeled_alpha_particle_peak_energy)
+                count_rates, energies = generate_sweep_data(modeled_proton_peak_energy,
+                                                            modeled_alpha_particle_peak_energy)
                 count_rate_delta = synthesize_uncertainties(count_rates)
 
-                alpha_energy_center_of_mass = calculate_alpha_center_of_mass(uarray(count_rates, count_rate_delta), energies)
+                alpha_energy_center_of_mass = calculate_alpha_center_of_mass(uarray(count_rates, count_rate_delta),
+                                                                             energies)
 
-                self.assertAlmostEqual(modeled_alpha_particle_peak_energy, alpha_energy_center_of_mass.nominal_value, delta=5)
-                self.assertAlmostEqual(expected_uncertainty, alpha_energy_center_of_mass.std_dev,0)
+                self.assertAlmostEqual(modeled_alpha_particle_peak_energy, alpha_energy_center_of_mass.nominal_value,
+                                       delta=5)
+                self.assertAlmostEqual(expected_uncertainty, alpha_energy_center_of_mass.std_dev, 0)
+
+    def test_calculate_combined_sweeps(self):
+        file_path = Path(
+            imap_processing.__file__).parent.parent / 'swapi' / 'test_data' / 'imap_swapi_l2_fake-menlo-5-sweeps_20100101_v002.cdf'
+        with CDF(str(file_path)) as cdf:
+            energy = cdf["energy"][...]
+            count_rate = cdf["swp_coin_rate"][...]
+            count_rate_delta = cdf["swp_coin_unc"][...]
+
+        actual_averaged_count_rates, actual_energy = calculate_combined_sweeps(uarray(count_rate, count_rate_delta),
+                                                                               energy)
+        expected_avg_count_rates = np.array([ufloat(15.2, 4.2708313008125245), ufloat(25.8, 5.5641710972974225),
+                                             ufloat(26.0, 5.585696017507577), ufloat(15.4, 4.298837052040936),
+                                             ufloat(5.8, 2.638181191654584)])
+
+        np.testing.assert_array_equal(nominal_values(actual_averaged_count_rates[22:27]),
+                                      nominal_values(expected_avg_count_rates))
+        np.testing.assert_array_equal(std_devs(actual_averaged_count_rates[22:27]), std_devs(expected_avg_count_rates))
+        np.testing.assert_array_equal(actual_energy[0:10],
+                                      np.array([19098, 17541, 16113, 14798, 13591, 12485, 11467, 10532, 9675,
+                                                8885]))
+
+    def test_extract_coarse_sweep(self):
+        first_sweep_energies = [i for i in range(64)]
+        second_sweep_energies = [i * 2 for i in range(64)]
+        two_sweeps_energies = np.array([first_sweep_energies, second_sweep_energies])
+
+        actual_energies = extract_coarse_sweep(two_sweeps_energies)
+
+        np.testing.assert_array_equal(first_sweep_energies[1:63], actual_energies[0])
+        np.testing.assert_array_equal(second_sweep_energies[1:63], actual_energies[1])
+
 
 def get_sweep_voltages(sweep_table_id=0):
     energies = np.geomspace(19000, 100, 62)
     return energies / get_k_factor()
 
+
 def synthesize_uncertainties(count_rates):
     return np.sqrt(6 * count_rates)
+
 
 def generate_sweep_data(proton_center, alpha_center) -> tuple[np.ndarray, np.ndarray]:
     voltages = get_sweep_voltages()
@@ -105,8 +146,10 @@ def generate_sweep_data(proton_center, alpha_center) -> tuple[np.ndarray, np.nda
 
     return (proton_peak + alpha_peak + background, energies)
 
+
 def get_k_factor():
     return 1.8
+
 
 def generate_peak(energies, height, center, narrowness):
     return np.exp(np.log(height) - narrowness * np.square(np.log(energies) - np.log(center)))

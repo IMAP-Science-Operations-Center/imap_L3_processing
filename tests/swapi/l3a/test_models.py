@@ -13,7 +13,9 @@ from imap_processing.swapi.l3a.models import SwapiL3ProtonSolarWindData, EPOCH_C
     PROTON_SOLAR_WIND_TEMPERATURE_UNCERTAINTY_CDF_VAR_NAME, PROTON_SOLAR_WIND_DENSITY_CDF_VAR_NAME, \
     PROTON_SOLAR_WIND_DENSITY_UNCERTAINTY_CDF_VAR_NAME, PROTON_SOLAR_WIND_CLOCK_ANGLE_CDF_VAR_NAME, \
     PROTON_SOLAR_WIND_CLOCK_ANGLE_UNCERTAINTY_CDF_VAR_NAME, PROTON_SOLAR_WIND_DEFLECTION_ANGLE_CDF_VAR_NAME, \
-    PROTON_SOLAR_WIND_DEFLECTION_ANGLE_UNCERTAINTY_CDF_VAR_NAME
+    PROTON_SOLAR_WIND_DEFLECTION_ANGLE_UNCERTAINTY_CDF_VAR_NAME, ALPHA_SOLAR_WIND_TEMPERATURE_CDF_VAR_NAME, \
+    ALPHA_SOLAR_WIND_TEMPERATURE_UNCERTAINTY_CDF_VAR_NAME, ALPHA_SOLAR_WIND_DENSITY_CDF_VAR_NAME, \
+    ALPHA_SOLAR_WIND_DENSITY_UNCERTAINTY_CDF_VAR_NAME
 
 
 class TestModels(TestCase):
@@ -62,17 +64,33 @@ class TestModels(TestCase):
 
     def test_getting_alpha_sw_data_product_variables(self):
         epoch_data = np.arange(20, step=2)
-        expected_nominal_values = np.arange(10, step=1)
-        expected_std = np.arange(5, step=.5)
-        proton_speed = uarray(expected_nominal_values, expected_std)
-        data = SwapiL3AlphaSolarWindData(Mock(), epoch_data, proton_speed)
+        expected_speed_nominal_values = np.arange(10, step=1)
+        expected_speed_std = np.arange(5, step=.5)
+        alpha_speed = uarray(expected_speed_nominal_values, expected_speed_std)
+        expected_temperature_nominal_values = np.arange(300000, step=30000)
+        expected_temperature_std_devs = np.arange(50000, step=5000)
+        alpha_temperature = uarray(expected_temperature_nominal_values, expected_temperature_std_devs)
+        expected_alpha_density_nominal_values = np.arange(2, step=.2)
+        expected_alpha_density_std_devs = np.arange(1, step=0.1)
+        alpha_density = uarray(expected_alpha_density_nominal_values, expected_alpha_density_std_devs)
+        data = SwapiL3AlphaSolarWindData(Mock(), epoch_data, alpha_speed, alpha_temperature, alpha_density)
         variables = data.to_data_product_variables()
 
         self._assert_variable_attributes(variables[0], epoch_data, EPOCH_CDF_VAR_NAME, pycdf.const.CDF_TIME_TT2000)
-        self._assert_variable_attributes(variables[1], expected_nominal_values, ALPHA_SOLAR_WIND_SPEED_CDF_VAR_NAME)
-        self._assert_variable_attributes(variables[2], expected_std, ALPHA_SOLAR_WIND_SPEED_UNCERTAINTY_CDF_VAR_NAME)
-        self._assert_variable_attributes(variables[3], THIRTY_SECONDS_IN_NANOSECONDS, EPOCH_DELTA_CDF_VAR_NAME,
+        self._assert_variable_attributes(variables[1], THIRTY_SECONDS_IN_NANOSECONDS, EPOCH_DELTA_CDF_VAR_NAME,
                                          expected_record_varying=False)
+        self._assert_variable_attributes(variables[2], expected_speed_nominal_values,
+                                         ALPHA_SOLAR_WIND_SPEED_CDF_VAR_NAME)
+        self._assert_variable_attributes(variables[3], expected_speed_std,
+                                         ALPHA_SOLAR_WIND_SPEED_UNCERTAINTY_CDF_VAR_NAME)
+        self._assert_variable_attributes(variables[4], expected_temperature_nominal_values,
+                                         "alpha_sw_temperature")
+        self._assert_variable_attributes(variables[5], expected_temperature_std_devs,
+                                         "alpha_sw_temperature_delta")
+        self._assert_variable_attributes(variables[6], expected_alpha_density_nominal_values,
+                                         "alpha_sw_density")
+        self._assert_variable_attributes(variables[7], expected_alpha_density_std_devs,
+                                         "alpha_sw_density_delta")
 
     def _assert_variable_attributes(self, variable: DataProductVariable,
                                     expected_data, expected_name,

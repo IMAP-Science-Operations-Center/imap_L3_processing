@@ -132,6 +132,48 @@ alpha_sw_speed_delta:
   FIELDNAM: alpha_sw_speed_delta
   UNITS: km/s
 
+alpha_sw_temperature:
+  <<: *default_timeseries
+  CATDESC: Temperature of Alpha Solar Wind
+  FIELDNAM: alpha_sw_temperature
+  DELTA_MINUS_VAR: alpha_sw_temperature_delta
+  DELTA_PLUS_VAR: alpha_sw_temperature_delta
+  LABLAXIS: Alpha Solar Wind Temperature
+  UNITS: K
+  SCALETYP: linear
+  VAR_TYPE: data
+  DISPLAY_TYPE: time_series
+  SCALEMIN: 0
+  SCALEMAX: 450000
+
+alpha_sw_temperature_delta:
+  <<: *default_timeseries
+  VAR_TYPE: support_data
+  CATDESC: Alpha Solar Wind Temperature Uncertainty
+  FIELDNAM: alpha_sw_temperature_delta
+  UNITS: K
+
+alpha_sw_density:
+  <<: *default_timeseries
+  CATDESC: Density of Alpha Solar Wind
+  FIELDNAM: alpha_sw_density
+  DELTA_MINUS_VAR: alpha_sw_density_delta
+  DELTA_PLUS_VAR: alpha_sw_density_delta
+  LABLAXIS: Alpha Solar Wind Density
+  UNITS: cm!E-3!N
+  SCALETYP: linear
+  VAR_TYPE: data
+  DISPLAY_TYPE: time_series
+  SCALEMIN: 0
+  SCALEMAX: 5
+
+alpha_sw_density_delta:
+  <<: *default_timeseries
+  VAR_TYPE: support_data
+  CATDESC: Alpha Solar Wind Density Uncertainty
+  FIELDNAM: alpha_sw_density_delta
+  UNITS: cm!E-3!N
+
 
 epoch:
   CATDESC: Time, number of nanoseconds since J2000 with leap seconds included

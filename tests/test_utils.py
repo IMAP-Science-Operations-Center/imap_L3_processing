@@ -30,11 +30,17 @@ class TestUtils(TestCase):
         mock_today.today.return_value = date(2024, 9, 16)
         mock_uuid.return_value = 444
 
-        input_metadata = UpstreamDataDependency("swapi", "l2", datetime(2024, 9, 17), datetime(2024, 9, 18), "v2", "descriptor")
+        input_metadata = UpstreamDataDependency("swapi", "l2", datetime(2024, 9, 17), datetime(2024, 9, 18), "v2",
+                                                "descriptor")
         epoch = np.array([1, 2, 3])
         alpha_sw_speed = np.array([4, 5, 6])
+        alpha_sw_density = np.array([5, 5, 5])
+        alpha_sw_temperature = np.array([4, 3, 5])
 
-        data_product = SwapiL3AlphaSolarWindData(input_metadata=input_metadata, epoch=epoch, alpha_sw_speed=alpha_sw_speed)
+        data_product = SwapiL3AlphaSolarWindData(input_metadata=input_metadata, epoch=epoch,
+                                                 alpha_sw_speed=alpha_sw_speed,
+                                                 alpha_sw_temperature=alpha_sw_temperature,
+                                                 alpha_sw_density=alpha_sw_density)
         upload_data(data_product)
 
         mock_write_cdf.assert_called_once()
@@ -69,9 +75,10 @@ class TestUtils(TestCase):
 
     @patch('imap_processing.utils.imap_data_access')
     def test_download_dependency(self, mock_data_access):
-        dependency = UpstreamDataDependency("swapi", "l2", datetime(2024, 9, 17), datetime(2024, 9, 18), "v2", "descriptor")
+        dependency = UpstreamDataDependency("swapi", "l2", datetime(2024, 9, 17), datetime(2024, 9, 18), "v2",
+                                            "descriptor")
         query_dictionary = [{'file_path': "imap_swapi_l2_descriptor-fake-menlo-444_20240917_v2.cdf",
-                            'second_entry': '12345'}]
+                             'second_entry': '12345'}]
         mock_data_access.query.return_value = query_dictionary
 
         path = download_dependency(dependency)
@@ -87,17 +94,26 @@ class TestUtils(TestCase):
         self.assertIs(path, mock_data_access.download.return_value)
 
     @patch('imap_processing.utils.imap_data_access')
-    def test_download_dependency_throws_value_error_if_more_than_one_file_returned(self, mock_data_access):
+    def test_download_dependency_throws_value_error_if_not_one_file_returned(self, mock_data_access):
         dependency = UpstreamDataDependency("swapi", "l2", datetime(2024, 9, 17), datetime(2024, 9, 18), "v2",
                                             "descriptor")
-        query_dictionary = [{'file_path': "imap_swapi_l2_descriptor-fake-menlo-444_20240917_v2.cdf",
-                             'second_entry': '12345'}, {"file_path": "extra_value"}]
-        mock_data_access.query.return_value = query_dictionary
+        query_dictionary_more_than_one_file = [{'file_path': "imap_swapi_l2_descriptor-fake-menlo-444_20240917_v2.cdf",
+                                                'second_entry': '12345'}, {"file_path": "extra_value"}]
+        query_dictionary_less_than_one_file = []
 
-        with self.assertRaises(Exception) as cm:
-            download_dependency(dependency)
+        cases = [("2", query_dictionary_more_than_one_file),
+                 ("0", query_dictionary_less_than_one_file)]
 
-        self.assertEqual("['imap_swapi_l2_descriptor-fake-menlo-444_20240917_v2.cdf', 'extra_value']. Expected only one file to download.", str(cm.exception))
+        for case, query_dictionary in cases:
+            with self.subTest(case):
+                mock_data_access.query.return_value = query_dictionary
+                expected_files_to_download = [dict_entry['file_path'] for dict_entry in query_dictionary]
+                with self.assertRaises(Exception) as cm:
+                    download_dependency(dependency)
+
+                self.assertEqual(
+                    f"{expected_files_to_download}. Expected one file to download, found {case}.",
+                    str(cm.exception))
 
     def test_read_l2_mag_data(self):
         mag_cdf = CDF("test_cdf", "")
