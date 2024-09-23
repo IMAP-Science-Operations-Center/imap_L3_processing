@@ -3,6 +3,7 @@ from pathlib import Path
 import numpy as np
 import scipy
 import uncertainties
+from matplotlib import pyplot as plt
 from numpy import ndarray
 from scipy.special import erf
 from uncertainties import correlated_values, ufloat
@@ -65,7 +66,8 @@ def alpha_count_rate_model(ev_per_q, density_per_cm3, temperature, bulk_flow_spe
 
 
 def calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps(
-        table: AlphaTemperatureDensityCalibrationTable, alpha_sw_speed: ufloat,
+        table: AlphaTemperatureDensityCalibrationTable,
+        alpha_sw_speed: ufloat,
         count_rates: uarray,
         energies: ndarray,
 ):
