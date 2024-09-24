@@ -1,10 +1,11 @@
+from pathlib import Path
 from unittest import TestCase
 
 import numpy as np
 
-from imap_processing.constants import PROTON_MASS_KG, PROTON_CHARGE_COULOMBS
-from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_speed import calculate_sw_speed_h_plus
-from imap_processing.swapi.l3b.science.calculate_proton_solar_wind_vdf import calculate_proton_solar_wind_vdf
+import imap_processing
+from imap_processing.swapi.l3b.science.calculate_proton_solar_wind_vdf import calculate_proton_solar_wind_vdf, \
+    GeometricFactorCalibrationTable
 
 
 class TestCalculateProtonSolarWindVDF(TestCase):
@@ -21,3 +22,17 @@ class TestCalculateProtonSolarWindVDF(TestCase):
 
         np.testing.assert_array_equal(velocities, expected_velocities)
         np.testing.assert_array_equal(probabilities, expected_probabilities)
+
+    def test_geometric_factor_table_from_file(self):
+        file_path = Path(
+            imap_processing.__file__).parent.parent / "swapi" / "test_data" / "imap_swapi_l2_energy-gf-lut-not-cdf_20240923_v001.cdf"
+
+        calibration_table = GeometricFactorCalibrationTable.from_file(file_path)
+
+        self.assertEqual(62, len(calibration_table.grid))
+        self.assertEqual((62,), calibration_table.geometric_factor_grid.shape)
+
+        known_energy = 8165.393844536367
+        energy_to_interpolate = 14194.87288073211
+        self.assertEqual(6.419796603112413e-13, calibration_table.lookup_geometric_factor(known_energy))
+        self.assertAlmostEqual(5.711128783363629e-13, calibration_table.lookup_geometric_factor(energy_to_interpolate))
