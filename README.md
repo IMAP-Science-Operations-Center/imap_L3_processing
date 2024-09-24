@@ -13,7 +13,7 @@ Continue following the installation instructions from the IMAP Science Operation
 
 The SDC expects cdf files to follow a specific naming convention: `imap_swapi_{data_level}_{descriptor}_{start_date}_{version}.cdf`
 An example file would be called: `imap_swapi_l2_sci_20111231_v001.cdf`
-
+Note: Currently the only acceptable descriptor is 'sci'
 Note: File versions must be 3 characters long. (i.e. v003)
 
 The command to upload a cdf file and trigger the pipeline is : `imap-data-access upload imap_swapi_l2_sci_20111231_v001.cdf`.
