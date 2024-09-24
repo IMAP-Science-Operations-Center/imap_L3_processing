@@ -1,6 +1,6 @@
 import numpy as np
 import scipy
-from uncertainties import umath, correlated_values
+from uncertainties import umath, correlated_values, unumpy
 from uncertainties.unumpy import uarray, nominal_values, std_devs
 
 from imap_processing.constants import PROTON_CHARGE_COULOMBS, PROTON_MASS_KG, METERS_PER_KILOMETER
@@ -73,7 +73,7 @@ def calculate_proton_centers_of_mass(coincidence_count_rates, spin_angles, energ
 
 
 def calculate_sw_speed_h_plus(energy):
-    return umath.sqrt(2 * energy * PROTON_CHARGE_COULOMBS / PROTON_MASS_KG) / METERS_PER_KILOMETER
+    return unumpy.sqrt(2 * energy * PROTON_CHARGE_COULOMBS / PROTON_MASS_KG) / METERS_PER_KILOMETER
 
 
 def calculate_proton_solar_wind_speed(coincidence_count_rates, spin_angles, energies, epoch):

@@ -12,8 +12,8 @@ Start by running the following commands in a terminal to create a virtual enviro
 Continue following the installation instructions from the IMAP Science Operations Center. Installation instructions are found at: https://github.com/IMAP-Science-Operations-Center/imap-data-access
 
 The SDC expects cdf files to follow a specific naming convention: `imap_swapi_{data_level}_{descriptor}_{start_date}_{version}.cdf`
-An example file would be called: `imap_swapi_l2_sci_20111231_v001.cdf`
-
+An example file would be called: `imap_swapi_l2_sci_20111231_v001.cdf`<br/>
+Note: Currently the only acceptable descriptor is 'sci' <br/>
 Note: File versions must be 3 characters long. (i.e. v003)
 
 The command to upload a cdf file and trigger the pipeline is : `imap-data-access upload imap_swapi_l2_sci_20111231_v001.cdf`.
