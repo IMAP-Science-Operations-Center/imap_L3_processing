@@ -1,7 +1,6 @@
 import os
 import shutil
 from datetime import datetime, timedelta, date
-from pathlib import Path
 from unittest import TestCase
 from unittest.mock import patch, sentinel, call
 
@@ -9,13 +8,11 @@ import numpy as np
 from uncertainties import ufloat
 from uncertainties.unumpy import uarray, nominal_values, std_devs
 
-import imap_processing
 from imap_processing.constants import TEMP_CDF_FOLDER_PATH, THIRTY_SECONDS_IN_NANOSECONDS
 from imap_processing.models import UpstreamDataDependency, InputMetadata
 from imap_processing.swapi.l3a.models import SwapiL2Data
-from imap_processing.swapi.l3a.processor import SwapiL3AProcessor
-from imap_processing.swapi.l3a.swapi_l3a_dependencies import SWAPI_L2_DESCRIPTOR, \
-    PROTON_TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR
+from imap_processing.swapi.processor import SwapiProcessor
+from imap_processing.swapi.l3a.swapi_l3a_dependencies import SWAPI_L2_DESCRIPTOR
 
 
 class TestProcessor(TestCase):
@@ -32,19 +29,19 @@ class TestProcessor(TestCase):
         self.mock_imap_patcher.stop()
 
     @patch('imap_processing.utils.ImapAttributeManager')
-    @patch('imap_processing.swapi.l3a.processor.SwapiL3AlphaSolarWindData')
-    @patch('imap_processing.swapi.l3a.processor.SwapiL3ProtonSolarWindData')
+    @patch('imap_processing.swapi.processor.SwapiL3AlphaSolarWindData')
+    @patch('imap_processing.swapi.processor.SwapiL3ProtonSolarWindData')
     @patch('imap_processing.utils.write_cdf')
     @patch('imap_processing.utils.uuid')
-    @patch('imap_processing.swapi.l3a.processor.chunk_l2_data')
-    @patch('imap_processing.swapi.l3a.processor.read_l2_swapi_data')
-    @patch('imap_processing.swapi.l3a.processor.calculate_proton_solar_wind_speed')
-    @patch('imap_processing.swapi.l3a.processor.calculate_alpha_solar_wind_speed')
-    @patch('imap_processing.swapi.l3a.processor.calculate_proton_solar_wind_temperature_and_density')
-    @patch('imap_processing.swapi.l3a.processor.calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps')
-    @patch('imap_processing.swapi.l3a.processor.calculate_clock_angle')
-    @patch('imap_processing.swapi.l3a.processor.calculate_deflection_angle')
-    @patch('imap_processing.swapi.l3a.processor.SwapiL3ADependencies')
+    @patch('imap_processing.swapi.processor.chunk_l2_data')
+    @patch('imap_processing.swapi.processor.read_l2_swapi_data')
+    @patch('imap_processing.swapi.processor.calculate_proton_solar_wind_speed')
+    @patch('imap_processing.swapi.processor.calculate_alpha_solar_wind_speed')
+    @patch('imap_processing.swapi.processor.calculate_proton_solar_wind_temperature_and_density')
+    @patch('imap_processing.swapi.processor.calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps')
+    @patch('imap_processing.swapi.processor.calculate_clock_angle')
+    @patch('imap_processing.swapi.processor.calculate_deflection_angle')
+    @patch('imap_processing.swapi.processor.SwapiL3ADependencies')
     def test_processor(self, mock_swapi_l3_dependencies_class,
                        mock_calculate_deflection_angle,
                        mock_calculate_clock_angle,
@@ -122,7 +119,7 @@ class TestProcessor(TestCase):
                                    version, descriptor),
         ]
 
-        swapi_processor = SwapiL3AProcessor(
+        swapi_processor = SwapiProcessor(
             dependencies, input_metadata)
         swapi_processor.process()
 
@@ -240,47 +237,3 @@ class TestProcessor(TestCase):
     def assert_ufloat_equal(self, expected_ufloat, actual_ufloat):
         self.assertEqual(expected_ufloat.n, actual_ufloat.n)
         self.assertEqual(expected_ufloat.s, actual_ufloat.s)
-
-    def test_processor_throws_exception_when_more_than_one_file_is_downloaded(self):
-        file_path = Path(
-            imap_processing.__file__).parent.parent / 'swapi/test_data/imap_swapi_l2_fake-menlo-5-sweeps_20100101_v002.cdf'
-
-        self.mock_imap_api.download.return_value = file_path
-
-        self.mock_imap_api.query.side_effect = [
-            [{'file_path': '1 thing'}],
-            [{'file_path': '2 thing'}, {'file_path': '3 thing'}]
-        ]
-
-        input_metadata = InputMetadata('swapi', "l3a", datetime.now() - timedelta(days=1),
-                                       datetime.now(),
-                                       "12345")
-        dependencies = [UpstreamDataDependency('swapi', 'l2', datetime.now() - timedelta(days=1),
-                                               datetime.now(), 'f', SWAPI_L2_DESCRIPTOR),
-                        UpstreamDataDependency('swapi', 'l2',
-                                               datetime.now() - timedelta(days=1), datetime.now(), 'f',
-                                               PROTON_TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR)
-                        ]
-        swapi_processor = SwapiL3AProcessor(
-            dependencies, input_metadata)
-
-        with self.assertRaises(ValueError) as cm:
-            swapi_processor.process()
-        exception = cm.exception
-        self.assertEqual(f"Unexpected files found for SWAPI L3:"
-                         f"{['2 thing', '3 thing']}. Expected one file to download, found 2.",
-                         str(exception))
-
-    def test_processor_throws_exception_when_missing_swapi_data(self):
-        dependencies = [
-            UpstreamDataDependency('swapi', 'l2', datetime.now() - timedelta(days=1), datetime.now(), 'f', 'data'),
-            UpstreamDataDependency('swapi', 'l2',
-                                   datetime.now() - timedelta(days=1), datetime.now(), 'f',
-                                   PROTON_TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR)]
-        input_metadata = InputMetadata('swapi', "l3a", datetime.now() - timedelta(days=1), datetime.now(), "12345")
-        swapi_processor = SwapiL3AProcessor(dependencies, input_metadata)
-        with self.assertRaises(ValueError) as cm:
-            swapi_processor.process()
-        exception = cm.exception
-        self.assertEqual(f"Missing {SWAPI_L2_DESCRIPTOR} dependency.",
-                         str(exception))

@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from imap_processing.models import UpstreamDataDependency, InputMetadata
-from imap_processing.swapi.l3a.processor import SwapiL3AProcessor
+from imap_processing.swapi.processor import SwapiProcessor
 import argparse
 import json
 
@@ -33,7 +33,7 @@ if args.instrument == 'swapi':
                                          datetime.strptime(args.start_date, '%Y%m%d'),
                                          None,
                                          args.version)
-        processor = SwapiL3AProcessor(dependencies, input_dependency)
+        processor = SwapiProcessor(dependencies, input_dependency)
         processor.process()
 else:
     raise NotImplemented(f'Level {args.level} data processing has not yet been implemented for {args.instrument}')

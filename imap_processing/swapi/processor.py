@@ -23,7 +23,7 @@ from imap_processing.swapi.l3b.science.calculate_proton_solar_wind_vdf import Ge
 from imap_processing.utils import download_dependency, upload_data
 
 
-class SwapiL3AProcessor(Processor):
+class SwapiProcessor(Processor):
 
     def process(self):
         dependencies = [

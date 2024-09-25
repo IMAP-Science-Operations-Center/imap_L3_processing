@@ -3,6 +3,8 @@ from dataclasses import dataclass
 from spacepy.pycdf import CDF
 
 from imap_processing.models import UpstreamDataDependency
+from imap_processing.swapi.descriptors import SWAPI_L2_DESCRIPTOR, PROTON_TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR, \
+    ALPHA_TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR, CLOCK_ANGLE_AND_FLOW_DEFLECTION_LOOKUP_TABLE_DESCRIPTOR
 from imap_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density import \
     AlphaTemperatureDensityCalibrationTable
 from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_clock_and_deflection_angles import \
@@ -10,12 +12,6 @@ from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_clock_and_def
 from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_temperature_and_density import \
     ProtonTemperatureAndDensityCalibrationTable
 from imap_processing.utils import download_dependency
-
-SWAPI_L2_DESCRIPTOR = "sci"
-PROTON_TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR = "density-temperature-lut-text-not-cdf"
-ALPHA_TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR = "alpha-density-temperature-lut-text-not-cdf"
-CLOCK_ANGLE_AND_FLOW_DEFLECTION_LOOKUP_TABLE_DESCRIPTOR = "clock-angle-and-flow-deflection-lut-text-not-cdf"
-GEOMETRIC_FACTOR_LOOKUP_TABLE_DESCRIPTOR = "energy-gf-lut-not-cdf"
 
 
 @dataclass

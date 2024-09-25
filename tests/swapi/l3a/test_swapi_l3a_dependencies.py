@@ -5,7 +5,7 @@ from unittest.mock import patch, sentinel, call
 
 import imap_processing
 from imap_processing.models import UpstreamDataDependency
-from imap_processing.swapi.l3a.processor import SWAPI_L2_DESCRIPTOR
+from imap_processing.swapi.descriptors import SWAPI_L2_DESCRIPTOR
 from imap_processing.swapi.l3a.swapi_l3a_dependencies import SwapiL3ADependencies
 
 
@@ -92,3 +92,34 @@ class TestSwapiL3ADependencies(unittest.TestCase):
                       fetched_dependencies.alpha_temperature_density_calibration_table)
         self.assertIs(mock_clock_angle_calibration_table_constructor.from_file.return_value,
                       fetched_dependencies.clock_angle_and_flow_deflection_calibration_table)
+
+    def test_throws_exception_when_more_than_one_file_is_downloaded(self):
+        file_path = Path(
+            imap_processing.__file__).parent.parent / 'swapi/test_data/imap_swapi_l2_fake-menlo-5-sweeps_20100101_v002.cdf'
+
+        self.mock_imap_api.download.return_value = file_path
+
+        self.mock_imap_api.query.side_effect = [
+            [{'file_path': '1 thing'}],
+            [{'file_path': '2 thing'}, {'file_path': '3 thing'}]
+        ]
+
+        dependencies = [UpstreamDataDependency('swapi', 'l2', datetime.now() - timedelta(days=1),
+                                               datetime.now(), 'f', SWAPI_L2_DESCRIPTOR)]
+
+        with self.assertRaises(ValueError) as cm:
+            SwapiL3ADependencies.fetch_dependencies(dependencies)
+        exception = cm.exception
+        self.assertEqual(f"Unexpected files found for SWAPI L3:"
+                         f"{['2 thing', '3 thing']}. Expected one file to download, found 2.",
+                         str(exception))
+
+    def test_throws_exception_when_missing_swapi_data(self):
+        dependencies = [
+            UpstreamDataDependency('swapi', 'l2', datetime.now() - timedelta(days=1), datetime.now(), 'f', 'data')]
+
+        with self.assertRaises(ValueError) as cm:
+            SwapiL3ADependencies.fetch_dependencies(dependencies)
+        exception = cm.exception
+        self.assertEqual(f"Missing {SWAPI_L2_DESCRIPTOR} dependency.",
+                         str(exception))
