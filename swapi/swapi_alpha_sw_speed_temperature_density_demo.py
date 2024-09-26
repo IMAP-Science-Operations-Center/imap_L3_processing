@@ -2,14 +2,19 @@ import os
 import sys
 
 import numpy as np
+import scipy
 from matplotlib import pyplot as plt
+from numpy import ndarray
 from spacepy.pycdf import CDF
+from uncertainties import ufloat, correlated_values
 from uncertainties.unumpy import uarray, nominal_values, std_devs
 
 from imap_processing.swapi.l3a.models import SwapiL2Data
-from imap_processing.swapi.l3a.science.calculate_alpha_solar_wind_speed import calculate_alpha_solar_wind_speed
+from imap_processing.swapi.l3a.science.calculate_alpha_solar_wind_speed import calculate_alpha_solar_wind_speed, \
+    calculate_combined_sweeps, get_alpha_peak_indices
 from imap_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density import \
-    calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps, AlphaTemperatureDensityCalibrationTable
+    calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps, AlphaTemperatureDensityCalibrationTable, \
+    alpha_count_rate_model
 from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_clock_and_deflection_angles import \
     calculate_clock_angle, calculate_deflection_angle
 from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_speed import sine_fit_function, \
@@ -58,7 +63,7 @@ def plot_sweeps(data):
 
 
 def run_example_dat_files():
-    data = read_l2_data_from_dat("swapi/test_data/swapi_test_data_v3.dat")
+    data = read_l2_data_from_dat("swapi/test_data/swapi_test_data_v5.dat")
     coincident_count_rate = uarray(data.coincidence_count_rate, data.coincidence_count_rate_uncertainty)
     energy = data.energy
     alpha_speed = calculate_alpha_solar_wind_speed(coincident_count_rate, energy)
@@ -68,6 +73,47 @@ def run_example_dat_files():
     alpha_temperature, alpha_density = calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps(
         temperature_density_lut, alpha_speed,
         coincident_count_rate, energy)
+
+
+def plot_and_calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps(
+        table: AlphaTemperatureDensityCalibrationTable,
+        alpha_sw_speed: ufloat,
+        count_rates: uarray,
+        energies: ndarray,
+):
+    average_count_rates, energies = calculate_combined_sweeps(count_rates, energies)
+
+    alpha_particle_peak_slice = get_alpha_peak_indices(average_count_rates, energies)
+
+    peak_energies = energies[alpha_particle_peak_slice]
+    peak_average_alpha_count_rates = average_count_rates[alpha_particle_peak_slice]
+
+    initial_parameter_guess = [0.15, 3.6e5, nominal_values(alpha_sw_speed)]
+    values, covariance = scipy.optimize.curve_fit(alpha_count_rate_model,
+                                                  peak_energies,
+                                                  nominal_values(peak_average_alpha_count_rates),
+                                                  sigma=std_devs(peak_average_alpha_count_rates),
+                                                  absolute_sigma=True,
+                                                  bounds=[[0, 0, 0], [np.inf, np.inf, np.inf]],
+                                                  p0=initial_parameter_guess)
+    residual = abs(alpha_count_rate_model(peak_energies, *values) - nominal_values(peak_average_alpha_count_rates))
+    reduced_chisq = np.sum(np.square(residual / std_devs(peak_average_alpha_count_rates))) / (len(peak_energies) - 3)
+    if reduced_chisq > 10:
+        raise ValueError("Failed to fit - chi-squared too large", reduced_chisq)
+    density, temperature, speed = correlated_values(values, covariance)
+
+    density = table.lookup_density(speed, density, temperature)
+    temperature = table.lookup_temperature(speed, density, temperature)
+
+    plt.loglog(energies, nominal_values(average_count_rates), marker="o")
+    plt.xlabel("Energy")
+    plt.ylabel("Average count rates over 5 sweeps")
+    es = np.geomspace(peak_energies[0], peak_energies[-1], 100)
+    plt.loglog(es, alpha_count_rate_model(es, *values), linewidth=2.0)
+    plt.savefig("alpha_temp_dens_fitting")
+    plt.show()
+
+    return density, temperature
 
 
 def main(file_path):
@@ -82,17 +128,15 @@ def main(file_path):
     energy = data.energy
     alpha_speed = calculate_alpha_solar_wind_speed(coincident_count_rate, energy)
 
-    plot_sweeps(data)
-
     temperature_density_lut = AlphaTemperatureDensityCalibrationTable.from_file(
         r"test_data/imap_swapi_l2_alpha-density-temperature-lut-text-not-cdf_20240920_v004.cdf")
-    alpha_temperature, alpha_density = calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps(
+    alpha_temperature, alpha_density = plot_and_calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps(
         temperature_density_lut, alpha_speed,
         coincident_count_rate, energy)
 
-    print(f"SW He++ speed: {alpha_speed}")
-    print(f"SW He++ temperature: {alpha_temperature}")
-    print(f"SW He++ density: {alpha_density}")
+    print(f"SW He++ speed: {alpha_speed.n} +/- {alpha_speed.s}")
+    print(f"SW He++ temperature: {alpha_temperature.n} +/- {alpha_temperature.s}")
+    print(f"SW He++ density: {alpha_density.n} +/- {alpha_density.s}")
 
     if __name__ == "__main__":
         fig.legend([f"SW He++ speed: {alpha_speed :.3f}",
@@ -109,4 +153,4 @@ if __name__ == "__main__":
         file_path = sys.argv[1]
         main(file_path)
     except:
-        main(os.path.abspath("test_data/swapi_test_data_v3.dat"))
+        main(os.path.abspath("test_data/swapi_test_data_v5.dat"))
