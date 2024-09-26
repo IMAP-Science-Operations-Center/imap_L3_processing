@@ -11,8 +11,8 @@ from uncertainties.unumpy import uarray, nominal_values, std_devs
 from imap_processing.constants import TEMP_CDF_FOLDER_PATH, THIRTY_SECONDS_IN_NANOSECONDS, FIVE_MINUTES_IN_NANOSECONDS
 from imap_processing.models import UpstreamDataDependency, InputMetadata
 from imap_processing.swapi.l3a.models import SwapiL2Data
-from imap_processing.swapi.processor import SwapiProcessor
 from imap_processing.swapi.l3a.swapi_l3a_dependencies import SWAPI_L2_DESCRIPTOR
+from imap_processing.swapi.processor import SwapiProcessor
 
 
 class TestProcessor(TestCase):
@@ -263,14 +263,16 @@ class TestProcessor(TestCase):
         initial_epoch = 10
         efficiency = 0.10
 
-        mock_calculate_proton_solar_wind_vdf.return_value = (
-            sentinel.proton_calculated_velocities, sentinel.proton_calculated_probabilities)
+        mock_calculate_proton_solar_wind_vdf.side_effect = [
+            (sentinel.proton_calculated_velocities1, sentinel.proton_calculated_probabilities1),
+            (sentinel.proton_calculated_velocities2, sentinel.proton_calculated_probabilities2),
+        ]
 
-        mock_calculate_alpha_solar_wind_vdf.return_value = (
-            sentinel.alpha_calculated_velocities, sentinel.alpha_calculated_probabilities
-        )
+        mock_calculate_alpha_solar_wind_vdf.side_effect = [
+            (sentinel.alpha_calculated_velocities1, sentinel.alpha_calculated_probabilities1),
+            (sentinel.alpha_calculated_velocities2, sentinel.alpha_calculated_probabilities2),
+        ]
 
-        epoch = np.array([initial_epoch, 11, 12, 13])
         energy = np.array([15000, 16000, 17000, 18000, 19000])
         coincidence_count_rate = np.array(
             [[4, 5, 6, 7, 8], [9, 10, 11, 12, 13], [14, 15, 16, 17, 18], [19, 20, 21, 22, 23]])
@@ -282,10 +284,17 @@ class TestProcessor(TestCase):
              [0.1, 0.2, 0.3, 0.4, 0.5]])
         average_coincident_count_rate_uncertainties = [0.1, 0.2, 0.3, 0.4, 0.5]
 
-        l2_data_chunk = SwapiL2Data(epoch, sentinel.energies, coincidence_count_rate, spin_angles,
-                                    coincidence_count_rate_uncertainty)
-        mock_chunk_l2_data.return_value = [
-            l2_data_chunk]
+        first_chunk_initial_epoch = 10
+        first_l2_data_chunk = SwapiL2Data(np.array([first_chunk_initial_epoch, 11, 12, 13]), sentinel.energies,
+                                          coincidence_count_rate, spin_angles,
+                                          coincidence_count_rate_uncertainty)
+
+        second_chunk_initial_epoch = 60
+        second_l2_data_chunk = SwapiL2Data(np.array([second_chunk_initial_epoch, 11, 12, 13]), sentinel.energies,
+                                           coincidence_count_rate, spin_angles,
+                                           coincidence_count_rate_uncertainty)
+
+        mock_chunk_l2_data.return_value = [first_l2_data_chunk, second_l2_data_chunk]
 
         mock_calculate_combined_sweeps.return_value = [
             uarray(average_coincident_count_rates, average_coincident_count_rate_uncertainties), energy]
@@ -331,12 +340,21 @@ class TestProcessor(TestCase):
 
         expected_combined_metadata = input_metadata.to_upstream_data_dependency("combined")
         self.assertEqual(expected_combined_metadata, mock_combined_vdf_data.call_args_list[0].args[0])
-        np.testing.assert_array_equal(np.array([l2_data_chunk.epoch[0] + FIVE_MINUTES_IN_NANOSECONDS]),
+
+        np.testing.assert_array_equal(np.array([first_chunk_initial_epoch + FIVE_MINUTES_IN_NANOSECONDS,
+                                                second_chunk_initial_epoch + FIVE_MINUTES_IN_NANOSECONDS]),
                                       mock_combined_vdf_data.call_args_list[0].args[1])
-        self.assertEqual(sentinel.proton_calculated_velocities, mock_combined_vdf_data.call_args_list[0].args[2])
-        self.assertEqual(sentinel.proton_calculated_probabilities, mock_combined_vdf_data.call_args_list[0].args[3])
-        self.assertEqual(sentinel.alpha_calculated_velocities, mock_combined_vdf_data.call_args_list[0].args[4])
-        self.assertEqual(sentinel.alpha_calculated_probabilities, mock_combined_vdf_data.call_args_list[0].args[5])
+
+        np.testing.assert_array_equal([sentinel.proton_calculated_velocities1, sentinel.proton_calculated_velocities2],
+                                      mock_combined_vdf_data.call_args_list[0].args[2])
+        np.testing.assert_array_equal(
+            [sentinel.proton_calculated_probabilities1, sentinel.proton_calculated_probabilities2],
+            mock_combined_vdf_data.call_args_list[0].args[3])
+        np.testing.assert_array_equal([sentinel.alpha_calculated_velocities1, sentinel.alpha_calculated_velocities2],
+                                      mock_combined_vdf_data.call_args_list[0].args[4])
+        np.testing.assert_array_equal(
+            [sentinel.alpha_calculated_probabilities1, sentinel.alpha_calculated_probabilities2],
+            mock_combined_vdf_data.call_args_list[0].args[5])
 
         mock_upload_data.assert_called_once_with(mock_combined_vdf_data.return_value)
 
