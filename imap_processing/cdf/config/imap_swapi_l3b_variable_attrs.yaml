@@ -45,6 +45,46 @@ proton_sw_vdf_delta:
   CATDESC: Proton Solar Wind Combined VDF Uncertainty
   FIELDNAM: proton_sw_vdf_delta
 
+alpha_sw_velocity:
+  <<: *default_timeseries
+  CATDESC: Alpha Solar Wind Velocity
+  FIELDNAM: alpha_sw_velocity
+  UNITS: km/s
+  LABLAXIS: Velocity
+  SCALETYP: linear
+  VAR_TYPE: data
+  DISPLAY_TYPE: time_series
+  SCALEMIN: 0
+  SCALEMAX: 1000
+
+alpha_sw_velocity_delta:
+  <<: *default_timeseries
+  VAR_TYPE: support_data
+  CATDESC: Alpha Solar Wind Velocity Delta
+  FIELDNAM: alpha_sw_velocity_delta
+
+alpha_sw_vdf:
+  <<: *default_timeseries
+  DEPEND_1: alpha_sw_velocity
+  CATDESC: Alpha Solar Wind Combined VDF
+  FIELDNAM: alpha_sw_vdf
+  DELTA_MINUS_VAR: alpha_sw_vdf_delta
+  DELTA_PLUS_VAR: alpha_sw_vdf_delta
+  LABLAXIS: F(v)
+  SCALETYP: linear
+  VAR_TYPE: data
+  DISPLAY_TYPE: spectrogram
+  SCALEMIN: 0
+  SCALEMAX: 1
+
+alpha_sw_vdf_delta:
+  <<: *default_timeseries
+  DEPEND_1: alpha_sw_velocity
+  VAR_TYPE: support_data
+  CATDESC: Alpha Solar Wind Combined VDF Uncertainty
+  FIELDNAM: alpha_sw_vdf_delta
+
+
 epoch:
   CATDESC: Time, number of nanoseconds since J2000 with leap seconds included
   FIELDNAM: epoch

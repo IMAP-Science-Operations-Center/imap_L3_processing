@@ -5,11 +5,11 @@ from unittest.mock import create_autospec
 import numpy as np
 
 import imap_processing
-from imap_processing.swapi.l3b.science.calculate_proton_solar_wind_vdf import calculate_proton_solar_wind_vdf, \
-    GeometricFactorCalibrationTable
+from imap_processing.swapi.l3b.science.calculate_solar_wind_vdf import calculate_proton_solar_wind_vdf, \
+    GeometricFactorCalibrationTable, calculate_alpha_solar_wind_vdf
 
 
-class TestCalculateProtonSolarWindVDF(TestCase):
+class TestCalculateSolarWindVDF(TestCase):
     def test_calculate_proton_solar_wind_vdf(self):
         energies = np.array([0, 1000, 750, 500])
         count_rates = np.array([0, 10, 20, 30])
@@ -22,6 +22,23 @@ class TestCalculateProtonSolarWindVDF(TestCase):
 
         velocities, probabilities = calculate_proton_solar_wind_vdf(energies, count_rates, efficiency,
                                                                     mock_geometric_factor_table)
+
+        np.testing.assert_array_equal(velocities, expected_velocities)
+        np.testing.assert_array_almost_equal(probabilities, expected_probabilities)
+        mock_geometric_factor_table.lookup_geometric_factor.assert_called_with(energies)
+
+    def test_calculate_alpha_solar_wind_vdf(self):
+        energies = np.array([0, 1000, 750, 500])
+        count_rates = np.array([0, 10, 20, 30])
+        efficiency = 0.0882
+        mock_geometric_factor_table = create_autospec(GeometricFactorCalibrationTable)
+        mock_geometric_factor_table.lookup_geometric_factor.return_value = np.array([1, 1e-12, 1e-13, 1e-14])
+
+        expected_velocities = [0.0, 310.5624166704235, 268.95494229727456, 219.6007908093385]
+        expected_probabilities = [np.nan, 29544.284683, 787847.591534, 17726570.809506]
+
+        velocities, probabilities = calculate_alpha_solar_wind_vdf(energies, count_rates, efficiency,
+                                                                   mock_geometric_factor_table)
 
         np.testing.assert_array_equal(velocities, expected_velocities)
         np.testing.assert_array_almost_equal(probabilities, expected_probabilities)

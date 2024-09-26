@@ -4,7 +4,7 @@ from spacepy.pycdf import CDF
 
 from imap_processing.models import UpstreamDataDependency
 from imap_processing.swapi.descriptors import GEOMETRIC_FACTOR_LOOKUP_TABLE_DESCRIPTOR, SWAPI_L2_DESCRIPTOR
-from imap_processing.swapi.l3b.science.calculate_proton_solar_wind_vdf import GeometricFactorCalibrationTable
+from imap_processing.swapi.l3b.science.calculate_solar_wind_vdf import GeometricFactorCalibrationTable
 from imap_processing.utils import download_dependency
 
 

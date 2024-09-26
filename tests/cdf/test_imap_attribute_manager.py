@@ -77,3 +77,13 @@ class TestImapCdfManager(TestCase):
                          manager.get_variable_attributes('proton_sw_vdf'))
         self.assertEqual(base_manager.get_variable_attributes('proton_sw_vdf_delta'),
                          manager.get_variable_attributes('proton_sw_vdf_delta'))
+
+        self.assertEqual(base_manager.get_variable_attributes('alpha_sw_velocity'),
+                         manager.get_variable_attributes('alpha_sw_velocity'))
+        self.assertEqual(base_manager.get_variable_attributes('alpha_sw_velocity_delta'),
+                         manager.get_variable_attributes('alpha_sw_velocity_delta'))
+
+        self.assertEqual(base_manager.get_variable_attributes('alpha_sw_vdf'),
+                         manager.get_variable_attributes('alpha_sw_vdf'))
+        self.assertEqual(base_manager.get_variable_attributes('alpha_sw_vdf_delta'),
+                         manager.get_variable_attributes('alpha_sw_vdf_delta'))

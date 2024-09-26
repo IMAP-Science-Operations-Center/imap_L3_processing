@@ -241,8 +241,10 @@ class TestProcessor(TestCase):
     @patch('imap_processing.swapi.processor.chunk_l2_data')
     @patch('imap_processing.swapi.processor.read_l2_swapi_data')
     @patch('imap_processing.swapi.processor.SwapiL3BDependencies')
+    @patch('imap_processing.swapi.processor.calculate_alpha_solar_wind_vdf')
     @patch('imap_processing.swapi.processor.calculate_proton_solar_wind_vdf')
-    def test_process_l3b(self, mock_calculate_proton_solar_wind_vdf, mock_swapi_l3b_dependencies_class,
+    def test_process_l3b(self, mock_calculate_proton_solar_wind_vdf, mock_calculate_alpha_solar_wind_vdf,
+                         mock_swapi_l3b_dependencies_class,
                          mock_read_l2_swapi_data, mock_chunk_l2_data, mock_uuid,
                          mock_calculate_combined_sweeps, mock_combined_vdf_data,
                          mock_upload_data):
@@ -261,10 +263,12 @@ class TestProcessor(TestCase):
         initial_epoch = 10
         efficiency = 0.10
 
-        start_date_as_str = datetime.strftime(start_date, "%Y%m%d")
-
         mock_calculate_proton_solar_wind_vdf.return_value = (
-            sentinel.calculated_velocities, sentinel.calculated_probabilities)
+            sentinel.proton_calculated_velocities, sentinel.proton_calculated_probabilities)
+
+        mock_calculate_alpha_solar_wind_vdf.return_value = (
+            sentinel.alpha_calculated_velocities, sentinel.alpha_calculated_probabilities
+        )
 
         epoch = np.array([initial_epoch, 11, 12, 13])
         energy = np.array([15000, 16000, 17000, 18000, 19000])
@@ -325,12 +329,14 @@ class TestProcessor(TestCase):
         np.testing.assert_array_equal(mock_geometric_factor_calibration_table,
                                       mock_calculate_proton_solar_wind_vdf.call_args_list[0].args[3])
 
-        expected_alpha_metadata = input_metadata.to_upstream_data_dependency("combined")
-        self.assertEqual(expected_alpha_metadata, mock_combined_vdf_data.call_args_list[0].args[0])
+        expected_combined_metadata = input_metadata.to_upstream_data_dependency("combined")
+        self.assertEqual(expected_combined_metadata, mock_combined_vdf_data.call_args_list[0].args[0])
         np.testing.assert_array_equal(np.array([l2_data_chunk.epoch[0] + FIVE_MINUTES_IN_NANOSECONDS]),
                                       mock_combined_vdf_data.call_args_list[0].args[1])
-        self.assertEqual(sentinel.calculated_velocities, mock_combined_vdf_data.call_args_list[0].args[2])
-        self.assertEqual(sentinel.calculated_probabilities, mock_combined_vdf_data.call_args_list[0].args[3])
+        self.assertEqual(sentinel.proton_calculated_velocities, mock_combined_vdf_data.call_args_list[0].args[2])
+        self.assertEqual(sentinel.proton_calculated_probabilities, mock_combined_vdf_data.call_args_list[0].args[3])
+        self.assertEqual(sentinel.alpha_calculated_velocities, mock_combined_vdf_data.call_args_list[0].args[4])
+        self.assertEqual(sentinel.alpha_calculated_probabilities, mock_combined_vdf_data.call_args_list[0].args[5])
 
         mock_upload_data.assert_called_once_with(mock_combined_vdf_data.return_value)
 
