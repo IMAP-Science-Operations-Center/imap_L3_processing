@@ -1,4 +1,3 @@
-from unittest import TestCase
 from unittest.mock import Mock
 
 import numpy as np
@@ -8,17 +7,16 @@ from uncertainties.unumpy import uarray
 from imap_processing.constants import THIRTY_SECONDS_IN_NANOSECONDS
 from imap_processing.swapi.l3a.models import SwapiL3ProtonSolarWindData, EPOCH_CDF_VAR_NAME, \
     PROTON_SOLAR_WIND_SPEED_UNCERTAINTY_CDF_VAR_NAME, PROTON_SOLAR_WIND_SPEED_CDF_VAR_NAME, EPOCH_DELTA_CDF_VAR_NAME, \
-    DataProductVariable, SwapiL3AlphaSolarWindData, ALPHA_SOLAR_WIND_SPEED_CDF_VAR_NAME, \
+    SwapiL3AlphaSolarWindData, ALPHA_SOLAR_WIND_SPEED_CDF_VAR_NAME, \
     ALPHA_SOLAR_WIND_SPEED_UNCERTAINTY_CDF_VAR_NAME, PROTON_SOLAR_WIND_TEMPERATURE_CDF_VAR_NAME, \
     PROTON_SOLAR_WIND_TEMPERATURE_UNCERTAINTY_CDF_VAR_NAME, PROTON_SOLAR_WIND_DENSITY_CDF_VAR_NAME, \
     PROTON_SOLAR_WIND_DENSITY_UNCERTAINTY_CDF_VAR_NAME, PROTON_SOLAR_WIND_CLOCK_ANGLE_CDF_VAR_NAME, \
     PROTON_SOLAR_WIND_CLOCK_ANGLE_UNCERTAINTY_CDF_VAR_NAME, PROTON_SOLAR_WIND_DEFLECTION_ANGLE_CDF_VAR_NAME, \
-    PROTON_SOLAR_WIND_DEFLECTION_ANGLE_UNCERTAINTY_CDF_VAR_NAME, ALPHA_SOLAR_WIND_TEMPERATURE_CDF_VAR_NAME, \
-    ALPHA_SOLAR_WIND_TEMPERATURE_UNCERTAINTY_CDF_VAR_NAME, ALPHA_SOLAR_WIND_DENSITY_CDF_VAR_NAME, \
-    ALPHA_SOLAR_WIND_DENSITY_UNCERTAINTY_CDF_VAR_NAME
+    PROTON_SOLAR_WIND_DEFLECTION_ANGLE_UNCERTAINTY_CDF_VAR_NAME
+from tests.swapi.cdf_model_test_case import CdfModelTestCase
 
 
-class TestModels(TestCase):
+class TestModels(CdfModelTestCase):
     def test_getting_proton_sw_data_product_variables(self):
         epoch_data = np.arange(20, step=2)
         expected_nominal_values = np.arange(10, step=1)
@@ -41,26 +39,26 @@ class TestModels(TestCase):
                                           flow_deflection_data)
         variables = data.to_data_product_variables()
 
-        self._assert_variable_attributes(variables[0], epoch_data, EPOCH_CDF_VAR_NAME, pycdf.const.CDF_TIME_TT2000)
-        self._assert_variable_attributes(variables[1], expected_nominal_values, PROTON_SOLAR_WIND_SPEED_CDF_VAR_NAME)
-        self._assert_variable_attributes(variables[2], expected_std, PROTON_SOLAR_WIND_SPEED_UNCERTAINTY_CDF_VAR_NAME)
-        self._assert_variable_attributes(variables[3], THIRTY_SECONDS_IN_NANOSECONDS, EPOCH_DELTA_CDF_VAR_NAME,
-                                         expected_record_varying=False)
-        self._assert_variable_attributes(variables[4], expected_temperature_nominal_values,
-                                         PROTON_SOLAR_WIND_TEMPERATURE_CDF_VAR_NAME)
-        self._assert_variable_attributes(variables[5], expected_temperature_std,
-                                         PROTON_SOLAR_WIND_TEMPERATURE_UNCERTAINTY_CDF_VAR_NAME)
-        self._assert_variable_attributes(variables[6], expected_density_nominal_values,
-                                         PROTON_SOLAR_WIND_DENSITY_CDF_VAR_NAME)
-        self._assert_variable_attributes(variables[7], expected_density_std,
-                                         PROTON_SOLAR_WIND_DENSITY_UNCERTAINTY_CDF_VAR_NAME)
-        self._assert_variable_attributes(variables[8], expected_clock_angle, PROTON_SOLAR_WIND_CLOCK_ANGLE_CDF_VAR_NAME)
-        self._assert_variable_attributes(variables[9], expected_clock_angle_std,
-                                         PROTON_SOLAR_WIND_CLOCK_ANGLE_UNCERTAINTY_CDF_VAR_NAME)
-        self._assert_variable_attributes(variables[10], expected_flow_deflection,
-                                         PROTON_SOLAR_WIND_DEFLECTION_ANGLE_CDF_VAR_NAME)
-        self._assert_variable_attributes(variables[11], expected_flow_deflection_std,
-                                         PROTON_SOLAR_WIND_DEFLECTION_ANGLE_UNCERTAINTY_CDF_VAR_NAME)
+        self.assert_variable_attributes(variables[0], epoch_data, EPOCH_CDF_VAR_NAME, pycdf.const.CDF_TIME_TT2000)
+        self.assert_variable_attributes(variables[1], expected_nominal_values, PROTON_SOLAR_WIND_SPEED_CDF_VAR_NAME)
+        self.assert_variable_attributes(variables[2], expected_std, PROTON_SOLAR_WIND_SPEED_UNCERTAINTY_CDF_VAR_NAME)
+        self.assert_variable_attributes(variables[3], THIRTY_SECONDS_IN_NANOSECONDS, EPOCH_DELTA_CDF_VAR_NAME,
+                                        expected_record_varying=False)
+        self.assert_variable_attributes(variables[4], expected_temperature_nominal_values,
+                                        PROTON_SOLAR_WIND_TEMPERATURE_CDF_VAR_NAME)
+        self.assert_variable_attributes(variables[5], expected_temperature_std,
+                                        PROTON_SOLAR_WIND_TEMPERATURE_UNCERTAINTY_CDF_VAR_NAME)
+        self.assert_variable_attributes(variables[6], expected_density_nominal_values,
+                                        PROTON_SOLAR_WIND_DENSITY_CDF_VAR_NAME)
+        self.assert_variable_attributes(variables[7], expected_density_std,
+                                        PROTON_SOLAR_WIND_DENSITY_UNCERTAINTY_CDF_VAR_NAME)
+        self.assert_variable_attributes(variables[8], expected_clock_angle, PROTON_SOLAR_WIND_CLOCK_ANGLE_CDF_VAR_NAME)
+        self.assert_variable_attributes(variables[9], expected_clock_angle_std,
+                                        PROTON_SOLAR_WIND_CLOCK_ANGLE_UNCERTAINTY_CDF_VAR_NAME)
+        self.assert_variable_attributes(variables[10], expected_flow_deflection,
+                                        PROTON_SOLAR_WIND_DEFLECTION_ANGLE_CDF_VAR_NAME)
+        self.assert_variable_attributes(variables[11], expected_flow_deflection_std,
+                                        PROTON_SOLAR_WIND_DEFLECTION_ANGLE_UNCERTAINTY_CDF_VAR_NAME)
 
     def test_getting_alpha_sw_data_product_variables(self):
         epoch_data = np.arange(20, step=2)
@@ -76,27 +74,18 @@ class TestModels(TestCase):
         data = SwapiL3AlphaSolarWindData(Mock(), epoch_data, alpha_speed, alpha_temperature, alpha_density)
         variables = data.to_data_product_variables()
 
-        self._assert_variable_attributes(variables[0], epoch_data, EPOCH_CDF_VAR_NAME, pycdf.const.CDF_TIME_TT2000)
-        self._assert_variable_attributes(variables[1], THIRTY_SECONDS_IN_NANOSECONDS, EPOCH_DELTA_CDF_VAR_NAME,
-                                         expected_record_varying=False)
-        self._assert_variable_attributes(variables[2], expected_speed_nominal_values,
-                                         ALPHA_SOLAR_WIND_SPEED_CDF_VAR_NAME)
-        self._assert_variable_attributes(variables[3], expected_speed_std,
-                                         ALPHA_SOLAR_WIND_SPEED_UNCERTAINTY_CDF_VAR_NAME)
-        self._assert_variable_attributes(variables[4], expected_temperature_nominal_values,
-                                         "alpha_sw_temperature")
-        self._assert_variable_attributes(variables[5], expected_temperature_std_devs,
-                                         "alpha_sw_temperature_delta")
-        self._assert_variable_attributes(variables[6], expected_alpha_density_nominal_values,
-                                         "alpha_sw_density")
-        self._assert_variable_attributes(variables[7], expected_alpha_density_std_devs,
-                                         "alpha_sw_density_delta")
-
-    def _assert_variable_attributes(self, variable: DataProductVariable,
-                                    expected_data, expected_name,
-                                    expected_data_type=None,
-                                    expected_record_varying=True):
-        self.assertEqual(expected_name, variable.name)
-        np.testing.assert_array_equal(expected_data, variable.value)
-        self.assertEqual(expected_data_type, variable.cdf_data_type)
-        self.assertEqual(expected_record_varying, variable.record_varying)
+        self.assert_variable_attributes(variables[0], epoch_data, EPOCH_CDF_VAR_NAME, pycdf.const.CDF_TIME_TT2000)
+        self.assert_variable_attributes(variables[1], THIRTY_SECONDS_IN_NANOSECONDS, EPOCH_DELTA_CDF_VAR_NAME,
+                                        expected_record_varying=False)
+        self.assert_variable_attributes(variables[2], expected_speed_nominal_values,
+                                        ALPHA_SOLAR_WIND_SPEED_CDF_VAR_NAME)
+        self.assert_variable_attributes(variables[3], expected_speed_std,
+                                        ALPHA_SOLAR_WIND_SPEED_UNCERTAINTY_CDF_VAR_NAME)
+        self.assert_variable_attributes(variables[4], expected_temperature_nominal_values,
+                                        "alpha_sw_temperature")
+        self.assert_variable_attributes(variables[5], expected_temperature_std_devs,
+                                        "alpha_sw_temperature_delta")
+        self.assert_variable_attributes(variables[6], expected_alpha_density_nominal_values,
+                                        "alpha_sw_density")
+        self.assert_variable_attributes(variables[7], expected_alpha_density_std_devs,
+                                        "alpha_sw_density_delta")

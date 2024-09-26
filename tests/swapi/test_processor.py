@@ -8,7 +8,7 @@ import numpy as np
 from uncertainties import ufloat
 from uncertainties.unumpy import uarray, nominal_values, std_devs
 
-from imap_processing.constants import TEMP_CDF_FOLDER_PATH, THIRTY_SECONDS_IN_NANOSECONDS
+from imap_processing.constants import TEMP_CDF_FOLDER_PATH, THIRTY_SECONDS_IN_NANOSECONDS, FIVE_MINUTES_IN_NANOSECONDS
 from imap_processing.models import UpstreamDataDependency, InputMetadata
 from imap_processing.swapi.l3a.models import SwapiL2Data
 from imap_processing.swapi.processor import SwapiProcessor
@@ -233,6 +233,106 @@ class TestProcessor(TestCase):
             call(alpha_cdf_path, alpha_solar_wind_data, mock_manager)
         ])
         self.mock_imap_api.upload.assert_has_calls([call(proton_cdf_path), call(alpha_cdf_path)])
+
+    @patch('imap_processing.swapi.processor.upload_data')
+    @patch('imap_processing.swapi.processor.SwapiL3BCombinedVDF')
+    @patch('imap_processing.swapi.processor.calculate_combined_sweeps')
+    @patch('imap_processing.utils.uuid')
+    @patch('imap_processing.swapi.processor.chunk_l2_data')
+    @patch('imap_processing.swapi.processor.read_l2_swapi_data')
+    @patch('imap_processing.swapi.processor.SwapiL3BDependencies')
+    @patch('imap_processing.swapi.processor.calculate_proton_solar_wind_vdf')
+    def test_process_l3b(self, mock_calculate_proton_solar_wind_vdf, mock_swapi_l3b_dependencies_class,
+                         mock_read_l2_swapi_data, mock_chunk_l2_data, mock_uuid,
+                         mock_calculate_combined_sweeps, mock_combined_vdf_data,
+                         mock_upload_data):
+        mock_uuid_value = 123
+        mock_uuid.uuid4.return_value = mock_uuid_value
+
+        instrument = 'swapi'
+        incoming_data_level = 'l2'
+        descriptor = SWAPI_L2_DESCRIPTOR
+        end_date = datetime.now()
+        version = 'f'
+        outgoing_data_level = "l3b"
+        start_date = datetime.now() - timedelta(days=1)
+        outgoing_version = "12345"
+
+        initial_epoch = 10
+        efficiency = 0.10
+
+        start_date_as_str = datetime.strftime(start_date, "%Y%m%d")
+
+        mock_calculate_proton_solar_wind_vdf.return_value = (
+            sentinel.calculated_velocities, sentinel.calculated_probabilities)
+
+        epoch = np.array([initial_epoch, 11, 12, 13])
+        energy = np.array([15000, 16000, 17000, 18000, 19000])
+        coincidence_count_rate = np.array(
+            [[4, 5, 6, 7, 8], [9, 10, 11, 12, 13], [14, 15, 16, 17, 18], [19, 20, 21, 22, 23]])
+        average_coincident_count_rates = [14, 15, 16, 17, 18]
+
+        spin_angles = np.array([[24, 25, 26, 27, 28], [29, 30, 31, 32, 33], [34, 35, 36, 37, 38], [39, 40, 41, 42, 43]])
+        coincidence_count_rate_uncertainty = np.array(
+            [[0.1, 0.2, 0.3, 0.4, 0.5], [0.1, 0.2, 0.3, 0.4, 0.5], [0.1, 0.2, 0.3, 0.4, 0.5],
+             [0.1, 0.2, 0.3, 0.4, 0.5]])
+        average_coincident_count_rate_uncertainties = [0.1, 0.2, 0.3, 0.4, 0.5]
+
+        l2_data_chunk = SwapiL2Data(epoch, sentinel.energies, coincidence_count_rate, spin_angles,
+                                    coincidence_count_rate_uncertainty)
+        mock_chunk_l2_data.return_value = [
+            l2_data_chunk]
+
+        mock_calculate_combined_sweeps.return_value = [
+            uarray(average_coincident_count_rates, average_coincident_count_rate_uncertainties), energy]
+
+        input_metadata = InputMetadata(instrument, outgoing_data_level, start_date, end_date,
+                                       outgoing_version)
+        dependencies = [
+            UpstreamDataDependency(instrument, incoming_data_level, start_date, end_date,
+                                   version, descriptor),
+        ]
+
+        swapi_processor = SwapiProcessor(
+            dependencies, input_metadata)
+        swapi_processor.process()
+
+        mock_swapi_l3b_dependencies_class.fetch_dependencies.assert_called_once_with(dependencies)
+
+        mock_geometric_factor_calibration_table = mock_swapi_l3b_dependencies_class.fetch_dependencies.return_value.geometric_factor_calibration_table
+
+        mock_read_l2_swapi_data.assert_called_once_with(
+            mock_swapi_l3b_dependencies_class.fetch_dependencies.return_value.data)
+
+        mock_chunk_l2_data.assert_called_with(mock_read_l2_swapi_data.return_value, 50)
+
+        np.testing.assert_array_equal(coincidence_count_rate,
+                                      nominal_values(mock_calculate_combined_sweeps.call_args_list[0].args[0]))
+        np.testing.assert_array_equal(coincidence_count_rate_uncertainty,
+                                      std_devs(mock_calculate_combined_sweeps.call_args_list[0].args[0]))
+        self.assertEqual(sentinel.energies,
+                         mock_calculate_combined_sweeps.call_args_list[0].args[1])
+
+        expected_count_rate_with_uncertainties = uarray(average_coincident_count_rates,
+                                                        average_coincident_count_rate_uncertainties)
+
+        np.testing.assert_array_equal(energy, mock_calculate_proton_solar_wind_vdf.call_args_list[0].args[0])
+        np.testing.assert_array_equal(nominal_values(expected_count_rate_with_uncertainties),
+                                      nominal_values(mock_calculate_proton_solar_wind_vdf.call_args_list[0].args[1]))
+        np.testing.assert_array_equal(std_devs(expected_count_rate_with_uncertainties),
+                                      std_devs(mock_calculate_proton_solar_wind_vdf.call_args_list[0].args[1]))
+        np.testing.assert_array_equal(efficiency, mock_calculate_proton_solar_wind_vdf.call_args_list[0].args[3])
+        np.testing.assert_array_equal(mock_geometric_factor_calibration_table,
+                                      mock_calculate_proton_solar_wind_vdf.call_args_list[0].args[3])
+
+        expected_alpha_metadata = input_metadata.to_upstream_data_dependency("combined")
+        self.assertEqual(expected_alpha_metadata, mock_combined_vdf_data.call_args_list[0].args[0])
+        np.testing.assert_array_equal(np.array([l2_data_chunk.epoch[0] + FIVE_MINUTES_IN_NANOSECONDS]),
+                                      mock_combined_vdf_data.call_args_list[0].args[1])
+        self.assertEqual(sentinel.calculated_velocities, mock_combined_vdf_data.call_args_list[0].args[2])
+        self.assertEqual(sentinel.calculated_probabilities, mock_combined_vdf_data.call_args_list[0].args[3])
+
+        mock_upload_data.assert_called_once_with(mock_combined_vdf_data.return_value)
 
     def assert_ufloat_equal(self, expected_ufloat, actual_ufloat):
         self.assertEqual(expected_ufloat.n, actual_ufloat.n)

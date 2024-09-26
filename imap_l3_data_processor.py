@@ -24,7 +24,7 @@ args = parser.parse_args()
 dependencies_list = json.loads(args.dependency.replace("'", '"'))
 
 if args.instrument == 'swapi':
-    if args.data_level == 'l3a':
+    if args.data_level == 'l3a' or args.data_level == 'l3b':
         dependencies = [UpstreamDataDependency(d['instrument'], d['data_level'],
                                                None, None,
                                                d['version'], d['descriptor']) for d in dependencies_list]

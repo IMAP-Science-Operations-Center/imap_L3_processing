@@ -1,0 +1,5 @@
+Instrument_type: Particles (space)
+Data_level: "3"
+Data_type: L3_SCI>Level-3 Science data
+Logical_file_id: imap_swapi_l3b_combined
+Logical_source_description: SWAPI Instrument Combined VDF and Differential Flux

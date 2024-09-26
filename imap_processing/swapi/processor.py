@@ -1,26 +1,29 @@
 import dataclasses
-from dataclasses import dataclass
+
 import numpy as np
-from spacepy.pycdf import CDF
 from uncertainties import ufloat
 from uncertainties.unumpy import uarray
 
-from imap_processing.constants import THIRTY_SECONDS_IN_NANOSECONDS
-from imap_processing.models import UpstreamDataDependency
+from imap_processing.constants import THIRTY_SECONDS_IN_NANOSECONDS, FIVE_MINUTES_IN_NANOSECONDS
 from imap_processing.processor import Processor
 from imap_processing.swapi.l3a.models import SwapiL3ProtonSolarWindData, SwapiL3AlphaSolarWindData
-from imap_processing.swapi.l3a.science.calculate_alpha_solar_wind_speed import calculate_alpha_solar_wind_speed
+from imap_processing.swapi.l3a.science.calculate_alpha_solar_wind_speed import calculate_alpha_solar_wind_speed, \
+    calculate_combined_sweeps
 from imap_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density import \
-    AlphaTemperatureDensityCalibrationTable, calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps
+    calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps
 from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_clock_and_deflection_angles import \
-    ClockAngleCalibrationTable, calculate_deflection_angle, calculate_clock_angle
+    calculate_deflection_angle, calculate_clock_angle
 from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_speed import calculate_proton_solar_wind_speed
 from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_temperature_and_density import \
-    ProtonTemperatureAndDensityCalibrationTable, calculate_proton_solar_wind_temperature_and_density
+    calculate_proton_solar_wind_temperature_and_density
 from imap_processing.swapi.l3a.swapi_l3a_dependencies import SwapiL3ADependencies
 from imap_processing.swapi.l3a.utils import read_l2_swapi_data, chunk_l2_data
-from imap_processing.swapi.l3b.science.calculate_proton_solar_wind_vdf import GeometricFactorCalibrationTable
-from imap_processing.utils import download_dependency, upload_data
+from imap_processing.swapi.l3b.models import SwapiL3BCombinedVDF
+from imap_processing.swapi.l3b.science.calculate_proton_solar_wind_vdf import calculate_proton_solar_wind_vdf
+from imap_processing.swapi.l3b.swapi_l3b_dependencies import SwapiL3BDependencies
+from imap_processing.swapi.parameters import INSTRUMENT_EFFICIENCY
+from imap_processing.swapi.swapi_utils import extract_coarse_sweep
+from imap_processing.utils import upload_data
 
 
 class SwapiProcessor(Processor):
@@ -30,11 +33,15 @@ class SwapiProcessor(Processor):
             dataclasses.replace(dep, start_date=self.input_metadata.start_date, end_date=self.input_metadata.end_date)
             for dep in
             self.dependencies]
-        dependencies = SwapiL3ADependencies.fetch_dependencies(dependencies)
 
-        data = read_l2_swapi_data(dependencies.data)
-
-        self.process_l3a(data, dependencies)
+        if self.input_metadata.data_level == "l3a":
+            l3a_dependencies = SwapiL3ADependencies.fetch_dependencies(dependencies)
+            data = read_l2_swapi_data(l3a_dependencies.data)
+            self.process_l3a(data, l3a_dependencies)
+        elif self.input_metadata.data_level == "l3b":
+            l3b_dependencies = SwapiL3BDependencies.fetch_dependencies(dependencies)
+            data = read_l2_swapi_data(l3b_dependencies.data)
+            self.process_l3b(data, l3b_dependencies)
 
     def process_l3a(self, data, dependencies):
         epochs = []
@@ -109,4 +116,27 @@ class SwapiProcessor(Processor):
         upload_data(alpha_solar_wind_l3_data)
 
     def process_l3b(self, data, dependencies):
-        pass
+        epochs = []
+        cdf_velocities = []
+        cdf_probabilities = []
+
+        for data_chunk in chunk_l2_data(data, 50):
+            coincidence_count_rates_with_uncertainty = uarray(data_chunk.coincidence_count_rate,
+                                                              data_chunk.coincidence_count_rate_uncertainty)
+            average_coincident_count_rates, energies = calculate_combined_sweeps(
+                coincidence_count_rates_with_uncertainty, data_chunk.energy)
+
+            velocities, probabilities = calculate_proton_solar_wind_vdf(energies,
+                                                                        average_coincident_count_rates,
+                                                                        INSTRUMENT_EFFICIENCY,
+                                                                        dependencies.geometric_factor_calibration_table)
+
+            epochs.append(data_chunk.epoch[0] + FIVE_MINUTES_IN_NANOSECONDS)
+            cdf_velocities.append(velocities)
+            cdf_probabilities.append(probabilities)
+
+        l3b_combined_metadata = self.input_metadata.to_upstream_data_dependency("combined")
+        l3b_combined_vdf = SwapiL3BCombinedVDF(l3b_combined_metadata, epochs, np.array(cdf_velocities),
+                                               np.array(cdf_probabilities))
+
+        upload_data(l3b_combined_vdf)

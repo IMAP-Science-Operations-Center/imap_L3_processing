@@ -40,3 +40,40 @@ class TestImapCdfManager(TestCase):
                          manager.get_variable_attributes('proton_sw_deflection_angle'))
         self.assertEqual(base_manager.get_variable_attributes('proton_sw_deflection_angle_delta'),
                          manager.get_variable_attributes('proton_sw_deflection_angle_delta'))
+
+        self.assertEqual(base_manager.get_variable_attributes('alpha_sw_speed'),
+                         manager.get_variable_attributes('alpha_sw_speed'))
+        self.assertEqual(base_manager.get_variable_attributes('alpha_sw_speed_delta'),
+                         manager.get_variable_attributes('alpha_sw_speed_delta'))
+
+        self.assertEqual(base_manager.get_variable_attributes('alpha_sw_density'),
+                         manager.get_variable_attributes('alpha_sw_density'))
+        self.assertEqual(base_manager.get_variable_attributes('alpha_sw_density_delta'),
+                         manager.get_variable_attributes('alpha_sw_density_delta'))
+
+        self.assertEqual(base_manager.get_variable_attributes('alpha_sw_temperature'),
+                         manager.get_variable_attributes('alpha_sw_temperature'))
+        self.assertEqual(base_manager.get_variable_attributes('alpha_sw_temperature_delta'),
+                         manager.get_variable_attributes('alpha_sw_temperature_delta'))
+
+    def test_l3b_metadata_configuration(self):
+        manager = ImapAttributeManager()
+        manager.add_instrument_attrs('swapi', 'l3b')
+
+        base_manager = CdfAttributeManager(Path(f'{Path(imap_processing.__file__).parent.resolve()}/cdf/config'))
+        base_manager.load_global_attributes('imap_default_global_cdf_attrs.yaml')
+        base_manager.load_global_attributes('imap_swapi_global_cdf_attrs.yaml')
+        base_manager.load_global_attributes('imap_swapi_l3b_global_cdf_attrs.yaml')
+        base_manager.load_variable_attributes('imap_swapi_l3b_variable_attrs.yaml')
+        self.assertEqual(base_manager.get_global_attributes(), manager.get_global_attributes())
+        self.assertEqual(base_manager.get_variable_attributes('epoch'), manager.get_variable_attributes('epoch'))
+
+        self.assertEqual(base_manager.get_variable_attributes('proton_sw_velocity'),
+                         manager.get_variable_attributes('proton_sw_velocity'))
+        self.assertEqual(base_manager.get_variable_attributes('proton_sw_velocity_delta'),
+                         manager.get_variable_attributes('proton_sw_velocity_delta'))
+
+        self.assertEqual(base_manager.get_variable_attributes('proton_sw_vdf'),
+                         manager.get_variable_attributes('proton_sw_vdf'))
+        self.assertEqual(base_manager.get_variable_attributes('proton_sw_vdf_delta'),
+                         manager.get_variable_attributes('proton_sw_vdf_delta'))

@@ -1,0 +1,79 @@
+default_attrs: &default_timeseries
+  FORMAT: F19.3
+  DEPEND_0: epoch
+  FILLVAL: -1.000000e+31
+  VALIDMIN: 0
+  VALIDMAX: 9223372036854775807
+  UNITS: ' '
+
+proton_sw_velocity:
+  <<: *default_timeseries
+  CATDESC: Proton Solar Wind Velocity
+  FIELDNAM: proton_sw_velocity
+  UNITS: km/s
+  LABLAXIS: Velocity
+  SCALETYP: linear
+  VAR_TYPE: data
+  DISPLAY_TYPE: time_series
+  SCALEMIN: 0
+  SCALEMAX: 1000
+
+proton_sw_velocity_delta:
+  <<: *default_timeseries
+  VAR_TYPE: support_data
+  CATDESC: Proton Solar Wind Velocity Delta
+  FIELDNAM: proton_sw_velocity_delta
+
+proton_sw_vdf:
+  <<: *default_timeseries
+  DEPEND_1: proton_sw_velocity
+  CATDESC: Proton Solar Wind Combined VDF
+  FIELDNAM: proton_sw_vdf
+  DELTA_MINUS_VAR: proton_sw_vdf_delta
+  DELTA_PLUS_VAR: proton_sw_vdf_delta
+  LABLAXIS: F(v)
+  SCALETYP: linear
+  VAR_TYPE: data
+  DISPLAY_TYPE: spectrogram
+  SCALEMIN: 0
+  SCALEMAX: 1
+
+proton_sw_vdf_delta:
+  <<: *default_timeseries
+  DEPEND_1: proton_sw_velocity
+  VAR_TYPE: support_data
+  CATDESC: Proton Solar Wind Combined VDF Uncertainty
+  FIELDNAM: proton_sw_vdf_delta
+
+epoch:
+  CATDESC: Time, number of nanoseconds since J2000 with leap seconds included
+  FIELDNAM: epoch
+  LABLAXIS: epoch
+  UNITS: ns
+  VAR_TYPE: support_data
+  SCALETYP: linear
+  MONOTON: INCREASE
+  TIME_BASE: J2000
+  TIME_SCALE: Terrestrial Time
+  REFERENCE_POSITION: Rotating Earth Geoid
+  DELTA_MINUS_VAR: epoch_delta
+  DELTA_PLUS_VAR: epoch_delta
+  FILLVAL: 9999-12-31T23:59:59.999999999
+  VALIDMIN: 2010-01-01T00:00:00.000000000
+  VALIDMAX: 2040-01-01T00:00:00.000000000
+  FORMAT: " "
+
+epoch_delta:
+  CATDESC: epoch_DELTA
+  DEPEND_0: epoch
+  DISPLAY_TYPE: time_series
+  FIELDNAM: epoch_delta
+  FILLVAL: -9223372036854775808
+  VALIDMIN: 0
+  VALIDMAX: 86000000000000
+  SCALEMIN: 0
+  SCALEMAX: 86000000000000
+  SCALETYP: linear
+  UNITS: ns
+  VAR_TYPE: support_data
+  FORMAT: 19I
