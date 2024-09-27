@@ -26,6 +26,12 @@ PUI_SOLAR_WIND_VELOCITIES_DELTAS_CDF_VAR_NAME = "pui_sw_velocity_delta"
 PUI_SOLAR_WIND_VDF_CDF_VAR_NAME = "pui_sw_vdf"
 PUI_SOLAR_WIND_VDF_DELTAS_CDF_VAR_NAME = "pui_sw_vdf_delta"
 
+SOLAR_WIND_ENERGY_CDF_VAR_NAME = "combined_energy"
+SOLAR_WIND_COMBINED_ENERGY_DELTAS_CDF_VAR_NAME = "combined_energy_delta"
+
+COMBINED_SOLAR_WIND_DIFFERENTIAL_FLUX_CDF_VAR_NAME = "combined_differential_flux"
+COMBINED_SOLAR_WIND_DIFFERENTIAL_FLUX_DELTA_CDF_VAR_NAME = "combined_differential_flux_delta"
+
 
 @dataclass
 class SwapiL3BCombinedVDF(DataProduct):
@@ -36,6 +42,8 @@ class SwapiL3BCombinedVDF(DataProduct):
     alpha_sw_combined_vdf: np.ndarray[float]
     pui_sw_velocities: np.ndarray[float]
     pui_sw_combined_vdf: np.ndarray[float]
+    combined_energy: np.ndarray[float]
+    combined_differential_flux: np.ndarray[float]
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
@@ -59,4 +67,12 @@ class SwapiL3BCombinedVDF(DataProduct):
 
             DataProductVariable(PUI_SOLAR_WIND_VDF_CDF_VAR_NAME, nominal_values(self.pui_sw_combined_vdf)),
             DataProductVariable(PUI_SOLAR_WIND_VDF_DELTAS_CDF_VAR_NAME, std_devs(self.pui_sw_combined_vdf)),
+
+            DataProductVariable(SOLAR_WIND_ENERGY_CDF_VAR_NAME, self.combined_energy),
+            DataProductVariable(SOLAR_WIND_COMBINED_ENERGY_DELTAS_CDF_VAR_NAME, 6.0, record_varying=False),
+
+            DataProductVariable(COMBINED_SOLAR_WIND_DIFFERENTIAL_FLUX_CDF_VAR_NAME,
+                                nominal_values(self.combined_differential_flux)),
+            DataProductVariable(COMBINED_SOLAR_WIND_DIFFERENTIAL_FLUX_DELTA_CDF_VAR_NAME,
+                                std_devs(self.combined_differential_flux))
         ]

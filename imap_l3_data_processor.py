@@ -3,7 +3,7 @@ import json
 from datetime import datetime
 
 from imap_processing.models import UpstreamDataDependency, InputMetadata
-from imap_processing.swapi.processor import SwapiProcessor
+from imap_processing.swapi.swapi_processor import SwapiProcessor
 
 
 def imap_l3_processor():

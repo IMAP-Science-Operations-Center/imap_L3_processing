@@ -12,10 +12,11 @@ from imap_processing.constants import TEMP_CDF_FOLDER_PATH, THIRTY_SECONDS_IN_NA
 from imap_processing.models import UpstreamDataDependency, InputMetadata
 from imap_processing.swapi.l3a.models import SwapiL2Data
 from imap_processing.swapi.l3a.swapi_l3a_dependencies import SWAPI_L2_DESCRIPTOR
-from imap_processing.swapi.processor import SwapiProcessor
+from imap_processing.swapi.parameters import INSTRUMENT_EFFICIENCY
+from imap_processing.swapi.swapi_processor import SwapiProcessor
 
 
-class TestProcessor(TestCase):
+class TestSwapiProcessor(TestCase):
     def setUp(self) -> None:
         self.temp_directory = f"{TEMP_CDF_FOLDER_PATH}"
         if os.path.exists(self.temp_directory):
@@ -29,19 +30,20 @@ class TestProcessor(TestCase):
         self.mock_imap_patcher.stop()
 
     @patch('imap_processing.utils.ImapAttributeManager')
-    @patch('imap_processing.swapi.processor.SwapiL3AlphaSolarWindData')
-    @patch('imap_processing.swapi.processor.SwapiL3ProtonSolarWindData')
+    @patch('imap_processing.swapi.swapi_processor.SwapiL3AlphaSolarWindData')
+    @patch('imap_processing.swapi.swapi_processor.SwapiL3ProtonSolarWindData')
     @patch('imap_processing.utils.write_cdf')
     @patch('imap_processing.utils.uuid')
-    @patch('imap_processing.swapi.processor.chunk_l2_data')
-    @patch('imap_processing.swapi.processor.read_l2_swapi_data')
-    @patch('imap_processing.swapi.processor.calculate_proton_solar_wind_speed')
-    @patch('imap_processing.swapi.processor.calculate_alpha_solar_wind_speed')
-    @patch('imap_processing.swapi.processor.calculate_proton_solar_wind_temperature_and_density')
-    @patch('imap_processing.swapi.processor.calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps')
-    @patch('imap_processing.swapi.processor.calculate_clock_angle')
-    @patch('imap_processing.swapi.processor.calculate_deflection_angle')
-    @patch('imap_processing.swapi.processor.SwapiL3ADependencies')
+    @patch('imap_processing.swapi.swapi_processor.chunk_l2_data')
+    @patch('imap_processing.swapi.swapi_processor.read_l2_swapi_data')
+    @patch('imap_processing.swapi.swapi_processor.calculate_proton_solar_wind_speed')
+    @patch('imap_processing.swapi.swapi_processor.calculate_alpha_solar_wind_speed')
+    @patch('imap_processing.swapi.swapi_processor.calculate_proton_solar_wind_temperature_and_density')
+    @patch(
+        'imap_processing.swapi.swapi_processor.calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps')
+    @patch('imap_processing.swapi.swapi_processor.calculate_clock_angle')
+    @patch('imap_processing.swapi.swapi_processor.calculate_deflection_angle')
+    @patch('imap_processing.swapi.swapi_processor.SwapiL3ADependencies')
     def test_processor(self, mock_swapi_l3_dependencies_class,
                        mock_calculate_deflection_angle,
                        mock_calculate_clock_angle,
@@ -234,17 +236,19 @@ class TestProcessor(TestCase):
         ])
         self.mock_imap_api.upload.assert_has_calls([call(proton_cdf_path), call(alpha_cdf_path)])
 
-    @patch('imap_processing.swapi.processor.upload_data')
-    @patch('imap_processing.swapi.processor.SwapiL3BCombinedVDF')
-    @patch('imap_processing.swapi.processor.calculate_combined_sweeps')
+    @patch('imap_processing.swapi.swapi_processor.upload_data')
+    @patch('imap_processing.swapi.swapi_processor.SwapiL3BCombinedVDF')
+    @patch('imap_processing.swapi.swapi_processor.calculate_combined_sweeps')
     @patch('imap_processing.utils.uuid')
-    @patch('imap_processing.swapi.processor.chunk_l2_data')
-    @patch('imap_processing.swapi.processor.read_l2_swapi_data')
-    @patch('imap_processing.swapi.processor.SwapiL3BDependencies')
-    @patch('imap_processing.swapi.processor.calculate_alpha_solar_wind_vdf')
-    @patch('imap_processing.swapi.processor.calculate_proton_solar_wind_vdf')
-    @patch('imap_processing.swapi.processor.calculate_pui_solar_wind_vdf')
-    def test_process_l3b(self, mock_calculate_pui_solar_wind_vdf, mock_calculate_proton_solar_wind_vdf,
+    @patch('imap_processing.swapi.swapi_processor.chunk_l2_data')
+    @patch('imap_processing.swapi.swapi_processor.read_l2_swapi_data')
+    @patch('imap_processing.swapi.swapi_processor.SwapiL3BDependencies')
+    @patch('imap_processing.swapi.swapi_processor.calculate_alpha_solar_wind_vdf')
+    @patch('imap_processing.swapi.swapi_processor.calculate_proton_solar_wind_vdf')
+    @patch('imap_processing.swapi.swapi_processor.calculate_pui_solar_wind_vdf')
+    @patch('imap_processing.swapi.swapi_processor.calculate_combined_solar_wind_diffential_flux')
+    def test_process_l3b(self, mock_calculate_combined_solar_wind_differential_flux, mock_calculate_pui_solar_wind_vdf,
+                         mock_calculate_proton_solar_wind_vdf,
                          mock_calculate_alpha_solar_wind_vdf,
                          mock_swapi_l3b_dependencies_class,
                          mock_read_l2_swapi_data, mock_chunk_l2_data, mock_uuid,
@@ -278,6 +282,11 @@ class TestProcessor(TestCase):
         mock_calculate_pui_solar_wind_vdf.side_effect = [
             (sentinel.pui_calculated_velocities1, sentinel.pui_calculated_probabilities1),
             (sentinel.pui_calculated_velocities2, sentinel.pui_calculated_probabilities2),
+        ]
+
+        mock_calculate_combined_solar_wind_differential_flux.side_effect = [
+            sentinel.calculated_diffential_flux1,
+            sentinel.calculated_diffential_flux2
         ]
 
         energy = np.array([15000, 16000, 17000, 18000, 19000])
@@ -337,13 +346,48 @@ class TestProcessor(TestCase):
                                                         average_coincident_count_rate_uncertainties)
 
         np.testing.assert_array_equal(energy, mock_calculate_proton_solar_wind_vdf.call_args_list[0].args[0])
-        np.testing.assert_array_equal(nominal_values(expected_count_rate_with_uncertainties),
+        nominal_count_rates = nominal_values(expected_count_rate_with_uncertainties)
+        std_devs_count_rates = std_devs(expected_count_rate_with_uncertainties)
+
+        np.testing.assert_array_equal(nominal_count_rates,
                                       nominal_values(mock_calculate_proton_solar_wind_vdf.call_args_list[0].args[1]))
-        np.testing.assert_array_equal(std_devs(expected_count_rate_with_uncertainties),
+        np.testing.assert_array_equal(std_devs_count_rates,
                                       std_devs(mock_calculate_proton_solar_wind_vdf.call_args_list[0].args[1]))
-        np.testing.assert_array_equal(efficiency, mock_calculate_proton_solar_wind_vdf.call_args_list[0].args[3])
+        np.testing.assert_array_equal(INSTRUMENT_EFFICIENCY,
+                                      mock_calculate_proton_solar_wind_vdf.call_args_list[0].args[3])
         np.testing.assert_array_equal(mock_geometric_factor_calibration_table,
                                       mock_calculate_proton_solar_wind_vdf.call_args_list[0].args[3])
+
+        np.testing.assert_array_equal(energy, mock_calculate_alpha_solar_wind_vdf.call_args_list[0].args[0])
+        np.testing.assert_array_equal(nominal_count_rates,
+                                      nominal_values(mock_calculate_alpha_solar_wind_vdf.call_args_list[0].args[1]))
+        np.testing.assert_array_equal(std_devs_count_rates,
+                                      std_devs(mock_calculate_alpha_solar_wind_vdf.call_args_list[0].args[1]))
+        np.testing.assert_array_equal(INSTRUMENT_EFFICIENCY,
+                                      mock_calculate_alpha_solar_wind_vdf.call_args_list[0].args[2])
+        np.testing.assert_array_equal(mock_geometric_factor_calibration_table,
+                                      mock_calculate_alpha_solar_wind_vdf.call_args_list[0].args[3])
+
+        np.testing.assert_array_equal(energy, mock_calculate_pui_solar_wind_vdf.call_args_list[0].args[0])
+        np.testing.assert_array_equal(nominal_count_rates,
+                                      nominal_values(mock_calculate_pui_solar_wind_vdf.call_args_list[0].args[1]))
+        np.testing.assert_array_equal(std_devs_count_rates,
+                                      std_devs(mock_calculate_pui_solar_wind_vdf.call_args_list[0].args[1]))
+        np.testing.assert_array_equal(INSTRUMENT_EFFICIENCY,
+                                      mock_calculate_pui_solar_wind_vdf.call_args_list[0].args[2])
+        np.testing.assert_array_equal(mock_geometric_factor_calibration_table,
+                                      mock_calculate_pui_solar_wind_vdf.call_args_list[0].args[3])
+
+        np.testing.assert_array_equal(energy,
+                                      mock_calculate_combined_solar_wind_differential_flux.call_args_list[0].args[0])
+        np.testing.assert_array_equal(nominal_count_rates, nominal_values(
+            mock_calculate_combined_solar_wind_differential_flux.call_args_list[0].args[1]))
+        np.testing.assert_array_equal(std_devs_count_rates, std_devs(
+            mock_calculate_combined_solar_wind_differential_flux.call_args_list[0].args[1]))
+        np.testing.assert_array_equal(INSTRUMENT_EFFICIENCY,
+                                      mock_calculate_combined_solar_wind_differential_flux.call_args_list[0].args[2])
+        np.testing.assert_array_equal(mock_geometric_factor_calibration_table,
+                                      mock_calculate_combined_solar_wind_differential_flux.call_args_list[0].args[3])
 
         expected_combined_metadata = input_metadata.to_upstream_data_dependency("combined")
         self.assertEqual(expected_combined_metadata, mock_combined_vdf_data.call_args_list[0].args[0])
@@ -368,6 +412,10 @@ class TestProcessor(TestCase):
         np.testing.assert_array_equal(
             [sentinel.pui_calculated_probabilities1, sentinel.pui_calculated_probabilities2],
             mock_combined_vdf_data.call_args_list[0].args[7])
+        np.testing.assert_array_equal([energy, energy], mock_combined_vdf_data.call_args_list[0].args[8])
+        np.testing.assert_array_equal(
+            [sentinel.calculated_diffential_flux1, sentinel.calculated_diffential_flux2],
+            mock_combined_vdf_data.call_args_list[0].args[9])
 
         mock_upload_data.assert_called_once_with(mock_combined_vdf_data.return_value)
 

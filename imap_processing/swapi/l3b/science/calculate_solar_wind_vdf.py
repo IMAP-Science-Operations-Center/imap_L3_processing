@@ -6,6 +6,7 @@ from numpy import ndarray
 from imap_processing.constants import PROTON_MASS_KG, PROTON_CHARGE_COULOMBS, ALPHA_PARTICLE_CHARGE_COULOMBS, \
     ALPHA_PARTICLE_MASS_KG, PUI_PARTICLE_MASS_KG, PUI_PARTICLE_CHARGE_COULOMBS
 from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_speed import calculate_sw_speed
+from imap_processing.swapi.l3b.science.geometric_factor_calibration_table import GeometricFactorCalibrationTable
 
 
 def calculate_vdf(particle_mass, particle_charge, energies: ndarray, average_count_rates: ndarray,
@@ -39,17 +40,3 @@ def calculate_pui_solar_wind_vdf(energies: ndarray, average_count_rates: ndarray
     return calculate_vdf(PUI_PARTICLE_MASS_KG, PUI_PARTICLE_CHARGE_COULOMBS, energies,
                          average_count_rates, efficiency,
                          geometric_factor_table)
-
-
-class GeometricFactorCalibrationTable:
-    def __init__(self, data: ndarray):
-        self.grid = data[:, 0]
-        self.geometric_factor_grid = data[:, 1]
-
-    def lookup_geometric_factor(self, energy):
-        return np.interp(energy, self.grid, self.geometric_factor_grid)
-
-    @classmethod
-    def from_file(cls, file_path) -> GeometricFactorCalibrationTable:
-        data = np.loadtxt(file_path, skiprows=1, delimiter=',')
-        return cls(data)

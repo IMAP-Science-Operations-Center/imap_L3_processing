@@ -19,6 +19,8 @@ from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_temperature_a
 from imap_processing.swapi.l3a.swapi_l3a_dependencies import SwapiL3ADependencies
 from imap_processing.swapi.l3a.utils import read_l2_swapi_data, chunk_l2_data
 from imap_processing.swapi.l3b.models import SwapiL3BCombinedVDF
+from imap_processing.swapi.l3b.science.calculate_solar_wind_differential_flux import \
+    calculate_combined_solar_wind_diffential_flux
 from imap_processing.swapi.l3b.science.calculate_solar_wind_vdf import calculate_proton_solar_wind_vdf, \
     calculate_alpha_solar_wind_vdf, calculate_pui_solar_wind_vdf
 from imap_processing.swapi.l3b.swapi_l3b_dependencies import SwapiL3BDependencies
@@ -123,6 +125,8 @@ class SwapiProcessor(Processor):
         cdf_alpha_probabilities = []
         cdf_pui_velocities = []
         cdf_pui_probabilities = []
+        combined_differential_fluxes = []
+        combined_energies = []
 
         for data_chunk in chunk_l2_data(data, 50):
             coincidence_count_rates_with_uncertainty = uarray(data_chunk.coincidence_count_rate,
@@ -144,7 +148,10 @@ class SwapiProcessor(Processor):
                                                                              average_coincident_count_rates,
                                                                              INSTRUMENT_EFFICIENCY,
                                                                              dependencies.geometric_factor_calibration_table)
-
+            combined_differential_flux = calculate_combined_solar_wind_diffential_flux(energies,
+                                                                                       average_coincident_count_rates,
+                                                                                       INSTRUMENT_EFFICIENCY,
+                                                                                       dependencies.geometric_factor_calibration_table)
             epochs.append(data_chunk.epoch[0] + FIVE_MINUTES_IN_NANOSECONDS)
             cdf_proton_velocities.append(proton_velocities)
             cdf_proton_probabilities.append(proton_probabilities)
@@ -155,10 +162,15 @@ class SwapiProcessor(Processor):
             cdf_pui_velocities.append(pui_velocities)
             cdf_pui_probabilities.append(pui_probabilities)
 
+            combined_differential_fluxes.append(combined_differential_flux)
+            combined_energies.append(energies)
+
         l3b_combined_metadata = self.input_metadata.to_upstream_data_dependency("combined")
         l3b_combined_vdf = SwapiL3BCombinedVDF(l3b_combined_metadata, np.array(epochs), np.array(cdf_proton_velocities),
                                                np.array(cdf_proton_probabilities), np.array(cdf_alpha_velocities),
                                                np.array(cdf_alpha_probabilities), np.array(cdf_pui_velocities),
-                                               np.array(cdf_pui_probabilities))
+                                               np.array(cdf_pui_probabilities), np.array(combined_energies),
+                                               np.array(combined_differential_fluxes),
+                                               )
 
         upload_data(l3b_combined_vdf)
