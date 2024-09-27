@@ -243,7 +243,9 @@ class TestProcessor(TestCase):
     @patch('imap_processing.swapi.processor.SwapiL3BDependencies')
     @patch('imap_processing.swapi.processor.calculate_alpha_solar_wind_vdf')
     @patch('imap_processing.swapi.processor.calculate_proton_solar_wind_vdf')
-    def test_process_l3b(self, mock_calculate_proton_solar_wind_vdf, mock_calculate_alpha_solar_wind_vdf,
+    @patch('imap_processing.swapi.processor.calculate_pui_solar_wind_vdf')
+    def test_process_l3b(self, mock_calculate_pui_solar_wind_vdf, mock_calculate_proton_solar_wind_vdf,
+                         mock_calculate_alpha_solar_wind_vdf,
                          mock_swapi_l3b_dependencies_class,
                          mock_read_l2_swapi_data, mock_chunk_l2_data, mock_uuid,
                          mock_calculate_combined_sweeps, mock_combined_vdf_data,
@@ -271,6 +273,11 @@ class TestProcessor(TestCase):
         mock_calculate_alpha_solar_wind_vdf.side_effect = [
             (sentinel.alpha_calculated_velocities1, sentinel.alpha_calculated_probabilities1),
             (sentinel.alpha_calculated_velocities2, sentinel.alpha_calculated_probabilities2),
+        ]
+
+        mock_calculate_pui_solar_wind_vdf.side_effect = [
+            (sentinel.pui_calculated_velocities1, sentinel.pui_calculated_probabilities1),
+            (sentinel.pui_calculated_velocities2, sentinel.pui_calculated_probabilities2),
         ]
 
         energy = np.array([15000, 16000, 17000, 18000, 19000])
@@ -355,6 +362,12 @@ class TestProcessor(TestCase):
         np.testing.assert_array_equal(
             [sentinel.alpha_calculated_probabilities1, sentinel.alpha_calculated_probabilities2],
             mock_combined_vdf_data.call_args_list[0].args[5])
+
+        np.testing.assert_array_equal([sentinel.pui_calculated_velocities1, sentinel.pui_calculated_velocities2],
+                                      mock_combined_vdf_data.call_args_list[0].args[6])
+        np.testing.assert_array_equal(
+            [sentinel.pui_calculated_probabilities1, sentinel.pui_calculated_probabilities2],
+            mock_combined_vdf_data.call_args_list[0].args[7])
 
         mock_upload_data.assert_called_once_with(mock_combined_vdf_data.return_value)
 

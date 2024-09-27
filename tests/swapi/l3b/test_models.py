@@ -11,7 +11,9 @@ from imap_processing.swapi.l3b.models import SwapiL3BCombinedVDF, PROTON_SOLAR_W
     PROTON_SOLAR_WIND_VDF_CDF_VAR_NAME, PROTON_SOLAR_WIND_VDF_DELTAS_CDF_VAR_NAME, \
     PROTON_SOLAR_WIND_VELOCITIES_DELTAS_CDF_VAR_NAME, ALPHA_SOLAR_WIND_VELOCITIES_CDF_VAR_NAME, \
     ALPHA_SOLAR_WIND_VELOCITIES_DELTAS_CDF_VAR_NAME, ALPHA_SOLAR_WIND_VDF_CDF_VAR_NAME, \
-    ALPHA_SOLAR_WIND_VDF_DELTAS_CDF_VAR_NAME
+    ALPHA_SOLAR_WIND_VDF_DELTAS_CDF_VAR_NAME, PUI_SOLAR_WIND_VELOCITIES_CDF_VAR_NAME, \
+    PUI_SOLAR_WIND_VELOCITIES_DELTAS_CDF_VAR_NAME, PUI_SOLAR_WIND_VDF_CDF_VAR_NAME, \
+    PUI_SOLAR_WIND_VDF_DELTAS_CDF_VAR_NAME
 from tests.swapi.cdf_model_test_case import CdfModelTestCase
 
 
@@ -28,13 +30,17 @@ class TestModels(CdfModelTestCase):
         alpha_velocities = np.array([11, 12, 13])
         alpha_vdf = np.array([[14, 15, 16], [17, 18, 19], [20, 21, 22]])
         alpha_vdf_uncertainties = np.array([[0.7, 0.8, 0.9], [0.10, 0.11, 0.12], [0.13, 0.14, 0.15]])
+        pui_velocities = np.array([23, 24, 25])
+        pui_vdf = np.array([[26, 27, 28], [29, 30, 31], [32, 33, 34]])
+        pui_vdf_uncertainties = np.array([[0.72, 0.8, 0.9], [0.10, 0.121, 0.12], [0.13, 0.142, 0.15]])
 
         vdf = SwapiL3BCombinedVDF(input_metadata, epoch, proton_velocities,
                                   uarray(proton_vdf, proton_vdf_uncertainties), alpha_velocities,
-                                  uarray(alpha_vdf, alpha_vdf_uncertainties))
+                                  uarray(alpha_vdf, alpha_vdf_uncertainties), pui_velocities,
+                                  uarray(pui_vdf, pui_vdf_uncertainties))
         variables = vdf.to_data_product_variables()
 
-        self.assertEqual(10, len(variables))
+        self.assertEqual(14, len(variables))
         self.assert_variable_attributes(variables[0], epoch, EPOCH_CDF_VAR_NAME, pycdf.const.CDF_TIME_TT2000)
         self.assert_variable_attributes(variables[1], FIVE_MINUTES_IN_NANOSECONDS, EPOCH_DELTA_CDF_VAR_NAME,
                                         expected_record_varying=False)
@@ -49,3 +55,9 @@ class TestModels(CdfModelTestCase):
                                         expected_record_varying=False)
         self.assert_variable_attributes(variables[8], alpha_vdf, ALPHA_SOLAR_WIND_VDF_CDF_VAR_NAME)
         self.assert_variable_attributes(variables[9], alpha_vdf_uncertainties, ALPHA_SOLAR_WIND_VDF_DELTAS_CDF_VAR_NAME)
+
+        self.assert_variable_attributes(variables[10], pui_velocities, PUI_SOLAR_WIND_VELOCITIES_CDF_VAR_NAME)
+        self.assert_variable_attributes(variables[11], 6.0, PUI_SOLAR_WIND_VELOCITIES_DELTAS_CDF_VAR_NAME,
+                                        expected_record_varying=False)
+        self.assert_variable_attributes(variables[12], pui_vdf, PUI_SOLAR_WIND_VDF_CDF_VAR_NAME)
+        self.assert_variable_attributes(variables[13], pui_vdf_uncertainties, PUI_SOLAR_WIND_VDF_DELTAS_CDF_VAR_NAME)

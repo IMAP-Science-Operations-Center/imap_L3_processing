@@ -20,7 +20,7 @@ from imap_processing.swapi.l3a.swapi_l3a_dependencies import SwapiL3ADependencie
 from imap_processing.swapi.l3a.utils import read_l2_swapi_data, chunk_l2_data
 from imap_processing.swapi.l3b.models import SwapiL3BCombinedVDF
 from imap_processing.swapi.l3b.science.calculate_solar_wind_vdf import calculate_proton_solar_wind_vdf, \
-    calculate_alpha_solar_wind_vdf
+    calculate_alpha_solar_wind_vdf, calculate_pui_solar_wind_vdf
 from imap_processing.swapi.l3b.swapi_l3b_dependencies import SwapiL3BDependencies
 from imap_processing.swapi.parameters import INSTRUMENT_EFFICIENCY
 from imap_processing.utils import upload_data
@@ -121,6 +121,8 @@ class SwapiProcessor(Processor):
         cdf_proton_probabilities = []
         cdf_alpha_velocities = []
         cdf_alpha_probabilities = []
+        cdf_pui_velocities = []
+        cdf_pui_probabilities = []
 
         for data_chunk in chunk_l2_data(data, 50):
             coincidence_count_rates_with_uncertainty = uarray(data_chunk.coincidence_count_rate,
@@ -138,6 +140,11 @@ class SwapiProcessor(Processor):
                                                                                    INSTRUMENT_EFFICIENCY,
                                                                                    dependencies.geometric_factor_calibration_table)
 
+            pui_velocities, pui_probabilities = calculate_pui_solar_wind_vdf(energies,
+                                                                             average_coincident_count_rates,
+                                                                             INSTRUMENT_EFFICIENCY,
+                                                                             dependencies.geometric_factor_calibration_table)
+
             epochs.append(data_chunk.epoch[0] + FIVE_MINUTES_IN_NANOSECONDS)
             cdf_proton_velocities.append(proton_velocities)
             cdf_proton_probabilities.append(proton_probabilities)
@@ -145,9 +152,13 @@ class SwapiProcessor(Processor):
             cdf_alpha_velocities.append(alpha_velocities)
             cdf_alpha_probabilities.append(alpha_probabilities)
 
+            cdf_pui_velocities.append(pui_velocities)
+            cdf_pui_probabilities.append(pui_probabilities)
+
         l3b_combined_metadata = self.input_metadata.to_upstream_data_dependency("combined")
-        l3b_combined_vdf = SwapiL3BCombinedVDF(l3b_combined_metadata, epochs, np.array(cdf_proton_velocities),
+        l3b_combined_vdf = SwapiL3BCombinedVDF(l3b_combined_metadata, np.array(epochs), np.array(cdf_proton_velocities),
                                                np.array(cdf_proton_probabilities), np.array(cdf_alpha_velocities),
-                                               np.array(cdf_alpha_probabilities))
+                                               np.array(cdf_alpha_probabilities), np.array(cdf_pui_velocities),
+                                               np.array(cdf_pui_probabilities))
 
         upload_data(l3b_combined_vdf)

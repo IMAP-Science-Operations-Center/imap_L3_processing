@@ -3,8 +3,8 @@ from unittest import TestCase
 
 from sammi.cdf_attribute_manager import CdfAttributeManager
 
-from imap_processing.cdf.imap_attribute_manager import ImapAttributeManager
 import imap_processing
+from imap_processing.cdf.imap_attribute_manager import ImapAttributeManager
 
 
 class TestImapCdfManager(TestCase):
@@ -87,3 +87,13 @@ class TestImapCdfManager(TestCase):
                          manager.get_variable_attributes('alpha_sw_vdf'))
         self.assertEqual(base_manager.get_variable_attributes('alpha_sw_vdf_delta'),
                          manager.get_variable_attributes('alpha_sw_vdf_delta'))
+
+        self.assertEqual(base_manager.get_variable_attributes('pui_sw_velocity'),
+                         manager.get_variable_attributes('pui_sw_velocity'))
+        self.assertEqual(base_manager.get_variable_attributes('pui_sw_velocity_delta'),
+                         manager.get_variable_attributes('pui_sw_velocity_delta'))
+
+        self.assertEqual(base_manager.get_variable_attributes('pui_sw_vdf'),
+                         manager.get_variable_attributes('pui_sw_vdf'))
+        self.assertEqual(base_manager.get_variable_attributes('pui_sw_vdf_delta'),
+                         manager.get_variable_attributes('pui_sw_vdf_delta'))

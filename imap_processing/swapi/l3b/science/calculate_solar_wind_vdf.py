@@ -4,9 +4,8 @@ import numpy as np
 from numpy import ndarray
 
 from imap_processing.constants import PROTON_MASS_KG, PROTON_CHARGE_COULOMBS, ALPHA_PARTICLE_CHARGE_COULOMBS, \
-    ALPHA_PARTICLE_MASS_KG
-from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_speed import calculate_sw_speed_h_plus, \
-    calculate_sw_speed
+    ALPHA_PARTICLE_MASS_KG, PUI_PARTICLE_MASS_KG, PUI_PARTICLE_CHARGE_COULOMBS
+from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_speed import calculate_sw_speed
 
 
 def calculate_vdf(particle_mass, particle_charge, energies: ndarray, average_count_rates: ndarray,
@@ -31,6 +30,13 @@ def calculate_proton_solar_wind_vdf(energies: ndarray, average_count_rates: ndar
 def calculate_alpha_solar_wind_vdf(energies: ndarray, average_count_rates: ndarray,
                                    efficiency: float, geometric_factor_table: GeometricFactorCalibrationTable):
     return calculate_vdf(ALPHA_PARTICLE_MASS_KG, ALPHA_PARTICLE_CHARGE_COULOMBS, energies,
+                         average_count_rates, efficiency,
+                         geometric_factor_table)
+
+
+def calculate_pui_solar_wind_vdf(energies: ndarray, average_count_rates: ndarray, efficiency: float,
+                                 geometric_factor_table: GeometricFactorCalibrationTable):
+    return calculate_vdf(PUI_PARTICLE_MASS_KG, PUI_PARTICLE_CHARGE_COULOMBS, energies,
                          average_count_rates, efficiency,
                          geometric_factor_table)
 

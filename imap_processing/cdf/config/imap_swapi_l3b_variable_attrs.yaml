@@ -32,11 +32,12 @@ proton_sw_vdf:
   DELTA_MINUS_VAR: proton_sw_vdf_delta
   DELTA_PLUS_VAR: proton_sw_vdf_delta
   LABLAXIS: F(v)
-  SCALETYP: linear
+  SCALETYP: log
   VAR_TYPE: data
   DISPLAY_TYPE: spectrogram
   SCALEMIN: 0
   SCALEMAX: 1
+  UNITS: (gm/q)/(cm^2 s sr eV/q)
 
 proton_sw_vdf_delta:
   <<: *default_timeseries
@@ -44,6 +45,7 @@ proton_sw_vdf_delta:
   VAR_TYPE: support_data
   CATDESC: Proton Solar Wind Combined VDF Uncertainty
   FIELDNAM: proton_sw_vdf_delta
+  UNITS: (gm/q)/(cm^2 s sr eV/q)
 
 alpha_sw_velocity:
   <<: *default_timeseries
@@ -71,11 +73,12 @@ alpha_sw_vdf:
   DELTA_MINUS_VAR: alpha_sw_vdf_delta
   DELTA_PLUS_VAR: alpha_sw_vdf_delta
   LABLAXIS: F(v)
-  SCALETYP: linear
+  SCALETYP: log
   VAR_TYPE: data
   DISPLAY_TYPE: spectrogram
   SCALEMIN: 0
   SCALEMAX: 1
+  UNITS: (gm/q)/(cm^2 s sr eV/q)
 
 alpha_sw_vdf_delta:
   <<: *default_timeseries
@@ -83,7 +86,49 @@ alpha_sw_vdf_delta:
   VAR_TYPE: support_data
   CATDESC: Alpha Solar Wind Combined VDF Uncertainty
   FIELDNAM: alpha_sw_vdf_delta
+  UNITS: (gm/q)/(cm^2 s sr eV/q)
 
+pui_sw_velocity:
+  <<: *default_timeseries
+  CATDESC: Pickup Ion Solar Wind Velocity
+  FIELDNAM: pui_sw_velocity
+  UNITS: km/s
+  LABLAXIS: Velocity
+  SCALETYP: linear
+  VAR_TYPE: data
+  DISPLAY_TYPE: time_series
+  SCALEMIN: 0
+  SCALEMAX: 1000
+
+pui_sw_velocity_delta:
+  <<: *default_timeseries
+  VAR_TYPE: support_data
+  CATDESC: Pickup Ion Solar Wind Velocity Delta
+  FIELDNAM: pui_sw_velocity_delta
+
+pui_sw_vdf:
+  <<: *default_timeseries
+  DEPEND_1: pui_sw_velocity
+  CATDESC: Pickup Ion Solar Wind Combined VDF
+  FIELDNAM: pui_sw_vdf
+  DELTA_MINUS_VAR: pui_sw_vdf_delta
+  DELTA_PLUS_VAR: pui_sw_vdf_delta
+  LABLAXIS: F(v)
+  SCALETYP: log
+  VAR_TYPE: data
+  DISPLAY_TYPE: spectrogram
+  SCALEMIN: 0
+  SCALEMAX: 1
+  UNITS: (gm/q)/(cm^2 s sr eV/q)
+
+
+pui_sw_vdf_delta:
+  <<: *default_timeseries
+  DEPEND_1: pui_sw_velocity
+  VAR_TYPE: support_data
+  CATDESC: Pickup Ion Solar Wind Combined VDF Uncertainty
+  FIELDNAM: pui_sw_vdf_delta
+  UNITS: (gm/q)/(cm^2 s sr eV/q)
 
 epoch:
   CATDESC: Time, number of nanoseconds since J2000 with leap seconds included
