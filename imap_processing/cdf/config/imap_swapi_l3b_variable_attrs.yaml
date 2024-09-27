@@ -35,8 +35,8 @@ proton_sw_vdf:
   SCALETYP: log
   VAR_TYPE: data
   DISPLAY_TYPE: spectrogram
-  SCALEMIN: 0
-  SCALEMAX: 1
+  SCALEMIN: .000001
+  SCALEMAX: 1000000
   UNITS: (gm/q)/(cm^2 s sr eV/q)
 
 proton_sw_vdf_delta:
@@ -76,8 +76,8 @@ alpha_sw_vdf:
   SCALETYP: log
   VAR_TYPE: data
   DISPLAY_TYPE: spectrogram
-  SCALEMIN: 0
-  SCALEMAX: 1
+  SCALEMIN: .000001
+  SCALEMAX: 1000000
   UNITS: (gm/q)/(cm^2 s sr eV/q)
 
 alpha_sw_vdf_delta:
@@ -117,8 +117,8 @@ pui_sw_vdf:
   SCALETYP: log
   VAR_TYPE: data
   DISPLAY_TYPE: spectrogram
-  SCALEMIN: 0
-  SCALEMAX: 1
+  SCALEMIN: .000001
+  SCALEMAX: 1000000
   UNITS: (gm/q)/(cm^2 s sr eV/q)
 
 
