@@ -97,3 +97,13 @@ class TestImapCdfManager(TestCase):
                          manager.get_variable_attributes('pui_sw_vdf'))
         self.assertEqual(base_manager.get_variable_attributes('pui_sw_vdf_delta'),
                          manager.get_variable_attributes('pui_sw_vdf_delta'))
+
+        self.assertEqual(base_manager.get_variable_attributes('combined_energy'),
+                         manager.get_variable_attributes('combined_energy'))
+        self.assertEqual(base_manager.get_variable_attributes('combined_energy_delta'),
+                         manager.get_variable_attributes('combined_energy_delta'))
+
+        self.assertEqual(base_manager.get_variable_attributes('combined_differential_flux'),
+                         manager.get_variable_attributes('combined_differential_flux'))
+        self.assertEqual(base_manager.get_variable_attributes('combined_differential_flux_delta'),
+                         manager.get_variable_attributes('combined_differential_flux_delta'))

@@ -20,7 +20,7 @@ from imap_processing.swapi.l3a.swapi_l3a_dependencies import SwapiL3ADependencie
 from imap_processing.swapi.l3a.utils import read_l2_swapi_data, chunk_l2_data
 from imap_processing.swapi.l3b.models import SwapiL3BCombinedVDF
 from imap_processing.swapi.l3b.science.calculate_solar_wind_differential_flux import \
-    calculate_combined_solar_wind_diffential_flux
+    calculate_combined_solar_wind_differential_flux
 from imap_processing.swapi.l3b.science.calculate_solar_wind_vdf import calculate_proton_solar_wind_vdf, \
     calculate_alpha_solar_wind_vdf, calculate_pui_solar_wind_vdf
 from imap_processing.swapi.l3b.swapi_l3b_dependencies import SwapiL3BDependencies
@@ -148,10 +148,10 @@ class SwapiProcessor(Processor):
                                                                              average_coincident_count_rates,
                                                                              INSTRUMENT_EFFICIENCY,
                                                                              dependencies.geometric_factor_calibration_table)
-            combined_differential_flux = calculate_combined_solar_wind_diffential_flux(energies,
-                                                                                       average_coincident_count_rates,
-                                                                                       INSTRUMENT_EFFICIENCY,
-                                                                                       dependencies.geometric_factor_calibration_table)
+            combined_differential_flux = calculate_combined_solar_wind_differential_flux(energies,
+                                                                                         average_coincident_count_rates,
+                                                                                         INSTRUMENT_EFFICIENCY,
+                                                                                         dependencies.geometric_factor_calibration_table)
             epochs.append(data_chunk.epoch[0] + FIVE_MINUTES_IN_NANOSECONDS)
             cdf_proton_velocities.append(proton_velocities)
             cdf_proton_probabilities.append(proton_probabilities)

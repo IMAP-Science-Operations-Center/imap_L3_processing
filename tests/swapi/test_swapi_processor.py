@@ -246,7 +246,7 @@ class TestSwapiProcessor(TestCase):
     @patch('imap_processing.swapi.swapi_processor.calculate_alpha_solar_wind_vdf')
     @patch('imap_processing.swapi.swapi_processor.calculate_proton_solar_wind_vdf')
     @patch('imap_processing.swapi.swapi_processor.calculate_pui_solar_wind_vdf')
-    @patch('imap_processing.swapi.swapi_processor.calculate_combined_solar_wind_diffential_flux')
+    @patch('imap_processing.swapi.swapi_processor.calculate_combined_solar_wind_differential_flux')
     def test_process_l3b(self, mock_calculate_combined_solar_wind_differential_flux, mock_calculate_pui_solar_wind_vdf,
                          mock_calculate_proton_solar_wind_vdf,
                          mock_calculate_alpha_solar_wind_vdf,

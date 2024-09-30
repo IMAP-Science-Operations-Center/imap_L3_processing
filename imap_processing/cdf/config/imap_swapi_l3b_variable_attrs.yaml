@@ -130,6 +130,48 @@ pui_sw_vdf_delta:
   FIELDNAM: pui_sw_vdf_delta
   UNITS: (gm/q)/(cm^2 s sr eV/q)
 
+combined_energy:
+  <<: *default_timeseries
+  CATDESC: Solar Wind Energy
+  FIELDNAM: combined_energy
+  UNITS: eV/q
+  LABLAXIS: Energy
+  SCALETYP: log
+  VAR_TYPE: data
+  DISPLAY_TYPE: time_series
+  SCALEMIN: 0
+  SCALEMAX: 1000
+
+combined_energy_delta:
+  <<: *default_timeseries
+  VAR_TYPE: support_data
+  CATDESC: Solar Wind Energy Delta
+  FIELDNAM: combined_energy_delta
+
+combined_differential_flux:
+  <<: *default_timeseries
+  DEPEND_1: combined_energy
+  CATDESC: Solar Wind Combined Differential Flux
+  FIELDNAM: combined_differential_flux
+  DELTA_MINUS_VAR: combined_differential_flux_delta
+  DELTA_PLUS_VAR: combined_differential_flux_delta
+  LABLAXIS: Differential Flux
+  SCALETYP: log
+  VAR_TYPE: data
+  DISPLAY_TYPE: spectrogram
+  SCALEMIN: .000001
+  SCALEMAX: 1000000
+  UNITS: ' '
+
+
+combined_differential_flux_delta:
+  <<: *default_timeseries
+  DEPEND_1: combined_energy
+  VAR_TYPE: support_data
+  CATDESC: Solar Wind Combined Differential Flux Uncertainty
+  FIELDNAM: combined_differential_flux_delta
+  UNITS: ' '
+
 epoch:
   CATDESC: Time, number of nanoseconds since J2000 with leap seconds included
   FIELDNAM: epoch
