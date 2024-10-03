@@ -24,7 +24,6 @@ from imap_processing.swapi.l3b.science.calculate_solar_wind_differential_flux im
 from imap_processing.swapi.l3b.science.calculate_solar_wind_vdf import calculate_proton_solar_wind_vdf, \
     calculate_alpha_solar_wind_vdf, calculate_pui_solar_wind_vdf
 from imap_processing.swapi.l3b.swapi_l3b_dependencies import SwapiL3BDependencies
-from imap_processing.swapi.parameters import INSTRUMENT_EFFICIENCY
 from imap_processing.utils import upload_data
 
 
@@ -129,30 +128,34 @@ class SwapiProcessor(Processor):
         combined_energies = []
 
         for data_chunk in chunk_l2_data(data, 50):
+            center_of_epoch = data_chunk.epoch[0] + FIVE_MINUTES_IN_NANOSECONDS
+            instrument_efficiency = dependencies.efficiency_calibration_table.get_efficiency_for(center_of_epoch)
             coincidence_count_rates_with_uncertainty = uarray(data_chunk.coincidence_count_rate,
                                                               data_chunk.coincidence_count_rate_uncertainty)
+
             average_coincident_count_rates, energies = calculate_combined_sweeps(
                 coincidence_count_rates_with_uncertainty, data_chunk.energy)
 
             proton_velocities, proton_probabilities = calculate_proton_solar_wind_vdf(energies,
                                                                                       average_coincident_count_rates,
-                                                                                      INSTRUMENT_EFFICIENCY,
+                                                                                      instrument_efficiency,
                                                                                       dependencies.geometric_factor_calibration_table)
 
             alpha_velocities, alpha_probabilities = calculate_alpha_solar_wind_vdf(energies,
                                                                                    average_coincident_count_rates,
-                                                                                   INSTRUMENT_EFFICIENCY,
+                                                                                   instrument_efficiency,
                                                                                    dependencies.geometric_factor_calibration_table)
 
             pui_velocities, pui_probabilities = calculate_pui_solar_wind_vdf(energies,
                                                                              average_coincident_count_rates,
-                                                                             INSTRUMENT_EFFICIENCY,
+                                                                             instrument_efficiency,
                                                                              dependencies.geometric_factor_calibration_table)
             combined_differential_flux = calculate_combined_solar_wind_differential_flux(energies,
                                                                                          average_coincident_count_rates,
-                                                                                         INSTRUMENT_EFFICIENCY,
+                                                                                         instrument_efficiency,
                                                                                          dependencies.geometric_factor_calibration_table)
-            epochs.append(data_chunk.epoch[0] + FIVE_MINUTES_IN_NANOSECONDS)
+
+            epochs.append(center_of_epoch)
             cdf_proton_velocities.append(proton_velocities)
             cdf_proton_probabilities.append(proton_probabilities)
 

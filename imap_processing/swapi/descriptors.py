@@ -3,3 +3,4 @@ PROTON_TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR = "density-temperature-lut-te
 ALPHA_TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR = "alpha-density-temperature-lut-text-not-cdf"
 CLOCK_ANGLE_AND_FLOW_DEFLECTION_LOOKUP_TABLE_DESCRIPTOR = "clock-angle-and-flow-deflection-lut-text-not-cdf"
 GEOMETRIC_FACTOR_LOOKUP_TABLE_DESCRIPTOR = "energy-gf-lut-not-cdf"
+EFFICIENCY_LOOKUP_TABLE_DESCRIPTOR = "efficiency-lut-text-not-cdf"

@@ -15,12 +15,15 @@ class TestSwapiL3BDependencies(unittest.TestCase):
         self.mock_imap_api = self.mock_imap_patcher.start()
         self.mock_imap_api.query.side_effect = [
             [{'file_path': sentinel.data_file_path}],
-            [{'file_path': sentinel.energy_gf_file_path}]
+            [{'file_path': sentinel.energy_gf_file_path}],
+            [{'file_path': sentinel.efficiency_calibration_table_file_path}],
         ]
 
     @patch('imap_processing.swapi.l3b.swapi_l3b_dependencies.CDF')
     @patch('imap_processing.swapi.l3b.swapi_l3b_dependencies.GeometricFactorCalibrationTable')
-    def test_fetch_dependencies(self, mock_geometric_factor_calibration_table, mock_cdf_constructor):
+    @patch('imap_processing.swapi.l3b.swapi_l3b_dependencies.EfficiencyCalibrationTable')
+    def test_fetch_dependencies(self, mock_efficiency_calibration_table_class, mock_geometric_factor_calibration_table,
+                                mock_cdf_constructor):
         instrument = 'swapi'
         incoming_data_level = 'l2'
         descriptor = SWAPI_L2_DESCRIPTOR
@@ -37,6 +40,7 @@ class TestSwapiL3BDependencies(unittest.TestCase):
         self.mock_imap_api.download.side_effect = [
             data_file_path,
             sentinel.energy_gf_local_file_path,
+            sentinel.efficiency_calibration_table_local_file_path
         ]
 
         fetched_dependencies = SwapiL3BDependencies.fetch_dependencies([dependencies])
@@ -51,18 +55,28 @@ class TestSwapiL3BDependencies(unittest.TestCase):
                                                         start_date=None,
                                                         end_date=None,
                                                         version='latest'),
+                                                   call(instrument=instrument, data_level=incoming_data_level,
+                                                        descriptor="efficiency-lut-text-not-cdf",
+                                                        start_date=None,
+                                                        end_date=None,
+                                                        version='latest'),
                                                    ])
         self.mock_imap_api.download.assert_has_calls(
-            [call(sentinel.data_file_path), call(sentinel.energy_gf_file_path)])
+            [call(sentinel.data_file_path), call(sentinel.energy_gf_file_path),
+             call(sentinel.efficiency_calibration_table_file_path)])
 
         mock_cdf_constructor.assert_called_with(str(data_file_path))
         mock_geometric_factor_calibration_table.from_file.assert_called_with(
             sentinel.energy_gf_local_file_path)
+        mock_efficiency_calibration_table_class.assert_called_with(
+            sentinel.efficiency_calibration_table_local_file_path)
 
         self.assertIs(mock_cdf_constructor.return_value,
                       fetched_dependencies.data)
         self.assertIs(mock_geometric_factor_calibration_table.from_file.return_value,
                       fetched_dependencies.geometric_factor_calibration_table)
+        self.assertIs(mock_efficiency_calibration_table_class.return_value,
+                      fetched_dependencies.efficiency_calibration_table)
 
     def test_throws_exception_when_more_than_one_file_is_downloaded(self):
         file_path = Path(

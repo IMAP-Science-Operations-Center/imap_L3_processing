@@ -1,11 +1,13 @@
+import numpy as np
+
+
 class EfficiencyCalibrationTable:
     def __init__(self, path):
-        self.index = 0
+        self.data = np.loadtxt(path, dtype=[("time", "M8[ns]"), ("MET", "i8"), ("efficiency", "f8")])
 
     def get_efficiency_for(self, time):
-        self.index += 1
-        if self.index < 3:
-            return 0.1
-        if self.index < 5:
-            return 0.09
-        return 0.0882
+        for d in reversed(self.data):
+            if d[0] < np.datetime64(time):
+                return d[2]
+
+        raise ValueError(f"No efficiency data for {time}")

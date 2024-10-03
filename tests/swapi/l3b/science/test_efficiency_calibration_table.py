@@ -17,3 +17,14 @@ class TestEfficiencyCalibrationTable(unittest.TestCase):
         self.assertEqual(efficiency_table.get_efficiency_for(datetime(year=2014, month=10, day=3)), 0.09)
         self.assertEqual(efficiency_table.get_efficiency_for(datetime(year=2024, month=10, day=1)), 0.09)
         self.assertEqual(efficiency_table.get_efficiency_for(datetime(year=2024, month=10, day=3)), 0.0882)
+
+    def test_loads_calibration_table_raises_exception_if_ask_for_time_before_the_table_starts(self):
+        calibration_table_path = Path(
+            imap_l3_data_processor.__file__).parent / "swapi" / "test_data" / "imap_swapi_l2_efficiency-lut-text-not-cdf_20241020_v001.cdf"
+        efficiency_table = EfficiencyCalibrationTable(calibration_table_path)
+
+        with self.assertRaises(ValueError) as content_manager:
+            time = datetime(year=1999, month=1, day=4)
+            efficiency_table.get_efficiency_for(time)
+
+        self.assertEqual((f"No efficiency data for {time}",), content_manager.exception.args)
