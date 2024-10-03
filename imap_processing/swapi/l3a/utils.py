@@ -1,4 +1,3 @@
-from pathlib import Path
 from typing import Iterable
 
 from spacepy.pycdf import CDF

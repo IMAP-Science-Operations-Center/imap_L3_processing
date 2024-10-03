@@ -1,8 +1,8 @@
 import os
-import sys
 from pathlib import Path
 
 from spacepy.pycdf import CDF
+from spacepy.pycdf.const import CDF_TIME_TT2000
 
 import imap_processing
 from swapi.swapi_alpha_sw_speed_temperature_density_demo import read_l2_data_from_dat
@@ -16,7 +16,7 @@ def generate_cdf_from_dat(dat_file_path: str, output_filename: str):
         cdf.col_major(True)
 
         cdf.new("energy", dat_data.energy, recVary=False)
-        cdf["epoch"] = dat_data.epoch
+        cdf.new("epoch", dat_data.epoch, type=CDF_TIME_TT2000)
         cdf["spin_angles"] = dat_data.spin_angles
         cdf["swp_coin_rate"] = dat_data.coincidence_count_rate
         cdf["swp_coin_unc"] = dat_data.coincidence_count_rate_uncertainty

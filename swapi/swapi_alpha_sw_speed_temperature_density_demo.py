@@ -15,18 +15,14 @@ from imap_processing.swapi.l3a.science.calculate_alpha_solar_wind_speed import c
 from imap_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density import \
     calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps, AlphaTemperatureDensityCalibrationTable, \
     alpha_count_rate_model
-from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_clock_and_deflection_angles import \
-    calculate_clock_angle, calculate_deflection_angle
-from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_speed import sine_fit_function, \
-    calculate_proton_solar_wind_speed, calculate_proton_centers_of_mass, extract_coarse_sweep
 
 
 def read_l2_data_from_dat(file_path: str) -> SwapiL2Data:
     data = np.loadtxt(file_path)
     data = data.reshape((-1, 72, 8))
-
+    start_time = int(np.datetime64("2010-01-01", "ns") - np.datetime64("2000-01-01T12:00", "ns"))
     twelve_seconds_in_nanoseconds = 12_000_000_000
-    epochs = twelve_seconds_in_nanoseconds * np.arange(len(data))
+    epochs = start_time + twelve_seconds_in_nanoseconds * np.arange(len(data))
 
     energy_for_first_sweep = data[0, :, 2]
     spin_angles = data[..., 3]
