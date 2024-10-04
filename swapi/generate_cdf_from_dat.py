@@ -24,4 +24,4 @@ def generate_cdf_from_dat(dat_file_path: str, output_filename: str):
 
 if __name__ == "__main__":
     generate_cdf_from_dat(os.path.abspath("test_data/swapi_test_data_50_sweeps.dat"),
-                          "imap_swapi_l2_50-sweeps_20100101_v001")
+                          "imap_swapi_l2_sci_20100101_v001")

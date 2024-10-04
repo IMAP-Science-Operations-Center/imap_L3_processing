@@ -4,7 +4,8 @@ from unittest.mock import create_autospec
 import numpy as np
 
 from imap_processing.swapi.l3b.science.calculate_solar_wind_vdf import calculate_proton_solar_wind_vdf, \
-    GeometricFactorCalibrationTable, calculate_alpha_solar_wind_vdf, calculate_pui_solar_wind_vdf
+    GeometricFactorCalibrationTable, calculate_alpha_solar_wind_vdf, calculate_pui_solar_wind_vdf, \
+    calculate_delta_minus_plus
 
 
 class TestCalculateSolarWindVDF(TestCase):
@@ -24,6 +25,24 @@ class TestCalculateSolarWindVDF(TestCase):
         np.testing.assert_array_equal(velocities, expected_velocities)
         np.testing.assert_array_almost_equal(probabilities, expected_probabilities)
         mock_geometric_factor_table.lookup_geometric_factor.assert_called_with(energies)
+
+    def test_calculate_delta_minus_plus(self):
+        energies = np.array([8, 32, 128])
+        delta_minus_plus = calculate_delta_minus_plus(energies)
+        np.testing.assert_array_equal([4, 16, 64], delta_minus_plus.delta_minus)
+        np.testing.assert_array_equal([8, 32, 128], delta_minus_plus.delta_plus)
+
+    def test_calculate_delta_minus_plus_reversed(self):
+        energies = np.array([128, 32, 8])
+        delta_minus_plus = calculate_delta_minus_plus(energies)
+        np.testing.assert_array_equal([64, 16, 4], delta_minus_plus.delta_minus)
+        np.testing.assert_array_equal([128, 32, 8], delta_minus_plus.delta_plus)
+
+    def test_calculate_delta_minus_plus_uneven(self):
+        energies = np.array([8, 32, 288])
+        delta_minus_plus = calculate_delta_minus_plus(energies)
+        np.testing.assert_array_equal([4, 16, 192], delta_minus_plus.delta_minus)
+        np.testing.assert_array_equal([8, 64, 576], delta_minus_plus.delta_plus)
 
     def test_calculate_alpha_solar_wind_vdf(self):
         energies = np.array([1000, 750, 500])

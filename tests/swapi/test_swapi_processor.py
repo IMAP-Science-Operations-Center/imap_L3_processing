@@ -12,6 +12,7 @@ from imap_processing.constants import TEMP_CDF_FOLDER_PATH, THIRTY_SECONDS_IN_NA
 from imap_processing.models import UpstreamDataDependency, InputMetadata
 from imap_processing.swapi.l3a.models import SwapiL2Data
 from imap_processing.swapi.l3a.swapi_l3a_dependencies import SWAPI_L2_DESCRIPTOR
+from imap_processing.swapi.l3b.science.calculate_solar_wind_vdf import DeltaMinusPlus
 from imap_processing.swapi.swapi_processor import SwapiProcessor
 
 
@@ -235,6 +236,7 @@ class TestSwapiProcessor(TestCase):
         ])
         self.mock_imap_api.upload.assert_has_calls([call(proton_cdf_path), call(alpha_cdf_path)])
 
+    @patch('imap_processing.swapi.swapi_processor.calculate_delta_minus_plus')
     @patch('imap_processing.swapi.swapi_processor.upload_data')
     @patch('imap_processing.swapi.swapi_processor.SwapiL3BCombinedVDF')
     @patch('imap_processing.swapi.swapi_processor.calculate_combined_sweeps')
@@ -252,7 +254,8 @@ class TestSwapiProcessor(TestCase):
                          mock_swapi_l3b_dependencies_class,
                          mock_read_l2_swapi_data, mock_chunk_l2_data, mock_uuid,
                          mock_calculate_combined_sweeps, mock_combined_vdf_data,
-                         mock_upload_data):
+                         mock_upload_data,
+                         mock_calculate_delta_minus_plus):
         mock_uuid_value = 123
         mock_uuid.uuid4.return_value = mock_uuid_value
 
@@ -283,6 +286,17 @@ class TestSwapiProcessor(TestCase):
         mock_calculate_combined_solar_wind_differential_flux.side_effect = [
             sentinel.calculated_diffential_flux1,
             sentinel.calculated_diffential_flux2
+        ]
+
+        mock_calculate_delta_minus_plus.side_effect = [
+            DeltaMinusPlus(sentinel.proton_velocity_delta_minus1, sentinel.proton_velocity_delta_plus1),
+            DeltaMinusPlus(sentinel.alpha_velocity_delta_minus1, sentinel.alpha_velocity_delta_plus1),
+            DeltaMinusPlus(sentinel.pui_velocity_delta_minus1, sentinel.pui_velocity_delta_plus1),
+            DeltaMinusPlus(sentinel.energy_delta_minus1, sentinel.energy_delta_plus1),
+            DeltaMinusPlus(sentinel.proton_velocity_delta_minus2, sentinel.proton_velocity_delta_plus2),
+            DeltaMinusPlus(sentinel.alpha_velocity_delta_minus2, sentinel.alpha_velocity_delta_plus2),
+            DeltaMinusPlus(sentinel.pui_velocity_delta_minus2, sentinel.pui_velocity_delta_plus2),
+            DeltaMinusPlus(sentinel.energy_delta_minus2, sentinel.energy_delta_plus2),
         ]
 
         energy = np.array([15000, 16000, 17000, 18000, 19000])
@@ -389,34 +403,69 @@ class TestSwapiProcessor(TestCase):
                          mock_calculate_combined_solar_wind_differential_flux.call_args_list[0].args[2])
         self.assertEqual(mock_geometric_factor_calibration_table,
                          mock_calculate_combined_solar_wind_differential_flux.call_args_list[0].args[3])
+        mock_calculate_delta_minus_plus.assert_has_calls([
+            call(sentinel.proton_calculated_velocities1),
+            call(sentinel.alpha_calculated_velocities1),
+            call(sentinel.pui_calculated_velocities1),
+            call(energy),
+            call(sentinel.proton_calculated_velocities2),
+            call(sentinel.alpha_calculated_velocities2),
+            call(sentinel.pui_calculated_velocities2),
+            call(energy),
+        ])
 
         expected_combined_metadata = input_metadata.to_upstream_data_dependency("combined")
-        self.assertEqual(expected_combined_metadata, mock_combined_vdf_data.call_args_list[0].args[0])
+        self.assertEqual(expected_combined_metadata, mock_combined_vdf_data.call_args_list[0].kwargs["input_metadata"])
 
         np.testing.assert_array_equal(np.array([first_chunk_initial_epoch + FIVE_MINUTES_IN_NANOSECONDS,
                                                 second_chunk_initial_epoch + FIVE_MINUTES_IN_NANOSECONDS]),
-                                      mock_combined_vdf_data.call_args_list[0].args[1])
+                                      mock_combined_vdf_data.call_args_list[0].kwargs["epoch"])
 
         np.testing.assert_array_equal([sentinel.proton_calculated_velocities1, sentinel.proton_calculated_velocities2],
-                                      mock_combined_vdf_data.call_args_list[0].args[2])
+                                      mock_combined_vdf_data.call_args_list[0].kwargs["proton_sw_velocities"])
+        np.testing.assert_array_equal([sentinel.proton_velocity_delta_minus1, sentinel.proton_velocity_delta_minus2],
+                                      mock_combined_vdf_data.call_args_list[0].kwargs[
+                                          "proton_sw_velocities_delta_minus"])
+        np.testing.assert_array_equal([sentinel.proton_velocity_delta_plus1, sentinel.proton_velocity_delta_plus2],
+                                      mock_combined_vdf_data.call_args_list[0].kwargs[
+                                          "proton_sw_velocities_delta_plus"])
         np.testing.assert_array_equal(
             [sentinel.proton_calculated_probabilities1, sentinel.proton_calculated_probabilities2],
-            mock_combined_vdf_data.call_args_list[0].args[3])
+            mock_combined_vdf_data.call_args_list[0].kwargs["proton_sw_combined_vdf"])
+
         np.testing.assert_array_equal([sentinel.alpha_calculated_velocities1, sentinel.alpha_calculated_velocities2],
-                                      mock_combined_vdf_data.call_args_list[0].args[4])
+                                      mock_combined_vdf_data.call_args_list[0].kwargs["alpha_sw_velocities"])
+        np.testing.assert_array_equal([sentinel.alpha_velocity_delta_minus1, sentinel.alpha_velocity_delta_minus2],
+                                      mock_combined_vdf_data.call_args_list[0].kwargs[
+                                          "alpha_sw_velocities_delta_minus"])
+        np.testing.assert_array_equal([sentinel.alpha_velocity_delta_plus1, sentinel.alpha_velocity_delta_plus2],
+                                      mock_combined_vdf_data.call_args_list[0].kwargs[
+                                          "alpha_sw_velocities_delta_plus"])
         np.testing.assert_array_equal(
             [sentinel.alpha_calculated_probabilities1, sentinel.alpha_calculated_probabilities2],
-            mock_combined_vdf_data.call_args_list[0].args[5])
+            mock_combined_vdf_data.call_args_list[0].kwargs["alpha_sw_combined_vdf"])
 
         np.testing.assert_array_equal([sentinel.pui_calculated_velocities1, sentinel.pui_calculated_velocities2],
-                                      mock_combined_vdf_data.call_args_list[0].args[6])
+                                      mock_combined_vdf_data.call_args_list[0].kwargs["pui_sw_velocities"])
+        np.testing.assert_array_equal([sentinel.pui_velocity_delta_minus1, sentinel.pui_velocity_delta_minus2],
+                                      mock_combined_vdf_data.call_args_list[0].kwargs[
+                                          "pui_sw_velocities_delta_minus"])
+        np.testing.assert_array_equal([sentinel.pui_velocity_delta_plus1, sentinel.pui_velocity_delta_plus2],
+                                      mock_combined_vdf_data.call_args_list[0].kwargs[
+                                          "pui_sw_velocities_delta_plus"])
         np.testing.assert_array_equal(
             [sentinel.pui_calculated_probabilities1, sentinel.pui_calculated_probabilities2],
-            mock_combined_vdf_data.call_args_list[0].args[7])
-        np.testing.assert_array_equal([energy, energy], mock_combined_vdf_data.call_args_list[0].args[8])
+            mock_combined_vdf_data.call_args_list[0].kwargs["pui_sw_combined_vdf"])
+
+        np.testing.assert_array_equal([energy, energy],
+                                      mock_combined_vdf_data.call_args_list[0].kwargs["combined_energy"])
+        np.testing.assert_array_equal([sentinel.energy_delta_minus1, sentinel.energy_delta_minus2],
+                                      mock_combined_vdf_data.call_args_list[0].kwargs["combined_energy_delta_minus"])
+        np.testing.assert_array_equal([sentinel.energy_delta_plus1, sentinel.energy_delta_plus2],
+                                      mock_combined_vdf_data.call_args_list[0].kwargs["combined_energy_delta_plus"])
         np.testing.assert_array_equal(
             [sentinel.calculated_diffential_flux1, sentinel.calculated_diffential_flux2],
-            mock_combined_vdf_data.call_args_list[0].args[9])
+            mock_combined_vdf_data.call_args_list[0].kwargs["combined_differential_flux"])
 
         mock_upload_data.assert_called_once_with(mock_combined_vdf_data.return_value)
 

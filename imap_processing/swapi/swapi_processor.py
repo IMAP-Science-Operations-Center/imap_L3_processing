@@ -22,7 +22,7 @@ from imap_processing.swapi.l3b.models import SwapiL3BCombinedVDF
 from imap_processing.swapi.l3b.science.calculate_solar_wind_differential_flux import \
     calculate_combined_solar_wind_differential_flux
 from imap_processing.swapi.l3b.science.calculate_solar_wind_vdf import calculate_proton_solar_wind_vdf, \
-    calculate_alpha_solar_wind_vdf, calculate_pui_solar_wind_vdf
+    calculate_alpha_solar_wind_vdf, calculate_pui_solar_wind_vdf, calculate_delta_minus_plus
 from imap_processing.swapi.l3b.swapi_l3b_dependencies import SwapiL3BDependencies
 from imap_processing.utils import upload_data
 
@@ -126,7 +126,10 @@ class SwapiProcessor(Processor):
         cdf_pui_probabilities = []
         combined_differential_fluxes = []
         combined_energies = []
-
+        cdf_proton_deltas = []
+        cdf_alpha_deltas = []
+        cdf_pui_deltas = []
+        combined_energy_deltas = []
         for data_chunk in chunk_l2_data(data, 50):
             center_of_epoch = data_chunk.epoch[0] + FIVE_MINUTES_IN_NANOSECONDS
             instrument_efficiency = dependencies.efficiency_calibration_table.get_efficiency_for(center_of_epoch)
@@ -158,22 +161,47 @@ class SwapiProcessor(Processor):
             epochs.append(center_of_epoch)
             cdf_proton_velocities.append(proton_velocities)
             cdf_proton_probabilities.append(proton_probabilities)
+            cdf_proton_deltas.append(calculate_delta_minus_plus(proton_velocities))
 
             cdf_alpha_velocities.append(alpha_velocities)
             cdf_alpha_probabilities.append(alpha_probabilities)
+            cdf_alpha_deltas.append(calculate_delta_minus_plus(alpha_velocities))
 
             cdf_pui_velocities.append(pui_velocities)
             cdf_pui_probabilities.append(pui_probabilities)
+            cdf_pui_deltas.append(calculate_delta_minus_plus(pui_velocities))
 
             combined_differential_fluxes.append(combined_differential_flux)
             combined_energies.append(energies)
+            combined_energy_deltas.append(calculate_delta_minus_plus(energies))
 
         l3b_combined_metadata = self.input_metadata.to_upstream_data_dependency("combined")
-        l3b_combined_vdf = SwapiL3BCombinedVDF(l3b_combined_metadata, np.array(epochs), np.array(cdf_proton_velocities),
-                                               np.array(cdf_proton_probabilities), np.array(cdf_alpha_velocities),
-                                               np.array(cdf_alpha_probabilities), np.array(cdf_pui_velocities),
-                                               np.array(cdf_pui_probabilities), np.array(combined_energies),
-                                               np.array(combined_differential_fluxes),
+        l3b_combined_vdf = SwapiL3BCombinedVDF(input_metadata=l3b_combined_metadata,
+                                               epoch=np.array(epochs),
+                                               proton_sw_velocities=np.array(cdf_proton_velocities),
+                                               proton_sw_velocities_delta_minus=np.array(
+                                                   [delta.delta_minus for delta in cdf_proton_deltas]),
+                                               proton_sw_velocities_delta_plus=np.array(
+                                                   [delta.delta_plus for delta in cdf_proton_deltas]),
+                                               proton_sw_combined_vdf=np.array(cdf_proton_probabilities),
+                                               alpha_sw_velocities=np.array(cdf_alpha_velocities),
+                                               alpha_sw_velocities_delta_minus=np.array(
+                                                   [delta.delta_minus for delta in cdf_alpha_deltas]),
+                                               alpha_sw_velocities_delta_plus=np.array(
+                                                   [delta.delta_plus for delta in cdf_alpha_deltas]),
+                                               alpha_sw_combined_vdf=np.array(cdf_alpha_probabilities),
+                                               pui_sw_velocities=np.array(cdf_pui_velocities),
+                                               pui_sw_velocities_delta_minus=np.array(
+                                                   [delta.delta_minus for delta in cdf_pui_deltas]),
+                                               pui_sw_velocities_delta_plus=np.array(
+                                                   [delta.delta_plus for delta in cdf_pui_deltas]),
+                                               pui_sw_combined_vdf=np.array(cdf_pui_probabilities),
+                                               combined_energy=np.array(combined_energies),
+                                               combined_energy_delta_minus=np.array(
+                                                   [delta.delta_minus for delta in combined_energy_deltas]),
+                                               combined_energy_delta_plus=np.array(
+                                                   [delta.delta_plus for delta in combined_energy_deltas]),
+                                               combined_differential_flux=np.array(combined_differential_fluxes),
                                                )
 
         upload_data(l3b_combined_vdf)

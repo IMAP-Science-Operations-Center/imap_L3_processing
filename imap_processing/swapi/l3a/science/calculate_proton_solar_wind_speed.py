@@ -1,6 +1,7 @@
 import numpy as np
 import scipy
-from uncertainties import correlated_values, unumpy
+import uncertainties
+from uncertainties import correlated_values, unumpy, umath
 from uncertainties.unumpy import uarray, nominal_values, std_devs
 
 from imap_processing.constants import PROTON_CHARGE_COULOMBS, PROTON_MASS_KG, METERS_PER_KILOMETER
@@ -73,7 +74,15 @@ def calculate_proton_centers_of_mass(coincidence_count_rates, spin_angles, energ
 
 
 def calculate_sw_speed(particle_mass, particle_charge, energy):
-    return unumpy.sqrt(2 * energy * particle_charge / particle_mass) / METERS_PER_KILOMETER
+    if np.size(energy) == 0:
+        return np.array([])
+    dimensions = np.asanyarray(energy).ndim
+    if dimensions > 0:
+        if isinstance(np.ravel(energy)[0], uncertainties.UFloat):
+            return unumpy.sqrt(2 * energy * particle_charge / particle_mass) / METERS_PER_KILOMETER
+        return np.sqrt(2 * energy * particle_charge / particle_mass) / METERS_PER_KILOMETER
+    else:
+        return umath.sqrt(2 * energy * particle_charge / particle_mass) / METERS_PER_KILOMETER
 
 
 def calculate_sw_speed_h_plus(energy):

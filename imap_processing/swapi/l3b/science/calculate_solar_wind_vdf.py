@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 import numpy as np
 from numpy import ndarray
 
@@ -40,3 +42,19 @@ def calculate_pui_solar_wind_vdf(energies: ndarray, average_count_rates: ndarray
     return calculate_vdf(PUI_PARTICLE_MASS_KG, PUI_PARTICLE_CHARGE_COULOMBS, energies,
                          average_count_rates, efficiency,
                          geometric_factor_table)
+
+
+@dataclass
+class DeltaMinusPlus:
+    delta_minus: ndarray
+    delta_plus: ndarray
+
+
+def calculate_delta_minus_plus(nominal_values: ndarray) -> DeltaMinusPlus:
+    ratios = nominal_values[1:] / nominal_values[:-1]
+    half_ratios = np.sqrt(ratios)
+    left_edges = nominal_values / [half_ratios[0], *half_ratios]
+    right_edges = nominal_values * [*half_ratios, half_ratios[-1]]
+    lower_bounds = np.minimum(left_edges, right_edges)
+    upper_bounds = np.maximum(left_edges, right_edges)
+    return DeltaMinusPlus(delta_minus=nominal_values - lower_bounds, delta_plus=upper_bounds - nominal_values)

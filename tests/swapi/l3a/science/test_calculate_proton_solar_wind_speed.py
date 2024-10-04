@@ -261,3 +261,36 @@ class TestCalculateProtonSolarWindSpeed(TestCase):
                 sw_speed = calculate_sw_speed_h_plus(ev_q)
                 self.assertAlmostEqual(expected_speed_km_s.n, sw_speed.n)
                 self.assertAlmostEqual(expected_speed_km_s.s, sw_speed.s)
+
+    def test_calculate_sw_speed_on_array_with_uncertainties(self):
+        energy = np.array([
+            ufloat(1000.0, 10.0),
+            ufloat(800.0, 100.0),
+            ufloat(2000.0, 2.0)
+        ], dtype=object)
+        expected = [ufloat(437.6947142244463, 2.1884735711222315), ufloat(391.48605375928245, 24.46787835995515),
+                    ufloat(618.993801035228, 0.30949690051761405)]
+        np.testing.assert_array_equal(nominal_values(expected), nominal_values(calculate_sw_speed_h_plus(energy)))
+        np.testing.assert_array_almost_equal(std_devs(expected), std_devs(calculate_sw_speed_h_plus(energy)))
+
+    def test_calculate_sw_speed_on_array_without_uncertainties(self):
+        energy = np.array([1000.0, 800.0, 2000.0], dtype=float)
+        expected = [437.6947142244463, 391.48605375928245, 618.993801035228]
+        result = calculate_sw_speed_h_plus(energy)
+        self.assertIsInstance(result, np.ndarray)
+        self.assertEqual(float, result.dtype)
+        np.sqrt(result)
+        np.testing.assert_array_equal(expected, result)
+
+    def test_calculate_sw_speed_on_2d_array(self):
+        energy = uarray([[1000]], [[10]])
+        expected = uarray([[437.6947142244463]], [[2.1884735711222315]])
+        result = calculate_sw_speed_h_plus(energy)
+        np.testing.assert_array_almost_equal(nominal_values(expected), nominal_values(result))
+        np.testing.assert_array_almost_equal(std_devs(expected), std_devs(result))
+
+    def test_calculate_sw_speed_on_empty_array(self):
+        energy = []
+        expected = []
+        result = calculate_sw_speed_h_plus(energy)
+        np.testing.assert_array_equal(expected, result)
