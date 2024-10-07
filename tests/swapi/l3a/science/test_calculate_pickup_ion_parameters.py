@@ -1,9 +1,13 @@
 import unittest
 
+import unittest
+
 import numpy as np
 from uncertainties import ufloat
 
-from imap_processing.swapi.l3a.science.calculate_pickup_ion import calculate_pui_energy_cutoff, extract_pui_energy_bins
+from imap_processing.swapi.l3a.science.calculate_pickup_ion import calculate_pui_energy_cutoff, extract_pui_energy_bins, \
+    _model_count_rate_denominator
+from imap_processing.swapi.l3b.science.instrument_response_lookup_table import InstrumentResponseLookupTable
 
 
 class CalculatePickupIonParameters(unittest.TestCase):
@@ -15,7 +19,7 @@ class CalculatePickupIonParameters(unittest.TestCase):
         energy_cutoff = calculate_pui_energy_cutoff(epoch, solar_wind_bulk_velocity)
 
         self.assertAlmostEqual(0.00256375, energy_cutoff.n)
-        self.assertAlmostEqual(-1.46328e-5, energy_cutoff.s, 4)
+        self.assertAlmostEqual(1.46328e-5, energy_cutoff.s, 10)
 
     def test_extract_pui_energy_bins(self):
         energies = np.array([100, 1000, 1500, 2000, 10000])
@@ -27,3 +31,18 @@ class CalculatePickupIonParameters(unittest.TestCase):
                                                                             energy_cutoff, background_count_rate)
         np.testing.assert_array_equal(np.array([1500, 10000]), extracted_energies)
         np.testing.assert_array_equal(np.array([100, 200]), extracted_count_rates)
+
+    def test_model_count_rate_denominator(self):
+        lookup_table = InstrumentResponseLookupTable(np.array([103.07800, 105.04500]),
+                                                     np.array([2.0, 1.0]),
+                                                     np.array([-149.0, -149.0]),
+                                                     np.array([0.97411, 0.99269]),
+                                                     np.array([1.0, 1.0]),
+                                                     np.array([1.0, 1.0]),
+                                                     np.array([0.0160000000, 0.0160000000]),
+                                                     )
+        result = _model_count_rate_denominator(lookup_table)
+
+        expected = 0.97411 * np.cos(np.deg2rad(90 - 2)) * 1.0 * 1.0 + \
+                   0.99269 * np.cos(np.deg2rad(90 - 1.0)) * 1.0 * 1.0
+        self.assertEqual(expected, result)
