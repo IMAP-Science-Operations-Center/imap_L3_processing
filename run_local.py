@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from spacepy.pycdf import CDF
 
 from imap_processing.models import InputMetadata
@@ -19,8 +21,8 @@ def create_l3b_cdf(geometric_calibration_file, efficiency_calibration_file, cdf_
     input_metadata = InputMetadata(
         instrument='swapi',
         data_level='l3b',
-        start_date=None,
-        end_date=None,
+        start_date=datetime(2010, 1, 1),
+        end_date=datetime(2010, 1, 2),
         version='v999')
     processor = SwapiProcessor(None, input_metadata)
 
