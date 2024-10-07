@@ -20,7 +20,7 @@ def load_spice_kernels():
     spiceypy.furnsh(kernel_paths)
 
 
-def upload_data(data: DataProduct):
+def save_data(data: DataProduct) -> str:
     formatted_start_date = format_time(data.input_metadata.start_date)
     logical_file_id = f'imap_{data.input_metadata.instrument}_{data.input_metadata.data_level}_{data.input_metadata.descriptor}-fake-menlo-{uuid.uuid4()}_{formatted_start_date}_{data.input_metadata.version}'
     file_path = f'{TEMP_CDF_FOLDER_PATH}/{logical_file_id}.cdf'
@@ -33,7 +33,7 @@ def upload_data(data: DataProduct):
                                            f'imap_{data.input_metadata.instrument}_{data.input_metadata.data_level}_{data.input_metadata.descriptor}')
     attribute_manager.add_global_attribute("Logical_file_id", logical_file_id)
     write_cdf(file_path, data, attribute_manager)
-    imap_data_access.upload(file_path)
+    return file_path
 
 
 def format_time(t: Optional[datetime]) -> Optional[str]:

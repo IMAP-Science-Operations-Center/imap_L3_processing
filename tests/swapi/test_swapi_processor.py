@@ -22,7 +22,7 @@ class TestSwapiProcessor(TestCase):
         if os.path.exists(self.temp_directory):
             shutil.rmtree(self.temp_directory)
         os.mkdir(self.temp_directory)
-        self.mock_imap_patcher = patch('imap_processing.utils.imap_data_access')
+        self.mock_imap_patcher = patch('imap_processing.swapi.swapi_processor.imap_data_access')
         self.mock_imap_api = self.mock_imap_patcher.start()
 
     def tearDown(self) -> None:
@@ -236,8 +236,9 @@ class TestSwapiProcessor(TestCase):
         ])
         self.mock_imap_api.upload.assert_has_calls([call(proton_cdf_path), call(alpha_cdf_path)])
 
+    @patch('imap_processing.swapi.swapi_processor.imap_data_access')
     @patch('imap_processing.swapi.swapi_processor.calculate_delta_minus_plus')
-    @patch('imap_processing.swapi.swapi_processor.upload_data')
+    @patch('imap_processing.swapi.swapi_processor.save_data')
     @patch('imap_processing.swapi.swapi_processor.SwapiL3BCombinedVDF')
     @patch('imap_processing.swapi.swapi_processor.calculate_combined_sweeps')
     @patch('imap_processing.utils.uuid')
@@ -254,8 +255,9 @@ class TestSwapiProcessor(TestCase):
                          mock_swapi_l3b_dependencies_class,
                          mock_read_l2_swapi_data, mock_chunk_l2_data, mock_uuid,
                          mock_calculate_combined_sweeps, mock_combined_vdf_data,
-                         mock_upload_data,
-                         mock_calculate_delta_minus_plus):
+                         mock_save_data,
+                         mock_calculate_delta_minus_plus,
+                         mock_imap_data_access):
         mock_uuid_value = 123
         mock_uuid.uuid4.return_value = mock_uuid_value
 
@@ -467,7 +469,8 @@ class TestSwapiProcessor(TestCase):
             [sentinel.calculated_diffential_flux1, sentinel.calculated_diffential_flux2],
             mock_combined_vdf_data.call_args_list[0].kwargs["combined_differential_flux"])
 
-        mock_upload_data.assert_called_once_with(mock_combined_vdf_data.return_value)
+        mock_save_data.assert_called_once_with(mock_combined_vdf_data.return_value)
+        mock_imap_data_access.upload.assert_called_with(mock_save_data.return_value)
 
     def assert_ufloat_equal(self, expected_ufloat, actual_ufloat):
         self.assertEqual(expected_ufloat.n, actual_ufloat.n)

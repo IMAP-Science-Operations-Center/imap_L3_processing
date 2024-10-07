@@ -9,7 +9,7 @@ from spacepy.pycdf import CDF
 from imap_processing.constants import TEMP_CDF_FOLDER_PATH
 from imap_processing.models import UpstreamDataDependency
 from imap_processing.swapi.l3a.models import SwapiL3AlphaSolarWindData
-from imap_processing.utils import upload_data, format_time, download_dependency, read_l2_mag_data
+from imap_processing.utils import format_time, download_dependency, read_l2_mag_data, save_data
 
 
 class TestUtils(TestCase):
@@ -25,8 +25,7 @@ class TestUtils(TestCase):
     @patch("imap_processing.utils.date")
     @patch("imap_processing.utils.uuid.uuid4")
     @patch("imap_processing.utils.write_cdf")
-    @patch("imap_processing.utils.imap_data_access.upload")
-    def test_upload_data(self, mock_upload, mock_write_cdf, mock_uuid, mock_today, _):
+    def test_save_data(self, mock_write_cdf, mock_uuid, mock_today, _):
         mock_today.today.return_value = date(2024, 9, 16)
         mock_uuid.return_value = 444
 
@@ -41,7 +40,7 @@ class TestUtils(TestCase):
                                                  alpha_sw_speed=alpha_sw_speed,
                                                  alpha_sw_temperature=alpha_sw_temperature,
                                                  alpha_sw_density=alpha_sw_density)
-        upload_data(data_product)
+        returned_file_path = save_data(data_product)
 
         mock_write_cdf.assert_called_once()
         actual_file_path = mock_write_cdf.call_args.args[0]
@@ -63,7 +62,7 @@ class TestUtils(TestCase):
             "swapi", "l2"
         )
 
-        mock_upload.assert_called_once_with(expected_file_path)
+        self.assertEqual(expected_file_path, returned_file_path)
 
     def test_format_time(self):
         time = datetime(2024, 7, 9)

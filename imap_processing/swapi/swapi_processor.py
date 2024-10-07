@@ -1,5 +1,6 @@
 import dataclasses
 
+import imap_data_access
 import numpy as np
 from uncertainties import ufloat
 from uncertainties.unumpy import uarray
@@ -24,7 +25,7 @@ from imap_processing.swapi.l3b.science.calculate_solar_wind_differential_flux im
 from imap_processing.swapi.l3b.science.calculate_solar_wind_vdf import calculate_proton_solar_wind_vdf, \
     calculate_alpha_solar_wind_vdf, calculate_pui_solar_wind_vdf, calculate_delta_minus_plus
 from imap_processing.swapi.l3b.swapi_l3b_dependencies import SwapiL3BDependencies
-from imap_processing.utils import upload_data
+from imap_processing.utils import save_data
 
 
 class SwapiProcessor(Processor):
@@ -38,13 +39,19 @@ class SwapiProcessor(Processor):
         if self.input_metadata.data_level == "l3a":
             l3a_dependencies = SwapiL3ADependencies.fetch_dependencies(dependencies)
             data = read_l2_swapi_data(l3a_dependencies.data)
-            self.process_l3a(data, l3a_dependencies)
+            proton_data, alpha_data = self.process_l3a(data, l3a_dependencies)
+            proton_cdf = save_data(proton_data)
+            alpha_cdf = save_data(alpha_data)
+            imap_data_access.upload(proton_cdf)
+            imap_data_access.upload(alpha_cdf)
         elif self.input_metadata.data_level == "l3b":
             l3b_dependencies = SwapiL3BDependencies.fetch_dependencies(dependencies)
             data = read_l2_swapi_data(l3b_dependencies.data)
-            self.process_l3b(data, l3b_dependencies)
+            l3b_combined_vdf = self.process_l3b(data, l3b_dependencies)
+            cdf_path = save_data(l3b_combined_vdf)
+            imap_data_access.upload(cdf_path)
 
-    def process_l3a(self, data, dependencies):
+    def process_l3a(self, data, dependencies) -> tuple[SwapiL3ProtonSolarWindData, SwapiL3AlphaSolarWindData]:
         epochs = []
 
         proton_solar_wind_speeds = []
@@ -107,14 +114,13 @@ class SwapiProcessor(Processor):
                                                                np.array(proton_solar_wind_density),
                                                                np.array(proton_solar_wind_clock_angles),
                                                                np.array(proton_solar_wind_deflection_angles))
-        upload_data(proton_solar_wind_l3_data)
 
         alpha_solar_wind_speed_metadata = self.input_metadata.to_upstream_data_dependency("alpha-sw")
         alpha_solar_wind_l3_data = SwapiL3AlphaSolarWindData(alpha_solar_wind_speed_metadata, np.array(epochs),
                                                              np.array(alpha_solar_wind_speeds),
                                                              np.array(alpha_solar_wind_temperatures),
                                                              np.array(alpha_solar_wind_densities))
-        upload_data(alpha_solar_wind_l3_data)
+        return proton_solar_wind_l3_data, alpha_solar_wind_l3_data
 
     def process_l3b(self, data, dependencies):
         epochs = []
@@ -203,5 +209,4 @@ class SwapiProcessor(Processor):
                                                    [delta.delta_plus for delta in combined_energy_deltas]),
                                                combined_differential_flux=np.array(combined_differential_fluxes),
                                                )
-
-        upload_data(l3b_combined_vdf)
+        return l3b_combined_vdf
