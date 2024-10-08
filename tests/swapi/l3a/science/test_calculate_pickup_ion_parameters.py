@@ -1,12 +1,13 @@
 import unittest
-
-import unittest
+from datetime import datetime
 
 import numpy as np
 from uncertainties import ufloat
 
+from imap_processing.spice_wrapper import fake_spice_context
 from imap_processing.swapi.l3a.science.calculate_pickup_ion import calculate_pui_energy_cutoff, extract_pui_energy_bins, \
     _model_count_rate_denominator
+from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_speed import calculate_sw_speed_h_plus
 from imap_processing.swapi.l3b.science.instrument_response_lookup_table import InstrumentResponseLookupTable
 
 
@@ -46,3 +47,7 @@ class CalculatePickupIonParameters(unittest.TestCase):
         expected = 0.97411 * np.cos(np.deg2rad(90 - 2)) * 1.0 * 1.0 + \
                    0.99269 * np.cos(np.deg2rad(90 - 1.0)) * 1.0 * 1.0
         self.assertEqual(expected, result)
+
+    def test_forward_model(self):
+
+
