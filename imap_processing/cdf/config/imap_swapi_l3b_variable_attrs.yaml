@@ -193,7 +193,7 @@ combined_differential_flux:
   DISPLAY_TYPE: spectrogram
   SCALEMIN: .000001
   SCALEMAX: 1000000
-  UNITS: ' '
+  UNITS: 'cm^-2 sr^-1 s^-1 eV^-1'
 
 
 combined_differential_flux_delta:
@@ -202,7 +202,7 @@ combined_differential_flux_delta:
   VAR_TYPE: support_data
   CATDESC: Solar Wind Combined Differential Flux Uncertainty
   FIELDNAM: combined_differential_flux_delta
-  UNITS: ' '
+  UNITS: 'cm^-2 sr^-1 s^-1 eV^-1'
 
 epoch:
   CATDESC: Time, number of nanoseconds since J2000 with leap seconds included

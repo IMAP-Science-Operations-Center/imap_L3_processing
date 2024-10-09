@@ -18,6 +18,6 @@ class TestCalculateSolarWindDifferentialFlux(TestCase):
 
         differential_flux = calculate_combined_solar_wind_differential_flux(energies, count_rates, efficiency,
                                                                             mock_geometric_factor_table)
-        expected_flux = np.array([113378684807.25623, 3023431594860.166, 68027210884353.74])
+        expected_flux = np.array([11.337868480725623, 302.3431594860166, 6802.721088435374])
         np.testing.assert_array_almost_equal(expected_flux, differential_flux)
         mock_geometric_factor_table.lookup_geometric_factor.assert_called_with(energies)
