@@ -1,14 +1,16 @@
 import unittest
+from datetime import datetime
 from unittest.mock import patch
 
 import numpy as np
 
 from imap_processing.constants import HYDROGEN_INFLOW_SPEED_IN_KM_PER_SECOND, \
     HYDROGEN_INFLOW_LONGITUDE_DEGREES_IN_ECLIPJ2000, HYDROGEN_INFLOW_LATITUDE_DEGREES_IN_ECLIPJ2000, PROTON_MASS_KG, \
-    PROTON_CHARGE_COULOMBS
+    PROTON_CHARGE_COULOMBS, ONE_AU_IN_KM
 from imap_processing.spice_wrapper import FAKE_ROTATION_MATRIX_FROM_PSP
 from imap_processing.swapi.l3a.science.calculate_pickup_ion import calculate_pui_energy_cutoff, extract_pui_energy_bins, \
-    _model_count_rate_denominator, convert_velocity_relative_to_imap
+    _model_count_rate_denominator, convert_velocity_relative_to_imap, calculate_pui_velocity_vector, FittingParameters, \
+    ForwardModel
 from imap_processing.swapi.l3b.science.instrument_response_lookup_table import InstrumentResponseLookupTable
 
 
@@ -86,3 +88,62 @@ class TestCalculatePickupIon(unittest.TestCase):
         np.testing.assert_array_almost_equal(expected_velocity, output_velocity)
         mock_spice.sxform.assert_called_with(from_frame, to_frame, ephemeris_time)
         mock_spice.spkezr.assert_called_with("IMAP", ephemeris_time, to_frame, "NONE", "SUN")
+
+    @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.spiceypy")
+    def test_calculate_pui_velocity_vector(self, mock_spice):
+        mock_spice.sphrec.return_value = np.array([1, 2, 3])
+        speed = 45.6787
+        colatitude = 88.3
+        phi = -149.0
+        actual_pui_vector = calculate_pui_velocity_vector(speed, colatitude, phi)
+        np.testing.assert_array_equal(np.array([1, 2, 3]), actual_pui_vector)
+        mock_spice.sphrec.assert_called_with(speed, colatitude, phi)
+
+    @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.convert_velocity_relative_to_imap")
+    @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.spiceypy")
+    def test_forward_model(self, mock_spice, mock_convert_velocity):
+        ephemeris_time_for_epoch = 100000
+        mock_spice.datetime2et.return_value = ephemeris_time_for_epoch
+
+        imap_position_rectangular_coordinates = np.array([50, 60, 70, 0, 0, 0])
+        mock_spice.spkezr.return_value = imap_position_rectangular_coordinates
+        imap_position_latitudinal_coordinates = np.array([10, 11, 12])
+        mock_spice.reclat.return_value = imap_position_latitudinal_coordinates
+        pui_velocity_instrument_frame = np.array([8, 6, 4])
+        mock_spice.sphrec.return_value = pui_velocity_instrument_frame
+
+        pui_velocity_gse_frame = np.array([5, 7, 9])
+        mock_convert_velocity.return_value = pui_velocity_gse_frame
+
+        fitting_parameters = FittingParameters(0.1, 0.47, 42, 23)
+        epoch = datetime(2024, 10, 10)
+        solar_wind_vector_gse_frame = np.array([1, 2, 3])
+        solar_wind_speed_inertial_frame = np.array([4, 5, 6])
+
+        energy = 94
+        theta = 75
+        phi = -135
+
+        forward_model = ForwardModel(fitting_parameters, epoch, solar_wind_vector_gse_frame,
+                                     solar_wind_speed_inertial_frame)
+        result = forward_model.f(energy, theta, phi)
+
+        expected_term_1 = 0.1 / (4 * np.pi)
+        expected_term_2 = (0.47 * ONE_AU_IN_KM ** 2) / (
+                imap_position_latitudinal_coordinates[0] * solar_wind_speed_inertial_frame * 42)
+        magnitude = 8.774964387392123
+        expected_term_3 = (magnitude / 42) ** (0.1 - 3)
+        expected_term_4 = 1
+        expected_term_5 = 1
+
+        expected = expected_term_1 * expected_term_2 * expected_term_3 * expected_term_4 * expected_term_5
+
+        np.testing.assert_array_equal(result, expected)
+        mock_spice.datetime2et.assert_called_with(epoch)
+        mock_spice.spkezr.assert_called_with("IMAP", ephemeris_time_for_epoch, "ECLIPJ2000", "NONE", "SUN")
+        np.testing.assert_array_equal(imap_position_rectangular_coordinates[0:3], mock_spice.reclat.call_args.args[0])
+        speed = 67.32371
+        self.assertAlmostEqual(speed, mock_spice.sphrec.call_args.args[0], 5)
+        self.assertAlmostEqual(theta, mock_spice.sphrec.call_args.args[1])
+        self.assertAlmostEqual(phi, mock_spice.sphrec.call_args.args[2])
+        mock_convert_velocity.assert_called_with(pui_velocity_instrument_frame, "IMAP_SWAPI", "GSE")
