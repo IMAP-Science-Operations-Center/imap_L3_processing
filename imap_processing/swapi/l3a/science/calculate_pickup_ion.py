@@ -8,7 +8,6 @@ from spiceypy import spiceypy
 from imap_processing.constants import HYDROGEN_INFLOW_SPEED_IN_KM_PER_SECOND, PROTON_MASS_KG, PROTON_CHARGE_COULOMBS, \
     PUI_PARTICLE_MASS_KG, PUI_PARTICLE_CHARGE_COULOMBS, HYDROGEN_INFLOW_LATITUDE_DEGREES_IN_ECLIPJ2000, \
     HYDROGEN_INFLOW_LONGITUDE_DEGREES_IN_ECLIPJ2000, ONE_AU_IN_KM
-from imap_processing.spice_wrapper import fake_spice_context
 from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_speed import calculate_sw_speed
 from imap_processing.swapi.l3b.science.geometric_factor_calibration_table import GeometricFactorCalibrationTable
 from imap_processing.swapi.l3b.science.instrument_response_lookup_table import InstrumentResponseLookupTable, \
@@ -40,27 +39,27 @@ class ForwardModel:
     fitting_params: FittingParameters
     epoch: datetime
     solar_wind_vector_gse_frame: ndarray
-    solar_wind_speed_inertial_frame: ndarray
+    solar_wind_vector_inertial_frame: ndarray
 
     # at some point we might want to pass in vectors for energy, theta, phi
     def f(self, energy, theta, phi):
         ephemeris_time = spiceypy.datetime2et(self.epoch)
         speed = calculate_sw_speed(PUI_PARTICLE_MASS_KG, PUI_PARTICLE_CHARGE_COULOMBS, energy)  # energy vs E/q?
-        pui_vector_instrument_frame = calculate_pui_velocity_vector(speed, theta, phi)
+        pui_vector_instrument_frame = calculate_velocity_vector(speed, theta, phi)
         pui_vector_gse_frame = convert_velocity_relative_to_imap(pui_vector_instrument_frame, "IMAP_SWAPI", "GSE")
         pui_vector_solar_wind_frame = pui_vector_gse_frame - self.solar_wind_vector_gse_frame
         magnitude = np.linalg.norm(pui_vector_solar_wind_frame)
         w = magnitude / self.fitting_params.cutoff_speed
         imap_position_eclip2000_frame_state = spiceypy.spkezr("IMAP", ephemeris_time, "ECLIPJ2000", "NONE", "SUN")[0:3]
         distance, longitude, latitude = spiceypy.reclat(imap_position_eclip2000_frame_state)
-        psi = longitude - 0  # HELIUM_INFLOW_DIRECTION from the lookup table
+        psi = longitude - InterstellarHeliumInflowLookupTable.inflow_direction()
 
-        neutral_helium_density = DensityOfNeutralHeliumLookupTable().density(
+        neutral_helium_density = DensityOfNeutralHeliumLookupTable.density(
             distance * w ** self.fitting_params.cooling_index,
             psi)
         term1 = self.fitting_params.cooling_index / (4 * np.pi)
         term2 = (self.fitting_params.ionization_rate * ONE_AU_IN_KM ** 2) / (
-                distance * self.solar_wind_speed_inertial_frame * self.fitting_params.cutoff_speed)
+                distance * self.solar_wind_vector_inertial_frame * self.fitting_params.cutoff_speed)
         term3 = w ** (self.fitting_params.cooling_index - 3)
         term4 = neutral_helium_density
         term5 = np.heaviside(1 - w, 0.5)
@@ -72,36 +71,40 @@ def model_count_rate(fitting_params: FittingParameters, energy_bin_index: int, e
                      geometric_table: GeometricFactorCalibrationTable) -> float:
     epoch = datetime(2010, 1, 1)
 
-    with fake_spice_context() as spice:
-        ephemeris_time = spice.datetime2et(epoch)
+    ephemeris_time = spiceypy.datetime2et(epoch)
 
-        # proton l3a calculation - should l3a be an input for l3b? or redo the part of the calculation we need?
-        # solar wind speed, flow deflection angle, clock angle
-        # at 1-minute intervals - need to average 10 minutes in some way
-        # convert each minute into xyz vector?
-        v, deflection, clock = l3a_calculation()
-        solar_wind_vector_instrument_frame = convert_flow_deflection_to_xyz(v, deflection, clock)
-        solar_wind_vector_gse_frame = convert_velocity(solar_wind_vector_instrument_frame, "IMAP_RTN",
-                                                       "GSE")  # account for IMAP velocity?
-        solar_wind_vector_inertial_frame = convert_velocity(solar_wind_vector_instrument_frame, "IMAP_RTN",
-                                                            "HCI")  # account for IMAP velocity?
-        solar_wind_speed_inertial_frame = np.linalg.norm(solar_wind_vector_inertial_frame)
+    # proton l3a calculation - should l3a be an input for l3b? or redo the part of the calculation we need?
+    # solar wind speed, flow deflection angle, clock angle
+    # at 1-minute intervals - need to average 10 minutes in some way
+    # convert each minute into xyz vector?
+    v, deflection, clock = l3a_calculation()
+    solar_wind_vector_instrument_frame = calculate_velocity_vector(v, deflection, clock)
+    solar_wind_vector_gse_frame = convert_velocity_to_reference_frame(solar_wind_vector_instrument_frame,
+                                                                      "IMAP_RTN",
+                                                                      "GSE")  # account for IMAP velocity?
+    solar_wind_vector_inertial_frame = convert_velocity_to_reference_frame(solar_wind_vector_instrument_frame,
+                                                                           "IMAP_RTN",
+                                                                           "HCI")  # account for IMAP velocity?
 
-        response_lookup_table = response_lookup_table_collection.get_table_for_energy_bin(energy_bin_index)
-        integral = 0
-        for i in range(len(response_lookup_table.response)):
-            speed = calculate_sw_speed(PUI_PARTICLE_MASS_KG, PUI_PARTICLE_CHARGE_COULOMBS,
-                                       response_lookup_table.energy[i])
-            colatitude = 90 - response_lookup_table.elevation[i]
-            integral += response_lookup_table.response[i] * f(response_lookup_table.energy[i], colatitude,
-                                                              response_lookup_table.azimuth[i]) \
-                        * speed ** 4 * response_lookup_table.d_energy[i] * np.cos(np.deg2rad(colatitude)) \
-                        * response_lookup_table.d_azimuth[i] * response_lookup_table.d_elevation[i]
+    response_lookup_table = response_lookup_table_collection.get_table_for_energy_bin(energy_bin_index)
+    forward_model = ForwardModel(fitting_params, epoch, solar_wind_vector_gse_frame,
+                                 solar_wind_vector_inertial_frame)
+    integral = 0
+    for i in range(len(response_lookup_table.response)):
+        speed = calculate_sw_speed(PUI_PARTICLE_MASS_KG, PUI_PARTICLE_CHARGE_COULOMBS,
+                                   response_lookup_table.energy[i])
+        colatitude = 90 - response_lookup_table.elevation[i]
+        integral += response_lookup_table.response[i] * forward_model.f(response_lookup_table.energy[i], colatitude,
+                                                                        response_lookup_table.azimuth[i]) \
+                    * speed ** 4 * response_lookup_table.d_energy[i] * np.cos(np.deg2rad(colatitude)) \
+                    * response_lookup_table.d_azimuth[i] * response_lookup_table.d_elevation[i]
 
-        geometric_factor = geometric_table.lookup_geometric_factor(energy_bin_center)
+    geometric_factor = geometric_table.lookup_geometric_factor(energy_bin_center)
 
-        return (geometric_factor / 2) * integral / _model_count_rate_denominator(
-            response_lookup_table) + fitting_params.background_count_rate
+    return (geometric_factor / 2) * integral / _model_count_rate_denominator(
+        response_lookup_table)
+
+def model_count_rate_integral(lookup_table: InstrumentResponseLookupTable, forward_model: ForwardModel):
 
 
 def _model_count_rate_denominator(response_lookup_table: InstrumentResponseLookupTable) -> float:
@@ -113,17 +116,23 @@ def _model_count_rate_denominator(response_lookup_table: InstrumentResponseLooku
     return rows.sum()
 
 
-def convert_velocity_relative_to_imap(velocity, ephemeris_time, from_frame, to_frame):
-    imap_rotation_matrix = spiceypy.sxform(from_frame, to_frame, ephemeris_time)
+def convert_velocity_to_reference_frame(velocity: ndarray, ephemeris_time: float, from_frame: str,
+                                        to_frame: str) -> ndarray:
+    rotation_matrix = spiceypy.sxform(from_frame, to_frame, ephemeris_time)
     state = [0, 0, 0, *velocity]
-    state_in_target_frame = np.matmul(imap_rotation_matrix, state)
-    velocity_in_target_frame_relative_to_imap = state_in_target_frame[3:6]
+    state_in_target_frame = np.matmul(rotation_matrix, state)
+    return state_in_target_frame[3:6]
+
+
+def convert_velocity_relative_to_imap(velocity, ephemeris_time, from_frame, to_frame):
+    velocity_in_target_frame_relative_to_imap = convert_velocity_to_reference_frame(velocity, ephemeris_time,
+                                                                                    from_frame, to_frame)
     imap_velocity = spiceypy.spkezr("IMAP", ephemeris_time, to_frame, "NONE", "SUN")[3:6]
 
     return velocity_in_target_frame_relative_to_imap + imap_velocity
 
 
-def calculate_pui_velocity_vector(sw_speed: float, colatitude: float, azimuth: float) -> np.ndarray:
+def calculate_velocity_vector(sw_speed: float, colatitude: float, azimuth: float) -> np.ndarray:
     return spiceypy.sphrec(sw_speed, colatitude, azimuth)
 
 
@@ -154,3 +163,10 @@ def extract_pui_energy_bins(energy_bin_labels, energies, observed_count_rates, e
             extracted_energy_bin_labels.append(label)
 
     return np.array(extracted_energy_bin_labels), np.array(extracted_energy_bins), np.array(count_rates)
+
+
+def l3a_calculation():
+    velocity = 10.0
+    flow_deflection_angle = 2.1
+    clock_angle = -123.4
+    return velocity, flow_deflection_angle, clock_angle
