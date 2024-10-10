@@ -183,7 +183,7 @@ combined_energy_delta_plus:
 combined_differential_flux:
   <<: *default_timeseries
   DEPEND_1: combined_energy
-  CATDESC: Solar Wind Combined Differential Flux
+  CATDESC: Combined Differential Flux
   FIELDNAM: combined_differential_flux
   DELTA_MINUS_VAR: combined_differential_flux_delta
   DELTA_PLUS_VAR: combined_differential_flux_delta
@@ -193,16 +193,16 @@ combined_differential_flux:
   DISPLAY_TYPE: spectrogram
   SCALEMIN: .000001
   SCALEMAX: 1000000
-  UNITS: ' '
+  UNITS: 'cm!E-2!N sr!E-1!N s!E-1!N eV/q!E-1!N'
 
 
 combined_differential_flux_delta:
   <<: *default_timeseries
   DEPEND_1: combined_energy
   VAR_TYPE: support_data
-  CATDESC: Solar Wind Combined Differential Flux Uncertainty
+  CATDESC: Combined Differential Flux Uncertainty
   FIELDNAM: combined_differential_flux_delta
-  UNITS: ' '
+  UNITS: 'cm!E-2!N sr!E-1!N s!E-1!N eV/q!E-1!N'
 
 epoch:
   CATDESC: Time, number of nanoseconds since J2000 with leap seconds included
