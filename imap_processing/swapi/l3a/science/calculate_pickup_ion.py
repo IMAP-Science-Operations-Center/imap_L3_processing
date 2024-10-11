@@ -46,7 +46,8 @@ class ForwardModel:
         ephemeris_time = spiceypy.datetime2et(self.epoch)
         speed = calculate_sw_speed(PUI_PARTICLE_MASS_KG, PUI_PARTICLE_CHARGE_COULOMBS, energy)  # energy vs E/q?
         pui_vector_instrument_frame = calculate_velocity_vector(speed, theta, phi)
-        pui_vector_gse_frame = convert_velocity_relative_to_imap(pui_vector_instrument_frame, "IMAP_SWAPI", "GSE")
+        pui_vector_gse_frame = convert_velocity_relative_to_imap(pui_vector_instrument_frame, ephemeris_time,
+                                                                 "IMAP_SWAPI", "GSE")
         pui_vector_solar_wind_frame = pui_vector_gse_frame - self.solar_wind_vector_gse_frame
         magnitude = np.linalg.norm(pui_vector_solar_wind_frame)
         w = magnitude / self.fitting_params.cutoff_speed
@@ -80,15 +81,25 @@ def model_count_rate(fitting_params: FittingParameters, energy_bin_index: int, e
     v, deflection, clock = l3a_calculation()
     solar_wind_vector_instrument_frame = calculate_velocity_vector(v, deflection, clock)
     solar_wind_vector_gse_frame = convert_velocity_to_reference_frame(solar_wind_vector_instrument_frame,
+                                                                      ephemeris_time,
                                                                       "IMAP_RTN",
                                                                       "GSE")  # account for IMAP velocity?
     solar_wind_vector_inertial_frame = convert_velocity_to_reference_frame(solar_wind_vector_instrument_frame,
+                                                                           ephemeris_time,
                                                                            "IMAP_RTN",
                                                                            "HCI")  # account for IMAP velocity?
 
     response_lookup_table = response_lookup_table_collection.get_table_for_energy_bin(energy_bin_index)
     forward_model = ForwardModel(fitting_params, epoch, solar_wind_vector_gse_frame,
                                  solar_wind_vector_inertial_frame)
+    integral = model_count_rate_integral(response_lookup_table, forward_model)
+
+    geometric_factor = geometric_table.lookup_geometric_factor(energy_bin_center)
+    denominator = _model_count_rate_denominator(response_lookup_table)
+    return (geometric_factor / 2) * integral / denominator
+
+
+def model_count_rate_integral(response_lookup_table: InstrumentResponseLookupTable, forward_model: ForwardModel):
     integral = 0
     for i in range(len(response_lookup_table.response)):
         speed = calculate_sw_speed(PUI_PARTICLE_MASS_KG, PUI_PARTICLE_CHARGE_COULOMBS,
@@ -98,13 +109,7 @@ def model_count_rate(fitting_params: FittingParameters, energy_bin_index: int, e
                                                                         response_lookup_table.azimuth[i]) \
                     * speed ** 4 * response_lookup_table.d_energy[i] * np.cos(np.deg2rad(colatitude)) \
                     * response_lookup_table.d_azimuth[i] * response_lookup_table.d_elevation[i]
-
-    geometric_factor = geometric_table.lookup_geometric_factor(energy_bin_center)
-
-    return (geometric_factor / 2) * integral / _model_count_rate_denominator(
-        response_lookup_table)
-
-def model_count_rate_integral(lookup_table: InstrumentResponseLookupTable, forward_model: ForwardModel):
+    return integral
 
 
 def _model_count_rate_denominator(response_lookup_table: InstrumentResponseLookupTable) -> float:

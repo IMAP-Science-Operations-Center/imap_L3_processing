@@ -1,7 +1,6 @@
 import unittest
 from datetime import datetime
-from pathlib import Path
-from unittest.mock import patch, Mock
+from unittest.mock import patch, Mock, call
 
 import numpy as np
 
@@ -12,8 +11,7 @@ from imap_processing.spice_wrapper import FAKE_ROTATION_MATRIX_FROM_PSP
 from imap_processing.swapi.l3a.science.calculate_pickup_ion import calculate_pui_energy_cutoff, extract_pui_energy_bins, \
     _model_count_rate_denominator, convert_velocity_relative_to_imap, calculate_velocity_vector, FittingParameters, \
     ForwardModel, convert_velocity_to_reference_frame, model_count_rate, model_count_rate_integral
-from imap_processing.swapi.l3b.science.instrument_response_lookup_table import InstrumentResponseLookupTable, \
-    InstrumentResponseLookupTableCollection
+from imap_processing.swapi.l3b.science.instrument_response_lookup_table import InstrumentResponseLookupTable
 
 
 class TestCalculatePickupIon(unittest.TestCase):
@@ -156,7 +154,6 @@ class TestCalculatePickupIon(unittest.TestCase):
         expected_term_5 = 1
 
         expected = expected_term_1 * expected_term_2 * expected_term_3 * expected_term_4 * expected_term_5
-
         np.testing.assert_array_equal(result, expected)
         mock_spice.datetime2et.assert_called_with(epoch)
         mock_spice.spkezr.assert_called_with("IMAP", ephemeris_time_for_epoch, "ECLIPJ2000", "NONE", "SUN")
@@ -165,14 +162,30 @@ class TestCalculatePickupIon(unittest.TestCase):
         self.assertAlmostEqual(speed, mock_spice.sphrec.call_args.args[0], 5)
         self.assertAlmostEqual(theta, mock_spice.sphrec.call_args.args[1])
         self.assertAlmostEqual(phi, mock_spice.sphrec.call_args.args[2])
-        mock_convert_velocity.assert_called_with(pui_velocity_instrument_frame, "IMAP_SWAPI", "GSE")
+        mock_convert_velocity.assert_called_with(pui_velocity_instrument_frame, ephemeris_time_for_epoch, "IMAP_SWAPI",
+                                                 "GSE")
 
+    @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.convert_velocity_to_reference_frame")
+    @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.model_count_rate_integral")
+    @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.ForwardModel")
     @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.InstrumentResponseLookupTableCollection")
     @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.spiceypy")
-    def test_model_count_rate(self, mock_spice, mock_instrument_response_lut_collection):
+    def test_model_count_rate(self, mock_spice, mock_instrument_response_lut_collection, mock_forward_model,
+                              mock_model_count_rate_integral, mock_convert_velocity_to_reference_frame):
         ephemeris_time_for_epoch = 100000
         mock_spice.datetime2et.return_value = ephemeris_time_for_epoch
 
+        sw_instrument_frame_vector = np.array([55, 66, 77])
+        mock_spice.sphrec.return_value = sw_instrument_frame_vector
+        mock_spice.spkezr.return_value = np.array([99, 88, 77, 66, 55, 44])
+
+        expected_sw_gse_vector = np.array([200, 300, 400])
+        expected_sw_hci_vector = np.array([150, 250, 350])
+        mock_convert_velocity_to_reference_frame.side_effect = [expected_sw_gse_vector, expected_sw_hci_vector]
+
+        expected_integral_result = np.array([500, 600, 700])
+        mock_model_count_rate_integral.return_value = expected_integral_result
+
         lookup_table = InstrumentResponseLookupTable(np.array([103.07800, 105.04500]),
                                                      np.array([2.0, 1.0]),
                                                      np.array([-149.0, -149.0]),
@@ -181,43 +194,66 @@ class TestCalculatePickupIon(unittest.TestCase):
                                                      np.array([1.0, 1.0]),
                                                      np.array([0.0160000000, 0.0160000000]),
                                                      )
-
         mock_instrument_response_lut_collection.get_table_for_energy_bin.return_value = lookup_table
+
         fitting_params = FittingParameters(0.23, 0.57, 0.91, 1.23)
         energy_bin_index = 1
         energy_bin_center = 10000
-        response_lut_collection = InstrumentResponseLookupTableCollection(
-            Path("swapi/test_data/swapi_response_simion_v1"))
+
         geometric_table = Mock()
         geometric_table.lookup_geometric_factor.return_value = 6.4e-13
 
-        result = model_count_rate(fitting_params, energy_bin_index, energy_bin_center, response_lut_collection,
+        result = model_count_rate(fitting_params, energy_bin_index, energy_bin_center,
+                                  mock_instrument_response_lut_collection,
                                   geometric_table)
 
         expected_geo_factor = 6.4e-13 / 2
-        expected_integral = 0
-        expected_denominator = 0.97411 * np.cos(np.deg2rad(90 - 2)) * 1.0 * 1.0 + \
-                               0.99269 * np.cos(np.deg2rad(90 - 1.0)) * 1.0 * 1.0
+        expected_denominator = (0.97411 * np.cos(np.deg2rad(90 - 2.0)) * 1.0 * 1.0) + \
+                               (0.99269 * np.cos(np.deg2rad(90 - 1.0)) * 1.0 * 1.0)
+        expected_result = expected_geo_factor * expected_integral_result / expected_denominator
+        np.testing.assert_array_equal(expected_result, result)
 
-    def test_model_count_rate_integral(self):
+        actual_fitting_params, actual_epoch, actual_sw_gse_vector, actual_sw_hci_vector = mock_forward_model.call_args.args
+        self.assertIs(fitting_params, actual_fitting_params)
+        self.assertEqual(datetime(2010, 1, 1), actual_epoch)
+
+        np.testing.assert_array_equal(expected_sw_gse_vector, actual_sw_gse_vector)
+        np.testing.assert_array_equal(expected_sw_hci_vector, actual_sw_hci_vector)
+        mock_convert_velocity_to_reference_frame.assert_has_calls([
+            call(sw_instrument_frame_vector, ephemeris_time_for_epoch, "IMAP_RTN", "GSE"),
+            call(sw_instrument_frame_vector, ephemeris_time_for_epoch, "IMAP_RTN", "HCI")
+        ])
+
+        mock_model_count_rate_integral.assert_called_with(lookup_table, mock_forward_model.return_value)
+
+    @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.ForwardModel")
+    @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.calculate_sw_speed")
+    def test_model_count_rate_integral(self, mock_calculate_speed, mock_forward_model):
+        expected_speed_row_1 = 421
+        expected_speed_row_2 = 124
+        mock_calculate_speed.side_effect = [expected_speed_row_1, expected_speed_row_2]
+
+        mock_forward_model.return_value.f.side_effect = [np.array([33.33, 34.44, 35.55]),
+                                                         np.array([44.44, 45.55, 46.66])]
+
         lookup_table = InstrumentResponseLookupTable(np.array([103.07800, 105.04500]),
-                                                     np.array([2.0, 1.0]),
-                                                     np.array([-149.0, -149.0]),
+                                                     np.array([2.0, 1.1]),
+                                                     np.array([-149.0, -132.0]),
                                                      np.array([0.97411, 0.99269]),
-                                                     np.array([1.0, 1.0]),
-                                                     np.array([1.0, 1.0]),
-                                                     np.array([0.0160000000, 0.0160000000]),
+                                                     np.array([3.0, 2.0]),
+                                                     np.array([1.0, 1.5]),
+                                                     np.array([0.0160000000, 0.0230000000]),
                                                      )
+        result = model_count_rate_integral(lookup_table, mock_forward_model.return_value)
 
-        fitting_params = FittingParameters(0.23, 0.57, 0.91, 1.23)
-        epoch = datetime(2024, 10, 10)
-        solar_wind_vector_gse = np.array([23, 42, 34])
-        solar_wind_vector_inertial = np.array([89, 23, 10])
+        expected_row_1_colatitude = 90 - 2.0
+        expected_row_1_forward_model_f = np.array([33.33, 34.44, 35.55])
+        expected_row_1 = 0.0160000000 * expected_row_1_forward_model_f * expected_speed_row_1 ** 4 * 0.97411 * np.cos(
+            np.deg2rad(expected_row_1_colatitude)) * 1.0 * 3.0
 
-        forward_model = ForwardModel(fitting_params, epoch, solar_wind_vector_gse, solar_wind_vector_inertial)
+        expected_row_2_colatitude = 90 - 1.1
+        expected_row_2_forward_model_f = np.array([44.44, 45.55, 46.66])
+        expected_row_2 = 0.0230000000 * expected_row_2_forward_model_f * expected_speed_row_2 ** 4 * 0.99269 * np.cos(
+            np.deg2rad(expected_row_2_colatitude)) * 1.5 * 2.0
 
-        result = model_count_rate_integral(lookup_table, forward_model)
-
-
-
-
+        np.testing.assert_array_equal(result, expected_row_1 + expected_row_2)
