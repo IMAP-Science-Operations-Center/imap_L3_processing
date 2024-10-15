@@ -2,16 +2,32 @@ from dataclasses import dataclass
 from datetime import datetime
 
 import numpy as np
+import scipy.optimize
 from numpy import ndarray
 from spiceypy import spiceypy
+from uncertainties.unumpy import nominal_values, std_devs, uarray
 
 from imap_processing.constants import HYDROGEN_INFLOW_SPEED_IN_KM_PER_SECOND, PROTON_MASS_KG, PROTON_CHARGE_COULOMBS, \
     PUI_PARTICLE_MASS_KG, PUI_PARTICLE_CHARGE_COULOMBS, HYDROGEN_INFLOW_LATITUDE_DEGREES_IN_ECLIPJ2000, \
-    HYDROGEN_INFLOW_LONGITUDE_DEGREES_IN_ECLIPJ2000, ONE_AU_IN_KM
+    HYDROGEN_INFLOW_LONGITUDE_DEGREES_IN_ECLIPJ2000, ONE_AU_IN_KM, HELIUM_INFLOW_LONGITUDE_DEGREES_IN_ECLIPJ2000
 from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_speed import calculate_sw_speed
 from imap_processing.swapi.l3b.science.geometric_factor_calibration_table import GeometricFactorCalibrationTable
 from imap_processing.swapi.l3b.science.instrument_response_lookup_table import InstrumentResponseLookupTable, \
     InstrumentResponseLookupTableCollection
+
+
+def calculate_pickup_ion_values(instrument_response_lookup_table, geometric_factor_calibration_table,
+                                energy: list[float],
+                                count_rates: uarray):
+    model_count_rate_calculator = ModelCountRateCalculator(instrument_response_lookup_table,
+                                                           geometric_factor_calibration_table)
+
+    values, covariance = scipy.optimize.curve_fit(model_count_rate_calculator.model_count_rate, list(enumerate(energy)),
+                                                  nominal_values(count_rates),
+                                                  sigma=std_devs(count_rates),
+                                                  absolute_sigma=True)
+
+    print(values)
 
 
 class DensityOfNeutralHeliumLookupTable:
@@ -53,7 +69,7 @@ class ForwardModel:
         w = magnitude / self.fitting_params.cutoff_speed
         imap_position_eclip2000_frame_state = spiceypy.spkezr("IMAP", ephemeris_time, "ECLIPJ2000", "NONE", "SUN")[0:3]
         distance, longitude, latitude = spiceypy.reclat(imap_position_eclip2000_frame_state)
-        psi = longitude - InterstellarHeliumInflowLookupTable.inflow_direction()
+        psi = longitude - HELIUM_INFLOW_LONGITUDE_DEGREES_IN_ECLIPJ2000
 
         neutral_helium_density = DensityOfNeutralHeliumLookupTable.density(
             distance * w ** self.fitting_params.cooling_index,
@@ -67,36 +83,43 @@ class ForwardModel:
         return term1 * term2 * term3 * term4 * term5  # What units should the result be in? What units are the inputs in?
 
 
-def model_count_rate(fitting_params: FittingParameters, energy_bin_index: int, energy_bin_center: float,
-                     response_lookup_table_collection: InstrumentResponseLookupTableCollection,
-                     geometric_table: GeometricFactorCalibrationTable) -> float:
-    epoch = datetime(2010, 1, 1)
+@dataclass
+class ModelCountRateCalculator:
+    response_lookup_table_collection: InstrumentResponseLookupTableCollection
+    geometric_table: GeometricFactorCalibrationTable
 
-    ephemeris_time = spiceypy.datetime2et(epoch)
+    def model_count_rate(self, indices_and_energy_centers: list[tuple[int, float]], cooling_index: float,
+                         ionization_rate: float, cutoff_speed: float, background_count_rate: float) -> float:
+        energy_bin_index = indices_and_energy_centers[:, 0]
+        energy_bin_center = indices_and_energy_centers[:, 1]
 
-    # proton l3a calculation - should l3a be an input for l3b? or redo the part of the calculation we need?
-    # solar wind speed, flow deflection angle, clock angle
-    # at 1-minute intervals - need to average 10 minutes in some way
-    # convert each minute into xyz vector?
-    v, deflection, clock = l3a_calculation()
-    solar_wind_vector_instrument_frame = calculate_velocity_vector(v, deflection, clock)
-    solar_wind_vector_gse_frame = convert_velocity_to_reference_frame(solar_wind_vector_instrument_frame,
-                                                                      ephemeris_time,
-                                                                      "IMAP_RTN",
-                                                                      "GSE")  # account for IMAP velocity?
-    solar_wind_vector_inertial_frame = convert_velocity_to_reference_frame(solar_wind_vector_instrument_frame,
-                                                                           ephemeris_time,
-                                                                           "IMAP_RTN",
-                                                                           "HCI")  # account for IMAP velocity?
+        epoch = datetime(2010, 1, 1)
 
-    response_lookup_table = response_lookup_table_collection.get_table_for_energy_bin(energy_bin_index)
-    forward_model = ForwardModel(fitting_params, epoch, solar_wind_vector_gse_frame,
-                                 solar_wind_vector_inertial_frame)
-    integral = model_count_rate_integral(response_lookup_table, forward_model)
+        ephemeris_time = spiceypy.datetime2et(epoch)
 
-    geometric_factor = geometric_table.lookup_geometric_factor(energy_bin_center)
-    denominator = _model_count_rate_denominator(response_lookup_table)
-    return (geometric_factor / 2) * integral / denominator
+        # proton l3a calculation - should l3a be an input for l3b? or redo the part of the calculation we need?
+        # solar wind speed, flow deflection angle, clock angle
+        # at 1-minute intervals - need to average 10 minutes in some way
+        # convert each minute into xyz vector?
+        v, deflection, clock = l3a_calculation()
+        solar_wind_vector_instrument_frame = calculate_velocity_vector(v, deflection, clock)
+        solar_wind_vector_gse_frame = convert_velocity_to_reference_frame(solar_wind_vector_instrument_frame,
+                                                                          ephemeris_time,
+                                                                          "IMAP_RTN",
+                                                                          "GSE")  # account for IMAP velocity?
+        solar_wind_vector_inertial_frame = convert_velocity_to_reference_frame(solar_wind_vector_instrument_frame,
+                                                                               ephemeris_time,
+                                                                               "IMAP_RTN",
+                                                                               "HCI")  # account for IMAP velocity?
+
+        response_lookup_table = self.response_lookup_table_collection.get_table_for_energy_bin(energy_bin_index)
+        forward_model = ForwardModel(fitting_params, epoch, solar_wind_vector_gse_frame,
+                                     solar_wind_vector_inertial_frame)
+        integral = model_count_rate_integral(response_lookup_table, forward_model)
+
+        geometric_factor = self.geometric_table.lookup_geometric_factor(energy_bin_center)
+        denominator = _model_count_rate_denominator(response_lookup_table)
+        return (geometric_factor / 2) * integral / denominator
 
 
 def model_count_rate_integral(response_lookup_table: InstrumentResponseLookupTable, forward_model: ForwardModel):

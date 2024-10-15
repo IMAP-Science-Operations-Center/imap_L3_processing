@@ -1,17 +1,25 @@
 import unittest
 from datetime import datetime
+from pathlib import Path
 from unittest.mock import patch, Mock, call
 
 import numpy as np
+from spacepy.pycdf import CDF
+from uncertainties.unumpy import uarray
 
+import imap_processing
 from imap_processing.constants import HYDROGEN_INFLOW_SPEED_IN_KM_PER_SECOND, \
     HYDROGEN_INFLOW_LONGITUDE_DEGREES_IN_ECLIPJ2000, HYDROGEN_INFLOW_LATITUDE_DEGREES_IN_ECLIPJ2000, PROTON_MASS_KG, \
-    PROTON_CHARGE_COULOMBS, ONE_AU_IN_KM
+    PROTON_CHARGE_COULOMBS, ONE_AU_IN_KM, HELIUM_INFLOW_LONGITUDE_DEGREES_IN_ECLIPJ2000
 from imap_processing.spice_wrapper import FAKE_ROTATION_MATRIX_FROM_PSP
+from imap_processing.swapi.l3a.science.calculate_alpha_solar_wind_speed import calculate_combined_sweeps
 from imap_processing.swapi.l3a.science.calculate_pickup_ion import calculate_pui_energy_cutoff, extract_pui_energy_bins, \
     _model_count_rate_denominator, convert_velocity_relative_to_imap, calculate_velocity_vector, FittingParameters, \
-    ForwardModel, convert_velocity_to_reference_frame, model_count_rate, model_count_rate_integral
-from imap_processing.swapi.l3b.science.instrument_response_lookup_table import InstrumentResponseLookupTable
+    ForwardModel, convert_velocity_to_reference_frame, model_count_rate_integral, \
+    calculate_pickup_ion_values, ModelCountRateCalculator
+from imap_processing.swapi.l3b.science.geometric_factor_calibration_table import GeometricFactorCalibrationTable
+from imap_processing.swapi.l3b.science.instrument_response_lookup_table import InstrumentResponseLookupTable, \
+    InstrumentResponseLookupTableCollection
 
 
 class TestCalculatePickupIon(unittest.TestCase):
@@ -116,9 +124,12 @@ class TestCalculatePickupIon(unittest.TestCase):
         np.testing.assert_array_almost_equal(expected_result, result)
         mock_spice.sxform.assert_called_with("FROM", "TO", ephemeris_time)
 
+    @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.DensityOfNeutralHeliumLookupTable.density")
     @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.convert_velocity_relative_to_imap")
     @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.spiceypy")
-    def test_forward_model(self, mock_spice, mock_convert_velocity):
+    def test_forward_model(self, mock_spice, mock_convert_velocity, mock_helium_density):
+        mock_helium_density.return_value = 1
+
         ephemeris_time_for_epoch = 100000
         mock_spice.datetime2et.return_value = ephemeris_time_for_epoch
 
@@ -164,6 +175,8 @@ class TestCalculatePickupIon(unittest.TestCase):
         self.assertAlmostEqual(phi, mock_spice.sphrec.call_args.args[2])
         mock_convert_velocity.assert_called_with(pui_velocity_instrument_frame, ephemeris_time_for_epoch, "IMAP_SWAPI",
                                                  "GSE")
+        mock_helium_density.assert_called_with(10 * (magnitude / 42) ** 0.1,
+                                               11 - HELIUM_INFLOW_LONGITUDE_DEGREES_IN_ECLIPJ2000)
 
     @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.convert_velocity_to_reference_frame")
     @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.model_count_rate_integral")
@@ -196,16 +209,16 @@ class TestCalculatePickupIon(unittest.TestCase):
                                                      )
         mock_instrument_response_lut_collection.get_table_for_energy_bin.return_value = lookup_table
 
-        fitting_params = FittingParameters(0.23, 0.57, 0.91, 1.23)
         energy_bin_index = 1
         energy_bin_center = 10000
 
         geometric_table = Mock()
         geometric_table.lookup_geometric_factor.return_value = 6.4e-13
 
-        result = model_count_rate(fitting_params, energy_bin_index, energy_bin_center,
-                                  mock_instrument_response_lut_collection,
-                                  geometric_table)
+        model_count_rate_calculator = ModelCountRateCalculator(mock_instrument_response_lut_collection, geometric_table)
+
+        result = model_count_rate_calculator.model_count_rate([(energy_bin_index, energy_bin_center)], 0.23, 0.57, 0.91,
+                                                              1.23)
 
         expected_geo_factor = 6.4e-13 / 2
         expected_denominator = (0.97411 * np.cos(np.deg2rad(90 - 2.0)) * 1.0 * 1.0) + \
@@ -257,3 +270,39 @@ class TestCalculatePickupIon(unittest.TestCase):
             np.deg2rad(expected_row_2_colatitude)) * 1.5 * 2.0
 
         np.testing.assert_array_equal(result, expected_row_1 + expected_row_2)
+
+    @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.spiceypy")
+    def test_calculate_pickup_ions(self, mock_spice):
+        ephemeris_time_for_epoch = 100000
+        mock_spice.datetime2et.return_value = ephemeris_time_for_epoch
+        mock_spice.spkezr.return_value = np.array([0, 0, 0, 4, 0, 0])
+        mock_spice.latrec.return_value = np.array([0, 2, 0])
+        mock_spice.sxform.return_value = FAKE_ROTATION_MATRIX_FROM_PSP
+        mock_spice.sphrec.return_value = np.array([1, 2, 3])
+
+        data_file_path = Path(
+            imap_processing.__file__).parent.parent / "swapi" / "test_data" / "imap_swapi_l2_50-sweeps_20100101_v002.cdf"
+        with CDF(str(data_file_path)) as cdf:
+            energy = cdf["energy"][...]
+            count_rate = cdf["swp_coin_rate"][...]
+            count_rate_delta = cdf["swp_coin_unc"][...]
+
+            count_rates_with_uncertainty = uarray(count_rate, count_rate_delta)
+            average_count_rates, energies = calculate_combined_sweeps(count_rates_with_uncertainty, energy)
+            response_lut_path = Path(
+                imap_processing.__file__).parent.parent / "swapi" / "test_data" / "swapi_response_simion_v1"
+            instrument_response_collection = InstrumentResponseLookupTableCollection(response_lut_path)
+
+            geometric_factor_lut_path = Path(
+                imap_processing.__file__).parent.parent / "swapi" / "test_data" / "imap_swapi_l2_energy-gf-lut-not-cdf_20240923_v001.cdf"
+
+            geometric_factor_lut = GeometricFactorCalibrationTable.from_file(geometric_factor_lut_path)
+
+            cooling_index, ionization_rate, cutoff_speed, background_count_rate = calculate_pickup_ion_values(
+                instrument_response_collection, geometric_factor_lut, energies,
+                average_count_rates)
+
+            self.assertEqual(0.0, cooling_index)
+            self.assertEqual(0.0, ionization_rate)
+            self.assertEqual(0.0, cutoff_speed)
+            self.assertEqual(0.0, background_count_rate)

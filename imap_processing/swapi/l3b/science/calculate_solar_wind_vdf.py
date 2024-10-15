@@ -6,7 +6,8 @@ import numpy as np
 from numpy import ndarray
 
 from imap_processing.constants import PROTON_MASS_KG, PROTON_CHARGE_COULOMBS, ALPHA_PARTICLE_CHARGE_COULOMBS, \
-    ALPHA_PARTICLE_MASS_KG, PUI_PARTICLE_MASS_KG, PUI_PARTICLE_CHARGE_COULOMBS
+    ALPHA_PARTICLE_MASS_KG, PUI_PARTICLE_MASS_KG, PUI_PARTICLE_CHARGE_COULOMBS, METERS_PER_KILOMETER, \
+    CENTIMETERS_PER_METER
 from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_speed import calculate_sw_speed
 from imap_processing.swapi.l3b.science.geometric_factor_calibration_table import GeometricFactorCalibrationTable
 
@@ -15,10 +16,14 @@ def calculate_vdf(particle_mass, particle_charge, energies: ndarray, average_cou
                   efficiency: float, geometric_factor_table: GeometricFactorCalibrationTable):
     velocities = calculate_sw_speed(particle_mass, particle_charge, energies)
     geometric_factors = geometric_factor_table.lookup_geometric_factor(energies)
+    geometric_factors *= (METERS_PER_KILOMETER * CENTIMETERS_PER_METER) ** 2
 
-    proton_mass_per_charge = particle_mass / particle_charge
+    proton_mass_per_charge = particle_mass * 1000 / particle_charge
+
     numerator = 4 * np.pi * proton_mass_per_charge * average_count_rates
+
     denominator = (energies * geometric_factors * efficiency)
+
     probabilities = numerator / denominator
 
     return velocities, probabilities
