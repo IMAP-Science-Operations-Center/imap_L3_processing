@@ -196,8 +196,8 @@ class TestCalculatePickupIon(unittest.TestCase):
         expected_sw_hci_vector = np.array([150, 250, 350])
         mock_convert_velocity_to_reference_frame.side_effect = [expected_sw_gse_vector, expected_sw_hci_vector]
 
-        expected_integral_result = np.array([500, 600, 700])
-        mock_model_count_rate_integral.return_value = expected_integral_result
+        expected_integral_results = np.array([500, 600, 700])
+        mock_model_count_rate_integral.side_effect = expected_integral_results
 
         lookup_table = InstrumentResponseLookupTable(np.array([103.07800, 105.04500]),
                                                      np.array([2.0, 1.0]),
@@ -217,13 +217,17 @@ class TestCalculatePickupIon(unittest.TestCase):
 
         model_count_rate_calculator = ModelCountRateCalculator(mock_instrument_response_lut_collection, geometric_table)
 
-        result = model_count_rate_calculator.model_count_rate([(energy_bin_index, energy_bin_center)], 0.23, 0.57, 0.91,
-                                                              1.23)
+        fitting_params = FittingParameters(0.23, 0.57, 0.91, 1.23)
+        result = model_count_rate_calculator.model_count_rate([
+            (energy_bin_index, energy_bin_center),
+            (2, 8000),
+            (3, 6000),
+        ], fitting_params)
 
         expected_geo_factor = 6.4e-13 / 2
         expected_denominator = (0.97411 * np.cos(np.deg2rad(90 - 2.0)) * 1.0 * 1.0) + \
                                (0.99269 * np.cos(np.deg2rad(90 - 1.0)) * 1.0 * 1.0)
-        expected_result = expected_geo_factor * expected_integral_result / expected_denominator
+        expected_result = expected_geo_factor * expected_integral_results / expected_denominator
         np.testing.assert_array_equal(expected_result, result)
 
         actual_fitting_params, actual_epoch, actual_sw_gse_vector, actual_sw_hci_vector = mock_forward_model.call_args.args
@@ -277,6 +281,7 @@ class TestCalculatePickupIon(unittest.TestCase):
         mock_spice.datetime2et.return_value = ephemeris_time_for_epoch
         mock_spice.spkezr.return_value = np.array([0, 0, 0, 4, 0, 0])
         mock_spice.latrec.return_value = np.array([0, 2, 0])
+        mock_spice.reclat.return_value = np.array([1, 0.2, 0.6])
         mock_spice.sxform.return_value = FAKE_ROTATION_MATRIX_FROM_PSP
         mock_spice.sphrec.return_value = np.array([1, 2, 3])
 
@@ -297,10 +302,13 @@ class TestCalculatePickupIon(unittest.TestCase):
                 imap_processing.__file__).parent.parent / "swapi" / "test_data" / "imap_swapi_l2_energy-gf-lut-not-cdf_20240923_v001.cdf"
 
             geometric_factor_lut = GeometricFactorCalibrationTable.from_file(geometric_factor_lut_path)
-
+            background_count_rate_cutoff = 0.1
+            epoch = datetime(2024, 10, 17)
             cooling_index, ionization_rate, cutoff_speed, background_count_rate = calculate_pickup_ion_values(
                 instrument_response_collection, geometric_factor_lut, energies,
-                average_count_rates)
+                average_count_rates, epoch, background_count_rate_cutoff)
+
+            mock_spice.datetime2et.assert_called_with(epoch)
 
             self.assertEqual(0.0, cooling_index)
             self.assertEqual(0.0, ionization_rate)

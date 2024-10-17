@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
 from datetime import datetime
 
@@ -5,7 +7,7 @@ import numpy as np
 import scipy.optimize
 from numpy import ndarray
 from spiceypy import spiceypy
-from uncertainties.unumpy import nominal_values, std_devs, uarray
+from uncertainties.unumpy import uarray
 
 from imap_processing.constants import HYDROGEN_INFLOW_SPEED_IN_KM_PER_SECOND, PROTON_MASS_KG, PROTON_CHARGE_COULOMBS, \
     PUI_PARTICLE_MASS_KG, PUI_PARTICLE_CHARGE_COULOMBS, HYDROGEN_INFLOW_LATITUDE_DEGREES_IN_ECLIPJ2000, \
@@ -18,16 +20,28 @@ from imap_processing.swapi.l3b.science.instrument_response_lookup_table import I
 
 def calculate_pickup_ion_values(instrument_response_lookup_table, geometric_factor_calibration_table,
                                 energy: list[float],
-                                count_rates: uarray):
+                                count_rates: uarray, epoch: datetime,
+                                background_count_rate_cutoff: float) -> FittingParameters:
+    initial_guess = np.array([2.0, 1e-5, 400.0, 0.1])
+    energy_labels = range(62, 0, -1)
+    # calculate sw_velocity_in_imap_frame
+    sw_velocity_in_imap_frame = np.array([0, 0, 0])
+    energy_cutoff = calculate_pui_energy_cutoff(epoch, sw_velocity_in_imap_frame)
+    extracted_energy_labels, extracted_energies, extracted_count_rates = extract_pui_energy_bins(energy_labels, energy,
+                                                                                                 count_rates,
+                                                                                                 energy_cutoff,
+                                                                                                 background_count_rate_cutoff)
+
+    # observed_count_rates: np.ndarray,
+    # indices_and_energy_centers: list[tuple[int, float]], calculator: ModelCountRateCalculator
     model_count_rate_calculator = ModelCountRateCalculator(instrument_response_lookup_table,
                                                            geometric_factor_calibration_table)
+    indices = list(zip(extracted_energy_labels, extracted_energies))
+    result = scipy.optimize.minimize(calc_chi_squared, initial_guess,
+                                     args=(extracted_count_rates, indices, model_count_rate_calculator))
+    # uncertainty inputs and/or outputs?
 
-    values, covariance = scipy.optimize.curve_fit(model_count_rate_calculator.model_count_rate, list(enumerate(energy)),
-                                                  nominal_values(count_rates),
-                                                  sigma=std_devs(count_rates),
-                                                  absolute_sigma=True)
-
-    print(values)
+    return result
 
 
 class DensityOfNeutralHeliumLookupTable:
@@ -88,11 +102,8 @@ class ModelCountRateCalculator:
     response_lookup_table_collection: InstrumentResponseLookupTableCollection
     geometric_table: GeometricFactorCalibrationTable
 
-    def model_count_rate(self, indices_and_energy_centers: list[tuple[int, float]], cooling_index: float,
-                         ionization_rate: float, cutoff_speed: float, background_count_rate: float) -> float:
-        energy_bin_index = indices_and_energy_centers[:, 0]
-        energy_bin_center = indices_and_energy_centers[:, 1]
-
+    def model_count_rate(self, indices_and_energy_centers: list[tuple[int, float]],
+                         fitting_params: FittingParameters) -> np.ndarray:
         epoch = datetime(2010, 1, 1)
 
         ephemeris_time = spiceypy.datetime2et(epoch)
@@ -112,14 +123,31 @@ class ModelCountRateCalculator:
                                                                                "IMAP_RTN",
                                                                                "HCI")  # account for IMAP velocity?
 
-        response_lookup_table = self.response_lookup_table_collection.get_table_for_energy_bin(energy_bin_index)
         forward_model = ForwardModel(fitting_params, epoch, solar_wind_vector_gse_frame,
                                      solar_wind_vector_inertial_frame)
+        model_count_rates = []
+        for energy_bin_index, energy_bin_center in indices_and_energy_centers:
+            model_count_rates.append(
+                self.model_one_count_rate(energy_bin_index, energy_bin_center, forward_model)
+            )
+        return np.array(model_count_rates)
+
+    def model_one_count_rate(self, energy_bin_index, energy_bin_center, forward_model) -> float:
+        response_lookup_table = self.response_lookup_table_collection.get_table_for_energy_bin(energy_bin_index)
         integral = model_count_rate_integral(response_lookup_table, forward_model)
 
         geometric_factor = self.geometric_table.lookup_geometric_factor(energy_bin_center)
         denominator = _model_count_rate_denominator(response_lookup_table)
         return (geometric_factor / 2) * integral / denominator
+
+
+def calc_chi_squared(fit_params_array: np.ndarray, observed_count_rates: np.ndarray,
+                     indices_and_energy_centers: list[tuple[int, float]], calculator: ModelCountRateCalculator):
+    cooling_index, ionization_rate, cutoff_speed, background_count_rate = fit_params_array
+    fit_params = FittingParameters(cooling_index, ionization_rate, cutoff_speed, background_count_rate)
+    modeled_rates = calculator.model_count_rate(indices_and_energy_centers, fit_params)
+    return 2 * sum(
+        modeled_rates - observed_count_rates + observed_count_rates * np.log(observed_count_rates / modeled_rates))
 
 
 def model_count_rate_integral(response_lookup_table: InstrumentResponseLookupTable, forward_model: ForwardModel):
@@ -164,7 +192,7 @@ def calculate_velocity_vector(sw_speed: float, colatitude: float, azimuth: float
     return spiceypy.sphrec(sw_speed, colatitude, azimuth)
 
 
-def calculate_pui_energy_cutoff(epoch, sw_velocity_in_imap_frame):
+def calculate_pui_energy_cutoff(epoch: datetime, sw_velocity_in_imap_frame):
     ephemeris_time = spiceypy.datetime2et(epoch)
     imap_velocity = spiceypy.spkezr("IMAP", ephemeris_time, "ECLIPJ2000", "NONE", "SUN")[
                     3:6]
