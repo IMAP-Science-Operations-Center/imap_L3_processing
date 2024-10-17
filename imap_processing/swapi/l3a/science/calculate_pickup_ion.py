@@ -5,13 +5,15 @@ from datetime import datetime
 
 import numpy as np
 import scipy.optimize
+from matplotlib import pyplot as plt
 from numpy import ndarray
 from spiceypy import spiceypy
 from uncertainties.unumpy import uarray
 
 from imap_processing.constants import HYDROGEN_INFLOW_SPEED_IN_KM_PER_SECOND, PROTON_MASS_KG, PROTON_CHARGE_COULOMBS, \
     PUI_PARTICLE_MASS_KG, PUI_PARTICLE_CHARGE_COULOMBS, HYDROGEN_INFLOW_LATITUDE_DEGREES_IN_ECLIPJ2000, \
-    HYDROGEN_INFLOW_LONGITUDE_DEGREES_IN_ECLIPJ2000, ONE_AU_IN_KM, HELIUM_INFLOW_LONGITUDE_DEGREES_IN_ECLIPJ2000
+    HYDROGEN_INFLOW_LONGITUDE_DEGREES_IN_ECLIPJ2000, ONE_AU_IN_KM, HELIUM_INFLOW_LONGITUDE_DEGREES_IN_ECLIPJ2000, \
+    METERS_PER_KILOMETER
 from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_speed import calculate_sw_speed
 from imap_processing.swapi.l3b.science.geometric_factor_calibration_table import GeometricFactorCalibrationTable
 from imap_processing.swapi.l3b.science.instrument_response_lookup_table import InstrumentResponseLookupTable, \
@@ -22,10 +24,10 @@ def calculate_pickup_ion_values(instrument_response_lookup_table, geometric_fact
                                 energy: list[float],
                                 count_rates: uarray, epoch: datetime,
                                 background_count_rate_cutoff: float) -> FittingParameters:
-    initial_guess = np.array([2.0, 1e-5, 400.0, 0.1])
+    initial_guess = np.array([2.0, 1e-5, 500.0, 0.1])
     energy_labels = range(62, 0, -1)
     # calculate sw_velocity_in_imap_frame
-    sw_velocity_in_imap_frame = np.array([0, 0, 0])
+    sw_velocity_in_imap_frame = np.array([0, 0, -500])
     energy_cutoff = calculate_pui_energy_cutoff(epoch, sw_velocity_in_imap_frame)
     extracted_energy_labels, extracted_energies, extracted_count_rates = extract_pui_energy_bins(energy_labels, energy,
                                                                                                  count_rates,
@@ -37,7 +39,9 @@ def calculate_pickup_ion_values(instrument_response_lookup_table, geometric_fact
     model_count_rate_calculator = ModelCountRateCalculator(instrument_response_lookup_table,
                                                            geometric_factor_calibration_table)
     indices = list(zip(extracted_energy_labels, extracted_energies))
+
     result = scipy.optimize.minimize(calc_chi_squared, initial_guess,
+                                     bounds=((0, None), (0, None), (0, None), (0, None)),
                                      args=(extracted_count_rates, indices, model_count_rate_calculator))
     # uncertainty inputs and/or outputs?
 
@@ -69,9 +73,8 @@ class ForwardModel:
     fitting_params: FittingParameters
     epoch: datetime
     solar_wind_vector_gse_frame: ndarray
-    solar_wind_vector_inertial_frame: ndarray
+    solar_wind_vector_inertial_frame: float
 
-    # at some point we might want to pass in vectors for energy, theta, phi
     def f(self, energy, theta, phi):
         ephemeris_time = spiceypy.datetime2et(self.epoch)
         speed = calculate_sw_speed(PUI_PARTICLE_MASS_KG, PUI_PARTICLE_CHARGE_COULOMBS, energy)  # energy vs E/q?
@@ -79,7 +82,7 @@ class ForwardModel:
         pui_vector_gse_frame = convert_velocity_relative_to_imap(pui_vector_instrument_frame, ephemeris_time,
                                                                  "IMAP_SWAPI", "GSE")
         pui_vector_solar_wind_frame = pui_vector_gse_frame - self.solar_wind_vector_gse_frame
-        magnitude = np.linalg.norm(pui_vector_solar_wind_frame)
+        magnitude = np.linalg.norm(pui_vector_solar_wind_frame, axis=1)
         w = magnitude / self.fitting_params.cutoff_speed
         imap_position_eclip2000_frame_state = spiceypy.spkezr("IMAP", ephemeris_time, "ECLIPJ2000", "NONE", "SUN")[0:3]
         distance, longitude, latitude = spiceypy.reclat(imap_position_eclip2000_frame_state)
@@ -124,7 +127,7 @@ class ModelCountRateCalculator:
                                                                                "HCI")  # account for IMAP velocity?
 
         forward_model = ForwardModel(fitting_params, epoch, solar_wind_vector_gse_frame,
-                                     solar_wind_vector_inertial_frame)
+                                     np.linalg.norm(solar_wind_vector_inertial_frame))
         model_count_rates = []
         for energy_bin_index, energy_bin_center in indices_and_energy_centers:
             model_count_rates.append(
@@ -138,7 +141,7 @@ class ModelCountRateCalculator:
 
         geometric_factor = self.geometric_table.lookup_geometric_factor(energy_bin_center)
         denominator = _model_count_rate_denominator(response_lookup_table)
-        return (geometric_factor / 2) * integral / denominator
+        return (geometric_factor / 2) * integral / denominator + forward_model.fitting_params.background_count_rate
 
 
 def calc_chi_squared(fit_params_array: np.ndarray, observed_count_rates: np.ndarray,
@@ -146,27 +149,36 @@ def calc_chi_squared(fit_params_array: np.ndarray, observed_count_rates: np.ndar
     cooling_index, ionization_rate, cutoff_speed, background_count_rate = fit_params_array
     fit_params = FittingParameters(cooling_index, ionization_rate, cutoff_speed, background_count_rate)
     modeled_rates = calculator.model_count_rate(indices_and_energy_centers, fit_params)
-    return 2 * sum(
+
+    energies = [energy for index, energy in indices_and_energy_centers]
+    plt.loglog(energies, observed_count_rates)
+    plt.loglog(energies, modeled_rates)
+    plt.show()
+    result = 2 * sum(
         modeled_rates - observed_count_rates + observed_count_rates * np.log(observed_count_rates / modeled_rates))
+    print("chisquared", result)
+    print(fit_params)
+    return result
 
 
 def model_count_rate_integral(response_lookup_table: InstrumentResponseLookupTable, forward_model: ForwardModel):
-    integral = 0
-    for i in range(len(response_lookup_table.response)):
-        speed = calculate_sw_speed(PUI_PARTICLE_MASS_KG, PUI_PARTICLE_CHARGE_COULOMBS,
-                                   response_lookup_table.energy[i])
-        colatitude = 90 - response_lookup_table.elevation[i]
-        integral += response_lookup_table.response[i] * forward_model.f(response_lookup_table.energy[i], colatitude,
-                                                                        response_lookup_table.azimuth[i]) \
-                    * speed ** 4 * response_lookup_table.d_energy[i] * np.cos(np.deg2rad(colatitude)) \
-                    * response_lookup_table.d_azimuth[i] * response_lookup_table.d_elevation[i]
-    return integral
+    speed = calculate_sw_speed(PUI_PARTICLE_MASS_KG, PUI_PARTICLE_CHARGE_COULOMBS,
+                               response_lookup_table.energy)
+    colatitude = 90 - response_lookup_table.elevation
+    count_rates = forward_model.f(response_lookup_table.energy, colatitude, response_lookup_table.azimuth)
+
+    integrals = response_lookup_table.response * count_rates \
+                * speed ** 4 * \
+                response_lookup_table.d_energy * np.sin(np.deg2rad(colatitude)) * \
+                response_lookup_table.d_azimuth * response_lookup_table.d_elevation
+
+    return np.sum(integrals)
 
 
 def _model_count_rate_denominator(response_lookup_table: InstrumentResponseLookupTable) -> float:
     colatitude_radians = np.deg2rad(90 - response_lookup_table.elevation)
 
-    rows = response_lookup_table.d_energy * np.cos(
+    rows = response_lookup_table.d_energy * np.sin(
         colatitude_radians) * response_lookup_table.d_elevation * response_lookup_table.d_azimuth
 
     return rows.sum()
@@ -175,9 +187,11 @@ def _model_count_rate_denominator(response_lookup_table: InstrumentResponseLooku
 def convert_velocity_to_reference_frame(velocity: ndarray, ephemeris_time: float, from_frame: str,
                                         to_frame: str) -> ndarray:
     rotation_matrix = spiceypy.sxform(from_frame, to_frame, ephemeris_time)
-    state = [0, 0, 0, *velocity]
-    state_in_target_frame = np.matmul(rotation_matrix, state)
-    return state_in_target_frame[3:6]
+
+    state = velocity[..., np.newaxis]
+
+    state_in_target_frame = np.matmul(rotation_matrix[3:6, 3:6], state)
+    return state_in_target_frame[..., 0]
 
 
 def convert_velocity_relative_to_imap(velocity, ephemeris_time, from_frame, to_frame):
@@ -189,7 +203,13 @@ def convert_velocity_relative_to_imap(velocity, ephemeris_time, from_frame, to_f
 
 
 def calculate_velocity_vector(sw_speed: float, colatitude: float, azimuth: float) -> np.ndarray:
-    return spiceypy.sphrec(sw_speed, colatitude, azimuth)
+    colat_radians = np.deg2rad(colatitude)
+    azimuth_radians = np.deg2rad(azimuth)
+    z = sw_speed * np.cos(colat_radians)
+    xy_radius = sw_speed * np.sin(colat_radians)
+    x = xy_radius * np.cos(azimuth_radians)
+    y = xy_radius * np.sin(azimuth_radians)
+    return np.transpose([x, y, z])
 
 
 def calculate_pui_energy_cutoff(epoch: datetime, sw_velocity_in_imap_frame):
@@ -204,7 +224,7 @@ def calculate_pui_energy_cutoff(epoch: datetime, sw_velocity_in_imap_frame):
 
     proton_velocity_cutoff_vector = solar_wind_velocity - hydrogen_velocity - imap_velocity
     proton_speed_cutoff = np.linalg.norm(proton_velocity_cutoff_vector)
-    return 0.5 * (PROTON_MASS_KG / PROTON_CHARGE_COULOMBS) * (2 * proton_speed_cutoff) ** 2
+    return 0.5 * (PROTON_MASS_KG / PROTON_CHARGE_COULOMBS) * (2 * proton_speed_cutoff * METERS_PER_KILOMETER) ** 2
 
 
 def extract_pui_energy_bins(energy_bin_labels, energies, observed_count_rates, energy_cutoff, background_count_rate):
