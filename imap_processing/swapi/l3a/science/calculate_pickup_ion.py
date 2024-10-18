@@ -7,6 +7,7 @@ import numpy as np
 import scipy.optimize
 from matplotlib import pyplot as plt
 from numpy import ndarray
+from scipy.optimize import OptimizeResult
 from spiceypy import spiceypy
 from uncertainties.unumpy import uarray
 
@@ -38,12 +39,12 @@ def calculate_pickup_ion_values(instrument_response_lookup_table, geometric_fact
                                                            geometric_factor_calibration_table)
     indices = list(zip(extracted_energy_labels, extracted_energies))
 
-    result = scipy.optimize.minimize(calc_chi_squared, initial_guess,
-                                     bounds=((0, None), (0, None), (0, None), (0, None)),
-                                     args=(extracted_count_rates, indices, model_count_rate_calculator))
+    result: OptimizeResult = scipy.optimize.minimize(calc_chi_squared, initial_guess,
+                                                     bounds=((0, None), (0, None), (0, None), (0, None)),
+                                                     args=(extracted_count_rates, indices, model_count_rate_calculator,
+                                                           epoch))
     # uncertainty inputs and/or outputs?
-
-    return result
+    return FittingParameters(*result.x)
 
 
 class DensityOfNeutralHeliumLookupTable:
@@ -82,7 +83,8 @@ class ForwardModel:
         pui_vector_solar_wind_frame = pui_vector_gse_frame - self.solar_wind_vector_gse_frame
         magnitude = np.linalg.norm(pui_vector_solar_wind_frame, axis=-1)
         w = magnitude / self.fitting_params.cutoff_speed
-        imap_position_eclip2000_frame_state = spiceypy.spkezr("IMAP", ephemeris_time, "ECLIPJ2000", "NONE", "SUN")[0:3]
+        imap_position_eclip2000_frame_state = spiceypy.spkezr("IMAP", ephemeris_time, "ECLIPJ2000", "NONE", "SUN")[0][
+                                              0:3]
         distance, longitude, latitude = spiceypy.reclat(imap_position_eclip2000_frame_state)
         psi = longitude - HELIUM_INFLOW_LONGITUDE_DEGREES_IN_ECLIPJ2000
 
@@ -104,9 +106,7 @@ class ModelCountRateCalculator:
     geometric_table: GeometricFactorCalibrationTable
 
     def model_count_rate(self, indices_and_energy_centers: list[tuple[int, float]],
-                         fitting_params: FittingParameters) -> np.ndarray:
-        epoch = datetime(2010, 1, 1)
-
+                         fitting_params: FittingParameters, epoch: datetime) -> np.ndarray:
         ephemeris_time = spiceypy.datetime2et(epoch)
 
         # proton l3a calculation - should l3a be an input for l3b? or redo the part of the calculation we need?
@@ -143,10 +143,11 @@ class ModelCountRateCalculator:
 
 
 def calc_chi_squared(fit_params_array: np.ndarray, observed_count_rates: np.ndarray,
-                     indices_and_energy_centers: list[tuple[int, float]], calculator: ModelCountRateCalculator):
+                     indices_and_energy_centers: list[tuple[int, float]], calculator: ModelCountRateCalculator,
+                     epoch: datetime):
     cooling_index, ionization_rate, cutoff_speed, background_count_rate = fit_params_array
     fit_params = FittingParameters(cooling_index, 1e-10 * ionization_rate, 900 * cutoff_speed, background_count_rate)
-    modeled_rates = calculator.model_count_rate(indices_and_energy_centers, fit_params)
+    modeled_rates = calculator.model_count_rate(indices_and_energy_centers, fit_params, epoch)
 
     energies = [energy for index, energy in indices_and_energy_centers]
     plt.loglog(energies, observed_count_rates)
@@ -154,8 +155,8 @@ def calc_chi_squared(fit_params_array: np.ndarray, observed_count_rates: np.ndar
     plt.show()
     result = 2 * sum(
         modeled_rates - observed_count_rates + observed_count_rates * np.log(observed_count_rates / modeled_rates))
-    print("chisquared", result)
-    print(fit_params)
+    # print("chisquared", result)
+    # print(fit_params)
     return result
 
 
@@ -195,7 +196,7 @@ def convert_velocity_to_reference_frame(velocity: ndarray, ephemeris_time: float
 def convert_velocity_relative_to_imap(velocity, ephemeris_time, from_frame, to_frame):
     velocity_in_target_frame_relative_to_imap = convert_velocity_to_reference_frame(velocity, ephemeris_time,
                                                                                     from_frame, to_frame)
-    imap_velocity = spiceypy.spkezr("IMAP", ephemeris_time, to_frame, "NONE", "SUN")[3:6]
+    imap_velocity = spiceypy.spkezr("IMAP", ephemeris_time, to_frame, "NONE", "SUN")[0][3:6]
 
     return velocity_in_target_frame_relative_to_imap + imap_velocity
 
@@ -212,7 +213,7 @@ def calculate_velocity_vector(sw_speed: float, colatitude: float, azimuth: float
 
 def calculate_pui_energy_cutoff(epoch: datetime, sw_velocity_in_imap_frame):
     ephemeris_time = spiceypy.datetime2et(epoch)
-    imap_velocity = spiceypy.spkezr("IMAP", ephemeris_time, "ECLIPJ2000", "NONE", "SUN")[
+    imap_velocity = spiceypy.spkezr("IMAP", ephemeris_time, "ECLIPJ2000", "NONE", "SUN")[0][
                     3:6]
     solar_wind_velocity = convert_velocity_relative_to_imap(
         sw_velocity_in_imap_frame, ephemeris_time, "IMAP", "ECLIPJ2000")
