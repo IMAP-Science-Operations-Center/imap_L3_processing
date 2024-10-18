@@ -50,7 +50,7 @@ class TestCalculatePickupIon(unittest.TestCase):
 
         velocity_cutoff_vector = np.array([-3, 0, 4])
         velocity_cutoff_norm = 5
-        self.assertAlmostEqual(0.5 * (PROTON_MASS_KG / PROTON_CHARGE_COULOMBS) * (2 * velocity_cutoff_norm) ** 2,
+        self.assertAlmostEqual(0.5 * (PROTON_MASS_KG / PROTON_CHARGE_COULOMBS) * (2 * velocity_cutoff_norm * 1000) ** 2,
                                energy_cutoff)
 
     def test_extract_pui_energy_bins(self):
@@ -78,8 +78,8 @@ class TestCalculatePickupIon(unittest.TestCase):
                                                      )
         result = _model_count_rate_denominator(lookup_table)
 
-        expected = 0.97411 * np.cos(np.deg2rad(90 - 2)) * 1.0 * 1.0 + \
-                   0.99269 * np.cos(np.deg2rad(90 - 1.0)) * 1.0 * 1.0
+        expected = 0.97411 * np.sin(np.deg2rad(90 - 2)) * 1.0 * 1.0 + \
+                   0.99269 * np.sin(np.deg2rad(90 - 1.0)) * 1.0 * 1.0
         self.assertEqual(expected, result)
 
     @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.spiceypy")
@@ -227,6 +227,8 @@ class TestCalculatePickupIon(unittest.TestCase):
         model_count_rate_calculator = ModelCountRateCalculator(mock_instrument_response_lut_collection, geometric_table)
 
         fitting_params = FittingParameters(0.23, 0.57, 0.91, 1.23)
+        mock_forward_model.return_value.fitting_params = fitting_params
+
         result = model_count_rate_calculator.model_count_rate([
             (energy_bin_index, energy_bin_center),
             (2, 8000),
@@ -234,19 +236,17 @@ class TestCalculatePickupIon(unittest.TestCase):
         ], fitting_params)
 
         expected_geo_factor = 6.4e-13 / 2
-        expected_denominator = (0.97411 * np.cos(np.deg2rad(90 - 2.0)) * 1.0 * 1.0) + \
-                               (0.99269 * np.cos(np.deg2rad(90 - 1.0)) * 1.0 * 1.0)
-        expected_result = expected_geo_factor * expected_integral_results / expected_denominator
+        expected_denominator = (0.97411 * np.sin(np.deg2rad(90 - 2.0)) * 1.0 * 1.0) + \
+                               (0.99269 * np.sin(np.deg2rad(90 - 1.0)) * 1.0 * 1.0)
+        expected_result = expected_geo_factor * expected_integral_results / expected_denominator + fitting_params.background_count_rate
         np.testing.assert_array_equal(expected_result, result)
 
-        actual_fitting_params, actual_epoch, actual_sw_gse_vector, actual_sw_hci_vector = mock_forward_model.call_args.args
+        actual_fitting_params, actual_epoch, actual_sw_gse_vector, actual_sw_hci_vector_norm = mock_forward_model.call_args.args
         self.assertIs(fitting_params, actual_fitting_params)
         self.assertEqual(datetime(2010, 1, 1), actual_epoch)
-
+        expected_sw_hci_vector_norm = 455.521679
         np.testing.assert_array_equal(expected_sw_gse_vector, actual_sw_gse_vector)
-        np.testing.assert_array_equal(expected_sw_hci_vector, actual_sw_hci_vector)
-        print(mock_convert_velocity_to_reference_frame.call_args_list)
-        print(sw_instrument_frame_vector)
+        self.assertAlmostEqual(expected_sw_hci_vector_norm, actual_sw_hci_vector_norm)
         mock_calculate_velocity_vector.assert_called_with(*l3a_calculation())
         mock_convert_velocity_to_reference_frame.assert_has_calls([
             call(sw_instrument_frame_vector, ephemeris_time_for_epoch, "IMAP_RTN", "GSE"),
@@ -276,12 +276,12 @@ class TestCalculatePickupIon(unittest.TestCase):
 
         expected_row_1_colatitude = 90 - 2.0
         expected_row_1_forward_model_f = 33.33
-        expected_row_1 = 0.0160000000 * expected_row_1_forward_model_f * expected_speed_row_1 ** 4 * 0.97411 * np.cos(
+        expected_row_1 = 0.0160000000 * expected_row_1_forward_model_f * expected_speed_row_1 ** 4 * 0.97411 * np.sin(
             np.deg2rad(expected_row_1_colatitude)) * 1.0 * 3.0
 
         expected_row_2_colatitude = 90 - 1.1
         expected_row_2_forward_model_f = 35.55
-        expected_row_2 = 0.0230000000 * expected_row_2_forward_model_f * expected_speed_row_2 ** 4 * 0.99269 * np.cos(
+        expected_row_2 = 0.0230000000 * expected_row_2_forward_model_f * expected_speed_row_2 ** 4 * 0.99269 * np.sin(
             np.deg2rad(expected_row_2_colatitude)) * 1.5 * 2.0
 
         np.testing.assert_array_equal(result, expected_row_1 + expected_row_2)

@@ -24,7 +24,7 @@ def calculate_pickup_ion_values(instrument_response_lookup_table, geometric_fact
                                 energy: list[float],
                                 count_rates: uarray, epoch: datetime,
                                 background_count_rate_cutoff: float) -> FittingParameters:
-    initial_guess = np.array([2.0, 1e-5, 500.0, 0.1])
+    initial_guess = np.array([1.4, 1, 1, 0.1])
     energy_labels = range(62, 0, -1)
     # calculate sw_velocity_in_imap_frame
     sw_velocity_in_imap_frame = np.array([0, 0, -500])
@@ -34,8 +34,6 @@ def calculate_pickup_ion_values(instrument_response_lookup_table, geometric_fact
                                                                                                  energy_cutoff,
                                                                                                  background_count_rate_cutoff)
 
-    # observed_count_rates: np.ndarray,
-    # indices_and_energy_centers: list[tuple[int, float]], calculator: ModelCountRateCalculator
     model_count_rate_calculator = ModelCountRateCalculator(instrument_response_lookup_table,
                                                            geometric_factor_calibration_table)
     indices = list(zip(extracted_energy_labels, extracted_energies))
@@ -82,7 +80,7 @@ class ForwardModel:
         pui_vector_gse_frame = convert_velocity_relative_to_imap(pui_vector_instrument_frame, ephemeris_time,
                                                                  "IMAP_SWAPI", "GSE")
         pui_vector_solar_wind_frame = pui_vector_gse_frame - self.solar_wind_vector_gse_frame
-        magnitude = np.linalg.norm(pui_vector_solar_wind_frame, axis=1)
+        magnitude = np.linalg.norm(pui_vector_solar_wind_frame, axis=-1)
         w = magnitude / self.fitting_params.cutoff_speed
         imap_position_eclip2000_frame_state = spiceypy.spkezr("IMAP", ephemeris_time, "ECLIPJ2000", "NONE", "SUN")[0:3]
         distance, longitude, latitude = spiceypy.reclat(imap_position_eclip2000_frame_state)
@@ -147,7 +145,7 @@ class ModelCountRateCalculator:
 def calc_chi_squared(fit_params_array: np.ndarray, observed_count_rates: np.ndarray,
                      indices_and_energy_centers: list[tuple[int, float]], calculator: ModelCountRateCalculator):
     cooling_index, ionization_rate, cutoff_speed, background_count_rate = fit_params_array
-    fit_params = FittingParameters(cooling_index, ionization_rate, cutoff_speed, background_count_rate)
+    fit_params = FittingParameters(cooling_index, 1e-10 * ionization_rate, 900 * cutoff_speed, background_count_rate)
     modeled_rates = calculator.model_count_rate(indices_and_energy_centers, fit_params)
 
     energies = [energy for index, energy in indices_and_energy_centers]
