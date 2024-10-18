@@ -17,7 +17,7 @@ from imap_processing.swapi.l3a.science.calculate_alpha_solar_wind_speed import c
 from imap_processing.swapi.l3a.science.calculate_pickup_ion import calculate_pui_energy_cutoff, extract_pui_energy_bins, \
     _model_count_rate_denominator, convert_velocity_relative_to_imap, calculate_velocity_vector, FittingParameters, \
     ForwardModel, convert_velocity_to_reference_frame, model_count_rate_integral, \
-    calculate_pickup_ion_values, ModelCountRateCalculator, l3a_calculation
+    calculate_pickup_ion_values, ModelCountRateCalculator, calculate_ten_minute_velocities
 from imap_processing.swapi.l3b.science.geometric_factor_calibration_table import GeometricFactorCalibrationTable
 from imap_processing.swapi.l3b.science.instrument_response_lookup_table import InstrumentResponseLookupTable, \
     InstrumentResponseLookupTableCollection
@@ -194,15 +194,13 @@ class TestCalculatePickupIon(unittest.TestCase):
     @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.ForwardModel")
     @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.InstrumentResponseLookupTableCollection")
     @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.spiceypy")
-    @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.calculate_velocity_vector")
-    def test_model_count_rate(self, mock_calculate_velocity_vector, mock_spice, mock_instrument_response_lut_collection,
+    def test_model_count_rate(self, mock_spice, mock_instrument_response_lut_collection,
                               mock_forward_model,
                               mock_model_count_rate_integral, mock_convert_velocity_to_reference_frame):
         ephemeris_time_for_epoch = 100000
         mock_spice.datetime2et.return_value = ephemeris_time_for_epoch
 
         sw_instrument_frame_vector = np.array([55, 66, 77])
-        mock_calculate_velocity_vector.return_value = sw_instrument_frame_vector
         mock_light_time = 122.0
         mock_spice.spkezr.return_value = (np.array([99, 88, 77, 66, 55, 44]), mock_light_time)
 
@@ -229,7 +227,8 @@ class TestCalculatePickupIon(unittest.TestCase):
         geometric_table = Mock()
         geometric_table.lookup_geometric_factor.return_value = 6.4e-13
 
-        model_count_rate_calculator = ModelCountRateCalculator(mock_instrument_response_lut_collection, geometric_table)
+        model_count_rate_calculator = ModelCountRateCalculator(mock_instrument_response_lut_collection, geometric_table,
+                                                               sw_instrument_frame_vector)
 
         fitting_params = FittingParameters(0.23, 0.57, 0.91, 1.23)
         mock_forward_model.return_value.fitting_params = fitting_params
@@ -252,7 +251,6 @@ class TestCalculatePickupIon(unittest.TestCase):
         expected_sw_hci_vector_norm = 455.521679
         np.testing.assert_array_equal(expected_sw_gse_vector, actual_sw_gse_vector)
         self.assertAlmostEqual(expected_sw_hci_vector_norm, actual_sw_hci_vector_norm)
-        mock_calculate_velocity_vector.assert_called_with(*l3a_calculation())
         mock_convert_velocity_to_reference_frame.assert_has_calls([
             call(sw_instrument_frame_vector, ephemeris_time_for_epoch, "IMAP_RTN", "GSE"),
             call(sw_instrument_frame_vector, ephemeris_time_for_epoch, "IMAP_RTN", "HCI")
@@ -291,9 +289,55 @@ class TestCalculatePickupIon(unittest.TestCase):
 
         np.testing.assert_array_equal(result, expected_row_1 + expected_row_2)
 
+    @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.calculate_pui_energy_cutoff")
+    @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.scipy.optimize.minimize")
+    @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.spiceypy")
+    def test_calculate_pickup_ions_with_minimize_mocked(self, mock_spice, mock_minimize,
+                                                        mock_calculate_pui_energy_cutoff):
+        ephemeris_time_for_epoch = 100000
+        mock_spice.datetime2et.return_value = ephemeris_time_for_epoch
+        mock_light_time = 122.0
+        mock_spice.spkezr.return_value = (np.array([0, 0, 0, 4, 0, 0]), mock_light_time)
+        mock_spice.latrec.return_value = np.array([0, 2, 0])
+        mock_spice.reclat.return_value = np.array([1, 0.2, 0.6])
+        mock_spice.sxform.return_value = FAKE_ROTATION_MATRIX_FROM_PSP
+
+        data_file_path = Path(
+            imap_processing.__file__).parent.parent / "swapi" / "test_data" / "imap_swapi_l2_50-sweeps_20100101_v002.cdf"
+        with CDF(str(data_file_path)) as cdf:
+            energy = cdf["energy"][...]
+            count_rate = cdf["swp_coin_rate"][...]
+            count_rate_delta = cdf["swp_coin_unc"][...]
+
+            count_rates_with_uncertainty = uarray(count_rate, count_rate_delta)
+            average_count_rates, energies = calculate_combined_sweeps(count_rate, energy)
+            response_lut_path = Path(
+                imap_processing.__file__).parent.parent / "swapi" / "test_data" / "truncated_swapi_response_simion_v1"
+
+            instrument_response_collection = InstrumentResponseLookupTableCollection(response_lut_path)
+
+            geometric_factor_lut_path = Path(
+                imap_processing.__file__).parent.parent / "swapi" / "test_data" / "imap_swapi_l2_energy-gf-lut-not-cdf_20240923_v001.cdf"
+
+            geometric_factor_lut = GeometricFactorCalibrationTable.from_file(geometric_factor_lut_path)
+            background_count_rate_cutoff = 0.1
+            epoch = datetime(2024, 10, 17)
+            sw_velocity = Mock()
+            mock_minimize.return_value.x = [1, 2, 3, 4]
+            mock_calculate_pui_energy_cutoff.return_value = 6000.0
+
+            _ = calculate_pickup_ion_values(
+                instrument_response_collection, geometric_factor_lut, energies,
+                average_count_rates, epoch, background_count_rate_cutoff, sw_velocity)
+
+            mock_calculate_pui_energy_cutoff.assert_called_with(epoch, sw_velocity)
+            extracted_count_rates, indices, model_count_rates_calculator, epoch = mock_minimize.call_args.kwargs['args']
+
+            np.testing.assert_array_equal(model_count_rates_calculator.solar_wind_vector, sw_velocity)
+
     @skip
     @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.spiceypy")
-    def test_calculate_pickup_ions(self, mock_spice):
+    def test_calculate_pickup_ions_with_minimize(self, mock_spice):
         ephemeris_time_for_epoch = 100000
         mock_spice.datetime2et.return_value = ephemeris_time_for_epoch
         mock_light_time = 122.0
@@ -331,3 +375,24 @@ class TestCalculatePickupIon(unittest.TestCase):
             self.assertEqual(1.230969960827135, actual_fitting_parameters.ionization_rate)
             self.assertEqual(1.001668820723139, actual_fitting_parameters.cutoff_speed)
             self.assertEqual(0.18394392413512836, actual_fitting_parameters.background_count_rate)
+
+    @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.calculate_velocity_vector")
+    def test_calculate_ten_minute_velocities(self, mock_calculate_velocity_vector):
+        x = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21])
+        y = np.array([10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180,
+                      190, 200, 210])
+        z = np.array([10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180,
+                      190, 200, 210])
+
+        mock_calculate_velocity_vector.return_value = np.transpose([x, y, z])
+
+        mock_speed = Mock()
+        mock_deflection_angles = Mock()
+        mock_clock_angles = Mock()
+        averaged_velocities = calculate_ten_minute_velocities(mock_speed, mock_deflection_angles, mock_clock_angles)
+
+        expected_averaged_velocities = np.array([[5.5, 55, 55], [15.5, 155, 155], [21, 210, 210]])
+
+        mock_calculate_velocity_vector.assert_called_with(mock_speed, mock_deflection_angles, mock_clock_angles)
+
+        np.testing.assert_array_equal(expected_averaged_velocities, averaged_velocities)

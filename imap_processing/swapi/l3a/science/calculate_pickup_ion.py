@@ -24,19 +24,17 @@ from imap_processing.swapi.l3b.science.instrument_response_lookup_table import I
 def calculate_pickup_ion_values(instrument_response_lookup_table, geometric_factor_calibration_table,
                                 energy: list[float],
                                 count_rates: uarray, epoch: datetime,
-                                background_count_rate_cutoff: float) -> FittingParameters:
+                                background_count_rate_cutoff: float, sw_velocity_vector: ndarray) -> FittingParameters:
     initial_guess = np.array([1.4, 1, 1, 0.1])
     energy_labels = range(62, 0, -1)
-    # calculate sw_velocity_in_imap_frame
-    sw_velocity_in_imap_frame = np.array([0, 0, -500])
-    energy_cutoff = calculate_pui_energy_cutoff(epoch, sw_velocity_in_imap_frame)
+    energy_cutoff = calculate_pui_energy_cutoff(epoch, sw_velocity_vector)
     extracted_energy_labels, extracted_energies, extracted_count_rates = extract_pui_energy_bins(energy_labels, energy,
                                                                                                  count_rates,
                                                                                                  energy_cutoff,
                                                                                                  background_count_rate_cutoff)
 
     model_count_rate_calculator = ModelCountRateCalculator(instrument_response_lookup_table,
-                                                           geometric_factor_calibration_table)
+                                                           geometric_factor_calibration_table, sw_velocity_vector)
     indices = list(zip(extracted_energy_labels, extracted_energies))
 
     result: OptimizeResult = scipy.optimize.minimize(calc_chi_squared, initial_guess,
@@ -104,22 +102,17 @@ class ForwardModel:
 class ModelCountRateCalculator:
     response_lookup_table_collection: InstrumentResponseLookupTableCollection
     geometric_table: GeometricFactorCalibrationTable
+    solar_wind_vector: np.ndarray
 
     def model_count_rate(self, indices_and_energy_centers: list[tuple[int, float]],
                          fitting_params: FittingParameters, epoch: datetime) -> np.ndarray:
         ephemeris_time = spiceypy.datetime2et(epoch)
 
-        # proton l3a calculation - should l3a be an input for l3b? or redo the part of the calculation we need?
-        # solar wind speed, flow deflection angle, clock angle
-        # at 1-minute intervals - need to average 10 minutes in some way
-        # convert each minute into xyz vector?
-        v, deflection, clock = l3a_calculation()
-        solar_wind_vector_instrument_frame = calculate_velocity_vector(v, deflection, clock)
-        solar_wind_vector_gse_frame = convert_velocity_to_reference_frame(solar_wind_vector_instrument_frame,
+        solar_wind_vector_gse_frame = convert_velocity_to_reference_frame(self.solar_wind_vector,
                                                                           ephemeris_time,
                                                                           "IMAP_RTN",
                                                                           "GSE")  # account for IMAP velocity?
-        solar_wind_vector_inertial_frame = convert_velocity_to_reference_frame(solar_wind_vector_instrument_frame,
+        solar_wind_vector_inertial_frame = convert_velocity_to_reference_frame(self.solar_wind_vector,
                                                                                ephemeris_time,
                                                                                "IMAP_RTN",
                                                                                "HCI")  # account for IMAP velocity?
@@ -201,7 +194,7 @@ def convert_velocity_relative_to_imap(velocity, ephemeris_time, from_frame, to_f
     return velocity_in_target_frame_relative_to_imap + imap_velocity
 
 
-def calculate_velocity_vector(sw_speed: float, colatitude: float, azimuth: float) -> np.ndarray:
+def calculate_velocity_vector(sw_speed: ndarray, colatitude: ndarray, azimuth: ndarray) -> np.ndarray:
     colat_radians = np.deg2rad(colatitude)
     azimuth_radians = np.deg2rad(azimuth)
     z = sw_speed * np.cos(colat_radians)
@@ -240,8 +233,11 @@ def extract_pui_energy_bins(energy_bin_labels, energies, observed_count_rates, e
     return np.array(extracted_energy_bin_labels), np.array(extracted_energy_bins), np.array(count_rates)
 
 
-def l3a_calculation():
-    velocity = 10.0
-    flow_deflection_angle = 2.1
-    clock_angle = -123.4
-    return velocity, flow_deflection_angle, clock_angle
+def calculate_ten_minute_velocities(speeds: ndarray, deflection_angle: ndarray, clock_angle: ndarray) -> ndarray:
+    velocity_vector = calculate_velocity_vector(speeds, deflection_angle, clock_angle)
+    left_slice = 0
+    chunked_velocities = []
+    while left_slice < len(velocity_vector):
+        chunked_velocities.append(np.mean(velocity_vector[left_slice:left_slice + 10], axis=0))
+        left_slice += 10
+    return np.array(chunked_velocities)

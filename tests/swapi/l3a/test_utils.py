@@ -1,6 +1,5 @@
 import os
 from datetime import datetime
-from pathlib import Path
 from unittest import TestCase
 
 import numpy as np
@@ -26,7 +25,7 @@ class TestUtils(TestCase):
              [0.1, 0.2, 0.3, 0.4, 0.5]])
 
         data = SwapiL2Data(epoch, energy, coincidence_count_rate, spin_angles, coincidence_count_rate_uncertainty)
-        chunks = list(chunk_l2_data(data, 2))
+        chunks = list(chunk_l2_data(data, 3))
 
         expected_count_rate_chunk_1 = np.array([[4, 5, 6, 7, 8], [9, 10, 11, 12, 13]])
         expected_spin_angles_chunk_1 = np.array([[24, 25, 26, 27, 28], [29, 30, 31, 32, 33]])
