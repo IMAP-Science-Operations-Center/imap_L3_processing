@@ -14,7 +14,7 @@ from uncertainties.unumpy import uarray
 from imap_processing.constants import HYDROGEN_INFLOW_SPEED_IN_KM_PER_SECOND, PROTON_MASS_KG, PROTON_CHARGE_COULOMBS, \
     PUI_PARTICLE_MASS_KG, PUI_PARTICLE_CHARGE_COULOMBS, HYDROGEN_INFLOW_LATITUDE_DEGREES_IN_ECLIPJ2000, \
     HYDROGEN_INFLOW_LONGITUDE_DEGREES_IN_ECLIPJ2000, ONE_AU_IN_KM, HELIUM_INFLOW_LONGITUDE_DEGREES_IN_ECLIPJ2000, \
-    METERS_PER_KILOMETER
+    METERS_PER_KILOMETER, CENTIMETERS_PER_METER
 from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_speed import calculate_sw_speed
 from imap_processing.swapi.l3b.science.geometric_factor_calibration_table import GeometricFactorCalibrationTable
 from imap_processing.swapi.l3b.science.instrument_response_lookup_table import InstrumentResponseLookupTable, \
@@ -24,17 +24,18 @@ from imap_processing.swapi.l3b.science.instrument_response_lookup_table import I
 def calculate_pickup_ion_values(instrument_response_lookup_table, geometric_factor_calibration_table,
                                 energy: list[float],
                                 count_rates: uarray, epoch: datetime,
-                                background_count_rate_cutoff: float, sw_velocity_vector: ndarray) -> FittingParameters:
-    initial_guess = np.array([1.4, 1, 1, 0.1])
+                                background_count_rate_cutoff: float, sw_velocity_vector: ndarray,
+                                density_of_neutral_helium_lookup_table: DensityOfNeutralHeliumLookupTable) -> FittingParameters:
+    initial_guess = np.array([1.5, 1.e-7, 520, 0.1])
     energy_labels = range(62, 0, -1)
     energy_cutoff = calculate_pui_energy_cutoff(epoch, sw_velocity_vector)
     extracted_energy_labels, extracted_energies, extracted_count_rates = extract_pui_energy_bins(energy_labels, energy,
                                                                                                  count_rates,
                                                                                                  energy_cutoff,
                                                                                                  background_count_rate_cutoff)
-
     model_count_rate_calculator = ModelCountRateCalculator(instrument_response_lookup_table,
-                                                           geometric_factor_calibration_table, sw_velocity_vector)
+                                                           geometric_factor_calibration_table, sw_velocity_vector,
+                                                           density_of_neutral_helium_lookup_table)
     indices = list(zip(extracted_energy_labels, extracted_energies))
 
     result: OptimizeResult = scipy.optimize.minimize(calc_chi_squared, initial_guess,
@@ -46,9 +47,26 @@ def calculate_pickup_ion_values(instrument_response_lookup_table, geometric_fact
 
 
 class DensityOfNeutralHeliumLookupTable:
-    @staticmethod
-    def density(position: float, psi: float):
-        return 1
+    def __init__(self, calibration_table: np.ndarray):
+        angle = np.unique(calibration_table[:, 0])
+        distance = np.unique(calibration_table[:, 1])
+
+        self.grid = (angle, distance)
+        values_shape = tuple(len(x) for x in self.grid)
+
+        self.densities = calibration_table[:, 2].reshape(values_shape)
+
+    def density(self, angle: ndarray, distance: ndarray):
+        coords = np.empty((len(distance), 2))
+        coords[:, 0] = angle % 360
+        coords[:, 1] = distance
+        return scipy.interpolate.interpn(self.grid, self.densities,
+                                         coords, bounds_error=False, fill_value=None)
+
+    @classmethod
+    def from_file(cls, file):
+        data = np.loadtxt(file)
+        return cls(data)
 
 
 class InterstellarHeliumInflowLookupTable:
@@ -71,6 +89,7 @@ class ForwardModel:
     epoch: datetime
     solar_wind_vector_gse_frame: ndarray
     solar_wind_vector_inertial_frame: float
+    density_of_neutral_helium_lookup_table: DensityOfNeutralHeliumLookupTable
 
     def f(self, energy, theta, phi):
         ephemeris_time = spiceypy.datetime2et(self.epoch)
@@ -83,17 +102,19 @@ class ForwardModel:
         w = magnitude / self.fitting_params.cutoff_speed
         imap_position_eclip2000_frame_state = spiceypy.spkezr("IMAP", ephemeris_time, "ECLIPJ2000", "NONE", "SUN")[0][
                                               0:3]
-        distance, longitude, latitude = spiceypy.reclat(imap_position_eclip2000_frame_state)
-        psi = longitude - HELIUM_INFLOW_LONGITUDE_DEGREES_IN_ECLIPJ2000
+        distance_km, longitude, latitude = spiceypy.reclat(imap_position_eclip2000_frame_state)
+        distance_au = distance_km / ONE_AU_IN_KM
+        psi = np.rad2deg(longitude) - HELIUM_INFLOW_LONGITUDE_DEGREES_IN_ECLIPJ2000
 
-        neutral_helium_density = DensityOfNeutralHeliumLookupTable.density(
-            distance * w ** self.fitting_params.cooling_index,
-            psi)
+        neutral_helium_density_per_cm3 = self.density_of_neutral_helium_lookup_table.density(
+            psi, distance_au * w ** self.fitting_params.cooling_index)
+        neutral_helium_density_per_km3 = neutral_helium_density_per_cm3 * (
+                CENTIMETERS_PER_METER * METERS_PER_KILOMETER) ** 3
         term1 = self.fitting_params.cooling_index / (4 * np.pi)
         term2 = (self.fitting_params.ionization_rate * ONE_AU_IN_KM ** 2) / (
-                distance * self.solar_wind_vector_inertial_frame * self.fitting_params.cutoff_speed)
+                distance_km * self.solar_wind_vector_inertial_frame * self.fitting_params.cutoff_speed)
         term3 = w ** (self.fitting_params.cooling_index - 3)
-        term4 = neutral_helium_density
+        term4 = neutral_helium_density_per_km3
         term5 = np.heaviside(1 - w, 0.5)
         return term1 * term2 * term3 * term4 * term5  # What units should the result be in? What units are the inputs in?
 
@@ -103,6 +124,7 @@ class ModelCountRateCalculator:
     response_lookup_table_collection: InstrumentResponseLookupTableCollection
     geometric_table: GeometricFactorCalibrationTable
     solar_wind_vector: np.ndarray
+    density_of_neutral_helium_lookup_table: DensityOfNeutralHeliumLookupTable
 
     def model_count_rate(self, indices_and_energy_centers: list[tuple[int, float]],
                          fitting_params: FittingParameters, epoch: datetime) -> np.ndarray:
@@ -118,7 +140,8 @@ class ModelCountRateCalculator:
                                                                                "HCI")  # account for IMAP velocity?
 
         forward_model = ForwardModel(fitting_params, epoch, solar_wind_vector_gse_frame,
-                                     np.linalg.norm(solar_wind_vector_inertial_frame))
+                                     np.linalg.norm(solar_wind_vector_inertial_frame),
+                                     self.density_of_neutral_helium_lookup_table)
         model_count_rates = []
         for energy_bin_index, energy_bin_center in indices_and_energy_centers:
             model_count_rates.append(
@@ -139,7 +162,7 @@ def calc_chi_squared(fit_params_array: np.ndarray, observed_count_rates: np.ndar
                      indices_and_energy_centers: list[tuple[int, float]], calculator: ModelCountRateCalculator,
                      epoch: datetime):
     cooling_index, ionization_rate, cutoff_speed, background_count_rate = fit_params_array
-    fit_params = FittingParameters(cooling_index, 1e-10 * ionization_rate, 900 * cutoff_speed, background_count_rate)
+    fit_params = FittingParameters(cooling_index, ionization_rate, cutoff_speed, background_count_rate)
     modeled_rates = calculator.model_count_rate(indices_and_energy_centers, fit_params, epoch)
 
     energies = [energy for index, energy in indices_and_energy_centers]
@@ -148,8 +171,8 @@ def calc_chi_squared(fit_params_array: np.ndarray, observed_count_rates: np.ndar
     plt.show()
     result = 2 * sum(
         modeled_rates - observed_count_rates + observed_count_rates * np.log(observed_count_rates / modeled_rates))
-    # print("chisquared", result)
-    # print(fit_params)
+    print("chisquared", result)
+    print(fit_params)
     return result
 
 
