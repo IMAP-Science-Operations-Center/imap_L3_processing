@@ -12,6 +12,8 @@ from imap_processing.swapi.l3a.science.calculate_alpha_solar_wind_speed import c
     calculate_combined_sweeps
 from imap_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density import \
     calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps
+from imap_processing.swapi.l3a.science.calculate_pickup_ion import calculate_ten_minute_velocities, \
+    calculate_pickup_ion_values
 from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_clock_and_deflection_angles import \
     calculate_deflection_angle, calculate_clock_angle
 from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_speed import calculate_proton_solar_wind_speed
@@ -105,6 +107,17 @@ class SwapiProcessor(Processor):
 
             alpha_solar_wind_densities.append(alpha_density)
             alpha_solar_wind_temperatures.append(alpha_temperature)
+
+        ten_minute_solar_wind_velocities = calculate_ten_minute_velocities(proton_solar_wind_speeds,
+                                                                           proton_solar_wind_deflection_angles,
+                                                                           proton_solar_wind_clock_angles)
+        for data_chunk, sw_velocity in zip(chunk_l2_data(data, 50), ten_minute_solar_wind_velocities):
+            _ = calculate_pickup_ion_values(dependencies.instrument_response_calibration_table,
+                                            dependencies.geometric_factor_calibration_table, data_chunk.energy,
+                                            data_chunk.coincidence_count_rate,
+                                            data_chunk.epoch, 0.1,
+                                            sw_velocity,
+                                            dependencies.density_of_neutral_helium_calibration_table)
 
         proton_solar_wind_speed_metadata = self.input_metadata.to_upstream_data_dependency("proton-sw")
 

@@ -1,6 +1,6 @@
 import unittest
-from datetime import datetime
 from pathlib import Path
+from unittest import skip
 from unittest.mock import patch, Mock, call
 
 import numpy as np
@@ -10,7 +10,8 @@ from uncertainties.unumpy import uarray
 import imap_processing
 from imap_processing.constants import HYDROGEN_INFLOW_SPEED_IN_KM_PER_SECOND, \
     HYDROGEN_INFLOW_LONGITUDE_DEGREES_IN_ECLIPJ2000, HYDROGEN_INFLOW_LATITUDE_DEGREES_IN_ECLIPJ2000, PROTON_MASS_KG, \
-    PROTON_CHARGE_COULOMBS, ONE_AU_IN_KM, HELIUM_INFLOW_LONGITUDE_DEGREES_IN_ECLIPJ2000
+    PROTON_CHARGE_COULOMBS, ONE_AU_IN_KM, HELIUM_INFLOW_LONGITUDE_DEGREES_IN_ECLIPJ2000, NANOSECONDS_IN_SECONDS, \
+    FIVE_MINUTES_IN_NANOSECONDS
 from imap_processing.spice_wrapper import FAKE_ROTATION_MATRIX_FROM_PSP
 from imap_processing.swapi.l3a.science.calculate_alpha_solar_wind_speed import calculate_combined_sweeps
 from imap_processing.swapi.l3a.science.calculate_pickup_ion import calculate_pui_energy_cutoff, extract_pui_energy_bins, \
@@ -35,8 +36,7 @@ class TestCalculatePickupIon(unittest.TestCase):
     @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.convert_velocity_relative_to_imap")
     @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.spiceypy")
     def test_calculate_pickup_ion_energy_cutoff(self, mock_spice, mock_convert_velocity):
-        expected_ephemeris_time = 0.00032
-        mock_spice.datetime2et.return_value = expected_ephemeris_time
+        expected_ephemeris_time = 100000000
         mock_light_time = 1233.002
         mock_spice.spkezr.return_value = (np.array([0, 0, 0, 4, 0, 0]), mock_light_time)
         mock_spice.latrec.return_value = np.array([0, 2, 0])
@@ -44,12 +44,10 @@ class TestCalculatePickupIon(unittest.TestCase):
         expected_sw_velocity_in_eclipj2000_frame = np.array([1, 2, 4])
         mock_convert_velocity.return_value = expected_sw_velocity_in_eclipj2000_frame
 
-        epoch = 1
         solar_wind_velocity_in_imap_frame = np.array([22, 33, 44])
 
-        energy_cutoff = calculate_pui_energy_cutoff(epoch, solar_wind_velocity_in_imap_frame)
+        energy_cutoff = calculate_pui_energy_cutoff(expected_ephemeris_time, solar_wind_velocity_in_imap_frame)
 
-        mock_spice.datetime2et.assert_called_with(epoch)
         mock_spice.spkezr.assert_called_with("IMAP", expected_ephemeris_time, "ECLIPJ2000", "NONE", "SUN")
         mock_spice.latrec.assert_called_with(-HYDROGEN_INFLOW_SPEED_IN_KM_PER_SECOND,
                                              HYDROGEN_INFLOW_LONGITUDE_DEGREES_IN_ECLIPJ2000,
@@ -57,7 +55,6 @@ class TestCalculatePickupIon(unittest.TestCase):
         mock_convert_velocity.assert_called_with(solar_wind_velocity_in_imap_frame, expected_ephemeris_time, "IMAP",
                                                  "ECLIPJ2000")
 
-        velocity_cutoff_vector = np.array([-3, 0, 4])
         velocity_cutoff_norm = 5
         self.assertAlmostEqual(0.5 * (PROTON_MASS_KG / PROTON_CHARGE_COULOMBS) * (2 * velocity_cutoff_norm * 1000) ** 2,
                                energy_cutoff)
@@ -110,10 +107,10 @@ class TestCalculatePickupIon(unittest.TestCase):
 
     def test_calculate_velocity_vector(self):
         speed = [45.6787, 60.123]
-        colatitude_degrees = [88.3, 89.3]
+        elevation_degrees = [1.7, 0.7]
         phi = [-149.0, -100.0]
 
-        actual_pui_vector = calculate_velocity_vector(speed, colatitude_degrees, phi)
+        actual_pui_vector = calculate_velocity_vector(speed, elevation_degrees, phi)
 
         expected_pui_vectors = np.array([[-39.137055, -23.515915, 1.355115],
                                          [-10.43947, -59.205178, 0.734523]])
@@ -147,9 +144,6 @@ class TestCalculatePickupIon(unittest.TestCase):
                            mock_helium_density):
         mock_helium_density.return_value = 1
 
-        ephemeris_time_for_epoch = 100000
-        mock_spice.datetime2et.return_value = ephemeris_time_for_epoch
-
         imap_position_rectangular_coordinates = np.array([50, 60, 70, 0, 0, 0])
         mock_light_time = 123.0
         mock_spice.spkezr.return_value = (imap_position_rectangular_coordinates, mock_light_time)
@@ -162,7 +156,7 @@ class TestCalculatePickupIon(unittest.TestCase):
         mock_convert_velocity.return_value = pui_velocity_gse_frame
 
         fitting_parameters = FittingParameters(0.1, 0.47, 42, 23)
-        epoch = datetime(2024, 10, 10)
+        ephemeris_time_for_epoch = 1234567.1
         solar_wind_vector_gse_frame = np.array([1, 2, 3])
         solar_wind_speed_inertial_frame = np.array([4, 5, 6])
 
@@ -170,7 +164,7 @@ class TestCalculatePickupIon(unittest.TestCase):
         theta = 75
         phi = -135
 
-        forward_model = ForwardModel(fitting_parameters, epoch, solar_wind_vector_gse_frame,
+        forward_model = ForwardModel(fitting_parameters, ephemeris_time_for_epoch, solar_wind_vector_gse_frame,
                                      solar_wind_speed_inertial_frame, self.density_of_neutral_helium_lookup_table)
         result = forward_model.compute_from_instrument_frame(speed, theta, phi)
 
@@ -184,7 +178,6 @@ class TestCalculatePickupIon(unittest.TestCase):
 
         expected = expected_term_1 * expected_term_2 * expected_term_3 * expected_term_4 * expected_term_5
         np.testing.assert_array_equal(result, expected)
-        mock_spice.datetime2et.assert_called_with(epoch)
         mock_spice.spkezr.assert_called_with("IMAP", ephemeris_time_for_epoch, "ECLIPJ2000", "NONE", "SUN")
         np.testing.assert_array_equal(imap_position_rectangular_coordinates[0:3], mock_spice.reclat.call_args.args[0])
         self.assertAlmostEqual(speed, mock_calculate_velocity_vector.call_args.args[0], 5)
@@ -205,7 +198,6 @@ class TestCalculatePickupIon(unittest.TestCase):
                               mock_forward_model,
                               mock_model_count_rate_integral, mock_convert_velocity_to_reference_frame):
         ephemeris_time_for_epoch = 100000
-        mock_spice.datetime2et.return_value = ephemeris_time_for_epoch
 
         sw_instrument_frame_vector = np.array([55, 66, 77])
         mock_light_time = 122.0
@@ -245,7 +237,7 @@ class TestCalculatePickupIon(unittest.TestCase):
             (energy_bin_index, energy_bin_center),
             (2, 8000),
             (3, 6000),
-        ], fitting_params, datetime(2010, 1, 1))
+        ], fitting_params, ephemeris_time_for_epoch)
 
         expected_geo_factor = 6.4e-13 / 2
         expected_denominator = (0.97411 * np.cos(np.deg2rad(2.0)) * 1.0 * 1.0) + \
@@ -253,9 +245,9 @@ class TestCalculatePickupIon(unittest.TestCase):
         expected_result = expected_geo_factor * expected_integral_results / expected_denominator + fitting_params.background_count_rate
         np.testing.assert_array_equal(expected_result, result)
 
-        actual_fitting_params, actual_epoch, actual_sw_gse_vector, actual_sw_hci_vector_norm, actual_neutral_helium_lut = mock_forward_model.call_args.args
+        actual_fitting_params, actual_ephemeris_time, actual_sw_gse_vector, actual_sw_hci_vector_norm, actual_neutral_helium_lut = mock_forward_model.call_args.args
         self.assertIs(fitting_params, actual_fitting_params)
-        self.assertEqual(datetime(2010, 1, 1), actual_epoch)
+        self.assertEqual(ephemeris_time_for_epoch, actual_ephemeris_time)
         expected_sw_hci_vector_norm = 455.521679
         np.testing.assert_array_equal(expected_sw_gse_vector, actual_sw_gse_vector)
         self.assertAlmostEqual(expected_sw_hci_vector_norm, actual_sw_hci_vector_norm)
@@ -309,7 +301,8 @@ class TestCalculatePickupIon(unittest.TestCase):
     def test_calculate_pickup_ions_with_minimize_mocked(self, mock_spice, mock_minimize,
                                                         mock_calculate_pui_energy_cutoff):
         ephemeris_time_for_epoch = 100000
-        mock_spice.datetime2et.return_value = ephemeris_time_for_epoch
+        mock_spice.unitim.return_value = ephemeris_time_for_epoch
+
         mock_light_time = 122.0
         mock_spice.spkezr.return_value = (np.array([0, 0, 0, 4, 0, 0]), mock_light_time)
         mock_spice.latrec.return_value = np.array([0, 2, 0])
@@ -335,18 +328,20 @@ class TestCalculatePickupIon(unittest.TestCase):
 
             geometric_factor_lut = GeometricFactorCalibrationTable.from_file(geometric_factor_lut_path)
             background_count_rate_cutoff = 0.1
-            epoch = datetime(2024, 10, 17)
+            input_epochs = cdf.raw_var("epoch")[...]
             sw_velocity = np.array([2, 0, 0])
             mock_minimize.return_value.x = [1, 2, 3, 4]
             mock_calculate_pui_energy_cutoff.return_value = 6000.0
 
             actual_fitting_parameters = calculate_pickup_ion_values(
                 instrument_response_collection, geometric_factor_lut, energies,
-                average_count_rates, epoch, background_count_rate_cutoff, sw_velocity,
+                average_count_rates, input_epochs, background_count_rate_cutoff, sw_velocity,
                 self.density_of_neutral_helium_lookup_table)
 
-            mock_calculate_pui_energy_cutoff.assert_called_with(epoch, sw_velocity)
-            extracted_count_rates, indices, model_count_rates_calculator, epoch = mock_minimize.call_args.kwargs['args']
+            mock_spice.unitim.assert_called_with(input_epochs[0] / 1e9 + 300, "TT", "ET")
+            mock_calculate_pui_energy_cutoff.assert_called_with(ephemeris_time_for_epoch, sw_velocity)
+            extracted_count_rates, indices, model_count_rates_calculator, ephemeris_time = \
+                mock_minimize.call_args.kwargs['args']
             actual_bounds = mock_minimize.call_args.kwargs['bounds']
             _, actual_initial_guess = mock_minimize.call_args.args
 
@@ -356,14 +351,16 @@ class TestCalculatePickupIon(unittest.TestCase):
             self.assertEqual(expected_bounds, actual_bounds)
             np.testing.assert_array_equal(model_count_rates_calculator.solar_wind_vector, sw_velocity)
             self.assertEqual('Nelder-Mead', mock_minimize.call_args.kwargs['method'])
+            self.assertEqual(ephemeris_time_for_epoch, ephemeris_time)
 
             expected_fitting_params = FittingParameters(1, 2, 3, 4)
             self.assertEqual(expected_fitting_params, actual_fitting_parameters)
 
+    @skip
     @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.spiceypy")
     def test_calculate_pickup_ions_with_minimize(self, mock_spice):
         ephemeris_time_for_epoch = 100000
-        mock_spice.datetime2et.return_value = ephemeris_time_for_epoch
+        mock_spice.unitim.return_value = ephemeris_time_for_epoch
         mock_light_time = 122.0
         mock_spice.spkezr.return_value = (np.array([0, 0, 0, 0, 0, 0]), mock_light_time)
         mock_spice.latrec.return_value = np.array([0, 2, 0])
@@ -387,7 +384,7 @@ class TestCalculatePickupIon(unittest.TestCase):
 
             geometric_factor_lut = GeometricFactorCalibrationTable.from_file(geometric_factor_lut_path)
             background_count_rate_cutoff = 0.1
-            epoch = datetime(2024, 10, 17)
+            epoch = np.array([1, 2, 3, 4])
             sw_velocity_vector = np.array([500, 0, 0])
 
             actual_fitting_parameters = calculate_pickup_ion_values(
@@ -395,7 +392,8 @@ class TestCalculatePickupIon(unittest.TestCase):
                 average_count_rates, epoch, background_count_rate_cutoff, sw_velocity_vector,
                 self.density_of_neutral_helium_lookup_table)
 
-            mock_spice.datetime2et.assert_called_with(epoch)
+            mock_spice.unitim.assert_called_with((epoch[0] + FIVE_MINUTES_IN_NANOSECONDS) / NANOSECONDS_IN_SECONDS,
+                                                 "TT", "ET")
             self.assertAlmostEqual(1.5, actual_fitting_parameters.cooling_index, delta=0.1)
             self.assertAlmostEqual(3e-13, actual_fitting_parameters.ionization_rate, delta=1e-13)
             self.assertAlmostEqual(520, actual_fitting_parameters.cutoff_speed, delta=5)

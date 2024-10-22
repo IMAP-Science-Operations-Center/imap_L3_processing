@@ -4,7 +4,7 @@ import numpy as np
 from spacepy import pycdf
 from uncertainties.unumpy import uarray
 
-from imap_processing.constants import THIRTY_SECONDS_IN_NANOSECONDS
+from imap_processing.constants import THIRTY_SECONDS_IN_NANOSECONDS, FIVE_MINUTES_IN_NANOSECONDS
 from imap_processing.swapi.l3a.models import SwapiL3ProtonSolarWindData, EPOCH_CDF_VAR_NAME, \
     PROTON_SOLAR_WIND_SPEED_UNCERTAINTY_CDF_VAR_NAME, PROTON_SOLAR_WIND_SPEED_CDF_VAR_NAME, EPOCH_DELTA_CDF_VAR_NAME, \
     SwapiL3AlphaSolarWindData, ALPHA_SOLAR_WIND_SPEED_CDF_VAR_NAME, \
@@ -12,7 +12,8 @@ from imap_processing.swapi.l3a.models import SwapiL3ProtonSolarWindData, EPOCH_C
     PROTON_SOLAR_WIND_TEMPERATURE_UNCERTAINTY_CDF_VAR_NAME, PROTON_SOLAR_WIND_DENSITY_CDF_VAR_NAME, \
     PROTON_SOLAR_WIND_DENSITY_UNCERTAINTY_CDF_VAR_NAME, PROTON_SOLAR_WIND_CLOCK_ANGLE_CDF_VAR_NAME, \
     PROTON_SOLAR_WIND_CLOCK_ANGLE_UNCERTAINTY_CDF_VAR_NAME, PROTON_SOLAR_WIND_DEFLECTION_ANGLE_CDF_VAR_NAME, \
-    PROTON_SOLAR_WIND_DEFLECTION_ANGLE_UNCERTAINTY_CDF_VAR_NAME
+    PROTON_SOLAR_WIND_DEFLECTION_ANGLE_UNCERTAINTY_CDF_VAR_NAME, SwapiL3PickupIonData, PUI_COOLING_INDEX_CDF_VAR_NAME, \
+    PUI_IONIZATION_RATE_CDF_VAR_NAME, PUI_CUTOFF_SPEED_CDF_VAR_NAME, PUI_BACKGROUND_COUNT_RATE_CDF_VAR_NAME
 from tests.swapi.cdf_model_test_case import CdfModelTestCase
 
 
@@ -89,3 +90,26 @@ class TestModels(CdfModelTestCase):
                                         "alpha_sw_density")
         self.assert_variable_attributes(variables[7], expected_alpha_density_std_devs,
                                         "alpha_sw_density_delta")
+
+    def test_getting_pui_data_product_variables(self):
+        epoch_data = np.arange(20, step=2)
+        expected_cooling_index = np.arange(10, step=1)
+        expected_ionization_rate = np.arange(300000, step=30000)
+        expected_cutoff_speed = np.arange(50000, step=5000)
+        expected_background = np.arange(1, step=0.1)
+        data = SwapiL3PickupIonData(Mock(), epoch_data, expected_cooling_index, expected_ionization_rate,
+                                    expected_cutoff_speed, expected_background)
+        variables = data.to_data_product_variables()
+
+        self.assertEqual(6, len(variables))
+        self.assert_variable_attributes(variables[0], epoch_data, EPOCH_CDF_VAR_NAME, pycdf.const.CDF_TIME_TT2000)
+        self.assert_variable_attributes(variables[1], FIVE_MINUTES_IN_NANOSECONDS, EPOCH_DELTA_CDF_VAR_NAME,
+                                        expected_record_varying=False)
+        self.assert_variable_attributes(variables[2], expected_cooling_index,
+                                        PUI_COOLING_INDEX_CDF_VAR_NAME)
+        self.assert_variable_attributes(variables[3], expected_ionization_rate,
+                                        PUI_IONIZATION_RATE_CDF_VAR_NAME)
+        self.assert_variable_attributes(variables[4], expected_cutoff_speed,
+                                        PUI_CUTOFF_SPEED_CDF_VAR_NAME)
+        self.assert_variable_attributes(variables[5], expected_background,
+                                        PUI_BACKGROUND_COUNT_RATE_CDF_VAR_NAME)

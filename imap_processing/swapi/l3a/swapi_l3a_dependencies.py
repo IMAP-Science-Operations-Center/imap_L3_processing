@@ -7,10 +7,13 @@ from imap_processing.swapi.descriptors import SWAPI_L2_DESCRIPTOR, PROTON_TEMPER
     ALPHA_TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR, CLOCK_ANGLE_AND_FLOW_DEFLECTION_LOOKUP_TABLE_DESCRIPTOR
 from imap_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density import \
     AlphaTemperatureDensityCalibrationTable
+from imap_processing.swapi.l3a.science.calculate_pickup_ion import DensityOfNeutralHeliumLookupTable
 from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_clock_and_deflection_angles import \
     ClockAngleCalibrationTable
 from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_temperature_and_density import \
     ProtonTemperatureAndDensityCalibrationTable
+from imap_processing.swapi.l3b.science.geometric_factor_calibration_table import GeometricFactorCalibrationTable
+from imap_processing.swapi.l3b.science.instrument_response_lookup_table import InstrumentResponseLookupTableCollection
 from imap_processing.utils import download_dependency
 
 
@@ -20,6 +23,9 @@ class SwapiL3ADependencies:
     proton_temperature_density_calibration_table: ProtonTemperatureAndDensityCalibrationTable
     alpha_temperature_density_calibration_table: AlphaTemperatureDensityCalibrationTable
     clock_angle_and_flow_deflection_calibration_table: ClockAngleCalibrationTable
+    geometric_factor_calibration_table: GeometricFactorCalibrationTable
+    instrument_response_calibration_table: InstrumentResponseLookupTableCollection
+    density_of_neutral_helium_calibration_table: DensityOfNeutralHeliumLookupTable
 
     @classmethod
     def fetch_dependencies(cls, dependencies: list[UpstreamDataDependency]):
@@ -59,4 +65,4 @@ class SwapiL3ADependencies:
         clock_angle_calibration_file = ClockAngleCalibrationTable.from_file(clock_and_deflection_file_path)
 
         return cls(data_file, proton_temperature_and_density_calibration_file,
-                   alpha_density_and_temperature_calibration_file, clock_angle_calibration_file)
+                   alpha_density_and_temperature_calibration_file, clock_angle_calibration_file, None, None, None)

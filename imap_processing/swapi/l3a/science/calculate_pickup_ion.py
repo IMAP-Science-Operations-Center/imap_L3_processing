@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime
 
 import numpy as np
 import scipy.optimize
@@ -13,7 +12,7 @@ from uncertainties.unumpy import uarray
 from imap_processing.constants import HYDROGEN_INFLOW_SPEED_IN_KM_PER_SECOND, PROTON_MASS_KG, PROTON_CHARGE_COULOMBS, \
     PUI_PARTICLE_MASS_KG, PUI_PARTICLE_CHARGE_COULOMBS, HYDROGEN_INFLOW_LATITUDE_DEGREES_IN_ECLIPJ2000, \
     HYDROGEN_INFLOW_LONGITUDE_DEGREES_IN_ECLIPJ2000, ONE_AU_IN_KM, HELIUM_INFLOW_LONGITUDE_DEGREES_IN_ECLIPJ2000, \
-    METERS_PER_KILOMETER, CENTIMETERS_PER_METER
+    METERS_PER_KILOMETER, CENTIMETERS_PER_METER, FIVE_MINUTES_IN_NANOSECONDS, NANOSECONDS_IN_SECONDS
 from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_speed import calculate_sw_speed
 from imap_processing.swapi.l3b.science.geometric_factor_calibration_table import GeometricFactorCalibrationTable
 from imap_processing.swapi.l3b.science.instrument_response_lookup_table import InstrumentResponseLookupTable, \
@@ -22,12 +21,15 @@ from imap_processing.swapi.l3b.science.instrument_response_lookup_table import I
 
 def calculate_pickup_ion_values(instrument_response_lookup_table, geometric_factor_calibration_table,
                                 energy: list[float],
-                                count_rates: uarray, epoch: datetime,
+                                count_rates: uarray, epoch: np.ndarray,
                                 background_count_rate_cutoff: float, sw_velocity_vector: ndarray,
                                 density_of_neutral_helium_lookup_table: DensityOfNeutralHeliumLookupTable) -> FittingParameters:
+    center_of_epoch = epoch[0] + FIVE_MINUTES_IN_NANOSECONDS
+    ephemeris_time = spiceypy.unitim(center_of_epoch / NANOSECONDS_IN_SECONDS, "TT", "ET")
+
     initial_guess = np.array([1.5, 3e-13, 520, 0.1])
     energy_labels = range(62, 0, -1)
-    energy_cutoff = calculate_pui_energy_cutoff(epoch, sw_velocity_vector)
+    energy_cutoff = calculate_pui_energy_cutoff(ephemeris_time, sw_velocity_vector)
     extracted_energy_labels, extracted_energies, extracted_count_rates = extract_pui_energy_bins(energy_labels, energy,
                                                                                                  count_rates,
                                                                                                  energy_cutoff,
@@ -42,7 +44,7 @@ def calculate_pickup_ion_values(instrument_response_lookup_table, geometric_fact
                                                      bounds=((1.0, 5.0), (1e-14, 1e-5),
                                                              (sw_velocity * .8, sw_velocity * 1.2), (0, 0.2)),
                                                      args=(extracted_count_rates, indices, model_count_rate_calculator,
-                                                           epoch),
+                                                           ephemeris_time),
                                                      method='Nelder-Mead',
                                                      options=dict(disp=True))
     # uncertainty inputs and/or outputs?
@@ -89,21 +91,20 @@ class FittingParameters:
 @dataclass
 class ForwardModel:
     fitting_params: FittingParameters
-    epoch: datetime
+    ephemeris_time: float
     solar_wind_vector_gse_frame: ndarray
     solar_wind_vector_inertial_frame: float
     density_of_neutral_helium_lookup_table: DensityOfNeutralHeliumLookupTable
 
     def compute_from_instrument_frame(self, speed, theta, phi):
-        ephemeris_time = spiceypy.datetime2et(self.epoch)
         pui_vector_instrument_frame = calculate_velocity_vector(speed, theta, phi)
-        pui_vector_gse_frame = convert_velocity_relative_to_imap(pui_vector_instrument_frame, ephemeris_time,
+        pui_vector_gse_frame = convert_velocity_relative_to_imap(pui_vector_instrument_frame, self.ephemeris_time,
                                                                  "IMAP_SWAPI", "GSE")
         pui_vector_solar_wind_frame = pui_vector_gse_frame - self.solar_wind_vector_gse_frame
         magnitude = np.linalg.norm(pui_vector_solar_wind_frame, axis=-1)
         w = magnitude / self.fitting_params.cutoff_speed
-        imap_position_eclip2000_frame_state = spiceypy.spkezr("IMAP", ephemeris_time, "ECLIPJ2000", "NONE", "SUN")[0][
-                                              0:3]
+        imap_position_eclip2000_frame_state = spiceypy.spkezr(
+            "IMAP", self.ephemeris_time, "ECLIPJ2000", "NONE", "SUN")[0][0:3]
         distance_km, longitude, latitude = spiceypy.reclat(imap_position_eclip2000_frame_state)
         psi = np.rad2deg(longitude) - HELIUM_INFLOW_LONGITUDE_DEGREES_IN_ECLIPJ2000
         distance_au = distance_km / ONE_AU_IN_KM
@@ -132,9 +133,7 @@ class ModelCountRateCalculator:
     density_of_neutral_helium_lookup_table: DensityOfNeutralHeliumLookupTable
 
     def model_count_rate(self, indices_and_energy_centers: list[tuple[int, float]],
-                         fitting_params: FittingParameters, epoch: datetime) -> np.ndarray:
-        ephemeris_time = spiceypy.datetime2et(epoch)
-
+                         fitting_params: FittingParameters, ephemeris_time: float) -> np.ndarray:
         solar_wind_vector_gse_frame = convert_velocity_to_reference_frame(self.solar_wind_vector,
                                                                           ephemeris_time,
                                                                           "IMAP_RTN",
@@ -144,7 +143,7 @@ class ModelCountRateCalculator:
                                                                                "IMAP_RTN",
                                                                                "HCI")  # account for IMAP velocity?
 
-        forward_model = ForwardModel(fitting_params, epoch, solar_wind_vector_gse_frame,
+        forward_model = ForwardModel(fitting_params, ephemeris_time, solar_wind_vector_gse_frame,
                                      np.linalg.norm(solar_wind_vector_inertial_frame),
                                      self.density_of_neutral_helium_lookup_table)
         model_count_rates = []
@@ -165,14 +164,14 @@ class ModelCountRateCalculator:
 
 def calc_chi_squared(fit_params_array: np.ndarray, observed_count_rates: np.ndarray,
                      indices_and_energy_centers: list[tuple[int, float]], calculator: ModelCountRateCalculator,
-                     epoch: datetime):
+                     ephemeris_time: float):
     cooling_index, ionization_rate, cutoff_speed, background_count_rate = fit_params_array
     fit_params = FittingParameters(cooling_index, ionization_rate, cutoff_speed, background_count_rate)
-    modeled_rates = calculator.model_count_rate(indices_and_energy_centers, fit_params, epoch)
+    modeled_rates = calculator.model_count_rate(indices_and_energy_centers, fit_params, ephemeris_time)
 
     result = 2 * sum(
         modeled_rates - observed_count_rates + observed_count_rates * np.log(observed_count_rates / modeled_rates))
-
+    print(f"chi_squared: {result}  params: {fit_params}")
     return result
 
 
@@ -227,8 +226,7 @@ def calculate_velocity_vector(sw_speed: ndarray, elevation: ndarray, azimuth: nd
     return np.transpose([x, y, z])
 
 
-def calculate_pui_energy_cutoff(epoch: datetime, sw_velocity_in_imap_frame):
-    ephemeris_time = spiceypy.datetime2et(epoch)
+def calculate_pui_energy_cutoff(ephemeris_time: float, sw_velocity_in_imap_frame):
     imap_velocity = spiceypy.spkezr("IMAP", ephemeris_time, "ECLIPJ2000", "NONE", "SUN")[0][
                     3:6]
     solar_wind_velocity = convert_velocity_relative_to_imap(

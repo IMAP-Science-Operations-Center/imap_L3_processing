@@ -11,6 +11,7 @@ from uncertainties.unumpy import uarray, nominal_values, std_devs
 from imap_processing.constants import TEMP_CDF_FOLDER_PATH, THIRTY_SECONDS_IN_NANOSECONDS, FIVE_MINUTES_IN_NANOSECONDS
 from imap_processing.models import UpstreamDataDependency, InputMetadata
 from imap_processing.swapi.l3a.models import SwapiL2Data
+from imap_processing.swapi.l3a.science.calculate_pickup_ion import FittingParameters
 from imap_processing.swapi.l3a.swapi_l3a_dependencies import SWAPI_L2_DESCRIPTOR
 from imap_processing.swapi.l3b.science.calculate_solar_wind_vdf import DeltaMinusPlus
 from imap_processing.swapi.swapi_processor import SwapiProcessor
@@ -44,16 +45,20 @@ class TestSwapiProcessor(TestCase):
     @patch('imap_processing.swapi.swapi_processor.calculate_clock_angle')
     @patch('imap_processing.swapi.swapi_processor.calculate_deflection_angle')
     @patch('imap_processing.swapi.swapi_processor.SwapiL3ADependencies')
-    def test_processor(self, mock_swapi_l3_dependencies_class,
-                       mock_calculate_deflection_angle,
-                       mock_calculate_clock_angle,
-                       mock_alpha_calculate_temperature_and_density,
-                       mock_proton_calculate_temperature_and_density,
-                       mock_calculate_alpha_solar_wind_speed,
-                       mock_calculate_proton_solar_wind_speed,
-                       mock_read_l2_swapi_data, mock_chunk_l2_data, mock_uuid, mock_write_cdf,
-                       mock_proton_solar_wind_data_constructor, mock_alpha_solar_wind_data_constructor,
-                       mock_imap_attribute_manager):
+    @patch('imap_processing.swapi.swapi_processor.calculate_pickup_ion_values')
+    @patch('imap_processing.swapi.swapi_processor.calculate_ten_minute_velocities')
+    def test_process_l3a(self, mock_calculate_ten_minute_velocities,
+                         mock_calculate_pickup_ion,
+                         mock_swapi_l3_dependencies_class,
+                         mock_calculate_deflection_angle,
+                         mock_calculate_clock_angle,
+                         mock_alpha_calculate_temperature_and_density,
+                         mock_proton_calculate_temperature_and_density,
+                         mock_calculate_alpha_solar_wind_speed,
+                         mock_calculate_proton_solar_wind_speed,
+                         mock_read_l2_swapi_data, mock_chunk_l2_data, mock_uuid, mock_write_cdf,
+                         mock_proton_solar_wind_data_constructor, mock_alpha_solar_wind_data_constructor,
+                         mock_imap_attribute_manager):
         mock_uuid_value = 123
         mock_uuid.uuid4.return_value = mock_uuid_value
 
@@ -93,6 +98,7 @@ class TestSwapiProcessor(TestCase):
         initial_epoch = 10
 
         epoch = np.array([initial_epoch, 11, 12, 13])
+        epoch_for_fifty_sweeps = np.arange(initial_epoch, 50)
         energy = np.array([15000, 16000, 17000, 18000, 19000])
         coincidence_count_rate = np.array(
             [[4, 5, 6, 7, 8], [9, 10, 11, 12, 13], [14, 15, 16, 17, 18], [19, 20, 21, 22, 23]])
@@ -100,8 +106,14 @@ class TestSwapiProcessor(TestCase):
         coincidence_count_rate_uncertainty = np.array(
             [[0.1, 0.2, 0.3, 0.4, 0.5], [0.1, 0.2, 0.3, 0.4, 0.5], [0.1, 0.2, 0.3, 0.4, 0.5],
              [0.1, 0.2, 0.3, 0.4, 0.5]])
-        mock_chunk_l2_data.return_value = [
-            SwapiL2Data(epoch, energy, coincidence_count_rate, spin_angles, coincidence_count_rate_uncertainty)]
+        chunk_of_five = SwapiL2Data(epoch, energy, coincidence_count_rate, spin_angles,
+                                    coincidence_count_rate_uncertainty)
+        chunk_of_fifty = SwapiL2Data(epoch_for_fifty_sweeps, energy * 2, coincidence_count_rate * 2, spin_angles * 2,
+                                     coincidence_count_rate_uncertainty * 2)
+        mock_chunk_l2_data.side_effect = [
+            [chunk_of_five],
+            [chunk_of_fifty],
+        ]
 
         input_metadata = InputMetadata(instrument, outgoing_data_level, start_date, end_date,
                                        outgoing_version)
@@ -115,6 +127,11 @@ class TestSwapiProcessor(TestCase):
         alpha_solar_wind_data.input_metadata = expected_alpha_metadata
 
         mock_manager = mock_imap_attribute_manager.return_value
+
+        mock_calculate_pickup_ion.return_value = FittingParameters(1, 2, 3, 4)
+        mock_calculate_ten_minute_velocities.return_value = np.array([
+            [17, 18, 19]
+        ])
 
         dependencies = [
             UpstreamDataDependency(instrument, incoming_data_level, start_date, end_date,
@@ -130,11 +147,16 @@ class TestSwapiProcessor(TestCase):
         mock_proton_temperature_density_calibration_table = mock_swapi_l3_dependencies_class.fetch_dependencies.return_value.proton_temperature_density_calibration_table
         mock_alpha_temperature_density_calibration_table = mock_swapi_l3_dependencies_class.fetch_dependencies.return_value.alpha_temperature_density_calibration_table
         mock_clock_angle_and_flow_deflection_calibration_table = mock_swapi_l3_dependencies_class.fetch_dependencies.return_value.clock_angle_and_flow_deflection_calibration_table
+        mock_instrument_response_calibration_table = mock_swapi_l3_dependencies_class.fetch_dependencies.return_value.instrument_response_calibration_table
+        mock_geometric_factor_calibration_table = mock_swapi_l3_dependencies_class.fetch_dependencies.return_value.geometric_factor_calibration_table
+        mock_density_of_neutral_helium_calibration_table = mock_swapi_l3_dependencies_class.fetch_dependencies.return_value.density_of_neutral_helium_calibration_table
 
         mock_read_l2_swapi_data.assert_called_once_with(
             mock_swapi_l3_dependencies_class.fetch_dependencies.return_value.data)
 
-        mock_chunk_l2_data.assert_called_with(mock_read_l2_swapi_data.return_value, 5)
+        mock_chunk_l2_data.side_effect = []
+        mock_chunk_l2_data.assert_has_calls([call(mock_read_l2_swapi_data.return_value, 5),
+                                             call(mock_read_l2_swapi_data.return_value, 50)])
 
         expected_count_rate_with_uncertainties = uarray(coincidence_count_rate, coincidence_count_rate_uncertainty)
         np.testing.assert_array_equal(nominal_values(expected_count_rate_with_uncertainties),
@@ -201,6 +223,21 @@ class TestSwapiProcessor(TestCase):
                                       actual_proton_sw_deflection_angle,
                                       strict=True)
 
+        instrument_response_lut, geometric_factor_lut, energies, count_rates, epoch, background_rate_cutoff, \
+            sw_velocity, density_of_neutral_helium_lut = mock_calculate_pickup_ion.call_args.args
+
+        self.assertEqual(mock_instrument_response_calibration_table, instrument_response_lut)
+        self.assertEqual(mock_geometric_factor_calibration_table, geometric_factor_lut)
+        self.assertEqual(mock_density_of_neutral_helium_calibration_table, density_of_neutral_helium_lut)
+        np.testing.assert_array_equal(chunk_of_fifty.energy, energies)
+        np.testing.assert_array_equal(chunk_of_fifty.coincidence_count_rate, count_rates)
+        np.testing.assert_array_equal(chunk_of_fifty.epoch, epoch)
+        self.assertEqual(0.1, background_rate_cutoff)
+        np.testing.assert_array_equal([17, 18, 19], sw_velocity)
+
+        mock_calculate_ten_minute_velocities.assert_called_with([returned_proton_sw_speed],
+                                                                [returned_proton_sw_deflection_angle],
+                                                                [returned_proton_sw_clock_angle])
         proton_cdf_path = f"{self.temp_directory}/imap_swapi_l3a_proton-sw-fake-menlo-{mock_uuid_value}_{start_date_as_str}_12345.cdf"
         alpha_cdf_path = f"{self.temp_directory}/imap_swapi_l3a_alpha-sw-fake-menlo-{mock_uuid_value}_{start_date_as_str}_12345.cdf"
         mock_manager.add_global_attribute.assert_has_calls([call("Data_version", outgoing_version),

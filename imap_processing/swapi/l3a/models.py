@@ -4,7 +4,7 @@ import numpy as np
 from spacepy import pycdf
 from uncertainties.unumpy import nominal_values, std_devs
 
-from imap_processing.constants import THIRTY_SECONDS_IN_NANOSECONDS
+from imap_processing.constants import THIRTY_SECONDS_IN_NANOSECONDS, FIVE_MINUTES_IN_NANOSECONDS
 from imap_processing.models import DataProduct, DataProductVariable
 
 EPOCH_CDF_VAR_NAME = "epoch"
@@ -28,6 +28,11 @@ ALPHA_SOLAR_WIND_DENSITY_CDF_VAR_NAME = "alpha_sw_density"
 ALPHA_SOLAR_WIND_DENSITY_UNCERTAINTY_CDF_VAR_NAME = "alpha_sw_density_delta"
 ALPHA_SOLAR_WIND_TEMPERATURE_CDF_VAR_NAME = "alpha_sw_temperature"
 ALPHA_SOLAR_WIND_TEMPERATURE_UNCERTAINTY_CDF_VAR_NAME = "alpha_sw_temperature_delta"
+
+PUI_COOLING_INDEX_CDF_VAR_NAME = "pui_cooling_index"
+PUI_IONIZATION_RATE_CDF_VAR_NAME = "pui_ionization_rate"
+PUI_CUTOFF_SPEED_CDF_VAR_NAME = "pui_cutoff_speed"
+PUI_BACKGROUND_COUNT_RATE_CDF_VAR_NAME = "pui_background_count_rate"
 
 
 @dataclass
@@ -79,6 +84,25 @@ class SwapiL3AlphaSolarWindData(DataProduct):
                                 std_devs(self.alpha_sw_temperature)),
             DataProductVariable(ALPHA_SOLAR_WIND_DENSITY_CDF_VAR_NAME, nominal_values(self.alpha_sw_density)),
             DataProductVariable(ALPHA_SOLAR_WIND_DENSITY_UNCERTAINTY_CDF_VAR_NAME, std_devs(self.alpha_sw_density))
+        ]
+
+
+@dataclass
+class SwapiL3PickupIonData(DataProduct):
+    epoch: np.ndarray[float]
+    cooling_index: np.ndarray[float]
+    ionization_rate: np.ndarray[float]
+    cutoff_speed: np.ndarray[float]
+    background_rate: np.ndarray[float]
+
+    def to_data_product_variables(self) -> list[DataProductVariable]:
+        return [
+            DataProductVariable(EPOCH_CDF_VAR_NAME, self.epoch, cdf_data_type=pycdf.const.CDF_TIME_TT2000),
+            DataProductVariable(EPOCH_DELTA_CDF_VAR_NAME, FIVE_MINUTES_IN_NANOSECONDS, record_varying=False),
+            DataProductVariable(PUI_COOLING_INDEX_CDF_VAR_NAME, self.cooling_index),
+            DataProductVariable(PUI_IONIZATION_RATE_CDF_VAR_NAME, self.ionization_rate),
+            DataProductVariable(PUI_CUTOFF_SPEED_CDF_VAR_NAME, self.cutoff_speed),
+            DataProductVariable(PUI_BACKGROUND_COUNT_RATE_CDF_VAR_NAME, self.background_rate),
         ]
 
 
