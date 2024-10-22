@@ -5,7 +5,8 @@ from unittest.mock import patch, sentinel, call
 
 import imap_processing
 from imap_processing.models import UpstreamDataDependency
-from imap_processing.swapi.descriptors import SWAPI_L2_DESCRIPTOR
+from imap_processing.swapi.descriptors import SWAPI_L2_DESCRIPTOR, GEOMETRIC_FACTOR_LOOKUP_TABLE_DESCRIPTOR, \
+    INSTRUMENT_RESPONSE_LOOKUP_TABLE, DENSITY_OF_NEUTRAL_HELIUM
 from imap_processing.swapi.l3a.swapi_l3a_dependencies import SwapiL3ADependencies
 
 
@@ -17,14 +18,23 @@ class TestSwapiL3ADependencies(unittest.TestCase):
             [{'file_path': sentinel.data_file_path}],
             [{'file_path': sentinel.proton_lookup_table_file_path}],
             [{'file_path': sentinel.alpha_lookup_table_file_path}],
-            [{'file_path': sentinel.clock_and_deflection_table_file_path}]
+            [{'file_path': sentinel.clock_and_deflection_table_file_path}],
+            [{'file_path': sentinel.geometric_factor_calibration_table_file_path}],
+            [{'file_path': sentinel.instrument_response_calibration_table_file_path}],
+            [{'file_path': sentinel.density_of_neutral_helium_calibration_table_file_path}]
         ]
 
     @patch('imap_processing.swapi.l3a.swapi_l3a_dependencies.CDF')
     @patch('imap_processing.swapi.l3a.swapi_l3a_dependencies.ClockAngleCalibrationTable')
     @patch('imap_processing.swapi.l3a.swapi_l3a_dependencies.AlphaTemperatureDensityCalibrationTable')
     @patch('imap_processing.swapi.l3a.swapi_l3a_dependencies.ProtonTemperatureAndDensityCalibrationTable')
-    def test_fetch_dependencies(self, mock_proton_temperature_and_density_calibrator_class,
+    @patch('imap_processing.swapi.l3a.swapi_l3a_dependencies.GeometricFactorCalibrationTable')
+    @patch('imap_processing.swapi.l3a.swapi_l3a_dependencies.InstrumentResponseLookupTableCollection')
+    @patch('imap_processing.swapi.l3a.swapi_l3a_dependencies.DensityOfNeutralHeliumLookupTable')
+    def test_fetch_dependencies(self, mock_density_of_neutral_hydrogen_lookup_table_class
+                                , mock_instrument_response_lookup_table_class
+                                , mock_geometric_factor_calibration_class
+                                , mock_proton_temperature_and_density_calibrator_class,
                                 mock_alpha_temperature_and_density_calibrator_class,
                                 mock_clock_angle_calibration_table_constructor,
                                 mock_cdf_constructor):
@@ -45,7 +55,10 @@ class TestSwapiL3ADependencies(unittest.TestCase):
             data_file_path,
             sentinel.proton_density_temp_local_lookup_table_path,
             sentinel.alpha_density_temp_local_lookup_table_path,
-            sentinel.clock_deflection_angle_local_lookup_table_path
+            sentinel.clock_deflection_angle_local_lookup_table_path,
+            sentinel.geometric_factor_calibration_table_file_path,
+            sentinel.instrument_response_calibration_table_file_path,
+            sentinel.density_of_neutral_helium_calibration_table_file_path
         ]
 
         fetched_dependencies = SwapiL3ADependencies.fetch_dependencies([dependencies])
@@ -70,11 +83,31 @@ class TestSwapiL3ADependencies(unittest.TestCase):
                                                         start_date=None,
                                                         end_date=None,
                                                         version='latest'),
-                                                   ])
+                                                   call(instrument=instrument, data_level=incoming_data_level,
+                                                        descriptor=GEOMETRIC_FACTOR_LOOKUP_TABLE_DESCRIPTOR,
+                                                        start_date=None,
+                                                        end_date=None,
+                                                        version='latest'),
+                                                   call(instrument=instrument, data_level=incoming_data_level,
+                                                        descriptor=INSTRUMENT_RESPONSE_LOOKUP_TABLE,
+                                                        start_date=None,
+                                                        end_date=None,
+                                                        version='latest'),
+                                                   call(instrument=instrument, data_level=incoming_data_level,
+                                                        descriptor=DENSITY_OF_NEUTRAL_HELIUM,
+                                                        start_date=None,
+                                                        end_date=None,
+                                                        version='latest'),
+                                                   ],
+                                                  )
         self.mock_imap_api.download.assert_has_calls(
             [call(sentinel.data_file_path), call(sentinel.proton_lookup_table_file_path),
              call(sentinel.alpha_lookup_table_file_path),
-             call(sentinel.clock_and_deflection_table_file_path)])
+             call(sentinel.clock_and_deflection_table_file_path),
+             call(sentinel.geometric_factor_calibration_table_file_path),
+             call(sentinel.instrument_response_calibration_table_file_path),
+             call(sentinel.density_of_neutral_helium_calibration_table_file_path),
+             ])
 
         mock_cdf_constructor.assert_called_with(str(data_file_path))
         mock_proton_temperature_and_density_calibrator_class.from_file.assert_called_with(
@@ -83,6 +116,12 @@ class TestSwapiL3ADependencies(unittest.TestCase):
             sentinel.alpha_density_temp_local_lookup_table_path)
         mock_clock_angle_calibration_table_constructor.from_file.assert_called_with(
             sentinel.clock_deflection_angle_local_lookup_table_path)
+        mock_geometric_factor_calibration_class.from_file.assert_called_with(
+            sentinel.geometric_factor_calibration_table_file_path)
+        mock_instrument_response_lookup_table_class.from_file.assert_called_with(
+            sentinel.instrument_response_calibration_table_file_path)
+        mock_density_of_neutral_hydrogen_lookup_table_class.from_file.assert_called_with(
+            sentinel.density_of_neutral_helium_calibration_table_file_path)
 
         self.assertIs(mock_cdf_constructor.return_value,
                       fetched_dependencies.data)
@@ -92,6 +131,12 @@ class TestSwapiL3ADependencies(unittest.TestCase):
                       fetched_dependencies.alpha_temperature_density_calibration_table)
         self.assertIs(mock_clock_angle_calibration_table_constructor.from_file.return_value,
                       fetched_dependencies.clock_angle_and_flow_deflection_calibration_table)
+        self.assertIs(mock_geometric_factor_calibration_class.from_file.return_value,
+                      fetched_dependencies.geometric_factor_calibration_table)
+        self.assertIs(mock_instrument_response_lookup_table_class.from_file.return_value,
+                      fetched_dependencies.instrument_response_calibration_table)
+        self.assertIs(mock_density_of_neutral_hydrogen_lookup_table_class.from_file.return_value,
+                      fetched_dependencies.density_of_neutral_helium_calibration_table)
 
     def test_throws_exception_when_more_than_one_file_is_downloaded(self):
         file_path = Path(

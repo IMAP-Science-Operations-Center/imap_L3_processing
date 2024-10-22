@@ -25,13 +25,13 @@ class TestUtils(TestCase):
              [0.1, 0.2, 0.3, 0.4, 0.5]])
 
         data = SwapiL2Data(epoch, energy, coincidence_count_rate, spin_angles, coincidence_count_rate_uncertainty)
-        chunks = list(chunk_l2_data(data, 3))
+        chunks = list(chunk_l2_data(data, 2))
 
         expected_count_rate_chunk_1 = np.array([[4, 5, 6, 7, 8], [9, 10, 11, 12, 13]])
         expected_spin_angles_chunk_1 = np.array([[24, 25, 26, 27, 28], [29, 30, 31, 32, 33]])
         expected_count_rate_uncertainty_chunk_1 = np.array([[0.1, 0.2, 0.3, 0.4, 0.5], [0.1, 0.2, 0.3, 0.4, 0.5]])
         first_chunk = chunks[0]
-        np.testing.assert_array_equal(np.array([0, 1]), first_chunk.epoch)
+        np.testing.assert_array_equal(first_chunk.epoch, np.array([0, 1]))
         np.testing.assert_array_equal(energy, first_chunk.energy)
         np.testing.assert_array_equal(expected_count_rate_chunk_1, first_chunk.coincidence_count_rate)
         np.testing.assert_array_equal(expected_spin_angles_chunk_1, first_chunk.spin_angles)

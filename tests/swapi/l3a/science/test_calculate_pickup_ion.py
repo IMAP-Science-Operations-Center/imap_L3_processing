@@ -319,9 +319,9 @@ class TestCalculatePickupIon(unittest.TestCase):
             count_rates_with_uncertainty = uarray(count_rate, count_rate_delta)
             average_count_rates, energies = calculate_combined_sweeps(count_rate, energy)
             response_lut_path = Path(
-                imap_processing.__file__).parent.parent / "swapi" / "test_data" / "truncated_swapi_response_simion_v1"
+                imap_processing.__file__).parent.parent / "swapi" / "test_data" / "truncated_swapi_response_simion_v1.zip"
 
-            instrument_response_collection = InstrumentResponseLookupTableCollection(response_lut_path)
+            instrument_response_collection = InstrumentResponseLookupTableCollection.from_file(response_lut_path)
 
             geometric_factor_lut_path = Path(
                 imap_processing.__file__).parent.parent / "swapi" / "test_data" / "imap_swapi_l2_energy-gf-lut-not-cdf_20240923_v001.cdf"
@@ -375,9 +375,9 @@ class TestCalculatePickupIon(unittest.TestCase):
 
             average_count_rates, energies = calculate_combined_sweeps(count_rate, energy)
             response_lut_path = Path(
-                imap_processing.__file__).parent.parent / "swapi" / "test_data" / "swapi_response_simion_v1"
+                imap_processing.__file__).parent.parent / "swapi" / "test_data" / "swapi_response_simion_v1.zip"
 
-            instrument_response_collection = InstrumentResponseLookupTableCollection(response_lut_path)
+            instrument_response_collection = InstrumentResponseLookupTableCollection.from_file(response_lut_path)
 
             geometric_factor_lut_path = Path(
                 imap_processing.__file__).parent.parent / "swapi" / "test_data" / "imap_swapi_l2_energy-gf-lut-not-cdf_20240923_v001.cdf"

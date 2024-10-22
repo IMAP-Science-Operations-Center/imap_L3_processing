@@ -1,4 +1,5 @@
 import re
+import zipfile
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -17,12 +18,19 @@ class InstrumentResponseLookupTable:
 
 
 class InstrumentResponseLookupTableCollection:
-    def __init__(self, directory_path: Path):
-        self.files = {}
-        for file_path in directory_path.iterdir():
-            number = re.match('response_ESA(\d*).dat', file_path.name)[1]
-            transposed = np.loadtxt(file_path).T
-            self.files[int(number)] = InstrumentResponseLookupTable(*transposed)
+    def __init__(self, lookup_tables: dict[int, InstrumentResponseLookupTable]):
+        self.lookup_tables = lookup_tables
 
     def get_table_for_energy_bin(self, index: int) -> InstrumentResponseLookupTable:
-        return self.files[index]
+        return self.lookup_tables[index]
+
+    @classmethod
+    def from_file(cls, zip_path: Path):
+        files = {}
+        with zipfile.ZipFile(zip_path) as zip_file:
+            for file_name in zip_file.namelist():
+                if match := re.search('response_ESA(\d*).dat', file_name):
+                    number = int(match[1])
+                    transposed = np.loadtxt(zip_file.open(file_name)).T
+                    files[int(number)] = InstrumentResponseLookupTable(*transposed)
+        return cls(files)
