@@ -5,7 +5,6 @@ from datetime import datetime
 
 import numpy as np
 import scipy.optimize
-from matplotlib import pyplot as plt
 from numpy import ndarray
 from scipy.optimize import OptimizeResult
 from spiceypy import spiceypy
@@ -26,7 +25,7 @@ def calculate_pickup_ion_values(instrument_response_lookup_table, geometric_fact
                                 count_rates: uarray, epoch: datetime,
                                 background_count_rate_cutoff: float, sw_velocity_vector: ndarray,
                                 density_of_neutral_helium_lookup_table: DensityOfNeutralHeliumLookupTable) -> FittingParameters:
-    initial_guess = np.array([1.5, 1.e-7, 520, 0.1])
+    initial_guess = np.array([1.5, 3e-13, 520, 0.1])
     energy_labels = range(62, 0, -1)
     energy_cutoff = calculate_pui_energy_cutoff(epoch, sw_velocity_vector)
     extracted_energy_labels, extracted_energies, extracted_count_rates = extract_pui_energy_bins(energy_labels, energy,
@@ -38,10 +37,14 @@ def calculate_pickup_ion_values(instrument_response_lookup_table, geometric_fact
                                                            density_of_neutral_helium_lookup_table)
     indices = list(zip(extracted_energy_labels, extracted_energies))
 
+    sw_velocity = np.linalg.norm(sw_velocity_vector)
     result: OptimizeResult = scipy.optimize.minimize(calc_chi_squared, initial_guess,
-                                                     bounds=((0, None), (0, None), (0, None), (0, None)),
+                                                     bounds=((1.0, 5.0), (1e-14, 1e-5),
+                                                             (sw_velocity * .8, sw_velocity * 1.2), (0, 0.2)),
                                                      args=(extracted_count_rates, indices, model_count_rate_calculator,
-                                                           epoch))
+                                                           epoch),
+                                                     method='Nelder-Mead',
+                                                     options=dict(disp=True))
     # uncertainty inputs and/or outputs?
     return FittingParameters(*result.x)
 
@@ -91,9 +94,8 @@ class ForwardModel:
     solar_wind_vector_inertial_frame: float
     density_of_neutral_helium_lookup_table: DensityOfNeutralHeliumLookupTable
 
-    def f(self, energy, theta, phi):
+    def compute_from_instrument_frame(self, speed, theta, phi):
         ephemeris_time = spiceypy.datetime2et(self.epoch)
-        speed = calculate_sw_speed(PUI_PARTICLE_MASS_KG, PUI_PARTICLE_CHARGE_COULOMBS, energy)  # energy vs E/q?
         pui_vector_instrument_frame = calculate_velocity_vector(speed, theta, phi)
         pui_vector_gse_frame = convert_velocity_relative_to_imap(pui_vector_instrument_frame, ephemeris_time,
                                                                  "IMAP_SWAPI", "GSE")
@@ -103,16 +105,19 @@ class ForwardModel:
         imap_position_eclip2000_frame_state = spiceypy.spkezr("IMAP", ephemeris_time, "ECLIPJ2000", "NONE", "SUN")[0][
                                               0:3]
         distance_km, longitude, latitude = spiceypy.reclat(imap_position_eclip2000_frame_state)
-        distance_au = distance_km / ONE_AU_IN_KM
         psi = np.rad2deg(longitude) - HELIUM_INFLOW_LONGITUDE_DEGREES_IN_ECLIPJ2000
+        distance_au = distance_km / ONE_AU_IN_KM
+        result = self.f(distance_au, w, psi)
+        return result
 
+    def f(self, radius_in_au, w, psi):
         neutral_helium_density_per_cm3 = self.density_of_neutral_helium_lookup_table.density(
-            psi, distance_au * w ** self.fitting_params.cooling_index)
+            psi, radius_in_au * w ** self.fitting_params.cooling_index)
         neutral_helium_density_per_km3 = neutral_helium_density_per_cm3 * (
                 CENTIMETERS_PER_METER * METERS_PER_KILOMETER) ** 3
         term1 = self.fitting_params.cooling_index / (4 * np.pi)
         term2 = (self.fitting_params.ionization_rate * ONE_AU_IN_KM ** 2) / (
-                distance_km * self.solar_wind_vector_inertial_frame * self.fitting_params.cutoff_speed)
+                radius_in_au * ONE_AU_IN_KM * self.solar_wind_vector_inertial_frame * self.fitting_params.cutoff_speed)
         term3 = w ** (self.fitting_params.cooling_index - 3)
         term4 = neutral_helium_density_per_km3
         term5 = np.heaviside(1 - w, 0.5)
@@ -165,36 +170,31 @@ def calc_chi_squared(fit_params_array: np.ndarray, observed_count_rates: np.ndar
     fit_params = FittingParameters(cooling_index, ionization_rate, cutoff_speed, background_count_rate)
     modeled_rates = calculator.model_count_rate(indices_and_energy_centers, fit_params, epoch)
 
-    energies = [energy for index, energy in indices_and_energy_centers]
-    plt.loglog(energies, observed_count_rates)
-    plt.loglog(energies, modeled_rates)
-    plt.show()
     result = 2 * sum(
         modeled_rates - observed_count_rates + observed_count_rates * np.log(observed_count_rates / modeled_rates))
-    print("chisquared", result)
-    print(fit_params)
+
     return result
 
 
 def model_count_rate_integral(response_lookup_table: InstrumentResponseLookupTable, forward_model: ForwardModel):
     speed = calculate_sw_speed(PUI_PARTICLE_MASS_KG, PUI_PARTICLE_CHARGE_COULOMBS,
                                response_lookup_table.energy)
-    colatitude = 90 - response_lookup_table.elevation
-    count_rates = forward_model.f(response_lookup_table.energy, colatitude, response_lookup_table.azimuth)
+    count_rates = forward_model.compute_from_instrument_frame(speed, response_lookup_table.elevation,
+                                                              response_lookup_table.azimuth)
 
     integrals = response_lookup_table.response * count_rates \
                 * speed ** 4 * \
-                response_lookup_table.d_energy * np.sin(np.deg2rad(colatitude)) * \
+                response_lookup_table.d_energy * np.cos(np.deg2rad(response_lookup_table.elevation)) * \
                 response_lookup_table.d_azimuth * response_lookup_table.d_elevation
 
     return np.sum(integrals)
 
 
 def _model_count_rate_denominator(response_lookup_table: InstrumentResponseLookupTable) -> float:
-    colatitude_radians = np.deg2rad(90 - response_lookup_table.elevation)
+    elevation_radians = np.deg2rad(response_lookup_table.elevation)
 
-    rows = response_lookup_table.d_energy * np.sin(
-        colatitude_radians) * response_lookup_table.d_elevation * response_lookup_table.d_azimuth
+    rows = response_lookup_table.d_energy * np.cos(
+        elevation_radians) * response_lookup_table.d_elevation * response_lookup_table.d_azimuth
 
     return rows.sum()
 
@@ -217,11 +217,11 @@ def convert_velocity_relative_to_imap(velocity, ephemeris_time, from_frame, to_f
     return velocity_in_target_frame_relative_to_imap + imap_velocity
 
 
-def calculate_velocity_vector(sw_speed: ndarray, colatitude: ndarray, azimuth: ndarray) -> np.ndarray:
-    colat_radians = np.deg2rad(colatitude)
+def calculate_velocity_vector(sw_speed: ndarray, elevation: ndarray, azimuth: ndarray) -> np.ndarray:
+    elevation_radians = np.deg2rad(elevation)
     azimuth_radians = np.deg2rad(azimuth)
-    z = sw_speed * np.cos(colat_radians)
-    xy_radius = sw_speed * np.sin(colat_radians)
+    z = sw_speed * np.sin(elevation_radians)
+    xy_radius = sw_speed * np.cos(elevation_radians)
     x = xy_radius * np.cos(azimuth_radians)
     y = xy_radius * np.sin(azimuth_radians)
     return np.transpose([x, y, z])
