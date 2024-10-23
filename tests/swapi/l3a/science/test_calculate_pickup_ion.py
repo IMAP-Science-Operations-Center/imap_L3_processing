@@ -295,11 +295,13 @@ class TestCalculatePickupIon(unittest.TestCase):
         np.testing.assert_array_equal(actual_elevations, lookup_table.elevation)
         np.testing.assert_array_equal(actual_azimuths, lookup_table.azimuth)
 
+    @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.extract_pui_energy_bins")
     @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.calculate_pui_energy_cutoff")
     @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.scipy.optimize.minimize")
     @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.spiceypy")
-    def test_calculate_pickup_ions_with_minimize_mocked(self, mock_spice, mock_minimize,
-                                                        mock_calculate_pui_energy_cutoff):
+    @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.calculate_combined_sweeps")
+    def test_calculate_pickup_ions_with_minimize_mocked(self, mock_calculate_combined_sweeps, mock_spice, mock_minimize,
+                                                        mock_calculate_pui_energy_cutoff, mock_extract_pui_energy_bins):
         ephemeris_time_for_epoch = 100000
         mock_spice.unitim.return_value = ephemeris_time_for_epoch
 
@@ -317,7 +319,15 @@ class TestCalculatePickupIon(unittest.TestCase):
             count_rate_delta = cdf["swp_coin_unc"][...]
 
             count_rates_with_uncertainty = uarray(count_rate, count_rate_delta)
-            average_count_rates, energies = calculate_combined_sweeps(count_rate, energy)
+            combined_counts, combined_energies = calculate_combined_sweeps(count_rate, energy)
+            mock_calculate_combined_sweeps.return_value = combined_counts, combined_energies
+            extracted_counts = [1.9, 1.2, 0.4]
+            extracted_energies = [5000, 4000, 3000]
+            extracted_indices = [4, 3, 2]
+            expected_indices = [(4, 5000), (3, 4000), (2, 3000)]
+            mock_extract_pui_energy_bins.return_value = (
+                extracted_indices, extracted_energies, extracted_counts
+            )
             response_lut_path = Path(
                 imap_processing.__file__).parent.parent / "swapi" / "test_data" / "truncated_swapi_response_simion_v1.zip"
 
@@ -331,16 +341,24 @@ class TestCalculatePickupIon(unittest.TestCase):
             input_epochs = cdf.raw_var("epoch")[...]
             sw_velocity = np.array([2, 0, 0])
             mock_minimize.return_value.x = [1, 2, 3, 4]
-            mock_calculate_pui_energy_cutoff.return_value = 6000.0
+            energy_cutoff = 6000.0
+            mock_calculate_pui_energy_cutoff.return_value = energy_cutoff
 
             actual_fitting_parameters = calculate_pickup_ion_values(
-                instrument_response_collection, geometric_factor_lut, energies,
-                average_count_rates, input_epochs, background_count_rate_cutoff, sw_velocity,
+                instrument_response_collection, geometric_factor_lut, energy,
+                count_rate, input_epochs, background_count_rate_cutoff, sw_velocity,
                 self.density_of_neutral_helium_lookup_table)
+
+            mock_calculate_combined_sweeps.assert_called_once_with(count_rate, energy)
 
             mock_spice.unitim.assert_called_with(input_epochs[0] / 1e9 + 300, "TT", "ET")
             mock_calculate_pui_energy_cutoff.assert_called_with(ephemeris_time_for_epoch, sw_velocity)
-            extracted_count_rates, indices, model_count_rates_calculator, ephemeris_time = \
+            mock_extract_pui_energy_bins.assert_called_with(range(62, 0, -1),
+                                                            combined_energies,
+                                                            combined_counts,
+                                                            energy_cutoff,
+                                                            background_count_rate_cutoff)
+            actual_count_rates, indices, model_count_rates_calculator, ephemeris_time = \
                 mock_minimize.call_args.kwargs['args']
             actual_bounds = mock_minimize.call_args.kwargs['bounds']
             _, actual_initial_guess = mock_minimize.call_args.args
@@ -349,6 +367,8 @@ class TestCalculatePickupIon(unittest.TestCase):
             np.testing.assert_array_equal(expected_initial_guess, actual_initial_guess)
             expected_bounds = ((1.0, 5.0), (0.6e-7, 2.1e-7), (2 * .8, 2 * 1.2), (0, 0.2))
             self.assertEqual(expected_bounds, actual_bounds)
+            self.assertEqual(expected_indices, indices)
+            np.testing.assert_array_equal(extracted_counts, actual_count_rates)
             np.testing.assert_array_equal(model_count_rates_calculator.solar_wind_vector, sw_velocity)
             self.assertEqual('Nelder-Mead', mock_minimize.call_args.kwargs['method'])
             self.assertEqual(ephemeris_time_for_epoch, ephemeris_time)
@@ -373,7 +393,6 @@ class TestCalculatePickupIon(unittest.TestCase):
             energy = cdf["energy"][...]
             count_rate = cdf["swp_coin_rate"][...]
 
-            average_count_rates, energies = calculate_combined_sweeps(count_rate, energy)
             response_lut_path = Path(
                 imap_processing.__file__).parent.parent / "swapi" / "test_data" / "swapi_response_simion_v1.zip"
 
@@ -388,8 +407,8 @@ class TestCalculatePickupIon(unittest.TestCase):
             sw_velocity_vector = np.array([500, 0, 0])
 
             actual_fitting_parameters = calculate_pickup_ion_values(
-                instrument_response_collection, geometric_factor_lut, energies,
-                average_count_rates, epoch, background_count_rate_cutoff, sw_velocity_vector,
+                instrument_response_collection, geometric_factor_lut, energy,
+                count_rate, epoch, background_count_rate_cutoff, sw_velocity_vector,
                 self.density_of_neutral_helium_lookup_table)
 
             mock_spice.unitim.assert_called_with((epoch[0] + FIVE_MINUTES_IN_NANOSECONDS) / NANOSECONDS_IN_SECONDS,

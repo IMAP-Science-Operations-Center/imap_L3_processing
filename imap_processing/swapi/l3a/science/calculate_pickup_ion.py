@@ -13,6 +13,7 @@ from imap_processing.constants import HYDROGEN_INFLOW_SPEED_IN_KM_PER_SECOND, PR
     PUI_PARTICLE_MASS_KG, PUI_PARTICLE_CHARGE_COULOMBS, HYDROGEN_INFLOW_LATITUDE_DEGREES_IN_ECLIPJ2000, \
     HYDROGEN_INFLOW_LONGITUDE_DEGREES_IN_ECLIPJ2000, ONE_AU_IN_KM, HELIUM_INFLOW_LONGITUDE_DEGREES_IN_ECLIPJ2000, \
     METERS_PER_KILOMETER, CENTIMETERS_PER_METER, FIVE_MINUTES_IN_NANOSECONDS, NANOSECONDS_IN_SECONDS
+from imap_processing.swapi.l3a.science.calculate_alpha_solar_wind_speed import calculate_combined_sweeps
 from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_speed import calculate_sw_speed
 from imap_processing.swapi.l3b.science.geometric_factor_calibration_table import GeometricFactorCalibrationTable
 from imap_processing.swapi.l3b.science.instrument_response_lookup_table import InstrumentResponseLookupTable, \
@@ -20,7 +21,7 @@ from imap_processing.swapi.l3b.science.instrument_response_lookup_table import I
 
 
 def calculate_pickup_ion_values(instrument_response_lookup_table, geometric_factor_calibration_table,
-                                energy: list[float],
+                                energy: np.ndarray[float],
                                 count_rates: uarray, epoch: np.ndarray,
                                 background_count_rate_cutoff: float, sw_velocity_vector: ndarray,
                                 density_of_neutral_helium_lookup_table: DensityOfNeutralHeliumLookupTable) -> FittingParameters:
@@ -30,8 +31,11 @@ def calculate_pickup_ion_values(instrument_response_lookup_table, geometric_fact
     initial_guess = np.array([1.5, 1e-7, 520, 0.1])
     energy_labels = range(62, 0, -1)
     energy_cutoff = calculate_pui_energy_cutoff(ephemeris_time, sw_velocity_vector)
-    extracted_energy_labels, extracted_energies, extracted_count_rates = extract_pui_energy_bins(energy_labels, energy,
-                                                                                                 count_rates,
+    average_count_rates, energies = calculate_combined_sweeps(count_rates, energy)
+
+    extracted_energy_labels, extracted_energies, extracted_count_rates = extract_pui_energy_bins(energy_labels,
+                                                                                                 energies,
+                                                                                                 average_count_rates,
                                                                                                  energy_cutoff,
                                                                                                  background_count_rate_cutoff)
     model_count_rate_calculator = ModelCountRateCalculator(instrument_response_lookup_table,
