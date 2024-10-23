@@ -3,7 +3,7 @@ import dataclasses
 import imap_data_access
 import numpy as np
 from uncertainties import ufloat
-from uncertainties.unumpy import uarray
+from uncertainties.unumpy import uarray, nominal_values
 
 from imap_processing.constants import THIRTY_SECONDS_IN_NANOSECONDS, FIVE_MINUTES_IN_NANOSECONDS
 from imap_processing.processor import Processor
@@ -111,9 +111,10 @@ class SwapiProcessor(Processor):
             alpha_solar_wind_densities.append(alpha_density)
             alpha_solar_wind_temperatures.append(alpha_temperature)
 
-        ten_minute_solar_wind_velocities = calculate_ten_minute_velocities(proton_solar_wind_speeds,
-                                                                           proton_solar_wind_deflection_angles,
-                                                                           proton_solar_wind_clock_angles)
+        ten_minute_solar_wind_velocities = calculate_ten_minute_velocities(
+            nominal_values(proton_solar_wind_speeds),
+            nominal_values(proton_solar_wind_deflection_angles),
+            nominal_values(proton_solar_wind_clock_angles))
         pui_epochs = []
         pui_cooling_index = []
         pui_ionization_rate = []

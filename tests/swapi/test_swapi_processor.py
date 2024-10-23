@@ -241,9 +241,9 @@ class TestSwapiProcessor(TestCase):
         self.assertEqual(0.1, background_rate_cutoff)
         np.testing.assert_array_equal([17, 18, 19], sw_velocity)
 
-        mock_calculate_ten_minute_velocities.assert_called_with([returned_proton_sw_speed],
-                                                                [returned_proton_sw_deflection_angle],
-                                                                [returned_proton_sw_clock_angle])
+        mock_calculate_ten_minute_velocities.assert_called_with([returned_proton_sw_speed.nominal_value],
+                                                                [returned_proton_sw_deflection_angle.nominal_value],
+                                                                [returned_proton_sw_clock_angle.nominal_value])
         proton_cdf_path = f"{self.temp_directory}/imap_swapi_l3a_proton-sw-fake-menlo-{mock_uuid_value}_{start_date_as_str}_12345.cdf"
         alpha_cdf_path = f"{self.temp_directory}/imap_swapi_l3a_alpha-sw-fake-menlo-{mock_uuid_value}_{start_date_as_str}_12345.cdf"
         pui_cdf_path = f"{self.temp_directory}/imap_swapi_l3a_pui-he-fake-menlo-{mock_uuid_value}_{start_date_as_str}_12345.cdf"
