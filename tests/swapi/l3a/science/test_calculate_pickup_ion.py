@@ -28,7 +28,7 @@ class TestCalculatePickupIon(unittest.TestCase):
 
     def setUp(self) -> None:
         density_of_neutral_helium_lut_path = Path(
-            imap_processing.__file__).parent.parent / "swapi" / "test_data" / "neutral_He_density.txt"
+            imap_processing.__file__).parent.parent / "swapi" / "test_data" / "imap_swapi_l2_density-of-neutral-helium-lut-text-not-cdf_20241023_v001.cdf"
 
         self.density_of_neutral_helium_lookup_table = DensityOfNeutralHeliumLookupTable.from_file(
             density_of_neutral_helium_lut_path)
@@ -394,7 +394,7 @@ class TestCalculatePickupIon(unittest.TestCase):
             count_rate = cdf["swp_coin_rate"][...]
 
             response_lut_path = Path(
-                imap_processing.__file__).parent.parent / "swapi" / "test_data" / "swapi_response_simion_v1.zip"
+                imap_processing.__file__).parent.parent / "swapi" / "test_data" / "imap_swapi_l2_instrument-response-lut-zip-not-cdf_20241023_v001.cdf"
 
             instrument_response_collection = InstrumentResponseLookupTableCollection.from_file(response_lut_path)
 

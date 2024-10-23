@@ -7,7 +7,7 @@ from uncertainties.unumpy import uarray
 
 from imap_processing.constants import THIRTY_SECONDS_IN_NANOSECONDS, FIVE_MINUTES_IN_NANOSECONDS
 from imap_processing.processor import Processor
-from imap_processing.swapi.l3a.models import SwapiL3ProtonSolarWindData, SwapiL3AlphaSolarWindData
+from imap_processing.swapi.l3a.models import SwapiL3ProtonSolarWindData, SwapiL3AlphaSolarWindData, SwapiL3PickupIonData
 from imap_processing.swapi.l3a.science.calculate_alpha_solar_wind_speed import calculate_alpha_solar_wind_speed, \
     calculate_combined_sweeps
 from imap_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density import \
@@ -41,11 +41,13 @@ class SwapiProcessor(Processor):
         if self.input_metadata.data_level == "l3a":
             l3a_dependencies = SwapiL3ADependencies.fetch_dependencies(dependencies)
             data = read_l2_swapi_data(l3a_dependencies.data)
-            proton_data, alpha_data = self.process_l3a(data, l3a_dependencies)
+            proton_data, alpha_data, pui_he_data = self.process_l3a(data, l3a_dependencies)
             proton_cdf = save_data(proton_data)
             alpha_cdf = save_data(alpha_data)
+            pui_he_cdf = save_data(pui_he_data)
             imap_data_access.upload(proton_cdf)
             imap_data_access.upload(alpha_cdf)
+            imap_data_access.upload(pui_he_cdf)
         elif self.input_metadata.data_level == "l3b":
             l3b_dependencies = SwapiL3BDependencies.fetch_dependencies(dependencies)
             data = read_l2_swapi_data(l3b_dependencies.data)
@@ -53,7 +55,8 @@ class SwapiProcessor(Processor):
             cdf_path = save_data(l3b_combined_vdf)
             imap_data_access.upload(cdf_path)
 
-    def process_l3a(self, data, dependencies) -> tuple[SwapiL3ProtonSolarWindData, SwapiL3AlphaSolarWindData]:
+    def process_l3a(self, data, dependencies) -> tuple[
+        SwapiL3ProtonSolarWindData, SwapiL3AlphaSolarWindData, SwapiL3PickupIonData]:
         epochs = []
 
         proton_solar_wind_speeds = []
@@ -111,13 +114,27 @@ class SwapiProcessor(Processor):
         ten_minute_solar_wind_velocities = calculate_ten_minute_velocities(proton_solar_wind_speeds,
                                                                            proton_solar_wind_deflection_angles,
                                                                            proton_solar_wind_clock_angles)
+        pui_epochs = []
+        pui_cooling_index = []
+        pui_ionization_rate = []
+        pui_cutoff_speed = []
+        pui_background_rate = []
         for data_chunk, sw_velocity in zip(chunk_l2_data(data, 50), ten_minute_solar_wind_velocities):
-            _ = calculate_pickup_ion_values(dependencies.instrument_response_calibration_table,
-                                            dependencies.geometric_factor_calibration_table, data_chunk.energy,
-                                            data_chunk.coincidence_count_rate,
-                                            data_chunk.epoch, 0.1,
-                                            sw_velocity,
-                                            dependencies.density_of_neutral_helium_calibration_table)
+            fit_params = calculate_pickup_ion_values(dependencies.instrument_response_calibration_table,
+                                                     dependencies.geometric_factor_calibration_table, data_chunk.energy,
+                                                     data_chunk.coincidence_count_rate,
+                                                     data_chunk.epoch, 0.1,
+                                                     sw_velocity,
+                                                     dependencies.density_of_neutral_helium_calibration_table)
+            pui_epochs.append(data_chunk.epoch[0] + FIVE_MINUTES_IN_NANOSECONDS)
+            pui_cooling_index.append(fit_params.cooling_index)
+            pui_ionization_rate.append(fit_params.ionization_rate)
+            pui_cutoff_speed.append(fit_params.cutoff_speed)
+            pui_background_rate.append(fit_params.background_count_rate)
+        pui_metadata = self.input_metadata.to_upstream_data_dependency("pui-he")
+        pui_data = SwapiL3PickupIonData(pui_metadata, np.array(pui_epochs), np.array(pui_cooling_index),
+                                        np.array(pui_ionization_rate),
+                                        np.array(pui_cutoff_speed), np.array(pui_background_rate))
 
         proton_solar_wind_speed_metadata = self.input_metadata.to_upstream_data_dependency("proton-sw")
 
@@ -133,7 +150,7 @@ class SwapiProcessor(Processor):
                                                              np.array(alpha_solar_wind_speeds),
                                                              np.array(alpha_solar_wind_temperatures),
                                                              np.array(alpha_solar_wind_densities))
-        return proton_solar_wind_l3_data, alpha_solar_wind_l3_data
+        return proton_solar_wind_l3_data, alpha_solar_wind_l3_data, pui_data
 
     def process_l3b(self, data, dependencies):
         epochs = []

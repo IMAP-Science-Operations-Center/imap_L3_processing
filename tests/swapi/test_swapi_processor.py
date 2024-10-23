@@ -31,6 +31,7 @@ class TestSwapiProcessor(TestCase):
         self.mock_imap_patcher.stop()
 
     @patch('imap_processing.utils.ImapAttributeManager')
+    @patch('imap_processing.swapi.swapi_processor.SwapiL3PickupIonData')
     @patch('imap_processing.swapi.swapi_processor.SwapiL3AlphaSolarWindData')
     @patch('imap_processing.swapi.swapi_processor.SwapiL3ProtonSolarWindData')
     @patch('imap_processing.utils.write_cdf')
@@ -58,6 +59,7 @@ class TestSwapiProcessor(TestCase):
                          mock_calculate_proton_solar_wind_speed,
                          mock_read_l2_swapi_data, mock_chunk_l2_data, mock_uuid, mock_write_cdf,
                          mock_proton_solar_wind_data_constructor, mock_alpha_solar_wind_data_constructor,
+                         mock_pickup_ion_data_constructor,
                          mock_imap_attribute_manager):
         mock_uuid_value = 123
         mock_uuid.uuid4.return_value = mock_uuid_value
@@ -125,6 +127,10 @@ class TestSwapiProcessor(TestCase):
         alpha_solar_wind_data = mock_alpha_solar_wind_data_constructor.return_value
         expected_alpha_metadata = input_metadata.to_upstream_data_dependency("alpha-sw")
         alpha_solar_wind_data.input_metadata = expected_alpha_metadata
+
+        pickup_ion_data = mock_pickup_ion_data_constructor.return_value
+        expected_pickup_ion_metadata = input_metadata.to_upstream_data_dependency("pui-he")
+        pickup_ion_data.input_metadata = expected_pickup_ion_metadata
 
         mock_manager = mock_imap_attribute_manager.return_value
 
@@ -240,6 +246,7 @@ class TestSwapiProcessor(TestCase):
                                                                 [returned_proton_sw_clock_angle])
         proton_cdf_path = f"{self.temp_directory}/imap_swapi_l3a_proton-sw-fake-menlo-{mock_uuid_value}_{start_date_as_str}_12345.cdf"
         alpha_cdf_path = f"{self.temp_directory}/imap_swapi_l3a_alpha-sw-fake-menlo-{mock_uuid_value}_{start_date_as_str}_12345.cdf"
+        pui_cdf_path = f"{self.temp_directory}/imap_swapi_l3a_pui-he-fake-menlo-{mock_uuid_value}_{start_date_as_str}_12345.cdf"
         mock_manager.add_global_attribute.assert_has_calls([call("Data_version", outgoing_version),
                                                             call("Generation_date", date.today().strftime("%Y%m%d")),
                                                             call("Logical_source",
@@ -252,10 +259,15 @@ class TestSwapiProcessor(TestCase):
                                                                  "imap_swapi_l3a_alpha-sw"),
                                                             call("Logical_file_id",
                                                                  f"imap_swapi_l3a_alpha-sw-fake-menlo-{mock_uuid_value}_{start_date_as_str}_12345"),
+                                                            call("Data_version", outgoing_version),
+                                                            call("Generation_date", date.today().strftime("%Y%m%d")),
+                                                            call("Logical_source",
+                                                                 "imap_swapi_l3a_pui-he"),
+                                                            call("Logical_file_id",
+                                                                 f"imap_swapi_l3a_pui-he-fake-menlo-{mock_uuid_value}_{start_date_as_str}_12345"),
                                                             ])
 
         actual_alpha_metadata, actual_alpha_epoch, actual_alpha_sw_speed, actual_alpha_sw_temperature, actual_alpha_sw_density = mock_alpha_solar_wind_data_constructor.call_args.args
-        expected_alpha_metadata = input_metadata.to_upstream_data_dependency("alpha-sw")
         self.assertEqual(expected_alpha_metadata, actual_alpha_metadata)
 
         np.testing.assert_array_equal(np.array([initial_epoch + THIRTY_SECONDS_IN_NANOSECONDS]), actual_alpha_epoch)
@@ -266,12 +278,22 @@ class TestSwapiProcessor(TestCase):
         np.testing.assert_array_equal(np.array([mock_alpha_calculate_temperature_and_density.return_value[1]]),
                                       actual_alpha_sw_density)
 
+        actual_pui_metadata, actual_pui_epoch, actual_pui_cooling_index, actual_pui_ionization_rate, \
+            actual_pui_cutoff_speed, actual_pui_background_rate = mock_pickup_ion_data_constructor.call_args.args
+        self.assertEqual(expected_pickup_ion_metadata, actual_pui_metadata)
+        np.testing.assert_array_equal(np.array([initial_epoch + FIVE_MINUTES_IN_NANOSECONDS]), actual_pui_epoch)
+        np.testing.assert_array_equal(np.array([1]), actual_pui_cooling_index)
+        np.testing.assert_array_equal(np.array([2]), actual_pui_ionization_rate)
+        np.testing.assert_array_equal(np.array([3]), actual_pui_cutoff_speed)
+        np.testing.assert_array_equal(np.array([4]), actual_pui_background_rate)
+
         mock_manager.add_instrument_attrs.assert_has_calls([call("swapi", "l3a"), call("swapi", "l3a")])
         mock_write_cdf.assert_has_calls([
             call(proton_cdf_path, proton_solar_wind_data, mock_manager),
-            call(alpha_cdf_path, alpha_solar_wind_data, mock_manager)
+            call(alpha_cdf_path, alpha_solar_wind_data, mock_manager),
+            call(pui_cdf_path, pickup_ion_data, mock_manager),
         ])
-        self.mock_imap_api.upload.assert_has_calls([call(proton_cdf_path), call(alpha_cdf_path)])
+        self.mock_imap_api.upload.assert_has_calls([call(proton_cdf_path), call(alpha_cdf_path), call(pui_cdf_path)])
 
     @patch('imap_processing.swapi.swapi_processor.imap_data_access')
     @patch('imap_processing.swapi.swapi_processor.calculate_delta_minus_plus')
