@@ -27,8 +27,9 @@ def calculate_pickup_ion_values(instrument_response_lookup_table, geometric_fact
                                 density_of_neutral_helium_lookup_table: DensityOfNeutralHeliumLookupTable) -> FittingParameters:
     center_of_epoch = epoch[0] + FIVE_MINUTES_IN_NANOSECONDS
     ephemeris_time = spiceypy.unitim(center_of_epoch / NANOSECONDS_IN_SECONDS, "TT", "ET")
+    sw_velocity = np.linalg.norm(sw_velocity_vector)
 
-    initial_guess = np.array([1.5, 1e-7, 520, 0.1])
+    initial_guess = np.array([1.5, 1e-7, sw_velocity, 0.1])
     energy_labels = range(62, 0, -1)
     energy_cutoff = calculate_pui_energy_cutoff(ephemeris_time, sw_velocity_vector)
     average_count_rates, energies = calculate_combined_sweeps(count_rates, energy)
@@ -43,14 +44,14 @@ def calculate_pickup_ion_values(instrument_response_lookup_table, geometric_fact
                                                            density_of_neutral_helium_lookup_table)
     indices = list(zip(extracted_energy_labels, extracted_energies))
 
-    sw_velocity = np.linalg.norm(sw_velocity_vector)
-    result: OptimizeResult = scipy.optimize.minimize(calc_chi_squared, initial_guess,
-                                                     bounds=((1.0, 5.0), (0.6e-7, 2.1e-7),
-                                                             (sw_velocity * .8, sw_velocity * 1.2), (0, 0.2)),
-                                                     args=(extracted_count_rates, indices, model_count_rate_calculator,
-                                                           ephemeris_time),
-                                                     method='Nelder-Mead',
-                                                     options=dict(disp=True))
+    result: OptimizeResult = scipy.optimize.minimize(
+        calc_chi_squared, initial_guess,
+        bounds=((1.0, 5.0), (0.6e-7, 2.1e-7),
+                (sw_velocity * .8, sw_velocity * 1.2), (0, 0.2)),
+        args=(extracted_count_rates, indices, model_count_rate_calculator,
+              ephemeris_time),
+        method='Nelder-Mead',
+        options=dict(disp=True))
     # uncertainty inputs and/or outputs?
     return FittingParameters(*result.x)
 

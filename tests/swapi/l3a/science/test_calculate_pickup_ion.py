@@ -339,7 +339,7 @@ class TestCalculatePickupIon(unittest.TestCase):
             geometric_factor_lut = GeometricFactorCalibrationTable.from_file(geometric_factor_lut_path)
             background_count_rate_cutoff = 0.1
             input_epochs = cdf.raw_var("epoch")[...]
-            sw_velocity = np.array([2, 0, 0])
+            sw_velocity = np.array([300, 400, 0])
             mock_minimize.return_value.x = [1, 2, 3, 4]
             energy_cutoff = 6000.0
             mock_calculate_pui_energy_cutoff.return_value = energy_cutoff
@@ -363,9 +363,9 @@ class TestCalculatePickupIon(unittest.TestCase):
             actual_bounds = mock_minimize.call_args.kwargs['bounds']
             _, actual_initial_guess = mock_minimize.call_args.args
 
-            expected_initial_guess = np.array([1.5, 1e-7, 520, 0.1])
+            expected_initial_guess = np.array([1.5, 1e-7, 500, 0.1])
             np.testing.assert_array_equal(expected_initial_guess, actual_initial_guess)
-            expected_bounds = ((1.0, 5.0), (0.6e-7, 2.1e-7), (2 * .8, 2 * 1.2), (0, 0.2))
+            expected_bounds = ((1.0, 5.0), (0.6e-7, 2.1e-7), (500 * .8, 500 * 1.2), (0, 0.2))
             self.assertEqual(expected_bounds, actual_bounds)
             self.assertEqual(expected_indices, indices)
             np.testing.assert_array_equal(extracted_counts, actual_count_rates)
