@@ -170,7 +170,7 @@ class TestCalculatePickupIon(unittest.TestCase):
 
         expected_term_1 = 0.1 / (4 * np.pi)
         expected_term_2 = (0.47 * ONE_AU_IN_KM ** 2) / (
-                imap_position_latitudinal_coordinates[0] * solar_wind_speed_inertial_frame * 42)
+                imap_position_latitudinal_coordinates[0] * solar_wind_speed_inertial_frame * 42 ** 3)
         magnitude = 8.774964387392123
         expected_term_3 = (magnitude / 42) ** (0.1 - 3)
         expected_term_4 = 1 * 1e15
@@ -345,9 +345,9 @@ class TestCalculatePickupIon(unittest.TestCase):
             actual_bounds = mock_minimize.call_args.kwargs['bounds']
             _, actual_initial_guess = mock_minimize.call_args.args
 
-            expected_initial_guess = np.array([1.5, 3e-13, 520, 0.1])
+            expected_initial_guess = np.array([1.5, 1e-7, 520, 0.1])
             np.testing.assert_array_equal(expected_initial_guess, actual_initial_guess)
-            expected_bounds = ((1.0, 5.0), (1e-14, 1e-5), (2 * .8, 2 * 1.2), (0, 0.2))
+            expected_bounds = ((1.0, 5.0), (0.6e-7, 2.1e-7), (2 * .8, 2 * 1.2), (0, 0.2))
             self.assertEqual(expected_bounds, actual_bounds)
             np.testing.assert_array_equal(model_count_rates_calculator.solar_wind_vector, sw_velocity)
             self.assertEqual('Nelder-Mead', mock_minimize.call_args.kwargs['method'])
@@ -394,8 +394,9 @@ class TestCalculatePickupIon(unittest.TestCase):
 
             mock_spice.unitim.assert_called_with((epoch[0] + FIVE_MINUTES_IN_NANOSECONDS) / NANOSECONDS_IN_SECONDS,
                                                  "TT", "ET")
+            print(actual_fitting_parameters)
             self.assertAlmostEqual(1.5, actual_fitting_parameters.cooling_index, delta=0.1)
-            self.assertAlmostEqual(3e-13, actual_fitting_parameters.ionization_rate, delta=1e-13)
+            self.assertAlmostEqual(1e-7, actual_fitting_parameters.ionization_rate, delta=5e-9)
             self.assertAlmostEqual(520, actual_fitting_parameters.cutoff_speed, delta=5)
             self.assertAlmostEqual(0.1, actual_fitting_parameters.background_count_rate, delta=0.05)
 

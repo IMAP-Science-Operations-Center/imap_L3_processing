@@ -27,7 +27,7 @@ def calculate_pickup_ion_values(instrument_response_lookup_table, geometric_fact
     center_of_epoch = epoch[0] + FIVE_MINUTES_IN_NANOSECONDS
     ephemeris_time = spiceypy.unitim(center_of_epoch / NANOSECONDS_IN_SECONDS, "TT", "ET")
 
-    initial_guess = np.array([1.5, 3e-13, 520, 0.1])
+    initial_guess = np.array([1.5, 1e-7, 520, 0.1])
     energy_labels = range(62, 0, -1)
     energy_cutoff = calculate_pui_energy_cutoff(ephemeris_time, sw_velocity_vector)
     extracted_energy_labels, extracted_energies, extracted_count_rates = extract_pui_energy_bins(energy_labels, energy,
@@ -41,7 +41,7 @@ def calculate_pickup_ion_values(instrument_response_lookup_table, geometric_fact
 
     sw_velocity = np.linalg.norm(sw_velocity_vector)
     result: OptimizeResult = scipy.optimize.minimize(calc_chi_squared, initial_guess,
-                                                     bounds=((1.0, 5.0), (1e-14, 1e-5),
+                                                     bounds=((1.0, 5.0), (0.6e-7, 2.1e-7),
                                                              (sw_velocity * .8, sw_velocity * 1.2), (0, 0.2)),
                                                      args=(extracted_count_rates, indices, model_count_rate_calculator,
                                                            ephemeris_time),
@@ -118,11 +118,11 @@ class ForwardModel:
                 CENTIMETERS_PER_METER * METERS_PER_KILOMETER) ** 3
         term1 = self.fitting_params.cooling_index / (4 * np.pi)
         term2 = (self.fitting_params.ionization_rate * ONE_AU_IN_KM ** 2) / (
-                radius_in_au * ONE_AU_IN_KM * self.solar_wind_vector_inertial_frame * self.fitting_params.cutoff_speed)
+                radius_in_au * ONE_AU_IN_KM * self.solar_wind_vector_inertial_frame * self.fitting_params.cutoff_speed ** 3)
         term3 = w ** (self.fitting_params.cooling_index - 3)
         term4 = neutral_helium_density_per_km3
         term5 = np.heaviside(1 - w, 0.5)
-        return term1 * term2 * term3 * term4 * term5  # What units should the result be in? What units are the inputs in?
+        return term1 * term2 * term3 * term4 * term5
 
 
 @dataclass
