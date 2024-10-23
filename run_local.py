@@ -33,7 +33,7 @@ def create_l3b_cdf(geometric_calibration_file, efficiency_calibration_file, cdf_
 
 if __name__ == "__main__":
     path = create_l3b_cdf(
-        "swapi/test_data/imap_swapi_l2_energy-gf-lut-not-cdf_20240923_v001.cdf",
-        "swapi/test_data/imap_swapi_l2_efficiency-lut-text-not-cdf_20241020_v002.cdf",
+        "swapi/test_data/imap_swapi_l2_energy-gf-lut-not-cdf_20240923_v002.cdf",
+        "swapi/test_data/imap_swapi_l2_efficiency-lut-text-not-cdf_20241020_v003.cdf",
         "swapi/test_data/imap_swapi_l2_sci_20100101_v001.cdf")
     print(path)

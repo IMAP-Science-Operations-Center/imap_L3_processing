@@ -334,7 +334,7 @@ class TestCalculatePickupIon(unittest.TestCase):
             instrument_response_collection = InstrumentResponseLookupTableCollection.from_file(response_lut_path)
 
             geometric_factor_lut_path = Path(
-                imap_processing.__file__).parent.parent / "swapi" / "test_data" / "imap_swapi_l2_energy-gf-lut-not-cdf_20240923_v001.cdf"
+                imap_processing.__file__).parent.parent / "swapi" / "test_data" / "imap_swapi_l2_energy-gf-lut-not-cdf_20240923_v002.cdf"
 
             geometric_factor_lut = GeometricFactorCalibrationTable.from_file(geometric_factor_lut_path)
             background_count_rate_cutoff = 0.1
@@ -399,7 +399,7 @@ class TestCalculatePickupIon(unittest.TestCase):
             instrument_response_collection = InstrumentResponseLookupTableCollection.from_file(response_lut_path)
 
             geometric_factor_lut_path = Path(
-                imap_processing.__file__).parent.parent / "swapi" / "test_data" / "imap_swapi_l2_energy-gf-lut-not-cdf_20240923_v001.cdf"
+                imap_processing.__file__).parent.parent / "swapi" / "test_data" / "imap_swapi_l2_energy-gf-lut-not-cdf_20240923_v002.cdf"
 
             geometric_factor_lut = GeometricFactorCalibrationTable.from_file(geometric_factor_lut_path)
             background_count_rate_cutoff = 0.1
