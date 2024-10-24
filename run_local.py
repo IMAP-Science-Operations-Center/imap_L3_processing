@@ -3,6 +3,7 @@ from datetime import datetime
 
 from spacepy.pycdf import CDF
 
+from imap_processing import spice_wrapper
 from imap_processing.models import InputMetadata
 from imap_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density import \
     AlphaTemperatureDensityCalibrationTable
@@ -68,8 +69,8 @@ def create_l3a_cdf(proton_temperature_density_calibration_file, alpha_temperatur
     input_metadata = InputMetadata(
         instrument='swapi',
         data_level='l3a',
-        start_date=datetime(2010, 1, 1),
-        end_date=datetime(2010, 1, 2),
+        start_date=datetime(2025, 10, 23),
+        end_date=datetime(2025, 10, 24),
         version='v999')
     processor = SwapiProcessor(None, input_metadata)
 
@@ -82,6 +83,7 @@ def create_l3a_cdf(proton_temperature_density_calibration_file, alpha_temperatur
 
 if __name__ == "__main__":
     if "l3a" in sys.argv:
+        spice_wrapper.furnish()
         paths = create_l3a_cdf(
             "swapi/test_data/imap_swapi_l2_density-temperature-lut-text-not-cdf_20240905_v002.cdf",
             "swapi/test_data/imap_swapi_l2_alpha-density-temperature-lut-text-not-cdf_20240920_v004.cdf",
@@ -89,7 +91,7 @@ if __name__ == "__main__":
             "swapi/test_data/imap_swapi_l2_energy-gf-lut-not-cdf_20240923_v002.cdf",
             "swapi/test_data/imap_swapi_l2_instrument-response-lut-zip-not-cdf_20241023_v001.cdf",
             "swapi/test_data/imap_swapi_l2_density-of-neutral-helium-lut-text-not-cdf_20241023_v001.cdf",
-            "swapi/test_data/imap_swapi_l2_sci_20100101_v001.cdf"
+            "swapi/test_data/imap_swapi_l2_50-sweeps_20250606_v001.cdf"
         )
         print(paths)
     if "l3b" in sys.argv:
@@ -98,5 +100,3 @@ if __name__ == "__main__":
             "swapi/test_data/imap_swapi_l2_efficiency-lut-text-not-cdf_20241020_v003.cdf",
             "swapi/test_data/imap_swapi_l2_sci_20100101_v001.cdf")
         print(path)
-    else:
-        pass

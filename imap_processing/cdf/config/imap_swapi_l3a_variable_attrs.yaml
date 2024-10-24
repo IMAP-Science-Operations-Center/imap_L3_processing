@@ -207,3 +207,51 @@ epoch_delta:
   UNITS: ns
   VAR_TYPE: support_data
   FORMAT: 19I
+
+pui_cooling_index:
+  <<: *default_timeseries
+  CATDESC: Pickup Ion Cooling Index
+  FIELDNAM: pui_cooling_index
+  LABLAXIS: PUI Cooling Index
+  UNITS: " "
+  SCALETYP: linear
+  VAR_TYPE: data
+  DISPLAY_TYPE: time_series
+  SCALEMIN: 0
+  SCALEMAX: 5
+
+pui_ionization_rate:
+  <<: *default_timeseries
+  CATDESC: Pickup Ion Ionization Rate
+  FIELDNAM: pui_ionization_rate
+  LABLAXIS: PUI Ionization Rate
+  UNITS: s!E-1!N
+  SCALETYP: linear
+  VAR_TYPE: data
+  DISPLAY_TYPE: time_series
+  SCALEMIN: 0
+  SCALEMAX: 3e-7
+
+pui_cutoff_speed:
+  <<: *default_timeseries
+  CATDESC: Pickup Ion Cutoff Speed
+  FIELDNAM: pui_cutoff_speed
+  LABLAXIS: PUI Cutoff Speed
+  UNITS: km/s
+  SCALETYP: linear
+  VAR_TYPE: data
+  DISPLAY_TYPE: time_series
+  SCALEMIN: 0
+  SCALEMAX: 1000
+
+pui_background_count_rate:
+  <<: *default_timeseries
+  CATDESC: Pickup Ion Background Count Rate
+  FIELDNAM: pui_background_count_rate
+  LABLAXIS: PUI Background Count Rate
+  UNITS: s!E-1!N
+  SCALETYP: linear
+  VAR_TYPE: data
+  DISPLAY_TYPE: time_series
+  SCALEMIN: 0
+  SCALEMAX: .2

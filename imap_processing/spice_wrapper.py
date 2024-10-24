@@ -1,6 +1,10 @@
 from contextlib import contextmanager
+from pathlib import Path
 
 import numpy as np
+from spiceypy import spiceypy
+
+import imap_processing
 
 FAKE_SPICE_DATA_FROM_PSP = np.array([-2.79573704e+07, 2.06980031e+07, -1.03669775e+06, -7.05092444e+01,
                                      -3.22099099e+01, 3.27852669e+00])
@@ -34,3 +38,9 @@ class FakeSpiceContext:
 
     def reclat(self, ):
         pass
+
+
+def furnish():
+    kernels = Path(imap_processing.__file__).parent.parent / "spice_kernels"
+    for file in kernels.iterdir():
+        spiceypy.furnsh(str(file))

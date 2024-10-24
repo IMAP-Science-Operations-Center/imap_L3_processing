@@ -102,9 +102,9 @@ class ForwardModel:
     density_of_neutral_helium_lookup_table: DensityOfNeutralHeliumLookupTable
 
     def compute_from_instrument_frame(self, speed, theta, phi):
-        pui_vector_instrument_frame = calculate_velocity_vector(speed, theta, phi)
+        pui_vector_instrument_frame = calculate_pui_velocity_vector(speed, theta, phi)
         pui_vector_gse_frame = convert_velocity_relative_to_imap(pui_vector_instrument_frame, self.ephemeris_time,
-                                                                 "IMAP_SWAPI", "GSE")
+                                                                 "IMAP_SWAPI", "ECLIPJ2000")
         pui_vector_solar_wind_frame = pui_vector_gse_frame - self.solar_wind_vector_gse_frame
         magnitude = np.linalg.norm(pui_vector_solar_wind_frame, axis=-1)
         w = magnitude / self.fitting_params.cutoff_speed
@@ -141,12 +141,12 @@ class ModelCountRateCalculator:
                          fitting_params: FittingParameters, ephemeris_time: float) -> np.ndarray:
         solar_wind_vector_gse_frame = convert_velocity_to_reference_frame(self.solar_wind_vector,
                                                                           ephemeris_time,
-                                                                          "IMAP_RTN",
-                                                                          "GSE")  # account for IMAP velocity?
+                                                                          "IMAP_SPACECRAFT",
+                                                                          "ECLIPJ2000")  # account for IMAP velocity?
         solar_wind_vector_inertial_frame = convert_velocity_to_reference_frame(self.solar_wind_vector,
                                                                                ephemeris_time,
-                                                                               "IMAP_RTN",
-                                                                               "HCI")  # account for IMAP velocity?
+                                                                               "IMAP_SPACECRAFT",
+                                                                               "ECLIPJ2000")  # account for IMAP velocity?
 
         forward_model = ForwardModel(fitting_params, ephemeris_time, solar_wind_vector_gse_frame,
                                      np.linalg.norm(solar_wind_vector_inertial_frame),
@@ -231,11 +231,15 @@ def calculate_velocity_vector(sw_speed: ndarray, elevation: ndarray, azimuth: nd
     return np.transpose([x, y, z])
 
 
+def calculate_pui_velocity_vector(speed: ndarray, elevation: ndarray, azimuth: ndarray) -> np.ndarray:
+    return calculate_velocity_vector(-speed, elevation, 90 + azimuth)
+
+
 def calculate_pui_energy_cutoff(ephemeris_time: float, sw_velocity_in_imap_frame):
     imap_velocity = spiceypy.spkezr("IMAP", ephemeris_time, "ECLIPJ2000", "NONE", "SUN")[0][
                     3:6]
     solar_wind_velocity = convert_velocity_relative_to_imap(
-        sw_velocity_in_imap_frame, ephemeris_time, "IMAP", "ECLIPJ2000")
+        sw_velocity_in_imap_frame, ephemeris_time, "IMAP_SPACECRAFT", "ECLIPJ2000")
     hydrogen_velocity = spiceypy.latrec(-HYDROGEN_INFLOW_SPEED_IN_KM_PER_SECOND,
                                         HYDROGEN_INFLOW_LONGITUDE_DEGREES_IN_ECLIPJ2000,
                                         HYDROGEN_INFLOW_LATITUDE_DEGREES_IN_ECLIPJ2000)
@@ -259,8 +263,13 @@ def extract_pui_energy_bins(energy_bin_labels, energies, observed_count_rates, e
     return np.array(extracted_energy_bin_labels), np.array(extracted_energy_bins), np.array(count_rates)
 
 
+def calculate_solar_wind_velocity_vector(speeds: ndarray, deflection_angle: ndarray, clock_angle: ndarray) -> ndarray:
+    elevation_angle = 90 - deflection_angle
+    return calculate_velocity_vector(-speeds, elevation_angle, clock_angle)
+
+
 def calculate_ten_minute_velocities(speeds: ndarray, deflection_angle: ndarray, clock_angle: ndarray) -> ndarray:
-    velocity_vector = calculate_velocity_vector(speeds, deflection_angle, clock_angle)
+    velocity_vector = calculate_solar_wind_velocity_vector(speeds, deflection_angle, clock_angle)
     left_slice = 0
     chunked_velocities = []
     while left_slice < len(velocity_vector):

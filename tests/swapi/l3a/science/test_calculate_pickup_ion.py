@@ -18,7 +18,7 @@ from imap_processing.swapi.l3a.science.calculate_pickup_ion import calculate_pui
     _model_count_rate_denominator, convert_velocity_relative_to_imap, calculate_velocity_vector, FittingParameters, \
     ForwardModel, convert_velocity_to_reference_frame, model_count_rate_integral, \
     calculate_pickup_ion_values, ModelCountRateCalculator, calculate_ten_minute_velocities, \
-    DensityOfNeutralHeliumLookupTable
+    DensityOfNeutralHeliumLookupTable, calculate_pui_velocity_vector, calculate_solar_wind_velocity_vector
 from imap_processing.swapi.l3b.science.geometric_factor_calibration_table import GeometricFactorCalibrationTable
 from imap_processing.swapi.l3b.science.instrument_response_lookup_table import InstrumentResponseLookupTable, \
     InstrumentResponseLookupTableCollection
@@ -52,7 +52,8 @@ class TestCalculatePickupIon(unittest.TestCase):
         mock_spice.latrec.assert_called_with(-HYDROGEN_INFLOW_SPEED_IN_KM_PER_SECOND,
                                              HYDROGEN_INFLOW_LONGITUDE_DEGREES_IN_ECLIPJ2000,
                                              HYDROGEN_INFLOW_LATITUDE_DEGREES_IN_ECLIPJ2000)
-        mock_convert_velocity.assert_called_with(solar_wind_velocity_in_imap_frame, expected_ephemeris_time, "IMAP",
+        mock_convert_velocity.assert_called_with(solar_wind_velocity_in_imap_frame, expected_ephemeris_time,
+                                                 "IMAP_SPACECRAFT",
                                                  "ECLIPJ2000")
 
         velocity_cutoff_norm = 5
@@ -139,8 +140,8 @@ class TestCalculatePickupIon(unittest.TestCase):
     @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.DensityOfNeutralHeliumLookupTable.density")
     @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.convert_velocity_relative_to_imap")
     @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.spiceypy")
-    @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.calculate_velocity_vector")
-    def test_forward_model(self, mock_calculate_velocity_vector, mock_spice, mock_convert_velocity,
+    @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.calculate_pui_velocity_vector")
+    def test_forward_model(self, mock_calculate_pui_velocity_vector, mock_spice, mock_convert_velocity,
                            mock_helium_density):
         mock_helium_density.return_value = 1
 
@@ -150,7 +151,7 @@ class TestCalculatePickupIon(unittest.TestCase):
         imap_position_latitudinal_coordinates = np.array([10, np.deg2rad(11), 12])
         mock_spice.reclat.return_value = imap_position_latitudinal_coordinates
         pui_velocity_instrument_frame = np.array([8, 6, 4])
-        mock_calculate_velocity_vector.return_value = pui_velocity_instrument_frame
+        mock_calculate_pui_velocity_vector.return_value = pui_velocity_instrument_frame
 
         pui_velocity_gse_frame = np.array([5, 7, 9])
         mock_convert_velocity.return_value = pui_velocity_gse_frame
@@ -180,11 +181,11 @@ class TestCalculatePickupIon(unittest.TestCase):
         np.testing.assert_array_equal(result, expected)
         mock_spice.spkezr.assert_called_with("IMAP", ephemeris_time_for_epoch, "ECLIPJ2000", "NONE", "SUN")
         np.testing.assert_array_equal(imap_position_rectangular_coordinates[0:3], mock_spice.reclat.call_args.args[0])
-        self.assertAlmostEqual(speed, mock_calculate_velocity_vector.call_args.args[0], 5)
-        self.assertAlmostEqual(theta, mock_calculate_velocity_vector.call_args.args[1])
-        self.assertAlmostEqual(phi, mock_calculate_velocity_vector.call_args.args[2])
+        self.assertAlmostEqual(speed, mock_calculate_pui_velocity_vector.call_args.args[0], 5)
+        self.assertAlmostEqual(theta, mock_calculate_pui_velocity_vector.call_args.args[1])
+        self.assertAlmostEqual(phi, mock_calculate_pui_velocity_vector.call_args.args[2])
         mock_convert_velocity.assert_called_with(pui_velocity_instrument_frame, ephemeris_time_for_epoch, "IMAP_SWAPI",
-                                                 "GSE")
+                                                 "ECLIPJ2000")
         mock_helium_density.assert_called_with(11 - HELIUM_INFLOW_LONGITUDE_DEGREES_IN_ECLIPJ2000,
                                                10 / ONE_AU_IN_KM * (magnitude / 42) ** 0.1,
                                                )
@@ -253,8 +254,8 @@ class TestCalculatePickupIon(unittest.TestCase):
         self.assertAlmostEqual(expected_sw_hci_vector_norm, actual_sw_hci_vector_norm)
         self.assertEqual(self.density_of_neutral_helium_lookup_table, actual_neutral_helium_lut)
         mock_convert_velocity_to_reference_frame.assert_has_calls([
-            call(sw_instrument_frame_vector, ephemeris_time_for_epoch, "IMAP_RTN", "GSE"),
-            call(sw_instrument_frame_vector, ephemeris_time_for_epoch, "IMAP_RTN", "HCI")
+            call(sw_instrument_frame_vector, ephemeris_time_for_epoch, "IMAP_SPACECRAFT", "ECLIPJ2000"),
+            call(sw_instrument_frame_vector, ephemeris_time_for_epoch, "IMAP_SPACECRAFT", "ECLIPJ2000")
         ])
 
         mock_model_count_rate_integral.assert_called_with(lookup_table, mock_forward_model.return_value)
@@ -385,7 +386,20 @@ class TestCalculatePickupIon(unittest.TestCase):
         mock_spice.spkezr.return_value = (np.array([0, 0, 0, 0, 0, 0]), mock_light_time)
         mock_spice.latrec.return_value = np.array([0, 2, 0])
         mock_spice.reclat.return_value = np.array([0.99 * ONE_AU_IN_KM, np.deg2rad(255.7), 0.6])
-        mock_spice.sxform.return_value = np.eye(6)
+
+        def mock_sxform(from_frame, to_frame, et):
+            if from_frame == "IMAP_SWAPI":
+                return np.eye(6)
+            return np.array([
+                [0, 1, 0, 0, 0, 0],
+                [0, 0, 1, 0, 0, 0],
+                [1, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 1, 0],
+                [0, 0, 0, 0, 0, 1],
+                [0, 0, 0, 1, 0, 0],
+            ])
+
+        mock_spice.sxform.side_effect = mock_sxform
 
         data_file_path = Path(
             imap_processing.__file__).parent.parent / "swapi" / "test_data" / "imap_swapi_l2_50-sweeps_20100101_v002.cdf"
@@ -404,30 +418,29 @@ class TestCalculatePickupIon(unittest.TestCase):
             geometric_factor_lut = GeometricFactorCalibrationTable.from_file(geometric_factor_lut_path)
             background_count_rate_cutoff = 0.1
             epoch = np.array([1, 2, 3, 4])
-            sw_velocity_vector = np.array([500, 0, 0])
+            sw_velocity_vector = np.array([0, 0, -500])
 
             actual_fitting_parameters = calculate_pickup_ion_values(
                 instrument_response_collection, geometric_factor_lut, energy,
                 count_rate, epoch, background_count_rate_cutoff, sw_velocity_vector,
                 self.density_of_neutral_helium_lookup_table)
-
             mock_spice.unitim.assert_called_with((epoch[0] + FIVE_MINUTES_IN_NANOSECONDS) / NANOSECONDS_IN_SECONDS,
                                                  "TT", "ET")
-            print(actual_fitting_parameters)
+
             self.assertAlmostEqual(1.5, actual_fitting_parameters.cooling_index, delta=0.1)
             self.assertAlmostEqual(1e-7, actual_fitting_parameters.ionization_rate, delta=5e-9)
             self.assertAlmostEqual(520, actual_fitting_parameters.cutoff_speed, delta=5)
             self.assertAlmostEqual(0.1, actual_fitting_parameters.background_count_rate, delta=0.05)
 
-    @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.calculate_velocity_vector")
-    def test_calculate_ten_minute_velocities(self, mock_calculate_velocity_vector):
+    @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.calculate_solar_wind_velocity_vector")
+    def test_calculate_ten_minute_velocities(self, mock_calculate_solar_wind_velocity_vector):
         x = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21])
         y = np.array([10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180,
                       190, 200, 210])
         z = np.array([10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180,
                       190, 200, 210])
 
-        mock_calculate_velocity_vector.return_value = np.transpose([x, y, z])
+        mock_calculate_solar_wind_velocity_vector.return_value = np.transpose([x, y, z])
 
         mock_speed = Mock()
         mock_deflection_angles = Mock()
@@ -436,6 +449,29 @@ class TestCalculatePickupIon(unittest.TestCase):
 
         expected_averaged_velocities = np.array([[5.5, 55, 55], [15.5, 155, 155], [21, 210, 210]])
 
-        mock_calculate_velocity_vector.assert_called_with(mock_speed, mock_deflection_angles, mock_clock_angles)
+        mock_calculate_solar_wind_velocity_vector.assert_called_with(mock_speed, mock_deflection_angles,
+                                                                     mock_clock_angles)
 
         np.testing.assert_array_equal(expected_averaged_velocities, averaged_velocities)
+
+    def test_calculate_pickup_ion_velocities(self):
+        speed = np.array([400, 390, 400, 410, 400])
+        elevation = np.array([-90, 0, 0, 0, 90])
+        azimuth = np.array([-180, -90, 0, 90, 180])
+
+        actual = calculate_pui_velocity_vector(speed, elevation, azimuth)
+
+        expected_values = [(0, 0, 400), (-390, 0, 0), (0, -400, 0), (410, 0, 0), (0, 0, -400)]
+
+        np.testing.assert_array_almost_equal(expected_values, actual, 1)
+
+    def test_calculate_solar_wind_velocity_vector(self):
+        speed = np.array([400, 390, 400, 410, 400, 400])
+        deflection_angle = np.array([90, 0, 180, 0, 90, 90])
+        clock_angle = np.array([-180, -90, 0, 90, 90, -90])
+
+        actual = calculate_solar_wind_velocity_vector(speed, deflection_angle, clock_angle)
+
+        expected_values = [(400, 0, 0), (0, 0, -390), (0, 0, 400), (0, 0, -410), (0, -400, 0), (0, 400, 0)]
+
+        np.testing.assert_array_almost_equal(expected_values, actual, 1)
