@@ -41,6 +41,9 @@ class FakeSpiceContext:
 
 
 def furnish():
-    kernels = Path(imap_processing.__file__).parent.parent / "spice_kernels"
+    if Path("/mnt/spice").is_dir():
+        kernels = Path("/mnt/spice")
+    else:
+        kernels = Path(imap_processing.__file__).parent.parent.joinpath("spice_kernels")
     for file in kernels.iterdir():
         spiceypy.furnsh(str(file))

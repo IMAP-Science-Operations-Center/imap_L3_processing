@@ -5,6 +5,7 @@ import numpy as np
 from uncertainties import ufloat
 from uncertainties.unumpy import uarray, nominal_values
 
+from imap_processing import spice_wrapper
 from imap_processing.constants import THIRTY_SECONDS_IN_NANOSECONDS, FIVE_MINUTES_IN_NANOSECONDS
 from imap_processing.processor import Processor
 from imap_processing.swapi.l3a.models import SwapiL3ProtonSolarWindData, SwapiL3AlphaSolarWindData, SwapiL3PickupIonData
@@ -57,6 +58,7 @@ class SwapiProcessor(Processor):
 
     def process_l3a(self, data, dependencies) -> tuple[
         SwapiL3ProtonSolarWindData, SwapiL3AlphaSolarWindData, SwapiL3PickupIonData]:
+        spice_wrapper.furnish()
         epochs = []
 
         proton_solar_wind_speeds = []

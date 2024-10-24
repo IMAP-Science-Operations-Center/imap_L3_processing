@@ -30,6 +30,7 @@ class TestSwapiProcessor(TestCase):
         shutil.rmtree(self.temp_directory)
         self.mock_imap_patcher.stop()
 
+    @patch('imap_processing.swapi.swapi_processor.spice_wrapper.furnish')
     @patch('imap_processing.utils.ImapAttributeManager')
     @patch('imap_processing.swapi.swapi_processor.SwapiL3PickupIonData')
     @patch('imap_processing.swapi.swapi_processor.SwapiL3AlphaSolarWindData')
@@ -60,7 +61,8 @@ class TestSwapiProcessor(TestCase):
                          mock_read_l2_swapi_data, mock_chunk_l2_data, mock_uuid, mock_write_cdf,
                          mock_proton_solar_wind_data_constructor, mock_alpha_solar_wind_data_constructor,
                          mock_pickup_ion_data_constructor,
-                         mock_imap_attribute_manager):
+                         mock_imap_attribute_manager,
+                         mock_spice_wrapper_furnish):
         mock_uuid_value = 123
         mock_uuid.uuid4.return_value = mock_uuid_value
 
@@ -172,6 +174,8 @@ class TestSwapiProcessor(TestCase):
         np.testing.assert_array_equal(spin_angles, mock_calculate_proton_solar_wind_speed.call_args_list[0].args[1])
         np.testing.assert_array_equal(energy, mock_calculate_proton_solar_wind_speed.call_args_list[0].args[2])
         np.testing.assert_array_equal(epoch, mock_calculate_proton_solar_wind_speed.call_args_list[0].args[3])
+
+        mock_spice_wrapper_furnish.assert_called()
 
         self.assertEqual(
             call(mock_clock_angle_and_flow_deflection_calibration_table, returned_proton_sw_speed, sentinel.a,

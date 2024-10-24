@@ -3,7 +3,6 @@ from datetime import datetime
 
 from spacepy.pycdf import CDF
 
-from imap_processing import spice_wrapper
 from imap_processing.models import InputMetadata
 from imap_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density import \
     AlphaTemperatureDensityCalibrationTable
@@ -83,7 +82,6 @@ def create_l3a_cdf(proton_temperature_density_calibration_file, alpha_temperatur
 
 if __name__ == "__main__":
     if "l3a" in sys.argv:
-        spice_wrapper.furnish()
         paths = create_l3a_cdf(
             "swapi/test_data/imap_swapi_l2_density-temperature-lut-text-not-cdf_20240905_v002.cdf",
             "swapi/test_data/imap_swapi_l2_alpha-density-temperature-lut-text-not-cdf_20240920_v004.cdf",
