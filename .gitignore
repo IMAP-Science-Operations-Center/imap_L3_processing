@@ -1,7 +1,6 @@
 .idea
 data
 test_data/*
-spice_kernels/*
 temp_cdf_data/*
 __pycache__
 venv
