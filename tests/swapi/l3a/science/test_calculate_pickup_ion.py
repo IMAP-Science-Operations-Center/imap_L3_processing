@@ -1,7 +1,7 @@
 import unittest
 from pathlib import Path
 from unittest import skip
-from unittest.mock import patch, Mock, call
+from unittest.mock import patch, Mock
 
 import numpy as np
 from spacepy.pycdf import CDF
@@ -190,23 +190,22 @@ class TestCalculatePickupIon(unittest.TestCase):
                                                10 / ONE_AU_IN_KM * (magnitude / 42) ** 0.1,
                                                )
 
-    @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.convert_velocity_to_reference_frame")
+    @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.convert_velocity_relative_to_imap")
     @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.model_count_rate_integral")
     @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.ForwardModel")
     @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.InstrumentResponseLookupTableCollection")
     @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.spiceypy")
     def test_model_count_rate(self, mock_spice, mock_instrument_response_lut_collection,
                               mock_forward_model,
-                              mock_model_count_rate_integral, mock_convert_velocity_to_reference_frame):
+                              mock_model_count_rate_integral, mock_convert_velocity_relative_to_imap):
         ephemeris_time_for_epoch = 100000
 
         sw_instrument_frame_vector = np.array([55, 66, 77])
         mock_light_time = 122.0
         mock_spice.spkezr.return_value = (np.array([99, 88, 77, 66, 55, 44]), mock_light_time)
 
-        expected_sw_gse_vector = np.array([200, 300, 400])
-        expected_sw_hci_vector = np.array([150, 250, 350])
-        mock_convert_velocity_to_reference_frame.side_effect = [expected_sw_gse_vector, expected_sw_hci_vector]
+        expected_sw_eclipj2000_vector = np.array([200, 300, 400])
+        mock_convert_velocity_relative_to_imap.return_value = expected_sw_eclipj2000_vector
 
         expected_integral_results = np.array([500, 600, 700])
         mock_model_count_rate_integral.side_effect = expected_integral_results
@@ -249,14 +248,12 @@ class TestCalculatePickupIon(unittest.TestCase):
         actual_fitting_params, actual_ephemeris_time, actual_sw_gse_vector, actual_sw_hci_vector_norm, actual_neutral_helium_lut = mock_forward_model.call_args.args
         self.assertIs(fitting_params, actual_fitting_params)
         self.assertEqual(ephemeris_time_for_epoch, actual_ephemeris_time)
-        expected_sw_hci_vector_norm = 455.521679
-        np.testing.assert_array_equal(expected_sw_gse_vector, actual_sw_gse_vector)
-        self.assertAlmostEqual(expected_sw_hci_vector_norm, actual_sw_hci_vector_norm)
+        expected_sw_eclipj2000_vector_norm = 538.5164807134504
+        np.testing.assert_array_equal(expected_sw_eclipj2000_vector, actual_sw_gse_vector)
+        self.assertAlmostEqual(expected_sw_eclipj2000_vector_norm, actual_sw_hci_vector_norm)
         self.assertEqual(self.density_of_neutral_helium_lookup_table, actual_neutral_helium_lut)
-        mock_convert_velocity_to_reference_frame.assert_has_calls([
-            call(sw_instrument_frame_vector, ephemeris_time_for_epoch, "IMAP_SPACECRAFT", "ECLIPJ2000"),
-            call(sw_instrument_frame_vector, ephemeris_time_for_epoch, "IMAP_SPACECRAFT", "ECLIPJ2000")
-        ])
+        mock_convert_velocity_relative_to_imap.assert_called_once_with(
+            sw_instrument_frame_vector, ephemeris_time_for_epoch, "IMAP_SPACECRAFT", "ECLIPJ2000")
 
         mock_model_count_rate_integral.assert_called_with(lookup_table, mock_forward_model.return_value)
 

@@ -97,15 +97,16 @@ class FittingParameters:
 class ForwardModel:
     fitting_params: FittingParameters
     ephemeris_time: float
-    solar_wind_vector_gse_frame: ndarray
-    solar_wind_vector_inertial_frame: float
+    solar_wind_vector_eclipj2000_frame: ndarray
+    solar_wind_speed_inertial_frame: float
     density_of_neutral_helium_lookup_table: DensityOfNeutralHeliumLookupTable
 
     def compute_from_instrument_frame(self, speed, theta, phi):
         pui_vector_instrument_frame = calculate_pui_velocity_vector(speed, theta, phi)
-        pui_vector_gse_frame = convert_velocity_relative_to_imap(pui_vector_instrument_frame, self.ephemeris_time,
-                                                                 "IMAP_SWAPI", "ECLIPJ2000")
-        pui_vector_solar_wind_frame = pui_vector_gse_frame - self.solar_wind_vector_gse_frame
+        pui_vector_eclipj2000_frame = convert_velocity_relative_to_imap(pui_vector_instrument_frame,
+                                                                        self.ephemeris_time,
+                                                                        "IMAP_SWAPI", "ECLIPJ2000")
+        pui_vector_solar_wind_frame = pui_vector_eclipj2000_frame - self.solar_wind_vector_eclipj2000_frame
         magnitude = np.linalg.norm(pui_vector_solar_wind_frame, axis=-1)
         w = magnitude / self.fitting_params.cutoff_speed
         imap_position_eclip2000_frame_state = spiceypy.spkezr(
@@ -123,7 +124,7 @@ class ForwardModel:
                 CENTIMETERS_PER_METER * METERS_PER_KILOMETER) ** 3
         term1 = self.fitting_params.cooling_index / (4 * np.pi)
         term2 = (self.fitting_params.ionization_rate * ONE_AU_IN_KM ** 2) / (
-                radius_in_au * ONE_AU_IN_KM * self.solar_wind_vector_inertial_frame * self.fitting_params.cutoff_speed ** 3)
+                radius_in_au * ONE_AU_IN_KM * self.solar_wind_speed_inertial_frame * self.fitting_params.cutoff_speed ** 3)
         term3 = w ** (self.fitting_params.cooling_index - 3)
         term4 = neutral_helium_density_per_km3
         term5 = np.heaviside(1 - w, 0.5)
@@ -139,17 +140,12 @@ class ModelCountRateCalculator:
 
     def model_count_rate(self, indices_and_energy_centers: list[tuple[int, float]],
                          fitting_params: FittingParameters, ephemeris_time: float) -> np.ndarray:
-        solar_wind_vector_gse_frame = convert_velocity_to_reference_frame(self.solar_wind_vector,
-                                                                          ephemeris_time,
-                                                                          "IMAP_SPACECRAFT",
-                                                                          "ECLIPJ2000")  # account for IMAP velocity?
-        solar_wind_vector_inertial_frame = convert_velocity_to_reference_frame(self.solar_wind_vector,
+        solar_wind_vector_eclipj2000_frame = convert_velocity_relative_to_imap(self.solar_wind_vector,
                                                                                ephemeris_time,
                                                                                "IMAP_SPACECRAFT",
-                                                                               "ECLIPJ2000")  # account for IMAP velocity?
-
-        forward_model = ForwardModel(fitting_params, ephemeris_time, solar_wind_vector_gse_frame,
-                                     np.linalg.norm(solar_wind_vector_inertial_frame),
+                                                                               "ECLIPJ2000")
+        forward_model = ForwardModel(fitting_params, ephemeris_time, solar_wind_vector_eclipj2000_frame,
+                                     np.linalg.norm(solar_wind_vector_eclipj2000_frame),
                                      self.density_of_neutral_helium_lookup_table)
         model_count_rates = []
         for energy_bin_index, energy_bin_center in indices_and_energy_centers:
