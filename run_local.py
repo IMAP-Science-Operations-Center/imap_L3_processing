@@ -88,7 +88,7 @@ if __name__ == "__main__":
             "swapi/test_data/imap_swapi_l2_clock-angle-and-flow-deflection-lut-text-not-cdf_20240918_v001.cdf",
             "swapi/test_data/imap_swapi_l2_energy-gf-lut-not-cdf_20240923_v002.cdf",
             "swapi/test_data/imap_swapi_l2_instrument-response-lut-zip-not-cdf_20241023_v001.cdf",
-            "swapi/test_data/imap_swapi_l2_density-of-neutral-helium-lut-text-not-cdf_20241023_v001.cdf",
+            "swapi/test_data/imap_swapi_l2_density-of-neutral-helium-lut-text-not-cdf_20241023_v002.cdf",
             "swapi/test_data/imap_swapi_l2_50-sweeps_20250606_v001.cdf"
         )
         print(paths)

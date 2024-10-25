@@ -114,7 +114,7 @@ class ModelCountRateCalculator:
                          fitting_params: FittingParameters, ephemeris_time: float) -> np.ndarray:
         solar_wind_vector_eclipj2000_frame = convert_velocity_relative_to_imap(self.solar_wind_vector,
                                                                                ephemeris_time,
-                                                                               "IMAP_SPACECRAFT",
+                                                                               "IMAP_DPS",
                                                                                "ECLIPJ2000")
         forward_model = ForwardModel(fitting_params, ephemeris_time, solar_wind_vector_eclipj2000_frame,
                                      np.linalg.norm(solar_wind_vector_eclipj2000_frame),
@@ -207,7 +207,7 @@ def calculate_pui_energy_cutoff(ephemeris_time: float, sw_velocity_in_imap_frame
     imap_velocity = spiceypy.spkezr("IMAP", ephemeris_time, "ECLIPJ2000", "NONE", "SUN")[0][
                     3:6]
     solar_wind_velocity = convert_velocity_relative_to_imap(
-        sw_velocity_in_imap_frame, ephemeris_time, "IMAP_SPACECRAFT", "ECLIPJ2000")
+        sw_velocity_in_imap_frame, ephemeris_time, "IMAP_DPS", "ECLIPJ2000")
     hydrogen_velocity = spiceypy.latrec(-HYDROGEN_INFLOW_SPEED_IN_KM_PER_SECOND,
                                         HYDROGEN_INFLOW_LONGITUDE_DEGREES_IN_ECLIPJ2000,
                                         HYDROGEN_INFLOW_LATITUDE_DEGREES_IN_ECLIPJ2000)

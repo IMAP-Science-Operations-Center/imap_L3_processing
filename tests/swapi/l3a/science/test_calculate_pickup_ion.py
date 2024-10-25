@@ -54,7 +54,7 @@ class TestCalculatePickupIon(unittest.TestCase):
                                              HYDROGEN_INFLOW_LONGITUDE_DEGREES_IN_ECLIPJ2000,
                                              HYDROGEN_INFLOW_LATITUDE_DEGREES_IN_ECLIPJ2000)
         mock_convert_velocity.assert_called_with(solar_wind_velocity_in_imap_frame, expected_ephemeris_time,
-                                                 "IMAP_SPACECRAFT",
+                                                 "IMAP_DPS",
                                                  "ECLIPJ2000")
 
         velocity_cutoff_norm = 5
@@ -254,7 +254,7 @@ class TestCalculatePickupIon(unittest.TestCase):
         self.assertAlmostEqual(expected_sw_eclipj2000_vector_norm, actual_sw_hci_vector_norm)
         self.assertEqual(self.density_of_neutral_helium_lookup_table, actual_neutral_helium_lut)
         mock_convert_velocity_relative_to_imap.assert_called_once_with(
-            sw_instrument_frame_vector, ephemeris_time_for_epoch, "IMAP_SPACECRAFT", "ECLIPJ2000")
+            sw_instrument_frame_vector, ephemeris_time_for_epoch, "IMAP_DPS", "ECLIPJ2000")
 
         mock_model_count_rate_integral.assert_called_with(lookup_table, mock_forward_model.return_value)
 
