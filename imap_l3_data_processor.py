@@ -1,6 +1,6 @@
 import argparse
 import json
-import traceback
+import logging
 from datetime import datetime
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -48,13 +48,17 @@ def imap_l3_processor():
 
 
 if __name__ == '__main__':
-    try:
-        imap_l3_processor()
-    except Exception as e:
-        with TemporaryDirectory() as dir:
-            log_path = Path(
-                dir) / f"imap_swapi_l3_log-{datetime.now().strftime('%Y-%m-%d-%H%M%S')}_20240606_v001.cdf"
-            with open(log_path, "w+") as file:
-                traceback.print_exc(file=file)
+    with TemporaryDirectory() as dir:
+        logger = logging.getLogger(__name__)
+        log_path = Path(
+            dir) / f"imap_swapi_l3_log-{datetime.now().strftime('%Y-%m-%d-%H%M%S')}_20240606_v001.cdf"
 
-            imap_data_access.upload(log_path)
+        logging.basicConfig(filename=str(log_path), level=logging.INFO)
+        logger.info('Started')
+
+        try:
+            imap_l3_processor()
+        except Exception as e:
+            logger.error("Unhandled Exception:", exc_info=e)
+        logging.shutdown()
+        imap_data_access.upload(log_path)

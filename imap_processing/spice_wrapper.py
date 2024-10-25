@@ -1,3 +1,4 @@
+import logging
 from contextlib import contextmanager
 from pathlib import Path
 
@@ -41,9 +42,20 @@ class FakeSpiceContext:
 
 
 def furnish():
-    if Path("/mnt/spice").is_dir():
-        kernels = Path("/mnt/spice")
-    else:
-        kernels = Path(imap_processing.__file__).parent.parent.joinpath("spice_kernels")
+    logger = logging.getLogger(__name__)
+
+    kernels = Path(imap_processing.__file__).parent.parent.joinpath("spice_kernels")
     for file in kernels.iterdir():
+        logger.log(logging.INFO, f"loading packaged kernel: {file}")
         spiceypy.furnsh(str(file))
+
+    kernels = Path("/mnt/spice")
+    if kernels.is_dir():
+        for file in kernels.iterdir():
+            logger.log(logging.INFO, f"Spice file: {str(file)}")
+            try:
+                if file.is_symlink():
+                    logger.log(logging.INFO, f"Spice file symlink: {file.readlink()} {file.exists()}")
+                spiceypy.furnsh(str(file))
+            except:
+                logger.exception("Error while trying to load spice kernel: ")
