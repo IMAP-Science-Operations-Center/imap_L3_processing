@@ -230,7 +230,7 @@ pui_ionization_rate:
   VAR_TYPE: data
   DISPLAY_TYPE: time_series
   SCALEMIN: 0
-  SCALEMAX: 3e-7
+  SCALEMAX: 3.0e-7
 
 pui_cutoff_speed:
   <<: *default_timeseries
