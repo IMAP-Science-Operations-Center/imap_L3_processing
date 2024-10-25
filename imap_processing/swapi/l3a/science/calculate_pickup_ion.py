@@ -15,6 +15,7 @@ from imap_processing.constants import HYDROGEN_INFLOW_SPEED_IN_KM_PER_SECOND, PR
     METERS_PER_KILOMETER, CENTIMETERS_PER_METER, FIVE_MINUTES_IN_NANOSECONDS, NANOSECONDS_IN_SECONDS
 from imap_processing.swapi.l3a.science.calculate_alpha_solar_wind_speed import calculate_combined_sweeps
 from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_speed import calculate_sw_speed
+from imap_processing.swapi.l3a.science.density_of_neutral_helium_lookup_table import DensityOfNeutralHeliumLookupTable
 from imap_processing.swapi.l3b.science.geometric_factor_calibration_table import GeometricFactorCalibrationTable
 from imap_processing.swapi.l3b.science.instrument_response_lookup_table import InstrumentResponseLookupTable, \
     InstrumentResponseLookupTableCollection
@@ -54,35 +55,6 @@ def calculate_pickup_ion_values(instrument_response_lookup_table, geometric_fact
         options=dict(disp=True))
     # uncertainty inputs and/or outputs?
     return FittingParameters(*result.x)
-
-
-class DensityOfNeutralHeliumLookupTable:
-    def __init__(self, calibration_table: np.ndarray):
-        angle = np.unique(calibration_table[:, 0])
-        distance = np.unique(calibration_table[:, 1])
-
-        self.grid = (angle, distance)
-        values_shape = tuple(len(x) for x in self.grid)
-
-        self.densities = calibration_table[:, 2].reshape(values_shape)
-
-    def density(self, angle: ndarray, distance: ndarray):
-        coords = np.empty((len(distance), 2))
-        coords[:, 0] = angle % 360
-        coords[:, 1] = distance
-        return scipy.interpolate.interpn(self.grid, self.densities,
-                                         coords, bounds_error=False, fill_value=None)
-
-    @classmethod
-    def from_file(cls, file):
-        data = np.loadtxt(file)
-        return cls(data)
-
-
-class InterstellarHeliumInflowLookupTable:
-    @staticmethod
-    def inflow_direction():
-        return 2
 
 
 @dataclass

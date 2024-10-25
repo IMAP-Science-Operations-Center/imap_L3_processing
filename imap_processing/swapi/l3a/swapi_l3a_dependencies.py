@@ -9,11 +9,11 @@ from imap_processing.swapi.descriptors import SWAPI_L2_DESCRIPTOR, PROTON_TEMPER
     GEOMETRIC_FACTOR_LOOKUP_TABLE_DESCRIPTOR, INSTRUMENT_RESPONSE_LOOKUP_TABLE, DENSITY_OF_NEUTRAL_HELIUM
 from imap_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density import \
     AlphaTemperatureDensityCalibrationTable
-from imap_processing.swapi.l3a.science.calculate_pickup_ion import DensityOfNeutralHeliumLookupTable
 from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_clock_and_deflection_angles import \
     ClockAngleCalibrationTable
 from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_temperature_and_density import \
     ProtonTemperatureAndDensityCalibrationTable
+from imap_processing.swapi.l3a.science.density_of_neutral_helium_lookup_table import DensityOfNeutralHeliumLookupTable
 from imap_processing.swapi.l3b.science.geometric_factor_calibration_table import GeometricFactorCalibrationTable
 from imap_processing.swapi.l3b.science.instrument_response_lookup_table import InstrumentResponseLookupTableCollection
 from imap_processing.utils import download_dependency

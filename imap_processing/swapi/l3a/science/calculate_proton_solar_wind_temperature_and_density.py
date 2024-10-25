@@ -104,13 +104,13 @@ class ProtonTemperatureAndDensityCalibrationTable:
     @uncertainties.wrap
     def calibrate_density(self, solar_wind_speed, deflection_angle, clock_angle, fit_density, fit_temperature):
         return scipy.interpolate.interpn(self.grid, self.density_grid,
-                                         [solar_wind_speed, deflection_angle, clock_angle, fit_density,
+                                         [solar_wind_speed, deflection_angle, clock_angle % 360, fit_density,
                                           fit_temperature])[0]
 
     @uncertainties.wrap
     def calibrate_temperature(self, solar_wind_speed, deflection_angle, clock_angle, fit_density, fit_temperature):
         return scipy.interpolate.interpn(self.grid, self.temperature_grid,
-                                         [solar_wind_speed, deflection_angle, clock_angle, fit_density,
+                                         [solar_wind_speed, deflection_angle, clock_angle % 360, fit_density,
                                           fit_temperature])[0]
 
     @classmethod

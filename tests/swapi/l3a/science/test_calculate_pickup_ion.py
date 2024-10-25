@@ -18,7 +18,8 @@ from imap_processing.swapi.l3a.science.calculate_pickup_ion import calculate_pui
     _model_count_rate_denominator, convert_velocity_relative_to_imap, calculate_velocity_vector, FittingParameters, \
     ForwardModel, convert_velocity_to_reference_frame, model_count_rate_integral, \
     calculate_pickup_ion_values, ModelCountRateCalculator, calculate_ten_minute_velocities, \
-    DensityOfNeutralHeliumLookupTable, calculate_pui_velocity_vector, calculate_solar_wind_velocity_vector
+    calculate_pui_velocity_vector, calculate_solar_wind_velocity_vector
+from imap_processing.swapi.l3a.science.density_of_neutral_helium_lookup_table import DensityOfNeutralHeliumLookupTable
 from imap_processing.swapi.l3b.science.geometric_factor_calibration_table import GeometricFactorCalibrationTable
 from imap_processing.swapi.l3b.science.instrument_response_lookup_table import InstrumentResponseLookupTable, \
     InstrumentResponseLookupTableCollection
@@ -28,7 +29,7 @@ class TestCalculatePickupIon(unittest.TestCase):
 
     def setUp(self) -> None:
         density_of_neutral_helium_lut_path = Path(
-            imap_processing.__file__).parent.parent / "swapi" / "test_data" / "imap_swapi_l2_density-of-neutral-helium-lut-text-not-cdf_20241023_v001.cdf"
+            imap_processing.__file__).parent.parent / "swapi" / "test_data" / "imap_swapi_l2_density-of-neutral-helium-lut-text-not-cdf_20241023_v002.cdf"
 
         self.density_of_neutral_helium_lookup_table = DensityOfNeutralHeliumLookupTable.from_file(
             density_of_neutral_helium_lut_path)
