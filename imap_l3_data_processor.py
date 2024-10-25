@@ -1,6 +1,11 @@
 import argparse
 import json
+import traceback
 from datetime import datetime
+from pathlib import Path
+from tempfile import TemporaryDirectory
+
+import imap_data_access
 
 from imap_processing.models import UpstreamDataDependency, InputMetadata
 from imap_processing.swapi.swapi_processor import SwapiProcessor
@@ -43,4 +48,13 @@ def imap_l3_processor():
 
 
 if __name__ == '__main__':
-    imap_l3_processor()
+    try:
+        imap_l3_processor()
+    except Exception as e:
+        with TemporaryDirectory() as dir:
+            log_path = Path(
+                dir) / f"imap_swapi_l3_log-{datetime.now().strftime('%Y-%m-%d-%H%M%S')}_20240606_v001.cdf"
+            with open(log_path, "w+") as file:
+                traceback.print_exc(file=file)
+
+            imap_data_access.upload(log_path)
