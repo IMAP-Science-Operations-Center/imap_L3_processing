@@ -10,9 +10,9 @@ from spiceypy import spiceypy
 from uncertainties.unumpy import uarray
 
 from imap_processing.constants import HYDROGEN_INFLOW_SPEED_IN_KM_PER_SECOND, PROTON_MASS_KG, PROTON_CHARGE_COULOMBS, \
-    PUI_PARTICLE_MASS_KG, PUI_PARTICLE_CHARGE_COULOMBS, HYDROGEN_INFLOW_LATITUDE_DEGREES_IN_ECLIPJ2000, \
+    HE_PUI_PARTICLE_MASS_KG, PUI_PARTICLE_CHARGE_COULOMBS, HYDROGEN_INFLOW_LATITUDE_DEGREES_IN_ECLIPJ2000, \
     HYDROGEN_INFLOW_LONGITUDE_DEGREES_IN_ECLIPJ2000, ONE_AU_IN_KM, HELIUM_INFLOW_LONGITUDE_DEGREES_IN_ECLIPJ2000, \
-    METERS_PER_KILOMETER, CENTIMETERS_PER_METER, FIVE_MINUTES_IN_NANOSECONDS, NANOSECONDS_IN_SECONDS
+    METERS_PER_KILOMETER, CENTIMETERS_PER_METER, NANOSECONDS_IN_SECONDS, BOLTZMANN_CONSTANT_JOULES_PER_KELVIN
 from imap_processing.swapi.l3a.science.calculate_alpha_solar_wind_speed import calculate_combined_sweeps
 from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_speed import calculate_sw_speed
 from imap_processing.swapi.l3a.science.density_of_neutral_helium_lookup_table import DensityOfNeutralHeliumLookupTable
@@ -23,10 +23,9 @@ from imap_processing.swapi.l3b.science.instrument_response_lookup_table import I
 
 def calculate_pickup_ion_values(instrument_response_lookup_table, geometric_factor_calibration_table,
                                 energy: np.ndarray[float],
-                                count_rates: uarray, epoch: np.ndarray,
+                                count_rates: uarray, center_of_epoch: int,
                                 background_count_rate_cutoff: float, sw_velocity_vector: ndarray,
                                 density_of_neutral_helium_lookup_table: DensityOfNeutralHeliumLookupTable) -> FittingParameters:
-    center_of_epoch = epoch[0] + FIVE_MINUTES_IN_NANOSECONDS
     ephemeris_time = spiceypy.unitim(center_of_epoch / NANOSECONDS_IN_SECONDS, "TT", "ET")
     sw_velocity = np.linalg.norm(sw_velocity_vector)
 
@@ -57,6 +56,44 @@ def calculate_pickup_ion_values(instrument_response_lookup_table, geometric_fact
     return FittingParameters(*result.x)
 
 
+def calculate_helium_pui_density(epoch: int,
+                                 sw_velocity_vector: ndarray,
+                                 density_of_neutral_helium_lookup_table: DensityOfNeutralHeliumLookupTable,
+                                 fitting_params: FittingParameters) -> float:
+    ephemeris_time = spiceypy.unitim(epoch / NANOSECONDS_IN_SECONDS, "TT", "ET")
+    model = build_forward_model(fitting_params, ephemeris_time, sw_velocity_vector,
+                                density_of_neutral_helium_lookup_table)
+    lower_discontinuity = (density_of_neutral_helium_lookup_table.get_minimum_distance() / (
+                model.distance_km / ONE_AU_IN_KM)) ** (
+                                  1 / fitting_params.cooling_index) * fitting_params.cutoff_speed
+    points = (0, lower_discontinuity, fitting_params.cutoff_speed)
+
+    results = scipy.integrate.quad(lambda v: model.f(v) * v * v, 0, fitting_params.cutoff_speed, limit=100,
+                                   points=points)
+    return 4 * np.pi * results[0] / (CENTIMETERS_PER_METER * METERS_PER_KILOMETER) ** 3
+
+
+def calculate_helium_pui_temperature(epoch: int,
+                                     sw_velocity_vector: ndarray,
+                                     density_of_neutral_helium_lookup_table: DensityOfNeutralHeliumLookupTable,
+                                     fitting_params: FittingParameters) -> float:
+    ephemeris_time = spiceypy.unitim(epoch / NANOSECONDS_IN_SECONDS, "TT", "ET")
+    model = build_forward_model(fitting_params, ephemeris_time, sw_velocity_vector,
+                                density_of_neutral_helium_lookup_table)
+    lower_discontinuity = (density_of_neutral_helium_lookup_table.get_minimum_distance() / (
+                model.distance_km / ONE_AU_IN_KM)) ** (
+                                  1 / fitting_params.cooling_index) * fitting_params.cutoff_speed
+    points = (0, lower_discontinuity, fitting_params.cutoff_speed)
+
+    numerator = scipy.integrate.quad(lambda v: model.f(v) * v ** 4, 0, fitting_params.cutoff_speed, points=points,
+                                     limit=100)
+    denominator = scipy.integrate.quad(lambda v: model.f(v) * v ** 2, 0, fitting_params.cutoff_speed, points=points,
+                                       limit=100)
+    return HE_PUI_PARTICLE_MASS_KG / (3 * BOLTZMANN_CONSTANT_JOULES_PER_KELVIN) * \
+        numerator[0] / denominator[0] * \
+        METERS_PER_KILOMETER ** 2
+
+
 @dataclass
 class FittingParameters:
     cooling_index: float
@@ -72,6 +109,8 @@ class ForwardModel:
     solar_wind_vector_eclipj2000_frame: ndarray
     solar_wind_speed_inertial_frame: float
     density_of_neutral_helium_lookup_table: DensityOfNeutralHeliumLookupTable
+    distance_km: float
+    psi: float
 
     def compute_from_instrument_frame(self, speed, theta, phi):
         pui_vector_instrument_frame = calculate_pui_velocity_vector(speed, theta, phi)
@@ -79,28 +118,41 @@ class ForwardModel:
                                                                         self.ephemeris_time,
                                                                         "IMAP_SWAPI", "ECLIPJ2000")
         pui_vector_solar_wind_frame = pui_vector_eclipj2000_frame - self.solar_wind_vector_eclipj2000_frame
-        magnitude = np.linalg.norm(pui_vector_solar_wind_frame, axis=-1)
-        w = magnitude / self.fitting_params.cutoff_speed
-        imap_position_eclip2000_frame_state = spiceypy.spkezr(
-            "IMAP", self.ephemeris_time, "ECLIPJ2000", "NONE", "SUN")[0][0:3]
-        distance_km, longitude, latitude = spiceypy.reclat(imap_position_eclip2000_frame_state)
-        psi = np.rad2deg(longitude) - HELIUM_INFLOW_LONGITUDE_DEGREES_IN_ECLIPJ2000
-        distance_au = distance_km / ONE_AU_IN_KM
-        result = self.f(distance_au, w, psi)
+        pickup_ion_speed = np.linalg.norm(pui_vector_solar_wind_frame, axis=-1)
+
+        result = self.f(pickup_ion_speed)
         return result
 
-    def f(self, radius_in_au, w, psi):
+    def f(self, pickup_ion_speed):
+        w = pickup_ion_speed / self.fitting_params.cutoff_speed
+        radius_in_au = self.distance_km / ONE_AU_IN_KM
         neutral_helium_density_per_cm3 = self.density_of_neutral_helium_lookup_table.density(
-            psi, radius_in_au * w ** self.fitting_params.cooling_index)
+            self.psi, radius_in_au * w ** self.fitting_params.cooling_index)
         neutral_helium_density_per_km3 = neutral_helium_density_per_cm3 * (
                 CENTIMETERS_PER_METER * METERS_PER_KILOMETER) ** 3
         term1 = self.fitting_params.cooling_index / (4 * np.pi)
         term2 = (self.fitting_params.ionization_rate * ONE_AU_IN_KM ** 2) / (
-                radius_in_au * ONE_AU_IN_KM * self.solar_wind_speed_inertial_frame * self.fitting_params.cutoff_speed ** 3)
+                self.distance_km * self.solar_wind_speed_inertial_frame * self.fitting_params.cutoff_speed ** 3)
         term3 = w ** (self.fitting_params.cooling_index - 3)
         term4 = neutral_helium_density_per_km3
         term5 = np.heaviside(1 - w, 0.5)
         return term1 * term2 * term3 * term4 * term5
+
+
+def build_forward_model(fitting_params: FittingParameters, ephemeris_time: float, solar_wind_vector: ndarray,
+                        density_of_neutral_helium_lookup_table: DensityOfNeutralHeliumLookupTable) -> ForwardModel:
+    solar_wind_vector_eclipj2000_frame = convert_velocity_relative_to_imap(solar_wind_vector,
+                                                                           ephemeris_time,
+                                                                           "IMAP_DPS",
+                                                                           "ECLIPJ2000")
+    imap_position_eclip2000_frame_state = spiceypy.spkezr(
+        "IMAP", ephemeris_time, "ECLIPJ2000", "NONE", "SUN")[0][0:3]
+    distance_km, longitude, latitude = spiceypy.reclat(imap_position_eclip2000_frame_state)
+    psi = np.rad2deg(longitude) - HELIUM_INFLOW_LONGITUDE_DEGREES_IN_ECLIPJ2000
+
+    return ForwardModel(fitting_params, ephemeris_time, solar_wind_vector_eclipj2000_frame,
+                        np.linalg.norm(solar_wind_vector_eclipj2000_frame),
+                        density_of_neutral_helium_lookup_table, distance_km, psi)
 
 
 @dataclass
@@ -112,13 +164,8 @@ class ModelCountRateCalculator:
 
     def model_count_rate(self, indices_and_energy_centers: list[tuple[int, float]],
                          fitting_params: FittingParameters, ephemeris_time: float) -> np.ndarray:
-        solar_wind_vector_eclipj2000_frame = convert_velocity_relative_to_imap(self.solar_wind_vector,
-                                                                               ephemeris_time,
-                                                                               "IMAP_DPS",
-                                                                               "ECLIPJ2000")
-        forward_model = ForwardModel(fitting_params, ephemeris_time, solar_wind_vector_eclipj2000_frame,
-                                     np.linalg.norm(solar_wind_vector_eclipj2000_frame),
-                                     self.density_of_neutral_helium_lookup_table)
+        forward_model = build_forward_model(fitting_params, ephemeris_time, self.solar_wind_vector,
+                                            self.density_of_neutral_helium_lookup_table)
         model_count_rates = []
         for energy_bin_index, energy_bin_center in indices_and_energy_centers:
             model_count_rates.append(
@@ -149,7 +196,7 @@ def calc_chi_squared(fit_params_array: np.ndarray, observed_count_rates: np.ndar
 
 
 def model_count_rate_integral(response_lookup_table: InstrumentResponseLookupTable, forward_model: ForwardModel):
-    speed = calculate_sw_speed(PUI_PARTICLE_MASS_KG, PUI_PARTICLE_CHARGE_COULOMBS,
+    speed = calculate_sw_speed(HE_PUI_PARTICLE_MASS_KG, PUI_PARTICLE_CHARGE_COULOMBS,
                                response_lookup_table.energy)
     count_rates = forward_model.compute_from_instrument_frame(speed, response_lookup_table.elevation,
                                                               response_lookup_table.azimuth)

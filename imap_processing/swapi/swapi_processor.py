@@ -123,13 +123,14 @@ class SwapiProcessor(Processor):
         pui_cutoff_speed = []
         pui_background_rate = []
         for data_chunk, sw_velocity in zip(chunk_l2_data(data, 50), ten_minute_solar_wind_velocities):
+            epoch = data_chunk.epoch[0] + FIVE_MINUTES_IN_NANOSECONDS
             fit_params = calculate_pickup_ion_values(dependencies.instrument_response_calibration_table,
                                                      dependencies.geometric_factor_calibration_table, data_chunk.energy,
                                                      data_chunk.coincidence_count_rate,
-                                                     data_chunk.epoch, 0.1,
+                                                     epoch, 0.1,
                                                      sw_velocity,
                                                      dependencies.density_of_neutral_helium_calibration_table)
-            pui_epochs.append(data_chunk.epoch[0] + FIVE_MINUTES_IN_NANOSECONDS)
+            pui_epochs.append(epoch)
             pui_cooling_index.append(fit_params.cooling_index)
             pui_ionization_rate.append(fit_params.ionization_rate)
             pui_cutoff_speed.append(fit_params.cutoff_speed)

@@ -241,7 +241,7 @@ class TestSwapiProcessor(TestCase):
         self.assertEqual(mock_density_of_neutral_helium_calibration_table, density_of_neutral_helium_lut)
         np.testing.assert_array_equal(chunk_of_fifty.energy, energies)
         np.testing.assert_array_equal(chunk_of_fifty.coincidence_count_rate, count_rates)
-        np.testing.assert_array_equal(chunk_of_fifty.epoch, epoch)
+        self.assertEqual(chunk_of_fifty.epoch[0] + FIVE_MINUTES_IN_NANOSECONDS, epoch)
         self.assertEqual(0.1, background_rate_cutoff)
         np.testing.assert_array_equal([17, 18, 19], sw_velocity)
 
