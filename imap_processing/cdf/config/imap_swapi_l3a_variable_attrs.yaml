@@ -255,3 +255,27 @@ pui_background_count_rate:
   DISPLAY_TYPE: time_series
   SCALEMIN: 0
   SCALEMAX: .2
+
+pui_density:
+  <<: *default_timeseries
+  CATDESC: Pickup Ion Density
+  FIELDNAM: pui_density
+  LABLAXIS: PUI Density
+  UNITS: cm!E-3!N
+  SCALETYP: linear
+  VAR_TYPE: data
+  DISPLAY_TYPE: time_series
+  SCALEMIN: 0
+  SCALEMAX: 0.001
+
+pui_temperature:
+  <<: *default_timeseries
+  CATDESC: Pickup Ion Temperature
+  FIELDNAM: pui_temperature
+  LABLAXIS: PUI Temperature
+  UNITS: K
+  SCALETYP: linear
+  VAR_TYPE: data
+  DISPLAY_TYPE: time_series
+  SCALEMIN: 0
+  SCALEMAX: 50000000

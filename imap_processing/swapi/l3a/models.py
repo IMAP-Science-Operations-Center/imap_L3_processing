@@ -33,6 +33,8 @@ PUI_COOLING_INDEX_CDF_VAR_NAME = "pui_cooling_index"
 PUI_IONIZATION_RATE_CDF_VAR_NAME = "pui_ionization_rate"
 PUI_CUTOFF_SPEED_CDF_VAR_NAME = "pui_cutoff_speed"
 PUI_BACKGROUND_COUNT_RATE_CDF_VAR_NAME = "pui_background_count_rate"
+PUI_DENSITY_CDF_VAR_NAME = "pui_density"
+PUI_TEMPERATURE_CDF_VAR_NAME = "pui_temperature"
 
 
 @dataclass
@@ -94,6 +96,8 @@ class SwapiL3PickupIonData(DataProduct):
     ionization_rate: np.ndarray[float]
     cutoff_speed: np.ndarray[float]
     background_rate: np.ndarray[float]
+    density: np.ndarray[float]
+    temperature: np.ndarray[float]
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
@@ -103,6 +107,8 @@ class SwapiL3PickupIonData(DataProduct):
             DataProductVariable(PUI_IONIZATION_RATE_CDF_VAR_NAME, self.ionization_rate),
             DataProductVariable(PUI_CUTOFF_SPEED_CDF_VAR_NAME, self.cutoff_speed),
             DataProductVariable(PUI_BACKGROUND_COUNT_RATE_CDF_VAR_NAME, self.background_rate),
+            DataProductVariable(PUI_DENSITY_CDF_VAR_NAME, self.density),
+            DataProductVariable(PUI_TEMPERATURE_CDF_VAR_NAME, self.temperature),
         ]
 
 

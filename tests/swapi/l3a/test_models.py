@@ -13,7 +13,8 @@ from imap_processing.swapi.l3a.models import SwapiL3ProtonSolarWindData, EPOCH_C
     PROTON_SOLAR_WIND_DENSITY_UNCERTAINTY_CDF_VAR_NAME, PROTON_SOLAR_WIND_CLOCK_ANGLE_CDF_VAR_NAME, \
     PROTON_SOLAR_WIND_CLOCK_ANGLE_UNCERTAINTY_CDF_VAR_NAME, PROTON_SOLAR_WIND_DEFLECTION_ANGLE_CDF_VAR_NAME, \
     PROTON_SOLAR_WIND_DEFLECTION_ANGLE_UNCERTAINTY_CDF_VAR_NAME, SwapiL3PickupIonData, PUI_COOLING_INDEX_CDF_VAR_NAME, \
-    PUI_IONIZATION_RATE_CDF_VAR_NAME, PUI_CUTOFF_SPEED_CDF_VAR_NAME, PUI_BACKGROUND_COUNT_RATE_CDF_VAR_NAME
+    PUI_IONIZATION_RATE_CDF_VAR_NAME, PUI_CUTOFF_SPEED_CDF_VAR_NAME, PUI_BACKGROUND_COUNT_RATE_CDF_VAR_NAME, \
+    PUI_DENSITY_CDF_VAR_NAME, PUI_TEMPERATURE_CDF_VAR_NAME
 from tests.swapi.cdf_model_test_case import CdfModelTestCase
 
 
@@ -97,11 +98,13 @@ class TestModels(CdfModelTestCase):
         expected_ionization_rate = np.arange(300000, step=30000)
         expected_cutoff_speed = np.arange(50000, step=5000)
         expected_background = np.arange(1, step=0.1)
+        expected_density = np.arange(0.001, step=0.0001)
+        expected_temperature = np.arange(1e7, step=100)
         data = SwapiL3PickupIonData(Mock(), epoch_data, expected_cooling_index, expected_ionization_rate,
-                                    expected_cutoff_speed, expected_background)
+                                    expected_cutoff_speed, expected_background, expected_density, expected_temperature)
         variables = data.to_data_product_variables()
 
-        self.assertEqual(6, len(variables))
+        self.assertEqual(8, len(variables))
         self.assert_variable_attributes(variables[0], epoch_data, EPOCH_CDF_VAR_NAME, pycdf.const.CDF_TIME_TT2000)
         self.assert_variable_attributes(variables[1], FIVE_MINUTES_IN_NANOSECONDS, EPOCH_DELTA_CDF_VAR_NAME,
                                         expected_record_varying=False)
@@ -113,3 +116,7 @@ class TestModels(CdfModelTestCase):
                                         PUI_CUTOFF_SPEED_CDF_VAR_NAME)
         self.assert_variable_attributes(variables[5], expected_background,
                                         PUI_BACKGROUND_COUNT_RATE_CDF_VAR_NAME)
+        self.assert_variable_attributes(variables[6], expected_density,
+                                        PUI_DENSITY_CDF_VAR_NAME)
+        self.assert_variable_attributes(variables[7], expected_temperature,
+                                        PUI_TEMPERATURE_CDF_VAR_NAME)

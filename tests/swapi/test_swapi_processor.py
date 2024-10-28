@@ -49,7 +49,10 @@ class TestSwapiProcessor(TestCase):
     @patch('imap_processing.swapi.swapi_processor.SwapiL3ADependencies')
     @patch('imap_processing.swapi.swapi_processor.calculate_pickup_ion_values')
     @patch('imap_processing.swapi.swapi_processor.calculate_ten_minute_velocities')
-    def test_process_l3a(self, mock_calculate_ten_minute_velocities,
+    @patch('imap_processing.swapi.swapi_processor.calculate_helium_pui_density')
+    @patch('imap_processing.swapi.swapi_processor.calculate_helium_pui_temperature')
+    def test_process_l3a(self, mock_calculate_helium_pui_temperature, mock_calculate_helium_pui_density,
+                         mock_calculate_ten_minute_velocities,
                          mock_calculate_pickup_ion,
                          mock_swapi_l3_dependencies_class,
                          mock_calculate_deflection_angle,
@@ -136,7 +139,10 @@ class TestSwapiProcessor(TestCase):
 
         mock_manager = mock_imap_attribute_manager.return_value
 
-        mock_calculate_pickup_ion.return_value = FittingParameters(1, 2, 3, 4)
+        expected_fitting_params = FittingParameters(1, 2, 3, 4)
+        mock_calculate_pickup_ion.return_value = expected_fitting_params
+        mock_calculate_helium_pui_density.return_value = 5
+        mock_calculate_helium_pui_temperature.return_value = 6
         mock_calculate_ten_minute_velocities.return_value = np.array([
             [17, 18, 19]
         ])
@@ -234,7 +240,7 @@ class TestSwapiProcessor(TestCase):
                                       strict=True)
 
         instrument_response_lut, geometric_factor_lut, energies, count_rates, epoch, background_rate_cutoff, \
-            sw_velocity, density_of_neutral_helium_lut = mock_calculate_pickup_ion.call_args.args
+            sw_velocity_vector, density_of_neutral_helium_lut = mock_calculate_pickup_ion.call_args.args
 
         self.assertEqual(mock_instrument_response_calibration_table, instrument_response_lut)
         self.assertEqual(mock_geometric_factor_calibration_table, geometric_factor_lut)
@@ -243,7 +249,21 @@ class TestSwapiProcessor(TestCase):
         np.testing.assert_array_equal(chunk_of_fifty.coincidence_count_rate, count_rates)
         self.assertEqual(chunk_of_fifty.epoch[0] + FIVE_MINUTES_IN_NANOSECONDS, epoch)
         self.assertEqual(0.1, background_rate_cutoff)
-        np.testing.assert_array_equal([17, 18, 19], sw_velocity)
+        np.testing.assert_array_equal([17, 18, 19], sw_velocity_vector)
+
+        epoch, sw_velocity_vector, density_of_neutral_helium_lut, passed_in_fitting_params = mock_calculate_helium_pui_density.call_args.args
+
+        self.assertEqual(chunk_of_fifty.epoch[0] + FIVE_MINUTES_IN_NANOSECONDS, epoch)
+        np.testing.assert_array_equal([17, 18, 19], sw_velocity_vector)
+        self.assertEqual(mock_density_of_neutral_helium_calibration_table, density_of_neutral_helium_lut)
+        self.assertEqual(expected_fitting_params, passed_in_fitting_params)
+
+        epoch, sw_velocity_vector, density_of_neutral_helium_lut, passed_in_fitting_params = mock_calculate_helium_pui_temperature.call_args.args
+
+        self.assertEqual(chunk_of_fifty.epoch[0] + FIVE_MINUTES_IN_NANOSECONDS, epoch)
+        np.testing.assert_array_equal([17, 18, 19], sw_velocity_vector)
+        self.assertEqual(mock_density_of_neutral_helium_calibration_table, density_of_neutral_helium_lut)
+        self.assertEqual(expected_fitting_params, passed_in_fitting_params)
 
         mock_calculate_ten_minute_velocities.assert_called_with([returned_proton_sw_speed.nominal_value],
                                                                 [returned_proton_sw_deflection_angle.nominal_value],
@@ -283,13 +303,15 @@ class TestSwapiProcessor(TestCase):
                                       actual_alpha_sw_density)
 
         actual_pui_metadata, actual_pui_epoch, actual_pui_cooling_index, actual_pui_ionization_rate, \
-            actual_pui_cutoff_speed, actual_pui_background_rate = mock_pickup_ion_data_constructor.call_args.args
+            actual_pui_cutoff_speed, actual_pui_background_rate, actual_pui_density, actual_pui_temperature = mock_pickup_ion_data_constructor.call_args.args
         self.assertEqual(expected_pickup_ion_metadata, actual_pui_metadata)
         np.testing.assert_array_equal(np.array([initial_epoch + FIVE_MINUTES_IN_NANOSECONDS]), actual_pui_epoch)
         np.testing.assert_array_equal(np.array([1]), actual_pui_cooling_index)
         np.testing.assert_array_equal(np.array([2]), actual_pui_ionization_rate)
         np.testing.assert_array_equal(np.array([3]), actual_pui_cutoff_speed)
         np.testing.assert_array_equal(np.array([4]), actual_pui_background_rate)
+        np.testing.assert_array_equal(np.array([5]), actual_pui_density)
+        np.testing.assert_array_equal(np.array([6]), actual_pui_temperature)
 
         mock_manager.add_instrument_attrs.assert_has_calls([call("swapi", "l3a"), call("swapi", "l3a")])
         mock_write_cdf.assert_has_calls([

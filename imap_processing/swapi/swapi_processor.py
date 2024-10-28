@@ -14,7 +14,7 @@ from imap_processing.swapi.l3a.science.calculate_alpha_solar_wind_speed import c
 from imap_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density import \
     calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps
 from imap_processing.swapi.l3a.science.calculate_pickup_ion import calculate_ten_minute_velocities, \
-    calculate_pickup_ion_values
+    calculate_pickup_ion_values, calculate_helium_pui_temperature, calculate_helium_pui_density
 from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_clock_and_deflection_angles import \
     calculate_deflection_angle, calculate_clock_angle
 from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_speed import calculate_proton_solar_wind_speed
@@ -122,6 +122,8 @@ class SwapiProcessor(Processor):
         pui_ionization_rate = []
         pui_cutoff_speed = []
         pui_background_rate = []
+        pui_density = []
+        pui_temperature = []
         for data_chunk, sw_velocity in zip(chunk_l2_data(data, 50), ten_minute_solar_wind_velocities):
             epoch = data_chunk.epoch[0] + FIVE_MINUTES_IN_NANOSECONDS
             fit_params = calculate_pickup_ion_values(dependencies.instrument_response_calibration_table,
@@ -135,10 +137,17 @@ class SwapiProcessor(Processor):
             pui_ionization_rate.append(fit_params.ionization_rate)
             pui_cutoff_speed.append(fit_params.cutoff_speed)
             pui_background_rate.append(fit_params.background_count_rate)
+            density = calculate_helium_pui_density(
+                epoch, sw_velocity, dependencies.density_of_neutral_helium_calibration_table, fit_params)
+            pui_density.append(density)
+            temperature = calculate_helium_pui_temperature(
+                epoch, sw_velocity, dependencies.density_of_neutral_helium_calibration_table, fit_params)
+            pui_temperature.append(temperature)
         pui_metadata = self.input_metadata.to_upstream_data_dependency("pui-he")
         pui_data = SwapiL3PickupIonData(pui_metadata, np.array(pui_epochs), np.array(pui_cooling_index),
                                         np.array(pui_ionization_rate),
-                                        np.array(pui_cutoff_speed), np.array(pui_background_rate))
+                                        np.array(pui_cutoff_speed), np.array(pui_background_rate),
+                                        np.array(pui_density), np.array(pui_temperature))
 
         proton_solar_wind_speed_metadata = self.input_metadata.to_upstream_data_dependency("proton-sw")
 
