@@ -52,7 +52,6 @@ def calculate_pickup_ion_values(instrument_response_lookup_table, geometric_fact
               ephemeris_time),
         method='Nelder-Mead',
         options=dict(disp=True))
-    # uncertainty inputs and/or outputs?
     return FittingParameters(*result.x)
 
 
@@ -64,7 +63,7 @@ def calculate_helium_pui_density(epoch: int,
     model = build_forward_model(fitting_params, ephemeris_time, sw_velocity_vector,
                                 density_of_neutral_helium_lookup_table)
     lower_discontinuity = (density_of_neutral_helium_lookup_table.get_minimum_distance() / (
-                model.distance_km / ONE_AU_IN_KM)) ** (
+            model.distance_km / ONE_AU_IN_KM)) ** (
                                   1 / fitting_params.cooling_index) * fitting_params.cutoff_speed
     points = (0, lower_discontinuity, fitting_params.cutoff_speed)
 
@@ -81,7 +80,7 @@ def calculate_helium_pui_temperature(epoch: int,
     model = build_forward_model(fitting_params, ephemeris_time, sw_velocity_vector,
                                 density_of_neutral_helium_lookup_table)
     lower_discontinuity = (density_of_neutral_helium_lookup_table.get_minimum_distance() / (
-                model.distance_km / ONE_AU_IN_KM)) ** (
+            model.distance_km / ONE_AU_IN_KM)) ** (
                                   1 / fitting_params.cooling_index) * fitting_params.cutoff_speed
     points = (0, lower_discontinuity, fitting_params.cutoff_speed)
 
@@ -191,7 +190,6 @@ def calc_chi_squared(fit_params_array: np.ndarray, observed_count_rates: np.ndar
 
     result = 2 * sum(
         modeled_rates - observed_count_rates + observed_count_rates * np.log(observed_count_rates / modeled_rates))
-    print(f"chi_squared: {result}  params: {fit_params}")
     return result
 
 

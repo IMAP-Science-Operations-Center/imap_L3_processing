@@ -1,29 +1,33 @@
 import math
+from datetime import datetime
 from pathlib import Path
-from unittest import TestCase
 from unittest.mock import patch
 
 import numpy as np
+import spiceypy
 from spacepy.pycdf import CDF
 from uncertainties import ufloat
 from uncertainties.unumpy import uarray, std_devs, nominal_values
 
 import imap_processing
-from imap_processing.constants import METERS_PER_KILOMETER
+from imap_processing.constants import METERS_PER_KILOMETER, NANOSECONDS_IN_SECONDS
 from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_speed import calculate_proton_solar_wind_speed, \
     get_peak_indices, find_peak_center_of_mass_index, interpolate_energy, fit_energy_per_charge_peak_variations, \
-    calculate_sw_speed_h_plus, get_proton_peak_indices, interpolate_angle
+    calculate_sw_speed_h_plus, get_proton_peak_indices, interpolate_angle, get_angle
+from tests.spice_test_case import SpiceTestCase
 
 
-class TestCalculateProtonSolarWindSpeed(TestCase):
+class TestCalculateProtonSolarWindSpeed(SpiceTestCase):
     def test_calculate_solar_wind_speed(self):
         spin_angles = np.array([[0, 4, 8, 12], [16, 20, 24, 28], [32, 36, 40, 44], [48, 52, 56, 60], [64, 68, 72, 76]])
         energies = np.array([0, 1000, 750, 500])
         count_rates = np.array([[0, 0, 10, 0], [0, 0, 10, 0], [0, 0, 10, 0], [0, 0, 10, 0], [0, 0, 10, 0]])
         count_rates_with_uncertainties = uarray(count_rates, np.full_like(count_rates, 1.0))
 
+        times = [datetime(2025, 6, 6, 12, i) for i in range(5)]
+        epochs_in_terrestrial_time = spiceypy.datetime2et(times) * NANOSECONDS_IN_SECONDS
         speed, a, phi, b = calculate_proton_solar_wind_speed(count_rates_with_uncertainties, spin_angles, energies,
-                                                             [0, 0, 0, 0, 0])
+                                                             epochs_in_terrestrial_time)
 
         proton_charge = 1.602176634e-19
         proton_mass = 1.67262192595e-27
@@ -32,7 +36,7 @@ class TestCalculateProtonSolarWindSpeed(TestCase):
 
     def test_calculate_solar_wind_speed_from_model_data(self):
         file_path = Path(
-            imap_processing.__file__).parent.parent / 'swapi' / 'test_data' / 'imap_swapi_l2_fake-menlo-5-sweeps_20100101_v002.cdf'
+            imap_processing.__file__).parent.parent / 'swapi' / 'test_data' / 'imap_swapi_l2_fake-menlo-5-sweeps_20250606_v001.cdf'
         with CDF(str(file_path)) as cdf:
             epoch = cdf.raw_var("epoch")[...]
             energy = cdf["energy"][...]
@@ -43,12 +47,12 @@ class TestCalculateProtonSolarWindSpeed(TestCase):
         speed, a, phi, b = calculate_proton_solar_wind_speed(uarray(count_rate, count_rate_delta), spin_angles, energy,
                                                              epoch)
 
-        self.assertAlmostEqual(speed.n, 497.919, 3)
-        self.assertAlmostEqual(speed.s, 0.464, 3)
-        self.assertAlmostEqual(a.n, 32.234, 3)
-        self.assertAlmostEqual(a.s, 3.48, 2)
-        self.assertAlmostEqual(phi.n, 252.2, 1)
-        self.assertAlmostEqual(phi.s, 5.85, 2)
+        self.assertAlmostEqual(speed.n, 497.9135, 3)
+        self.assertAlmostEqual(speed.s, 0.4634, 3)
+        self.assertAlmostEqual(a.n, 32.2194, 3)
+        self.assertAlmostEqual(a.s, 3.4794, 2)
+        self.assertAlmostEqual(phi.n, 4.3650, 1)
+        self.assertAlmostEqual(phi.s, 5.8556, 2)
         self.assertAlmostEqual(b.n, 1294, 0)
         self.assertAlmostEqual(b.s, 2.4, 1)
 
@@ -294,3 +298,20 @@ class TestCalculateProtonSolarWindSpeed(TestCase):
         expected = []
         result = calculate_sw_speed_h_plus(energy)
         np.testing.assert_array_equal(expected, result)
+
+    @patch('spiceypy.spiceypy.pxform')
+    @patch('spiceypy.spiceypy.unitim')
+    @patch('spiceypy.spiceypy.reclat')
+    def test_get_angle(self, mock_reclat, mock_unitim, mock_pxform):
+        mock_reclat.return_value = (1, 3 * np.pi, 2 * np.pi)
+        mock_pxform.return_value = np.array([[1, 1, 1], [2, 2, 2], [3, 3, 3]])
+
+        epoch = 123
+
+        actual_angle = get_angle(epoch)
+
+        mock_unitim.assert_called_with((epoch / NANOSECONDS_IN_SECONDS), "TT", "ET")
+        mock_pxform.assert_called_with("IMAP_SWAPI", "IMAP_DPS", mock_unitim.return_value)
+        np.testing.assert_array_equal(np.array([-1, -2, -3]), mock_reclat.call_args.args[0])
+
+        self.assertEqual(180, actual_angle)

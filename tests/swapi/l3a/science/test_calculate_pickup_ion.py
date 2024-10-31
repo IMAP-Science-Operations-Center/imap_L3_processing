@@ -1,4 +1,4 @@
-import unittest
+from datetime import datetime
 from datetime import datetime
 from pathlib import Path
 from unittest import skip
@@ -14,7 +14,7 @@ from imap_processing.constants import HYDROGEN_INFLOW_SPEED_IN_KM_PER_SECOND, \
     HYDROGEN_INFLOW_LONGITUDE_DEGREES_IN_ECLIPJ2000, HYDROGEN_INFLOW_LATITUDE_DEGREES_IN_ECLIPJ2000, PROTON_MASS_KG, \
     PROTON_CHARGE_COULOMBS, ONE_AU_IN_KM, NANOSECONDS_IN_SECONDS, \
     HELIUM_INFLOW_LONGITUDE_DEGREES_IN_ECLIPJ2000, HE_PUI_PARTICLE_MASS_KG, BOLTZMANN_CONSTANT_JOULES_PER_KELVIN
-from imap_processing.spice_wrapper import FAKE_ROTATION_MATRIX_FROM_PSP, furnish
+from imap_processing.spice_wrapper import FAKE_ROTATION_MATRIX_FROM_PSP
 from imap_processing.swapi.l3a.science.calculate_alpha_solar_wind_speed import calculate_combined_sweeps
 from imap_processing.swapi.l3a.science.calculate_pickup_ion import calculate_pui_energy_cutoff, extract_pui_energy_bins, \
     _model_count_rate_denominator, convert_velocity_relative_to_imap, calculate_velocity_vector, FittingParameters, \
@@ -26,13 +26,10 @@ from imap_processing.swapi.l3a.science.density_of_neutral_helium_lookup_table im
 from imap_processing.swapi.l3b.science.geometric_factor_calibration_table import GeometricFactorCalibrationTable
 from imap_processing.swapi.l3b.science.instrument_response_lookup_table import InstrumentResponseLookupTable, \
     InstrumentResponseLookupTableCollection
+from tests.spice_test_case import SpiceTestCase
 
 
-class TestCalculatePickupIon(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        furnish()
-
+class TestCalculatePickupIon(SpiceTestCase):
     def setUp(self) -> None:
         density_of_neutral_helium_lut_path = Path(
             imap_processing.__file__).parent.parent / "swapi" / "test_data" / "imap_swapi_l2_density-of-neutral-helium-lut-text-not-cdf_20241023_v002.cdf"
@@ -391,7 +388,7 @@ class TestCalculatePickupIon(unittest.TestCase):
             self.assertEqual(expected_fitting_params, actual_fitting_parameters)
 
     def test_calculate_pui_density(self):
-        epoch = spacepy.pycdf.lib.datetime_to_tt2000(datetime(2025, 7, 1, 12))
+        epoch = spacepy.pycdf.lib.datetime_to_tt2000(datetime(2025, 6, 6, 12))
         sw_velocity_vector = np.array([0, 0, -500])
         fitting_params = FittingParameters(1.5, 1e-7, 520, 0.1)
 
@@ -457,14 +454,14 @@ class TestCalculatePickupIon(unittest.TestCase):
         self.assertEqual(HE_PUI_PARTICLE_MASS_KG / (3 * BOLTZMANN_CONSTANT_JOULES_PER_KELVIN) * 1000 / 10 * 1e6, result)
 
     def test_calculate_pui_temperature(self):
-        epoch = spacepy.pycdf.lib.datetime_to_tt2000(datetime(2025, 7, 1, 12))
+        epoch = spacepy.pycdf.lib.datetime_to_tt2000(datetime(2025, 6, 6, 12))
         sw_velocity_vector = np.array([0, 0, -500])
         fitting_params = FittingParameters(1.5, 1e-7, 500, 0.1)
 
         result = calculate_helium_pui_temperature(epoch, sw_velocity_vector,
                                                   self.density_of_neutral_helium_lookup_table,
                                                   fitting_params)
-        self.assertAlmostEqual(24449023.70312053, result)
+        self.assertAlmostEqual(24456817.05142866, result)
 
     @skip
     @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.spiceypy")
@@ -513,6 +510,8 @@ class TestCalculatePickupIon(unittest.TestCase):
                 instrument_response_collection, geometric_factor_lut, energy,
                 count_rate, epoch, background_count_rate_cutoff, sw_velocity_vector,
                 self.density_of_neutral_helium_lookup_table)
+            print(actual_fitting_parameters)
+
             mock_spice.unitim.assert_called_with(epoch / NANOSECONDS_IN_SECONDS,
                                                  "TT", "ET")
 
