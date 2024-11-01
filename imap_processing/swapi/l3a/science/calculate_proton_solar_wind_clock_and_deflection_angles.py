@@ -2,8 +2,6 @@ import numpy as np
 import scipy
 import uncertainties
 
-from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_speed import calculate_proton_solar_wind_speed
-
 
 class ClockAngleCalibrationTable:
     def __init__(self, calibration_table: np.ndarray):
@@ -34,7 +32,7 @@ class ClockAngleCalibrationTable:
 def calculate_clock_angle(lookup_table, sw_speed, a, phi, b):
     a_over_b = a / b
     phi_offset = lookup_table.lookup_clock_offset(sw_speed, a_over_b)
-    return phi + phi_offset
+    return (phi + phi_offset) % 360
 
 
 def calculate_deflection_angle(lookup_table, sw_speed, a, phi, b):
