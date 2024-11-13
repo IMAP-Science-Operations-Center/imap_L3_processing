@@ -71,13 +71,16 @@ def calculate_proton_centers_of_mass(coincidence_count_rates, energies, epoch):
     return uarray(energies_at_center_of_mass, energies_at_center_of_mass_uncertainties), spin_angles_at_center_of_mass
 
 
+def get_spin_angle_from_swapi_axis_in_despun_frame(instrument_axis: np.ndarray):
+    r, lon, lat = spiceypy.reclat(instrument_axis)
+    return np.mod(180 - np.rad2deg(lon), 360)
+
 @wrap
 def get_angle(epoch) -> float:
     rotation_matrix = spiceypy.pxform("IMAP_SWAPI", "IMAP_DPS",
                                       spiceypy.unitim(epoch / NANOSECONDS_IN_SECONDS, "TT", "ET"))
     swapi_instrument_axis_in_despun_imap_frame = rotation_matrix @ np.array([0, 0, -1])
-    r, lon, lat = spiceypy.reclat(swapi_instrument_axis_in_despun_imap_frame)
-    return np.mod(np.rad2deg(lon), 360)
+    return get_spin_angle_from_swapi_axis_in_despun_frame(swapi_instrument_axis_in_despun_imap_frame)
 
 
 def calculate_sw_speed(particle_mass, particle_charge, energy):

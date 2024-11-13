@@ -13,7 +13,8 @@ import imap_processing
 from imap_processing.constants import METERS_PER_KILOMETER, NANOSECONDS_IN_SECONDS
 from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_speed import calculate_proton_solar_wind_speed, \
     get_peak_indices, find_peak_center_of_mass_index, interpolate_energy, fit_energy_per_charge_peak_variations, \
-    calculate_sw_speed_h_plus, get_proton_peak_indices, interpolate_angle, get_angle
+    calculate_sw_speed_h_plus, get_proton_peak_indices, interpolate_angle, get_angle, \
+    get_spin_angle_from_swapi_axis_in_despun_frame
 from tests.spice_test_case import SpiceTestCase
 
 
@@ -41,7 +42,6 @@ class TestCalculateProtonSolarWindSpeed(SpiceTestCase):
             energy = cdf["energy"][...]
             count_rate = cdf["swp_coin_rate"][...]
             count_rate_delta = cdf["swp_coin_unc"][...]
-
         speed, a, phi, b = calculate_proton_solar_wind_speed(uarray(count_rate, count_rate_delta), energy,
                                                              epoch)
 
@@ -49,7 +49,7 @@ class TestCalculateProtonSolarWindSpeed(SpiceTestCase):
         self.assertAlmostEqual(speed.s, 0.4634, 3)
         self.assertAlmostEqual(a.n, 32.2194, 3)
         self.assertAlmostEqual(a.s, 3.4794, 2)
-        self.assertAlmostEqual(phi.n, 4.3650, 1)
+        self.assertAlmostEqual(phi.n, 277.6, 1)
         self.assertAlmostEqual(phi.s, 5.8556, 2)
         self.assertAlmostEqual(b.n, 1294, 0)
         self.assertAlmostEqual(b.s, 2.4, 1)
@@ -312,4 +312,17 @@ class TestCalculateProtonSolarWindSpeed(SpiceTestCase):
         mock_pxform.assert_called_with("IMAP_SWAPI", "IMAP_DPS", mock_unitim.return_value)
         np.testing.assert_array_equal(np.array([-1, -2, -3]), mock_reclat.call_args.args[0])
 
-        self.assertEqual(180, actual_angle)
+        self.assertEqual(0, actual_angle)
+
+
+    def test_get_spin_angle_from_swapi_axis_in_despun_frame(self):
+        cases = [
+            ([1, 0, 0], 180),
+            ([0,1,0], 90),
+            ([0,-1,0], 270),
+            ([-1,0,0], 0),
+            ([-1,0,50], 0),
+        ]
+        for swapi_axis, expected_angle in cases:
+            with self.subTest(swapi_axis):
+                self.assertAlmostEqual(expected_angle, get_spin_angle_from_swapi_axis_in_despun_frame(np.array(swapi_axis)))
