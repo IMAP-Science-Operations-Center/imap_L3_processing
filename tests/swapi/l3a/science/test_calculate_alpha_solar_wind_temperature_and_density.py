@@ -52,10 +52,10 @@ class TestCalculateAlphaSolarWindTemperatureAndDensity(TestCase):
             self.calibration_table, speed,
             uarray(self.count_rate, self.count_rate_delta), self.energy)
 
-        self.assertAlmostEqual(493686.26052628754, actual_temperature.nominal_value, 3)
+        self.assertAlmostEqual(493686.26052628754, actual_temperature.nominal_value, 2)
         self.assertAlmostEqual(156296.1278672896, actual_temperature.std_dev, 2)
-        self.assertAlmostEqual(0.164806556, actual_density.nominal_value, 3)
-        self.assertAlmostEqual(0.02097422, actual_density.std_dev, 4)
+        self.assertAlmostEqual(0.164806556, actual_density.nominal_value)
+        self.assertAlmostEqual(0.02097422, actual_density.std_dev)
 
     @patch(
         'imap_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density.get_alpha_peak_indices')

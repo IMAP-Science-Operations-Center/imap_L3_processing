@@ -19,33 +19,28 @@ class TestUtils(TestCase):
         energy = np.array([15000, 16000, 17000, 18000, 19000])
         coincidence_count_rate = np.array(
             [[4, 5, 6, 7, 8], [9, 10, 11, 12, 13], [14, 15, 16, 17, 18], [19, 20, 21, 22, 23]])
-        spin_angles = np.array([[24, 25, 26, 27, 28], [29, 30, 31, 32, 33], [34, 35, 36, 37, 38], [39, 40, 41, 42, 43]])
         coincidence_count_rate_uncertainty = np.array(
             [[0.1, 0.2, 0.3, 0.4, 0.5], [0.1, 0.2, 0.3, 0.4, 0.5], [0.1, 0.2, 0.3, 0.4, 0.5],
              [0.1, 0.2, 0.3, 0.4, 0.5]])
 
-        data = SwapiL2Data(epoch, energy, coincidence_count_rate, spin_angles, coincidence_count_rate_uncertainty)
+        data = SwapiL2Data(epoch, energy, coincidence_count_rate, coincidence_count_rate_uncertainty)
         chunks = list(chunk_l2_data(data, 2))
 
         expected_count_rate_chunk_1 = np.array([[4, 5, 6, 7, 8], [9, 10, 11, 12, 13]])
-        expected_spin_angles_chunk_1 = np.array([[24, 25, 26, 27, 28], [29, 30, 31, 32, 33]])
         expected_count_rate_uncertainty_chunk_1 = np.array([[0.1, 0.2, 0.3, 0.4, 0.5], [0.1, 0.2, 0.3, 0.4, 0.5]])
         first_chunk = chunks[0]
         np.testing.assert_array_equal(first_chunk.epoch, np.array([0, 1]))
         np.testing.assert_array_equal(energy, first_chunk.energy)
         np.testing.assert_array_equal(expected_count_rate_chunk_1, first_chunk.coincidence_count_rate)
-        np.testing.assert_array_equal(expected_spin_angles_chunk_1, first_chunk.spin_angles)
         np.testing.assert_array_equal(expected_count_rate_uncertainty_chunk_1,
                                       first_chunk.coincidence_count_rate_uncertainty)
 
         expected_count_rate_chunk_2 = np.array([[14, 15, 16, 17, 18], [19, 20, 21, 22, 23]])
-        expected_spin_angles_chunk_2 = np.array([[34, 35, 36, 37, 38], [39, 40, 41, 42, 43]])
         expected_count_rate_uncertainty_chunk_2 = np.array([[0.1, 0.2, 0.3, 0.4, 0.5], [0.1, 0.2, 0.3, 0.4, 0.5]])
         second_chunk = chunks[1]
         np.testing.assert_array_equal(np.array([2, 3]), second_chunk.epoch)
         np.testing.assert_array_equal(energy, second_chunk.energy)
         np.testing.assert_array_equal(expected_count_rate_chunk_2, second_chunk.coincidence_count_rate)
-        np.testing.assert_array_equal(expected_spin_angles_chunk_2, second_chunk.spin_angles)
         np.testing.assert_array_equal(expected_count_rate_uncertainty_chunk_2,
                                       second_chunk.coincidence_count_rate_uncertainty)
 
@@ -54,7 +49,6 @@ class TestUtils(TestCase):
         temp_cdf["epoch"] = np.array([datetime(2010, 1, 1, 0, 0, 46)])
         temp_cdf["energy"] = np.array([1, 2, 3, 4])
         temp_cdf["swp_coin_rate"] = np.array([5, 6, 7, 8])
-        temp_cdf["spin_angles"] = np.array([1, 1, 1, 1, 1, 1, 1])
         temp_cdf["swp_coin_unc"] = np.array([2, 2, 2, 2, 2, 2, 2, 2])
 
         temp_cdf.close()
@@ -65,7 +59,6 @@ class TestUtils(TestCase):
         np.testing.assert_array_equal(np.array(epoch_as_tt2000), actual_swapi_l2_data.epoch)
         np.testing.assert_array_equal(np.array([1, 2, 3, 4]), actual_swapi_l2_data.energy)
         np.testing.assert_array_equal(np.array([5, 6, 7, 8]), actual_swapi_l2_data.coincidence_count_rate)
-        np.testing.assert_array_equal(np.array([1, 1, 1, 1, 1, 1, 1]), actual_swapi_l2_data.spin_angles)
         np.testing.assert_array_equal(np.array([2, 2, 2, 2, 2, 2, 2, 2]),
                                       actual_swapi_l2_data.coincidence_count_rate_uncertainty)
         os.remove('temp_cdf.cdf')

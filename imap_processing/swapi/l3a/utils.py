@@ -9,7 +9,6 @@ def read_l2_swapi_data(cdf: CDF) -> SwapiL2Data:
     return SwapiL2Data(cdf.raw_var("epoch")[...],
                        cdf["energy"][...],
                        cdf["swp_coin_rate"][...],
-                       cdf["spin_angles"][...],
                        cdf["swp_coin_unc"][...])
 
 
@@ -20,7 +19,6 @@ def chunk_l2_data(data: SwapiL2Data, chunk_size: int) -> Iterable[SwapiL2Data]:
             data.epoch[i:i + chunk_size],
             data.energy,
             data.coincidence_count_rate[i:i + chunk_size],
-            data.spin_angles[i:i + chunk_size],
             data.coincidence_count_rate_uncertainty[i:i + chunk_size]
         )
         i += chunk_size

@@ -109,13 +109,12 @@ class TestSwapiProcessor(TestCase):
         energy = np.array([15000, 16000, 17000, 18000, 19000])
         coincidence_count_rate = np.array(
             [[4, 5, 6, 7, 8], [9, 10, 11, 12, 13], [14, 15, 16, 17, 18], [19, 20, 21, 22, 23]])
-        spin_angles = np.array([[24, 25, 26, 27, 28], [29, 30, 31, 32, 33], [34, 35, 36, 37, 38], [39, 40, 41, 42, 43]])
         coincidence_count_rate_uncertainty = np.array(
             [[0.1, 0.2, 0.3, 0.4, 0.5], [0.1, 0.2, 0.3, 0.4, 0.5], [0.1, 0.2, 0.3, 0.4, 0.5],
              [0.1, 0.2, 0.3, 0.4, 0.5]])
-        chunk_of_five = SwapiL2Data(epoch, energy, coincidence_count_rate, spin_angles,
+        chunk_of_five = SwapiL2Data(epoch, energy, coincidence_count_rate,
                                     coincidence_count_rate_uncertainty)
-        chunk_of_fifty = SwapiL2Data(epoch_for_fifty_sweeps, energy * 2, coincidence_count_rate * 2, spin_angles * 2,
+        chunk_of_fifty = SwapiL2Data(epoch_for_fifty_sweeps, energy * 2, coincidence_count_rate * 2,
                                      coincidence_count_rate_uncertainty * 2)
         mock_chunk_l2_data.side_effect = [
             [chunk_of_five],
@@ -177,9 +176,8 @@ class TestSwapiProcessor(TestCase):
                                       nominal_values(mock_calculate_proton_solar_wind_speed.call_args_list[0].args[0]))
         np.testing.assert_array_equal(std_devs(expected_count_rate_with_uncertainties),
                                       std_devs(mock_calculate_proton_solar_wind_speed.call_args_list[0].args[0]))
-        np.testing.assert_array_equal(spin_angles, mock_calculate_proton_solar_wind_speed.call_args_list[0].args[1])
-        np.testing.assert_array_equal(energy, mock_calculate_proton_solar_wind_speed.call_args_list[0].args[2])
-        np.testing.assert_array_equal(epoch, mock_calculate_proton_solar_wind_speed.call_args_list[0].args[3])
+        np.testing.assert_array_equal(energy, mock_calculate_proton_solar_wind_speed.call_args_list[0].args[1])
+        np.testing.assert_array_equal(epoch, mock_calculate_proton_solar_wind_speed.call_args_list[0].args[2])
 
         mock_spice_wrapper_furnish.assert_called()
 
@@ -391,7 +389,6 @@ class TestSwapiProcessor(TestCase):
             [[4, 5, 6, 7, 8], [9, 10, 11, 12, 13], [14, 15, 16, 17, 18], [19, 20, 21, 22, 23]])
         average_coincident_count_rates = [14, 15, 16, 17, 18]
 
-        spin_angles = np.array([[24, 25, 26, 27, 28], [29, 30, 31, 32, 33], [34, 35, 36, 37, 38], [39, 40, 41, 42, 43]])
         coincidence_count_rate_uncertainty = np.array(
             [[0.1, 0.2, 0.3, 0.4, 0.5], [0.1, 0.2, 0.3, 0.4, 0.5], [0.1, 0.2, 0.3, 0.4, 0.5],
              [0.1, 0.2, 0.3, 0.4, 0.5]])
@@ -399,12 +396,12 @@ class TestSwapiProcessor(TestCase):
 
         first_chunk_initial_epoch = 10
         first_l2_data_chunk = SwapiL2Data(np.array([first_chunk_initial_epoch, 11, 12, 13]), sentinel.energies,
-                                          coincidence_count_rate, spin_angles,
+                                          coincidence_count_rate,
                                           coincidence_count_rate_uncertainty)
 
         second_chunk_initial_epoch = 60
         second_l2_data_chunk = SwapiL2Data(np.array([second_chunk_initial_epoch, 11, 12, 13]), sentinel.energies,
-                                           coincidence_count_rate, spin_angles,
+                                           coincidence_count_rate,
                                            coincidence_count_rate_uncertainty)
 
         mock_chunk_l2_data.return_value = [first_l2_data_chunk, second_l2_data_chunk]

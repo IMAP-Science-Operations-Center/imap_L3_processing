@@ -117,5 +117,4 @@ class SwapiL2Data:
     epoch: np.ndarray[float]
     energy: np.ndarray[float]
     coincidence_count_rate: np.ndarray[float]
-    spin_angles: np.ndarray[float]  # not currently in the L2 cdf, is in the sample data provided by Bishwas
     coincidence_count_rate_uncertainty: np.ndarray[float]

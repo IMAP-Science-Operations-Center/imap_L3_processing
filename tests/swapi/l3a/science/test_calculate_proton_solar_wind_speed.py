@@ -19,14 +19,13 @@ from tests.spice_test_case import SpiceTestCase
 
 class TestCalculateProtonSolarWindSpeed(SpiceTestCase):
     def test_calculate_solar_wind_speed(self):
-        spin_angles = np.array([[0, 4, 8, 12], [16, 20, 24, 28], [32, 36, 40, 44], [48, 52, 56, 60], [64, 68, 72, 76]])
         energies = np.array([0, 1000, 750, 500])
         count_rates = np.array([[0, 0, 10, 0], [0, 0, 10, 0], [0, 0, 10, 0], [0, 0, 10, 0], [0, 0, 10, 0]])
         count_rates_with_uncertainties = uarray(count_rates, np.full_like(count_rates, 1.0))
 
         times = [datetime(2025, 6, 6, 12, i) for i in range(5)]
         epochs_in_terrestrial_time = spiceypy.datetime2et(times) * NANOSECONDS_IN_SECONDS
-        speed, a, phi, b = calculate_proton_solar_wind_speed(count_rates_with_uncertainties, spin_angles, energies,
+        speed, a, phi, b = calculate_proton_solar_wind_speed(count_rates_with_uncertainties, energies,
                                                              epochs_in_terrestrial_time)
 
         proton_charge = 1.602176634e-19
@@ -41,10 +40,9 @@ class TestCalculateProtonSolarWindSpeed(SpiceTestCase):
             epoch = cdf.raw_var("epoch")[...]
             energy = cdf["energy"][...]
             count_rate = cdf["swp_coin_rate"][...]
-            spin_angles = cdf["spin_angles"][...]
             count_rate_delta = cdf["swp_coin_unc"][...]
 
-        speed, a, phi, b = calculate_proton_solar_wind_speed(uarray(count_rate, count_rate_delta), spin_angles, energy,
+        speed, a, phi, b = calculate_proton_solar_wind_speed(uarray(count_rate, count_rate_delta), energy,
                                                              epoch)
 
         self.assertAlmostEqual(speed.n, 497.9135, 3)

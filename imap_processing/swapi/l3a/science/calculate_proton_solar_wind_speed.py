@@ -96,7 +96,7 @@ def calculate_sw_speed_h_plus(energy):
     return calculate_sw_speed(PROTON_MASS_KG, PROTON_CHARGE_COULOMBS, energy)
 
 
-def calculate_proton_solar_wind_speed(coincidence_count_rates, _, energies, epoch):
+def calculate_proton_solar_wind_speed(coincidence_count_rates, energies, epoch):
     energies = extract_coarse_sweep(energies)
     coincidence_count_rates = extract_coarse_sweep(coincidence_count_rates)
 
