@@ -549,7 +549,7 @@ class TestCalculatePickupIon(SpiceTestCase):
 
         actual = calculate_pui_velocity_vector(speed, elevation, azimuth)
 
-        expected_values = [(0, 0, 400), (-390, 0, 0), (0, -400, 0), (410, 0, 0), (0, 0, -400)]
+        expected_values = [(0, 0, 400), (390, 0, 0), (0, -400, 0), (-410, 0, 0), (0, 0, -400)]
 
         np.testing.assert_array_almost_equal(expected_values, actual, 1)
 
@@ -560,6 +560,6 @@ class TestCalculatePickupIon(SpiceTestCase):
 
         actual = calculate_solar_wind_velocity_vector(speed, deflection_angle, clock_angle)
 
-        expected_values = [(400, 0, 0), (0, 0, -390), (0, 0, 400), (0, 0, -410), (0, -400, 0), (0, 400, 0)]
+        expected_values = [(0, -400, 0), (0, 0, -390), (0, 0, 400), (0, 0, -410), (-400, 0, 0), (400, 0, 0)]
 
-        np.testing.assert_array_almost_equal(expected_values, actual, 1)
+        np.testing.assert_array_almost_equal(actual, expected_values, 1)

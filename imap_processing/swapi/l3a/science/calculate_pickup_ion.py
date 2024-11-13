@@ -245,7 +245,8 @@ def calculate_velocity_vector(sw_speed: ndarray, elevation: ndarray, azimuth: nd
 
 
 def calculate_pui_velocity_vector(speed: ndarray, elevation: ndarray, azimuth: ndarray) -> np.ndarray:
-    return calculate_velocity_vector(-speed, elevation, 90 + azimuth)
+    y_axis_azimuth = 90
+    return calculate_velocity_vector(-speed, elevation, y_axis_azimuth - azimuth)
 
 
 def calculate_pui_energy_cutoff(ephemeris_time: float, sw_velocity_in_imap_frame):
@@ -278,7 +279,8 @@ def extract_pui_energy_bins(energy_bin_labels, energies, observed_count_rates, e
 
 def calculate_solar_wind_velocity_vector(speeds: ndarray, deflection_angle: ndarray, clock_angle: ndarray) -> ndarray:
     elevation_angle = 90 - deflection_angle
-    return calculate_velocity_vector(-speeds, elevation_angle, clock_angle)
+    clock_angle_origin_in_despun_frame = -90
+    return calculate_velocity_vector(-speeds, elevation_angle, clock_angle + clock_angle_origin_in_despun_frame)
 
 
 def calculate_ten_minute_velocities(speeds: ndarray, deflection_angle: ndarray, clock_angle: ndarray) -> ndarray:
