@@ -193,9 +193,9 @@ class TestSwapiProcessor(TestCase):
                          mock_proton_calculate_temperature_and_density.call_args_list[0].args[0])
         self.assert_ufloat_equal(returned_proton_sw_speed,
                                  mock_proton_calculate_temperature_and_density.call_args_list[0].args[1])
-        self.assert_ufloat_equal(ufloat(0.01, 1.0),
+        self.assert_ufloat_equal(returned_proton_sw_deflection_angle,
                                  mock_proton_calculate_temperature_and_density.call_args_list[0].args[2])
-        self.assertEqual(sentinel.phi, mock_proton_calculate_temperature_and_density.call_args_list[0].args[3])
+        self.assertEqual(returned_proton_sw_clock_angle, mock_proton_calculate_temperature_and_density.call_args_list[0].args[3])
         np.testing.assert_array_equal(nominal_values(expected_count_rate_with_uncertainties),
                                       nominal_values(
                                           mock_proton_calculate_temperature_and_density.call_args_list[0].args[4]))

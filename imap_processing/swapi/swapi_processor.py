@@ -78,14 +78,6 @@ class SwapiProcessor(Processor):
                 coincidence_count_rates_with_uncertainty, data_chunk.energy, data_chunk.epoch)
             proton_solar_wind_speeds.append(proton_solar_wind_speed)
 
-            proton_temperature, proton_density = calculate_proton_solar_wind_temperature_and_density(
-                dependencies.proton_temperature_density_calibration_table,
-                proton_solar_wind_speed,
-                ufloat(0.01, 1.0),
-                phi,
-                coincidence_count_rates_with_uncertainty,
-                data_chunk.energy)
-
             clock_angle = calculate_clock_angle(dependencies.clock_angle_and_flow_deflection_calibration_table,
                                                 proton_solar_wind_speed, a, phi, b)
 
@@ -93,10 +85,19 @@ class SwapiProcessor(Processor):
                 dependencies.clock_angle_and_flow_deflection_calibration_table,
                 proton_solar_wind_speed, a, phi, b)
 
-            proton_solar_wind_temperatures.append(proton_temperature)
-            proton_solar_wind_density.append(proton_density)
             proton_solar_wind_clock_angles.append(clock_angle)
             proton_solar_wind_deflection_angles.append(deflection_angle)
+
+            proton_temperature, proton_density = calculate_proton_solar_wind_temperature_and_density(
+                dependencies.proton_temperature_density_calibration_table,
+                proton_solar_wind_speed,
+                deflection_angle,
+                clock_angle,
+                coincidence_count_rates_with_uncertainty,
+                data_chunk.energy)
+
+            proton_solar_wind_temperatures.append(proton_temperature)
+            proton_solar_wind_density.append(proton_density)
 
             epochs.append(data_chunk.epoch[0] + THIRTY_SECONDS_IN_NANOSECONDS)
 
