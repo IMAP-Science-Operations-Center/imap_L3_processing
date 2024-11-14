@@ -1,0 +1,1 @@
+GLOWS_L2_DESCRIPTOR = "histogram-"
