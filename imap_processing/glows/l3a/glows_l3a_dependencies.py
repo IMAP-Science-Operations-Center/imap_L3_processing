@@ -10,6 +10,7 @@ from imap_processing.utils import download_dependency
 @dataclass
 class GlowsL3ADependencies:
     data: CDF
+    number_of_bins: int
 
     @classmethod
     def fetch_dependencies(cls, dependencies: list[UpstreamDataDependency]):
@@ -19,5 +20,5 @@ class GlowsL3ADependencies:
         l2_cdf_path = download_dependency(dependency)
         cdf = CDF(str(l2_cdf_path))
 
-        return cls(cdf)
+        return cls(cdf, 90)
 
