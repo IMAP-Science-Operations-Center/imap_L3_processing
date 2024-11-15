@@ -30,4 +30,4 @@ class GlowsProcessor(Processor):
                                                             data.exposure_times, dependencies.number_of_bins)
         return GlowsL3LightCurve(photon_flux=rebinned_flux,
                                  exposure_times=rebinned_exposure,
-                                 input_metadata=self.dependencies[0])
+                                 input_metadata=self.input_metadata.to_upstream_data_dependency(self.dependencies[0].descriptor))

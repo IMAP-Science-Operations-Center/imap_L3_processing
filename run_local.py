@@ -3,7 +3,11 @@ from datetime import datetime
 
 from spacepy.pycdf import CDF
 
-from imap_processing.models import InputMetadata
+from imap_processing.glows.descriptors import GLOWS_L2_DESCRIPTOR
+from imap_processing.glows.glows_processor import GlowsProcessor
+from imap_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
+from imap_processing.glows.l3a.utils import read_l2_glows_data
+from imap_processing.models import InputMetadata, UpstreamDataDependency
 from imap_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density import \
     AlphaTemperatureDensityCalibrationTable
 from imap_processing.swapi.l3a.science.calculate_pickup_ion import DensityOfNeutralHeliumLookupTable
@@ -21,7 +25,34 @@ from imap_processing.swapi.swapi_processor import SwapiProcessor
 from imap_processing.utils import save_data
 
 
-def create_l3b_cdf(geometric_calibration_file, efficiency_calibration_file, cdf_file):
+
+def create_glows_l3a_cdf(cdf_file):
+    cdf_data = CDF(cdf_file)
+    glows_l3_dependencies = GlowsL3ADependencies(cdf_data, 90)
+    data = read_l2_glows_data(glows_l3_dependencies.data)
+
+    input_metadata = InputMetadata(
+        instrument='glows',
+        data_level='l3a',
+        start_date=datetime(2010, 1, 1),
+        end_date=datetime(2010, 1, 2),
+        version='v999')
+
+    dependencies = [
+        UpstreamDataDependency(input_metadata.instrument,
+                               "l2",
+                               input_metadata.start_date,
+                               input_metadata.end_date,
+                               input_metadata.version,
+                               GLOWS_L2_DESCRIPTOR + '0001')
+    ]
+    processor = GlowsProcessor(dependencies, input_metadata)
+
+    l3a_data = processor.process_l3a(data, glows_l3_dependencies)
+    cdf_path = save_data(l3a_data)
+    return cdf_path
+
+def create_swapi_l3b_cdf(geometric_calibration_file, efficiency_calibration_file, cdf_file):
     geometric_calibration = GeometricFactorCalibrationTable.from_file(geometric_calibration_file)
     efficiency_calibration = EfficiencyCalibrationTable(efficiency_calibration_file)
     cdf_data = CDF(cdf_file)
@@ -41,10 +72,10 @@ def create_l3b_cdf(geometric_calibration_file, efficiency_calibration_file, cdf_
     return cdf_path
 
 
-def create_l3a_cdf(proton_temperature_density_calibration_file, alpha_temperature_density_calibration_file,
-                   clock_angle_and_flow_deflection_calibration_file, geometric_factor_calibration_file,
-                   instrument_response_calibration_file, density_of_neutral_helium_calibration_file,
-                   cdf_file):
+def create_swapi_l3a_cdf(proton_temperature_density_calibration_file, alpha_temperature_density_calibration_file,
+                         clock_angle_and_flow_deflection_calibration_file, geometric_factor_calibration_file,
+                         instrument_response_calibration_file, density_of_neutral_helium_calibration_file,
+                         cdf_file):
     proton_temperature_density_calibration_table = ProtonTemperatureAndDensityCalibrationTable.from_file(
         proton_temperature_density_calibration_file)
     alpha_temperature_density_calibration_table = AlphaTemperatureDensityCalibrationTable.from_file(
@@ -81,20 +112,25 @@ def create_l3a_cdf(proton_temperature_density_calibration_file, alpha_temperatur
 
 
 if __name__ == "__main__":
-    if "l3a" in sys.argv:
-        paths = create_l3a_cdf(
-            "swapi/test_data/imap_swapi_l2_density-temperature-lut-text-not-cdf_20240905_v002.cdf",
-            "swapi/test_data/imap_swapi_l2_alpha-density-temperature-lut-text-not-cdf_20240920_v004.cdf",
-            "swapi/test_data/imap_swapi_l2_clock-angle-and-flow-deflection-lut-text-not-cdf_20240918_v001.cdf",
-            "swapi/test_data/imap_swapi_l2_energy-gf-lut-not-cdf_20240923_v002.cdf",
-            "swapi/test_data/imap_swapi_l2_instrument-response-lut-zip-not-cdf_20241023_v001.cdf",
-            "swapi/test_data/imap_swapi_l2_density-of-neutral-helium-lut-text-not-cdf_20241023_v002.cdf",
-            "swapi/test_data/imap_swapi_l2_50-sweeps_20250606_v001.cdf"
+    if "swapi" in sys.argv:
+        if "l3a" in sys.argv:
+            paths = create_swapi_l3a_cdf(
+                "swapi/test_data/imap_swapi_l2_density-temperature-lut-text-not-cdf_20240905_v002.cdf",
+                "swapi/test_data/imap_swapi_l2_alpha-density-temperature-lut-text-not-cdf_20240920_v004.cdf",
+                "swapi/test_data/imap_swapi_l2_clock-angle-and-flow-deflection-lut-text-not-cdf_20240918_v001.cdf",
+                "swapi/test_data/imap_swapi_l2_energy-gf-lut-not-cdf_20240923_v002.cdf",
+                "swapi/test_data/imap_swapi_l2_instrument-response-lut-zip-not-cdf_20241023_v001.cdf",
+                "swapi/test_data/imap_swapi_l2_density-of-neutral-helium-lut-text-not-cdf_20241023_v002.cdf",
+                "swapi/test_data/imap_swapi_l2_50-sweeps_20250606_v001.cdf"
+            )
+            print(paths)
+        if "l3b" in sys.argv:
+            path = create_swapi_l3b_cdf(
+                "swapi/test_data/imap_swapi_l2_energy-gf-lut-not-cdf_20240923_v002.cdf",
+                "swapi/test_data/imap_swapi_l2_efficiency-lut-text-not-cdf_20241020_v003.cdf",
+                "swapi/test_data/imap_swapi_l2_sci_20100101_v001.cdf")
+            print(path)
+    if "glows" in sys.argv:
+        path = create_glows_l3a_cdf(
+            "tests/test_data/glows_l2.cdf"
         )
-        print(paths)
-    if "l3b" in sys.argv:
-        path = create_l3b_cdf(
-            "swapi/test_data/imap_swapi_l2_energy-gf-lut-not-cdf_20240923_v002.cdf",
-            "swapi/test_data/imap_swapi_l2_efficiency-lut-text-not-cdf_20241020_v003.cdf",
-            "swapi/test_data/imap_swapi_l2_sci_20100101_v001.cdf")
-        print(path)

@@ -81,7 +81,7 @@ class TestGlowsProcessor(unittest.TestCase):
                                                  data.exposure_times, fetched_dependencies.number_of_bins)
         self.assertEqual(rebinned_flux, result.photon_flux)
         self.assertEqual(rebinned_exposure, result.exposure_times)
-        self.assertEqual(dependencies[0], result.input_metadata)
+        self.assertEqual(input_metadata.to_upstream_data_dependency(descriptor), result.input_metadata)
 
 
 

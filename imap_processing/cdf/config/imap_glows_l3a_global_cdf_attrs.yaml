@@ -1,0 +1,5 @@
+Instrument_type: Particles (space)
+Data_level: "3"
+Data_type: L3_SCI>Level-3 Science data
+Logical_file_id: imap_glows_l3a_histogram-XXXXX
+Logical_source_description: GLOWS Instrument Light Curve

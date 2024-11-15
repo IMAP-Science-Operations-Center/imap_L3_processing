@@ -1,0 +1,7 @@
+Descriptor: GLOWS>Global Solar Wind Structure
+TEXT: >
+  The GLObal Solar Wind Structure (GLOWS) is a non-imaging single-pixel Lyman-α 
+  photometer that will be used to observe the sky distribution of the helioglow 
+  to better understand the evolution of the solar wind structure. See
+  https://imap.princeton.edu/instruments/glows for more details.
+Instrument_type: Particles (space)
