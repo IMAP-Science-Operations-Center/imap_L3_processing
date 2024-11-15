@@ -3,8 +3,6 @@ from datetime import datetime
 from pathlib import Path
 from unittest.mock import patch
 
-from spacepy.pycdf import CDF
-
 from imap_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
 from imap_processing.models import UpstreamDataDependency
 

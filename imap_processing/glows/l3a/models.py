@@ -6,11 +6,10 @@ import numpy as np
 
 @dataclass
 class GlowsL2Data:
-    epoch: datetime
     start_time: datetime
     end_time: datetime
-    histogram_flags_array: np.ndarray[int]
+    histogram_flag_array: np.ndarray[bool]
     photon_flux: np.ndarray[float]
     flux_uncertainties: np.ndarray[float]
-    spin_angles: np.ndarray[float]
+    spin_angle: np.ndarray[float]
     exposure_times: np.ndarray[float]
