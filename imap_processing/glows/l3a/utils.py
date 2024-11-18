@@ -10,4 +10,6 @@ def read_l2_glows_data(cdf: CDF) -> GlowsL2Data:
                        histogram_flag_array=cdf['histogram_flag_array'][...].astype(bool),
                        flux_uncertainties=cdf['flux_uncertainties'][...],
                        spin_angle=cdf['spin_angle'][...],
-                       exposure_times=cdf['exposure_times'][...])
+                       exposure_times=cdf['exposure_times'][...],
+                       epoch=cdf['epoch'][...],
+                       )

@@ -25,7 +25,6 @@ from imap_processing.swapi.swapi_processor import SwapiProcessor
 from imap_processing.utils import save_data
 
 
-
 def create_glows_l3a_cdf(cdf_file):
     cdf_data = CDF(cdf_file)
     glows_l3_dependencies = GlowsL3ADependencies(cdf_data, 90)
@@ -51,6 +50,7 @@ def create_glows_l3a_cdf(cdf_file):
     l3a_data = processor.process_l3a(data, glows_l3_dependencies)
     cdf_path = save_data(l3a_data)
     return cdf_path
+
 
 def create_swapi_l3b_cdf(geometric_calibration_file, efficiency_calibration_file, cdf_file):
     geometric_calibration = GeometricFactorCalibrationTable.from_file(geometric_calibration_file)
@@ -132,5 +132,5 @@ if __name__ == "__main__":
             print(path)
     if "glows" in sys.argv:
         path = create_glows_l3a_cdf(
-            "tests/test_data/glows_l2.cdf"
+            "tests/test_data/glows_l2_with_epoch.cdf"
         )

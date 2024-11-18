@@ -1,6 +1,7 @@
 import dataclasses
 
 import imap_data_access
+import numpy as np
 
 from imap_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
 from imap_processing.glows.l3a.models import GlowsL2Data, GlowsL3LightCurve
@@ -28,6 +29,12 @@ class GlowsProcessor(Processor):
     def process_l3a(self, data: GlowsL2Data, dependencies: GlowsL3ADependencies) -> GlowsL3LightCurve:
         rebinned_flux, rebinned_exposure = rebin_lightcurve(data.photon_flux, data.histogram_flag_array,
                                                             data.exposure_times, dependencies.number_of_bins)
-        return GlowsL3LightCurve(photon_flux=rebinned_flux,
-                                 exposure_times=rebinned_exposure,
-                                 input_metadata=self.input_metadata.to_upstream_data_dependency(self.dependencies[0].descriptor))
+        duration_seconds = [td.total_seconds() for td in data.end_time - data.start_time]
+        epoch_delta = np.array(duration_seconds) * 1_000_000_000 / 2
+        return GlowsL3LightCurve(
+            photon_flux=rebinned_flux.reshape(1, -1),
+            exposure_times=rebinned_exposure.reshape(1, -1),
+            input_metadata=self.input_metadata.to_upstream_data_dependency(self.dependencies[0].descriptor),
+            epoch=data.epoch,
+            epoch_delta=epoch_delta
+        )

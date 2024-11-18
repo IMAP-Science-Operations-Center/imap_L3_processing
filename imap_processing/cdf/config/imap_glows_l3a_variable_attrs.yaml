@@ -9,14 +9,14 @@ bins:
   FIELDNAM: Bin number
   FORMAT: I5
   VAR_TYPE: support_data
-  LABLAXIS: Counts
+  LABLAXIS: Bin Number
   FILLVAL: -32768
   UNITS: ' '
   MONOTON: INCREASE
   SCALETYP: linear
 
 support_data_defaults: &support_data_defaults
-#  DEPEND_0: epoch
+  DEPEND_0: epoch
   DISPLAY_TYPE: time_series
   VAR_TYPE: support_data
   FORMAT: I10
@@ -26,11 +26,14 @@ photon_flux:
   VALIDMIN: 0.0
   VALIDMAX: 2000.0
   CATDESC: Histogram of photon flux in scanning-circle bins
-#  DEPEND_0: epoch
+  DEPEND_0: epoch
   DEPEND_1: bins
   FIELDNAM: Histogram of photon flux
   FORMAT: F12.6
   DISPLAY_TYPE: spectrogram
+  SCALEMIN: 0
+  SCALEMAX: 1000
+  SCALETYP: linear
   LABLAXIS: Flux
   FILL_VAL: *float_fillval
   UNITS: Rayleigh
@@ -57,6 +60,41 @@ exposure_times:
   LABLAXIS: Duration
   VALIDMAX: 4000.0
   VALIDMIN: 0.0
+
+epoch:
+  CATDESC: Time, number of nanoseconds since J2000 with leap seconds included
+  FIELDNAM: epoch
+  LABLAXIS: epoch
+  UNITS: ns
+  VAR_TYPE: support_data
+  SCALETYP: linear
+  MONOTON: INCREASE
+  TIME_BASE: J2000
+  TIME_SCALE: Terrestrial Time
+  REFERENCE_POSITION: Rotating Earth Geoid
+  DELTA_MINUS_VAR: epoch_delta
+  DELTA_PLUS_VAR: epoch_delta
+  FILLVAL: 9999-12-31T23:59:59.999999999
+  VALIDMIN: 2010-01-01T00:00:00.000000000
+  VALIDMAX: 2040-01-01T00:00:00.000000000
+  FORMAT: " "
+
+
+
+epoch_delta:
+  CATDESC: epoch_DELTA
+  DEPEND_0: epoch
+  DISPLAY_TYPE: time_series
+  FIELDNAM: epoch_delta
+  FILLVAL: -9223372036854775808
+  VALIDMIN: 0
+  VALIDMAX: 86000000000000
+  SCALEMIN: 0
+  SCALEMAX: 86000000000000
+  SCALETYP: linear
+  UNITS: ns
+  VAR_TYPE: support_data
+  FORMAT: 19I
 
 
 
