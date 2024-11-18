@@ -7,6 +7,7 @@ from imap_processing.models import DataProduct, DataProductVariable
 PHOTON_FLUX_CDF_VAR_NAME = 'photon_flux'
 EXPOSURE_TIMES_CDF_VAR_NAME = 'exposure_times'
 NUM_OF_BINS_CDF_VAR_NAME = 'number_of_bins'
+BINS_CDF_VAR_NAME = 'bins'
 
 @dataclass
 class GlowsL2Data:
@@ -29,4 +30,5 @@ class GlowsL3LightCurve(DataProduct):
             DataProductVariable(PHOTON_FLUX_CDF_VAR_NAME, self.photon_flux),
             DataProductVariable(EXPOSURE_TIMES_CDF_VAR_NAME, self.exposure_times),
             DataProductVariable(NUM_OF_BINS_CDF_VAR_NAME, len(self.photon_flux), record_varying=False),
+            DataProductVariable(BINS_CDF_VAR_NAME, np.arange(len(self.photon_flux))),
         ]

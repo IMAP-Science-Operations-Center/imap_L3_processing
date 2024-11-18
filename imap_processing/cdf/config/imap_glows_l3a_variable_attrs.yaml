@@ -1,0 +1,62 @@
+float_fillval: &float_fillval -1.000000e+31
+max_uint16: &max_uint16 65535
+
+
+bins:
+  VALIDMIN: 0
+  VALIDMAX: 3599
+  CATDESC: Histogram bin number
+  FIELDNAM: Bin number
+  FORMAT: I5
+  VAR_TYPE: support_data
+  LABLAXIS: Counts
+  FILLVAL: -32768
+  UNITS: ' '
+  MONOTON: INCREASE
+  SCALETYP: linear
+
+support_data_defaults: &support_data_defaults
+#  DEPEND_0: epoch
+  DISPLAY_TYPE: time_series
+  VAR_TYPE: support_data
+  FORMAT: I10
+  RESOLUTION: ISO8601
+
+photon_flux:
+  VALIDMIN: 0.0
+  VALIDMAX: 2000.0
+  CATDESC: Histogram of photon flux in scanning-circle bins
+#  DEPEND_0: epoch
+  DEPEND_1: bins
+  FIELDNAM: Histogram of photon flux
+  FORMAT: F12.6
+  DISPLAY_TYPE: spectrogram
+  LABLAXIS: Flux
+  FILL_VAL: *float_fillval
+  UNITS: Rayleigh
+  VAR_TYPE: data
+
+number_of_bins:
+  <<: *support_data_defaults
+  CATDESC: Number of histogram bins
+  FIELDNAM: Number of histogram bins
+  FILLVAL: *max_uint16
+  FORMAT: I5
+  LABLAXIS: Num of bins
+  UNITS: ' '
+  VALIDMAX: 3600
+  VALIDMIN: 1
+
+exposure_times:
+  <<: *support_data_defaults
+  CATDESC: Exposure time in seconds for GLOWS histogram
+  FIELDNAM: Histogram exposure time
+  FILLVAL: *float_fillval
+  FORMAT: F12.6
+  UNITS: seconds
+  LABLAXIS: Duration
+  VALIDMAX: 4000.0
+  VALIDMIN: 0.0
+
+
+
