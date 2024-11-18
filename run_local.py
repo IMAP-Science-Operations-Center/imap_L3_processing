@@ -1,6 +1,7 @@
 import sys
 from datetime import datetime
 
+import numpy as np
 from spacepy.pycdf import CDF
 
 from imap_processing.glows.descriptors import GLOWS_L2_DESCRIPTOR
@@ -25,10 +26,11 @@ from imap_processing.swapi.swapi_processor import SwapiProcessor
 from imap_processing.utils import save_data
 
 
-def create_glows_l3a_cdf(cdf_file):
+def create_glows_l3a_cdf(cdf_file, background_file):
     cdf_data = CDF(cdf_file)
-    glows_l3_dependencies = GlowsL3ADependencies(cdf_data, 90)
-    data = read_l2_glows_data(glows_l3_dependencies.data)
+    l2_glows_data = read_l2_glows_data(cdf_data)
+    background = np.loadtxt(background_file)
+    glows_l3_dependencies = GlowsL3ADependencies(l2_glows_data, 90, background)
 
     input_metadata = InputMetadata(
         instrument='glows',
@@ -47,7 +49,7 @@ def create_glows_l3a_cdf(cdf_file):
     ]
     processor = GlowsProcessor(dependencies, input_metadata)
 
-    l3a_data = processor.process_l3a(data, glows_l3_dependencies)
+    l3a_data = processor.process_l3a(glows_l3_dependencies)
     cdf_path = save_data(l3a_data)
     return cdf_path
 
@@ -132,5 +134,6 @@ if __name__ == "__main__":
             print(path)
     if "glows" in sys.argv:
         path = create_glows_l3a_cdf(
-            "tests/test_data/glows_l2_with_epoch.cdf"
+            "tests/test_data/glows_l2_with_epoch.cdf",
+            "tests/test_data/imap_glows_l2_histogram-background-estimate-text-not-cdf_20250701_v001.cdf"
         )

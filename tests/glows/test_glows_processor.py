@@ -13,11 +13,10 @@ from imap_processing.models import UpstreamDataDependency, InputMetadata
 class TestGlowsProcessor(unittest.TestCase):
 
     @patch('imap_processing.glows.glows_processor.GlowsL3ADependencies')
-    @patch('imap_processing.glows.glows_processor.read_l2_glows_data')
     @patch('imap_processing.glows.glows_processor.GlowsProcessor.process_l3a')
     @patch('imap_processing.glows.glows_processor.save_data')
     @patch('imap_processing.glows.glows_processor.imap_data_access.upload')
-    def test_processor_handles_l3a(self, mock_upload, mock_save_data, mock_process_l3a_method, mock_read_glows_data,
+    def test_processor_handles_l3a(self, mock_upload, mock_save_data, mock_process_l3a_method,
                                    mock_glows_dependencies_class):
         instrument = 'glows'
         incoming_data_level = 'l2'
@@ -30,7 +29,6 @@ class TestGlowsProcessor(unittest.TestCase):
         outgoing_version = 'v02'
 
         mock_fetched_dependencies = mock_glows_dependencies_class.fetch_dependencies.return_value
-        mock_glows_l2_data = mock_read_glows_data.return_value
         mock_light_curve = mock_process_l3a_method.return_value
         mock_cdf_path = mock_save_data.return_value
 
@@ -46,8 +44,7 @@ class TestGlowsProcessor(unittest.TestCase):
         processor.process()
 
         mock_glows_dependencies_class.fetch_dependencies.assert_called_with(dependencies)
-        mock_read_glows_data.assert_called_with(mock_fetched_dependencies.data)
-        mock_process_l3a_method.assert_called_with(mock_glows_l2_data, mock_fetched_dependencies)
+        mock_process_l3a_method.assert_called_with(mock_fetched_dependencies)
         mock_save_data.assert_called_with(mock_light_curve)
         mock_upload.assert_called_with(mock_cdf_path)
 
@@ -75,16 +72,20 @@ class TestGlowsProcessor(unittest.TestCase):
         ]
         processor = GlowsProcessor(dependencies=dependencies, input_metadata=input_metadata)
 
-        fetched_dependencies = Mock()
         data = Mock()
         data.start_time = np.array([start_date])
         data.end_time = np.array([end_date])
+
+        fetched_dependencies = Mock()
+        fetched_dependencies.data = data
+
         expected_epoch_delta = round((end_date - start_date).total_seconds() * 1_000_000_000 / 2)
-        result = processor.process_l3a(data, fetched_dependencies)
+        result = processor.process_l3a(fetched_dependencies)
         self.assertIsInstance(result, GlowsL3LightCurve)
 
         mock_rebin_lightcurve.assert_called_with(data.photon_flux, data.histogram_flag_array,
-                                                 data.exposure_times, fetched_dependencies.number_of_bins)
+                                                 data.exposure_times, fetched_dependencies.number_of_bins,
+                                                 fetched_dependencies.background)
         np.testing.assert_equal(result.photon_flux, np.array([[1, 2, 3, 4]]), strict=True)
         np.testing.assert_equal(result.exposure_times, np.array([[5, 6, 7, 8]]), strict=True)
         self.assertEqual(input_metadata.to_upstream_data_dependency(descriptor), result.input_metadata)

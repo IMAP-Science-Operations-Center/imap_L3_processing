@@ -4,9 +4,8 @@ import imap_data_access
 import numpy as np
 
 from imap_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
-from imap_processing.glows.l3a.models import GlowsL2Data, GlowsL3LightCurve
+from imap_processing.glows.l3a.models import GlowsL3LightCurve
 from imap_processing.glows.l3a.science.calculate_daily_lightcurve import rebin_lightcurve
-from imap_processing.glows.l3a.utils import read_l2_glows_data
 from imap_processing.processor import Processor
 from imap_processing.utils import save_data
 
@@ -21,14 +20,16 @@ class GlowsProcessor(Processor):
 
         if self.input_metadata.data_level == "l3a":
             l3a_dependencies = GlowsL3ADependencies.fetch_dependencies(dependencies)
-            data = read_l2_glows_data(l3a_dependencies.data)
-            l3a_output = self.process_l3a(data, l3a_dependencies)
+            l3a_output = self.process_l3a(l3a_dependencies)
             proton_cdf = save_data(l3a_output)
             imap_data_access.upload(proton_cdf)
 
-    def process_l3a(self, data: GlowsL2Data, dependencies: GlowsL3ADependencies) -> GlowsL3LightCurve:
+    def process_l3a(self, dependencies: GlowsL3ADependencies) -> GlowsL3LightCurve:
+        data = dependencies.data
         rebinned_flux, rebinned_exposure = rebin_lightcurve(data.photon_flux, data.histogram_flag_array,
-                                                            data.exposure_times, dependencies.number_of_bins)
+                                                            data.exposure_times, dependencies.number_of_bins,
+                                                            dependencies.background)
+
         duration_seconds = [td.total_seconds() for td in data.end_time - data.start_time]
         epoch_delta = np.array(duration_seconds) * 1_000_000_000 / 2
         return GlowsL3LightCurve(

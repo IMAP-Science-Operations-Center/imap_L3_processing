@@ -64,5 +64,6 @@ if __name__ == '__main__':
             imap_l3_processor()
         except Exception as e:
             logger.error("Unhandled Exception:", exc_info=e)
+
         logging.shutdown()
         imap_data_access.upload(log_path)
