@@ -15,10 +15,12 @@ class GlowsL3ADependencies:
     @classmethod
     def fetch_dependencies(cls, dependencies: list[UpstreamDataDependency]):
         dependency = next(dep
-            for dep in dependencies if dep.descriptor.startswith(GLOWS_L2_DESCRIPTOR))
+                          for dep in dependencies if dep.descriptor.startswith(GLOWS_L2_DESCRIPTOR))
 
         l2_cdf_path = download_dependency(dependency)
         cdf = CDF(str(l2_cdf_path))
 
-        return cls(cdf, 90)
-
+        num_bin_dependency = UpstreamDataDependency("glows", "l2", None, None, "latest",
+                                                    descriptor="histogram-number-of-bins-text-not-cdf")
+        num_of_bin = int(download_dependency(num_bin_dependency).read_text())
+        return cls(cdf, num_of_bin)
