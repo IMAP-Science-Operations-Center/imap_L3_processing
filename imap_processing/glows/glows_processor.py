@@ -2,6 +2,7 @@ import dataclasses
 
 import imap_data_access
 import numpy as np
+from uncertainties import unumpy
 
 from imap_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
 from imap_processing.glows.l3a.models import GlowsL3LightCurve
@@ -26,7 +27,8 @@ class GlowsProcessor(Processor):
 
     def process_l3a(self, dependencies: GlowsL3ADependencies) -> GlowsL3LightCurve:
         data = dependencies.data
-        rebinned_flux, rebinned_exposure = rebin_lightcurve(data.photon_flux, data.histogram_flag_array,
+        flux_with_uncertainty = unumpy.uarray(data.photon_flux, data.flux_uncertainties)
+        rebinned_flux, rebinned_exposure = rebin_lightcurve(flux_with_uncertainty, data.histogram_flag_array,
                                                             data.exposure_times, dependencies.number_of_bins,
                                                             dependencies.background)
 

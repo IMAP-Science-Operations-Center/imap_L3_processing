@@ -49,7 +49,8 @@ class TestGlowsProcessor(unittest.TestCase):
         mock_upload.assert_called_with(mock_cdf_path)
 
     @patch('imap_processing.glows.glows_processor.rebin_lightcurve')
-    def test_process_l3a(self, mock_rebin_lightcurve):
+    @patch('imap_processing.glows.glows_processor.unumpy.uarray')
+    def test_process_l3a(self, mock_uarray, mock_rebin_lightcurve):
         rebinned_flux = np.array([1, 2, 3, 4])
         rebinned_exposure = np.array([5, 6, 7, 8])
         mock_rebin_lightcurve.return_value = (rebinned_flux, rebinned_exposure)
@@ -82,8 +83,8 @@ class TestGlowsProcessor(unittest.TestCase):
         expected_epoch_delta = round((end_date - start_date).total_seconds() * 1_000_000_000 / 2)
         result = processor.process_l3a(fetched_dependencies)
         self.assertIsInstance(result, GlowsL3LightCurve)
-
-        mock_rebin_lightcurve.assert_called_with(data.photon_flux, data.histogram_flag_array,
+        mock_uarray.assert_called_with(data.photon_flux, data.flux_uncertainties)
+        mock_rebin_lightcurve.assert_called_with(mock_uarray.return_value, data.histogram_flag_array,
                                                  data.exposure_times, fetched_dependencies.number_of_bins,
                                                  fetched_dependencies.background)
         np.testing.assert_equal(result.photon_flux, np.array([[1, 2, 3, 4]]), strict=True)
