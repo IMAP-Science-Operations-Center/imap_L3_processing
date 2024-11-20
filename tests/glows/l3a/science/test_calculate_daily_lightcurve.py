@@ -1,6 +1,7 @@
 import unittest
 
 import numpy as np
+from uncertainties.unumpy import uarray, nominal_values, std_devs
 
 from imap_processing.glows.l3a.science.calculate_daily_lightcurve import rebin_lightcurve
 
@@ -94,6 +95,22 @@ class TestCalculateDailyLightcurve(unittest.TestCase):
 
         result, exposure = rebin_lightcurve(photon_flux, flags, exposure_times, 2, background)
         np.testing.assert_equal(result, [5.0, 36.0], strict=True)
+        np.testing.assert_equal(exposure, [3.0, 1.0], strict=True)
+
+    def test_rebin_uses_uncertain_photon_flux_and_background(self):
+        photon_flux = np.array([5, 20, 30, 40])
+        photon_flux_uncertainty = np.array([0.1, 2.0, 3.0, .5])
+        photon_flux = uarray(photon_flux, photon_flux_uncertainty)
+
+        flags = np.zeros((4, 4))
+        exposure_times = np.array([2, 1, 0, 1])
+        background = np.array([5, 4])
+        background_uncertainty = np.array([0.02, 0.08])
+        background = uarray(background, background_uncertainty)
+
+        result, exposure = rebin_lightcurve(photon_flux, flags, exposure_times, 2, background)
+        np.testing.assert_equal(nominal_values(result), [5.0, 36.0], strict=True)
+        np.testing.assert_equal(std_devs(result), [5.0, 36.0], strict=True)
         np.testing.assert_equal(exposure, [3.0, 1.0], strict=True)
 
 
