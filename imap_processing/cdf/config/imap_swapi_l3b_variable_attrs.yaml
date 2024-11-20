@@ -15,7 +15,7 @@ proton_sw_velocity:
   UNITS: km/s
   LABLAXIS: Velocity
   SCALETYP: linear
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   DISPLAY_TYPE: time_series
   SCALEMIN: 0
   SCALEMAX: 1000
