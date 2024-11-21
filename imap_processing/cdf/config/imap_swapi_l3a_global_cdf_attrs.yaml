@@ -1,5 +1,18 @@
-Instrument_type: Particles (space)
-Data_level: "3"
-Data_type: L3_SCI>Level-3 Science data
-Logical_file_id: imap_swapi_l3a_proton-solar-wind-speed
-Logical_source_description: SWAPI Instrument Proton Solar Wind Speed
+instrument_base: &instrument_base
+  Instrument_type: Particles (space)
+  Data_level: "3a"
+
+imap_swapi_l3a_proton-sw:
+  <<: *instrument_base
+  Data_type: L3a_PROTON-SW>Level-3a Proton Solar Wind
+  Logical_source_description: SWAPI Instrument Proton Solar Wind Parameters
+
+imap_swapi_l3a_alpha-sw:
+  <<: *instrument_base
+  Data_type: L3a_ALPHA-SW>Level-3a Alpha Solar Wind
+  Logical_source_description: SWAPI Instrument Alpha Solar Wind Parameters
+
+imap_swapi_l3a_pui-he:
+  <<: *instrument_base
+  Data_type: L3a_PUI-HE>Level-3a Pickup Ion
+  Logical_source_description: SWAPI Instrument Pickup Ion Parameters

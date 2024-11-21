@@ -22,15 +22,15 @@ def load_spice_kernels():
 
 def save_data(data: DataProduct) -> str:
     formatted_start_date = format_time(data.input_metadata.start_date)
-    logical_file_id = f'imap_{data.input_metadata.instrument}_{data.input_metadata.data_level}_{data.input_metadata.descriptor}-fake-menlo-{uuid.uuid4()}_{formatted_start_date}_{data.input_metadata.version}'
+    logical_source = data.input_metadata.logical_source
+    logical_file_id = f'{logical_source}-{uuid.uuid4()}_{formatted_start_date}_{data.input_metadata.version}'
     file_path = f'{TEMP_CDF_FOLDER_PATH}/{logical_file_id}.cdf'
 
     attribute_manager = ImapAttributeManager()
     attribute_manager.add_global_attribute("Data_version", data.input_metadata.version)
     attribute_manager.add_instrument_attrs(data.input_metadata.instrument, data.input_metadata.data_level)
     attribute_manager.add_global_attribute("Generation_date", date.today().strftime("%Y%m%d"))
-    attribute_manager.add_global_attribute("Logical_source",
-                                           f'imap_{data.input_metadata.instrument}_{data.input_metadata.data_level}_{data.input_metadata.descriptor}')
+    attribute_manager.add_global_attribute("Logical_source", logical_source)
     attribute_manager.add_global_attribute("Logical_file_id", logical_file_id)
     write_cdf(file_path, data, attribute_manager)
     return file_path

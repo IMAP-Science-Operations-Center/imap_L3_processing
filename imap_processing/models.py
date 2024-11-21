@@ -24,6 +24,10 @@ class InputMetadata:
 class UpstreamDataDependency(InputMetadata):
     descriptor: str
 
+    @property
+    def logical_source(self):
+        return f"imap_{self.instrument}_{self.data_level}_{self.descriptor}"
+
 
 @dataclass
 class DataProductVariable:
