@@ -12,7 +12,7 @@ from uncertainties.unumpy import uarray
 import imap_processing
 from imap_processing.constants import HYDROGEN_INFLOW_SPEED_IN_KM_PER_SECOND, \
     HYDROGEN_INFLOW_LONGITUDE_DEGREES_IN_ECLIPJ2000, HYDROGEN_INFLOW_LATITUDE_DEGREES_IN_ECLIPJ2000, PROTON_MASS_KG, \
-    PROTON_CHARGE_COULOMBS, ONE_AU_IN_KM, NANOSECONDS_IN_SECONDS, \
+    PROTON_CHARGE_COULOMBS, ONE_AU_IN_KM, ONE_SECOND_IN_NANOSECONDS, \
     HELIUM_INFLOW_LONGITUDE_DEGREES_IN_ECLIPJ2000, HE_PUI_PARTICLE_MASS_KG, BOLTZMANN_CONSTANT_JOULES_PER_KELVIN
 from imap_processing.spice_wrapper import FAKE_ROTATION_MATRIX_FROM_PSP
 from imap_processing.swapi.l3a.science.calculate_alpha_solar_wind_speed import calculate_combined_sweeps
@@ -512,7 +512,7 @@ class TestCalculatePickupIon(SpiceTestCase):
                 self.density_of_neutral_helium_lookup_table)
             print(actual_fitting_parameters)
 
-            mock_spice.unitim.assert_called_with(epoch / NANOSECONDS_IN_SECONDS,
+            mock_spice.unitim.assert_called_with(epoch / ONE_SECOND_IN_NANOSECONDS,
                                                  "TT", "ET")
 
             self.assertAlmostEqual(1.5, actual_fitting_parameters.cooling_index, delta=0.1)

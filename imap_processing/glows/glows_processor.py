@@ -4,6 +4,7 @@ import imap_data_access
 import numpy as np
 from uncertainties import unumpy
 
+from imap_processing.constants import ONE_SECOND_IN_NANOSECONDS
 from imap_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
 from imap_processing.glows.l3a.models import GlowsL3LightCurve
 from imap_processing.glows.l3a.science.calculate_daily_lightcurve import rebin_lightcurve
@@ -33,7 +34,7 @@ class GlowsProcessor(Processor):
                                                             dependencies.background)
 
         duration_seconds = [td.total_seconds() for td in data.end_time - data.start_time]
-        epoch_delta = np.array(duration_seconds) * 1_000_000_000 / 2
+        epoch_delta = np.array(duration_seconds) * ONE_SECOND_IN_NANOSECONDS / 2
         return GlowsL3LightCurve(
             photon_flux=rebinned_flux.reshape(1, -1),
             exposure_times=rebinned_exposure.reshape(1, -1),

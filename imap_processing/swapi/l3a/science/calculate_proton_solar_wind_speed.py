@@ -6,7 +6,7 @@ from uncertainties import correlated_values, unumpy, umath, wrap
 from uncertainties.unumpy import uarray, nominal_values, std_devs
 
 from imap_processing.constants import PROTON_CHARGE_COULOMBS, PROTON_MASS_KG, METERS_PER_KILOMETER, \
-    NANOSECONDS_IN_SECONDS
+    ONE_SECOND_IN_NANOSECONDS
 from imap_processing.swapi.l3a.science.speed_calculation import get_peak_indices, find_peak_center_of_mass_index, \
     interpolate_energy, extract_coarse_sweep
 
@@ -62,7 +62,7 @@ def calculate_proton_centers_of_mass(coincidence_count_rates, energies, epoch):
         center_of_mass_index = find_peak_center_of_mass_index(peak_slice, rates)
         energy_at_center_of_mass = interpolate_energy(center_of_mass_index, energies)
 
-        time_at_center_of_mass = epoch[i] + 1 / 6 * NANOSECONDS_IN_SECONDS * (center_of_mass_index + 1)
+        time_at_center_of_mass = epoch[i] + 1 / 6 * ONE_SECOND_IN_NANOSECONDS * (center_of_mass_index + 1)
         spin_angle = get_angle(time_at_center_of_mass)
         energies_at_center_of_mass.append(energy_at_center_of_mass.nominal_value)
         energies_at_center_of_mass_uncertainties.append(energy_at_center_of_mass.std_dev)
@@ -75,10 +75,11 @@ def get_spin_angle_from_swapi_axis_in_despun_frame(instrument_axis: np.ndarray):
     r, lon, lat = spiceypy.reclat(instrument_axis)
     return np.mod(180 - np.rad2deg(lon), 360)
 
+
 @wrap
 def get_angle(epoch) -> float:
     rotation_matrix = spiceypy.pxform("IMAP_SWAPI", "IMAP_DPS",
-                                      spiceypy.unitim(epoch / NANOSECONDS_IN_SECONDS, "TT", "ET"))
+                                      spiceypy.unitim(epoch / ONE_SECOND_IN_NANOSECONDS, "TT", "ET"))
     swapi_instrument_axis_in_despun_imap_frame = rotation_matrix @ np.array([0, 0, -1])
     return get_spin_angle_from_swapi_axis_in_despun_frame(swapi_instrument_axis_in_despun_imap_frame)
 

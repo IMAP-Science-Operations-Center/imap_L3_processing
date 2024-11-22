@@ -12,7 +12,7 @@ from uncertainties.unumpy import uarray
 from imap_processing.constants import HYDROGEN_INFLOW_SPEED_IN_KM_PER_SECOND, PROTON_MASS_KG, PROTON_CHARGE_COULOMBS, \
     HE_PUI_PARTICLE_MASS_KG, PUI_PARTICLE_CHARGE_COULOMBS, HYDROGEN_INFLOW_LATITUDE_DEGREES_IN_ECLIPJ2000, \
     HYDROGEN_INFLOW_LONGITUDE_DEGREES_IN_ECLIPJ2000, ONE_AU_IN_KM, HELIUM_INFLOW_LONGITUDE_DEGREES_IN_ECLIPJ2000, \
-    METERS_PER_KILOMETER, CENTIMETERS_PER_METER, NANOSECONDS_IN_SECONDS, BOLTZMANN_CONSTANT_JOULES_PER_KELVIN
+    METERS_PER_KILOMETER, CENTIMETERS_PER_METER, ONE_SECOND_IN_NANOSECONDS, BOLTZMANN_CONSTANT_JOULES_PER_KELVIN
 from imap_processing.swapi.l3a.science.calculate_alpha_solar_wind_speed import calculate_combined_sweeps
 from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_speed import calculate_sw_speed
 from imap_processing.swapi.l3a.science.density_of_neutral_helium_lookup_table import DensityOfNeutralHeliumLookupTable
@@ -26,7 +26,7 @@ def calculate_pickup_ion_values(instrument_response_lookup_table, geometric_fact
                                 count_rates: uarray, center_of_epoch: int,
                                 background_count_rate_cutoff: float, sw_velocity_vector: ndarray,
                                 density_of_neutral_helium_lookup_table: DensityOfNeutralHeliumLookupTable) -> FittingParameters:
-    ephemeris_time = spiceypy.unitim(center_of_epoch / NANOSECONDS_IN_SECONDS, "TT", "ET")
+    ephemeris_time = spiceypy.unitim(center_of_epoch / ONE_SECOND_IN_NANOSECONDS, "TT", "ET")
     sw_velocity = np.linalg.norm(sw_velocity_vector)
 
     initial_guess = np.array([1.5, 1e-7, sw_velocity, 0.1])
@@ -59,7 +59,7 @@ def calculate_helium_pui_density(epoch: int,
                                  sw_velocity_vector: ndarray,
                                  density_of_neutral_helium_lookup_table: DensityOfNeutralHeliumLookupTable,
                                  fitting_params: FittingParameters) -> float:
-    ephemeris_time = spiceypy.unitim(epoch / NANOSECONDS_IN_SECONDS, "TT", "ET")
+    ephemeris_time = spiceypy.unitim(epoch / ONE_SECOND_IN_NANOSECONDS, "TT", "ET")
     model = build_forward_model(fitting_params, ephemeris_time, sw_velocity_vector,
                                 density_of_neutral_helium_lookup_table)
     lower_discontinuity = (density_of_neutral_helium_lookup_table.get_minimum_distance() / (
@@ -76,7 +76,7 @@ def calculate_helium_pui_temperature(epoch: int,
                                      sw_velocity_vector: ndarray,
                                      density_of_neutral_helium_lookup_table: DensityOfNeutralHeliumLookupTable,
                                      fitting_params: FittingParameters) -> float:
-    ephemeris_time = spiceypy.unitim(epoch / NANOSECONDS_IN_SECONDS, "TT", "ET")
+    ephemeris_time = spiceypy.unitim(epoch / ONE_SECOND_IN_NANOSECONDS, "TT", "ET")
     model = build_forward_model(fitting_params, ephemeris_time, sw_velocity_vector,
                                 density_of_neutral_helium_lookup_table)
     lower_discontinuity = (density_of_neutral_helium_lookup_table.get_minimum_distance() / (

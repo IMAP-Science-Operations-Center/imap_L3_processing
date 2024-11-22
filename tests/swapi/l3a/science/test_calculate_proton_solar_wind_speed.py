@@ -10,7 +10,7 @@ from uncertainties import ufloat
 from uncertainties.unumpy import uarray, std_devs, nominal_values
 
 import imap_processing
-from imap_processing.constants import METERS_PER_KILOMETER, NANOSECONDS_IN_SECONDS
+from imap_processing.constants import METERS_PER_KILOMETER, ONE_SECOND_IN_NANOSECONDS
 from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_speed import calculate_proton_solar_wind_speed, \
     get_peak_indices, find_peak_center_of_mass_index, interpolate_energy, fit_energy_per_charge_peak_variations, \
     calculate_sw_speed_h_plus, get_proton_peak_indices, interpolate_angle, get_angle, \
@@ -25,7 +25,7 @@ class TestCalculateProtonSolarWindSpeed(SpiceTestCase):
         count_rates_with_uncertainties = uarray(count_rates, np.full_like(count_rates, 1.0))
 
         times = [datetime(2025, 6, 6, 12, i) for i in range(5)]
-        epochs_in_terrestrial_time = spiceypy.datetime2et(times) * NANOSECONDS_IN_SECONDS
+        epochs_in_terrestrial_time = spiceypy.datetime2et(times) * ONE_SECOND_IN_NANOSECONDS
         speed, a, phi, b = calculate_proton_solar_wind_speed(count_rates_with_uncertainties, energies,
                                                              epochs_in_terrestrial_time)
 
@@ -308,21 +308,21 @@ class TestCalculateProtonSolarWindSpeed(SpiceTestCase):
 
         actual_angle = get_angle(epoch)
 
-        mock_unitim.assert_called_with((epoch / NANOSECONDS_IN_SECONDS), "TT", "ET")
+        mock_unitim.assert_called_with((epoch / ONE_SECOND_IN_NANOSECONDS), "TT", "ET")
         mock_pxform.assert_called_with("IMAP_SWAPI", "IMAP_DPS", mock_unitim.return_value)
         np.testing.assert_array_equal(np.array([-1, -2, -3]), mock_reclat.call_args.args[0])
 
         self.assertEqual(0, actual_angle)
 
-
     def test_get_spin_angle_from_swapi_axis_in_despun_frame(self):
         cases = [
             ([1, 0, 0], 180),
-            ([0,1,0], 90),
-            ([0,-1,0], 270),
-            ([-1,0,0], 0),
-            ([-1,0,50], 0),
+            ([0, 1, 0], 90),
+            ([0, -1, 0], 270),
+            ([-1, 0, 0], 0),
+            ([-1, 0, 50], 0),
         ]
         for swapi_axis, expected_angle in cases:
             with self.subTest(swapi_axis):
-                self.assertAlmostEqual(expected_angle, get_spin_angle_from_swapi_axis_in_despun_frame(np.array(swapi_axis)))
+                self.assertAlmostEqual(expected_angle,
+                                       get_spin_angle_from_swapi_axis_in_despun_frame(np.array(swapi_axis)))
