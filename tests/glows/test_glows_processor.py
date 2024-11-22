@@ -74,9 +74,9 @@ class TestGlowsProcessor(unittest.TestCase):
         processor = GlowsProcessor(dependencies=dependencies, input_metadata=input_metadata)
 
         data = Mock()
-        data.start_time = np.array([datetime(2024, 10, 7, 2)])
-        data.end_time = np.array([datetime(2024, 10, 7, 22)])
-        data.epoch = np.array([datetime(2024, 10, 7, 2)])
+        data.start_time = datetime(2024, 10, 7, 2)
+        data.end_time = datetime(2024, 10, 7, 22)
+        data.epoch = datetime(2024, 10, 7, 2)
 
         fetched_dependencies = Mock()
         fetched_dependencies.data = data
@@ -86,9 +86,13 @@ class TestGlowsProcessor(unittest.TestCase):
         result = processor.process_l3a(fetched_dependencies)
         self.assertIsInstance(result, GlowsL3LightCurve)
         mock_uarray.assert_called_with(data.photon_flux, data.flux_uncertainties)
-        mock_rebin_lightcurve.assert_called_with(mock_uarray.return_value, data.histogram_flag_array,
+        mock_rebin_lightcurve.assert_called_with(fetched_dependencies.time_independent_background_table,
+                                                 mock_uarray.return_value,
+                                                 data.ecliptic_lat,
+                                                 data.ecliptic_lon,
+                                                 data.histogram_flag_array,
                                                  data.exposure_times, fetched_dependencies.number_of_bins,
-                                                 fetched_dependencies.background)
+                                                 fetched_dependencies.time_dependent_background)
         np.testing.assert_equal(result.photon_flux, np.array([[1, 2, 3, 4]]), strict=True)
         np.testing.assert_equal(result.exposure_times, np.array([[5, 6, 7, 8]]), strict=True)
         self.assertEqual(input_metadata.to_upstream_data_dependency(descriptor), result.input_metadata)

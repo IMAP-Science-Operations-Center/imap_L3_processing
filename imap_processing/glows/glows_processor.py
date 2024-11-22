@@ -29,17 +29,18 @@ class GlowsProcessor(Processor):
     def process_l3a(self, dependencies: GlowsL3ADependencies) -> GlowsL3LightCurve:
         data = dependencies.data
         flux_with_uncertainty = unumpy.uarray(data.photon_flux, data.flux_uncertainties)
-        rebinned_flux, rebinned_exposure = rebin_lightcurve(flux_with_uncertainty, data.histogram_flag_array,
+        rebinned_flux, rebinned_exposure = rebin_lightcurve(dependencies.time_independent_background_table,
+                                                            flux_with_uncertainty, data.ecliptic_lat, data.ecliptic_lon,
+                                                            data.histogram_flag_array,
                                                             data.exposure_times, dependencies.number_of_bins,
-                                                            dependencies.background)
+                                                            dependencies.time_dependent_background)
 
         epoch = data.start_time + (data.end_time - data.start_time) / 2
-        duration_seconds = [td.total_seconds() for td in data.end_time - data.start_time]
-        epoch_delta = np.array(duration_seconds) * ONE_SECOND_IN_NANOSECONDS / 2
+        epoch_delta = (data.end_time - data.start_time).total_seconds() * ONE_SECOND_IN_NANOSECONDS / 2
         return GlowsL3LightCurve(
             photon_flux=rebinned_flux.reshape(1, -1),
             exposure_times=rebinned_exposure.reshape(1, -1),
             input_metadata=self.input_metadata.to_upstream_data_dependency(self.dependencies[0].descriptor),
-            epoch=epoch,
-            epoch_delta=epoch_delta
+            epoch=np.array([epoch]),
+            epoch_delta=np.array([epoch_delta])
         )

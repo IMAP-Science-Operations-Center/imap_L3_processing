@@ -5,8 +5,10 @@ from numpy import ndarray
 from spacepy.pycdf import CDF
 
 from imap_processing.glows.descriptors import GLOWS_L2_DESCRIPTOR, GLOWS_NUMBER_OF_BINS_ANCILLARY_DESCRIPTOR, \
-    GLOWS_TIME_DEPENDENT_BACKGROUND_DESCRIPTOR
+    GLOWS_TIME_DEPENDENT_BACKGROUND_DESCRIPTOR, GLOWS_TIME_INDEPENDENT_BACKGROUND_DESCRIPTOR
 from imap_processing.glows.l3a.models import GlowsL2Data
+from imap_processing.glows.l3a.science.time_independent_background_lookup_table import \
+    TimeIndependentBackgroundLookupTable
 from imap_processing.glows.l3a.utils import read_l2_glows_data
 from imap_processing.models import UpstreamDataDependency
 from imap_processing.utils import download_dependency
@@ -16,7 +18,8 @@ from imap_processing.utils import download_dependency
 class GlowsL3ADependencies:
     data: GlowsL2Data
     number_of_bins: int
-    background: ndarray[float]
+    time_dependent_background: ndarray[float]
+    time_independent_background_table: TimeIndependentBackgroundLookupTable
 
     @classmethod
     def fetch_dependencies(cls, dependencies: list[UpstreamDataDependency]):
@@ -37,4 +40,10 @@ class GlowsL3ADependencies:
         background_text = download_dependency(background_dependency)
         background = np.loadtxt(background_text)
 
-        return cls(l2_glows_data, num_of_bin, background)
+        time_independent_background_dependency = UpstreamDataDependency("glows", "l2", None, None,
+                                                                        "latest",
+                                                                        descriptor=GLOWS_TIME_INDEPENDENT_BACKGROUND_DESCRIPTOR)
+        time_independent_background_file_path = download_dependency(time_independent_background_dependency)
+
+        return cls(l2_glows_data, num_of_bin, background,
+                   TimeIndependentBackgroundLookupTable.from_file(time_independent_background_file_path))

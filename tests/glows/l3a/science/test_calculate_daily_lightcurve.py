@@ -1,22 +1,36 @@
 import unittest
+from unittest.mock import Mock
 
 import numpy as np
 from uncertainties.unumpy import uarray, nominal_values, std_devs
 
 from imap_processing.glows.l3a.science.calculate_daily_lightcurve import rebin_lightcurve
+from imap_processing.glows.l3a.science.time_independent_background_lookup_table import \
+    TimeIndependentBackgroundLookupTable
 
 
 class TestCalculateDailyLightcurve(unittest.TestCase):
+    def setUp(self):
+        self.all_zero_time_independent_background = TimeIndependentBackgroundLookupTable(
+            latitudes=np.array([-90, 90]),
+            longitudes=np.array([0]),
+            background_values=np.zeros(
+                shape=(2, 1)))
+
     def test_rebin_with_no_flags_and_equal_exposure_times(self):
         photon_flux = np.full(3600, 1.0)
         photon_flux[1800:] = 5.0
         photon_flux[5] = 41.0
+        latitudes = np.linspace(start=0, stop=0, num=3600)
+        longitudes = np.linspace(start=0, stop=360, num=3600)
+
         flags = np.full((4, 3600), 0)
         exposure_times = np.full(3600, 24.0)
         output_size = 90
         background = np.zeros(90)
-        result, rebinned_exposure = rebin_lightcurve(
-            photon_flux, flags, exposure_times, output_size, background)
+        result, rebinned_exposure = rebin_lightcurve(self.all_zero_time_independent_background,
+                                                     photon_flux, latitudes, longitudes, flags, exposure_times,
+                                                     output_size, background)
 
         expected_output = np.full(90, 1.0)
         expected_output[45:] = 5.0
@@ -31,8 +45,12 @@ class TestCalculateDailyLightcurve(unittest.TestCase):
         flags = np.full((4, 2400), 0)
         exposure_times = np.full(2400, 10.0)
         background = np.zeros(80)
+        latitudes = np.linspace(start=0, stop=0, num=2400)
+        longitudes = np.linspace(start=0, stop=360, num=2400)
 
-        result, exposure = rebin_lightcurve(photon_flux, flags, exposure_times, 80, background)
+        result, exposure = rebin_lightcurve(self.all_zero_time_independent_background, photon_flux, latitudes,
+                                            longitudes, flags,
+                                            exposure_times, 80, background)
         expected_output = np.full(80, 1.0)
         expected_exposure = np.full(80, 300.0)
         np.testing.assert_equal(result, expected_output, strict=True)
@@ -51,8 +69,12 @@ class TestCalculateDailyLightcurve(unittest.TestCase):
         exposure_times = np.full(3600, 24.0)
         output_size = 90
         background = np.zeros(90)
+        latitudes = np.linspace(start=0, stop=0, num=3600)
+        longitudes = np.linspace(start=0, stop=360, num=3600)
 
-        result, exposure = rebin_lightcurve(photon_flux, flags, exposure_times, output_size, background)
+        result, exposure = rebin_lightcurve(self.all_zero_time_independent_background, photon_flux, latitudes,
+                                            longitudes, flags,
+                                            exposure_times, output_size, background)
 
         expected_output = np.full(90, 1.0)
         expected_output[45:] = 5.0
@@ -72,8 +94,12 @@ class TestCalculateDailyLightcurve(unittest.TestCase):
         flags = np.zeros((4, 4))
         exposure_times = np.array([2., 1., 0., 1.])
         background = np.zeros(1)
+        latitudes = np.linspace(start=0, stop=0, num=4)
+        longitudes = np.linspace(start=0, stop=360, num=4)
 
-        result, exposure = rebin_lightcurve(photon_flux, flags, exposure_times, 1, background)
+        result, exposure = rebin_lightcurve(self.all_zero_time_independent_background, photon_flux, latitudes,
+                                            longitudes, flags,
+                                            exposure_times, 1, background)
         np.testing.assert_equal(result, [20.0], strict=True)
         np.testing.assert_equal(exposure, [4.0], strict=True)
 
@@ -82,8 +108,12 @@ class TestCalculateDailyLightcurve(unittest.TestCase):
         flags = np.zeros((4, 4))
         exposure_times = np.array([0., 0., 0., 0.])
         background = np.zeros(1)
+        latitudes = np.linspace(start=0, stop=0, num=4)
+        longitudes = np.linspace(start=0, stop=360, num=4)
 
-        result, exposure = rebin_lightcurve(photon_flux, flags, exposure_times, 1, background)
+        result, exposure = rebin_lightcurve(self.all_zero_time_independent_background, photon_flux, latitudes,
+                                            longitudes, flags,
+                                            exposure_times, 1, background)
         np.testing.assert_equal(result, [np.nan], strict=True)
         np.testing.assert_equal(exposure, [0.0], strict=True)
 
@@ -92,8 +122,12 @@ class TestCalculateDailyLightcurve(unittest.TestCase):
         flags = np.zeros((4, 4))
         exposure_times = np.array([2., 1., 0., 1.])
         background = np.array([5, 4])
+        latitudes = np.linspace(start=0, stop=0, num=4)
+        longitudes = np.linspace(start=0, stop=360, num=4)
 
-        result, exposure = rebin_lightcurve(photon_flux, flags, exposure_times, 2, background)
+        result, exposure = rebin_lightcurve(self.all_zero_time_independent_background, photon_flux, latitudes,
+                                            longitudes, flags,
+                                            exposure_times, 2, background)
         np.testing.assert_equal(result, [5.0, 36.0], strict=True)
         np.testing.assert_equal(exposure, [3.0, 1.0], strict=True)
 
@@ -101,6 +135,8 @@ class TestCalculateDailyLightcurve(unittest.TestCase):
         photon_flux = np.array([5, 20, 30, 40])
         photon_flux_uncertainty = np.array([0.1, 2.0, 3.0, .5])
         photon_flux = uarray(photon_flux, photon_flux_uncertainty)
+        latitudes = np.linspace(start=0, stop=0, num=4)
+        longitudes = np.linspace(start=0, stop=360, num=4)
 
         flags = np.zeros((4, 4))
         exposure_times = np.array([2., 1., 0., 1.])
@@ -108,7 +144,38 @@ class TestCalculateDailyLightcurve(unittest.TestCase):
         background_uncertainty = np.array([0.02, 0.08])
         background = uarray(background, background_uncertainty)
 
-        result, exposure = rebin_lightcurve(photon_flux, flags, exposure_times, 2, background)
+        result, exposure = rebin_lightcurve(self.all_zero_time_independent_background, photon_flux, latitudes,
+                                            longitudes, flags,
+                                            exposure_times, 2, background)
+        np.testing.assert_equal(nominal_values(result), [5.0, 36.0], strict=True)
+        np.testing.assert_equal(std_devs(result), [0.6702901527613909, 0.5063595560468865], strict=True)
+        np.testing.assert_equal(exposure, [3.0, 1.0], strict=True)
+
+    def test_rebin_subtracts_time_independent_background(self):
+        time_independent_background = np.array([20, 2, 1, 0.2])
+
+        photon_flux = np.array([5, 20, 30, 40]) + time_independent_background
+        photon_flux_uncertainty = np.array([0.1, 2.0, 3.0, .5])
+        photon_flux = uarray(photon_flux, photon_flux_uncertainty)
+        latitudes = np.linspace(start=0, stop=0, num=4)
+        longitudes = np.linspace(start=0, stop=360, num=4)
+
+        flags = np.zeros((4, 4))
+        exposure_times = np.array([2., 1., 0., 1.])
+        background = np.array([5, 4])
+        background_uncertainty = np.array([0.02, 0.08])
+        background = uarray(background, background_uncertainty)
+
+        mock_time_independent_background_lookup_table = Mock()
+        mock_time_independent_background_lookup_table.lookup.return_value = time_independent_background
+
+        result, exposure = rebin_lightcurve(mock_time_independent_background_lookup_table, photon_flux, latitudes,
+                                            longitudes, flags,
+                                            exposure_times, 2, background)
+
+        mock_time_independent_background_lookup_table.lookup.assert_called_once_with(lat=latitudes,
+                                                                                     lon=longitudes)
+
         np.testing.assert_equal(nominal_values(result), [5.0, 36.0], strict=True)
         np.testing.assert_equal(std_devs(result), [0.6702901527613909, 0.5063595560468865], strict=True)
         np.testing.assert_equal(exposure, [3.0, 1.0], strict=True)

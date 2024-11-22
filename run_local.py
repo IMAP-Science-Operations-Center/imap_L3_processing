@@ -7,6 +7,8 @@ from spacepy.pycdf import CDF
 from imap_processing.glows.descriptors import GLOWS_L2_DESCRIPTOR
 from imap_processing.glows.glows_processor import GlowsProcessor
 from imap_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
+from imap_processing.glows.l3a.science.time_independent_background_lookup_table import \
+    TimeIndependentBackgroundLookupTable
 from imap_processing.glows.l3a.utils import read_l2_glows_data
 from imap_processing.models import InputMetadata, UpstreamDataDependency
 from imap_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density import \
@@ -26,11 +28,13 @@ from imap_processing.swapi.swapi_processor import SwapiProcessor
 from imap_processing.utils import save_data
 
 
-def create_glows_l3a_cdf(cdf_file, background_file):
+def create_glows_l3a_cdf(cdf_file, time_dependent_background_file, time_independent_background_file):
     cdf_data = CDF(cdf_file)
     l2_glows_data = read_l2_glows_data(cdf_data)
-    background = np.loadtxt(background_file)
-    glows_l3_dependencies = GlowsL3ADependencies(l2_glows_data, 90, background)
+    background = np.loadtxt(time_dependent_background_file)
+    independent_table = TimeIndependentBackgroundLookupTable.from_file(time_independent_background_file)
+
+    glows_l3_dependencies = GlowsL3ADependencies(l2_glows_data, 90, background, independent_table)
 
     input_metadata = InputMetadata(
         instrument='glows',
@@ -135,6 +139,7 @@ if __name__ == "__main__":
     if "glows" in sys.argv:
         path = create_glows_l3a_cdf(
             "tests/test_data/glows_l2_with_epoch.cdf",
-            "tests/test_data/imap_glows_l2_histogram-background-estimate-text-not-cdf_20250701_v001.cdf"
+            "tests/test_data/imap_glows_l2_histogram-background-estimate-text-not-cdf_20250701_v001.cdf",
+            "tests/test_data/imap_glows_l2_histogram-time-independent-background-map-text-not-cdf_20250701_v001.cdf",
         )
         print(path)

@@ -19,14 +19,16 @@ EPOCH_DELTA_CDF_VAR_NAME = "epoch_delta"
 
 @dataclass
 class GlowsL2Data:
-    start_time: np.ndarray[datetime]
-    end_time: np.ndarray[datetime]
+    start_time: datetime
+    end_time: datetime
     histogram_flag_array: np.ndarray[bool]
     photon_flux: np.ndarray[float]
     flux_uncertainties: np.ndarray[float]
     spin_angle: np.ndarray[float]
     exposure_times: np.ndarray[float]
-    epoch: np.ndarray[datetime]
+    epoch: datetime
+    ecliptic_lon: np.ndarray[float]
+    ecliptic_lat: np.ndarray[float]
 
 
 @dataclass
