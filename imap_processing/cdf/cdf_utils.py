@@ -1,3 +1,5 @@
+import re
+
 from spacepy.pycdf import CDF
 
 from imap_processing.cdf.imap_attribute_manager import ImapAttributeManager
@@ -7,7 +9,13 @@ from imap_processing.swapi.l3a.models import DataProduct
 def write_cdf(file_path: str, data: DataProduct, attribute_manager: ImapAttributeManager):
     with CDF(file_path, '') as cdf:
         cdf.col_major(True)
-        for k, v in attribute_manager.get_global_attributes(data.input_metadata.logical_source).items():
+        try:
+            global_attrs = attribute_manager.get_global_attributes(data.input_metadata.logical_source)
+        except KeyError:
+            trimmed_source = re.sub(r"-\d+$", "-", data.input_metadata.logical_source)
+            global_attrs = attribute_manager.get_global_attributes(trimmed_source)
+
+        for k, v in global_attrs.items():
             cdf.attrs[k] = v
 
         for data_product in data.to_data_product_variables():

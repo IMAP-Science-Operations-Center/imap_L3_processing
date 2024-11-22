@@ -54,6 +54,26 @@ class TestCdfUtils(TempFileTestCase):
             self.assertEqual(pycdf.const.CDF_BYTE.value, actual_cdf[non_rec_varying_var.name].type())
             self.assertFalse(actual_cdf[non_rec_varying_var.name].rv())
 
+    def test_write_cdf_trims_numbers_in_logical_source_when_fetching_global_metadata(self):
+        path = str(self.temp_directory / "write_cdf.cdf")
+        data = TestDataProduct()
+        attribute_manager = Mock(spec=ImapAttributeManager)
+        attribute_manager.get_global_attributes.side_effect = [KeyError("Logical Source Not Found"),
+                                                               {"global1": "global_val1", "global2": "global_val2"}]
+        attribute_manager.get_variable_attributes.return_value = {}
+        expected_data_product_logical_source = "imap_instrument_data-level_descriptor-10100"
+        data.input_metadata.descriptor = "descriptor-10100"
+
+        write_cdf(path, data, attribute_manager)
+
+        attribute_manager.get_global_attributes.assert_has_calls(
+            [call(expected_data_product_logical_source), call("imap_instrument_data-level_descriptor-")])
+
+        with pycdf.CDF(path) as actual_cdf:
+            self.assertTrue(actual_cdf.col_major())
+            self.assertEqual('global_val1', str(actual_cdf.attrs['global1']))
+            self.assertEqual('global_val2', str(actual_cdf.attrs['global2']))
+
 
 class TestDataProduct(DataProduct):
     def __init__(self):

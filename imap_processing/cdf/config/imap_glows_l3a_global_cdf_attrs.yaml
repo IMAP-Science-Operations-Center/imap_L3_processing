@@ -1,4 +1,4 @@
-Data_level: "3"
-Data_type: L3A_histogram>Level-3A histogram
-Logical_file_id: imap_glows_l3a_histogram-XXXXX
-Logical_source_description: IMAP Mission GLOWS Instrument Light Curve
+imap_glows_l3a_histogram-:
+  Data_level: "3a"
+  Data_type: L3A_histogram>Level-3A histogram
+  Logical_source_description: IMAP Mission GLOWS Instrument Light Curve
