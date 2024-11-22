@@ -137,3 +137,4 @@ if __name__ == "__main__":
             "tests/test_data/glows_l2_with_epoch.cdf",
             "tests/test_data/imap_glows_l2_histogram-background-estimate-text-not-cdf_20250701_v001.cdf"
         )
+        print(path)

@@ -74,13 +74,15 @@ class TestGlowsProcessor(unittest.TestCase):
         processor = GlowsProcessor(dependencies=dependencies, input_metadata=input_metadata)
 
         data = Mock()
-        data.start_time = np.array([start_date])
-        data.end_time = np.array([end_date])
+        data.start_time = np.array([datetime(2024, 10, 7, 2)])
+        data.end_time = np.array([datetime(2024, 10, 7, 22)])
+        data.epoch = np.array([datetime(2024, 10, 7, 2)])
 
         fetched_dependencies = Mock()
         fetched_dependencies.data = data
 
-        expected_epoch_delta = round((end_date - start_date).total_seconds() * 1_000_000_000 / 2)
+        expected_epoch_delta = 10 * 3600 * 1_000_000_000
+        expected_epoch = np.array([datetime(2024, 10, 7, 12)])
         result = processor.process_l3a(fetched_dependencies)
         self.assertIsInstance(result, GlowsL3LightCurve)
         mock_uarray.assert_called_with(data.photon_flux, data.flux_uncertainties)
@@ -90,7 +92,7 @@ class TestGlowsProcessor(unittest.TestCase):
         np.testing.assert_equal(result.photon_flux, np.array([[1, 2, 3, 4]]), strict=True)
         np.testing.assert_equal(result.exposure_times, np.array([[5, 6, 7, 8]]), strict=True)
         self.assertEqual(input_metadata.to_upstream_data_dependency(descriptor), result.input_metadata)
-        self.assertEqual(data.epoch, result.epoch)
+        np.testing.assert_equal(result.epoch, expected_epoch, strict=True)
         self.assertEqual(result.epoch_delta, [expected_epoch_delta])
 
 

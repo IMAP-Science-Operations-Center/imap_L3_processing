@@ -1,1 +1,3 @@
 GLOWS_L2_DESCRIPTOR = "histogram-"
+GLOWS_NUMBER_OF_BINS_ANCILLARY_DESCRIPTOR = "histogram-number-of-bins-text-not-cdf"
+GLOWS_TIME_DEPENDENT_BACKGROUND_DESCRIPTOR = "histogram-background-estimate-text-not-cdf"

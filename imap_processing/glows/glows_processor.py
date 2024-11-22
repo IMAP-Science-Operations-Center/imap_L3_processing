@@ -33,12 +33,13 @@ class GlowsProcessor(Processor):
                                                             data.exposure_times, dependencies.number_of_bins,
                                                             dependencies.background)
 
+        epoch = data.start_time + (data.end_time - data.start_time) / 2
         duration_seconds = [td.total_seconds() for td in data.end_time - data.start_time]
         epoch_delta = np.array(duration_seconds) * ONE_SECOND_IN_NANOSECONDS / 2
         return GlowsL3LightCurve(
             photon_flux=rebinned_flux.reshape(1, -1),
             exposure_times=rebinned_exposure.reshape(1, -1),
             input_metadata=self.input_metadata.to_upstream_data_dependency(self.dependencies[0].descriptor),
-            epoch=data.epoch,
+            epoch=epoch,
             epoch_delta=epoch_delta
         )

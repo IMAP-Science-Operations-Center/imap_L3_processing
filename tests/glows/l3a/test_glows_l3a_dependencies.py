@@ -6,6 +6,8 @@ from unittest.mock import patch, call
 
 import numpy as np
 
+from imap_processing.glows.descriptors import GLOWS_TIME_DEPENDENT_BACKGROUND_DESCRIPTOR, \
+    GLOWS_NUMBER_OF_BINS_ANCILLARY_DESCRIPTOR
 from imap_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
 from imap_processing.models import UpstreamDataDependency
 
@@ -51,10 +53,10 @@ class TestGlowsL3aDependencies(unittest.TestCase):
                     self.assertEqual(number_of_bins, result.number_of_bins)
                     np.testing.assert_equal([4, 10, 6, 7], result.background)
                     expected_number_of_bins_dependency = UpstreamDataDependency("glows", "l2", None, None, "latest",
-                                                                                "histogram-number-of-bins-text-not-cdf")
+                                                                                GLOWS_NUMBER_OF_BINS_ANCILLARY_DESCRIPTOR)
                     expected_background_dependency = UpstreamDataDependency("glows", "l2", datetime(2023, 1, 1),
                                                                             datetime(2023, 2, 1), "latest",
-                                                                            "background-estimate-text-not-cdf")
+                                                                            GLOWS_TIME_DEPENDENT_BACKGROUND_DESCRIPTOR)
                     mock_download_dependency.assert_has_calls([
                         call(cdf_dependency),
                         call(expected_number_of_bins_dependency),

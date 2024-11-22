@@ -28,6 +28,8 @@ photon_flux:
   CATDESC: Histogram of photon flux in scanning-circle bins
   DEPEND_0: epoch
   DEPEND_1: bins
+  DELTA_MINUS_VAR: photon_flux_uncertainty
+  DELTA_PLUS_VAR: photon_flux_uncertainty
   FIELDNAM: Histogram of photon flux
   FORMAT: F12.6
   DISPLAY_TYPE: spectrogram
@@ -35,9 +37,20 @@ photon_flux:
   SCALEMAX: 1000
   SCALETYP: linear
   LABLAXIS: Flux
-  FILL_VAL: *float_fillval
+  FILLVAL: *float_fillval
   UNITS: Rayleigh
   VAR_TYPE: data
+
+photon_flux_uncertainty:
+  VALIDMIN: 0.0
+  VALIDMAX: 2000.0
+  CATDESC: Uncertainty of photon flux
+  DEPEND_0: epoch
+  DEPEND_1: bins
+  FIELDNAM: Uncertainty of photon flux
+  FILLVAL: *float_fillval
+  UNITS: Rayleigh
+  VAR_TYPE: support_data
 
 number_of_bins:
   <<: *support_data_defaults
