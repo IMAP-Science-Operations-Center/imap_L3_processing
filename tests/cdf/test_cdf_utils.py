@@ -1,3 +1,4 @@
+from datetime import datetime
 from unittest.mock import Mock, call
 
 import numpy as np
@@ -5,7 +6,7 @@ from spacepy import pycdf
 
 from imap_processing.cdf.cdf_utils import write_cdf
 from imap_processing.cdf.imap_attribute_manager import ImapAttributeManager
-from imap_processing.models import DataProduct, DataProductVariable
+from imap_processing.models import DataProduct, DataProductVariable, InputMetadata
 from tests.temp_file_test_case import TempFileTestCase
 
 
@@ -24,7 +25,8 @@ class TestCdfUtils(TempFileTestCase):
 
         write_cdf(path, data, attribute_manager)
 
-        attribute_manager.get_global_attributes.assert_called_once()
+        expected_data_product_logical_source = "imap_instrument_data-level_descriptor"
+        attribute_manager.get_global_attributes.assert_called_once_with(expected_data_product_logical_source)
         attribute_manager.get_variable_attributes.assert_has_calls(
             [call(var.name) for var in data.to_data_product_variables()]
         )
@@ -55,8 +57,11 @@ class TestCdfUtils(TempFileTestCase):
 
 class TestDataProduct(DataProduct):
     def __init__(self):
-        pass
-    
+        input_metadata = InputMetadata("instrument", "data-level", datetime(year=2025, month=5, day=10),
+                                       datetime(year=2025, month=5, day=12), "version")
+
+        self.input_metadata = input_metadata.to_upstream_data_dependency("descriptor")
+
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
             DataProductVariable("var1", np.arange(0, 10)),

@@ -195,7 +195,8 @@ class TestSwapiProcessor(TestCase):
                                  mock_proton_calculate_temperature_and_density.call_args_list[0].args[1])
         self.assert_ufloat_equal(returned_proton_sw_deflection_angle,
                                  mock_proton_calculate_temperature_and_density.call_args_list[0].args[2])
-        self.assertEqual(returned_proton_sw_clock_angle, mock_proton_calculate_temperature_and_density.call_args_list[0].args[3])
+        self.assertEqual(returned_proton_sw_clock_angle,
+                         mock_proton_calculate_temperature_and_density.call_args_list[0].args[3])
         np.testing.assert_array_equal(nominal_values(expected_count_rate_with_uncertainties),
                                       nominal_values(
                                           mock_proton_calculate_temperature_and_density.call_args_list[0].args[4]))
@@ -266,27 +267,27 @@ class TestSwapiProcessor(TestCase):
         mock_calculate_ten_minute_velocities.assert_called_with([returned_proton_sw_speed.nominal_value],
                                                                 [returned_proton_sw_deflection_angle.nominal_value],
                                                                 [returned_proton_sw_clock_angle.nominal_value])
-        proton_cdf_path = f"{self.temp_directory}/imap_swapi_l3a_proton-sw-fake-menlo-{mock_uuid_value}_{start_date_as_str}_12345.cdf"
-        alpha_cdf_path = f"{self.temp_directory}/imap_swapi_l3a_alpha-sw-fake-menlo-{mock_uuid_value}_{start_date_as_str}_12345.cdf"
-        pui_cdf_path = f"{self.temp_directory}/imap_swapi_l3a_pui-he-fake-menlo-{mock_uuid_value}_{start_date_as_str}_12345.cdf"
+        proton_cdf_path = f"{self.temp_directory}/imap_swapi_l3a_proton-sw-{mock_uuid_value}_{start_date_as_str}_12345.cdf"
+        alpha_cdf_path = f"{self.temp_directory}/imap_swapi_l3a_alpha-sw-{mock_uuid_value}_{start_date_as_str}_12345.cdf"
+        pui_cdf_path = f"{self.temp_directory}/imap_swapi_l3a_pui-he-{mock_uuid_value}_{start_date_as_str}_12345.cdf"
         mock_manager.add_global_attribute.assert_has_calls([call("Data_version", outgoing_version),
                                                             call("Generation_date", date.today().strftime("%Y%m%d")),
                                                             call("Logical_source",
                                                                  "imap_swapi_l3a_proton-sw"),
                                                             call("Logical_file_id",
-                                                                 f"imap_swapi_l3a_proton-sw-fake-menlo-{mock_uuid_value}_{start_date_as_str}_12345"),
+                                                                 f"imap_swapi_l3a_proton-sw-{mock_uuid_value}_{start_date_as_str}_12345"),
                                                             call("Data_version", outgoing_version),
                                                             call("Generation_date", date.today().strftime("%Y%m%d")),
                                                             call("Logical_source",
                                                                  "imap_swapi_l3a_alpha-sw"),
                                                             call("Logical_file_id",
-                                                                 f"imap_swapi_l3a_alpha-sw-fake-menlo-{mock_uuid_value}_{start_date_as_str}_12345"),
+                                                                 f"imap_swapi_l3a_alpha-sw-{mock_uuid_value}_{start_date_as_str}_12345"),
                                                             call("Data_version", outgoing_version),
                                                             call("Generation_date", date.today().strftime("%Y%m%d")),
                                                             call("Logical_source",
                                                                  "imap_swapi_l3a_pui-he"),
                                                             call("Logical_file_id",
-                                                                 f"imap_swapi_l3a_pui-he-fake-menlo-{mock_uuid_value}_{start_date_as_str}_12345"),
+                                                                 f"imap_swapi_l3a_pui-he-{mock_uuid_value}_{start_date_as_str}_12345"),
                                                             ])
 
         actual_alpha_metadata, actual_alpha_epoch, actual_alpha_sw_speed, actual_alpha_sw_temperature, actual_alpha_sw_density = mock_alpha_solar_wind_data_constructor.call_args.args

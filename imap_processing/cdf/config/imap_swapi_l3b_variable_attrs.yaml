@@ -15,7 +15,7 @@ proton_sw_velocity:
   UNITS: km/s
   LABLAXIS: Velocity
   SCALETYP: linear
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   DISPLAY_TYPE: time_series
   SCALEMIN: 0
   SCALEMAX: 1000
@@ -25,12 +25,16 @@ proton_sw_velocity_delta_minus:
   VAR_TYPE: support_data
   CATDESC: Proton Solar Wind Velocity Delta Minus
   FIELDNAM: proton_sw_velocity_delta_minus
+  UNITS: km/s
+  LABLAXIS: Velocity Delta Minus
 
 proton_sw_velocity_delta_plus:
   <<: *default_timeseries
   VAR_TYPE: support_data
   CATDESC: Proton Solar Wind Velocity Delta Plus
   FIELDNAM: proton_sw_velocity_delta_plus
+  UNITS: km/s
+  LABLAXIS: Velocity Delta Plus
 
 proton_sw_vdf:
   <<: *default_timeseries
@@ -54,6 +58,7 @@ proton_sw_vdf_delta:
   CATDESC: Proton Solar Wind Combined VDF Uncertainty
   FIELDNAM: proton_sw_vdf_delta
   UNITS: (gm/q)/(cm^2 s sr eV/q)
+  LABLAXIS: F(v) Delta
 
 alpha_sw_velocity:
   <<: *default_timeseries
@@ -64,7 +69,7 @@ alpha_sw_velocity:
   UNITS: km/s
   LABLAXIS: Velocity
   SCALETYP: linear
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   DISPLAY_TYPE: time_series
   SCALEMIN: 0
   SCALEMAX: 1000
@@ -74,12 +79,16 @@ alpha_sw_velocity_delta_minus:
   VAR_TYPE: support_data
   CATDESC: Alpha Solar Wind Velocity Delta Minus
   FIELDNAM: alpha_sw_velocity_delta_minus
+  UNITS: km/s
+  LABLAXIS: Velocity Minus
 
 alpha_sw_velocity_delta_plus:
   <<: *default_timeseries
   VAR_TYPE: support_data
   CATDESC: Alpha Solar Wind Velocity Delta Plus
   FIELDNAM: alpha_sw_velocity_delta_plus
+  UNITS: km/s
+  LABLAXIS: Velocity Delta Plus
 
 alpha_sw_vdf:
   <<: *default_timeseries
@@ -103,6 +112,7 @@ alpha_sw_vdf_delta:
   CATDESC: Alpha Solar Wind Combined VDF Uncertainty
   FIELDNAM: alpha_sw_vdf_delta
   UNITS: (gm/q)/(cm^2 s sr eV/q)
+  LABLAXIS: F(v) Delta
 
 pui_sw_velocity:
   <<: *default_timeseries
@@ -113,7 +123,7 @@ pui_sw_velocity:
   UNITS: km/s
   LABLAXIS: Velocity
   SCALETYP: linear
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   DISPLAY_TYPE: time_series
   SCALEMIN: 0
   SCALEMAX: 1000
@@ -123,12 +133,16 @@ pui_sw_velocity_delta_minus:
   VAR_TYPE: support_data
   CATDESC: Pickup Ion Solar Wind Velocity Delta Minus
   FIELDNAM: pui_sw_velocity_delta_minus
+  UNITS: km/s
+  LABLAXIS: Velocity Delta Minus
 
 pui_sw_velocity_delta_plus:
   <<: *default_timeseries
   VAR_TYPE: support_data
   CATDESC: Pickup Ion Solar Wind Velocity Delta Plus
   FIELDNAM: pui_sw_velocity_delta_plus
+  UNITS: km/s
+  LABLAXIS: Velocity Delta Plus
 
 pui_sw_vdf:
   <<: *default_timeseries
@@ -153,6 +167,7 @@ pui_sw_vdf_delta:
   CATDESC: Pickup Ion Solar Wind Combined VDF Uncertainty
   FIELDNAM: pui_sw_vdf_delta
   UNITS: (gm/q)/(cm^2 s sr eV/q)
+  LABLAXIS: F(v) Delta
 
 combined_energy:
   <<: *default_timeseries
@@ -163,7 +178,7 @@ combined_energy:
   UNITS: eV/q
   LABLAXIS: Energy
   SCALETYP: log
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   DISPLAY_TYPE: time_series
   SCALEMIN: 0
   SCALEMAX: 1000
@@ -173,12 +188,16 @@ combined_energy_delta_minus:
   VAR_TYPE: support_data
   CATDESC: Solar Wind Energy Delta Minus
   FIELDNAM: combined_energy_delta_minus
+  UNITS: eV/q
+  LABLAXIS: Energy Delta Minus
 
 combined_energy_delta_plus:
   <<: *default_timeseries
   VAR_TYPE: support_data
   CATDESC: Solar Wind Energy Delta Plus
   FIELDNAM: combined_energy_delta_plus
+  UNITS: eV/q
+  LABLAXIS: Energy Delta Plus
 
 combined_differential_flux:
   <<: *default_timeseries
@@ -203,6 +222,7 @@ combined_differential_flux_delta:
   CATDESC: Combined Differential Flux Uncertainty
   FIELDNAM: combined_differential_flux_delta
   UNITS: 'cm!E-2!N sr!E-1!N s!E-1!N (eV/q)!E-1!N'
+  LABLAXIS: Differential Flux Uncertainty
 
 epoch:
   CATDESC: Time, number of nanoseconds since J2000 with leap seconds included
