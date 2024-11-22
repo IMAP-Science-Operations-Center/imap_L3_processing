@@ -56,7 +56,7 @@ class TestCalculateDailyLightcurve(unittest.TestCase):
 
         expected_output = np.full(90, 1.0)
         expected_output[45:] = 5.0
-        expected_output[2] = 0.0
+        expected_output[2] = np.nan
         expected_output[0] = 3.0
         np.testing.assert_equal(result, expected_output, strict=True)
         self.assertFalse(np.ma.isMaskedArray(result))
@@ -68,9 +68,9 @@ class TestCalculateDailyLightcurve(unittest.TestCase):
         self.assertFalse(np.ma.isMaskedArray(exposure))
 
     def test_rebin_uses_exposure_times(self):
-        photon_flux = np.array([10, 20, 30, 40])
+        photon_flux = np.array([10., 20., 30., 40.])
         flags = np.zeros((4, 4))
-        exposure_times = np.array([2, 1, 0, 1])
+        exposure_times = np.array([2., 1., 0., 1.])
         background = np.zeros(1)
 
         result, exposure = rebin_lightcurve(photon_flux, flags, exposure_times, 1, background)
@@ -78,19 +78,19 @@ class TestCalculateDailyLightcurve(unittest.TestCase):
         np.testing.assert_equal(exposure, [4.0], strict=True)
 
     def test_rebin_uses_exposure_times_all_zero_bin(self):
-        photon_flux = np.array([10, 20, 30, 40])
+        photon_flux = np.array([10., 20., 30., 40.])
         flags = np.zeros((4, 4))
-        exposure_times = np.array([0, 0, 0, 0])
+        exposure_times = np.array([0., 0., 0., 0.])
         background = np.zeros(1)
 
         result, exposure = rebin_lightcurve(photon_flux, flags, exposure_times, 1, background)
-        np.testing.assert_equal(result, [0.0], strict=True)
+        np.testing.assert_equal(result, [np.nan], strict=True)
         np.testing.assert_equal(exposure, [0.0], strict=True)
 
     def test_rebin_uses_exposure_times_and_background(self):
-        photon_flux = np.array([5, 20, 30, 40])
+        photon_flux = np.array([5., 20., 30., 40.])
         flags = np.zeros((4, 4))
-        exposure_times = np.array([2, 1, 0, 1])
+        exposure_times = np.array([2., 1., 0., 1.])
         background = np.array([5, 4])
 
         result, exposure = rebin_lightcurve(photon_flux, flags, exposure_times, 2, background)
@@ -103,14 +103,14 @@ class TestCalculateDailyLightcurve(unittest.TestCase):
         photon_flux = uarray(photon_flux, photon_flux_uncertainty)
 
         flags = np.zeros((4, 4))
-        exposure_times = np.array([2, 1, 0, 1])
+        exposure_times = np.array([2., 1., 0., 1.])
         background = np.array([5, 4])
         background_uncertainty = np.array([0.02, 0.08])
         background = uarray(background, background_uncertainty)
 
         result, exposure = rebin_lightcurve(photon_flux, flags, exposure_times, 2, background)
         np.testing.assert_equal(nominal_values(result), [5.0, 36.0], strict=True)
-        np.testing.assert_equal(std_devs(result), [5.0, 36.0], strict=True)
+        np.testing.assert_equal(std_devs(result), [0.6702901527613909, 0.5063595560468865], strict=True)
         np.testing.assert_equal(exposure, [3.0, 1.0], strict=True)
 
 
