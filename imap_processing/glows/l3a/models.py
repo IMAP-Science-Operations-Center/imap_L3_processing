@@ -15,6 +15,7 @@ NUM_OF_BINS_CDF_VAR_NAME = 'number_of_bins'
 BINS_CDF_VAR_NAME = 'bins'
 EPOCH_CDF_VAR_NAME = "epoch"
 EPOCH_DELTA_CDF_VAR_NAME = "epoch_delta"
+SPIN_ANGLE_CDF_VAR_NAME = "spin_angle"
 
 
 @dataclass
@@ -37,6 +38,7 @@ class GlowsL3LightCurve(DataProduct):
     exposure_times: np.ndarray[float]
     epoch: np.ndarray[datetime]
     epoch_delta: np.ndarray[float]
+    spin_angle: np.ndarray[float]
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
@@ -46,5 +48,6 @@ class GlowsL3LightCurve(DataProduct):
             DataProductVariable(NUM_OF_BINS_CDF_VAR_NAME, len(self.photon_flux[-1]), record_varying=False),
             DataProductVariable(BINS_CDF_VAR_NAME, np.arange(len(self.photon_flux[-1])), record_varying=False),
             DataProductVariable(EPOCH_CDF_VAR_NAME, self.epoch, cdf_data_type=pycdf.const.CDF_TIME_TT2000),
-            DataProductVariable(EPOCH_DELTA_CDF_VAR_NAME, self.epoch_delta, cdf_data_type=pycdf.const.CDF_INT8)
+            DataProductVariable(EPOCH_DELTA_CDF_VAR_NAME, self.epoch_delta, cdf_data_type=pycdf.const.CDF_INT8),
+            DataProductVariable(SPIN_ANGLE_CDF_VAR_NAME, self.spin_angle)
         ]

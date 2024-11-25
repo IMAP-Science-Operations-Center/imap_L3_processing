@@ -27,7 +27,7 @@ photon_flux:
   VALIDMAX: 2000.0
   CATDESC: Histogram of photon flux in scanning-circle bins
   DEPEND_0: epoch
-  DEPEND_1: bins
+  DEPEND_1: spin_angle
   DELTA_MINUS_VAR: photon_flux_uncertainty
   DELTA_PLUS_VAR: photon_flux_uncertainty
   FIELDNAM: Histogram of photon flux
@@ -110,4 +110,14 @@ epoch_delta:
   FORMAT: 19I
 
 
+spin_angle:
+  <<: *support_data_defaults
+  CATDESC: Spin angle at center of bin in Degrees for GLOWS histogram
+  FIELDNAM: Histogram Spin Angle time
+  FILLVAL: *float_fillval
+  FORMAT: F12.6
+  UNITS: degrees
+  LABLAXIS: Spin Angle
+  VALIDMAX: 360.0
+  VALIDMIN: 0.0
 

@@ -5,7 +5,7 @@ import numpy as np
 from uncertainties.unumpy import uarray, nominal_values, std_devs
 
 from imap_processing.glows.l3a.science.bad_angle_flag_configuration import BadAngleFlagConfiguration
-from imap_processing.glows.l3a.science.calculate_daily_lightcurve import rebin_lightcurve
+from imap_processing.glows.l3a.science.calculate_daily_lightcurve import rebin_lightcurve, calculate_spin_angles
 from imap_processing.glows.l3a.science.time_independent_background_lookup_table import \
     TimeIndependentBackgroundLookupTable
 
@@ -230,6 +230,15 @@ class TestCalculateDailyLightcurve(unittest.TestCase):
         np.testing.assert_equal(nominal_values(result), [5.0, 36.0], strict=True)
         np.testing.assert_equal(std_devs(result), [0.6702901527613909, 0.5063595560468865], strict=True)
         np.testing.assert_equal(exposure, [3.0, 1.0], strict=True)
+
+    def test_calculate_spin_angles(self):
+        spin_angles = np.array([70, 130, 190, 250, 310, 10, 70, 130, 190, 350, 10, 30])
+
+        np.testing.assert_array_equal([130, 310, 130, 10], calculate_spin_angles(4, spin_angles))
+
+        realistic_angles = np.linspace(0, 360, 3600, endpoint=False) + 0.05
+        expected_4_degree_bins = np.linspace(0, 360, 90, endpoint=False) + 2
+        np.testing.assert_allclose(expected_4_degree_bins, calculate_spin_angles(90, realistic_angles))
 
 
 if __name__ == '__main__':

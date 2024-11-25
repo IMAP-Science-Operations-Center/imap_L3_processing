@@ -49,11 +49,13 @@ class TestGlowsProcessor(unittest.TestCase):
         mock_upload.assert_called_with(mock_cdf_path)
 
     @patch('imap_processing.glows.glows_processor.rebin_lightcurve')
+    @patch('imap_processing.glows.glows_processor.calculate_spin_angles')
     @patch('imap_processing.glows.glows_processor.unumpy.uarray')
-    def test_process_l3a(self, mock_uarray, mock_rebin_lightcurve):
+    def test_process_l3a(self, mock_uarray, mock_calculate_spin_angles, mock_rebin_lightcurve):
         rebinned_flux = np.array([1, 2, 3, 4])
         rebinned_exposure = np.array([5, 6, 7, 8])
         mock_rebin_lightcurve.return_value = (rebinned_flux, rebinned_exposure)
+        mock_calculate_spin_angles.return_value = np.array([90, 90, 90, 90])
         instrument = 'glows'
         incoming_data_level = 'l2'
         start_date = datetime(2024, 10, 7, 10, 00, 00)
@@ -94,11 +96,13 @@ class TestGlowsProcessor(unittest.TestCase):
                                                  data.histogram_flag_array,
                                                  data.exposure_times, fetched_dependencies.number_of_bins,
                                                  fetched_dependencies.time_dependent_background)
+        mock_calculate_spin_angles.assert_called_with(fetched_dependencies.number_of_bins, data.spin_angle)
         np.testing.assert_equal(result.photon_flux, np.array([[1, 2, 3, 4]]), strict=True)
         np.testing.assert_equal(result.exposure_times, np.array([[5, 6, 7, 8]]), strict=True)
         self.assertEqual(input_metadata.to_upstream_data_dependency(descriptor), result.input_metadata)
         np.testing.assert_equal(result.epoch, expected_epoch, strict=True)
         self.assertEqual(result.epoch_delta, [expected_epoch_delta])
+        np.testing.assert_equal(result.spin_angle, np.array([[90, 90, 90, 90]]), strict=True)
 
 
 if __name__ == '__main__':

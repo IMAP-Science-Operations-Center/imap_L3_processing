@@ -34,3 +34,9 @@ def rebin_lightcurve(time_independent_background_table: TimeIndependentBackgroun
 
     rebinned_photon_flux = rebinned_photon_flux - background
     return rebinned_photon_flux, exposure_times_rebinned
+
+
+def calculate_spin_angles(number_of_bins: int, spin_angles: np.ndarray) -> np.ndarray:
+    binned = spin_angles.reshape((number_of_bins, -1))
+    unwrapped = np.unwrap(binned, axis=-1, period=360)
+    return np.mod(np.mean(unwrapped, axis=-1), 360)

@@ -7,7 +7,7 @@ from uncertainties import unumpy
 from imap_processing.constants import ONE_SECOND_IN_NANOSECONDS
 from imap_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
 from imap_processing.glows.l3a.models import GlowsL3LightCurve
-from imap_processing.glows.l3a.science.calculate_daily_lightcurve import rebin_lightcurve
+from imap_processing.glows.l3a.science.calculate_daily_lightcurve import rebin_lightcurve, calculate_spin_angles
 from imap_processing.processor import Processor
 from imap_processing.utils import save_data
 
@@ -35,7 +35,7 @@ class GlowsProcessor(Processor):
                                                             data.histogram_flag_array,
                                                             data.exposure_times, dependencies.number_of_bins,
                                                             dependencies.time_dependent_background)
-
+        rebinned_spin_angles = calculate_spin_angles(dependencies.number_of_bins, data.spin_angle)
         epoch = data.start_time + (data.end_time - data.start_time) / 2
         epoch_delta = (data.end_time - data.start_time).total_seconds() * ONE_SECOND_IN_NANOSECONDS / 2
         return GlowsL3LightCurve(
@@ -43,5 +43,6 @@ class GlowsProcessor(Processor):
             exposure_times=rebinned_exposure.reshape(1, -1),
             input_metadata=self.input_metadata.to_upstream_data_dependency(self.dependencies[0].descriptor),
             epoch=np.array([epoch]),
-            epoch_delta=np.array([epoch_delta])
+            epoch_delta=np.array([epoch_delta]),
+            spin_angle=rebinned_spin_angles.reshape(1, -1),
         )
