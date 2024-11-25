@@ -30,6 +30,7 @@ class GlowsProcessor(Processor):
         data = dependencies.data
         flux_with_uncertainty = unumpy.uarray(data.photon_flux, data.flux_uncertainties)
         rebinned_flux, rebinned_exposure = rebin_lightcurve(dependencies.time_independent_background_table,
+                                                            dependencies.bad_angle_flag_configuration,
                                                             flux_with_uncertainty, data.ecliptic_lat, data.ecliptic_lon,
                                                             data.histogram_flag_array,
                                                             data.exposure_times, dependencies.number_of_bins,

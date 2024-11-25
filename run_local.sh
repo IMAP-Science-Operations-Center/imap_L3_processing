@@ -6,7 +6,7 @@ python imap_l3_data_processor.py --instrument swapi --data-level l3b --start-dat
 --version v003 --dependency \
 """[{'instrument':'swapi', 'data_level':'l2', 'descriptor':'sci', 'version':'v002'}]"""
 elif [[ "$1" == "glows" ]]; then
-  python imap_l3_data_processor.py --instrument glows --data-level l3a --start-date 20250701 \
---version v001 --dependency \
-"""[{'instrument':'glows', 'data_level':'l2', 'descriptor':'histogram-00001', 'version':'v001'}]"""
+python imap_l3_data_processor.py --instrument glows --data-level l3a --start-date 20250701 \
+--version v020 --dependency \
+"""[{'instrument':'glows', 'data_level':'l2', 'descriptor':'histogram-00001', 'version':'v002'}]"""
 fi

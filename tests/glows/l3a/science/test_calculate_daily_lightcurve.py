@@ -4,6 +4,7 @@ from unittest.mock import Mock
 import numpy as np
 from uncertainties.unumpy import uarray, nominal_values, std_devs
 
+from imap_processing.glows.l3a.science.bad_angle_flag_configuration import BadAngleFlagConfiguration
 from imap_processing.glows.l3a.science.calculate_daily_lightcurve import rebin_lightcurve
 from imap_processing.glows.l3a.science.time_independent_background_lookup_table import \
     TimeIndependentBackgroundLookupTable
@@ -16,6 +17,7 @@ class TestCalculateDailyLightcurve(unittest.TestCase):
             longitudes=np.array([0]),
             background_values=np.zeros(
                 shape=(2, 1)))
+        self.enable_all_flags_configuration = BadAngleFlagConfiguration(True, True, True, True)
 
     def test_rebin_with_no_flags_and_equal_exposure_times(self):
         photon_flux = np.full(3600, 1.0)
@@ -29,6 +31,7 @@ class TestCalculateDailyLightcurve(unittest.TestCase):
         output_size = 90
         background = np.zeros(90)
         result, rebinned_exposure = rebin_lightcurve(self.all_zero_time_independent_background,
+                                                     self.enable_all_flags_configuration,
                                                      photon_flux, latitudes, longitudes, flags, exposure_times,
                                                      output_size, background)
 
@@ -48,7 +51,8 @@ class TestCalculateDailyLightcurve(unittest.TestCase):
         latitudes = np.linspace(start=0, stop=0, num=2400)
         longitudes = np.linspace(start=0, stop=360, num=2400)
 
-        result, exposure = rebin_lightcurve(self.all_zero_time_independent_background, photon_flux, latitudes,
+        result, exposure = rebin_lightcurve(self.all_zero_time_independent_background,
+                                            self.enable_all_flags_configuration, photon_flux, latitudes,
                                             longitudes, flags,
                                             exposure_times, 80, background)
         expected_output = np.full(80, 1.0)
@@ -61,18 +65,60 @@ class TestCalculateDailyLightcurve(unittest.TestCase):
         photon_flux[1800:] = 5.0
         photon_flux[80:120] = 100.0
         photon_flux[0] = 41
-        flags = np.full((4, 3600), 0)
-        flags[0, 80:100] = 1
-        flags[1, 100:120] = 1
-        flags[2, 20:30] = 1
-        flags[3, 30:40] = 1
+        flags = np.full((4, 3600), False)
+        flags[0, 80:100] = True
+        flags[1, 100:120] = True
+        flags[2, 20:30] = True
+        flags[3, 30:40] = True
+
         exposure_times = np.full(3600, 24.0)
         output_size = 90
         background = np.zeros(90)
         latitudes = np.linspace(start=0, stop=0, num=3600)
         longitudes = np.linspace(start=0, stop=360, num=3600)
 
-        result, exposure = rebin_lightcurve(self.all_zero_time_independent_background, photon_flux, latitudes,
+        result, exposure = rebin_lightcurve(self.all_zero_time_independent_background,
+                                            self.enable_all_flags_configuration, photon_flux, latitudes,
+                                            longitudes, flags,
+                                            exposure_times, output_size, background)
+
+        expected_output = np.full(90, 1.0)
+        expected_output[45:] = 5.0
+        expected_output[2] = np.nan
+        expected_output[0] = 3.0
+        np.testing.assert_equal(result, expected_output, strict=True)
+        self.assertFalse(np.ma.isMaskedArray(result))
+
+        expected_exposure = np.full(90, 24.0 * 40)
+        expected_exposure[0] = 24.0 * 20
+        expected_exposure[2] = 0
+        np.testing.assert_equal(expected_exposure, exposure, strict=True)
+        self.assertFalse(np.ma.isMaskedArray(exposure))
+
+    def test_uses_configuration_to_flag_bins(self):
+        photon_flux = np.full(3600, 1.0)
+        photon_flux[1800:] = 5.0
+        photon_flux[80:120] = 100.0
+        photon_flux[0] = 41
+        flags = np.full((4, 3600), False)
+        flags[0, 80:100] = True
+        flags[1, 100:120] = True
+        flags[2, 800:900] = True
+        flags[3, 20:30] = True
+        flags[3, 30:40] = True
+
+        exposure_times = np.full(3600, 24.0)
+        output_size = 90
+        background = np.zeros(90)
+        latitudes = np.linspace(start=0, stop=0, num=3600)
+        longitudes = np.linspace(start=0, stop=360, num=3600)
+
+        flag_configuration = BadAngleFlagConfiguration(mask_close_to_uv_source=True,
+                                                       mask_inside_excluded_region=True,
+                                                       mask_excluded_by_instr_team=False,
+                                                       mask_suspected_transient=True, )
+        result, exposure = rebin_lightcurve(self.all_zero_time_independent_background, flag_configuration, photon_flux,
+                                            latitudes,
                                             longitudes, flags,
                                             exposure_times, output_size, background)
 
@@ -97,7 +143,8 @@ class TestCalculateDailyLightcurve(unittest.TestCase):
         latitudes = np.linspace(start=0, stop=0, num=4)
         longitudes = np.linspace(start=0, stop=360, num=4)
 
-        result, exposure = rebin_lightcurve(self.all_zero_time_independent_background, photon_flux, latitudes,
+        result, exposure = rebin_lightcurve(self.all_zero_time_independent_background,
+                                            self.enable_all_flags_configuration, photon_flux, latitudes,
                                             longitudes, flags,
                                             exposure_times, 1, background)
         np.testing.assert_equal(result, [20.0], strict=True)
@@ -111,7 +158,8 @@ class TestCalculateDailyLightcurve(unittest.TestCase):
         latitudes = np.linspace(start=0, stop=0, num=4)
         longitudes = np.linspace(start=0, stop=360, num=4)
 
-        result, exposure = rebin_lightcurve(self.all_zero_time_independent_background, photon_flux, latitudes,
+        result, exposure = rebin_lightcurve(self.all_zero_time_independent_background,
+                                            self.enable_all_flags_configuration, photon_flux, latitudes,
                                             longitudes, flags,
                                             exposure_times, 1, background)
         np.testing.assert_equal(result, [np.nan], strict=True)
@@ -125,7 +173,8 @@ class TestCalculateDailyLightcurve(unittest.TestCase):
         latitudes = np.linspace(start=0, stop=0, num=4)
         longitudes = np.linspace(start=0, stop=360, num=4)
 
-        result, exposure = rebin_lightcurve(self.all_zero_time_independent_background, photon_flux, latitudes,
+        result, exposure = rebin_lightcurve(self.all_zero_time_independent_background,
+                                            self.enable_all_flags_configuration, photon_flux, latitudes,
                                             longitudes, flags,
                                             exposure_times, 2, background)
         np.testing.assert_equal(result, [5.0, 36.0], strict=True)
@@ -144,7 +193,8 @@ class TestCalculateDailyLightcurve(unittest.TestCase):
         background_uncertainty = np.array([0.02, 0.08])
         background = uarray(background, background_uncertainty)
 
-        result, exposure = rebin_lightcurve(self.all_zero_time_independent_background, photon_flux, latitudes,
+        result, exposure = rebin_lightcurve(self.all_zero_time_independent_background,
+                                            self.enable_all_flags_configuration, photon_flux, latitudes,
                                             longitudes, flags,
                                             exposure_times, 2, background)
         np.testing.assert_equal(nominal_values(result), [5.0, 36.0], strict=True)
@@ -169,7 +219,8 @@ class TestCalculateDailyLightcurve(unittest.TestCase):
         mock_time_independent_background_lookup_table = Mock()
         mock_time_independent_background_lookup_table.lookup.return_value = time_independent_background
 
-        result, exposure = rebin_lightcurve(mock_time_independent_background_lookup_table, photon_flux, latitudes,
+        result, exposure = rebin_lightcurve(mock_time_independent_background_lookup_table,
+                                            self.enable_all_flags_configuration, photon_flux, latitudes,
                                             longitudes, flags,
                                             exposure_times, 2, background)
 

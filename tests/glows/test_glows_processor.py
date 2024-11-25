@@ -87,6 +87,7 @@ class TestGlowsProcessor(unittest.TestCase):
         self.assertIsInstance(result, GlowsL3LightCurve)
         mock_uarray.assert_called_with(data.photon_flux, data.flux_uncertainties)
         mock_rebin_lightcurve.assert_called_with(fetched_dependencies.time_independent_background_table,
+                                                 fetched_dependencies.bad_angle_flag_configuration,
                                                  mock_uarray.return_value,
                                                  data.ecliptic_lat,
                                                  data.ecliptic_lon,

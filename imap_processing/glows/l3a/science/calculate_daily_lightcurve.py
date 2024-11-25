@@ -1,11 +1,13 @@
 import numpy as np
 from numpy import ndarray
 
+from imap_processing.glows.l3a.science.bad_angle_flag_configuration import BadAngleFlagConfiguration
 from imap_processing.glows.l3a.science.time_independent_background_lookup_table import \
     TimeIndependentBackgroundLookupTable
 
 
 def rebin_lightcurve(time_independent_background_table: TimeIndependentBackgroundLookupTable,
+                     bad_angle_flag_configuration: BadAngleFlagConfiguration,
                      photon_flux: np.ndarray,
                      latitudes: np.ndarray,
                      longitudes: np.ndarray,
@@ -15,7 +17,8 @@ def rebin_lightcurve(time_independent_background_table: TimeIndependentBackgroun
     photon_flux_minus_time_independent_background = photon_flux - time_independent_background_table.lookup(
         lat=latitudes, lon=longitudes)
 
-    included = np.all(flags == False, axis=-2)
+    masked = bad_angle_flag_configuration.evaluate_flags(flags)
+    included = np.logical_not(masked)
     filtered_exposure_times = exposure_times * included
     exposure_time_by_bins = np.reshape(filtered_exposure_times, (output_size, -1))
 

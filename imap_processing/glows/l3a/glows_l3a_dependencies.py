@@ -5,8 +5,10 @@ from numpy import ndarray
 from spacepy.pycdf import CDF
 
 from imap_processing.glows.descriptors import GLOWS_L2_DESCRIPTOR, GLOWS_NUMBER_OF_BINS_ANCILLARY_DESCRIPTOR, \
-    GLOWS_TIME_DEPENDENT_BACKGROUND_DESCRIPTOR, GLOWS_TIME_INDEPENDENT_BACKGROUND_DESCRIPTOR
+    GLOWS_TIME_DEPENDENT_BACKGROUND_DESCRIPTOR, GLOWS_TIME_INDEPENDENT_BACKGROUND_DESCRIPTOR, \
+    GLOWS_BAD_ANGLE_FLAG_CONFIG_DESCRIPTOR
 from imap_processing.glows.l3a.models import GlowsL2Data
+from imap_processing.glows.l3a.science.bad_angle_flag_configuration import BadAngleFlagConfiguration
 from imap_processing.glows.l3a.science.time_independent_background_lookup_table import \
     TimeIndependentBackgroundLookupTable
 from imap_processing.glows.l3a.utils import read_l2_glows_data
@@ -20,6 +22,7 @@ class GlowsL3ADependencies:
     number_of_bins: int
     time_dependent_background: ndarray[float]
     time_independent_background_table: TimeIndependentBackgroundLookupTable
+    bad_angle_flag_configuration: BadAngleFlagConfiguration
 
     @classmethod
     def fetch_dependencies(cls, dependencies: list[UpstreamDataDependency]):
@@ -44,6 +47,11 @@ class GlowsL3ADependencies:
                                                                         "latest",
                                                                         descriptor=GLOWS_TIME_INDEPENDENT_BACKGROUND_DESCRIPTOR)
         time_independent_background_file_path = download_dependency(time_independent_background_dependency)
+        flag_configuration_dependency = UpstreamDataDependency("glows", "l2", None, None,
+                                                               "latest",
+                                                               descriptor=GLOWS_BAD_ANGLE_FLAG_CONFIG_DESCRIPTOR)
+        flag_configuration_file_path = download_dependency(flag_configuration_dependency)
 
         return cls(l2_glows_data, num_of_bin, background,
-                   TimeIndependentBackgroundLookupTable.from_file(time_independent_background_file_path))
+                   TimeIndependentBackgroundLookupTable.from_file(time_independent_background_file_path),
+                   BadAngleFlagConfiguration.from_file(flag_configuration_file_path))
