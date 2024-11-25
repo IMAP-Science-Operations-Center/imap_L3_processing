@@ -24,6 +24,6 @@ def write_cdf(file_path: str, data: DataProduct, attribute_manager: ImapAttribut
                     recVary=data_product.record_varying,
                     type=data_product.cdf_data_type)
             for k, v in attribute_manager.get_variable_attributes(var_name).items():
-                if var_name == 'epoch' and k == 'DEPEND_0':
+                if k == 'DEPEND_0' and v == '':
                     continue
                 cdf[var_name].attrs[k] = v

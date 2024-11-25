@@ -74,6 +74,26 @@ class TestCdfUtils(TempFileTestCase):
             self.assertEqual('global_val1', str(actual_cdf.attrs['global1']))
             self.assertEqual('global_val2', str(actual_cdf.attrs['global2']))
 
+    def test_does_not_write_depend_0_variable_attribute_if_it_is_empty(self):
+        path = str(self.temp_directory / "write_cdf.cdf")
+        data = TestDataProduct()
+        regular_var, time_var, non_rec_varying_var = data.to_data_product_variables()
+        attribute_manager = Mock(spec=ImapAttributeManager)
+        attribute_manager.get_global_attributes.return_value = {"global1": "global_val1", "global2": "global_val2"}
+        attribute_manager.get_variable_attributes.side_effect = [
+            {"variable_attr1": "var_val1", "variable_attr2": "var_val2", "DEPEND_0": "epoch"},
+            {"variable_attr3": "var_val3", "variable_attr4": "var_val4", "DEPEND_0": ""},
+            {"variable_attr5": "var_val5", "variable_attr6": "var_val6", "DEPEND_0": ""},
+        ]
+
+        write_cdf(path, data, attribute_manager)
+
+        with pycdf.CDF(path) as actual_cdf:
+            np.testing.assert_array_equal(regular_var.value, actual_cdf[regular_var.name][...])
+            self.assertEqual('epoch', actual_cdf[regular_var.name].attrs['DEPEND_0'])
+            self.assertFalse('DEPEND_0' in actual_cdf[time_var.name].attrs)
+            self.assertFalse('DEPEND_0' in actual_cdf[non_rec_varying_var.name].attrs)
+
 
 class TestDataProduct(DataProduct):
     def __init__(self):

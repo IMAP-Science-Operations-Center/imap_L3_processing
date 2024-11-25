@@ -34,7 +34,7 @@ class TestModels(CdfModelTestCase):
         self.assert_variable_attributes(variables[1], photon_flux_uncertainty, PHOTON_FLUX_UNCERTAINTY_CDF_VAR_NAME)
         self.assert_variable_attributes(variables[2], exposure_times, EXPOSURE_TIMES_CDF_VAR_NAME)
         self.assert_variable_attributes(variables[3], number_of_bins, NUM_OF_BINS_CDF_VAR_NAME,
-                                        expected_record_varying=False)
+                                        expected_record_varying=False, expected_data_type=pycdf.const.CDF_INT2)
         self.assert_variable_attributes(variables[4], np.arange(number_of_bins), BINS_CDF_VAR_NAME,
                                         expected_record_varying=False)
         self.assert_variable_attributes(variables[5], epoch, EPOCH_CDF_VAR_NAME,

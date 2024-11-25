@@ -48,6 +48,8 @@ photon_flux_uncertainty:
   DEPEND_0: epoch
   DEPEND_1: bins
   FIELDNAM: Uncertainty of photon flux
+  LABLAXIS: Flux Uncertainty
+  FORMAT: F12.6
   FILLVAL: *float_fillval
   UNITS: Rayleigh
   VAR_TYPE: support_data
