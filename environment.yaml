@@ -1,0 +1,10 @@
+name: imap_l3
+channels:
+  - conda-forge
+dependencies:
+  - python>=3.12
+  - healpy
+  - scipy=1.13.1
+  - pip
+  - pip:
+      - -r requirements.txt
