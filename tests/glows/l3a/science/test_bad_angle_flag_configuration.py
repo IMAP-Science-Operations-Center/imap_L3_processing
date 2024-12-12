@@ -40,7 +40,7 @@ class TestBadAngleFlagConfiguration(unittest.TestCase):
 
     def test_load_from_file(self):
         path = get_test_data_path(
-            "test_data/glows/imap_glows_l2_histogram-bad-angle-flags-configuration-json-not-cdf_20250701_v001.cdf")
+            "glows/imap_glows_l2_histogram-bad-angle-flags-configuration-json-not-cdf_20250701_v001.cdf")
         expected = BadAngleFlagConfiguration(
             mask_close_to_uv_source=True,
             mask_inside_excluded_region=True,

@@ -1,15 +1,12 @@
 import sys
 from datetime import datetime
+from pathlib import Path
 
-import numpy as np
 from spacepy.pycdf import CDF
 
 from imap_processing.glows.descriptors import GLOWS_L2_DESCRIPTOR
 from imap_processing.glows.glows_processor import GlowsProcessor
 from imap_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
-from imap_processing.glows.l3a.science.bad_angle_flag_configuration import BadAngleFlagConfiguration
-from imap_processing.glows.l3a.science.time_independent_background_lookup_table import \
-    TimeIndependentBackgroundLookupTable
 from imap_processing.glows.l3a.utils import read_l2_glows_data
 from imap_processing.models import InputMetadata, UpstreamDataDependency
 from imap_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density import \
@@ -29,17 +26,7 @@ from imap_processing.swapi.swapi_processor import SwapiProcessor
 from imap_processing.utils import save_data
 
 
-def create_glows_l3a_cdf(cdf_file, time_dependent_background_file, time_independent_background_file,
-                         bad_angle_flag_configuration_file):
-    cdf_data = CDF(cdf_file)
-    l2_glows_data = read_l2_glows_data(cdf_data)
-    background = np.loadtxt(time_dependent_background_file)
-    independent_table = TimeIndependentBackgroundLookupTable.from_file(time_independent_background_file)
-    bad_angle_flag_configuration = BadAngleFlagConfiguration.from_file(bad_angle_flag_configuration_file)
-
-    glows_l3_dependencies = GlowsL3ADependencies(l2_glows_data, 90, background, independent_table,
-                                                 bad_angle_flag_configuration)
-
+def create_glows_l3a_cdf(dependencies: GlowsL3ADependencies):
     input_metadata = InputMetadata(
         instrument='glows',
         data_level='l3a',
@@ -47,7 +34,7 @@ def create_glows_l3a_cdf(cdf_file, time_dependent_background_file, time_independ
         end_date=datetime(2010, 1, 2),
         version='v999')
 
-    dependencies = [
+    upstream_dependencies = [
         UpstreamDataDependency(input_metadata.instrument,
                                "l2",
                                input_metadata.start_date,
@@ -55,9 +42,9 @@ def create_glows_l3a_cdf(cdf_file, time_dependent_background_file, time_independ
                                input_metadata.version,
                                GLOWS_L2_DESCRIPTOR + '0001')
     ]
-    processor = GlowsProcessor(dependencies, input_metadata)
+    processor = GlowsProcessor(upstream_dependencies, input_metadata)
 
-    l3a_data = processor.process_l3a(glows_l3_dependencies)
+    l3a_data = processor.process_l3a(dependencies)
     cdf_path = save_data(l3a_data)
     return cdf_path
 
@@ -141,10 +128,16 @@ if __name__ == "__main__":
                 "tests/test_data/swapi/imap_swapi_l2_sci_20100101_v001.cdf")
             print(path)
     if "glows" in sys.argv:
-        path = create_glows_l3a_cdf(
-            "tests/test_data/glows/glows_l2_with_epoch.cdf",
-            "tests/test_data/glows/imap_glows_l2_histogram-background-estimate-text-not-cdf_20250701_v001.cdf",
-            "tests/test_data/glows/imap_glows_l2_histogram-time-independent-background-map-text-not-cdf_20250701_v001.cdf",
-            "tests/test_data/glows/imap_glows_l2_histogram-bad-angle-flags-configuration-json-not-cdf_20250701_v001.cdf",
-        )
+        cdf_data = CDF("tests/test_data/glows/imap_glows_l2_hist_20130908_v001.cdf")
+        l2_glows_data = read_l2_glows_data(cdf_data)
+
+        dependencies = GlowsL3ADependencies(l2_glows_data, {
+            "calibration_data": Path("instrument_team_data/glows/imap_glows_calibration_data_v002.dat"),
+            "settings": Path("instrument_team_data/glows/imap_glows_pipeline_settings_v002.json"),
+            "time_dependent_bckgrd": Path("instrument_team_data/glows/imap_glows_time_dep_bckgrd_v001.dat"),
+            "extra_heliospheric_bckgrd": Path(
+                "instrument_team_data/glows/imap_glows_map_of_extra_helio_bckgrd_v001.dat"),
+        })
+
+        path = create_glows_l3a_cdf(dependencies)
         print(path)

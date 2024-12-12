@@ -5,7 +5,6 @@ from unittest.mock import Mock
 import numpy as np
 from numpy import ndarray
 from spacepy import pycdf
-from uncertainties.unumpy import uarray
 
 from imap_processing.glows.l3a.models import GlowsL3LightCurve, PHOTON_FLUX_CDF_VAR_NAME, EXPOSURE_TIMES_CDF_VAR_NAME, \
     NUM_OF_BINS_CDF_VAR_NAME, BINS_CDF_VAR_NAME, EPOCH_CDF_VAR_NAME, EPOCH_DELTA_CDF_VAR_NAME, \
@@ -25,8 +24,12 @@ class TestModels(CdfModelTestCase):
 
         data = GlowsL3LightCurve(input_metadata=Mock(),
                                  exposure_times=exposure_times,
-                                 photon_flux=uarray(photon_flux, photon_flux_uncertainty), epoch=epoch,
-                                 epoch_delta=epoch_delta, spin_angle=spin_angle)
+                                 photon_flux=photon_flux, epoch=epoch,
+                                 epoch_delta=epoch_delta, spin_angle=spin_angle,
+                                 photon_flux_uncertainty=photon_flux_uncertainty,
+                                 latitude=np.array([5.0]),
+                                 longitude=np.array([34.35])
+                                 )
 
         variables = data.to_data_product_variables()
         self.assertEqual(8, len(variables))

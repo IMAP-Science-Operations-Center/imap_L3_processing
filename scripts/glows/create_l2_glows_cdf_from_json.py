@@ -6,7 +6,7 @@ from spacepy.pycdf import CDF
 
 
 def set_up_required_data_values(cdf, l2_data):
-    for key in ['identifier', 'start_time', 'end_time', 'filter_temperature_average', 'filter_temperature_std_dev',
+    for key in ['identifier', 'filter_temperature_average', 'filter_temperature_std_dev',
                 'hv_voltage_average', 'hv_voltage_std_dev', 'spin_period_average', 'spin_period_std_dev',
                 'spin_period_ground_average', 'spin_period_ground_std_dev', 'pulse_length_average',
                 'pulse_length_std_dev',
@@ -30,14 +30,19 @@ def create_l2_glows_cdf_from_json(json_file_path: str, output_filename: str):
             data = json.load(f)
             set_up_required_data_values(cdf, data)
             light_curve = data["daily_lightcurve"]
-            epoch_window = datetime.fromisoformat(data["end_time"]) - datetime.fromisoformat(data["start_time"])
-            epoch = datetime.fromisoformat(data["start_time"]) + epoch_window / 2
 
+            start_of_epoch_window = datetime.fromisoformat(data["start_time"])
+            end_of_epoch_window = datetime.fromisoformat(data["end_time"])
+            epoch_window = end_of_epoch_window - start_of_epoch_window
+            epoch = start_of_epoch_window + epoch_window / 2
+
+            cdf["start_time"] = np.array([start_of_epoch_window])
+            cdf["end_time"] = np.array([end_of_epoch_window])
             cdf["epoch"] = np.array([epoch])
             cdf["epoch_delta"] = np.array([int(epoch_window.total_seconds() * 1e9 / 2)])
             int_flags = [int(f, 16) for f in light_curve["histogram_flag_array"]]
             flag_bits = np.unpackbits(np.array([int_flags], dtype=np.uint8), axis=0, bitorder='little', count=4)
-            cdf["histogram_flag_array"] = flag_bits
+            cdf["histogram_flag_array"] = [flag_bits]
 
             cdf.new("number_of_bins", light_curve["number_of_bins"], recVary=False)
 
@@ -47,6 +52,10 @@ def create_l2_glows_cdf_from_json(json_file_path: str, output_filename: str):
             ]
             for var in lightcurve_vars:
                 cdf[var] = np.reshape(light_curve[var], (1, -1))
+
+            cdf.attrs["flight_software_version"] = data["header"]["flight_software_version"]
+            cdf.attrs["pkts_file_name"] = data["header"]["pkts_file_name"]
+            cdf.attrs["ancillary_data_files"] = data["header"]["ancillary_data_files"]
 
 
 if __name__ == "__main__":
