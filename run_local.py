@@ -128,15 +128,18 @@ if __name__ == "__main__":
                 "tests/test_data/swapi/imap_swapi_l2_sci_20100101_v001.cdf")
             print(path)
     if "glows" in sys.argv:
-        cdf_data = CDF("tests/test_data/glows/imap_glows_l2_hist_20130908_v001.cdf")
+        cdf_data = CDF("tests/test_data/glows/imap_glows_l2_histogram-00001_20130908_v003.cdf")
         l2_glows_data = read_l2_glows_data(cdf_data)
 
         dependencies = GlowsL3ADependencies(l2_glows_data, {
-            "calibration_data": Path("instrument_team_data/glows/imap_glows_calibration_data_v002.dat"),
-            "settings": Path("instrument_team_data/glows/imap_glows_pipeline_settings_v002.json"),
-            "time_dependent_bckgrd": Path("instrument_team_data/glows/imap_glows_time_dep_bckgrd_v001.dat"),
+            "calibration_data": Path(
+                "instrument_team_data/glows/imap_glows_l3a_calibration-data-text-not-cdf_20250707_v002.cdf"),
+            "settings": Path(
+                "instrument_team_data/glows/imap_glows_l3a_pipeline-settings-json-not-cdf_20250707_v002.cdf"),
+            "time_dependent_bckgrd": Path(
+                "instrument_team_data/glows/imap_glows_l3a_time-dep-bckgrd-text-not-cdf_20250707_v001.cdf"),
             "extra_heliospheric_bckgrd": Path(
-                "instrument_team_data/glows/imap_glows_map_of_extra_helio_bckgrd_v001.dat"),
+                "instrument_team_data/glows/imap_glows_l3a_map-of-extra-helio-bckgrd-text-not-cdf_20250707_v001.cdf"),
         })
 
         path = create_glows_l3a_cdf(dependencies)

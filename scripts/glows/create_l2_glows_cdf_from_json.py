@@ -60,4 +60,4 @@ def create_l2_glows_cdf_from_json(json_file_path: str, output_filename: str):
 
 if __name__ == "__main__":
     create_l2_glows_cdf_from_json("instrument_team_data/glows/imap_glows_l2_20130908085214_orbX_modX_p_v00.json",
-                                  "tests/test_data/glows/imap_glows_l2_hist_20130908_v001.cdf")
+                                  "tests/test_data/glows/imap_glows_l2_histogram-00001_20130908_v003.cdf")

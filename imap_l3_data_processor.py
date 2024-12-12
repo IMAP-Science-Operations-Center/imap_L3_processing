@@ -1,6 +1,7 @@
 import argparse
 import json
 import logging
+import traceback
 from datetime import datetime
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -64,6 +65,8 @@ if __name__ == '__main__':
             imap_l3_processor()
         except Exception as e:
             logger.error("Unhandled Exception:", exc_info=e)
+            print("caught exception")
+            traceback.print_exc()
 
         logging.shutdown()
         imap_data_access.upload(log_path)

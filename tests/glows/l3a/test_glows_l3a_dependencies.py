@@ -21,15 +21,15 @@ class TestGlowsL3aDependencies(unittest.TestCase):
                                                 "1",
                                                 descriptor="histogram-01029")
         calibration_data_dependency = UpstreamDataDependency("glows", "l3a", None, None, "latest",
-                                                             descriptor="calibration-data")
+                                                             descriptor="calibration-data-text-not-cdf")
         settings_dependency = UpstreamDataDependency("glows", "l3a", None, None, "latest",
-                                                     descriptor="pipeline-settings")
+                                                     descriptor="pipeline-settings-json-not-cdf")
         extra_heliospheric_background_dependency = UpstreamDataDependency("glows", "l3a",
                                                                           None, None, "latest",
-                                                                          descriptor="map-of-extra-helio-bckgrd")
+                                                                          descriptor="map-of-extra-helio-bckgrd-text-not-cdf")
         time_dependent_background_dependency = UpstreamDataDependency("glows", "l3a", datetime(2023, 1, 1),
                                                                       datetime(2023, 2, 1), "latest",
-                                                                      descriptor="time-dep-bckgrd")
+                                                                      descriptor="time-dep-bckgrd-text-not-cdf")
 
         cdf_path_str = "some_cdf.cdf"
         cdf_path_name = Path(cdf_path_str)
@@ -56,9 +56,9 @@ class TestGlowsL3aDependencies(unittest.TestCase):
         self.assertEqual(calibration_data, result.ancillary_files["calibration_data"])
         self.assertEqual(settings, result.ancillary_files["settings"])
         self.assertEqual(time_dependent_background_path,
-                         result.ancillary_files["time_dependent_background_path"])
+                         result.ancillary_files["time_dependent_bckgrd"])
         self.assertEqual(extra_heliospheric_background,
-                         result.ancillary_files["extra_heliospheric_background"])
+                         result.ancillary_files["extra_heliospheric_bckgrd"])
 
         self.assertEqual([
             call(cdf_dependency),

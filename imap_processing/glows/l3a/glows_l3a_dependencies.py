@@ -46,7 +46,7 @@ class GlowsL3ADependencies:
         ancillary_files = {
             "calibration_data": calibration_path,
             "settings": settings_path,
-            "time_dependent_background_path": time_dependent_background_path,
-            "extra_heliospheric_background": extra_heliospheric_background,
+            "time_dependent_bckgrd": time_dependent_background_path,
+            "extra_heliospheric_bckgrd": extra_heliospheric_background,
         }
         return cls(l2_glows_data, ancillary_files)
