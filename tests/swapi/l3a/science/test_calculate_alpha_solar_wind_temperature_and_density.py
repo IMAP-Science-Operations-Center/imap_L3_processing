@@ -1,4 +1,3 @@
-from _ast import Slice
 from pathlib import Path
 from unittest import TestCase
 from unittest.mock import patch
@@ -16,19 +15,19 @@ from imap_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_an
 class TestCalculateAlphaSolarWindTemperatureAndDensity(TestCase):
     def setUp(self) -> None:
         data_file_path = Path(
-            imap_processing.__file__).parent.parent / "swapi" / "test_data" / "imap_swapi_l2_fake-menlo-5-sweeps_20100101_v002.cdf"
+            imap_processing.__file__).parent.parent / 'tests' / 'test_data' / 'swapi' / "imap_swapi_l2_fake-menlo-5-sweeps_20100101_v002.cdf"
         with CDF(str(data_file_path)) as cdf:
             self.energy = cdf["energy"][...]
             self.count_rate = cdf["swp_coin_rate"][...]
             self.count_rate_delta = cdf["swp_coin_unc"][...]
 
         lookup_table_file_path = Path(
-            imap_processing.__file__).parent.parent / "swapi" / "test_data" / "imap_swapi_l2_alpha-density-temperature-lut-text-not-cdf_20240920_v004.cdf"
+            imap_processing.__file__).parent.parent / 'tests' / 'test_data' / 'swapi' / "imap_swapi_l2_alpha-density-temperature-lut-text-not-cdf_20240920_v004.cdf"
         self.calibration_table = AlphaTemperatureDensityCalibrationTable.from_file(lookup_table_file_path)
 
     def test_temperature_and_density_calibration_table_from_file(self):
         file_path = Path(
-            imap_processing.__file__).parent.parent / "swapi" / "test_data" / "imap_swapi_l2_alpha-density-temperature-lut-text-not-cdf_20240920_v004.cdf"
+            imap_processing.__file__).parent.parent / 'tests' / 'test_data' / 'swapi' / "imap_swapi_l2_alpha-density-temperature-lut-text-not-cdf_20240920_v004.cdf"
 
         calibration_table = AlphaTemperatureDensityCalibrationTable.from_file(file_path)
 

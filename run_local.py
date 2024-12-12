@@ -125,26 +125,26 @@ if __name__ == "__main__":
     if "swapi" in sys.argv:
         if "l3a" in sys.argv:
             paths = create_swapi_l3a_cdf(
-                "swapi/test_data/imap_swapi_l2_density-temperature-lut-text-not-cdf_20240905_v002.cdf",
-                "swapi/test_data/imap_swapi_l2_alpha-density-temperature-lut-text-not-cdf_20240920_v004.cdf",
-                "swapi/test_data/imap_swapi_l2_clock-angle-and-flow-deflection-lut-text-not-cdf_20240918_v001.cdf",
-                "swapi/test_data/imap_swapi_l2_energy-gf-lut-not-cdf_20240923_v002.cdf",
-                "swapi/test_data/imap_swapi_l2_instrument-response-lut-zip-not-cdf_20241023_v001.cdf",
-                "swapi/test_data/imap_swapi_l2_density-of-neutral-helium-lut-text-not-cdf_20241023_v002.cdf",
-                "swapi/test_data/imap_swapi_l2_50-sweeps_20250606_v001.cdf"
+                "tests/test_data/swapi/imap_swapi_l2_density-temperature-lut-text-not-cdf_20240905_v002.cdf",
+                "tests/test_data/swapi/imap_swapi_l2_alpha-density-temperature-lut-text-not-cdf_20240920_v004.cdf",
+                "tests/test_data/swapi/imap_swapi_l2_clock-angle-and-flow-deflection-lut-text-not-cdf_20240918_v001.cdf",
+                "tests/test_data/swapi/imap_swapi_l2_energy-gf-lut-not-cdf_20240923_v002.cdf",
+                "tests/test_data/swapi/imap_swapi_l2_instrument-response-lut-zip-not-cdf_20241023_v001.cdf",
+                "tests/test_data/swapi/imap_swapi_l2_density-of-neutral-helium-lut-text-not-cdf_20241023_v002.cdf",
+                "tests/test_data/swapi/imap_swapi_l2_50-sweeps_20250606_v001.cdf"
             )
             print(paths)
         if "l3b" in sys.argv:
             path = create_swapi_l3b_cdf(
-                "swapi/test_data/imap_swapi_l2_energy-gf-lut-not-cdf_20240923_v002.cdf",
-                "swapi/test_data/imap_swapi_l2_efficiency-lut-text-not-cdf_20241020_v003.cdf",
-                "swapi/test_data/imap_swapi_l2_sci_20100101_v001.cdf")
+                "tests/test_data/swapi/imap_swapi_l2_energy-gf-lut-not-cdf_20240923_v002.cdf",
+                "tests/test_data/swapi/imap_swapi_l2_efficiency-lut-text-not-cdf_20241020_v003.cdf",
+                "tests/test_data/swapi/imap_swapi_l2_sci_20100101_v001.cdf")
             print(path)
     if "glows" in sys.argv:
         path = create_glows_l3a_cdf(
-            "tests/test_data/glows_l2_with_epoch.cdf",
-            "tests/test_data/imap_glows_l2_histogram-background-estimate-text-not-cdf_20250701_v001.cdf",
-            "tests/test_data/imap_glows_l2_histogram-time-independent-background-map-text-not-cdf_20250701_v001.cdf",
-            "tests/test_data/imap_glows_l2_histogram-bad-angle-flags-configuration-json-not-cdf_20250701_v001.cdf",
+            "tests/test_data/glows/glows_l2_with_epoch.cdf",
+            "tests/test_data/glows/imap_glows_l2_histogram-background-estimate-text-not-cdf_20250701_v001.cdf",
+            "tests/test_data/glows/imap_glows_l2_histogram-time-independent-background-map-text-not-cdf_20250701_v001.cdf",
+            "tests/test_data/glows/imap_glows_l2_histogram-bad-angle-flags-configuration-json-not-cdf_20250701_v001.cdf",
         )
         print(path)

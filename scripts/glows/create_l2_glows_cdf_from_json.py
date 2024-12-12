@@ -1,0 +1,54 @@
+import json
+from datetime import datetime
+
+import numpy as np
+from spacepy.pycdf import CDF
+
+
+def set_up_required_data_values(cdf, l2_data):
+    for key in ['identifier', 'start_time', 'end_time', 'filter_temperature_average', 'filter_temperature_std_dev',
+                'hv_voltage_average', 'hv_voltage_std_dev', 'spin_period_average', 'spin_period_std_dev',
+                'spin_period_ground_average', 'spin_period_ground_std_dev', 'pulse_length_average',
+                'pulse_length_std_dev',
+                'position_angle_offset_average', 'position_angle_offset_std_dev']:
+        cdf[key] = [l2_data[key]]
+
+    for key1 in ['spin_axis_orientation_average', 'spin_axis_orientation_std_dev']:
+        for key2 in ['lon', 'lat']:
+            cdf[f"{key1}_{key2}"] = [l2_data[key1][key2]]
+
+    for key1 in ['spacecraft_location_average', 'spacecraft_location_std_dev',
+                 'spacecraft_velocity_average', 'spacecraft_velocity_std_dev']:
+        for key2 in ['x', 'y', 'z']:
+            cdf[f"{key1}_{key2}"] = [l2_data[key1][key2]]
+
+
+def create_l2_glows_cdf_from_json(json_file_path: str, output_filename: str):
+    with CDF(output_filename, '') as cdf:
+        cdf.col_major(True)
+        with open(json_file_path) as f:
+            data = json.load(f)
+            set_up_required_data_values(cdf, data)
+            light_curve = data["daily_lightcurve"]
+            epoch_window = datetime.fromisoformat(data["end_time"]) - datetime.fromisoformat(data["start_time"])
+            epoch = datetime.fromisoformat(data["start_time"]) + epoch_window / 2
+
+            cdf["epoch"] = np.array([epoch])
+            cdf["epoch_delta"] = np.array([int(epoch_window.total_seconds() * 1e9 / 2)])
+            int_flags = [int(f, 16) for f in light_curve["histogram_flag_array"]]
+            flag_bits = np.unpackbits(np.array([int_flags], dtype=np.uint8), axis=0, bitorder='little', count=4)
+            cdf["histogram_flag_array"] = flag_bits
+
+            cdf.new("number_of_bins", light_curve["number_of_bins"], recVary=False)
+
+            lightcurve_vars = [
+                "spin_angle", "photon_flux", "exposure_times", "flux_uncertainties",
+                "raw_histogram", "ecliptic_lon", "ecliptic_lat"
+            ]
+            for var in lightcurve_vars:
+                cdf[var] = np.reshape(light_curve[var], (1, -1))
+
+
+if __name__ == "__main__":
+    create_l2_glows_cdf_from_json("instrument_team_data/glows/imap_glows_l2_20130908085214_orbX_modX_p_v00.json",
+                                  "tests/test_data/glows/imap_glows_l2_hist_20130908_v001.cdf")

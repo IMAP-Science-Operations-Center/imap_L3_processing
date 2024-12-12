@@ -1,5 +1,4 @@
 import os
-import sys
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -66,12 +65,12 @@ def plot_variation_in_center_of_mass(a, phi, b, spin_angles, centers_of_mass):
 
 
 def run_example_dat_files():
-    data = read_l2_data_from_dat("test_data/swapi_test_data_v4.dat")
+    data = read_l2_data_from_dat("../../instrument_team_data/swapi/swapi_test_data_v4.dat")
     coincident_count_rate = uarray(data.coincidence_count_rate, data.coincidence_count_rate_uncertainty)
     proton_sw_speed, a, phi, b = calculate_proton_solar_wind_speed(coincident_count_rate, data.spin_angles, data.energy,
                                                                    data.epoch)
 
-    clock_angle_lut = ClockAngleCalibrationTable.from_file('test_data/example_LUT_flow_angle_v2.dat')
+    clock_angle_lut = ClockAngleCalibrationTable.from_file('../../tests/test_data/swapi/example_LUT_flow_angle_v2.dat')
 
     clock_angle = calculate_clock_angle(clock_angle_lut, proton_sw_speed, a, phi, b)
 

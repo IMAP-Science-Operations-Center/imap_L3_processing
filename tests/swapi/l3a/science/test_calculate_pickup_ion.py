@@ -32,7 +32,7 @@ from tests.spice_test_case import SpiceTestCase
 class TestCalculatePickupIon(SpiceTestCase):
     def setUp(self) -> None:
         density_of_neutral_helium_lut_path = Path(
-            imap_processing.__file__).parent.parent / "swapi" / "test_data" / "imap_swapi_l2_density-of-neutral-helium-lut-text-not-cdf_20241023_v002.cdf"
+            imap_processing.__file__).parent.parent / 'tests' / 'test_data' / 'swapi' / "imap_swapi_l2_density-of-neutral-helium-lut-text-not-cdf_20241023_v002.cdf"
 
         self.density_of_neutral_helium_lookup_table = DensityOfNeutralHeliumLookupTable.from_file(
             density_of_neutral_helium_lut_path)
@@ -323,7 +323,7 @@ class TestCalculatePickupIon(SpiceTestCase):
         mock_spice.sxform.return_value = FAKE_ROTATION_MATRIX_FROM_PSP
 
         data_file_path = Path(
-            imap_processing.__file__).parent.parent / "swapi" / "test_data" / "imap_swapi_l2_50-sweeps_20100101_v002.cdf"
+            imap_processing.__file__).parent.parent / 'tests' / 'test_data' / 'swapi' / "imap_swapi_l2_50-sweeps_20100101_v002.cdf"
         with CDF(str(data_file_path)) as cdf:
             energy = cdf["energy"][...]
             count_rate = cdf["swp_coin_rate"][...]
@@ -340,12 +340,12 @@ class TestCalculatePickupIon(SpiceTestCase):
                 extracted_indices, extracted_energies, extracted_counts
             )
             response_lut_path = Path(
-                imap_processing.__file__).parent.parent / "swapi" / "test_data" / "truncated_swapi_response_simion_v1.zip"
+                imap_processing.__file__).parent.parent / 'tests' / 'test_data' / 'swapi' / "truncated_swapi_response_simion_v1.zip"
 
             instrument_response_collection = InstrumentResponseLookupTableCollection.from_file(response_lut_path)
 
             geometric_factor_lut_path = Path(
-                imap_processing.__file__).parent.parent / "swapi" / "test_data" / "imap_swapi_l2_energy-gf-lut-not-cdf_20240923_v002.cdf"
+                imap_processing.__file__).parent.parent / 'tests' / 'test_data' / 'swapi' / "imap_swapi_l2_energy-gf-lut-not-cdf_20240923_v002.cdf"
 
             geometric_factor_lut = GeometricFactorCalibrationTable.from_file(geometric_factor_lut_path)
             background_count_rate_cutoff = 0.1

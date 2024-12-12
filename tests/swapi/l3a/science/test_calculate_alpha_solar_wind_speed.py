@@ -64,7 +64,7 @@ class TestCalculateAlphaSolarWindSpeed(TestCase):
 
     def test_calculate_alpha_solar_wind_speed(self):
         file_path = Path(
-            imap_processing.__file__).parent.parent / 'swapi' / 'test_data' / 'imap_swapi_l2_fake-menlo-5-sweeps_20100101_v002.cdf'
+            imap_processing.__file__).parent.parent / 'tests' / 'test_data' / 'swapi' / 'imap_swapi_l2_fake-menlo-5-sweeps_20100101_v002.cdf'
         with CDF(str(file_path)) as cdf:
             energy = cdf["energy"][...]
             count_rate = cdf["swp_coin_rate"][...]
@@ -98,7 +98,7 @@ class TestCalculateAlphaSolarWindSpeed(TestCase):
 
     def test_calculate_combined_sweeps(self):
         file_path = Path(
-            imap_processing.__file__).parent.parent / 'swapi' / 'test_data' / 'imap_swapi_l2_fake-menlo-5-sweeps_20100101_v002.cdf'
+            imap_processing.__file__).parent.parent / 'tests' / 'test_data' / 'swapi' / 'imap_swapi_l2_fake-menlo-5-sweeps_20100101_v002.cdf'
         with CDF(str(file_path)) as cdf:
             energy = cdf["energy"][...]
             count_rate = cdf["swp_coin_rate"][...]

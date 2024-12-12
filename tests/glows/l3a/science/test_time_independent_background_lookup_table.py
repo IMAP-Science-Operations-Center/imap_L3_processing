@@ -33,7 +33,7 @@ class TestTimeIndependentBackgroundLookupTable(unittest.TestCase):
     def test_load_from_file(self):
         table = TimeIndependentBackgroundLookupTable.from_file(
             get_test_data_path(
-                "test_data/imap_glows_l2_histogram-time-independent-background-map-text-not-cdf_20250701_v001.cdf"))
+                "test_data/glows/imap_glows_l2_histogram-time-independent-background-map-text-not-cdf_20250701_v001.cdf"))
 
         expected_latitudes = np.array([90, 0, -90])
         expected_longitudes = np.array([0, 90, 180, 270])

@@ -6,7 +6,7 @@ from tests.test_helpers import get_test_data_path
 
 class TestInstrumentResponseLookupTable(unittest.TestCase):
     def test_get_table_for_energy_bin(self):
-        lut_zip_path = get_test_data_path('../swapi/test_data/truncated_swapi_response_simion_v1.zip')
+        lut_zip_path = get_test_data_path('../tests/test_data/swapi/truncated_swapi_response_simion_v1.zip')
         lut = InstrumentResponseLookupTableCollection.from_file(lut_zip_path)
         energy_bin_index = 2
         result = lut.get_table_for_energy_bin(energy_bin_index)

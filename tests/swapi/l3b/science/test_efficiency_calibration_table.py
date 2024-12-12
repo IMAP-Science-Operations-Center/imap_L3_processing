@@ -11,7 +11,7 @@ from imap_processing.swapi.l3b.science.efficiency_calibration_table import Effic
 class TestEfficiencyCalibrationTable(unittest.TestCase):
     def test_loads_calibration_table_and_returns_efficiency_for_a_time(self):
         calibration_table_path = Path(
-            imap_l3_data_processor.__file__).parent / "swapi" / "test_data" / "imap_swapi_l2_efficiency-lut-text-not-cdf_20241020_v001.cdf"
+            imap_l3_data_processor.__file__).parent / 'tests' / 'test_data' / 'swapi' / "imap_swapi_l2_efficiency-lut-text-not-cdf_20241020_v001.cdf"
         efficiency_table = EfficiencyCalibrationTable(calibration_table_path)
 
         self.assertEqual(
@@ -31,7 +31,7 @@ class TestEfficiencyCalibrationTable(unittest.TestCase):
 
     def test_loads_calibration_table_raises_exception_if_ask_for_time_before_the_table_starts(self):
         calibration_table_path = Path(
-            imap_l3_data_processor.__file__).parent / "swapi" / "test_data" / "imap_swapi_l2_efficiency-lut-text-not-cdf_20241020_v001.cdf"
+            imap_l3_data_processor.__file__).parent / 'tests' / 'test_data' / 'swapi' / "imap_swapi_l2_efficiency-lut-text-not-cdf_20241020_v001.cdf"
         efficiency_table = EfficiencyCalibrationTable(calibration_table_path)
 
         with self.assertRaises(ValueError) as content_manager:

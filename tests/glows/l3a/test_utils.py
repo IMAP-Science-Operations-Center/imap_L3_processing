@@ -11,7 +11,7 @@ from tests.test_helpers import get_test_data_path
 
 class TestUtils(unittest.TestCase):
     def test_reading_l2_glows_data_into_models(self):
-        cdf = CDF(str(get_test_data_path('test_data/glows_l2_with_epoch.cdf')))
+        cdf = CDF(str(get_test_data_path('test_data/glows/glows_l2_with_epoch.cdf')))
 
         glows_l2_data: GlowsL2Data = read_l2_glows_data(cdf)
 
@@ -48,7 +48,7 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(-90, glows_l2_data.ecliptic_lat[-1])
 
     def test_fails_if_cdf_has_more_than_one_histogram(self):
-        cdf = CDF(str(get_test_data_path('test_data/glows_l2_with_too_many_histograms.cdf')))
+        cdf = CDF(str(get_test_data_path('test_data/glows/glows_l2_with_too_many_histograms.cdf')))
 
         with self.assertRaises(AssertionError) as cm:
             glows_l2_data: GlowsL2Data = read_l2_glows_data(cdf)

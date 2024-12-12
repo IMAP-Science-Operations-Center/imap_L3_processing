@@ -19,7 +19,7 @@ from tests.swapi.l3a.science.test_calculate_alpha_solar_wind_speed import synthe
 class TestCalculateProtonSolarWindTemperatureAndDensity(TestCase):
     def test_uncalibrated_calculate_a_single_sweep_from_example_file(self):
         file_path = Path(
-            imap_processing.__file__).parent.parent / 'swapi' / 'test_data' / 'imap_swapi_l2_fake-menlo-5-sweeps_20100101_v002.cdf'
+            imap_processing.__file__).parent.parent / 'tests' / 'test_data' / 'swapi' / 'imap_swapi_l2_fake-menlo-5-sweeps_20100101_v002.cdf'
         with CDF(str(file_path)) as cdf:
             energy = cdf["energy"][...]
             count_rate = cdf["swp_coin_rate"][...]
@@ -35,7 +35,7 @@ class TestCalculateProtonSolarWindTemperatureAndDensity(TestCase):
 
     def test_uncalibrated_calculate_using_five_sweeps_from_example_file(self):
         file_path = Path(
-            imap_processing.__file__).parent.parent / 'swapi' / 'test_data' / 'imap_swapi_l2_fake-menlo-5-sweeps_20100101_v002.cdf'
+            imap_processing.__file__).parent.parent / 'tests' / 'test_data' / 'swapi' / 'imap_swapi_l2_fake-menlo-5-sweeps_20100101_v002.cdf'
         with CDF(str(file_path)) as cdf:
             energy = cdf["energy"][...]
             count_rate = cdf["swp_coin_rate"][...]
@@ -105,7 +105,7 @@ class TestCalculateProtonSolarWindTemperatureAndDensity(TestCase):
                                                   density_values, temperature_values)
 
         file_path = Path(
-            imap_processing.__file__).parent.parent / 'swapi' / 'test_data' / 'imap_swapi_l2_fake-menlo-5-sweeps_20100101_v002.cdf'
+            imap_processing.__file__).parent.parent / 'tests' / 'test_data' / 'swapi' / 'imap_swapi_l2_fake-menlo-5-sweeps_20100101_v002.cdf'
         with CDF(str(file_path)) as cdf:
             energy = cdf["energy"][...]
             count_rate = cdf["swp_coin_rate"][...]

@@ -125,7 +125,7 @@ def main(file_path):
     alpha_speed = calculate_alpha_solar_wind_speed(coincident_count_rate, energy)
 
     temperature_density_lut = AlphaTemperatureDensityCalibrationTable.from_file(
-        r"test_data/imap_swapi_l2_alpha-density-temperature-lut-text-not-cdf_20240920_v004.cdf")
+        r"../../tests/test_data/swapi/imap_swapi_l2_alpha-density-temperature-lut-text-not-cdf_20240920_v004.cdf")
     alpha_temperature, alpha_density = plot_and_calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps(
         temperature_density_lut, alpha_speed,
         coincident_count_rate, energy)
@@ -149,4 +149,4 @@ if __name__ == "__main__":
         file_path = sys.argv[1]
         main(file_path)
     except:
-        main(os.path.abspath("test_data/swapi_test_data_v5.dat"))
+        main(os.path.abspath("../../instrument_team_data/swapi/swapi_test_data_v5.dat"))
