@@ -104,6 +104,8 @@ exposure_times:
   UNITS: seconds
   VALIDMAX: 4000.0
   VALIDMIN: 0.0
+  SCALEMAX: 4000.0
+  SCALEMIN: 0.0
 
 epoch:
   CATDESC: Time, number of nanoseconds since J2000 with leap seconds included
@@ -156,6 +158,8 @@ ecliptic_lat:
   UNITS: degrees
   VALIDMAX: 90.0
   VALIDMIN: -90.0
+  SCALEMAX: 90.0
+  SCALEMIN: -90.0
 
 ecliptic_lon:
   <<: *spectrogram_defaults
@@ -165,6 +169,8 @@ ecliptic_lon:
   UNITS: degrees
   VALIDMAX: 360.0
   VALIDMIN: 0.0
+  SCALEMAX: 360.0
+  SCALEMIN: 0.0
 
 filter_temperature_average:
   <<: *timeseries_defaults
