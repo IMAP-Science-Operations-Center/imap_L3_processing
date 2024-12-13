@@ -72,6 +72,7 @@ def create_glows_l3a_from_dictionary(data: dict, input_metadata: UpstreamDataDep
         epoch_delta=np.array([total_time.total_seconds() / 2 * 1e9]),
         photon_flux=np.array(data["daily_lightcurve"]["photon_flux"]).reshape(1, -1),
         photon_flux_uncertainty=np.array(data["daily_lightcurve"]["flux_uncertainties"]).reshape(1, -1),
+        raw_histogram=np.array(data["daily_lightcurve"]["raw_histogram"]).reshape(1, -1),
         exposure_times=np.array(data["daily_lightcurve"]["exposure_times"]).reshape(1, -1),
         spin_angle=np.array(data["daily_lightcurve"]["spin_angle"]).reshape(1, -1),
         latitude=np.array(data["daily_lightcurve"]["ecliptic_lat"]).reshape(1, -1),

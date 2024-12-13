@@ -122,6 +122,9 @@ class TestUtils(unittest.TestCase):
             self.assertEqual((1, 65), result.photon_flux.shape)
             self.assertEqual(620.9, result.photon_flux[0, 0])
 
+            self.assertEqual((1, 65), result.raw_histogram.shape)
+            self.assertEqual(498484, result.raw_histogram[0, 0])
+
             self.assertEqual((1, 65), result.exposure_times.shape)
             self.assertEqual(8.028e+02, result.exposure_times[0, 0])
 

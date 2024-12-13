@@ -1,4 +1,5 @@
 float_fillval: &float_fillval -1.000000e+31
+uint4_fillval: &uint4_fillval 4294967295
 max_uint16: &max_uint16 65535
 
 data_defaults: &data_defaults
@@ -19,6 +20,7 @@ spectrogram_defaults: &spectrogram_defaults
 support_data_defaults: &support_data_defaults
   <<: *data_defaults
   VAR_TYPE: support_data
+  DISPLAY_TYPE: no_plot
 
 photon_flux:
   <<: *spectrogram_defaults
@@ -35,17 +37,29 @@ photon_flux:
   VALIDMAX: 2000.0
 
 photon_flux_uncertainty:
-  VALIDMIN: 0.0
-  VALIDMAX: 2000.0
+  <<: *support_data_defaults
+  DEPEND_1: spin_angle
   CATDESC: Uncertainty of photon flux
-  DEPEND_0: epoch
-  DEPEND_1: bins
   FIELDNAM: Uncertainty of photon flux
   LABLAXIS: Flux Uncertainty
-  FORMAT: F12.6
-  FILLVAL: *float_fillval
   UNITS: Rayleigh
-  VAR_TYPE: support_data
+  VALIDMIN: 0.0
+  VALIDMAX: 2000.0
+
+raw_histogram:
+  <<: *spectrogram_defaults
+  CATDESC: Raw daily counts in lightcurve bins
+  FIELDNAM: Raw daily counts
+  LABLAXIS: Counts
+  FILLVAL: *uint4_fillval
+  FORMAT: I10
+  UNITS: counts
+  SCALETYP: linear
+  SCALEMIN: 0
+  SCALEMAX: 1000000
+  VALIDMIN: 0
+  VALIDMAX: 1000000
+
 
 extra_heliospheric_bckgrd:
   <<: *spectrogram_defaults
@@ -108,6 +122,7 @@ epoch:
   VALIDMIN: 2010-01-01T00:00:00.000000000
   VALIDMAX: 2040-01-01T00:00:00.000000000
   FORMAT: " "
+  DISPLAY_TYPE: no_plot
 
 epoch_delta:
   CATDESC: epoch_DELTA
@@ -157,8 +172,8 @@ filter_temperature_average:
   FIELDNAM: filter temperature average
   LABLAXIS: filter temperature average
   UNITS: Celsius
-  VALIDMAX: 0.0
-  VALIDMIN: -271.3
+  VALIDMAX: 1.0
+  VALIDMIN: -273.15
   DELTA_PLUS_VAR: filter_temperature_std_dev
   DELTA_MINUS_VAR: filter_temperature_std_dev
 
@@ -168,7 +183,7 @@ filter_temperature_std_dev:
   FIELDNAM: filter temperature std dev
   LABLAXIS: filter temperature std dev
   UNITS: Celsius
-  VALIDMAX: 0.0
+  VALIDMAX: 1.0
   VALIDMIN: 0.0
 
 hv_voltage_average:
@@ -177,7 +192,7 @@ hv_voltage_average:
   FIELDNAM: hv voltage average
   LABLAXIS: hv voltage average
   UNITS: V
-  VALIDMAX: 0.0
+  VALIDMAX: 1.0
   VALIDMIN: 0.0
   DELTA_PLUS_VAR: hv_voltage_std_dev
   DELTA_MINUS_VAR: hv_voltage_std_dev
@@ -188,7 +203,7 @@ hv_voltage_std_dev:
   FIELDNAM: hv voltage std dev
   LABLAXIS: hv voltage std dev
   UNITS: V
-  VALIDMAX: 0.0
+  VALIDMAX: 1.0
   VALIDMIN: 0.0
 
 spin_period_average:
@@ -197,7 +212,7 @@ spin_period_average:
   FIELDNAM: spin period average
   LABLAXIS: spin period average
   UNITS: s
-  VALIDMAX: 0.0
+  VALIDMAX: 1.0
   VALIDMIN: 0.0
   DELTA_PLUS_VAR: spin_period_std_dev
   DELTA_MINUS_VAR: spin_period_std_dev
@@ -208,7 +223,7 @@ spin_period_std_dev:
   FIELDNAM: spin period std dev
   LABLAXIS: spin period std dev
   UNITS: s
-  VALIDMAX: 0.0
+  VALIDMAX: 1.0
   VALIDMIN: 0.0
 
 spin_period_ground_average:
@@ -217,7 +232,7 @@ spin_period_ground_average:
   FIELDNAM: spin period ground average
   LABLAXIS: spin period ground average
   UNITS: s
-  VALIDMAX: 0.0
+  VALIDMAX: 1.0
   VALIDMIN: 0.0
   DELTA_PLUS_VAR: spin_period_ground_std_dev
   DELTA_MINUS_VAR: spin_period_ground_std_dev
@@ -228,7 +243,7 @@ spin_period_ground_std_dev:
   FIELDNAM: spin period ground std dev
   LABLAXIS: spin period ground std dev
   UNITS: s
-  VALIDMAX: 0.0
+  VALIDMAX: 1.0
   VALIDMIN: 0.0
 
 pulse_length_average:
@@ -236,8 +251,8 @@ pulse_length_average:
   CATDESC: Observational-day-averaged pulse length
   FIELDNAM: pulse length average
   LABLAXIS: pulse length average
-  UNITS: μs
-  VALIDMAX: 0.0
+  UNITS: microsecond
+  VALIDMAX: 1.0
   VALIDMIN: 0.0
   DELTA_PLUS_VAR: pulse_length_std_dev
   DELTA_MINUS_VAR: pulse_length_std_dev
@@ -247,8 +262,8 @@ pulse_length_std_dev:
   CATDESC: standard deviation for pulse length
   FIELDNAM: pulse length std dev
   LABLAXIS: pulse length std dev
-  UNITS: μs
-  VALIDMAX: 0.0
+  UNITS: microsecond
+  VALIDMAX: 1.0
   VALIDMIN: 0.0
 
 position_angle_offset_average:
@@ -257,7 +272,7 @@ position_angle_offset_average:
   FIELDNAM: position angle offset average
   LABLAXIS: position angle offset average
   UNITS: degrees
-  VALIDMAX: 0.0
+  VALIDMAX: 1.0
   VALIDMIN: 0.0
   DELTA_PLUS_VAR: position_angle_offset_std_dev
   DELTA_MINUS_VAR: position_angle_offset_std_dev
@@ -268,76 +283,96 @@ position_angle_offset_std_dev:
   FIELDNAM: position angle offset std dev
   LABLAXIS: position angle offset std dev
   UNITS: degrees
-  VALIDMAX: 0.0
+  VALIDMAX: 1.0
   VALIDMIN: 0.0
+
+lon_lat:
+  CATDESC: component index for coordinate data
+  FORMAT: I10
+  VAR_TYPE: metadata
+
+lon_lat_labels:
+  CATDESC: label names for coordinate data
+  VAR_TYPE: metadata
+  FORMAT: A3
 
 spin_axis_orientation_average:
   <<: *timeseries_defaults
-  CATDESC: observational-day-averaged spin-axis ecliptic longitude ⟨λ⟩ and latitude ⟨φ⟩
+  CATDESC: Observational-day-averaged spin-axis ecliptic longitude and latitude
   FIELDNAM: spin axis orientation average
-  LABLAXIS: spin axis
   UNITS: degrees
-  VALIDMAX: -90.0
-  VALIDMIN: 360.0
-  DEPEND_1: lon_lat
+  VALIDMAX: 360.0
+  VALIDMIN: -90.0
   DELTA_PLUS_VAR: spin_axis_orientation_std_dev
   DELTA_MINUS_VAR: spin_axis_orientation_std_dev
+  DEPEND_1: lon_lat
+  LABL_PTR_1: lon_lat_labels
 
 spin_axis_orientation_std_dev:
   <<: *support_data_defaults
-  CATDESC: standard deviation for spin-axis longitude and latitude
+  CATDESC: Standard deviation for spin-axis longitude and latitude
   FIELDNAM: spin axis orientation std dev
-  LABLAXIS: spin axis
   UNITS: degrees
-  VALIDMAX: -90.0
-  VALIDMIN: 360.0
+  VALIDMAX: 360.0
+  VALIDMIN: -90.0
   DEPEND_1: lon_lat
+  LABL_PTR_1: lon_lat_labels
 
+x_y_z:
+  CATDESC: component index for ecliptic coordinate data
+  FORMAT: I10
+  VAR_TYPE: metadata
+
+x_y_z_labels:
+  CATDESC: label names for ecliptic coordinate data
+  VAR_TYPE: metadata
+  FORMAT: A1
 
 spacecraft_location_average:
   <<: *timeseries_defaults
-  CATDESC: observational-day-averaged Cartesian ecliptic coordinates ⟨X⟩, ⟨Y⟩, ⟨Z⟩ of IMAP
+  CATDESC: Observational-day-averaged Cartesian ecliptic coordinates X, Y, Z of IMAP
   FIELDNAM: spacecraft location average
-  LABLAXIS: location
   UNITS: km
-  VALIDMAX: 2.0e8
-  VALIDMIN: -2.0e8
-  DEPEND_1: x_y_z
+  VALIDMAX: 2.0e+8
+  VALIDMIN: -2.0e+8
   DELTA_PLUS_VAR: spacecraft_location_std_dev
   DELTA_MINUS_VAR: spacecraft_location_std_dev
+  FORMAT: E12.5E1
+  DEPEND_1: x_y_z
+  LABL_PTR_1: x_y_z_labels
 
 
 spacecraft_location_std_dev:
   <<: *support_data_defaults
-  CATDESC: standard deviation for ecliptic coordinates of IMAP
+  CATDESC: Standard deviation for ecliptic coordinates of IMAP
   FIELDNAM: spacecraft location std dev
-  LABLAXIS: location stdev
   UNITS: km
-  VALIDMAX: 3.0e6
-  VALIDMIN: -3.0e6
+  VALIDMAX: 3.0e+6
+  VALIDMIN: -3.0e+6
+  FORMAT: E12.5E1
   DEPEND_1: x_y_z
-
+  LABL_PTR_1: x_y_z_labels
 
 
 spacecraft_velocity_average:
   <<: *timeseries_defaults
-  CATDESC: observational-day-averaged values ⟨VX⟩, ⟨VY⟩, ⟨VZ⟩ of IMAP velocity components (Cartesian ecliptic frame)
+  CATDESC: Observational-day-averaged values VX, VY, VZ of IMAP velocity components (Cartesian ecliptic frame)
   FIELDNAM: spacecraft velocity average
-  LABLAXIS: velocity
   UNITS: km/s
   VALIDMAX: 50.0
   VALIDMIN: -50.0
-  DEPEND_1: x_y_z
   DELTA_PLUS_VAR: spacecraft_velocity_std_dev
   DELTA_MINUS_VAR: spacecraft_velocity_std_dev
+  DEPEND_1: x_y_z
+  LABL_PTR_1: x_y_z_labels
 
 
 spacecraft_velocity_std_dev:
   <<: *support_data_defaults
   CATDESC: standard deviation for velocity components of IMAP
   FIELDNAM: spacecraft velocity std dev
-  LABLAXIS: velocity stdev
   UNITS: km/s
   VALIDMAX: 1.0
   VALIDMIN: -1.0
   DEPEND_1: x_y_z
+  LABL_PTR_1: x_y_z_labels

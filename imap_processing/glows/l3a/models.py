@@ -9,6 +9,7 @@ from imap_processing.models import DataProduct, DataProductVariable
 
 PHOTON_FLUX_CDF_VAR_NAME = 'photon_flux'
 PHOTON_FLUX_UNCERTAINTY_CDF_VAR_NAME = 'photon_flux_uncertainty'
+RAW_HISTOGRAM_CDF_VAR_NAME = 'raw_histogram'
 EXPOSURE_TIMES_CDF_VAR_NAME = 'exposure_times'
 NUM_OF_BINS_CDF_VAR_NAME = 'number_of_bins'
 EPOCH_CDF_VAR_NAME = "epoch"
@@ -99,6 +100,7 @@ class GlowsL2Data(TypedDict):
 class GlowsL3LightCurve(DataProduct):
     photon_flux: np.ndarray[float]
     photon_flux_uncertainty: np.ndarray[float]
+    raw_histogram: np.ndarray[float]
     exposure_times: np.ndarray[float]
     epoch: np.ndarray[datetime]
     epoch_delta: np.ndarray[float]
@@ -132,6 +134,7 @@ class GlowsL3LightCurve(DataProduct):
         return [
             DataProductVariable(PHOTON_FLUX_CDF_VAR_NAME, self.photon_flux),
             DataProductVariable(PHOTON_FLUX_UNCERTAINTY_CDF_VAR_NAME, self.photon_flux_uncertainty),
+            DataProductVariable(RAW_HISTOGRAM_CDF_VAR_NAME, self.raw_histogram, cdf_data_type=pycdf.const.CDF_UINT4),
             DataProductVariable(EXPOSURE_TIMES_CDF_VAR_NAME, self.exposure_times),
             DataProductVariable(NUM_OF_BINS_CDF_VAR_NAME, len(self.photon_flux[-1]), record_varying=False,
                                 cdf_data_type=pycdf.const.CDF_INT2),
@@ -161,4 +164,9 @@ class GlowsL3LightCurve(DataProduct):
             DataProductVariable(SPACECRAFT_LOCATION_STD_DEV_CDF_VAR_NAME, self.spacecraft_location_std_dev),
             DataProductVariable(SPACECRAFT_VELOCITY_AVERAGE_CDF_VAR_NAME, self.spacecraft_velocity_average),
             DataProductVariable(SPACECRAFT_VELOCITY_STD_DEV_CDF_VAR_NAME, self.spacecraft_velocity_std_dev),
+
+            DataProductVariable("lon_lat", np.arange(2), record_varying=False),
+            DataProductVariable("lon_lat_labels", ["lon", "lat"], record_varying=False),
+            DataProductVariable("x_y_z", np.arange(3), record_varying=False),
+            DataProductVariable("x_y_z_labels", ["X", "Y", "Z"], record_varying=False),
         ]
