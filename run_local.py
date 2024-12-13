@@ -32,7 +32,7 @@ def create_glows_l3a_cdf(dependencies: GlowsL3ADependencies):
         data_level='l3a',
         start_date=datetime(2010, 1, 1),
         end_date=datetime(2010, 1, 2),
-        version='v999')
+        version='v001')
 
     upstream_dependencies = [
         UpstreamDataDependency(input_metadata.instrument,
