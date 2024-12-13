@@ -1,45 +1,38 @@
 float_fillval: &float_fillval -1.000000e+31
 max_uint16: &max_uint16 65535
 
+data_defaults: &data_defaults
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  FORMAT: F12.6
+  FILLVAL: *float_fillval
 
-bins:
-  VALIDMIN: 0
-  VALIDMAX: 3599
-  CATDESC: Histogram bin number
-  FIELDNAM: Bin number
-  FORMAT: I5
-  VAR_TYPE: support_data
-  LABLAXIS: Bin Number
-  FILLVAL: -32768
-  UNITS: ' '
-  MONOTON: INCREASE
-  SCALETYP: linear
+timeseries_defaults: &timeseries_defaults
+  <<: *data_defaults
+  DISPLAY_TYPE: time_series
+
+spectrogram_defaults: &spectrogram_defaults
+  <<: *data_defaults
+  DEPEND_1: spin_angle
+  DISPLAY_TYPE: spectrogram
 
 support_data_defaults: &support_data_defaults
-  DEPEND_0: epoch
-  DISPLAY_TYPE: time_series
+  <<: *data_defaults
   VAR_TYPE: support_data
-  FORMAT: I10
-  RESOLUTION: ISO8601
 
 photon_flux:
-  VALIDMIN: 0.0
-  VALIDMAX: 2000.0
+  <<: *spectrogram_defaults
   CATDESC: Histogram of photon flux in scanning-circle bins
-  DEPEND_0: epoch
-  DEPEND_1: spin_angle
+  FIELDNAM: Histogram of photon flux
+  LABLAXIS: Flux
+  UNITS: Rayleigh
   DELTA_MINUS_VAR: photon_flux_uncertainty
   DELTA_PLUS_VAR: photon_flux_uncertainty
-  FIELDNAM: Histogram of photon flux
-  FORMAT: F12.6
-  DISPLAY_TYPE: spectrogram
   SCALEMIN: 0
   SCALEMAX: 1000
   SCALETYP: linear
-  LABLAXIS: Flux
-  FILLVAL: *float_fillval
-  UNITS: Rayleigh
-  VAR_TYPE: data
+  VALIDMIN: 0.0
+  VALIDMAX: 2000.0
 
 photon_flux_uncertainty:
   VALIDMIN: 0.0
@@ -55,31 +48,28 @@ photon_flux_uncertainty:
   VAR_TYPE: support_data
 
 extra_heliospheric_bckgrd:
-  VALIDMIN: 0.0
-  VALIDMAX: 2000.0
+  <<: *spectrogram_defaults
   CATDESC: Extra-heliospheric background estimate
-  DEPEND_0: epoch
-  DEPEND_1: bins
   FIELDNAM: Extra-heliospheric background
   LABLAXIS: Extra-heliospheric background
-  FORMAT: F12.6
-  FILLVAL: *float_fillval
   UNITS: Rayleigh
-  VAR_TYPE: support_data
-
-
-time_dependent_bckgrd:
   VALIDMIN: 0.0
   VALIDMAX: 2000.0
+  SCALEMIN: 0
+  SCALEMAX: 1000
+  SCALETYP: linear
+
+time_dependent_bckgrd:
+  <<: *spectrogram_defaults
   CATDESC: Time-dependent background estimate
-  DEPEND_0: epoch
-  DEPEND_1: bins
   FIELDNAM: Time-dependent background
   LABLAXIS: Time-dependent background
-  FORMAT: F12.6
-  FILLVAL: *float_fillval
   UNITS: Rayleigh
-  VAR_TYPE: support_data
+  VALIDMIN: 0.0
+  VALIDMAX: 2000.0
+  SCALEMIN: 0
+  SCALEMAX: 1000
+  SCALETYP: linear
 
 number_of_bins:
   <<: *support_data_defaults
@@ -93,13 +83,11 @@ number_of_bins:
   VALIDMIN: 1
 
 exposure_times:
-  <<: *support_data_defaults
+  <<: *spectrogram_defaults
   CATDESC: Exposure time in seconds for GLOWS histogram
   FIELDNAM: Histogram exposure time
-  FILLVAL: *float_fillval
-  FORMAT: F12.6
-  UNITS: seconds
   LABLAXIS: Duration
+  UNITS: seconds
   VALIDMAX: 4000.0
   VALIDMIN: 0.0
 
@@ -121,8 +109,6 @@ epoch:
   VALIDMAX: 2040-01-01T00:00:00.000000000
   FORMAT: " "
 
-
-
 epoch_delta:
   CATDESC: epoch_DELTA
   DEPEND_0: epoch
@@ -138,38 +124,220 @@ epoch_delta:
   VAR_TYPE: support_data
   FORMAT: 19I
 
-
 spin_angle:
   <<: *support_data_defaults
   CATDESC: Spin angle at center of bin in Degrees for GLOWS histogram
   FIELDNAM: Histogram Spin Angle
-  FILLVAL: *float_fillval
-  FORMAT: F12.6
-  UNITS: degrees
   LABLAXIS: Spin Angle
+  UNITS: degrees
   VALIDMAX: 360.0
   VALIDMIN: 0.0
 
 ecliptic_lat:
-  <<: *support_data_defaults
-  DEPEND_1: spin_angle
+  <<: *spectrogram_defaults
   CATDESC: Latitude in ECLIPJ2000 at center of bin in Degrees
   FIELDNAM: Histogram Latitude
-  FILLVAL: *float_fillval
-  FORMAT: F12.6
-  UNITS: degrees
   LABLAXIS: Ecliptic Latitude
+  UNITS: degrees
   VALIDMAX: 90.0
   VALIDMIN: -90.0
 
 ecliptic_lon:
-  <<: *support_data_defaults
-  DEPEND_1: spin_angle
+  <<: *spectrogram_defaults
   CATDESC: Longitude in ECLIPJ2000 at center of bin in Degrees
   FIELDNAM: Histogram Longitude
-  FILLVAL: *float_fillval
-  FORMAT: F12.6
-  UNITS: degrees
   LABLAXIS: Ecliptic Longitude
+  UNITS: degrees
   VALIDMAX: 360.0
   VALIDMIN: 0.0
+
+filter_temperature_average:
+  <<: *timeseries_defaults
+  CATDESC: Observational-day-averaged filter temperature
+  FIELDNAM: filter temperature average
+  LABLAXIS: filter temperature average
+  UNITS: Celsius
+  VALIDMAX: 0.0
+  VALIDMIN: -271.3
+  DELTA_PLUS_VAR: filter_temperature_std_dev
+  DELTA_MINUS_VAR: filter_temperature_std_dev
+
+filter_temperature_std_dev:
+  <<: *support_data_defaults
+  CATDESC: standard deviation for filter temperature
+  FIELDNAM: filter temperature std dev
+  LABLAXIS: filter temperature std dev
+  UNITS: Celsius
+  VALIDMAX: 0.0
+  VALIDMIN: 0.0
+
+hv_voltage_average:
+  <<: *timeseries_defaults
+  CATDESC: Observational-day-averaged channeltron voltage
+  FIELDNAM: hv voltage average
+  LABLAXIS: hv voltage average
+  UNITS: V
+  VALIDMAX: 0.0
+  VALIDMIN: 0.0
+  DELTA_PLUS_VAR: hv_voltage_std_dev
+  DELTA_MINUS_VAR: hv_voltage_std_dev
+
+hv_voltage_std_dev:
+  <<: *support_data_defaults
+  CATDESC: standard deviation for channeltron voltage
+  FIELDNAM: hv voltage std dev
+  LABLAXIS: hv voltage std dev
+  UNITS: V
+  VALIDMAX: 0.0
+  VALIDMIN: 0.0
+
+spin_period_average:
+  <<: *timeseries_defaults
+  CATDESC: Observational-day-averaged spin period
+  FIELDNAM: spin period average
+  LABLAXIS: spin period average
+  UNITS: s
+  VALIDMAX: 0.0
+  VALIDMIN: 0.0
+  DELTA_PLUS_VAR: spin_period_std_dev
+  DELTA_MINUS_VAR: spin_period_std_dev
+
+spin_period_std_dev:
+  <<: *support_data_defaults
+  CATDESC: standard deviation for spin period
+  FIELDNAM: spin period std dev
+  LABLAXIS: spin period std dev
+  UNITS: s
+  VALIDMAX: 0.0
+  VALIDMIN: 0.0
+
+spin_period_ground_average:
+  <<: *timeseries_defaults
+  CATDESC: Observational-day-averaged spin period (ground value)
+  FIELDNAM: spin period ground average
+  LABLAXIS: spin period ground average
+  UNITS: s
+  VALIDMAX: 0.0
+  VALIDMIN: 0.0
+  DELTA_PLUS_VAR: spin_period_ground_std_dev
+  DELTA_MINUS_VAR: spin_period_ground_std_dev
+
+spin_period_ground_std_dev:
+  <<: *support_data_defaults
+  CATDESC: standard deviation for spin period (ground value)
+  FIELDNAM: spin period ground std dev
+  LABLAXIS: spin period ground std dev
+  UNITS: s
+  VALIDMAX: 0.0
+  VALIDMIN: 0.0
+
+pulse_length_average:
+  <<: *timeseries_defaults
+  CATDESC: Observational-day-averaged pulse length
+  FIELDNAM: pulse length average
+  LABLAXIS: pulse length average
+  UNITS: μs
+  VALIDMAX: 0.0
+  VALIDMIN: 0.0
+  DELTA_PLUS_VAR: pulse_length_std_dev
+  DELTA_MINUS_VAR: pulse_length_std_dev
+
+pulse_length_std_dev:
+  <<: *support_data_defaults
+  CATDESC: standard deviation for pulse length
+  FIELDNAM: pulse length std dev
+  LABLAXIS: pulse length std dev
+  UNITS: μs
+  VALIDMAX: 0.0
+  VALIDMIN: 0.0
+
+position_angle_offset_average:
+  <<: *timeseries_defaults
+  CATDESC: Observational-day-averaged GLOWS angular offset
+  FIELDNAM: position angle offset average
+  LABLAXIS: position angle offset average
+  UNITS: degrees
+  VALIDMAX: 0.0
+  VALIDMIN: 0.0
+  DELTA_PLUS_VAR: position_angle_offset_std_dev
+  DELTA_MINUS_VAR: position_angle_offset_std_dev
+
+position_angle_offset_std_dev:
+  <<: *support_data_defaults
+  CATDESC: position angle offset standard deviation
+  FIELDNAM: position angle offset std dev
+  LABLAXIS: position angle offset std dev
+  UNITS: degrees
+  VALIDMAX: 0.0
+  VALIDMIN: 0.0
+
+spin_axis_orientation_average:
+  <<: *timeseries_defaults
+  CATDESC: observational-day-averaged spin-axis ecliptic longitude ⟨λ⟩ and latitude ⟨φ⟩
+  FIELDNAM: spin axis orientation average
+  LABLAXIS: spin axis
+  UNITS: degrees
+  VALIDMAX: -90.0
+  VALIDMIN: 360.0
+  DEPEND_1: lon_lat
+  DELTA_PLUS_VAR: spin_axis_orientation_std_dev
+  DELTA_MINUS_VAR: spin_axis_orientation_std_dev
+
+spin_axis_orientation_std_dev:
+  <<: *support_data_defaults
+  CATDESC: standard deviation for spin-axis longitude and latitude
+  FIELDNAM: spin axis orientation std dev
+  LABLAXIS: spin axis
+  UNITS: degrees
+  VALIDMAX: -90.0
+  VALIDMIN: 360.0
+  DEPEND_1: lon_lat
+
+
+spacecraft_location_average:
+  <<: *timeseries_defaults
+  CATDESC: observational-day-averaged Cartesian ecliptic coordinates ⟨X⟩, ⟨Y⟩, ⟨Z⟩ of IMAP
+  FIELDNAM: spacecraft location average
+  LABLAXIS: location
+  UNITS: km
+  VALIDMAX: 2.0e8
+  VALIDMIN: -2.0e8
+  DEPEND_1: x_y_z
+  DELTA_PLUS_VAR: spacecraft_location_std_dev
+  DELTA_MINUS_VAR: spacecraft_location_std_dev
+
+
+spacecraft_location_std_dev:
+  <<: *support_data_defaults
+  CATDESC: standard deviation for ecliptic coordinates of IMAP
+  FIELDNAM: spacecraft location std dev
+  LABLAXIS: location stdev
+  UNITS: km
+  VALIDMAX: 3.0e6
+  VALIDMIN: -3.0e6
+  DEPEND_1: x_y_z
+
+
+
+spacecraft_velocity_average:
+  <<: *timeseries_defaults
+  CATDESC: observational-day-averaged values ⟨VX⟩, ⟨VY⟩, ⟨VZ⟩ of IMAP velocity components (Cartesian ecliptic frame)
+  FIELDNAM: spacecraft velocity average
+  LABLAXIS: velocity
+  UNITS: km/s
+  VALIDMAX: 50.0
+  VALIDMIN: -50.0
+  DEPEND_1: x_y_z
+  DELTA_PLUS_VAR: spacecraft_velocity_std_dev
+  DELTA_MINUS_VAR: spacecraft_velocity_std_dev
+
+
+spacecraft_velocity_std_dev:
+  <<: *support_data_defaults
+  CATDESC: standard deviation for velocity components of IMAP
+  FIELDNAM: spacecraft velocity std dev
+  LABLAXIS: velocity stdev
+  UNITS: km/s
+  VALIDMAX: 1.0
+  VALIDMIN: -1.0
+  DEPEND_1: x_y_z

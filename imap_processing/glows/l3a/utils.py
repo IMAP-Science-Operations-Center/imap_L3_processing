@@ -25,13 +25,13 @@ def read_l2_glows_data(cdf: CDF) -> GlowsL2Data:
                                     lon=cdf['spin_axis_orientation_average_lon'][0])
     spin_axis_std_dev = GlowsLatLon(lat=cdf['spin_axis_orientation_std_dev_lat'][0],
                                     lon=cdf['spin_axis_orientation_std_dev_lon'][0])
-    return GlowsL2Data(start_time=str(cdf['start_time'][0]),
+    return GlowsL2Data(identifier=cdf['identifier'][0],
+                       start_time=str(cdf['start_time'][0]),
                        end_time=str(cdf['end_time'][0]),
                        daily_lightcurve=light_curve,
                        number_of_bins=cdf['number_of_bins'][...],
                        spin_axis_orientation_average=spin_axis_average,
                        spin_axis_orientation_std_dev=spin_axis_std_dev,
-                       identifier=cdf['identifier'][0],
                        filter_temperature_average=cdf['filter_temperature_average'][0],
                        filter_temperature_std_dev=cdf['filter_temperature_std_dev'][0],
                        hv_voltage_average=cdf['hv_voltage_average'][0],
@@ -77,6 +77,31 @@ def create_glows_l3a_from_dictionary(data: dict, input_metadata: UpstreamDataDep
         latitude=np.array(data["daily_lightcurve"]["ecliptic_lat"]).reshape(1, -1),
         longitude=np.array(data["daily_lightcurve"]["ecliptic_lon"]).reshape(1, -1),
         extra_heliospheric_background=np.array(data["daily_lightcurve"]["extra_heliospheric_bckgrd"]).reshape(1, -1),
-        time_dependent_background=np.array(data["daily_lightcurve"]["time_dependent_bckgrd"]).reshape(1, -1)
-
+        time_dependent_background=np.array(data["daily_lightcurve"]["time_dependent_bckgrd"]).reshape(1, -1),
+        filter_temperature_average=np.array([data["filter_temperature_average"]]),
+        filter_temperature_std_dev=np.array([data["filter_temperature_std_dev"]]),
+        hv_voltage_average=np.array([data["hv_voltage_average"]]),
+        hv_voltage_std_dev=np.array([data["hv_voltage_std_dev"]]),
+        spin_period_average=np.array([data["spin_period_average"]]),
+        spin_period_std_dev=np.array([data["spin_period_std_dev"]]),
+        spin_period_ground_average=np.array([data["spin_period_ground_average"]]),
+        spin_period_ground_std_dev=np.array([data["spin_period_ground_std_dev"]]),
+        pulse_length_average=np.array([data["pulse_length_average"]]),
+        pulse_length_std_dev=np.array([data["pulse_length_std_dev"]]),
+        position_angle_offset_average=np.array([data["position_angle_offset_average"]]),
+        position_angle_offset_std_dev=np.array([data["position_angle_offset_std_dev"]]),
+        spin_axis_orientation_average=get_lon_lat(data["spin_axis_orientation_average"]),
+        spin_axis_orientation_std_dev=get_lon_lat(data["spin_axis_orientation_std_dev"]),
+        spacecraft_location_average=get_xyz(data["spacecraft_location_average"]),
+        spacecraft_location_std_dev=get_xyz(data["spacecraft_location_std_dev"]),
+        spacecraft_velocity_average=get_xyz(data["spacecraft_velocity_average"]),
+        spacecraft_velocity_std_dev=get_xyz(data["spacecraft_velocity_std_dev"]),
     )
+
+
+def get_lon_lat(data: dict) -> np.ndarray:
+    return np.array([[data["lon"], data["lat"]]])
+
+
+def get_xyz(data: dict) -> np.ndarray:
+    return np.array([[data["x"], data["y"], data["z"]]])
