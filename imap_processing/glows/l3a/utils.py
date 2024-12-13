@@ -76,4 +76,7 @@ def create_glows_l3a_from_dictionary(data: dict, input_metadata: UpstreamDataDep
         spin_angle=np.array(data["daily_lightcurve"]["spin_angle"]).reshape(1, -1),
         latitude=np.array(data["daily_lightcurve"]["ecliptic_lat"]).reshape(1, -1),
         longitude=np.array(data["daily_lightcurve"]["ecliptic_lon"]).reshape(1, -1),
+        extra_heliospheric_background=np.array(data["daily_lightcurve"]["extra_heliospheric_bckgrd"]).reshape(1, -1),
+        time_dependent_background=np.array(data["daily_lightcurve"]["time_dependent_bckgrd"]).reshape(1, -1)
+
     )

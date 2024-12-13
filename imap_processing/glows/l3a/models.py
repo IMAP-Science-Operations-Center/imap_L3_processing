@@ -15,6 +15,10 @@ BINS_CDF_VAR_NAME = 'bins'
 EPOCH_CDF_VAR_NAME = "epoch"
 EPOCH_DELTA_CDF_VAR_NAME = "epoch_delta"
 SPIN_ANGLE_CDF_VAR_NAME = "spin_angle"
+LATITUDE_CDF_VAR_NAME = "ecliptic_lat"
+LONGITUDE_CDF_VAR_NAME = "ecliptic_lon"
+EXTRA_HELIOSPHERIC_BACKGROUND_CDF_VAR_NAME = "extra_heliospheric_bckgrd"
+TIME_DEPENDENT_BACKGROUND_CDF_VAR_NAME = "time_dependent_bckgrd"
 
 
 class GlowsL2LightCurve(TypedDict):
@@ -83,6 +87,8 @@ class GlowsL3LightCurve(DataProduct):
     spin_angle: np.ndarray[float]
     latitude: np.ndarray[float]
     longitude: np.ndarray[float]
+    extra_heliospheric_background: np.ndarray[float]
+    time_dependent_background: np.ndarray[float]
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
@@ -94,5 +100,9 @@ class GlowsL3LightCurve(DataProduct):
             DataProductVariable(BINS_CDF_VAR_NAME, np.arange(len(self.photon_flux[-1])), record_varying=False),
             DataProductVariable(EPOCH_CDF_VAR_NAME, self.epoch, cdf_data_type=pycdf.const.CDF_TIME_TT2000),
             DataProductVariable(EPOCH_DELTA_CDF_VAR_NAME, self.epoch_delta, cdf_data_type=pycdf.const.CDF_INT8),
-            DataProductVariable(SPIN_ANGLE_CDF_VAR_NAME, self.spin_angle)
+            DataProductVariable(SPIN_ANGLE_CDF_VAR_NAME, self.spin_angle),
+            DataProductVariable(LATITUDE_CDF_VAR_NAME, self.latitude),
+            DataProductVariable(LONGITUDE_CDF_VAR_NAME, self.longitude),
+            DataProductVariable(EXTRA_HELIOSPHERIC_BACKGROUND_CDF_VAR_NAME, self.extra_heliospheric_background),
+            DataProductVariable(TIME_DEPENDENT_BACKGROUND_CDF_VAR_NAME, self.time_dependent_background),
         ]

@@ -54,6 +54,33 @@ photon_flux_uncertainty:
   UNITS: Rayleigh
   VAR_TYPE: support_data
 
+extra_heliospheric_bckgrd:
+  VALIDMIN: 0.0
+  VALIDMAX: 2000.0
+  CATDESC: Extra-heliospheric background estimate
+  DEPEND_0: epoch
+  DEPEND_1: bins
+  FIELDNAM: Extra-heliospheric background
+  LABLAXIS: Extra-heliospheric background
+  FORMAT: F12.6
+  FILLVAL: *float_fillval
+  UNITS: Rayleigh
+  VAR_TYPE: support_data
+
+
+time_dependent_bckgrd:
+  VALIDMIN: 0.0
+  VALIDMAX: 2000.0
+  CATDESC: Time-dependent background estimate
+  DEPEND_0: epoch
+  DEPEND_1: bins
+  FIELDNAM: Time-dependent background
+  LABLAXIS: Time-dependent background
+  FORMAT: F12.6
+  FILLVAL: *float_fillval
+  UNITS: Rayleigh
+  VAR_TYPE: support_data
+
 number_of_bins:
   <<: *support_data_defaults
   CATDESC: Number of histogram bins
@@ -115,7 +142,7 @@ epoch_delta:
 spin_angle:
   <<: *support_data_defaults
   CATDESC: Spin angle at center of bin in Degrees for GLOWS histogram
-  FIELDNAM: Histogram Spin Angle time
+  FIELDNAM: Histogram Spin Angle
   FILLVAL: *float_fillval
   FORMAT: F12.6
   UNITS: degrees
@@ -123,3 +150,26 @@ spin_angle:
   VALIDMAX: 360.0
   VALIDMIN: 0.0
 
+ecliptic_lat:
+  <<: *support_data_defaults
+  DEPEND_1: spin_angle
+  CATDESC: Latitude in ECLIPJ2000 at center of bin in Degrees
+  FIELDNAM: Histogram Latitude
+  FILLVAL: *float_fillval
+  FORMAT: F12.6
+  UNITS: degrees
+  LABLAXIS: Ecliptic Latitude
+  VALIDMAX: 90.0
+  VALIDMIN: -90.0
+
+ecliptic_lon:
+  <<: *support_data_defaults
+  DEPEND_1: spin_angle
+  CATDESC: Longitude in ECLIPJ2000 at center of bin in Degrees
+  FIELDNAM: Histogram Longitude
+  FILLVAL: *float_fillval
+  FORMAT: F12.6
+  UNITS: degrees
+  LABLAXIS: Ecliptic Longitude
+  VALIDMAX: 360.0
+  VALIDMIN: 0.0

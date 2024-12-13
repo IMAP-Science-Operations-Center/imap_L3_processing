@@ -137,6 +137,12 @@ class TestUtils(unittest.TestCase):
             self.assertEqual((1, 65), result.latitude.shape)
             self.assertEqual(74.870, result.latitude[0, 0])
 
+            self.assertEqual((1, 65), result.extra_heliospheric_background.shape)
+            self.assertEqual(1.23, result.extra_heliospheric_background[0, 10])
+
+            self.assertEqual((1, 65), result.time_dependent_background.shape)
+            self.assertEqual(1.66, result.time_dependent_background[0, 15])
+
             self.assertEqual(upstream_data_dependency, result.input_metadata)
 
 
