@@ -128,7 +128,7 @@ if __name__ == "__main__":
                 "tests/test_data/swapi/imap_swapi_l2_sci_20100101_v001.cdf")
             print(path)
     if "glows" in sys.argv:
-        cdf_data = CDF("tests/test_data/glows/imap_glows_l2_histogram-00001_20130908_v003.cdf")
+        cdf_data = CDF("tests/test_data/glows/imap_glows_l2_hist_20130908_v003.cdf")
         l2_glows_data = read_l2_glows_data(cdf_data)
 
         dependencies = GlowsL3ADependencies(l2_glows_data, {

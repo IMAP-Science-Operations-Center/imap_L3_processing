@@ -1,4 +1,5 @@
 import json
+import traceback
 from datetime import datetime
 
 import numpy as np
@@ -59,5 +60,16 @@ def create_l2_glows_cdf_from_json(json_file_path: str, output_filename: str):
 
 
 if __name__ == "__main__":
-    create_l2_glows_cdf_from_json("instrument_team_data/glows/imap_glows_l2_20130908085214_orbX_modX_p_v00.json",
-                                  "tests/test_data/glows/imap_glows_l2_histogram-00001_20130908_v003.cdf")
+    files_to_generate = [
+        ("instrument_team_data/glows/imap_glows_l2_20130908085214_orbX_modX_p_v00.json",
+         "tests/test_data/glows/imap_glows_l2_hist_20130908_v003.cdf"),
+        ("instrument_team_data/glows/imap_glows_l2_20140908145701_orbX_modX_p_v00.json",
+         "tests/test_data/glows/imap_glows_l2_hist_20140908_v003.cdf"),
+        ("instrument_team_data/glows/imap_glows_l2_20150606163400_orbX_modX_p_v00.json",
+         "tests/test_data/glows/imap_glows_l2_hist_20150606_v003.cdf")]
+
+    for json_file, cdf_file_path in files_to_generate:
+        try:
+            create_l2_glows_cdf_from_json(json_file, cdf_file_path)
+        except Exception as e:
+            traceback.print_exc()

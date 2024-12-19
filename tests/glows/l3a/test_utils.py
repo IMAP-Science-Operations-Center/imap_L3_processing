@@ -13,7 +13,7 @@ from tests.test_helpers import get_test_data_path
 
 class TestUtils(unittest.TestCase):
     def test_reading_l2_glows_data_into_models(self):
-        cdf = CDF(str(get_test_data_path('glows/imap_glows_l2_histogram-00001_20130908_v003.cdf')))
+        cdf = CDF(str(get_test_data_path('glows/imap_glows_l2_hist_20130908_v003.cdf')))
 
         glows_l2_data: GlowsL2Data = read_l2_glows_data(cdf)
 
@@ -66,7 +66,7 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(cdf['pulse_length_std_dev'][0], glows_l2_data['pulse_length_std_dev'])
         self.assertEqual(cdf['position_angle_offset_average'][0], glows_l2_data['position_angle_offset_average'])
         self.assertEqual(cdf['position_angle_offset_std_dev'][0], glows_l2_data['position_angle_offset_std_dev'])
-        self.assertEqual("imap_glows_l2_histogram-00001_20130908_v003.cdf", glows_l2_data['l2_file_name'])
+        self.assertEqual("imap_glows_l2_hist_20130908_v003.cdf", glows_l2_data['l2_file_name'])
 
         self.assert_equal_xyz(cdf, "spacecraft_location_average", glows_l2_data)
         self.assert_equal_xyz(cdf, "spacecraft_location_std_dev", glows_l2_data)
