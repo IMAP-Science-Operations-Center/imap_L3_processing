@@ -40,7 +40,7 @@ def create_glows_l3a_cdf(dependencies: GlowsL3ADependencies):
                                input_metadata.start_date,
                                input_metadata.end_date,
                                input_metadata.version,
-                               GLOWS_L2_DESCRIPTOR + '0001')
+                               GLOWS_L2_DESCRIPTOR)
     ]
     processor = GlowsProcessor(upstream_dependencies, input_metadata)
 
