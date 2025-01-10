@@ -50,7 +50,7 @@ def download_dependency(dependency: UpstreamDataDependency) -> Path:
                                                 descriptor=dependency.descriptor,
                                                 start_date=format_time(dependency.start_date),
                                                 end_date=format_time(dependency.end_date),
-                                                version='latest'
+                                                version=dependency.version
                                                 )]
     if len(files_to_download) != 1:
         raise ValueError(f"{files_to_download}. Expected one file to download, found {len(files_to_download)}.")

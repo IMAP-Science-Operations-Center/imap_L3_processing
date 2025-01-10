@@ -10,7 +10,8 @@ class TestImapL3DataProcessor(TestCase):
     @patch('imap_l3_data_processor.SwapiProcessor')
     @patch('imap_l3_data_processor.argparse')
     def test_runs_swapi_processor_when_instrument_argument_is_swapi(self, mock_argparse, mock_swapi_processor_class):
-        cases = [("20170630", datetime(2017, 6, 30)), (None, None)]
+
+        cases = [("20170630", datetime(2017, 6, 30)), (None, datetime(2016, 6, 30))]
 
         instrument_argument = "swapi"
         data_level_argument = "l3a"
@@ -64,7 +65,7 @@ class TestImapL3DataProcessor(TestCase):
     @patch('imap_l3_data_processor.GlowsProcessor')
     @patch('imap_l3_data_processor.argparse')
     def test_runs_glows_processor_when_instrument_argument_is_glows(self, mock_argparse, mock_processor_class):
-        cases = [("20170630", datetime(2017, 6, 30)), (None, None)]
+        cases = [("20170630", datetime(2017, 6, 30)), (None, datetime(2016, 6, 30))]
 
         instrument_argument = "glows"
         data_level_argument = "l3a"

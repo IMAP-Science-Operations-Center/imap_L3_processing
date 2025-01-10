@@ -87,8 +87,8 @@ class TestUtils(TestCase):
                                                        descriptor=dependency.descriptor,
                                                        start_date="20240917",
                                                        end_date="20240918",
-                                                       version='latest')
-        mock_data_access.download.asser_called_once_with("imap_swapi_l2_descriptor-fake-menlo-444_20240917_v2.cdf")
+                                                       version='v2')
+        mock_data_access.download.assert_called_once_with("imap_swapi_l2_descriptor-fake-menlo-444_20240917_v2.cdf")
 
         self.assertIs(path, mock_data_access.download.return_value)
 

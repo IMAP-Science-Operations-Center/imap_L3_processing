@@ -28,7 +28,7 @@ class TestSwapiL3BDependencies(unittest.TestCase):
         incoming_data_level = 'l2'
         descriptor = SWAPI_L2_DESCRIPTOR
         end_date = datetime.now()
-        version = 'f'
+        version = 'v002'
         start_date = datetime.now() - timedelta(days=1)
 
         dependencies = UpstreamDataDependency(instrument, incoming_data_level, start_date, end_date,
@@ -49,7 +49,7 @@ class TestSwapiL3BDependencies(unittest.TestCase):
         end_date_as_str = end_date.strftime("%Y%m%d")
         self.mock_imap_api.query.assert_has_calls([call(instrument=instrument, data_level=incoming_data_level,
                                                         descriptor=descriptor, start_date=start_date_as_str,
-                                                        end_date=end_date_as_str, version='latest'),
+                                                        end_date=end_date_as_str, version=version),
                                                    call(instrument=instrument, data_level=incoming_data_level,
                                                         descriptor="energy-gf-lut-not-cdf",
                                                         start_date=None,
