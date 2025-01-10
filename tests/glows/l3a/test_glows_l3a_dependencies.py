@@ -27,8 +27,8 @@ class TestGlowsL3aDependencies(unittest.TestCase):
         extra_heliospheric_background_dependency = UpstreamDataDependency("glows", "l3a",
                                                                           None, None, "latest",
                                                                           descriptor="map-of-extra-helio-bckgrd-text-not-cdf")
-        time_dependent_background_dependency = UpstreamDataDependency("glows", "l3a", datetime(2023, 1, 1),
-                                                                      datetime(2023, 2, 1), "latest",
+        time_dependent_background_dependency = UpstreamDataDependency("glows", "l3a",
+                                                                      None, None, "latest",
                                                                       descriptor="time-dep-bckgrd-text-not-cdf")
 
         cdf_path_str = "some_cdf.cdf"

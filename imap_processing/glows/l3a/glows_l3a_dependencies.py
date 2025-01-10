@@ -28,8 +28,8 @@ class GlowsL3ADependencies:
 
         calibration_dependency = UpstreamDataDependency("glows", "l3a", None, None, "latest",
                                                         descriptor=GLOWS_CALIBRATION_DATA_DESCRIPTOR)
-        time_dependent_background_dependency = UpstreamDataDependency("glows", "l3a", dependency.start_date,
-                                                                      dependency.end_date,
+        time_dependent_background_dependency = UpstreamDataDependency("glows", "l3a", None,
+                                                                      None,
                                                                       "latest",
                                                                       descriptor=GLOWS_TIME_DEPENDENT_BACKGROUND_DESCRIPTOR)
         extra_heliospheric_background_dependency = UpstreamDataDependency("glows", "l3a", None, None,

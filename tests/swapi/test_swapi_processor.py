@@ -36,7 +36,6 @@ class TestSwapiProcessor(TestCase):
     @patch('imap_processing.swapi.swapi_processor.SwapiL3AlphaSolarWindData')
     @patch('imap_processing.swapi.swapi_processor.SwapiL3ProtonSolarWindData')
     @patch('imap_processing.utils.write_cdf')
-    @patch('imap_processing.utils.uuid')
     @patch('imap_processing.swapi.swapi_processor.chunk_l2_data')
     @patch('imap_processing.swapi.swapi_processor.read_l2_swapi_data')
     @patch('imap_processing.swapi.swapi_processor.calculate_proton_solar_wind_speed')
@@ -61,14 +60,11 @@ class TestSwapiProcessor(TestCase):
                          mock_proton_calculate_temperature_and_density,
                          mock_calculate_alpha_solar_wind_speed,
                          mock_calculate_proton_solar_wind_speed,
-                         mock_read_l2_swapi_data, mock_chunk_l2_data, mock_uuid, mock_write_cdf,
+                         mock_read_l2_swapi_data, mock_chunk_l2_data, mock_write_cdf,
                          mock_proton_solar_wind_data_constructor, mock_alpha_solar_wind_data_constructor,
                          mock_pickup_ion_data_constructor,
                          mock_imap_attribute_manager,
                          mock_spice_wrapper_furnish):
-        mock_uuid_value = 123
-        mock_uuid.uuid4.return_value = mock_uuid_value
-
         instrument = 'swapi'
         incoming_data_level = 'l2'
         descriptor = SWAPI_L2_DESCRIPTOR
@@ -267,27 +263,27 @@ class TestSwapiProcessor(TestCase):
         mock_calculate_ten_minute_velocities.assert_called_with([returned_proton_sw_speed.nominal_value],
                                                                 [returned_proton_sw_deflection_angle.nominal_value],
                                                                 [returned_proton_sw_clock_angle.nominal_value])
-        proton_cdf_path = f"{self.temp_directory}/imap_swapi_l3a_proton-sw-{mock_uuid_value}_{start_date_as_str}_12345.cdf"
-        alpha_cdf_path = f"{self.temp_directory}/imap_swapi_l3a_alpha-sw-{mock_uuid_value}_{start_date_as_str}_12345.cdf"
-        pui_cdf_path = f"{self.temp_directory}/imap_swapi_l3a_pui-he-{mock_uuid_value}_{start_date_as_str}_12345.cdf"
+        proton_cdf_path = f"{self.temp_directory}/imap_swapi_l3a_proton-sw_{start_date_as_str}_12345.cdf"
+        alpha_cdf_path = f"{self.temp_directory}/imap_swapi_l3a_alpha-sw_{start_date_as_str}_12345.cdf"
+        pui_cdf_path = f"{self.temp_directory}/imap_swapi_l3a_pui-he_{start_date_as_str}_12345.cdf"
         mock_manager.add_global_attribute.assert_has_calls([call("Data_version", outgoing_version),
                                                             call("Generation_date", date.today().strftime("%Y%m%d")),
                                                             call("Logical_source",
                                                                  "imap_swapi_l3a_proton-sw"),
                                                             call("Logical_file_id",
-                                                                 f"imap_swapi_l3a_proton-sw-{mock_uuid_value}_{start_date_as_str}_12345"),
+                                                                 f"imap_swapi_l3a_proton-sw_{start_date_as_str}_12345"),
                                                             call("Data_version", outgoing_version),
                                                             call("Generation_date", date.today().strftime("%Y%m%d")),
                                                             call("Logical_source",
                                                                  "imap_swapi_l3a_alpha-sw"),
                                                             call("Logical_file_id",
-                                                                 f"imap_swapi_l3a_alpha-sw-{mock_uuid_value}_{start_date_as_str}_12345"),
+                                                                 f"imap_swapi_l3a_alpha-sw_{start_date_as_str}_12345"),
                                                             call("Data_version", outgoing_version),
                                                             call("Generation_date", date.today().strftime("%Y%m%d")),
                                                             call("Logical_source",
                                                                  "imap_swapi_l3a_pui-he"),
                                                             call("Logical_file_id",
-                                                                 f"imap_swapi_l3a_pui-he-{mock_uuid_value}_{start_date_as_str}_12345"),
+                                                                 f"imap_swapi_l3a_pui-he_{start_date_as_str}_12345"),
                                                             ])
 
         actual_alpha_metadata, actual_alpha_epoch, actual_alpha_sw_speed, actual_alpha_sw_temperature, actual_alpha_sw_density = mock_alpha_solar_wind_data_constructor.call_args.args
@@ -325,7 +321,6 @@ class TestSwapiProcessor(TestCase):
     @patch('imap_processing.swapi.swapi_processor.save_data')
     @patch('imap_processing.swapi.swapi_processor.SwapiL3BCombinedVDF')
     @patch('imap_processing.swapi.swapi_processor.calculate_combined_sweeps')
-    @patch('imap_processing.utils.uuid')
     @patch('imap_processing.swapi.swapi_processor.chunk_l2_data')
     @patch('imap_processing.swapi.swapi_processor.read_l2_swapi_data')
     @patch('imap_processing.swapi.swapi_processor.SwapiL3BDependencies')
@@ -337,14 +332,11 @@ class TestSwapiProcessor(TestCase):
                          mock_calculate_proton_solar_wind_vdf,
                          mock_calculate_alpha_solar_wind_vdf,
                          mock_swapi_l3b_dependencies_class,
-                         mock_read_l2_swapi_data, mock_chunk_l2_data, mock_uuid,
+                         mock_read_l2_swapi_data, mock_chunk_l2_data,
                          mock_calculate_combined_sweeps, mock_combined_vdf_data,
                          mock_save_data,
                          mock_calculate_delta_minus_plus,
                          mock_imap_data_access):
-        mock_uuid_value = 123
-        mock_uuid.uuid4.return_value = mock_uuid_value
-
         instrument = 'swapi'
         incoming_data_level = 'l2'
         descriptor = SWAPI_L2_DESCRIPTOR

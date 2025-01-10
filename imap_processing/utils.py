@@ -1,5 +1,4 @@
 import os
-import uuid
 from datetime import datetime, date
 from pathlib import Path
 from typing import Optional
@@ -23,7 +22,7 @@ def load_spice_kernels():
 def save_data(data: DataProduct) -> str:
     formatted_start_date = format_time(data.input_metadata.start_date)
     logical_source = data.input_metadata.logical_source
-    logical_file_id = f'{logical_source}-{uuid.uuid4()}_{formatted_start_date}_{data.input_metadata.version}'
+    logical_file_id = f'{logical_source}_{formatted_start_date}_{data.input_metadata.version}'
     Path(TEMP_CDF_FOLDER_PATH).mkdir(exist_ok=True)
     file_path = f'{TEMP_CDF_FOLDER_PATH}/{logical_file_id}.cdf'
 

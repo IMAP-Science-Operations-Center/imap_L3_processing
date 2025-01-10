@@ -23,11 +23,9 @@ class TestUtils(TestCase):
 
     @patch("imap_processing.utils.ImapAttributeManager")
     @patch("imap_processing.utils.date")
-    @patch("imap_processing.utils.uuid.uuid4")
     @patch("imap_processing.utils.write_cdf")
-    def test_save_data(self, mock_write_cdf, mock_uuid, mock_today, _):
+    def test_save_data(self, mock_write_cdf, mock_today, _):
         mock_today.today.return_value = date(2024, 9, 16)
-        mock_uuid.return_value = 444
 
         input_metadata = UpstreamDataDependency("swapi", "l2", datetime(2024, 9, 17), datetime(2024, 9, 18), "v2",
                                                 "descriptor")
@@ -47,7 +45,7 @@ class TestUtils(TestCase):
         actual_data = mock_write_cdf.call_args.args[1]
         actual_attribute_manager = mock_write_cdf.call_args.args[2]
 
-        expected_file_path = f"{TEMP_CDF_FOLDER_PATH}/imap_swapi_l2_descriptor-444_20240917_v2.cdf"
+        expected_file_path = f"{TEMP_CDF_FOLDER_PATH}/imap_swapi_l2_descriptor_20240917_v2.cdf"
         self.assertEqual(expected_file_path, actual_file_path)
         self.assertIs(data_product, actual_data)
 
@@ -55,7 +53,7 @@ class TestUtils(TestCase):
             call("Data_version", "v2"),
             call("Generation_date", "20240916"),
             call("Logical_source", "imap_swapi_l2_descriptor"),
-            call("Logical_file_id", "imap_swapi_l2_descriptor-444_20240917_v2")
+            call("Logical_file_id", "imap_swapi_l2_descriptor_20240917_v2")
         ])
 
         actual_attribute_manager.add_instrument_attrs.assert_called_with(
