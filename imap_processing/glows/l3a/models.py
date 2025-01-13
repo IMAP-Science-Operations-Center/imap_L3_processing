@@ -15,6 +15,7 @@ NUM_OF_BINS_CDF_VAR_NAME = 'number_of_bins'
 EPOCH_CDF_VAR_NAME = "epoch"
 EPOCH_DELTA_CDF_VAR_NAME = "epoch_delta"
 SPIN_ANGLE_CDF_VAR_NAME = "spin_angle"
+SPIN_ANGLE_DELTA_CDF_VAR_NAME = "spin_angle_delta"
 LATITUDE_CDF_VAR_NAME = "ecliptic_lat"
 LONGITUDE_CDF_VAR_NAME = "ecliptic_lon"
 EXTRA_HELIOSPHERIC_BACKGROUND_CDF_VAR_NAME = "extra_heliospheric_bckgrd"
@@ -105,6 +106,7 @@ class GlowsL3LightCurve(DataProduct):
     epoch: np.ndarray[datetime]
     epoch_delta: np.ndarray[float]
     spin_angle: np.ndarray[float]
+    spin_angle_delta: np.ndarray[float]
     latitude: np.ndarray[float]
     longitude: np.ndarray[float]
     extra_heliospheric_background: np.ndarray[float]
@@ -141,6 +143,7 @@ class GlowsL3LightCurve(DataProduct):
             DataProductVariable(EPOCH_CDF_VAR_NAME, self.epoch, cdf_data_type=pycdf.const.CDF_TIME_TT2000),
             DataProductVariable(EPOCH_DELTA_CDF_VAR_NAME, self.epoch_delta, cdf_data_type=pycdf.const.CDF_INT8),
             DataProductVariable(SPIN_ANGLE_CDF_VAR_NAME, self.spin_angle),
+            DataProductVariable(SPIN_ANGLE_DELTA_CDF_VAR_NAME, self.spin_angle_delta),
             DataProductVariable(LATITUDE_CDF_VAR_NAME, self.latitude),
             DataProductVariable(LONGITUDE_CDF_VAR_NAME, self.longitude),
             DataProductVariable(EXTRA_HELIOSPHERIC_BACKGROUND_CDF_VAR_NAME, self.extra_heliospheric_background),

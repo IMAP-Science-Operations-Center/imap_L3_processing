@@ -17,7 +17,7 @@ from imap_processing.glows.l3a.models import GlowsL3LightCurve, PHOTON_FLUX_CDF_
     POSITION_ANGLE_OFFSET_STD_DEV_CDF_VAR_NAME, SPIN_AXIS_ORIENTATION_AVERAGE_CDF_VAR_NAME, \
     SPIN_AXIS_ORIENTATION_STD_DEV_CDF_VAR_NAME, SPACECRAFT_LOCATION_AVERAGE_CDF_VAR_NAME, \
     SPACECRAFT_LOCATION_STD_DEV_CDF_VAR_NAME, SPACECRAFT_VELOCITY_AVERAGE_CDF_VAR_NAME, \
-    SPACECRAFT_VELOCITY_STD_DEV_CDF_VAR_NAME, RAW_HISTOGRAM_CDF_VAR_NAME
+    SPACECRAFT_VELOCITY_STD_DEV_CDF_VAR_NAME, RAW_HISTOGRAM_CDF_VAR_NAME, SPIN_ANGLE_DELTA_CDF_VAR_NAME
 from tests.swapi.cdf_model_test_case import CdfModelTestCase
 
 
@@ -30,6 +30,7 @@ class TestModels(CdfModelTestCase):
         epoch: ndarray = np.array(datetime(2024, 11, 18, 12))
         epoch_delta = np.array(43200000000000)
         spin_angle = photon_flux + 1.8
+        spin_angle_delta = np.full((1, 360), 0.5)
         latitudes: ndarray = (np.arange(360) + 360).reshape(1, -1)
         longitudes: ndarray = (np.arange(360) + 180).reshape(1, -1)
         extra_heliospheric_background: ndarray = (np.arange(360) + 25).reshape(1, -1)
@@ -60,6 +61,7 @@ class TestModels(CdfModelTestCase):
                                  exposure_times=exposure_times,
                                  photon_flux=photon_flux, epoch=epoch,
                                  epoch_delta=epoch_delta, spin_angle=spin_angle,
+                                 spin_angle_delta=spin_angle_delta,
                                  photon_flux_uncertainty=photon_flux_uncertainty,
                                  latitude=latitudes,
                                  longitude=longitudes,
@@ -85,7 +87,7 @@ class TestModels(CdfModelTestCase):
                                  spacecraft_velocity_std_dev=spacecraft_velocity_std_dev, raw_histogram=raw_histogram)
 
         variables = data.to_data_product_variables()
-        self.assertEqual(34, len(variables))
+        self.assertEqual(35, len(variables))
 
         variables = iter(variables)
         # @formatter:off
@@ -97,6 +99,7 @@ class TestModels(CdfModelTestCase):
         self.assert_variable_attributes(next(variables), epoch, EPOCH_CDF_VAR_NAME, expected_data_type=pycdf.const.CDF_TIME_TT2000)
         self.assert_variable_attributes(next(variables), epoch_delta, EPOCH_DELTA_CDF_VAR_NAME, expected_data_type=pycdf.const.CDF_INT8)
         self.assert_variable_attributes(next(variables), spin_angle, SPIN_ANGLE_CDF_VAR_NAME)
+        self.assert_variable_attributes(next(variables), spin_angle_delta, SPIN_ANGLE_DELTA_CDF_VAR_NAME)
         self.assert_variable_attributes(next(variables), latitudes, LATITUDE_CDF_VAR_NAME)
         self.assert_variable_attributes(next(variables), longitudes, LONGITUDE_CDF_VAR_NAME)
         self.assert_variable_attributes(next(variables), extra_heliospheric_background, EXTRA_HELIOSPHERIC_BACKGROUND_CDF_VAR_NAME)

@@ -149,6 +149,17 @@ spin_angle:
   UNITS: degrees
   VALIDMAX: 360.0
   VALIDMIN: 0.0
+  DELTA_PLUS_VAR: spin_angle_delta
+  DELTA_MINUS_VAR: spin_angle_delta
+
+spin_angle_delta:
+  <<: *support_data_defaults
+  CATDESC: Spin angle bin half width in Degrees for GLOWS histogram
+  FIELDNAM: Histogram Spin Angle Delta
+  LABLAXIS: Spin Angle Delta
+  UNITS: degrees
+  VALIDMAX: 180.0
+  VALIDMIN: 0.0
 
 ecliptic_lat:
   <<: *spectrogram_defaults

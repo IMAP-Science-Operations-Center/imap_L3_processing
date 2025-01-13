@@ -1,10 +1,17 @@
+import json
+import tempfile
 import unittest
+from copy import deepcopy
 from datetime import datetime
+from pathlib import Path
 from unittest.mock import patch, Mock
+
+import numpy as np
 
 from imap_processing.glows.descriptors import GLOWS_L2_DESCRIPTOR
 from imap_processing.glows.glows_processor import GlowsProcessor
 from imap_processing.models import UpstreamDataDependency, InputMetadata
+from tests.test_helpers import get_test_instrument_team_data_path, get_test_data_path
 
 
 class TestGlowsProcessor(unittest.TestCase):
@@ -60,6 +67,7 @@ class TestGlowsProcessor(unittest.TestCase):
         ]
         processor = GlowsProcessor(dependencies=dependencies, input_metadata=input_metadata)
 
+        processor.add_spin_angle_delta = Mock()
         fetched_dependencies = Mock()
         result = processor.process_l3a(fetched_dependencies)
 
@@ -68,9 +76,48 @@ class TestGlowsProcessor(unittest.TestCase):
         l3a_data_constructor.return_value.process_l2_data_file.assert_called_once_with(fetched_dependencies.data)
         l3a_data_constructor.return_value.generate_l3a_data.assert_called_once_with(
             fetched_dependencies.ancillary_files)
-        create_glows_l3a_from_dictionary.assert_called_once_with(l3a_data_constructor.return_value.data,
+        processor.add_spin_angle_delta.assert_called_with(l3a_data_constructor.return_value.data,
+                                                          fetched_dependencies.ancillary_files)
+        create_glows_l3a_from_dictionary.assert_called_once_with(processor.add_spin_angle_delta.return_value,
                                                                  input_metadata.to_upstream_data_dependency(
                                                                      dependencies[0].descriptor))
+
+    def test_add_spin_angle_delta(self):
+        cases = [
+            (60, 3),
+            (90, 2)
+        ]
+
+        for bins, expected_delta in cases:
+            with self.subTest(bin=bins, expected_delta=expected_delta):
+                ancillary_files = {}
+                with open(get_test_data_path("glows/imap_glows_l3a_20130908085214_orbX_modX_p_v00.json")) as f:
+                    example_data = json.load(f)
+
+                with tempfile.TemporaryDirectory() as tempdir:
+                    temp_file_path = Path(tempdir) / "settings.json"
+                    example_settings = get_test_instrument_team_data_path(
+                        "glows/imap_glows_l3a_pipeline-settings-json-not-cdf_20250707_v002.cdf")
+
+                    with open(example_settings) as file:
+                        loaded_file = json.load(file)
+
+                    loaded_file['l3a_nominal_number_of_bins'] = bins
+
+                    with open(temp_file_path, 'w') as file:
+                        json.dump(loaded_file, file)
+                    ancillary_files['settings'] = temp_file_path
+
+                    result = GlowsProcessor.add_spin_angle_delta(deepcopy(example_data), ancillary_files)
+                for k, v in example_data.items():
+                    if k != "daily_lightcurve":
+                        self.assertEqual(v, result[k])
+
+                for k2, v2 in example_data["daily_lightcurve"].items():
+                    self.assertEqual(v2, result["daily_lightcurve"][k2])
+                spin_angle_delta = result["daily_lightcurve"]["spin_angle_delta"]
+                self.assertEqual(len(example_data["daily_lightcurve"]["spin_angle"]), len(spin_angle_delta))
+                self.assertTrue(np.all(spin_angle_delta == expected_delta))
 
 
 if __name__ == '__main__':

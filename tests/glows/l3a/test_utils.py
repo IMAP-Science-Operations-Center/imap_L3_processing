@@ -108,6 +108,10 @@ class TestUtils(unittest.TestCase):
     def test_create_glows_l3a_from_dictionary(self):
         with open(get_test_data_path("glows/imap_glows_l3a_20130908085214_orbX_modX_p_v00.json")) as f:
             data = json.load(f)
+            expected_spin_delta = 3
+            data["daily_lightcurve"]['spin_angle_delta'] = np.full_like(data['daily_lightcurve']['spin_angle'],
+                                                                        expected_spin_delta)
+
             upstream_data_dependency = UpstreamDataDependency(instrument='glows', data_level='l3a',
                                                               descriptor='histogram', start_date=datetime(2013, 9, 8),
                                                               end_date=datetime(2013, 9, 9), version="v003")
@@ -118,6 +122,9 @@ class TestUtils(unittest.TestCase):
 
             self.assertEqual((1, 65), result.spin_angle.shape)
             self.assertEqual(2.000, result.spin_angle[0, 0])
+
+            self.assertEqual((1, 65), result.spin_angle_delta.shape)
+            self.assertEqual(expected_spin_delta, result.spin_angle_delta[0, 0])
 
             self.assertEqual((1, 65), result.photon_flux.shape)
             self.assertEqual(620.9, result.photon_flux[0, 0])
