@@ -1,6 +1,8 @@
 import json
+import re
 import traceback
 from datetime import datetime
+from pathlib import Path
 
 import numpy as np
 from spacepy.pycdf import CDF
@@ -60,16 +62,13 @@ def create_l2_glows_cdf_from_json(json_file_path: str, output_filename: str):
 
 
 if __name__ == "__main__":
-    files_to_generate = [
-        ("instrument_team_data/glows/imap_glows_l2_20130908085214_orbX_modX_p_v00.json",
-         "tests/test_data/glows/imap_glows_l2_hist_20130908_v003.cdf"),
-        ("instrument_team_data/glows/imap_glows_l2_20140908145701_orbX_modX_p_v00.json",
-         "tests/test_data/glows/imap_glows_l2_hist_20140908_v003.cdf"),
-        ("instrument_team_data/glows/imap_glows_l2_20150606163400_orbX_modX_p_v00.json",
-         "tests/test_data/glows/imap_glows_l2_hist_20150606_v003.cdf")]
-
-    for json_file, cdf_file_path in files_to_generate:
+    json_directory = Path(r'C:\Users\Harrison\Downloads\data_l2_histograms')
+    output_directory = Path(r'C:\Users\Harrison\Downloads\p3')
+    for file_path in json_directory.iterdir():
+        output = re.search(r"imap_glows_l2_(\d{8}).*_orbX_modX_p_v00.json", file_path.name)
+        output_file_path_date = output.group(1)
+        cdf_file_path = f"{output_directory}/imap_glows_l2_hist_{output_file_path_date}_v003.cdf"
         try:
-            create_l2_glows_cdf_from_json(json_file, cdf_file_path)
+            create_l2_glows_cdf_from_json(file_path, cdf_file_path)
         except Exception as e:
             traceback.print_exc()

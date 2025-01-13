@@ -1,10 +1,14 @@
 """@package docstring
 Author: Marek Strumik, maro at cbk.waw.pl
 """
-import json
 import copy
+import json
+import sys
+
 import numpy as np
-import healpy as hp
+
+if sys.platform != "win32":
+    import healpy as hp
 from .constants import VERSION, SCAN_CIRCLE_ANGULAR_RADIUS
 from .funcs import calibration_factor, check_if_contains_actual_data
 from .geom_fun_libr_box import spin2lb
