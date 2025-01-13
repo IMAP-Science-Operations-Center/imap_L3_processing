@@ -56,7 +56,7 @@ if __name__ == '__main__':
     with TemporaryDirectory() as dir:
         logger = logging.getLogger(__name__)
         log_path = Path(
-            dir) / f"imap_swapi_l3_log-{datetime.now().strftime('%Y-%m-%d-%H%M%S')}_20240606_v001.cdf"
+            dir) / f"imap_swapi_l3_log-{datetime.now().strftime('%Y-%m-%d-%H%M%S-%f')}_20240606_v001.cdf"
 
         logging.basicConfig(filename=str(log_path), level=logging.INFO)
         logger.info('Started')
