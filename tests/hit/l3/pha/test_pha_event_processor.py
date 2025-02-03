@@ -3,7 +3,7 @@ import unittest
 from bitstring import BitArray, BitStream
 from spacepy.pycdf import CDF
 
-from imap_processing.hit.l3.pha_event_processor import PHAEventReader, PHAEvent, PHAWord
+from imap_processing.hit.l3.pha.pha_event_processor import PHAEventReader, PHAEvent, PHAWord
 from tests.test_helpers import get_test_data_path
 
 
