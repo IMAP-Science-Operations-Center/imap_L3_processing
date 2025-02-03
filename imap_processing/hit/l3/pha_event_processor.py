@@ -47,60 +47,92 @@ class PHAEvent:
     spare: bool
     pha_words: list[PHAWord]
     extended_header: Optional[PHAExtendedHeader] = None
-    stim_block = int
+    stim_block: Optional[StimBlock] = None
+    extended_stim_header: Optional[ExtendedStimHeader] = None
 
 
-def read_l1_pha_data(pha_event) -> PHAEvent:
-    bitstream = BitStream("0b" + pha_event)
-    particle_id = bitstream.read("uint:8")
-    priority_buffer_num = bitstream.read("uint:5")
-    stim_tag = bitstream.read("uint:1")
-    haz_tag = bitstream.read("uint:1")
-    time_tag = bitstream.read("uint:4")
-    a_b_side_flag = bitstream.read("uint:1")
-    has_unread_adcs = bitstream.read("uint:1")
-    long_event_flag = bitstream.read("uint:1")
-    culling_flag = bitstream.read("uint:1")
-    spare = bitstream.read("uint:1")
+class PHAEventReader:
+    @classmethod
+    def read_pha_event(cls, event_bitstream: BitStream) -> PHAEvent:
+        spare = event_bitstream.read("uint:1")
 
-    if stim_tag:
-        stim_step = bitstream.read("uint:4")
-        stim_gain = bitstream.read("uint:1")
-        unused = bitstream.read("uint:2")
-        a_l_stim = bitstream.read("uint:1")
-        StimBlock(stim_step=stim_step, stim_gain=stim_gain, unused=unused, a_l_stim=a_l_stim)
+        culling_flag = event_bitstream.read("uint:1")
+        long_event_flag = event_bitstream.read("uint:1")
+        has_unread_adcs = event_bitstream.read("uint:1")
+        a_b_side_flag = event_bitstream.read("uint:1")
 
-    extended_header = None
-    if long_event_flag:
-        detector_flags = bitstream.read("uint:8")
-        e_delta_index = bitstream.read("uint:8")
-        e_prime_index = bitstream.read("uint:8")
-        extended_header = PHAExtendedHeader(detector_flags, e_delta_index, e_prime_index)
+        time_tag = event_bitstream.read("uint:4")
 
-    reading_pha = True
-    pha_words = []
-    while reading_pha:
-        adc_value = bitstream.read("uint:12")
-        adc_detector_address = bitstream.read("uint:6")
-        is_high_gain = bitstream.read("uint:1")
-        is_last_event = bitstream.read("uint:1")
-        reading_pha = not is_last_event
+        haz_tag = event_bitstream.read("uint:1")
+        stim_tag = event_bitstream.read("uint:1")
 
-        pha_word = PHAWord(adc_value=adc_value, detector_address=adc_detector_address, is_last_pha=is_last_event,
-                           is_high_gain=is_high_gain)
+        priority_buffer_num = event_bitstream.read("uint:5")
 
-        pha_words.append(pha_word)
+        particle_id = event_bitstream.read("uint:8")
 
-    return PHAEvent(particle_id=particle_id,
-                    priority_buffer_num=priority_buffer_num,
-                    stim_tag=stim_tag,
-                    haz_tag=haz_tag,
-                    time_tag=time_tag,
-                    a_b_side_flag=a_b_side_flag,
-                    has_unread_adcs=has_unread_adcs,
-                    long_event_flag=long_event_flag,
-                    culling_flag=culling_flag,
-                    spare=spare,
-                    pha_words=pha_words,
-                    extended_header=extended_header
-                    )
+        extended_header = None
+        extended_stim_header = None
+        stim_block = None
+        if long_event_flag and not stim_tag:
+            e_prime_index = event_bitstream.read("uint:7")
+            e_delta_index = event_bitstream.read("uint:9")
+            detector_flags = event_bitstream.read("uint:8")
+            extended_header = PHAExtendedHeader(detector_flags, e_delta_index, e_prime_index)
+
+        elif stim_tag:
+            if long_event_flag:
+                tbd = event_bitstream.read("uint:12")
+                dac_value = event_bitstream.read("uint:12")
+                extended_stim_header = ExtendedStimHeader(dac_value, tbd)
+
+            a_l_stim = event_bitstream.read("uint:1")
+            unused = event_bitstream.read("uint:2")
+            stim_gain = event_bitstream.read("uint:1")
+            stim_step = event_bitstream.read("uint:4")
+            stim_block = StimBlock(stim_step=stim_step, stim_gain=stim_gain, unused=unused, a_l_stim=a_l_stim)
+
+        reading_pha = True
+        pha_words = []
+        while reading_pha:
+            is_last_event = event_bitstream.read("uint:1")
+            is_high_gain = event_bitstream.read("uint:1")
+            adc_detector_address = event_bitstream.read("uint:6")
+            adc_value = event_bitstream.read("uint:12")
+            reading_pha = not is_last_event
+
+            pha_word = PHAWord(adc_value=adc_value, detector_address=adc_detector_address, is_last_pha=is_last_event,
+                               is_high_gain=is_high_gain)
+            pha_words.append(pha_word)
+
+        if len(pha_words) % 2 == 1:
+            event_bitstream.read("uint:4")
+
+        return PHAEvent(particle_id=particle_id,
+                        priority_buffer_num=priority_buffer_num,
+                        stim_tag=stim_tag,
+                        haz_tag=haz_tag,
+                        time_tag=time_tag,
+                        a_b_side_flag=a_b_side_flag,
+                        has_unread_adcs=has_unread_adcs,
+                        long_event_flag=long_event_flag,
+                        culling_flag=culling_flag,
+                        spare=spare,
+                        pha_words=pha_words,
+                        extended_header=extended_header,
+                        extended_stim_header=extended_stim_header,
+                        stim_block=stim_block
+                        )
+
+    @classmethod
+    def read_all_pha_events(cls, binary_pha_events: str) -> list[PHAEvent]:
+        bitstream = BitStream("0b" + binary_pha_events)
+        _ = bitstream.read("uint:16")
+
+        events = []
+        while (bitstream.len - bitstream.pos >= 48) and bitstream.peek("uint:48") != 0:
+            try:
+                events.append(cls.read_pha_event(bitstream))
+            except Exception as e:
+                print("failed to read event")
+
+        return events
