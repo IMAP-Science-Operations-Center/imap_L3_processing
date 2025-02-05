@@ -224,26 +224,25 @@ class TestPHAEventProcessor(unittest.TestCase):
 
         self.assertEqual(event_total, 7050)
 
-    def test_read_hit_provided_binary(self):
+    def test_verify_against_HIT_script_output(self):
         bitstream = BitStream(filename=get_test_data_path("hit/pha_events/full_event_record_buffer.bin"))
 
         events = PHAEventReader.read_all_pha_events(bitstream.bin)
 
-        with open(get_test_data_path("hit/pha_events/result.csv"), 'w', newline='') as f:
-            csv_file = csv.writer(f)
-            for event in events:
-                row = ["" for _ in range(128)]
+        with open(get_test_data_path("hit/pha_events/expected_pha_data_for_all_events.csv")) as expected_file:
+            reader = csv.reader(expected_file)
+            for expected_row, event in zip(reader, events):
+                row = ["      " for _ in range(128)]
                 for pha_word in event.pha_words:
                     if pha_word.adc_overflow:
                         continue
-                    if pha_word.is_high_gain:
+                    if not pha_word.is_high_gain:
                         index = pha_word.detector_address
+                        row[index] = "{: 6}".format(pha_word.adc_value)
                     else:
-                        index = pha_word.detector_address + 64
-                    row[index] = pha_word.adc_value
-                csv_file.writerow(["0x12345", 334455] + row)
-
-        print(events)
+                        index = pha_word.detector_address
+                        row[index + 64] = "{: 6}".format(pha_word.adc_value)
+                self.assertEqual(expected_row[2:], row)
 
     def test_preprocesses_raw_pha_event(self):
         event1 = self._create_raw_pha_event(
