@@ -47,6 +47,6 @@ class DataProduct(metaclass=abc.ABCMeta):
 
 
 @dataclass
-class MagL2Data:
+class MagL1dData:
     epoch: np.ndarray[float]
     mag_data: np.ndarray[float]

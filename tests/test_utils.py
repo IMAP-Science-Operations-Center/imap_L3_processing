@@ -1,5 +1,6 @@
 import os
 from datetime import datetime, date
+from pathlib import Path
 from unittest import TestCase
 from unittest.mock import patch, call
 
@@ -9,7 +10,7 @@ from spacepy.pycdf import CDF
 from imap_processing.constants import TEMP_CDF_FOLDER_PATH
 from imap_processing.models import UpstreamDataDependency
 from imap_processing.swapi.l3a.models import SwapiL3AlphaSolarWindData
-from imap_processing.utils import format_time, download_dependency, read_l2_mag_data, save_data
+from imap_processing.utils import format_time, download_dependency, read_l1d_mag_data, save_data
 
 
 class TestUtils(TestCase):
@@ -112,13 +113,16 @@ class TestUtils(TestCase):
                     f"{expected_files_to_download}. Expected one file to download, found {case}.",
                     str(cm.exception))
 
-    def test_read_l2_mag_data(self):
-        mag_cdf = CDF("test_cdf", "")
-        mag_cdf["epoch_mag_SC_1min"] = np.array([datetime(2010, 1, 1, 0, 0, 46)])
-        mag_cdf["psp_fld_l2_mag_SC_1min"] = np.array([[0, 1, 2], [3, 4, 5], [6, 7, 8]])
+    def test_read_l1d_mag_data(self):
+        file_name = "test_cdf.cdf"
+        vectors = np.array([[0, 1, 2], [3, 4, 5], [6, 7, 8]])
+        with CDF(file_name, "") as mag_cdf:
+            mag_cdf["epoch"] = np.array([datetime(2010, 1, 1, 0, 0, 46)])
+            mag_cdf["vectors"] = vectors
+        for path in [file_name, Path(file_name)]:
+            with self.subTest(path):
+                results = read_l1d_mag_data(path)
 
-        results = read_l2_mag_data(mag_cdf)
-
-        epoch_as_tt2000 = 315576112184000000
-        np.testing.assert_array_equal([epoch_as_tt2000], results.epoch)
-        np.testing.assert_array_equal(mag_cdf["psp_fld_l2_mag_SC_1min"], results.mag_data)
+                epoch_as_tt2000 = 315576112184000000
+                np.testing.assert_array_equal([epoch_as_tt2000], results.epoch)
+                np.testing.assert_array_equal(vectors, results.mag_data)
