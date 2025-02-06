@@ -2,7 +2,7 @@ import unittest
 from collections import defaultdict
 from unittest.mock import patch, call
 
-from imap_processing.hit.l3.pha.pha_event_processor import PHAWord, Detector
+from imap_processing.hit.l3.pha.pha_event_reader import PHAWord, Detector
 from imap_processing.hit.l3.pha.science.calculate_pha import EventAnalysis, analyze_event, calculate_mev
 from imap_processing.hit.l3.pha.science.cosine_correction_lookup_table import DetectedRange
 from imap_processing.hit.l3.pha.science.gain_lookup_table import DetectorGain, Gain

@@ -4,12 +4,12 @@ import unittest
 from bitstring import BitArray, BitStream
 from spacepy.pycdf import CDF
 
-from imap_processing.hit.l3.pha.pha_event_processor import PHAEventReader, RawPHAEvent, PHAWord, Detector
+from imap_processing.hit.l3.pha.pha_event_reader import PHAEventReader, RawPHAEvent, PHAWord, Detector
 from tests.hit.l3.hit_test_builders import create_raw_pha_event
 from tests.test_helpers import get_test_data_path
 
 
-class TestPHAEventProcessor(unittest.TestCase):
+class TestPHAEventReader(unittest.TestCase):
 
     def test_can_create_detector_from_address(self):
         address_to_expected_detector = [
