@@ -1,27 +1,49 @@
 import csv
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Literal
 
 from bitstring import BitStream
 
-from imap_processing.hit.l3.pha.science.cosine_correction_lookup_table import DetectedRange
+
+@dataclass
+class Detector:
+    layer: Literal[1, 2, 3, 4]
+    side: Literal["A", "B"]
+    segment: str
+    address: int
+
+    def __str__(self):
+        return "L" + str(self.layer) + self.side + self.segment
+
+    detector_mapping = {}
+
+    @classmethod
+    def from_address(cls, address: int):
+        if cls.detector_mapping == {}:
+            with open(Path(__file__).parent / "address_to_detector.csv") as detector_mapping_file:
+                reader = csv.reader(detector_mapping_file)
+                next(reader)
+                for name, address_str, _ in reader:
+                    cls.detector_mapping[int(address_str)] = name
+        detector_string = cls.detector_mapping.get(address)
+        if detector_string is not None:
+            layer = int(detector_string[1])
+            return cls(layer=layer,
+                       side=detector_string[2],
+                       segment=detector_string[3:],
+                       address=address)
+        else:
+            return cls(layer=4, side="A", segment=f"UNKNOWN_{address}", address=address)
 
 
 @dataclass
 class PHAWord:
     adc_overflow: bool
     adc_value: int
-    detector_address: int
+    detector: Detector
     is_high_gain: bool
     is_last_pha: bool
-
-
-@dataclass
-class PHAEvent:
-    detectors: list[str]
-    adc_values: list[float]
-    range: DetectedRange
 
 
 @dataclass
@@ -112,7 +134,8 @@ class PHAEventReader:
             adc_value = event_bitstream.read("uint:11")
             reading_pha = not is_last_event
 
-            pha_word = PHAWord(adc_overflow=adc_overflow, adc_value=adc_value, detector_address=adc_detector_address,
+            pha_word = PHAWord(adc_overflow=adc_overflow, adc_value=adc_value,
+                               detector=Detector.from_address(adc_detector_address),
                                is_last_pha=is_last_event,
                                is_high_gain=is_high_gain)
             pha_words.append(pha_word)
@@ -137,45 +160,12 @@ class PHAEventReader:
                            )
 
     @classmethod
-    def preprocess(cls, raw_pha_events: [RawPHAEvent]):
-        detector_mapping = {}
-        with open(Path(__file__).parent / "address_to_detector.csv") as detector_mapping_file:
-            reader = csv.reader(detector_mapping_file)
-            next(reader)
-            for name, address, _ in reader:
-                detector_mapping[int(address)] = name
-
-        pha_events = []
-        for pha_event in raw_pha_events:
-            detectors = []
-            adc_values = []
-            for word in pha_event.pha_words:
-                detectors.append(detector_mapping[word.detector_address])
-                adc_values.append(word.adc_value)
-
-            detector_levels = set([d[:2] for d in detectors])
-            detected_range = None
-            if set(detector_levels) == {"L1", "L2"}:
-                detected_range = DetectedRange.R2
-            elif set(detector_levels) == {"L1", "L2", "L3"}:
-                detected_range = DetectedRange.R3
-            elif set(detector_levels) == {"L1", "L2", "L3", "L3"}:
-                detected_range = DetectedRange.R4
-
-            pha_events.append(PHAEvent(range=detected_range, detectors=detectors, adc_values=adc_values))
-
-        return pha_events
-
-    @classmethod
     def read_all_pha_events(cls, binary_pha_events: str) -> list[RawPHAEvent]:
         bitstream = BitStream("0b" + binary_pha_events)
-        _ = bitstream.read("uint:16")
+        _event_buffer_header = bitstream.read("uint:16")
 
         events = []
         while (bitstream.len - bitstream.pos >= 48) and bitstream.peek("uint:48") != 0:
-            try:
-                events.append(cls.read_pha_event(bitstream))
-            except Exception as e:
-                print("failed to read event")
+            events.append(cls.read_pha_event(bitstream))
 
         return events
