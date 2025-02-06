@@ -16,7 +16,7 @@ class EventAnalysis:
 
 
 def calculate_mev(word: PHAWord, gain_lookup_table: GainLookupTable) -> float:
-    gain_level = DetectorGain.HIGH if word.is_high_gain else DetectorGain.LOW
+    gain_level = DetectorGain.LOW if word.is_low_gain else DetectorGain.HIGH
     gain_coeffs = gain_lookup_table[gain_level][word.detector.address]
     return word.adc_value * gain_coeffs.a + gain_coeffs.b
 

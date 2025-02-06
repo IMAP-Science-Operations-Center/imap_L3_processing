@@ -42,7 +42,7 @@ class PHAWord:
     adc_overflow: bool
     adc_value: int
     detector: Detector
-    is_high_gain: bool
+    is_low_gain: bool
     is_last_pha: bool
 
 
@@ -128,7 +128,7 @@ class PHAEventReader:
         pha_words = []
         while reading_pha:
             is_last_event = event_bitstream.read("uint:1")
-            is_high_gain = event_bitstream.read("uint:1")
+            is_low_gain = event_bitstream.read("uint:1")
             adc_detector_address = event_bitstream.read("uint:6")
             adc_overflow = event_bitstream.read("uint:1")
             adc_value = event_bitstream.read("uint:11")
@@ -137,7 +137,7 @@ class PHAEventReader:
             pha_word = PHAWord(adc_overflow=adc_overflow, adc_value=adc_value,
                                detector=Detector.from_address(adc_detector_address),
                                is_last_pha=is_last_event,
-                               is_high_gain=is_high_gain)
+                               is_low_gain=is_low_gain)
             pha_words.append(pha_word)
 
         if len(pha_words) % 2 == 1:

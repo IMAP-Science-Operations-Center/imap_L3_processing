@@ -51,8 +51,8 @@ class TestPHAEventProcessor(unittest.TestCase):
         pha1_adc_overflow_binary = "0"
         pha1_adc_detector_address = 8
         pha1_detector_address_binary = "001000"
-        pha1_is_high_gain = False
-        pha1_is_high_gain_binary = "0"
+        pha1_is_low_gain = False
+        pha1_is_low_gain_binary = "0"
         pha1_is_last_event = False
         pha1_is_last_pha_event = "0"
 
@@ -62,8 +62,8 @@ class TestPHAEventProcessor(unittest.TestCase):
         pha2_adc_overflow_binary = "1"
         pha2_adc_detector_address = 31
         pha2_detector_address_binary = "011111"
-        pha2_is_high_gain = 0
-        pha2_is_high_gain_binary = "0"
+        pha2_is_low_gain = True
+        pha2_is_low_gain_binary = "1"
         pha2_is_last_event = True
         pha2_is_last_pha_event = "1"
 
@@ -71,10 +71,10 @@ class TestPHAEventProcessor(unittest.TestCase):
                                      time_tag_binary, a_b_side_binary, has_unread_adcs_binary, long_event_flag_binary,
                                      culling_flag_binary, spare_binary]
         pha1_data_parts = [pha1_adc_value_binary, pha1_adc_overflow_binary, pha1_detector_address_binary,
-                           pha1_is_high_gain_binary,
+                           pha1_is_low_gain_binary,
                            pha1_is_last_pha_event]
         pha2_data_parts = [pha2_adc_value_binary, pha2_adc_overflow_binary, pha2_detector_address_binary,
-                           pha2_is_high_gain_binary,
+                           pha2_is_low_gain_binary,
                            pha2_is_last_pha_event]
 
         binary = "".join(event_record_header_parts[::-1]) + "".join(pha1_data_parts[::-1]) + "".join(
@@ -99,13 +99,13 @@ class TestPHAEventProcessor(unittest.TestCase):
         self.assertEqual(pha1_adc_value, event_data.pha_words[0].adc_value)
         self.assertEqual(pha1_adc_overflow, event_data.pha_words[0].adc_overflow)
         self.assertEqual(pha1_adc_detector_address, event_data.pha_words[0].detector.address)
-        self.assertEqual(pha1_is_high_gain, event_data.pha_words[0].is_high_gain)
+        self.assertEqual(pha1_is_low_gain, event_data.pha_words[0].is_low_gain)
         self.assertEqual(pha1_is_last_event, event_data.pha_words[0].is_last_pha)
 
         self.assertEqual(pha2_adc_value, event_data.pha_words[1].adc_value)
         self.assertEqual(pha2_adc_overflow, event_data.pha_words[1].adc_overflow)
         self.assertEqual(pha2_adc_detector_address, event_data.pha_words[1].detector.address)
-        self.assertEqual(pha2_is_high_gain, event_data.pha_words[1].is_high_gain)
+        self.assertEqual(pha2_is_low_gain, event_data.pha_words[1].is_low_gain)
         self.assertEqual(pha2_is_last_event, event_data.pha_words[1].is_last_pha)
 
     def test_reads_extended_header_section_when_long_event_flag_set(self):
@@ -210,7 +210,7 @@ class TestPHAEventProcessor(unittest.TestCase):
 
     def test_read_events_adds_extra_bits_for_odd_length_pha_words(self):
         event1 = create_raw_pha_event(pha_words=[
-            PHAWord(detector=Detector.from_address(14), adc_value=1000, adc_overflow=True, is_high_gain=True,
+            PHAWord(detector=Detector.from_address(14), adc_value=1000, adc_overflow=True, is_low_gain=True,
                     is_last_pha=True)])
 
         event2 = create_raw_pha_event()
@@ -248,12 +248,12 @@ class TestPHAEventProcessor(unittest.TestCase):
                 for pha_word in event.pha_words:
                     if pha_word.adc_overflow:
                         continue
-                    if not pha_word.is_high_gain:
+                    if not pha_word.is_low_gain:
                         index = pha_word.detector.address
                         row[index] = "{: 6}".format(pha_word.adc_value)
                     else:
-                        index = pha_word.detector.address
-                        row[index + 64] = "{: 6}".format(pha_word.adc_value)
+                        index = pha_word.detector.address + 64
+                        row[index] = "{: 6}".format(pha_word.adc_value)
                 self.assertEqual(expected_row[2:], row)
 
     def _create_pha_event_binary(self, pha_event: RawPHAEvent) -> str:
@@ -293,7 +293,7 @@ class TestPHAEventProcessor(unittest.TestCase):
         for word in pha_event.pha_words:
             binary_string += self._create_pha_data(adc_value=word.adc_value, adc_overflow=word.adc_overflow,
                                                    adc_detector_address=word.detector.address,
-                                                   is_high_gain=word.is_high_gain, is_last_event=word.is_last_pha)
+                                                   is_low_gain=word.is_low_gain, is_last_event=word.is_last_pha)
         if len(pha_event.pha_words) % 2 == 1:
             binary_string += "0000"
 
@@ -328,12 +328,12 @@ class TestPHAEventProcessor(unittest.TestCase):
                          adc_value=0,
                          adc_overflow=False,
                          adc_detector_address=0,
-                         is_high_gain=True,
+                         is_low_gain=True,
                          is_last_event=True,
                          ):
         bit_arrays = [
             BitArray(uint=int(is_last_event), length=1),
-            BitArray(uint=int(is_high_gain), length=1),
+            BitArray(uint=int(is_low_gain), length=1),
             BitArray(uint=adc_detector_address, length=6),
             BitArray(uint=adc_overflow, length=1),
             BitArray(uint=adc_value, length=11),

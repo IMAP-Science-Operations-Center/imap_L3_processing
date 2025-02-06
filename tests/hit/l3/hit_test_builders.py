@@ -6,9 +6,9 @@ def create_raw_pha_event(particle_id=0, priority_buffer_num=0, stim_tag=False, h
                          pha_words=None) -> RawPHAEvent:
     if pha_words is None:
         pha_words = [
-            PHAWord(adc_value=0, adc_overflow=False, detector=Detector.from_address(1), is_high_gain=True,
+            PHAWord(adc_value=0, adc_overflow=False, detector=Detector.from_address(1), is_low_gain=False,
                     is_last_pha=False),
-            PHAWord(adc_value=10, adc_overflow=False, detector=Detector.from_address(8), is_high_gain=False,
+            PHAWord(adc_value=10, adc_overflow=False, detector=Detector.from_address(8), is_low_gain=True,
                     is_last_pha=True)
         ]
 

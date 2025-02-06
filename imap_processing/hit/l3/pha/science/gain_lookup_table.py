@@ -12,8 +12,8 @@ class Gain:
 
 
 class DetectorGain(Enum):
-    LOW = 0
-    HIGH = 1
+    LOW = True
+    HIGH = False
 
 
 class GainLookupTable(dict):
@@ -35,5 +35,5 @@ class GainLookupTable(dict):
 
         lookup_table[DetectorGain.HIGH] = high_gain_lookup
         lookup_table[DetectorGain.LOW] = low_gain_lookup
-        
+
         return lookup_table

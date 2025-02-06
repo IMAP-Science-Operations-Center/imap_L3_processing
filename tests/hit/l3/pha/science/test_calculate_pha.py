@@ -26,12 +26,12 @@ class TestCalculatePHA(unittest.TestCase):
             DetectorGain.LOW: {10: Gain(a=low_gain_a_value, b=low_gain_b_value)},
             DetectorGain.HIGH: {22: Gain(a=high_gain_a_value, b=high_gain_b_value)},
         }
-        low_gain_word = PHAWord(adc_value=low_gain_adc_value, is_high_gain=False, detector=Detector.from_address(10),
+        low_gain_word = PHAWord(adc_value=low_gain_adc_value, is_low_gain=True, detector=Detector.from_address(10),
                                 is_last_pha=False, adc_overflow=False)
         mev = calculate_mev(low_gain_word, gain_lookup_table)
         self.assertEqual(low_gain_a_value * low_gain_adc_value + low_gain_b_value, mev)
 
-        low_gain_word = PHAWord(adc_value=high_gain_adc_value, is_high_gain=True, detector=Detector.from_address(22),
+        low_gain_word = PHAWord(adc_value=high_gain_adc_value, is_low_gain=False, detector=Detector.from_address(22),
                                 is_last_pha=False, adc_overflow=False)
         mev = calculate_mev(low_gain_word, gain_lookup_table)
         self.assertEqual(high_gain_a_value * high_gain_adc_value + high_gain_b_value, mev)
@@ -203,7 +203,7 @@ class TestCalculatePHA(unittest.TestCase):
 
     def _create_event_from_detectors(self, detectors: list[str]):
         detector_objects = [self._create_detector_from_string(d) for d in detectors]
-        pha_words = [PHAWord(adc_value=0, adc_overflow=False, detector=d, is_high_gain=True, is_last_pha=False) for d in
+        pha_words = [PHAWord(adc_value=0, adc_overflow=False, detector=d, is_low_gain=False, is_last_pha=False) for d in
                      detector_objects]
         raw_pha_event = create_raw_pha_event(pha_words=pha_words)
         return raw_pha_event
