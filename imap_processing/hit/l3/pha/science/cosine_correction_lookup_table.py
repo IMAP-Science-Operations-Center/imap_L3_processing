@@ -1,18 +1,14 @@
 import csv
-from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
+
+from imap_processing.hit.l3.pha.pha_event_reader import Detector
 
 
 class DetectedRange(Enum):
     R2 = 0
     R3 = 1
     R4 = 2
-
-
-@dataclass
-class Detector:
-    name: str
 
 
 class CosineCorrectionLookupTable:
@@ -34,10 +30,10 @@ class CosineCorrectionLookupTable:
 
                 for row_num, row in enumerate(detected_range_reader):
                     for col_num, value in enumerate(row):
-                        lookup_key = (self._l1_detector_order[col_num], self._l2_detector_order[row_num])
+                        lookup_key = (self._l1_detector_order[col_num][3:], self._l2_detector_order[row_num][3:])
                         lookup_table[lookup_key] = float(value)
 
-    def get_cosine_correction(self, range: DetectedRange, l1_detector: Detector, l2_detector: Detector):
+    def get_cosine_correction(self, range: DetectedRange, l1_detector: Detector, l2_detector: Detector) -> float:
         corrections_by_range = {DetectedRange.R2: self._range2_corrections, DetectedRange.R3: self._range3_corrections,
                                 DetectedRange.R4: self._range4_corrections}
-        return corrections_by_range[range][(l1_detector.name, l2_detector.name)]
+        return corrections_by_range[range][(l1_detector.segment, l2_detector.segment)]

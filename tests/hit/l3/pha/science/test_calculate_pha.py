@@ -1,9 +1,10 @@
 import unittest
 from collections import defaultdict
-from unittest.mock import patch, call
+from unittest.mock import patch, call, Mock, sentinel
 
 from imap_processing.hit.l3.pha.pha_event_reader import PHAWord, Detector
-from imap_processing.hit.l3.pha.science.calculate_pha import EventAnalysis, analyze_event, calculate_mev
+from imap_processing.hit.l3.pha.science.calculate_pha import EventAnalysis, analyze_event, calculate_mev, \
+    process_pha_event
 from imap_processing.hit.l3.pha.science.cosine_correction_lookup_table import DetectedRange
 from imap_processing.hit.l3.pha.science.gain_lookup_table import DetectorGain, Gain
 from tests.hit.l3.hit_test_builders import create_raw_pha_event
@@ -193,6 +194,48 @@ class TestCalculatePHA(unittest.TestCase):
         self.assertEqual(l2_higher_energy_word.detector, event_analysis.l2_detector)
         self.assertEqual(l3a_high_energy_word, event_analysis.e_delta_word)
         self.assertEqual(l3b_high_energy_word, event_analysis.e_prime_word)
+
+    @patch("imap_processing.hit.l3.pha.science.calculate_pha.analyze_event")
+    def test_process_pha_event(self, mock_analyze_event):
+        pha_word1_adc_value = 53
+        pha_word2_adc_value = 92
+
+        raw_pha_event = create_raw_pha_event(pha_words=[
+            PHAWord(detector=Detector.from_address(12), adc_value=pha_word1_adc_value, adc_overflow=False,
+                    is_low_gain=True, is_last_pha=False),
+            PHAWord(detector=Detector.from_address(28), adc_value=pha_word2_adc_value, adc_overflow=False,
+                    is_low_gain=False, is_last_pha=False)
+        ])
+
+        word1_gain = Gain(a=10.76, b=14.3)
+        word2_gain = Gain(a=25.89, b=11.2)
+
+        mock_analyze_event.return_value = EventAnalysis(range=sentinel.detected_range, l1_detector=sentinel.l1_detector,
+                                                        l2_detector=sentinel.l2_detector,
+                                                        e_delta_word=sentinel.e_delta_word,
+                                                        e_prime_word=sentinel.e_prime_word)
+
+        gain_lookup_table = {
+            DetectorGain.HIGH: {28: word2_gain},
+            DetectorGain.LOW: {12: word1_gain}
+        }
+
+        cosine_correction = 12.2
+
+        mock_cosine_correction_table = Mock()
+        mock_cosine_correction_table.get_cosine_correction.return_value = cosine_correction
+
+        energies = process_pha_event(raw_pha_event, mock_cosine_correction_table, gain_lookup_table)
+
+        mock_analyze_event.assert_called_once_with(raw_pha_event, gain_lookup_table)
+
+        mock_cosine_correction_table.get_cosine_correction.assert_called_once_with(sentinel.detected_range,
+                                                                                   sentinel.l1_detector,
+                                                                                   sentinel.l2_detector)
+
+        expected_energy1 = cosine_correction * (word1_gain.a * pha_word1_adc_value + word1_gain.b)
+        expected_energy2 = cosine_correction * (word2_gain.a * pha_word2_adc_value + word2_gain.b)
+        self.assertEqual([expected_energy1, expected_energy2], energies)
 
     def _create_detector_from_string(self, detector_string: str):
         layer = int(detector_string[1])

@@ -16,8 +16,8 @@ class TestCosineCorrectionLookupTable(unittest.TestCase):
         self.assertEqual(150, len(lookup_table._range3_corrections))
         self.assertEqual(150, len(lookup_table._range4_corrections))
 
-        L1A0b_detector = Detector(name="L1A0b")
-        L2A0_detector = Detector(name="L2A0")
+        L1A0b_detector = Detector(layer=1, side="A", segment="0b", address=1234)
+        L2A0_detector = Detector(layer=2, side="A", segment="0", address=5678)
 
         self.assertEqual(0.978643, lookup_table.get_cosine_correction(DetectedRange.R2, L1A0b_detector, L2A0_detector))
         self.assertEqual(0.674600, lookup_table.get_cosine_correction(DetectedRange.R3, L1A0b_detector, L2A0_detector))

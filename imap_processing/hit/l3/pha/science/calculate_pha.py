@@ -2,7 +2,8 @@ from dataclasses import dataclass
 from typing import Optional
 
 from imap_processing.hit.l3.pha.pha_event_reader import PHAWord, RawPHAEvent
-from imap_processing.hit.l3.pha.science.cosine_correction_lookup_table import DetectedRange, Detector
+from imap_processing.hit.l3.pha.science.cosine_correction_lookup_table import DetectedRange, Detector, \
+    CosineCorrectionLookupTable
 from imap_processing.hit.l3.pha.science.gain_lookup_table import GainLookupTable, DetectorGain
 
 
@@ -74,3 +75,12 @@ def analyze_event(event: RawPHAEvent, gain_lookup: GainLookupTable) -> Optional[
                          l2_detector=l2_detector,
                          e_delta_word=e_delta_word,
                          e_prime_word=e_prime_word)
+
+
+def process_pha_event(event: RawPHAEvent, cosine_table: CosineCorrectionLookupTable, gain_table: GainLookupTable) -> \
+        list[float]:
+    event_analysis = analyze_event(event, gain_table)
+    correction = cosine_table.get_cosine_correction(event_analysis.range, event_analysis.l1_detector,
+                                                    event_analysis.l2_detector)
+    energies = [correction * calculate_mev(word, gain_table) for word in event.pha_words]
+    return energies
