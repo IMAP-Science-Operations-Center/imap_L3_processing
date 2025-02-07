@@ -226,7 +226,7 @@ class TestPHAEventReader(unittest.TestCase):
         self.assertEqual(event1, events[0])
         self.assertEqual(event2, events[1])
 
-    def test_reads_sdc_pha_events(self):
+    def test_reads_pha_events_from_cdf(self):
         cdf = CDF(str(get_test_data_path("hit/pha_events/imap_hit_l1a_pulse-height-events_20100105_v003.cdf")))
 
         event_total = 0

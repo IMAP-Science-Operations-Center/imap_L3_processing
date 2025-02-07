@@ -2,12 +2,18 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+from bitstring import BitStream
 from spacepy.pycdf import CDF
 
 from imap_processing.glows.descriptors import GLOWS_L2_DESCRIPTOR
 from imap_processing.glows.glows_processor import GlowsProcessor
 from imap_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
 from imap_processing.glows.l3a.utils import read_l2_glows_data
+from imap_processing.hit.l3.pha.pha_event_reader import PHAEventReader
+from imap_processing.hit.l3.pha.science.calculate_pha import process_pha_event
+from imap_processing.hit.l3.pha.science.cosine_correction_lookup_table import CosineCorrectionLookupTable
+from imap_processing.hit.l3.pha.science.gain_lookup_table import GainLookupTable
+from imap_processing.hit.l3.pha.science.range_fit_lookup import RangeFitLookup
 from imap_processing.models import InputMetadata, UpstreamDataDependency
 from imap_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density import \
     AlphaTemperatureDensityCalibrationTable
@@ -24,6 +30,7 @@ from imap_processing.swapi.l3b.science.instrument_response_lookup_table import I
 from imap_processing.swapi.l3b.swapi_l3b_dependencies import SwapiL3BDependencies
 from imap_processing.swapi.swapi_processor import SwapiProcessor
 from imap_processing.utils import save_data
+from tests.test_helpers import get_test_data_path
 
 
 def create_glows_l3a_cdf(dependencies: GlowsL3ADependencies):
@@ -108,6 +115,28 @@ def create_swapi_l3a_cdf(proton_temperature_density_calibration_file, alpha_temp
     return proton_cdf_path, alpha_cdf_path, pui_he_cdf_path
 
 
+def process_hit_pha():
+    bitstream = BitStream(filename=get_test_data_path("hit/pha_events/full_event_record_buffer.bin"))
+    events = PHAEventReader.read_all_pha_events(bitstream.bin)
+
+    cosine_table = CosineCorrectionLookupTable(
+        get_test_data_path("hit/pha_events/imap_hit_l3_r2-cosines-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_r3-cosines-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_r4-cosines-text-not-cdf_20250203_v001.cdf"),
+    )
+    gain_table = GainLookupTable.from_file(
+        get_test_data_path("hit/pha_events/imap_hit_l3_high-gains-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_low-gains-text-not-cdf_20250203_v001.cdf"))
+
+    range_fit_lookup = RangeFitLookup.from_files(
+        get_test_data_path("hit/pha_events/imap_hit_l3_range2-fit-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_range3-fit-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_range4-fit-text-not-cdf_20250203_v001.cdf"),
+    )
+    processed_events = [process_pha_event(e, cosine_table, gain_table, range_fit_lookup) for e in events]
+    print(processed_events)
+
+
 if __name__ == "__main__":
     if "swapi" in sys.argv:
         if "l3a" in sys.argv:
@@ -144,3 +173,6 @@ if __name__ == "__main__":
 
         path = create_glows_l3a_cdf(dependencies)
         print(path)
+
+    if "hit" in sys.argv:
+        process_hit_pha()

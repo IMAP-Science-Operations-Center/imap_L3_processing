@@ -111,17 +111,25 @@ def compute_charge(detected_range: DetectedRange, delta_e: float, e_prime: float
     return A * delta_e ** B
 
 
-def process_pha_event(event: RawPHAEvent, cosine_table: CosineCorrectionLookupTable, gain_table: GainLookupTable) -> \
+def process_pha_event(event: RawPHAEvent, cosine_table: CosineCorrectionLookupTable, gain_table: GainLookupTable,
+                      range_fit_lookup: RangeFitLookup) -> \
         EventOutput:
     event_analysis = analyze_event(event, gain_table)
     if event_analysis:
         correction = cosine_table.get_cosine_correction(event_analysis.range, event_analysis.l1_detector,
                                                         event_analysis.l2_detector)
-        energies = [correction * calculate_mev(word, gain_table) for word in event.pha_words]
-        total_energy = sum(
-            correction * calculate_mev(word, gain_table) for word in event_analysis.words_with_highest_energy)
 
-        return EventOutput(original_event=event, charge=None, total_energy=total_energy, energies=energies)
+        def calculate_corrected_energy(word):
+            return correction * calculate_mev(word, gain_table)
+
+        energies = [calculate_corrected_energy(word) for word in event.pha_words]
+        total_energy = sum(
+            calculate_corrected_energy(word) for word in event_analysis.words_with_highest_energy)
+        e_delta = calculate_corrected_energy(event_analysis.e_delta_word)
+        e_prime = calculate_corrected_energy(event_analysis.e_prime_word)
+        charge = compute_charge(event_analysis.range, e_delta, e_prime, range_fit_lookup)
+
+        return EventOutput(original_event=event, charge=charge, total_energy=total_energy, energies=energies)
     else:
         energies = [calculate_mev(word, gain_table) for word in event.pha_words]
         return EventOutput(original_event=event, charge=None, total_energy=None, energies=energies)

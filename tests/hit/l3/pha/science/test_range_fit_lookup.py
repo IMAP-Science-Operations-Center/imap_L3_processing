@@ -7,6 +7,7 @@ import numpy as np
 
 from imap_processing.hit.l3.pha.science.cosine_correction_lookup_table import DetectedRange
 from imap_processing.hit.l3.pha.science.range_fit_lookup import double_power_law, RangeFitLookup
+from tests.test_helpers import get_test_data_path
 
 
 class TestRangeFitLookup(unittest.TestCase):
@@ -55,3 +56,12 @@ class TestRangeFitLookup(unittest.TestCase):
             np.testing.assert_equal(charges, expected_charges)
             np.testing.assert_equal([double_power_law(e_prime, *charge1_parameters),
                                      double_power_law(e_prime, *charge2_parameters)], delta_e_loss)
+
+    def test_load_from_real_example_files(self):
+        range_fit_lookup = RangeFitLookup.from_files(
+            get_test_data_path("hit/pha_events/imap_hit_l3_range2-fit-text-not-cdf_20250203_v001.cdf"),
+            get_test_data_path("hit/pha_events/imap_hit_l3_range3-fit-text-not-cdf_20250203_v001.cdf"),
+            get_test_data_path("hit/pha_events/imap_hit_l3_range4-fit-text-not-cdf_20250203_v001.cdf"),
+        )
+
+        self.assertIsInstance(range_fit_lookup, RangeFitLookup)

@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from pathlib import Path
 
 import numpy as np
 from numpy import ndarray
@@ -17,10 +18,10 @@ class RangeFitLookup:
     range_4_table: ndarray
 
     @classmethod
-    def from_files(cls, range2_file: str, range3_file: str, range4_file: str):
-        return cls(np.loadtxt(range2_file, delimiter=','),
-                   np.loadtxt(range3_file, delimiter=','),
-                   np.loadtxt(range4_file, delimiter=','))
+    def from_files(cls, range2_file: str | Path, range3_file: str | Path, range4_file: str | Path):
+        return cls(np.loadtxt(range2_file, delimiter=',', usecols=range(6)),
+                   np.loadtxt(range3_file, delimiter=',', usecols=range(6)),
+                   np.loadtxt(range4_file, delimiter=',', usecols=range(6)))
 
     def evaluate_e_prime(self, range: DetectedRange, energy):
         tables = {DetectedRange.R2: self.range_2_table,
