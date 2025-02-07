@@ -61,33 +61,57 @@ class TestSectoredProductsAlgorithms(TestCase):
         np.testing.assert_array_equal(gyrophases, expected_gyrophases)
 
     def test_rebin_by_pitch_angle_and_gyrophase(self):
-        mag_basis = np.array([
-            [1, 0, 0],
-            [0, -1, 0],
-            [0, 0, -1]
-        ])
-
         flux_data_for_energy_1 = np.arange(0, 2 * 4).reshape((2, 4))
         flux_data_for_energy_2 = np.arange(2 * 4, 2 * 2 * 4).reshape((2, 4))
         fluxes = np.array([
             flux_data_for_energy_1,
             flux_data_for_energy_2
         ])
+        sector_areas = np.full((2, 4), np.pi / 2)
 
         """
         [[0, 1, 2, 3], [4, 5, 6, 7],
         [8, 9, 10, 11], [12, 13, 14, 15]]
         """
 
-        rebinned_fluxes = rebin_by_pitch_angle_and_gyrophase(mag_basis, fluxes)
+        pitch_angles = np.array([[45, 45, 45, 45], [135, 135, 135, 135]])
+        gyrophases = np.array([[45, 135, 225, 315], [45, 135, 225, 315]])
 
-        self.assertEqual(fluxes.shape, rebinned_fluxes.shape)
+        fluxes_rebinned_to_one_bin = rebin_by_pitch_angle_and_gyrophase(fluxes, pitch_angles, gyrophases, sector_areas,
+                                                                        1, 1)
+        np.testing.assert_equal(fluxes_rebinned_to_one_bin, [[[3.5]], [[11.5]]])
+        fluxes_rebinned_to_same_bins = rebin_by_pitch_angle_and_gyrophase(fluxes, pitch_angles, gyrophases,
+                                                                          sector_areas, 2, 4)
+        np.testing.assert_array_almost_equal(fluxes_rebinned_to_same_bins, fluxes)
 
-        expected_rebinned_flux_data_for_energy_1 = np.array([[3, 2, 1, 0], [7, 6, 5, 4]])
-        expected_rebinned_flux_data_for_energy_2 = np.array([[11, 10, 9, 8], [15, 14, 13, 12]])
-        expected_rebinned_fluxes = np.array([
-            expected_rebinned_flux_data_for_energy_1,
-            expected_rebinned_flux_data_for_energy_2
-        ])
+        fluxes_with_gyrophase_rotated_by_90 = rebin_by_pitch_angle_and_gyrophase(fluxes, pitch_angles,
+                                                                                 (gyrophases + 90) % 360,
+                                                                                 sector_areas,
+                                                                                 2, 4)
+        np.testing.assert_array_almost_equal([[3, 0, 1, 2], [7, 4, 5, 6]], fluxes_with_gyrophase_rotated_by_90[0])
+        np.testing.assert_array_almost_equal([[11, 8, 9, 10], [15, 12, 13, 14]], fluxes_with_gyrophase_rotated_by_90[1])
 
-        np.testing.assert_array_almost_equal(expected_rebinned_fluxes, rebinned_fluxes)
+        fluxes_rebinned_with_different_areas = rebin_by_pitch_angle_and_gyrophase(fluxes, pitch_angles, gyrophases,
+                                                                                  [[1, 1, 1, 1], [3, 3, 3, 3]], 1, 4)
+        np.testing.assert_array_almost_equal(fluxes_rebinned_with_different_areas, [[[3, 4, 5, 6]], [[11, 12, 13, 14]]])
+
+        rebinned_includes_empty_bins = rebin_by_pitch_angle_and_gyrophase(fluxes, pitch_angles,
+                                                                          gyrophases,
+                                                                          sector_areas,
+                                                                          2, 6)
+        np.testing.assert_array_almost_equal(rebinned_includes_empty_bins[0],
+                                             [[0, np.nan, 1, 2, np.nan, 3], [4, np.nan, 5, 6, np.nan, 7]])
+
+        np.testing.assert_array_almost_equal(rebinned_includes_empty_bins[1],
+                                             [[8, np.nan, 9, 10, np.nan, 11], [12, np.nan, 13, 14, np.nan, 15]])
+
+        pitch_angles = np.array([[45, 45, 135, 135], [45, 45, 135, 135]])
+        gyrophases = np.array([[135, 225, 225, 135], [45, 315, 315, 45]])
+
+        rebinned_with_varying_pitch_angles = rebin_by_pitch_angle_and_gyrophase(fluxes, pitch_angles,
+                                                                                gyrophases,
+                                                                                sector_areas,
+                                                                                2, 4)
+
+        np.testing.assert_array_almost_equal(rebinned_with_varying_pitch_angles[0],
+                                             [[4, 0, 1, 5], [7, 3, 2, 6]])

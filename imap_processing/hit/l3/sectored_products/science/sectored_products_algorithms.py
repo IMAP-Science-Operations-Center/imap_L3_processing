@@ -44,19 +44,21 @@ def calculate_gyrophase(particle_vectors: np.ndarray, magnetic_field_vector: np.
     return np.mod(np.degrees(gyrophases), 360)
 
 
-def rebin_by_pitch_angle_and_gyrophase(mag_coordinate_system: np.ndarray, flux_data: np.ndarray):
-    pitch_angle_bins = get_sector_unit_vectors()
-    flattened_pitch_angle_vectors = pitch_angle_bins.reshape(-1, pitch_angle_bins.shape[-1])
-    output_fluxes = []
-    input_sector_vectors = np.dot(mag_coordinate_system, flattened_pitch_angle_vectors.T).T
+def rebin_by_pitch_angle_and_gyrophase(flux_data: np.array, pitch_angles: np.array, gyrophases: np.array,
+                                       sector_areas: np.array,
+                                       number_of_pitch_angle_bins: int, number_of_gyrophase_bins: int):
+    pitch_angle_bins = np.floor(pitch_angles / (180 / number_of_pitch_angle_bins)).astype(int)
+    gyrophase_bins = np.floor(gyrophases / (360 / number_of_gyrophase_bins)).astype(int)
 
-    flux_for_first_energy = flux_data[0]
-    flattened_flux_for_first_energy = flux_for_first_energy.reshape(-1, flux_for_first_energy.shape[-1])
-    for i, pitch_patch in enumerate(pitch_angle_bins):
-        for input_patch in input_sector_vectors:
-            vector_equality_mask = pitch_patch == input_patch)
-            if np.all(vector_equality_mask):
-                output_fluxes.append(flattened_flux_for_first_energy[i])
+    output_shape = (flux_data.shape[0], number_of_pitch_angle_bins, number_of_gyrophase_bins)
+    rebinned_summed = np.zeros(shape=output_shape)
+    rebinned_acc = np.zeros(shape=output_shape)
 
-    output_array = np.array(output_fluxes).reshape(8, 15)
-    return output_array
+    for i, flux_data in enumerate(flux_data):
+        for pitch_angle_bin, gyrophase_bin, sector_area, flux in zip(np.ravel(pitch_angle_bins),
+                                                                     np.ravel(gyrophase_bins), np.ravel(sector_areas),
+                                                                     np.ravel(flux_data)):
+            rebinned_summed[i, pitch_angle_bin, gyrophase_bin] += sector_area * flux
+            rebinned_acc[i, pitch_angle_bin, gyrophase_bin] += sector_area
+    return np.divide(rebinned_summed, rebinned_acc, out=np.full_like(rebinned_summed, np.nan),
+                     where=rebinned_acc != 0)
