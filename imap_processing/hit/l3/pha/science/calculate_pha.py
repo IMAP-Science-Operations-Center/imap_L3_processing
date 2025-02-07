@@ -14,6 +14,15 @@ class EventAnalysis:
     l2_detector: Detector
     e_delta_word: PHAWord
     e_prime_word: PHAWord
+    words_with_highest_energy: list[PHAWord]
+
+
+@dataclass
+class EventOutput:
+    original_event: RawPHAEvent
+    total_energy: Optional[float]
+    charge: Optional[float]
+    energies: list[float]
 
 
 def calculate_mev(word: PHAWord, gain_lookup_table: GainLookupTable) -> float:
@@ -39,6 +48,7 @@ def analyze_event(event: RawPHAEvent, gain_lookup: GainLookupTable) -> Optional[
         return None
     l2_word = max((word for word in matching_l2), key=calculate_mev_with_bound_lookup)
     l2_detector = l2_word.detector
+    words_with_highest_energy = [l1_word, l2_word]
 
     l3_sides = {word.detector.side for word in event.pha_words if word.detector.layer == 3}
     if l3_sides == set():
@@ -52,6 +62,7 @@ def analyze_event(event: RawPHAEvent, gain_lookup: GainLookupTable) -> Optional[
         e_delta_word = l2_word
         e_prime_word = max((word for word in event.pha_words if word.detector.layer == 3),
                            key=calculate_mev_with_bound_lookup)
+        words_with_highest_energy.append(e_prime_word)
     elif len(l3_sides) == 2:
         detected_range = DetectedRange.R4
 
@@ -61,26 +72,35 @@ def analyze_event(event: RawPHAEvent, gain_lookup: GainLookupTable) -> Optional[
         e_prime_word = max(
             (word for word in event.pha_words if word.detector.layer == 3 and word.detector.side != l1_detector.side),
             key=calculate_mev_with_bound_lookup)
+        words_with_highest_energy.append(e_delta_word)
+        words_with_highest_energy.append(e_prime_word)
     else:
         return None
 
-    l2_on_other_side = len([word for word in event.pha_words if
-                            word.detector.layer == 2 and word.detector.side != l1_detector.side]) > 0
+    l2_on_other_side = max(
+        (word for word in event.pha_words if word.detector.layer == 2 and word.detector.side != l1_detector.side),
+        key=calculate_mev_with_bound_lookup, default=None)
 
-    if detected_range in [DetectedRange.R2, DetectedRange.R3] and l2_on_other_side:
+    if detected_range in [DetectedRange.R2, DetectedRange.R3] and l2_on_other_side is not None:
         return None
+    elif l2_on_other_side is not None:
+        words_with_highest_energy.append(l2_on_other_side)
 
     return EventAnalysis(range=detected_range,
                          l1_detector=l1_detector,
                          l2_detector=l2_detector,
                          e_delta_word=e_delta_word,
-                         e_prime_word=e_prime_word)
+                         e_prime_word=e_prime_word,
+                         words_with_highest_energy=words_with_highest_energy)
 
 
 def process_pha_event(event: RawPHAEvent, cosine_table: CosineCorrectionLookupTable, gain_table: GainLookupTable) -> \
-        list[float]:
+        EventOutput:
     event_analysis = analyze_event(event, gain_table)
     correction = cosine_table.get_cosine_correction(event_analysis.range, event_analysis.l1_detector,
                                                     event_analysis.l2_detector)
     energies = [correction * calculate_mev(word, gain_table) for word in event.pha_words]
-    return energies
+    total_energy = sum(
+        correction * calculate_mev(word, gain_table) for word in event_analysis.words_with_highest_energy)
+
+    return EventOutput(original_event=event, charge=None, total_energy=total_energy, energies=energies)

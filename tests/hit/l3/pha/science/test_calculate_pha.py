@@ -4,7 +4,7 @@ from unittest.mock import patch, call, Mock, sentinel
 
 from imap_processing.hit.l3.pha.pha_event_reader import PHAWord, Detector
 from imap_processing.hit.l3.pha.science.calculate_pha import EventAnalysis, analyze_event, calculate_mev, \
-    process_pha_event
+    process_pha_event, EventOutput
 from imap_processing.hit.l3.pha.science.cosine_correction_lookup_table import DetectedRange
 from imap_processing.hit.l3.pha.science.gain_lookup_table import DetectorGain, Gain
 from tests.hit.l3.hit_test_builders import create_raw_pha_event
@@ -46,7 +46,8 @@ class TestCalculatePHA(unittest.TestCase):
                                                 l1_detector=event.pha_words[0].detector,
                                                 l2_detector=event.pha_words[1].detector,
                                                 e_delta_word=event.pha_words[0],
-                                                e_prime_word=event.pha_words[1])
+                                                e_prime_word=event.pha_words[1],
+                                                words_with_highest_energy=event.pha_words)
         self.assertEqual(expected_event_analysis, event_analysis)
 
         raw_pha_event_flipped = self._create_event_from_detectors(["L2A2", "L1A1c"])
@@ -59,7 +60,8 @@ class TestCalculatePHA(unittest.TestCase):
                                                 l1_detector=l1_word.detector,
                                                 l2_detector=l2_word.detector,
                                                 e_delta_word=l3a_word,
-                                                e_prime_word=l3b_word
+                                                e_prime_word=l3b_word,
+                                                words_with_highest_energy=event.pha_words,
                                                 )
         self.assertEqual(expected_event_analysis, analyze_event(event, self.gain_lookup))
 
@@ -73,7 +75,8 @@ class TestCalculatePHA(unittest.TestCase):
                                                 l1_detector=l1_word.detector,
                                                 l2_detector=l2_word.detector,
                                                 e_delta_word=l3b_word,
-                                                e_prime_word=l3a_word
+                                                e_prime_word=l3a_word,
+                                                words_with_highest_energy=event.pha_words
                                                 )
         self.assertEqual(expected_event_analysis, analyze_event(event, self.gain_lookup))
 
@@ -87,7 +90,8 @@ class TestCalculatePHA(unittest.TestCase):
                                                 l1_detector=l1_word.detector,
                                                 l2_detector=l2_word.detector,
                                                 e_delta_word=l2_word,
-                                                e_prime_word=l3a_word
+                                                e_prime_word=l3a_word,
+                                                words_with_highest_energy=event.pha_words
                                                 )
         self.assertEqual(expected_event_analysis, analyze_event(event, self.gain_lookup))
 
@@ -133,6 +137,7 @@ class TestCalculatePHA(unittest.TestCase):
         self.assertEqual(l2_word.detector, event_analysis.l2_detector)
         self.assertEqual(l1_higher_energy_word, event_analysis.e_delta_word)
         self.assertEqual(l2_word, event_analysis.e_prime_word)
+        self.assertEqual([l1_higher_energy_word, l2_word], event_analysis.words_with_highest_energy)
 
     @patch("imap_processing.hit.l3.pha.science.calculate_pha.calculate_mev")
     def test_analyzes_event_range_3_uses_the_largest_energy_detector_for_each_layer(self, mock_calculate_mev):
@@ -155,6 +160,8 @@ class TestCalculatePHA(unittest.TestCase):
         self.assertEqual(l2_higher_energy_word.detector, event_analysis.l2_detector)
         self.assertEqual(l2_higher_energy_word, event_analysis.e_delta_word)
         self.assertEqual(l3_high_energy_word, event_analysis.e_prime_word)
+        self.assertEqual([l1_higher_energy_word, l2_higher_energy_word, l3_high_energy_word],
+                         event_analysis.words_with_highest_energy)
 
     @patch("imap_processing.hit.l3.pha.science.calculate_pha.calculate_mev")
     def test_analyzes_event_range_4_uses_the_largest_energy_detector_for_each_layer(self, mock_calculate_mev):
@@ -180,12 +187,21 @@ class TestCalculatePHA(unittest.TestCase):
         self.assertEqual(l2_higher_energy_word.detector, event_analysis.l2_detector)
         self.assertEqual(l3a_high_energy_word, event_analysis.e_delta_word)
         self.assertEqual(l3b_high_energy_word, event_analysis.e_prime_word)
+        self.assertEqual([l1_higher_energy_word, l2_higher_energy_word, l3a_high_energy_word, l3b_high_energy_word],
+                         event_analysis.words_with_highest_energy)
 
-    def test_analyzes_event_range_4_that_passes_through_both_l3_layers(self):
-        detectors = ["L1A3b", "L2A4", "L3Ao", "L3Bo", "L2B1"]
+    @patch("imap_processing.hit.l3.pha.science.calculate_pha.calculate_mev")
+    def test_analyzes_event_range_4_that_passes_through_both_l3_layers(self, mock_calculate_mev):
+        detectors = ["L1A3b", "L2A4", "L3Ao", "L3Bo", "L2B1", "L2B2"]
+
+        def calculate_mev_side_effect(word: PHAWord, _):
+            detector_to_energy = {"L2B1": 128, "L2B2": 0.001}
+            return detector_to_energy.get(str(word.detector)) or word.adc_value
+
+        mock_calculate_mev.side_effect = calculate_mev_side_effect
 
         event = self._create_event_from_detectors(detectors)
-        l1_higher_energy_word, l2_higher_energy_word, l3a_high_energy_word, l3b_high_energy_word, _ = event.pha_words
+        l1_higher_energy_word, l2_higher_energy_word, l3a_high_energy_word, l3b_high_energy_word, l2b_high_energy_word, _ = event.pha_words
 
         event_analysis = analyze_event(event, self.gain_lookup)
 
@@ -194,29 +210,40 @@ class TestCalculatePHA(unittest.TestCase):
         self.assertEqual(l2_higher_energy_word.detector, event_analysis.l2_detector)
         self.assertEqual(l3a_high_energy_word, event_analysis.e_delta_word)
         self.assertEqual(l3b_high_energy_word, event_analysis.e_prime_word)
+        self.assertEqual(
+            [l1_higher_energy_word, l2_higher_energy_word, l3a_high_energy_word, l3b_high_energy_word,
+             l2b_high_energy_word],
+            event_analysis.words_with_highest_energy)
 
     @patch("imap_processing.hit.l3.pha.science.calculate_pha.analyze_event")
     def test_process_pha_event(self, mock_analyze_event):
         pha_word1_adc_value = 53
         pha_word2_adc_value = 92
+        pha_word3_adc_value = 48
 
-        raw_pha_event = create_raw_pha_event(pha_words=[
-            PHAWord(detector=Detector.from_address(12), adc_value=pha_word1_adc_value, adc_overflow=False,
-                    is_low_gain=True, is_last_pha=False),
-            PHAWord(detector=Detector.from_address(28), adc_value=pha_word2_adc_value, adc_overflow=False,
-                    is_low_gain=False, is_last_pha=False)
-        ])
+        l1_word = PHAWord(detector=Detector.from_address(12), adc_value=pha_word1_adc_value, adc_overflow=False,
+                          is_low_gain=True, is_last_pha=False)
+        l2_high_energy_word = PHAWord(detector=Detector.from_address(28), adc_value=pha_word2_adc_value,
+                                      adc_overflow=False,
+                                      is_low_gain=False, is_last_pha=False)
+        l2_low_energy_word = PHAWord(detector=Detector.from_address(29), adc_value=pha_word3_adc_value,
+                                     adc_overflow=False,
+                                     is_low_gain=False, is_last_pha=False)
+
+        raw_pha_event = create_raw_pha_event(pha_words=[l1_word, l2_high_energy_word, l2_low_energy_word])
 
         word1_gain = Gain(a=10.76, b=14.3)
         word2_gain = Gain(a=25.89, b=11.2)
+        word3_gain = Gain(a=31.3, b=5.9)
 
         mock_analyze_event.return_value = EventAnalysis(range=sentinel.detected_range, l1_detector=sentinel.l1_detector,
                                                         l2_detector=sentinel.l2_detector,
                                                         e_delta_word=sentinel.e_delta_word,
-                                                        e_prime_word=sentinel.e_prime_word)
+                                                        e_prime_word=sentinel.e_prime_word,
+                                                        words_with_highest_energy=[l1_word, l2_high_energy_word])
 
         gain_lookup_table = {
-            DetectorGain.HIGH: {28: word2_gain},
+            DetectorGain.HIGH: {28: word2_gain, 29: word3_gain},
             DetectorGain.LOW: {12: word1_gain}
         }
 
@@ -225,7 +252,7 @@ class TestCalculatePHA(unittest.TestCase):
         mock_cosine_correction_table = Mock()
         mock_cosine_correction_table.get_cosine_correction.return_value = cosine_correction
 
-        energies = process_pha_event(raw_pha_event, mock_cosine_correction_table, gain_lookup_table)
+        event_output = process_pha_event(raw_pha_event, mock_cosine_correction_table, gain_lookup_table)
 
         mock_analyze_event.assert_called_once_with(raw_pha_event, gain_lookup_table)
 
@@ -233,9 +260,15 @@ class TestCalculatePHA(unittest.TestCase):
                                                                                    sentinel.l1_detector,
                                                                                    sentinel.l2_detector)
 
+        self.assertIsInstance(event_output, EventOutput)
+
         expected_energy1 = cosine_correction * (word1_gain.a * pha_word1_adc_value + word1_gain.b)
         expected_energy2 = cosine_correction * (word2_gain.a * pha_word2_adc_value + word2_gain.b)
-        self.assertEqual([expected_energy1, expected_energy2], energies)
+        expected_energy3 = cosine_correction * (word3_gain.a * pha_word3_adc_value + word3_gain.b)
+        self.assertEqual([expected_energy1, expected_energy2, expected_energy3], event_output.energies)
+
+        self.assertEqual(expected_energy1 + expected_energy2, event_output.total_energy)
+        self.assertEqual(raw_pha_event, event_output.original_event)
 
     def _create_detector_from_string(self, detector_string: str):
         layer = int(detector_string[1])
