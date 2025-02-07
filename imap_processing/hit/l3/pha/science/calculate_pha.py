@@ -1,10 +1,14 @@
 from dataclasses import dataclass
 from typing import Optional
 
+import numpy as np
+from numpy import clip
+
 from imap_processing.hit.l3.pha.pha_event_reader import PHAWord, RawPHAEvent
 from imap_processing.hit.l3.pha.science.cosine_correction_lookup_table import DetectedRange, Detector, \
     CosineCorrectionLookupTable
 from imap_processing.hit.l3.pha.science.gain_lookup_table import GainLookupTable, DetectorGain
+from imap_processing.hit.l3.pha.science.range_fit_lookup import RangeFitLookup
 
 
 @dataclass
@@ -92,6 +96,19 @@ def analyze_event(event: RawPHAEvent, gain_lookup: GainLookupTable) -> Optional[
                          e_delta_word=e_delta_word,
                          e_prime_word=e_prime_word,
                          words_with_highest_energy=words_with_highest_energy)
+
+
+def compute_charge(detected_range: DetectedRange, delta_e: float, e_prime: float,
+                   double_power_law_lookup: RangeFitLookup) -> float:
+    charges, deltas = double_power_law_lookup.evaluate_e_prime(detected_range, e_prime)
+    assert np.array_equal(deltas, np.sort(deltas)), "values are not increasing"
+    index_2 = clip(np.searchsorted(deltas, delta_e), 1, len(charges) - 1)
+    index_1 = index_2 - 1
+
+    B = np.log(charges[index_2] / charges[index_1]) / np.log(deltas[index_2] / deltas[index_1])
+    A = charges[index_1] / (deltas[index_1] ** B)
+
+    return A * delta_e ** B
 
 
 def process_pha_event(event: RawPHAEvent, cosine_table: CosineCorrectionLookupTable, gain_table: GainLookupTable) -> \

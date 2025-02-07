@@ -1,10 +1,11 @@
+import math
 import unittest
 from collections import defaultdict
 from unittest.mock import patch, call, Mock, sentinel
 
 from imap_processing.hit.l3.pha.pha_event_reader import PHAWord, Detector
 from imap_processing.hit.l3.pha.science.calculate_pha import EventAnalysis, analyze_event, calculate_mev, \
-    process_pha_event, EventOutput
+    process_pha_event, EventOutput, compute_charge
 from imap_processing.hit.l3.pha.science.cosine_correction_lookup_table import DetectedRange
 from imap_processing.hit.l3.pha.science.gain_lookup_table import DetectorGain, Gain
 from tests.hit.l3.hit_test_builders import create_raw_pha_event
@@ -291,6 +292,34 @@ class TestCalculatePHA(unittest.TestCase):
 
         self.assertEqual(expected_energy1 + expected_energy2, event_output.total_energy)
         self.assertEqual(raw_pha_event, event_output.original_event)
+
+    def test_compute_charge(self):
+        charges = [3, 4, 5, 6]
+        delta_e_losses = [1, 2, 20, 200]
+        cases = [
+            (15.0, 1, 2),
+            (2, 1, 2),
+            (2, 0, 1),
+            (1.1, 0, 1),
+            (0.2, 0, 1),
+            (300, 2, 3),
+        ]
+        for delta_e, index_1, index_2 in cases:
+            with self.subTest(delta_e):
+                mock_double_power_law_fit_params = Mock()
+                mock_double_power_law_fit_params.evaluate_e_prime.return_value = (charges, delta_e_losses)
+
+                charge = compute_charge(sentinel.detected_range, delta_e, sentinel.e_prime,
+                                        mock_double_power_law_fit_params)
+
+                mock_double_power_law_fit_params.evaluate_e_prime.assert_called_once_with(sentinel.detected_range,
+                                                                                          sentinel.e_prime)
+
+                B = math.log(charges[index_2] / charges[index_1]) / math.log(
+                    delta_e_losses[index_2] / delta_e_losses[index_1])
+                A = charges[index_1] / (delta_e_losses[index_1] ** B)
+
+                self.assertAlmostEqual(charge, A * delta_e ** B)
 
     def _create_detector_from_string(self, detector_string: str):
         layer = int(detector_string[1])
