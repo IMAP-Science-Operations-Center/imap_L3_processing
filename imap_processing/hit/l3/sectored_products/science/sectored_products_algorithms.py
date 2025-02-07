@@ -8,16 +8,17 @@ def get_hit_bin_polar_coordinates() -> tuple[np.ndarray, np.ndarray, np.ndarray,
     azimuth_starts, azimuth_step = np.linspace(0, 360, 15, endpoint=False, retstep=True)
     azimuth_delta = azimuth_step / 2
     azimuths = azimuth_starts + azimuth_delta
-    return np.deg2rad(declinations), np.deg2rad(azimuths), np.deg2rad(declination_delta), np.deg2rad(azimuth_delta)
+    return declinations, azimuths, declination_delta, azimuth_delta
 
 
-def get_sector_unit_vectors() -> np.ndarray:
-    declinations, azimuths, _, _ = get_hit_bin_polar_coordinates()
+def get_sector_unit_vectors(declinations_degrees: np.ndarray, inclinations_degrees: np.ndarray) -> np.ndarray:
+    declinations = np.deg2rad(declinations_degrees)
+    inclinations = np.deg2rad(inclinations_degrees)
     declinations = declinations[:, np.newaxis]
     z = np.cos(declinations)
     sin_dec = np.sin(declinations)
-    x = sin_dec * np.cos(azimuths)
-    y = sin_dec * np.sin(azimuths)
+    x = sin_dec * np.cos(inclinations)
+    y = sin_dec * np.sin(inclinations)
     stacked = np.stack(np.broadcast_arrays(x, y, z), axis=-1)
     return stacked
 
@@ -42,6 +43,17 @@ def calculate_gyrophase(particle_vectors: np.ndarray, magnetic_field_vector: np.
     gyrophases = np.atan2(particle_magnetic_field_y_component, particle_magnetic_field_x_component)
 
     return np.mod(np.degrees(gyrophases), 360)
+
+
+def calculate_sector_areas(declinations_degrees: np.ndarray, declination_deltas_degrees: np.ndarray,
+                           inclination_deltas_degrees: np.ndarray):
+    northernmost_angles = np.deg2rad(declinations_degrees) - np.deg2rad(declination_deltas_degrees)
+    southernmost_angles = np.deg2rad(declinations_degrees) + np.deg2rad(declination_deltas_degrees)
+
+    declination_term = (np.cos(northernmost_angles) - np.cos(southernmost_angles)).reshape((-1, 1))
+    inclination_term = (2 * np.deg2rad(inclination_deltas_degrees)).reshape((1, -1))
+
+    return declination_term * inclination_term
 
 
 def rebin_by_pitch_angle_and_gyrophase(flux_data: np.array, pitch_angles: np.array, gyrophases: np.array,

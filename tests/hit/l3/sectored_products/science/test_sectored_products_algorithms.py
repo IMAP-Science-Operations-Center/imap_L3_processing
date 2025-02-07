@@ -1,26 +1,27 @@
+import math
 from unittest import TestCase
 
 import numpy as np
 
 from imap_processing.hit.l3.sectored_products.science.sectored_products_algorithms import get_sector_unit_vectors, \
     calculate_pitch_angle, calculate_unit_vector, calculate_gyrophase, get_hit_bin_polar_coordinates, \
-    rebin_by_pitch_angle_and_gyrophase
+    rebin_by_pitch_angle_and_gyrophase, calculate_sector_areas
 
 
 class TestSectoredProductsAlgorithms(TestCase):
     def test_get_sector_unit_vectors(self):
-        sector_vectors = get_sector_unit_vectors()
-        self.assertEqual((8, 15, 3), sector_vectors.shape)
-        np.testing.assert_array_almost_equal([1.90827130e-01, 4.05615587e-02, 9.80785280e-01], sector_vectors[0][0])
-        np.testing.assert_array_almost_equal([1.90827130e-01, -4.05615587e-02, -9.80785280e-01], sector_vectors[-1][-1])
+        sector_vectors = get_sector_unit_vectors([0, 90], [0, 90])
+        self.assertEqual((2, 2, 3), sector_vectors.shape)
+        np.testing.assert_array_almost_equal([[0, 0, 1], [0, 0, 1]], sector_vectors[0])
+        np.testing.assert_array_almost_equal([[1, 0, 0], [0, 1, 0]], sector_vectors[1])
 
     def test_get_hit_bin_polar_coordinates(self):
         declinations, azimuths, declination_delta, azimuth_delta = get_hit_bin_polar_coordinates()
 
-        self.assertEqual(np.deg2rad(11.25), declination_delta)
-        self.assertEqual(np.deg2rad(12), azimuth_delta)
-        np.testing.assert_array_almost_equal(np.deg2rad(11.25 + np.arange(0, 8) * 22.5), declinations)
-        np.testing.assert_array_almost_equal(np.deg2rad(12 + np.arange(15) * 24), azimuths)
+        self.assertEqual(11.25, declination_delta)
+        self.assertEqual(12, azimuth_delta)
+        np.testing.assert_array_almost_equal(11.25 + np.arange(0, 8) * 22.5, declinations)
+        np.testing.assert_array_almost_equal(12 + np.arange(15) * 24, azimuths)
 
     def test_calculate_pitch_angle(self):
         hit_unit_vector = np.array([-0.09362045, 0.8466484, 0.5238528])
@@ -59,6 +60,22 @@ class TestSectoredProductsAlgorithms(TestCase):
         expected_gyrophases = [0, 90, 0, 180, 270, 0]
 
         np.testing.assert_array_equal(gyrophases, expected_gyrophases)
+
+    def test_calculate_sector_areas(self):
+        declinations = [45, 90 + 22.5, 90 + 45 + 22.5]
+        declination_deltas = [45, 22.5, 22.5]
+        inclinations = [45, 225]
+        inclination_deltas = [45, 135]
+
+        sector_areas = calculate_sector_areas(np.array(declinations), np.array(declination_deltas),
+                                              np.array(inclination_deltas))
+
+        np.testing.assert_array_almost_equal(
+            [[math.pi / 2, 3 * math.pi / 2],
+             [(np.sqrt(2) / 2) * (math.pi / 2), (np.sqrt(2) / 2) * (3 * math.pi / 2)],
+             [(1 - np.sqrt(2) / 2) * (math.pi / 2), (1 - np.sqrt(2) / 2) * (3 * math.pi / 2)],
+             ],
+            sector_areas)
 
     def test_rebin_by_pitch_angle_and_gyrophase(self):
         flux_data_for_energy_1 = np.arange(0, 2 * 4).reshape((2, 4))
