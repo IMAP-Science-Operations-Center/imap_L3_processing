@@ -216,6 +216,28 @@ class TestCalculatePHA(unittest.TestCase):
             event_analysis.words_with_highest_energy)
 
     @patch("imap_processing.hit.l3.pha.science.calculate_pha.analyze_event")
+    @patch("imap_processing.hit.l3.pha.science.calculate_pha.calculate_mev")
+    def test_process_event_for_event_with_invalid_detector_sequences(self, mock_calculate_mev, mock_analyze_event):
+        raw_pha_event = create_raw_pha_event(pha_words=[
+            PHAWord(detector=Detector.from_address(12), adc_value=10, adc_overflow=False,
+                    is_low_gain=True, is_last_pha=False),
+            PHAWord(detector=Detector.from_address(28), adc_value=20,
+                    adc_overflow=False,
+                    is_low_gain=False, is_last_pha=False)])
+
+        word1_mev = 101.3
+        word2_mev = 66.8
+
+        mock_calculate_mev.side_effect = [word1_mev, word2_mev]
+        mock_analyze_event.return_value = None
+
+        event_output = process_pha_event(raw_pha_event, Mock(), Mock())
+
+        expected_event_output = EventOutput(original_event=raw_pha_event, energies=[word1_mev, word2_mev], charge=None,
+                                            total_energy=None)
+        self.assertEqual(expected_event_output, event_output)
+
+    @patch("imap_processing.hit.l3.pha.science.calculate_pha.analyze_event")
     def test_process_pha_event(self, mock_analyze_event):
         pha_word1_adc_value = 53
         pha_word2_adc_value = 92

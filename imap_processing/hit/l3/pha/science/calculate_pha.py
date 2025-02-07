@@ -97,10 +97,14 @@ def analyze_event(event: RawPHAEvent, gain_lookup: GainLookupTable) -> Optional[
 def process_pha_event(event: RawPHAEvent, cosine_table: CosineCorrectionLookupTable, gain_table: GainLookupTable) -> \
         EventOutput:
     event_analysis = analyze_event(event, gain_table)
-    correction = cosine_table.get_cosine_correction(event_analysis.range, event_analysis.l1_detector,
-                                                    event_analysis.l2_detector)
-    energies = [correction * calculate_mev(word, gain_table) for word in event.pha_words]
-    total_energy = sum(
-        correction * calculate_mev(word, gain_table) for word in event_analysis.words_with_highest_energy)
+    if event_analysis:
+        correction = cosine_table.get_cosine_correction(event_analysis.range, event_analysis.l1_detector,
+                                                        event_analysis.l2_detector)
+        energies = [correction * calculate_mev(word, gain_table) for word in event.pha_words]
+        total_energy = sum(
+            correction * calculate_mev(word, gain_table) for word in event_analysis.words_with_highest_energy)
 
-    return EventOutput(original_event=event, charge=None, total_energy=total_energy, energies=energies)
+        return EventOutput(original_event=event, charge=None, total_energy=total_energy, energies=energies)
+    else:
+        energies = [calculate_mev(word, gain_table) for word in event.pha_words]
+        return EventOutput(original_event=event, charge=None, total_energy=None, energies=energies)
