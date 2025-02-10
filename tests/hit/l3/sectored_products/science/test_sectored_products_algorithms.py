@@ -1,14 +1,47 @@
 import math
+from datetime import datetime
 from unittest import TestCase
 
 import numpy as np
 
 from imap_processing.hit.l3.sectored_products.science.sectored_products_algorithms import get_sector_unit_vectors, \
     calculate_pitch_angle, calculate_unit_vector, calculate_gyrophase, get_hit_bin_polar_coordinates, \
-    rebin_by_pitch_angle_and_gyrophase, calculate_sector_areas
+    rebin_by_pitch_angle_and_gyrophase, calculate_sector_areas, calculate_average_mag_data
 
 
 class TestSectoredProductsAlgorithms(TestCase):
+
+    def test_calculate_average_mag_data(self):
+        hit_data_epoch = np.array([datetime(2020, 4, 4, 0, 5), datetime(2020, 4, 4, 0, 15)])
+        hit_data_delta = np.array([300000000000, 300000000000])
+        mag_data = np.array(
+            [[0.5, 0, 1], [0, 0.5, 1], [0, 0, 1], [0, 1, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1], [0, 1, 0], [1, 0, 0],
+             [1, 0, 0]])
+        mag_epoch = np.array([datetime(2020, 4, 3, 0, 23), datetime(2020, 4, 3, 0, 23, 30), datetime(2020, 4, 4, 0, 1),
+                              datetime(2020, 4, 4, 0, 3), datetime(2020, 4, 4, 0, 6),
+                              datetime(2020, 4, 4, 0, 9, 55), datetime(2020, 4, 4, 0, 12, 45),
+                              datetime(2020, 4, 4, 0, 13),
+                              datetime(2020, 4, 4, 0, 15), datetime(2020, 4, 4, 0, 17)])
+        expected_average = [[1 / 4, 1 / 2, 1 / 4], [1 / 2, 1 / 4, 1 / 4]]
+        actual_average = calculate_average_mag_data(mag_data=mag_data, mag_epoch=mag_epoch, hit_epoch=hit_data_epoch,
+                                                    hit_delta=hit_data_delta)
+        np.testing.assert_array_equal(actual_average, expected_average)
+
+    def test_calculate_average_mag_data_handles_missing_mag_data(self):
+        hit_data_epoch = np.array(
+            [datetime(2020, 4, 4, 0, 5), datetime(2020, 4, 4, 0, 15), datetime(2020, 4, 4, 0, 25)])
+        hit_data_delta = np.array([300000000000, 300000000000, 300000000000])
+        mag_data = np.array(
+            [[0, 0, 1], [0, 1, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1], [0, 1, 0], [1, 0, 0], [1, 0, 0]])
+        mag_epoch = np.array([datetime(2020, 4, 4, 0, 1), datetime(2020, 4, 4, 0, 3), datetime(2020, 4, 4, 0, 6),
+                              datetime(2020, 4, 4, 0, 9, 55), datetime(2020, 4, 4, 0, 12, 45),
+                              datetime(2020, 4, 4, 0, 13),
+                              datetime(2020, 4, 4, 0, 15), datetime(2020, 4, 4, 0, 17)])
+        expected_average = [[1 / 4, 1 / 2, 1 / 4], [1 / 2, 1 / 4, 1 / 4]]
+        actual_average = calculate_average_mag_data(mag_data=mag_data, mag_epoch=mag_epoch, hit_epoch=hit_data_epoch,
+                                                    hit_delta=hit_data_delta)
+        np.testing.assert_array_equal(actual_average, expected_average)
+
     def test_get_sector_unit_vectors(self):
         sector_vectors = get_sector_unit_vectors([0, 90], [0, 90])
         self.assertEqual((2, 2, 3), sector_vectors.shape)

@@ -1,4 +1,28 @@
+from datetime import timedelta
+
 import numpy as np
+
+
+def calculate_average_mag_data(mag_data: np.ndarray, mag_epoch: np.ndarray, hit_epoch: np.ndarray,
+                               hit_delta: np.ndarray) -> np.ndarray:
+    vector_sums = np.zeros(shape=(hit_epoch.shape[0], 3))
+    vector_counts = np.zeros_like(hit_epoch)
+
+    mag_data_iter = ((time, vec) for time, vec in zip(mag_epoch, mag_data))
+    current_epoch, current_vec = next(mag_data_iter)
+    for i, (time, delta) in enumerate(zip(hit_epoch, hit_delta)):
+        start_time = time - timedelta(microseconds=(delta / 1000))
+        end_time = time + timedelta(microseconds=(delta / 1000))
+
+        while current_epoch < start_time:
+            current_epoch, current_vec = next(mag_data_iter)
+
+        while current_epoch is not None and start_time <= current_epoch < end_time:
+            vector_sums[i] += current_vec
+            vector_counts[i] += 1
+            current_epoch, current_vec = next(mag_data_iter, (None, None))
+
+    return np.divide(vector_sums, np.reshape(vector_counts, (-1, 1)))
 
 
 def get_hit_bin_polar_coordinates() -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
