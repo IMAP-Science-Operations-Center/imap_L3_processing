@@ -4,5 +4,6 @@ test_data/*
 temp_cdf_data/*
 __pycache__
 venv
+.venv
 
 .DS_Store
