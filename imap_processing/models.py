@@ -50,3 +50,25 @@ class DataProduct(metaclass=abc.ABCMeta):
 class MagL1dData:
     epoch: np.ndarray[float]
     mag_data: np.ndarray[float]
+
+    def rebin_to(self, epoch: np.ndarray[float], epoch_delta: np.ndarray[float]) -> np.ndarray[float]:
+        vector_sums = np.zeros(shape=(epoch.shape[0], 3), dtype=float)
+        vector_counts = np.zeros_like(epoch, dtype=float)
+
+        mag_data_iter = ((time, vec) for time, vec in zip(self.epoch, self.mag_data))
+        current_epoch, current_vec = next(mag_data_iter)
+        for i, (time, delta) in enumerate(zip(epoch, epoch_delta)):
+            start_time = time - delta
+            end_time = time + delta
+
+            while current_epoch < start_time:
+                current_epoch, current_vec = next(mag_data_iter)
+
+            while current_epoch is not None and start_time <= current_epoch < end_time:
+                vector_sums[i] += current_vec
+                vector_counts[i] += 1
+                current_epoch, current_vec = next(mag_data_iter, (None, None))
+
+        vector_counts = np.reshape(vector_counts, (-1, 1))
+        return np.divide(vector_sums, vector_counts, out=np.full_like(vector_sums, fill_value=np.nan),
+                         where=vector_counts != 0)

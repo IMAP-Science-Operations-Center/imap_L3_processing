@@ -1,29 +1,4 @@
-from datetime import timedelta
-
 import numpy as np
-
-
-def calculate_average_mag_data(mag_data: np.ndarray, mag_epoch: np.ndarray, hit_epoch: np.ndarray,
-                               hit_delta: np.ndarray) -> np.ndarray:
-    vector_sums = np.zeros(shape=(hit_epoch.shape[0], 3), dtype=float)
-    vector_counts = np.zeros_like(hit_epoch, dtype=float)
-
-    mag_data_iter = ((time, vec) for time, vec in zip(mag_epoch, mag_data))
-    current_epoch, current_vec = next(mag_data_iter)
-    for i, (time, delta) in enumerate(zip(hit_epoch, hit_delta)):
-        start_time = time - delta
-        end_time = time + delta
-
-        while current_epoch < start_time:
-            current_epoch, current_vec = next(mag_data_iter)
-
-        while current_epoch is not None and start_time <= current_epoch < end_time:
-            vector_sums[i] += current_vec
-            vector_counts[i] += 1
-            current_epoch, current_vec = next(mag_data_iter, (None, None))
-
-    vector_counts = np.reshape(vector_counts, (-1, 1))
-    return np.divide(vector_sums, vector_counts, out=np.full_like(vector_sums, fill_value=np.nan), where=vector_counts != 0)
 
 
 def get_hit_bin_polar_coordinates() -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
@@ -55,7 +30,7 @@ def calculate_pitch_angle(x: np.ndarray[float], y: np.ndarray[float]) -> float:
 
 
 def calculate_unit_vector(vector: np.ndarray[float]) -> np.ndarray[float]:
-    return (vector.T / np.linalg.norm(vector, axis=-1)).T
+    return vector / np.linalg.norm(vector, axis=-1, keepdims=True)
 
 
 def calculate_gyrophase(particle_vectors: np.ndarray, magnetic_field_vector: np.ndarray):
