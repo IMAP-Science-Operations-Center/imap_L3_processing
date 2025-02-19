@@ -19,5 +19,5 @@ spiceypy==6.0.0
 uncertainties==3.2.2
 zipp==3.19.2
 sammi-cdf==0.1.2
-healpy==1.18
+healpy==1.18; sys_platform!='win32'
 bitstring==4.3.0
