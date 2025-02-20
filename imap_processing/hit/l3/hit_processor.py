@@ -1,7 +1,7 @@
 from imap_processing.hit.l3.hit_l3_sectored_dependencies import HITL3SectoredDependencies
 from imap_processing.hit.l3.sectored_products.science.sectored_products_algorithms import get_sector_unit_vectors, \
-    get_hit_bin_polar_coordinates, calculate_pitch_angle, calculate_gyrophase, rebin_by_pitch_angle_and_gyrophase, \
-    calculate_unit_vector, calculate_sector_areas
+    get_hit_bin_polar_coordinates, calculate_sector_areas, rebin_by_pitch_angle_and_gyrophase
+from imap_processing.pitch_angles import calculate_unit_vector, calculate_pitch_angle, calculate_gyrophase
 from imap_processing.processor import Processor
 
 

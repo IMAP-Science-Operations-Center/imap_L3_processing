@@ -23,28 +23,6 @@ def get_sector_unit_vectors(declinations_degrees: np.ndarray, inclinations_degre
     return stacked
 
 
-def calculate_pitch_angle(x: np.ndarray[float], y: np.ndarray[float]) -> float:
-    norm_x = calculate_unit_vector(x)
-    norm_y = calculate_unit_vector(y)
-    return np.degrees(np.acos(np.dot(norm_x, norm_y)))
-
-
-def calculate_unit_vector(vector: np.ndarray[float]) -> np.ndarray[float]:
-    return vector / np.linalg.norm(vector, axis=-1, keepdims=True)
-
-
-def calculate_gyrophase(particle_vectors: np.ndarray, magnetic_field_vector: np.ndarray):
-    magnetic_field_plus_z = magnetic_field_vector
-    imap_dps_plus_x = [1, 0, 0]
-    magnetic_field_plus_y = calculate_unit_vector(np.cross(magnetic_field_plus_z, imap_dps_plus_x))
-    magnetic_field_plus_x = calculate_unit_vector(np.cross(magnetic_field_plus_y, magnetic_field_plus_z))
-    particle_magnetic_field_x_component = np.dot(particle_vectors, magnetic_field_plus_x)
-    particle_magnetic_field_y_component = np.dot(particle_vectors, magnetic_field_plus_y)
-    gyrophases = np.atan2(particle_magnetic_field_y_component, particle_magnetic_field_x_component)
-
-    return np.mod(np.degrees(gyrophases), 360)
-
-
 def calculate_sector_areas(declinations_degrees: np.ndarray, declination_deltas_degrees: np.ndarray,
                            inclination_deltas_degrees: np.ndarray):
     northernmost_angles = np.deg2rad(declinations_degrees) - np.deg2rad(declination_deltas_degrees)
