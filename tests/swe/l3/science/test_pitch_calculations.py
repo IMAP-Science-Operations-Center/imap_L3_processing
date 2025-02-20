@@ -1,12 +1,14 @@
 import unittest
+from unittest.mock import Mock, patch
 
 import numpy as np
 
 from imap_processing.swe.l3.science.pitch_calculations import piece_wise_model, find_breakpoints, \
-    average_flux, calculate_velocity_in_dsp_frame_km_s, calculate_look_directions, rebin_by_pitch_angle
+    average_flux, calculate_velocity_in_dsp_frame_km_s, calculate_look_directions, rebin_by_pitch_angle, \
+    correct_and_rebin, calculate_energy_in_ev_from_velocity_in_km_per_second
 
 
-class TestCalculateSpacecraftPotential(unittest.TestCase):
+class TestPitchCalculations(unittest.TestCase):
     def test_average_flux(self):
         flux_data = np.array([
             [
@@ -199,6 +201,51 @@ class TestCalculateSpacecraftPotential(unittest.TestCase):
         energy_bins = np.geomspace(2, 5000, 24)
         result = rebin_by_pitch_angle(flux, pitch_angle, energy, pitch_angle_bins, energy_bins)
         self.assertEqual((24, 20), result.shape)
+
+    def test_calculate_energy(self):
+        velocities = np.array([
+            [400, 0, 0],
+            [0, -25000, 0],
+        ])
+        expected_energies = [0.45485041, 1776.7594]
+        result = calculate_energy_in_ev_from_velocity_in_km_per_second(velocities)
+        np.testing.assert_allclose(result, expected_energies, rtol=1e-7)
+
+    @patch('imap_processing.swe.l3.science.pitch_calculations.calculate_energy_in_ev_from_velocity_in_km_per_second')
+    @patch('imap_processing.swe.l3.science.pitch_calculations.rebin_by_pitch_angle')
+    @patch('imap_processing.swe.l3.science.pitch_calculations.calculate_pitch_angle')
+    @patch('imap_processing.swe.l3.science.pitch_calculations.calculate_velocity_in_sw_frame')
+    @patch('imap_processing.swe.l3.science.pitch_calculations.calculate_velocity_in_dsp_frame_km_s')
+    def test_correct_and_rebin(self, mock_calculate_dsp_velocity, mock_calculate_velocity_in_sw_frame,
+                               mock_calculate_pitch_angle, mock_rebin_by_pitch_angle, mock_calculate_energy):
+        flux_data = Mock()
+        corrected_energy = Mock()
+        inst_el = Mock()
+        inst_az = Mock()
+        mag_vector = Mock()
+        solar_wind_vector = Mock()
+        pitch_angle_bins = Mock()
+        energy_bins = Mock()
+        result = correct_and_rebin(
+            flux_or_psd=flux_data,
+            energy_bins_minus_potential=corrected_energy,
+            inst_el=inst_el, inst_az=inst_az,
+            mag_vector=mag_vector, solar_wind_vector=solar_wind_vector,
+            pitch_angle_bins=pitch_angle_bins,
+            output_energy_bins=energy_bins, )
+
+        mock_calculate_dsp_velocity.assert_called_once_with(corrected_energy, inst_el, inst_az)
+        mock_calculate_velocity_in_sw_frame.assert_called_once_with(
+            mock_calculate_dsp_velocity.return_value, solar_wind_vector)
+        mock_calculate_pitch_angle.assert_called_once_with(mock_calculate_velocity_in_sw_frame.return_value, mag_vector)
+        mock_calculate_energy.assert_called_with(mock_calculate_velocity_in_sw_frame.return_value)
+        mock_rebin_by_pitch_angle.assert_called_with(
+            flux_data, mock_calculate_pitch_angle.return_value,
+            mock_calculate_energy.return_value,
+            pitch_angle_bins,
+            energy_bins
+        )
+        self.assertEqual(mock_rebin_by_pitch_angle.return_value, result)
 
 
 if __name__ == '__main__':

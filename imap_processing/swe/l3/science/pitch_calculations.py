@@ -1,7 +1,12 @@
+from __future__ import annotations
+
+from typing import TypeVar
+
 import numpy as np
 from scipy.optimize import curve_fit
 
 from imap_processing.constants import ELECTRON_MASS_KG, PROTON_CHARGE_COULOMBS, METERS_PER_KILOMETER
+from imap_processing.pitch_angles import calculate_pitch_angle
 
 
 def piece_wise_model(x: np.ndarray, b0: float, b1: float,
@@ -61,7 +66,8 @@ def calculate_velocity_in_dsp_frame_km_s(energy: np.ndarray, inst_el: np.ndarray
     return particle_direction
 
 
-def rebin_by_pitch_angle(flux, pitch_angles, energies, pitch_angle_bins, energy_bins):
+def rebin_by_pitch_angle(flux, pitch_angles, energies, pitch_angle_bins, energy_bins) -> np.ndarray[
+    (E_BINS, PITCH_ANGLE_BINS)]:
     num_pitch_bins = len(pitch_angle_bins) - 1
     num_energy_bins = len(energy_bins)
 
@@ -92,9 +98,39 @@ def rebin_by_pitch_angle(flux, pitch_angles, energies, pitch_angle_bins, energy_
     return rebinned
 
 
-def calculate_velocity_in_sw_frame(velocity_in_despun_frame, solar_wind_velocity):
+def calculate_velocity_in_sw_frame(velocity_in_despun_frame: np.ndarray[(..., 3)],
+                                   solar_wind_velocity: np.ndarray[(3,)]) -> np.ndarray[(..., 3)]:
     return velocity_in_despun_frame - solar_wind_velocity
 
 
-def calculate_energy_in_ev_from_velocity_in_km_per_second(velocity):
-    pass
+def calculate_energy_in_ev_from_velocity_in_km_per_second(velocity: np.ndarray[(..., 3)]):
+    joule_to_ev = 1 / PROTON_CHARGE_COULOMBS
+
+    velocity_m_s = velocity * 1e3
+
+    speed_squared = np.sum(velocity_m_s ** 2, axis=-1)
+    energy_joules = 0.5 * ELECTRON_MASS_KG * speed_squared
+
+    return energy_joules * joule_to_ev
+
+
+E_BINS = TypeVar("E_BINS")
+SPIN_SECTORS = TypeVar("SPIN_SECTORS")
+CEMS = TypeVar("CEMS")
+PITCH_ANGLE_BINS = TypeVar("PITCH_ANGLE_BINS")
+
+
+def correct_and_rebin(flux_or_psd: np.ndarray[(E_BINS, SPIN_SECTORS, CEMS)],
+                      energy_bins_minus_potential: np.ndarray[(E_BINS,)],
+                      inst_el: np.ndarray[(CEMS,)],
+                      inst_az: np.ndarray[E_BINS, SPIN_SECTORS, CEMS],
+                      mag_vector: np.ndarray[(3,)],
+                      solar_wind_vector: np.ndarray[(3,)],
+                      pitch_angle_bins: np.ndarray[(PITCH_ANGLE_BINS + 1,)],
+                      output_energy_bins: np.ndarray[(E_BINS,)]) -> np.ndarray[(E_BINS, PITCH_ANGLE_BINS)]:
+    despun_velocity = calculate_velocity_in_dsp_frame_km_s(energy_bins_minus_potential, inst_el, inst_az)
+    velocity_in_sw_frame = calculate_velocity_in_sw_frame(despun_velocity, solar_wind_vector)
+    pitch_angle = calculate_pitch_angle(velocity_in_sw_frame, mag_vector)
+    energy_in_sw_frame = calculate_energy_in_ev_from_velocity_in_km_per_second(velocity_in_sw_frame)
+
+    return rebin_by_pitch_angle(flux_or_psd, pitch_angle, energy_in_sw_frame, pitch_angle_bins, output_energy_bins)
