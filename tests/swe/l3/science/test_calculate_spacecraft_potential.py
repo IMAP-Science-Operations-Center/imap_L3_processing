@@ -2,8 +2,8 @@ import unittest
 
 import numpy as np
 
-from imap_processing.swe.l3.science.calculate_spacecraft_potential import piece_wise_model, find_breakpoints, \
-    average_flux, compute_velocity_in_dsp_frame_km_s, compute_look_directions
+from imap_processing.swe.l3.science.pitch_calculations import piece_wise_model, find_breakpoints, \
+    average_flux, calculate_velocity_in_dsp_frame_km_s, calculate_look_directions, rebin_by_pitch_angle
 
 
 class TestCalculateSpacecraftPotential(unittest.TestCase):
@@ -62,7 +62,7 @@ class TestCalculateSpacecraftPotential(unittest.TestCase):
             ]
         ])
 
-        actual_look_direction = compute_look_directions(inst_el, inst_az)
+        actual_look_direction = calculate_look_directions(inst_el, inst_az)
         np.testing.assert_array_almost_equal(actual_look_direction, expected_look_direction)
 
     def test_compute_velocity(self):
@@ -88,7 +88,7 @@ class TestCalculateSpacecraftPotential(unittest.TestCase):
         ]
         )
 
-        velocity = compute_velocity_in_dsp_frame_km_s(energy, inst_el, inst_az)
+        velocity = calculate_velocity_in_dsp_frame_km_s(energy, inst_el, inst_az)
         np.testing.assert_array_almost_equal(velocity, expected_velocity)
 
     def test_compute_velocity_and_confirm_energy_calculation(self):
@@ -96,14 +96,13 @@ class TestCalculateSpacecraftPotential(unittest.TestCase):
         inst_el = np.linspace(-90, 90, 7)
         rng = np.random.default_rng(20250219)
         inst_az = rng.random((24, 30)) * 360
-        velocity = compute_velocity_in_dsp_frame_km_s(energy, inst_el, inst_az)
+        velocity = calculate_velocity_in_dsp_frame_km_s(energy, inst_el, inst_az)
         scalar_velocity = np.linalg.norm(velocity, axis=-1)
         calculated_energy = 0.5 * 9.109_383_7139e-31 * np.square(scalar_velocity * 1000) / 1.602176634e-19
 
         np.testing.assert_almost_equal(calculated_energy[0], energy[0])
         np.testing.assert_almost_equal(calculated_energy[1], energy[1])
         self.assertEqual((24, 30, 7, 3), velocity.shape)
-        print(velocity.max())
 
     def test_find_breakpoints_with_noisy_data(self):
         xs = np.array([2.6600000e+00, 3.7050000e+00, 5.1300000e+00, 7.1725000e+00,
@@ -140,6 +139,66 @@ class TestCalculateSpacecraftPotential(unittest.TestCase):
                 spacecraft_potential, core_halo_breakpoint = find_breakpoints(xs, avg_flux)
                 self.assertAlmostEqual(expected_potential, spacecraft_potential, 2)
                 self.assertAlmostEqual(expected_core_halo, core_halo_breakpoint, 0)
+
+    def test_rebin_by_pitch_angle(self):
+        flux = np.array([1000, 10, 32, 256])
+        pitch_angle = np.array([25, 60, 120, 170])
+        energy = np.array([10 * 0.8, 10 / 0.8, 10 * 0.9 * 0.9, 10 / 0.9])
+
+        pitch_angle_bins = np.array([0, 90, 180])
+        energy_bins = np.array([10])
+
+        result = rebin_by_pitch_angle(flux, pitch_angle, energy, pitch_angle_bins, energy_bins)
+
+        expected_result = np.array([
+            [100, 128]
+        ]
+        )
+        np.testing.assert_almost_equal(result, expected_result)
+
+    def test_rebin_by_pitch_angle_uses_energy_within_60_to_140_percent_of_nominal(self):
+        flux = np.array([9999, 50, 50, 9999])
+        pitch_angle = np.array([25, 60, 120, 170])
+        energy = np.array([10 * 0.59, 10 * 0.61, 10 * 1.39, 10 * 1.41])
+
+        pitch_angle_bins = np.array([0, 180])
+        energy_bins = np.array([10])
+
+        result = rebin_by_pitch_angle(flux, pitch_angle, energy, pitch_angle_bins, energy_bins)
+
+        expected_result = np.array([
+            [50]
+        ]
+        )
+        np.testing.assert_almost_equal(result, expected_result)
+
+    def test_rebin_by_pitch_angle_skips_bins_with_less_than_two_measurements(self):
+        flux = np.array([9999, 50, 50, 9999])
+        pitch_angle = np.array([91, 95, 120, 170])
+        energy = np.array([10 * 0.59, 10 * 0.61, 10 * 1.39, 50 * 1.1])
+
+        pitch_angle_bins = np.array([0, 90, 180])
+        energy_bins = np.array([10, 50])
+
+        result = rebin_by_pitch_angle(flux, pitch_angle, energy, pitch_angle_bins, energy_bins)
+
+        expected_result = np.array(
+            [
+                [np.nan, 50],
+                [np.nan, np.nan]
+            ]
+        )
+        np.testing.assert_almost_equal(result, expected_result)
+
+    def test_rebin_full_size_data(self):
+        rng = np.random.default_rng(202502201113)
+        flux = rng.random((24, 30, 7)) * 1000
+        pitch_angle = rng.random((24, 30, 7)) * 180
+        energy = rng.random((24, 30, 7)) * 1000
+        pitch_angle_bins = np.linspace(0, 180, 21, endpoint=True)
+        energy_bins = np.geomspace(2, 5000, 24)
+        result = rebin_by_pitch_angle(flux, pitch_angle, energy, pitch_angle_bins, energy_bins)
+        self.assertEqual((24, 20), result.shape)
 
 
 if __name__ == '__main__':

@@ -40,7 +40,7 @@ def average_flux(flux_data: np.ndarray, geometric_weights: np.ndarray) -> np.nda
     return np.mean(weighted_average, axis=1)
 
 
-def compute_look_directions(inst_el: np.ndarray, inst_az: np.ndarray) -> np.ndarray:
+def calculate_look_directions(inst_el: np.ndarray, inst_az: np.ndarray) -> np.ndarray:
     inst_az_rad = np.deg2rad(inst_az)[..., np.newaxis]
     inst_el_rad = np.deg2rad(inst_el)
     z = np.sin(inst_el_rad)
@@ -50,8 +50,8 @@ def compute_look_directions(inst_el: np.ndarray, inst_az: np.ndarray) -> np.ndar
     return np.stack(np.broadcast_arrays(x, y, z), axis=-1)
 
 
-def compute_velocity_in_dsp_frame_km_s(energy: np.ndarray, inst_el: np.ndarray, inst_az: np.ndarray) -> np.ndarray:
-    particle_direction = - compute_look_directions(inst_el, inst_az)
+def calculate_velocity_in_dsp_frame_km_s(energy: np.ndarray, inst_el: np.ndarray, inst_az: np.ndarray) -> np.ndarray:
+    particle_direction = - calculate_look_directions(inst_el, inst_az)
     speed_meters_per_second = np.sqrt(energy * PROTON_CHARGE_COULOMBS * 2 / ELECTRON_MASS_KG)
     speed_km_per_second = speed_meters_per_second / METERS_PER_KILOMETER
 
@@ -61,9 +61,40 @@ def compute_velocity_in_dsp_frame_km_s(energy: np.ndarray, inst_el: np.ndarray, 
     return particle_direction
 
 
-def compute_velocity_in_sw_frame(velocity_in_despun_frame, solar_wind_velocity):
+def rebin_by_pitch_angle(flux, pitch_angles, energies, pitch_angle_bins, energy_bins):
+    num_pitch_bins = len(pitch_angle_bins) - 1
+    num_energy_bins = len(energy_bins)
+
+    rebinned = np.full((num_energy_bins, num_pitch_bins), np.nan)
+
+    for j in range(num_pitch_bins):
+        mask_pitch_angle = (pitch_angles >= pitch_angle_bins[j]) & (pitch_angles <= pitch_angle_bins[j + 1])
+
+        flux_by_pitch_angle = flux[mask_pitch_angle]
+        energy_by_pitch_angle = energies[mask_pitch_angle]
+
+        for i, center in enumerate(energy_bins):
+            left = 0.6 * center
+            right = 1.4 * center
+
+            mask_energy = (energy_by_pitch_angle >= left) & (energy_by_pitch_angle <= right)
+
+            energy_to_fit = energy_by_pitch_angle[mask_energy]
+            flux_to_fit = flux_by_pitch_angle[mask_energy]
+            if len(energy_to_fit) > 1:
+                log_energy_to_fit = np.log(energy_to_fit)
+                log_flux_to_fit = np.log(flux_to_fit)
+                intercept, slope = np.polynomial.polynomial.polyfit(log_energy_to_fit, log_flux_to_fit, 1)
+                log_flux_to_nom = slope * np.log(center) + intercept
+
+                rebinned[i, j] = np.exp(log_flux_to_nom)
+
+    return rebinned
+
+
+def calculate_velocity_in_sw_frame(velocity_in_despun_frame, solar_wind_velocity):
     return velocity_in_despun_frame - solar_wind_velocity
 
 
-def compute_energy_in_ev_from_velocity_in_km_per_second(velocity):
+def calculate_energy_in_ev_from_velocity_in_km_per_second(velocity):
     pass
