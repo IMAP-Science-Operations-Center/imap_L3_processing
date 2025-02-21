@@ -6,6 +6,7 @@ import numpy as np
 from imap_processing.swe.l3.science.pitch_calculations import piece_wise_model, find_breakpoints, \
     average_flux, calculate_velocity_in_dsp_frame_km_s, calculate_look_directions, rebin_by_pitch_angle, \
     correct_and_rebin, calculate_energy_in_ev_from_velocity_in_km_per_second
+from tests.test_helpers import build_swe_configuration
 
 
 class TestPitchCalculations(unittest.TestCase):
@@ -147,10 +148,13 @@ class TestPitchCalculations(unittest.TestCase):
         pitch_angle = np.array([25, 60, 120, 170])
         energy = np.array([10 * 0.8, 10 / 0.8, 10 * 0.9 * 0.9, 10 / 0.9])
 
-        pitch_angle_bins = np.array([0, 90, 180])
-        energy_bins = np.array([10])
+        config = build_swe_configuration(
+            pitch_angle_bins=[45, 135],
+            pitch_angle_delta=[45, 45],
+            energy_bins=[10]
+        )
 
-        result = rebin_by_pitch_angle(flux, pitch_angle, energy, pitch_angle_bins, energy_bins)
+        result = rebin_by_pitch_angle(flux, pitch_angle, energy, config)
 
         expected_result = np.array([
             [100, 128]
@@ -163,10 +167,12 @@ class TestPitchCalculations(unittest.TestCase):
         pitch_angle = np.array([25, 60, 120, 170])
         energy = np.array([10 * 0.59, 10 * 0.61, 10 * 1.39, 10 * 1.41])
 
-        pitch_angle_bins = np.array([0, 180])
-        energy_bins = np.array([10])
-
-        result = rebin_by_pitch_angle(flux, pitch_angle, energy, pitch_angle_bins, energy_bins)
+        config = build_swe_configuration(
+            pitch_angle_bins=[90],
+            pitch_angle_delta=[90],
+            energy_bins=[10]
+        )
+        result = rebin_by_pitch_angle(flux, pitch_angle, energy, config)
 
         expected_result = np.array([
             [50]
@@ -179,10 +185,13 @@ class TestPitchCalculations(unittest.TestCase):
         pitch_angle = np.array([91, 95, 120, 170])
         energy = np.array([10 * 0.59, 10 * 0.61, 10 * 1.39, 50 * 1.1])
 
-        pitch_angle_bins = np.array([0, 90, 180])
-        energy_bins = np.array([10, 50])
+        config = build_swe_configuration(
+            pitch_angle_bins=[45, 135],
+            pitch_angle_delta=[45, 45],
+            energy_bins=[10, 50]
+        )
 
-        result = rebin_by_pitch_angle(flux, pitch_angle, energy, pitch_angle_bins, energy_bins)
+        result = rebin_by_pitch_angle(flux, pitch_angle, energy, config)
 
         expected_result = np.array(
             [
@@ -197,9 +206,12 @@ class TestPitchCalculations(unittest.TestCase):
         flux = rng.random((24, 30, 7)) * 1000
         pitch_angle = rng.random((24, 30, 7)) * 180
         energy = rng.random((24, 30, 7)) * 1000
-        pitch_angle_bins = np.linspace(0, 180, 21, endpoint=True)
+        pitch_angle_bins = np.linspace(0, 180, 20, endpoint=False) + 4.5
+        pitch_angle_deltas = np.repeat(4.5, 20)
         energy_bins = np.geomspace(2, 5000, 24)
-        result = rebin_by_pitch_angle(flux, pitch_angle, energy, pitch_angle_bins, energy_bins)
+        config = build_swe_configuration(pitch_angle_bins=pitch_angle_bins, pitch_angle_delta=pitch_angle_deltas,
+                                         energy_bins=energy_bins)
+        result = rebin_by_pitch_angle(flux, pitch_angle, energy, config)
         self.assertEqual((24, 20), result.shape)
 
     def test_calculate_energy(self):
@@ -224,15 +236,14 @@ class TestPitchCalculations(unittest.TestCase):
         inst_az = Mock()
         mag_vector = Mock()
         solar_wind_vector = Mock()
-        pitch_angle_bins = Mock()
-        energy_bins = Mock()
+        configuration = Mock()
         result = correct_and_rebin(
             flux_or_psd=flux_data,
             energy_bins_minus_potential=corrected_energy,
             inst_el=inst_el, inst_az=inst_az,
             mag_vector=mag_vector, solar_wind_vector=solar_wind_vector,
-            pitch_angle_bins=pitch_angle_bins,
-            output_energy_bins=energy_bins, )
+            config=configuration,
+        )
 
         mock_calculate_dsp_velocity.assert_called_once_with(corrected_energy, inst_el, inst_az)
         mock_calculate_velocity_in_sw_frame.assert_called_once_with(
@@ -242,8 +253,7 @@ class TestPitchCalculations(unittest.TestCase):
         mock_rebin_by_pitch_angle.assert_called_with(
             flux_data, mock_calculate_pitch_angle.return_value,
             mock_calculate_energy.return_value,
-            pitch_angle_bins,
-            energy_bins
+            configuration,
         )
         self.assertEqual(mock_rebin_by_pitch_angle.return_value, result)
 

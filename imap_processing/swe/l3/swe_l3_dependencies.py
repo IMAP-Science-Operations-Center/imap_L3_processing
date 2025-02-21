@@ -8,6 +8,11 @@ from imap_processing.swe.l3.models import SweL2Data
 
 class SweConfiguration(TypedDict):
     geometric_fractions: list[float]
+    pitch_angle_bins: list[float]
+    pitch_angle_delta: list[float]
+    energy_bins: list[float]
+    energy_delta_plus: list[float]
+    energy_delta_minus: list[float]
 
 
 @dataclass

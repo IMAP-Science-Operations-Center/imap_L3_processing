@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from imap_processing.models import DataProduct
+from imap_processing.models import DataProduct, DataProductVariable
 
 
 @dataclass
@@ -21,7 +21,13 @@ class SweL3Data(DataProduct):
     epoch: np.ndarray
     epoch_delta: np.ndarray
     energy: np.ndarray
+    energy_delta_plus: np.ndarray
+    energy_delta_minus: np.ndarray
     pitch_angle: np.ndarray
     pitch_angle_delta: np.ndarray
     gyrophase: np.ndarray
     gyrophase_delta: np.ndarray
+    flux_by_pitch_angle: np.ndarray
+
+    def to_data_product_variables(self) -> list[DataProductVariable]:
+        return []

@@ -1,5 +1,3 @@
-from datetime import timedelta
-
 import numpy as np
 
 from imap_processing.data_utils import rebin
@@ -19,8 +17,9 @@ class SweProcessor(Processor):
 
         swe_l2_data = dependencies.swe_l2_data
         swe_epoch = swe_l2_data.epoch
-        swe_epoch_delta = np.full(swe_epoch.shape, timedelta(seconds=30))
+        swe_epoch_delta = swe_l2_data.epoch_delta
         rebinned_mag = dependencies.mag_l1d_data.rebin_to(swe_epoch, swe_epoch_delta)
+
         swapi_l_a_proton_data = dependencies.swapi_l3a_proton_data
         swapi_epoch = swapi_l_a_proton_data.epoch
         solar_wind_vectors = calculate_solar_wind_velocity_vector(swapi_l_a_proton_data.proton_sw_speed,
@@ -32,20 +31,33 @@ class SweProcessor(Processor):
                                             to_epoch=swe_epoch,
                                             to_epoch_delta=swe_epoch_delta)
 
+        flux_by_pitch_angles = []
         for i in range(len(swe_epoch)):
             averaged_flux = average_flux(swe_l2_data.flux[i],
                                          np.array(dependencies.configuration["geometric_fractions"]))
             spacecraft_potential, halo_core = find_breakpoints(swe_l2_data.energy, averaged_flux)
 
             corrected_energy_bins = swe_l2_data.energy - spacecraft_potential
-            pitch_angle_bins, output_energies = [0, 90, 180], [1, 10, 100]
-            correct_and_rebin(swe_l2_data.flux[i], corrected_energy_bins, swe_l2_data.inst_el,
-                              swe_l2_data.inst_az_spin_sector[i],
-                              rebinned_mag[i],
-                              rebinned_solar_wind_vectors[i],
-                              pitch_angle_bins,
-                              output_energies,
-                              )
+            rebinned_flux = correct_and_rebin(swe_l2_data.flux[i], corrected_energy_bins, swe_l2_data.inst_el,
+                                              swe_l2_data.inst_az_spin_sector[i],
+                                              rebinned_mag[i],
+                                              rebinned_solar_wind_vectors[i],
+                                              dependencies.configuration,
+                                              )
+            flux_by_pitch_angles.append(rebinned_flux)
+
+        swe_l3_data = SweL3Data(input_metadata=self.input_metadata.to_upstream_data_dependency("sci"),
+                                epoch=swe_epoch,
+                                epoch_delta=swe_epoch_delta,
+                                energy=dependencies.configuration["energy_bins"],
+                                energy_delta_plus=dependencies.configuration["energy_delta_plus"],
+                                energy_delta_minus=dependencies.configuration["energy_delta_minus"],
+                                pitch_angle=dependencies.configuration["pitch_angle_bins"],
+                                pitch_angle_delta=dependencies.configuration["pitch_angle_delta"],
+                                gyrophase=None,
+                                gyrophase_delta=None,
+                                flux_by_pitch_angle=np.array(flux_by_pitch_angles))
+        return swe_l3_data
 
         # iterate minute chucks of SweL3Data, mag vector, swapi sw vector
         #   flux = calulate average flux

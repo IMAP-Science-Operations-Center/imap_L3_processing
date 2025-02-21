@@ -7,6 +7,7 @@ from scipy.optimize import curve_fit
 
 from imap_processing.constants import ELECTRON_MASS_KG, PROTON_CHARGE_COULOMBS, METERS_PER_KILOMETER
 from imap_processing.pitch_angles import calculate_pitch_angle
+from imap_processing.swe.l3.swe_l3_dependencies import SweConfiguration
 
 
 def piece_wise_model(x: np.ndarray, b0: float, b1: float,
@@ -66,15 +67,21 @@ def calculate_velocity_in_dsp_frame_km_s(energy: np.ndarray, inst_el: np.ndarray
     return particle_direction
 
 
-def rebin_by_pitch_angle(flux, pitch_angles, energies, pitch_angle_bins, energy_bins) -> np.ndarray[
+def rebin_by_pitch_angle(flux, pitch_angles, energies, config: SweConfiguration) -> np.ndarray[
     (E_BINS, PITCH_ANGLE_BINS)]:
-    num_pitch_bins = len(pitch_angle_bins) - 1
+    pitch_angle_bins = np.array(config["pitch_angle_bins"])
+    pitch_angle_delta = np.array(config["pitch_angle_delta"])
+    energy_bins = config["energy_bins"]
+    pitch_angle_left_edges = pitch_angle_bins - pitch_angle_delta
+    pitch_angle_right_edges = pitch_angle_bins + pitch_angle_delta
+
+    num_pitch_bins = len(pitch_angle_bins)
     num_energy_bins = len(energy_bins)
 
     rebinned = np.full((num_energy_bins, num_pitch_bins), np.nan)
 
     for j in range(num_pitch_bins):
-        mask_pitch_angle = (pitch_angles >= pitch_angle_bins[j]) & (pitch_angles <= pitch_angle_bins[j + 1])
+        mask_pitch_angle = (pitch_angles >= pitch_angle_left_edges[j]) & (pitch_angles < pitch_angle_right_edges[j])
 
         flux_by_pitch_angle = flux[mask_pitch_angle]
         energy_by_pitch_angle = energies[mask_pitch_angle]
@@ -83,7 +90,7 @@ def rebin_by_pitch_angle(flux, pitch_angles, energies, pitch_angle_bins, energy_
             left = 0.6 * center
             right = 1.4 * center
 
-            mask_energy = (energy_by_pitch_angle >= left) & (energy_by_pitch_angle <= right)
+            mask_energy = (energy_by_pitch_angle > left) & (energy_by_pitch_angle < right)
 
             energy_to_fit = energy_by_pitch_angle[mask_energy]
             flux_to_fit = flux_by_pitch_angle[mask_energy]
@@ -126,11 +133,10 @@ def correct_and_rebin(flux_or_psd: np.ndarray[(E_BINS, SPIN_SECTORS, CEMS)],
                       inst_az: np.ndarray[E_BINS, SPIN_SECTORS, CEMS],
                       mag_vector: np.ndarray[(3,)],
                       solar_wind_vector: np.ndarray[(3,)],
-                      pitch_angle_bins: np.ndarray[(PITCH_ANGLE_BINS + 1,)],
-                      output_energy_bins: np.ndarray[(E_BINS,)]) -> np.ndarray[(E_BINS, PITCH_ANGLE_BINS)]:
+                      config: SweConfiguration) -> np.ndarray[(E_BINS, PITCH_ANGLE_BINS)]:
     despun_velocity = calculate_velocity_in_dsp_frame_km_s(energy_bins_minus_potential, inst_el, inst_az)
     velocity_in_sw_frame = calculate_velocity_in_sw_frame(despun_velocity, solar_wind_vector)
     pitch_angle = calculate_pitch_angle(velocity_in_sw_frame, mag_vector)
     energy_in_sw_frame = calculate_energy_in_ev_from_velocity_in_km_per_second(velocity_in_sw_frame)
 
-    return rebin_by_pitch_angle(flux_or_psd, pitch_angle, energy_in_sw_frame, pitch_angle_bins, output_energy_bins)
+    return rebin_by_pitch_angle(flux_or_psd, pitch_angle, energy_in_sw_frame, config)
