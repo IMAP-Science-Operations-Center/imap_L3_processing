@@ -13,6 +13,8 @@ class SweConfiguration(TypedDict):
     energy_bins: list[float]
     energy_delta_plus: list[float]
     energy_delta_minus: list[float]
+    energy_bin_low_multiplier: float
+    energy_bin_high_multiplier: float
 
 
 @dataclass

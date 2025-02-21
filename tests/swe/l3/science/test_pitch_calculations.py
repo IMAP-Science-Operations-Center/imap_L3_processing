@@ -162,15 +162,17 @@ class TestPitchCalculations(unittest.TestCase):
         )
         np.testing.assert_almost_equal(result, expected_result)
 
-    def test_rebin_by_pitch_angle_uses_energy_within_60_to_140_percent_of_nominal(self):
+    def test_rebin_by_pitch_angle_uses_energy_within_configured_percent_of_nominal(self):
         flux = np.array([9999, 50, 50, 9999])
         pitch_angle = np.array([25, 60, 120, 170])
-        energy = np.array([10 * 0.59, 10 * 0.61, 10 * 1.39, 10 * 1.41])
+        energy = np.array([10 * 0.69, 10 * 0.71, 10 * 1.49, 10 * 1.51])
 
         config = build_swe_configuration(
             pitch_angle_bins=[90],
             pitch_angle_delta=[90],
-            energy_bins=[10]
+            energy_bins=[10],
+            energy_bin_low_multiplier=0.7,
+            energy_bin_high_multiplier=1.5,
         )
         result = rebin_by_pitch_angle(flux, pitch_angle, energy, config)
 
@@ -188,7 +190,9 @@ class TestPitchCalculations(unittest.TestCase):
         config = build_swe_configuration(
             pitch_angle_bins=[45, 135],
             pitch_angle_delta=[45, 45],
-            energy_bins=[10, 50]
+            energy_bins=[10, 50],
+            energy_bin_low_multiplier=0.6,
+            energy_bin_high_multiplier=1.4,
         )
 
         result = rebin_by_pitch_angle(flux, pitch_angle, energy, config)

@@ -87,8 +87,8 @@ def rebin_by_pitch_angle(flux, pitch_angles, energies, config: SweConfiguration)
         energy_by_pitch_angle = energies[mask_pitch_angle]
 
         for i, center in enumerate(energy_bins):
-            left = 0.6 * center
-            right = 1.4 * center
+            left = config["energy_bin_low_multiplier"] * center
+            right = config["energy_bin_high_multiplier"] * center
 
             mask_energy = (energy_by_pitch_angle > left) & (energy_by_pitch_angle < right)
 
