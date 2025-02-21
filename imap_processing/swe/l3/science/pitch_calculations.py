@@ -7,7 +7,7 @@ from scipy.optimize import curve_fit
 
 from imap_processing.constants import ELECTRON_MASS_KG, PROTON_CHARGE_COULOMBS, METERS_PER_KILOMETER
 from imap_processing.pitch_angles import calculate_pitch_angle
-from imap_processing.swe.l3.swe_l3_dependencies import SweConfiguration
+from imap_processing.swe.l3.models import SweConfiguration
 
 
 def piece_wise_model(x: np.ndarray, b0: float, b1: float,

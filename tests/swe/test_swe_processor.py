@@ -5,9 +5,8 @@ from unittest.mock import patch, call
 import numpy as np
 
 from imap_processing.models import MagL1dData, InputMetadata, UpstreamDataDependency
-from imap_processing.swapi.l3a.models import SwapiL3ProtonSolarWindData
-from imap_processing.swe.l3.models import SweL2Data
-from imap_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies, SweConfiguration
+from imap_processing.swe.l3.models import SweL2Data, SweConfiguration, SwapiL3aProtonData
+from imap_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies
 from imap_processing.swe.swe_processor import SweProcessor
 from tests.test_helpers import NumpyArrayMatcher
 
@@ -41,14 +40,12 @@ class TestSweProcessor(unittest.TestCase):
             mag_data=np.arange(7, 22).reshape(5, 3).repeat(2, axis=0)
         )
 
-        swapi_l3a_proton_data = SwapiL3ProtonSolarWindData(
+        swapi_l3a_proton_data = SwapiL3aProtonData(
             epoch=swapi_epochs,
+            epoch_delta=np.repeat(timedelta(seconds=30), 10),
             proton_sw_speed=np.array([]),
-            proton_sw_density=np.array([]),
-            proton_sw_temperature=np.array([]),
             proton_sw_clock_angle=np.array([]),
             proton_sw_deflection_angle=np.array([]),
-            input_metadata=np.array([])
         )
         mock_average_flux.return_value = np.array([5, 10, 15])
         solar_wind_velocity_vector = np.arange(8, 23).reshape(5, 3).repeat(2, 0)

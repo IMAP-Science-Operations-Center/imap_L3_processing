@@ -4,7 +4,7 @@ from pathlib import Path
 import numpy as np
 
 import tests
-from imap_processing.swe.l3.swe_l3_dependencies import SweConfiguration
+from imap_processing.swe.l3.models import SweConfiguration
 
 
 def get_test_data_path(filename: str) -> Path:

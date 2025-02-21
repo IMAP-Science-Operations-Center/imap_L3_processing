@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import TypedDict
 
 import numpy as np
 
@@ -17,6 +18,15 @@ class SweL2Data:
 
 
 @dataclass
+class SwapiL3aProtonData:
+    epoch: np.ndarray
+    epoch_delta: np.ndarray
+    proton_sw_speed: np.ndarray[float]
+    proton_sw_clock_angle: np.ndarray[float]
+    proton_sw_deflection_angle: np.ndarray[float]
+
+
+@dataclass
 class SweL3Data(DataProduct):
     epoch: np.ndarray
     epoch_delta: np.ndarray
@@ -31,3 +41,14 @@ class SweL3Data(DataProduct):
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return []
+
+
+class SweConfiguration(TypedDict):
+    geometric_fractions: list[float]
+    pitch_angle_bins: list[float]
+    pitch_angle_delta: list[float]
+    energy_bins: list[float]
+    energy_delta_plus: list[float]
+    energy_delta_minus: list[float]
+    energy_bin_low_multiplier: float
+    energy_bin_high_multiplier: float

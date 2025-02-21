@@ -13,8 +13,6 @@ class SweProcessor(Processor):
         pass
 
     def calculate_pitch_angle_products(self, dependencies: SweL3Dependencies) -> SweL3Data:
-        # step 1 rebin
-
         swe_l2_data = dependencies.swe_l2_data
         swe_epoch = swe_l2_data.epoch
         swe_epoch_delta = swe_l2_data.epoch_delta
@@ -58,28 +56,3 @@ class SweProcessor(Processor):
                                 gyrophase_delta=None,
                                 flux_by_pitch_angle=np.array(flux_by_pitch_angles))
         return swe_l3_data
-
-        # iterate minute chucks of SweL3Data, mag vector, swapi sw vector
-        #   flux = calulate average flux
-        #   spacecraft_potential, halo_core = swapi_epochs(energies ,flux)
-        #   (maybe using previous values as initial guess)
-        #
-        #   corrected_energies = energies - spacecraft_potential
-        #   particle_velocity_despun = calculate_velocity_in_dsp_frame_km_s(
-        #       corrected_energies, inst_el, inst_az)
-        #   particle_velocity_sw_frame = calculate_velocity_in_sw_frame(
-        #       particle_velocity_despun, solar_wind_velocity)
-        #
-        #   pitch_angle = calculate_pitch_angle(particle_velocity_sw_frame, mag_field_vector)
-        #   gyrophase = calculate_gyrophase(particle_velocity_sw_frame, mag_field_vector)
-        #   energy_in_sw_frame = calculate_energy_in_ev_from_velocity_in_km_per_second(
-        #       particle_velocity_sw_frame)
-
-        # pitch_angle_bin_edges = [0, 9, 18, 27,  36, ..., 171, 180]
-        #   flux_by_pa = rebin_by_pitch_angle(flux_data, pitch_angle, energy_in_sw_frame, pitch_angle_bin_edges, energy_bin_centers)
-        #   psd_by_pa = rebin_by_pitch_angle(psd_data, pitch_angle, energy_in_sw_frame, pitch_angle_bin_edges, energy_bin_centers)
-
-        #   flux_by_pa_and_gyrophase = rebin_by_pitch_angle(flux_data, pitch_angle, gyrophase, energy_in_sw_frame)
-        #   psd_by_pa_gyrophase = rebin_by_pitch_angle(psd_data, pitch_angle, gyrophase, energy_in_sw_frame)
-
-        pass

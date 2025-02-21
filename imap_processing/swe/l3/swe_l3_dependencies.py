@@ -1,25 +1,60 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import TypedDict
+from pathlib import Path
 
-from imap_processing.models import MagL1dData
-from imap_processing.swapi.l3a.models import SwapiL3ProtonSolarWindData
-from imap_processing.swe.l3.models import SweL2Data
+from imap_processing.models import MagL1dData, UpstreamDataDependency
+from imap_processing.swe.l3.models import SweL2Data, SweConfiguration, SwapiL3aProtonData
+from imap_processing.swe.l3.utils import read_l2_swe_data, read_l3a_swapi_proton_data, read_swe_config
+from imap_processing.utils import read_l1d_mag_data, download_dependency
 
-
-class SweConfiguration(TypedDict):
-    geometric_fractions: list[float]
-    pitch_angle_bins: list[float]
-    pitch_angle_delta: list[float]
-    energy_bins: list[float]
-    energy_delta_plus: list[float]
-    energy_delta_minus: list[float]
-    energy_bin_low_multiplier: float
-    energy_bin_high_multiplier: float
+MAG_L1D_DESCRIPTOR = "mago-normal"
+SWAPI_L3A_PROTON_DESCRIPTOR = "proton-sw"
+SWE_CONFIG_DESCRIPTOR = "config-json-not-cdf"
 
 
 @dataclass
 class SweL3Dependencies:
     swe_l2_data: SweL2Data
     mag_l1d_data: MagL1dData
-    swapi_l3a_proton_data: SwapiL3ProtonSolarWindData
+    swapi_l3a_proton_data: SwapiL3aProtonData
     configuration: SweConfiguration
+
+    @classmethod
+    def fetch_dependencies(cls, dependencies: list[UpstreamDataDependency]) -> SweL3Dependencies:
+        swe_config_dependency = UpstreamDataDependency("swe", "l3", None, None, "latest", SWE_CONFIG_DESCRIPTOR)
+
+        try:
+            swe_dependency = next(
+                d for d in dependencies if d.instrument == "swe")
+        except StopIteration:
+            raise ValueError(f"Missing SWE dependency.")
+        try:
+            mag_dependency = next(
+                d for d in dependencies if d.instrument == "mag"
+                and d.descriptor == MAG_L1D_DESCRIPTOR)
+        except StopIteration:
+            raise ValueError(f"Missing MAG {MAG_L1D_DESCRIPTOR} dependency.")
+        try:
+            swapi_dependency = next(
+                d for d in dependencies if d.instrument == "swapi"
+                and d.descriptor == SWAPI_L3A_PROTON_DESCRIPTOR)
+        except StopIteration:
+            raise ValueError(f"Missing SWAPI {SWAPI_L3A_PROTON_DESCRIPTOR} dependency.")
+
+        swe_file = download_dependency(swe_dependency)
+        mag_file = download_dependency(mag_dependency)
+        swapi_file = download_dependency(swapi_dependency)
+        swe_config = download_dependency(swe_config_dependency)
+
+        return cls.from_file_paths(swe_file, mag_file, swapi_file, swe_config)
+
+    @classmethod
+    def from_file_paths(cls, swe_l2_file_path: Path, mag_file_path: Path, swapi_file_path: Path,
+                        configuration_file_path: Path) -> SweL3Dependencies:
+        mag_l1d_data = read_l1d_mag_data(mag_file_path)
+        swe_l2_data = read_l2_swe_data(swe_l2_file_path)
+        swapi_l3a_proton_data = read_l3a_swapi_proton_data(swapi_file_path)
+        configuration = read_swe_config(configuration_file_path)
+
+        return cls(swe_l2_data, mag_l1d_data, swapi_l3a_proton_data, configuration)
