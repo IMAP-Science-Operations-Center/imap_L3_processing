@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 import numpy as np
@@ -14,9 +15,9 @@ def get_test_instrument_team_data_path(filename: str) -> Path:
     return Path(tests.__file__).parent.parent / "instrument_team_data" / filename
 
 
-def build_swe_configuration(**args):
-    default_config = SweConfiguration(geometric_fractions=[], pitch_angle_bins=[], pitch_angle_delta=[], energy_bins=[],
-                                      energy_delta_plus=[], energy_delta_minus=[])
+def build_swe_configuration(**args) -> SweConfiguration:
+    with open(get_test_data_path("swe/example_swe_config.json")) as f:
+        default_config = json.load(f)
     default_config.update(**args)
     return default_config
 
