@@ -142,14 +142,20 @@ class TestSwapiProcessor(TestCase):
             [17, 18, 19]
         ])
 
+        dependency_start_date = datetime(2025, 1, 1)
+        dependency_end_date = datetime(2025, 2, 1)
+
         dependencies = [
-            UpstreamDataDependency(instrument, incoming_data_level, start_date, end_date,
+            UpstreamDataDependency(instrument, incoming_data_level, dependency_start_date, dependency_end_date,
                                    version, descriptor),
         ]
 
         swapi_processor = SwapiProcessor(
             dependencies, input_metadata)
         swapi_processor.process()
+
+        self.assertEqual(swapi_processor.dependencies[0].start_date, dependency_start_date)
+        self.assertEqual(swapi_processor.dependencies[0].end_date, dependency_end_date)
 
         mock_swapi_l3_dependencies_class.fetch_dependencies.assert_called_once_with(dependencies)
 

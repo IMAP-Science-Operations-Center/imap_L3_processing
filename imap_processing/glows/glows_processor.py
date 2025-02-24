@@ -15,13 +15,8 @@ from imap_processing.utils import save_data
 class GlowsProcessor(Processor):
 
     def process(self):
-        dependencies = [
-            dataclasses.replace(dep, start_date=self.input_metadata.start_date, end_date=self.input_metadata.end_date)
-            for dep in
-            self.dependencies]
-
         if self.input_metadata.data_level == "l3a":
-            l3a_dependencies = GlowsL3ADependencies.fetch_dependencies(dependencies)
+            l3a_dependencies = GlowsL3ADependencies.fetch_dependencies(self.dependencies)
             l3a_output = self.process_l3a(l3a_dependencies)
             proton_cdf = save_data(l3a_output)
             imap_data_access.upload(proton_cdf)

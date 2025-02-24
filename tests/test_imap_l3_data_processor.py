@@ -17,7 +17,8 @@ class TestImapL3DataProcessor(TestCase):
         data_level_argument = "l3a"
         start_date_argument = "20160630"
         version_argument = "v092"
-        dependencies_argument = "[{'instrument':'not_swapi', 'data_level':'l1000', 'descriptor':'science', 'version':'v112'}]"
+        dependencies_argument = ("[{'instrument':'not_swapi', 'data_level':'l1000', 'descriptor':'science', 'version':'v112',"
+                                 "'start_date':'20250101'}]")
 
         mock_argument_parser = mock_argparse.ArgumentParser.return_value
 
@@ -50,7 +51,7 @@ class TestImapL3DataProcessor(TestCase):
 
                 expected_input_dependencies = [UpstreamDataDependency("not_swapi",
                                                                       "l1000",
-                                                                      None,
+                                                                      datetime(2025,1,1),
                                                                       None,
                                                                       "v112",
                                                                       "science")]
@@ -71,7 +72,8 @@ class TestImapL3DataProcessor(TestCase):
         data_level_argument = "l3a"
         start_date_argument = "20160630"
         version_argument = "v092"
-        dependencies_argument = "[{'instrument':'not_swapi', 'data_level':'l1000', 'descriptor':'science', 'version':'v112'}]"
+        dependencies_argument = ("[{'instrument':'not_swapi', 'data_level':'l1000', 'descriptor':'science', 'version':'v112',"
+                                 "'start_date':'20250101','end_date':'20250202'}]")
 
         mock_argument_parser = mock_argparse.ArgumentParser.return_value
 
@@ -104,8 +106,8 @@ class TestImapL3DataProcessor(TestCase):
 
                 expected_input_dependencies = [UpstreamDataDependency("not_swapi",
                                                                       "l1000",
-                                                                      None,
-                                                                      None,
+                                                                      datetime(2025,1,1),
+                                                                      datetime(2025,2,2),
                                                                       "v112",
                                                                       "science")]
 
@@ -123,7 +125,7 @@ class TestImapL3DataProcessor(TestCase):
         start_date_argument = "20160630"
         end_date_argument = None
         version_argument = "v092"
-        dependencies_argument = "[{'instrument':'not_swapi', 'data_level':'l1000', 'descriptor':'science', 'version':'v112'}]"
+        dependencies_argument = "[{'instrument':'not_swapi', 'data_level':'l1000', 'descriptor':'science', 'version':'v112', 'start_date': '20250101'}]"
 
         mock_argument_parser = mock_argparse.ArgumentParser.return_value
 
@@ -146,7 +148,7 @@ class TestImapL3DataProcessor(TestCase):
         start_date_argument = "20160630"
         end_date_argument = "20160701"
         version_argument = "v092"
-        dependencies_argument = "[{'instrument':'not_swapi', 'data_level':'l1000', 'descriptor':'science', 'version':'v112'}]"
+        dependencies_argument = "[{'instrument':'not_swapi', 'data_level':'l1000', 'descriptor':'science', 'version':'v112', 'start_date':'20250101'}]"
 
         mock_argument_parser = mock_argparse.ArgumentParser.return_value
 

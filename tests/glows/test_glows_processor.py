@@ -38,9 +38,10 @@ class TestGlowsProcessor(unittest.TestCase):
 
         input_metadata = InputMetadata(instrument, outgoing_data_level, start_date, end_date,
                                        outgoing_version)
-
+        dependency_start_date = datetime(2025,2,24)
+        dependency_end_date = None
         dependencies = [
-            UpstreamDataDependency(instrument, incoming_data_level, start_date, end_date,
+            UpstreamDataDependency(instrument, incoming_data_level, dependency_start_date, dependency_end_date,
                                    version, descriptor),
         ]
         processor = GlowsProcessor(dependencies=dependencies, input_metadata=input_metadata)
