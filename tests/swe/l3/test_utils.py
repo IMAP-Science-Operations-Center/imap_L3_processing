@@ -32,7 +32,7 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(1.4, result["energy_bin_high_multiplier"])
 
     def test_read_l2_swe_data(self):
-        result: SweL2Data = read_l2_swe_data(get_test_data_path('swe/imap_swe_l2_sci_20240510_v002.cdf'))
+        result: SweL2Data = read_l2_swe_data(get_test_data_path('swe/imap_swe_l2_sci_20250101_v002.cdf'))
 
         self.assertEqual(result.epoch[0], datetime(2024, 5, 10, 15, 35, 5))
         self.assertEqual(len(result.epoch), 6)
@@ -56,7 +56,7 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(result.phase_space_density.shape, (6, 24, 30, 7))
 
     def test_read_l3a_swapi_proton_data(self):
-        result = read_l3a_swapi_proton_data(get_test_data_path('swe/imap_swapi_l3a_proton-sw_20251023_v001.cdf'))
+        result = read_l3a_swapi_proton_data(get_test_data_path('swe/imap_swapi_l3a_proton-sw_20250101_v001.cdf'))
         self.assertIsInstance(result, SwapiL3aProtonData)
         self.assertEqual(10, len(result.epoch))
         self.assertEqual(10, len(result.epoch_delta))
