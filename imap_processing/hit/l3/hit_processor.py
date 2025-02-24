@@ -3,6 +3,7 @@ from imap_processing.hit.l3.sectored_products.science.sectored_products_algorith
     get_hit_bin_polar_coordinates, calculate_sector_areas, rebin_by_pitch_angle_and_gyrophase
 from imap_processing.pitch_angles import calculate_unit_vector, calculate_pitch_angle, calculate_gyrophase
 from imap_processing.processor import Processor
+from imap_processing.utils import save_data
 
 
 class HitProcessor(Processor):
@@ -29,7 +30,9 @@ class HitProcessor(Processor):
             gyrophases = calculate_gyrophase(particle_unit_vectors, mag_unit_vector)
 
             for species_hit_data in species_list:
-                for energy in species_hit_data[time_index]:
-                    rebinned_data = rebin_by_pitch_angle_and_gyrophase(energy, pitch_angles, gyrophases, sector_areas,
-                                                                       number_of_pitch_angle_bins,
-                                                                       number_of_gyrophase_bins)
+                rebinned_data = rebin_by_pitch_angle_and_gyrophase(species_hit_data[time_index], pitch_angles,
+                                                                   gyrophases, sector_areas,
+                                                                   number_of_pitch_angle_bins,
+                                                                   number_of_gyrophase_bins)
+
+        save_data
