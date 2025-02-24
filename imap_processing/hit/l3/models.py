@@ -3,6 +3,34 @@ from datetime import datetime, timedelta
 
 import numpy as np
 
+from imap_processing.hit.l3.pha.science.calculate_pha import EventOutput
+from imap_processing.models import DataProduct, DataProductVariable
+
+EPOCH_VAR_NAME = "EPOCH"
+CHARGE_VAR_NAME = "CHARGE"
+ENERGY_VAR_NAME = "ENERGY"
+PARTICLE_ID_VAR_NAME = "PARTICLE_ID"
+PRIORITY_BUFFER_ID_VAR_NAME = "PRIORITY_BUFFER_ID"
+LATENCY_VAR_NAME = "LATENCY"
+STIM_FLAG_VAR_NAME = "STIM_FLAG"
+LONG_EVENT_FLAG_VAR_NAME = "LONG_EVENT_FLAG"
+HAZ_FLAG_VAR_NAME = "HAZ_FLAG"
+A_B_SIDE_VAR_NAME = "A_B_SIDE"
+HAS_UNREAD_FLAG_VAR_NAME = "HAS_UNREAD_FLAG"
+CULLING_FLAG_VAR_NAME = "CULLING_FLAG"
+PHA_VALUE_VAR_NAME = "PHA_VALUE"
+ENERGY_AT_DETECTOR_VAR_NAME = "ENERGY_AT_DETECTOR"
+DETECTOR_ADDRESS_VAR_NAME = "DETECTOR_ADDRESS"
+GAIN_FLAG_VAR_NAME = "GAIN_FLAG"
+LAST_PHA_VAR_NAME = "LAST_PHA"
+DETECTOR_FLAG_VAR_NAME = "DETECTOR_FLAG"
+DEINDEX_VAR_NAME = "DEINDEX"
+EPINDEX_VAR_NAME = "EPINDEX"
+STIM_GAIN_VAR_NAME = "STIM_GAIN"
+A_L_STIM_VAR_NAME = "A_L_STIM"
+STIM_STEP_VAR_NAME = "STIM_STEP"
+DAC_VALUE_VAR_NAME = "DAC_VALUE"
+
 
 @dataclass
 class HitL2Data:
@@ -39,3 +67,63 @@ class HitL2Data:
     nemgsi_energy_high: np.ndarray[float]
     nemgsi_energy_idx: np.ndarray[int]
     nemgsi_energy_low: np.ndarray[float]
+
+
+@dataclass
+class PHAData(DataProduct):
+    event_outputs: list[EventOutput]
+
+    def to_data_product_variables(self) -> list[DataProductVariable]:
+        charges = []
+        energies = []
+        particle_ids = []
+        priority_buffer_numbers = []
+        time_tags = []
+        stim_tags = []
+        long_event_flags = []
+        haz_tags = []
+        a_b_sides = []
+        has_unread_adcs = []
+        culling_flags = []
+        pha_values = []
+        energies_per_detector = []
+        detector_addresses = []
+        gain_flags = []
+        last_phas = []
+
+        for event_output in self.event_outputs:
+            charges.append(event_output.charge)
+            energies.append(event_output.total_energy)
+            particle_ids.append(event_output.original_event.particle_id)
+            priority_buffer_numbers.append(event_output.original_event.priority_buffer_num)
+            time_tags.append(event_output.original_event.time_tag)
+            stim_tags.append(event_output.original_event.stim_tag)
+            long_event_flags.append(event_output.original_event.long_event_flag)
+            haz_tags.append(event_output.original_event.haz_tag)
+            a_b_sides.append(event_output.original_event.a_b_side_flag)
+            has_unread_adcs.append(event_output.original_event.has_unread_adcs)
+            culling_flags.append(event_output.original_event.culling_flag)
+            pha_values.append([pha_word.adc_value for pha_word in event_output.original_event.pha_words])
+            energies_per_detector.append(event_output.energies)
+            detector_addresses.append([pha_word.detector.address for pha_word in event_output.original_event.pha_words])
+            gain_flags.append([pha_word.is_low_gain for pha_word in event_output.original_event.pha_words])
+            last_phas.append([pha_word.is_last_pha for pha_word in event_output.original_event.pha_words])
+
+        return [
+            DataProductVariable(CHARGE_VAR_NAME, np.array(charges)),
+            DataProductVariable(ENERGY_VAR_NAME, np.array(energies)),
+            DataProductVariable(PARTICLE_ID_VAR_NAME, np.array(particle_ids)),
+            DataProductVariable(PRIORITY_BUFFER_ID_VAR_NAME, np.array(priority_buffer_numbers)),
+            DataProductVariable(LATENCY_VAR_NAME, np.array(time_tags)),
+            DataProductVariable(STIM_FLAG_VAR_NAME, np.array(stim_tags)),
+            DataProductVariable(LONG_EVENT_FLAG_VAR_NAME, np.array(long_event_flags)),
+            DataProductVariable(HAZ_FLAG_VAR_NAME, np.array(haz_tags)),
+            DataProductVariable(A_B_SIDE_VAR_NAME, np.array(a_b_sides)),
+            DataProductVariable(HAS_UNREAD_FLAG_VAR_NAME, np.array(has_unread_adcs)),
+            DataProductVariable(CULLING_FLAG_VAR_NAME, np.array(culling_flags)),
+            DataProductVariable(PHA_VALUE_VAR_NAME, np.array(pha_values)),
+            DataProductVariable(ENERGY_AT_DETECTOR_VAR_NAME, np.array(energies_per_detector)),
+            DataProductVariable(DETECTOR_ADDRESS_VAR_NAME, np.array(detector_addresses)),
+            DataProductVariable(GAIN_FLAG_VAR_NAME, np.array(gain_flags)),
+            DataProductVariable(LAST_PHA_VAR_NAME, np.array(last_phas)),
+        ]
