@@ -196,8 +196,7 @@ class TestPitchCalculations(unittest.TestCase):
 
         expected_result = np.array([
             [50]
-        ]
-        )
+        ])
         np.testing.assert_almost_equal(result, expected_result)
 
     def test_rebin_by_pitch_angle_skips_bins_with_less_than_two_measurements(self):
@@ -217,8 +216,8 @@ class TestPitchCalculations(unittest.TestCase):
 
         expected_result = np.array(
             [
-                [np.nan, 50],
-                [np.nan, np.nan]
+                [0, 50],
+                [0, 0]
             ]
         )
         np.testing.assert_almost_equal(result, expected_result)

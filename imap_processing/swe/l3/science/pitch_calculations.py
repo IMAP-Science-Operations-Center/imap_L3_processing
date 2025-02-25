@@ -82,7 +82,7 @@ def rebin_by_pitch_angle(flux, pitch_angles, energies, config: SweConfiguration)
     num_pitch_bins = len(pitch_angle_bins)
     num_energy_bins = len(energy_bins)
 
-    rebinned = np.full((num_energy_bins, num_pitch_bins), np.nan)
+    rebinned = np.zeros((num_energy_bins, num_pitch_bins), dtype=float)
 
     for j in range(num_pitch_bins):
         mask_pitch_angle = (pitch_angles_for_masked_flux >= pitch_angle_left_edges[j]) & (
@@ -104,7 +104,6 @@ def rebin_by_pitch_angle(flux, pitch_angles, energies, config: SweConfiguration)
                 log_flux_to_fit = np.log(flux_to_fit)
                 intercept, slope = np.polynomial.polynomial.polyfit(log_energy_to_fit, log_flux_to_fit, 1)
                 log_flux_to_nom = slope * np.log(center) + intercept
-
                 rebinned[i, j] = np.exp(log_flux_to_nom)
 
     return rebinned
