@@ -114,15 +114,23 @@ class TestUtils(TestCase):
                     str(cm.exception))
 
     def test_read_l1d_mag_data(self):
-        file_name = "test_cdf.cdf"
-        vectors = np.array([[0, 1, 2], [3, 4, 5], [6, 7, 8]])
-        with CDF(file_name, "") as mag_cdf:
-            mag_cdf["epoch"] = np.array([datetime(2010, 1, 1, 0, 0, 46)])
-            mag_cdf["vectors"] = vectors
-        for path in [file_name, Path(file_name)]:
-            with self.subTest(path):
+        file_name_as_str = "test_cdf.cdf"
+        file_name_as_path = Path(file_name_as_str)
+
+        epoch = np.array([datetime(2010, 1, 1, 0, 0, 46)])
+        vectors_with_magnitudes = np.array([[0, 1, 2, 0], [3, 4, 5, 0], [6, 7, 8, 0]])
+        trimmed_vectors = np.array([[0, 1, 2], [3, 4, 5], [6, 7, 8]])
+        with CDF(file_name_as_str, "") as mag_cdf:
+            mag_cdf["epoch"] = epoch
+            mag_cdf["vectors"] = vectors_with_magnitudes
+
+        cases = [
+            ("file name as str", file_name_as_str),
+            ("file name as Path", file_name_as_path)
+        ]
+        for name, path in cases:
+            with self.subTest(name):
                 results = read_l1d_mag_data(path)
 
-                epoch_as_tt2000 = 315576112184000000
-                np.testing.assert_array_equal([epoch_as_tt2000], results.epoch)
-                np.testing.assert_array_equal(vectors, results.mag_data)
+                np.testing.assert_array_equal(epoch, results.epoch)
+                np.testing.assert_array_equal(trimmed_vectors, results.mag_data)

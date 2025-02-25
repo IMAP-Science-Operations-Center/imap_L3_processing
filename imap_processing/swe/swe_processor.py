@@ -1,4 +1,5 @@
 import numpy as np
+from imap_data_access import upload
 
 from imap_processing.data_utils import rebin
 from imap_processing.processor import Processor
@@ -6,11 +7,15 @@ from imap_processing.swapi.l3a.science.calculate_pickup_ion import calculate_sol
 from imap_processing.swe.l3.models import SweL3Data
 from imap_processing.swe.l3.science.pitch_calculations import average_flux, find_breakpoints, correct_and_rebin
 from imap_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies
+from imap_processing.utils import save_data
 
 
 class SweProcessor(Processor):
     def process(self):
-        pass
+        dependencies = SweL3Dependencies.fetch_dependencies(self.dependencies)
+        output_data = self.calculate_pitch_angle_products(dependencies)
+        output_cdf = save_data(output_data)
+        upload(output_cdf)
 
     def calculate_pitch_angle_products(self, dependencies: SweL3Dependencies) -> SweL3Data:
         swe_l2_data = dependencies.swe_l2_data
@@ -52,7 +57,5 @@ class SweProcessor(Processor):
                                 energy_delta_minus=dependencies.configuration["energy_delta_minus"],
                                 pitch_angle=dependencies.configuration["pitch_angle_bins"],
                                 pitch_angle_delta=dependencies.configuration["pitch_angle_delta"],
-                                gyrophase=None,
-                                gyrophase_delta=None,
                                 flux_by_pitch_angle=np.array(flux_by_pitch_angles))
         return swe_l3_data

@@ -27,6 +27,7 @@ from imap_processing.swapi.l3b.science.geometric_factor_calibration_table import
 from imap_processing.swapi.l3b.science.instrument_response_lookup_table import InstrumentResponseLookupTable, \
     InstrumentResponseLookupTableCollection
 from tests.spice_test_case import SpiceTestCase
+from tests.test_helpers import get_test_data_path
 
 
 class TestCalculatePickupIon(SpiceTestCase):
@@ -487,19 +488,18 @@ class TestCalculatePickupIon(SpiceTestCase):
 
         mock_spice.sxform.side_effect = mock_sxform
 
-        data_file_path = Path(
-            imap_processing.__file__).parent.parent / "swapi" / "test_data" / "imap_swapi_l2_50-sweeps_20100101_v002.cdf"
+        data_file_path = get_test_data_path("swapi/imap_swapi_l2_50-sweeps_20100101_v002.cdf")
         with CDF(str(data_file_path)) as cdf:
             energy = cdf["energy"][...]
             count_rate = cdf["swp_coin_rate"][...]
 
-            response_lut_path = Path(
-                imap_processing.__file__).parent.parent / "swapi" / "test_data" / "imap_swapi_l2_instrument-response-lut-zip-not-cdf_20241023_v001.cdf"
+            response_lut_path = get_test_data_path(
+                "swapi/imap_swapi_l2_instrument-response-lut-zip-not-cdf_20241023_v001.cdf")
 
             instrument_response_collection = InstrumentResponseLookupTableCollection.from_file(response_lut_path)
 
-            geometric_factor_lut_path = Path(
-                imap_processing.__file__).parent.parent / "swapi" / "test_data" / "imap_swapi_l2_energy-gf-lut-not-cdf_20240923_v002.cdf"
+            geometric_factor_lut_path = get_test_data_path(
+                "swapi/imap_swapi_l2_energy-gf-lut-not-cdf_20240923_v002.cdf")
 
             geometric_factor_lut = GeometricFactorCalibrationTable.from_file(geometric_factor_lut_path)
             background_count_rate_cutoff = 0.1

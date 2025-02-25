@@ -1,6 +1,6 @@
 import unittest
 from datetime import datetime, timedelta
-from unittest.mock import patch, call
+from unittest.mock import patch, call, Mock
 
 import numpy as np
 
@@ -12,6 +12,21 @@ from tests.test_helpers import NumpyArrayMatcher
 
 
 class TestSweProcessor(unittest.TestCase):
+    @patch('imap_processing.swe.swe_processor.upload')
+    @patch('imap_processing.swe.swe_processor.save_data')
+    @patch('imap_processing.swe.swe_processor.SweL3Dependencies.fetch_dependencies')
+    @patch('imap_processing.swe.swe_processor.SweProcessor.calculate_pitch_angle_products')
+    def test_process(self, mock_calculate_pitch_angle_products, mock_fetch_dependencies, mock_save_data, mock_upload):
+        mock_dependencies = Mock()
+        mock_input_metadata = Mock()
+        swe_processor = SweProcessor(mock_dependencies, mock_input_metadata)
+        swe_processor.process()
+
+        mock_fetch_dependencies.assert_called_once_with(mock_dependencies)
+        mock_calculate_pitch_angle_products.assert_called_once_with(mock_fetch_dependencies.return_value)
+        mock_save_data.assert_called_once_with(mock_calculate_pitch_angle_products.return_value)
+        mock_upload.assert_called_once_with(mock_save_data.return_value)
+
     @patch('imap_processing.swe.swe_processor.average_flux')
     @patch('imap_processing.swe.swe_processor.find_breakpoints')
     @patch('imap_processing.swe.swe_processor.calculate_solar_wind_velocity_vector')

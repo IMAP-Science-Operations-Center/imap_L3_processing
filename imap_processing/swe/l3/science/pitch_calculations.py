@@ -74,6 +74,10 @@ def rebin_by_pitch_angle(flux, pitch_angles, energies, config: SweConfiguration)
     energy_bins = config["energy_bins"]
     pitch_angle_left_edges = pitch_angle_bins - pitch_angle_delta
     pitch_angle_right_edges = pitch_angle_bins + pitch_angle_delta
+    mask_flux = flux > 0
+    flux_greater_than_zero = flux[mask_flux]
+    pitch_angles_for_masked_flux = pitch_angles[mask_flux]
+    energies_for_masked_flux = energies[mask_flux]
 
     num_pitch_bins = len(pitch_angle_bins)
     num_energy_bins = len(energy_bins)
@@ -81,10 +85,11 @@ def rebin_by_pitch_angle(flux, pitch_angles, energies, config: SweConfiguration)
     rebinned = np.full((num_energy_bins, num_pitch_bins), np.nan)
 
     for j in range(num_pitch_bins):
-        mask_pitch_angle = (pitch_angles >= pitch_angle_left_edges[j]) & (pitch_angles < pitch_angle_right_edges[j])
+        mask_pitch_angle = (pitch_angles_for_masked_flux >= pitch_angle_left_edges[j]) & (
+                    pitch_angles_for_masked_flux < pitch_angle_right_edges[j])
 
-        flux_by_pitch_angle = flux[mask_pitch_angle]
-        energy_by_pitch_angle = energies[mask_pitch_angle]
+        flux_by_pitch_angle = flux_greater_than_zero[mask_pitch_angle]
+        energy_by_pitch_angle = energies_for_masked_flux[mask_pitch_angle]
 
         for i, center in enumerate(energy_bins):
             left = config["energy_bin_low_multiplier"] * center

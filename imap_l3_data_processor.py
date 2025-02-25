@@ -11,6 +11,7 @@ import imap_data_access
 from imap_processing.glows.glows_processor import GlowsProcessor
 from imap_processing.models import UpstreamDataDependency, InputMetadata
 from imap_processing.swapi.swapi_processor import SwapiProcessor
+from imap_processing.swe.swe_processor import SweProcessor
 
 
 def imap_l3_processor():
@@ -32,20 +33,28 @@ def imap_l3_processor():
     args = parser.parse_args()
     dependencies_list = json.loads(args.dependency.replace("'", '"'))
 
+    def convert_to_datetime(date):
+        if date is None:
+            return None
+        else:
+            return datetime.strptime(date, "%Y%m%d")
+
     dependencies = [UpstreamDataDependency(d['instrument'], d['data_level'],
-                                           None, None,
+                                           convert_to_datetime(d['start_date']), convert_to_datetime(d.get('end_date', None)),
                                            d['version'], d['descriptor']) for d in dependencies_list]
     input_dependency = InputMetadata(args.instrument,
                                      args.data_level,
-                                     datetime.strptime(args.start_date, '%Y%m%d'),
-                                     datetime.strptime(args.end_date or args.start_date,
-                                                       '%Y%m%d'),
+                                     convert_to_datetime(args.start_date),
+                                     convert_to_datetime(args.end_date or args.start_date),
                                      args.version)
     if args.instrument == 'swapi' and (args.data_level == 'l3a' or args.data_level == 'l3b'):
         processor = SwapiProcessor(dependencies, input_dependency)
         processor.process()
     elif args.instrument == 'glows' and args.data_level == 'l3a':
         processor = GlowsProcessor(dependencies, input_dependency)
+        processor.process()
+    elif args.instrument == 'swe' and args.data_level == 'l3':
+        processor = SweProcessor(dependencies, input_dependency)
         processor.process()
     else:
         raise NotImplementedError(

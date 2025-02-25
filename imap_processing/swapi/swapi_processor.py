@@ -34,13 +34,8 @@ from imap_processing.utils import save_data
 class SwapiProcessor(Processor):
 
     def process(self):
-        dependencies = [
-            dataclasses.replace(dep, start_date=self.input_metadata.start_date, end_date=self.input_metadata.end_date)
-            for dep in
-            self.dependencies]
-
         if self.input_metadata.data_level == "l3a":
-            l3a_dependencies = SwapiL3ADependencies.fetch_dependencies(dependencies)
+            l3a_dependencies = SwapiL3ADependencies.fetch_dependencies(self.dependencies)
             data = read_l2_swapi_data(l3a_dependencies.data)
             proton_data, alpha_data, pui_he_data = self.process_l3a(data, l3a_dependencies)
             proton_cdf = save_data(proton_data)
@@ -50,7 +45,7 @@ class SwapiProcessor(Processor):
             imap_data_access.upload(alpha_cdf)
             imap_data_access.upload(pui_he_cdf)
         elif self.input_metadata.data_level == "l3b":
-            l3b_dependencies = SwapiL3BDependencies.fetch_dependencies(dependencies)
+            l3b_dependencies = SwapiL3BDependencies.fetch_dependencies(self.dependencies)
             data = read_l2_swapi_data(l3b_dependencies.data)
             l3b_combined_vdf = self.process_l3b(data, l3b_dependencies)
             cdf_path = save_data(l3b_combined_vdf)
