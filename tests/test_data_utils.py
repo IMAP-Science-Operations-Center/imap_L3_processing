@@ -71,3 +71,61 @@ class TestDataUtils(unittest.TestCase):
                                to_epoch=hit_data_epoch,
                                to_epoch_delta=hit_data_delta)
         np.testing.assert_array_equal(actual_average, expected_average)
+
+    def test_rebin_with_missing_data_fills_with_nan(self):
+        hit_data_epoch = np.array([datetime(2020, 4, 4, 0, 5),
+                                   datetime(2020, 4, 4, 0, 15),
+                                   datetime(2020, 4, 4, 0, 25)])
+        hit_data_delta = np.array([timedelta(seconds=300), timedelta(seconds=300), timedelta(seconds=300)])
+        mag_data = np.empty((0, 3))
+        mag_epoch = []
+        actual_average = rebin(from_epoch=mag_epoch, from_data=mag_data,
+                               to_epoch=hit_data_epoch,
+                               to_epoch_delta=hit_data_delta)
+
+        expected_average = [
+            [np.nan, np.nan, np.nan],
+            [np.nan, np.nan, np.nan],
+            [np.nan, np.nan, np.nan]
+        ]
+
+        np.testing.assert_array_equal(expected_average, actual_average)
+
+    def test_rebin_empty_bins_with_nan(self):
+        hit_data_epoch = np.array([datetime(2020, 4, 4, 0, 5),
+                                   datetime(2020, 4, 4, 0, 15),
+                                   datetime(2020, 4, 4, 0, 25)])
+        hit_data_delta = np.array([timedelta(seconds=300), timedelta(seconds=300), timedelta(seconds=300)])
+        mag_data = np.array([[0, 0, 1], [0, 1, 0]])
+        mag_epoch = [datetime(2020, 4, 4, 0, 1),
+                     datetime(2020, 4, 4, 0, 3)]
+        actual_average = rebin(from_epoch=mag_epoch, from_data=mag_data,
+                               to_epoch=hit_data_epoch,
+                               to_epoch_delta=hit_data_delta)
+        expected_average = [
+            [0, 0.5, 0.5],
+            [np.nan, np.nan, np.nan],
+            [np.nan, np.nan, np.nan]
+        ]
+        np.testing.assert_array_equal(actual_average, expected_average)
+
+    def test_temp(self):
+        hit_data_epoch = np.array([datetime(2020, 4, 4, 0, 5),
+                                   datetime(2020, 4, 4, 0, 15),
+                                   datetime(2020, 4, 4, 0, 30)])
+        hit_data_delta = np.array([timedelta(seconds=300), timedelta(seconds=300), timedelta(seconds=300)])
+        mag_data = np.array([[0, 0, 1], [0, 1, 0], [0, 0, 1], [1, 0, 0]])
+        mag_epoch = [datetime(2020, 4, 4, 0, 1),
+                     datetime(2020, 4, 4, 0, 7),
+                     datetime(2020, 4, 4, 0, 17),
+                     datetime(2020, 4, 4, 0, 21)
+                     ]
+        actual_average = rebin(from_epoch=mag_epoch, from_data=mag_data,
+                               to_epoch=hit_data_epoch,
+                               to_epoch_delta=hit_data_delta)
+        expected_average = [
+            [0, 0.5, 0.5],
+            [0, 0, 1],
+            [np.nan, np.nan, np.nan]
+        ]
+        np.testing.assert_array_equal(actual_average, expected_average)
