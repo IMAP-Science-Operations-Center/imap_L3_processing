@@ -1,4 +1,5 @@
 from dataclasses import fields
+from typing import Type, TypeVar
 from unittest import TestCase
 from unittest.mock import sentinel, patch, call, Mock
 
@@ -18,6 +19,9 @@ class TestHitProcessor(TestCase):
             Processor
         )
 
+    @patch('imap_processing.hit.l3.hit_processor.imap_data_access.upload')
+    @patch('imap_processing.hit.l3.hit_processor.convert_bin_high_low_to_center_delta')
+    @patch('imap_processing.hit.l3.hit_processor.save_data')
     @patch('imap_processing.hit.l3.hit_processor.HITL3SectoredDependencies.fetch_dependencies')
     @patch('imap_processing.hit.l3.hit_processor.calculate_unit_vector')
     @patch('imap_processing.hit.l3.hit_processor.get_hit_bin_polar_coordinates')
@@ -31,9 +35,17 @@ class TestHitProcessor(TestCase):
                                     mock_calculate_sector_areas,
                                     mock_get_sector_unit_vectors, mock_get_hit_bin_polar_coordinates,
                                     mock_calculate_unit_vector,
-                                    mock_fetch_dependencies):
-        epochs = [sentinel.time1, sentinel.time2]
+                                    mock_fetch_dependencies, mock_save_data, mock_convert_bin_high_low_to_center_delta,
+                                    mock_imap_data_access_upload):
+        epochs = np.array([123, 234])
+        epoch_deltas = np.array([12, 13])
         averaged_mag_vectors = [sentinel.mag_vector1, sentinel.mag_vector2]
+
+        mock_convert_bin_high_low_to_center_delta.side_effect = [(sentinel.h_energy, sentinel.h_energy_delta),
+                                                                 (sentinel.he4_energy, sentinel.he4_energy_delta),
+                                                                 (sentinel.cno_energy, sentinel.cno_energy_delta),
+                                                                 (sentinel.nemgsi_energy, sentinel.nemgsi_energy_delta),
+                                                                 (sentinel.fe_energy, sentinel.fe_energy_delta)]
 
         mock_dependencies = Mock(spec=HITL3SectoredDependencies)
         mock_mag_data = self.create_dataclass_mock(MagL1dData)
@@ -42,12 +54,13 @@ class TestHitProcessor(TestCase):
         mock_dependencies.mag_l1d_data = mock_mag_data
         mock_hit_data = self.create_dataclass_mock(HitL2Data)
         mock_hit_data.epoch = epochs
+        mock_hit_data.epoch_delta = epoch_deltas
 
-        mock_hit_data.CNO = [[sentinel.time1_energy], [sentinel.time2_energy]]
-        mock_hit_data.helium4 = [[], []]
-        mock_hit_data.hydrogen = [[], []]
-        mock_hit_data.iron = [[], []]
-        mock_hit_data.NeMgSi = [[], []]
+        mock_hit_data.CNO = [sentinel.CNO_time1, sentinel.CNO_time2]
+        mock_hit_data.helium4 = [sentinel.helium4_time1, sentinel.helium4_time2]
+        mock_hit_data.hydrogen = [sentinel.hydrogen_time1, sentinel.hydrogen_time2]
+        mock_hit_data.iron = [sentinel.iron_time1, sentinel.iron_time2]
+        mock_hit_data.NeMgSi = [sentinel.NeMgSi_time1, sentinel.NeMgSi_time2]
 
         mock_dependencies.data = mock_hit_data
         mock_fetch_dependencies.return_value = mock_dependencies
@@ -60,8 +73,38 @@ class TestHitProcessor(TestCase):
         mock_get_sector_unit_vectors.return_value = sector_unit_vectors
         mock_calculate_sector_areas.return_value = sentinel.sector_areas
 
-        mock_calculate_pitch_angle.side_effect = [sentinel.pitch_angle1, sentinel.pitch_angle2]
-        mock_calculate_gyrophase.side_effect = [sentinel.gyrophase1, sentinel.gyrophase2]
+        pitch_angle1 = np.array([100])
+        pitch_angle2 = np.array([200])
+
+        gyrophase1 = np.array([1000])
+        gyrophase2 = np.array([2000])
+
+        mock_calculate_pitch_angle.side_effect = [pitch_angle1, pitch_angle2]
+        mock_calculate_gyrophase.side_effect = [gyrophase1, gyrophase2]
+
+        rebinned_CNO_time1 = np.array([1])
+        rebinned_helium4_time1 = np.array([3])
+        rebinned_hydrogen_time1 = np.array([5])
+        rebinned_iron_time1 = np.array([7])
+        rebinned_NeMgSi_time1 = np.array([9])
+        rebinned_CNO_time2 = np.array([2])
+        rebinned_helium4_time2 = np.array([4])
+        rebinned_hydrogen_time2 = np.array([6])
+        rebinned_iron_time2 = np.array([8])
+        rebinned_NeMgSi_time2 = np.array([9])
+
+        mock_rebin_by_pitch_angle_and_gyrophase.side_effect = [
+            rebinned_CNO_time1,
+            rebinned_helium4_time1,
+            rebinned_hydrogen_time1,
+            rebinned_iron_time1,
+            rebinned_NeMgSi_time1,
+            rebinned_CNO_time2,
+            rebinned_helium4_time2,
+            rebinned_hydrogen_time2,
+            rebinned_iron_time2,
+            rebinned_NeMgSi_time2
+        ]
 
         processor = HitProcessor(sentinel.upstream_dependency, Mock())
         processor.process()
@@ -75,6 +118,14 @@ class TestHitProcessor(TestCase):
         ])
         mock_get_sector_unit_vectors.assert_called_once_with(sentinel.dec, sentinel.inc)
         mock_calculate_sector_areas.assert_called_once_with(sentinel.dec, sentinel.dec_delta, sentinel.inc_delta)
+
+        mock_convert_bin_high_low_to_center_delta.assert_has_calls([
+            call(mock_hit_data.h_energy_high, mock_hit_data.h_energy_low),
+            call(mock_hit_data.he4_energy_high, mock_hit_data.he4_energy_low),
+            call(mock_hit_data.cno_energy_high, mock_hit_data.cno_energy_low),
+            call(mock_hit_data.nemgsi_energy_high, mock_hit_data.nemgsi_energy_low),
+            call(mock_hit_data.fe_energy_high, mock_hit_data.fe_energy_low),
+        ])
 
         self.assertEqual(2, mock_calculate_pitch_angle.call_count)
         np.testing.assert_array_equal(mock_calculate_pitch_angle.call_args_list[0].args[0], -sector_unit_vectors)
@@ -94,11 +145,75 @@ class TestHitProcessor(TestCase):
         number_of_gyrophase_bins = 15
 
         mock_rebin_by_pitch_angle_and_gyrophase.assert_has_calls([
-            call(sentinel.time1_energy, sentinel.pitch_angle1, sentinel.gyrophase1, sentinel.sector_areas,
-                 number_of_pitch_angle_bins, number_of_gyrophase_bins),
-            call(sentinel.time2_energy, sentinel.pitch_angle2, sentinel.gyrophase2, sentinel.sector_areas,
-                 number_of_pitch_angle_bins, number_of_gyrophase_bins)
+            call(sentinel.CNO_time1, pitch_angle1, gyrophase1, sentinel.sector_areas,
+                 number_of_pitch_angle_bins,
+                 number_of_gyrophase_bins),
+            call(sentinel.helium4_time1, pitch_angle1, gyrophase1, sentinel.sector_areas,
+                 number_of_pitch_angle_bins,
+                 number_of_gyrophase_bins),
+            call(sentinel.hydrogen_time1, pitch_angle1, gyrophase1, sentinel.sector_areas,
+                 number_of_pitch_angle_bins,
+                 number_of_gyrophase_bins),
+            call(sentinel.iron_time1, pitch_angle1, gyrophase1, sentinel.sector_areas,
+                 number_of_pitch_angle_bins,
+                 number_of_gyrophase_bins),
+            call(sentinel.NeMgSi_time1, pitch_angle1, gyrophase1, sentinel.sector_areas,
+                 number_of_pitch_angle_bins,
+                 number_of_gyrophase_bins),
+
+            call(sentinel.CNO_time2, pitch_angle2, gyrophase2, sentinel.sector_areas,
+                 number_of_pitch_angle_bins,
+                 number_of_gyrophase_bins),
+            call(sentinel.helium4_time2, pitch_angle2, gyrophase2, sentinel.sector_areas,
+                 number_of_pitch_angle_bins,
+                 number_of_gyrophase_bins),
+            call(sentinel.hydrogen_time2, pitch_angle2, gyrophase2, sentinel.sector_areas,
+                 number_of_pitch_angle_bins,
+                 number_of_gyrophase_bins),
+            call(sentinel.iron_time2, pitch_angle2, gyrophase2, sentinel.sector_areas,
+                 number_of_pitch_angle_bins,
+                 number_of_gyrophase_bins),
+            call(sentinel.NeMgSi_time2, pitch_angle2, gyrophase2, sentinel.sector_areas,
+                 number_of_pitch_angle_bins,
+                 number_of_gyrophase_bins),
         ])
 
-    def create_dataclass_mock(self, obj):
+        saved_data_product = mock_save_data.call_args_list[0].args[0]
+
+        np.testing.assert_array_equal(saved_data_product.epochs, epochs)
+        np.testing.assert_array_equal(saved_data_product.epoch_deltas, epoch_deltas)
+
+        np.testing.assert_array_equal(saved_data_product.pitch_angles, sentinel.dec)
+        np.testing.assert_array_equal(saved_data_product.pitch_angle_deltas, sentinel.dec_delta)
+        np.testing.assert_array_equal(saved_data_product.gyrophases, sentinel.inc)
+        np.testing.assert_array_equal(saved_data_product.gyrophase_deltas, sentinel.inc_delta)
+
+        np.testing.assert_array_equal(saved_data_product.h_fluxes,
+                                      np.concatenate((rebinned_hydrogen_time1, rebinned_hydrogen_time2)))
+        np.testing.assert_array_equal(saved_data_product.he4_fluxes,
+                                      np.concatenate((rebinned_helium4_time1, rebinned_helium4_time2)))
+
+        np.testing.assert_array_equal(saved_data_product.cno_fluxes,
+                                      np.concatenate((rebinned_CNO_time1, rebinned_CNO_time2)))
+        np.testing.assert_array_equal(saved_data_product.ne_mg_si_fluxes,
+                                      np.concatenate((rebinned_NeMgSi_time1, rebinned_NeMgSi_time2)))
+        np.testing.assert_array_equal(saved_data_product.iron_fluxes,
+                                      np.concatenate((rebinned_iron_time1, rebinned_iron_time2)))
+
+        self.assertIs(sentinel.h_energy, saved_data_product.h_energies)
+        self.assertIs(sentinel.h_energy_delta, saved_data_product.h_energy_deltas)
+        self.assertIs(sentinel.he4_energy, saved_data_product.he4_energies)
+        self.assertIs(sentinel.he4_energy_delta, saved_data_product.he4_energy_deltas)
+        self.assertIs(sentinel.cno_energy, saved_data_product.cno_energies)
+        self.assertIs(sentinel.cno_energy_delta, saved_data_product.cno_energy_deltas)
+        self.assertIs(sentinel.nemgsi_energy, saved_data_product.ne_mg_si_energies)
+        self.assertIs(sentinel.nemgsi_energy_delta, saved_data_product.ne_mg_si_energy_deltas)
+        self.assertIs(sentinel.fe_energy, saved_data_product.iron_energies)
+        self.assertIs(sentinel.fe_energy_delta, saved_data_product.iron_energy_deltas)
+
+        mock_imap_data_access_upload.assert_called_once_with(mock_save_data.return_value)
+
+    T = TypeVar("T")
+
+    def create_dataclass_mock(self, obj: Type[T]) -> T:
         return Mock(spec=[field.name for field in fields(obj)])

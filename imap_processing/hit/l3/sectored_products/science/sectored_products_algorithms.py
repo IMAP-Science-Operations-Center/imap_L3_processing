@@ -1,14 +1,15 @@
 import numpy as np
 
 
-def get_hit_bin_polar_coordinates() -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-    declination_starts, declination_step = np.linspace(0, 180, 8, endpoint=False, retstep=True)
+def get_hit_bin_polar_coordinates(declination_bins=8, inclination_bins=15) -> tuple[
+    np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    declination_starts, declination_step = np.linspace(0, 180, declination_bins, endpoint=False, retstep=True)
     declination_delta = declination_step / 2
     declinations = declination_starts + declination_delta
-    azimuth_starts, azimuth_step = np.linspace(0, 360, 15, endpoint=False, retstep=True)
-    azimuth_delta = azimuth_step / 2
-    azimuths = azimuth_starts + azimuth_delta
-    return declinations, azimuths, declination_delta, azimuth_delta
+    inclination_starts, inclination_step = np.linspace(0, 360, inclination_bins, endpoint=False, retstep=True)
+    inclination_delta = inclination_step / 2
+    inclinations = inclination_starts + inclination_delta
+    return declinations, inclinations, declination_delta, inclination_delta
 
 
 def get_sector_unit_vectors(declinations_degrees: np.ndarray, inclinations_degrees: np.ndarray) -> np.ndarray:
