@@ -5,7 +5,7 @@ max_uint16: &max_uint16 65535
 data_defaults: &data_defaults
   DEPEND_0: epoch
   VAR_TYPE: data
-  FORMAT: F12.6
+  FORMAT: F8.3
   FILLVAL: *float_fillval
 
 timeseries_defaults: &timeseries_defaults
@@ -46,6 +46,7 @@ epoch_delta:
   DEPEND_0: epoch
   DISPLAY_TYPE: time_series
   FIELDNAM: epoch_delta
+  LABLAXIS: Time
   FILLVAL: -9223372036854775808
   VALIDMIN: 0
   VALIDMAX: 86000000000000
@@ -57,86 +58,66 @@ epoch_delta:
   FORMAT: 19I
 
 energy:
+  <<: *support_data_defaults
   CATDESC: Bin Energy
-  DEPEND_0: temp
-  DISPLAY_TYPE: temp
-  FIELDNAM: temp
-  FILLVAL: temp
-  VALIDMIN: temp
-  VALIDMAX: temp
-  SCALEMIN: temp
-  SCALEMAX: temp
-  SCALETYP: temp
-  UNITS: temp
-  VAR_TYPE: temp
-  FORMAT: temp
+  FIELDNAM: Energy
+  LABLAXIS: Energy
+  VALIDMIN: 1
+  VALIDMAX: 10000
+  SCALEMIN: 1
+  SCALEMAX: 10000
+  SCALETYP: log
+  UNITS: eV
 energy_delta_plus:
-  CATDESC: temp
-  DEPEND_0: temp
-  DISPLAY_TYPE: temp
-  FIELDNAM: temp
-  FILLVAL: temp
-  VALIDMIN: temp
-  VALIDMAX: temp
-  SCALEMIN: temp
-  SCALEMAX: temp
-  SCALETYP: temp
-  UNITS: temp
-  VAR_TYPE: temp
-  FORMAT: temp
+  <<: *support_data_defaults
+  CATDESC: Energy bin half-width
+  FIELDNAM: Energy
+  LABLAXIS: Energy
+  VALIDMIN: 0
+  VALIDMAX: 10000
+  SCALEMIN: 0
+  SCALEMAX: 10000
+  SCALETYP: log
+  UNITS: eV
 energy_delta_minus:
-  CATDESC: temp
-  DEPEND_0: temp
-  DISPLAY_TYPE: temp
-  FIELDNAM: temp
-  FILLVAL: temp
-  VALIDMIN: temp
-  VALIDMAX: temp
-  SCALEMIN: temp
-  SCALEMAX: temp
-  SCALETYP: temp
-  UNITS: temp
-  VAR_TYPE: temp
-  FORMAT: temp
-pitch_angle:
-  CATDESC: temp
-  DEPEND_0: temp
-  DISPLAY_TYPE: temp
-  FIELDNAM: temp
-  FILLVAL: temp
-  VALIDMIN: temp
-  VALIDMAX: temp
-  SCALEMIN: temp
-  SCALEMAX: temp
-  SCALETYP: temp
-  UNITS: temp
-  VAR_TYPE: temp
-  FORMAT: temp
+  <<: *support_data_defaults
+  CATDESC: Energy bin half-width
+  FIELDNAM: Energy
+  LABLAXIS: Energy
+  VALIDMIN: 0
+  VALIDMAX: 10000
+  SCALEMIN: 0
+  SCALEMAX: 10000
+  SCALETYP: log
+  UNITS: eV
+pitch_angle: &pitch_angle
+  <<: *support_data_defaults
+  CATDESC: Pitch Angle
+  FIELDNAM: Pitch Angle
+  LABLAXIS: Pitch Angle
+  VALIDMIN: 0
+  VALIDMAX: 180
+  SCALEMIN: 0
+  SCALEMAX: 180
+  SCALETYP: linear
+  UNITS: degrees
 pitch_angle_delta:
-  CATDESC: temp
-  DEPEND_0: temp
-  DISPLAY_TYPE: temp
-  FIELDNAM: temp
-  FILLVAL: temp
-  VALIDMIN: temp
-  VALIDMAX: temp
-  SCALEMIN: temp
-  SCALEMAX: temp
-  SCALETYP: temp
-  UNITS: temp
-  VAR_TYPE: temp
-  FORMAT: temp
+  <<: *pitch_angle
+  CATDESC: Pitch Angle bin half-width
 flux_by_pitch_angle:
-  CATDESC: temp
-  DEPEND_0: temp
-  DISPLAY_TYPE: temp
-  FIELDNAM: temp
-  FILLVAL: temp
-  VALIDMIN: temp
-  VALIDMAX: temp
-  SCALEMIN: temp
-  SCALEMAX: temp
-  SCALETYP: temp
-  UNITS: temp
-  VAR_TYPE: temp
-  FORMAT: temp
+  CATDESC: Electron flux organized by pitch angle
+  DEPEND_0: epoch
+  DEPEND_1: energy
+  DEPEND_2: pitch_angle
+  DISPLAY_TYPE: spectrogram
+  FIELDNAM: Electron Flux
+  LABLAXIS: Flux
+  FILLVAL: *float_fillval
+  VALIDMIN: 1.0e-40
+  VALIDMAX: 100000
+  SCALEMIN: 1.0e-40
+  SCALEMAX: 100000
+  SCALETYP: log
+  UNITS: cm^-2 sr^-1 s^-1 eV^-1
+  VAR_TYPE: data
+  FORMAT: F8.3
