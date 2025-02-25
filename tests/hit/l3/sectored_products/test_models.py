@@ -8,7 +8,8 @@ from imap_processing.hit.l3.sectored_products.models import HitPitchAngleDataPro
     H_ENERGY_CDF_VAR_NAME, H_ENERGY_DELTA_CDF_VAR_NAME, HE4_FLUX_CDF_VAR_NAME, HE4_ENERGY_CDF_VAR_NAME, \
     HE4_ENERGY_DELTA_CDF_VAR_NAME, CNO_FLUX_CDF_VAR_NAME, CNO_ENERGY_CDF_VAR_NAME, CNO_ENERGY_DELTA_CDF_VAR_NAME, \
     NE_MG_SI_FLUX_CDF_VAR_NAME, NE_MG_SI_ENERGY_CDF_VAR_NAME, NE_MG_SI_ENERGY_DELTA_CDF_VAR_NAME, \
-    IRON_FLUX_CDF_VAR_NAME, IRON_ENERGY_CDF_VAR_NAME, IRON_ENERGY_DELTA_CDF_VAR_NAME
+    IRON_FLUX_CDF_VAR_NAME, IRON_ENERGY_CDF_VAR_NAME, IRON_ENERGY_DELTA_CDF_VAR_NAME, PITCH_ANGLE_DELTA_CDF_VAR_NAME, \
+    GYROPHASE_DELTA_CDF_VAR_NAME
 from imap_processing.models import DataProductVariable
 
 
@@ -35,14 +36,18 @@ class TestHitPitchAngleDataProduct(TestCase):
         iron_energy_deltas = sentinel.iron_energy_deltas
 
         pitch_angles = sentinel.pitch_angles
+        pitch_angle_deltas = sentinel.pitch_angles_deltas
         gyrophases = sentinel.gyrophases
+        gyrophase_deltas = sentinel.gyrophase_deltas
         epochs = sentinel.epochs
         epoch_deltas = sentinel.epoch_delta
 
         data = HitPitchAngleDataProduct(epochs,
                                         epoch_deltas,
                                         pitch_angles,
+                                        pitch_angle_deltas,
                                         gyrophases,
+                                        gyrophase_deltas,
                                         h_fluxes,
                                         h_energies,
                                         h_energy_deltas,
@@ -65,8 +70,10 @@ class TestHitPitchAngleDataProduct(TestCase):
         expected_data_product_variables = [
             DataProductVariable(EPOCH_CDF_VAR_NAME, epochs, cdf_data_type=pycdf.const.CDF_TIME_TT2000),
             DataProductVariable(EPOCH_DELTA_CDF_VAR_NAME, epoch_deltas),
-            DataProductVariable(PITCH_ANGLE_CDF_VAR_NAME, pitch_angles),
-            DataProductVariable(GYROPHASE_CDF_VAR_NAME, gyrophases),
+            DataProductVariable(PITCH_ANGLE_CDF_VAR_NAME, pitch_angles, record_varying=False),
+            DataProductVariable(PITCH_ANGLE_DELTA_CDF_VAR_NAME, pitch_angle_deltas, record_varying=False),
+            DataProductVariable(GYROPHASE_CDF_VAR_NAME, gyrophases, record_varying=False),
+            DataProductVariable(GYROPHASE_DELTA_CDF_VAR_NAME, gyrophase_deltas, record_varying=False),
             DataProductVariable(H_FLUX_CDF_VAR_NAME, h_fluxes),
             DataProductVariable(H_ENERGY_CDF_VAR_NAME, h_energies, record_varying=False),
             DataProductVariable(H_ENERGY_DELTA_CDF_VAR_NAME, h_energy_deltas, record_varying=False),

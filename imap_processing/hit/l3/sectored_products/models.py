@@ -5,7 +5,9 @@ from imap_processing.models import DataProduct, DataProductVariable
 EPOCH_CDF_VAR_NAME = "epoch"
 EPOCH_DELTA_CDF_VAR_NAME = "epoch_delta"
 GYROPHASE_CDF_VAR_NAME = "gyrophase"
+GYROPHASE_DELTA_CDF_VAR_NAME = "gyrophase_delta"
 PITCH_ANGLE_CDF_VAR_NAME = "pitch_angle"
+PITCH_ANGLE_DELTA_CDF_VAR_NAME = "pitch_angle_delta"
 H_FLUX_CDF_VAR_NAME = "h_flux"
 H_ENERGY_CDF_VAR_NAME = "h_energy"
 H_ENERGY_DELTA_CDF_VAR_NAME = "h_energy_delta"
@@ -27,7 +29,9 @@ class HitPitchAngleDataProduct(DataProduct):
     def __init__(self, epochs,
                  epoch_deltas,
                  pitch_angles,
+                 pitch_angle_deltas,
                  gyrophases,
+                 gyrophase_deltas,
                  h_fluxes,
                  h_energies,
                  h_energy_deltas,
@@ -46,7 +50,9 @@ class HitPitchAngleDataProduct(DataProduct):
         self.epochs = epochs
         self.epoch_deltas = epoch_deltas
         self.pitch_angles = pitch_angles
+        self.pitch_angle_deltas = pitch_angle_deltas
         self.gyrophases = gyrophases
+        self.gyrophase_deltas = gyrophase_deltas
         self.h_fluxes = h_fluxes
         self.h_energies = h_energies
         self.h_energy_deltas = h_energy_deltas
@@ -67,8 +73,10 @@ class HitPitchAngleDataProduct(DataProduct):
         return [
             DataProductVariable(EPOCH_CDF_VAR_NAME, self.epochs, cdf_data_type=pycdf.const.CDF_TIME_TT2000),
             DataProductVariable(EPOCH_DELTA_CDF_VAR_NAME, self.epoch_deltas),
-            DataProductVariable(PITCH_ANGLE_CDF_VAR_NAME, self.pitch_angles),
-            DataProductVariable(GYROPHASE_CDF_VAR_NAME, self.gyrophases),
+            DataProductVariable(PITCH_ANGLE_CDF_VAR_NAME, self.pitch_angles, record_varying=False),
+            DataProductVariable(PITCH_ANGLE_DELTA_CDF_VAR_NAME, self.pitch_angle_deltas, record_varying=False),
+            DataProductVariable(GYROPHASE_CDF_VAR_NAME, self.gyrophases, record_varying=False),
+            DataProductVariable(GYROPHASE_DELTA_CDF_VAR_NAME, self.gyrophase_deltas, record_varying=False),
             DataProductVariable(H_FLUX_CDF_VAR_NAME, self.h_fluxes),
             DataProductVariable(H_ENERGY_CDF_VAR_NAME, self.h_energies, record_varying=False),
             DataProductVariable(H_ENERGY_DELTA_CDF_VAR_NAME, self.h_energy_deltas, record_varying=False),

@@ -7,7 +7,7 @@ import numpy as np
 from spacepy.pycdf import CDF
 
 from imap_processing.constants import FIVE_MINUTES_IN_NANOSECONDS
-from imap_processing.hit.l3.utils import read_l2_hit_data
+from imap_processing.hit.l3.utils import read_l2_hit_data, convert_bin_high_low_to_center_delta
 
 
 class TestUtils(TestCase):
@@ -18,6 +18,11 @@ class TestUtils(TestCase):
     def tearDown(self) -> None:
         if os.path.exists('test_cdf.cdf'):
             os.remove('test_cdf.cdf')
+
+    def test_convert_bin_high_low_to_center_delta(self):
+        bin_center, bin_delta = convert_bin_high_low_to_center_delta(np.array([2, 8.5]), np.array([0, 7.0]))
+        np.testing.assert_almost_equal(bin_center, [1, 7.75])
+        np.testing.assert_almost_equal(bin_delta, [1, 0.75])
 
     def test_read_l2_hit_data(self):
         rng = np.random.default_rng()
