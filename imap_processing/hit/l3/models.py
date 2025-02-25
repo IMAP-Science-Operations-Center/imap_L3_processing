@@ -90,6 +90,13 @@ class PHAData(DataProduct):
         detector_addresses = []
         gain_flags = []
         last_phas = []
+        detector_flags = []
+        de_index = []
+        ep_index = []
+        stim_gains = []
+        a_l_stims = []
+        stim_steps = []
+        dac_values = []
 
         for event_output in self.event_outputs:
             charges.append(event_output.charge)
@@ -108,7 +115,9 @@ class PHAData(DataProduct):
             detector_addresses.append([pha_word.detector.address for pha_word in event_output.original_event.pha_words])
             gain_flags.append([pha_word.is_low_gain for pha_word in event_output.original_event.pha_words])
             last_phas.append([pha_word.is_last_pha for pha_word in event_output.original_event.pha_words])
-
+            self._process_extended_header(de_index, detector_flags, ep_index, event_output)
+            self._process_stim_block(a_l_stims, event_output, stim_gains, stim_steps)
+            self._process_extended_stim_header(dac_values, event_output)
         return [
             DataProductVariable(CHARGE_VAR_NAME, np.array(charges)),
             DataProductVariable(ENERGY_VAR_NAME, np.array(energies)),
@@ -126,4 +135,37 @@ class PHAData(DataProduct):
             DataProductVariable(DETECTOR_ADDRESS_VAR_NAME, np.array(detector_addresses)),
             DataProductVariable(GAIN_FLAG_VAR_NAME, np.array(gain_flags)),
             DataProductVariable(LAST_PHA_VAR_NAME, np.array(last_phas)),
+            DataProductVariable(DETECTOR_FLAG_VAR_NAME, np.array(detector_flags)),
+            DataProductVariable(DEINDEX_VAR_NAME, np.array(de_index)),
+            DataProductVariable(EPINDEX_VAR_NAME, np.array(ep_index)),
+            DataProductVariable(STIM_GAIN_VAR_NAME, np.array(stim_gains)),
+            DataProductVariable(A_L_STIM_VAR_NAME, np.array(a_l_stims)),
+            DataProductVariable(STIM_STEP_VAR_NAME, np.array(stim_steps)),
+            DataProductVariable(DAC_VALUE_VAR_NAME, np.array(dac_values))
         ]
+
+    def _process_stim_block(self, a_l_stims, event_output, stim_gains, stim_steps):
+        if event_output.original_event.stim_block is None:
+            stim_gains.append(None)
+            a_l_stims.append(None)
+            stim_steps.append(None)
+        else:
+            stim_gains.append(event_output.original_event.stim_block.stim_gain)
+            a_l_stims.append(event_output.original_event.stim_block.a_l_stim)
+            stim_steps.append(event_output.original_event.stim_block.stim_step)
+
+    def _process_extended_header(self, de_index, detector_flags, ep_index, event_output):
+        if event_output.original_event.extended_header is None:
+            detector_flags.append(None)
+            de_index.append(None)
+            ep_index.append(None)
+        else:
+            detector_flags.append(event_output.original_event.extended_header.detector_flags)
+            de_index.append(event_output.original_event.extended_header.delta_e_index)
+            ep_index.append(event_output.original_event.extended_header.e_prime_index)
+
+    def _process_extended_stim_header(self, dac_values, event_output):
+        if event_output.original_event.extended_stim_header is None:
+            dac_values.append(None)
+        else:
+            dac_values.append(event_output.original_event.extended_stim_header.dac_value)

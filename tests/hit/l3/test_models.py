@@ -12,7 +12,7 @@ from tests.swapi.cdf_model_test_case import CdfModelTestCase
 
 
 class TestModels(CdfModelTestCase):
-    def test_pha_to_data_product_variables_with_no_flags(self):
+    def test_pha_to_data_product_variables_with_multiple_events(self):
         pha_word = PHAWord(adc_overflow=False, adc_value=11,
                            detector=Detector(layer=1, side="A", segment="1A", address=200), is_last_pha=True,
                            is_low_gain=True)
@@ -111,6 +111,7 @@ class TestModels(CdfModelTestCase):
                                         expected_variables[15].cdf_data_type, expected_variables[15].record_varying)
         self.assert_variable_attributes(actual_variables[16], expected_variables[16].value, expected_variables[16].name,
                                         expected_variables[16].cdf_data_type, expected_variables[16].record_varying)
+
         self.assert_variable_attributes(actual_variables[17], expected_variables[17].value, expected_variables[17].name,
                                         expected_variables[17].cdf_data_type, expected_variables[17].record_varying)
         self.assert_variable_attributes(actual_variables[18], expected_variables[18].value, expected_variables[18].name,
