@@ -1,0 +1,142 @@
+float_fillval: &float_fillval -1.000000e+31
+uint4_fillval: &uint4_fillval 4294967295
+max_uint16: &max_uint16 65535
+
+data_defaults: &data_defaults
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  FORMAT: F12.6
+  FILLVAL: *float_fillval
+
+timeseries_defaults: &timeseries_defaults
+  <<: *data_defaults
+  DISPLAY_TYPE: time_series
+
+spectrogram_defaults: &spectrogram_defaults
+  <<: *data_defaults
+  DEPEND_1: spin_angle
+  DISPLAY_TYPE: spectrogram
+
+support_data_defaults: &support_data_defaults
+  <<: *data_defaults
+  VAR_TYPE: support_data
+  DISPLAY_TYPE: no_plot
+
+epoch:
+  CATDESC: Time, number of nanoseconds since J2000 with leap seconds included
+  FIELDNAM: epoch
+  LABLAXIS: epoch
+  UNITS: ns
+  VAR_TYPE: support_data
+  SCALETYP: linear
+  MONOTON: INCREASE
+  TIME_BASE: J2000
+  TIME_SCALE: Terrestrial Time
+  REFERENCE_POSITION: Rotating Earth Geoid
+  DELTA_MINUS_VAR: epoch_delta
+  DELTA_PLUS_VAR: epoch_delta
+  FILLVAL: 9999-12-31T23:59:59.999999999
+  VALIDMIN: 2010-01-01T00:00:00.000000000
+  VALIDMAX: 2040-01-01T00:00:00.000000000
+  FORMAT: " "
+  DISPLAY_TYPE: no_plot
+
+epoch_delta:
+  CATDESC: epoch_DELTA
+  DEPEND_0: epoch
+  DISPLAY_TYPE: time_series
+  FIELDNAM: epoch_delta
+  FILLVAL: -9223372036854775808
+  VALIDMIN: 0
+  VALIDMAX: 86000000000000
+  SCALEMIN: 0
+  SCALEMAX: 86000000000000
+  SCALETYP: linear
+  UNITS: ns
+  VAR_TYPE: support_data
+  FORMAT: 19I
+
+energy:
+  CATDESC: Bin Energy
+  DEPEND_0: temp
+  DISPLAY_TYPE: temp
+  FIELDNAM: temp
+  FILLVAL: temp
+  VALIDMIN: temp
+  VALIDMAX: temp
+  SCALEMIN: temp
+  SCALEMAX: temp
+  SCALETYP: temp
+  UNITS: temp
+  VAR_TYPE: temp
+  FORMAT: temp
+energy_delta_plus:
+  CATDESC: temp
+  DEPEND_0: temp
+  DISPLAY_TYPE: temp
+  FIELDNAM: temp
+  FILLVAL: temp
+  VALIDMIN: temp
+  VALIDMAX: temp
+  SCALEMIN: temp
+  SCALEMAX: temp
+  SCALETYP: temp
+  UNITS: temp
+  VAR_TYPE: temp
+  FORMAT: temp
+energy_delta_minus:
+  CATDESC: temp
+  DEPEND_0: temp
+  DISPLAY_TYPE: temp
+  FIELDNAM: temp
+  FILLVAL: temp
+  VALIDMIN: temp
+  VALIDMAX: temp
+  SCALEMIN: temp
+  SCALEMAX: temp
+  SCALETYP: temp
+  UNITS: temp
+  VAR_TYPE: temp
+  FORMAT: temp
+pitch_angle:
+  CATDESC: temp
+  DEPEND_0: temp
+  DISPLAY_TYPE: temp
+  FIELDNAM: temp
+  FILLVAL: temp
+  VALIDMIN: temp
+  VALIDMAX: temp
+  SCALEMIN: temp
+  SCALEMAX: temp
+  SCALETYP: temp
+  UNITS: temp
+  VAR_TYPE: temp
+  FORMAT: temp
+pitch_angle_delta:
+  CATDESC: temp
+  DEPEND_0: temp
+  DISPLAY_TYPE: temp
+  FIELDNAM: temp
+  FILLVAL: temp
+  VALIDMIN: temp
+  VALIDMAX: temp
+  SCALEMIN: temp
+  SCALEMAX: temp
+  SCALETYP: temp
+  UNITS: temp
+  VAR_TYPE: temp
+  FORMAT: temp
+flux_by_pitch_angle:
+  CATDESC: temp
+  DEPEND_0: temp
+  DISPLAY_TYPE: temp
+  FIELDNAM: temp
+  FILLVAL: temp
+  VALIDMIN: temp
+  VALIDMAX: temp
+  SCALEMIN: temp
+  SCALEMAX: temp
+  SCALETYP: temp
+  UNITS: temp
+  VAR_TYPE: temp
+  FORMAT: temp
