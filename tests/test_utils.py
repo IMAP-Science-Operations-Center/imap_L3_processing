@@ -118,10 +118,11 @@ class TestUtils(TestCase):
         file_name_as_path = Path(file_name_as_str)
 
         epoch = np.array([datetime(2010, 1, 1, 0, 0, 46)])
-        vectors = np.array([[0, 1, 2], [3, 4, 5], [6, 7, 8]])
+        vectors_with_magnitudes = np.array([[0, 1, 2, 0], [3, 4, 5, 0], [6, 7, 8, 0]])
+        trimmed_vectors = np.array([[0, 1, 2], [3, 4, 5], [6, 7, 8]])
         with CDF(file_name_as_str, "") as mag_cdf:
             mag_cdf["epoch"] = epoch
-            mag_cdf["vectors"] = vectors
+            mag_cdf["vectors"] = vectors_with_magnitudes
 
         cases = [
             ("file name as str", file_name_as_str),
@@ -132,4 +133,4 @@ class TestUtils(TestCase):
                 results = read_l1d_mag_data(path)
 
                 np.testing.assert_array_equal(epoch, results.epoch)
-                np.testing.assert_array_equal(vectors, results.mag_data)
+                np.testing.assert_array_equal(trimmed_vectors, results.mag_data)

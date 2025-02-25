@@ -61,4 +61,4 @@ def read_l1d_mag_data(cdf_path: Union[str, Path]) -> MagL1dData:
     with CDF(str(cdf_path)) as cdf:
         return MagL1dData(
             epoch=cdf['epoch'][...],
-            mag_data=cdf["vectors"][...])
+            mag_data=cdf["vectors"][:, :3])
