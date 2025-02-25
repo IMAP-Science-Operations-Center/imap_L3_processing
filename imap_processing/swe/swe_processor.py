@@ -35,6 +35,7 @@ class SweProcessor(Processor):
                                             to_epoch_delta=swe_epoch_delta)
 
         flux_by_pitch_angles = []
+        phase_space_density_by_pitch_angle = []
         for i in range(len(swe_epoch)):
             averaged_flux = average_flux(swe_l2_data.flux[i],
                                          np.array(dependencies.configuration["geometric_fractions"]))
@@ -47,7 +48,14 @@ class SweProcessor(Processor):
                                               rebinned_solar_wind_vectors[i],
                                               dependencies.configuration,
                                               )
+            rebinned_psd = correct_and_rebin(swe_l2_data.phase_space_density[i], corrected_energy_bins,
+                                             swe_l2_data.inst_el,
+                                             swe_l2_data.inst_az_spin_sector[i],
+                                             rebinned_mag[i],
+                                             rebinned_solar_wind_vectors[i],
+                                             dependencies.configuration, )
             flux_by_pitch_angles.append(rebinned_flux)
+            phase_space_density_by_pitch_angle.append(rebinned_psd)
 
         swe_l3_data = SweL3Data(input_metadata=self.input_metadata.to_upstream_data_dependency("sci"),
                                 epoch=swe_epoch,
@@ -57,5 +65,6 @@ class SweProcessor(Processor):
                                 energy_delta_minus=dependencies.configuration["energy_delta_minus"],
                                 pitch_angle=dependencies.configuration["pitch_angle_bins"],
                                 pitch_angle_delta=dependencies.configuration["pitch_angle_delta"],
-                                flux_by_pitch_angle=np.array(flux_by_pitch_angles))
+                                flux_by_pitch_angle=np.array(flux_by_pitch_angles),
+                                phase_space_density_by_pitch_angle=phase_space_density_by_pitch_angle)
         return swe_l3_data
