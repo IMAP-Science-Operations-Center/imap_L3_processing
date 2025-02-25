@@ -5,7 +5,7 @@ import numpy as np
 
 from imap_processing.swe.l3.science.pitch_calculations import piece_wise_model, find_breakpoints, \
     average_flux, calculate_velocity_in_dsp_frame_km_s, calculate_look_directions, rebin_by_pitch_angle, \
-    correct_and_rebin, calculate_energy_in_ev_from_velocity_in_km_per_second
+    correct_and_rebin, calculate_energy_in_ev_from_velocity_in_km_per_second, integrate_distribution_to_get_1d_spectrum
 from tests.test_helpers import build_swe_configuration
 
 
@@ -278,6 +278,29 @@ class TestPitchCalculations(unittest.TestCase):
             configuration,
         )
         self.assertEqual(mock_rebin_by_pitch_angle.return_value, result)
+
+    def test_integrate_distribution_to_get_1d_spectrum(self):
+        pitch_angle_bins = [30, 90]
+        pitch_angle_deltas = [15, 15]
+        configuration = build_swe_configuration(pitch_angle_bins=pitch_angle_bins,
+                                                pitch_angle_delta=pitch_angle_deltas)
+
+        psd_by_pitch_angles = np.array([
+            [10, 20],
+            [5, 10],
+            [7, 15],
+        ])
+
+        actual_integrated_spectrum = integrate_distribution_to_get_1d_spectrum(psd_by_pitch_angles, configuration)
+
+        bin1_factor = ((0.5 * np.deg2rad(30)) / 2)
+        bin2_factor = ((1 * np.deg2rad(30)) / 2)
+        expected_integrated_spectrum = [
+            10 * bin1_factor + 20 * bin2_factor,
+            5 * bin1_factor + 10 * bin2_factor,
+            7 * bin1_factor + 15 * bin2_factor
+        ]
+        np.testing.assert_allclose(actual_integrated_spectrum, expected_integrated_spectrum)
 
 
 if __name__ == '__main__':

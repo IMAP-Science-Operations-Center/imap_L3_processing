@@ -117,7 +117,7 @@ def create_swapi_l3a_cdf(proton_temperature_density_calibration_file, alpha_temp
     return proton_cdf_path, alpha_cdf_path, pui_he_cdf_path
 
 
-def create_swe_cdf(dependencies: SweL3Dependencies)->str:
+def create_swe_cdf(dependencies: SweL3Dependencies) -> str:
     input_metadata = InputMetadata(
         instrument='swe',
         data_level='l3',
@@ -125,9 +125,10 @@ def create_swe_cdf(dependencies: SweL3Dependencies)->str:
         end_date=datetime(2025, 10, 24),
         version='v999')
     processor = SweProcessor(None, input_metadata)
-    output_data =processor.calculate_pitch_angle_products(dependencies)
+    output_data = processor.calculate_pitch_angle_products(dependencies)
     cdf_path = save_data(output_data)
     return cdf_path
+
 
 def process_hit_pha():
     bitstream = BitStream(filename=get_test_data_path("hit/pha_events/full_event_record_buffer.bin"))
@@ -193,10 +194,9 @@ if __name__ == "__main__":
 
     if "swe" in sys.argv:
         dependencies = SweL3Dependencies.from_file_paths(
-            get_test_data_path("swe/imap_swe_l2_sci_20250101_v002.cdf"),
+            get_test_data_path("swe/imap_swe_l2_sci-with-ace-data_20250101_v002.cdf"),
             get_test_data_path("mag/imap_mag_l1d_mago-normal_20250101_v001.cdf"),
             get_test_data_path("swe/imap_swapi_l3a_proton-sw_20250101_v001.cdf"),
             get_test_data_path("swe/example_swe_config.json"),
         )
         print(create_swe_cdf(dependencies))
-

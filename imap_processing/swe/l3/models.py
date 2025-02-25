@@ -14,6 +14,7 @@ PITCH_ANGLE_CDF_VAR_NAME = "pitch_angle"
 PITCH_ANGLE_DELTA_CDF_VAR_NAME = "pitch_angle_delta"
 FLUX_BY_PITCH_ANGLE_CDF_VAR_NAME = "flux_by_pitch_angle"
 PHASE_SPACE_DENSITY_BY_PITCH_ANGLE_CDF_VAR_NAME = "phase_space_density_by_pitch_angle"
+ENERGY_SPECTRUM_CDF_VAR_NAME = "energy_spectrum"
 
 
 @dataclass
@@ -47,6 +48,7 @@ class SweL3Data(DataProduct):
     pitch_angle_delta: np.ndarray
     flux_by_pitch_angle: np.ndarray
     phase_space_density_by_pitch_angle: np.ndarray
+    energy_spectrum: np.ndarray
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
@@ -61,6 +63,8 @@ class SweL3Data(DataProduct):
             DataProductVariable(FLUX_BY_PITCH_ANGLE_CDF_VAR_NAME, value=self.flux_by_pitch_angle),
             DataProductVariable(PHASE_SPACE_DENSITY_BY_PITCH_ANGLE_CDF_VAR_NAME,
                                 value=self.phase_space_density_by_pitch_angle),
+            DataProductVariable(ENERGY_SPECTRUM_CDF_VAR_NAME,
+                                value=self.energy_spectrum),
         ]
 
 

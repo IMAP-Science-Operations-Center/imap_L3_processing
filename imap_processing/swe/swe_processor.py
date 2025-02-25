@@ -5,7 +5,8 @@ from imap_processing.data_utils import rebin
 from imap_processing.processor import Processor
 from imap_processing.swapi.l3a.science.calculate_pickup_ion import calculate_solar_wind_velocity_vector
 from imap_processing.swe.l3.models import SweL3Data
-from imap_processing.swe.l3.science.pitch_calculations import average_flux, find_breakpoints, correct_and_rebin
+from imap_processing.swe.l3.science.pitch_calculations import average_flux, find_breakpoints, correct_and_rebin, \
+    integrate_distribution_to_get_1d_spectrum
 from imap_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies
 from imap_processing.utils import save_data
 
@@ -36,6 +37,7 @@ class SweProcessor(Processor):
 
         flux_by_pitch_angles = []
         phase_space_density_by_pitch_angle = []
+        energy_spectrum = []
         for i in range(len(swe_epoch)):
             averaged_flux = average_flux(swe_l2_data.flux[i],
                                          np.array(dependencies.configuration["geometric_fractions"]))
@@ -56,6 +58,7 @@ class SweProcessor(Processor):
                                              dependencies.configuration, )
             flux_by_pitch_angles.append(rebinned_flux)
             phase_space_density_by_pitch_angle.append(rebinned_psd)
+            energy_spectrum.append(integrate_distribution_to_get_1d_spectrum(rebinned_psd, dependencies.configuration))
 
         swe_l3_data = SweL3Data(input_metadata=self.input_metadata.to_upstream_data_dependency("sci"),
                                 epoch=swe_epoch,
@@ -66,5 +69,7 @@ class SweProcessor(Processor):
                                 pitch_angle=dependencies.configuration["pitch_angle_bins"],
                                 pitch_angle_delta=dependencies.configuration["pitch_angle_delta"],
                                 flux_by_pitch_angle=np.array(flux_by_pitch_angles),
-                                phase_space_density_by_pitch_angle=phase_space_density_by_pitch_angle)
+                                phase_space_density_by_pitch_angle=phase_space_density_by_pitch_angle,
+                                energy_spectrum=energy_spectrum,
+                                )
         return swe_l3_data

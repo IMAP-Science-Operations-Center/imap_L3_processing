@@ -31,7 +31,10 @@ class TestSweProcessor(unittest.TestCase):
     @patch('imap_processing.swe.swe_processor.find_breakpoints')
     @patch('imap_processing.swe.swe_processor.calculate_solar_wind_velocity_vector')
     @patch('imap_processing.swe.swe_processor.correct_and_rebin')
-    def test_calculate_pitch_angle_products(self, mock_correct_and_rebin, mock_calculate_solar_wind_velocity_vector,
+    @patch('imap_processing.swe.swe_processor.integrate_distribution_to_get_1d_spectrum')
+    def test_calculate_pitch_angle_products(self, mock_integrate_distribution_to_get_1d_spectrum,
+                                            mock_correct_and_rebin,
+                                            mock_calculate_solar_wind_velocity_vector,
                                             mock_find_breakpoints,
                                             mock_average_flux):
         epochs = datetime.now() + np.arange(3) * timedelta(minutes=1)
@@ -70,6 +73,9 @@ class TestSweProcessor(unittest.TestCase):
                                                                                    len(pitch_angle_bins)) for i in
             range(2 * len(epochs))]
         mock_correct_and_rebin.side_effect = rebinned_by_pitch
+        integrated_spectrum = np.arange(9).reshape(3, 3) + 11
+
+        mock_integrate_distribution_to_get_1d_spectrum.side_effect = integrated_spectrum
 
         geometric_fractions = [0.0697327, 0.138312, 0.175125, 0.181759,
                                0.204686, 0.151448, 0.0781351]
@@ -90,6 +96,7 @@ class TestSweProcessor(unittest.TestCase):
         self.assertEqual(3, mock_average_flux.call_count)
         self.assertEqual(3, mock_find_breakpoints.call_count)
         self.assertEqual(6, mock_correct_and_rebin.call_count)
+        self.assertEqual(3, mock_integrate_distribution_to_get_1d_spectrum.call_count)
         mock_calculate_solar_wind_velocity_vector.assert_called_once_with(
             swel3_dependency.swapi_l3a_proton_data.proton_sw_speed,
             swel3_dependency.swapi_l3a_proton_data.proton_sw_clock_angle,
@@ -117,6 +124,7 @@ class TestSweProcessor(unittest.TestCase):
         np.testing.assert_array_equal(swe_l3_data.phase_space_density_by_pitch_angle, rebinned_by_pitch[1::2])
         np.testing.assert_array_equal(swe_l3_data.epoch_delta, swe_l2_data.epoch_delta)
         np.testing.assert_array_equal(swe_l3_data.epoch, swe_l2_data.epoch)
+        np.testing.assert_array_equal(swe_l3_data.energy_spectrum, integrated_spectrum)
 
         def call_with_array_matchers(*args):
             return call(*[NumpyArrayMatcher(x) for x in args])
@@ -140,4 +148,9 @@ class TestSweProcessor(unittest.TestCase):
             call_with_array_matchers(swe_l2_data.phase_space_density[2], swe_l2_data.energy - 10, swe_l2_data.inst_el,
                                      swe_l2_data.inst_az_spin_sector[2],
                                      mag_l1d_data.mag_data[4], solar_wind_velocity_vector[4], swe_config)
+        ])
+        mock_integrate_distribution_to_get_1d_spectrum.assert_has_calls([
+            call(rebinned_by_pitch[1], swe_config),
+            call(rebinned_by_pitch[3], swe_config),
+            call(rebinned_by_pitch[5], swe_config)
         ])
