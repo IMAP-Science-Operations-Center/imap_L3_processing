@@ -34,13 +34,13 @@ class TestUtils(unittest.TestCase):
     def test_read_l2_swe_data(self):
         result: SweL2Data = read_l2_swe_data(get_test_data_path('swe/imap_swe_l2_sci_20250101_v002.cdf'))
 
-        self.assertEqual(result.epoch[0], datetime(2024, 5, 10, 15, 35, 5))
+        self.assertEqual(result.epoch[0], datetime(2025, 1, 1))
         self.assertEqual(len(result.epoch), 6)
 
         self.assertEqual(result.epoch_delta[0], timedelta(seconds=30))
         self.assertEqual(len(result.epoch_delta), 6)
 
-        self.assertEqual(result.flux[3][13][12][6], 546401869.7902625)
+        self.assertEqual(result.flux[3][13][12][6], 324526.5306847633)
         self.assertEqual(result.flux.shape, (6, 24, 30, 7))
 
         self.assertEqual(result.inst_el[0], -63)
@@ -52,7 +52,7 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(result.inst_az_spin_sector[0][0][0], 153.97713661193848)
         self.assertEqual(result.inst_az_spin_sector.shape, (6, 24, 30))
 
-        self.assertEqual(result.phase_space_density[3][11][8][4], 2.557910824674086e-29)
+        self.assertEqual(result.phase_space_density[3][11][8][4], 1.8811969552023866e-26)
         self.assertEqual(result.phase_space_density.shape, (6, 24, 30, 7))
 
     def test_read_l3a_swapi_proton_data(self):
@@ -63,7 +63,7 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(10, len(result.proton_sw_speed))
         self.assertEqual(10, len(result.proton_sw_clock_angle))
         self.assertEqual(10, len(result.proton_sw_deflection_angle))
-        self.assertEqual(datetime(2025, 6, 6, 12, 0, 30), result.epoch[0])
+        self.assertEqual(datetime(2025, 1, 1), result.epoch[0])
         self.assertEqual(timedelta(seconds=30), result.epoch_delta[0])
         self.assertEqual(498.4245091006667, result.proton_sw_speed[0])
         self.assertEqual(82.53712019721974, result.proton_sw_clock_angle[0])
