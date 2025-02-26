@@ -1,9 +1,12 @@
+import os
 from datetime import datetime
+from pathlib import Path
 
 import numpy as np
+from spacepy.pycdf import CDF
 
 from imap_processing.hit.l3 import models
-from imap_processing.hit.l3.models import HitDirectEventDataProduct
+from imap_processing.hit.l3.models import HitDirectEventDataProduct, HitL1Data
 from imap_processing.hit.l3.pha.pha_event_reader import RawPHAEvent, PHAWord, Detector, PHAExtendedHeader, StimBlock, \
     ExtendedStimHeader
 from imap_processing.hit.l3.pha.science.calculate_pha import EventOutput
@@ -12,6 +15,14 @@ from tests.swapi.cdf_model_test_case import CdfModelTestCase
 
 
 class TestModels(CdfModelTestCase):
+    def setUp(self) -> None:
+        if os.path.exists('test_cdf.cdf'):
+            os.remove('test_cdf.cdf')
+
+    def tearDown(self) -> None:
+        if os.path.exists('test_cdf.cdf'):
+            os.remove('test_cdf.cdf')
+
     def test_pha_to_data_product_variables_with_multiple_events(self):
         pha_word = PHAWord(adc_overflow=False, adc_value=11,
                            detector=Detector(layer=1, side="A", segment="1A", address=200), is_last_pha=True,
@@ -125,3 +136,19 @@ class TestModels(CdfModelTestCase):
                                         expected_variables[21].cdf_data_type, expected_variables[21].record_varying)
         self.assert_variable_attributes(actual_variables[22], expected_variables[22].value, expected_variables[22].name,
                                         expected_variables[22].cdf_data_type, expected_variables[22].record_varying)
+
+    def test_hit_l1_data_read_from_cdf(self):
+        expected_epochs = np.array([datetime(year=2020, month=1, day=1), datetime(year=2020, month=1, day=1, hour=2)])
+        expected_raw_binaries = ["10101011", "10101001010101"]
+
+        pathname = 'test_cdf'
+        with CDF(pathname, '') as cdf:
+            cdf["epoch"] = expected_epochs
+            cdf["pha_raw"] = expected_raw_binaries
+
+        for file_path in [pathname, Path(pathname)]:
+            with self.subTest(f"Can take {type(file_path)} as file path type"):
+                hit_l1_data = HitL1Data.read_from_cdf(file_path)
+
+                np.testing.assert_array_equal(hit_l1_data.epoch, expected_epochs)
+                np.testing.assert_array_equal(expected_raw_binaries, hit_l1_data.event_binary)

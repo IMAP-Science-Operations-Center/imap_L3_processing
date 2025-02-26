@@ -40,13 +40,14 @@ def imap_l3_processor():
             return datetime.strptime(date, "%Y%m%d")
 
     dependencies = [UpstreamDataDependency(d['instrument'], d['data_level'],
-                                           convert_to_datetime(d['start_date']), convert_to_datetime(d.get('end_date', None)),
+                                           convert_to_datetime(d['start_date']),
+                                           convert_to_datetime(d.get('end_date', None)),
                                            d['version'], d['descriptor']) for d in dependencies_list]
     input_dependency = InputMetadata(args.instrument,
                                      args.data_level,
                                      convert_to_datetime(args.start_date),
                                      convert_to_datetime(args.end_date or args.start_date),
-                                     args.version)
+                                     args.version, descriptor=args.descriptor)
     if args.instrument == 'swapi' and (args.data_level == 'l3a' or args.data_level == 'l3b'):
         processor = SwapiProcessor(dependencies, input_dependency)
         processor.process()

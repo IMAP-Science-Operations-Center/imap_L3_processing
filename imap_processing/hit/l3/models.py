@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 import numpy as np
-from bitstring import BitStream
+from spacepy.pycdf import CDF
 
 from imap_processing.hit.l3.pha.science.calculate_pha import EventOutput
 from imap_processing.models import DataProduct, DataProductVariable
@@ -176,8 +176,10 @@ class HitDirectEventDataProduct(DataProduct):
 @dataclass
 class HitL1Data:
     epoch: np.ndarray[datetime]
-    event_binary: list[BitStream]
+    event_binary: np.ndarray[str]
 
     @classmethod
     def read_from_cdf(cls, cdf_file_path: Path):
-        return cls(None, None)
+        cdf = CDF(str(cdf_file_path))
+
+        return cls(cdf["epoch"], cdf["pha_raw"][...])
