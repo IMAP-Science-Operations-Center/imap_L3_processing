@@ -5,7 +5,7 @@ import numpy as np
 
 from imap_processing.swe.l3.science.pitch_calculations import piece_wise_model, find_breakpoints, \
     average_flux, calculate_velocity_in_dsp_frame_km_s, calculate_look_directions, rebin_by_pitch_angle, \
-    correct_and_rebin, calculate_energy_in_ev_from_velocity_in_km_per_second
+    correct_and_rebin, calculate_energy_in_ev_from_velocity_in_km_per_second, integrate_distribution_to_get_1d_spectrum
 from tests.test_helpers import build_swe_configuration
 
 
@@ -162,6 +162,24 @@ class TestPitchCalculations(unittest.TestCase):
         )
         np.testing.assert_almost_equal(result, expected_result)
 
+    def test_rebin_by_pitch_angle_ignores_zero_measurements(self):
+        flux = np.array([1000, 10, 32, 256, 0])
+        pitch_angle = np.array([25, 60, 120, 170, 165])
+        energy = np.array([10 * 0.8, 10 / 0.8, 10 * 0.9 * 0.9, 10 / 0.9, 10 / 0.9])
+
+        config = build_swe_configuration(
+            pitch_angle_bins=[45, 135],
+            pitch_angle_delta=[45, 45],
+            energy_bins=[10]
+        )
+
+        result = rebin_by_pitch_angle(flux, pitch_angle, energy, config)
+
+        expected_result = np.array([
+            [100, 128]
+        ])
+        np.testing.assert_almost_equal(result, expected_result)
+
     def test_rebin_by_pitch_angle_uses_energy_within_configured_percent_of_nominal(self):
         flux = np.array([9999, 50, 50, 9999])
         pitch_angle = np.array([25, 60, 120, 170])
@@ -178,8 +196,7 @@ class TestPitchCalculations(unittest.TestCase):
 
         expected_result = np.array([
             [50]
-        ]
-        )
+        ])
         np.testing.assert_almost_equal(result, expected_result)
 
     def test_rebin_by_pitch_angle_skips_bins_with_less_than_two_measurements(self):
@@ -199,8 +216,8 @@ class TestPitchCalculations(unittest.TestCase):
 
         expected_result = np.array(
             [
-                [np.nan, 50],
-                [np.nan, np.nan]
+                [0, 50],
+                [0, 0]
             ]
         )
         np.testing.assert_almost_equal(result, expected_result)
@@ -260,6 +277,29 @@ class TestPitchCalculations(unittest.TestCase):
             configuration,
         )
         self.assertEqual(mock_rebin_by_pitch_angle.return_value, result)
+
+    def test_integrate_distribution_to_get_1d_spectrum(self):
+        pitch_angle_bins = [30, 90]
+        pitch_angle_deltas = [15, 15]
+        configuration = build_swe_configuration(pitch_angle_bins=pitch_angle_bins,
+                                                pitch_angle_delta=pitch_angle_deltas)
+
+        psd_by_pitch_angles = np.array([
+            [10, 20],
+            [5, 10],
+            [7, 15],
+        ])
+
+        actual_integrated_spectrum = integrate_distribution_to_get_1d_spectrum(psd_by_pitch_angles, configuration)
+
+        bin1_factor = ((0.5 * np.deg2rad(30)) / 2)
+        bin2_factor = ((1 * np.deg2rad(30)) / 2)
+        expected_integrated_spectrum = [
+            10 * bin1_factor + 20 * bin2_factor,
+            5 * bin1_factor + 10 * bin2_factor,
+            7 * bin1_factor + 15 * bin2_factor
+        ]
+        np.testing.assert_allclose(actual_integrated_spectrum, expected_integrated_spectrum)
 
 
 if __name__ == '__main__':

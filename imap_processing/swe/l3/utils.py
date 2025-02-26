@@ -11,11 +11,11 @@ from imap_processing.swe.l3.models import SweConfiguration, SweL2Data, SwapiL3aP
 def read_l2_swe_data(swe_l2_data: Path) -> SweL2Data:
     with CDF(str(swe_l2_data)) as cdf:
         epoch = cdf["epoch"][:]
-        flux = cdf["flux"][:]
+        flux = cdf["flux_spin_sector"][:]
         inst_el = cdf["inst_el"][:]
         energy = cdf["energy"][:]
         inst_az_spin_sector = cdf["inst_az_spin_sector"][:]
-        phase_space_density = cdf["phase_space_density"][:]
+        phase_space_density = cdf["phase_space_density_spin_sector"][:]
     return SweL2Data(epoch=epoch,
                      epoch_delta=np.full(epoch.shape, timedelta(seconds=30)),
                      phase_space_density=phase_space_density,

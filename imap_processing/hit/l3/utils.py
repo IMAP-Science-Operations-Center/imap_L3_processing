@@ -1,4 +1,3 @@
-import math
 from datetime import timedelta
 from pathlib import Path
 from typing import Union
@@ -7,6 +6,12 @@ import numpy as np
 from spacepy.pycdf import CDF
 
 from imap_processing.hit.l3.models import HitL2Data
+
+
+def convert_bin_high_low_to_center_delta(bin_high: np.array, bin_low: np.array) -> tuple[np.array, np.array]:
+    bin_center = (bin_high + bin_low) / 2
+    bin_delta = bin_high - bin_center
+    return bin_center, bin_delta
 
 
 def read_l2_hit_data(cdf_file_path: Union[str, Path]) -> HitL2Data:

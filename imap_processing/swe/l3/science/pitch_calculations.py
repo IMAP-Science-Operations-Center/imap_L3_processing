@@ -74,17 +74,22 @@ def rebin_by_pitch_angle(flux, pitch_angles, energies, config: SweConfiguration)
     energy_bins = config["energy_bins"]
     pitch_angle_left_edges = pitch_angle_bins - pitch_angle_delta
     pitch_angle_right_edges = pitch_angle_bins + pitch_angle_delta
+    mask_flux = flux > 0
+    flux_greater_than_zero = flux[mask_flux]
+    pitch_angles_for_masked_flux = pitch_angles[mask_flux]
+    energies_for_masked_flux = energies[mask_flux]
 
     num_pitch_bins = len(pitch_angle_bins)
     num_energy_bins = len(energy_bins)
 
-    rebinned = np.full((num_energy_bins, num_pitch_bins), np.nan)
+    rebinned = np.zeros((num_energy_bins, num_pitch_bins), dtype=float)
 
     for j in range(num_pitch_bins):
-        mask_pitch_angle = (pitch_angles >= pitch_angle_left_edges[j]) & (pitch_angles < pitch_angle_right_edges[j])
+        mask_pitch_angle = (pitch_angles_for_masked_flux >= pitch_angle_left_edges[j]) & (
+                pitch_angles_for_masked_flux < pitch_angle_right_edges[j])
 
-        flux_by_pitch_angle = flux[mask_pitch_angle]
-        energy_by_pitch_angle = energies[mask_pitch_angle]
+        flux_by_pitch_angle = flux_greater_than_zero[mask_pitch_angle]
+        energy_by_pitch_angle = energies_for_masked_flux[mask_pitch_angle]
 
         for i, center in enumerate(energy_bins):
             left = config["energy_bin_low_multiplier"] * center
@@ -99,7 +104,6 @@ def rebin_by_pitch_angle(flux, pitch_angles, energies, config: SweConfiguration)
                 log_flux_to_fit = np.log(flux_to_fit)
                 intercept, slope = np.polynomial.polynomial.polyfit(log_energy_to_fit, log_flux_to_fit, 1)
                 log_flux_to_nom = slope * np.log(center) + intercept
-
                 rebinned[i, j] = np.exp(log_flux_to_nom)
 
     return rebinned
@@ -140,3 +144,11 @@ def correct_and_rebin(flux_or_psd: np.ndarray[(E_BINS, SPIN_SECTORS, CEMS)],
     energy_in_sw_frame = calculate_energy_in_ev_from_velocity_in_km_per_second(velocity_in_sw_frame)
 
     return rebin_by_pitch_angle(flux_or_psd, pitch_angle, energy_in_sw_frame, config)
+
+
+def integrate_distribution_to_get_1d_spectrum(psd_by_pitch_angle: np.ndarray[(E_BINS, PITCH_ANGLE_BINS)],
+                                              config: SweConfiguration) -> np.ndarray[E_BINS]:
+    pitch_angle_bin_factors = np.sin(np.deg2rad(config["pitch_angle_bins"])) * 2 * np.deg2rad(
+        config["pitch_angle_delta"]) / 2
+
+    return np.sum(psd_by_pitch_angle * pitch_angle_bin_factors, axis=1)

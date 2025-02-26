@@ -1,6 +1,6 @@
 import unittest
 from datetime import datetime, timedelta
-from unittest.mock import patch, call
+from unittest.mock import patch, call, Mock
 
 import numpy as np
 
@@ -12,14 +12,32 @@ from tests.test_helpers import NumpyArrayMatcher
 
 
 class TestSweProcessor(unittest.TestCase):
+    @patch('imap_processing.swe.swe_processor.upload')
+    @patch('imap_processing.swe.swe_processor.save_data')
+    @patch('imap_processing.swe.swe_processor.SweL3Dependencies.fetch_dependencies')
+    @patch('imap_processing.swe.swe_processor.SweProcessor.calculate_pitch_angle_products')
+    def test_process(self, mock_calculate_pitch_angle_products, mock_fetch_dependencies, mock_save_data, mock_upload):
+        mock_dependencies = Mock()
+        mock_input_metadata = Mock()
+        swe_processor = SweProcessor(mock_dependencies, mock_input_metadata)
+        swe_processor.process()
+
+        mock_fetch_dependencies.assert_called_once_with(mock_dependencies)
+        mock_calculate_pitch_angle_products.assert_called_once_with(mock_fetch_dependencies.return_value)
+        mock_save_data.assert_called_once_with(mock_calculate_pitch_angle_products.return_value)
+        mock_upload.assert_called_once_with(mock_save_data.return_value)
+
     @patch('imap_processing.swe.swe_processor.average_flux')
     @patch('imap_processing.swe.swe_processor.find_breakpoints')
     @patch('imap_processing.swe.swe_processor.calculate_solar_wind_velocity_vector')
     @patch('imap_processing.swe.swe_processor.correct_and_rebin')
-    def test_calculate_pitch_angle_products(self, mock_correct_and_rebin, mock_calculate_solar_wind_velocity_vector,
+    @patch('imap_processing.swe.swe_processor.integrate_distribution_to_get_1d_spectrum')
+    def test_calculate_pitch_angle_products(self, mock_integrate_distribution_to_get_1d_spectrum,
+                                            mock_correct_and_rebin,
+                                            mock_calculate_solar_wind_velocity_vector,
                                             mock_find_breakpoints,
                                             mock_average_flux):
-        epochs = datetime.now() + np.arange(5) * timedelta(minutes=1)
+        epochs = datetime.now() + np.arange(3) * timedelta(minutes=1)
         mag_epochs = datetime.now() - timedelta(seconds=15) + np.arange(10) * timedelta(minutes=.5)
         swapi_epochs = datetime.now() - timedelta(seconds=15) + np.arange(10) * timedelta(minutes=.5)
         mock_find_breakpoints.return_value = (10, 80)
@@ -27,12 +45,12 @@ class TestSweProcessor(unittest.TestCase):
 
         swe_l2_data = SweL2Data(
             epoch=epochs,
-            epoch_delta=np.repeat(timedelta(seconds=30), 5),
-            phase_space_density=np.array([]),
-            flux=np.arange(15).reshape(5, 3),
+            epoch_delta=np.repeat(timedelta(seconds=30), 3),
+            phase_space_density=np.arange(9).reshape(3, 3) + 100,
+            flux=np.arange(9).reshape(3, 3),
             energy=np.array([2, 4, 6]),
             inst_el=np.array([]),
-            inst_az_spin_sector=np.arange(10, 25).reshape(5, 3)
+            inst_az_spin_sector=np.arange(10, 19).reshape(3, 3)
         )
 
         mag_l1d_data = MagL1dData(
@@ -53,8 +71,11 @@ class TestSweProcessor(unittest.TestCase):
         rebinned_by_pitch = [
             i + np.arange(len(swe_l2_data.energy) * len(pitch_angle_bins)).reshape(len(swe_l2_data.energy),
                                                                                    len(pitch_angle_bins)) for i in
-            range(len(epochs))]
+            range(2 * len(epochs))]
         mock_correct_and_rebin.side_effect = rebinned_by_pitch
+        integrated_spectrum = np.arange(9).reshape(3, 3) + 11
+
+        mock_integrate_distribution_to_get_1d_spectrum.side_effect = integrated_spectrum
 
         geometric_fractions = [0.0697327, 0.138312, 0.175125, 0.181759,
                                0.204686, 0.151448, 0.0781351]
@@ -72,9 +93,10 @@ class TestSweProcessor(unittest.TestCase):
         swe_processor = SweProcessor(dependencies=[], input_metadata=input_metadata)
         swe_l3_data = swe_processor.calculate_pitch_angle_products(swel3_dependency)
 
-        self.assertEqual(5, mock_average_flux.call_count)
-        self.assertEqual(5, mock_find_breakpoints.call_count)
-        self.assertEqual(5, mock_correct_and_rebin.call_count)
+        self.assertEqual(3, mock_average_flux.call_count)
+        self.assertEqual(3, mock_find_breakpoints.call_count)
+        self.assertEqual(6, mock_correct_and_rebin.call_count)
+        self.assertEqual(3, mock_integrate_distribution_to_get_1d_spectrum.call_count)
         mock_calculate_solar_wind_velocity_vector.assert_called_once_with(
             swel3_dependency.swapi_l3a_proton_data.proton_sw_speed,
             swel3_dependency.swapi_l3a_proton_data.proton_sw_clock_angle,
@@ -83,13 +105,9 @@ class TestSweProcessor(unittest.TestCase):
         mock_average_flux.assert_has_calls([
             call(NumpyArrayMatcher(swe_l2_data.flux[0]), NumpyArrayMatcher(geometric_fractions)),
             call(NumpyArrayMatcher(swe_l2_data.flux[1]), NumpyArrayMatcher(geometric_fractions)),
-            call(NumpyArrayMatcher(swe_l2_data.flux[2]), NumpyArrayMatcher(geometric_fractions)),
-            call(NumpyArrayMatcher(swe_l2_data.flux[3]), NumpyArrayMatcher(geometric_fractions)),
-            call(NumpyArrayMatcher(swe_l2_data.flux[4]), NumpyArrayMatcher(geometric_fractions))])
+            call(NumpyArrayMatcher(swe_l2_data.flux[2]), NumpyArrayMatcher(geometric_fractions))])
 
         mock_find_breakpoints.assert_has_calls([
-            call(swe_l2_data.energy, mock_average_flux.return_value),
-            call(swe_l2_data.energy, mock_average_flux.return_value),
             call(swe_l2_data.energy, mock_average_flux.return_value),
             call(swe_l2_data.energy, mock_average_flux.return_value),
             call(swe_l2_data.energy, mock_average_flux.return_value),
@@ -102,9 +120,11 @@ class TestSweProcessor(unittest.TestCase):
         self.assertEqual(swe_l3_data.energy, swel3_dependency.configuration["energy_bins"])
         self.assertEqual(swe_l3_data.energy_delta_plus, swel3_dependency.configuration["energy_delta_plus"])
         self.assertEqual(swe_l3_data.energy_delta_minus, swel3_dependency.configuration["energy_delta_minus"])
-        np.testing.assert_array_equal(swe_l3_data.flux_by_pitch_angle, rebinned_by_pitch)
+        np.testing.assert_array_equal(swe_l3_data.flux_by_pitch_angle, rebinned_by_pitch[0::2])
+        np.testing.assert_array_equal(swe_l3_data.phase_space_density_by_pitch_angle, rebinned_by_pitch[1::2])
         np.testing.assert_array_equal(swe_l3_data.epoch_delta, swe_l2_data.epoch_delta)
         np.testing.assert_array_equal(swe_l3_data.epoch, swe_l2_data.epoch)
+        np.testing.assert_array_equal(swe_l3_data.energy_spectrum, integrated_spectrum)
 
         def call_with_array_matchers(*args):
             return call(*[NumpyArrayMatcher(x) for x in args])
@@ -113,16 +133,24 @@ class TestSweProcessor(unittest.TestCase):
             call_with_array_matchers(swe_l2_data.flux[0], swe_l2_data.energy - 10, swe_l2_data.inst_el,
                                      swe_l2_data.inst_az_spin_sector[0],
                                      mag_l1d_data.mag_data[0], solar_wind_velocity_vector[0], swe_config),
+            call_with_array_matchers(swe_l2_data.phase_space_density[0], swe_l2_data.energy - 10, swe_l2_data.inst_el,
+                                     swe_l2_data.inst_az_spin_sector[0],
+                                     mag_l1d_data.mag_data[0], solar_wind_velocity_vector[0], swe_config),
             call_with_array_matchers(swe_l2_data.flux[1], swe_l2_data.energy - 10, swe_l2_data.inst_el,
+                                     swe_l2_data.inst_az_spin_sector[1],
+                                     mag_l1d_data.mag_data[2], solar_wind_velocity_vector[2], swe_config),
+            call_with_array_matchers(swe_l2_data.phase_space_density[1], swe_l2_data.energy - 10, swe_l2_data.inst_el,
                                      swe_l2_data.inst_az_spin_sector[1],
                                      mag_l1d_data.mag_data[2], solar_wind_velocity_vector[2], swe_config),
             call_with_array_matchers(swe_l2_data.flux[2], swe_l2_data.energy - 10, swe_l2_data.inst_el,
                                      swe_l2_data.inst_az_spin_sector[2],
                                      mag_l1d_data.mag_data[4], solar_wind_velocity_vector[4], swe_config),
-            call_with_array_matchers(swe_l2_data.flux[3], swe_l2_data.energy - 10, swe_l2_data.inst_el,
-                                     swe_l2_data.inst_az_spin_sector[3],
-                                     mag_l1d_data.mag_data[6], solar_wind_velocity_vector[6], swe_config),
-            call_with_array_matchers(swe_l2_data.flux[4], swe_l2_data.energy - 10, swe_l2_data.inst_el,
-                                     swe_l2_data.inst_az_spin_sector[4],
-                                     mag_l1d_data.mag_data[8], solar_wind_velocity_vector[8], swe_config)
+            call_with_array_matchers(swe_l2_data.phase_space_density[2], swe_l2_data.energy - 10, swe_l2_data.inst_el,
+                                     swe_l2_data.inst_az_spin_sector[2],
+                                     mag_l1d_data.mag_data[4], solar_wind_velocity_vector[4], swe_config)
+        ])
+        mock_integrate_distribution_to_get_1d_spectrum.assert_has_calls([
+            call(rebinned_by_pitch[1], swe_config),
+            call(rebinned_by_pitch[3], swe_config),
+            call(rebinned_by_pitch[5], swe_config)
         ])
