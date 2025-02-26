@@ -18,7 +18,8 @@ from imap_processing.utils import save_data
 class HitProcessor(Processor):
     def process(self):
         if self.input_metadata.descriptor == "pitch-angle":
-            pitch_angle_data_product = self.process_pitch_angle_product()
+            dependencies = HITL3SectoredDependencies.fetch_dependencies(self.dependencies)
+            pitch_angle_data_product = self.process_pitch_angle_product(dependencies)
             cdf_file_path = save_data(pitch_angle_data_product)
             imap_data_access.upload(cdf_file_path)
         elif self.input_metadata.descriptor == "direct-event":
@@ -41,7 +42,7 @@ class HitProcessor(Processor):
 
         return HitDirectEventDataProduct(event_outputs=processed_events, input_metadata=self.input_metadata)
 
-    def process_pitch_angle_product(self) -> HitPitchAngleDataProduct:
+    def process_pitch_angle_product(self, dependencies: HITL3SectoredDependencies) -> HitPitchAngleDataProduct:
         number_of_pitch_angle_bins = 8
         number_of_gyrophase_bins = 15
 

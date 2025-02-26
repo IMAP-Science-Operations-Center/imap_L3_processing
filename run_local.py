@@ -140,7 +140,7 @@ def create_hit_cdf(dependencies: HITL3SectoredDependencies) -> str:
         end_date=datetime(2025, 10, 24),
         version='v999')
     processor = HitProcessor(None, input_metadata)
-    output_data = processor._calculate_pitch_angle_products(dependencies)
+    output_data = processor.process_pitch_angle_product(dependencies)
     cdf_path = save_data(output_data)
     return cdf_path
 
@@ -203,11 +203,11 @@ if __name__ == "__main__":
         path = create_glows_l3a_cdf(dependencies)
         print(path)
 
-    # if "hit" in sys.argv:
-    mag_data = read_l1d_mag_data(get_test_data_path("mag/imap_mag_l1d_mago-normal_20250101_v001.cdf"))
-    hit_data = read_l2_hit_data(get_test_data_path("hit/hit_l2_sectored_sample1_20250101.cdf"))
-    dependencies = HITL3SectoredDependencies(mag_l1d_data=mag_data, data=hit_data)
-    print(create_hit_cdf(dependencies))
+    if "hit" in sys.argv:
+        mag_data = read_l1d_mag_data(get_test_data_path("mag/imap_mag_l1d_mago-normal_20250101_v001.cdf"))
+        hit_data = read_l2_hit_data(get_test_data_path("hit/hit_l2_sectored_sample1_20250101.cdf"))
+        dependencies = HITL3SectoredDependencies(mag_l1d_data=mag_data, data=hit_data)
+        print(create_hit_cdf(dependencies))
         # process_hit_pha()
 
     if "swe" in sys.argv:
