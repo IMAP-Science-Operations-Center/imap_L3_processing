@@ -1,7 +1,9 @@
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+from pathlib import Path
 
 import numpy as np
+from bitstring import BitStream
 
 from imap_processing.hit.l3.pha.science.calculate_pha import EventOutput
 from imap_processing.models import DataProduct, DataProductVariable
@@ -169,3 +171,13 @@ class PHAData(DataProduct):
             dac_values.append(None)
         else:
             dac_values.append(event_output.original_event.extended_stim_header.dac_value)
+
+
+@dataclass
+class HitL1Data:
+    epoch: np.ndarray[datetime]
+    event_binary: list[BitStream]
+
+    @classmethod
+    def read_from_cdf(cls, cdf_file_path: Path):
+        return cls(None, None)
