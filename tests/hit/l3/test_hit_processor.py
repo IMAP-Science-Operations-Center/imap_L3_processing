@@ -67,7 +67,7 @@ class TestHitProcessor(TestCase):
 
         mock_calculate_unit_vector.side_effect = [sentinel.mag_unit_vector1, sentinel.mag_unit_vector2]
         mock_get_hit_bin_polar_coordinates.return_value = (
-            sentinel.dec, sentinel.dec_delta, sentinel.inc, sentinel.inc_delta)
+            sentinel.dec,  sentinel.inc, sentinel.dec_delta, sentinel.inc_delta)
 
         sector_unit_vectors = np.array([[1, 0, 0], [0, 1, 0]])
         mock_get_sector_unit_vectors.return_value = sector_unit_vectors

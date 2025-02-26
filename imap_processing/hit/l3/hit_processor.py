@@ -13,10 +13,16 @@ from imap_processing.utils import save_data
 
 class HitProcessor(Processor):
     def process(self):
+        dependencies = HITL3SectoredDependencies.fetch_dependencies(self.dependencies)
+
+        data_product = self._calculate_pitch_angle_products(dependencies)
+        cdf_file_path = save_data(data_product)
+        imap_data_access.upload(cdf_file_path)
+
+    def _calculate_pitch_angle_products(self, dependencies: HITL3SectoredDependencies) -> HitPitchAngleDataProduct:
         number_of_pitch_angle_bins = 8
         number_of_gyrophase_bins = 15
 
-        dependencies = HITL3SectoredDependencies.fetch_dependencies(self.dependencies)
         mag_data = dependencies.mag_l1d_data
         hit_data = dependencies.data
 
@@ -39,13 +45,13 @@ class HitProcessor(Processor):
         fe_energy_center, fe_energy_delta = convert_bin_high_low_to_center_delta(hit_data.fe_energy_high,
                                                                                  hit_data.fe_energy_low)
 
-        dec, dec_delta, inc, inc_delta = get_hit_bin_polar_coordinates()
+        dec, inc, dec_delta, inc_delta = get_hit_bin_polar_coordinates()
         sector_unit_vectors = get_sector_unit_vectors(dec, inc)
         particle_unit_vectors = -sector_unit_vectors
 
         sector_areas = calculate_sector_areas(dec, dec_delta, inc_delta)
 
-        pitch_angles, pitch_angle_deltas, gyrophases, gyrophase_delta = get_hit_bin_polar_coordinates(
+        pitch_angles, gyrophases, pitch_angle_deltas, gyrophase_delta = get_hit_bin_polar_coordinates(
             number_of_pitch_angle_bins, number_of_gyrophase_bins)
 
         averaged_mag_data = mag_data.rebin_to(hit_data.epoch, hit_data.epoch_delta)
@@ -62,7 +68,7 @@ class HitProcessor(Processor):
                                                                                                    number_of_pitch_angle_bins,
                                                                                                    number_of_gyrophase_bins)
 
-        data_product = HitPitchAngleDataProduct(hit_data.epoch, hit_data.epoch_delta, pitch_angles, pitch_angle_deltas,
+        return HitPitchAngleDataProduct(self.input_metadata.to_upstream_data_dependency("sci"), hit_data.epoch, hit_data.epoch_delta, pitch_angles, pitch_angle_deltas,
                                                 gyrophases,
                                                 gyrophase_delta,
                                                 rebinned_flux_by_species["hydrogen"],
@@ -74,5 +80,3 @@ class HitProcessor(Processor):
                                                 rebinned_flux_by_species["NeMgSi"], nemgsi_energy_center,
                                                 nemgsi_energy_delta, rebinned_flux_by_species["iron"], fe_energy_center,
                                                 fe_energy_delta)
-        cdf_file_path = save_data(data_product)
-        imap_data_access.upload(cdf_file_path)
