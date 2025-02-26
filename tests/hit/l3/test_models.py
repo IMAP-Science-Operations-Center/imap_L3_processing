@@ -3,7 +3,7 @@ from datetime import datetime
 import numpy as np
 
 from imap_processing.hit.l3 import models
-from imap_processing.hit.l3.models import PHAData
+from imap_processing.hit.l3.models import HitDirectEventDataProduct
 from imap_processing.hit.l3.pha.pha_event_reader import RawPHAEvent, PHAWord, Detector, PHAExtendedHeader, StimBlock, \
     ExtendedStimHeader
 from imap_processing.hit.l3.pha.science.calculate_pha import EventOutput
@@ -46,7 +46,8 @@ class TestModels(CdfModelTestCase):
             descriptor="PHA"
         )
 
-        pha_data = PHAData(input_metadata=input_metadata, event_outputs=[event_output, event_output_2])
+        pha_data = HitDirectEventDataProduct(input_metadata=input_metadata,
+                                             event_outputs=[event_output, event_output_2])
 
         expected_variables = [
             DataProductVariable(models.CHARGE_VAR_NAME, np.array([10.0, 12.0])),

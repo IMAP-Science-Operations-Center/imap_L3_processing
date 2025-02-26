@@ -72,7 +72,7 @@ class HitL2Data:
 
 
 @dataclass
-class PHAData(DataProduct):
+class HitDirectEventDataProduct(DataProduct):
     event_outputs: list[EventOutput]
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
