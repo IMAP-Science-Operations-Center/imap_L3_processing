@@ -68,6 +68,8 @@ energy:
   SCALEMAX: 10000
   SCALETYP: log
   UNITS: eV
+  DELTA_PLUS_VAR: energy_delta_plus
+  DELTA_MINUS_VAR: energy_delta_minus
 energy_delta_plus:
   <<: *support_data_defaults
   CATDESC: Energy bin half-width
@@ -101,6 +103,8 @@ pitch_angle: &pitch_angle
   SCALEMAX: 180
   SCALETYP: linear
   UNITS: degrees
+  DELTA_PLUS_VAR: pitch_angle_delta
+  DELTA_MINUS_VAR: pitch_angle_delta
 pitch_angle_delta:
   <<: *pitch_angle
   CATDESC: Pitch Angle bin half-width
