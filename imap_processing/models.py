@@ -16,6 +16,7 @@ class InputMetadata:
     start_date: datetime
     end_date: datetime
     version: str
+    descriptor: str = ""
 
     def to_upstream_data_dependency(self, descriptor: str):
         return UpstreamDataDependency(self.instrument, self.data_level, self.start_date, self.end_date, self.version,

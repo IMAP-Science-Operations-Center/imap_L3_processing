@@ -17,8 +17,10 @@ class TestImapL3DataProcessor(TestCase):
         data_level_argument = "l3a"
         start_date_argument = "20160630"
         version_argument = "v092"
-        dependencies_argument = ("[{'instrument':'not_swapi', 'data_level':'l1000', 'descriptor':'science', 'version':'v112',"
-                                 "'start_date':'20250101'}]")
+        descriptor_argument = "proton"
+        dependencies_argument = (
+            "[{'instrument':'not_swapi', 'data_level':'l1000', 'descriptor':'science', 'version':'v112',"
+            "'start_date':'20250101'}]")
 
         mock_argument_parser = mock_argparse.ArgumentParser.return_value
 
@@ -27,6 +29,8 @@ class TestImapL3DataProcessor(TestCase):
         mock_argument_parser.parse_args.return_value.dependency = dependencies_argument
         mock_argument_parser.parse_args.return_value.start_date = start_date_argument
         mock_argument_parser.parse_args.return_value.version = version_argument
+        mock_argument_parser.parse_args.return_value.version = version_argument
+        mock_argument_parser.parse_args.return_value.descriptor = descriptor_argument
 
         mock_swapi_processor = mock_swapi_processor_class.return_value
 
@@ -51,13 +55,13 @@ class TestImapL3DataProcessor(TestCase):
 
                 expected_input_dependencies = [UpstreamDataDependency("not_swapi",
                                                                       "l1000",
-                                                                      datetime(2025,1,1),
+                                                                      datetime(2025, 1, 1),
                                                                       None,
                                                                       "v112",
                                                                       "science")]
 
                 expected_input_metadata = InputMetadata("swapi", "l3a", datetime(year=2016, month=6, day=30),
-                                                        expected_end_date, "v092")
+                                                        expected_end_date, "v092", "proton")
 
                 mock_swapi_processor_class.assert_called_with(expected_input_dependencies, expected_input_metadata)
 
@@ -72,8 +76,10 @@ class TestImapL3DataProcessor(TestCase):
         data_level_argument = "l3a"
         start_date_argument = "20160630"
         version_argument = "v092"
-        dependencies_argument = ("[{'instrument':'not_swapi', 'data_level':'l1000', 'descriptor':'science', 'version':'v112',"
-                                 "'start_date':'20250101','end_date':'20250202'}]")
+        descriptor_argument = "lightcurve"
+        dependencies_argument = (
+            "[{'instrument':'not_swapi', 'data_level':'l1000', 'descriptor':'science', 'version':'v112',"
+            "'start_date':'20250101','end_date':'20250202'}]")
 
         mock_argument_parser = mock_argparse.ArgumentParser.return_value
 
@@ -82,6 +88,7 @@ class TestImapL3DataProcessor(TestCase):
         mock_argument_parser.parse_args.return_value.dependency = dependencies_argument
         mock_argument_parser.parse_args.return_value.start_date = start_date_argument
         mock_argument_parser.parse_args.return_value.version = version_argument
+        mock_argument_parser.parse_args.return_value.descriptor = descriptor_argument
 
         mock_processor = mock_processor_class.return_value
 
@@ -106,13 +113,13 @@ class TestImapL3DataProcessor(TestCase):
 
                 expected_input_dependencies = [UpstreamDataDependency("not_swapi",
                                                                       "l1000",
-                                                                      datetime(2025,1,1),
-                                                                      datetime(2025,2,2),
+                                                                      datetime(2025, 1, 1),
+                                                                      datetime(2025, 2, 2),
                                                                       "v112",
                                                                       "science")]
 
                 expected_input_metadata = InputMetadata("glows", "l3a", datetime(year=2016, month=6, day=30),
-                                                        expected_end_date, "v092")
+                                                        expected_end_date, "v092", descriptor="lightcurve")
 
                 mock_processor_class.assert_called_with(expected_input_dependencies, expected_input_metadata)
 
@@ -127,6 +134,7 @@ class TestImapL3DataProcessor(TestCase):
         data_level_argument = "l3"
         start_date_argument = "20160630"
         version_argument = "v092"
+        descriptor_argument = "pitch-angle"
         dependencies_argument = (
             "[{'instrument':'swe', 'data_level':'l1000', 'descriptor':'science', 'version':'v112',"
             "'start_date':'20250101','end_date':'20250202'}]")
@@ -138,6 +146,7 @@ class TestImapL3DataProcessor(TestCase):
         mock_argument_parser.parse_args.return_value.dependency = dependencies_argument
         mock_argument_parser.parse_args.return_value.start_date = start_date_argument
         mock_argument_parser.parse_args.return_value.version = version_argument
+        mock_argument_parser.parse_args.return_value.descriptor = descriptor_argument
 
         mock_processor = mock_processor_class.return_value
 
@@ -168,7 +177,7 @@ class TestImapL3DataProcessor(TestCase):
                                                                       "science")]
 
                 expected_input_metadata = InputMetadata("swe", "l3", datetime(year=2016, month=6, day=30),
-                                                        expected_end_date, "v092")
+                                                        expected_end_date, "v092", "pitch-angle")
 
                 mock_processor_class.assert_called_with(expected_input_dependencies, expected_input_metadata)
 

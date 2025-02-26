@@ -2,6 +2,10 @@ import imap_data_access
 import numpy as np
 
 from imap_processing.hit.l3.hit_l3_sectored_dependencies import HITL3SectoredDependencies
+from imap_processing.hit.l3.models import HitDirectEventDataProduct
+from imap_processing.hit.l3.pha.hit_l3_pha_dependencies import HitL3PhaDependencies
+from imap_processing.hit.l3.pha.pha_event_reader import PHAEventReader
+from imap_processing.hit.l3.pha.science.calculate_pha import process_pha_event
 from imap_processing.hit.l3.sectored_products.models import HitPitchAngleDataProduct
 from imap_processing.hit.l3.sectored_products.science.sectored_products_algorithms import get_sector_unit_vectors, \
     get_hit_bin_polar_coordinates, calculate_sector_areas, rebin_by_pitch_angle_and_gyrophase
@@ -13,13 +17,31 @@ from imap_processing.utils import save_data
 
 class HitProcessor(Processor):
     def process(self):
-        dependencies = HITL3SectoredDependencies.fetch_dependencies(self.dependencies)
+        if self.input_metadata.descriptor == "pitch-angle":
+            pitch_angle_data_product = self.process_pitch_angle_product()
+            cdf_file_path = save_data(pitch_angle_data_product)
+            imap_data_access.upload(cdf_file_path)
+        elif self.input_metadata.descriptor == "direct-event":
+            direct_event_data_product = self.process_direct_event_product()
+            cdf_file_path = save_data(direct_event_data_product)
+            imap_data_access.upload(cdf_file_path)
+        else:
+            raise ValueError(
+                f"Don't know how to generate '{self.input_metadata.descriptor}' /n Known HIT l3 data products: 'pitch-angle', 'direct-event'.")
 
-        data_product = self._calculate_pitch_angle_products(dependencies)
-        cdf_file_path = save_data(data_product)
-        imap_data_access.upload(cdf_file_path)
+    def process_direct_event_product(self) -> HitDirectEventDataProduct:
+        processed_events = []
+        direct_event_dependencies = HitL3PhaDependencies.fetch_dependencies(self.dependencies)
+        for event_binary in direct_event_dependencies.hit_l1_data.event_binary:
+            raw_pha_events = PHAEventReader.read_all_pha_events(event_binary)
+            for raw_event in raw_pha_events:
+                processed_events.append(process_pha_event(raw_event, direct_event_dependencies.cosine_correction_lookup,
+                                                          direct_event_dependencies.gain_lookup,
+                                                          direct_event_dependencies.range_fit_lookup))
 
-    def _calculate_pitch_angle_products(self, dependencies: HITL3SectoredDependencies) -> HitPitchAngleDataProduct:
+        return HitDirectEventDataProduct(event_outputs=processed_events, input_metadata=self.input_metadata)
+
+    def process_pitch_angle_product(self) -> HitPitchAngleDataProduct:
         number_of_pitch_angle_bins = 8
         number_of_gyrophase_bins = 15
 
