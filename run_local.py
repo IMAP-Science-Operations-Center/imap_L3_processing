@@ -9,6 +9,9 @@ from imap_processing.glows.descriptors import GLOWS_L2_DESCRIPTOR
 from imap_processing.glows.glows_processor import GlowsProcessor
 from imap_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
 from imap_processing.glows.l3a.utils import read_l2_glows_data
+from imap_processing.hit.l3.hit_processor import HitProcessor
+from imap_processing.hit.l3.models import HitL1Data
+from imap_processing.hit.l3.pha.hit_l3_pha_dependencies import HitL3PhaDependencies
 from imap_processing.hit.l3.pha.pha_event_reader import PHAEventReader
 from imap_processing.hit.l3.pha.science.calculate_pha import process_pha_event
 from imap_processing.hit.l3.pha.science.cosine_correction_lookup_table import CosineCorrectionLookupTable
@@ -152,6 +155,36 @@ def process_hit_pha():
     print(processed_events)
 
 
+def create_hit_direct_event_cdf():
+    bitstream = BitStream(filename=get_test_data_path("hit/pha_events/full_event_record_buffer.bin"))
+    events = PHAEventReader.read_all_pha_events(bitstream.bin)
+
+    cosine_table = CosineCorrectionLookupTable(
+        get_test_data_path("hit/pha_events/imap_hit_l3_r2-cosines-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_r3-cosines-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_r4-cosines-text-not-cdf_20250203_v001.cdf"),
+    )
+    gain_table = GainLookupTable.from_file(
+        get_test_data_path("hit/pha_events/imap_hit_l3_high-gains-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_low-gains-text-not-cdf_20250203_v001.cdf"))
+
+    range_fit_lookup = RangeFitLookup.from_files(
+        get_test_data_path("hit/pha_events/imap_hit_l3_range2-fit-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_range3-fit-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_range4-fit-text-not-cdf_20250203_v001.cdf"),
+    )
+    processed_events = [process_pha_event(e, cosine_table, gain_table, range_fit_lookup) for e in events]
+
+    hit_l1_data = HitL1Data.read_from_cdf(
+        get_test_data_path("hit/pha_events/imap_hit_l1a_pulse-height-events_20100105_v003.cdf"))
+    direct_event_dependencies = HitL3PhaDependencies(hit_l1_data=hit_l1_data, cosine_correction_lookup=cosine_table,
+                                                     gain_lookup=gain_table, range_fit_lookup=range_fit_lookup)
+    processor = HitProcessor(None, None)
+    product = processor.process_direct_event_product(direct_event_dependencies)
+    file_path = save_data(product)
+    return file_path
+
+
 if __name__ == "__main__":
     if "swapi" in sys.argv:
         if "l3a" in sys.argv:
@@ -190,7 +223,8 @@ if __name__ == "__main__":
         print(path)
 
     if "hit" in sys.argv:
-        process_hit_pha()
+        path = create_hit_direct_event_cdf()
+        print(path)
 
     if "swe" in sys.argv:
         dependencies = SweL3Dependencies.from_file_paths(

@@ -8,30 +8,32 @@ from spacepy.pycdf import CDF
 from imap_processing.hit.l3.pha.science.calculate_pha import EventOutput
 from imap_processing.models import DataProduct, DataProductVariable
 
-EPOCH_VAR_NAME = "EPOCH"
-CHARGE_VAR_NAME = "CHARGE"
-ENERGY_VAR_NAME = "ENERGY"
-PARTICLE_ID_VAR_NAME = "PARTICLE_ID"
-PRIORITY_BUFFER_ID_VAR_NAME = "PRIORITY_BUFFER_ID"
-LATENCY_VAR_NAME = "LATENCY"
-STIM_FLAG_VAR_NAME = "STIM_FLAG"
-LONG_EVENT_FLAG_VAR_NAME = "LONG_EVENT_FLAG"
-HAZ_FLAG_VAR_NAME = "HAZ_FLAG"
-A_B_SIDE_VAR_NAME = "A_B_SIDE"
-HAS_UNREAD_FLAG_VAR_NAME = "HAS_UNREAD_FLAG"
-CULLING_FLAG_VAR_NAME = "CULLING_FLAG"
-PHA_VALUE_VAR_NAME = "PHA_VALUE"
-ENERGY_AT_DETECTOR_VAR_NAME = "ENERGY_AT_DETECTOR"
-DETECTOR_ADDRESS_VAR_NAME = "DETECTOR_ADDRESS"
-GAIN_FLAG_VAR_NAME = "GAIN_FLAG"
-LAST_PHA_VAR_NAME = "LAST_PHA"
-DETECTOR_FLAG_VAR_NAME = "DETECTOR_FLAG"
-DEINDEX_VAR_NAME = "DEINDEX"
-EPINDEX_VAR_NAME = "EPINDEX"
-STIM_GAIN_VAR_NAME = "STIM_GAIN"
-A_L_STIM_VAR_NAME = "A_L_STIM"
-STIM_STEP_VAR_NAME = "STIM_STEP"
-DAC_VALUE_VAR_NAME = "DAC_VALUE"
+EPOCH_VAR_NAME = "epoch"
+CHARGE_VAR_NAME = "charge"
+ENERGY_VAR_NAME = "energy"
+ENERGY_AT_DETECTOR_VAR_NAME = "energy_at_detector"
+# TODO add range, delta_e_energy, e_prime_energy
+
+PARTICLE_ID_VAR_NAME = "particle_id"
+PRIORITY_BUFFER_NUMBER_VAR_NAME = "priority_buffer_number"
+LATENCY_VAR_NAME = "latency"
+STIM_TAG_VAR_NAME = "stim_tag"
+LONG_EVENT_FLAG_VAR_NAME = "long_event_flag"
+HAZ_TAG_VAR_NAME = "haz_tag"
+A_B_SIDE_VAR_NAME = "a_b_side"
+HAS_UNREAD_FLAG_VAR_NAME = "has_unread_flag"
+CULLING_FLAG_VAR_NAME = "culling_flag"
+PHA_VALUE_VAR_NAME = "pha_value"
+DETECTOR_ADDRESS_VAR_NAME = "detector_address"
+IS_LOW_GAIN_VAR_NAME = "is_low_gain"
+LAST_PHA_VAR_NAME = "last_pha"
+DETECTOR_FLAGS_VAR_NAME = "detector_flags"
+DEINDEX_VAR_NAME = "deindex"
+EPINDEX_VAR_NAME = "epindex"
+STIM_GAIN_VAR_NAME = "stim_gain"
+A_L_STIM_VAR_NAME = "a_l_stim"
+STIM_STEP_VAR_NAME = "stim_step"
+DAC_VALUE_VAR_NAME = "dac_value"
 
 
 @dataclass
@@ -124,20 +126,20 @@ class HitDirectEventDataProduct(DataProduct):
             DataProductVariable(CHARGE_VAR_NAME, np.array(charges)),
             DataProductVariable(ENERGY_VAR_NAME, np.array(energies)),
             DataProductVariable(PARTICLE_ID_VAR_NAME, np.array(particle_ids)),
-            DataProductVariable(PRIORITY_BUFFER_ID_VAR_NAME, np.array(priority_buffer_numbers)),
+            DataProductVariable(PRIORITY_BUFFER_NUMBER_VAR_NAME, np.array(priority_buffer_numbers)),
             DataProductVariable(LATENCY_VAR_NAME, np.array(time_tags)),
-            DataProductVariable(STIM_FLAG_VAR_NAME, np.array(stim_tags)),
+            DataProductVariable(STIM_TAG_VAR_NAME, np.array(stim_tags)),
             DataProductVariable(LONG_EVENT_FLAG_VAR_NAME, np.array(long_event_flags)),
-            DataProductVariable(HAZ_FLAG_VAR_NAME, np.array(haz_tags)),
+            DataProductVariable(HAZ_TAG_VAR_NAME, np.array(haz_tags)),
             DataProductVariable(A_B_SIDE_VAR_NAME, np.array(a_b_sides)),
             DataProductVariable(HAS_UNREAD_FLAG_VAR_NAME, np.array(has_unread_adcs)),
             DataProductVariable(CULLING_FLAG_VAR_NAME, np.array(culling_flags)),
             DataProductVariable(PHA_VALUE_VAR_NAME, np.array(pha_values)),
             DataProductVariable(ENERGY_AT_DETECTOR_VAR_NAME, np.array(energies_per_detector)),
             DataProductVariable(DETECTOR_ADDRESS_VAR_NAME, np.array(detector_addresses)),
-            DataProductVariable(GAIN_FLAG_VAR_NAME, np.array(gain_flags)),
+            DataProductVariable(IS_LOW_GAIN_VAR_NAME, np.array(gain_flags)),
             DataProductVariable(LAST_PHA_VAR_NAME, np.array(last_phas)),
-            DataProductVariable(DETECTOR_FLAG_VAR_NAME, np.array(detector_flags)),
+            DataProductVariable(DETECTOR_FLAGS_VAR_NAME, np.array(detector_flags)),
             DataProductVariable(DEINDEX_VAR_NAME, np.array(de_index)),
             DataProductVariable(EPINDEX_VAR_NAME, np.array(ep_index)),
             DataProductVariable(STIM_GAIN_VAR_NAME, np.array(stim_gains)),

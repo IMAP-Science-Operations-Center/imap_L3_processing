@@ -22,16 +22,17 @@ class HitProcessor(Processor):
             cdf_file_path = save_data(pitch_angle_data_product)
             imap_data_access.upload(cdf_file_path)
         elif self.input_metadata.descriptor == "direct-event":
-            direct_event_data_product = self.process_direct_event_product()
+            direct_event_dependencies = HitL3PhaDependencies.fetch_dependencies(self.dependencies)
+            direct_event_data_product = self.process_direct_event_product(direct_event_dependencies)
             cdf_file_path = save_data(direct_event_data_product)
             imap_data_access.upload(cdf_file_path)
         else:
             raise ValueError(
                 f"Don't know how to generate '{self.input_metadata.descriptor}' /n Known HIT l3 data products: 'pitch-angle', 'direct-event'.")
 
-    def process_direct_event_product(self) -> HitDirectEventDataProduct:
+    def process_direct_event_product(self,
+                                     direct_event_dependencies: HitL3PhaDependencies) -> HitDirectEventDataProduct:
         processed_events = []
-        direct_event_dependencies = HitL3PhaDependencies.fetch_dependencies(self.dependencies)
         for event_binary in direct_event_dependencies.hit_l1_data.event_binary:
             raw_pha_events = PHAEventReader.read_all_pha_events(event_binary)
             for raw_event in raw_pha_events:
