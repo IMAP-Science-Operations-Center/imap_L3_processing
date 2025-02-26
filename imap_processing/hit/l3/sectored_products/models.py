@@ -1,3 +1,6 @@
+from dataclasses import dataclass
+
+import numpy as np
 from spacepy import pycdf
 
 from imap_processing.models import DataProduct, DataProductVariable
@@ -17,62 +20,41 @@ HE4_ENERGY_DELTA_CDF_VAR_NAME = "he4_energy_delta"
 CNO_FLUX_CDF_VAR_NAME = "cno_flux"
 CNO_ENERGY_CDF_VAR_NAME = "cno_energy"
 CNO_ENERGY_DELTA_CDF_VAR_NAME = "cno_energy_delta"
-NE_MG_SI_FLUX_CDF_VAR_NAME = "ne_mg_si_flux"
-NE_MG_SI_ENERGY_CDF_VAR_NAME = "ne_mg_si_energy"
-NE_MG_SI_ENERGY_DELTA_CDF_VAR_NAME = "ne_mg_si_energy_delta"
-IRON_FLUX_CDF_VAR_NAME = "iron_flux"
-IRON_ENERGY_CDF_VAR_NAME = "iron_energy"
-IRON_ENERGY_DELTA_CDF_VAR_NAME = "iron_energy_delta"
+NE_MG_SI_FLUX_CDF_VAR_NAME = "nemgsi_flux"
+NE_MG_SI_ENERGY_CDF_VAR_NAME = "nemgsi_energy"
+NE_MG_SI_ENERGY_DELTA_CDF_VAR_NAME = "nemgsi_energy_delta"
+IRON_FLUX_CDF_VAR_NAME = "fe_flux"
+IRON_ENERGY_CDF_VAR_NAME = "fe_energy"
+IRON_ENERGY_DELTA_CDF_VAR_NAME = "fe_energy_delta"
 
-
+@dataclass
 class HitPitchAngleDataProduct(DataProduct):
-    def __init__(self, epochs,
-                 epoch_deltas,
-                 pitch_angles,
-                 pitch_angle_deltas,
-                 gyrophases,
-                 gyrophase_deltas,
-                 h_fluxes,
-                 h_energies,
-                 h_energy_deltas,
-                 he4_fluxes,
-                 he4_energies,
-                 he4_energy_deltas,
-                 cno_fluxes,
-                 cno_energies,
-                 cno_energy_deltas,
-                 ne_mg_si_fluxes,
-                 ne_mg_si_energies,
-                 ne_mg_si_energy_deltas,
-                 iron_fluxes,
-                 iron_energies,
-                 iron_energy_deltas):
-        self.epochs = epochs
-        self.epoch_deltas = epoch_deltas
-        self.pitch_angles = pitch_angles
-        self.pitch_angle_deltas = pitch_angle_deltas
-        self.gyrophases = gyrophases
-        self.gyrophase_deltas = gyrophase_deltas
-        self.h_fluxes = h_fluxes
-        self.h_energies = h_energies
-        self.h_energy_deltas = h_energy_deltas
-        self.he4_fluxes = he4_fluxes
-        self.he4_energies = he4_energies
-        self.he4_energy_deltas = he4_energy_deltas
-        self.cno_fluxes = cno_fluxes
-        self.cno_energies = cno_energies
-        self.cno_energy_deltas = cno_energy_deltas
-        self.ne_mg_si_fluxes = ne_mg_si_fluxes
-        self.ne_mg_si_energies = ne_mg_si_energies
-        self.ne_mg_si_energy_deltas = ne_mg_si_energy_deltas
-        self.iron_fluxes = iron_fluxes
-        self.iron_energies = iron_energies
-        self.iron_energy_deltas = iron_energy_deltas
+    epochs: np.ndarray
+    epoch_deltas: np.ndarray
+    pitch_angles: np.ndarray
+    pitch_angle_deltas: np.ndarray
+    gyrophases: np.ndarray
+    gyrophase_deltas: np.ndarray
+    h_fluxes: np.ndarray
+    h_energies: np.ndarray
+    h_energy_deltas: np.ndarray
+    he4_fluxes: np.ndarray
+    he4_energies: np.ndarray
+    he4_energy_deltas: np.ndarray
+    cno_fluxes: np.ndarray
+    cno_energies: np.ndarray
+    cno_energy_deltas: np.ndarray
+    ne_mg_si_fluxes: np.ndarray
+    ne_mg_si_energies: np.ndarray
+    ne_mg_si_energy_deltas: np.ndarray
+    iron_fluxes: np.ndarray
+    iron_energies: np.ndarray
+    iron_energy_deltas: np.ndarray
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
             DataProductVariable(EPOCH_CDF_VAR_NAME, self.epochs, cdf_data_type=pycdf.const.CDF_TIME_TT2000),
-            DataProductVariable(EPOCH_DELTA_CDF_VAR_NAME, self.epoch_deltas),
+            DataProductVariable(EPOCH_DELTA_CDF_VAR_NAME, np.array([t.total_seconds() for t in self.epoch_deltas]) * 1e9, cdf_data_type=pycdf.const.CDF_INT8),
             DataProductVariable(PITCH_ANGLE_CDF_VAR_NAME, self.pitch_angles, record_varying=False),
             DataProductVariable(PITCH_ANGLE_DELTA_CDF_VAR_NAME, self.pitch_angle_deltas, record_varying=False),
             DataProductVariable(GYROPHASE_CDF_VAR_NAME, self.gyrophases, record_varying=False),
