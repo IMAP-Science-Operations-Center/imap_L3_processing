@@ -121,3 +121,36 @@ flux_by_pitch_angle:
   UNITS: cm^-2 sr^-1 s^-1 eV^-1
   VAR_TYPE: data
   FORMAT: F8.3
+phase_space_density_by_pitch_angle:
+  CATDESC: Phase space density organized by pitch angle
+  DEPEND_0: epoch
+  DEPEND_1: energy
+  DEPEND_2: pitch_angle
+  DISPLAY_TYPE: spectrogram
+  FIELDNAM: Electron Phase Space Density
+  LABLAXIS: PSD
+  FILLVAL: *float_fillval
+  VALIDMIN: 1.0e-40
+  VALIDMAX: 100000
+  SCALEMIN: 1.0e-40
+  SCALEMAX: 100000
+  SCALETYP: log
+  UNITS: s^3 cm^-6
+  VAR_TYPE: data
+  FORMAT: F8.3
+energy_spectrum:
+  CATDESC: 1D Electron Energy Spectrum
+  DEPEND_0: epoch
+  DEPEND_1: energy
+  DISPLAY_TYPE: spectrogram
+  FIELDNAM: Electron Flux
+  LABLAXIS: Flux
+  FILLVAL: *float_fillval
+  VALIDMIN: 1.0e-40
+  VALIDMAX: 100000
+  SCALEMIN: 1.0e-40
+  SCALEMAX: 100000
+  SCALETYP: log
+  UNITS: cm^-2 sr^-1 s^-1 eV^-1
+  VAR_TYPE: data
+  FORMAT: F8.3
