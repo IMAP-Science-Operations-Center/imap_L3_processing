@@ -5,7 +5,8 @@ import numpy as np
 
 from imap_processing.swe.l3.science.pitch_calculations import piece_wise_model, find_breakpoints, \
     average_flux, calculate_velocity_in_dsp_frame_km_s, calculate_look_directions, rebin_by_pitch_angle, \
-    correct_and_rebin, calculate_energy_in_ev_from_velocity_in_km_per_second, integrate_distribution_to_get_1d_spectrum
+    correct_and_rebin, calculate_energy_in_ev_from_velocity_in_km_per_second, integrate_distribution_to_get_1d_spectrum, \
+    integrate_distribution_to_get_inbound_and_outbound_1d_spectrum
 from tests.test_helpers import build_swe_configuration
 
 
@@ -282,7 +283,9 @@ class TestPitchCalculations(unittest.TestCase):
         pitch_angle_bins = [30, 90]
         pitch_angle_deltas = [15, 15]
         configuration = build_swe_configuration(pitch_angle_bins=pitch_angle_bins,
-                                                pitch_angle_delta=pitch_angle_deltas)
+                                                pitch_angle_delta=pitch_angle_deltas,
+                                                in_vs_out_energy_index=1,
+                                                )
 
         psd_by_pitch_angles = np.array([
             [10, 20],
@@ -300,6 +303,50 @@ class TestPitchCalculations(unittest.TestCase):
             7 * bin1_factor + 15 * bin2_factor
         ]
         np.testing.assert_allclose(actual_integrated_spectrum, expected_integrated_spectrum)
+
+    def test_integrate_distribution_decides_inbound_and_outbound_based_on_config_energy_index(
+            self):
+        pitch_angle_bins = [10, 85.5, 94.5, 100]
+        pitch_angle_deltas = [4.5, 4.5, 4.5, 4.5]
+
+        psd_by_pitch_angles = np.array([
+            [10, 20, 30, 40],
+            [15, 20, 5, 10],
+            [1, 2, 3, 4],
+        ])
+
+        bin1_factor = (np.sin(np.deg2rad(10)) * np.deg2rad(4.5 * 2))
+        bin2_factor = (np.sin(np.deg2rad(85.5)) * np.deg2rad(4.5 * 2))
+        bin3_factor = (np.sin(np.deg2rad(94.5)) * np.deg2rad(4.5 * 2))
+        bin4_factor = (np.sin(np.deg2rad(100)) * np.deg2rad(4.5 * 2))
+
+        expected_A_spectrum = [
+            10 * bin1_factor + 20 * bin2_factor,
+            15 * bin1_factor + 20 * bin2_factor,
+            1 * bin1_factor + 2 * bin2_factor,
+        ]
+        expected_B_spectrum = [
+            30 * bin3_factor + 40 * bin4_factor,
+            5 * bin3_factor + 10 * bin4_factor,
+            3 * bin3_factor + 4 * bin4_factor,
+        ]
+
+        cases = [
+            (1, expected_B_spectrum, expected_A_spectrum),
+            (2, expected_A_spectrum, expected_B_spectrum),
+        ]
+        for index, expected_in, expected_out in cases:
+            with self.subTest(index):
+                configuration = build_swe_configuration(pitch_angle_bins=pitch_angle_bins,
+                                                        pitch_angle_delta=pitch_angle_deltas,
+                                                        in_vs_out_energy_index=index)
+
+                in_spectrum, out_spectrum = integrate_distribution_to_get_inbound_and_outbound_1d_spectrum(
+                    psd_by_pitch_angles,
+                    configuration)
+
+                np.testing.assert_allclose(in_spectrum, expected_in)
+                np.testing.assert_allclose(out_spectrum, expected_out)
 
 
 if __name__ == '__main__':

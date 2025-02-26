@@ -131,5 +131,6 @@
     9.44755083e+02
   ],
   "energy_bin_low_multiplier": 0.6,
-  "energy_bin_high_multiplier": 1.4
+  "energy_bin_high_multiplier": 1.4,
+  "in_vs_out_energy_index": 14
 }

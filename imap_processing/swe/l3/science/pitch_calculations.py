@@ -152,3 +152,23 @@ def integrate_distribution_to_get_1d_spectrum(psd_by_pitch_angle: np.ndarray[(E_
         config["pitch_angle_delta"]) / 2
 
     return np.sum(psd_by_pitch_angle * pitch_angle_bin_factors, axis=1)
+
+
+def integrate_distribution_to_get_inbound_and_outbound_1d_spectrum(
+        psd_by_pitch_angle: np.ndarray[(E_BINS, PITCH_ANGLE_BINS)],
+        config: SweConfiguration) -> (np.ndarray[E_BINS], np.ndarray[E_BINS]):
+    pitch_angle_bin_factors = np.sin(np.deg2rad(config["pitch_angle_bins"])) * 2 * np.deg2rad(
+        config["pitch_angle_delta"])
+    pitch_less_than_90 = np.array(config["pitch_angle_bins"]) < 90
+
+    spectrum_a = np.sum((psd_by_pitch_angle * pitch_angle_bin_factors)[:, pitch_less_than_90], axis=1)
+    spectrum_b = np.sum((psd_by_pitch_angle * pitch_angle_bin_factors)[:, ~pitch_less_than_90], axis=1)
+
+    if spectrum_a[config["in_vs_out_energy_index"]] > spectrum_b[config["in_vs_out_energy_index"]]:
+        inbound = spectrum_b
+        outbound = spectrum_a
+    else:
+        inbound = spectrum_a
+        outbound = spectrum_b
+
+    return inbound, outbound
