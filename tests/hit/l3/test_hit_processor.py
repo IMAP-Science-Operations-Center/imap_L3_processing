@@ -8,7 +8,7 @@ import numpy as np
 from imap_processing.hit.l3.hit_l3_sectored_dependencies import HITL3SectoredDependencies
 from imap_processing.hit.l3.hit_processor import HitProcessor
 from imap_processing.hit.l3.models import HitL2Data
-from imap_processing.models import MagL1dData
+from imap_processing.models import MagL1dData, InputMetadata
 from imap_processing.processor import Processor
 
 
@@ -30,13 +30,23 @@ class TestHitProcessor(TestCase):
     @patch('imap_processing.hit.l3.hit_processor.calculate_pitch_angle')
     @patch('imap_processing.hit.l3.hit_processor.calculate_gyrophase')
     @patch('imap_processing.hit.l3.hit_processor.rebin_by_pitch_angle_and_gyrophase')
-    def test_can_fetch_dependencies(self, mock_rebin_by_pitch_angle_and_gyrophase, mock_calculate_gyrophase,
-                                    mock_calculate_pitch_angle,
-                                    mock_calculate_sector_areas,
-                                    mock_get_sector_unit_vectors, mock_get_hit_bin_polar_coordinates,
-                                    mock_calculate_unit_vector,
-                                    mock_fetch_dependencies, mock_save_data, mock_convert_bin_high_low_to_center_delta,
-                                    mock_imap_data_access_upload):
+    def test_process_pitch_angle_product(self, mock_rebin_by_pitch_angle_and_gyrophase, mock_calculate_gyrophase,
+                                         mock_calculate_pitch_angle,
+                                         mock_calculate_sector_areas,
+                                         mock_get_sector_unit_vectors, mock_get_hit_bin_polar_coordinates,
+                                         mock_calculate_unit_vector,
+                                         mock_fetch_dependencies, mock_save_data,
+                                         mock_convert_bin_high_low_to_center_delta,
+                                         mock_imap_data_access_upload):
+        input_metadata = InputMetadata(
+            instrument="hit",
+            data_level="l3",
+            start_date=None,
+            end_date=None,
+            version="",
+            descriptor="pitch-angle"
+        )
+
         epochs = np.array([123, 234])
         epoch_deltas = np.array([12, 13])
         averaged_mag_vectors = [sentinel.mag_vector1, sentinel.mag_vector2]
@@ -67,7 +77,7 @@ class TestHitProcessor(TestCase):
 
         mock_calculate_unit_vector.side_effect = [sentinel.mag_unit_vector1, sentinel.mag_unit_vector2]
         mock_get_hit_bin_polar_coordinates.return_value = (
-            sentinel.dec, sentinel.dec_delta, sentinel.inc, sentinel.inc_delta)
+            sentinel.dec,  sentinel.inc, sentinel.dec_delta, sentinel.inc_delta)
 
         sector_unit_vectors = np.array([[1, 0, 0], [0, 1, 0]])
         mock_get_sector_unit_vectors.return_value = sector_unit_vectors
@@ -106,7 +116,7 @@ class TestHitProcessor(TestCase):
             rebinned_NeMgSi_time2
         ]
 
-        processor = HitProcessor(sentinel.upstream_dependency, Mock())
+        processor = HitProcessor(sentinel.upstream_dependency, input_metadata)
         processor.process()
         mock_fetch_dependencies.assert_called_once_with(sentinel.upstream_dependency)
 
@@ -212,6 +222,74 @@ class TestHitProcessor(TestCase):
         self.assertIs(sentinel.fe_energy_delta, saved_data_product.iron_energy_deltas)
 
         mock_imap_data_access_upload.assert_called_once_with(mock_save_data.return_value)
+
+    @patch("imap_processing.hit.l3.hit_processor.imap_data_access.upload")
+    @patch("imap_processing.hit.l3.hit_processor.save_data")
+    @patch("imap_processing.hit.l3.hit_processor.process_pha_event")
+    @patch("imap_processing.hit.l3.hit_processor.HitL3PhaDependencies.fetch_dependencies")
+    @patch("imap_processing.hit.l3.hit_processor.PHAEventReader.read_all_pha_events")
+    def test_process_direct_event_product(self, mock_read_all_events, mock_fetch_dependencies, mock_process_pha_event,
+                                          mock_save_data, mock_imap_data_access_upload):
+        input_metadata = InputMetadata(
+            instrument="hit",
+            data_level="l3",
+            start_date=None,
+            end_date=None,
+            version="",
+            descriptor="direct-event"
+        )
+
+        dependencies = []
+        mock_hit_l3_pha_dependencies = mock_fetch_dependencies.return_value
+        mock_hit_l3_pha_dependencies.hit_l1_data.event_binary = [sentinel.binary_stream_1, sentinel.binary_stream_2]
+        events_at_epoch_1 = [sentinel.raw_event_1, sentinel.raw_event_2]
+        events_at_epoch_2 = [sentinel.raw_event_3, sentinel.raw_event_4]
+        processed_pha_events = [sentinel.event_output_1, sentinel.event_output_2, sentinel.event_output_3,
+                                sentinel.event_output_4]
+        mock_process_pha_event.side_effect = processed_pha_events
+
+        mock_read_all_events.side_effect = [events_at_epoch_1, events_at_epoch_2]
+
+        processor = HitProcessor(dependencies, input_metadata)
+        processor.process()
+
+        mock_fetch_dependencies.assert_called_once_with(dependencies)
+        mock_read_all_events.assert_has_calls([call(sentinel.binary_stream_1), call(sentinel.binary_stream_2)])
+
+        mock_process_pha_event.assert_has_calls(
+            [call(sentinel.raw_event_1, mock_hit_l3_pha_dependencies.cosine_correction_lookup,
+                  mock_hit_l3_pha_dependencies.gain_lookup, mock_hit_l3_pha_dependencies.range_fit_lookup),
+             call(sentinel.raw_event_2, mock_hit_l3_pha_dependencies.cosine_correction_lookup,
+                  mock_hit_l3_pha_dependencies.gain_lookup, mock_hit_l3_pha_dependencies.range_fit_lookup),
+             call(sentinel.raw_event_3, mock_hit_l3_pha_dependencies.cosine_correction_lookup,
+                  mock_hit_l3_pha_dependencies.gain_lookup, mock_hit_l3_pha_dependencies.range_fit_lookup),
+             call(sentinel.raw_event_4, mock_hit_l3_pha_dependencies.cosine_correction_lookup,
+                  mock_hit_l3_pha_dependencies.gain_lookup, mock_hit_l3_pha_dependencies.range_fit_lookup)],
+            any_order=False)
+
+        mock_save_data.assert_called_once()
+        direct_event_product = mock_save_data.call_args_list[0].args[0]
+        self.assertEqual(processed_pha_events, direct_event_product.event_outputs)
+        self.assertEqual(input_metadata, direct_event_product.input_metadata)
+
+        mock_imap_data_access_upload.assert_called_once_with(mock_save_data.return_value)
+
+    def test_raise_error_if_descriptor_doesnt_match(self):
+        input_metadata = InputMetadata(
+            instrument="hit",
+            data_level="l3",
+            start_date=None,
+            end_date=None,
+            version="",
+            descriptor="spectral-index"
+        )
+        processor = HitProcessor(Mock(), input_metadata)
+
+        with self.assertRaises(ValueError) as e:
+            processor.process()
+
+        self.assertEqual(e.exception.args[0],
+                         f"Don't know how to generate 'spectral-index' /n Known HIT l3 data products: 'pitch-angle', 'direct-event'.")
 
     T = TypeVar("T")
 

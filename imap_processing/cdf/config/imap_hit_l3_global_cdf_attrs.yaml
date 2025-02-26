@@ -1,0 +1,4 @@
+imap_hit_l3_sci:
+  Data_level: "3"
+  Data_type: L3_SCI>Level-3 Science data
+  Logical_source_description: HIT Instrument Level-3 Science Data
