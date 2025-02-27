@@ -86,3 +86,5 @@ class SweConfiguration(TypedDict):
     energy_bin_low_multiplier: float
     energy_bin_high_multiplier: float
     in_vs_out_energy_index: float
+    high_energy_proximity_threshold: float
+    low_energy_proximity_threshold: float
