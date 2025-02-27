@@ -4,7 +4,9 @@ import sys
 if len(sys.argv) == 2:
     product_definition_file = sys.argv[1]
 else:
-    product_definition_file = "data_product_spec_csvs/hit_l3_sectoredrates_product_definition.csv"
+    product_definition_file = "data_product_spec_csvs/imap_hit_l3_pitch_angle.csv"
+
+yaml_text = ""
 
 with open(product_definition_file) as csvfile:
     csv_reader = csv.reader(csvfile)
@@ -16,5 +18,7 @@ with open(product_definition_file) as csvfile:
         metadata_strs = ["  " + f"{cdf_metadata_name}: {cdf_metadata_value}" for cdf_metadata_name, cdf_metadata_value
                          in
                          list(zip(headers, row))[3:] if cdf_metadata_value]
-        variable_section = "\n".join([f"{variable_name}:"] + metadata_strs + [""])
-        print(variable_section)
+        yaml_text += "\n".join([f"{variable_name}:"] + metadata_strs + [""]) + "\n"
+
+with open("variable.yaml", "w") as yaml_file:
+    yaml_file.write(yaml_text)
