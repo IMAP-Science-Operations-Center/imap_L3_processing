@@ -90,6 +90,11 @@ def rebin_by_pitch_angle(flux, pitch_angles, energies, config: SweConfiguration)
 
         flux_by_pitch_angle = flux_greater_than_zero[mask_pitch_angle]
         energy_by_pitch_angle = energies_for_masked_flux[mask_pitch_angle]
+        if len(energy_by_pitch_angle) < 2:
+            continue
+        sorted_energies = np.sort(energy_by_pitch_angle)
+        overall_max_energy_for_pitch_angle = sorted_energies[-1]
+        overall_second_min_energy_for_pitch_angle = sorted_energies[1]
 
         for i, center in enumerate(energy_bins):
             left = config["energy_bin_low_multiplier"] * center
@@ -99,7 +104,27 @@ def rebin_by_pitch_angle(flux, pitch_angles, energies, config: SweConfiguration)
 
             energy_to_fit = energy_by_pitch_angle[mask_energy]
             flux_to_fit = flux_by_pitch_angle[mask_energy]
-            if len(energy_to_fit) > 1:
+            if len(energy_to_fit) < 2:
+                continue
+
+            closest_energy_ratio = np.min(np.abs(energy_to_fit / center - 1))
+            max_within_window = np.max(energy_to_fit)
+            min_within_window = np.min(energy_to_fit)
+
+            has_points_on_both_sides = max_within_window > center and min_within_window < center
+            is_overall_max_within_window = overall_max_energy_for_pitch_angle in energy_to_fit
+            max_within_case = is_overall_max_within_window and closest_energy_ratio < config[
+                "high_energy_proximity_threshold"]
+
+            is_overall_second_min_within_window = overall_second_min_energy_for_pitch_angle in energy_to_fit
+
+            mins_within_case = is_overall_second_min_within_window and (closest_energy_ratio < config[
+                "low_energy_proximity_threshold"] or has_points_on_both_sides)
+            max_and_mins_outside_window_case = (not is_overall_max_within_window
+                                                and not is_overall_second_min_within_window
+                                                and has_points_on_both_sides)
+
+            if max_within_case or mins_within_case or max_and_mins_outside_window_case:
                 log_energy_to_fit = np.log(energy_to_fit)
                 log_flux_to_fit = np.log(flux_to_fit)
                 intercept, slope = np.polynomial.polynomial.polyfit(log_energy_to_fit, log_flux_to_fit, 1)

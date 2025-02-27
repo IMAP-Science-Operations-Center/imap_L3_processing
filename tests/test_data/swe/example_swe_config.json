@@ -132,5 +132,7 @@
   ],
   "energy_bin_low_multiplier": 0.6,
   "energy_bin_high_multiplier": 1.4,
-  "in_vs_out_energy_index": 14
+  "in_vs_out_energy_index": 14,
+  "high_energy_proximity_threshold": 0.18,
+  "low_energy_proximity_threshold": 0.12
 }

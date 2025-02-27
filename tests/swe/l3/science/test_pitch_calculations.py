@@ -223,6 +223,39 @@ class TestPitchCalculations(unittest.TestCase):
         )
         np.testing.assert_almost_equal(result, expected_result)
 
+    def test_rebin_by_pitch_angle_skips_bins_with_invalid_measurements(self):
+        test_cases = [
+            ('no energy is close enough', [5.9, 6, 8.2, 11.8, 12.2], 0),
+            ('overall max value is in range and an energy is close enough below', [8, 8.21, 11.8, 12, 12.1], 50),
+            ('overall max value is in range and an energy is close enough above', [8, 8.20, 11.79, 12, 12.1], 50),
+            ('min and max are outside window and points on both side of nominal', [5.8, 5.9, 14.1, 9, 11], 50),
+            ('two lowest mins and max are outside window and points only below', [5.8, 5.9, 14.1, 8, 9], 0),
+            ('two lowest mins and max are outside window and points only above', [5.8, 5.9, 14.1, 11, 12], 0),
+            ('second_lowest in window and an energy close enough', [5.8, 6.1, 14.1, 11, 12], 50),
+            ('second_lowest in window and points on both sides', [5.8, 6.1, 14.1, 8, 12], 50),
+            ('second_lowest in window but all above and not close', [5.8, 11.3, 14.1, 11.3, 12], 0),
+            ('second_lowest in window but all below and not close', [5.8, 6.1, 14.1, 8, 8.7], 0),
+        ]
+        for case, energy, expected_output in test_cases:
+            with self.subTest(case):
+                config = build_swe_configuration(
+                    pitch_angle_bins=[45],
+                    pitch_angle_delta=[45],
+                    energy_bins=[10],
+                    energy_bin_low_multiplier=0.6,
+                    energy_bin_high_multiplier=1.4,
+                    high_energy_proximity_threshold=0.18,
+                    low_energy_proximity_threshold=0.12
+                )
+
+                pitch_angle = np.array([30, 35, 40, 45, 50])
+                psd = np.array([50, 50, 50, 50, 50])
+                energy = np.array(energy)
+
+                result = rebin_by_pitch_angle(psd, pitch_angle, energy, config)
+
+                np.testing.assert_almost_equal(result, np.array([[expected_output]]))
+
     def test_rebin_full_size_data(self):
         rng = np.random.default_rng(202502201113)
         flux = rng.random((24, 30, 7)) * 1000
