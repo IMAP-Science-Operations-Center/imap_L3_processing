@@ -33,7 +33,9 @@ class TestSweProcessor(unittest.TestCase):
     @patch('imap_processing.swe.swe_processor.correct_and_rebin')
     @patch('imap_processing.swe.swe_processor.integrate_distribution_to_get_1d_spectrum')
     @patch('imap_processing.swe.swe_processor.integrate_distribution_to_get_inbound_and_outbound_1d_spectrum')
-    def test_calculate_pitch_angle_products(self, mock_integrate_distribution_to_get_inbound_and_outbound_1d_spectrum,
+    @patch('imap_processing.swe.swe_processor.find_closest_neighbor')
+    def test_calculate_pitch_angle_products(self, mock_find_closest_neighbor,
+                                            mock_integrate_distribution_to_get_inbound_and_outbound_1d_spectrum,
                                             mock_integrate_distribution_to_get_1d_spectrum,
                                             mock_correct_and_rebin,
                                             mock_calculate_solar_wind_velocity_vector,
@@ -68,8 +70,8 @@ class TestSweProcessor(unittest.TestCase):
             proton_sw_deflection_angle=np.array([]),
         )
         mock_average_flux.return_value = np.array([5, 10, 15])
-        solar_wind_velocity_vector = np.arange(8, 23).reshape(5, 3).repeat(2, 0)
-        mock_calculate_solar_wind_velocity_vector.return_value = solar_wind_velocity_vector
+        mock_find_closest_neighbor.return_value = np.arange(8, 17).reshape(3, 3)
+
         rebinned_by_pitch = [
             i + np.arange(len(swe_l2_data.energy) * len(pitch_angle_bins)).reshape(len(swe_l2_data.energy),
                                                                                    len(pitch_angle_bins)) for i in
@@ -95,6 +97,7 @@ class TestSweProcessor(unittest.TestCase):
             energy_bins=[1, 10, 100],
             energy_delta_plus=[2, 20, 200],
             energy_delta_minus=[8, 80, 800],
+            max_swapi_offset_in_minutes=5
         )
         input_metadata = InputMetadata("swe", "l3", datetime(2025, 2, 21),
                                        datetime(2025, 2, 22), "v001")
@@ -110,7 +113,12 @@ class TestSweProcessor(unittest.TestCase):
             swel3_dependency.swapi_l3a_proton_data.proton_sw_speed,
             swel3_dependency.swapi_l3a_proton_data.proton_sw_clock_angle,
             swel3_dependency.swapi_l3a_proton_data.proton_sw_deflection_angle)
-
+        mock_find_closest_neighbor.assert_called_once_with(
+            from_epoch=swapi_epochs,
+            from_data=mock_calculate_solar_wind_velocity_vector.return_value,
+            to_epoch=epochs,
+            maximum_distance=timedelta(minutes=5)
+        )
         mock_average_flux.assert_has_calls([
             call(NumpyArrayMatcher(swe_l2_data.flux[0]), NumpyArrayMatcher(geometric_fractions)),
             call(NumpyArrayMatcher(swe_l2_data.flux[1]), NumpyArrayMatcher(geometric_fractions)),
@@ -143,22 +151,22 @@ class TestSweProcessor(unittest.TestCase):
         mock_correct_and_rebin.assert_has_calls([
             call_with_array_matchers(swe_l2_data.flux[0], swe_l2_data.energy - 10, swe_l2_data.inst_el,
                                      swe_l2_data.inst_az_spin_sector[0],
-                                     mag_l1d_data.mag_data[0], solar_wind_velocity_vector[0], swe_config),
+                                     mag_l1d_data.mag_data[0], mock_find_closest_neighbor.return_value[0], swe_config),
             call_with_array_matchers(swe_l2_data.phase_space_density[0], swe_l2_data.energy - 10, swe_l2_data.inst_el,
                                      swe_l2_data.inst_az_spin_sector[0],
-                                     mag_l1d_data.mag_data[0], solar_wind_velocity_vector[0], swe_config),
+                                     mag_l1d_data.mag_data[0], mock_find_closest_neighbor.return_value[0], swe_config),
             call_with_array_matchers(swe_l2_data.flux[1], swe_l2_data.energy - 10, swe_l2_data.inst_el,
                                      swe_l2_data.inst_az_spin_sector[1],
-                                     mag_l1d_data.mag_data[2], solar_wind_velocity_vector[2], swe_config),
+                                     mag_l1d_data.mag_data[2], mock_find_closest_neighbor.return_value[1], swe_config),
             call_with_array_matchers(swe_l2_data.phase_space_density[1], swe_l2_data.energy - 10, swe_l2_data.inst_el,
                                      swe_l2_data.inst_az_spin_sector[1],
-                                     mag_l1d_data.mag_data[2], solar_wind_velocity_vector[2], swe_config),
+                                     mag_l1d_data.mag_data[2], mock_find_closest_neighbor.return_value[1], swe_config),
             call_with_array_matchers(swe_l2_data.flux[2], swe_l2_data.energy - 10, swe_l2_data.inst_el,
                                      swe_l2_data.inst_az_spin_sector[2],
-                                     mag_l1d_data.mag_data[4], solar_wind_velocity_vector[4], swe_config),
+                                     mag_l1d_data.mag_data[4], mock_find_closest_neighbor.return_value[2], swe_config),
             call_with_array_matchers(swe_l2_data.phase_space_density[2], swe_l2_data.energy - 10, swe_l2_data.inst_el,
                                      swe_l2_data.inst_az_spin_sector[2],
-                                     mag_l1d_data.mag_data[4], solar_wind_velocity_vector[4], swe_config)
+                                     mag_l1d_data.mag_data[4], mock_find_closest_neighbor.return_value[2], swe_config)
         ])
         mock_integrate_distribution_to_get_1d_spectrum.assert_has_calls([
             call(rebinned_by_pitch[1], swe_config),

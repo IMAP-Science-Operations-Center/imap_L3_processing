@@ -88,3 +88,5 @@ class SweConfiguration(TypedDict):
     in_vs_out_energy_index: float
     high_energy_proximity_threshold: float
     low_energy_proximity_threshold: float
+    max_swapi_offset_in_minutes: float
+    max_mag_offset_in_minutes: float
