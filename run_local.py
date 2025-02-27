@@ -1,5 +1,5 @@
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from bitstring import BitStream
@@ -165,14 +165,12 @@ def process_hit_pha():
         get_test_data_path("hit/pha_events/imap_hit_l3_range3-fit-text-not-cdf_20250203_v001.cdf"),
         get_test_data_path("hit/pha_events/imap_hit_l3_range4-fit-text-not-cdf_20250203_v001.cdf"),
     )
-    processed_events = [process_pha_event(e, cosine_table, gain_table, range_fit_lookup) for e in events]
+    processed_events = [process_pha_event(e, cosine_table, gain_table, range_fit_lookup) for e
+                        in events]
     print(processed_events)
 
 
 def create_hit_direct_event_cdf():
-    bitstream = BitStream(filename=get_test_data_path("hit/pha_events/full_event_record_buffer.bin"))
-    events = PHAEventReader.read_all_pha_events(bitstream.bin)
-
     cosine_table = CosineCorrectionLookupTable(
         get_test_data_path("hit/pha_events/imap_hit_l3_r2-cosines-text-not-cdf_20250203_v001.cdf"),
         get_test_data_path("hit/pha_events/imap_hit_l3_r3-cosines-text-not-cdf_20250203_v001.cdf"),
@@ -187,13 +185,23 @@ def create_hit_direct_event_cdf():
         get_test_data_path("hit/pha_events/imap_hit_l3_range3-fit-text-not-cdf_20250203_v001.cdf"),
         get_test_data_path("hit/pha_events/imap_hit_l3_range4-fit-text-not-cdf_20250203_v001.cdf"),
     )
-    processed_events = [process_pha_event(e, cosine_table, gain_table, range_fit_lookup) for e in events]
 
     hit_l1_data = HitL1Data.read_from_cdf(
-        get_test_data_path("hit/pha_events/imap_hit_l1a_pulse-height-events_20100105_v003.cdf"))
+        get_test_data_path("hit/pha_events/fake-menlo-imap_hit_l1a_pulse-height-events_20100106_v003.cdf"))
+
     direct_event_dependencies = HitL3PhaDependencies(hit_l1_data=hit_l1_data, cosine_correction_lookup=cosine_table,
+
                                                      gain_lookup=gain_table, range_fit_lookup=range_fit_lookup)
-    processor = HitProcessor(None, None)
+    input_metadata = InputMetadata(
+        instrument="hit",
+        data_level="l3",
+        start_date=datetime.now(),
+        end_date=datetime.now() + timedelta(days=1),
+        version="",
+        descriptor="pulse-height-events"
+    )
+    processor = HitProcessor(None, input_metadata)
+
     product = processor.process_direct_event_product(direct_event_dependencies)
     file_path = save_data(product)
     return file_path
