@@ -1,4 +1,6 @@
+from copy import deepcopy
 from dataclasses import fields
+from datetime import datetime
 from typing import Type, TypeVar
 from unittest import TestCase
 from unittest.mock import sentinel, patch, call, Mock
@@ -8,6 +10,9 @@ import numpy as np
 from imap_processing.hit.l3.hit_l3_sectored_dependencies import HITL3SectoredDependencies
 from imap_processing.hit.l3.hit_processor import HitProcessor
 from imap_processing.hit.l3.models import HitL2Data
+from imap_processing.hit.l3.pha.pha_event_reader import PHAWord, Detector, RawPHAEvent, PHAExtendedHeader, StimBlock, \
+    ExtendedStimHeader
+from imap_processing.hit.l3.pha.science.calculate_pha import EventOutput
 from imap_processing.hit.l3.sectored_products.models import HitPitchAngleDataProduct
 from imap_processing.models import MagL1dData, InputMetadata
 from imap_processing.processor import Processor
@@ -76,7 +81,7 @@ class TestHitProcessor(TestCase):
 
         mock_calculate_unit_vector.side_effect = [sentinel.mag_unit_vector1, sentinel.mag_unit_vector2]
         mock_get_hit_bin_polar_coordinates.return_value = (
-            sentinel.dec,  sentinel.inc, sentinel.dec_delta, sentinel.inc_delta)
+            sentinel.dec, sentinel.inc, sentinel.dec_delta, sentinel.inc_delta)
 
         sector_unit_vectors = np.array([[1, 0, 0], [0, 1, 0]])
         mock_get_sector_unit_vectors.return_value = sector_unit_vectors
@@ -163,35 +168,35 @@ class TestHitProcessor(TestCase):
         number_of_gyrophase_bins = 15
 
         mock_rebin_by_pitch_angle_and_gyrophase.assert_has_calls([
-            call(sentinel.CNO_time1, pitch_angle1, gyrophase1, 
+            call(sentinel.CNO_time1, pitch_angle1, gyrophase1,
                  number_of_pitch_angle_bins,
                  number_of_gyrophase_bins),
-            call(sentinel.helium4_time1, pitch_angle1, gyrophase1, 
+            call(sentinel.helium4_time1, pitch_angle1, gyrophase1,
                  number_of_pitch_angle_bins,
                  number_of_gyrophase_bins),
-            call(sentinel.hydrogen_time1, pitch_angle1, gyrophase1, 
+            call(sentinel.hydrogen_time1, pitch_angle1, gyrophase1,
                  number_of_pitch_angle_bins,
                  number_of_gyrophase_bins),
-            call(sentinel.iron_time1, pitch_angle1, gyrophase1, 
+            call(sentinel.iron_time1, pitch_angle1, gyrophase1,
                  number_of_pitch_angle_bins,
                  number_of_gyrophase_bins),
-            call(sentinel.NeMgSi_time1, pitch_angle1, gyrophase1, 
+            call(sentinel.NeMgSi_time1, pitch_angle1, gyrophase1,
                  number_of_pitch_angle_bins,
                  number_of_gyrophase_bins),
 
-            call(sentinel.CNO_time2, pitch_angle2, gyrophase2, 
+            call(sentinel.CNO_time2, pitch_angle2, gyrophase2,
                  number_of_pitch_angle_bins,
                  number_of_gyrophase_bins),
-            call(sentinel.helium4_time2, pitch_angle2, gyrophase2, 
+            call(sentinel.helium4_time2, pitch_angle2, gyrophase2,
                  number_of_pitch_angle_bins,
                  number_of_gyrophase_bins),
-            call(sentinel.hydrogen_time2, pitch_angle2, gyrophase2, 
+            call(sentinel.hydrogen_time2, pitch_angle2, gyrophase2,
                  number_of_pitch_angle_bins,
                  number_of_gyrophase_bins),
-            call(sentinel.iron_time2, pitch_angle2, gyrophase2, 
+            call(sentinel.iron_time2, pitch_angle2, gyrophase2,
                  number_of_pitch_angle_bins,
                  number_of_gyrophase_bins),
-            call(sentinel.NeMgSi_time2, pitch_angle2, gyrophase2, 
+            call(sentinel.NeMgSi_time2, pitch_angle2, gyrophase2,
                  number_of_pitch_angle_bins,
                  number_of_gyrophase_bins),
         ])
@@ -250,6 +255,41 @@ class TestHitProcessor(TestCase):
     @patch("imap_processing.hit.l3.hit_processor.PHAEventReader.read_all_pha_events")
     def test_process_direct_event_product(self, mock_read_all_events, mock_fetch_dependencies, mock_process_pha_event,
                                           mock_save_data, mock_imap_data_access_upload):
+        pha_word_1 = PHAWord(adc_overflow=False, adc_value=11,
+                             detector=Detector(layer=1, side="A", segment="1A", address=2), is_last_pha=True,
+                             is_low_gain=True)
+
+        raw_pha_event_1 = RawPHAEvent(particle_id=1, priority_buffer_num=2, stim_tag=False, haz_tag=False, time_tag=20,
+                                      a_b_side_flag=False, has_unread_adcs=True, long_event_flag=False,
+                                      culling_flag=True,
+                                      spare=True, pha_words=[pha_word_1])
+
+        raw_pha_event_2 = RawPHAEvent(particle_id=1, priority_buffer_num=2, stim_tag=False, haz_tag=False, time_tag=20,
+                                      a_b_side_flag=False, has_unread_adcs=True, long_event_flag=False,
+                                      culling_flag=True,
+                                      spare=True, pha_words=[deepcopy(pha_word_1)])
+
+        pha_word_2 = PHAWord(adc_overflow=True, adc_value=12,
+                             detector=Detector(layer=2, side="B", segment="1B", address=5), is_last_pha=False,
+                             is_low_gain=False)
+
+        pha_word_3 = PHAWord(adc_overflow=False, adc_value=11,
+                             detector=Detector(layer=1, side="A", segment="2A", address=8), is_last_pha=True,
+                             is_low_gain=True)
+
+        raw_pha_event_3 = RawPHAEvent(particle_id=2, priority_buffer_num=3, stim_tag=True, haz_tag=True, time_tag=30,
+                                      a_b_side_flag=True, has_unread_adcs=False, long_event_flag=True,
+                                      culling_flag=False,
+                                      spare=False, pha_words=[pha_word_2, pha_word_3],
+                                      extended_header=PHAExtendedHeader(detector_flags=2, delta_e_index=2,
+                                                                        e_prime_index=True),
+                                      stim_block=StimBlock(stim_step=1, stim_gain=2, unused=3, a_l_stim=True),
+                                      extended_stim_header=ExtendedStimHeader(dac_value=123, tbd=666))
+
+        event_output_1 = EventOutput(original_event=raw_pha_event_1, charge=9.0, energies=[1], total_energy=99)
+        event_output_2 = EventOutput(original_event=raw_pha_event_2, charge=10.0, energies=[4], total_energy=100)
+        event_output_3 = EventOutput(original_event=raw_pha_event_3, charge=12.0, energies=[9, 8], total_energy=200)
+
         input_metadata = InputMetadata(
             instrument="hit",
             data_level="l3",
@@ -261,14 +301,12 @@ class TestHitProcessor(TestCase):
 
         dependencies = []
         mock_hit_l3_pha_dependencies = mock_fetch_dependencies.return_value
+        mock_hit_l3_pha_dependencies.hit_l1_data.epoch = [datetime(year=2020, month=2, day=1),
+                                                          datetime(year=2020, month=2, day=1, hour=1)]
         mock_hit_l3_pha_dependencies.hit_l1_data.event_binary = [sentinel.binary_stream_1, sentinel.binary_stream_2]
-        events_at_epoch_1 = [sentinel.raw_event_1, sentinel.raw_event_2]
-        events_at_epoch_2 = [sentinel.raw_event_3, sentinel.raw_event_4]
-        processed_pha_events = [sentinel.event_output_1, sentinel.event_output_2, sentinel.event_output_3,
-                                sentinel.event_output_4]
-        mock_process_pha_event.side_effect = processed_pha_events
 
-        mock_read_all_events.side_effect = [events_at_epoch_1, events_at_epoch_2]
+        mock_process_pha_event.side_effect = [event_output_1, event_output_2, event_output_3]
+        mock_read_all_events.side_effect = [[raw_pha_event_1, raw_pha_event_2], [raw_pha_event_3]]
 
         processor = HitProcessor(dependencies, input_metadata)
         processor.process()
@@ -277,22 +315,66 @@ class TestHitProcessor(TestCase):
         mock_read_all_events.assert_has_calls([call(sentinel.binary_stream_1), call(sentinel.binary_stream_2)])
 
         mock_process_pha_event.assert_has_calls(
-            [call(sentinel.raw_event_1, mock_hit_l3_pha_dependencies.cosine_correction_lookup,
+            [call(raw_pha_event_1, mock_hit_l3_pha_dependencies.cosine_correction_lookup,
                   mock_hit_l3_pha_dependencies.gain_lookup, mock_hit_l3_pha_dependencies.range_fit_lookup),
-             call(sentinel.raw_event_2, mock_hit_l3_pha_dependencies.cosine_correction_lookup,
+             call(raw_pha_event_2, mock_hit_l3_pha_dependencies.cosine_correction_lookup,
                   mock_hit_l3_pha_dependencies.gain_lookup, mock_hit_l3_pha_dependencies.range_fit_lookup),
-             call(sentinel.raw_event_3, mock_hit_l3_pha_dependencies.cosine_correction_lookup,
-                  mock_hit_l3_pha_dependencies.gain_lookup, mock_hit_l3_pha_dependencies.range_fit_lookup),
-             call(sentinel.raw_event_4, mock_hit_l3_pha_dependencies.cosine_correction_lookup,
+             call(raw_pha_event_3, mock_hit_l3_pha_dependencies.cosine_correction_lookup,
                   mock_hit_l3_pha_dependencies.gain_lookup, mock_hit_l3_pha_dependencies.range_fit_lookup)],
             any_order=False)
 
         mock_save_data.assert_called_once()
-        direct_event_product = mock_save_data.call_args_list[0].args[0]
-        self.assertEqual(processed_pha_events, direct_event_product.event_outputs)
-        self.assertEqual(input_metadata, direct_event_product.input_metadata)
 
         mock_imap_data_access_upload.assert_called_once_with(mock_save_data.return_value)
+
+        direct_event_product = mock_save_data.call_args_list[0].args[0]
+        self.assertEqual(input_metadata.to_upstream_data_dependency("direct-event"),
+                         direct_event_product.input_metadata)
+
+        # np.testing.assert_array_equal(direct_event_product.epoch, np.array(
+        #     [datetime(year=2020, month=2, day=1), datetime(year=2020, month=2, day=1),
+        #      datetime(year=2020, month=2, day=1, hour=1)]))
+        np.testing.assert_array_equal(direct_event_product.charge, np.array([9.0, 10.0, 12.0]))
+        np.testing.assert_array_equal(direct_event_product.energy, np.array([99, 100, 200]))
+        np.testing.assert_array_equal(direct_event_product.particle_id, np.array([1, 1, 2]))
+        np.testing.assert_array_equal(direct_event_product.priority_buffer_number, np.array([2, 2, 3]))
+        np.testing.assert_array_equal(direct_event_product.latency, np.array([20, 20, 30]))
+        np.testing.assert_array_equal(direct_event_product.stim_tag, np.array([False, False, True]))
+        np.testing.assert_array_equal(direct_event_product.long_event_flag, np.array([False, False, True]))
+        np.testing.assert_array_equal(direct_event_product.haz_tag, np.array([False, False, True]))
+        np.testing.assert_array_equal(direct_event_product.a_b_side, np.array([False, False, True]))
+        np.testing.assert_array_equal(direct_event_product.has_unread_adcs, np.array([True, True, False]))
+        np.testing.assert_array_equal(direct_event_product.culling_flag, np.array([True, True, False]))
+
+        self.assertEqual((3, 64), direct_event_product.pha_value.shape)
+        expected_values = {(0, pha_word_1.detector.address): (
+            pha_word_1.adc_value, event_output_1.energies[0], pha_word_1.is_low_gain),
+            (1, pha_word_1.detector.address): (
+                pha_word_1.adc_value, event_output_2.energies[0], pha_word_1.is_low_gain),
+            (2, pha_word_2.detector.address): (
+                pha_word_2.adc_value, event_output_3.energies[0], pha_word_2.is_low_gain),
+            (2, pha_word_3.detector.address): (
+                pha_word_3.adc_value, event_output_3.energies[1], pha_word_3.is_low_gain)}
+
+        mask = np.full_like(direct_event_product.pha_value, True, dtype=bool)
+        for idx, (adc_val, energy, is_low_gain) in expected_values.items():
+            np.testing.assert_array_equal(direct_event_product.pha_value[idx], adc_val,
+                                          err_msg=f"Did not match at index {idx}")
+            np.testing.assert_array_equal(direct_event_product.energy_at_detector[idx], energy,
+                                          err_msg=f"Did not match at index {idx}")
+            np.testing.assert_array_equal(direct_event_product.is_low_gain[idx], is_low_gain,
+                                          err_msg=f"Did not match at index {idx}")
+            mask[idx] = False
+
+        self.assertTrue(np.all(np.isnan(direct_event_product.pha_value[mask])))
+
+        np.testing.assert_array_equal(direct_event_product.detector_flags, np.array([None, None, 2]))
+        np.testing.assert_array_equal(direct_event_product.deindex, np.array([None, None, 2]))
+        np.testing.assert_array_equal(direct_event_product.epindex, np.array([None, None, True]))
+        np.testing.assert_array_equal(direct_event_product.stim_gain, np.array([None, None, 2]))
+        np.testing.assert_array_equal(direct_event_product.a_l_stim, np.array([None, None, True]))
+        np.testing.assert_array_equal(direct_event_product.stim_step, np.array([None, None, 1]))
+        np.testing.assert_array_equal(direct_event_product.dac_value, np.array([None, None, 123]))
 
     def test_raise_error_if_descriptor_doesnt_match(self):
         input_metadata = InputMetadata(

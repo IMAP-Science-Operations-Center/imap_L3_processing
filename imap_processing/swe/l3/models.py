@@ -15,6 +15,8 @@ PITCH_ANGLE_DELTA_CDF_VAR_NAME = "pitch_angle_delta"
 FLUX_BY_PITCH_ANGLE_CDF_VAR_NAME = "flux_by_pitch_angle"
 PHASE_SPACE_DENSITY_BY_PITCH_ANGLE_CDF_VAR_NAME = "phase_space_density_by_pitch_angle"
 ENERGY_SPECTRUM_CDF_VAR_NAME = "energy_spectrum"
+ENERGY_SPECTRUM_INBOUND_CDF_VAR_NAME = "energy_spectrum_inbound"
+ENERGY_SPECTRUM_OUTBOUND_CDF_VAR_NAME = "energy_spectrum_outbound"
 
 
 @dataclass
@@ -49,6 +51,8 @@ class SweL3Data(DataProduct):
     flux_by_pitch_angle: np.ndarray
     phase_space_density_by_pitch_angle: np.ndarray
     energy_spectrum: np.ndarray
+    energy_spectrum_inbound: np.ndarray
+    energy_spectrum_outbound: np.ndarray
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
@@ -65,6 +69,10 @@ class SweL3Data(DataProduct):
                                 value=self.phase_space_density_by_pitch_angle),
             DataProductVariable(ENERGY_SPECTRUM_CDF_VAR_NAME,
                                 value=self.energy_spectrum),
+            DataProductVariable(ENERGY_SPECTRUM_INBOUND_CDF_VAR_NAME,
+                                value=self.energy_spectrum_inbound),
+            DataProductVariable(ENERGY_SPECTRUM_OUTBOUND_CDF_VAR_NAME,
+                                value=self.energy_spectrum_outbound),
         ]
 
 
@@ -77,3 +85,6 @@ class SweConfiguration(TypedDict):
     energy_delta_minus: list[float]
     energy_bin_low_multiplier: float
     energy_bin_high_multiplier: float
+    in_vs_out_energy_index: float
+    high_energy_proximity_threshold: float
+    low_energy_proximity_threshold: float

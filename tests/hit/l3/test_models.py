@@ -7,9 +7,6 @@ from spacepy.pycdf import CDF
 
 from imap_processing.hit.l3 import models
 from imap_processing.hit.l3.models import HitDirectEventDataProduct, HitL1Data
-from imap_processing.hit.l3.pha.pha_event_reader import RawPHAEvent, PHAWord, Detector, PHAExtendedHeader, StimBlock, \
-    ExtendedStimHeader
-from imap_processing.hit.l3.pha.science.calculate_pha import EventOutput
 from imap_processing.models import DataProductVariable, UpstreamDataDependency
 from tests.swapi.cdf_model_test_case import CdfModelTestCase
 
@@ -24,71 +21,90 @@ class TestModels(CdfModelTestCase):
             os.remove('test_cdf.cdf')
 
     def test_pha_to_data_product_variables_with_multiple_events(self):
-        pha_word = PHAWord(adc_overflow=False, adc_value=11,
-                           detector=Detector(layer=1, side="A", segment="1A", address=200), is_last_pha=True,
-                           is_low_gain=True)
-
-        raw_pha_event = RawPHAEvent(particle_id=1, priority_buffer_num=2, stim_tag=False, haz_tag=False, time_tag=20,
-                                    a_b_side_flag=False, has_unread_adcs=True, long_event_flag=False, culling_flag=True,
-                                    spare=True, pha_words=[pha_word])
-
-        pha_word_2 = PHAWord(adc_overflow=True, adc_value=12,
-                             detector=Detector(layer=2, side="B", segment="1B", address=201), is_last_pha=False,
-                             is_low_gain=False)
-
-        raw_pha_event_2 = RawPHAEvent(particle_id=2, priority_buffer_num=3, stim_tag=True, haz_tag=True, time_tag=30,
-                                      a_b_side_flag=True, has_unread_adcs=False, long_event_flag=True,
-                                      culling_flag=False,
-                                      spare=False, pha_words=[pha_word_2],
-                                      extended_header=PHAExtendedHeader(detector_flags=2, delta_e_index=2,
-                                                                        e_prime_index=True),
-                                      stim_block=StimBlock(stim_step=1, stim_gain=2, unused=3, a_l_stim=True),
-                                      extended_stim_header=ExtendedStimHeader(dac_value=123, tbd=666))
-
-        event_output = EventOutput(original_event=raw_pha_event, charge=10.0, energies=[1, 2, 3], total_energy=100)
-        event_output_2 = EventOutput(original_event=raw_pha_event_2, charge=12.0, energies=[9, 8, 7], total_energy=200)
-
         input_metadata = UpstreamDataDependency(
             instrument="HIT",
             data_level="L3A",
             start_date=datetime.min,
             end_date=datetime.max,
             version="1",
-            descriptor="PHA"
+            descriptor="direct-event"
         )
 
-        pha_data = HitDirectEventDataProduct(input_metadata=input_metadata,
-                                             event_outputs=[event_output, event_output_2])
+        charge = np.array([10.0, 12.0])
+        energy = np.array([100, 200])
+        particle = np.array([1, 2])
+        priority_buffer_number = np.array([2, 3])
+        latency = np.array([20, 30])
+        stim_tag = np.array([False, True])
+        long_event_flag = np.array([False, True])
+        haz_tag = np.array([False, True])
+        a_b_side = np.array([False, True])
+        has_unread_adcs = np.array([True, False])
+        culling_flag = np.array([True, False])
+        pha_value = np.array([[11], [12]])
+        energy_at_detector = np.array([[1, 2, 3], [9, 8, 7]])
+        detector_address = np.array([[200], [201]])
+        is_low_gain = np.array([[True], [False]])
+        detector_flags = np.array([None, 2])
+        deindex = np.array([None, 2])
+        epindex = np.array([None, True])
+        stim_gain = np.array([None, 2])
+        a_l_stim = np.array([None, True])
+        stim_step = np.array([None, 1])
+        dac_value = np.array([None, 123])
+
+        direct_event = HitDirectEventDataProduct(input_metadata=input_metadata,
+                                                 charge=charge,
+                                                 energy=energy,
+                                                 particle_id=particle,
+                                                 priority_buffer_number=priority_buffer_number,
+                                                 latency=latency,
+                                                 stim_tag=stim_tag,
+                                                 long_event_flag=long_event_flag,
+                                                 haz_tag=haz_tag,
+                                                 a_b_side=a_b_side,
+                                                 has_unread_adcs=has_unread_adcs,
+                                                 culling_flag=culling_flag,
+                                                 pha_value=pha_value,
+                                                 energy_at_detector=energy_at_detector,
+                                                 detector_address=detector_address,
+                                                 is_low_gain=is_low_gain,
+                                                 detector_flags=detector_flags,
+                                                 deindex=deindex,
+                                                 epindex=epindex,
+                                                 stim_gain=stim_gain,
+                                                 a_l_stim=a_l_stim,
+                                                 stim_step=stim_step,
+                                                 dac_value=dac_value, )
 
         expected_variables = [
-            DataProductVariable(models.CHARGE_VAR_NAME, np.array([10.0, 12.0])),
-            DataProductVariable(models.ENERGY_VAR_NAME, np.array([100, 200])),
-            DataProductVariable(models.PARTICLE_ID_VAR_NAME, np.array([1, 2])),
-            DataProductVariable(models.PRIORITY_BUFFER_ID_VAR_NAME, np.array([2, 3])),
-            DataProductVariable(models.LATENCY_VAR_NAME, np.array([20, 30])),
-            DataProductVariable(models.STIM_FLAG_VAR_NAME, np.array([False, True])),
-            DataProductVariable(models.LONG_EVENT_FLAG_VAR_NAME, np.array([False, True])),
-            DataProductVariable(models.HAZ_FLAG_VAR_NAME, np.array([False, True])),
-            DataProductVariable(models.A_B_SIDE_VAR_NAME, np.array([False, True])),
-            DataProductVariable(models.HAS_UNREAD_FLAG_VAR_NAME, np.array([True, False])),
-            DataProductVariable(models.CULLING_FLAG_VAR_NAME, np.array([True, False])),
-            DataProductVariable(models.PHA_VALUE_VAR_NAME, np.array([[11], [12]])),
-            DataProductVariable(models.ENERGY_AT_DETECTOR_VAR_NAME, np.array([[1, 2, 3], [9, 8, 7]])),
-            DataProductVariable(models.DETECTOR_ADDRESS_VAR_NAME, np.array([[200], [201]])),
-            DataProductVariable(models.GAIN_FLAG_VAR_NAME, np.array([[True], [False]])),
-            DataProductVariable(models.LAST_PHA_VAR_NAME, np.array([[True], [False]])),
-            DataProductVariable(models.DETECTOR_FLAG_VAR_NAME, np.array([None, 2])),
-            DataProductVariable(models.DEINDEX_VAR_NAME, np.array([None, 2])),
-            DataProductVariable(models.EPINDEX_VAR_NAME, np.array([None, True])),
-            DataProductVariable(models.STIM_GAIN_VAR_NAME, np.array([None, 2])),
-            DataProductVariable(models.A_L_STIM_VAR_NAME, np.array([None, True])),
-            DataProductVariable(models.STIM_STEP_VAR_NAME, np.array([None, 1])),
-            DataProductVariable(models.DAC_VALUE_VAR_NAME, np.array([None, 123]))
+            DataProductVariable(models.CHARGE_VAR_NAME, charge),
+            DataProductVariable(models.ENERGY_VAR_NAME, energy),
+            DataProductVariable(models.PARTICLE_ID_VAR_NAME, particle),
+            DataProductVariable(models.PRIORITY_BUFFER_NUMBER_VAR_NAME, priority_buffer_number),
+            DataProductVariable(models.LATENCY_VAR_NAME, latency),
+            DataProductVariable(models.STIM_TAG_VAR_NAME, stim_tag),
+            DataProductVariable(models.LONG_EVENT_FLAG_VAR_NAME, long_event_flag),
+            DataProductVariable(models.HAZ_TAG_VAR_NAME, haz_tag),
+            DataProductVariable(models.A_B_SIDE_VAR_NAME, a_b_side),
+            DataProductVariable(models.HAS_UNREAD_FLAG_VAR_NAME, has_unread_adcs),
+            DataProductVariable(models.CULLING_FLAG_VAR_NAME, culling_flag),
+            DataProductVariable(models.PHA_VALUE_VAR_NAME, pha_value),
+            DataProductVariable(models.ENERGY_AT_DETECTOR_VAR_NAME, energy_at_detector),
+            DataProductVariable(models.DETECTOR_ADDRESS_VAR_NAME, detector_address),
+            DataProductVariable(models.IS_LOW_GAIN_VAR_NAME, is_low_gain),
+            DataProductVariable(models.DETECTOR_FLAGS_VAR_NAME, detector_flags),
+            DataProductVariable(models.DEINDEX_VAR_NAME, deindex),
+            DataProductVariable(models.EPINDEX_VAR_NAME, epindex),
+            DataProductVariable(models.STIM_GAIN_VAR_NAME, stim_gain),
+            DataProductVariable(models.A_L_STIM_VAR_NAME, a_l_stim),
+            DataProductVariable(models.STIM_STEP_VAR_NAME, stim_step),
+            DataProductVariable(models.DAC_VALUE_VAR_NAME, dac_value)
         ]
 
-        actual_variables = pha_data.to_data_product_variables()
+        actual_variables = direct_event.to_data_product_variables()
 
-        self.assertEqual(23, len(actual_variables))
+        self.assertEqual(22, len(actual_variables))
         self.assert_variable_attributes(actual_variables[0], expected_variables[0].value, expected_variables[0].name,
                                         expected_variables[0].cdf_data_type, expected_variables[0].record_varying)
         self.assert_variable_attributes(actual_variables[1], expected_variables[1].value, expected_variables[1].name,
@@ -134,8 +150,6 @@ class TestModels(CdfModelTestCase):
                                         expected_variables[20].cdf_data_type, expected_variables[20].record_varying)
         self.assert_variable_attributes(actual_variables[21], expected_variables[21].value, expected_variables[21].name,
                                         expected_variables[21].cdf_data_type, expected_variables[21].record_varying)
-        self.assert_variable_attributes(actual_variables[22], expected_variables[22].value, expected_variables[22].name,
-                                        expected_variables[22].cdf_data_type, expected_variables[22].record_varying)
 
     def test_hit_l1_data_read_from_cdf(self):
         expected_epochs = np.array([datetime(year=2020, month=1, day=1), datetime(year=2020, month=1, day=1, hour=2)])

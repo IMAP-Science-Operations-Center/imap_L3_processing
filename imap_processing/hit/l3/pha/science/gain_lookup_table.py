@@ -2,7 +2,6 @@ import csv
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Self
 
 
 @dataclass
@@ -18,7 +17,7 @@ class DetectorGain(Enum):
 
 class GainLookupTable(dict):
     @classmethod
-    def from_file(cls, high_gain_file_path: Path, low_gain_file_path: Path) -> Self:
+    def from_file(cls, high_gain_file_path: Path, low_gain_file_path: Path):
         lookup_table = cls()
         high_gain_lookup = {}
         low_gain_lookup = {}

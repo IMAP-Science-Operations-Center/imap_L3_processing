@@ -32,7 +32,9 @@ class TestSweProcessor(unittest.TestCase):
     @patch('imap_processing.swe.swe_processor.calculate_solar_wind_velocity_vector')
     @patch('imap_processing.swe.swe_processor.correct_and_rebin')
     @patch('imap_processing.swe.swe_processor.integrate_distribution_to_get_1d_spectrum')
-    def test_calculate_pitch_angle_products(self, mock_integrate_distribution_to_get_1d_spectrum,
+    @patch('imap_processing.swe.swe_processor.integrate_distribution_to_get_inbound_and_outbound_1d_spectrum')
+    def test_calculate_pitch_angle_products(self, mock_integrate_distribution_to_get_inbound_and_outbound_1d_spectrum,
+                                            mock_integrate_distribution_to_get_1d_spectrum,
                                             mock_correct_and_rebin,
                                             mock_calculate_solar_wind_velocity_vector,
                                             mock_find_breakpoints,
@@ -76,6 +78,13 @@ class TestSweProcessor(unittest.TestCase):
         integrated_spectrum = np.arange(9).reshape(3, 3) + 11
 
         mock_integrate_distribution_to_get_1d_spectrum.side_effect = integrated_spectrum
+
+        expected_inbound_spectrum = np.arange(9).reshape(3, 3) + 12
+        expected_outbound_spectrum = np.arange(9).reshape(3, 3) + 13
+        mock_integrate_distribution_to_get_inbound_and_outbound_1d_spectrum.side_effect = [
+            (expected_inbound_spectrum[0], expected_outbound_spectrum[0]),
+            (expected_inbound_spectrum[1], expected_outbound_spectrum[1]),
+            (expected_inbound_spectrum[2], expected_outbound_spectrum[2])]
 
         geometric_fractions = [0.0697327, 0.138312, 0.175125, 0.181759,
                                0.204686, 0.151448, 0.0781351]
@@ -125,6 +134,8 @@ class TestSweProcessor(unittest.TestCase):
         np.testing.assert_array_equal(swe_l3_data.epoch_delta, swe_l2_data.epoch_delta)
         np.testing.assert_array_equal(swe_l3_data.epoch, swe_l2_data.epoch)
         np.testing.assert_array_equal(swe_l3_data.energy_spectrum, integrated_spectrum)
+        np.testing.assert_array_equal(swe_l3_data.energy_spectrum_inbound, expected_inbound_spectrum)
+        np.testing.assert_array_equal(swe_l3_data.energy_spectrum_outbound, expected_outbound_spectrum)
 
         def call_with_array_matchers(*args):
             return call(*[NumpyArrayMatcher(x) for x in args])
@@ -150,6 +161,11 @@ class TestSweProcessor(unittest.TestCase):
                                      mag_l1d_data.mag_data[4], solar_wind_velocity_vector[4], swe_config)
         ])
         mock_integrate_distribution_to_get_1d_spectrum.assert_has_calls([
+            call(rebinned_by_pitch[1], swe_config),
+            call(rebinned_by_pitch[3], swe_config),
+            call(rebinned_by_pitch[5], swe_config)
+        ])
+        mock_integrate_distribution_to_get_inbound_and_outbound_1d_spectrum.assert_has_calls([
             call(rebinned_by_pitch[1], swe_config),
             call(rebinned_by_pitch[3], swe_config),
             call(rebinned_by_pitch[5], swe_config)

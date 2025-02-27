@@ -1,5 +1,5 @@
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from bitstring import BitStream
@@ -11,12 +11,13 @@ from imap_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencie
 from imap_processing.glows.l3a.utils import read_l2_glows_data
 from imap_processing.hit.l3.hit_l3_sectored_dependencies import HITL3SectoredDependencies
 from imap_processing.hit.l3.hit_processor import HitProcessor
+from imap_processing.hit.l3.models import HitL1Data
+from imap_processing.hit.l3.pha.hit_l3_pha_dependencies import HitL3PhaDependencies
 from imap_processing.hit.l3.pha.pha_event_reader import PHAEventReader
 from imap_processing.hit.l3.pha.science.calculate_pha import process_pha_event
 from imap_processing.hit.l3.pha.science.cosine_correction_lookup_table import CosineCorrectionLookupTable
 from imap_processing.hit.l3.pha.science.gain_lookup_table import GainLookupTable
 from imap_processing.hit.l3.pha.science.range_fit_lookup import RangeFitLookup
-from imap_processing.hit.l3.utils import read_l2_hit_data
 from imap_processing.models import InputMetadata, UpstreamDataDependency
 from imap_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density import \
     AlphaTemperatureDensityCalibrationTable
@@ -34,7 +35,7 @@ from imap_processing.swapi.l3b.swapi_l3b_dependencies import SwapiL3BDependencie
 from imap_processing.swapi.swapi_processor import SwapiProcessor
 from imap_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies
 from imap_processing.swe.swe_processor import SweProcessor
-from imap_processing.utils import save_data, read_l1d_mag_data
+from imap_processing.utils import save_data
 from tests.test_helpers import get_test_data_path
 
 
@@ -132,7 +133,8 @@ def create_swe_cdf(dependencies: SweL3Dependencies) -> str:
     cdf_path = save_data(output_data)
     return cdf_path
 
-def create_hit_cdf(dependencies: HITL3SectoredDependencies) -> str:
+
+def create_hit_sectored_cdf(dependencies: HITL3SectoredDependencies) -> str:
     input_metadata = InputMetadata(
         instrument='hit',
         data_level='l3',
@@ -143,6 +145,7 @@ def create_hit_cdf(dependencies: HITL3SectoredDependencies) -> str:
     output_data = processor.process_pitch_angle_product(dependencies)
     cdf_path = save_data(output_data)
     return cdf_path
+
 
 def process_hit_pha():
     bitstream = BitStream(filename=get_test_data_path("hit/pha_events/full_event_record_buffer.bin"))
@@ -162,8 +165,46 @@ def process_hit_pha():
         get_test_data_path("hit/pha_events/imap_hit_l3_range3-fit-text-not-cdf_20250203_v001.cdf"),
         get_test_data_path("hit/pha_events/imap_hit_l3_range4-fit-text-not-cdf_20250203_v001.cdf"),
     )
-    processed_events = [process_pha_event(e, cosine_table, gain_table, range_fit_lookup) for e in events]
+    processed_events = [process_pha_event(e, cosine_table, gain_table, range_fit_lookup) for e
+                        in events]
     print(processed_events)
+
+
+def create_hit_direct_event_cdf():
+    cosine_table = CosineCorrectionLookupTable(
+        get_test_data_path("hit/pha_events/imap_hit_l3_r2-cosines-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_r3-cosines-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_r4-cosines-text-not-cdf_20250203_v001.cdf"),
+    )
+    gain_table = GainLookupTable.from_file(
+        get_test_data_path("hit/pha_events/imap_hit_l3_high-gains-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_low-gains-text-not-cdf_20250203_v001.cdf"))
+
+    range_fit_lookup = RangeFitLookup.from_files(
+        get_test_data_path("hit/pha_events/imap_hit_l3_range2-fit-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_range3-fit-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_range4-fit-text-not-cdf_20250203_v001.cdf"),
+    )
+
+    hit_l1_data = HitL1Data.read_from_cdf(
+        get_test_data_path("hit/pha_events/fake-menlo-imap_hit_l1a_pulse-height-events_20100106_v003.cdf"))
+
+    direct_event_dependencies = HitL3PhaDependencies(hit_l1_data=hit_l1_data, cosine_correction_lookup=cosine_table,
+
+                                                     gain_lookup=gain_table, range_fit_lookup=range_fit_lookup)
+    input_metadata = InputMetadata(
+        instrument="hit",
+        data_level="l3",
+        start_date=datetime.now(),
+        end_date=datetime.now() + timedelta(days=1),
+        version="",
+        descriptor="pulse-height-events"
+    )
+    processor = HitProcessor(None, input_metadata)
+
+    product = processor.process_direct_event_product(direct_event_dependencies)
+    file_path = save_data(product)
+    return file_path
 
 
 if __name__ == "__main__":
@@ -204,11 +245,13 @@ if __name__ == "__main__":
         print(path)
 
     if "hit" in sys.argv:
-        mag_data = read_l1d_mag_data(get_test_data_path("mag/imap_mag_l1d_mago-normal_20250101_v001.cdf"))
-        hit_data = read_l2_hit_data(get_test_data_path("hit/hit_l2_sectored_sample1_20250101.cdf"))
-        dependencies = HITL3SectoredDependencies(mag_l1d_data=mag_data, data=hit_data)
-        print(create_hit_cdf(dependencies))
-        # process_hit_pha()
+        # mag_data = read_l1d_mag_data(get_test_data_path("mag/imap_mag_l1d_mago-normal_20250101_v001.cdf"))
+        # hit_data = read_l2_hit_data(get_test_data_path("hit/hit_l2_sectored_sample1_20250101.cdf"))
+        # dependencies = HITL3SectoredDependencies(mag_l1d_data=mag_data, data=hit_data)
+        # print(f"hit sectored data product: {create_hit_sectored_cdf(dependencies)}")
+
+        path = create_hit_direct_event_cdf()
+        print(f"hit direct event data product: {path}")
 
     if "swe" in sys.argv:
         dependencies = SweL3Dependencies.from_file_paths(

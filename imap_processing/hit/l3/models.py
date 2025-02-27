@@ -1,37 +1,39 @@
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import Union
 
 import numpy as np
 from spacepy.pycdf import CDF
 
-from imap_processing.hit.l3.pha.science.calculate_pha import EventOutput
 from imap_processing.models import DataProduct, DataProductVariable
 
-EPOCH_VAR_NAME = "EPOCH"
-CHARGE_VAR_NAME = "CHARGE"
-ENERGY_VAR_NAME = "ENERGY"
-PARTICLE_ID_VAR_NAME = "PARTICLE_ID"
-PRIORITY_BUFFER_ID_VAR_NAME = "PRIORITY_BUFFER_ID"
-LATENCY_VAR_NAME = "LATENCY"
-STIM_FLAG_VAR_NAME = "STIM_FLAG"
-LONG_EVENT_FLAG_VAR_NAME = "LONG_EVENT_FLAG"
-HAZ_FLAG_VAR_NAME = "HAZ_FLAG"
-A_B_SIDE_VAR_NAME = "A_B_SIDE"
-HAS_UNREAD_FLAG_VAR_NAME = "HAS_UNREAD_FLAG"
-CULLING_FLAG_VAR_NAME = "CULLING_FLAG"
-PHA_VALUE_VAR_NAME = "PHA_VALUE"
-ENERGY_AT_DETECTOR_VAR_NAME = "ENERGY_AT_DETECTOR"
-DETECTOR_ADDRESS_VAR_NAME = "DETECTOR_ADDRESS"
-GAIN_FLAG_VAR_NAME = "GAIN_FLAG"
-LAST_PHA_VAR_NAME = "LAST_PHA"
-DETECTOR_FLAG_VAR_NAME = "DETECTOR_FLAG"
-DEINDEX_VAR_NAME = "DEINDEX"
-EPINDEX_VAR_NAME = "EPINDEX"
-STIM_GAIN_VAR_NAME = "STIM_GAIN"
-A_L_STIM_VAR_NAME = "A_L_STIM"
-STIM_STEP_VAR_NAME = "STIM_STEP"
-DAC_VALUE_VAR_NAME = "DAC_VALUE"
+EPOCH_VAR_NAME = "epoch"
+CHARGE_VAR_NAME = "charge"
+ENERGY_VAR_NAME = "energy"
+ENERGY_AT_DETECTOR_VAR_NAME = "energy_at_detector"
+# TODO add range, delta_e_energy, e_prime_energy
+
+PARTICLE_ID_VAR_NAME = "particle_id"
+PRIORITY_BUFFER_NUMBER_VAR_NAME = "priority_buffer_number"
+LATENCY_VAR_NAME = "latency"
+STIM_TAG_VAR_NAME = "stim_tag"
+LONG_EVENT_FLAG_VAR_NAME = "long_event_flag"
+HAZ_TAG_VAR_NAME = "haz_tag"
+A_B_SIDE_VAR_NAME = "a_b_side"
+HAS_UNREAD_FLAG_VAR_NAME = "has_unread_flag"
+CULLING_FLAG_VAR_NAME = "culling_flag"
+PHA_VALUE_VAR_NAME = "pha_value"
+DETECTOR_ADDRESS_VAR_NAME = "detector_address"
+IS_LOW_GAIN_VAR_NAME = "is_low_gain"
+LAST_PHA_VAR_NAME = "last_pha"
+DETECTOR_FLAGS_VAR_NAME = "detector_flags"
+DEINDEX_VAR_NAME = "deindex"
+EPINDEX_VAR_NAME = "epindex"
+STIM_GAIN_VAR_NAME = "stim_gain"
+A_L_STIM_VAR_NAME = "a_l_stim"
+STIM_STEP_VAR_NAME = "stim_step"
+DAC_VALUE_VAR_NAME = "dac_value"
 
 
 @dataclass
@@ -73,104 +75,54 @@ class HitL2Data:
 
 @dataclass
 class HitDirectEventDataProduct(DataProduct):
-    event_outputs: list[EventOutput]
+    charge: np.ndarray[float]
+    energy: np.ndarray[float]
+    particle_id: np.ndarray[int]
+    priority_buffer_number: np.ndarray[int]
+    latency: np.ndarray[int]
+    stim_tag: np.ndarray[bool]
+    long_event_flag: np.ndarray[bool]
+    haz_tag: np.ndarray[bool]
+    a_b_side: np.ndarray[bool]
+    has_unread_adcs: np.ndarray[bool]
+    culling_flag: np.ndarray[bool]
+    pha_value: np.ndarray[int]
+    energy_at_detector: np.ndarray[float]
+    detector_address: np.ndarray[int]
+    is_low_gain: np.ndarray[bool]
+    detector_flags: np.ndarray[int]
+    deindex: np.ndarray[int]
+    epindex: np.ndarray[int]
+    stim_gain: np.ndarray[float]
+    a_l_stim: np.ndarray[bool]
+    stim_step: np.ndarray[int]
+    dac_value: np.ndarray[int]
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
-        charges = []
-        energies = []
-        particle_ids = []
-        priority_buffer_numbers = []
-        time_tags = []
-        stim_tags = []
-        long_event_flags = []
-        haz_tags = []
-        a_b_sides = []
-        has_unread_adcs = []
-        culling_flags = []
-        pha_values = []
-        energies_per_detector = []
-        detector_addresses = []
-        gain_flags = []
-        last_phas = []
-        detector_flags = []
-        de_index = []
-        ep_index = []
-        stim_gains = []
-        a_l_stims = []
-        stim_steps = []
-        dac_values = []
-
-        for event_output in self.event_outputs:
-            charges.append(event_output.charge)
-            energies.append(event_output.total_energy)
-            particle_ids.append(event_output.original_event.particle_id)
-            priority_buffer_numbers.append(event_output.original_event.priority_buffer_num)
-            time_tags.append(event_output.original_event.time_tag)
-            stim_tags.append(event_output.original_event.stim_tag)
-            long_event_flags.append(event_output.original_event.long_event_flag)
-            haz_tags.append(event_output.original_event.haz_tag)
-            a_b_sides.append(event_output.original_event.a_b_side_flag)
-            has_unread_adcs.append(event_output.original_event.has_unread_adcs)
-            culling_flags.append(event_output.original_event.culling_flag)
-            pha_values.append([pha_word.adc_value for pha_word in event_output.original_event.pha_words])
-            energies_per_detector.append(event_output.energies)
-            detector_addresses.append([pha_word.detector.address for pha_word in event_output.original_event.pha_words])
-            gain_flags.append([pha_word.is_low_gain for pha_word in event_output.original_event.pha_words])
-            last_phas.append([pha_word.is_last_pha for pha_word in event_output.original_event.pha_words])
-            self._process_extended_header(de_index, detector_flags, ep_index, event_output)
-            self._process_stim_block(a_l_stims, event_output, stim_gains, stim_steps)
-            self._process_extended_stim_header(dac_values, event_output)
         return [
-            DataProductVariable(CHARGE_VAR_NAME, np.array(charges)),
-            DataProductVariable(ENERGY_VAR_NAME, np.array(energies)),
-            DataProductVariable(PARTICLE_ID_VAR_NAME, np.array(particle_ids)),
-            DataProductVariable(PRIORITY_BUFFER_ID_VAR_NAME, np.array(priority_buffer_numbers)),
-            DataProductVariable(LATENCY_VAR_NAME, np.array(time_tags)),
-            DataProductVariable(STIM_FLAG_VAR_NAME, np.array(stim_tags)),
-            DataProductVariable(LONG_EVENT_FLAG_VAR_NAME, np.array(long_event_flags)),
-            DataProductVariable(HAZ_FLAG_VAR_NAME, np.array(haz_tags)),
-            DataProductVariable(A_B_SIDE_VAR_NAME, np.array(a_b_sides)),
-            DataProductVariable(HAS_UNREAD_FLAG_VAR_NAME, np.array(has_unread_adcs)),
-            DataProductVariable(CULLING_FLAG_VAR_NAME, np.array(culling_flags)),
-            DataProductVariable(PHA_VALUE_VAR_NAME, np.array(pha_values)),
-            DataProductVariable(ENERGY_AT_DETECTOR_VAR_NAME, np.array(energies_per_detector)),
-            DataProductVariable(DETECTOR_ADDRESS_VAR_NAME, np.array(detector_addresses)),
-            DataProductVariable(GAIN_FLAG_VAR_NAME, np.array(gain_flags)),
-            DataProductVariable(LAST_PHA_VAR_NAME, np.array(last_phas)),
-            DataProductVariable(DETECTOR_FLAG_VAR_NAME, np.array(detector_flags)),
-            DataProductVariable(DEINDEX_VAR_NAME, np.array(de_index)),
-            DataProductVariable(EPINDEX_VAR_NAME, np.array(ep_index)),
-            DataProductVariable(STIM_GAIN_VAR_NAME, np.array(stim_gains)),
-            DataProductVariable(A_L_STIM_VAR_NAME, np.array(a_l_stims)),
-            DataProductVariable(STIM_STEP_VAR_NAME, np.array(stim_steps)),
-            DataProductVariable(DAC_VALUE_VAR_NAME, np.array(dac_values))
+            DataProductVariable(CHARGE_VAR_NAME, self.charge),
+            DataProductVariable(ENERGY_VAR_NAME, self.energy),
+            DataProductVariable(PARTICLE_ID_VAR_NAME, self.particle_id),
+            DataProductVariable(PRIORITY_BUFFER_NUMBER_VAR_NAME, self.priority_buffer_number),
+            DataProductVariable(LATENCY_VAR_NAME, self.latency),
+            DataProductVariable(STIM_TAG_VAR_NAME, self.stim_tag),
+            DataProductVariable(LONG_EVENT_FLAG_VAR_NAME, self.long_event_flag),
+            DataProductVariable(HAZ_TAG_VAR_NAME, self.haz_tag),
+            DataProductVariable(A_B_SIDE_VAR_NAME, self.a_b_side),
+            DataProductVariable(HAS_UNREAD_FLAG_VAR_NAME, self.has_unread_adcs),
+            DataProductVariable(CULLING_FLAG_VAR_NAME, self.culling_flag),
+            DataProductVariable(PHA_VALUE_VAR_NAME, self.pha_value),
+            DataProductVariable(ENERGY_AT_DETECTOR_VAR_NAME, self.energy_at_detector),
+            DataProductVariable(DETECTOR_ADDRESS_VAR_NAME, self.detector_address),
+            DataProductVariable(IS_LOW_GAIN_VAR_NAME, self.is_low_gain),
+            DataProductVariable(DETECTOR_FLAGS_VAR_NAME, self.detector_flags),
+            DataProductVariable(DEINDEX_VAR_NAME, self.deindex),
+            DataProductVariable(EPINDEX_VAR_NAME, self.epindex),
+            DataProductVariable(STIM_GAIN_VAR_NAME, self.stim_gain),
+            DataProductVariable(A_L_STIM_VAR_NAME, self.a_l_stim),
+            DataProductVariable(STIM_STEP_VAR_NAME, self.stim_step),
+            DataProductVariable(DAC_VALUE_VAR_NAME, self.dac_value)
         ]
-
-    def _process_stim_block(self, a_l_stims, event_output, stim_gains, stim_steps):
-        if event_output.original_event.stim_block is None:
-            stim_gains.append(None)
-            a_l_stims.append(None)
-            stim_steps.append(None)
-        else:
-            stim_gains.append(event_output.original_event.stim_block.stim_gain)
-            a_l_stims.append(event_output.original_event.stim_block.a_l_stim)
-            stim_steps.append(event_output.original_event.stim_block.stim_step)
-
-    def _process_extended_header(self, de_index, detector_flags, ep_index, event_output):
-        if event_output.original_event.extended_header is None:
-            detector_flags.append(None)
-            de_index.append(None)
-            ep_index.append(None)
-        else:
-            detector_flags.append(event_output.original_event.extended_header.detector_flags)
-            de_index.append(event_output.original_event.extended_header.delta_e_index)
-            ep_index.append(event_output.original_event.extended_header.e_prime_index)
-
-    def _process_extended_stim_header(self, dac_values, event_output):
-        if event_output.original_event.extended_stim_header is None:
-            dac_values.append(None)
-        else:
-            dac_values.append(event_output.original_event.extended_stim_header.dac_value)
 
 
 @dataclass
@@ -179,7 +131,7 @@ class HitL1Data:
     event_binary: np.ndarray[str]
 
     @classmethod
-    def read_from_cdf(cls, cdf_file_path: Path):
+    def read_from_cdf(cls, cdf_file_path: Union[Path, str]):
         cdf = CDF(str(cdf_file_path))
 
         return cls(cdf["epoch"], cdf["pha_raw"][...])

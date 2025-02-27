@@ -4,7 +4,7 @@ import numpy as np
 from imap_processing.hit.l3.hit_l3_sectored_dependencies import HITL3SectoredDependencies
 from imap_processing.hit.l3.models import HitDirectEventDataProduct
 from imap_processing.hit.l3.pha.hit_l3_pha_dependencies import HitL3PhaDependencies
-from imap_processing.hit.l3.pha.pha_event_reader import PHAEventReader
+from imap_processing.hit.l3.pha.pha_event_reader import PHAEventReader, RawPHAEvent
 from imap_processing.hit.l3.pha.science.calculate_pha import process_pha_event
 from imap_processing.hit.l3.sectored_products.models import HitPitchAngleDataProduct
 from imap_processing.hit.l3.sectored_products.science.sectored_products_algorithms import get_sector_unit_vectors, \
@@ -23,24 +23,110 @@ class HitProcessor(Processor):
             cdf_file_path = save_data(pitch_angle_data_product)
             imap_data_access.upload(cdf_file_path)
         elif self.input_metadata.descriptor == "direct-event":
-            direct_event_data_product = self.process_direct_event_product()
+            direct_event_dependencies = HitL3PhaDependencies.fetch_dependencies(self.dependencies)
+            direct_event_data_product = self.process_direct_event_product(direct_event_dependencies)
             cdf_file_path = save_data(direct_event_data_product)
             imap_data_access.upload(cdf_file_path)
         else:
             raise ValueError(
                 f"Don't know how to generate '{self.input_metadata.descriptor}' /n Known HIT l3 data products: 'pitch-angle', 'direct-event'.")
 
-    def process_direct_event_product(self) -> HitDirectEventDataProduct:
-        processed_events = []
-        direct_event_dependencies = HitL3PhaDependencies.fetch_dependencies(self.dependencies)
-        for event_binary in direct_event_dependencies.hit_l1_data.event_binary:
-            raw_pha_events = PHAEventReader.read_all_pha_events(event_binary)
-            for raw_event in raw_pha_events:
-                processed_events.append(process_pha_event(raw_event, direct_event_dependencies.cosine_correction_lookup,
-                                                          direct_event_dependencies.gain_lookup,
-                                                          direct_event_dependencies.range_fit_lookup))
+    def process_direct_event_product(self,
+                                     direct_event_dependencies: HitL3PhaDependencies) -> HitDirectEventDataProduct:
 
-        return HitDirectEventDataProduct(event_outputs=processed_events, input_metadata=self.input_metadata)
+        epochs = []
+        raw_pha_events: list[RawPHAEvent] = []
+        for epoch, event_binary in zip(direct_event_dependencies.hit_l1_data.epoch,
+                                       direct_event_dependencies.hit_l1_data.event_binary):
+            raw_pha_events += PHAEventReader.read_all_pha_events(event_binary)
+            epochs += [epoch] * len(raw_pha_events)
+
+        charge = np.full(shape=(len(raw_pha_events)), fill_value=np.nan)
+        energy = np.full(shape=(len(raw_pha_events)), fill_value=np.nan)
+        particle_id = np.full(shape=(len(raw_pha_events)), fill_value=np.nan)
+        priority_buffer_number = np.full(shape=(len(raw_pha_events)), fill_value=np.nan)
+        latency = np.full(shape=(len(raw_pha_events)), fill_value=np.nan)
+        stim_tag = np.full(shape=(len(raw_pha_events)), fill_value=np.nan)
+        long_event_flag = np.full(shape=(len(raw_pha_events)), fill_value=np.nan)
+        haz_tag = np.full(shape=(len(raw_pha_events)), fill_value=np.nan)
+        a_b_side = np.full(shape=(len(raw_pha_events)), fill_value=np.nan)
+        has_unread_adcs = np.full(shape=(len(raw_pha_events)), fill_value=np.nan)
+        culling_flag = np.full(shape=(len(raw_pha_events)), fill_value=np.nan)
+
+        pha_value = np.full(shape=(len(raw_pha_events), 64), fill_value=np.nan)
+        energy_at_detector = np.full(shape=(len(raw_pha_events), 64), fill_value=np.nan)
+        detector_address = np.full(shape=(len(raw_pha_events), 64), fill_value="")
+        is_low_gain = np.full(shape=(len(raw_pha_events), 64), fill_value=False)
+
+        detector_flags = np.full(shape=(len(raw_pha_events)), fill_value=None)
+        deindex = np.full(shape=(len(raw_pha_events)), fill_value=None)
+        epindex = np.full(shape=(len(raw_pha_events)), fill_value=None)
+        stim_gain = np.full(shape=(len(raw_pha_events)), fill_value=None)
+        a_l_stim = np.full(shape=(len(raw_pha_events)), fill_value=None)
+        stim_step = np.full(shape=(len(raw_pha_events)), fill_value=None)
+        dac_value = np.full(shape=(len(raw_pha_events)), fill_value=None)
+
+        for i, raw_event in enumerate(raw_pha_events):
+            event_output = process_pha_event(
+                raw_event,
+                direct_event_dependencies.cosine_correction_lookup,
+                direct_event_dependencies.gain_lookup,
+                direct_event_dependencies.range_fit_lookup
+            )
+
+            charge[i] = event_output.charge
+            energy[i] = event_output.total_energy
+
+            particle_id[i] = raw_event.particle_id
+            priority_buffer_number[i] = raw_event.priority_buffer_num
+            latency[i] = raw_event.time_tag
+            stim_tag[i] = raw_event.stim_tag
+            long_event_flag[i] = raw_event.long_event_flag
+            haz_tag[i] = raw_event.haz_tag
+            a_b_side[i] = raw_event.a_b_side_flag
+            has_unread_adcs[i] = raw_event.has_unread_adcs
+            culling_flag[i] = raw_event.culling_flag
+
+            for event_energy_at_detector, word in zip(event_output.energies, raw_event.pha_words):
+                pha_value[i, word.detector.address] = word.adc_value
+                energy_at_detector[i, word.detector.address] = event_energy_at_detector
+                # detector_address[i, word.detector.address] = str(word.detector)
+                is_low_gain[i, word.detector.address] = word.is_low_gain
+
+            if raw_event.extended_header is not None:
+                detector_flags[i] = raw_event.extended_header.detector_flags
+                deindex[i] = raw_event.extended_header.delta_e_index
+                epindex[i] = raw_event.extended_header.e_prime_index
+            if raw_event.stim_block is not None:
+                stim_gain[i] = raw_event.stim_block.stim_gain
+                a_l_stim[i] = raw_event.stim_block.a_l_stim
+                stim_step[i] = raw_event.stim_block.stim_step
+            if raw_event.extended_stim_header is not None:
+                dac_value[i] = raw_event.extended_stim_header.dac_value
+
+        return HitDirectEventDataProduct(charge=charge,
+                                         energy=energy,
+                                         particle_id=particle_id,
+                                         priority_buffer_number=priority_buffer_number,
+                                         latency=latency,
+                                         stim_tag=stim_tag,
+                                         long_event_flag=long_event_flag,
+                                         haz_tag=haz_tag,
+                                         a_b_side=a_b_side,
+                                         has_unread_adcs=has_unread_adcs,
+                                         culling_flag=culling_flag,
+                                         pha_value=pha_value,
+                                         energy_at_detector=energy_at_detector,
+                                         detector_address=detector_address,
+                                         is_low_gain=is_low_gain,
+                                         detector_flags=detector_flags,
+                                         deindex=deindex,
+                                         epindex=epindex,
+                                         stim_gain=stim_gain,
+                                         a_l_stim=a_l_stim,
+                                         stim_step=stim_step,
+                                         dac_value=dac_value,
+                                         input_metadata=self.input_metadata.to_upstream_data_dependency("direct-event"))
 
     def process_pitch_angle_product(self, dependencies: HITL3SectoredDependencies) -> HitPitchAngleDataProduct:
         number_of_pitch_angle_bins = 8
