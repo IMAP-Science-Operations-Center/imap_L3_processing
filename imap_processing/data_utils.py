@@ -30,11 +30,19 @@ def rebin(from_epoch: np.ndarray[float], from_data: np.ndarray[float], to_epoch:
 def find_closest_neighbor(from_epoch: np.ndarray[datetime], from_data: np.ndarray[float],
                           to_epoch: np.ndarray[datetime],
                           maximum_distance: timedelta) -> np.ndarray[float]:
-    deltas = np.abs(from_epoch - to_epoch[..., np.newaxis])
-    min_deltas = np.min(deltas, axis=-1, keepdims=True)
-    min_outside_range = min_deltas > maximum_distance
-    indices = np.argmin(deltas, axis=-1)
+    index = np.searchsorted(from_epoch, to_epoch)
+    right_indices = np.minimum(len(from_epoch) - 1, index)
+    left_indices = np.maximum(0, index - 1)
 
-    closest_data = from_data[indices]
-    closest_data_in_range = np.where(min_outside_range, np.nan, closest_data)
-    return closest_data_in_range
+    right_delta = np.abs(from_epoch[right_indices] - to_epoch)
+    left_delta = np.abs(from_epoch[left_indices] - to_epoch)
+
+    best_indices = np.where(right_delta < left_delta, right_indices, left_indices)
+
+    min_deltas = np.abs(from_epoch[best_indices] - to_epoch)
+    min_outside_range = min_deltas > maximum_distance
+
+    closest_data = from_data[best_indices].astype(float, copy=True)
+    closest_data[min_outside_range] = np.nan
+
+    return closest_data
