@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 
 import numpy as np
 
-from imap_processing.data_utils import rebin
+from imap_processing.data_utils import rebin, find_closest_neighbor
 
 
 class TestDataUtils(unittest.TestCase):
@@ -109,7 +109,7 @@ class TestDataUtils(unittest.TestCase):
         ]
         np.testing.assert_array_equal(actual_average, expected_average)
 
-    def test_temp(self):
+    def test_gap_in_to_epoch(self):
         hit_data_epoch = np.array([datetime(2020, 4, 4, 0, 5),
                                    datetime(2020, 4, 4, 0, 15),
                                    datetime(2020, 4, 4, 0, 30)])
@@ -129,3 +129,39 @@ class TestDataUtils(unittest.TestCase):
             [np.nan, np.nan, np.nan]
         ]
         np.testing.assert_array_equal(actual_average, expected_average)
+
+    def test_find_closest_neighbor(self):
+        test_cases = [
+            ("matching cadence", [datetime(2020, 4, 4),
+                                  datetime(2020, 4, 5),
+                                  datetime(2020, 4, 6),
+                                  datetime(2020, 4, 7)],
+             [[0, 0, 1], [0, 2, 0], [0, 0, 3], [4, 0, 0]]),
+            ("to slower cadence", [datetime(2020, 4, 4),
+                                   datetime(2020, 4, 6),
+                                   datetime(2020, 4, 8)],
+             [[0, 0, 1], [0, 0, 3], [4, 0, 0]]),
+            ("to faster cadence", [datetime(2020, 4, 4, hour=12),
+                                   datetime(2020, 4, 5),
+                                   datetime(2020, 4, 5, hour=12)],
+             [[0, 0, 1], [0, 2, 0], [0, 2, 0]]),
+            ("outside range", [datetime(2020, 4, 2, hour=23),
+                               datetime(2020, 4, 5),
+                               datetime(2020, 4, 8, hour=1)],
+             [[np.nan, np.nan, np.nan], [0, 2, 0], [np.nan, np.nan, np.nan]]),
+        ]
+
+        for case, to_dates, expected_values in test_cases:
+            with self.subTest(case):
+                to_data_epoch = np.array(to_dates)
+                from_data = np.array([[0, 0, 1], [0, 2, 0], [0, 0, 3], [4, 0, 0]])
+                from_date_epoch = np.array([datetime(2020, 4, 4),
+                                            datetime(2020, 4, 5),
+                                            datetime(2020, 4, 6),
+                                            datetime(2020, 4, 7)
+                                            ])
+
+                actual_neighbor_values = find_closest_neighbor(from_date_epoch, from_data, to_data_epoch,
+                                                               timedelta(days=1))
+
+                np.testing.assert_array_equal(actual_neighbor_values, expected_values)

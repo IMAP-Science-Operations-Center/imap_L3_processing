@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 import numpy as np
 
 
@@ -23,3 +25,16 @@ def rebin(from_epoch: np.ndarray[float], from_data: np.ndarray[float], to_epoch:
 
     return np.divide(vector_sums, vector_counts, out=np.full_like(vector_sums, fill_value=np.nan),
                      where=vector_counts != 0)
+
+
+def find_closest_neighbor(from_epoch: np.ndarray[datetime], from_data: np.ndarray[float],
+                          to_epoch: np.ndarray[datetime],
+                          maximum_distance: timedelta) -> np.ndarray[float]:
+    deltas = np.abs(from_epoch - to_epoch[..., np.newaxis])
+    min_deltas = np.min(deltas, axis=-1, keepdims=True)
+    min_outside_range = min_deltas > maximum_distance
+    indices = np.argmin(deltas, axis=-1)
+
+    closest_data = from_data[indices]
+    closest_data_in_range = np.where(min_outside_range, np.nan, closest_data)
+    return closest_data_in_range
