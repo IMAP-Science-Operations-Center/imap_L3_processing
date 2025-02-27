@@ -9,6 +9,7 @@ from imap_processing.glows.descriptors import GLOWS_L2_DESCRIPTOR
 from imap_processing.glows.glows_processor import GlowsProcessor
 from imap_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
 from imap_processing.glows.l3a.utils import read_l2_glows_data
+from imap_processing.hit.l3.hit_l3_sectored_dependencies import HITL3SectoredDependencies
 from imap_processing.hit.l3.hit_processor import HitProcessor
 from imap_processing.hit.l3.models import HitL1Data
 from imap_processing.hit.l3.pha.hit_l3_pha_dependencies import HitL3PhaDependencies
@@ -133,6 +134,19 @@ def create_swe_cdf(dependencies: SweL3Dependencies) -> str:
     return cdf_path
 
 
+def create_hit_sectored_cdf(dependencies: HITL3SectoredDependencies) -> str:
+    input_metadata = InputMetadata(
+        instrument='hit',
+        data_level='l3',
+        start_date=datetime(2025, 10, 23),
+        end_date=datetime(2025, 10, 24),
+        version='v999')
+    processor = HitProcessor(None, input_metadata)
+    output_data = processor.process_pitch_angle_product(dependencies)
+    cdf_path = save_data(output_data)
+    return cdf_path
+
+
 def process_hit_pha():
     bitstream = BitStream(filename=get_test_data_path("hit/pha_events/full_event_record_buffer.bin"))
     events = PHAEventReader.read_all_pha_events(bitstream.bin)
@@ -223,8 +237,13 @@ if __name__ == "__main__":
         print(path)
 
     if "hit" in sys.argv:
+        # mag_data = read_l1d_mag_data(get_test_data_path("mag/imap_mag_l1d_mago-normal_20250101_v001.cdf"))
+        # hit_data = read_l2_hit_data(get_test_data_path("hit/hit_l2_sectored_sample1_20250101.cdf"))
+        # dependencies = HITL3SectoredDependencies(mag_l1d_data=mag_data, data=hit_data)
+        # print(f"hit sectored data product: {create_hit_sectored_cdf(dependencies)}")
+
         path = create_hit_direct_event_cdf()
-        print(path)
+        print(f"hit direct event data product: {path}")
 
     if "swe" in sys.argv:
         dependencies = SweL3Dependencies.from_file_paths(

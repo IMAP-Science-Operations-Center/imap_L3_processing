@@ -1,6 +1,8 @@
+from datetime import timedelta
 from unittest import TestCase
 from unittest.mock import sentinel
 
+import numpy as np
 from spacepy import pycdf
 
 from imap_processing.hit.l3.sectored_products.models import HitPitchAngleDataProduct, EPOCH_CDF_VAR_NAME, \
@@ -40,9 +42,12 @@ class TestHitPitchAngleDataProduct(TestCase):
         gyrophases = sentinel.gyrophases
         gyrophase_deltas = sentinel.gyrophase_deltas
         epochs = sentinel.epochs
-        epoch_deltas = sentinel.epoch_delta
+        epoch_deltas = np.array([timedelta(seconds=5)])
 
-        data = HitPitchAngleDataProduct(epochs,
+        input_meta_data = sentinel.input_meta_data
+
+        data = HitPitchAngleDataProduct(input_meta_data,
+                                        epochs,
                                         epoch_deltas,
                                         pitch_angles,
                                         pitch_angle_deltas,
@@ -66,29 +71,29 @@ class TestHitPitchAngleDataProduct(TestCase):
                                         )
 
         data_product_variables = data.to_data_product_variables()
-
+        expected_epoch_deltas = np.array([5e9])
         expected_data_product_variables = [
-            DataProductVariable(EPOCH_CDF_VAR_NAME, epochs, cdf_data_type=pycdf.const.CDF_TIME_TT2000),
-            DataProductVariable(EPOCH_DELTA_CDF_VAR_NAME, epoch_deltas),
-            DataProductVariable(PITCH_ANGLE_CDF_VAR_NAME, pitch_angles, record_varying=False),
-            DataProductVariable(PITCH_ANGLE_DELTA_CDF_VAR_NAME, pitch_angle_deltas, record_varying=False),
-            DataProductVariable(GYROPHASE_CDF_VAR_NAME, gyrophases, record_varying=False),
-            DataProductVariable(GYROPHASE_DELTA_CDF_VAR_NAME, gyrophase_deltas, record_varying=False),
-            DataProductVariable(H_FLUX_CDF_VAR_NAME, h_fluxes),
-            DataProductVariable(H_ENERGY_CDF_VAR_NAME, h_energies, record_varying=False),
-            DataProductVariable(H_ENERGY_DELTA_CDF_VAR_NAME, h_energy_deltas, record_varying=False),
-            DataProductVariable(HE4_FLUX_CDF_VAR_NAME, he4_fluxes),
-            DataProductVariable(HE4_ENERGY_CDF_VAR_NAME, he4_energies, record_varying=False),
-            DataProductVariable(HE4_ENERGY_DELTA_CDF_VAR_NAME, he4_energy_deltas, record_varying=False),
-            DataProductVariable(CNO_FLUX_CDF_VAR_NAME, cno_fluxes),
-            DataProductVariable(CNO_ENERGY_CDF_VAR_NAME, cno_energies, record_varying=False),
-            DataProductVariable(CNO_ENERGY_DELTA_CDF_VAR_NAME, cno_energy_deltas, record_varying=False),
-            DataProductVariable(NE_MG_SI_FLUX_CDF_VAR_NAME, ne_mg_si_fluxes),
-            DataProductVariable(NE_MG_SI_ENERGY_CDF_VAR_NAME, ne_mg_si_energies, record_varying=False),
-            DataProductVariable(NE_MG_SI_ENERGY_DELTA_CDF_VAR_NAME, ne_mg_si_energy_deltas, record_varying=False),
-            DataProductVariable(IRON_FLUX_CDF_VAR_NAME, iron_fluxes),
-            DataProductVariable(IRON_ENERGY_CDF_VAR_NAME, iron_energies, record_varying=False),
-            DataProductVariable(IRON_ENERGY_DELTA_CDF_VAR_NAME, iron_energy_deltas, record_varying=False),
+            DataProductVariable("epoch", epochs, cdf_data_type=pycdf.const.CDF_TIME_TT2000),
+            DataProductVariable("epoch_delta", expected_epoch_deltas, cdf_data_type=pycdf.const.CDF_INT8),
+            DataProductVariable("pitch_angle", pitch_angles, record_varying=False),
+            DataProductVariable("pitch_angle_delta", pitch_angle_deltas, record_varying=False),
+            DataProductVariable("gyrophase", gyrophases, record_varying=False),
+            DataProductVariable("gyrophase_delta", gyrophase_deltas, record_varying=False),
+            DataProductVariable("h_flux", h_fluxes),
+            DataProductVariable("h_energy", h_energies, record_varying=False),
+            DataProductVariable("h_energy_delta", h_energy_deltas, record_varying=False),
+            DataProductVariable("he4_flux", he4_fluxes),
+            DataProductVariable("he4_energy", he4_energies, record_varying=False),
+            DataProductVariable("he4_energy_delta", he4_energy_deltas, record_varying=False),
+            DataProductVariable("cno_flux", cno_fluxes),
+            DataProductVariable("cno_energy", cno_energies, record_varying=False),
+            DataProductVariable("cno_energy_delta", cno_energy_deltas, record_varying=False),
+            DataProductVariable("nemgsi_flux", ne_mg_si_fluxes),
+            DataProductVariable("nemgsi_energy", ne_mg_si_energies, record_varying=False),
+            DataProductVariable("nemgsi_energy_delta", ne_mg_si_energy_deltas, record_varying=False),
+            DataProductVariable("fe_flux", iron_fluxes),
+            DataProductVariable("fe_energy", iron_energies, record_varying=False),
+            DataProductVariable("fe_energy_delta", iron_energy_deltas, record_varying=False),
         ]
 
         self.assertEqual(expected_data_product_variables, data_product_variables)

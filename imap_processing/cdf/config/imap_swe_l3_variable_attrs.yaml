@@ -68,6 +68,8 @@ energy:
   SCALEMAX: 10000
   SCALETYP: log
   UNITS: eV
+  DELTA_PLUS_VAR: energy_delta_plus
+  DELTA_MINUS_VAR: energy_delta_minus
 energy_delta_plus:
   <<: *support_data_defaults
   CATDESC: Energy bin half-width
@@ -101,6 +103,8 @@ pitch_angle: &pitch_angle
   SCALEMAX: 180
   SCALETYP: linear
   UNITS: degrees
+  DELTA_PLUS_VAR: pitch_angle_delta
+  DELTA_MINUS_VAR: pitch_angle_delta
 pitch_angle_delta:
   <<: *pitch_angle
   CATDESC: Pitch Angle bin half-width
@@ -138,7 +142,7 @@ phase_space_density_by_pitch_angle:
   UNITS: s^3 cm^-6
   VAR_TYPE: data
   FORMAT: F8.3
-energy_spectrum:
+energy_spectrum: &energy_spectrum
   CATDESC: 1D Electron Energy Spectrum
   DEPEND_0: epoch
   DEPEND_1: energy
@@ -154,3 +158,9 @@ energy_spectrum:
   UNITS: cm^-2 sr^-1 s^-1 eV^-1
   VAR_TYPE: data
   FORMAT: F8.3
+energy_spectrum_inbound:
+  <<: *energy_spectrum
+  CATDESC: 1D Electron Energy Spectrum (Inbound)
+energy_spectrum_outbound:
+  <<: *energy_spectrum
+  CATDESC: 1D Electron Energy Spectrum (Outbound)
