@@ -47,10 +47,17 @@ class SweProcessor(Processor):
         energy_spectrum = []
         energy_spectrum_inbound = []
         energy_spectrum_outbound = []
+        spacecraft_potential_history = [10, 10, 10, 10]
+        halo_core_history = [80, 80, 80, 80]
+
         for i in range(len(swe_epoch)):
             averaged_flux = average_flux(swe_l2_data.flux[i],
                                          np.array(dependencies.configuration["geometric_fractions"]))
-            spacecraft_potential, halo_core = find_breakpoints(swe_l2_data.energy, averaged_flux)
+            spacecraft_potential, halo_core = find_breakpoints(swe_l2_data.energy, averaged_flux,
+                                                               np.average(spacecraft_potential_history[:3]),
+                                                               np.average(halo_core_history[:3]))
+            spacecraft_potential_history = [*spacecraft_potential_history[1:], spacecraft_potential]
+            halo_core_history = [*halo_core_history[1:], halo_core]
 
             corrected_energy_bins = swe_l2_data.energy - spacecraft_potential
             rebinned_flux = correct_and_rebin(swe_l2_data.flux[i], corrected_energy_bins, swe_l2_data.inst_el,
