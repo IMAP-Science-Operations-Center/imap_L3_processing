@@ -1,5 +1,7 @@
 import re
 
+import numpy as np
+from spacepy import pycdf
 from spacepy.pycdf import CDF
 
 from imap_processing.cdf.imap_attribute_manager import ImapAttributeManager
@@ -27,3 +29,7 @@ def write_cdf(file_path: str, data: DataProduct, attribute_manager: ImapAttribut
                 if k == 'DEPEND_0' and v == '':
                     continue
                 cdf[var_name].attrs[k] = v
+
+
+def read_variable(var: pycdf.Var) -> np.ndarray:
+    return np.where(var == var.attrs['FILLVAL'], np.nan, var)

@@ -118,11 +118,12 @@ class TestUtils(TestCase):
         file_name_as_path = Path(file_name_as_str)
 
         epoch = np.array([datetime(2010, 1, 1, 0, 0, 46)])
-        vectors_with_magnitudes = np.array([[0, 1, 2, 0], [3, 4, 5, 0], [6, 7, 8, 0]])
-        trimmed_vectors = np.array([[0, 1, 2], [3, 4, 5], [6, 7, 8]])
+        vectors_with_magnitudes = np.array([[0, 1, 2, 0], [255, 255, 255, 255], [6, 7, 8, 0]])
+        trimmed_vectors = np.array([[0, 1, 2], [np.nan, np.nan, np.nan], [6, 7, 8]])
         with CDF(file_name_as_str, "") as mag_cdf:
             mag_cdf["epoch"] = epoch
             mag_cdf["vectors"] = vectors_with_magnitudes
+            mag_cdf["vectors"].attrs['FILLVAL'] = 255
 
         cases = [
             ("file name as str", file_name_as_str),
