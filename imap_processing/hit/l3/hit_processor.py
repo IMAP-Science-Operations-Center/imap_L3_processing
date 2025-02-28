@@ -1,6 +1,7 @@
 import imap_data_access
 import numpy as np
 
+from imap_processing.constants import UNSIGNED_INT1_FILL_VALUE, UNSIGNED_INT2_FILL_VALUE
 from imap_processing.hit.l3.hit_l3_sectored_dependencies import HITL3SectoredDependencies
 from imap_processing.hit.l3.models import HitDirectEventDataProduct
 from imap_processing.hit.l3.pha.hit_l3_pha_dependencies import HitL3PhaDependencies
@@ -46,10 +47,10 @@ class HitProcessor(Processor):
         energy = np.full(shape=(len(raw_pha_events)), fill_value=np.nan)
         e_delta = np.full(shape=(len(raw_pha_events)), fill_value=np.nan)
         e_prime = np.full(shape=(len(raw_pha_events)), fill_value=np.nan)
-        detected_range = np.full(shape=(len(raw_pha_events)), fill_value=None)
-        particle_id = np.full(shape=(len(raw_pha_events)), fill_value=np.nan)
-        priority_buffer_number = np.full(shape=(len(raw_pha_events)), fill_value=np.nan)
-        latency = np.full(shape=(len(raw_pha_events)), fill_value=np.nan)
+        detected_range = np.full(shape=(len(raw_pha_events)), fill_value=UNSIGNED_INT1_FILL_VALUE)
+        particle_id = np.full(shape=(len(raw_pha_events)), fill_value=UNSIGNED_INT2_FILL_VALUE)
+        priority_buffer_number = np.full(shape=(len(raw_pha_events)), fill_value=UNSIGNED_INT1_FILL_VALUE)
+        latency = np.full(shape=(len(raw_pha_events)), fill_value=UNSIGNED_INT1_FILL_VALUE)
         stim_tag = np.full(shape=(len(raw_pha_events)), fill_value=False)
         long_event_flag = np.full(shape=(len(raw_pha_events)), fill_value=False)
         haz_tag = np.full(shape=(len(raw_pha_events)), fill_value=False)
@@ -57,18 +58,17 @@ class HitProcessor(Processor):
         has_unread_adcs = np.full(shape=(len(raw_pha_events)), fill_value=False)
         culling_flag = np.full(shape=(len(raw_pha_events)), fill_value=False)
 
-        pha_value = np.full(shape=(len(raw_pha_events), 64), fill_value=np.nan)
+        pha_value = np.full(shape=(len(raw_pha_events), 64), fill_value=UNSIGNED_INT2_FILL_VALUE)
         energy_at_detector = np.full(shape=(len(raw_pha_events), 64), fill_value=np.nan)
-        detector_address = np.full(shape=(len(raw_pha_events), 64), fill_value="")
         is_low_gain = np.full(shape=(len(raw_pha_events), 64), fill_value=False)
 
-        detector_flags = np.full(shape=(len(raw_pha_events)), fill_value=None)
-        deindex = np.full(shape=(len(raw_pha_events)), fill_value=None)
-        epindex = np.full(shape=(len(raw_pha_events)), fill_value=None)
-        stim_gain = np.full(shape=(len(raw_pha_events)), fill_value=None)
-        a_l_stim = np.full(shape=(len(raw_pha_events)), fill_value=None)
-        stim_step = np.full(shape=(len(raw_pha_events)), fill_value=None)
-        dac_value = np.full(shape=(len(raw_pha_events)), fill_value=None)
+        detector_flags = np.full(shape=(len(raw_pha_events)), fill_value=UNSIGNED_INT2_FILL_VALUE)
+        deindex = np.full(shape=(len(raw_pha_events)), fill_value=UNSIGNED_INT2_FILL_VALUE)
+        epindex = np.full(shape=(len(raw_pha_events)), fill_value=UNSIGNED_INT2_FILL_VALUE)
+        stim_gain = np.full(shape=(len(raw_pha_events)), fill_value=False)
+        a_l_stim = np.full(shape=(len(raw_pha_events)), fill_value=False)
+        stim_step = np.full(shape=(len(raw_pha_events)), fill_value=UNSIGNED_INT1_FILL_VALUE)
+        dac_value = np.full(shape=(len(raw_pha_events)), fill_value=UNSIGNED_INT2_FILL_VALUE)
 
         for i, raw_event in enumerate(raw_pha_events):
             event_output = process_pha_event(
@@ -81,9 +81,12 @@ class HitProcessor(Processor):
             charge[i] = event_output.charge
             energy[i] = event_output.total_energy
 
-            e_delta[i] = event_output.e_delta if event_output.e_delta is not None else np.nan
-            e_prime[i] = event_output.e_prime if event_output.e_prime is not None else np.nan
-            detected_range[i] = event_output.detected_range.value if event_output.detected_range is not None else None
+            if event_output.e_delta is not None:
+                e_delta[i] = event_output.e_delta
+            if event_output.e_prime is not None:
+                e_prime[i] = event_output.e_prime
+            if event_output.detected_range is not None:
+                detected_range[i] = event_output.detected_range.value
 
             particle_id[i] = raw_event.particle_id
             priority_buffer_number[i] = raw_event.priority_buffer_num
@@ -98,7 +101,6 @@ class HitProcessor(Processor):
             for event_energy_at_detector, word in zip(event_output.energies, raw_event.pha_words):
                 pha_value[i, word.detector.address] = word.adc_value
                 energy_at_detector[i, word.detector.address] = event_energy_at_detector
-                # detector_address[i, word.detector.address] = str(word.detector)
                 is_low_gain[i, word.detector.address] = word.is_low_gain
 
             if raw_event.extended_header is not None:
@@ -129,7 +131,6 @@ class HitProcessor(Processor):
                                          culling_flag=culling_flag,
                                          pha_value=pha_value,
                                          energy_at_detector=energy_at_detector,
-                                         detector_address=detector_address,
                                          is_low_gain=is_low_gain,
                                          detector_flags=detector_flags,
                                          deindex=deindex,
@@ -148,18 +149,18 @@ class HitProcessor(Processor):
         hit_data = dependencies.data
 
         input_flux_data_by_species = {"cno": hit_data.CNO, "helium4": hit_data.helium4, "hydrogen": hit_data.hydrogen,
-                                 "iron": hit_data.iron, "NeMgSi": hit_data.NeMgSi}
+                                      "iron": hit_data.iron, "NeMgSi": hit_data.NeMgSi}
         rebinned_pa_gyrophase_flux_by_species = {"cno": np.full_like(hit_data.CNO, np.nan),
-                                    "helium4": np.full_like(hit_data.helium4, np.nan),
-                                    "hydrogen": np.full_like(hit_data.hydrogen, np.nan),
-                                    "iron": np.full_like(hit_data.iron, np.nan),
-                                    "NeMgSi": np.full_like(hit_data.NeMgSi, np.nan)}
+                                                 "helium4": np.full_like(hit_data.helium4, np.nan),
+                                                 "hydrogen": np.full_like(hit_data.hydrogen, np.nan),
+                                                 "iron": np.full_like(hit_data.iron, np.nan),
+                                                 "NeMgSi": np.full_like(hit_data.NeMgSi, np.nan)}
 
         rebinned_pa_only_flux_by_species = {"cno": np.full_like(hit_data.CNO, np.nan),
-                                    "helium4": np.full_like(hit_data.helium4, np.nan),
-                                    "hydrogen": np.full_like(hit_data.hydrogen, np.nan),
-                                    "iron": np.full_like(hit_data.iron, np.nan),
-                                    "NeMgSi": np.full_like(hit_data.NeMgSi, np.nan)}
+                                            "helium4": np.full_like(hit_data.helium4, np.nan),
+                                            "hydrogen": np.full_like(hit_data.hydrogen, np.nan),
+                                            "iron": np.full_like(hit_data.iron, np.nan),
+                                            "NeMgSi": np.full_like(hit_data.NeMgSi, np.nan)}
 
         h_energy_center, h_energy_delta = convert_bin_high_low_to_center_delta(hit_data.h_energy_high,
                                                                                hit_data.h_energy_low)
@@ -186,26 +187,29 @@ class HitProcessor(Processor):
             input_bin_gyrophases = calculate_gyrophase(particle_unit_vectors, mag_unit_vector)
 
             for species, flux in input_flux_data_by_species.items():
-                rebinned_pa_gyrophase_flux_by_species[species][time_index], rebinned_pa_only_flux_by_species[species][time_index] = rebin_by_pitch_angle_and_gyrophase(flux[time_index],
-                                                                                                   input_bin_pitch_angles,
-                                                                                                   input_bin_gyrophases,
-                                                                                                   number_of_pitch_angle_bins,
-                                                                                                   number_of_gyrophase_bins)
+                rebinned_pa_gyrophase_flux_by_species[species][time_index], rebinned_pa_only_flux_by_species[species][
+                    time_index] = rebin_by_pitch_angle_and_gyrophase(flux[time_index],
+                                                                     input_bin_pitch_angles,
+                                                                     input_bin_gyrophases,
+                                                                     number_of_pitch_angle_bins,
+                                                                     number_of_gyrophase_bins)
 
-        return HitPitchAngleDataProduct(self.input_metadata.to_upstream_data_dependency("sci"), hit_data.epoch, hit_data.epoch_delta, pitch_angles, pitch_angle_deltas,
-                                                gyrophases,
-                                                gyrophase_delta,
-                                                rebinned_pa_gyrophase_flux_by_species["hydrogen"],
-                                                rebinned_pa_only_flux_by_species["hydrogen"],
-                                                h_energy_center,
-                                                h_energy_delta,
-                                                rebinned_pa_gyrophase_flux_by_species["helium4"],
-                                                rebinned_pa_only_flux_by_species["helium4"],
-                                                he4_energy_center, he4_energy_delta, rebinned_pa_gyrophase_flux_by_species["cno"],
-                                                rebinned_pa_only_flux_by_species["cno"],
-                                                cno_energy_center, cno_energy_delta,
-                                                rebinned_pa_gyrophase_flux_by_species["NeMgSi"],
-                                                rebinned_pa_only_flux_by_species["NeMgSi"], nemgsi_energy_center,
-                                                nemgsi_energy_delta, rebinned_pa_gyrophase_flux_by_species["iron"],
-                                                rebinned_pa_only_flux_by_species["iron"],fe_energy_center,
-                                                fe_energy_delta)
+        return HitPitchAngleDataProduct(self.input_metadata.to_upstream_data_dependency("sci"), hit_data.epoch,
+                                        hit_data.epoch_delta, pitch_angles, pitch_angle_deltas,
+                                        gyrophases,
+                                        gyrophase_delta,
+                                        rebinned_pa_gyrophase_flux_by_species["hydrogen"],
+                                        rebinned_pa_only_flux_by_species["hydrogen"],
+                                        h_energy_center,
+                                        h_energy_delta,
+                                        rebinned_pa_gyrophase_flux_by_species["helium4"],
+                                        rebinned_pa_only_flux_by_species["helium4"],
+                                        he4_energy_center, he4_energy_delta,
+                                        rebinned_pa_gyrophase_flux_by_species["cno"],
+                                        rebinned_pa_only_flux_by_species["cno"],
+                                        cno_energy_center, cno_energy_delta,
+                                        rebinned_pa_gyrophase_flux_by_species["NeMgSi"],
+                                        rebinned_pa_only_flux_by_species["NeMgSi"], nemgsi_energy_center,
+                                        nemgsi_energy_delta, rebinned_pa_gyrophase_flux_by_species["iron"],
+                                        rebinned_pa_only_flux_by_species["iron"], fe_energy_center,
+                                        fe_energy_delta)

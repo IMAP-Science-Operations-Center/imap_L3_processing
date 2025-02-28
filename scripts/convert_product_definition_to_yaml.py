@@ -4,7 +4,7 @@ import sys
 if len(sys.argv) == 2:
     product_definition_file = sys.argv[1]
 else:
-    product_definition_file = "data_product_spec_csvs/imap_hit_l3_pitch_angle.csv"
+    product_definition_file = "../data_product_spec_csvs/imap_hit_l3_direct_event_product_definitions.csv"
 
 yaml_text = ""
 

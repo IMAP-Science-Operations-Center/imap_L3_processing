@@ -7,6 +7,7 @@ from unittest.mock import sentinel, patch, call, Mock
 
 import numpy as np
 
+from imap_processing.constants import UNSIGNED_INT2_FILL_VALUE, UNSIGNED_INT1_FILL_VALUE
 from imap_processing.hit.l3.hit_l3_sectored_dependencies import HITL3SectoredDependencies
 from imap_processing.hit.l3.hit_processor import HitProcessor
 from imap_processing.hit.l3.models import HitL2Data
@@ -346,7 +347,7 @@ class TestHitProcessor(TestCase):
         np.testing.assert_array_equal(direct_event_product.e_delta, np.array([103.7, np.nan, 106.7]))
         np.testing.assert_array_equal(direct_event_product.e_prime, np.array([63.27, np.nan, 69.27]))
 
-        np.testing.assert_array_equal(direct_event_product.detected_range, np.array([2, None, 3]))
+        np.testing.assert_array_equal(direct_event_product.detected_range, np.array([2, UNSIGNED_INT1_FILL_VALUE, 3]))
 
         np.testing.assert_array_equal(direct_event_product.priority_buffer_number, np.array([2, 2, 3]))
         np.testing.assert_array_equal(direct_event_product.latency, np.array([20, 20, 30]))
@@ -377,15 +378,22 @@ class TestHitProcessor(TestCase):
                                           err_msg=f"Did not match at index {idx}")
             mask[idx] = False
 
-        self.assertTrue(np.all(np.isnan(direct_event_product.pha_value[mask])))
+        self.assertTrue(np.all(direct_event_product.pha_value[mask] == UNSIGNED_INT2_FILL_VALUE))
+        self.assertTrue(np.all(np.isnan(direct_event_product.energy_at_detector[mask])))
+        self.assertTrue(np.all(direct_event_product.is_low_gain[mask] == False))
 
-        np.testing.assert_array_equal(direct_event_product.detector_flags, np.array([None, None, 2]))
-        np.testing.assert_array_equal(direct_event_product.deindex, np.array([None, None, 2]))
-        np.testing.assert_array_equal(direct_event_product.epindex, np.array([None, None, True]))
-        np.testing.assert_array_equal(direct_event_product.stim_gain, np.array([None, None, 2]))
-        np.testing.assert_array_equal(direct_event_product.a_l_stim, np.array([None, None, True]))
-        np.testing.assert_array_equal(direct_event_product.stim_step, np.array([None, None, 1]))
-        np.testing.assert_array_equal(direct_event_product.dac_value, np.array([None, None, 123]))
+        np.testing.assert_array_equal(direct_event_product.detector_flags,
+                                      np.array([UNSIGNED_INT2_FILL_VALUE, UNSIGNED_INT2_FILL_VALUE, 2]))
+        np.testing.assert_array_equal(direct_event_product.deindex,
+                                      np.array([UNSIGNED_INT2_FILL_VALUE, UNSIGNED_INT2_FILL_VALUE, 2]))
+        np.testing.assert_array_equal(direct_event_product.epindex,
+                                      np.array([UNSIGNED_INT2_FILL_VALUE, UNSIGNED_INT2_FILL_VALUE, True]))
+        np.testing.assert_array_equal(direct_event_product.stim_gain, np.array([False, False, True]))
+        np.testing.assert_array_equal(direct_event_product.a_l_stim, np.array([False, False, True]))
+        np.testing.assert_array_equal(direct_event_product.stim_step,
+                                      np.array([UNSIGNED_INT1_FILL_VALUE, UNSIGNED_INT1_FILL_VALUE, 1]))
+        np.testing.assert_array_equal(direct_event_product.dac_value,
+                                      np.array([UNSIGNED_INT2_FILL_VALUE, UNSIGNED_INT2_FILL_VALUE, 123]))
 
     def test_raise_error_if_descriptor_doesnt_match(self):
         input_metadata = InputMetadata(
