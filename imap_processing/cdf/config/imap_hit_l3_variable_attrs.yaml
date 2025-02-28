@@ -33,7 +33,7 @@ epoch_delta:
   REFERENCE_POSITION: Rotating Earth Geoid
 
 charge:
-  CATDESC: TBD by HIT team
+  CATDESC: charge
   VAR_TYPE: data
   DEPEND_0: epoch
   DISPLAY_TYPE: time_series
@@ -46,32 +46,32 @@ charge:
   SCALETYP: linear
 
 energy:
-  CATDESC: TBD by HIT team
+  CATDESC: energy
   VAR_TYPE: data
   DEPEND_0: epoch
   DISPLAY_TYPE: time_series
   FIELDNAM: energy
   LABLAXIS: Energy
   UNITS: MeV
-  VALIDMIN: 0
+  VALIDMIN: 1
   VALIDMAX: 10000
   FILLVAL: -1.00E+31
   SCALETYP: log
 
 energy_at_detector:
-  CATDESC: TBD by HIT team
+  CATDESC: energy_at_detector
   VAR_TYPE: data
   DEPEND_0: epoch
   DEPEND_1: detector_id
   DISPLAY_TYPE: no_plot
   FIELDNAM: energy_at_detector
-  VALIDMIN: 0
+  VALIDMIN: 1
   VALIDMAX: 10000
   FILLVAL: -1.00E+31
   SCALETYP: log
 
 range:
-  CATDESC: TBD by HIT team
+  CATDESC: range
   VAR_TYPE: data
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
@@ -81,33 +81,33 @@ range:
   FILLVAL: 255
 
 delta_e:
-  CATDESC: TBD by HIT team
+  CATDESC: delta_e
   VAR_TYPE: data
   DEPEND_0: epoch
   DISPLAY_TYPE: time_series
   FIELDNAM: delta_e
   LABLAXIS: Delta E
   UNITS: MeV
-  VALIDMIN: 0
+  VALIDMIN: 1
   VALIDMAX: 10000
   FILLVAL: -1.00E+31
   SCALETYP: log
 
 e_prime:
-  CATDESC: TBD by HIT team
+  CATDESC: e_prime
   VAR_TYPE: data
   DEPEND_0: epoch
   DISPLAY_TYPE: time_series
   FIELDNAM: e_prime
   LABLAXIS: E Prime
   UNITS: MeV
-  VALIDMIN: 0
+  VALIDMIN: 1
   VALIDMAX: 10000
   FILLVAL: -1.00E+31
   SCALETYP: log
 
 particle_id:
-  CATDESC: TBD by HIT team, determined by onboard computer
+  CATDESC: particle_id
   VAR_TYPE: data
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
@@ -117,7 +117,7 @@ particle_id:
   FILLVAL: 65535
 
 priority_buffer_number:
-  CATDESC: TBD by HIT team, determined by onboard computer
+  CATDESC: priority_buffer_number
   VAR_TYPE: data
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
@@ -127,7 +127,7 @@ priority_buffer_number:
   FILLVAL: 255
 
 latency:
-  CATDESC: TBD by HIT team, determined by onboard computer
+  CATDESC: latency
   VAR_TYPE: data
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
@@ -137,7 +137,7 @@ latency:
   FILLVAL: 255
 
 stim_tag:
-  CATDESC: TBD by HIT team, determined by onboard computer
+  CATDESC: stim_tag
   VAR_TYPE: data
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
@@ -146,7 +146,7 @@ stim_tag:
   VALIDMAX: 1
 
 long_event_flag:
-  CATDESC: TBD by HIT team, determined by onboard computer
+  CATDESC: long_event_flag
   VAR_TYPE: data
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
@@ -155,7 +155,7 @@ long_event_flag:
   VALIDMAX: 1
 
 haz_tag:
-  CATDESC: TBD by HIT team, determined by onboard computer
+  CATDESC: haz_tag
   VAR_TYPE: data
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
@@ -164,7 +164,7 @@ haz_tag:
   VALIDMAX: 1
 
 a_b_side:
-  CATDESC: TBD by HIT team, determined by onboard computer
+  CATDESC: a_b_side
   VAR_TYPE: data
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
@@ -173,7 +173,7 @@ a_b_side:
   VALIDMAX: 1
 
 has_unread_flag:
-  CATDESC: TBD by HIT team, determined by onboard computer
+  CATDESC: has_unread_flag
   VAR_TYPE: data
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
@@ -182,7 +182,7 @@ has_unread_flag:
   VALIDMAX: 1
 
 culling_flag:
-  CATDESC: TBD by HIT team, determined by onboard computer
+  CATDESC: culling_flag
   VAR_TYPE: data
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
@@ -191,7 +191,7 @@ culling_flag:
   VALIDMAX: 1
 
 pha_value:
-  CATDESC: TBD by HIT team, determined by onboard computer
+  CATDESC: pha_value
   VAR_TYPE: data
   DEPEND_0: epoch
   DEPEND_1: detector_id
@@ -202,7 +202,7 @@ pha_value:
   FILLVAL: 65535
 
 is_low_gain:
-  CATDESC: TBD by HIT team, determined by onboard computer
+  CATDESC: is_low_gain
   VAR_TYPE: data
   DEPEND_0: epoch
   DEPEND_1: detector_id
@@ -212,7 +212,7 @@ is_low_gain:
   VALIDMAX: 1
 
 detector_flags:
-  CATDESC: TBD by HIT team, determined by onboard computer
+  CATDESC: detector_flags
   VAR_TYPE: data
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
@@ -222,7 +222,7 @@ detector_flags:
   FILLVAL: 65535
 
 deindex:
-  CATDESC: TBD by HIT team, determined by onboard computer, in extended header
+  CATDESC: deindex
   VAR_TYPE: data
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
@@ -232,7 +232,7 @@ deindex:
   FILLVAL: 65535
 
 epindex:
-  CATDESC: TBD by HIT team, determined by onboard computer, in extended header
+  CATDESC: epindex
   VAR_TYPE: data
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
@@ -242,7 +242,7 @@ epindex:
   FILLVAL: 65535
 
 stim_gain:
-  CATDESC: TBD by HIT team, determined by onboard computer, stim information
+  CATDESC: stim_gain
   VAR_TYPE: data
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
@@ -251,7 +251,7 @@ stim_gain:
   VALIDMAX: 1
 
 a_l_stim:
-  CATDESC: TBD by HIT team, determined by onboard computer, stim information
+  CATDESC: a_l_stim
   VAR_TYPE: data
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
@@ -260,7 +260,7 @@ a_l_stim:
   VALIDMAX: 1
 
 stim_step:
-  CATDESC: TBD by HIT team, determined by onboard computer, stim information
+  CATDESC: stim_step
   VAR_TYPE: data
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
@@ -270,7 +270,7 @@ stim_step:
   FILLVAL: 255
 
 dac_value:
-  CATDESC: TBD by HIT team, determined by onboard computer, stim information
+  CATDESC: dac_value
   VAR_TYPE: data
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
@@ -287,3 +287,4 @@ detector_id:
   VALIDMIN: 0
   VALIDMAX: 64
   FILLVAL: 255
+
