@@ -4,16 +4,19 @@ from pathlib import Path
 from typing import Union
 
 import numpy as np
+from spacepy import pycdf
 from spacepy.pycdf import CDF
 
 from imap_processing.models import DataProduct, DataProductVariable
 
 EPOCH_VAR_NAME = "epoch"
+EPOCH_DELTA_VAR_NAME = "epoch_delta"
 CHARGE_VAR_NAME = "charge"
 ENERGY_VAR_NAME = "energy"
 ENERGY_AT_DETECTOR_VAR_NAME = "energy_at_detector"
-# TODO add range, delta_e_energy, e_prime_energy
-
+E_DELTA_VAR_NAME = "delta_e"
+E_PRIME_VAR_NAME = "e_prime"
+DETECTED_RANGE_VAR_NAME = "range"
 PARTICLE_ID_VAR_NAME = "particle_id"
 PRIORITY_BUFFER_NUMBER_VAR_NAME = "priority_buffer_number"
 LATENCY_VAR_NAME = "latency"
@@ -75,8 +78,12 @@ class HitL2Data:
 
 @dataclass
 class HitDirectEventDataProduct(DataProduct):
+    epoch: np.ndarray[datetime]
     charge: np.ndarray[float]
     energy: np.ndarray[float]
+    e_delta: np.ndarray[float]
+    e_prime: np.ndarray[float]
+    detected_range: np.ndarray[int]
     particle_id: np.ndarray[int]
     priority_buffer_number: np.ndarray[int]
     latency: np.ndarray[int]
@@ -88,7 +95,6 @@ class HitDirectEventDataProduct(DataProduct):
     culling_flag: np.ndarray[bool]
     pha_value: np.ndarray[int]
     energy_at_detector: np.ndarray[float]
-    detector_address: np.ndarray[int]
     is_low_gain: np.ndarray[bool]
     detector_flags: np.ndarray[int]
     deindex: np.ndarray[int]
@@ -100,28 +106,39 @@ class HitDirectEventDataProduct(DataProduct):
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
+            DataProductVariable(EPOCH_VAR_NAME, self.epoch, cdf_data_type=pycdf.const.CDF_TIME_TT2000),
+            DataProductVariable(EPOCH_DELTA_VAR_NAME, 1, record_varying=False),
             DataProductVariable(CHARGE_VAR_NAME, self.charge),
             DataProductVariable(ENERGY_VAR_NAME, self.energy),
-            DataProductVariable(PARTICLE_ID_VAR_NAME, self.particle_id),
-            DataProductVariable(PRIORITY_BUFFER_NUMBER_VAR_NAME, self.priority_buffer_number),
-            DataProductVariable(LATENCY_VAR_NAME, self.latency),
+            DataProductVariable(E_DELTA_VAR_NAME, self.e_delta),
+            DataProductVariable(E_PRIME_VAR_NAME, self.e_prime),
+            DataProductVariable(DETECTED_RANGE_VAR_NAME, self.detected_range, cdf_data_type=pycdf.const.CDF_UINT1),
+            DataProductVariable(PARTICLE_ID_VAR_NAME, self.particle_id, cdf_data_type=pycdf.const.CDF_UINT2),
+            DataProductVariable(PRIORITY_BUFFER_NUMBER_VAR_NAME, self.priority_buffer_number,
+                                cdf_data_type=pycdf.const.CDF_UINT1),
+            DataProductVariable(LATENCY_VAR_NAME, self.latency,
+                                cdf_data_type=pycdf.const.CDF_UINT1),
             DataProductVariable(STIM_TAG_VAR_NAME, self.stim_tag),
             DataProductVariable(LONG_EVENT_FLAG_VAR_NAME, self.long_event_flag),
             DataProductVariable(HAZ_TAG_VAR_NAME, self.haz_tag),
             DataProductVariable(A_B_SIDE_VAR_NAME, self.a_b_side),
             DataProductVariable(HAS_UNREAD_FLAG_VAR_NAME, self.has_unread_adcs),
             DataProductVariable(CULLING_FLAG_VAR_NAME, self.culling_flag),
-            DataProductVariable(PHA_VALUE_VAR_NAME, self.pha_value),
+            DataProductVariable(PHA_VALUE_VAR_NAME, self.pha_value,
+                                cdf_data_type=pycdf.const.CDF_UINT2),
             DataProductVariable(ENERGY_AT_DETECTOR_VAR_NAME, self.energy_at_detector),
-            DataProductVariable(DETECTOR_ADDRESS_VAR_NAME, self.detector_address),
             DataProductVariable(IS_LOW_GAIN_VAR_NAME, self.is_low_gain),
-            DataProductVariable(DETECTOR_FLAGS_VAR_NAME, self.detector_flags),
-            DataProductVariable(DEINDEX_VAR_NAME, self.deindex),
-            DataProductVariable(EPINDEX_VAR_NAME, self.epindex),
+            DataProductVariable(DETECTOR_FLAGS_VAR_NAME, self.detector_flags, cdf_data_type=pycdf.const.CDF_UINT2),
+            DataProductVariable(DEINDEX_VAR_NAME, self.deindex,
+                                cdf_data_type=pycdf.const.CDF_UINT2),
+            DataProductVariable(EPINDEX_VAR_NAME, self.epindex,
+                                cdf_data_type=pycdf.const.CDF_UINT2),
             DataProductVariable(STIM_GAIN_VAR_NAME, self.stim_gain),
             DataProductVariable(A_L_STIM_VAR_NAME, self.a_l_stim),
-            DataProductVariable(STIM_STEP_VAR_NAME, self.stim_step),
-            DataProductVariable(DAC_VALUE_VAR_NAME, self.dac_value)
+            DataProductVariable(STIM_STEP_VAR_NAME, self.stim_step,
+                                cdf_data_type=pycdf.const.CDF_UINT1),
+            DataProductVariable(DAC_VALUE_VAR_NAME, self.dac_value,
+                                cdf_data_type=pycdf.const.CDF_UINT2)
         ]
 
 

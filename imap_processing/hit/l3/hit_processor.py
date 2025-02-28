@@ -1,6 +1,7 @@
 import imap_data_access
 import numpy as np
 
+from imap_processing.constants import UNSIGNED_INT1_FILL_VALUE, UNSIGNED_INT2_FILL_VALUE
 from imap_processing.hit.l3.hit_l3_sectored_dependencies import HITL3SectoredDependencies
 from imap_processing.hit.l3.models import HitDirectEventDataProduct
 from imap_processing.hit.l3.pha.hit_l3_pha_dependencies import HitL3PhaDependencies
@@ -38,33 +39,36 @@ class HitProcessor(Processor):
         raw_pha_events: list[RawPHAEvent] = []
         for epoch, event_binary in zip(direct_event_dependencies.hit_l1_data.epoch,
                                        direct_event_dependencies.hit_l1_data.event_binary):
-            raw_pha_events += PHAEventReader.read_all_pha_events(event_binary)
-            epochs += [epoch] * len(raw_pha_events)
+            event_raw_pha_events = PHAEventReader.read_all_pha_events(event_binary)
+            epochs += [epoch] * len(event_raw_pha_events)
+            raw_pha_events += event_raw_pha_events
 
         charge = np.full(shape=(len(raw_pha_events)), fill_value=np.nan)
         energy = np.full(shape=(len(raw_pha_events)), fill_value=np.nan)
-        particle_id = np.full(shape=(len(raw_pha_events)), fill_value=np.nan)
-        priority_buffer_number = np.full(shape=(len(raw_pha_events)), fill_value=np.nan)
-        latency = np.full(shape=(len(raw_pha_events)), fill_value=np.nan)
-        stim_tag = np.full(shape=(len(raw_pha_events)), fill_value=np.nan)
-        long_event_flag = np.full(shape=(len(raw_pha_events)), fill_value=np.nan)
-        haz_tag = np.full(shape=(len(raw_pha_events)), fill_value=np.nan)
-        a_b_side = np.full(shape=(len(raw_pha_events)), fill_value=np.nan)
-        has_unread_adcs = np.full(shape=(len(raw_pha_events)), fill_value=np.nan)
-        culling_flag = np.full(shape=(len(raw_pha_events)), fill_value=np.nan)
+        e_delta = np.full(shape=(len(raw_pha_events)), fill_value=np.nan)
+        e_prime = np.full(shape=(len(raw_pha_events)), fill_value=np.nan)
+        detected_range = np.full(shape=(len(raw_pha_events)), fill_value=UNSIGNED_INT1_FILL_VALUE)
+        particle_id = np.full(shape=(len(raw_pha_events)), fill_value=UNSIGNED_INT2_FILL_VALUE)
+        priority_buffer_number = np.full(shape=(len(raw_pha_events)), fill_value=UNSIGNED_INT1_FILL_VALUE)
+        latency = np.full(shape=(len(raw_pha_events)), fill_value=UNSIGNED_INT1_FILL_VALUE)
+        stim_tag = np.full(shape=(len(raw_pha_events)), fill_value=False)
+        long_event_flag = np.full(shape=(len(raw_pha_events)), fill_value=False)
+        haz_tag = np.full(shape=(len(raw_pha_events)), fill_value=False)
+        a_b_side = np.full(shape=(len(raw_pha_events)), fill_value=False)
+        has_unread_adcs = np.full(shape=(len(raw_pha_events)), fill_value=False)
+        culling_flag = np.full(shape=(len(raw_pha_events)), fill_value=False)
 
-        pha_value = np.full(shape=(len(raw_pha_events), 64), fill_value=np.nan)
+        pha_value = np.full(shape=(len(raw_pha_events), 64), fill_value=UNSIGNED_INT2_FILL_VALUE)
         energy_at_detector = np.full(shape=(len(raw_pha_events), 64), fill_value=np.nan)
-        detector_address = np.full(shape=(len(raw_pha_events), 64), fill_value="")
         is_low_gain = np.full(shape=(len(raw_pha_events), 64), fill_value=False)
 
-        detector_flags = np.full(shape=(len(raw_pha_events)), fill_value=None)
-        deindex = np.full(shape=(len(raw_pha_events)), fill_value=None)
-        epindex = np.full(shape=(len(raw_pha_events)), fill_value=None)
-        stim_gain = np.full(shape=(len(raw_pha_events)), fill_value=None)
-        a_l_stim = np.full(shape=(len(raw_pha_events)), fill_value=None)
-        stim_step = np.full(shape=(len(raw_pha_events)), fill_value=None)
-        dac_value = np.full(shape=(len(raw_pha_events)), fill_value=None)
+        detector_flags = np.full(shape=(len(raw_pha_events)), fill_value=UNSIGNED_INT2_FILL_VALUE)
+        deindex = np.full(shape=(len(raw_pha_events)), fill_value=UNSIGNED_INT2_FILL_VALUE)
+        epindex = np.full(shape=(len(raw_pha_events)), fill_value=UNSIGNED_INT2_FILL_VALUE)
+        stim_gain = np.full(shape=(len(raw_pha_events)), fill_value=False)
+        a_l_stim = np.full(shape=(len(raw_pha_events)), fill_value=False)
+        stim_step = np.full(shape=(len(raw_pha_events)), fill_value=UNSIGNED_INT1_FILL_VALUE)
+        dac_value = np.full(shape=(len(raw_pha_events)), fill_value=UNSIGNED_INT2_FILL_VALUE)
 
         for i, raw_event in enumerate(raw_pha_events):
             event_output = process_pha_event(
@@ -76,6 +80,13 @@ class HitProcessor(Processor):
 
             charge[i] = event_output.charge
             energy[i] = event_output.total_energy
+
+            if event_output.e_delta is not None:
+                e_delta[i] = event_output.e_delta
+            if event_output.e_prime is not None:
+                e_prime[i] = event_output.e_prime
+            if event_output.detected_range is not None:
+                detected_range[i] = event_output.detected_range.value
 
             particle_id[i] = raw_event.particle_id
             priority_buffer_number[i] = raw_event.priority_buffer_num
@@ -90,7 +101,6 @@ class HitProcessor(Processor):
             for event_energy_at_detector, word in zip(event_output.energies, raw_event.pha_words):
                 pha_value[i, word.detector.address] = word.adc_value
                 energy_at_detector[i, word.detector.address] = event_energy_at_detector
-                # detector_address[i, word.detector.address] = str(word.detector)
                 is_low_gain[i, word.detector.address] = word.is_low_gain
 
             if raw_event.extended_header is not None:
@@ -104,8 +114,12 @@ class HitProcessor(Processor):
             if raw_event.extended_stim_header is not None:
                 dac_value[i] = raw_event.extended_stim_header.dac_value
 
-        return HitDirectEventDataProduct(charge=charge,
+        return HitDirectEventDataProduct(epoch=epochs,
+                                         charge=charge,
                                          energy=energy,
+                                         e_delta=e_delta,
+                                         e_prime=e_prime,
+                                         detected_range=detected_range,
                                          particle_id=particle_id,
                                          priority_buffer_number=priority_buffer_number,
                                          latency=latency,
@@ -117,7 +131,6 @@ class HitProcessor(Processor):
                                          culling_flag=culling_flag,
                                          pha_value=pha_value,
                                          energy_at_detector=energy_at_detector,
-                                         detector_address=detector_address,
                                          is_low_gain=is_low_gain,
                                          detector_flags=detector_flags,
                                          deindex=deindex,

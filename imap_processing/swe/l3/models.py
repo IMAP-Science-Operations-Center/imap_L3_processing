@@ -28,6 +28,7 @@ class SweL2Data:
     energy: np.ndarray
     inst_el: np.ndarray
     inst_az_spin_sector: np.ndarray
+    acquisition_time: np.ndarray
 
 
 @dataclass
@@ -88,3 +89,5 @@ class SweConfiguration(TypedDict):
     in_vs_out_energy_index: float
     high_energy_proximity_threshold: float
     low_energy_proximity_threshold: float
+    max_swapi_offset_in_minutes: float
+    max_mag_offset_in_minutes: float

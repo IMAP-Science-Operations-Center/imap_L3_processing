@@ -7,12 +7,14 @@ from unittest.mock import sentinel, patch, call, Mock
 
 import numpy as np
 
+from imap_processing.constants import UNSIGNED_INT2_FILL_VALUE, UNSIGNED_INT1_FILL_VALUE
 from imap_processing.hit.l3.hit_l3_sectored_dependencies import HITL3SectoredDependencies
 from imap_processing.hit.l3.hit_processor import HitProcessor
 from imap_processing.hit.l3.models import HitL2Data
 from imap_processing.hit.l3.pha.pha_event_reader import PHAWord, Detector, RawPHAEvent, PHAExtendedHeader, StimBlock, \
     ExtendedStimHeader
 from imap_processing.hit.l3.pha.science.calculate_pha import EventOutput
+from imap_processing.hit.l3.pha.science.cosine_correction_lookup_table import DetectedRange
 from imap_processing.hit.l3.sectored_products.models import HitPitchAngleDataProduct
 from imap_processing.models import MagL1dData, InputMetadata
 from imap_processing.processor import Processor
@@ -131,16 +133,16 @@ class TestHitProcessor(TestCase):
         rebinned_pa_NeMgSi_time2 = np.array([19])
 
         mock_rebin_by_pitch_angle_and_gyrophase.side_effect = [
-            (rebinned_pa_gyro_CNO_time1,rebinned_pa_CNO_time1),
-            (rebinned_pa_gyro_helium4_time1,rebinned_pa_helium4_time1),
-            (rebinned_pa_gyro_hydrogen_time1,rebinned_pa_hydrogen_time1),
-            (rebinned_pa_gyro_iron_time1,rebinned_pa_iron_time1),
-            (rebinned_pa_gyro_NeMgSi_time1,rebinned_pa_NeMgSi_time1),
-            (rebinned_pa_gyro_CNO_time2,rebinned_pa_CNO_time2),
-            (rebinned_pa_gyro_helium4_time2,rebinned_pa_helium4_time2),
-            (rebinned_pa_gyro_hydrogen_time2,rebinned_pa_hydrogen_time2),
-            (rebinned_pa_gyro_iron_time2,rebinned_pa_iron_time2),
-            (rebinned_pa_gyro_NeMgSi_time2,rebinned_pa_NeMgSi_time2)
+            (rebinned_pa_gyro_CNO_time1, rebinned_pa_CNO_time1),
+            (rebinned_pa_gyro_helium4_time1, rebinned_pa_helium4_time1),
+            (rebinned_pa_gyro_hydrogen_time1, rebinned_pa_hydrogen_time1),
+            (rebinned_pa_gyro_iron_time1, rebinned_pa_iron_time1),
+            (rebinned_pa_gyro_NeMgSi_time1, rebinned_pa_NeMgSi_time1),
+            (rebinned_pa_gyro_CNO_time2, rebinned_pa_CNO_time2),
+            (rebinned_pa_gyro_helium4_time2, rebinned_pa_helium4_time2),
+            (rebinned_pa_gyro_hydrogen_time2, rebinned_pa_hydrogen_time2),
+            (rebinned_pa_gyro_iron_time2, rebinned_pa_iron_time2),
+            (rebinned_pa_gyro_NeMgSi_time2, rebinned_pa_NeMgSi_time2)
         ]
 
         processor = HitProcessor(sentinel.upstream_dependency, input_metadata)
@@ -308,9 +310,12 @@ class TestHitProcessor(TestCase):
                                       stim_block=StimBlock(stim_step=1, stim_gain=2, unused=3, a_l_stim=True),
                                       extended_stim_header=ExtendedStimHeader(dac_value=123, tbd=666))
 
-        event_output_1 = EventOutput(original_event=raw_pha_event_1, charge=9.0, energies=[1], total_energy=99)
-        event_output_2 = EventOutput(original_event=raw_pha_event_2, charge=10.0, energies=[4], total_energy=100)
-        event_output_3 = EventOutput(original_event=raw_pha_event_3, charge=12.0, energies=[9, 8], total_energy=200)
+        event_output_1 = EventOutput(original_event=raw_pha_event_1, charge=9.0, energies=[1], total_energy=99,
+                                     detected_range=DetectedRange.R2, e_delta=103.7, e_prime=63.27)
+        event_output_2 = EventOutput(original_event=raw_pha_event_2, charge=10.0, energies=[4], total_energy=100,
+                                     detected_range=None, e_delta=None, e_prime=None)
+        event_output_3 = EventOutput(original_event=raw_pha_event_3, charge=12.0, energies=[9, 8], total_energy=200,
+                                     detected_range=DetectedRange.R3, e_delta=106.7, e_prime=69.27)
 
         input_metadata = InputMetadata(
             instrument="hit",
@@ -353,12 +358,18 @@ class TestHitProcessor(TestCase):
         self.assertEqual(input_metadata.to_upstream_data_dependency("direct-event"),
                          direct_event_product.input_metadata)
 
-        # np.testing.assert_array_equal(direct_event_product.epoch, np.array(
-        #     [datetime(year=2020, month=2, day=1), datetime(year=2020, month=2, day=1),
-        #      datetime(year=2020, month=2, day=1, hour=1)]))
+        np.testing.assert_array_equal(direct_event_product.epoch, np.array(
+            [datetime(year=2020, month=2, day=1), datetime(year=2020, month=2, day=1),
+             datetime(year=2020, month=2, day=1, hour=1)]))
         np.testing.assert_array_equal(direct_event_product.charge, np.array([9.0, 10.0, 12.0]))
         np.testing.assert_array_equal(direct_event_product.energy, np.array([99, 100, 200]))
         np.testing.assert_array_equal(direct_event_product.particle_id, np.array([1, 1, 2]))
+
+        np.testing.assert_array_equal(direct_event_product.e_delta, np.array([103.7, np.nan, 106.7]))
+        np.testing.assert_array_equal(direct_event_product.e_prime, np.array([63.27, np.nan, 69.27]))
+
+        np.testing.assert_array_equal(direct_event_product.detected_range, np.array([2, UNSIGNED_INT1_FILL_VALUE, 3]))
+
         np.testing.assert_array_equal(direct_event_product.priority_buffer_number, np.array([2, 2, 3]))
         np.testing.assert_array_equal(direct_event_product.latency, np.array([20, 20, 30]))
         np.testing.assert_array_equal(direct_event_product.stim_tag, np.array([False, False, True]))
@@ -388,15 +399,22 @@ class TestHitProcessor(TestCase):
                                           err_msg=f"Did not match at index {idx}")
             mask[idx] = False
 
-        self.assertTrue(np.all(np.isnan(direct_event_product.pha_value[mask])))
+        self.assertTrue(np.all(direct_event_product.pha_value[mask] == UNSIGNED_INT2_FILL_VALUE))
+        self.assertTrue(np.all(np.isnan(direct_event_product.energy_at_detector[mask])))
+        self.assertTrue(np.all(direct_event_product.is_low_gain[mask] == False))
 
-        np.testing.assert_array_equal(direct_event_product.detector_flags, np.array([None, None, 2]))
-        np.testing.assert_array_equal(direct_event_product.deindex, np.array([None, None, 2]))
-        np.testing.assert_array_equal(direct_event_product.epindex, np.array([None, None, True]))
-        np.testing.assert_array_equal(direct_event_product.stim_gain, np.array([None, None, 2]))
-        np.testing.assert_array_equal(direct_event_product.a_l_stim, np.array([None, None, True]))
-        np.testing.assert_array_equal(direct_event_product.stim_step, np.array([None, None, 1]))
-        np.testing.assert_array_equal(direct_event_product.dac_value, np.array([None, None, 123]))
+        np.testing.assert_array_equal(direct_event_product.detector_flags,
+                                      np.array([UNSIGNED_INT2_FILL_VALUE, UNSIGNED_INT2_FILL_VALUE, 2]))
+        np.testing.assert_array_equal(direct_event_product.deindex,
+                                      np.array([UNSIGNED_INT2_FILL_VALUE, UNSIGNED_INT2_FILL_VALUE, 2]))
+        np.testing.assert_array_equal(direct_event_product.epindex,
+                                      np.array([UNSIGNED_INT2_FILL_VALUE, UNSIGNED_INT2_FILL_VALUE, True]))
+        np.testing.assert_array_equal(direct_event_product.stim_gain, np.array([False, False, True]))
+        np.testing.assert_array_equal(direct_event_product.a_l_stim, np.array([False, False, True]))
+        np.testing.assert_array_equal(direct_event_product.stim_step,
+                                      np.array([UNSIGNED_INT1_FILL_VALUE, UNSIGNED_INT1_FILL_VALUE, 1]))
+        np.testing.assert_array_equal(direct_event_product.dac_value,
+                                      np.array([UNSIGNED_INT2_FILL_VALUE, UNSIGNED_INT2_FILL_VALUE, 123]))
 
     def test_raise_error_if_descriptor_doesnt_match(self):
         input_metadata = InputMetadata(

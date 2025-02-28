@@ -1,6 +1,8 @@
 import unittest
 from datetime import datetime, timedelta
 
+import numpy as np
+
 from imap_processing.swe.l3.models import SweL2Data, SwapiL3aProtonData
 from imap_processing.swe.l3.utils import read_swe_config, read_l2_swe_data, read_l3a_swapi_proton_data
 from tests.test_helpers import get_test_data_path
@@ -54,6 +56,9 @@ class TestUtils(unittest.TestCase):
 
         self.assertEqual(result.phase_space_density[3][11][8][4], 1.8811969552023866e-26)
         self.assertEqual(result.phase_space_density.shape, (6, 24, 30, 7))
+
+        self.assertEqual(result.acquisition_time.shape, (6, 24, 30))
+        self.assertEqual(result.acquisition_time[0][0][0], np.datetime64('2024-12-31T23:59:30.099713984'))
 
     def test_read_l3a_swapi_proton_data(self):
         result = read_l3a_swapi_proton_data(get_test_data_path('swe/imap_swapi_l3a_proton-sw_20250101_v001.cdf'))

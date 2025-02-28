@@ -20,7 +20,9 @@ def piece_wise_model(x: np.ndarray, b0: float, b1: float,
                                ]))
 
 
-def find_breakpoints(energies: np.ndarray, flux: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+def find_breakpoints(energies: np.ndarray, flux: np.ndarray, initial_spacecraft_potential_guess: float,
+                     initial_core_halo_break_point_guess: float) -> tuple[
+    np.ndarray, np.ndarray]:
     log_flux = np.log(flux)
     slope = -np.diff(log_flux) / np.diff(energies)
     xsratio = slope[1:] / slope[:-1]
@@ -33,11 +35,10 @@ def find_breakpoints(energies: np.ndarray, flux: np.ndarray) -> tuple[np.ndarray
     b3 = (log_flux[5] - log_flux[6]) / (energies[6] - energies[5])
     b1 = (log_flux[0] - log_flux[1]) / (energies[1] - energies[0])
     b0 = np.exp(log_flux[0] + b1 * energies[0])
-    initial_spacecraft_potential = 10
-    initial_core_halo_break_point = 80
-    initial_guesses = (b0, b1, initial_spacecraft_potential, b3, initial_core_halo_break_point, b5)
+    initial_guesses = (b0, b1, initial_spacecraft_potential_guess, b3, initial_core_halo_break_point_guess, b5)
 
     fit, covariance = curve_fit(piece_wise_model, energies, log_flux, initial_guesses)
+
     return fit[2], fit[4]
 
 
@@ -160,12 +161,12 @@ def correct_and_rebin(flux_or_psd: np.ndarray[(E_BINS, SPIN_SECTORS, CEMS)],
                       energy_bins_minus_potential: np.ndarray[(E_BINS,)],
                       inst_el: np.ndarray[(CEMS,)],
                       inst_az: np.ndarray[E_BINS, SPIN_SECTORS, CEMS],
-                      mag_vector: np.ndarray[(3,)],
+                      mag_vector: np.ndarray[(E_BINS, SPIN_SECTORS, 3,)],
                       solar_wind_vector: np.ndarray[(3,)],
                       config: SweConfiguration) -> np.ndarray[(E_BINS, PITCH_ANGLE_BINS)]:
     despun_velocity = calculate_velocity_in_dsp_frame_km_s(energy_bins_minus_potential, inst_el, inst_az)
     velocity_in_sw_frame = calculate_velocity_in_sw_frame(despun_velocity, solar_wind_vector)
-    pitch_angle = calculate_pitch_angle(velocity_in_sw_frame, mag_vector)
+    pitch_angle = calculate_pitch_angle(velocity_in_sw_frame, mag_vector[..., np.newaxis, :])
     energy_in_sw_frame = calculate_energy_in_ev_from_velocity_in_km_per_second(velocity_in_sw_frame)
 
     return rebin_by_pitch_angle(flux_or_psd, pitch_angle, energy_in_sw_frame, config)

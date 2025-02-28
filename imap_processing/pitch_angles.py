@@ -4,7 +4,8 @@ import numpy as np
 def calculate_pitch_angle(particle_vectors: np.ndarray[float], magnetic_field_vector: np.ndarray[float]) -> float:
     norm_x = calculate_unit_vector(particle_vectors)
     norm_y = calculate_unit_vector(magnetic_field_vector)
-    return np.degrees(np.acos(np.dot(norm_x, norm_y)))
+    dot = np.sum(norm_x * norm_y, axis=-1)
+    return np.degrees(np.acos(dot))
 
 
 def calculate_unit_vector(vector: np.ndarray[float]) -> np.ndarray[float]:
