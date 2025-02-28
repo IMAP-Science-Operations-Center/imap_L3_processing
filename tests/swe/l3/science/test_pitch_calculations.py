@@ -7,7 +7,7 @@ from imap_processing.swe.l3.science.pitch_calculations import piece_wise_model, 
     average_flux, calculate_velocity_in_dsp_frame_km_s, calculate_look_directions, rebin_by_pitch_angle, \
     correct_and_rebin, calculate_energy_in_ev_from_velocity_in_km_per_second, integrate_distribution_to_get_1d_spectrum, \
     integrate_distribution_to_get_inbound_and_outbound_1d_spectrum
-from tests.test_helpers import build_swe_configuration
+from tests.test_helpers import build_swe_configuration, NumpyArrayMatcher
 
 
 class TestPitchCalculations(unittest.TestCase):
@@ -119,7 +119,7 @@ class TestPitchCalculations(unittest.TestCase):
                              3.32793768e+00, 1.72978233e+00, 9.43240260e-01, 5.82430995e-01,
                              3.69484446e-01, 2.19359553e-01, 1.19059738e-01, 5.64115725e-02,
                              2.30604686e-02, 9.14406238e-03, 4.24754874e-03, 1.61814681e-03])
-        spacecraft_potential, core_halo_breakpoint = find_breakpoints(xs, avg_flux)
+        spacecraft_potential, core_halo_breakpoint = find_breakpoints(xs, avg_flux, 10, 80)
         self.assertAlmostEqual(11.1, spacecraft_potential, 1)
         self.assertAlmostEqual(81.1, core_halo_breakpoint, 1)
 
@@ -140,7 +140,29 @@ class TestPitchCalculations(unittest.TestCase):
                 avg_flux = np.exp(piece_wise_model(xs, 1e4, 0.05, expected_potential, 0.02, expected_core_halo, 0.01))
                 noise_floor = 1
                 avg_flux += noise_floor
-                spacecraft_potential, core_halo_breakpoint = find_breakpoints(xs, avg_flux)
+                spacecraft_potential, core_halo_breakpoint = find_breakpoints(xs, avg_flux, 10, 80)
+                self.assertAlmostEqual(expected_potential, spacecraft_potential, 2)
+                self.assertAlmostEqual(expected_core_halo, core_halo_breakpoint, 0)
+
+    def test_find_breakpoints_using_initial_guess(self):
+        cases = [
+            (4, 40, 4, 50),
+            (10, 80, 12, 100),
+            (12, 60, 10, 80),
+        ]
+        for case in cases:
+            with self.subTest(case):
+                expected_potential, expected_core_halo, guess_potential, guess_halo = case
+                xs = np.array([2.6600000e+00, 3.7050000e+00, 5.1300000e+00, 7.1725000e+00,
+                               9.9750000e+00, 1.3870000e+01, 1.9285000e+01, 2.6790000e+01,
+                               3.7287500e+01, 5.1870000e+01, 7.2152500e+01, 1.0036750e+02,
+                               1.3960250e+02, 1.9418000e+02, 2.7013250e+02, 3.7572500e+02,
+                               5.2264250e+02, 7.2698750e+02, 1.0112275e+03, 1.4066650e+03])
+                avg_flux = np.exp(piece_wise_model(xs, 1e4, 0.05, expected_potential, 0.02, expected_core_halo, 0.01))
+                noise_floor = 0.1
+                avg_flux += noise_floor
+
+                spacecraft_potential, core_halo_breakpoint = find_breakpoints(xs, avg_flux, guess_potential, guess_halo)
                 self.assertAlmostEqual(expected_potential, spacecraft_potential, 2)
                 self.assertAlmostEqual(expected_core_halo, core_halo_breakpoint, 0)
 
@@ -289,21 +311,42 @@ class TestPitchCalculations(unittest.TestCase):
         corrected_energy = Mock()
         inst_el = Mock()
         inst_az = Mock()
-        mag_vector = Mock()
+        mag_vectors = np.array([
+            [
+                [1, 0, 0],
+                [0, 1, 0],
+            ],
+            [
+                [0, 0, 1],
+                [1, 1, 1],
+            ],
+        ])
         solar_wind_vector = Mock()
         configuration = Mock()
         result = correct_and_rebin(
             flux_or_psd=flux_data,
             energy_bins_minus_potential=corrected_energy,
             inst_el=inst_el, inst_az=inst_az,
-            mag_vector=mag_vector, solar_wind_vector=solar_wind_vector,
+            mag_vector=mag_vectors, solar_wind_vector=solar_wind_vector,
             config=configuration,
         )
 
+        expected_mag_vectors_with_cem_axis = np.array([
+            [
+                [[1, 0, 0]],
+                [[0, 1, 0]],
+            ],
+            [
+                [[0, 0, 1]],
+                [[1, 1, 1]],
+            ],
+        ])
         mock_calculate_dsp_velocity.assert_called_once_with(corrected_energy, inst_el, inst_az)
         mock_calculate_velocity_in_sw_frame.assert_called_once_with(
             mock_calculate_dsp_velocity.return_value, solar_wind_vector)
-        mock_calculate_pitch_angle.assert_called_once_with(mock_calculate_velocity_in_sw_frame.return_value, mag_vector)
+
+        mock_calculate_pitch_angle.assert_called_once_with(mock_calculate_velocity_in_sw_frame.return_value,
+                                                           NumpyArrayMatcher(expected_mag_vectors_with_cem_axis))
         mock_calculate_energy.assert_called_with(mock_calculate_velocity_in_sw_frame.return_value)
         mock_rebin_by_pitch_angle.assert_called_with(
             flux_data, mock_calculate_pitch_angle.return_value,

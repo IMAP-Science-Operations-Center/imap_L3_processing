@@ -182,12 +182,12 @@ class TestDataUtils(unittest.TestCase):
                     for j in range(24)
                 ]
                 for i in range(1440)])
-        
+
         from_data = np.repeat([[1, 0, 0]], 86400 * 2, axis=0)
         from_epoch = np.array([datetime(2020, 4, 4) + timedelta(seconds=0.5) * i for i in range(86400 * 2)])
 
         t0 = time.perf_counter()
-        actual_neighbor_values = find_closest_neighbor(from_epoch.astype(np.datetime64), from_data,
+        actual_neighbor_values = find_closest_neighbor(from_epoch, from_data,
                                                        to_epoch.astype(np.datetime64),
                                                        timedelta(days=1))
         t1 = time.perf_counter()

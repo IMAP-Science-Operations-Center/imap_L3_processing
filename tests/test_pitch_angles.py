@@ -21,6 +21,12 @@ class TestPitchAngles(unittest.TestCase):
         actual_pitch_angle = calculate_pitch_angle(hit_unit_vectors, mag_unit_vector)
         np.testing.assert_array_almost_equal(actual_pitch_angle, [45, 0])
 
+    def test_calculate_pitch_angle_for_multiple_mag_vectors(self):
+        hit_unit_vectors = np.array([[1, 1, 0], [1, 0, 0]])
+        mag_unit_vector = np.array([[1, 0, 0], [0, 0, 1]])
+        actual_pitch_angle = calculate_pitch_angle(hit_unit_vectors, mag_unit_vector)
+        np.testing.assert_array_almost_equal(actual_pitch_angle, [45, 90])
+
     def test_calculate_unit_vector(self):
         vector = np.array([27, 34, 56])
 
