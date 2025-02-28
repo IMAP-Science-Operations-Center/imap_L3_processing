@@ -160,12 +160,12 @@ def correct_and_rebin(flux_or_psd: np.ndarray[(E_BINS, SPIN_SECTORS, CEMS)],
                       energy_bins_minus_potential: np.ndarray[(E_BINS,)],
                       inst_el: np.ndarray[(CEMS,)],
                       inst_az: np.ndarray[E_BINS, SPIN_SECTORS, CEMS],
-                      mag_vector: np.ndarray[(3,)],
+                      mag_vector: np.ndarray[(E_BINS, SPIN_SECTORS, 3,)],
                       solar_wind_vector: np.ndarray[(3,)],
                       config: SweConfiguration) -> np.ndarray[(E_BINS, PITCH_ANGLE_BINS)]:
     despun_velocity = calculate_velocity_in_dsp_frame_km_s(energy_bins_minus_potential, inst_el, inst_az)
     velocity_in_sw_frame = calculate_velocity_in_sw_frame(despun_velocity, solar_wind_vector)
-    pitch_angle = calculate_pitch_angle(velocity_in_sw_frame, mag_vector)
+    pitch_angle = calculate_pitch_angle(velocity_in_sw_frame, mag_vector[..., np.newaxis, :])
     energy_in_sw_frame = calculate_energy_in_ev_from_velocity_in_km_per_second(velocity_in_sw_frame)
 
     return rebin_by_pitch_angle(flux_or_psd, pitch_angle, energy_in_sw_frame, config)

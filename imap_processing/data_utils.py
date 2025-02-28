@@ -30,16 +30,18 @@ def rebin(from_epoch: np.ndarray[float], from_data: np.ndarray[float], to_epoch:
 def find_closest_neighbor(from_epoch: np.ndarray[datetime], from_data: np.ndarray[float],
                           to_epoch: np.ndarray[datetime],
                           maximum_distance: timedelta) -> np.ndarray[float]:
-    index = np.searchsorted(from_epoch, to_epoch)
-    right_indices = np.minimum(len(from_epoch) - 1, index)
+    from_epoch_as_dt64 = from_epoch.astype(np.datetime64)
+    to_epoch_as_dt64 = to_epoch.astype(np.datetime64)
+    index = np.searchsorted(from_epoch_as_dt64, to_epoch_as_dt64)
+    right_indices = np.minimum(len(from_epoch_as_dt64) - 1, index)
     left_indices = np.maximum(0, index - 1)
 
-    right_delta = np.abs(from_epoch[right_indices] - to_epoch)
-    left_delta = np.abs(from_epoch[left_indices] - to_epoch)
+    right_delta = np.abs(from_epoch_as_dt64[right_indices] - to_epoch_as_dt64)
+    left_delta = np.abs(from_epoch_as_dt64[left_indices] - to_epoch_as_dt64)
 
     best_indices = np.where(right_delta < left_delta, right_indices, left_indices)
 
-    min_deltas = np.abs(from_epoch[best_indices] - to_epoch)
+    min_deltas = np.abs(from_epoch_as_dt64[best_indices] - to_epoch_as_dt64)
     min_outside_range = min_deltas > maximum_distance
 
     closest_data = from_data[best_indices].astype(float, copy=True)

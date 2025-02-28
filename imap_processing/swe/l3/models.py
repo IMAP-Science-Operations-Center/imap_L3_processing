@@ -28,6 +28,7 @@ class SweL2Data:
     energy: np.ndarray
     inst_el: np.ndarray
     inst_az_spin_sector: np.ndarray
+    acquisition_time: np.ndarray
 
 
 @dataclass

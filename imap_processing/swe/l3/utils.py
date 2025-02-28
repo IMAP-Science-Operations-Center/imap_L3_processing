@@ -16,6 +16,11 @@ def read_l2_swe_data(swe_l2_data: Path) -> SweL2Data:
         energy = cdf["energy"][:]
         inst_az_spin_sector = cdf["inst_az_spin_sector"][:]
         phase_space_density = cdf["phase_space_density_spin_sector"][:]
+        acquisition_time_in_MET = cdf["acquisition_time"][:]
+        mission_epoch = np.datetime64("2010-01-01", 'ns')
+        wip_leap_second_correction_revisit_with_spice = 3
+        acquisition_time = mission_epoch + (
+                    (acquisition_time_in_MET - wip_leap_second_correction_revisit_with_spice) * 1e9).astype(int)
     return SweL2Data(epoch=epoch,
                      epoch_delta=np.full(epoch.shape, timedelta(seconds=30)),
                      phase_space_density=phase_space_density,
@@ -23,6 +28,7 @@ def read_l2_swe_data(swe_l2_data: Path) -> SweL2Data:
                      energy=energy,
                      inst_el=inst_el,
                      inst_az_spin_sector=inst_az_spin_sector,
+                     acquisition_time=acquisition_time,
                      )
 
 

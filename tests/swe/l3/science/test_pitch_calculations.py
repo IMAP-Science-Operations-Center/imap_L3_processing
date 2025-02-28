@@ -7,7 +7,7 @@ from imap_processing.swe.l3.science.pitch_calculations import piece_wise_model, 
     average_flux, calculate_velocity_in_dsp_frame_km_s, calculate_look_directions, rebin_by_pitch_angle, \
     correct_and_rebin, calculate_energy_in_ev_from_velocity_in_km_per_second, integrate_distribution_to_get_1d_spectrum, \
     integrate_distribution_to_get_inbound_and_outbound_1d_spectrum
-from tests.test_helpers import build_swe_configuration
+from tests.test_helpers import build_swe_configuration, NumpyArrayMatcher
 
 
 class TestPitchCalculations(unittest.TestCase):
@@ -289,21 +289,42 @@ class TestPitchCalculations(unittest.TestCase):
         corrected_energy = Mock()
         inst_el = Mock()
         inst_az = Mock()
-        mag_vector = Mock()
+        mag_vectors = np.array([
+            [
+                [1, 0, 0],
+                [0, 1, 0],
+            ],
+            [
+                [0, 0, 1],
+                [1, 1, 1],
+            ],
+        ])
         solar_wind_vector = Mock()
         configuration = Mock()
         result = correct_and_rebin(
             flux_or_psd=flux_data,
             energy_bins_minus_potential=corrected_energy,
             inst_el=inst_el, inst_az=inst_az,
-            mag_vector=mag_vector, solar_wind_vector=solar_wind_vector,
+            mag_vector=mag_vectors, solar_wind_vector=solar_wind_vector,
             config=configuration,
         )
 
+        expected_mag_vectors_with_cem_axis = np.array([
+            [
+                [[1, 0, 0]],
+                [[0, 1, 0]],
+            ],
+            [
+                [[0, 0, 1]],
+                [[1, 1, 1]],
+            ],
+        ])
         mock_calculate_dsp_velocity.assert_called_once_with(corrected_energy, inst_el, inst_az)
         mock_calculate_velocity_in_sw_frame.assert_called_once_with(
             mock_calculate_dsp_velocity.return_value, solar_wind_vector)
-        mock_calculate_pitch_angle.assert_called_once_with(mock_calculate_velocity_in_sw_frame.return_value, mag_vector)
+
+        mock_calculate_pitch_angle.assert_called_once_with(mock_calculate_velocity_in_sw_frame.return_value,
+                                                           NumpyArrayMatcher(expected_mag_vectors_with_cem_axis))
         mock_calculate_energy.assert_called_with(mock_calculate_velocity_in_sw_frame.return_value)
         mock_rebin_by_pitch_angle.assert_called_with(
             flux_data, mock_calculate_pitch_angle.return_value,
