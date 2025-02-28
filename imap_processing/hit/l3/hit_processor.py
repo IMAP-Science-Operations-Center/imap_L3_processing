@@ -38,20 +38,24 @@ class HitProcessor(Processor):
         raw_pha_events: list[RawPHAEvent] = []
         for epoch, event_binary in zip(direct_event_dependencies.hit_l1_data.epoch,
                                        direct_event_dependencies.hit_l1_data.event_binary):
-            raw_pha_events += PHAEventReader.read_all_pha_events(event_binary)
-            epochs += [epoch] * len(raw_pha_events)
+            event_raw_pha_events = PHAEventReader.read_all_pha_events(event_binary)
+            epochs += [epoch] * len(event_raw_pha_events)
+            raw_pha_events += event_raw_pha_events
 
         charge = np.full(shape=(len(raw_pha_events)), fill_value=np.nan)
         energy = np.full(shape=(len(raw_pha_events)), fill_value=np.nan)
+        e_delta = np.full(shape=(len(raw_pha_events)), fill_value=np.nan)
+        e_prime = np.full(shape=(len(raw_pha_events)), fill_value=np.nan)
+        detected_range = np.full(shape=(len(raw_pha_events)), fill_value=None)
         particle_id = np.full(shape=(len(raw_pha_events)), fill_value=np.nan)
         priority_buffer_number = np.full(shape=(len(raw_pha_events)), fill_value=np.nan)
         latency = np.full(shape=(len(raw_pha_events)), fill_value=np.nan)
-        stim_tag = np.full(shape=(len(raw_pha_events)), fill_value=np.nan)
-        long_event_flag = np.full(shape=(len(raw_pha_events)), fill_value=np.nan)
-        haz_tag = np.full(shape=(len(raw_pha_events)), fill_value=np.nan)
-        a_b_side = np.full(shape=(len(raw_pha_events)), fill_value=np.nan)
-        has_unread_adcs = np.full(shape=(len(raw_pha_events)), fill_value=np.nan)
-        culling_flag = np.full(shape=(len(raw_pha_events)), fill_value=np.nan)
+        stim_tag = np.full(shape=(len(raw_pha_events)), fill_value=False)
+        long_event_flag = np.full(shape=(len(raw_pha_events)), fill_value=False)
+        haz_tag = np.full(shape=(len(raw_pha_events)), fill_value=False)
+        a_b_side = np.full(shape=(len(raw_pha_events)), fill_value=False)
+        has_unread_adcs = np.full(shape=(len(raw_pha_events)), fill_value=False)
+        culling_flag = np.full(shape=(len(raw_pha_events)), fill_value=False)
 
         pha_value = np.full(shape=(len(raw_pha_events), 64), fill_value=np.nan)
         energy_at_detector = np.full(shape=(len(raw_pha_events), 64), fill_value=np.nan)
@@ -76,6 +80,10 @@ class HitProcessor(Processor):
 
             charge[i] = event_output.charge
             energy[i] = event_output.total_energy
+
+            e_delta[i] = event_output.e_delta if event_output.e_delta is not None else np.nan
+            e_prime[i] = event_output.e_prime if event_output.e_prime is not None else np.nan
+            detected_range[i] = event_output.detected_range.value if event_output.detected_range is not None else None
 
             particle_id[i] = raw_event.particle_id
             priority_buffer_number[i] = raw_event.priority_buffer_num
@@ -104,8 +112,12 @@ class HitProcessor(Processor):
             if raw_event.extended_stim_header is not None:
                 dac_value[i] = raw_event.extended_stim_header.dac_value
 
-        return HitDirectEventDataProduct(charge=charge,
+        return HitDirectEventDataProduct(epoch=epochs,
+                                         charge=charge,
                                          energy=energy,
+                                         e_delta=e_delta,
+                                         e_prime=e_prime,
+                                         detected_range=detected_range,
                                          particle_id=particle_id,
                                          priority_buffer_number=priority_buffer_number,
                                          latency=latency,

@@ -27,6 +27,9 @@ class EventOutput:
     total_energy: Optional[float]
     charge: Optional[float]
     energies: list[float]
+    detected_range: Optional[DetectedRange]
+    e_delta: Optional[float]
+    e_prime: Optional[float]
 
 
 def calculate_mev(word: PHAWord, gain_lookup_table: GainLookupTable) -> float:
@@ -129,7 +132,9 @@ def process_pha_event(event: RawPHAEvent, cosine_table: CosineCorrectionLookupTa
         e_prime = calculate_corrected_energy(event_analysis.e_prime_word)
         charge = compute_charge(event_analysis.range, e_delta, e_prime, range_fit_lookup)
 
-        return EventOutput(original_event=event, charge=charge, total_energy=total_energy, energies=energies)
+        return EventOutput(original_event=event, charge=charge, total_energy=total_energy, energies=energies,
+                           detected_range=event_analysis.range, e_delta=e_delta, e_prime=e_prime)
     else:
         energies = [calculate_mev(word, gain_table) for word in event.pha_words]
-        return EventOutput(original_event=event, charge=None, total_energy=None, energies=energies)
+        return EventOutput(original_event=event, charge=None, total_energy=None, energies=energies, detected_range=None,
+                           e_delta=None, e_prime=None)

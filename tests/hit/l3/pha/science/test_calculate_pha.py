@@ -101,9 +101,9 @@ class TestCalculatePHA(unittest.TestCase):
 
     def test_analyzes_event_returns_none_when_l1_and_l2_sides_mismatch(self):
         test_cases = [
-            ("range 2", ["L1B3b", "L2A4"]),
-            ("range 3", ["L1B3b", "L2A4", "L3Ao"]),
-            ("range 4", ["L1B3b", "L2A4", "L3Ao", "L3Bo"]),
+            ("detected_range 2", ["L1B3b", "L2A4"]),
+            ("detected_range 3", ["L1B3b", "L2A4", "L3Ao"]),
+            ("detected_range 4", ["L1B3b", "L2A4", "L3Ao", "L3Bo"]),
             ("no l1", ["L2A1"]),
             ("both sides l1", ["L1A2c", "L1B2c", "L2A1"]),
             ("no l2", ["L1A1a"]),
@@ -235,7 +235,7 @@ class TestCalculatePHA(unittest.TestCase):
         event_output = process_pha_event(raw_pha_event, Mock(), Mock(), Mock())
 
         expected_event_output = EventOutput(original_event=raw_pha_event, energies=[word1_mev, word2_mev], charge=None,
-                                            total_energy=None)
+                                            total_energy=None, detected_range=None, e_delta=None, e_prime=None, )
         self.assertEqual(expected_event_output, event_output)
 
     @patch("imap_processing.hit.l3.pha.science.calculate_pha.compute_charge")
@@ -298,6 +298,9 @@ class TestCalculatePHA(unittest.TestCase):
         mock_compute_charge.assert_called_once_with(sentinel.detected_range, expected_l1_energy,
                                                     expected_l2_higher_energy, sentinel.range_fit_lookup)
         self.assertEqual(mock_compute_charge.return_value, event_output.charge)
+        self.assertEqual(sentinel.detected_range, event_output.detected_range)
+        self.assertEqual(expected_l1_energy, event_output.e_delta)
+        self.assertEqual(expected_l2_higher_energy, event_output.e_prime)
 
     def test_compute_charge(self):
         charges = [3, 4, 5, 6]

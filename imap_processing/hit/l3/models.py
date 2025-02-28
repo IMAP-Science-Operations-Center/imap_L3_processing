@@ -12,8 +12,9 @@ EPOCH_VAR_NAME = "epoch"
 CHARGE_VAR_NAME = "charge"
 ENERGY_VAR_NAME = "energy"
 ENERGY_AT_DETECTOR_VAR_NAME = "energy_at_detector"
-# TODO add range, delta_e_energy, e_prime_energy
-
+E_DELTA_VAR_NAME = "e_delta"
+E_PRIME_VAR_NAME = "e_prime"
+DETECTED_RANGE_VAR_NAME = "detected_range"
 PARTICLE_ID_VAR_NAME = "particle_id"
 PRIORITY_BUFFER_NUMBER_VAR_NAME = "priority_buffer_number"
 LATENCY_VAR_NAME = "latency"
@@ -75,8 +76,12 @@ class HitL2Data:
 
 @dataclass
 class HitDirectEventDataProduct(DataProduct):
+    epoch: np.ndarray[datetime]
     charge: np.ndarray[float]
     energy: np.ndarray[float]
+    e_delta: np.ndarray[float]
+    e_prime: np.ndarray[float]
+    detected_range: np.ndarray[int]
     particle_id: np.ndarray[int]
     priority_buffer_number: np.ndarray[int]
     latency: np.ndarray[int]
@@ -100,21 +105,33 @@ class HitDirectEventDataProduct(DataProduct):
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
+            DataProductVariable(EPOCH_VAR_NAME, self.epoch),
             DataProductVariable(CHARGE_VAR_NAME, self.charge),
             DataProductVariable(ENERGY_VAR_NAME, self.energy),
+
+            DataProductVariable(E_DELTA_VAR_NAME, self.e_delta),
+            DataProductVariable(E_PRIME_VAR_NAME, self.e_prime),
+            DataProductVariable(DETECTED_RANGE_VAR_NAME, self.detected_range),
+
             DataProductVariable(PARTICLE_ID_VAR_NAME, self.particle_id),
             DataProductVariable(PRIORITY_BUFFER_NUMBER_VAR_NAME, self.priority_buffer_number),
             DataProductVariable(LATENCY_VAR_NAME, self.latency),
+
             DataProductVariable(STIM_TAG_VAR_NAME, self.stim_tag),
             DataProductVariable(LONG_EVENT_FLAG_VAR_NAME, self.long_event_flag),
             DataProductVariable(HAZ_TAG_VAR_NAME, self.haz_tag),
             DataProductVariable(A_B_SIDE_VAR_NAME, self.a_b_side),
             DataProductVariable(HAS_UNREAD_FLAG_VAR_NAME, self.has_unread_adcs),
             DataProductVariable(CULLING_FLAG_VAR_NAME, self.culling_flag),
+
             DataProductVariable(PHA_VALUE_VAR_NAME, self.pha_value),
+
             DataProductVariable(ENERGY_AT_DETECTOR_VAR_NAME, self.energy_at_detector),
+
             DataProductVariable(DETECTOR_ADDRESS_VAR_NAME, self.detector_address),
+
             DataProductVariable(IS_LOW_GAIN_VAR_NAME, self.is_low_gain),
+
             DataProductVariable(DETECTOR_FLAGS_VAR_NAME, self.detector_flags),
             DataProductVariable(DEINDEX_VAR_NAME, self.deindex),
             DataProductVariable(EPINDEX_VAR_NAME, self.epindex),

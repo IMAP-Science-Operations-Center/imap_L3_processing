@@ -13,6 +13,7 @@ from imap_processing.hit.l3.models import HitL2Data
 from imap_processing.hit.l3.pha.pha_event_reader import PHAWord, Detector, RawPHAEvent, PHAExtendedHeader, StimBlock, \
     ExtendedStimHeader
 from imap_processing.hit.l3.pha.science.calculate_pha import EventOutput
+from imap_processing.hit.l3.pha.science.cosine_correction_lookup_table import DetectedRange
 from imap_processing.models import MagL1dData, InputMetadata
 from imap_processing.processor import Processor
 
@@ -266,9 +267,12 @@ class TestHitProcessor(TestCase):
                                       stim_block=StimBlock(stim_step=1, stim_gain=2, unused=3, a_l_stim=True),
                                       extended_stim_header=ExtendedStimHeader(dac_value=123, tbd=666))
 
-        event_output_1 = EventOutput(original_event=raw_pha_event_1, charge=9.0, energies=[1], total_energy=99)
-        event_output_2 = EventOutput(original_event=raw_pha_event_2, charge=10.0, energies=[4], total_energy=100)
-        event_output_3 = EventOutput(original_event=raw_pha_event_3, charge=12.0, energies=[9, 8], total_energy=200)
+        event_output_1 = EventOutput(original_event=raw_pha_event_1, charge=9.0, energies=[1], total_energy=99,
+                                     detected_range=DetectedRange.R2, e_delta=103.7, e_prime=63.27)
+        event_output_2 = EventOutput(original_event=raw_pha_event_2, charge=10.0, energies=[4], total_energy=100,
+                                     detected_range=None, e_delta=None, e_prime=None)
+        event_output_3 = EventOutput(original_event=raw_pha_event_3, charge=12.0, energies=[9, 8], total_energy=200,
+                                     detected_range=DetectedRange.R3, e_delta=106.7, e_prime=69.27)
 
         input_metadata = InputMetadata(
             instrument="hit",
@@ -311,12 +315,18 @@ class TestHitProcessor(TestCase):
         self.assertEqual(input_metadata.to_upstream_data_dependency("direct-event"),
                          direct_event_product.input_metadata)
 
-        # np.testing.assert_array_equal(direct_event_product.epoch, np.array(
-        #     [datetime(year=2020, month=2, day=1), datetime(year=2020, month=2, day=1),
-        #      datetime(year=2020, month=2, day=1, hour=1)]))
+        np.testing.assert_array_equal(direct_event_product.epoch, np.array(
+            [datetime(year=2020, month=2, day=1), datetime(year=2020, month=2, day=1),
+             datetime(year=2020, month=2, day=1, hour=1)]))
         np.testing.assert_array_equal(direct_event_product.charge, np.array([9.0, 10.0, 12.0]))
         np.testing.assert_array_equal(direct_event_product.energy, np.array([99, 100, 200]))
         np.testing.assert_array_equal(direct_event_product.particle_id, np.array([1, 1, 2]))
+
+        np.testing.assert_array_equal(direct_event_product.e_delta, np.array([103.7, np.nan, 106.7]))
+        np.testing.assert_array_equal(direct_event_product.e_prime, np.array([63.27, np.nan, 69.27]))
+
+        np.testing.assert_array_equal(direct_event_product.detected_range, np.array([2, None, 3]))
+
         np.testing.assert_array_equal(direct_event_product.priority_buffer_number, np.array([2, 2, 3]))
         np.testing.assert_array_equal(direct_event_product.latency, np.array([20, 20, 30]))
         np.testing.assert_array_equal(direct_event_product.stim_tag, np.array([False, False, True]))
