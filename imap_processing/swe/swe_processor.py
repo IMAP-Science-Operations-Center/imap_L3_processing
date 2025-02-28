@@ -1,7 +1,9 @@
+from datetime import timedelta
+
 import numpy as np
 from imap_data_access import upload
 
-from imap_processing.data_utils import rebin
+from imap_processing.data_utils import find_closest_neighbor
 from imap_processing.processor import Processor
 from imap_processing.swapi.l3a.science.calculate_pickup_ion import calculate_solar_wind_velocity_vector
 from imap_processing.swe.l3.models import SweL3Data
@@ -29,11 +31,11 @@ class SweProcessor(Processor):
         solar_wind_vectors = calculate_solar_wind_velocity_vector(swapi_l_a_proton_data.proton_sw_speed,
                                                                   swapi_l_a_proton_data.proton_sw_clock_angle,
                                                                   swapi_l_a_proton_data.proton_sw_deflection_angle)
-
-        rebinned_solar_wind_vectors = rebin(from_epoch=swapi_epoch,
-                                            from_data=solar_wind_vectors,
-                                            to_epoch=swe_epoch,
-                                            to_epoch_delta=swe_epoch_delta)
+        swapi_max_distance = timedelta(minutes=dependencies.configuration['max_swapi_offset_in_minutes'])
+        rebinned_solar_wind_vectors = find_closest_neighbor(from_epoch=swapi_epoch,
+                                                            from_data=solar_wind_vectors,
+                                                            to_epoch=swe_epoch,
+                                                            maximum_distance=swapi_max_distance)
 
         flux_by_pitch_angles = []
         phase_space_density_by_pitch_angle = []
