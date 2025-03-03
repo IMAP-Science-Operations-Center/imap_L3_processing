@@ -21,8 +21,10 @@ def piece_wise_model(x: np.ndarray, b0: float, b1: float,
 
 
 def find_breakpoints(energies: np.ndarray, flux: np.ndarray, initial_spacecraft_potential_guess: float,
-                     initial_core_halo_break_point_guess: float, config: SweConfiguration) -> tuple[
-    np.ndarray, np.ndarray]:
+                     initial_core_halo_break_point_guess: float,
+                     latest_spacecraft_potential: float, latest_core_halo_breakpoint: float,
+                     config: SweConfiguration) -> tuple[
+    float, float]:
     log_flux = np.log(flux)
     slope = -np.diff(log_flux) / np.diff(energies)
     slope_ratios = slope[1:] / slope[:-1]
@@ -38,9 +40,46 @@ def find_breakpoints(energies: np.ndarray, flux: np.ndarray, initial_spacecraft_
     b0 = np.exp(log_flux[0] + b1 * energies[0])
     initial_guesses = (b0, b1, initial_spacecraft_potential_guess, b3, initial_core_halo_break_point_guess, b5)
 
-    fit, covariance = curve_fit(piece_wise_model, energies, log_flux, initial_guesses)
+    slope_local_max = (slope[1:-1] > slope[:-2]) & (slope[1:-1] > slope[2:])
+    last_max_index = np.max(np.nonzero(slope_local_max), initial=-1) + 1
+    if last_max_index < config["refit_core_halo_breakpoint_index"]:
+        delta_b2 = -1.5
+        delta_b4 = -10
+    else:
+        delta_b2 = -1.0
+        delta_b4 = 10
 
-    return fit[2], fit[4]
+    return try_curve_fit_until_valid(energies, log_flux, initial_guesses, latest_spacecraft_potential,
+                                     latest_core_halo_breakpoint, delta_b2, delta_b4)
+
+
+def try_curve_fit_until_valid(energies: np.ndarray, log_flux: np.ndarray, initial_guesses: np.ndarray,
+                              latest_spacecraft_potential: float, latest_core_halo_breakpoint: float,
+                              delta_b2: float, delta_b4: float) -> tuple[float, float]:
+    b, _ = curve_fit(piece_wise_model, energies, log_flux, initial_guesses)
+
+    def bad_fit(b):
+        return (b[1] <= 0 or
+                b[3] <= 0 or
+                b[5] <= 0 or
+                b[2] >= b[4] or
+                b[4] <= 15 or
+                b[2] <= energies[0] or
+                b[2] >= 20 or
+                b[2] >= 2 * latest_spacecraft_potential)
+
+    attempt_count = 0
+
+    modified_guesses = list(initial_guesses)
+    while bad_fit(b):
+        if attempt_count < 3:
+            modified_guesses[2] += delta_b2
+            modified_guesses[4] += delta_b4
+            b, _ = curve_fit(piece_wise_model, energies, log_flux, tuple(modified_guesses))
+            attempt_count += 1
+        else:
+            return latest_spacecraft_potential, latest_core_halo_breakpoint
+    return b[2], b[4]
 
 
 def average_flux(flux_data: np.ndarray, geometric_weights: np.ndarray) -> np.ndarray:

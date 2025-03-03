@@ -57,7 +57,9 @@ class SweProcessor(Processor):
                                          np.array(config["geometric_fractions"]))
             spacecraft_potential, halo_core = find_breakpoints(swe_l2_data.energy, averaged_flux,
                                                                np.average(spacecraft_potential_history[:3]),
-                                                               np.average(halo_core_history[:3]), config)
+                                                               np.average(halo_core_history[:3]),
+                                                               spacecraft_potential_history[-1], halo_core_history[-1],
+                                                               config)
             spacecraft_potential_history = [*spacecraft_potential_history[1:], spacecraft_potential]
             halo_core_history = [*halo_core_history[1:], halo_core]
 

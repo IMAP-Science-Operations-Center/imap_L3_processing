@@ -150,10 +150,10 @@ class TestSweProcessor(unittest.TestCase):
         halo_core_initial_guess = swe_config['core_halo_breakpoint_initial_guess']
         mock_find_breakpoints.assert_has_calls([
             call(swe_l2_data.energy, mock_average_flux.return_value, spacecraft_potential_initial_guess,
-                 halo_core_initial_guess, swe_config),
+                 halo_core_initial_guess, 15, 90, swe_config),
             call(swe_l2_data.energy, mock_average_flux.return_value, spacecraft_potential_initial_guess,
-                 halo_core_initial_guess, swe_config),
-            call(swe_l2_data.energy, mock_average_flux.return_value, 14, 92, swe_config),
+                 halo_core_initial_guess, 12, 96, swe_config),
+            call(swe_l2_data.energy, mock_average_flux.return_value, 14, 92, 16, 86, swe_config),
         ])
 
         self.assertEqual(UpstreamDataDependency("swe", "l3", datetime(2025, 2, 21),
