@@ -24,21 +24,28 @@ def get_sector_unit_vectors(declinations_degrees: np.ndarray, inclinations_degre
     return stacked
 
 
-def rebin_by_pitch_angle_and_gyrophase(flux_data: np.array, pitch_angles: np.array, gyrophases: np.array,
-                                       number_of_pitch_angle_bins: int, number_of_gyrophase_bins: int):
+def rebin_by_pitch_angle_and_gyrophase(flux_data: np.array,
+                                       flux_delta_plus: np.array,
+                                       flux_delta_minus: np.array,
+                                       pitch_angles: np.array,
+                                       gyrophases: np.array,
+                                       number_of_pitch_angle_bins: int,
+                                       number_of_gyrophase_bins: int):
     pitch_angle_bins = np.floor(pitch_angles / (180 / number_of_pitch_angle_bins)).astype(int)
     gyrophase_bins = np.floor(gyrophases / (360 / number_of_gyrophase_bins)).astype(int)
 
     output_shape = (flux_data.shape[0], number_of_pitch_angle_bins, number_of_gyrophase_bins)
     rebinned_summed = np.zeros(shape=output_shape)
-    rebinned_acc = np.zeros(shape=output_shape)
+    rebinned_count = np.zeros(shape=output_shape)
 
     for i, flux_data in enumerate(flux_data):
         for pitch_angle_bin, gyrophase_bin, flux in zip(np.ravel(pitch_angle_bins),
-                                                                     np.ravel(gyrophase_bins),
-                                                                     np.ravel(flux_data)):
+                                                        np.ravel(gyrophase_bins),
+                                                        np.ravel(flux_data)):
             rebinned_summed[i, pitch_angle_bin, gyrophase_bin] += flux
-            rebinned_acc[i, pitch_angle_bin, gyrophase_bin] += 1
-    averaged_rebinned_fluxes = np.divide(rebinned_summed, rebinned_acc, out=np.full_like(rebinned_summed, np.nan),
-                       where=rebinned_acc != 0)
-    return averaged_rebinned_fluxes, np.nansum(averaged_rebinned_fluxes, axis=-1)
+
+            rebinned_count[i, pitch_angle_bin, gyrophase_bin] += 1
+
+    averaged_rebinned_fluxes = np.divide(rebinned_summed, rebinned_count, out=np.full_like(rebinned_summed, np.nan),
+                                         where=rebinned_count != 0)
+    return averaged_rebinned_fluxes, None, None, np.nansum(averaged_rebinned_fluxes, axis=-1), None, None

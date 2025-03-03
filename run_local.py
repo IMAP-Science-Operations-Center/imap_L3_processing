@@ -246,13 +246,15 @@ if __name__ == "__main__":
         print(path)
 
     if "hit" in sys.argv:
-        # mag_data = read_l1d_mag_data(get_test_data_path("mag/imap_mag_l1d_mago-normal_20250101_v001.cdf"))
-        # hit_data = read_l2_hit_data(get_test_data_path("hit/hit_l2_sectored-sample1-with-uncertainties_20250101.cdf"))
-        # dependencies = HITL3SectoredDependencies(mag_l1d_data=mag_data, data=hit_data)
-        # print(f"hit sectored data product: {create_hit_sectored_cdf(dependencies)}")
-
-        path = create_hit_direct_event_cdf()
-        print(f"hit direct event data product: {path}")
+        if "l3a" in sys.argv:
+            path = create_hit_direct_event_cdf()
+            print(f"hit direct event data product: {path}")
+        else:
+            mag_data = read_l1d_mag_data(get_test_data_path("mag/imap_mag_l1d_mago-normal_20250101_v001.cdf"))
+            hit_data = read_l2_hit_data(
+                get_test_data_path("hit/hit_l2_sectored-sample1-with-uncertainties_20250101.cdf"))
+            dependencies = HITL3SectoredDependencies(mag_l1d_data=mag_data, data=hit_data)
+            print(f"hit sectored data product: {create_hit_sectored_cdf(dependencies)}")
 
     if "swe" in sys.argv:
         dependencies = SweL3Dependencies.from_file_paths(

@@ -8,6 +8,7 @@ from imap_processing.hit.l3.pha.pha_event_reader import PHAWord, RawPHAEvent
 from imap_processing.hit.l3.pha.science.cosine_correction_lookup_table import DetectedRange, Detector, \
     CosineCorrectionLookupTable
 from imap_processing.hit.l3.pha.science.gain_lookup_table import GainLookupTable, DetectorGain
+from imap_processing.hit.l3.pha.science.hit_event_type_lookup import HitEventTypeLookup
 from imap_processing.hit.l3.pha.science.range_fit_lookup import RangeFitLookup
 
 
@@ -38,67 +39,32 @@ def calculate_mev(word: PHAWord, gain_lookup_table: GainLookupTable) -> float:
     return word.adc_value * gain_coeffs.a + gain_coeffs.b
 
 
-def analyze_event(event: RawPHAEvent, gain_lookup: GainLookupTable) -> Optional[EventAnalysis]:
+def analyze_event(event: RawPHAEvent, gain_lookup: GainLookupTable, rule_lookup: HitEventTypeLookup) -> Optional[
+    EventAnalysis]:
     def calculate_mev_with_bound_lookup(pha_word: PHAWord) -> float:
         return calculate_mev(pha_word, gain_lookup)
 
-    l1_sides = {word.detector.side for word in event.pha_words if word.detector.layer == 1}
+    words = [word for word in event.pha_words]
+    groups_to_words = {}
+    for word in words:
+        if word.detector.group in groups_to_words.keys():
+            groups_to_words[word.detector.group].append(word)
+        else:
+            groups_to_words[word.detector.group] = [word]
 
-    if len(l1_sides) != 1:
-        return None
-    l1_word = max((word for word in event.pha_words if word.detector.layer == 1), key=calculate_mev_with_bound_lookup)
-    l1_detector = l1_word.detector
+    rule = rule_lookup.lookup_range(set(groups_to_words.keys()))
+    if rule is not None:
+        highest_value_words_per_group = {}
+        for include_group in rule.included_detector_groups:
+            highest_value_words_per_group[include_group] = max(groups_to_words[include_group],
+                                                               key=calculate_mev_with_bound_lookup)
 
-    matching_l2 = [word for word in event.pha_words if
-                   word.detector.layer == 2 and word.detector.side == l1_detector.side]
-    if len(matching_l2) == 0:
-        return None
-    l2_word = max((word for word in matching_l2), key=calculate_mev_with_bound_lookup)
-    l2_detector = l2_word.detector
-    words_with_highest_energy = [l1_word, l2_word]
-
-    l3_sides = {word.detector.side for word in event.pha_words if word.detector.layer == 3}
-    if l3_sides == set():
-        detected_range = DetectedRange.R2
-
-        e_delta_word = l1_word
-        e_prime_word = l2_word
-    elif l3_sides == l1_sides:
-        detected_range = DetectedRange.R3
-
-        e_delta_word = l2_word
-        e_prime_word = max((word for word in event.pha_words if word.detector.layer == 3),
-                           key=calculate_mev_with_bound_lookup)
-        words_with_highest_energy.append(e_prime_word)
-    elif len(l3_sides) == 2:
-        detected_range = DetectedRange.R4
-
-        e_delta_word = max(
-            (word for word in event.pha_words if word.detector.layer == 3 and word.detector.side == l1_detector.side),
-            key=calculate_mev_with_bound_lookup)
-        e_prime_word = max(
-            (word for word in event.pha_words if word.detector.layer == 3 and word.detector.side != l1_detector.side),
-            key=calculate_mev_with_bound_lookup)
-        words_with_highest_energy.append(e_delta_word)
-        words_with_highest_energy.append(e_prime_word)
-    else:
-        return None
-
-    l2_on_other_side = max(
-        (word for word in event.pha_words if word.detector.layer == 2 and word.detector.side != l1_detector.side),
-        key=calculate_mev_with_bound_lookup, default=None)
-
-    if detected_range in [DetectedRange.R2, DetectedRange.R3] and l2_on_other_side is not None:
-        return None
-    elif l2_on_other_side is not None:
-        words_with_highest_energy.append(l2_on_other_side)
-
-    return EventAnalysis(range=detected_range,
-                         l1_detector=l1_detector,
-                         l2_detector=l2_detector,
-                         e_delta_word=e_delta_word,
-                         e_prime_word=e_prime_word,
-                         words_with_highest_energy=words_with_highest_energy)
+        return EventAnalysis(range=rule.range,
+                             l1_detector=highest_value_words_per_group[rule.included_detector_groups[0]].detector,
+                             l2_detector=highest_value_words_per_group[rule.included_detector_groups[1]].detector,
+                             e_delta_word=highest_value_words_per_group[rule.included_detector_groups[-2]],
+                             e_prime_word=highest_value_words_per_group[rule.included_detector_groups[-1]],
+                             words_with_highest_energy=list(highest_value_words_per_group.values()))
 
 
 def compute_charge(detected_range: DetectedRange, delta_e: float, e_prime: float,
@@ -115,9 +81,9 @@ def compute_charge(detected_range: DetectedRange, delta_e: float, e_prime: float
 
 
 def process_pha_event(event: RawPHAEvent, cosine_table: CosineCorrectionLookupTable, gain_table: GainLookupTable,
-                      range_fit_lookup: RangeFitLookup) -> \
+                      range_fit_lookup: RangeFitLookup, rule_lookup: HitEventTypeLookup) -> \
         EventOutput:
-    event_analysis = analyze_event(event, gain_table)
+    event_analysis = analyze_event(event, gain_table, rule_lookup)
     if event_analysis:
         correction = cosine_table.get_cosine_correction(event_analysis.range, event_analysis.l1_detector,
                                                         event_analysis.l2_detector)

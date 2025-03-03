@@ -1,7 +1,6 @@
 import csv
 from dataclasses import dataclass
-
-from imap_processing.hit.l3.pha.pha_event_reader import Detector
+from pathlib import Path
 
 
 @dataclass
@@ -15,19 +14,19 @@ class Rule:
 class HitEventTypeLookup:
     _rules: list[Rule]
 
-    def lookup_range(self, detectors: set[Detector]):
+    def lookup_range(self, detectors: set[str]):
         for rule in self._rules:
             has_required_groups = all(included_group in detectors for included_group in rule.included_detector_groups)
             does_not_have_excluding_groups = all(
                 excluded_group not in detectors for excluded_group in rule.excluded_detector_groups)
 
             if has_required_groups and does_not_have_excluding_groups:
-                return rule.range
+                return rule
 
         return None
 
     @classmethod
-    def from_csv(cls, file_path: str):
+    def from_csv(cls, file_path: Path):
         with open(file_path) as csv_file:
             csv_reader = csv.reader(csv_file, delimiter=',')
 

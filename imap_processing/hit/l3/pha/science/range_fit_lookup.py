@@ -1,4 +1,5 @@
-from  __future__ import annotations
+from __future__ import annotations
+
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -25,9 +26,13 @@ class RangeFitLookup:
                    np.loadtxt(range4_file, delimiter=',', usecols=range(6)))
 
     def evaluate_e_prime(self, range: DetectedRange, energy):
-        tables = {DetectedRange.R2: self.range_2_table,
-                  DetectedRange.R3: self.range_3_table,
-                  DetectedRange.R4: self.range_4_table}
+        tables = {
+            DetectedRange.R2A: self.range_2_table,
+            DetectedRange.R2B: self.range_2_table,
+            DetectedRange.R3A: self.range_3_table,
+            DetectedRange.R3B: self.range_3_table,
+            DetectedRange.R4A: self.range_4_table,
+            DetectedRange.R4B: self.range_4_table, }
         table = tables[range]
         charges = table[:, 0]
         a1, b1, a2, b2, gamma = table[:, 1:].T
