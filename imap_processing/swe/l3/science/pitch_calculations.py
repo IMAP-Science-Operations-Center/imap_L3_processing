@@ -21,19 +21,20 @@ def piece_wise_model(x: np.ndarray, b0: float, b1: float,
 
 
 def find_breakpoints(energies: np.ndarray, flux: np.ndarray, initial_spacecraft_potential_guess: float,
-                     initial_core_halo_break_point_guess: float) -> tuple[
+                     initial_core_halo_break_point_guess: float, config: SweConfiguration) -> tuple[
     np.ndarray, np.ndarray]:
     log_flux = np.log(flux)
     slope = -np.diff(log_flux) / np.diff(energies)
-    xsratio = slope[1:] / slope[:-1]
-    numb = np.max(np.nonzero(xsratio > 0.55), initial=0)
+    slope_ratios = slope[1:] / slope[:-1]
+    numb = np.max(np.nonzero(slope_ratios > config['slope_ratio_cutoff_for_potential_calc']), initial=0)
 
     energies = energies[:numb]
     log_flux = log_flux[:numb]
-
-    b5 = (log_flux[10] - log_flux[11]) / (energies[11] - energies[10])
-    b3 = (log_flux[5] - log_flux[6]) / (energies[6] - energies[5])
-    b1 = (log_flux[0] - log_flux[1]) / (energies[1] - energies[0])
+    b1 = slope[0]
+    core_index = np.searchsorted(energies, config["core_energy_for_slope_guess"]) - 1
+    halo_index = np.searchsorted(energies, config["halo_energy_for_slope_guess"]) - 1
+    b3 = slope[core_index]
+    b5 = slope[halo_index]
     b0 = np.exp(log_flux[0] + b1 * energies[0])
     initial_guesses = (b0, b1, initial_spacecraft_potential_guess, b3, initial_core_halo_break_point_guess, b5)
 
