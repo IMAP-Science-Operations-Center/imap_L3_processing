@@ -9,6 +9,7 @@ from tempfile import TemporaryDirectory
 import imap_data_access
 
 from imap_processing.glows.glows_processor import GlowsProcessor
+from imap_processing.hit.l3.hit_processor import HitProcessor
 from imap_processing.models import UpstreamDataDependency, InputMetadata
 from imap_processing.swapi.swapi_processor import SwapiProcessor
 from imap_processing.swe.swe_processor import SweProcessor
@@ -56,6 +57,9 @@ def imap_l3_processor():
         processor.process()
     elif args.instrument == 'swe' and args.data_level == 'l3':
         processor = SweProcessor(dependencies, input_dependency)
+        processor.process()
+    elif args.instrument == 'hit' and (args.data_level == 'l3b' or args.data_level == 'l3a'):
+        processor = HitProcessor(dependencies, input_dependency)
         processor.process()
     else:
         raise NotImplementedError(
