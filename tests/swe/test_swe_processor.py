@@ -8,7 +8,7 @@ from imap_processing.models import MagL1dData, InputMetadata, UpstreamDataDepend
 from imap_processing.swe.l3.models import SweL2Data, SweConfiguration, SwapiL3aProtonData
 from imap_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies
 from imap_processing.swe.swe_processor import SweProcessor
-from tests.test_helpers import NumpyArrayMatcher
+from tests.test_helpers import NumpyArrayMatcher, build_swe_configuration
 
 
 class TestSweProcessor(unittest.TestCase):
@@ -45,7 +45,7 @@ class TestSweProcessor(unittest.TestCase):
         mag_epochs = datetime.now() - timedelta(seconds=15) + np.arange(10) * timedelta(minutes=.5)
         swapi_epochs = datetime.now() - timedelta(seconds=15) + np.arange(10) * timedelta(minutes=.5)
         mock_find_breakpoints.side_effect = [
-            (13, 83),
+            (12, 96),
             (16, 86),
             (19, 89),
         ]
@@ -100,7 +100,7 @@ class TestSweProcessor(unittest.TestCase):
 
         geometric_fractions = [0.0697327, 0.138312, 0.175125, 0.181759,
                                0.204686, 0.151448, 0.0781351]
-        swe_config = SweConfiguration(
+        swe_config = build_swe_configuration(
             geometric_fractions=geometric_fractions,
             pitch_angle_bins=pitch_angle_bins,
             pitch_angle_delta=[45, 45, 45],
@@ -108,8 +108,11 @@ class TestSweProcessor(unittest.TestCase):
             energy_delta_plus=[2, 20, 200],
             energy_delta_minus=[8, 80, 800],
             max_swapi_offset_in_minutes=5,
-            max_mag_offset_in_minutes=1
+            max_mag_offset_in_minutes=1,
+            spacecraft_potential_initial_guess=15,
+            core_halo_breakpoint_initial_guess=90,
         )
+
         input_metadata = InputMetadata("swe", "l3", datetime(2025, 2, 21),
                                        datetime(2025, 2, 22), "v001")
         swel3_dependency = SweL3Dependencies(swe_l2_data, mag_l1d_data, swapi_l3a_proton_data, swe_config)
@@ -143,10 +146,14 @@ class TestSweProcessor(unittest.TestCase):
             call(NumpyArrayMatcher(swe_l2_data.flux[1]), NumpyArrayMatcher(geometric_fractions)),
             call(NumpyArrayMatcher(swe_l2_data.flux[2]), NumpyArrayMatcher(geometric_fractions))])
 
+        spacecraft_potential_initial_guess = swe_config['spacecraft_potential_initial_guess']
+        halo_core_initial_guess = swe_config['core_halo_breakpoint_initial_guess']
         mock_find_breakpoints.assert_has_calls([
-            call(swe_l2_data.energy, mock_average_flux.return_value, 10, 80),
-            call(swe_l2_data.energy, mock_average_flux.return_value, 10, 80),
-            call(swe_l2_data.energy, mock_average_flux.return_value, 11, 81),
+            call(swe_l2_data.energy, mock_average_flux.return_value, spacecraft_potential_initial_guess,
+                 halo_core_initial_guess, swe_config),
+            call(swe_l2_data.energy, mock_average_flux.return_value, spacecraft_potential_initial_guess,
+                 halo_core_initial_guess, swe_config),
+            call(swe_l2_data.energy, mock_average_flux.return_value, 14, 92, swe_config),
         ])
 
         self.assertEqual(UpstreamDataDependency("swe", "l3", datetime(2025, 2, 21),
@@ -168,10 +175,10 @@ class TestSweProcessor(unittest.TestCase):
             return call(*[NumpyArrayMatcher(x) for x in args])
 
         self.assertEqual(mock_correct_and_rebin.call_args_list, [
-            call_with_array_matchers(swe_l2_data.flux[0], swe_l2_data.energy - 13, swe_l2_data.inst_el,
+            call_with_array_matchers(swe_l2_data.flux[0], swe_l2_data.energy - 12, swe_l2_data.inst_el,
                                      swe_l2_data.inst_az_spin_sector[0],
                                      closest_mag_data[0], closest_swapi_data[0], swe_config),
-            call_with_array_matchers(swe_l2_data.phase_space_density[0], swe_l2_data.energy - 13, swe_l2_data.inst_el,
+            call_with_array_matchers(swe_l2_data.phase_space_density[0], swe_l2_data.energy - 12, swe_l2_data.inst_el,
                                      swe_l2_data.inst_az_spin_sector[0],
                                      closest_mag_data[0], closest_swapi_data[0], swe_config),
             call_with_array_matchers(swe_l2_data.flux[1], swe_l2_data.energy - 16, swe_l2_data.inst_el,

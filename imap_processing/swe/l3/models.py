@@ -91,3 +91,8 @@ class SweConfiguration(TypedDict):
     low_energy_proximity_threshold: float
     max_swapi_offset_in_minutes: float
     max_mag_offset_in_minutes: float
+    slope_ratio_cutoff_for_potential_calc: float
+    spacecraft_potential_initial_guess: float
+    core_halo_breakpoint_initial_guess: float
+    core_energy_for_slope_guess: float
+    halo_energy_for_slope_guess: float
