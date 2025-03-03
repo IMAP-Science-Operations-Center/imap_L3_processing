@@ -12,22 +12,32 @@ from imap_processing.models import DataProductVariable
 class TestHitPitchAngleDataProduct(TestCase):
     def test_to_data_product_variables(self):
         h_fluxes = sentinel.h_fluxes
+        h_flux_delta_plus = sentinel.h_flux_delta_plus
+        h_flux_delta_minus = sentinel.h_flux_delta_minus
         h_energies = sentinel.h_energies
         h_energy_deltas = sentinel.h_energy_deltas
 
         he4_fluxes = sentinel.he4_fluxes
+        he4_flux_delta_plus = sentinel.he4_flux_delta_plus
+        he4_flux_delta_minus = sentinel.he4_flux_delta_minus
         he4_energies = sentinel.he4_energies
         he4_energy_deltas = sentinel.he4_energy_deltas
 
         cno_fluxes = sentinel.cno_fluxes
+        cno_flux_delta_plus = sentinel.cno_flux_delta_plus
+        cno_flux_delta_minus = sentinel.cno_flux_delta_minus
         cno_energies = sentinel.cno_energies
         cno_energy_deltas = sentinel.cno_energy_deltas
 
         ne_mg_si_fluxes = sentinel.ne_mg_si_fluxes
+        ne_mg_si_flux_delta_plus = sentinel.ne_mg_si_flux_delta_plus
+        ne_mg_si_flux_delta_minus = sentinel.ne_mg_si_flux_delta_minus
         ne_mg_si_energies = sentinel.ne_mg_si_energies
         ne_mg_si_energy_deltas = sentinel.ne_mg_si_energy_deltas
 
         iron_fluxes = sentinel.iron_fluxes
+        iron_flux_delta_plus = sentinel.iron_flux_delta_plus
+        iron_flux_delta_minus = sentinel.iron_flux_delta_minus
         iron_energies = sentinel.iron_energies
         iron_energy_deltas = sentinel.iron_energy_deltas
 
@@ -48,23 +58,43 @@ class TestHitPitchAngleDataProduct(TestCase):
                                         gyrophases,
                                         gyrophase_deltas,
                                         h_fluxes,
+                                        h_flux_delta_plus,
+                                        h_flux_delta_minus,
                                         sentinel.h_pa_fluxes,
+                                        sentinel.h_pa_fluxes_delta_plus,
+                                        sentinel.h_pa_fluxes_delta_minus,
                                         h_energies,
                                         h_energy_deltas,
                                         he4_fluxes,
+                                        he4_flux_delta_plus,
+                                        he4_flux_delta_minus,
                                         sentinel.he4_pa_fluxes,
+                                        sentinel.he4_pa_fluxes_delta_plus,
+                                        sentinel.he4_pa_fluxes_delta_minus,
                                         he4_energies,
                                         he4_energy_deltas,
                                         cno_fluxes,
+                                        cno_flux_delta_plus,
+                                        cno_flux_delta_minus,
                                         sentinel.cno_pa_fluxes,
+                                        sentinel.cno_pa_fluxes_delta_plus,
+                                        sentinel.cno_pa_fluxes_delta_minus,
                                         cno_energies,
                                         cno_energy_deltas,
                                         ne_mg_si_fluxes,
+                                        ne_mg_si_flux_delta_plus,
+                                        ne_mg_si_flux_delta_minus,
                                         sentinel.ne_mg_si_pa_fluxes,
+                                        sentinel.ne_mg_si_pa_fluxes_delta_plus,
+                                        sentinel.ne_mg_si_pa_fluxes_delta_minus,
                                         ne_mg_si_energies,
                                         ne_mg_si_energy_deltas,
                                         iron_fluxes,
+                                        iron_flux_delta_plus,
+                                        iron_flux_delta_minus,
                                         sentinel.iron_pa_fluxes,
+                                        sentinel.iron_pa_fluxes_delta_plus,
+                                        sentinel.iron_pa_fluxes_delta_minus,
                                         iron_energies,
                                         iron_energy_deltas
                                         )
@@ -79,23 +109,43 @@ class TestHitPitchAngleDataProduct(TestCase):
             DataProductVariable("gyrophase", gyrophases, record_varying=False),
             DataProductVariable("gyrophase_delta", gyrophase_deltas, record_varying=False),
             DataProductVariable("h_flux", h_fluxes),
+            DataProductVariable("h_flux_delta_plus", h_flux_delta_plus),
+            DataProductVariable("h_flux_delta_minus", h_flux_delta_minus),
             DataProductVariable("h_flux_pa", sentinel.h_pa_fluxes),
+            DataProductVariable("h_flux_pa_delta_plus", sentinel.h_pa_fluxes_delta_plus),
+            DataProductVariable("h_flux_pa_delta_minus", sentinel.h_pa_fluxes_delta_minus),
             DataProductVariable("h_energy", h_energies, record_varying=False),
             DataProductVariable("h_energy_delta", h_energy_deltas, record_varying=False),
             DataProductVariable("he4_flux", he4_fluxes),
+            DataProductVariable("he4_flux_delta_plus", he4_flux_delta_plus),
+            DataProductVariable("he4_flux_delta_minus", he4_flux_delta_minus),
             DataProductVariable("he4_flux_pa", sentinel.he4_pa_fluxes),
+            DataProductVariable("he4_flux_pa_delta_plus", sentinel.he4_pa_fluxes_delta_plus),
+            DataProductVariable("he4_flux_pa_delta_minus", sentinel.he4_pa_fluxes_delta_minus),
             DataProductVariable("he4_energy", he4_energies, record_varying=False),
             DataProductVariable("he4_energy_delta", he4_energy_deltas, record_varying=False),
             DataProductVariable("cno_flux", cno_fluxes),
+            DataProductVariable("cno_flux_delta_plus", cno_flux_delta_plus),
+            DataProductVariable("cno_flux_delta_minus", cno_flux_delta_minus),
             DataProductVariable("cno_flux_pa", sentinel.cno_pa_fluxes),
+            DataProductVariable("cno_flux_pa_delta_plus", sentinel.cno_pa_fluxes_delta_plus),
+            DataProductVariable("cno_flux_pa_delta_minus", sentinel.cno_pa_fluxes_delta_minus),
             DataProductVariable("cno_energy", cno_energies, record_varying=False),
             DataProductVariable("cno_energy_delta", cno_energy_deltas, record_varying=False),
             DataProductVariable("nemgsi_flux", ne_mg_si_fluxes),
+            DataProductVariable("nemgsi_flux_delta_plus", ne_mg_si_flux_delta_plus),
+            DataProductVariable("nemgsi_flux_delta_minus", ne_mg_si_flux_delta_minus),
             DataProductVariable("nemgsi_flux_pa", sentinel.ne_mg_si_pa_fluxes),
+            DataProductVariable("nemgsi_flux_pa_delta_plus", sentinel.ne_mg_si_pa_fluxes_delta_plus),
+            DataProductVariable("nemgsi_flux_pa_delta_minus", sentinel.ne_mg_si_pa_fluxes_delta_minus),
             DataProductVariable("nemgsi_energy", ne_mg_si_energies, record_varying=False),
             DataProductVariable("nemgsi_energy_delta", ne_mg_si_energy_deltas, record_varying=False),
             DataProductVariable("fe_flux", iron_fluxes),
+            DataProductVariable("fe_flux_delta_plus", iron_flux_delta_plus),
+            DataProductVariable("fe_flux_delta_minus", iron_flux_delta_minus),
             DataProductVariable("fe_flux_pa", sentinel.iron_pa_fluxes),
+            DataProductVariable("fe_flux_pa_delta_plus", sentinel.iron_pa_fluxes_delta_plus),
+            DataProductVariable("fe_flux_pa_delta_minus", sentinel.iron_pa_fluxes_delta_minus),
             DataProductVariable("fe_energy", iron_energies, record_varying=False),
             DataProductVariable("fe_energy_delta", iron_energy_deltas, record_varying=False),
         ]
