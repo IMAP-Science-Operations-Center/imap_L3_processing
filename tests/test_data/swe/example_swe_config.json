@@ -136,5 +136,10 @@
   "high_energy_proximity_threshold": 0.18,
   "low_energy_proximity_threshold": 0.12,
   "max_swapi_offset_in_minutes": 10,
-  "max_mag_offset_in_minutes": 1
+  "max_mag_offset_in_minutes": 1,
+  "slope_ratio_cutoff_for_potential_calc": 0.55,
+  "spacecraft_potential_initial_guess": 10,
+  "core_halo_breakpoint_initial_guess": 80,
+  "halo_energy_for_slope_guess": 100,
+  "core_energy_for_slope_guess": 20
 }

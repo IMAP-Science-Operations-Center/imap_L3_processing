@@ -183,6 +183,62 @@ class TestImapL3DataProcessor(TestCase):
 
                 mock_processor.process.assert_called()
 
+    @patch('imap_l3_data_processor.HitProcessor')
+    @patch('imap_l3_data_processor.argparse')
+    def test_runs_hit_processor_when_instrument_argument_is_hit(self, mock_argparse, mock_processor_class):
+
+        cases = [("20170630", datetime(2017, 6, 30), 'l3b'),
+                 (None, datetime(2016, 6, 30), 'l3a')]
+
+        instrument_argument = "hit"
+        start_date_argument = "20160630"
+        version_argument = "v092"
+        descriptor_argument = "A descriptor"
+        dependencies_argument = (
+            "[{'instrument':'dependent_instrument', 'data_level':'l1000', 'descriptor':'science', 'version':'v112',"
+            "'start_date':'20250101'}]")
+
+        mock_argument_parser = mock_argparse.ArgumentParser.return_value
+        mock_argument_parser.parse_args.return_value.instrument = instrument_argument
+        mock_argument_parser.parse_args.return_value.dependency = dependencies_argument
+        mock_argument_parser.parse_args.return_value.start_date = start_date_argument
+        mock_argument_parser.parse_args.return_value.version = version_argument
+        mock_argument_parser.parse_args.return_value.descriptor = descriptor_argument
+
+        for input_end_date, expected_end_date, data_level in cases:
+            with self.subTest(data_level):
+                mock_argument_parser.parse_args.return_value.data_level = data_level
+                mock_argument_parser.parse_args.return_value.end_date = input_end_date
+
+                imap_l3_processor()
+
+                parser = mock_argparse.ArgumentParser()
+                parser.add_argument.assert_has_calls([
+                    call("--instrument"),
+                    call("--data-level"),
+                    call("--descriptor"),
+                    call("--start-date"),
+                    call("--end-date", required=False),
+                    call("--version"),
+                    call("--dependency"),
+                    call("--upload-to-sdc", action="store_true", required=False,
+                         help="Upload completed output files to the IMAP SDC.")
+                ])
+
+                expected_input_dependencies = [UpstreamDataDependency("dependent_instrument",
+                                                                      "l1000",
+                                                                      datetime(2025, 1, 1),
+                                                                      None,
+                                                                      "v112",
+                                                                      "science")]
+
+                expected_input_metadata = InputMetadata("hit", data_level, datetime(year=2016, month=6, day=30),
+                                                        expected_end_date, "v092", "A descriptor")
+
+                mock_processor_class.assert_called_with(expected_input_dependencies,
+                                                        expected_input_metadata)
+                mock_processor_class.return_value.process.assert_called()
+
     @patch('imap_l3_data_processor.argparse')
     def test_throws_exception_for_unimplemented_instrument(self, mock_argparse):
         instrument_argument = "new_instrument"

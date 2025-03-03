@@ -4,7 +4,7 @@ from unittest.mock import Mock, call
 import numpy as np
 from spacepy import pycdf
 
-from imap_processing.cdf.cdf_utils import write_cdf
+from imap_processing.cdf.cdf_utils import write_cdf, read_variable
 from imap_processing.cdf.imap_attribute_manager import ImapAttributeManager
 from imap_processing.models import DataProduct, DataProductVariable, InputMetadata
 from tests.temp_file_test_case import TempFileTestCase
@@ -93,6 +93,16 @@ class TestCdfUtils(TempFileTestCase):
             self.assertEqual('epoch', actual_cdf[regular_var.name].attrs['DEPEND_0'])
             self.assertFalse('DEPEND_0' in actual_cdf[time_var.name].attrs)
             self.assertFalse('DEPEND_0' in actual_cdf[non_rec_varying_var.name].attrs)
+
+    def test_read_variable_replaces_fill_values_with_nan(self):
+        path = str(self.temp_directory / "cdf.cdf")
+        with pycdf.CDF(path, create=True) as actual_cdf:
+            actual_cdf['var'] = np.array([1, 2, -1e31, 4, 5])
+            actual_cdf['var'].attrs['FILLVAL'] = -1e31
+
+            data = read_variable(actual_cdf['var'])
+
+        np.testing.assert_equal(data, np.array([1, 2, np.nan, 4, 5]))
 
 
 class TestDataProduct(DataProduct):
