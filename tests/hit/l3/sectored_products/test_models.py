@@ -5,13 +5,7 @@ from unittest.mock import sentinel
 import numpy as np
 from spacepy import pycdf
 
-from imap_processing.hit.l3.sectored_products.models import HitPitchAngleDataProduct, EPOCH_CDF_VAR_NAME, \
-    EPOCH_DELTA_CDF_VAR_NAME, PITCH_ANGLE_CDF_VAR_NAME, GYROPHASE_CDF_VAR_NAME, H_FLUX_CDF_VAR_NAME, \
-    H_ENERGY_CDF_VAR_NAME, H_ENERGY_DELTA_CDF_VAR_NAME, HE4_FLUX_CDF_VAR_NAME, HE4_ENERGY_CDF_VAR_NAME, \
-    HE4_ENERGY_DELTA_CDF_VAR_NAME, CNO_FLUX_CDF_VAR_NAME, CNO_ENERGY_CDF_VAR_NAME, CNO_ENERGY_DELTA_CDF_VAR_NAME, \
-    NE_MG_SI_FLUX_CDF_VAR_NAME, NE_MG_SI_ENERGY_CDF_VAR_NAME, NE_MG_SI_ENERGY_DELTA_CDF_VAR_NAME, \
-    IRON_FLUX_CDF_VAR_NAME, IRON_ENERGY_CDF_VAR_NAME, IRON_ENERGY_DELTA_CDF_VAR_NAME, PITCH_ANGLE_DELTA_CDF_VAR_NAME, \
-    GYROPHASE_DELTA_CDF_VAR_NAME
+from imap_processing.hit.l3.sectored_products.models import HitPitchAngleDataProduct
 from imap_processing.models import DataProductVariable
 
 
@@ -85,23 +79,23 @@ class TestHitPitchAngleDataProduct(TestCase):
             DataProductVariable("gyrophase", gyrophases, record_varying=False),
             DataProductVariable("gyrophase_delta", gyrophase_deltas, record_varying=False),
             DataProductVariable("h_flux", h_fluxes),
-            DataProductVariable("h_pa_flux", sentinel.h_pa_fluxes),
+            DataProductVariable("h_flux_pa", sentinel.h_pa_fluxes),
             DataProductVariable("h_energy", h_energies, record_varying=False),
             DataProductVariable("h_energy_delta", h_energy_deltas, record_varying=False),
             DataProductVariable("he4_flux", he4_fluxes),
-            DataProductVariable("he4_pa_flux", sentinel.he4_pa_fluxes),
+            DataProductVariable("he4_flux_pa", sentinel.he4_pa_fluxes),
             DataProductVariable("he4_energy", he4_energies, record_varying=False),
             DataProductVariable("he4_energy_delta", he4_energy_deltas, record_varying=False),
             DataProductVariable("cno_flux", cno_fluxes),
-            DataProductVariable("cno_pa_flux", sentinel.cno_pa_fluxes),
+            DataProductVariable("cno_flux_pa", sentinel.cno_pa_fluxes),
             DataProductVariable("cno_energy", cno_energies, record_varying=False),
             DataProductVariable("cno_energy_delta", cno_energy_deltas, record_varying=False),
             DataProductVariable("nemgsi_flux", ne_mg_si_fluxes),
-            DataProductVariable("nemgsi_pa_flux", sentinel.ne_mg_si_pa_fluxes),
+            DataProductVariable("nemgsi_flux_pa", sentinel.ne_mg_si_pa_fluxes),
             DataProductVariable("nemgsi_energy", ne_mg_si_energies, record_varying=False),
             DataProductVariable("nemgsi_energy_delta", ne_mg_si_energy_deltas, record_varying=False),
             DataProductVariable("fe_flux", iron_fluxes),
-            DataProductVariable("fe_pa_flux", sentinel.iron_pa_fluxes),
+            DataProductVariable("fe_flux_pa", sentinel.iron_pa_fluxes),
             DataProductVariable("fe_energy", iron_energies, record_varying=False),
             DataProductVariable("fe_energy_delta", iron_energy_deltas, record_varying=False),
         ]
