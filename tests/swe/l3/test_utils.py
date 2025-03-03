@@ -1,7 +1,11 @@
+import shutil
+import tempfile
 import unittest
 from datetime import datetime, timedelta
+from pathlib import Path
 
 import numpy as np
+from spacepy.pycdf import CDF
 
 from imap_processing.swe.l3.models import SweL2Data, SwapiL3aProtonData
 from imap_processing.swe.l3.utils import read_swe_config, read_l2_swe_data, read_l3a_swapi_proton_data
@@ -34,7 +38,8 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(1.4, result["energy_bin_high_multiplier"])
 
     def test_read_l2_swe_data(self):
-        result: SweL2Data = read_l2_swe_data(get_test_data_path('swe/imap_swe_l2_sci_20250101_v002.cdf'))
+        result: SweL2Data = read_l2_swe_data(
+            get_test_data_path('swe/imap_swe_l2_sci-with-fill-values_20250101_v002.cdf'))
 
         self.assertEqual(result.epoch[0], datetime(2025, 1, 1))
         self.assertEqual(len(result.epoch), 6)
@@ -43,6 +48,8 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(len(result.epoch_delta), 6)
 
         self.assertEqual(result.flux[3][13][12][6], 324526.5306847633)
+        self.assertTrue(np.isnan(result.flux[1][2][3][4]))
+        self.assertEqual(0, np.count_nonzero(result.flux == -1e31))
         self.assertEqual(result.flux.shape, (6, 24, 30, 7))
 
         self.assertEqual(result.inst_el[0], -63)
@@ -51,14 +58,17 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(result.energy[0], 2.66)
         self.assertEqual(len(result.energy), 24)
 
-        self.assertEqual(result.inst_az_spin_sector[0][0][0], 153.97713661193848)
         self.assertEqual(result.inst_az_spin_sector.shape, (6, 24, 30))
+        self.assertEqual(result.inst_az_spin_sector[0][0][0], 153.97713661193848)
+        self.assertTrue(np.isnan(result.inst_az_spin_sector[4][5][6]))
 
-        self.assertEqual(result.phase_space_density[3][11][8][4], 1.8811969552023866e-26)
         self.assertEqual(result.phase_space_density.shape, (6, 24, 30, 7))
+        self.assertEqual(result.phase_space_density[3][11][8][4], 1.8811969552023866e-26)
+        self.assertTrue(np.isnan(result.phase_space_density[5][4][3][2]))
 
         self.assertEqual(result.acquisition_time.shape, (6, 24, 30))
         self.assertEqual(result.acquisition_time[0][0][0], np.datetime64('2024-12-31T23:59:30.099713984'))
+        self.assertTrue(np.isnat(result.acquisition_time[1][2][3]))
 
     def test_read_l3a_swapi_proton_data(self):
         result = read_l3a_swapi_proton_data(get_test_data_path('swe/imap_swapi_l3a_proton-sw_20250101_v001.cdf'))
@@ -73,6 +83,23 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(498.4245091006667, result.proton_sw_speed[0])
         self.assertEqual(82.53712019721974, result.proton_sw_clock_angle[0])
         self.assertEqual(5.553957246800335e-06, result.proton_sw_deflection_angle[0])
+
+    def test_read_l3a_swapi_proton_data_with_fill_values(self):
+        with tempfile.TemporaryDirectory() as tempdir:
+            cdf_with_fill_path = Path(tempdir, 'swe_file_with_fill.cdf')
+            shutil.copyfile(get_test_data_path('swe/imap_swapi_l3a_proton-sw_20250101_v001.cdf'), cdf_with_fill_path)
+            with CDF(str(cdf_with_fill_path), readonly=False) as cdf:
+                proton_sw_speed_fill_value = cdf['proton_sw_speed'].attrs['FILLVAL']
+                proton_sw_clock_angle_fill_value = cdf['proton_sw_clock_angle'].attrs['FILLVAL']
+                proton_sw_deflection_angle_fill_value = cdf['proton_sw_deflection_angle'].attrs['FILLVAL']
+                cdf['proton_sw_speed'][0] = proton_sw_speed_fill_value
+                cdf['proton_sw_clock_angle'][0] = proton_sw_clock_angle_fill_value
+                cdf['proton_sw_deflection_angle'][0] = proton_sw_deflection_angle_fill_value
+
+            swapi_l3a_data = read_l3a_swapi_proton_data(cdf_with_fill_path)
+            self.assertTrue(np.isnan(swapi_l3a_data.proton_sw_speed[0]))
+            self.assertTrue(np.isnan(swapi_l3a_data.proton_sw_clock_angle[0]))
+            self.assertTrue(np.isnan(swapi_l3a_data.proton_sw_deflection_angle[0]))
 
 
 if __name__ == '__main__':
