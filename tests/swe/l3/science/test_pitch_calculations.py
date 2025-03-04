@@ -178,14 +178,15 @@ class TestPitchCalculations(unittest.TestCase):
 
     @patch('imap_processing.swe.l3.science.pitch_calculations.try_curve_fit_until_valid')
     def test_find_breakpoints_determines_b_deltas_correctly(self, mock_try_curve_fit_until_valid):
-        mock_try_curve_fit_until_valid.return_value = (10, 80)
-        config = build_swe_configuration(refit_core_halo_breakpoint_index=4)
+        config = build_swe_configuration(refit_core_halo_breakpoint_index=4, slope_ratio_cutoff_for_potential_calc=0)
 
         cases = [
             ("slope local max is on left side of data", [0.1, 0.2, 0.15, 0.1, 0.08, 0.06, 0.04, 0.03], -1.5, -10),
             ("slope local max in on right side of data", [0.1, 0.18, 0.15, 0.1, 0.09, 0.08, 0.12, 0.1], -1, 10),
-            # ("leftmost slope ratio local min > rightmost slope local max", [0.5, 0.6, 0.7, 0.8, 0.9, 0.75, 0.4, 0.35],
-            # -1.5, -10),  # todo implement this case?
+            ("leftmost slope ratio local min > rightmost slope local max", [0.5, 0.6, 0.7, 0.8, 0.9, 0.75, 0.4, 0.35],
+             -1.5, -10),
+            ("no local min ratio or local max", [.8, .7, .6, .5, .4, .3, .2, .1], -1.5, -10),
+            ("no local min ratio or local max", [.1, .2, .3, .4, .5, .6, .7, .8], -1.5, -10)
         ]
         for name, slopes, expected_b2_delta, expected_b4_delta in cases:
             with self.subTest(name):
@@ -197,11 +198,13 @@ class TestPitchCalculations(unittest.TestCase):
                 log_flux = np.cumsum(np.append(np.log(initial), diff_log_flux))
                 avg_flux = np.exp(log_flux)
 
-                spacecraft_potential, core_halo_breakpoint = find_breakpoints(
+                result = find_breakpoints(
                     xs, avg_flux, 10, 80, 15,
                     90, config)
                 mock_try_curve_fit_until_valid.assert_called_with(ANY, ANY, ANY, 15, 90, expected_b2_delta,
                                                                   expected_b4_delta)
+
+                self.assertEqual(mock_try_curve_fit_until_valid.return_value, result)
 
     @patch('imap_processing.swe.l3.science.pitch_calculations.curve_fit')
     def test_find_breakpoints_uses_config_for_slope_guesses(self, mock_curve_fit):
