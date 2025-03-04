@@ -431,13 +431,14 @@ class TestHitProcessor(TestCase):
 
     @patch("imap_processing.hit.l3.hit_processor.imap_data_access.upload")
     @patch("imap_processing.hit.l3.hit_processor.save_data")
-    @patch("imap_processing.hit.l3.hit_processor.process_pha_event")
+    @patch("imap_processing.hit.l3.hit_processor.process_pha_event", autospec=True)
     @patch("imap_processing.hit.l3.hit_processor.HitL3PhaDependencies.fetch_dependencies")
     @patch("imap_processing.hit.l3.hit_processor.PHAEventReader.read_all_pha_events")
     def test_process_direct_event_product(self, mock_read_all_events, mock_fetch_dependencies, mock_process_pha_event,
                                           mock_save_data, mock_imap_data_access_upload):
         pha_word_1 = PHAWord(adc_overflow=False, adc_value=11,
-                             detector=Detector(layer=1, side="A", segment="1A", address=2), is_last_pha=True,
+                             detector=Detector(layer=1, side="A", segment="1A", address=2, group="L1A4"),
+                             is_last_pha=True,
                              is_low_gain=True)
 
         raw_pha_event_1 = RawPHAEvent(particle_id=1, priority_buffer_num=2, stim_tag=False, haz_tag=False, time_tag=20,
@@ -451,11 +452,13 @@ class TestHitProcessor(TestCase):
                                       spare=True, pha_words=[deepcopy(pha_word_1)])
 
         pha_word_2 = PHAWord(adc_overflow=True, adc_value=12,
-                             detector=Detector(layer=2, side="B", segment="1B", address=5), is_last_pha=False,
+                             detector=Detector(layer=2, side="B", segment="1B", address=5, group="L2B"),
+                             is_last_pha=False,
                              is_low_gain=False)
 
         pha_word_3 = PHAWord(adc_overflow=False, adc_value=11,
-                             detector=Detector(layer=1, side="A", segment="2A", address=8), is_last_pha=True,
+                             detector=Detector(layer=1, side="A", segment="2A", address=8, group="L1A1"),
+                             is_last_pha=True,
                              is_low_gain=True)
 
         raw_pha_event_3 = RawPHAEvent(particle_id=2, priority_buffer_num=3, stim_tag=True, haz_tag=True, time_tag=30,
@@ -468,11 +471,11 @@ class TestHitProcessor(TestCase):
                                       extended_stim_header=ExtendedStimHeader(dac_value=123, tbd=666))
 
         event_output_1 = EventOutput(original_event=raw_pha_event_1, charge=9.0, energies=[1], total_energy=99,
-                                     detected_range=DetectedRange.R2, e_delta=103.7, e_prime=63.27)
+                                     detected_range=DetectedRange.R2A, e_delta=103.7, e_prime=63.27)
         event_output_2 = EventOutput(original_event=raw_pha_event_2, charge=10.0, energies=[4], total_energy=100,
                                      detected_range=None, e_delta=None, e_prime=None)
         event_output_3 = EventOutput(original_event=raw_pha_event_3, charge=12.0, energies=[9, 8], total_energy=200,
-                                     detected_range=DetectedRange.R3, e_delta=106.7, e_prime=69.27)
+                                     detected_range=DetectedRange.R3A, e_delta=106.7, e_prime=69.27)
 
         input_metadata = InputMetadata(
             instrument="hit",
@@ -500,11 +503,14 @@ class TestHitProcessor(TestCase):
 
         mock_process_pha_event.assert_has_calls(
             [call(raw_pha_event_1, mock_hit_l3_pha_dependencies.cosine_correction_lookup,
-                  mock_hit_l3_pha_dependencies.gain_lookup, mock_hit_l3_pha_dependencies.range_fit_lookup),
+                  mock_hit_l3_pha_dependencies.gain_lookup, mock_hit_l3_pha_dependencies.range_fit_lookup,
+                  mock_hit_l3_pha_dependencies.event_type_lookup),
              call(raw_pha_event_2, mock_hit_l3_pha_dependencies.cosine_correction_lookup,
-                  mock_hit_l3_pha_dependencies.gain_lookup, mock_hit_l3_pha_dependencies.range_fit_lookup),
+                  mock_hit_l3_pha_dependencies.gain_lookup, mock_hit_l3_pha_dependencies.range_fit_lookup,
+                  mock_hit_l3_pha_dependencies.event_type_lookup),
              call(raw_pha_event_3, mock_hit_l3_pha_dependencies.cosine_correction_lookup,
-                  mock_hit_l3_pha_dependencies.gain_lookup, mock_hit_l3_pha_dependencies.range_fit_lookup)],
+                  mock_hit_l3_pha_dependencies.gain_lookup, mock_hit_l3_pha_dependencies.range_fit_lookup,
+                  mock_hit_l3_pha_dependencies.event_type_lookup)],
             any_order=False)
 
         mock_save_data.assert_called_once()
@@ -525,7 +531,7 @@ class TestHitProcessor(TestCase):
         np.testing.assert_array_equal(direct_event_product.e_delta, np.array([103.7, np.nan, 106.7]))
         np.testing.assert_array_equal(direct_event_product.e_prime, np.array([63.27, np.nan, 69.27]))
 
-        np.testing.assert_array_equal(direct_event_product.detected_range, np.array([2, UNSIGNED_INT1_FILL_VALUE, 3]))
+        np.testing.assert_array_equal(direct_event_product.detected_range, np.array(["2A", "", "3A"]))
 
         np.testing.assert_array_equal(direct_event_product.priority_buffer_number, np.array([2, 2, 3]))
         np.testing.assert_array_equal(direct_event_product.latency, np.array([20, 20, 30]))

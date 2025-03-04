@@ -96,3 +96,4 @@ class SweConfiguration(TypedDict):
     core_halo_breakpoint_initial_guess: float
     core_energy_for_slope_guess: float
     halo_energy_for_slope_guess: float
+    refit_core_halo_breakpoint_index: int
