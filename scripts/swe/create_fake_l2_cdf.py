@@ -1,39 +1,90 @@
 import traceback
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import numpy as np
 import pyhdf
 import pyhdf.SD
+from pyhdf.VS import *
+from pyhdf.HDF import *
 from spacepy.pycdf import CDF
 
 
-def create_fake_l2_cdf(input_hdf: str, cdf_filename: str):
-    hdf = pyhdf.SD.SD(input_hdf)
-    counts = hdf.select("DNSWE_COUNT")[:]
-    counts = np.moveaxis(counts, 3, 2).reshape((-1, 20, 30, 7))
-    print(counts.shape)
-    with CDF(cdf_filename, readonly=False) as cdf:
-        energies = cdf["energy"][:20]
-        energies = energies[:, np.newaxis, np.newaxis]
-        psd = counts / np.square(energies)
-        cdf_data = cdf["phase_space_density_spin_sector"][:]
-        cdf["phase_space_density_spin_sector"][:] = np.zeros_like(cdf_data)
-        cdf["phase_space_density_spin_sector"][:, :20, :, :] = psd[:6]
+def create_fake_l2_cdf(l1_hdf_path: str, l2_hdf_path: str, l2_swe_cdf_file_path: str, mag_file_path: str,
+                       swapi_file_path: str):
+    l1_hdf = pyhdf.SD.SD(l1_hdf_path)
 
-        flux = psd * energies
-        cdf_data = cdf["flux_spin_sector"][:]
-        cdf["flux_spin_sector"][:] = np.zeros_like(cdf_data)
-        cdf["flux_spin_sector"][:, :20, :, :] = flux[:6]
-        print(flux.shape)
-        print(np.mean(flux[0], axis=(1, 2)))
+    l2_hdf_path = HDF(l2_hdf_path)
+    vs = l2_hdf_path.vstart()
+    vd = vs.attach("swepam_e")
+
+    b_rtn_index = vd.field("b_rtn")._index
+    b_rtn_data = np.array([x[b_rtn_index] for x in vd[:]])
+
+    sw_velocity_index = vd.field("v_rtn_i")._index
+    sw_velocity_data = np.array([x[sw_velocity_index] for x in vd[:]])
+    sw_speed = np.linalg.norm(sw_velocity_data, axis=1)
+    r, t, n = sw_velocity_data.T
+    deflection = np.arcsin()
+
+    print(vd.field("b_rtn").attrinfo())
+
+    counts = l1_hdf.select("DNSWE_COUNT")[:]
+    counts = np.moveaxis(counts, 3, 2).reshape((-1, 20, 30, 7))
+
+    starting_date_time = datetime(year=2025, month=1, day=1)
+    epochs = starting_date_time + (timedelta(minutes=1) * np.arange(len(counts)))
+
+    with CDF(l2_swe_cdf_file_path, readonly=False) as cdf:
+        cdf["epoch"] = epochs
+
+        evenly_spaced_energies = np.geomspace(1, 1350, 20, endpoint=True)
+        replace_variable(cdf, "energy", evenly_spaced_energies)
+
+        energies_reshaped = evenly_spaced_energies[:, np.newaxis, np.newaxis]
+        psd = counts / np.square(energies_reshaped)
+        replace_variable(cdf, "phase_space_density_spin_sector", psd)
+
+        flux = psd * energies_reshaped
+        replace_variable(cdf, "flux_spin_sector", flux)
+
+        shape_without_aperture_axis = psd.shape[:-1]
+        placeholder_insta_az_spin_sector = np.random.random(shape_without_aperture_axis) * 360
+        replace_variable(cdf, "inst_az_spin_sector", placeholder_insta_az_spin_sector)
+
+        minutes = len(counts)
+        measurement_count = placeholder_insta_az_spin_sector.size
+        start_time = 473385573.099714
+        measurement_times = start_time + np.linspace(0, minutes * 60, measurement_count)
+        placeholder_acquisition_time = measurement_times.reshape(shape_without_aperture_axis)
+        replace_variable(cdf, "acquisition_time", placeholder_acquisition_time)
+    with CDF(mag_file_path, readonly=False, create=True) as cdf:
+        cdf["epoch"] = epochs
+        cdf["vectors"] = b_rtn_data
+        cdf["vectors"].attrs["FILLVAL"] = -1e31
+
+
+def replace_variable(cdf: CDF, variable_name: str, new_values: np.ndarray):
+    del cdf[variable_name]
+    cdf[variable_name] = new_values
+    cdf[variable_name].attrs["FILLVAL"] = -1e31
 
 
 if __name__ == "__main__":
     path = Path(__file__)
-    hdf_path = path.parent.parent.parent / "instrument_team_data/swe/ACE_LV1_1999-159.swepam.hdf"
-    cdf_file_path = path.parent.parent.parent / "tests" / "test_data" / "swe" / "imap_swe_l2_sci-with-ace-data_20240510_v002.cdf"
+    l1_hdf_path = path.parent.parent.parent / "instrument_team_data/swe/ACE_LV1_1999-159.swepam.hdf"
+    l2_hdf_path = path.parent.parent.parent / "instrument_team_data/swe/swepam-nswe-1999-159.v1-02.hdf"
 
+    l2_swe_cdf_file_path = path.parent.parent.parent / "tests" / "test_data" / "swe" / "imap_swe_l2_sci-with-ace-data_19990609_v002.cdf"
+    mag_file_path = path.parent.parent.parent / "tests" / "test_data" / "swe" / "imap_mag_l1d_mago-normal_19990609_v001.cdf"
+    swapi_file_path = path.parent.parent.parent / "tests" / "test_data" / "swe" / "imap_swapi_l3a_proton-sw_19990609_v001.cdf"
+
+    mag_file_path.unlink(missing_ok=True)
     try:
-        create_fake_l2_cdf(str(hdf_path), str(cdf_file_path))
+        create_fake_l2_cdf(str(l1_hdf_path),
+                           str(l2_hdf_path),
+                           str(l2_swe_cdf_file_path),
+                           str(mag_file_path),
+                           str(swapi_file_path))
     except Exception as e:
         traceback.print_exc()
