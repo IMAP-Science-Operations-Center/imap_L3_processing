@@ -198,3 +198,6 @@ class TestSweProcessor(unittest.TestCase):
             call(rebinned_by_pitch[3], swe_config),
             call(rebinned_by_pitch[5], swe_config)
         ])
+
+    def test_calculate_moment_products(self):
+        pass

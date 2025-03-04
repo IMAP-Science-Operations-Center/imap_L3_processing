@@ -1,53 +1,63 @@
-import math
 import unittest
 
 import numpy as np
 
-from imap_processing.constants import ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR
-from imap_processing.swe.l3.science.moment_calculations import compute_velocity_vectors, convert_energy_to_speed
+from imap_processing.swe.l3.science.moment_calculations import compute_maxwellian_weight_factors, \
+    filter_and_flatten_regress_parameters, regress
+from tests.test_helpers import get_test_data_path
 
 
 class TestMomentsCalculation(unittest.TestCase):
-    def test_convert_energy_to_velocity(self):
-        self.assertAlmostEqual(ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR * np.sqrt(2.5),
-                               convert_energy_to_speed(2.5))
+    def test_compute_maxwellian_weight_factors_reproduces_heritage_results(self):
+        corrected_counts = np.array([[[536.0, 10000.0, 1.2]]])
+        weight_factors = compute_maxwellian_weight_factors(corrected_counts)
 
-    def test_compute_velocity_vectors(self):
-        energy_bins = 2
-        spin_angle_bins = 2
-        declination_angle_bins = 3
+        np.testing.assert_array_almost_equal(weight_factors, [[[0.044041, 0.017845, 0.816500]]])
 
-        corrected_energy = np.array([
-            [[1, 2, 3],
-             [4, 5, 6]
-             ],
-            [[7, 8, 9],
-             [10, 11, 12]
-             ]])
+    def test_regress_reproduces_heritage_results(self):
+        velocity_vectors = np.loadtxt(get_test_data_path("swe/fake_velocity_vectors.csv"), delimiter=",")
+        weights = np.loadtxt(get_test_data_path("swe/fake_weights.csv"), delimiter=",")
+        yreg = np.loadtxt(get_test_data_path("swe/fake_yreg.csv"), delimiter=",")
 
-        corrected_energy = np.random.rand(energy_bins, spin_angle_bins, declination_angle_bins)
-        spin_angles = np.arange(0, 360, 360 / spin_angle_bins)
-        declination_angles = np.arange(0, 180, 180 / declination_angle_bins)
+        regression_values = regress(velocity_vectors, weights, yreg)
 
-        velocities = compute_velocity_vectors(corrected_energy, spin_angles, declination_angles)
+        np.testing.assert_array_almost_equal(regression_values,
+                                             [5.741342, 5.938431, 5.829471, 0.029683, -0.063667, 0.000497, -215.541543,
+                                              37.755161, -748.104342,
+                                              -0.278396])
 
-        self.assertEqual((energy_bins * spin_angle_bins * declination_angle_bins, 3), velocities.shape)
+    def test_filter_and_flatten_regress_parameters(self):
+        corrected_energy_bins = np.array([-1, 0, 3, 4, 5])
+        phase_space_density = np.array([
+            [[1, 2], [2, 3]],
+            [[5, 6], [6, 7]],
+            [[3, 1e-36], [0, 0]],
+            [[10, 11], [0, 12]],
+            [[21, 22], [23, 24]],
+        ])
 
-        vx1 = -1 * convert_energy_to_speed(corrected_energy[0][0][0]) * (
-            np.sin(spin_angles[0] * math.pi / 180)) * np.cos(
-            declination_angles[0] * math.pi / 180)
-        vy1 = -1 * convert_energy_to_speed(corrected_energy[0][0][0]) * (
-            np.sin(spin_angles[0] * math.pi / 180)) * np.sin(
-            declination_angles[0] * math.pi / 180)
-        vz1 = -1 * convert_energy_to_speed(corrected_energy[0][0][0]) * np.cos(spin_angles[0] * math.pi / 180)
+        weights = np.array([
+            [[1, 2], [2, 3]],
+            [[5, 6], [6, 7]],
+            [[3, 1e-36], [0, 0]],
+            [[10, 11], [0, 12]],
+            [[21, 22], [23, 24]],
+        ])
 
-        vx2 = -1 * convert_energy_to_speed(corrected_energy[0][0][1]) * (
-            np.sin(spin_angles[0] * math.pi / 180)) * np.cos(
-            declination_angles[1] * math.pi / 180)
-        vy2 = -1 * convert_energy_to_speed(corrected_energy[0][0][1]) * (
-            np.sin(spin_angles[0] * math.pi / 180)) * np.sin(
-            declination_angles[1] * math.pi / 180)
-        vz2 = -1 * convert_energy_to_speed(corrected_energy[0][0][1]) * np.cos(spin_angles[0] * math.pi / 180)
+        velocity_vectors = np.array([
+            [[[1, 0, 0], [1, 0, 0]], [[2, 0, 0], [2, 0, 0]]],
+            [[[5, 0, 0], [5, 0, 0]], [[6, 0, 0], [6, 0, 0]]],
+            [[[3, 0, 0], [4, 0, 0]], [[0, 0, 0], [0, 0, 0]]],
+            [[[10, 0, 0], [10, 0, 0]], [[0, 0, 0], [0, 0, 0]]],
+            [[[20, 0, 0], [8, 0, 0]], [[12, 0, 0], [23, 0, 0]]],
+        ])
 
-        np.testing.assert_array_almost_equal([vx1, vy1, vz1], velocities[0])
-        np.testing.assert_array_almost_equal([vx2, vy2, vz2], velocities[1])
+        core_breakpoint = 0
+        core_halo_breakpoint = 4.5
+        vectors, actual_weights, yreg = filter_and_flatten_regress_parameters(corrected_energy_bins, velocity_vectors,
+                                                                              phase_space_density, weights,
+                                                                              core_breakpoint, core_halo_breakpoint)
+
+        np.testing.assert_array_equal(vectors, [[3, 0, 0], [4, 0, 0], [10, 0, 0], [10, 0, 0], [0, 0, 0]])
+        np.testing.assert_array_equal(actual_weights, [3, 1e-36, 10, 11, 12])
+        np.testing.assert_array_equal(yreg, [np.log(3), -80.6, np.log(10), np.log(11), np.log(12)])

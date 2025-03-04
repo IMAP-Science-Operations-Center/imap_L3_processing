@@ -73,7 +73,7 @@ MAX_VARIANCE = 349525.25
 ZMK = ELECTRON_MASS_KG / (2 * BOLTZMANN_CONSTANT_JOULES_PER_KELVIN)
 
 
-def regress(self, velocity_vectors: np.ndarray[float], weight: np.ndarray[float], yreg: np.ndarray[float]) -> \
+def regress(velocity_vectors: np.ndarray[float], weight: np.ndarray[float], yreg: np.ndarray[float]) -> \
         np.ndarray[float]:
     fit_function = np.zeros((len(velocity_vectors), 9))
 
@@ -92,19 +92,17 @@ def regress(self, velocity_vectors: np.ndarray[float], weight: np.ndarray[float]
     fit_function[:, 8] = -1 * ZMK * 2 * velocity_zs
 
     y_fit = np.zeros(len(velocity_vectors))
-
     wt = np.zeros(len(velocity_vectors))
-
     array = np.zeros(shape=(9, 9))
     invarray = np.zeros(shape=(9, 9))
+    ymean = 0
 
     sgmx = np.zeros(9)
     r = np.zeros(9)
-    a = np.zeros(9)
+    a = np.zeros(10)
     sa = np.zeros(9)
 
     xmean = np.zeros(9)
-    ymean = 0
     chisq = 0
 
     array = np.zeros((9, 9))
@@ -131,8 +129,8 @@ def regress(self, velocity_vectors: np.ndarray[float], weight: np.ndarray[float]
         for k in range(j, 9):
             array[j][k] = np.sum(wt * xx * (fit_function[:, k] - xmean[k]))
 
-    sigma = math.sqrt(sigma)
-    sgmx = math.sqrt(sgmx)
+    # sigma = math.sqrt(sigma)
+    # sgmx = math.sqrt(sgmx)
 
     array = np.transpose(array)
 
@@ -141,14 +139,15 @@ def regress(self, velocity_vectors: np.ndarray[float], weight: np.ndarray[float]
 
     ao = ymean
 
+    yfit = np.zeros(len(fit_function))
     for j in range(9):
         a[j] = np.sum(r * invarray[j, :])
-        ao -= a * xmean
-        yfit = np.sum(a[j] * fit_function[:, j])
+        ao -= a[j] * xmean[j]
+        yfit += a[j] * fit_function[:, j]
 
     a[9] = ao
     for i in range(len(velocity_vectors)):
-        yfit[i] += ao;
+        yfit[i] += ao
         chisq += wt[i] * (yfit[i] - yreg[i]) * (yfit[i] - yreg[i])
 
     freen = len(velocity_vectors) - 9 - 1
@@ -185,7 +184,7 @@ class Moments:
 
 
 # TODO figure out what the moments are and return a dataclass with them
-def calculate_fit_temperature_density_velocity(parameters: np.array[float]):
+def calculate_fit_temperature_density_velocity(parameters: np.ndarray[float]):
     moments = Moments(alpha=0,
                       beta=0,
                       t_parallel=0,
@@ -254,7 +253,7 @@ def calculate_fit_temperature_density_velocity(parameters: np.array[float]):
 #  total variance includes both sigma2 and statistical variance (=counts)
 LIMIT = np.array([32, 64, 128, 256, 1024, 2048, 3072, 5120, 9216, 17408, 33792])
 SIGMA2 = np.array([0, 0.25, 1.25, 5.25, 21.25, 85.25, 341.25, 1365.25, 5461.25, 21845.25, 87381.25])
-TSAMPLE = 1.0
+TSAMPLE = 1.2
 MINIMUM_WEIGHT = 0.8165
 MAX_VARIANCE = 349525.25
 
@@ -263,15 +262,16 @@ MAX_VARIANCE = 349525.25
 def compute_maxwellian_weight_factors(corrected_counts: np.ndarray[float]) -> np.ndarray[float]:
     correction = 1.0 - 1.5e-6 * LIMIT / TSAMPLE
     correction[correction < 0.1] = 0.1
-    xlimit = LIMIT / correction
+    xlimits = LIMIT / correction
 
-    weights = np.empty_like(corrected_counts)
+    weights = np.empty_like(corrected_counts, dtype=np.float64)
 
     for (energy_i, spin_i, declination_i), corrected_count in np.ndenumerate(corrected_counts):
         variance = MAX_VARIANCE
-        for xlimit, sigma in zip((xlimit, SIGMA2)):
+        for xlimit, sigma in zip(xlimits, SIGMA2):
             if corrected_count < xlimit:
                 variance = sigma
+                break
 
         if corrected_count <= 1.5:
             weights[energy_i, spin_i, declination_i] = MINIMUM_WEIGHT
@@ -279,3 +279,24 @@ def compute_maxwellian_weight_factors(corrected_counts: np.ndarray[float]) -> np
             weights[energy_i, spin_i, declination_i] = np.sqrt(variance + corrected_count) / corrected_count
 
     return weights
+
+
+def filter_and_flatten_regress_parameters(corrected_energy_bins: np.ndarray,
+                                          velocity_vectors: np.ndarray,
+                                          phase_space_density: np.ndarray,
+                                          weights: np.ndarray,
+                                          core_breakpoint: float,
+                                          core_halo_breakpoint: float) -> tuple[
+    np.ndarray, np.ndarray, np.ndarray]:
+    valid_mask = np.full_like(phase_space_density, fill_value=False, dtype=bool)
+    valid_mask[
+        np.logical_and(core_breakpoint < corrected_energy_bins, corrected_energy_bins < core_halo_breakpoint)] = True
+    valid_mask[phase_space_density <= 0] = False
+
+    filtered_phase_space_density = phase_space_density[valid_mask]
+    yreg = np.zeros_like(filtered_phase_space_density)
+    yreg[filtered_phase_space_density > 1e-35] = np.log(
+        filtered_phase_space_density[filtered_phase_space_density > 1e-35])
+    yreg[filtered_phase_space_density <= 1e-35] = -80.6
+
+    return velocity_vectors[valid_mask], weights[valid_mask], yreg
