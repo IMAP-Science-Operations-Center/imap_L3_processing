@@ -140,6 +140,7 @@
   "slope_ratio_cutoff_for_potential_calc": 0.55,
   "spacecraft_potential_initial_guess": 10,
   "core_halo_breakpoint_initial_guess": 80,
+  "core_energy_for_slope_guess": 20,
   "halo_energy_for_slope_guess": 100,
-  "core_energy_for_slope_guess": 20
+  "refit_core_halo_breakpoint_index": 8
 }

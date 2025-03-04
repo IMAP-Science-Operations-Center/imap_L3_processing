@@ -1,4 +1,5 @@
 import numpy as np
+from uncertainties.unumpy import uarray, nominal_values, std_devs
 
 
 def get_hit_bin_polar_coordinates(declination_bins=8, inclination_bins=15) -> tuple[
@@ -34,18 +35,36 @@ def rebin_by_pitch_angle_and_gyrophase(flux_data: np.array,
     pitch_angle_bins = np.floor(pitch_angles / (180 / number_of_pitch_angle_bins)).astype(int)
     gyrophase_bins = np.floor(gyrophases / (360 / number_of_gyrophase_bins)).astype(int)
 
+    flux_with_delta_plus = uarray(flux_data, flux_delta_plus)
+    flux_with_delta_minus = uarray(flux_data, flux_delta_minus)
+
     output_shape = (flux_data.shape[0], number_of_pitch_angle_bins, number_of_gyrophase_bins)
-    rebinned_summed = np.zeros(shape=output_shape)
+    rebinned_summed_with_delta_plus = uarray(np.zeros(shape=output_shape), 0)
+    rebinned_summed_with_delta_minus = uarray(np.zeros(shape=output_shape), 0)
     rebinned_count = np.zeros(shape=output_shape)
 
-    for i, flux_data in enumerate(flux_data):
-        for pitch_angle_bin, gyrophase_bin, flux in zip(np.ravel(pitch_angle_bins),
-                                                        np.ravel(gyrophase_bins),
-                                                        np.ravel(flux_data)):
-            rebinned_summed[i, pitch_angle_bin, gyrophase_bin] += flux
+    for i, (flux_delta_plus, flux_delta_minus) in enumerate(zip(flux_with_delta_plus, flux_with_delta_minus)):
+        for pitch_angle_bin, gyrophase_bin, flux_with_plus, flux_with_minus in zip(np.ravel(pitch_angle_bins),
+                                                                                   np.ravel(gyrophase_bins),
+                                                                                   np.ravel(flux_delta_plus),
+                                                                                   np.ravel(flux_delta_minus)):
+            rebinned_summed_with_delta_plus[i, pitch_angle_bin, gyrophase_bin] += flux_with_plus
+            rebinned_summed_with_delta_minus[i, pitch_angle_bin, gyrophase_bin] += flux_with_minus
 
             rebinned_count[i, pitch_angle_bin, gyrophase_bin] += 1
 
-    averaged_rebinned_fluxes = np.divide(rebinned_summed, rebinned_count, out=np.full_like(rebinned_summed, np.nan),
-                                         where=rebinned_count != 0)
-    return averaged_rebinned_fluxes, None, None, np.nansum(averaged_rebinned_fluxes, axis=-1), None, None
+    averaged_rebinned_fluxes_with_delta_plus = np.divide(rebinned_summed_with_delta_plus, rebinned_count,
+                                                         out=np.full_like(rebinned_summed_with_delta_plus, np.nan),
+                                                         where=rebinned_count != 0)
+    averaged_rebinned_fluxes_with_delta_minus = np.divide(rebinned_summed_with_delta_minus, rebinned_count,
+                                                          out=np.full_like(rebinned_summed_with_delta_minus, np.nan),
+                                                          where=rebinned_count != 0)
+    pa_only_with_delta_plus = np.nansum(averaged_rebinned_fluxes_with_delta_plus, axis=-1)
+    pa_only_with_delta_minus = np.nansum(averaged_rebinned_fluxes_with_delta_minus, axis=-1)
+
+    return (nominal_values(averaged_rebinned_fluxes_with_delta_plus),
+            std_devs(averaged_rebinned_fluxes_with_delta_plus),
+            std_devs(averaged_rebinned_fluxes_with_delta_minus),
+            nominal_values(pa_only_with_delta_plus),
+            std_devs(pa_only_with_delta_plus),
+            std_devs(pa_only_with_delta_minus))

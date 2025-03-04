@@ -205,8 +205,7 @@ class HitProcessor(Processor):
                     number_of_pitch_angle_bins,
                     number_of_gyrophase_bins)
 
-                flux_by_pa_gyro, flux_delta_plus_by_pa_gyro, flux_delta_minus_by_pa_gyro = rebinned_result[
-                                                                                           0:3]
+                flux_by_pa_gyro, flux_delta_plus_by_pa_gyro, flux_delta_minus_by_pa_gyro = rebinned_result[0:3]
                 flux_by_pa, flux_delta_plus_by_pa, flux_delta_minus_by_pa = rebinned_result[3:6]
 
                 rebinned_pa_gyro_flux_by_species[species][0][time_index] = flux_by_pa_gyro
