@@ -63,13 +63,67 @@ class TestSectoredProductsAlgorithms(TestCase):
 
         for case, pitch_angles, gyrophases, number_of_pitch_angle_bins, number_of_gyrophase_bins, \
                 expected_flux_by_pa_gyrophase, expected_flux_by_pa in test_cases:
-            with self.subTest(case):
-                fluxes_rebinned_to_one_bin, _, _, fluxes_rebinned_to_one_bin_pa_only, _, _ = rebin_by_pitch_angle_and_gyrophase(
+            with (((self.subTest(case)))):
+                rebinned_data = rebin_by_pitch_angle_and_gyrophase(
                     fluxes,
                     flux_delta_plus,
                     flux_delta_minus,
                     pitch_angles,
                     gyrophases,
                     number_of_pitch_angle_bins, number_of_gyrophase_bins)
-                np.testing.assert_equal(fluxes_rebinned_to_one_bin, expected_flux_by_pa_gyrophase)
-                np.testing.assert_equal(fluxes_rebinned_to_one_bin_pa_only, expected_flux_by_pa)
+                fluxes_pa_and_gyro, _, _ = rebinned_data[0:3]
+                fluxes_pa_only, _, _ = rebinned_data[3:6]
+
+                np.testing.assert_equal(fluxes_pa_and_gyro, expected_flux_by_pa_gyrophase)
+                np.testing.assert_equal(fluxes_pa_only, expected_flux_by_pa)
+
+    def test_rebin_by_pitch_angle_and_gyrophase_includes_uncertainties(self):
+        default_pitch_angles = np.array([[45, 45, 45, 45], [135, 135, 135, 135]])
+        default_gyrophases = np.array([[45, 135, 225, 315], [45, 135, 225, 315]])
+        flux_data_for_energy_1 = [[0, 1, 2, 3], [4, 5, 6, 7]]
+        flux_data_for_energy_2 = [[8, 9, 10, 11], [12, 13, 14, 15]]
+        fluxes = np.array([
+            flux_data_for_energy_1,
+            flux_data_for_energy_2
+        ])
+        flux_delta_plus = fluxes * 0.09
+        flux_delta_minus = fluxes * 0.11
+
+        number_of_pitch_angle_bins = 2
+        number_of_gyrophase_bins = 4
+
+        expected_delta_plus_pa_gyro = np.array([
+            [[0, 0.09, 0.18, 0.27], [0.36, 0.45, 0.54, 0.63]],
+            [[0.72, 0.81, 0.9, 0.99], [1.08, 1.17, 1.26, 1.35]]
+        ])
+
+        expected_delta_minus_pa_gyro = np.array([
+            [[0, 0.11, 0.22, 0.33], [0.44, 0.55, 0.66, 0.77]],
+            [[0.88, 0.99, 1.1, 1.21], [1.32, 1.43, 1.54, 1.65]]
+        ])
+
+        expected_delta_plus_pa_only = np.array([
+            [0.33674916, 1.01024749],
+            [1.72180138, 2.43831909]
+        ])
+
+        expected_delta_minus_pa_only = np.array([
+            [0.41158231, 1.23474694],
+            [2.10442391, 2.98016778]
+        ])
+
+        rebinned_data = rebin_by_pitch_angle_and_gyrophase(
+            fluxes,
+            flux_delta_plus,
+            flux_delta_minus,
+            default_pitch_angles,
+            default_gyrophases,
+            number_of_pitch_angle_bins, number_of_gyrophase_bins)
+
+        _, delta_plus_pa_gyro, delta_minus_pa_gyro = rebinned_data[0:3]
+        _, delta_plus_pa_only, delta_minus_pa_only = rebinned_data[3:6]
+
+        np.testing.assert_allclose(expected_delta_plus_pa_gyro, delta_plus_pa_gyro)
+        np.testing.assert_allclose(expected_delta_minus_pa_gyro, delta_minus_pa_gyro)
+        np.testing.assert_allclose(expected_delta_plus_pa_only, delta_plus_pa_only)
+        np.testing.assert_allclose(expected_delta_minus_pa_only, delta_minus_pa_only)
