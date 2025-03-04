@@ -47,7 +47,7 @@ class HitProcessor(Processor):
         energy = np.full(shape=(len(raw_pha_events)), fill_value=np.nan)
         e_delta = np.full(shape=(len(raw_pha_events)), fill_value=np.nan)
         e_prime = np.full(shape=(len(raw_pha_events)), fill_value=np.nan)
-        detected_range = np.full(shape=(len(raw_pha_events)), fill_value="", dtype='<U2')
+        detected_range = np.full(shape=(len(raw_pha_events)), fill_value=np.nan)
         particle_id = np.full(shape=(len(raw_pha_events)), fill_value=UNSIGNED_INT2_FILL_VALUE)
         priority_buffer_number = np.full(shape=(len(raw_pha_events)), fill_value=UNSIGNED_INT1_FILL_VALUE)
         latency = np.full(shape=(len(raw_pha_events)), fill_value=UNSIGNED_INT1_FILL_VALUE)
@@ -87,7 +87,7 @@ class HitProcessor(Processor):
             if event_output.e_prime is not None:
                 e_prime[i] = event_output.e_prime
             if event_output.detected_range is not None:
-                detected_range[i] = event_output.detected_range.value
+                detected_range[i] = event_output.detected_range.range.value
 
             particle_id[i] = raw_event.particle_id
             priority_buffer_number[i] = raw_event.priority_buffer_num

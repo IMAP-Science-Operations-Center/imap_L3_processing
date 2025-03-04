@@ -6,7 +6,7 @@ from unittest.mock import patch, Mock, sentinel
 from imap_processing.hit.l3.pha.pha_event_reader import PHAWord, Detector
 from imap_processing.hit.l3.pha.science.calculate_pha import EventAnalysis, analyze_event, calculate_mev, \
     process_pha_event, EventOutput, compute_charge
-from imap_processing.hit.l3.pha.science.cosine_correction_lookup_table import DetectedRange
+from imap_processing.hit.l3.pha.science.cosine_correction_lookup_table import DetectedRange, DetectorRange, DetectorSide
 from imap_processing.hit.l3.pha.science.gain_lookup_table import DetectorGain, Gain
 from imap_processing.hit.l3.pha.science.hit_event_type_lookup import Rule
 from tests.hit.l3.hit_test_builders import create_raw_pha_event
@@ -54,7 +54,7 @@ class TestCalculatePHA(unittest.TestCase):
         words = [word for _, word in detector_to_word_tuples.items()]
         raw_pha_event = create_raw_pha_event(pha_words=words)
 
-        rule_stub = Rule(range=DetectedRange.R2A,
+        rule_stub = Rule(range=DetectedRange(DetectorRange.R2, DetectorSide.A),
                          included_detector_groups=["L1A14", "L2A"],
                          excluded_detector_groups=["L2B"]
                          )

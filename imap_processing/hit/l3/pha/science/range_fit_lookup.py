@@ -6,7 +6,7 @@ from pathlib import Path
 import numpy as np
 from numpy import ndarray
 
-from imap_processing.hit.l3.pha.science.cosine_correction_lookup_table import DetectedRange
+from imap_processing.hit.l3.pha.science.cosine_correction_lookup_table import DetectedRange, DetectorRange
 
 
 def double_power_law(e_prime, a1, b1, a2, b2, gamma):
@@ -25,15 +25,14 @@ class RangeFitLookup:
                    np.loadtxt(range3_file, delimiter=',', usecols=range(6)),
                    np.loadtxt(range4_file, delimiter=',', usecols=range(6)))
 
-    def evaluate_e_prime(self, range: DetectedRange, energy):
+    def evaluate_e_prime(self, detected_range: DetectedRange, energy):
         tables = {
-            DetectedRange.R2A: self.range_2_table,
-            DetectedRange.R2B: self.range_2_table,
-            DetectedRange.R3A: self.range_3_table,
-            DetectedRange.R3B: self.range_3_table,
-            DetectedRange.R4A: self.range_4_table,
-            DetectedRange.R4B: self.range_4_table, }
-        table = tables[range]
+            DetectorRange.R2: self.range_2_table,
+            DetectorRange.R3: self.range_3_table,
+            DetectorRange.R4: self.range_4_table
+        }
+
+        table = tables[detected_range.range]
         charges = table[:, 0]
         a1, b1, a2, b2, gamma = table[:, 1:].T
         return charges, double_power_law(energy, a1, b1, a2, b2, gamma)

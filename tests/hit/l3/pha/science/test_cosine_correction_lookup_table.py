@@ -1,7 +1,7 @@
 import unittest
 
 from imap_processing.hit.l3.pha.science.cosine_correction_lookup_table import CosineCorrectionLookupTable, Detector, \
-    DetectedRange
+    DetectedRange, DetectorSide, DetectorRange
 from tests.test_helpers import get_test_data_path
 
 
@@ -19,11 +19,20 @@ class TestCosineCorrectionLookupTable(unittest.TestCase):
         L1A0b_detector = Detector(layer=1, side="A", segment="0b", address=1234, group="L1A")
         L2A0_detector = Detector(layer=2, side="A", segment="0", address=5678, group="L2A")
 
-        self.assertEqual(0.978643, lookup_table.get_cosine_correction(DetectedRange.R2A, L1A0b_detector, L2A0_detector))
-        self.assertEqual(0.978643, lookup_table.get_cosine_correction(DetectedRange.R2B, L1A0b_detector, L2A0_detector))
+        L1B0b_detector = Detector(layer=1, side="B", segment="0b", address=1234, group="L1A")
+        L2B0_detector = Detector(layer=2, side="B", segment="0", address=5678, group="L2A")
 
-        self.assertEqual(0.674600, lookup_table.get_cosine_correction(DetectedRange.R3B, L1A0b_detector, L2A0_detector))
-        self.assertEqual(0.674600, lookup_table.get_cosine_correction(DetectedRange.R3A, L1A0b_detector, L2A0_detector))
+        self.assertEqual(0.978643, lookup_table.get_cosine_correction(DetectedRange(DetectorRange.R2, DetectorSide.A),
+                                                                      L1A0b_detector, L2A0_detector))
+        self.assertEqual(0.978643, lookup_table.get_cosine_correction(DetectedRange(DetectorRange.R2, DetectorSide.B),
+                                                                      L1B0b_detector, L2B0_detector))
 
-        self.assertEqual(0.705122, lookup_table.get_cosine_correction(DetectedRange.R4A, L1A0b_detector, L2A0_detector))
-        self.assertEqual(0.705122, lookup_table.get_cosine_correction(DetectedRange.R4B, L1A0b_detector, L2A0_detector))
+        self.assertEqual(0.674600, lookup_table.get_cosine_correction(DetectedRange(DetectorRange.R3, DetectorSide.A),
+                                                                      L1A0b_detector, L2A0_detector))
+        self.assertEqual(0.674600, lookup_table.get_cosine_correction(DetectedRange(DetectorRange.R3, DetectorSide.B),
+                                                                      L1B0b_detector, L2B0_detector))
+
+        self.assertEqual(0.705122, lookup_table.get_cosine_correction(DetectedRange(DetectorRange.R4, DetectorSide.A),
+                                                                      L1A0b_detector, L2A0_detector))
+        self.assertEqual(0.705122, lookup_table.get_cosine_correction(DetectedRange(DetectorRange.R4, DetectorSide.B),
+                                                                      L1B0b_detector, L2B0_detector))

@@ -14,7 +14,7 @@ from imap_processing.hit.l3.models import HitL2Data
 from imap_processing.hit.l3.pha.pha_event_reader import PHAWord, Detector, RawPHAEvent, PHAExtendedHeader, StimBlock, \
     ExtendedStimHeader
 from imap_processing.hit.l3.pha.science.calculate_pha import EventOutput
-from imap_processing.hit.l3.pha.science.cosine_correction_lookup_table import DetectedRange
+from imap_processing.hit.l3.pha.science.cosine_correction_lookup_table import DetectedRange, DetectorSide, DetectorRange
 from imap_processing.hit.l3.sectored_products.models import HitPitchAngleDataProduct
 from imap_processing.models import MagL1dData, InputMetadata
 from imap_processing.processor import Processor
@@ -471,11 +471,13 @@ class TestHitProcessor(TestCase):
                                       extended_stim_header=ExtendedStimHeader(dac_value=123, tbd=666))
 
         event_output_1 = EventOutput(original_event=raw_pha_event_1, charge=9.0, energies=[1], total_energy=99,
-                                     detected_range=DetectedRange.R2A, e_delta=103.7, e_prime=63.27)
+                                     detected_range=DetectedRange(DetectorRange.R2, DetectorSide.A), e_delta=103.7,
+                                     e_prime=63.27)
         event_output_2 = EventOutput(original_event=raw_pha_event_2, charge=10.0, energies=[4], total_energy=100,
                                      detected_range=None, e_delta=None, e_prime=None)
         event_output_3 = EventOutput(original_event=raw_pha_event_3, charge=12.0, energies=[9, 8], total_energy=200,
-                                     detected_range=DetectedRange.R3A, e_delta=106.7, e_prime=69.27)
+                                     detected_range=DetectedRange(DetectorRange.R3, DetectorSide.A), e_delta=106.7,
+                                     e_prime=69.27)
 
         input_metadata = InputMetadata(
             instrument="hit",
@@ -531,7 +533,7 @@ class TestHitProcessor(TestCase):
         np.testing.assert_array_equal(direct_event_product.e_delta, np.array([103.7, np.nan, 106.7]))
         np.testing.assert_array_equal(direct_event_product.e_prime, np.array([63.27, np.nan, 69.27]))
 
-        np.testing.assert_array_equal(direct_event_product.detected_range, np.array(["2A", "", "3A"]))
+        np.testing.assert_array_equal(direct_event_product.detected_range, np.array([2, np.nan, 3]))
 
         np.testing.assert_array_equal(direct_event_product.priority_buffer_number, np.array([2, 2, 3]))
         np.testing.assert_array_equal(direct_event_product.latency, np.array([20, 20, 30]))

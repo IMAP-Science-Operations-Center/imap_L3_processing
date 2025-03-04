@@ -5,7 +5,7 @@ import unittest
 
 import numpy as np
 
-from imap_processing.hit.l3.pha.science.cosine_correction_lookup_table import DetectedRange
+from imap_processing.hit.l3.pha.science.cosine_correction_lookup_table import DetectedRange, DetectorSide, DetectorRange
 from imap_processing.hit.l3.pha.science.range_fit_lookup import double_power_law, RangeFitLookup
 from tests.test_helpers import get_test_data_path
 
@@ -25,12 +25,12 @@ class TestRangeFitLookup(unittest.TestCase):
 
     def test_loads_csv_into_array(self):
         test_cases = [
-            (DetectedRange.R2A, "range2.csv"),
-            (DetectedRange.R2B, "range2.csv"),
-            (DetectedRange.R3A, "range3.csv"),
-            (DetectedRange.R3B, "range3.csv"),
-            (DetectedRange.R4A, "range4.csv"),
-            (DetectedRange.R4B, "range4.csv"),
+            (DetectedRange(DetectorRange.R2, DetectorSide.A), "range2.csv"),
+            (DetectedRange(DetectorRange.R2, DetectorSide.B), "range2.csv"),
+            (DetectedRange(DetectorRange.R3, DetectorSide.A), "range3.csv"),
+            (DetectedRange(DetectorRange.R3, DetectorSide.B), "range3.csv"),
+            (DetectedRange(DetectorRange.R4, DetectorSide.A), "range4.csv"),
+            (DetectedRange(DetectorRange.R4, DetectorSide.B), "range4.csv"),
         ]
         for range, file_to_populate in test_cases:
             with self.subTest(range):
