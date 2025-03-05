@@ -5,7 +5,7 @@ import unittest
 
 import numpy as np
 
-from imap_processing.hit.l3.pha.science.cosine_correction_lookup_table import DetectedRange
+from imap_processing.hit.l3.pha.science.cosine_correction_lookup_table import DetectedRange, DetectorSide, DetectorRange
 from imap_processing.hit.l3.pha.science.range_fit_lookup import double_power_law, RangeFitLookup
 from tests.test_helpers import get_test_data_path
 
@@ -25,27 +25,33 @@ class TestRangeFitLookup(unittest.TestCase):
 
     def test_loads_csv_into_array(self):
         test_cases = [
-            (DetectedRange.R2A, "range2.csv"),
-            (DetectedRange.R2B, "range2.csv"),
-            (DetectedRange.R3A, "range3.csv"),
-            (DetectedRange.R3B, "range3.csv"),
-            (DetectedRange.R4A, "range4.csv"),
-            (DetectedRange.R4B, "range4.csv"),
+            (DetectedRange(DetectorRange.R2, DetectorSide.A), "range2A.csv"),
+            (DetectedRange(DetectorRange.R2, DetectorSide.B), "range2B.csv"),
+            (DetectedRange(DetectorRange.R3, DetectorSide.A), "range3A.csv"),
+            (DetectedRange(DetectorRange.R3, DetectorSide.B), "range3B.csv"),
+            (DetectedRange(DetectorRange.R4, DetectorSide.A), "range4A.csv"),
+            (DetectedRange(DetectorRange.R4, DetectorSide.B), "range4B.csv"),
         ]
         for range, file_to_populate in test_cases:
             with self.subTest(range):
                 with tempfile.TemporaryDirectory() as tempdir:
-                    range2_path = os.path.join(tempdir, "range2.csv")
-                    range3_path = os.path.join(tempdir, "range3.csv")
-                    range4_path = os.path.join(tempdir, "range4.csv")
+                    range2A_path = os.path.join(tempdir, "range2A.csv")
+                    range3A_path = os.path.join(tempdir, "range3A.csv")
+                    range4A_path = os.path.join(tempdir, "range4A.csv")
+                    range2B_path = os.path.join(tempdir, "range2B.csv")
+                    range3B_path = os.path.join(tempdir, "range3B.csv")
+                    range4B_path = os.path.join(tempdir, "range4B.csv")
 
                     expected_charges = [12, 13]
                     charge1_parameters = [1, 2, 3, 4, 5]
                     charge2_parameters = [4, 5, 6, 7, 8]
 
-                    open(range2_path, 'w').close()
-                    open(range3_path, 'w').close()
-                    open(range4_path, 'w').close()
+                    open(range2A_path, 'w').close()
+                    open(range3A_path, 'w').close()
+                    open(range4A_path, 'w').close()
+                    open(range2B_path, 'w').close()
+                    open(range3B_path, 'w').close()
+                    open(range4B_path, 'w').close()
 
                     path_to_populate = os.path.join(tempdir, file_to_populate)
                     with open(path_to_populate, 'w') as range_file:
@@ -58,9 +64,13 @@ class TestRangeFitLookup(unittest.TestCase):
                         csv_writer.writerow(expected_charges[1:2] + charge2_parameters)
 
                     lookup_table = RangeFitLookup.from_files(
-                        range2_file=range2_path,
-                        range3_file=range3_path,
-                        range4_file=range4_path)
+                        range2A_file=range2A_path,
+                        range3A_file=range3A_path,
+                        range4A_file=range4A_path,
+                        range2B_file=range2B_path,
+                        range3B_file=range3B_path,
+                        range4B_file=range4B_path
+                    )
 
                     e_prime = 11.2
 
@@ -72,9 +82,12 @@ class TestRangeFitLookup(unittest.TestCase):
 
     def test_load_from_real_example_files(self):
         range_fit_lookup = RangeFitLookup.from_files(
-            get_test_data_path("hit/pha_events/imap_hit_l3_range2-fit-text-not-cdf_20250203_v001.cdf"),
-            get_test_data_path("hit/pha_events/imap_hit_l3_range3-fit-text-not-cdf_20250203_v001.cdf"),
-            get_test_data_path("hit/pha_events/imap_hit_l3_range4-fit-text-not-cdf_20250203_v001.cdf"),
+            get_test_data_path("hit/pha_events/imap_hit_l3_range2A-fit-text-not-cdf_20250203_v001.cdf"),
+            get_test_data_path("hit/pha_events/imap_hit_l3_range3A-fit-text-not-cdf_20250203_v001.cdf"),
+            get_test_data_path("hit/pha_events/imap_hit_l3_range4A-fit-text-not-cdf_20250203_v001.cdf"),
+            get_test_data_path("hit/pha_events/imap_hit_l3_range2B-fit-text-not-cdf_20250203_v001.cdf"),
+            get_test_data_path("hit/pha_events/imap_hit_l3_range3B-fit-text-not-cdf_20250203_v001.cdf"),
+            get_test_data_path("hit/pha_events/imap_hit_l3_range4B-fit-text-not-cdf_20250203_v001.cdf"),
         )
 
         self.assertIsInstance(range_fit_lookup, RangeFitLookup)

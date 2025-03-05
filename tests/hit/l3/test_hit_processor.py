@@ -14,7 +14,7 @@ from imap_processing.hit.l3.models import HitL2Data
 from imap_processing.hit.l3.pha.pha_event_reader import PHAWord, Detector, RawPHAEvent, PHAExtendedHeader, StimBlock, \
     ExtendedStimHeader
 from imap_processing.hit.l3.pha.science.calculate_pha import EventOutput
-from imap_processing.hit.l3.pha.science.cosine_correction_lookup_table import DetectedRange
+from imap_processing.hit.l3.pha.science.cosine_correction_lookup_table import DetectedRange, DetectorSide, DetectorRange
 from imap_processing.hit.l3.sectored_products.models import HitPitchAngleDataProduct
 from imap_processing.models import MagL1dData, InputMetadata
 from imap_processing.processor import Processor
@@ -29,7 +29,6 @@ class TestHitProcessor(TestCase):
         )
 
     @patch('imap_processing.hit.l3.hit_processor.imap_data_access.upload')
-    @patch('imap_processing.hit.l3.hit_processor.convert_bin_high_low_to_center_delta')
     @patch('imap_processing.hit.l3.hit_processor.save_data')
     @patch('imap_processing.hit.l3.hit_processor.HITL3SectoredDependencies.fetch_dependencies')
     @patch('imap_processing.hit.l3.hit_processor.calculate_unit_vector')
@@ -43,7 +42,6 @@ class TestHitProcessor(TestCase):
                                          mock_get_sector_unit_vectors, mock_get_hit_bin_polar_coordinates,
                                          mock_calculate_unit_vector,
                                          mock_fetch_dependencies, mock_save_data,
-                                         mock_convert_bin_high_low_to_center_delta,
                                          mock_imap_data_access_upload):
         input_metadata = InputMetadata(
             instrument="hit",
@@ -57,12 +55,6 @@ class TestHitProcessor(TestCase):
         epochs = np.array([123, 234])
         epoch_deltas = np.array([12, 13])
         averaged_mag_vectors = [sentinel.mag_vector1, sentinel.mag_vector2]
-
-        mock_convert_bin_high_low_to_center_delta.side_effect = [(sentinel.h_energy, sentinel.h_energy_delta),
-                                                                 (sentinel.he4_energy, sentinel.he4_energy_delta),
-                                                                 (sentinel.cno_energy, sentinel.cno_energy_delta),
-                                                                 (sentinel.nemgsi_energy, sentinel.nemgsi_energy_delta),
-                                                                 (sentinel.fe_energy, sentinel.fe_energy_delta)]
 
         mock_dependencies = Mock(spec=HITL3SectoredDependencies)
         mock_mag_data = self.create_dataclass_mock(MagL1dData)
@@ -245,14 +237,6 @@ class TestHitProcessor(TestCase):
         ])
         mock_get_sector_unit_vectors.assert_called_once_with(sentinel.dec, sentinel.inc)
 
-        mock_convert_bin_high_low_to_center_delta.assert_has_calls([
-            call(mock_hit_data.h_energy_high, mock_hit_data.h_energy_low),
-            call(mock_hit_data.he4_energy_high, mock_hit_data.he4_energy_low),
-            call(mock_hit_data.cno_energy_high, mock_hit_data.cno_energy_low),
-            call(mock_hit_data.nemgsi_energy_high, mock_hit_data.nemgsi_energy_low),
-            call(mock_hit_data.fe_energy_high, mock_hit_data.fe_energy_low),
-        ])
-
         self.assertEqual(2, mock_calculate_pitch_angle.call_count)
         np.testing.assert_array_equal(mock_calculate_pitch_angle.call_args_list[0].args[0], -sector_unit_vectors)
         self.assertEqual(mock_calculate_pitch_angle.call_args_list[0].args[1], sentinel.mag_unit_vector1)
@@ -416,16 +400,21 @@ class TestHitProcessor(TestCase):
                                       np.concatenate(
                                           (rebinned_pa_iron_delta_minus_time1, rebinned_pa_iron_delta_minus_time2)))
 
-        self.assertIs(sentinel.h_energy, saved_data_product.h_energies)
-        self.assertIs(sentinel.h_energy_delta, saved_data_product.h_energy_deltas)
-        self.assertIs(sentinel.he4_energy, saved_data_product.he4_energies)
-        self.assertIs(sentinel.he4_energy_delta, saved_data_product.he4_energy_deltas)
-        self.assertIs(sentinel.cno_energy, saved_data_product.cno_energies)
-        self.assertIs(sentinel.cno_energy_delta, saved_data_product.cno_energy_deltas)
-        self.assertIs(sentinel.nemgsi_energy, saved_data_product.ne_mg_si_energies)
-        self.assertIs(sentinel.nemgsi_energy_delta, saved_data_product.ne_mg_si_energy_deltas)
-        self.assertIs(sentinel.fe_energy, saved_data_product.iron_energies)
-        self.assertIs(sentinel.fe_energy_delta, saved_data_product.iron_energy_deltas)
+        self.assertIs(mock_hit_data.h_energy, saved_data_product.h_energies)
+        self.assertIs(mock_hit_data.h_energy_delta_plus, saved_data_product.h_energy_delta_plus)
+        self.assertIs(mock_hit_data.h_energy_delta_minus, saved_data_product.h_energy_delta_minus)
+        self.assertIs(mock_hit_data.he4_energy, saved_data_product.he4_energies)
+        self.assertIs(mock_hit_data.he4_energy_delta_plus, saved_data_product.he4_energy_delta_plus)
+        self.assertIs(mock_hit_data.he4_energy_delta_minus, saved_data_product.he4_energy_delta_minus)
+        self.assertIs(mock_hit_data.cno_energy, saved_data_product.cno_energies)
+        self.assertIs(mock_hit_data.cno_energy_delta_plus, saved_data_product.cno_energy_delta_plus)
+        self.assertIs(mock_hit_data.cno_energy_delta_minus, saved_data_product.cno_energy_delta_minus)
+        self.assertIs(mock_hit_data.nemgsi_energy, saved_data_product.ne_mg_si_energies)
+        self.assertIs(mock_hit_data.nemgsi_energy_delta_plus, saved_data_product.ne_mg_si_energy_delta_plus)
+        self.assertIs(mock_hit_data.nemgsi_energy_delta_minus, saved_data_product.ne_mg_si_energy_delta_minus)
+        self.assertIs(mock_hit_data.fe_energy, saved_data_product.iron_energies)
+        self.assertIs(mock_hit_data.fe_energy_delta_plus, saved_data_product.iron_energy_delta_plus)
+        self.assertIs(mock_hit_data.fe_energy_delta_minus, saved_data_product.iron_energy_delta_minus)
 
         mock_imap_data_access_upload.assert_called_once_with(mock_save_data.return_value)
 
@@ -471,11 +460,13 @@ class TestHitProcessor(TestCase):
                                       extended_stim_header=ExtendedStimHeader(dac_value=123, tbd=666))
 
         event_output_1 = EventOutput(original_event=raw_pha_event_1, charge=9.0, energies=[1], total_energy=99,
-                                     detected_range=DetectedRange.R2A, e_delta=103.7, e_prime=63.27)
+                                     detected_range=DetectedRange(DetectorRange.R2, DetectorSide.A), e_delta=103.7,
+                                     e_prime=63.27)
         event_output_2 = EventOutput(original_event=raw_pha_event_2, charge=10.0, energies=[4], total_energy=100,
                                      detected_range=None, e_delta=None, e_prime=None)
         event_output_3 = EventOutput(original_event=raw_pha_event_3, charge=12.0, energies=[9, 8], total_energy=200,
-                                     detected_range=DetectedRange.R3A, e_delta=106.7, e_prime=69.27)
+                                     detected_range=DetectedRange(DetectorRange.R3, DetectorSide.A), e_delta=106.7,
+                                     e_prime=69.27)
 
         input_metadata = InputMetadata(
             instrument="hit",
@@ -531,7 +522,7 @@ class TestHitProcessor(TestCase):
         np.testing.assert_array_equal(direct_event_product.e_delta, np.array([103.7, np.nan, 106.7]))
         np.testing.assert_array_equal(direct_event_product.e_prime, np.array([63.27, np.nan, 69.27]))
 
-        np.testing.assert_array_equal(direct_event_product.detected_range, np.array(["2A", "", "3A"]))
+        np.testing.assert_array_equal(direct_event_product.detected_range, np.array([2, np.nan, 3]))
 
         np.testing.assert_array_equal(direct_event_product.priority_buffer_number, np.array([2, 2, 3]))
         np.testing.assert_array_equal(direct_event_product.latency, np.array([20, 20, 30]))

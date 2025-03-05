@@ -17,6 +17,7 @@ from imap_processing.hit.l3.pha.pha_event_reader import PHAEventReader
 from imap_processing.hit.l3.pha.science.calculate_pha import process_pha_event
 from imap_processing.hit.l3.pha.science.cosine_correction_lookup_table import CosineCorrectionLookupTable
 from imap_processing.hit.l3.pha.science.gain_lookup_table import GainLookupTable
+from imap_processing.hit.l3.pha.science.hit_event_type_lookup import HitEventTypeLookup
 from imap_processing.hit.l3.pha.science.range_fit_lookup import RangeFitLookup
 from imap_processing.hit.l3.utils import read_l2_hit_data
 from imap_processing.models import InputMetadata, UpstreamDataDependency
@@ -200,12 +201,16 @@ def create_hit_direct_event_cdf():
         get_test_data_path("hit/pha_events/imap_hit_l3_range4-fit-text-not-cdf_20250203_v001.cdf"),
     )
 
+    event_type_look = HitEventTypeLookup.from_csv(
+        get_test_data_path("hit/pha_events/imap_hit_l3_hit-event-types-text-not-cdf_20250228_v001.cdf"))
+
     hit_l1_data = HitL1Data.read_from_cdf(
         get_test_data_path("hit/pha_events/fake-menlo-imap_hit_l1a_pulse-height-events_20100106_v003.cdf"))
 
     direct_event_dependencies = HitL3PhaDependencies(hit_l1_data=hit_l1_data, cosine_correction_lookup=cosine_table,
 
-                                                     gain_lookup=gain_table, range_fit_lookup=range_fit_lookup)
+                                                     gain_lookup=gain_table, range_fit_lookup=range_fit_lookup,
+                                                     event_type_lookup=event_type_look)
     input_metadata = InputMetadata(
         instrument="hit",
         data_level="l3a",
@@ -259,13 +264,13 @@ if __name__ == "__main__":
         print(path)
 
     if "hit" in sys.argv:
-        if "l3a" in sys.argv:
+        if "direct_event" in sys.argv:
             path = create_hit_direct_event_cdf()
             print(f"hit direct event data product: {path}")
         else:
             mag_data = read_l1d_mag_data(get_test_data_path("mag/imap_mag_l1d_mago-normal_20250101_v001.cdf"))
             hit_data = read_l2_hit_data(
-                get_test_data_path("hit/hit_l2_sectored-sample1-with-uncertainties_20250101.cdf"))
+                get_test_data_path("hit/imap_hit_l2_sectored-sample1-with-uncertainties_20250101_v001.cdf"))
             dependencies = HITL3SectoredDependencies(mag_l1d_data=mag_data, data=hit_data)
             print(f"hit sectored data product: {create_hit_sectored_cdf(dependencies)}")
 

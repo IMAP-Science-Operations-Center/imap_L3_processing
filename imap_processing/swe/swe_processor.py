@@ -9,7 +9,8 @@ from imap_processing.swapi.l3a.science.calculate_pickup_ion import calculate_sol
 from imap_processing.swe.l3.models import SweL3Data
 from imap_processing.swe.l3.science.moment_calculations import compute_maxwellian_weight_factors, \
     filter_and_flatten_regress_parameters, regress
-from imap_processing.swe.l3.science.pitch_calculations import average_flux, find_breakpoints, correct_and_rebin, \
+from imap_processing.swe.l3.science.pitch_calculations import average_over_look_directions, find_breakpoints, \
+    correct_and_rebin, \
     integrate_distribution_to_get_1d_spectrum, integrate_distribution_to_get_inbound_and_outbound_1d_spectrum, \
     calculate_velocity_in_dsp_frame_km_s
 from imap_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies
@@ -27,16 +28,19 @@ class SweProcessor(Processor):
     def calculate_moment_products(self, dependencies: SweL3Dependencies):
         swe_l2_data = dependencies.swe_l2_data
         swe_epoch = swe_l2_data.epoch
+        config = dependencies.configuration
 
         spacecraft_potential_history = [10, 10, 10, 10]
         halo_core_history = [80, 80, 80, 80]
 
         for i in range(len(swe_epoch)):
-            averaged_flux = average_flux(swe_l2_data.flux[i],
-                                         np.array(dependencies.configuration["geometric_fractions"]))
-            spacecraft_potential, halo_core = find_breakpoints(swe_l2_data.energy, averaged_flux,
+            averaged_psd = average_over_look_directions(swe_l2_data.phase_space_density[i],
+                                                        np.array(config["geometric_fractions"]))
+            spacecraft_potential, halo_core = find_breakpoints(swe_l2_data.energy, averaged_psd,
                                                                np.average(spacecraft_potential_history[:3]),
-                                                               np.average(halo_core_history[:3]))
+                                                               np.average(halo_core_history[:3]),
+                                                               spacecraft_potential_history[-1], halo_core_history[-1],
+                                                               config)
             corrected_energy_bins = swe_l2_data.energy - spacecraft_potential
 
             velocity_vectors = calculate_velocity_in_dsp_frame_km_s(corrected_energy_bins, swe_l2_data.inst_el,
@@ -94,9 +98,9 @@ class SweProcessor(Processor):
         halo_core_history = [config["core_halo_breakpoint_initial_guess"] for _ in range(4)]
 
         for i in range(len(swe_epoch)):
-            averaged_flux = average_flux(swe_l2_data.flux[i],
-                                         np.array(config["geometric_fractions"]))
-            spacecraft_potential, halo_core = find_breakpoints(swe_l2_data.energy, averaged_flux,
+            averaged_psd = average_over_look_directions(swe_l2_data.phase_space_density[i],
+                                                        np.array(config["geometric_fractions"]))
+            spacecraft_potential, halo_core = find_breakpoints(swe_l2_data.energy, averaged_psd,
                                                                np.average(spacecraft_potential_history[:3]),
                                                                np.average(halo_core_history[:3]),
                                                                spacecraft_potential_history[-1], halo_core_history[-1],

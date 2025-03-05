@@ -2,10 +2,14 @@ import unittest
 from unittest.mock import patch, call, sentinel
 
 from imap_processing.hit.l3.pha.hit_l3_pha_dependencies import HitL3PhaDependencies, HIT_L1A_EVENT_DESCRIPTOR, \
-    HIT_L3_RANGE_2_COSINE_LOOKUP_DESCRIPTOR, HIT_L3_RANGE_3_COSINE_LOOKUP_DESCRIPTOR, \
-    HIT_L3_RANGE_4_COSINE_LOOKUP_DESCRIPTOR, HIT_L3_LO_GAIN_LOOKUP_DESCRIPTOR, HIT_L3_HI_GAIN_LOOKUP_DESCRIPTOR, \
-    HIT_L3_RANGE_2_CHARGE_FIT_LOOKUP_DESCRIPTOR, HIT_L3_RANGE_3_CHARGE_FIT_LOOKUP_DESCRIPTOR, \
-    HIT_L3_RANGE_4_CHARGE_FIT_LOOKUP_DESCRIPTOR, HIT_L3_EVENT_TYPE_LOOKUP_DESCRIPTOR
+    HIT_L3_LO_GAIN_LOOKUP_DESCRIPTOR, HIT_L3_HI_GAIN_LOOKUP_DESCRIPTOR, \
+    HIT_L3_EVENT_TYPE_LOOKUP_DESCRIPTOR, \
+    HIT_L3_RANGE_2A_COSINE_LOOKUP_DESCRIPTOR, HIT_L3_RANGE_3A_COSINE_LOOKUP_DESCRIPTOR, \
+    HIT_L3_RANGE_4A_COSINE_LOOKUP_DESCRIPTOR, HIT_L3_RANGE_2B_COSINE_LOOKUP_DESCRIPTOR, \
+    HIT_L3_RANGE_3B_COSINE_LOOKUP_DESCRIPTOR, HIT_L3_RANGE_4B_COSINE_LOOKUP_DESCRIPTOR, \
+    HIT_L3_RANGE_2A_CHARGE_FIT_LOOKUP_DESCRIPTOR, HIT_L3_RANGE_3A_CHARGE_FIT_LOOKUP_DESCRIPTOR, \
+    HIT_L3_RANGE_4A_CHARGE_FIT_LOOKUP_DESCRIPTOR, HIT_L3_RANGE_2B_CHARGE_FIT_LOOKUP_DESCRIPTOR, \
+    HIT_L3_RANGE_3B_CHARGE_FIT_LOOKUP_DESCRIPTOR, HIT_L3_RANGE_4B_CHARGE_FIT_LOOKUP_DESCRIPTOR
 from imap_processing.models import UpstreamDataDependency
 
 
@@ -24,14 +28,20 @@ class TestHitL3PhaDependencies(unittest.TestCase):
 
         mock_download_dependency.side_effect = [
             sentinel.l1_data_cdf_path,
-            sentinel.range_2_cosine_lookup_cdf_path,
-            sentinel.range_3_cosine_lookup_cdf_path,
-            sentinel.range_4_cosine_lookup_cdf_path,
+            sentinel.range_2A_cosine_lookup_cdf_path,
+            sentinel.range_3A_cosine_lookup_cdf_path,
+            sentinel.range_4A_cosine_lookup_cdf_path,
+            sentinel.range_2B_cosine_lookup_cdf_path,
+            sentinel.range_3B_cosine_lookup_cdf_path,
+            sentinel.range_4B_cosine_lookup_cdf_path,
             sentinel.lo_gain_lookup_cdf_path,
             sentinel.hi_gain_lookup_cdf_path,
-            sentinel.range_2_charge_fit_lookup_cdf_path,
-            sentinel.range_3_charge_fit_lookup_cdf_path,
-            sentinel.range_4_charge_fit_lookup_cdf_path,
+            sentinel.range_2A_charge_fit_lookup_cdf_path,
+            sentinel.range_3A_charge_fit_lookup_cdf_path,
+            sentinel.range_4A_charge_fit_lookup_cdf_path,
+            sentinel.range_2B_charge_fit_lookup_cdf_path,
+            sentinel.range_3B_charge_fit_lookup_cdf_path,
+            sentinel.range_4B_charge_fit_lookup_cdf_path,
             sentinel.event_type_lookup_path,
         ]
 
@@ -40,36 +50,55 @@ class TestHitL3PhaDependencies(unittest.TestCase):
         mock_download_dependency.assert_has_calls([
             call(upstream_data_dependency),
 
-            call(UpstreamDataDependency("hit", "l3", None, None, "latest", HIT_L3_RANGE_2_COSINE_LOOKUP_DESCRIPTOR, )),
-            call(UpstreamDataDependency("hit", "l3", None, None, "latest", HIT_L3_RANGE_3_COSINE_LOOKUP_DESCRIPTOR, )),
-            call(UpstreamDataDependency("hit", "l3", None, None, "latest", HIT_L3_RANGE_4_COSINE_LOOKUP_DESCRIPTOR, )),
+            call(UpstreamDataDependency("hit", "l3", None, None, "latest", HIT_L3_RANGE_2A_COSINE_LOOKUP_DESCRIPTOR, )),
+            call(UpstreamDataDependency("hit", "l3", None, None, "latest", HIT_L3_RANGE_3A_COSINE_LOOKUP_DESCRIPTOR, )),
+            call(UpstreamDataDependency("hit", "l3", None, None, "latest", HIT_L3_RANGE_4A_COSINE_LOOKUP_DESCRIPTOR, )),
+            call(UpstreamDataDependency("hit", "l3", None, None, "latest", HIT_L3_RANGE_2B_COSINE_LOOKUP_DESCRIPTOR, )),
+            call(UpstreamDataDependency("hit", "l3", None, None, "latest", HIT_L3_RANGE_3B_COSINE_LOOKUP_DESCRIPTOR, )),
+            call(UpstreamDataDependency("hit", "l3", None, None, "latest", HIT_L3_RANGE_4B_COSINE_LOOKUP_DESCRIPTOR, )),
 
             call(UpstreamDataDependency("hit", "l3", None, None, "latest", HIT_L3_LO_GAIN_LOOKUP_DESCRIPTOR, )),
             call(UpstreamDataDependency("hit", "l3", None, None, "latest", HIT_L3_HI_GAIN_LOOKUP_DESCRIPTOR, )),
 
             call(
                 UpstreamDataDependency("hit", "l3", None, None, "latest",
-                                       HIT_L3_RANGE_2_CHARGE_FIT_LOOKUP_DESCRIPTOR, )),
+                                       HIT_L3_RANGE_2A_CHARGE_FIT_LOOKUP_DESCRIPTOR, )),
             call(
                 UpstreamDataDependency("hit", "l3", None, None, "latest",
-                                       HIT_L3_RANGE_3_CHARGE_FIT_LOOKUP_DESCRIPTOR, )),
+                                       HIT_L3_RANGE_3A_CHARGE_FIT_LOOKUP_DESCRIPTOR, )),
             call(
                 UpstreamDataDependency("hit", "l3", None, None, "latest",
-                                       HIT_L3_RANGE_4_CHARGE_FIT_LOOKUP_DESCRIPTOR, )),
+                                       HIT_L3_RANGE_4A_CHARGE_FIT_LOOKUP_DESCRIPTOR, )),
+            call(
+                UpstreamDataDependency("hit", "l3", None, None, "latest",
+                                       HIT_L3_RANGE_2B_CHARGE_FIT_LOOKUP_DESCRIPTOR, )),
+            call(
+                UpstreamDataDependency("hit", "l3", None, None, "latest",
+                                       HIT_L3_RANGE_3B_CHARGE_FIT_LOOKUP_DESCRIPTOR, )),
+            call(
+                UpstreamDataDependency("hit", "l3", None, None, "latest",
+                                       HIT_L3_RANGE_4B_CHARGE_FIT_LOOKUP_DESCRIPTOR, )),
             call(
                 UpstreamDataDependency("hit", "l3", None, None, "latest",
                                        HIT_L3_EVENT_TYPE_LOOKUP_DESCRIPTOR, )),
         ])
         mock_read_from_cdf.assert_called_with(sentinel.l1_data_cdf_path)
 
-        mock_cosine_correction_lookup_from_file.assert_called_once_with(sentinel.range_2_cosine_lookup_cdf_path,
-                                                                        sentinel.range_3_cosine_lookup_cdf_path,
-                                                                        sentinel.range_4_cosine_lookup_cdf_path, )
+        mock_cosine_correction_lookup_from_file.assert_called_once_with(sentinel.range_2A_cosine_lookup_cdf_path,
+                                                                        sentinel.range_3A_cosine_lookup_cdf_path,
+                                                                        sentinel.range_4A_cosine_lookup_cdf_path,
+                                                                        sentinel.range_2B_cosine_lookup_cdf_path,
+                                                                        sentinel.range_3B_cosine_lookup_cdf_path,
+                                                                        sentinel.range_4B_cosine_lookup_cdf_path)
         mock_gain_lookup_from_file.assert_called_once_with(sentinel.hi_gain_lookup_cdf_path,
                                                            sentinel.lo_gain_lookup_cdf_path, )
-        mock_range_fit_from_lookup.assert_called_once_with(sentinel.range_2_charge_fit_lookup_cdf_path,
-                                                           sentinel.range_3_charge_fit_lookup_cdf_path,
-                                                           sentinel.range_4_charge_fit_lookup_cdf_path, )
+        mock_range_fit_from_lookup.assert_called_once_with(sentinel.range_2A_charge_fit_lookup_cdf_path,
+                                                           sentinel.range_3A_charge_fit_lookup_cdf_path,
+                                                           sentinel.range_4A_charge_fit_lookup_cdf_path,
+                                                           sentinel.range_2B_charge_fit_lookup_cdf_path,
+                                                           sentinel.range_3B_charge_fit_lookup_cdf_path,
+                                                           sentinel.range_4B_charge_fit_lookup_cdf_path,
+                                                           )
 
         mock_hit_event_type_from_lookup.assert_called_once_with(sentinel.event_type_lookup_path)
 
