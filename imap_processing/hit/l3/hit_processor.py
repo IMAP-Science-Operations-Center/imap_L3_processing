@@ -47,7 +47,7 @@ class HitProcessor(Processor):
         energy = np.full(shape=(len(raw_pha_events)), fill_value=np.nan)
         e_delta = np.full(shape=(len(raw_pha_events)), fill_value=np.nan)
         e_prime = np.full(shape=(len(raw_pha_events)), fill_value=np.nan)
-        detected_range = np.full(shape=(len(raw_pha_events)), fill_value=UNSIGNED_INT1_FILL_VALUE)
+        detected_range = np.full(shape=(len(raw_pha_events)), fill_value="", dtype='<U2')
         particle_id = np.full(shape=(len(raw_pha_events)), fill_value=UNSIGNED_INT2_FILL_VALUE)
         priority_buffer_number = np.full(shape=(len(raw_pha_events)), fill_value=UNSIGNED_INT1_FILL_VALUE)
         latency = np.full(shape=(len(raw_pha_events)), fill_value=UNSIGNED_INT1_FILL_VALUE)
@@ -75,7 +75,8 @@ class HitProcessor(Processor):
                 raw_event,
                 direct_event_dependencies.cosine_correction_lookup,
                 direct_event_dependencies.gain_lookup,
-                direct_event_dependencies.range_fit_lookup
+                direct_event_dependencies.range_fit_lookup,
+                direct_event_dependencies.event_type_lookup
             )
 
             charge[i] = event_output.charge
@@ -148,20 +149,27 @@ class HitProcessor(Processor):
         mag_data = dependencies.mag_l1d_data
         hit_data = dependencies.data
 
-        input_flux_data_by_species = {"cno": hit_data.CNO, "helium4": hit_data.helium4, "hydrogen": hit_data.hydrogen,
-                                      "iron": hit_data.iron, "NeMgSi": hit_data.NeMgSi}
+        input_flux_data_by_species = {"cno": (hit_data.CNO, hit_data.DELTA_PLUS_CNO, hit_data.DELTA_MINUS_CNO),
+                                      "helium4": (
+                                          hit_data.helium4, hit_data.DELTA_PLUS_HELIUM4, hit_data.DELTA_MINUS_HELIUM4),
+                                      "hydrogen": (
+                                          hit_data.hydrogen, hit_data.DELTA_PLUS_HYDROGEN,
+                                          hit_data.DELTA_MINUS_HYDROGEN),
+                                      "iron": (hit_data.iron, hit_data.DELTA_PLUS_IRON, hit_data.DELTA_MINUS_IRON),
+                                      "NeMgSi": (
+                                          hit_data.NeMgSi, hit_data.DELTA_PLUS_NEMGSI, hit_data.DELTA_MINUS_NEMGSI)}
 
-        rebinned_pa_gyrophase_flux_by_species = {"cno": np.full(hit_data.CNO.shape, np.nan),
-                                                 "helium4": np.full(hit_data.helium4.shape, np.nan),
-                                                 "hydrogen": np.full(hit_data.hydrogen.shape, np.nan),
-                                                 "iron": np.full(hit_data.iron.shape, np.nan),
-                                                 "NeMgSi": np.full(hit_data.NeMgSi.shape, np.nan)}
+        rebinned_pa_gyro_flux_by_species = {"cno": self._create_nan_array(hit_data.CNO.shape),
+                                            "helium4": self._create_nan_array(hit_data.helium4.shape),
+                                            "hydrogen": self._create_nan_array(hit_data.hydrogen.shape),
+                                            "iron": self._create_nan_array(hit_data.iron.shape),
+                                            "NeMgSi": self._create_nan_array(hit_data.NeMgSi.shape)}
 
-        rebinned_pa_only_flux_by_species = {"cno": np.full(hit_data.CNO.shape[:-1], np.nan),
-                                            "helium4": np.full(hit_data.helium4.shape[:-1], np.nan),
-                                            "hydrogen": np.full(hit_data.hydrogen.shape[:-1], np.nan),
-                                            "iron": np.full(hit_data.iron.shape[:-1], np.nan),
-                                            "NeMgSi": np.full(hit_data.NeMgSi.shape[:-1], np.nan)}
+        rebinned_pa_only_flux_by_species = {"cno": self._create_nan_array(hit_data.CNO.shape[:-1]),
+                                            "helium4": self._create_nan_array(hit_data.helium4.shape[:-1]),
+                                            "hydrogen": self._create_nan_array(hit_data.hydrogen.shape[:-1]),
+                                            "iron": self._create_nan_array(hit_data.iron.shape[:-1]),
+                                            "NeMgSi": self._create_nan_array(hit_data.NeMgSi.shape[:-1])}
 
         h_energy_center, h_energy_delta = convert_bin_high_low_to_center_delta(hit_data.h_energy_high,
                                                                                hit_data.h_energy_low)
@@ -188,29 +196,69 @@ class HitProcessor(Processor):
             input_bin_gyrophases = calculate_gyrophase(particle_unit_vectors, mag_unit_vector)
 
             for species, flux in input_flux_data_by_species.items():
-                pa_gyrophase, pa_only = rebin_by_pitch_angle_and_gyrophase(flux[time_index], input_bin_pitch_angles,
-                                                                           input_bin_gyrophases,
-                                                                           number_of_pitch_angle_bins,
-                                                                           number_of_gyrophase_bins)
-                rebinned_pa_gyrophase_flux_by_species[species][time_index] = pa_gyrophase
-                rebinned_pa_only_flux_by_species[species][time_index] = pa_only
+                rebinned_result = rebin_by_pitch_angle_and_gyrophase(
+                    flux[0][time_index],
+                    flux[1][time_index],
+                    flux[2][time_index],
+                    input_bin_pitch_angles,
+                    input_bin_gyrophases,
+                    number_of_pitch_angle_bins,
+                    number_of_gyrophase_bins)
+
+                flux_by_pa_gyro, flux_delta_plus_by_pa_gyro, flux_delta_minus_by_pa_gyro = rebinned_result[
+                                                                                           0:3]
+                flux_by_pa, flux_delta_plus_by_pa, flux_delta_minus_by_pa = rebinned_result[3:6]
+
+                rebinned_pa_gyro_flux_by_species[species][0][time_index] = flux_by_pa_gyro
+                rebinned_pa_gyro_flux_by_species[species][1][time_index] = flux_delta_plus_by_pa_gyro
+                rebinned_pa_gyro_flux_by_species[species][2][time_index] = flux_delta_minus_by_pa_gyro
+                rebinned_pa_only_flux_by_species[species][0][time_index] = flux_by_pa
+                rebinned_pa_only_flux_by_species[species][1][time_index] = flux_delta_plus_by_pa
+                rebinned_pa_only_flux_by_species[species][2][time_index] = flux_delta_minus_by_pa
 
         return HitPitchAngleDataProduct(self.input_metadata.to_upstream_data_dependency("sci"), hit_data.epoch,
                                         hit_data.epoch_delta, pitch_angles, pitch_angle_deltas,
                                         gyrophases,
                                         gyrophase_delta,
-                                        rebinned_pa_gyrophase_flux_by_species["hydrogen"],
-                                        rebinned_pa_only_flux_by_species["hydrogen"],
+                                        rebinned_pa_gyro_flux_by_species["hydrogen"][0],
+                                        rebinned_pa_gyro_flux_by_species["hydrogen"][1],
+                                        rebinned_pa_gyro_flux_by_species["hydrogen"][2],
+                                        rebinned_pa_only_flux_by_species["hydrogen"][0],
+                                        rebinned_pa_only_flux_by_species["hydrogen"][1],
+                                        rebinned_pa_only_flux_by_species["hydrogen"][2],
                                         h_energy_center,
                                         h_energy_delta,
-                                        rebinned_pa_gyrophase_flux_by_species["helium4"],
-                                        rebinned_pa_only_flux_by_species["helium4"],
+                                        rebinned_pa_gyro_flux_by_species["helium4"][0],
+                                        rebinned_pa_gyro_flux_by_species["helium4"][1],
+                                        rebinned_pa_gyro_flux_by_species["helium4"][2],
+                                        rebinned_pa_only_flux_by_species["helium4"][0],
+                                        rebinned_pa_only_flux_by_species["helium4"][1],
+                                        rebinned_pa_only_flux_by_species["helium4"][2],
                                         he4_energy_center, he4_energy_delta,
-                                        rebinned_pa_gyrophase_flux_by_species["cno"],
-                                        rebinned_pa_only_flux_by_species["cno"],
+                                        rebinned_pa_gyro_flux_by_species["cno"][0],
+                                        rebinned_pa_gyro_flux_by_species["cno"][1],
+                                        rebinned_pa_gyro_flux_by_species["cno"][2],
+                                        rebinned_pa_only_flux_by_species["cno"][0],
+                                        rebinned_pa_only_flux_by_species["cno"][1],
+                                        rebinned_pa_only_flux_by_species["cno"][2],
                                         cno_energy_center, cno_energy_delta,
-                                        rebinned_pa_gyrophase_flux_by_species["NeMgSi"],
-                                        rebinned_pa_only_flux_by_species["NeMgSi"], nemgsi_energy_center,
-                                        nemgsi_energy_delta, rebinned_pa_gyrophase_flux_by_species["iron"],
-                                        rebinned_pa_only_flux_by_species["iron"], fe_energy_center,
+                                        rebinned_pa_gyro_flux_by_species["NeMgSi"][0],
+                                        rebinned_pa_gyro_flux_by_species["NeMgSi"][1],
+                                        rebinned_pa_gyro_flux_by_species["NeMgSi"][2],
+                                        rebinned_pa_only_flux_by_species["NeMgSi"][0],
+                                        rebinned_pa_only_flux_by_species["NeMgSi"][1],
+                                        rebinned_pa_only_flux_by_species["NeMgSi"][2],
+                                        nemgsi_energy_center,
+                                        nemgsi_energy_delta,
+                                        rebinned_pa_gyro_flux_by_species["iron"][0],
+                                        rebinned_pa_gyro_flux_by_species["iron"][1],
+                                        rebinned_pa_gyro_flux_by_species["iron"][2],
+                                        rebinned_pa_only_flux_by_species["iron"][0],
+                                        rebinned_pa_only_flux_by_species["iron"][1],
+                                        rebinned_pa_only_flux_by_species["iron"][2],
+                                        fe_energy_center,
                                         fe_energy_delta)
+
+    @staticmethod
+    def _create_nan_array(shape) -> tuple[np.array, np.array, np.array]:
+        return np.full(shape, np.nan), np.full(shape, np.nan), np.full(shape, np.nan)

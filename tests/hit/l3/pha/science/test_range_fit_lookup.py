@@ -24,38 +24,51 @@ class TestRangeFitLookup(unittest.TestCase):
         self.assertAlmostEqual(result, ((a1 * e_prime ** b1) ** gamma + (a2 * e_prime ** b2) ** gamma) ** (1 / gamma))
 
     def test_loads_csv_into_array(self):
-        with tempfile.TemporaryDirectory() as tempdir:
-            range2_path = os.path.join(tempdir, "range2.csv")
-            range3_path = os.path.join(tempdir, "range3.csv")
-            range4_path = os.path.join(tempdir, "range4.csv")
+        test_cases = [
+            (DetectedRange.R2A, "range2.csv"),
+            (DetectedRange.R2B, "range2.csv"),
+            (DetectedRange.R3A, "range3.csv"),
+            (DetectedRange.R3B, "range3.csv"),
+            (DetectedRange.R4A, "range4.csv"),
+            (DetectedRange.R4B, "range4.csv"),
+        ]
+        for range, file_to_populate in test_cases:
+            with self.subTest(range):
+                with tempfile.TemporaryDirectory() as tempdir:
+                    range2_path = os.path.join(tempdir, "range2.csv")
+                    range3_path = os.path.join(tempdir, "range3.csv")
+                    range4_path = os.path.join(tempdir, "range4.csv")
 
-            expected_charges = [12, 13]
-            charge1_parameters = [1, 2, 3, 4, 5]
-            charge2_parameters = [4, 5, 6, 7, 8]
+                    expected_charges = [12, 13]
+                    charge1_parameters = [1, 2, 3, 4, 5]
+                    charge2_parameters = [4, 5, 6, 7, 8]
 
-            with open(range3_path, 'w') as range3_file:
-                range3_file.write("""# 
+                    open(range2_path, 'w').close()
+                    open(range3_path, 'w').close()
+                    open(range4_path, 'w').close()
+
+                    path_to_populate = os.path.join(tempdir, file_to_populate)
+                    with open(path_to_populate, 'w') as range_file:
+                        range_file.write("""# 
 # Format: ion_charge, a1, b1, a2, b2, gamma
 # 
 """)
-                csv_writer = csv.writer(range3_file)
-                csv_writer.writerow(expected_charges[0:1] + charge1_parameters)
-                csv_writer.writerow(expected_charges[1:2] + charge2_parameters)
-            open(range2_path, 'w').close()
-            open(range4_path, 'w').close()
+                        csv_writer = csv.writer(range_file)
+                        csv_writer.writerow(expected_charges[0:1] + charge1_parameters)
+                        csv_writer.writerow(expected_charges[1:2] + charge2_parameters)
 
-            lookup_table = RangeFitLookup.from_files(
-                range2_file=range2_path,
-                range3_file=range3_path,
-                range4_file=range4_path)
+                    lookup_table = RangeFitLookup.from_files(
+                        range2_file=range2_path,
+                        range3_file=range3_path,
+                        range4_file=range4_path)
 
-            e_prime = 11.2
+                    e_prime = 11.2
 
-            charges, delta_e_loss = lookup_table.evaluate_e_prime(DetectedRange.R3, e_prime)
+                    charges, delta_e_loss = lookup_table.evaluate_e_prime(range, e_prime)
 
-            np.testing.assert_equal(charges, expected_charges)
-            np.testing.assert_equal([double_power_law(e_prime, *charge1_parameters),
-                                     double_power_law(e_prime, *charge2_parameters)], delta_e_loss)
+                    np.testing.assert_equal(charges, expected_charges)
+                    np.testing.assert_equal([double_power_law(e_prime, *charge1_parameters),
+                                             double_power_law(e_prime, *charge2_parameters)], delta_e_loss)
 
     def test_load_from_real_example_files(self):
         range_fit_lookup = RangeFitLookup.from_files(

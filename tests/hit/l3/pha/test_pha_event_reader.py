@@ -13,9 +13,10 @@ class TestPHAEventReader(unittest.TestCase):
 
     def test_can_create_detector_from_address(self):
         address_to_expected_detector = [
-            (35, "L1B1a", Detector(layer=1, side="B", segment="1a", address=35)),
-            (6, "L2A3", Detector(layer=2, side="A", segment="3", address=6)),
-            (31, "L4Ao", Detector(layer=4, side="A", segment="o", address=31)),
+            (35, "L1B1a", Detector(layer=1, side="B", segment="1a", address=35, group="L1B14")),
+            (6, "L2A3", Detector(layer=2, side="A", segment="3", address=6, group="L2A")),
+            (31, "L4Ao", Detector(layer=4, side="A", segment="o", address=31, group="L4oA")),
+            (10, "L4AUnknown_10", Detector(layer=4, side="A", segment="UNKNOWN_10", address=10, group="Unknown")),
         ]
 
         for address, expected_detector_name, expected_detector in address_to_expected_detector:

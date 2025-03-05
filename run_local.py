@@ -18,6 +18,7 @@ from imap_processing.hit.l3.pha.science.calculate_pha import process_pha_event
 from imap_processing.hit.l3.pha.science.cosine_correction_lookup_table import CosineCorrectionLookupTable
 from imap_processing.hit.l3.pha.science.gain_lookup_table import GainLookupTable
 from imap_processing.hit.l3.pha.science.range_fit_lookup import RangeFitLookup
+from imap_processing.hit.l3.utils import read_l2_hit_data
 from imap_processing.models import InputMetadata, UpstreamDataDependency
 from imap_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density import \
     AlphaTemperatureDensityCalibrationTable
@@ -35,7 +36,7 @@ from imap_processing.swapi.l3b.swapi_l3b_dependencies import SwapiL3BDependencie
 from imap_processing.swapi.swapi_processor import SwapiProcessor
 from imap_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies
 from imap_processing.swe.swe_processor import SweProcessor
-from imap_processing.utils import save_data
+from imap_processing.utils import save_data, read_l1d_mag_data
 from tests.test_helpers import get_test_data_path
 
 
@@ -150,7 +151,7 @@ def create_swe_moments_cdf(dependencies: SweL3Dependencies) -> str:
 def create_hit_sectored_cdf(dependencies: HITL3SectoredDependencies) -> str:
     input_metadata = InputMetadata(
         instrument='hit',
-        data_level='l3',
+        data_level='l3b',
         start_date=datetime(2025, 10, 23),
         end_date=datetime(2025, 10, 24),
         version='v999')
@@ -207,7 +208,7 @@ def create_hit_direct_event_cdf():
                                                      gain_lookup=gain_table, range_fit_lookup=range_fit_lookup)
     input_metadata = InputMetadata(
         instrument="hit",
-        data_level="l3",
+        data_level="l3a",
         start_date=datetime.now(),
         end_date=datetime.now() + timedelta(days=1),
         version="",
@@ -258,13 +259,15 @@ if __name__ == "__main__":
         print(path)
 
     if "hit" in sys.argv:
-        # mag_data = read_l1d_mag_data(get_test_data_path("mag/imap_mag_l1d_mago-normal_20250101_v001.cdf"))
-        # hit_data = read_l2_hit_data(get_test_data_path("hit/hit_l2_sectored_sample1_20250101.cdf"))
-        # dependencies = HITL3SectoredDependencies(mag_l1d_data=mag_data, data=hit_data)
-        # print(f"hit sectored data product: {create_hit_sectored_cdf(dependencies)}")
-
-        path = create_hit_direct_event_cdf()
-        print(f"hit direct event data product: {path}")
+        if "l3a" in sys.argv:
+            path = create_hit_direct_event_cdf()
+            print(f"hit direct event data product: {path}")
+        else:
+            mag_data = read_l1d_mag_data(get_test_data_path("mag/imap_mag_l1d_mago-normal_20250101_v001.cdf"))
+            hit_data = read_l2_hit_data(
+                get_test_data_path("hit/hit_l2_sectored-sample1-with-uncertainties_20250101.cdf"))
+            dependencies = HITL3SectoredDependencies(mag_l1d_data=mag_data, data=hit_data)
+            print(f"hit sectored data product: {create_hit_sectored_cdf(dependencies)}")
 
     if "swe_pitch_angels" in sys.argv:
         dependencies = SweL3Dependencies.from_file_paths(

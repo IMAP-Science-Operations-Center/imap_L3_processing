@@ -6,9 +6,12 @@ from imap_processing.hit.l3.pha.pha_event_reader import Detector
 
 
 class DetectedRange(Enum):
-    R2 = 2
-    R3 = 3
-    R4 = 4
+    R2A = "2A"
+    R2B = "2B"
+    R3A = "3A"
+    R3B = "3B"
+    R4A = "4A"
+    R4B = "4B"
 
 
 class CosineCorrectionLookupTable:
@@ -34,6 +37,11 @@ class CosineCorrectionLookupTable:
                         lookup_table[lookup_key] = float(value)
 
     def get_cosine_correction(self, range: DetectedRange, l1_detector: Detector, l2_detector: Detector) -> float:
-        corrections_by_range = {DetectedRange.R2: self._range2_corrections, DetectedRange.R3: self._range3_corrections,
-                                DetectedRange.R4: self._range4_corrections}
+        corrections_by_range = {DetectedRange.R2A: self._range2_corrections,
+                                DetectedRange.R2B: self._range2_corrections,
+                                DetectedRange.R3A: self._range3_corrections,
+                                DetectedRange.R3B: self._range3_corrections,
+                                DetectedRange.R4A: self._range4_corrections,
+                                DetectedRange.R4B: self._range4_corrections
+                                }
         return corrections_by_range[range][(l1_detector.segment, l2_detector.segment)]

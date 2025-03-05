@@ -1,5 +1,8 @@
+import shutil
+import tempfile
 import unittest
 from datetime import datetime, timedelta
+from pathlib import Path
 
 import numpy as np
 from spacepy.pycdf import CDF
@@ -80,6 +83,23 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(498.4245091006667, result.proton_sw_speed[0])
         self.assertEqual(82.53712019721974, result.proton_sw_clock_angle[0])
         self.assertEqual(5.553957246800335e-06, result.proton_sw_deflection_angle[0])
+
+    def test_read_l3a_swapi_proton_data_with_fill_values(self):
+        with tempfile.TemporaryDirectory() as tempdir:
+            cdf_with_fill_path = Path(tempdir, 'swe_file_with_fill.cdf')
+            shutil.copyfile(get_test_data_path('swe/imap_swapi_l3a_proton-sw_20250101_v001.cdf'), cdf_with_fill_path)
+            with CDF(str(cdf_with_fill_path), readonly=False) as cdf:
+                proton_sw_speed_fill_value = cdf['proton_sw_speed'].attrs['FILLVAL']
+                proton_sw_clock_angle_fill_value = cdf['proton_sw_clock_angle'].attrs['FILLVAL']
+                proton_sw_deflection_angle_fill_value = cdf['proton_sw_deflection_angle'].attrs['FILLVAL']
+                cdf['proton_sw_speed'][0] = proton_sw_speed_fill_value
+                cdf['proton_sw_clock_angle'][0] = proton_sw_clock_angle_fill_value
+                cdf['proton_sw_deflection_angle'][0] = proton_sw_deflection_angle_fill_value
+
+            swapi_l3a_data = read_l3a_swapi_proton_data(cdf_with_fill_path)
+            self.assertTrue(np.isnan(swapi_l3a_data.proton_sw_speed[0]))
+            self.assertTrue(np.isnan(swapi_l3a_data.proton_sw_clock_angle[0]))
+            self.assertTrue(np.isnan(swapi_l3a_data.proton_sw_deflection_angle[0]))
 
 
 if __name__ == '__main__':

@@ -12,6 +12,7 @@ class Detector:
     side: Literal["A", "B"]
     segment: str
     address: int
+    group: str
 
     def __str__(self):
         return "L" + str(self.layer) + self.side + self.segment
@@ -24,17 +25,22 @@ class Detector:
             with open(Path(__file__).parent / "address_to_detector.csv") as detector_mapping_file:
                 reader = csv.reader(detector_mapping_file)
                 next(reader)
-                for name, address_str, _ in reader:
-                    cls.detector_mapping[int(address_str)] = name
-        detector_string = cls.detector_mapping.get(address)
-        if detector_string is not None:
-            layer = int(detector_string[1])
+                for name, address_str, group in reader:
+                    cls.detector_mapping[int(address_str)] = (name, group)
+
+        detector_name_and_group = cls.detector_mapping.get(address)
+
+        if detector_name_and_group is not None:
+            detector_name, group = detector_name_and_group
+            layer = int(detector_name[1])
             return cls(layer=layer,
-                       side=detector_string[2],
-                       segment=detector_string[3:],
-                       address=address)
+                       side=detector_name[2],
+                       segment=detector_name[3:],
+                       address=address,
+                       group=group)
+
         else:
-            return cls(layer=4, side="A", segment=f"UNKNOWN_{address}", address=address)
+            return cls(layer=4, side="A", segment=f"UNKNOWN_{address}", address=address, group="Unknown")
 
 
 @dataclass

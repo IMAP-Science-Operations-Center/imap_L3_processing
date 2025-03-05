@@ -41,9 +41,9 @@ def read_l3a_swapi_proton_data(swapi_l3a_data: Path) -> SwapiL3aProtonData:
             epoch_delta = [timedelta(seconds=x) for x in epoch_delta_ns]
         else:
             epoch_delta = np.repeat(timedelta(seconds=epoch_delta_ns), len(epoch))
-        proton_sw_speed = cdf["proton_sw_speed"][:]
-        proton_sw_clock_angle = cdf["proton_sw_clock_angle"][:]
-        proton_sw_deflection_angle = cdf["proton_sw_deflection_angle"][:]
+        proton_sw_speed = read_variable(cdf["proton_sw_speed"])
+        proton_sw_clock_angle = read_variable(cdf["proton_sw_clock_angle"])
+        proton_sw_deflection_angle = read_variable(cdf["proton_sw_deflection_angle"])
 
     return SwapiL3aProtonData(epoch=epoch,
                               epoch_delta=epoch_delta,
