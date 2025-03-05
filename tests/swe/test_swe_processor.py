@@ -27,7 +27,7 @@ class TestSweProcessor(unittest.TestCase):
         mock_save_data.assert_called_once_with(mock_calculate_pitch_angle_products.return_value)
         mock_upload.assert_called_once_with(mock_save_data.return_value)
 
-    @patch('imap_processing.swe.swe_processor.average_flux')
+    @patch('imap_processing.swe.swe_processor.average_over_look_directions')
     @patch('imap_processing.swe.swe_processor.find_breakpoints')
     @patch('imap_processing.swe.swe_processor.calculate_solar_wind_velocity_vector')
     @patch('imap_processing.swe.swe_processor.correct_and_rebin')
@@ -40,7 +40,7 @@ class TestSweProcessor(unittest.TestCase):
                                             mock_correct_and_rebin,
                                             mock_calculate_solar_wind_velocity_vector,
                                             mock_find_breakpoints,
-                                            mock_average_flux):
+                                            mock_average_over_look_directions):
         epochs = datetime.now() + np.arange(3) * timedelta(minutes=1)
         mag_epochs = datetime.now() - timedelta(seconds=15) + np.arange(10) * timedelta(minutes=.5)
         swapi_epochs = datetime.now() - timedelta(seconds=15) + np.arange(10) * timedelta(minutes=.5)
@@ -74,7 +74,7 @@ class TestSweProcessor(unittest.TestCase):
             proton_sw_clock_angle=np.array([]),
             proton_sw_deflection_angle=np.array([]),
         )
-        mock_average_flux.return_value = np.array([5, 10, 15])
+        mock_average_over_look_directions.return_value = np.array([5, 10, 15])
         closest_mag_data = np.arange(9).reshape(3, 3)
         closest_swapi_data = np.arange(8, 17).reshape(3, 3)
         mock_find_closest_neighbor.side_effect = [
@@ -119,7 +119,7 @@ class TestSweProcessor(unittest.TestCase):
         swe_processor = SweProcessor(dependencies=[], input_metadata=input_metadata)
         swe_l3_data = swe_processor.calculate_pitch_angle_products(swel3_dependency)
 
-        self.assertEqual(3, mock_average_flux.call_count)
+        self.assertEqual(3, mock_average_over_look_directions.call_count)
         self.assertEqual(3, mock_find_breakpoints.call_count)
         self.assertEqual(6, mock_correct_and_rebin.call_count)
         self.assertEqual(3, mock_integrate_distribution_to_get_1d_spectrum.call_count)
@@ -141,19 +141,19 @@ class TestSweProcessor(unittest.TestCase):
                 maximum_distance=timedelta(minutes=5)
             )
         ])
-        mock_average_flux.assert_has_calls([
-            call(NumpyArrayMatcher(swe_l2_data.flux[0]), NumpyArrayMatcher(geometric_fractions)),
-            call(NumpyArrayMatcher(swe_l2_data.flux[1]), NumpyArrayMatcher(geometric_fractions)),
-            call(NumpyArrayMatcher(swe_l2_data.flux[2]), NumpyArrayMatcher(geometric_fractions))])
+        mock_average_over_look_directions.assert_has_calls([
+            call(NumpyArrayMatcher(swe_l2_data.phase_space_density[0]), NumpyArrayMatcher(geometric_fractions)),
+            call(NumpyArrayMatcher(swe_l2_data.phase_space_density[1]), NumpyArrayMatcher(geometric_fractions)),
+            call(NumpyArrayMatcher(swe_l2_data.phase_space_density[2]), NumpyArrayMatcher(geometric_fractions))])
 
         spacecraft_potential_initial_guess = swe_config['spacecraft_potential_initial_guess']
         halo_core_initial_guess = swe_config['core_halo_breakpoint_initial_guess']
         mock_find_breakpoints.assert_has_calls([
-            call(swe_l2_data.energy, mock_average_flux.return_value, spacecraft_potential_initial_guess,
+            call(swe_l2_data.energy, mock_average_over_look_directions.return_value, spacecraft_potential_initial_guess,
                  halo_core_initial_guess, 15, 90, swe_config),
-            call(swe_l2_data.energy, mock_average_flux.return_value, spacecraft_potential_initial_guess,
+            call(swe_l2_data.energy, mock_average_over_look_directions.return_value, spacecraft_potential_initial_guess,
                  halo_core_initial_guess, 12, 96, swe_config),
-            call(swe_l2_data.energy, mock_average_flux.return_value, 14, 92, 16, 86, swe_config),
+            call(swe_l2_data.energy, mock_average_over_look_directions.return_value, 14, 92, 16, 86, swe_config),
         ])
 
         self.assertEqual(UpstreamDataDependency("swe", "l3", datetime(2025, 2, 21),
