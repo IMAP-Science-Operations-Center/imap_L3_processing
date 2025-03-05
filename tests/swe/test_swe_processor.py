@@ -5,7 +5,7 @@ from unittest.mock import patch, call, Mock
 import numpy as np
 
 from imap_processing.models import MagL1dData, InputMetadata, UpstreamDataDependency
-from imap_processing.swe.l3.models import SweL2Data, SweConfiguration, SwapiL3aProtonData
+from imap_processing.swe.l3.models import SweL2Data, SwapiL3aProtonData
 from imap_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies
 from imap_processing.swe.swe_processor import SweProcessor
 from tests.test_helpers import NumpyArrayMatcher, build_swe_configuration
@@ -206,5 +206,48 @@ class TestSweProcessor(unittest.TestCase):
             call(rebinned_by_pitch[5], swe_config)
         ])
 
-    def test_calculate_moment_products(self):
-        pass
+    @patch('imap_processing.swe.swe_processor.find_breakpoints')
+    @patch('imap_processing.swe.swe_processor.average_over_look_directions')
+    def test_calculate_moment_products(self, mock_average_over_look_directions, mock_find_breakpoints):
+        epochs = datetime.now() + np.arange(2) * timedelta(minutes=1)
+        geometric_fractions = [0.0697327, 0.138312, 0.175125, 0.181759,
+                               0.204686, 0.151448, 0.0781351]
+        swe_config = build_swe_configuration(
+            geometric_fractions=geometric_fractions,
+        )
+
+        swe_l2_data = SweL2Data(
+            epoch=epochs,
+            epoch_delta=np.repeat(timedelta(seconds=30), 2),
+            phase_space_density=np.arange(9).reshape(3, 3) + 100,
+            flux=np.arange(9).reshape(3, 3),
+            energy=np.array([2, 4, 6]),
+            inst_el=np.array([]),
+            inst_az_spin_sector=np.arange(10, 19).reshape(3, 3),
+            acquisition_time=np.array([]),
+        )
+
+        mock_average_over_look_directions.return_value = np.array([5, 10, 15])
+        input_metadata = InputMetadata("swe", "l3", datetime(2025, 2, 21),
+                                       datetime(2025, 2, 22), "v001")
+
+        swel3_dependency = SweL3Dependencies(swe_l2_data, Mock(), Mock(), swe_config)
+        swe_processor = SweProcessor(dependencies=[], input_metadata=input_metadata)
+
+        swe_l3_moment_data = swe_processor.calculate_moment_products(swel3_dependency)
+
+        self.assertEqual(2, mock_average_over_look_directions.call_count)
+        mock_average_over_look_directions.assert_has_calls([
+            call(NumpyArrayMatcher(swe_l2_data.phase_space_density[0]), NumpyArrayMatcher(geometric_fractions)),
+            call(NumpyArrayMatcher(swe_l2_data.phase_space_density[1]), NumpyArrayMatcher(geometric_fractions))])
+
+        spacecraft_potential_initial_guess = swe_config['spacecraft_potential_initial_guess']
+        halo_core_initial_guess = swe_config['core_halo_breakpoint_initial_guess']
+
+        mock_find_breakpoints.assert_has_calls([
+            call(swe_l2_data.energy, mock_average_over_look_directions.return_value, spacecraft_potential_initial_guess,
+                 halo_core_initial_guess, 15, 90, swe_config),
+            call(swe_l2_data.energy, mock_average_over_look_directions.return_value, spacecraft_potential_initial_guess,
+                 halo_core_initial_guess, 12, 96, swe_config),
+            call(swe_l2_data.energy, mock_average_over_look_directions.return_value, 14, 92, 16, 86, swe_config),
+        ])
