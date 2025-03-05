@@ -9,14 +9,20 @@ from imap_processing.models import UpstreamDataDependency
 from imap_processing.utils import download_dependency
 
 HIT_L1A_EVENT_DESCRIPTOR = "pulse-height-events"
-HIT_L3_RANGE_2_COSINE_LOOKUP_DESCRIPTOR = "range-2-cosine-lookup"
-HIT_L3_RANGE_3_COSINE_LOOKUP_DESCRIPTOR = "range-3-cosine-lookup"
-HIT_L3_RANGE_4_COSINE_LOOKUP_DESCRIPTOR = "range-4-cosine-lookup"
+HIT_L3_RANGE_2A_COSINE_LOOKUP_DESCRIPTOR = "range-2A-cosine-lookup"
+HIT_L3_RANGE_3A_COSINE_LOOKUP_DESCRIPTOR = "range-3A-cosine-lookup"
+HIT_L3_RANGE_4A_COSINE_LOOKUP_DESCRIPTOR = "range-4A-cosine-lookup"
+HIT_L3_RANGE_2B_COSINE_LOOKUP_DESCRIPTOR = "range-2B-cosine-lookup"
+HIT_L3_RANGE_3B_COSINE_LOOKUP_DESCRIPTOR = "range-3B-cosine-lookup"
+HIT_L3_RANGE_4B_COSINE_LOOKUP_DESCRIPTOR = "range-4B-cosine-lookup"
 HIT_L3_LO_GAIN_LOOKUP_DESCRIPTOR = "lo-gain-lookup"
 HIT_L3_HI_GAIN_LOOKUP_DESCRIPTOR = "hi-gain-lookup"
-HIT_L3_RANGE_2_CHARGE_FIT_LOOKUP_DESCRIPTOR = "range-2-charge-fit-lookup"
-HIT_L3_RANGE_3_CHARGE_FIT_LOOKUP_DESCRIPTOR = "range_3-charge-fit-lookup"
-HIT_L3_RANGE_4_CHARGE_FIT_LOOKUP_DESCRIPTOR = "range-4-charge-fit-lookup"
+HIT_L3_RANGE_2A_CHARGE_FIT_LOOKUP_DESCRIPTOR = "range-2A-charge-fit-lookup"
+HIT_L3_RANGE_3A_CHARGE_FIT_LOOKUP_DESCRIPTOR = "range_3A-charge-fit-lookup"
+HIT_L3_RANGE_4A_CHARGE_FIT_LOOKUP_DESCRIPTOR = "range-4A-charge-fit-lookup"
+HIT_L3_RANGE_2B_CHARGE_FIT_LOOKUP_DESCRIPTOR = "range-2B-charge-fit-lookup"
+HIT_L3_RANGE_3B_CHARGE_FIT_LOOKUP_DESCRIPTOR = "range_3B-charge-fit-lookup"
+HIT_L3_RANGE_4B_CHARGE_FIT_LOOKUP_DESCRIPTOR = "range-4B-charge-fit-lookup"
 HIT_L3_EVENT_TYPE_LOOKUP_DESCRIPTOR = "hit-event-type-lookup"
 
 
@@ -38,29 +44,49 @@ class HitL3PhaDependencies:
         l1_events_cdf_path = download_dependency(l1_events_dependency)
         hit_l1_data = HitL1Data.read_from_cdf(l1_events_cdf_path)
 
-        range_2_cosine_lookup_path = download_dependency(
-            cls.create_ancillary_dependency(HIT_L3_RANGE_2_COSINE_LOOKUP_DESCRIPTOR))
-        range_3_cosine_lookup_path = download_dependency(
-            cls.create_ancillary_dependency(HIT_L3_RANGE_3_COSINE_LOOKUP_DESCRIPTOR))
-        range_4_cosine_lookup_path = download_dependency(
-            cls.create_ancillary_dependency(HIT_L3_RANGE_4_COSINE_LOOKUP_DESCRIPTOR))
+        range_2A_cosine_lookup_path = download_dependency(
+            cls.create_ancillary_dependency(HIT_L3_RANGE_2A_COSINE_LOOKUP_DESCRIPTOR))
+        range_3A_cosine_lookup_path = download_dependency(
+            cls.create_ancillary_dependency(HIT_L3_RANGE_3A_COSINE_LOOKUP_DESCRIPTOR))
+        range_4A_cosine_lookup_path = download_dependency(
+            cls.create_ancillary_dependency(HIT_L3_RANGE_4A_COSINE_LOOKUP_DESCRIPTOR))
+        range_2B_cosine_lookup_path = download_dependency(
+            cls.create_ancillary_dependency(HIT_L3_RANGE_2B_COSINE_LOOKUP_DESCRIPTOR))
+        range_3B_cosine_lookup_path = download_dependency(
+            cls.create_ancillary_dependency(HIT_L3_RANGE_3B_COSINE_LOOKUP_DESCRIPTOR))
+        range_4B_cosine_lookup_path = download_dependency(
+            cls.create_ancillary_dependency(HIT_L3_RANGE_4B_COSINE_LOOKUP_DESCRIPTOR))
+
         lo_gain_lookup_path = download_dependency(cls.create_ancillary_dependency(HIT_L3_LO_GAIN_LOOKUP_DESCRIPTOR))
         hi_gain_lookup_path = download_dependency(cls.create_ancillary_dependency(HIT_L3_HI_GAIN_LOOKUP_DESCRIPTOR))
-        range_2_charge_fit_lookup_path = download_dependency(
-            cls.create_ancillary_dependency(HIT_L3_RANGE_2_CHARGE_FIT_LOOKUP_DESCRIPTOR))
-        range_3_charge_fit_lookup_path = download_dependency(
-            cls.create_ancillary_dependency(HIT_L3_RANGE_3_CHARGE_FIT_LOOKUP_DESCRIPTOR))
-        range_4_charge_fit_lookup_path = download_dependency(
-            cls.create_ancillary_dependency(HIT_L3_RANGE_4_CHARGE_FIT_LOOKUP_DESCRIPTOR))
+        range_2A_charge_fit_lookup_path = download_dependency(
+            cls.create_ancillary_dependency(HIT_L3_RANGE_2A_CHARGE_FIT_LOOKUP_DESCRIPTOR))
+        range_3A_charge_fit_lookup_path = download_dependency(
+            cls.create_ancillary_dependency(HIT_L3_RANGE_3A_CHARGE_FIT_LOOKUP_DESCRIPTOR))
+        range_4A_charge_fit_lookup_path = download_dependency(
+            cls.create_ancillary_dependency(HIT_L3_RANGE_4A_CHARGE_FIT_LOOKUP_DESCRIPTOR))
+        range_2B_charge_fit_lookup_path = download_dependency(
+            cls.create_ancillary_dependency(HIT_L3_RANGE_2B_CHARGE_FIT_LOOKUP_DESCRIPTOR))
+        range_3B_charge_fit_lookup_path = download_dependency(
+            cls.create_ancillary_dependency(HIT_L3_RANGE_3B_CHARGE_FIT_LOOKUP_DESCRIPTOR))
+        range_4B_charge_fit_lookup_path = download_dependency(
+            cls.create_ancillary_dependency(HIT_L3_RANGE_4B_CHARGE_FIT_LOOKUP_DESCRIPTOR))
         event_type_lookup_path = download_dependency(
             cls.create_ancillary_dependency(HIT_L3_EVENT_TYPE_LOOKUP_DESCRIPTOR))
 
-        cosine_lookup_table = CosineCorrectionLookupTable(range_2_cosine_lookup_path, range_3_cosine_lookup_path,
-                                                          range_4_cosine_lookup_path)
+        cosine_lookup_table = CosineCorrectionLookupTable(range_2A_cosine_lookup_path, range_3A_cosine_lookup_path,
+                                                          range_4A_cosine_lookup_path,
+                                                          range_2B_cosine_lookup_path,
+                                                          range_3B_cosine_lookup_path,
+                                                          range_4B_cosine_lookup_path, )
         gain_lookup_table = GainLookupTable.from_file(hi_gain_lookup_path, lo_gain_lookup_path)
-        range_fit_lookup_table = RangeFitLookup.from_files(range_2_charge_fit_lookup_path,
-                                                           range_3_charge_fit_lookup_path,
-                                                           range_4_charge_fit_lookup_path)
+        range_fit_lookup_table = RangeFitLookup.from_files(range_2A_charge_fit_lookup_path,
+                                                           range_3A_charge_fit_lookup_path,
+                                                           range_4A_charge_fit_lookup_path,
+                                                           range_2B_charge_fit_lookup_path,
+                                                           range_3B_charge_fit_lookup_path,
+                                                           range_4B_charge_fit_lookup_path
+                                                           )
         event_type_lookup_table = HitEventTypeLookup.from_csv(event_type_lookup_path)
         return cls(hit_l1_data=hit_l1_data,
                    cosine_correction_lookup=cosine_lookup_table,

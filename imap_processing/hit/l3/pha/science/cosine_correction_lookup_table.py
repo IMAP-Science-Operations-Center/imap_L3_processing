@@ -17,7 +17,7 @@ class DetectorRange(Enum):
     R4 = 4
 
 
-@dataclass
+@dataclass(frozen=True)
 class DetectedRange:
     range: DetectorRange
     side: DetectorSide
@@ -28,14 +28,21 @@ class CosineCorrectionLookupTable:
                           "L1A3b", "L1A3c", "L1A4a", "L1A4b", "L1A4c"]
     _l2_detector_order = ["L2A0", "L2A1", "L2A2", "L2A3", "L2A4", "L2A5", "L2A6", "L2A7", "L2A8", "L2A9"]
 
-    def __init__(self, range_2_file_path: Path, range_3_file_path: Path, range_4_file_path: Path):
-        self._range2_corrections = {}
-        self._range3_corrections = {}
-        self._range4_corrections = {}
+    def __init__(self, range_2A_file_path: Path, range_3A_file_path: Path, range_4A_file_path: Path,
+                 range_2B_file_path: Path, range_3B_file_path: Path, range_4B_file_path: Path):
+        self._range2A_corrections = {}
+        self._range3A_corrections = {}
+        self._range4A_corrections = {}
+        self._range2B_corrections = {}
+        self._range3B_corrections = {}
+        self._range4B_corrections = {}
 
-        for path, lookup_table in [(range_2_file_path, self._range2_corrections),
-                                   (range_3_file_path, self._range3_corrections),
-                                   (range_4_file_path, self._range4_corrections)]:
+        for path, lookup_table in [(range_2A_file_path, self._range2A_corrections),
+                                   (range_3A_file_path, self._range3A_corrections),
+                                   (range_4A_file_path, self._range4A_corrections),
+                                   (range_2B_file_path, self._range2B_corrections),
+                                   (range_3B_file_path, self._range3B_corrections),
+                                   (range_4B_file_path, self._range4B_corrections)]:
 
             with open(str(path)) as file:
                 detected_range_reader = csv.reader(file, delimiter=",")
@@ -47,8 +54,12 @@ class CosineCorrectionLookupTable:
 
     def get_cosine_correction(self, detected_range: DetectedRange, l1_detector: Detector,
                               l2_detector: Detector) -> float:
-        corrections_by_range = {DetectorRange.R2: self._range2_corrections,
-                                DetectorRange.R3: self._range3_corrections,
-                                DetectorRange.R4: self._range4_corrections,
-                                }
-        return corrections_by_range[detected_range.range][(l1_detector.segment, l2_detector.segment)]
+        corrections_by_range = {
+            DetectedRange(DetectorRange.R2, DetectorSide.A): self._range2A_corrections,
+            DetectedRange(DetectorRange.R3, DetectorSide.A): self._range3A_corrections,
+            DetectedRange(DetectorRange.R4, DetectorSide.A): self._range4A_corrections,
+            DetectedRange(DetectorRange.R2, DetectorSide.B): self._range2A_corrections,
+            DetectedRange(DetectorRange.R3, DetectorSide.B): self._range3A_corrections,
+            DetectedRange(DetectorRange.R4, DetectorSide.B): self._range4A_corrections,
+        }
+        return corrections_by_range[detected_range][(l1_detector.segment, l2_detector.segment)]
