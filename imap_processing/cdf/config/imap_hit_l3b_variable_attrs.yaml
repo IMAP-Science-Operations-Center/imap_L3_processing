@@ -588,8 +588,8 @@ h_energy:
   VALIDMAX: 1000
   FILLVAL: -1.00E+31
   SCALETYP: log
-  DELTA_PLUS_VAR: h_energy_delta
-  DELTA_MINUS_VAR: h_energy_delta
+  DELTA_PLUS_VAR: h_energy_delta_plus
+  DELTA_MINUS_VAR: h_energy_delta_minus
 
 he4_energy:
   CATDESC: Energy bins for He4 by pitch angle and gyrophase
@@ -602,8 +602,8 @@ he4_energy:
   VALIDMAX: 1000
   FILLVAL: -1.00E+31
   SCALETYP: log
-  DELTA_PLUS_VAR: he4_energy_delta
-  DELTA_MINUS_VAR: he4_energy_delta
+  DELTA_PLUS_VAR: he4_energy_delta_plus
+  DELTA_MINUS_VAR: he4_energy_delta_minus
 
 cno_energy:
   CATDESC: Energy bins for CNO by pitch angle and gyrophase
@@ -616,8 +616,8 @@ cno_energy:
   VALIDMAX: 1000
   FILLVAL: -1.00E+31
   SCALETYP: log
-  DELTA_PLUS_VAR: cno_energy_delta
-  DELTA_MINUS_VAR: cno_energy_delta
+  DELTA_PLUS_VAR: cno_energy_delta_plus
+  DELTA_MINUS_VAR: cno_energy_delta_minus
 
 nemgsi_energy:
   CATDESC: Energy bins for NeMgSi by pitch angle and gyrophase
@@ -630,8 +630,8 @@ nemgsi_energy:
   VALIDMAX: 1000
   FILLVAL: -1.00E+31
   SCALETYP: log
-  DELTA_PLUS_VAR: nemgsi_energy_delta
-  DELTA_MINUS_VAR: nemgsi_energy_delta
+  DELTA_PLUS_VAR: nemgsi_energy_delta_plus
+  DELTA_MINUS_VAR: nemgsi_energy_delta_minus
 
 fe_energy:
   CATDESC: Energy bins for Fe by pitch angle and gyrophase
@@ -644,14 +644,14 @@ fe_energy:
   VALIDMAX: 1000
   FILLVAL: -1.00E+31
   SCALETYP: log
-  DELTA_PLUS_VAR: fe_energy_delta
-  DELTA_MINUS_VAR: fe_energy_delta
+  DELTA_PLUS_VAR: fe_energy_delta_plus
+  DELTA_MINUS_VAR: fe_energy_delta_minus
 
-h_energy_delta:
-  CATDESC: H energy bin Delta
+h_energy_delta_plus:
+  CATDESC: H energy bin Delta plus
   VAR_TYPE: support_data
   DISPLAY_TYPE: no_plot
-  FIELDNAM: h_energy_delta
+  FIELDNAM: h_energy_delta_plus
   FORMAT: F5.1
   LABLAXIS: Energy
   UNITS: MeV
@@ -661,11 +661,11 @@ h_energy_delta:
   SCALEMIN: 0.0001
   SCALEMAX: 1000
 
-he4_energy_delta:
-  CATDESC: He4 energy bin Delta
+he4_energy_delta_plus:
+  CATDESC: He4 energy bin Delta plus
   VAR_TYPE: support_data
   DISPLAY_TYPE: no_plot
-  FIELDNAM: he4_energy_delta
+  FIELDNAM: he4_energy_delta_plus
   FORMAT: F5.1
   LABLAXIS: Energy
   UNITS: MeV
@@ -675,11 +675,11 @@ he4_energy_delta:
   SCALEMIN: 0.0001
   SCALEMAX: 1000
 
-cno_energy_delta:
-  CATDESC: CNO energy bin Delta
+cno_energy_delta_plus:
+  CATDESC: CNO energy bin Delta plus
   VAR_TYPE: support_data
   DISPLAY_TYPE: no_plot
-  FIELDNAM: cno_energy_delta
+  FIELDNAM: cno_energy_delta_plus
   FORMAT: F5.1
   LABLAXIS: Energy
   UNITS: MeV
@@ -689,11 +689,11 @@ cno_energy_delta:
   SCALEMIN: 0.0001
   SCALEMAX: 1000
 
-nemgsi_energy_delta:
-  CATDESC: NeMgSi energy bin Delta
+nemgsi_energy_delta_plus:
+  CATDESC: NeMgSi energy bin Delta plus
   VAR_TYPE: support_data
   DISPLAY_TYPE: no_plot
-  FIELDNAM: nemgsi_energy_delta
+  FIELDNAM: nemgsi_energy_delta_plus
   FORMAT: F5.1
   LABLAXIS: Energy
   UNITS: MeV
@@ -703,11 +703,81 @@ nemgsi_energy_delta:
   SCALEMIN: 0.0001
   SCALEMAX: 1000
 
-fe_energy_delta:
-  CATDESC: Fe energy bin Delta
+fe_energy_delta_plus:
+  CATDESC: Fe energy bin Delta plus
   VAR_TYPE: support_data
   DISPLAY_TYPE: no_plot
-  FIELDNAM: fe_energy_delta
+  FIELDNAM: fe_energy_delta_plus
+  FORMAT: F5.1
+  LABLAXIS: Energy
+  UNITS: MeV
+  VALIDMAX: 1000
+  FILLVAL: -1.00E+31
+  SCALETYP: log
+  SCALEMIN: 0.0001
+  SCALEMAX: 1000
+
+h_energy_delta_minus:
+  CATDESC: H energy bin Delta minus
+  VAR_TYPE: support_data
+  DISPLAY_TYPE: no_plot
+  FIELDNAM: h_energy_delta_minus
+  FORMAT: F5.1
+  LABLAXIS: Energy
+  UNITS: MeV
+  VALIDMAX: 1000
+  FILLVAL: -1.00E+31
+  SCALETYP: log
+  SCALEMIN: 0.0001
+  SCALEMAX: 1000
+
+he4_energy_delta_minus:
+  CATDESC: He4 energy bin Delta minus
+  VAR_TYPE: support_data
+  DISPLAY_TYPE: no_plot
+  FIELDNAM: he4_energy_delta_minus
+  FORMAT: F5.1
+  LABLAXIS: Energy
+  UNITS: MeV
+  VALIDMAX: 1000
+  FILLVAL: -1.00E+31
+  SCALETYP: log
+  SCALEMIN: 0.0001
+  SCALEMAX: 1000
+
+cno_energy_delta_minus:
+  CATDESC: CNO energy bin Delta minus
+  VAR_TYPE: support_data
+  DISPLAY_TYPE: no_plot
+  FIELDNAM: cno_energy_delta_minus
+  FORMAT: F5.1
+  LABLAXIS: Energy
+  UNITS: MeV
+  VALIDMAX: 1000
+  FILLVAL: -1.00E+31
+  SCALETYP: log
+  SCALEMIN: 0.0001
+  SCALEMAX: 1000
+
+nemgsi_energy_delta_minus:
+  CATDESC: NeMgSi energy bin Delta minus
+  VAR_TYPE: support_data
+  DISPLAY_TYPE: no_plot
+  FIELDNAM: nemgsi_energy_delta_minus
+  FORMAT: F5.1
+  LABLAXIS: Energy
+  UNITS: MeV
+  VALIDMAX: 1000
+  FILLVAL: -1.00E+31
+  SCALETYP: log
+  SCALEMIN: 0.0001
+  SCALEMAX: 1000
+
+fe_energy_delta_minus:
+  CATDESC: Fe energy bin Delta minus
+  VAR_TYPE: support_data
+  DISPLAY_TYPE: no_plot
+  FIELDNAM: fe_energy_delta_minus
   FORMAT: F5.1
   LABLAXIS: Energy
   UNITS: MeV

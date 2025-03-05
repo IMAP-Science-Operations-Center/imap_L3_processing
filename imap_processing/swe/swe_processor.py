@@ -7,7 +7,8 @@ from imap_processing.data_utils import find_closest_neighbor
 from imap_processing.processor import Processor
 from imap_processing.swapi.l3a.science.calculate_pickup_ion import calculate_solar_wind_velocity_vector
 from imap_processing.swe.l3.models import SweL3Data
-from imap_processing.swe.l3.science.pitch_calculations import average_flux, find_breakpoints, correct_and_rebin, \
+from imap_processing.swe.l3.science.pitch_calculations import average_over_look_directions, find_breakpoints, \
+    correct_and_rebin, \
     integrate_distribution_to_get_1d_spectrum, integrate_distribution_to_get_inbound_and_outbound_1d_spectrum
 from imap_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies
 from imap_processing.utils import save_data
@@ -53,9 +54,9 @@ class SweProcessor(Processor):
         halo_core_history = [config["core_halo_breakpoint_initial_guess"] for _ in range(4)]
 
         for i in range(len(swe_epoch)):
-            averaged_flux = average_flux(swe_l2_data.flux[i],
-                                         np.array(config["geometric_fractions"]))
-            spacecraft_potential, halo_core = find_breakpoints(swe_l2_data.energy, averaged_flux,
+            averaged_psd = average_over_look_directions(swe_l2_data.phase_space_density[i],
+                                                        np.array(config["geometric_fractions"]))
+            spacecraft_potential, halo_core = find_breakpoints(swe_l2_data.energy, averaged_psd,
                                                                np.average(spacecraft_potential_history[:3]),
                                                                np.average(halo_core_history[:3]),
                                                                spacecraft_potential_history[-1], halo_core_history[-1],

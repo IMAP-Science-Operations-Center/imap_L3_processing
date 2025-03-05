@@ -5,7 +5,7 @@ from unittest.mock import Mock, patch, ANY, call
 import numpy as np
 
 from imap_processing.swe.l3.science.pitch_calculations import piece_wise_model, find_breakpoints, \
-    average_flux, calculate_velocity_in_dsp_frame_km_s, calculate_look_directions, rebin_by_pitch_angle, \
+    average_over_look_directions, calculate_velocity_in_dsp_frame_km_s, calculate_look_directions, rebin_by_pitch_angle, \
     correct_and_rebin, calculate_energy_in_ev_from_velocity_in_km_per_second, integrate_distribution_to_get_1d_spectrum, \
     integrate_distribution_to_get_inbound_and_outbound_1d_spectrum, try_curve_fit_until_valid
 from tests.test_helpers import build_swe_configuration, NumpyArrayMatcher
@@ -26,7 +26,7 @@ class TestPitchCalculations(unittest.TestCase):
             ],
         ])
         geometric_weights = [0.5, 0.25, 0.25, 0]
-        result = average_flux(flux_data, geometric_weights)
+        result = average_over_look_directions(flux_data, geometric_weights)
 
         expected_result = [
             ((1 * 0.5 + 2 * 0.25 + 3 * 0.25) + (5 * 0.5 + 6 * 0.25 + 7 * 0.25) + (9 * 0.5 + 10 * 0.25 + 11 * 0.25)) / 3,
