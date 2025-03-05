@@ -1,4 +1,5 @@
 import sys
+import uuid
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -19,7 +20,6 @@ from imap_processing.hit.l3.pha.science.cosine_correction_lookup_table import Co
 from imap_processing.hit.l3.pha.science.gain_lookup_table import GainLookupTable
 from imap_processing.hit.l3.pha.science.hit_event_type_lookup import HitEventTypeLookup
 from imap_processing.hit.l3.pha.science.range_fit_lookup import RangeFitLookup
-from imap_processing.hit.l3.utils import read_l2_hit_data
 from imap_processing.models import InputMetadata, UpstreamDataDependency
 from imap_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density import \
     AlphaTemperatureDensityCalibrationTable
@@ -37,7 +37,7 @@ from imap_processing.swapi.l3b.swapi_l3b_dependencies import SwapiL3BDependencie
 from imap_processing.swapi.swapi_processor import SwapiProcessor
 from imap_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies
 from imap_processing.swe.swe_processor import SweProcessor
-from imap_processing.utils import save_data, read_l1d_mag_data
+from imap_processing.utils import save_data
 from tests.test_helpers import get_test_data_path
 
 
@@ -154,18 +154,24 @@ def process_hit_pha():
     events = PHAEventReader.read_all_pha_events(bitstream.bin)
 
     cosine_table = CosineCorrectionLookupTable(
-        get_test_data_path("hit/pha_events/imap_hit_l3_r2-cosines-text-not-cdf_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_r3-cosines-text-not-cdf_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_r4-cosines-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_r2A-cosines-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_r3A-cosines-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_r4A-cosines-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_r2B-cosines-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_r3B-cosines-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_r4B-cosines-text-not-cdf_20250203_v001.cdf"),
     )
     gain_table = GainLookupTable.from_file(
         get_test_data_path("hit/pha_events/imap_hit_l3_high-gains-text-not-cdf_20250203_v001.cdf"),
         get_test_data_path("hit/pha_events/imap_hit_l3_low-gains-text-not-cdf_20250203_v001.cdf"))
 
     range_fit_lookup = RangeFitLookup.from_files(
-        get_test_data_path("hit/pha_events/imap_hit_l3_range2-fit-text-not-cdf_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_range3-fit-text-not-cdf_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_range4-fit-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_range2A-fit-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_range3A-fit-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_range4A-fit-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_range2B-fit-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_range3B-fit-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_range4B-fit-text-not-cdf_20250203_v001.cdf"),
     )
     processed_events = [process_pha_event(e, cosine_table, gain_table, range_fit_lookup) for e
                         in events]
@@ -174,18 +180,24 @@ def process_hit_pha():
 
 def create_hit_direct_event_cdf():
     cosine_table = CosineCorrectionLookupTable(
-        get_test_data_path("hit/pha_events/imap_hit_l3_r2-cosines-text-not-cdf_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_r3-cosines-text-not-cdf_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_r4-cosines-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_r2A-cosines-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_r3A-cosines-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_r4A-cosines-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_r2B-cosines-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_r3B-cosines-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_r4B-cosines-text-not-cdf_20250203_v001.cdf"),
     )
     gain_table = GainLookupTable.from_file(
         get_test_data_path("hit/pha_events/imap_hit_l3_high-gains-text-not-cdf_20250203_v001.cdf"),
         get_test_data_path("hit/pha_events/imap_hit_l3_low-gains-text-not-cdf_20250203_v001.cdf"))
 
     range_fit_lookup = RangeFitLookup.from_files(
-        get_test_data_path("hit/pha_events/imap_hit_l3_range2-fit-text-not-cdf_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_range3-fit-text-not-cdf_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_range4-fit-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_range2A-fit-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_range3A-fit-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_range4A-fit-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_range2B-fit-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_range3B-fit-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_range4B-fit-text-not-cdf_20250203_v001.cdf"),
     )
 
     event_type_look = HitEventTypeLookup.from_csv(
@@ -203,7 +215,7 @@ def create_hit_direct_event_cdf():
         data_level="l3a",
         start_date=datetime.now(),
         end_date=datetime.now() + timedelta(days=1),
-        version="",
+        version=str(uuid.uuid4()),
         descriptor="pulse-height-events"
     )
     processor = HitProcessor(None, input_metadata)
@@ -251,15 +263,15 @@ if __name__ == "__main__":
         print(path)
 
     if "hit" in sys.argv:
-        if "l3a" in sys.argv:
-            path = create_hit_direct_event_cdf()
-            print(f"hit direct event data product: {path}")
-        else:
-            mag_data = read_l1d_mag_data(get_test_data_path("mag/imap_mag_l1d_mago-normal_20250101_v001.cdf"))
-            hit_data = read_l2_hit_data(
-                get_test_data_path("hit/hit_l2_sectored-sample1-with-uncertainties_20250101.cdf"))
-            dependencies = HITL3SectoredDependencies(mag_l1d_data=mag_data, data=hit_data)
-            print(f"hit sectored data product: {create_hit_sectored_cdf(dependencies)}")
+        # if "l3a" in sys.argv:
+        path = create_hit_direct_event_cdf()
+        print(f"hit direct event data product: {path}")
+        # else:
+        #     mag_data = read_l1d_mag_data(get_test_data_path("mag/imap_mag_l1d_mago-normal_20250101_v001.cdf"))
+        #     hit_data = read_l2_hit_data(
+        #         get_test_data_path("hit/hit_l2_sectored-sample1-with-uncertainties_20250101.cdf"))
+        #     dependencies = HITL3SectoredDependencies(mag_l1d_data=mag_data, data=hit_data)
+        #     print(f"hit sectored data product: {create_hit_sectored_cdf(dependencies)}")
 
     if "swe" in sys.argv:
         dependencies = SweL3Dependencies.from_file_paths(

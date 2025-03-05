@@ -78,7 +78,7 @@ range:
   FIELDNAM: range
   VALIDMIN: 0
   VALIDMAX: 4
-  FILLVAL: -128
+  FILLVAL: 255
 
 delta_e:
   CATDESC: delta_e

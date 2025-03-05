@@ -59,11 +59,16 @@ def analyze_event(event: RawPHAEvent, gain_lookup: GainLookupTable, rule_lookup:
             highest_value_words_per_group[include_group] = max(groups_to_words[include_group],
                                                                key=calculate_mev_with_bound_lookup)
 
+        l1_detector = [group for group in rule.included_detector_groups if group[0:3] == f"L1{rule.range.side.name}"][0]
+        l2_detector = [group for group in rule.included_detector_groups if group[0:3] == f"L2{rule.range.side.name}"][0]
+
+        detectors_on_range_side = [group for group in rule.included_detector_groups if group[2] == rule.range.side.name]
+        detectors_on_range_side.sort()
         return EventAnalysis(range=rule.range,
-                             l1_detector=highest_value_words_per_group[rule.included_detector_groups[0]].detector,
-                             l2_detector=highest_value_words_per_group[rule.included_detector_groups[1]].detector,
-                             e_delta_word=highest_value_words_per_group[rule.included_detector_groups[-2]],
-                             e_prime_word=highest_value_words_per_group[rule.included_detector_groups[-1]],
+                             l1_detector=highest_value_words_per_group[l1_detector].detector,
+                             l2_detector=highest_value_words_per_group[l2_detector].detector,
+                             e_delta_word=highest_value_words_per_group[detectors_on_range_side[-2]],
+                             e_prime_word=highest_value_words_per_group[detectors_on_range_side[-1]],
                              words_with_highest_energy=list(highest_value_words_per_group.values()))
 
 

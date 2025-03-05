@@ -23,7 +23,7 @@ LATENCY_VAR_NAME = "latency"
 STIM_TAG_VAR_NAME = "stim_tag"
 LONG_EVENT_FLAG_VAR_NAME = "long_event_flag"
 HAZ_TAG_VAR_NAME = "haz_tag"
-A_B_SIDE_VAR_NAME = "a_b_side"
+A_B_SIDE_VAR_NAME = "side"
 HAS_UNREAD_FLAG_VAR_NAME = "has_unread_flag"
 CULLING_FLAG_VAR_NAME = "culling_flag"
 PHA_VALUE_VAR_NAME = "pha_value"
@@ -112,7 +112,7 @@ class HitDirectEventDataProduct(DataProduct):
             DataProductVariable(ENERGY_VAR_NAME, self.energy),
             DataProductVariable(E_DELTA_VAR_NAME, self.e_delta),
             DataProductVariable(E_PRIME_VAR_NAME, self.e_prime),
-            DataProductVariable(DETECTED_RANGE_VAR_NAME, self.detected_range, cdf_data_type=pycdf.const.CDF_UINT1),
+            DataProductVariable(DETECTED_RANGE_VAR_NAME, self.detected_range, cdf_data_type=pycdf.const.CDF_INT4),
             DataProductVariable(PARTICLE_ID_VAR_NAME, self.particle_id, cdf_data_type=pycdf.const.CDF_UINT2),
             DataProductVariable(PRIORITY_BUFFER_NUMBER_VAR_NAME, self.priority_buffer_number,
                                 cdf_data_type=pycdf.const.CDF_UINT1),
