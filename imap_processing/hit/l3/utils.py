@@ -8,12 +8,6 @@ from spacepy.pycdf import CDF
 from imap_processing.hit.l3.models import HitL2Data
 
 
-def convert_bin_high_low_to_center_delta(bin_high: np.array, bin_low: np.array) -> tuple[np.array, np.array]:
-    bin_center = (bin_high + bin_low) / 2
-    bin_delta = bin_high - bin_center
-    return bin_center, bin_delta
-
-
 def read_l2_hit_data(cdf_file_path: Union[str, Path]) -> HitL2Data:
     with CDF(str(cdf_file_path)) as cdf:
         return HitL2Data(
@@ -34,19 +28,19 @@ def read_l2_hit_data(cdf_file_path: Union[str, Path]) -> HitL2Data:
             DELTA_PLUS_HYDROGEN=cdf["DELTA_PLUS_HYDROGEN"][...],
             DELTA_PLUS_IRON=cdf["DELTA_PLUS_IRON"][...],
             DELTA_PLUS_NEMGSI=cdf["DELTA_PLUS_NEMGSI"][...],
-            cno_energy_high=cdf["cno_energy_high"][...],
-            cno_energy_idx=cdf["cno_energy_idx"][...],
-            cno_energy_low=cdf["cno_energy_low"][...],
-            fe_energy_high=cdf["fe_energy_high"][...],
-            fe_energy_idx=cdf["fe_energy_idx"][...],
-            fe_energy_low=cdf["fe_energy_low"][...],
-            h_energy_high=cdf["h_energy_high"][...],
-            h_energy_idx=cdf["h_energy_idx"][...],
-            h_energy_low=cdf["h_energy_low"][...],
-            he4_energy_high=cdf["he4_energy_high"][...],
-            he4_energy_idx=cdf["he4_energy_idx"][...],
-            he4_energy_low=cdf["he4_energy_low"][...],
-            nemgsi_energy_high=cdf["nemgsi_energy_high"][...],
-            nemgsi_energy_idx=cdf["nemgsi_energy_idx"][...],
-            nemgsi_energy_low=cdf["nemgsi_energy_low"][...],
+            cno_energy=cdf["cno_energy"][...],
+            cno_energy_delta_plus=cdf["cno_energy_delta_plus"][...],
+            cno_energy_delta_minus=cdf["cno_energy_delta_minus"][...],
+            fe_energy=cdf["fe_energy"][...],
+            fe_energy_delta_plus=cdf["fe_energy_delta_plus"][...],
+            fe_energy_delta_minus=cdf["fe_energy_delta_minus"][...],
+            h_energy=cdf["h_energy"][...],
+            h_energy_delta_plus=cdf["h_energy_delta_plus"][...],
+            h_energy_delta_minus=cdf["h_energy_delta_minus"][...],
+            he4_energy=cdf["he4_energy"][...],
+            he4_energy_delta_plus=cdf["he4_energy_delta_plus"][...],
+            he4_energy_delta_minus=cdf["he4_energy_delta_minus"][...],
+            nemgsi_energy=cdf["nemgsi_energy"][...],
+            nemgsi_energy_delta_plus=cdf["nemgsi_energy_delta_plus"][...],
+            nemgsi_energy_delta_minus=cdf["nemgsi_energy_delta_minus"][...],
         )
