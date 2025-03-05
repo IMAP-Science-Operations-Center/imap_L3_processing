@@ -26,22 +26,32 @@ def find_breakpoints(energies: np.ndarray, flux: np.ndarray, initial_spacecraft_
                      config: SweConfiguration) -> tuple[
     float, float]:
     log_flux = np.log(flux)
-    slope = -np.diff(log_flux) / np.diff(energies)
-    slope_ratios = slope[1:] / slope[:-1]
+    slopes = -np.diff(log_flux) / np.diff(energies)
+    slope_ratios = slopes[1:] / slopes[:-1]
     numb = np.max(np.nonzero(slope_ratios > config['slope_ratio_cutoff_for_potential_calc']), initial=0)
 
     energies = energies[:numb]
     log_flux = log_flux[:numb]
-    b1 = slope[0]
+    b1: float = slopes[0]
     core_index = np.searchsorted(energies, config["core_energy_for_slope_guess"]) - 1
     halo_index = np.searchsorted(energies, config["halo_energy_for_slope_guess"]) - 1
-    b3 = slope[core_index]
-    b5 = slope[halo_index]
-    b0 = np.exp(log_flux[0] + b1 * energies[0])
+    b3: float = slopes[core_index]
+    b5: float = slopes[halo_index]
+    b0: float = np.exp(log_flux[0] + b1 * energies[0])
     initial_guesses = (b0, b1, initial_spacecraft_potential_guess, b3, initial_core_halo_break_point_guess, b5)
 
-    slope_local_max = (slope[1:-1] > slope[:-2]) & (slope[1:-1] > slope[2:])
-    last_max_index = np.max(np.nonzero(slope_local_max), initial=-1) + 1
+    first_min_index = 0
+    for i in range(1, len(slope_ratios) - 1):
+        if slope_ratios[i - 1] > slope_ratios[i] < slope_ratios[i + 1]:
+            first_min_index = i
+            break
+
+    last_max_index = 0
+    for i in reversed(range(1 + first_min_index, len(slopes) - 1)):
+        if slopes[i - 1] < slopes[i] > slopes[i + 1]:
+            last_max_index = i
+            break
+
     if last_max_index < config["refit_core_halo_breakpoint_index"]:
         delta_b2 = -1.5
         delta_b4 = -10
@@ -53,7 +63,7 @@ def find_breakpoints(energies: np.ndarray, flux: np.ndarray, initial_spacecraft_
                                      latest_core_halo_breakpoint, delta_b2, delta_b4)
 
 
-def try_curve_fit_until_valid(energies: np.ndarray, log_flux: np.ndarray, initial_guesses: np.ndarray,
+def try_curve_fit_until_valid(energies: np.ndarray, log_flux: np.ndarray, initial_guesses: tuple[float, ...],
                               latest_spacecraft_potential: float, latest_core_halo_breakpoint: float,
                               delta_b2: float, delta_b4: float) -> tuple[float, float]:
     b, _ = curve_fit(piece_wise_model, energies, log_flux, initial_guesses)

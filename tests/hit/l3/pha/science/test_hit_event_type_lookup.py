@@ -1,6 +1,7 @@
 import os
 import unittest
 
+from imap_processing.hit.l3.pha.science.cosine_correction_lookup_table import DetectedRange, DetectorRange, DetectorSide
 from imap_processing.hit.l3.pha.science.hit_event_type_lookup import HitEventTypeLookup, Rule
 
 
@@ -24,11 +25,16 @@ class TestHitEventTypeLookup(unittest.TestCase):
         lookup = HitEventTypeLookup.from_csv(self.fake_lookup_path)
         self.assertEqual(4, len(lookup._rules))
 
+        Range2A = DetectedRange(DetectorRange.R2, DetectorSide.A)
+        Range3A = DetectedRange(DetectorRange.R3, DetectorSide.A)
+        Range2B = DetectedRange(DetectorRange.R2, DetectorSide.B)
+
         test_cases = [
-            (Rule("2A", ["L1A4", "L2A"], ["L1B14", "L3A", "L2B", "L40B", "L4B14"]), {"L1A4", "L2A"}),
-            (Rule("3A", ["L1A4", "L2A", "L3A"], ["L1B14", "L2B", "L4B14"]), {"L1A4", "L2A", "L3A"}),
-            (Rule("3A", ["L1A4", "L2A", "L3A", "L2B"], ["L1B14", "L4B14"]), {"L1A4", "L2A", "L3A", "L2B", "L40B"}),
-            (Rule("2B", ["L1B14", "L2B", "L4B14"], ["L1A4", "L2A"]), {"L1B14", "L2B", "L4B14"}),
+            (Rule(Range2A, ["L1A4", "L2A"], ["L1B14", "L3A", "L2B", "L40B", "L4B14"]), {"L1A4", "L2A"}),
+            (Rule(Range3A, ["L1A4", "L2A", "L3A"], ["L1B14", "L2B", "L4B14"]), {"L1A4", "L2A", "L3A"}),
+            (Rule(Range3A, ["L1A4", "L2A", "L3A", "L2B"], ["L1B14", "L4B14"]),
+             {"L1A4", "L2A", "L3A", "L2B", "L40B"}),
+            (Rule(Range2B, ["L1B14", "L2B", "L4B14"], ["L1A4", "L2A"]), {"L1B14", "L2B", "L4B14"}),
             (None, {"L3A", "L2B", "L40B"})
         ]
         for expected, detector_groups in test_cases:

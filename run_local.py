@@ -17,6 +17,7 @@ from imap_processing.hit.l3.pha.pha_event_reader import PHAEventReader
 from imap_processing.hit.l3.pha.science.calculate_pha import process_pha_event
 from imap_processing.hit.l3.pha.science.cosine_correction_lookup_table import CosineCorrectionLookupTable
 from imap_processing.hit.l3.pha.science.gain_lookup_table import GainLookupTable
+from imap_processing.hit.l3.pha.science.hit_event_type_lookup import HitEventTypeLookup
 from imap_processing.hit.l3.pha.science.range_fit_lookup import RangeFitLookup
 from imap_processing.hit.l3.utils import read_l2_hit_data
 from imap_processing.models import InputMetadata, UpstreamDataDependency
@@ -187,12 +188,16 @@ def create_hit_direct_event_cdf():
         get_test_data_path("hit/pha_events/imap_hit_l3_range4-fit-text-not-cdf_20250203_v001.cdf"),
     )
 
+    event_type_look = HitEventTypeLookup.from_csv(
+        get_test_data_path("hit/pha_events/imap_hit_l3_hit-event-types-text-not-cdf_20250228_v001.cdf"))
+
     hit_l1_data = HitL1Data.read_from_cdf(
         get_test_data_path("hit/pha_events/fake-menlo-imap_hit_l1a_pulse-height-events_20100106_v003.cdf"))
 
     direct_event_dependencies = HitL3PhaDependencies(hit_l1_data=hit_l1_data, cosine_correction_lookup=cosine_table,
 
-                                                     gain_lookup=gain_table, range_fit_lookup=range_fit_lookup)
+                                                     gain_lookup=gain_table, range_fit_lookup=range_fit_lookup,
+                                                     event_type_lookup=event_type_look)
     input_metadata = InputMetadata(
         instrument="hit",
         data_level="l3a",
