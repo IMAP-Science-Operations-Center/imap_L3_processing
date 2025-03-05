@@ -1,54 +1,3 @@
-"""
-int prep(int ifit, int nfit)
-{
-
-/* Sets up data for doing bi-Maxwellian fit to the core electrons */
-/* Throw out points where fv=0, calculate velocity components */
-/* Do this for nfit points starting with ifit. */
-
-int i,j,k,ipt;
-int ii,jj,kk;
-int npts;
-double v;
-
-ipt = 0;
-npts = 0;
-for (j=0; j<N_CEMS; j++){
-  npts += kmax[j]*nfit;
-}
-
-for (i=ifit; i<ifit+nfit; i++){
-   for (j=0; j<N_CEMS; j++){
-      for (k=0; k<kmax[j]; k++){
-         if ((fv[i][j][k] > 0) && (energy[i][j][k] > 0)) {
-            /* 5.93097e7 converts energy in eV to velocity in cm/s */
-            v = 5.93097e7*sqrt(energy[i][j][k]);
-            vxr[ipt] = -v*sintheta[i][j]*cos(phi[i][j][k]*pi/180);
-            vyr[ipt] = -v*sintheta[i][j]*sin(phi[i][j][k]*pi/180);
-            vzr[ipt] = -v*costheta[i][j];
-            if (ipt == 51) {
-            ii=i;
-            jj=j;
-            kk=k;
-            }
-
-            if (fv[i][j][k] > 1e-35)
-               yreg[ipt] = log(fv[i][j][k]);
-            else
-               yreg[ipt] = -80.6;
-            wait[ipt] = w[i][j][k];
-            ipt++;
-         }
-         else
-            npts--;
-      }
-   }
-}
-
-return ipt;
-
-}
-"""
 import math
 from dataclasses import dataclass
 
@@ -56,19 +5,6 @@ import numpy as np
 
 from imap_processing.constants import ELECTRON_MASS_KG, \
     BOLTZMANN_CONSTANT_JOULES_PER_KELVIN
-
-# CONSTANTS FOR COMPUTING MAXWELLIAN WEIGHTS
-# Compute weight factors for bi-maxwellian fits.
-#  sigma2 are variances due to digitization errors.
-#  total variance includes both sigma2 and statistical variance (=counts)
-LIMIT = np.array([32, 64, 128, 256, 1024, 2048, 3072, 5120, 9216, 17408, 33792])
-SIGMA2 = np.array([0, 0.25, 1.25, 5.25, 21.25, 85.25, 341.25, 1365.25, 5461.25, 21845.25, 87381.25])
-TSAMPLE = 1.0
-MINIMUM_WEIGHT = 0.8165
-MAX_VARIANCE = 349525.25
-
-# CONSTANTS FOR COMPUTING MOMENTS WITH MAXWELL distribution (Units here are K / (m/s) ^2
-# note the c code uses units of K / (cm/s)^2
 
 ZMK = ELECTRON_MASS_KG / (2 * BOLTZMANN_CONSTANT_JOULES_PER_KELVIN)
 
@@ -91,13 +27,6 @@ def regress(velocity_vectors: np.ndarray[float], weight: np.ndarray[float], yreg
     fit_function[:, 7] = -1 * ZMK * 2 * velocity_ys
     fit_function[:, 8] = -1 * ZMK * 2 * velocity_zs
 
-    y_fit = np.zeros(len(velocity_vectors))
-    wt = np.zeros(len(velocity_vectors))
-    array = np.zeros(shape=(9, 9))
-    invarray = np.zeros(shape=(9, 9))
-    ymean = 0
-
-    sgmx = np.zeros(9)
     r = np.zeros(9)
     a = np.zeros(10)
     sa = np.zeros(9)
@@ -120,19 +49,16 @@ def regress(velocity_vectors: np.ndarray[float], weight: np.ndarray[float], yreg
     wt /= sum
 
     yy = yreg - ymean
-    sigma = np.sum(wt * yy * yy)
 
     for j in range(9):
         xx = fit_function[:, j] - xmean[j]
-        sgmx[j] = np.sum(wt * xx * xx)
         r[j] = np.sum(wt * xx * yy)
         for k in range(j, 9):
             array[j][k] = np.sum(wt * xx * (fit_function[:, k] - xmean[k]))
 
-    # sigma = math.sqrt(sigma)
-    # sgmx = math.sqrt(sgmx)
-
-    array = np.transpose(array)
+    for j in range(9):
+        for k in range(9):
+            array[k][j] = array[j][k]
 
     # TODO the C code has an error case here, the following line can throw LinAlgError which may or may not be what the C code handles
     invarray = np.linalg.inv(array)
@@ -166,7 +92,7 @@ def regress(velocity_vectors: np.ndarray[float], weight: np.ndarray[float], yreg
         for k in range(9):
             sao += xmean[j] * xmean[k] * invarray[j][k]
 
-    return a
+    return a, chisq
 
 
 @dataclass
@@ -194,6 +120,7 @@ def calculate_fit_temperature_density_velocity(parameters: np.ndarray[float]):
                       velocity_z=0,
                       density=0,
                       ao=0,
+                      aoo=0
                       )
 
     moments.ao = parameters[9]
@@ -218,7 +145,6 @@ def calculate_fit_temperature_density_velocity(parameters: np.ndarray[float]):
 
     d = parameters[0] * c11 + parameters[3] * c12 + parameters[4] * c13
 
-    vel = np.zeros(3)
     if d == 0:
         moments.velocity_x = 0
         moments.velocity_y = 0
@@ -228,22 +154,22 @@ def calculate_fit_temperature_density_velocity(parameters: np.ndarray[float]):
         moments.velocity_y = -1 * (parameters[6] * c12 + parameters[7] * c22 + parameters[8] * c23) / d
         moments.velocity_z = -1 * (parameters[6] * c13 + parameters[7] * c23 + parameters[8] * c33) / d
 
-    fact = parameters[0] * moments.velocity_x * moments.velocity_x + parameters[
-        1] * moments.velocity_y * moments.velocity_y + parameters[2] * \
-           moments.velocity_z * moments.velocity_z
+    fact = parameters[0] * moments.velocity_x ** 2 + parameters[1] * moments.velocity_y ** 2 + parameters[
+        2] * moments.velocity_z ** 2
+
     moments.aoo = fact + parameters[3] * moments.velocity_x * moments.velocity_y + parameters[4] \
                   * moments.velocity_x * moments.velocity_z + \
                   parameters[5] * moments.velocity_y * moments.velocity_z
 
-    moments.velocity_x = 1e-5
-    moments.velocity_y = 1e-5
-    moments.velocity_z = 1e-5
+    moments.velocity_x *= 1e-5
+    moments.velocity_y *= 1e-5
+    moments.velocity_z *= 1e-5
 
     if (moments.t_parallel < 0) or (moments.aoo < 0) or (moments.aoo > 1e13):
         moments.density = 0.0
     else:
-        moments.density = (moments.t_perpendicular * np.sqrt(moments.t_parallel) / (
-                (ZMK / math.pi) * np.sqrt(ZMK / math.pi))) * np.exp(
+        moments.density = (moments.t_perpendicular * np.sqrt(moments.t_parallel) /
+                           ((ZMK / math.pi) * np.sqrt(ZMK / math.pi))) * np.exp(
             moments.ao + ZMK * moments.aoo)
     return moments
 
