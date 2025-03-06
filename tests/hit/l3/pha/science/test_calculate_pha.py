@@ -76,6 +76,49 @@ class TestCalculatePHA(unittest.TestCase):
 
         self.assertEqual(expected_event_analysis, event_analysis)
 
+    def test_analyze_range_mixed_sides(self):
+        detector_2_in_L2A_group = Detector(layer=2, side="A", segment="c", address=11, group="L2A")
+        detector_1_in_L2A_group = Detector(layer=2, side="A", segment="b", address=10, group="L2A")
+        detector_1_in_L2B_group = Detector(layer=2, side="B", segment="c", address=15, group="L2B")
+        detector_1_in_L1B14_group = Detector(layer=1, side="B", segment="a", address=20, group="L1B14")
+
+        detector_to_pha_value = [(detector_1_in_L2A_group, 10),
+                                 (detector_2_in_L2A_group, 20),
+                                 (detector_1_in_L2B_group, 20),
+                                 (detector_1_in_L1B14_group, 10)]
+
+        detector_to_word_tuples = self._create_event_from_detector_to_pha_value_dict(detector_to_pha_value)
+        words = [word for _, word in detector_to_word_tuples.items()]
+        raw_pha_event = create_raw_pha_event(pha_words=words)
+
+        rule_stub = Rule(range=DetectedRange(DetectorRange.R2, DetectorSide.B),
+                         included_detector_groups=["L2B", "L2A", "L1B14"],
+                         excluded_detector_groups=["L1A14", "L1A0", "L3B", "L1B0", "L4iA", "L4iB", "L4oB"]
+                         )
+        range_lookup_table = Mock()
+        range_lookup_table.lookup_range.return_value = rule_stub
+
+        event_analysis = analyze_event(raw_pha_event, self.gain_lookup, range_lookup_table)
+
+        range_lookup_table.lookup_range.assert_called_with({"L2A", "L2B", "L1B14"})
+
+        expected_highest_words = [
+            detector_to_word_tuples[str(detector_1_in_L2B_group)],
+            detector_to_word_tuples[str(detector_1_in_L2A_group)],
+            detector_to_word_tuples[str(detector_1_in_L1B14_group)]
+            ,
+
+        ]
+
+        expected_event_analysis = EventAnalysis(range=rule_stub.range,
+                                                l1_detector=detector_1_in_L1B14_group,
+                                                l2_detector=detector_1_in_L2B_group,
+                                                e_delta_word=detector_to_word_tuples[str(detector_1_in_L1B14_group)],
+                                                e_prime_word=detector_to_word_tuples[str(detector_1_in_L2B_group)],
+                                                words_with_highest_energy=expected_highest_words)
+
+        self.assertEqual(expected_event_analysis, event_analysis)
+
     def test_analyze_event_handles_no_calc_rules(self):
         detector_1_in_group_1 = Detector(layer=1, side="A", segment="b", address=10, group="L1A14")
         detector_2_in_group_1 = Detector(layer=1, side="A", segment="c", address=11, group="L1A14")

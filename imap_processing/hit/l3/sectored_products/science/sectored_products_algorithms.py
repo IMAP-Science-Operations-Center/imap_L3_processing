@@ -59,8 +59,8 @@ def rebin_by_pitch_angle_and_gyrophase(flux_data: np.array,
     averaged_rebinned_fluxes_with_delta_minus = np.divide(rebinned_summed_with_delta_minus, rebinned_count,
                                                           out=np.full_like(rebinned_summed_with_delta_minus, np.nan),
                                                           where=rebinned_count != 0)
-    pa_only_with_delta_plus = np.nansum(averaged_rebinned_fluxes_with_delta_plus, axis=-1)
-    pa_only_with_delta_minus = np.nansum(averaged_rebinned_fluxes_with_delta_minus, axis=-1)
+    pa_only_with_delta_plus = np.nanmean(averaged_rebinned_fluxes_with_delta_plus, axis=-1)
+    pa_only_with_delta_minus = np.nanmean(averaged_rebinned_fluxes_with_delta_minus, axis=-1)
 
     return (nominal_values(averaged_rebinned_fluxes_with_delta_plus),
             std_devs(averaged_rebinned_fluxes_with_delta_plus),

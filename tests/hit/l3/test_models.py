@@ -91,7 +91,7 @@ class TestModels(CdfModelTestCase):
             DataProductVariable(models.ENERGY_VAR_NAME, energy),
             DataProductVariable(models.E_DELTA_VAR_NAME, e_delta),
             DataProductVariable(models.E_PRIME_VAR_NAME, e_prime),
-            DataProductVariable(models.DETECTED_RANGE_VAR_NAME, detected_range, cdf_data_type=pycdf.const.CDF_UINT1),
+            DataProductVariable(models.DETECTED_RANGE_VAR_NAME, detected_range, cdf_data_type=pycdf.const.CDF_INT4),
             DataProductVariable(models.PARTICLE_ID_VAR_NAME, particle, cdf_data_type=pycdf.const.CDF_UINT2),
             DataProductVariable(models.PRIORITY_BUFFER_NUMBER_VAR_NAME, priority_buffer_number,
                                 cdf_data_type=pycdf.const.CDF_UINT1),
