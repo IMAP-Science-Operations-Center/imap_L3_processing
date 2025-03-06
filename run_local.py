@@ -144,9 +144,9 @@ def create_swe_moments_cdf(dependencies: SweL3Dependencies) -> str:
         end_date=datetime(2025, 10, 24),
         version='v999')
     processor = SweProcessor(None, input_metadata)
-    output_data = processor.calculate_moment_products(dependencies)
-    cdf_path = save_data(output_data)
-    return cdf_path
+    processor.calculate_moment_products(dependencies)
+    # cdf_path = save_data(output_data)
+    # return cdf_path
 
 
 def create_hit_sectored_cdf(dependencies: HITL3SectoredDependencies) -> str:

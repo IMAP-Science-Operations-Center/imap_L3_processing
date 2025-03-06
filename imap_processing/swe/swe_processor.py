@@ -8,7 +8,7 @@ from imap_processing.processor import Processor
 from imap_processing.swapi.l3a.science.calculate_pickup_ion import calculate_solar_wind_velocity_vector
 from imap_processing.swe.l3.models import SweL3Data
 from imap_processing.swe.l3.science.moment_calculations import compute_maxwellian_weight_factors, \
-    filter_and_flatten_regress_parameters, regress
+    filter_and_flatten_regress_parameters, regress, calculate_fit_temperature_density_velocity
 from imap_processing.swe.l3.science.pitch_calculations import average_over_look_directions, find_breakpoints, \
     correct_and_rebin, \
     integrate_distribution_to_get_1d_spectrum, integrate_distribution_to_get_inbound_and_outbound_1d_spectrum, \
@@ -30,40 +30,47 @@ class SweProcessor(Processor):
         swe_epoch = swe_l2_data.epoch
         config = dependencies.configuration
 
-        spacecraft_potential_history = [10, 10, 10, 10]
-        halo_core_history = [80, 80, 80, 80]
+        spacecraft_potential_history = [config["spacecraft_potential_initial_guess"] for _ in
+                                        range(4)]
+        halo_core_history = [config["core_halo_breakpoint_initial_guess"] for _ in range(4)]
 
         for i in range(len(swe_epoch)):
-            averaged_psd = average_over_look_directions(swe_l2_data.phase_space_density[i],
-                                                        np.array(config["geometric_fractions"]))
-            spacecraft_potential, halo_core = find_breakpoints(swe_l2_data.energy, averaged_psd,
+            averaged_phase_space_density = average_over_look_directions(swe_l2_data.phase_space_density[i],
+                                                                        np.array(config["geometric_fractions"]))
+
+            spacecraft_potential, halo_core = find_breakpoints(swe_l2_data.energy, averaged_phase_space_density,
                                                                np.average(spacecraft_potential_history[:3]),
                                                                np.average(halo_core_history[:3]),
                                                                spacecraft_potential_history[-1], halo_core_history[-1],
                                                                config)
+
+            spacecraft_potential_history = [*spacecraft_potential_history[1:], spacecraft_potential]
+            halo_core_history = [*halo_core_history[1:], halo_core]
             corrected_energy_bins = swe_l2_data.energy - spacecraft_potential
 
-            velocity_vectors = calculate_velocity_in_dsp_frame_km_s(corrected_energy_bins, swe_l2_data.inst_el,
-                                                                    swe_l2_data.inst_az_spin_sector[i])
+            velocity_vectors: np.ndarray = calculate_velocity_in_dsp_frame_km_s(corrected_energy_bins,
+                                                                                swe_l2_data.inst_el,
+                                                                                swe_l2_data.inst_az_spin_sector[i])
 
-            # TODO: the c code computes these using corrected count rates
+            # TODO: read these from L1 dataset
             ccounts = np.reshape(np.arange(24 * 30 * 7), (24, 30, 7)) * 1000
 
-            weights = compute_maxwellian_weight_factors(ccounts)
+            weights: np.ndarray[float] = compute_maxwellian_weight_factors(ccounts)
+            core_breakpoint: int = 0
 
             filtered_velocity_vectors, filtered_weights, filtered_yreg = filter_and_flatten_regress_parameters(
                 corrected_energy_bins,
                 velocity_vectors,
                 swe_l2_data.phase_space_density[i],
                 weights,
-                0, halo_core - spacecraft_potential)
+                core_breakpoint, halo_core - spacecraft_potential)
 
-            np.savetxt("fake_velocity_vectors.csv", filtered_velocity_vectors, delimiter=",")
-            np.savetxt("fake_weights.csv", filtered_weights, delimiter=",")
-            np.savetxt("fake_yreg.csv", filtered_yreg, delimiter=",")
+            # np.savetxt("fake_velocity_vectors.csv", filtered_velocity_vectors[::100], delimiter=",")
+            # np.savetxt("fake_weights.csv", filtered_weights[::100], delimiter=",")
+            # np.savetxt("fake_yreg.csv", filtered_yreg[::100], delimiter=",")
 
-            fit_function = regress(filtered_velocity_vectors, filtered_weights, filtered_yreg)
-            print(fit_function)
+            fit_function: np.ndarray[float] = regress(filtered_velocity_vectors, filtered_weights, filtered_yreg)
+            calculate_fit_temperature_density_velocity(fit_function)
 
     def calculate_pitch_angle_products(self, dependencies: SweL3Dependencies) -> SweL3Data:
         swe_l2_data = dependencies.swe_l2_data

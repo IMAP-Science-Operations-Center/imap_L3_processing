@@ -37,24 +37,24 @@ class TestMomentsCalculation(unittest.TestCase):
         self.assertAlmostEqual(75398.120454, chisq, places=6)
 
     def test_regress_reproduces_heritage_results_given_10_rows_of_test_data(self):
-        velocity_vectors = np.loadtxt(get_test_data_path("swe/fake_velocity_vectors.csv"), delimiter=",",
+        velocity_vectors = np.loadtxt(get_test_data_path("swe/fake_velocity_vectors_10.csv"), delimiter=",",
                                       dtype=np.float64)
-        weights = np.loadtxt(get_test_data_path("swe/fake_weights.csv"), delimiter=",", dtype=np.float64)
-        yreg = np.loadtxt(get_test_data_path("swe/fake_yreg.csv"), delimiter=",", dtype=np.float64)
+        weights = np.loadtxt(get_test_data_path("swe/fake_weights_10.csv"), delimiter=",", dtype=np.float64)
+        yreg = np.loadtxt(get_test_data_path("swe/fake_yreg_10.csv"), delimiter=",", dtype=np.float64)
 
-        regression_values, chisq = regress(velocity_vectors[:10], weights[:10], yreg[:10])
+        regression_values, chisq = regress(velocity_vectors, weights, yreg)
 
         np.testing.assert_array_almost_equal(regression_values,
-                                             [18.546747,
-                                              18.706356,
-                                              2.018933,
-                                              0.413322,
-                                              1.666656,
-                                              3.930964,
-                                              -7627.713430,
-                                              -18209.865922,
-                                              -4261.624494,
-                                              -0.665255])
+                                             [7.907190,
+                                              8.474900,
+                                              7.881836,
+                                              -1.032437,
+                                              -0.190888,
+                                              -1.320381,
+                                              202.408970,
+                                              -98.152393,
+                                              -1053.816409,
+                                              0.074479])
         self.assertEqual(0, chisq)
 
     def test_calculate_fit_temperature_density_velocity_is_consistent_with_heritage_on_full_data(self):

@@ -1,6 +1,6 @@
 import unittest
 from datetime import datetime, timedelta
-from unittest.mock import patch, call, Mock
+from unittest.mock import patch, call, Mock, sentinel
 
 import numpy as np
 
@@ -208,12 +208,24 @@ class TestSweProcessor(unittest.TestCase):
 
     @patch('imap_processing.swe.swe_processor.find_breakpoints')
     @patch('imap_processing.swe.swe_processor.average_over_look_directions')
-    def test_calculate_moment_products(self, mock_average_over_look_directions, mock_find_breakpoints):
+    @patch('imap_processing.swe.swe_processor.filter_and_flatten_regress_parameters')
+    @patch('imap_processing.swe.swe_processor.compute_maxwellian_weight_factors')
+    @patch('imap_processing.swe.swe_processor.calculate_velocity_in_dsp_frame_km_s')
+    @patch('imap_processing.swe.swe_processor.regress')
+    @patch('imap_processing.swe.swe_processor.calculate_fit_temperature_density_velocity')
+    def test_calculate_moment_products(self, mock_calculate_fit_temperature_density_velocity, mock_regress,
+                                       mock_calculate_velocity_in_dsp_frame_km_s,
+                                       mock_compute_maxwellian_weight_factors,
+                                       mock_filter_and_flatten_regress_parameters,
+                                       mock_average_over_look_directions, mock_find_breakpoints):
         epochs = datetime.now() + np.arange(2) * timedelta(minutes=1)
         geometric_fractions = [0.0697327, 0.138312, 0.175125, 0.181759,
                                0.204686, 0.151448, 0.0781351]
+
         swe_config = build_swe_configuration(
             geometric_fractions=geometric_fractions,
+            spacecraft_potential_initial_guess=15,
+            core_halo_breakpoint_initial_guess=90,
         )
 
         swe_l2_data = SweL2Data(
@@ -227,6 +239,47 @@ class TestSweProcessor(unittest.TestCase):
             acquisition_time=np.array([]),
         )
 
+        expected_core_breakpoint = 0
+        expected_breakpoint_1 = (12, 96)
+        expected_breakpoint_2 = (16, 86)
+        mock_find_breakpoints.side_effect = [
+            expected_breakpoint_1,
+            expected_breakpoint_2
+        ]
+
+        velocity_in_dsp_frame_km_s = [
+            np.full(shape=(24, 30, 7, 3), fill_value=1),
+            np.full(shape=(24, 30, 7, 3), fill_value=2)
+        ]
+
+        mock_calculate_velocity_in_dsp_frame_km_s.side_effect = velocity_in_dsp_frame_km_s
+
+        maxwellian_weight_factors = [np.full(shape=(24, 30, 7), fill_value=1),
+                                     np.full(shape=(24, 30, 7), fill_value=2)]
+
+        mock_compute_maxwellian_weight_factors.side_effect = maxwellian_weight_factors
+
+        filtered_velocity_vectors = [np.full(shape=(1080, 3), fill_value=1.1),
+                                     np.full(shape=(1080, 3), fill_value=2.1)]
+        filtered_weights = [np.full(shape=(1080,), fill_value=1.2),
+                            np.full(shape=(1080,), fill_value=2.2)]
+
+        filtered_yreg = [np.full(shape=(1080,), fill_value=1.3), np.full(shape=(1080,), fill_value=2.3)]
+
+        mock_filter_and_flatten_regress_parameters.side_effect = [
+            (
+                filtered_velocity_vectors[0],
+                filtered_weights[0],
+                filtered_yreg[0]
+            ),
+            (
+                filtered_velocity_vectors[1],
+                filtered_weights[1],
+                filtered_yreg[1]
+            )
+        ]
+
+        mock_regress.side_effect = [sentinel.first_regress_return, sentinel.second_regress_return]
         mock_average_over_look_directions.return_value = np.array([5, 10, 15])
         input_metadata = InputMetadata("swe", "l3", datetime(2025, 2, 21),
                                        datetime(2025, 2, 22), "v001")
@@ -234,7 +287,7 @@ class TestSweProcessor(unittest.TestCase):
         swel3_dependency = SweL3Dependencies(swe_l2_data, Mock(), Mock(), swe_config)
         swe_processor = SweProcessor(dependencies=[], input_metadata=input_metadata)
 
-        swe_l3_moment_data = swe_processor.calculate_moment_products(swel3_dependency)
+        swe_processor.calculate_moment_products(swel3_dependency)
 
         self.assertEqual(2, mock_average_over_look_directions.call_count)
         mock_average_over_look_directions.assert_has_calls([
@@ -247,7 +300,59 @@ class TestSweProcessor(unittest.TestCase):
         mock_find_breakpoints.assert_has_calls([
             call(swe_l2_data.energy, mock_average_over_look_directions.return_value, spacecraft_potential_initial_guess,
                  halo_core_initial_guess, 15, 90, swe_config),
+
             call(swe_l2_data.energy, mock_average_over_look_directions.return_value, spacecraft_potential_initial_guess,
-                 halo_core_initial_guess, 12, 96, swe_config),
-            call(swe_l2_data.energy, mock_average_over_look_directions.return_value, 14, 92, 16, 86, swe_config),
+                 halo_core_initial_guess, 12, 96, swe_config)
         ])
+
+        calculate_velocity_call_1 = mock_calculate_velocity_in_dsp_frame_km_s.mock_calls[0]
+        np.testing.assert_array_equal(swe_l2_data.energy - expected_breakpoint_1[0], calculate_velocity_call_1.args[0])
+        np.testing.assert_array_equal(swe_l2_data.inst_el, calculate_velocity_call_1.args[1])
+        np.testing.assert_array_equal(swe_l2_data.inst_az_spin_sector[0], calculate_velocity_call_1.args[2])
+
+        calculate_velocity_call_2 = mock_calculate_velocity_in_dsp_frame_km_s.mock_calls[1]
+        np.testing.assert_array_equal(swe_l2_data.energy - expected_breakpoint_2[0], calculate_velocity_call_2.args[0])
+        np.testing.assert_array_equal(swe_l2_data.inst_el, calculate_velocity_call_2.args[1])
+        np.testing.assert_array_equal(swe_l2_data.inst_az_spin_sector[1], calculate_velocity_call_2.args[2])
+
+        np.testing.assert_array_equal(np.reshape(np.arange(24 * 30 * 7), (24, 30, 7)) * 1000,
+                                      mock_compute_maxwellian_weight_factors.mock_calls[0].args[0])
+        np.testing.assert_array_equal(np.reshape(np.arange(24 * 30 * 7), (24, 30, 7)) * 1000,
+                                      mock_compute_maxwellian_weight_factors.mock_calls[1].args[0])
+
+        filter_and_flatten_call_1 = mock_filter_and_flatten_regress_parameters.mock_calls[0]
+        np.testing.assert_array_equal(swe_l2_data.energy - expected_breakpoint_1[0],
+                                      filter_and_flatten_call_1.args[0])
+        np.testing.assert_array_equal(velocity_in_dsp_frame_km_s[0],
+                                      filter_and_flatten_call_1.args[1])
+        np.testing.assert_array_equal(swe_l2_data.phase_space_density[0], filter_and_flatten_call_1.args[2])
+        np.testing.assert_array_equal(maxwellian_weight_factors[0],
+                                      filter_and_flatten_call_1.args[3])
+        self.assertEqual(expected_core_breakpoint, filter_and_flatten_call_1.args[4])
+        self.assertEqual(expected_breakpoint_1[1] - expected_breakpoint_1[0],
+                         filter_and_flatten_call_1.args[5])
+
+        filter_and_flatten_call_2 = mock_filter_and_flatten_regress_parameters.mock_calls[1]
+        np.testing.assert_array_equal(swe_l2_data.energy - expected_breakpoint_2[0],
+                                      filter_and_flatten_call_2.args[0])
+        np.testing.assert_array_equal(velocity_in_dsp_frame_km_s[1],
+                                      filter_and_flatten_call_2.args[1])
+        np.testing.assert_array_equal(swe_l2_data.phase_space_density[1], filter_and_flatten_call_2.args[2])
+        np.testing.assert_array_equal(maxwellian_weight_factors[1],
+                                      filter_and_flatten_call_2.args[3])
+        self.assertEqual(expected_core_breakpoint, filter_and_flatten_call_2.args[4])
+        self.assertEqual(expected_breakpoint_2[1] - expected_breakpoint_2[0],
+                         filter_and_flatten_call_2.args[5])
+
+        regress_call_1 = mock_regress.mock_calls[0]
+        np.testing.assert_array_equal(filtered_velocity_vectors[0], regress_call_1.args[0])
+        np.testing.assert_array_equal(filtered_weights[0], regress_call_1.args[1])
+        np.testing.assert_array_equal(filtered_yreg[0], regress_call_1.args[2])
+
+        regress_call_2 = mock_regress.mock_calls[1]
+        np.testing.assert_array_equal(filtered_velocity_vectors[1], regress_call_2.args[0])
+        np.testing.assert_array_equal(filtered_weights[1], regress_call_2.args[1])
+        np.testing.assert_array_equal(filtered_yreg[1], regress_call_2.args[2])
+
+        mock_calculate_fit_temperature_density_velocity.assert_has_calls(
+            [call(sentinel.first_regress_return), call(sentinel.second_regress_return)])
