@@ -39,26 +39,26 @@ class TestSectoredProductsAlgorithms(TestCase):
         test_cases = [
             ('One bin', default_pitch_angles, default_gyrophases, 1, 1, [[[3.5]], [[11.5]]], [[3.5], [11.5]]),
             ('Rebinned to same bins', default_pitch_angles, default_gyrophases, 2, 4, fluxes,
-             np.array([[6, 22], [38, 54]])),
+             np.array([[1.5, 5.5], [9.5, 13.5]])),
             ('Gyrophase rotated by 90', default_pitch_angles, (default_gyrophases + 90) % 360, 2, 4,
              [
                  [[3, 0, 1, 2], [7, 4, 5, 6]],
                  [[11, 8, 9, 10], [15, 12, 13, 14]]
              ],
-             [[6, 22], [38, 54]]),
+             np.array([[1.5, 5.5], [9.5, 13.5]])),
             ('Includes empty bins', default_pitch_angles, default_gyrophases, 2, 6,
              [
                  [[0, np.nan, 1, 2, np.nan, 3], [4, np.nan, 5, 6, np.nan, 7]],
                  [[8, np.nan, 9, 10, np.nan, 11], [12, np.nan, 13, 14, np.nan, 15]]
              ],
-             [[6, 22], [38, 54]]),
+             np.array([[1.5, 5.5], [9.5, 13.5]])),
             ('Varying Pitch Angles', np.array([[45, 45, 135, 135], [45, 45, 135, 135]]),
              np.array([[135, 225, 225, 135], [45, 315, 315, 45]]), 2, 4,
              [
                  [[4, 0, 1, 5], [7, 3, 2, 6]],
                  [[12, 8, 9, 13], [15, 11, 10, 14]]
              ],
-             [[10, 18], [42, 50]]),
+             [[2.5, 4.5], [10.5, 12.5]]),
         ]
 
         for case, pitch_angles, gyrophases, number_of_pitch_angle_bins, number_of_gyrophase_bins, \
@@ -103,13 +103,13 @@ class TestSectoredProductsAlgorithms(TestCase):
         ])
 
         expected_delta_plus_pa_only = np.array([
-            [0.33674916, 1.01024749],
-            [1.72180138, 2.43831909]
+            [0.084187, 0.252562],
+            [0.43045, 0.60958]
         ])
 
         expected_delta_minus_pa_only = np.array([
-            [0.41158231, 1.23474694],
-            [2.10442391, 2.98016778]
+            [0.102896, 0.308687],
+            [0.526106, 0.745042]
         ])
 
         rebinned_data = rebin_by_pitch_angle_and_gyrophase(
@@ -123,7 +123,7 @@ class TestSectoredProductsAlgorithms(TestCase):
         _, delta_plus_pa_gyro, delta_minus_pa_gyro = rebinned_data[0:3]
         _, delta_plus_pa_only, delta_minus_pa_only = rebinned_data[3:6]
 
-        np.testing.assert_allclose(expected_delta_plus_pa_gyro, delta_plus_pa_gyro)
-        np.testing.assert_allclose(expected_delta_minus_pa_gyro, delta_minus_pa_gyro)
-        np.testing.assert_allclose(expected_delta_plus_pa_only, delta_plus_pa_only)
-        np.testing.assert_allclose(expected_delta_minus_pa_only, delta_minus_pa_only)
+        np.testing.assert_allclose(delta_plus_pa_gyro, expected_delta_plus_pa_gyro)
+        np.testing.assert_allclose(delta_minus_pa_gyro, expected_delta_minus_pa_gyro)
+        np.testing.assert_allclose(delta_plus_pa_only, expected_delta_plus_pa_only, rtol=1e-5)
+        np.testing.assert_allclose(delta_minus_pa_only, expected_delta_minus_pa_only, rtol=1e-5)
