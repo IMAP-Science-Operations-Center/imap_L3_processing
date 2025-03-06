@@ -60,5 +60,5 @@ def download_dependency(dependency: UpstreamDataDependency) -> Path:
 def read_l1d_mag_data(cdf_path: Union[str, Path]) -> MagL1dData:
     with CDF(str(cdf_path)) as cdf:
         return MagL1dData(
-            epoch=cdf['epoch'][...],
+            epoch=cdf.raw_var('epoch')[...],
             mag_data=read_variable(cdf["vectors"])[:, :3])

@@ -11,7 +11,7 @@ from imap_processing.hit.l3.models import HitL2Data
 def read_l2_hit_data(cdf_file_path: Union[str, Path]) -> HitL2Data:
     with CDF(str(cdf_file_path)) as cdf:
         return HitL2Data(
-            epoch=cdf["epoch"][...],
+            epoch=cdf.raw_var("epoch")[...],
             epoch_delta=np.array([timedelta(seconds=ns / 1e9) for ns in cdf["epoch_delta"][...]]),
             hydrogen=cdf["hydrogen"][...],
             helium4=cdf["helium4"][...],

@@ -2,9 +2,11 @@ from datetime import datetime, timedelta
 
 import numpy as np
 
+from imap_processing.constants import ONE_SECOND_IN_NANOSECONDS
+
 
 def rebin(from_epoch: np.ndarray[float], from_data: np.ndarray[float], to_epoch: np.ndarray[float],
-          to_epoch_delta: np.ndarray[float]) -> np.ndarray[float]:
+          to_epoch_delta: np.ndarray[timedelta]) -> np.ndarray[float]:
     output_shape = to_epoch.shape + from_data.shape[1:]
     vector_sums = np.zeros(shape=output_shape, dtype=float)
     vector_counts = np.zeros(shape=output_shape, dtype=float)
@@ -12,8 +14,12 @@ def rebin(from_epoch: np.ndarray[float], from_data: np.ndarray[float], to_epoch:
     input_data_iter = ((time, vec) for time, vec in zip(from_epoch, from_data))
     current_epoch, current_vec = next(input_data_iter, (None, None))
     for i, (time, delta) in enumerate(zip(to_epoch, to_epoch_delta)):
-        start_time = time - delta
-        end_time = time + delta
+        start_time = time - delta.total_seconds() * ONE_SECOND_IN_NANOSECONDS
+        end_time = time + delta.total_seconds() * ONE_SECOND_IN_NANOSECONDS
+        print(current_epoch)
+        print(start_time)
+        print(end_time)
+        print(ONE_SECOND_IN_NANOSECONDS)
 
         while current_epoch is not None and current_epoch < start_time:
             current_epoch, current_vec = next(input_data_iter, (None, None))

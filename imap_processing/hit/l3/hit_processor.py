@@ -1,7 +1,10 @@
+from datetime import datetime
+
 import imap_data_access
 import numpy as np
+from spiceypy import spiceypy
 
-from imap_processing.constants import UNSIGNED_INT1_FILL_VALUE, UNSIGNED_INT2_FILL_VALUE
+from imap_processing.constants import UNSIGNED_INT1_FILL_VALUE, UNSIGNED_INT2_FILL_VALUE, ONE_SECOND_IN_NANOSECONDS
 from imap_processing.hit.l3.hit_l3_sectored_dependencies import HITL3SectoredDependencies
 from imap_processing.hit.l3.models import HitDirectEventDataProduct
 from imap_processing.hit.l3.pha.hit_l3_pha_dependencies import HitL3PhaDependencies
@@ -180,6 +183,16 @@ class HitProcessor(Processor):
         averaged_mag_data = mag_data.rebin_to(hit_data.epoch, hit_data.epoch_delta)
         for time_index, average_mag_vector in enumerate(averaged_mag_data):
             mag_unit_vector = calculate_unit_vector(average_mag_vector)
+            print(hit_data.epoch[0])
+            print(hit_data.epoch[0] / ONE_SECOND_IN_NANOSECONDS)
+            # first_date = hit_data.epoch[0]  # need to go back and fix epoch to be rawvar instead of datetime
+            # terrestrial_time = first_date - datetime(year=2000, month=1, day=1, hour=11, minute=58, second=55)
+            # print(terrestrial_time)
+            # time = spiceypy.unitim(hit_data.epoch[0] / ONE_SECOND_IN_NANOSECONDS, "TT", "ET")
+            # rotation_matrix = spiceypy.pxform("IMAP_DPS", "IMAP_HIT",
+            #                                   spiceypy.unitim(802483274.6246681, "TT", "ET"))
+            # mag_unit_vector_in_hit_frame = rotation_matrix @ mag_unit_vector
+            # mag vector is in DPS reference frame, particles in instrument frame
             input_bin_pitch_angles = calculate_pitch_angle(particle_unit_vectors, mag_unit_vector)
             input_bin_gyrophases = calculate_gyrophase(particle_unit_vectors, mag_unit_vector)
 

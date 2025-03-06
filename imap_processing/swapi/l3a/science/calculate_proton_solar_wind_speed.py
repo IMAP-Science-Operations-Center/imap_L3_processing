@@ -78,6 +78,9 @@ def get_spin_angle_from_swapi_axis_in_despun_frame(instrument_axis: np.ndarray):
 
 @wrap
 def get_angle(epoch) -> float:
+    print(epoch)
+    print(epoch / ONE_SECOND_IN_NANOSECONDS)
+    print(spiceypy.unitim(epoch / ONE_SECOND_IN_NANOSECONDS, "TT", "ET"))
     rotation_matrix = spiceypy.pxform("IMAP_SWAPI", "IMAP_DPS",
                                       spiceypy.unitim(epoch / ONE_SECOND_IN_NANOSECONDS, "TT", "ET"))
     swapi_instrument_axis_in_despun_imap_frame = rotation_matrix @ np.array([0, 0, -1])

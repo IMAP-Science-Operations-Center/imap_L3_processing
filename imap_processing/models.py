@@ -1,7 +1,7 @@
 import abc
 import ctypes
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Union
 
 import numpy as np
@@ -54,5 +54,5 @@ class MagL1dData:
     epoch: np.ndarray[float]
     mag_data: np.ndarray[float]
 
-    def rebin_to(self, epoch: np.ndarray[float], epoch_delta: np.ndarray[float]) -> np.ndarray[float]:
+    def rebin_to(self, epoch: np.ndarray[float], epoch_delta: np.ndarray[timedelta]) -> np.ndarray[float]:
         return rebin(self.epoch, self.mag_data, epoch, epoch_delta)

@@ -5,6 +5,7 @@ from pathlib import Path
 from bitstring import BitStream
 from spacepy.pycdf import CDF
 
+from imap_processing import spice_wrapper
 from imap_processing.glows.descriptors import GLOWS_L2_DESCRIPTOR
 from imap_processing.glows.glows_processor import GlowsProcessor
 from imap_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
@@ -214,6 +215,8 @@ def create_hit_direct_event_cdf():
 
 
 if __name__ == "__main__":
+    spice_wrapper.furnish()
+
     if "swapi" in sys.argv:
         if "l3a" in sys.argv:
             paths = create_swapi_l3a_cdf(
