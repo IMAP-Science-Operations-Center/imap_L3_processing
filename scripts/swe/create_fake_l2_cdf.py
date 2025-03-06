@@ -20,14 +20,17 @@ def create_fake_l2_cdf(l1_hdf_path: str, l2_hdf_path: str, l2_swe_cdf_file_path:
 
     b_rtn_index = vd.field("b_rtn")._index
     b_rtn_data = np.array([x[b_rtn_index] for x in vd[:]])
+    mag_r, mag_t, mag_n = b_rtn_data.T
+    mag_despun_vectors = np.stack((mag_n, mag_t, -mag_r), axis=1)
 
     sw_velocity_index = vd.field(
         "v_rtn_i")._index  # this is wrong, eventually use swepam I file for proton sw velocity instead
     sw_velocity_data = np.array([x[sw_velocity_index] for x in vd[:]])
     sw_speed = np.linalg.norm(sw_velocity_data, axis=1)
-    r, t, n = sw_velocity_data.T
-    deflection = np.rad2deg(np.arcsin(np.sqrt(t * t + n * n) / sw_speed))
-    clock = np.rad2deg(np.arctan2(n, -t))
+    sw_r, sw_t, sw_n = sw_velocity_data.T
+    sw_x, sw_y, sw_z = sw_n, sw_t, -sw_r
+    deflection = np.rad2deg(np.arctan2(np.sqrt(sw_x ** 2 + sw_y ** 2), -sw_z))
+    clock = np.rad2deg(np.arctan2(sw_x, -sw_y))
     counts = l1_hdf.select("DNSWE_COUNT")[:]
     total_number_of_energies = 20
     spin_spectors = 30
@@ -67,7 +70,7 @@ def create_fake_l2_cdf(l1_hdf_path: str, l2_hdf_path: str, l2_swe_cdf_file_path:
         replace_variable(cdf, "acquisition_time", placeholder_acquisition_time)
     with CDF(mag_file_path, readonly=False, create=True) as cdf:
         cdf["epoch"] = epochs
-        cdf["vectors"] = b_rtn_data
+        cdf["vectors"] = mag_despun_vectors
         cdf["vectors"].attrs["FILLVAL"] = -1e31
     with CDF(swapi_file_path, readonly=False, create=True) as cdf:
         cdf['epoch'] = epochs
