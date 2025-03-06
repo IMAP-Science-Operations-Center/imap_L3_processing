@@ -21,19 +21,26 @@ def create_fake_l2_cdf(l1_hdf_path: str, l2_hdf_path: str, l2_swe_cdf_file_path:
     b_rtn_index = vd.field("b_rtn")._index
     b_rtn_data = np.array([x[b_rtn_index] for x in vd[:]])
 
-    sw_velocity_index = vd.field("v_rtn_i")._index
+    sw_velocity_index = vd.field(
+        "v_rtn_i")._index  # this is wrong, eventually use swepam I file for proton sw velocity instead
     sw_velocity_data = np.array([x[sw_velocity_index] for x in vd[:]])
     sw_speed = np.linalg.norm(sw_velocity_data, axis=1)
     r, t, n = sw_velocity_data.T
-    deflection = np.arcsin()
-
-    print(vd.field("b_rtn").attrinfo())
-
+    deflection = np.rad2deg(np.arcsin(np.sqrt(t * t + n * n) / sw_speed))
+    clock = np.rad2deg(np.arctan2(n, -t))
     counts = l1_hdf.select("DNSWE_COUNT")[:]
-    counts = np.moveaxis(counts, 3, 2).reshape((-1, 20, 30, 7))
+    total_number_of_energies = 20
+    spin_spectors = 30
+    apertures = 7
+    counts_in_swe_shape = np.moveaxis(counts, 3, 2).reshape((-1, total_number_of_energies, spin_spectors, apertures))
 
-    starting_date_time = datetime(year=2025, month=1, day=1)
-    epochs = starting_date_time + (timedelta(minutes=1) * np.arange(len(counts)))
+    starting_date_time = datetime(year=1999, month=9, day=6)
+    epochs = starting_date_time + (timedelta(minutes=1) * np.arange(len(counts_in_swe_shape)))
+
+    with open(path.parent.parent.parent / 'temp_cdf_data/swepam.txt', 'w') as file:
+        dist_fun_1d_sw_index = vd.field('dist_fun_1d_sw')._index
+        dist_fun_1d_sw_data = np.array([x[dist_fun_1d_sw_index] for x in vd[:]])
+        np.savetxt(file, dist_fun_1d_sw_data)
 
     with CDF(l2_swe_cdf_file_path, readonly=False) as cdf:
         cdf["epoch"] = epochs
@@ -42,7 +49,7 @@ def create_fake_l2_cdf(l1_hdf_path: str, l2_hdf_path: str, l2_swe_cdf_file_path:
         replace_variable(cdf, "energy", evenly_spaced_energies)
 
         energies_reshaped = evenly_spaced_energies[:, np.newaxis, np.newaxis]
-        psd = counts / np.square(energies_reshaped)
+        psd = counts_in_swe_shape / np.square(energies_reshaped)
         replace_variable(cdf, "phase_space_density_spin_sector", psd)
 
         flux = psd * energies_reshaped
@@ -52,9 +59,9 @@ def create_fake_l2_cdf(l1_hdf_path: str, l2_hdf_path: str, l2_swe_cdf_file_path:
         placeholder_insta_az_spin_sector = np.random.random(shape_without_aperture_axis) * 360
         replace_variable(cdf, "inst_az_spin_sector", placeholder_insta_az_spin_sector)
 
-        minutes = len(counts)
+        minutes = len(counts_in_swe_shape)
         measurement_count = placeholder_insta_az_spin_sector.size
-        start_time = 473385573.099714
+        start_time = (datetime(1999, 9, 6) - datetime(2010, 1, 1)).total_seconds()
         measurement_times = start_time + np.linspace(0, minutes * 60, measurement_count)
         placeholder_acquisition_time = measurement_times.reshape(shape_without_aperture_axis)
         replace_variable(cdf, "acquisition_time", placeholder_acquisition_time)
@@ -62,6 +69,15 @@ def create_fake_l2_cdf(l1_hdf_path: str, l2_hdf_path: str, l2_swe_cdf_file_path:
         cdf["epoch"] = epochs
         cdf["vectors"] = b_rtn_data
         cdf["vectors"].attrs["FILLVAL"] = -1e31
+    with CDF(swapi_file_path, readonly=False, create=True) as cdf:
+        cdf['epoch'] = epochs
+        cdf['epoch_delta'] = np.array([])
+        cdf['proton_sw_speed'] = sw_speed
+        cdf['proton_sw_speed'].attrs["FILLVAL"] = -1e31
+        cdf['proton_sw_clock_angle'] = clock
+        cdf['proton_sw_clock_angle'].attrs["FILLVAL"] = -1e31
+        cdf['proton_sw_deflection_angle'] = deflection
+        cdf['proton_sw_deflection_angle'].attrs["FILLVAL"] = -1e31
 
 
 def replace_variable(cdf: CDF, variable_name: str, new_values: np.ndarray):
@@ -80,6 +96,7 @@ if __name__ == "__main__":
     swapi_file_path = path.parent.parent.parent / "tests" / "test_data" / "swe" / "imap_swapi_l3a_proton-sw_19990609_v001.cdf"
 
     mag_file_path.unlink(missing_ok=True)
+    swapi_file_path.unlink(missing_ok=True)
     try:
         create_fake_l2_cdf(str(l1_hdf_path),
                            str(l2_hdf_path),

@@ -126,9 +126,9 @@ def create_swe_cdf(dependencies: SweL3Dependencies) -> str:
     input_metadata = InputMetadata(
         instrument='swe',
         data_level='l3',
-        start_date=datetime(2025, 10, 23),
-        end_date=datetime(2025, 10, 24),
-        version='v999')
+        start_date=datetime(1999, 9, 6),
+        end_date=datetime(1999, 9, 7),
+        version='v000')
     processor = SweProcessor(None, input_metadata)
     output_data = processor.calculate_pitch_angle_products(dependencies)
     cdf_path = save_data(output_data)
@@ -260,7 +260,7 @@ if __name__ == "__main__":
         dependencies = SweL3Dependencies.from_file_paths(
             get_test_data_path("swe/imap_swe_l2_sci-with-ace-data_19990609_v002.cdf"),
             get_test_data_path("swe/imap_mag_l1d_mago-normal_19990609_v001.cdf"),
-            get_test_data_path("swe/imap_swapi_l3a_proton-sw_20250101_v001.cdf"),
+            get_test_data_path("swe/imap_swapi_l3a_proton-sw_19990609_v001.cdf"),
             get_test_data_path("swe/example_swe_config.json"),
         )
         print(create_swe_cdf(dependencies))

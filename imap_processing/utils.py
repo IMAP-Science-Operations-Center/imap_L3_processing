@@ -26,7 +26,6 @@ def save_data(data: DataProduct) -> str:
     Path(TEMP_CDF_FOLDER_PATH).mkdir(exist_ok=True)
     file_path = f'{TEMP_CDF_FOLDER_PATH}/{logical_file_id}.cdf'
 
-    Path(file_path).unlink(missing_ok=True)
     attribute_manager = ImapAttributeManager()
     attribute_manager.add_global_attribute("Data_version", data.input_metadata.version)
     attribute_manager.add_instrument_attrs(data.input_metadata.instrument, data.input_metadata.data_level)
