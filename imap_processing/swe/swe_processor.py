@@ -65,25 +65,35 @@ class SweProcessor(Processor):
             halo_core_history = [*halo_core_history[1:], halo_core]
 
             corrected_energy_bins = swe_l2_data.energy - spacecraft_potential
-            rebinned_flux = correct_and_rebin(swe_l2_data.flux[i], corrected_energy_bins, swe_l2_data.inst_el,
-                                              swe_l2_data.inst_az_spin_sector[i],
-                                              rebinned_mag_data[i],
-                                              rebinned_solar_wind_vectors[i],
-                                              config,
-                                              )
-            rebinned_psd = correct_and_rebin(swe_l2_data.phase_space_density[i], corrected_energy_bins,
-                                             swe_l2_data.inst_el,
-                                             swe_l2_data.inst_az_spin_sector[i],
-                                             rebinned_mag_data[i],
-                                             rebinned_solar_wind_vectors[i],
-                                             config, )
-            flux_by_pitch_angles.append(rebinned_flux)
-            phase_space_density_by_pitch_angle.append(rebinned_psd)
-            energy_spectrum.append(integrate_distribution_to_get_1d_spectrum(rebinned_psd, config))
-            inbound, outbound = integrate_distribution_to_get_inbound_and_outbound_1d_spectrum(rebinned_psd,
-                                                                                               config)
-            energy_spectrum_inbound.append(inbound)
-            energy_spectrum_outbound.append(outbound)
+            missing_mag_data = np.any(np.isnan(rebinned_mag_data[i]))
+            if missing_mag_data:
+                num_energy_bins = len(config['energy_bins'])
+                num_pitch_angle_bins = len(config['pitch_angle_bins'])
+                flux_by_pitch_angles.append(np.full((num_energy_bins, num_pitch_angle_bins), np.nan))
+                phase_space_density_by_pitch_angle.append(np.full((num_energy_bins, num_pitch_angle_bins), np.nan))
+                energy_spectrum.append(np.full(num_energy_bins, np.nan))
+                energy_spectrum_inbound.append(np.full(num_energy_bins, np.nan))
+                energy_spectrum_outbound.append(np.full(num_energy_bins, np.nan))
+            else:
+                rebinned_flux = correct_and_rebin(swe_l2_data.flux[i], corrected_energy_bins, swe_l2_data.inst_el,
+                                                  swe_l2_data.inst_az_spin_sector[i],
+                                                  rebinned_mag_data[i],
+                                                  rebinned_solar_wind_vectors[i],
+                                                  config,
+                                                  )
+                rebinned_psd = correct_and_rebin(swe_l2_data.phase_space_density[i], corrected_energy_bins,
+                                                 swe_l2_data.inst_el,
+                                                 swe_l2_data.inst_az_spin_sector[i],
+                                                 rebinned_mag_data[i],
+                                                 rebinned_solar_wind_vectors[i],
+                                                 config, )
+                flux_by_pitch_angles.append(rebinned_flux)
+                phase_space_density_by_pitch_angle.append(rebinned_psd)
+                energy_spectrum.append(integrate_distribution_to_get_1d_spectrum(rebinned_psd, config))
+                inbound, outbound = integrate_distribution_to_get_inbound_and_outbound_1d_spectrum(rebinned_psd,
+                                                                                                   config)
+                energy_spectrum_inbound.append(inbound)
+                energy_spectrum_outbound.append(outbound)
 
         swe_l3_data = SweL3Data(input_metadata=self.input_metadata.to_upstream_data_dependency("sci"),
                                 epoch=swe_epoch,

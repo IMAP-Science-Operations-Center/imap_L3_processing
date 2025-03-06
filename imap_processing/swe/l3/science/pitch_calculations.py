@@ -133,7 +133,7 @@ def rebin_by_pitch_angle(flux, pitch_angles, energies, config: SweConfiguration)
     num_pitch_bins = len(pitch_angle_bins)
     num_energy_bins = len(energy_bins)
 
-    rebinned = np.zeros((num_energy_bins, num_pitch_bins), dtype=float)
+    rebinned = np.full((num_energy_bins, num_pitch_bins), np.nan, dtype=float)
 
     for j in range(num_pitch_bins):
         mask_pitch_angle = (pitch_angles_for_masked_flux >= pitch_angle_left_edges[j]) & (
@@ -222,12 +222,12 @@ def correct_and_rebin(flux_or_psd: np.ndarray[(E_BINS, SPIN_SECTORS, CEMS)],
     return rebin_by_pitch_angle(flux_or_psd, pitch_angle, energy_in_sw_frame, config)
 
 
-def integrate_distribution_to_get_1d_spectrum(psd_by_pitch_angle: np.ndarray[(E_BINS, PITCH_ANGLE_BINS)],
+def integrate_distribution_to_get_1d_spectrum(psd_by_energy_and_pitch_angle: np.ndarray[(E_BINS, PITCH_ANGLE_BINS)],
                                               config: SweConfiguration) -> np.ndarray[E_BINS]:
     pitch_angle_bin_factors = np.sin(np.deg2rad(config["pitch_angle_bins"])) * 2 * np.deg2rad(
         config["pitch_angle_delta"]) / 2
 
-    return np.sum(psd_by_pitch_angle * pitch_angle_bin_factors, axis=1)
+    return np.nansum(psd_by_energy_and_pitch_angle * pitch_angle_bin_factors, axis=1)
 
 
 def integrate_distribution_to_get_inbound_and_outbound_1d_spectrum(
@@ -237,8 +237,8 @@ def integrate_distribution_to_get_inbound_and_outbound_1d_spectrum(
         config["pitch_angle_delta"])
     pitch_less_than_90 = np.array(config["pitch_angle_bins"]) < 90
 
-    spectrum_a = np.sum((psd_by_pitch_angle * pitch_angle_bin_factors)[:, pitch_less_than_90], axis=1)
-    spectrum_b = np.sum((psd_by_pitch_angle * pitch_angle_bin_factors)[:, ~pitch_less_than_90], axis=1)
+    spectrum_a = np.nansum((psd_by_pitch_angle * pitch_angle_bin_factors)[:, pitch_less_than_90], axis=1)
+    spectrum_b = np.nansum((psd_by_pitch_angle * pitch_angle_bin_factors)[:, ~pitch_less_than_90], axis=1)
 
     if spectrum_a[config["in_vs_out_energy_index"]] > spectrum_b[config["in_vs_out_energy_index"]]:
         inbound = spectrum_b

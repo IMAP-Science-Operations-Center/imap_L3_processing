@@ -418,24 +418,24 @@ class TestPitchCalculations(unittest.TestCase):
 
         expected_result = np.array(
             [
-                [0, 50],
-                [0, 0]
+                [np.nan, 50],
+                [np.nan, np.nan]
             ]
         )
         np.testing.assert_almost_equal(result, expected_result)
 
     def test_rebin_by_pitch_angle_skips_bins_with_invalid_measurements(self):
         test_cases = [
-            ('no energy is close enough', [5.9, 6, 8.2, 11.8, 12.2], 0),
+            ('no energy is close enough', [5.9, 6, 8.2, 11.8, 12.2], np.nan),
             ('overall max value is in range and an energy is close enough below', [8, 8.21, 11.8, 12, 12.1], 50),
             ('overall max value is in range and an energy is close enough above', [8, 8.20, 11.79, 12, 12.1], 50),
             ('min and max are outside window and points on both side of nominal', [5.8, 5.9, 14.1, 9, 11], 50),
-            ('two lowest mins and max are outside window and points only below', [5.8, 5.9, 14.1, 8, 9], 0),
-            ('two lowest mins and max are outside window and points only above', [5.8, 5.9, 14.1, 11, 12], 0),
+            ('two lowest mins and max are outside window and points only below', [5.8, 5.9, 14.1, 8, 9], np.nan),
+            ('two lowest mins and max are outside window and points only above', [5.8, 5.9, 14.1, 11, 12], np.nan),
             ('second_lowest in window and an energy close enough', [5.8, 6.1, 14.1, 11, 12], 50),
             ('second_lowest in window and points on both sides', [5.8, 6.1, 14.1, 8, 12], 50),
-            ('second_lowest in window but all above and not close', [5.8, 11.3, 14.1, 11.3, 12], 0),
-            ('second_lowest in window but all below and not close', [5.8, 6.1, 14.1, 8, 8.7], 0),
+            ('second_lowest in window but all above and not close', [5.8, 11.3, 14.1, 11.3, 12], np.nan),
+            ('second_lowest in window but all below and not close', [5.8, 6.1, 14.1, 8, 8.7], np.nan),
         ]
         for case, energy, expected_output in test_cases:
             with self.subTest(case):
@@ -559,6 +559,32 @@ class TestPitchCalculations(unittest.TestCase):
         ]
         np.testing.assert_allclose(actual_integrated_spectrum, expected_integrated_spectrum)
 
+    def test_integrate_distribution_to_get_1d_spectrum_ignores_nan_values(self):
+        pitch_angle_bins = [30, 90]
+        pitch_angle_deltas = [15, 15]
+        configuration = build_swe_configuration(pitch_angle_bins=pitch_angle_bins,
+                                                pitch_angle_delta=pitch_angle_deltas,
+                                                in_vs_out_energy_index=1,
+                                                )
+
+        psd_by_energy_and_pitch_angles = np.array([
+            [10, np.nan],
+            [5, 10],
+            [np.nan, 15],
+        ])
+
+        actual_integrated_spectrum = integrate_distribution_to_get_1d_spectrum(psd_by_energy_and_pitch_angles,
+                                                                               configuration)
+
+        bin1_factor = ((0.5 * np.deg2rad(30)) / 2)
+        bin2_factor = ((1 * np.deg2rad(30)) / 2)
+        expected_integrated_spectrum = [
+            10 * bin1_factor,
+            5 * bin1_factor + 10 * bin2_factor,
+            15 * bin2_factor
+        ]
+        np.testing.assert_allclose(actual_integrated_spectrum, expected_integrated_spectrum)
+
     def test_integrate_distribution_decides_inbound_and_outbound_based_on_config_energy_index(
             self):
         pitch_angle_bins = [10, 85.5, 94.5, 100]
@@ -602,6 +628,44 @@ class TestPitchCalculations(unittest.TestCase):
 
                 np.testing.assert_allclose(in_spectrum, expected_in)
                 np.testing.assert_allclose(out_spectrum, expected_out)
+
+    def test_integrate_distribution_to_get_inbound_and_outbound_ignores_fill(
+            self):
+        pitch_angle_bins = [10, 85.5, 94.5, 100]
+        pitch_angle_deltas = [4.5, 4.5, 4.5, 4.5]
+
+        psd_by_pitch_angles = np.array([
+            [10, 20, 30, 40],
+            [np.nan, 20, 5, 10],
+            [1, 2, 3, np.nan],
+        ])
+
+        bin1_factor = (np.sin(np.deg2rad(10)) * np.deg2rad(4.5 * 2))
+        bin2_factor = (np.sin(np.deg2rad(85.5)) * np.deg2rad(4.5 * 2))
+        bin3_factor = (np.sin(np.deg2rad(94.5)) * np.deg2rad(4.5 * 2))
+        bin4_factor = (np.sin(np.deg2rad(100)) * np.deg2rad(4.5 * 2))
+
+        expected_A_spectrum = [
+            10 * bin1_factor + 20 * bin2_factor,
+            0 + 20 * bin2_factor,
+            1 * bin1_factor + 2 * bin2_factor,
+        ]
+        expected_B_spectrum = [
+            30 * bin3_factor + 40 * bin4_factor,
+            5 * bin3_factor + 10 * bin4_factor,
+            3 * bin3_factor + 0,
+        ]
+
+        configuration = build_swe_configuration(pitch_angle_bins=pitch_angle_bins,
+                                                pitch_angle_delta=pitch_angle_deltas,
+                                                in_vs_out_energy_index=0)
+
+        in_spectrum, out_spectrum = integrate_distribution_to_get_inbound_and_outbound_1d_spectrum(
+            psd_by_pitch_angles,
+            configuration)
+
+        np.testing.assert_allclose(in_spectrum, expected_A_spectrum)
+        np.testing.assert_allclose(out_spectrum, expected_B_spectrum)
 
 
 if __name__ == '__main__':

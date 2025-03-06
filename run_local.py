@@ -129,7 +129,7 @@ def create_swe_cdf(dependencies: SweL3Dependencies) -> str:
         data_level='l3',
         start_date=datetime(2025, 10, 23),
         end_date=datetime(2025, 10, 24),
-        version='v999')
+        version='v000')
     processor = SweProcessor(None, input_metadata)
     output_data = processor.calculate_pitch_angle_products(dependencies)
     cdf_path = save_data(output_data)
