@@ -1,4 +1,5 @@
 import sys
+import uuid
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -127,9 +128,9 @@ def create_swe_pitch_angle_cdf(dependencies: SweL3Dependencies) -> str:
     input_metadata = InputMetadata(
         instrument='swe',
         data_level='l3',
-        start_date=datetime(2025, 10, 23),
-        end_date=datetime(2025, 10, 24),
-        version='v999')
+        start_date=datetime(1999, 9, 6),
+        end_date=datetime(1999, 9, 7),
+        version='v000')
     processor = SweProcessor(None, input_metadata)
     output_data = processor.calculate_pitch_angle_products(dependencies)
     cdf_path = save_data(output_data)
@@ -167,18 +168,24 @@ def process_hit_pha():
     events = PHAEventReader.read_all_pha_events(bitstream.bin)
 
     cosine_table = CosineCorrectionLookupTable(
-        get_test_data_path("hit/pha_events/imap_hit_l3_r2-cosines-text-not-cdf_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_r3-cosines-text-not-cdf_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_r4-cosines-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_r2A-cosines-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_r3A-cosines-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_r4A-cosines-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_r2B-cosines-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_r3B-cosines-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_r4B-cosines-text-not-cdf_20250203_v001.cdf"),
     )
     gain_table = GainLookupTable.from_file(
         get_test_data_path("hit/pha_events/imap_hit_l3_high-gains-text-not-cdf_20250203_v001.cdf"),
         get_test_data_path("hit/pha_events/imap_hit_l3_low-gains-text-not-cdf_20250203_v001.cdf"))
 
     range_fit_lookup = RangeFitLookup.from_files(
-        get_test_data_path("hit/pha_events/imap_hit_l3_range2-fit-text-not-cdf_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_range3-fit-text-not-cdf_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_range4-fit-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_range2A-fit-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_range3A-fit-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_range4A-fit-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_range2B-fit-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_range3B-fit-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_range4B-fit-text-not-cdf_20250203_v001.cdf"),
     )
     processed_events = [process_pha_event(e, cosine_table, gain_table, range_fit_lookup) for e
                         in events]
@@ -187,18 +194,24 @@ def process_hit_pha():
 
 def create_hit_direct_event_cdf():
     cosine_table = CosineCorrectionLookupTable(
-        get_test_data_path("hit/pha_events/imap_hit_l3_r2-cosines-text-not-cdf_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_r3-cosines-text-not-cdf_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_r4-cosines-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_r2A-cosines-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_r3A-cosines-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_r4A-cosines-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_r2B-cosines-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_r3B-cosines-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_r4B-cosines-text-not-cdf_20250203_v001.cdf"),
     )
     gain_table = GainLookupTable.from_file(
         get_test_data_path("hit/pha_events/imap_hit_l3_high-gains-text-not-cdf_20250203_v001.cdf"),
         get_test_data_path("hit/pha_events/imap_hit_l3_low-gains-text-not-cdf_20250203_v001.cdf"))
 
     range_fit_lookup = RangeFitLookup.from_files(
-        get_test_data_path("hit/pha_events/imap_hit_l3_range2-fit-text-not-cdf_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_range3-fit-text-not-cdf_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_range4-fit-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_range2A-fit-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_range3A-fit-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_range4A-fit-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_range2B-fit-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_range3B-fit-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_range4B-fit-text-not-cdf_20250203_v001.cdf"),
     )
 
     event_type_look = HitEventTypeLookup.from_csv(
@@ -216,7 +229,7 @@ def create_hit_direct_event_cdf():
         data_level="l3a",
         start_date=datetime.now(),
         end_date=datetime.now() + timedelta(days=1),
-        version="",
+        version=str(uuid.uuid4()),
         descriptor="pulse-height-events"
     )
     processor = HitProcessor(None, input_metadata)
@@ -276,9 +289,9 @@ if __name__ == "__main__":
 
     if "swe_pitch_angels" in sys.argv:
         dependencies = SweL3Dependencies.from_file_paths(
-            get_test_data_path("swe/imap_swe_l2_sci-with-ace-data_20250101_v002.cdf"),
-            get_test_data_path("mag/imap_mag_l1d_mago-normal_20250101_v001.cdf"),
-            get_test_data_path("swe/imap_swapi_l3a_proton-sw_20250101_v001.cdf"),
+            get_test_data_path("swe/imap_swe_l2_sci-with-ace-data_19990609_v002.cdf"),
+            get_test_data_path("swe/imap_mag_l1d_mago-normal_19990609_v001.cdf"),
+            get_test_data_path("swe/imap_swapi_l3a_proton-sw_19990609_v001.cdf"),
             get_test_data_path("swe/example_swe_config.json"),
         )
         print(create_swe_pitch_angle_cdf(dependencies))

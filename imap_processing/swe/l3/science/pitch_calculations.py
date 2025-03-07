@@ -20,9 +20,8 @@ def piece_wise_model(x: np.ndarray, b0: float, b1: float,
                                ]))
 
 
-def find_breakpoints(energies: np.ndarray, averaged_psd: np.ndarray, initial_spacecraft_potential_guess: float,
-                     initial_core_halo_break_point_guess: float,
-                     latest_spacecraft_potential: float, latest_core_halo_breakpoint: float,
+def find_breakpoints(energies: np.ndarray, averaged_psd: np.ndarray, latest_spacecraft_potentials: list[float],
+                     latest_core_halo_break_points: list[float],
                      config: SweConfiguration) -> tuple[
     float, float]:
     log_psd = np.log(averaged_psd)
@@ -38,7 +37,8 @@ def find_breakpoints(energies: np.ndarray, averaged_psd: np.ndarray, initial_spa
     b3: float = slopes[core_index]
     b5: float = slopes[halo_index]
     b0: float = np.exp(log_psd[0] + b1 * energies[0])
-    initial_guesses = (b0, b1, initial_spacecraft_potential_guess, b3, initial_core_halo_break_point_guess, b5)
+    initial_guesses = (
+        b0, b1, np.average(latest_spacecraft_potentials), b3, np.average(latest_core_halo_break_points), b5)
 
     first_min_index = 0
     for i in range(1, len(slope_ratios) - 1):
@@ -59,8 +59,8 @@ def find_breakpoints(energies: np.ndarray, averaged_psd: np.ndarray, initial_spa
         delta_b2 = -1.0
         delta_b4 = 10
 
-    return try_curve_fit_until_valid(energies, log_psd, initial_guesses, latest_spacecraft_potential,
-                                     latest_core_halo_breakpoint, delta_b2, delta_b4)
+    return try_curve_fit_until_valid(energies, log_psd, initial_guesses, latest_spacecraft_potentials[-1],
+                                     latest_core_halo_break_points[-1], delta_b2, delta_b4)
 
 
 def try_curve_fit_until_valid(energies: np.ndarray, log_psd: np.ndarray, initial_guesses: tuple[float, ...],
@@ -133,7 +133,7 @@ def rebin_by_pitch_angle(flux, pitch_angles, energies, config: SweConfiguration)
     num_pitch_bins = len(pitch_angle_bins)
     num_energy_bins = len(energy_bins)
 
-    rebinned = np.zeros((num_energy_bins, num_pitch_bins), dtype=float)
+    rebinned = np.full((num_energy_bins, num_pitch_bins), np.nan, dtype=float)
 
     for j in range(num_pitch_bins):
         mask_pitch_angle = (pitch_angles_for_masked_flux >= pitch_angle_left_edges[j]) & (
@@ -222,12 +222,12 @@ def correct_and_rebin(flux_or_psd: np.ndarray[(E_BINS, SPIN_SECTORS, CEMS)],
     return rebin_by_pitch_angle(flux_or_psd, pitch_angle, energy_in_sw_frame, config)
 
 
-def integrate_distribution_to_get_1d_spectrum(psd_by_pitch_angle: np.ndarray[(E_BINS, PITCH_ANGLE_BINS)],
+def integrate_distribution_to_get_1d_spectrum(psd_by_energy_and_pitch_angle: np.ndarray[(E_BINS, PITCH_ANGLE_BINS)],
                                               config: SweConfiguration) -> np.ndarray[E_BINS]:
     pitch_angle_bin_factors = np.sin(np.deg2rad(config["pitch_angle_bins"])) * 2 * np.deg2rad(
         config["pitch_angle_delta"]) / 2
 
-    return np.sum(psd_by_pitch_angle * pitch_angle_bin_factors, axis=1)
+    return np.nansum(psd_by_energy_and_pitch_angle * pitch_angle_bin_factors, axis=1)
 
 
 def integrate_distribution_to_get_inbound_and_outbound_1d_spectrum(
@@ -237,8 +237,8 @@ def integrate_distribution_to_get_inbound_and_outbound_1d_spectrum(
         config["pitch_angle_delta"])
     pitch_less_than_90 = np.array(config["pitch_angle_bins"]) < 90
 
-    spectrum_a = np.sum((psd_by_pitch_angle * pitch_angle_bin_factors)[:, pitch_less_than_90], axis=1)
-    spectrum_b = np.sum((psd_by_pitch_angle * pitch_angle_bin_factors)[:, ~pitch_less_than_90], axis=1)
+    spectrum_a = np.nansum((psd_by_pitch_angle * pitch_angle_bin_factors)[:, pitch_less_than_90], axis=1)
+    spectrum_b = np.nansum((psd_by_pitch_angle * pitch_angle_bin_factors)[:, ~pitch_less_than_90], axis=1)
 
     if spectrum_a[config["in_vs_out_energy_index"]] > spectrum_b[config["in_vs_out_energy_index"]]:
         inbound = spectrum_b

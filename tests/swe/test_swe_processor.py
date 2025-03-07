@@ -146,14 +146,13 @@ class TestSweProcessor(unittest.TestCase):
             call(NumpyArrayMatcher(swe_l2_data.phase_space_density[1]), NumpyArrayMatcher(geometric_fractions)),
             call(NumpyArrayMatcher(swe_l2_data.phase_space_density[2]), NumpyArrayMatcher(geometric_fractions))])
 
-        spacecraft_potential_initial_guess = swe_config['spacecraft_potential_initial_guess']
-        halo_core_initial_guess = swe_config['core_halo_breakpoint_initial_guess']
         mock_find_breakpoints.assert_has_calls([
-            call(swe_l2_data.energy, mock_average_over_look_directions.return_value, spacecraft_potential_initial_guess,
-                 halo_core_initial_guess, 15, 90, swe_config),
-            call(swe_l2_data.energy, mock_average_over_look_directions.return_value, spacecraft_potential_initial_guess,
-                 halo_core_initial_guess, 12, 96, swe_config),
-            call(swe_l2_data.energy, mock_average_over_look_directions.return_value, 14, 92, 16, 86, swe_config),
+            call(swe_l2_data.energy, mock_average_over_look_directions.return_value, [15, 15, 15],
+                 [90, 90, 90], swe_config),
+            call(swe_l2_data.energy, mock_average_over_look_directions.return_value, [15, 15, 12],
+                 [90, 90, 96], swe_config),
+            call(swe_l2_data.energy, mock_average_over_look_directions.return_value, [15, 12, 16],
+                 [90, 96, 86], swe_config),
         ])
 
         self.assertEqual(UpstreamDataDependency("swe", "l3", datetime(2025, 2, 21),
@@ -174,7 +173,9 @@ class TestSweProcessor(unittest.TestCase):
         def call_with_array_matchers(*args):
             return call(*[NumpyArrayMatcher(x) for x in args])
 
-        self.assertEqual(mock_correct_and_rebin.call_args_list, [
+        actual_calls = mock_correct_and_rebin.call_args_list
+
+        expected_calls = [
             call_with_array_matchers(swe_l2_data.flux[0], swe_l2_data.energy - 12, swe_l2_data.inst_el,
                                      swe_l2_data.inst_az_spin_sector[0],
                                      closest_mag_data[0], closest_swapi_data[0], swe_config),
@@ -193,8 +194,8 @@ class TestSweProcessor(unittest.TestCase):
             call_with_array_matchers(swe_l2_data.phase_space_density[2], swe_l2_data.energy - 19, swe_l2_data.inst_el,
                                      swe_l2_data.inst_az_spin_sector[2],
                                      closest_mag_data[2], closest_swapi_data[2], swe_config)
-        ])
-        # mock_correct_and_rebin.assert_has_calls()
+        ]
+        self.assertEqual(actual_calls, expected_calls)
         mock_integrate_distribution_to_get_1d_spectrum.assert_has_calls([
             call(rebinned_by_pitch[1], swe_config),
             call(rebinned_by_pitch[3], swe_config),
@@ -205,6 +206,162 @@ class TestSweProcessor(unittest.TestCase):
             call(rebinned_by_pitch[3], swe_config),
             call(rebinned_by_pitch[5], swe_config)
         ])
+
+    def test_calculate_pitch_angle_products_makes_nan_if_no_mag_close_enough(self):
+        epochs = np.array([datetime(2025, 3, 6)])
+        mag_epochs = np.array([datetime(2025, 3, 6, 0, 1, 30)])
+        swapi_epochs = np.array([datetime(2025, 3, 6)])
+
+        pitch_angle_bins = [70, 100, 130]
+
+        num_energies = 9
+        num_epochs = 1
+        swe_l2_data = SweL2Data(
+            epoch=epochs,
+            epoch_delta=np.repeat(timedelta(seconds=30), num_epochs),
+            phase_space_density=np.arange(num_epochs * num_energies * 5 * 7).reshape(num_epochs, num_energies, 5,
+                                                                                     7) + 100,
+            flux=np.arange(num_epochs * num_energies * 5 * 7).reshape(num_epochs, num_energies, 5, 7),
+            energy=np.arange(num_energies) + 20,
+            inst_el=np.array([-30, -20, -10, 0, 10, 20, 30]),
+            inst_az_spin_sector=np.arange(num_epochs * num_energies * 5).reshape(num_epochs, num_energies, 5),
+            acquisition_time=np.linspace(datetime(2025, 3, 6), datetime(2025, 3, 6, 0, 1),
+                                         num_epochs * num_energies * 5).reshape(num_epochs, num_energies, 5),
+        )
+
+        mag_l1d_data = MagL1dData(
+            epoch=mag_epochs,
+            mag_data=np.arange(7, 22).reshape(5, 3).repeat(2, axis=0)
+        )
+
+        swapi_l3a_proton_data = SwapiL3aProtonData(
+            epoch=swapi_epochs,
+            epoch_delta=np.repeat(timedelta(seconds=30), 10),
+            proton_sw_speed=np.full(len(swapi_epochs), 400),
+            proton_sw_clock_angle=np.full(len(swapi_epochs), 0),
+            proton_sw_deflection_angle=np.full(len(swapi_epochs), 0),
+        )
+        geometric_fractions = [0.0697327, 0.138312, 0.175125, 0.181759,
+                               0.204686, 0.151448, 0.0781351]
+        energy_bins = [8, 10, 13]
+        swe_config = build_swe_configuration(
+            geometric_fractions=geometric_fractions,
+            pitch_angle_bins=pitch_angle_bins,
+            pitch_angle_delta=[15, 15, 15],
+            energy_bins=energy_bins,
+            energy_delta_plus=[2, 20, 200],
+            energy_delta_minus=[8, 80, 800],
+            max_swapi_offset_in_minutes=5,
+            max_mag_offset_in_minutes=1,
+            spacecraft_potential_initial_guess=15,
+            core_halo_breakpoint_initial_guess=90,
+            in_vs_out_energy_index=len(energy_bins) - 1
+        )
+
+        input_metadata = InputMetadata("swe", "l3", datetime(2025, 2, 21),
+                                       datetime(2025, 2, 22), "v001")
+        swel3_dependency = SweL3Dependencies(swe_l2_data, mag_l1d_data, swapi_l3a_proton_data, swe_config)
+        swe_processor = SweProcessor(dependencies=[], input_metadata=input_metadata)
+        swe_l3_data = swe_processor.calculate_pitch_angle_products(swel3_dependency)
+
+        self.assertEqual(UpstreamDataDependency("swe", "l3", datetime(2025, 2, 21),
+                                                datetime(2025, 2, 22), "v001", "sci"), swe_l3_data.input_metadata)
+        self.assertEqual(swe_l3_data.pitch_angle, swel3_dependency.configuration["pitch_angle_bins"])
+        self.assertEqual(swe_l3_data.pitch_angle_delta, swel3_dependency.configuration["pitch_angle_delta"])
+        self.assertEqual(swe_l3_data.energy, swel3_dependency.configuration["energy_bins"])
+        self.assertEqual(swe_l3_data.energy_delta_plus, swel3_dependency.configuration["energy_delta_plus"])
+        self.assertEqual(swe_l3_data.energy_delta_minus, swel3_dependency.configuration["energy_delta_minus"])
+        np.testing.assert_array_equal(swe_l3_data.flux_by_pitch_angle,
+                                      np.full((len(epochs), len(energy_bins), len(pitch_angle_bins)), np.nan))
+        np.testing.assert_array_equal(swe_l3_data.phase_space_density_by_pitch_angle,
+                                      np.full((len(epochs), len(energy_bins), len(pitch_angle_bins)), np.nan))
+        np.testing.assert_array_equal(swe_l3_data.epoch_delta, swe_l2_data.epoch_delta)
+        np.testing.assert_array_equal(swe_l3_data.epoch, swe_l2_data.epoch)
+        np.testing.assert_array_equal(swe_l3_data.energy_spectrum, np.full((len(epochs), len(energy_bins)), np.nan))
+        np.testing.assert_array_equal(swe_l3_data.energy_spectrum_inbound,
+                                      np.full((len(epochs), len(energy_bins)), np.nan))
+        np.testing.assert_array_equal(swe_l3_data.energy_spectrum_outbound,
+                                      np.full((len(epochs), len(energy_bins)), np.nan))
+
+    def test_calculate_pitch_angle_products_without_mocks(self):
+        epochs = np.array([datetime(2025, 3, 6)])
+        mag_epochs = np.array([datetime(2025, 3, 6, 0, 0, 30)])
+        swapi_epochs = np.array([datetime(2025, 3, 6)])
+
+        pitch_angle_bins = [70, 100, 130]
+
+        num_energies = 9
+        num_epochs = 1
+        swe_l2_data = SweL2Data(
+            epoch=epochs,
+            epoch_delta=np.repeat(timedelta(seconds=30), num_epochs),
+            phase_space_density=np.arange(num_epochs * num_energies * 5 * 7).reshape(num_epochs, num_energies, 5,
+                                                                                     7) + 100,
+            flux=np.arange(num_epochs * num_energies * 5 * 7).reshape(num_epochs, num_energies, 5, 7),
+            energy=np.arange(num_energies) + 20,
+            inst_el=np.array([-30, -20, -10, 0, 10, 20, 30]),
+            inst_az_spin_sector=np.arange(num_epochs * num_energies * 5).reshape(num_epochs, num_energies, 5),
+            acquisition_time=np.linspace(datetime(2025, 3, 6), datetime(2025, 3, 6, 0, 1),
+                                         num_epochs * num_energies * 5).reshape(num_epochs, num_energies, 5),
+        )
+
+        mag_l1d_data = MagL1dData(
+            epoch=mag_epochs,
+            mag_data=np.arange(7, 22).reshape(5, 3).repeat(2, axis=0)
+        )
+
+        swapi_l3a_proton_data = SwapiL3aProtonData(
+            epoch=swapi_epochs,
+            epoch_delta=np.repeat(timedelta(seconds=30), 10),
+            proton_sw_speed=np.full(len(swapi_epochs), 400),
+            proton_sw_clock_angle=np.full(len(swapi_epochs), 0),
+            proton_sw_deflection_angle=np.full(len(swapi_epochs), 0),
+        )
+        geometric_fractions = [0.0697327, 0.138312, 0.175125, 0.181759,
+                               0.204686, 0.151448, 0.0781351]
+        energy_bins = [8, 10, 13]
+        swe_config = build_swe_configuration(
+            geometric_fractions=geometric_fractions,
+            pitch_angle_bins=pitch_angle_bins,
+            pitch_angle_delta=[15, 15, 15],
+            energy_bins=energy_bins,
+            energy_delta_plus=[2, 20, 200],
+            energy_delta_minus=[8, 80, 800],
+            max_swapi_offset_in_minutes=5,
+            max_mag_offset_in_minutes=1,
+            spacecraft_potential_initial_guess=15,
+            core_halo_breakpoint_initial_guess=90,
+            in_vs_out_energy_index=len(energy_bins) - 1
+        )
+
+        input_metadata = InputMetadata("swe", "l3", datetime(2025, 2, 21),
+                                       datetime(2025, 2, 22), "v001")
+        swel3_dependency = SweL3Dependencies(swe_l2_data, mag_l1d_data, swapi_l3a_proton_data, swe_config)
+        swe_processor = SweProcessor(dependencies=[], input_metadata=input_metadata)
+        swe_l3_data = swe_processor.calculate_pitch_angle_products(swel3_dependency)
+
+        self.assertEqual(UpstreamDataDependency("swe", "l3", datetime(2025, 2, 21),
+                                                datetime(2025, 2, 22), "v001", "sci"), swe_l3_data.input_metadata)
+        self.assertEqual(swe_l3_data.pitch_angle, swel3_dependency.configuration["pitch_angle_bins"])
+        self.assertEqual(swe_l3_data.pitch_angle_delta, swel3_dependency.configuration["pitch_angle_delta"])
+        self.assertEqual(swe_l3_data.energy, swel3_dependency.configuration["energy_bins"])
+        self.assertEqual(swe_l3_data.energy_delta_plus, swel3_dependency.configuration["energy_delta_plus"])
+        self.assertEqual(swe_l3_data.energy_delta_minus, swel3_dependency.configuration["energy_delta_minus"])
+        np.testing.assert_allclose(swe_l3_data.flux_by_pitch_angle,
+                                   np.array([[[np.nan, 73.003799, 180.513816],
+                                              [111.982682, 159.352476, 281.418325],
+                                              [209.853169, 314.550222, np.nan]]]))
+        np.testing.assert_allclose(swe_l3_data.phase_space_density_by_pitch_angle,
+                                   np.array([[[np.nan, 194.772034, 270.312835],
+                                              [211.672665, 273.136802, 363.195552],
+                                              [313.860051, 400.23009, np.nan]]]))
+        np.testing.assert_array_equal(swe_l3_data.epoch_delta, swe_l2_data.epoch_delta)
+        np.testing.assert_array_equal(swe_l3_data.epoch, swe_l2_data.epoch)
+        np.testing.assert_allclose(swe_l3_data.energy_spectrum, np.array([[104.427758, 195.333344, 180.401159]]))
+        np.testing.assert_allclose(swe_l3_data.energy_spectrum_inbound, np.array([[0, 104.147588, 154.42602]]))
+        np.testing.assert_allclose(swe_l3_data.energy_spectrum_outbound,
+                                   np.array([[208.855516, 286.519101, 206.376298]]))
+
 
     @patch('imap_processing.swe.swe_processor.find_breakpoints')
     @patch('imap_processing.swe.swe_processor.average_over_look_directions')
