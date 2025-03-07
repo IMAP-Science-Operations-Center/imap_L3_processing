@@ -56,21 +56,29 @@ class SweProcessor(Processor):
             ccounts = np.reshape(np.arange(24 * 30 * 7), (24, 30, 7)) * 1000
 
             weights: np.ndarray[float] = compute_maxwellian_weight_factors(ccounts)
-            core_breakpoint: int = 0
 
-            filtered_velocity_vectors, filtered_weights, filtered_yreg = filter_and_flatten_regress_parameters(
-                corrected_energy_bins,
-                velocity_vectors,
-                swe_l2_data.phase_space_density[i],
-                weights,
-                core_breakpoint, halo_core - spacecraft_potential)
+            halo_core_breakpoint_index: int = next(
+                i - 1 for i, energy in enumerate(swe_l2_data.energy) if energy > halo_core)
+            spacecraft_potential_core_breakpoint_index: int = next(
+                i for i, energy in enumerate(swe_l2_data.energy) if energy >= spacecraft_potential)
 
-            # np.savetxt("fake_velocity_vectors.csv", filtered_velocity_vectors[::100], delimiter=",")
-            # np.savetxt("fake_weights.csv", filtered_weights[::100], delimiter=",")
-            # np.savetxt("fake_yreg.csv", filtered_yreg[::100], delimiter=",")
+            while True:
+                filtered_velocity_vectors, filtered_weights, filtered_yreg = filter_and_flatten_regress_parameters(
+                    corrected_energy_bins,
+                    velocity_vectors,
+                    swe_l2_data.phase_space_density[i],
+                    weights,
+                    spacecraft_potential_core_breakpoint_index, halo_core_breakpoint_index)
 
-            fit_function: np.ndarray[float] = regress(filtered_velocity_vectors, filtered_weights, filtered_yreg)
-            calculate_fit_temperature_density_velocity(fit_function)
+                fit_function, chisq = regress(filtered_velocity_vectors,
+                                              filtered_weights, filtered_yreg)
+                moments = calculate_fit_temperature_density_velocity(fit_function)
+
+                if 0 < moments.density < 185 or (
+                        halo_core_breakpoint_index - spacecraft_potential_core_breakpoint_index) <= 3:
+                    break
+                else:
+                    halo_core_breakpoint_index -= 1
 
     def calculate_pitch_angle_products(self, dependencies: SweL3Dependencies) -> SweL3Data:
         swe_l2_data = dependencies.swe_l2_data

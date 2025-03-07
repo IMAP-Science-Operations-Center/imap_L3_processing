@@ -104,7 +104,7 @@ class TestMomentsCalculation(unittest.TestCase):
         self.assertAlmostEqual(21193300.548418, moments.aoo, delta=1)
 
     def test_filter_and_flatten_regress_parameters(self):
-        corrected_energy_bins = np.array([-1, 0, 3, 4, 5])
+        corrected_energy_bins = np.array([-1, 0, 3, 4.5, 5])
         phase_space_density = np.array([
             [[1, 2], [2, 3]],
             [[5, 6], [6, 7]],
@@ -129,11 +129,12 @@ class TestMomentsCalculation(unittest.TestCase):
             [[[20, 0, 0], [8, 0, 0]], [[12, 0, 0], [23, 0, 0]]],
         ])
 
-        core_breakpoint = 0
-        core_halo_breakpoint = 4.5
+        core_breakpoint_index = 1
+        core_halo_breakpoint_index = 4
         vectors, actual_weights, yreg = filter_and_flatten_regress_parameters(corrected_energy_bins, velocity_vectors,
                                                                               phase_space_density, weights,
-                                                                              core_breakpoint, core_halo_breakpoint)
+                                                                              core_breakpoint_index,
+                                                                              core_halo_breakpoint_index)
 
         np.testing.assert_array_equal(vectors, [[3, 0, 0], [4, 0, 0], [10, 0, 0], [10, 0, 0], [0, 0, 0]])
         np.testing.assert_array_equal(actual_weights, [3, 1e-36, 10, 11, 12])

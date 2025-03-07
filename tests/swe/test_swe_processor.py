@@ -233,15 +233,14 @@ class TestSweProcessor(unittest.TestCase):
             epoch_delta=np.repeat(timedelta(seconds=30), 2),
             phase_space_density=np.arange(9).reshape(3, 3) + 100,
             flux=np.arange(9).reshape(3, 3),
-            energy=np.array([2, 4, 6]),
+            energy=np.array([9, 10, 12, 14, 36, 54, 96, 102, 112, 156]),
             inst_el=np.array([]),
             inst_az_spin_sector=np.arange(10, 19).reshape(3, 3),
             acquisition_time=np.array([]),
         )
 
-        expected_core_breakpoint = 0
         expected_breakpoint_1 = (12, 96)
-        expected_breakpoint_2 = (16, 86)
+        expected_breakpoint_2 = (14, 54)
         mock_find_breakpoints.side_effect = [
             expected_breakpoint_1,
             expected_breakpoint_2
@@ -279,7 +278,9 @@ class TestSweProcessor(unittest.TestCase):
             )
         ]
 
-        mock_regress.side_effect = [sentinel.first_regress_return, sentinel.second_regress_return]
+        mock_calculate_fit_temperature_density_velocity.return_value = Mock(density=10)
+
+        mock_regress.side_effect = [(sentinel.first_regress_return, 0), (sentinel.second_regress_return, 0)]
         mock_average_over_look_directions.return_value = np.array([5, 10, 15])
         input_metadata = InputMetadata("swe", "l3", datetime(2025, 2, 21),
                                        datetime(2025, 2, 22), "v001")
@@ -328,9 +329,8 @@ class TestSweProcessor(unittest.TestCase):
         np.testing.assert_array_equal(swe_l2_data.phase_space_density[0], filter_and_flatten_call_1.args[2])
         np.testing.assert_array_equal(maxwellian_weight_factors[0],
                                       filter_and_flatten_call_1.args[3])
-        self.assertEqual(expected_core_breakpoint, filter_and_flatten_call_1.args[4])
-        self.assertEqual(expected_breakpoint_1[1] - expected_breakpoint_1[0],
-                         filter_and_flatten_call_1.args[5])
+        self.assertEqual(2, filter_and_flatten_call_1.args[4])
+        self.assertEqual(6, filter_and_flatten_call_1.args[5])
 
         filter_and_flatten_call_2 = mock_filter_and_flatten_regress_parameters.mock_calls[1]
         np.testing.assert_array_equal(swe_l2_data.energy - expected_breakpoint_2[0],
@@ -340,9 +340,8 @@ class TestSweProcessor(unittest.TestCase):
         np.testing.assert_array_equal(swe_l2_data.phase_space_density[1], filter_and_flatten_call_2.args[2])
         np.testing.assert_array_equal(maxwellian_weight_factors[1],
                                       filter_and_flatten_call_2.args[3])
-        self.assertEqual(expected_core_breakpoint, filter_and_flatten_call_2.args[4])
-        self.assertEqual(expected_breakpoint_2[1] - expected_breakpoint_2[0],
-                         filter_and_flatten_call_2.args[5])
+        self.assertEqual(3, filter_and_flatten_call_2.args[4])
+        self.assertEqual(5, filter_and_flatten_call_2.args[5])
 
         regress_call_1 = mock_regress.mock_calls[0]
         np.testing.assert_array_equal(filtered_velocity_vectors[0], regress_call_1.args[0])
@@ -356,3 +355,151 @@ class TestSweProcessor(unittest.TestCase):
 
         mock_calculate_fit_temperature_density_velocity.assert_has_calls(
             [call(sentinel.first_regress_return), call(sentinel.second_regress_return)])
+
+    @patch('imap_processing.swe.swe_processor.average_over_look_directions')
+    @patch('imap_processing.swe.swe_processor.compute_maxwellian_weight_factors')
+    @patch('imap_processing.swe.swe_processor.calculate_velocity_in_dsp_frame_km_s')
+    @patch('imap_processing.swe.swe_processor.regress')
+    @patch('imap_processing.swe.swe_processor.calculate_fit_temperature_density_velocity')
+    @patch('imap_processing.swe.swe_processor.find_breakpoints')
+    @patch('imap_processing.swe.swe_processor.filter_and_flatten_regress_parameters')
+    def test_moment_fit_should_be_retried_until_returned_density_is_valid(self,
+                                                                          mock_filter_and_flatten_regress_parameters,
+                                                                          mock_find_breakpoints,
+                                                                          mock_calculate_fit_temperature_density_velocity,
+                                                                          mock_regress, mock_calculate_velocity,
+                                                                          mock_compute_maxwellian_weights,
+                                                                          _):
+        epochs = datetime.now() + np.arange(1) * timedelta(minutes=1)
+        swe_config = build_swe_configuration()
+
+        energies = np.array([1.2, 3.4, 4.6, 5.9, 8.7, 9.1, 9.2, 10.5, 11.9])
+
+        swe_l2_data = SweL2Data(
+            epoch=epochs,
+            epoch_delta=np.repeat(timedelta(seconds=30), 1),
+            phase_space_density=np.arange(7 * 3).reshape(1, 7, 3) + 100,
+            flux=np.arange(9).reshape(3, 3),
+            energy=energies,
+            inst_el=np.array([]),
+            inst_az_spin_sector=np.arange(10, 19).reshape(3, 3),
+            acquisition_time=np.array([]),
+        )
+
+        core_breakpoint = 3.4
+        core_halo_breakpoint = 9.2
+        mock_find_breakpoints.return_value = (core_breakpoint, core_halo_breakpoint)
+
+        expected_core_energy_start_index = 1
+        expected_core_energy_end_index = 6
+
+        mock_filter_and_flatten_regress_parameters.side_effect = [
+            (sentinel.filtered_vecs_1, sentinel.filtered_weights_1, sentinel.filtered_yreg_1),
+            (sentinel.filtered_vecs_2, sentinel.filtered_weights_2, sentinel.filtered_yreg_2),
+            (sentinel.filtered_vecs_3, sentinel.filtered_weights_3, sentinel.filtered_yreg_3)
+        ]
+
+        mock_regress.side_effect = [(sentinel.first_regress_return, 0), (sentinel.second_regress_return, 0),
+                                    (sentinel.third_regress_return, 0)]
+
+        mock_calculate_fit_temperature_density_velocity.side_effect = [(Mock(density=-1)), (Mock(density=186)),
+                                                                       (Mock(density=10))]
+
+        input_metadata = InputMetadata("swe", "l3", datetime(2025, 2, 21),
+                                       datetime(2025, 2, 22), "v001")
+
+        swel3_dependency = SweL3Dependencies(swe_l2_data, Mock(), Mock(), swe_config)
+        swe_processor = SweProcessor(dependencies=[], input_metadata=input_metadata)
+
+        swe_processor.calculate_moment_products(swel3_dependency)
+
+        self.assertEqual(3, mock_filter_and_flatten_regress_parameters.call_count)
+        mock_filter_and_flatten_regress_parameters.assert_has_calls([
+            call(NumpyArrayMatcher(swe_l2_data.energy - core_breakpoint), mock_calculate_velocity.return_value,
+                 NumpyArrayMatcher(swe_l2_data.phase_space_density[0]), mock_compute_maxwellian_weights.return_value,
+                 expected_core_energy_start_index, expected_core_energy_end_index),
+            call(NumpyArrayMatcher(swe_l2_data.energy - core_breakpoint), mock_calculate_velocity.return_value,
+                 NumpyArrayMatcher(swe_l2_data.phase_space_density[0]), mock_compute_maxwellian_weights.return_value,
+                 expected_core_energy_start_index, expected_core_energy_end_index - 1),
+            call(NumpyArrayMatcher(swe_l2_data.energy - core_breakpoint), mock_calculate_velocity.return_value,
+                 NumpyArrayMatcher(swe_l2_data.phase_space_density[0]), mock_compute_maxwellian_weights.return_value,
+                 expected_core_energy_start_index, expected_core_energy_end_index - 2)
+        ])
+
+        self.assertEqual(3, mock_regress.call_count)
+        mock_regress.assert_has_calls([
+            call(sentinel.filtered_vecs_1, sentinel.filtered_weights_1, sentinel.filtered_yreg_1),
+            call(sentinel.filtered_vecs_2, sentinel.filtered_weights_2, sentinel.filtered_yreg_2),
+            call(sentinel.filtered_vecs_3, sentinel.filtered_weights_3, sentinel.filtered_yreg_3)
+
+        ])
+
+        self.assertEqual(3, mock_calculate_fit_temperature_density_velocity.call_count)
+        mock_calculate_fit_temperature_density_velocity.assert_has_calls([
+            call(sentinel.first_regress_return),
+            call(sentinel.second_regress_return),
+            call(sentinel.third_regress_return)
+        ])
+
+    @patch('imap_processing.swe.swe_processor.average_over_look_directions')
+    @patch('imap_processing.swe.swe_processor.compute_maxwellian_weight_factors')
+    @patch('imap_processing.swe.swe_processor.calculate_velocity_in_dsp_frame_km_s')
+    @patch('imap_processing.swe.swe_processor.regress')
+    @patch('imap_processing.swe.swe_processor.calculate_fit_temperature_density_velocity')
+    @patch('imap_processing.swe.swe_processor.find_breakpoints')
+    @patch('imap_processing.swe.swe_processor.filter_and_flatten_regress_parameters')
+    def test_moment_fit_should_be_ran_while_number_of_energies_between_halo_and_core_is_greater_than_3(self,
+                                                                                                       mock_filter_and_flatten_regress_parameters,
+                                                                                                       mock_find_breakpoints,
+                                                                                                       mock_calculate_fit_temperature_density_velocity,
+                                                                                                       mock_regress,
+                                                                                                       mock_calculate_velocity,
+                                                                                                       mock_compute_maxwellian_weights,
+                                                                                                       _):
+        epochs = datetime.now() + np.arange(1) * timedelta(minutes=1)
+        swe_config = build_swe_configuration()
+
+        energies = np.array([1.2, 3.4, 4.6, 5.9, 8.7, 9.2, 10.5, 11.9])
+
+        swe_l2_data = SweL2Data(
+            epoch=epochs,
+            epoch_delta=np.repeat(timedelta(seconds=30), 1),
+            phase_space_density=np.arange(7 * 3).reshape(1, 7, 3) + 100,
+            flux=np.arange(9).reshape(3, 3),
+            energy=energies,
+            inst_el=np.array([]),
+            inst_az_spin_sector=np.arange(10, 19).reshape(3, 3),
+            acquisition_time=np.array([]),
+        )
+
+        core_breakpoint = 3.4
+        core_halo_breakpoint = 8.7
+        mock_find_breakpoints.return_value = (core_breakpoint, core_halo_breakpoint)
+
+        expected_core_energy_start_index = 1
+        expected_core_energy_end_index = 4
+
+        mock_filter_and_flatten_regress_parameters.return_value = (
+            sentinel.filtered_vecs_1, sentinel.filtered_weights_1, sentinel.filtered_yreg_1)
+
+        mock_regress.return_value = (sentinel.first_regress_return, 0)
+
+        mock_calculate_fit_temperature_density_velocity.side_effect = [Mock(density=-1), Mock(density=10)]
+
+        input_metadata = InputMetadata("swe", "l3", datetime(2025, 2, 21),
+                                       datetime(2025, 2, 22), "v001")
+
+        swel3_dependency = SweL3Dependencies(swe_l2_data, Mock(), Mock(), swe_config)
+        swe_processor = SweProcessor(dependencies=[], input_metadata=input_metadata)
+
+        swe_processor.calculate_moment_products(swel3_dependency)
+
+        mock_filter_and_flatten_regress_parameters.assert_called_once_with(
+            NumpyArrayMatcher(swe_l2_data.energy - core_breakpoint), mock_calculate_velocity.return_value,
+            NumpyArrayMatcher(swe_l2_data.phase_space_density[0]), mock_compute_maxwellian_weights.return_value,
+            expected_core_energy_start_index, expected_core_energy_end_index)
+
+        mock_regress.assert_called_once_with(sentinel.filtered_vecs_1, sentinel.filtered_weights_1,
+                                             sentinel.filtered_yreg_1)
+
+        mock_calculate_fit_temperature_density_velocity.assert_called_once_with(sentinel.first_regress_return)
