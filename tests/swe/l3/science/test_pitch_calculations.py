@@ -122,8 +122,7 @@ class TestPitchCalculations(unittest.TestCase):
                              3.69484446e-01, 2.19359553e-01, 1.19059738e-01, 5.64115725e-02,
                              2.30604686e-02, 9.14406238e-03, 4.24754874e-03, 1.61814681e-03])
         spacecraft_potential, core_halo_breakpoint = find_breakpoints(
-            xs, avg_flux, 10, 80,
-            11, 81, config)
+            xs, avg_flux, [10, 10, 10], [80, 80, 80], config)
         self.assertAlmostEqual(11.1, spacecraft_potential, 1)
         self.assertAlmostEqual(81.1, core_halo_breakpoint, 1)
 
@@ -146,8 +145,8 @@ class TestPitchCalculations(unittest.TestCase):
                 noise_floor = 1
                 avg_flux += noise_floor
                 spacecraft_potential, core_halo_breakpoint = find_breakpoints(
-                    xs, avg_flux, 10, 80,
-                    11, 82, config)
+                    xs, avg_flux, [10, 10, 10], [80, 80, 80],
+                    config)
                 self.assertAlmostEqual(expected_potential, spacecraft_potential, 2)
                 self.assertAlmostEqual(expected_core_halo, core_halo_breakpoint, 0)
 
@@ -155,9 +154,9 @@ class TestPitchCalculations(unittest.TestCase):
         config = build_swe_configuration()
 
         cases = [
-            (4, 40, 4, 50),
-            (10, 80, 12, 100),
-            (12, 60, 10, 80),
+            (4, 40, [4, 4, 4], [50, 50, 50]),
+            (10, 80, [12, 12, 12], [100, 100, 100]),
+            (12, 60, [10, 10, 10], [80, 80, 80]),
         ]
         for case in cases:
             with self.subTest(case):
@@ -172,7 +171,7 @@ class TestPitchCalculations(unittest.TestCase):
                 avg_flux += noise_floor
 
                 spacecraft_potential, core_halo_breakpoint = find_breakpoints(
-                    xs, avg_flux, guess_potential, guess_halo, 10, 80, config)
+                    xs, avg_flux, guess_potential, guess_halo, config)
                 self.assertAlmostEqual(expected_potential, spacecraft_potential, 2)
                 self.assertAlmostEqual(expected_core_halo, core_halo_breakpoint, 0)
 
@@ -199,9 +198,8 @@ class TestPitchCalculations(unittest.TestCase):
                 avg_flux = np.exp(log_flux)
 
                 result = find_breakpoints(
-                    xs, avg_flux, 10, 80, 15,
-                    90, config)
-                mock_try_curve_fit_until_valid.assert_called_with(ANY, ANY, ANY, 15, 90, expected_b2_delta,
+                    xs, avg_flux, [10, 10, 10], [80, 80, 80], config)
+                mock_try_curve_fit_until_valid.assert_called_with(ANY, ANY, ANY, 10, 80, expected_b2_delta,
                                                                   expected_b4_delta)
 
                 self.assertEqual(mock_try_curve_fit_until_valid.return_value, result)
@@ -233,8 +231,8 @@ class TestPitchCalculations(unittest.TestCase):
                 avg_flux = np.exp(log_flux)
 
                 spacecraft_potential, core_halo_breakpoint = find_breakpoints(
-                    xs, avg_flux, 10, 80,
-                    11, 81, config)
+                    xs, avg_flux, [10, 10, 10], [80, 80, 80],
+                    config)
                 expected_guesses = [ANY, b1, 10, b3, 80, b5]
                 rounded_actuals = [round(x, 6) for x in mock_curve_fit.call_args.args[3]]
                 self.assertEqual(expected_guesses, rounded_actuals)
@@ -264,8 +262,7 @@ class TestPitchCalculations(unittest.TestCase):
                 avg_flux = np.exp(log_flux)
 
                 spacecraft_potential, core_halo_breakpoint = find_breakpoints(
-                    xs, avg_flux, 10, 80,
-                    11, 81, config)
+                    xs, avg_flux, [10, 10, 10], [80, 80, 80], config)
 
                 np.testing.assert_almost_equal(mock_curve_fit.call_args.args[1], xs[:data_length])
                 np.testing.assert_almost_equal(mock_curve_fit.call_args.args[2], log_flux[:data_length])

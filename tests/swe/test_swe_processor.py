@@ -146,14 +146,13 @@ class TestSweProcessor(unittest.TestCase):
             call(NumpyArrayMatcher(swe_l2_data.phase_space_density[1]), NumpyArrayMatcher(geometric_fractions)),
             call(NumpyArrayMatcher(swe_l2_data.phase_space_density[2]), NumpyArrayMatcher(geometric_fractions))])
 
-        spacecraft_potential_initial_guess = swe_config['spacecraft_potential_initial_guess']
-        halo_core_initial_guess = swe_config['core_halo_breakpoint_initial_guess']
         mock_find_breakpoints.assert_has_calls([
-            call(swe_l2_data.energy, mock_average_over_look_directions.return_value, spacecraft_potential_initial_guess,
-                 halo_core_initial_guess, 15, 90, swe_config),
-            call(swe_l2_data.energy, mock_average_over_look_directions.return_value, spacecraft_potential_initial_guess,
-                 halo_core_initial_guess, 12, 96, swe_config),
-            call(swe_l2_data.energy, mock_average_over_look_directions.return_value, 14, 92, 16, 86, swe_config),
+            call(swe_l2_data.energy, mock_average_over_look_directions.return_value, [15, 15, 15],
+                 [90, 90, 90], swe_config),
+            call(swe_l2_data.energy, mock_average_over_look_directions.return_value, [15, 15, 12],
+                 [90, 90, 96], swe_config),
+            call(swe_l2_data.energy, mock_average_over_look_directions.return_value, [15, 12, 16],
+                 [90, 96, 86], swe_config),
         ])
 
         self.assertEqual(UpstreamDataDependency("swe", "l3", datetime(2025, 2, 21),
@@ -174,7 +173,9 @@ class TestSweProcessor(unittest.TestCase):
         def call_with_array_matchers(*args):
             return call(*[NumpyArrayMatcher(x) for x in args])
 
-        self.assertEqual(mock_correct_and_rebin.call_args_list, [
+        actual_calls = mock_correct_and_rebin.call_args_list
+
+        expected_calls = [
             call_with_array_matchers(swe_l2_data.flux[0], swe_l2_data.energy - 12, swe_l2_data.inst_el,
                                      swe_l2_data.inst_az_spin_sector[0],
                                      closest_mag_data[0], closest_swapi_data[0], swe_config),
@@ -193,7 +194,8 @@ class TestSweProcessor(unittest.TestCase):
             call_with_array_matchers(swe_l2_data.phase_space_density[2], swe_l2_data.energy - 19, swe_l2_data.inst_el,
                                      swe_l2_data.inst_az_spin_sector[2],
                                      closest_mag_data[2], closest_swapi_data[2], swe_config)
-        ])
+        ]
+        self.assertEqual(actual_calls, expected_calls)
         mock_integrate_distribution_to_get_1d_spectrum.assert_has_calls([
             call(rebinned_by_pitch[1], swe_config),
             call(rebinned_by_pitch[3], swe_config),

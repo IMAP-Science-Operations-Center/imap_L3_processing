@@ -50,16 +50,15 @@ class SweProcessor(Processor):
         energy_spectrum_inbound = []
         energy_spectrum_outbound = []
         spacecraft_potential_history = [config["spacecraft_potential_initial_guess"] for _ in
-                                        range(4)]
-        halo_core_history = [config["core_halo_breakpoint_initial_guess"] for _ in range(4)]
+                                        range(3)]
+        halo_core_history = [config["core_halo_breakpoint_initial_guess"] for _ in range(3)]
 
         for i in range(len(swe_epoch)):
             averaged_psd = average_over_look_directions(swe_l2_data.phase_space_density[i],
                                                         np.array(config["geometric_fractions"]))
             spacecraft_potential, halo_core = find_breakpoints(swe_l2_data.energy, averaged_psd,
-                                                               np.average(spacecraft_potential_history[:3]),
-                                                               np.average(halo_core_history[:3]),
-                                                               spacecraft_potential_history[-1], halo_core_history[-1],
+                                                               spacecraft_potential_history,
+                                                               halo_core_history,
                                                                config)
             spacecraft_potential_history = [*spacecraft_potential_history[1:], spacecraft_potential]
             halo_core_history = [*halo_core_history[1:], halo_core]

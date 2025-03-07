@@ -20,9 +20,8 @@ def piece_wise_model(x: np.ndarray, b0: float, b1: float,
                                ]))
 
 
-def find_breakpoints(energies: np.ndarray, averaged_psd: np.ndarray, initial_spacecraft_potential_guess: float,
-                     initial_core_halo_break_point_guess: float,
-                     latest_spacecraft_potential: float, latest_core_halo_breakpoint: float,
+def find_breakpoints(energies: np.ndarray, averaged_psd: np.ndarray, latest_spacecraft_potentials: list[float],
+                     latest_core_halo_break_points: list[float],
                      config: SweConfiguration) -> tuple[
     float, float]:
     log_psd = np.log(averaged_psd)
@@ -38,7 +37,8 @@ def find_breakpoints(energies: np.ndarray, averaged_psd: np.ndarray, initial_spa
     b3: float = slopes[core_index]
     b5: float = slopes[halo_index]
     b0: float = np.exp(log_psd[0] + b1 * energies[0])
-    initial_guesses = (b0, b1, initial_spacecraft_potential_guess, b3, initial_core_halo_break_point_guess, b5)
+    initial_guesses = (
+        b0, b1, np.average(latest_spacecraft_potentials), b3, np.average(latest_core_halo_break_points), b5)
 
     first_min_index = 0
     for i in range(1, len(slope_ratios) - 1):
@@ -59,8 +59,8 @@ def find_breakpoints(energies: np.ndarray, averaged_psd: np.ndarray, initial_spa
         delta_b2 = -1.0
         delta_b4 = 10
 
-    return try_curve_fit_until_valid(energies, log_psd, initial_guesses, latest_spacecraft_potential,
-                                     latest_core_halo_breakpoint, delta_b2, delta_b4)
+    return try_curve_fit_until_valid(energies, log_psd, initial_guesses, latest_spacecraft_potentials[-1],
+                                     latest_core_halo_break_points[-1], delta_b2, delta_b4)
 
 
 def try_curve_fit_until_valid(energies: np.ndarray, log_psd: np.ndarray, initial_guesses: tuple[float, ...],
