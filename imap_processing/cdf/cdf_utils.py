@@ -28,7 +28,10 @@ def write_cdf(file_path: str, data: DataProduct, attribute_manager: ImapAttribut
             for k, v in attribute_manager.get_variable_attributes(var_name).items():
                 if k == 'DEPEND_0' and v == '':
                     continue
-                cdf[var_name].attrs[k] = v
+                if k == 'FILLVAL' and data_product.cdf_data_type is not None:
+                    cdf[var_name].attrs.new(k, v, data_product.cdf_data_type)
+                else:
+                    cdf[var_name].attrs[k] = v
 
 
 def read_variable(var: pycdf.Var) -> np.ndarray:
