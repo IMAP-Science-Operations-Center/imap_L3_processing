@@ -3,15 +3,15 @@ from datetime import datetime
 from pathlib import Path
 from unittest.mock import patch, call
 
-from imap_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
-from imap_processing.models import UpstreamDataDependency
+from imap_l3_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
+from imap_l3_processing.models import UpstreamDataDependency
 
 
 class TestGlowsL3aDependencies(unittest.TestCase):
 
-    @patch('imap_processing.glows.l3a.glows_l3a_dependencies.CDF')
-    @patch('imap_processing.glows.l3a.glows_l3a_dependencies.download_dependency')
-    @patch('imap_processing.glows.l3a.glows_l3a_dependencies.read_l2_glows_data')
+    @patch('imap_l3_processing.glows.l3a.glows_l3a_dependencies.CDF')
+    @patch('imap_l3_processing.glows.l3a.glows_l3a_dependencies.download_dependency')
+    @patch('imap_l3_processing.glows.l3a.glows_l3a_dependencies.read_l2_glows_data')
     def test_fetch_dependencies(self, mock_read_l2_glows_data, mock_download_dependency, mock_cdf_constructor):
         ignored_dependency = UpstreamDataDependency("glows", "l2b", datetime(2023, 1, 1), datetime(2023, 2, 1),
                                                     "1",

@@ -7,7 +7,7 @@ from pathlib import Path
 import numpy as np
 from spacepy.pycdf import CDF
 
-from imap_processing.constants import FIVE_MINUTES_IN_NANOSECONDS
+from imap_l3_processing.constants import FIVE_MINUTES_IN_NANOSECONDS
 
 
 def create_l2_hit_sectored_rates_cdf_from_csv(csv_file_path: str, output_filename: str):

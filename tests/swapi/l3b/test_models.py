@@ -4,10 +4,10 @@ import numpy as np
 from spacepy import pycdf
 from uncertainties.unumpy import uarray
 
-from imap_processing.constants import FIVE_MINUTES_IN_NANOSECONDS
-from imap_processing.models import UpstreamDataDependency
-from imap_processing.swapi.l3a.models import EPOCH_CDF_VAR_NAME, EPOCH_DELTA_CDF_VAR_NAME
-from imap_processing.swapi.l3b.models import SwapiL3BCombinedVDF, PROTON_SOLAR_WIND_VELOCITIES_CDF_VAR_NAME, \
+from imap_l3_processing.constants import FIVE_MINUTES_IN_NANOSECONDS
+from imap_l3_processing.models import UpstreamDataDependency
+from imap_l3_processing.swapi.l3a.models import EPOCH_CDF_VAR_NAME, EPOCH_DELTA_CDF_VAR_NAME
+from imap_l3_processing.swapi.l3b.models import SwapiL3BCombinedVDF, PROTON_SOLAR_WIND_VELOCITIES_CDF_VAR_NAME, \
     PROTON_SOLAR_WIND_VDF_CDF_VAR_NAME, PROTON_SOLAR_WIND_VDF_DELTAS_CDF_VAR_NAME, \
     ALPHA_SOLAR_WIND_VELOCITIES_CDF_VAR_NAME, \
     ALPHA_SOLAR_WIND_VDF_CDF_VAR_NAME, \

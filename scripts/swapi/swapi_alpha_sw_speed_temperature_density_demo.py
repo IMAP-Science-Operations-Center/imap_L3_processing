@@ -9,10 +9,10 @@ from spacepy.pycdf import CDF
 from uncertainties import ufloat, correlated_values
 from uncertainties.unumpy import uarray, nominal_values, std_devs
 
-from imap_processing.swapi.l3a.models import SwapiL2Data
-from imap_processing.swapi.l3a.science.calculate_alpha_solar_wind_speed import calculate_alpha_solar_wind_speed, \
+from imap_l3_processing.swapi.l3a.models import SwapiL2Data
+from imap_l3_processing.swapi.l3a.science.calculate_alpha_solar_wind_speed import calculate_alpha_solar_wind_speed, \
     calculate_combined_sweeps, get_alpha_peak_indices
-from imap_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density import \
+from imap_l3_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density import \
     calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps, AlphaTemperatureDensityCalibrationTable, \
     alpha_count_rate_model
 

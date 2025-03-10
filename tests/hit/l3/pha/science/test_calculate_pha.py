@@ -3,12 +3,12 @@ import unittest
 from collections import defaultdict
 from unittest.mock import patch, Mock, sentinel
 
-from imap_processing.hit.l3.pha.pha_event_reader import PHAWord, Detector
-from imap_processing.hit.l3.pha.science.calculate_pha import EventAnalysis, analyze_event, calculate_mev, \
+from imap_l3_processing.hit.l3.pha.pha_event_reader import PHAWord, Detector
+from imap_l3_processing.hit.l3.pha.science.calculate_pha import EventAnalysis, analyze_event, calculate_mev, \
     process_pha_event, EventOutput, compute_charge
-from imap_processing.hit.l3.pha.science.cosine_correction_lookup_table import DetectedRange, DetectorRange, DetectorSide
-from imap_processing.hit.l3.pha.science.gain_lookup_table import DetectorGain, Gain
-from imap_processing.hit.l3.pha.science.hit_event_type_lookup import Rule
+from imap_l3_processing.hit.l3.pha.science.cosine_correction_lookup_table import DetectedRange, DetectorRange, DetectorSide
+from imap_l3_processing.hit.l3.pha.science.gain_lookup_table import DetectorGain, Gain
+from imap_l3_processing.hit.l3.pha.science.hit_event_type_lookup import Rule
 from tests.hit.l3.hit_test_builders import create_raw_pha_event
 
 
@@ -143,8 +143,8 @@ class TestCalculatePHA(unittest.TestCase):
 
         self.assertIsNone(event_analysis)
 
-    @patch("imap_processing.hit.l3.pha.science.calculate_pha.analyze_event")
-    @patch("imap_processing.hit.l3.pha.science.calculate_pha.calculate_mev")
+    @patch("imap_l3_processing.hit.l3.pha.science.calculate_pha.analyze_event")
+    @patch("imap_l3_processing.hit.l3.pha.science.calculate_pha.calculate_mev")
     def test_process_event_for_event_with_invalid_detector_sequences(self, mock_calculate_mev, mock_analyze_event):
         raw_pha_event = create_raw_pha_event(pha_words=[
             PHAWord(detector=Detector.from_address(12), adc_value=10, adc_overflow=False,
@@ -165,8 +165,8 @@ class TestCalculatePHA(unittest.TestCase):
                                             total_energy=None, detected_range=None, e_delta=None, e_prime=None, )
         self.assertEqual(expected_event_output, event_output)
 
-    @patch("imap_processing.hit.l3.pha.science.calculate_pha.compute_charge")
-    @patch("imap_processing.hit.l3.pha.science.calculate_pha.analyze_event", spec_set=True)
+    @patch("imap_l3_processing.hit.l3.pha.science.calculate_pha.compute_charge")
+    @patch("imap_l3_processing.hit.l3.pha.science.calculate_pha.analyze_event", spec_set=True)
     def test_process_pha_event(self, mock_analyze_event, mock_compute_charge):
         pha_word1_adc_value = 53
         pha_word2_adc_value = 92

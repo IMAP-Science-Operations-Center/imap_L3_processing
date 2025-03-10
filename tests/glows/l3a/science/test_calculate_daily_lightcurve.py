@@ -4,9 +4,9 @@ from unittest.mock import Mock
 import numpy as np
 from uncertainties.unumpy import uarray, nominal_values, std_devs
 
-from imap_processing.glows.l3a.science.bad_angle_flag_configuration import BadAngleFlagConfiguration
-from imap_processing.glows.l3a.science.calculate_daily_lightcurve import rebin_lightcurve, calculate_spin_angles
-from imap_processing.glows.l3a.science.time_independent_background_lookup_table import \
+from imap_l3_processing.glows.l3a.science.bad_angle_flag_configuration import BadAngleFlagConfiguration
+from imap_l3_processing.glows.l3a.science.calculate_daily_lightcurve import rebin_lightcurve, calculate_spin_angles
+from imap_l3_processing.glows.l3a.science.time_independent_background_lookup_table import \
     TimeIndependentBackgroundLookupTable
 
 

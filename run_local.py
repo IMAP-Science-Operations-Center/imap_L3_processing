@@ -6,39 +6,39 @@ from pathlib import Path
 from bitstring import BitStream
 from spacepy.pycdf import CDF
 
-from imap_processing.glows.descriptors import GLOWS_L2_DESCRIPTOR
-from imap_processing.glows.glows_processor import GlowsProcessor
-from imap_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
-from imap_processing.glows.l3a.utils import read_l2_glows_data
-from imap_processing.hit.l3.hit_l3_sectored_dependencies import HITL3SectoredDependencies
-from imap_processing.hit.l3.hit_processor import HitProcessor
-from imap_processing.hit.l3.models import HitL1Data
-from imap_processing.hit.l3.pha.hit_l3_pha_dependencies import HitL3PhaDependencies
-from imap_processing.hit.l3.pha.pha_event_reader import PHAEventReader
-from imap_processing.hit.l3.pha.science.calculate_pha import process_pha_event
-from imap_processing.hit.l3.pha.science.cosine_correction_lookup_table import CosineCorrectionLookupTable
-from imap_processing.hit.l3.pha.science.gain_lookup_table import GainLookupTable
-from imap_processing.hit.l3.pha.science.hit_event_type_lookup import HitEventTypeLookup
-from imap_processing.hit.l3.pha.science.range_fit_lookup import RangeFitLookup
-from imap_processing.hit.l3.utils import read_l2_hit_data
-from imap_processing.models import InputMetadata, UpstreamDataDependency
-from imap_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density import \
+from imap_l3_processing.glows.descriptors import GLOWS_L2_DESCRIPTOR
+from imap_l3_processing.glows.glows_processor import GlowsProcessor
+from imap_l3_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
+from imap_l3_processing.glows.l3a.utils import read_l2_glows_data
+from imap_l3_processing.hit.l3.hit_l3_sectored_dependencies import HITL3SectoredDependencies
+from imap_l3_processing.hit.l3.hit_processor import HitProcessor
+from imap_l3_processing.hit.l3.models import HitL1Data
+from imap_l3_processing.hit.l3.pha.hit_l3_pha_dependencies import HitL3PhaDependencies
+from imap_l3_processing.hit.l3.pha.pha_event_reader import PHAEventReader
+from imap_l3_processing.hit.l3.pha.science.calculate_pha import process_pha_event
+from imap_l3_processing.hit.l3.pha.science.cosine_correction_lookup_table import CosineCorrectionLookupTable
+from imap_l3_processing.hit.l3.pha.science.gain_lookup_table import GainLookupTable
+from imap_l3_processing.hit.l3.pha.science.hit_event_type_lookup import HitEventTypeLookup
+from imap_l3_processing.hit.l3.pha.science.range_fit_lookup import RangeFitLookup
+from imap_l3_processing.hit.l3.utils import read_l2_hit_data
+from imap_l3_processing.models import InputMetadata, UpstreamDataDependency
+from imap_l3_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density import \
     AlphaTemperatureDensityCalibrationTable
-from imap_processing.swapi.l3a.science.calculate_pickup_ion import DensityOfNeutralHeliumLookupTable
-from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_clock_and_deflection_angles import \
+from imap_l3_processing.swapi.l3a.science.calculate_pickup_ion import DensityOfNeutralHeliumLookupTable
+from imap_l3_processing.swapi.l3a.science.calculate_proton_solar_wind_clock_and_deflection_angles import \
     ClockAngleCalibrationTable
-from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_temperature_and_density import \
+from imap_l3_processing.swapi.l3a.science.calculate_proton_solar_wind_temperature_and_density import \
     ProtonTemperatureAndDensityCalibrationTable
-from imap_processing.swapi.l3a.swapi_l3a_dependencies import SwapiL3ADependencies
-from imap_processing.swapi.l3a.utils import read_l2_swapi_data
-from imap_processing.swapi.l3b.science.efficiency_calibration_table import EfficiencyCalibrationTable
-from imap_processing.swapi.l3b.science.geometric_factor_calibration_table import GeometricFactorCalibrationTable
-from imap_processing.swapi.l3b.science.instrument_response_lookup_table import InstrumentResponseLookupTableCollection
-from imap_processing.swapi.l3b.swapi_l3b_dependencies import SwapiL3BDependencies
-from imap_processing.swapi.swapi_processor import SwapiProcessor
-from imap_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies
-from imap_processing.swe.swe_processor import SweProcessor
-from imap_processing.utils import save_data, read_l1d_mag_data
+from imap_l3_processing.swapi.l3a.swapi_l3a_dependencies import SwapiL3ADependencies
+from imap_l3_processing.swapi.l3a.utils import read_l2_swapi_data
+from imap_l3_processing.swapi.l3b.science.efficiency_calibration_table import EfficiencyCalibrationTable
+from imap_l3_processing.swapi.l3b.science.geometric_factor_calibration_table import GeometricFactorCalibrationTable
+from imap_l3_processing.swapi.l3b.science.instrument_response_lookup_table import InstrumentResponseLookupTableCollection
+from imap_l3_processing.swapi.l3b.swapi_l3b_dependencies import SwapiL3BDependencies
+from imap_l3_processing.swapi.swapi_processor import SwapiProcessor
+from imap_l3_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies
+from imap_l3_processing.swe.swe_processor import SweProcessor
+from imap_l3_processing.utils import save_data, read_l1d_mag_data
 from tests.test_helpers import get_test_data_path
 
 

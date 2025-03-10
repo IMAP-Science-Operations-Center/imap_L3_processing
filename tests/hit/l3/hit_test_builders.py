@@ -1,4 +1,4 @@
-from imap_processing.hit.l3.pha.pha_event_reader import RawPHAEvent, PHAWord, Detector
+from imap_l3_processing.hit.l3.pha.pha_event_reader import RawPHAEvent, PHAWord, Detector
 
 
 def create_raw_pha_event(particle_id=0, priority_buffer_num=0, stim_tag=False, haz_tag=False, time_tag=False,

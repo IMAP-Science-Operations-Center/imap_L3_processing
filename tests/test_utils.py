@@ -7,10 +7,10 @@ from unittest.mock import patch, call
 import numpy as np
 from spacepy.pycdf import CDF
 
-from imap_processing.constants import TEMP_CDF_FOLDER_PATH
-from imap_processing.models import UpstreamDataDependency
-from imap_processing.swapi.l3a.models import SwapiL3AlphaSolarWindData
-from imap_processing.utils import format_time, download_dependency, read_l1d_mag_data, save_data
+from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
+from imap_l3_processing.models import UpstreamDataDependency
+from imap_l3_processing.swapi.l3a.models import SwapiL3AlphaSolarWindData
+from imap_l3_processing.utils import format_time, download_dependency, read_l1d_mag_data, save_data
 
 
 class TestUtils(TestCase):
@@ -22,9 +22,9 @@ class TestUtils(TestCase):
         if os.path.exists('test_cdf.cdf'):
             os.remove('test_cdf.cdf')
 
-    @patch("imap_processing.utils.ImapAttributeManager")
-    @patch("imap_processing.utils.date")
-    @patch("imap_processing.utils.write_cdf")
+    @patch("imap_l3_processing.utils.ImapAttributeManager")
+    @patch("imap_l3_processing.utils.date")
+    @patch("imap_l3_processing.utils.write_cdf")
     def test_save_data(self, mock_write_cdf, mock_today, _):
         mock_today.today.return_value = date(2024, 9, 16)
 
@@ -71,7 +71,7 @@ class TestUtils(TestCase):
         actual_time = format_time(None)
         self.assertEqual(None, actual_time)
 
-    @patch('imap_processing.utils.imap_data_access')
+    @patch('imap_l3_processing.utils.imap_data_access')
     def test_download_dependency(self, mock_data_access):
         dependency = UpstreamDataDependency("swapi", "l2", datetime(2024, 9, 17), datetime(2024, 9, 18), "v2",
                                             "descriptor")
@@ -91,7 +91,7 @@ class TestUtils(TestCase):
 
         self.assertIs(path, mock_data_access.download.return_value)
 
-    @patch('imap_processing.utils.imap_data_access')
+    @patch('imap_l3_processing.utils.imap_data_access')
     def test_download_dependency_throws_value_error_if_not_one_file_returned(self, mock_data_access):
         dependency = UpstreamDataDependency("swapi", "l2", datetime(2024, 9, 17), datetime(2024, 9, 18), "v2",
                                             "descriptor")

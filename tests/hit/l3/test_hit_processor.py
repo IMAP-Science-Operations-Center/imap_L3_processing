@@ -6,17 +6,17 @@ from unittest.mock import sentinel, patch, call, Mock
 
 import numpy as np
 
-from imap_processing.constants import UNSIGNED_INT2_FILL_VALUE, UNSIGNED_INT1_FILL_VALUE
-from imap_processing.hit.l3.hit_l3_sectored_dependencies import HITL3SectoredDependencies
-from imap_processing.hit.l3.hit_processor import HitProcessor
-from imap_processing.hit.l3.models import HitL2Data
-from imap_processing.hit.l3.pha.pha_event_reader import PHAWord, Detector, RawPHAEvent, PHAExtendedHeader, StimBlock, \
+from imap_l3_processing.constants import UNSIGNED_INT2_FILL_VALUE, UNSIGNED_INT1_FILL_VALUE
+from imap_l3_processing.hit.l3.hit_l3_sectored_dependencies import HITL3SectoredDependencies
+from imap_l3_processing.hit.l3.hit_processor import HitProcessor
+from imap_l3_processing.hit.l3.models import HitL2Data
+from imap_l3_processing.hit.l3.pha.pha_event_reader import PHAWord, Detector, RawPHAEvent, PHAExtendedHeader, StimBlock, \
     ExtendedStimHeader
-from imap_processing.hit.l3.pha.science.calculate_pha import EventOutput
-from imap_processing.hit.l3.pha.science.cosine_correction_lookup_table import DetectedRange, DetectorSide, DetectorRange
-from imap_processing.hit.l3.sectored_products.models import HitPitchAngleDataProduct
-from imap_processing.models import MagL1dData, InputMetadata
-from imap_processing.processor import Processor
+from imap_l3_processing.hit.l3.pha.science.calculate_pha import EventOutput
+from imap_l3_processing.hit.l3.pha.science.cosine_correction_lookup_table import DetectedRange, DetectorSide, DetectorRange
+from imap_l3_processing.hit.l3.sectored_products.models import HitPitchAngleDataProduct
+from imap_l3_processing.models import MagL1dData, InputMetadata
+from imap_l3_processing.processor import Processor
 from tests.test_helpers import NumpyArrayMatcher, create_dataclass_mock
 
 
@@ -27,15 +27,15 @@ class TestHitProcessor(TestCase):
             Processor
         )
 
-    @patch('imap_processing.hit.l3.hit_processor.imap_data_access.upload')
-    @patch('imap_processing.hit.l3.hit_processor.save_data')
-    @patch('imap_processing.hit.l3.hit_processor.HITL3SectoredDependencies.fetch_dependencies')
-    @patch('imap_processing.hit.l3.hit_processor.calculate_unit_vector')
-    @patch('imap_processing.hit.l3.hit_processor.get_hit_bin_polar_coordinates')
-    @patch('imap_processing.hit.l3.hit_processor.get_sector_unit_vectors')
-    @patch('imap_processing.hit.l3.hit_processor.calculate_pitch_angle')
-    @patch('imap_processing.hit.l3.hit_processor.calculate_gyrophase')
-    @patch('imap_processing.hit.l3.hit_processor.rebin_by_pitch_angle_and_gyrophase')
+    @patch('imap_l3_processing.hit.l3.hit_processor.imap_data_access.upload')
+    @patch('imap_l3_processing.hit.l3.hit_processor.save_data')
+    @patch('imap_l3_processing.hit.l3.hit_processor.HITL3SectoredDependencies.fetch_dependencies')
+    @patch('imap_l3_processing.hit.l3.hit_processor.calculate_unit_vector')
+    @patch('imap_l3_processing.hit.l3.hit_processor.get_hit_bin_polar_coordinates')
+    @patch('imap_l3_processing.hit.l3.hit_processor.get_sector_unit_vectors')
+    @patch('imap_l3_processing.hit.l3.hit_processor.calculate_pitch_angle')
+    @patch('imap_l3_processing.hit.l3.hit_processor.calculate_gyrophase')
+    @patch('imap_l3_processing.hit.l3.hit_processor.rebin_by_pitch_angle_and_gyrophase')
     def test_process_pitch_angle_product(self, mock_rebin_by_pitch_angle_and_gyrophase, mock_calculate_gyrophase,
                                          mock_calculate_pitch_angle,
                                          mock_get_sector_unit_vectors, mock_get_hit_bin_polar_coordinates,
@@ -417,11 +417,11 @@ class TestHitProcessor(TestCase):
 
         mock_imap_data_access_upload.assert_called_once_with(mock_save_data.return_value)
 
-    @patch("imap_processing.hit.l3.hit_processor.imap_data_access.upload")
-    @patch("imap_processing.hit.l3.hit_processor.save_data")
-    @patch("imap_processing.hit.l3.hit_processor.process_pha_event", autospec=True)
-    @patch("imap_processing.hit.l3.hit_processor.HitL3PhaDependencies.fetch_dependencies")
-    @patch("imap_processing.hit.l3.hit_processor.PHAEventReader.read_all_pha_events")
+    @patch("imap_l3_processing.hit.l3.hit_processor.imap_data_access.upload")
+    @patch("imap_l3_processing.hit.l3.hit_processor.save_data")
+    @patch("imap_l3_processing.hit.l3.hit_processor.process_pha_event", autospec=True)
+    @patch("imap_l3_processing.hit.l3.hit_processor.HitL3PhaDependencies.fetch_dependencies")
+    @patch("imap_l3_processing.hit.l3.hit_processor.PHAEventReader.read_all_pha_events")
     def test_process_direct_event_product(self, mock_read_all_events, mock_fetch_dependencies, mock_process_pha_event,
                                           mock_save_data, mock_imap_data_access_upload):
         pha_word_1 = PHAWord(adc_overflow=False, adc_value=11,

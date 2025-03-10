@@ -1,8 +1,8 @@
 import os
 import unittest
 
-from imap_processing.hit.l3.pha.science.cosine_correction_lookup_table import DetectedRange, DetectorRange, DetectorSide
-from imap_processing.hit.l3.pha.science.hit_event_type_lookup import HitEventTypeLookup, Rule
+from imap_l3_processing.hit.l3.pha.science.cosine_correction_lookup_table import DetectedRange, DetectorRange, DetectorSide
+from imap_l3_processing.hit.l3.pha.science.hit_event_type_lookup import HitEventTypeLookup, Rule
 
 
 class TestHitEventTypeLookup(unittest.TestCase):

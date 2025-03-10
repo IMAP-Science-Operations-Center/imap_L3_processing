@@ -3,13 +3,13 @@ from unittest import TestCase
 
 from sammi.cdf_attribute_manager import CdfAttributeManager
 
-import imap_processing
-from imap_processing.cdf.imap_attribute_manager import ImapAttributeManager
+import imap_l3_processing
+from imap_l3_processing.cdf.imap_attribute_manager import ImapAttributeManager
 
 
 class TestImapCdfManager(TestCase):
     def setUp(self):
-        self.config_folder_path = Path(imap_processing.__file__).parent.resolve() / 'cdf/config'
+        self.config_folder_path = Path(imap_l3_processing.__file__).parent.resolve() / 'cdf/config'
         self.base_manager = CdfAttributeManager(
             variable_schema_layers=[self.config_folder_path / 'imap_l3_variable_cdf_attrs_schema.yaml'],
             use_defaults=True)

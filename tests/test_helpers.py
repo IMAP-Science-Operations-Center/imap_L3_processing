@@ -7,7 +7,7 @@ from unittest.mock import Mock
 import numpy as np
 
 import tests
-from imap_processing.swe.l3.models import SweConfiguration
+from imap_l3_processing.swe.l3.models import SweConfiguration
 
 
 def get_test_data_path(filename: str) -> Path:

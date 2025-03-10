@@ -3,16 +3,16 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from unittest.mock import patch, sentinel, call
 
-import imap_processing
-from imap_processing.models import UpstreamDataDependency
-from imap_processing.swapi.descriptors import SWAPI_L2_DESCRIPTOR, GEOMETRIC_FACTOR_LOOKUP_TABLE_DESCRIPTOR, \
+import imap_l3_processing
+from imap_l3_processing.models import UpstreamDataDependency
+from imap_l3_processing.swapi.descriptors import SWAPI_L2_DESCRIPTOR, GEOMETRIC_FACTOR_LOOKUP_TABLE_DESCRIPTOR, \
     INSTRUMENT_RESPONSE_LOOKUP_TABLE, DENSITY_OF_NEUTRAL_HELIUM
-from imap_processing.swapi.l3a.swapi_l3a_dependencies import SwapiL3ADependencies
+from imap_l3_processing.swapi.l3a.swapi_l3a_dependencies import SwapiL3ADependencies
 
 
 class TestSwapiL3ADependencies(unittest.TestCase):
     def setUp(self) -> None:
-        self.mock_imap_patcher = patch('imap_processing.utils.imap_data_access')
+        self.mock_imap_patcher = patch('imap_l3_processing.utils.imap_data_access')
         self.mock_imap_api = self.mock_imap_patcher.start()
         self.mock_imap_api.query.side_effect = [
             [{'file_path': sentinel.data_file_path}],
@@ -24,13 +24,13 @@ class TestSwapiL3ADependencies(unittest.TestCase):
             [{'file_path': sentinel.density_of_neutral_helium_calibration_table_file_path}]
         ]
 
-    @patch('imap_processing.swapi.l3a.swapi_l3a_dependencies.CDF')
-    @patch('imap_processing.swapi.l3a.swapi_l3a_dependencies.ClockAngleCalibrationTable')
-    @patch('imap_processing.swapi.l3a.swapi_l3a_dependencies.AlphaTemperatureDensityCalibrationTable')
-    @patch('imap_processing.swapi.l3a.swapi_l3a_dependencies.ProtonTemperatureAndDensityCalibrationTable')
-    @patch('imap_processing.swapi.l3a.swapi_l3a_dependencies.GeometricFactorCalibrationTable')
-    @patch('imap_processing.swapi.l3a.swapi_l3a_dependencies.InstrumentResponseLookupTableCollection')
-    @patch('imap_processing.swapi.l3a.swapi_l3a_dependencies.DensityOfNeutralHeliumLookupTable')
+    @patch('imap_l3_processing.swapi.l3a.swapi_l3a_dependencies.CDF')
+    @patch('imap_l3_processing.swapi.l3a.swapi_l3a_dependencies.ClockAngleCalibrationTable')
+    @patch('imap_l3_processing.swapi.l3a.swapi_l3a_dependencies.AlphaTemperatureDensityCalibrationTable')
+    @patch('imap_l3_processing.swapi.l3a.swapi_l3a_dependencies.ProtonTemperatureAndDensityCalibrationTable')
+    @patch('imap_l3_processing.swapi.l3a.swapi_l3a_dependencies.GeometricFactorCalibrationTable')
+    @patch('imap_l3_processing.swapi.l3a.swapi_l3a_dependencies.InstrumentResponseLookupTableCollection')
+    @patch('imap_l3_processing.swapi.l3a.swapi_l3a_dependencies.DensityOfNeutralHeliumLookupTable')
     def test_fetch_dependencies(self, mock_density_of_neutral_hydrogen_lookup_table_class
                                 , mock_instrument_response_lookup_table_class
                                 , mock_geometric_factor_calibration_class
@@ -49,7 +49,7 @@ class TestSwapiL3ADependencies(unittest.TestCase):
                                               version, descriptor)
 
         data_file_path = Path(
-            imap_processing.__file__).parent.parent / 'swapi/test_data/imap_swapi_l2_fake-menlo-5-sweeps_20100101_v002.cdf'
+            imap_l3_processing.__file__).parent.parent / 'swapi/test_data/imap_swapi_l2_fake-menlo-5-sweeps_20100101_v002.cdf'
 
         self.mock_imap_api.download.side_effect = [
             data_file_path,
@@ -140,7 +140,7 @@ class TestSwapiL3ADependencies(unittest.TestCase):
 
     def test_throws_exception_when_more_than_one_file_is_downloaded(self):
         file_path = Path(
-            imap_processing.__file__).parent.parent / 'swapi/test_data/imap_swapi_l2_fake-menlo-5-sweeps_20100101_v002.cdf'
+            imap_l3_processing.__file__).parent.parent / 'swapi/test_data/imap_swapi_l2_fake-menlo-5-sweeps_20100101_v002.cdf'
 
         self.mock_imap_api.download.return_value = file_path
 

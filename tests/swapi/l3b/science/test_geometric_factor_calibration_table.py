@@ -1,12 +1,12 @@
 from pathlib import Path
 
-import imap_processing
-from imap_processing.swapi.l3b.science.geometric_factor_calibration_table import GeometricFactorCalibrationTable
+import imap_l3_processing
+from imap_l3_processing.swapi.l3b.science.geometric_factor_calibration_table import GeometricFactorCalibrationTable
 
 
 def test_geometric_factor_table_from_file(self):
     file_path = Path(
-        imap_processing.__file__).parent.parent / "swapi" / "test_data" / "imap_swapi_l2_energy-gf-lut-not-cdf_20240923_v002.cdf"
+        imap_l3_processing.__file__).parent.parent / "swapi" / "test_data" / "imap_swapi_l2_energy-gf-lut-not-cdf_20240923_v002.cdf"
 
     calibration_table = GeometricFactorCalibrationTable.from_file(file_path)
 

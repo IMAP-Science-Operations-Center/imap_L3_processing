@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from imap_processing.pitch_angles import calculate_pitch_angle, calculate_unit_vector, calculate_gyrophase
+from imap_l3_processing.pitch_angles import calculate_pitch_angle, calculate_unit_vector, calculate_gyrophase
 
 
 class TestPitchAngles(unittest.TestCase):

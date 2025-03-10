@@ -3,7 +3,7 @@ from unittest import TestCase
 
 import numpy as np
 
-from imap_processing.hit.l3.sectored_products.science.sectored_products_algorithms import get_sector_unit_vectors, \
+from imap_l3_processing.hit.l3.sectored_products.science.sectored_products_algorithms import get_sector_unit_vectors, \
     get_hit_bin_polar_coordinates, \
     rebin_by_pitch_angle_and_gyrophase
 

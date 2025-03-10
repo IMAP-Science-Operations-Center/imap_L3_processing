@@ -5,8 +5,8 @@ from unittest.mock import sentinel
 import numpy as np
 from spacepy import pycdf
 
-from imap_processing.hit.l3.sectored_products.models import HitPitchAngleDataProduct
-from imap_processing.models import DataProductVariable
+from imap_l3_processing.hit.l3.sectored_products.models import HitPitchAngleDataProduct
+from imap_l3_processing.models import DataProductVariable
 
 
 class TestHitPitchAngleDataProduct(TestCase):

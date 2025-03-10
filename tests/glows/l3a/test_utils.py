@@ -5,9 +5,9 @@ from datetime import datetime
 import numpy as np
 from spacepy.pycdf import CDF
 
-from imap_processing.glows.l3a.models import GlowsL2Data, GlowsL2Header
-from imap_processing.glows.l3a.utils import read_l2_glows_data, create_glows_l3a_from_dictionary
-from imap_processing.models import UpstreamDataDependency
+from imap_l3_processing.glows.l3a.models import GlowsL2Data, GlowsL2Header
+from imap_l3_processing.glows.l3a.utils import read_l2_glows_data, create_glows_l3a_from_dictionary
+from imap_l3_processing.models import UpstreamDataDependency
 from tests.test_helpers import get_test_data_path
 
 

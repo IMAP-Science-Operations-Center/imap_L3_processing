@@ -7,8 +7,8 @@ from pathlib import Path
 import numpy as np
 from spacepy.pycdf import CDF
 
-from imap_processing.swe.l3.models import SweL2Data, SwapiL3aProtonData
-from imap_processing.swe.l3.utils import read_swe_config, read_l2_swe_data, read_l3a_swapi_proton_data
+from imap_l3_processing.swe.l3.models import SweL2Data, SwapiL3aProtonData
+from imap_l3_processing.swe.l3.utils import read_swe_config, read_l2_swe_data, read_l3a_swapi_proton_data
 from tests.test_helpers import get_test_data_path
 
 

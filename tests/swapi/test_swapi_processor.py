@@ -8,13 +8,13 @@ import numpy as np
 from uncertainties import ufloat
 from uncertainties.unumpy import uarray, nominal_values, std_devs
 
-from imap_processing.constants import TEMP_CDF_FOLDER_PATH, THIRTY_SECONDS_IN_NANOSECONDS, FIVE_MINUTES_IN_NANOSECONDS
-from imap_processing.models import UpstreamDataDependency, InputMetadata
-from imap_processing.swapi.l3a.models import SwapiL2Data
-from imap_processing.swapi.l3a.science.calculate_pickup_ion import FittingParameters
-from imap_processing.swapi.l3a.swapi_l3a_dependencies import SWAPI_L2_DESCRIPTOR
-from imap_processing.swapi.l3b.science.calculate_solar_wind_vdf import DeltaMinusPlus
-from imap_processing.swapi.swapi_processor import SwapiProcessor
+from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH, THIRTY_SECONDS_IN_NANOSECONDS, FIVE_MINUTES_IN_NANOSECONDS
+from imap_l3_processing.models import UpstreamDataDependency, InputMetadata
+from imap_l3_processing.swapi.l3a.models import SwapiL2Data
+from imap_l3_processing.swapi.l3a.science.calculate_pickup_ion import FittingParameters
+from imap_l3_processing.swapi.l3a.swapi_l3a_dependencies import SWAPI_L2_DESCRIPTOR
+from imap_l3_processing.swapi.l3b.science.calculate_solar_wind_vdf import DeltaMinusPlus
+from imap_l3_processing.swapi.swapi_processor import SwapiProcessor
 
 
 class TestSwapiProcessor(TestCase):
@@ -23,33 +23,33 @@ class TestSwapiProcessor(TestCase):
         if os.path.exists(self.temp_directory):
             shutil.rmtree(self.temp_directory)
         os.mkdir(self.temp_directory)
-        self.mock_imap_patcher = patch('imap_processing.swapi.swapi_processor.imap_data_access')
+        self.mock_imap_patcher = patch('imap_l3_processing.swapi.swapi_processor.imap_data_access')
         self.mock_imap_api = self.mock_imap_patcher.start()
 
     def tearDown(self) -> None:
         shutil.rmtree(self.temp_directory)
         self.mock_imap_patcher.stop()
 
-    @patch('imap_processing.swapi.swapi_processor.spice_wrapper.furnish')
-    @patch('imap_processing.utils.ImapAttributeManager')
-    @patch('imap_processing.swapi.swapi_processor.SwapiL3PickupIonData')
-    @patch('imap_processing.swapi.swapi_processor.SwapiL3AlphaSolarWindData')
-    @patch('imap_processing.swapi.swapi_processor.SwapiL3ProtonSolarWindData')
-    @patch('imap_processing.utils.write_cdf')
-    @patch('imap_processing.swapi.swapi_processor.chunk_l2_data')
-    @patch('imap_processing.swapi.swapi_processor.read_l2_swapi_data')
-    @patch('imap_processing.swapi.swapi_processor.calculate_proton_solar_wind_speed')
-    @patch('imap_processing.swapi.swapi_processor.calculate_alpha_solar_wind_speed')
-    @patch('imap_processing.swapi.swapi_processor.calculate_proton_solar_wind_temperature_and_density')
+    @patch('imap_l3_processing.swapi.swapi_processor.spice_wrapper.furnish')
+    @patch('imap_l3_processing.utils.ImapAttributeManager')
+    @patch('imap_l3_processing.swapi.swapi_processor.SwapiL3PickupIonData')
+    @patch('imap_l3_processing.swapi.swapi_processor.SwapiL3AlphaSolarWindData')
+    @patch('imap_l3_processing.swapi.swapi_processor.SwapiL3ProtonSolarWindData')
+    @patch('imap_l3_processing.utils.write_cdf')
+    @patch('imap_l3_processing.swapi.swapi_processor.chunk_l2_data')
+    @patch('imap_l3_processing.swapi.swapi_processor.read_l2_swapi_data')
+    @patch('imap_l3_processing.swapi.swapi_processor.calculate_proton_solar_wind_speed')
+    @patch('imap_l3_processing.swapi.swapi_processor.calculate_alpha_solar_wind_speed')
+    @patch('imap_l3_processing.swapi.swapi_processor.calculate_proton_solar_wind_temperature_and_density')
     @patch(
-        'imap_processing.swapi.swapi_processor.calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps')
-    @patch('imap_processing.swapi.swapi_processor.calculate_clock_angle')
-    @patch('imap_processing.swapi.swapi_processor.calculate_deflection_angle')
-    @patch('imap_processing.swapi.swapi_processor.SwapiL3ADependencies')
-    @patch('imap_processing.swapi.swapi_processor.calculate_pickup_ion_values')
-    @patch('imap_processing.swapi.swapi_processor.calculate_ten_minute_velocities')
-    @patch('imap_processing.swapi.swapi_processor.calculate_helium_pui_density')
-    @patch('imap_processing.swapi.swapi_processor.calculate_helium_pui_temperature')
+        'imap_l3_processing.swapi.swapi_processor.calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps')
+    @patch('imap_l3_processing.swapi.swapi_processor.calculate_clock_angle')
+    @patch('imap_l3_processing.swapi.swapi_processor.calculate_deflection_angle')
+    @patch('imap_l3_processing.swapi.swapi_processor.SwapiL3ADependencies')
+    @patch('imap_l3_processing.swapi.swapi_processor.calculate_pickup_ion_values')
+    @patch('imap_l3_processing.swapi.swapi_processor.calculate_ten_minute_velocities')
+    @patch('imap_l3_processing.swapi.swapi_processor.calculate_helium_pui_density')
+    @patch('imap_l3_processing.swapi.swapi_processor.calculate_helium_pui_temperature')
     def test_process_l3a(self, mock_calculate_helium_pui_temperature, mock_calculate_helium_pui_density,
                          mock_calculate_ten_minute_velocities,
                          mock_calculate_pickup_ion,
@@ -322,18 +322,18 @@ class TestSwapiProcessor(TestCase):
         ])
         self.mock_imap_api.upload.assert_has_calls([call(proton_cdf_path), call(alpha_cdf_path), call(pui_cdf_path)])
 
-    @patch('imap_processing.swapi.swapi_processor.imap_data_access')
-    @patch('imap_processing.swapi.swapi_processor.calculate_delta_minus_plus')
-    @patch('imap_processing.swapi.swapi_processor.save_data')
-    @patch('imap_processing.swapi.swapi_processor.SwapiL3BCombinedVDF')
-    @patch('imap_processing.swapi.swapi_processor.calculate_combined_sweeps')
-    @patch('imap_processing.swapi.swapi_processor.chunk_l2_data')
-    @patch('imap_processing.swapi.swapi_processor.read_l2_swapi_data')
-    @patch('imap_processing.swapi.swapi_processor.SwapiL3BDependencies')
-    @patch('imap_processing.swapi.swapi_processor.calculate_alpha_solar_wind_vdf')
-    @patch('imap_processing.swapi.swapi_processor.calculate_proton_solar_wind_vdf')
-    @patch('imap_processing.swapi.swapi_processor.calculate_pui_solar_wind_vdf')
-    @patch('imap_processing.swapi.swapi_processor.calculate_combined_solar_wind_differential_flux')
+    @patch('imap_l3_processing.swapi.swapi_processor.imap_data_access')
+    @patch('imap_l3_processing.swapi.swapi_processor.calculate_delta_minus_plus')
+    @patch('imap_l3_processing.swapi.swapi_processor.save_data')
+    @patch('imap_l3_processing.swapi.swapi_processor.SwapiL3BCombinedVDF')
+    @patch('imap_l3_processing.swapi.swapi_processor.calculate_combined_sweeps')
+    @patch('imap_l3_processing.swapi.swapi_processor.chunk_l2_data')
+    @patch('imap_l3_processing.swapi.swapi_processor.read_l2_swapi_data')
+    @patch('imap_l3_processing.swapi.swapi_processor.SwapiL3BDependencies')
+    @patch('imap_l3_processing.swapi.swapi_processor.calculate_alpha_solar_wind_vdf')
+    @patch('imap_l3_processing.swapi.swapi_processor.calculate_proton_solar_wind_vdf')
+    @patch('imap_l3_processing.swapi.swapi_processor.calculate_pui_solar_wind_vdf')
+    @patch('imap_l3_processing.swapi.swapi_processor.calculate_combined_solar_wind_differential_flux')
     def test_process_l3b(self, mock_calculate_combined_solar_wind_differential_flux, mock_calculate_pui_solar_wind_vdf,
                          mock_calculate_proton_solar_wind_vdf,
                          mock_calculate_alpha_solar_wind_vdf,

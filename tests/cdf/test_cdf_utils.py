@@ -4,9 +4,9 @@ from unittest.mock import Mock, call
 import numpy as np
 from spacepy import pycdf
 
-from imap_processing.cdf.cdf_utils import write_cdf, read_variable
-from imap_processing.cdf.imap_attribute_manager import ImapAttributeManager
-from imap_processing.models import DataProduct, DataProductVariable, InputMetadata
+from imap_l3_processing.cdf.cdf_utils import write_cdf, read_variable
+from imap_l3_processing.cdf.imap_attribute_manager import ImapAttributeManager
+from imap_l3_processing.models import DataProduct, DataProductVariable, InputMetadata
 from tests.temp_file_test_case import TempFileTestCase
 
 

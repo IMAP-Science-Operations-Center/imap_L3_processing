@@ -7,27 +7,27 @@ from spacepy.pycdf import CDF
 from uncertainties import ufloat
 from uncertainties.unumpy import uarray
 
-import imap_processing
-from imap_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density import \
+import imap_l3_processing
+from imap_l3_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density import \
     AlphaTemperatureDensityCalibrationTable, calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps
 
 
 class TestCalculateAlphaSolarWindTemperatureAndDensity(TestCase):
     def setUp(self) -> None:
         data_file_path = Path(
-            imap_processing.__file__).parent.parent / 'tests' / 'test_data' / 'swapi' / "imap_swapi_l2_fake-menlo-5-sweeps_20100101_v002.cdf"
+            imap_l3_processing.__file__).parent.parent / 'tests' / 'test_data' / 'swapi' / "imap_swapi_l2_fake-menlo-5-sweeps_20100101_v002.cdf"
         with CDF(str(data_file_path)) as cdf:
             self.energy = cdf["energy"][...]
             self.count_rate = cdf["swp_coin_rate"][...]
             self.count_rate_delta = cdf["swp_coin_unc"][...]
 
         lookup_table_file_path = Path(
-            imap_processing.__file__).parent.parent / 'tests' / 'test_data' / 'swapi' / "imap_swapi_l2_alpha-density-temperature-lut-text-not-cdf_20240920_v004.cdf"
+            imap_l3_processing.__file__).parent.parent / 'tests' / 'test_data' / 'swapi' / "imap_swapi_l2_alpha-density-temperature-lut-text-not-cdf_20240920_v004.cdf"
         self.calibration_table = AlphaTemperatureDensityCalibrationTable.from_file(lookup_table_file_path)
 
     def test_temperature_and_density_calibration_table_from_file(self):
         file_path = Path(
-            imap_processing.__file__).parent.parent / 'tests' / 'test_data' / 'swapi' / "imap_swapi_l2_alpha-density-temperature-lut-text-not-cdf_20240920_v004.cdf"
+            imap_l3_processing.__file__).parent.parent / 'tests' / 'test_data' / 'swapi' / "imap_swapi_l2_alpha-density-temperature-lut-text-not-cdf_20240920_v004.cdf"
 
         calibration_table = AlphaTemperatureDensityCalibrationTable.from_file(file_path)
 
@@ -57,9 +57,9 @@ class TestCalculateAlphaSolarWindTemperatureAndDensity(TestCase):
         self.assertAlmostEqual(0.02097422, actual_density.std_dev)
 
     @patch(
-        'imap_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density.get_alpha_peak_indices')
+        'imap_l3_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density.get_alpha_peak_indices')
     @patch(
-        'imap_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density.calculate_combined_sweeps')
+        'imap_l3_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density.calculate_combined_sweeps')
     def test_raises_error_when_chi_squared_over_ten(self, mock_calculate_combine_sweeps, mock_get_alpha_peak_indices):
         speed = ufloat(496.490, 2.811)
         peak_energies = np.array([2944, 2705, 2485, 2281, 2094])

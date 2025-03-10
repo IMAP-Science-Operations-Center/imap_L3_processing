@@ -4,19 +4,19 @@ from unittest.mock import patch, call, Mock, sentinel
 
 import numpy as np
 
-from imap_processing.models import MagL1dData, InputMetadata, UpstreamDataDependency
-from imap_processing.swe.l3.models import SweL2Data, SwapiL3aProtonData
-from imap_processing.swe.l3.science.moment_calculations import Moments
-from imap_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies
-from imap_processing.swe.swe_processor import SweProcessor
+from imap_l3_processing.models import MagL1dData, InputMetadata, UpstreamDataDependency
+from imap_l3_processing.swe.l3.models import SweL2Data, SwapiL3aProtonData
+from imap_l3_processing.swe.l3.science.moment_calculations import Moments
+from imap_l3_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies
+from imap_l3_processing.swe.swe_processor import SweProcessor
 from tests.test_helpers import NumpyArrayMatcher, build_swe_configuration, create_dataclass_mock
 
 
 class TestSweProcessor(unittest.TestCase):
-    @patch('imap_processing.swe.swe_processor.upload')
-    @patch('imap_processing.swe.swe_processor.save_data')
-    @patch('imap_processing.swe.swe_processor.SweL3Dependencies.fetch_dependencies')
-    @patch('imap_processing.swe.swe_processor.SweProcessor.calculate_pitch_angle_products')
+    @patch('imap_l3_processing.swe.swe_processor.upload')
+    @patch('imap_l3_processing.swe.swe_processor.save_data')
+    @patch('imap_l3_processing.swe.swe_processor.SweL3Dependencies.fetch_dependencies')
+    @patch('imap_l3_processing.swe.swe_processor.SweProcessor.calculate_pitch_angle_products')
     def test_process(self, mock_calculate_pitch_angle_products, mock_fetch_dependencies, mock_save_data, mock_upload):
         mock_dependencies = Mock()
         mock_input_metadata = Mock()
@@ -28,13 +28,13 @@ class TestSweProcessor(unittest.TestCase):
         mock_save_data.assert_called_once_with(mock_calculate_pitch_angle_products.return_value)
         mock_upload.assert_called_once_with(mock_save_data.return_value)
 
-    @patch('imap_processing.swe.swe_processor.average_over_look_directions')
-    @patch('imap_processing.swe.swe_processor.find_breakpoints')
-    @patch('imap_processing.swe.swe_processor.calculate_solar_wind_velocity_vector')
-    @patch('imap_processing.swe.swe_processor.correct_and_rebin')
-    @patch('imap_processing.swe.swe_processor.integrate_distribution_to_get_1d_spectrum')
-    @patch('imap_processing.swe.swe_processor.integrate_distribution_to_get_inbound_and_outbound_1d_spectrum')
-    @patch('imap_processing.swe.swe_processor.find_closest_neighbor')
+    @patch('imap_l3_processing.swe.swe_processor.average_over_look_directions')
+    @patch('imap_l3_processing.swe.swe_processor.find_breakpoints')
+    @patch('imap_l3_processing.swe.swe_processor.calculate_solar_wind_velocity_vector')
+    @patch('imap_l3_processing.swe.swe_processor.correct_and_rebin')
+    @patch('imap_l3_processing.swe.swe_processor.integrate_distribution_to_get_1d_spectrum')
+    @patch('imap_l3_processing.swe.swe_processor.integrate_distribution_to_get_inbound_and_outbound_1d_spectrum')
+    @patch('imap_l3_processing.swe.swe_processor.find_closest_neighbor')
     def test_calculate_pitch_angle_products(self, mock_find_closest_neighbor,
                                             mock_integrate_distribution_to_get_inbound_and_outbound_1d_spectrum,
                                             mock_integrate_distribution_to_get_1d_spectrum,
@@ -363,16 +363,16 @@ class TestSweProcessor(unittest.TestCase):
         np.testing.assert_allclose(swe_l3_data.energy_spectrum_outbound,
                                    np.array([[208.855516, 286.519101, 206.376298]]))
 
-    @patch('imap_processing.swe.swe_processor.find_breakpoints')
-    @patch('imap_processing.swe.swe_processor.average_over_look_directions')
-    @patch('imap_processing.swe.swe_processor.filter_and_flatten_regress_parameters')
-    @patch('imap_processing.swe.swe_processor.compute_maxwellian_weight_factors')
-    @patch('imap_processing.swe.swe_processor.calculate_velocity_in_dsp_frame_km_s')
-    @patch('imap_processing.swe.swe_processor.regress')
-    @patch('imap_processing.swe.swe_processor.calculate_fit_temperature_density_velocity')
-    @patch('imap_processing.swe.swe_processor.rotate_dps_vector_to_rtn')
-    @patch('imap_processing.swe.swe_processor.rotate_temperature')
-    @patch('imap_processing.swe.swe_processor.spice_wrapper')
+    @patch('imap_l3_processing.swe.swe_processor.find_breakpoints')
+    @patch('imap_l3_processing.swe.swe_processor.average_over_look_directions')
+    @patch('imap_l3_processing.swe.swe_processor.filter_and_flatten_regress_parameters')
+    @patch('imap_l3_processing.swe.swe_processor.compute_maxwellian_weight_factors')
+    @patch('imap_l3_processing.swe.swe_processor.calculate_velocity_in_dsp_frame_km_s')
+    @patch('imap_l3_processing.swe.swe_processor.regress')
+    @patch('imap_l3_processing.swe.swe_processor.calculate_fit_temperature_density_velocity')
+    @patch('imap_l3_processing.swe.swe_processor.rotate_dps_vector_to_rtn')
+    @patch('imap_l3_processing.swe.swe_processor.rotate_temperature')
+    @patch('imap_l3_processing.swe.swe_processor.spice_wrapper')
     def test_calculate_moment_products(self, mock_spice_wrapper, mock_rotate_temperature,
                                        mock_rotate_dps_vector_to_rtn,
                                        mock_calculate_fit_temperature_density_velocity, mock_regress,
@@ -611,15 +611,15 @@ class TestSweProcessor(unittest.TestCase):
              call(epochs[1], core_moments2.alpha, core_moments2.beta),
              call(epochs[1], halo_moments2.alpha, halo_moments2.beta), ])
 
-    @patch('imap_processing.swe.swe_processor.rotate_dps_vector_to_rtn')
-    @patch('imap_processing.swe.swe_processor.rotate_temperature')
-    @patch('imap_processing.swe.swe_processor.average_over_look_directions')
-    @patch('imap_processing.swe.swe_processor.compute_maxwellian_weight_factors')
-    @patch('imap_processing.swe.swe_processor.calculate_velocity_in_dsp_frame_km_s')
-    @patch('imap_processing.swe.swe_processor.regress')
-    @patch('imap_processing.swe.swe_processor.calculate_fit_temperature_density_velocity')
-    @patch('imap_processing.swe.swe_processor.find_breakpoints')
-    @patch('imap_processing.swe.swe_processor.filter_and_flatten_regress_parameters')
+    @patch('imap_l3_processing.swe.swe_processor.rotate_dps_vector_to_rtn')
+    @patch('imap_l3_processing.swe.swe_processor.rotate_temperature')
+    @patch('imap_l3_processing.swe.swe_processor.average_over_look_directions')
+    @patch('imap_l3_processing.swe.swe_processor.compute_maxwellian_weight_factors')
+    @patch('imap_l3_processing.swe.swe_processor.calculate_velocity_in_dsp_frame_km_s')
+    @patch('imap_l3_processing.swe.swe_processor.regress')
+    @patch('imap_l3_processing.swe.swe_processor.calculate_fit_temperature_density_velocity')
+    @patch('imap_l3_processing.swe.swe_processor.find_breakpoints')
+    @patch('imap_l3_processing.swe.swe_processor.filter_and_flatten_regress_parameters')
     def test_moment_fit_should_be_retried_until_returned_density_is_greater_than_zero_and_less_than_rolling_average_density(
             self,
             mock_filter_and_flatten_regress_parameters,
@@ -794,15 +794,15 @@ class TestSweProcessor(unittest.TestCase):
             call(sentinel.time2_halo_regress_3)
         ])
 
-    @patch('imap_processing.swe.swe_processor.rotate_dps_vector_to_rtn')
-    @patch('imap_processing.swe.swe_processor.rotate_temperature')
-    @patch('imap_processing.swe.swe_processor.average_over_look_directions')
-    @patch('imap_processing.swe.swe_processor.compute_maxwellian_weight_factors')
-    @patch('imap_processing.swe.swe_processor.calculate_velocity_in_dsp_frame_km_s')
-    @patch('imap_processing.swe.swe_processor.regress')
-    @patch('imap_processing.swe.swe_processor.calculate_fit_temperature_density_velocity')
-    @patch('imap_processing.swe.swe_processor.find_breakpoints')
-    @patch('imap_processing.swe.swe_processor.filter_and_flatten_regress_parameters')
+    @patch('imap_l3_processing.swe.swe_processor.rotate_dps_vector_to_rtn')
+    @patch('imap_l3_processing.swe.swe_processor.rotate_temperature')
+    @patch('imap_l3_processing.swe.swe_processor.average_over_look_directions')
+    @patch('imap_l3_processing.swe.swe_processor.compute_maxwellian_weight_factors')
+    @patch('imap_l3_processing.swe.swe_processor.calculate_velocity_in_dsp_frame_km_s')
+    @patch('imap_l3_processing.swe.swe_processor.regress')
+    @patch('imap_l3_processing.swe.swe_processor.calculate_fit_temperature_density_velocity')
+    @patch('imap_l3_processing.swe.swe_processor.find_breakpoints')
+    @patch('imap_l3_processing.swe.swe_processor.filter_and_flatten_regress_parameters')
     def test_moment_fit_should_be_ran_while_number_of_energies_between_halo_and_core_is_greater_than_3(self,
                                                                                                        mock_filter_and_flatten_regress_parameters,
                                                                                                        mock_find_breakpoints,

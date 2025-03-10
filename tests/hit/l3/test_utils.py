@@ -6,8 +6,8 @@ from unittest import TestCase
 import numpy as np
 from spacepy.pycdf import CDF
 
-from imap_processing.constants import FIVE_MINUTES_IN_NANOSECONDS
-from imap_processing.hit.l3.utils import read_l2_hit_data
+from imap_l3_processing.constants import FIVE_MINUTES_IN_NANOSECONDS
+from imap_l3_processing.hit.l3.utils import read_l2_hit_data
 
 
 class TestUtils(TestCase):

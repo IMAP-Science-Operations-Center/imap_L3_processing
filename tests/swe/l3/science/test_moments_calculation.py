@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import numpy as np
 
-from imap_processing.swe.l3.science.moment_calculations import compute_maxwellian_weight_factors, \
+from imap_l3_processing.swe.l3.science.moment_calculations import compute_maxwellian_weight_factors, \
     filter_and_flatten_regress_parameters, regress, calculate_fit_temperature_density_velocity, rotate_temperature, \
     rotate_dps_vector_to_rtn
 from tests.test_helpers import get_test_data_path

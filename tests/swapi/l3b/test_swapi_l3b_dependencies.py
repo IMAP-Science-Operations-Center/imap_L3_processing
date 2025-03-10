@@ -3,15 +3,15 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from unittest.mock import patch, sentinel, call
 
-import imap_processing
-from imap_processing.models import UpstreamDataDependency
-from imap_processing.swapi.descriptors import SWAPI_L2_DESCRIPTOR
-from imap_processing.swapi.l3b.swapi_l3b_dependencies import SwapiL3BDependencies
+import imap_l3_processing
+from imap_l3_processing.models import UpstreamDataDependency
+from imap_l3_processing.swapi.descriptors import SWAPI_L2_DESCRIPTOR
+from imap_l3_processing.swapi.l3b.swapi_l3b_dependencies import SwapiL3BDependencies
 
 
 class TestSwapiL3BDependencies(unittest.TestCase):
     def setUp(self) -> None:
-        self.mock_imap_patcher = patch('imap_processing.utils.imap_data_access')
+        self.mock_imap_patcher = patch('imap_l3_processing.utils.imap_data_access')
         self.mock_imap_api = self.mock_imap_patcher.start()
         self.mock_imap_api.query.side_effect = [
             [{'file_path': sentinel.data_file_path}],
@@ -19,9 +19,9 @@ class TestSwapiL3BDependencies(unittest.TestCase):
             [{'file_path': sentinel.efficiency_calibration_table_file_path}],
         ]
 
-    @patch('imap_processing.swapi.l3b.swapi_l3b_dependencies.CDF')
-    @patch('imap_processing.swapi.l3b.swapi_l3b_dependencies.GeometricFactorCalibrationTable')
-    @patch('imap_processing.swapi.l3b.swapi_l3b_dependencies.EfficiencyCalibrationTable')
+    @patch('imap_l3_processing.swapi.l3b.swapi_l3b_dependencies.CDF')
+    @patch('imap_l3_processing.swapi.l3b.swapi_l3b_dependencies.GeometricFactorCalibrationTable')
+    @patch('imap_l3_processing.swapi.l3b.swapi_l3b_dependencies.EfficiencyCalibrationTable')
     def test_fetch_dependencies(self, mock_efficiency_calibration_table_class, mock_geometric_factor_calibration_table,
                                 mock_cdf_constructor):
         instrument = 'swapi'
@@ -35,7 +35,7 @@ class TestSwapiL3BDependencies(unittest.TestCase):
                                               version, descriptor)
 
         data_file_path = Path(
-            imap_processing.__file__).parent.parent / 'swapi/test_data/imap_swapi_l2_fake-menlo-5-sweeps_20100101_v002.cdf'
+            imap_l3_processing.__file__).parent.parent / 'swapi/test_data/imap_swapi_l2_fake-menlo-5-sweeps_20100101_v002.cdf'
 
         self.mock_imap_api.download.side_effect = [
             data_file_path,
@@ -80,7 +80,7 @@ class TestSwapiL3BDependencies(unittest.TestCase):
 
     def test_throws_exception_when_more_than_one_file_is_downloaded(self):
         file_path = Path(
-            imap_processing.__file__).parent.parent / 'swapi/test_data/imap_swapi_l2_fake-menlo-5-sweeps_20100101_v002.cdf'
+            imap_l3_processing.__file__).parent.parent / 'swapi/test_data/imap_swapi_l2_fake-menlo-5-sweeps_20100101_v002.cdf'
 
         self.mock_imap_api.download.return_value = file_path
 

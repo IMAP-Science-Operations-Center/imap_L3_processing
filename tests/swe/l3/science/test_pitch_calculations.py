@@ -4,7 +4,7 @@ from unittest.mock import Mock, patch, ANY, call
 
 import numpy as np
 
-from imap_processing.swe.l3.science.pitch_calculations import piece_wise_model, find_breakpoints, \
+from imap_l3_processing.swe.l3.science.pitch_calculations import piece_wise_model, find_breakpoints, \
     average_over_look_directions, calculate_velocity_in_dsp_frame_km_s, calculate_look_directions, rebin_by_pitch_angle, \
     correct_and_rebin, calculate_energy_in_ev_from_velocity_in_km_per_second, integrate_distribution_to_get_1d_spectrum, \
     integrate_distribution_to_get_inbound_and_outbound_1d_spectrum, try_curve_fit_until_valid
@@ -175,7 +175,7 @@ class TestPitchCalculations(unittest.TestCase):
                 self.assertAlmostEqual(expected_potential, spacecraft_potential, 2)
                 self.assertAlmostEqual(expected_core_halo, core_halo_breakpoint, 0)
 
-    @patch('imap_processing.swe.l3.science.pitch_calculations.try_curve_fit_until_valid')
+    @patch('imap_l3_processing.swe.l3.science.pitch_calculations.try_curve_fit_until_valid')
     def test_find_breakpoints_determines_b_deltas_correctly(self, mock_try_curve_fit_until_valid):
         config = build_swe_configuration(refit_core_halo_breakpoint_index=4, slope_ratio_cutoff_for_potential_calc=0)
 
@@ -204,7 +204,7 @@ class TestPitchCalculations(unittest.TestCase):
 
                 self.assertEqual(mock_try_curve_fit_until_valid.return_value, result)
 
-    @patch('imap_processing.swe.l3.science.pitch_calculations.curve_fit')
+    @patch('imap_l3_processing.swe.l3.science.pitch_calculations.curve_fit')
     def test_find_breakpoints_uses_config_for_slope_guesses(self, mock_curve_fit):
         mock_curve_fit.return_value = [1, 3, 10, 2, 80, 1], Mock()
 
@@ -237,7 +237,7 @@ class TestPitchCalculations(unittest.TestCase):
                 rounded_actuals = [round(x, 6) for x in mock_curve_fit.call_args.args[3]]
                 self.assertEqual(expected_guesses, rounded_actuals)
 
-    @patch('imap_processing.swe.l3.science.pitch_calculations.curve_fit')
+    @patch('imap_l3_processing.swe.l3.science.pitch_calculations.curve_fit')
     def test_find_breakpoints_uses_config_for_slope_ratio(self, mock_curve_fit):
         mock_curve_fit.return_value = [1, 2, 3, 4, 5, 6], Mock()
         cases = [
@@ -267,7 +267,7 @@ class TestPitchCalculations(unittest.TestCase):
                 np.testing.assert_almost_equal(mock_curve_fit.call_args.args[1], xs[:data_length])
                 np.testing.assert_almost_equal(mock_curve_fit.call_args.args[2], log_flux[:data_length])
 
-    @patch('imap_processing.swe.l3.science.pitch_calculations.curve_fit')
+    @patch('imap_l3_processing.swe.l3.science.pitch_calculations.curve_fit')
     def test_try_curve_fit_until_valid(self, mock_curve_fit):
         covariance = Mock()
         cases = [
@@ -309,7 +309,7 @@ class TestPitchCalculations(unittest.TestCase):
                                      mock_curve_fit.call_args_list[1])
                 self.assertEqual((10, 80), returned_fit)
 
-    @patch('imap_processing.swe.l3.science.pitch_calculations.curve_fit')
+    @patch('imap_l3_processing.swe.l3.science.pitch_calculations.curve_fit')
     def test_try_curve_fit_until_valid_tries_up_to_3_times(self, mock_curve_fit):
         covariance = Mock()
         good_fit = ([1, 3, 10, 2, 80, 1], covariance)
@@ -476,11 +476,11 @@ class TestPitchCalculations(unittest.TestCase):
         result = calculate_energy_in_ev_from_velocity_in_km_per_second(velocities)
         np.testing.assert_allclose(result, expected_energies, rtol=1e-7)
 
-    @patch('imap_processing.swe.l3.science.pitch_calculations.calculate_energy_in_ev_from_velocity_in_km_per_second')
-    @patch('imap_processing.swe.l3.science.pitch_calculations.rebin_by_pitch_angle')
-    @patch('imap_processing.swe.l3.science.pitch_calculations.calculate_pitch_angle')
-    @patch('imap_processing.swe.l3.science.pitch_calculations.calculate_velocity_in_sw_frame')
-    @patch('imap_processing.swe.l3.science.pitch_calculations.calculate_velocity_in_dsp_frame_km_s')
+    @patch('imap_l3_processing.swe.l3.science.pitch_calculations.calculate_energy_in_ev_from_velocity_in_km_per_second')
+    @patch('imap_l3_processing.swe.l3.science.pitch_calculations.rebin_by_pitch_angle')
+    @patch('imap_l3_processing.swe.l3.science.pitch_calculations.calculate_pitch_angle')
+    @patch('imap_l3_processing.swe.l3.science.pitch_calculations.calculate_velocity_in_sw_frame')
+    @patch('imap_l3_processing.swe.l3.science.pitch_calculations.calculate_velocity_in_dsp_frame_km_s')
     def test_correct_and_rebin(self, mock_calculate_dsp_velocity, mock_calculate_velocity_in_sw_frame,
                                mock_calculate_pitch_angle, mock_rebin_by_pitch_angle, mock_calculate_energy):
         flux_data = Mock()

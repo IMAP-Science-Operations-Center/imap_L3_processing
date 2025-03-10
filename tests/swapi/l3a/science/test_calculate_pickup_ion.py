@@ -9,22 +9,22 @@ import spacepy.pycdf
 from spacepy.pycdf import CDF
 from uncertainties.unumpy import uarray
 
-import imap_processing
-from imap_processing.constants import HYDROGEN_INFLOW_SPEED_IN_KM_PER_SECOND, \
+import imap_l3_processing
+from imap_l3_processing.constants import HYDROGEN_INFLOW_SPEED_IN_KM_PER_SECOND, \
     HYDROGEN_INFLOW_LONGITUDE_DEGREES_IN_ECLIPJ2000, HYDROGEN_INFLOW_LATITUDE_DEGREES_IN_ECLIPJ2000, PROTON_MASS_KG, \
     PROTON_CHARGE_COULOMBS, ONE_AU_IN_KM, ONE_SECOND_IN_NANOSECONDS, \
     HELIUM_INFLOW_LONGITUDE_DEGREES_IN_ECLIPJ2000, HE_PUI_PARTICLE_MASS_KG, BOLTZMANN_CONSTANT_JOULES_PER_KELVIN
-from imap_processing.spice_wrapper import FAKE_ROTATION_MATRIX_FROM_PSP
-from imap_processing.swapi.l3a.science.calculate_alpha_solar_wind_speed import calculate_combined_sweeps
-from imap_processing.swapi.l3a.science.calculate_pickup_ion import calculate_pui_energy_cutoff, extract_pui_energy_bins, \
+from imap_l3_processing.spice_wrapper import FAKE_ROTATION_MATRIX_FROM_PSP
+from imap_l3_processing.swapi.l3a.science.calculate_alpha_solar_wind_speed import calculate_combined_sweeps
+from imap_l3_processing.swapi.l3a.science.calculate_pickup_ion import calculate_pui_energy_cutoff, extract_pui_energy_bins, \
     _model_count_rate_denominator, convert_velocity_relative_to_imap, calculate_velocity_vector, FittingParameters, \
     ForwardModel, convert_velocity_to_reference_frame, model_count_rate_integral, \
     calculate_pickup_ion_values, ModelCountRateCalculator, calculate_ten_minute_velocities, \
     calculate_pui_velocity_vector, calculate_solar_wind_velocity_vector, calculate_helium_pui_density, \
     calculate_helium_pui_temperature
-from imap_processing.swapi.l3a.science.density_of_neutral_helium_lookup_table import DensityOfNeutralHeliumLookupTable
-from imap_processing.swapi.l3b.science.geometric_factor_calibration_table import GeometricFactorCalibrationTable
-from imap_processing.swapi.l3b.science.instrument_response_lookup_table import InstrumentResponseLookupTable, \
+from imap_l3_processing.swapi.l3a.science.density_of_neutral_helium_lookup_table import DensityOfNeutralHeliumLookupTable
+from imap_l3_processing.swapi.l3b.science.geometric_factor_calibration_table import GeometricFactorCalibrationTable
+from imap_l3_processing.swapi.l3b.science.instrument_response_lookup_table import InstrumentResponseLookupTable, \
     InstrumentResponseLookupTableCollection
 from tests.spice_test_case import SpiceTestCase
 from tests.test_helpers import get_test_data_path
@@ -33,13 +33,13 @@ from tests.test_helpers import get_test_data_path
 class TestCalculatePickupIon(SpiceTestCase):
     def setUp(self) -> None:
         density_of_neutral_helium_lut_path = Path(
-            imap_processing.__file__).parent.parent / 'tests' / 'test_data' / 'swapi' / "imap_swapi_l2_density-of-neutral-helium-lut-text-not-cdf_20241023_v002.cdf"
+            imap_l3_processing.__file__).parent.parent / 'tests' / 'test_data' / 'swapi' / "imap_swapi_l2_density-of-neutral-helium-lut-text-not-cdf_20241023_v002.cdf"
 
         self.density_of_neutral_helium_lookup_table = DensityOfNeutralHeliumLookupTable.from_file(
             density_of_neutral_helium_lut_path)
 
-    @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.convert_velocity_relative_to_imap")
-    @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.spiceypy")
+    @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.convert_velocity_relative_to_imap")
+    @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.spiceypy")
     def test_calculate_pickup_ion_energy_cutoff(self, mock_spice, mock_convert_velocity):
         expected_ephemeris_time = 100000000
         mock_light_time = 1233.002
@@ -94,7 +94,7 @@ class TestCalculatePickupIon(SpiceTestCase):
                    0.99269 * np.cos(np.deg2rad(1.0)) * 1.0 * 1.0
         self.assertEqual(expected, result)
 
-    @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.spiceypy")
+    @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.spiceypy")
     def test_convert_velocity_relative_to_imap(self, mock_spice):
         mock_spice.sxform.return_value = FAKE_ROTATION_MATRIX_FROM_PSP
         mock_light_time = 12.459
@@ -122,7 +122,7 @@ class TestCalculatePickupIon(SpiceTestCase):
                                          [-10.43947, -59.205178, 0.734523]])
         np.testing.assert_array_almost_equal(actual_pui_vector, expected_pui_vectors)
 
-    @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.spiceypy")
+    @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.spiceypy")
     def test_convert_velocity_to_reference_frame(self, mock_spice):
         input_vector = np.array([[1, 2, 3], [1, 2, 3]])
         ephemeris_time = 10000000
@@ -142,10 +142,10 @@ class TestCalculatePickupIon(SpiceTestCase):
         result = convert_velocity_to_reference_frame(input_vector[0], ephemeris_time, "FROM", "TO")
         np.testing.assert_array_almost_equal(expected_result, result)
 
-    @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.DensityOfNeutralHeliumLookupTable.density")
-    @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.convert_velocity_relative_to_imap")
-    @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.spiceypy")
-    @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.calculate_pui_velocity_vector")
+    @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.DensityOfNeutralHeliumLookupTable.density")
+    @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.convert_velocity_relative_to_imap")
+    @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.spiceypy")
+    @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.calculate_pui_velocity_vector")
     def test_forward_model(self, mock_calculate_pui_velocity_vector, mock_spice, mock_convert_velocity,
                            mock_helium_density):
         mock_helium_density.return_value = 1
@@ -192,11 +192,11 @@ class TestCalculatePickupIon(SpiceTestCase):
                                                distance_km / ONE_AU_IN_KM * (magnitude / 42) ** 0.1,
                                                )
 
-    @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.convert_velocity_relative_to_imap")
-    @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.model_count_rate_integral")
-    @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.ForwardModel")
-    @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.InstrumentResponseLookupTableCollection")
-    @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.spiceypy")
+    @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.convert_velocity_relative_to_imap")
+    @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.model_count_rate_integral")
+    @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.ForwardModel")
+    @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.InstrumentResponseLookupTableCollection")
+    @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.spiceypy")
     def test_model_count_rate(self, mock_spice, mock_instrument_response_lut_collection,
                               mock_forward_model,
                               mock_model_count_rate_integral, mock_convert_velocity_relative_to_imap):
@@ -271,8 +271,8 @@ class TestCalculatePickupIon(SpiceTestCase):
 
         mock_model_count_rate_integral.assert_called_with(lookup_table, mock_forward_model.return_value)
 
-    @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.ForwardModel")
-    @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.calculate_sw_speed")
+    @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.ForwardModel")
+    @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.calculate_sw_speed")
     def test_model_count_rate_integral(self, mock_calculate_speed, mock_forward_model):
         expected_speed_row_1 = 421
         expected_speed_row_2 = 124
@@ -307,11 +307,11 @@ class TestCalculatePickupIon(SpiceTestCase):
         np.testing.assert_array_equal(actual_elevations, lookup_table.elevation)
         np.testing.assert_array_equal(actual_azimuths, lookup_table.azimuth)
 
-    @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.extract_pui_energy_bins")
-    @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.calculate_pui_energy_cutoff")
-    @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.scipy.optimize.minimize")
-    @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.spiceypy")
-    @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.calculate_combined_sweeps")
+    @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.extract_pui_energy_bins")
+    @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.calculate_pui_energy_cutoff")
+    @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.scipy.optimize.minimize")
+    @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.spiceypy")
+    @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.calculate_combined_sweeps")
     def test_calculate_pickup_ions_with_minimize_mocked(self, mock_calculate_combined_sweeps, mock_spice, mock_minimize,
                                                         mock_calculate_pui_energy_cutoff, mock_extract_pui_energy_bins):
         ephemeris_time_for_epoch = 100000
@@ -324,7 +324,7 @@ class TestCalculatePickupIon(SpiceTestCase):
         mock_spice.sxform.return_value = FAKE_ROTATION_MATRIX_FROM_PSP
 
         data_file_path = Path(
-            imap_processing.__file__).parent.parent / 'tests' / 'test_data' / 'swapi' / "imap_swapi_l2_50-sweeps_20100101_v002.cdf"
+            imap_l3_processing.__file__).parent.parent / 'tests' / 'test_data' / 'swapi' / "imap_swapi_l2_50-sweeps_20100101_v002.cdf"
         with CDF(str(data_file_path)) as cdf:
             energy = cdf["energy"][...]
             count_rate = cdf["swp_coin_rate"][...]
@@ -341,12 +341,12 @@ class TestCalculatePickupIon(SpiceTestCase):
                 extracted_indices, extracted_energies, extracted_counts
             )
             response_lut_path = Path(
-                imap_processing.__file__).parent.parent / 'tests' / 'test_data' / 'swapi' / "truncated_swapi_response_simion_v1.zip"
+                imap_l3_processing.__file__).parent.parent / 'tests' / 'test_data' / 'swapi' / "truncated_swapi_response_simion_v1.zip"
 
             instrument_response_collection = InstrumentResponseLookupTableCollection.from_file(response_lut_path)
 
             geometric_factor_lut_path = Path(
-                imap_processing.__file__).parent.parent / 'tests' / 'test_data' / 'swapi' / "imap_swapi_l2_energy-gf-lut-not-cdf_20240923_v002.cdf"
+                imap_l3_processing.__file__).parent.parent / 'tests' / 'test_data' / 'swapi' / "imap_swapi_l2_energy-gf-lut-not-cdf_20240923_v002.cdf"
 
             geometric_factor_lut = GeometricFactorCalibrationTable.from_file(geometric_factor_lut_path)
             background_count_rate_cutoff = 0.1
@@ -397,8 +397,8 @@ class TestCalculatePickupIon(SpiceTestCase):
                                               fitting_params)
         self.assertAlmostEqual(0.00014681078095942195, result)
 
-    @patch('imap_processing.swapi.l3a.science.calculate_pickup_ion.spiceypy.reclat')
-    @patch('imap_processing.swapi.l3a.science.calculate_pickup_ion.scipy.integrate.quad')
+    @patch('imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.spiceypy.reclat')
+    @patch('imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.scipy.integrate.quad')
     def test_calculate_pui_density_with_mocks(self, mock_integrate, mock_reclat):
         epoch = spacepy.pycdf.lib.datetime_to_tt2000(datetime(2025, 7, 1, 12))
         sw_velocity_vector = np.array([0, 0, -500])
@@ -420,8 +420,8 @@ class TestCalculatePickupIon(SpiceTestCase):
         self.assertEqual(520, args[2])
         self.assertEqual(4 * np.pi * 1000 / 1e15, result)
 
-    @patch('imap_processing.swapi.l3a.science.calculate_pickup_ion.spiceypy.reclat')
-    @patch('imap_processing.swapi.l3a.science.calculate_pickup_ion.scipy.integrate.quad')
+    @patch('imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.spiceypy.reclat')
+    @patch('imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.scipy.integrate.quad')
     def test_calculate_pui_temperature_with_mocks(self, mock_integrate, mock_reclat):
         epoch = spacepy.pycdf.lib.datetime_to_tt2000(datetime(2025, 7, 1, 12))
         sw_velocity_vector = np.array([0, 0, -500])
@@ -468,7 +468,7 @@ class TestCalculatePickupIon(SpiceTestCase):
     ALLOWED_GAP_TIME = timedelta(days=7)
 
     @skipIf(datetime.now() < LAST_RUN + ALLOWED_GAP_TIME, "expensive test already run in last week")
-    @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.spiceypy")
+    @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.spiceypy")
     def test_calculate_pickup_ions_with_minimize(self, mock_spice):
         ephemeris_time_for_epoch = 100000
         mock_spice.unitim.return_value = ephemeris_time_for_epoch
@@ -523,7 +523,7 @@ class TestCalculatePickupIon(SpiceTestCase):
             self.assertAlmostEqual(520, actual_fitting_parameters.cutoff_speed, delta=5)
             self.assertAlmostEqual(0.1, actual_fitting_parameters.background_count_rate, delta=0.05)
 
-    @patch("imap_processing.swapi.l3a.science.calculate_pickup_ion.calculate_solar_wind_velocity_vector")
+    @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.calculate_solar_wind_velocity_vector")
     def test_calculate_ten_minute_velocities(self, mock_calculate_solar_wind_velocity_vector):
         x = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21])
         y = np.array([10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180,

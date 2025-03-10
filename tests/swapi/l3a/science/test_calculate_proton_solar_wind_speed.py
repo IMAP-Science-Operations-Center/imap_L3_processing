@@ -9,9 +9,9 @@ from spacepy.pycdf import CDF
 from uncertainties import ufloat
 from uncertainties.unumpy import uarray, std_devs, nominal_values
 
-import imap_processing
-from imap_processing.constants import METERS_PER_KILOMETER, ONE_SECOND_IN_NANOSECONDS
-from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_speed import calculate_proton_solar_wind_speed, \
+import imap_l3_processing
+from imap_l3_processing.constants import METERS_PER_KILOMETER, ONE_SECOND_IN_NANOSECONDS
+from imap_l3_processing.swapi.l3a.science.calculate_proton_solar_wind_speed import calculate_proton_solar_wind_speed, \
     get_peak_indices, find_peak_center_of_mass_index, interpolate_energy, fit_energy_per_charge_peak_variations, \
     calculate_sw_speed_h_plus, get_proton_peak_indices, interpolate_angle, get_angle, \
     get_spin_angle_from_swapi_axis_in_despun_frame
@@ -36,7 +36,7 @@ class TestCalculateProtonSolarWindSpeed(SpiceTestCase):
 
     def test_calculate_solar_wind_speed_from_model_data(self):
         file_path = Path(
-            imap_processing.__file__).parent.parent / 'tests' / 'test_data' / 'swapi' / 'imap_swapi_l2_fake-menlo-5-sweeps_20250606_v001.cdf'
+            imap_l3_processing.__file__).parent.parent / 'tests' / 'test_data' / 'swapi' / 'imap_swapi_l2_fake-menlo-5-sweeps_20250606_v001.cdf'
         with CDF(str(file_path)) as cdf:
             epoch = cdf.raw_var("epoch")[...]
             energy = cdf["energy"][...]

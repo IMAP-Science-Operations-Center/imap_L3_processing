@@ -1,6 +1,6 @@
 import unittest
 
-from imap_processing.swapi.l3b.science.instrument_response_lookup_table import InstrumentResponseLookupTableCollection
+from imap_l3_processing.swapi.l3b.science.instrument_response_lookup_table import InstrumentResponseLookupTableCollection
 from tests.test_helpers import get_test_data_path
 
 

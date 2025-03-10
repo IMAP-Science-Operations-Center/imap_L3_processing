@@ -6,7 +6,7 @@ from pathlib import Path
 
 import numpy as np
 
-from imap_processing.glows.l3a.science.bad_angle_flag_configuration import BadAngleFlagConfiguration
+from imap_l3_processing.glows.l3a.science.bad_angle_flag_configuration import BadAngleFlagConfiguration
 from tests.test_helpers import get_test_data_path
 
 

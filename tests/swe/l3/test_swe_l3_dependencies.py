@@ -3,16 +3,16 @@ from datetime import datetime
 from pathlib import Path
 from unittest.mock import patch, Mock, call
 
-from imap_processing.models import UpstreamDataDependency
-from imap_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies, SWE_CONFIG_DESCRIPTOR
+from imap_l3_processing.models import UpstreamDataDependency
+from imap_l3_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies, SWE_CONFIG_DESCRIPTOR
 
 
 class TestSweL3Dependencies(unittest.TestCase):
 
-    @patch("imap_processing.swe.l3.swe_l3_dependencies.read_l1d_mag_data")
-    @patch("imap_processing.swe.l3.swe_l3_dependencies.read_l2_swe_data")
-    @patch("imap_processing.swe.l3.swe_l3_dependencies.read_l3a_swapi_proton_data")
-    @patch("imap_processing.swe.l3.swe_l3_dependencies.read_swe_config")
+    @patch("imap_l3_processing.swe.l3.swe_l3_dependencies.read_l1d_mag_data")
+    @patch("imap_l3_processing.swe.l3.swe_l3_dependencies.read_l2_swe_data")
+    @patch("imap_l3_processing.swe.l3.swe_l3_dependencies.read_l3a_swapi_proton_data")
+    @patch("imap_l3_processing.swe.l3.swe_l3_dependencies.read_swe_config")
     def test_from_file_paths(self, mock_read_swe_config, mock_read_swapi_data, mock_read_swe_data, mock_read_mag_data):
         swe_path = Path("test_swe_cdf.cdf")
         mag_path = Path("test_mag_cdf.cdf")
@@ -31,8 +31,8 @@ class TestSweL3Dependencies(unittest.TestCase):
         self.assertEqual(mock_read_swapi_data.return_value, result.swapi_l3a_proton_data)
         self.assertEqual(mock_read_swe_config.return_value, result.configuration)
 
-    @patch("imap_processing.swe.l3.swe_l3_dependencies.download_dependency")
-    @patch("imap_processing.swe.l3.swe_l3_dependencies.SweL3Dependencies.from_file_paths")
+    @patch("imap_l3_processing.swe.l3.swe_l3_dependencies.download_dependency")
+    @patch("imap_l3_processing.swe.l3.swe_l3_dependencies.SweL3Dependencies.from_file_paths")
     def test_fetch_dependencies(self, mock_from_file_paths, mock_download_dependency):
         swe_l2_dependency = UpstreamDataDependency("swe", "l2", datetime(2020, 1, 1), datetime(2020, 1, 1),
                                                    version="v0.00",
