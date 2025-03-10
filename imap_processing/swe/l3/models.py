@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import TypedDict
 
 import numpy as np
+from spacepy import pycdf
 
 from imap_processing.models import DataProduct, DataProductVariable
 
@@ -57,23 +58,30 @@ class SweL3Data(DataProduct):
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
-            DataProductVariable(EPOCH_CDF_VAR_NAME, value=self.epoch),
+            DataProductVariable(EPOCH_CDF_VAR_NAME, value=self.epoch, cdf_data_type=pycdf.const.CDF_TIME_TT2000),
             DataProductVariable(EPOCH_DELTA_CDF_VAR_NAME,
-                                value=[delta.total_seconds() * 1e9 for delta in self.epoch_delta]),
-            DataProductVariable(ENERGY_CDF_VAR_NAME, value=self.energy, record_varying=False),
-            DataProductVariable(ENERGY_DELTA_PLUS_CDF_VAR_NAME, value=self.energy_delta_plus, record_varying=False),
-            DataProductVariable(ENERGY_DELTA_MINUS_CDF_VAR_NAME, value=self.energy_delta_minus, record_varying=False),
-            DataProductVariable(PITCH_ANGLE_CDF_VAR_NAME, value=self.pitch_angle, record_varying=False),
-            DataProductVariable(PITCH_ANGLE_DELTA_CDF_VAR_NAME, value=self.pitch_angle_delta, record_varying=False),
-            DataProductVariable(FLUX_BY_PITCH_ANGLE_CDF_VAR_NAME, value=self.flux_by_pitch_angle),
+                                value=[delta.total_seconds() * 1e9 for delta in self.epoch_delta],
+                                cdf_data_type=pycdf.const.CDF_INT8),
+            DataProductVariable(ENERGY_CDF_VAR_NAME, value=self.energy, cdf_data_type=pycdf.const.CDF_REAL4,
+                                record_varying=False),
+            DataProductVariable(ENERGY_DELTA_PLUS_CDF_VAR_NAME, value=self.energy_delta_plus,
+                                cdf_data_type=pycdf.const.CDF_REAL4, record_varying=False),
+            DataProductVariable(ENERGY_DELTA_MINUS_CDF_VAR_NAME, value=self.energy_delta_minus,
+                                cdf_data_type=pycdf.const.CDF_REAL4, record_varying=False),
+            DataProductVariable(PITCH_ANGLE_CDF_VAR_NAME, value=self.pitch_angle, cdf_data_type=pycdf.const.CDF_REAL4,
+                                record_varying=False),
+            DataProductVariable(PITCH_ANGLE_DELTA_CDF_VAR_NAME, value=self.pitch_angle_delta,
+                                cdf_data_type=pycdf.const.CDF_REAL4, record_varying=False),
+            DataProductVariable(FLUX_BY_PITCH_ANGLE_CDF_VAR_NAME, value=self.flux_by_pitch_angle,
+                                cdf_data_type=pycdf.const.CDF_REAL4),
             DataProductVariable(PHASE_SPACE_DENSITY_BY_PITCH_ANGLE_CDF_VAR_NAME,
-                                value=self.phase_space_density_by_pitch_angle),
+                                value=self.phase_space_density_by_pitch_angle, cdf_data_type=pycdf.const.CDF_REAL4),
             DataProductVariable(ENERGY_SPECTRUM_CDF_VAR_NAME,
-                                value=self.energy_spectrum),
+                                value=self.energy_spectrum, cdf_data_type=pycdf.const.CDF_REAL4),
             DataProductVariable(ENERGY_SPECTRUM_INBOUND_CDF_VAR_NAME,
-                                value=self.energy_spectrum_inbound),
+                                value=self.energy_spectrum_inbound, cdf_data_type=pycdf.const.CDF_REAL4),
             DataProductVariable(ENERGY_SPECTRUM_OUTBOUND_CDF_VAR_NAME,
-                                value=self.energy_spectrum_outbound),
+                                value=self.energy_spectrum_outbound, cdf_data_type=pycdf.const.CDF_REAL4),
         ]
 
 

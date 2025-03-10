@@ -2,6 +2,9 @@ import unittest
 from datetime import timedelta
 from unittest.mock import Mock
 
+from spacepy import pycdf
+from spacepy.pycdf.const import CDF_TIME_TT2000, CDF_INT8
+
 from imap_processing.swe.l3.models import SweL3Data, EPOCH_CDF_VAR_NAME, EPOCH_DELTA_CDF_VAR_NAME, ENERGY_CDF_VAR_NAME, \
     ENERGY_DELTA_PLUS_CDF_VAR_NAME, ENERGY_DELTA_MINUS_CDF_VAR_NAME, PITCH_ANGLE_CDF_VAR_NAME, \
     PITCH_ANGLE_DELTA_CDF_VAR_NAME, FLUX_BY_PITCH_ANGLE_CDF_VAR_NAME, PHASE_SPACE_DENSITY_BY_PITCH_ANGLE_CDF_VAR_NAME, \
@@ -43,18 +46,30 @@ class TestModels(CdfModelTestCase):
 
         variables = iter(variables)
         # @formatter:off
-        self.assert_variable_attributes(next(variables), epoch, EPOCH_CDF_VAR_NAME)
-        self.assert_variable_attributes(next(variables), [86400*1e9, 40*1e9], EPOCH_DELTA_CDF_VAR_NAME)
-        self.assert_variable_attributes(next(variables), energy, ENERGY_CDF_VAR_NAME, expected_record_varying=False)
-        self.assert_variable_attributes(next(variables), energy_delta_plus, ENERGY_DELTA_PLUS_CDF_VAR_NAME, expected_record_varying=False)
-        self.assert_variable_attributes(next(variables), energy_delta_minus, ENERGY_DELTA_MINUS_CDF_VAR_NAME, expected_record_varying=False)
-        self.assert_variable_attributes(next(variables), pitch_angle, PITCH_ANGLE_CDF_VAR_NAME, expected_record_varying=False)
-        self.assert_variable_attributes(next(variables), pitch_angle_delta, PITCH_ANGLE_DELTA_CDF_VAR_NAME, expected_record_varying=False)
-        self.assert_variable_attributes(next(variables), flux_by_pitch_angle, FLUX_BY_PITCH_ANGLE_CDF_VAR_NAME)
-        self.assert_variable_attributes(next(variables), psd_by_pitch_angle, PHASE_SPACE_DENSITY_BY_PITCH_ANGLE_CDF_VAR_NAME)
-        self.assert_variable_attributes(next(variables), energy_spectrum, ENERGY_SPECTRUM_CDF_VAR_NAME)
-        self.assert_variable_attributes(next(variables), energy_spectrum_inbound, ENERGY_SPECTRUM_INBOUND_CDF_VAR_NAME)
-        self.assert_variable_attributes(next(variables), energy_spectrum_outbound, ENERGY_SPECTRUM_OUTBOUND_CDF_VAR_NAME)
+        self.assert_variable_attributes(
+            next(variables), epoch, EPOCH_CDF_VAR_NAME, pycdf.const.CDF_TIME_TT2000)
+        self.assert_variable_attributes(
+            next(variables), [86400 * 1e9, 40 * 1e9], EPOCH_DELTA_CDF_VAR_NAME, pycdf.const.CDF_INT8)
+        self.assert_variable_attributes(
+            next(variables), energy, ENERGY_CDF_VAR_NAME, pycdf.const.CDF_REAL4, expected_record_varying=False)
+        self.assert_variable_attributes(
+            next(variables), energy_delta_plus, ENERGY_DELTA_PLUS_CDF_VAR_NAME, pycdf.const.CDF_REAL4, expected_record_varying=False)
+        self.assert_variable_attributes(
+            next(variables), energy_delta_minus, ENERGY_DELTA_MINUS_CDF_VAR_NAME, pycdf.const.CDF_REAL4, expected_record_varying=False)
+        self.assert_variable_attributes(
+            next(variables), pitch_angle, PITCH_ANGLE_CDF_VAR_NAME, pycdf.const.CDF_REAL4, expected_record_varying=False)
+        self.assert_variable_attributes(
+            next(variables), pitch_angle_delta, PITCH_ANGLE_DELTA_CDF_VAR_NAME, pycdf.const.CDF_REAL4, expected_record_varying=False)
+        self.assert_variable_attributes(
+            next(variables), flux_by_pitch_angle, FLUX_BY_PITCH_ANGLE_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+        self.assert_variable_attributes(
+            next(variables), psd_by_pitch_angle, PHASE_SPACE_DENSITY_BY_PITCH_ANGLE_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+        self.assert_variable_attributes(
+            next(variables), energy_spectrum, ENERGY_SPECTRUM_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+        self.assert_variable_attributes(
+            next(variables), energy_spectrum_inbound, ENERGY_SPECTRUM_INBOUND_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+        self.assert_variable_attributes(
+            next(variables), energy_spectrum_outbound, ENERGY_SPECTRUM_OUTBOUND_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
 
 
 if __name__ == '__main__':
