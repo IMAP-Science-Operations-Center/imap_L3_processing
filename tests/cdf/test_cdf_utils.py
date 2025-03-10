@@ -167,5 +167,5 @@ class TestDataProduct(DataProduct):
             DataProductVariable("int_var", np.arange(0, 10), pycdf.const.CDF_INT8),
             DataProductVariable("float_var", np.arange(0, 10), pycdf.const.CDF_REAL4),
             DataProductVariable("time_var", np.arange(10, 20), pycdf.const.CDF_TIME_TT2000),
-            DataProductVariable("non_record_varying", 100, record_varying=False)
+            DataProductVariable("non_record_varying", 100, pycdf.const.CDF_BYTE, record_varying=False)
         ]
