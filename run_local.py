@@ -128,8 +128,8 @@ def create_swe_pitch_angle_cdf(dependencies: SweL3Dependencies) -> str:
     input_metadata = InputMetadata(
         instrument='swe',
         data_level='l3',
-        start_date=datetime(1999, 9, 6),
-        end_date=datetime(1999, 9, 7),
+        start_date=datetime(1999, 6, 8),
+        end_date=datetime(1999, 6, 9),
         version='v000')
     processor = SweProcessor(None, input_metadata)
     output_data = processor.calculate_pitch_angle_products(dependencies)
@@ -287,11 +287,11 @@ if __name__ == "__main__":
             dependencies = HITL3SectoredDependencies(mag_l1d_data=mag_data, data=hit_data)
             print(f"hit sectored data product: {create_hit_sectored_cdf(dependencies)}")
 
-    if "swe_pitch_angels" in sys.argv:
+    if "swe_pitch_angles" in sys.argv:
         dependencies = SweL3Dependencies.from_file_paths(
-            get_test_data_path("swe/imap_swe_l2_sci-with-ace-data_19990906_v002.cdf"),
-            get_test_data_path("swe/imap_mag_l1d_mago-normal_19990906_v001.cdf"),
-            get_test_data_path("swe/imap_swapi_l3a_proton-sw_19990906_v001.cdf"),
+            get_test_data_path("swe/imap_swe_l2_sci-with-ace-data_19990608_v002.cdf"),
+            get_test_data_path("swe/imap_mag_l1d_mago-normal_19990608_v001.cdf"),
+            get_test_data_path("swe/imap_swapi_l3a_proton-sw_19990608_v001.cdf"),
             get_test_data_path("swe/example_swe_config.json"),
         )
         print(create_swe_pitch_angle_cdf(dependencies))
