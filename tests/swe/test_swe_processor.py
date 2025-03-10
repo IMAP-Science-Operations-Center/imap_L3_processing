@@ -6,9 +6,10 @@ import numpy as np
 
 from imap_processing.models import MagL1dData, InputMetadata, UpstreamDataDependency
 from imap_processing.swe.l3.models import SweL2Data, SwapiL3aProtonData
+from imap_processing.swe.l3.science.moment_calculations import Moments
 from imap_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies
 from imap_processing.swe.swe_processor import SweProcessor
-from tests.test_helpers import NumpyArrayMatcher, build_swe_configuration
+from tests.test_helpers import NumpyArrayMatcher, build_swe_configuration, create_dataclass_mock
 
 
 class TestSweProcessor(unittest.TestCase):
@@ -362,7 +363,6 @@ class TestSweProcessor(unittest.TestCase):
         np.testing.assert_allclose(swe_l3_data.energy_spectrum_outbound,
                                    np.array([[208.855516, 286.519101, 206.376298]]))
 
-
     @patch('imap_processing.swe.swe_processor.find_breakpoints')
     @patch('imap_processing.swe.swe_processor.average_over_look_directions')
     @patch('imap_processing.swe.swe_processor.filter_and_flatten_regress_parameters')
@@ -370,7 +370,12 @@ class TestSweProcessor(unittest.TestCase):
     @patch('imap_processing.swe.swe_processor.calculate_velocity_in_dsp_frame_km_s')
     @patch('imap_processing.swe.swe_processor.regress')
     @patch('imap_processing.swe.swe_processor.calculate_fit_temperature_density_velocity')
-    def test_calculate_moment_products(self, mock_calculate_fit_temperature_density_velocity, mock_regress,
+    @patch('imap_processing.swe.swe_processor.rotate_dps_vector_to_rtn')
+    @patch('imap_processing.swe.swe_processor.rotate_temperature')
+    @patch('imap_processing.swe.swe_processor.spice_wrapper')
+    def test_calculate_moment_products(self, mock_spice_wrapper, mock_rotate_temperature,
+                                       mock_rotate_dps_vector_to_rtn,
+                                       mock_calculate_fit_temperature_density_velocity, mock_regress,
                                        mock_calculate_velocity_in_dsp_frame_km_s,
                                        mock_compute_maxwellian_weight_factors,
                                        mock_filter_and_flatten_regress_parameters,
@@ -435,7 +440,9 @@ class TestSweProcessor(unittest.TestCase):
             )
         ]
 
-        mock_calculate_fit_temperature_density_velocity.return_value = Mock(density=10)
+        moments1 = create_dataclass_mock(Moments, density=10, velocity_x=5, velocity_y=6, velocity_z=7)
+        moments2 = create_dataclass_mock(Moments, density=10, velocity_x=8, velocity_y=9, velocity_z=10)
+        mock_calculate_fit_temperature_density_velocity.side_effect = [moments1, moments2]
 
         mock_regress.side_effect = [(sentinel.first_regress_return, 0), (sentinel.second_regress_return, 0)]
         mock_average_over_look_directions.return_value = np.array([5, 10, 15])
@@ -447,20 +454,20 @@ class TestSweProcessor(unittest.TestCase):
 
         swe_processor.calculate_moment_products(swel3_dependency)
 
+        mock_spice_wrapper.furnish.assert_called_once()
+
         self.assertEqual(2, mock_average_over_look_directions.call_count)
         mock_average_over_look_directions.assert_has_calls([
             call(NumpyArrayMatcher(swe_l2_data.phase_space_density[0]), NumpyArrayMatcher(geometric_fractions)),
             call(NumpyArrayMatcher(swe_l2_data.phase_space_density[1]), NumpyArrayMatcher(geometric_fractions))])
 
-        spacecraft_potential_initial_guess = swe_config['spacecraft_potential_initial_guess']
-        halo_core_initial_guess = swe_config['core_halo_breakpoint_initial_guess']
-
         mock_find_breakpoints.assert_has_calls([
-            call(swe_l2_data.energy, mock_average_over_look_directions.return_value, spacecraft_potential_initial_guess,
-                 halo_core_initial_guess, 15, 90, swe_config),
+            call(swe_l2_data.energy, mock_average_over_look_directions.return_value,
+                 [15, 15, 15],
+                 [90, 90, 90], swe_config),
 
-            call(swe_l2_data.energy, mock_average_over_look_directions.return_value, spacecraft_potential_initial_guess,
-                 halo_core_initial_guess, 12, 96, swe_config)
+            call(swe_l2_data.energy, mock_average_over_look_directions.return_value, [15, 15, 12],
+                 [90, 90, 96], swe_config)
         ])
 
         calculate_velocity_call_1 = mock_calculate_velocity_in_dsp_frame_km_s.mock_calls[0]
@@ -473,9 +480,9 @@ class TestSweProcessor(unittest.TestCase):
         np.testing.assert_array_equal(swe_l2_data.inst_el, calculate_velocity_call_2.args[1])
         np.testing.assert_array_equal(swe_l2_data.inst_az_spin_sector[1], calculate_velocity_call_2.args[2])
 
-        np.testing.assert_array_equal(np.reshape(np.arange(24 * 30 * 7), (24, 30, 7)) * 1000,
+        np.testing.assert_array_equal(np.reshape(np.arange(20 * 30 * 7), (20, 30, 7)) * 1000,
                                       mock_compute_maxwellian_weight_factors.mock_calls[0].args[0])
-        np.testing.assert_array_equal(np.reshape(np.arange(24 * 30 * 7), (24, 30, 7)) * 1000,
+        np.testing.assert_array_equal(np.reshape(np.arange(20 * 30 * 7), (20, 30, 7)) * 1000,
                                       mock_compute_maxwellian_weight_factors.mock_calls[1].args[0])
 
         filter_and_flatten_call_1 = mock_filter_and_flatten_regress_parameters.mock_calls[0]
@@ -513,6 +520,22 @@ class TestSweProcessor(unittest.TestCase):
         mock_calculate_fit_temperature_density_velocity.assert_has_calls(
             [call(sentinel.first_regress_return), call(sentinel.second_regress_return)])
 
+        self.assertEqual(2, mock_rotate_dps_vector_to_rtn.call_count)
+
+        self.assertEqual(epochs[0], mock_rotate_dps_vector_to_rtn.call_args_list[0].args[0])
+        np.testing.assert_array_equal(np.array([moments1.velocity_x, moments1.velocity_y, moments1.velocity_z]),
+                                      mock_rotate_dps_vector_to_rtn.call_args_list[0].args[1])
+
+        self.assertEqual(epochs[1], mock_rotate_dps_vector_to_rtn.call_args_list[1].args[0])
+        np.testing.assert_array_equal(np.array([moments2.velocity_x, moments2.velocity_y, moments2.velocity_z]),
+                                      mock_rotate_dps_vector_to_rtn.call_args_list[1].args[1])
+
+        self.assertEqual(2, mock_rotate_temperature.call_count)
+        mock_rotate_temperature.assert_has_calls(
+            [call(epochs[0], moments1.alpha, moments1.beta), call(epochs[1], moments2.alpha, moments2.beta)])
+
+    @patch('imap_processing.swe.swe_processor.rotate_dps_vector_to_rtn')
+    @patch('imap_processing.swe.swe_processor.rotate_temperature')
     @patch('imap_processing.swe.swe_processor.average_over_look_directions')
     @patch('imap_processing.swe.swe_processor.compute_maxwellian_weight_factors')
     @patch('imap_processing.swe.swe_processor.calculate_velocity_in_dsp_frame_km_s')
@@ -526,7 +549,7 @@ class TestSweProcessor(unittest.TestCase):
                                                                           mock_calculate_fit_temperature_density_velocity,
                                                                           mock_regress, mock_calculate_velocity,
                                                                           mock_compute_maxwellian_weights,
-                                                                          _):
+                                                                          _, __, ___):
         epochs = datetime.now() + np.arange(1) * timedelta(minutes=1)
         swe_config = build_swe_configuration()
 
@@ -559,8 +582,9 @@ class TestSweProcessor(unittest.TestCase):
         mock_regress.side_effect = [(sentinel.first_regress_return, 0), (sentinel.second_regress_return, 0),
                                     (sentinel.third_regress_return, 0)]
 
-        mock_calculate_fit_temperature_density_velocity.side_effect = [(Mock(density=-1)), (Mock(density=186)),
-                                                                       (Mock(density=10))]
+        mock_calculate_fit_temperature_density_velocity.side_effect = [(create_dataclass_mock(Moments, density=-1)),
+                                                                       (create_dataclass_mock(Moments, density=186)),
+                                                                       (create_dataclass_mock(Moments, density=10))]
 
         input_metadata = InputMetadata("swe", "l3", datetime(2025, 2, 21),
                                        datetime(2025, 2, 22), "v001")
@@ -598,6 +622,8 @@ class TestSweProcessor(unittest.TestCase):
             call(sentinel.third_regress_return)
         ])
 
+    @patch('imap_processing.swe.swe_processor.rotate_dps_vector_to_rtn')
+    @patch('imap_processing.swe.swe_processor.rotate_temperature')
     @patch('imap_processing.swe.swe_processor.average_over_look_directions')
     @patch('imap_processing.swe.swe_processor.compute_maxwellian_weight_factors')
     @patch('imap_processing.swe.swe_processor.calculate_velocity_in_dsp_frame_km_s')
@@ -612,7 +638,7 @@ class TestSweProcessor(unittest.TestCase):
                                                                                                        mock_regress,
                                                                                                        mock_calculate_velocity,
                                                                                                        mock_compute_maxwellian_weights,
-                                                                                                       _):
+                                                                                                       _, __, ___):
         epochs = datetime.now() + np.arange(1) * timedelta(minutes=1)
         swe_config = build_swe_configuration()
 
@@ -641,7 +667,8 @@ class TestSweProcessor(unittest.TestCase):
 
         mock_regress.return_value = (sentinel.first_regress_return, 0)
 
-        mock_calculate_fit_temperature_density_velocity.side_effect = [Mock(density=-1), Mock(density=10)]
+        mock_calculate_fit_temperature_density_velocity.side_effect = [create_dataclass_mock(Moments, density=-1),
+                                                                       create_dataclass_mock(Moments, density=10)]
 
         input_metadata = InputMetadata("swe", "l3", datetime(2025, 2, 21),
                                        datetime(2025, 2, 22), "v001")

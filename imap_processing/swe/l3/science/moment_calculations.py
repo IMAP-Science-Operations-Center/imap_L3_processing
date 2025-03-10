@@ -1,7 +1,9 @@
 import math
 from dataclasses import dataclass
+from datetime import datetime
 
 import numpy as np
+from spiceypy import spiceypy
 
 from imap_processing.constants import ELECTRON_MASS_KG, \
     BOLTZMANN_CONSTANT_JOULES_PER_KELVIN
@@ -109,7 +111,6 @@ class Moments:
     ao: float
 
 
-# TODO figure out what the moments are and return a dataclass with them
 def calculate_fit_temperature_density_velocity(parameters: np.ndarray[float]):
     moments = Moments(alpha=0,
                       beta=0,
@@ -226,3 +227,23 @@ def filter_and_flatten_regress_parameters(corrected_energy_bins: np.ndarray,
     yreg[filtered_phase_space_density <= 1e-35] = -80.6
 
     return velocity_vectors[valid_mask], weights[valid_mask], yreg
+
+
+def rotate_dps_vector_to_rtn(epoch: datetime, vector: np.ndarray[float]) -> np.ndarray[float]:
+    et_time = spiceypy.datetime2et(epoch)
+    rotation_matrix = spiceypy.pxform("IMAP_DPS", "IMAP_RTN", et_time)
+    return rotation_matrix @ vector
+
+
+def rotate_temperature(epoch: datetime, alpha: float, beta: float):
+    sin_dec = np.sin(beta)
+    x = sin_dec * np.cos(alpha)
+    y = sin_dec * np.sin(alpha)
+    z = np.cos(beta)
+
+    rtn_temperature = rotate_dps_vector_to_rtn(epoch, np.array([x, y, z]))
+
+    phi = np.asin(rtn_temperature[2])
+    theta = np.atan2(rtn_temperature[1], rtn_temperature[0])
+
+    return theta, phi

@@ -1,7 +1,6 @@
 from copy import deepcopy
-from dataclasses import fields
 from datetime import datetime
-from typing import Type, TypeVar
+from typing import TypeVar
 from unittest import TestCase
 from unittest.mock import sentinel, patch, call, Mock
 
@@ -18,7 +17,7 @@ from imap_processing.hit.l3.pha.science.cosine_correction_lookup_table import De
 from imap_processing.hit.l3.sectored_products.models import HitPitchAngleDataProduct
 from imap_processing.models import MagL1dData, InputMetadata
 from imap_processing.processor import Processor
-from tests.test_helpers import NumpyArrayMatcher
+from tests.test_helpers import NumpyArrayMatcher, create_dataclass_mock
 
 
 class TestHitProcessor(TestCase):
@@ -57,11 +56,11 @@ class TestHitProcessor(TestCase):
         averaged_mag_vectors = [sentinel.mag_vector1, sentinel.mag_vector2]
 
         mock_dependencies = Mock(spec=HITL3SectoredDependencies)
-        mock_mag_data = self.create_dataclass_mock(MagL1dData)
+        mock_mag_data = create_dataclass_mock(MagL1dData)
         mock_mag_data.rebin_to = Mock()
         mock_mag_data.rebin_to.return_value = averaged_mag_vectors
         mock_dependencies.mag_l1d_data = mock_mag_data
-        mock_hit_data = self.create_dataclass_mock(HitL2Data)
+        mock_hit_data = create_dataclass_mock(HitL2Data)
         mock_hit_data.epoch = epochs
         mock_hit_data.epoch_delta = epoch_deltas
 
@@ -588,6 +587,3 @@ class TestHitProcessor(TestCase):
                          f"Don't know how to generate 'spectral-index' /n Known HIT l3 data products: 'pitch-angle', 'direct-event'.")
 
     T = TypeVar("T")
-
-    def create_dataclass_mock(self, obj: Type[T]) -> T:
-        return Mock(spec=[field.name for field in fields(obj)])
