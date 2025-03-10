@@ -33,7 +33,8 @@ from imap_l3_processing.swapi.l3a.swapi_l3a_dependencies import SwapiL3ADependen
 from imap_l3_processing.swapi.l3a.utils import read_l2_swapi_data
 from imap_l3_processing.swapi.l3b.science.efficiency_calibration_table import EfficiencyCalibrationTable
 from imap_l3_processing.swapi.l3b.science.geometric_factor_calibration_table import GeometricFactorCalibrationTable
-from imap_l3_processing.swapi.l3b.science.instrument_response_lookup_table import InstrumentResponseLookupTableCollection
+from imap_l3_processing.swapi.l3b.science.instrument_response_lookup_table import \
+    InstrumentResponseLookupTableCollection
 from imap_l3_processing.swapi.l3b.swapi_l3b_dependencies import SwapiL3BDependencies
 from imap_l3_processing.swapi.swapi_processor import SwapiProcessor
 from imap_l3_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies
@@ -298,9 +299,9 @@ if __name__ == "__main__":
 
     if "swe_moments" in sys.argv:
         dependencies = SweL3Dependencies.from_file_paths(
-            get_test_data_path("swe/imap_swe_l2_sci-with-ace-data_19990906_v002.cdf"),
-            get_test_data_path("swe/imap_mag_l1d_mago-normal_19990906_v001.cdf"),
-            get_test_data_path("swe/imap_swapi_l3a_proton-sw_19990906_v001.cdf"),
+            get_test_data_path("swe/imap_swe_l2_sci-with-ace-data_19990608_v002.cdf"),
+            get_test_data_path("swe/imap_mag_l1d_mago-normal_19990608_v001.cdf"),
+            get_test_data_path("swe/imap_swapi_l3a_proton-sw_19990608_v001.cdf"),
             get_test_data_path("swe/example_swe_config.json"),
         )
         print(create_swe_moments_cdf(dependencies))
