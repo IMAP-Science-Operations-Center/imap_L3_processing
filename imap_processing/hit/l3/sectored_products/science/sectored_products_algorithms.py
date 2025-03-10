@@ -10,7 +10,10 @@ def get_hit_bin_polar_coordinates(declination_bins=8, inclination_bins=15) -> tu
     inclination_starts, inclination_step = np.linspace(0, 360, inclination_bins, endpoint=False, retstep=True)
     inclination_delta = inclination_step / 2
     inclinations = inclination_starts + inclination_delta
-    return declinations, inclinations, declination_delta, inclination_delta
+    declination_deltas = np.array([declination_delta] * declination_bins)
+    inclination_deltas = np.array([inclination_delta] * inclination_bins)
+
+    return declinations, inclinations, declination_deltas, inclination_deltas
 
 
 def get_sector_unit_vectors(declinations_degrees: np.ndarray, inclinations_degrees: np.ndarray) -> np.ndarray:
