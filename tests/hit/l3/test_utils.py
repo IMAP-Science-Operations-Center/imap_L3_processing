@@ -35,36 +35,36 @@ class TestUtils(TestCase):
             cno_data = rng.random((1, 2, 8, 15))
             nemgsi_data = rng.random((1, 2, 8, 15))
             iron_data = rng.random((1, 1, 8, 15))
-            cdf["hydrogen"] = hydrogen_data
-            cdf["helium4"] = helium_data
-            cdf["CNO"] = cno_data
-            cdf["NeMgSi"] = nemgsi_data
-            cdf["iron"] = iron_data
+            cdf["h"] = hydrogen_data
+            cdf["he4"] = helium_data
+            cdf["cno"] = cno_data
+            cdf["nemgsi"] = nemgsi_data
+            cdf["fe"] = iron_data
 
             cdf["epoch"] = epoch_data
             cdf["epoch_delta"] = epoch_delta
 
-            cdf.new("h_energy", np.arange(3), recVary=False)
-            cdf.new("he4_energy", np.arange(2), recVary=False)
-            cdf.new("cno_energy", np.arange(2), recVary=False)
-            cdf.new("nemgsi_energy", np.arange(2), recVary=False)
-            cdf.new("fe_energy", np.arange(1), recVary=False)
+            cdf.new("h_energy_mean", np.arange(3), recVary=False)
+            cdf.new("he4_energy_mean", np.arange(2), recVary=False)
+            cdf.new("cno_energy_mean", np.arange(2), recVary=False)
+            cdf.new("nemgsi_energy_mean", np.arange(2), recVary=False)
+            cdf.new("fe_energy_mean", np.arange(1), recVary=False)
 
             hydrogen_delta = hydrogen_data * 0.1
             helium_delta = helium_data * 0.1
             cno_delta = cno_data * 0.1
             nemgsi_delta = nemgsi_data * 0.1
             iron_delta = iron_data * 0.1
-            cdf["DELTA_PLUS_HYDROGEN"] = hydrogen_delta
-            cdf["DELTA_MINUS_HYDROGEN"] = hydrogen_delta
-            cdf["DELTA_PLUS_HELIUM4"] = helium_delta
-            cdf["DELTA_MINUS_HELIUM4"] = helium_delta
-            cdf["DELTA_PLUS_CNO"] = cno_delta
-            cdf["DELTA_MINUS_CNO"] = cno_delta
-            cdf["DELTA_PLUS_NEMGSI"] = nemgsi_delta
-            cdf["DELTA_MINUS_NEMGSI"] = nemgsi_delta
-            cdf["DELTA_PLUS_IRON"] = iron_delta
-            cdf["DELTA_MINUS_IRON"] = iron_delta
+            cdf["delta_plus_h"] = hydrogen_delta
+            cdf["delta_minus_h"] = hydrogen_delta
+            cdf["delta_plus_he4"] = helium_delta
+            cdf["delta_minus_he4"] = helium_delta
+            cdf["delta_plus_cno"] = cno_delta
+            cdf["delta_minus_cno"] = cno_delta
+            cdf["delta_plus_nemgsi"] = nemgsi_delta
+            cdf["delta_minus_nemgsi"] = nemgsi_delta
+            cdf["delta_plus_fe"] = iron_delta
+            cdf["delta_minus_fe"] = iron_delta
 
             cdf.new("h_energy_delta_plus", [4, 6, 10], recVary=False)
             cdf.new("h_energy_delta_minus", np.array([1.8, 4, 6]), recVary=False)
@@ -81,11 +81,11 @@ class TestUtils(TestCase):
             with self.subTest(path):
                 result = read_l2_hit_data(path)
 
-                np.testing.assert_array_equal(hydrogen_data, result.hydrogen)
-                np.testing.assert_array_equal(helium_data, result.helium4)
-                np.testing.assert_array_equal(cno_data, result.CNO)
-                np.testing.assert_array_equal(nemgsi_data, result.NeMgSi)
-                np.testing.assert_array_equal(iron_data, result.iron)
+                np.testing.assert_array_equal(hydrogen_data, result.h)
+                np.testing.assert_array_equal(helium_data, result.he4)
+                np.testing.assert_array_equal(cno_data, result.cno)
+                np.testing.assert_array_equal(nemgsi_data, result.nemgsi)
+                np.testing.assert_array_equal(iron_data, result.fe)
 
                 np.testing.assert_array_equal(epoch_data, result.epoch)
                 np.testing.assert_array_equal([timedelta(minutes=5)], result.epoch_delta)
@@ -96,16 +96,16 @@ class TestUtils(TestCase):
                 np.testing.assert_array_equal([0, 1], result.nemgsi_energy)
                 np.testing.assert_array_equal([0], result.fe_energy)
 
-                np.testing.assert_array_equal(hydrogen_delta, result.DELTA_PLUS_HYDROGEN)
-                np.testing.assert_array_equal(hydrogen_delta, result.DELTA_MINUS_HYDROGEN)
-                np.testing.assert_array_equal(helium_delta, result.DELTA_PLUS_HELIUM4)
-                np.testing.assert_array_equal(helium_delta, result.DELTA_MINUS_HELIUM4)
-                np.testing.assert_array_equal(cno_delta, result.DELTA_PLUS_CNO)
-                np.testing.assert_array_equal(cno_delta, result.DELTA_MINUS_CNO)
-                np.testing.assert_array_equal(nemgsi_delta, result.DELTA_PLUS_NEMGSI)
-                np.testing.assert_array_equal(nemgsi_delta, result.DELTA_MINUS_NEMGSI)
-                np.testing.assert_array_equal(iron_delta, result.DELTA_PLUS_IRON)
-                np.testing.assert_array_equal(iron_delta, result.DELTA_MINUS_IRON)
+                np.testing.assert_array_equal(hydrogen_delta, result.delta_plus_h)
+                np.testing.assert_array_equal(hydrogen_delta, result.delta_minus_h)
+                np.testing.assert_array_equal(helium_delta, result.delta_plus_he4)
+                np.testing.assert_array_equal(helium_delta, result.delta_minus_he4)
+                np.testing.assert_array_equal(cno_delta, result.delta_plus_cno)
+                np.testing.assert_array_equal(cno_delta, result.delta_minus_cno)
+                np.testing.assert_array_equal(nemgsi_delta, result.delta_plus_nemgsi)
+                np.testing.assert_array_equal(nemgsi_delta, result.delta_minus_nemgsi)
+                np.testing.assert_array_equal(iron_delta, result.delta_plus_fe)
+                np.testing.assert_array_equal(iron_delta, result.delta_minus_fe)
 
                 np.testing.assert_array_equal([4, 6, 10], result.h_energy_delta_plus)
                 np.testing.assert_array_equal([1.8, 4, 6], result.h_energy_delta_minus)

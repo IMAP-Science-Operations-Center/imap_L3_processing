@@ -148,27 +148,27 @@ class HitProcessor(Processor):
         mag_data = dependencies.mag_l1d_data
         hit_data = dependencies.data
 
-        input_flux_data_by_species = {"cno": (hit_data.CNO, hit_data.DELTA_PLUS_CNO, hit_data.DELTA_MINUS_CNO),
+        input_flux_data_by_species = {"cno": (hit_data.cno, hit_data.delta_plus_cno, hit_data.delta_minus_cno),
                                       "helium4": (
-                                          hit_data.helium4, hit_data.DELTA_PLUS_HELIUM4, hit_data.DELTA_MINUS_HELIUM4),
+                                          hit_data.he4, hit_data.delta_plus_he4, hit_data.delta_minus_he4),
                                       "hydrogen": (
-                                          hit_data.hydrogen, hit_data.DELTA_PLUS_HYDROGEN,
-                                          hit_data.DELTA_MINUS_HYDROGEN),
-                                      "iron": (hit_data.iron, hit_data.DELTA_PLUS_IRON, hit_data.DELTA_MINUS_IRON),
+                                          hit_data.h, hit_data.delta_plus_h,
+                                          hit_data.delta_minus_h),
+                                      "iron": (hit_data.fe, hit_data.delta_plus_fe, hit_data.delta_minus_fe),
                                       "NeMgSi": (
-                                          hit_data.NeMgSi, hit_data.DELTA_PLUS_NEMGSI, hit_data.DELTA_MINUS_NEMGSI)}
+                                          hit_data.nemgsi, hit_data.delta_plus_nemgsi, hit_data.delta_minus_nemgsi)}
 
-        rebinned_pa_gyro_flux_by_species = {"cno": self._create_nan_array(hit_data.CNO.shape),
-                                            "helium4": self._create_nan_array(hit_data.helium4.shape),
-                                            "hydrogen": self._create_nan_array(hit_data.hydrogen.shape),
-                                            "iron": self._create_nan_array(hit_data.iron.shape),
-                                            "NeMgSi": self._create_nan_array(hit_data.NeMgSi.shape)}
+        rebinned_pa_gyro_flux_by_species = {"cno": self._create_nan_array(hit_data.cno.shape),
+                                            "helium4": self._create_nan_array(hit_data.he4.shape),
+                                            "hydrogen": self._create_nan_array(hit_data.h.shape),
+                                            "iron": self._create_nan_array(hit_data.fe.shape),
+                                            "NeMgSi": self._create_nan_array(hit_data.nemgsi.shape)}
 
-        rebinned_pa_only_flux_by_species = {"cno": self._create_nan_array(hit_data.CNO.shape[:-1]),
-                                            "helium4": self._create_nan_array(hit_data.helium4.shape[:-1]),
-                                            "hydrogen": self._create_nan_array(hit_data.hydrogen.shape[:-1]),
-                                            "iron": self._create_nan_array(hit_data.iron.shape[:-1]),
-                                            "NeMgSi": self._create_nan_array(hit_data.NeMgSi.shape[:-1])}
+        rebinned_pa_only_flux_by_species = {"cno": self._create_nan_array(hit_data.cno.shape[:-1]),
+                                            "helium4": self._create_nan_array(hit_data.he4.shape[:-1]),
+                                            "hydrogen": self._create_nan_array(hit_data.h.shape[:-1]),
+                                            "iron": self._create_nan_array(hit_data.fe.shape[:-1]),
+                                            "NeMgSi": self._create_nan_array(hit_data.nemgsi.shape[:-1])}
 
         dec, inc, dec_delta, inc_delta = get_hit_bin_polar_coordinates()
         sector_unit_vectors = get_sector_unit_vectors(dec, inc)
