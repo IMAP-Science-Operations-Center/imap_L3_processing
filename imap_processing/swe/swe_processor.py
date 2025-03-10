@@ -3,12 +3,14 @@ from datetime import timedelta
 import numpy as np
 from imap_data_access import upload
 
+from imap_processing import spice_wrapper
 from imap_processing.data_utils import find_closest_neighbor
 from imap_processing.processor import Processor
 from imap_processing.swapi.l3a.science.calculate_pickup_ion import calculate_solar_wind_velocity_vector
 from imap_processing.swe.l3.models import SweL3Data
 from imap_processing.swe.l3.science.moment_calculations import compute_maxwellian_weight_factors, \
-    filter_and_flatten_regress_parameters, regress, calculate_fit_temperature_density_velocity
+    filter_and_flatten_regress_parameters, regress, calculate_fit_temperature_density_velocity, rotate_temperature, \
+    rotate_dps_vector_to_rtn
 from imap_processing.swe.l3.science.pitch_calculations import average_over_look_directions, find_breakpoints, \
     correct_and_rebin, \
     integrate_distribution_to_get_1d_spectrum, integrate_distribution_to_get_inbound_and_outbound_1d_spectrum, \
@@ -26,22 +28,21 @@ class SweProcessor(Processor):
         upload(output_cdf)
 
     def calculate_moment_products(self, dependencies: SweL3Dependencies):
+        spice_wrapper.furnish()
         swe_l2_data = dependencies.swe_l2_data
         swe_epoch = swe_l2_data.epoch
         config = dependencies.configuration
 
         spacecraft_potential_history = [config["spacecraft_potential_initial_guess"] for _ in
-                                        range(4)]
-        halo_core_history = [config["core_halo_breakpoint_initial_guess"] for _ in range(4)]
+                                        range(3)]
+        halo_core_history = [config["core_halo_breakpoint_initial_guess"] for _ in range(3)]
 
         for i in range(len(swe_epoch)):
-            averaged_phase_space_density = average_over_look_directions(swe_l2_data.phase_space_density[i],
-                                                                        np.array(config["geometric_fractions"]))
-
-            spacecraft_potential, halo_core = find_breakpoints(swe_l2_data.energy, averaged_phase_space_density,
-                                                               np.average(spacecraft_potential_history[:3]),
-                                                               np.average(halo_core_history[:3]),
-                                                               spacecraft_potential_history[-1], halo_core_history[-1],
+            averaged_psd = average_over_look_directions(swe_l2_data.phase_space_density[i],
+                                                        np.array(config["geometric_fractions"]))
+            spacecraft_potential, halo_core = find_breakpoints(swe_l2_data.energy, averaged_psd,
+                                                               spacecraft_potential_history,
+                                                               halo_core_history,
                                                                config)
 
             spacecraft_potential_history = [*spacecraft_potential_history[1:], spacecraft_potential]
@@ -53,32 +54,64 @@ class SweProcessor(Processor):
                                                                                 swe_l2_data.inst_az_spin_sector[i])
 
             # TODO: read these from L1 dataset
-            ccounts = np.reshape(np.arange(24 * 30 * 7), (24, 30, 7)) * 1000
+            ccounts = np.reshape(np.arange(20 * 30 * 7), (20, 30, 7)) * 1000
 
             weights: np.ndarray[float] = compute_maxwellian_weight_factors(ccounts)
 
-            halo_core_breakpoint_index: int = next(
-                i - 1 for i, energy in enumerate(swe_l2_data.energy) if energy > halo_core)
             spacecraft_potential_core_breakpoint_index: int = next(
                 i for i, energy in enumerate(swe_l2_data.energy) if energy >= spacecraft_potential)
+            halo_core_breakpoint_index: int = next(
+                i - 1 for i, energy in enumerate(swe_l2_data.energy) if energy > halo_core)
 
+            core_end_index = halo_core_breakpoint_index
             while True:
                 filtered_velocity_vectors, filtered_weights, filtered_yreg = filter_and_flatten_regress_parameters(
                     corrected_energy_bins,
                     velocity_vectors,
                     swe_l2_data.phase_space_density[i],
                     weights,
-                    spacecraft_potential_core_breakpoint_index, halo_core_breakpoint_index)
+                    spacecraft_potential_core_breakpoint_index, core_end_index)
 
                 fit_function, chisq = regress(filtered_velocity_vectors,
                                               filtered_weights, filtered_yreg)
-                moments = calculate_fit_temperature_density_velocity(fit_function)
+                core_moments = calculate_fit_temperature_density_velocity(fit_function)
 
-                if 0 < moments.density < 185 or (
-                        halo_core_breakpoint_index - spacecraft_potential_core_breakpoint_index) <= 3:
+                if 0 < core_moments.density < 185 or (
+                        core_end_index - spacecraft_potential_core_breakpoint_index) <= 3:
                     break
                 else:
-                    halo_core_breakpoint_index -= 1
+                    core_end_index -= 1
+
+            rtn_velocity = rotate_dps_vector_to_rtn(swe_epoch[i],
+                                                    np.array(
+                                                        [core_moments.velocity_x, core_moments.velocity_y,
+                                                         core_moments.velocity_z]))
+            rotate_temperature(swe_epoch[i], core_moments.alpha, core_moments.beta)
+
+            halo_end_index = len(swe_l2_data.energy)
+            while True:
+                filtered_velocity_vectors, filtered_weights, filtered_yreg = filter_and_flatten_regress_parameters(
+                    corrected_energy_bins,
+                    velocity_vectors,
+                    swe_l2_data.phase_space_density[i],
+                    weights,
+                    halo_core_breakpoint_index, halo_end_index)
+
+                fit_function, chisq = regress(filtered_velocity_vectors,
+                                              filtered_weights, filtered_yreg)
+                halo_moments = calculate_fit_temperature_density_velocity(fit_function)
+
+                if 0 < halo_moments.density < 185 or (
+                        halo_end_index - halo_core_breakpoint_index) <= 3:
+                    break
+                else:
+                    halo_end_index -= 1
+
+            rtn_velocity = rotate_dps_vector_to_rtn(swe_epoch[i],
+                                                    np.array(
+                                                        [halo_moments.velocity_x, halo_moments.velocity_y,
+                                                         halo_moments.velocity_z]))
+            rotate_temperature(swe_epoch[i], halo_moments.alpha, halo_moments.beta)
 
     def calculate_pitch_angle_products(self, dependencies: SweL3Dependencies) -> SweL3Data:
         swe_l2_data = dependencies.swe_l2_data

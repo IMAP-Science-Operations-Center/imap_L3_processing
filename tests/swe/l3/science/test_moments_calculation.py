@@ -1,9 +1,13 @@
+import math
 import unittest
+from datetime import datetime
+from unittest.mock import patch
 
 import numpy as np
 
 from imap_processing.swe.l3.science.moment_calculations import compute_maxwellian_weight_factors, \
-    filter_and_flatten_regress_parameters, regress, calculate_fit_temperature_density_velocity
+    filter_and_flatten_regress_parameters, regress, calculate_fit_temperature_density_velocity, rotate_temperature, \
+    rotate_dps_vector_to_rtn
 from tests.test_helpers import get_test_data_path
 
 
@@ -139,3 +143,44 @@ class TestMomentsCalculation(unittest.TestCase):
         np.testing.assert_array_equal(vectors, [[3, 0, 0], [4, 0, 0], [10, 0, 0], [10, 0, 0], [0, 0, 0]])
         np.testing.assert_array_equal(actual_weights, [3, 1e-36, 10, 11, 12])
         np.testing.assert_array_equal(yreg, [np.log(3), -80.6, np.log(10), np.log(11), np.log(12)])
+
+    @patch('spiceypy.spiceypy.pxform')
+    @patch('spiceypy.spiceypy.datetime2et')
+    def test_rotate_dps_vector_to_rtn(self, mock_datetime2et, mock_pxform):
+        epoch = datetime(year=2020, month=3, day=10)
+        dsp_vector = np.array([0, 1, 0])
+        rotation_matrix = np.array([[0, 0, 1], [1, 0, 0], [0, 1, 0]])
+        mock_pxform.return_value = rotation_matrix
+
+        rtn_vector = rotate_dps_vector_to_rtn(epoch, dsp_vector)
+        mock_datetime2et.assert_called_once_with(epoch)
+
+        mock_pxform.assert_called_once_with("IMAP_DPS", "IMAP_RTN", mock_datetime2et.return_value)
+
+        np.testing.assert_array_equal(rtn_vector, rotation_matrix @ dsp_vector)
+
+    @patch('spiceypy.spiceypy.pxform')
+    @patch('spiceypy.spiceypy.datetime2et')
+    def test_rotate_temperature(self, mock_datetime2et, mock_pxform):
+        epoch = datetime(year=2020, month=3, day=11)
+        temperature_alpha = math.pi / 4
+        temperature_beta = math.pi / 8
+
+        rotation_matrix = np.array([[0, 0, 1], [1, 0, 0], [0, 1, 0]])
+        mock_pxform.return_value = rotation_matrix
+
+        theta, phi = rotate_temperature(epoch, temperature_alpha, temperature_beta)
+        mock_datetime2et.assert_called_once_with(epoch)
+
+        mock_pxform.assert_called_once_with("IMAP_DPS", "IMAP_RTN", mock_datetime2et.return_value)
+
+        sin_dec = np.sin(temperature_beta)
+        x = sin_dec * np.cos(temperature_alpha)
+        y = sin_dec * np.sin(temperature_alpha)
+        z = np.cos(temperature_beta)
+
+        expected_rtn_temperature = rotation_matrix @ np.array([x, y, z])
+        expected_rtn_temperature /= np.linalg.norm(expected_rtn_temperature)
+
+        self.assertEqual(np.asin(expected_rtn_temperature[2]), phi)
+        self.assertEqual(np.atan2(expected_rtn_temperature[1], expected_rtn_temperature[0]), theta)
