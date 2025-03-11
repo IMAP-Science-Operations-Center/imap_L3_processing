@@ -58,7 +58,7 @@ class SweProcessor(Processor):
                                                                                 swe_l2_data.inst_az_spin_sector[i])
 
             # TODO: read these from L1 dataset
-            ccounts = np.reshape(np.arange(20 * 30 * 7), (20, 30, 7)) * 1000
+            ccounts = np.reshape(np.arange(24 * 30 * 7), (24, 30, 7)) * 1000
 
             weights: np.ndarray[float] = compute_maxwellian_weight_factors(ccounts)
 

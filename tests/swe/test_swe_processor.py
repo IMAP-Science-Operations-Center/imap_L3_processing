@@ -515,9 +515,9 @@ class TestSweProcessor(unittest.TestCase):
         np.testing.assert_array_equal(swe_l2_data.inst_el, calculate_velocity_call_2.args[1])
         np.testing.assert_array_equal(swe_l2_data.inst_az_spin_sector[1], calculate_velocity_call_2.args[2])
 
-        np.testing.assert_array_equal(np.reshape(np.arange(20 * 30 * 7), (20, 30, 7)) * 1000,
+        np.testing.assert_array_equal(np.reshape(np.arange(24 * 30 * 7), (24, 30, 7)) * 1000,
                                       mock_compute_maxwellian_weight_factors.mock_calls[0].args[0])
-        np.testing.assert_array_equal(np.reshape(np.arange(20 * 30 * 7), (20, 30, 7)) * 1000,
+        np.testing.assert_array_equal(np.reshape(np.arange(24 * 30 * 7), (24, 30, 7)) * 1000,
                                       mock_compute_maxwellian_weight_factors.mock_calls[1].args[0])
 
         core_filter_and_flatten_call_1 = mock_filter_and_flatten_regress_parameters.mock_calls[0]
