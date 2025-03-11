@@ -1,6 +1,7 @@
 import math
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Optional
 
 import numpy as np
 from spiceypy import spiceypy
@@ -8,6 +9,7 @@ from spiceypy import spiceypy
 from imap_l3_processing.constants import ELECTRON_MASS_KG, \
     BOLTZMANN_CONSTANT_JOULES_PER_KELVIN
 
+# units of K / (m^2/s^2)
 ZMK = ELECTRON_MASS_KG / (2 * BOLTZMANN_CONSTANT_JOULES_PER_KELVIN)
 
 
@@ -247,3 +249,57 @@ def rotate_temperature(epoch: datetime, alpha: float, beta: float):
     theta = np.atan2(rtn_temperature[1], rtn_temperature[0])
 
     return theta, phi
+
+
+# this function computes 'dscale' from the heritage code
+def compute_density_scale(core_electron_energy_range: float, speed: float, temperature: float) -> float:
+    energy_multplier = 11600.0
+    density_multiplier = 0.88623
+    ev_speed = 593.097
+
+    velocity_delta = ev_speed * math.sqrt(core_electron_energy_range)
+
+    velocity_plus = velocity_delta + speed
+    velocity_minus = velocity_delta - speed
+
+    energy_plus = (velocity_plus / ev_speed) ** 2
+    energy_minus = (velocity_minus / ev_speed) ** 2
+
+    scalep2 = energy_multplier * energy_plus / temperature
+    scalep = math.sqrt(scalep2)
+
+    scalem2 = energy_multplier * energy_minus / temperature
+    scalem = math.sqrt(scalem2)
+
+    escalep = math.erfc(scalep) if scalep < 9 else 0
+    escalem = math.erfc(scalem) if scalem < 9 else 0
+
+    dscalep = density_multiplier / (scalep * np.exp(-scalep2) + density_multiplier * escalep)
+    dscalem = density_multiplier / (scalem * np.exp(-scalem2) + density_multiplier * escalem)
+
+    return 0.5 * (dscalep + dscalem)
+
+
+def halotrunc(moments: Moments, core_halo_breakpoint: float, spacecraft_potential: float) -> Optional[np.float64]:
+    htmax = moments.t_parallel
+    htmin = moments.t_perpendicular
+
+    speed = math.sqrt(moments.velocity_x ** 2 + moments.velocity_y ** 2 + moments.velocity_z ** 2)
+
+    halod = moments.density
+
+    if htmax > 1.0e8 or htmin > 1e8:
+        return None
+
+    temp = (htmax + 2 * htmin) / 3
+
+    if htmax <= 1e4 or htmin <= 1e4:
+        dscale = 1
+    elif core_halo_breakpoint - spacecraft_potential > 5 and temp < 1.0e7:
+        dscale = compute_density_scale(core_halo_breakpoint - spacecraft_potential, speed, temp)
+    else:
+        dscale = 1
+
+    halod = halod / np.clip(dscale, 1, 5)
+
+    return halod

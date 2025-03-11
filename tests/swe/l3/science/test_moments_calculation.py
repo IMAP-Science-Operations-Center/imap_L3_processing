@@ -1,3 +1,4 @@
+import dataclasses
 import math
 import unittest
 from datetime import datetime
@@ -7,7 +8,7 @@ import numpy as np
 
 from imap_l3_processing.swe.l3.science.moment_calculations import compute_maxwellian_weight_factors, \
     filter_and_flatten_regress_parameters, regress, calculate_fit_temperature_density_velocity, rotate_temperature, \
-    rotate_dps_vector_to_rtn
+    rotate_dps_vector_to_rtn, Moments, halotrunc, compute_density_scale
 from tests.test_helpers import get_test_data_path
 
 
@@ -184,3 +185,56 @@ class TestMomentsCalculation(unittest.TestCase):
 
         self.assertEqual(np.asin(expected_rtn_temperature[2]), phi)
         self.assertEqual(np.atan2(expected_rtn_temperature[1], expected_rtn_temperature[0]), theta)
+
+    def test_momscale(self):
+        core_halo_break = 125.6
+        spacecraft_potential = 25.6
+
+        test_cases = [
+            ("normal values", 1.92424e4, 1.74908e5, 68.3, 3497.7912, 1e-4),
+            ("the sun froze", 12301, 12301, 1500, 7.0965e62, 1e57),
+            ("the sun froze", 12301, 12301, 400.3, 1.99655e+45, 1e40)
+        ]
+
+        for test_name, t_parallel, t_perpendicular, speed, expected_density_scale, allowable_difference in test_cases:
+            with self.subTest(test_name):
+                temperature = (t_parallel + 2 * t_perpendicular) / 3
+                dscale = compute_density_scale(core_halo_break - spacecraft_potential, speed, temperature)
+
+                self.assertAlmostEqual(expected_density_scale, dscale, delta=allowable_difference)
+
+    def test_halotrunc(self):
+        density = 130
+
+        spacecraft_potential = 5
+
+        moments = Moments(
+            alpha=0,
+            beta=0,
+            t_parallel=0,
+            t_perpendicular=0,
+            velocity_x=102.3,
+            velocity_y=94.9,
+            velocity_z=86.7,
+            density=density,
+            aoo=0,
+            ao=0,
+        )
+
+        test_cases = [
+            ("t parallel less then 1e4, density should not change", 1e3, 1e7, 15, moments.density),
+            ("t perpendicular less then 1e4, density should not change", 1e7, 1e2, 15, moments.density),
+            ("t perpendicular greater then 1e8, density should be thrown out", 1e9, 1e1, 15, None),
+            ("t parallel greater then 1e8, density should be thrown out", 1e2, 1e9, 15, None),
+            ("core energy range is greater than 5 and temp is greater than 1e7", 1e7, 1.5e7, 15, moments.density),
+            ("core energy range is less than 5 and temperatures greater than 1e4", 1e5, 1.5e6, 10, moments.density),
+            ("core energy range is greater than 5 and temperatures greater than 1e4", 1e5, 1.5e6, 15, 126.487),
+        ]
+
+        for test_name, t_parallel, t_perpendicular, core_halo_breakpoint, expected_density in test_cases:
+            with self.subTest(test_name):
+                moments = dataclasses.replace(moments, t_parallel=t_parallel, t_perpendicular=t_perpendicular)
+
+                scaled_density = halotrunc(moments, core_halo_breakpoint, spacecraft_potential)
+
+                self.assertAlmostEqual(expected_density, scaled_density, places=3)
