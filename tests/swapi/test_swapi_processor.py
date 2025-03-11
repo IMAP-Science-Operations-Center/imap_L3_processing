@@ -8,7 +8,8 @@ import numpy as np
 from uncertainties import ufloat
 from uncertainties.unumpy import uarray, nominal_values, std_devs
 
-from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH, THIRTY_SECONDS_IN_NANOSECONDS, FIVE_MINUTES_IN_NANOSECONDS
+from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH, THIRTY_SECONDS_IN_NANOSECONDS, \
+    FIVE_MINUTES_IN_NANOSECONDS
 from imap_l3_processing.models import UpstreamDataDependency, InputMetadata
 from imap_l3_processing.swapi.l3a.models import SwapiL2Data
 from imap_l3_processing.swapi.l3a.science.calculate_pickup_ion import FittingParameters
@@ -314,7 +315,11 @@ class TestSwapiProcessor(TestCase):
         np.testing.assert_array_equal(np.array([5]), actual_pui_density)
         np.testing.assert_array_equal(np.array([6]), actual_pui_temperature)
 
-        mock_manager.add_instrument_attrs.assert_has_calls([call("swapi", "l3a"), call("swapi", "l3a")])
+        mock_manager.add_instrument_attrs.assert_has_calls(
+            [call("swapi", "l3a", "proton-sw"),
+             call("swapi", "l3a", "alpha-sw"),
+             call("swapi", "l3a", "pui-he")]
+        )
         mock_write_cdf.assert_has_calls([
             call(proton_cdf_path, proton_solar_wind_data, mock_manager),
             call(alpha_cdf_path, alpha_solar_wind_data, mock_manager),

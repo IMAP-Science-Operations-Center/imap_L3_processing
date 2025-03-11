@@ -154,7 +154,8 @@ def create_swe_moments_cdf(dependencies: SweL3Dependencies) -> str:
 def create_hit_sectored_cdf(dependencies: HITL3SectoredDependencies) -> str:
     input_metadata = InputMetadata(
         instrument='hit',
-        data_level='l3b',
+        data_level='l3',
+        descriptor='macropixel',
         start_date=datetime(2025, 10, 23),
         end_date=datetime(2025, 10, 24),
         version='v999')

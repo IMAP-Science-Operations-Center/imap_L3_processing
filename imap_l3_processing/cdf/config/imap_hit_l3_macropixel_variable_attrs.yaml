@@ -23,13 +23,13 @@ epoch_delta:
   FIELDNAM: epoch_delta
   LABLAXIS: epoch_delta
   UNITS: ns
-  FILLVAL: -9223372036854775808
   VALIDMIN: 0
   VALIDMAX: 86000000000000
+  FILLVAL: -9223372036854770000
   SCALETYP: linear
 
-h_flux:
-  CATDESC: H flux sectored rates
+h_intensity:
+  CATDESC: H intensity by pitch angle and gyrophase
   VAR_TYPE: data
   DEPEND_0: epoch
   DEPEND_1: h_energy
@@ -43,13 +43,13 @@ h_flux:
   VALIDMAX: 10000000000
   FILLVAL: -1.00E+31
   SCALETYP: log
-  DELTA_PLUS_VAR: h_flux_delta_plus
-  DELTA_MINUS_VAR: h_flux_delta_minus
+  DELTA_PLUS_VAR: h_intensity_delta_plus
+  DELTA_MINUS_VAR: h_intensity_delta_minus
   SCALEMIN: 0.0001
   SCALEMAX: 1000
 
-he4_flux:
-  CATDESC: He4 flux by pitch angle and gyrophase
+he4_intensity:
+  CATDESC: He4 intensity by pitch angle and gyrophase
   VAR_TYPE: data
   DEPEND_0: epoch
   DEPEND_1: he4_energy
@@ -63,13 +63,13 @@ he4_flux:
   VALIDMAX: 10000000000
   FILLVAL: -1.00E+31
   SCALETYP: log
-  DELTA_PLUS_VAR: he4_flux_delta_plus
-  DELTA_MINUS_VAR: he4_flux_delta_minus
+  DELTA_PLUS_VAR: he4_intensity_delta_plus
+  DELTA_MINUS_VAR: he4_intensity_delta_minus
   SCALEMIN: 0.0001
   SCALEMAX: 1000
 
-cno_flux:
-  CATDESC: CNO flux by pitch angle and gyrophase
+cno_intensity:
+  CATDESC: CNO intensity by pitch angle and gyrophase
   VAR_TYPE: data
   DEPEND_0: epoch
   DEPEND_1: cno_energy
@@ -83,13 +83,13 @@ cno_flux:
   VALIDMAX: 10000000000
   FILLVAL: -1.00E+31
   SCALETYP: log
-  DELTA_PLUS_VAR: cno_flux_delta_plus
-  DELTA_MINUS_VAR: cno_flux_delta_minus
+  DELTA_PLUS_VAR: cno_intensity_delta_plus
+  DELTA_MINUS_VAR: cno_intensity_delta_minus
   SCALEMIN: 0.0001
   SCALEMAX: 1000
 
-nemgsi_flux:
-  CATDESC: NeMgSi flux by pitch angle and gyrophase
+nemgsi_intensity:
+  CATDESC: NeMgSi intensity by pitch angle and gyrophase
   VAR_TYPE: data
   DEPEND_0: epoch
   DEPEND_1: nemgsi_energy
@@ -103,13 +103,13 @@ nemgsi_flux:
   VALIDMAX: 10000000000
   FILLVAL: -1.00E+31
   SCALETYP: log
-  DELTA_PLUS_VAR: nemgsi_flux_delta_plus
-  DELTA_MINUS_VAR: nemgsi_flux_delta_minus
+  DELTA_PLUS_VAR: nemgsi_intensity_delta_plus
+  DELTA_MINUS_VAR: nemgsi_intensity_delta_minus
   SCALEMIN: 0.0001
   SCALEMAX: 1000
 
-fe_flux:
-  CATDESC: Fe flux by pitch angle and gyrophase
+fe_intensity:
+  CATDESC: Fe intensity by pitch angle and gyrophase
   VAR_TYPE: data
   DEPEND_0: epoch
   DEPEND_1: fe_energy
@@ -123,13 +123,13 @@ fe_flux:
   VALIDMAX: 10000000000
   FILLVAL: -1.00E+31
   SCALETYP: log
-  DELTA_PLUS_VAR: fe_flux_delta_plus
-  DELTA_MINUS_VAR: fe_flux_delta_minus
+  DELTA_PLUS_VAR: fe_intensity_delta_plus
+  DELTA_MINUS_VAR: fe_intensity_delta_minus
   SCALEMIN: 0.0001
   SCALEMAX: 1000
 
-h_flux_pa:
-  CATDESC: H flux by pitch angle
+h_intensity_pa:
+  CATDESC: H intensity by pitch angle
   VAR_TYPE: data
   DEPEND_0: epoch
   DEPEND_1: h_energy
@@ -142,13 +142,13 @@ h_flux_pa:
   VALIDMAX: 10000000000
   FILLVAL: -1.00E+31
   SCALETYP: log
-  DELTA_PLUS_VAR: h_flux_pa_delta_plus
-  DELTA_MINUS_VAR: h_flux_pa_delta_minus
+  DELTA_PLUS_VAR: h_intensity_pa_delta_plus
+  DELTA_MINUS_VAR: h_intensity_pa_delta_minus
   SCALEMIN: 0.0001
   SCALEMAX: 1000
 
-he4_flux_pa:
-  CATDESC: He4 flux by pitch angle
+he4_intensity_pa:
+  CATDESC: He4 intensity by pitch angle
   VAR_TYPE: data
   DEPEND_0: epoch
   DEPEND_1: he4_energy
@@ -161,13 +161,13 @@ he4_flux_pa:
   VALIDMAX: 10000000000
   FILLVAL: -1.00E+31
   SCALETYP: log
-  DELTA_PLUS_VAR: he4_flux_pa_delta_plus
-  DELTA_MINUS_VAR: he4_flux_pa_delta_minus
+  DELTA_PLUS_VAR: he4_intensity_pa_delta_plus
+  DELTA_MINUS_VAR: he4_intensity_pa_delta_minus
   SCALEMIN: 0.0001
   SCALEMAX: 1000
 
-cno_flux_pa:
-  CATDESC: CNO flux by pitch angle
+cno_intensity_pa:
+  CATDESC: CNO intensity by pitch angle
   VAR_TYPE: data
   DEPEND_0: epoch
   DEPEND_1: cno_energy
@@ -180,13 +180,13 @@ cno_flux_pa:
   VALIDMAX: 10000000000
   FILLVAL: -1.00E+31
   SCALETYP: log
-  DELTA_PLUS_VAR: cno_flux_pa_delta_plus
-  DELTA_MINUS_VAR: cno_flux_pa_delta_minus
+  DELTA_PLUS_VAR: cno_intensity_pa_delta_plus
+  DELTA_MINUS_VAR: cno_intensity_pa_delta_minus
   SCALEMIN: 0.0001
   SCALEMAX: 1000
 
-nemgsi_flux_pa:
-  CATDESC: NeMgSi flux by pitch angle
+nemgsi_intensity_pa:
+  CATDESC: NeMgSi intensity by pitch angle
   VAR_TYPE: data
   DEPEND_0: epoch
   DEPEND_1: nemgsi_energy
@@ -199,13 +199,13 @@ nemgsi_flux_pa:
   VALIDMAX: 10000000000
   FILLVAL: -1.00E+31
   SCALETYP: log
-  DELTA_PLUS_VAR: nemgsi_flux_pa_delta_plus
-  DELTA_MINUS_VAR: nemgsi_flux_pa_delta_minus
+  DELTA_PLUS_VAR: nemgsi_intensity_pa_delta_plus
+  DELTA_MINUS_VAR: nemgsi_intensity_pa_delta_minus
   SCALEMIN: 0.0001
   SCALEMAX: 1000
 
-fe_flux_pa:
-  CATDESC: Fe flux by pitch angle
+fe_intensity_pa:
+  CATDESC: Fe intensity by pitch angle
   VAR_TYPE: data
   DEPEND_0: epoch
   DEPEND_1: fe_energy
@@ -218,12 +218,12 @@ fe_flux_pa:
   VALIDMAX: 10000000000
   FILLVAL: -1.00E+31
   SCALETYP: log
-  DELTA_PLUS_VAR: fe_flux_pa_delta_plus
-  DELTA_MINUS_VAR: fe_flux_pa_delta_minus
+  DELTA_PLUS_VAR: fe_intensity_pa_delta_plus
+  DELTA_MINUS_VAR: fe_intensity_pa_delta_minus
   SCALEMIN: 0.0001
   SCALEMAX: 1000
 
-h_flux_delta_plus:
+h_intensity_delta_plus:
   CATDESC: Plus uncertainty for H by pitch angle and gyrophase
   VAR_TYPE: support_data
   DEPEND_0: epoch
@@ -241,7 +241,7 @@ h_flux_delta_plus:
   SCALEMIN: 0.0001
   SCALEMAX: 1000
 
-h_flux_delta_minus:
+h_intensity_delta_minus:
   CATDESC: Minus uncertainty for H by pitch angle and gyrophase
   VAR_TYPE: support_data
   DEPEND_0: epoch
@@ -259,7 +259,7 @@ h_flux_delta_minus:
   SCALEMIN: 0.0001
   SCALEMAX: 1000
 
-he4_flux_delta_plus:
+he4_intensity_delta_plus:
   CATDESC: Plus uncertainty for He4 by pitch angle and gyrophase
   VAR_TYPE: support_data
   DEPEND_0: epoch
@@ -277,7 +277,7 @@ he4_flux_delta_plus:
   SCALEMIN: 0.0001
   SCALEMAX: 1000
 
-he4_flux_delta_minus:
+he4_intensity_delta_minus:
   CATDESC: Minus uncertainty for He4 by pitch angle and gyrophase
   VAR_TYPE: support_data
   DEPEND_0: epoch
@@ -295,7 +295,7 @@ he4_flux_delta_minus:
   SCALEMIN: 0.0001
   SCALEMAX: 1000
 
-cno_flux_delta_plus:
+cno_intensity_delta_plus:
   CATDESC: Plus uncertainty for CNO by pitch angle and gyrophase
   VAR_TYPE: support_data
   DEPEND_0: epoch
@@ -313,7 +313,7 @@ cno_flux_delta_plus:
   SCALEMIN: 0.0001
   SCALEMAX: 1000
 
-cno_flux_delta_minus:
+cno_intensity_delta_minus:
   CATDESC: Minus uncertainty for CNO by pitch angle and gyrophase
   VAR_TYPE: support_data
   DEPEND_0: epoch
@@ -331,7 +331,7 @@ cno_flux_delta_minus:
   SCALEMIN: 0.0001
   SCALEMAX: 1000
 
-nemgsi_flux_delta_plus:
+nemgsi_intensity_delta_plus:
   CATDESC: Plus uncertainty for NeMgSi by pitch angle and gyrophase
   VAR_TYPE: support_data
   DEPEND_0: epoch
@@ -349,7 +349,7 @@ nemgsi_flux_delta_plus:
   SCALEMIN: 0.0001
   SCALEMAX: 1000
 
-nemgsi_flux_delta_minus:
+nemgsi_intensity_delta_minus:
   CATDESC: Minus uncertainty for NeMgSi by pitch angle and gyrophase
   VAR_TYPE: support_data
   DEPEND_0: epoch
@@ -367,7 +367,7 @@ nemgsi_flux_delta_minus:
   SCALEMIN: 0.0001
   SCALEMAX: 1000
 
-fe_flux_delta_plus:
+fe_intensity_delta_plus:
   CATDESC: Plus uncertainty for Fe by pitch angle and gyrophase
   VAR_TYPE: support_data
   DEPEND_0: epoch
@@ -385,7 +385,7 @@ fe_flux_delta_plus:
   SCALEMIN: 0.0001
   SCALEMAX: 1000
 
-fe_flux_delta_minus:
+fe_intensity_delta_minus:
   CATDESC: Minus uncertainty for Fe by pitch angle and gyrophase
   VAR_TYPE: support_data
   DEPEND_0: epoch
@@ -403,7 +403,7 @@ fe_flux_delta_minus:
   SCALEMIN: 0.0001
   SCALEMAX: 1000
 
-h_flux_pa_delta_plus:
+h_intensity_pa_delta_plus:
   CATDESC: Plus uncertainty for H by pitch angle
   VAR_TYPE: support_data
   DEPEND_0: epoch
@@ -420,7 +420,7 @@ h_flux_pa_delta_plus:
   SCALEMIN: 0.0001
   SCALEMAX: 1000
 
-h_flux_pa_delta_minus:
+h_intensity_pa_delta_minus:
   CATDESC: Minus uncertainty for H by pitch angle
   VAR_TYPE: support_data
   DEPEND_0: epoch
@@ -437,7 +437,7 @@ h_flux_pa_delta_minus:
   SCALEMIN: 0.0001
   SCALEMAX: 1000
 
-he4_flux_pa_delta_plus:
+he4_intensity_pa_delta_plus:
   CATDESC: Plus uncertainty for He4 by pitch angle
   VAR_TYPE: support_data
   DEPEND_0: epoch
@@ -454,7 +454,7 @@ he4_flux_pa_delta_plus:
   SCALEMIN: 0.0001
   SCALEMAX: 1000
 
-he4_flux_pa_delta_minus:
+he4_intensity_pa_delta_minus:
   CATDESC: Minus uncertainty for He4 by pitch angle
   VAR_TYPE: support_data
   DEPEND_0: epoch
@@ -471,7 +471,7 @@ he4_flux_pa_delta_minus:
   SCALEMIN: 0.0001
   SCALEMAX: 1000
 
-cno_flux_pa_delta_plus:
+cno_intensity_pa_delta_plus:
   CATDESC: Plus uncertainty for CNO by pitch angle
   VAR_TYPE: support_data
   DEPEND_0: epoch
@@ -488,7 +488,7 @@ cno_flux_pa_delta_plus:
   SCALEMIN: 0.0001
   SCALEMAX: 1000
 
-cno_flux_pa_delta_minus:
+cno_intensity_pa_delta_minus:
   CATDESC: Minus uncertainty for CNO by pitch angle
   VAR_TYPE: support_data
   DEPEND_0: epoch
@@ -505,7 +505,7 @@ cno_flux_pa_delta_minus:
   SCALEMIN: 0.0001
   SCALEMAX: 1000
 
-nemgsi_flux_pa_delta_plus:
+nemgsi_intensity_pa_delta_plus:
   CATDESC: Plus uncertainty for NeMgSi by pitch angle
   VAR_TYPE: support_data
   DEPEND_0: epoch
@@ -522,7 +522,7 @@ nemgsi_flux_pa_delta_plus:
   SCALEMIN: 0.0001
   SCALEMAX: 1000
 
-nemgsi_flux_pa_delta_minus:
+nemgsi_intensity_pa_delta_minus:
   CATDESC: Minus uncertainty for NeMgSi by pitch angle
   VAR_TYPE: support_data
   DEPEND_0: epoch
@@ -539,7 +539,7 @@ nemgsi_flux_pa_delta_minus:
   SCALEMIN: 0.0001
   SCALEMAX: 1000
 
-fe_flux_pa_delta_plus:
+fe_intensity_pa_delta_plus:
   CATDESC: Plus uncertainty for Fe by pitch angle
   VAR_TYPE: support_data
   DEPEND_0: epoch
@@ -556,7 +556,7 @@ fe_flux_pa_delta_plus:
   SCALEMIN: 0.0001
   SCALEMAX: 1000
 
-fe_flux_pa_delta_minus:
+fe_intensity_pa_delta_minus:
   CATDESC: Minus uncertainty for Fe by pitch angle
   VAR_TYPE: support_data
   DEPEND_0: epoch
@@ -838,3 +838,4 @@ gyrophase_delta:
   VALIDMAX: 360
   FILLVAL: -1.00E+31
   SCALETYP: linear
+

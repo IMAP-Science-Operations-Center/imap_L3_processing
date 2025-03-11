@@ -13,9 +13,10 @@ from imap_l3_processing.hit.l3.models import HitL2Data
 from imap_l3_processing.hit.l3.pha.pha_event_reader import PHAWord, Detector, RawPHAEvent, PHAExtendedHeader, StimBlock, \
     ExtendedStimHeader
 from imap_l3_processing.hit.l3.pha.science.calculate_pha import EventOutput
-from imap_l3_processing.hit.l3.pha.science.cosine_correction_lookup_table import DetectedRange, DetectorSide, DetectorRange
+from imap_l3_processing.hit.l3.pha.science.cosine_correction_lookup_table import DetectedRange, DetectorSide, \
+    DetectorRange
 from imap_l3_processing.hit.l3.sectored_products.models import HitPitchAngleDataProduct
-from imap_l3_processing.models import MagL1dData, InputMetadata
+from imap_l3_processing.models import MagL1dData, InputMetadata, UpstreamDataDependency
 from imap_l3_processing.processor import Processor
 from tests.test_helpers import NumpyArrayMatcher, create_dataclass_mock
 
@@ -49,6 +50,14 @@ class TestHitProcessor(TestCase):
             end_date=None,
             version="",
             descriptor="pitch-angle"
+        )
+        expected_upstream_data_dependencies = UpstreamDataDependency(
+            instrument="hit",
+            data_level="l3",
+            start_date=None,
+            end_date=None,
+            version="",
+            descriptor="macropixel"
         )
 
         epochs = np.array([123, 234])
@@ -298,6 +307,7 @@ class TestHitProcessor(TestCase):
 
         saved_data_product: HitPitchAngleDataProduct = mock_save_data.call_args_list[0].args[0]
 
+        self.assertEqual(expected_upstream_data_dependencies, saved_data_product.input_metadata)
         np.testing.assert_array_equal(saved_data_product.epochs, epochs)
         np.testing.assert_array_equal(saved_data_product.epoch_deltas, epoch_deltas)
 

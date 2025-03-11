@@ -58,7 +58,7 @@ def imap_l3_processor():
     elif args.instrument == 'swe' and args.data_level == 'l3':
         processor = SweProcessor(dependencies, input_dependency)
         processor.process()
-    elif args.instrument == 'hit' and (args.data_level == 'l3b' or args.data_level == 'l3a'):
+    elif args.instrument == 'hit':
         processor = HitProcessor(dependencies, input_dependency)
         processor.process()
     else:
