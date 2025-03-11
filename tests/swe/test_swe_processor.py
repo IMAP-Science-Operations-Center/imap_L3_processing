@@ -363,6 +363,7 @@ class TestSweProcessor(unittest.TestCase):
         np.testing.assert_allclose(swe_l3_data.energy_spectrum_outbound,
                                    np.array([[208.855516, 286.519101, 206.376298]]))
 
+    @patch('imap_l3_processing.swe.swe_processor.halotrunc')
     @patch('imap_l3_processing.swe.swe_processor.find_breakpoints')
     @patch('imap_l3_processing.swe.swe_processor.average_over_look_directions')
     @patch('imap_l3_processing.swe.swe_processor.filter_and_flatten_regress_parameters')
@@ -379,7 +380,7 @@ class TestSweProcessor(unittest.TestCase):
                                        mock_calculate_velocity_in_dsp_frame_km_s,
                                        mock_compute_maxwellian_weight_factors,
                                        mock_filter_and_flatten_regress_parameters,
-                                       mock_average_over_look_directions, mock_find_breakpoints):
+                                       mock_average_over_look_directions, mock_find_breakpoints, mock_halotrunc):
         epochs = datetime.now() + np.arange(2) * timedelta(minutes=1)
         geometric_fractions = [0.0697327, 0.138312, 0.175125, 0.181759,
                                0.204686, 0.151448, 0.0781351]
@@ -460,9 +461,16 @@ class TestSweProcessor(unittest.TestCase):
         ]
 
         core_moments1 = create_dataclass_mock(Moments, density=10, velocity_x=5, velocity_y=6, velocity_z=7)
-        halo_moments1 = create_dataclass_mock(Moments, density=10, velocity_x=5, velocity_y=6, velocity_z=7)
+        halo_moments1 = create_dataclass_mock(Moments, density=sentinel.halo_density_1, velocity_x=5, velocity_y=6,
+                                              velocity_z=7)
         core_moments2 = create_dataclass_mock(Moments, density=10, velocity_x=8, velocity_y=9, velocity_z=10)
-        halo_moments2 = create_dataclass_mock(Moments, density=10, velocity_x=8, velocity_y=9, velocity_z=10)
+        halo_moments2 = create_dataclass_mock(Moments, density=sentinel.halo_density_2, velocity_x=8, velocity_y=9,
+                                              velocity_z=10)
+
+        mock_halotrunc.side_effect = [
+            10,
+            10
+        ]
 
         mock_calculate_fit_temperature_density_velocity.side_effect = [core_moments1, halo_moments1, core_moments2,
                                                                        halo_moments2]
@@ -582,6 +590,11 @@ class TestSweProcessor(unittest.TestCase):
              call(sentinel.second_core_regress_return),
              call(sentinel.second_halo_moment_regress_return), ])
 
+        mock_halotrunc.assert_has_calls([
+            call(halo_moments1, expected_breakpoint_1[1], expected_breakpoint_1[0]),
+            call(halo_moments2, expected_breakpoint_2[1], expected_breakpoint_2[0])
+        ])
+
         self.assertEqual(4, mock_rotate_dps_vector_to_rtn.call_count)
 
         self.assertEqual(epochs[0], mock_rotate_dps_vector_to_rtn.call_args_list[0].args[0])
@@ -614,6 +627,7 @@ class TestSweProcessor(unittest.TestCase):
     @patch('imap_l3_processing.swe.swe_processor.rotate_dps_vector_to_rtn')
     @patch('imap_l3_processing.swe.swe_processor.rotate_temperature')
     @patch('imap_l3_processing.swe.swe_processor.average_over_look_directions')
+    @patch('imap_l3_processing.swe.swe_processor.halotrunc')
     @patch('imap_l3_processing.swe.swe_processor.compute_maxwellian_weight_factors')
     @patch('imap_l3_processing.swe.swe_processor.calculate_velocity_in_dsp_frame_km_s')
     @patch('imap_l3_processing.swe.swe_processor.regress')
@@ -627,6 +641,7 @@ class TestSweProcessor(unittest.TestCase):
             mock_calculate_fit_temperature_density_velocity,
             mock_regress, mock_calculate_velocity,
             mock_compute_maxwellian_weights,
+            mock_halotrunc,
             _, __, ___):
         epochs = datetime.now() + np.arange(2) * timedelta(minutes=1)
         swe_config = build_swe_configuration()
@@ -704,14 +719,22 @@ class TestSweProcessor(unittest.TestCase):
         halo_density_greater_than_rolling_average = (25 + 25 + time1_halo_valid_density) / 3 * 1.65 + 1
 
         halo_moments_time1 = [
-            (create_dataclass_mock(Moments, density=halo_density_greater_than_config_value)),
-            (create_dataclass_mock(Moments, density=time1_halo_valid_density)),
+            (create_dataclass_mock(Moments, density=sentinel.fit_density_1)),
+            (create_dataclass_mock(Moments, density=sentinel.fit_density_2)),
         ]
 
         halo_moments_time2 = [
-            (create_dataclass_mock(Moments, density=halo_density_greater_than_rolling_average)),
-            (create_dataclass_mock(Moments, density=low_density)),
-            (create_dataclass_mock(Moments, density=time2_halo_valid_density))
+            (create_dataclass_mock(Moments, density=sentinel.fit_density_3)),
+            (create_dataclass_mock(Moments, density=sentinel.fit_density_4)),
+            (create_dataclass_mock(Moments, density=sentinel.fit_density_5))
+        ]
+
+        mock_halotrunc.side_effect = [
+            halo_density_greater_than_config_value,
+            time1_halo_valid_density,
+            halo_density_greater_than_rolling_average,
+            low_density,
+            time2_halo_valid_density
         ]
 
         mock_calculate_fit_temperature_density_velocity.side_effect = core_momements_time1 + halo_moments_time1 + core_momements_time2 + halo_moments_time2
@@ -794,9 +817,19 @@ class TestSweProcessor(unittest.TestCase):
             call(sentinel.time2_halo_regress_3)
         ])
 
+        self.assertEqual(5, mock_halotrunc.call_count)
+        mock_halotrunc.assert_has_calls([
+            call(halo_moments_time1[0], core_halo_breakpoint, core_breakpoint),
+            call(halo_moments_time1[1], core_halo_breakpoint, core_breakpoint),
+            call(halo_moments_time2[0], core_halo_breakpoint, core_breakpoint),
+            call(halo_moments_time2[1], core_halo_breakpoint, core_breakpoint),
+            call(halo_moments_time2[2], core_halo_breakpoint, core_breakpoint),
+        ])
+
     @patch('imap_l3_processing.swe.swe_processor.rotate_dps_vector_to_rtn')
     @patch('imap_l3_processing.swe.swe_processor.rotate_temperature')
     @patch('imap_l3_processing.swe.swe_processor.average_over_look_directions')
+    @patch('imap_l3_processing.swe.swe_processor.halotrunc')
     @patch('imap_l3_processing.swe.swe_processor.compute_maxwellian_weight_factors')
     @patch('imap_l3_processing.swe.swe_processor.calculate_velocity_in_dsp_frame_km_s')
     @patch('imap_l3_processing.swe.swe_processor.regress')
@@ -810,6 +843,7 @@ class TestSweProcessor(unittest.TestCase):
                                                                                                        mock_regress,
                                                                                                        mock_calculate_velocity,
                                                                                                        mock_compute_maxwellian_weights,
+                                                                                                       mock_halotrunc,
                                                                                                        _, __, ___):
         epochs = datetime.now() + np.arange(1) * timedelta(minutes=1)
         swe_config = build_swe_configuration()
@@ -841,7 +875,9 @@ class TestSweProcessor(unittest.TestCase):
         mock_regress.side_effect = [(sentinel.core_regress_return, 0), (sentinel.halo_regress_return, 0)]
 
         core_moments = create_dataclass_mock(Moments, density=-1)
-        halo_moments = create_dataclass_mock(Moments, density=-1)
+        halo_moments = create_dataclass_mock(Moments)
+
+        mock_halotrunc.side_effect = [-1]
 
         mock_calculate_fit_temperature_density_velocity.side_effect = [core_moments,
                                                                        halo_moments]
