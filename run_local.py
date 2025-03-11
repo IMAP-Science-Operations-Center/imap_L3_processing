@@ -6,6 +6,7 @@ from pathlib import Path
 from bitstring import BitStream
 from spacepy.pycdf import CDF
 
+from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
 from imap_l3_processing.glows.descriptors import GLOWS_L2_DESCRIPTOR
 from imap_l3_processing.glows.glows_processor import GlowsProcessor
 from imap_l3_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
@@ -21,7 +22,7 @@ from imap_l3_processing.hit.l3.pha.science.gain_lookup_table import GainLookupTa
 from imap_l3_processing.hit.l3.pha.science.hit_event_type_lookup import HitEventTypeLookup
 from imap_l3_processing.hit.l3.pha.science.range_fit_lookup import RangeFitLookup
 from imap_l3_processing.hit.l3.utils import read_l2_hit_data
-from imap_l3_processing.models import InputMetadata, UpstreamDataDependency
+from imap_l3_processing.models import InputMetadata, UpstreamDataDependency, DataProduct
 from imap_l3_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density import \
     AlphaTemperatureDensityCalibrationTable
 from imap_l3_processing.swapi.l3a.science.calculate_pickup_ion import DensityOfNeutralHeliumLookupTable
@@ -39,8 +40,17 @@ from imap_l3_processing.swapi.l3b.swapi_l3b_dependencies import SwapiL3BDependen
 from imap_l3_processing.swapi.swapi_processor import SwapiProcessor
 from imap_l3_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies
 from imap_l3_processing.swe.swe_processor import SweProcessor
-from imap_l3_processing.utils import save_data, read_l1d_mag_data
+from imap_l3_processing.utils import save_data, read_l1d_mag_data, format_time
 from tests.test_helpers import get_test_data_path
+
+
+def delete_temp_cdf_file_path_if_exists(data: DataProduct):
+    formatted_start_date = format_time(data.input_metadata.start_date)
+    logical_source = data.input_metadata.logical_source
+    logical_file_id = f'{logical_source}_{formatted_start_date}_{data.input_metadata.version}'
+    file_path = f'{TEMP_CDF_FOLDER_PATH}/{logical_file_id}.cdf'
+    path = Path(file_path)
+    path.unlink(missing_ok=True)
 
 
 def create_glows_l3a_cdf(dependencies: GlowsL3ADependencies):
@@ -161,6 +171,7 @@ def create_hit_sectored_cdf(dependencies: HITL3SectoredDependencies) -> str:
         version='v999')
     processor = HitProcessor(None, input_metadata)
     output_data = processor.process_pitch_angle_product(dependencies)
+    delete_temp_cdf_file_path_if_exists(output_data)
     cdf_path = save_data(output_data)
     return cdf_path
 

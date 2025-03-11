@@ -10,7 +10,8 @@ from imap_l3_processing.hit.l3.pha.science.calculate_pha import process_pha_even
 from imap_l3_processing.hit.l3.sectored_products.models import HitPitchAngleDataProduct
 from imap_l3_processing.hit.l3.sectored_products.science.sectored_products_algorithms import get_sector_unit_vectors, \
     get_hit_bin_polar_coordinates, rebin_by_pitch_angle_and_gyrophase
-from imap_l3_processing.pitch_angles import calculate_unit_vector, calculate_pitch_angle, calculate_gyrophase
+from imap_l3_processing.pitch_angles import calculate_unit_vector, calculate_pitch_angle, calculate_gyrophase, \
+    rotate_from_imap_despun_to_hit_despun
 from imap_l3_processing.processor import Processor
 from imap_l3_processing.utils import save_data
 
@@ -180,9 +181,10 @@ class HitProcessor(Processor):
         averaged_mag_data = mag_data.rebin_to(hit_data.epoch, hit_data.epoch_delta)
         for time_index, average_mag_vector in enumerate(averaged_mag_data):
             mag_unit_vector = calculate_unit_vector(average_mag_vector)
-            input_bin_pitch_angles = calculate_pitch_angle(particle_unit_vectors, mag_unit_vector)
-            input_bin_gyrophases = calculate_gyrophase(particle_unit_vectors, mag_unit_vector)
+            mag_vector_in_instrument_frame = rotate_from_imap_despun_to_hit_despun(mag_unit_vector)
 
+            input_bin_pitch_angles = calculate_pitch_angle(particle_unit_vectors, mag_vector_in_instrument_frame)
+            input_bin_gyrophases = calculate_gyrophase(particle_unit_vectors, mag_vector_in_instrument_frame)
             for species, flux in input_flux_data_by_species.items():
                 rebinned_result = rebin_by_pitch_angle_and_gyrophase(
                     flux[0][time_index],
