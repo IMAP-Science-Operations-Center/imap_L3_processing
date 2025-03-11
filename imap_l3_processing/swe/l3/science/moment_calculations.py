@@ -1,6 +1,7 @@
 import math
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Optional
 
 import numpy as np
 from spiceypy import spiceypy
@@ -279,7 +280,7 @@ def compute_density_scale(core_electron_energy_range: float, speed: float, tempe
     return 0.5 * (dscalep + dscalem)
 
 
-def halotrunc(moments: Moments, core_halo_breakpoint: float, spacecraft_potential: float) -> float:
+def halotrunc(moments: Moments, core_halo_breakpoint: float, spacecraft_potential: float) -> Optional[np.float64]:
     htmax = moments.t_parallel
     htmin = moments.t_perpendicular
 
