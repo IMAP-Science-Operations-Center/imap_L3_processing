@@ -42,7 +42,8 @@ class SweProcessor(Processor):
 
         for i in range(len(swe_epoch)):
             averaged_psd = average_over_look_directions(swe_l2_data.phase_space_density[i],
-                                                        np.array(config["geometric_fractions"]))
+                                                        np.array(config["geometric_fractions"]),
+                                                        config["minimum_phase_space_density_value"])
             spacecraft_potential, halo_core = find_breakpoints(swe_l2_data.energy, averaged_psd,
                                                                spacecraft_potential_history,
                                                                halo_core_history,
@@ -158,7 +159,8 @@ class SweProcessor(Processor):
 
         for i in range(len(swe_epoch)):
             averaged_psd = average_over_look_directions(swe_l2_data.phase_space_density[i],
-                                                        np.array(config["geometric_fractions"]))
+                                                        np.array(config["geometric_fractions"]),
+                                                        config["minimum_phase_space_density_value"])
             spacecraft_potential, halo_core = find_breakpoints(swe_l2_data.energy, averaged_psd,
                                                                spacecraft_potential_history,
                                                                halo_core_history,

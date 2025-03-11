@@ -92,8 +92,10 @@ def try_curve_fit_until_valid(energies: np.ndarray, log_psd: np.ndarray, initial
     return b[2], b[4]
 
 
-def average_over_look_directions(phase_space_density: np.ndarray, geometric_weights: np.ndarray) -> np.ndarray:
-    weighted_average = np.sum(phase_space_density * geometric_weights, axis=-1) / np.sum(geometric_weights)
+def average_over_look_directions(phase_space_density: np.ndarray, geometric_weights: np.ndarray,
+                                 minimum_psd_value: float) -> np.ndarray:
+    enforced_minimum_psd = np.maximum(phase_space_density, minimum_psd_value)
+    weighted_average = np.sum(enforced_minimum_psd * geometric_weights, axis=-1) / np.sum(geometric_weights)
     return np.mean(weighted_average, axis=1)
 
 

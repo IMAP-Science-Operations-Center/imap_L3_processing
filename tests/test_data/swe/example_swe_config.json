@@ -142,5 +142,6 @@
   "core_halo_breakpoint_initial_guess": 80,
   "core_energy_for_slope_guess": 20,
   "halo_energy_for_slope_guess": 100,
-  "refit_core_halo_breakpoint_index": 8
+  "refit_core_halo_breakpoint_index": 8,
+  "minimum_phase_space_density_value": 1e-32
 }

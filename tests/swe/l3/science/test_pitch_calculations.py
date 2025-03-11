@@ -26,7 +26,7 @@ class TestPitchCalculations(unittest.TestCase):
             ],
         ])
         geometric_weights = [0.5, 0.25, 0.25, 0]
-        result = average_over_look_directions(flux_data, geometric_weights)
+        result = average_over_look_directions(flux_data, geometric_weights, 1e-32)
 
         expected_result = [
             ((1 * 0.5 + 2 * 0.25 + 3 * 0.25) + (5 * 0.5 + 6 * 0.25 + 7 * 0.25) + (9 * 0.5 + 10 * 0.25 + 11 * 0.25)) / 3,
@@ -35,6 +35,23 @@ class TestPitchCalculations(unittest.TestCase):
 
         ]
         np.testing.assert_almost_equal(result, expected_result)
+
+    def test_average_over_look_directions_with_zeroes(self):
+        flux_data = np.array([
+            [
+                [1, 2, 3, 4],
+            ],
+            [
+                [0, 0, 0, 1e-36],
+            ],
+        ])
+        geometric_weights = [0.25, 0.25, 0.25, 0.25]
+        result = average_over_look_directions(flux_data, geometric_weights, 1e-34)
+
+        expected_result = [
+            (1 * 0.25 + 2 * 0.25 + 3 * 0.25 + 4 * 0.25), 1e-34
+        ]
+        np.testing.assert_allclose(result, expected_result)
 
     def test_look_direction(self):
         inst_az = np.array([[0, 90], [180, 270]])

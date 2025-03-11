@@ -44,8 +44,7 @@ def create_fake_swe_l2_cdf(l1_hdf_path: str, l2_hdf_path: str, output_l2_swe_cdf
 
         minutes = len(counts_in_swe_shape)
         measurement_count = placeholder_insta_az_spin_sector.size
-        start_time = (datetime(1999, 6, 8) - datetime(2010, 1, 1)).total_seconds()
-        measurement_times = start_time + np.linspace(0, minutes * 60, measurement_count)
+        measurement_times = np.linspace(0, minutes * 60, measurement_count)
         placeholder_acquisition_time = measurement_times.reshape(shape_without_aperture_axis)
         replace_variable(cdf, "acquisition_time", placeholder_acquisition_time)
 
@@ -120,8 +119,10 @@ def get_epochs_from_output_file(dataset: VD) -> np.array:
     min_index = dataset.field("min")._index
     sec_index = dataset.field("sec")._index
 
+    correction_factor = (datetime(2010, 1, 1) - datetime(1999, 6, 8))
+
     return np.array([datetime(year=x[years_index], month=x[month_index], day=x[day_index], hour=x[hour_index],
-                              minute=x[min_index], second=x[sec_index]) for x in dataset[:]])
+                              minute=x[min_index], second=x[sec_index]) + correction_factor for x in dataset[:]])
 
 
 if __name__ == "__main__":
@@ -130,9 +131,9 @@ if __name__ == "__main__":
     l2_electron_hdf_path = path.parent.parent.parent / "instrument_team_data/swe/swepam-nswe-1999-159.v1-02.hdf"
     l2_ion_hdf_path = path.parent.parent.parent / "instrument_team_data/swe/swepam-swi-1999-159.v2-01.hdf"
 
-    l2_swe_cdf_file_path = path.parent.parent.parent / "tests" / "test_data" / "swe" / "imap_swe_l2_sci-with-ace-data_19990608_v002.cdf"
-    mag_file_path = path.parent.parent.parent / "tests" / "test_data" / "swe" / "imap_mag_l1d_mago-normal_19990608_v001.cdf"
-    swapi_file_path = path.parent.parent.parent / "tests" / "test_data" / "swe" / "imap_swapi_l3a_proton-sw_19990608_v001.cdf"
+    l2_swe_cdf_file_path = path.parent.parent.parent / "tests" / "test_data" / "swe" / "imap_swe_l2_sci-with-ace-data_20100101_v002.cdf"
+    mag_file_path = path.parent.parent.parent / "tests" / "test_data" / "swe" / "imap_mag_l1d_mago-normal_20100101_v001.cdf"
+    swapi_file_path = path.parent.parent.parent / "tests" / "test_data" / "swe" / "imap_swapi_l3a_proton-sw_20100101_v001.cdf"
 
     mag_file_path.unlink(missing_ok=True)
     swapi_file_path.unlink(missing_ok=True)
