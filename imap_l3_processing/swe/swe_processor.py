@@ -10,7 +10,7 @@ from imap_l3_processing.swapi.l3a.science.calculate_pickup_ion import calculate_
 from imap_l3_processing.swe.l3.models import SweL3Data
 from imap_l3_processing.swe.l3.science.moment_calculations import compute_maxwellian_weight_factors, \
     filter_and_flatten_regress_parameters, regress, calculate_fit_temperature_density_velocity, rotate_temperature, \
-    rotate_dps_vector_to_rtn
+    rotate_dps_vector_to_rtn, halotrunc
 from imap_l3_processing.swe.l3.science.pitch_calculations import average_over_look_directions, find_breakpoints, \
     correct_and_rebin, \
     integrate_distribution_to_get_1d_spectrum, integrate_distribution_to_get_inbound_and_outbound_1d_spectrum, \
@@ -109,6 +109,8 @@ class SweProcessor(Processor):
                 fit_function, chisq = regress(filtered_velocity_vectors,
                                               filtered_weights, filtered_yreg)
                 halo_moments = calculate_fit_temperature_density_velocity(fit_function)
+
+                halo_moments.density = halotrunc(halo_moments, halo_core, spacecraft_potential)
 
                 if 0 < halo_moments.density < np.average(halo_density_history) * 1.65 or (
                         halo_end_index - halo_core_breakpoint_index) <= 3:
