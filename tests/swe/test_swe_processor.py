@@ -143,9 +143,9 @@ class TestSweProcessor(unittest.TestCase):
             )
         ])
         mock_average_over_look_directions.assert_has_calls([
-            call(NumpyArrayMatcher(swe_l2_data.phase_space_density[0]), NumpyArrayMatcher(geometric_fractions)),
-            call(NumpyArrayMatcher(swe_l2_data.phase_space_density[1]), NumpyArrayMatcher(geometric_fractions)),
-            call(NumpyArrayMatcher(swe_l2_data.phase_space_density[2]), NumpyArrayMatcher(geometric_fractions))])
+            call(NumpyArrayMatcher(swe_l2_data.phase_space_density[0]), NumpyArrayMatcher(geometric_fractions), 1e-32),
+            call(NumpyArrayMatcher(swe_l2_data.phase_space_density[1]), NumpyArrayMatcher(geometric_fractions), 1e-32),
+            call(NumpyArrayMatcher(swe_l2_data.phase_space_density[2]), NumpyArrayMatcher(geometric_fractions), 1e-32)])
 
         mock_find_breakpoints.assert_has_calls([
             call(swe_l2_data.energy, mock_average_over_look_directions.return_value, [15, 15, 15],
@@ -485,8 +485,8 @@ class TestSweProcessor(unittest.TestCase):
 
         self.assertEqual(2, mock_average_over_look_directions.call_count)
         mock_average_over_look_directions.assert_has_calls([
-            call(NumpyArrayMatcher(swe_l2_data.phase_space_density[0]), NumpyArrayMatcher(geometric_fractions)),
-            call(NumpyArrayMatcher(swe_l2_data.phase_space_density[1]), NumpyArrayMatcher(geometric_fractions))])
+            call(NumpyArrayMatcher(swe_l2_data.phase_space_density[0]), NumpyArrayMatcher(geometric_fractions), 1e-32),
+            call(NumpyArrayMatcher(swe_l2_data.phase_space_density[1]), NumpyArrayMatcher(geometric_fractions), 1e-32)])
 
         mock_find_breakpoints.assert_has_calls([
             call(swe_l2_data.energy, mock_average_over_look_directions.return_value,

@@ -203,7 +203,7 @@ class HitProcessor(Processor):
                 rebinned_pa_only_flux_by_species[species][1][time_index] = flux_delta_plus_by_pa
                 rebinned_pa_only_flux_by_species[species][2][time_index] = flux_delta_minus_by_pa
 
-        return HitPitchAngleDataProduct(self.input_metadata.to_upstream_data_dependency("sci"), hit_data.epoch,
+        return HitPitchAngleDataProduct(self.input_metadata.to_upstream_data_dependency("macropixel"), hit_data.epoch,
                                         hit_data.epoch_delta, pitch_angles, pitch_angle_deltas,
                                         gyrophases,
                                         gyrophase_delta,

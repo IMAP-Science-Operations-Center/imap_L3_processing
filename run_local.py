@@ -129,8 +129,8 @@ def create_swe_pitch_angle_cdf(dependencies: SweL3Dependencies) -> str:
     input_metadata = InputMetadata(
         instrument='swe',
         data_level='l3',
-        start_date=datetime(1999, 6, 8),
-        end_date=datetime(1999, 6, 9),
+        start_date=datetime(2010, 1, 1),
+        end_date=datetime(2010, 1, 2),
         version='v000')
     processor = SweProcessor(None, input_metadata)
     output_data = processor.calculate_pitch_angle_products(dependencies)
@@ -154,7 +154,8 @@ def create_swe_moments_cdf(dependencies: SweL3Dependencies) -> str:
 def create_hit_sectored_cdf(dependencies: HITL3SectoredDependencies) -> str:
     input_metadata = InputMetadata(
         instrument='hit',
-        data_level='l3b',
+        data_level='l3',
+        descriptor='macropixel',
         start_date=datetime(2025, 10, 23),
         end_date=datetime(2025, 10, 24),
         version='v999')
@@ -290,18 +291,18 @@ if __name__ == "__main__":
 
     if "swe_pitch_angles" in sys.argv:
         dependencies = SweL3Dependencies.from_file_paths(
-            get_test_data_path("swe/imap_swe_l2_sci-with-ace-data_19990608_v002.cdf"),
-            get_test_data_path("swe/imap_mag_l1d_mago-normal_19990608_v001.cdf"),
-            get_test_data_path("swe/imap_swapi_l3a_proton-sw_19990608_v001.cdf"),
+            get_test_data_path("swe/imap_swe_l2_sci-with-ace-data_20100101_v002.cdf"),
+            get_test_data_path("swe/imap_mag_l1d_mago-normal_20100101_v001.cdf"),
+            get_test_data_path("swe/imap_swapi_l3a_proton-sw_20100101_v001.cdf"),
             get_test_data_path("swe/example_swe_config.json"),
         )
         print(create_swe_pitch_angle_cdf(dependencies))
 
     if "swe_moments" in sys.argv:
         dependencies = SweL3Dependencies.from_file_paths(
-            get_test_data_path("swe/imap_swe_l2_sci-with-ace-data_19990608_v002.cdf"),
-            get_test_data_path("swe/imap_mag_l1d_mago-normal_19990608_v001.cdf"),
-            get_test_data_path("swe/imap_swapi_l3a_proton-sw_19990608_v001.cdf"),
+            get_test_data_path("swe/imap_swe_l2_sci-with-ace-data_20100101_v002.cdf"),
+            get_test_data_path("swe/imap_mag_l1d_mago-normal_20100101_v001.cdf"),
+            get_test_data_path("swe/imap_swapi_l3a_proton-sw_20100101_v001.cdf"),
             get_test_data_path("swe/example_swe_config.json"),
         )
         print(create_swe_moments_cdf(dependencies))

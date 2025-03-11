@@ -58,7 +58,7 @@ class TestUtils(TestCase):
         ])
 
         actual_attribute_manager.add_instrument_attrs.assert_called_with(
-            "swapi", "l2"
+            "swapi", "l2", input_metadata.descriptor
         )
 
         self.assertEqual(expected_file_path, returned_file_path)

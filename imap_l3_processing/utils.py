@@ -28,7 +28,8 @@ def save_data(data: DataProduct) -> str:
 
     attribute_manager = ImapAttributeManager()
     attribute_manager.add_global_attribute("Data_version", data.input_metadata.version)
-    attribute_manager.add_instrument_attrs(data.input_metadata.instrument, data.input_metadata.data_level)
+    attribute_manager.add_instrument_attrs(data.input_metadata.instrument, data.input_metadata.data_level,
+                                           data.input_metadata.descriptor)
     attribute_manager.add_global_attribute("Generation_date", date.today().strftime("%Y%m%d"))
     attribute_manager.add_global_attribute("Logical_source", logical_source)
     attribute_manager.add_global_attribute("Logical_file_id", logical_file_id)

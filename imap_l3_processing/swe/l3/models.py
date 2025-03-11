@@ -105,3 +105,4 @@ class SweConfiguration(TypedDict):
     core_energy_for_slope_guess: float
     halo_energy_for_slope_guess: float
     refit_core_halo_breakpoint_index: int
+    minimum_phase_space_density_value: float

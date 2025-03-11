@@ -1,0 +1,841 @@
+epoch:
+  CATDESC: Time, number of nanoseconds since J2000 with leap seconds included
+  VAR_TYPE: support_data
+  DISPLAY_TYPE: no_plot
+  FIELDNAM: epoch
+  LABLAXIS: epoch
+  UNITS: ns
+  VALIDMIN: 1990-01-01T00:00:00.000000000
+  VALIDMAX: 2099-12-31T00:00:00.000000000
+  FILLVAL: 9999-12-31T23:59:59.999999999
+  SCALETYP: linear
+  TIME_BASE: J2000
+  TIME_SCALE: Terrestrial Time
+  DELTA_PLUS_VAR: epoch_delta
+  DELTA_MINUS_VAR: epoch_delta
+  MONOTON: INCREASE
+  REFERENCE_POSITION: Rotating Earth Geoid
+
+epoch_delta:
+  CATDESC: epoch_delta
+  VAR_TYPE: support_data
+  DISPLAY_TYPE: no_plot
+  FIELDNAM: epoch_delta
+  LABLAXIS: epoch_delta
+  UNITS: ns
+  VALIDMIN: 0
+  VALIDMAX: 86000000000000
+  FILLVAL: -9223372036854770000
+  SCALETYP: linear
+
+h_intensity:
+  CATDESC: H intensity by pitch angle and gyrophase
+  VAR_TYPE: data
+  DEPEND_0: epoch
+  DEPEND_1: h_energy
+  DEPEND_2: pitch_angle
+  DEPEND_3: gyrophase
+  DISPLAY_TYPE: spectrogram
+  FIELDNAM: H_Flux
+  FORMAT: g9.3
+  LABLAXIS: H Flux
+  UNITS: 1/(cm^2 s MeV/nuc sr)
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  SCALETYP: log
+  DELTA_PLUS_VAR: h_intensity_delta_plus
+  DELTA_MINUS_VAR: h_intensity_delta_minus
+  SCALEMIN: 0.0001
+  SCALEMAX: 1000
+
+he4_intensity:
+  CATDESC: He4 intensity by pitch angle and gyrophase
+  VAR_TYPE: data
+  DEPEND_0: epoch
+  DEPEND_1: he4_energy
+  DEPEND_2: pitch_angle
+  DEPEND_3: gyrophase
+  DISPLAY_TYPE: spectrogram
+  FIELDNAM: He4_Flux
+  FORMAT: g9.3
+  LABLAXIS: He4 Flux
+  UNITS: 1/(cm^2 s MeV/nuc sr)
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  SCALETYP: log
+  DELTA_PLUS_VAR: he4_intensity_delta_plus
+  DELTA_MINUS_VAR: he4_intensity_delta_minus
+  SCALEMIN: 0.0001
+  SCALEMAX: 1000
+
+cno_intensity:
+  CATDESC: CNO intensity by pitch angle and gyrophase
+  VAR_TYPE: data
+  DEPEND_0: epoch
+  DEPEND_1: cno_energy
+  DEPEND_2: pitch_angle
+  DEPEND_3: gyrophase
+  DISPLAY_TYPE: spectrogram
+  FIELDNAM: CNO_Flux
+  FORMAT: g9.3
+  LABLAXIS: CNO Flux
+  UNITS: 1/(cm^2 s MeV/nuc sr)
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  SCALETYP: log
+  DELTA_PLUS_VAR: cno_intensity_delta_plus
+  DELTA_MINUS_VAR: cno_intensity_delta_minus
+  SCALEMIN: 0.0001
+  SCALEMAX: 1000
+
+nemgsi_intensity:
+  CATDESC: NeMgSi intensity by pitch angle and gyrophase
+  VAR_TYPE: data
+  DEPEND_0: epoch
+  DEPEND_1: nemgsi_energy
+  DEPEND_2: pitch_angle
+  DEPEND_3: gyrophase
+  DISPLAY_TYPE: spectrogram
+  FIELDNAM: NeMgSi_Flux
+  FORMAT: g9.3
+  LABLAXIS: NeMgSi Flux
+  UNITS: 1/(cm^2 s MeV/nuc sr)
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  SCALETYP: log
+  DELTA_PLUS_VAR: nemgsi_intensity_delta_plus
+  DELTA_MINUS_VAR: nemgsi_intensity_delta_minus
+  SCALEMIN: 0.0001
+  SCALEMAX: 1000
+
+fe_intensity:
+  CATDESC: Fe intensity by pitch angle and gyrophase
+  VAR_TYPE: data
+  DEPEND_0: epoch
+  DEPEND_1: fe_energy
+  DEPEND_2: pitch_angle
+  DEPEND_3: gyrophase
+  DISPLAY_TYPE: spectrogram
+  FIELDNAM: Fe_Flux
+  FORMAT: g9.3
+  LABLAXIS: Fe Flux
+  UNITS: 1/(cm^2 s MeV/nuc sr)
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  SCALETYP: log
+  DELTA_PLUS_VAR: fe_intensity_delta_plus
+  DELTA_MINUS_VAR: fe_intensity_delta_minus
+  SCALEMIN: 0.0001
+  SCALEMAX: 1000
+
+h_intensity_pa:
+  CATDESC: H intensity by pitch angle
+  VAR_TYPE: data
+  DEPEND_0: epoch
+  DEPEND_1: h_energy
+  DEPEND_2: pitch_angle
+  DISPLAY_TYPE: spectrogram
+  FIELDNAM: H_Flux_PA
+  FORMAT: g9.3
+  LABLAXIS: H Flux PA
+  UNITS: 1/(cm^2 s MeV/nuc sr)
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  SCALETYP: log
+  DELTA_PLUS_VAR: h_intensity_pa_delta_plus
+  DELTA_MINUS_VAR: h_intensity_pa_delta_minus
+  SCALEMIN: 0.0001
+  SCALEMAX: 1000
+
+he4_intensity_pa:
+  CATDESC: He4 intensity by pitch angle
+  VAR_TYPE: data
+  DEPEND_0: epoch
+  DEPEND_1: he4_energy
+  DEPEND_2: pitch_angle
+  DISPLAY_TYPE: spectrogram
+  FIELDNAM: He4_Flux_PA
+  FORMAT: g9.3
+  LABLAXIS: He4 Flux PA
+  UNITS: 1/(cm^2 s MeV/nuc sr)
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  SCALETYP: log
+  DELTA_PLUS_VAR: he4_intensity_pa_delta_plus
+  DELTA_MINUS_VAR: he4_intensity_pa_delta_minus
+  SCALEMIN: 0.0001
+  SCALEMAX: 1000
+
+cno_intensity_pa:
+  CATDESC: CNO intensity by pitch angle
+  VAR_TYPE: data
+  DEPEND_0: epoch
+  DEPEND_1: cno_energy
+  DEPEND_2: pitch_angle
+  DISPLAY_TYPE: spectrogram
+  FIELDNAM: CNO_Flux_PA
+  FORMAT: g9.3
+  LABLAXIS: CNO Flux PA
+  UNITS: 1/(cm^2 s MeV/nuc sr)
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  SCALETYP: log
+  DELTA_PLUS_VAR: cno_intensity_pa_delta_plus
+  DELTA_MINUS_VAR: cno_intensity_pa_delta_minus
+  SCALEMIN: 0.0001
+  SCALEMAX: 1000
+
+nemgsi_intensity_pa:
+  CATDESC: NeMgSi intensity by pitch angle
+  VAR_TYPE: data
+  DEPEND_0: epoch
+  DEPEND_1: nemgsi_energy
+  DEPEND_2: pitch_angle
+  DISPLAY_TYPE: spectrogram
+  FIELDNAM: NeMgSi_Flux_PA
+  FORMAT: g9.3
+  LABLAXIS: NeMgSi Flux PA
+  UNITS: 1/(cm^2 s MeV/nuc sr)
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  SCALETYP: log
+  DELTA_PLUS_VAR: nemgsi_intensity_pa_delta_plus
+  DELTA_MINUS_VAR: nemgsi_intensity_pa_delta_minus
+  SCALEMIN: 0.0001
+  SCALEMAX: 1000
+
+fe_intensity_pa:
+  CATDESC: Fe intensity by pitch angle
+  VAR_TYPE: data
+  DEPEND_0: epoch
+  DEPEND_1: fe_energy
+  DEPEND_2: pitch_angle
+  DISPLAY_TYPE: spectrogram
+  FIELDNAM: Fe_Flux_PA
+  FORMAT: g9.3
+  LABLAXIS: Fe Flux PA
+  UNITS: 1/(cm^2 s MeV/nuc sr)
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  SCALETYP: log
+  DELTA_PLUS_VAR: fe_intensity_pa_delta_plus
+  DELTA_MINUS_VAR: fe_intensity_pa_delta_minus
+  SCALEMIN: 0.0001
+  SCALEMAX: 1000
+
+h_intensity_delta_plus:
+  CATDESC: Plus uncertainty for H by pitch angle and gyrophase
+  VAR_TYPE: support_data
+  DEPEND_0: epoch
+  DEPEND_1: h_energy
+  DEPEND_2: pitch_angle
+  DEPEND_3: gyrophase
+  DISPLAY_TYPE: spectrogram
+  FIELDNAM: H_Plus_Uncertainty
+  FORMAT: g9.3
+  LABLAXIS: H Flux
+  UNITS: 1/(cm^2 s MeV/nuc sr)
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  SCALETYP: log
+  SCALEMIN: 0.0001
+  SCALEMAX: 1000
+
+h_intensity_delta_minus:
+  CATDESC: Minus uncertainty for H by pitch angle and gyrophase
+  VAR_TYPE: support_data
+  DEPEND_0: epoch
+  DEPEND_1: h_energy
+  DEPEND_2: pitch_angle
+  DEPEND_3: gyrophase
+  DISPLAY_TYPE: spectrogram
+  FIELDNAM: H_Minus_Uncertainty
+  FORMAT: g9.3
+  LABLAXIS: H Flux
+  UNITS: 1/(cm^2 s MeV/nuc sr)
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  SCALETYP: log
+  SCALEMIN: 0.0001
+  SCALEMAX: 1000
+
+he4_intensity_delta_plus:
+  CATDESC: Plus uncertainty for He4 by pitch angle and gyrophase
+  VAR_TYPE: support_data
+  DEPEND_0: epoch
+  DEPEND_1: he4_energy
+  DEPEND_2: pitch_angle
+  DEPEND_3: gyrophase
+  DISPLAY_TYPE: spectrogram
+  FIELDNAM: He4_Plus_Uncertainty
+  FORMAT: g9.3
+  LABLAXIS: He4 Flux
+  UNITS: 1/(cm^2 s MeV/nuc sr)
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  SCALETYP: log
+  SCALEMIN: 0.0001
+  SCALEMAX: 1000
+
+he4_intensity_delta_minus:
+  CATDESC: Minus uncertainty for He4 by pitch angle and gyrophase
+  VAR_TYPE: support_data
+  DEPEND_0: epoch
+  DEPEND_1: he4_energy
+  DEPEND_2: pitch_angle
+  DEPEND_3: gyrophase
+  DISPLAY_TYPE: spectrogram
+  FIELDNAM: He4_Minus_Uncertainty
+  FORMAT: g9.3
+  LABLAXIS: He4 Flux
+  UNITS: 1/(cm^2 s MeV/nuc sr)
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  SCALETYP: log
+  SCALEMIN: 0.0001
+  SCALEMAX: 1000
+
+cno_intensity_delta_plus:
+  CATDESC: Plus uncertainty for CNO by pitch angle and gyrophase
+  VAR_TYPE: support_data
+  DEPEND_0: epoch
+  DEPEND_1: cno_energy
+  DEPEND_2: pitch_angle
+  DEPEND_3: gyrophase
+  DISPLAY_TYPE: spectrogram
+  FIELDNAM: CNO_Plus_Uncertainty
+  FORMAT: g9.3
+  LABLAXIS: CNO Flux
+  UNITS: 1/(cm^2 s MeV/nuc sr)
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  SCALETYP: log
+  SCALEMIN: 0.0001
+  SCALEMAX: 1000
+
+cno_intensity_delta_minus:
+  CATDESC: Minus uncertainty for CNO by pitch angle and gyrophase
+  VAR_TYPE: support_data
+  DEPEND_0: epoch
+  DEPEND_1: cno_energy
+  DEPEND_2: pitch_angle
+  DEPEND_3: gyrophase
+  DISPLAY_TYPE: spectrogram
+  FIELDNAM: CNO_Minus_Uncertainty
+  FORMAT: g9.3
+  LABLAXIS: CNO Flux
+  UNITS: 1/(cm^2 s MeV/nuc sr)
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  SCALETYP: log
+  SCALEMIN: 0.0001
+  SCALEMAX: 1000
+
+nemgsi_intensity_delta_plus:
+  CATDESC: Plus uncertainty for NeMgSi by pitch angle and gyrophase
+  VAR_TYPE: support_data
+  DEPEND_0: epoch
+  DEPEND_1: nemgsi_energy
+  DEPEND_2: pitch_angle
+  DEPEND_3: gyrophase
+  DISPLAY_TYPE: spectrogram
+  FIELDNAM: NeMgSi_Plus_Uncertainty
+  FORMAT: g9.3
+  LABLAXIS: NeMgSi Flux
+  UNITS: 1/(cm^2 s MeV/nuc sr)
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  SCALETYP: log
+  SCALEMIN: 0.0001
+  SCALEMAX: 1000
+
+nemgsi_intensity_delta_minus:
+  CATDESC: Minus uncertainty for NeMgSi by pitch angle and gyrophase
+  VAR_TYPE: support_data
+  DEPEND_0: epoch
+  DEPEND_1: nemgsi_energy
+  DEPEND_2: pitch_angle
+  DEPEND_3: gyrophase
+  DISPLAY_TYPE: spectrogram
+  FIELDNAM: NeMgSi_Minus_Uncertainty
+  FORMAT: g9.3
+  LABLAXIS: NeMgSi Flux
+  UNITS: 1/(cm^2 s MeV/nuc sr)
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  SCALETYP: log
+  SCALEMIN: 0.0001
+  SCALEMAX: 1000
+
+fe_intensity_delta_plus:
+  CATDESC: Plus uncertainty for Fe by pitch angle and gyrophase
+  VAR_TYPE: support_data
+  DEPEND_0: epoch
+  DEPEND_1: fe_energy
+  DEPEND_2: pitch_angle
+  DEPEND_3: gyrophase
+  DISPLAY_TYPE: spectrogram
+  FIELDNAM: Fe_Plus_Uncertainty
+  FORMAT: g9.3
+  LABLAXIS: Fe Flux
+  UNITS: 1/(cm^2 s MeV/nuc sr)
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  SCALETYP: log
+  SCALEMIN: 0.0001
+  SCALEMAX: 1000
+
+fe_intensity_delta_minus:
+  CATDESC: Minus uncertainty for Fe by pitch angle and gyrophase
+  VAR_TYPE: support_data
+  DEPEND_0: epoch
+  DEPEND_1: fe_energy
+  DEPEND_2: pitch_angle
+  DEPEND_3: gyrophase
+  DISPLAY_TYPE: spectrogram
+  FIELDNAM: Fe_Minus_Uncertainty
+  FORMAT: g9.3
+  LABLAXIS: Fe Flux
+  UNITS: 1/(cm^2 s MeV/nuc sr)
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  SCALETYP: log
+  SCALEMIN: 0.0001
+  SCALEMAX: 1000
+
+h_intensity_pa_delta_plus:
+  CATDESC: Plus uncertainty for H by pitch angle
+  VAR_TYPE: support_data
+  DEPEND_0: epoch
+  DEPEND_1: h_energy
+  DEPEND_2: pitch_angle
+  DISPLAY_TYPE: spectrogram
+  FIELDNAM: H_Plus_PA_Uncertainty
+  FORMAT: g9.3
+  LABLAXIS: H Flux
+  UNITS: 1/(cm^2 s MeV/nuc sr)
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  SCALETYP: log
+  SCALEMIN: 0.0001
+  SCALEMAX: 1000
+
+h_intensity_pa_delta_minus:
+  CATDESC: Minus uncertainty for H by pitch angle
+  VAR_TYPE: support_data
+  DEPEND_0: epoch
+  DEPEND_1: h_energy
+  DEPEND_2: pitch_angle
+  DISPLAY_TYPE: spectrogram
+  FIELDNAM: H_Minus_PA_Uncertainty
+  FORMAT: g9.3
+  LABLAXIS: H Flux
+  UNITS: 1/(cm^2 s MeV/nuc sr)
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  SCALETYP: log
+  SCALEMIN: 0.0001
+  SCALEMAX: 1000
+
+he4_intensity_pa_delta_plus:
+  CATDESC: Plus uncertainty for He4 by pitch angle
+  VAR_TYPE: support_data
+  DEPEND_0: epoch
+  DEPEND_1: he4_energy
+  DEPEND_2: pitch_angle
+  DISPLAY_TYPE: spectrogram
+  FIELDNAM: He4_Plus_PA_Uncertainty
+  FORMAT: g9.3
+  LABLAXIS: He4 Flux
+  UNITS: 1/(cm^2 s MeV/nuc sr)
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  SCALETYP: log
+  SCALEMIN: 0.0001
+  SCALEMAX: 1000
+
+he4_intensity_pa_delta_minus:
+  CATDESC: Minus uncertainty for He4 by pitch angle
+  VAR_TYPE: support_data
+  DEPEND_0: epoch
+  DEPEND_1: he4_energy
+  DEPEND_2: pitch_angle
+  DISPLAY_TYPE: spectrogram
+  FIELDNAM: He4_Minus_PA_Uncertainty
+  FORMAT: g9.3
+  LABLAXIS: He4 Flux
+  UNITS: 1/(cm^2 s MeV/nuc sr)
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  SCALETYP: log
+  SCALEMIN: 0.0001
+  SCALEMAX: 1000
+
+cno_intensity_pa_delta_plus:
+  CATDESC: Plus uncertainty for CNO by pitch angle
+  VAR_TYPE: support_data
+  DEPEND_0: epoch
+  DEPEND_1: cno_energy
+  DEPEND_2: pitch_angle
+  DISPLAY_TYPE: spectrogram
+  FIELDNAM: CNO_Plus_PA_Uncertainty
+  FORMAT: g9.3
+  LABLAXIS: CNO Flux
+  UNITS: 1/(cm^2 s MeV/nuc sr)
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  SCALETYP: log
+  SCALEMIN: 0.0001
+  SCALEMAX: 1000
+
+cno_intensity_pa_delta_minus:
+  CATDESC: Minus uncertainty for CNO by pitch angle
+  VAR_TYPE: support_data
+  DEPEND_0: epoch
+  DEPEND_1: cno_energy
+  DEPEND_2: pitch_angle
+  DISPLAY_TYPE: spectrogram
+  FIELDNAM: CNO_Minus_PA_Uncertainty
+  FORMAT: g9.3
+  LABLAXIS: CNO Flux
+  UNITS: 1/(cm^2 s MeV/nuc sr)
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  SCALETYP: log
+  SCALEMIN: 0.0001
+  SCALEMAX: 1000
+
+nemgsi_intensity_pa_delta_plus:
+  CATDESC: Plus uncertainty for NeMgSi by pitch angle
+  VAR_TYPE: support_data
+  DEPEND_0: epoch
+  DEPEND_1: nemgsi_energy
+  DEPEND_2: pitch_angle
+  DISPLAY_TYPE: spectrogram
+  FIELDNAM: NeMgSi_Plus_PA_Uncertainty
+  FORMAT: g9.3
+  LABLAXIS: NeMgSi Flux
+  UNITS: 1/(cm^2 s MeV/nuc sr)
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  SCALETYP: log
+  SCALEMIN: 0.0001
+  SCALEMAX: 1000
+
+nemgsi_intensity_pa_delta_minus:
+  CATDESC: Minus uncertainty for NeMgSi by pitch angle
+  VAR_TYPE: support_data
+  DEPEND_0: epoch
+  DEPEND_1: nemgsi_energy
+  DEPEND_2: pitch_angle
+  DISPLAY_TYPE: spectrogram
+  FIELDNAM: NeMgSi_Minus_PA_Uncertainty
+  FORMAT: g9.3
+  LABLAXIS: NeMgSi Flux
+  UNITS: 1/(cm^2 s MeV/nuc sr)
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  SCALETYP: log
+  SCALEMIN: 0.0001
+  SCALEMAX: 1000
+
+fe_intensity_pa_delta_plus:
+  CATDESC: Plus uncertainty for Fe by pitch angle
+  VAR_TYPE: support_data
+  DEPEND_0: epoch
+  DEPEND_1: fe_energy
+  DEPEND_2: pitch_angle
+  DISPLAY_TYPE: spectrogram
+  FIELDNAM: Fe_Plus_PA_Uncertainty
+  FORMAT: g9.3
+  LABLAXIS: Fe Flux
+  UNITS: 1/(cm^2 s MeV/nuc sr)
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  SCALETYP: log
+  SCALEMIN: 0.0001
+  SCALEMAX: 1000
+
+fe_intensity_pa_delta_minus:
+  CATDESC: Minus uncertainty for Fe by pitch angle
+  VAR_TYPE: support_data
+  DEPEND_0: epoch
+  DEPEND_1: fe_energy
+  DEPEND_2: pitch_angle
+  DISPLAY_TYPE: spectrogram
+  FIELDNAM: Fe_Minus_PA_Uncertainty
+  FORMAT: g9.3
+  LABLAXIS: Fe Flux
+  UNITS: 1/(cm^2 s MeV/nuc sr)
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  SCALETYP: log
+  SCALEMIN: 0.0001
+  SCALEMAX: 1000
+
+h_energy:
+  CATDESC: Energy bins for H by pitch angle and gyrophase
+  VAR_TYPE: support_data
+  DISPLAY_TYPE: no_plot
+  FIELDNAM: H_Energy
+  FORMAT: F5.1
+  LABLAXIS: Energy
+  UNITS: MeV
+  VALIDMAX: 1000
+  FILLVAL: -1.00E+31
+  SCALETYP: log
+  DELTA_PLUS_VAR: h_energy_delta_plus
+  DELTA_MINUS_VAR: h_energy_delta_minus
+
+he4_energy:
+  CATDESC: Energy bins for He4 by pitch angle and gyrophase
+  VAR_TYPE: support_data
+  DISPLAY_TYPE: no_plot
+  FIELDNAM: He4_Energy
+  FORMAT: F5.1
+  LABLAXIS: Energy
+  UNITS: MeV
+  VALIDMAX: 1000
+  FILLVAL: -1.00E+31
+  SCALETYP: log
+  DELTA_PLUS_VAR: he4_energy_delta_plus
+  DELTA_MINUS_VAR: he4_energy_delta_minus
+
+cno_energy:
+  CATDESC: Energy bins for CNO by pitch angle and gyrophase
+  VAR_TYPE: support_data
+  DISPLAY_TYPE: no_plot
+  FIELDNAM: CNO_Energy
+  FORMAT: F5.1
+  LABLAXIS: Energy
+  UNITS: MeV
+  VALIDMAX: 1000
+  FILLVAL: -1.00E+31
+  SCALETYP: log
+  DELTA_PLUS_VAR: cno_energy_delta_plus
+  DELTA_MINUS_VAR: cno_energy_delta_minus
+
+nemgsi_energy:
+  CATDESC: Energy bins for NeMgSi by pitch angle and gyrophase
+  VAR_TYPE: support_data
+  DISPLAY_TYPE: no_plot
+  FIELDNAM: NeMgSi_Energy
+  FORMAT: F5.1
+  LABLAXIS: Energy
+  UNITS: MeV
+  VALIDMAX: 1000
+  FILLVAL: -1.00E+31
+  SCALETYP: log
+  DELTA_PLUS_VAR: nemgsi_energy_delta_plus
+  DELTA_MINUS_VAR: nemgsi_energy_delta_minus
+
+fe_energy:
+  CATDESC: Energy bins for Fe by pitch angle and gyrophase
+  VAR_TYPE: support_data
+  DISPLAY_TYPE: no_plot
+  FIELDNAM: Fe_Energy
+  FORMAT: F5.1
+  LABLAXIS: Energy
+  UNITS: MeV
+  VALIDMAX: 1000
+  FILLVAL: -1.00E+31
+  SCALETYP: log
+  DELTA_PLUS_VAR: fe_energy_delta_plus
+  DELTA_MINUS_VAR: fe_energy_delta_minus
+
+h_energy_delta_plus:
+  CATDESC: H energy bin Delta plus
+  VAR_TYPE: support_data
+  DISPLAY_TYPE: no_plot
+  FIELDNAM: h_energy_delta_plus
+  FORMAT: F5.1
+  LABLAXIS: Energy
+  UNITS: MeV
+  VALIDMAX: 1000
+  FILLVAL: -1.00E+31
+  SCALETYP: log
+  SCALEMIN: 0.0001
+  SCALEMAX: 1000
+
+he4_energy_delta_plus:
+  CATDESC: He4 energy bin Delta plus
+  VAR_TYPE: support_data
+  DISPLAY_TYPE: no_plot
+  FIELDNAM: he4_energy_delta_plus
+  FORMAT: F5.1
+  LABLAXIS: Energy
+  UNITS: MeV
+  VALIDMAX: 1000
+  FILLVAL: -1.00E+31
+  SCALETYP: log
+  SCALEMIN: 0.0001
+  SCALEMAX: 1000
+
+cno_energy_delta_plus:
+  CATDESC: CNO energy bin Delta plus
+  VAR_TYPE: support_data
+  DISPLAY_TYPE: no_plot
+  FIELDNAM: cno_energy_delta_plus
+  FORMAT: F5.1
+  LABLAXIS: Energy
+  UNITS: MeV
+  VALIDMAX: 1000
+  FILLVAL: -1.00E+31
+  SCALETYP: log
+  SCALEMIN: 0.0001
+  SCALEMAX: 1000
+
+nemgsi_energy_delta_plus:
+  CATDESC: NeMgSi energy bin Delta plus
+  VAR_TYPE: support_data
+  DISPLAY_TYPE: no_plot
+  FIELDNAM: nemgsi_energy_delta_plus
+  FORMAT: F5.1
+  LABLAXIS: Energy
+  UNITS: MeV
+  VALIDMAX: 1000
+  FILLVAL: -1.00E+31
+  SCALETYP: log
+  SCALEMIN: 0.0001
+  SCALEMAX: 1000
+
+fe_energy_delta_plus:
+  CATDESC: Fe energy bin Delta plus
+  VAR_TYPE: support_data
+  DISPLAY_TYPE: no_plot
+  FIELDNAM: fe_energy_delta_plus
+  FORMAT: F5.1
+  LABLAXIS: Energy
+  UNITS: MeV
+  VALIDMAX: 1000
+  FILLVAL: -1.00E+31
+  SCALETYP: log
+  SCALEMIN: 0.0001
+  SCALEMAX: 1000
+
+h_energy_delta_minus:
+  CATDESC: H energy bin Delta minus
+  VAR_TYPE: support_data
+  DISPLAY_TYPE: no_plot
+  FIELDNAM: h_energy_delta_minus
+  FORMAT: F5.1
+  LABLAXIS: Energy
+  UNITS: MeV
+  VALIDMAX: 1000
+  FILLVAL: -1.00E+31
+  SCALETYP: log
+  SCALEMIN: 0.0001
+  SCALEMAX: 1000
+
+he4_energy_delta_minus:
+  CATDESC: He4 energy bin Delta minus
+  VAR_TYPE: support_data
+  DISPLAY_TYPE: no_plot
+  FIELDNAM: he4_energy_delta_minus
+  FORMAT: F5.1
+  LABLAXIS: Energy
+  UNITS: MeV
+  VALIDMAX: 1000
+  FILLVAL: -1.00E+31
+  SCALETYP: log
+  SCALEMIN: 0.0001
+  SCALEMAX: 1000
+
+cno_energy_delta_minus:
+  CATDESC: CNO energy bin Delta minus
+  VAR_TYPE: support_data
+  DISPLAY_TYPE: no_plot
+  FIELDNAM: cno_energy_delta_minus
+  FORMAT: F5.1
+  LABLAXIS: Energy
+  UNITS: MeV
+  VALIDMAX: 1000
+  FILLVAL: -1.00E+31
+  SCALETYP: log
+  SCALEMIN: 0.0001
+  SCALEMAX: 1000
+
+nemgsi_energy_delta_minus:
+  CATDESC: NeMgSi energy bin Delta minus
+  VAR_TYPE: support_data
+  DISPLAY_TYPE: no_plot
+  FIELDNAM: nemgsi_energy_delta_minus
+  FORMAT: F5.1
+  LABLAXIS: Energy
+  UNITS: MeV
+  VALIDMAX: 1000
+  FILLVAL: -1.00E+31
+  SCALETYP: log
+  SCALEMIN: 0.0001
+  SCALEMAX: 1000
+
+fe_energy_delta_minus:
+  CATDESC: Fe energy bin Delta minus
+  VAR_TYPE: support_data
+  DISPLAY_TYPE: no_plot
+  FIELDNAM: fe_energy_delta_minus
+  FORMAT: F5.1
+  LABLAXIS: Energy
+  UNITS: MeV
+  VALIDMAX: 1000
+  FILLVAL: -1.00E+31
+  SCALETYP: log
+  SCALEMIN: 0.0001
+  SCALEMAX: 1000
+
+pitch_angle:
+  CATDESC: Pitch Angle Bin
+  VAR_TYPE: support_data
+  DISPLAY_TYPE: no_plot
+  FIELDNAM: pitch_angle
+  FORMAT: F5.2
+  LABLAXIS: Pitch Angle
+  UNITS: Degree
+  VALIDMIN: 0
+  VALIDMAX: 180
+  FILLVAL: -1.00E+31
+  SCALETYP: linear
+  DELTA_PLUS_VAR: pitch_angle_delta
+  DELTA_MINUS_VAR: pitch_angle_delta
+
+pitch_angle_delta:
+  CATDESC: Pitch Angle Bin Delta
+  VAR_TYPE: support_data
+  DISPLAY_TYPE: no_plot
+  FIELDNAM: pitch_angle_delta
+  FORMAT: F5.3
+  LABLAXIS: Pitch Angle Delta
+  UNITS: Degree
+  VALIDMIN: 0
+  VALIDMAX: 180
+  FILLVAL: -1.00E+31
+  SCALETYP: linear
+
+gyrophase:
+  CATDESC: Gyrophase
+  VAR_TYPE: support_data
+  DISPLAY_TYPE: no_plot
+  FIELDNAM: gyrophase
+  FORMAT: F5.4
+  LABLAXIS: Gyrophase
+  UNITS: Degree
+  VALIDMIN: 0
+  VALIDMAX: 360
+  FILLVAL: -1.00E+31
+  SCALETYP: linear
+  DELTA_PLUS_VAR: gyrophase_delta
+  DELTA_MINUS_VAR: gyrophase_delta
+
+gyrophase_delta:
+  CATDESC: Gyrophase Delta
+  VAR_TYPE: support_data
+  DISPLAY_TYPE: no_plot
+  FIELDNAM: gyrophase_delta
+  FORMAT: F5.5
+  LABLAXIS: Gyrophase Delta
+  UNITS: Degree
+  VALIDMIN: 0
+  VALIDMAX: 360
+  FILLVAL: -1.00E+31
+  SCALETYP: linear
+

@@ -25,7 +25,7 @@ with open(args.csv) as csvfile:
 
 filename_without_extension = Path(args.csv).name.split(".")[0]
 print(filename_without_extension)
-yaml_file_name = f"imap_processing/cdf/config/{filename_without_extension}.yaml"
+yaml_file_name = f"imap_l3_processing/cdf/config/{filename_without_extension}.yaml"
 if os.path.isfile(yaml_file_name):
     if input(
             "The Yaml already exists in the config folder! Are your sure your want to overwrite the other pairs work? [Y/n]") != "n":
