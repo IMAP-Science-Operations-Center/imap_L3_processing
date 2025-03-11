@@ -12,6 +12,13 @@ def calculate_unit_vector(vector: np.ndarray[float]) -> np.ndarray[float]:
     return vector / np.linalg.norm(vector, axis=-1, keepdims=True)
 
 
+def rotate_from_imap_despun_to_hit_despun(vector: np.ndarray[float]) -> np.ndarray[float]:
+    rotation_matrix_from_imap_despun_frame_to_hit_despun_instrument_frame = [[[0.866025, 0.5, 0],
+                                                                              [-0.5, 0.866025, 0],
+                                                                              [0, 0, 1]]]
+    return rotation_matrix_from_imap_despun_frame_to_hit_despun_instrument_frame @ vector
+
+
 def calculate_gyrophase(particle_vectors: np.ndarray, magnetic_field_vector: np.ndarray):
     magnetic_field_plus_z = magnetic_field_vector
     imap_dps_plus_x = [1, 0, 0]
