@@ -44,7 +44,7 @@ class TestPitchAngles(unittest.TestCase):
 
         rotated_vector = rotate_from_imap_despun_to_hit_despun(vector)
 
-        expected_vector = np.array([[1.366025, 0.366025, 1.0]])
+        expected_vector = np.array([1.366025, 0.366025, 1.0])
 
         np.testing.assert_array_almost_equal(rotated_vector, expected_vector)
 

@@ -24,6 +24,7 @@ def get_sector_unit_vectors(declinations_degrees: np.ndarray, inclinations_degre
     sin_dec = np.sin(declinations)
     x = sin_dec * np.cos(inclinations)
     y = sin_dec * np.sin(inclinations)
+
     stacked = np.stack(np.broadcast_arrays(x, y, z), axis=-1)
     return stacked
 
@@ -41,29 +42,50 @@ def rebin_by_pitch_angle_and_gyrophase(flux_data: np.array,
     flux_with_delta_plus = uarray(flux_data, flux_delta_plus)
     flux_with_delta_minus = uarray(flux_data, flux_delta_minus)
 
-    output_shape = (flux_data.shape[0], number_of_pitch_angle_bins, number_of_gyrophase_bins)
-    rebinned_summed_with_delta_plus = uarray(np.zeros(shape=output_shape), 0)
-    rebinned_summed_with_delta_minus = uarray(np.zeros(shape=output_shape), 0)
-    rebinned_count = np.zeros(shape=output_shape)
+    output_shape_pa_and_gyro = (flux_data.shape[0], number_of_pitch_angle_bins, number_of_gyrophase_bins)
+    output_shape_pa_only = (flux_data.shape[0], number_of_pitch_angle_bins)
+    rebinned_summed_by_pa_and_gyro_with_delta_plus = uarray(np.zeros(shape=output_shape_pa_and_gyro), 0)
+    rebinned_summed_by_pa_and_gyro_with_delta_minus = uarray(np.zeros(shape=output_shape_pa_and_gyro), 0)
+
+    rebinned_summed_pa_only_with_delta_plus = uarray(np.zeros(shape=output_shape_pa_only), 0)
+    rebinned_summed_pa_only_with_delta_minus = uarray(np.zeros(shape=output_shape_pa_only), 0)
+
+    rebinned_count_by_pa_and_gyro = np.zeros(shape=output_shape_pa_and_gyro)
+    rebinned_count_pa_only = np.zeros(shape=output_shape_pa_only)
 
     for i, (flux_delta_plus, flux_delta_minus) in enumerate(zip(flux_with_delta_plus, flux_with_delta_minus)):
         for pitch_angle_bin, gyrophase_bin, flux_with_plus, flux_with_minus in zip(np.ravel(pitch_angle_bins),
                                                                                    np.ravel(gyrophase_bins),
                                                                                    np.ravel(flux_delta_plus),
                                                                                    np.ravel(flux_delta_minus)):
-            rebinned_summed_with_delta_plus[i, pitch_angle_bin, gyrophase_bin] += flux_with_plus
-            rebinned_summed_with_delta_minus[i, pitch_angle_bin, gyrophase_bin] += flux_with_minus
+            rebinned_summed_by_pa_and_gyro_with_delta_plus[i, pitch_angle_bin, gyrophase_bin] += flux_with_plus
+            rebinned_summed_by_pa_and_gyro_with_delta_minus[i, pitch_angle_bin, gyrophase_bin] += flux_with_minus
+            rebinned_count_by_pa_and_gyro[i, pitch_angle_bin, gyrophase_bin] += 1
 
-            rebinned_count[i, pitch_angle_bin, gyrophase_bin] += 1
+            rebinned_summed_pa_only_with_delta_plus[i, pitch_angle_bin] += flux_with_plus
+            rebinned_summed_pa_only_with_delta_minus[i, pitch_angle_bin] += flux_with_minus
+            rebinned_count_pa_only[i, pitch_angle_bin] += 1
 
-    averaged_rebinned_fluxes_with_delta_plus = np.divide(rebinned_summed_with_delta_plus, rebinned_count,
-                                                         out=np.full_like(rebinned_summed_with_delta_plus, np.nan),
-                                                         where=rebinned_count != 0)
-    averaged_rebinned_fluxes_with_delta_minus = np.divide(rebinned_summed_with_delta_minus, rebinned_count,
-                                                          out=np.full_like(rebinned_summed_with_delta_minus, np.nan),
-                                                          where=rebinned_count != 0)
-    pa_only_with_delta_plus = np.nanmean(averaged_rebinned_fluxes_with_delta_plus, axis=-1)
-    pa_only_with_delta_minus = np.nanmean(averaged_rebinned_fluxes_with_delta_minus, axis=-1)
+    averaged_rebinned_fluxes_with_delta_plus = np.divide(rebinned_summed_by_pa_and_gyro_with_delta_plus,
+                                                         rebinned_count_by_pa_and_gyro,
+                                                         out=np.full_like(
+                                                             rebinned_summed_by_pa_and_gyro_with_delta_plus, np.nan),
+                                                         where=rebinned_count_by_pa_and_gyro != 0)
+    averaged_rebinned_fluxes_with_delta_minus = np.divide(rebinned_summed_by_pa_and_gyro_with_delta_minus,
+                                                          rebinned_count_by_pa_and_gyro,
+                                                          out=np.full_like(
+                                                              rebinned_summed_by_pa_and_gyro_with_delta_minus, np.nan),
+                                                          where=rebinned_count_by_pa_and_gyro != 0)
+    pa_only_with_delta_plus = np.divide(rebinned_summed_pa_only_with_delta_plus,
+                                        rebinned_count_pa_only,
+                                        out=np.full_like(
+                                            rebinned_summed_pa_only_with_delta_plus, np.nan),
+                                        where=rebinned_count_pa_only != 0)
+    pa_only_with_delta_minus = np.divide(rebinned_summed_pa_only_with_delta_minus,
+                                         rebinned_count_pa_only,
+                                         out=np.full_like(
+                                             rebinned_summed_pa_only_with_delta_minus, np.nan),
+                                         where=rebinned_count_pa_only != 0)
 
     return (nominal_values(averaged_rebinned_fluxes_with_delta_plus),
             std_devs(averaged_rebinned_fluxes_with_delta_plus),

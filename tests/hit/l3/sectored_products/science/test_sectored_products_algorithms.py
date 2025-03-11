@@ -58,7 +58,7 @@ class TestSectoredProductsAlgorithms(TestCase):
                  [[4, 0, 1, 5], [7, 3, 2, 6]],
                  [[12, 8, 9, 13], [15, 11, 10, 14]]
              ],
-             [[2.5, 4.5], [10.5, 12.5]]),
+             [[2.5, 4.5], [10.5, 12.5]])
         ]
 
         for case, pitch_angles, gyrophases, number_of_pitch_angle_bins, number_of_gyrophase_bins, \
@@ -76,6 +76,21 @@ class TestSectoredProductsAlgorithms(TestCase):
 
                 np.testing.assert_equal(fluxes_pa_and_gyro, expected_flux_by_pa_gyrophase)
                 np.testing.assert_equal(fluxes_pa_only, expected_flux_by_pa)
+
+    def test_rebin_by_pitch_angle_and_gyrophase_pa_product_only_correctly_weights_when_averaging(self):
+        fluxes = np.array([[[0, 1, 2], [3, 4, 5]]])
+        rebinned_data = rebin_by_pitch_angle_and_gyrophase(
+            fluxes,
+            fluxes * 0.01,
+            fluxes * 0.01,
+            np.array([[45, 45, 45], [135, 135, 135]]),
+            np.array([[45, 135, 225], [45, 135, 225]]),
+            1, 2)
+        fluxes_pa_and_gyro, _, _ = rebinned_data[0:3]
+        fluxes_pa_only, _, _ = rebinned_data[3:6]
+
+        np.testing.assert_equal(fluxes_pa_and_gyro, [[[2, 3.5]]])
+        np.testing.assert_equal(fluxes_pa_only, [[2.5]])
 
     def test_rebin_by_pitch_angle_and_gyrophase_includes_uncertainties(self):
         default_pitch_angles = np.array([[45, 45, 45, 45], [135, 135, 135, 135]])

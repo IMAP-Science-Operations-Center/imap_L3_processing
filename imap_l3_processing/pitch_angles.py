@@ -13,9 +13,9 @@ def calculate_unit_vector(vector: np.ndarray[float]) -> np.ndarray[float]:
 
 
 def rotate_from_imap_despun_to_hit_despun(vector: np.ndarray[float]) -> np.ndarray[float]:
-    rotation_matrix_from_imap_despun_frame_to_hit_despun_instrument_frame = [[[0.866025, 0.5, 0],
-                                                                              [-0.5, 0.866025, 0],
-                                                                              [0, 0, 1]]]
+    rotation_matrix_from_imap_despun_frame_to_hit_despun_instrument_frame = [[0.866025, 0.5, 0],
+                                                                             [-0.5, 0.866025, 0],
+                                                                             [0, 0, 1]]
     return rotation_matrix_from_imap_despun_frame_to_hit_despun_instrument_frame @ vector
 
 

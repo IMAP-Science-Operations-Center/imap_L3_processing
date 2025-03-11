@@ -149,15 +149,12 @@ class HitProcessor(Processor):
         mag_data = dependencies.mag_l1d_data
         hit_data = dependencies.data
 
-        input_flux_data_by_species = {"cno": (hit_data.cno, hit_data.delta_plus_cno, hit_data.delta_minus_cno),
-                                      "helium4": (
-                                          hit_data.he4, hit_data.delta_plus_he4, hit_data.delta_minus_he4),
-                                      "hydrogen": (
-                                          hit_data.h, hit_data.delta_plus_h,
-                                          hit_data.delta_minus_h),
-                                      "iron": (hit_data.fe, hit_data.delta_plus_fe, hit_data.delta_minus_fe),
-                                      "NeMgSi": (
-                                          hit_data.nemgsi, hit_data.delta_plus_nemgsi, hit_data.delta_minus_nemgsi)}
+        input_flux_data_by_species = {
+            "hydrogen": (hit_data.h, hit_data.delta_plus_h, hit_data.delta_minus_h),
+            "helium4": (hit_data.he4, hit_data.delta_plus_he4, hit_data.delta_minus_he4),
+            "cno": (hit_data.cno, hit_data.delta_plus_cno, hit_data.delta_minus_cno),
+            "NeMgSi": (hit_data.nemgsi, hit_data.delta_plus_nemgsi, hit_data.delta_minus_nemgsi),
+            "iron": (hit_data.fe, hit_data.delta_plus_fe, hit_data.delta_minus_fe)}
 
         rebinned_pa_gyro_flux_by_species = {"cno": self._create_nan_array(hit_data.cno.shape),
                                             "helium4": self._create_nan_array(hit_data.he4.shape),
