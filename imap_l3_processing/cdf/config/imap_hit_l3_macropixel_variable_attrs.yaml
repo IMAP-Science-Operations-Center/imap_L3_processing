@@ -41,7 +41,7 @@ h_intensity:
   LABLAXIS: H Flux
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMAX: 10000000000
-  FILLVAL: -1.00E+31
+  FILLVAL: -1.0000E+31
   SCALETYP: log
   DELTA_PLUS_VAR: h_intensity_delta_plus
   DELTA_MINUS_VAR: h_intensity_delta_minus
@@ -61,7 +61,7 @@ he4_intensity:
   LABLAXIS: He4 Flux
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMAX: 10000000000
-  FILLVAL: -1.00E+31
+  FILLVAL: -1.0000E+31
   SCALETYP: log
   DELTA_PLUS_VAR: he4_intensity_delta_plus
   DELTA_MINUS_VAR: he4_intensity_delta_minus
@@ -81,7 +81,7 @@ cno_intensity:
   LABLAXIS: CNO Flux
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMAX: 10000000000
-  FILLVAL: -1.00E+31
+  FILLVAL: -1.0000E+31
   SCALETYP: log
   DELTA_PLUS_VAR: cno_intensity_delta_plus
   DELTA_MINUS_VAR: cno_intensity_delta_minus
@@ -101,7 +101,7 @@ nemgsi_intensity:
   LABLAXIS: NeMgSi Flux
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMAX: 10000000000
-  FILLVAL: -1.00E+31
+  FILLVAL: -1.0000E+31
   SCALETYP: log
   DELTA_PLUS_VAR: nemgsi_intensity_delta_plus
   DELTA_MINUS_VAR: nemgsi_intensity_delta_minus
@@ -121,7 +121,7 @@ fe_intensity:
   LABLAXIS: Fe Flux
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMAX: 10000000000
-  FILLVAL: -1.00E+31
+  FILLVAL: -1.0000E+31
   SCALETYP: log
   DELTA_PLUS_VAR: fe_intensity_delta_plus
   DELTA_MINUS_VAR: fe_intensity_delta_minus
@@ -140,7 +140,7 @@ h_intensity_pa:
   LABLAXIS: H Flux PA
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMAX: 10000000000
-  FILLVAL: -1.00E+31
+  FILLVAL: -1.0000E+31
   SCALETYP: log
   DELTA_PLUS_VAR: h_intensity_pa_delta_plus
   DELTA_MINUS_VAR: h_intensity_pa_delta_minus
@@ -159,7 +159,7 @@ he4_intensity_pa:
   LABLAXIS: He4 Flux PA
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMAX: 10000000000
-  FILLVAL: -1.00E+31
+  FILLVAL: -1.0000E+31
   SCALETYP: log
   DELTA_PLUS_VAR: he4_intensity_pa_delta_plus
   DELTA_MINUS_VAR: he4_intensity_pa_delta_minus
@@ -178,7 +178,7 @@ cno_intensity_pa:
   LABLAXIS: CNO Flux PA
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMAX: 10000000000
-  FILLVAL: -1.00E+31
+  FILLVAL: -1.0000E+31
   SCALETYP: log
   DELTA_PLUS_VAR: cno_intensity_pa_delta_plus
   DELTA_MINUS_VAR: cno_intensity_pa_delta_minus
@@ -197,7 +197,7 @@ nemgsi_intensity_pa:
   LABLAXIS: NeMgSi Flux PA
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMAX: 10000000000
-  FILLVAL: -1.00E+31
+  FILLVAL: -1.0000E+31
   SCALETYP: log
   DELTA_PLUS_VAR: nemgsi_intensity_pa_delta_plus
   DELTA_MINUS_VAR: nemgsi_intensity_pa_delta_minus
@@ -216,7 +216,7 @@ fe_intensity_pa:
   LABLAXIS: Fe Flux PA
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMAX: 10000000000
-  FILLVAL: -1.00E+31
+  FILLVAL: -1.0000E+31
   SCALETYP: log
   DELTA_PLUS_VAR: fe_intensity_pa_delta_plus
   DELTA_MINUS_VAR: fe_intensity_pa_delta_minus
@@ -236,7 +236,7 @@ h_intensity_delta_plus:
   LABLAXIS: H Flux
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMAX: 10000000000
-  FILLVAL: -1.00E+31
+  FILLVAL: -1.0000E+31
   SCALETYP: log
   SCALEMIN: 0.0001
   SCALEMAX: 1000
@@ -254,7 +254,7 @@ h_intensity_delta_minus:
   LABLAXIS: H Flux
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMAX: 10000000000
-  FILLVAL: -1.00E+31
+  FILLVAL: -1.0000E+31
   SCALETYP: log
   SCALEMIN: 0.0001
   SCALEMAX: 1000
@@ -272,7 +272,7 @@ he4_intensity_delta_plus:
   LABLAXIS: He4 Flux
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMAX: 10000000000
-  FILLVAL: -1.00E+31
+  FILLVAL: -1.0000E+31
   SCALETYP: log
   SCALEMIN: 0.0001
   SCALEMAX: 1000
@@ -290,7 +290,7 @@ he4_intensity_delta_minus:
   LABLAXIS: He4 Flux
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMAX: 10000000000
-  FILLVAL: -1.00E+31
+  FILLVAL: -1.0000E+31
   SCALETYP: log
   SCALEMIN: 0.0001
   SCALEMAX: 1000
@@ -308,7 +308,7 @@ cno_intensity_delta_plus:
   LABLAXIS: CNO Flux
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMAX: 10000000000
-  FILLVAL: -1.00E+31
+  FILLVAL: -1.0000E+31
   SCALETYP: log
   SCALEMIN: 0.0001
   SCALEMAX: 1000
@@ -326,7 +326,7 @@ cno_intensity_delta_minus:
   LABLAXIS: CNO Flux
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMAX: 10000000000
-  FILLVAL: -1.00E+31
+  FILLVAL: -1.0000E+31
   SCALETYP: log
   SCALEMIN: 0.0001
   SCALEMAX: 1000
@@ -344,7 +344,7 @@ nemgsi_intensity_delta_plus:
   LABLAXIS: NeMgSi Flux
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMAX: 10000000000
-  FILLVAL: -1.00E+31
+  FILLVAL: -1.0000E+31
   SCALETYP: log
   SCALEMIN: 0.0001
   SCALEMAX: 1000
@@ -362,7 +362,7 @@ nemgsi_intensity_delta_minus:
   LABLAXIS: NeMgSi Flux
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMAX: 10000000000
-  FILLVAL: -1.00E+31
+  FILLVAL: -1.0000E+31
   SCALETYP: log
   SCALEMIN: 0.0001
   SCALEMAX: 1000
@@ -380,7 +380,7 @@ fe_intensity_delta_plus:
   LABLAXIS: Fe Flux
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMAX: 10000000000
-  FILLVAL: -1.00E+31
+  FILLVAL: -1.0000E+31
   SCALETYP: log
   SCALEMIN: 0.0001
   SCALEMAX: 1000
@@ -398,7 +398,7 @@ fe_intensity_delta_minus:
   LABLAXIS: Fe Flux
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMAX: 10000000000
-  FILLVAL: -1.00E+31
+  FILLVAL: -1.0000E+31
   SCALETYP: log
   SCALEMIN: 0.0001
   SCALEMAX: 1000
@@ -415,7 +415,7 @@ h_intensity_pa_delta_plus:
   LABLAXIS: H Flux
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMAX: 10000000000
-  FILLVAL: -1.00E+31
+  FILLVAL: -1.0000E+31
   SCALETYP: log
   SCALEMIN: 0.0001
   SCALEMAX: 1000
@@ -432,7 +432,7 @@ h_intensity_pa_delta_minus:
   LABLAXIS: H Flux
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMAX: 10000000000
-  FILLVAL: -1.00E+31
+  FILLVAL: -1.0000E+31
   SCALETYP: log
   SCALEMIN: 0.0001
   SCALEMAX: 1000
@@ -449,7 +449,7 @@ he4_intensity_pa_delta_plus:
   LABLAXIS: He4 Flux
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMAX: 10000000000
-  FILLVAL: -1.00E+31
+  FILLVAL: -1.0000E+31
   SCALETYP: log
   SCALEMIN: 0.0001
   SCALEMAX: 1000
@@ -466,7 +466,7 @@ he4_intensity_pa_delta_minus:
   LABLAXIS: He4 Flux
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMAX: 10000000000
-  FILLVAL: -1.00E+31
+  FILLVAL: -1.0000E+31
   SCALETYP: log
   SCALEMIN: 0.0001
   SCALEMAX: 1000
@@ -483,7 +483,7 @@ cno_intensity_pa_delta_plus:
   LABLAXIS: CNO Flux
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMAX: 10000000000
-  FILLVAL: -1.00E+31
+  FILLVAL: -1.0000E+31
   SCALETYP: log
   SCALEMIN: 0.0001
   SCALEMAX: 1000
@@ -500,7 +500,7 @@ cno_intensity_pa_delta_minus:
   LABLAXIS: CNO Flux
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMAX: 10000000000
-  FILLVAL: -1.00E+31
+  FILLVAL: -1.0000E+31
   SCALETYP: log
   SCALEMIN: 0.0001
   SCALEMAX: 1000
@@ -517,7 +517,7 @@ nemgsi_intensity_pa_delta_plus:
   LABLAXIS: NeMgSi Flux
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMAX: 10000000000
-  FILLVAL: -1.00E+31
+  FILLVAL: -1.0000E+31
   SCALETYP: log
   SCALEMIN: 0.0001
   SCALEMAX: 1000
@@ -534,7 +534,7 @@ nemgsi_intensity_pa_delta_minus:
   LABLAXIS: NeMgSi Flux
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMAX: 10000000000
-  FILLVAL: -1.00E+31
+  FILLVAL: -1.0000E+31
   SCALETYP: log
   SCALEMIN: 0.0001
   SCALEMAX: 1000
@@ -551,7 +551,7 @@ fe_intensity_pa_delta_plus:
   LABLAXIS: Fe Flux
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMAX: 10000000000
-  FILLVAL: -1.00E+31
+  FILLVAL: -1.0000E+31
   SCALETYP: log
   SCALEMIN: 0.0001
   SCALEMAX: 1000
@@ -568,7 +568,7 @@ fe_intensity_pa_delta_minus:
   LABLAXIS: Fe Flux
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMAX: 10000000000
-  FILLVAL: -1.00E+31
+  FILLVAL: -1.0000E+31
   SCALETYP: log
   SCALEMIN: 0.0001
   SCALEMAX: 1000
@@ -582,7 +582,7 @@ h_energy:
   LABLAXIS: Energy
   UNITS: MeV
   VALIDMAX: 1000
-  FILLVAL: -1.00E+31
+  FILLVAL: -1.0000E+31
   SCALETYP: log
   DELTA_PLUS_VAR: h_energy_delta_plus
   DELTA_MINUS_VAR: h_energy_delta_minus
@@ -596,7 +596,7 @@ he4_energy:
   LABLAXIS: Energy
   UNITS: MeV
   VALIDMAX: 1000
-  FILLVAL: -1.00E+31
+  FILLVAL: -1.0000E+31
   SCALETYP: log
   DELTA_PLUS_VAR: he4_energy_delta_plus
   DELTA_MINUS_VAR: he4_energy_delta_minus
@@ -610,7 +610,7 @@ cno_energy:
   LABLAXIS: Energy
   UNITS: MeV
   VALIDMAX: 1000
-  FILLVAL: -1.00E+31
+  FILLVAL: -1.0000E+31
   SCALETYP: log
   DELTA_PLUS_VAR: cno_energy_delta_plus
   DELTA_MINUS_VAR: cno_energy_delta_minus
@@ -624,7 +624,7 @@ nemgsi_energy:
   LABLAXIS: Energy
   UNITS: MeV
   VALIDMAX: 1000
-  FILLVAL: -1.00E+31
+  FILLVAL: -1.0000E+31
   SCALETYP: log
   DELTA_PLUS_VAR: nemgsi_energy_delta_plus
   DELTA_MINUS_VAR: nemgsi_energy_delta_minus
@@ -638,7 +638,7 @@ fe_energy:
   LABLAXIS: Energy
   UNITS: MeV
   VALIDMAX: 1000
-  FILLVAL: -1.00E+31
+  FILLVAL: -1.0000E+31
   SCALETYP: log
   DELTA_PLUS_VAR: fe_energy_delta_plus
   DELTA_MINUS_VAR: fe_energy_delta_minus
@@ -652,7 +652,7 @@ h_energy_delta_plus:
   LABLAXIS: Energy
   UNITS: MeV
   VALIDMAX: 1000
-  FILLVAL: -1.00E+31
+  FILLVAL: -1.0000E+31
   SCALETYP: log
   SCALEMIN: 0.0001
   SCALEMAX: 1000
@@ -666,7 +666,7 @@ he4_energy_delta_plus:
   LABLAXIS: Energy
   UNITS: MeV
   VALIDMAX: 1000
-  FILLVAL: -1.00E+31
+  FILLVAL: -1.0000E+31
   SCALETYP: log
   SCALEMIN: 0.0001
   SCALEMAX: 1000
@@ -680,7 +680,7 @@ cno_energy_delta_plus:
   LABLAXIS: Energy
   UNITS: MeV
   VALIDMAX: 1000
-  FILLVAL: -1.00E+31
+  FILLVAL: -1.0000E+31
   SCALETYP: log
   SCALEMIN: 0.0001
   SCALEMAX: 1000
@@ -694,7 +694,7 @@ nemgsi_energy_delta_plus:
   LABLAXIS: Energy
   UNITS: MeV
   VALIDMAX: 1000
-  FILLVAL: -1.00E+31
+  FILLVAL: -1.0000E+31
   SCALETYP: log
   SCALEMIN: 0.0001
   SCALEMAX: 1000
@@ -708,7 +708,7 @@ fe_energy_delta_plus:
   LABLAXIS: Energy
   UNITS: MeV
   VALIDMAX: 1000
-  FILLVAL: -1.00E+31
+  FILLVAL: -1.0000E+31
   SCALETYP: log
   SCALEMIN: 0.0001
   SCALEMAX: 1000
@@ -722,7 +722,7 @@ h_energy_delta_minus:
   LABLAXIS: Energy
   UNITS: MeV
   VALIDMAX: 1000
-  FILLVAL: -1.00E+31
+  FILLVAL: -1.0000E+31
   SCALETYP: log
   SCALEMIN: 0.0001
   SCALEMAX: 1000
@@ -736,7 +736,7 @@ he4_energy_delta_minus:
   LABLAXIS: Energy
   UNITS: MeV
   VALIDMAX: 1000
-  FILLVAL: -1.00E+31
+  FILLVAL: -1.0000E+31
   SCALETYP: log
   SCALEMIN: 0.0001
   SCALEMAX: 1000
@@ -750,7 +750,7 @@ cno_energy_delta_minus:
   LABLAXIS: Energy
   UNITS: MeV
   VALIDMAX: 1000
-  FILLVAL: -1.00E+31
+  FILLVAL: -1.0000E+31
   SCALETYP: log
   SCALEMIN: 0.0001
   SCALEMAX: 1000
@@ -764,7 +764,7 @@ nemgsi_energy_delta_minus:
   LABLAXIS: Energy
   UNITS: MeV
   VALIDMAX: 1000
-  FILLVAL: -1.00E+31
+  FILLVAL: -1.0000E+31
   SCALETYP: log
   SCALEMIN: 0.0001
   SCALEMAX: 1000
@@ -778,7 +778,7 @@ fe_energy_delta_minus:
   LABLAXIS: Energy
   UNITS: MeV
   VALIDMAX: 1000
-  FILLVAL: -1.00E+31
+  FILLVAL: -1.0000E+31
   SCALETYP: log
   SCALEMIN: 0.0001
   SCALEMAX: 1000
@@ -788,12 +788,12 @@ pitch_angle:
   VAR_TYPE: support_data
   DISPLAY_TYPE: no_plot
   FIELDNAM: pitch_angle
-  FORMAT: F5.2
+  FORMAT: F5.1
   LABLAXIS: Pitch Angle
   UNITS: Degree
   VALIDMIN: 0
   VALIDMAX: 180
-  FILLVAL: -1.00E+31
+  FILLVAL: -1.0000E+31
   SCALETYP: linear
   DELTA_PLUS_VAR: pitch_angle_delta
   DELTA_MINUS_VAR: pitch_angle_delta
@@ -803,12 +803,12 @@ pitch_angle_delta:
   VAR_TYPE: support_data
   DISPLAY_TYPE: no_plot
   FIELDNAM: pitch_angle_delta
-  FORMAT: F5.3
+  FORMAT: F5.1
   LABLAXIS: Pitch Angle Delta
   UNITS: Degree
   VALIDMIN: 0
   VALIDMAX: 180
-  FILLVAL: -1.00E+31
+  FILLVAL: -1.0000E+31
   SCALETYP: linear
 
 gyrophase:
@@ -816,12 +816,12 @@ gyrophase:
   VAR_TYPE: support_data
   DISPLAY_TYPE: no_plot
   FIELDNAM: gyrophase
-  FORMAT: F5.4
+  FORMAT: F5.1
   LABLAXIS: Gyrophase
   UNITS: Degree
   VALIDMIN: 0
   VALIDMAX: 360
-  FILLVAL: -1.00E+31
+  FILLVAL: -1.0000E+31
   SCALETYP: linear
   DELTA_PLUS_VAR: gyrophase_delta
   DELTA_MINUS_VAR: gyrophase_delta
@@ -831,11 +831,37 @@ gyrophase_delta:
   VAR_TYPE: support_data
   DISPLAY_TYPE: no_plot
   FIELDNAM: gyrophase_delta
-  FORMAT: F5.5
+  FORMAT: F5.1
   LABLAXIS: Gyrophase Delta
   UNITS: Degree
   VALIDMIN: 0
   VALIDMAX: 360
-  FILLVAL: -1.00E+31
+  FILLVAL: -1.0000E+31
+  SCALETYP: linear
+
+measurement_pitch_angle:
+  CATDESC: Measured input pitch angle before rebinning
+  VAR_TYPE: support_data
+  DISPLAY_TYPE: no_plot
+  FIELDNAM: measurement_pitch_angle
+  FORMAT: F5.1
+  LABLAXIS: Pitch Angle
+  UNITS: Degree
+  VALIDMIN: 0
+  VALIDMAX: 180
+  FILLVAL: -1.0000E+31
+  SCALETYP: linear
+
+measurement_gyrophase:
+  CATDESC: Measured input gyrophase before rebinning
+  VAR_TYPE: support_data
+  DISPLAY_TYPE: no_plot
+  FIELDNAM: measurement_gyrophase
+  FORMAT: F5.1
+  LABLAXIS: Gyrophase
+  UNITS: Degree
+  VALIDMIN: 0
+  VALIDMAX: 360
+  FILLVAL: -1.0000E+31
   SCALETYP: linear
 
