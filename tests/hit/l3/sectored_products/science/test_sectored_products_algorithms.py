@@ -27,18 +27,18 @@ class TestSectoredProductsAlgorithms(TestCase):
     def test_rebin_by_pitch_angle_and_gyrophase(self):
         default_pitch_angles = np.array([[45, 45, 45, 45], [135, 135, 135, 135]])
         default_gyrophases = np.array([[45, 135, 225, 315], [45, 135, 225, 315]])
-        flux_data_for_energy_1 = [[0, 1, 2, 3], [4, 5, 6, 7]]
-        flux_data_for_energy_2 = [[8, 9, 10, 11], [12, 13, 14, 15]]
-        fluxes = np.array([
-            flux_data_for_energy_1,
-            flux_data_for_energy_2
+        intensity_data_for_energy_1 = [[0, 1, 2, 3], [4, 5, 6, 7]]
+        intensity_data_for_energy_2 = [[8, 9, 10, 11], [12, 13, 14, 15]]
+        intensity = np.array([
+            intensity_data_for_energy_1,
+            intensity_data_for_energy_2
         ])
-        flux_delta_plus = fluxes * 0.09
-        flux_delta_minus = fluxes * 0.11
+        intensity_delta_plus = intensity * 0.09
+        intensity_delta_minus = intensity * 0.11
 
         test_cases = [
             ('One bin', default_pitch_angles, default_gyrophases, 1, 1, [[[3.5]], [[11.5]]], [[3.5], [11.5]]),
-            ('Rebinned to same bins', default_pitch_angles, default_gyrophases, 2, 4, fluxes,
+            ('Rebinned to same bins', default_pitch_angles, default_gyrophases, 2, 4, intensity,
              np.array([[1.5, 5.5], [9.5, 13.5]])),
             ('Gyrophase rotated by 90', default_pitch_angles, (default_gyrophases + 90) % 360, 2, 4,
              [
@@ -62,47 +62,62 @@ class TestSectoredProductsAlgorithms(TestCase):
         ]
 
         for case, pitch_angles, gyrophases, number_of_pitch_angle_bins, number_of_gyrophase_bins, \
-                expected_flux_by_pa_gyrophase, expected_flux_by_pa in test_cases:
+                expected_intensity_by_pa_gyrophase, expected_intensity_by_pa in test_cases:
             with (((self.subTest(case)))):
                 rebinned_data = rebin_by_pitch_angle_and_gyrophase(
-                    fluxes,
-                    flux_delta_plus,
-                    flux_delta_minus,
+                    intensity,
+                    intensity_delta_plus,
+                    intensity_delta_minus,
                     pitch_angles,
                     gyrophases,
                     number_of_pitch_angle_bins, number_of_gyrophase_bins)
-                fluxes_pa_and_gyro, _, _ = rebinned_data[0:3]
-                fluxes_pa_only, _, _ = rebinned_data[3:6]
+                intensity_pa_and_gyro, _, _ = rebinned_data[0:3]
+                intensity_pa_only, _, _ = rebinned_data[3:6]
 
-                np.testing.assert_equal(fluxes_pa_and_gyro, expected_flux_by_pa_gyrophase)
-                np.testing.assert_equal(fluxes_pa_only, expected_flux_by_pa)
+                np.testing.assert_equal(intensity_pa_and_gyro, expected_intensity_by_pa_gyrophase)
+                np.testing.assert_equal(intensity_pa_only, expected_intensity_by_pa)
 
     def test_rebin_by_pitch_angle_and_gyrophase_pa_product_only_correctly_weights_when_averaging(self):
-        fluxes = np.array([[[0, 1, 2], [3, 4, 5]]])
+        intensity = np.array([[[0, 1, 2], [3, 4, 5]]])
         rebinned_data = rebin_by_pitch_angle_and_gyrophase(
-            fluxes,
-            fluxes * 0.01,
-            fluxes * 0.01,
+            intensity,
+            intensity * 0.01,
+            intensity * 0.01,
             np.array([[45, 45, 45], [135, 135, 135]]),
             np.array([[45, 135, 225], [45, 135, 225]]),
             1, 2)
-        fluxes_pa_and_gyro, _, _ = rebinned_data[0:3]
-        fluxes_pa_only, _, _ = rebinned_data[3:6]
+        intensity_pa_and_gyro, _, _ = rebinned_data[0:3]
+        intensity_pa_only, _, _ = rebinned_data[3:6]
 
-        np.testing.assert_equal(fluxes_pa_and_gyro, [[[2, 3.5]]])
-        np.testing.assert_equal(fluxes_pa_only, [[2.5]])
+        np.testing.assert_equal(intensity_pa_and_gyro, [[[2, 3.5]]])
+        np.testing.assert_equal(intensity_pa_only, [[2.5]])
+
+    def test_rebin_by_pitch_angle_and_gyrophase_pa_product_only_handles_nan_intensity(self):
+        intensity = np.array([[[0, np.nan, 2, 7], [3, 4, np.nan, 8]]])
+        rebinned_data = rebin_by_pitch_angle_and_gyrophase(
+            intensity,
+            intensity * 0.01,
+            intensity * 0.01,
+            np.array([[45, 45, 45, 45], [135, 135, 135, 135]]),
+            np.array([[45, 135, 225, 300], [45, 135, 225, 300]]),
+            2, 2)
+        intensity_pa_and_gyro, _, _ = rebinned_data[0:3]
+        intensity_pa_only, _, _ = rebinned_data[3:6]
+
+        np.testing.assert_equal(intensity_pa_and_gyro, [[[0, 4.5], [3.5, 8]]])
+        np.testing.assert_equal(intensity_pa_only, [[3, 5]])
 
     def test_rebin_by_pitch_angle_and_gyrophase_includes_uncertainties(self):
         default_pitch_angles = np.array([[45, 45, 45, 45], [135, 135, 135, 135]])
         default_gyrophases = np.array([[45, 135, 225, 315], [45, 135, 225, 315]])
-        flux_data_for_energy_1 = [[0, 1, 2, 3], [4, 5, 6, 7]]
-        flux_data_for_energy_2 = [[8, 9, 10, 11], [12, 13, 14, 15]]
-        fluxes = np.array([
-            flux_data_for_energy_1,
-            flux_data_for_energy_2
+        intensity_data_for_energy_1 = [[0, 1, 2, 3], [4, 5, 6, 7]]
+        intensity_data_for_energy_2 = [[8, 9, 10, 11], [12, 13, 14, 15]]
+        intensity = np.array([
+            intensity_data_for_energy_1,
+            intensity_data_for_energy_2
         ])
-        flux_delta_plus = fluxes * 0.09
-        flux_delta_minus = fluxes * 0.11
+        intensity_delta_plus = intensity * 0.09
+        intensity_delta_minus = intensity * 0.11
 
         number_of_pitch_angle_bins = 2
         number_of_gyrophase_bins = 4
@@ -128,9 +143,9 @@ class TestSectoredProductsAlgorithms(TestCase):
         ])
 
         rebinned_data = rebin_by_pitch_angle_and_gyrophase(
-            fluxes,
-            flux_delta_plus,
-            flux_delta_minus,
+            intensity,
+            intensity_delta_plus,
+            intensity_delta_minus,
             default_pitch_angles,
             default_gyrophases,
             number_of_pitch_angle_bins, number_of_gyrophase_bins)
