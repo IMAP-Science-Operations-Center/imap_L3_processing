@@ -17,6 +17,8 @@ PHASE_SPACE_DENSITY_BY_PITCH_ANGLE_CDF_VAR_NAME = "phase_space_density_by_pitch_
 ENERGY_SPECTRUM_CDF_VAR_NAME = "energy_spectrum"
 ENERGY_SPECTRUM_INBOUND_CDF_VAR_NAME = "energy_spectrum_inbound"
 ENERGY_SPECTRUM_OUTBOUND_CDF_VAR_NAME = "energy_spectrum_outbound"
+SPACECRAFT_POTENTIAL_CDF_VAR_NAME = "spacecraft_potential"
+CORE_HALO_BREAKPOINT_CDF_VAR_NAME = "core_halo_breakpoint"
 
 
 @dataclass
@@ -51,6 +53,8 @@ class SweL3Data(DataProduct):
     pitch_angle_delta: np.ndarray
     phase_space_density_by_pitch_angle: np.ndarray
     energy_spectrum: np.ndarray
+    spacecraft_potential: np.ndarray
+    core_halo_breakpoint: np.ndarray
     energy_spectrum_inbound: np.ndarray
     energy_spectrum_outbound: np.ndarray
 
@@ -78,6 +82,10 @@ class SweL3Data(DataProduct):
                                 value=self.energy_spectrum_inbound, cdf_data_type=pycdf.const.CDF_REAL4),
             DataProductVariable(ENERGY_SPECTRUM_OUTBOUND_CDF_VAR_NAME,
                                 value=self.energy_spectrum_outbound, cdf_data_type=pycdf.const.CDF_REAL4),
+            DataProductVariable(SPACECRAFT_POTENTIAL_CDF_VAR_NAME,
+                                value=self.spacecraft_potential, cdf_data_type=pycdf.const.CDF_REAL4),
+            DataProductVariable(CORE_HALO_BREAKPOINT_CDF_VAR_NAME,
+                                value=self.core_halo_breakpoint, cdf_data_type=pycdf.const.CDF_REAL4),
         ]
 
 

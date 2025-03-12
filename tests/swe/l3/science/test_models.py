@@ -8,7 +8,8 @@ from imap_l3_processing.swe.l3.models import SweL3Data, EPOCH_CDF_VAR_NAME, EPOC
     ENERGY_CDF_VAR_NAME, \
     ENERGY_DELTA_PLUS_CDF_VAR_NAME, ENERGY_DELTA_MINUS_CDF_VAR_NAME, PITCH_ANGLE_CDF_VAR_NAME, \
     PITCH_ANGLE_DELTA_CDF_VAR_NAME, PHASE_SPACE_DENSITY_BY_PITCH_ANGLE_CDF_VAR_NAME, \
-    ENERGY_SPECTRUM_CDF_VAR_NAME, ENERGY_SPECTRUM_OUTBOUND_CDF_VAR_NAME, ENERGY_SPECTRUM_INBOUND_CDF_VAR_NAME
+    ENERGY_SPECTRUM_CDF_VAR_NAME, ENERGY_SPECTRUM_OUTBOUND_CDF_VAR_NAME, ENERGY_SPECTRUM_INBOUND_CDF_VAR_NAME, \
+    SPACECRAFT_POTENTIAL_CDF_VAR_NAME, CORE_HALO_BREAKPOINT_CDF_VAR_NAME
 from tests.swapi.cdf_model_test_case import CdfModelTestCase
 
 
@@ -25,6 +26,8 @@ class TestModels(CdfModelTestCase):
         energy_spectrum = Mock()
         energy_spectrum_inbound = Mock()
         energy_spectrum_outbound = Mock()
+        spacecraft_potential = Mock()
+        core_halo_breakpoint = Mock()
 
         data = SweL3Data(epoch=epoch,
                          epoch_delta=epoch_delta,
@@ -37,10 +40,12 @@ class TestModels(CdfModelTestCase):
                          energy_spectrum=energy_spectrum,
                          energy_spectrum_inbound=energy_spectrum_inbound,
                          energy_spectrum_outbound=energy_spectrum_outbound,
+                         spacecraft_potential=spacecraft_potential,
+                         core_halo_breakpoint=core_halo_breakpoint,
                          input_metadata=Mock())
 
         variables = data.to_data_product_variables()
-        self.assertEqual(11, len(variables))
+        self.assertEqual(13, len(variables))
 
         variables = iter(variables)
         # @formatter:off
@@ -66,6 +71,10 @@ class TestModels(CdfModelTestCase):
             next(variables), energy_spectrum_inbound, ENERGY_SPECTRUM_INBOUND_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
         self.assert_variable_attributes(
             next(variables), energy_spectrum_outbound, ENERGY_SPECTRUM_OUTBOUND_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+        self.assert_variable_attributes(
+            next(variables), spacecraft_potential, SPACECRAFT_POTENTIAL_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+        self.assert_variable_attributes(
+            next(variables), core_halo_breakpoint, CORE_HALO_BREAKPOINT_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
 
 
 if __name__ == '__main__':

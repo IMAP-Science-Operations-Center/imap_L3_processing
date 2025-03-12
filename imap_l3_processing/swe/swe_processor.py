@@ -163,11 +163,11 @@ class SweProcessor(Processor):
                                                         np.array(config["geometric_fractions"]),
                                                         config["minimum_phase_space_density_value"])
             spacecraft_potential, halo_core = find_breakpoints(swe_l2_data.energy, averaged_psd,
-                                                               spacecraft_potential_history,
-                                                               halo_core_history,
+                                                               spacecraft_potential_history[-3:],
+                                                               halo_core_history[-3:],
                                                                config)
-            spacecraft_potential_history = [*spacecraft_potential_history[1:], spacecraft_potential]
-            halo_core_history = [*halo_core_history[1:], halo_core]
+            spacecraft_potential_history.append(spacecraft_potential)
+            halo_core_history.append(halo_core)
 
             corrected_energy_bins = swe_l2_data.energy - spacecraft_potential
             missing_mag_data = np.any(np.isnan(rebinned_mag_data[i]))
@@ -205,5 +205,7 @@ class SweProcessor(Processor):
                                 energy_spectrum=energy_spectrum,
                                 energy_spectrum_inbound=energy_spectrum_inbound,
                                 energy_spectrum_outbound=energy_spectrum_outbound,
+                                spacecraft_potential=spacecraft_potential_history[3:],
+                                core_halo_breakpoint=halo_core_history[3:]
                                 )
         return swe_l3_data

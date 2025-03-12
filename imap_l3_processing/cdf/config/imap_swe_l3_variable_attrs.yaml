@@ -147,3 +147,28 @@ energy_spectrum_inbound:
 energy_spectrum_outbound:
   <<: *energy_spectrum
   CATDESC: 1D Electron Energy Spectrum (Outbound)
+
+spacecraft_potential:
+  CATDESC: IMAP Spacecraft potential
+  <<: *timeseries_defaults
+  FIELDNAM: Spacecraft Potential
+  LABLAXIS: Potential
+  UNITS: V
+  VALIDMIN: 0
+  VALIDMAX: 100
+  SCALE_TYP: linear
+  SCALEMIN: 0
+  SCALEMAX: 20
+
+core_halo_breakpoint:
+  CATDESC: SW Electron Core/Halo breakpoint
+  <<: *timeseries_defaults
+  FIELDNAM: Core/Halo Breakpoint
+  LABLAXIS: Core/Halo Break
+  UNITS: eV
+  VALIDMIN: 15
+  VALIDMAX: 200
+  SCALE_TYP: linear
+  SCALEMIN: 15
+  SCALEMAX: 100
+  SI_CONVERSION: 1.602176634e-19>joules

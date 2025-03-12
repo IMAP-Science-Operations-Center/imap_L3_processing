@@ -50,6 +50,8 @@ class TestSweProcessor(unittest.TestCase):
             (16, 86),
             (19, 89),
         ]
+        expected_spacecraft_potential = [12, 16, 19]
+        expected_core_halo_breakpoint = [96, 86, 89]
         pitch_angle_bins = [0, 90, 180]
 
         swe_l2_data = SweL2Data(
@@ -169,6 +171,8 @@ class TestSweProcessor(unittest.TestCase):
         np.testing.assert_array_equal(swe_l3_data.energy_spectrum, integrated_spectrum)
         np.testing.assert_array_equal(swe_l3_data.energy_spectrum_inbound, expected_inbound_spectrum)
         np.testing.assert_array_equal(swe_l3_data.energy_spectrum_outbound, expected_outbound_spectrum)
+        np.testing.assert_array_equal(swe_l3_data.spacecraft_potential, expected_spacecraft_potential)
+        np.testing.assert_array_equal(swe_l3_data.core_halo_breakpoint, expected_core_halo_breakpoint)
 
         def call_with_array_matchers(*args):
             return call(*[NumpyArrayMatcher(x) for x in args])
