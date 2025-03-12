@@ -1,15 +1,13 @@
 import json
-import warnings
 from datetime import timedelta
 from pathlib import Path
 
 import numpy as np
+from imap_processing.spice.time import met_to_datetime64
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.cdf.cdf_utils import read_variable
-from imap_l3_processing.swe.l3.models import SweConfiguration, SweL2Data, SwapiL3aProtonData
-
-from imap_processing.spice.time import met_to_datetime64
+from imap_l3_processing.swe.l3.models import SweConfiguration, SweL2Data, SwapiL3aProtonData, SweL1bData
 
 
 def read_l2_swe_data(swe_l2_data: Path) -> SweL2Data:
@@ -25,6 +23,7 @@ def read_l2_swe_data(swe_l2_data: Path) -> SweL2Data:
         converted_valid_times = met_to_datetime64(acquisition_time_in_MET[valid_times_mask].ravel())
         acquisition_time_dt64 = np.full(acquisition_time_in_MET.shape, np.datetime64("NaT", 'ns'))
         acquisition_time_dt64[valid_times_mask] = converted_valid_times
+        acquisition_duration = cdf["acq_duration"][...]
     return SweL2Data(epoch=epoch,
                      epoch_delta=np.full(epoch.shape, timedelta(seconds=30)),
                      phase_space_density=phase_space_density,
@@ -33,7 +32,16 @@ def read_l2_swe_data(swe_l2_data: Path) -> SweL2Data:
                      inst_el=inst_el,
                      inst_az_spin_sector=inst_az_spin_sector,
                      acquisition_time=acquisition_time_dt64,
+                     acquisition_duration=acquisition_duration
                      )
+
+
+def read_l1b_swe_data(swe_l1b_data: Path) -> SweL1bData:
+    with CDF(str(swe_l1b_data)) as cdf:
+        epoch = cdf["epoch"][...]
+        count_rates = cdf["science_data"][...]
+
+    return SweL1bData(epoch=epoch, count_rates=count_rates)
 
 
 def read_l3a_swapi_proton_data(swapi_l3a_data: Path) -> SwapiL3aProtonData:

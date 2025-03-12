@@ -188,7 +188,8 @@ MAX_VARIANCE = 349525.25
 
 
 # is corrected counts (ccounts) just count rate
-def compute_maxwellian_weight_factors(corrected_counts: np.ndarray[float]) -> np.ndarray[float]:
+def compute_maxwellian_weight_factors(corrected_counts: np.ndarray[float], acqusition_durations: np.ndarray[float]) -> \
+np.ndarray[float]:
     correction = 1.0 - 1.5e-6 * LIMIT / TSAMPLE
     correction[correction < 0.1] = 0.1
     xlimits = LIMIT / correction

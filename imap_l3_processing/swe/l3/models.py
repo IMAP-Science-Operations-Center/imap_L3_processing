@@ -30,6 +30,7 @@ class SweL2Data:
     inst_el: np.ndarray
     inst_az_spin_sector: np.ndarray
     acquisition_time: np.ndarray
+    acquisition_duration: np.ndarray
 
 
 @dataclass
@@ -39,6 +40,12 @@ class SwapiL3aProtonData:
     proton_sw_speed: np.ndarray[float]
     proton_sw_clock_angle: np.ndarray[float]
     proton_sw_deflection_angle: np.ndarray[float]
+
+
+@dataclass
+class SweL1bData:
+    epoch: np.ndarray
+    count_rates: np.ndarray
 
 
 @dataclass

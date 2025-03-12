@@ -14,10 +14,15 @@ from tests.test_helpers import get_test_data_path
 
 class TestMomentsCalculation(unittest.TestCase):
     def test_compute_maxwellian_weight_factors_reproduces_heritage_results(self):
-        corrected_counts = np.array([[[536.0, 10000.0, 1.2]]])
-        weight_factors = compute_maxwellian_weight_factors(corrected_counts)
+        count_rates = np.array([[[536.0, 10000.0, 1.2]]])
+        acquisition_duration = np.array([[[80000, 80000]]])
+        weight_factors = compute_maxwellian_weight_factors(count_rates, acquisition_duration)
 
-        np.testing.assert_array_almost_equal(weight_factors, [[[0.044041, 0.017845, 0.816500]]])
+        first_weight = np.sqrt(536 * 80000) / (536 * 80000)
+        second_weight = np.sqrt(10000.0 * 80000) / (10000.0 * 80000)
+        third_weight = np.sqrt(1.2 * 80000) / (1.2 * 80000)
+
+        np.testing.assert_array_almost_equal(weight_factors, [[[first_weight, second_weight, third_weight]]])
 
     def test_regress_reproduces_heritage_results_given_all_test_data(self):
         velocity_vectors = np.loadtxt(get_test_data_path("swe/fake_velocity_vectors.csv"), delimiter=",",
