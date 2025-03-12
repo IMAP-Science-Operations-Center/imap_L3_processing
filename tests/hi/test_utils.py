@@ -38,7 +38,7 @@ class TestUtils(unittest.TestCase):
             sensitivity = rng.random((2, 180, 90, 23))
             variance = rng.random((2, 180, 90, 23))
 
-            cdf["epoch"] = epoch
+            cdf["Epoch"] = epoch
             cdf.new("bin", bins, recVary=False)
             cdf.new("bin_boundaries", bin_boundaries, recVary=False)
             cdf["counts"] = counts

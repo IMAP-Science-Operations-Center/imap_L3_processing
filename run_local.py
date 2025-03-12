@@ -10,6 +10,8 @@ from imap_processing.glows.descriptors import GLOWS_L2_DESCRIPTOR
 from imap_processing.glows.glows_processor import GlowsProcessor
 from imap_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
 from imap_processing.glows.l3a.utils import read_l2_glows_data
+from imap_processing.hi.hi_processor import HiProcessor
+from imap_processing.hi.l3.hi_l3_dependencies import HiL3Dependencies
 from imap_processing.hit.l3.hit_l3_sectored_dependencies import HITL3SectoredDependencies
 from imap_processing.hit.l3.hit_processor import HitProcessor
 from imap_processing.hit.l3.models import HitL1Data
@@ -133,6 +135,20 @@ def create_swe_cdf(dependencies: SweL3Dependencies) -> str:
         version='v999')
     processor = SweProcessor(None, input_metadata)
     output_data = processor.calculate_pitch_angle_products(dependencies)
+    cdf_path = save_data(output_data)
+    return cdf_path
+
+
+def create_hi_cdf(dependencies: HiL3Dependencies) -> str:
+    input_metadata = InputMetadata(instrument="hi",
+                                   data_level="l3",
+                                   start_date=datetime.now(),
+                                   end_date=datetime.now() + timedelta(days=1),
+                                   version="",
+                                   descriptor="spectral-fit-index",
+                                   )
+    processor = HiProcessor(None, input_metadata)
+    output_data = processor._process_spectral_fit_index(dependencies)
     cdf_path = save_data(output_data)
     return cdf_path
 
@@ -282,3 +298,9 @@ if __name__ == "__main__":
             get_test_data_path("swe/example_swe_config.json"),
         )
         print(create_swe_cdf(dependencies))
+
+    if "hi" in sys.argv:
+        dependencies = HiL3Dependencies.from_file_paths(
+            get_test_data_path("hi/IMAP_HI_90_maps_20000101_v02.cdf")
+        )
+        print(create_hi_cdf(dependencies))

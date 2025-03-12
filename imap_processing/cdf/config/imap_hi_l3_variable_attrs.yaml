@@ -1,0 +1,38 @@
+Epoch:
+  CATDESC: Epoch
+
+lat:
+  CATDESC: lat
+
+lon:
+  CATDESC: lon
+
+bin:
+  CATDESC: bin
+
+flux:
+  CATDESC: flux
+
+variance:
+  CATDESC: variance
+
+energy_deltas:
+  CATDESC: energy_deltas
+
+counts:
+  CATDESC: counts
+
+counts_uncertainty:
+  CATDESC: counts_uncertainty
+
+epoch_delta:
+  CATDESC: epoch_delta
+
+exposure:
+  CATDESC: exposure
+
+sensitivity:
+  CATDESC: sensitivity
+
+spectral_fit_index:
+  CATDESC: spectral_fit_index

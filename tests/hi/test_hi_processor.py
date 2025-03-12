@@ -6,16 +6,25 @@ import numpy as np
 
 from imap_processing.hi.hi_processor import HiProcessor
 from imap_processing.hi.l3.hi_l3_dependencies import HiL3Dependencies
-from imap_processing.hi.l3.models import HiL3Data
+from imap_processing.hi.l3.models import HiL3Data, HiL3SpectralIndexDataProduct
 from imap_processing.models import InputMetadata
 
 
 class TestHiProcessor(unittest.TestCase):
     @patch('imap_processing.hi.hi_processor.HiL3Dependencies.fetch_dependencies')
     @patch('imap_processing.hi.hi_processor.mpfit')
-    def test_process(self, mock_mpfit, mock_fetch_dependencies):
+    @patch('imap_processing.hi.hi_processor.save_data')
+    def test_process(self, mock_save_data, mock_mpfit, mock_fetch_dependencies):
         lat = np.array([0, 45])
         long = np.array([0, 45, 90])
+        expected_spectral_fit_index = np.array(
+            [[
+                [1.0, 2.0],
+                [3.0, 4.0],
+                [5.0, 6.0]
+            ]]
+        )
+
         energy = np.array([10, 20, 30])
         epoch = np.array([datetime.now()])
         flux = np.array(
@@ -48,6 +57,8 @@ class TestHiProcessor(unittest.TestCase):
                                        descriptor="",
                                        )
 
+        mock_mpfit.side_effect = [Mock(params=(0, 1.0)), Mock(params=(0, 2.0)), Mock(params=(0, 3.0)),
+                                  Mock(params=(0, 4.0)), Mock(params=(0, 5.0)), Mock(params=(0, 6.0))]
         processor = HiProcessor(upstream_dependencies, input_metadata)
         processor.process()
 
@@ -70,7 +81,19 @@ class TestHiProcessor(unittest.TestCase):
 
             ]
         )
-        mock_fetch_dependencies.return_value = dependencies
+
+        mock_save_data.assert_called_once()
+        actual_hi_data_product: HiL3SpectralIndexDataProduct = mock_save_data.call_args_list[0].args[0]
+
+        np.testing.assert_array_equal(actual_hi_data_product.spectral_fit_index, expected_spectral_fit_index)
+        np.testing.assert_array_equal(actual_hi_data_product.energy, hi_l3_data.energy)
+        np.testing.assert_array_equal(actual_hi_data_product.sensitivity, hi_l3_data.sensitivity)
+        np.testing.assert_array_equal(actual_hi_data_product.lat, hi_l3_data.lat)
+        np.testing.assert_array_equal(actual_hi_data_product.lon, hi_l3_data.lon)
+        np.testing.assert_array_equal(actual_hi_data_product.counts_uncertainty, hi_l3_data.counts_uncertainty)
+        np.testing.assert_array_equal(actual_hi_data_product.counts, hi_l3_data.counts)
+        np.testing.assert_array_equal(actual_hi_data_product.epoch, hi_l3_data.epoch)
+        np.testing.assert_array_equal(actual_hi_data_product.flux, hi_l3_data.flux)
 
     def test_power_law_function(self):
         input_metadata = InputMetadata(instrument="hi",
@@ -115,7 +138,7 @@ class TestHiProcessor(unittest.TestCase):
         dependency = HiL3Dependencies(hi_l3_data=hi_l3_data)
         processor = HiProcessor(Mock(), Mock())
 
-        result = processor._process_spectral_fit_index(dependency)
+        result = processor._process_spectral_fit_index(dependency).spectral_fit_index
         np.testing.assert_array_equal(result, np.array(true_gamma).reshape(1, 1, 1))
 
 

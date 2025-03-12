@@ -29,6 +29,12 @@ class TestModels(unittest.TestCase):
         flux = np.array([[[[1, 2], [10, 20]], [[100, 200], [1000, 2000]]]])
         variance = np.ones_like(flux)
         spectral_index = np.ones([len(epoch), len(long), len(lat)])
+        energy_deltas = np.arange(2 * 2).reshape(2, 2)
+        counts = np.arange(2 * 2 * 2).reshape(1, 2, 2, 2) * 104.3
+        counts_uncertainty = np.arange(2 * 2 * 2).reshape(1, 2, 2, 2) * 56.8
+        epoch_delta = np.arange(1) * timedelta(hours=1)
+        exposure = np.arange(2 * 2).reshape(1, 2, 2) * 20.4
+        sensitivity = np.arange(2 * 2 * 2).reshape(1, 2, 2, 2)
 
         expected_variables = [
             DataProductVariable(models.EPOCH_VAR_NAME, epoch, cdf_data_type=pycdf.const.CDF_TIME_TT2000),
@@ -37,7 +43,15 @@ class TestModels(unittest.TestCase):
             DataProductVariable(models.ENERGY_VAR_NAME, energy, cdf_data_type=pycdf.const.CDF_DOUBLE),
             DataProductVariable(models.FLUX_VAR_NAME, flux, cdf_data_type=pycdf.const.CDF_DOUBLE),
             DataProductVariable(models.VARIANCE_VAR_NAME, variance, cdf_data_type=pycdf.const.CDF_DOUBLE),
-            DataProductVariable(models.SPECTRAL_INDEX_VAR_NAME, spectral_index, cdf_data_type=pycdf.const.CDF_DOUBLE),
+            DataProductVariable(models.ENERGY_DELTAS_VAR_NAME, energy_deltas, cdf_data_type=pycdf.const.CDF_DOUBLE),
+            DataProductVariable(models.COUNTS_VAR_NAME, counts, cdf_data_type=pycdf.const.CDF_DOUBLE),
+            DataProductVariable(models.COUNTS_UNCERTAINTY_VAR_NAME, counts_uncertainty,
+                                cdf_data_type=pycdf.const.CDF_DOUBLE),
+            DataProductVariable(models.EPOCH_DELTA_VAR_NAME, epoch_delta, cdf_data_type=pycdf.const.CDF_DOUBLE),
+            DataProductVariable(models.EXPOSURE_VAR_NAME, exposure, cdf_data_type=pycdf.const.CDF_DOUBLE),
+            DataProductVariable(models.SENSITIVITY_VAR_NAME, sensitivity, cdf_data_type=pycdf.const.CDF_DOUBLE),
+            DataProductVariable(models.SPECTRAL_FIT_INDEX_VAR_NAME, spectral_index,
+                                cdf_data_type=pycdf.const.CDF_DOUBLE),
         ]
 
         spectral_index_product = HiL3SpectralIndexDataProduct(
@@ -49,12 +63,12 @@ class TestModels(unittest.TestCase):
             lat=lat,
             lon=long,
             spectral_fit_index=spectral_index,
-            energy_deltas=None,
-            counts=None,
-            counts_uncertainty=None,
-            epoch_delta=None,
-            exposure=None,
-            sensitivity=None,
+            energy_deltas=energy_deltas,
+            counts=counts,
+            counts_uncertainty=counts_uncertainty,
+            epoch_delta=epoch_delta,
+            exposure=exposure,
+            sensitivity=sensitivity,
         )
 
         actual_variables = spectral_index_product.to_data_product_variables()
