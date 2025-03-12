@@ -13,7 +13,6 @@ ENERGY_DELTA_PLUS_CDF_VAR_NAME = "energy_delta_plus"
 ENERGY_DELTA_MINUS_CDF_VAR_NAME = "energy_delta_minus"
 PITCH_ANGLE_CDF_VAR_NAME = "pitch_angle"
 PITCH_ANGLE_DELTA_CDF_VAR_NAME = "pitch_angle_delta"
-FLUX_BY_PITCH_ANGLE_CDF_VAR_NAME = "flux_by_pitch_angle"
 PHASE_SPACE_DENSITY_BY_PITCH_ANGLE_CDF_VAR_NAME = "phase_space_density_by_pitch_angle"
 ENERGY_SPECTRUM_CDF_VAR_NAME = "energy_spectrum"
 ENERGY_SPECTRUM_INBOUND_CDF_VAR_NAME = "energy_spectrum_inbound"
@@ -50,7 +49,6 @@ class SweL3Data(DataProduct):
     energy_delta_minus: np.ndarray
     pitch_angle: np.ndarray
     pitch_angle_delta: np.ndarray
-    flux_by_pitch_angle: np.ndarray
     phase_space_density_by_pitch_angle: np.ndarray
     energy_spectrum: np.ndarray
     energy_spectrum_inbound: np.ndarray
@@ -72,8 +70,6 @@ class SweL3Data(DataProduct):
                                 record_varying=False),
             DataProductVariable(PITCH_ANGLE_DELTA_CDF_VAR_NAME, value=self.pitch_angle_delta,
                                 cdf_data_type=pycdf.const.CDF_REAL4, record_varying=False),
-            DataProductVariable(FLUX_BY_PITCH_ANGLE_CDF_VAR_NAME, value=self.flux_by_pitch_angle,
-                                cdf_data_type=pycdf.const.CDF_REAL4),
             DataProductVariable(PHASE_SPACE_DENSITY_BY_PITCH_ANGLE_CDF_VAR_NAME,
                                 value=self.phase_space_density_by_pitch_angle, cdf_data_type=pycdf.const.CDF_REAL4),
             DataProductVariable(ENERGY_SPECTRUM_CDF_VAR_NAME,

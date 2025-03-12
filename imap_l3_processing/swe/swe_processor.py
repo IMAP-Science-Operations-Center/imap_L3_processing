@@ -150,7 +150,6 @@ class SweProcessor(Processor):
                                                             to_epoch=swe_epoch,
                                                             maximum_distance=swapi_max_distance)
 
-        flux_by_pitch_angles = []
         phase_space_density_by_pitch_angle = []
         energy_spectrum = []
         energy_spectrum_inbound = []
@@ -175,25 +174,18 @@ class SweProcessor(Processor):
             if missing_mag_data:
                 num_energy_bins = len(config['energy_bins'])
                 num_pitch_angle_bins = len(config['pitch_angle_bins'])
-                flux_by_pitch_angles.append(np.full((num_energy_bins, num_pitch_angle_bins), np.nan))
                 phase_space_density_by_pitch_angle.append(np.full((num_energy_bins, num_pitch_angle_bins), np.nan))
                 energy_spectrum.append(np.full(num_energy_bins, np.nan))
                 energy_spectrum_inbound.append(np.full(num_energy_bins, np.nan))
                 energy_spectrum_outbound.append(np.full(num_energy_bins, np.nan))
             else:
-                rebinned_flux = correct_and_rebin(swe_l2_data.flux[i], corrected_energy_bins, swe_l2_data.inst_el,
-                                                  swe_l2_data.inst_az_spin_sector[i],
-                                                  rebinned_mag_data[i],
-                                                  rebinned_solar_wind_vectors[i],
-                                                  config,
-                                                  )
+
                 rebinned_psd = correct_and_rebin(swe_l2_data.phase_space_density[i], corrected_energy_bins,
                                                  swe_l2_data.inst_el,
                                                  swe_l2_data.inst_az_spin_sector[i],
                                                  rebinned_mag_data[i],
                                                  rebinned_solar_wind_vectors[i],
                                                  config, )
-                flux_by_pitch_angles.append(rebinned_flux)
                 phase_space_density_by_pitch_angle.append(rebinned_psd)
                 energy_spectrum.append(integrate_distribution_to_get_1d_spectrum(rebinned_psd, config))
                 inbound, outbound = integrate_distribution_to_get_inbound_and_outbound_1d_spectrum(rebinned_psd,
@@ -209,7 +201,6 @@ class SweProcessor(Processor):
                                 energy_delta_minus=config["energy_delta_minus"],
                                 pitch_angle=config["pitch_angle_bins"],
                                 pitch_angle_delta=config["pitch_angle_delta"],
-                                flux_by_pitch_angle=np.array(flux_by_pitch_angles),
                                 phase_space_density_by_pitch_angle=phase_space_density_by_pitch_angle,
                                 energy_spectrum=energy_spectrum,
                                 energy_spectrum_inbound=energy_spectrum_inbound,
