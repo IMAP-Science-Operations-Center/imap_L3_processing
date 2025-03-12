@@ -56,6 +56,8 @@ IRON_INTENSITY_PA_DELTA_MINUS_CDF_VAR_NAME = "fe_intensity_pa_delta_minus"
 IRON_ENERGY_CDF_VAR_NAME = "fe_energy"
 IRON_ENERGY_DELTA_PLUS_CDF_VAR_NAME = "fe_energy_delta_plus"
 IRON_ENERGY_DELTA_MINUS_CDF_VAR_NAME = "fe_energy_delta_minus"
+MEASUREMENT_PITCH_ANGLE_VAR_NAME = "measurement_pitch_angle"
+MEASUREMENT_GYROPHASE_VAR_NAME = "measurement_gyrophase"
 
 
 @dataclass
@@ -111,6 +113,8 @@ class HitPitchAngleDataProduct(DataProduct):
     iron_energies: np.ndarray
     iron_energy_delta_plus: np.ndarray
     iron_energy_delta_minus: np.ndarray
+    measurement_pitch_angle: np.ndarray
+    measurement_gyrophase: np.ndarray
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
@@ -170,4 +174,6 @@ class HitPitchAngleDataProduct(DataProduct):
             DataProductVariable(IRON_ENERGY_DELTA_PLUS_CDF_VAR_NAME, self.iron_energy_delta_plus, record_varying=False),
             DataProductVariable(IRON_ENERGY_DELTA_MINUS_CDF_VAR_NAME, self.iron_energy_delta_minus,
                                 record_varying=False),
+            DataProductVariable(MEASUREMENT_PITCH_ANGLE_VAR_NAME, self.measurement_pitch_angle),
+            DataProductVariable(MEASUREMENT_GYROPHASE_VAR_NAME, self.measurement_gyrophase)
         ]

@@ -9,11 +9,13 @@ from imap_l3_processing.pitch_angles import calculate_pitch_angle, calculate_uni
 class TestPitchAngles(unittest.TestCase):
 
     def test_calculate_pitch_angle(self):
-        hit_unit_vector = np.array([-0.09362045, 0.8466484, 0.5238528])
+        hit_unit_vector = np.array([[-0.09362045, 0.8466484, 0.5238528]])
         mag_unit_vector = np.array([-0.42566603, 0.7890057, 0.44303328])
 
         actual_pitch_angle = calculate_pitch_angle(hit_unit_vector, mag_unit_vector)
-        self.assertAlmostEqual(19.95757200714941, actual_pitch_angle)
+        expected_pitch_angle = np.array([19.95757200714941])
+        self.assertEqual(expected_pitch_angle.shape, actual_pitch_angle.shape)
+        np.testing.assert_array_almost_equal(actual_pitch_angle, expected_pitch_angle)
 
     def test_calculate_pitch_angle_for_multiple_vectors(self):
         hit_unit_vectors = np.array([[1, 1, 0], [1, 0, 0]])

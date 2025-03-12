@@ -64,7 +64,9 @@ class TestHitPitchAngleDataProduct(TestCase):
                                         sentinel.iron_pa_intensity_delta_minus,
                                         sentinel.iron_energies,
                                         sentinel.iron_energy_delta_plus,
-                                        sentinel.iron_energy_delta_minus
+                                        sentinel.iron_energy_delta_minus,
+                                        sentinel.measurement_pitch_angle,
+                                        sentinel.measurement_gyrophase
                                         )
 
         data_product_variables = data.to_data_product_variables()
@@ -122,6 +124,8 @@ class TestHitPitchAngleDataProduct(TestCase):
             DataProductVariable("fe_energy", sentinel.iron_energies, record_varying=False),
             DataProductVariable("fe_energy_delta_plus", sentinel.iron_energy_delta_plus, record_varying=False),
             DataProductVariable("fe_energy_delta_minus", sentinel.iron_energy_delta_minus, record_varying=False),
+            DataProductVariable("measurement_pitch_angle", sentinel.measurement_pitch_angle),
+            DataProductVariable("measurement_gyrophase", sentinel.measurement_gyrophase),
         ]
 
         self.assertEqual(expected_data_product_variables, data_product_variables)

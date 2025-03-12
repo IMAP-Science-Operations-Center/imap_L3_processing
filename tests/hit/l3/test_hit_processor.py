@@ -132,16 +132,10 @@ class TestHitProcessor(TestCase):
         sector_unit_vectors = np.array([[1, 0, 0], [0, 1, 0]])
         mock_get_sector_unit_vectors.return_value = sector_unit_vectors
 
-        pitch_angle1 = np.array([100])
-        pitch_angle2 = np.array([200])
-
-        gyrophase1 = np.array([1000])
-        gyrophase2 = np.array([2000])
-
         mock_rotate_from_imap_despun_to_hit_despun.side_effect = [sentinel.rotated_mag_vector1,
                                                                   sentinel.rotated_mag_vector2]
-        mock_calculate_pitch_angle.side_effect = [pitch_angle1, pitch_angle2]
-        mock_calculate_gyrophase.side_effect = [gyrophase1, gyrophase2]
+        mock_calculate_pitch_angle.side_effect = [sentinel.pitch_angle1, sentinel.pitch_angle2]
+        mock_calculate_gyrophase.side_effect = [sentinel.gyrophase1, sentinel.gyrophase2]
 
         rebinned_pa_gyro_CNO_time1 = np.array([1])
         rebinned_pa_gyro_CNO_delta_plus_time1 = np.array([100])
@@ -272,43 +266,43 @@ class TestHitProcessor(TestCase):
 
         mock_rebin_by_pitch_angle_and_gyrophase.assert_has_calls([
             call(NumpyArrayMatcher(hydrogen_time1), NumpyArrayMatcher(delta_plus_hydrogen_time1),
-                 NumpyArrayMatcher(delta_minus_hydrogen_time1), pitch_angle1, gyrophase1,
+                 NumpyArrayMatcher(delta_minus_hydrogen_time1), sentinel.pitch_angle1, sentinel.gyrophase1,
                  number_of_pitch_angle_bins,
                  number_of_gyrophase_bins),
             call(NumpyArrayMatcher(helium4_time1), NumpyArrayMatcher(delta_plus_helium4_time1),
-                 NumpyArrayMatcher(delta_minus_helium4_time1), pitch_angle1, gyrophase1,
+                 NumpyArrayMatcher(delta_minus_helium4_time1), sentinel.pitch_angle1, sentinel.gyrophase1,
                  number_of_pitch_angle_bins,
                  number_of_gyrophase_bins),
             call(NumpyArrayMatcher(CNO_time1), NumpyArrayMatcher(delta_plus_CNO_time1),
-                 NumpyArrayMatcher(delta_minus_CNO_time1), pitch_angle1, gyrophase1,
+                 NumpyArrayMatcher(delta_minus_CNO_time1), sentinel.pitch_angle1, sentinel.gyrophase1,
                  number_of_pitch_angle_bins,
                  number_of_gyrophase_bins),
             call(NumpyArrayMatcher(NeMgSi_time1), NumpyArrayMatcher(delta_plus_NeMgSi_time1),
-                 NumpyArrayMatcher(delta_minus_NeMgSi_time1), pitch_angle1, gyrophase1,
+                 NumpyArrayMatcher(delta_minus_NeMgSi_time1), sentinel.pitch_angle1, sentinel.gyrophase1,
                  number_of_pitch_angle_bins,
                  number_of_gyrophase_bins),
             call(NumpyArrayMatcher(iron_time1), NumpyArrayMatcher(delta_plus_iron_time1),
-                 NumpyArrayMatcher(delta_minus_iron_time1), pitch_angle1, gyrophase1,
+                 NumpyArrayMatcher(delta_minus_iron_time1), sentinel.pitch_angle1, sentinel.gyrophase1,
                  number_of_pitch_angle_bins,
                  number_of_gyrophase_bins),
             call(NumpyArrayMatcher(hydrogen_time2), NumpyArrayMatcher(delta_plus_hydrogen_time2),
-                 NumpyArrayMatcher(delta_minus_hydrogen_time2), pitch_angle2, gyrophase2,
+                 NumpyArrayMatcher(delta_minus_hydrogen_time2), sentinel.pitch_angle2, sentinel.gyrophase2,
                  number_of_pitch_angle_bins,
                  number_of_gyrophase_bins),
             call(NumpyArrayMatcher(helium4_time2), NumpyArrayMatcher(delta_plus_helium4_time2),
-                 NumpyArrayMatcher(delta_minus_helium4_time2), pitch_angle2, gyrophase2,
+                 NumpyArrayMatcher(delta_minus_helium4_time2), sentinel.pitch_angle2, sentinel.gyrophase2,
                  number_of_pitch_angle_bins,
                  number_of_gyrophase_bins),
             call(NumpyArrayMatcher(CNO_time2), NumpyArrayMatcher(delta_plus_CNO_time2),
-                 NumpyArrayMatcher(delta_minus_CNO_time2), pitch_angle2, gyrophase2,
+                 NumpyArrayMatcher(delta_minus_CNO_time2), sentinel.pitch_angle2, sentinel.gyrophase2,
                  number_of_pitch_angle_bins,
                  number_of_gyrophase_bins),
             call(NumpyArrayMatcher(NeMgSi_time2), NumpyArrayMatcher(delta_plus_NeMgSi_time2),
-                 NumpyArrayMatcher(delta_minus_NeMgSi_time2), pitch_angle2, gyrophase2,
+                 NumpyArrayMatcher(delta_minus_NeMgSi_time2), sentinel.pitch_angle2, sentinel.gyrophase2,
                  number_of_pitch_angle_bins,
                  number_of_gyrophase_bins),
             call(NumpyArrayMatcher(iron_time2), NumpyArrayMatcher(delta_plus_iron_time2),
-                 NumpyArrayMatcher(delta_minus_iron_time2), pitch_angle2, gyrophase2,
+                 NumpyArrayMatcher(delta_minus_iron_time2), sentinel.pitch_angle2, sentinel.gyrophase2,
                  number_of_pitch_angle_bins,
                  number_of_gyrophase_bins),
         ])
@@ -432,6 +426,11 @@ class TestHitProcessor(TestCase):
         self.assertIs(mock_hit_data.fe_energy, saved_data_product.iron_energies)
         self.assertIs(mock_hit_data.fe_energy_delta_plus, saved_data_product.iron_energy_delta_plus)
         self.assertIs(mock_hit_data.fe_energy_delta_minus, saved_data_product.iron_energy_delta_minus)
+
+        np.testing.assert_array_equal(saved_data_product.measurement_pitch_angle,
+                                      np.array([sentinel.pitch_angle1, sentinel.pitch_angle2]))
+        np.testing.assert_array_equal(saved_data_product.measurement_gyrophase,
+                                      np.array([sentinel.gyrophase1, sentinel.gyrophase2]))
 
         mock_imap_data_access_upload.assert_called_once_with(mock_save_data.return_value)
 

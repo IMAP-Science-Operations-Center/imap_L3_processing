@@ -176,12 +176,17 @@ class HitProcessor(Processor):
             number_of_pitch_angle_bins, number_of_gyrophase_bins)
 
         averaged_mag_data = mag_data.rebin_to(hit_data.epoch, hit_data.epoch_delta)
+        measurement_pitch_angle = []
+        measurement_gyrophase = []
         for time_index, average_mag_vector in enumerate(averaged_mag_data):
             mag_unit_vector = calculate_unit_vector(average_mag_vector)
             mag_vector_in_instrument_frame = rotate_from_imap_despun_to_hit_despun(mag_unit_vector)
 
             input_bin_pitch_angles = calculate_pitch_angle(particle_unit_vectors, mag_vector_in_instrument_frame)
             input_bin_gyrophases = calculate_gyrophase(particle_unit_vectors, mag_vector_in_instrument_frame)
+
+            measurement_pitch_angle.append(input_bin_pitch_angles)
+            measurement_gyrophase.append(input_bin_gyrophases)
             for species, intensity in input_intensity_data_by_species.items():
                 rebinned_result = rebin_by_pitch_angle_and_gyrophase(
                     intensity[0][time_index],
@@ -251,7 +256,9 @@ class HitProcessor(Processor):
                                         rebinned_pa_only_intensity_by_species["iron"][2],
                                         hit_data.fe_energy,
                                         hit_data.fe_energy_delta_plus,
-                                        hit_data.fe_energy_delta_minus)
+                                        hit_data.fe_energy_delta_minus,
+                                        np.array(measurement_pitch_angle),
+                                        np.array(measurement_gyrophase))
 
     @staticmethod
     def _create_nan_array(shape) -> tuple[np.array, np.array, np.array]:
