@@ -50,6 +50,8 @@ class TestSweProcessor(unittest.TestCase):
             (16, 86),
             (19, 89),
         ]
+        expected_spacecraft_potential = [12, 16, 19]
+        expected_core_halo_breakpoint = [96, 86, 89]
         pitch_angle_bins = [0, 90, 180]
 
         swe_l2_data = SweL2Data(
@@ -86,7 +88,7 @@ class TestSweProcessor(unittest.TestCase):
         rebinned_by_pitch = [
             i + np.arange(len(swe_l2_data.energy) * len(pitch_angle_bins)).reshape(len(swe_l2_data.energy),
                                                                                    len(pitch_angle_bins)) for i in
-            range(2 * len(epochs))]
+            range(len(epochs))]
         mock_correct_and_rebin.side_effect = rebinned_by_pitch
         integrated_spectrum = np.arange(9).reshape(3, 3) + 11
 
@@ -122,7 +124,7 @@ class TestSweProcessor(unittest.TestCase):
 
         self.assertEqual(3, mock_average_over_look_directions.call_count)
         self.assertEqual(3, mock_find_breakpoints.call_count)
-        self.assertEqual(6, mock_correct_and_rebin.call_count)
+        self.assertEqual(3, mock_correct_and_rebin.call_count)
         self.assertEqual(3, mock_integrate_distribution_to_get_1d_spectrum.call_count)
         mock_calculate_solar_wind_velocity_vector.assert_called_once_with(
             swel3_dependency.swapi_l3a_proton_data.proton_sw_speed,
@@ -163,13 +165,14 @@ class TestSweProcessor(unittest.TestCase):
         self.assertEqual(swe_l3_data.energy, swel3_dependency.configuration["energy_bins"])
         self.assertEqual(swe_l3_data.energy_delta_plus, swel3_dependency.configuration["energy_delta_plus"])
         self.assertEqual(swe_l3_data.energy_delta_minus, swel3_dependency.configuration["energy_delta_minus"])
-        np.testing.assert_array_equal(swe_l3_data.flux_by_pitch_angle, rebinned_by_pitch[0::2])
-        np.testing.assert_array_equal(swe_l3_data.phase_space_density_by_pitch_angle, rebinned_by_pitch[1::2])
+        np.testing.assert_array_equal(swe_l3_data.phase_space_density_by_pitch_angle, rebinned_by_pitch)
         np.testing.assert_array_equal(swe_l3_data.epoch_delta, swe_l2_data.epoch_delta)
         np.testing.assert_array_equal(swe_l3_data.epoch, swe_l2_data.epoch)
         np.testing.assert_array_equal(swe_l3_data.energy_spectrum, integrated_spectrum)
         np.testing.assert_array_equal(swe_l3_data.energy_spectrum_inbound, expected_inbound_spectrum)
         np.testing.assert_array_equal(swe_l3_data.energy_spectrum_outbound, expected_outbound_spectrum)
+        np.testing.assert_array_equal(swe_l3_data.spacecraft_potential, expected_spacecraft_potential)
+        np.testing.assert_array_equal(swe_l3_data.core_halo_breakpoint, expected_core_halo_breakpoint)
 
         def call_with_array_matchers(*args):
             return call(*[NumpyArrayMatcher(x) for x in args])
@@ -177,35 +180,26 @@ class TestSweProcessor(unittest.TestCase):
         actual_calls = mock_correct_and_rebin.call_args_list
 
         expected_calls = [
-            call_with_array_matchers(swe_l2_data.flux[0], swe_l2_data.energy - 12, swe_l2_data.inst_el,
-                                     swe_l2_data.inst_az_spin_sector[0],
-                                     closest_mag_data[0], closest_swapi_data[0], swe_config),
             call_with_array_matchers(swe_l2_data.phase_space_density[0], swe_l2_data.energy - 12, swe_l2_data.inst_el,
                                      swe_l2_data.inst_az_spin_sector[0],
                                      closest_mag_data[0], closest_swapi_data[0], swe_config),
-            call_with_array_matchers(swe_l2_data.flux[1], swe_l2_data.energy - 16, swe_l2_data.inst_el,
-                                     swe_l2_data.inst_az_spin_sector[1],
-                                     closest_mag_data[1], closest_swapi_data[1], swe_config),
             call_with_array_matchers(swe_l2_data.phase_space_density[1], swe_l2_data.energy - 16, swe_l2_data.inst_el,
                                      swe_l2_data.inst_az_spin_sector[1],
                                      closest_mag_data[1], closest_swapi_data[1], swe_config),
-            call_with_array_matchers(swe_l2_data.flux[2], swe_l2_data.energy - 19, swe_l2_data.inst_el,
-                                     swe_l2_data.inst_az_spin_sector[2],
-                                     closest_mag_data[2], closest_swapi_data[2], swe_config),
             call_with_array_matchers(swe_l2_data.phase_space_density[2], swe_l2_data.energy - 19, swe_l2_data.inst_el,
                                      swe_l2_data.inst_az_spin_sector[2],
                                      closest_mag_data[2], closest_swapi_data[2], swe_config)
         ]
         self.assertEqual(actual_calls, expected_calls)
         mock_integrate_distribution_to_get_1d_spectrum.assert_has_calls([
+            call(rebinned_by_pitch[0], swe_config),
             call(rebinned_by_pitch[1], swe_config),
-            call(rebinned_by_pitch[3], swe_config),
-            call(rebinned_by_pitch[5], swe_config)
+            call(rebinned_by_pitch[2], swe_config)
         ])
         mock_integrate_distribution_to_get_inbound_and_outbound_1d_spectrum.assert_has_calls([
+            call(rebinned_by_pitch[0], swe_config),
             call(rebinned_by_pitch[1], swe_config),
-            call(rebinned_by_pitch[3], swe_config),
-            call(rebinned_by_pitch[5], swe_config)
+            call(rebinned_by_pitch[2], swe_config)
         ])
 
     def test_calculate_pitch_angle_products_makes_nan_if_no_mag_close_enough(self):
@@ -272,8 +266,6 @@ class TestSweProcessor(unittest.TestCase):
         self.assertEqual(swe_l3_data.energy, swel3_dependency.configuration["energy_bins"])
         self.assertEqual(swe_l3_data.energy_delta_plus, swel3_dependency.configuration["energy_delta_plus"])
         self.assertEqual(swe_l3_data.energy_delta_minus, swel3_dependency.configuration["energy_delta_minus"])
-        np.testing.assert_array_equal(swe_l3_data.flux_by_pitch_angle,
-                                      np.full((len(epochs), len(energy_bins), len(pitch_angle_bins)), np.nan))
         np.testing.assert_array_equal(swe_l3_data.phase_space_density_by_pitch_angle,
                                       np.full((len(epochs), len(energy_bins), len(pitch_angle_bins)), np.nan))
         np.testing.assert_array_equal(swe_l3_data.epoch_delta, swe_l2_data.epoch_delta)
@@ -348,10 +340,6 @@ class TestSweProcessor(unittest.TestCase):
         self.assertEqual(swe_l3_data.energy, swel3_dependency.configuration["energy_bins"])
         self.assertEqual(swe_l3_data.energy_delta_plus, swel3_dependency.configuration["energy_delta_plus"])
         self.assertEqual(swe_l3_data.energy_delta_minus, swel3_dependency.configuration["energy_delta_minus"])
-        np.testing.assert_allclose(swe_l3_data.flux_by_pitch_angle,
-                                   np.array([[[np.nan, 73.003799, 180.513816],
-                                              [111.982682, 159.352476, 281.418325],
-                                              [209.853169, 314.550222, np.nan]]]))
         np.testing.assert_allclose(swe_l3_data.phase_space_density_by_pitch_angle,
                                    np.array([[[np.nan, 194.772034, 270.312835],
                                               [211.672665, 273.136802, 363.195552],
