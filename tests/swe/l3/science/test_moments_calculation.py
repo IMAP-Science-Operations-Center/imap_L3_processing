@@ -10,6 +10,7 @@ from imap_l3_processing.swe.l3.science import moment_calculations
 from imap_l3_processing.swe.l3.science.moment_calculations import compute_maxwellian_weight_factors, \
     filter_and_flatten_regress_parameters, regress, calculate_fit_temperature_density_velocity, rotate_temperature, \
     rotate_dps_vector_to_rtn, Moments, halotrunc, compute_density_scale
+from imap_l3_processing.swe.l3.utils import read_l2_swe_data
 from tests.test_helpers import get_test_data_path
 
 
@@ -247,3 +248,50 @@ class TestMomentsCalculation(unittest.TestCase):
                 scaled_density = halotrunc(moments, core_halo_breakpoint, spacecraft_potential)
 
                 self.assertAlmostEqual(expected_density, scaled_density, places=3)
+
+    def test_cintegr8(self):
+        data = read_l2_swe_data(get_test_data_path(
+            "swe/imap_swe_l2_sci-with-ace-data_20100101_v002.cdf"))
+
+        istart = 1
+        iend = 19
+        temp_from_fit = 5000
+        chbreak = 80
+
+        inst_az_data = np.loadtxt(get_test_data_path("swe/instrument_azimuth.csv"), delimiter=",").reshape(20, 7, 30)
+        # phi = np.broadcast_to(data.inst_az_spin_sector[0, :, np.newaxis], (20, 7, 30))
+
+        phase_space_density = np.loadtxt(get_test_data_path("swe/phase_space_density.csv"), delimiter=",").reshape(20,
+                                                                                                                   7,
+                                                                                                                   30)
+
+        energy = np.loadtxt(get_test_data_path("swe/energies.csv"), delimiter=",").reshape(20, 7, 30)
+
+        sintheta = np.zeros(shape=(20, 7))
+        sintheta[:] = [-0.1673557, 0.91652155, -0.83665564, 0., 0.83665564, -0.91652155, 0.1673557]
+
+        costheta = np.zeros(shape=(20, 7))
+        costheta[:] = [0.9858965815825497, -0.39998531498835127, -0.5477292602242684, 1.0, -0.5477292602242684,
+                       -0.39998531498835127, 0.9858965815825497]
+
+        deltheta = np.zeros(shape=(20, 7))
+        deltheta[:] = [0.6178, 0.3770, 0.3857, 0.3805, 0.3805, 0.3805, 0.6196]
+
+        etop = np.array(
+            [0.9, 1.3, 1.8, 2.5, 3.5, 4.8, 6.7, 9.3, 13, 18, 25, 34, 47, 65, 90, 124, 175, 243, 335, 461, 634,
+             875])
+        emid = np.array([0.86, 1.21, 1.69, 2.34, 3.24, 4.5, 6.25, 8.64, 12.07, 16.74, 23.13, 31.85, 43.85, 60.53, 83.86,
+                         115.73, 162.7, 225.6, 311.47, 428.56, 589.84, 813.87])
+        spacecraft_potential = 12
+        integrate_outputs = moment_calculations.core_integrate(istart, iend, temp_from_fit, energy, sintheta, costheta,
+                                                               deltheta, phase_space_density,
+                                                               inst_az_data, chbreak, etop, emid, spacecraft_potential)
+        np.testing.assert_allclose(1.7683e+24, integrate_outputs.density, rtol=1e-5)
+
+        np.testing.assert_allclose(np.array([815.816, 2258.9, 1466.27, 1.22866]), integrate_outputs.velocity, rtol=1e-4)
+        np.testing.assert_array_equal(
+            np.array([6.00338e+16, -2.69651e+16, 1.3202e+16, -1.88685e+16, -4.25577e+16, -1.90593e+16]),
+            integrate_outputs.temperature)
+        np.testing.assert_array_equal(
+            np.array([-5.3362e+21, -4.20726e+22, 3.0546e+22]),
+            integrate_outputs.heat_flux)

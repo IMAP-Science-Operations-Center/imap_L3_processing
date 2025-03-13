@@ -300,3 +300,91 @@ def halotrunc(moments: Moments, core_halo_breakpoint: float, spacecraft_potentia
     halod = halod / np.clip(dscale, 1, 5)
 
     return halod
+
+
+@dataclass
+class CoreIntegrateOutputs:
+    density: np.float64
+    velocity: np.ndarray
+    temperature: np.ndarray
+    heat_flux: np.ndarray
+
+
+def core_integrate(istart, iend, temp: np.float64, energy: np.ndarray, sintheta: np.ndarray,
+                   costheta: np.ndarray, deltheta: np.ndarray, fv: np.ndarray, phi: np.ndarray,
+                   chbreak: np.float64, etop: np.ndarray, emid: np.ndarray,
+                   spacecraft_potential: float) -> CoreIntegrateOutputs:
+    # kmax? 30 or based on array size? expect different for different detectors?
+    sumn = 0
+    sumvx = 0
+    sumvy = 0
+    sumvz = 0
+    base = 1000
+    delphi = np.full(7, 2 * np.pi / 30)
+    delv = np.empty((len(energy), 7))
+    for i in range(istart, iend + 1):
+        for j in range(7):
+            some_constant = 3.5176e15
+            if energy[i, j, 1] > 0:
+                v2mid = some_constant * energy[i, j, 1]
+                v3mid = v2mid * np.sqrt(v2mid)
+            else:
+                v2mid = 0
+                v3mid = 0
+            ehigh = 1.175 * energy[i, j, 1]
+            if i < len(energy) - 1:
+                ehigh = np.sqrt((energy[i + 1, j, 1] + spacecraft_potential) * (energy[i, j, 1] + spacecraft_potential))
+            elow = np.sqrt((energy[i, j, 1] + spacecraft_potential) * (energy[i - 1, j, 1] + spacecraft_potential))
+            constast_fifty_nine_million = 5.93097e7
+            # print(ehigh, elow)
+            delv[i, j] = constast_fifty_nine_million * (np.sqrt(ehigh) - np.sqrt(elow))
+            if elow < base:
+                base = elow
+            for k in range(28):  # why 28 and not 30?
+                if energy[i, j, k] > 0:
+                    # print(delv[i, j], deltheta[i, j], delphi[j])
+                    delta = delv[i, j] * deltheta[i, j] * delphi[j]
+                    fact = sintheta[i, j] * fv[i, j, k]
+                    sumn += delta * v2mid * fact
+                    sumvx += delta * v3mid * fact * sintheta[i, j] * np.cos(np.deg2rad(phi[i, j, k]))
+                    sumvy += delta * v3mid * fact * sintheta[i, j] * np.sin(np.deg2rad(phi[i, j, k]))
+                    sumvz += delta * v3mid * fact * costheta[i, j]
+                    # print(delta, fact, sumn, sumvx, sumvy, sumvz)
+
+    totden = sumn
+    eobolt = 12345
+
+    # TODO    if (totden <= 0.0) throw up
+
+    base -= spacecraft_potential
+
+    output_velocities = np.array([
+        -1e-5 * sumvx / totden,
+        -1e-5 * sumvy / totden,
+        -1e-5 * sumvz / totden,
+        base,
+    ])
+
+    sumtxx = 0
+    sumtxy = 0
+    sumtxz = 0
+    sumtyy = 0
+    sumtyz = 0
+    sumtzz = 0
+    sumqx = 0
+    sumqy = 0
+    sumqz = 0
+    for i in range(istart, iend + 1):
+        for j in range(7):
+            v2mid = some_constant * energy[i, j, 1]
+            for k in range(28):  # again why 28?
+                if energy[i, j, k] > 0:
+                    angx = sintheta[i, j] * np.cos(np.deg2rad(phi[i, j, k]))
+                    vx = -constast_fifty_nine_million * np.sqrt(energy[i, j, k]) * angx - 1e5 * output_velocities[0]
+
+                    delta = delv[i, j] * deltheta[i, j] * delphi[j]
+                    fact = v2mid * sintheta[i, j] * fv[i, j, k]
+                    sumtxx += delta * fact * vx * vx
+    t0 = 1e-4 * sumtxx * eobolt / totden
+
+    return CoreIntegrateOutputs(sumn, output_velocities, 0, 0)
