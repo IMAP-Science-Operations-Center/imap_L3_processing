@@ -1,7 +1,5 @@
-import json
-import re
 import traceback
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 
 import numpy as np
@@ -80,7 +78,7 @@ def create_l2_hit_sectored_rates_cdf_from_csv(csv_file_path: str, output_filenam
 if __name__ == "__main__":
     path = Path(__file__)
     input_path = path.parent.parent.parent / "instrument_team_data" / "hit" / "hit_l2_sectored_sample1.csv"
-    cdf_file_path = path.parent.parent.parent / "tests" / "test_data" / "hit" / "imap_hit_l2_sectored-sample1-with-uncertainties_20250101_v001.cdf"
+    cdf_file_path = path.parent.parent.parent / "tests" / "test_data" / "hit" / "imap_hit_l2_macropixel-intensity_20250101_v001.cdf"
 
     try:
         create_l2_hit_sectored_rates_cdf_from_csv(str(input_path), str(cdf_file_path))
