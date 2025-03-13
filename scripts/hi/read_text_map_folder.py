@@ -19,7 +19,7 @@ def extract_data(lines: list[str]):
     start_row, dimension_string = lines[0][2:10].split(':')
     data_lines = lines[int(start_row):]
     data = np.fromstring('\t'.join(data_lines), dtype=float, sep='\t')
-    return data.reshape(tuple(int(x) for x in dimension_string.split('x')))
+    return data.reshape(tuple(int(x) for x in dimension_string.split('x'))).T
 
 
 fluxes = []
@@ -49,6 +49,7 @@ with CDF(pathname, '') as cdf:
     variance_data = np.array([variance_data])
 
     energies = np.unique(energies)
+    energies = energies[energies != 0]
     energy_data = np.stack(energies, axis=-1)
 
     data_shape = flux_data.shape
@@ -59,8 +60,14 @@ with CDF(pathname, '') as cdf:
     counts_uncertainty = rng.random(data_shape)
     epoch_delta = np.array([FIVE_MINUTES_IN_NANOSECONDS])
     exposure = rng.random(flux_data.shape[:-1])
-    lat = np.linspace(0, 360, flux_data.shape[2])
-    lon = np.linspace(0, 180, flux_data.shape[1])
+
+    number_of_lats = flux_data.shape[2]
+    number_of_lons = flux_data.shape[1]
+    lat_delta = 180 / number_of_lats
+    lon_delta = 360 / number_of_lons
+    lat = np.arange(number_of_lats) * lat_delta + (lat_delta / 2)
+    lon = np.arange(number_of_lons) * lon_delta + (lon_delta / 2)
+
     sensitivity = rng.random(data_shape)
 
     cdf["Epoch"] = epoch
