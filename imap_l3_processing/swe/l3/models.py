@@ -24,7 +24,6 @@ CORE_HALO_BREAKPOINT_CDF_VAR_NAME = "core_halo_breakpoint"
 @dataclass
 class SweL2Data:
     epoch: np.ndarray
-    epoch_delta: np.ndarray
     phase_space_density: np.ndarray
     flux: np.ndarray
     energy: np.ndarray
@@ -47,6 +46,7 @@ class SwapiL3aProtonData:
 class SweL1bData:
     epoch: np.ndarray
     count_rates: np.ndarray
+    settle_duration: np.ndarray
 
 
 @dataclass
