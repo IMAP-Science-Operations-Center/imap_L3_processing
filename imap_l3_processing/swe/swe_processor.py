@@ -57,10 +57,9 @@ class SweProcessor(Processor):
                                                                                 swe_l2_data.inst_el,
                                                                                 swe_l2_data.inst_az_spin_sector[i])
 
-            # TODO: read these from L1 dataset
-            ccounts = np.reshape(np.arange(24 * 30 * 7), (24, 30, 7)) * 1000
-
-            weights: np.ndarray[float] = compute_maxwellian_weight_factors(ccounts)
+            weights: np.ndarray[float] = compute_maxwellian_weight_factors(dependencies.swe_l1b_data.count_rates[i],
+                                                                           dependencies.swe_l2_data.acquisition_duration[
+                                                                               i])
 
             spacecraft_potential_core_breakpoint_index: int = next(
                 i for i, energy in enumerate(swe_l2_data.energy) if energy >= spacecraft_potential)

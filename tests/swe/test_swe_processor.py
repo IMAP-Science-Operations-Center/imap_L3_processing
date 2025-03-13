@@ -5,7 +5,7 @@ from unittest.mock import patch, call, Mock, sentinel
 import numpy as np
 
 from imap_l3_processing.models import MagL1dData, InputMetadata, UpstreamDataDependency
-from imap_l3_processing.swe.l3.models import SweL2Data, SwapiL3aProtonData
+from imap_l3_processing.swe.l3.models import SweL2Data, SwapiL3aProtonData, SweL1bData
 from imap_l3_processing.swe.l3.science.moment_calculations import Moments
 from imap_l3_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies
 from imap_l3_processing.swe.swe_processor import SweProcessor
@@ -63,6 +63,7 @@ class TestSweProcessor(unittest.TestCase):
             inst_el=np.array([]),
             inst_az_spin_sector=np.arange(10, 19).reshape(3, 3),
             acquisition_time=np.array([]),
+            acquisition_duration=np.array([])
         )
 
         mag_l1d_data = MagL1dData(
@@ -118,7 +119,7 @@ class TestSweProcessor(unittest.TestCase):
 
         input_metadata = InputMetadata("swe", "l3", datetime(2025, 2, 21),
                                        datetime(2025, 2, 22), "v001")
-        swel3_dependency = SweL3Dependencies(swe_l2_data, mag_l1d_data, swapi_l3a_proton_data, swe_config)
+        swel3_dependency = SweL3Dependencies(swe_l2_data, Mock(), mag_l1d_data, swapi_l3a_proton_data, swe_config)
         swe_processor = SweProcessor(dependencies=[], input_metadata=input_metadata)
         swe_l3_data = swe_processor.calculate_pitch_angle_products(swel3_dependency)
 
@@ -222,6 +223,8 @@ class TestSweProcessor(unittest.TestCase):
             inst_az_spin_sector=np.arange(num_epochs * num_energies * 5).reshape(num_epochs, num_energies, 5),
             acquisition_time=np.linspace(datetime(2025, 3, 6), datetime(2025, 3, 6, 0, 1),
                                          num_epochs * num_energies * 5).reshape(num_epochs, num_energies, 5),
+            acquisition_duration=np.array([])
+
         )
 
         mag_l1d_data = MagL1dData(
@@ -255,7 +258,7 @@ class TestSweProcessor(unittest.TestCase):
 
         input_metadata = InputMetadata("swe", "l3", datetime(2025, 2, 21),
                                        datetime(2025, 2, 22), "v001")
-        swel3_dependency = SweL3Dependencies(swe_l2_data, mag_l1d_data, swapi_l3a_proton_data, swe_config)
+        swel3_dependency = SweL3Dependencies(swe_l2_data, Mock(), mag_l1d_data, swapi_l3a_proton_data, swe_config)
         swe_processor = SweProcessor(dependencies=[], input_metadata=input_metadata)
         swe_l3_data = swe_processor.calculate_pitch_angle_products(swel3_dependency)
 
@@ -296,6 +299,8 @@ class TestSweProcessor(unittest.TestCase):
             inst_az_spin_sector=np.arange(num_epochs * num_energies * 5).reshape(num_epochs, num_energies, 5),
             acquisition_time=np.linspace(datetime(2025, 3, 6), datetime(2025, 3, 6, 0, 1),
                                          num_epochs * num_energies * 5).reshape(num_epochs, num_energies, 5),
+            acquisition_duration=np.array([])
+
         )
 
         mag_l1d_data = MagL1dData(
@@ -329,7 +334,7 @@ class TestSweProcessor(unittest.TestCase):
 
         input_metadata = InputMetadata("swe", "l3", datetime(2025, 2, 21),
                                        datetime(2025, 2, 22), "v001")
-        swel3_dependency = SweL3Dependencies(swe_l2_data, mag_l1d_data, swapi_l3a_proton_data, swe_config)
+        swel3_dependency = SweL3Dependencies(swe_l2_data, Mock(), mag_l1d_data, swapi_l3a_proton_data, swe_config)
         swe_processor = SweProcessor(dependencies=[], input_metadata=input_metadata)
         swe_l3_data = swe_processor.calculate_pitch_angle_products(swel3_dependency)
 
@@ -388,7 +393,10 @@ class TestSweProcessor(unittest.TestCase):
             inst_el=np.array([]),
             inst_az_spin_sector=np.arange(10, 19).reshape(3, 3),
             acquisition_time=np.array([]),
+            acquisition_duration=[sentinel.acquisition_duration_1, sentinel.acquisition_duration_2],
         )
+        swe_l1_data = SweL1bData(epoch=epochs,
+                                 count_rates=[sentinel.l1b_count_rates_1, sentinel.l1b_count_rates_2])
 
         expected_breakpoint_1 = (12, 96)
         expected_breakpoint_2 = (14, 54)
@@ -472,7 +480,7 @@ class TestSweProcessor(unittest.TestCase):
         input_metadata = InputMetadata("swe", "l3", datetime(2025, 2, 21),
                                        datetime(2025, 2, 22), "v001")
 
-        swel3_dependency = SweL3Dependencies(swe_l2_data, Mock(), Mock(), swe_config)
+        swel3_dependency = SweL3Dependencies(swe_l2_data, swe_l1_data, Mock(), Mock(), swe_config)
         swe_processor = SweProcessor(dependencies=[], input_metadata=input_metadata)
 
         swe_processor.calculate_moment_products(swel3_dependency)
@@ -503,10 +511,9 @@ class TestSweProcessor(unittest.TestCase):
         np.testing.assert_array_equal(swe_l2_data.inst_el, calculate_velocity_call_2.args[1])
         np.testing.assert_array_equal(swe_l2_data.inst_az_spin_sector[1], calculate_velocity_call_2.args[2])
 
-        np.testing.assert_array_equal(np.reshape(np.arange(24 * 30 * 7), (24, 30, 7)) * 1000,
-                                      mock_compute_maxwellian_weight_factors.mock_calls[0].args[0])
-        np.testing.assert_array_equal(np.reshape(np.arange(24 * 30 * 7), (24, 30, 7)) * 1000,
-                                      mock_compute_maxwellian_weight_factors.mock_calls[1].args[0])
+        mock_compute_maxwellian_weight_factors.assert_has_calls(
+            [call(sentinel.l1b_count_rates_1, sentinel.acquisition_duration_1),
+             call(sentinel.l1b_count_rates_2, sentinel.acquisition_duration_2)])
 
         core_filter_and_flatten_call_1 = mock_filter_and_flatten_regress_parameters.mock_calls[0]
         np.testing.assert_array_equal(swe_l2_data.energy - expected_breakpoint_1[0],
@@ -645,7 +652,11 @@ class TestSweProcessor(unittest.TestCase):
             inst_el=np.array([]),
             inst_az_spin_sector=np.arange(10, 19).reshape(3, 3),
             acquisition_time=np.array([]),
+            acquisition_duration=np.array([3, 4])
         )
+
+        swe_l1_data = create_dataclass_mock(SweL1bData)
+        swe_l1_data.count_rates = np.array([1, 2])
 
         core_breakpoint = 3.4
         core_halo_breakpoint = 9.2
@@ -730,7 +741,7 @@ class TestSweProcessor(unittest.TestCase):
         input_metadata = InputMetadata("swe", "l3", datetime(2025, 2, 21),
                                        datetime(2025, 2, 22), "v001")
 
-        swel3_dependency = SweL3Dependencies(swe_l2_data, Mock(), Mock(), swe_config)
+        swel3_dependency = SweL3Dependencies(swe_l2_data, swe_l1_data, Mock(), Mock(), swe_config)
         swe_processor = SweProcessor(dependencies=[], input_metadata=input_metadata)
 
         swe_processor.calculate_moment_products(swel3_dependency)
@@ -847,7 +858,11 @@ class TestSweProcessor(unittest.TestCase):
             inst_el=np.array([]),
             inst_az_spin_sector=np.arange(10, 19).reshape(3, 3),
             acquisition_time=np.array([]),
+            acquisition_duration=np.array([3, 4])
         )
+
+        swe_l1_data = create_dataclass_mock(SweL1bData)
+        swe_l1_data.count_rates = np.array([1, 2])
 
         core_breakpoint = 3.4
         core_halo_breakpoint = 8.7
@@ -873,7 +888,7 @@ class TestSweProcessor(unittest.TestCase):
         input_metadata = InputMetadata("swe", "l3", datetime(2025, 2, 21),
                                        datetime(2025, 2, 22), "v001")
 
-        swel3_dependency = SweL3Dependencies(swe_l2_data, Mock(), Mock(), swe_config)
+        swel3_dependency = SweL3Dependencies(swe_l2_data, swe_l1_data, Mock(), Mock(), swe_config)
         swe_processor = SweProcessor(dependencies=[], input_metadata=input_metadata)
 
         swe_processor.calculate_moment_products(swel3_dependency)
