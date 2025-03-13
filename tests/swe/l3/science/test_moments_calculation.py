@@ -6,6 +6,7 @@ from unittest.mock import patch
 
 import numpy as np
 
+from imap_l3_processing.swe.l3.science import moment_calculations
 from imap_l3_processing.swe.l3.science.moment_calculations import compute_maxwellian_weight_factors, \
     filter_and_flatten_regress_parameters, regress, calculate_fit_temperature_density_velocity, rotate_temperature, \
     rotate_dps_vector_to_rtn, Moments, halotrunc, compute_density_scale
@@ -14,15 +15,18 @@ from tests.test_helpers import get_test_data_path
 
 class TestMomentsCalculation(unittest.TestCase):
     def test_compute_maxwellian_weight_factors_reproduces_heritage_results(self):
-        count_rates = np.array([[[536.0, 10000.0, 1.2]]])
-        acquisition_duration = np.array([[[80000, 80000]]])
+        counts = np.array([[[536.0, 20000, 1.2, 3072.0000001359296]]])
+        acquisition_duration = np.array([[[80000., 80000., 80000., 40000]]])
+        count_rates = counts / acquisition_duration
         weight_factors = compute_maxwellian_weight_factors(count_rates, acquisition_duration)
 
-        first_weight = np.sqrt(536 * 80000) / (536 * 80000)
-        second_weight = np.sqrt(10000.0 * 80000) / (10000.0 * 80000)
-        third_weight = np.sqrt(1.2 * 80000) / (1.2 * 80000)
+        first_weight = np.sqrt(21.25 + 536) / 536
+        second_weight = np.sqrt(87381.25 + 20000.0) / 20000
+        third_weight = moment_calculations.MINIMUM_WEIGHT
+        fourth_weight = np.sqrt(341.25 + 3072) / 3072
 
-        np.testing.assert_array_almost_equal(weight_factors, [[[first_weight, second_weight, third_weight]]])
+        np.testing.assert_array_almost_equal(weight_factors,
+                                             np.array([[[first_weight, second_weight, third_weight, fourth_weight]]]))
 
     def test_regress_reproduces_heritage_results_given_all_test_data(self):
         velocity_vectors = np.loadtxt(get_test_data_path("swe/fake_velocity_vectors.csv"), delimiter=",",

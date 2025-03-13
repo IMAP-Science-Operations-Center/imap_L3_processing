@@ -177,35 +177,31 @@ def calculate_fit_temperature_density_velocity(parameters: np.ndarray[float]):
     return moments
 
 
-# Compute weight factors for bi-maxwellian fits.
-#  sigma2 are variances due to digitization errors.
-#  total variance includes both sigma2 and statistical variance (=counts)
 LIMIT = np.array([32, 64, 128, 256, 1024, 2048, 3072, 5120, 9216, 17408, 33792])
 SIGMA2 = np.array([0, 0.25, 1.25, 5.25, 21.25, 85.25, 341.25, 1365.25, 5461.25, 21845.25, 87381.25])
-TSAMPLE = 1.2
 MINIMUM_WEIGHT = 0.8165
 MAX_VARIANCE = 349525.25
 
 
-# is corrected counts (ccounts) just count rate
-def compute_maxwellian_weight_factors(corrected_counts: np.ndarray[float], acqusition_durations: np.ndarray[float]) -> \
-np.ndarray[float]:
-    correction = 1.0 - 1.5e-6 * LIMIT / TSAMPLE
+def compute_maxwellian_weight_factors(count_rates: np.ndarray[float], acquisition_durations: np.ndarray[float]) -> \
+        np.ndarray[float]:
+    correction = 1.0 - 1e-9 * LIMIT / acquisition_durations.reshape((*acquisition_durations.shape, 1))
     correction[correction < 0.1] = 0.1
-    xlimits = LIMIT / correction
+    xlimits_per_measurement = LIMIT / correction
 
-    weights = np.empty_like(corrected_counts, dtype=np.float64)
+    counts = count_rates * acquisition_durations
+    weights = np.empty_like(count_rates, dtype=np.float64)
 
-    for (energy_i, spin_i, declination_i), corrected_count in np.ndenumerate(corrected_counts):
-        variance = MAX_VARIANCE
-        for xlimit, sigma in zip(xlimits, SIGMA2):
-            if corrected_count < xlimit:
-                variance = sigma
-                break
-
+    for (energy_i, spin_i, declination_i), corrected_count in np.ndenumerate(counts):
         if corrected_count <= 1.5:
             weights[energy_i, spin_i, declination_i] = MINIMUM_WEIGHT
         else:
+            variance = MAX_VARIANCE
+            xlimits = xlimits_per_measurement[energy_i, spin_i, declination_i]
+            for xlimit, sigma in zip(xlimits, SIGMA2):
+                if corrected_count < xlimit:
+                    variance = sigma
+                    break
             weights[energy_i, spin_i, declination_i] = np.sqrt(variance + corrected_count) / corrected_count
 
     return weights
