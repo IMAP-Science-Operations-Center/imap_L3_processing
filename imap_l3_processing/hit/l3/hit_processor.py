@@ -18,7 +18,7 @@ from imap_l3_processing.utils import save_data
 
 class HitProcessor(Processor):
     def process(self):
-        if self.input_metadata.descriptor == "pitch-angle":
+        if self.input_metadata.descriptor == "macropixel":
             dependencies = HITL3SectoredDependencies.fetch_dependencies(self.dependencies)
             pitch_angle_data_product = self.process_pitch_angle_product(dependencies)
             cdf_file_path = save_data(pitch_angle_data_product)
@@ -30,7 +30,7 @@ class HitProcessor(Processor):
             imap_data_access.upload(cdf_file_path)
         else:
             raise ValueError(
-                f"Don't know how to generate '{self.input_metadata.descriptor}' /n Known HIT l3 data products: 'pitch-angle', 'direct-event'.")
+                f"Don't know how to generate '{self.input_metadata.descriptor}' /n Known HIT l3 data products: 'macropixel', 'direct-event'.")
 
     def process_direct_event_product(self,
                                      direct_event_dependencies: HitL3PhaDependencies) -> HitDirectEventDataProduct:

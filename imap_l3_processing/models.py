@@ -25,7 +25,6 @@ class InputMetadata:
 
 @dataclass
 class UpstreamDataDependency(InputMetadata):
-    descriptor: str
 
     @property
     def logical_source(self):

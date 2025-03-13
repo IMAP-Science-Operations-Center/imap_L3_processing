@@ -7,18 +7,9 @@ from uncertainties.unumpy import uarray
 from imap_l3_processing.constants import FIVE_MINUTES_IN_NANOSECONDS
 from imap_l3_processing.models import UpstreamDataDependency
 from imap_l3_processing.swapi.l3a.models import EPOCH_CDF_VAR_NAME, EPOCH_DELTA_CDF_VAR_NAME
-from imap_l3_processing.swapi.l3b.models import SwapiL3BCombinedVDF, PROTON_SOLAR_WIND_VELOCITIES_CDF_VAR_NAME, \
-    PROTON_SOLAR_WIND_VDF_CDF_VAR_NAME, PROTON_SOLAR_WIND_VDF_DELTAS_CDF_VAR_NAME, \
-    ALPHA_SOLAR_WIND_VELOCITIES_CDF_VAR_NAME, \
-    ALPHA_SOLAR_WIND_VDF_CDF_VAR_NAME, \
-    ALPHA_SOLAR_WIND_VDF_DELTAS_CDF_VAR_NAME, PUI_SOLAR_WIND_VELOCITIES_CDF_VAR_NAME, \
-    PUI_SOLAR_WIND_VDF_CDF_VAR_NAME, \
-    PUI_SOLAR_WIND_VDF_DELTAS_CDF_VAR_NAME, COMBINED_SOLAR_WIND_DIFFERENTIAL_FLUX_CDF_VAR_NAME, \
+from imap_l3_processing.swapi.l3b.models import SwapiL3BCombinedVDF, COMBINED_SOLAR_WIND_DIFFERENTIAL_FLUX_CDF_VAR_NAME, \
     COMBINED_SOLAR_WIND_DIFFERENTIAL_FLUX_DELTA_CDF_VAR_NAME, SOLAR_WIND_ENERGY_CDF_VAR_NAME, \
-    PROTON_SOLAR_WIND_VELOCITIES_DELTA_MINUS_CDF_VAR_NAME, \
-    PROTON_SOLAR_WIND_VELOCITIES_DELTA_PLUS_CDF_VAR_NAME, ALPHA_SOLAR_WIND_VELOCITIES_DELTA_MINUS_CDF_VAR_NAME, \
-    ALPHA_SOLAR_WIND_VELOCITIES_DELTA_PLUS_CDF_VAR_NAME, PUI_SOLAR_WIND_VELOCITIES_DELTA_MINUS_CDF_VAR_NAME, \
-    PUI_SOLAR_WIND_VELOCITIES_DELTA_PLUS_CDF_VAR_NAME, SOLAR_WIND_COMBINED_ENERGY_DELTA_MINUS_CDF_VAR_NAME, \
+    SOLAR_WIND_COMBINED_ENERGY_DELTA_MINUS_CDF_VAR_NAME, \
     SOLAR_WIND_COMBINED_ENERGY_DELTA_PLUS_CDF_VAR_NAME
 from tests.swapi.cdf_model_test_case import CdfModelTestCase
 
@@ -74,41 +65,17 @@ class TestModels(CdfModelTestCase):
 
         variables = vdf.to_data_product_variables()
 
-        self.assertEqual(22, len(variables))
+        self.assertEqual(7, len(variables))
         self.assert_variable_attributes(variables[0], epoch, EPOCH_CDF_VAR_NAME, pycdf.const.CDF_TIME_TT2000)
         self.assert_variable_attributes(variables[1], FIVE_MINUTES_IN_NANOSECONDS, EPOCH_DELTA_CDF_VAR_NAME,
                                         expected_record_varying=False)
-        self.assert_variable_attributes(variables[2], proton_velocities, PROTON_SOLAR_WIND_VELOCITIES_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[3], proton_velocities_delta_minus,
-                                        PROTON_SOLAR_WIND_VELOCITIES_DELTA_MINUS_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[4], proton_velocities_delta_plus,
-                                        PROTON_SOLAR_WIND_VELOCITIES_DELTA_PLUS_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[5], proton_vdf, PROTON_SOLAR_WIND_VDF_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[6], proton_vdf_uncertainties,
-                                        PROTON_SOLAR_WIND_VDF_DELTAS_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[7], alpha_velocities, ALPHA_SOLAR_WIND_VELOCITIES_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[8], alpha_velocities_delta_minus,
-                                        ALPHA_SOLAR_WIND_VELOCITIES_DELTA_MINUS_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[9], alpha_velocities_delta_plus,
-                                        ALPHA_SOLAR_WIND_VELOCITIES_DELTA_PLUS_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[10], alpha_vdf, ALPHA_SOLAR_WIND_VDF_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[11], alpha_vdf_uncertainties,
-                                        ALPHA_SOLAR_WIND_VDF_DELTAS_CDF_VAR_NAME)
 
-        self.assert_variable_attributes(variables[12], pui_velocities, PUI_SOLAR_WIND_VELOCITIES_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[13], pui_velocities_delta_minus,
-                                        PUI_SOLAR_WIND_VELOCITIES_DELTA_MINUS_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[14], pui_velocities_delta_plus,
-                                        PUI_SOLAR_WIND_VELOCITIES_DELTA_PLUS_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[15], pui_vdf, PUI_SOLAR_WIND_VDF_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[16], pui_vdf_uncertainties, PUI_SOLAR_WIND_VDF_DELTAS_CDF_VAR_NAME)
-
-        self.assert_variable_attributes(variables[17], combined_energies, SOLAR_WIND_ENERGY_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[18], combined_energies_delta_minus,
+        self.assert_variable_attributes(variables[2], combined_energies, SOLAR_WIND_ENERGY_CDF_VAR_NAME)
+        self.assert_variable_attributes(variables[3], combined_energies_delta_minus,
                                         SOLAR_WIND_COMBINED_ENERGY_DELTA_MINUS_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[19], combined_energies_delta_plus,
+        self.assert_variable_attributes(variables[4], combined_energies_delta_plus,
                                         SOLAR_WIND_COMBINED_ENERGY_DELTA_PLUS_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[20], combined_differential_flux,
+        self.assert_variable_attributes(variables[5], combined_differential_flux,
                                         COMBINED_SOLAR_WIND_DIFFERENTIAL_FLUX_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[21], combined_differential_flux_uncertainties,
+        self.assert_variable_attributes(variables[6], combined_differential_flux_uncertainties,
                                         COMBINED_SOLAR_WIND_DIFFERENTIAL_FLUX_DELTA_CDF_VAR_NAME)

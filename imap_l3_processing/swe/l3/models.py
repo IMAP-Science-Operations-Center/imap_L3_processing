@@ -24,13 +24,13 @@ CORE_HALO_BREAKPOINT_CDF_VAR_NAME = "core_halo_breakpoint"
 @dataclass
 class SweL2Data:
     epoch: np.ndarray
-    epoch_delta: np.ndarray
     phase_space_density: np.ndarray
     flux: np.ndarray
     energy: np.ndarray
     inst_el: np.ndarray
     inst_az_spin_sector: np.ndarray
     acquisition_time: np.ndarray
+    acquisition_duration: np.ndarray
 
 
 @dataclass
@@ -40,6 +40,13 @@ class SwapiL3aProtonData:
     proton_sw_speed: np.ndarray[float]
     proton_sw_clock_angle: np.ndarray[float]
     proton_sw_deflection_angle: np.ndarray[float]
+
+
+@dataclass
+class SweL1bData:
+    epoch: np.ndarray
+    count_rates: np.ndarray
+    settle_duration: np.ndarray
 
 
 @dataclass

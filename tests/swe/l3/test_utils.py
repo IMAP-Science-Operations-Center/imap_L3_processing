@@ -6,11 +6,11 @@ from pathlib import Path
 
 import numpy as np
 import spiceypy
-from imap_processing.spice.time import met_to_datetime64
 from spacepy.pycdf import CDF
 
-from imap_l3_processing.swe.l3.models import SweL2Data, SwapiL3aProtonData
-from imap_l3_processing.swe.l3.utils import read_swe_config, read_l2_swe_data, read_l3a_swapi_proton_data
+from imap_l3_processing.swe.l3.models import SweL2Data, SwapiL3aProtonData, SweL1bData
+from imap_l3_processing.swe.l3.utils import read_swe_config, read_l2_swe_data, read_l3a_swapi_proton_data, \
+    read_l1b_swe_data, compute_epoch_delta_in_ns
 from tests.test_helpers import get_test_data_path
 
 
@@ -39,15 +39,27 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(0.6, result["energy_bin_low_multiplier"])
         self.assertEqual(1.4, result["energy_bin_high_multiplier"])
 
+    def test_read_l1b_swe_data(self):
+        result: SweL1bData = read_l1b_swe_data(
+            get_test_data_path('swe/imap_swe_l1b_sci_20240510_v002.cdf'))
+
+        self.assertEqual((6,), result.epoch.shape)
+        self.assertEqual(datetime(2010, 1, 1, 0, 0), result.epoch[0])
+        self.assertEqual(datetime(2010, 1, 1, 0, 1), result.epoch[1])
+
+        self.assertEqual((6, 24, 30, 7), result.count_rates.shape)
+        self.assertEqual(0, result.count_rates[0, 0, 0, 0])
+        self.assertEqual(589631.7192194695, result.count_rates[2, 0, 0, 0])
+
+        self.assertEqual((6, 4), result.settle_duration.shape)
+        self.assertEqual(3333, result.settle_duration[0, 0])
+
     def test_read_l2_swe_data(self):
         result: SweL2Data = read_l2_swe_data(
             get_test_data_path('swe/imap_swe_l2_sci-with-fill-values_20250101_v002.cdf'))
 
         self.assertEqual(result.epoch[0], datetime(2025, 1, 1))
         self.assertEqual(len(result.epoch), 6)
-
-        self.assertEqual(result.epoch_delta[0], timedelta(seconds=30))
-        self.assertEqual(len(result.epoch_delta), 6)
 
         self.assertEqual(result.flux[3][13][12][6], 324526.5306847633)
         self.assertTrue(np.isnan(result.flux[1][2][3][4]))
@@ -71,6 +83,9 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(result.acquisition_time.shape, (6, 24, 30))
         self.assertEqual(result.acquisition_time[0][0][0], np.datetime64('2024-12-31T23:59:30.099713922'))
         self.assertTrue(np.isnat(result.acquisition_time[1][2][3]))
+
+        self.assertEqual(result.acquisition_duration.shape, (6, 24, 30))
+        self.assertEqual(result.acquisition_duration[0][0][0], 80000)
 
     def test_read_l3a_swapi_proton_data(self):
         result = read_l3a_swapi_proton_data(get_test_data_path('swe/imap_swapi_l3a_proton-sw_20250101_v001.cdf'))
@@ -102,6 +117,13 @@ class TestUtils(unittest.TestCase):
             self.assertTrue(np.isnan(swapi_l3a_data.proton_sw_speed[0]))
             self.assertTrue(np.isnan(swapi_l3a_data.proton_sw_clock_angle[0]))
             self.assertTrue(np.isnan(swapi_l3a_data.proton_sw_deflection_angle[0]))
+
+    def test_compute_epoch_delta_in_ns(self):
+        acq_duration_microseconds = np.full((4, 24, 30), 80_000)
+        settle_duration_microseconds = np.full((4, 4), 10000 / 3)
+        result = compute_epoch_delta_in_ns(acq_duration_microseconds, settle_duration_microseconds)
+        expected = np.full(4, 30 * 1e9)
+        np.testing.assert_array_equal(expected, result)
 
 
 if __name__ == '__main__':

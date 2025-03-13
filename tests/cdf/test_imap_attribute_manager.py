@@ -82,42 +82,6 @@ class TestImapCdfManager(TestCase):
         self.assertEqual(self.base_manager.get_global_attributes(), manager.get_global_attributes())
         self.assertEqual(self.base_manager.get_variable_attributes('epoch'), manager.get_variable_attributes('epoch'))
 
-        self.assertEqual(self.base_manager.get_variable_attributes('proton_sw_velocity'),
-                         manager.get_variable_attributes('proton_sw_velocity'))
-        self.assertEqual(self.base_manager.get_variable_attributes('proton_sw_velocity_delta_minus'),
-                         manager.get_variable_attributes('proton_sw_velocity_delta_minus'))
-        self.assertEqual(self.base_manager.get_variable_attributes('proton_sw_velocity_delta_plus'),
-                         manager.get_variable_attributes('proton_sw_velocity_delta_plus'))
-
-        self.assertEqual(self.base_manager.get_variable_attributes('proton_sw_vdf'),
-                         manager.get_variable_attributes('proton_sw_vdf'))
-        self.assertEqual(self.base_manager.get_variable_attributes('proton_sw_vdf_delta'),
-                         manager.get_variable_attributes('proton_sw_vdf_delta'))
-
-        self.assertEqual(self.base_manager.get_variable_attributes('alpha_sw_velocity'),
-                         manager.get_variable_attributes('alpha_sw_velocity'))
-        self.assertEqual(self.base_manager.get_variable_attributes('alpha_sw_velocity_delta_minus'),
-                         manager.get_variable_attributes('alpha_sw_velocity_delta_minus'))
-        self.assertEqual(self.base_manager.get_variable_attributes('alpha_sw_velocity_delta_plus'),
-                         manager.get_variable_attributes('alpha_sw_velocity_delta_plus'))
-
-        self.assertEqual(self.base_manager.get_variable_attributes('alpha_sw_vdf'),
-                         manager.get_variable_attributes('alpha_sw_vdf'))
-        self.assertEqual(self.base_manager.get_variable_attributes('alpha_sw_vdf_delta'),
-                         manager.get_variable_attributes('alpha_sw_vdf_delta'))
-
-        self.assertEqual(self.base_manager.get_variable_attributes('pui_sw_velocity'),
-                         manager.get_variable_attributes('pui_sw_velocity'))
-        self.assertEqual(self.base_manager.get_variable_attributes('pui_sw_velocity_delta_minus'),
-                         manager.get_variable_attributes('pui_sw_velocity_delta_minus'))
-        self.assertEqual(self.base_manager.get_variable_attributes('pui_sw_velocity_delta_plus'),
-                         manager.get_variable_attributes('pui_sw_velocity_delta_plus'))
-
-        self.assertEqual(self.base_manager.get_variable_attributes('pui_sw_vdf'),
-                         manager.get_variable_attributes('pui_sw_vdf'))
-        self.assertEqual(self.base_manager.get_variable_attributes('pui_sw_vdf_delta'),
-                         manager.get_variable_attributes('pui_sw_vdf_delta'))
-
         self.assertEqual(self.base_manager.get_variable_attributes('combined_energy'),
                          manager.get_variable_attributes('combined_energy'))
         self.assertEqual(self.base_manager.get_variable_attributes('combined_energy_delta_minus'),

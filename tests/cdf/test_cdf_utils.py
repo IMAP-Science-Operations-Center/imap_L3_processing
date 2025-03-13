@@ -110,7 +110,7 @@ class TestCdfUtils(TempFileTestCase):
         attribute_manager = Mock(spec=ImapAttributeManager)
         attribute_manager.get_global_attributes.return_value = {}
         attribute_manager.get_variable_attributes.side_effect = [
-            {"VAR_NAME": "epoch", "FILLVAL": datetime.fromisoformat("9999-12-31T23:59:59.999999999")},
+            {"VAR_NAME": "epoch", "FILLVAL": datetime.fromisoformat("9999-12-31T23:59:59.999999")},
             {"VAR_NAME": "float_var", "FILLVAL": -1e31},
         ]
 

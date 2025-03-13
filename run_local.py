@@ -256,11 +256,11 @@ def create_hit_direct_event_cdf():
                                                      event_type_lookup=event_type_look)
     input_metadata = InputMetadata(
         instrument="hit",
-        data_level="l3a",
+        data_level="l3",
         start_date=datetime.now(),
         end_date=datetime.now() + timedelta(days=1),
         version=str(uuid.uuid4()),
-        descriptor="pulse-height-events"
+        descriptor="direct-event"
     )
     processor = HitProcessor(None, input_metadata)
 
