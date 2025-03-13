@@ -16,7 +16,7 @@ from tests.swapi.cdf_model_test_case import CdfModelTestCase
 class TestModels(CdfModelTestCase):
     def test_data_to_product_variables(self):
         epoch = Mock()
-        epoch_delta = [timedelta(days=1), timedelta(seconds=40)]
+        epoch_delta = [30_000_000_000, 30_000_000_000]
         energy = Mock()
         energy_delta_plus = Mock()
         energy_delta_minus = Mock()
@@ -52,7 +52,7 @@ class TestModels(CdfModelTestCase):
         self.assert_variable_attributes(
             next(variables), epoch, EPOCH_CDF_VAR_NAME, pycdf.const.CDF_TIME_TT2000)
         self.assert_variable_attributes(
-            next(variables), [86400 * 1e9, 40 * 1e9], EPOCH_DELTA_CDF_VAR_NAME, pycdf.const.CDF_INT8)
+            next(variables), [30_000_000_000, 30_000_000_000], EPOCH_DELTA_CDF_VAR_NAME, pycdf.const.CDF_INT8)
         self.assert_variable_attributes(
             next(variables), energy, ENERGY_CDF_VAR_NAME, pycdf.const.CDF_REAL4, expected_record_varying=False)
         self.assert_variable_attributes(
