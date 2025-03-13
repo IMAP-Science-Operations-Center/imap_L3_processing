@@ -1,10 +1,10 @@
 import numpy as np
 
-from imap_processing.hi.l3.hi_l3_dependencies import HiL3Dependencies, HI_L3_DESCRIPTOR
-from imap_processing.hi.l3.models import HiL3SpectralIndexDataProduct
-from imap_processing.hi.l3.science.spectral_fit import spectral_fit
-from imap_processing.processor import Processor
-from imap_processing.utils import save_data
+from imap_l3_processing.hi.l3.hi_l3_dependencies import HiL3Dependencies, HI_L3_DESCRIPTOR
+from imap_l3_processing.hi.l3.models import HiL3SpectralIndexDataProduct
+from imap_l3_processing.hi.l3.science.spectral_fit import spectral_fit
+from imap_l3_processing.processor import Processor
+from imap_l3_processing.utils import save_data
 
 
 class HiProcessor(Processor):

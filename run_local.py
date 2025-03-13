@@ -6,8 +6,8 @@ from pathlib import Path
 from bitstring import BitStream
 from spacepy.pycdf import CDF
 
-from imap_processing.hi.hi_processor import HiProcessor
-from imap_processing.hi.l3.hi_l3_dependencies import HiL3Dependencies
+from imap_l3_processing.hi.hi_processor import HiProcessor
+from imap_l3_processing.hi.l3.hi_l3_dependencies import HiL3Dependencies
 from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
 from imap_l3_processing.glows.descriptors import GLOWS_L2_DESCRIPTOR
 from imap_l3_processing.glows.glows_processor import GlowsProcessor
@@ -160,6 +160,7 @@ def create_hi_cdf(dependencies: HiL3Dependencies) -> str:
                                    )
     processor = HiProcessor(None, input_metadata)
     output_data = processor._process_spectral_fit_index(dependencies)
+    delete_temp_cdf_file_path_if_exists(output_data)
     cdf_path = save_data(output_data)
     return cdf_path
 

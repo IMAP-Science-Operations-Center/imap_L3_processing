@@ -4,9 +4,9 @@ from datetime import datetime, timedelta
 import numpy as np
 from spacepy import pycdf
 
-from imap_processing.hi.l3 import models
-from imap_processing.hi.l3.models import HiL3SpectralIndexDataProduct
-from imap_processing.models import InputMetadata, DataProductVariable
+from imap_l3_processing.hi.l3 import models
+from imap_l3_processing.hi.l3.models import HiL3SpectralIndexDataProduct
+from imap_l3_processing.models import InputMetadata, DataProductVariable
 
 
 class TestModels(unittest.TestCase):

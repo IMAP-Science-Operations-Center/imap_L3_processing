@@ -1,6 +1,6 @@
 from spacepy.pycdf import CDF
 
-from imap_processing.hi.l3.models import HiL3Data
+from imap_l3_processing.hi.l3.models import HiL3Data
 
 
 def read_hi_l3_data(cdf_path) -> HiL3Data:

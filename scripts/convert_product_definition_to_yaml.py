@@ -18,9 +18,10 @@ with open(args.csv) as csvfile:
     metadata = list(csv_reader)
     for row in metadata:
         variable_name = row[0]
+        columns = list(zip(headers, row))
         metadata_strs = ["  " + f"{cdf_metadata_name}: {cdf_metadata_value}" for cdf_metadata_name, cdf_metadata_value
                          in
-                         list(zip(headers, row))[3:] if cdf_metadata_value]
+                         columns[1:] if cdf_metadata_value and cdf_metadata_name != 'Data shape']
         yaml_text += "\n".join([f"{variable_name}:"] + metadata_strs + [""]) + "\n"
 
 filename_without_extension = Path(args.csv).name.split(".")[0]

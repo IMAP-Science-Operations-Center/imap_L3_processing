@@ -1,38 +1,115 @@
 Epoch:
-  CATDESC: Epoch
-
-lat:
-  CATDESC: lat
-
-lon:
-  CATDESC: lon
-
-bin:
-  CATDESC: bin
-
-flux:
-  CATDESC: flux
-
-variance:
-  CATDESC: variance
-
-energy_deltas:
-  CATDESC: energy_deltas
-
-counts:
-  CATDESC: counts
-
-counts_uncertainty:
-  CATDESC: counts_uncertainty
+  DATA_TYPE: int64
+  CATDESC: Time, number of nanoseconds since J2000 with leap seconds included
+  VAR_TYPE: support_data
+  DISPLAY_TYPE: no_plot
+  FIELDNAM: epoch
+  LABLAXIS: epoch
+  UNITS: ns
+  VALIDMIN: 1990-01-01T00:00:00.000000000
+  VALIDMAX: 2099-12-31T00:00:00.000000000
+  FILLVAL: 9999-12-31T23:59:59.999999999
+  SCALETYP: linear
+  TIME_BASE: J2000
+  TIME_SCALE: Terrestrial Time
+  DELTA_PLUS_VAR: epoch_delta
+  DELTA_MINUS_VAR: epoch_delta
+  MONOTON: INCREASE
+  REFERENCE_POSITION: Rotating Earth Geoid
 
 epoch_delta:
+  DATA_TYPE: int64
   CATDESC: epoch_delta
+  VAR_TYPE: support_data
+  DISPLAY_TYPE: no_plot
+  FIELDNAM: epoch_delta
+  LABLAXIS: epoch_delta
+  UNITS: ns
+  VALIDMIN: 0
+  VALIDMAX: 86000000000000
+  FILLVAL: -9223372036854770000
+  SCALETYP: linear
+
+lat:
+  DATA_TYPE: float64
+  VAR_TYPE: support_data
+  FILLVAL: -1.00E+31
+
+lon:
+  DATA_TYPE: float64
+  VAR_TYPE: support_data
+  FILLVAL: -1.00E+31
+
+bin:
+  DATA_TYPE: float64
+  VAR_TYPE: support_data
+  FILLVAL: -1.00E+31
+
+intensity:
+  DATA_TYPE: float64
+  VAR_TYPE: data
+  DEPEND_0: Epoch
+  DEPEND_1: lon
+  DEPEND_2: lat
+  DEPEND_3: bin
+  FILLVAL: -1.00E+31
+
+variance:
+  DATA_TYPE: float64
+  VAR_TYPE: support_data
+  DEPEND_0: Epoch
+  DEPEND_1: lon
+  DEPEND_2: lat
+  DEPEND_3: bin
+  FILLVAL: -1.00E+31
+
+energy_deltas:
+  DATA_TYPE: float64
+  VAR_TYPE: support_data
+  DEPEND_0: Epoch
+  DEPEND_1: bin
+  FILLVAL: -1.00E+31
+
+counts:
+  DATA_TYPE: float64
+  VAR_TYPE: support_data
+  DEPEND_0: Epoch
+  DEPEND_1: lon
+  DEPEND_2: lat
+  DEPEND_3: bin
+  FILLVAL: -1.00E+31
+
+counts_uncertainty:
+  DATA_TYPE: float64
+  VAR_TYPE: support_data
+  DEPEND_0: Epoch
+  DEPEND_1: lon
+  DEPEND_2: lat
+  DEPEND_3: bin
+  FILLVAL: -1.00E+31
 
 exposure:
-  CATDESC: exposure
+  DATA_TYPE: float64
+  VAR_TYPE: support_data
+  DEPEND_0: Epoch
+  DEPEND_1: lon
+  DEPEND_2: lat
+  FILLVAL: -1.00E+31
 
 sensitivity:
-  CATDESC: sensitivity
+  DATA_TYPE: float64
+  VAR_TYPE: support_data
+  DEPEND_0: Epoch
+  DEPEND_1: lon
+  DEPEND_2: lat
+  DEPEND_3: bin
+  FILLVAL: -1.00E+31
 
 spectral_fit_index:
-  CATDESC: spectral_fit_index
+  DATA_TYPE: float64
+  VAR_TYPE: data
+  DEPEND_0: Epoch
+  DEPEND_1: lon
+  DEPEND_2: lat
+  FILLVAL: -1.00E+31
+

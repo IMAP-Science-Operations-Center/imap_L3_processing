@@ -1,6 +1,6 @@
 import numpy as np
 
-from imap_processing.hi.l3.science.mpfit import mpfit
+from imap_l3_processing.hi.l3.science.mpfit import mpfit
 
 
 def spectral_fit(num_epochs, num_lons, num_lats, fluxes, variances, energy):

@@ -1,10 +1,10 @@
 from dataclasses import dataclass
 from pathlib import Path
 
-from imap_processing.hi.l3.models import HiL3Data
-from imap_processing.hi.l3.utils import read_hi_l3_data
-from imap_processing.models import UpstreamDataDependency
-from imap_processing.utils import download_dependency
+from imap_l3_processing.hi.l3.models import HiL3Data
+from imap_l3_processing.hi.l3.utils import read_hi_l3_data
+from imap_l3_processing.models import UpstreamDataDependency
+from imap_l3_processing.utils import download_dependency
 
 HI_L3_DESCRIPTOR = "spectral-fit-index"
 

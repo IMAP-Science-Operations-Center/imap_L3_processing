@@ -6,8 +6,8 @@ from pathlib import Path
 import numpy as np
 from spacepy.pycdf import CDF
 
-from imap_processing.constants import FIVE_MINUTES_IN_NANOSECONDS
-from imap_processing.hi.l3.utils import read_hi_l3_data
+from imap_l3_processing.constants import FIVE_MINUTES_IN_NANOSECONDS
+from imap_l3_processing.hi.l3.utils import read_hi_l3_data
 
 
 class TestUtils(unittest.TestCase):

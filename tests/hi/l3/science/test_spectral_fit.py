@@ -2,8 +2,8 @@ import unittest
 
 import numpy as np
 
-from imap_processing.hi.l3.science.spectral_fit import power_law, spectral_fit
-from imap_processing.models import InputMetadata
+from imap_l3_processing.hi.l3.science.spectral_fit import power_law, spectral_fit
+from imap_l3_processing.models import InputMetadata
 
 
 class TestHiProcessor(unittest.TestCase):

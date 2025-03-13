@@ -4,16 +4,16 @@ from unittest.mock import patch, Mock, call, sentinel
 
 import numpy as np
 
-from imap_processing.hi.hi_processor import HiProcessor
-from imap_processing.hi.l3.hi_l3_dependencies import HiL3Dependencies
-from imap_processing.hi.l3.models import HiL3Data, HiL3SpectralIndexDataProduct
-from imap_processing.models import InputMetadata
+from imap_l3_processing.hi.hi_processor import HiProcessor
+from imap_l3_processing.hi.l3.hi_l3_dependencies import HiL3Dependencies
+from imap_l3_processing.hi.l3.models import HiL3Data, HiL3SpectralIndexDataProduct
+from imap_l3_processing.models import InputMetadata
 
 
 class TestHiProcessor(unittest.TestCase):
-    @patch('imap_processing.hi.hi_processor.HiL3Dependencies.fetch_dependencies')
-    @patch('imap_processing.hi.hi_processor.spectral_fit')
-    @patch('imap_processing.hi.hi_processor.save_data')
+    @patch('imap_l3_processing.hi.hi_processor.HiL3Dependencies.fetch_dependencies')
+    @patch('imap_l3_processing.hi.hi_processor.spectral_fit')
+    @patch('imap_l3_processing.hi.hi_processor.save_data')
     def test_process(self, mock_save_data, mock_spectral_fit, mock_fetch_dependencies):
         lat = np.array([0, 45])
         long = np.array([0, 45, 90])

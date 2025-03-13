@@ -3,13 +3,13 @@ from dataclasses import dataclass
 import numpy as np
 from spacepy import pycdf
 
-from imap_processing.models import InputMetadata, DataProduct, DataProductVariable
+from imap_l3_processing.models import InputMetadata, DataProduct, DataProductVariable
 
 EPOCH_VAR_NAME = "Epoch"
 LAT_VAR_NAME = "lat"
 LONG_VAR_NAME = "lon"
 ENERGY_VAR_NAME = "bin"
-FLUX_VAR_NAME = "flux"
+FLUX_VAR_NAME = "intensity"
 VARIANCE_VAR_NAME = "variance"
 ENERGY_DELTAS_VAR_NAME = "energy_deltas"
 COUNTS_VAR_NAME = "counts"
