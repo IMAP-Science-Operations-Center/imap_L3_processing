@@ -19,7 +19,6 @@ def spectral_fit(num_epochs, num_lons, num_lats, fluxes, variances, energy):
                 filtered_energy = energy[~flux_or_error_is_invalid]
                 keywords = {'xval': filtered_energy, 'yval': flux, 'errval': variance}
                 fit = mpfit(power_law, initial_parameters, keywords, nprint=0)
-                print(fit.status)
                 a, gamma = fit.params
                 gammas[epoch][lon][lat] = gamma
     return gammas
