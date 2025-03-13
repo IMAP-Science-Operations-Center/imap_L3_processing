@@ -1,6 +1,6 @@
 import unittest
 from datetime import datetime, timedelta
-from unittest.mock import patch, Mock, call
+from unittest.mock import patch, Mock, call, sentinel
 
 import numpy as np
 
@@ -12,42 +12,21 @@ from imap_processing.models import InputMetadata
 
 class TestHiProcessor(unittest.TestCase):
     @patch('imap_processing.hi.hi_processor.HiL3Dependencies.fetch_dependencies')
-    @patch('imap_processing.hi.hi_processor.mpfit')
+    @patch('imap_processing.hi.hi_processor.spectral_fit')
     @patch('imap_processing.hi.hi_processor.save_data')
-    def test_process(self, mock_save_data, mock_mpfit, mock_fetch_dependencies):
+    def test_process(self, mock_save_data, mock_spectral_fit, mock_fetch_dependencies):
         lat = np.array([0, 45])
         long = np.array([0, 45, 90])
-        expected_spectral_fit_index = np.array(
-            [[
-                [1.0, 2.0],
-                [3.0, 4.0],
-                [5.0, 6.0]
-            ]]
-        )
-
-        energy = np.array([10, 20, 30])
+        energy = sentinel.energy
         epoch = np.array([datetime.now()])
-        flux = np.array(
-            [[
-                [[1, 2, 3], [10, 20, 30]],
-                [[100, 200, 300], [1000, 2000, 3000]],
-                [[150, 300, 450], [600, 750, 900]]
-            ]]
-        )
-        variance = np.array(
-            [[
-                [[1, 1, 1], [10, 10, 10]],
-                [[100, 100, 100], [1000, 1000, 1000]],
-                [[20, 20, 20], [40, 40, 40]]
-            ]]
-        )
+        flux = sentinel.flux
+        variance = sentinel.variance
 
-        hi_l3_data = _create_h1_l3_data(lat=lat, lon=long, energy=energy, epoch=epoch)
+        hi_l3_data = _create_h1_l3_data(lat=lat, lon=long, energy=energy, epoch=epoch, flux=flux, variance=variance,
+                                        energy_delta=sentinel.energy_delta)
         dependencies = HiL3Dependencies(hi_l3_data=hi_l3_data)
         upstream_dependencies = [Mock()]
         mock_fetch_dependencies.return_value = dependencies
-
-        initial_parameters = (1, 1)
 
         input_metadata = InputMetadata(instrument="hi",
                                        data_level="",
@@ -57,35 +36,21 @@ class TestHiProcessor(unittest.TestCase):
                                        descriptor="",
                                        )
 
-        mock_mpfit.side_effect = [Mock(params=(0, 1.0)), Mock(params=(0, 2.0)), Mock(params=(0, 3.0)),
-                                  Mock(params=(0, 4.0)), Mock(params=(0, 5.0)), Mock(params=(0, 6.0))]
+        mock_spectral_fit.return_value = sentinel.gammas
         processor = HiProcessor(upstream_dependencies, input_metadata)
         processor.process()
 
         mock_fetch_dependencies.assert_called_with(upstream_dependencies)
-        self.assertEqual(mock_mpfit.call_count, len(hi_l3_data.lon) * len(hi_l3_data.lat))
-        mock_mpfit.has_calls(
-            [
-                call(HiProcessor._fit_function, initial_parameters,
-                     {"xval": energy, "yval": flux[0][0][0], 'errval': variance[0][0][0]}),
-                call(HiProcessor._fit_function, initial_parameters,
-                     {"xval": energy, "yval": flux[0][1][1], 'errval': variance[0][1][1]}),
-                call(HiProcessor._fit_function, initial_parameters,
-                     {"xval": energy, "yval": flux[0][2][0], 'errval': variance[0][2][0]}),
-                call(HiProcessor._fit_function, initial_parameters,
-                     {"xval": energy, "yval": flux[0][0][1], 'errval': variance[0][0][1]}),
-                call(HiProcessor._fit_function, initial_parameters,
-                     {"xval": energy, "yval": flux[0][1][0], 'errval': variance[0][1][0]}),
-                call(HiProcessor._fit_function, initial_parameters,
-                     {"xval": energy, "yval": flux[0][2][1], 'errval': variance[0][2][1]}),
-
-            ]
-        )
+        mock_spectral_fit.assert_called_once_with(len(epoch), len(long), len(lat), hi_l3_data.flux, hi_l3_data.variance,
+                                                  hi_l3_data.energy)
 
         mock_save_data.assert_called_once()
         actual_hi_data_product: HiL3SpectralIndexDataProduct = mock_save_data.call_args_list[0].args[0]
 
-        np.testing.assert_array_equal(actual_hi_data_product.spectral_fit_index, expected_spectral_fit_index)
+        self.assertEqual(sentinel.gammas, actual_hi_data_product.spectral_fit_index)
+        self.assertEqual(sentinel.flux, actual_hi_data_product.flux)
+        self.assertEqual(sentinel.variance, actual_hi_data_product.variance)
+        self.assertEqual(sentinel.energy_delta, actual_hi_data_product.energy_deltas)
         np.testing.assert_array_equal(actual_hi_data_product.energy, hi_l3_data.energy)
         np.testing.assert_array_equal(actual_hi_data_product.sensitivity, hi_l3_data.sensitivity)
         np.testing.assert_array_equal(actual_hi_data_product.lat, hi_l3_data.lat)
@@ -94,58 +59,14 @@ class TestHiProcessor(unittest.TestCase):
         np.testing.assert_array_equal(actual_hi_data_product.counts, hi_l3_data.counts)
         np.testing.assert_array_equal(actual_hi_data_product.epoch, hi_l3_data.epoch)
         np.testing.assert_array_equal(actual_hi_data_product.flux, hi_l3_data.flux)
-
-    def test_power_law_function(self):
-        input_metadata = InputMetadata(instrument="hi",
-                                       data_level="",
-                                       start_date=datetime.now(),
-                                       end_date=datetime.now() + timedelta(days=1),
-                                       version="",
-                                       descriptor="",
-                                       )
-        upstream_dependencies = [Mock()]
-        processor = HiProcessor(upstream_dependencies, input_metadata)
-
-        params = (2, -2)
-        x = np.array([1, 2, 3])
-        y = np.array([4, 10, 22])
-        err = np.array([2, 2, 2])
-        keywords = {'xval': x, 'yval': y, 'errval': err}
-
-        expected_residual = np.array([1, 1, 2])
-        status, actual_residuals = processor._fit_function(params, **keywords)
-
-        np.testing.assert_array_equal(actual_residuals, expected_residual)
-        self.assertEqual(status, 0)
-
-    def test_finds_best_fit(self):
-        np.random.seed(42)
-        energies = np.geomspace(1, 10, 23)
-        true_A, true_gamma = 2.0, -1.5
-        flux_data = true_A * np.power(energies, -true_gamma)
-
-        errors = 0.2 * np.abs(flux_data)
-
-        lat = np.array([0])
-        long = np.array([0])
-        epoch = np.array([datetime.now()])
-        energy = energies
-        flux = np.array(flux_data).reshape(1, 1, 1, len(energies))
-        variance = np.array(errors).reshape(1, 1, 1, len(energies))
-
-        hi_l3_data = _create_h1_l3_data(lat=lat, lon=long, energy=energy, epoch=epoch, flux=flux, variance=variance)
-
-        dependency = HiL3Dependencies(hi_l3_data=hi_l3_data)
-        processor = HiProcessor(Mock(), Mock())
-
-        result = processor._process_spectral_fit_index(dependency).spectral_fit_index
-        np.testing.assert_array_equal(result, np.array(true_gamma).reshape(1, 1, 1))
+        np.testing.assert_array_equal(actual_hi_data_product.exposure, hi_l3_data.exposure)
 
 
-def _create_h1_l3_data(epoch=None, lon=None, lat=None, energy=None, flux=None, variance=None):
+def _create_h1_l3_data(epoch=None, lon=None, lat=None, energy=None, energy_delta=None, flux=None, variance=None):
     lon = lon if lon is not None else np.array([1.0])
     lat = lat if lat is not None else np.array([1.0])
     energy = energy if energy is not None else np.array([1.0])
+    energy_delta = energy_delta if energy_delta is not None else np.full((len(energy), 2), 1)
     flux = flux if flux is not None else np.full((len(epoch), len(lon), len(lat), len(energy)), fill_value=1)
     variance = variance if variance is not None else np.full((len(epoch), len(lon), len(lat), len(energy)),
                                                              fill_value=1)
@@ -157,11 +78,11 @@ def _create_h1_l3_data(epoch=None, lon=None, lat=None, energy=None, flux=None, v
         flux=flux,
         lon=lon,
         lat=lat,
-        energy_deltas=np.full((len(energy), 2), 1),
-        counts=np.full_like(flux, np.nan),
-        counts_uncertainty=np.full_like(flux, np.nan),
+        energy_deltas=energy_delta,
+        counts=np.full_like(flux, 12),
+        counts_uncertainty=np.full_like(flux, 0.1),
         epoch_delta=np.full(2, timedelta(minutes=5)),
-        exposure=np.full((len(epoch), len(lat), len(lon)), np.nan),
-        sensitivity=np.full_like(flux, np.nan),
+        exposure=np.full((len(epoch), len(lat), len(lon)), 2),
+        sensitivity=np.full_like(flux, 0.5),
         variance=variance,
     )
