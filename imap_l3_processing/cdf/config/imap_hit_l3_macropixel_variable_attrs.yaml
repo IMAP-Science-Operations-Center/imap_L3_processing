@@ -36,9 +36,9 @@ h_intensity:
   DEPEND_2: pitch_angle
   DEPEND_3: gyrophase
   DISPLAY_TYPE: spectrogram
-  FIELDNAM: H_Flux
+  FIELDNAM: H_Intensity
   FORMAT: g9.3
-  LABLAXIS: H Flux
+  LABLAXIS: H Intensity
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMAX: 10000000000
   FILLVAL: -1.0000E+31
@@ -56,9 +56,9 @@ he4_intensity:
   DEPEND_2: pitch_angle
   DEPEND_3: gyrophase
   DISPLAY_TYPE: spectrogram
-  FIELDNAM: He4_Flux
+  FIELDNAM: He4_Intensity
   FORMAT: g9.3
-  LABLAXIS: He4 Flux
+  LABLAXIS: He4 Intensity
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMAX: 10000000000
   FILLVAL: -1.0000E+31
@@ -76,9 +76,9 @@ cno_intensity:
   DEPEND_2: pitch_angle
   DEPEND_3: gyrophase
   DISPLAY_TYPE: spectrogram
-  FIELDNAM: CNO_Flux
+  FIELDNAM: CNO_Intensity
   FORMAT: g9.3
-  LABLAXIS: CNO Flux
+  LABLAXIS: CNO Intensity
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMAX: 10000000000
   FILLVAL: -1.0000E+31
@@ -96,9 +96,9 @@ nemgsi_intensity:
   DEPEND_2: pitch_angle
   DEPEND_3: gyrophase
   DISPLAY_TYPE: spectrogram
-  FIELDNAM: NeMgSi_Flux
+  FIELDNAM: NeMgSi_Intensity
   FORMAT: g9.3
-  LABLAXIS: NeMgSi Flux
+  LABLAXIS: NeMgSi Intensity
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMAX: 10000000000
   FILLVAL: -1.0000E+31
@@ -116,9 +116,9 @@ fe_intensity:
   DEPEND_2: pitch_angle
   DEPEND_3: gyrophase
   DISPLAY_TYPE: spectrogram
-  FIELDNAM: Fe_Flux
+  FIELDNAM: Fe_Intensity
   FORMAT: g9.3
-  LABLAXIS: Fe Flux
+  LABLAXIS: Fe Intensity
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMAX: 10000000000
   FILLVAL: -1.0000E+31
@@ -135,9 +135,9 @@ h_intensity_pa:
   DEPEND_1: h_energy
   DEPEND_2: pitch_angle
   DISPLAY_TYPE: spectrogram
-  FIELDNAM: H_Flux_PA
+  FIELDNAM: H_Intensity_PA
   FORMAT: g9.3
-  LABLAXIS: H Flux PA
+  LABLAXIS: H Intensity PA
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMAX: 10000000000
   FILLVAL: -1.0000E+31
@@ -154,9 +154,9 @@ he4_intensity_pa:
   DEPEND_1: he4_energy
   DEPEND_2: pitch_angle
   DISPLAY_TYPE: spectrogram
-  FIELDNAM: He4_Flux_PA
+  FIELDNAM: He4_Intensity_PA
   FORMAT: g9.3
-  LABLAXIS: He4 Flux PA
+  LABLAXIS: He4 Intensity PA
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMAX: 10000000000
   FILLVAL: -1.0000E+31
@@ -173,9 +173,9 @@ cno_intensity_pa:
   DEPEND_1: cno_energy
   DEPEND_2: pitch_angle
   DISPLAY_TYPE: spectrogram
-  FIELDNAM: CNO_Flux_PA
+  FIELDNAM: CNO_Intensity_PA
   FORMAT: g9.3
-  LABLAXIS: CNO Flux PA
+  LABLAXIS: CNO Intensity PA
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMAX: 10000000000
   FILLVAL: -1.0000E+31
@@ -192,9 +192,9 @@ nemgsi_intensity_pa:
   DEPEND_1: nemgsi_energy
   DEPEND_2: pitch_angle
   DISPLAY_TYPE: spectrogram
-  FIELDNAM: NeMgSi_Flux_PA
+  FIELDNAM: NeMgSi_Intensity_PA
   FORMAT: g9.3
-  LABLAXIS: NeMgSi Flux PA
+  LABLAXIS: NeMgSi Intensity PA
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMAX: 10000000000
   FILLVAL: -1.0000E+31
@@ -211,9 +211,9 @@ fe_intensity_pa:
   DEPEND_1: fe_energy
   DEPEND_2: pitch_angle
   DISPLAY_TYPE: spectrogram
-  FIELDNAM: Fe_Flux_PA
+  FIELDNAM: Fe_Intensity_PA
   FORMAT: g9.3
-  LABLAXIS: Fe Flux PA
+  LABLAXIS: Fe Intensity PA
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMAX: 10000000000
   FILLVAL: -1.0000E+31
@@ -233,7 +233,7 @@ h_intensity_delta_plus:
   DISPLAY_TYPE: spectrogram
   FIELDNAM: H_Plus_Uncertainty
   FORMAT: g9.3
-  LABLAXIS: H Flux
+  LABLAXIS: H Intensity
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMAX: 10000000000
   FILLVAL: -1.0000E+31
@@ -251,7 +251,7 @@ h_intensity_delta_minus:
   DISPLAY_TYPE: spectrogram
   FIELDNAM: H_Minus_Uncertainty
   FORMAT: g9.3
-  LABLAXIS: H Flux
+  LABLAXIS: H Intensity
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMAX: 10000000000
   FILLVAL: -1.0000E+31
@@ -269,7 +269,7 @@ he4_intensity_delta_plus:
   DISPLAY_TYPE: spectrogram
   FIELDNAM: He4_Plus_Uncertainty
   FORMAT: g9.3
-  LABLAXIS: He4 Flux
+  LABLAXIS: He4 Intensity
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMAX: 10000000000
   FILLVAL: -1.0000E+31
@@ -287,7 +287,7 @@ he4_intensity_delta_minus:
   DISPLAY_TYPE: spectrogram
   FIELDNAM: He4_Minus_Uncertainty
   FORMAT: g9.3
-  LABLAXIS: He4 Flux
+  LABLAXIS: He4 Intensity
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMAX: 10000000000
   FILLVAL: -1.0000E+31
@@ -305,7 +305,7 @@ cno_intensity_delta_plus:
   DISPLAY_TYPE: spectrogram
   FIELDNAM: CNO_Plus_Uncertainty
   FORMAT: g9.3
-  LABLAXIS: CNO Flux
+  LABLAXIS: CNO Intensity
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMAX: 10000000000
   FILLVAL: -1.0000E+31
@@ -323,7 +323,7 @@ cno_intensity_delta_minus:
   DISPLAY_TYPE: spectrogram
   FIELDNAM: CNO_Minus_Uncertainty
   FORMAT: g9.3
-  LABLAXIS: CNO Flux
+  LABLAXIS: CNO Intensity
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMAX: 10000000000
   FILLVAL: -1.0000E+31
@@ -341,7 +341,7 @@ nemgsi_intensity_delta_plus:
   DISPLAY_TYPE: spectrogram
   FIELDNAM: NeMgSi_Plus_Uncertainty
   FORMAT: g9.3
-  LABLAXIS: NeMgSi Flux
+  LABLAXIS: NeMgSi Intensity
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMAX: 10000000000
   FILLVAL: -1.0000E+31
@@ -359,7 +359,7 @@ nemgsi_intensity_delta_minus:
   DISPLAY_TYPE: spectrogram
   FIELDNAM: NeMgSi_Minus_Uncertainty
   FORMAT: g9.3
-  LABLAXIS: NeMgSi Flux
+  LABLAXIS: NeMgSi Intensity
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMAX: 10000000000
   FILLVAL: -1.0000E+31
@@ -377,7 +377,7 @@ fe_intensity_delta_plus:
   DISPLAY_TYPE: spectrogram
   FIELDNAM: Fe_Plus_Uncertainty
   FORMAT: g9.3
-  LABLAXIS: Fe Flux
+  LABLAXIS: Fe Intensity
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMAX: 10000000000
   FILLVAL: -1.0000E+31
@@ -395,7 +395,7 @@ fe_intensity_delta_minus:
   DISPLAY_TYPE: spectrogram
   FIELDNAM: Fe_Minus_Uncertainty
   FORMAT: g9.3
-  LABLAXIS: Fe Flux
+  LABLAXIS: Fe Intensity
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMAX: 10000000000
   FILLVAL: -1.0000E+31
@@ -404,7 +404,7 @@ fe_intensity_delta_minus:
   SCALEMAX: 1000
 
 h_intensity_pa_delta_plus:
-  CATDESC: Plus uncertainty for H by pitch angle
+  CATDESC: Plus uncertainty for H by pitch angle 
   VAR_TYPE: support_data
   DEPEND_0: epoch
   DEPEND_1: h_energy
@@ -412,7 +412,7 @@ h_intensity_pa_delta_plus:
   DISPLAY_TYPE: spectrogram
   FIELDNAM: H_Plus_PA_Uncertainty
   FORMAT: g9.3
-  LABLAXIS: H Flux
+  LABLAXIS: H Intensity
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMAX: 10000000000
   FILLVAL: -1.0000E+31
@@ -421,7 +421,7 @@ h_intensity_pa_delta_plus:
   SCALEMAX: 1000
 
 h_intensity_pa_delta_minus:
-  CATDESC: Minus uncertainty for H by pitch angle
+  CATDESC: Minus uncertainty for H by pitch angle 
   VAR_TYPE: support_data
   DEPEND_0: epoch
   DEPEND_1: h_energy
@@ -429,7 +429,7 @@ h_intensity_pa_delta_minus:
   DISPLAY_TYPE: spectrogram
   FIELDNAM: H_Minus_PA_Uncertainty
   FORMAT: g9.3
-  LABLAXIS: H Flux
+  LABLAXIS: H Intensity
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMAX: 10000000000
   FILLVAL: -1.0000E+31
@@ -438,7 +438,7 @@ h_intensity_pa_delta_minus:
   SCALEMAX: 1000
 
 he4_intensity_pa_delta_plus:
-  CATDESC: Plus uncertainty for He4 by pitch angle
+  CATDESC: Plus uncertainty for He4 by pitch angle 
   VAR_TYPE: support_data
   DEPEND_0: epoch
   DEPEND_1: he4_energy
@@ -446,7 +446,7 @@ he4_intensity_pa_delta_plus:
   DISPLAY_TYPE: spectrogram
   FIELDNAM: He4_Plus_PA_Uncertainty
   FORMAT: g9.3
-  LABLAXIS: He4 Flux
+  LABLAXIS: He4 Intensity
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMAX: 10000000000
   FILLVAL: -1.0000E+31
@@ -455,7 +455,7 @@ he4_intensity_pa_delta_plus:
   SCALEMAX: 1000
 
 he4_intensity_pa_delta_minus:
-  CATDESC: Minus uncertainty for He4 by pitch angle
+  CATDESC: Minus uncertainty for He4 by pitch angle 
   VAR_TYPE: support_data
   DEPEND_0: epoch
   DEPEND_1: he4_energy
@@ -463,7 +463,7 @@ he4_intensity_pa_delta_minus:
   DISPLAY_TYPE: spectrogram
   FIELDNAM: He4_Minus_PA_Uncertainty
   FORMAT: g9.3
-  LABLAXIS: He4 Flux
+  LABLAXIS: He4 Intensity
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMAX: 10000000000
   FILLVAL: -1.0000E+31
@@ -472,7 +472,7 @@ he4_intensity_pa_delta_minus:
   SCALEMAX: 1000
 
 cno_intensity_pa_delta_plus:
-  CATDESC: Plus uncertainty for CNO by pitch angle
+  CATDESC: Plus uncertainty for CNO by pitch angle 
   VAR_TYPE: support_data
   DEPEND_0: epoch
   DEPEND_1: cno_energy
@@ -480,7 +480,7 @@ cno_intensity_pa_delta_plus:
   DISPLAY_TYPE: spectrogram
   FIELDNAM: CNO_Plus_PA_Uncertainty
   FORMAT: g9.3
-  LABLAXIS: CNO Flux
+  LABLAXIS: CNO Intensity
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMAX: 10000000000
   FILLVAL: -1.0000E+31
@@ -489,7 +489,7 @@ cno_intensity_pa_delta_plus:
   SCALEMAX: 1000
 
 cno_intensity_pa_delta_minus:
-  CATDESC: Minus uncertainty for CNO by pitch angle
+  CATDESC: Minus uncertainty for CNO by pitch angle 
   VAR_TYPE: support_data
   DEPEND_0: epoch
   DEPEND_1: cno_energy
@@ -497,7 +497,7 @@ cno_intensity_pa_delta_minus:
   DISPLAY_TYPE: spectrogram
   FIELDNAM: CNO_Minus_PA_Uncertainty
   FORMAT: g9.3
-  LABLAXIS: CNO Flux
+  LABLAXIS: CNO Intensity
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMAX: 10000000000
   FILLVAL: -1.0000E+31
@@ -506,7 +506,7 @@ cno_intensity_pa_delta_minus:
   SCALEMAX: 1000
 
 nemgsi_intensity_pa_delta_plus:
-  CATDESC: Plus uncertainty for NeMgSi by pitch angle
+  CATDESC: Plus uncertainty for NeMgSi by pitch angle 
   VAR_TYPE: support_data
   DEPEND_0: epoch
   DEPEND_1: nemgsi_energy
@@ -514,7 +514,7 @@ nemgsi_intensity_pa_delta_plus:
   DISPLAY_TYPE: spectrogram
   FIELDNAM: NeMgSi_Plus_PA_Uncertainty
   FORMAT: g9.3
-  LABLAXIS: NeMgSi Flux
+  LABLAXIS: NeMgSi Intensity
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMAX: 10000000000
   FILLVAL: -1.0000E+31
@@ -523,7 +523,7 @@ nemgsi_intensity_pa_delta_plus:
   SCALEMAX: 1000
 
 nemgsi_intensity_pa_delta_minus:
-  CATDESC: Minus uncertainty for NeMgSi by pitch angle
+  CATDESC: Minus uncertainty for NeMgSi by pitch angle 
   VAR_TYPE: support_data
   DEPEND_0: epoch
   DEPEND_1: nemgsi_energy
@@ -531,7 +531,7 @@ nemgsi_intensity_pa_delta_minus:
   DISPLAY_TYPE: spectrogram
   FIELDNAM: NeMgSi_Minus_PA_Uncertainty
   FORMAT: g9.3
-  LABLAXIS: NeMgSi Flux
+  LABLAXIS: NeMgSi Intensity
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMAX: 10000000000
   FILLVAL: -1.0000E+31
@@ -540,7 +540,7 @@ nemgsi_intensity_pa_delta_minus:
   SCALEMAX: 1000
 
 fe_intensity_pa_delta_plus:
-  CATDESC: Plus uncertainty for Fe by pitch angle
+  CATDESC: Plus uncertainty for Fe by pitch angle 
   VAR_TYPE: support_data
   DEPEND_0: epoch
   DEPEND_1: fe_energy
@@ -548,7 +548,7 @@ fe_intensity_pa_delta_plus:
   DISPLAY_TYPE: spectrogram
   FIELDNAM: Fe_Plus_PA_Uncertainty
   FORMAT: g9.3
-  LABLAXIS: Fe Flux
+  LABLAXIS: Fe Intensity
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMAX: 10000000000
   FILLVAL: -1.0000E+31
@@ -557,7 +557,7 @@ fe_intensity_pa_delta_plus:
   SCALEMAX: 1000
 
 fe_intensity_pa_delta_minus:
-  CATDESC: Minus uncertainty for Fe by pitch angle
+  CATDESC: Minus uncertainty for Fe by pitch angle 
   VAR_TYPE: support_data
   DEPEND_0: epoch
   DEPEND_1: fe_energy
@@ -565,7 +565,7 @@ fe_intensity_pa_delta_minus:
   DISPLAY_TYPE: spectrogram
   FIELDNAM: Fe_Minus_PA_Uncertainty
   FORMAT: g9.3
-  LABLAXIS: Fe Flux
+  LABLAXIS: Fe Intensity
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMAX: 10000000000
   FILLVAL: -1.0000E+31
