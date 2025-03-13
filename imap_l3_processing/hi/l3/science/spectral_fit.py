@@ -12,7 +12,11 @@ def spectral_fit(num_epochs, num_lons, num_lats, fluxes, variances, energy):
             for lat in range(num_lats):
                 flux = fluxes[epoch][lon][lat]
                 variance = variances[epoch][lon][lat]
-                keywords = {'xval': energy, 'yval': flux, 'errval': variance}
+                flux_or_error_is_nan = np.isnan(flux) | np.isnan(variance)
+                flux = flux[~flux_or_error_is_nan]
+                variance = variance[~flux_or_error_is_nan]
+                filtered_energy = energy[~flux_or_error_is_nan]
+                keywords = {'xval': filtered_energy, 'yval': flux, 'errval': variance}
                 _, gamma = mpfit(power_law, initial_parameters, keywords, nprint=0, maxiter=50).params
                 gammas[epoch][lon][lat] = gamma
     return gammas

@@ -36,3 +36,43 @@ class TestHiProcessor(unittest.TestCase):
 
         result = spectral_fit(num_epochs, num_lons, num_lats, flux, variance, energies)
         np.testing.assert_array_equal(result, np.array(true_gamma).reshape(1, 1, 1))
+
+    def test_finds_best_fit_with_nan_in_flux(self):
+        np.random.seed(42)
+        energies = np.geomspace(1, 10, 23)
+        true_A, true_gamma = 2.0, -1.5
+        flux_data = true_A * np.power(energies, -true_gamma)
+        flux_data[len(flux_data) // 2] = np.nan
+        flux_data[0] = np.nan
+        flux_data[-1] = np.nan
+
+        errors = 0.2 * np.abs(flux_data)
+
+        num_lats = 1
+        num_lons = 1
+        num_epochs = 1
+        flux = np.array(flux_data).reshape(1, 1, 1, len(energies))
+        variance = np.array(errors).reshape(1, 1, 1, len(energies))
+
+        result = spectral_fit(num_epochs, num_lons, num_lats, flux, variance, energies)
+        np.testing.assert_array_equal(result, np.array(true_gamma).reshape(1, 1, 1))
+
+    def test_finds_best_fit_with_nan_in_uncertainty(self):
+        np.random.seed(42)
+        energies = np.geomspace(1, 10, 23)
+        true_A, true_gamma = 2.0, -1.5
+        flux_data = true_A * np.power(energies, -true_gamma)
+
+        errors = 0.2 * np.abs(flux_data)
+        errors[len(errors) // 2] = np.nan
+        errors[0] = np.nan
+        errors[-1] = np.nan
+
+        num_lats = 1
+        num_lons = 1
+        num_epochs = 1
+        flux = np.array(flux_data).reshape(1, 1, 1, len(energies))
+        variance = np.array(errors).reshape(1, 1, 1, len(energies))
+
+        result = spectral_fit(num_epochs, num_lons, num_lats, flux, variance, energies)
+        np.testing.assert_array_equal(result, np.array(true_gamma).reshape(1, 1, 1))
