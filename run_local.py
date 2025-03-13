@@ -320,6 +320,7 @@ if __name__ == "__main__":
     if "swe_pitch_angles" in sys.argv:
         dependencies = SweL3Dependencies.from_file_paths(
             get_test_data_path("swe/imap_swe_l2_sci-with-ace-data_20100101_v002.cdf"),
+            get_test_data_path("swe/imap_swe_l1b_sci-with-ace-data_20100101_v002.cdf"),
             get_test_data_path("swe/imap_mag_l1d_mago-normal_20100101_v001.cdf"),
             get_test_data_path("swe/imap_swapi_l3a_proton-sw_20100101_v001.cdf"),
             get_test_data_path("swe/example_swe_config.json"),
@@ -329,6 +330,7 @@ if __name__ == "__main__":
     if "swe_moments" in sys.argv:
         dependencies = SweL3Dependencies.from_file_paths(
             get_test_data_path("swe/imap_swe_l2_sci-3-11-good-epochs_20240510_v002.cdf"),
+            get_test_data_path("swe/imap_swe_l1b_sci-3-11-good-times_20100101_v002.cdf"),
             get_test_data_path("swe/imap_mag_l1d_mago-normal_20100101_v001.cdf"),
             get_test_data_path("swe/imap_swapi_l3a_proton-sw_20100101_v001.cdf"),
             get_test_data_path("swe/example_swe_config.json"),

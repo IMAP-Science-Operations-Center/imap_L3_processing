@@ -68,8 +68,7 @@ class SweL3Data(DataProduct):
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
             DataProductVariable(EPOCH_CDF_VAR_NAME, value=self.epoch, cdf_data_type=pycdf.const.CDF_TIME_TT2000),
-            DataProductVariable(EPOCH_DELTA_CDF_VAR_NAME,
-                                value=[delta.total_seconds() * 1e9 for delta in self.epoch_delta],
+            DataProductVariable(EPOCH_DELTA_CDF_VAR_NAME, value=self.epoch_delta,
                                 cdf_data_type=pycdf.const.CDF_INT8),
             DataProductVariable(ENERGY_CDF_VAR_NAME, value=self.energy, cdf_data_type=pycdf.const.CDF_REAL4,
                                 record_varying=False),
