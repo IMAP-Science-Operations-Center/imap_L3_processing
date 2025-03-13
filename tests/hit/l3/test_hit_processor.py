@@ -51,7 +51,7 @@ class TestHitProcessor(TestCase):
             start_date=None,
             end_date=None,
             version="",
-            descriptor="pitch-angle"
+            descriptor="macropixel"
         )
         expected_upstream_data_dependencies = UpstreamDataDependency(
             instrument="hit",
@@ -601,6 +601,6 @@ class TestHitProcessor(TestCase):
             processor.process()
 
         self.assertEqual(e.exception.args[0],
-                         f"Don't know how to generate 'spectral-index' /n Known HIT l3 data products: 'pitch-angle', 'direct-event'.")
+                         f"Don't know how to generate 'spectral-index' /n Known HIT l3 data products: 'macropixel', 'direct-event'.")
 
     T = TypeVar("T")
