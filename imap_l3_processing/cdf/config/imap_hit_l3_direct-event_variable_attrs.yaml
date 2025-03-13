@@ -23,9 +23,9 @@ epoch_delta:
   FIELDNAM: epoch_delta
   LABLAXIS: epoch_delta
   UNITS: ns
-  FILLVAL: -9223372036854775808
   VALIDMIN: 0
   VALIDMAX: 86000000000000
+  FILLVAL: -9.22337E+18
   SCALETYP: linear
 
 charge:
@@ -74,7 +74,7 @@ range:
   FIELDNAM: range
   VALIDMIN: 0
   VALIDMAX: 4
-  FILLVAL: -128
+  FILLVAL: 255
 
 delta_e:
   CATDESC: delta_e
