@@ -21,7 +21,6 @@ class TestHiProcessor(unittest.TestCase):
         self.assertEqual(status, 0)
 
     def test_finds_best_fit(self):
-        np.random.seed(42)
         energies = np.geomspace(1, 10, 23)
         true_A, true_gamma = 2.0, -1.5
         flux_data = true_A * np.power(energies, -true_gamma)
@@ -38,7 +37,6 @@ class TestHiProcessor(unittest.TestCase):
         np.testing.assert_array_equal(result, np.array(true_gamma).reshape(1, 1, 1))
 
     def test_finds_best_fit_with_nan_in_flux(self):
-        np.random.seed(42)
         energies = np.geomspace(1, 10, 23)
         true_A, true_gamma = 2.0, -1.5
         flux_data = true_A * np.power(energies, -true_gamma)
@@ -58,7 +56,6 @@ class TestHiProcessor(unittest.TestCase):
         np.testing.assert_array_equal(result, np.array(true_gamma).reshape(1, 1, 1))
 
     def test_finds_best_fit_with_nan_in_uncertainty(self):
-        np.random.seed(42)
         energies = np.geomspace(1, 10, 23)
         true_A, true_gamma = 2.0, -1.5
         flux_data = true_A * np.power(energies, -true_gamma)
@@ -76,3 +73,39 @@ class TestHiProcessor(unittest.TestCase):
 
         result = spectral_fit(num_epochs, num_lons, num_lats, flux, variance, energies)
         np.testing.assert_array_equal(result, np.array(true_gamma).reshape(1, 1, 1))
+
+    def test_finds_best_fit_with_zero_in_flux_and_uncertainty(self):
+        energies = np.geomspace(1, 10, 23)
+        true_A, true_gamma = 2.0, -1.5
+        flux_data = true_A * np.power(energies, -true_gamma)
+        errors = 0.2 * np.abs(flux_data)
+
+        num_lats = 1
+        num_lons = 1
+        num_epochs = 1
+        flux_data[0:3] = 0
+        errors[0:3] = 0
+
+        flux = np.array(flux_data).reshape(1, 1, 1, len(energies))
+        variance = np.array(errors).reshape(1, 1, 1, len(energies))
+
+        result = spectral_fit(num_epochs, num_lons, num_lats, flux, variance, energies)
+        np.testing.assert_array_equal(result, np.array(true_gamma).reshape(1, 1, 1))
+
+    def test_finds_best_fit_with_zeros_in_flux_and_not_uncertainty(self):
+        energies = np.geomspace(1, 1e10, 23)
+        true_A, true_gamma = 2.0, -1.5
+
+        flux_data = true_A * np.power(energies, -true_gamma)
+        errors = 0.2 * np.abs(flux_data)
+
+        flux_data[0:3] = 0
+
+        num_lats = 1
+        num_lons = 1
+        num_epochs = 1
+        flux = np.array(flux_data).reshape(1, 1, 1, len(energies))
+        variance = np.array(errors).reshape(1, 1, 1, len(energies))
+
+        result = spectral_fit(num_epochs, num_lons, num_lats, flux, variance, energies)
+        np.testing.assert_array_almost_equal(result, np.array(26.554173).reshape(1, 1, 1))
