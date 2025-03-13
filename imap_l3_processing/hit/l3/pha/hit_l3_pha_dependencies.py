@@ -8,7 +8,7 @@ from imap_l3_processing.hit.l3.pha.science.range_fit_lookup import RangeFitLooku
 from imap_l3_processing.models import UpstreamDataDependency
 from imap_l3_processing.utils import download_dependency
 
-HIT_L1A_EVENT_DESCRIPTOR = "pulse-height-events"
+HIT_L1A_EVENT_DESCRIPTOR = "direct-events"
 HIT_L3_RANGE_2A_COSINE_LOOKUP_DESCRIPTOR = "range-2A-cosine-lookup"
 HIT_L3_RANGE_3A_COSINE_LOOKUP_DESCRIPTOR = "range-3A-cosine-lookup"
 HIT_L3_RANGE_4A_COSINE_LOOKUP_DESCRIPTOR = "range-4A-cosine-lookup"

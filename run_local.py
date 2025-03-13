@@ -248,7 +248,7 @@ def create_hit_direct_event_cdf():
         get_test_data_path("hit/pha_events/imap_hit_l3_hit-event-types-text-not-cdf_20250228_v001.cdf"))
 
     hit_l1_data = HitL1Data.read_from_cdf(
-        get_test_data_path("hit/pha_events/fake-menlo-imap_hit_l1a_pulse-height-events_20100106_v003.cdf"))
+        get_test_data_path("hit/pha_events/fake-menlo-imap_hit_l1a_direct-events_20100106_v003.cdf"))
 
     direct_event_dependencies = HitL3PhaDependencies(hit_l1_data=hit_l1_data, cosine_correction_lookup=cosine_table,
 
@@ -313,9 +313,9 @@ if __name__ == "__main__":
         else:
             mag_data = read_l1d_mag_data(get_test_data_path("mag/imap_mag_l1d_mago-normal_20250101_v001.cdf"))
             hit_data = read_l2_hit_data(
-                get_test_data_path("hit/imap_hit_l2_sectored-sample1-with-uncertainties_20250101_v001.cdf"))
+                get_test_data_path("hit/imap_hit_l2_macropixel-intensity_20250101_v001.cdf"))
             dependencies = HITL3SectoredDependencies(mag_l1d_data=mag_data, data=hit_data)
-            print(f"hit sectored data product: {create_hit_sectored_cdf(dependencies)}")
+            print(f"hit macropixel data product: {create_hit_sectored_cdf(dependencies)}")
 
     if "swe_pitch_angles" in sys.argv:
         dependencies = SweL3Dependencies.from_file_paths(
