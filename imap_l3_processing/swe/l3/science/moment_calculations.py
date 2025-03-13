@@ -13,8 +13,112 @@ from imap_l3_processing.constants import ELECTRON_MASS_KG, \
 ZMK = ELECTRON_MASS_KG / (2 * BOLTZMANN_CONSTANT_JOULES_PER_KELVIN)
 
 
-def regress(velocity_vectors: np.ndarray[float], weight: np.ndarray[float], yreg: np.ndarray[float]) -> \
-        np.ndarray[float]:
+@dataclass
+class Moments:
+    alpha: float
+    beta: float
+    t_parallel: float
+    t_perpendicular: float
+    velocity_x: float
+    velocity_y: float
+    velocity_z: float
+    density: float
+    aoo: float
+    ao: float
+
+
+@dataclass
+class HaloCorrectionParameters:
+    spacecraft_potential: float
+    core_halo_breakpoint: float
+
+
+def core_fit_moments_retrying_on_failure(corrected_energy_bins: np.ndarray,
+                                         velocity_vectors: np.ndarray,
+                                         phase_space_density: np.ndarray,
+                                         weights: np.ndarray,
+                                         energy_start: int,
+                                         energy_end: int,
+                                         density_history: np.ndarray) -> Optional[Moments]:
+    return _fit_moments_retrying_on_failure(
+        corrected_energy_bins,
+        velocity_vectors,
+        phase_space_density,
+        weights,
+        energy_start,
+        energy_end,
+        density_history,
+        1.85
+    )
+
+
+def halo_fit_moments_retrying_on_failure(corrected_energy_bins: np.ndarray, velocity_vectors: np.ndarray,
+                                         phase_space_density: np.ndarray,
+                                         weights: np.ndarray,
+                                         energy_start: int,
+                                         energy_end: int,
+                                         density_history: np.ndarray, spacecraft_potential: float,
+                                         core_halo_breakpoint: float) -> Optional[Moments]:
+    return _fit_moments_retrying_on_failure(
+        corrected_energy_bins,
+        velocity_vectors,
+        phase_space_density,
+        weights,
+        energy_start,
+        energy_end,
+        density_history,
+        1.35,
+        halo_correction_parameters=HaloCorrectionParameters(spacecraft_potential,
+                                                            core_halo_breakpoint)
+    )
+
+
+def _fit_moments_retrying_on_failure(corrected_energy_bins: np.ndarray,
+                                     velocity_vectors: np.ndarray,
+                                     phase_space_density: np.ndarray,
+                                     weights: np.ndarray,
+                                     energy_start: int,
+                                     energy_end: int,
+                                     density_history: np.ndarray,
+                                     history_scalar: float,
+                                     halo_correction_parameters: Optional[HaloCorrectionParameters] = None) -> Optional[
+    Moments]:
+    filtered_velocity_vectors, filtered_weights, filtered_yreg = filter_and_flatten_regress_parameters(
+        corrected_energy_bins,
+        velocity_vectors,
+        phase_space_density,
+        weights,
+        energy_start,
+        energy_end)
+
+    fit_function, chi_squared = regress(filtered_velocity_vectors, filtered_weights, filtered_yreg)
+    moment = calculate_fit_temperature_density_velocity(fit_function)
+    average_density = np.average(density_history) * history_scalar
+
+    if halo_correction_parameters is not None:
+        moment.density = halotrunc(moment, halo_correction_parameters.core_halo_breakpoint,
+                                   halo_correction_parameters.spacecraft_potential)
+
+    if 0 < moment.density < average_density:
+        return moment
+    elif energy_end - energy_start < 4:
+        return None
+    else:
+        return _fit_moments_retrying_on_failure(
+            corrected_energy_bins,
+            velocity_vectors,
+            phase_space_density,
+            weights,
+            energy_start,
+            energy_end - 1,
+            density_history,
+            history_scalar,
+            halo_correction_parameters
+        )
+
+
+def regress(velocity_vectors: np.ndarray, weight: np.ndarray, yreg: np.ndarray) -> \
+        np.ndarray:
     fit_function = np.zeros((len(velocity_vectors), 9))
 
     velocity_xs = velocity_vectors[:, 0]
@@ -97,20 +201,6 @@ def regress(velocity_vectors: np.ndarray[float], weight: np.ndarray[float], yreg
             sao += xmean[j] * xmean[k] * invarray[j][k]
 
     return a, chisq
-
-
-@dataclass
-class Moments:
-    alpha: float
-    beta: float
-    t_parallel: float
-    t_perpendicular: float
-    velocity_x: float
-    velocity_y: float
-    velocity_z: float
-    density: float
-    aoo: float
-    ao: float
 
 
 def calculate_fit_temperature_density_velocity(parameters: np.ndarray[float]):

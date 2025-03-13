@@ -9,8 +9,8 @@ from imap_l3_processing.processor import Processor
 from imap_l3_processing.swapi.l3a.science.calculate_pickup_ion import calculate_solar_wind_velocity_vector
 from imap_l3_processing.swe.l3.models import SweL3Data
 from imap_l3_processing.swe.l3.science.moment_calculations import compute_maxwellian_weight_factors, \
-    filter_and_flatten_regress_parameters, regress, calculate_fit_temperature_density_velocity, rotate_temperature, \
-    rotate_dps_vector_to_rtn, halotrunc
+    rotate_temperature, \
+    rotate_dps_vector_to_rtn, core_fit_moments_retrying_on_failure, halo_fit_moments_retrying_on_failure
 from imap_l3_processing.swe.l3.science.pitch_calculations import average_over_look_directions, find_breakpoints, \
     correct_and_rebin, \
     integrate_distribution_to_get_1d_spectrum, integrate_distribution_to_get_inbound_and_outbound_1d_spectrum, \
@@ -68,57 +68,39 @@ class SweProcessor(Processor):
 
             core_end_index = halo_core_breakpoint_index
 
-            while True:
-                filtered_velocity_vectors, filtered_weights, filtered_yreg = filter_and_flatten_regress_parameters(
-                    corrected_energy_bins,
-                    velocity_vectors,
-                    swe_l2_data.phase_space_density[i],
-                    weights,
-                    spacecraft_potential_core_breakpoint_index, core_end_index)
+            core_moments = core_fit_moments_retrying_on_failure(
+                corrected_energy_bins,
+                velocity_vectors,
+                swe_l2_data.phase_space_density[i],
+                weights,
+                spacecraft_potential_core_breakpoint_index,
+                core_end_index,
+                core_density_history
+            )
 
-                fit_function, chisq = regress(filtered_velocity_vectors,
-                                              filtered_weights, filtered_yreg)
-                core_moments = calculate_fit_temperature_density_velocity(fit_function)
-
-                if 0 < core_moments.density < np.average(core_density_history) * 1.85 or (
-                        core_end_index - spacecraft_potential_core_breakpoint_index) <= 3:
-
-                    break
-                else:
-                    core_end_index -= 1
-
-            core_density_history.append(core_moments.density)
-            core_density_history = core_density_history[1:]
+            core_density_history = [*core_density_history[1:], core_moments.density]
 
             rtn_velocity = rotate_dps_vector_to_rtn(swe_epoch[i],
                                                     np.array(
                                                         [core_moments.velocity_x, core_moments.velocity_y,
                                                          core_moments.velocity_z]))
+
             rotate_temperature(swe_epoch[i], core_moments.alpha, core_moments.beta)
 
             halo_end_index = len(swe_l2_data.energy)
-            while True:
-                filtered_velocity_vectors, filtered_weights, filtered_yreg = filter_and_flatten_regress_parameters(
-                    corrected_energy_bins,
-                    velocity_vectors,
-                    swe_l2_data.phase_space_density[i],
-                    weights,
-                    halo_core_breakpoint_index, halo_end_index)
+            halo_moments = halo_fit_moments_retrying_on_failure(
+                corrected_energy_bins,
+                velocity_vectors,
+                swe_l2_data.phase_space_density[i],
+                weights,
+                halo_core_breakpoint_index,
+                halo_end_index,
+                halo_density_history,
+                spacecraft_potential,
+                halo_core,
+            )
 
-                fit_function, chisq = regress(filtered_velocity_vectors,
-                                              filtered_weights, filtered_yreg)
-                halo_moments = calculate_fit_temperature_density_velocity(fit_function)
-
-                halo_moments.density = halotrunc(halo_moments, halo_core, spacecraft_potential)
-
-                if 0 < halo_moments.density < np.average(halo_density_history) * 1.65 or (
-                        halo_end_index - halo_core_breakpoint_index) <= 3:
-                    break
-                else:
-                    halo_end_index -= 1
-
-            halo_density_history.append(halo_moments.density)
-            halo_density_history = halo_density_history[1:]
+            halo_density_history = [*halo_density_history[1:], halo_moments.density]
 
             rtn_velocity = rotate_dps_vector_to_rtn(swe_epoch[i],
                                                     np.array(

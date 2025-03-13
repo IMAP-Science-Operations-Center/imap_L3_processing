@@ -356,24 +356,22 @@ class TestSweProcessor(unittest.TestCase):
         np.testing.assert_allclose(swe_l3_data.energy_spectrum_outbound,
                                    np.array([[208.855516, 286.519101, 206.376298]]))
 
-    @patch('imap_l3_processing.swe.swe_processor.halotrunc')
+    @patch('imap_l3_processing.swe.swe_processor.halo_fit_moments_retrying_on_failure')
+    @patch('imap_l3_processing.swe.swe_processor.core_fit_moments_retrying_on_failure')
     @patch('imap_l3_processing.swe.swe_processor.find_breakpoints')
     @patch('imap_l3_processing.swe.swe_processor.average_over_look_directions')
-    @patch('imap_l3_processing.swe.swe_processor.filter_and_flatten_regress_parameters')
     @patch('imap_l3_processing.swe.swe_processor.compute_maxwellian_weight_factors')
     @patch('imap_l3_processing.swe.swe_processor.calculate_velocity_in_dsp_frame_km_s')
-    @patch('imap_l3_processing.swe.swe_processor.regress')
-    @patch('imap_l3_processing.swe.swe_processor.calculate_fit_temperature_density_velocity')
     @patch('imap_l3_processing.swe.swe_processor.rotate_dps_vector_to_rtn')
     @patch('imap_l3_processing.swe.swe_processor.rotate_temperature')
     @patch('imap_l3_processing.swe.swe_processor.spice_wrapper')
     def test_calculate_moment_products(self, mock_spice_wrapper, mock_rotate_temperature,
                                        mock_rotate_dps_vector_to_rtn,
-                                       mock_calculate_fit_temperature_density_velocity, mock_regress,
                                        mock_calculate_velocity_in_dsp_frame_km_s,
                                        mock_compute_maxwellian_weight_factors,
-                                       mock_filter_and_flatten_regress_parameters,
-                                       mock_average_over_look_directions, mock_find_breakpoints, mock_halotrunc):
+                                       mock_average_over_look_directions, mock_find_breakpoints,
+                                       mock_core_fit_moments_retrying_on_failure: Mock,
+                                       mock_halo_fit_moments_retrying_on_failure: Mock):
         epochs = datetime.now() + np.arange(2) * timedelta(minutes=1)
         geometric_fractions = [0.0697327, 0.138312, 0.175125, 0.181759,
                                0.204686, 0.151448, 0.0781351]
@@ -417,64 +415,15 @@ class TestSweProcessor(unittest.TestCase):
 
         mock_compute_maxwellian_weight_factors.side_effect = maxwellian_weight_factors
 
-        filtered_velocity_vectors = [np.full(shape=(1080, 3), fill_value=1.1),
-                                     np.full(shape=(1080, 3), fill_value=5.1),
-                                     np.full(shape=(1080, 3), fill_value=2.1),
-                                     np.full(shape=(1080, 3), fill_value=6.1)]
-        filtered_weights = [np.full(shape=(1080,), fill_value=1.2),
-                            np.full(shape=(1080,), fill_value=5.2),
-                            np.full(shape=(1080,), fill_value=2.2),
-                            np.full(shape=(1080,), fill_value=6.2)]
-
-        filtered_yreg = [
-            np.full(shape=(1080,), fill_value=1.3),
-            np.full(shape=(1080,), fill_value=5.3),
-            np.full(shape=(1080,), fill_value=2.3),
-            np.full(shape=(1080,), fill_value=6.3),
-        ]
-
-        mock_filter_and_flatten_regress_parameters.side_effect = [
-            (
-                filtered_velocity_vectors[0],
-                filtered_weights[0],
-                filtered_yreg[0]
-            ),
-            (
-                filtered_velocity_vectors[1],
-                filtered_weights[1],
-                filtered_yreg[1],
-            ),
-            (
-                filtered_velocity_vectors[2],
-                filtered_weights[2],
-                filtered_yreg[2]
-            ),
-            (
-                filtered_velocity_vectors[3],
-                filtered_weights[3],
-                filtered_yreg[3],
-            ),
-        ]
-
-        core_moments1 = create_dataclass_mock(Moments, density=10, velocity_x=5, velocity_y=6, velocity_z=7)
-        halo_moments1 = create_dataclass_mock(Moments, density=sentinel.halo_density_1, velocity_x=5, velocity_y=6,
+        core_moments1 = create_dataclass_mock(Moments, density=15, velocity_x=5, velocity_y=6, velocity_z=7)
+        halo_moments1 = create_dataclass_mock(Moments, density=22, velocity_x=5, velocity_y=6,
                                               velocity_z=7)
-        core_moments2 = create_dataclass_mock(Moments, density=10, velocity_x=8, velocity_y=9, velocity_z=10)
-        halo_moments2 = create_dataclass_mock(Moments, density=sentinel.halo_density_2, velocity_x=8, velocity_y=9,
+        core_moments2 = create_dataclass_mock(Moments, density=12, velocity_x=8, velocity_y=9, velocity_z=10)
+        halo_moments2 = create_dataclass_mock(Moments, density=19, velocity_x=8, velocity_y=9,
                                               velocity_z=10)
 
-        mock_halotrunc.side_effect = [
-            10,
-            10
-        ]
-
-        mock_calculate_fit_temperature_density_velocity.side_effect = [core_moments1, halo_moments1, core_moments2,
-                                                                       halo_moments2]
-
-        mock_regress.side_effect = [(sentinel.first_core_regress_return, 0),
-                                    (sentinel.first_halo_moment_regress_return, 0),
-                                    (sentinel.second_core_regress_return, 0),
-                                    (sentinel.second_halo_moment_regress_return, 0)]
+        mock_core_fit_moments_retrying_on_failure.side_effect = [core_moments1, core_moments2]
+        mock_halo_fit_moments_retrying_on_failure.side_effect = [halo_moments1, halo_moments2]
 
         mock_average_over_look_directions.return_value = np.array([5, 10, 15])
         input_metadata = InputMetadata("swe", "l3", datetime(2025, 2, 21),
@@ -515,80 +464,60 @@ class TestSweProcessor(unittest.TestCase):
             [call(sentinel.l1b_count_rates_1, sentinel.acquisition_duration_1),
              call(sentinel.l1b_count_rates_2, sentinel.acquisition_duration_2)])
 
-        core_filter_and_flatten_call_1 = mock_filter_and_flatten_regress_parameters.mock_calls[0]
+        self.assertEqual(2, mock_core_fit_moments_retrying_on_failure.call_count)
+        self.assertEqual(2, mock_halo_fit_moments_retrying_on_failure.call_count)
+
+        core_fit_moments_call_1 = mock_core_fit_moments_retrying_on_failure.mock_calls[0]
         np.testing.assert_array_equal(swe_l2_data.energy - expected_breakpoint_1[0],
-                                      core_filter_and_flatten_call_1.args[0])
+                                      core_fit_moments_call_1.args[0])
         np.testing.assert_array_equal(velocity_in_dsp_frame_km_s[0],
-                                      core_filter_and_flatten_call_1.args[1])
-        np.testing.assert_array_equal(swe_l2_data.phase_space_density[0], core_filter_and_flatten_call_1.args[2])
+                                      core_fit_moments_call_1.args[1])
+        np.testing.assert_array_equal(swe_l2_data.phase_space_density[0], core_fit_moments_call_1.args[2])
         np.testing.assert_array_equal(maxwellian_weight_factors[0],
-                                      core_filter_and_flatten_call_1.args[3])
-        self.assertEqual(2, core_filter_and_flatten_call_1.args[4])
-        self.assertEqual(6, core_filter_and_flatten_call_1.args[5])
+                                      core_fit_moments_call_1.args[3])
+        self.assertEqual(2, core_fit_moments_call_1.args[4])
+        self.assertEqual(6, core_fit_moments_call_1.args[5])
+        np.testing.assert_array_equal(core_fit_moments_call_1.args[6], [100, 100, 100])
 
-        halo_filter_and_flatten_call_1 = mock_filter_and_flatten_regress_parameters.mock_calls[1]
+        halo_fit_moments_call_1 = mock_halo_fit_moments_retrying_on_failure.mock_calls[0]
         np.testing.assert_array_equal(swe_l2_data.energy - expected_breakpoint_1[0],
-                                      halo_filter_and_flatten_call_1.args[0])
+                                      halo_fit_moments_call_1.args[0])
         np.testing.assert_array_equal(velocity_in_dsp_frame_km_s[0],
-                                      halo_filter_and_flatten_call_1.args[1])
-        np.testing.assert_array_equal(swe_l2_data.phase_space_density[0], halo_filter_and_flatten_call_1.args[2])
+                                      halo_fit_moments_call_1.args[1])
+        np.testing.assert_array_equal(swe_l2_data.phase_space_density[0], halo_fit_moments_call_1.args[2])
         np.testing.assert_array_equal(maxwellian_weight_factors[0],
-                                      halo_filter_and_flatten_call_1.args[3])
-        self.assertEqual(6, halo_filter_and_flatten_call_1.args[4])
-        self.assertEqual(10, halo_filter_and_flatten_call_1.args[5])
+                                      halo_fit_moments_call_1.args[3])
+        self.assertEqual(6, halo_fit_moments_call_1.args[4])
+        self.assertEqual(10, halo_fit_moments_call_1.args[5])
+        np.testing.assert_array_equal(halo_fit_moments_call_1.args[6], [25, 25, 25])
+        self.assertEqual(expected_breakpoint_1[0], halo_fit_moments_call_1.args[7])
+        self.assertEqual(expected_breakpoint_1[1], halo_fit_moments_call_1.args[8])
 
-        core_filter_and_flatten_call_2 = mock_filter_and_flatten_regress_parameters.mock_calls[2]
+        core_fit_moments_2 = mock_core_fit_moments_retrying_on_failure.mock_calls[1]
         np.testing.assert_array_equal(swe_l2_data.energy - expected_breakpoint_2[0],
-                                      core_filter_and_flatten_call_2.args[0])
+                                      core_fit_moments_2.args[0])
         np.testing.assert_array_equal(velocity_in_dsp_frame_km_s[1],
-                                      core_filter_and_flatten_call_2.args[1])
-        np.testing.assert_array_equal(swe_l2_data.phase_space_density[1], core_filter_and_flatten_call_2.args[2])
+                                      core_fit_moments_2.args[1])
+        np.testing.assert_array_equal(swe_l2_data.phase_space_density[1], core_fit_moments_2.args[2])
         np.testing.assert_array_equal(maxwellian_weight_factors[1],
-                                      core_filter_and_flatten_call_2.args[3])
-        self.assertEqual(3, core_filter_and_flatten_call_2.args[4])
-        self.assertEqual(5, core_filter_and_flatten_call_2.args[5])
+                                      core_fit_moments_2.args[3])
+        self.assertEqual(3, core_fit_moments_2.args[4])
+        self.assertEqual(5, core_fit_moments_2.args[5])
+        np.testing.assert_array_equal(core_fit_moments_2.args[6], [100, 100, core_moments1.density])
 
-        halo_filter_and_flatten_call_2 = mock_filter_and_flatten_regress_parameters.mock_calls[3]
+        halo_fit_moments_2 = mock_halo_fit_moments_retrying_on_failure.mock_calls[1]
         np.testing.assert_array_equal(swe_l2_data.energy - expected_breakpoint_2[0],
-                                      halo_filter_and_flatten_call_2.args[0])
+                                      halo_fit_moments_2.args[0])
         np.testing.assert_array_equal(velocity_in_dsp_frame_km_s[1],
-                                      halo_filter_and_flatten_call_2.args[1])
-        np.testing.assert_array_equal(swe_l2_data.phase_space_density[1], halo_filter_and_flatten_call_2.args[2])
+                                      halo_fit_moments_2.args[1])
+        np.testing.assert_array_equal(swe_l2_data.phase_space_density[1], halo_fit_moments_2.args[2])
         np.testing.assert_array_equal(maxwellian_weight_factors[1],
-                                      halo_filter_and_flatten_call_2.args[3])
-        self.assertEqual(5, halo_filter_and_flatten_call_2.args[4])
-        self.assertEqual(10, halo_filter_and_flatten_call_2.args[5])
-
-        core_regress_call_1 = mock_regress.mock_calls[0]
-        np.testing.assert_array_equal(filtered_velocity_vectors[0], core_regress_call_1.args[0])
-        np.testing.assert_array_equal(filtered_weights[0], core_regress_call_1.args[1])
-        np.testing.assert_array_equal(filtered_yreg[0], core_regress_call_1.args[2])
-
-        halo_regress_call_1 = mock_regress.mock_calls[1]
-        np.testing.assert_array_equal(filtered_velocity_vectors[1], halo_regress_call_1.args[0])
-        np.testing.assert_array_equal(filtered_weights[1], halo_regress_call_1.args[1])
-        np.testing.assert_array_equal(filtered_yreg[1], halo_regress_call_1.args[2])
-
-        core_regress_call_2 = mock_regress.mock_calls[2]
-        np.testing.assert_array_equal(filtered_velocity_vectors[2], core_regress_call_2.args[0])
-        np.testing.assert_array_equal(filtered_weights[2], core_regress_call_2.args[1])
-        np.testing.assert_array_equal(filtered_yreg[2], core_regress_call_2.args[2])
-
-        halo_regress_call_2 = mock_regress.mock_calls[3]
-        np.testing.assert_array_equal(filtered_velocity_vectors[3], halo_regress_call_2.args[0])
-        np.testing.assert_array_equal(filtered_weights[3], halo_regress_call_2.args[1])
-        np.testing.assert_array_equal(filtered_yreg[3], halo_regress_call_2.args[2])
-
-        mock_calculate_fit_temperature_density_velocity.assert_has_calls(
-            [call(sentinel.first_core_regress_return),
-             call(sentinel.first_halo_moment_regress_return),
-             call(sentinel.second_core_regress_return),
-             call(sentinel.second_halo_moment_regress_return), ])
-
-        mock_halotrunc.assert_has_calls([
-            call(halo_moments1, expected_breakpoint_1[1], expected_breakpoint_1[0]),
-            call(halo_moments2, expected_breakpoint_2[1], expected_breakpoint_2[0])
-        ])
+                                      halo_fit_moments_2.args[3])
+        self.assertEqual(5, halo_fit_moments_2.args[4])
+        self.assertEqual(10, halo_fit_moments_2.args[5])
+        np.testing.assert_array_equal(halo_fit_moments_2.args[6], [25, 25, halo_moments1.density])
+        self.assertEqual(expected_breakpoint_2[0], halo_fit_moments_2.args[7])
+        self.assertEqual(expected_breakpoint_2[1], halo_fit_moments_2.args[8])
 
         self.assertEqual(4, mock_rotate_dps_vector_to_rtn.call_count)
 
@@ -618,294 +547,3 @@ class TestSweProcessor(unittest.TestCase):
              call(epochs[0], halo_moments1.alpha, halo_moments1.beta),
              call(epochs[1], core_moments2.alpha, core_moments2.beta),
              call(epochs[1], halo_moments2.alpha, halo_moments2.beta), ])
-
-    @patch('imap_l3_processing.swe.swe_processor.rotate_dps_vector_to_rtn')
-    @patch('imap_l3_processing.swe.swe_processor.rotate_temperature')
-    @patch('imap_l3_processing.swe.swe_processor.average_over_look_directions')
-    @patch('imap_l3_processing.swe.swe_processor.halotrunc')
-    @patch('imap_l3_processing.swe.swe_processor.compute_maxwellian_weight_factors')
-    @patch('imap_l3_processing.swe.swe_processor.calculate_velocity_in_dsp_frame_km_s')
-    @patch('imap_l3_processing.swe.swe_processor.regress')
-    @patch('imap_l3_processing.swe.swe_processor.calculate_fit_temperature_density_velocity')
-    @patch('imap_l3_processing.swe.swe_processor.find_breakpoints')
-    @patch('imap_l3_processing.swe.swe_processor.filter_and_flatten_regress_parameters')
-    def test_moment_fit_should_be_retried_until_returned_density_is_greater_than_zero_and_less_than_rolling_average_density(
-            self,
-            mock_filter_and_flatten_regress_parameters,
-            mock_find_breakpoints,
-            mock_calculate_fit_temperature_density_velocity,
-            mock_regress, mock_calculate_velocity,
-            mock_compute_maxwellian_weights,
-            mock_halotrunc,
-            _, __, ___):
-        epochs = datetime.now() + np.arange(2) * timedelta(minutes=1)
-        swe_config = build_swe_configuration()
-
-        energies = np.array([1.2, 3.4, 4.6, 5.9, 8.7, 9.1, 9.2, 10.5, 11.9, 12.8, 13.9, 14.6])
-
-        swe_l2_data = SweL2Data(
-            epoch=epochs,
-            epoch_delta=np.repeat(timedelta(seconds=30), 2),
-            phase_space_density=np.arange(2 * 7 * 3).reshape(2, 7, 3) + 100,
-            flux=np.arange(9).reshape(3, 3),
-            energy=energies,
-            inst_el=np.array([]),
-            inst_az_spin_sector=np.arange(10, 19).reshape(3, 3),
-            acquisition_time=np.array([]),
-            acquisition_duration=np.array([3, 4])
-        )
-
-        swe_l1_data = create_dataclass_mock(SweL1bData)
-        swe_l1_data.count_rates = np.array([1, 2])
-
-        core_breakpoint = 3.4
-        core_halo_breakpoint = 9.2
-        mock_find_breakpoints.return_value = (core_breakpoint, core_halo_breakpoint)
-
-        expected_core_energy_start_index = 1
-        expected_core_energy_end_index = 6
-
-        expected_halo_energy_end_index = len(energies)
-
-        # @formatter:off
-        mock_filter_and_flatten_regress_parameters.side_effect = [
-            (sentinel.time1_core_filtered_vecs_1, sentinel.time1_core_filtered_weights_1, sentinel.time1_core_filtered_yreg_1),
-            (sentinel.time1_core_filtered_vecs_2, sentinel.time1_core_filtered_weights_2, sentinel.time1_core_filtered_yreg_2),
-            (sentinel.time1_halo_filtered_vecs_1, sentinel.time1_halo_filtered_weights_1, sentinel.time1_halo_filtered_yreg_1),
-            (sentinel.time1_halo_filtered_vecs_2, sentinel.time1_halo_filtered_weights_2, sentinel.time1_halo_filtered_yreg_2),
-
-            (sentinel.time2_core_filtered_vecs_1, sentinel.time2_core_filtered_weights_1, sentinel.time2_core_filtered_yreg_1),
-            (sentinel.time2_core_filtered_vecs_2, sentinel.time2_core_filtered_weights_2, sentinel.time2_core_filtered_yreg_2),
-            (sentinel.time2_core_filtered_vecs_3, sentinel.time2_core_filtered_weights_3, sentinel.time2_core_filtered_yreg_3),
-            (sentinel.time2_halo_filtered_vecs_1, sentinel.time2_halo_filtered_weights_1, sentinel.time2_halo_filtered_yreg_1),
-            (sentinel.time2_halo_filtered_vecs_2, sentinel.time2_halo_filtered_weights_2, sentinel.time2_halo_filtered_yreg_2),
-            (sentinel.time2_halo_filtered_vecs_3, sentinel.time2_halo_filtered_weights_3, sentinel.time2_halo_filtered_yreg_3),
-        ]
-        # @formatter:on
-
-        mock_regress.side_effect = [(sentinel.time1_core_regress_1, 0),
-                                    (sentinel.time1_core_regress_2, 0),
-                                    (sentinel.time1_halo_regress_1, 0),
-                                    (sentinel.time1_halo_regress_2, 0),
-
-                                    (sentinel.time2_core_regress_1, 0),
-                                    (sentinel.time2_core_regress_2, 0),
-                                    (sentinel.time2_core_regress_3, 0),
-                                    (sentinel.time2_halo_regress_1, 0),
-                                    (sentinel.time2_halo_regress_2, 0),
-                                    (sentinel.time2_halo_regress_3, 0)
-                                    ]
-
-        low_density = -1
-
-        time1_core_valid_density = 10
-        time2_core_valid_density = 13
-        core_density_greater_than_config_value = 1.85 * 100 + 1
-        core_density_greater_than_rolling_average = (100 + 100 + time1_core_valid_density) / 3 * 1.85 + 1
-
-        core_momements_time1 = [(create_dataclass_mock(Moments, density=core_density_greater_than_config_value)),
-                                (create_dataclass_mock(Moments, density=time1_core_valid_density)),
-                                ]
-
-        core_momements_time2 = [
-            (create_dataclass_mock(Moments, density=core_density_greater_than_rolling_average)),
-            (create_dataclass_mock(Moments, density=low_density)),
-            (create_dataclass_mock(Moments, density=time2_core_valid_density))]
-
-        time1_halo_valid_density = 8
-        time2_halo_valid_density = 19
-        halo_density_greater_than_config_value = 1.65 * 25 + 1
-        halo_density_greater_than_rolling_average = (25 + 25 + time1_halo_valid_density) / 3 * 1.65 + 1
-
-        halo_moments_time1 = [
-            (create_dataclass_mock(Moments, density=sentinel.fit_density_1)),
-            (create_dataclass_mock(Moments, density=sentinel.fit_density_2)),
-        ]
-
-        halo_moments_time2 = [
-            (create_dataclass_mock(Moments, density=sentinel.fit_density_3)),
-            (create_dataclass_mock(Moments, density=sentinel.fit_density_4)),
-            (create_dataclass_mock(Moments, density=sentinel.fit_density_5))
-        ]
-
-        mock_halotrunc.side_effect = [
-            halo_density_greater_than_config_value,
-            time1_halo_valid_density,
-            halo_density_greater_than_rolling_average,
-            low_density,
-            time2_halo_valid_density
-        ]
-
-        mock_calculate_fit_temperature_density_velocity.side_effect = core_momements_time1 + halo_moments_time1 + core_momements_time2 + halo_moments_time2
-
-        input_metadata = InputMetadata("swe", "l3", datetime(2025, 2, 21),
-                                       datetime(2025, 2, 22), "v001")
-
-        swel3_dependency = SweL3Dependencies(swe_l2_data, swe_l1_data, Mock(), Mock(), swe_config)
-        swe_processor = SweProcessor(dependencies=[], input_metadata=input_metadata)
-
-        swe_processor.calculate_moment_products(swel3_dependency)
-
-        self.assertEqual(10, mock_filter_and_flatten_regress_parameters.call_count)
-        mock_filter_and_flatten_regress_parameters.assert_has_calls([
-            call(NumpyArrayMatcher(swe_l2_data.energy - core_breakpoint), mock_calculate_velocity.return_value,
-                 NumpyArrayMatcher(swe_l2_data.phase_space_density[0]), mock_compute_maxwellian_weights.return_value,
-                 expected_core_energy_start_index, expected_core_energy_end_index),
-            call(NumpyArrayMatcher(swe_l2_data.energy - core_breakpoint), mock_calculate_velocity.return_value,
-                 NumpyArrayMatcher(swe_l2_data.phase_space_density[0]), mock_compute_maxwellian_weights.return_value,
-                 expected_core_energy_start_index, expected_core_energy_end_index - 1),
-
-            call(NumpyArrayMatcher(swe_l2_data.energy - core_breakpoint), mock_calculate_velocity.return_value,
-                 NumpyArrayMatcher(swe_l2_data.phase_space_density[0]), mock_compute_maxwellian_weights.return_value,
-                 expected_core_energy_end_index, expected_halo_energy_end_index),
-            call(NumpyArrayMatcher(swe_l2_data.energy - core_breakpoint), mock_calculate_velocity.return_value,
-                 NumpyArrayMatcher(swe_l2_data.phase_space_density[0]), mock_compute_maxwellian_weights.return_value,
-                 expected_core_energy_end_index, expected_halo_energy_end_index - 1),
-
-            call(NumpyArrayMatcher(swe_l2_data.energy - core_breakpoint), mock_calculate_velocity.return_value,
-                 NumpyArrayMatcher(swe_l2_data.phase_space_density[1]), mock_compute_maxwellian_weights.return_value,
-                 expected_core_energy_start_index, expected_core_energy_end_index),
-            call(NumpyArrayMatcher(swe_l2_data.energy - core_breakpoint), mock_calculate_velocity.return_value,
-                 NumpyArrayMatcher(swe_l2_data.phase_space_density[1]), mock_compute_maxwellian_weights.return_value,
-                 expected_core_energy_start_index, expected_core_energy_end_index - 1),
-            call(NumpyArrayMatcher(swe_l2_data.energy - core_breakpoint), mock_calculate_velocity.return_value,
-                 NumpyArrayMatcher(swe_l2_data.phase_space_density[1]), mock_compute_maxwellian_weights.return_value,
-                 expected_core_energy_start_index, expected_core_energy_end_index - 2),
-
-            call(NumpyArrayMatcher(swe_l2_data.energy - core_breakpoint), mock_calculate_velocity.return_value,
-                 NumpyArrayMatcher(swe_l2_data.phase_space_density[1]), mock_compute_maxwellian_weights.return_value,
-                 expected_core_energy_end_index, expected_halo_energy_end_index),
-            call(NumpyArrayMatcher(swe_l2_data.energy - core_breakpoint), mock_calculate_velocity.return_value,
-                 NumpyArrayMatcher(swe_l2_data.phase_space_density[1]), mock_compute_maxwellian_weights.return_value,
-                 expected_core_energy_end_index, expected_halo_energy_end_index - 1),
-            call(NumpyArrayMatcher(swe_l2_data.energy - core_breakpoint), mock_calculate_velocity.return_value,
-                 NumpyArrayMatcher(swe_l2_data.phase_space_density[1]), mock_compute_maxwellian_weights.return_value,
-                 expected_core_energy_end_index, expected_halo_energy_end_index - 2),
-
-        ])
-
-        # @formatter:off
-        self.assertEqual(10, mock_regress.call_count)
-        mock_regress.assert_has_calls([
-            call(sentinel.time1_core_filtered_vecs_1, sentinel.time1_core_filtered_weights_1, sentinel.time1_core_filtered_yreg_1),
-            call(sentinel.time1_core_filtered_vecs_2, sentinel.time1_core_filtered_weights_2, sentinel.time1_core_filtered_yreg_2),
-            call(sentinel.time1_halo_filtered_vecs_1, sentinel.time1_halo_filtered_weights_1, sentinel.time1_halo_filtered_yreg_1),
-            call(sentinel.time1_halo_filtered_vecs_2, sentinel.time1_halo_filtered_weights_2, sentinel.time1_halo_filtered_yreg_2),
-
-            call(sentinel.time2_core_filtered_vecs_1, sentinel.time2_core_filtered_weights_1, sentinel.time2_core_filtered_yreg_1),
-            call(sentinel.time2_core_filtered_vecs_2, sentinel.time2_core_filtered_weights_2, sentinel.time2_core_filtered_yreg_2),
-            call(sentinel.time2_core_filtered_vecs_3, sentinel.time2_core_filtered_weights_3, sentinel.time2_core_filtered_yreg_3),
-            call(sentinel.time2_halo_filtered_vecs_1, sentinel.time2_halo_filtered_weights_1, sentinel.time2_halo_filtered_yreg_1),
-            call(sentinel.time2_halo_filtered_vecs_2, sentinel.time2_halo_filtered_weights_2, sentinel.time2_halo_filtered_yreg_2),
-            call(sentinel.time2_halo_filtered_vecs_3, sentinel.time2_halo_filtered_weights_3, sentinel.time2_halo_filtered_yreg_3),
-        ])
-        # @formatter:on
-
-        self.assertEqual(10, mock_calculate_fit_temperature_density_velocity.call_count)
-        mock_calculate_fit_temperature_density_velocity.assert_has_calls([
-            call(sentinel.time1_core_regress_1),
-            call(sentinel.time1_core_regress_2),
-            call(sentinel.time1_halo_regress_1),
-            call(sentinel.time1_halo_regress_2),
-
-            call(sentinel.time2_core_regress_1),
-            call(sentinel.time2_core_regress_2),
-            call(sentinel.time2_core_regress_3),
-            call(sentinel.time2_halo_regress_1),
-            call(sentinel.time2_halo_regress_2),
-            call(sentinel.time2_halo_regress_3)
-        ])
-
-        self.assertEqual(5, mock_halotrunc.call_count)
-        mock_halotrunc.assert_has_calls([
-            call(halo_moments_time1[0], core_halo_breakpoint, core_breakpoint),
-            call(halo_moments_time1[1], core_halo_breakpoint, core_breakpoint),
-            call(halo_moments_time2[0], core_halo_breakpoint, core_breakpoint),
-            call(halo_moments_time2[1], core_halo_breakpoint, core_breakpoint),
-            call(halo_moments_time2[2], core_halo_breakpoint, core_breakpoint),
-        ])
-
-    @patch('imap_l3_processing.swe.swe_processor.rotate_dps_vector_to_rtn')
-    @patch('imap_l3_processing.swe.swe_processor.rotate_temperature')
-    @patch('imap_l3_processing.swe.swe_processor.average_over_look_directions')
-    @patch('imap_l3_processing.swe.swe_processor.halotrunc')
-    @patch('imap_l3_processing.swe.swe_processor.compute_maxwellian_weight_factors')
-    @patch('imap_l3_processing.swe.swe_processor.calculate_velocity_in_dsp_frame_km_s')
-    @patch('imap_l3_processing.swe.swe_processor.regress')
-    @patch('imap_l3_processing.swe.swe_processor.calculate_fit_temperature_density_velocity')
-    @patch('imap_l3_processing.swe.swe_processor.find_breakpoints')
-    @patch('imap_l3_processing.swe.swe_processor.filter_and_flatten_regress_parameters')
-    def test_moment_fit_should_be_ran_while_number_of_energies_between_halo_and_core_is_greater_than_3(self,
-                                                                                                       mock_filter_and_flatten_regress_parameters,
-                                                                                                       mock_find_breakpoints,
-                                                                                                       mock_calculate_fit_temperature_density_velocity,
-                                                                                                       mock_regress,
-                                                                                                       mock_calculate_velocity,
-                                                                                                       mock_compute_maxwellian_weights,
-                                                                                                       mock_halotrunc,
-                                                                                                       _, __, ___):
-        epochs = datetime.now() + np.arange(1) * timedelta(minutes=1)
-        swe_config = build_swe_configuration()
-
-        energies = np.array([1.2, 3.4, 4.6, 5.9, 8.7, 9.2, 10.5])
-
-        swe_l2_data = SweL2Data(
-            epoch=epochs,
-            epoch_delta=np.repeat(timedelta(seconds=30), 1),
-            phase_space_density=np.arange(7 * 3).reshape(1, 7, 3) + 100,
-            flux=np.arange(9).reshape(3, 3),
-            energy=energies,
-            inst_el=np.array([]),
-            inst_az_spin_sector=np.arange(10, 19).reshape(3, 3),
-            acquisition_time=np.array([]),
-            acquisition_duration=np.array([3, 4])
-        )
-
-        swe_l1_data = create_dataclass_mock(SweL1bData)
-        swe_l1_data.count_rates = np.array([1, 2])
-
-        core_breakpoint = 3.4
-        core_halo_breakpoint = 8.7
-        mock_find_breakpoints.return_value = (core_breakpoint, core_halo_breakpoint)
-
-        expected_core_energy_start_index = 1
-        expected_core_energy_end_index = 4
-
-        mock_filter_and_flatten_regress_parameters.side_effect = [
-            (sentinel.core_filtered_vecs_1, sentinel.core_filtered_weights_1, sentinel.core_filtered_yreg_1),
-            (sentinel.halo_filtered_vecs_1, sentinel.halo_filtered_weights_1, sentinel.halo_filtered_yreg_1)]
-
-        mock_regress.side_effect = [(sentinel.core_regress_return, 0), (sentinel.halo_regress_return, 0)]
-
-        core_moments = create_dataclass_mock(Moments, density=-1)
-        halo_moments = create_dataclass_mock(Moments)
-
-        mock_halotrunc.side_effect = [-1]
-
-        mock_calculate_fit_temperature_density_velocity.side_effect = [core_moments,
-                                                                       halo_moments]
-
-        input_metadata = InputMetadata("swe", "l3", datetime(2025, 2, 21),
-                                       datetime(2025, 2, 22), "v001")
-
-        swel3_dependency = SweL3Dependencies(swe_l2_data, swe_l1_data, Mock(), Mock(), swe_config)
-        swe_processor = SweProcessor(dependencies=[], input_metadata=input_metadata)
-
-        swe_processor.calculate_moment_products(swel3_dependency)
-
-        mock_filter_and_flatten_regress_parameters.assert_has_calls([
-            call(NumpyArrayMatcher(swe_l2_data.energy - core_breakpoint), mock_calculate_velocity.return_value,
-                 NumpyArrayMatcher(swe_l2_data.phase_space_density[0]), mock_compute_maxwellian_weights.return_value,
-                 expected_core_energy_start_index, expected_core_energy_end_index),
-            call(NumpyArrayMatcher(swe_l2_data.energy - core_breakpoint), mock_calculate_velocity.return_value,
-                 NumpyArrayMatcher(swe_l2_data.phase_space_density[0]), mock_compute_maxwellian_weights.return_value,
-                 expected_core_energy_end_index, len(energies)),
-        ])
-
-        mock_regress.assert_has_calls([call(sentinel.core_filtered_vecs_1, sentinel.core_filtered_weights_1,
-                                            sentinel.core_filtered_yreg_1),
-                                       call(sentinel.halo_filtered_vecs_1, sentinel.halo_filtered_weights_1,
-                                            sentinel.halo_filtered_yreg_1)])
-
-        mock_calculate_fit_temperature_density_velocity.assert_has_calls(
-            [call(sentinel.core_regress_return), call(sentinel.halo_regress_return)])
