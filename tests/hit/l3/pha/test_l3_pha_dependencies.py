@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import patch, call, sentinel
 
-from imap_processing.hit.l3.pha.hit_l3_pha_dependencies import HitL3PhaDependencies, HIT_L1A_EVENT_DESCRIPTOR, \
+from imap_l3_processing.hit.l3.pha.hit_l3_pha_dependencies import HitL3PhaDependencies, HIT_L1A_EVENT_DESCRIPTOR, \
     HIT_L3_LO_GAIN_LOOKUP_DESCRIPTOR, HIT_L3_HI_GAIN_LOOKUP_DESCRIPTOR, \
     HIT_L3_EVENT_TYPE_LOOKUP_DESCRIPTOR, \
     HIT_L3_RANGE_2A_COSINE_LOOKUP_DESCRIPTOR, HIT_L3_RANGE_3A_COSINE_LOOKUP_DESCRIPTOR, \
@@ -10,17 +10,17 @@ from imap_processing.hit.l3.pha.hit_l3_pha_dependencies import HitL3PhaDependenc
     HIT_L3_RANGE_2A_CHARGE_FIT_LOOKUP_DESCRIPTOR, HIT_L3_RANGE_3A_CHARGE_FIT_LOOKUP_DESCRIPTOR, \
     HIT_L3_RANGE_4A_CHARGE_FIT_LOOKUP_DESCRIPTOR, HIT_L3_RANGE_2B_CHARGE_FIT_LOOKUP_DESCRIPTOR, \
     HIT_L3_RANGE_3B_CHARGE_FIT_LOOKUP_DESCRIPTOR, HIT_L3_RANGE_4B_CHARGE_FIT_LOOKUP_DESCRIPTOR
-from imap_processing.models import UpstreamDataDependency
+from imap_l3_processing.models import UpstreamDataDependency
 
 
 class TestHitL3PhaDependencies(unittest.TestCase):
 
-    @patch('imap_processing.hit.l3.pha.hit_l3_pha_dependencies.download_dependency')
-    @patch('imap_processing.hit.l3.pha.hit_l3_pha_dependencies.HitL1Data.read_from_cdf')
-    @patch('imap_processing.hit.l3.pha.hit_l3_pha_dependencies.CosineCorrectionLookupTable')
-    @patch('imap_processing.hit.l3.pha.hit_l3_pha_dependencies.GainLookupTable.from_file')
-    @patch('imap_processing.hit.l3.pha.hit_l3_pha_dependencies.RangeFitLookup.from_files')
-    @patch('imap_processing.hit.l3.pha.hit_l3_pha_dependencies.HitEventTypeLookup.from_csv')
+    @patch('imap_l3_processing.hit.l3.pha.hit_l3_pha_dependencies.download_dependency')
+    @patch('imap_l3_processing.hit.l3.pha.hit_l3_pha_dependencies.HitL1Data.read_from_cdf')
+    @patch('imap_l3_processing.hit.l3.pha.hit_l3_pha_dependencies.CosineCorrectionLookupTable')
+    @patch('imap_l3_processing.hit.l3.pha.hit_l3_pha_dependencies.GainLookupTable.from_file')
+    @patch('imap_l3_processing.hit.l3.pha.hit_l3_pha_dependencies.RangeFitLookup.from_files')
+    @patch('imap_l3_processing.hit.l3.pha.hit_l3_pha_dependencies.HitEventTypeLookup.from_csv')
     def test_fetch_dependencies(self, mock_hit_event_type_from_lookup, mock_range_fit_from_lookup,
                                 mock_gain_lookup_from_file,
                                 mock_cosine_correction_lookup_from_file, mock_read_from_cdf, mock_download_dependency):
@@ -109,8 +109,8 @@ class TestHitL3PhaDependencies(unittest.TestCase):
         self.assertEqual(mock_range_fit_from_lookup.return_value, hit_L3_pha_dependencies.range_fit_lookup)
         self.assertEqual(mock_hit_event_type_from_lookup.return_value, hit_L3_pha_dependencies.event_type_lookup)
 
-    @patch('imap_processing.hit.l3.pha.hit_l3_pha_dependencies.download_dependency')
-    @patch('imap_processing.hit.l3.pha.hit_l3_pha_dependencies.HitL1Data.read_from_cdf')
+    @patch('imap_l3_processing.hit.l3.pha.hit_l3_pha_dependencies.download_dependency')
+    @patch('imap_l3_processing.hit.l3.pha.hit_l3_pha_dependencies.HitL1Data.read_from_cdf')
     def test_fetch_dependencies_throws_when_no_data_dependency_provided(self, mock_read_from_cdf,
                                                                         mock_download_dependency):
         with self.assertRaises(ValueError) as e:

@@ -1,6 +1,6 @@
 import unittest
 
-from imap_processing.spice_wrapper import furnish
+from imap_l3_processing.spice_wrapper import furnish
 
 
 class SpiceTestCase(unittest.TestCase):

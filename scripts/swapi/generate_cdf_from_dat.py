@@ -4,13 +4,13 @@ from pathlib import Path
 from spacepy.pycdf import CDF
 from spacepy.pycdf.const import CDF_TIME_TT2000
 
-import imap_processing
+import imap_l3_processing
 from scripts.swapi.swapi_alpha_sw_speed_temperature_density_demo import read_l2_data_from_dat
 
 
 def generate_cdf_from_dat(dat_file_path: str, output_filename: str):
     dat_data = read_l2_data_from_dat(dat_file_path)
-    cdf_file_path = Path(imap_processing.__file__).parent.parent / 'swapi' / 'test_data' / output_filename
+    cdf_file_path = Path(imap_l3_processing.__file__).parent.parent / 'swapi' / 'test_data' / output_filename
 
     with CDF(str(cdf_file_path), '') as cdf:
         cdf.col_major(True)

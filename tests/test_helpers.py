@@ -1,10 +1,13 @@
 import json
+from dataclasses import fields
 from pathlib import Path
+from typing import Type, T
+from unittest.mock import Mock
 
 import numpy as np
 
 import tests
-from imap_processing.swe.l3.models import SweConfiguration
+from imap_l3_processing.swe.l3.models import SweConfiguration
 
 
 def get_test_data_path(filename: str) -> Path:
@@ -20,6 +23,10 @@ def build_swe_configuration(**args) -> SweConfiguration:
         default_config = json.load(f)
     default_config.update(**args)
     return default_config
+
+
+def create_dataclass_mock(obj: Type[T], **kwargs) -> T:
+    return Mock(spec=[field.name for field in fields(obj)], **kwargs)
 
 
 class NumpyArrayMatcher:

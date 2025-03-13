@@ -7,7 +7,7 @@ from pathlib import Path
 import numpy as np
 from spacepy.pycdf import CDF
 
-from imap_processing.constants import FIVE_MINUTES_IN_NANOSECONDS
+from imap_l3_processing.constants import FIVE_MINUTES_IN_NANOSECONDS
 
 
 def create_l2_hit_sectored_rates_cdf_from_csv(csv_file_path: str, output_filename: str):
@@ -26,53 +26,53 @@ def create_l2_hit_sectored_rates_cdf_from_csv(csv_file_path: str, output_filenam
         cno_data = flux_data[np.newaxis, 5:7]
         nemgsi_data = flux_data[np.newaxis, 7:9]
         iron_data = flux_data[np.newaxis, 9:10]
-        cdf["hydrogen"] = hydrogen_data
-        cdf["DELTA_MINUS_HYDROGEN"] = hydrogen_data - hydrogen_data * 0.09
-        cdf["DELTA_PLUS_HYDROGEN"] = hydrogen_data + hydrogen_data * 0.11
-        cdf["helium4"] = helium_data
-        cdf["DELTA_MINUS_HELIUM4"] = helium_data - helium_data * 0.09
-        cdf["DELTA_PLUS_HELIUM4"] = helium_data + helium_data * 0.11
-        cdf["CNO"] = cno_data
-        cdf["DELTA_MINUS_CNO"] = cno_data - cno_data * 0.09
-        cdf["DELTA_PLUS_CNO"] = cno_data + cno_data * 0.11
-        cdf["NeMgSi"] = nemgsi_data
-        cdf["DELTA_MINUS_NEMGSI"] = nemgsi_data - nemgsi_data * 0.09
-        cdf["DELTA_PLUS_NEMGSI"] = nemgsi_data + nemgsi_data * 0.11
-        cdf["iron"] = iron_data
-        cdf["DELTA_MINUS_IRON"] = iron_data - iron_data * 0.09
-        cdf["DELTA_PLUS_IRON"] = iron_data + iron_data * 0.11
+        cdf["h"] = hydrogen_data
+        cdf["delta_minus_h"] = hydrogen_data - hydrogen_data * 0.09
+        cdf["delta_plus_h"] = hydrogen_data + hydrogen_data * 0.11
+        cdf["he4"] = helium_data
+        cdf["delta_minus_he4"] = helium_data - helium_data * 0.09
+        cdf["delta_plus_he4"] = helium_data + helium_data * 0.11
+        cdf["cno"] = cno_data
+        cdf["delta_minus_cno"] = cno_data - cno_data * 0.09
+        cdf["delta_plus_cno"] = cno_data + cno_data * 0.11
+        cdf["nemgsi"] = nemgsi_data
+        cdf["delta_minus_nemgsi"] = nemgsi_data - nemgsi_data * 0.09
+        cdf["delta_plus_nemgsi"] = nemgsi_data + nemgsi_data * 0.11
+        cdf["fe"] = iron_data
+        cdf["delta_minus_fe"] = iron_data - iron_data * 0.09
+        cdf["delta_plus_fe"] = iron_data + iron_data * 0.11
 
         cdf["epoch"] = epoch_data
         cdf["epoch_delta"] = epoch_delta
 
-        cdf["DELTA_PLUS_HYDROGEN"] = hydrogen_data * 0.1
-        cdf["DELTA_MINUS_HYDROGEN"] = hydrogen_data * 0.1
-        cdf["DELTA_PLUS_HELIUM4"] = helium_data * 0.1
-        cdf["DELTA_MINUS_HELIUM4"] = helium_data * 0.1
-        cdf["DELTA_PLUS_CNO"] = cno_data * 0.1
-        cdf["DELTA_MINUS_CNO"] = cno_data * 0.1
-        cdf["DELTA_PLUS_NEMGSI"] = nemgsi_data * 0.1
-        cdf["DELTA_MINUS_NEMGSI"] = nemgsi_data * 0.1
-        cdf["DELTA_PLUS_IRON"] = iron_data * 0.1
-        cdf["DELTA_MINUS_IRON"] = iron_data * 0.1
+        cdf["delta_plus_h"] = hydrogen_data * 0.1
+        cdf["delta_minus_h"] = hydrogen_data * 0.1
+        cdf["delta_plus_he4"] = helium_data * 0.1
+        cdf["delta_minus_he4"] = helium_data * 0.1
+        cdf["delta_plus_cno"] = cno_data * 0.1
+        cdf["delta_minus_cno"] = cno_data * 0.1
+        cdf["delta_plus_nemgsi"] = nemgsi_data * 0.1
+        cdf["delta_minus_nemgsi"] = nemgsi_data * 0.1
+        cdf["delta_plus_fe"] = iron_data * 0.1
+        cdf["delta_minus_fe"] = iron_data * 0.1
 
-        cdf.new("h_energy", [5, 6, 7], recVary=False)
+        cdf.new("h_energy_mean", [5, 6, 7], recVary=False)
         cdf.new("h_energy_delta_plus", [0.6, 0.7, 0.6], recVary=False)
         cdf.new("h_energy_delta_minus", [0.4, 0.4, 0.3], recVary=False)
 
-        cdf.new("he4_energy", [5, 6], recVary=False)
+        cdf.new("he4_energy_mean", [5, 6], recVary=False)
         cdf.new("he4_energy_delta_plus", [0.6, 0.7], recVary=False)
         cdf.new("he4_energy_delta_minus", [0.4, 0.4], recVary=False)
 
-        cdf.new("cno_energy", [5, 6], recVary=False)
+        cdf.new("cno_energy_mean", [5, 6], recVary=False)
         cdf.new("cno_energy_delta_plus", [0.6, 0.7], recVary=False)
         cdf.new("cno_energy_delta_minus", [0.4, 0.4], recVary=False)
 
-        cdf.new("nemgsi_energy", [5, 6], recVary=False)
+        cdf.new("nemgsi_energy_mean", [5, 6], recVary=False)
         cdf.new("nemgsi_energy_delta_plus", [0.6, 0.7], recVary=False)
         cdf.new("nemgsi_energy_delta_minus", [0.4, 0.4], recVary=False)
 
-        cdf.new("fe_energy", [5], recVary=False)
+        cdf.new("fe_energy_mean", [5], recVary=False)
         cdf.new("fe_energy_delta_plus", [0.6], recVary=False)
         cdf.new("fe_energy_delta_minus", [0.4], recVary=False)
 

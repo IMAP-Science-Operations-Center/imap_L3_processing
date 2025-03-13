@@ -5,8 +5,8 @@ from unittest import TestCase
 import numpy as np
 from spacepy.pycdf import CDF
 
-from imap_processing.swapi.l3a.models import SwapiL2Data
-from imap_processing.swapi.l3a.utils import chunk_l2_data, read_l2_swapi_data
+from imap_l3_processing.swapi.l3a.models import SwapiL2Data
+from imap_l3_processing.swapi.l3a.utils import chunk_l2_data, read_l2_swapi_data
 
 
 class TestUtils(TestCase):

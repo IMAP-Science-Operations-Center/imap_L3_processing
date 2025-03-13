@@ -3,9 +3,9 @@ from unittest.mock import create_autospec
 
 import numpy as np
 
-from imap_processing.swapi.l3b.science.calculate_solar_wind_differential_flux import \
+from imap_l3_processing.swapi.l3b.science.calculate_solar_wind_differential_flux import \
     calculate_combined_solar_wind_differential_flux
-from imap_processing.swapi.l3b.science.geometric_factor_calibration_table import GeometricFactorCalibrationTable
+from imap_l3_processing.swapi.l3b.science.geometric_factor_calibration_table import GeometricFactorCalibrationTable
 
 
 class TestCalculateSolarWindDifferentialFlux(TestCase):

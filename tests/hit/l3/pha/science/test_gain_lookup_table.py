@@ -1,6 +1,6 @@
 import unittest
 
-from imap_processing.hit.l3.pha.science.gain_lookup_table import GainLookupTable, DetectorGain
+from imap_l3_processing.hit.l3.pha.science.gain_lookup_table import GainLookupTable, DetectorGain
 from tests.test_helpers import get_test_data_path
 
 

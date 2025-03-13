@@ -3,13 +3,13 @@ from unittest import TestCase
 
 from sammi.cdf_attribute_manager import CdfAttributeManager
 
-import imap_processing
-from imap_processing.cdf.imap_attribute_manager import ImapAttributeManager
+import imap_l3_processing
+from imap_l3_processing.cdf.imap_attribute_manager import ImapAttributeManager
 
 
 class TestImapCdfManager(TestCase):
     def setUp(self):
-        self.config_folder_path = Path(imap_processing.__file__).parent.resolve() / 'cdf/config'
+        self.config_folder_path = Path(imap_l3_processing.__file__).parent.resolve() / 'cdf/config'
         self.base_manager = CdfAttributeManager(
             variable_schema_layers=[self.config_folder_path / 'imap_l3_variable_cdf_attrs_schema.yaml'],
             use_defaults=True)
@@ -23,7 +23,7 @@ class TestImapCdfManager(TestCase):
 
     def test_load_instrument_and_variable_attributes_with_level(self):
         manager = ImapAttributeManager()
-        manager.add_instrument_attrs('swapi', 'l3a')
+        manager.add_instrument_attrs('swapi', 'l3a', "descriptor")
 
         self.base_manager.load_global_attributes(self.config_folder_path / 'imap_swapi_global_cdf_attrs.yaml')
         self.base_manager.load_global_attributes(self.config_folder_path / 'imap_swapi_l3a_global_cdf_attrs.yaml')
@@ -59,9 +59,22 @@ class TestImapCdfManager(TestCase):
         self.assertEqual(self.base_manager.get_variable_attributes('alpha_sw_temperature_delta'),
                          manager.get_variable_attributes('alpha_sw_temperature_delta'))
 
+    def test_load_instrument_and_variable_attributes_with_level_and_descriptor(self):
+        manager = ImapAttributeManager()
+        manager.add_instrument_attrs('hit', 'l3', 'macropixel')
+
+        self.base_manager.load_global_attributes(self.config_folder_path / 'imap_hit_global_cdf_attrs.yaml')
+        self.base_manager.load_global_attributes(
+            self.config_folder_path / 'imap_hit_l3_macropixel_global_cdf_attrs.yaml')
+        self.base_manager.load_variable_attributes(
+            self.config_folder_path / 'imap_hit_l3_macropixel_variable_attrs.yaml')
+
+        self.assertEqual(self.base_manager.get_global_attributes(), manager.get_global_attributes())
+        self.assertEqual(self.base_manager.get_variable_attributes('epoch'), manager.get_variable_attributes('epoch'))
+
     def test_l3b_metadata_configuration(self):
         manager = ImapAttributeManager()
-        manager.add_instrument_attrs('swapi', 'l3b')
+        manager.add_instrument_attrs('swapi', 'l3b', "descriptor")
 
         self.base_manager.load_global_attributes(self.config_folder_path / 'imap_swapi_global_cdf_attrs.yaml')
         self.base_manager.load_global_attributes(self.config_folder_path / 'imap_swapi_l3b_global_cdf_attrs.yaml')

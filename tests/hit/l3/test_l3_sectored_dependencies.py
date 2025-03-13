@@ -2,16 +2,16 @@ from datetime import datetime
 from pathlib import Path
 from unittest import TestCase
 from unittest.mock import patch, call
-from imap_processing.models import UpstreamDataDependency, InputMetadata
+from imap_l3_processing.models import UpstreamDataDependency, InputMetadata
 
-from imap_processing.hit.l3.hit_l3_sectored_dependencies import HITL3SectoredDependencies, MAG_L1D_DESCRIPTOR, \
+from imap_l3_processing.hit.l3.hit_l3_sectored_dependencies import HITL3SectoredDependencies, MAG_L1D_DESCRIPTOR, \
     HIT_L2_DESCRIPTOR
 
 
 class TestHITL3SectoredDependencies(TestCase):
-    @patch("imap_processing.hit.l3.hit_l3_sectored_dependencies.read_l1d_mag_data")
-    @patch("imap_processing.hit.l3.hit_l3_sectored_dependencies.read_l2_hit_data")
-    @patch('imap_processing.hit.l3.hit_l3_sectored_dependencies.download_dependency')
+    @patch("imap_l3_processing.hit.l3.hit_l3_sectored_dependencies.read_l1d_mag_data")
+    @patch("imap_l3_processing.hit.l3.hit_l3_sectored_dependencies.read_l2_hit_data")
+    @patch('imap_l3_processing.hit.l3.hit_l3_sectored_dependencies.download_dependency')
     def test_fetch_dependencies(self, mock_download_dependency, mock_read_hit_data, mock_read_mag_data):
         upstream_l2_data_dependency = UpstreamDataDependency("hit", "l2",
                                                              datetime(2024, 9, 8),

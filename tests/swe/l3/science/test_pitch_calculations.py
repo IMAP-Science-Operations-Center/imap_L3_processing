@@ -4,7 +4,7 @@ from unittest.mock import Mock, patch, ANY, call
 
 import numpy as np
 
-from imap_processing.swe.l3.science.pitch_calculations import piece_wise_model, find_breakpoints, \
+from imap_l3_processing.swe.l3.science.pitch_calculations import piece_wise_model, find_breakpoints, \
     average_over_look_directions, calculate_velocity_in_dsp_frame_km_s, calculate_look_directions, rebin_by_pitch_angle, \
     correct_and_rebin, calculate_energy_in_ev_from_velocity_in_km_per_second, integrate_distribution_to_get_1d_spectrum, \
     integrate_distribution_to_get_inbound_and_outbound_1d_spectrum, try_curve_fit_until_valid
@@ -26,7 +26,7 @@ class TestPitchCalculations(unittest.TestCase):
             ],
         ])
         geometric_weights = [0.5, 0.25, 0.25, 0]
-        result = average_over_look_directions(flux_data, geometric_weights)
+        result = average_over_look_directions(flux_data, geometric_weights, 1e-32)
 
         expected_result = [
             ((1 * 0.5 + 2 * 0.25 + 3 * 0.25) + (5 * 0.5 + 6 * 0.25 + 7 * 0.25) + (9 * 0.5 + 10 * 0.25 + 11 * 0.25)) / 3,
@@ -35,6 +35,23 @@ class TestPitchCalculations(unittest.TestCase):
 
         ]
         np.testing.assert_almost_equal(result, expected_result)
+
+    def test_average_over_look_directions_with_zeroes(self):
+        flux_data = np.array([
+            [
+                [1, 2, 3, 4],
+            ],
+            [
+                [0, 0, 0, 1e-36],
+            ],
+        ])
+        geometric_weights = [0.25, 0.25, 0.25, 0.25]
+        result = average_over_look_directions(flux_data, geometric_weights, 1e-34)
+
+        expected_result = [
+            (1 * 0.25 + 2 * 0.25 + 3 * 0.25 + 4 * 0.25), 1e-34
+        ]
+        np.testing.assert_allclose(result, expected_result)
 
     def test_look_direction(self):
         inst_az = np.array([[0, 90], [180, 270]])
@@ -122,8 +139,7 @@ class TestPitchCalculations(unittest.TestCase):
                              3.69484446e-01, 2.19359553e-01, 1.19059738e-01, 5.64115725e-02,
                              2.30604686e-02, 9.14406238e-03, 4.24754874e-03, 1.61814681e-03])
         spacecraft_potential, core_halo_breakpoint = find_breakpoints(
-            xs, avg_flux, 10, 80,
-            11, 81, config)
+            xs, avg_flux, [10, 10, 10], [80, 80, 80], config)
         self.assertAlmostEqual(11.1, spacecraft_potential, 1)
         self.assertAlmostEqual(81.1, core_halo_breakpoint, 1)
 
@@ -146,8 +162,8 @@ class TestPitchCalculations(unittest.TestCase):
                 noise_floor = 1
                 avg_flux += noise_floor
                 spacecraft_potential, core_halo_breakpoint = find_breakpoints(
-                    xs, avg_flux, 10, 80,
-                    11, 82, config)
+                    xs, avg_flux, [10, 10, 10], [80, 80, 80],
+                    config)
                 self.assertAlmostEqual(expected_potential, spacecraft_potential, 2)
                 self.assertAlmostEqual(expected_core_halo, core_halo_breakpoint, 0)
 
@@ -155,9 +171,9 @@ class TestPitchCalculations(unittest.TestCase):
         config = build_swe_configuration()
 
         cases = [
-            (4, 40, 4, 50),
-            (10, 80, 12, 100),
-            (12, 60, 10, 80),
+            (4, 40, [4, 4, 4], [50, 50, 50]),
+            (10, 80, [12, 12, 12], [100, 100, 100]),
+            (12, 60, [10, 10, 10], [80, 80, 80]),
         ]
         for case in cases:
             with self.subTest(case):
@@ -172,11 +188,11 @@ class TestPitchCalculations(unittest.TestCase):
                 avg_flux += noise_floor
 
                 spacecraft_potential, core_halo_breakpoint = find_breakpoints(
-                    xs, avg_flux, guess_potential, guess_halo, 10, 80, config)
+                    xs, avg_flux, guess_potential, guess_halo, config)
                 self.assertAlmostEqual(expected_potential, spacecraft_potential, 2)
                 self.assertAlmostEqual(expected_core_halo, core_halo_breakpoint, 0)
 
-    @patch('imap_processing.swe.l3.science.pitch_calculations.try_curve_fit_until_valid')
+    @patch('imap_l3_processing.swe.l3.science.pitch_calculations.try_curve_fit_until_valid')
     def test_find_breakpoints_determines_b_deltas_correctly(self, mock_try_curve_fit_until_valid):
         config = build_swe_configuration(refit_core_halo_breakpoint_index=4, slope_ratio_cutoff_for_potential_calc=0)
 
@@ -199,14 +215,13 @@ class TestPitchCalculations(unittest.TestCase):
                 avg_flux = np.exp(log_flux)
 
                 result = find_breakpoints(
-                    xs, avg_flux, 10, 80, 15,
-                    90, config)
-                mock_try_curve_fit_until_valid.assert_called_with(ANY, ANY, ANY, 15, 90, expected_b2_delta,
+                    xs, avg_flux, [10, 10, 10], [80, 80, 80], config)
+                mock_try_curve_fit_until_valid.assert_called_with(ANY, ANY, ANY, 10, 80, expected_b2_delta,
                                                                   expected_b4_delta)
 
                 self.assertEqual(mock_try_curve_fit_until_valid.return_value, result)
 
-    @patch('imap_processing.swe.l3.science.pitch_calculations.curve_fit')
+    @patch('imap_l3_processing.swe.l3.science.pitch_calculations.curve_fit')
     def test_find_breakpoints_uses_config_for_slope_guesses(self, mock_curve_fit):
         mock_curve_fit.return_value = [1, 3, 10, 2, 80, 1], Mock()
 
@@ -233,13 +248,13 @@ class TestPitchCalculations(unittest.TestCase):
                 avg_flux = np.exp(log_flux)
 
                 spacecraft_potential, core_halo_breakpoint = find_breakpoints(
-                    xs, avg_flux, 10, 80,
-                    11, 81, config)
+                    xs, avg_flux, [10, 10, 10], [80, 80, 80],
+                    config)
                 expected_guesses = [ANY, b1, 10, b3, 80, b5]
                 rounded_actuals = [round(x, 6) for x in mock_curve_fit.call_args.args[3]]
                 self.assertEqual(expected_guesses, rounded_actuals)
 
-    @patch('imap_processing.swe.l3.science.pitch_calculations.curve_fit')
+    @patch('imap_l3_processing.swe.l3.science.pitch_calculations.curve_fit')
     def test_find_breakpoints_uses_config_for_slope_ratio(self, mock_curve_fit):
         mock_curve_fit.return_value = [1, 2, 3, 4, 5, 6], Mock()
         cases = [
@@ -264,13 +279,12 @@ class TestPitchCalculations(unittest.TestCase):
                 avg_flux = np.exp(log_flux)
 
                 spacecraft_potential, core_halo_breakpoint = find_breakpoints(
-                    xs, avg_flux, 10, 80,
-                    11, 81, config)
+                    xs, avg_flux, [10, 10, 10], [80, 80, 80], config)
 
                 np.testing.assert_almost_equal(mock_curve_fit.call_args.args[1], xs[:data_length])
                 np.testing.assert_almost_equal(mock_curve_fit.call_args.args[2], log_flux[:data_length])
 
-    @patch('imap_processing.swe.l3.science.pitch_calculations.curve_fit')
+    @patch('imap_l3_processing.swe.l3.science.pitch_calculations.curve_fit')
     def test_try_curve_fit_until_valid(self, mock_curve_fit):
         covariance = Mock()
         cases = [
@@ -312,7 +326,7 @@ class TestPitchCalculations(unittest.TestCase):
                                      mock_curve_fit.call_args_list[1])
                 self.assertEqual((10, 80), returned_fit)
 
-    @patch('imap_processing.swe.l3.science.pitch_calculations.curve_fit')
+    @patch('imap_l3_processing.swe.l3.science.pitch_calculations.curve_fit')
     def test_try_curve_fit_until_valid_tries_up_to_3_times(self, mock_curve_fit):
         covariance = Mock()
         good_fit = ([1, 3, 10, 2, 80, 1], covariance)
@@ -418,24 +432,24 @@ class TestPitchCalculations(unittest.TestCase):
 
         expected_result = np.array(
             [
-                [0, 50],
-                [0, 0]
+                [np.nan, 50],
+                [np.nan, np.nan]
             ]
         )
         np.testing.assert_almost_equal(result, expected_result)
 
     def test_rebin_by_pitch_angle_skips_bins_with_invalid_measurements(self):
         test_cases = [
-            ('no energy is close enough', [5.9, 6, 8.2, 11.8, 12.2], 0),
+            ('no energy is close enough', [5.9, 6, 8.2, 11.8, 12.2], np.nan),
             ('overall max value is in range and an energy is close enough below', [8, 8.21, 11.8, 12, 12.1], 50),
             ('overall max value is in range and an energy is close enough above', [8, 8.20, 11.79, 12, 12.1], 50),
             ('min and max are outside window and points on both side of nominal', [5.8, 5.9, 14.1, 9, 11], 50),
-            ('two lowest mins and max are outside window and points only below', [5.8, 5.9, 14.1, 8, 9], 0),
-            ('two lowest mins and max are outside window and points only above', [5.8, 5.9, 14.1, 11, 12], 0),
+            ('two lowest mins and max are outside window and points only below', [5.8, 5.9, 14.1, 8, 9], np.nan),
+            ('two lowest mins and max are outside window and points only above', [5.8, 5.9, 14.1, 11, 12], np.nan),
             ('second_lowest in window and an energy close enough', [5.8, 6.1, 14.1, 11, 12], 50),
             ('second_lowest in window and points on both sides', [5.8, 6.1, 14.1, 8, 12], 50),
-            ('second_lowest in window but all above and not close', [5.8, 11.3, 14.1, 11.3, 12], 0),
-            ('second_lowest in window but all below and not close', [5.8, 6.1, 14.1, 8, 8.7], 0),
+            ('second_lowest in window but all above and not close', [5.8, 11.3, 14.1, 11.3, 12], np.nan),
+            ('second_lowest in window but all below and not close', [5.8, 6.1, 14.1, 8, 8.7], np.nan),
         ]
         for case, energy, expected_output in test_cases:
             with self.subTest(case):
@@ -479,11 +493,11 @@ class TestPitchCalculations(unittest.TestCase):
         result = calculate_energy_in_ev_from_velocity_in_km_per_second(velocities)
         np.testing.assert_allclose(result, expected_energies, rtol=1e-7)
 
-    @patch('imap_processing.swe.l3.science.pitch_calculations.calculate_energy_in_ev_from_velocity_in_km_per_second')
-    @patch('imap_processing.swe.l3.science.pitch_calculations.rebin_by_pitch_angle')
-    @patch('imap_processing.swe.l3.science.pitch_calculations.calculate_pitch_angle')
-    @patch('imap_processing.swe.l3.science.pitch_calculations.calculate_velocity_in_sw_frame')
-    @patch('imap_processing.swe.l3.science.pitch_calculations.calculate_velocity_in_dsp_frame_km_s')
+    @patch('imap_l3_processing.swe.l3.science.pitch_calculations.calculate_energy_in_ev_from_velocity_in_km_per_second')
+    @patch('imap_l3_processing.swe.l3.science.pitch_calculations.rebin_by_pitch_angle')
+    @patch('imap_l3_processing.swe.l3.science.pitch_calculations.calculate_pitch_angle')
+    @patch('imap_l3_processing.swe.l3.science.pitch_calculations.calculate_velocity_in_sw_frame')
+    @patch('imap_l3_processing.swe.l3.science.pitch_calculations.calculate_velocity_in_dsp_frame_km_s')
     def test_correct_and_rebin(self, mock_calculate_dsp_velocity, mock_calculate_velocity_in_sw_frame,
                                mock_calculate_pitch_angle, mock_rebin_by_pitch_angle, mock_calculate_energy):
         flux_data = Mock()
@@ -559,6 +573,32 @@ class TestPitchCalculations(unittest.TestCase):
         ]
         np.testing.assert_allclose(actual_integrated_spectrum, expected_integrated_spectrum)
 
+    def test_integrate_distribution_to_get_1d_spectrum_ignores_nan_values(self):
+        pitch_angle_bins = [30, 90]
+        pitch_angle_deltas = [15, 15]
+        configuration = build_swe_configuration(pitch_angle_bins=pitch_angle_bins,
+                                                pitch_angle_delta=pitch_angle_deltas,
+                                                in_vs_out_energy_index=1,
+                                                )
+
+        psd_by_energy_and_pitch_angles = np.array([
+            [10, np.nan],
+            [5, 10],
+            [np.nan, 15],
+        ])
+
+        actual_integrated_spectrum = integrate_distribution_to_get_1d_spectrum(psd_by_energy_and_pitch_angles,
+                                                                               configuration)
+
+        bin1_factor = ((0.5 * np.deg2rad(30)) / 2)
+        bin2_factor = ((1 * np.deg2rad(30)) / 2)
+        expected_integrated_spectrum = [
+            10 * bin1_factor,
+            5 * bin1_factor + 10 * bin2_factor,
+            15 * bin2_factor
+        ]
+        np.testing.assert_allclose(actual_integrated_spectrum, expected_integrated_spectrum)
+
     def test_integrate_distribution_decides_inbound_and_outbound_based_on_config_energy_index(
             self):
         pitch_angle_bins = [10, 85.5, 94.5, 100]
@@ -602,6 +642,44 @@ class TestPitchCalculations(unittest.TestCase):
 
                 np.testing.assert_allclose(in_spectrum, expected_in)
                 np.testing.assert_allclose(out_spectrum, expected_out)
+
+    def test_integrate_distribution_to_get_inbound_and_outbound_ignores_fill(
+            self):
+        pitch_angle_bins = [10, 85.5, 94.5, 100]
+        pitch_angle_deltas = [4.5, 4.5, 4.5, 4.5]
+
+        psd_by_pitch_angles = np.array([
+            [10, 20, 30, 40],
+            [np.nan, 20, 5, 10],
+            [1, 2, 3, np.nan],
+        ])
+
+        bin1_factor = (np.sin(np.deg2rad(10)) * np.deg2rad(4.5 * 2))
+        bin2_factor = (np.sin(np.deg2rad(85.5)) * np.deg2rad(4.5 * 2))
+        bin3_factor = (np.sin(np.deg2rad(94.5)) * np.deg2rad(4.5 * 2))
+        bin4_factor = (np.sin(np.deg2rad(100)) * np.deg2rad(4.5 * 2))
+
+        expected_A_spectrum = [
+            10 * bin1_factor + 20 * bin2_factor,
+            0 + 20 * bin2_factor,
+            1 * bin1_factor + 2 * bin2_factor,
+        ]
+        expected_B_spectrum = [
+            30 * bin3_factor + 40 * bin4_factor,
+            5 * bin3_factor + 10 * bin4_factor,
+            3 * bin3_factor + 0,
+        ]
+
+        configuration = build_swe_configuration(pitch_angle_bins=pitch_angle_bins,
+                                                pitch_angle_delta=pitch_angle_deltas,
+                                                in_vs_out_energy_index=0)
+
+        in_spectrum, out_spectrum = integrate_distribution_to_get_inbound_and_outbound_1d_spectrum(
+            psd_by_pitch_angles,
+            configuration)
+
+        np.testing.assert_allclose(in_spectrum, expected_A_spectrum)
+        np.testing.assert_allclose(out_spectrum, expected_B_spectrum)
 
 
 if __name__ == '__main__':

@@ -5,8 +5,8 @@ import unittest
 
 import numpy as np
 
-from imap_processing.hit.l3.pha.science.cosine_correction_lookup_table import DetectedRange, DetectorSide, DetectorRange
-from imap_processing.hit.l3.pha.science.range_fit_lookup import double_power_law, RangeFitLookup
+from imap_l3_processing.hit.l3.pha.science.cosine_correction_lookup_table import DetectedRange, DetectorSide, DetectorRange
+from imap_l3_processing.hit.l3.pha.science.range_fit_lookup import double_power_law, RangeFitLookup
 from tests.test_helpers import get_test_data_path
 
 

@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 
 import numpy as np
 
-from imap_processing.data_utils import rebin, find_closest_neighbor
+from imap_l3_processing.data_utils import rebin, find_closest_neighbor
 
 
 class TestDataUtils(unittest.TestCase):

@@ -2,7 +2,7 @@ from unittest import TestCase
 
 import numpy as np
 
-from imap_processing.swapi.l3a.science.density_of_neutral_helium_lookup_table import DensityOfNeutralHeliumLookupTable
+from imap_l3_processing.swapi.l3a.science.density_of_neutral_helium_lookup_table import DensityOfNeutralHeliumLookupTable
 
 
 class TestDensityOfNeutralHeliumLookupTable(TestCase):

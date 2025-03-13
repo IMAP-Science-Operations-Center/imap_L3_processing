@@ -2,14 +2,14 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch, call, Mock
 
-import imap_processing
-from imap_processing.spice_wrapper import furnish
+import imap_l3_processing
+from imap_l3_processing.spice_wrapper import furnish
 
 
 class TestSpiceWrapper(unittest.TestCase):
-    @patch('imap_processing.spice_wrapper.logging')
-    @patch('imap_processing.spice_wrapper.Path')
-    @patch('imap_processing.spice_wrapper.spiceypy.furnsh')
+    @patch('imap_l3_processing.spice_wrapper.logging')
+    @patch('imap_l3_processing.spice_wrapper.Path')
+    @patch('imap_l3_processing.spice_wrapper.spiceypy.furnsh')
     def test_furnish_with_spice_dir_mounted(self, mock_furnsh, mock_path_constructor, _mock_logging):
         mock_mnt_spice_path = Mock()
         mock_imap_processing_path = Mock()
@@ -32,7 +32,7 @@ class TestSpiceWrapper(unittest.TestCase):
 
         mock_imap_processing_path.parent.parent.joinpath.assert_called_with("spice_kernels")
         mock_path_constructor.assert_has_calls([
-            call(imap_processing.__file__),
+            call(imap_l3_processing.__file__),
             call("/mnt/spice")
         ])
 
@@ -43,8 +43,8 @@ class TestSpiceWrapper(unittest.TestCase):
             call(str(kernel_4_path)),
         ])
 
-    @patch('imap_processing.spice_wrapper.Path')
-    @patch('imap_processing.spice_wrapper.spiceypy.furnsh')
+    @patch('imap_l3_processing.spice_wrapper.Path')
+    @patch('imap_l3_processing.spice_wrapper.spiceypy.furnsh')
     def test_furnish_with_spice_dir_unmounted(self, mock_furnsh, mock_path_constructor):
         mock_mnt_spice_path = Mock()
         mock_imap_processing_path = Mock()
@@ -63,7 +63,7 @@ class TestSpiceWrapper(unittest.TestCase):
 
         mock_imap_processing_path.parent.parent.joinpath.assert_called_with("spice_kernels")
         mock_path_constructor.assert_has_calls([
-            call(imap_processing.__file__),
+            call(imap_l3_processing.__file__),
             call("/mnt/spice")
         ])
         mock_furnsh.assert_has_calls([

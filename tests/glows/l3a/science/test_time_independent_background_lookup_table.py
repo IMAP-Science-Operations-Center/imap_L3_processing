@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from imap_processing.glows.l3a.science.time_independent_background_lookup_table import \
+from imap_l3_processing.glows.l3a.science.time_independent_background_lookup_table import \
     TimeIndependentBackgroundLookupTable
 from tests.test_helpers import get_test_data_path
 

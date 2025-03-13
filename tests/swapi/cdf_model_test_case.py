@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from imap_processing.models import DataProductVariable
+from imap_l3_processing.models import DataProductVariable
 
 
 class CdfModelTestCase(unittest.TestCase):

@@ -8,18 +8,18 @@ from unittest.mock import patch, Mock
 
 import numpy as np
 
-from imap_processing.glows.descriptors import GLOWS_L2_DESCRIPTOR
-from imap_processing.glows.glows_processor import GlowsProcessor
-from imap_processing.models import UpstreamDataDependency, InputMetadata
+from imap_l3_processing.glows.descriptors import GLOWS_L2_DESCRIPTOR
+from imap_l3_processing.glows.glows_processor import GlowsProcessor
+from imap_l3_processing.models import UpstreamDataDependency, InputMetadata
 from tests.test_helpers import get_test_instrument_team_data_path, get_test_data_path
 
 
 class TestGlowsProcessor(unittest.TestCase):
 
-    @patch('imap_processing.glows.glows_processor.GlowsL3ADependencies')
-    @patch('imap_processing.glows.glows_processor.GlowsProcessor.process_l3a')
-    @patch('imap_processing.glows.glows_processor.save_data')
-    @patch('imap_processing.glows.glows_processor.imap_data_access.upload')
+    @patch('imap_l3_processing.glows.glows_processor.GlowsL3ADependencies')
+    @patch('imap_l3_processing.glows.glows_processor.GlowsProcessor.process_l3a')
+    @patch('imap_l3_processing.glows.glows_processor.save_data')
+    @patch('imap_l3_processing.glows.glows_processor.imap_data_access.upload')
     def test_processor_handles_l3a(self, mock_upload, mock_save_data, mock_process_l3a_method,
                                    mock_glows_dependencies_class):
         instrument = 'glows'
@@ -53,8 +53,8 @@ class TestGlowsProcessor(unittest.TestCase):
         mock_save_data.assert_called_with(mock_light_curve)
         mock_upload.assert_called_with(mock_cdf_path)
 
-    @patch('imap_processing.glows.glows_processor.create_glows_l3a_from_dictionary')
-    @patch('imap_processing.glows.glows_processor.L3aData')
+    @patch('imap_l3_processing.glows.glows_processor.create_glows_l3a_from_dictionary')
+    @patch('imap_l3_processing.glows.glows_processor.L3aData')
     def test_process_l3a(self, l3a_data_constructor, create_glows_l3a_from_dictionary):
         descriptor = GLOWS_L2_DESCRIPTOR + '00001'
 

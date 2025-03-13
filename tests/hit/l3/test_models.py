@@ -6,9 +6,9 @@ import numpy as np
 from spacepy import pycdf
 from spacepy.pycdf import CDF
 
-from imap_processing.hit.l3 import models
-from imap_processing.hit.l3.models import HitDirectEventDataProduct, HitL1Data
-from imap_processing.models import DataProductVariable, UpstreamDataDependency
+from imap_l3_processing.hit.l3 import models
+from imap_l3_processing.hit.l3.models import HitDirectEventDataProduct, HitL1Data
+from imap_l3_processing.models import DataProductVariable, UpstreamDataDependency
 from tests.swapi.cdf_model_test_case import CdfModelTestCase
 
 

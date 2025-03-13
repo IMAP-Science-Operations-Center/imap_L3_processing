@@ -6,10 +6,10 @@ from spacepy.pycdf import CDF
 from uncertainties import ufloat
 from uncertainties.unumpy import uarray, nominal_values, std_devs
 
-import imap_processing
-from imap_processing.swapi.l3a.science.calculate_alpha_solar_wind_speed import calculate_alpha_solar_wind_speed, \
+import imap_l3_processing
+from imap_l3_processing.swapi.l3a.science.calculate_alpha_solar_wind_speed import calculate_alpha_solar_wind_speed, \
     calculate_alpha_center_of_mass, get_alpha_peak_indices, calculate_sw_speed_alpha, calculate_combined_sweeps
-from imap_processing.swapi.l3a.science.speed_calculation import extract_coarse_sweep
+from imap_l3_processing.swapi.l3a.science.speed_calculation import extract_coarse_sweep
 
 
 class TestCalculateAlphaSolarWindSpeed(TestCase):
@@ -64,7 +64,7 @@ class TestCalculateAlphaSolarWindSpeed(TestCase):
 
     def test_calculate_alpha_solar_wind_speed(self):
         file_path = Path(
-            imap_processing.__file__).parent.parent / 'tests' / 'test_data' / 'swapi' / 'imap_swapi_l2_fake-menlo-5-sweeps_20100101_v002.cdf'
+            imap_l3_processing.__file__).parent.parent / 'tests' / 'test_data' / 'swapi' / 'imap_swapi_l2_fake-menlo-5-sweeps_20100101_v002.cdf'
         with CDF(str(file_path)) as cdf:
             energy = cdf["energy"][...]
             count_rate = cdf["swp_coin_rate"][...]
@@ -98,7 +98,7 @@ class TestCalculateAlphaSolarWindSpeed(TestCase):
 
     def test_calculate_combined_sweeps(self):
         file_path = Path(
-            imap_processing.__file__).parent.parent / 'tests' / 'test_data' / 'swapi' / 'imap_swapi_l2_fake-menlo-5-sweeps_20100101_v002.cdf'
+            imap_l3_processing.__file__).parent.parent / 'tests' / 'test_data' / 'swapi' / 'imap_swapi_l2_fake-menlo-5-sweeps_20100101_v002.cdf'
         with CDF(str(file_path)) as cdf:
             energy = cdf["energy"][...]
             count_rate = cdf["swp_coin_rate"][...]

@@ -1,5 +1,0 @@
-imap_hit_l3b_sci:
-  Data_level: "3b"
-  Instrument_type: Particles (space)
-  Data_type: L3_SCI>Level-3b Science data
-  Logical_source_description: HIT Instrument Level-3b Science Data

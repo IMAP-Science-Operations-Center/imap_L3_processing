@@ -2,17 +2,20 @@ import unittest
 
 import numpy as np
 
-from imap_processing.pitch_angles import calculate_pitch_angle, calculate_unit_vector, calculate_gyrophase
+from imap_l3_processing.pitch_angles import calculate_pitch_angle, calculate_unit_vector, calculate_gyrophase, \
+    rotate_from_imap_despun_to_hit_despun
 
 
 class TestPitchAngles(unittest.TestCase):
 
     def test_calculate_pitch_angle(self):
-        hit_unit_vector = np.array([-0.09362045, 0.8466484, 0.5238528])
+        hit_unit_vector = np.array([[-0.09362045, 0.8466484, 0.5238528]])
         mag_unit_vector = np.array([-0.42566603, 0.7890057, 0.44303328])
 
         actual_pitch_angle = calculate_pitch_angle(hit_unit_vector, mag_unit_vector)
-        self.assertAlmostEqual(19.95757200714941, actual_pitch_angle)
+        expected_pitch_angle = np.array([19.95757200714941])
+        self.assertEqual(expected_pitch_angle.shape, actual_pitch_angle.shape)
+        np.testing.assert_array_almost_equal(actual_pitch_angle, expected_pitch_angle)
 
     def test_calculate_pitch_angle_for_multiple_vectors(self):
         hit_unit_vectors = np.array([[1, 1, 0], [1, 0, 0]])
@@ -37,6 +40,15 @@ class TestPitchAngles(unittest.TestCase):
         many_vectors = np.array([[0.1, 0, 0], [30, 40, 0]])
         unit_vectors = calculate_unit_vector(many_vectors)
         np.testing.assert_array_almost_equal([[1, 0, 0], [3 / 5, 4 / 5, 0]], unit_vectors)
+
+    def test_rotate_from_imap_despun_to_hit_despun(self):
+        vector = np.array([1.0, 1.0, 1.0])
+
+        rotated_vector = rotate_from_imap_despun_to_hit_despun(vector)
+
+        expected_vector = np.array([1.366025, 0.366025, 1.0])
+
+        np.testing.assert_array_almost_equal(rotated_vector, expected_vector)
 
     def test_gyrophase(self):
         particle_vector = np.array([

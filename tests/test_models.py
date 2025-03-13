@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 
 import numpy as np
 
-from imap_processing.models import MagL1dData
+from imap_l3_processing.models import MagL1dData
 
 
 class TestModels(unittest.TestCase):

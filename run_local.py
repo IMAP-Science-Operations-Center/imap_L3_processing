@@ -6,42 +6,53 @@ from pathlib import Path
 from bitstring import BitStream
 from spacepy.pycdf import CDF
 
-from imap_processing.glows.descriptors import GLOWS_L2_DESCRIPTOR
-from imap_processing.glows.glows_processor import GlowsProcessor
-from imap_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
-from imap_processing.glows.l3a.utils import read_l2_glows_data
 from imap_processing.hi.hi_processor import HiProcessor
 from imap_processing.hi.l3.hi_l3_dependencies import HiL3Dependencies
-from imap_processing.hit.l3.hit_l3_sectored_dependencies import HITL3SectoredDependencies
-from imap_processing.hit.l3.hit_processor import HitProcessor
-from imap_processing.hit.l3.models import HitL1Data
-from imap_processing.hit.l3.pha.hit_l3_pha_dependencies import HitL3PhaDependencies
-from imap_processing.hit.l3.pha.pha_event_reader import PHAEventReader
-from imap_processing.hit.l3.pha.science.calculate_pha import process_pha_event
-from imap_processing.hit.l3.pha.science.cosine_correction_lookup_table import CosineCorrectionLookupTable
-from imap_processing.hit.l3.pha.science.gain_lookup_table import GainLookupTable
-from imap_processing.hit.l3.pha.science.hit_event_type_lookup import HitEventTypeLookup
-from imap_processing.hit.l3.pha.science.range_fit_lookup import RangeFitLookup
-from imap_processing.hit.l3.utils import read_l2_hit_data
-from imap_processing.models import InputMetadata, UpstreamDataDependency
-from imap_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density import \
+from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
+from imap_l3_processing.glows.descriptors import GLOWS_L2_DESCRIPTOR
+from imap_l3_processing.glows.glows_processor import GlowsProcessor
+from imap_l3_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
+from imap_l3_processing.glows.l3a.utils import read_l2_glows_data
+from imap_l3_processing.hit.l3.hit_l3_sectored_dependencies import HITL3SectoredDependencies
+from imap_l3_processing.hit.l3.hit_processor import HitProcessor
+from imap_l3_processing.hit.l3.models import HitL1Data
+from imap_l3_processing.hit.l3.pha.hit_l3_pha_dependencies import HitL3PhaDependencies
+from imap_l3_processing.hit.l3.pha.pha_event_reader import PHAEventReader
+from imap_l3_processing.hit.l3.pha.science.calculate_pha import process_pha_event
+from imap_l3_processing.hit.l3.pha.science.cosine_correction_lookup_table import CosineCorrectionLookupTable
+from imap_l3_processing.hit.l3.pha.science.gain_lookup_table import GainLookupTable
+from imap_l3_processing.hit.l3.pha.science.hit_event_type_lookup import HitEventTypeLookup
+from imap_l3_processing.hit.l3.pha.science.range_fit_lookup import RangeFitLookup
+from imap_l3_processing.hit.l3.utils import read_l2_hit_data
+from imap_l3_processing.models import InputMetadata, UpstreamDataDependency, DataProduct
+from imap_l3_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density import \
     AlphaTemperatureDensityCalibrationTable
-from imap_processing.swapi.l3a.science.calculate_pickup_ion import DensityOfNeutralHeliumLookupTable
-from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_clock_and_deflection_angles import \
+from imap_l3_processing.swapi.l3a.science.calculate_pickup_ion import DensityOfNeutralHeliumLookupTable
+from imap_l3_processing.swapi.l3a.science.calculate_proton_solar_wind_clock_and_deflection_angles import \
     ClockAngleCalibrationTable
-from imap_processing.swapi.l3a.science.calculate_proton_solar_wind_temperature_and_density import \
+from imap_l3_processing.swapi.l3a.science.calculate_proton_solar_wind_temperature_and_density import \
     ProtonTemperatureAndDensityCalibrationTable
-from imap_processing.swapi.l3a.swapi_l3a_dependencies import SwapiL3ADependencies
-from imap_processing.swapi.l3a.utils import read_l2_swapi_data
-from imap_processing.swapi.l3b.science.efficiency_calibration_table import EfficiencyCalibrationTable
-from imap_processing.swapi.l3b.science.geometric_factor_calibration_table import GeometricFactorCalibrationTable
-from imap_processing.swapi.l3b.science.instrument_response_lookup_table import InstrumentResponseLookupTableCollection
-from imap_processing.swapi.l3b.swapi_l3b_dependencies import SwapiL3BDependencies
-from imap_processing.swapi.swapi_processor import SwapiProcessor
-from imap_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies
-from imap_processing.swe.swe_processor import SweProcessor
-from imap_processing.utils import save_data, read_l1d_mag_data
+from imap_l3_processing.swapi.l3a.swapi_l3a_dependencies import SwapiL3ADependencies
+from imap_l3_processing.swapi.l3a.utils import read_l2_swapi_data
+from imap_l3_processing.swapi.l3b.science.efficiency_calibration_table import EfficiencyCalibrationTable
+from imap_l3_processing.swapi.l3b.science.geometric_factor_calibration_table import GeometricFactorCalibrationTable
+from imap_l3_processing.swapi.l3b.science.instrument_response_lookup_table import \
+    InstrumentResponseLookupTableCollection
+from imap_l3_processing.swapi.l3b.swapi_l3b_dependencies import SwapiL3BDependencies
+from imap_l3_processing.swapi.swapi_processor import SwapiProcessor
+from imap_l3_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies
+from imap_l3_processing.swe.swe_processor import SweProcessor
+from imap_l3_processing.utils import save_data, read_l1d_mag_data, format_time
 from tests.test_helpers import get_test_data_path
+
+
+def delete_temp_cdf_file_path_if_exists(data: DataProduct):
+    formatted_start_date = format_time(data.input_metadata.start_date)
+    logical_source = data.input_metadata.logical_source
+    logical_file_id = f'{logical_source}_{formatted_start_date}_{data.input_metadata.version}'
+    file_path = f'{TEMP_CDF_FOLDER_PATH}/{logical_file_id}.cdf'
+    path = Path(file_path)
+    path.unlink(missing_ok=True)
 
 
 def create_glows_l3a_cdf(dependencies: GlowsL3ADependencies):
@@ -126,13 +137,13 @@ def create_swapi_l3a_cdf(proton_temperature_density_calibration_file, alpha_temp
     return proton_cdf_path, alpha_cdf_path, pui_he_cdf_path
 
 
-def create_swe_cdf(dependencies: SweL3Dependencies) -> str:
+def create_swe_pitch_angle_cdf(dependencies: SweL3Dependencies) -> str:
     input_metadata = InputMetadata(
         instrument='swe',
         data_level='l3',
-        start_date=datetime(2025, 10, 23),
-        end_date=datetime(2025, 10, 24),
-        version='v999')
+        start_date=datetime(2010, 1, 1),
+        end_date=datetime(2010, 1, 2),
+        version='v000')
     processor = SweProcessor(None, input_metadata)
     output_data = processor.calculate_pitch_angle_products(dependencies)
     cdf_path = save_data(output_data)
@@ -153,15 +164,30 @@ def create_hi_cdf(dependencies: HiL3Dependencies) -> str:
     return cdf_path
 
 
+def create_swe_moments_cdf(dependencies: SweL3Dependencies) -> str:
+    input_metadata = InputMetadata(
+        instrument='swe',
+        data_level='l3',
+        start_date=datetime(2025, 10, 23),
+        end_date=datetime(2025, 10, 24),
+        version='v999')
+    processor = SweProcessor(None, input_metadata)
+    processor.calculate_moment_products(dependencies)
+    # cdf_path = save_data(output_data)
+    # return cdf_path
+
+
 def create_hit_sectored_cdf(dependencies: HITL3SectoredDependencies) -> str:
     input_metadata = InputMetadata(
         instrument='hit',
-        data_level='l3b',
+        data_level='l3',
+        descriptor='macropixel',
         start_date=datetime(2025, 10, 23),
         end_date=datetime(2025, 10, 24),
         version='v999')
     processor = HitProcessor(None, input_metadata)
     output_data = processor.process_pitch_angle_product(dependencies)
+    delete_temp_cdf_file_path_if_exists(output_data)
     cdf_path = save_data(output_data)
     return cdf_path
 
@@ -290,14 +316,23 @@ if __name__ == "__main__":
             dependencies = HITL3SectoredDependencies(mag_l1d_data=mag_data, data=hit_data)
             print(f"hit sectored data product: {create_hit_sectored_cdf(dependencies)}")
 
-    if "swe" in sys.argv:
+    if "swe_pitch_angles" in sys.argv:
         dependencies = SweL3Dependencies.from_file_paths(
-            get_test_data_path("swe/imap_swe_l2_sci-with-ace-data_20250101_v002.cdf"),
-            get_test_data_path("mag/imap_mag_l1d_mago-normal_20250101_v001.cdf"),
-            get_test_data_path("swe/imap_swapi_l3a_proton-sw_20250101_v001.cdf"),
+            get_test_data_path("swe/imap_swe_l2_sci-with-ace-data_20100101_v002.cdf"),
+            get_test_data_path("swe/imap_mag_l1d_mago-normal_20100101_v001.cdf"),
+            get_test_data_path("swe/imap_swapi_l3a_proton-sw_20100101_v001.cdf"),
             get_test_data_path("swe/example_swe_config.json"),
         )
-        print(create_swe_cdf(dependencies))
+        print(create_swe_pitch_angle_cdf(dependencies))
+
+    if "swe_moments" in sys.argv:
+        dependencies = SweL3Dependencies.from_file_paths(
+            get_test_data_path("swe/imap_swe_l2_sci-3-11-good-epochs_20240510_v002.cdf"),
+            get_test_data_path("swe/imap_mag_l1d_mago-normal_20100101_v001.cdf"),
+            get_test_data_path("swe/imap_swapi_l3a_proton-sw_20100101_v001.cdf"),
+            get_test_data_path("swe/example_swe_config.json"),
+        )
+        print(create_swe_moments_cdf(dependencies))
 
     if "hi" in sys.argv:
         dependencies = HiL3Dependencies.from_file_paths(

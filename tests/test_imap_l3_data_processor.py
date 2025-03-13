@@ -3,7 +3,7 @@ from unittest import TestCase
 from unittest.mock import patch, call
 
 from imap_l3_data_processor import imap_l3_processor
-from imap_processing.models import InputMetadata, UpstreamDataDependency
+from imap_l3_processing.models import InputMetadata, UpstreamDataDependency
 
 
 class TestImapL3DataProcessor(TestCase):

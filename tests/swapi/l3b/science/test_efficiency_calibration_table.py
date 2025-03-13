@@ -5,7 +5,7 @@ from pathlib import Path
 from spacepy import pycdf
 
 import imap_l3_data_processor
-from imap_processing.swapi.l3b.science.efficiency_calibration_table import EfficiencyCalibrationTable
+from imap_l3_processing.swapi.l3b.science.efficiency_calibration_table import EfficiencyCalibrationTable
 
 
 class TestEfficiencyCalibrationTable(unittest.TestCase):
