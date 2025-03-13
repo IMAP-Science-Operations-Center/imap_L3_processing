@@ -56,6 +56,8 @@ IRON_INTENSITY_PA_DELTA_MINUS_CDF_VAR_NAME = "fe_intensity_pa_delta_minus"
 IRON_ENERGY_CDF_VAR_NAME = "fe_energy"
 IRON_ENERGY_DELTA_PLUS_CDF_VAR_NAME = "fe_energy_delta_plus"
 IRON_ENERGY_DELTA_MINUS_CDF_VAR_NAME = "fe_energy_delta_minus"
+MEASUREMENT_PITCH_ANGLE_VAR_NAME = "measurement_pitch_angle"
+MEASUREMENT_GYROPHASE_VAR_NAME = "measurement_gyrophase"
 
 
 @dataclass
@@ -66,51 +68,53 @@ class HitPitchAngleDataProduct(DataProduct):
     pitch_angle_deltas: np.ndarray
     gyrophases: np.ndarray
     gyrophase_deltas: np.ndarray
-    h_fluxes: np.ndarray
-    h_flux_delta_plus: np.ndarray
-    h_flux_delta_minus: np.ndarray
-    h_flux_pa: np.ndarray
-    h_flux_pa_delta_plus: np.ndarray
-    h_flux_pa_delta_minus: np.ndarray
+    h_intensity: np.ndarray
+    h_intensity_delta_plus: np.ndarray
+    h_intensity_delta_minus: np.ndarray
+    h_intensity_pa: np.ndarray
+    h_intensity_pa_delta_plus: np.ndarray
+    h_intensity_pa_delta_minus: np.ndarray
     h_energies: np.ndarray
     h_energy_delta_plus: np.ndarray
     h_energy_delta_minus: np.ndarray
-    he4_fluxes: np.ndarray
-    he4_flux_delta_plus: np.ndarray
-    he4_flux_delta_minus: np.ndarray
-    he4_flux_pa: np.ndarray
-    he4_flux_pa_delta_plus: np.ndarray
-    he4_flux_pa_delta_minus: np.ndarray
+    he4_intensity: np.ndarray
+    he4_intensity_delta_plus: np.ndarray
+    he4_intensity_delta_minus: np.ndarray
+    he4_intensity_pa: np.ndarray
+    he4_intensity_pa_delta_plus: np.ndarray
+    he4_intensity_pa_delta_minus: np.ndarray
     he4_energies: np.ndarray
     he4_energy_delta_plus: np.ndarray
     he4_energy_delta_minus: np.ndarray
-    cno_fluxes: np.ndarray
-    cno_flux_delta_plus: np.ndarray
-    cno_flux_delta_minus: np.ndarray
-    cno_flux_pa: np.ndarray
-    cno_flux_pa_delta_plus: np.ndarray
-    cno_flux_pa_delta_minus: np.ndarray
+    cno_intensity: np.ndarray
+    cno_intensity_delta_plus: np.ndarray
+    cno_intensity_delta_minus: np.ndarray
+    cno_intensity_pa: np.ndarray
+    cno_intensity_pa_delta_plus: np.ndarray
+    cno_intensity_pa_delta_minus: np.ndarray
     cno_energies: np.ndarray
     cno_energy_delta_plus: np.ndarray
     cno_energy_delta_minus: np.ndarray
-    ne_mg_si_fluxes: np.ndarray
-    ne_mg_si_flux_delta_plus: np.ndarray
-    ne_mg_si_flux_delta_minus: np.ndarray
-    ne_mg_si_flux_pa: np.ndarray
-    ne_mg_si_flux_pa_delta_plus: np.ndarray
-    ne_mg_si_flux_pa_delta_minus: np.ndarray
+    ne_mg_si_intensity: np.ndarray
+    ne_mg_si_intensity_delta_plus: np.ndarray
+    ne_mg_si_intensity_delta_minus: np.ndarray
+    ne_mg_si_intensity_pa: np.ndarray
+    ne_mg_si_intensity_pa_delta_plus: np.ndarray
+    ne_mg_si_intensity_pa_delta_minus: np.ndarray
     ne_mg_si_energies: np.ndarray
     ne_mg_si_energy_delta_plus: np.ndarray
     ne_mg_si_energy_delta_minus: np.ndarray
-    iron_fluxes: np.ndarray
-    iron_flux_delta_plus: np.ndarray
-    iron_flux_delta_minus: np.ndarray
-    iron_flux_pa: np.ndarray
-    iron_flux_pa_delta_plus: np.ndarray
-    iron_flux_pa_delta_minus: np.ndarray
+    iron_intensity: np.ndarray
+    iron_intensity_delta_plus: np.ndarray
+    iron_intensity_delta_minus: np.ndarray
+    iron_intensity_pa: np.ndarray
+    iron_intensity_pa_delta_plus: np.ndarray
+    iron_intensity_pa_delta_minus: np.ndarray
     iron_energies: np.ndarray
     iron_energy_delta_plus: np.ndarray
     iron_energy_delta_minus: np.ndarray
+    measurement_pitch_angle: np.ndarray
+    measurement_gyrophase: np.ndarray
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
@@ -122,52 +126,54 @@ class HitPitchAngleDataProduct(DataProduct):
             DataProductVariable(PITCH_ANGLE_DELTA_CDF_VAR_NAME, self.pitch_angle_deltas, record_varying=False),
             DataProductVariable(GYROPHASE_CDF_VAR_NAME, self.gyrophases, record_varying=False),
             DataProductVariable(GYROPHASE_DELTA_CDF_VAR_NAME, self.gyrophase_deltas, record_varying=False),
-            DataProductVariable(H_INTENSITY_CDF_VAR_NAME, self.h_fluxes),
-            DataProductVariable(H_INTENSITY_DELTA_PLUS_CDF_VAR_NAME, self.h_flux_delta_plus),
-            DataProductVariable(H_INTENSITY_DELTA_MINUS_CDF_VAR_NAME, self.h_flux_delta_minus),
-            DataProductVariable(H_INTENSITY_PA_CDF_VAR_NAME, self.h_flux_pa),
-            DataProductVariable(H_INTENSITY_PA_DELTA_PLUS_CDF_VAR_NAME, self.h_flux_pa_delta_plus),
-            DataProductVariable(H_INTENSITY_PA_DELTA_MINUS_CDF_VAR_NAME, self.h_flux_pa_delta_minus),
+            DataProductVariable(H_INTENSITY_CDF_VAR_NAME, self.h_intensity),
+            DataProductVariable(H_INTENSITY_DELTA_PLUS_CDF_VAR_NAME, self.h_intensity_delta_plus),
+            DataProductVariable(H_INTENSITY_DELTA_MINUS_CDF_VAR_NAME, self.h_intensity_delta_minus),
+            DataProductVariable(H_INTENSITY_PA_CDF_VAR_NAME, self.h_intensity_pa),
+            DataProductVariable(H_INTENSITY_PA_DELTA_PLUS_CDF_VAR_NAME, self.h_intensity_pa_delta_plus),
+            DataProductVariable(H_INTENSITY_PA_DELTA_MINUS_CDF_VAR_NAME, self.h_intensity_pa_delta_minus),
             DataProductVariable(H_ENERGY_CDF_VAR_NAME, self.h_energies, record_varying=False),
             DataProductVariable(H_ENERGY_DELTA_PLUS_CDF_VAR_NAME, self.h_energy_delta_plus, record_varying=False),
             DataProductVariable(H_ENERGY_DELTA_MINUS_CDF_VAR_NAME, self.h_energy_delta_minus, record_varying=False),
-            DataProductVariable(HE4_INTENSITY_CDF_VAR_NAME, self.he4_fluxes),
-            DataProductVariable(HE4_INTENSITY_DELTA_PLUS_CDF_VAR_NAME, self.he4_flux_delta_plus),
-            DataProductVariable(HE4_INTENSITY_DELTA_MINUS_CDF_VAR_NAME, self.he4_flux_delta_minus),
-            DataProductVariable(HE4_INTENSITY_PA_CDF_VAR_NAME, self.he4_flux_pa),
-            DataProductVariable(HE4_INTENSITY_PA_DELTA_PLUS_CDF_VAR_NAME, self.he4_flux_pa_delta_plus),
-            DataProductVariable(HE4_INTENSITY_PA_DELTA_MINUS_CDF_VAR_NAME, self.he4_flux_pa_delta_minus),
+            DataProductVariable(HE4_INTENSITY_CDF_VAR_NAME, self.he4_intensity),
+            DataProductVariable(HE4_INTENSITY_DELTA_PLUS_CDF_VAR_NAME, self.he4_intensity_delta_plus),
+            DataProductVariable(HE4_INTENSITY_DELTA_MINUS_CDF_VAR_NAME, self.he4_intensity_delta_minus),
+            DataProductVariable(HE4_INTENSITY_PA_CDF_VAR_NAME, self.he4_intensity_pa),
+            DataProductVariable(HE4_INTENSITY_PA_DELTA_PLUS_CDF_VAR_NAME, self.he4_intensity_pa_delta_plus),
+            DataProductVariable(HE4_INTENSITY_PA_DELTA_MINUS_CDF_VAR_NAME, self.he4_intensity_pa_delta_minus),
             DataProductVariable(HE4_ENERGY_CDF_VAR_NAME, self.he4_energies, record_varying=False),
             DataProductVariable(HE4_ENERGY_DELTA_PLUS_CDF_VAR_NAME, self.he4_energy_delta_plus, record_varying=False),
             DataProductVariable(HE4_ENERGY_DELTA_MINUS_CDF_VAR_NAME, self.he4_energy_delta_minus, record_varying=False),
-            DataProductVariable(CNO_INTENSITY_CDF_VAR_NAME, self.cno_fluxes),
-            DataProductVariable(CNO_INTENSITY_DELTA_PLUS_CDF_VAR_NAME, self.cno_flux_delta_plus),
-            DataProductVariable(CNO_INTENSITY_DELTA_MINUS_CDF_VAR_NAME, self.cno_flux_delta_minus),
-            DataProductVariable(CNO_INTENSITY_PA_CDF_VAR_NAME, self.cno_flux_pa),
-            DataProductVariable(CNO_INTENSITY_PA_DELTA_PLUS_CDF_VAR_NAME, self.cno_flux_pa_delta_plus),
-            DataProductVariable(CNO_INTENSITY_PA_DELTA_MINUS_CDF_VAR_NAME, self.cno_flux_pa_delta_minus),
+            DataProductVariable(CNO_INTENSITY_CDF_VAR_NAME, self.cno_intensity),
+            DataProductVariable(CNO_INTENSITY_DELTA_PLUS_CDF_VAR_NAME, self.cno_intensity_delta_plus),
+            DataProductVariable(CNO_INTENSITY_DELTA_MINUS_CDF_VAR_NAME, self.cno_intensity_delta_minus),
+            DataProductVariable(CNO_INTENSITY_PA_CDF_VAR_NAME, self.cno_intensity_pa),
+            DataProductVariable(CNO_INTENSITY_PA_DELTA_PLUS_CDF_VAR_NAME, self.cno_intensity_pa_delta_plus),
+            DataProductVariable(CNO_INTENSITY_PA_DELTA_MINUS_CDF_VAR_NAME, self.cno_intensity_pa_delta_minus),
             DataProductVariable(CNO_ENERGY_CDF_VAR_NAME, self.cno_energies, record_varying=False),
             DataProductVariable(CNO_ENERGY_DELTA_PLUS_CDF_VAR_NAME, self.cno_energy_delta_plus, record_varying=False),
             DataProductVariable(CNO_ENERGY_DELTA_MINUS_CDF_VAR_NAME, self.cno_energy_delta_minus, record_varying=False),
-            DataProductVariable(NE_MG_SI_INTENSITY_CDF_VAR_NAME, self.ne_mg_si_fluxes),
-            DataProductVariable(NE_MG_SI_INTENSITY_DELTA_PLUS_CDF_VAR_NAME, self.ne_mg_si_flux_delta_plus),
-            DataProductVariable(NE_MG_SI_INTENSITY_DELTA_MINUS_CDF_VAR_NAME, self.ne_mg_si_flux_delta_minus),
-            DataProductVariable(NE_MG_SI_INTENSITY_PA_CDF_VAR_NAME, self.ne_mg_si_flux_pa),
-            DataProductVariable(NE_MG_SI_INTENSITY_PA_DELTA_PLUS_CDF_VAR_NAME, self.ne_mg_si_flux_pa_delta_plus),
-            DataProductVariable(NE_MG_SI_INTENSITY_PA_DELTA_MINUS_CDF_VAR_NAME, self.ne_mg_si_flux_pa_delta_minus),
+            DataProductVariable(NE_MG_SI_INTENSITY_CDF_VAR_NAME, self.ne_mg_si_intensity),
+            DataProductVariable(NE_MG_SI_INTENSITY_DELTA_PLUS_CDF_VAR_NAME, self.ne_mg_si_intensity_delta_plus),
+            DataProductVariable(NE_MG_SI_INTENSITY_DELTA_MINUS_CDF_VAR_NAME, self.ne_mg_si_intensity_delta_minus),
+            DataProductVariable(NE_MG_SI_INTENSITY_PA_CDF_VAR_NAME, self.ne_mg_si_intensity_pa),
+            DataProductVariable(NE_MG_SI_INTENSITY_PA_DELTA_PLUS_CDF_VAR_NAME, self.ne_mg_si_intensity_pa_delta_plus),
+            DataProductVariable(NE_MG_SI_INTENSITY_PA_DELTA_MINUS_CDF_VAR_NAME, self.ne_mg_si_intensity_pa_delta_minus),
             DataProductVariable(NE_MG_SI_ENERGY_CDF_VAR_NAME, self.ne_mg_si_energies, record_varying=False),
             DataProductVariable(NE_MG_SI_ENERGY_DELTA_PLUS_CDF_VAR_NAME, self.ne_mg_si_energy_delta_plus,
                                 record_varying=False),
             DataProductVariable(NE_MG_SI_ENERGY_DELTA_MINUS_CDF_VAR_NAME, self.ne_mg_si_energy_delta_minus,
                                 record_varying=False),
-            DataProductVariable(IRON_INTENSITY_CDF_VAR_NAME, self.iron_fluxes),
-            DataProductVariable(IRON_INTENSITY_DELTA_PLUS_CDF_VAR_NAME, self.iron_flux_delta_plus),
-            DataProductVariable(IRON_INTENSITY_DELTA_MINUS_CDF_VAR_NAME, self.iron_flux_delta_minus),
-            DataProductVariable(IRON_INTENSITY_PA_CDF_VAR_NAME, self.iron_flux_pa),
-            DataProductVariable(IRON_INTENSITY_PA_DELTA_PLUS_CDF_VAR_NAME, self.iron_flux_pa_delta_plus),
-            DataProductVariable(IRON_INTENSITY_PA_DELTA_MINUS_CDF_VAR_NAME, self.iron_flux_pa_delta_minus),
+            DataProductVariable(IRON_INTENSITY_CDF_VAR_NAME, self.iron_intensity),
+            DataProductVariable(IRON_INTENSITY_DELTA_PLUS_CDF_VAR_NAME, self.iron_intensity_delta_plus),
+            DataProductVariable(IRON_INTENSITY_DELTA_MINUS_CDF_VAR_NAME, self.iron_intensity_delta_minus),
+            DataProductVariable(IRON_INTENSITY_PA_CDF_VAR_NAME, self.iron_intensity_pa),
+            DataProductVariable(IRON_INTENSITY_PA_DELTA_PLUS_CDF_VAR_NAME, self.iron_intensity_pa_delta_plus),
+            DataProductVariable(IRON_INTENSITY_PA_DELTA_MINUS_CDF_VAR_NAME, self.iron_intensity_pa_delta_minus),
             DataProductVariable(IRON_ENERGY_CDF_VAR_NAME, self.iron_energies, record_varying=False),
             DataProductVariable(IRON_ENERGY_DELTA_PLUS_CDF_VAR_NAME, self.iron_energy_delta_plus, record_varying=False),
             DataProductVariable(IRON_ENERGY_DELTA_MINUS_CDF_VAR_NAME, self.iron_energy_delta_minus,
                                 record_varying=False),
+            DataProductVariable(MEASUREMENT_PITCH_ANGLE_VAR_NAME, self.measurement_pitch_angle),
+            DataProductVariable(MEASUREMENT_GYROPHASE_VAR_NAME, self.measurement_gyrophase)
         ]
