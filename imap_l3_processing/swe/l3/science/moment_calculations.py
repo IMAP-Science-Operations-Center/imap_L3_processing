@@ -1,7 +1,7 @@
 import math
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Union
 
 import numpy as np
 from spiceypy import spiceypy
@@ -28,6 +28,13 @@ class Moments:
 
 
 @dataclass
+class MomentFitResults:
+    moments: Moments
+    chisq: float
+    number_of_points: int
+
+
+@dataclass
 class HaloCorrectionParameters:
     spacecraft_potential: float
     core_halo_breakpoint: float
@@ -39,7 +46,7 @@ def core_fit_moments_retrying_on_failure(corrected_energy_bins: np.ndarray,
                                          weights: np.ndarray,
                                          energy_start: int,
                                          energy_end: int,
-                                         density_history: np.ndarray) -> Optional[Moments]:
+                                         density_history: Union[np.ndarray, list[float]]) -> Optional[MomentFitResults]:
     return _fit_moments_retrying_on_failure(
         corrected_energy_bins,
         velocity_vectors,
@@ -57,8 +64,9 @@ def halo_fit_moments_retrying_on_failure(corrected_energy_bins: np.ndarray, velo
                                          weights: np.ndarray,
                                          energy_start: int,
                                          energy_end: int,
-                                         density_history: np.ndarray, spacecraft_potential: float,
-                                         core_halo_breakpoint: float) -> Optional[Moments]:
+                                         density_history: Union[np.ndarray, list[float]],
+                                         spacecraft_potential: Union[np.float64, float],
+                                         core_halo_breakpoint: Union[np.float64, float]) -> Optional[MomentFitResults]:
     return _fit_moments_retrying_on_failure(
         corrected_energy_bins,
         velocity_vectors,
@@ -79,10 +87,10 @@ def _fit_moments_retrying_on_failure(corrected_energy_bins: np.ndarray,
                                      weights: np.ndarray,
                                      energy_start: int,
                                      energy_end: int,
-                                     density_history: np.ndarray,
+                                     density_history: Union[np.ndarray, list[float]],
                                      history_scalar: float,
                                      halo_correction_parameters: Optional[HaloCorrectionParameters] = None) -> Optional[
-    Moments]:
+    MomentFitResults]:
     filtered_velocity_vectors, filtered_weights, filtered_yreg = filter_and_flatten_regress_parameters(
         corrected_energy_bins,
         velocity_vectors,
@@ -100,7 +108,7 @@ def _fit_moments_retrying_on_failure(corrected_energy_bins: np.ndarray,
                                    halo_correction_parameters.spacecraft_potential)
 
     if 0 < moment.density < average_density:
-        return moment
+        return MomentFitResults(moments=moment, chisq=chi_squared, number_of_points=energy_end - energy_start)
     elif energy_end - energy_start < 4:
         return None
     else:
@@ -273,7 +281,7 @@ MINIMUM_WEIGHT = 0.8165
 MAX_VARIANCE = 349525.25
 
 
-def compute_maxwellian_weight_factors(count_rates: np.ndarray[float], acquisition_durations: np.ndarray[float]) -> \
+def compute_maxwellian_weight_factors(count_rates: np.ndarray, acquisition_durations: np.ndarray) -> \
         np.ndarray[float]:
     correction = 1.0 - 1e-9 * LIMIT / acquisition_durations.reshape((*acquisition_durations.shape, 1))
     correction[correction < 0.1] = 0.1
@@ -318,7 +326,7 @@ def filter_and_flatten_regress_parameters(corrected_energy_bins: np.ndarray,
     return velocity_vectors[valid_mask], weights[valid_mask], yreg
 
 
-def rotate_dps_vector_to_rtn(epoch: datetime, vector: np.ndarray[float]) -> np.ndarray[float]:
+def rotate_dps_vector_to_rtn(epoch: datetime, vector: np.ndarray) -> np.ndarray:
     et_time = spiceypy.datetime2et(epoch)
     rotation_matrix = spiceypy.pxform("IMAP_DPS", "IMAP_RTN", et_time)
     return rotation_matrix @ vector
@@ -332,8 +340,8 @@ def rotate_temperature(epoch: datetime, alpha: float, beta: float):
 
     rtn_temperature = rotate_dps_vector_to_rtn(epoch, np.array([x, y, z]))
 
-    phi = np.asin(rtn_temperature[2])
-    theta = np.atan2(rtn_temperature[1], rtn_temperature[0])
+    theta = np.asin(rtn_temperature[2])
+    phi = np.atan2(rtn_temperature[1], rtn_temperature[0])
 
     return theta, phi
 

@@ -55,14 +55,15 @@ class TestMomentsCalculation(unittest.TestCase):
             valid_density
         ]
 
-        actual_moments = halo_fit_moments_retrying_on_failure(sentinel.corrected_energy_bins,
-                                                              sentinel.velocity_vectors,
-                                                              sentinel.phase_space_density,
-                                                              sentinel.weights,
-                                                              0,
-                                                              8,
-                                                              density_history, sentinel.spacecraft_potential,
-                                                              sentinel.halo_core_breakpoint)
+        moment_fit_result = halo_fit_moments_retrying_on_failure(sentinel.corrected_energy_bins,
+                                                                 sentinel.velocity_vectors,
+                                                                 sentinel.phase_space_density,
+                                                                 sentinel.weights,
+                                                                 0,
+                                                                 8,
+                                                                 density_history,
+                                                                 sentinel.spacecraft_potential,
+                                                                 sentinel.halo_core_breakpoint)
 
         mock_filter_and_flatten_regress_parameters.assert_has_calls([
             call(sentinel.corrected_energy_bins, sentinel.velocity_vectors, sentinel.phase_space_density,
@@ -91,7 +92,10 @@ class TestMomentsCalculation(unittest.TestCase):
             call(moments_3_with_valid_density, sentinel.halo_core_breakpoint, sentinel.spacecraft_potential, )
         ])
 
-        self.assertIs(moments_3_with_valid_density, actual_moments)
+        self.assertIs(moments_3_with_valid_density, moment_fit_result.moments)
+        self.assertEqual(sentinel.chisq_3, moment_fit_result.chisq)
+        self.assertIs(moments_3_with_valid_density, moment_fit_result.moments)
+        self.assertEqual(6, moment_fit_result.number_of_points)
 
     @patch('imap_l3_processing.swe.l3.science.moment_calculations.regress')
     @patch('imap_l3_processing.swe.l3.science.moment_calculations.calculate_fit_temperature_density_velocity')
@@ -124,13 +128,13 @@ class TestMomentsCalculation(unittest.TestCase):
             (sentinel.fit_function_3, sentinel.chisq_3)
         ]
 
-        actual_moments = core_fit_moments_retrying_on_failure(sentinel.corrected_energy_bins,
-                                                              sentinel.velocity_vectors,
-                                                              sentinel.phase_space_density,
-                                                              sentinel.weights,
-                                                              0,
-                                                              8,
-                                                              density_history)
+        moment_fit_result = core_fit_moments_retrying_on_failure(sentinel.corrected_energy_bins,
+                                                                 sentinel.velocity_vectors,
+                                                                 sentinel.phase_space_density,
+                                                                 sentinel.weights,
+                                                                 0,
+                                                                 8,
+                                                                 density_history)
 
         mock_filter_and_flatten_regress_parameters.assert_has_calls([
             call(sentinel.corrected_energy_bins, sentinel.velocity_vectors, sentinel.phase_space_density,
@@ -153,7 +157,10 @@ class TestMomentsCalculation(unittest.TestCase):
             call(sentinel.fit_function_3),
         ])
 
-        self.assertIs(moments_with_valid_density, actual_moments)
+        self.assertIs(moments_with_valid_density, moment_fit_result.moments)
+        self.assertEqual(sentinel.chisq_3, moment_fit_result.chisq)
+        self.assertIs(moments_with_valid_density, moment_fit_result.moments)
+        self.assertEqual(6, moment_fit_result.number_of_points)
 
     @patch('imap_l3_processing.swe.l3.science.moment_calculations.regress')
     @patch('imap_l3_processing.swe.l3.science.moment_calculations.calculate_fit_temperature_density_velocity')
@@ -377,8 +384,8 @@ class TestMomentsCalculation(unittest.TestCase):
         expected_rtn_temperature = rotation_matrix @ np.array([x, y, z])
         expected_rtn_temperature /= np.linalg.norm(expected_rtn_temperature)
 
-        self.assertEqual(np.asin(expected_rtn_temperature[2]), phi)
-        self.assertEqual(np.atan2(expected_rtn_temperature[1], expected_rtn_temperature[0]), theta)
+        self.assertEqual(np.asin(expected_rtn_temperature[2]), theta)
+        self.assertEqual(np.atan2(expected_rtn_temperature[1], expected_rtn_temperature[0]), phi)
 
     def test_momscale(self):
         core_halo_break = 125.6

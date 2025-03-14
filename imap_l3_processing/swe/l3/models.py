@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime
 from typing import TypedDict
 
 import numpy as np
@@ -19,11 +20,28 @@ ENERGY_SPECTRUM_INBOUND_CDF_VAR_NAME = "energy_spectrum_inbound"
 ENERGY_SPECTRUM_OUTBOUND_CDF_VAR_NAME = "energy_spectrum_outbound"
 SPACECRAFT_POTENTIAL_CDF_VAR_NAME = "spacecraft_potential"
 CORE_HALO_BREAKPOINT_CDF_VAR_NAME = "core_halo_breakpoint"
+CORE_FIT_NUM_POINTS_CDF_VAR_NAME = "core_fit_num_points"
+CHISQ_C_CDF_VAR_NAME = "core_chisq"
+CHISQ_H_CDF_VAR_NAME = "halo_chisq"
+CORE_DENSITY_FIT_CDF_VAR_NAME = "core_density_fit"
+HALO_DENSITY_FIT_CDF_VAR_NAME = "halo_density_fit"
+CORE_T_PARALLEL_FIT_CDF_VAR_NAME = "core_t_parallel_fit"
+HALO_T_PARALLEL_FIT_CDF_VAR_NAME = "halo_t_parallel_fit"
+CORE_T_PERPENDICULAR_FIT_CDF_VAR_NAME = "core_t_perpendicular_fit"
+HALO_T_PERPENDICULAR_FIT_CDF_VAR_NAME = "halo_t_perpendicular_fit"
+CORE_TEMPERATURE_PHI_RTN_FIT_CDF_VAR_NAME = "core_temperature_phi_rtn_fit"
+HALO_TEMPERATURE_PHI_RTN_FIT_CDF_VAR_NAME = "halo_temperature_phi_rtn_fit"
+CORE_TEMPERATURE_THETA_RTN_FIT_CDF_VAR_NAME = "core_temperature_theta_rtn_fit"
+HALO_TEMPERATURE_THETA_RTN_FIT_CDF_VAR_NAME = "halo_temperature_theta_rtn_fit"
+CORE_SPEED_FIT_CDF_VAR_NAME = "core_speed_fit"
+HALO_SPEED_FIT_CDF_VAR_NAME = "halo_speed_fit"
+CORE_VELOCITY_VECTOR_RTN_FIT_CDF_VAR_NAME = "core_velocity_vector_rtn_fit"
+HALO_VELOCITY_VECTOR_RTN_FIT_CDF_VAR_NAME = "halo_velocity_vector_rtn_fit"
 
 
 @dataclass
 class SweL2Data:
-    epoch: np.ndarray
+    epoch: np.ndarray[datetime]
     epoch_delta: np.ndarray
     phase_space_density: np.ndarray
     flux: np.ndarray
@@ -50,7 +68,29 @@ class SweL1bData:
 
 
 @dataclass
+class SweL3MomentData:
+    core_fit_num_points: np.ndarray
+    core_chisq: np.ndarray
+    halo_chisq: np.ndarray
+    core_density_fit: np.ndarray
+    halo_density_fit: np.ndarray
+    core_t_parallel_fit: np.ndarray
+    halo_t_parallel_fit: np.ndarray
+    core_t_perpendicular_fit: np.ndarray
+    halo_t_perpendicular_fit: np.ndarray
+    core_temperature_phi_rtn_fit: np.ndarray
+    halo_temperature_phi_rtn_fit: np.ndarray
+    core_temperature_theta_rtn_fit: np.ndarray
+    halo_temperature_theta_rtn_fit: np.ndarray
+    core_speed_fit: np.ndarray
+    halo_speed_fit: np.ndarray
+    core_velocity_vector_rtn_fit: np.ndarray
+    halo_velocity_vector_rtn_fit: np.ndarray
+
+
+@dataclass
 class SweL3Data(DataProduct):
+    # coming from the config
     epoch: np.ndarray
     epoch_delta: np.ndarray
     energy: np.ndarray
@@ -58,12 +98,32 @@ class SweL3Data(DataProduct):
     energy_delta_minus: np.ndarray
     pitch_angle: np.ndarray
     pitch_angle_delta: np.ndarray
-    phase_space_density_by_pitch_angle: np.ndarray
-    energy_spectrum: np.ndarray
+    # need for both
     spacecraft_potential: np.ndarray
     core_halo_breakpoint: np.ndarray
+    # pitch angle specific
+    phase_space_density_by_pitch_angle: np.ndarray
+    energy_spectrum: np.ndarray
     energy_spectrum_inbound: np.ndarray
     energy_spectrum_outbound: np.ndarray
+    # fit moments
+    core_fit_num_points: np.array
+    core_chisq: np.ndarray
+    halo_chisq: np.ndarray
+    core_density_fit: np.ndarray
+    halo_density_fit: np.ndarray
+    core_t_parallel_fit: np.ndarray
+    halo_t_parallel_fit: np.ndarray
+    core_t_perpendicular_fit: np.ndarray
+    halo_t_perpendicular_fit: np.ndarray
+    core_temperature_phi_rtn_fit: np.ndarray
+    halo_temperature_phi_rtn_fit: np.ndarray
+    core_temperature_theta_rtn_fit: np.ndarray
+    halo_temperature_theta_rtn_fit: np.ndarray
+    core_speed_fit: np.ndarray
+    halo_speed_fit: np.ndarray
+    core_velocity_vector_rtn_fit: np.ndarray
+    halo_velocity_vector_rtn_fit: np.ndarray
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
@@ -93,6 +153,41 @@ class SweL3Data(DataProduct):
                                 value=self.spacecraft_potential, cdf_data_type=pycdf.const.CDF_REAL4),
             DataProductVariable(CORE_HALO_BREAKPOINT_CDF_VAR_NAME,
                                 value=self.core_halo_breakpoint, cdf_data_type=pycdf.const.CDF_REAL4),
+            DataProductVariable(CORE_FIT_NUM_POINTS_CDF_VAR_NAME,
+                                value=self.core_fit_num_points, cdf_data_type=pycdf.const.CDF_REAL4),
+            DataProductVariable(CHISQ_C_CDF_VAR_NAME,
+                                value=self.core_chisq, cdf_data_type=pycdf.const.CDF_REAL4),
+            DataProductVariable(CHISQ_H_CDF_VAR_NAME,
+                                value=self.halo_chisq, cdf_data_type=pycdf.const.CDF_REAL4),
+            DataProductVariable(CORE_DENSITY_FIT_CDF_VAR_NAME,
+                                value=self.core_density_fit, cdf_data_type=pycdf.const.CDF_REAL4),
+            DataProductVariable(HALO_DENSITY_FIT_CDF_VAR_NAME,
+                                value=self.halo_density_fit, cdf_data_type=pycdf.const.CDF_REAL4),
+            DataProductVariable(CORE_T_PARALLEL_FIT_CDF_VAR_NAME,
+                                value=self.core_t_parallel_fit, cdf_data_type=pycdf.const.CDF_REAL4),
+            DataProductVariable(HALO_T_PARALLEL_FIT_CDF_VAR_NAME,
+                                value=self.halo_t_parallel_fit, cdf_data_type=pycdf.const.CDF_REAL4),
+            DataProductVariable(CORE_T_PERPENDICULAR_FIT_CDF_VAR_NAME,
+                                value=self.core_t_perpendicular_fit, cdf_data_type=pycdf.const.CDF_REAL4),
+            DataProductVariable(HALO_T_PERPENDICULAR_FIT_CDF_VAR_NAME,
+                                value=self.halo_t_perpendicular_fit, cdf_data_type=pycdf.const.CDF_REAL4),
+            DataProductVariable(CORE_TEMPERATURE_PHI_RTN_FIT_CDF_VAR_NAME,
+                                value=self.core_temperature_phi_rtn_fit, cdf_data_type=pycdf.const.CDF_REAL4),
+            DataProductVariable(HALO_TEMPERATURE_PHI_RTN_FIT_CDF_VAR_NAME,
+                                value=self.halo_temperature_phi_rtn_fit, cdf_data_type=pycdf.const.CDF_REAL4),
+            DataProductVariable(CORE_TEMPERATURE_THETA_RTN_FIT_CDF_VAR_NAME,
+                                value=self.core_temperature_theta_rtn_fit, cdf_data_type=pycdf.const.CDF_REAL4),
+            DataProductVariable(HALO_TEMPERATURE_THETA_RTN_FIT_CDF_VAR_NAME,
+                                value=self.halo_temperature_theta_rtn_fit, cdf_data_type=pycdf.const.CDF_REAL4),
+            DataProductVariable(CORE_SPEED_FIT_CDF_VAR_NAME,
+                                value=self.core_speed_fit, cdf_data_type=pycdf.const.CDF_REAL4),
+            DataProductVariable(HALO_SPEED_FIT_CDF_VAR_NAME,
+                                value=self.halo_speed_fit, cdf_data_type=pycdf.const.CDF_REAL4),
+            DataProductVariable(CORE_VELOCITY_VECTOR_RTN_FIT_CDF_VAR_NAME,
+                                value=self.core_velocity_vector_rtn_fit, cdf_data_type=pycdf.const.CDF_REAL4),
+            DataProductVariable(HALO_VELOCITY_VECTOR_RTN_FIT_CDF_VAR_NAME,
+                                value=self.halo_velocity_vector_rtn_fit, cdf_data_type=pycdf.const.CDF_REAL4),
+
         ]
 
 
