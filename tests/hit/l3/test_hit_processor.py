@@ -490,7 +490,7 @@ class TestHitProcessor(TestCase):
             start_date=None,
             end_date=None,
             version="",
-            descriptor="direct-event"
+            descriptor="direct-events"
         )
 
         dependencies = []
@@ -525,7 +525,7 @@ class TestHitProcessor(TestCase):
         mock_imap_data_access_upload.assert_called_once_with(mock_save_data.return_value)
 
         direct_event_product = mock_save_data.call_args_list[0].args[0]
-        self.assertEqual(input_metadata.to_upstream_data_dependency("direct-event"),
+        self.assertEqual(input_metadata.to_upstream_data_dependency("direct-events"),
                          direct_event_product.input_metadata)
 
         np.testing.assert_array_equal(direct_event_product.epoch, np.array(
@@ -601,6 +601,6 @@ class TestHitProcessor(TestCase):
             processor.process()
 
         self.assertEqual(e.exception.args[0],
-                         f"Don't know how to generate 'spectral-index' /n Known HIT l3 data products: 'macropixel', 'direct-event'.")
+                         f"Don't know how to generate 'spectral-index' /n Known HIT l3 data products: 'macropixel', 'direct-events'.")
 
     T = TypeVar("T")
