@@ -1,8 +1,0 @@
-imap_hit_l3a_sci: &imap_hit_l3a_sci
-  Data_level: "3a"
-  Instrument_type: Particles (space)
-  Data_type: L3_SCI>Level-3a Science data
-  Logical_source_description: HIT Instrument Level-3a Science Data
-
-imap_hit_l3a_direct-event:
-  <<: *imap_hit_l3a_sci

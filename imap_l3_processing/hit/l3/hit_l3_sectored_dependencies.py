@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from dataclasses import dataclass
 
 from imap_l3_processing.hit.l3.models import HitL2Data
@@ -6,8 +7,8 @@ from imap_l3_processing.hit.l3.utils import read_l2_hit_data
 from imap_l3_processing.models import UpstreamDataDependency, MagL1dData
 from imap_l3_processing.utils import download_dependency, read_l1d_mag_data
 
-HIT_L2_DESCRIPTOR = "sectoredrates"
-MAG_L1D_DESCRIPTOR = "mago-normal"
+HIT_L2_DESCRIPTOR = "macropixel-intensity"
+MAG_L1D_DESCRIPTOR = "norm-mago"
 
 
 @dataclass

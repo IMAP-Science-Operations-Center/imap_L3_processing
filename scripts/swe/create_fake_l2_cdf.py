@@ -11,7 +11,8 @@ from spacepy import pycdf
 from spacepy.pycdf import CDF
 
 
-def create_fake_swe_l2_cdf(l1_hdf_path: str, l2_hdf_path: str, output_l2_swe_cdf_file_path: str):
+def create_fake_swe_l1b_and_l2_cdf(l1_hdf_path: str, l2_hdf_path: str, output_l1b_swe_cdf_file_path: str,
+                                   output_l2_swe_cdf_file_path: str):
     l1_hdf = pyhdf.SD.SD(l1_hdf_path)
     counts = l1_hdf.select("DNSWE_COUNT")[:]
     total_number_of_energies = 20
@@ -24,29 +25,38 @@ def create_fake_swe_l2_cdf(l1_hdf_path: str, l2_hdf_path: str, output_l2_swe_cdf
     vd_electron = vs_electron.attach("swepam_e")
     epochs = get_epochs_from_output_file(vd_electron)
 
-    with CDF(output_l2_swe_cdf_file_path, readonly=False) as cdf:
+    with CDF(output_l2_swe_cdf_file_path, create=True) as cdf:
         cdf.compress(pycdf.const.GZIP_COMPRESSION)
         cdf["epoch"] = epochs
 
         evenly_spaced_energies = np.geomspace(1, 1350, 20, endpoint=True)
-        replace_variable(cdf, "energy", evenly_spaced_energies)
+        create_variable(cdf, "energy", evenly_spaced_energies)
 
         energies_reshaped = evenly_spaced_energies[:, np.newaxis, np.newaxis]
         psd = counts_in_swe_shape / np.square(energies_reshaped)
-        replace_variable(cdf, "phase_space_density_spin_sector", psd)
+        create_variable(cdf, "phase_space_density_spin_sector", psd)
 
         flux = psd * energies_reshaped
-        replace_variable(cdf, "flux_spin_sector", flux)
+        create_variable(cdf, "flux_spin_sector", flux)
+
+        cdf.new("inst_el", [-63, -42, -21, 0, 21, 42, 63], recVary=False)
 
         shape_without_aperture_axis = psd.shape[:-1]
         placeholder_insta_az_spin_sector = np.random.random(shape_without_aperture_axis) * 360
-        replace_variable(cdf, "inst_az_spin_sector", placeholder_insta_az_spin_sector)
+        create_variable(cdf, "inst_az_spin_sector", placeholder_insta_az_spin_sector)
 
         minutes = len(counts_in_swe_shape)
         measurement_count = placeholder_insta_az_spin_sector.size
         measurement_times = np.linspace(0, minutes * 60, measurement_count)
         placeholder_acquisition_time = measurement_times.reshape(shape_without_aperture_axis)
-        replace_variable(cdf, "acquisition_time", placeholder_acquisition_time)
+        create_variable(cdf, "acquisition_time", placeholder_acquisition_time)
+
+        acquisition_duration = np.full((minutes, 20, 30), 80000)
+        cdf["acq_duration"] = acquisition_duration
+    with CDF(output_l1b_swe_cdf_file_path, create=True) as cdf:
+        cdf["epoch"] = epochs
+        cdf["science_data"] = counts_in_swe_shape
+        cdf["settle_duration"] = np.full((minutes, 4), 133333.3333333334)
 
 
 def create_fake_swapi_l3a_cdf(l2_swepam_ion_file_path: str,
@@ -105,8 +115,7 @@ def create_fake_mag_l1d_cdf(l2_swepam_electron_file_path: str,
     #     np.savetxt(file, dist_fun_1d_sw_data)
 
 
-def replace_variable(cdf: CDF, variable_name: str, new_values: np.ndarray):
-    del cdf[variable_name]
+def create_variable(cdf: CDF, variable_name: str, new_values: np.ndarray):
     cdf[variable_name] = new_values
     cdf[variable_name].attrs["FILLVAL"] = -1e31
 
@@ -132,11 +141,15 @@ if __name__ == "__main__":
     l2_ion_hdf_path = path.parent.parent.parent / "instrument_team_data/swe/swepam-swi-1999-159.v2-01.hdf"
 
     l2_swe_cdf_file_path = path.parent.parent.parent / "tests" / "test_data" / "swe" / "imap_swe_l2_sci-with-ace-data_20100101_v002.cdf"
+    l1b_swe_cdf_file_path = path.parent.parent.parent / "tests" / "test_data" / "swe" / "imap_swe_l1b_sci-with-ace-data_20100101_v002.cdf"
     mag_file_path = path.parent.parent.parent / "tests" / "test_data" / "swe" / "imap_mag_l1d_mago-normal_20100101_v001.cdf"
     swapi_file_path = path.parent.parent.parent / "tests" / "test_data" / "swe" / "imap_swapi_l3a_proton-sw_20100101_v001.cdf"
 
     mag_file_path.unlink(missing_ok=True)
     swapi_file_path.unlink(missing_ok=True)
-    create_fake_swe_l2_cdf(str(l1_hdf_path), str(l2_electron_hdf_path), str(l2_swe_cdf_file_path))
+    l1b_swe_cdf_file_path.unlink(missing_ok=True)
+    l2_swe_cdf_file_path.unlink(missing_ok=True)
+    create_fake_swe_l1b_and_l2_cdf(str(l1_hdf_path), str(l2_electron_hdf_path), str(l1b_swe_cdf_file_path),
+                                   str(l2_swe_cdf_file_path))
     create_fake_mag_l1d_cdf(str(l2_electron_hdf_path), str(mag_file_path))
     create_fake_swapi_l3a_cdf(str(l2_ion_hdf_path), str(swapi_file_path))

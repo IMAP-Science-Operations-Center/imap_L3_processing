@@ -16,6 +16,7 @@ from imap_l3_processing.swe.l3.science.pitch_calculations import average_over_lo
     integrate_distribution_to_get_1d_spectrum, integrate_distribution_to_get_inbound_and_outbound_1d_spectrum, \
     calculate_velocity_in_dsp_frame_km_s
 from imap_l3_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies
+from imap_l3_processing.swe.l3.utils import compute_epoch_delta_in_ns
 from imap_l3_processing.utils import save_data
 
 
@@ -111,7 +112,10 @@ class SweProcessor(Processor):
     def calculate_pitch_angle_products(self, dependencies: SweL3Dependencies) -> SweL3Data:
         swe_l2_data = dependencies.swe_l2_data
         swe_epoch = swe_l2_data.epoch
-        swe_epoch_delta = swe_l2_data.epoch_delta
+        swe_l1b_data = dependencies.swe_l1b_data
+
+        epoch_delta = compute_epoch_delta_in_ns(swe_l2_data.acquisition_duration, swe_l1b_data.settle_duration)
+
         config = dependencies.configuration
         mag_max_distance = np.timedelta64(int(config['max_mag_offset_in_minutes'] * 60e9), 'ns')
         rebinned_mag_data = find_closest_neighbor(from_epoch=dependencies.mag_l1d_data.epoch,
@@ -176,7 +180,7 @@ class SweProcessor(Processor):
 
         swe_l3_data = SweL3Data(input_metadata=self.input_metadata.to_upstream_data_dependency("sci"),
                                 epoch=swe_epoch,
-                                epoch_delta=swe_epoch_delta,
+                                epoch_delta=epoch_delta,
                                 energy=config["energy_bins"],
                                 energy_delta_plus=config["energy_delta_plus"],
                                 energy_delta_minus=config["energy_delta_minus"],
