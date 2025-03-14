@@ -27,6 +27,20 @@ class Moments:
     aoo: float
     ao: float
 
+    @classmethod
+    def construct_all_fill(cls):
+        return cls(alpha=np.nan,
+                   beta=np.nan,
+                   t_parallel=np.nan,
+                   t_perpendicular=np.nan,
+                   velocity_x=np.nan,
+                   velocity_y=np.nan,
+                   velocity_z=np.nan,
+                   density=np.nan,
+                   aoo=np.nan,
+                   ao=np.nan,
+                   )
+
 
 @dataclass
 class MomentFitResults:

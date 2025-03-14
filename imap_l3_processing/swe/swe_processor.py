@@ -10,7 +10,7 @@ from imap_l3_processing.swapi.l3a.science.calculate_pickup_ion import calculate_
 from imap_l3_processing.swe.l3.models import SweL3Data, SweL1bData, SweL2Data, SweL3MomentData
 from imap_l3_processing.swe.l3.science.moment_calculations import compute_maxwellian_weight_factors, \
     rotate_temperature, \
-    rotate_dps_vector_to_rtn, core_fit_moments_retrying_on_failure, halo_fit_moments_retrying_on_failure
+    rotate_dps_vector_to_rtn, core_fit_moments_retrying_on_failure, halo_fit_moments_retrying_on_failure, Moments
 from imap_l3_processing.swe.l3.science.pitch_calculations import average_over_look_directions, find_breakpoints, \
     correct_and_rebin, \
     integrate_distribution_to_get_1d_spectrum, integrate_distribution_to_get_inbound_and_outbound_1d_spectrum, \
@@ -143,22 +143,32 @@ class SweProcessor(Processor):
                 core_end_index,
                 core_density_history
             )
-            core_moment = core_moment_fit_result.moments
-            core_moments.append(core_moment)
-            core_fit_chi_squareds.append(core_moment_fit_result.chisq)
-            core_fit_num_points.append(core_moment_fit_result.number_of_points)
 
-            core_density_history = [*core_density_history[1:], core_moment.density]
+            if core_moment_fit_result is not None:
+                core_moment = core_moment_fit_result.moments
+                core_moments.append(core_moment)
+                core_fit_chi_squareds.append(core_moment_fit_result.chisq)
+                core_fit_num_points.append(core_moment_fit_result.number_of_points)
 
-            core_rtn_velocity.append(rotate_dps_vector_to_rtn(swe_l2_data.epoch[i],
-                                                              np.array(
-                                                                  [core_moment.velocity_x, core_moment.velocity_y,
-                                                                   core_moment.velocity_z])))
+                core_density_history = [*core_density_history[1:], core_moment.density]
 
-            core_temp_theta_rtn, core_temp_phi_rtn = rotate_temperature(swe_l2_data.epoch[i], core_moment.alpha,
-                                                                        core_moment.beta)
-            core_temp_theta_rtns.append(core_temp_theta_rtn)
-            core_temp_phi_rtns.append(core_temp_phi_rtn)
+                core_rtn_velocity.append(rotate_dps_vector_to_rtn(swe_l2_data.epoch[i],
+                                                                  np.array(
+                                                                      [core_moment.velocity_x, core_moment.velocity_y,
+                                                                       core_moment.velocity_z])))
+
+                core_temp_theta_rtn, core_temp_phi_rtn = rotate_temperature(swe_l2_data.epoch[i], core_moment.alpha,
+                                                                            core_moment.beta)
+                core_temp_theta_rtns.append(core_temp_theta_rtn)
+                core_temp_phi_rtns.append(core_temp_phi_rtn)
+            else:
+                core_moments.append(Moments.construct_all_fill())
+                core_fit_chi_squareds.append(np.nan)
+                core_fit_num_points.append(np.nan)
+
+                core_rtn_velocity.append([np.nan, np.nan, np.nan])
+                core_temp_theta_rtns.append(np.nan)
+                core_temp_phi_rtns.append(np.nan)
 
             halo_end_index = len(swe_l2_data.energy)
             halo_moment_fit_result = halo_fit_moments_retrying_on_failure(
@@ -172,22 +182,30 @@ class SweProcessor(Processor):
                 spacecraft_potential[i],
                 halo_core[i],
             )
-            halo_moment = halo_moment_fit_result.moments
 
-            halo_moments.append(halo_moment)
-            halo_fit_chi_squareds.append(halo_moment_fit_result.chisq)
+            if halo_moment_fit_result is not None:
+                halo_moment = halo_moment_fit_result.moments
+                halo_moments.append(halo_moment)
+                halo_fit_chi_squareds.append(halo_moment_fit_result.chisq)
 
-            halo_density_history = [*halo_density_history[1:], halo_moment.density]
+                halo_density_history = [*halo_density_history[1:], halo_moment.density]
 
-            halo_rtn_velocity.append(rotate_dps_vector_to_rtn(swe_l2_data.epoch[i],
-                                                              np.array(
-                                                                  [halo_moment.velocity_x, halo_moment.velocity_y,
-                                                                   halo_moment.velocity_z])))
+                halo_rtn_velocity.append(rotate_dps_vector_to_rtn(swe_l2_data.epoch[i],
+                                                                  np.array(
+                                                                      [halo_moment.velocity_x, halo_moment.velocity_y,
+                                                                       halo_moment.velocity_z])))
 
-            halo_temp_theta_rtn, halo_temp_phi_rtn = rotate_temperature(swe_l2_data.epoch[i], halo_moment.alpha,
-                                                                        halo_moment.beta)
-            halo_temp_theta_rtns.append(halo_temp_theta_rtn)
-            halo_temp_phi_rtns.append(halo_temp_phi_rtn)
+                halo_temp_theta_rtn, halo_temp_phi_rtn = rotate_temperature(swe_l2_data.epoch[i], halo_moment.alpha,
+                                                                            halo_moment.beta)
+                halo_temp_theta_rtns.append(halo_temp_theta_rtn)
+                halo_temp_phi_rtns.append(halo_temp_phi_rtn)
+            else:
+                halo_moments.append(Moments.construct_all_fill())
+                halo_fit_chi_squareds.append(np.nan)
+
+                halo_rtn_velocity.append([np.nan, np.nan, np.nan])
+                halo_temp_theta_rtns.append(np.nan)
+                halo_temp_phi_rtns.append(np.nan)
 
         return SweL3MomentData(
             core_fit_num_points=np.array(core_fit_num_points),
