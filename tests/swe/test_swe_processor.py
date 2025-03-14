@@ -5,8 +5,10 @@ from unittest.mock import patch, call, Mock, sentinel
 import numpy as np
 
 from imap_l3_processing.models import MagL1dData, InputMetadata, UpstreamDataDependency
-from imap_l3_processing.swe.l3.models import SweL2Data, SwapiL3aProtonData, SweL1bData, SweL3MomentData
-from imap_l3_processing.swe.l3.science.moment_calculations import Moments, MomentFitResults
+from imap_l3_processing.swe.l3.models import SweL2Data, SwapiL3aProtonData, SweL1bData
+from imap_l3_processing.swe.l3.models import SweL3MomentData
+from imap_l3_processing.swe.l3.science.moment_calculations import MomentFitResults
+from imap_l3_processing.swe.l3.science.moment_calculations import Moments
 from imap_l3_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies
 from imap_l3_processing.swe.swe_processor import SweProcessor
 from tests.test_helpers import NumpyArrayMatcher, build_swe_configuration, create_dataclass_mock
@@ -28,13 +30,15 @@ class TestSweProcessor(unittest.TestCase):
         mock_save_data.assert_called_once_with(mock_calculate_products.return_value)
         mock_upload.assert_called_once_with(mock_save_data.return_value)
 
+    @patch("imap_l3_processing.swe.swe_processor.compute_epoch_delta_in_ns")
     @patch('imap_l3_processing.swe.swe_processor.average_over_look_directions')
     @patch('imap_l3_processing.swe.swe_processor.find_breakpoints')
     @patch('imap_l3_processing.swe.swe_processor.spice_wrapper')
     @patch('imap_l3_processing.swe.swe_processor.SweProcessor.calculate_pitch_angle_products')
     @patch('imap_l3_processing.swe.swe_processor.SweProcessor.calculate_moment_products')
     def test_calculate_products(self, mock_calculate_moment_products, mock_calculate_pitch_angle_products,
-                                mock_spice_wrapper, mock_find_breakpoints, mock_average_over_look_directions):
+                                mock_spice_wrapper, mock_find_breakpoints, mock_average_over_look_directions,
+                                mock_compute_epoch_delta_in_ns):
         epochs = datetime.now() + np.arange(2) * timedelta(minutes=1)
         mag_epochs = datetime.now() - timedelta(seconds=15) + np.arange(2) * timedelta(minutes=.5)
         swapi_epochs = datetime.now() - timedelta(seconds=15) + np.arange(2) * timedelta(minutes=.5)
@@ -47,7 +51,6 @@ class TestSweProcessor(unittest.TestCase):
 
         swe_l2_data = SweL2Data(
             epoch=epochs,
-            epoch_delta=np.repeat(timedelta(seconds=30), 2),
             phase_space_density=np.arange(9).reshape(3, 3) + 100,
             flux=np.arange(9).reshape(3, 3),
             energy=np.array([2, 4, 6]),
@@ -102,6 +105,9 @@ class TestSweProcessor(unittest.TestCase):
         swe_processor = SweProcessor(swel3_dependency, input_metadata)
         swe_l3_data = swe_processor.calculate_products(swel3_dependency)
 
+        mock_compute_epoch_delta_in_ns.assert_called_once_with(swe_l2_data.acquisition_duration,
+                                                               swe_l1b_data.settle_duration)
+
         mock_spice_wrapper.furnish.assert_called_once()
 
         self.assertEqual(2, mock_average_over_look_directions.call_count)
@@ -144,7 +150,7 @@ class TestSweProcessor(unittest.TestCase):
         self.assertEqual(swe_l3_data.input_metadata, swe_processor.input_metadata.to_upstream_data_dependency("sci"))
         # pass through from l2
         np.testing.assert_array_equal(swe_l3_data.epoch, swe_l2_data.epoch)
-        np.testing.assert_array_equal(swe_l3_data.epoch_delta, swe_l2_data.epoch_delta)
+        np.testing.assert_array_equal(swe_l3_data.epoch_delta, mock_compute_epoch_delta_in_ns.return_value)
         # coming from the config
         np.testing.assert_array_equal(swe_l3_data.energy, swe_config["energy_bins"])
         np.testing.assert_array_equal(swe_l3_data.energy_delta_plus, swe_config["energy_delta_plus"])
@@ -209,7 +215,6 @@ class TestSweProcessor(unittest.TestCase):
 
         swe_l2_data = SweL2Data(
             epoch=epochs,
-            epoch_delta=np.repeat(timedelta(seconds=30), 3),
             phase_space_density=np.arange(9).reshape(3, 3) + 100,
             flux=np.arange(9).reshape(3, 3),
             energy=energies,
@@ -344,7 +349,6 @@ class TestSweProcessor(unittest.TestCase):
         num_epochs = 1
         swe_l2_data = SweL2Data(
             epoch=epochs,
-            epoch_delta=np.repeat(timedelta(seconds=30), num_epochs),
             phase_space_density=np.arange(num_epochs * num_energies * 5 * 7).reshape(num_epochs, num_energies, 5,
                                                                                      7) + 100,
             flux=np.arange(num_epochs * num_energies * 5 * 7).reshape(num_epochs, num_energies, 5, 7),
@@ -353,8 +357,13 @@ class TestSweProcessor(unittest.TestCase):
             inst_az_spin_sector=np.arange(num_epochs * num_energies * 5).reshape(num_epochs, num_energies, 5),
             acquisition_time=np.linspace(datetime(2025, 3, 6), datetime(2025, 3, 6, 0, 1),
                                          num_epochs * num_energies * 5).reshape(num_epochs, num_energies, 5),
-            acquisition_duration=np.array([])
+            acquisition_duration=np.full((num_epochs, num_energies, 5), 80000)
+        )
 
+        swe_l1b_data = SweL1bData(
+            epoch=epochs,
+            count_rates=Mock(),
+            settle_duration=np.full((num_epochs, 3), 333)
         )
 
         mag_l1d_data = MagL1dData(
@@ -388,7 +397,7 @@ class TestSweProcessor(unittest.TestCase):
 
         input_metadata = InputMetadata("swe", "l3", datetime(2025, 2, 21),
                                        datetime(2025, 2, 22), "v001")
-        swel3_dependency = SweL3Dependencies(swe_l2_data, Mock(), mag_l1d_data, swapi_l3a_proton_data, swe_config)
+        swel3_dependency = SweL3Dependencies(swe_l2_data, swe_l1b_data, mag_l1d_data, swapi_l3a_proton_data, swe_config)
         swe_processor = SweProcessor(dependencies=[], input_metadata=input_metadata)
         swe_l3_data = swe_processor.calculate_products(swel3_dependency)
 
@@ -401,7 +410,6 @@ class TestSweProcessor(unittest.TestCase):
         self.assertEqual(swe_l3_data.energy_delta_minus, swel3_dependency.configuration["energy_delta_minus"])
         np.testing.assert_array_equal(swe_l3_data.phase_space_density_by_pitch_angle,
                                       np.full((len(epochs), len(energy_bins), len(pitch_angle_bins)), np.nan))
-        np.testing.assert_array_equal(swe_l3_data.epoch_delta, swe_l2_data.epoch_delta)
         np.testing.assert_array_equal(swe_l3_data.epoch, swe_l2_data.epoch)
         np.testing.assert_array_equal(swe_l3_data.energy_spectrum, np.full((len(epochs), len(energy_bins)), np.nan))
         np.testing.assert_array_equal(swe_l3_data.energy_spectrum_inbound,
@@ -421,7 +429,6 @@ class TestSweProcessor(unittest.TestCase):
         num_epochs = 1
         swe_l2_data = SweL2Data(
             epoch=epochs,
-            epoch_delta=np.repeat(timedelta(seconds=30), num_epochs),
             phase_space_density=np.arange(num_epochs * num_energies * 5 * 7).reshape(num_epochs, num_energies, 5,
                                                                                      7) + 100,
             flux=np.arange(num_epochs * num_energies * 5 * 7).reshape(num_epochs, num_energies, 5, 7),
@@ -430,8 +437,7 @@ class TestSweProcessor(unittest.TestCase):
             inst_az_spin_sector=np.arange(num_epochs * num_energies * 5).reshape(num_epochs, num_energies, 5),
             acquisition_time=np.linspace(datetime(2025, 3, 6), datetime(2025, 3, 6, 0, 1),
                                          num_epochs * num_energies * 5).reshape(num_epochs, num_energies, 5),
-            acquisition_duration=np.array([])
-
+            acquisition_duration=np.full((num_epochs, num_energies, 5), 80000)
         )
 
         mag_l1d_data = MagL1dData(
@@ -465,7 +471,14 @@ class TestSweProcessor(unittest.TestCase):
 
         input_metadata = InputMetadata("swe", "l3", datetime(2025, 2, 21),
                                        datetime(2025, 2, 22), "v001")
-        swel3_dependency = SweL3Dependencies(swe_l2_data, Mock(), mag_l1d_data, swapi_l3a_proton_data, swe_config)
+
+        swe_l1b_data = SweL1bData(
+            epoch=epochs,
+            count_rates=Mock(),
+            settle_duration=np.full((num_epochs, 3), 333)
+        )
+
+        swel3_dependency = SweL3Dependencies(swe_l2_data, swe_l1b_data, mag_l1d_data, swapi_l3a_proton_data, swe_config)
         swe_processor = SweProcessor(dependencies=[], input_metadata=input_metadata)
         swe_l3_data = swe_processor.calculate_products(swel3_dependency)
 
@@ -480,7 +493,7 @@ class TestSweProcessor(unittest.TestCase):
                                    np.array([[[np.nan, 194.772034, 270.312835],
                                               [211.672665, 273.136802, 363.195552],
                                               [313.860051, 400.23009, np.nan]]]))
-        np.testing.assert_array_equal(swe_l3_data.epoch_delta, swe_l2_data.epoch_delta)
+        np.testing.assert_allclose(swe_l3_data.epoch_delta, np.array([1807492500]))
         np.testing.assert_array_equal(swe_l3_data.epoch, swe_l2_data.epoch)
         np.testing.assert_allclose(swe_l3_data.energy_spectrum, np.array([[104.427758, 195.333344, 180.401159]]))
         np.testing.assert_allclose(swe_l3_data.energy_spectrum_inbound, np.array([[0, 104.147588, 154.42602]]))
@@ -503,7 +516,6 @@ class TestSweProcessor(unittest.TestCase):
 
         swe_l2_data = SweL2Data(
             epoch=epochs,
-            epoch_delta=np.repeat(timedelta(seconds=30), 2),
             phase_space_density=np.arange(9).reshape(3, 3) + 100,
             flux=np.arange(9).reshape(3, 3),
             energy=np.array([9, 10, 12, 14, 36, 54, 96, 102, 112, 156]),
@@ -513,7 +525,8 @@ class TestSweProcessor(unittest.TestCase):
             acquisition_duration=[sentinel.acquisition_duration_1, sentinel.acquisition_duration_2],
         )
         swe_l1_data = SweL1bData(epoch=epochs,
-                                 count_rates=[sentinel.l1b_count_rates_1, sentinel.l1b_count_rates_2])
+                                 count_rates=[sentinel.l1b_count_rates_1, sentinel.l1b_count_rates_2],
+                                 settle_duration=Mock())
 
         spacecraft_potential = np.array([12, 14])
         core_halo_breakpoint = np.array([96, 54])

@@ -10,7 +10,7 @@ from spacepy.pycdf import CDF
 
 from imap_l3_processing.swe.l3.models import SweL2Data, SwapiL3aProtonData, SweL1bData
 from imap_l3_processing.swe.l3.utils import read_swe_config, read_l2_swe_data, read_l3a_swapi_proton_data, \
-    read_l1b_swe_data
+    read_l1b_swe_data, compute_epoch_delta_in_ns
 from tests.test_helpers import get_test_data_path
 
 
@@ -51,15 +51,15 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(0, result.count_rates[0, 0, 0, 0])
         self.assertEqual(589631.7192194695, result.count_rates[2, 0, 0, 0])
 
+        self.assertEqual((6, 4), result.settle_duration.shape)
+        self.assertEqual(3333, result.settle_duration[0, 0])
+
     def test_read_l2_swe_data(self):
         result: SweL2Data = read_l2_swe_data(
             get_test_data_path('swe/imap_swe_l2_sci-with-fill-values_20250101_v002.cdf'))
 
         self.assertEqual(result.epoch[0], datetime(2025, 1, 1))
         self.assertEqual(len(result.epoch), 6)
-
-        self.assertEqual(result.epoch_delta[0], timedelta(seconds=30))
-        self.assertEqual(len(result.epoch_delta), 6)
 
         self.assertEqual(result.flux[3][13][12][6], 324526.5306847633)
         self.assertTrue(np.isnan(result.flux[1][2][3][4]))
@@ -117,6 +117,13 @@ class TestUtils(unittest.TestCase):
             self.assertTrue(np.isnan(swapi_l3a_data.proton_sw_speed[0]))
             self.assertTrue(np.isnan(swapi_l3a_data.proton_sw_clock_angle[0]))
             self.assertTrue(np.isnan(swapi_l3a_data.proton_sw_deflection_angle[0]))
+
+    def test_compute_epoch_delta_in_ns(self):
+        acq_duration_microseconds = np.full((4, 24, 30), 80_000)
+        settle_duration_microseconds = np.full((4, 4), 10000 / 3)
+        result = compute_epoch_delta_in_ns(acq_duration_microseconds, settle_duration_microseconds)
+        expected = np.full(4, 30 * 1e9)
+        np.testing.assert_array_equal(expected, result)
 
 
 if __name__ == '__main__':

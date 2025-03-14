@@ -41,8 +41,7 @@ HALO_VELOCITY_VECTOR_RTN_FIT_CDF_VAR_NAME = "halo_velocity_vector_rtn_fit"
 
 @dataclass
 class SweL2Data:
-    epoch: np.ndarray[datetime]
-    epoch_delta: np.ndarray
+    epoch: np.ndarray
     phase_space_density: np.ndarray
     flux: np.ndarray
     energy: np.ndarray
@@ -65,6 +64,7 @@ class SwapiL3aProtonData:
 class SweL1bData:
     epoch: np.ndarray
     count_rates: np.ndarray
+    settle_duration: np.ndarray
 
 
 @dataclass
@@ -128,8 +128,7 @@ class SweL3Data(DataProduct):
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
             DataProductVariable(EPOCH_CDF_VAR_NAME, value=self.epoch, cdf_data_type=pycdf.const.CDF_TIME_TT2000),
-            DataProductVariable(EPOCH_DELTA_CDF_VAR_NAME,
-                                value=[delta.total_seconds() * 1e9 for delta in self.epoch_delta],
+            DataProductVariable(EPOCH_DELTA_CDF_VAR_NAME, value=self.epoch_delta,
                                 cdf_data_type=pycdf.const.CDF_INT8),
             DataProductVariable(ENERGY_CDF_VAR_NAME, value=self.energy, cdf_data_type=pycdf.const.CDF_REAL4,
                                 record_varying=False),

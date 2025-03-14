@@ -25,7 +25,6 @@ def read_l2_swe_data(swe_l2_data: Path) -> SweL2Data:
         acquisition_time_dt64[valid_times_mask] = converted_valid_times
         acquisition_duration = cdf["acq_duration"][...]
     return SweL2Data(epoch=epoch,
-                     epoch_delta=np.full(epoch.shape, timedelta(seconds=30)),
                      phase_space_density=phase_space_density,
                      flux=flux,
                      energy=energy,
@@ -40,8 +39,9 @@ def read_l1b_swe_data(swe_l1b_data: Path) -> SweL1bData:
     with CDF(str(swe_l1b_data)) as cdf:
         epoch = cdf["epoch"][...]
         count_rates = cdf["science_data"][...]
+        settle_duration = cdf["settle_duration"][...]
 
-    return SweL1bData(epoch=epoch, count_rates=count_rates)
+    return SweL1bData(epoch=epoch, count_rates=count_rates, settle_duration=settle_duration)
 
 
 def read_l3a_swapi_proton_data(swapi_l3a_data: Path) -> SwapiL3aProtonData:
@@ -68,3 +68,16 @@ def read_swe_config(swe_config: Path) -> SweConfiguration:
         config: SweConfiguration = json.load(f)
 
     return config
+
+
+def compute_epoch_delta_in_ns(acq_duration: np.ndarray[float], settle_duration: np.ndarray[float]) -> np.ndarray:
+    number_of_energies = acq_duration.shape[1]
+    number_of_spins = settle_duration.shape[1]
+    number_of_spin_sectors = acq_duration.shape[2]
+
+    energies_per_spin = number_of_energies / number_of_spins
+
+    total_settle_duration = np.sum(settle_duration, axis=1) * energies_per_spin * number_of_spin_sectors
+    total_acq_duration = np.sum(acq_duration, axis=(1, 2))
+    total_duration_in_microseconds = total_settle_duration + total_acq_duration
+    return total_duration_in_microseconds / 2 * 1000

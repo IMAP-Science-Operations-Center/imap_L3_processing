@@ -6,6 +6,8 @@ from pathlib import Path
 from bitstring import BitStream
 from spacepy.pycdf import CDF
 
+from imap_l3_processing.hi.hi_processor import HiProcessor
+from imap_l3_processing.hi.l3.hi_l3_dependencies import HiL3Dependencies
 from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
 from imap_l3_processing.glows.descriptors import GLOWS_L2_DESCRIPTOR
 from imap_l3_processing.glows.glows_processor import GlowsProcessor
@@ -148,6 +150,21 @@ def create_swe_pitch_angle_cdf(dependencies: SweL3Dependencies) -> str:
     return cdf_path
 
 
+def create_hi_cdf(dependencies: HiL3Dependencies) -> str:
+    input_metadata = InputMetadata(instrument="hi",
+                                   data_level="l3",
+                                   start_date=datetime.now(),
+                                   end_date=datetime.now() + timedelta(days=1),
+                                   version="",
+                                   descriptor="spectral-fit-index",
+                                   )
+    processor = HiProcessor(None, input_metadata)
+    output_data = processor._process_spectral_fit_index(dependencies)
+    delete_temp_cdf_file_path_if_exists(output_data)
+    cdf_path = save_data(output_data)
+    return cdf_path
+
+
 def create_swe_moments_cdf(dependencies: SweL3Dependencies) -> str:
     input_metadata = InputMetadata(
         instrument='swe',
@@ -231,7 +248,7 @@ def create_hit_direct_event_cdf():
         get_test_data_path("hit/pha_events/imap_hit_l3_hit-event-types-text-not-cdf_20250228_v001.cdf"))
 
     hit_l1_data = HitL1Data.read_from_cdf(
-        get_test_data_path("hit/pha_events/fake-menlo-imap_hit_l1a_pulse-height-events_20100106_v003.cdf"))
+        get_test_data_path("hit/pha_events/fake-menlo-imap_hit_l1a_direct-events_20100106_v003.cdf"))
 
     direct_event_dependencies = HitL3PhaDependencies(hit_l1_data=hit_l1_data, cosine_correction_lookup=cosine_table,
 
@@ -239,11 +256,11 @@ def create_hit_direct_event_cdf():
                                                      event_type_lookup=event_type_look)
     input_metadata = InputMetadata(
         instrument="hit",
-        data_level="l3a",
+        data_level="l3",
         start_date=datetime.now(),
         end_date=datetime.now() + timedelta(days=1),
         version=str(uuid.uuid4()),
-        descriptor="pulse-height-events"
+        descriptor="direct-event"
     )
     processor = HitProcessor(None, input_metadata)
 
@@ -296,13 +313,14 @@ if __name__ == "__main__":
         else:
             mag_data = read_l1d_mag_data(get_test_data_path("mag/imap_mag_l1d_mago-normal_20250101_v001.cdf"))
             hit_data = read_l2_hit_data(
-                get_test_data_path("hit/imap_hit_l2_sectored-sample1-with-uncertainties_20250101_v001.cdf"))
+                get_test_data_path("hit/imap_hit_l2_macropixel-intensity_20250101_v001.cdf"))
             dependencies = HITL3SectoredDependencies(mag_l1d_data=mag_data, data=hit_data)
-            print(f"hit sectored data product: {create_hit_sectored_cdf(dependencies)}")
+            print(f"hit macropixel data product: {create_hit_sectored_cdf(dependencies)}")
 
     if "swe_pitch_angles" in sys.argv:
         dependencies = SweL3Dependencies.from_file_paths(
             get_test_data_path("swe/imap_swe_l2_sci-with-ace-data_20100101_v002.cdf"),
+            get_test_data_path("swe/imap_swe_l1b_sci-with-ace-data_20100101_v002.cdf"),
             get_test_data_path("swe/imap_mag_l1d_mago-normal_20100101_v001.cdf"),
             get_test_data_path("swe/imap_swapi_l3a_proton-sw_20100101_v001.cdf"),
             get_test_data_path("swe/example_swe_config.json"),
@@ -312,8 +330,15 @@ if __name__ == "__main__":
     if "swe_moments" in sys.argv:
         dependencies = SweL3Dependencies.from_file_paths(
             get_test_data_path("swe/imap_swe_l2_sci-3-11-good-epochs_20240510_v002.cdf"),
+            get_test_data_path("swe/imap_swe_l1b_sci-3-11-good-times_20100101_v002.cdf"),
             get_test_data_path("swe/imap_mag_l1d_mago-normal_20100101_v001.cdf"),
             get_test_data_path("swe/imap_swapi_l3a_proton-sw_20100101_v001.cdf"),
             get_test_data_path("swe/example_swe_config.json"),
         )
         print(create_swe_moments_cdf(dependencies))
+
+    if "hi" in sys.argv:
+        dependencies = HiL3Dependencies.from_file_paths(
+            get_test_data_path("hvset_2013A.cdf")
+        )
+        print(create_hi_cdf(dependencies))
