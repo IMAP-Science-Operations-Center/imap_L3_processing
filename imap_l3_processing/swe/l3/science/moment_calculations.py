@@ -284,11 +284,11 @@ MAX_VARIANCE = 349525.25
 
 def compute_maxwellian_weight_factors(count_rates: np.ndarray, acquisition_durations: np.ndarray) -> \
         np.ndarray[float]:
-    correction = 1.0 - 1e-9 * LIMIT / acquisition_durations.reshape((*acquisition_durations.shape, 1))
+    correction = 1.0 - 1e-9 * LIMIT / acquisition_durations[:, :, np.newaxis]
     correction[correction < 0.1] = 0.1
     xlimits_per_measurement = LIMIT / correction
 
-    counts = count_rates * acquisition_durations
+    counts = count_rates * acquisition_durations[:, :, np.newaxis]
     weights = np.empty_like(count_rates, dtype=np.float64)
 
     for (energy_i, spin_i, declination_i), corrected_count in np.ndenumerate(counts):
@@ -296,7 +296,7 @@ def compute_maxwellian_weight_factors(count_rates: np.ndarray, acquisition_durat
             weights[energy_i, spin_i, declination_i] = MINIMUM_WEIGHT
         else:
             variance = MAX_VARIANCE
-            xlimits = xlimits_per_measurement[energy_i, spin_i, declination_i]
+            xlimits = xlimits_per_measurement[energy_i, spin_i]
             for xlimit, sigma in zip(xlimits, SIGMA2):
                 if corrected_count < xlimit:
                     variance = sigma

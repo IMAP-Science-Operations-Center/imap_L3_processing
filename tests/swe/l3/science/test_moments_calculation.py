@@ -208,9 +208,9 @@ class TestMomentsCalculation(unittest.TestCase):
         ])
 
     def test_compute_maxwellian_weight_factors_reproduces_heritage_results(self):
-        counts = np.array([[[536.0, 20000, 1.2, 3072.0000001359296]]])
-        acquisition_duration = np.array([[[80000., 80000., 80000., 40000]]])
-        count_rates = counts / acquisition_duration
+        counts = np.array([[[536.0, 20000, 536.0], [1.2, 3072.0000001359296, 1.2]]])
+        acquisition_duration = np.array([[80000., 40000.]])
+        count_rates = counts / acquisition_duration[:, :, np.newaxis]
         weight_factors = compute_maxwellian_weight_factors(count_rates, acquisition_duration)
 
         first_weight = np.sqrt(21.25 + 536) / 536
@@ -219,7 +219,8 @@ class TestMomentsCalculation(unittest.TestCase):
         fourth_weight = np.sqrt(341.25 + 3072) / 3072
 
         np.testing.assert_array_almost_equal(weight_factors,
-                                             np.array([[[first_weight, second_weight, third_weight, fourth_weight]]]))
+                                             np.array([[[first_weight, second_weight, first_weight],
+                                                        [third_weight, fourth_weight, third_weight]]]))
 
     def test_regress_reproduces_heritage_results_given_all_test_data(self):
         velocity_vectors = np.loadtxt(get_test_data_path("swe/fake_velocity_vectors.csv"), delimiter=",",
