@@ -7,7 +7,8 @@ import numpy as np
 from spiceypy import spiceypy
 
 from imap_l3_processing.constants import ELECTRON_MASS_KG, \
-    BOLTZMANN_CONSTANT_JOULES_PER_KELVIN
+    BOLTZMANN_CONSTANT_JOULES_PER_KELVIN, ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR, METERS_PER_KILOMETER, \
+    CENTIMETERS_PER_METER
 
 # units of K / (m^2/s^2)
 ZMK = ELECTRON_MASS_KG / (2 * BOLTZMANN_CONSTANT_JOULES_PER_KELVIN)
@@ -310,10 +311,9 @@ class CoreIntegrateOutputs:
     heat_flux: np.ndarray
 
 
-def core_integrate(istart, iend, temp: np.float64, energy: np.ndarray, sintheta: np.ndarray,
+def core_integrate(istart, iend, energy: np.ndarray, sintheta: np.ndarray,
                    costheta: np.ndarray, deltheta: np.ndarray, fv: np.ndarray, phi: np.ndarray,
-                   chbreak: np.float64, etop: np.ndarray, emid: np.ndarray,
-                   spacecraft_potential: float) -> CoreIntegrateOutputs:
+                   spacecraft_potential: float) -> Optional[CoreIntegrateOutputs]:
     # kmax? 30 or based on array size? expect different for different detectors?
     sumn = 0
     sumvx = 0
@@ -324,9 +324,8 @@ def core_integrate(istart, iend, temp: np.float64, energy: np.ndarray, sintheta:
     delv = np.empty((len(energy), 7))
     for i in range(istart, iend + 1):
         for j in range(7):
-            some_constant = 3.5176e15
             if energy[i, j, 1] > 0:
-                v2mid = some_constant * energy[i, j, 1]
+                v2mid = (ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR ** 2) * energy[i, j, 1]
                 v3mid = v2mid * np.sqrt(v2mid)
             else:
                 v2mid = 0
@@ -335,33 +334,32 @@ def core_integrate(istart, iend, temp: np.float64, energy: np.ndarray, sintheta:
             if i < len(energy) - 1:
                 ehigh = np.sqrt((energy[i + 1, j, 1] + spacecraft_potential) * (energy[i, j, 1] + spacecraft_potential))
             elow = np.sqrt((energy[i, j, 1] + spacecraft_potential) * (energy[i - 1, j, 1] + spacecraft_potential))
-            constast_fifty_nine_million = 5.93097e7
-            # print(ehigh, elow)
-            delv[i, j] = constast_fifty_nine_million * (np.sqrt(ehigh) - np.sqrt(elow))
+
+            delv[i, j] = ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR * (np.sqrt(ehigh) - np.sqrt(elow))
             if elow < base:
                 base = elow
+
             for k in range(28):  # why 28 and not 30?
                 if energy[i, j, k] > 0:
-                    # print(delv[i, j], deltheta[i, j], delphi[j])
                     delta = delv[i, j] * deltheta[i, j] * delphi[j]
                     fact = sintheta[i, j] * fv[i, j, k]
                     sumn += delta * v2mid * fact
                     sumvx += delta * v3mid * fact * sintheta[i, j] * np.cos(np.deg2rad(phi[i, j, k]))
                     sumvy += delta * v3mid * fact * sintheta[i, j] * np.sin(np.deg2rad(phi[i, j, k]))
                     sumvz += delta * v3mid * fact * costheta[i, j]
-                    # print(delta, fact, sumn, sumvx, sumvy, sumvz)
 
     totden = sumn
+    if totden <= 0:
+        return None
     eobolt = 12345
 
-    # TODO    if (totden <= 0.0) throw up
-
     base -= spacecraft_potential
-
+    CM_PER_KM = METERS_PER_KILOMETER * CENTIMETERS_PER_METER
+    KM_PER_CM = 1 / CM_PER_KM
     output_velocities = np.array([
-        -1e-5 * sumvx / totden,
-        -1e-5 * sumvy / totden,
-        -1e-5 * sumvz / totden,
+        -KM_PER_CM * sumvx / totden,
+        -KM_PER_CM * sumvy / totden,
+        -KM_PER_CM * sumvz / totden,
         base,
     ])
 
@@ -376,15 +374,39 @@ def core_integrate(istart, iend, temp: np.float64, energy: np.ndarray, sintheta:
     sumqz = 0
     for i in range(istart, iend + 1):
         for j in range(7):
-            v2mid = some_constant * energy[i, j, 1]
+            v2mid = (ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR ** 2) * energy[i, j, 1]
             for k in range(28):  # again why 28?
                 if energy[i, j, k] > 0:
                     angx = sintheta[i, j] * np.cos(np.deg2rad(phi[i, j, k]))
-                    vx = -constast_fifty_nine_million * np.sqrt(energy[i, j, k]) * angx - 1e5 * output_velocities[0]
+                    vx = -ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR * np.sqrt(energy[i, j, k]) * angx - CM_PER_KM * \
+                         output_velocities[0]
+
+                    angy = sintheta[i, j] * np.sin(np.deg2rad(phi[i, j, k]))
+                    vy = -ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR * np.sqrt(energy[i, j, k]) * angy - CM_PER_KM * \
+                         output_velocities[1]
+
+                    angz = costheta[i, j]
+                    vz = -ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR * np.sqrt(energy[i, j, k]) * angz - CM_PER_KM * \
+                         output_velocities[2]
+
+                    vmag2 = vx * vx + vy * vy + vz * vz
 
                     delta = delv[i, j] * deltheta[i, j] * delphi[j]
                     fact = v2mid * sintheta[i, j] * fv[i, j, k]
                     sumtxx += delta * fact * vx * vx
-    t0 = 1e-4 * sumtxx * eobolt / totden
+                    sumtxy += delta * fact * vx * vy
+                    sumtxz += delta * fact * vx * vz
+                    sumtyy += delta * fact * vy * vy
+                    sumtyz += delta * fact * vy * vz
+                    sumtzz += delta * fact * vz * vz
+                    sumqx += delta * fact * vmag2 * vx
+                    sumqy += delta * fact * vmag2 * vy
+                    sumqz += delta * fact * vmag2 * vz
 
-    return CoreIntegrateOutputs(sumn, output_velocities, 0, 0)
+    TEMPERATURE_SCALING_FACTOR_TO_UNDO_IN_EIGEN = 1e-4
+    temperature = np.array([sumtxx, sumtxy, sumtyy, sumtxz, sumtyz, sumtzz]) * \
+                  TEMPERATURE_SCALING_FACTOR_TO_UNDO_IN_EIGEN * eobolt / totden
+
+    heat_flux = np.array([sumqx, sumqy, sumqz]) * 500 * ELECTRON_MASS_KG
+
+    return CoreIntegrateOutputs(sumn, output_velocities, temperature, heat_flux)

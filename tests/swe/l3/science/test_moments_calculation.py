@@ -250,16 +250,10 @@ class TestMomentsCalculation(unittest.TestCase):
                 self.assertAlmostEqual(expected_density, scaled_density, places=3)
 
     def test_cintegr8(self):
-        data = read_l2_swe_data(get_test_data_path(
-            "swe/imap_swe_l2_sci-with-ace-data_20100101_v002.cdf"))
-
         istart = 1
         iend = 19
-        temp_from_fit = 5000
-        chbreak = 80
 
         inst_az_data = np.loadtxt(get_test_data_path("swe/instrument_azimuth.csv"), delimiter=",").reshape(20, 7, 30)
-        # phi = np.broadcast_to(data.inst_az_spin_sector[0, :, np.newaxis], (20, 7, 30))
 
         phase_space_density = np.loadtxt(get_test_data_path("swe/phase_space_density.csv"), delimiter=",").reshape(20,
                                                                                                                    7,
@@ -277,21 +271,48 @@ class TestMomentsCalculation(unittest.TestCase):
         deltheta = np.zeros(shape=(20, 7))
         deltheta[:] = [0.6178, 0.3770, 0.3857, 0.3805, 0.3805, 0.3805, 0.6196]
 
-        etop = np.array(
-            [0.9, 1.3, 1.8, 2.5, 3.5, 4.8, 6.7, 9.3, 13, 18, 25, 34, 47, 65, 90, 124, 175, 243, 335, 461, 634,
-             875])
-        emid = np.array([0.86, 1.21, 1.69, 2.34, 3.24, 4.5, 6.25, 8.64, 12.07, 16.74, 23.13, 31.85, 43.85, 60.53, 83.86,
-                         115.73, 162.7, 225.6, 311.47, 428.56, 589.84, 813.87])
         spacecraft_potential = 12
-        integrate_outputs = moment_calculations.core_integrate(istart, iend, temp_from_fit, energy, sintheta, costheta,
+        integrate_outputs = moment_calculations.core_integrate(istart, iend, energy - spacecraft_potential, sintheta,
+                                                               costheta,
                                                                deltheta, phase_space_density,
-                                                               inst_az_data, chbreak, etop, emid, spacecraft_potential)
-        np.testing.assert_allclose(1.7683e+24, integrate_outputs.density, rtol=1e-5)
+                                                               inst_az_data, spacecraft_potential)
 
-        np.testing.assert_allclose(np.array([815.816, 2258.9, 1466.27, 1.22866]), integrate_outputs.velocity, rtol=1e-4)
-        np.testing.assert_array_equal(
-            np.array([6.00338e+16, -2.69651e+16, 1.3202e+16, -1.88685e+16, -4.25577e+16, -1.90593e+16]),
-            integrate_outputs.temperature)
-        np.testing.assert_array_equal(
-            np.array([-5.3362e+21, -4.20726e+22, 3.0546e+22]),
-            integrate_outputs.heat_flux)
+        np.testing.assert_allclose(6.71828e+23, integrate_outputs.density, rtol=1e-5)
+
+        np.testing.assert_allclose(np.array([-1053.53, 327.55, 1919.34, -10.7911]), integrate_outputs.velocity,
+                                   rtol=1e-4)
+        np.testing.assert_allclose(
+            np.array([9.01575e+16, -1.99203e+15, 1.16781e+17, -1.98483e+15, -7.08943e+16, -1.60545e+16]),
+            integrate_outputs.temperature, rtol=2e-4)
+        np.testing.assert_allclose(
+            np.array([9.92303e+21, -2.88985e+22, 9.45357e+21]),
+            integrate_outputs.heat_flux, rtol=1e-4)
+
+    def test_cintegr8_returns_early_when_density_is_negative(self):
+        istart = 1
+        iend = 19
+
+        inst_az_data = np.loadtxt(get_test_data_path("swe/instrument_azimuth.csv"), delimiter=",").reshape(20, 7, 30)
+
+        phase_space_density = np.loadtxt(get_test_data_path("swe/phase_space_density.csv"), delimiter=",").reshape(20,
+                                                                                                                   7,
+                                                                                                                   30)
+
+        energy = np.loadtxt(get_test_data_path("swe/energies.csv"), delimiter=",").reshape(20, 7, 30)
+
+        sintheta = np.zeros(shape=(20, 7))
+        sintheta[:] = [-0.89100652, -0.66913061, -0.35836795, 0., 0.35836795, 0.66913061, 0.89100652]
+
+        costheta = np.zeros(shape=(20, 7))
+        costheta[:] = [0.4539905, 0.74314483, 0.93358043, 1., 0.93358043, 0.74314483, 0.4539905]
+
+        deltheta = np.zeros(shape=(20, 7))
+        deltheta[:] = [0.6178, 0.3770, 0.3857, 0.3805, 0.3805, 0.3805, 0.6196]
+
+        spacecraft_potential = 12
+        integrate_outputs = moment_calculations.core_integrate(istart, iend, energy - spacecraft_potential, sintheta,
+                                                               costheta,
+                                                               deltheta, phase_space_density,
+                                                               inst_az_data, spacecraft_potential)
+
+        self.assertIsNone(integrate_outputs)
