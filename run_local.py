@@ -183,9 +183,9 @@ def create_hit_sectored_cdf(dependencies: HITL3SectoredDependencies) -> str:
         instrument='hit',
         data_level='l3',
         descriptor='macropixel',
-        start_date=datetime(2025, 10, 23),
-        end_date=datetime(2025, 10, 24),
-        version='v999')
+        start_date=datetime(2025, 1, 1),
+        end_date=datetime(2025, 1, 2),
+        version='v000')
     processor = HitProcessor(None, input_metadata)
     output_data = processor.process_pitch_angle_product(dependencies)
     delete_temp_cdf_file_path_if_exists(output_data)
