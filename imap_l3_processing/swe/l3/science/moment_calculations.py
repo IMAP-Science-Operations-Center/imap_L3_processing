@@ -401,9 +401,10 @@ class CoreIntegrateOutputs:
     heat_flux: np.ndarray
 
 
-def core_integrate(istart, iend, energy: np.ndarray, sintheta: np.ndarray,
-                   costheta: np.ndarray, deltheta: np.ndarray, fv: np.ndarray, phi: np.ndarray,
-                   spacecraft_potential: float) -> Optional[CoreIntegrateOutputs]:
+def integrate(istart, iend, energy: np.ndarray, sintheta: np.ndarray,
+              costheta: np.ndarray, deltheta: np.ndarray, fv: np.ndarray, phi: np.ndarray,
+              spacecraft_potential: float, cdelnv: np.ndarray, cdelt: np.ndarray) -> Optional[
+    CoreIntegrateOutputs]:
     # kmax? 30 or based on array size? expect different for different detectors?
     sumn = 0
     sumvx = 0
@@ -438,7 +439,7 @@ def core_integrate(istart, iend, energy: np.ndarray, sintheta: np.ndarray,
                     sumvy += delta * v3mid * fact * sintheta[i, j] * np.sin(np.deg2rad(phi[i, j, k]))
                     sumvz += delta * v3mid * fact * costheta[i, j]
 
-    totden = sumn
+    totden = sumn + cdelnv[0]
     if totden <= 0:
         return None
     eobolt = 12345
@@ -447,9 +448,9 @@ def core_integrate(istart, iend, energy: np.ndarray, sintheta: np.ndarray,
     CM_PER_KM = METERS_PER_KILOMETER * CENTIMETERS_PER_METER
     KM_PER_CM = 1 / CM_PER_KM
     output_velocities = np.array([
-        -KM_PER_CM * sumvx / totden,
-        -KM_PER_CM * sumvy / totden,
-        -KM_PER_CM * sumvz / totden,
+        (-KM_PER_CM * sumvx + cdelnv[1]) / totden,
+        (-KM_PER_CM * sumvy + cdelnv[2]) / totden,
+        (-KM_PER_CM * sumvz + cdelnv[3]) / totden,
         base,
     ])
 
@@ -494,9 +495,9 @@ def core_integrate(istart, iend, energy: np.ndarray, sintheta: np.ndarray,
                     sumqz += delta * fact * vmag2 * vz
 
     TEMPERATURE_SCALING_FACTOR_TO_UNDO_IN_EIGEN = 1e-4
-    temperature = np.array([sumtxx, sumtxy, sumtyy, sumtxz, sumtyz, sumtzz]) * \
-                  TEMPERATURE_SCALING_FACTOR_TO_UNDO_IN_EIGEN * eobolt / totden
+    temperature = (np.array([sumtxx, sumtxy, sumtyy, sumtxz, sumtyz, sumtzz]) *
+                   TEMPERATURE_SCALING_FACTOR_TO_UNDO_IN_EIGEN * eobolt + cdelt) / totden
 
     heat_flux = np.array([sumqx, sumqy, sumqz]) * 500 * ELECTRON_MASS_KG
 
-    return CoreIntegrateOutputs(sumn, output_velocities, temperature, heat_flux)
+    return CoreIntegrateOutputs(totden, output_velocities, temperature, heat_flux)
