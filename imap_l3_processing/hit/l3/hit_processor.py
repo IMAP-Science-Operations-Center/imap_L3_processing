@@ -23,14 +23,14 @@ class HitProcessor(Processor):
             pitch_angle_data_product = self.process_pitch_angle_product(dependencies)
             cdf_file_path = save_data(pitch_angle_data_product)
             imap_data_access.upload(cdf_file_path)
-        elif self.input_metadata.descriptor == "direct-event":
+        elif self.input_metadata.descriptor == "direct-events":
             direct_event_dependencies = HitL3PhaDependencies.fetch_dependencies(self.dependencies)
             direct_event_data_product = self.process_direct_event_product(direct_event_dependencies)
             cdf_file_path = save_data(direct_event_data_product)
             imap_data_access.upload(cdf_file_path)
         else:
             raise ValueError(
-                f"Don't know how to generate '{self.input_metadata.descriptor}' /n Known HIT l3 data products: 'macropixel', 'direct-event'.")
+                f"Don't know how to generate '{self.input_metadata.descriptor}' /n Known HIT l3 data products: 'macropixel', 'direct-events'.")
 
     def process_direct_event_product(self,
                                      direct_event_dependencies: HitL3PhaDependencies) -> HitDirectEventDataProduct:
@@ -140,7 +140,8 @@ class HitProcessor(Processor):
                                          a_l_stim=a_l_stim,
                                          stim_step=stim_step,
                                          dac_value=dac_value,
-                                         input_metadata=self.input_metadata.to_upstream_data_dependency("direct-event"))
+                                         input_metadata=self.input_metadata.to_upstream_data_dependency(
+                                             "direct-events"))
 
     def process_pitch_angle_product(self, dependencies: HITL3SectoredDependencies) -> HitPitchAngleDataProduct:
         number_of_pitch_angle_bins = 8

@@ -260,7 +260,7 @@ def create_hit_direct_event_cdf():
         start_date=datetime.now(),
         end_date=datetime.now() + timedelta(days=1),
         version=str(uuid.uuid4()),
-        descriptor="direct-event"
+        descriptor="direct-events"
     )
     processor = HitProcessor(None, input_metadata)
 
@@ -339,6 +339,6 @@ if __name__ == "__main__":
 
     if "hi" in sys.argv:
         dependencies = HiL3Dependencies.from_file_paths(
-            get_test_data_path("hvset_2013A.cdf")
+            get_test_data_path("hvset_noSP_ram_cg_2013.cdf")
         )
         print(create_hi_cdf(dependencies))
