@@ -54,31 +54,32 @@ def create_l2_hit_sectored_rates_cdf_from_csv(csv_file_path: str, output_filenam
         cdf["delta_plus_fe"] = iron_data * 0.1
         cdf["delta_minus_fe"] = iron_data * 0.1
 
-        cdf.new("h_energy_mean", [5, 6, 7], recVary=False)
-        cdf.new("h_energy_delta_plus", [0.6, 0.7, 0.6], recVary=False)
-        cdf.new("h_energy_delta_minus", [0.4, 0.4, 0.3], recVary=False)
+        # using energy values listed in Table 3 of algorithm document
+        cdf.new("h_energy_mean", [2.7, 5, 8], recVary=False)
+        cdf.new("h_energy_delta_plus", [0.9, 1, 2], recVary=False)
+        cdf.new("h_energy_delta_minus", [0.9, 1, 2], recVary=False)
 
-        cdf.new("he4_energy_mean", [5, 6], recVary=False)
-        cdf.new("he4_energy_delta_plus", [0.6, 0.7], recVary=False)
-        cdf.new("he4_energy_delta_minus", [0.4, 0.4], recVary=False)
+        cdf.new("he4_energy_mean", [5, 9], recVary=False)
+        cdf.new("he4_energy_delta_plus", [1, 3], recVary=False)
+        cdf.new("he4_energy_delta_minus", [1, 3], recVary=False)
 
-        cdf.new("cno_energy_mean", [5, 6], recVary=False)
-        cdf.new("cno_energy_delta_plus", [0.6, 0.7], recVary=False)
-        cdf.new("cno_energy_delta_minus", [0.4, 0.4], recVary=False)
+        cdf.new("cno_energy_mean", [5, 9], recVary=False)
+        cdf.new("cno_energy_delta_plus", [1, 3], recVary=False)
+        cdf.new("cno_energy_delta_minus", [1, 3], recVary=False)
 
-        cdf.new("nemgsi_energy_mean", [5, 6], recVary=False)
-        cdf.new("nemgsi_energy_delta_plus", [0.6, 0.7], recVary=False)
-        cdf.new("nemgsi_energy_delta_minus", [0.4, 0.4], recVary=False)
+        cdf.new("nemgsi_energy_mean", [5, 9], recVary=False)
+        cdf.new("nemgsi_energy_delta_plus", [1, 3], recVary=False)
+        cdf.new("nemgsi_energy_delta_minus", [1, 3], recVary=False)
 
-        cdf.new("fe_energy_mean", [5], recVary=False)
-        cdf.new("fe_energy_delta_plus", [0.6], recVary=False)
-        cdf.new("fe_energy_delta_minus", [0.4], recVary=False)
+        cdf.new("fe_energy_mean", [8], recVary=False)
+        cdf.new("fe_energy_delta_plus", [4], recVary=False)
+        cdf.new("fe_energy_delta_minus", [4], recVary=False)
 
 
 if __name__ == "__main__":
     path = Path(__file__)
     input_path = path.parent.parent.parent / "instrument_team_data" / "hit" / "hit_l2_sectored_sample1.csv"
-    cdf_file_path = path.parent.parent.parent / "tests" / "test_data" / "hit" / "imap_hit_l2_macropixel-intensity_20250101_v001.cdf"
+    cdf_file_path = path.parent.parent.parent / "tests" / "test_data" / "hit" / "imap_hit_l2_macropixel-intensity_20250101_v002.cdf"
 
     try:
         create_l2_hit_sectored_rates_cdf_from_csv(str(input_path), str(cdf_file_path))
