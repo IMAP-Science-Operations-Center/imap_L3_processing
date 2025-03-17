@@ -452,17 +452,14 @@ class TestMomentsCalculation(unittest.TestCase):
                                                                                                                    7,
                                                                                                                    30)
 
-        energy = np.loadtxt(get_test_data_path("swe/energies.csv"), delimiter=",").reshape(20, 7, 30)
+        energy = np.loadtxt(get_test_data_path("swe/energies.csv"), delimiter=",").reshape(20, 7, 30)[:, 0, 0]
 
-        sintheta = np.zeros(shape=(20, 7))
-        sintheta[:] = [-0.1673557, 0.91652155, -0.83665564, 0., 0.83665564, -0.91652155, 0.1673557]
+        sintheta = np.array([-0.1673557, 0.91652155, -0.83665564, 0., 0.83665564, -0.91652155, 0.1673557])
 
-        costheta = np.zeros(shape=(20, 7))
-        costheta[:] = [0.9858965815825497, -0.39998531498835127, -0.5477292602242684, 1.0, -0.5477292602242684,
-                       -0.39998531498835127, 0.9858965815825497]
+        costheta = np.array([0.9858965815825497, -0.39998531498835127, -0.5477292602242684, 1.0, -0.5477292602242684,
+                             -0.39998531498835127, 0.9858965815825497])
 
-        deltheta = np.zeros(shape=(20, 7))
-        deltheta[:] = [0.6178, 0.3770, 0.3857, 0.3805, 0.3805, 0.3805, 0.6196]
+        deltheta = np.array([0.6178, 0.3770, 0.3857, 0.3805, 0.3805, 0.3805, 0.6196])
 
         cdelnv = np.array([0, 0, 0, 0])
         cdelt = np.array([0, 0, 0, 0, 0, 0])
@@ -493,16 +490,13 @@ class TestMomentsCalculation(unittest.TestCase):
                                                                                                                    7,
                                                                                                                    30)
 
-        energy = np.loadtxt(get_test_data_path("swe/energies.csv"), delimiter=",").reshape(20, 7, 30)
+        energy = np.loadtxt(get_test_data_path("swe/energies.csv"), delimiter=",").reshape(20, 7, 30)[:, 0, 0]
 
-        sintheta = np.zeros(shape=(20, 7))
-        sintheta[:] = [-0.89100652, -0.66913061, -0.35836795, 0., 0.35836795, 0.66913061, 0.89100652]
+        sintheta = np.array([-0.89100652, -0.66913061, -0.35836795, 0., 0.35836795, 0.66913061, 0.89100652])
 
-        costheta = np.zeros(shape=(20, 7))
-        costheta[:] = [0.4539905, 0.74314483, 0.93358043, 1., 0.93358043, 0.74314483, 0.4539905]
+        costheta = np.array([0.4539905, 0.74314483, 0.93358043, 1., 0.93358043, 0.74314483, 0.4539905])
 
-        deltheta = np.zeros(shape=(20, 7))
-        deltheta[:] = [0.6178, 0.3770, 0.3857, 0.3805, 0.3805, 0.3805, 0.6196]
+        deltheta = np.array([0.6178, 0.3770, 0.3857, 0.3805, 0.3805, 0.3805, 0.6196])
 
         spacecraft_potential = 12
         cdelnv = np.array([0, 0, 0, 0])
@@ -524,17 +518,14 @@ class TestMomentsCalculation(unittest.TestCase):
                                                                                                                    7,
                                                                                                                    30)
 
-        energy = np.loadtxt(get_test_data_path("swe/energies.csv"), delimiter=",").reshape(20, 7, 30)
+        energy = np.loadtxt(get_test_data_path("swe/energies.csv"), delimiter=",").reshape(20, 7, 30)[:, 0, 0]
 
-        artificial_all_positive_sintheta = np.zeros(shape=(20, 7))
-        artificial_all_positive_sintheta[:] = [0.89100652, 0.66913061, 0.35836795, 0., 0.35836795, 0.66913061,
-                                               0.89100652]
+        artificial_all_positive_sintheta = np.array([0.89100652, 0.66913061, 0.35836795, 0., 0.35836795, 0.66913061,
+                                                     0.89100652])
 
-        costheta = np.zeros(shape=(20, 7))
-        costheta[:] = [0.4539905, 0.74314483, 0.93358043, 1., 0.93358043, 0.74314483, 0.4539905]
+        costheta = np.array([0.4539905, 0.74314483, 0.93358043, 1., 0.93358043, 0.74314483, 0.4539905])
 
-        deltheta = np.zeros(shape=(20, 7))
-        deltheta[:] = [0.6178, 0.3770, 0.3857, 0.3805, 0.3805, 0.3805, 0.6196]
+        deltheta = np.array([0.6178, 0.3770, 0.3857, 0.3805, 0.3805, 0.3805, 0.6196])
 
         spacecraft_potential = 12
         cdelnv = np.array([1e23, 2e23, 3e23, 4e23])

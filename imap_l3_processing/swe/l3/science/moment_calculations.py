@@ -57,7 +57,7 @@ class HaloCorrectionParameters:
 
 
 @dataclass
-class CoreIntegrateOutputs:
+class IntegrateOutputs:
     density: np.float64
     velocity: np.ndarray
     temperature: np.ndarray
@@ -436,7 +436,7 @@ def halotrunc(moments: Moments, core_halo_breakpoint: float, spacecraft_potentia
 def integrate(istart, iend, energy: np.ndarray, sintheta: np.ndarray,
               costheta: np.ndarray, deltheta: np.ndarray, fv: np.ndarray, phi: np.ndarray,
               spacecraft_potential: float, cdelnv: np.ndarray, cdelt: np.ndarray) -> Optional[
-    CoreIntegrateOutputs]:
+    IntegrateOutputs]:
     # kmax? 30 or based on array size? expect different for different detectors?
     sumn = 0
     sumvx = 0
@@ -444,32 +444,31 @@ def integrate(istart, iend, energy: np.ndarray, sintheta: np.ndarray,
     sumvz = 0
     base = 1000
     delphi = np.full(7, 2 * np.pi / 30)
-    delv = np.empty((len(energy), 7))
+    delv = np.empty((len(energy)))
     for i in range(istart, iend + 1):
+        if energy[i] > 0:
+            v2mid = (ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR ** 2) * energy[i]
+            v3mid = v2mid * np.sqrt(v2mid)
+        else:
+            v2mid = 0
+            v3mid = 0
+        ehigh = 1.175 * energy[i]
+        if i < len(energy) - 1:
+            ehigh = np.sqrt((energy[i + 1] + spacecraft_potential) * (energy[i] + spacecraft_potential))
+        elow = np.sqrt((energy[i] + spacecraft_potential) * (energy[i - 1] + spacecraft_potential))
+
+        delv[i] = ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR * (np.sqrt(ehigh) - np.sqrt(elow))
+        if elow < base:
+            base = elow
         for j in range(7):
-            if energy[i, j, 1] > 0:
-                v2mid = (ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR ** 2) * energy[i, j, 1]
-                v3mid = v2mid * np.sqrt(v2mid)
-            else:
-                v2mid = 0
-                v3mid = 0
-            ehigh = 1.175 * energy[i, j, 1]
-            if i < len(energy) - 1:
-                ehigh = np.sqrt((energy[i + 1, j, 1] + spacecraft_potential) * (energy[i, j, 1] + spacecraft_potential))
-            elow = np.sqrt((energy[i, j, 1] + spacecraft_potential) * (energy[i - 1, j, 1] + spacecraft_potential))
-
-            delv[i, j] = ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR * (np.sqrt(ehigh) - np.sqrt(elow))
-            if elow < base:
-                base = elow
-
             for k in range(28):  # why 28 and not 30?
-                if energy[i, j, k] > 0:
-                    delta = delv[i, j] * deltheta[i, j] * delphi[j]
-                    fact = sintheta[i, j] * fv[i, j, k]
+                if energy[i] > 0:
+                    delta = delv[i] * deltheta[j] * delphi[j]
+                    fact = sintheta[j] * fv[i, j, k]
                     sumn += delta * v2mid * fact
-                    sumvx += delta * v3mid * fact * sintheta[i, j] * np.cos(np.deg2rad(phi[i, j, k]))
-                    sumvy += delta * v3mid * fact * sintheta[i, j] * np.sin(np.deg2rad(phi[i, j, k]))
-                    sumvz += delta * v3mid * fact * costheta[i, j]
+                    sumvx += delta * v3mid * fact * sintheta[j] * np.cos(np.deg2rad(phi[i, j, k]))
+                    sumvy += delta * v3mid * fact * sintheta[j] * np.sin(np.deg2rad(phi[i, j, k]))
+                    sumvz += delta * v3mid * fact * costheta[j]
 
     totden = sumn + cdelnv[0]
     if totden <= 0:
@@ -497,25 +496,25 @@ def integrate(istart, iend, energy: np.ndarray, sintheta: np.ndarray,
     sumqz = 0
     for i in range(istart, iend + 1):
         for j in range(7):
-            v2mid = (ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR ** 2) * energy[i, j, 1]
+            v2mid = (ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR ** 2) * energy[i]
             for k in range(28):  # again why 28?
-                if energy[i, j, k] > 0:
-                    angx = sintheta[i, j] * np.cos(np.deg2rad(phi[i, j, k]))
-                    vx = -ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR * np.sqrt(energy[i, j, k]) * angx - CM_PER_KM * \
+                if energy[i] > 0:
+                    angx = sintheta[j] * np.cos(np.deg2rad(phi[i, j, k]))
+                    vx = -ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR * np.sqrt(energy[i]) * angx - CM_PER_KM * \
                          output_velocities[0]
 
-                    angy = sintheta[i, j] * np.sin(np.deg2rad(phi[i, j, k]))
-                    vy = -ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR * np.sqrt(energy[i, j, k]) * angy - CM_PER_KM * \
+                    angy = sintheta[j] * np.sin(np.deg2rad(phi[i, j, k]))
+                    vy = -ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR * np.sqrt(energy[i]) * angy - CM_PER_KM * \
                          output_velocities[1]
 
-                    angz = costheta[i, j]
-                    vz = -ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR * np.sqrt(energy[i, j, k]) * angz - CM_PER_KM * \
+                    angz = costheta[j]
+                    vz = -ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR * np.sqrt(energy[i]) * angz - CM_PER_KM * \
                          output_velocities[2]
 
                     vmag2 = vx * vx + vy * vy + vz * vz
 
-                    delta = delv[i, j] * deltheta[i, j] * delphi[j]
-                    fact = v2mid * sintheta[i, j] * fv[i, j, k]
+                    delta = delv[i] * deltheta[j] * delphi[j]
+                    fact = v2mid * sintheta[j] * fv[i, j, k]
                     sumtxx += delta * fact * vx * vx
                     sumtxy += delta * fact * vx * vy
                     sumtxz += delta * fact * vx * vz
@@ -532,7 +531,7 @@ def integrate(istart, iend, energy: np.ndarray, sintheta: np.ndarray,
 
     heat_flux = np.array([sumqx, sumqy, sumqz]) * 500 * ELECTRON_MASS_KG
 
-    return CoreIntegrateOutputs(totden, output_velocities, temperature, heat_flux)
+    return IntegrateOutputs(totden, output_velocities, temperature, heat_flux)
 
 
 def scale_density(core_velocity: np.ndarray, core_temp: np.ndarray,
