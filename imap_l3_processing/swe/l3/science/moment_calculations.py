@@ -48,6 +48,7 @@ class MomentFitResults:
     moments: Moments
     chisq: float
     number_of_points: int
+    regress_result: np.ndarray
 
 
 @dataclass
@@ -62,6 +63,7 @@ class IntegrateOutputs:
     velocity: np.ndarray
     temperature: np.ndarray
     heat_flux: np.ndarray
+    base_energy: np.float64
 
 
 @dataclass
@@ -141,7 +143,10 @@ def _fit_moments_retrying_on_failure(corrected_energy_bins: np.ndarray,
                                    halo_correction_parameters.spacecraft_potential)
 
     if 0 < moment.density < average_density:
-        return MomentFitResults(moments=moment, chisq=chi_squared, number_of_points=energy_end - energy_start)
+        return MomentFitResults(moments=moment, chisq=chi_squared,
+                                number_of_points=energy_end - energy_start,
+                                regress_result=fit_function
+                                )
     elif energy_end - energy_start < 4:
         return None
     else:
@@ -482,7 +487,6 @@ def integrate(istart, iend, energy: np.ndarray, sintheta: np.ndarray,
         (-KM_PER_CM * sumvx + cdelnv[1]) / totden,
         (-KM_PER_CM * sumvy + cdelnv[2]) / totden,
         (-KM_PER_CM * sumvz + cdelnv[3]) / totden,
-        base,
     ])
 
     sumtxx = 0
@@ -531,7 +535,7 @@ def integrate(istart, iend, energy: np.ndarray, sintheta: np.ndarray,
 
     heat_flux = np.array([sumqx, sumqy, sumqz]) * 500 * ELECTRON_MASS_KG
 
-    return IntegrateOutputs(totden, output_velocities, temperature, heat_flux)
+    return IntegrateOutputs(totden, output_velocities, temperature, heat_flux, base)
 
 
 def scale_density(core_density: float,

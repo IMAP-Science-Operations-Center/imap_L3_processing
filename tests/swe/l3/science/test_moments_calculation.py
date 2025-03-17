@@ -94,8 +94,8 @@ class TestMomentsCalculation(unittest.TestCase):
         ])
 
         self.assertIs(moments_3_with_valid_density, moment_fit_result.moments)
+        self.assertIs(sentinel.fit_function_3, moment_fit_result.regress_result)
         self.assertEqual(sentinel.chisq_3, moment_fit_result.chisq)
-        self.assertIs(moments_3_with_valid_density, moment_fit_result.moments)
         self.assertEqual(6, moment_fit_result.number_of_points)
 
     @patch('imap_l3_processing.swe.l3.science.moment_calculations.regress')
@@ -159,8 +159,8 @@ class TestMomentsCalculation(unittest.TestCase):
         ])
 
         self.assertIs(moments_with_valid_density, moment_fit_result.moments)
+        self.assertIs(sentinel.fit_function_3, moment_fit_result.regress_result)
         self.assertEqual(sentinel.chisq_3, moment_fit_result.chisq)
-        self.assertIs(moments_with_valid_density, moment_fit_result.moments)
         self.assertEqual(6, moment_fit_result.number_of_points)
 
     @patch('imap_l3_processing.swe.l3.science.moment_calculations.regress')
@@ -471,7 +471,9 @@ class TestMomentsCalculation(unittest.TestCase):
 
         np.testing.assert_allclose(6.71828e+23, integrate_outputs.density, rtol=1e-5)
 
-        np.testing.assert_allclose(np.array([-1053.53, 327.55, 1919.34, -10.7911]), integrate_outputs.velocity,
+        np.testing.assert_allclose(np.array([-1053.53, 327.55, 1919.34]), integrate_outputs.velocity,
+                                   rtol=1e-4)
+        np.testing.assert_allclose(np.array(-10.7911), integrate_outputs.base_energy,
                                    rtol=1e-4)
         np.testing.assert_allclose(
             np.array([9.01575e+16, -1.99203e+15, 1.16781e+17, -1.98483e+15, -7.08943e+16, -1.60545e+16]),
@@ -538,7 +540,10 @@ class TestMomentsCalculation(unittest.TestCase):
 
         np.testing.assert_allclose(1.94762e+25, integrate_outputs.density, rtol=1e-5)
 
-        np.testing.assert_allclose(np.array([53.8532, 10.9898, -2355.75, -10.7911]), integrate_outputs.velocity,
+        np.testing.assert_allclose(np.array([53.8532, 10.9898, -2355.75]), integrate_outputs.velocity,
+                                   rtol=1e-4)
+
+        np.testing.assert_allclose(np.array(-10.7911), integrate_outputs.base_energy,
                                    rtol=1e-4)
         np.testing.assert_allclose(
             np.array([7.1484e+16, 3.47791e+15, 6.4914e+16, 1.31551e+15, 2.07552e+15, 4.38465e+16]),
