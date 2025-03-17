@@ -56,14 +56,15 @@ class TestMomentsCalculation(unittest.TestCase):
             valid_density
         ]
 
-        actual_moments = halo_fit_moments_retrying_on_failure(sentinel.corrected_energy_bins,
-                                                              sentinel.velocity_vectors,
-                                                              sentinel.phase_space_density,
-                                                              sentinel.weights,
-                                                              0,
-                                                              8,
-                                                              density_history, sentinel.spacecraft_potential,
-                                                              sentinel.halo_core_breakpoint)
+        moment_fit_result = halo_fit_moments_retrying_on_failure(sentinel.corrected_energy_bins,
+                                                                 sentinel.velocity_vectors,
+                                                                 sentinel.phase_space_density,
+                                                                 sentinel.weights,
+                                                                 0,
+                                                                 8,
+                                                                 density_history,
+                                                                 sentinel.spacecraft_potential,
+                                                                 sentinel.halo_core_breakpoint)
 
         mock_filter_and_flatten_regress_parameters.assert_has_calls([
             call(sentinel.corrected_energy_bins, sentinel.velocity_vectors, sentinel.phase_space_density,
@@ -92,7 +93,10 @@ class TestMomentsCalculation(unittest.TestCase):
             call(moments_3_with_valid_density, sentinel.halo_core_breakpoint, sentinel.spacecraft_potential, )
         ])
 
-        self.assertIs(moments_3_with_valid_density, actual_moments)
+        self.assertIs(moments_3_with_valid_density, moment_fit_result.moments)
+        self.assertEqual(sentinel.chisq_3, moment_fit_result.chisq)
+        self.assertIs(moments_3_with_valid_density, moment_fit_result.moments)
+        self.assertEqual(6, moment_fit_result.number_of_points)
 
     @patch('imap_l3_processing.swe.l3.science.moment_calculations.regress')
     @patch('imap_l3_processing.swe.l3.science.moment_calculations.calculate_fit_temperature_density_velocity')
@@ -125,13 +129,13 @@ class TestMomentsCalculation(unittest.TestCase):
             (sentinel.fit_function_3, sentinel.chisq_3)
         ]
 
-        actual_moments = core_fit_moments_retrying_on_failure(sentinel.corrected_energy_bins,
-                                                              sentinel.velocity_vectors,
-                                                              sentinel.phase_space_density,
-                                                              sentinel.weights,
-                                                              0,
-                                                              8,
-                                                              density_history)
+        moment_fit_result = core_fit_moments_retrying_on_failure(sentinel.corrected_energy_bins,
+                                                                 sentinel.velocity_vectors,
+                                                                 sentinel.phase_space_density,
+                                                                 sentinel.weights,
+                                                                 0,
+                                                                 8,
+                                                                 density_history)
 
         mock_filter_and_flatten_regress_parameters.assert_has_calls([
             call(sentinel.corrected_energy_bins, sentinel.velocity_vectors, sentinel.phase_space_density,
@@ -154,7 +158,10 @@ class TestMomentsCalculation(unittest.TestCase):
             call(sentinel.fit_function_3),
         ])
 
-        self.assertIs(moments_with_valid_density, actual_moments)
+        self.assertIs(moments_with_valid_density, moment_fit_result.moments)
+        self.assertEqual(sentinel.chisq_3, moment_fit_result.chisq)
+        self.assertIs(moments_with_valid_density, moment_fit_result.moments)
+        self.assertEqual(6, moment_fit_result.number_of_points)
 
     @patch('imap_l3_processing.swe.l3.science.moment_calculations.regress')
     @patch('imap_l3_processing.swe.l3.science.moment_calculations.calculate_fit_temperature_density_velocity')
@@ -201,9 +208,9 @@ class TestMomentsCalculation(unittest.TestCase):
         ])
 
     def test_compute_maxwellian_weight_factors_reproduces_heritage_results(self):
-        counts = np.array([[[536.0, 20000, 1.2, 3072.0000001359296]]])
-        acquisition_duration = np.array([[[80000., 80000., 80000., 40000]]])
-        count_rates = counts / acquisition_duration
+        counts = np.array([[[536.0, 20000, 536.0], [1.2, 3072.0000001359296, 1.2]]])
+        acquisition_duration = np.array([[80000., 40000.]])
+        count_rates = counts / acquisition_duration[:, :, np.newaxis]
         weight_factors = compute_maxwellian_weight_factors(count_rates, acquisition_duration)
 
         first_weight = np.sqrt(21.25 + 536) / 536
@@ -212,7 +219,8 @@ class TestMomentsCalculation(unittest.TestCase):
         fourth_weight = np.sqrt(341.25 + 3072) / 3072
 
         np.testing.assert_array_almost_equal(weight_factors,
-                                             np.array([[[first_weight, second_weight, third_weight, fourth_weight]]]))
+                                             np.array([[[first_weight, second_weight, first_weight],
+                                                        [third_weight, fourth_weight, third_weight]]]))
 
     def test_regress_reproduces_heritage_results_given_all_test_data(self):
         velocity_vectors = np.loadtxt(get_test_data_path("swe/fake_velocity_vectors.csv"), delimiter=",",
@@ -378,8 +386,8 @@ class TestMomentsCalculation(unittest.TestCase):
         expected_rtn_temperature = rotation_matrix @ np.array([x, y, z])
         expected_rtn_temperature /= np.linalg.norm(expected_rtn_temperature)
 
-        self.assertEqual(np.asin(expected_rtn_temperature[2]), phi)
-        self.assertEqual(np.atan2(expected_rtn_temperature[1], expected_rtn_temperature[0]), theta)
+        self.assertEqual(np.asin(expected_rtn_temperature[2]), theta)
+        self.assertEqual(np.atan2(expected_rtn_temperature[1], expected_rtn_temperature[0]), phi)
 
     def test_momscale(self):
         core_halo_break = 125.6
@@ -434,7 +442,7 @@ class TestMomentsCalculation(unittest.TestCase):
 
                 self.assertAlmostEqual(expected_density, scaled_density, places=3)
 
-    def test_cintegr8(self):
+    def test_integrate(self):
         istart = 1
         iend = 19
 
@@ -456,11 +464,13 @@ class TestMomentsCalculation(unittest.TestCase):
         deltheta = np.zeros(shape=(20, 7))
         deltheta[:] = [0.6178, 0.3770, 0.3857, 0.3805, 0.3805, 0.3805, 0.6196]
 
+        cdelnv = np.array([0, 0, 0, 0])
+        cdelt = np.array([0, 0, 0, 0, 0, 0])
         spacecraft_potential = 12
-        integrate_outputs = moment_calculations.core_integrate(istart, iend, energy - spacecraft_potential, sintheta,
-                                                               costheta,
-                                                               deltheta, phase_space_density,
-                                                               inst_az_data, spacecraft_potential)
+        integrate_outputs = moment_calculations.integrate(istart, iend, energy - spacecraft_potential, sintheta,
+                                                          costheta,
+                                                          deltheta, phase_space_density,
+                                                          inst_az_data, spacecraft_potential, cdelnv, cdelt)
 
         np.testing.assert_allclose(6.71828e+23, integrate_outputs.density, rtol=1e-5)
 
@@ -473,7 +483,7 @@ class TestMomentsCalculation(unittest.TestCase):
             np.array([9.92303e+21, -2.88985e+22, 9.45357e+21]),
             integrate_outputs.heat_flux, rtol=1e-4)
 
-    def test_cintegr8_returns_early_when_density_is_negative(self):
+    def test_integrate_returns_early_when_density_is_negative(self):
         istart = 1
         iend = 19
 
@@ -495,9 +505,165 @@ class TestMomentsCalculation(unittest.TestCase):
         deltheta[:] = [0.6178, 0.3770, 0.3857, 0.3805, 0.3805, 0.3805, 0.6196]
 
         spacecraft_potential = 12
-        integrate_outputs = moment_calculations.core_integrate(istart, iend, energy - spacecraft_potential, sintheta,
-                                                               costheta,
-                                                               deltheta, phase_space_density,
-                                                               inst_az_data, spacecraft_potential)
+        cdelnv = np.array([0, 0, 0, 0])
+        cdelt = np.array([0, 0, 0, 0, 0, 0])
+        integrate_outputs = moment_calculations.integrate(istart, iend, energy - spacecraft_potential, sintheta,
+                                                          costheta,
+                                                          deltheta, phase_space_density,
+                                                          inst_az_data, spacecraft_potential, cdelnv, cdelt)
 
         self.assertIsNone(integrate_outputs)
+
+    def test_integrate_with_nonzero_cdelnv_and_cdelt(self):
+        istart = 1
+        iend = 19
+
+        inst_az_data = np.loadtxt(get_test_data_path("swe/instrument_azimuth.csv"), delimiter=",").reshape(20, 7, 30)
+
+        phase_space_density = np.loadtxt(get_test_data_path("swe/phase_space_density.csv"), delimiter=",").reshape(20,
+                                                                                                                   7,
+                                                                                                                   30)
+
+        energy = np.loadtxt(get_test_data_path("swe/energies.csv"), delimiter=",").reshape(20, 7, 30)
+
+        artificial_all_positive_sintheta = np.zeros(shape=(20, 7))
+        artificial_all_positive_sintheta[:] = [0.89100652, 0.66913061, 0.35836795, 0., 0.35836795, 0.66913061,
+                                               0.89100652]
+
+        costheta = np.zeros(shape=(20, 7))
+        costheta[:] = [0.4539905, 0.74314483, 0.93358043, 1., 0.93358043, 0.74314483, 0.4539905]
+
+        deltheta = np.zeros(shape=(20, 7))
+        deltheta[:] = [0.6178, 0.3770, 0.3857, 0.3805, 0.3805, 0.3805, 0.6196]
+
+        spacecraft_potential = 12
+        cdelnv = np.array([1e23, 2e23, 3e23, 4e23])
+        cdelt = np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6]) * 1e40
+        integrate_outputs = moment_calculations.integrate(istart, iend, energy - spacecraft_potential,
+                                                          artificial_all_positive_sintheta,
+                                                          costheta,
+                                                          deltheta, phase_space_density,
+                                                          inst_az_data, spacecraft_potential, cdelnv, cdelt)
+
+        np.testing.assert_allclose(1.94762e+25, integrate_outputs.density, rtol=1e-5)
+
+        np.testing.assert_allclose(np.array([53.8532, 10.9898, -2355.75, -10.7911]), integrate_outputs.velocity,
+                                   rtol=1e-4)
+        np.testing.assert_allclose(
+            np.array([7.1484e+16, 3.47791e+15, 6.4914e+16, 1.31551e+15, 2.07552e+15, 4.38465e+16]),
+            integrate_outputs.temperature, rtol=2e-4)
+        np.testing.assert_allclose(
+            np.array([-5.50653e+21, -1.61473e+21, -3.40728e+23]),
+            integrate_outputs.heat_flux, rtol=2e-4)
+
+    def test_scale_density(self):
+        core_velocity = np.array([300, 400, 500], dtype=float)
+        core_temp = np.array([10, 20, 30, 40, 50, 60], dtype=float)
+
+        core_moment_fit: Moments = Moments(
+            alpha=1,
+            beta=2,
+            t_parallel=3,
+            t_perpendicular=4,
+            velocity_x=5,
+            velocity_y=6,
+            velocity_z=7,
+            density=8,
+            aoo=9,
+            ao=10
+        )
+
+        ifit = 5
+        spacecraft_potential = 12
+        cosin_p = np.array([0.9034, 0.6947, 0.3730, 0.0, -0.3714, -0.6896, -0.8996])
+        aperture_field_of_view = np.array([0.6178, 0.3770, 0.3857, 0.3805, 0.3805, 0.3805, 0.6196])
+
+        regress_outputs = np.array([-1e-9, -9e-10, -8e-10, -7e-10, -6e-10, -5e-10, -4e-10, -3e-10, -2e-10, -1e-10])
+        initial_core_density = 1.23456789
+        base_energy = 100
+
+        swepam_energies = np.array([2.55714286, 3.65142857, 5.16, 7.30571429,
+                                    10.32857143, 14.34285714, 19.95714286, 27.42857143,
+                                    38.37142857, 52.82857143, 73.32857143, 102.0,
+                                    142.14285714, 196.57142857, 272., 372.71428571,
+                                    519.0, 712.57142857, 987.14285714, 1370.0])
+
+        energy = np.broadcast_to(swepam_energies[:, np.newaxis, np.newaxis], (20, 7, 30))
+        phi = np.broadcast_to((np.arange(0, 30) * 360 / 30)[np.newaxis, np.newaxis, :], (20, 7, 30))
+
+        core_density_output = \
+            moment_calculations.scale_density(core_velocity, core_temp,
+                                              core_moment_fit, ifit, energy - spacecraft_potential,
+                                              spacecraft_potential, cosin_p,
+                                              aperture_field_of_view,
+                                              phi,
+                                              regress_outputs,
+                                              initial_core_density,
+                                              base_energy)
+
+        np.testing.assert_allclose(np.array([5.71854e+06, -2.63793e+08, 8.57113e+07, -8.11159e+06]),
+                                   core_density_output.cdelnv, rtol=2e-5)
+        np.testing.assert_allclose(
+            np.array([1.7004e+22, 7.40212e+20, 1.90414e+22, 6.71709e+18, -2.10254e+18, 2.08076e+22]),
+            core_density_output.cdelt, rtol=1e-4)
+        np.testing.assert_allclose(5.71854e+06, core_density_output.density, rtol=1e-5)
+        np.testing.assert_allclose(
+            np.array([2.97349e+15, 1.29441e+14, 3.32977e+15, 1.17462e+12, -3.6767e+11, 3.63862e+15]),
+            core_density_output.temperature,
+            rtol=2e-5)
+        np.testing.assert_allclose(np.array([-46.1293, 14.9884, -1.41836]), core_density_output.velocity, rtol=1e-5)
+
+    def test_scale_density_with_base_less_than_zero(self):
+        core_velocity = np.array([300, 400, 500], dtype=float)
+        core_temp = np.array([10, 20, 30, 40, 50, 60], dtype=float)
+
+        core_moment_fit: Moments = Moments(
+            alpha=1,
+            beta=2,
+            t_parallel=3,
+            t_perpendicular=4,
+            velocity_x=5,
+            velocity_y=6,
+            velocity_z=7,
+            density=8,
+            aoo=9,
+            ao=10
+        )
+        ifit = 5
+        spacecraft_potential = 14
+        cosin_p = np.array([0.9034, 0.6947, 0.3730, 0.0, -0.3714, -0.6896, -0.8996])
+        aperture_field_of_view = np.array([0.6178, 0.3770, 0.3857, 0.3805, 0.3805, 0.3805, 0.6196])
+
+        regress_outputs = np.array([-1e-9, -9e-10, -8e-10, -7e-10, -6e-10, -5e-10, -4e-10, -3e-10, -2e-10, -1e-10])
+        initial_core_density = 1.23456789
+        base_energy = 100
+
+        swepam_energies = np.array([2.55714286, 3.65142857, 5.16, 7.30571429,
+                                    10.32857143, 14.34285714, 19.95714286, 27.42857143,
+                                    38.37142857, 52.82857143, 73.32857143, 102.0,
+                                    142.14285714, 196.57142857, 272., 372.71428571,
+                                    519.0, 712.57142857, 987.14285714, 1370.0])
+
+        energy = np.broadcast_to(swepam_energies[:, np.newaxis, np.newaxis], (20, 7, 30))
+        phi = np.broadcast_to((np.arange(0, 30) * 360 / 30)[np.newaxis, np.newaxis, :], (20, 7, 30))
+
+        core_density_output = moment_calculations.scale_density(core_velocity, core_temp,
+                                                                core_moment_fit, ifit, energy - spacecraft_potential,
+                                                                spacecraft_potential, cosin_p,
+                                                                aperture_field_of_view,
+                                                                phi,
+                                                                regress_outputs,
+                                                                initial_core_density,
+                                                                base_energy)
+
+        np.testing.assert_allclose(np.array([817042, -1.46993e+07, 4.7761e+06, -451960, ]), core_density_output.cdelnv,
+                                   rtol=2e-5)
+        np.testing.assert_allclose(
+            np.array([3.63825e+20, 1.58366e+19, 4.07419e+20, 1.4257e+17, -4.6073e+16, 4.45208e+20, ]),
+            core_density_output.cdelt, rtol=1e-4)
+        np.testing.assert_allclose(817043, core_density_output.density, rtol=1e-5)
+        np.testing.assert_allclose(
+            np.array([4.45295e+14, 1.93829e+13, 4.9865e+14, 1.74495e+11, -5.639e+10, 5.44902e+14, ]),
+            core_density_output.temperature,
+            rtol=2e-5)
+        np.testing.assert_allclose(np.array([-17.9904, 5.8462, -0.55241, ]), core_density_output.velocity, rtol=1e-5)
