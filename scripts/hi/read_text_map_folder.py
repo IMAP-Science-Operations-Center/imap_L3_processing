@@ -27,13 +27,11 @@ energies = []
 variances = []
 
 for file in folder.iterdir():
-    if file.parts[-1].endswith("flux.txt"):
+    if file.parts[-1].endswith("flux.txt") and not "mono" in file.parts[-1]:
         group_file_name_prefix = '-'.join(file.parts[-1].split('-')[:-1])
 
         with open(file.parent / (group_file_name_prefix + "-flux.txt"), "r") as flux_file:
             fluxes.append(extract_data(flux_file.readlines()))
-        with open(file.parent / (group_file_name_prefix + "-ener.txt"), "r") as energy_file:
-            energies.append(extract_data(energy_file.readlines()))
         with open(file.parent / (group_file_name_prefix + "-fvar.txt"), "r") as variance_file:
             variances.append(extract_data(variance_file.readlines()))
 
@@ -48,7 +46,8 @@ with CDF(pathname, '') as cdf:
     variance_data = np.stack(variances, axis=-1)
     variance_data = np.array([variance_data])
 
-    energies = np.unique(energies)
+    # energies = np.unique(energies)
+    energies = np.array([0.71, 1.11, 1.74, 2.73, 4.29])
     energies = energies[energies != 0]
     energy_data = np.stack(energies, axis=-1)
 
