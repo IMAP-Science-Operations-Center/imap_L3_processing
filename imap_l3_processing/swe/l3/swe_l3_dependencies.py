@@ -9,7 +9,7 @@ from imap_l3_processing.swe.l3.utils import read_l2_swe_data, read_l3a_swapi_pro
     read_l1b_swe_data
 from imap_l3_processing.utils import read_l1d_mag_data, download_dependency
 
-MAG_L1D_DESCRIPTOR = "mago-normal"
+MAG_L1D_DESCRIPTOR = "norm-mago"
 SWAPI_L3A_PROTON_DESCRIPTOR = "proton-sw"
 SWE_CONFIG_DESCRIPTOR = "config-json-not-cdf"
 
