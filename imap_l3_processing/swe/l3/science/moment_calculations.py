@@ -12,6 +12,7 @@ from imap_l3_processing.constants import ELECTRON_MASS_KG, \
 
 # units of K / (m^2/s^2)
 ZMK = ELECTRON_MASS_KG / (2 * BOLTZMANN_CONSTANT_JOULES_PER_KELVIN)
+NUMBER_OF_DETECTORS = 7
 
 
 @dataclass
@@ -53,6 +54,23 @@ class MomentFitResults:
 class HaloCorrectionParameters:
     spacecraft_potential: float
     core_halo_breakpoint: float
+
+
+@dataclass
+class CoreIntegrateOutputs:
+    density: np.float64
+    velocity: np.ndarray
+    temperature: np.ndarray
+    heat_flux: np.ndarray
+
+
+@dataclass
+class ScaleDensityOutput:
+    density: np.float64
+    velocity: np.ndarray
+    temperature: np.ndarray
+    cdelnv: np.ndarray
+    cdelt: np.ndarray
 
 
 def core_fit_moments_retrying_on_failure(corrected_energy_bins: np.ndarray,
@@ -415,14 +433,6 @@ def halotrunc(moments: Moments, core_halo_breakpoint: float, spacecraft_potentia
     return halod
 
 
-@dataclass
-class CoreIntegrateOutputs:
-    density: np.float64
-    velocity: np.ndarray
-    temperature: np.ndarray
-    heat_flux: np.ndarray
-
-
 def integrate(istart, iend, energy: np.ndarray, sintheta: np.ndarray,
               costheta: np.ndarray, deltheta: np.ndarray, fv: np.ndarray, phi: np.ndarray,
               spacecraft_potential: float, cdelnv: np.ndarray, cdelt: np.ndarray) -> Optional[
@@ -523,3 +533,91 @@ def integrate(istart, iend, energy: np.ndarray, sintheta: np.ndarray,
     heat_flux = np.array([sumqx, sumqy, sumqz]) * 500 * ELECTRON_MASS_KG
 
     return CoreIntegrateOutputs(totden, output_velocities, temperature, heat_flux)
+
+
+def scale_density(core_velocity: np.ndarray, core_temp: np.ndarray,
+                  core_moment_fit: Moments, ifit: int, energy: np.ndarray,
+                  spacecraft_potential: float, cosin_p: np.ndarray,
+                  aperture_field_of_view: np.ndarray,
+                  phi: np.ndarray,
+                  regress_outputs: np.ndarray,
+                  initial_core_density: float,
+                  base_energy: float) -> ScaleDensityOutput:
+    eobolt = 12345
+
+    zmk = ELECTRON_MASS_KG / (2 * BOLTZMANN_CONSTANT_JOULES_PER_KELVIN * 1e4)
+    MAX_SPIN_SECTOR_INDEX = 28  # why 28 and not 30?
+    KMAX = np.full(7, 30)
+
+    number_of_energies = 1
+    assert 0 < ifit < len(energy) - 1, "ifit must be in middle of energies"
+    delv = np.zeros((2, NUMBER_OF_DETECTORS))
+    velocity_in_sc_frame = np.zeros((2, NUMBER_OF_DETECTORS))
+    for j in range(NUMBER_OF_DETECTORS):
+        ehigh = np.sqrt((energy[ifit + 1, j, 1] + spacecraft_potential) *
+                        (energy[ifit, j, 1] + spacecraft_potential))
+        elow = np.sqrt((energy[ifit, j, 1] + spacecraft_potential) *
+                       (energy[ifit - 1, j, 1] + spacecraft_potential))
+        delv[0, j] = ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR * (np.sqrt(ehigh) - np.sqrt(elow))
+        velocity_in_sc_frame[0, j] = ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR * np.sqrt(energy[ifit, j, 1])
+        base_energy = min(base_energy, elow)
+    base_energy -= spacecraft_potential
+    if base_energy > 0:
+        number_of_energies = 2
+        velocity_in_sc_frame[1, :] = ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR * np.sqrt(0.5 * base_energy)
+        delv[1, :] = ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR * np.sqrt(base_energy)
+    factor = core_moment_fit.density * zmk / (np.pi * core_moment_fit.t_parallel) * np.sqrt(
+        zmk / (np.pi * core_moment_fit.t_perpendicular))
+
+    cos_theta = cosin_p[np.newaxis, :, np.newaxis]
+    sin_theta = np.sin(np.arccos(cos_theta))
+    delta_theta = aperture_field_of_view[np.newaxis, :, np.newaxis]
+    cos_phi = np.cos(np.deg2rad(phi[0, 0]))
+    sin_phi = np.sin(np.deg2rad(phi[0, 0]))
+    delta_phi = 2 * np.pi / KMAX[-1]
+
+    velocity_3_dim = velocity_in_sc_frame[:, :, np.newaxis]
+    vx = -velocity_3_dim * sin_theta * cos_phi
+    vy = -velocity_3_dim * sin_theta * sin_phi
+    vz = -velocity_3_dim * cos_theta
+
+    fun = -zmk * np.stack(np.broadcast_arrays(vx * vx, vy * vy, vz * vz, vx * vy, vx * vz, vy * vz, vx, vy, vz),
+                          axis=-1)
+    exponent = np.dot(fun, regress_outputs[:9])
+    delt = delv[:, :, np.newaxis] * delta_theta * delta_phi
+    common_factor = np.square(velocity_3_dim) * delt * sin_theta * factor * np.exp(exponent)
+
+    def integrate(array):
+        return np.sum(array[:number_of_energies, :NUMBER_OF_DETECTORS, :MAX_SPIN_SECTOR_INDEX])
+
+    sumint = integrate(common_factor)
+    sumvx = integrate(vx * common_factor)
+    sumvy = integrate(vy * common_factor)
+    sumvz = integrate(vz * common_factor)
+
+    sumtxx = integrate(vx * vx * common_factor)
+    sumtxy = integrate(vx * vy * common_factor)
+    sumtxz = integrate(vx * vz * common_factor)
+    sumtyy = integrate(vy * vy * common_factor)
+    sumtyz = integrate(vy * vz * common_factor)
+    sumtzz = integrate(vz * vz * common_factor)
+
+    sum_velocities = np.array([sumvx, sumvy, sumvz])
+    sum_temperatures = np.array([sumtxx, sumtxy, sumtyy, sumtxz, sumtyz, sumtzz])
+
+    corrected_density = initial_core_density + sumint
+
+    corrected_core_velocity = core_velocity.copy()
+    corrected_core_velocity *= initial_core_density / corrected_density
+    corrected_core_velocity += sum_velocities * (-1e-5) / corrected_density
+
+    corrected_core_temp = core_temp.copy()
+    corrected_core_temp *= initial_core_density / corrected_density
+    corrected_core_temp += sum_temperatures * 1e-4 * eobolt / corrected_density
+
+    cdelnv = np.array([sumint, sumvx * (-1e-5), sumvy * (-1e-5), sumvz * (-1e-5)])
+
+    cdelt = sum_temperatures * 1e-4 * eobolt
+
+    return ScaleDensityOutput(density=corrected_density, velocity=corrected_core_velocity,
+                              temperature=corrected_core_temp, cdelnv=cdelnv, cdelt=cdelt)

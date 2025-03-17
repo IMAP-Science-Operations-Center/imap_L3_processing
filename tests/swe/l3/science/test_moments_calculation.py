@@ -555,3 +555,115 @@ class TestMomentsCalculation(unittest.TestCase):
         np.testing.assert_allclose(
             np.array([-5.50653e+21, -1.61473e+21, -3.40728e+23]),
             integrate_outputs.heat_flux, rtol=2e-4)
+
+    def test_scale_density(self):
+        core_velocity = np.array([300, 400, 500], dtype=float)
+        core_temp = np.array([10, 20, 30, 40, 50, 60], dtype=float)
+
+        core_moment_fit: Moments = Moments(
+            alpha=1,
+            beta=2,
+            t_parallel=3,
+            t_perpendicular=4,
+            velocity_x=5,
+            velocity_y=6,
+            velocity_z=7,
+            density=8,
+            aoo=9,
+            ao=10
+        )
+
+        ifit = 5
+        spacecraft_potential = 12
+        cosin_p = np.array([0.9034, 0.6947, 0.3730, 0.0, -0.3714, -0.6896, -0.8996])
+        aperture_field_of_view = np.array([0.6178, 0.3770, 0.3857, 0.3805, 0.3805, 0.3805, 0.6196])
+
+        regress_outputs = np.array([-1e-9, -9e-10, -8e-10, -7e-10, -6e-10, -5e-10, -4e-10, -3e-10, -2e-10, -1e-10])
+        initial_core_density = 1.23456789
+        base_energy = 100
+
+        swepam_energies = np.array([2.55714286, 3.65142857, 5.16, 7.30571429,
+                                    10.32857143, 14.34285714, 19.95714286, 27.42857143,
+                                    38.37142857, 52.82857143, 73.32857143, 102.0,
+                                    142.14285714, 196.57142857, 272., 372.71428571,
+                                    519.0, 712.57142857, 987.14285714, 1370.0])
+
+        energy = np.broadcast_to(swepam_energies[:, np.newaxis, np.newaxis], (20, 7, 30))
+        phi = np.broadcast_to((np.arange(0, 30) * 360 / 30)[np.newaxis, np.newaxis, :], (20, 7, 30))
+
+        core_density_output = \
+            moment_calculations.scale_density(core_velocity, core_temp,
+                                              core_moment_fit, ifit, energy - spacecraft_potential,
+                                              spacecraft_potential, cosin_p,
+                                              aperture_field_of_view,
+                                              phi,
+                                              regress_outputs,
+                                              initial_core_density,
+                                              base_energy)
+
+        np.testing.assert_allclose(np.array([5.71854e+06, -2.63793e+08, 8.57113e+07, -8.11159e+06]),
+                                   core_density_output.cdelnv, rtol=2e-5)
+        np.testing.assert_allclose(
+            np.array([1.7004e+22, 7.40212e+20, 1.90414e+22, 6.71709e+18, -2.10254e+18, 2.08076e+22]),
+            core_density_output.cdelt, rtol=1e-4)
+        np.testing.assert_allclose(5.71854e+06, core_density_output.density, rtol=1e-5)
+        np.testing.assert_allclose(
+            np.array([2.97349e+15, 1.29441e+14, 3.32977e+15, 1.17462e+12, -3.6767e+11, 3.63862e+15]),
+            core_density_output.temperature,
+            rtol=2e-5)
+        np.testing.assert_allclose(np.array([-46.1293, 14.9884, -1.41836]), core_density_output.velocity, rtol=1e-5)
+
+    def test_scale_density_with_base_less_than_zero(self):
+        core_velocity = np.array([300, 400, 500], dtype=float)
+        core_temp = np.array([10, 20, 30, 40, 50, 60], dtype=float)
+
+        core_moment_fit: Moments = Moments(
+            alpha=1,
+            beta=2,
+            t_parallel=3,
+            t_perpendicular=4,
+            velocity_x=5,
+            velocity_y=6,
+            velocity_z=7,
+            density=8,
+            aoo=9,
+            ao=10
+        )
+        ifit = 5
+        spacecraft_potential = 14
+        cosin_p = np.array([0.9034, 0.6947, 0.3730, 0.0, -0.3714, -0.6896, -0.8996])
+        aperture_field_of_view = np.array([0.6178, 0.3770, 0.3857, 0.3805, 0.3805, 0.3805, 0.6196])
+
+        regress_outputs = np.array([-1e-9, -9e-10, -8e-10, -7e-10, -6e-10, -5e-10, -4e-10, -3e-10, -2e-10, -1e-10])
+        initial_core_density = 1.23456789
+        base_energy = 100
+
+        swepam_energies = np.array([2.55714286, 3.65142857, 5.16, 7.30571429,
+                                    10.32857143, 14.34285714, 19.95714286, 27.42857143,
+                                    38.37142857, 52.82857143, 73.32857143, 102.0,
+                                    142.14285714, 196.57142857, 272., 372.71428571,
+                                    519.0, 712.57142857, 987.14285714, 1370.0])
+
+        energy = np.broadcast_to(swepam_energies[:, np.newaxis, np.newaxis], (20, 7, 30))
+        phi = np.broadcast_to((np.arange(0, 30) * 360 / 30)[np.newaxis, np.newaxis, :], (20, 7, 30))
+
+        core_density_output = moment_calculations.scale_density(core_velocity, core_temp,
+                                                                core_moment_fit, ifit, energy - spacecraft_potential,
+                                                                spacecraft_potential, cosin_p,
+                                                                aperture_field_of_view,
+                                                                phi,
+                                                                regress_outputs,
+                                                                initial_core_density,
+                                                                base_energy)
+
+        np.testing.assert_allclose(np.array([817042, -1.46993e+07, 4.7761e+06, -451960, ]), core_density_output.cdelnv,
+                                   rtol=2e-5)
+        np.testing.assert_allclose(
+            np.array([3.63825e+20, 1.58366e+19, 4.07419e+20, 1.4257e+17, -4.6073e+16, 4.45208e+20, ]),
+            core_density_output.cdelt, rtol=1e-4)
+        np.testing.assert_allclose(817043, core_density_output.density, rtol=1e-5)
+        np.testing.assert_allclose(
+            np.array([4.45295e+14, 1.93829e+13, 4.9865e+14, 1.74495e+11, -5.639e+10, 5.44902e+14, ]),
+            core_density_output.temperature,
+            rtol=2e-5)
+        np.testing.assert_allclose(np.array([-17.9904, 5.8462, -0.55241, ]), core_density_output.velocity, rtol=1e-5)
