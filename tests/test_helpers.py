@@ -14,6 +14,10 @@ def get_test_data_path(filename: str) -> Path:
     return Path(tests.__file__).parent / "test_data" / filename
 
 
+def get_test_data_folder() -> Path:
+    return Path(tests.__file__).parent / "test_data"
+
+
 def get_test_instrument_team_data_path(filename: str) -> Path:
     return Path(tests.__file__).parent.parent / "instrument_team_data" / filename
 

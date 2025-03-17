@@ -7,7 +7,8 @@ import numpy as np
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.constants import FIVE_MINUTES_IN_NANOSECONDS
-from imap_l3_processing.hi.l3.utils import read_hi_l3_data
+from imap_l3_processing.hi.l3.utils import read_hi_l2_data
+from tests.test_helpers import get_test_data_path, get_test_data_folder
 
 
 class TestUtils(unittest.TestCase):
@@ -19,7 +20,7 @@ class TestUtils(unittest.TestCase):
         if os.path.exists('test_cdf.cdf'):
             os.remove('test_cdf.cdf')
 
-    def test_reads_hi_l3_data(self):
+    def test_reads_hi_l2_data(self):
         rng = np.random.default_rng()
         pathname = "test_cdf"
         with CDF(pathname, '') as cdf:
@@ -51,9 +52,12 @@ class TestUtils(unittest.TestCase):
             cdf["sensitivity"] = sensitivity
             cdf["variance"] = variance
 
+            for var in cdf:
+                cdf[var].attrs['FILLVAL'] = 1000000
+
         for path in [pathname, Path(pathname)]:
             with self.subTest(path=path):
-                result = read_hi_l3_data(path)
+                result = read_hi_l2_data(path)
 
                 np.testing.assert_array_equal(epoch, result.epoch)
                 np.testing.assert_array_equal(bins, result.energy)
@@ -67,3 +71,20 @@ class TestUtils(unittest.TestCase):
                 np.testing.assert_array_equal(lon, result.lon)
                 np.testing.assert_array_equal(sensitivity, result.sensitivity)
                 np.testing.assert_array_equal(variance, result.variance)
+
+    def test_fill_values_create_nan_data(self):
+        path = get_test_data_folder() / 'hi' / 'l2_map_with_fill_values.cdf'
+        result = read_hi_l2_data(path)
+
+        with CDF(str(path)) as cdf:
+            np.testing.assert_array_equal(result.epoch, cdf['Epoch'])
+            np.testing.assert_array_equal(result.energy, cdf['bin'])
+            np.testing.assert_array_equal(result.counts, np.full_like(cdf['counts'], np.nan))
+            np.testing.assert_array_equal(result.counts_uncertainty, np.full_like(cdf['counts_uncertainty'], np.nan))
+            np.testing.assert_array_equal(result.epoch_delta, cdf['epoch_delta'])
+            np.testing.assert_array_equal(result.exposure, np.full_like(cdf['exposure'], np.nan))
+            np.testing.assert_array_equal(result.flux, np.full_like(cdf['flux'], np.nan))
+            np.testing.assert_array_equal(result.lat, cdf['lat'])
+            np.testing.assert_array_equal(result.lon, cdf['lon'])
+            np.testing.assert_array_equal(result.sensitivity, np.full_like(cdf['sensitivity'], np.nan))
+            np.testing.assert_array_equal(result.variance, np.full_like(cdf['variance'], np.nan))

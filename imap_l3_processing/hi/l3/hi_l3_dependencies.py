@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from imap_l3_processing.hi.l3.models import HiL3Data
-from imap_l3_processing.hi.l3.utils import read_hi_l3_data
+from imap_l3_processing.hi.l3.utils import read_hi_l2_data
 from imap_l3_processing.models import UpstreamDataDependency
 from imap_l3_processing.utils import download_dependency
 
@@ -27,4 +27,4 @@ class HiL3Dependencies:
 
     @classmethod
     def from_file_paths(cls, hi_l3_path: Path):
-        return cls(read_hi_l3_data(hi_l3_path))
+        return cls(read_hi_l2_data(hi_l3_path))
