@@ -570,7 +570,7 @@ class TestMomentsCalculation(unittest.TestCase):
         aperture_field_of_view = np.array([0.6178, 0.3770, 0.3857, 0.3805, 0.3805, 0.3805, 0.6196])
 
         regress_outputs = np.array([-1e-9, -9e-10, -8e-10, -7e-10, -6e-10, -5e-10, -4e-10, -3e-10, -2e-10, -1e-10])
-        initial_core_density = 1.23456789
+        core_density = 1.23456789
         base_energy = 100
 
         swepam_energies = np.array([2.55714286, 3.65142857, 5.16, 7.30571429,
@@ -579,18 +579,18 @@ class TestMomentsCalculation(unittest.TestCase):
                                     142.14285714, 196.57142857, 272., 372.71428571,
                                     519.0, 712.57142857, 987.14285714, 1370.0])
 
-        energy = np.broadcast_to(swepam_energies[:, np.newaxis, np.newaxis], (20, 7, 30))
         phi = np.broadcast_to((np.arange(0, 30) * 360 / 30)[np.newaxis, np.newaxis, :], (20, 7, 30))
 
         core_density_output = \
-            moment_calculations.scale_density(core_velocity, core_temp,
-                                              core_moment_fit, ifit, energy - spacecraft_potential,
-                                              spacecraft_potential, cosin_p,
-                                              aperture_field_of_view,
-                                              phi,
-                                              regress_outputs,
-                                              initial_core_density,
-                                              base_energy)
+            moment_calculations.scale_density(
+                core_density,
+                core_velocity, core_temp,
+                core_moment_fit, ifit, swepam_energies - spacecraft_potential,
+                spacecraft_potential, cosin_p,
+                aperture_field_of_view,
+                phi,
+                regress_outputs,
+                base_energy)
 
         np.testing.assert_allclose(np.array([5.71854e+06, -2.63793e+08, 8.57113e+07, -8.11159e+06]),
                                    core_density_output.cdelnv, rtol=2e-5)
@@ -626,7 +626,7 @@ class TestMomentsCalculation(unittest.TestCase):
         aperture_field_of_view = np.array([0.6178, 0.3770, 0.3857, 0.3805, 0.3805, 0.3805, 0.6196])
 
         regress_outputs = np.array([-1e-9, -9e-10, -8e-10, -7e-10, -6e-10, -5e-10, -4e-10, -3e-10, -2e-10, -1e-10])
-        initial_core_density = 1.23456789
+        core_density = 1.23456789
         base_energy = 100
 
         swepam_energies = np.array([2.55714286, 3.65142857, 5.16, 7.30571429,
@@ -635,17 +635,18 @@ class TestMomentsCalculation(unittest.TestCase):
                                     142.14285714, 196.57142857, 272., 372.71428571,
                                     519.0, 712.57142857, 987.14285714, 1370.0])
 
-        energy = np.broadcast_to(swepam_energies[:, np.newaxis, np.newaxis], (20, 7, 30))
         phi = np.broadcast_to((np.arange(0, 30) * 360 / 30)[np.newaxis, np.newaxis, :], (20, 7, 30))
 
-        core_density_output = moment_calculations.scale_density(core_velocity, core_temp,
-                                                                core_moment_fit, ifit, energy - spacecraft_potential,
-                                                                spacecraft_potential, cosin_p,
-                                                                aperture_field_of_view,
-                                                                phi,
-                                                                regress_outputs,
-                                                                initial_core_density,
-                                                                base_energy)
+        core_density_output = moment_calculations.scale_density(
+            core_density,
+            core_velocity, core_temp,
+            core_moment_fit, ifit,
+            swepam_energies - spacecraft_potential,
+            spacecraft_potential, cosin_p,
+            aperture_field_of_view,
+            phi,
+            regress_outputs,
+            base_energy)
 
         np.testing.assert_allclose(np.array([817042, -1.46993e+07, 4.7761e+06, -451960, ]), core_density_output.cdelnv,
                                    rtol=2e-5)

@@ -534,13 +534,13 @@ def integrate(istart, iend, energy: np.ndarray, sintheta: np.ndarray,
     return IntegrateOutputs(totden, output_velocities, temperature, heat_flux)
 
 
-def scale_density(core_velocity: np.ndarray, core_temp: np.ndarray,
+def scale_density(core_density: float,
+                  core_velocity: np.ndarray, core_temp: np.ndarray,
                   core_moment_fit: Moments, ifit: int, energy: np.ndarray,
                   spacecraft_potential: float, cosin_p: np.ndarray,
                   aperture_field_of_view: np.ndarray,
                   phi: np.ndarray,
                   regress_outputs: np.ndarray,
-                  initial_core_density: float,
                   base_energy: float) -> ScaleDensityOutput:
     eobolt = 12345
 
@@ -553,12 +553,12 @@ def scale_density(core_velocity: np.ndarray, core_temp: np.ndarray,
     delv = np.zeros((2, NUMBER_OF_DETECTORS))
     velocity_in_sc_frame = np.zeros((2, NUMBER_OF_DETECTORS))
     for j in range(NUMBER_OF_DETECTORS):
-        ehigh = np.sqrt((energy[ifit + 1, j, 1] + spacecraft_potential) *
-                        (energy[ifit, j, 1] + spacecraft_potential))
-        elow = np.sqrt((energy[ifit, j, 1] + spacecraft_potential) *
-                       (energy[ifit - 1, j, 1] + spacecraft_potential))
+        ehigh = np.sqrt((energy[ifit + 1] + spacecraft_potential) *
+                        (energy[ifit] + spacecraft_potential))
+        elow = np.sqrt((energy[ifit] + spacecraft_potential) *
+                       (energy[ifit - 1] + spacecraft_potential))
         delv[0, j] = ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR * (np.sqrt(ehigh) - np.sqrt(elow))
-        velocity_in_sc_frame[0, j] = ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR * np.sqrt(energy[ifit, j, 1])
+        velocity_in_sc_frame[0, j] = ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR * np.sqrt(energy[ifit])
         base_energy = min(base_energy, elow)
     base_energy -= spacecraft_potential
     if base_energy > 0:
@@ -604,14 +604,14 @@ def scale_density(core_velocity: np.ndarray, core_temp: np.ndarray,
     sum_velocities = np.array([sumvx, sumvy, sumvz])
     sum_temperatures = np.array([sumtxx, sumtxy, sumtyy, sumtxz, sumtyz, sumtzz])
 
-    corrected_density = initial_core_density + sumint
+    corrected_density = core_density + sumint
 
     corrected_core_velocity = core_velocity.copy()
-    corrected_core_velocity *= initial_core_density / corrected_density
+    corrected_core_velocity *= core_density / corrected_density
     corrected_core_velocity += sum_velocities * (-1e-5) / corrected_density
 
     corrected_core_temp = core_temp.copy()
-    corrected_core_temp *= initial_core_density / corrected_density
+    corrected_core_temp *= core_density / corrected_density
     corrected_core_temp += sum_temperatures * 1e-4 * eobolt / corrected_density
 
     cdelnv = np.array([sumint, sumvx * (-1e-5), sumvy * (-1e-5), sumvz * (-1e-5)])
