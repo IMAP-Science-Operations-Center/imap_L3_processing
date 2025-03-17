@@ -28,7 +28,7 @@ class TestModels(CdfModelTestCase):
             start_date=datetime.min,
             end_date=datetime.max,
             version="1",
-            descriptor="direct-event"
+            descriptor="direct-events"
         )
 
         epoch = np.array([datetime.now(), datetime.now() + timedelta(hours=1)])

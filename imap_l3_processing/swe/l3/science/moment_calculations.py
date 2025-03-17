@@ -1,20 +1,147 @@
 import math
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Union
 
 import numpy as np
 from spiceypy import spiceypy
 
 from imap_l3_processing.constants import ELECTRON_MASS_KG, \
-    BOLTZMANN_CONSTANT_JOULES_PER_KELVIN
+    BOLTZMANN_CONSTANT_JOULES_PER_KELVIN, ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR, METERS_PER_KILOMETER, \
+    CENTIMETERS_PER_METER
 
 # units of K / (m^2/s^2)
 ZMK = ELECTRON_MASS_KG / (2 * BOLTZMANN_CONSTANT_JOULES_PER_KELVIN)
 
 
-def regress(velocity_vectors: np.ndarray[float], weight: np.ndarray[float], yreg: np.ndarray[float]) -> \
-        np.ndarray[float]:
+@dataclass
+class Moments:
+    alpha: float
+    beta: float
+    t_parallel: float
+    t_perpendicular: float
+    velocity_x: float
+    velocity_y: float
+    velocity_z: float
+    density: float
+    aoo: float
+    ao: float
+
+    @classmethod
+    def construct_all_fill(cls):
+        return cls(alpha=np.nan,
+                   beta=np.nan,
+                   t_parallel=np.nan,
+                   t_perpendicular=np.nan,
+                   velocity_x=np.nan,
+                   velocity_y=np.nan,
+                   velocity_z=np.nan,
+                   density=np.nan,
+                   aoo=np.nan,
+                   ao=np.nan,
+                   )
+
+
+@dataclass
+class MomentFitResults:
+    moments: Moments
+    chisq: float
+    number_of_points: int
+
+
+@dataclass
+class HaloCorrectionParameters:
+    spacecraft_potential: float
+    core_halo_breakpoint: float
+
+
+def core_fit_moments_retrying_on_failure(corrected_energy_bins: np.ndarray,
+                                         velocity_vectors: np.ndarray,
+                                         phase_space_density: np.ndarray,
+                                         weights: np.ndarray,
+                                         energy_start: int,
+                                         energy_end: int,
+                                         density_history: Union[np.ndarray, list[float]]) -> Optional[MomentFitResults]:
+    return _fit_moments_retrying_on_failure(
+        corrected_energy_bins,
+        velocity_vectors,
+        phase_space_density,
+        weights,
+        energy_start,
+        energy_end,
+        density_history,
+        1.85
+    )
+
+
+def halo_fit_moments_retrying_on_failure(corrected_energy_bins: np.ndarray, velocity_vectors: np.ndarray,
+                                         phase_space_density: np.ndarray,
+                                         weights: np.ndarray,
+                                         energy_start: int,
+                                         energy_end: int,
+                                         density_history: Union[np.ndarray, list[float]],
+                                         spacecraft_potential: Union[np.float64, float],
+                                         core_halo_breakpoint: Union[np.float64, float]) -> Optional[MomentFitResults]:
+    return _fit_moments_retrying_on_failure(
+        corrected_energy_bins,
+        velocity_vectors,
+        phase_space_density,
+        weights,
+        energy_start,
+        energy_end,
+        density_history,
+        1.35,
+        halo_correction_parameters=HaloCorrectionParameters(spacecraft_potential,
+                                                            core_halo_breakpoint)
+    )
+
+
+def _fit_moments_retrying_on_failure(corrected_energy_bins: np.ndarray,
+                                     velocity_vectors: np.ndarray,
+                                     phase_space_density: np.ndarray,
+                                     weights: np.ndarray,
+                                     energy_start: int,
+                                     energy_end: int,
+                                     density_history: Union[np.ndarray, list[float]],
+                                     history_scalar: float,
+                                     halo_correction_parameters: Optional[HaloCorrectionParameters] = None) -> Optional[
+    MomentFitResults]:
+    filtered_velocity_vectors, filtered_weights, filtered_yreg = filter_and_flatten_regress_parameters(
+        corrected_energy_bins,
+        velocity_vectors,
+        phase_space_density,
+        weights,
+        energy_start,
+        energy_end)
+
+    fit_function, chi_squared = regress(filtered_velocity_vectors, filtered_weights, filtered_yreg)
+    moment = calculate_fit_temperature_density_velocity(fit_function)
+    average_density = np.average(density_history) * history_scalar
+
+    if halo_correction_parameters is not None:
+        moment.density = halotrunc(moment, halo_correction_parameters.core_halo_breakpoint,
+                                   halo_correction_parameters.spacecraft_potential)
+
+    if 0 < moment.density < average_density:
+        return MomentFitResults(moments=moment, chisq=chi_squared, number_of_points=energy_end - energy_start)
+    elif energy_end - energy_start < 4:
+        return None
+    else:
+        return _fit_moments_retrying_on_failure(
+            corrected_energy_bins,
+            velocity_vectors,
+            phase_space_density,
+            weights,
+            energy_start,
+            energy_end - 1,
+            density_history,
+            history_scalar,
+            halo_correction_parameters
+        )
+
+
+def regress(velocity_vectors: np.ndarray, weight: np.ndarray, yreg: np.ndarray) -> \
+        np.ndarray:
     fit_function = np.zeros((len(velocity_vectors), 9))
 
     velocity_xs = velocity_vectors[:, 0]
@@ -99,20 +226,6 @@ def regress(velocity_vectors: np.ndarray[float], weight: np.ndarray[float], yreg
     return a, chisq
 
 
-@dataclass
-class Moments:
-    alpha: float
-    beta: float
-    t_parallel: float
-    t_perpendicular: float
-    velocity_x: float
-    velocity_y: float
-    velocity_z: float
-    density: float
-    aoo: float
-    ao: float
-
-
 def calculate_fit_temperature_density_velocity(parameters: np.ndarray[float]):
     moments = Moments(alpha=0,
                       beta=0,
@@ -183,13 +296,13 @@ MINIMUM_WEIGHT = 0.8165
 MAX_VARIANCE = 349525.25
 
 
-def compute_maxwellian_weight_factors(count_rates: np.ndarray[float], acquisition_durations: np.ndarray[float]) -> \
+def compute_maxwellian_weight_factors(count_rates: np.ndarray, acquisition_durations: np.ndarray) -> \
         np.ndarray[float]:
-    correction = 1.0 - 1e-9 * LIMIT / acquisition_durations.reshape((*acquisition_durations.shape, 1))
+    correction = 1.0 - 1e-9 * LIMIT / acquisition_durations[:, :, np.newaxis]
     correction[correction < 0.1] = 0.1
     xlimits_per_measurement = LIMIT / correction
 
-    counts = count_rates * acquisition_durations
+    counts = count_rates * acquisition_durations[:, :, np.newaxis]
     weights = np.empty_like(count_rates, dtype=np.float64)
 
     for (energy_i, spin_i, declination_i), corrected_count in np.ndenumerate(counts):
@@ -197,7 +310,7 @@ def compute_maxwellian_weight_factors(count_rates: np.ndarray[float], acquisitio
             weights[energy_i, spin_i, declination_i] = MINIMUM_WEIGHT
         else:
             variance = MAX_VARIANCE
-            xlimits = xlimits_per_measurement[energy_i, spin_i, declination_i]
+            xlimits = xlimits_per_measurement[energy_i, spin_i]
             for xlimit, sigma in zip(xlimits, SIGMA2):
                 if corrected_count < xlimit:
                     variance = sigma
@@ -228,7 +341,7 @@ def filter_and_flatten_regress_parameters(corrected_energy_bins: np.ndarray,
     return velocity_vectors[valid_mask], weights[valid_mask], yreg
 
 
-def rotate_dps_vector_to_rtn(epoch: datetime, vector: np.ndarray[float]) -> np.ndarray[float]:
+def rotate_dps_vector_to_rtn(epoch: datetime, vector: np.ndarray) -> np.ndarray:
     et_time = spiceypy.datetime2et(epoch)
     rotation_matrix = spiceypy.pxform("IMAP_DPS", "IMAP_RTN", et_time)
     return rotation_matrix @ vector
@@ -242,8 +355,8 @@ def rotate_temperature(epoch: datetime, alpha: float, beta: float):
 
     rtn_temperature = rotate_dps_vector_to_rtn(epoch, np.array([x, y, z]))
 
-    phi = np.asin(rtn_temperature[2])
-    theta = np.atan2(rtn_temperature[1], rtn_temperature[0])
+    theta = np.asin(rtn_temperature[2])
+    phi = np.atan2(rtn_temperature[1], rtn_temperature[0])
 
     return theta, phi
 
@@ -300,3 +413,113 @@ def halotrunc(moments: Moments, core_halo_breakpoint: float, spacecraft_potentia
     halod = halod / np.clip(dscale, 1, 5)
 
     return halod
+
+
+@dataclass
+class CoreIntegrateOutputs:
+    density: np.float64
+    velocity: np.ndarray
+    temperature: np.ndarray
+    heat_flux: np.ndarray
+
+
+def integrate(istart, iend, energy: np.ndarray, sintheta: np.ndarray,
+              costheta: np.ndarray, deltheta: np.ndarray, fv: np.ndarray, phi: np.ndarray,
+              spacecraft_potential: float, cdelnv: np.ndarray, cdelt: np.ndarray) -> Optional[
+    CoreIntegrateOutputs]:
+    # kmax? 30 or based on array size? expect different for different detectors?
+    sumn = 0
+    sumvx = 0
+    sumvy = 0
+    sumvz = 0
+    base = 1000
+    delphi = np.full(7, 2 * np.pi / 30)
+    delv = np.empty((len(energy), 7))
+    for i in range(istart, iend + 1):
+        for j in range(7):
+            if energy[i, j, 1] > 0:
+                v2mid = (ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR ** 2) * energy[i, j, 1]
+                v3mid = v2mid * np.sqrt(v2mid)
+            else:
+                v2mid = 0
+                v3mid = 0
+            ehigh = 1.175 * energy[i, j, 1]
+            if i < len(energy) - 1:
+                ehigh = np.sqrt((energy[i + 1, j, 1] + spacecraft_potential) * (energy[i, j, 1] + spacecraft_potential))
+            elow = np.sqrt((energy[i, j, 1] + spacecraft_potential) * (energy[i - 1, j, 1] + spacecraft_potential))
+
+            delv[i, j] = ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR * (np.sqrt(ehigh) - np.sqrt(elow))
+            if elow < base:
+                base = elow
+
+            for k in range(28):  # why 28 and not 30?
+                if energy[i, j, k] > 0:
+                    delta = delv[i, j] * deltheta[i, j] * delphi[j]
+                    fact = sintheta[i, j] * fv[i, j, k]
+                    sumn += delta * v2mid * fact
+                    sumvx += delta * v3mid * fact * sintheta[i, j] * np.cos(np.deg2rad(phi[i, j, k]))
+                    sumvy += delta * v3mid * fact * sintheta[i, j] * np.sin(np.deg2rad(phi[i, j, k]))
+                    sumvz += delta * v3mid * fact * costheta[i, j]
+
+    totden = sumn + cdelnv[0]
+    if totden <= 0:
+        return None
+    eobolt = 12345
+
+    base -= spacecraft_potential
+    CM_PER_KM = METERS_PER_KILOMETER * CENTIMETERS_PER_METER
+    KM_PER_CM = 1 / CM_PER_KM
+    output_velocities = np.array([
+        (-KM_PER_CM * sumvx + cdelnv[1]) / totden,
+        (-KM_PER_CM * sumvy + cdelnv[2]) / totden,
+        (-KM_PER_CM * sumvz + cdelnv[3]) / totden,
+        base,
+    ])
+
+    sumtxx = 0
+    sumtxy = 0
+    sumtxz = 0
+    sumtyy = 0
+    sumtyz = 0
+    sumtzz = 0
+    sumqx = 0
+    sumqy = 0
+    sumqz = 0
+    for i in range(istart, iend + 1):
+        for j in range(7):
+            v2mid = (ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR ** 2) * energy[i, j, 1]
+            for k in range(28):  # again why 28?
+                if energy[i, j, k] > 0:
+                    angx = sintheta[i, j] * np.cos(np.deg2rad(phi[i, j, k]))
+                    vx = -ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR * np.sqrt(energy[i, j, k]) * angx - CM_PER_KM * \
+                         output_velocities[0]
+
+                    angy = sintheta[i, j] * np.sin(np.deg2rad(phi[i, j, k]))
+                    vy = -ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR * np.sqrt(energy[i, j, k]) * angy - CM_PER_KM * \
+                         output_velocities[1]
+
+                    angz = costheta[i, j]
+                    vz = -ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR * np.sqrt(energy[i, j, k]) * angz - CM_PER_KM * \
+                         output_velocities[2]
+
+                    vmag2 = vx * vx + vy * vy + vz * vz
+
+                    delta = delv[i, j] * deltheta[i, j] * delphi[j]
+                    fact = v2mid * sintheta[i, j] * fv[i, j, k]
+                    sumtxx += delta * fact * vx * vx
+                    sumtxy += delta * fact * vx * vy
+                    sumtxz += delta * fact * vx * vz
+                    sumtyy += delta * fact * vy * vy
+                    sumtyz += delta * fact * vy * vz
+                    sumtzz += delta * fact * vz * vz
+                    sumqx += delta * fact * vmag2 * vx
+                    sumqy += delta * fact * vmag2 * vy
+                    sumqz += delta * fact * vmag2 * vz
+
+    TEMPERATURE_SCALING_FACTOR_TO_UNDO_IN_EIGEN = 1e-4
+    temperature = (np.array([sumtxx, sumtxy, sumtyy, sumtxz, sumtyz, sumtzz]) *
+                   TEMPERATURE_SCALING_FACTOR_TO_UNDO_IN_EIGEN * eobolt + cdelt) / totden
+
+    heat_flux = np.array([sumqx, sumqy, sumqz]) * 500 * ELECTRON_MASS_KG
+
+    return CoreIntegrateOutputs(totden, output_velocities, temperature, heat_flux)

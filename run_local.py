@@ -6,13 +6,13 @@ from pathlib import Path
 from bitstring import BitStream
 from spacepy.pycdf import CDF
 
-from imap_l3_processing.hi.hi_processor import HiProcessor
-from imap_l3_processing.hi.l3.hi_l3_dependencies import HiL3Dependencies
 from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
 from imap_l3_processing.glows.descriptors import GLOWS_L2_DESCRIPTOR
 from imap_l3_processing.glows.glows_processor import GlowsProcessor
 from imap_l3_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
 from imap_l3_processing.glows.l3a.utils import read_l2_glows_data
+from imap_l3_processing.hi.hi_processor import HiProcessor
+from imap_l3_processing.hi.l3.hi_l3_dependencies import HiL3Dependencies
 from imap_l3_processing.hit.l3.hit_l3_sectored_dependencies import HITL3SectoredDependencies
 from imap_l3_processing.hit.l3.hit_processor import HitProcessor
 from imap_l3_processing.hit.l3.models import HitL1Data
@@ -145,7 +145,7 @@ def create_swe_pitch_angle_cdf(dependencies: SweL3Dependencies) -> str:
         end_date=datetime(2010, 1, 2),
         version='v000')
     processor = SweProcessor(None, input_metadata)
-    output_data = processor.calculate_pitch_angle_products(dependencies)
+    output_data = processor.calculate_products(dependencies)
     cdf_path = save_data(output_data)
     return cdf_path
 
@@ -183,9 +183,9 @@ def create_hit_sectored_cdf(dependencies: HITL3SectoredDependencies) -> str:
         instrument='hit',
         data_level='l3',
         descriptor='macropixel',
-        start_date=datetime(2025, 10, 23),
-        end_date=datetime(2025, 10, 24),
-        version='v999')
+        start_date=datetime(2025, 1, 1),
+        end_date=datetime(2025, 1, 2),
+        version='v000')
     processor = HitProcessor(None, input_metadata)
     output_data = processor.process_pitch_angle_product(dependencies)
     delete_temp_cdf_file_path_if_exists(output_data)
@@ -260,7 +260,7 @@ def create_hit_direct_event_cdf():
         start_date=datetime.now(),
         end_date=datetime.now() + timedelta(days=1),
         version=str(uuid.uuid4()),
-        descriptor="direct-event"
+        descriptor="direct-events"
     )
     processor = HitProcessor(None, input_metadata)
 
@@ -317,7 +317,7 @@ if __name__ == "__main__":
             dependencies = HITL3SectoredDependencies(mag_l1d_data=mag_data, data=hit_data)
             print(f"hit macropixel data product: {create_hit_sectored_cdf(dependencies)}")
 
-    if "swe_pitch_angles" in sys.argv:
+    if "swe" in sys.argv:
         dependencies = SweL3Dependencies.from_file_paths(
             get_test_data_path("swe/imap_swe_l2_sci-with-ace-data_20100101_v002.cdf"),
             get_test_data_path("swe/imap_swe_l1b_sci-with-ace-data_20100101_v002.cdf"),
@@ -327,18 +327,8 @@ if __name__ == "__main__":
         )
         print(create_swe_pitch_angle_cdf(dependencies))
 
-    if "swe_moments" in sys.argv:
-        dependencies = SweL3Dependencies.from_file_paths(
-            get_test_data_path("swe/imap_swe_l2_sci-3-11-good-epochs_20240510_v002.cdf"),
-            get_test_data_path("swe/imap_swe_l1b_sci-3-11-good-times_20100101_v002.cdf"),
-            get_test_data_path("swe/imap_mag_l1d_mago-normal_20100101_v001.cdf"),
-            get_test_data_path("swe/imap_swapi_l3a_proton-sw_20100101_v001.cdf"),
-            get_test_data_path("swe/example_swe_config.json"),
-        )
-        print(create_swe_moments_cdf(dependencies))
-
     if "hi" in sys.argv:
         dependencies = HiL3Dependencies.from_file_paths(
-            get_test_data_path("hvset_2013A.cdf")
+            get_test_data_path("hvset_noSP_ram_cg_2013.cdf")
         )
         print(create_hi_cdf(dependencies))

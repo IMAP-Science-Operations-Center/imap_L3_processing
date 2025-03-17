@@ -9,7 +9,13 @@ from imap_l3_processing.swe.l3.models import SweL3Data, EPOCH_CDF_VAR_NAME, EPOC
     ENERGY_DELTA_PLUS_CDF_VAR_NAME, ENERGY_DELTA_MINUS_CDF_VAR_NAME, PITCH_ANGLE_CDF_VAR_NAME, \
     PITCH_ANGLE_DELTA_CDF_VAR_NAME, PHASE_SPACE_DENSITY_BY_PITCH_ANGLE_CDF_VAR_NAME, \
     ENERGY_SPECTRUM_CDF_VAR_NAME, ENERGY_SPECTRUM_OUTBOUND_CDF_VAR_NAME, ENERGY_SPECTRUM_INBOUND_CDF_VAR_NAME, \
-    SPACECRAFT_POTENTIAL_CDF_VAR_NAME, CORE_HALO_BREAKPOINT_CDF_VAR_NAME
+    SPACECRAFT_POTENTIAL_CDF_VAR_NAME, CORE_HALO_BREAKPOINT_CDF_VAR_NAME, CORE_FIT_NUM_POINTS_CDF_VAR_NAME, \
+    CHISQ_C_CDF_VAR_NAME, CHISQ_H_CDF_VAR_NAME, CORE_DENSITY_FIT_CDF_VAR_NAME, HALO_DENSITY_FIT_CDF_VAR_NAME, \
+    CORE_T_PARALLEL_FIT_CDF_VAR_NAME, HALO_T_PARALLEL_FIT_CDF_VAR_NAME, CORE_T_PERPENDICULAR_FIT_CDF_VAR_NAME, \
+    HALO_T_PERPENDICULAR_FIT_CDF_VAR_NAME, CORE_TEMPERATURE_PHI_RTN_FIT_CDF_VAR_NAME, \
+    HALO_TEMPERATURE_PHI_RTN_FIT_CDF_VAR_NAME, CORE_TEMPERATURE_THETA_RTN_FIT_CDF_VAR_NAME, \
+    HALO_TEMPERATURE_THETA_RTN_FIT_CDF_VAR_NAME, CORE_SPEED_FIT_CDF_VAR_NAME, HALO_SPEED_FIT_CDF_VAR_NAME, \
+    CORE_VELOCITY_VECTOR_RTN_FIT_CDF_VAR_NAME, HALO_VELOCITY_VECTOR_RTN_FIT_CDF_VAR_NAME
 from tests.swapi.cdf_model_test_case import CdfModelTestCase
 
 
@@ -28,6 +34,23 @@ class TestModels(CdfModelTestCase):
         energy_spectrum_outbound = Mock()
         spacecraft_potential = Mock()
         core_halo_breakpoint = Mock()
+        core_fit_num_points = Mock()
+        chisq_c = Mock()
+        chisq_h = Mock()
+        core_density_fit = Mock()
+        halo_density_fit = Mock()
+        core_t_parallel_fit = Mock()
+        halo_t_parallel_fit = Mock()
+        core_t_perpendicular_fit = Mock()
+        halo_t_perpendicular_fit = Mock()
+        core_temperature_phi_rtn_fit = Mock()
+        halo_temperature_phi_rtn_fit = Mock()
+        core_temperature_theta_rtn_fit = Mock()
+        halo_temperature_theta_rtn_fit = Mock()
+        core_speed_fit = Mock()
+        halo_speed_fit = Mock()
+        core_velocity_vector_rtn_fit = Mock()
+        halo_velocity_vector_rtn_fit = Mock()
 
         data = SweL3Data(epoch=epoch,
                          epoch_delta=epoch_delta,
@@ -42,10 +65,27 @@ class TestModels(CdfModelTestCase):
                          energy_spectrum_outbound=energy_spectrum_outbound,
                          spacecraft_potential=spacecraft_potential,
                          core_halo_breakpoint=core_halo_breakpoint,
+                         core_fit_num_points=core_fit_num_points,
+                         core_chisq=chisq_c,
+                         halo_chisq=chisq_h,
+                         core_density_fit=core_density_fit,
+                         halo_density_fit=halo_density_fit,
+                         core_t_parallel_fit=core_t_parallel_fit,
+                         halo_t_parallel_fit=halo_t_parallel_fit,
+                         core_t_perpendicular_fit=core_t_perpendicular_fit,
+                         halo_t_perpendicular_fit=halo_t_perpendicular_fit,
+                         core_temperature_phi_rtn_fit=core_temperature_phi_rtn_fit,
+                         halo_temperature_phi_rtn_fit=halo_temperature_phi_rtn_fit,
+                         core_temperature_theta_rtn_fit=core_temperature_theta_rtn_fit,
+                         halo_temperature_theta_rtn_fit=halo_temperature_theta_rtn_fit,
+                         core_speed_fit=core_speed_fit,
+                         halo_speed_fit=halo_speed_fit,
+                         core_velocity_vector_rtn_fit=core_velocity_vector_rtn_fit,
+                         halo_velocity_vector_rtn_fit=halo_velocity_vector_rtn_fit,
                          input_metadata=Mock())
 
         variables = data.to_data_product_variables()
-        self.assertEqual(13, len(variables))
+        self.assertEqual(30, len(variables))
 
         variables = iter(variables)
         # @formatter:off
@@ -75,6 +115,41 @@ class TestModels(CdfModelTestCase):
             next(variables), spacecraft_potential, SPACECRAFT_POTENTIAL_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
         self.assert_variable_attributes(
             next(variables), core_halo_breakpoint, CORE_HALO_BREAKPOINT_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+
+        self.assert_variable_attributes(
+            next(variables), core_fit_num_points, CORE_FIT_NUM_POINTS_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+        self.assert_variable_attributes(
+            next(variables), chisq_c, CHISQ_C_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+        self.assert_variable_attributes(
+            next(variables), chisq_h, CHISQ_H_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+        self.assert_variable_attributes(
+            next(variables), core_density_fit, CORE_DENSITY_FIT_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+        self.assert_variable_attributes(
+            next(variables), halo_density_fit, HALO_DENSITY_FIT_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+        self.assert_variable_attributes(
+            next(variables), core_t_parallel_fit, CORE_T_PARALLEL_FIT_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+        self.assert_variable_attributes(
+            next(variables), halo_t_parallel_fit, HALO_T_PARALLEL_FIT_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+        self.assert_variable_attributes(
+            next(variables), core_t_perpendicular_fit, CORE_T_PERPENDICULAR_FIT_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+        self.assert_variable_attributes(
+            next(variables), halo_t_perpendicular_fit, HALO_T_PERPENDICULAR_FIT_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+        self.assert_variable_attributes(
+            next(variables), core_temperature_phi_rtn_fit, CORE_TEMPERATURE_PHI_RTN_FIT_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+        self.assert_variable_attributes(
+            next(variables), halo_temperature_phi_rtn_fit, HALO_TEMPERATURE_PHI_RTN_FIT_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+        self.assert_variable_attributes(
+            next(variables), core_temperature_theta_rtn_fit, CORE_TEMPERATURE_THETA_RTN_FIT_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+        self.assert_variable_attributes(
+            next(variables), halo_temperature_theta_rtn_fit, HALO_TEMPERATURE_THETA_RTN_FIT_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+        self.assert_variable_attributes(
+            next(variables), core_speed_fit, CORE_SPEED_FIT_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+        self.assert_variable_attributes(
+            next(variables), halo_speed_fit, HALO_SPEED_FIT_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+        self.assert_variable_attributes(
+            next(variables), core_velocity_vector_rtn_fit, CORE_VELOCITY_VECTOR_RTN_FIT_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+        self.assert_variable_attributes(
+            next(variables), halo_velocity_vector_rtn_fit, HALO_VELOCITY_VECTOR_RTN_FIT_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
 
 
 if __name__ == '__main__':
