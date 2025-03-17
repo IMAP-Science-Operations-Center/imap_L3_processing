@@ -543,26 +543,12 @@ def scale_density(core_velocity: np.ndarray, core_temp: np.ndarray,
                   regress_outputs: np.ndarray,
                   initial_core_density: float,
                   base_energy: float) -> ScaleDensityOutput:
-    sumtxx = 0
-    sumtxy = 0
-    sumtyy = 0
-    sumtxz = 0
-    sumtyz = 0
-    sumtzz = 0
-    sumint = 0
-    sumvx = 0
-    sumvy = 0
-    sumvz = 0
-
     eobolt = 12345
 
     zmk = ELECTRON_MASS_KG / (2 * BOLTZMANN_CONSTANT_JOULES_PER_KELVIN * 1e4)
     MAX_SPIN_SECTOR_INDEX = 28  # why 28 and not 30?
     KMAX = np.full(7, 30)
 
-    exponent = np.full((2, NUMBER_OF_DETECTORS, MAX_SPIN_SECTOR_INDEX), -zmk * core_moment_fit.aoo)
-
-    fv_integral = np.zeros((2, NUMBER_OF_DETECTORS, MAX_SPIN_SECTOR_INDEX))
     number_of_energies = 1
     assert 0 < ifit < len(energy) - 1, "ifit must be in middle of energies"
     delv = np.zeros((2, NUMBER_OF_DETECTORS))
@@ -583,58 +569,48 @@ def scale_density(core_velocity: np.ndarray, core_temp: np.ndarray,
     factor = core_moment_fit.density * zmk / (np.pi * core_moment_fit.t_parallel) * np.sqrt(
         zmk / (np.pi * core_moment_fit.t_perpendicular))
 
-    cos_theta = cosin_p
+    cos_theta = cosin_p[np.newaxis, :, np.newaxis]
     sin_theta = np.sin(np.arccos(cos_theta))
-    delta_theta = aperture_field_of_view
+    delta_theta = aperture_field_of_view[np.newaxis, :, np.newaxis]
     cos_phi = np.cos(np.deg2rad(phi[0, 0]))
     sin_phi = np.sin(np.deg2rad(phi[0, 0]))
     delta_phi = 2 * np.pi / KMAX[-1]
 
-    vscx = np.zeros((2, NUMBER_OF_DETECTORS, MAX_SPIN_SECTOR_INDEX))
-    vscy = np.zeros((2, NUMBER_OF_DETECTORS, MAX_SPIN_SECTOR_INDEX))
-    vscz = np.zeros((2, NUMBER_OF_DETECTORS, MAX_SPIN_SECTOR_INDEX))
+    velocity_3_dim = velocity_in_sc_frame[:, :, np.newaxis]
+    vx = -velocity_3_dim * sin_theta * cos_phi
+    vy = -velocity_3_dim * sin_theta * sin_phi
+    vz = -velocity_3_dim * cos_theta
 
-    for j in range(NUMBER_OF_DETECTORS):
-        for k in range(MAX_SPIN_SECTOR_INDEX):
-            for i in range(number_of_energies):
-                vx = -velocity_in_sc_frame[i, j] * sin_theta[j] * cos_phi[k]
-                vy = -velocity_in_sc_frame[i, j] * sin_theta[j] * sin_phi[k]
-                vz = -velocity_in_sc_frame[i, j] * cos_theta[j]
-                vscx[i, j, k] = vx
-                vscy[i, j, k] = vy
-                vscz[i, j, k] = vz
+    fun = -zmk * np.stack(np.broadcast_arrays(vx * vx, vy * vy, vz * vz, vx * vy, vx * vz, vy * vz, vx, vy, vz),
+                          axis=-1)
+    exponent = np.dot(fun, regress_outputs[:9])
+    delt = delv[:, :, np.newaxis] * delta_theta * delta_phi
+    common_factor = np.square(velocity_3_dim) * delt * sin_theta * factor * np.exp(exponent)
 
-                fun = -zmk * np.array([vx * vx, vy * vy, vz * vz, vx * vy, vx * vz, vy * vz, vx, vy, vz])
-                exponent[i, j, k] += np.dot(fun, regress_outputs[:9])
-                fv_integral[i, j, k] = factor * np.exp(exponent[i, j, k])
+    def integrate(array):
+        return np.sum(array[:number_of_energies, :NUMBER_OF_DETECTORS, :MAX_SPIN_SECTOR_INDEX])
 
-                delt = delv[i][j] * delta_theta[j] * delta_phi
-                v2 = velocity_in_sc_frame[i][j] * velocity_in_sc_frame[i][j]
+    sumint = integrate(common_factor)
+    sumvx = integrate(vx * common_factor)
+    sumvy = integrate(vy * common_factor)
+    sumvz = integrate(vz * common_factor)
 
-                common_factor = v2 * delt * sin_theta[j] * fv_integral[i, j, k]
+    sumtxx = integrate(vx * vx * common_factor)
+    sumtxy = integrate(vx * vy * common_factor)
+    sumtxz = integrate(vx * vz * common_factor)
+    sumtyy = integrate(vy * vy * common_factor)
+    sumtyz = integrate(vy * vz * common_factor)
+    sumtzz = integrate(vz * vz * common_factor)
 
-                sumint += common_factor
+    sum_velocities = np.array([sumvx, sumvy, sumvz])
+    sum_temperatures = np.array([sumtxx, sumtxy, sumtyy, sumtxz, sumtyz, sumtzz])
 
-                sumvx += vx * common_factor
-                sumvy += vy * common_factor
-                sumvz += vz * common_factor
-                sumtxx += vx * vx * common_factor
-                sumtxy += vx * vy * common_factor
-                sumtxz += vx * vz * common_factor
-                sumtyy += vy * vy * common_factor
-                sumtyz += vy * vz * common_factor
-                sumtzz += vz * vz * common_factor
-
-    corrected_density = initial_core_density
-
-    corrected_density += sumint
+    corrected_density = initial_core_density + sumint
 
     corrected_core_velocity = core_velocity.copy()
-
     corrected_core_velocity *= initial_core_density / corrected_density
-    corrected_core_velocity += np.array([sumvx, sumvy, sumvz]) * (-1e-5) / corrected_density
+    corrected_core_velocity += sum_velocities * (-1e-5) / corrected_density
 
-    sum_temperatures = np.array([sumtxx, sumtxy, sumtyy, sumtxz, sumtyz, sumtzz])
     corrected_core_temp = core_temp.copy()
     corrected_core_temp *= initial_core_density / corrected_density
     corrected_core_temp += sum_temperatures * 1e-4 * eobolt / corrected_density
