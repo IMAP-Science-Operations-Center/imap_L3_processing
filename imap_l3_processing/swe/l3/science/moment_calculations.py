@@ -11,9 +11,9 @@ from imap_l3_processing.constants import ELECTRON_MASS_KG, \
     CENTIMETERS_PER_METER, PROTON_CHARGE_COULOMBS
 
 # units of K / (m^2/s^2)
-ZMK = ELECTRON_MASS_KG / (2 * BOLTZMANN_CONSTANT_JOULES_PER_KELVIN)
 ELECTRON_MASS_OVER_BOLTZMANN_IN_CGS_UNITS = ELECTRON_MASS_KG / BOLTZMANN_CONSTANT_JOULES_PER_KELVIN * 1e-4
 NUMBER_OF_DETECTORS = 7
+ZMK = 3.2971e-12
 
 ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR = np.sqrt(2 * PROTON_CHARGE_COULOMBS / ELECTRON_MASS_KG) * 100
 
@@ -145,7 +145,7 @@ def _fit_moments_retrying_on_failure(corrected_energy_bins: np.ndarray,
         moment.density = halotrunc(moment, halo_correction_parameters.core_halo_breakpoint,
                                    halo_correction_parameters.spacecraft_potential)
 
-    if 0 < moment.density < average_density:
+    if moment.density is not None and 0 < moment.density < average_density:
         return MomentFitResults(moments=moment, chisq=chi_squared,
                                 number_of_points=energy_end - energy_start,
                                 regress_result=fit_function

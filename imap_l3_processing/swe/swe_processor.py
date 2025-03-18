@@ -121,9 +121,11 @@ class SweProcessor(Processor):
         halo_temp_phi_rtns = []
 
         for i in range(len(swe_l2_data.epoch)):
-            velocity_vectors: np.ndarray = calculate_velocity_in_dsp_frame_km_s(corrected_energy_bins[i],
-                                                                                swe_l2_data.inst_el,
-                                                                                swe_l2_data.inst_az_spin_sector[i])
+            velocity_vectors_cm_per_s: np.ndarray = 1000 * 100 * calculate_velocity_in_dsp_frame_km_s(
+                corrected_energy_bins[i],
+                swe_l2_data.inst_el,
+                swe_l2_data.inst_az_spin_sector[
+                    i])
 
             weights: np.ndarray[float] = compute_maxwellian_weight_factors(swe_l1b_data.count_rates[i],
                                                                            swe_l2_data.acquisition_duration[i])
@@ -145,7 +147,7 @@ class SweProcessor(Processor):
 
             core_moment_fit_result = core_fit_moments_retrying_on_failure(
                 corrected_energy_bins[i],
-                velocity_vectors,
+                velocity_vectors_cm_per_s,
                 swe_l2_data.phase_space_density[i],
                 weights,
                 spacecraft_potential_core_breakpoint_index,
@@ -197,7 +199,7 @@ class SweProcessor(Processor):
             halo_end_index = len(swe_l2_data.energy)
             halo_moment_fit_result = halo_fit_moments_retrying_on_failure(
                 corrected_energy_bins[i],
-                velocity_vectors,
+                velocity_vectors_cm_per_s,
                 swe_l2_data.phase_space_density[i],
                 weights,
                 halo_core_breakpoint_index,

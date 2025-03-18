@@ -8,6 +8,7 @@ from spacepy.pycdf import CDF
 
 from imap_l3_processing.constants import FIVE_MINUTES_IN_NANOSECONDS
 from imap_l3_processing.hit.l3.utils import read_l2_hit_data
+from tests.test_helpers import get_test_data_folder
 
 
 class TestUtils(TestCase):
@@ -76,6 +77,9 @@ class TestUtils(TestCase):
             cdf.new("nemgsi_energy_delta_minus", [4, 6], recVary=False)
             cdf.new("fe_energy_delta_plus", [12], recVary=False)
             cdf.new("fe_energy_delta_minus", [4], recVary=False)
+            
+            for var in cdf:
+                cdf[var].attrs["FILLVAL"] = -1e31
 
         for path in [pathname, Path(pathname)]:
             with self.subTest(path):
@@ -117,3 +121,25 @@ class TestUtils(TestCase):
                 np.testing.assert_array_equal([4, 6], result.nemgsi_energy_delta_minus)
                 np.testing.assert_array_equal([12], result.fe_energy_delta_plus)
                 np.testing.assert_array_equal([4], result.fe_energy_delta_minus)
+
+    def test_read_l2_hit_data_handles_fill_values(self):
+        path = get_test_data_folder() / 'hit' / 'l2_hit_data_with_fill_values.cdf'
+        result = read_l2_hit_data(path)
+
+        with CDF(str(path)) as cdf:
+            np.testing.assert_array_equal(result.h, np.full_like(cdf["h"], np.nan))
+            np.testing.assert_array_equal(result.he4, np.full_like(cdf["he4"], np.nan))
+            np.testing.assert_array_equal(result.cno, np.full_like(cdf["cno"], np.nan))
+            np.testing.assert_array_equal(result.nemgsi, np.full_like(cdf["nemgsi"], np.nan))
+            np.testing.assert_array_equal(result.fe, np.full_like(cdf["fe"], np.nan))
+
+            np.testing.assert_array_equal(result.delta_plus_h, np.full_like(cdf["delta_plus_h"], np.nan))
+            np.testing.assert_array_equal(result.delta_minus_h, np.full_like(cdf["delta_minus_h"], np.nan))
+            np.testing.assert_array_equal(result.delta_plus_he4, np.full_like(cdf["delta_plus_he4"], np.nan))
+            np.testing.assert_array_equal(result.delta_minus_he4, np.full_like(cdf["delta_minus_he4"], np.nan))
+            np.testing.assert_array_equal(result.delta_plus_cno, np.full_like(cdf["delta_plus_cno"], np.nan))
+            np.testing.assert_array_equal(result.delta_minus_cno, np.full_like(cdf["delta_minus_cno"], np.nan))
+            np.testing.assert_array_equal(result.delta_plus_nemgsi, np.full_like(cdf["delta_plus_nemgsi"], np.nan))
+            np.testing.assert_array_equal(result.delta_minus_nemgsi, np.full_like(cdf["delta_minus_nemgsi"], np.nan))
+            np.testing.assert_array_equal(result.delta_plus_fe, np.full_like(cdf["delta_plus_fe"], np.nan))
+            np.testing.assert_array_equal(result.delta_minus_fe, np.full_like(cdf["delta_minus_fe"], np.nan))

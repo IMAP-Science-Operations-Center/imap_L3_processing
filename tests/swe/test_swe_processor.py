@@ -640,7 +640,7 @@ class TestSweProcessor(unittest.TestCase):
 
         core_fit_moments_call_1 = mock_core_fit_moments_retrying_on_failure.mock_calls[0]
         np.testing.assert_array_equal(core_fit_moments_call_1.args[0], corrected_energy_bins[0])
-        np.testing.assert_array_equal(velocity_in_dsp_frame_km_s[0],
+        np.testing.assert_array_equal(velocity_in_dsp_frame_km_s[0] * 100000,
                                       core_fit_moments_call_1.args[1])
         np.testing.assert_array_equal(swe_l2_data.phase_space_density[0], core_fit_moments_call_1.args[2])
         np.testing.assert_array_equal(maxwellian_weight_factors[0],
@@ -652,7 +652,7 @@ class TestSweProcessor(unittest.TestCase):
         halo_fit_moments_call_1 = mock_halo_fit_moments_retrying_on_failure.mock_calls[0]
         np.testing.assert_array_equal(corrected_energy_bins[0],
                                       halo_fit_moments_call_1.args[0])
-        np.testing.assert_array_equal(velocity_in_dsp_frame_km_s[0],
+        np.testing.assert_array_equal(velocity_in_dsp_frame_km_s[0] * 100000,
                                       halo_fit_moments_call_1.args[1])
         np.testing.assert_array_equal(swe_l2_data.phase_space_density[0], halo_fit_moments_call_1.args[2])
         np.testing.assert_array_equal(maxwellian_weight_factors[0],
@@ -666,7 +666,7 @@ class TestSweProcessor(unittest.TestCase):
         core_fit_moments_2 = mock_core_fit_moments_retrying_on_failure.mock_calls[1]
         np.testing.assert_array_equal(corrected_energy_bins[1],
                                       core_fit_moments_2.args[0])
-        np.testing.assert_array_equal(velocity_in_dsp_frame_km_s[1],
+        np.testing.assert_array_equal(velocity_in_dsp_frame_km_s[1] * 100000,
                                       core_fit_moments_2.args[1])
         np.testing.assert_array_equal(swe_l2_data.phase_space_density[1], core_fit_moments_2.args[2])
         np.testing.assert_array_equal(maxwellian_weight_factors[1],
@@ -678,7 +678,7 @@ class TestSweProcessor(unittest.TestCase):
         halo_fit_moments_2 = mock_halo_fit_moments_retrying_on_failure.mock_calls[1]
         np.testing.assert_array_equal(corrected_energy_bins[1],
                                       halo_fit_moments_2.args[0])
-        np.testing.assert_array_equal(velocity_in_dsp_frame_km_s[1],
+        np.testing.assert_array_equal(velocity_in_dsp_frame_km_s[1] * 100000,
                                       halo_fit_moments_2.args[1])
         np.testing.assert_array_equal(swe_l2_data.phase_space_density[1], halo_fit_moments_2.args[2])
         np.testing.assert_array_equal(maxwellian_weight_factors[1],
@@ -692,7 +692,7 @@ class TestSweProcessor(unittest.TestCase):
         core_fit_moments_3 = mock_core_fit_moments_retrying_on_failure.mock_calls[2]
         np.testing.assert_array_equal(corrected_energy_bins[2],
                                       core_fit_moments_3.args[0])
-        np.testing.assert_array_equal(velocity_in_dsp_frame_km_s[2],
+        np.testing.assert_array_equal(velocity_in_dsp_frame_km_s[2] * 100000,
                                       core_fit_moments_3.args[1])
         np.testing.assert_array_equal(swe_l2_data.phase_space_density[2], core_fit_moments_3.args[2])
         np.testing.assert_array_equal(maxwellian_weight_factors[2],
@@ -704,7 +704,7 @@ class TestSweProcessor(unittest.TestCase):
         halo_fit_moments_3 = mock_halo_fit_moments_retrying_on_failure.mock_calls[2]
         np.testing.assert_array_equal(corrected_energy_bins[2],
                                       halo_fit_moments_3.args[0])
-        np.testing.assert_array_equal(velocity_in_dsp_frame_km_s[2],
+        np.testing.assert_array_equal(velocity_in_dsp_frame_km_s[2] * 100000,
                                       halo_fit_moments_3.args[1])
         np.testing.assert_array_equal(swe_l2_data.phase_space_density[2], halo_fit_moments_3.args[2])
         np.testing.assert_array_equal(maxwellian_weight_factors[2],

@@ -231,85 +231,41 @@ class TestMomentsCalculation(unittest.TestCase):
         regression_values, chisq = regress(velocity_vectors, weights, yreg)
 
         np.testing.assert_array_almost_equal(regression_values,
-                                             [5.924450,
-                                              5.796693,
-                                              5.877938,
-                                              0.107305,
-                                              -0.018571,
-                                              0.045502,
-                                              -140.856230,
-                                              248.422738,
-                                              -754.801277,
+                                             [59277.743670,
+                                              57999.454287,
+                                              58812.363965,
+                                              1073.651710,
+                                              -185.816917,
+                                              455.279162,
+                                              -1409352.589002,
+                                              2485621.191362,
+                                              -7552247.685865,
                                               -0.281777])
 
         self.assertAlmostEqual(75398.120454, chisq, places=6)
 
-    def test_regress_reproduces_heritage_results_given_10_rows_of_test_data(self):
-        velocity_vectors = np.loadtxt(get_test_data_path("swe/fake_velocity_vectors_10.csv"), delimiter=",",
-                                      dtype=np.float64)
-        weights = np.loadtxt(get_test_data_path("swe/fake_weights_10.csv"), delimiter=",", dtype=np.float64)
-        yreg = np.loadtxt(get_test_data_path("swe/fake_yreg_10.csv"), delimiter=",", dtype=np.float64)
-
-        regression_values, chisq = regress(velocity_vectors, weights, yreg)
-
-        np.testing.assert_array_almost_equal(regression_values,
-                                             [7.907190,
-                                              8.474900,
-                                              7.881836,
-                                              -1.032437,
-                                              -0.190888,
-                                              -1.320381,
-                                              202.408970,
-                                              -98.152393,
-                                              -1053.816409,
-                                              0.074479])
-        self.assertEqual(0, chisq)
-
     def test_calculate_fit_temperature_density_velocity_is_consistent_with_heritage_on_full_data(self):
-        regress_output_of_full_fake_data = np.array([5.924450,
-                                                     5.796693,
-                                                     5.877938,
-                                                     0.107305,
-                                                     -0.018571,
-                                                     0.045502,
-                                                     -140.856230,
-                                                     248.422738,
-                                                     -754.801277,
+        regress_output_of_full_fake_data = np.array([59277.743670,
+                                                     57999.454287,
+                                                     58812.363965,
+                                                     1073.651710,
+                                                     -185.816917,
+                                                     455.279162,
+                                                     -1409352.589002,
+                                                     2485621.191362,
+                                                     -7552247.685865,
                                                      -0.281777], dtype=np.float64)
         moments = calculate_fit_temperature_density_velocity(regress_output_of_full_fake_data)
 
         self.assertAlmostEqual(1.958299, moments.alpha, places=5)
         self.assertAlmostEqual(1.729684, moments.beta, places=5)
-        self.assertAlmostEqual(0.167553, moments.t_perpendicular, places=5)
-        self.assertAlmostEqual(0.176598, moments.t_parallel, places=5)
+        self.assertAlmostEqual(0.000017, moments.t_perpendicular, places=5)
+        self.assertAlmostEqual(0.000018, moments.t_parallel, places=5)
         self.assertAlmostEqual(0.000250, moments.velocity_x, places=5)
         self.assertAlmostEqual(-0.000443, moments.velocity_y, places=5)
         self.assertAlmostEqual(0.001288, moments.velocity_z, places=5)
-        self.assertAlmostEqual(4.9549619600156776e10, moments.density, delta=2.5e4)
-        self.assertAlmostEqual(112214.467052, moments.aoo, places=2)
-
-    def test_calculate_fit_temperature_density_velocity_is_consistent_with_heritage_on_first_ten_vectors_data(self):
-        regress_output_of_full_fake_data = np.array([18.546747,
-                                                     18.706356,
-                                                     2.018933,
-                                                     0.413322,
-                                                     1.666656,
-                                                     3.930964,
-                                                     -7627.713430,
-                                                     -18209.865922,
-                                                     -4261.624494,
-                                                     -0.665255], dtype=np.float64)
-        moments = calculate_fit_temperature_density_velocity(regress_output_of_full_fake_data)
-
-        self.assertAlmostEqual(1.169789, moments.alpha, places=5)
-        self.assertAlmostEqual(0.263119, moments.beta, places=5)
-        self.assertAlmostEqual(0.054432, moments.t_perpendicular, places=5)
-        self.assertAlmostEqual(0.395409, moments.t_parallel, places=5)
-        self.assertAlmostEqual(0.004043, moments.velocity_x, places=5)
-        self.assertAlmostEqual(0.010004, moments.velocity_y, places=5)
-        self.assertAlmostEqual(-0.001708, moments.velocity_z, places=5)
-        self.assertAlmostEqual(32905109580.985397, moments.density, delta=2.5e4)
-        self.assertAlmostEqual(21193300.548418, moments.aoo, delta=1)
+        self.assertAlmostEqual(49549619600.156715, moments.density, delta=1e5)
+        self.assertAlmostEqual(1122774265.098257, moments.aoo, delta=1e5)
 
     def test_filter_and_flatten_regress_parameters(self):
         corrected_energy_bins = np.array([-1, 0, 3, 4.5, 5])

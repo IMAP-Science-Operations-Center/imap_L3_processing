@@ -2,7 +2,9 @@ import sys
 import uuid
 from datetime import datetime, timedelta
 from pathlib import Path
+from unittest.mock import patch
 
+import numpy as np
 from bitstring import BitStream
 from spacepy.pycdf import CDF
 
@@ -137,7 +139,25 @@ def create_swapi_l3a_cdf(proton_temperature_density_calibration_file, alpha_temp
     return proton_cdf_path, alpha_cdf_path, pui_he_cdf_path
 
 
-def create_swe_pitch_angle_cdf(dependencies: SweL3Dependencies) -> str:
+def create_swe_product(dependencies: SweL3Dependencies) -> str:
+    input_metadata = InputMetadata(
+        instrument='swe',
+        data_level='l3',
+        start_date=datetime(2010, 1, 1),
+        end_date=datetime(2010, 1, 2),
+        version='v000')
+    processor = SweProcessor(None, input_metadata)
+    output_data = processor.calculate_products(dependencies)
+    cdf_path = save_data(output_data)
+    return cdf_path
+
+
+@patch("imap_l3_processing.swe.l3.science.moment_calculations.spiceypy.pxform")
+def create_swe_product_with_fake_spice(dependencies: SweL3Dependencies, mock_spice_pxform) -> str:
+    mock_spice_pxform.return_value = np.array([
+        [1, 0, 0], [0, 1, 0], [0, 0, 1]
+    ])
+
     input_metadata = InputMetadata(
         instrument='swe',
         data_level='l3',
@@ -163,19 +183,6 @@ def create_hi_cdf(dependencies: HiL3Dependencies) -> str:
     delete_temp_cdf_file_path_if_exists(output_data)
     cdf_path = save_data(output_data)
     return cdf_path
-
-
-def create_swe_moments_cdf(dependencies: SweL3Dependencies) -> str:
-    input_metadata = InputMetadata(
-        instrument='swe',
-        data_level='l3',
-        start_date=datetime(2025, 10, 23),
-        end_date=datetime(2025, 10, 24),
-        version='v999')
-    processor = SweProcessor(None, input_metadata)
-    processor.calculate_moment_products(dependencies)
-    # cdf_path = save_data(output_data)
-    # return cdf_path
 
 
 def create_hit_sectored_cdf(dependencies: HITL3SectoredDependencies) -> str:
@@ -325,7 +332,17 @@ if __name__ == "__main__":
             get_test_data_path("swe/imap_swapi_l3a_proton-sw_20100101_v001.cdf"),
             get_test_data_path("swe/example_swe_config.json"),
         )
-        print(create_swe_pitch_angle_cdf(dependencies))
+        print(create_swe_product(dependencies))
+
+    if "swe-fake-spice" in sys.argv:
+        dependencies = SweL3Dependencies.from_file_paths(
+            get_test_data_path("swe/imap_swe_l2_sci-with-ace-data_20100101_v002.cdf"),
+            get_test_data_path("swe/imap_swe_l1b_sci-with-ace-data_20100101_v002.cdf"),
+            get_test_data_path("swe/imap_mag_l1d_mago-normal_20100101_v001.cdf"),
+            get_test_data_path("swe/imap_swapi_l3a_proton-sw_20100101_v001.cdf"),
+            get_test_data_path("swe/example_swe_config.json"),
+        )
+        print(create_swe_product_with_fake_spice(dependencies))
 
     if "hi" in sys.argv:
         dependencies = HiL3Dependencies.from_file_paths(
