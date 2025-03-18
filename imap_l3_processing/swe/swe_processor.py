@@ -121,6 +121,8 @@ class SweProcessor(Processor):
         halo_temp_phi_rtns = []
         core_density_integrated = []
         halo_density_integrated = []
+        core_velocity_integrated = []
+        halo_velocity_integrated = []
 
         for i in range(len(swe_l2_data.epoch)):
             velocity_vectors_cm_per_s: np.ndarray = 1000 * 100 * calculate_velocity_in_dsp_frame_km_s(
@@ -191,8 +193,13 @@ class SweProcessor(Processor):
                                                                    core_moment_fit_result.regress_result,
                                                                    core_integrate_result.base_energy)
                     core_density_integrated.append(scale_core_density_output.density)
+
+                    core_velocity_integrated.append(rotate_dps_vector_to_rtn(swe_l2_data.epoch[i],
+                                                                             scale_core_density_output.velocity))
                 else:
                     core_density_integrated.append(np.nan)
+                    core_velocity_integrated.append([np.nan, np.nan, np.nan])
+
             else:
                 core_moments.append(Moments.construct_all_fill())
                 core_fit_chi_squareds.append(np.nan)
@@ -202,6 +209,7 @@ class SweProcessor(Processor):
                 core_temp_theta_rtns.append(np.nan)
                 core_temp_phi_rtns.append(np.nan)
                 core_density_integrated.append(np.nan)
+                core_velocity_integrated.append([np.nan, np.nan, np.nan])
 
             halo_end_index = len(swe_l2_data.energy)
             halo_moment_fit_result = halo_fit_moments_retrying_on_failure(
@@ -251,8 +259,12 @@ class SweProcessor(Processor):
 
                     halo_density_integrated.append(scale_halo_density_output.density)
 
+                    halo_velocity_integrated.append(rotate_dps_vector_to_rtn(swe_l2_data.epoch[i],
+                                                                             scale_halo_density_output.velocity))
+
                 else:
                     halo_density_integrated.append(np.nan)
+                    halo_velocity_integrated.append([np.nan, np.nan, np.nan])
 
 
             else:
@@ -263,6 +275,7 @@ class SweProcessor(Processor):
                 halo_temp_theta_rtns.append(np.nan)
                 halo_temp_phi_rtns.append(np.nan)
                 halo_density_integrated.append(np.nan)
+                halo_velocity_integrated.append([np.nan, np.nan, np.nan])
 
         return SweL3MomentData(
             core_fit_num_points=np.array(core_fit_num_points),
@@ -283,7 +296,11 @@ class SweProcessor(Processor):
             core_velocity_vector_rtn_fit=np.array(core_rtn_velocity),
             halo_velocity_vector_rtn_fit=np.array(halo_rtn_velocity),
             core_density_integrated=core_density_integrated,
-            halo_density_integrated=halo_density_integrated
+            halo_density_integrated=halo_density_integrated,
+            core_speed_integrated=np.linalg.norm(core_velocity_integrated, axis=-1),
+            halo_speed_integrated=np.linalg.norm(halo_velocity_integrated, axis=-1),
+            core_velocity_vector_rtn_integrated=core_velocity_integrated,
+            halo_velocity_vector_rtn_integrated=halo_velocity_integrated
         )
 
     def calculate_pitch_angle_products(self, dependencies: SweL3Dependencies, corrected_energy_bins: np.ndarray):

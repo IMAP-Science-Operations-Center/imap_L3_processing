@@ -592,15 +592,19 @@ class TestSweProcessor(unittest.TestCase):
             (halo_rtn_theta_2, halo_rtn_phi_2),
         ]
 
-        core_velocity_1 = [0, 0, 1]
-        halo_velocity_1 = [0, 1, 0]
-        core_velocity_2 = [0, 1, 1]
-        halo_velocity_2 = [1, 0, 0]
+        core_fit_velocity_1 = [0, 0, 1]
+        core_fit_velocity_2 = [0, 1, 1]
+        halo_fit_velocity_1 = [0, 1, 0]
+        halo_fit_velocity_2 = [1, 0, 0]
+        core_integrated_velocity_rtn = [2, 3, 4]
+        halo_integrated_velocity_rtn = [6, 0, 6]
         mock_rotate_dps_vector_to_rtn.side_effect = [
-            core_velocity_1,
-            halo_velocity_1,
-            core_velocity_2,
-            halo_velocity_2
+            core_fit_velocity_1,
+            core_integrated_velocity_rtn,
+            halo_fit_velocity_1,
+            halo_integrated_velocity_rtn,
+            core_fit_velocity_2,
+            halo_fit_velocity_2
         ]
 
         core_integrate_output = Mock()
@@ -608,12 +612,16 @@ class TestSweProcessor(unittest.TestCase):
 
         mock_integrate.side_effect = [core_integrate_output, halo_integrate_output, None, None]
 
-        scale_core_density_output = ScaleDensityOutput(density=400, velocity=None, temperature=None, cdelnv=None,
+        scaled_core_velocity = [900, 800, 700]
+        scale_core_density_output = ScaleDensityOutput(density=400, velocity=scaled_core_velocity, temperature=None,
+                                                       cdelnv=None,
                                                        cdelt=None)
 
         mock_scale_core_density.side_effect = [scale_core_density_output]
 
-        scale_halo_density_output = ScaleDensityOutput(density=500, velocity=None, temperature=None, cdelnv=None,
+        scaled_halo_velocity = [2000, 1800, 1700]
+        scale_halo_density_output = ScaleDensityOutput(density=500, velocity=scaled_halo_velocity, temperature=None,
+                                                       cdelnv=None,
                                                        cdelt=None)
 
         mock_scale_halo_density.side_effect = [scale_halo_density_output]
@@ -728,27 +736,36 @@ class TestSweProcessor(unittest.TestCase):
         self.assertEqual(spacecraft_potential[2], halo_fit_moments_3.args[7])
         self.assertEqual(core_halo_breakpoint[2], halo_fit_moments_3.args[8])
 
-        self.assertEqual(4, mock_rotate_dps_vector_to_rtn.call_count)
+        self.assertEqual(6, mock_rotate_dps_vector_to_rtn.call_count)
 
         self.assertEqual(epochs[0], mock_rotate_dps_vector_to_rtn.call_args_list[0].args[0])
         np.testing.assert_array_equal(
             np.array([core_moments1.velocity_x, core_moments1.velocity_y, core_moments1.velocity_z]),
             mock_rotate_dps_vector_to_rtn.call_args_list[0].args[1])
-
         self.assertEqual(epochs[0], mock_rotate_dps_vector_to_rtn.call_args_list[1].args[0])
         np.testing.assert_array_equal(
-            np.array([halo_moments1.velocity_x, halo_moments1.velocity_y, halo_moments1.velocity_z]),
+            scaled_core_velocity,
             mock_rotate_dps_vector_to_rtn.call_args_list[1].args[1])
 
-        self.assertEqual(epochs[1], mock_rotate_dps_vector_to_rtn.call_args_list[2].args[0])
+        self.assertEqual(epochs[0], mock_rotate_dps_vector_to_rtn.call_args_list[2].args[0])
         np.testing.assert_array_equal(
-            np.array([core_moments2.velocity_x, core_moments2.velocity_y, core_moments2.velocity_z]),
+            np.array([halo_moments1.velocity_x, halo_moments1.velocity_y, halo_moments1.velocity_z]),
             mock_rotate_dps_vector_to_rtn.call_args_list[2].args[1])
 
-        self.assertEqual(epochs[1], mock_rotate_dps_vector_to_rtn.call_args_list[2].args[0])
+        self.assertEqual(epochs[0], mock_rotate_dps_vector_to_rtn.call_args_list[3].args[0])
+        np.testing.assert_array_equal(
+            scaled_halo_velocity,
+            mock_rotate_dps_vector_to_rtn.call_args_list[3].args[1])
+
+        self.assertEqual(epochs[1], mock_rotate_dps_vector_to_rtn.call_args_list[4].args[0])
+        np.testing.assert_array_equal(
+            np.array([core_moments2.velocity_x, core_moments2.velocity_y, core_moments2.velocity_z]),
+            mock_rotate_dps_vector_to_rtn.call_args_list[4].args[1])
+
+        self.assertEqual(epochs[1], mock_rotate_dps_vector_to_rtn.call_args_list[5].args[0])
         np.testing.assert_array_equal(
             np.array([halo_moments2.velocity_x, halo_moments2.velocity_y, halo_moments2.velocity_z]),
-            mock_rotate_dps_vector_to_rtn.call_args_list[2].args[1])
+            mock_rotate_dps_vector_to_rtn.call_args_list[5].args[1])
 
         self.assertEqual(4, mock_rotate_temperature.call_count)
         mock_rotate_temperature.assert_has_calls(
@@ -827,11 +844,18 @@ class TestSweProcessor(unittest.TestCase):
         np.testing.assert_array_equal(swe_moment_data.halo_temperature_phi_rtn_fit,[halo_rtn_phi_1, halo_rtn_phi_2, np.nan])
         np.testing.assert_array_equal(swe_moment_data.core_temperature_theta_rtn_fit,[core_rtn_theta_1, core_rtn_theta_2, np.nan])
         np.testing.assert_array_equal(swe_moment_data.halo_temperature_theta_rtn_fit,[halo_rtn_theta_1, halo_rtn_theta_2, np.nan])
-        np.testing.assert_array_equal(swe_moment_data.core_speed_fit,[np.linalg.norm(core_velocity_1), np.linalg.norm(core_velocity_2), np.nan])
-        np.testing.assert_array_equal(swe_moment_data.halo_speed_fit,[np.linalg.norm(halo_velocity_1), np.linalg.norm(halo_velocity_2), np.nan])
-        np.testing.assert_array_equal(swe_moment_data.core_velocity_vector_rtn_fit,[core_velocity_1, core_velocity_2, [np.nan, np.nan, np.nan]])
-        np.testing.assert_array_equal(swe_moment_data.halo_velocity_vector_rtn_fit,[halo_velocity_1, halo_velocity_2, [np.nan, np.nan, np.nan]])
+        np.testing.assert_array_equal(swe_moment_data.core_speed_fit,[np.linalg.norm(core_fit_velocity_1), np.linalg.norm(core_fit_velocity_2), np.nan])
+        np.testing.assert_array_equal(swe_moment_data.halo_speed_fit,[np.linalg.norm(halo_fit_velocity_1), np.linalg.norm(halo_fit_velocity_2), np.nan])
+        np.testing.assert_array_equal(swe_moment_data.core_velocity_vector_rtn_fit,[core_fit_velocity_1, core_fit_velocity_2, [np.nan, np.nan, np.nan]])
+        np.testing.assert_array_equal(swe_moment_data.halo_velocity_vector_rtn_fit,[halo_fit_velocity_1, halo_fit_velocity_2, [np.nan, np.nan, np.nan]])
 
         np.testing.assert_array_equal(swe_moment_data.core_density_integrated,[scale_core_density_output.density, np.nan, np.nan])
         np.testing.assert_array_equal(swe_moment_data.halo_density_integrated,[scale_halo_density_output.density, np.nan, np.nan])
+        np.testing.assert_array_equal(swe_moment_data.core_speed_integrated,[np.linalg.norm(core_integrated_velocity_rtn), np.nan, np.nan])
+        np.testing.assert_array_equal(swe_moment_data.halo_speed_integrated,[np.linalg.norm(halo_integrated_velocity_rtn), np.nan, np.nan])
+        np.testing.assert_array_equal(swe_moment_data.core_velocity_vector_rtn_integrated,[core_integrated_velocity_rtn, [np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan]])
+        np.testing.assert_array_equal(swe_moment_data.halo_velocity_vector_rtn_integrated,[halo_integrated_velocity_rtn, [np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan]])
+
+
+
         # @formatter:on
