@@ -1,7 +1,5 @@
 TEMP_CDF_FOLDER_PATH = "temp_cdf_data"
 
-# zmk = electron mass / (2 * (Boltzman constant)), Units = K / (cm / s) ^ 2 * /
-
 ELECTRON_MASS_KG = 9.109_383_7139e-31
 PROTON_CHARGE_COULOMBS = 1.602176634e-19
 PROTON_MASS_KG = 1.67262192595e-27
