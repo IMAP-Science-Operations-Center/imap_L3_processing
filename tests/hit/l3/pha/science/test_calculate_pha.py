@@ -6,7 +6,8 @@ from unittest.mock import patch, Mock, sentinel
 from imap_l3_processing.hit.l3.pha.pha_event_reader import PHAWord, Detector
 from imap_l3_processing.hit.l3.pha.science.calculate_pha import EventAnalysis, analyze_event, calculate_mev, \
     process_pha_event, EventOutput, compute_charge
-from imap_l3_processing.hit.l3.pha.science.cosine_correction_lookup_table import DetectedRange, DetectorRange, DetectorSide
+from imap_l3_processing.hit.l3.pha.science.cosine_correction_lookup_table import DetectedRange, DetectorRange, \
+    DetectorSide
 from imap_l3_processing.hit.l3.pha.science.gain_lookup_table import DetectorGain, Gain
 from imap_l3_processing.hit.l3.pha.science.hit_event_type_lookup import Rule
 from tests.hit.l3.hit_test_builders import create_raw_pha_event
@@ -115,6 +116,52 @@ class TestCalculatePHA(unittest.TestCase):
                                                 l2_detector=detector_1_in_L2B_group,
                                                 e_delta_word=detector_to_word_tuples[str(detector_1_in_L1B14_group)],
                                                 e_prime_word=detector_to_word_tuples[str(detector_1_in_L2B_group)],
+                                                words_with_highest_energy=expected_highest_words)
+
+        self.assertEqual(expected_event_analysis, event_analysis)
+
+    def test_analyze_range_with_range_4(self):
+        detector_1_in_group_1 = Detector(layer=1, side="A", segment="b", address=10, group="L1A14")
+        detector_2_in_group_1 = Detector(layer=1, side="A", segment="c", address=11, group="L1A14")
+        detector_1_in_group_2 = Detector(layer=2, side="A", segment="c", address=15, group="L2A")
+        detector_1_in_group_3 = Detector(layer=3, side="A", segment="a", address=20, group="L3A")
+        detector_1_in_group_4 = Detector(layer=3, side="B", segment="a", address=21, group="L3B")
+        detector_1_in_group_5 = Detector(layer=2, side="B", segment="a", address=22, group="L2B")
+
+        detector_to_pha_value = [(detector_1_in_group_1, 10),
+                                 (detector_2_in_group_1, 20),
+                                 (detector_1_in_group_2, 20),
+                                 (detector_1_in_group_3, 11),
+                                 (detector_1_in_group_4, 12),
+                                 (detector_1_in_group_5, 13),
+                                 ]
+
+        detector_to_word_tuples = self._create_event_from_detector_to_pha_value_dict(detector_to_pha_value)
+        words = [word for _, word in detector_to_word_tuples.items()]
+        raw_pha_event = create_raw_pha_event(pha_words=words)
+
+        rule_stub = Rule(range=DetectedRange(DetectorRange.R4, DetectorSide.A),
+                         included_detector_groups=["L1A14", "L2A", "L3A", "L3B", "L2B"],
+                         excluded_detector_groups=["L1B"]
+                         )
+        range_lookup_table = Mock()
+        range_lookup_table.lookup_range.return_value = rule_stub
+
+        event_analysis = analyze_event(raw_pha_event, self.gain_lookup, range_lookup_table)
+
+        range_lookup_table.lookup_range.assert_called_with({"L1A14", "L2A", "L3A", "L3B", "L2B"})
+
+        expected_highest_words = [detector_to_word_tuples[str(detector_1_in_group_1)],
+                                  detector_to_word_tuples[str(detector_1_in_group_2)],
+                                  detector_to_word_tuples[str(detector_1_in_group_3)],
+                                  detector_to_word_tuples[str(detector_1_in_group_4)],
+                                  detector_to_word_tuples[str(detector_1_in_group_5)],
+                                  ]
+        expected_event_analysis = EventAnalysis(range=rule_stub.range,
+                                                l1_detector=detector_1_in_group_1,
+                                                l2_detector=detector_1_in_group_2,
+                                                e_delta_word=detector_to_word_tuples[str(detector_1_in_group_3)],
+                                                e_prime_word=detector_to_word_tuples[str(detector_1_in_group_4)],
                                                 words_with_highest_energy=expected_highest_words)
 
         self.assertEqual(expected_event_analysis, event_analysis)
