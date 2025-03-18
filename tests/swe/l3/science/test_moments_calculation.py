@@ -403,10 +403,12 @@ class TestMomentsCalculation(unittest.TestCase):
         iend = 19
 
         inst_az_data = np.loadtxt(get_test_data_path("swe/instrument_azimuth.csv"), delimiter=",").reshape(20, 7, 30)
+        inst_az_data_reshaped = inst_az_data[:, 0, :]
 
         phase_space_density = np.loadtxt(get_test_data_path("swe/phase_space_density.csv"), delimiter=",").reshape(20,
                                                                                                                    7,
                                                                                                                    30)
+        phase_space_density_expected_shape = np.moveaxis(phase_space_density, 2, 1)
 
         energy = np.loadtxt(get_test_data_path("swe/energies.csv"), delimiter=",").reshape(20, 7, 30)[:, 0, 0]
 
@@ -422,8 +424,8 @@ class TestMomentsCalculation(unittest.TestCase):
         spacecraft_potential = 12
         integrate_outputs = moment_calculations.integrate(istart, iend, energy - spacecraft_potential, sintheta,
                                                           costheta,
-                                                          deltheta, phase_space_density,
-                                                          inst_az_data, spacecraft_potential, cdelnv, cdelt)
+                                                          deltheta, phase_space_density_expected_shape,
+                                                          inst_az_data_reshaped, spacecraft_potential, cdelnv, cdelt)
 
         np.testing.assert_allclose(6.71828e+23, integrate_outputs.density, rtol=1e-5)
 
@@ -443,10 +445,12 @@ class TestMomentsCalculation(unittest.TestCase):
         iend = 19
 
         inst_az_data = np.loadtxt(get_test_data_path("swe/instrument_azimuth.csv"), delimiter=",").reshape(20, 7, 30)
+        inst_az_data_reshaped = inst_az_data[:, 0, :]
 
         phase_space_density = np.loadtxt(get_test_data_path("swe/phase_space_density.csv"), delimiter=",").reshape(20,
                                                                                                                    7,
                                                                                                                    30)
+        phase_space_density_expected_shape = np.moveaxis(phase_space_density, 2, 1)
 
         energy = np.loadtxt(get_test_data_path("swe/energies.csv"), delimiter=",").reshape(20, 7, 30)[:, 0, 0]
 
@@ -461,8 +465,8 @@ class TestMomentsCalculation(unittest.TestCase):
         cdelt = np.array([0, 0, 0, 0, 0, 0])
         integrate_outputs = moment_calculations.integrate(istart, iend, energy - spacecraft_potential, sintheta,
                                                           costheta,
-                                                          deltheta, phase_space_density,
-                                                          inst_az_data, spacecraft_potential, cdelnv, cdelt)
+                                                          deltheta, phase_space_density_expected_shape,
+                                                          inst_az_data_reshaped, spacecraft_potential, cdelnv, cdelt)
 
         self.assertIsNone(integrate_outputs)
 
@@ -475,6 +479,8 @@ class TestMomentsCalculation(unittest.TestCase):
         phase_space_density = np.loadtxt(get_test_data_path("swe/phase_space_density.csv"), delimiter=",").reshape(20,
                                                                                                                    7,
                                                                                                                    30)
+        inst_az_data_energy_spin = inst_az_data[:, 0, :]
+        phase_space_density_energy_spin_cem = np.moveaxis(phase_space_density, 2, 1)
 
         energy = np.loadtxt(get_test_data_path("swe/energies.csv"), delimiter=",").reshape(20, 7, 30)[:, 0, 0]
 
@@ -491,8 +497,8 @@ class TestMomentsCalculation(unittest.TestCase):
         integrate_outputs = moment_calculations.integrate(istart, iend, energy - spacecraft_potential,
                                                           artificial_all_positive_sintheta,
                                                           costheta,
-                                                          deltheta, phase_space_density,
-                                                          inst_az_data, spacecraft_potential, cdelnv, cdelt)
+                                                          deltheta, phase_space_density_energy_spin_cem,
+                                                          inst_az_data_energy_spin, spacecraft_potential, cdelnv, cdelt)
 
         np.testing.assert_allclose(1.94762e+25, integrate_outputs.density, rtol=1e-5)
 
@@ -540,7 +546,7 @@ class TestMomentsCalculation(unittest.TestCase):
                                     142.14285714, 196.57142857, 272., 372.71428571,
                                     519.0, 712.57142857, 987.14285714, 1370.0])
 
-        phi = np.broadcast_to((np.arange(0, 30) * 360 / 30)[np.newaxis, np.newaxis, :], (20, 7, 30))
+        phi = np.broadcast_to((np.arange(0, 30) * 360 / 30)[np.newaxis, :], (20, 30))
 
         core_density_output = \
             moment_calculations.scale_core_density(
@@ -598,7 +604,7 @@ class TestMomentsCalculation(unittest.TestCase):
                                     142.14285714, 196.57142857, 272., 372.71428571,
                                     519.0, 712.57142857, 987.14285714, 1370.0])
 
-        phi = np.broadcast_to((np.arange(0, 30) * 360 / 30)[np.newaxis, np.newaxis, :], (20, 7, 30))
+        phi = np.broadcast_to((np.arange(0, 30) * 360 / 30)[np.newaxis, :], (20, 30))
 
         core_density_output = moment_calculations.scale_core_density(
             core_density,
@@ -649,7 +655,7 @@ class TestMomentsCalculation(unittest.TestCase):
         regress_outputs = np.array([-1e-9, -9e-10, -8e-10, -7e-10, -6e-10, -5e-10, -4e-10, -3e-10, -2e-10, -1e-10])
         base_energy = 100
 
-        phi = np.broadcast_to((np.arange(0, 30) * 360 / 30)[np.newaxis, np.newaxis, :], (20, 7, 30))
+        phi = np.broadcast_to((np.arange(0, 30) * 360 / 30)[np.newaxis, :], (20, 30))
 
         halo_density = 1.23456789
         core_halo_break = 80
@@ -692,7 +698,7 @@ class TestMomentsCalculation(unittest.TestCase):
         regress_outputs = np.array([-1e-9, -9e-10, -8e-10, -7e-10, -6e-10, -5e-10, -4e-10, -3e-10, -2e-10, -1e-10])
         base_energy = 60
 
-        phi = np.broadcast_to((np.arange(0, 30) * 360 / 30)[np.newaxis, np.newaxis, :], (20, 7, 30))
+        phi = np.broadcast_to((np.arange(0, 30) * 360 / 30)[np.newaxis, :], (20, 30))
 
         halo_density = 1e9
         core_halo_break = 80

@@ -63,7 +63,7 @@ class SweProcessor(Processor):
 
         swe_l3_moments_data = self.calculate_moment_products(swe_l2_data, dependencies.swe_l1b_data,
                                                              spacecraft_potential, halo_core,
-                                                             corrected_energy_bins)
+                                                             corrected_energy_bins, config)
 
         phase_space_density_by_pitch_angle, energy_spectrum, energy_spectrum_inbound, energy_spectrum_outbound = self.calculate_pitch_angle_products(
             dependencies, corrected_energy_bins)
@@ -126,6 +126,9 @@ class SweProcessor(Processor):
                 swe_l2_data.inst_el,
                 swe_l2_data.inst_az_spin_sector[
                     i])
+
+            print("psd shape", swe_l2_data.phase_space_density[i].shape)
+            print("az spin shape", swe_l2_data.inst_az_spin_sector[i].shape)
 
             weights: np.ndarray[float] = compute_maxwellian_weight_factors(swe_l1b_data.count_rates[i],
                                                                            swe_l2_data.acquisition_duration[i])

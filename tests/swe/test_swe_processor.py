@@ -140,6 +140,7 @@ class TestSweProcessor(unittest.TestCase):
         np.testing.assert_array_equal(mock_calculate_moment_products.call_args[0][2], expected_spacecraft_potential)
         np.testing.assert_array_equal(mock_calculate_moment_products.call_args[0][3], expected_core_halo_breakpoint)
         np.testing.assert_array_equal(mock_calculate_moment_products.call_args[0][4], expected_corrected_energy_bins)
+        self.assertEqual(swe_config, mock_calculate_moment_products.call_args[0][5])
 
         mock_calculate_pitch_angle_products.assert_called_once()
         self.assertEqual(swel3_dependency, mock_calculate_pitch_angle_products.call_args[0][0])

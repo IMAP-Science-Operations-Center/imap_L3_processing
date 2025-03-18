@@ -452,6 +452,7 @@ def integrate(istart, iend, energy: np.ndarray, sintheta: np.ndarray,
     base = 1000
     delphi = np.full(7, 2 * np.pi / 30)
     delv = np.empty((len(energy)))
+    fv_with_axis_order_energy_cem_spin = np.moveaxis(fv, 1, 2)
     for i in range(istart, iend + 1):
         if energy[i] > 0:
             v2mid = (ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR ** 2) * energy[i]
@@ -471,10 +472,10 @@ def integrate(istart, iend, energy: np.ndarray, sintheta: np.ndarray,
             for k in range(28):  # why 28 and not 30?
                 if energy[i] > 0:
                     delta = delv[i] * deltheta[j] * delphi[j]
-                    fact = sintheta[j] * fv[i, j, k]
+                    fact = sintheta[j] * fv_with_axis_order_energy_cem_spin[i, j, k]
                     sumn += delta * v2mid * fact
-                    sumvx += delta * v3mid * fact * sintheta[j] * np.cos(np.deg2rad(phi[i, j, k]))
-                    sumvy += delta * v3mid * fact * sintheta[j] * np.sin(np.deg2rad(phi[i, j, k]))
+                    sumvx += delta * v3mid * fact * sintheta[j] * np.cos(np.deg2rad(phi[i, k]))
+                    sumvy += delta * v3mid * fact * sintheta[j] * np.sin(np.deg2rad(phi[i, k]))
                     sumvz += delta * v3mid * fact * costheta[j]
 
     totden = sumn + cdelnv[0]
@@ -504,11 +505,11 @@ def integrate(istart, iend, energy: np.ndarray, sintheta: np.ndarray,
             v2mid = (ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR ** 2) * energy[i]
             for k in range(28):  # again why 28?
                 if energy[i] > 0:
-                    angx = sintheta[j] * np.cos(np.deg2rad(phi[i, j, k]))
+                    angx = sintheta[j] * np.cos(np.deg2rad(phi[i, k]))
                     vx = -ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR * np.sqrt(energy[i]) * angx - CM_PER_KM * \
                          output_velocities[0]
 
-                    angy = sintheta[j] * np.sin(np.deg2rad(phi[i, j, k]))
+                    angy = sintheta[j] * np.sin(np.deg2rad(phi[i, k]))
                     vy = -ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR * np.sqrt(energy[i]) * angy - CM_PER_KM * \
                          output_velocities[1]
 
@@ -519,7 +520,7 @@ def integrate(istart, iend, energy: np.ndarray, sintheta: np.ndarray,
                     vmag2 = vx * vx + vy * vy + vz * vz
 
                     delta = delv[i] * deltheta[j] * delphi[j]
-                    fact = v2mid * sintheta[j] * fv[i, j, k]
+                    fact = v2mid * sintheta[j] * fv_with_axis_order_energy_cem_spin[i, j, k]
                     sumtxx += delta * fact * vx * vx
                     sumtxy += delta * fact * vx * vy
                     sumtxz += delta * fact * vx * vz
@@ -573,8 +574,8 @@ def scale_core_density(core_density: float,
     cos_theta = cosin_p[np.newaxis, :, np.newaxis]
     sin_theta = np.sin(np.arccos(cos_theta))
     delta_theta = aperture_field_of_view[np.newaxis, :, np.newaxis]
-    cos_phi = np.cos(np.deg2rad(phi[0, 0]))
-    sin_phi = np.sin(np.deg2rad(phi[0, 0]))
+    cos_phi = np.cos(np.deg2rad(phi[0]))
+    sin_phi = np.sin(np.deg2rad(phi[0]))
     delta_phi = 2 * np.pi / NUMBER_OF_SPIN_SECTORS
 
     velocity_3_dim = velocity_in_sc_frame[:, :, np.newaxis]
@@ -650,8 +651,8 @@ def scale_halo_density(halo_density: float,
     cos_theta = cosin_p[:, np.newaxis]
     sin_theta = np.sin(np.arccos(cos_theta))
     delta_theta = aperture_field_of_view[:, np.newaxis]
-    cos_phi = np.cos(np.deg2rad(phi[0, 0]))
-    sin_phi = np.sin(np.deg2rad(phi[0, 0]))
+    cos_phi = np.cos(np.deg2rad(phi[0]))
+    sin_phi = np.sin(np.deg2rad(phi[0]))
     delta_phi = 2 * np.pi / NUMBER_OF_SPIN_SECTORS
 
     vx = -vsch * sin_theta * cos_phi
