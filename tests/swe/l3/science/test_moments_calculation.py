@@ -10,7 +10,7 @@ from imap_l3_processing.swe.l3.science import moment_calculations
 from imap_l3_processing.swe.l3.science.moment_calculations import compute_maxwellian_weight_factors, \
     filter_and_flatten_regress_parameters, regress, calculate_fit_temperature_density_velocity, rotate_temperature, \
     rotate_dps_vector_to_rtn, Moments, halotrunc, compute_density_scale, core_fit_moments_retrying_on_failure, \
-    halo_fit_moments_retrying_on_failure
+    halo_fit_moments_retrying_on_failure, scale_halo_density
 from tests.test_helpers import create_dataclass_mock
 from tests.test_helpers import get_test_data_path
 
@@ -552,7 +552,7 @@ class TestMomentsCalculation(unittest.TestCase):
             np.array([-5.50653e+21, -1.61473e+21, -3.40728e+23]),
             integrate_outputs.heat_flux, rtol=2e-4)
 
-    def test_scale_density(self):
+    def test_scale_core_density(self):
         core_velocity = np.array([300, 400, 500], dtype=float)
         core_temp = np.array([10, 20, 30, 40, 50, 60], dtype=float)
 
@@ -587,7 +587,7 @@ class TestMomentsCalculation(unittest.TestCase):
         phi = np.broadcast_to((np.arange(0, 30) * 360 / 30)[np.newaxis, np.newaxis, :], (20, 7, 30))
 
         core_density_output = \
-            moment_calculations.scale_density(
+            moment_calculations.scale_core_density(
                 core_density,
                 core_velocity, core_temp,
                 core_moment_fit, ifit, swepam_energies - spacecraft_potential,
@@ -611,7 +611,7 @@ class TestMomentsCalculation(unittest.TestCase):
         np.testing.assert_allclose(np.array([-46.12927998, 14.98840069, -1.41836371, ]), core_density_output.velocity,
                                    rtol=1e-5)
 
-    def test_scale_density_with_base_less_than_zero(self):
+    def test_scale_core_density_with_base_less_than_zero(self):
         core_velocity = np.array([300, 400, 500], dtype=float)
         core_temp = np.array([10, 20, 30, 40, 50, 60], dtype=float)
 
@@ -644,7 +644,7 @@ class TestMomentsCalculation(unittest.TestCase):
 
         phi = np.broadcast_to((np.arange(0, 30) * 360 / 30)[np.newaxis, np.newaxis, :], (20, 7, 30))
 
-        core_density_output = moment_calculations.scale_density(
+        core_density_output = moment_calculations.scale_core_density(
             core_density,
             core_velocity, core_temp,
             core_moment_fit, ifit,
@@ -668,3 +668,89 @@ class TestMomentsCalculation(unittest.TestCase):
             rtol=5e-5)
         np.testing.assert_allclose(np.array([-17.99044364, 5.84620013, -0.55240957]), core_density_output.velocity,
                                    rtol=1e-5)
+
+    def test_scale_halo_density(self):
+        halo_velocities = np.array([300, 400, 500], dtype=float)
+        halo_temps = np.array([10, 20, 30, 40, 50, 60], dtype=float)
+
+        halo_moment_fits: Moments = Moments(
+            alpha=1,
+            beta=2,
+            t_parallel=3,
+            t_perpendicular=4,
+            velocity_x=5,
+            velocity_y=6,
+            velocity_z=7,
+            density=8,
+            aoo=9,
+            ao=10
+        )
+        space_craft_potential = 12
+
+        cosin_p = np.array([0.9034, 0.6947, 0.3730, 0.0, -0.3714, -0.6896, -0.8996])
+        aperture_field_of_view = np.array([0.6178, 0.3770, 0.3857, 0.3805, 0.3805, 0.3805, 0.6196])
+
+        regress_outputs = np.array([-1e-9, -9e-10, -8e-10, -7e-10, -6e-10, -5e-10, -4e-10, -3e-10, -2e-10, -1e-10])
+        base_energy = 100
+
+        phi = np.broadcast_to((np.arange(0, 30) * 360 / 30)[np.newaxis, np.newaxis, :], (20, 7, 30))
+
+        halo_density = 1.23456789
+        core_halo_break = 80
+
+        scaled_density = scale_halo_density(
+            halo_density, halo_velocities, halo_temps, halo_moment_fits,
+            space_craft_potential, core_halo_break,
+            cosin_p,
+            aperture_field_of_view,
+            phi,
+            regress_outputs,
+            base_energy)
+
+        np.testing.assert_allclose(1.8148638e+09, scaled_density.density, rtol=1e-5)
+        np.testing.assert_allclose(np.array([-281.57623, 91.485629, -8.6923434, ]), scaled_density.velocity)
+        np.testing.assert_allclose(np.array([58.311792, 2.5465379, 65.29518, 0.030580338, -9.4024419e-05, 71.348932, ]),
+                                   scaled_density.temperature)
+
+    def test_scale_halo_density_difference_in_breakpoints_is_greater_than_base_energy(self):
+        halo_velocities = np.array([300, 400, 500], dtype=float)
+        halo_temps = np.array([10, 20, 30, 40, 50, 60], dtype=float)
+
+        halo_moment_fits: Moments = Moments(
+            alpha=1,
+            beta=2,
+            t_parallel=3,
+            t_perpendicular=4,
+            velocity_x=5,
+            velocity_y=6,
+            velocity_z=7,
+            density=8,
+            aoo=9,
+            ao=10
+        )
+        space_craft_potential = 12
+
+        cosin_p = np.array([0.9034, 0.6947, 0.3730, 0.0, -0.3714, -0.6896, -0.8996])
+        aperture_field_of_view = np.array([0.6178, 0.3770, 0.3857, 0.3805, 0.3805, 0.3805, 0.6196])
+
+        regress_outputs = np.array([-1e-9, -9e-10, -8e-10, -7e-10, -6e-10, -5e-10, -4e-10, -3e-10, -2e-10, -1e-10])
+        base_energy = 60
+
+        phi = np.broadcast_to((np.arange(0, 30) * 360 / 30)[np.newaxis, np.newaxis, :], (20, 7, 30))
+
+        halo_density = 1e9
+        core_halo_break = 80
+
+        scaled_density = scale_halo_density(
+            halo_density, halo_velocities, halo_temps, halo_moment_fits,
+            space_craft_potential, core_halo_break,
+            cosin_p,
+            aperture_field_of_view,
+            phi,
+            regress_outputs,
+            base_energy)
+
+        np.testing.assert_allclose(3.0876812e+08, scaled_density.density, rtol=1e-5)
+        np.testing.assert_allclose(np.array([1521.8375, 1116.6945, 1636.3078]), scaled_density.velocity, rtol=1e-5)
+        np.testing.assert_allclose(np.array([-67.071986, 60.433456, -14.211044, 129.49805, 161.93695, 72.622535]),
+                                   scaled_density.temperature, rtol=3e-5)

@@ -7,13 +7,15 @@ import numpy as np
 from spiceypy import spiceypy
 
 from imap_l3_processing.constants import ELECTRON_MASS_KG, \
-    BOLTZMANN_CONSTANT_JOULES_PER_KELVIN, ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR, METERS_PER_KILOMETER, \
-    CENTIMETERS_PER_METER
+    BOLTZMANN_CONSTANT_JOULES_PER_KELVIN, METERS_PER_KILOMETER, \
+    CENTIMETERS_PER_METER, PROTON_CHARGE_COULOMBS
 
 # units of K / (m^2/s^2)
 ZMK = ELECTRON_MASS_KG / (2 * BOLTZMANN_CONSTANT_JOULES_PER_KELVIN)
 ELECTRON_MASS_OVER_BOLTZMANN_IN_CGS_UNITS = ELECTRON_MASS_KG / BOLTZMANN_CONSTANT_JOULES_PER_KELVIN * 1e-4
 NUMBER_OF_DETECTORS = 7
+
+ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR = np.sqrt(2 * PROTON_CHARGE_COULOMBS / ELECTRON_MASS_KG) * 100
 
 
 @dataclass
@@ -538,14 +540,14 @@ def integrate(istart, iend, energy: np.ndarray, sintheta: np.ndarray,
     return IntegrateOutputs(totden, output_velocities, temperature, heat_flux, base)
 
 
-def scale_density(core_density: float,
-                  core_velocity: np.ndarray, core_temp: np.ndarray,
-                  core_moment_fit: Moments, ifit: int, energy: np.ndarray,
-                  spacecraft_potential: float, cosin_p: np.ndarray,
-                  aperture_field_of_view: np.ndarray,
-                  phi: np.ndarray,
-                  regress_outputs: np.ndarray,
-                  base_energy: float) -> ScaleDensityOutput:
+def scale_core_density(core_density: float,
+                       core_velocity: np.ndarray, core_temp: np.ndarray,
+                       core_moment_fit: Moments, ifit: int, energy: np.ndarray,
+                       spacecraft_potential: float, cosin_p: np.ndarray,
+                       aperture_field_of_view: np.ndarray,
+                       phi: np.ndarray,
+                       regress_outputs: np.ndarray,
+                       base_energy: float) -> ScaleDensityOutput:
     zmk = ELECTRON_MASS_KG / (2 * BOLTZMANN_CONSTANT_JOULES_PER_KELVIN * 1e4)
     MAX_SPIN_SECTOR_INDEX = 28  # why 28 and not 30?
     KMAX = np.full(7, 30)
@@ -624,3 +626,83 @@ def scale_density(core_density: float,
 
     return ScaleDensityOutput(density=corrected_density, velocity=corrected_core_velocity,
                               temperature=corrected_core_temp, cdelnv=cdelnv, cdelt=cdelt)
+
+
+def scale_halo_density(halo_density: float,
+                       halo_velocity: np.ndarray, halo_temp: np.ndarray,
+                       halo_moment_fit: Moments,
+                       spacecraft_potential: float,
+                       core_halo_break: float,
+                       cosin_p: np.ndarray,
+                       aperture_field_of_view: np.ndarray,
+                       phi: np.ndarray,
+                       regress_outputs: np.ndarray,
+                       base_energy: float) -> ScaleDensityOutput:
+    zmk = ELECTRON_MASS_KG / (2 * BOLTZMANN_CONSTANT_JOULES_PER_KELVIN * 1e4)
+    MAX_SPIN_SECTOR_INDEX = 28  # why 28 and not 30?
+    KMAX = np.full(7, 30)
+
+    hchbreak = core_halo_break - spacecraft_potential
+    scval = abs(hchbreak - base_energy)
+    min_energy = min(base_energy, hchbreak)
+    vsch = ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR * np.sqrt(min_energy + 0.5 * scval)
+    deltav = ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR * np.sqrt(scval)
+    factor = halo_moment_fit.density * zmk / (np.pi * halo_moment_fit.t_parallel) * np.sqrt(
+        zmk / (np.pi * halo_moment_fit.t_perpendicular))
+
+    cos_theta = cosin_p[:, np.newaxis]
+    sin_theta = np.sin(np.arccos(cos_theta))
+    delta_theta = aperture_field_of_view[:, np.newaxis]
+    cos_phi = np.cos(np.deg2rad(phi[0, 0]))
+    sin_phi = np.sin(np.deg2rad(phi[0, 0]))
+    delta_phi = 2 * np.pi / KMAX[-1]
+
+    vx = -vsch * sin_theta * cos_phi
+    vy = -vsch * sin_theta * sin_phi
+    vz = -vsch * cos_theta
+
+    fun = -zmk * np.stack(np.broadcast_arrays(vx * vx, vy * vy, vz * vz, vx * vy, vx * vz, vy * vz, vx, vy, vz),
+                          axis=-1)
+    exponent = np.dot(fun, regress_outputs[:9])
+    delt = deltav * delta_theta * delta_phi
+    common_factor = np.square(vsch) * delt * sin_theta * factor * np.exp(exponent)
+
+    def integrate(array):
+        return np.sum(array[:NUMBER_OF_DETECTORS, :MAX_SPIN_SECTOR_INDEX])
+
+    sumint = integrate(common_factor)
+    sumvx = integrate(vx * common_factor)
+    sumvy = integrate(vy * common_factor)
+    sumvz = integrate(vz * common_factor)
+
+    sumtxx = integrate(vx * vx * common_factor)
+    sumtxy = integrate(vx * vy * common_factor)
+    sumtxz = integrate(vx * vz * common_factor)
+    sumtyy = integrate(vy * vy * common_factor)
+    sumtyz = integrate(vy * vz * common_factor)
+    sumtzz = integrate(vz * vz * common_factor)
+
+    sum_velocities = np.array([sumvx, sumvy, sumvz])
+    sum_temperatures = np.array([sumtxx, sumtxy, sumtyy, sumtxz, sumtyz, sumtzz])
+
+    if base_energy > hchbreak:
+        delta_density = sumint
+        delta_velocity = sum_velocities
+        delta_temperature = sum_temperatures
+    else:
+        delta_density = -sumint
+        delta_velocity = -sum_velocities
+        delta_temperature = -sum_temperatures
+
+    corrected_density = halo_density + delta_density
+
+    corrected_halo_velocity = halo_velocity.copy()
+    corrected_halo_velocity *= halo_density / corrected_density
+    corrected_halo_velocity += delta_velocity * (-1e-5) / corrected_density
+
+    corrected_halo_temp = halo_temp.copy()
+    corrected_halo_temp *= halo_density / corrected_density
+    corrected_halo_temp += delta_temperature * 1e-4 * ELECTRON_MASS_OVER_BOLTZMANN_IN_CGS_UNITS / corrected_density
+
+    return ScaleDensityOutput(density=corrected_density, velocity=corrected_halo_velocity,
+                              temperature=corrected_halo_temp, cdelnv=None, cdelt=None)

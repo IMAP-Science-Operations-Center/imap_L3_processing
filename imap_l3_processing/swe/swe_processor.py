@@ -11,7 +11,7 @@ from imap_l3_processing.swe.l3.models import SweL3Data, SweL1bData, SweL2Data, S
 from imap_l3_processing.swe.l3.science.moment_calculations import compute_maxwellian_weight_factors, \
     rotate_temperature, \
     rotate_dps_vector_to_rtn, core_fit_moments_retrying_on_failure, halo_fit_moments_retrying_on_failure, Moments, \
-    integrate, scale_density
+    integrate, scale_core_density
 from imap_l3_processing.swe.l3.science.pitch_calculations import average_over_look_directions, find_breakpoints, \
     correct_and_rebin, \
     integrate_distribution_to_get_1d_spectrum, integrate_distribution_to_get_inbound_and_outbound_1d_spectrum, \
@@ -180,11 +180,11 @@ class SweProcessor(Processor):
                                                   spacecraft_potential[i],
                                                   [0, 0, 0, 0], [0, 0, 0, 0, 0, 0])
                 if core_integrate_result is not None:
-                    scale_density(core_integrate_result.density, core_integrate_result.velocity,
-                                  core_integrate_result.temperature, core_moment, ifit, corrected_energy_bins[i],
-                                  spacecraft_potential[i], cos_theta, config['aperture_field_of_view_radians'],
-                                  swe_l2_data.inst_az_spin_sector[i], core_moment_fit_result.regress_result,
-                                  core_integrate_result.base_energy)
+                    scale_core_density(core_integrate_result.density, core_integrate_result.velocity,
+                                       core_integrate_result.temperature, core_moment, ifit, corrected_energy_bins[i],
+                                       spacecraft_potential[i], cos_theta, config['aperture_field_of_view_radians'],
+                                       swe_l2_data.inst_az_spin_sector[i], core_moment_fit_result.regress_result,
+                                       core_integrate_result.base_energy)
             else:
                 core_moments.append(Moments.construct_all_fill())
                 core_fit_chi_squareds.append(np.nan)
