@@ -7,10 +7,11 @@ from imap_l3_processing import spice_wrapper
 from imap_l3_processing.data_utils import find_closest_neighbor
 from imap_l3_processing.processor import Processor
 from imap_l3_processing.swapi.l3a.science.calculate_pickup_ion import calculate_solar_wind_velocity_vector
-from imap_l3_processing.swe.l3.models import SweL3Data, SweL1bData, SweL2Data, SweL3MomentData
+from imap_l3_processing.swe.l3.models import SweL3Data, SweL1bData, SweL2Data, SweL3MomentData, SweConfiguration
 from imap_l3_processing.swe.l3.science.moment_calculations import compute_maxwellian_weight_factors, \
     rotate_temperature, \
-    rotate_dps_vector_to_rtn, core_fit_moments_retrying_on_failure, halo_fit_moments_retrying_on_failure, Moments
+    rotate_dps_vector_to_rtn, core_fit_moments_retrying_on_failure, halo_fit_moments_retrying_on_failure, Moments, \
+    integrate, scale_density
 from imap_l3_processing.swe.l3.science.pitch_calculations import average_over_look_directions, find_breakpoints, \
     correct_and_rebin, \
     integrate_distribution_to_get_1d_spectrum, integrate_distribution_to_get_inbound_and_outbound_1d_spectrum, \
@@ -103,7 +104,7 @@ class SweProcessor(Processor):
 
     def calculate_moment_products(self, swe_l2_data: SweL2Data, swe_l1b_data: SweL1bData,
                                   spacecraft_potential: np.ndarray, halo_core: np.ndarray,
-                                  corrected_energy_bins: np.ndarray):
+                                  corrected_energy_bins: np.ndarray, config: SweConfiguration):
 
         core_density_history = [100 for _ in range(3)]
         halo_density_history = [25 for _ in range(3)]
@@ -131,8 +132,16 @@ class SweProcessor(Processor):
 
             spacecraft_potential_core_breakpoint_index: int = next(
                 energy_i for energy_i, energy in enumerate(swe_l2_data.energy) if energy >= spacecraft_potential[i])
+            # ifit
             halo_core_breakpoint_index: int = next(
                 energy_i - 1 for energy_i, energy in enumerate(swe_l2_data.energy) if energy > halo_core[i])
+            # jbreak
+            # nfit = jbreak - ifit + 1
+            # ifit + nfit = jbreak + 1
+
+            ifit = 1 + next(
+                index for index, energy in enumerate(swe_l2_data.energy) if energy >= spacecraft_potential[i])
+            jbreak = next(index for index, energy in enumerate(swe_l2_data.energy) if energy >= halo_core[i])
 
             core_end_index = halo_core_breakpoint_index
 
@@ -163,6 +172,21 @@ class SweProcessor(Processor):
                                                                             core_moment.beta)
                 core_temp_theta_rtns.append(core_temp_theta_rtn)
                 core_temp_phi_rtns.append(core_temp_phi_rtn)
+
+                sin_theta = np.sin(np.deg2rad(swe_l2_data.inst_el))
+                cos_theta = np.cos(np.deg2rad(swe_l2_data.inst_el))
+                core_integrate_result = integrate(ifit + 1, jbreak - 1, corrected_energy_bins[i],
+                                                  sin_theta, cos_theta, config['aperture_field_of_view_radians'],
+                                                  swe_l2_data.phase_space_density[i],
+                                                  swe_l2_data.inst_az_spin_sector[i],
+                                                  spacecraft_potential[i],
+                                                  [0, 0, 0, 0], [0, 0, 0, 0, 0, 0])
+                if core_integrate_result is not None:
+                    scale_density(core_integrate_result.density, core_integrate_result.velocity,
+                                  core_integrate_result.temperature, core_moment, ifit, corrected_energy_bins[i],
+                                  spacecraft_potential[i], cos_theta, config['aperture_field_of_view_radians'],
+                                  swe_l2_data.inst_az_spin_sector[i], core_moment_fit_result.regress_result,
+                                  core_integrate_result.base_energy)
             else:
                 core_moments.append(Moments.construct_all_fill())
                 core_fit_chi_squareds.append(np.nan)
@@ -201,6 +225,12 @@ class SweProcessor(Processor):
                                                                             halo_moment.beta)
                 halo_temp_theta_rtns.append(halo_temp_theta_rtn)
                 halo_temp_phi_rtns.append(halo_temp_phi_rtn)
+
+                integrate(jbreak, len(corrected_energy_bins[i]) - 1, corrected_energy_bins[i],
+                          sin_theta, cos_theta, config['aperture_field_of_view_radians'],
+                          swe_l2_data.phase_space_density[i], swe_l2_data.inst_az_spin_sector[i],
+                          spacecraft_potential[i],
+                          [0, 0, 0, 0], [0, 0, 0, 0, 0, 0])
             else:
                 halo_moments.append(Moments.construct_all_fill())
                 halo_fit_chi_squareds.append(np.nan)

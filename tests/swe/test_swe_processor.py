@@ -7,7 +7,7 @@ import numpy as np
 from imap_l3_processing.models import MagL1dData, InputMetadata, UpstreamDataDependency
 from imap_l3_processing.swe.l3.models import SweL2Data, SwapiL3aProtonData, SweL1bData
 from imap_l3_processing.swe.l3.models import SweL3MomentData
-from imap_l3_processing.swe.l3.science.moment_calculations import MomentFitResults
+from imap_l3_processing.swe.l3.science.moment_calculations import MomentFitResults, IntegrateOutputs
 from imap_l3_processing.swe.l3.science.moment_calculations import Moments
 from imap_l3_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies
 from imap_l3_processing.swe.swe_processor import SweProcessor
@@ -500,6 +500,8 @@ class TestSweProcessor(unittest.TestCase):
         np.testing.assert_allclose(swe_l3_data.energy_spectrum_outbound,
                                    np.array([[208.855516, 286.519101, 206.376298]]))
 
+    @patch('imap_l3_processing.swe.swe_processor.scale_density')
+    @patch('imap_l3_processing.swe.swe_processor.integrate')
     @patch('imap_l3_processing.swe.swe_processor.halo_fit_moments_retrying_on_failure')
     @patch('imap_l3_processing.swe.swe_processor.core_fit_moments_retrying_on_failure')
     @patch('imap_l3_processing.swe.swe_processor.compute_maxwellian_weight_factors')
@@ -511,20 +513,25 @@ class TestSweProcessor(unittest.TestCase):
                                        mock_calculate_velocity_in_dsp_frame_km_s,
                                        mock_compute_maxwellian_weight_factors,
                                        mock_core_fit_moments_retrying_on_failure: Mock,
-                                       mock_halo_fit_moments_retrying_on_failure: Mock):
+                                       mock_halo_fit_moments_retrying_on_failure: Mock,
+                                       mock_integrate: Mock,
+                                       mock_scale_density: Mock):
         epochs = datetime.now() + np.arange(3) * timedelta(minutes=1)
 
+        instrument_elevation = np.array([-70, -50, -30, 0, 30, 50, 70])
         swe_l2_data = SweL2Data(
             epoch=epochs,
             phase_space_density=np.arange(9).reshape(3, 3) + 100,
             flux=np.arange(9).reshape(3, 3),
             energy=np.array([9, 10, 12, 14, 36, 54, 96, 102, 112, 156]),
-            inst_el=np.array([]),
+            inst_el=instrument_elevation,
             inst_az_spin_sector=np.arange(10, 19).reshape(3, 3),
             acquisition_time=np.array([]),
             acquisition_duration=[sentinel.acquisition_duration_1, sentinel.acquisition_duration_2,
                                   sentinel.acquisition_duration_3],
         )
+        expected_sin_theta = np.sin(np.deg2rad(instrument_elevation))
+        expected_cos_theta = np.cos(np.deg2rad(instrument_elevation))
         swe_l1_data = SweL1bData(epoch=epochs,
                                  count_rates=[sentinel.l1b_count_rates_1, sentinel.l1b_count_rates_2,
                                               sentinel.count_rates_3],
@@ -558,10 +565,14 @@ class TestSweProcessor(unittest.TestCase):
         halo_moments2 = create_dataclass_mock(Moments, density=19, velocity_x=8, velocity_y=9,
                                               velocity_z=10, t_parallel=103, t_perpendicular=203)
 
-        core_moment_fit_results_1 = MomentFitResults(moments=core_moments1, chisq=4730912.0, number_of_points=10)
-        core_moment_fit_results_2 = MomentFitResults(moments=core_moments2, chisq=4705988.0, number_of_points=11)
-        halo_moment_fit_results_1 = MomentFitResults(moments=halo_moments1, chisq=3412.0, number_of_points=12)
-        halo_moment_fit_results_2 = MomentFitResults(moments=halo_moments2, chisq=3214.0, number_of_points=13)
+        core_moment_fit_results_1 = MomentFitResults(moments=core_moments1, chisq=4730912.0, number_of_points=10,
+                                                     regress_result=sentinel.core_regress_result_1)
+        core_moment_fit_results_2 = MomentFitResults(moments=core_moments2, chisq=4705988.0, number_of_points=11,
+                                                     regress_result=sentinel.core_regress_result_2)
+        halo_moment_fit_results_1 = MomentFitResults(moments=halo_moments1, chisq=3412.0, number_of_points=12,
+                                                     regress_result=sentinel.halo_regress_result_1)
+        halo_moment_fit_results_2 = MomentFitResults(moments=halo_moments2, chisq=3214.0, number_of_points=13,
+                                                     regress_result=sentinel.halo_regress_result_2)
 
         mock_core_fit_moments_retrying_on_failure.side_effect = [core_moment_fit_results_1, core_moment_fit_results_2,
                                                                  None]
@@ -590,13 +601,20 @@ class TestSweProcessor(unittest.TestCase):
             halo_velocity_2
         ]
 
+        core_integrate_output = Mock()
+        halo_integrate_output = Mock()
+
+        mock_integrate.side_effect = [core_integrate_output, halo_integrate_output, None, None]
+
         input_metadata = InputMetadata("swe", "l3", datetime(2025, 2, 21),
                                        datetime(2025, 2, 22), "v001")
 
         swe_processor = SweProcessor(dependencies=[], input_metadata=input_metadata)
+        config = build_swe_configuration()
         swe_moment_data = swe_processor.calculate_moment_products(swe_l2_data, swe_l1_data, spacecraft_potential,
                                                                   core_halo_breakpoint,
-                                                                  corrected_energy_bins)
+                                                                  corrected_energy_bins,
+                                                                  config)
 
         calculate_velocity_call_1 = mock_calculate_velocity_in_dsp_frame_km_s.mock_calls[0]
         np.testing.assert_array_equal(corrected_energy_bins[0], calculate_velocity_call_1.args[0])
@@ -725,6 +743,49 @@ class TestSweProcessor(unittest.TestCase):
              call(epochs[0], halo_moments1.alpha, halo_moments1.beta),
              call(epochs[1], core_moments2.alpha, core_moments2.beta),
              call(epochs[1], halo_moments2.alpha, halo_moments2.beta), ])
+
+        def call_with_array_matchers(*args):
+            return call(*[NumpyArrayMatcher(x) for x in args])
+
+        self.assertEqual(4, mock_integrate.call_count)
+        mock_integrate.assert_has_calls(
+            [call_with_array_matchers(4, 5,
+                                      corrected_energy_bins[0], expected_sin_theta, expected_cos_theta,
+                                      config["aperture_field_of_view_radians"],
+                                      swe_l2_data.phase_space_density[0],
+                                      swe_l2_data.inst_az_spin_sector[0],  # does this have the right dimensions?
+                                      12, np.array([0, 0, 0, 0]), np.array([0, 0, 0, 0, 0, 0])),
+             call_with_array_matchers(6, 9,
+                                      corrected_energy_bins[0], expected_sin_theta, expected_cos_theta,
+                                      config["aperture_field_of_view_radians"],
+                                      swe_l2_data.phase_space_density[0],
+                                      swe_l2_data.inst_az_spin_sector[0],  # does this have the right dimensions?
+                                      12, np.array([0, 0, 0, 0]), np.array([0, 0, 0, 0, 0, 0])),
+             call_with_array_matchers(5, 4,
+                                      corrected_energy_bins[1], expected_sin_theta, expected_cos_theta,
+                                      config["aperture_field_of_view_radians"],
+                                      swe_l2_data.phase_space_density[1],
+                                      swe_l2_data.inst_az_spin_sector[1],  # does this have the right dimensions?
+                                      14, np.array([0, 0, 0, 0]), np.array([0, 0, 0, 0, 0, 0])),
+             call_with_array_matchers(5, 9,
+                                      corrected_energy_bins[1], expected_sin_theta, expected_cos_theta,
+                                      config["aperture_field_of_view_radians"],
+                                      swe_l2_data.phase_space_density[1],
+                                      swe_l2_data.inst_az_spin_sector[1],  # does this have the right dimensions?
+                                      14, np.array([0, 0, 0, 0]), np.array([0, 0, 0, 0, 0, 0])),
+
+             ]
+        )
+
+        self.assertEqual(1, mock_scale_density.call_count)
+        mock_scale_density.assert_has_calls([
+            call_with_array_matchers(core_integrate_output.density, core_integrate_output.velocity,
+                                     core_integrate_output.temperature, core_moments1, 3, corrected_energy_bins[0],
+                                     12, expected_cos_theta, config["aperture_field_of_view_radians"],
+                                     swe_l2_data.inst_az_spin_sector[0],
+                                     sentinel.core_regress_result_1,
+                                     core_integrate_output.base_energy)
+        ])
 
         # @formatter:off
         self.assertIsInstance(swe_moment_data, SweL3MomentData)

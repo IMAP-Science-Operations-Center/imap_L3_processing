@@ -211,3 +211,4 @@ class SweConfiguration(TypedDict):
     halo_energy_for_slope_guess: float
     refit_core_halo_breakpoint_index: int
     minimum_phase_space_density_value: float
+    aperture_field_of_view_radians: list[float]

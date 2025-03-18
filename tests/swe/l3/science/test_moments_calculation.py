@@ -94,8 +94,8 @@ class TestMomentsCalculation(unittest.TestCase):
         ])
 
         self.assertIs(moments_3_with_valid_density, moment_fit_result.moments)
+        self.assertIs(sentinel.fit_function_3, moment_fit_result.regress_result)
         self.assertEqual(sentinel.chisq_3, moment_fit_result.chisq)
-        self.assertIs(moments_3_with_valid_density, moment_fit_result.moments)
         self.assertEqual(6, moment_fit_result.number_of_points)
 
     @patch('imap_l3_processing.swe.l3.science.moment_calculations.regress')
@@ -159,8 +159,8 @@ class TestMomentsCalculation(unittest.TestCase):
         ])
 
         self.assertIs(moments_with_valid_density, moment_fit_result.moments)
+        self.assertIs(sentinel.fit_function_3, moment_fit_result.regress_result)
         self.assertEqual(sentinel.chisq_3, moment_fit_result.chisq)
-        self.assertIs(moments_with_valid_density, moment_fit_result.moments)
         self.assertEqual(6, moment_fit_result.number_of_points)
 
     @patch('imap_l3_processing.swe.l3.science.moment_calculations.regress')
@@ -408,17 +408,14 @@ class TestMomentsCalculation(unittest.TestCase):
                                                                                                                    7,
                                                                                                                    30)
 
-        energy = np.loadtxt(get_test_data_path("swe/energies.csv"), delimiter=",").reshape(20, 7, 30)
+        energy = np.loadtxt(get_test_data_path("swe/energies.csv"), delimiter=",").reshape(20, 7, 30)[:, 0, 0]
 
-        sintheta = np.zeros(shape=(20, 7))
-        sintheta[:] = [-0.1673557, 0.91652155, -0.83665564, 0., 0.83665564, -0.91652155, 0.1673557]
+        sintheta = np.array([-0.1673557, 0.91652155, -0.83665564, 0., 0.83665564, -0.91652155, 0.1673557])
 
-        costheta = np.zeros(shape=(20, 7))
-        costheta[:] = [0.9858965815825497, -0.39998531498835127, -0.5477292602242684, 1.0, -0.5477292602242684,
-                       -0.39998531498835127, 0.9858965815825497]
+        costheta = np.array([0.9858965815825497, -0.39998531498835127, -0.5477292602242684, 1.0, -0.5477292602242684,
+                             -0.39998531498835127, 0.9858965815825497])
 
-        deltheta = np.zeros(shape=(20, 7))
-        deltheta[:] = [0.6178, 0.3770, 0.3857, 0.3805, 0.3805, 0.3805, 0.6196]
+        deltheta = np.array([0.6178, 0.3770, 0.3857, 0.3805, 0.3805, 0.3805, 0.6196])
 
         cdelnv = np.array([0, 0, 0, 0])
         cdelt = np.array([0, 0, 0, 0, 0, 0])
@@ -430,10 +427,12 @@ class TestMomentsCalculation(unittest.TestCase):
 
         np.testing.assert_allclose(6.71828e+23, integrate_outputs.density, rtol=1e-5)
 
-        np.testing.assert_allclose(np.array([-1053.53, 327.55, 1919.34, -10.7911]), integrate_outputs.velocity,
+        np.testing.assert_allclose(np.array([-1053.53, 327.55, 1919.34]), integrate_outputs.velocity,
+                                   rtol=1e-4)
+        np.testing.assert_allclose(np.array(-10.7911), integrate_outputs.base_energy,
                                    rtol=1e-4)
         np.testing.assert_allclose(
-            np.array([9.01575e+16, -1.99203e+15, 1.16781e+17, -1.98483e+15, -7.08943e+16, -1.60545e+16]),
+            np.array([48.1855, -1.06466, 62.4149, -1.06081, -37.8901, -8.58049]),
             integrate_outputs.temperature, rtol=2e-4)
         np.testing.assert_allclose(
             np.array([9.92303e+21, -2.88985e+22, 9.45357e+21]),
@@ -449,16 +448,13 @@ class TestMomentsCalculation(unittest.TestCase):
                                                                                                                    7,
                                                                                                                    30)
 
-        energy = np.loadtxt(get_test_data_path("swe/energies.csv"), delimiter=",").reshape(20, 7, 30)
+        energy = np.loadtxt(get_test_data_path("swe/energies.csv"), delimiter=",").reshape(20, 7, 30)[:, 0, 0]
 
-        sintheta = np.zeros(shape=(20, 7))
-        sintheta[:] = [-0.89100652, -0.66913061, -0.35836795, 0., 0.35836795, 0.66913061, 0.89100652]
+        sintheta = np.array([-0.89100652, -0.66913061, -0.35836795, 0., 0.35836795, 0.66913061, 0.89100652])
 
-        costheta = np.zeros(shape=(20, 7))
-        costheta[:] = [0.4539905, 0.74314483, 0.93358043, 1., 0.93358043, 0.74314483, 0.4539905]
+        costheta = np.array([0.4539905, 0.74314483, 0.93358043, 1., 0.93358043, 0.74314483, 0.4539905])
 
-        deltheta = np.zeros(shape=(20, 7))
-        deltheta[:] = [0.6178, 0.3770, 0.3857, 0.3805, 0.3805, 0.3805, 0.6196]
+        deltheta = np.array([0.6178, 0.3770, 0.3857, 0.3805, 0.3805, 0.3805, 0.6196])
 
         spacecraft_potential = 12
         cdelnv = np.array([0, 0, 0, 0])
@@ -480,17 +476,14 @@ class TestMomentsCalculation(unittest.TestCase):
                                                                                                                    7,
                                                                                                                    30)
 
-        energy = np.loadtxt(get_test_data_path("swe/energies.csv"), delimiter=",").reshape(20, 7, 30)
+        energy = np.loadtxt(get_test_data_path("swe/energies.csv"), delimiter=",").reshape(20, 7, 30)[:, 0, 0]
 
-        artificial_all_positive_sintheta = np.zeros(shape=(20, 7))
-        artificial_all_positive_sintheta[:] = [0.89100652, 0.66913061, 0.35836795, 0., 0.35836795, 0.66913061,
-                                               0.89100652]
+        artificial_all_positive_sintheta = np.array([0.89100652, 0.66913061, 0.35836795, 0., 0.35836795, 0.66913061,
+                                                     0.89100652])
 
-        costheta = np.zeros(shape=(20, 7))
-        costheta[:] = [0.4539905, 0.74314483, 0.93358043, 1., 0.93358043, 0.74314483, 0.4539905]
+        costheta = np.array([0.4539905, 0.74314483, 0.93358043, 1., 0.93358043, 0.74314483, 0.4539905])
 
-        deltheta = np.zeros(shape=(20, 7))
-        deltheta[:] = [0.6178, 0.3770, 0.3857, 0.3805, 0.3805, 0.3805, 0.6196]
+        deltheta = np.array([0.6178, 0.3770, 0.3857, 0.3805, 0.3805, 0.3805, 0.6196])
 
         spacecraft_potential = 12
         cdelnv = np.array([1e23, 2e23, 3e23, 4e23])
@@ -503,11 +496,131 @@ class TestMomentsCalculation(unittest.TestCase):
 
         np.testing.assert_allclose(1.94762e+25, integrate_outputs.density, rtol=1e-5)
 
-        np.testing.assert_allclose(np.array([53.8532, 10.9898, -2355.75, -10.7911]), integrate_outputs.velocity,
+        np.testing.assert_allclose(np.array([53.8532, 10.9898, -2355.75]), integrate_outputs.velocity,
+                                   rtol=1e-4)
+
+        np.testing.assert_allclose(np.array(-10.7911), integrate_outputs.base_energy,
                                    rtol=1e-4)
         np.testing.assert_allclose(
-            np.array([7.1484e+16, 3.47791e+15, 6.4914e+16, 1.31551e+15, 2.07552e+15, 4.38465e+16]),
+            np.array([5.13448e+13, 1.0269e+14, 1.54034e+14, 2.05379e+14, 2.56724e+14, 3.08069e+14]),
             integrate_outputs.temperature, rtol=2e-4)
         np.testing.assert_allclose(
             np.array([-5.50653e+21, -1.61473e+21, -3.40728e+23]),
             integrate_outputs.heat_flux, rtol=2e-4)
+
+    def test_scale_density(self):
+        core_velocity = np.array([300, 400, 500], dtype=float)
+        core_temp = np.array([10, 20, 30, 40, 50, 60], dtype=float)
+
+        core_moment_fit: Moments = Moments(
+            alpha=1,
+            beta=2,
+            t_parallel=3,
+            t_perpendicular=4,
+            velocity_x=5,
+            velocity_y=6,
+            velocity_z=7,
+            density=8,
+            aoo=9,
+            ao=10
+        )
+
+        ifit = 5
+        spacecraft_potential = 12
+        cosin_p = np.array([0.9034, 0.6947, 0.3730, 0.0, -0.3714, -0.6896, -0.8996])
+        aperture_field_of_view = np.array([0.6178, 0.3770, 0.3857, 0.3805, 0.3805, 0.3805, 0.6196])
+
+        regress_outputs = np.array([-1e-9, -9e-10, -8e-10, -7e-10, -6e-10, -5e-10, -4e-10, -3e-10, -2e-10, -1e-10])
+        core_density = 1.23456789
+        base_energy = 100
+
+        swepam_energies = np.array([2.55714286, 3.65142857, 5.16, 7.30571429,
+                                    10.32857143, 14.34285714, 19.95714286, 27.42857143,
+                                    38.37142857, 52.82857143, 73.32857143, 102.0,
+                                    142.14285714, 196.57142857, 272., 372.71428571,
+                                    519.0, 712.57142857, 987.14285714, 1370.0])
+
+        phi = np.broadcast_to((np.arange(0, 30) * 360 / 30)[np.newaxis, np.newaxis, :], (20, 7, 30))
+
+        core_density_output = \
+            moment_calculations.scale_density(
+                core_density,
+                core_velocity, core_temp,
+                core_moment_fit, ifit, swepam_energies - spacecraft_potential,
+                spacecraft_potential, cosin_p,
+                aperture_field_of_view,
+                phi,
+                regress_outputs,
+                base_energy)
+
+        np.testing.assert_allclose(
+            np.array([5718541.16075311, -263792613.61606878, 85711310.93588784, -8111590.29270447]),
+            core_density_output.cdelnv, rtol=2e-5)
+        np.testing.assert_allclose(
+            np.array([9087744.94089722, 395603.64214905, 10176632.69696172, 3589.92320634, -1123.69322733,
+                      11120544.60123955]),
+            core_density_output.cdelt, rtol=5e-5)
+        np.testing.assert_allclose(5718542.39532100, core_density_output.density, rtol=1e-5)
+        np.testing.assert_allclose(
+            np.array([1.58917372, 0.06918342, 1.77959155, 0.00063640, -0.00018571, 1.94465965]),
+            core_density_output.temperature, rtol=5e-5)
+        np.testing.assert_allclose(np.array([-46.12927998, 14.98840069, -1.41836371, ]), core_density_output.velocity,
+                                   rtol=1e-5)
+
+    def test_scale_density_with_base_less_than_zero(self):
+        core_velocity = np.array([300, 400, 500], dtype=float)
+        core_temp = np.array([10, 20, 30, 40, 50, 60], dtype=float)
+
+        core_moment_fit: Moments = Moments(
+            alpha=1,
+            beta=2,
+            t_parallel=3,
+            t_perpendicular=4,
+            velocity_x=5,
+            velocity_y=6,
+            velocity_z=7,
+            density=8,
+            aoo=9,
+            ao=10
+        )
+        ifit = 5
+        spacecraft_potential = 14
+        cosin_p = np.array([0.9034, 0.6947, 0.3730, 0.0, -0.3714, -0.6896, -0.8996])
+        aperture_field_of_view = np.array([0.6178, 0.3770, 0.3857, 0.3805, 0.3805, 0.3805, 0.6196])
+
+        regress_outputs = np.array([-1e-9, -9e-10, -8e-10, -7e-10, -6e-10, -5e-10, -4e-10, -3e-10, -2e-10, -1e-10])
+        core_density = 1.23456789
+        base_energy = 100
+
+        swepam_energies = np.array([2.55714286, 3.65142857, 5.16, 7.30571429,
+                                    10.32857143, 14.34285714, 19.95714286, 27.42857143,
+                                    38.37142857, 52.82857143, 73.32857143, 102.0,
+                                    142.14285714, 196.57142857, 272., 372.71428571,
+                                    519.0, 712.57142857, 987.14285714, 1370.0])
+
+        phi = np.broadcast_to((np.arange(0, 30) * 360 / 30)[np.newaxis, np.newaxis, :], (20, 7, 30))
+
+        core_density_output = moment_calculations.scale_density(
+            core_density,
+            core_velocity, core_temp,
+            core_moment_fit, ifit,
+            swepam_energies - spacecraft_potential,
+            spacecraft_potential, cosin_p,
+            aperture_field_of_view,
+            phi,
+            regress_outputs,
+            base_energy)
+
+        np.testing.assert_allclose(
+            np.array([817041.86654199, -14699338.23262659, 4776103.65373425, -451959.71106777, ]),
+            core_density_output.cdelnv, 2e-5)
+        np.testing.assert_allclose(
+            np.array([194444.92879664, 8463.82584106, 217743.48011274, 76.19579312, -24.62356212, 237940.02226200, ]),
+            core_density_output.cdelt, 5e-5)
+        np.testing.assert_allclose(817043, core_density_output.density, rtol=1e-5)
+        np.testing.assert_allclose(
+            np.array([0.23800124, 0.01038931, 0.26654716, 0.00015370, 0.00004541, 0.29131156, ]),
+            core_density_output.temperature,
+            rtol=5e-5)
+        np.testing.assert_allclose(np.array([-17.99044364, 5.84620013, -0.55240957]), core_density_output.velocity,
+                                   rtol=1e-5)

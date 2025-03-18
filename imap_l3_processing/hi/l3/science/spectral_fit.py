@@ -4,7 +4,7 @@ from imap_l3_processing.hi.l3.science.mpfit import mpfit
 
 
 def spectral_fit(num_epochs, num_lons, num_lats, fluxes, variances, energy):
-    initial_parameters = (1e4, 2.5)
+    initial_parameters = (100, 2)
 
     gammas = np.full((num_epochs, num_lons, num_lats), fill_value=np.nan, dtype=float)
     for epoch in range(num_epochs):
@@ -17,7 +17,7 @@ def spectral_fit(num_epochs, num_lons, num_lats, fluxes, variances, energy):
                 flux = flux[~flux_or_error_is_invalid]
                 variance = variance[~flux_or_error_is_invalid]
                 filtered_energy = energy[~flux_or_error_is_invalid]
-                keywords = {'xval': filtered_energy, 'yval': flux, 'errval': variance}
+                keywords = {'xval': filtered_energy, 'yval': flux, 'errval': np.sqrt(variance)}
                 fit = mpfit(power_law, initial_parameters, keywords, nprint=0)
                 a, gamma = fit.params
                 gammas[epoch][lon][lat] = gamma
@@ -34,6 +34,5 @@ def power_law(params, **kwargs):
 
     status = 0
     residuals = (y - model) / err
-    # print(f'A: {A}\nB: {B}\nresiduals: {residuals}')
 
     return status, residuals

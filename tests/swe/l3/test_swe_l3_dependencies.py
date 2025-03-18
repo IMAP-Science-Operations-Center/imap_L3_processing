@@ -47,7 +47,7 @@ class TestSweL3Dependencies(unittest.TestCase):
                                                     descriptor="sci")
         mag_l1d_dependency = UpstreamDataDependency("mag", "l1d", datetime(2020, 1, 1), datetime(2020, 1, 1),
                                                     version="v0.00",
-                                                    descriptor="mago-normal")
+                                                    descriptor="norm-mago")
         swapi_l3a_dependency = UpstreamDataDependency("swapi", "l3", datetime(2020, 1, 1), datetime(2020, 1, 1),
                                                       version="v0.00",
                                                       descriptor="proton-sw")

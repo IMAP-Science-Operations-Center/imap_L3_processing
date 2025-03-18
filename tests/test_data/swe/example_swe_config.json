@@ -143,5 +143,14 @@
   "core_energy_for_slope_guess": 20,
   "halo_energy_for_slope_guess": 100,
   "refit_core_halo_breakpoint_index": 13,
-  "minimum_phase_space_density_value": 1e-32
+  "minimum_phase_space_density_value": 1e-32,
+  "aperture_field_of_view_radians": [
+    0.6178,
+    0.3770,
+    0.3857,
+    0.3805,
+    0.3805,
+    0.3805,
+    0.6196
+  ]
 }
