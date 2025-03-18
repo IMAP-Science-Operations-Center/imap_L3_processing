@@ -501,6 +501,7 @@ class TestSweProcessor(unittest.TestCase):
         np.testing.assert_allclose(swe_l3_data.energy_spectrum_outbound,
                                    np.array([[208.855516, 286.519101, 206.376298]]))
 
+    @patch('imap_l3_processing.swe.swe_processor.scale_halo_density')
     @patch('imap_l3_processing.swe.swe_processor.scale_core_density')
     @patch('imap_l3_processing.swe.swe_processor.integrate')
     @patch('imap_l3_processing.swe.swe_processor.halo_fit_moments_retrying_on_failure')
@@ -516,7 +517,7 @@ class TestSweProcessor(unittest.TestCase):
                                        mock_core_fit_moments_retrying_on_failure: Mock,
                                        mock_halo_fit_moments_retrying_on_failure: Mock,
                                        mock_integrate: Mock,
-                                       mock_scale_core_density: Mock):
+                                       mock_scale_core_density: Mock, mock_scale_halo_density: Mock):
         epochs = datetime.now() + np.arange(3) * timedelta(minutes=1)
 
         instrument_elevation = np.array([-70, -50, -30, 0, 30, 50, 70])
@@ -782,10 +783,22 @@ class TestSweProcessor(unittest.TestCase):
         mock_scale_core_density.assert_has_calls([
             call_with_array_matchers(core_integrate_output.density, core_integrate_output.velocity,
                                      core_integrate_output.temperature, core_moments1, 3, corrected_energy_bins[0],
-                                     12, expected_cos_theta, config["aperture_field_of_view_radians"],
+                                     spacecraft_potential[0], expected_cos_theta,
+                                     config["aperture_field_of_view_radians"],
                                      swe_l2_data.inst_az_spin_sector[0],
                                      sentinel.core_regress_result_1,
                                      core_integrate_output.base_energy)
+        ])
+
+        self.assertEqual(1, mock_scale_halo_density.call_count)
+
+        mock_scale_halo_density.assert_has_calls([
+            call_with_array_matchers(halo_integrate_output.density, halo_integrate_output.velocity,
+                                     halo_integrate_output.temperature, halo_moments1, spacecraft_potential[0],
+                                     core_halo_breakpoint[0], expected_cos_theta,
+                                     config["aperture_field_of_view_radians"],
+                                     swe_l2_data.inst_az_spin_sector[0], sentinel.halo_regress_result_1,
+                                     halo_integrate_output.base_energy)
         ])
 
         # @formatter:off
