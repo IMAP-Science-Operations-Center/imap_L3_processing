@@ -196,8 +196,7 @@ class TestPHAEventReader(unittest.TestCase):
         event3 = create_raw_pha_event()
 
         number_of_events = 33715
-        event_record_buffer = BitArray(uint=number_of_events, length=16).bin
-        event_record_buffer += self._create_pha_event_binary(event1)
+        event_record_buffer = self._create_pha_event_binary(event1)
         event_record_buffer += self._create_pha_event_binary(event2)
         event_record_buffer += self._create_pha_event_binary(event3)
         event_record_buffer += "0" * 48
@@ -216,9 +215,7 @@ class TestPHAEventReader(unittest.TestCase):
 
         event2 = create_raw_pha_event()
 
-        number_of_events = 33715
-        event_record_buffer = BitArray(uint=number_of_events, length=16).bin
-        event_record_buffer += self._create_pha_event_binary(event1)
+        event_record_buffer = self._create_pha_event_binary(event1)
         event_record_buffer += self._create_pha_event_binary(event2)
 
         events = PHAEventReader.read_all_pha_events(event_record_buffer)
@@ -235,7 +232,7 @@ class TestPHAEventReader(unittest.TestCase):
             events = PHAEventReader.read_all_pha_events(event_buffer)
             event_total += len(events)
 
-        self.assertEqual(event_total, 7050)
+        self.assertEqual(6967, event_total)
 
     def test_verify_against_HIT_script_output(self):
         bitstream = BitStream(filename=get_test_data_path("hit/pha_events/full_event_record_buffer.bin"))
