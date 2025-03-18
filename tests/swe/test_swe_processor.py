@@ -7,7 +7,7 @@ import numpy as np
 from imap_l3_processing.models import MagL1dData, InputMetadata, UpstreamDataDependency
 from imap_l3_processing.swe.l3.models import SweL2Data, SwapiL3aProtonData, SweL1bData
 from imap_l3_processing.swe.l3.models import SweL3MomentData
-from imap_l3_processing.swe.l3.science.moment_calculations import MomentFitResults, IntegrateOutputs
+from imap_l3_processing.swe.l3.science.moment_calculations import MomentFitResults, ScaleDensityOutput
 from imap_l3_processing.swe.l3.science.moment_calculations import Moments
 from imap_l3_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies
 from imap_l3_processing.swe.swe_processor import SweProcessor
@@ -608,11 +608,22 @@ class TestSweProcessor(unittest.TestCase):
 
         mock_integrate.side_effect = [core_integrate_output, halo_integrate_output, None, None]
 
+        scale_core_density_output = ScaleDensityOutput(density=400, velocity=None, temperature=None, cdelnv=None,
+                                                       cdelt=None)
+
+        mock_scale_core_density.side_effect = [scale_core_density_output]
+
+        scale_halo_density_output = ScaleDensityOutput(density=500, velocity=None, temperature=None, cdelnv=None,
+                                                       cdelt=None)
+
+        mock_scale_halo_density.side_effect = [scale_halo_density_output]
+
         input_metadata = InputMetadata("swe", "l3", datetime(2025, 2, 21),
                                        datetime(2025, 2, 22), "v001")
 
         swe_processor = SweProcessor(dependencies=[], input_metadata=input_metadata)
         config = build_swe_configuration()
+
         swe_moment_data = swe_processor.calculate_moment_products(swe_l2_data, swe_l1_data, spacecraft_potential,
                                                                   core_halo_breakpoint,
                                                                   corrected_energy_bins,
@@ -820,4 +831,7 @@ class TestSweProcessor(unittest.TestCase):
         np.testing.assert_array_equal(swe_moment_data.halo_speed_fit,[np.linalg.norm(halo_velocity_1), np.linalg.norm(halo_velocity_2), np.nan])
         np.testing.assert_array_equal(swe_moment_data.core_velocity_vector_rtn_fit,[core_velocity_1, core_velocity_2, [np.nan, np.nan, np.nan]])
         np.testing.assert_array_equal(swe_moment_data.halo_velocity_vector_rtn_fit,[halo_velocity_1, halo_velocity_2, [np.nan, np.nan, np.nan]])
+
+        np.testing.assert_array_equal(swe_moment_data.core_density_integrated,[scale_core_density_output.density, np.nan, np.nan])
+        np.testing.assert_array_equal(swe_moment_data.halo_density_integrated,[scale_halo_density_output.density, np.nan, np.nan])
         # @formatter:on

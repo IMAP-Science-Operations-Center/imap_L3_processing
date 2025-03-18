@@ -119,6 +119,8 @@ class SweProcessor(Processor):
         core_temp_phi_rtns = []
         halo_temp_theta_rtns = []
         halo_temp_phi_rtns = []
+        core_density_integrated = []
+        halo_density_integrated = []
 
         for i in range(len(swe_l2_data.epoch)):
             velocity_vectors_cm_per_s: np.ndarray = 1000 * 100 * calculate_velocity_in_dsp_frame_km_s(
@@ -179,11 +181,18 @@ class SweProcessor(Processor):
                                                   spacecraft_potential[i],
                                                   [0, 0, 0, 0], [0, 0, 0, 0, 0, 0])
                 if core_integrate_result is not None:
-                    scale_core_density(core_integrate_result.density, core_integrate_result.velocity,
-                                       core_integrate_result.temperature, core_moment, ifit, corrected_energy_bins[i],
-                                       spacecraft_potential[i], cos_theta, config['aperture_field_of_view_radians'],
-                                       swe_l2_data.inst_az_spin_sector[i], core_moment_fit_result.regress_result,
-                                       core_integrate_result.base_energy)
+                    scale_core_density_output = scale_core_density(core_integrate_result.density,
+                                                                   core_integrate_result.velocity,
+                                                                   core_integrate_result.temperature, core_moment, ifit,
+                                                                   corrected_energy_bins[i],
+                                                                   spacecraft_potential[i], cos_theta,
+                                                                   config['aperture_field_of_view_radians'],
+                                                                   swe_l2_data.inst_az_spin_sector[i],
+                                                                   core_moment_fit_result.regress_result,
+                                                                   core_integrate_result.base_energy)
+                    core_density_integrated.append(scale_core_density_output.density)
+                else:
+                    core_density_integrated.append(np.nan)
             else:
                 core_moments.append(Moments.construct_all_fill())
                 core_fit_chi_squareds.append(np.nan)
@@ -192,6 +201,7 @@ class SweProcessor(Processor):
                 core_rtn_velocity.append([np.nan, np.nan, np.nan])
                 core_temp_theta_rtns.append(np.nan)
                 core_temp_phi_rtns.append(np.nan)
+                core_density_integrated.append(np.nan)
 
             halo_end_index = len(swe_l2_data.energy)
             halo_moment_fit_result = halo_fit_moments_retrying_on_failure(
@@ -230,12 +240,20 @@ class SweProcessor(Processor):
                                                   spacecraft_potential[i],
                                                   [0, 0, 0, 0], [0, 0, 0, 0, 0, 0])
                 if halo_integrate_result is not None:
-                    scale_halo_density(halo_integrate_result.density, halo_integrate_result.velocity,
-                                       halo_integrate_result.temperature, halo_moment,
-                                       spacecraft_potential[i], halo_core[i], cos_theta,
-                                       config['aperture_field_of_view_radians'],
-                                       swe_l2_data.inst_az_spin_sector[i], halo_moment_fit_result.regress_result,
-                                       halo_integrate_result.base_energy)
+                    scale_halo_density_output = scale_halo_density(halo_integrate_result.density,
+                                                                   halo_integrate_result.velocity,
+                                                                   halo_integrate_result.temperature, halo_moment,
+                                                                   spacecraft_potential[i], halo_core[i], cos_theta,
+                                                                   config['aperture_field_of_view_radians'],
+                                                                   swe_l2_data.inst_az_spin_sector[i],
+                                                                   halo_moment_fit_result.regress_result,
+                                                                   halo_integrate_result.base_energy)
+
+                    halo_density_integrated.append(scale_halo_density_output.density)
+
+                else:
+                    halo_density_integrated.append(np.nan)
+
 
             else:
                 halo_moments.append(Moments.construct_all_fill())
@@ -244,6 +262,7 @@ class SweProcessor(Processor):
                 halo_rtn_velocity.append([np.nan, np.nan, np.nan])
                 halo_temp_theta_rtns.append(np.nan)
                 halo_temp_phi_rtns.append(np.nan)
+                halo_density_integrated.append(np.nan)
 
         return SweL3MomentData(
             core_fit_num_points=np.array(core_fit_num_points),
@@ -263,6 +282,8 @@ class SweProcessor(Processor):
             halo_speed_fit=np.linalg.norm(np.array(halo_rtn_velocity), axis=-1),
             core_velocity_vector_rtn_fit=np.array(core_rtn_velocity),
             halo_velocity_vector_rtn_fit=np.array(halo_rtn_velocity),
+            core_density_integrated=core_density_integrated,
+            halo_density_integrated=halo_density_integrated
         )
 
     def calculate_pitch_angle_products(self, dependencies: SweL3Dependencies, corrected_energy_bins: np.ndarray):
