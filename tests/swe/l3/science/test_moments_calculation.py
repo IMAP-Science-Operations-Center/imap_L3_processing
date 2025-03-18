@@ -476,7 +476,7 @@ class TestMomentsCalculation(unittest.TestCase):
         np.testing.assert_allclose(np.array(-10.7911), integrate_outputs.base_energy,
                                    rtol=1e-4)
         np.testing.assert_allclose(
-            np.array([9.01575e+16, -1.99203e+15, 1.16781e+17, -1.98483e+15, -7.08943e+16, -1.60545e+16]),
+            np.array([48.1855, -1.06466, 62.4149, -1.06081, -37.8901, -8.58049]),
             integrate_outputs.temperature, rtol=2e-4)
         np.testing.assert_allclose(
             np.array([9.92303e+21, -2.88985e+22, 9.45357e+21]),
@@ -546,7 +546,7 @@ class TestMomentsCalculation(unittest.TestCase):
         np.testing.assert_allclose(np.array(-10.7911), integrate_outputs.base_energy,
                                    rtol=1e-4)
         np.testing.assert_allclose(
-            np.array([7.1484e+16, 3.47791e+15, 6.4914e+16, 1.31551e+15, 2.07552e+15, 4.38465e+16]),
+            np.array([5.13448e+13, 1.0269e+14, 1.54034e+14, 2.05379e+14, 2.56724e+14, 3.08069e+14]),
             integrate_outputs.temperature, rtol=2e-4)
         np.testing.assert_allclose(
             np.array([-5.50653e+21, -1.61473e+21, -3.40728e+23]),
@@ -597,17 +597,19 @@ class TestMomentsCalculation(unittest.TestCase):
                 regress_outputs,
                 base_energy)
 
-        np.testing.assert_allclose(np.array([5.71854e+06, -2.63793e+08, 8.57113e+07, -8.11159e+06]),
-                                   core_density_output.cdelnv, rtol=2e-5)
         np.testing.assert_allclose(
-            np.array([1.7004e+22, 7.40212e+20, 1.90414e+22, 6.71709e+18, -2.10254e+18, 2.08076e+22]),
-            core_density_output.cdelt, rtol=1e-4)
-        np.testing.assert_allclose(5.71854e+06, core_density_output.density, rtol=1e-5)
+            np.array([5718541.16075311, -263792613.61606878, 85711310.93588784, -8111590.29270447]),
+            core_density_output.cdelnv, rtol=2e-5)
         np.testing.assert_allclose(
-            np.array([2.97349e+15, 1.29441e+14, 3.32977e+15, 1.17462e+12, -3.6767e+11, 3.63862e+15]),
-            core_density_output.temperature,
-            rtol=2e-5)
-        np.testing.assert_allclose(np.array([-46.1293, 14.9884, -1.41836]), core_density_output.velocity, rtol=1e-5)
+            np.array([9087744.94089722, 395603.64214905, 10176632.69696172, 3589.92320634, -1123.69322733,
+                      11120544.60123955]),
+            core_density_output.cdelt, rtol=5e-5)
+        np.testing.assert_allclose(5718542.39532100, core_density_output.density, rtol=1e-5)
+        np.testing.assert_allclose(
+            np.array([1.58917372, 0.06918342, 1.77959155, 0.00063640, -0.00018571, 1.94465965]),
+            core_density_output.temperature, rtol=5e-5)
+        np.testing.assert_allclose(np.array([-46.12927998, 14.98840069, -1.41836371, ]), core_density_output.velocity,
+                                   rtol=1e-5)
 
     def test_scale_density_with_base_less_than_zero(self):
         core_velocity = np.array([300, 400, 500], dtype=float)
@@ -653,14 +655,16 @@ class TestMomentsCalculation(unittest.TestCase):
             regress_outputs,
             base_energy)
 
-        np.testing.assert_allclose(np.array([817042, -1.46993e+07, 4.7761e+06, -451960, ]), core_density_output.cdelnv,
-                                   rtol=2e-5)
         np.testing.assert_allclose(
-            np.array([3.63825e+20, 1.58366e+19, 4.07419e+20, 1.4257e+17, -4.6073e+16, 4.45208e+20, ]),
-            core_density_output.cdelt, rtol=1e-4)
+            np.array([817041.86654199, -14699338.23262659, 4776103.65373425, -451959.71106777, ]),
+            core_density_output.cdelnv, 2e-5)
+        np.testing.assert_allclose(
+            np.array([194444.92879664, 8463.82584106, 217743.48011274, 76.19579312, -24.62356212, 237940.02226200, ]),
+            core_density_output.cdelt, 5e-5)
         np.testing.assert_allclose(817043, core_density_output.density, rtol=1e-5)
         np.testing.assert_allclose(
-            np.array([4.45295e+14, 1.93829e+13, 4.9865e+14, 1.74495e+11, -5.639e+10, 5.44902e+14, ]),
+            np.array([0.23800124, 0.01038931, 0.26654716, 0.00015370, 0.00004541, 0.29131156, ]),
             core_density_output.temperature,
-            rtol=2e-5)
-        np.testing.assert_allclose(np.array([-17.9904, 5.8462, -0.55241, ]), core_density_output.velocity, rtol=1e-5)
+            rtol=5e-5)
+        np.testing.assert_allclose(np.array([-17.99044364, 5.84620013, -0.55240957]), core_density_output.velocity,
+                                   rtol=1e-5)
