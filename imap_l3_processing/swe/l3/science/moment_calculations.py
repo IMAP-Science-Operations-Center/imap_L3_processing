@@ -12,6 +12,7 @@ from imap_l3_processing.constants import ELECTRON_MASS_KG, \
 
 # units of K / (m^2/s^2)
 ZMK = ELECTRON_MASS_KG / (2 * BOLTZMANN_CONSTANT_JOULES_PER_KELVIN)
+ELECTRON_MASS_OVER_BOLTZMANN_IN_CGS_UNITS = ELECTRON_MASS_KG / BOLTZMANN_CONSTANT_JOULES_PER_KELVIN * 1e-4
 NUMBER_OF_DETECTORS = 7
 
 
@@ -478,7 +479,6 @@ def integrate(istart, iend, energy: np.ndarray, sintheta: np.ndarray,
     totden = sumn + cdelnv[0]
     if totden <= 0:
         return None
-    eobolt = 12345
 
     base -= spacecraft_potential
     CM_PER_KM = METERS_PER_KILOMETER * CENTIMETERS_PER_METER
@@ -531,7 +531,7 @@ def integrate(istart, iend, energy: np.ndarray, sintheta: np.ndarray,
 
     TEMPERATURE_SCALING_FACTOR_TO_UNDO_IN_EIGEN = 1e-4
     temperature = (np.array([sumtxx, sumtxy, sumtyy, sumtxz, sumtyz, sumtzz]) *
-                   TEMPERATURE_SCALING_FACTOR_TO_UNDO_IN_EIGEN * eobolt + cdelt) / totden
+                   TEMPERATURE_SCALING_FACTOR_TO_UNDO_IN_EIGEN * ELECTRON_MASS_OVER_BOLTZMANN_IN_CGS_UNITS + cdelt) / totden
 
     heat_flux = np.array([sumqx, sumqy, sumqz]) * 500 * ELECTRON_MASS_KG
 
@@ -546,8 +546,6 @@ def scale_density(core_density: float,
                   phi: np.ndarray,
                   regress_outputs: np.ndarray,
                   base_energy: float) -> ScaleDensityOutput:
-    eobolt = 12345
-
     zmk = ELECTRON_MASS_KG / (2 * BOLTZMANN_CONSTANT_JOULES_PER_KELVIN * 1e4)
     MAX_SPIN_SECTOR_INDEX = 28  # why 28 and not 30?
     KMAX = np.full(7, 30)
@@ -610,17 +608,19 @@ def scale_density(core_density: float,
 
     corrected_density = core_density + sumint
 
+    delta_v = -1e-5 * sum_velocities
+
     corrected_core_velocity = core_velocity.copy()
     corrected_core_velocity *= core_density / corrected_density
-    corrected_core_velocity += sum_velocities * (-1e-5) / corrected_density
+    corrected_core_velocity += delta_v / corrected_density
+
+    cdelt = sum_temperatures * 1e-4 * ELECTRON_MASS_OVER_BOLTZMANN_IN_CGS_UNITS
 
     corrected_core_temp = core_temp.copy()
     corrected_core_temp *= core_density / corrected_density
-    corrected_core_temp += sum_temperatures * 1e-4 * eobolt / corrected_density
+    corrected_core_temp += cdelt / corrected_density
 
-    cdelnv = np.array([sumint, sumvx * (-1e-5), sumvy * (-1e-5), sumvz * (-1e-5)])
-
-    cdelt = sum_temperatures * 1e-4 * eobolt
+    cdelnv = np.append(sumint, delta_v)
 
     return ScaleDensityOutput(density=corrected_density, velocity=corrected_core_velocity,
                               temperature=corrected_core_temp, cdelnv=cdelnv, cdelt=cdelt)
