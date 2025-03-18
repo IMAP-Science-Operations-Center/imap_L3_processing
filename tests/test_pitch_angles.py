@@ -67,6 +67,31 @@ class TestPitchAngles(unittest.TestCase):
 
         np.testing.assert_array_equal(gyrophases, expected_gyrophases)
 
+    def test_gyrophase_degenerate_particle_and_magnetic_field_returns_zero(self):
+        particle_vector = np.array([
+            [0, 0, 1],
+        ])
+        mag_field_vector = np.array([0, 0, 1])
+
+        gyrophases = calculate_gyrophase(particle_vector, mag_field_vector)
+
+        expected_gyrophases = [0]
+
+        np.testing.assert_array_equal(gyrophases, expected_gyrophases)
+
+    def test_gyrophase_degenerate_dps_frame_x_axis_and_magnetic_field_returns_all_nans(self):
+        particle_vector = np.array([[
+            [0, 1, 0],
+            [0, -1, 0],
+        ]])
+
+        for mag_field_vector in [np.array([1, 0, 0]), np.array([-1, 0, 0])]:
+            with self.subTest(mag_field_vector):
+                gyrophases = calculate_gyrophase(particle_vector, mag_field_vector)
+
+                expected_gyrophases = [[np.nan, np.nan]]
+                np.testing.assert_array_equal(gyrophases, expected_gyrophases)
+
 
 if __name__ == '__main__':
     unittest.main()
