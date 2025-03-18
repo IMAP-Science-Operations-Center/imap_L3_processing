@@ -12,6 +12,7 @@ from imap_l3_processing.constants import ELECTRON_MASS_KG, \
 
 ELECTRON_MASS_OVER_BOLTZMANN_IN_CGS_UNITS = ELECTRON_MASS_KG / BOLTZMANN_CONSTANT_JOULES_PER_KELVIN * 1e-4
 NUMBER_OF_DETECTORS = 7
+NUMBER_OF_SPIN_SECTORS = 30
 ZMK = 3.2971e-12
 
 ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR = np.sqrt(2 * PROTON_CHARGE_COULOMBS / ELECTRON_MASS_KG) * 100
@@ -444,7 +445,6 @@ def integrate(istart, iend, energy: np.ndarray, sintheta: np.ndarray,
               costheta: np.ndarray, deltheta: np.ndarray, fv: np.ndarray, phi: np.ndarray,
               spacecraft_potential: float, cdelnv: np.ndarray, cdelt: np.ndarray) -> Optional[
     IntegrateOutputs]:
-    # kmax? 30 or based on array size? expect different for different detectors?
     sumn = 0
     sumvx = 0
     sumvy = 0
@@ -549,7 +549,6 @@ def scale_core_density(core_density: float,
                        base_energy: float) -> ScaleDensityOutput:
     zmk = ELECTRON_MASS_KG / (2 * BOLTZMANN_CONSTANT_JOULES_PER_KELVIN * 1e4)
     MAX_SPIN_SECTOR_INDEX = 28  # why 28 and not 30?
-    KMAX = np.full(7, 30)
 
     number_of_energies = 1
     assert 0 < ifit < len(energy) - 1, "ifit must be in middle of energies"
@@ -576,7 +575,7 @@ def scale_core_density(core_density: float,
     delta_theta = aperture_field_of_view[np.newaxis, :, np.newaxis]
     cos_phi = np.cos(np.deg2rad(phi[0, 0]))
     sin_phi = np.sin(np.deg2rad(phi[0, 0]))
-    delta_phi = 2 * np.pi / KMAX[-1]
+    delta_phi = 2 * np.pi / NUMBER_OF_SPIN_SECTORS
 
     velocity_3_dim = velocity_in_sc_frame[:, :, np.newaxis]
     vx = -velocity_3_dim * sin_theta * cos_phi
@@ -639,7 +638,6 @@ def scale_halo_density(halo_density: float,
                        base_energy: float) -> ScaleDensityOutput:
     zmk = ELECTRON_MASS_KG / (2 * BOLTZMANN_CONSTANT_JOULES_PER_KELVIN * 1e4)
     MAX_SPIN_SECTOR_INDEX = 28  # why 28 and not 30?
-    KMAX = np.full(7, 30)
 
     hchbreak = core_halo_break - spacecraft_potential
     scval = abs(hchbreak - base_energy)
@@ -654,7 +652,7 @@ def scale_halo_density(halo_density: float,
     delta_theta = aperture_field_of_view[:, np.newaxis]
     cos_phi = np.cos(np.deg2rad(phi[0, 0]))
     sin_phi = np.sin(np.deg2rad(phi[0, 0]))
-    delta_phi = 2 * np.pi / KMAX[-1]
+    delta_phi = 2 * np.pi / NUMBER_OF_SPIN_SECTORS
 
     vx = -vsch * sin_theta * cos_phi
     vy = -vsch * sin_theta * sin_phi
