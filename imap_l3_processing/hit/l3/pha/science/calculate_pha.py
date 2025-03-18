@@ -6,7 +6,7 @@ from numpy import clip
 
 from imap_l3_processing.hit.l3.pha.pha_event_reader import PHAWord, RawPHAEvent
 from imap_l3_processing.hit.l3.pha.science.cosine_correction_lookup_table import DetectedRange, Detector, \
-    CosineCorrectionLookupTable
+    CosineCorrectionLookupTable, DetectorRange
 from imap_l3_processing.hit.l3.pha.science.gain_lookup_table import GainLookupTable, DetectorGain
 from imap_l3_processing.hit.l3.pha.science.hit_event_type_lookup import HitEventTypeLookup
 from imap_l3_processing.hit.l3.pha.science.range_fit_lookup import RangeFitLookup
@@ -62,13 +62,26 @@ def analyze_event(event: RawPHAEvent, gain_lookup: GainLookupTable, rule_lookup:
         l1_detector = [group for group in rule.included_detector_groups if group[0:3] == f"L1{rule.range.side.name}"][0]
         l2_detector = [group for group in rule.included_detector_groups if group[0:3] == f"L2{rule.range.side.name}"][0]
 
-        detectors_on_range_side = [group for group in rule.included_detector_groups if group[2] == rule.range.side.name]
-        detectors_on_range_side.sort()
+        if rule.range.range == DetectorRange.R2:
+            e_prime_group = l2_detector
+            e_delta_group = l1_detector
+        elif rule.range.range == DetectorRange.R3:
+            e_prime_group = \
+            [group for group in rule.included_detector_groups if group[0:3] == f"L3{rule.range.side.name}"][0]
+            e_delta_group = l2_detector
+        elif rule.range.range == DetectorRange.R4:
+            opposite_side = 'A' if rule.range.side.name == 'B' else 'B'
+            e_prime_group = [group for group in rule.included_detector_groups if group[0:3] == f"L3{opposite_side}"][0]
+            e_delta_group = \
+            [group for group in rule.included_detector_groups if group[0:3] == f"L3{rule.range.side.name}"][0]
+
+        # detectors_on_range_side = [group for group in rule.included_detector_groups if group[2] == rule.range.side.name]
+        # detectors_on_range_side.sort()
         return EventAnalysis(range=rule.range,
                              l1_detector=highest_value_words_per_group[l1_detector].detector,
                              l2_detector=highest_value_words_per_group[l2_detector].detector,
-                             e_delta_word=highest_value_words_per_group[detectors_on_range_side[-2]],
-                             e_prime_word=highest_value_words_per_group[detectors_on_range_side[-1]],
+                             e_delta_word=highest_value_words_per_group[e_delta_group],
+                             e_prime_word=highest_value_words_per_group[e_prime_group],
                              words_with_highest_energy=list(highest_value_words_per_group.values()))
 
 

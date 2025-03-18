@@ -1,4 +1,4 @@
-imap_hit_l3_direct-event:
+imap_hit_l3_direct-events:
   Data_level: "3"
   Instrument_type: Particles (space)
   Data_type: L3_SCI>Level-3 Science data

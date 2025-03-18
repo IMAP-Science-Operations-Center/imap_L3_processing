@@ -86,6 +86,12 @@ class SweL3MomentData:
     halo_speed_fit: np.ndarray
     core_velocity_vector_rtn_fit: np.ndarray
     halo_velocity_vector_rtn_fit: np.ndarray
+    core_density_integrated: np.ndarray
+    halo_density_integrated: np.ndarray
+    core_speed_integrated: np.ndarray
+    halo_speed_integrated: np.ndarray
+    core_velocity_vector_rtn_integrated: np.ndarray
+    halo_velocity_vector_rtn_integrated: np.ndarray
 
 
 @dataclass

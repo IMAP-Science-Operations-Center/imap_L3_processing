@@ -168,7 +168,6 @@ class PHAEventReader:
     @classmethod
     def read_all_pha_events(cls, binary_pha_events: str) -> list[RawPHAEvent]:
         bitstream = BitStream("0b" + binary_pha_events)
-        _event_buffer_header = bitstream.read("uint:16")
 
         events = []
         while (bitstream.len - bitstream.pos >= 48) and bitstream.peek("uint:48") != 0:
