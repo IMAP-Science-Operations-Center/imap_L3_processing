@@ -7,11 +7,11 @@ import numpy as np
 from spiceypy import spiceypy
 
 from imap_l3_processing.constants import ELECTRON_MASS_KG, \
-    BOLTZMANN_CONSTANT_JOULES_PER_KELVIN, ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR, METERS_PER_KILOMETER, \
+    ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR, METERS_PER_KILOMETER, \
     CENTIMETERS_PER_METER
 
 # units of K / (m^2/s^2)
-ZMK = ELECTRON_MASS_KG / (2 * BOLTZMANN_CONSTANT_JOULES_PER_KELVIN)
+ZMK = 3.2971e-12
 
 
 @dataclass
@@ -122,7 +122,7 @@ def _fit_moments_retrying_on_failure(corrected_energy_bins: np.ndarray,
         moment.density = halotrunc(moment, halo_correction_parameters.core_halo_breakpoint,
                                    halo_correction_parameters.spacecraft_potential)
 
-    if 0 < moment.density < average_density:
+    if moment.density is not None and 0 < moment.density < average_density:
         return MomentFitResults(moments=moment, chisq=chi_squared, number_of_points=energy_end - energy_start)
     elif energy_end - energy_start < 4:
         return None
