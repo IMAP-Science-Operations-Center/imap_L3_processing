@@ -21,7 +21,7 @@ HIT_L3_RANGE_2A_CHARGE_FIT_LOOKUP_DESCRIPTOR = "range-2A-charge-fit-lookup"
 HIT_L3_RANGE_3A_CHARGE_FIT_LOOKUP_DESCRIPTOR = "range-3A-charge-fit-lookup"
 HIT_L3_RANGE_4A_CHARGE_FIT_LOOKUP_DESCRIPTOR = "range-4A-charge-fit-lookup"
 HIT_L3_RANGE_2B_CHARGE_FIT_LOOKUP_DESCRIPTOR = "range-2B-charge-fit-lookup"
-HIT_L3_RANGE_3B_CHARGE_FIT_LOOKUP_DESCRIPTOR = "range_3B-charge-fit-lookup"
+HIT_L3_RANGE_3B_CHARGE_FIT_LOOKUP_DESCRIPTOR = "range-3B-charge-fit-lookup"
 HIT_L3_RANGE_4B_CHARGE_FIT_LOOKUP_DESCRIPTOR = "range-4B-charge-fit-lookup"
 HIT_L3_EVENT_TYPE_LOOKUP_DESCRIPTOR = "hit-event-type-lookup"
 
