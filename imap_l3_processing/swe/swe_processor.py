@@ -108,21 +108,21 @@ class SweProcessor(Processor):
         number_of_points = len(swe_l2_data.epoch)
         core_density_history = [100 for _ in range(3)]
         halo_density_history = [25 for _ in range(3)]
-        core_moments = []
-        core_fit_chi_squareds = []
-        core_fit_num_points = []
-        halo_moments = []
-        halo_fit_chi_squareds = []
-        core_rtn_velocity = []
-        halo_rtn_velocity = []
-        core_temp_theta_rtns = []
-        core_temp_phi_rtns = []
-        halo_temp_theta_rtns = []
-        halo_temp_phi_rtns = []
-        core_density_integrated = []
-        halo_density_integrated = []
-        core_velocity_integrated = []
-        halo_velocity_integrated = []
+        core_moments = np.full(number_of_points, Moments.construct_all_fill())
+        core_fit_chi_squareds = np.full(number_of_points, np.nan)
+        core_fit_num_points = np.full(number_of_points, np.nan)
+        halo_moments = np.full(number_of_points, Moments.construct_all_fill())
+        halo_fit_chi_squareds = np.full(number_of_points, np.nan)
+        core_rtn_velocity = np.full((number_of_points, 3), np.nan)
+        halo_rtn_velocity = np.full((number_of_points, 3), np.nan)
+        core_temp_theta_rtns = np.full(number_of_points, np.nan)
+        core_temp_phi_rtns = np.full(number_of_points, np.nan)
+        halo_temp_theta_rtns = np.full(number_of_points, np.nan)
+        halo_temp_phi_rtns = np.full(number_of_points, np.nan)
+        core_density_integrated = np.full(number_of_points, np.nan)
+        halo_density_integrated = np.full(number_of_points, np.nan)
+        core_velocity_integrated = np.full((number_of_points, 3), np.nan)
+        halo_velocity_integrated = np.full((number_of_points, 3), np.nan)
         core_heat_flux_magnitude = np.full(number_of_points, np.nan)
         core_heat_flux_theta = np.full(number_of_points, np.nan)
         core_heat_flux_phi = np.full(number_of_points, np.nan)
@@ -160,21 +160,21 @@ class SweProcessor(Processor):
 
             if core_moment_fit_result is not None:
                 core_moment = core_moment_fit_result.moments
-                core_moments.append(core_moment)
-                core_fit_chi_squareds.append(core_moment_fit_result.chisq)
-                core_fit_num_points.append(core_moment_fit_result.number_of_points)
+                core_moments[i] = core_moment
+                core_fit_chi_squareds[i] = core_moment_fit_result.chisq
+                core_fit_num_points[i] = core_moment_fit_result.number_of_points
 
                 core_density_history = [*core_density_history[1:], core_moment.density]
 
-                core_rtn_velocity.append(rotate_dps_vector_to_rtn(swe_l2_data.epoch[i],
-                                                                  np.array(
-                                                                      [core_moment.velocity_x, core_moment.velocity_y,
-                                                                       core_moment.velocity_z])))
+                core_rtn_velocity[i] = rotate_dps_vector_to_rtn(swe_l2_data.epoch[i],
+                                                                np.array(
+                                                                    [core_moment.velocity_x, core_moment.velocity_y,
+                                                                     core_moment.velocity_z]))
 
                 core_temp_theta_rtn, core_temp_phi_rtn = rotate_temperature(swe_l2_data.epoch[i], core_moment.alpha,
                                                                             core_moment.beta)
-                core_temp_theta_rtns.append(core_temp_theta_rtn)
-                core_temp_phi_rtns.append(core_temp_phi_rtn)
+                core_temp_theta_rtns[i] = core_temp_theta_rtn
+                core_temp_phi_rtns[i] = core_temp_phi_rtn
                 sin_theta = np.sin(np.deg2rad(swe_l2_data.inst_el))
                 cos_theta = np.cos(np.deg2rad(swe_l2_data.inst_el))
                 core_temp_avg = (2 * core_moment.t_perpendicular + core_moment.t_parallel) / 3
@@ -197,10 +197,10 @@ class SweProcessor(Processor):
                                                                        swe_l2_data.inst_az_spin_sector[i],
                                                                        core_moment_fit_result.regress_result,
                                                                        core_integrate_result.base_energy)
-                        core_density_integrated.append(scale_core_density_output.density)
+                        core_density_integrated[i] = scale_core_density_output.density
 
-                        core_velocity_integrated.append(rotate_dps_vector_to_rtn(swe_l2_data.epoch[i],
-                                                                                 scale_core_density_output.velocity))
+                        core_velocity_integrated[i] = rotate_dps_vector_to_rtn(swe_l2_data.epoch[i],
+                                                                               scale_core_density_output.velocity)
 
                         magnitude, theta, phi = rotate_heat_flux(swe_l2_data.epoch[i], core_integrate_result.heat_flux)
 
@@ -208,26 +208,6 @@ class SweProcessor(Processor):
                         core_heat_flux_theta[i] = theta
                         core_heat_flux_phi[i] = phi
 
-                    else:
-                        core_density_integrated.append(np.nan)
-                        core_velocity_integrated.append([np.nan, np.nan, np.nan])
-                else:
-                    core_density_integrated.append(np.nan)
-                    core_velocity_integrated.append([np.nan, np.nan, np.nan])
-
-
-            else:
-                core_moments.append(Moments.construct_all_fill())
-                core_fit_chi_squareds.append(np.nan)
-                core_fit_num_points.append(np.nan)
-
-                core_rtn_velocity.append([np.nan, np.nan, np.nan])
-                core_temp_theta_rtns.append(np.nan)
-                core_temp_phi_rtns.append(np.nan)
-                core_density_integrated.append(np.nan)
-                core_velocity_integrated.append([np.nan, np.nan, np.nan])
-
-            halo_end_index = len(swe_l2_data.energy)
             halo_moment_fit_result = halo_fit_moments_retrying_on_failure(
                 corrected_energy_bins[i],
                 velocity_vectors_cm_per_s,
@@ -242,20 +222,20 @@ class SweProcessor(Processor):
 
             if halo_moment_fit_result is not None:
                 halo_moment = halo_moment_fit_result.moments
-                halo_moments.append(halo_moment)
-                halo_fit_chi_squareds.append(halo_moment_fit_result.chisq)
+                halo_moments[i] = halo_moment
+                halo_fit_chi_squareds[i] = halo_moment_fit_result.chisq
 
                 halo_density_history = [*halo_density_history[1:], halo_moment.density]
 
-                halo_rtn_velocity.append(rotate_dps_vector_to_rtn(swe_l2_data.epoch[i],
-                                                                  np.array(
-                                                                      [halo_moment.velocity_x, halo_moment.velocity_y,
-                                                                       halo_moment.velocity_z])))
+                halo_rtn_velocity[i] = rotate_dps_vector_to_rtn(swe_l2_data.epoch[i],
+                                                                np.array(
+                                                                    [halo_moment.velocity_x, halo_moment.velocity_y,
+                                                                     halo_moment.velocity_z]))
 
                 halo_temp_theta_rtn, halo_temp_phi_rtn = rotate_temperature(swe_l2_data.epoch[i], halo_moment.alpha,
                                                                             halo_moment.beta)
-                halo_temp_theta_rtns.append(halo_temp_theta_rtn)
-                halo_temp_phi_rtns.append(halo_temp_phi_rtn)
+                halo_temp_theta_rtns[i] = halo_temp_theta_rtn
+                halo_temp_phi_rtns[i] = halo_temp_phi_rtn
                 halo_temp_avg = (2 * halo_moment.t_perpendicular + halo_moment.t_parallel) / 3
                 if 1e4 < halo_temp_avg < 1e8:
                     halo_integrate_result = integrate(jbreak, len(corrected_energy_bins[i]) - 1,
@@ -275,54 +255,34 @@ class SweProcessor(Processor):
                                                                        halo_moment_fit_result.regress_result,
                                                                        halo_integrate_result.base_energy)
 
-                        halo_density_integrated.append(scale_halo_density_output.density)
+                        halo_density_integrated[i] = scale_halo_density_output.density
 
-                        halo_velocity_integrated.append(rotate_dps_vector_to_rtn(swe_l2_data.epoch[i],
-                                                                                 scale_halo_density_output.velocity))
+                        halo_velocity_integrated[i] = rotate_dps_vector_to_rtn(swe_l2_data.epoch[i],
+                                                                               scale_halo_density_output.velocity)
                         magnitude, theta, phi = rotate_heat_flux(swe_l2_data.epoch[i], halo_integrate_result.heat_flux)
 
                         halo_heat_flux_magnitude[i] = magnitude
                         halo_heat_flux_theta[i] = theta
                         halo_heat_flux_phi[i] = phi
 
-
-
-                    else:
-                        halo_density_integrated.append(np.nan)
-                        halo_velocity_integrated.append([np.nan, np.nan, np.nan])
-
-                else:
-                    halo_density_integrated.append(np.nan)
-                    halo_velocity_integrated.append([np.nan, np.nan, np.nan])
-
-            else:
-                halo_moments.append(Moments.construct_all_fill())
-                halo_fit_chi_squareds.append(np.nan)
-
-                halo_rtn_velocity.append([np.nan, np.nan, np.nan])
-                halo_temp_theta_rtns.append(np.nan)
-                halo_temp_phi_rtns.append(np.nan)
-                halo_density_integrated.append(np.nan)
-                halo_velocity_integrated.append([np.nan, np.nan, np.nan])
-
         return SweL3MomentData(
-            core_fit_num_points=np.array(core_fit_num_points),
-            core_chisq=np.array(core_fit_chi_squareds),
-            halo_chisq=np.array(halo_fit_chi_squareds),
+            core_fit_num_points=core_fit_num_points,
+            core_chisq=core_fit_chi_squareds,
+            halo_chisq=halo_fit_chi_squareds,
             core_density_fit=np.array([core_moment.density for core_moment in core_moments]),
             halo_density_fit=np.array([halo_moment.density for halo_moment in halo_moments]),
             core_t_parallel_fit=np.array([core_moment.t_parallel for core_moment in core_moments]),
             halo_t_parallel_fit=np.array([halo_moment.t_parallel for halo_moment in halo_moments]),
             core_t_perpendicular_fit=np.array([core_moment.t_perpendicular for core_moment in core_moments]),
             halo_t_perpendicular_fit=np.array([halo_moment.t_perpendicular for halo_moment in halo_moments]),
-            core_temperature_phi_rtn_fit=np.array(core_temp_phi_rtns),
-            halo_temperature_phi_rtn_fit=np.array(halo_temp_phi_rtns),
-            core_temperature_theta_rtn_fit=np.array(core_temp_theta_rtns),
-            halo_temperature_theta_rtn_fit=np.array(halo_temp_theta_rtns),
-            core_speed_fit=np.linalg.norm(np.array(core_rtn_velocity), axis=-1),
-            halo_speed_fit=np.linalg.norm(np.array(halo_rtn_velocity), axis=-1),
-            core_velocity_vector_rtn_fit=np.array(core_rtn_velocity),
-            halo_velocity_vector_rtn_fit=np.array(halo_rtn_velocity),
+            core_temperature_phi_rtn_fit=core_temp_phi_rtns,
+            halo_temperature_phi_rtn_fit=halo_temp_phi_rtns,
+            core_temperature_theta_rtn_fit=core_temp_theta_rtns,
+            halo_temperature_theta_rtn_fit=halo_temp_theta_rtns,
+            core_speed_fit=np.linalg.norm(core_rtn_velocity, axis=-1),
+            halo_speed_fit=np.linalg.norm(halo_rtn_velocity, axis=-1),
+            core_velocity_vector_rtn_fit=core_rtn_velocity,
+            halo_velocity_vector_rtn_fit=halo_rtn_velocity,
             core_density_integrated=core_density_integrated,
             halo_density_integrated=halo_density_integrated,
             core_speed_integrated=np.linalg.norm(core_velocity_integrated, axis=-1),
@@ -390,7 +350,3 @@ class SweProcessor(Processor):
                 energy_spectrum_outbound.append(outbound)
 
         return phase_space_density_by_pitch_angle, energy_spectrum, energy_spectrum_inbound, energy_spectrum_outbound
-
-
-def calculate_pitch(arg1, arg_1, arg_3):
-    pass
