@@ -2,7 +2,8 @@ import csv
 from dataclasses import dataclass
 from pathlib import Path
 
-from imap_l3_processing.hit.l3.pha.science.cosine_correction_lookup_table import DetectedRange, DetectorRange, DetectorSide
+from imap_l3_processing.hit.l3.pha.science.cosine_correction_lookup_table import DetectedRange, DetectorRange, \
+    DetectorSide
 
 
 @dataclass
@@ -24,7 +25,6 @@ class HitEventTypeLookup:
                 excluded_group not in detectors_groups_to_check for excluded_group in rule.excluded_detector_groups)
 
             if has_required_groups and does_not_have_excluding_groups:
-                print(f"Rule: {rule.included_detector_groups}")
                 return rule
 
         return None
