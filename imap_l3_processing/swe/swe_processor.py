@@ -134,25 +134,21 @@ class SweProcessor(Processor):
             weights: np.ndarray[float] = compute_maxwellian_weight_factors(swe_l1b_data.count_rates[i],
                                                                            swe_l2_data.acquisition_duration[i])
 
-            spacecraft_potential_core_breakpoint_index: int = next(
-                energy_i for energy_i, energy in enumerate(swe_l2_data.energy) if energy >= spacecraft_potential[i])
-
-            halo_core_breakpoint_index: int = next(
-                energy_i - 1 for energy_i, energy in enumerate(swe_l2_data.energy) if energy > halo_core[i])
-
-            ifit = 1 + next(
+            ifit = next(
                 index for index, energy in enumerate(swe_l2_data.energy) if energy >= spacecraft_potential[i])
             jbreak = next(index for index, energy in enumerate(swe_l2_data.energy) if energy >= halo_core[i])
+            core_nfit = jbreak - ifit
+            ifit += 1
 
-            core_end_index = halo_core_breakpoint_index
+            halo_nfit = 5 if len(swe_l2_data.energy) - jbreak > 5 else len(swe_l2_data.energy) - jbreak
 
             core_moment_fit_result = core_fit_moments_retrying_on_failure(
                 corrected_energy_bins[i],
                 velocity_vectors_cm_per_s,
                 swe_l2_data.phase_space_density[i],
                 weights,
-                spacecraft_potential_core_breakpoint_index,
-                core_end_index,
+                ifit,
+                ifit + core_nfit,
                 core_density_history
             )
 
@@ -217,8 +213,8 @@ class SweProcessor(Processor):
                 velocity_vectors_cm_per_s,
                 swe_l2_data.phase_space_density[i],
                 weights,
-                halo_core_breakpoint_index,
-                halo_end_index,
+                jbreak,
+                jbreak + halo_nfit,
                 halo_density_history,
                 spacecraft_potential[i],
                 halo_core[i],
