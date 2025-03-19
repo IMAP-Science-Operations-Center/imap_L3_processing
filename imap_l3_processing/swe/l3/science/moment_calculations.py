@@ -373,7 +373,7 @@ def rotate_dps_vector_to_rtn(epoch: datetime, vector: np.ndarray) -> np.ndarray:
     return rotation_matrix @ vector
 
 
-def rotate_temperature(epoch: datetime, alpha: float, beta: float):
+def rotate_temperature(epoch: datetime, alpha: float, beta: float) -> tuple[float, float]:
     sin_dec = np.sin(beta)
     x = sin_dec * np.cos(alpha)
     y = sin_dec * np.sin(alpha)
@@ -387,7 +387,15 @@ def rotate_temperature(epoch: datetime, alpha: float, beta: float):
     return theta, phi
 
 
-# this function computes 'dscale' from the heritage code
+def rotate_heat_flux(epoch: datetime, heat_flux: np.ndarray) -> tuple[float, float, float]:
+    r, t, n = rotate_dps_vector_to_rtn(epoch, heat_flux)
+    magnitude = np.linalg.norm(heat_flux, axis=-1)
+    rt = np.sqrt(r * r + t * t)
+    theta = np.arctan2(n, rt)
+    phi = np.arctan2(t, r)
+    return magnitude, theta, phi
+
+
 def compute_density_scale(core_electron_energy_range: float, speed: float, temperature: float) -> float:
     energy_multplier = 11600.0
     density_multiplier = 0.88623

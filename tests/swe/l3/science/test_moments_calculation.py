@@ -10,7 +10,7 @@ from imap_l3_processing.swe.l3.science import moment_calculations
 from imap_l3_processing.swe.l3.science.moment_calculations import compute_maxwellian_weight_factors, \
     filter_and_flatten_regress_parameters, regress, calculate_fit_temperature_density_velocity, rotate_temperature, \
     rotate_dps_vector_to_rtn, Moments, halotrunc, compute_density_scale, core_fit_moments_retrying_on_failure, \
-    halo_fit_moments_retrying_on_failure, scale_halo_density
+    halo_fit_moments_retrying_on_failure, scale_halo_density, rotate_heat_flux
 from tests.test_helpers import create_dataclass_mock
 from tests.test_helpers import get_test_data_path
 
@@ -716,3 +716,28 @@ class TestMomentsCalculation(unittest.TestCase):
         np.testing.assert_allclose(np.array([1521.8375, 1116.6945, 1636.3078]), scaled_density.velocity, rtol=1e-5)
         np.testing.assert_allclose(np.array([-67.071986, 60.433456, -14.211044, 129.49805, 161.93695, 72.622535]),
                                    scaled_density.temperature, rtol=3e-5)
+
+    @patch('spiceypy.spiceypy.pxform')
+    @patch('spiceypy.spiceypy.datetime2et')
+    def test_rotate_heat_flux(self, mock_datetime2et, mock_pxform):
+        cases = [
+            ([0, 1, 0], 1, math.pi / 2, 0),
+            ([0, 0, 0], 0, 0, 0),
+            ([2, 0, 0], 2, 0, math.pi / 2),
+            ([0, 0, -1], 1, 0, math.pi),
+        ]
+        for input, expected_mag, expected_theta, expected_phi in cases:
+            mock_datetime2et.reset_mock()
+            with self.subTest(input):
+                epoch = datetime(year=2020, month=3, day=10)
+                dsp_vector = np.array(input)
+                rotation_matrix = np.array([[0, 0, 1], [1, 0, 0], [0, 1, 0]])
+                mock_pxform.return_value = rotation_matrix
+
+                magnitude, theta, phi = rotate_heat_flux(epoch, dsp_vector)
+
+                mock_datetime2et.assert_called_once_with(epoch)
+
+                self.assertEqual(expected_mag, magnitude)
+                self.assertEqual(expected_theta, theta)
+                self.assertEqual(expected_phi, phi)
