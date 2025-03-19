@@ -71,18 +71,20 @@ class TestPitchAngles(unittest.TestCase):
 
     def test_gyrophase(self):
         particle_vector = np.array([
-            [1, 0, 0],
             [0, 1, 0],
-            [0, 0, 1],
-            [-1, 0, 0],
+            [1, 0, 0],
             [0, -1, 0],
+            [-1, 0, 0],
+            [.5, .5, 0],
+            [.5, -.5, 0],
             [0, 0, -1],
+            [0, 0, 1],
         ])
         mag_field_vector = np.array([0, 0, 1])
 
         gyrophases = calculate_gyrophase(particle_vector, mag_field_vector)
 
-        expected_gyrophases = [0, 90, 0, 180, 270, 0]
+        expected_gyrophases = [0, 90, 180, 270, 45, 135, 0, 0]
 
         np.testing.assert_array_equal(gyrophases, expected_gyrophases)
 
@@ -98,13 +100,13 @@ class TestPitchAngles(unittest.TestCase):
 
         np.testing.assert_array_equal(gyrophases, expected_gyrophases)
 
-    def test_gyrophase_degenerate_dps_frame_x_axis_and_magnetic_field_returns_all_nans(self):
+    def test_gyrophase_degenerate_dps_frame_y_axis_and_magnetic_field_returns_all_nans(self):
         particle_vector = np.array([[
-            [0, 1, 0],
-            [0, -1, 0],
+            [1, 0, 0],
+            [-1, 0, 0],
         ]])
 
-        for mag_field_vector in [np.array([1, 0, 0]), np.array([-1, 0, 0])]:
+        for mag_field_vector in [np.array([0, 1, 0]), np.array([0, -1, 0])]:
             with self.subTest(mag_field_vector):
                 gyrophases = calculate_gyrophase(particle_vector, mag_field_vector)
 
