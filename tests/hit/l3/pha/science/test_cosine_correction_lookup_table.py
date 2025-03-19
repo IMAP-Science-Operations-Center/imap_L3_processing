@@ -8,12 +8,12 @@ from tests.test_helpers import get_test_data_path
 class TestCosineCorrectionLookupTable(unittest.TestCase):
     def test_can_create_from_file(self):
         lookup_table = CosineCorrectionLookupTable(get_test_data_path(
-            "hit/pha_events/imap_hit_l3_r2A-cosines-text-not-cdf_20250203_v001.cdf"), get_test_data_path(
-            "hit/pha_events/imap_hit_l3_r3A-cosines-text-not-cdf_20250203_v001.cdf"), get_test_data_path(
-            "hit/pha_events/imap_hit_l3_r4A-cosines-text-not-cdf_20250203_v001.cdf"), get_test_data_path(
-            "hit/pha_events/imap_hit_l3_r2B-cosines-text-not-cdf_20250203_v001.cdf"), get_test_data_path(
-            "hit/pha_events/imap_hit_l3_r3B-cosines-text-not-cdf_20250203_v001.cdf"), get_test_data_path(
-            "hit/pha_events/imap_hit_l3_r4B-cosines-text-not-cdf_20250203_v001.cdf")
+            "hit/pha_events/imap_hit_l3_range-2A-cosine-lookup_20250203_v001.cdf"), get_test_data_path(
+            "hit/pha_events/imap_hit_l3_range-3A-cosine-lookup_20250203_v001.cdf"), get_test_data_path(
+            "hit/pha_events/imap_hit_l3_range-4A-cosine-lookup_20250203_v001.cdf"), get_test_data_path(
+            "hit/pha_events/imap_hit_l3_range-2B-cosine-lookup_20250203_v001.cdf"), get_test_data_path(
+            "hit/pha_events/imap_hit_l3_range-3B-cosine-lookup_20250203_v001.cdf"), get_test_data_path(
+            "hit/pha_events/imap_hit_l3_range-4B-cosine-lookup_20250203_v001.cdf")
         )
 
         self.assertEqual(150, len(lookup_table._range2A_corrections))
