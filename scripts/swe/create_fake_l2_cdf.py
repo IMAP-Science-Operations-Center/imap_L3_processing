@@ -1,12 +1,11 @@
-import traceback
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 
 import numpy as np
 import pyhdf
 import pyhdf.SD
-from pyhdf.VS import *
 from pyhdf.HDF import *
+from pyhdf.VS import *
 from spacepy import pycdf
 from spacepy.pycdf import CDF
 
@@ -24,6 +23,56 @@ def create_fake_swe_l1b_and_l2_cdf(l1_hdf_path: str, l2_hdf_path: str, output_l1
     vs_electron = l2_swepam_electron_file.vstart()
     vd_electron = vs_electron.attach("swepam_e")
     epochs = get_epochs_from_output_file(vd_electron)
+    fields = ["chisq_c",
+              "chisq_h",
+              "n_fc",
+              "n_fh",
+              "n_ic",
+              "n_ih",
+              "n_i",
+              "q_flux_ic",
+              "q_flux_ih",
+              "q_flux_i",
+              "q_flux_phi_ic",
+              "q_flux_phi_ih",
+              "q_flux_phi_i",
+              "q_flux_theta_ic",
+              "q_flux_theta_ih",
+              "q_flux_theta_i",
+              "t_para_fc",
+              "t_para_fh",
+              "t_para_ic",
+              "t_para_ih",
+              "t_para_i",
+              "t_perp_fc",
+              "t_perp_fh",
+              "t_perp_ic",
+              "t_perp_ih",
+              "t_perp_i",
+              "t_mat_ic",
+              "t_mat_ih",
+              "t_mat_i",
+              "t_phi_fc",
+              "t_phi_fh",
+              "t_phi_ic",
+              "t_phi_ih",
+              "t_phi_i",
+              "t_theta_fc",
+              "t_theta_fh",
+              "t_theta_ic",
+              "t_theta_ih",
+              "t_theta_i",
+              "v_fc",
+              "v_fh",
+              "v_ic",
+              "v_ih",
+              "v_i",
+              "v_rtn_fc",
+              "v_rtn_fh",
+              "v_rtn_ic",
+              "v_rtn_ih",
+              "v_rtn_i"]
+    create_expected_cdf(vd_electron, fields, "swe_moments")
 
     with CDF(output_l2_swe_cdf_file_path, create=True) as cdf:
         cdf.compress(pycdf.const.GZIP_COMPRESSION)
@@ -132,6 +181,14 @@ def get_epochs_from_output_file(dataset: VD) -> np.array:
 
     return np.array([datetime(year=x[years_index], month=x[month_index], day=x[day_index], hour=x[hour_index],
                               minute=x[min_index], second=x[sec_index]) + correction_factor for x in dataset[:]])
+
+
+def create_expected_cdf(dataset: VD, fields: list[str], file_name):
+    with pycdf.CDF(str(path.parent.parent.parent / f'temp_cdf_data/expected_{file_name}.cdf'), masterpath="") as file:
+        for field in fields:
+            index = dataset.field(field)._index
+            data = np.array([x[index] for x in dataset[:]])
+            file.new(field, data)
 
 
 if __name__ == "__main__":
