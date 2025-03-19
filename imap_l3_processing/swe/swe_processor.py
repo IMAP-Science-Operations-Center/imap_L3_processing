@@ -11,7 +11,7 @@ from imap_l3_processing.swe.l3.models import SweL3Data, SweL1bData, SweL2Data, S
 from imap_l3_processing.swe.l3.science.moment_calculations import compute_maxwellian_weight_factors, \
     rotate_temperature, \
     rotate_dps_vector_to_rtn, core_fit_moments_retrying_on_failure, halo_fit_moments_retrying_on_failure, Moments, \
-    integrate, scale_core_density, scale_halo_density
+    integrate, scale_core_density, scale_halo_density, rotate_heat_flux
 from imap_l3_processing.swe.l3.science.pitch_calculations import average_over_look_directions, find_breakpoints, \
     correct_and_rebin, \
     integrate_distribution_to_get_1d_spectrum, integrate_distribution_to_get_inbound_and_outbound_1d_spectrum, \
@@ -105,7 +105,7 @@ class SweProcessor(Processor):
     def calculate_moment_products(self, swe_l2_data: SweL2Data, swe_l1b_data: SweL1bData,
                                   spacecraft_potential: np.ndarray, halo_core: np.ndarray,
                                   corrected_energy_bins: np.ndarray, config: SweConfiguration):
-
+        number_of_points = len(swe_l2_data.epoch)
         core_density_history = [100 for _ in range(3)]
         halo_density_history = [25 for _ in range(3)]
         core_moments = []
@@ -123,6 +123,12 @@ class SweProcessor(Processor):
         halo_density_integrated = []
         core_velocity_integrated = []
         halo_velocity_integrated = []
+        core_heat_flux_magnitude = np.full(number_of_points, np.nan)
+        core_heat_flux_theta = np.full(number_of_points, np.nan)
+        core_heat_flux_phi = np.full(number_of_points, np.nan)
+        halo_heat_flux_magnitude = np.full(number_of_points, np.nan)
+        halo_heat_flux_theta = np.full(number_of_points, np.nan)
+        halo_heat_flux_phi = np.full(number_of_points, np.nan)
 
         for i in range(len(swe_l2_data.epoch)):
             velocity_vectors_cm_per_s: np.ndarray = 1000 * 100 * calculate_velocity_in_dsp_frame_km_s(
@@ -192,6 +198,13 @@ class SweProcessor(Processor):
 
                     core_velocity_integrated.append(rotate_dps_vector_to_rtn(swe_l2_data.epoch[i],
                                                                              scale_core_density_output.velocity))
+
+                    magnitude, theta, phi = rotate_heat_flux(swe_l2_data.epoch[i], core_integrate_result.heat_flux)
+
+                    core_heat_flux_magnitude[i] = magnitude
+                    core_heat_flux_theta[i] = theta
+                    core_heat_flux_phi[i] = phi
+
                 else:
                     core_density_integrated.append(np.nan)
                     core_velocity_integrated.append([np.nan, np.nan, np.nan])
@@ -257,6 +270,13 @@ class SweProcessor(Processor):
 
                     halo_velocity_integrated.append(rotate_dps_vector_to_rtn(swe_l2_data.epoch[i],
                                                                              scale_halo_density_output.velocity))
+                    magnitude, theta, phi = rotate_heat_flux(swe_l2_data.epoch[i], halo_integrate_result.heat_flux)
+
+                    halo_heat_flux_magnitude[i] = magnitude
+                    halo_heat_flux_theta[i] = theta
+                    halo_heat_flux_phi[i] = phi
+
+
 
                 else:
                     halo_density_integrated.append(np.nan)
@@ -296,7 +316,13 @@ class SweProcessor(Processor):
             core_speed_integrated=np.linalg.norm(core_velocity_integrated, axis=-1),
             halo_speed_integrated=np.linalg.norm(halo_velocity_integrated, axis=-1),
             core_velocity_vector_rtn_integrated=core_velocity_integrated,
-            halo_velocity_vector_rtn_integrated=halo_velocity_integrated
+            halo_velocity_vector_rtn_integrated=halo_velocity_integrated,
+            core_heat_flux_magnitude_integrated=core_heat_flux_magnitude,
+            core_heat_flux_phi_integrated=core_heat_flux_phi,
+            core_heat_flux_theta_integrated=core_heat_flux_theta,
+            halo_heat_flux_magnitude_integrated=halo_heat_flux_magnitude,
+            halo_heat_flux_phi_integrated=halo_heat_flux_phi,
+            halo_heat_flux_theta_integrated=halo_heat_flux_theta,
         )
 
     def calculate_pitch_angle_products(self, dependencies: SweL3Dependencies, corrected_energy_bins: np.ndarray):

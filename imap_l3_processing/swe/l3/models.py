@@ -92,6 +92,12 @@ class SweL3MomentData:
     halo_speed_integrated: np.ndarray
     core_velocity_vector_rtn_integrated: np.ndarray
     halo_velocity_vector_rtn_integrated: np.ndarray
+    core_heat_flux_magnitude_integrated: np.ndarray
+    core_heat_flux_theta_integrated: np.ndarray
+    core_heat_flux_phi_integrated: np.ndarray
+    halo_heat_flux_magnitude_integrated: np.ndarray
+    halo_heat_flux_theta_integrated: np.ndarray
+    halo_heat_flux_phi_integrated: np.ndarray
 
 
 @dataclass
