@@ -576,8 +576,9 @@ def scale_core_density(core_density: float,
         number_of_energies = 2
         velocity_in_sc_frame[1, :] = ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR * np.sqrt(0.5 * base_energy)
         delv[1, :] = ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR * np.sqrt(base_energy)
-    factor = core_moment_fit.density * zmk / (np.pi * core_moment_fit.t_parallel) * np.sqrt(
-        zmk / (np.pi * core_moment_fit.t_perpendicular))
+
+    factor = core_moment_fit.density * zmk / (np.pi * core_moment_fit.t_perpendicular) * np.sqrt(
+        zmk / (np.pi * core_moment_fit.t_parallel))
 
     cos_theta = cosin_p[np.newaxis, :, np.newaxis]
     sin_theta = np.sin(np.arccos(cos_theta))
@@ -593,7 +594,7 @@ def scale_core_density(core_density: float,
 
     fun = -zmk * np.stack(np.broadcast_arrays(vx * vx, vy * vy, vz * vz, vx * vy, vx * vz, vy * vz, vx, vy, vz),
                           axis=-1)
-    exponent = np.dot(fun, regress_outputs[:9])
+    exponent = -zmk * core_moment_fit.aoo + np.dot(fun, regress_outputs[:9])
     delt = delv[:, :, np.newaxis] * delta_theta * delta_phi
     common_factor = np.square(velocity_3_dim) * delt * sin_theta * factor * np.exp(exponent)
 
