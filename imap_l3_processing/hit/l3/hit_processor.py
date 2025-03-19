@@ -11,7 +11,7 @@ from imap_l3_processing.hit.l3.sectored_products.models import HitPitchAngleData
 from imap_l3_processing.hit.l3.sectored_products.science.sectored_products_algorithms import get_sector_unit_vectors, \
     get_hit_bin_polar_coordinates, rebin_by_pitch_angle_and_gyrophase
 from imap_l3_processing.pitch_angles import calculate_unit_vector, calculate_pitch_angle, calculate_gyrophase, \
-    rotate_from_imap_despun_to_hit_despun
+    rotate_particle_vectors_from_hit_despun_to_imap_despun
 from imap_l3_processing.processor import Processor
 from imap_l3_processing.utils import save_data
 
@@ -172,6 +172,7 @@ class HitProcessor(Processor):
         dec, inc, dec_delta, inc_delta = get_hit_bin_polar_coordinates()
         sector_unit_vectors = get_sector_unit_vectors(dec, inc)
         particle_unit_vectors = -sector_unit_vectors
+        rotated_particle_unit_vectors = rotate_particle_vectors_from_hit_despun_to_imap_despun(particle_unit_vectors)
 
         pitch_angles, gyrophases, pitch_angle_deltas, gyrophase_delta = get_hit_bin_polar_coordinates(
             number_of_pitch_angle_bins, number_of_gyrophase_bins)
@@ -181,10 +182,9 @@ class HitProcessor(Processor):
         measurement_gyrophase = []
         for time_index, average_mag_vector in enumerate(averaged_mag_data):
             mag_unit_vector = calculate_unit_vector(average_mag_vector)
-            mag_vector_in_instrument_frame = rotate_from_imap_despun_to_hit_despun(mag_unit_vector)
 
-            input_bin_pitch_angles = calculate_pitch_angle(particle_unit_vectors, mag_vector_in_instrument_frame)
-            input_bin_gyrophases = calculate_gyrophase(particle_unit_vectors, mag_vector_in_instrument_frame)
+            input_bin_pitch_angles = calculate_pitch_angle(rotated_particle_unit_vectors, mag_unit_vector)
+            input_bin_gyrophases = calculate_gyrophase(rotated_particle_unit_vectors, mag_unit_vector)
 
             measurement_pitch_angle.append(input_bin_pitch_angles)
             measurement_gyrophase.append(input_bin_gyrophases)
