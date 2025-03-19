@@ -67,16 +67,14 @@ def analyze_event(event: RawPHAEvent, gain_lookup: GainLookupTable, rule_lookup:
             e_delta_group = l1_detector
         elif rule.range.range == DetectorRange.R3:
             e_prime_group = \
-            [group for group in rule.included_detector_groups if group[0:3] == f"L3{rule.range.side.name}"][0]
+                [group for group in rule.included_detector_groups if group[0:3] == f"L3{rule.range.side.name}"][0]
             e_delta_group = l2_detector
         elif rule.range.range == DetectorRange.R4:
             opposite_side = 'A' if rule.range.side.name == 'B' else 'B'
             e_prime_group = [group for group in rule.included_detector_groups if group[0:3] == f"L3{opposite_side}"][0]
             e_delta_group = \
-            [group for group in rule.included_detector_groups if group[0:3] == f"L3{rule.range.side.name}"][0]
+                [group for group in rule.included_detector_groups if group[0:3] == f"L3{rule.range.side.name}"][0]
 
-        # detectors_on_range_side = [group for group in rule.included_detector_groups if group[2] == rule.range.side.name]
-        # detectors_on_range_side.sort()
         return EventAnalysis(range=rule.range,
                              l1_detector=highest_value_words_per_group[l1_detector].detector,
                              l2_detector=highest_value_words_per_group[l2_detector].detector,
