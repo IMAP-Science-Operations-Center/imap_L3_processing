@@ -8,6 +8,7 @@ import numpy as np
 
 import tests
 from imap_l3_processing.swe.l3.models import SweConfiguration
+from imap_l3_processing.swe.l3.science.moment_calculations import Moments, MomentFitResults
 
 
 def get_test_data_path(filename: str) -> Path:
@@ -27,6 +28,24 @@ def build_swe_configuration(**args) -> SweConfiguration:
         default_config = json.load(f)
     default_config.update(**args)
     return default_config
+
+
+def build_moments(**args) -> Moments:
+    default_moments = dict(alpha=1, beta=2, t_parallel=3e5, t_perpendicular=4e5, velocity_x=500, velocity_y=600,
+                           velocity_z=700, density=80, aoo=9, ao=10)
+    default_moments.update(**args)
+
+    return Moments(**default_moments)
+
+
+def build_moment_fit_results(moments: Moments = None, chisq: float = 1, number_of_points: int = 10,
+                             regress_result: np.ndarray = None) -> MomentFitResults:
+    if moments is None:
+        moments = build_moments()
+    if regress_result is None:
+        regress_result = np.ndarray([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+    return MomentFitResults(moments=moments, chisq=chisq, number_of_points=number_of_points,
+                            regress_result=regress_result)
 
 
 def create_dataclass_mock(obj: Type[T], **kwargs) -> T:
