@@ -37,13 +37,13 @@ def rotate_particle_vectors_from_hit_despun_to_imap_despun(vector: np.ndarray[fl
 
 def calculate_gyrophase(particle_vectors: np.ndarray, magnetic_field_vector: np.ndarray):
     magnetic_field_plus_z = magnetic_field_vector
-    imap_dps_plus_x = [1, 0, 0]
-    if np.all(np.cross(magnetic_field_plus_z, imap_dps_plus_x) == 0):
+    imap_dps_plus_y = [0, 1, 0]
+    if np.all(np.cross(magnetic_field_plus_z, imap_dps_plus_y) == 0):
         return np.full(shape=particle_vectors.shape[:-1], fill_value=np.nan)
-    magnetic_field_plus_y = calculate_unit_vector(np.cross(magnetic_field_plus_z, imap_dps_plus_x))
-    magnetic_field_plus_x = calculate_unit_vector(np.cross(magnetic_field_plus_y, magnetic_field_plus_z))
+    magnetic_field_plus_x = calculate_unit_vector(np.cross(imap_dps_plus_y, magnetic_field_plus_z))
+    magnetic_field_plus_y = calculate_unit_vector(np.cross(magnetic_field_plus_z, magnetic_field_plus_x))
     particle_magnetic_field_x_component = np.dot(particle_vectors, magnetic_field_plus_x)
     particle_magnetic_field_y_component = np.dot(particle_vectors, magnetic_field_plus_y)
-    gyrophases = np.atan2(particle_magnetic_field_y_component, particle_magnetic_field_x_component)
+    gyrophases = np.atan2(particle_magnetic_field_x_component, particle_magnetic_field_y_component)
 
     return np.mod(np.degrees(gyrophases), 360)

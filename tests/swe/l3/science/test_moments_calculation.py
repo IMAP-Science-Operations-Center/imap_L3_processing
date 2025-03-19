@@ -521,13 +521,13 @@ class TestMomentsCalculation(unittest.TestCase):
         core_moment_fit: Moments = Moments(
             alpha=1,
             beta=2,
-            t_parallel=3,
-            t_perpendicular=4,
+            t_perpendicular=3,
+            t_parallel=4,
             velocity_x=5,
             velocity_y=6,
             velocity_z=7,
             density=8,
-            aoo=9,
+            aoo=9e5,
             ao=10
         )
 
@@ -560,15 +560,15 @@ class TestMomentsCalculation(unittest.TestCase):
                 base_energy)
 
         np.testing.assert_allclose(
-            np.array([5718541.16075311, -263792613.61606878, 85711310.93588784, -8111590.29270447]),
+            np.array([5718524.18228547, -263791830.41031304, 85711056.45722340, -8111566.20922477, ]),
             core_density_output.cdelnv, rtol=2e-5)
         np.testing.assert_allclose(
-            np.array([9087744.94089722, 395603.64214905, 10176632.69696172, 3589.92320634, -1123.69322733,
-                      11120544.60123955]),
+            np.array([9087717.95919351, 395602.46759361, 10176602.48232761, 3589.91254779, -1123.68989106,
+                      11120511.58411137, ]),
             core_density_output.cdelt, rtol=5e-5)
-        np.testing.assert_allclose(5718542.39532100, core_density_output.density, rtol=1e-5)
+        np.testing.assert_allclose(5718525.41685336, core_density_output.density, rtol=1e-5)
         np.testing.assert_allclose(
-            np.array([1.58917372, 0.06918342, 1.77959155, 0.00063640, -0.00018571, 1.94465965]),
+            np.array([1.58917372, 0.06918342, 1.77959155, 0.00063640, -0.00018571, 1.94465965, ]),
             core_density_output.temperature, rtol=5e-5)
         np.testing.assert_allclose(np.array([-46.12927998, 14.98840069, -1.41836371, ]), core_density_output.velocity,
                                    rtol=1e-5)
@@ -580,8 +580,8 @@ class TestMomentsCalculation(unittest.TestCase):
         core_moment_fit: Moments = Moments(
             alpha=1,
             beta=2,
-            t_parallel=3,
-            t_perpendicular=4,
+            t_perpendicular=3,
+            t_parallel=4,
             velocity_x=5,
             velocity_y=6,
             velocity_z=7,

@@ -1,6 +1,6 @@
 import unittest
 from datetime import datetime, timedelta
-from unittest.mock import patch, call, Mock, sentinel
+from unittest.mock import patch, call, Mock, sentinel, ANY
 
 import numpy as np
 
@@ -11,7 +11,8 @@ from imap_l3_processing.swe.l3.science.moment_calculations import MomentFitResul
 from imap_l3_processing.swe.l3.science.moment_calculations import Moments
 from imap_l3_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies
 from imap_l3_processing.swe.swe_processor import SweProcessor
-from tests.test_helpers import NumpyArrayMatcher, build_swe_configuration, create_dataclass_mock
+from tests.test_helpers import NumpyArrayMatcher, build_swe_configuration, create_dataclass_mock, build_moments, \
+    build_moment_fit_results
 
 
 class TestSweProcessor(unittest.TestCase):
@@ -563,13 +564,13 @@ class TestSweProcessor(unittest.TestCase):
         mock_compute_maxwellian_weight_factors.side_effect = maxwellian_weight_factors
 
         core_moments1 = create_dataclass_mock(Moments, density=15, velocity_x=5, velocity_y=6, velocity_z=7,
-                                              t_parallel=100, t_perpendicular=200)
+                                              t_parallel=1e5, t_perpendicular=1e5)
         halo_moments1 = create_dataclass_mock(Moments, density=22, velocity_x=5, velocity_y=6,
-                                              velocity_z=7, t_parallel=101, t_perpendicular=201)
+                                              velocity_z=7, t_parallel=1e5, t_perpendicular=1e5)
         core_moments2 = create_dataclass_mock(Moments, density=12, velocity_x=8, velocity_y=9, velocity_z=10,
-                                              t_parallel=102, t_perpendicular=202)
+                                              t_parallel=1e5, t_perpendicular=1e5)
         halo_moments2 = create_dataclass_mock(Moments, density=19, velocity_x=8, velocity_y=9,
-                                              velocity_z=10, t_parallel=103, t_perpendicular=203)
+                                              velocity_z=10, t_parallel=1e5, t_perpendicular=1e5)
 
         core_moment_fit_results_1 = MomentFitResults(moments=core_moments1, chisq=4730912.0, number_of_points=10,
                                                      regress_result=sentinel.core_regress_result_1)
@@ -872,3 +873,87 @@ class TestSweProcessor(unittest.TestCase):
 
 
         # @formatter:on
+
+    @patch('imap_l3_processing.swe.swe_processor.rotate_heat_flux')
+    @patch('imap_l3_processing.swe.swe_processor.scale_halo_density')
+    @patch('imap_l3_processing.swe.swe_processor.scale_core_density')
+    @patch('imap_l3_processing.swe.swe_processor.rotate_temperature')
+    @patch('imap_l3_processing.swe.swe_processor.rotate_dps_vector_to_rtn')
+    @patch('imap_l3_processing.swe.swe_processor.compute_maxwellian_weight_factors')
+    @patch('imap_l3_processing.swe.swe_processor.integrate')
+    @patch('imap_l3_processing.swe.swe_processor.halo_fit_moments_retrying_on_failure')
+    @patch('imap_l3_processing.swe.swe_processor.core_fit_moments_retrying_on_failure')
+    def test_calculate_moment_products_only_integrates_temperatures_in_a_range(self,
+                                                                               mock_core_fit_moments_retrying_on_failure,
+                                                                               mock_halo_fit_moments_retrying_on_failure,
+                                                                               mock_integrate,
+                                                                               _, mock_rotate_dps_vector_to_rtn,
+                                                                               mock_rotate_temperature,
+                                                                               mock_scale_core_density,
+                                                                               mock_scale_halo_density,
+                                                                               mock_rotate_heat_flux):
+        mock_core_fit_moments_retrying_on_failure.side_effect = [
+            build_moment_fit_results(moments=build_moments(t_parallel=1e3 - 1, t_perpendicular=1e3 - 1)),
+            build_moment_fit_results(moments=build_moments(t_parallel=1e3 + 1, t_perpendicular=1e3 + 1)),
+            build_moment_fit_results(moments=build_moments(t_parallel=1e7 - 1, t_perpendicular=1e7 - 1)),
+            build_moment_fit_results(moments=build_moments(t_parallel=1e7 + 1, t_perpendicular=1e7 + 1)),
+        ]
+
+        mock_halo_fit_moments_retrying_on_failure.side_effect = [
+            build_moment_fit_results(moments=build_moments(t_parallel=1e4 - 1, t_perpendicular=1e4 - 1)),
+            build_moment_fit_results(moments=build_moments(t_parallel=1e4 + 1, t_perpendicular=1e4 + 1)),
+            build_moment_fit_results(moments=build_moments(t_parallel=1e8 - 1, t_perpendicular=1e8 - 1)),
+            build_moment_fit_results(moments=build_moments(t_parallel=1e8 + 1, t_perpendicular=1e8 + 1)),
+        ]
+
+        mock_rotate_temperature.return_value = ((4, 5))
+        mock_rotate_heat_flux.return_value = ((1, 2, 3))
+
+        input_metadata = InputMetadata("swe", "l3", datetime(2025, 2, 21),
+                                       datetime(2025, 2, 22), "v001")
+
+        swe_processor = SweProcessor(dependencies=[], input_metadata=input_metadata)
+        config = build_swe_configuration()
+        epochs = datetime.now() + np.arange(4) * timedelta(minutes=1)
+
+        instrument_elevation = np.array([-70, -50, -30, 0, 30, 50, 70])
+        swe_l2_data = SweL2Data(
+            epoch=epochs,
+            phase_space_density=np.arange(16).reshape(4, 4) + 100,
+            flux=np.arange(9).reshape(3, 3),
+            energy=np.array([9, 10, 12, 14, 36, 54, 96, 102, 112, 156]),
+            inst_el=instrument_elevation,
+            inst_az_spin_sector=np.arange(16, 32).reshape(4, 4),
+            acquisition_time=np.array([]),
+            acquisition_duration=[Mock(), Mock(), Mock(), Mock()],
+        )
+        swe_l1_data = SweL1bData(epoch=epochs,
+                                 count_rates=[Mock(), Mock(), Mock(), Mock()],
+                                 settle_duration=Mock())
+
+        spacecraft_potential = np.array([12, 14, 16, 18])
+        core_halo_breakpoint = np.array([96, 54, 103, 124])
+
+        corrected_energy_bins = swe_l2_data.energy.reshape(1, -1) - spacecraft_potential.reshape(-1, 1)
+
+        mock_scale_core_density.return_value.density = 1
+        mock_scale_halo_density.return_value.density = 1
+
+        mock_rotate_dps_vector_to_rtn.return_value = (2, 3, 4)
+
+        swe_moment_data = swe_processor.calculate_moment_products(swe_l2_data, swe_l1_data, spacecraft_potential,
+                                                                  core_halo_breakpoint,
+                                                                  corrected_energy_bins,
+                                                                  config)
+
+        self.assertEqual(4, mock_integrate.call_count)
+        self.assertEqual(2, mock_scale_core_density.call_count)
+        self.assertEqual(2, mock_scale_halo_density.call_count)
+
+        np.testing.assert_array_equal([np.nan, 1, 1, np.nan], swe_moment_data.core_density_integrated)
+        self.assertEqual(4, len(swe_moment_data.core_velocity_vector_rtn_integrated))
+        np.testing.assert_array_equal([np.nan, np.nan, np.nan], swe_moment_data.core_velocity_vector_rtn_integrated[0])
+        np.testing.assert_array_equal([np.nan, np.nan, np.nan], swe_moment_data.core_velocity_vector_rtn_integrated[3])
+
+        np.testing.assert_array_equal([np.nan, 1, 1, np.nan], swe_moment_data.halo_density_integrated)
+        self.assertEqual(4, len(swe_moment_data.halo_velocity_vector_rtn_integrated))
