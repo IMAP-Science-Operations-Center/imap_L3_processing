@@ -501,6 +501,7 @@ class TestSweProcessor(unittest.TestCase):
         np.testing.assert_allclose(swe_l3_data.energy_spectrum_outbound,
                                    np.array([[208.855516, 286.519101, 206.376298]]))
 
+    @patch('imap_l3_processing.swe.swe_processor.rotate_heat_flux')
     @patch('imap_l3_processing.swe.swe_processor.scale_halo_density')
     @patch('imap_l3_processing.swe.swe_processor.scale_core_density')
     @patch('imap_l3_processing.swe.swe_processor.integrate')
@@ -517,7 +518,9 @@ class TestSweProcessor(unittest.TestCase):
                                        mock_core_fit_moments_retrying_on_failure: Mock,
                                        mock_halo_fit_moments_retrying_on_failure: Mock,
                                        mock_integrate: Mock,
-                                       mock_scale_core_density: Mock, mock_scale_halo_density: Mock):
+                                       mock_scale_core_density: Mock,
+                                       mock_scale_halo_density: Mock,
+                                       mock_rotate_heat_flux):
         epochs = datetime.now() + np.arange(3) * timedelta(minutes=1)
 
         instrument_elevation = np.array([-70, -50, -30, 0, 30, 50, 70])
@@ -625,6 +628,8 @@ class TestSweProcessor(unittest.TestCase):
                                                        cdelt=None)
 
         mock_scale_halo_density.side_effect = [scale_halo_density_output]
+
+        mock_rotate_heat_flux.side_effect = [(10, 11, 12), (13, 14, 15)]
 
         input_metadata = InputMetadata("swe", "l3", datetime(2025, 2, 21),
                                        datetime(2025, 2, 22), "v001")
@@ -829,6 +834,13 @@ class TestSweProcessor(unittest.TestCase):
                                      halo_integrate_output.base_energy)
         ])
 
+        self.assertEqual(2, mock_rotate_heat_flux.call_count)
+
+        mock_rotate_heat_flux.assert_has_calls([
+            call(epochs[0], core_integrate_output.heat_flux),
+            call(epochs[0], halo_integrate_output.heat_flux),
+        ])
+
         # @formatter:off
         self.assertIsInstance(swe_moment_data, SweL3MomentData)
         np.testing.assert_array_equal(swe_moment_data.core_fit_num_points,[core_moment_fit_results_1.number_of_points,core_moment_fit_results_2.number_of_points, np.nan])
@@ -855,7 +867,12 @@ class TestSweProcessor(unittest.TestCase):
         np.testing.assert_array_equal(swe_moment_data.halo_speed_integrated,[np.linalg.norm(halo_integrated_velocity_rtn), np.nan, np.nan])
         np.testing.assert_array_equal(swe_moment_data.core_velocity_vector_rtn_integrated,[core_integrated_velocity_rtn, [np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan]])
         np.testing.assert_array_equal(swe_moment_data.halo_velocity_vector_rtn_integrated,[halo_integrated_velocity_rtn, [np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan]])
-
+        np.testing.assert_array_equal(swe_moment_data.core_heat_flux_magnitude_integrated,[10, np.nan, np.nan])
+        np.testing.assert_array_equal(swe_moment_data.core_heat_flux_theta_integrated,[11, np.nan, np.nan])
+        np.testing.assert_array_equal(swe_moment_data.core_heat_flux_phi_integrated,[12, np.nan, np.nan])
+        np.testing.assert_array_equal(swe_moment_data.halo_heat_flux_magnitude_integrated,[13, np.nan, np.nan])
+        np.testing.assert_array_equal(swe_moment_data.halo_heat_flux_theta_integrated,[14, np.nan, np.nan])
+        np.testing.assert_array_equal(swe_moment_data.halo_heat_flux_phi_integrated,[15, np.nan, np.nan])
 
 
         # @formatter:on
