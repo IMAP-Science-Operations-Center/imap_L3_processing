@@ -232,10 +232,10 @@ def process_hit_pha():
 def create_hit_direct_event_cdf():
     cosine_table = CosineCorrectionLookupTable(
         get_test_data_path("hit/pha_events/imap_hit_l3_range-2A-cosine-lookup_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_range-3A-cosine-lookup_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_range-4A-cosine-lookup_20250203_v001.cdf"),
         get_test_data_path("hit/pha_events/imap_hit_l3_range-2B-cosine-lookup_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_range-3A-cosine-lookup_20250203_v001.cdf"),
         get_test_data_path("hit/pha_events/imap_hit_l3_range-3B-cosine-lookup_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_range-4A-cosine-lookup_20250203_v001.cdf"),
         get_test_data_path("hit/pha_events/imap_hit_l3_range-4B-cosine-lookup_20250203_v001.cdf"),
     )
     gain_table = GainLookupTable.from_file(
