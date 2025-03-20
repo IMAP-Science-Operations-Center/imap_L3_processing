@@ -387,7 +387,7 @@ def rotate_temperature(epoch: datetime, alpha: float, beta: float) -> tuple[floa
     return theta, phi
 
 
-def rotate_heat_flux(epoch: datetime, heat_flux: np.ndarray) -> tuple[float, float, float]:
+def rotate_vector_to_rtn_spherical_coordinates(epoch: datetime, heat_flux: np.ndarray) -> tuple[float, float, float]:
     r, t, n = rotate_dps_vector_to_rtn(epoch, heat_flux)
     magnitude = np.linalg.norm(heat_flux, axis=-1)
     rt = np.sqrt(r * r + t * t)

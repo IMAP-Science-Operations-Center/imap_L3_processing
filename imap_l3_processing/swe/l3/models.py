@@ -100,6 +100,10 @@ class SweL3MomentData:
     halo_heat_flux_phi_integrated: np.ndarray
     core_temperature_moments: np.ndarray
     halo_temperature_moments: np.ndarray
+    core_temperature_theta_rtn_integrated: np.ndarray
+    core_temperature_phi_rtn_integrated: np.ndarray
+    halo_temperature_theta_rtn_integrated: np.ndarray
+    halo_temperature_phi_rtn_integrated: np.ndarray
 
 
 @dataclass

@@ -504,7 +504,7 @@ class TestSweProcessor(unittest.TestCase):
                                    np.array([[208.855516, 286.519101, 206.376298]]))
 
     @patch('imap_l3_processing.swe.swe_processor.calculate_primary_eigenvector')
-    @patch('imap_l3_processing.swe.swe_processor.rotate_heat_flux')
+    @patch('imap_l3_processing.swe.swe_processor.rotate_vector_to_rtn_spherical_coordinates')
     @patch('imap_l3_processing.swe.swe_processor.scale_halo_density')
     @patch('imap_l3_processing.swe.swe_processor.scale_core_density')
     @patch('imap_l3_processing.swe.swe_processor.integrate')
@@ -523,7 +523,7 @@ class TestSweProcessor(unittest.TestCase):
                                        mock_integrate: Mock,
                                        mock_scale_core_density: Mock,
                                        mock_scale_halo_density: Mock,
-                                       mock_rotate_heat_flux,
+                                       mock_rotate_vector_to_rtn_spherical_coordinates,
                                        mock_calculate_primary_eigenvector):
         epochs = datetime.now() + np.arange(3) * timedelta(minutes=1)
 
@@ -637,7 +637,8 @@ class TestSweProcessor(unittest.TestCase):
 
         mock_scale_halo_density.side_effect = [scale_halo_density_output]
 
-        mock_rotate_heat_flux.side_effect = [(10, 11, 12), (13, 14, 15)]
+        mock_rotate_vector_to_rtn_spherical_coordinates.side_effect = [(10, 11, 12), (16, 17, 18), (13, 14, 15),
+                                                                       (19, 20, 21)]
 
         core_primary_evec = Mock()
         halo_primary_evec = Mock()
@@ -855,11 +856,13 @@ class TestSweProcessor(unittest.TestCase):
                                      halo_integrate_output.base_energy)
         ])
 
-        self.assertEqual(2, mock_rotate_heat_flux.call_count)
+        self.assertEqual(4, mock_rotate_vector_to_rtn_spherical_coordinates.call_count)
 
-        mock_rotate_heat_flux.assert_has_calls([
+        mock_rotate_vector_to_rtn_spherical_coordinates.assert_has_calls([
             call(epochs[0], core_integrate_output.heat_flux),
+            call(epochs[0], core_primary_evec),
             call(epochs[0], halo_integrate_output.heat_flux),
+            call(epochs[0], halo_primary_evec),
         ])
 
         self.assertEqual(2, mock_calculate_primary_eigenvector.call_count)
@@ -898,12 +901,17 @@ class TestSweProcessor(unittest.TestCase):
         np.testing.assert_array_equal(swe_moment_data.core_temperature_moments,[[t_par_1, t_perp_1, gyro_1], [np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan]])
         np.testing.assert_array_equal(swe_moment_data.halo_temperature_moments,[[t_par_2, t_perp_2, gyro_2], [np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan]])
 
+        np.testing.assert_array_equal(swe_moment_data.core_temperature_theta_rtn_integrated, [17, np.nan, np.nan])
+        np.testing.assert_array_equal(swe_moment_data.core_temperature_phi_rtn_integrated, [18, np.nan, np.nan])
+
+        np.testing.assert_array_equal(swe_moment_data.halo_temperature_theta_rtn_integrated, [20, np.nan, np.nan])
+        np.testing.assert_array_equal(swe_moment_data.halo_temperature_phi_rtn_integrated, [21, np.nan, np.nan])
 
 
 
         # @formatter:on
 
-    @patch('imap_l3_processing.swe.swe_processor.rotate_heat_flux')
+    @patch('imap_l3_processing.swe.swe_processor.rotate_vector_to_rtn_spherical_coordinates')
     @patch('imap_l3_processing.swe.swe_processor.scale_halo_density')
     @patch('imap_l3_processing.swe.swe_processor.scale_core_density')
     @patch('imap_l3_processing.swe.swe_processor.rotate_temperature')
@@ -920,7 +928,7 @@ class TestSweProcessor(unittest.TestCase):
                                                                                mock_rotate_temperature,
                                                                                mock_scale_core_density,
                                                                                mock_scale_halo_density,
-                                                                               mock_rotate_heat_flux):
+                                                                               mock_rotate_vector_to_rtn_spherical_coordinates):
         mock_core_fit_moments_retrying_on_failure.side_effect = [
             build_moment_fit_results(moments=build_moments(t_parallel=1e3 - 1, t_perpendicular=1e3 - 1)),
             build_moment_fit_results(moments=build_moments(t_parallel=1e3 + 1, t_perpendicular=1e3 + 1)),
@@ -936,7 +944,7 @@ class TestSweProcessor(unittest.TestCase):
         ]
 
         mock_rotate_temperature.return_value = ((4, 5))
-        mock_rotate_heat_flux.return_value = ((1, 2, 3))
+        mock_rotate_vector_to_rtn_spherical_coordinates.return_value = ((1, 2, 3))
 
         input_metadata = InputMetadata("swe", "l3", datetime(2025, 2, 21),
                                        datetime(2025, 2, 22), "v001")
