@@ -95,9 +95,9 @@ class ValidDetectorRange:
 
 
 valid_ranges = {
-    DetectorRange.R2: ValidDetectorRange(0.2, 860, 0.1, 430),
-    DetectorRange.R3: ValidDetectorRange(1.0, 4300, 0.2, 860),
-    DetectorRange.R4: ValidDetectorRange(1.0, 4300, 1.0, 4300),
+    DetectorRange.R2: ValidDetectorRange(e_prime_min=0.2, e_prime_max=860, delta_e_min=0.1, delta_e_max=430),
+    DetectorRange.R3: ValidDetectorRange(e_prime_min=1.0, e_prime_max=4300, delta_e_min=0.2, delta_e_max=860),
+    DetectorRange.R4: ValidDetectorRange(e_prime_min=1.0, e_prime_max=4300, delta_e_min=1.0, delta_e_max=4300),
 }
 
 
