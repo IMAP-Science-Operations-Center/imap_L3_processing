@@ -6,7 +6,7 @@ import numpy as np
 from scipy.optimize import curve_fit
 
 from imap_l3_processing.constants import ELECTRON_MASS_KG, PROTON_CHARGE_COULOMBS, METERS_PER_KILOMETER
-from imap_l3_processing.pitch_angles import calculate_pitch_angle
+from imap_l3_processing.pitch_angles import calculate_pitch_angle, calculate_gyrophase
 from imap_l3_processing.swe.l3.models import SweConfiguration
 
 
@@ -140,11 +140,14 @@ def rebin_by_pitch_angle(flux, pitch_angles, energies, config: SweConfiguration)
     for j in range(num_pitch_bins):
         mask_pitch_angle = (pitch_angles_for_masked_flux >= pitch_angle_left_edges[j]) & (
                 pitch_angles_for_masked_flux < pitch_angle_right_edges[j])
+        # add another mask here for gyro
 
         flux_by_pitch_angle = flux_greater_than_zero[mask_pitch_angle]
         energy_by_pitch_angle = energies_for_masked_flux[mask_pitch_angle]
+        # maintain in new method
         if len(energy_by_pitch_angle) < 2:
             continue
+            # this requires some thinking to not end up with all fill val
         sorted_energies = np.sort(energy_by_pitch_angle)
         overall_max_energy_for_pitch_angle = sorted_energies[-1]
         overall_second_min_energy_for_pitch_angle = sorted_energies[1]
@@ -187,6 +190,10 @@ def rebin_by_pitch_angle(flux, pitch_angles, energies, config: SweConfiguration)
     return rebinned
 
 
+def rebin_by_pitch_angle_and_gyrophase(psd, pitch_angles, gyrophase, energies, config: SweConfiguration):
+    pass
+
+
 def calculate_velocity_in_sw_frame(velocity_in_despun_frame: np.ndarray[(..., 3)],
                                    solar_wind_velocity: np.ndarray[(3,)]) -> np.ndarray[(..., 3)]:
     return velocity_in_despun_frame - solar_wind_velocity
@@ -207,6 +214,7 @@ E_BINS = TypeVar("E_BINS")
 SPIN_SECTORS = TypeVar("SPIN_SECTORS")
 CEMS = TypeVar("CEMS")
 PITCH_ANGLE_BINS = TypeVar("PITCH_ANGLE_BINS")
+GYROPHASE_BINS = TypeVar("GYROPHASE_BINS")
 
 
 def correct_and_rebin(flux_or_psd: np.ndarray[(E_BINS, SPIN_SECTORS, CEMS)],
@@ -215,13 +223,19 @@ def correct_and_rebin(flux_or_psd: np.ndarray[(E_BINS, SPIN_SECTORS, CEMS)],
                       inst_az: np.ndarray[E_BINS, SPIN_SECTORS, CEMS],
                       mag_vector: np.ndarray[(E_BINS, SPIN_SECTORS, 3,)],
                       solar_wind_vector: np.ndarray[(3,)],
-                      config: SweConfiguration) -> np.ndarray[(E_BINS, PITCH_ANGLE_BINS)]:
+                      config: SweConfiguration) -> tuple[
+    np.ndarray[(E_BINS, PITCH_ANGLE_BINS)], np.ndarray[(E_BINS, PITCH_ANGLE_BINS, GYROPHASE_BINS)]]:
     despun_velocity = calculate_velocity_in_dsp_frame_km_s(energy_bins_minus_potential, inst_el, inst_az)
     velocity_in_sw_frame = calculate_velocity_in_sw_frame(despun_velocity, solar_wind_vector)
     pitch_angle = calculate_pitch_angle(velocity_in_sw_frame, mag_vector[..., np.newaxis, :])
+    gyrophase = calculate_gyrophase(velocity_in_sw_frame, mag_vector[..., np.newaxis, :])
     energy_in_sw_frame = calculate_energy_in_ev_from_velocity_in_km_per_second(velocity_in_sw_frame)
 
-    return rebin_by_pitch_angle(flux_or_psd, pitch_angle, energy_in_sw_frame, config)
+    rebinned_by_pa = rebin_by_pitch_angle(flux_or_psd, pitch_angle, energy_in_sw_frame, config)
+    rebinned_by_pa_and_gyro = rebin_by_pitch_angle_and_gyrophase(flux_or_psd, pitch_angle, gyrophase,
+                                                                 energy_in_sw_frame, config)
+
+    return (rebinned_by_pa, rebinned_by_pa_and_gyro)
 
 
 def integrate_distribution_to_get_1d_spectrum(psd_by_energy_and_pitch_angle: np.ndarray[(E_BINS, PITCH_ANGLE_BINS)],

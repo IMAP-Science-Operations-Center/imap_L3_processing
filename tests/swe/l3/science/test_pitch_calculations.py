@@ -1,4 +1,3 @@
-import itertools
 import unittest
 from unittest.mock import Mock, patch, ANY, call
 
@@ -7,7 +6,8 @@ import numpy as np
 from imap_l3_processing.swe.l3.science.pitch_calculations import piece_wise_model, find_breakpoints, \
     average_over_look_directions, calculate_velocity_in_dsp_frame_km_s, calculate_look_directions, rebin_by_pitch_angle, \
     correct_and_rebin, calculate_energy_in_ev_from_velocity_in_km_per_second, integrate_distribution_to_get_1d_spectrum, \
-    integrate_distribution_to_get_inbound_and_outbound_1d_spectrum, try_curve_fit_until_valid
+    integrate_distribution_to_get_inbound_and_outbound_1d_spectrum, try_curve_fit_until_valid, \
+    rebin_by_pitch_angle_and_gyrophase
 from tests.test_helpers import build_swe_configuration, NumpyArrayMatcher
 
 
@@ -378,6 +378,42 @@ class TestPitchCalculations(unittest.TestCase):
         )
         np.testing.assert_almost_equal(result, expected_result)
 
+    def test_rebin_by_pitch_angle_and_gyrophase(self):
+
+        psd = Mock()
+        pitch_angles = Mock()
+        gyrophase = Mock()
+        energies = Mock()
+
+        flux = np.array([1000, 10,
+                         32, 256,
+                         3, 9, 81,
+                         5, 25, 125])
+
+        pitch_angle = np.array([25, 60, 25, 60, 120, 170, 165, 120, 170, 165])
+        gyrophase = np.array([10, 120, 210, 350, 10, 120, 95, 210, 350, 260])
+
+        energy = np.array([10 * 0.1, 10 / 0.1,
+                           10 * 0.2 * 0.2, 10 / 0.2,
+                           10 * 0.3 * 0.3, 10 * 0.3, 10 / 0.3,
+                           10 * 0.5, 10, 10 / 0.5])
+
+        config = build_swe_configuration(
+            pitch_angle_bins=[45, 135],
+            pitch_angle_delta=[45, 45],
+            energy_bins=[10],
+            gyrophase_bins=[90, 270],
+            gyrophase_bin_deltas=[90, 90]
+        )
+
+        rebinned_by_gyro = rebin_by_pitch_angle_and_gyrophase(psd, pitch_angles, gyrophase, energies, config)
+        expected_gyro = np.array([
+            [
+                [100, 128], [27, 25]
+            ],
+        ])
+        np.testing.assert_array_equal(expected_gyro, rebinned_by_gyro)
+
     def test_rebin_by_pitch_angle_ignores_zero_measurements(self):
         flux = np.array([1000, 10, 32, 256, 0])
         pitch_angle = np.array([25, 60, 120, 170, 165])
@@ -493,13 +529,16 @@ class TestPitchCalculations(unittest.TestCase):
         result = calculate_energy_in_ev_from_velocity_in_km_per_second(velocities)
         np.testing.assert_allclose(result, expected_energies, rtol=1e-7)
 
+    @patch('imap_l3_processing.swe.l3.science.pitch_calculations.rebin_by_pitch_angle_and_gyrophase')
+    @patch('imap_l3_processing.swe.l3.science.pitch_calculations.calculate_gyrophase')
     @patch('imap_l3_processing.swe.l3.science.pitch_calculations.calculate_energy_in_ev_from_velocity_in_km_per_second')
     @patch('imap_l3_processing.swe.l3.science.pitch_calculations.rebin_by_pitch_angle')
     @patch('imap_l3_processing.swe.l3.science.pitch_calculations.calculate_pitch_angle')
     @patch('imap_l3_processing.swe.l3.science.pitch_calculations.calculate_velocity_in_sw_frame')
     @patch('imap_l3_processing.swe.l3.science.pitch_calculations.calculate_velocity_in_dsp_frame_km_s')
     def test_correct_and_rebin(self, mock_calculate_dsp_velocity, mock_calculate_velocity_in_sw_frame,
-                               mock_calculate_pitch_angle, mock_rebin_by_pitch_angle, mock_calculate_energy):
+                               mock_calculate_pitch_angle, mock_rebin_by_pitch_angle, mock_calculate_energy,
+                               mock_calculate_gyrophase, mock_rebin_by_pitch_angle_and_gyrophase):
         flux_data = Mock()
         corrected_energy = Mock()
         inst_el = Mock()
@@ -540,13 +579,24 @@ class TestPitchCalculations(unittest.TestCase):
 
         mock_calculate_pitch_angle.assert_called_once_with(mock_calculate_velocity_in_sw_frame.return_value,
                                                            NumpyArrayMatcher(expected_mag_vectors_with_cem_axis))
+        mock_calculate_gyrophase.assert_called_once_with(mock_calculate_velocity_in_sw_frame.return_value,
+                                                         NumpyArrayMatcher(expected_mag_vectors_with_cem_axis))
+
         mock_calculate_energy.assert_called_with(mock_calculate_velocity_in_sw_frame.return_value)
         mock_rebin_by_pitch_angle.assert_called_with(
             flux_data, mock_calculate_pitch_angle.return_value,
             mock_calculate_energy.return_value,
             configuration,
         )
-        self.assertEqual(mock_rebin_by_pitch_angle.return_value, result)
+        mock_rebin_by_pitch_angle_and_gyrophase.assert_called_with(
+            flux_data,
+            mock_calculate_pitch_angle.return_value,
+            mock_calculate_gyrophase.return_value,
+            mock_calculate_energy.return_value,
+            configuration,
+        )
+        self.assertEqual((mock_rebin_by_pitch_angle.return_value, mock_rebin_by_pitch_angle_and_gyrophase.return_value),
+                         result)
 
     def test_integrate_distribution_to_get_1d_spectrum(self):
         pitch_angle_bins = [30, 90]
