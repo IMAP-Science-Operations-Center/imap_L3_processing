@@ -63,7 +63,7 @@ energy:
 energy_at_detector:
   DATA_TYPE: float64
   CATDESC: energy_at_detector
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   DEPEND_0: epoch
   DEPEND_1: detector_id
   DISPLAY_TYPE: no_plot
@@ -78,7 +78,7 @@ energy_at_detector:
 range:
   DATA_TYPE: int8
   CATDESC: range
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
   FIELDNAM: range
@@ -122,7 +122,7 @@ e_prime:
 particle_id:
   DATA_TYPE: uint8
   CATDESC: particle_id
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
   FIELDNAM: particle_id
@@ -134,7 +134,7 @@ particle_id:
 priority_buffer_number:
   DATA_TYPE: int8
   CATDESC: priority_buffer_number
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
   FIELDNAM: priority_buffer_number
@@ -146,7 +146,7 @@ priority_buffer_number:
 latency:
   DATA_TYPE: int8
   CATDESC: latency
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
   FIELDNAM: latency
@@ -158,7 +158,7 @@ latency:
 stim_tag:
   DATA_TYPE: int8
   CATDESC: stim_tag
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
   FIELDNAM: stim_tag
@@ -170,7 +170,7 @@ stim_tag:
 long_event_flag:
   DATA_TYPE: int8
   CATDESC: long_event_flag
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
   FIELDNAM: long_event_flag
@@ -182,7 +182,7 @@ long_event_flag:
 haz_tag:
   DATA_TYPE: int8
   CATDESC: haz_tag
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
   FIELDNAM: haz_tag
@@ -194,7 +194,7 @@ haz_tag:
 side:
   DATA_TYPE: int8
   CATDESC: a_b_side
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
   FIELDNAM: a_b_side
@@ -206,7 +206,7 @@ side:
 has_unread_flag:
   DATA_TYPE: int8
   CATDESC: has_unread_flag
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
   FIELDNAM: has_unread_flag
@@ -218,7 +218,7 @@ has_unread_flag:
 culling_flag:
   DATA_TYPE: int8
   CATDESC: culling_flag
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
   FIELDNAM: culling_flag
@@ -233,7 +233,7 @@ pha_value:
   VAR_TYPE: data
   DEPEND_0: epoch
   DEPEND_1: detector_id
-  DISPLAY_TYPE: no_plot
+  DISPLAY_TYPE: spectrogram
   FIELDNAM: pha_value
   VALIDMIN: 0
   VALIDMAX: 65534
@@ -243,7 +243,7 @@ pha_value:
 is_low_gain:
   DATA_TYPE: int8
   CATDESC: is_low_gain
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   DEPEND_0: epoch
   DEPEND_1: detector_id
   DISPLAY_TYPE: no_plot
@@ -256,7 +256,7 @@ is_low_gain:
 detector_flags:
   DATA_TYPE: uint16
   CATDESC: detector_flags
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
   FIELDNAM: detector_flags
@@ -268,7 +268,7 @@ detector_flags:
 deindex:
   DATA_TYPE: uint16
   CATDESC: deindex
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
   FIELDNAM: deindex
@@ -280,7 +280,7 @@ deindex:
 epindex:
   DATA_TYPE: uint16
   CATDESC: epindex
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
   FIELDNAM: epindex
@@ -292,7 +292,7 @@ epindex:
 stim_gain:
   DATA_TYPE: int8
   CATDESC: stim_gain
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
   FIELDNAM: stim_gain
@@ -304,7 +304,7 @@ stim_gain:
 a_l_stim:
   DATA_TYPE: int8
   CATDESC: a_l_stim
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
   FIELDNAM: a_l_stim
@@ -316,7 +316,7 @@ a_l_stim:
 stim_step:
   DATA_TYPE: int8
   CATDESC: stim_step
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
   FIELDNAM: stim_step
@@ -328,7 +328,7 @@ stim_step:
 dac_value:
   DATA_TYPE: uint16
   CATDESC: dac_value
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
   FIELDNAM: dac_value
