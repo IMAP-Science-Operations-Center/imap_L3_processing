@@ -231,31 +231,31 @@ def process_hit_pha():
 
 def create_hit_direct_event_cdf():
     cosine_table = CosineCorrectionLookupTable(
-        get_test_data_path("hit/pha_events/imap_hit_l3_r2A-cosines-text-not-cdf_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_r3A-cosines-text-not-cdf_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_r4A-cosines-text-not-cdf_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_r2B-cosines-text-not-cdf_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_r3B-cosines-text-not-cdf_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_r4B-cosines-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_range-2A-cosine-lookup_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_range-2B-cosine-lookup_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_range-3A-cosine-lookup_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_range-3B-cosine-lookup_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_range-4A-cosine-lookup_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_range-4B-cosine-lookup_20250203_v001.cdf"),
     )
     gain_table = GainLookupTable.from_file(
-        get_test_data_path("hit/pha_events/imap_hit_l3_high-gains-text-not-cdf_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_low-gains-text-not-cdf_20250203_v001.cdf"))
+        get_test_data_path("hit/pha_events/imap_hit_l3_hi-gain-lookup_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_lo-gain-lookup_20250203_v001.cdf"))
 
     range_fit_lookup = RangeFitLookup.from_files(
-        get_test_data_path("hit/pha_events/imap_hit_l3_range2A-fit-text-not-cdf_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_range3A-fit-text-not-cdf_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_range4A-fit-text-not-cdf_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_range2B-fit-text-not-cdf_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_range3B-fit-text-not-cdf_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_range4B-fit-text-not-cdf_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_range-2A-charge-fit-lookup_20250319_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_range-3A-charge-fit-lookup_20250319_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_range-4A-charge-fit-lookup_20250319_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_range-2B-charge-fit-lookup_20250319_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_range-3B-charge-fit-lookup_20250319_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_l3_range-4B-charge-fit-lookup_20250319_v001.cdf"),
     )
 
     event_type_look = HitEventTypeLookup.from_csv(
-        get_test_data_path("hit/pha_events/imap_hit_l3_hit-event-types-text-not-cdf_20250228_v001.cdf"))
+        get_test_data_path("hit/pha_events/imap_hit_l3_hit-event-type-lookup_20250228_v001.cdf"))
 
     hit_l1_data = HitL1Data.read_from_cdf(
-        get_test_data_path("hit/pha_events/imap_hit_l1a_direct-events_20100105_v003.cdf"))
+        get_test_data_path("hit/pha_events/imap_hit_l1a_direct-events_20100105_v006.cdf"))
 
     direct_event_dependencies = HitL3PhaDependencies(hit_l1_data=hit_l1_data, cosine_correction_lookup=cosine_table,
 
