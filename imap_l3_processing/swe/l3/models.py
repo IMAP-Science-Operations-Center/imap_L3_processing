@@ -88,10 +88,31 @@ class SweL3MomentData:
     halo_velocity_vector_rtn_fit: np.ndarray
     core_density_integrated: np.ndarray
     halo_density_integrated: np.ndarray
+    total_density_integrated: np.ndarray
     core_speed_integrated: np.ndarray
     halo_speed_integrated: np.ndarray
+    total_speed_integrated: np.ndarray
     core_velocity_vector_rtn_integrated: np.ndarray
     halo_velocity_vector_rtn_integrated: np.ndarray
+    total_velocity_vector_rtn_integrated: np.ndarray
+    core_heat_flux_magnitude_integrated: np.ndarray
+    core_heat_flux_theta_integrated: np.ndarray
+    core_heat_flux_phi_integrated: np.ndarray
+    halo_heat_flux_magnitude_integrated: np.ndarray
+    halo_heat_flux_theta_integrated: np.ndarray
+    halo_heat_flux_phi_integrated: np.ndarray
+    total_heat_flux_magnitude_integrated: np.ndarray
+    total_heat_flux_theta_integrated: np.ndarray
+    total_heat_flux_phi_integrated: np.ndarray
+    core_temperature_moments: np.ndarray
+    halo_temperature_moments: np.ndarray
+    total_temperature_moments: np.ndarray
+    core_temperature_theta_rtn_integrated: np.ndarray
+    core_temperature_phi_rtn_integrated: np.ndarray
+    halo_temperature_theta_rtn_integrated: np.ndarray
+    halo_temperature_phi_rtn_integrated: np.ndarray
+    total_temperature_theta_rtn_integrated: np.ndarray
+    total_temperature_phi_rtn_integrated: np.ndarray
 
 
 @dataclass

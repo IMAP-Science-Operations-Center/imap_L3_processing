@@ -37,8 +37,8 @@ class TestHitProcessor(TestCase):
     @patch('imap_l3_processing.hit.l3.hit_processor.calculate_pitch_angle')
     @patch('imap_l3_processing.hit.l3.hit_processor.calculate_gyrophase')
     @patch('imap_l3_processing.hit.l3.hit_processor.rebin_by_pitch_angle_and_gyrophase')
-    @patch('imap_l3_processing.hit.l3.hit_processor.rotate_from_imap_despun_to_hit_despun')
-    def test_process_pitch_angle_product(self, mock_rotate_from_imap_despun_to_hit_despun,
+    @patch('imap_l3_processing.hit.l3.hit_processor.rotate_particle_vectors_from_hit_despun_to_imap_despun')
+    def test_process_pitch_angle_product(self, mock_rotate_particle_vectors_from_hit_despun_to_imap_despun,
                                          mock_rebin_by_pitch_angle_and_gyrophase, mock_calculate_gyrophase,
                                          mock_calculate_pitch_angle,
                                          mock_get_sector_unit_vectors, mock_get_hit_bin_polar_coordinates,
@@ -132,8 +132,7 @@ class TestHitProcessor(TestCase):
         sector_unit_vectors = np.array([[1, 0, 0], [0, 1, 0]])
         mock_get_sector_unit_vectors.return_value = sector_unit_vectors
 
-        mock_rotate_from_imap_despun_to_hit_despun.side_effect = [sentinel.rotated_mag_vector1,
-                                                                  sentinel.rotated_mag_vector2]
+        mock_rotate_particle_vectors_from_hit_despun_to_imap_despun.return_value = sentinel.rotated_particle_vector
         mock_calculate_pitch_angle.side_effect = [sentinel.pitch_angle1, sentinel.pitch_angle2]
         mock_calculate_gyrophase.side_effect = [sentinel.gyrophase1, sentinel.gyrophase2]
 
@@ -243,23 +242,28 @@ class TestHitProcessor(TestCase):
         ])
         mock_get_sector_unit_vectors.assert_called_once_with(sentinel.dec, sentinel.inc)
 
-        mock_rotate_from_imap_despun_to_hit_despun.assert_has_calls([
-            call(sentinel.mag_unit_vector1), call(sentinel.mag_unit_vector2)
-        ])
+        self.assertEqual(1, mock_rotate_particle_vectors_from_hit_despun_to_imap_despun.call_count)
+        np.testing.assert_array_equal(
+            mock_rotate_particle_vectors_from_hit_despun_to_imap_despun.call_args_list[0].args[0],
+            -sector_unit_vectors)
 
         self.assertEqual(2, mock_calculate_pitch_angle.call_count)
-        np.testing.assert_array_equal(mock_calculate_pitch_angle.call_args_list[0].args[0], -sector_unit_vectors)
-        self.assertEqual(mock_calculate_pitch_angle.call_args_list[0].args[1], sentinel.rotated_mag_vector1)
+        np.testing.assert_array_equal(mock_calculate_pitch_angle.call_args_list[0].args[0],
+                                      sentinel.rotated_particle_vector)
+        self.assertEqual(mock_calculate_pitch_angle.call_args_list[0].args[1], sentinel.mag_unit_vector1)
 
-        np.testing.assert_array_equal(mock_calculate_pitch_angle.call_args_list[1].args[0], -sector_unit_vectors)
-        self.assertEqual(mock_calculate_pitch_angle.call_args_list[1].args[1], sentinel.rotated_mag_vector2)
+        np.testing.assert_array_equal(mock_calculate_pitch_angle.call_args_list[1].args[0],
+                                      sentinel.rotated_particle_vector)
+        self.assertEqual(mock_calculate_pitch_angle.call_args_list[1].args[1], sentinel.mag_unit_vector2)
 
         self.assertEqual(2, mock_calculate_gyrophase.call_count)
-        np.testing.assert_array_equal(mock_calculate_gyrophase.call_args_list[0].args[0], -sector_unit_vectors)
-        self.assertEqual(mock_calculate_gyrophase.call_args_list[0].args[1], sentinel.rotated_mag_vector1)
+        np.testing.assert_array_equal(mock_calculate_gyrophase.call_args_list[0].args[0],
+                                      sentinel.rotated_particle_vector)
+        self.assertEqual(mock_calculate_gyrophase.call_args_list[0].args[1], sentinel.mag_unit_vector1)
 
-        np.testing.assert_array_equal(mock_calculate_gyrophase.call_args_list[1].args[0], -sector_unit_vectors)
-        self.assertEqual(mock_calculate_gyrophase.call_args_list[1].args[1], sentinel.rotated_mag_vector2)
+        np.testing.assert_array_equal(mock_calculate_gyrophase.call_args_list[1].args[0],
+                                      sentinel.rotated_particle_vector)
+        self.assertEqual(mock_calculate_gyrophase.call_args_list[1].args[1], sentinel.mag_unit_vector2)
 
         number_of_pitch_angle_bins = 8
         number_of_gyrophase_bins = 15

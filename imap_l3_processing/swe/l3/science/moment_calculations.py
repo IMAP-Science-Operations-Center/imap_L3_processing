@@ -387,7 +387,7 @@ def rotate_temperature(epoch: datetime, alpha: float, beta: float) -> tuple[floa
     return theta, phi
 
 
-def rotate_heat_flux(epoch: datetime, heat_flux: np.ndarray) -> tuple[float, float, float]:
+def rotate_vector_to_rtn_spherical_coordinates(epoch: datetime, heat_flux: np.ndarray) -> tuple[float, float, float]:
     r, t, n = rotate_dps_vector_to_rtn(epoch, heat_flux)
     magnitude = np.linalg.norm(heat_flux, axis=-1)
     rt = np.sqrt(r * r + t * t)
@@ -576,8 +576,9 @@ def scale_core_density(core_density: float,
         number_of_energies = 2
         velocity_in_sc_frame[1, :] = ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR * np.sqrt(0.5 * base_energy)
         delv[1, :] = ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR * np.sqrt(base_energy)
-    factor = core_moment_fit.density * zmk / (np.pi * core_moment_fit.t_parallel) * np.sqrt(
-        zmk / (np.pi * core_moment_fit.t_perpendicular))
+
+    factor = core_moment_fit.density * zmk / (np.pi * core_moment_fit.t_perpendicular) * np.sqrt(
+        zmk / (np.pi * core_moment_fit.t_parallel))
 
     cos_theta = cosin_p[np.newaxis, :, np.newaxis]
     sin_theta = np.sin(np.arccos(cos_theta))
@@ -593,7 +594,7 @@ def scale_core_density(core_density: float,
 
     fun = -zmk * np.stack(np.broadcast_arrays(vx * vx, vy * vy, vz * vz, vx * vy, vx * vz, vy * vz, vx, vy, vz),
                           axis=-1)
-    exponent = np.dot(fun, regress_outputs[:9])
+    exponent = -zmk * core_moment_fit.aoo + np.dot(fun, regress_outputs[:9])
     delt = delv[:, :, np.newaxis] * delta_theta * delta_phi
     common_factor = np.square(velocity_3_dim) * delt * sin_theta * factor * np.exp(exponent)
 
@@ -712,3 +713,45 @@ def scale_halo_density(halo_density: float,
 
     return ScaleDensityOutput(density=corrected_density, velocity=corrected_halo_velocity,
                               temperature=corrected_halo_temp, cdelnv=None, cdelt=None)
+
+
+def calculate_primary_eigenvector(temperature_tensor: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    symmetric_temperature_tensor = np.zeros(shape=(3, 3))
+
+    symmetric_temperature_tensor[0][0] = temperature_tensor[0]
+    symmetric_temperature_tensor[0][1] = symmetric_temperature_tensor[1][0] = temperature_tensor[1]
+    symmetric_temperature_tensor[1][1] = temperature_tensor[2]
+    symmetric_temperature_tensor[0][2] = symmetric_temperature_tensor[2][0] = temperature_tensor[3]
+    symmetric_temperature_tensor[1][2] = symmetric_temperature_tensor[2][1] = temperature_tensor[4]
+    symmetric_temperature_tensor[2][2] = temperature_tensor[5]
+
+    nan_array = np.full(3, np.nan)
+    try:
+        eigen_values, eigen_vectors = np.linalg.eigh(symmetric_temperature_tensor)
+    except np.linalg.LinAlgError:
+        return nan_array, nan_array
+
+    if np.any(eigen_values < 0) or np.all(eigen_values == 0) or np.any(np.isnan(eigen_values)):
+        return nan_array, nan_array
+
+    eigen_values_mean = np.mean(eigen_values)
+
+    diff = 0
+    ipar = 0
+    for i in range(len(eigen_values)):
+        if math.fabs(eigen_values[i] - eigen_values_mean) > diff:
+            ipar = i
+            diff = math.fabs(eigen_values[i] - eigen_values_mean)
+
+    primary_evec = eigen_vectors[:, ipar]
+    TEMPERATURE_SCALING_FACTOR = 1e4
+    parallel_temperature = TEMPERATURE_SCALING_FACTOR * eigen_values[ipar]
+    other_evals = [v for i, v in enumerate(eigen_values) if i != ipar]
+    max_eval = max(other_evals)
+    min_eval = min(other_evals)
+    perpendicular_temperature = TEMPERATURE_SCALING_FACTOR * np.sqrt(min_eval * max_eval)
+    if min_eval == 0:
+        gyro = 1
+    else:
+        gyro = max(other_evals) / min_eval
+    return primary_evec, np.array([parallel_temperature, perpendicular_temperature, gyro])
