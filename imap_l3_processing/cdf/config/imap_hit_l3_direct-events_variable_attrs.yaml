@@ -1,4 +1,5 @@
 epoch:
+  DATA_TYPE: int64
   CATDESC: Time, number of nanoseconds since J2000 with leap seconds included
   VAR_TYPE: support_data
   DISPLAY_TYPE: no_plot
@@ -17,6 +18,7 @@ epoch:
   REFERENCE_POSITION: Rotating Earth Geoid
 
 epoch_delta:
+  DATA_TYPE: int64
   CATDESC: epoch_delta
   VAR_TYPE: support_data
   DISPLAY_TYPE: no_plot
@@ -29,6 +31,7 @@ epoch_delta:
   SCALETYP: linear
 
 charge:
+  DATA_TYPE: float64
   CATDESC: charge
   VAR_TYPE: data
   DEPEND_0: epoch
@@ -42,6 +45,7 @@ charge:
   SCALETYP: linear
 
 energy:
+  DATA_TYPE: float64
   CATDESC: energy
   VAR_TYPE: data
   DEPEND_0: epoch
@@ -53,10 +57,13 @@ energy:
   VALIDMAX: 10000
   FILLVAL: -1.00E+31
   SCALETYP: log
+  SCALEMIN: 0.0001
+  SCALEMAX: 10000
 
 energy_at_detector:
+  DATA_TYPE: float64
   CATDESC: energy_at_detector
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   DEPEND_0: epoch
   DEPEND_1: detector_id
   DISPLAY_TYPE: no_plot
@@ -65,18 +72,23 @@ energy_at_detector:
   VALIDMAX: 10000
   FILLVAL: -1.00E+31
   SCALETYP: log
+  SCALEMIN: 0.0001
+  SCALEMAX: 10000
 
 range:
+  DATA_TYPE: int8
   CATDESC: range
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
   FIELDNAM: range
   VALIDMIN: 0
   VALIDMAX: 4
   FILLVAL: 255
+  SCALETYP: linear
 
 delta_e:
+  DATA_TYPE: float64
   CATDESC: delta_e
   VAR_TYPE: data
   DEPEND_0: epoch
@@ -88,8 +100,11 @@ delta_e:
   VALIDMAX: 10000
   FILLVAL: -1.00E+31
   SCALETYP: log
+  SCALEMIN: 0.0001
+  SCALEMAX: 10000
 
 e_prime:
+  DATA_TYPE: float64
   CATDESC: e_prime
   VAR_TYPE: data
   DEPEND_0: epoch
@@ -101,111 +116,134 @@ e_prime:
   VALIDMAX: 10000
   FILLVAL: -1.00E+31
   SCALETYP: log
+  SCALEMIN: 0.0001
+  SCALEMAX: 10000
 
 particle_id:
+  DATA_TYPE: uint8
   CATDESC: particle_id
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
   FIELDNAM: particle_id
   VALIDMIN: 0
   VALIDMAX: 255
   FILLVAL: 65535
+  SCALETYP: linear
 
 priority_buffer_number:
+  DATA_TYPE: int8
   CATDESC: priority_buffer_number
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
   FIELDNAM: priority_buffer_number
   VALIDMIN: 0
   VALIDMAX: 254
   FILLVAL: 255
+  SCALETYP: linear
 
 latency:
+  DATA_TYPE: int8
   CATDESC: latency
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
   FIELDNAM: latency
   VALIDMIN: 0
   VALIDMAX: 16
   FILLVAL: 255
+  SCALETYP: linear
 
 stim_tag:
+  DATA_TYPE: int8
   CATDESC: stim_tag
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
   FIELDNAM: stim_tag
   VALIDMIN: 0
   VALIDMAX: 1
   FILLVAL: -1.28E+02
+  SCALETYP: linear
 
 long_event_flag:
+  DATA_TYPE: int8
   CATDESC: long_event_flag
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
   FIELDNAM: long_event_flag
   VALIDMIN: 0
   VALIDMAX: 1
   FILLVAL: -1.28E+02
+  SCALETYP: linear
 
 haz_tag:
+  DATA_TYPE: int8
   CATDESC: haz_tag
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
   FIELDNAM: haz_tag
   VALIDMIN: 0
   VALIDMAX: 1
   FILLVAL: -1.28E+02
+  SCALETYP: linear
 
 side:
+  DATA_TYPE: int8
   CATDESC: a_b_side
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
   FIELDNAM: a_b_side
   VALIDMIN: 0
   VALIDMAX: 1
   FILLVAL: -1.28E+02
+  SCALETYP: linear
 
 has_unread_flag:
+  DATA_TYPE: int8
   CATDESC: has_unread_flag
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
   FIELDNAM: has_unread_flag
   VALIDMIN: 0
   VALIDMAX: 1
   FILLVAL: -1.28E+02
+  SCALETYP: linear
 
 culling_flag:
+  DATA_TYPE: int8
   CATDESC: culling_flag
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
   FIELDNAM: culling_flag
   VALIDMIN: 0
   VALIDMAX: 1
   FILLVAL: -1.28E+02
+  SCALETYP: linear
 
 pha_value:
+  DATA_TYPE: uint16
   CATDESC: pha_value
   VAR_TYPE: data
   DEPEND_0: epoch
   DEPEND_1: detector_id
-  DISPLAY_TYPE: no_plot
+  DISPLAY_TYPE: spectrogram
   FIELDNAM: pha_value
   VALIDMIN: 0
   VALIDMAX: 65534
   FILLVAL: 65535
+  SCALETYP: linear
 
 is_low_gain:
+  DATA_TYPE: int8
   CATDESC: is_low_gain
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   DEPEND_0: epoch
   DEPEND_1: detector_id
   DISPLAY_TYPE: no_plot
@@ -213,78 +251,94 @@ is_low_gain:
   VALIDMIN: 0
   VALIDMAX: 1
   FILLVAL: -128
+  SCALETYP: linear
 
 detector_flags:
+  DATA_TYPE: uint16
   CATDESC: detector_flags
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
   FIELDNAM: detector_flags
   VALIDMIN: 0
   VALIDMAX: 65534
   FILLVAL: 65535
+  SCALETYP: linear
 
 deindex:
+  DATA_TYPE: uint16
   CATDESC: deindex
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
   FIELDNAM: deindex
   VALIDMIN: 0
   VALIDMAX: 65534
   FILLVAL: 65535
+  SCALETYP: linear
 
 epindex:
+  DATA_TYPE: uint16
   CATDESC: epindex
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
   FIELDNAM: epindex
   VALIDMIN: 0
   VALIDMAX: 65534
   FILLVAL: 65535
+  SCALETYP: linear
 
 stim_gain:
+  DATA_TYPE: int8
   CATDESC: stim_gain
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
   FIELDNAM: stim_gain
   VALIDMIN: 0
   VALIDMAX: 1
   FILLVAL: -128
+  SCALETYP: linear
 
 a_l_stim:
+  DATA_TYPE: int8
   CATDESC: a_l_stim
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
   FIELDNAM: a_l_stim
   VALIDMIN: 0
   VALIDMAX: 1
   FILLVAL: -128
+  SCALETYP: linear
 
 stim_step:
+  DATA_TYPE: int8
   CATDESC: stim_step
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
   FIELDNAM: stim_step
   VALIDMIN: 0
   VALIDMAX: 254
   FILLVAL: 255
+  SCALETYP: linear
 
 dac_value:
+  DATA_TYPE: uint16
   CATDESC: dac_value
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
   FIELDNAM: dac_value
   VALIDMIN: 0
   VALIDMAX: 10000
   FILLVAL: 65535
+  SCALETYP: linear
 
 detector_id:
+  DATA_TYPE: int8
   CATDESC: index used to support up to 64 detector addresses per event
   VAR_TYPE: support_data
   DISPLAY_TYPE: no_plot
@@ -292,4 +346,5 @@ detector_id:
   VALIDMIN: 0
   VALIDMAX: 64
   FILLVAL: 255
+  SCALETYP: linear
 
