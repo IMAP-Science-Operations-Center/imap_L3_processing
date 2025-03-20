@@ -725,7 +725,14 @@ def calculate_primary_eigenvector(temperature_tensor: np.ndarray) -> tuple[np.nd
     symmetric_temperature_tensor[1][2] = symmetric_temperature_tensor[2][1] = temperature_tensor[4]
     symmetric_temperature_tensor[2][2] = temperature_tensor[5]
 
-    eigen_values, eigen_vectors = np.linalg.eigh(symmetric_temperature_tensor)
+    nan_array = np.full(3, np.nan)
+    try:
+        eigen_values, eigen_vectors = np.linalg.eigh(symmetric_temperature_tensor)
+    except np.linalg.LinAlgError:
+        return nan_array, nan_array
+
+    if np.any(eigen_values < 0) or np.all(eigen_values == 0) or np.any(np.isnan(eigen_values)):
+        return nan_array, nan_array
 
     eigen_values_mean = np.mean(eigen_values)
 

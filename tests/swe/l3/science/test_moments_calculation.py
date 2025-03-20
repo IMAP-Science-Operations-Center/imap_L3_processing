@@ -754,3 +754,17 @@ class TestMomentsCalculation(unittest.TestCase):
                 primary_evec, temps = calculate_primary_eigenvector(temps)
                 np.testing.assert_allclose(primary_evec, expected_evec)
                 np.testing.assert_allclose(temps, expected_temps)
+
+    def test_calculate_primary_eigenvector_error_cases(self):
+        cases = [
+            [-1, 0, 2, 0, 0, 4],
+            [0, 0, 0, 0, 0, 0],
+            [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan],
+            [np.nan, 0, 0, 0, 0, np.nan],
+            [0, np.inf, 0, 0, 0, 0],
+        ]
+        for temps in cases:
+            with self.subTest(temps):
+                primary_evec, temps = calculate_primary_eigenvector(temps)
+                np.testing.assert_equal(primary_evec, [np.nan, np.nan, np.nan])
+                np.testing.assert_equal(temps, [np.nan, np.nan, np.nan])
