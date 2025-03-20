@@ -10,7 +10,7 @@ from imap_l3_processing.swe.l3.science import moment_calculations
 from imap_l3_processing.swe.l3.science.moment_calculations import compute_maxwellian_weight_factors, \
     filter_and_flatten_regress_parameters, regress, calculate_fit_temperature_density_velocity, rotate_temperature, \
     rotate_dps_vector_to_rtn, Moments, halotrunc, compute_density_scale, core_fit_moments_retrying_on_failure, \
-    halo_fit_moments_retrying_on_failure, scale_halo_density, rotate_heat_flux
+    halo_fit_moments_retrying_on_failure, scale_halo_density, rotate_heat_flux, calculate_primary_eigenvector
 from tests.test_helpers import create_dataclass_mock
 from tests.test_helpers import get_test_data_path
 
@@ -741,3 +741,16 @@ class TestMomentsCalculation(unittest.TestCase):
                 self.assertEqual(expected_mag, magnitude)
                 self.assertEqual(expected_theta, theta)
                 self.assertEqual(expected_phi, phi)
+
+    def test_calculate_primary_eigenvector(self):
+        cases = [
+            ([1, 0, 2, 0, 0, 4], [0, 0, 1], [1e4 * 4, 1e4 * np.sqrt(1 * 2), 2 / 1]),
+            ([1, 0, 3, 0, 0, 4], [1, 0, 0], [1e4 * 1, 1e4 * np.sqrt(3 * 4), 4 / 3]),
+            ([1, 0, 0, 0, 0, 5], [0, 0, 1], [1e4 * 5, 1e4 * np.sqrt(0 * 1), 1]),
+            ([1, 0, 1, 0, 0, 1], [1, 0, 0], [1e4 * 1, 1e4 * np.sqrt(1 * 1), 1]),
+        ]
+        for temps, expected_evec, expected_temps in cases:
+            with self.subTest(temps):
+                primary_evec, temps = calculate_primary_eigenvector(temps)
+                np.testing.assert_allclose(primary_evec, expected_evec)
+                np.testing.assert_allclose(temps, expected_temps)

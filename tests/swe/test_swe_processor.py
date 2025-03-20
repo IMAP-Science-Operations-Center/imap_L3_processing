@@ -503,6 +503,7 @@ class TestSweProcessor(unittest.TestCase):
         np.testing.assert_allclose(swe_l3_data.energy_spectrum_outbound,
                                    np.array([[208.855516, 286.519101, 206.376298]]))
 
+    @patch('imap_l3_processing.swe.swe_processor.calculate_primary_eigenvector')
     @patch('imap_l3_processing.swe.swe_processor.rotate_heat_flux')
     @patch('imap_l3_processing.swe.swe_processor.scale_halo_density')
     @patch('imap_l3_processing.swe.swe_processor.scale_core_density')
@@ -522,7 +523,8 @@ class TestSweProcessor(unittest.TestCase):
                                        mock_integrate: Mock,
                                        mock_scale_core_density: Mock,
                                        mock_scale_halo_density: Mock,
-                                       mock_rotate_heat_flux):
+                                       mock_rotate_heat_flux,
+                                       mock_calculate_primary_eigenvector):
         epochs = datetime.now() + np.arange(3) * timedelta(minutes=1)
 
         instrument_elevation = np.array([-70, -50, -30, 0, 30, 50, 70])
@@ -618,20 +620,37 @@ class TestSweProcessor(unittest.TestCase):
         mock_integrate.side_effect = [core_integrate_output, halo_integrate_output, None, None]
 
         scaled_core_velocity = [900, 800, 700]
-        scale_core_density_output = ScaleDensityOutput(density=400, velocity=scaled_core_velocity, temperature=None,
+        scaled_core_temperature = Mock()
+        scale_core_density_output = ScaleDensityOutput(density=400, velocity=scaled_core_velocity,
+                                                       temperature=scaled_core_temperature,
                                                        cdelnv=None,
                                                        cdelt=None)
 
         mock_scale_core_density.side_effect = [scale_core_density_output]
 
         scaled_halo_velocity = [2000, 1800, 1700]
-        scale_halo_density_output = ScaleDensityOutput(density=500, velocity=scaled_halo_velocity, temperature=None,
+        scaled_halo_temperature = Mock()
+        scale_halo_density_output = ScaleDensityOutput(density=500, velocity=scaled_halo_velocity,
+                                                       temperature=scaled_halo_temperature,
                                                        cdelnv=None,
                                                        cdelt=None)
 
         mock_scale_halo_density.side_effect = [scale_halo_density_output]
 
         mock_rotate_heat_flux.side_effect = [(10, 11, 12), (13, 14, 15)]
+
+        core_primary_evec = Mock()
+        halo_primary_evec = Mock()
+        t_par_1 = 100001
+        t_par_2 = 100002
+        t_perp_1 = 200001
+        t_perp_2 = 200002
+        gyro_1 = 1.1
+        gyro_2 = 1.2
+        mock_calculate_primary_eigenvector.side_effect = [
+            (core_primary_evec, np.array([t_par_1, t_perp_1, gyro_1])),
+            (halo_primary_evec, np.array([t_par_2, t_perp_2, gyro_2])),
+        ]
 
         input_metadata = InputMetadata("swe", "l3", datetime(2025, 2, 21),
                                        datetime(2025, 2, 22), "v001")
@@ -843,6 +862,12 @@ class TestSweProcessor(unittest.TestCase):
             call(epochs[0], halo_integrate_output.heat_flux),
         ])
 
+        self.assertEqual(2, mock_calculate_primary_eigenvector.call_count)
+        mock_calculate_primary_eigenvector.assert_has_calls([
+            call(scaled_core_temperature),
+            call(scaled_halo_temperature),
+        ])
+
         # @formatter:off
         self.assertIsInstance(swe_moment_data, SweL3MomentData)
         np.testing.assert_array_equal(swe_moment_data.core_fit_num_points,[core_moment_fit_results_1.number_of_points,core_moment_fit_results_2.number_of_points, np.nan])
@@ -869,6 +894,10 @@ class TestSweProcessor(unittest.TestCase):
         np.testing.assert_array_equal(swe_moment_data.halo_speed_integrated,[np.linalg.norm(halo_integrated_velocity_rtn), np.nan, np.nan])
         np.testing.assert_array_equal(swe_moment_data.core_velocity_vector_rtn_integrated,[core_integrated_velocity_rtn, [np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan]])
         np.testing.assert_array_equal(swe_moment_data.halo_velocity_vector_rtn_integrated,[halo_integrated_velocity_rtn, [np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan]])
+
+        np.testing.assert_array_equal(swe_moment_data.core_temperature_moments,[[t_par_1, t_perp_1, gyro_1], [np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan]])
+        np.testing.assert_array_equal(swe_moment_data.halo_temperature_moments,[[t_par_2, t_perp_2, gyro_2], [np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan]])
+
 
 
 
