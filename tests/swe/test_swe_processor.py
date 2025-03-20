@@ -604,10 +604,12 @@ class TestSweProcessor(unittest.TestCase):
         halo_fit_velocity_1 = [0, 1, 0]
         halo_fit_velocity_2 = [1, 0, 0]
         core_integrated_velocity_rtn = [2, 3, 4]
+        total_integrated_velocity_rtn = [5, 8, 9]
         halo_integrated_velocity_rtn = [6, 0, 6]
         mock_rotate_dps_vector_to_rtn.side_effect = [
             core_fit_velocity_1,
             core_integrated_velocity_rtn,
+            total_integrated_velocity_rtn,
             halo_fit_velocity_1,
             halo_integrated_velocity_rtn,
             core_fit_velocity_2,
@@ -615,16 +617,20 @@ class TestSweProcessor(unittest.TestCase):
         ]
 
         core_integrate_output = Mock()
+        total_integrate_output = Mock()
+        total_integrate_output.density = 5
         halo_integrate_output = Mock()
 
-        mock_integrate.side_effect = [core_integrate_output, halo_integrate_output, None, None]
+        mock_integrate.side_effect = [core_integrate_output, total_integrate_output, halo_integrate_output, None, None]
 
         scaled_core_velocity = [900, 800, 700]
         scaled_core_temperature = Mock()
+        core_cdelnv = Mock()
+        core_cdelt = Mock()
         scale_core_density_output = ScaleDensityOutput(density=400, velocity=scaled_core_velocity,
                                                        temperature=scaled_core_temperature,
-                                                       cdelnv=None,
-                                                       cdelt=None)
+                                                       cdelnv=core_cdelnv,
+                                                       cdelt=core_cdelt)
 
         mock_scale_core_density.side_effect = [scale_core_density_output]
 
@@ -637,19 +643,29 @@ class TestSweProcessor(unittest.TestCase):
 
         mock_scale_halo_density.side_effect = [scale_halo_density_output]
 
-        mock_rotate_vector_to_rtn_spherical_coordinates.side_effect = [(10, 11, 12), (16, 17, 18), (13, 14, 15),
-                                                                       (19, 20, 21)]
+        mock_rotate_vector_to_rtn_spherical_coordinates.side_effect = [
+            (10, 11, 12),
+            (16, 17, 18),
+            (101, 102, 103),
+            (104, 105, 106),
+            (13, 14, 15),
+            (19, 20, 21)]
 
         core_primary_evec = Mock()
+        total_primary_evec = Mock()
         halo_primary_evec = Mock()
         t_par_1 = 100001
         t_par_2 = 100002
+        t_par_3 = 100003
         t_perp_1 = 200001
         t_perp_2 = 200002
+        t_perp_3 = 200003
         gyro_1 = 1.1
         gyro_2 = 1.2
+        gyro_3 = 1.3
         mock_calculate_primary_eigenvector.side_effect = [
             (core_primary_evec, np.array([t_par_1, t_perp_1, gyro_1])),
+            (total_primary_evec, np.array([t_par_3, t_perp_3, gyro_3])),
             (halo_primary_evec, np.array([t_par_2, t_perp_2, gyro_2])),
         ]
 
@@ -763,7 +779,7 @@ class TestSweProcessor(unittest.TestCase):
         self.assertEqual(spacecraft_potential[2], halo_fit_moments_3.args[7])
         self.assertEqual(core_halo_breakpoint[2], halo_fit_moments_3.args[8])
 
-        self.assertEqual(6, mock_rotate_dps_vector_to_rtn.call_count)
+        self.assertEqual(7, mock_rotate_dps_vector_to_rtn.call_count)
 
         self.assertEqual(epochs[0], mock_rotate_dps_vector_to_rtn.call_args_list[0].args[0])
         np.testing.assert_array_equal(
@@ -776,23 +792,28 @@ class TestSweProcessor(unittest.TestCase):
 
         self.assertEqual(epochs[0], mock_rotate_dps_vector_to_rtn.call_args_list[2].args[0])
         np.testing.assert_array_equal(
-            np.array([halo_moments1.velocity_x, halo_moments1.velocity_y, halo_moments1.velocity_z]),
+            total_integrate_output.velocity,
             mock_rotate_dps_vector_to_rtn.call_args_list[2].args[1])
 
         self.assertEqual(epochs[0], mock_rotate_dps_vector_to_rtn.call_args_list[3].args[0])
         np.testing.assert_array_equal(
-            scaled_halo_velocity,
+            np.array([halo_moments1.velocity_x, halo_moments1.velocity_y, halo_moments1.velocity_z]),
             mock_rotate_dps_vector_to_rtn.call_args_list[3].args[1])
 
-        self.assertEqual(epochs[1], mock_rotate_dps_vector_to_rtn.call_args_list[4].args[0])
+        self.assertEqual(epochs[0], mock_rotate_dps_vector_to_rtn.call_args_list[4].args[0])
         np.testing.assert_array_equal(
-            np.array([core_moments2.velocity_x, core_moments2.velocity_y, core_moments2.velocity_z]),
+            scaled_halo_velocity,
             mock_rotate_dps_vector_to_rtn.call_args_list[4].args[1])
 
         self.assertEqual(epochs[1], mock_rotate_dps_vector_to_rtn.call_args_list[5].args[0])
         np.testing.assert_array_equal(
-            np.array([halo_moments2.velocity_x, halo_moments2.velocity_y, halo_moments2.velocity_z]),
+            np.array([core_moments2.velocity_x, core_moments2.velocity_y, core_moments2.velocity_z]),
             mock_rotate_dps_vector_to_rtn.call_args_list[5].args[1])
+
+        self.assertEqual(epochs[1], mock_rotate_dps_vector_to_rtn.call_args_list[6].args[0])
+        np.testing.assert_array_equal(
+            np.array([halo_moments2.velocity_x, halo_moments2.velocity_y, halo_moments2.velocity_z]),
+            mock_rotate_dps_vector_to_rtn.call_args_list[6].args[1])
 
         self.assertEqual(4, mock_rotate_temperature.call_count)
         mock_rotate_temperature.assert_has_calls(
@@ -804,31 +825,37 @@ class TestSweProcessor(unittest.TestCase):
         def call_with_array_matchers(*args):
             return call(*[NumpyArrayMatcher(x) for x in args])
 
-        self.assertEqual(4, mock_integrate.call_count)
+        self.assertEqual(5, mock_integrate.call_count)
         mock_integrate.assert_has_calls(
             [call_with_array_matchers(4, 5,
                                       corrected_energy_bins[0], expected_sin_theta, expected_cos_theta,
                                       config["aperture_field_of_view_radians"],
                                       swe_l2_data.phase_space_density[0],
-                                      swe_l2_data.inst_az_spin_sector[0],  # does this have the right dimensions?
+                                      swe_l2_data.inst_az_spin_sector[0],
                                       12, np.array([0, 0, 0, 0]), np.array([0, 0, 0, 0, 0, 0])),
+             call_with_array_matchers(4, 10,
+                                      corrected_energy_bins[0], expected_sin_theta, expected_cos_theta,
+                                      config["aperture_field_of_view_radians"],
+                                      swe_l2_data.phase_space_density[0],
+                                      swe_l2_data.inst_az_spin_sector[0],
+                                      12, core_cdelnv, core_cdelt),
              call_with_array_matchers(6, 10,
                                       corrected_energy_bins[0], expected_sin_theta, expected_cos_theta,
                                       config["aperture_field_of_view_radians"],
                                       swe_l2_data.phase_space_density[0],
-                                      swe_l2_data.inst_az_spin_sector[0],  # does this have the right dimensions?
+                                      swe_l2_data.inst_az_spin_sector[0],
                                       12, np.array([0, 0, 0, 0]), np.array([0, 0, 0, 0, 0, 0])),
              call_with_array_matchers(5, 4,
                                       corrected_energy_bins[1], expected_sin_theta, expected_cos_theta,
                                       config["aperture_field_of_view_radians"],
                                       swe_l2_data.phase_space_density[1],
-                                      swe_l2_data.inst_az_spin_sector[1],  # does this have the right dimensions?
+                                      swe_l2_data.inst_az_spin_sector[1],
                                       14, np.array([0, 0, 0, 0]), np.array([0, 0, 0, 0, 0, 0])),
              call_with_array_matchers(5, 10,
                                       corrected_energy_bins[1], expected_sin_theta, expected_cos_theta,
                                       config["aperture_field_of_view_radians"],
                                       swe_l2_data.phase_space_density[1],
-                                      swe_l2_data.inst_az_spin_sector[1],  # does this have the right dimensions?
+                                      swe_l2_data.inst_az_spin_sector[1],
                                       14, np.array([0, 0, 0, 0]), np.array([0, 0, 0, 0, 0, 0])),
 
              ]
@@ -856,18 +883,21 @@ class TestSweProcessor(unittest.TestCase):
                                      halo_integrate_output.base_energy)
         ])
 
-        self.assertEqual(4, mock_rotate_vector_to_rtn_spherical_coordinates.call_count)
+        self.assertEqual(6, mock_rotate_vector_to_rtn_spherical_coordinates.call_count)
 
         mock_rotate_vector_to_rtn_spherical_coordinates.assert_has_calls([
             call(epochs[0], core_integrate_output.heat_flux),
             call(epochs[0], core_primary_evec),
+            call(epochs[0], total_integrate_output.heat_flux),
+            call(epochs[0], total_primary_evec),
             call(epochs[0], halo_integrate_output.heat_flux),
             call(epochs[0], halo_primary_evec),
         ])
 
-        self.assertEqual(2, mock_calculate_primary_eigenvector.call_count)
+        self.assertEqual(3, mock_calculate_primary_eigenvector.call_count)
         mock_calculate_primary_eigenvector.assert_has_calls([
             call(scaled_core_temperature),
+            call(total_integrate_output.temperature),
             call(scaled_halo_temperature),
         ])
 
@@ -890,22 +920,40 @@ class TestSweProcessor(unittest.TestCase):
         np.testing.assert_array_equal(swe_moment_data.halo_speed_fit,[np.linalg.norm(halo_fit_velocity_1), np.linalg.norm(halo_fit_velocity_2), np.nan])
         np.testing.assert_array_equal(swe_moment_data.core_velocity_vector_rtn_fit,[core_fit_velocity_1, core_fit_velocity_2, [np.nan, np.nan, np.nan]])
         np.testing.assert_array_equal(swe_moment_data.halo_velocity_vector_rtn_fit,[halo_fit_velocity_1, halo_fit_velocity_2, [np.nan, np.nan, np.nan]])
-
         np.testing.assert_array_equal(swe_moment_data.core_density_integrated,[scale_core_density_output.density, np.nan, np.nan])
         np.testing.assert_array_equal(swe_moment_data.halo_density_integrated,[scale_halo_density_output.density, np.nan, np.nan])
+        np.testing.assert_array_equal(swe_moment_data.total_density_integrated, [total_integrate_output.density, np.nan, np.nan])
         np.testing.assert_array_equal(swe_moment_data.core_speed_integrated,[np.linalg.norm(core_integrated_velocity_rtn), np.nan, np.nan])
         np.testing.assert_array_equal(swe_moment_data.halo_speed_integrated,[np.linalg.norm(halo_integrated_velocity_rtn), np.nan, np.nan])
+        np.testing.assert_array_equal(swe_moment_data.total_speed_integrated,[np.linalg.norm(total_integrated_velocity_rtn), np.nan, np.nan])
         np.testing.assert_array_equal(swe_moment_data.core_velocity_vector_rtn_integrated,[core_integrated_velocity_rtn, [np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan]])
         np.testing.assert_array_equal(swe_moment_data.halo_velocity_vector_rtn_integrated,[halo_integrated_velocity_rtn, [np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan]])
+        np.testing.assert_array_equal(swe_moment_data.total_velocity_vector_rtn_integrated,[total_integrated_velocity_rtn, [np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan]])
+
+        np.testing.assert_array_equal(swe_moment_data.core_heat_flux_magnitude_integrated,[10, np.nan, np.nan])
+        np.testing.assert_array_equal(swe_moment_data.core_heat_flux_theta_integrated,[11, np.nan, np.nan])
+        np.testing.assert_array_equal(swe_moment_data.core_heat_flux_phi_integrated,[12, np.nan, np.nan])
+        np.testing.assert_array_equal(swe_moment_data.halo_heat_flux_magnitude_integrated,[13, np.nan, np.nan])
+        np.testing.assert_array_equal(swe_moment_data.halo_heat_flux_theta_integrated,[14, np.nan, np.nan])
+        np.testing.assert_array_equal(swe_moment_data.halo_heat_flux_phi_integrated,[15, np.nan, np.nan])
+        np.testing.assert_array_equal(swe_moment_data.total_heat_flux_magnitude_integrated,[101, np.nan, np.nan])
+        np.testing.assert_array_equal(swe_moment_data.total_heat_flux_theta_integrated,[102, np.nan, np.nan])
+        np.testing.assert_array_equal(swe_moment_data.total_heat_flux_phi_integrated,[103, np.nan, np.nan])
+
 
         np.testing.assert_array_equal(swe_moment_data.core_temperature_moments,[[t_par_1, t_perp_1, gyro_1], [np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan]])
         np.testing.assert_array_equal(swe_moment_data.halo_temperature_moments,[[t_par_2, t_perp_2, gyro_2], [np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan]])
+        np.testing.assert_array_equal(swe_moment_data.total_temperature_moments,[[t_par_3, t_perp_3, gyro_3], [np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan]])
 
         np.testing.assert_array_equal(swe_moment_data.core_temperature_theta_rtn_integrated, [17, np.nan, np.nan])
         np.testing.assert_array_equal(swe_moment_data.core_temperature_phi_rtn_integrated, [18, np.nan, np.nan])
 
         np.testing.assert_array_equal(swe_moment_data.halo_temperature_theta_rtn_integrated, [20, np.nan, np.nan])
         np.testing.assert_array_equal(swe_moment_data.halo_temperature_phi_rtn_integrated, [21, np.nan, np.nan])
+
+
+        np.testing.assert_array_equal(swe_moment_data.total_temperature_theta_rtn_integrated, [105, np.nan, np.nan])
+        np.testing.assert_array_equal(swe_moment_data.total_temperature_phi_rtn_integrated, [106, np.nan, np.nan])
 
 
 
@@ -983,7 +1031,7 @@ class TestSweProcessor(unittest.TestCase):
                                                                   corrected_energy_bins,
                                                                   config)
 
-        self.assertEqual(4, mock_integrate.call_count)
+        self.assertEqual(6, mock_integrate.call_count)
         self.assertEqual(2, mock_scale_core_density.call_count)
         self.assertEqual(2, mock_scale_halo_density.call_count)
 
