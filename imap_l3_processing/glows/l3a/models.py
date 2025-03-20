@@ -139,7 +139,7 @@ class GlowsL3LightCurve(DataProduct):
             DataProductVariable(RAW_HISTOGRAM_CDF_VAR_NAME, self.raw_histogram, cdf_data_type=pycdf.const.CDF_UINT4),
             DataProductVariable(EXPOSURE_TIMES_CDF_VAR_NAME, self.exposure_times),
             DataProductVariable(NUM_OF_BINS_CDF_VAR_NAME, len(self.photon_flux[-1]), record_varying=False,
-                                cdf_data_type=pycdf.const.CDF_INT2),
+                                cdf_data_type=pycdf.const.CDF_UINT2),
             DataProductVariable(EPOCH_CDF_VAR_NAME, self.epoch, cdf_data_type=pycdf.const.CDF_TIME_TT2000),
             DataProductVariable(EPOCH_DELTA_CDF_VAR_NAME, self.epoch_delta, cdf_data_type=pycdf.const.CDF_INT8),
             DataProductVariable(SPIN_ANGLE_CDF_VAR_NAME, self.spin_angle),
