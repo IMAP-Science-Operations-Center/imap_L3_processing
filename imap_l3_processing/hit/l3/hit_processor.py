@@ -39,7 +39,11 @@ class HitProcessor(Processor):
         raw_pha_events: list[RawPHAEvent] = []
         for epoch, event_binary in zip(direct_event_dependencies.hit_l1_data.epoch,
                                        direct_event_dependencies.hit_l1_data.event_binary):
-            event_raw_pha_events = PHAEventReader.read_all_pha_events(event_binary)
+            try:
+                event_raw_pha_events = PHAEventReader.read_all_pha_events(event_binary)
+            except Exception:
+                continue
+
             epochs += [epoch] * len(event_raw_pha_events)
             raw_pha_events += event_raw_pha_events
 

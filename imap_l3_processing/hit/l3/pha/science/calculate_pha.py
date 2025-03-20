@@ -67,13 +67,13 @@ def analyze_event(event: RawPHAEvent, gain_lookup: GainLookupTable, rule_lookup:
             e_delta_group = l1_detector
         elif rule.range.range == DetectorRange.R3:
             e_prime_group = \
-            [group for group in rule.included_detector_groups if group[0:3] == f"L3{rule.range.side.name}"][0]
+                [group for group in rule.included_detector_groups if group[0:3] == f"L3{rule.range.side.name}"][0]
             e_delta_group = l2_detector
         elif rule.range.range == DetectorRange.R4:
             opposite_side = 'A' if rule.range.side.name == 'B' else 'B'
             e_prime_group = [group for group in rule.included_detector_groups if group[0:3] == f"L3{opposite_side}"][0]
             e_delta_group = \
-            [group for group in rule.included_detector_groups if group[0:3] == f"L3{rule.range.side.name}"][0]
+                [group for group in rule.included_detector_groups if group[0:3] == f"L3{rule.range.side.name}"][0]
 
         # detectors_on_range_side = [group for group in rule.included_detector_groups if group[2] == rule.range.side.name]
         # detectors_on_range_side.sort()
@@ -85,17 +85,37 @@ def analyze_event(event: RawPHAEvent, gain_lookup: GainLookupTable, rule_lookup:
                              words_with_highest_energy=list(highest_value_words_per_group.values()))
 
 
+@dataclass
+class ValidDetectorRange:
+    e_prime_min: float
+    e_prime_max: float
+    delta_e_min: float
+    delta_e_max: float
+
+    def is_in_range(self, e_prime: float, delta_e: float) -> bool:
+        return self.e_prime_min <= e_prime <= self.e_prime_max and self.delta_e_min <= delta_e <= self.delta_e_max
+
+
+valid_ranges = {
+    DetectorRange.R2: ValidDetectorRange(0.2, 860, 0.1, 430),
+    DetectorRange.R3: ValidDetectorRange(1.0, 4300, 0.2, 860),
+    DetectorRange.R4: ValidDetectorRange(1.0, 4300, 1.0, 4300),
+}
+
+
 def compute_charge(detected_range: DetectedRange, delta_e: float, e_prime: float,
                    double_power_law_lookup: RangeFitLookup) -> float:
-    charges, deltas = double_power_law_lookup.evaluate_e_prime(detected_range, e_prime)
-    assert np.array_equal(deltas, np.sort(deltas)), "values are not increasing"
-    index_2 = clip(np.searchsorted(deltas, delta_e), 1, len(charges) - 1)
-    index_1 = index_2 - 1
+    if valid_ranges[detected_range.range].is_in_range(e_prime, delta_e):
+        charges, deltas = double_power_law_lookup.evaluate_e_prime(detected_range, e_prime)
+        assert np.array_equal(deltas, np.sort(deltas)), "values are not increasing"
+        index_2 = clip(np.searchsorted(deltas, delta_e), 1, len(charges) - 1)
+        index_1 = index_2 - 1
 
-    B = np.log(charges[index_2] / charges[index_1]) / np.log(deltas[index_2] / deltas[index_1])
-    A = charges[index_1] / (deltas[index_1] ** B)
+        B = np.log(charges[index_2] / charges[index_1]) / np.log(deltas[index_2] / deltas[index_1])
+        A = charges[index_1] / (deltas[index_1] ** B)
 
-    return A * delta_e ** B
+        return A * delta_e ** B
+    return np.nan
 
 
 def process_pha_event(event: RawPHAEvent, cosine_table: CosineCorrectionLookupTable, gain_table: GainLookupTable,
