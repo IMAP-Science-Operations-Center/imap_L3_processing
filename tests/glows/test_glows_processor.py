@@ -16,12 +16,13 @@ from tests.test_helpers import get_test_instrument_team_data_path, get_test_data
 
 class TestGlowsProcessor(unittest.TestCase):
 
+    @patch("imap_l3_processing.glows.glows_processor.GlowsInitializer")
     @patch('imap_l3_processing.glows.glows_processor.GlowsL3ADependencies')
     @patch('imap_l3_processing.glows.glows_processor.GlowsProcessor.process_l3a')
     @patch('imap_l3_processing.glows.glows_processor.save_data')
     @patch('imap_l3_processing.glows.glows_processor.imap_data_access.upload')
     def test_processor_handles_l3a(self, mock_upload, mock_save_data, mock_process_l3a_method,
-                                   mock_glows_dependencies_class):
+                                   mock_glows_dependencies_class, mock_glows_initializer):
         instrument = 'glows'
         incoming_data_level = 'l2'
         start_date = datetime(2024, 10, 7, 10, 00, 00)
@@ -38,7 +39,7 @@ class TestGlowsProcessor(unittest.TestCase):
 
         input_metadata = InputMetadata(instrument, outgoing_data_level, start_date, end_date,
                                        outgoing_version)
-        dependency_start_date = datetime(2025,2,24)
+        dependency_start_date = datetime(2025, 2, 24)
         dependency_end_date = None
         dependencies = [
             UpstreamDataDependency(instrument, incoming_data_level, dependency_start_date, dependency_end_date,
@@ -47,7 +48,7 @@ class TestGlowsProcessor(unittest.TestCase):
         processor = GlowsProcessor(dependencies=dependencies, input_metadata=input_metadata)
 
         processor.process()
-
+        mock_glows_initializer.assert_not_called()
         mock_glows_dependencies_class.fetch_dependencies.assert_called_with(dependencies)
         mock_process_l3a_method.assert_called_with(mock_fetched_dependencies)
         mock_save_data.assert_called_with(mock_light_curve)
@@ -82,6 +83,64 @@ class TestGlowsProcessor(unittest.TestCase):
         create_glows_l3a_from_dictionary.assert_called_once_with(processor.add_spin_angle_delta.return_value,
                                                                  input_metadata.to_upstream_data_dependency(
                                                                      dependencies[0].descriptor))
+
+    @patch("imap_l3_processing.glows.glows_processor.imap_data_access")
+    @patch("imap_l3_processing.glows.glows_processor.save_data")
+    @patch("imap_l3_processing.glows.glows_processor.GlowsL3BDependencies")
+    @patch("imap_l3_processing.glows.glows_processor.GlowsInitializer")
+    def test_does_not_process_l3b_if_should_not_process(self, mock_glows_initializer_class,
+                                                        mock_glows_l3b_dependencies_class,
+                                                        mock_save_data,
+                                                        mock_imap_data_access):
+        mock_glows_initializer = mock_glows_initializer_class.return_value
+
+        input_metadata = InputMetadata('glows', "l3b", datetime(2024, 10, 7, 10, 00, 00),
+                                       datetime(2024, 10, 8, 10, 00, 00),
+                                       'v02')
+        dependencies = [
+            UpstreamDataDependency('glows', 'l3a', datetime(2024, 10, 7, 10, 00, 00), datetime(2024, 10, 8, 10, 00, 00),
+                                   'v001', GLOWS_L2_DESCRIPTOR + '00001'),
+        ]
+
+        mock_glows_initializer.should_process.return_value = False
+
+        processor = GlowsProcessor(dependencies=dependencies, input_metadata=input_metadata)
+        processor.process()
+
+        mock_glows_l3b_dependencies_class.fetch_dependencies.assert_called_with(dependencies)
+        mock_glows_initializer.should_process.assert_called_with(
+            mock_glows_l3b_dependencies_class.fetch_dependencies.return_value)
+        mock_save_data.assert_not_called()
+        mock_imap_data_access.upload.assert_not_called()
+
+    @patch("imap_l3_processing.glows.glows_processor.imap_data_access")
+    @patch("imap_l3_processing.glows.glows_processor.save_data")
+    @patch("imap_l3_processing.glows.glows_processor.GlowsL3BDependencies")
+    @patch("imap_l3_processing.glows.glows_processor.GlowsInitializer")
+    def test_processes_l3b_if_should_process(self, mock_glows_initializer_class,
+                                             mock_glows_l3b_dependencies_class,
+                                             mock_save_data,
+                                             mock_imap_data_access):
+        mock_glows_initializer = mock_glows_initializer_class.return_value
+
+        input_metadata = InputMetadata('glows', "l3b", datetime(2024, 10, 7, 10, 00, 00),
+                                       datetime(2024, 10, 8, 10, 00, 00),
+                                       'v02')
+        dependencies = [
+            UpstreamDataDependency('glows', 'l3a', datetime(2024, 10, 7, 10, 00, 00), datetime(2024, 10, 8, 10, 00, 00),
+                                   'v001', GLOWS_L2_DESCRIPTOR + '00001'),
+        ]
+
+        mock_glows_initializer.should_process.return_value = True
+
+        processor = GlowsProcessor(dependencies=dependencies, input_metadata=input_metadata)
+        processor.process()
+
+        mock_glows_l3b_dependencies_class.fetch_dependencies.assert_called_with(dependencies)
+        mock_glows_initializer.should_process.assert_called_with(
+            mock_glows_l3b_dependencies_class.fetch_dependencies.return_value)
+        mock_save_data.assert_called_once()
+        mock_imap_data_access.upload.assert_called_once()
 
     def test_add_spin_angle_delta(self):
         cases = [
