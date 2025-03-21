@@ -146,13 +146,17 @@ def _fit_moments_retrying_on_failure(corrected_energy_bins: np.ndarray,
         moment.density = halotrunc(moment, halo_correction_parameters.core_halo_breakpoint,
                                    halo_correction_parameters.spacecraft_potential)
 
+    results = MomentFitResults(moments=moment, chisq=chi_squared,
+                               number_of_points=energy_end - energy_start,
+                               regress_result=fit_function
+                               )
     if moment.density is not None and 0 < moment.density < average_density:
-        return MomentFitResults(moments=moment, chisq=chi_squared,
-                                number_of_points=energy_end - energy_start,
-                                regress_result=fit_function
-                                )
+        return results
     elif energy_end - energy_start < 4:
-        return None
+        if moment.density > 0:
+            return results
+        else:
+            return None
     else:
         return _fit_moments_retrying_on_failure(
             corrected_energy_bins,
@@ -553,7 +557,7 @@ def scale_core_density(core_density: float,
                        core_velocity: np.ndarray, core_temp: np.ndarray,
                        core_moment_fit: Moments, ifit: int, energy: np.ndarray,
                        spacecraft_potential: float, cosin_p: np.ndarray,
-                       aperture_field_of_view: np.ndarray,
+                       aperture_field_of_view: list,
                        phi: np.ndarray,
                        regress_outputs: np.ndarray,
                        base_energy: float) -> ScaleDensityOutput:
@@ -583,7 +587,7 @@ def scale_core_density(core_density: float,
 
     cos_theta = cosin_p[np.newaxis, :, np.newaxis]
     sin_theta = np.sin(np.arccos(cos_theta))
-    delta_theta = aperture_field_of_view[np.newaxis, :, np.newaxis]
+    delta_theta = np.array(aperture_field_of_view)[np.newaxis, :, np.newaxis]
     cos_phi = np.cos(np.deg2rad(phi[0]))
     sin_phi = np.sin(np.deg2rad(phi[0]))
     delta_phi = 2 * np.pi / NUMBER_OF_SPIN_SECTORS
@@ -643,7 +647,7 @@ def scale_halo_density(halo_density: float,
                        spacecraft_potential: float,
                        core_halo_break: float,
                        cosin_p: np.ndarray,
-                       aperture_field_of_view: np.ndarray,
+                       aperture_field_of_view: list,
                        phi: np.ndarray,
                        regress_outputs: np.ndarray,
                        base_energy: float) -> ScaleDensityOutput:
@@ -660,7 +664,7 @@ def scale_halo_density(halo_density: float,
 
     cos_theta = cosin_p[:, np.newaxis]
     sin_theta = np.sin(np.arccos(cos_theta))
-    delta_theta = aperture_field_of_view[:, np.newaxis]
+    delta_theta = np.array(aperture_field_of_view)[:, np.newaxis]
     cos_phi = np.cos(np.deg2rad(phi[0]))
     sin_phi = np.sin(np.deg2rad(phi[0]))
     delta_phi = 2 * np.pi / NUMBER_OF_SPIN_SECTORS
