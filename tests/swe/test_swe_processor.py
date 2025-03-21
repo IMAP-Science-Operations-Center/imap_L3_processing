@@ -40,8 +40,8 @@ class TestSweProcessor(unittest.TestCase):
     def test_calculate_products(self, mock_calculate_moment_products, mock_calculate_pitch_angle_products,
                                 mock_spice_wrapper, mock_find_breakpoints, mock_average_over_look_directions,
                                 mock_compute_epoch_delta_in_ns):
+        mock_compute_epoch_delta_in_ns.return_value = [30e9, 40e9]
         epochs = datetime.now() + np.arange(2) * timedelta(minutes=1)
-        mag_epochs = datetime.now() - timedelta(seconds=15) + np.arange(2) * timedelta(minutes=.5)
         swapi_epochs = datetime.now() - timedelta(seconds=15) + np.arange(2) * timedelta(minutes=.5)
         mock_find_breakpoints.side_effect = [
             (12, 96),
@@ -63,10 +63,7 @@ class TestSweProcessor(unittest.TestCase):
 
         expected_corrected_energy_bins = np.array([[2 - 12, 4 - 12, 6 - 12], [2 - 16, 4 - 16, 6 - 16]])
 
-        mag_l1d_data = MagL1dData(
-            epoch=mag_epochs,
-            mag_data=np.arange(7, 22).reshape(5, 3).repeat(2, axis=0)
-        )
+        mag_l1d_data = Mock()
 
         swapi_l3a_proton_data = SwapiL3aProtonData(
             epoch=swapi_epochs,
@@ -135,13 +132,15 @@ class TestSweProcessor(unittest.TestCase):
                  [90, 90, 96], swe_config),
         ])
 
+        mag_l1d_data.rebin_to.assert_called_with(epochs, [timedelta(seconds=30), timedelta(seconds=40)])
         mock_calculate_moment_products.assert_called_once()
         self.assertEqual(swe_l2_data, mock_calculate_moment_products.call_args[0][0])
         self.assertEqual(swe_l1b_data, mock_calculate_moment_products.call_args[0][1])
-        np.testing.assert_array_equal(mock_calculate_moment_products.call_args[0][2], expected_spacecraft_potential)
-        np.testing.assert_array_equal(mock_calculate_moment_products.call_args[0][3], expected_core_halo_breakpoint)
-        np.testing.assert_array_equal(mock_calculate_moment_products.call_args[0][4], expected_corrected_energy_bins)
-        self.assertEqual(swe_config, mock_calculate_moment_products.call_args[0][5])
+        self.assertEqual(mag_l1d_data.rebin_to.return_value, mock_calculate_moment_products.call_args[0][2])
+        np.testing.assert_array_equal(mock_calculate_moment_products.call_args[0][3], expected_spacecraft_potential)
+        np.testing.assert_array_equal(mock_calculate_moment_products.call_args[0][4], expected_core_halo_breakpoint)
+        np.testing.assert_array_equal(mock_calculate_moment_products.call_args[0][5], expected_corrected_energy_bins)
+        self.assertEqual(swe_config, mock_calculate_moment_products.call_args[0][6])
 
         mock_calculate_pitch_angle_products.assert_called_once()
         self.assertEqual(swel3_dependency, mock_calculate_pitch_angle_products.call_args[0][0])
@@ -675,7 +674,10 @@ class TestSweProcessor(unittest.TestCase):
         swe_processor = SweProcessor(dependencies=[], input_metadata=input_metadata)
         config = build_swe_configuration()
 
-        swe_moment_data = swe_processor.calculate_moment_products(swe_l2_data, swe_l1_data, spacecraft_potential,
+        rebinned_mag_data = [sentinel.mag_data_1, sentinel.mag_data_2, sentinel.mag_data_3]
+
+        swe_moment_data = swe_processor.calculate_moment_products(swe_l2_data, swe_l1_data, rebinned_mag_data,
+                                                                  spacecraft_potential,
                                                                   core_halo_breakpoint,
                                                                   corrected_energy_bins,
                                                                   config)
@@ -904,9 +906,9 @@ class TestSweProcessor(unittest.TestCase):
         self.assertEqual(3, mock_rotate_temperature_tensor_to_mag.call_count)
 
         mock_rotate_temperature_tensor_to_mag.assert_has_calls([
-            call(scale_core_density_output.temperature, [0, 0, 1]),
-            call(total_integrate_output.temperature, [0, 0, 1]),
-            call(scale_halo_density_output.temperature, [0, 0, 1]),
+            call(scale_core_density_output.temperature,sentinel.mag_data_1),
+            call(total_integrate_output.temperature, sentinel.mag_data_1),
+            call(scale_halo_density_output.temperature, sentinel.mag_data_1),
         ])
 
         # @formatter:off
@@ -1085,7 +1087,9 @@ class TestSweProcessor(unittest.TestCase):
 
         mock_rotate_dps_vector_to_rtn.return_value = (2, 3, 4)
 
-        swe_moment_data = swe_processor.calculate_moment_products(swe_l2_data, swe_l1_data, spacecraft_potential,
+        rebinned_mag_data = np.full((3, 3), 1)
+        swe_moment_data = swe_processor.calculate_moment_products(swe_l2_data, swe_l1_data, rebinned_mag_data,
+                                                                  spacecraft_potential,
                                                                   core_halo_breakpoint,
                                                                   corrected_energy_bins,
                                                                   config)

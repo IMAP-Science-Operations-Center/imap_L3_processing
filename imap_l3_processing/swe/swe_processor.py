@@ -1,3 +1,4 @@
+import datetime
 from datetime import timedelta
 
 import numpy as np
@@ -46,6 +47,9 @@ class SweProcessor(Processor):
         spacecraft_potential: np.ndarray[np.float64] = np.empty_like(swe_epoch, dtype=np.float64)
         halo_core: np.ndarray[np.float64] = np.empty_like(swe_epoch, dtype=np.float64)
         corrected_energy_bins = []
+        rebinned_mag_data = dependencies.mag_l1d_data.rebin_to(swe_epoch,
+                                                               [datetime.timedelta(seconds=delta / 1e9) for delta in
+                                                                epoch_delta])
 
         for i in range(len(swe_epoch)):
             average_psd.append(average_over_look_directions(swe_l2_data.phase_space_density[i],
@@ -64,6 +68,7 @@ class SweProcessor(Processor):
         corrected_energy_bins = np.array(corrected_energy_bins)
 
         swe_l3_moments_data = self.calculate_moment_products(swe_l2_data, dependencies.swe_l1b_data,
+                                                             rebinned_mag_data,
                                                              spacecraft_potential, halo_core,
                                                              corrected_energy_bins, config)
 
@@ -88,7 +93,7 @@ class SweProcessor(Processor):
             moment_data=swe_l3_moments_data
         )
 
-    def calculate_moment_products(self, swe_l2_data: SweL2Data, swe_l1b_data: SweL1bData,
+    def calculate_moment_products(self, swe_l2_data: SweL2Data, swe_l1b_data: SweL1bData, rebinned_mag_data: np.ndarray,
                                   spacecraft_potential: np.ndarray, halo_core: np.ndarray,
                                   corrected_energy_bins: np.ndarray, config: SweConfiguration) -> SweL3MomentData:
         number_of_points = len(swe_l2_data.epoch)
@@ -236,7 +241,7 @@ class SweProcessor(Processor):
                         core_temperature_phi_rtn_integrated[i] = phi
 
                         core_t_parallel_to_mag, core_t_perpendicular_to_mag_average, core_t_perpendicular_to_mag_ratio = rotate_temperature_tensor_to_mag(
-                            scale_core_density_output.temperature, [0, 0, 1])
+                            scale_core_density_output.temperature, rebinned_mag_data[i])
 
                         core_temperature_parallel_to_mag[i] = core_t_parallel_to_mag
                         core_temperature_perpendicular_to_mag[i] = [core_t_perpendicular_to_mag_average,
@@ -277,7 +282,7 @@ class SweProcessor(Processor):
                         total_temperature_phi_rtn_integrated[i] = phi
 
                         total_t_parallel_to_mag, total_t_perpendicular_to_mag_average, total_t_perpendicular_to_mag_ratio = rotate_temperature_tensor_to_mag(
-                            total_integration_output.temperature, [0, 0, 1])
+                            total_integration_output.temperature, rebinned_mag_data[i])
 
                         total_temperature_parallel_to_mag[i] = total_t_parallel_to_mag
                         total_temperature_perpendicular_to_mag[i] = [total_t_perpendicular_to_mag_average,
@@ -355,7 +360,7 @@ class SweProcessor(Processor):
                         halo_temperature_phi_rtn_integrated[i] = phi
 
                         halo_t_parallel_to_mag, halo_t_perpendicular_to_mag_average, halo_t_perpendicular_to_mag_ratio = rotate_temperature_tensor_to_mag(
-                            scale_halo_density_output.temperature, [0, 0, 1])
+                            scale_halo_density_output.temperature, rebinned_mag_data[i])
 
                         halo_temperature_parallel_to_mag[i] = halo_t_parallel_to_mag
                         halo_temperature_perpendicular_to_mag[i] = [halo_t_perpendicular_to_mag_average,
