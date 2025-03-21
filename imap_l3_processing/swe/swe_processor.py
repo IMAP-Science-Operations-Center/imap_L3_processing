@@ -17,7 +17,7 @@ from imap_l3_processing.swe.l3.science.moment_calculations import compute_maxwel
 from imap_l3_processing.swe.l3.science.pitch_calculations import average_over_look_directions, find_breakpoints, \
     correct_and_rebin, \
     integrate_distribution_to_get_1d_spectrum, integrate_distribution_to_get_inbound_and_outbound_1d_spectrum, \
-    calculate_velocity_in_dsp_frame_km_s
+    calculate_velocity_in_dsp_frame_km_s, rebin_flux_by_pitch_angle
 from imap_l3_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies
 from imap_l3_processing.swe.l3.utils import compute_epoch_delta_in_ns
 from imap_l3_processing.utils import save_data
@@ -445,6 +445,8 @@ class SweProcessor(Processor):
         energy_spectrum = []
         energy_spectrum_inbound = []
         energy_spectrum_outbound = []
+        rebinned_intensity_by_pa_and_gyro = []
+        rebinned_intensity_by_pa = []
 
         for i in range(len(swe_epoch)):
             missing_mag_data = np.any(np.isnan(rebinned_mag_data[i]))
@@ -455,6 +457,8 @@ class SweProcessor(Processor):
                 energy_spectrum.append(np.full(num_energy_bins, np.nan))
                 energy_spectrum_inbound.append(np.full(num_energy_bins, np.nan))
                 energy_spectrum_outbound.append(np.full(num_energy_bins, np.nan))
+                rebinned_intensity_by_pa_and_gyro.append(np.full((num_energy_bins, 7, 30), np.nan))
+                rebinned_intensity_by_pa.append(np.full((num_energy_bins, 7), np.nan))
             else:
                 dsp_velocities = calculate_velocity_in_dsp_frame_km_s(corrected_energy_bins[i], swe_l2_data.inst_el,
                                                                       swe_l2_data.inst_az_spin_sector[i])
@@ -470,4 +474,14 @@ class SweProcessor(Processor):
                 energy_spectrum_inbound.append(inbound)
                 energy_spectrum_outbound.append(outbound)
 
-        return phase_space_density_by_pitch_angle, energy_spectrum, energy_spectrum_inbound, energy_spectrum_outbound
+                intensity_delta = np.zeros_like(swe_l2_data.flux[i])
+                intensity_by_pa_and_gyro, _, _, intensity_by_pa, _, _ = rebin_flux_by_pitch_angle(swe_l2_data.flux[i],
+                                                                                                  intensity_delta,
+                                                                                                  intensity_delta,
+                                                                                                  dsp_velocities,
+                                                                                                  rebinned_mag_data[i])
+                rebinned_intensity_by_pa_and_gyro.append(intensity_by_pa_and_gyro)
+                rebinned_intensity_by_pa.append(intensity_by_pa)
+
+        return phase_space_density_by_pitch_angle, energy_spectrum, energy_spectrum_inbound, energy_spectrum_outbound, \
+            rebinned_intensity_by_pa_and_gyro, rebinned_intensity_by_pa

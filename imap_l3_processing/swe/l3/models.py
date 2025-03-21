@@ -44,7 +44,7 @@ HALO_VELOCITY_VECTOR_RTN_FIT_CDF_VAR_NAME = "halo_velocity_vector_rtn_fit"
 class SweL2Data:
     epoch: np.ndarray
     phase_space_density: np.ndarray
-    flux: np.ndarray
+    flux: np.ndarray  # actually flux_spin_sector
     energy: np.ndarray
     inst_el: np.ndarray
     inst_az_spin_sector: np.ndarray

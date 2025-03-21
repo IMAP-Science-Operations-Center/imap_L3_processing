@@ -43,8 +43,8 @@ def calculate_gyrophase(particle_vectors: np.ndarray, magnetic_field_vector: np.
         return np.full(shape=particle_vectors.shape[:-1], fill_value=np.nan)
     magnetic_field_plus_x = calculate_unit_vector(np.cross(imap_dps_plus_y, magnetic_field_plus_z))
     magnetic_field_plus_y = calculate_unit_vector(np.cross(magnetic_field_plus_z, magnetic_field_plus_x))
-    particle_magnetic_field_x_component = np.dot(particle_vectors, magnetic_field_plus_x)
-    particle_magnetic_field_y_component = np.dot(particle_vectors, magnetic_field_plus_y)
+    particle_magnetic_field_x_component = np.sum(particle_vectors * magnetic_field_plus_x, axis=-1)
+    particle_magnetic_field_y_component = np.sum(particle_vectors * magnetic_field_plus_y, axis=-1)
     gyrophases = np.atan2(particle_magnetic_field_x_component, particle_magnetic_field_y_component)
 
     return np.mod(np.degrees(gyrophases), 360)
