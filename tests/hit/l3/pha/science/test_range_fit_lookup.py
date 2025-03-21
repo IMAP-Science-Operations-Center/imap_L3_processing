@@ -47,12 +47,10 @@ class TestRangeFitLookup(unittest.TestCase):
                     charge1_parameters = [1, 2, 3, 4, 5]
                     charge2_parameters = [4, 5, 6, 7, 8]
 
-                    open(range2A_path, 'w').close()
-                    open(range3A_path, 'w').close()
-                    open(range4A_path, 'w').close()
-                    open(range2B_path, 'w').close()
-                    open(range3B_path, 'w').close()
-                    open(range4B_path, 'w').close()
+                    for path in [range2A_path, range3A_path, range4A_path, range2B_path, range3B_path, range4B_path]:
+                        with open(path, 'w') as f:
+                            csv_writer = csv.writer(f)
+                            csv_writer.writerow([0, 0, 0, 0, 0, 0])
 
                     path_to_populate = os.path.join(tempdir, file_to_populate)
                     with open(path_to_populate, 'w') as range_file:

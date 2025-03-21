@@ -590,6 +590,51 @@ class TestHitProcessor(TestCase):
         np.testing.assert_array_equal(direct_event_product.dac_value,
                                       np.array([UNSIGNED_INT2_FILL_VALUE, UNSIGNED_INT2_FILL_VALUE, 123]))
 
+    @patch("imap_l3_processing.hit.l3.hit_processor.imap_data_access.upload")
+    @patch("imap_l3_processing.hit.l3.hit_processor.save_data")
+    @patch("imap_l3_processing.hit.l3.hit_processor.process_pha_event", autospec=True)
+    @patch("imap_l3_processing.hit.l3.hit_processor.HitL3PhaDependencies.fetch_dependencies")
+    @patch("imap_l3_processing.hit.l3.hit_processor.PHAEventReader.read_all_pha_events")
+    def test_direct_event_parsing_errors_result_in_skipped_event(self, mock_read_all_events, mock_fetch_dependencies,
+                                                                 mock_process_pha_event,
+                                                                 mock_save_data, mock_imap_data_access_upload):
+        mock_hit_l3_pha_dependencies = mock_fetch_dependencies.return_value
+        mock_hit_l3_pha_dependencies.hit_l1_data.epoch = [datetime(year=2020, month=2, day=1),
+                                                          datetime(year=2020, month=2, day=1, hour=1)]
+        mock_hit_l3_pha_dependencies.hit_l1_data.event_binary = [sentinel.binary_stream_1, sentinel.binary_stream_2]
+
+        event = RawPHAEvent(
+            particle_id=1,
+            priority_buffer_num=1,
+            time_tag=1,
+            stim_tag=1,
+            long_event_flag=False,
+            haz_tag=False,
+            a_b_side_flag=False,
+            has_unread_adcs=False,
+            culling_flag=False,
+            spare=False,
+            pha_words=[]
+        )
+
+        mock_read_all_events.side_effect = [Exception("error parsing"), [event]]
+
+        input_metadata = InputMetadata(
+            instrument="hit",
+            data_level="l3",
+            start_date=None,
+            end_date=None,
+            version="",
+            descriptor="direct-events"
+        )
+
+        processor = HitProcessor([], input_metadata)
+        processor.process()
+
+        result = mock_save_data.call_args.args[0]
+        self.assertEqual(1, len(result.epoch))
+        self.assertEqual(datetime(year=2020, month=2, day=1, hour=1), result.epoch[0])
+
     def test_raise_error_if_descriptor_doesnt_match(self):
         input_metadata = InputMetadata(
             instrument="hit",
