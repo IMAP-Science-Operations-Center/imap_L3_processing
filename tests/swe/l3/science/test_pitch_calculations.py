@@ -372,47 +372,46 @@ class TestPitchCalculations(unittest.TestCase):
 
         result = rebin_by_pitch_angle(flux, pitch_angle, energy, config)
 
-        expected_result = np.array([
-            [100, 128]
-        ]
+        expected_result = np.array(
+            [
+                [100, 128]
+            ]
         )
         np.testing.assert_almost_equal(result, expected_result)
 
     def test_rebin_by_pitch_angle_and_gyrophase(self):
-
-        psd = Mock()
-        pitch_angles = Mock()
-        gyrophase = Mock()
-        energies = Mock()
-
-        flux = np.array([1000, 10,
-                         32, 256,
-                         3, 9, 81,
-                         5, 25, 125])
+        psd = np.array([1000, 10,
+                        32, 256,
+                        3, 9, 81,
+                        5, 25, 125])
 
         pitch_angle = np.array([25, 60, 25, 60, 120, 170, 165, 120, 170, 165])
         gyrophase = np.array([10, 120, 210, 350, 10, 120, 95, 210, 350, 260])
 
-        energy = np.array([10 * 0.1, 10 / 0.1,
-                           10 * 0.2 * 0.2, 10 / 0.2,
-                           10 * 0.3 * 0.3, 10 * 0.3, 10 / 0.3,
-                           10 * 0.5, 10, 10 / 0.5])
+        central_energy_value = 10  # bin range is really 60 - 140
+        energy = np.array([central_energy_value * 0.8, central_energy_value / 0.8,
+                           central_energy_value * 0.8 ** 2, central_energy_value / 0.8,
+                           central_energy_value * 0.8 ** 2, central_energy_value * 0.8, central_energy_value / 0.8,
+                           central_energy_value * 0.8, central_energy_value, central_energy_value / 0.8])
 
         config = build_swe_configuration(
             pitch_angle_bins=[45, 135],
             pitch_angle_delta=[45, 45],
-            energy_bins=[10],
+            energy_bins=[central_energy_value],
             gyrophase_bins=[90, 270],
             gyrophase_bin_deltas=[90, 90]
         )
 
-        rebinned_by_gyro = rebin_by_pitch_angle_and_gyrophase(psd, pitch_angles, gyrophase, energies, config)
+        rebinned_by_gyro = rebin_by_pitch_angle_and_gyrophase(psd, pitch_angle, gyrophase, energy, config)
+
         expected_gyro = np.array([
             [
-                [100, 128], [27, 25]
-            ],
+                [100, 128],
+                [27, 25]
+            ]
         ])
-        np.testing.assert_array_equal(expected_gyro, rebinned_by_gyro)
+
+        np.testing.assert_almost_equal(expected_gyro, rebinned_by_gyro)
 
     def test_rebin_by_pitch_angle_ignores_zero_measurements(self):
         flux = np.array([1000, 10, 32, 256, 0])
