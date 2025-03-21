@@ -6,7 +6,7 @@ import numpy as np
 from scipy.optimize import curve_fit
 
 from imap_l3_processing.constants import ELECTRON_MASS_KG, PROTON_CHARGE_COULOMBS, METERS_PER_KILOMETER
-from imap_l3_processing.pitch_angles import calculate_pitch_angle, calculate_unit_vector, calculate_gyrophase, \
+from imap_l3_processing.pitch_angles import calculate_pitch_angle, calculate_unit_vector, calculate_gyrophase
 from imap_l3_processing.swe.l3.models import SweConfiguration
 
 

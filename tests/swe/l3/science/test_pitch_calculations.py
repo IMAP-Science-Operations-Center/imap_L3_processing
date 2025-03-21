@@ -6,7 +6,8 @@ import numpy as np
 from imap_l3_processing.swe.l3.science.pitch_calculations import piece_wise_model, find_breakpoints, \
     average_over_look_directions, calculate_velocity_in_dsp_frame_km_s, calculate_look_directions, rebin_by_pitch_angle, \
     correct_and_rebin, calculate_energy_in_ev_from_velocity_in_km_per_second, integrate_distribution_to_get_1d_spectrum, \
-    integrate_distribution_to_get_inbound_and_outbound_1d_spectrum, try_curve_fit_until_valid, rebin_flux_by_pitch_angle
+    integrate_distribution_to_get_inbound_and_outbound_1d_spectrum, try_curve_fit_until_valid, \
+    rebin_flux_by_pitch_angle, rebin_by_pitch_angle_and_gyrophase
 from tests.test_helpers import build_swe_configuration, NumpyArrayMatcher
 
 
@@ -401,7 +402,7 @@ class TestPitchCalculations(unittest.TestCase):
             gyrophase_bin_deltas=[90, 90]
         )
 
-        rebinned_by_gyro = rebin_by_pitch_angle_and_gyrophase(psd, pitch_angle, energy, config, gyrophase=None)
+        rebinned_by_gyro = rebin_by_pitch_angle_and_gyrophase(psd, pitch_angle, gyrophase, energy, config)
 
         expected_gyro = np.array([
             [
@@ -533,9 +534,9 @@ class TestPitchCalculations(unittest.TestCase):
     @patch('imap_l3_processing.swe.l3.science.pitch_calculations.rebin_by_pitch_angle')
     @patch('imap_l3_processing.swe.l3.science.pitch_calculations.calculate_pitch_angle')
     @patch('imap_l3_processing.swe.l3.science.pitch_calculations.calculate_velocity_in_sw_frame')
-    @patch('imap_l3_processing.swe.l3.science.pitch_calculations.calculate_velocity_in_dsp_frame_km_s')
     def test_correct_and_rebin(self, mock_calculate_velocity_in_sw_frame,
-                               mock_calculate_pitch_angle, mock_rebin_by_pitch_angle,  mock_calculate_energy, mock_calculate_gyrophase, mock_rebin_by_pitch_angle_and_gyrophase):
+                               mock_calculate_pitch_angle, mock_rebin_by_pitch_angle, mock_calculate_energy,
+                               mock_calculate_gyrophase, mock_rebin_by_pitch_angle_and_gyrophase):
 
         mag_vectors = np.array([
             [
