@@ -257,4 +257,113 @@ halo_velocity_vector_rtn_fit:
   CATDESC: SW Electron Core/Halo breakpoint
   FILLVAL: *float_fillval
 
+core_density_integrated:
+  CATDESC: Density halo/suprathermal electrons (high energy) integrated
+  FILLVAL: *float_fillval
+
+halo_density_integrated:
+  FILLVAL: *float_fillval
+
+total_density_integrated:
+  FILLVAL: *float_fillval
+
+core_speed_integrated:
+  FILLVAL: *float_fillval
+
+halo_speed_integrated:
+  FILLVAL: *float_fillval
+
+total_speed_integrated:
+  FILLVAL: *float_fillval
+
+core_velocity_vector_rtn_integrated:
+  FILLVAL: *float_fillval
+
+halo_velocity_vector_rtn_integrated:
+  FILLVAL: *float_fillval
+
+total_velocity_vector_rtn_integrated:
+  FILLVAL: *float_fillval
+
+core_heat_flux_magnitude_integrated:
+  FILLVAL: *float_fillval
+
+core_heat_flux_theta_integrated:
+  FILLVAL: *float_fillval
+
+core_heat_flux_phi_integrated:
+  FILLVAL: *float_fillval
+
+halo_heat_flux_magnitude_integrated:
+  FILLVAL: *float_fillval
+
+halo_heat_flux_theta_integrated:
+  FILLVAL: *float_fillval
+
+halo_heat_flux_phi_integrated:
+  FILLVAL: *float_fillval
+
+total_heat_flux_magnitude_integrated:
+  FILLVAL: *float_fillval
+
+total_heat_flux_theta_integrated:
+  FILLVAL: *float_fillval
+
+total_heat_flux_phi_integrated:
+  FILLVAL: *float_fillval
+
+core_t_parallel_integrated:
+  FILLVAL: *float_fillval
+
+core_t_perpendicular_integrated:
+  FILLVAL: *float_fillval
+
+halo_t_parallel_integrated:
+  FILLVAL: *float_fillval
+
+halo_t_perpendicular_integrated:
+  FILLVAL: *float_fillval
+
+total_t_parallel_integrated:
+  FILLVAL: *float_fillval
+
+total_t_perpendicular_integrated:
+  FILLVAL: *float_fillval
+
+core_temperature_theta_rtn_integrated:
+  FILLVAL: *float_fillval
+
+core_temperature_phi_rtn_integrated:
+  FILLVAL: *float_fillval
+
+halo_temperature_theta_rtn_integrated:
+  FILLVAL: *float_fillval
+
+halo_temperature_phi_rtn_integrated:
+  FILLVAL: *float_fillval
+
+total_temperature_theta_rtn_integrated:
+  FILLVAL: *float_fillval
+
+total_temperature_phi_rtn_integrated:
+  FILLVAL: *float_fillval
+
+core_temperature_parallel_to_mag:
+  FILLVAL: *float_fillval
+
+core_temperature_perpendicular_to_mag:
+  FILLVAL: *float_fillval
+
+halo_temperature_parallel_to_mag:
+  FILLVAL: *float_fillval
+
+halo_temperature_perpendicular_to_mag:
+  FILLVAL: *float_fillval
+
+total_temperature_parallel_to_mag:
+  FILLVAL: *float_fillval
+
+total_temperature_perpendicular_to_mag:
+  FILLVAL: *float_fillval
+
 

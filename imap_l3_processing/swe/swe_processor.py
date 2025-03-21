@@ -85,23 +85,7 @@ class SweProcessor(Processor):
             energy_spectrum=energy_spectrum,
             energy_spectrum_inbound=energy_spectrum_inbound,
             energy_spectrum_outbound=energy_spectrum_outbound,
-            core_fit_num_points=swe_l3_moments_data.core_fit_num_points,
-            core_chisq=swe_l3_moments_data.core_chisq,
-            halo_chisq=swe_l3_moments_data.halo_chisq,
-            core_density_fit=swe_l3_moments_data.core_density_fit,
-            halo_density_fit=swe_l3_moments_data.halo_density_fit,
-            core_t_parallel_fit=swe_l3_moments_data.core_t_parallel_fit,
-            halo_t_parallel_fit=swe_l3_moments_data.halo_t_parallel_fit,
-            core_t_perpendicular_fit=swe_l3_moments_data.core_t_perpendicular_fit,
-            halo_t_perpendicular_fit=swe_l3_moments_data.halo_t_perpendicular_fit,
-            core_temperature_phi_rtn_fit=swe_l3_moments_data.core_temperature_phi_rtn_fit,
-            halo_temperature_phi_rtn_fit=swe_l3_moments_data.halo_temperature_phi_rtn_fit,
-            core_temperature_theta_rtn_fit=swe_l3_moments_data.core_temperature_theta_rtn_fit,
-            halo_temperature_theta_rtn_fit=swe_l3_moments_data.halo_temperature_theta_rtn_fit,
-            core_speed_fit=swe_l3_moments_data.core_speed_fit,
-            halo_speed_fit=swe_l3_moments_data.halo_speed_fit,
-            core_velocity_vector_rtn_fit=swe_l3_moments_data.core_velocity_vector_rtn_fit,
-            halo_velocity_vector_rtn_fit=swe_l3_moments_data.halo_velocity_vector_rtn_fit,
+            moment_data=swe_l3_moments_data
         )
 
     def calculate_moment_products(self, swe_l2_data: SweL2Data, swe_l1b_data: SweL1bData,
@@ -136,9 +120,12 @@ class SweProcessor(Processor):
         total_heat_flux_magnitude = np.full(number_of_points, np.nan)
         total_heat_flux_theta = np.full(number_of_points, np.nan)
         total_heat_flux_phi = np.full(number_of_points, np.nan)
-        core_temperature_moments = np.full((number_of_points, 3), np.nan)
-        halo_temperature_moments = np.full((number_of_points, 3), np.nan)
-        total_temperature_moments = np.full((number_of_points, 3), np.nan)
+        core_t_parallel_integrated = np.full(number_of_points, np.nan)
+        core_t_perpendicular_integrated = np.full((number_of_points, 2), np.nan)
+        halo_t_parallel_integrated = np.full(number_of_points, np.nan)
+        halo_t_perpendicular_integrated = np.full((number_of_points, 2), np.nan)
+        total_t_parallel_integrated = np.full(number_of_points, np.nan)
+        total_t_perpendicular_integrated = np.full((number_of_points, 2), np.nan)
         core_temperature_theta_rtn_integrated = np.full(number_of_points, np.nan)
         core_temperature_phi_rtn_integrated = np.full(number_of_points, np.nan)
         halo_temperature_theta_rtn_integrated = np.full(number_of_points, np.nan)
@@ -237,7 +224,9 @@ class SweProcessor(Processor):
                         core_primary_eigen_vector, core_temps = calculate_primary_eigenvector(
                             scale_core_density_output.temperature)
 
-                        core_temperature_moments[i] = core_temps
+                        core_t_parallel_integrated[i] = core_temps[0]
+                        core_t_perpendicular_integrated[i] = [core_temps[1], core_temps[2]]
+
                         magnitude, theta, phi = rotate_vector_to_rtn_spherical_coordinates(current_epoch,
                                                                                            core_primary_eigen_vector)
                         core_temperature_theta_rtn_integrated[i] = theta
@@ -274,7 +263,9 @@ class SweProcessor(Processor):
                         total_primary_eigen_vector, total_temps = calculate_primary_eigenvector(
                             total_integration_output.temperature)
 
-                        total_temperature_moments[i] = total_temps
+                        total_t_parallel_integrated[i] = total_temps[0]
+                        total_t_perpendicular_integrated[i] = [total_temps[1], total_temps[2]]
+
                         magnitude, theta, phi = rotate_vector_to_rtn_spherical_coordinates(current_epoch,
                                                                                            total_primary_eigen_vector)
                         total_temperature_theta_rtn_integrated[i] = theta
@@ -349,7 +340,9 @@ class SweProcessor(Processor):
                         halo_primary_eigen_vector, halo_temps = calculate_primary_eigenvector(
                             scale_halo_density_output.temperature)
 
-                        halo_temperature_moments[i] = halo_temps
+                        halo_t_parallel_integrated[i] = halo_temps[0]
+                        halo_t_perpendicular_integrated[i] = [halo_temps[1], halo_temps[2]]
+
                         magnitude, theta, phi = rotate_vector_to_rtn_spherical_coordinates(current_epoch,
                                                                                            halo_primary_eigen_vector)
                         halo_temperature_theta_rtn_integrated[i] = theta
@@ -398,9 +391,12 @@ class SweProcessor(Processor):
             total_heat_flux_magnitude_integrated=total_heat_flux_magnitude,
             total_heat_flux_theta_integrated=total_heat_flux_theta,
             total_heat_flux_phi_integrated=total_heat_flux_phi,
-            core_temperature_moments=core_temperature_moments,
-            halo_temperature_moments=halo_temperature_moments,
-            total_temperature_moments=total_temperature_moments,
+            core_t_parallel_integrated=core_t_parallel_integrated,
+            core_t_perpendicular_integrated=core_t_perpendicular_integrated,
+            halo_t_parallel_integrated=halo_t_parallel_integrated,
+            halo_t_perpendicular_integrated=halo_t_perpendicular_integrated,
+            total_t_parallel_integrated=total_t_parallel_integrated,
+            total_t_perpendicular_integrated=total_t_perpendicular_integrated,
             core_temperature_theta_rtn_integrated=core_temperature_theta_rtn_integrated,
             core_temperature_phi_rtn_integrated=core_temperature_phi_rtn_integrated,
             halo_temperature_theta_rtn_integrated=halo_temperature_theta_rtn_integrated,

@@ -170,26 +170,8 @@ class TestSweProcessor(unittest.TestCase):
         self.assertEqual(sentinel.expected_energy_spectrum, swe_l3_data.energy_spectrum)
         self.assertEqual(sentinel.expected_energy_spectrum_inbound, swe_l3_data.energy_spectrum_inbound)
         self.assertEqual(sentinel.expected_energy_spectrum_outbound, swe_l3_data.energy_spectrum_outbound)
+        self.assertEqual(mock_moment_data, swe_l3_data.moment_data)
 
-        # fit moments
-        self.assertEqual(mock_moment_data.core_fit_num_points, swe_l3_data.core_fit_num_points)
-        self.assertEqual(mock_moment_data.core_chisq, swe_l3_data.core_chisq)
-        self.assertEqual(mock_moment_data.halo_chisq, swe_l3_data.halo_chisq)
-        self.assertEqual(mock_moment_data.core_density_fit, swe_l3_data.core_density_fit)
-        self.assertEqual(mock_moment_data.halo_density_fit, swe_l3_data.halo_density_fit)
-        self.assertEqual(mock_moment_data.core_t_parallel_fit, swe_l3_data.core_t_parallel_fit)
-        self.assertEqual(mock_moment_data.halo_t_parallel_fit, swe_l3_data.halo_t_parallel_fit)
-        self.assertEqual(mock_moment_data.core_t_perpendicular_fit, swe_l3_data.core_t_perpendicular_fit)
-        self.assertEqual(mock_moment_data.halo_t_perpendicular_fit, swe_l3_data.halo_t_perpendicular_fit)
-        self.assertEqual(mock_moment_data.core_temperature_phi_rtn_fit, swe_l3_data.core_temperature_phi_rtn_fit)
-        self.assertEqual(mock_moment_data.halo_temperature_phi_rtn_fit, swe_l3_data.halo_temperature_phi_rtn_fit)
-        self.assertEqual(mock_moment_data.core_temperature_theta_rtn_fit, swe_l3_data.core_temperature_theta_rtn_fit)
-        self.assertEqual(mock_moment_data.halo_temperature_theta_rtn_fit, swe_l3_data.halo_temperature_theta_rtn_fit)
-        self.assertEqual(mock_moment_data.core_speed_fit, swe_l3_data.core_speed_fit)
-        self.assertEqual(mock_moment_data.halo_speed_fit, swe_l3_data.halo_speed_fit)
-        self.assertEqual(mock_moment_data.core_velocity_vector_rtn_fit, swe_l3_data.core_velocity_vector_rtn_fit)
-        self.assertEqual(mock_moment_data.halo_velocity_vector_rtn_fit, swe_l3_data.halo_velocity_vector_rtn_fit)
-        # @formatter:on
 
     @patch('imap_l3_processing.swe.swe_processor.calculate_velocity_in_dsp_frame_km_s')
     @patch('imap_l3_processing.swe.swe_processor.average_over_look_directions')
@@ -997,13 +979,17 @@ class TestSweProcessor(unittest.TestCase):
         np.testing.assert_array_equal(swe_moment_data.total_heat_flux_theta_integrated, [102, np.nan, np.nan])
         np.testing.assert_array_equal(swe_moment_data.total_heat_flux_phi_integrated, [103, np.nan, np.nan])
 
-        np.testing.assert_array_equal(swe_moment_data.core_temperature_moments,
-                                      [[t_par_1, t_perp_1, gyro_1], [np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan]])
-        np.testing.assert_array_equal(swe_moment_data.halo_temperature_moments,
-                                      [[t_par_2, t_perp_2, gyro_2], [np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan]])
-        np.testing.assert_array_equal(swe_moment_data.total_temperature_moments,
-                                      [[t_par_3, t_perp_3, gyro_3], [np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan]])
+        np.testing.assert_array_equal(swe_moment_data.core_t_parallel_integrated,  [t_par_1,  np.nan, np.nan])
+        np.testing.assert_array_equal(swe_moment_data.core_t_perpendicular_integrated,  
+                                      [[t_perp_1, gyro_1], [ np.nan, np.nan], [ np.nan, np.nan]])
 
+        np.testing.assert_array_equal(swe_moment_data.halo_t_parallel_integrated,  [t_par_2,  np.nan, np.nan])
+        np.testing.assert_array_equal(swe_moment_data.halo_t_perpendicular_integrated,  
+                                      [[t_perp_2, gyro_2], [ np.nan, np.nan], [ np.nan, np.nan]])
+
+        np.testing.assert_array_equal(swe_moment_data.total_t_parallel_integrated,  [t_par_3,  np.nan, np.nan])
+        np.testing.assert_array_equal(swe_moment_data.total_t_perpendicular_integrated,  
+                                      [[t_perp_3, gyro_3], [ np.nan, np.nan], [ np.nan, np.nan]])
         np.testing.assert_array_equal(swe_moment_data.core_temperature_theta_rtn_integrated, [17, np.nan, np.nan])
         np.testing.assert_array_equal(swe_moment_data.core_temperature_phi_rtn_integrated, [18, np.nan, np.nan])
 
