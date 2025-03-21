@@ -2,7 +2,7 @@ from typing import Iterable
 
 from spacepy.pycdf import CDF
 
-from imap_l3_processing.swapi.l3a.models import SwapiL2Data
+from imap_l3_processing.swapi.l3a.models import SwapiL2Data, SwapiL3AlphaSolarWindData
 
 
 def read_l2_swapi_data(cdf: CDF) -> SwapiL2Data:
@@ -10,6 +10,10 @@ def read_l2_swapi_data(cdf: CDF) -> SwapiL2Data:
                        cdf["energy"][...],
                        cdf["swp_coin_rate"][...],
                        cdf["swp_coin_unc"][...])
+
+
+def read_l3a_alpha_sw_swapi_data(cdf: CDF) -> SwapiL3AlphaSolarWindData:
+    return
 
 
 def chunk_l2_data(data: SwapiL2Data, chunk_size: int) -> Iterable[SwapiL2Data]:
