@@ -235,9 +235,11 @@ class TestSweProcessor(unittest.TestCase):
         ]
 
         rebinned_by_pitch = [
-            i + np.arange(len(swe_l2_data.energy) * len(pitch_angle_bins)).reshape(len(swe_l2_data.energy),
-                                                                                   len(pitch_angle_bins)) for i in
+            (i + np.arange(len(swe_l2_data.energy) * len(pitch_angle_bins)).reshape(len(swe_l2_data.energy),
+                                                                                   len(pitch_angle_bins)), None) for i in
             range(len(epochs))]
+        expected_rebin = [rebinned for rebinned, _ in rebinned_by_pitch]
+
         mock_correct_and_rebin.side_effect = rebinned_by_pitch
         integrated_spectrum = np.arange(9).reshape(3, 3) + 11
 
@@ -301,7 +303,7 @@ class TestSweProcessor(unittest.TestCase):
             )
         ])
 
-        np.testing.assert_array_equal(actual_phase_space_density_by_pitch_angle, rebinned_by_pitch)
+        np.testing.assert_array_equal(actual_phase_space_density_by_pitch_angle, expected_rebin)
         np.testing.assert_array_equal(actual_energy_spectrum, integrated_spectrum)
         np.testing.assert_array_equal(actual_energy_spectrum_inbound, expected_inbound_spectrum)
         np.testing.assert_array_equal(actual_energy_spectrum_outbound, expected_outbound_spectrum)
@@ -354,14 +356,14 @@ class TestSweProcessor(unittest.TestCase):
         self.assertEqual(mock_rebin_flux_expected_calls, mock_rebin_flux.call_args_list)
 
         mock_integrate_distribution_to_get_1d_spectrum.assert_has_calls([
-            call(rebinned_by_pitch[0], swe_config),
-            call(rebinned_by_pitch[1], swe_config),
-            call(rebinned_by_pitch[2], swe_config)
+            call(expected_rebin[0], swe_config),
+            call(expected_rebin[1], swe_config),
+            call(expected_rebin[2], swe_config)
         ])
         mock_integrate_distribution_to_get_inbound_and_outbound_1d_spectrum.assert_has_calls([
-            call(rebinned_by_pitch[0], swe_config),
-            call(rebinned_by_pitch[1], swe_config),
-            call(rebinned_by_pitch[2], swe_config)
+            call(expected_rebin[0], swe_config),
+            call(expected_rebin[1], swe_config),
+            call(expected_rebin[2], swe_config)
         ])
 
     @patch("imap_l3_processing.swe.swe_processor.SweProcessor.calculate_moment_products")
@@ -497,7 +499,9 @@ class TestSweProcessor(unittest.TestCase):
             max_mag_offset_in_minutes=1,
             spacecraft_potential_initial_guess=15,
             core_halo_breakpoint_initial_guess=90,
-            in_vs_out_energy_index=len(energy_bins) - 1
+            in_vs_out_energy_index=len(energy_bins) - 1,
+            gyrophase_bins=[1],
+            gyrophase_bin_deltas=[.1]
         )
 
         input_metadata = InputMetadata("swe", "l3", datetime(2025, 2, 21),

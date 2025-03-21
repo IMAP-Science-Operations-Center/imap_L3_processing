@@ -472,11 +472,11 @@ class SweProcessor(Processor):
             else:
                 dsp_velocities = calculate_velocity_in_dsp_frame_km_s(corrected_energy_bins[i], swe_l2_data.inst_el,
                                                                       swe_l2_data.inst_az_spin_sector[i])
-                rebinned_psd = correct_and_rebin(swe_l2_data.phase_space_density[i],
-                                                 rebinned_solar_wind_vectors[i],
-                                                 dsp_velocities,
-                                                 rebinned_mag_data[i],
-                                                 config)
+                rebinned_psd, _ = correct_and_rebin(swe_l2_data.phase_space_density[i],
+                                                    rebinned_solar_wind_vectors[i],
+                                                    dsp_velocities,
+                                                    rebinned_mag_data[i],
+                                                    config)
                 phase_space_density_by_pitch_angle.append(rebinned_psd)
                 energy_spectrum.append(integrate_distribution_to_get_1d_spectrum(rebinned_psd, config))
                 inbound, outbound = integrate_distribution_to_get_inbound_and_outbound_1d_spectrum(rebinned_psd,

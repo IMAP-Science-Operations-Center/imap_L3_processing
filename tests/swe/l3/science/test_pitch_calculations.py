@@ -730,7 +730,7 @@ class TestPitchCalculations(unittest.TestCase):
     @patch('imap_l3_processing.swe.l3.science.pitch_calculations.calculate_unit_vector')
     @patch('imap_l3_processing.swe.l3.science.pitch_calculations.calculate_pitch_angle')
     @patch('imap_l3_processing.swe.l3.science.pitch_calculations.calculate_gyrophase')
-    @patch('imap_l3_processing.swe.l3.science.pitch_calculations.rebin_by_pitch_angle_and_gyrophase')
+    @patch('imap_l3_processing.swe.l3.science.pitch_calculations.pitch_angle_rebin')
     def test_rebin_flux_by_pitch_angle(self, mock_rebin_by_pa_gyro, mock_calculate_gyrophases,
                                        mock_calculate_pitch_angles, mock_calculate_unit_vector):
         mag_vectors = np.array([

@@ -7,6 +7,7 @@ from scipy.optimize import curve_fit
 
 from imap_l3_processing.constants import ELECTRON_MASS_KG, PROTON_CHARGE_COULOMBS, METERS_PER_KILOMETER
 from imap_l3_processing.pitch_angles import calculate_pitch_angle, calculate_unit_vector, calculate_gyrophase
+from imap_l3_processing.pitch_angles import rebin_by_pitch_angle_and_gyrophase as pitch_angle_rebin
 from imap_l3_processing.swe.l3.models import SweConfiguration
 
 
@@ -245,7 +246,7 @@ def correct_and_rebin(flux_or_psd: np.ndarray[(E_BINS, SPIN_SECTORS, CEMS)],
                       solar_wind_vector: np.ndarray[(3,)],
                       dsp_velocities: np.ndarray[(E_BINS, SPIN_SECTORS, CEMS, 3,)],
                       mag_vector: np.ndarray[(E_BINS, SPIN_SECTORS, 3,)],
-                      config: SweConfiguration) -> np.ndarray[(E_BINS, PITCH_ANGLE_BINS)]:
+                      config: SweConfiguration) -> tuple[np.ndarray, np.ndarray]:
     velocity_in_sw_frame = calculate_velocity_in_sw_frame(dsp_velocities, solar_wind_vector)
     energy_in_sw_frame = calculate_energy_in_ev_from_velocity_in_km_per_second(velocity_in_sw_frame)
     pitch_angle = calculate_pitch_angle(velocity_in_sw_frame, mag_vector[..., np.newaxis, :])
@@ -255,7 +256,7 @@ def correct_and_rebin(flux_or_psd: np.ndarray[(E_BINS, SPIN_SECTORS, CEMS)],
     rebinned_by_pa_and_gyro = rebin_by_pitch_angle_and_gyrophase(flux_or_psd, pitch_angle, gyrophase,
                                                                  energy_in_sw_frame, config)
 
-    return (rebinned_by_pa, rebinned_by_pa_and_gyro)
+    return rebinned_by_pa, rebinned_by_pa_and_gyro
 
 
 def integrate_distribution_to_get_1d_spectrum(psd_by_energy_and_pitch_angle: np.ndarray[(E_BINS, PITCH_ANGLE_BINS)],
@@ -297,6 +298,5 @@ def rebin_flux_by_pitch_angle(intensity: np.ndarray[(E_BINS, SPIN_SECTORS, CEMS)
     # broadcast_mag_vectors = np.broadcast_to(normalized_mag_vectors[..., np.newaxis, :], normalized_velocities.shape)
     pitch_angles = calculate_pitch_angle(normalized_velocities, normalized_mag_vectors[..., np.newaxis, :])
     gyrophases = calculate_gyrophase(normalized_velocities, normalized_mag_vectors[..., np.newaxis, :])
-    return rebin_by_pitch_angle_and_gyrophase(intensity,
-                                              intensity_delta_plus,
-                                              intensity_delta_minus, pitch_angles, gyrophases, 30, 7)
+    return pitch_angle_rebin(intensity, intensity_delta_plus,
+                             intensity_delta_minus, pitch_angles, gyrophases, 30, 7)
