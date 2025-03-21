@@ -452,6 +452,7 @@ class SweProcessor(Processor):
                                                             maximum_distance=swapi_max_distance)
 
         phase_space_density_by_pitch_angle = []
+        phase_space_density_by_pitch_angle_and_gyrophase = []
         energy_spectrum = []
         energy_spectrum_inbound = []
         energy_spectrum_outbound = []
@@ -463,7 +464,10 @@ class SweProcessor(Processor):
             if missing_mag_data:
                 num_energy_bins = len(config['energy_bins'])
                 num_pitch_angle_bins = len(config['pitch_angle_bins'])
+                num_gyrophase_bins = len(config['gyrophase_bins'])
                 phase_space_density_by_pitch_angle.append(np.full((num_energy_bins, num_pitch_angle_bins), np.nan))
+                phase_space_density_by_pitch_angle_and_gyrophase.append(
+                    np.full((num_energy_bins, num_pitch_angle_bins, num_gyrophase_bins), np.nan))
                 energy_spectrum.append(np.full(num_energy_bins, np.nan))
                 energy_spectrum_inbound.append(np.full(num_energy_bins, np.nan))
                 energy_spectrum_outbound.append(np.full(num_energy_bins, np.nan))
@@ -472,12 +476,13 @@ class SweProcessor(Processor):
             else:
                 dsp_velocities = calculate_velocity_in_dsp_frame_km_s(corrected_energy_bins[i], swe_l2_data.inst_el,
                                                                       swe_l2_data.inst_az_spin_sector[i])
-                rebinned_psd, _ = correct_and_rebin(swe_l2_data.phase_space_density[i],
-                                                    rebinned_solar_wind_vectors[i],
-                                                    dsp_velocities,
-                                                    rebinned_mag_data[i],
-                                                    config)
+                rebinned_psd, rebinned_psd_by_pa_and_gyro = correct_and_rebin(swe_l2_data.phase_space_density[i],
+                                                                              rebinned_solar_wind_vectors[i],
+                                                                              dsp_velocities,
+                                                                              rebinned_mag_data[i],
+                                                                              config)
                 phase_space_density_by_pitch_angle.append(rebinned_psd)
+                phase_space_density_by_pitch_angle_and_gyrophase.append(rebinned_psd_by_pa_and_gyro)
                 energy_spectrum.append(integrate_distribution_to_get_1d_spectrum(rebinned_psd, config))
                 inbound, outbound = integrate_distribution_to_get_inbound_and_outbound_1d_spectrum(rebinned_psd,
                                                                                                    config)
@@ -493,5 +498,5 @@ class SweProcessor(Processor):
                 rebinned_intensity_by_pa_and_gyro.append(intensity_by_pa_and_gyro)
                 rebinned_intensity_by_pa.append(intensity_by_pa)
 
-        return phase_space_density_by_pitch_angle, energy_spectrum, energy_spectrum_inbound, energy_spectrum_outbound, \
+        return phase_space_density_by_pitch_angle, phase_space_density_by_pitch_angle_and_gyrophase, energy_spectrum, energy_spectrum_inbound, energy_spectrum_outbound, \
             rebinned_intensity_by_pa_and_gyro, rebinned_intensity_by_pa

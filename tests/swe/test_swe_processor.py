@@ -202,6 +202,7 @@ class TestSweProcessor(unittest.TestCase):
         corrected_energy_bins = energies.reshape(1, -1) - spacecraft_potential.reshape(-1, 1)
 
         pitch_angle_bins = [0, 90, 180]
+        gyrophase_bins = [0,360]
 
         swe_l2_data = SweL2Data(
             epoch=epochs,
@@ -234,13 +235,19 @@ class TestSweProcessor(unittest.TestCase):
             closest_swapi_data,
         ]
 
-        rebinned_by_pitch = [
-            (i + np.arange(len(swe_l2_data.energy) * len(pitch_angle_bins)).reshape(len(swe_l2_data.energy),
-                                                                                   len(pitch_angle_bins)), None) for i in
+        rebinned_by_pitch_list = [
+            i + np.arange(len(swe_l2_data.energy) * len(pitch_angle_bins)).reshape(len(swe_l2_data.energy),
+                                                                                   len(pitch_angle_bins)) for i in
             range(len(epochs))]
-        expected_rebin = [rebinned for rebinned, _ in rebinned_by_pitch]
 
-        mock_correct_and_rebin.side_effect = rebinned_by_pitch
+        rebinned_by_pitch_and_gyrophase_list = [
+            i + np.arange(len(swe_l2_data.energy) * len(pitch_angle_bins) * len(gyrophase_bins)).reshape(len(swe_l2_data.energy),
+                                                                                   len(pitch_angle_bins), len(gyrophase_bins)) for i in
+            range(len(epochs))]
+
+
+        rebinned_by_pitch_and_gyrophase = [(pa, pa_and_gyro) for pa, pa_and_gyro in zip(rebinned_by_pitch_list, rebinned_by_pitch_and_gyrophase_list)]
+        mock_correct_and_rebin.side_effect = rebinned_by_pitch_and_gyrophase
         integrated_spectrum = np.arange(9).reshape(3, 3) + 11
 
         expected_intensity_by_pa_and_gyro = np.arange(9).reshape(3, 3) + 25
@@ -267,6 +274,7 @@ class TestSweProcessor(unittest.TestCase):
             energy_bins=[1, 10, 100],
             energy_delta_plus=[2, 20, 200],
             energy_delta_minus=[8, 80, 800],
+            gyrophase_bins=gyrophase_bins,
             max_swapi_offset_in_minutes=5,
             max_mag_offset_in_minutes=1,
             spacecraft_potential_initial_guess=15,
@@ -278,7 +286,7 @@ class TestSweProcessor(unittest.TestCase):
         swel3_dependency = SweL3Dependencies(swe_l2_data, Mock(), mag_l1d_data, swapi_l3a_proton_data, swe_config)
         swe_processor = SweProcessor(dependencies=[], input_metadata=input_metadata)
 
-        actual_phase_space_density_by_pitch_angle, actual_energy_spectrum, actual_energy_spectrum_inbound, actual_energy_spectrum_outbound, \
+        actual_phase_space_density_by_pitch_angle, actual_phase_space_density_by_pa_and_gyrophase, actual_energy_spectrum, actual_energy_spectrum_inbound, actual_energy_spectrum_outbound, \
             actual_intensity_by_pa_and_gyro, actual_intensity_by_pa \
             = swe_processor.calculate_pitch_angle_products(swel3_dependency, corrected_energy_bins)
 
@@ -303,7 +311,8 @@ class TestSweProcessor(unittest.TestCase):
             )
         ])
 
-        np.testing.assert_array_equal(actual_phase_space_density_by_pitch_angle, expected_rebin)
+        np.testing.assert_array_equal(actual_phase_space_density_by_pitch_angle, rebinned_by_pitch_list)
+        np.testing.assert_array_equal(actual_phase_space_density_by_pa_and_gyrophase, rebinned_by_pitch_and_gyrophase_list)
         np.testing.assert_array_equal(actual_energy_spectrum, integrated_spectrum)
         np.testing.assert_array_equal(actual_energy_spectrum_inbound, expected_inbound_spectrum)
         np.testing.assert_array_equal(actual_energy_spectrum_outbound, expected_outbound_spectrum)
@@ -356,14 +365,14 @@ class TestSweProcessor(unittest.TestCase):
         self.assertEqual(mock_rebin_flux_expected_calls, mock_rebin_flux.call_args_list)
 
         mock_integrate_distribution_to_get_1d_spectrum.assert_has_calls([
-            call(expected_rebin[0], swe_config),
-            call(expected_rebin[1], swe_config),
-            call(expected_rebin[2], swe_config)
+            call(rebinned_by_pitch_list[0], swe_config),
+            call(rebinned_by_pitch_list[1], swe_config),
+            call(rebinned_by_pitch_list[2], swe_config)
         ])
         mock_integrate_distribution_to_get_inbound_and_outbound_1d_spectrum.assert_has_calls([
-            call(expected_rebin[0], swe_config),
-            call(expected_rebin[1], swe_config),
-            call(expected_rebin[2], swe_config)
+            call(rebinned_by_pitch_list[0], swe_config),
+            call(rebinned_by_pitch_list[1], swe_config),
+            call(rebinned_by_pitch_list[2], swe_config)
         ])
 
     @patch("imap_l3_processing.swe.swe_processor.SweProcessor.calculate_moment_products")
