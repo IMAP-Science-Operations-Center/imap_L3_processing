@@ -366,4 +366,12 @@ total_temperature_parallel_to_mag:
 total_temperature_perpendicular_to_mag:
   FILLVAL: *float_fillval
 
+core_temperature_tensor_integrated:
+  FILLVAL: *float_fillval
+
+halo_temperature_tensor_integrated:
+  FILLVAL: *float_fillval
+
+total_temperature_tensor_integrated:
+  FILLVAL: *float_fillval
 

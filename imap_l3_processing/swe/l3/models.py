@@ -73,6 +73,9 @@ HALO_TEMPERATURE_PARALLEL_TO_MAG_CDF_VAR_NAME = "halo_temperature_parallel_to_ma
 HALO_TEMPERATURE_PERPENDICULAR_TO_MAG_CDF_VAR_NAME = "halo_temperature_perpendicular_to_mag"
 TOTAL_TEMPERATURE_PARALLEL_TO_MAG_CDF_VAR_NAME = "total_temperature_parallel_to_mag"
 TOTAL_TEMPERATURE_PERPENDICULAR_TO_MAG_CDF_VAR_NAME = "total_temperature_perpendicular_to_mag"
+CORE_TEMPERATURE_TENSOR_INTEGRATED_CDF_VAR_NAME = "core_temperature_tensor_integrated"
+HALO_TEMPERATURE_TENSOR_INTEGRATED_CDF_VAR_NAME = "halo_temperature_tensor_integrated"
+TOTAL_TEMPERATURE_TENSOR_INTEGRATED_CDF_VAR_NAME = "total_temperature_tensor_integrated"
 
 
 @dataclass
@@ -158,6 +161,9 @@ class SweL3MomentData:
     halo_temperature_perpendicular_to_mag: np.ndarray
     total_temperature_parallel_to_mag: np.ndarray
     total_temperature_perpendicular_to_mag: np.ndarray
+    core_temperature_tensor_integrated: np.ndarray
+    halo_temperature_tensor_integrated: np.ndarray
+    total_temperature_tensor_integrated: np.ndarray
 
 
 @dataclass
@@ -349,7 +355,15 @@ class SweL3Data(DataProduct):
             DataProductVariable(TOTAL_TEMPERATURE_PERPENDICULAR_TO_MAG_CDF_VAR_NAME,
                                 value=self.moment_data.total_temperature_perpendicular_to_mag,
                                 cdf_data_type=pycdf.const.CDF_REAL4),
-
+            DataProductVariable(CORE_TEMPERATURE_TENSOR_INTEGRATED_CDF_VAR_NAME,
+                                value=self.moment_data.core_temperature_tensor_integrated,
+                                cdf_data_type=pycdf.const.CDF_REAL4),
+            DataProductVariable(HALO_TEMPERATURE_TENSOR_INTEGRATED_CDF_VAR_NAME,
+                                value=self.moment_data.halo_temperature_tensor_integrated,
+                                cdf_data_type=pycdf.const.CDF_REAL4),
+            DataProductVariable(TOTAL_TEMPERATURE_TENSOR_INTEGRATED_CDF_VAR_NAME,
+                                value=self.moment_data.total_temperature_tensor_integrated,
+                                cdf_data_type=pycdf.const.CDF_REAL4),
         ]
 
 

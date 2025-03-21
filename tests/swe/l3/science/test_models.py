@@ -34,7 +34,8 @@ from imap_l3_processing.swe.l3.models import SweL3Data, EPOCH_CDF_VAR_NAME, EPOC
     TOTAL_TEMPERATURE_PERPENDICULAR_TO_MAG_CDF_VAR_NAME, SweL3MomentData, CORE_T_PERPENDICULAR_INTEGRATED_CDF_VAR_NAME, \
     CORE_T_PARALLEL_INTEGRATED_CDF_VAR_NAME, HALO_T_PERPENDICULAR_INTEGRATED_CDF_VAR_NAME, \
     HALO_T_PARALLEL_INTEGRATED_CDF_VAR_NAME, TOTAL_T_PERPENDICULAR_INTEGRATED_CDF_VAR_NAME, \
-    TOTAL_T_PARALLEL_INTEGRATED_CDF_VAR_NAME
+    TOTAL_T_PARALLEL_INTEGRATED_CDF_VAR_NAME, CORE_TEMPERATURE_TENSOR_INTEGRATED_CDF_VAR_NAME, \
+    HALO_TEMPERATURE_TENSOR_INTEGRATED_CDF_VAR_NAME, TOTAL_TEMPERATURE_TENSOR_INTEGRATED_CDF_VAR_NAME
 from tests.swapi.cdf_model_test_case import CdfModelTestCase
 
 
@@ -106,6 +107,9 @@ class TestModels(CdfModelTestCase):
         halo_temperature_perpendicular_to_mag = Mock()
         total_temperature_parallel_to_mag = Mock()
         total_temperature_perpendicular_to_mag = Mock()
+        core_temperature_tensor_integrated = Mock()
+        halo_temperature_tensor_integrated = Mock()
+        total_temperature_tensor_integrated = Mock()
 
         data = SweL3Data(epoch=epoch,
                          epoch_delta=epoch_delta,
@@ -174,12 +178,13 @@ class TestModels(CdfModelTestCase):
                              halo_temperature_perpendicular_to_mag=halo_temperature_perpendicular_to_mag,
                              total_temperature_parallel_to_mag=total_temperature_parallel_to_mag,
                              total_temperature_perpendicular_to_mag=total_temperature_perpendicular_to_mag,
+                             core_temperature_tensor_integrated=core_temperature_tensor_integrated,
+                             halo_temperature_tensor_integrated=halo_temperature_tensor_integrated,
+                             total_temperature_tensor_integrated=total_temperature_tensor_integrated
                          ),
                          input_metadata=Mock())
 
         variables = data.to_data_product_variables()
-
-        self.assertEqual(66, len(variables))
 
         variables = iter(variables)
         # @formatter:off
@@ -316,7 +321,14 @@ class TestModels(CdfModelTestCase):
             next(variables), total_temperature_parallel_to_mag, TOTAL_TEMPERATURE_PARALLEL_TO_MAG_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
         self.assert_variable_attributes(
             next(variables), total_temperature_perpendicular_to_mag, TOTAL_TEMPERATURE_PERPENDICULAR_TO_MAG_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+        self.assert_variable_attributes(
+            next(variables), core_temperature_tensor_integrated, CORE_TEMPERATURE_TENSOR_INTEGRATED_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+        self.assert_variable_attributes(
+            next(variables), halo_temperature_tensor_integrated,HALO_TEMPERATURE_TENSOR_INTEGRATED_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+        self.assert_variable_attributes(
+            next(variables), total_temperature_tensor_integrated, TOTAL_TEMPERATURE_TENSOR_INTEGRATED_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
 
+        self.assertEqual([], list(variables), "unexpected variable found")
 
 if __name__ == '__main__':
     unittest.main()
