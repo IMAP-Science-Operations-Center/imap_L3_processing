@@ -108,6 +108,33 @@ pitch_angle: &pitch_angle
 pitch_angle_delta:
   <<: *pitch_angle
   CATDESC: Pitch Angle bin half-width
+intensity_by_pitch_angle:
+  CATDESC: Intensity organized by pitch angle
+  DEPEND_0: epoch
+  DEPEND_1: energy
+  DEPEND_2: pitch_angle
+  VAR_TYPE: data
+  DISPLAY_TYPE: spectrogram
+  LABLAXIS: Electron Intensity
+  FORMAT: F8.3
+  UNITS: cm^-2 sr^-1 s^-1 eV^-1
+  VALIDMIN: 1.00E-40
+  FILLVAL: -1.00E+31
+  SCALETYP: linear
+intensity_by_pitch_angle_and_gyrophase:
+  CATDESC: Intensity organized by pitch angle and gyrophase
+  DEPEND_0: epoch
+  DEPEND_1: energy
+  DEPEND_2: pitch_angle
+  DEPEND_3: gyrophase
+  VAR_TYPE: data
+  DISPLAY_TYPE: spectrogram
+  LABLAXIS: Electron Intensity
+  FORMAT: F8.3
+  UNITS: cm^-2 sr^-1 s^-1 eV^-1
+  VALIDMIN: 1.00E-40
+  FILLVAL: -1.00E+31
+  SCALETYP: linear
 phase_space_density_by_pitch_angle:
   CATDESC: Phase space density organized by pitch angle
   DEPEND_0: epoch

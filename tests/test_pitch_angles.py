@@ -171,7 +171,28 @@ class TestPitchAngles(unittest.TestCase):
                  [[4, 0, 1, 5], [7, 3, 2, 6]],
                  [[12, 8, 9, 13], [15, 11, 10, 14]]
              ],
-             [[2.5, 4.5], [10.5, 12.5]])
+             [[2.5, 4.5], [10.5, 12.5]]),
+            ('Nan in pitch angles', np.array([[45, 45, 135, 135], [np.nan, 45, 135, 135]]),
+             np.array([[135, 225, 225, 135], [45, 315, 315, 45]]), 2, 4,
+             [
+                 [[np.nan, 0, 1, 5], [7, 3, 2, 6]],
+                 [[12, 8, 9, 13], [15, 11, 10, 14]]
+             ],
+             [[2, 4.5], [10.5, 12.5]]),
+            ('Nan for all pitch angles in a bin', np.array([[np.nan, np.nan, 135, 135], [np.nan, np.nan, 135, 135]]),
+             np.array([[135, 225, 225, 135], [45, 315, 315, 45]]), 2, 4,
+             [
+                 [[np.nan, np.nan, np.nan, np.nan], [7, 3, 2, 6]],
+                 [[np.nan, np.nan, np.nan, np.nan], [15, 11, 10, 14]]
+             ],
+             [[np.nan, 4.5], [10.5, 12.5]]),
+            ('Nan in gyrophase', np.array([[45, 45, 135, 135], [45, 45, 135, 135]]),
+             np.array([[np.nan, 225, 225, 135], [45, 315, 315, 45]]), 2, 4,
+             [
+                 [[4, np.nan, 1, 5], [7, 3, 2, 6]],
+                 [[12, 8, 9, 13], [15, 11, 10, 14]]
+             ],
+             [[2.5, 4.5], [10.5, 12.5]]),
         ]
 
         for case, pitch_angles, gyrophases, number_of_pitch_angle_bins, number_of_gyrophase_bins, \

@@ -57,6 +57,11 @@ def rebin_by_pitch_angle_and_gyrophase(intensity_data: np.array,
                                        gyrophases: np.array,
                                        number_of_pitch_angle_bins: int,
                                        number_of_gyrophase_bins: int):
+    nanmask = np.isnan(gyrophases) or np.isnan(pitch_angles)
+
+    filtered_intensity = intensity_data[nanmask]
+    filtered_intensity = intensity_data[nanmask]
+
     pitch_angle_bins = np.floor(pitch_angles / (180 / number_of_pitch_angle_bins)).astype(int)
     gyrophase_bins = np.floor(gyrophases / (360 / number_of_gyrophase_bins)).astype(int)
 
