@@ -70,7 +70,7 @@ class TestPitchAngles(unittest.TestCase):
 
         np.testing.assert_array_almost_equal(rotated_particle_vectors, expected_particle_vectors)
 
-    def test_gyrophase(self):
+    def test_calculate_gyrophase(self):
         particle_vector = np.array([
             [0, 1, 0],
             [1, 0, 0],
@@ -86,6 +86,29 @@ class TestPitchAngles(unittest.TestCase):
         gyrophases = calculate_gyrophase(particle_vector, mag_field_vector)
 
         expected_gyrophases = [0, 90, 180, 270, 45, 135, 0, 0]
+
+        np.testing.assert_array_equal(gyrophases, expected_gyrophases)
+
+    def test_calculate_gyrophase_fany_input_arrays(self):
+        particle_vector = np.array([
+            [
+                [0, 1, 0],
+                [1, 0, 0],
+                [0, -1, 0],
+                [-1, 0, 0]
+            ],
+            [
+                [.5, .5, 0],
+                [.5, -.5, 0],
+                [0, 0, -1],
+                [0, 0, 1],
+            ]
+        ])
+        mag_field_vector = np.array([[0, 0, 1], [0, 0, 1]])[..., np.newaxis, :]
+
+        gyrophases = calculate_gyrophase(particle_vector, mag_field_vector)
+
+        expected_gyrophases = [[0, 90, 180, 270], [45, 135, 0, 0]]
 
         np.testing.assert_array_equal(gyrophases, expected_gyrophases)
 

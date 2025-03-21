@@ -1,3 +1,4 @@
+import datetime
 from datetime import timedelta
 
 import numpy as np
@@ -17,7 +18,7 @@ from imap_l3_processing.swe.l3.science.moment_calculations import compute_maxwel
 from imap_l3_processing.swe.l3.science.pitch_calculations import average_over_look_directions, find_breakpoints, \
     correct_and_rebin, \
     integrate_distribution_to_get_1d_spectrum, integrate_distribution_to_get_inbound_and_outbound_1d_spectrum, \
-    calculate_velocity_in_dsp_frame_km_s
+    calculate_velocity_in_dsp_frame_km_s, rebin_flux_by_pitch_angle
 from imap_l3_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies
 from imap_l3_processing.swe.l3.utils import compute_epoch_delta_in_ns
 from imap_l3_processing.utils import save_data
@@ -46,6 +47,9 @@ class SweProcessor(Processor):
         spacecraft_potential: np.ndarray[np.float64] = np.empty_like(swe_epoch, dtype=np.float64)
         halo_core: np.ndarray[np.float64] = np.empty_like(swe_epoch, dtype=np.float64)
         corrected_energy_bins = []
+        rebinned_mag_data = dependencies.mag_l1d_data.rebin_to(swe_epoch,
+                                                               [datetime.timedelta(seconds=delta / 1e9) for delta in
+                                                                epoch_delta])
 
         for i in range(len(swe_epoch)):
             average_psd.append(average_over_look_directions(swe_l2_data.phase_space_density[i],
@@ -64,10 +68,12 @@ class SweProcessor(Processor):
         corrected_energy_bins = np.array(corrected_energy_bins)
 
         swe_l3_moments_data = self.calculate_moment_products(swe_l2_data, dependencies.swe_l1b_data,
+                                                             rebinned_mag_data,
                                                              spacecraft_potential, halo_core,
                                                              corrected_energy_bins, config)
 
-        phase_space_density_by_pitch_angle, energy_spectrum, energy_spectrum_inbound, energy_spectrum_outbound = self.calculate_pitch_angle_products(
+        phase_space_density_by_pitch_angle, energy_spectrum, energy_spectrum_inbound, energy_spectrum_outbound, \
+            intensity_by_pitch_angle_and_gyrophase, intensity_by_pitch_angle = self.calculate_pitch_angle_products(
             dependencies, corrected_energy_bins)
 
         return SweL3Data(
@@ -79,6 +85,8 @@ class SweProcessor(Processor):
             energy_delta_minus=config["energy_delta_minus"],
             pitch_angle=config["pitch_angle_bins"],
             pitch_angle_delta=config["pitch_angle_delta"],
+            intensity_by_pitch_angle_and_gyrophase=intensity_by_pitch_angle_and_gyrophase,
+            intensity_by_pitch_angle=intensity_by_pitch_angle,
             spacecraft_potential=spacecraft_potential,
             core_halo_breakpoint=halo_core,
             phase_space_density_by_pitch_angle=phase_space_density_by_pitch_angle,
@@ -88,7 +96,7 @@ class SweProcessor(Processor):
             moment_data=swe_l3_moments_data
         )
 
-    def calculate_moment_products(self, swe_l2_data: SweL2Data, swe_l1b_data: SweL1bData,
+    def calculate_moment_products(self, swe_l2_data: SweL2Data, swe_l1b_data: SweL1bData, rebinned_mag_data: np.ndarray,
                                   spacecraft_potential: np.ndarray, halo_core: np.ndarray,
                                   corrected_energy_bins: np.ndarray, config: SweConfiguration) -> SweL3MomentData:
         number_of_points = len(swe_l2_data.epoch)
@@ -236,7 +244,7 @@ class SweProcessor(Processor):
                         core_temperature_phi_rtn_integrated[i] = phi
 
                         core_t_parallel_to_mag, core_t_perpendicular_to_mag_average, core_t_perpendicular_to_mag_ratio = rotate_temperature_tensor_to_mag(
-                            scale_core_density_output.temperature, [0, 0, 1])
+                            scale_core_density_output.temperature, rebinned_mag_data[i])
 
                         core_temperature_parallel_to_mag[i] = core_t_parallel_to_mag
                         core_temperature_perpendicular_to_mag[i] = [core_t_perpendicular_to_mag_average,
@@ -277,7 +285,7 @@ class SweProcessor(Processor):
                         total_temperature_phi_rtn_integrated[i] = phi
 
                         total_t_parallel_to_mag, total_t_perpendicular_to_mag_average, total_t_perpendicular_to_mag_ratio = rotate_temperature_tensor_to_mag(
-                            total_integration_output.temperature, [0, 0, 1])
+                            total_integration_output.temperature, rebinned_mag_data[i])
 
                         total_temperature_parallel_to_mag[i] = total_t_parallel_to_mag
                         total_temperature_perpendicular_to_mag[i] = [total_t_perpendicular_to_mag_average,
@@ -355,7 +363,7 @@ class SweProcessor(Processor):
                         halo_temperature_phi_rtn_integrated[i] = phi
 
                         halo_t_parallel_to_mag, halo_t_perpendicular_to_mag_average, halo_t_perpendicular_to_mag_ratio = rotate_temperature_tensor_to_mag(
-                            scale_halo_density_output.temperature, [0, 0, 1])
+                            scale_halo_density_output.temperature, rebinned_mag_data[i])
 
                         halo_temperature_parallel_to_mag[i] = halo_t_parallel_to_mag
                         halo_temperature_perpendicular_to_mag[i] = [halo_t_perpendicular_to_mag_average,
@@ -447,6 +455,8 @@ class SweProcessor(Processor):
         energy_spectrum = []
         energy_spectrum_inbound = []
         energy_spectrum_outbound = []
+        rebinned_intensity_by_pa_and_gyro = []
+        rebinned_intensity_by_pa = []
 
         for i in range(len(swe_epoch)):
             missing_mag_data = np.any(np.isnan(rebinned_mag_data[i]))
@@ -457,6 +467,8 @@ class SweProcessor(Processor):
                 energy_spectrum.append(np.full(num_energy_bins, np.nan))
                 energy_spectrum_inbound.append(np.full(num_energy_bins, np.nan))
                 energy_spectrum_outbound.append(np.full(num_energy_bins, np.nan))
+                rebinned_intensity_by_pa_and_gyro.append(np.full((num_energy_bins, 7, 30), np.nan))
+                rebinned_intensity_by_pa.append(np.full((num_energy_bins, 7), np.nan))
             else:
                 dsp_velocities = calculate_velocity_in_dsp_frame_km_s(corrected_energy_bins[i], swe_l2_data.inst_el,
                                                                       swe_l2_data.inst_az_spin_sector[i])
@@ -472,4 +484,14 @@ class SweProcessor(Processor):
                 energy_spectrum_inbound.append(inbound)
                 energy_spectrum_outbound.append(outbound)
 
-        return phase_space_density_by_pitch_angle, energy_spectrum, energy_spectrum_inbound, energy_spectrum_outbound
+                intensity_delta = np.zeros_like(swe_l2_data.flux[i])
+                intensity_by_pa_and_gyro, _, _, intensity_by_pa, _, _ = rebin_flux_by_pitch_angle(swe_l2_data.flux[i],
+                                                                                                  intensity_delta,
+                                                                                                  intensity_delta,
+                                                                                                  dsp_velocities,
+                                                                                                  rebinned_mag_data[i])
+                rebinned_intensity_by_pa_and_gyro.append(intensity_by_pa_and_gyro)
+                rebinned_intensity_by_pa.append(intensity_by_pa)
+
+        return phase_space_density_by_pitch_angle, energy_spectrum, energy_spectrum_inbound, energy_spectrum_outbound, \
+            rebinned_intensity_by_pa_and_gyro, rebinned_intensity_by_pa
