@@ -9,9 +9,9 @@ from imap_l3_processing.hit.l3.pha.pha_event_reader import PHAEventReader, RawPH
 from imap_l3_processing.hit.l3.pha.science.calculate_pha import process_pha_event
 from imap_l3_processing.hit.l3.sectored_products.models import HitPitchAngleDataProduct
 from imap_l3_processing.hit.l3.sectored_products.science.sectored_products_algorithms import get_sector_unit_vectors, \
-    get_hit_bin_polar_coordinates, rebin_by_pitch_angle_and_gyrophase
+    get_hit_bin_polar_coordinates
 from imap_l3_processing.pitch_angles import calculate_unit_vector, calculate_pitch_angle, calculate_gyrophase, \
-    rotate_particle_vectors_from_hit_despun_to_imap_despun
+    rotate_particle_vectors_from_hit_despun_to_imap_despun, rebin_by_pitch_angle_and_gyrophase
 from imap_l3_processing.processor import Processor
 from imap_l3_processing.utils import save_data
 
@@ -39,7 +39,11 @@ class HitProcessor(Processor):
         raw_pha_events: list[RawPHAEvent] = []
         for epoch, event_binary in zip(direct_event_dependencies.hit_l1_data.epoch,
                                        direct_event_dependencies.hit_l1_data.event_binary):
-            event_raw_pha_events = PHAEventReader.read_all_pha_events(event_binary)
+            try:
+                event_raw_pha_events = PHAEventReader.read_all_pha_events(event_binary)
+            except Exception:
+                continue
+
             epochs += [epoch] * len(event_raw_pha_events)
             raw_pha_events += event_raw_pha_events
 
