@@ -1,3 +1,4 @@
+import datetime
 from datetime import timedelta
 
 import numpy as np
@@ -46,6 +47,9 @@ class SweProcessor(Processor):
         spacecraft_potential: np.ndarray[np.float64] = np.empty_like(swe_epoch, dtype=np.float64)
         halo_core: np.ndarray[np.float64] = np.empty_like(swe_epoch, dtype=np.float64)
         corrected_energy_bins = []
+        rebinned_mag_data = dependencies.mag_l1d_data.rebin_to(swe_epoch,
+                                                               [datetime.timedelta(seconds=delta / 1e9) for delta in
+                                                                epoch_delta])
 
         for i in range(len(swe_epoch)):
             average_psd.append(average_over_look_directions(swe_l2_data.phase_space_density[i],
@@ -64,6 +68,7 @@ class SweProcessor(Processor):
         corrected_energy_bins = np.array(corrected_energy_bins)
 
         swe_l3_moments_data = self.calculate_moment_products(swe_l2_data, dependencies.swe_l1b_data,
+                                                             rebinned_mag_data,
                                                              spacecraft_potential, halo_core,
                                                              corrected_energy_bins, config)
 
@@ -88,28 +93,12 @@ class SweProcessor(Processor):
             energy_spectrum=energy_spectrum,
             energy_spectrum_inbound=energy_spectrum_inbound,
             energy_spectrum_outbound=energy_spectrum_outbound,
-            core_fit_num_points=swe_l3_moments_data.core_fit_num_points,
-            core_chisq=swe_l3_moments_data.core_chisq,
-            halo_chisq=swe_l3_moments_data.halo_chisq,
-            core_density_fit=swe_l3_moments_data.core_density_fit,
-            halo_density_fit=swe_l3_moments_data.halo_density_fit,
-            core_t_parallel_fit=swe_l3_moments_data.core_t_parallel_fit,
-            halo_t_parallel_fit=swe_l3_moments_data.halo_t_parallel_fit,
-            core_t_perpendicular_fit=swe_l3_moments_data.core_t_perpendicular_fit,
-            halo_t_perpendicular_fit=swe_l3_moments_data.halo_t_perpendicular_fit,
-            core_temperature_phi_rtn_fit=swe_l3_moments_data.core_temperature_phi_rtn_fit,
-            halo_temperature_phi_rtn_fit=swe_l3_moments_data.halo_temperature_phi_rtn_fit,
-            core_temperature_theta_rtn_fit=swe_l3_moments_data.core_temperature_theta_rtn_fit,
-            halo_temperature_theta_rtn_fit=swe_l3_moments_data.halo_temperature_theta_rtn_fit,
-            core_speed_fit=swe_l3_moments_data.core_speed_fit,
-            halo_speed_fit=swe_l3_moments_data.halo_speed_fit,
-            core_velocity_vector_rtn_fit=swe_l3_moments_data.core_velocity_vector_rtn_fit,
-            halo_velocity_vector_rtn_fit=swe_l3_moments_data.halo_velocity_vector_rtn_fit,
+            moment_data=swe_l3_moments_data
         )
 
-    def calculate_moment_products(self, swe_l2_data: SweL2Data, swe_l1b_data: SweL1bData,
+    def calculate_moment_products(self, swe_l2_data: SweL2Data, swe_l1b_data: SweL1bData, rebinned_mag_data: np.ndarray,
                                   spacecraft_potential: np.ndarray, halo_core: np.ndarray,
-                                  corrected_energy_bins: np.ndarray, config: SweConfiguration):
+                                  corrected_energy_bins: np.ndarray, config: SweConfiguration) -> SweL3MomentData:
         number_of_points = len(swe_l2_data.epoch)
         core_density_history = [100 for _ in range(3)]
         halo_density_history = [25 for _ in range(3)]
@@ -139,9 +128,12 @@ class SweProcessor(Processor):
         total_heat_flux_magnitude = np.full(number_of_points, np.nan)
         total_heat_flux_theta = np.full(number_of_points, np.nan)
         total_heat_flux_phi = np.full(number_of_points, np.nan)
-        core_temperature_moments = np.full((number_of_points, 3), np.nan)
-        halo_temperature_moments = np.full((number_of_points, 3), np.nan)
-        total_temperature_moments = np.full((number_of_points, 3), np.nan)
+        core_t_parallel_integrated = np.full(number_of_points, np.nan)
+        core_t_perpendicular_integrated = np.full((number_of_points, 2), np.nan)
+        halo_t_parallel_integrated = np.full(number_of_points, np.nan)
+        halo_t_perpendicular_integrated = np.full((number_of_points, 2), np.nan)
+        total_t_parallel_integrated = np.full(number_of_points, np.nan)
+        total_t_perpendicular_integrated = np.full((number_of_points, 2), np.nan)
         core_temperature_theta_rtn_integrated = np.full(number_of_points, np.nan)
         core_temperature_phi_rtn_integrated = np.full(number_of_points, np.nan)
         halo_temperature_theta_rtn_integrated = np.full(number_of_points, np.nan)
@@ -154,6 +146,9 @@ class SweProcessor(Processor):
         halo_temperature_perpendicular_to_mag = np.full((number_of_points, 2), np.nan)
         total_temperature_parallel_to_mag = np.full(number_of_points, np.nan)
         total_temperature_perpendicular_to_mag = np.full((number_of_points, 2), np.nan)
+        core_temperature_tensor_integrated = np.full((number_of_points, 6), np.nan)
+        halo_temperature_tensor_integrated = np.full((number_of_points, 6), np.nan)
+        total_temperature_tensor_integrated = np.full((number_of_points, 6), np.nan)
 
         for i in range(len(swe_l2_data.epoch)):
             velocity_vectors_cm_per_s: np.ndarray = 1000 * 100 * calculate_velocity_in_dsp_frame_km_s(
@@ -226,9 +221,9 @@ class SweProcessor(Processor):
                             core_integrate_result.base_energy)
 
                         core_density_integrated[i] = scale_core_density_output.density
-
                         core_velocity_integrated[i] = rotate_dps_vector_to_rtn(current_epoch,
                                                                                scale_core_density_output.velocity)
+                        core_temperature_tensor_integrated[i] = scale_core_density_output.temperature
 
                         magnitude, theta, phi = rotate_vector_to_rtn_spherical_coordinates(current_epoch,
                                                                                            core_integrate_result.heat_flux)
@@ -240,14 +235,16 @@ class SweProcessor(Processor):
                         core_primary_eigen_vector, core_temps = calculate_primary_eigenvector(
                             scale_core_density_output.temperature)
 
-                        core_temperature_moments[i] = core_temps
+                        core_t_parallel_integrated[i] = core_temps[0]
+                        core_t_perpendicular_integrated[i] = [core_temps[1], core_temps[2]]
+
                         magnitude, theta, phi = rotate_vector_to_rtn_spherical_coordinates(current_epoch,
                                                                                            core_primary_eigen_vector)
                         core_temperature_theta_rtn_integrated[i] = theta
                         core_temperature_phi_rtn_integrated[i] = phi
 
                         core_t_parallel_to_mag, core_t_perpendicular_to_mag_average, core_t_perpendicular_to_mag_ratio = rotate_temperature_tensor_to_mag(
-                            scale_core_density_output.temperature, [0, 0, 1])
+                            scale_core_density_output.temperature, rebinned_mag_data[i])
 
                         core_temperature_parallel_to_mag[i] = core_t_parallel_to_mag
                         core_temperature_perpendicular_to_mag[i] = [core_t_perpendicular_to_mag_average,
@@ -266,6 +263,8 @@ class SweProcessor(Processor):
                         total_density_integrated[i] = total_integration_output.density
                         total_velocity_integrated[i] = rotate_dps_vector_to_rtn(current_epoch,
                                                                                 total_integration_output.velocity)
+                        total_temperature_tensor_integrated[i] = total_integration_output.temperature
+
                         magnitude, theta, phi = rotate_vector_to_rtn_spherical_coordinates(
                             current_epoch,
                             total_integration_output.heat_flux)
@@ -277,14 +276,16 @@ class SweProcessor(Processor):
                         total_primary_eigen_vector, total_temps = calculate_primary_eigenvector(
                             total_integration_output.temperature)
 
-                        total_temperature_moments[i] = total_temps
+                        total_t_parallel_integrated[i] = total_temps[0]
+                        total_t_perpendicular_integrated[i] = [total_temps[1], total_temps[2]]
+
                         magnitude, theta, phi = rotate_vector_to_rtn_spherical_coordinates(current_epoch,
                                                                                            total_primary_eigen_vector)
                         total_temperature_theta_rtn_integrated[i] = theta
                         total_temperature_phi_rtn_integrated[i] = phi
 
                         total_t_parallel_to_mag, total_t_perpendicular_to_mag_average, total_t_perpendicular_to_mag_ratio = rotate_temperature_tensor_to_mag(
-                            total_integration_output.temperature, [0, 0, 1])
+                            total_integration_output.temperature, rebinned_mag_data[i])
 
                         total_temperature_parallel_to_mag[i] = total_t_parallel_to_mag
                         total_temperature_perpendicular_to_mag[i] = [total_t_perpendicular_to_mag_average,
@@ -339,9 +340,10 @@ class SweProcessor(Processor):
                             halo_integrate_result.base_energy)
 
                         halo_density_integrated[i] = scale_halo_density_output.density
-
                         halo_velocity_integrated[i] = rotate_dps_vector_to_rtn(current_epoch,
                                                                                scale_halo_density_output.velocity)
+                        halo_temperature_tensor_integrated[i] = scale_halo_density_output.temperature
+
                         magnitude, theta, phi = rotate_vector_to_rtn_spherical_coordinates(current_epoch,
                                                                                            halo_integrate_result.heat_flux)
 
@@ -352,14 +354,16 @@ class SweProcessor(Processor):
                         halo_primary_eigen_vector, halo_temps = calculate_primary_eigenvector(
                             scale_halo_density_output.temperature)
 
-                        halo_temperature_moments[i] = halo_temps
+                        halo_t_parallel_integrated[i] = halo_temps[0]
+                        halo_t_perpendicular_integrated[i] = [halo_temps[1], halo_temps[2]]
+
                         magnitude, theta, phi = rotate_vector_to_rtn_spherical_coordinates(current_epoch,
                                                                                            halo_primary_eigen_vector)
                         halo_temperature_theta_rtn_integrated[i] = theta
                         halo_temperature_phi_rtn_integrated[i] = phi
 
                         halo_t_parallel_to_mag, halo_t_perpendicular_to_mag_average, halo_t_perpendicular_to_mag_ratio = rotate_temperature_tensor_to_mag(
-                            scale_halo_density_output.temperature, [0, 0, 1])
+                            scale_halo_density_output.temperature, rebinned_mag_data[i])
 
                         halo_temperature_parallel_to_mag[i] = halo_t_parallel_to_mag
                         halo_temperature_perpendicular_to_mag[i] = [halo_t_perpendicular_to_mag_average,
@@ -401,9 +405,12 @@ class SweProcessor(Processor):
             total_heat_flux_magnitude_integrated=total_heat_flux_magnitude,
             total_heat_flux_theta_integrated=total_heat_flux_theta,
             total_heat_flux_phi_integrated=total_heat_flux_phi,
-            core_temperature_moments=core_temperature_moments,
-            halo_temperature_moments=halo_temperature_moments,
-            total_temperature_moments=total_temperature_moments,
+            core_t_parallel_integrated=core_t_parallel_integrated,
+            core_t_perpendicular_integrated=core_t_perpendicular_integrated,
+            halo_t_parallel_integrated=halo_t_parallel_integrated,
+            halo_t_perpendicular_integrated=halo_t_perpendicular_integrated,
+            total_t_parallel_integrated=total_t_parallel_integrated,
+            total_t_perpendicular_integrated=total_t_perpendicular_integrated,
             core_temperature_theta_rtn_integrated=core_temperature_theta_rtn_integrated,
             core_temperature_phi_rtn_integrated=core_temperature_phi_rtn_integrated,
             halo_temperature_theta_rtn_integrated=halo_temperature_theta_rtn_integrated,
@@ -416,6 +423,9 @@ class SweProcessor(Processor):
             halo_temperature_perpendicular_to_mag=halo_temperature_perpendicular_to_mag,
             total_temperature_parallel_to_mag=total_temperature_parallel_to_mag,
             total_temperature_perpendicular_to_mag=total_temperature_perpendicular_to_mag,
+            core_temperature_tensor_integrated=core_temperature_tensor_integrated,
+            halo_temperature_tensor_integrated=halo_temperature_tensor_integrated,
+            total_temperature_tensor_integrated=total_temperature_tensor_integrated,
         )
 
     def calculate_pitch_angle_products(self, dependencies: SweL3Dependencies, corrected_energy_bins: np.ndarray):

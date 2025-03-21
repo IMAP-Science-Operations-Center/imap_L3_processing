@@ -40,8 +40,8 @@ class TestSweProcessor(unittest.TestCase):
     def test_calculate_products(self, mock_calculate_moment_products, mock_calculate_pitch_angle_products,
                                 mock_spice_wrapper, mock_find_breakpoints, mock_average_over_look_directions,
                                 mock_compute_epoch_delta_in_ns):
+        mock_compute_epoch_delta_in_ns.return_value = [30e9, 40e9]
         epochs = datetime.now() + np.arange(2) * timedelta(minutes=1)
-        mag_epochs = datetime.now() - timedelta(seconds=15) + np.arange(2) * timedelta(minutes=.5)
         swapi_epochs = datetime.now() - timedelta(seconds=15) + np.arange(2) * timedelta(minutes=.5)
         mock_find_breakpoints.side_effect = [
             (12, 96),
@@ -63,10 +63,7 @@ class TestSweProcessor(unittest.TestCase):
 
         expected_corrected_energy_bins = np.array([[2 - 12, 4 - 12, 6 - 12], [2 - 16, 4 - 16, 6 - 16]])
 
-        mag_l1d_data = MagL1dData(
-            epoch=mag_epochs,
-            mag_data=np.arange(7, 22).reshape(5, 3).repeat(2, axis=0)
-        )
+        mag_l1d_data = Mock()
 
         swapi_l3a_proton_data = SwapiL3aProtonData(
             epoch=swapi_epochs,
@@ -136,13 +133,15 @@ class TestSweProcessor(unittest.TestCase):
                  [90, 90, 96], swe_config),
         ])
 
+        mag_l1d_data.rebin_to.assert_called_with(epochs, [timedelta(seconds=30), timedelta(seconds=40)])
         mock_calculate_moment_products.assert_called_once()
         self.assertEqual(swe_l2_data, mock_calculate_moment_products.call_args[0][0])
         self.assertEqual(swe_l1b_data, mock_calculate_moment_products.call_args[0][1])
-        np.testing.assert_array_equal(mock_calculate_moment_products.call_args[0][2], expected_spacecraft_potential)
-        np.testing.assert_array_equal(mock_calculate_moment_products.call_args[0][3], expected_core_halo_breakpoint)
-        np.testing.assert_array_equal(mock_calculate_moment_products.call_args[0][4], expected_corrected_energy_bins)
-        self.assertEqual(swe_config, mock_calculate_moment_products.call_args[0][5])
+        self.assertEqual(mag_l1d_data.rebin_to.return_value, mock_calculate_moment_products.call_args[0][2])
+        np.testing.assert_array_equal(mock_calculate_moment_products.call_args[0][3], expected_spacecraft_potential)
+        np.testing.assert_array_equal(mock_calculate_moment_products.call_args[0][4], expected_core_halo_breakpoint)
+        np.testing.assert_array_equal(mock_calculate_moment_products.call_args[0][5], expected_corrected_energy_bins)
+        self.assertEqual(swe_config, mock_calculate_moment_products.call_args[0][6])
 
         mock_calculate_pitch_angle_products.assert_called_once()
         self.assertEqual(swel3_dependency, mock_calculate_pitch_angle_products.call_args[0][0])
@@ -174,26 +173,8 @@ class TestSweProcessor(unittest.TestCase):
         self.assertEqual(sentinel.expected_energy_spectrum, swe_l3_data.energy_spectrum)
         self.assertEqual(sentinel.expected_energy_spectrum_inbound, swe_l3_data.energy_spectrum_inbound)
         self.assertEqual(sentinel.expected_energy_spectrum_outbound, swe_l3_data.energy_spectrum_outbound)
+        self.assertEqual(mock_moment_data, swe_l3_data.moment_data)
 
-        # fit moments
-        self.assertEqual(mock_moment_data.core_fit_num_points, swe_l3_data.core_fit_num_points)
-        self.assertEqual(mock_moment_data.core_chisq, swe_l3_data.core_chisq)
-        self.assertEqual(mock_moment_data.halo_chisq, swe_l3_data.halo_chisq)
-        self.assertEqual(mock_moment_data.core_density_fit, swe_l3_data.core_density_fit)
-        self.assertEqual(mock_moment_data.halo_density_fit, swe_l3_data.halo_density_fit)
-        self.assertEqual(mock_moment_data.core_t_parallel_fit, swe_l3_data.core_t_parallel_fit)
-        self.assertEqual(mock_moment_data.halo_t_parallel_fit, swe_l3_data.halo_t_parallel_fit)
-        self.assertEqual(mock_moment_data.core_t_perpendicular_fit, swe_l3_data.core_t_perpendicular_fit)
-        self.assertEqual(mock_moment_data.halo_t_perpendicular_fit, swe_l3_data.halo_t_perpendicular_fit)
-        self.assertEqual(mock_moment_data.core_temperature_phi_rtn_fit, swe_l3_data.core_temperature_phi_rtn_fit)
-        self.assertEqual(mock_moment_data.halo_temperature_phi_rtn_fit, swe_l3_data.halo_temperature_phi_rtn_fit)
-        self.assertEqual(mock_moment_data.core_temperature_theta_rtn_fit, swe_l3_data.core_temperature_theta_rtn_fit)
-        self.assertEqual(mock_moment_data.halo_temperature_theta_rtn_fit, swe_l3_data.halo_temperature_theta_rtn_fit)
-        self.assertEqual(mock_moment_data.core_speed_fit, swe_l3_data.core_speed_fit)
-        self.assertEqual(mock_moment_data.halo_speed_fit, swe_l3_data.halo_speed_fit)
-        self.assertEqual(mock_moment_data.core_velocity_vector_rtn_fit, swe_l3_data.core_velocity_vector_rtn_fit)
-        self.assertEqual(mock_moment_data.halo_velocity_vector_rtn_fit, swe_l3_data.halo_velocity_vector_rtn_fit)
-        # @formatter:on
 
     @patch('imap_l3_processing.swe.swe_processor.rebin_flux_by_pitch_angle')
     @patch('imap_l3_processing.swe.swe_processor.calculate_velocity_in_dsp_frame_km_s')
@@ -668,13 +649,14 @@ class TestSweProcessor(unittest.TestCase):
         core_integrate_output = Mock()
         total_integrate_output = Mock()
         total_integrate_output.density = 5
-        total_integrate_output.temperature = 11.4
+        total_temperature = [101000,102000,103000,104000,105000,106000]
+        total_integrate_output.temperature = total_temperature
         halo_integrate_output = Mock()
 
         mock_integrate.side_effect = [core_integrate_output, total_integrate_output, halo_integrate_output, None, None]
 
         scaled_core_velocity = [900, 800, 700]
-        scaled_core_temperature = Mock()
+        scaled_core_temperature = [90000,80000,70000,80000,90000,100000]
         core_cdelnv = Mock()
         core_cdelt = Mock()
         scale_core_density_output = ScaleDensityOutput(density=400, velocity=scaled_core_velocity,
@@ -685,7 +667,7 @@ class TestSweProcessor(unittest.TestCase):
         mock_scale_core_density.side_effect = [scale_core_density_output]
 
         scaled_halo_velocity = [2000, 1800, 1700]
-        scaled_halo_temperature = Mock()
+        scaled_halo_temperature = [180000,190000,200000,201000,202000,203000]
         scale_halo_density_output = ScaleDensityOutput(density=500, velocity=scaled_halo_velocity,
                                                        temperature=scaled_halo_temperature,
                                                        cdelnv=None,
@@ -727,7 +709,10 @@ class TestSweProcessor(unittest.TestCase):
         swe_processor = SweProcessor(dependencies=[], input_metadata=input_metadata)
         config = build_swe_configuration()
 
-        swe_moment_data = swe_processor.calculate_moment_products(swe_l2_data, swe_l1_data, spacecraft_potential,
+        rebinned_mag_data = [sentinel.mag_data_1, sentinel.mag_data_2, sentinel.mag_data_3]
+
+        swe_moment_data = swe_processor.calculate_moment_products(swe_l2_data, swe_l1_data, rebinned_mag_data,
+                                                                  spacecraft_potential,
                                                                   core_halo_breakpoint,
                                                                   corrected_energy_bins,
                                                                   config)
@@ -956,9 +941,9 @@ class TestSweProcessor(unittest.TestCase):
         self.assertEqual(3, mock_rotate_temperature_tensor_to_mag.call_count)
 
         mock_rotate_temperature_tensor_to_mag.assert_has_calls([
-            call(scale_core_density_output.temperature, [0, 0, 1]),
-            call(total_integrate_output.temperature, [0, 0, 1]),
-            call(scale_halo_density_output.temperature, [0, 0, 1]),
+            call(scale_core_density_output.temperature,sentinel.mag_data_1),
+            call(total_integrate_output.temperature, sentinel.mag_data_1),
+            call(scale_halo_density_output.temperature, sentinel.mag_data_1),
         ])
 
         # @formatter:off
@@ -1032,13 +1017,17 @@ class TestSweProcessor(unittest.TestCase):
         np.testing.assert_array_equal(swe_moment_data.total_heat_flux_theta_integrated, [102, np.nan, np.nan])
         np.testing.assert_array_equal(swe_moment_data.total_heat_flux_phi_integrated, [103, np.nan, np.nan])
 
-        np.testing.assert_array_equal(swe_moment_data.core_temperature_moments,
-                                      [[t_par_1, t_perp_1, gyro_1], [np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan]])
-        np.testing.assert_array_equal(swe_moment_data.halo_temperature_moments,
-                                      [[t_par_2, t_perp_2, gyro_2], [np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan]])
-        np.testing.assert_array_equal(swe_moment_data.total_temperature_moments,
-                                      [[t_par_3, t_perp_3, gyro_3], [np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan]])
+        np.testing.assert_array_equal(swe_moment_data.core_t_parallel_integrated,  [t_par_1,  np.nan, np.nan])
+        np.testing.assert_array_equal(swe_moment_data.core_t_perpendicular_integrated,
+                                      [[t_perp_1, gyro_1], [ np.nan, np.nan], [ np.nan, np.nan]])
 
+        np.testing.assert_array_equal(swe_moment_data.halo_t_parallel_integrated,  [t_par_2,  np.nan, np.nan])
+        np.testing.assert_array_equal(swe_moment_data.halo_t_perpendicular_integrated,
+                                      [[t_perp_2, gyro_2], [ np.nan, np.nan], [ np.nan, np.nan]])
+
+        np.testing.assert_array_equal(swe_moment_data.total_t_parallel_integrated,  [t_par_3,  np.nan, np.nan])
+        np.testing.assert_array_equal(swe_moment_data.total_t_perpendicular_integrated,
+                                      [[t_perp_3, gyro_3], [ np.nan, np.nan], [ np.nan, np.nan]])
         np.testing.assert_array_equal(swe_moment_data.core_temperature_theta_rtn_integrated, [17, np.nan, np.nan])
         np.testing.assert_array_equal(swe_moment_data.core_temperature_phi_rtn_integrated, [18, np.nan, np.nan])
 
@@ -1057,6 +1046,13 @@ class TestSweProcessor(unittest.TestCase):
         np.testing.assert_array_equal(swe_moment_data.total_temperature_parallel_to_mag, [14.4, np.nan, np.nan])
         np.testing.assert_array_equal(swe_moment_data.total_temperature_perpendicular_to_mag,
                                       [[15.4, 16.4], [np.nan, np.nan], [np.nan, np.nan]])
+        np.testing.assert_array_equal(swe_moment_data.total_temperature_perpendicular_to_mag, [[15.4, 16.4], [np.nan, np.nan], [np.nan, np.nan]])
+
+        np.testing.assert_array_equal(swe_moment_data.core_temperature_tensor_integrated, [scaled_core_temperature, np.full(6,np.nan),np.full(6,np.nan)])
+        np.testing.assert_array_equal(swe_moment_data.halo_temperature_tensor_integrated, [scaled_halo_temperature, np.full(6,np.nan),np.full(6,np.nan)])
+        np.testing.assert_array_equal(swe_moment_data.total_temperature_tensor_integrated, [total_temperature, np.full(6,np.nan),np.full(6,np.nan)])
+
+
         # @formatter:on
 
     @patch('imap_l3_processing.swe.swe_processor.rotate_vector_to_rtn_spherical_coordinates')
@@ -1121,12 +1117,18 @@ class TestSweProcessor(unittest.TestCase):
 
         corrected_energy_bins = swe_l2_data.energy.reshape(1, -1) - spacecraft_potential.reshape(-1, 1)
 
+        mock_integrate.return_value.temperature = np.full(6, 0)
+
         mock_scale_core_density.return_value.density = 1
+        mock_scale_core_density.return_value.temperature = np.full(6, 1)
         mock_scale_halo_density.return_value.density = 1
+        mock_scale_halo_density.return_value.temperature = np.full(6, 1)
 
         mock_rotate_dps_vector_to_rtn.return_value = (2, 3, 4)
 
-        swe_moment_data = swe_processor.calculate_moment_products(swe_l2_data, swe_l1_data, spacecraft_potential,
+        rebinned_mag_data = np.full((3, 3), 1)
+        swe_moment_data = swe_processor.calculate_moment_products(swe_l2_data, swe_l1_data, rebinned_mag_data,
+                                                                  spacecraft_potential,
                                                                   core_halo_breakpoint,
                                                                   corrected_energy_bins,
                                                                   config)
