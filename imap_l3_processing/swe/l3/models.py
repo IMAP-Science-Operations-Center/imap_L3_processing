@@ -113,6 +113,12 @@ class SweL3MomentData:
     halo_temperature_phi_rtn_integrated: np.ndarray
     total_temperature_theta_rtn_integrated: np.ndarray
     total_temperature_phi_rtn_integrated: np.ndarray
+    core_temperature_parallel_to_mag: np.ndarray
+    core_temperature_perpendicular_to_mag: np.ndarray
+    halo_temperature_parallel_to_mag: np.ndarray
+    halo_temperature_perpendicular_to_mag: np.ndarray
+    total_temperature_parallel_to_mag: np.ndarray
+    total_temperature_perpendicular_to_mag: np.ndarray
 
 
 @dataclass

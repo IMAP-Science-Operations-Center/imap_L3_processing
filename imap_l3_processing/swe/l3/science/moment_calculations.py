@@ -9,6 +9,7 @@ from spiceypy import spiceypy
 from imap_l3_processing.constants import ELECTRON_MASS_KG, \
     BOLTZMANN_CONSTANT_JOULES_PER_KELVIN, METERS_PER_KILOMETER, \
     CENTIMETERS_PER_METER, PROTON_CHARGE_COULOMBS
+from imap_l3_processing.pitch_angles import calculate_unit_vector
 
 ELECTRON_MASS_OVER_BOLTZMANN_IN_CGS_UNITS = ELECTRON_MASS_KG / BOLTZMANN_CONSTANT_JOULES_PER_KELVIN * 1e-4
 NUMBER_OF_DETECTORS = 7
@@ -755,3 +756,41 @@ def calculate_primary_eigenvector(temperature_tensor: np.ndarray) -> tuple[np.nd
     else:
         gyro = max(other_evals) / min_eval
     return primary_evec, np.array([parallel_temperature, perpendicular_temperature, gyro])
+
+
+def rotation_matrix_builder(mag_vector: np.ndarray) -> np.ndarray(shape=(3, 3)):
+    normalized_mag_vector = mag_vector / np.linalg.norm(mag_vector)
+    smallest_index = np.argmin(np.abs(normalized_mag_vector))
+    reference_vector = np.zeros(3)
+    reference_vector[smallest_index] = 1
+    row_1 = calculate_unit_vector(np.cross(normalized_mag_vector, reference_vector))
+    row_2 = calculate_unit_vector(np.cross(normalized_mag_vector, row_1))
+    return np.stack((normalized_mag_vector, row_1, row_2), axis=0)
+
+
+def rotate_temperature_tensor_to_mag(temperature_tensor: np.ndarray, mag_vector: np.ndarray) -> tuple[
+    float, float, float]:
+    symmetric_temperature_tensor = np.zeros(shape=(3, 3))
+
+    symmetric_temperature_tensor[0][0] = temperature_tensor[0]
+    symmetric_temperature_tensor[0][1] = symmetric_temperature_tensor[1][0] = temperature_tensor[1]
+    symmetric_temperature_tensor[1][1] = temperature_tensor[2]
+    symmetric_temperature_tensor[0][2] = symmetric_temperature_tensor[2][0] = temperature_tensor[3]
+    symmetric_temperature_tensor[1][2] = symmetric_temperature_tensor[2][1] = temperature_tensor[4]
+    symmetric_temperature_tensor[2][2] = temperature_tensor[5]
+
+    rotation_matrix = rotation_matrix_builder(mag_vector)
+
+    rotated_tensor = rotation_matrix @ symmetric_temperature_tensor @ rotation_matrix.T
+
+    t_parallel = rotated_tensor[0][0] * 1e4
+
+    t_perpendicular_1 = (rotated_tensor[1][1] + rotated_tensor[2][2]) * 1e4 / 2
+    t_perpendicular_2 = 0
+
+    if rotated_tensor[1][1] > 0 and rotated_tensor[2][2] > 0:
+        t_perpendicular_2 = rotated_tensor[1][1] / rotated_tensor[2][2]
+        if t_perpendicular_2 < 1:
+            t_perpendicular_2 = 1 / t_perpendicular_2
+
+    return t_parallel, t_perpendicular_1, t_perpendicular_2

@@ -503,6 +503,7 @@ class TestSweProcessor(unittest.TestCase):
         np.testing.assert_allclose(swe_l3_data.energy_spectrum_outbound,
                                    np.array([[208.855516, 286.519101, 206.376298]]))
 
+    @patch('imap_l3_processing.swe.swe_processor.rotate_temperature_tensor_to_mag')
     @patch('imap_l3_processing.swe.swe_processor.calculate_primary_eigenvector')
     @patch('imap_l3_processing.swe.swe_processor.rotate_vector_to_rtn_spherical_coordinates')
     @patch('imap_l3_processing.swe.swe_processor.scale_halo_density')
@@ -524,7 +525,8 @@ class TestSweProcessor(unittest.TestCase):
                                        mock_scale_core_density: Mock,
                                        mock_scale_halo_density: Mock,
                                        mock_rotate_vector_to_rtn_spherical_coordinates,
-                                       mock_calculate_primary_eigenvector):
+                                       mock_calculate_primary_eigenvector,
+                                       mock_rotate_temperature_tensor_to_mag):
         epochs = datetime.now() + np.arange(3) * timedelta(minutes=1)
 
         instrument_elevation = np.array([-70, -50, -30, 0, 30, 50, 70])
@@ -619,6 +621,7 @@ class TestSweProcessor(unittest.TestCase):
         core_integrate_output = Mock()
         total_integrate_output = Mock()
         total_integrate_output.density = 5
+        total_integrate_output.temperature = 11.4
         halo_integrate_output = Mock()
 
         mock_integrate.side_effect = [core_integrate_output, total_integrate_output, halo_integrate_output, None, None]
@@ -668,6 +671,8 @@ class TestSweProcessor(unittest.TestCase):
             (total_primary_evec, np.array([t_par_3, t_perp_3, gyro_3])),
             (halo_primary_evec, np.array([t_par_2, t_perp_2, gyro_2])),
         ]
+
+        mock_rotate_temperature_tensor_to_mag.side_effect = [(11.4, 12.4, 13.4), (14.4, 15.4, 16.4), (17.4, 18.4, 19.4)]
 
         input_metadata = InputMetadata("swe", "l3", datetime(2025, 2, 21),
                                        datetime(2025, 2, 22), "v001")
@@ -901,6 +906,14 @@ class TestSweProcessor(unittest.TestCase):
             call(scaled_halo_temperature),
         ])
 
+        self.assertEqual(3, mock_rotate_temperature_tensor_to_mag.call_count)
+
+        mock_rotate_temperature_tensor_to_mag.assert_has_calls([
+            call(scale_core_density_output.temperature, [0, 0, 1]),
+            call(total_integrate_output.temperature, [0, 0, 1]),
+            call(scale_halo_density_output.temperature, [0, 0, 1]),
+        ])
+
         # @formatter:off
         self.assertIsInstance(swe_moment_data, SweL3MomentData)
         np.testing.assert_array_equal(swe_moment_data.core_fit_num_points,[core_moment_fit_results_1.number_of_points,core_moment_fit_results_2.number_of_points, np.nan])
@@ -955,8 +968,12 @@ class TestSweProcessor(unittest.TestCase):
         np.testing.assert_array_equal(swe_moment_data.total_temperature_theta_rtn_integrated, [105, np.nan, np.nan])
         np.testing.assert_array_equal(swe_moment_data.total_temperature_phi_rtn_integrated, [106, np.nan, np.nan])
 
-
-
+        np.testing.assert_array_equal(swe_moment_data.core_temperature_parallel_to_mag, [11.4, np.nan, np.nan])
+        np.testing.assert_array_equal(swe_moment_data.core_temperature_perpendicular_to_mag, [[12.4, 13.4], [np.nan, np.nan], [np.nan, np.nan]])
+        np.testing.assert_array_equal(swe_moment_data.halo_temperature_parallel_to_mag, [17.4, np.nan, np.nan])
+        np.testing.assert_array_equal(swe_moment_data.halo_temperature_perpendicular_to_mag, [[18.4, 19.4], [np.nan, np.nan], [np.nan, np.nan]])
+        np.testing.assert_array_equal(swe_moment_data.total_temperature_parallel_to_mag, [14.4, np.nan, np.nan])
+        np.testing.assert_array_equal(swe_moment_data.total_temperature_perpendicular_to_mag, [[15.4, 16.4], [np.nan, np.nan], [np.nan, np.nan]])
         # @formatter:on
 
     @patch('imap_l3_processing.swe.swe_processor.rotate_vector_to_rtn_spherical_coordinates')
