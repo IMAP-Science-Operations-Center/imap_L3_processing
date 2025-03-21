@@ -67,7 +67,8 @@ class SweProcessor(Processor):
                                                              spacecraft_potential, halo_core,
                                                              corrected_energy_bins, config)
 
-        phase_space_density_by_pitch_angle, energy_spectrum, energy_spectrum_inbound, energy_spectrum_outbound = self.calculate_pitch_angle_products(
+        phase_space_density_by_pitch_angle, energy_spectrum, energy_spectrum_inbound, energy_spectrum_outbound, \
+            intensity_by_pitch_angle_and_gyrophase, intensity_by_pitch_angle = self.calculate_pitch_angle_products(
             dependencies, corrected_energy_bins)
 
         return SweL3Data(
@@ -79,6 +80,8 @@ class SweProcessor(Processor):
             energy_delta_minus=config["energy_delta_minus"],
             pitch_angle=config["pitch_angle_bins"],
             pitch_angle_delta=config["pitch_angle_delta"],
+            intensity_by_pitch_angle_and_gyrophase=intensity_by_pitch_angle_and_gyrophase,
+            intensity_by_pitch_angle=intensity_by_pitch_angle,
             spacecraft_potential=spacecraft_potential,
             core_halo_breakpoint=halo_core,
             phase_space_density_by_pitch_angle=phase_space_density_by_pitch_angle,

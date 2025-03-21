@@ -96,7 +96,8 @@ class TestSweProcessor(unittest.TestCase):
 
         mock_calculate_pitch_angle_products.return_value = (
             sentinel.expected_phase_space_density_by_pitch_angle, sentinel.expected_energy_spectrum,
-            sentinel.expected_energy_spectrum_inbound, sentinel.expected_energy_spectrum_outbound,)
+            sentinel.expected_energy_spectrum_inbound, sentinel.expected_energy_spectrum_outbound,
+            sentinel.intensity_by_pitch_angle_and_gyrophase, sentinel.intensity_by_pitch_angle)
 
         input_metadata = InputMetadata("swe", "l3", datetime(2025, 2, 21),
                                        datetime(2025, 2, 22), "v001")
@@ -159,6 +160,9 @@ class TestSweProcessor(unittest.TestCase):
         np.testing.assert_array_equal(swe_l3_data.energy_delta_minus, swe_config["energy_delta_minus"])
         np.testing.assert_array_equal(swe_l3_data.pitch_angle, swe_config["pitch_angle_bins"])
         np.testing.assert_array_equal(swe_l3_data.pitch_angle_delta, swe_config["pitch_angle_delta"])
+        np.testing.assert_array_equal(swe_l3_data.intensity_by_pitch_angle_and_gyrophase,
+                                      sentinel.intensity_by_pitch_angle_and_gyrophase)
+        np.testing.assert_array_equal(swe_l3_data.intensity_by_pitch_angle, sentinel.intensity_by_pitch_angle)
 
         # need for both moments and pitch angle
         np.testing.assert_array_equal(swe_l3_data.spacecraft_potential, expected_spacecraft_potential)
@@ -1014,11 +1018,14 @@ class TestSweProcessor(unittest.TestCase):
         np.testing.assert_array_equal(swe_moment_data.total_temperature_phi_rtn_integrated, [106, np.nan, np.nan])
 
         np.testing.assert_array_equal(swe_moment_data.core_temperature_parallel_to_mag, [11.4, np.nan, np.nan])
-        np.testing.assert_array_equal(swe_moment_data.core_temperature_perpendicular_to_mag, [[12.4, 13.4], [np.nan, np.nan], [np.nan, np.nan]])
+        np.testing.assert_array_equal(swe_moment_data.core_temperature_perpendicular_to_mag,
+                                      [[12.4, 13.4], [np.nan, np.nan], [np.nan, np.nan]])
         np.testing.assert_array_equal(swe_moment_data.halo_temperature_parallel_to_mag, [17.4, np.nan, np.nan])
-        np.testing.assert_array_equal(swe_moment_data.halo_temperature_perpendicular_to_mag, [[18.4, 19.4], [np.nan, np.nan], [np.nan, np.nan]])
+        np.testing.assert_array_equal(swe_moment_data.halo_temperature_perpendicular_to_mag,
+                                      [[18.4, 19.4], [np.nan, np.nan], [np.nan, np.nan]])
         np.testing.assert_array_equal(swe_moment_data.total_temperature_parallel_to_mag, [14.4, np.nan, np.nan])
-        np.testing.assert_array_equal(swe_moment_data.total_temperature_perpendicular_to_mag, [[15.4, 16.4], [np.nan, np.nan], [np.nan, np.nan]])
+        np.testing.assert_array_equal(swe_moment_data.total_temperature_perpendicular_to_mag,
+                                      [[15.4, 16.4], [np.nan, np.nan], [np.nan, np.nan]])
         # @formatter:on
 
     @patch('imap_l3_processing.swe.swe_processor.rotate_vector_to_rtn_spherical_coordinates')
