@@ -6,7 +6,8 @@ import numpy as np
 from imap_l3_processing.swe.l3.science.pitch_calculations import piece_wise_model, find_breakpoints, \
     average_over_look_directions, calculate_velocity_in_dsp_frame_km_s, calculate_look_directions, rebin_by_pitch_angle, \
     correct_and_rebin, calculate_energy_in_ev_from_velocity_in_km_per_second, integrate_distribution_to_get_1d_spectrum, \
-    integrate_distribution_to_get_inbound_and_outbound_1d_spectrum, try_curve_fit_until_valid, rebin_flux_by_pitch_angle
+    integrate_distribution_to_get_inbound_and_outbound_1d_spectrum, try_curve_fit_until_valid, \
+    rebin_flux_by_pitch_angle, rebin_by_pitch_angle_and_gyrophase
 from tests.test_helpers import build_swe_configuration, NumpyArrayMatcher
 
 
@@ -371,11 +372,46 @@ class TestPitchCalculations(unittest.TestCase):
 
         result = rebin_by_pitch_angle(flux, pitch_angle, energy, config)
 
-        expected_result = np.array([
-            [100, 128]
-        ]
+        expected_result = np.array(
+            [
+                [100, 128]
+            ]
         )
         np.testing.assert_almost_equal(result, expected_result)
+
+    def test_rebin_by_pitch_angle_and_gyrophase(self):
+        psd = np.array([1000, 10,
+                        32, 256,
+                        3, 9, 81,
+                        5, 25, 125])
+
+        pitch_angle = np.array([25, 60, 25, 60, 120, 170, 165, 120, 170, 165])
+        gyrophase = np.array([10, 120, 210, 350, 10, 120, 95, 210, 350, 260])
+
+        central_energy_value = 10  # bin range is really 60 - 140
+        energy = np.array([central_energy_value * 0.8, central_energy_value / 0.8,
+                           central_energy_value * 0.8 ** 2, central_energy_value / 0.8,
+                           central_energy_value * 0.8 ** 2, central_energy_value * 0.8, central_energy_value / 0.8,
+                           central_energy_value * 0.8, central_energy_value, central_energy_value / 0.8])
+
+        config = build_swe_configuration(
+            pitch_angle_bins=[45, 135],
+            pitch_angle_delta=[45, 45],
+            energy_bins=[central_energy_value],
+            gyrophase_bins=[90, 270],
+            gyrophase_bin_deltas=[90, 90]
+        )
+
+        rebinned_by_gyro = rebin_by_pitch_angle_and_gyrophase(psd, pitch_angle, gyrophase, energy, config)
+
+        expected_gyro = np.array([
+            [
+                [100, 128],
+                [27, 25]
+            ]
+        ])
+
+        np.testing.assert_almost_equal(expected_gyro, rebinned_by_gyro)
 
     def test_rebin_by_pitch_angle_ignores_zero_measurements(self):
         flux = np.array([1000, 10, 32, 256, 0])
@@ -492,12 +528,15 @@ class TestPitchCalculations(unittest.TestCase):
         result = calculate_energy_in_ev_from_velocity_in_km_per_second(velocities)
         np.testing.assert_allclose(result, expected_energies, rtol=1e-7)
 
+    @patch('imap_l3_processing.swe.l3.science.pitch_calculations.rebin_by_pitch_angle_and_gyrophase')
+    @patch('imap_l3_processing.swe.l3.science.pitch_calculations.calculate_gyrophase')
     @patch('imap_l3_processing.swe.l3.science.pitch_calculations.calculate_energy_in_ev_from_velocity_in_km_per_second')
     @patch('imap_l3_processing.swe.l3.science.pitch_calculations.rebin_by_pitch_angle')
     @patch('imap_l3_processing.swe.l3.science.pitch_calculations.calculate_pitch_angle')
     @patch('imap_l3_processing.swe.l3.science.pitch_calculations.calculate_velocity_in_sw_frame')
     def test_correct_and_rebin(self, mock_calculate_velocity_in_sw_frame,
-                               mock_calculate_pitch_angle, mock_rebin_by_pitch_angle, mock_calculate_energy):
+                               mock_calculate_pitch_angle, mock_rebin_by_pitch_angle, mock_calculate_energy,
+                               mock_calculate_gyrophase, mock_rebin_by_pitch_angle_and_gyrophase):
 
         mag_vectors = np.array([
             [
@@ -536,13 +575,24 @@ class TestPitchCalculations(unittest.TestCase):
 
         mock_calculate_pitch_angle.assert_called_once_with(mock_calculate_velocity_in_sw_frame.return_value,
                                                            NumpyArrayMatcher(expected_mag_vectors_with_cem_axis))
+        mock_calculate_gyrophase.assert_called_once_with(mock_calculate_velocity_in_sw_frame.return_value,
+                                                         NumpyArrayMatcher(expected_mag_vectors_with_cem_axis))
+
         mock_calculate_energy.assert_called_with(mock_calculate_velocity_in_sw_frame.return_value)
         mock_rebin_by_pitch_angle.assert_called_with(
             flux_data, mock_calculate_pitch_angle.return_value,
             mock_calculate_energy.return_value,
             configuration,
         )
-        self.assertEqual(mock_rebin_by_pitch_angle.return_value, result)
+        mock_rebin_by_pitch_angle_and_gyrophase.assert_called_with(
+            flux_data,
+            mock_calculate_pitch_angle.return_value,
+            mock_calculate_gyrophase.return_value,
+            mock_calculate_energy.return_value,
+            configuration,
+        )
+        self.assertEqual((mock_rebin_by_pitch_angle.return_value, mock_rebin_by_pitch_angle_and_gyrophase.return_value),
+                         result)
 
     def test_integrate_distribution_to_get_1d_spectrum(self):
         pitch_angle_bins = [30, 90]
@@ -680,7 +730,7 @@ class TestPitchCalculations(unittest.TestCase):
     @patch('imap_l3_processing.swe.l3.science.pitch_calculations.calculate_unit_vector')
     @patch('imap_l3_processing.swe.l3.science.pitch_calculations.calculate_pitch_angle')
     @patch('imap_l3_processing.swe.l3.science.pitch_calculations.calculate_gyrophase')
-    @patch('imap_l3_processing.swe.l3.science.pitch_calculations.rebin_by_pitch_angle_and_gyrophase')
+    @patch('imap_l3_processing.swe.l3.science.pitch_calculations.pitch_angle_rebin')
     def test_rebin_flux_by_pitch_angle(self, mock_rebin_by_pa_gyro, mock_calculate_gyrophases,
                                        mock_calculate_pitch_angles, mock_calculate_unit_vector):
         mag_vectors = np.array([
