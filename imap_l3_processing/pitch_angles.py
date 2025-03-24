@@ -50,6 +50,25 @@ def calculate_gyrophase(particle_vectors: np.ndarray, magnetic_field_vector: np.
     return np.mod(np.degrees(gyrophases), 360)
 
 
+def hit_rebin_by_pitch_angle_and_gyrophase(intensity_data: np.array,
+                                           intensity_delta_plus: np.array,
+                                           intensity_delta_minus: np.array,
+                                           pitch_angles: np.array,
+                                           gyrophases: np.array,
+                                           number_of_pitch_angle_bins: int,
+                                           number_of_gyrophase_bins: int):
+    broadcasted_pitch_angles = np.broadcast_to(pitch_angles[np.newaxis, ...], shape=intensity_data.shape)
+    broadcasted_gyrophases = np.broadcast_to(gyrophases[np.newaxis, ...], shape=intensity_data.shape)
+
+    return rebin_by_pitch_angle_and_gyrophase(intensity_data,
+                                              intensity_delta_plus,
+                                              intensity_delta_minus,
+                                              broadcasted_pitch_angles,
+                                              broadcasted_gyrophases,
+                                              number_of_pitch_angle_bins,
+                                              number_of_gyrophase_bins, )
+
+
 def rebin_by_pitch_angle_and_gyrophase(intensity_data: np.array,
                                        intensity_delta_plus: np.array,
                                        intensity_delta_minus: np.array,
@@ -57,14 +76,6 @@ def rebin_by_pitch_angle_and_gyrophase(intensity_data: np.array,
                                        gyrophases: np.array,
                                        number_of_pitch_angle_bins: int,
                                        number_of_gyrophase_bins: int):
-    nanmask = np.isnan(gyrophases) or np.isnan(pitch_angles)
-
-    filtered_intensity = intensity_data[nanmask]
-    filtered_intensity = intensity_data[nanmask]
-
-    pitch_angle_bins = np.floor(pitch_angles / (180 / number_of_pitch_angle_bins)).astype(int)
-    gyrophase_bins = np.floor(gyrophases / (360 / number_of_gyrophase_bins)).astype(int)
-
     intensity_with_delta_plus = uarray(intensity_data, intensity_delta_plus)
     intensity_with_delta_minus = uarray(intensity_data, intensity_delta_minus)
 
@@ -80,19 +91,22 @@ def rebin_by_pitch_angle_and_gyrophase(intensity_data: np.array,
     rebinned_count_by_pa_and_gyro = np.zeros(shape=output_shape_pa_and_gyro)
     rebinned_count_pa_only = np.zeros(shape=output_shape_pa_only)
 
-    for i, (intensity_delta_plus, intensity_delta_minus) in enumerate(
-            zip(intensity_with_delta_plus, intensity_with_delta_minus)):
-        for pitch_angle_bin, gyrophase_bin, intensity_with_plus, intensity_with_minus in zip(np.ravel(pitch_angle_bins),
-                                                                                             np.ravel(gyrophase_bins),
-                                                                                             np.ravel(
-                                                                                                 intensity_delta_plus),
-                                                                                             np.ravel(
-                                                                                                 intensity_delta_minus)):
-            if not np.isnan(nominal_values(intensity_with_plus)):
-                rebinned_summed_by_pa_and_gyro_with_delta_plus[i, pitch_angle_bin, gyrophase_bin] += intensity_with_plus
-                rebinned_summed_by_pa_and_gyro_with_delta_minus[
-                    i, pitch_angle_bin, gyrophase_bin] += intensity_with_minus
-                rebinned_count_by_pa_and_gyro[i, pitch_angle_bin, gyrophase_bin] += 1
+    for i in range(intensity_data.shape[0]):
+        for pitch_angle, gyrophase, intensity_with_plus, intensity_with_minus in zip(
+                np.ravel(pitch_angles[i]),
+                np.ravel(gyrophases[i]),
+                np.ravel(intensity_with_delta_plus[i]),
+                np.ravel(intensity_with_delta_minus[i])):
+            if not (np.isnan(nominal_values(intensity_with_plus)) or np.isnan(pitch_angle)):
+                pitch_angle_bin = np.floor(pitch_angle / (180 / number_of_pitch_angle_bins)).astype(int)
+                if not np.isnan(gyrophase):
+                    gyrophase_bin = np.floor(gyrophase / (360 / number_of_gyrophase_bins)).astype(int)
+
+                    rebinned_summed_by_pa_and_gyro_with_delta_plus[
+                        i, pitch_angle_bin, gyrophase_bin] += intensity_with_plus
+                    rebinned_summed_by_pa_and_gyro_with_delta_minus[
+                        i, pitch_angle_bin, gyrophase_bin] += intensity_with_minus
+                    rebinned_count_by_pa_and_gyro[i, pitch_angle_bin, gyrophase_bin] += 1
 
                 rebinned_summed_pa_only_with_delta_plus[i, pitch_angle_bin] += intensity_with_plus
                 rebinned_summed_pa_only_with_delta_minus[i, pitch_angle_bin] += intensity_with_minus
