@@ -23,7 +23,7 @@ class HiProcessor(Processor):
         lats = hi_l3_data.lat
         variances = hi_l3_data.variance
 
-        gammas = spectral_fit(len(epochs), len(lons), len(lats), fluxes, variances, energy)
+        gammas, errors = spectral_fit(len(epochs), len(lons), len(lats), fluxes, variances, energy)
 
         data_product = HiL3SpectralIndexDataProduct(self.input_metadata.to_upstream_data_dependency(HI_L3_DESCRIPTOR),
                                                     hi_l3_dependencies.hi_l3_data.epoch,
@@ -38,6 +38,7 @@ class HiProcessor(Processor):
                                                     hi_l3_dependencies.hi_l3_data.counts_uncertainty,
                                                     hi_l3_dependencies.hi_l3_data.epoch_delta,
                                                     hi_l3_dependencies.hi_l3_data.exposure,
-                                                    hi_l3_dependencies.hi_l3_data.sensitivity)
+                                                    hi_l3_dependencies.hi_l3_data.sensitivity,
+                                                    errors)
 
         return data_product

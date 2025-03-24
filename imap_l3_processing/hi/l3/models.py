@@ -18,6 +18,7 @@ EPOCH_DELTA_VAR_NAME = "epoch_delta"
 EXPOSURE_VAR_NAME = "exposure"
 SENSITIVITY_VAR_NAME = "sensitivity"
 SPECTRAL_FIT_INDEX_VAR_NAME = "spectral_fit_index"
+SPECTRAL_FIT_INDEX_ERROR_VAR_NAME = "spectral_fit_index_error"
 
 
 @dataclass
@@ -36,6 +37,7 @@ class HiL3SpectralIndexDataProduct(DataProduct):
     epoch_delta: np.ndarray
     exposure: np.ndarray
     sensitivity: np.ndarray
+    spectral_fit_index_error: np.ndarray
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
@@ -53,6 +55,8 @@ class HiL3SpectralIndexDataProduct(DataProduct):
             DataProductVariable(EXPOSURE_VAR_NAME, self.exposure, cdf_data_type=pycdf.const.CDF_DOUBLE),
             DataProductVariable(SENSITIVITY_VAR_NAME, self.sensitivity, cdf_data_type=pycdf.const.CDF_DOUBLE),
             DataProductVariable(SPECTRAL_FIT_INDEX_VAR_NAME, self.spectral_fit_index,
+                                cdf_data_type=pycdf.const.CDF_DOUBLE),
+            DataProductVariable(SPECTRAL_FIT_INDEX_ERROR_VAR_NAME, self.spectral_fit_index_error,
                                 cdf_data_type=pycdf.const.CDF_DOUBLE),
         ]
 
