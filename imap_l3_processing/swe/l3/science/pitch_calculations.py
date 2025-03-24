@@ -295,7 +295,6 @@ def rebin_flux_by_pitch_angle(intensity: np.ndarray[(E_BINS, SPIN_SECTORS, CEMS)
     normalized_velocities = calculate_unit_vector(dsp_velocities)
     normalized_mag_vectors = calculate_unit_vector(mag_vectors)
 
-    # broadcast_mag_vectors = np.broadcast_to(normalized_mag_vectors[..., np.newaxis, :], normalized_velocities.shape)
     pitch_angles = calculate_pitch_angle(normalized_velocities, normalized_mag_vectors[..., np.newaxis, :])
     gyrophases = calculate_gyrophase(normalized_velocities, normalized_mag_vectors[..., np.newaxis, :])
     return rebin_intensity_by_pitch_angle_and_gyrophase(intensity,

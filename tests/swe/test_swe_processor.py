@@ -208,7 +208,7 @@ class TestSweProcessor(unittest.TestCase):
         corrected_energy_bins = energies.reshape(1, -1) - spacecraft_potential.reshape(-1, 1)
 
         pitch_angle_bins = [0, 90, 180]
-        gyrophase_bins = [0,360]
+        gyrophase_bins = [0, 360]
 
         swe_l2_data = SweL2Data(
             epoch=epochs,
@@ -247,12 +247,13 @@ class TestSweProcessor(unittest.TestCase):
             range(len(epochs))]
 
         rebinned_by_pitch_and_gyrophase_list = [
-            i + np.arange(len(swe_l2_data.energy) * len(pitch_angle_bins) * len(gyrophase_bins)).reshape(len(swe_l2_data.energy),
-                                                                                   len(pitch_angle_bins), len(gyrophase_bins)) for i in
+            i + np.arange(len(swe_l2_data.energy) * len(pitch_angle_bins) * len(gyrophase_bins)).reshape(
+                len(swe_l2_data.energy),
+                len(pitch_angle_bins), len(gyrophase_bins)) for i in
             range(len(epochs))]
 
-
-        rebinned_by_pitch_and_gyrophase = [(pa, pa_and_gyro) for pa, pa_and_gyro in zip(rebinned_by_pitch_list, rebinned_by_pitch_and_gyrophase_list)]
+        rebinned_by_pitch_and_gyrophase = [(pa, pa_and_gyro) for pa, pa_and_gyro in
+                                           zip(rebinned_by_pitch_list, rebinned_by_pitch_and_gyrophase_list)]
         mock_correct_and_rebin.side_effect = rebinned_by_pitch_and_gyrophase
         integrated_spectrum = np.arange(9).reshape(3, 3) + 11
 
@@ -318,7 +319,8 @@ class TestSweProcessor(unittest.TestCase):
         ])
 
         np.testing.assert_array_equal(actual_phase_space_density_by_pitch_angle, rebinned_by_pitch_list)
-        np.testing.assert_array_equal(actual_phase_space_density_by_pa_and_gyrophase, rebinned_by_pitch_and_gyrophase_list)
+        np.testing.assert_array_equal(actual_phase_space_density_by_pa_and_gyrophase,
+                                      rebinned_by_pitch_and_gyrophase_list)
         np.testing.assert_array_equal(actual_energy_spectrum, integrated_spectrum)
         np.testing.assert_array_equal(actual_energy_spectrum_inbound, expected_inbound_spectrum)
         np.testing.assert_array_equal(actual_energy_spectrum_outbound, expected_outbound_spectrum)
@@ -429,8 +431,8 @@ class TestSweProcessor(unittest.TestCase):
             geometric_fractions=geometric_fractions,
             pitch_angle_bins=pitch_angle_bins,
             pitch_angle_delta=[15, 15, 15],
-            gyrophase_bins = [0,180,360],
-            gyrophase_delta = [180,180],
+            gyrophase_bins=[0, 180, 360],
+            gyrophase_delta=[180, 180],
             energy_bins=energy_bins,
             energy_delta_plus=[2, 20, 200],
             energy_delta_minus=[8, 80, 800],
@@ -517,8 +519,8 @@ class TestSweProcessor(unittest.TestCase):
             spacecraft_potential_initial_guess=15,
             core_halo_breakpoint_initial_guess=90,
             in_vs_out_energy_index=len(energy_bins) - 1,
-            gyrophase_bins=[90,180,270],
-            gyrophase_delta=[90,90,90]
+            gyrophase_bins=[90, 180, 270],
+            gyrophase_delta=[90, 90, 90]
         )
 
         input_metadata = InputMetadata("swe", "l3", datetime(2025, 2, 21),
@@ -553,6 +555,13 @@ class TestSweProcessor(unittest.TestCase):
         np.testing.assert_allclose(swe_l3_data.energy_spectrum_inbound, np.array([[0, 104.147588, 154.42602]]))
         np.testing.assert_allclose(swe_l3_data.energy_spectrum_outbound,
                                    np.array([[208.855516, 286.519101, 206.376298]]))
+        self.assertEqual((1, 9, 7, 30), swe_l3_data.intensity_by_pitch_angle_and_gyrophase.shape)
+        self.assertEqual((1, 9, 7), swe_l3_data.intensity_by_pitch_angle.shape)
+        np.testing.assert_allclose(swe_l3_data.intensity_by_pitch_angle[0, 1, 3:6],
+                                   np.array([49, 52.15789474,
+                                             53.09090909]))
+        np.testing.assert_allclose(swe_l3_data.intensity_by_pitch_angle_and_gyrophase[0, 1, 3, 15:17],
+                                   np.array([63, 45.5]))
 
     @patch('imap_l3_processing.swe.swe_processor.rotate_temperature_tensor_to_mag')
     @patch('imap_l3_processing.swe.swe_processor.calculate_primary_eigenvector')
