@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from pathlib import Path
 
-from cdflib import CDF
+from spacepy.pycdf import CDF
 
 from imap_l3_processing.glows.descriptors import GLOWS_L3A_DESCRIPTOR
 from imap_l3_processing.glows.l3a.models import GlowsL3LightCurve
