@@ -1,7 +1,6 @@
 import unittest
 from unittest.mock import Mock
 
-import numpy as np
 from spacepy import pycdf
 
 from imap_l3_processing.swe.l3.models import SweL3Data, EPOCH_CDF_VAR_NAME, EPOCH_DELTA_CDF_VAR_NAME, \
@@ -35,7 +34,9 @@ from imap_l3_processing.swe.l3.models import SweL3Data, EPOCH_CDF_VAR_NAME, EPOC
     CORE_T_PARALLEL_INTEGRATED_CDF_VAR_NAME, HALO_T_PERPENDICULAR_INTEGRATED_CDF_VAR_NAME, \
     HALO_T_PARALLEL_INTEGRATED_CDF_VAR_NAME, TOTAL_T_PERPENDICULAR_INTEGRATED_CDF_VAR_NAME, \
     TOTAL_T_PARALLEL_INTEGRATED_CDF_VAR_NAME, CORE_TEMPERATURE_TENSOR_INTEGRATED_CDF_VAR_NAME, \
-    HALO_TEMPERATURE_TENSOR_INTEGRATED_CDF_VAR_NAME, TOTAL_TEMPERATURE_TENSOR_INTEGRATED_CDF_VAR_NAME
+    HALO_TEMPERATURE_TENSOR_INTEGRATED_CDF_VAR_NAME, TOTAL_TEMPERATURE_TENSOR_INTEGRATED_CDF_VAR_NAME, \
+    PHASE_SPACE_DENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_CDF_VAR_NAME, GYROPHASE_DELTA_CDF_VAR_NAME, \
+    GYROPHASE_BINS_CDF_VAR_NAME
 from tests.swapi.cdf_model_test_case import CdfModelTestCase
 
 
@@ -48,7 +49,10 @@ class TestModels(CdfModelTestCase):
         energy_delta_minus = Mock()
         pitch_angle = Mock()
         pitch_angle_delta = Mock()
+        gyrophase_bins = Mock()
+        gyrophase_delta = Mock()
         psd_by_pitch_angle = Mock()
+        psd_by_pitch_angle_and_gyrophase = Mock()
         energy_spectrum = Mock()
         energy_spectrum_inbound = Mock()
         energy_spectrum_outbound = Mock()
@@ -120,7 +124,10 @@ class TestModels(CdfModelTestCase):
                          energy_delta_minus=energy_delta_minus,
                          pitch_angle=pitch_angle,
                          pitch_angle_delta=pitch_angle_delta,
+                         gyrophase_bins=gyrophase_bins,
+                         gyrophase_delta=gyrophase_delta,
                          phase_space_density_by_pitch_angle=psd_by_pitch_angle,
+                         phase_space_density_by_pitch_angle_and_gyrophase=psd_by_pitch_angle_and_gyrophase,
                          energy_spectrum=energy_spectrum,
                          energy_spectrum_inbound=energy_spectrum_inbound,
                          energy_spectrum_outbound=energy_spectrum_outbound,
@@ -211,7 +218,15 @@ class TestModels(CdfModelTestCase):
             next(variables), pitch_angle_delta, PITCH_ANGLE_DELTA_CDF_VAR_NAME, pycdf.const.CDF_REAL4,
             expected_record_varying=False)
         self.assert_variable_attributes(
+            next(variables), gyrophase_bins, GYROPHASE_BINS_CDF_VAR_NAME, pycdf.const.CDF_REAL4,
+            expected_record_varying=False)
+        self.assert_variable_attributes(
+            next(variables), gyrophase_delta, GYROPHASE_DELTA_CDF_VAR_NAME, pycdf.const.CDF_REAL4,
+            expected_record_varying=False)
+        self.assert_variable_attributes(
             next(variables), psd_by_pitch_angle, PHASE_SPACE_DENSITY_BY_PITCH_ANGLE_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+        self.assert_variable_attributes(
+            next(variables), psd_by_pitch_angle_and_gyrophase, PHASE_SPACE_DENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
         self.assert_variable_attributes(
             next(variables), energy_spectrum, ENERGY_SPECTRUM_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
         self.assert_variable_attributes(

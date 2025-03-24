@@ -13,7 +13,10 @@ ENERGY_DELTA_PLUS_CDF_VAR_NAME = "energy_delta_plus"
 ENERGY_DELTA_MINUS_CDF_VAR_NAME = "energy_delta_minus"
 PITCH_ANGLE_CDF_VAR_NAME = "pitch_angle"
 PITCH_ANGLE_DELTA_CDF_VAR_NAME = "pitch_angle_delta"
+GYROPHASE_BINS_CDF_VAR_NAME = "gyrophase_bins"
+GYROPHASE_DELTA_CDF_VAR_NAME = "gyrophase_deltas"
 PHASE_SPACE_DENSITY_BY_PITCH_ANGLE_CDF_VAR_NAME = "phase_space_density_by_pitch_angle"
+PHASE_SPACE_DENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_CDF_VAR_NAME = "phase_space_density_by_pitch_angle_and_gyrophase"
 ENERGY_SPECTRUM_CDF_VAR_NAME = "energy_spectrum"
 ENERGY_SPECTRUM_INBOUND_CDF_VAR_NAME = "energy_spectrum_inbound"
 ENERGY_SPECTRUM_OUTBOUND_CDF_VAR_NAME = "energy_spectrum_outbound"
@@ -177,6 +180,8 @@ class SweL3Data(DataProduct):
     energy_delta_minus: np.ndarray
     pitch_angle: np.ndarray
     pitch_angle_delta: np.ndarray
+    gyrophase_bins: np.ndarray
+    gyrophase_delta: np.ndarray
     spacecraft_potential: np.ndarray
     core_halo_breakpoint: np.ndarray
     # intensity
@@ -184,6 +189,7 @@ class SweL3Data(DataProduct):
     intensity_by_pitch_angle_and_gyrophase: np.ndarray
     # pitch angle specific
     phase_space_density_by_pitch_angle: np.ndarray
+    phase_space_density_by_pitch_angle_and_gyrophase: np.ndarray
     energy_spectrum: np.ndarray
     energy_spectrum_inbound: np.ndarray
     energy_spectrum_outbound: np.ndarray
@@ -205,8 +211,16 @@ class SweL3Data(DataProduct):
                                 record_varying=False),
             DataProductVariable(PITCH_ANGLE_DELTA_CDF_VAR_NAME, value=self.pitch_angle_delta,
                                 cdf_data_type=pycdf.const.CDF_REAL4, record_varying=False),
+
+            DataProductVariable(GYROPHASE_BINS_CDF_VAR_NAME, value=self.gyrophase_bins,
+                                cdf_data_type=pycdf.const.CDF_REAL4, record_varying=False),
+            DataProductVariable(GYROPHASE_DELTA_CDF_VAR_NAME, value=self.gyrophase_delta,
+                                cdf_data_type=pycdf.const.CDF_REAL4, record_varying=False),
             DataProductVariable(PHASE_SPACE_DENSITY_BY_PITCH_ANGLE_CDF_VAR_NAME,
                                 value=self.phase_space_density_by_pitch_angle, cdf_data_type=pycdf.const.CDF_REAL4),
+            DataProductVariable(PHASE_SPACE_DENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_CDF_VAR_NAME,
+                                value=self.phase_space_density_by_pitch_angle_and_gyrophase,
+                                cdf_data_type=pycdf.const.CDF_REAL4),
             DataProductVariable(ENERGY_SPECTRUM_CDF_VAR_NAME,
                                 value=self.energy_spectrum, cdf_data_type=pycdf.const.CDF_REAL4),
             DataProductVariable(ENERGY_SPECTRUM_INBOUND_CDF_VAR_NAME,

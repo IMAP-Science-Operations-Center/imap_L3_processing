@@ -399,7 +399,7 @@ class TestPitchCalculations(unittest.TestCase):
             pitch_angle_delta=[45, 45],
             energy_bins=[central_energy_value],
             gyrophase_bins=[90, 270],
-            gyrophase_bin_deltas=[90, 90]
+            gyrophase_delta=[90, 90]
         )
 
         rebinned_by_gyro = rebin_by_pitch_angle_and_gyrophase(psd, pitch_angle, gyrophase, energy, config)

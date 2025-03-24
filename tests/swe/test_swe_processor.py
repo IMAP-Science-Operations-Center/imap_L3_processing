@@ -86,13 +86,16 @@ class TestSweProcessor(unittest.TestCase):
             max_mag_offset_in_minutes=1,
             spacecraft_potential_initial_guess=15,
             core_halo_breakpoint_initial_guess=90,
+            gyrophase_bins=[90, 180, 270],
+            gyrophase_delta=[90, 90, 90]
         )
 
         mock_moment_data = create_dataclass_mock(SweL3MomentData)
         mock_calculate_moment_products.return_value = mock_moment_data
 
         mock_calculate_pitch_angle_products.return_value = (
-            sentinel.expected_phase_space_density_by_pitch_angle, sentinel.expected_energy_spectrum,
+            sentinel.expected_phase_space_density_by_pitch_angle,
+            sentinel.expected_phase_space_density_by_pitch_angle_and_gyrophase, sentinel.expected_energy_spectrum,
             sentinel.expected_energy_spectrum_inbound, sentinel.expected_energy_spectrum_outbound,
             sentinel.intensity_by_pitch_angle_and_gyrophase, sentinel.intensity_by_pitch_angle)
 
@@ -159,6 +162,8 @@ class TestSweProcessor(unittest.TestCase):
         np.testing.assert_array_equal(swe_l3_data.energy_delta_minus, swe_config["energy_delta_minus"])
         np.testing.assert_array_equal(swe_l3_data.pitch_angle, swe_config["pitch_angle_bins"])
         np.testing.assert_array_equal(swe_l3_data.pitch_angle_delta, swe_config["pitch_angle_delta"])
+        np.testing.assert_array_equal(swe_l3_data.gyrophase_bins, swe_config["gyrophase_bins"])
+        np.testing.assert_array_equal(swe_l3_data.gyrophase_delta, swe_config["gyrophase_delta"])
         np.testing.assert_array_equal(swe_l3_data.intensity_by_pitch_angle_and_gyrophase,
                                       sentinel.intensity_by_pitch_angle_and_gyrophase)
         np.testing.assert_array_equal(swe_l3_data.intensity_by_pitch_angle, sentinel.intensity_by_pitch_angle)
@@ -174,6 +179,8 @@ class TestSweProcessor(unittest.TestCase):
         self.assertEqual(sentinel.expected_energy_spectrum_inbound, swe_l3_data.energy_spectrum_inbound)
         self.assertEqual(sentinel.expected_energy_spectrum_outbound, swe_l3_data.energy_spectrum_outbound)
         self.assertEqual(mock_moment_data, swe_l3_data.moment_data)
+        self.assertEqual(sentinel.expected_phase_space_density_by_pitch_angle_and_gyrophase,
+                         swe_l3_data.phase_space_density_by_pitch_angle_and_gyrophase)
 
 
     @patch('imap_l3_processing.swe.swe_processor.rebin_flux_by_pitch_angle')
@@ -423,6 +430,8 @@ class TestSweProcessor(unittest.TestCase):
             geometric_fractions=geometric_fractions,
             pitch_angle_bins=pitch_angle_bins,
             pitch_angle_delta=[15, 15, 15],
+            gyrophase_bins = [0,180,360],
+            gyrophase_delta = [180,180],
             energy_bins=energy_bins,
             energy_delta_plus=[2, 20, 200],
             energy_delta_minus=[8, 80, 800],
@@ -509,8 +518,8 @@ class TestSweProcessor(unittest.TestCase):
             spacecraft_potential_initial_guess=15,
             core_halo_breakpoint_initial_guess=90,
             in_vs_out_energy_index=len(energy_bins) - 1,
-            gyrophase_bins=[1],
-            gyrophase_bin_deltas=[.1]
+            gyrophase_bins=[90,180,270],
+            gyrophase_delta=[90,90,90]
         )
 
         input_metadata = InputMetadata("swe", "l3", datetime(2025, 2, 21),
@@ -533,6 +542,8 @@ class TestSweProcessor(unittest.TestCase):
         self.assertEqual(swe_l3_data.energy, swel3_dependency.configuration["energy_bins"])
         self.assertEqual(swe_l3_data.energy_delta_plus, swel3_dependency.configuration["energy_delta_plus"])
         self.assertEqual(swe_l3_data.energy_delta_minus, swel3_dependency.configuration["energy_delta_minus"])
+        self.assertEqual(swe_l3_data.gyrophase_bins, swel3_dependency.configuration["gyrophase_bins"])
+        self.assertEqual(swe_l3_data.gyrophase_delta, swel3_dependency.configuration["gyrophase_delta"])
         np.testing.assert_allclose(swe_l3_data.phase_space_density_by_pitch_angle,
                                    np.array([[[np.nan, 194.772034, 270.312835],
                                               [211.672665, 273.136802, 363.195552],
