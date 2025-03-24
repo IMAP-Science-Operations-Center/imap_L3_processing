@@ -20,10 +20,15 @@ def spectral_fit(num_epochs, num_lons, num_lats, fluxes, variances, energy):
                 filtered_energy = energy[~flux_or_error_is_invalid]
                 keywords = {'xval': filtered_energy, 'yval': flux, 'errval': np.sqrt(variance)}
                 fit = mpfit(power_law, initial_parameters, keywords, nprint=0)
+
                 a, gamma = fit.params
-                a_error, gamma_error = fit.perror
-                gammas[epoch][lon][lat] = gamma
-                errors[epoch][lon][lat] = gamma_error
+                if fit.status > 0:
+                    a_error, gamma_error = fit.perror
+                    gammas[epoch][lon][lat] = gamma
+                    errors[epoch][lon][lat] = gamma_error
+                else:
+                    gammas[epoch][lon][lat] = np.nan
+                    errors[epoch][lon][lat] = np.nan
     return gammas, errors
 
 
