@@ -7,7 +7,7 @@ from imap_l3_processing.swe.l3.science.pitch_calculations import piece_wise_mode
     average_over_look_directions, calculate_velocity_in_dsp_frame_km_s, calculate_look_directions, rebin_by_pitch_angle, \
     correct_and_rebin, calculate_energy_in_ev_from_velocity_in_km_per_second, integrate_distribution_to_get_1d_spectrum, \
     integrate_distribution_to_get_inbound_and_outbound_1d_spectrum, try_curve_fit_until_valid, \
-    rebin_flux_by_pitch_angle, rebin_by_pitch_angle_and_gyrophase
+    rebin_intensity_by_pitch_angle, rebin_by_pitch_angle_and_gyrophase
 from tests.test_helpers import build_swe_configuration, NumpyArrayMatcher
 
 
@@ -730,8 +730,8 @@ class TestPitchCalculations(unittest.TestCase):
     @patch('imap_l3_processing.swe.l3.science.pitch_calculations.calculate_unit_vector')
     @patch('imap_l3_processing.swe.l3.science.pitch_calculations.calculate_pitch_angle')
     @patch('imap_l3_processing.swe.l3.science.pitch_calculations.calculate_gyrophase')
-    @patch('imap_l3_processing.swe.l3.science.pitch_calculations.rebin_intensity_by_pitch_angle_and_gyrophase')
-    def test_rebin_intensity_by_pitch_angle(self, mock_rebin_by_pa_gyro, mock_calculate_gyrophases,
+    @patch('imap_l3_processing.swe.l3.science.pitch_calculations.swe_rebin_intensity_by_pitch_angle_and_gyrophase')
+    def test_rebin_intensity_by_pitch_angle(self, mock_swe_rebin_by_pa_gyro, mock_calculate_gyrophases,
                                             mock_calculate_pitch_angles, mock_calculate_unit_vector):
         mag_vectors = np.array([
             [
@@ -759,18 +759,18 @@ class TestPitchCalculations(unittest.TestCase):
 
         mock_calculate_unit_vector.side_effect = [sentinel.normalized_dsp_velocities, mag_vectors]
 
-        intensity_by_pitch_angle = rebin_flux_by_pitch_angle(intensity, intensity_delta_plus, intensity_delta_minus,
-                                                             sentinel.dsp_velocities, sentinel.mag_vectors)
+        intensity_by_pitch_angle = rebin_intensity_by_pitch_angle(intensity, intensity_delta_plus,
+                                                                  intensity_delta_minus,
+                                                                  sentinel.dsp_velocities, sentinel.mag_vectors)
         mock_calculate_unit_vector.assert_has_calls([call(sentinel.dsp_velocities), call(sentinel.mag_vectors)])
         mock_calculate_pitch_angles.assert_called_once_with(sentinel.normalized_dsp_velocities,
                                                             NumpyArrayMatcher(expected_mag_vectors_with_cem_axis))
         mock_calculate_gyrophases.assert_called_once_with(sentinel.normalized_dsp_velocities,
                                                           NumpyArrayMatcher(expected_mag_vectors_with_cem_axis))
-        mock_rebin_by_pa_gyro.assert_called_once_with(intensity, intensity_delta_plus,
-                                                      intensity_delta_minus, mock_calculate_pitch_angles.return_value,
-                                                      mock_calculate_gyrophases.return_value,
-                                                      7, 30)
-        self.assertEqual(mock_rebin_by_pa_gyro.return_value, intensity_by_pitch_angle)
+        mock_swe_rebin_by_pa_gyro.assert_called_once_with(intensity, mock_calculate_pitch_angles.return_value,
+                                                          mock_calculate_gyrophases.return_value,
+                                                          7, 30)
+        self.assertEqual(mock_swe_rebin_by_pa_gyro.return_value, intensity_by_pitch_angle)
 
 
 if __name__ == '__main__':

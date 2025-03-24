@@ -4,7 +4,7 @@ import numpy as np
 
 from imap_l3_processing.pitch_angles import calculate_pitch_angle, calculate_unit_vector, calculate_gyrophase, \
     rotate_from_imap_despun_to_hit_despun, rotate_particle_vectors_from_hit_despun_to_imap_despun, \
-    rebin_intensity_by_pitch_angle_and_gyrophase, hit_rebin_by_pitch_angle_and_gyrophase
+    swe_rebin_intensity_by_pitch_angle_and_gyrophase, hit_rebin_by_pitch_angle_and_gyrophase
 
 
 class TestPitchAngles(unittest.TestCase):
@@ -218,8 +218,6 @@ class TestPitchAngles(unittest.TestCase):
             intensity_data_for_energy_1,
             intensity_data_for_energy_2
         ])
-        intensity_delta_plus = intensity * 0.09
-        intensity_delta_minus = intensity * 0.11
 
         pitch_angles = np.array(
             [
@@ -231,22 +229,38 @@ class TestPitchAngles(unittest.TestCase):
                 [[135, 225, 225, 135], [45, 315, 315, 45]],
                 [[135, 225, 225, 135], [45, 315, 315, 45]]
             ])
+
+        # (1, 2), (1, 3), (2, 3), (2, 2), # (1, 1), (1, 4), (2, 4), (2, 1)
+
+        counts = np.array([
+            [[4, 9, 49, 36], [1, 16, 64, 25]],
+            [[4 * 4, 4 * 9, 4 * 49, 4 * 36], [4 * 1, 4 * 16, 4 * 64, 4 * 25]],
+        ])
+        expected_uncertainty_by_pa_gyro = np.array([
+            [[1, 1 / 2, 1 / 3, 1 / 4], [1 / 5, 1 / 6, 1 / 7, 1 / 8]],
+            [[1 / 2, 1 / 4, 1 / 6, 1 / 8], [1 / 10, 1 / 12, 1 / 14, 1 / 16]]
+        ])
+        expected_uncertainty_by_pa = np.array([[2.5, 4.5], [10.5, 12.5]])
+
         num_pitch_angle_bins = 2
         num_gyrophase_bins = 4
         expected_intensity_by_pa_and_gyro = np.array([
             [[4, 0, 1, 5], [7, 3, 2, 6]],
             [[12, 8, 9, 13], [15, 11, 10, 14]]
         ])
-        expected_intensity_by_pa = np.array([[2.5, 4.5], [10.5, 12.5]])
+        expected_intensity_by_pa = np.array([[1 / np.sqrt(4 + 9 + 1 + 16), 1 / np.sqrt(49 + 36 + 64 + 25)],
+                                             [1 / 2 * np.sqrt(4 + 9 + 1 + 16), 1 / 2 * np.sqrt(49 + 36 + 64 + 25)]])
 
-        rebinned_data = rebin_intensity_by_pitch_angle_and_gyrophase(intensity, intensity_delta_plus,
-                                                                     intensity_delta_minus,
-                                                                     pitch_angles,
-                                                                     gyrophases, num_pitch_angle_bins,
-                                                                     num_gyrophase_bins)
-        actual_rebinned_by_pa_and_gyro, _, _, actual_rebinned_by_pa, _, _ = rebinned_data
+        rebinned_data = swe_rebin_intensity_by_pitch_angle_and_gyrophase(intensity,
+                                                                         counts,
+                                                                         pitch_angles,
+                                                                         gyrophases, num_pitch_angle_bins,
+                                                                         num_gyrophase_bins)
+        actual_rebinned_by_pa_and_gyro, actual_rebinned_by_pa, actual_intensity_uncertainty_by_pa_and_gyro, actual_intensity_uncertainty_by_pa = rebinned_data
         np.testing.assert_equal(actual_rebinned_by_pa_and_gyro, expected_intensity_by_pa_and_gyro)
         np.testing.assert_equal(actual_rebinned_by_pa, expected_intensity_by_pa)
+        np.testing.assert_array_equal(actual_intensity_uncertainty_by_pa_and_gyro, expected_uncertainty_by_pa_gyro)
+        np.testing.assert_array_equal(actual_intensity_uncertainty_by_pa, expected_uncertainty_by_pa)
 
     def test_rebin_by_pitch_angle_and_gyrophase_pa_product_only_correctly_weights_when_averaging(self):
         intensity = np.array([[[0, 1, 2], [3, 4, 5]]])

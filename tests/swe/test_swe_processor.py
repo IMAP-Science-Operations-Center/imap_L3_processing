@@ -182,7 +182,7 @@ class TestSweProcessor(unittest.TestCase):
         self.assertEqual(sentinel.expected_phase_space_density_by_pitch_angle_and_gyrophase,
                          swe_l3_data.phase_space_density_by_pitch_angle_and_gyrophase)
 
-    @patch('imap_l3_processing.swe.swe_processor.rebin_flux_by_pitch_angle')
+    @patch('imap_l3_processing.swe.swe_processor.rebin_intensity_by_pitch_angle')
     @patch('imap_l3_processing.swe.swe_processor.calculate_velocity_in_dsp_frame_km_s')
     @patch('imap_l3_processing.swe.swe_processor.average_over_look_directions')
     @patch('imap_l3_processing.swe.swe_processor.find_breakpoints')
@@ -198,7 +198,7 @@ class TestSweProcessor(unittest.TestCase):
                                                           mock_calculate_solar_wind_velocity_vector,
                                                           _,
                                                           mock_average_over_look_directions,
-                                                          mock_calculate_velocities, mock_rebin_flux):
+                                                          mock_calculate_velocities, mock_rebin_intensity):
         epochs = datetime.now() + np.arange(3) * timedelta(minutes=1)
         mag_epochs = datetime.now() - timedelta(seconds=15) + np.arange(10) * timedelta(minutes=.5)
         swapi_epochs = datetime.now() - timedelta(seconds=15) + np.arange(10) * timedelta(minutes=.5)
@@ -259,9 +259,10 @@ class TestSweProcessor(unittest.TestCase):
 
         expected_intensity_by_pa_and_gyro = np.arange(9).reshape(3, 3) + 25
         expected_intensity_by_pa = np.arange(9).reshape(3, 3) + 26
-        mock_rebin_flux.side_effect = [(expected_intensity_by_pa_and_gyro[0], 0, 0, expected_intensity_by_pa[0], 0, 0),
-                                       (expected_intensity_by_pa_and_gyro[1], 0, 0, expected_intensity_by_pa[1], 0, 0),
-                                       (expected_intensity_by_pa_and_gyro[2], 0, 0, expected_intensity_by_pa[2], 0, 0)]
+        mock_rebin_intensity.side_effect = [
+            (expected_intensity_by_pa_and_gyro[0], expected_intensity_by_pa[0]),
+            (expected_intensity_by_pa_and_gyro[1], expected_intensity_by_pa[1]),
+            (expected_intensity_by_pa_and_gyro[2], expected_intensity_by_pa[2])]
 
         mock_integrate_distribution_to_get_1d_spectrum.side_effect = integrated_spectrum
 
@@ -357,20 +358,15 @@ class TestSweProcessor(unittest.TestCase):
         ]
         self.assertEqual(correct_and_rebin_expected_calls, correct_and_rebin_actual_calls)
 
-        empty_array_with_correct_shape = np.zeros_like(swe_l2_data.flux[0])
-
-        mock_rebin_flux_expected_calls = [
-            call_with_array_matchers(swe_l2_data.flux[0], empty_array_with_correct_shape,
-                                     empty_array_with_correct_shape, mock_calculate_velocities.return_value,
+        mock_rebin_intensity_expected_calls = [
+            call_with_array_matchers(swe_l2_data.flux[0], mock_calculate_velocities.return_value,
                                      closest_mag_data[0]),
-            call_with_array_matchers(swe_l2_data.flux[1], empty_array_with_correct_shape,
-                                     empty_array_with_correct_shape, mock_calculate_velocities.return_value,
+            call_with_array_matchers(swe_l2_data.flux[1], mock_calculate_velocities.return_value,
                                      closest_mag_data[1]),
-            call_with_array_matchers(swe_l2_data.flux[2], empty_array_with_correct_shape,
-                                     empty_array_with_correct_shape, mock_calculate_velocities.return_value,
+            call_with_array_matchers(swe_l2_data.flux[2], mock_calculate_velocities.return_value,
                                      closest_mag_data[2])
         ]
-        self.assertEqual(mock_rebin_flux_expected_calls, mock_rebin_flux.call_args_list)
+        self.assertEqual(mock_rebin_intensity_expected_calls, mock_rebin_intensity.call_args_list)
 
         mock_integrate_distribution_to_get_1d_spectrum.assert_has_calls([
             call(rebinned_by_pitch_list[0], swe_config),
