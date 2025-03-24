@@ -10,7 +10,11 @@ from imap_l3_processing.models import UpstreamDataDependency
 from imap_l3_processing.swapi.descriptors import SWAPI_L3A_ALPHA_SW_DESCRIPTOR
 from imap_l3_processing.swapi.l3a.models import SwapiL3AlphaSolarWindData
 from imap_l3_processing.swapi.l3a.utils import read_l3a_alpha_sw_swapi_data
-from imap_l3_processing.utils import download_dependency
+from imap_l3_processing.utils import download_dependency, download_external_dependency
+
+F107_FLUX_TABLE_URL = "https://www.spaceweather.gc.ca/solar_flux_data/daily_flux_values/fluxtable.txt"
+LYMAN_ALPHA_COMPOSITE_INDEX_URL = "http://lasp.colorado.edu/data/timed_see/composite_lya/lyman_alpha_composite.nc"
+OMNI2_URL = "https://spdf.gsfc.nasa.gov/pub/data/omni/low_res_omni/omni2_all_years.dat"
 
 
 @dataclass
@@ -41,10 +45,18 @@ class GlowsL3BDependencies:
         bad_day_list_path = download_dependency(bad_day_list_dependency)
         uv_anisotropy_path = download_dependency(uv_anisotropy_factor_dependency)
         waw_helioion_mp_path = download_dependency(waw_helioion_mp_dependency)
+
+        f107_index_file_path = download_external_dependency(F107_FLUX_TABLE_URL, 'f107_fluxtable.txt')
+        lyman_alpha_path = download_external_dependency(LYMAN_ALPHA_COMPOSITE_INDEX_URL, 'lyman_alpha_composite.nc')
+        omni2_data_path = download_external_dependency(OMNI2_URL, 'omni2_all_years.dat')
+
         ancillary_files = {
             "bad_day_list": bad_day_list_path,
             "uv_anisotropy_factor": uv_anisotropy_path,
-            "waw_helioion_mp": waw_helioion_mp_path
+            "waw_helioion_mp": waw_helioion_mp_path,
+            "f107_index": f107_index_file_path,
+            "lyman_alpha_composite_index": lyman_alpha_path,
+            "omni2_data": omni2_data_path
         }
 
         return cls(glows_l3a_data, swapi_l3a_alpha_sw_data, ancillary_files)
