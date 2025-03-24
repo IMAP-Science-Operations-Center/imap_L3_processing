@@ -15,6 +15,12 @@ from imap_l3_processing.utils import download_dependency, download_external_depe
 F107_FLUX_TABLE_URL = "https://www.spaceweather.gc.ca/solar_flux_data/daily_flux_values/fluxtable.txt"
 LYMAN_ALPHA_COMPOSITE_INDEX_URL = "http://lasp.colorado.edu/data/timed_see/composite_lya/lyman_alpha_composite.nc"
 OMNI2_URL = "https://spdf.gsfc.nasa.gov/pub/data/omni/low_res_omni/omni2_all_years.dat"
+BAD_DAY_KEY = "bad_day_list"
+UV_ANISOTROPY_KEY = "uv_anisotropy_factor"
+WAW_HELIOION_MP_KEY = "waw_helioion_mp"
+F107_INDEX_KEY = "f107_index"
+LYMAN_ALPHA_COMPOSITE_KEY = "lyman_alpha_composite_index"
+OMNI2_DATA_KEY = "omni2_data"
 
 
 @dataclass
@@ -51,12 +57,12 @@ class GlowsL3BDependencies:
         omni2_data_path = download_external_dependency(OMNI2_URL, 'omni2_all_years.dat')
 
         ancillary_files = {
-            "bad_day_list": bad_day_list_path,
-            "uv_anisotropy_factor": uv_anisotropy_path,
-            "waw_helioion_mp": waw_helioion_mp_path,
-            "f107_index": f107_index_file_path,
-            "lyman_alpha_composite_index": lyman_alpha_path,
-            "omni2_data": omni2_data_path
+            BAD_DAY_KEY: bad_day_list_path,
+            UV_ANISOTROPY_KEY: uv_anisotropy_path,
+            WAW_HELIOION_MP_KEY: waw_helioion_mp_path,
+            F107_INDEX_KEY: f107_index_file_path,
+            LYMAN_ALPHA_COMPOSITE_KEY: lyman_alpha_path,
+            OMNI2_DATA_KEY: omni2_data_path
         }
 
         return cls(glows_l3a_data, swapi_l3a_alpha_sw_data, ancillary_files)
