@@ -48,15 +48,6 @@ from imap_l3_processing.utils import save_data, read_l1d_mag_data, format_time
 from tests.test_helpers import get_test_data_path
 
 
-def delete_temp_cdf_file_path_if_exists(data: DataProduct):
-    formatted_start_date = format_time(data.input_metadata.start_date)
-    logical_source = data.input_metadata.logical_source
-    logical_file_id = f'{logical_source}_{formatted_start_date}_{data.input_metadata.version}'
-    file_path = f'{TEMP_CDF_FOLDER_PATH}/{logical_file_id}.cdf'
-    path = Path(file_path)
-    path.unlink(missing_ok=True)
-
-
 def create_glows_l3a_cdf(dependencies: GlowsL3ADependencies):
     input_metadata = InputMetadata(
         instrument='glows',
@@ -76,7 +67,7 @@ def create_glows_l3a_cdf(dependencies: GlowsL3ADependencies):
     processor = GlowsProcessor(upstream_dependencies, input_metadata)
 
     l3a_data = processor.process_l3a(dependencies)
-    cdf_path = save_data(l3a_data)
+    cdf_path = save_data(l3a_data, delete_if_present=True)
     return cdf_path
 
 
@@ -96,7 +87,7 @@ def create_swapi_l3b_cdf(geometric_calibration_file, efficiency_calibration_file
     processor = SwapiProcessor(None, input_metadata)
 
     l3b_combined_vdf = processor.process_l3b(swapi_data, swapi_l3_dependencies)
-    cdf_path = save_data(l3b_combined_vdf)
+    cdf_path = save_data(l3b_combined_vdf, delete_if_present=True)
     return cdf_path
 
 
@@ -133,9 +124,9 @@ def create_swapi_l3a_cdf(proton_temperature_density_calibration_file, alpha_temp
     processor = SwapiProcessor(None, input_metadata)
 
     l3a_proton_sw, l3a_alpha_sw, l3a_pui_he = processor.process_l3a(swapi_data, swapi_l3_dependencies)
-    proton_cdf_path = save_data(l3a_proton_sw)
-    alpha_cdf_path = save_data(l3a_alpha_sw)
-    pui_he_cdf_path = save_data(l3a_pui_he)
+    proton_cdf_path = save_data(l3a_proton_sw, delete_if_present=True)
+    alpha_cdf_path = save_data(l3a_alpha_sw, delete_if_present=True)
+    pui_he_cdf_path = save_data(l3a_pui_he, delete_if_present=True)
     return proton_cdf_path, alpha_cdf_path, pui_he_cdf_path
 
 
@@ -148,7 +139,7 @@ def create_swe_product(dependencies: SweL3Dependencies) -> str:
         version='v000')
     processor = SweProcessor(None, input_metadata)
     output_data = processor.calculate_products(dependencies)
-    cdf_path = save_data(output_data)
+    cdf_path = save_data(output_data, delete_if_present=True)
     return cdf_path
 
 
@@ -166,7 +157,7 @@ def create_swe_product_with_fake_spice(dependencies: SweL3Dependencies, mock_spi
         version='v000')
     processor = SweProcessor(None, input_metadata)
     output_data = processor.calculate_products(dependencies)
-    cdf_path = save_data(output_data)
+    cdf_path = save_data(output_data, delete_if_present=True)
     return cdf_path
 
 
@@ -180,8 +171,7 @@ def create_hi_cdf(dependencies: HiL3Dependencies) -> str:
                                    )
     processor = HiProcessor(None, input_metadata)
     output_data = processor._process_spectral_fit_index(dependencies)
-    delete_temp_cdf_file_path_if_exists(output_data)
-    cdf_path = save_data(output_data)
+    cdf_path = save_data(output_data, delete_if_present=True)
     return cdf_path
 
 
@@ -195,8 +185,7 @@ def create_hit_sectored_cdf(dependencies: HITL3SectoredDependencies) -> str:
         version='v000')
     processor = HitProcessor(None, input_metadata)
     output_data = processor.process_pitch_angle_product(dependencies)
-    delete_temp_cdf_file_path_if_exists(output_data)
-    cdf_path = save_data(output_data)
+    cdf_path = save_data(output_data, delete_if_present=True)
     return cdf_path
 
 
@@ -255,7 +244,7 @@ def create_hit_direct_event_cdf():
         get_test_data_path("hit/pha_events/imap_hit_l3_hit-event-type-lookup_20250228_v001.cdf"))
 
     hit_l1_data = HitL1Data.read_from_cdf(
-        get_test_data_path("hit/pha_events/imap_hit_l1a_direct-events_20100105_v006.cdf"))
+        get_test_data_path("hit/pha_events/imap_hit_l1a_direct-events_20100105_v009.cdf"))
 
     direct_event_dependencies = HitL3PhaDependencies(hit_l1_data=hit_l1_data, cosine_correction_lookup=cosine_table,
 
@@ -272,7 +261,7 @@ def create_hit_direct_event_cdf():
     processor = HitProcessor(None, input_metadata)
 
     product = processor.process_direct_event_product(direct_event_dependencies)
-    file_path = save_data(product)
+    file_path = save_data(product, delete_if_present=True)
     return file_path
 
 

@@ -11,7 +11,7 @@ from imap_l3_processing.swe.l3.science.moment_calculations import compute_maxwel
     filter_and_flatten_regress_parameters, regress, calculate_fit_temperature_density_velocity, rotate_temperature, \
     rotate_dps_vector_to_rtn, Moments, halotrunc, compute_density_scale, core_fit_moments_retrying_on_failure, \
     halo_fit_moments_retrying_on_failure, scale_halo_density, rotate_vector_to_rtn_spherical_coordinates, \
-    calculate_primary_eigenvector
+    calculate_primary_eigenvector, rotation_matrix_builder, rotate_temperature_tensor_to_mag, MomentFitResults
 from tests.test_helpers import create_dataclass_mock
 from tests.test_helpers import get_test_data_path
 
@@ -167,10 +167,11 @@ class TestMomentsCalculation(unittest.TestCase):
     @patch('imap_l3_processing.swe.l3.science.moment_calculations.regress')
     @patch('imap_l3_processing.swe.l3.science.moment_calculations.calculate_fit_temperature_density_velocity')
     @patch('imap_l3_processing.swe.l3.science.moment_calculations.filter_and_flatten_regress_parameters')
-    def test_fit_moments_retrying_on_failure_should_stop_retrying_with_few_energies(self,
-                                                                                    mock_filter_and_flatten_regress_parameters,
-                                                                                    mock_calculate_fit_temp_dens_velocity,
-                                                                                    mock_regress):
+    def test_fit_moments_retrying_on_failure_should_stop_retrying_with_few_energies_and_return_none_if_negative_density(
+            self,
+            mock_filter_and_flatten_regress_parameters,
+            mock_calculate_fit_temp_dens_velocity,
+            mock_regress):
         density_history = np.array([100, 89, 72])
 
         negative_density_value = -1
@@ -194,6 +195,54 @@ class TestMomentsCalculation(unittest.TestCase):
                                                                0,
                                                                3,
                                                                density_history))
+
+        mock_filter_and_flatten_regress_parameters.assert_has_calls([(
+            call(sentinel.corrected_energy_bins, sentinel.velocity_vectors, sentinel.phase_space_density,
+                 sentinel.weights, 0, 3, )
+        )])
+
+        mock_regress.assert_has_calls([
+            call(sentinel.filtered_velocity_vectors, sentinel.filtered_weights, sentinel.filtered_yreg),
+        ])
+
+        mock_calculate_fit_temp_dens_velocity.assert_has_calls([
+            call(sentinel.fit_function_1),
+        ])
+
+    @patch('imap_l3_processing.swe.l3.science.moment_calculations.regress')
+    @patch('imap_l3_processing.swe.l3.science.moment_calculations.calculate_fit_temperature_density_velocity')
+    @patch('imap_l3_processing.swe.l3.science.moment_calculations.filter_and_flatten_regress_parameters')
+    def test_fit_moments_retrying_on_failure_should_stop_retrying_with_few_energies_but_return_results_if_high_density(
+            self,
+            mock_filter_and_flatten_regress_parameters,
+            mock_calculate_fit_temp_dens_velocity,
+            mock_regress):
+        density_history = np.array([100, 89, 72])
+
+        high_density_value = 200
+
+        calculated_moments = create_dataclass_mock(Moments, density=high_density_value)
+        mock_calculate_fit_temp_dens_velocity.side_effect = [
+            calculated_moments,
+        ]
+
+        mock_filter_and_flatten_regress_parameters.side_effect = [
+            (sentinel.filtered_velocity_vectors, sentinel.filtered_weights, sentinel.filtered_yreg)
+        ]
+
+        mock_regress.side_effect = [
+            (sentinel.fit_function_1, sentinel.chisq_1),
+        ]
+
+        result = core_fit_moments_retrying_on_failure(sentinel.corrected_energy_bins,
+                                                      sentinel.velocity_vectors,
+                                                      sentinel.phase_space_density,
+                                                      sentinel.weights,
+                                                      0,
+                                                      3,
+                                                      density_history)
+        self.assertIsInstance(result, MomentFitResults)
+        self.assertIs(calculated_moments, result.moments)
 
         mock_filter_and_flatten_regress_parameters.assert_has_calls([(
             call(sentinel.corrected_energy_bins, sentinel.velocity_vectors, sentinel.phase_space_density,
@@ -535,7 +584,7 @@ class TestMomentsCalculation(unittest.TestCase):
         ifit = 5
         spacecraft_potential = 12
         cosin_p = np.array([0.9034, 0.6947, 0.3730, 0.0, -0.3714, -0.6896, -0.8996])
-        aperture_field_of_view = np.array([0.6178, 0.3770, 0.3857, 0.3805, 0.3805, 0.3805, 0.6196])
+        aperture_field_of_view = [0.6178, 0.3770, 0.3857, 0.3805, 0.3805, 0.3805, 0.6196]
 
         regress_outputs = np.array([-1e-9, -9e-10, -8e-10, -7e-10, -6e-10, -5e-10, -4e-10, -3e-10, -2e-10, -1e-10])
         core_density = 1.23456789
@@ -593,7 +642,7 @@ class TestMomentsCalculation(unittest.TestCase):
         ifit = 5
         spacecraft_potential = 14
         cosin_p = np.array([0.9034, 0.6947, 0.3730, 0.0, -0.3714, -0.6896, -0.8996])
-        aperture_field_of_view = np.array([0.6178, 0.3770, 0.3857, 0.3805, 0.3805, 0.3805, 0.6196])
+        aperture_field_of_view = [0.6178, 0.3770, 0.3857, 0.3805, 0.3805, 0.3805, 0.6196]
 
         regress_outputs = np.array([-1e-9, -9e-10, -8e-10, -7e-10, -6e-10, -5e-10, -4e-10, -3e-10, -2e-10, -1e-10])
         core_density = 1.23456789
@@ -651,7 +700,7 @@ class TestMomentsCalculation(unittest.TestCase):
         space_craft_potential = 12
 
         cosin_p = np.array([0.9034, 0.6947, 0.3730, 0.0, -0.3714, -0.6896, -0.8996])
-        aperture_field_of_view = np.array([0.6178, 0.3770, 0.3857, 0.3805, 0.3805, 0.3805, 0.6196])
+        aperture_field_of_view = [0.6178, 0.3770, 0.3857, 0.3805, 0.3805, 0.3805, 0.6196]
 
         regress_outputs = np.array([-1e-9, -9e-10, -8e-10, -7e-10, -6e-10, -5e-10, -4e-10, -3e-10, -2e-10, -1e-10])
         base_energy = 100
@@ -694,7 +743,7 @@ class TestMomentsCalculation(unittest.TestCase):
         space_craft_potential = 12
 
         cosin_p = np.array([0.9034, 0.6947, 0.3730, 0.0, -0.3714, -0.6896, -0.8996])
-        aperture_field_of_view = np.array([0.6178, 0.3770, 0.3857, 0.3805, 0.3805, 0.3805, 0.6196])
+        aperture_field_of_view = [0.6178, 0.3770, 0.3857, 0.3805, 0.3805, 0.3805, 0.6196]
 
         regress_outputs = np.array([-1e-9, -9e-10, -8e-10, -7e-10, -6e-10, -5e-10, -4e-10, -3e-10, -2e-10, -1e-10])
         base_energy = 60
@@ -769,3 +818,45 @@ class TestMomentsCalculation(unittest.TestCase):
                 primary_evec, temps = calculate_primary_eigenvector(temps)
                 np.testing.assert_equal(primary_evec, [np.nan, np.nan, np.nan])
                 np.testing.assert_equal(temps, [np.nan, np.nan, np.nan])
+
+    def test_rotation_matrix_builder(self):
+        cases = [([25, 50, 75], [[0.26726124, 0.53452247, 0.80178374], [0.00000000, 0.83205032, -0.55470020],
+                                 [-0.96362412, 0.14824985, 0.22237480]]),
+                 ([500.123, 999.99, 750.23],
+                  [[0.37143612, 0.74268216, 0.55718797], [0.00000000, 0.60012156, -0.79990882],
+                   [-0.92845851, 0.29711503, 0.22290681, ]]),
+                 ([0, 0, 1], [[0, 0, 1], [0, 1, 0], [-1, 0, 0]])]
+
+        for b_vector, expected_matrix in cases:
+            with self.subTest(b_vector):
+                np.testing.assert_allclose(rotation_matrix_builder(b_vector), expected_matrix, rtol=2e-7)
+
+    def test_rotate_temperature_tensor_to_mag(self):
+        expected_t_par = 9e4
+        expected_t_perp = 3e4
+        expected_ratio = 5
+
+        t_parallel, t_perp_average, t_perp_ratio, = rotate_temperature_tensor_to_mag([1, 2, 5, 3, 6, 9], [0, 0, 1])
+        self.assertEqual(expected_t_par, t_parallel)
+        self.assertEqual(expected_t_perp, t_perp_average)
+        self.assertEqual(expected_ratio, t_perp_ratio)
+
+    def test_rotate_temperature_tensor_to_mag_with_ratio_less_than_one(self):
+        expected_t_par = 1e4
+        expected_t_perp = 6e4
+        expected_ratio = 3
+
+        t_parallel, t_perp_average, t_perp_ratio, = rotate_temperature_tensor_to_mag([9, 6, 3, 5, 2, 1], [0, 0, 1])
+        self.assertEqual(expected_t_par, t_parallel)
+        self.assertEqual(expected_t_perp, t_perp_average)
+        self.assertEqual(expected_ratio, t_perp_ratio)
+
+    def test_rotate_temperature_sensor_to_mag_with_negative_diagonal(self):
+        expected_t_par = 1e4
+        expected_t_perp = 2e4
+        expected_ratio = 0
+
+        t_parallel, t_perp_average, t_perp_ratio, = rotate_temperature_tensor_to_mag([9, 1, 1, 8, 1, -5], [0, 1, 0])
+        self.assertEqual(expected_t_par, t_parallel)
+        self.assertEqual(expected_t_perp, t_perp_average)
+        self.assertEqual(expected_ratio, t_perp_ratio)

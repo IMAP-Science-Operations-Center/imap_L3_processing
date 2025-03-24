@@ -9,6 +9,7 @@ from spiceypy import spiceypy
 from imap_l3_processing.constants import ELECTRON_MASS_KG, \
     BOLTZMANN_CONSTANT_JOULES_PER_KELVIN, METERS_PER_KILOMETER, \
     CENTIMETERS_PER_METER, PROTON_CHARGE_COULOMBS
+from imap_l3_processing.pitch_angles import calculate_unit_vector
 
 ELECTRON_MASS_OVER_BOLTZMANN_IN_CGS_UNITS = ELECTRON_MASS_KG / BOLTZMANN_CONSTANT_JOULES_PER_KELVIN * 1e-4
 NUMBER_OF_DETECTORS = 7
@@ -145,13 +146,17 @@ def _fit_moments_retrying_on_failure(corrected_energy_bins: np.ndarray,
         moment.density = halotrunc(moment, halo_correction_parameters.core_halo_breakpoint,
                                    halo_correction_parameters.spacecraft_potential)
 
+    results = MomentFitResults(moments=moment, chisq=chi_squared,
+                               number_of_points=energy_end - energy_start,
+                               regress_result=fit_function
+                               )
     if moment.density is not None and 0 < moment.density < average_density:
-        return MomentFitResults(moments=moment, chisq=chi_squared,
-                                number_of_points=energy_end - energy_start,
-                                regress_result=fit_function
-                                )
+        return results
     elif energy_end - energy_start < 4:
-        return None
+        if moment.density > 0:
+            return results
+        else:
+            return None
     else:
         return _fit_moments_retrying_on_failure(
             corrected_energy_bins,
@@ -552,7 +557,7 @@ def scale_core_density(core_density: float,
                        core_velocity: np.ndarray, core_temp: np.ndarray,
                        core_moment_fit: Moments, ifit: int, energy: np.ndarray,
                        spacecraft_potential: float, cosin_p: np.ndarray,
-                       aperture_field_of_view: np.ndarray,
+                       aperture_field_of_view: list,
                        phi: np.ndarray,
                        regress_outputs: np.ndarray,
                        base_energy: float) -> ScaleDensityOutput:
@@ -582,7 +587,7 @@ def scale_core_density(core_density: float,
 
     cos_theta = cosin_p[np.newaxis, :, np.newaxis]
     sin_theta = np.sin(np.arccos(cos_theta))
-    delta_theta = aperture_field_of_view[np.newaxis, :, np.newaxis]
+    delta_theta = np.array(aperture_field_of_view)[np.newaxis, :, np.newaxis]
     cos_phi = np.cos(np.deg2rad(phi[0]))
     sin_phi = np.sin(np.deg2rad(phi[0]))
     delta_phi = 2 * np.pi / NUMBER_OF_SPIN_SECTORS
@@ -642,7 +647,7 @@ def scale_halo_density(halo_density: float,
                        spacecraft_potential: float,
                        core_halo_break: float,
                        cosin_p: np.ndarray,
-                       aperture_field_of_view: np.ndarray,
+                       aperture_field_of_view: list,
                        phi: np.ndarray,
                        regress_outputs: np.ndarray,
                        base_energy: float) -> ScaleDensityOutput:
@@ -659,7 +664,7 @@ def scale_halo_density(halo_density: float,
 
     cos_theta = cosin_p[:, np.newaxis]
     sin_theta = np.sin(np.arccos(cos_theta))
-    delta_theta = aperture_field_of_view[:, np.newaxis]
+    delta_theta = np.array(aperture_field_of_view)[:, np.newaxis]
     cos_phi = np.cos(np.deg2rad(phi[0]))
     sin_phi = np.sin(np.deg2rad(phi[0]))
     delta_phi = 2 * np.pi / NUMBER_OF_SPIN_SECTORS
@@ -755,3 +760,41 @@ def calculate_primary_eigenvector(temperature_tensor: np.ndarray) -> tuple[np.nd
     else:
         gyro = max(other_evals) / min_eval
     return primary_evec, np.array([parallel_temperature, perpendicular_temperature, gyro])
+
+
+def rotation_matrix_builder(mag_vector: np.ndarray) -> np.ndarray(shape=(3, 3)):
+    normalized_mag_vector = mag_vector / np.linalg.norm(mag_vector)
+    smallest_index = np.argmin(np.abs(normalized_mag_vector))
+    reference_vector = np.zeros(3)
+    reference_vector[smallest_index] = 1
+    row_1 = calculate_unit_vector(np.cross(normalized_mag_vector, reference_vector))
+    row_2 = calculate_unit_vector(np.cross(normalized_mag_vector, row_1))
+    return np.stack((normalized_mag_vector, row_1, row_2), axis=0)
+
+
+def rotate_temperature_tensor_to_mag(temperature_tensor: np.ndarray, mag_vector: np.ndarray) -> tuple[
+    float, float, float]:
+    symmetric_temperature_tensor = np.zeros(shape=(3, 3))
+
+    symmetric_temperature_tensor[0][0] = temperature_tensor[0]
+    symmetric_temperature_tensor[0][1] = symmetric_temperature_tensor[1][0] = temperature_tensor[1]
+    symmetric_temperature_tensor[1][1] = temperature_tensor[2]
+    symmetric_temperature_tensor[0][2] = symmetric_temperature_tensor[2][0] = temperature_tensor[3]
+    symmetric_temperature_tensor[1][2] = symmetric_temperature_tensor[2][1] = temperature_tensor[4]
+    symmetric_temperature_tensor[2][2] = temperature_tensor[5]
+
+    rotation_matrix = rotation_matrix_builder(mag_vector)
+
+    rotated_tensor = rotation_matrix @ symmetric_temperature_tensor @ rotation_matrix.T
+
+    t_parallel = rotated_tensor[0][0] * 1e4
+
+    t_perpendicular_1 = (rotated_tensor[1][1] + rotated_tensor[2][2]) * 1e4 / 2
+    t_perpendicular_2 = 0
+
+    if rotated_tensor[1][1] > 0 and rotated_tensor[2][2] > 0:
+        t_perpendicular_2 = rotated_tensor[1][1] / rotated_tensor[2][2]
+        if t_perpendicular_2 < 1:
+            t_perpendicular_2 = 1 / t_perpendicular_2
+
+    return t_parallel, t_perpendicular_1, t_perpendicular_2
