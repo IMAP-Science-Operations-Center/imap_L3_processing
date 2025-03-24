@@ -113,3 +113,11 @@ spectral_fit_index:
   DEPEND_2: lat
   FILLVAL: -1.00E+31
 
+spectral_fit_index_error:
+  DATA_TYPE: float64
+  VAR_TYPE: data
+  DEPEND_0: Epoch
+  DEPEND_1: lon
+  DEPEND_2: lat
+  FILLVAL: -1.00E+31
+

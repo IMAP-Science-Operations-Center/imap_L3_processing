@@ -7,6 +7,7 @@ def spectral_fit(num_epochs, num_lons, num_lats, fluxes, variances, energy):
     initial_parameters = (100, 2)
 
     gammas = np.full((num_epochs, num_lons, num_lats), fill_value=np.nan, dtype=float)
+    errors = np.full_like(gammas, np.nan)
     for epoch in range(num_epochs):
         for lon in range(num_lons):
             for lat in range(num_lats):
@@ -19,9 +20,16 @@ def spectral_fit(num_epochs, num_lons, num_lats, fluxes, variances, energy):
                 filtered_energy = energy[~flux_or_error_is_invalid]
                 keywords = {'xval': filtered_energy, 'yval': flux, 'errval': np.sqrt(variance)}
                 fit = mpfit(power_law, initial_parameters, keywords, nprint=0)
+
                 a, gamma = fit.params
-                gammas[epoch][lon][lat] = gamma
-    return gammas
+                if fit.status > 0:
+                    a_error, gamma_error = fit.perror
+                    gammas[epoch][lon][lat] = gamma
+                    errors[epoch][lon][lat] = gamma_error
+                else:
+                    gammas[epoch][lon][lat] = np.nan
+                    errors[epoch][lon][lat] = np.nan
+    return gammas, errors
 
 
 def power_law(params, **kwargs):

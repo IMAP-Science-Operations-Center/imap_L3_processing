@@ -108,7 +108,57 @@ pitch_angle: &pitch_angle
 pitch_angle_delta:
   <<: *pitch_angle
   CATDESC: Pitch Angle bin half-width
-phase_space_density_by_pitch_angle:
+gyrophase_bins: &gyrophase
+  <<: *support_data_defaults
+  CATDESC: Gyrophase
+  FIELDNAM: Gyrophase
+  LABLAXIS: Gyrophase
+  VALIDMIN: 0
+  VALIDMAX: 360
+  SCALEMIN: 0
+  SCALEMAX: 360
+  SCALETYP: linear
+  UNITS: degrees
+  DELTA_PLUS_VAR: gyrophase_delta
+  DELTA_MINUS_VAR: gyrophase_delta
+gyrophase_deltas:
+  <<: *gyrophase
+  CATDESC: Gyrophase bin half-width
+
+
+
+intensity_by_pitch_angle:
+  CATDESC: Intensity organized by pitch angle
+  DEPEND_0: epoch
+  DEPEND_1: energy
+  DEPEND_2: pitch_angle
+  VAR_TYPE: data
+  DISPLAY_TYPE: spectrogram
+  LABLAXIS: Electron Intensity
+  FORMAT: F8.3
+  UNITS: cm^-2 sr^-1 s^-1 eV^-1
+  VALIDMIN: 1.00E-40
+  FILLVAL: -1.00E+31
+  SCALEMIN: 1.0e-40
+  SCALEMAX: 100000
+  SCALETYP: linear
+intensity_by_pitch_angle_and_gyrophase:
+  CATDESC: Intensity organized by pitch angle and gyrophase
+  DEPEND_0: epoch
+  DEPEND_1: energy
+  DEPEND_2: pitch_angle
+  DEPEND_3: gyrophase_bins
+  VAR_TYPE: data
+  DISPLAY_TYPE: spectrogram
+  LABLAXIS: Electron Intensity
+  FORMAT: F8.3
+  UNITS: cm^-2 sr^-1 s^-1 eV^-1
+  VALIDMIN: 1.00E-40
+  FILLVAL: *float_fillval
+  SCALEMIN: 1.0e-40
+  SCALEMAX: 100000
+  SCALETYP: linear
+phase_space_density_by_pitch_angle: &phase_space_density_by_pitch_angle
   CATDESC: Phase space density organized by pitch angle
   DEPEND_0: epoch
   DEPEND_1: energy
@@ -125,6 +175,12 @@ phase_space_density_by_pitch_angle:
   UNITS: s^3 cm^-6
   VAR_TYPE: data
   FORMAT: F8.3
+
+phase_space_density_by_pitch_angle_and_gyrophase:
+  <<: *phase_space_density_by_pitch_angle
+  CATDESC: Phase space density organized by pitch angle and gyrophase
+  DEPEND_3: gyrophase_bins
+
 energy_spectrum: &energy_spectrum
   CATDESC: 1D Electron Energy Spectrum
   DEPEND_0: epoch
@@ -257,4 +313,121 @@ halo_velocity_vector_rtn_fit:
   CATDESC: SW Electron Core/Halo breakpoint
   FILLVAL: *float_fillval
 
+core_density_integrated:
+  CATDESC: Density halo/suprathermal electrons (high energy) integrated
+  FILLVAL: *float_fillval
+
+halo_density_integrated:
+  FILLVAL: *float_fillval
+
+total_density_integrated:
+  FILLVAL: *float_fillval
+
+core_speed_integrated:
+  FILLVAL: *float_fillval
+
+halo_speed_integrated:
+  FILLVAL: *float_fillval
+
+total_speed_integrated:
+  FILLVAL: *float_fillval
+
+core_velocity_vector_rtn_integrated:
+  FILLVAL: *float_fillval
+
+halo_velocity_vector_rtn_integrated:
+  FILLVAL: *float_fillval
+
+total_velocity_vector_rtn_integrated:
+  FILLVAL: *float_fillval
+
+core_heat_flux_magnitude_integrated:
+  FILLVAL: *float_fillval
+
+core_heat_flux_theta_integrated:
+  FILLVAL: *float_fillval
+
+core_heat_flux_phi_integrated:
+  FILLVAL: *float_fillval
+
+halo_heat_flux_magnitude_integrated:
+  FILLVAL: *float_fillval
+
+halo_heat_flux_theta_integrated:
+  FILLVAL: *float_fillval
+
+halo_heat_flux_phi_integrated:
+  FILLVAL: *float_fillval
+
+total_heat_flux_magnitude_integrated:
+  FILLVAL: *float_fillval
+
+total_heat_flux_theta_integrated:
+  FILLVAL: *float_fillval
+
+total_heat_flux_phi_integrated:
+  FILLVAL: *float_fillval
+
+core_t_parallel_integrated:
+  FILLVAL: *float_fillval
+
+core_t_perpendicular_integrated:
+  FILLVAL: *float_fillval
+
+halo_t_parallel_integrated:
+  FILLVAL: *float_fillval
+
+halo_t_perpendicular_integrated:
+  FILLVAL: *float_fillval
+
+total_t_parallel_integrated:
+  FILLVAL: *float_fillval
+
+total_t_perpendicular_integrated:
+  FILLVAL: *float_fillval
+
+core_temperature_theta_rtn_integrated:
+  FILLVAL: *float_fillval
+
+core_temperature_phi_rtn_integrated:
+  FILLVAL: *float_fillval
+
+halo_temperature_theta_rtn_integrated:
+  FILLVAL: *float_fillval
+
+halo_temperature_phi_rtn_integrated:
+  FILLVAL: *float_fillval
+
+total_temperature_theta_rtn_integrated:
+  FILLVAL: *float_fillval
+
+total_temperature_phi_rtn_integrated:
+  FILLVAL: *float_fillval
+
+core_temperature_parallel_to_mag:
+  FILLVAL: *float_fillval
+
+core_temperature_perpendicular_to_mag:
+  FILLVAL: *float_fillval
+
+halo_temperature_parallel_to_mag:
+  FILLVAL: *float_fillval
+
+halo_temperature_perpendicular_to_mag:
+  FILLVAL: *float_fillval
+
+total_temperature_parallel_to_mag:
+  FILLVAL: *float_fillval
+
+total_temperature_perpendicular_to_mag:
+  FILLVAL: *float_fillval
+
+core_temperature_tensor_integrated:
+  FILLVAL: *float_fillval
+
+halo_temperature_tensor_integrated:
+  FILLVAL: *float_fillval
+
+total_temperature_tensor_integrated:
+  FILLVAL: *float_fillval
 

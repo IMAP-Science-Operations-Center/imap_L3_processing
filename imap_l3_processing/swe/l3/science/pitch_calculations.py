@@ -7,7 +7,7 @@ from scipy.optimize import curve_fit
 
 from imap_l3_processing.constants import ELECTRON_MASS_KG, PROTON_CHARGE_COULOMBS, METERS_PER_KILOMETER
 from imap_l3_processing.pitch_angles import calculate_pitch_angle, calculate_unit_vector, calculate_gyrophase, \
-    rebin_by_pitch_angle_and_gyrophase
+    rebin_intensity_by_pitch_angle_and_gyrophase
 from imap_l3_processing.swe.l3.models import SweConfiguration
 
 
@@ -121,71 +121,102 @@ def calculate_velocity_in_dsp_frame_km_s(energy: np.ndarray, inst_el: np.ndarray
     return particle_direction
 
 
-def rebin_by_pitch_angle(flux, pitch_angles, energies, config: SweConfiguration) -> np.ndarray[
-    (E_BINS, PITCH_ANGLE_BINS)]:
+def rebin_by_pitch_angle(flux, pitch_angles, energies, config: SweConfiguration) -> np.ndarray:
+    all_the_bins = rebin_by_pitch_angle_and_gyrophase(flux, pitch_angles, None, energies, config)
+    remove_gyrophase_axis = all_the_bins[:, :, 0]
+    return remove_gyrophase_axis
+
+
+def _rebin(flux, pitch_angles, energies, config: SweConfiguration, gyrophase: np.ndarray = None) -> np.ndarray:
     pitch_angle_bins = np.array(config["pitch_angle_bins"])
     pitch_angle_delta = np.array(config["pitch_angle_delta"])
     energy_bins = config["energy_bins"]
+    mask_psd = flux > 0
+    psd_greater_than_zero = flux[mask_psd]
+    pitch_angles_for_masked_psd = pitch_angles[mask_psd]
+    energies_for_masked_psd = energies[mask_psd]
     pitch_angle_left_edges = pitch_angle_bins - pitch_angle_delta
     pitch_angle_right_edges = pitch_angle_bins + pitch_angle_delta
-    mask_flux = flux > 0
-    flux_greater_than_zero = flux[mask_flux]
-    pitch_angles_for_masked_flux = pitch_angles[mask_flux]
-    energies_for_masked_flux = energies[mask_flux]
-
     num_pitch_bins = len(pitch_angle_bins)
     num_energy_bins = len(energy_bins)
 
-    rebinned = np.full((num_energy_bins, num_pitch_bins), np.nan, dtype=float)
+    if gyrophase is not None:
+        gyrophase_bins = np.array(config["gyrophase_bins"])
+        gyrophase_delta = np.array(config["gyrophase_delta"])
+        gyrophase_left_edges = gyrophase_bins - gyrophase_delta
+        gyrophase_right_edges = gyrophase_bins + gyrophase_delta
+        gyrophase_for_masked_psd = gyrophase[mask_psd]
+        num_gyrophase_bins = len(gyrophase_bins)
+        gyrophase_bins_range = range(len(gyrophase_bins))
+    else:
+        gyrophase_bins_range = [0]
+        num_gyrophase_bins = 1
 
-    for j in range(num_pitch_bins):
-        mask_pitch_angle = (pitch_angles_for_masked_flux >= pitch_angle_left_edges[j]) & (
-                pitch_angles_for_masked_flux < pitch_angle_right_edges[j])
+    rebinned = np.full((num_energy_bins, num_pitch_bins, num_gyrophase_bins), np.nan, dtype=float)
+    for g in gyrophase_bins_range:
+        for j in range(num_pitch_bins):
+            mask_pitch_angle = (pitch_angles_for_masked_psd >= pitch_angle_left_edges[j]) & (
+                    pitch_angles_for_masked_psd < pitch_angle_right_edges[j])
 
-        flux_by_pitch_angle = flux_greater_than_zero[mask_pitch_angle]
-        energy_by_pitch_angle = energies_for_masked_flux[mask_pitch_angle]
-        if len(energy_by_pitch_angle) < 2:
-            continue
-        sorted_energies = np.sort(energy_by_pitch_angle)
-        overall_max_energy_for_pitch_angle = sorted_energies[-1]
-        overall_second_min_energy_for_pitch_angle = sorted_energies[1]
+            if gyrophase is not None:
+                mask_gyrophase = (gyrophase_for_masked_psd >= gyrophase_left_edges[g]) & (
+                        gyrophase_for_masked_psd < gyrophase_right_edges[g])
+            else:
+                mask_gyrophase = np.ones_like(mask_pitch_angle, dtype=bool)
 
-        for i, center in enumerate(energy_bins):
-            left = config["energy_bin_low_multiplier"] * center
-            right = config["energy_bin_high_multiplier"] * center
+            psd_by_pitch_angle = psd_greater_than_zero[mask_pitch_angle & mask_gyrophase]
+            energy_by_pitch_angle = energies_for_masked_psd[mask_pitch_angle & mask_gyrophase]
 
-            mask_energy = (energy_by_pitch_angle > left) & (energy_by_pitch_angle < right)
-
-            energy_to_fit = energy_by_pitch_angle[mask_energy]
-            flux_to_fit = flux_by_pitch_angle[mask_energy]
-            if len(energy_to_fit) < 2:
+            # maintain in new method
+            if len(energy_by_pitch_angle) < 2:
                 continue
+                # this requires some thinking to not end up with all fill val
+            sorted_energies = np.sort(energy_by_pitch_angle)
+            overall_max_energy_for_pitch_angle = sorted_energies[-1]
+            overall_second_min_energy_for_pitch_angle = sorted_energies[1]
 
-            closest_energy_ratio = np.min(np.abs(energy_to_fit / center - 1))
-            max_within_window = np.max(energy_to_fit)
-            min_within_window = np.min(energy_to_fit)
+            for i, center in enumerate(energy_bins):
+                left = config["energy_bin_low_multiplier"] * center
+                right = config["energy_bin_high_multiplier"] * center
 
-            has_points_on_both_sides = max_within_window > center and min_within_window < center
-            is_overall_max_within_window = overall_max_energy_for_pitch_angle in energy_to_fit
-            max_within_case = is_overall_max_within_window and closest_energy_ratio < config[
-                "high_energy_proximity_threshold"]
+                mask_energy = (energy_by_pitch_angle > left) & (energy_by_pitch_angle < right)
 
-            is_overall_second_min_within_window = overall_second_min_energy_for_pitch_angle in energy_to_fit
+                energy_to_fit = energy_by_pitch_angle[mask_energy]
+                psd_to_fit = psd_by_pitch_angle[mask_energy]
+                if len(energy_to_fit) < 2:
+                    continue
 
-            mins_within_case = is_overall_second_min_within_window and (closest_energy_ratio < config[
-                "low_energy_proximity_threshold"] or has_points_on_both_sides)
-            max_and_mins_outside_window_case = (not is_overall_max_within_window
-                                                and not is_overall_second_min_within_window
-                                                and has_points_on_both_sides)
+                closest_energy_ratio = np.min(np.abs(energy_to_fit / center - 1))
+                max_within_window = np.max(energy_to_fit)
+                min_within_window = np.min(energy_to_fit)
 
-            if max_within_case or mins_within_case or max_and_mins_outside_window_case:
-                log_energy_to_fit = np.log(energy_to_fit)
-                log_flux_to_fit = np.log(flux_to_fit)
-                intercept, slope = np.polynomial.polynomial.polyfit(log_energy_to_fit, log_flux_to_fit, 1)
-                log_flux_to_nom = slope * np.log(center) + intercept
-                rebinned[i, j] = np.exp(log_flux_to_nom)
+                has_points_on_both_sides = max_within_window > center and min_within_window < center
+                is_overall_max_within_window = overall_max_energy_for_pitch_angle in energy_to_fit
+                max_within_case = is_overall_max_within_window and closest_energy_ratio < config[
+                    "high_energy_proximity_threshold"]
+
+                is_overall_second_min_within_window = overall_second_min_energy_for_pitch_angle in energy_to_fit
+
+                mins_within_case = is_overall_second_min_within_window and (closest_energy_ratio < config[
+                    "low_energy_proximity_threshold"] or has_points_on_both_sides)
+                max_and_mins_outside_window_case = (not is_overall_max_within_window
+                                                    and not is_overall_second_min_within_window
+                                                    and has_points_on_both_sides)
+
+                if max_within_case or mins_within_case or max_and_mins_outside_window_case:
+                    log_energy_to_fit = np.log(energy_to_fit)
+                    log_psd_to_fit = np.log(psd_to_fit)
+                    intercept, slope = np.polynomial.polynomial.polyfit(log_energy_to_fit, log_psd_to_fit, 1)
+                    log_psd_to_nom = slope * np.log(center) + intercept
+                    value = np.exp(log_psd_to_nom)
+
+                    rebinned[i, j, g] = value
 
     return rebinned
+
+
+def rebin_by_pitch_angle_and_gyrophase(psd, pitch_angles, gyrophase, energies, config: SweConfiguration) -> np.ndarray:
+    return _rebin(psd, pitch_angles, energies, config, gyrophase=gyrophase)
 
 
 def calculate_velocity_in_sw_frame(velocity_in_despun_frame: np.ndarray[(..., 3)],
@@ -208,18 +239,24 @@ E_BINS = TypeVar("E_BINS")
 SPIN_SECTORS = TypeVar("SPIN_SECTORS")
 CEMS = TypeVar("CEMS")
 PITCH_ANGLE_BINS = TypeVar("PITCH_ANGLE_BINS")
+GYROPHASE_BINS = TypeVar("GYROPHASE_BINS")
 
 
 def correct_and_rebin(flux_or_psd: np.ndarray[(E_BINS, SPIN_SECTORS, CEMS)],
                       solar_wind_vector: np.ndarray[(3,)],
                       dsp_velocities: np.ndarray[(E_BINS, SPIN_SECTORS, CEMS, 3,)],
                       mag_vector: np.ndarray[(E_BINS, SPIN_SECTORS, 3,)],
-                      config: SweConfiguration) -> np.ndarray[(E_BINS, PITCH_ANGLE_BINS)]:
+                      config: SweConfiguration) -> tuple[np.ndarray, np.ndarray]:
     velocity_in_sw_frame = calculate_velocity_in_sw_frame(dsp_velocities, solar_wind_vector)
     energy_in_sw_frame = calculate_energy_in_ev_from_velocity_in_km_per_second(velocity_in_sw_frame)
     pitch_angle = calculate_pitch_angle(velocity_in_sw_frame, mag_vector[..., np.newaxis, :])
+    gyrophase = calculate_gyrophase(velocity_in_sw_frame, mag_vector[..., np.newaxis, :])
 
-    return rebin_by_pitch_angle(flux_or_psd, pitch_angle, energy_in_sw_frame, config)
+    rebinned_by_pa = rebin_by_pitch_angle(flux_or_psd, pitch_angle, energy_in_sw_frame, config)
+    rebinned_by_pa_and_gyro = rebin_by_pitch_angle_and_gyrophase(flux_or_psd, pitch_angle, gyrophase,
+                                                                 energy_in_sw_frame, config)
+
+    return rebinned_by_pa, rebinned_by_pa_and_gyro
 
 
 def integrate_distribution_to_get_1d_spectrum(psd_by_energy_and_pitch_angle: np.ndarray[(E_BINS, PITCH_ANGLE_BINS)],
@@ -250,20 +287,16 @@ def integrate_distribution_to_get_inbound_and_outbound_1d_spectrum(
     return inbound, outbound
 
 
-def rebin_flux_by_pitch_angle():
-    pass
-
-
 def rebin_flux_by_pitch_angle(intensity: np.ndarray[(E_BINS, SPIN_SECTORS, CEMS)],
                               intensity_delta_plus: np.ndarray[(E_BINS, SPIN_SECTORS, CEMS)],
                               intensity_delta_minus: np.ndarray[(E_BINS, SPIN_SECTORS, CEMS)],
                               dsp_velocities: np.ndarray[(E_BINS, SPIN_SECTORS, CEMS, 3)],
-                              mag_vectors: np.ndarray[([(E_BINS, SPIN_SECTORS, 3,)])]):
+                              mag_vectors: np.ndarray[([(E_BINS, SPIN_SECTORS, 3,)])]) -> [np.ndarray]:
     normalized_velocities = calculate_unit_vector(dsp_velocities)
     normalized_mag_vectors = calculate_unit_vector(mag_vectors)
 
     pitch_angles = calculate_pitch_angle(normalized_velocities, normalized_mag_vectors[..., np.newaxis, :])
     gyrophases = calculate_gyrophase(normalized_velocities, normalized_mag_vectors[..., np.newaxis, :])
-    return rebin_by_pitch_angle_and_gyrophase(intensity,
-                                              intensity_delta_plus,
-                                              intensity_delta_minus, pitch_angles, gyrophases, 30, 7)
+    return rebin_intensity_by_pitch_angle_and_gyrophase(intensity,
+                                                        intensity_delta_plus,
+                                                        intensity_delta_minus, pitch_angles, gyrophases, 7, 30)

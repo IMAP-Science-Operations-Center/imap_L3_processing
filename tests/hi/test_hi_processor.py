@@ -36,7 +36,7 @@ class TestHiProcessor(unittest.TestCase):
                                        descriptor="",
                                        )
 
-        mock_spectral_fit.return_value = sentinel.gammas
+        mock_spectral_fit.return_value = sentinel.gammas, sentinel.errors
         processor = HiProcessor(upstream_dependencies, input_metadata)
         processor.process()
 
@@ -48,6 +48,7 @@ class TestHiProcessor(unittest.TestCase):
         actual_hi_data_product: HiL3SpectralIndexDataProduct = mock_save_data.call_args_list[0].args[0]
 
         self.assertEqual(sentinel.gammas, actual_hi_data_product.spectral_fit_index)
+        self.assertEqual(sentinel.errors, actual_hi_data_product.spectral_fit_index_error)
         self.assertEqual(sentinel.flux, actual_hi_data_product.flux)
         self.assertEqual(sentinel.variance, actual_hi_data_product.variance)
         self.assertEqual(sentinel.energy_delta, actual_hi_data_product.energy_deltas)

@@ -36,10 +36,10 @@ class TestHitProcessor(TestCase):
     @patch('imap_l3_processing.hit.l3.hit_processor.get_sector_unit_vectors')
     @patch('imap_l3_processing.hit.l3.hit_processor.calculate_pitch_angle')
     @patch('imap_l3_processing.hit.l3.hit_processor.calculate_gyrophase')
-    @patch('imap_l3_processing.hit.l3.hit_processor.rebin_by_pitch_angle_and_gyrophase')
+    @patch('imap_l3_processing.hit.l3.hit_processor.hit_rebin_by_pitch_angle_and_gyrophase')
     @patch('imap_l3_processing.hit.l3.hit_processor.rotate_particle_vectors_from_hit_despun_to_imap_despun')
     def test_process_pitch_angle_product(self, mock_rotate_particle_vectors_from_hit_despun_to_imap_despun,
-                                         mock_rebin_by_pitch_angle_and_gyrophase, mock_calculate_gyrophase,
+                                         mock_hit_rebin, mock_calculate_gyrophase,
                                          mock_calculate_pitch_angle,
                                          mock_get_sector_unit_vectors, mock_get_hit_bin_polar_coordinates,
                                          mock_calculate_unit_vector,
@@ -198,7 +198,7 @@ class TestHitProcessor(TestCase):
         rebinned_pa_NeMgSi_delta_plus_time2 = np.array([2000])
         rebinned_pa_NeMgSi_delta_minus_time2 = np.array([2001])
 
-        mock_rebin_by_pitch_angle_and_gyrophase.side_effect = [
+        mock_hit_rebin.side_effect = [
             (rebinned_pa_gyro_hydrogen_time1, rebinned_pa_gyro_hydrogen_delta_plus_time1,
              rebinned_pa_gyro_hydrogen_delta_minus_time1,
              rebinned_pa_hydrogen_time1, rebinned_pa_hydrogen_delta_plus_time1, rebinned_pa_hydrogen_delta_minus_time1),
@@ -268,7 +268,7 @@ class TestHitProcessor(TestCase):
         number_of_pitch_angle_bins = 8
         number_of_gyrophase_bins = 15
 
-        mock_rebin_by_pitch_angle_and_gyrophase.assert_has_calls([
+        mock_hit_rebin.assert_has_calls([
             call(NumpyArrayMatcher(hydrogen_time1), NumpyArrayMatcher(delta_plus_hydrogen_time1),
                  NumpyArrayMatcher(delta_minus_hydrogen_time1), sentinel.pitch_angle1, sentinel.gyrophase1,
                  number_of_pitch_angle_bins,
