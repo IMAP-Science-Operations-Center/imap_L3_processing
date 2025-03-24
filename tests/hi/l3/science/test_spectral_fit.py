@@ -3,7 +3,6 @@ import unittest
 import numpy as np
 
 from imap_l3_processing.hi.l3.science.spectral_fit import power_law, spectral_fit
-from imap_l3_processing.models import InputMetadata
 
 
 class TestHiProcessor(unittest.TestCase):
@@ -33,8 +32,9 @@ class TestHiProcessor(unittest.TestCase):
         flux = np.array(flux_data).reshape(1, 1, 1, len(energies))
         variance = np.array(errors).reshape(1, 1, 1, len(energies))
 
-        result = spectral_fit(num_epochs, num_lons, num_lats, flux, variance, energies)
+        result, result_error = spectral_fit(num_epochs, num_lons, num_lats, flux, variance, energies)
         np.testing.assert_array_equal(result, np.array(true_gamma).reshape(1, 1, 1))
+        np.testing.assert_array_almost_equal(result_error, np.array([0.04120789]).reshape(1, 1, 1))
 
     def test_finds_best_fit_with_nan_in_flux(self):
         energies = np.geomspace(1, 10, 23)
@@ -52,7 +52,7 @@ class TestHiProcessor(unittest.TestCase):
         flux = np.array(flux_data).reshape(1, 1, 1, len(energies))
         variance = np.array(errors).reshape(1, 1, 1, len(energies))
 
-        result = spectral_fit(num_epochs, num_lons, num_lats, flux, variance, energies)
+        result, result_error = spectral_fit(num_epochs, num_lons, num_lats, flux, variance, energies)
         np.testing.assert_array_equal(result, np.array(true_gamma).reshape(1, 1, 1))
 
     def test_finds_best_fit_with_nan_in_uncertainty(self):
@@ -71,7 +71,7 @@ class TestHiProcessor(unittest.TestCase):
         flux = np.array(flux_data).reshape(1, 1, 1, len(energies))
         variance = np.array(errors).reshape(1, 1, 1, len(energies))
 
-        result = spectral_fit(num_epochs, num_lons, num_lats, flux, variance, energies)
+        result, result_error = spectral_fit(num_epochs, num_lons, num_lats, flux, variance, energies)
         np.testing.assert_array_equal(result, np.array(true_gamma).reshape(1, 1, 1))
 
     def test_finds_best_fit_with_zero_in_flux_and_uncertainty(self):
@@ -89,7 +89,7 @@ class TestHiProcessor(unittest.TestCase):
         flux = np.array(flux_data).reshape(1, 1, 1, len(energies))
         variance = np.array(errors).reshape(1, 1, 1, len(energies))
 
-        result = spectral_fit(num_epochs, num_lons, num_lats, flux, variance, energies)
+        result, result_error = spectral_fit(num_epochs, num_lons, num_lats, flux, variance, energies)
         np.testing.assert_array_equal(result, np.array(true_gamma).reshape(1, 1, 1))
 
     def test_finds_best_fit_with_ibex_data(self):
@@ -111,9 +111,11 @@ class TestHiProcessor(unittest.TestCase):
         num_lons = 2
         num_epochs = 1
 
-        result = spectral_fit(num_epochs, num_lons, num_lats, flux_data, errors, energies)
+        result, result_error = spectral_fit(num_epochs, num_lons, num_lats, flux_data, errors, energies)
         np.testing.assert_array_almost_equal(result, np.array([[[1.28922, 1.060341],
                                                                 [1.201249, 0.974847]]]))
+        np.testing.assert_array_almost_equal(result_error, np.array([[[0.121739, 0.168973],
+                                                                      [0.111328, 0.153143]]]))
 
     def test_finds_best_fit_with_zeros_in_flux_and_not_uncertainty(self):
         energies = np.geomspace(1, 1e10, 23)
@@ -130,5 +132,5 @@ class TestHiProcessor(unittest.TestCase):
         flux = np.array(flux_data).reshape(1, 1, 1, len(energies))
         variance = np.array(errors).reshape(1, 1, 1, len(energies))
 
-        result = spectral_fit(num_epochs, num_lons, num_lats, flux, variance, energies)
+        result, result_error = spectral_fit(num_epochs, num_lons, num_lats, flux, variance, energies)
         np.testing.assert_array_almost_equal(result, np.array(1.959853).reshape(1, 1, 1))

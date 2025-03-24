@@ -29,6 +29,7 @@ class TestModels(unittest.TestCase):
         flux = np.array([[[[1, 2], [10, 20]], [[100, 200], [1000, 2000]]]])
         variance = np.ones_like(flux)
         spectral_index = np.ones([len(epoch), len(long), len(lat)])
+        spectral_index_error = np.full_like(spectral_index, 4)
         energy_deltas = np.arange(2 * 2).reshape(2, 2)
         counts = np.arange(2 * 2 * 2).reshape(1, 2, 2, 2) * 104.3
         counts_uncertainty = np.arange(2 * 2 * 2).reshape(1, 2, 2, 2) * 56.8
@@ -52,6 +53,8 @@ class TestModels(unittest.TestCase):
             DataProductVariable(models.SENSITIVITY_VAR_NAME, sensitivity, cdf_data_type=pycdf.const.CDF_DOUBLE),
             DataProductVariable(models.SPECTRAL_FIT_INDEX_VAR_NAME, spectral_index,
                                 cdf_data_type=pycdf.const.CDF_DOUBLE),
+            DataProductVariable(models.SPECTRAL_FIT_INDEX_ERROR_VAR_NAME, spectral_index_error,
+                                cdf_data_type=pycdf.const.CDF_DOUBLE),
         ]
 
         spectral_index_product = HiL3SpectralIndexDataProduct(
@@ -69,6 +72,7 @@ class TestModels(unittest.TestCase):
             epoch_delta=epoch_delta,
             exposure=exposure,
             sensitivity=sensitivity,
+            spectral_fit_index_error=spectral_index_error
         )
 
         actual_variables = spectral_index_product.to_data_product_variables()
