@@ -6,8 +6,8 @@ import numpy as np
 from scipy.optimize import curve_fit
 
 from imap_l3_processing.constants import ELECTRON_MASS_KG, PROTON_CHARGE_COULOMBS, METERS_PER_KILOMETER
-from imap_l3_processing.pitch_angles import calculate_pitch_angle, calculate_unit_vector, calculate_gyrophase
-from imap_l3_processing.pitch_angles import rebin_by_pitch_angle_and_gyrophase as pitch_angle_rebin
+from imap_l3_processing.pitch_angles import calculate_pitch_angle, calculate_unit_vector, calculate_gyrophase, \
+    rebin_intensity_by_pitch_angle_and_gyrophase
 from imap_l3_processing.swe.l3.models import SweConfiguration
 
 
@@ -298,5 +298,6 @@ def rebin_flux_by_pitch_angle(intensity: np.ndarray[(E_BINS, SPIN_SECTORS, CEMS)
     # broadcast_mag_vectors = np.broadcast_to(normalized_mag_vectors[..., np.newaxis, :], normalized_velocities.shape)
     pitch_angles = calculate_pitch_angle(normalized_velocities, normalized_mag_vectors[..., np.newaxis, :])
     gyrophases = calculate_gyrophase(normalized_velocities, normalized_mag_vectors[..., np.newaxis, :])
-    return pitch_angle_rebin(intensity, intensity_delta_plus,
-                             intensity_delta_minus, pitch_angles, gyrophases, 30, 7)
+    return rebin_intensity_by_pitch_angle_and_gyrophase(intensity,
+                                                        intensity_delta_plus,
+                                                        intensity_delta_minus, pitch_angles, gyrophases, 7, 30)

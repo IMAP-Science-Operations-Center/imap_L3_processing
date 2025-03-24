@@ -4,7 +4,7 @@ import numpy as np
 
 from imap_l3_processing.pitch_angles import calculate_pitch_angle, calculate_unit_vector, calculate_gyrophase, \
     rotate_from_imap_despun_to_hit_despun, rotate_particle_vectors_from_hit_despun_to_imap_despun, \
-    rebin_by_pitch_angle_and_gyrophase
+    rebin_intensity_by_pitch_angle_and_gyrophase, hit_rebin_by_pitch_angle_and_gyrophase
 
 
 class TestPitchAngles(unittest.TestCase):
@@ -137,7 +137,7 @@ class TestPitchAngles(unittest.TestCase):
                 expected_gyrophases = [[np.nan, np.nan]]
                 np.testing.assert_array_equal(gyrophases, expected_gyrophases)
 
-    def test_rebin_by_pitch_angle_and_gyrophase(self):
+    def test_rebin_intensity_by_pitch_angle_and_gyrophase(self):
         default_pitch_angles = np.array([[45, 45, 45, 45], [135, 135, 135, 135]])
         default_gyrophases = np.array([[45, 135, 225, 315], [45, 135, 225, 315]])
         intensity_data_for_energy_1 = [[0, 1, 2, 3], [4, 5, 6, 7]]
@@ -171,13 +171,34 @@ class TestPitchAngles(unittest.TestCase):
                  [[4, 0, 1, 5], [7, 3, 2, 6]],
                  [[12, 8, 9, 13], [15, 11, 10, 14]]
              ],
-             [[2.5, 4.5], [10.5, 12.5]])
+             [[2.5, 4.5], [10.5, 12.5]]),
+            ('Nan in pitch angles', np.array([[45, 45, 135, 135], [np.nan, 45, 135, 135]]),
+             np.array([[135, 225, 225, 135], [45, 315, 315, 45]]), 2, 4,
+             [
+                 [[np.nan, 0, 1, 5], [7, 3, 2, 6]],
+                 [[np.nan, 8, 9, 13], [15, 11, 10, 14]]
+             ],
+             [[2, 4.5], [10, 12.5]]),
+            ('Nan for all pitch angles in a bin', np.array([[np.nan, np.nan, 135, 135], [np.nan, np.nan, 135, 135]]),
+             np.array([[135, 225, 225, 135], [45, 315, 315, 45]]), 2, 4,
+             [
+                 [[np.nan, np.nan, np.nan, np.nan], [7, 3, 2, 6]],
+                 [[np.nan, np.nan, np.nan, np.nan], [15, 11, 10, 14]]
+             ],
+             [[np.nan, 4.5], [np.nan, 12.5]]),
+            ('Nan in gyrophase', np.array([[45, 45, 135, 135], [45, 45, 135, 135]]),
+             np.array([[np.nan, 225, 225, 135], [45, 315, 315, 45]]), 2, 4,
+             [
+                 [[4, np.nan, 1, 5], [7, 3, 2, 6]],
+                 [[12, np.nan, 9, 13], [15, 11, 10, 14]]
+             ],
+             [[2.5, 4.5], [10.5, 12.5]]),
         ]
 
         for case, pitch_angles, gyrophases, number_of_pitch_angle_bins, number_of_gyrophase_bins, \
                 expected_intensity_by_pa_gyrophase, expected_intensity_by_pa in test_cases:
             with (((self.subTest(case)))):
-                rebinned_data = rebin_by_pitch_angle_and_gyrophase(
+                rebinned_data = hit_rebin_by_pitch_angle_and_gyrophase(
                     intensity,
                     intensity_delta_plus,
                     intensity_delta_minus,
@@ -187,12 +208,49 @@ class TestPitchAngles(unittest.TestCase):
                 intensity_pa_and_gyro, _, _ = rebinned_data[0:3]
                 intensity_pa_only, _, _ = rebinned_data[3:6]
 
-                np.testing.assert_equal(intensity_pa_and_gyro, expected_intensity_by_pa_gyrophase)
-                np.testing.assert_equal(intensity_pa_only, expected_intensity_by_pa)
+                np.testing.assert_array_equal(intensity_pa_and_gyro, expected_intensity_by_pa_gyrophase)
+                np.testing.assert_array_equal(intensity_pa_only, expected_intensity_by_pa)
+
+    def test_rebin_swe_intensity(self):
+        intensity_data_for_energy_1 = [[0, 1, 2, 3], [4, 5, 6, 7]]
+        intensity_data_for_energy_2 = [[8, 9, 10, 11], [12, 13, 14, 15]]
+        intensity = np.array([
+            intensity_data_for_energy_1,
+            intensity_data_for_energy_2
+        ])
+        intensity_delta_plus = intensity * 0.09
+        intensity_delta_minus = intensity * 0.11
+
+        pitch_angles = np.array(
+            [
+                [[45, 45, 135, 135], [45, 45, 135, 135]],
+                [[45, 45, 135, 135], [45, 45, 135, 135]],
+            ])
+        gyrophases = np.array(
+            [
+                [[135, 225, 225, 135], [45, 315, 315, 45]],
+                [[135, 225, 225, 135], [45, 315, 315, 45]]
+            ])
+        num_pitch_angle_bins = 2
+        num_gyrophase_bins = 4
+        expected_intensity_by_pa_and_gyro = np.array([
+            [[4, 0, 1, 5], [7, 3, 2, 6]],
+            [[12, 8, 9, 13], [15, 11, 10, 14]]
+        ])
+        expected_intensity_by_pa = np.array([[2.5, 4.5], [10.5, 12.5]])
+
+        rebinned_data = rebin_intensity_by_pitch_angle_and_gyrophase(intensity, intensity_delta_plus,
+                                                                     intensity_delta_minus,
+                                                                     pitch_angles,
+                                                                     gyrophases, num_pitch_angle_bins,
+                                                                     num_gyrophase_bins)
+        actual_rebinned_by_pa_and_gyro, _, _, actual_rebinned_by_pa, _, _ = rebinned_data
+        np.testing.assert_equal(actual_rebinned_by_pa_and_gyro, expected_intensity_by_pa_and_gyro)
+        np.testing.assert_equal(actual_rebinned_by_pa, expected_intensity_by_pa)
 
     def test_rebin_by_pitch_angle_and_gyrophase_pa_product_only_correctly_weights_when_averaging(self):
         intensity = np.array([[[0, 1, 2], [3, 4, 5]]])
-        rebinned_data = rebin_by_pitch_angle_and_gyrophase(
+        rebinned_data = hit_rebin_by_pitch_angle_and_gyrophase(
             intensity,
             intensity * 0.01,
             intensity * 0.01,
@@ -207,7 +265,7 @@ class TestPitchAngles(unittest.TestCase):
 
     def test_rebin_by_pitch_angle_and_gyrophase_pa_product_only_handles_nan_intensity(self):
         intensity = np.array([[[0, np.nan, 2, 7], [3, 4, np.nan, 8]]])
-        rebinned_data = rebin_by_pitch_angle_and_gyrophase(
+        rebinned_data = hit_rebin_by_pitch_angle_and_gyrophase(
             intensity,
             intensity * 0.01,
             intensity * 0.01,
@@ -255,7 +313,7 @@ class TestPitchAngles(unittest.TestCase):
             [0.526106, 0.745042]
         ])
 
-        rebinned_data = rebin_by_pitch_angle_and_gyrophase(
+        rebinned_data = hit_rebin_by_pitch_angle_and_gyrophase(
             intensity,
             intensity_delta_plus,
             intensity_delta_minus,
