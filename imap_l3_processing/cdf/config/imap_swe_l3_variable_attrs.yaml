@@ -120,6 +120,8 @@ intensity_by_pitch_angle:
   UNITS: cm^-2 sr^-1 s^-1 eV^-1
   VALIDMIN: 1.00E-40
   FILLVAL: -1.00E+31
+  SCALEMIN: 1.0e-40
+  SCALEMAX: 100000
   SCALETYP: linear
 intensity_by_pitch_angle_and_gyrophase:
   CATDESC: Intensity organized by pitch angle and gyrophase
@@ -133,7 +135,9 @@ intensity_by_pitch_angle_and_gyrophase:
   FORMAT: F8.3
   UNITS: cm^-2 sr^-1 s^-1 eV^-1
   VALIDMIN: 1.00E-40
-  FILLVAL: -1.00E+31
+  FILLVAL: *float_fillval
+  SCALEMIN: 1.0e-40
+  SCALEMAX: 100000
   SCALETYP: linear
 phase_space_density_by_pitch_angle:
   CATDESC: Phase space density organized by pitch angle

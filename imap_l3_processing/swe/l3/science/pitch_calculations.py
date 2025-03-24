@@ -263,4 +263,4 @@ def rebin_flux_by_pitch_angle(intensity: np.ndarray[(E_BINS, SPIN_SECTORS, CEMS)
     gyrophases = calculate_gyrophase(normalized_velocities, normalized_mag_vectors[..., np.newaxis, :])
     return rebin_by_pitch_angle_and_gyrophase(intensity,
                                               intensity_delta_plus,
-                                              intensity_delta_minus, pitch_angles, gyrophases, 30, 7)
+                                              intensity_delta_minus, pitch_angles, gyrophases, 7, 30)

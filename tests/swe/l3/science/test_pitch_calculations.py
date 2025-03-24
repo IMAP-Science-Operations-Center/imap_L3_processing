@@ -719,7 +719,7 @@ class TestPitchCalculations(unittest.TestCase):
         mock_rebin_by_pa_gyro.assert_called_once_with(intensity, intensity_delta_plus,
                                                       intensity_delta_minus, mock_calculate_pitch_angles.return_value,
                                                       mock_calculate_gyrophases.return_value,
-                                                      30, 7)
+                                                      7, 30)
         self.assertEqual(mock_rebin_by_pa_gyro.return_value, intensity_by_pitch_angle)
 
 

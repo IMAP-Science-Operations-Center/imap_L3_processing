@@ -467,8 +467,9 @@ class SweProcessor(Processor):
                 energy_spectrum.append(np.full(num_energy_bins, np.nan))
                 energy_spectrum_inbound.append(np.full(num_energy_bins, np.nan))
                 energy_spectrum_outbound.append(np.full(num_energy_bins, np.nan))
-                rebinned_intensity_by_pa_and_gyro.append(np.full((num_energy_bins, 7, 30), np.nan))
-                rebinned_intensity_by_pa.append(np.full((num_energy_bins, 7), np.nan))
+
+                rebinned_intensity_by_pa_and_gyro.append(np.full((swe_l2_data.flux.shape[1], 7, 30), np.nan))
+                rebinned_intensity_by_pa.append(np.full((swe_l2_data.flux.shape[1], 7), np.nan))
             else:
                 dsp_velocities = calculate_velocity_in_dsp_frame_km_s(corrected_energy_bins[i], swe_l2_data.inst_el,
                                                                       swe_l2_data.inst_az_spin_sector[i])
@@ -494,4 +495,4 @@ class SweProcessor(Processor):
                 rebinned_intensity_by_pa.append(intensity_by_pa)
 
         return phase_space_density_by_pitch_angle, energy_spectrum, energy_spectrum_inbound, energy_spectrum_outbound, \
-            rebinned_intensity_by_pa_and_gyro, rebinned_intensity_by_pa
+            np.array(rebinned_intensity_by_pa_and_gyro), np.array(rebinned_intensity_by_pa)
