@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime
 
 import numpy as np
 from spacepy import pycdf
@@ -70,7 +71,7 @@ class SwapiL3ProtonSolarWindData(DataProduct):
 
 @dataclass
 class SwapiL3AlphaSolarWindData(DataProduct):
-    epoch: np.ndarray[float]
+    epoch: np.ndarray[datetime]
     alpha_sw_speed: np.ndarray[float]
     alpha_sw_temperature: np.ndarray[float]
     alpha_sw_density: np.ndarray[float]
