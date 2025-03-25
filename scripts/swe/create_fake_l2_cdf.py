@@ -177,7 +177,7 @@ def get_epochs_from_output_file(dataset: VD) -> np.array:
     min_index = dataset.field("min")._index
     sec_index = dataset.field("sec")._index
 
-    correction_factor = (datetime(2010, 1, 1) - datetime(1999, 6, 8))
+    correction_factor = (datetime(2025, 6, 30) - datetime(1999, 6, 8))
 
     return np.array([datetime(year=x[years_index], month=x[month_index], day=x[day_index], hour=x[hour_index],
                               minute=x[min_index], second=x[sec_index]) + correction_factor for x in dataset[:]])
@@ -197,16 +197,14 @@ if __name__ == "__main__":
     l2_electron_hdf_path = path.parent.parent.parent / "instrument_team_data/swe/swepam-nswe-1999-159.v1-02.hdf"
     l2_ion_hdf_path = path.parent.parent.parent / "instrument_team_data/swe/swepam-swi-1999-159.v2-01.hdf"
 
-    l2_swe_cdf_file_path = path.parent.parent.parent / "tests" / "test_data" / "swe" / "imap_swe_l2_sci-with-ace-data_20100101_v002.cdf"
-    l1b_swe_cdf_file_path = path.parent.parent.parent / "tests" / "test_data" / "swe" / "imap_swe_l1b_sci-with-ace-data_20100101_v002.cdf"
-    mag_file_path = path.parent.parent.parent / "tests" / "test_data" / "swe" / "imap_mag_l1d_mago-normal_20100101_v001.cdf"
-    swapi_file_path = path.parent.parent.parent / "tests" / "test_data" / "swe" / "imap_swapi_l3a_proton-sw_20100101_v001.cdf"
+    l2_swe_cdf_file_path = path.parent.parent.parent / "tests" / "test_data" / "swe" / "imap_swe_l2_sci-with-ace-data_20250630_v002.cdf"
+    l1b_swe_cdf_file_path = path.parent.parent.parent / "tests" / "test_data" / "swe" / "imap_swe_l1b_sci-with-ace-data_20250630_v002.cdf"
+    mag_file_path = path.parent.parent.parent / "tests" / "test_data" / "swe" / "imap_mag_l1d_mago-normal_20250630_v001.cdf"
+    swapi_file_path = path.parent.parent.parent / "tests" / "test_data" / "swe" / "imap_swapi_l3a_proton-sw_20250630_v001.cdf"
 
     mag_file_path.unlink(missing_ok=True)
     swapi_file_path.unlink(missing_ok=True)
     l1b_swe_cdf_file_path.unlink(missing_ok=True)
     l2_swe_cdf_file_path.unlink(missing_ok=True)
-    create_fake_swe_l1b_and_l2_cdf(str(l1_hdf_path), str(l2_electron_hdf_path), str(l1b_swe_cdf_file_path),
-                                   str(l2_swe_cdf_file_path))
     create_fake_mag_l1d_cdf(str(l2_electron_hdf_path), str(mag_file_path))
     create_fake_swapi_l3a_cdf(str(l2_ion_hdf_path), str(swapi_file_path))
