@@ -6,3 +6,5 @@ GEOMETRIC_FACTOR_LOOKUP_TABLE_DESCRIPTOR = "energy-gf-lut-not-cdf"
 EFFICIENCY_LOOKUP_TABLE_DESCRIPTOR = "efficiency-lut-text-not-cdf"
 INSTRUMENT_RESPONSE_LOOKUP_TABLE = "instrument-response-lut-zip-not-cdf"
 DENSITY_OF_NEUTRAL_HELIUM = "density-of-neutral-helium-lut-text-not-cdf"
+
+SWAPI_L3A_ALPHA_SW_DESCRIPTOR = "alpha-sw"

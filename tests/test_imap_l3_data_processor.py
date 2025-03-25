@@ -70,13 +70,14 @@ class TestImapL3DataProcessor(TestCase):
     @patch('imap_l3_data_processor.GlowsProcessor')
     @patch('imap_l3_data_processor.argparse')
     def test_runs_glows_processor_when_instrument_argument_is_glows(self, mock_argparse, mock_processor_class):
-        cases = [("20170630", datetime(2017, 6, 30)), (None, datetime(2016, 6, 30))]
+        cases = [("20170630", datetime(2017, 6, 30), "l3a", "lightcurve"),
+                 (None, datetime(2016, 6, 30), "l3a", "lightcurve"),
+                 ("20170630", datetime(2017, 6, 30), "l3b", "ionization-rates"),
+                 (None, datetime(2016, 6, 30), "l3b", "ionization-rates")]
 
         instrument_argument = "glows"
-        data_level_argument = "l3a"
         start_date_argument = "20160630"
         version_argument = "v092"
-        descriptor_argument = "lightcurve"
         dependencies_argument = (
             "[{'instrument':'not_swapi', 'data_level':'l1000', 'descriptor':'science', 'version':'v112',"
             "'start_date':'20250101','end_date':'20250202'}]")
@@ -84,17 +85,17 @@ class TestImapL3DataProcessor(TestCase):
         mock_argument_parser = mock_argparse.ArgumentParser.return_value
 
         mock_argument_parser.parse_args.return_value.instrument = instrument_argument
-        mock_argument_parser.parse_args.return_value.data_level = data_level_argument
         mock_argument_parser.parse_args.return_value.dependency = dependencies_argument
         mock_argument_parser.parse_args.return_value.start_date = start_date_argument
         mock_argument_parser.parse_args.return_value.version = version_argument
-        mock_argument_parser.parse_args.return_value.descriptor = descriptor_argument
 
         mock_processor = mock_processor_class.return_value
 
-        for input_end_date, expected_end_date in cases:
+        for input_end_date, expected_end_date, data_level, descriptor in cases:
             with self.subTest(input_end_date):
                 mock_argument_parser.parse_args.return_value.end_date = input_end_date
+                mock_argument_parser.parse_args.return_value.data_level = data_level
+                mock_argument_parser.parse_args.return_value.descriptor = descriptor
 
                 imap_l3_processor()
 
@@ -118,8 +119,8 @@ class TestImapL3DataProcessor(TestCase):
                                                                       "v112",
                                                                       "science")]
 
-                expected_input_metadata = InputMetadata("glows", "l3a", datetime(year=2016, month=6, day=30),
-                                                        expected_end_date, "v092", descriptor="lightcurve")
+                expected_input_metadata = InputMetadata("glows", data_level, datetime(year=2016, month=6, day=30),
+                                                        expected_end_date, "v092", descriptor=descriptor)
 
                 mock_processor_class.assert_called_with(expected_input_dependencies, expected_input_metadata)
 

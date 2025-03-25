@@ -2,6 +2,8 @@ import os
 from datetime import datetime, date
 from pathlib import Path
 from typing import Optional, Union
+from urllib.error import HTTPError
+from urllib.request import urlretrieve
 
 import imap_data_access
 from spacepy.pycdf import CDF
@@ -59,6 +61,14 @@ def download_dependency(dependency: UpstreamDataDependency) -> Path:
         raise ValueError(f"{files_to_download}. Expected one file to download, found {len(files_to_download)}.")
 
     return imap_data_access.download(files_to_download[0])
+
+
+def download_external_dependency(dependency_url: str, filename: str) -> Path | None:
+    try:
+        saved_path, _ = urlretrieve(dependency_url, filename)
+        return Path(saved_path)
+    except HTTPError:
+        return None
 
 
 def read_l1d_mag_data(cdf_path: Union[str, Path]) -> MagL1dData:

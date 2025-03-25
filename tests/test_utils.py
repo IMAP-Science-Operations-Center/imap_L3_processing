@@ -2,7 +2,8 @@ import os
 from datetime import datetime, date
 from pathlib import Path
 from unittest import TestCase
-from unittest.mock import patch, call
+from unittest.mock import patch, call, Mock
+from urllib.error import HTTPError
 
 import numpy as np
 from spacepy.pycdf import CDF
@@ -10,7 +11,8 @@ from spacepy.pycdf import CDF
 from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
 from imap_l3_processing.models import UpstreamDataDependency
 from imap_l3_processing.swapi.l3a.models import SwapiL3AlphaSolarWindData
-from imap_l3_processing.utils import format_time, download_dependency, read_l1d_mag_data, save_data
+from imap_l3_processing.utils import format_time, download_dependency, read_l1d_mag_data, save_data, \
+    download_external_dependency
 
 
 class TestUtils(TestCase):
@@ -90,6 +92,24 @@ class TestUtils(TestCase):
         mock_data_access.download.assert_called_once_with("imap_swapi_l2_descriptor-fake-menlo-444_20240917_v2.cdf")
 
         self.assertIs(path, mock_data_access.download.return_value)
+
+    @patch("imap_l3_processing.utils.urlretrieve")
+    def test_download_external_dependency(self, mock_urlretrieve):
+        expected_url = "https://www.spaceweather.gc.ca/solar_flux_data/daily_flux_values/fluxtable.txt"
+        expected_filename = "f107_fluxtable.txt"
+        mock_urlretrieve.return_value = (expected_filename, Mock())
+        saved_path = download_external_dependency(expected_url, expected_filename)
+
+        mock_urlretrieve.assert_called_once_with(expected_url, expected_filename)
+        self.assertEqual(Path(expected_filename), saved_path)
+
+    @patch("imap_l3_processing.utils.urlretrieve")
+    def test_download_external_dependency_error_case(self, mock_urlretrieve):
+        expected_url = "https://www.spaceweather.gc.ca/solar_flux_data/daily_flux_values/no_such_file.txt"
+        expected_filename = "f107_fluxtable.txt"
+        mock_urlretrieve.side_effect = HTTPError(url="url", code=404, msg="not there", hdrs=Mock(), fp=Mock())
+        returned = download_external_dependency(expected_url, expected_filename)
+        self.assertIsNone(returned)
 
     @patch('imap_l3_processing.utils.imap_data_access')
     def test_download_dependency_throws_value_error_if_not_one_file_returned(self, mock_data_access):

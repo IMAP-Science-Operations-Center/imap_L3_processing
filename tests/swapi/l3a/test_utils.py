@@ -5,8 +5,9 @@ from unittest import TestCase
 import numpy as np
 from spacepy.pycdf import CDF
 
-from imap_l3_processing.swapi.l3a.models import SwapiL2Data
-from imap_l3_processing.swapi.l3a.utils import chunk_l2_data, read_l2_swapi_data
+from imap_l3_processing.swapi.l3a.models import SwapiL2Data, SwapiL3AlphaSolarWindData
+from imap_l3_processing.swapi.l3a.utils import chunk_l2_data, read_l2_swapi_data, read_l3a_alpha_sw_swapi_data
+from tests.test_helpers import get_test_data_path
 
 
 class TestUtils(TestCase):
@@ -62,3 +63,18 @@ class TestUtils(TestCase):
         np.testing.assert_array_equal(np.array([2, 2, 2, 2, 2, 2, 2, 2]),
                                       actual_swapi_l2_data.coincidence_count_rate_uncertainty)
         os.remove('temp_cdf.cdf')
+
+    def test_read_l3a_alpha_sw_swapi_data(self):
+        cdf = CDF(str(get_test_data_path("swapi/imap_swapi_l3a_alpha-sw_20251023_v999.cdf")))
+
+        actual_swapi_data: SwapiL3AlphaSolarWindData = read_l3a_alpha_sw_swapi_data(cdf)
+
+        self.assertIsNone(actual_swapi_data.input_metadata)
+        self.assertEqual(10, len(actual_swapi_data.epoch))
+        self.assertEqual(datetime(2025, 6, 6, 12, 0, 30), actual_swapi_data.epoch[0])
+        self.assertAlmostEqual(503.8135455170878, actual_swapi_data.alpha_sw_speed[0].nominal_value)
+        self.assertAlmostEqual(2.6674679453256007, actual_swapi_data.alpha_sw_speed[0].std_dev)
+        self.assertAlmostEqual(517942.17964600306, actual_swapi_data.alpha_sw_temperature[0].nominal_value)
+        self.assertAlmostEqual(153774.59736339463, actual_swapi_data.alpha_sw_temperature[0].std_dev)
+        self.assertAlmostEqual(0.18881474473010484, actual_swapi_data.alpha_sw_density[0].nominal_value)
+        self.assertAlmostEqual(0.0243276700645657, actual_swapi_data.alpha_sw_density[0].std_dev)

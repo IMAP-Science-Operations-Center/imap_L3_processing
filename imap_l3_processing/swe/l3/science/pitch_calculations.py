@@ -7,7 +7,7 @@ from scipy.optimize import curve_fit
 
 from imap_l3_processing.constants import ELECTRON_MASS_KG, PROTON_CHARGE_COULOMBS, METERS_PER_KILOMETER
 from imap_l3_processing.pitch_angles import calculate_pitch_angle, calculate_unit_vector, calculate_gyrophase, \
-    rebin_intensity_by_pitch_angle_and_gyrophase
+    swe_rebin_intensity_by_pitch_angle_and_gyrophase
 from imap_l3_processing.swe.l3.models import SweConfiguration
 
 
@@ -287,17 +287,13 @@ def integrate_distribution_to_get_inbound_and_outbound_1d_spectrum(
     return inbound, outbound
 
 
-def rebin_flux_by_pitch_angle(intensity: np.ndarray[(E_BINS, SPIN_SECTORS, CEMS)],
-                              intensity_delta_plus: np.ndarray[(E_BINS, SPIN_SECTORS, CEMS)],
-                              intensity_delta_minus: np.ndarray[(E_BINS, SPIN_SECTORS, CEMS)],
-                              dsp_velocities: np.ndarray[(E_BINS, SPIN_SECTORS, CEMS, 3)],
-                              mag_vectors: np.ndarray[([(E_BINS, SPIN_SECTORS, 3,)])]) -> [np.ndarray]:
+def rebin_intensity_by_pitch_angle(intensity: np.ndarray[(E_BINS, SPIN_SECTORS, CEMS)],
+                                   counts: np.ndarray[(E_BINS, SPIN_SECTORS, CEMS)],
+                                   dsp_velocities: np.ndarray[(E_BINS, SPIN_SECTORS, CEMS, 3)],
+                                   mag_vectors: np.ndarray[([(E_BINS, SPIN_SECTORS, 3,)])]) -> [np.ndarray]:
     normalized_velocities = calculate_unit_vector(dsp_velocities)
     normalized_mag_vectors = calculate_unit_vector(mag_vectors)
 
-    # broadcast_mag_vectors = np.broadcast_to(normalized_mag_vectors[..., np.newaxis, :], normalized_velocities.shape)
     pitch_angles = calculate_pitch_angle(normalized_velocities, normalized_mag_vectors[..., np.newaxis, :])
     gyrophases = calculate_gyrophase(normalized_velocities, normalized_mag_vectors[..., np.newaxis, :])
-    return rebin_intensity_by_pitch_angle_and_gyrophase(intensity,
-                                                        intensity_delta_plus,
-                                                        intensity_delta_minus, pitch_angles, gyrophases, 7, 30)
+    return swe_rebin_intensity_by_pitch_angle_and_gyrophase(intensity, counts, pitch_angles, gyrophases, 7, 30)
