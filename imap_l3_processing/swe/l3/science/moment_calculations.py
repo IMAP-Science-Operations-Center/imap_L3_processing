@@ -153,7 +153,7 @@ def _fit_moments_retrying_on_failure(corrected_energy_bins: np.ndarray,
     if moment.density is not None and 0 < moment.density < average_density:
         return results
     elif energy_end - energy_start < 4:
-        if moment.density > 0:
+        if moment.density is not None and moment.density > 0:
             return results
         else:
             return None
