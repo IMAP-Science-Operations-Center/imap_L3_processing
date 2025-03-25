@@ -286,26 +286,21 @@ def integrate_distribution_to_get_inbound_and_outbound_1d_spectrum(
     return inbound, outbound
 
 
-def rebin_intensity_by_pitch_angle(intensity: np.ndarray[(E_BINS, SPIN_SECTORS, CEMS)],
-                                   counts: np.ndarray[(E_BINS, SPIN_SECTORS, CEMS)],
-                                   dsp_velocities: np.ndarray[(E_BINS, SPIN_SECTORS, CEMS, 3)],
-                                   mag_vectors: np.ndarray[([(E_BINS, SPIN_SECTORS, 3,)])]) -> [np.ndarray]:
+def swe_rebin_intensity_by_pitch_angle_and_gyrophase(intensity_data: np.ndarray[(E_BINS, SPIN_SECTORS, CEMS)],
+                                                     counts: np.ndarray[(E_BINS, SPIN_SECTORS, CEMS)],
+                                                     dsp_velocities: np.ndarray[(E_BINS, SPIN_SECTORS, CEMS, 3)],
+                                                     mag_vectors: np.ndarray[([(E_BINS, SPIN_SECTORS, 3,)])],
+                                                     config: SweConfiguration) -> [np.ndarray]:
     normalized_velocities = calculate_unit_vector(dsp_velocities)
     normalized_mag_vectors = calculate_unit_vector(mag_vectors)
 
     pitch_angles = calculate_pitch_angle(normalized_velocities, normalized_mag_vectors[..., np.newaxis, :])
     gyrophases = calculate_gyrophase(normalized_velocities, normalized_mag_vectors[..., np.newaxis, :])
-    return swe_rebin_intensity_by_pitch_angle_and_gyrophase(intensity, counts, pitch_angles, gyrophases, 7, 30)
 
-
-def swe_rebin_intensity_by_pitch_angle_and_gyrophase(intensity_data: np.array,
-                                                     counts: np.array,
-                                                     pitch_angles: np.array,
-                                                     gyrophases: np.array,
-                                                     number_of_pitch_angle_bins: int,
-                                                     number_of_gyrophase_bins: int):
-    output_shape_pa_and_gyro = (intensity_data.shape[0], number_of_pitch_angle_bins, number_of_gyrophase_bins)
-    output_shape_pa_only = (intensity_data.shape[0], number_of_pitch_angle_bins)
+    num_pitch_angle_bins = len(config["pitch_angle_bins"])
+    num_gyrophase_bins = len(config["gyrophase_bins"])
+    output_shape_pa_and_gyro = (intensity_data.shape[0], num_pitch_angle_bins, num_gyrophase_bins)
+    output_shape_pa_only = (intensity_data.shape[0], num_pitch_angle_bins)
 
     rebinned_summed_by_pa_and_gyro = np.zeros(shape=output_shape_pa_and_gyro)
     rebinned_summed_pa_only = np.zeros(shape=output_shape_pa_only)
@@ -323,9 +318,15 @@ def swe_rebin_intensity_by_pitch_angle_and_gyrophase(intensity_data: np.array,
                 np.ravel(intensity_data[i]),
                 np.ravel(counts[i])):
             if not (np.isnan(intensity) or np.isnan(pitch_angle)):
-                pitch_angle_bin = np.floor(pitch_angle / (180 / number_of_pitch_angle_bins)).astype(int)
+                pitch_angle_bin = next((i for i, (center, delta) in
+                                        enumerate(zip(config["pitch_angle_bins"], config["pitch_angle_deltas"])) if
+                                        center - delta <= pitch_angle < center + delta),
+                                       num_pitch_angle_bins - 1)
                 if not np.isnan(gyrophase):
-                    gyrophase_bin = np.floor(gyrophase / (360 / number_of_gyrophase_bins)).astype(int)
+                    gyrophase_bin = next((i for i, (center, delta) in
+                                          enumerate(zip(config["gyrophase_bins"], config["gyrophase_deltas"])) if
+                                          center - delta <= gyrophase < center + delta),
+                                         num_gyrophase_bins - 1)
 
                     rebinned_summed_by_pa_and_gyro[i, pitch_angle_bin, gyrophase_bin] += intensity
                     rebinned_count_by_pa_and_gyro[i, pitch_angle_bin, gyrophase_bin] += 1
