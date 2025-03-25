@@ -399,8 +399,14 @@ class SweL3Data(DataProduct):
 
 class SweConfiguration(TypedDict):
     geometric_fractions: list[float]
-    pitch_angle_bins: list[float]
-    pitch_angle_delta: list[float]
+    psd_pitch_angle_bins: list[float]
+    psd_pitch_angle_deltas: list[float]
+    psd_gyrophase_bins: list[float]
+    psd_gyrophase_deltas: list[float]
+    intensity_pitch_angle_bins: list[float]
+    intensity_pitch_angle_deltas: list[float]
+    intensity_gyrophase_bins: list[float]
+    intensity_gyrophase_deltas: list[float]
     energy_bins: list[float]
     energy_delta_plus: list[float]
     energy_delta_minus: list[float]
