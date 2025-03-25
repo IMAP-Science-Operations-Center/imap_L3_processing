@@ -365,8 +365,8 @@ class TestPitchCalculations(unittest.TestCase):
         energy = np.array([10 * 0.8, 10 / 0.8, 10 * 0.9 * 0.9, 10 / 0.9])
 
         config = build_swe_configuration(
-            psd_pitch_angle_bins=[45, 135],
-            psd_pitch_angle_deltas=[45, 45],
+            pitch_angle_bins=[45, 135],
+            pitch_angle_deltas=[45, 45],
             energy_bins=[10]
         )
 
@@ -395,11 +395,11 @@ class TestPitchCalculations(unittest.TestCase):
                            central_energy_value * 0.8, central_energy_value, central_energy_value / 0.8])
 
         config = build_swe_configuration(
-            psd_pitch_angle_bins=[45, 135],
-            psd_pitch_angle_deltas=[45, 45],
+            pitch_angle_bins=[45, 135],
+            pitch_angle_deltas=[45, 45],
             energy_bins=[central_energy_value],
             gyrophase_bins=[90, 270],
-            gyrophase_delta=[90, 90]
+            gyrophase_deltas=[90, 90]
         )
 
         rebinned_by_gyro = rebin_by_pitch_angle_and_gyrophase(psd, pitch_angle, gyrophase, energy, config)
@@ -419,8 +419,8 @@ class TestPitchCalculations(unittest.TestCase):
         energy = np.array([10 * 0.8, 10 / 0.8, 10 * 0.9 * 0.9, 10 / 0.9, 10 / 0.9])
 
         config = build_swe_configuration(
-            psd_pitch_angle_bins=[45, 135],
-            psd_pitch_angle_deltas=[45, 45],
+            pitch_angle_bins=[45, 135],
+            pitch_angle_deltas=[45, 45],
             energy_bins=[10]
         )
 
@@ -437,8 +437,8 @@ class TestPitchCalculations(unittest.TestCase):
         energy = np.array([10 * 0.69, 10 * 0.71, 10 * 1.49, 10 * 1.51])
 
         config = build_swe_configuration(
-            psd_pitch_angle_bins=[90],
-            psd_pitch_angle_deltas=[90],
+            pitch_angle_bins=[90],
+            pitch_angle_deltas=[90],
             energy_bins=[10],
             energy_bin_low_multiplier=0.7,
             energy_bin_high_multiplier=1.5,
@@ -456,8 +456,8 @@ class TestPitchCalculations(unittest.TestCase):
         energy = np.array([10 * 0.59, 10 * 0.61, 10 * 1.39, 50 * 1.1])
 
         config = build_swe_configuration(
-            psd_pitch_angle_bins=[45, 135],
-            psd_pitch_angle_deltas=[45, 45],
+            pitch_angle_bins=[45, 135],
+            pitch_angle_deltas=[45, 45],
             energy_bins=[10, 50],
             energy_bin_low_multiplier=0.6,
             energy_bin_high_multiplier=1.4,
@@ -489,8 +489,8 @@ class TestPitchCalculations(unittest.TestCase):
         for case, energy, expected_output in test_cases:
             with self.subTest(case):
                 config = build_swe_configuration(
-                    psd_pitch_angle_bins=[45],
-                    psd_pitch_angle_deltas=[45],
+                    pitch_angle_bins=[45],
+                    pitch_angle_deltas=[45],
                     energy_bins=[10],
                     energy_bin_low_multiplier=0.6,
                     energy_bin_high_multiplier=1.4,
@@ -514,8 +514,8 @@ class TestPitchCalculations(unittest.TestCase):
         pitch_angle_bins = np.linspace(0, 180, 20, endpoint=False) + 4.5
         pitch_angle_deltas = np.repeat(4.5, 20)
         energy_bins = np.geomspace(2, 5000, 24)
-        config = build_swe_configuration(psd_pitch_angle_bins=pitch_angle_bins,
-                                         psd_pitch_angle_deltas=pitch_angle_deltas,
+        config = build_swe_configuration(pitch_angle_bins=pitch_angle_bins,
+                                         pitch_angle_deltas=pitch_angle_deltas,
                                          energy_bins=energy_bins)
         result = rebin_by_pitch_angle(flux, pitch_angle, energy, config)
         self.assertEqual((24, 20), result.shape)
@@ -598,8 +598,8 @@ class TestPitchCalculations(unittest.TestCase):
     def test_integrate_distribution_to_get_1d_spectrum(self):
         pitch_angle_bins = [30, 90]
         pitch_angle_deltas = [15, 15]
-        configuration = build_swe_configuration(psd_pitch_angle_bins=pitch_angle_bins,
-                                                psd_pitch_angle_deltas=pitch_angle_deltas,
+        configuration = build_swe_configuration(pitch_angle_bins=pitch_angle_bins,
+                                                pitch_angle_deltas=pitch_angle_deltas,
                                                 in_vs_out_energy_index=1,
                                                 )
 
@@ -623,8 +623,8 @@ class TestPitchCalculations(unittest.TestCase):
     def test_integrate_distribution_to_get_1d_spectrum_ignores_nan_values(self):
         pitch_angle_bins = [30, 90]
         pitch_angle_deltas = [15, 15]
-        configuration = build_swe_configuration(psd_pitch_angle_bins=pitch_angle_bins,
-                                                psd_pitch_angle_deltas=pitch_angle_deltas,
+        configuration = build_swe_configuration(pitch_angle_bins=pitch_angle_bins,
+                                                pitch_angle_deltas=pitch_angle_deltas,
                                                 in_vs_out_energy_index=1,
                                                 )
 
@@ -679,8 +679,8 @@ class TestPitchCalculations(unittest.TestCase):
         ]
         for index, expected_in, expected_out in cases:
             with self.subTest(index):
-                configuration = build_swe_configuration(psd_pitch_angle_bins=pitch_angle_bins,
-                                                        psd_pitch_angle_deltas=pitch_angle_deltas,
+                configuration = build_swe_configuration(pitch_angle_bins=pitch_angle_bins,
+                                                        pitch_angle_deltas=pitch_angle_deltas,
                                                         in_vs_out_energy_index=index)
 
                 in_spectrum, out_spectrum = integrate_distribution_to_get_inbound_and_outbound_1d_spectrum(
@@ -717,8 +717,8 @@ class TestPitchCalculations(unittest.TestCase):
             3 * bin3_factor + 0,
         ]
 
-        configuration = build_swe_configuration(psd_pitch_angle_bins=pitch_angle_bins,
-                                                psd_pitch_angle_deltas=pitch_angle_deltas,
+        configuration = build_swe_configuration(pitch_angle_bins=pitch_angle_bins,
+                                                pitch_angle_deltas=pitch_angle_deltas,
                                                 in_vs_out_energy_index=0)
 
         in_spectrum, out_spectrum = integrate_distribution_to_get_inbound_and_outbound_1d_spectrum(

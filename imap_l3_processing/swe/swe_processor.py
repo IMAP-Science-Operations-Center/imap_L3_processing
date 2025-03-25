@@ -86,10 +86,10 @@ class SweProcessor(Processor):
             energy=config["energy_bins"],
             energy_delta_plus=config["energy_delta_plus"],
             energy_delta_minus=config["energy_delta_minus"],
-            pitch_angle=config["psd_pitch_angle_bins"],
-            pitch_angle_delta=config["psd_pitch_angle_deltas"],
-            gyrophase_bins=config["psd_gyrophase_bins"],
-            gyrophase_delta=config["psd_gyrophase_deltas"],
+            pitch_angle=config["pitch_angle_bins"],
+            pitch_angle_delta=config["pitch_angle_deltas"],
+            gyrophase_bins=config["gyrophase_bins"],
+            gyrophase_delta=config["gyrophase_deltas"],
             intensity_by_pitch_angle_and_gyrophase=intensity_by_pitch_angle_and_gyrophase,
             intensity_by_pitch_angle=intensity_by_pitch_angle,
             intensity_uncertainty_by_pitch_angle_and_gyrophase=uncertanties_by_pitch_angle_and_gyrophase,
@@ -475,8 +475,8 @@ class SweProcessor(Processor):
             missing_mag_data = np.any(np.isnan(rebinned_mag_data[i]))
             if missing_mag_data:
                 num_energy_bins = len(config['energy_bins'])
-                num_pitch_angle_bins = len(config['psd_pitch_angle_bins'])
-                num_gyrophase_bins = len(config['psd_gyrophase_bins'])
+                num_pitch_angle_bins = len(config['pitch_angle_bins'])
+                num_gyrophase_bins = len(config['gyrophase_bins'])
                 phase_space_density_by_pitch_angle.append(np.full((num_energy_bins, num_pitch_angle_bins), np.nan))
                 phase_space_density_by_pitch_angle_and_gyrophase.append(
                     np.full((num_energy_bins, num_pitch_angle_bins, num_gyrophase_bins), np.nan))

@@ -161,10 +161,10 @@ class TestSweProcessor(unittest.TestCase):
         np.testing.assert_array_equal(swe_l3_data.energy, swe_config["energy_bins"])
         np.testing.assert_array_equal(swe_l3_data.energy_delta_plus, swe_config["energy_delta_plus"])
         np.testing.assert_array_equal(swe_l3_data.energy_delta_minus, swe_config["energy_delta_minus"])
-        np.testing.assert_array_equal(swe_l3_data.pitch_angle, swe_config["psd_pitch_angle_bins"])
-        np.testing.assert_array_equal(swe_l3_data.pitch_angle_delta, swe_config["psd_pitch_angle_deltas"])
-        np.testing.assert_array_equal(swe_l3_data.gyrophase_bins, swe_config["psd_gyrophase_bins"])
-        np.testing.assert_array_equal(swe_l3_data.gyrophase_delta, swe_config["psd_gyrophase_deltas"])
+        np.testing.assert_array_equal(swe_l3_data.pitch_angle, swe_config["pitch_angle_bins"])
+        np.testing.assert_array_equal(swe_l3_data.pitch_angle_delta, swe_config["pitch_angle_deltas"])
+        np.testing.assert_array_equal(swe_l3_data.gyrophase_bins, swe_config["gyrophase_bins"])
+        np.testing.assert_array_equal(swe_l3_data.gyrophase_delta, swe_config["gyrophase_deltas"])
         np.testing.assert_array_equal(swe_l3_data.intensity_by_pitch_angle_and_gyrophase,
                                       sentinel.intensity_by_pitch_angle_and_gyrophase)
         np.testing.assert_array_equal(swe_l3_data.intensity_by_pitch_angle, sentinel.intensity_by_pitch_angle)
@@ -445,9 +445,9 @@ class TestSweProcessor(unittest.TestCase):
         swe_config = build_swe_configuration(
             geometric_fractions=geometric_fractions,
             pitch_angle_bins=pitch_angle_bins,
-            pitch_angle_delta=[15, 15, 15],
+            pitch_angle_deltas=[15, 15, 15],
             gyrophase_bins=[0, 180, 360],
-            gyrophase_delta=[180, 180],
+            gyrophase_deltas=[180, 180],
             energy_bins=energy_bins,
             energy_delta_plus=[2, 20, 200],
             energy_delta_minus=[8, 80, 800],
@@ -466,8 +466,8 @@ class TestSweProcessor(unittest.TestCase):
 
         self.assertEqual(UpstreamDataDependency("swe", "l3", datetime(2025, 2, 21),
                                                 datetime(2025, 2, 22), "v001", "sci"), swe_l3_data.input_metadata)
-        self.assertEqual(swe_l3_data.pitch_angle, swel3_dependency.configuration["psd_pitch_angle_bins"])
-        self.assertEqual(swe_l3_data.pitch_angle_delta, swel3_dependency.configuration["psd_pitch_angle_deltas"])
+        self.assertEqual(swe_l3_data.pitch_angle, swel3_dependency.configuration["pitch_angle_bins"])
+        self.assertEqual(swe_l3_data.pitch_angle_delta, swel3_dependency.configuration["pitch_angle_deltas"])
         self.assertEqual(swe_l3_data.energy, swel3_dependency.configuration["energy_bins"])
         self.assertEqual(swe_l3_data.energy_delta_plus, swel3_dependency.configuration["energy_delta_plus"])
         self.assertEqual(swe_l3_data.energy_delta_minus, swel3_dependency.configuration["energy_delta_minus"])
@@ -535,8 +535,8 @@ class TestSweProcessor(unittest.TestCase):
         energy_bins = [8, 10, 13]
         swe_config = build_swe_configuration(
             geometric_fractions=geometric_fractions,
-            psd_pitch_angle_bins=pitch_angle_bins,
-            psd_pitch_angle_deltas=[15, 15, 15],
+            pitch_angle_bins=pitch_angle_bins,
+            pitch_angle_deltas=[15, 15, 15],
             energy_bins=energy_bins,
             energy_delta_plus=[2, 20, 200],
             energy_delta_minus=[8, 80, 800],
@@ -546,7 +546,7 @@ class TestSweProcessor(unittest.TestCase):
             core_halo_breakpoint_initial_guess=90,
             in_vs_out_energy_index=len(energy_bins) - 1,
             gyrophase_bins=[90, 180, 270],
-            gyrophase_delta=[90, 90, 90]
+            gyrophase_deltas=[90, 90, 90]
         )
 
         input_metadata = InputMetadata("swe", "l3", datetime(2025, 2, 21),
@@ -558,13 +558,13 @@ class TestSweProcessor(unittest.TestCase):
 
         self.assertEqual(UpstreamDataDependency("swe", "l3", datetime(2025, 2, 21),
                                                 datetime(2025, 2, 22), "v001", "sci"), swe_l3_data.input_metadata)
-        self.assertEqual(swe_l3_data.pitch_angle, swel3_dependency.configuration["psd_pitch_angle_bins"])
-        self.assertEqual(swe_l3_data.pitch_angle_delta, swel3_dependency.configuration["psd_pitch_angle_deltas"])
+        self.assertEqual(swe_l3_data.pitch_angle, swel3_dependency.configuration["pitch_angle_bins"])
+        self.assertEqual(swe_l3_data.pitch_angle_delta, swel3_dependency.configuration["pitch_angle_deltas"])
         self.assertEqual(swe_l3_data.energy, swel3_dependency.configuration["energy_bins"])
         self.assertEqual(swe_l3_data.energy_delta_plus, swel3_dependency.configuration["energy_delta_plus"])
         self.assertEqual(swe_l3_data.energy_delta_minus, swel3_dependency.configuration["energy_delta_minus"])
-        self.assertEqual(swe_l3_data.gyrophase_bins, swel3_dependency.configuration["psd_gyrophase_bins"])
-        self.assertEqual(swe_l3_data.gyrophase_delta, swel3_dependency.configuration["psd_gyrophase_deltas"])
+        self.assertEqual(swe_l3_data.gyrophase_bins, swel3_dependency.configuration["gyrophase_bins"])
+        self.assertEqual(swe_l3_data.gyrophase_delta, swel3_dependency.configuration["gyrophase_deltas"])
         np.testing.assert_allclose(swe_l3_data.phase_space_density_by_pitch_angle,
                                    np.array([[[np.nan, 194.772034, 270.312835],
                                               [211.672665, 273.136802, 363.195552],

@@ -128,8 +128,8 @@ def rebin_by_pitch_angle(flux, pitch_angles, energies, config: SweConfiguration)
 
 
 def _rebin(flux, pitch_angles, energies, config: SweConfiguration, gyrophase: np.ndarray = None) -> np.ndarray:
-    pitch_angle_bins = np.array(config["psd_pitch_angle_bins"])
-    pitch_angle_delta = np.array(config["psd_pitch_angle_deltas"])
+    pitch_angle_bins = np.array(config["pitch_angle_bins"])
+    pitch_angle_delta = np.array(config["pitch_angle_deltas"])
     energy_bins = config["energy_bins"]
     mask_psd = flux > 0
     psd_greater_than_zero = flux[mask_psd]
@@ -141,8 +141,8 @@ def _rebin(flux, pitch_angles, energies, config: SweConfiguration, gyrophase: np
     num_energy_bins = len(energy_bins)
 
     if gyrophase is not None:
-        gyrophase_bins = np.array(config["psd_gyrophase_bins"])
-        gyrophase_delta = np.array(config["psd_gyrophase_deltas"])
+        gyrophase_bins = np.array(config["gyrophase_bins"])
+        gyrophase_delta = np.array(config["gyrophase_deltas"])
         gyrophase_left_edges = gyrophase_bins - gyrophase_delta
         gyrophase_right_edges = gyrophase_bins + gyrophase_delta
         gyrophase_for_masked_psd = gyrophase[mask_psd]
@@ -261,8 +261,8 @@ def correct_and_rebin(flux_or_psd: np.ndarray[(E_BINS, SPIN_SECTORS, CEMS)],
 
 def integrate_distribution_to_get_1d_spectrum(psd_by_energy_and_pitch_angle: np.ndarray[(E_BINS, PITCH_ANGLE_BINS)],
                                               config: SweConfiguration) -> np.ndarray[E_BINS]:
-    pitch_angle_bin_factors = np.sin(np.deg2rad(config["psd_pitch_angle_bins"])) * 2 * np.deg2rad(
-        config["psd_pitch_angle_deltas"]) / 2
+    pitch_angle_bin_factors = np.sin(np.deg2rad(config["pitch_angle_bins"])) * 2 * np.deg2rad(
+        config["pitch_angle_deltas"]) / 2
 
     return np.nansum(psd_by_energy_and_pitch_angle * pitch_angle_bin_factors, axis=1)
 
@@ -270,9 +270,9 @@ def integrate_distribution_to_get_1d_spectrum(psd_by_energy_and_pitch_angle: np.
 def integrate_distribution_to_get_inbound_and_outbound_1d_spectrum(
         psd_by_pitch_angle: np.ndarray[(E_BINS, PITCH_ANGLE_BINS)],
         config: SweConfiguration) -> (np.ndarray[E_BINS], np.ndarray[E_BINS]):
-    pitch_angle_bin_factors = np.sin(np.deg2rad(config["psd_pitch_angle_bins"])) * 2 * np.deg2rad(
-        config["psd_pitch_angle_deltas"])
-    pitch_less_than_90 = np.array(config["psd_pitch_angle_bins"]) < 90
+    pitch_angle_bin_factors = np.sin(np.deg2rad(config["pitch_angle_bins"])) * 2 * np.deg2rad(
+        config["pitch_angle_deltas"])
+    pitch_less_than_90 = np.array(config["pitch_angle_bins"]) < 90
 
     spectrum_a = np.nansum((psd_by_pitch_angle * pitch_angle_bin_factors)[:, pitch_less_than_90], axis=1)
     spectrum_b = np.nansum((psd_by_pitch_angle * pitch_angle_bin_factors)[:, ~pitch_less_than_90], axis=1)

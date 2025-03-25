@@ -26,30 +26,15 @@ class TestUtils(unittest.TestCase):
             0.151448,
             0.0781351
         ], result["geometric_fractions"])
-        self.assertEqual(20, len(result["psd_pitch_angle_bins"]))
-        self.assertEqual(13.5, result["psd_pitch_angle_bins"][1])
-        self.assertEqual(20, len(result["psd_pitch_angle_deltas"]))
-        self.assertEqual(4.5, result["psd_pitch_angle_deltas"][1])
+        self.assertEqual(20, len(result["pitch_angle_bins"]))
+        self.assertEqual(13.5, result["pitch_angle_bins"][1])
+        self.assertEqual(20, len(result["pitch_angle_deltas"]))
+        self.assertEqual(4.5, result["pitch_angle_deltas"][1])
 
-        self.assertEqual(24, len(result["psd_gyrophase_bins"]))
-        self.assertEqual(24, len(result["psd_gyrophase_deltas"]))
-        self.assertEqual(22.5, result["psd_gyrophase_bins"][1])
-        self.assertEqual(7.5, result["psd_gyrophase_deltas"][1])
-
-        self.assertEqual(20, len(result["intensity_pitch_angle_bins"]))
-        self.assertEqual(13.5, result["intensity_pitch_angle_bins"][1])
-        self.assertEqual(20, len(result["intensity_pitch_angle_deltas"]))
-        self.assertEqual(4.5, result["intensity_pitch_angle_deltas"][1])
-
-        self.assertEqual(24, len(result["intensity_gyrophase_bins"]))
-        self.assertEqual(24, len(result["intensity_gyrophase_deltas"]))
-        self.assertEqual(22.5, result["intensity_gyrophase_bins"][1])
-        self.assertEqual(7.5, result["intensity_gyrophase_deltas"][1])
-
-        self.assertEqual(24, len(result["intensity_gyrophase_bins"]))
-        self.assertEqual(24, len(result["intensity_gyrophase_deltas"]))
-        self.assertEqual(22.5, result["intensity_gyrophase_bins"][1])
-        self.assertEqual(7.5, result["intensity_gyrophase_deltas"][1])
+        self.assertEqual(24, len(result["gyrophase_bins"]))
+        self.assertEqual(24, len(result["gyrophase_deltas"]))
+        self.assertEqual(22.5, result["gyrophase_bins"][1])
+        self.assertEqual(7.5, result["gyrophase_deltas"][1])
 
         self.assertEqual(24, len(result["energy_bins"]))
         self.assertEqual(2.66, result["energy_bins"][0])
