@@ -120,11 +120,11 @@ class TestUtils(unittest.TestCase):
             self.assertEqual(1, len(result.epoch))
             self.assertEqual(datetime(2013, 9, 8, 18, 55, 14), result.epoch[0])
 
-            self.assertEqual((1, 65), result.spin_angle.shape)
-            self.assertEqual(2.000, result.spin_angle[0, 0])
+            self.assertEqual((65,), result.spin_angle.shape)
+            self.assertEqual(2.000, result.spin_angle[0])
 
-            self.assertEqual((1, 65), result.spin_angle_delta.shape)
-            self.assertEqual(expected_spin_delta, result.spin_angle_delta[0, 0])
+            self.assertEqual((65,), result.spin_angle_delta.shape)
+            self.assertEqual(expected_spin_delta, result.spin_angle_delta[0])
 
             self.assertEqual((1, 65), result.photon_flux.shape)
             self.assertEqual(620.9, result.photon_flux[0, 0])

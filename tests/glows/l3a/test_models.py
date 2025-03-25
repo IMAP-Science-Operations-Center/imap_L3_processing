@@ -103,8 +103,8 @@ class TestModels(CdfModelTestCase):
                                         expected_data_type=pycdf.const.CDF_TIME_TT2000)
         self.assert_variable_attributes(next(variables), epoch_delta, EPOCH_DELTA_CDF_VAR_NAME,
                                         expected_data_type=pycdf.const.CDF_INT8)
-        self.assert_variable_attributes(next(variables), spin_angle, SPIN_ANGLE_CDF_VAR_NAME)
-        self.assert_variable_attributes(next(variables), spin_angle_delta, SPIN_ANGLE_DELTA_CDF_VAR_NAME)
+        self.assert_variable_attributes(next(variables), spin_angle, SPIN_ANGLE_CDF_VAR_NAME, expected_record_varying=False)
+        self.assert_variable_attributes(next(variables), spin_angle_delta, SPIN_ANGLE_DELTA_CDF_VAR_NAME,  expected_record_varying=False)
         self.assert_variable_attributes(next(variables), latitudes, LATITUDE_CDF_VAR_NAME)
         self.assert_variable_attributes(next(variables), longitudes, LONGITUDE_CDF_VAR_NAME)
         self.assert_variable_attributes(next(variables), extra_heliospheric_background,
