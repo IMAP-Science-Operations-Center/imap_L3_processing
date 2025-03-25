@@ -130,7 +130,7 @@ intensity_uncertainty_by_pitch_angle_and_gyrophase:
   DEPEND_0: epoch
   DEPEND_1: energy
   DEPEND_2: pitch_angle
-  DEPEND_3: gyrophas
+  DEPEND_3: gyrophase
   VAR_TYPE: data
   DISPLAY_TYPE: spectrogram
   VARIABLE_PURPOSE: primary var, summary
