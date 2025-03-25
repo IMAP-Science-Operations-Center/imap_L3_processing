@@ -97,7 +97,8 @@ class TestSweProcessor(unittest.TestCase):
             sentinel.expected_phase_space_density_by_pitch_angle,
             sentinel.expected_phase_space_density_by_pitch_angle_and_gyrophase, sentinel.expected_energy_spectrum,
             sentinel.expected_energy_spectrum_inbound, sentinel.expected_energy_spectrum_outbound,
-            sentinel.intensity_by_pitch_angle_and_gyrophase, sentinel.intensity_by_pitch_angle)
+            sentinel.intensity_by_pitch_angle_and_gyrophase, sentinel.intensity_by_pitch_angle,
+            sentinel.uncertainty_by_pitch_angle_and_gyrophase, sentinel.uncertainty_by_pitch_angle)
 
         input_metadata = InputMetadata("swe", "l3", datetime(2025, 2, 21),
                                        datetime(2025, 2, 22), "v001")
@@ -167,6 +168,10 @@ class TestSweProcessor(unittest.TestCase):
         np.testing.assert_array_equal(swe_l3_data.intensity_by_pitch_angle_and_gyrophase,
                                       sentinel.intensity_by_pitch_angle_and_gyrophase)
         np.testing.assert_array_equal(swe_l3_data.intensity_by_pitch_angle, sentinel.intensity_by_pitch_angle)
+        np.testing.assert_array_equal(swe_l3_data.intensity_uncertainty_by_pitch_angle_and_gyrophase,
+                                      sentinel.uncertainty_by_pitch_angle_and_gyrophase)
+        np.testing.assert_array_equal(swe_l3_data.intensity_uncertainty_by_pitch_angle,
+                                      sentinel.uncertainty_by_pitch_angle)
 
         # need for both moments and pitch angle
         np.testing.assert_array_equal(swe_l3_data.spacecraft_potential, expected_spacecraft_potential)
@@ -182,7 +187,7 @@ class TestSweProcessor(unittest.TestCase):
         self.assertEqual(sentinel.expected_phase_space_density_by_pitch_angle_and_gyrophase,
                          swe_l3_data.phase_space_density_by_pitch_angle_and_gyrophase)
 
-    @patch('imap_l3_processing.swe.swe_processor.rebin_flux_by_pitch_angle')
+    @patch('imap_l3_processing.swe.swe_processor.rebin_intensity_by_pitch_angle')
     @patch('imap_l3_processing.swe.swe_processor.calculate_velocity_in_dsp_frame_km_s')
     @patch('imap_l3_processing.swe.swe_processor.average_over_look_directions')
     @patch('imap_l3_processing.swe.swe_processor.find_breakpoints')
@@ -198,7 +203,7 @@ class TestSweProcessor(unittest.TestCase):
                                                           mock_calculate_solar_wind_velocity_vector,
                                                           _,
                                                           mock_average_over_look_directions,
-                                                          mock_calculate_velocities, mock_rebin_flux):
+                                                          mock_calculate_velocities, mock_rebin_intensity):
         epochs = datetime.now() + np.arange(3) * timedelta(minutes=1)
         mag_epochs = datetime.now() - timedelta(seconds=15) + np.arange(10) * timedelta(minutes=.5)
         swapi_epochs = datetime.now() - timedelta(seconds=15) + np.arange(10) * timedelta(minutes=.5)
@@ -213,12 +218,18 @@ class TestSweProcessor(unittest.TestCase):
         swe_l2_data = SweL2Data(
             epoch=epochs,
             phase_space_density=np.arange(9).reshape(3, 3) + 100,
-            flux=np.arange(9).reshape(3, 3),
+            flux=np.arange(27).reshape(3, 3, 3),
             energy=energies,
             inst_el=np.array([]),
             inst_az_spin_sector=np.arange(10, 19).reshape(3, 3),
             acquisition_time=np.array([]),
-            acquisition_duration=np.array([])
+            acquisition_duration=np.arange(9).reshape(3, 3) + 5
+        )
+
+        swe_l1b_data = SweL1bData(
+            epoch=epochs,
+            count_rates=np.arange(27).reshape(3, 3, 3) + 10,
+            settle_duration=np.array([])
         )
 
         mag_l1d_data = MagL1dData(
@@ -233,6 +244,7 @@ class TestSweProcessor(unittest.TestCase):
             proton_sw_clock_angle=np.array([]),
             proton_sw_deflection_angle=np.array([]),
         )
+        counts = swe_l1b_data.count_rates * swe_l2_data.acquisition_duration[:, :, np.newaxis]
         mock_average_over_look_directions.return_value = np.array([5, 10, 15])
         closest_mag_data = np.arange(9).reshape(3, 3)
         closest_swapi_data = np.arange(8, 17).reshape(3, 3)
@@ -259,9 +271,15 @@ class TestSweProcessor(unittest.TestCase):
 
         expected_intensity_by_pa_and_gyro = np.arange(9).reshape(3, 3) + 25
         expected_intensity_by_pa = np.arange(9).reshape(3, 3) + 26
-        mock_rebin_flux.side_effect = [(expected_intensity_by_pa_and_gyro[0], 0, 0, expected_intensity_by_pa[0], 0, 0),
-                                       (expected_intensity_by_pa_and_gyro[1], 0, 0, expected_intensity_by_pa[1], 0, 0),
-                                       (expected_intensity_by_pa_and_gyro[2], 0, 0, expected_intensity_by_pa[2], 0, 0)]
+        expected_uncertainty_by_pa_and_gyro = np.arange(27).reshape(3, 3, 3) + 27
+        expected_uncertainty_by_pa = np.arange(27).reshape(3, 3, 3) + 28
+        mock_rebin_intensity.side_effect = [
+            (expected_intensity_by_pa_and_gyro[0], expected_intensity_by_pa[0], expected_uncertainty_by_pa_and_gyro[0],
+             expected_uncertainty_by_pa[0]),
+            (expected_intensity_by_pa_and_gyro[1], expected_intensity_by_pa[1], expected_uncertainty_by_pa_and_gyro[1],
+             expected_uncertainty_by_pa[1]),
+            (expected_intensity_by_pa_and_gyro[2], expected_intensity_by_pa[2], expected_uncertainty_by_pa_and_gyro[2],
+             expected_uncertainty_by_pa[2])]
 
         mock_integrate_distribution_to_get_1d_spectrum.side_effect = integrated_spectrum
 
@@ -290,11 +308,11 @@ class TestSweProcessor(unittest.TestCase):
 
         input_metadata = InputMetadata("swe", "l3", datetime(2025, 2, 21),
                                        datetime(2025, 2, 22), "v001")
-        swel3_dependency = SweL3Dependencies(swe_l2_data, Mock(), mag_l1d_data, swapi_l3a_proton_data, swe_config)
+        swel3_dependency = SweL3Dependencies(swe_l2_data, swe_l1b_data, mag_l1d_data, swapi_l3a_proton_data, swe_config)
         swe_processor = SweProcessor(dependencies=[], input_metadata=input_metadata)
 
         actual_phase_space_density_by_pitch_angle, actual_phase_space_density_by_pa_and_gyrophase, actual_energy_spectrum, actual_energy_spectrum_inbound, actual_energy_spectrum_outbound, \
-            actual_intensity_by_pa_and_gyro, actual_intensity_by_pa \
+            actual_intensity_by_pa_and_gyro, actual_intensity_by_pa, actual_uncertainty_by_pa_and_gyro, actual_uncertainty_by_pa \
             = swe_processor.calculate_pitch_angle_products(swel3_dependency, corrected_energy_bins)
 
         self.assertEqual(3, mock_correct_and_rebin.call_count)
@@ -327,6 +345,8 @@ class TestSweProcessor(unittest.TestCase):
         np.testing.assert_array_equal(actual_energy_spectrum_outbound, expected_outbound_spectrum)
         np.testing.assert_array_equal(actual_intensity_by_pa_and_gyro, expected_intensity_by_pa_and_gyro)
         np.testing.assert_array_equal(actual_intensity_by_pa, expected_intensity_by_pa)
+        np.testing.assert_array_equal(actual_uncertainty_by_pa_and_gyro, expected_uncertainty_by_pa_and_gyro)
+        np.testing.assert_array_equal(actual_uncertainty_by_pa, expected_uncertainty_by_pa)
 
         def call_with_array_matchers(*args):
             return call(*[NumpyArrayMatcher(x) for x in args])
@@ -357,20 +377,15 @@ class TestSweProcessor(unittest.TestCase):
         ]
         self.assertEqual(correct_and_rebin_expected_calls, correct_and_rebin_actual_calls)
 
-        empty_array_with_correct_shape = np.zeros_like(swe_l2_data.flux[0])
-
-        mock_rebin_flux_expected_calls = [
-            call_with_array_matchers(swe_l2_data.flux[0], empty_array_with_correct_shape,
-                                     empty_array_with_correct_shape, mock_calculate_velocities.return_value,
+        mock_rebin_intensity_expected_calls = [
+            call_with_array_matchers(swe_l2_data.flux[0], counts[0], mock_calculate_velocities.return_value,
                                      closest_mag_data[0]),
-            call_with_array_matchers(swe_l2_data.flux[1], empty_array_with_correct_shape,
-                                     empty_array_with_correct_shape, mock_calculate_velocities.return_value,
+            call_with_array_matchers(swe_l2_data.flux[1], counts[1], mock_calculate_velocities.return_value,
                                      closest_mag_data[1]),
-            call_with_array_matchers(swe_l2_data.flux[2], empty_array_with_correct_shape,
-                                     empty_array_with_correct_shape, mock_calculate_velocities.return_value,
+            call_with_array_matchers(swe_l2_data.flux[2], counts[2], mock_calculate_velocities.return_value,
                                      closest_mag_data[2])
         ]
-        self.assertEqual(mock_rebin_flux_expected_calls, mock_rebin_flux.call_args_list)
+        self.assertEqual(mock_rebin_intensity_expected_calls, mock_rebin_intensity.call_args_list)
 
         mock_integrate_distribution_to_get_1d_spectrum.assert_has_calls([
             call(rebinned_by_pitch_list[0], swe_config),
@@ -408,7 +423,7 @@ class TestSweProcessor(unittest.TestCase):
 
         swe_l1b_data = SweL1bData(
             epoch=epochs,
-            count_rates=Mock(),
+            count_rates=np.full((num_epochs, num_energies, 5, 7), 350),
             settle_duration=np.full((num_epochs, 3), 333)
         )
 
@@ -468,6 +483,10 @@ class TestSweProcessor(unittest.TestCase):
                                       np.full((len(epochs), num_energies, 7), np.nan))
         np.testing.assert_array_equal(swe_l3_data.intensity_by_pitch_angle_and_gyrophase,
                                       np.full((len(epochs), num_energies, 7, 30), np.nan))
+        np.testing.assert_array_equal(swe_l3_data.intensity_uncertainty_by_pitch_angle,
+                                      np.full((len(epochs), num_energies, 7), np.nan))
+        np.testing.assert_array_equal(swe_l3_data.intensity_uncertainty_by_pitch_angle_and_gyrophase,
+                                      np.full((len(epochs), num_energies, 7, 30), np.nan))
 
     @patch("imap_l3_processing.swe.swe_processor.SweProcessor.calculate_moment_products")
     def test_calculate_pitch_angle_products_without_mocks(self, _):
@@ -490,6 +509,13 @@ class TestSweProcessor(unittest.TestCase):
             acquisition_time=np.linspace(datetime(2025, 3, 6), datetime(2025, 3, 6, 0, 1),
                                          num_epochs * num_energies * 5).reshape(num_epochs, num_energies, 5),
             acquisition_duration=np.full((num_epochs, num_energies, 5), 80000)
+        )
+
+        swe_l1b_data = SweL1bData(
+            epoch=epochs,
+            count_rates=np.arange(num_epochs * num_energies * 5 * 7).reshape(num_epochs, num_energies, 5, 7) + 350,
+            settle_duration=np.full((num_epochs, 3), 333)
+
         )
 
         mag_l1d_data = MagL1dData(
@@ -526,12 +552,6 @@ class TestSweProcessor(unittest.TestCase):
         input_metadata = InputMetadata("swe", "l3", datetime(2025, 2, 21),
                                        datetime(2025, 2, 22), "v001")
 
-        swe_l1b_data = SweL1bData(
-            epoch=epochs,
-            count_rates=Mock(),
-            settle_duration=np.full((num_epochs, 3), 333)
-        )
-
         swel3_dependency = SweL3Dependencies(swe_l2_data, swe_l1b_data, mag_l1d_data, swapi_l3a_proton_data, swe_config)
         swe_processor = SweProcessor(dependencies=[], input_metadata=input_metadata)
         swe_l3_data = swe_processor.calculate_products(swel3_dependency)
@@ -562,6 +582,8 @@ class TestSweProcessor(unittest.TestCase):
                                              53.09090909]))
         np.testing.assert_allclose(swe_l3_data.intensity_by_pitch_angle_and_gyrophase[0, 1, 3, 15:17],
                                    np.array([63, 45.5]))
+        # np.testing.assert_allclose(swe_l3_data)
+        # assert output uncertainties
 
     @patch('imap_l3_processing.swe.swe_processor.rotate_temperature_tensor_to_mag')
     @patch('imap_l3_processing.swe.swe_processor.calculate_primary_eigenvector')

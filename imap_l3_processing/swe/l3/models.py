@@ -22,6 +22,8 @@ ENERGY_SPECTRUM_INBOUND_CDF_VAR_NAME = "energy_spectrum_inbound"
 ENERGY_SPECTRUM_OUTBOUND_CDF_VAR_NAME = "energy_spectrum_outbound"
 INTENSITY_BY_PITCH_ANGLE_CDF_VAR_NAME = "intensity_by_pitch_angle"
 INTENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_CDF_VAR_NAME = "intensity_by_pitch_angle_and_gyrophase"
+INTENSITY_UNCERTAINTY_BY_PITCH_ANGLE_CDF_VAR_NAME = "intensity_uncertainty_by_pitch_angle"
+INTENSITY_UNCERTAINTY_BY_PITCH_ANGLE_AND_GYROPHASE_CDF_VAR_NAME = "intensity_uncertainty_by_pitch_angle_and_gyrophase"
 SPACECRAFT_POTENTIAL_CDF_VAR_NAME = "spacecraft_potential"
 CORE_HALO_BREAKPOINT_CDF_VAR_NAME = "core_halo_breakpoint"
 CORE_FIT_NUM_POINTS_CDF_VAR_NAME = "core_fit_num_points"
@@ -187,6 +189,8 @@ class SweL3Data(DataProduct):
     # intensity
     intensity_by_pitch_angle: np.ndarray
     intensity_by_pitch_angle_and_gyrophase: np.ndarray
+    intensity_uncertainty_by_pitch_angle: np.ndarray
+    intensity_uncertainty_by_pitch_angle_and_gyrophase: np.ndarray
     # pitch angle specific
     phase_space_density_by_pitch_angle: np.ndarray
     phase_space_density_by_pitch_angle_and_gyrophase: np.ndarray
@@ -231,6 +235,11 @@ class SweL3Data(DataProduct):
                                 value=self.intensity_by_pitch_angle, cdf_data_type=pycdf.const.CDF_REAL4),
             DataProductVariable(INTENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_CDF_VAR_NAME,
                                 value=self.intensity_by_pitch_angle_and_gyrophase, cdf_data_type=pycdf.const.CDF_REAL4),
+            DataProductVariable(INTENSITY_UNCERTAINTY_BY_PITCH_ANGLE_CDF_VAR_NAME,
+                                value=self.intensity_uncertainty_by_pitch_angle, cdf_data_type=pycdf.const.CDF_REAL4),
+            DataProductVariable(INTENSITY_UNCERTAINTY_BY_PITCH_ANGLE_AND_GYROPHASE_CDF_VAR_NAME,
+                                value=self.intensity_uncertainty_by_pitch_angle_and_gyrophase,
+                                cdf_data_type=pycdf.const.CDF_REAL4),
             DataProductVariable(SPACECRAFT_POTENTIAL_CDF_VAR_NAME,
                                 value=self.spacecraft_potential, cdf_data_type=pycdf.const.CDF_REAL4),
             DataProductVariable(CORE_HALO_BREAKPOINT_CDF_VAR_NAME,
