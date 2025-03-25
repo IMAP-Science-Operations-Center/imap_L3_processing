@@ -9,9 +9,9 @@ from imap_l3_processing.hit.l3.pha.pha_event_reader import PHAEventReader, RawPH
 from imap_l3_processing.hit.l3.pha.science.calculate_pha import process_pha_event
 from imap_l3_processing.hit.l3.sectored_products.models import HitPitchAngleDataProduct
 from imap_l3_processing.hit.l3.sectored_products.science.sectored_products_algorithms import get_sector_unit_vectors, \
-    get_hit_bin_polar_coordinates
+    get_hit_bin_polar_coordinates, hit_rebin_by_pitch_angle_and_gyrophase
 from imap_l3_processing.pitch_angles import calculate_unit_vector, calculate_pitch_angle, calculate_gyrophase, \
-    rotate_particle_vectors_from_hit_despun_to_imap_despun, hit_rebin_by_pitch_angle_and_gyrophase
+    rotate_particle_vectors_from_hit_despun_to_imap_despun
 from imap_l3_processing.processor import Processor
 from imap_l3_processing.utils import save_data
 
