@@ -158,11 +158,15 @@ def swe_rebin_intensity_by_pitch_angle_and_gyrophase(intensity_data: np.array,
 
                     rebinned_summed_by_pa_and_gyro[i, pitch_angle_bin, gyrophase_bin] += intensity
                     rebinned_count_by_pa_and_gyro[i, pitch_angle_bin, gyrophase_bin] += 1
+
                     rebinned_summed_counts_by_pa_and_gyro[i, pitch_angle_bin, gyrophase_bin] += count
 
                 rebinned_summed_pa_only[i, pitch_angle_bin] += intensity
                 rebinned_count_pa_only[i, pitch_angle_bin] += 1
                 rebinned_summed_counts_by_pa_only[i, pitch_angle_bin] += count
+
+    rebinned_summed_counts_by_pa_and_gyro[rebinned_summed_counts_by_pa_and_gyro == 0] = np.nan
+    rebinned_summed_counts_by_pa_only[rebinned_summed_counts_by_pa_only == 0] = np.nan
 
     averaged_rebinned_intensity_by_pa_and_gyro = np.divide(
         rebinned_summed_by_pa_and_gyro,
@@ -178,9 +182,10 @@ def swe_rebin_intensity_by_pitch_angle_and_gyrophase(intensity_data: np.array,
                                                            np.nan),
                                                        where=rebinned_count_pa_only != 0)
 
-    uncertainties_by_pa_and_gyro = 1 / np.sqrt(rebinned_summed_by_pa_and_gyro)
+    uncertainties_by_pa_and_gyro = 1 / np.sqrt(rebinned_summed_counts_by_pa_and_gyro)
     uncertainties_by_pa_only = 1 / np.sqrt(rebinned_summed_counts_by_pa_only)
 
     return (
-    averaged_rebinned_intensity_by_pa_and_gyro, averaged_rebinned_intensity_by_pa_only, uncertainties_by_pa_and_gyro,
-    uncertainties_by_pa_only)
+        averaged_rebinned_intensity_by_pa_and_gyro, averaged_rebinned_intensity_by_pa_only,
+        uncertainties_by_pa_and_gyro,
+        uncertainties_by_pa_only)

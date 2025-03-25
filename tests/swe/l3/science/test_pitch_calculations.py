@@ -754,20 +754,18 @@ class TestPitchCalculations(unittest.TestCase):
             ],
         ])
         intensity = sentinel.intensity
-        intensity_delta_plus = sentinel.intensity_delta_minus
-        intensity_delta_minus = sentinel.intensity_delta_minus
+        counts = sentinel.counts
 
         mock_calculate_unit_vector.side_effect = [sentinel.normalized_dsp_velocities, mag_vectors]
 
-        intensity_by_pitch_angle = rebin_intensity_by_pitch_angle(intensity, intensity_delta_plus,
-                                                                  intensity_delta_minus,
+        intensity_by_pitch_angle = rebin_intensity_by_pitch_angle(intensity, counts,
                                                                   sentinel.dsp_velocities, sentinel.mag_vectors)
         mock_calculate_unit_vector.assert_has_calls([call(sentinel.dsp_velocities), call(sentinel.mag_vectors)])
         mock_calculate_pitch_angles.assert_called_once_with(sentinel.normalized_dsp_velocities,
                                                             NumpyArrayMatcher(expected_mag_vectors_with_cem_axis))
         mock_calculate_gyrophases.assert_called_once_with(sentinel.normalized_dsp_velocities,
                                                           NumpyArrayMatcher(expected_mag_vectors_with_cem_axis))
-        mock_swe_rebin_by_pa_gyro.assert_called_once_with(intensity, mock_calculate_pitch_angles.return_value,
+        mock_swe_rebin_by_pa_gyro.assert_called_once_with(intensity, counts, mock_calculate_pitch_angles.return_value,
                                                           mock_calculate_gyrophases.return_value,
                                                           7, 30)
         self.assertEqual(mock_swe_rebin_by_pa_gyro.return_value, intensity_by_pitch_angle)

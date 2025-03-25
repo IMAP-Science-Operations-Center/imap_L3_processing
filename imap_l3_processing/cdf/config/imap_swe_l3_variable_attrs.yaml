@@ -125,13 +125,44 @@ gyrophase_deltas:
   <<: *gyrophase
   CATDESC: Gyrophase bin half-width
 
+intensity_uncertainty_by_pitch_angle_and_gyrophase: &intensity_uncertainty_by_pitch_angle_and_gyrophase
+  CATDESC: Uncertainty Intensity organized by pitch angle and gyrophase
+  DEPEND_0: epoch
+  DEPEND_1: energy
+  DEPEND_2: pitch_angle
+  DEPEND_3: gyrophase
+  VAR_TYPE: data
+  DISPLAY_TYPE: spectrogram
+  VARIABLE_PURPOSE: primary var, summary
+  LABLAXIS: Electron Intensity Uncertainty
+  FORMAT: F8.3
+  UNITS: cm^-2 sr^-1 s^-1 eV^-1
+  VALIDMIN: 0
+  FILLVAL: *float_fillval
+  SCALE_TYP: linear
 
+intensity_uncertainty_by_pitch_angle: &intensity_uncertainty_by_pitch_angle
+  CATDESC: Uncertainty of Intensity organized by pitch angle
+  DEPEND_0: epoch
+  DEPEND_1: energy
+  DEPEND_2: pitch_angle
+  VAR_TYPE: data
+  DISPLAY_TYPE: spectrogram
+  VARIABLE_PURPOSE: primary var, summary
+  LABLAXIS: Electron Intensity Uncertainty
+  FORMAT: F8.3
+  UNITS: cm^-2 sr^-1 s^-1 eV^-1
+  VALIDMIN: 0
+  FILLVAL: *float_fillval
+  SCALE_TYP: linear
 
 intensity_by_pitch_angle:
   CATDESC: Intensity organized by pitch angle
   DEPEND_0: epoch
   DEPEND_1: energy
   DEPEND_2: pitch_angle
+  DELTA_PLUS_VAR: intensity_uncertainty_by_pitch_angle
+  DELTA_MINS_VAR: intensity_uncertainty_by_pitch_angle
   VAR_TYPE: data
   DISPLAY_TYPE: spectrogram
   LABLAXIS: Electron Intensity
@@ -148,6 +179,8 @@ intensity_by_pitch_angle_and_gyrophase:
   DEPEND_1: energy
   DEPEND_2: pitch_angle
   DEPEND_3: gyrophase_bins
+  DELTA_PLUS_VAR: intensity_uncertainty_by_pitch_angle_and_gyrophase
+  DELTA_MINS_VAR: intensity_uncertainty_by_pitch_angle_and_gyrophase
   VAR_TYPE: data
   DISPLAY_TYPE: spectrogram
   LABLAXIS: Electron Intensity
@@ -158,6 +191,7 @@ intensity_by_pitch_angle_and_gyrophase:
   SCALEMIN: 1.0e-40
   SCALEMAX: 100000
   SCALETYP: linear
+
 phase_space_density_by_pitch_angle: &phase_space_density_by_pitch_angle
   CATDESC: Phase space density organized by pitch angle
   DEPEND_0: epoch

@@ -36,7 +36,8 @@ from imap_l3_processing.swe.l3.models import SweL3Data, EPOCH_CDF_VAR_NAME, EPOC
     TOTAL_T_PARALLEL_INTEGRATED_CDF_VAR_NAME, CORE_TEMPERATURE_TENSOR_INTEGRATED_CDF_VAR_NAME, \
     HALO_TEMPERATURE_TENSOR_INTEGRATED_CDF_VAR_NAME, TOTAL_TEMPERATURE_TENSOR_INTEGRATED_CDF_VAR_NAME, \
     PHASE_SPACE_DENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_CDF_VAR_NAME, GYROPHASE_DELTA_CDF_VAR_NAME, \
-    GYROPHASE_BINS_CDF_VAR_NAME
+    GYROPHASE_BINS_CDF_VAR_NAME, INTENSITY_UNCERTAINTY_BY_PITCH_ANGLE_AND_GYROPHASE_CDF_VAR_NAME, \
+    INTENSITY_UNCERTAINTY_BY_PITCH_ANGLE_CDF_VAR_NAME
 from tests.swapi.cdf_model_test_case import CdfModelTestCase
 
 
@@ -58,6 +59,8 @@ class TestModels(CdfModelTestCase):
         energy_spectrum_outbound = Mock()
         intensity_by_pitch_angle = Mock()
         intensity_by_pitch_angle_and_gyrophase = Mock()
+        intensity_uncertainty_by_pitch_angle = Mock()
+        intensity_uncertainty_by_pitch_angle_and_gyrophase = Mock()
         spacecraft_potential = Mock()
         core_halo_breakpoint = Mock()
         core_fit_num_points = Mock()
@@ -133,6 +136,8 @@ class TestModels(CdfModelTestCase):
                          energy_spectrum_outbound=energy_spectrum_outbound,
                          intensity_by_pitch_angle=intensity_by_pitch_angle,
                          intensity_by_pitch_angle_and_gyrophase=intensity_by_pitch_angle_and_gyrophase,
+                         intensity_uncertainty_by_pitch_angle=intensity_uncertainty_by_pitch_angle,
+                         intensity_uncertainty_by_pitch_angle_and_gyrophase=intensity_uncertainty_by_pitch_angle_and_gyrophase,
                          spacecraft_potential=spacecraft_potential,
                          core_halo_breakpoint=core_halo_breakpoint,
                          moment_data=SweL3MomentData(
@@ -226,7 +231,8 @@ class TestModels(CdfModelTestCase):
         self.assert_variable_attributes(
             next(variables), psd_by_pitch_angle, PHASE_SPACE_DENSITY_BY_PITCH_ANGLE_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
         self.assert_variable_attributes(
-            next(variables), psd_by_pitch_angle_and_gyrophase, PHASE_SPACE_DENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+            next(variables), psd_by_pitch_angle_and_gyrophase,
+            PHASE_SPACE_DENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
         self.assert_variable_attributes(
             next(variables), energy_spectrum, ENERGY_SPECTRUM_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
         self.assert_variable_attributes(
@@ -238,6 +244,12 @@ class TestModels(CdfModelTestCase):
         self.assert_variable_attributes(
             next(variables), intensity_by_pitch_angle_and_gyrophase,
             INTENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+        self.assert_variable_attributes(
+            next(variables), intensity_uncertainty_by_pitch_angle, INTENSITY_UNCERTAINTY_BY_PITCH_ANGLE_CDF_VAR_NAME,
+            pycdf.const.CDF_REAL4)
+        self.assert_variable_attributes(
+            next(variables), intensity_uncertainty_by_pitch_angle_and_gyrophase,
+            INTENSITY_UNCERTAINTY_BY_PITCH_ANGLE_AND_GYROPHASE_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
         self.assert_variable_attributes(
             next(variables), spacecraft_potential, SPACECRAFT_POTENTIAL_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
         self.assert_variable_attributes(
@@ -281,7 +293,8 @@ class TestModels(CdfModelTestCase):
             next(variables), core_velocity_vector_rtn_fit, CORE_VELOCITY_VECTOR_RTN_FIT_CDF_VAR_NAME,
             pycdf.const.CDF_REAL4)
         self.assert_variable_attributes(
-            next(variables), halo_velocity_vector_rtn_fit, HALO_VELOCITY_VECTOR_RTN_FIT_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+            next(variables), halo_velocity_vector_rtn_fit, HALO_VELOCITY_VECTOR_RTN_FIT_CDF_VAR_NAME,
+            pycdf.const.CDF_REAL4)
         self.assert_variable_attributes(
             next(variables), core_density_integrated, CORE_DENSITY_INTEGRATED_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
         self.assert_variable_attributes(
@@ -295,73 +308,105 @@ class TestModels(CdfModelTestCase):
         self.assert_variable_attributes(
             next(variables), total_speed_integrated, TOTAL_SPEED_INTEGRATED_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
         self.assert_variable_attributes(
-            next(variables), core_velocity_vector_rtn_integrated, CORE_VELOCITY_VECTOR_RTN_INTEGRATED_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+            next(variables), core_velocity_vector_rtn_integrated, CORE_VELOCITY_VECTOR_RTN_INTEGRATED_CDF_VAR_NAME,
+            pycdf.const.CDF_REAL4)
         self.assert_variable_attributes(
-            next(variables), halo_velocity_vector_rtn_integrated, HALO_VELOCITY_VECTOR_RTN_INTEGRATED_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+            next(variables), halo_velocity_vector_rtn_integrated, HALO_VELOCITY_VECTOR_RTN_INTEGRATED_CDF_VAR_NAME,
+            pycdf.const.CDF_REAL4)
         self.assert_variable_attributes(
-            next(variables), total_velocity_vector_rtn_integrated, TOTAL_VELOCITY_VECTOR_RTN_INTEGRATED_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+            next(variables), total_velocity_vector_rtn_integrated, TOTAL_VELOCITY_VECTOR_RTN_INTEGRATED_CDF_VAR_NAME,
+            pycdf.const.CDF_REAL4)
         self.assert_variable_attributes(
-            next(variables), core_heat_flux_magnitude_integrated, CORE_HEAT_FLUX_MAGNITUDE_INTEGRATED_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+            next(variables), core_heat_flux_magnitude_integrated, CORE_HEAT_FLUX_MAGNITUDE_INTEGRATED_CDF_VAR_NAME,
+            pycdf.const.CDF_REAL4)
         self.assert_variable_attributes(
-            next(variables), core_heat_flux_theta_integrated, CORE_HEAT_FLUX_THETA_INTEGRATED_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+            next(variables), core_heat_flux_theta_integrated, CORE_HEAT_FLUX_THETA_INTEGRATED_CDF_VAR_NAME,
+            pycdf.const.CDF_REAL4)
         self.assert_variable_attributes(
-            next(variables), core_heat_flux_phi_integrated, CORE_HEAT_FLUX_PHI_INTEGRATED_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+            next(variables), core_heat_flux_phi_integrated, CORE_HEAT_FLUX_PHI_INTEGRATED_CDF_VAR_NAME,
+            pycdf.const.CDF_REAL4)
         self.assert_variable_attributes(
-            next(variables), halo_heat_flux_magnitude_integrated, HALO_HEAT_FLUX_MAGNITUDE_INTEGRATED_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+            next(variables), halo_heat_flux_magnitude_integrated, HALO_HEAT_FLUX_MAGNITUDE_INTEGRATED_CDF_VAR_NAME,
+            pycdf.const.CDF_REAL4)
         self.assert_variable_attributes(
-            next(variables), halo_heat_flux_theta_integrated, HALO_HEAT_FLUX_THETA_INTEGRATED_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+            next(variables), halo_heat_flux_theta_integrated, HALO_HEAT_FLUX_THETA_INTEGRATED_CDF_VAR_NAME,
+            pycdf.const.CDF_REAL4)
         self.assert_variable_attributes(
-            next(variables), halo_heat_flux_phi_integrated, HALO_HEAT_FLUX_PHI_INTEGRATED_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+            next(variables), halo_heat_flux_phi_integrated, HALO_HEAT_FLUX_PHI_INTEGRATED_CDF_VAR_NAME,
+            pycdf.const.CDF_REAL4)
         self.assert_variable_attributes(
-            next(variables), total_heat_flux_magnitude_integrated, TOTAL_HEAT_FLUX_MAGNITUDE_INTEGRATED_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+            next(variables), total_heat_flux_magnitude_integrated, TOTAL_HEAT_FLUX_MAGNITUDE_INTEGRATED_CDF_VAR_NAME,
+            pycdf.const.CDF_REAL4)
         self.assert_variable_attributes(
-            next(variables), total_heat_flux_theta_integrated, TOTAL_HEAT_FLUX_THETA_INTEGRATED_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+            next(variables), total_heat_flux_theta_integrated, TOTAL_HEAT_FLUX_THETA_INTEGRATED_CDF_VAR_NAME,
+            pycdf.const.CDF_REAL4)
         self.assert_variable_attributes(
-            next(variables), total_heat_flux_phi_integrated, TOTAL_HEAT_FLUX_PHI_INTEGRATED_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+            next(variables), total_heat_flux_phi_integrated, TOTAL_HEAT_FLUX_PHI_INTEGRATED_CDF_VAR_NAME,
+            pycdf.const.CDF_REAL4)
         self.assert_variable_attributes(
             next(variables), core_t_parallel_integrated, CORE_T_PARALLEL_INTEGRATED_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
         self.assert_variable_attributes(
-            next(variables), core_t_perpendicular_integrated, CORE_T_PERPENDICULAR_INTEGRATED_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+            next(variables), core_t_perpendicular_integrated, CORE_T_PERPENDICULAR_INTEGRATED_CDF_VAR_NAME,
+            pycdf.const.CDF_REAL4)
         self.assert_variable_attributes(
             next(variables), halo_t_parallel_integrated, HALO_T_PARALLEL_INTEGRATED_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
         self.assert_variable_attributes(
-            next(variables), halo_t_perpendicular_integrated, HALO_T_PERPENDICULAR_INTEGRATED_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+            next(variables), halo_t_perpendicular_integrated, HALO_T_PERPENDICULAR_INTEGRATED_CDF_VAR_NAME,
+            pycdf.const.CDF_REAL4)
         self.assert_variable_attributes(
-            next(variables), total_t_parallel_integrated, TOTAL_T_PARALLEL_INTEGRATED_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+            next(variables), total_t_parallel_integrated, TOTAL_T_PARALLEL_INTEGRATED_CDF_VAR_NAME,
+            pycdf.const.CDF_REAL4)
         self.assert_variable_attributes(
-            next(variables), total_t_perpendicular_integrated, TOTAL_T_PERPENDICULAR_INTEGRATED_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+            next(variables), total_t_perpendicular_integrated, TOTAL_T_PERPENDICULAR_INTEGRATED_CDF_VAR_NAME,
+            pycdf.const.CDF_REAL4)
         self.assert_variable_attributes(
-            next(variables), core_temperature_theta_rtn_integrated, CORE_TEMPERATURE_THETA_RTN_INTEGRATED_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+            next(variables), core_temperature_theta_rtn_integrated, CORE_TEMPERATURE_THETA_RTN_INTEGRATED_CDF_VAR_NAME,
+            pycdf.const.CDF_REAL4)
         self.assert_variable_attributes(
-            next(variables), core_temperature_phi_rtn_integrated, CORE_TEMPERATURE_PHI_RTN_INTEGRATED_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+            next(variables), core_temperature_phi_rtn_integrated, CORE_TEMPERATURE_PHI_RTN_INTEGRATED_CDF_VAR_NAME,
+            pycdf.const.CDF_REAL4)
         self.assert_variable_attributes(
-            next(variables), halo_temperature_theta_rtn_integrated, HALO_TEMPERATURE_THETA_RTN_INTEGRATED_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+            next(variables), halo_temperature_theta_rtn_integrated, HALO_TEMPERATURE_THETA_RTN_INTEGRATED_CDF_VAR_NAME,
+            pycdf.const.CDF_REAL4)
         self.assert_variable_attributes(
-            next(variables), halo_temperature_phi_rtn_integrated, HALO_TEMPERATURE_PHI_RTN_INTEGRATED_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+            next(variables), halo_temperature_phi_rtn_integrated, HALO_TEMPERATURE_PHI_RTN_INTEGRATED_CDF_VAR_NAME,
+            pycdf.const.CDF_REAL4)
         self.assert_variable_attributes(
-            next(variables), total_temperature_theta_rtn_integrated, TOTAL_TEMPERATURE_THETA_RTN_INTEGRATED_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+            next(variables), total_temperature_theta_rtn_integrated,
+            TOTAL_TEMPERATURE_THETA_RTN_INTEGRATED_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
         self.assert_variable_attributes(
-            next(variables), total_temperature_phi_rtn_integrated, TOTAL_TEMPERATURE_PHI_RTN_INTEGRATED_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+            next(variables), total_temperature_phi_rtn_integrated, TOTAL_TEMPERATURE_PHI_RTN_INTEGRATED_CDF_VAR_NAME,
+            pycdf.const.CDF_REAL4)
         self.assert_variable_attributes(
-            next(variables), core_temperature_parallel_to_mag, CORE_TEMPERATURE_PARALLEL_TO_MAG_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+            next(variables), core_temperature_parallel_to_mag, CORE_TEMPERATURE_PARALLEL_TO_MAG_CDF_VAR_NAME,
+            pycdf.const.CDF_REAL4)
         self.assert_variable_attributes(
-            next(variables), core_temperature_perpendicular_to_mag, CORE_TEMPERATURE_PERPENDICULAR_TO_MAG_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+            next(variables), core_temperature_perpendicular_to_mag, CORE_TEMPERATURE_PERPENDICULAR_TO_MAG_CDF_VAR_NAME,
+            pycdf.const.CDF_REAL4)
         self.assert_variable_attributes(
-            next(variables), halo_temperature_parallel_to_mag, HALO_TEMPERATURE_PARALLEL_TO_MAG_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+            next(variables), halo_temperature_parallel_to_mag, HALO_TEMPERATURE_PARALLEL_TO_MAG_CDF_VAR_NAME,
+            pycdf.const.CDF_REAL4)
         self.assert_variable_attributes(
-            next(variables), halo_temperature_perpendicular_to_mag, HALO_TEMPERATURE_PERPENDICULAR_TO_MAG_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+            next(variables), halo_temperature_perpendicular_to_mag, HALO_TEMPERATURE_PERPENDICULAR_TO_MAG_CDF_VAR_NAME,
+            pycdf.const.CDF_REAL4)
         self.assert_variable_attributes(
-            next(variables), total_temperature_parallel_to_mag, TOTAL_TEMPERATURE_PARALLEL_TO_MAG_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+            next(variables), total_temperature_parallel_to_mag, TOTAL_TEMPERATURE_PARALLEL_TO_MAG_CDF_VAR_NAME,
+            pycdf.const.CDF_REAL4)
         self.assert_variable_attributes(
-            next(variables), total_temperature_perpendicular_to_mag, TOTAL_TEMPERATURE_PERPENDICULAR_TO_MAG_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+            next(variables), total_temperature_perpendicular_to_mag,
+            TOTAL_TEMPERATURE_PERPENDICULAR_TO_MAG_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
         self.assert_variable_attributes(
-            next(variables), core_temperature_tensor_integrated, CORE_TEMPERATURE_TENSOR_INTEGRATED_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+            next(variables), core_temperature_tensor_integrated, CORE_TEMPERATURE_TENSOR_INTEGRATED_CDF_VAR_NAME,
+            pycdf.const.CDF_REAL4)
         self.assert_variable_attributes(
-            next(variables), halo_temperature_tensor_integrated,HALO_TEMPERATURE_TENSOR_INTEGRATED_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+            next(variables), halo_temperature_tensor_integrated, HALO_TEMPERATURE_TENSOR_INTEGRATED_CDF_VAR_NAME,
+            pycdf.const.CDF_REAL4)
         self.assert_variable_attributes(
-            next(variables), total_temperature_tensor_integrated, TOTAL_TEMPERATURE_TENSOR_INTEGRATED_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+            next(variables), total_temperature_tensor_integrated, TOTAL_TEMPERATURE_TENSOR_INTEGRATED_CDF_VAR_NAME,
+            pycdf.const.CDF_REAL4)
 
         self.assertEqual([], list(variables), "unexpected variable found")
+
 
 if __name__ == '__main__':
     unittest.main()

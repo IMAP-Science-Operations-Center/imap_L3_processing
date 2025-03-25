@@ -288,6 +288,7 @@ def integrate_distribution_to_get_inbound_and_outbound_1d_spectrum(
 
 
 def rebin_intensity_by_pitch_angle(intensity: np.ndarray[(E_BINS, SPIN_SECTORS, CEMS)],
+                                   counts: np.ndarray[(E_BINS, SPIN_SECTORS, CEMS)],
                                    dsp_velocities: np.ndarray[(E_BINS, SPIN_SECTORS, CEMS, 3)],
                                    mag_vectors: np.ndarray[([(E_BINS, SPIN_SECTORS, 3,)])]) -> [np.ndarray]:
     normalized_velocities = calculate_unit_vector(dsp_velocities)
@@ -295,4 +296,4 @@ def rebin_intensity_by_pitch_angle(intensity: np.ndarray[(E_BINS, SPIN_SECTORS, 
 
     pitch_angles = calculate_pitch_angle(normalized_velocities, normalized_mag_vectors[..., np.newaxis, :])
     gyrophases = calculate_gyrophase(normalized_velocities, normalized_mag_vectors[..., np.newaxis, :])
-    return swe_rebin_intensity_by_pitch_angle_and_gyrophase(intensity, pitch_angles, gyrophases, 7, 30)
+    return swe_rebin_intensity_by_pitch_angle_and_gyrophase(intensity, counts, pitch_angles, gyrophases, 7, 30)

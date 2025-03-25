@@ -230,17 +230,17 @@ class TestPitchAngles(unittest.TestCase):
                 [[135, 225, 225, 135], [45, 315, 315, 45]]
             ])
 
-        # (1, 2), (1, 3), (2, 3), (2, 2), # (1, 1), (1, 4), (2, 4), (2, 1)
-
         counts = np.array([
-            [[4, 9, 49, 36], [1, 16, 64, 25]],
+            [[4, 9, 49, 36], [0, 16, 64, 25]],
             [[4 * 4, 4 * 9, 4 * 49, 4 * 36], [4 * 1, 4 * 16, 4 * 64, 4 * 25]],
         ])
         expected_uncertainty_by_pa_gyro = np.array([
-            [[1, 1 / 2, 1 / 3, 1 / 4], [1 / 5, 1 / 6, 1 / 7, 1 / 8]],
+            [[np.nan, 1 / 2, 1 / 3, 1 / 4], [1 / 5, 1 / 6, 1 / 7, 1 / 8]],
             [[1 / 2, 1 / 4, 1 / 6, 1 / 8], [1 / 10, 1 / 12, 1 / 14, 1 / 16]]
         ])
-        expected_uncertainty_by_pa = np.array([[2.5, 4.5], [10.5, 12.5]])
+        expected_uncertainty_by_pa = np.array([[1 / np.sqrt(4 + 9 + 0 + 16), 1 / np.sqrt(49 + 36 + 64 + 25)],
+                                               [1 / (2 * np.sqrt(4 + 9 + 1 + 16)),
+                                                1 / (2 * np.sqrt(49 + 36 + 64 + 25))]])
 
         num_pitch_angle_bins = 2
         num_gyrophase_bins = 4
@@ -248,8 +248,7 @@ class TestPitchAngles(unittest.TestCase):
             [[4, 0, 1, 5], [7, 3, 2, 6]],
             [[12, 8, 9, 13], [15, 11, 10, 14]]
         ])
-        expected_intensity_by_pa = np.array([[1 / np.sqrt(4 + 9 + 1 + 16), 1 / np.sqrt(49 + 36 + 64 + 25)],
-                                             [1 / 2 * np.sqrt(4 + 9 + 1 + 16), 1 / 2 * np.sqrt(49 + 36 + 64 + 25)]])
+        expected_intensity_by_pa = np.array([[2.5, 4.5], [10.5, 12.5]])
 
         rebinned_data = swe_rebin_intensity_by_pitch_angle_and_gyrophase(intensity,
                                                                          counts,
