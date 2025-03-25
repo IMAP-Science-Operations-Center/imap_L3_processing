@@ -18,7 +18,7 @@ from imap_l3_processing.swe.l3.science.moment_calculations import compute_maxwel
 from imap_l3_processing.swe.l3.science.pitch_calculations import average_over_look_directions, find_breakpoints, \
     correct_and_rebin, \
     integrate_distribution_to_get_1d_spectrum, integrate_distribution_to_get_inbound_and_outbound_1d_spectrum, \
-    calculate_velocity_in_dsp_frame_km_s, rebin_flux_by_pitch_angle
+    calculate_velocity_in_dsp_frame_km_s, rebin_intensity_by_pitch_angle
 from imap_l3_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies
 from imap_l3_processing.swe.l3.utils import compute_epoch_delta_in_ns
 from imap_l3_processing.utils import save_data
@@ -72,10 +72,12 @@ class SweProcessor(Processor):
                                                              spacecraft_potential, halo_core,
                                                              corrected_energy_bins, config)
 
-        (phase_space_density_by_pitch_angle, phase_space_density_by_pitch_angle_and_gyrophase, energy_spectrum,
-         energy_spectrum_inbound, energy_spectrum_outbound,
-         intensity_by_pitch_angle_and_gyrophase, intensity_by_pitch_angle) = self.calculate_pitch_angle_products(
-            dependencies, corrected_energy_bins)
+        (
+            phase_space_density_by_pitch_angle, phase_space_density_by_pitch_angle_and_gyrophase,
+            energy_spectrum, energy_spectrum_inbound, energy_spectrum_outbound,
+            intensity_by_pitch_angle_and_gyrophase, intensity_by_pitch_angle,
+            uncertanties_by_pitch_angle_and_gyrophase, uncertanties_by_pitch_angle
+        ) = self.calculate_pitch_angle_products(dependencies, corrected_energy_bins)
 
         return SweL3Data(
             input_metadata=self.input_metadata.to_upstream_data_dependency("sci"),
@@ -90,6 +92,8 @@ class SweProcessor(Processor):
             gyrophase_delta=config["gyrophase_delta"],
             intensity_by_pitch_angle_and_gyrophase=intensity_by_pitch_angle_and_gyrophase,
             intensity_by_pitch_angle=intensity_by_pitch_angle,
+            intensity_uncertainty_by_pitch_angle_and_gyrophase=uncertanties_by_pitch_angle_and_gyrophase,
+            intensity_uncertainty_by_pitch_angle=uncertanties_by_pitch_angle,
             spacecraft_potential=spacecraft_potential,
             core_halo_breakpoint=halo_core,
             phase_space_density_by_pitch_angle=phase_space_density_by_pitch_angle,
@@ -455,6 +459,8 @@ class SweProcessor(Processor):
                                                             to_epoch=swe_epoch,
                                                             maximum_distance=swapi_max_distance)
 
+        counts = dependencies.swe_l1b_data.count_rates * swe_l2_data.acquisition_duration[..., np.newaxis]
+
         phase_space_density_by_pitch_angle = []
         phase_space_density_by_pitch_angle_and_gyrophase = []
         energy_spectrum = []
@@ -462,6 +468,8 @@ class SweProcessor(Processor):
         energy_spectrum_outbound = []
         rebinned_intensity_by_pa_and_gyro = []
         rebinned_intensity_by_pa = []
+        uncertainties_by_pa_and_gyro = []
+        uncertainties_by_pa = []
 
         for i in range(len(swe_epoch)):
             missing_mag_data = np.any(np.isnan(rebinned_mag_data[i]))
@@ -478,6 +486,8 @@ class SweProcessor(Processor):
 
                 rebinned_intensity_by_pa_and_gyro.append(np.full((swe_l2_data.flux.shape[1], 7, 30), np.nan))
                 rebinned_intensity_by_pa.append(np.full((swe_l2_data.flux.shape[1], 7), np.nan))
+                uncertainties_by_pa_and_gyro.append(np.full((swe_l2_data.flux.shape[1], 7, 30), np.nan))
+                uncertainties_by_pa.append(np.full((swe_l2_data.flux.shape[1], 7), np.nan))
             else:
                 dsp_velocities = calculate_velocity_in_dsp_frame_km_s(corrected_energy_bins[i], swe_l2_data.inst_el,
                                                                       swe_l2_data.inst_az_spin_sector[i])
@@ -494,14 +504,22 @@ class SweProcessor(Processor):
                 energy_spectrum_inbound.append(inbound)
                 energy_spectrum_outbound.append(outbound)
 
-                intensity_delta = np.zeros_like(swe_l2_data.flux[i])
-                intensity_by_pa_and_gyro, _, _, intensity_by_pa, _, _ = rebin_flux_by_pitch_angle(swe_l2_data.flux[i],
-                                                                                                  intensity_delta,
-                                                                                                  intensity_delta,
-                                                                                                  dsp_velocities,
-                                                                                                  rebinned_mag_data[i])
+                intensity_by_pa_and_gyro, intensity_by_pa, uncertainty_by_pa_and_gyro, uncertainty_by_pa = rebin_intensity_by_pitch_angle(
+                    swe_l2_data.flux[i],
+                    counts[i],
+                    dsp_velocities,
+                    rebinned_mag_data[i])
                 rebinned_intensity_by_pa_and_gyro.append(intensity_by_pa_and_gyro)
                 rebinned_intensity_by_pa.append(intensity_by_pa)
+                uncertainties_by_pa_and_gyro.append(uncertainty_by_pa_and_gyro)
+                uncertainties_by_pa.append(uncertainty_by_pa)
 
-        return phase_space_density_by_pitch_angle, phase_space_density_by_pitch_angle_and_gyrophase, energy_spectrum, energy_spectrum_inbound, energy_spectrum_outbound, \
-            np.array(rebinned_intensity_by_pa_and_gyro), np.array(rebinned_intensity_by_pa)
+        return phase_space_density_by_pitch_angle, \
+            phase_space_density_by_pitch_angle_and_gyrophase, \
+            energy_spectrum, \
+            energy_spectrum_inbound, \
+            energy_spectrum_outbound, \
+            np.array(rebinned_intensity_by_pa_and_gyro), \
+            np.array(rebinned_intensity_by_pa), \
+            np.array(uncertainties_by_pa_and_gyro), \
+            np.array(uncertainties_by_pa)
