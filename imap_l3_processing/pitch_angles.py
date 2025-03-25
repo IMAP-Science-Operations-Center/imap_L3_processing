@@ -182,8 +182,9 @@ def swe_rebin_intensity_by_pitch_angle_and_gyrophase(intensity_data: np.array,
                                                            np.nan),
                                                        where=rebinned_count_pa_only != 0)
 
-    uncertainties_by_pa_and_gyro = 1 / np.sqrt(rebinned_summed_counts_by_pa_and_gyro)
-    uncertainties_by_pa_only = 1 / np.sqrt(rebinned_summed_counts_by_pa_only)
+    uncertainties_by_pa_and_gyro = averaged_rebinned_intensity_by_pa_and_gyro / np.sqrt(
+        rebinned_summed_counts_by_pa_and_gyro)
+    uncertainties_by_pa_only = averaged_rebinned_intensity_by_pa_only / np.sqrt(rebinned_summed_counts_by_pa_only)
 
     return (
         averaged_rebinned_intensity_by_pa_and_gyro, averaged_rebinned_intensity_by_pa_only,

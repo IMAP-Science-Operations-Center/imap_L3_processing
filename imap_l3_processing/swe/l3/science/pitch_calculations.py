@@ -141,8 +141,8 @@ def _rebin(flux, pitch_angles, energies, config: SweConfiguration, gyrophase: np
     num_energy_bins = len(energy_bins)
 
     if gyrophase is not None:
-        gyrophase_bins = np.array(config["gyrophase_bins"])
-        gyrophase_delta = np.array(config["gyrophase_delta"])
+        gyrophase_bins = np.array(config["psd_gyrophase_bins"])
+        gyrophase_delta = np.array(config["psd_gyrophase_deltas"])
         gyrophase_left_edges = gyrophase_bins - gyrophase_delta
         gyrophase_right_edges = gyrophase_bins + gyrophase_delta
         gyrophase_for_masked_psd = gyrophase[mask_psd]

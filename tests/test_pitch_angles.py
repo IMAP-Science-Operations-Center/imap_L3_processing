@@ -234,13 +234,6 @@ class TestPitchAngles(unittest.TestCase):
             [[4, 9, 49, 36], [0, 16, 64, 25]],
             [[4 * 4, 4 * 9, 4 * 49, 4 * 36], [4 * 1, 4 * 16, 4 * 64, 4 * 25]],
         ])
-        expected_uncertainty_by_pa_gyro = np.array([
-            [[np.nan, 1 / 2, 1 / 3, 1 / 4], [1 / 5, 1 / 6, 1 / 7, 1 / 8]],
-            [[1 / 2, 1 / 4, 1 / 6, 1 / 8], [1 / 10, 1 / 12, 1 / 14, 1 / 16]]
-        ])
-        expected_uncertainty_by_pa = np.array([[1 / np.sqrt(4 + 9 + 0 + 16), 1 / np.sqrt(49 + 36 + 64 + 25)],
-                                               [1 / (2 * np.sqrt(4 + 9 + 1 + 16)),
-                                                1 / (2 * np.sqrt(49 + 36 + 64 + 25))]])
 
         num_pitch_angle_bins = 2
         num_gyrophase_bins = 4
@@ -250,6 +243,15 @@ class TestPitchAngles(unittest.TestCase):
         ])
         expected_intensity_by_pa = np.array([[2.5, 4.5], [10.5, 12.5]])
 
+        expected_uncertainty_by_pa_gyro = expected_intensity_by_pa_and_gyro * np.array([
+            [[np.nan, 1 / 2, 1 / 3, 1 / 4], [1 / 5, 1 / 6, 1 / 7, 1 / 8]],
+            [[1 / 2, 1 / 4, 1 / 6, 1 / 8], [1 / 10, 1 / 12, 1 / 14, 1 / 16]]
+        ])
+        expected_uncertainty_by_pa = expected_intensity_by_pa * np.array(
+            [[1 / np.sqrt(4 + 9 + 0 + 16), 1 / np.sqrt(49 + 36 + 64 + 25)],
+             [1 / (2 * np.sqrt(4 + 9 + 1 + 16)),
+              1 / (2 * np.sqrt(49 + 36 + 64 + 25))]])
+
         rebinned_data = swe_rebin_intensity_by_pitch_angle_and_gyrophase(intensity,
                                                                          counts,
                                                                          pitch_angles,
@@ -258,8 +260,9 @@ class TestPitchAngles(unittest.TestCase):
         actual_rebinned_by_pa_and_gyro, actual_rebinned_by_pa, actual_intensity_uncertainty_by_pa_and_gyro, actual_intensity_uncertainty_by_pa = rebinned_data
         np.testing.assert_equal(actual_rebinned_by_pa_and_gyro, expected_intensity_by_pa_and_gyro)
         np.testing.assert_equal(actual_rebinned_by_pa, expected_intensity_by_pa)
-        np.testing.assert_array_equal(actual_intensity_uncertainty_by_pa_and_gyro, expected_uncertainty_by_pa_gyro)
-        np.testing.assert_array_equal(actual_intensity_uncertainty_by_pa, expected_uncertainty_by_pa)
+        np.testing.assert_array_almost_equal(actual_intensity_uncertainty_by_pa_and_gyro,
+                                             expected_uncertainty_by_pa_gyro)
+        np.testing.assert_array_almost_equal(actual_intensity_uncertainty_by_pa, expected_uncertainty_by_pa)
 
     def test_rebin_by_pitch_angle_and_gyrophase_pa_product_only_correctly_weights_when_averaging(self):
         intensity = np.array([[[0, 1, 2], [3, 4, 5]]])

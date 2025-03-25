@@ -475,8 +475,8 @@ class SweProcessor(Processor):
             missing_mag_data = np.any(np.isnan(rebinned_mag_data[i]))
             if missing_mag_data:
                 num_energy_bins = len(config['energy_bins'])
-                num_pitch_angle_bins = len(config['pitch_angle_bins'])
-                num_gyrophase_bins = len(config['gyrophase_bins'])
+                num_pitch_angle_bins = len(config['psd_pitch_angle_bins'])
+                num_gyrophase_bins = len(config['psd_gyrophase_bins'])
                 phase_space_density_by_pitch_angle.append(np.full((num_energy_bins, num_pitch_angle_bins), np.nan))
                 phase_space_density_by_pitch_angle_and_gyrophase.append(
                     np.full((num_energy_bins, num_pitch_angle_bins, num_gyrophase_bins), np.nan))
