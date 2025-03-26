@@ -5,6 +5,7 @@ max_uint16: &max_uint16 65535
 data_defaults: &data_defaults
   DEPEND_0: epoch
   VAR_TYPE: data
+  VARIABLE_PURPOSE: primary var, summary
   FORMAT: F12.6
   FILLVAL: *float_fillval
 
@@ -18,9 +19,16 @@ spectrogram_defaults: &spectrogram_defaults
   DISPLAY_TYPE: spectrogram
 
 support_data_defaults: &support_data_defaults
-  <<: *data_defaults
   VAR_TYPE: support_data
   DISPLAY_TYPE: no_plot
+  DEPEND_0: epoch
+  FORMAT: F12.6
+  FILLVAL: *float_fillval
+
+debug_data_defaults: &debug_data_defaults
+  <<: *data_defaults
+  DISPLAY_TYPE: no_plot
+  VARIABLE_PURPOSE: ' '
 
 photon_flux:
   <<: *spectrogram_defaults
@@ -86,7 +94,7 @@ time_dependent_bckgrd:
   SCALETYP: linear
 
 number_of_bins:
-  <<: *support_data_defaults
+  <<: *debug_data_defaults
   CATDESC: Number of histogram bins
   FIELDNAM: Number of histogram bins
   FILLVAL: *max_uint16
@@ -190,7 +198,7 @@ ecliptic_lon:
   SCALEMIN: 0.0
 
 filter_temperature_average:
-  <<: *support_data_defaults
+  <<: *debug_data_defaults
   CATDESC: Observational-day-averaged filter temperature
   FIELDNAM: filter temperature average
   LABLAXIS: filter temperature average
@@ -210,7 +218,7 @@ filter_temperature_std_dev:
   VALIDMIN: 0.0
 
 hv_voltage_average:
-  <<: *support_data_defaults
+  <<: *debug_data_defaults
   CATDESC: Observational-day-averaged channeltron voltage
   FIELDNAM: hv voltage average
   LABLAXIS: hv voltage average
@@ -230,7 +238,7 @@ hv_voltage_std_dev:
   VALIDMIN: 0.0
 
 spin_period_average:
-  <<: *support_data_defaults
+  <<: *debug_data_defaults
   CATDESC: Observational-day-averaged spin period
   FIELDNAM: spin period average
   LABLAXIS: spin period average
@@ -250,7 +258,7 @@ spin_period_std_dev:
   VALIDMIN: 0.0
 
 spin_period_ground_average:
-  <<: *support_data_defaults
+  <<: *debug_data_defaults
   CATDESC: Observational-day-averaged spin period (ground value)
   FIELDNAM: spin period ground average
   LABLAXIS: spin period ground average
@@ -270,7 +278,7 @@ spin_period_ground_std_dev:
   VALIDMIN: 0.0
 
 pulse_length_average:
-  <<: *support_data_defaults
+  <<: *debug_data_defaults
   CATDESC: Observational-day-averaged pulse length
   FIELDNAM: pulse length average
   LABLAXIS: pulse length average
@@ -290,7 +298,7 @@ pulse_length_std_dev:
   VALIDMIN: 0.0
 
 position_angle_offset_average:
-  <<: *support_data_defaults
+  <<: *debug_data_defaults
   CATDESC: Observational-day-averaged GLOWS angular offset
   FIELDNAM: position angle offset average
   LABLAXIS: position angle offset average
@@ -392,7 +400,7 @@ spacecraft_location_std_dev:
 
 
 spacecraft_velocity_average:
-  <<: *support_data_defaults
+  <<: *debug_data_defaults
   CATDESC: Observational-day-averaged values VX, VY, VZ of IMAP velocity components (Cartesian ecliptic frame)
   FIELDNAM: spacecraft velocity average
   UNITS: km/s
