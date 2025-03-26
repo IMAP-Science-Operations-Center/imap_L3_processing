@@ -30,7 +30,7 @@
     166.5,
     175.5
   ],
-  "pitch_angle_delta": [
+  "pitch_angle_deltas": [
     4.5,
     4.5,
     4.5,
@@ -78,7 +78,7 @@
     337.5,
     352.5
   ],
-  "gyrophase_delta": [
+  "gyrophase_deltas": [
     7.5,
     7.5,
     7.5,

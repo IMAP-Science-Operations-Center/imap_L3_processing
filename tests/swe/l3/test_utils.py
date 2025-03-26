@@ -28,8 +28,14 @@ class TestUtils(unittest.TestCase):
         ], result["geometric_fractions"])
         self.assertEqual(20, len(result["pitch_angle_bins"]))
         self.assertEqual(13.5, result["pitch_angle_bins"][1])
-        self.assertEqual(20, len(result["pitch_angle_delta"]))
-        self.assertEqual(4.5, result["pitch_angle_delta"][1])
+        self.assertEqual(20, len(result["pitch_angle_deltas"]))
+        self.assertEqual(4.5, result["pitch_angle_deltas"][1])
+
+        self.assertEqual(24, len(result["gyrophase_bins"]))
+        self.assertEqual(24, len(result["gyrophase_deltas"]))
+        self.assertEqual(22.5, result["gyrophase_bins"][1])
+        self.assertEqual(7.5, result["gyrophase_deltas"][1])
+
         self.assertEqual(24, len(result["energy_bins"]))
         self.assertEqual(2.66, result["energy_bins"][0])
         self.assertEqual(24, len(result["energy_delta_minus"]))

@@ -13,8 +13,8 @@ ENERGY_DELTA_PLUS_CDF_VAR_NAME = "energy_delta_plus"
 ENERGY_DELTA_MINUS_CDF_VAR_NAME = "energy_delta_minus"
 PITCH_ANGLE_CDF_VAR_NAME = "pitch_angle"
 PITCH_ANGLE_DELTA_CDF_VAR_NAME = "pitch_angle_delta"
-GYROPHASE_BINS_CDF_VAR_NAME = "gyrophase_bins"
-GYROPHASE_DELTA_CDF_VAR_NAME = "gyrophase_deltas"
+GYROPHASE_BINS_CDF_VAR_NAME = "gyrophase"
+GYROPHASE_DELTA_CDF_VAR_NAME = "gyrophase_delta"
 PHASE_SPACE_DENSITY_BY_PITCH_ANGLE_CDF_VAR_NAME = "phase_space_density_by_pitch_angle"
 PHASE_SPACE_DENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_CDF_VAR_NAME = "phase_space_density_by_pitch_angle_and_gyrophase"
 ENERGY_SPECTRUM_CDF_VAR_NAME = "energy_spectrum"
@@ -400,7 +400,9 @@ class SweL3Data(DataProduct):
 class SweConfiguration(TypedDict):
     geometric_fractions: list[float]
     pitch_angle_bins: list[float]
-    pitch_angle_delta: list[float]
+    pitch_angle_deltas: list[float]
+    gyrophase_bins: list[float]
+    gyrophase_deltas: list[float]
     energy_bins: list[float]
     energy_delta_plus: list[float]
     energy_delta_minus: list[float]

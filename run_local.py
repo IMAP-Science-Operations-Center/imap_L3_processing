@@ -315,20 +315,20 @@ if __name__ == "__main__":
 
     if "swe" in sys.argv:
         dependencies = SweL3Dependencies.from_file_paths(
-            get_test_data_path("swe/imap_swe_l2_sci-with-ace-data_20100101_v002.cdf"),
-            get_test_data_path("swe/imap_swe_l1b_sci-with-ace-data_20100101_v002.cdf"),
-            get_test_data_path("swe/imap_mag_l1d_mago-normal_20100101_v001.cdf"),
-            get_test_data_path("swe/imap_swapi_l3a_proton-sw_20100101_v001.cdf"),
+            get_test_data_path("swe/imap_swe_l2_sci_20250630_v002.cdf"),
+            get_test_data_path("swe/imap_swe_l1b_sci_20250630_v003.cdf"),
+            get_test_data_path("swe/imap_mag_l1d_mago-normal_20250630_v001.cdf"),
+            get_test_data_path("swe/imap_swapi_l3a_proton-sw_20250630_v001.cdf"),
             get_test_data_path("swe/example_swe_config.json"),
         )
         print(create_swe_product(dependencies))
 
     if "swe-fake-spice" in sys.argv:
         dependencies = SweL3Dependencies.from_file_paths(
-            get_test_data_path("swe/imap_swe_l2_sci-with-ace-data_20100101_v002.cdf"),
-            get_test_data_path("swe/imap_swe_l1b_sci-with-ace-data_20100101_v002.cdf"),
-            get_test_data_path("swe/imap_mag_l1d_mago-normal_20100101_v001.cdf"),
-            get_test_data_path("swe/imap_swapi_l3a_proton-sw_20100101_v001.cdf"),
+            get_test_data_path("swe/imap_swe_l2_sci_20250630_v002.cdf"),
+            get_test_data_path("swe/imap_swe_l1b_sci_202502630_v003.cdf"),
+            get_test_data_path("swe/imap_mag_l1d_mago-normal_20250630_v001.cdf"),
+            get_test_data_path("swe/imap_swapi_l3a_proton-sw_20250630_v001.cdf"),
             get_test_data_path("swe/example_swe_config.json"),
         )
         print(create_swe_product_with_fake_spice(dependencies))

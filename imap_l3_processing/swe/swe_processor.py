@@ -18,7 +18,7 @@ from imap_l3_processing.swe.l3.science.moment_calculations import compute_maxwel
 from imap_l3_processing.swe.l3.science.pitch_calculations import average_over_look_directions, find_breakpoints, \
     correct_and_rebin, \
     integrate_distribution_to_get_1d_spectrum, integrate_distribution_to_get_inbound_and_outbound_1d_spectrum, \
-    calculate_velocity_in_dsp_frame_km_s, rebin_intensity_by_pitch_angle
+    calculate_velocity_in_dsp_frame_km_s, swe_rebin_intensity_by_pitch_angle_and_gyrophase
 from imap_l3_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies
 from imap_l3_processing.swe.l3.utils import compute_epoch_delta_in_ns
 from imap_l3_processing.utils import save_data
@@ -87,9 +87,9 @@ class SweProcessor(Processor):
             energy_delta_plus=config["energy_delta_plus"],
             energy_delta_minus=config["energy_delta_minus"],
             pitch_angle=config["pitch_angle_bins"],
-            pitch_angle_delta=config["pitch_angle_delta"],
+            pitch_angle_delta=config["pitch_angle_deltas"],
             gyrophase_bins=config["gyrophase_bins"],
-            gyrophase_delta=config["gyrophase_delta"],
+            gyrophase_delta=config["gyrophase_deltas"],
             intensity_by_pitch_angle_and_gyrophase=intensity_by_pitch_angle_and_gyrophase,
             intensity_by_pitch_angle=intensity_by_pitch_angle,
             intensity_uncertainty_by_pitch_angle_and_gyrophase=uncertanties_by_pitch_angle_and_gyrophase,
@@ -484,10 +484,12 @@ class SweProcessor(Processor):
                 energy_spectrum_inbound.append(np.full(num_energy_bins, np.nan))
                 energy_spectrum_outbound.append(np.full(num_energy_bins, np.nan))
 
-                rebinned_intensity_by_pa_and_gyro.append(np.full((swe_l2_data.flux.shape[1], 7, 30), np.nan))
-                rebinned_intensity_by_pa.append(np.full((swe_l2_data.flux.shape[1], 7), np.nan))
-                uncertainties_by_pa_and_gyro.append(np.full((swe_l2_data.flux.shape[1], 7, 30), np.nan))
-                uncertainties_by_pa.append(np.full((swe_l2_data.flux.shape[1], 7), np.nan))
+                rebinned_intensity_by_pa_and_gyro.append(
+                    np.full((swe_l2_data.flux.shape[1], num_pitch_angle_bins, num_gyrophase_bins), np.nan))
+                rebinned_intensity_by_pa.append(np.full((swe_l2_data.flux.shape[1], num_pitch_angle_bins), np.nan))
+                uncertainties_by_pa_and_gyro.append(
+                    np.full((swe_l2_data.flux.shape[1], num_pitch_angle_bins, num_gyrophase_bins), np.nan))
+                uncertainties_by_pa.append(np.full((swe_l2_data.flux.shape[1], num_pitch_angle_bins), np.nan))
             else:
                 dsp_velocities = calculate_velocity_in_dsp_frame_km_s(corrected_energy_bins[i], swe_l2_data.inst_el,
                                                                       swe_l2_data.inst_az_spin_sector[i])
@@ -504,11 +506,12 @@ class SweProcessor(Processor):
                 energy_spectrum_inbound.append(inbound)
                 energy_spectrum_outbound.append(outbound)
 
-                intensity_by_pa_and_gyro, intensity_by_pa, uncertainty_by_pa_and_gyro, uncertainty_by_pa = rebin_intensity_by_pitch_angle(
+                intensity_by_pa_and_gyro, intensity_by_pa, uncertainty_by_pa_and_gyro, uncertainty_by_pa = swe_rebin_intensity_by_pitch_angle_and_gyrophase(
                     swe_l2_data.flux[i],
                     counts[i],
                     dsp_velocities,
-                    rebinned_mag_data[i])
+                    rebinned_mag_data[i],
+                    config)
                 rebinned_intensity_by_pa_and_gyro.append(intensity_by_pa_and_gyro)
                 rebinned_intensity_by_pa.append(intensity_by_pa)
                 uncertainties_by_pa_and_gyro.append(uncertainty_by_pa_and_gyro)

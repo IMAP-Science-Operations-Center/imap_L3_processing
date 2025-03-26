@@ -108,7 +108,7 @@ pitch_angle: &pitch_angle
 pitch_angle_delta:
   <<: *pitch_angle
   CATDESC: Pitch Angle bin half-width
-gyrophase_bins: &gyrophase
+gyrophase: &gyrophase
   <<: *support_data_defaults
   CATDESC: Gyrophase
   FIELDNAM: Gyrophase
@@ -121,11 +121,11 @@ gyrophase_bins: &gyrophase
   UNITS: degrees
   DELTA_PLUS_VAR: gyrophase_delta
   DELTA_MINUS_VAR: gyrophase_delta
-gyrophase_deltas:
+gyrophase_delta:
   <<: *gyrophase
   CATDESC: Gyrophase bin half-width
 
-intensity_uncertainty_by_pitch_angle_and_gyrophase: &intensity_uncertainty_by_pitch_angle_and_gyrophase
+intensity_uncertainty_by_pitch_angle_and_gyrophase:
   CATDESC: Uncertainty Intensity organized by pitch angle and gyrophase
   DEPEND_0: epoch
   DEPEND_1: energy
@@ -141,7 +141,7 @@ intensity_uncertainty_by_pitch_angle_and_gyrophase: &intensity_uncertainty_by_pi
   FILLVAL: *float_fillval
   SCALE_TYP: linear
 
-intensity_uncertainty_by_pitch_angle: &intensity_uncertainty_by_pitch_angle
+intensity_uncertainty_by_pitch_angle:
   CATDESC: Uncertainty of Intensity organized by pitch angle
   DEPEND_0: epoch
   DEPEND_1: energy
@@ -162,7 +162,7 @@ intensity_by_pitch_angle:
   DEPEND_1: energy
   DEPEND_2: pitch_angle
   DELTA_PLUS_VAR: intensity_uncertainty_by_pitch_angle
-  DELTA_MINS_VAR: intensity_uncertainty_by_pitch_angle
+  DELTA_MINUS_VAR: intensity_uncertainty_by_pitch_angle
   VAR_TYPE: data
   DISPLAY_TYPE: spectrogram
   LABLAXIS: Electron Intensity
@@ -178,9 +178,9 @@ intensity_by_pitch_angle_and_gyrophase:
   DEPEND_0: epoch
   DEPEND_1: energy
   DEPEND_2: pitch_angle
-  DEPEND_3: gyrophase_bins
+  DEPEND_3: gyrophase
   DELTA_PLUS_VAR: intensity_uncertainty_by_pitch_angle_and_gyrophase
-  DELTA_MINS_VAR: intensity_uncertainty_by_pitch_angle_and_gyrophase
+  DELTA_MINUS_VAR: intensity_uncertainty_by_pitch_angle_and_gyrophase
   VAR_TYPE: data
   DISPLAY_TYPE: spectrogram
   LABLAXIS: Electron Intensity
@@ -213,7 +213,7 @@ phase_space_density_by_pitch_angle: &phase_space_density_by_pitch_angle
 phase_space_density_by_pitch_angle_and_gyrophase:
   <<: *phase_space_density_by_pitch_angle
   CATDESC: Phase space density organized by pitch angle and gyrophase
-  DEPEND_3: gyrophase_bins
+  DEPEND_3: gyrophase
 
 energy_spectrum: &energy_spectrum
   CATDESC: 1D Electron Energy Spectrum

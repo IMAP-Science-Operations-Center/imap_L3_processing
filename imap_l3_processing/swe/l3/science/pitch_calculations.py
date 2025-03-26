@@ -6,8 +6,7 @@ import numpy as np
 from scipy.optimize import curve_fit
 
 from imap_l3_processing.constants import ELECTRON_MASS_KG, PROTON_CHARGE_COULOMBS, METERS_PER_KILOMETER
-from imap_l3_processing.pitch_angles import calculate_pitch_angle, calculate_unit_vector, calculate_gyrophase, \
-    swe_rebin_intensity_by_pitch_angle_and_gyrophase
+from imap_l3_processing.pitch_angles import calculate_pitch_angle, calculate_unit_vector, calculate_gyrophase
 from imap_l3_processing.swe.l3.models import SweConfiguration
 
 
@@ -129,7 +128,7 @@ def rebin_by_pitch_angle(flux, pitch_angles, energies, config: SweConfiguration)
 
 def _rebin(flux, pitch_angles, energies, config: SweConfiguration, gyrophase: np.ndarray = None) -> np.ndarray:
     pitch_angle_bins = np.array(config["pitch_angle_bins"])
-    pitch_angle_delta = np.array(config["pitch_angle_delta"])
+    pitch_angle_delta = np.array(config["pitch_angle_deltas"])
     energy_bins = config["energy_bins"]
     mask_psd = flux > 0
     psd_greater_than_zero = flux[mask_psd]
@@ -142,7 +141,7 @@ def _rebin(flux, pitch_angles, energies, config: SweConfiguration, gyrophase: np
 
     if gyrophase is not None:
         gyrophase_bins = np.array(config["gyrophase_bins"])
-        gyrophase_delta = np.array(config["gyrophase_delta"])
+        gyrophase_delta = np.array(config["gyrophase_deltas"])
         gyrophase_left_edges = gyrophase_bins - gyrophase_delta
         gyrophase_right_edges = gyrophase_bins + gyrophase_delta
         gyrophase_for_masked_psd = gyrophase[mask_psd]
@@ -262,7 +261,7 @@ def correct_and_rebin(flux_or_psd: np.ndarray[(E_BINS, SPIN_SECTORS, CEMS)],
 def integrate_distribution_to_get_1d_spectrum(psd_by_energy_and_pitch_angle: np.ndarray[(E_BINS, PITCH_ANGLE_BINS)],
                                               config: SweConfiguration) -> np.ndarray[E_BINS]:
     pitch_angle_bin_factors = np.sin(np.deg2rad(config["pitch_angle_bins"])) * 2 * np.deg2rad(
-        config["pitch_angle_delta"]) / 2
+        config["pitch_angle_deltas"]) / 2
 
     return np.nansum(psd_by_energy_and_pitch_angle * pitch_angle_bin_factors, axis=1)
 
@@ -271,7 +270,7 @@ def integrate_distribution_to_get_inbound_and_outbound_1d_spectrum(
         psd_by_pitch_angle: np.ndarray[(E_BINS, PITCH_ANGLE_BINS)],
         config: SweConfiguration) -> (np.ndarray[E_BINS], np.ndarray[E_BINS]):
     pitch_angle_bin_factors = np.sin(np.deg2rad(config["pitch_angle_bins"])) * 2 * np.deg2rad(
-        config["pitch_angle_delta"])
+        config["pitch_angle_deltas"])
     pitch_less_than_90 = np.array(config["pitch_angle_bins"]) < 90
 
     spectrum_a = np.nansum((psd_by_pitch_angle * pitch_angle_bin_factors)[:, pitch_less_than_90], axis=1)
@@ -287,13 +286,79 @@ def integrate_distribution_to_get_inbound_and_outbound_1d_spectrum(
     return inbound, outbound
 
 
-def rebin_intensity_by_pitch_angle(intensity: np.ndarray[(E_BINS, SPIN_SECTORS, CEMS)],
-                                   counts: np.ndarray[(E_BINS, SPIN_SECTORS, CEMS)],
-                                   dsp_velocities: np.ndarray[(E_BINS, SPIN_SECTORS, CEMS, 3)],
-                                   mag_vectors: np.ndarray[([(E_BINS, SPIN_SECTORS, 3,)])]) -> [np.ndarray]:
+def swe_rebin_intensity_by_pitch_angle_and_gyrophase(intensity_data: np.ndarray[(E_BINS, SPIN_SECTORS, CEMS)],
+                                                     counts: np.ndarray[(E_BINS, SPIN_SECTORS, CEMS)],
+                                                     dsp_velocities: np.ndarray[(E_BINS, SPIN_SECTORS, CEMS, 3)],
+                                                     mag_vectors: np.ndarray[([(E_BINS, SPIN_SECTORS, 3,)])],
+                                                     config: SweConfiguration) -> [np.ndarray]:
     normalized_velocities = calculate_unit_vector(dsp_velocities)
     normalized_mag_vectors = calculate_unit_vector(mag_vectors)
 
     pitch_angles = calculate_pitch_angle(normalized_velocities, normalized_mag_vectors[..., np.newaxis, :])
     gyrophases = calculate_gyrophase(normalized_velocities, normalized_mag_vectors[..., np.newaxis, :])
-    return swe_rebin_intensity_by_pitch_angle_and_gyrophase(intensity, counts, pitch_angles, gyrophases, 7, 30)
+
+    num_pitch_angle_bins = len(config["pitch_angle_bins"])
+    num_gyrophase_bins = len(config["gyrophase_bins"])
+    output_shape_pa_and_gyro = (intensity_data.shape[0], num_pitch_angle_bins, num_gyrophase_bins)
+    output_shape_pa_only = (intensity_data.shape[0], num_pitch_angle_bins)
+
+    rebinned_summed_by_pa_and_gyro = np.zeros(shape=output_shape_pa_and_gyro)
+    rebinned_summed_pa_only = np.zeros(shape=output_shape_pa_only)
+
+    rebinned_count_by_pa_and_gyro = np.zeros(shape=output_shape_pa_and_gyro)
+    rebinned_count_pa_only = np.zeros(shape=output_shape_pa_only)
+
+    rebinned_summed_counts_by_pa_and_gyro = np.zeros(shape=output_shape_pa_and_gyro)
+    rebinned_summed_counts_by_pa_only = np.zeros(shape=output_shape_pa_only)
+
+    for i in range(intensity_data.shape[0]):
+        for pitch_angle, gyrophase, intensity, count in zip(
+                np.ravel(pitch_angles[i]),
+                np.ravel(gyrophases[i]),
+                np.ravel(intensity_data[i]),
+                np.ravel(counts[i])):
+            if not (np.isnan(intensity) or np.isnan(pitch_angle)):
+                pitch_angle_bin = next((i for i, (center, delta) in
+                                        enumerate(zip(config["pitch_angle_bins"], config["pitch_angle_deltas"])) if
+                                        center - delta <= pitch_angle < center + delta),
+                                       num_pitch_angle_bins - 1)
+                if not np.isnan(gyrophase):
+                    gyrophase_bin = next((i for i, (center, delta) in
+                                          enumerate(zip(config["gyrophase_bins"], config["gyrophase_deltas"])) if
+                                          center - delta <= gyrophase < center + delta),
+                                         num_gyrophase_bins - 1)
+
+                    rebinned_summed_by_pa_and_gyro[i, pitch_angle_bin, gyrophase_bin] += intensity
+                    rebinned_count_by_pa_and_gyro[i, pitch_angle_bin, gyrophase_bin] += 1
+
+                    rebinned_summed_counts_by_pa_and_gyro[i, pitch_angle_bin, gyrophase_bin] += count
+
+                rebinned_summed_pa_only[i, pitch_angle_bin] += intensity
+                rebinned_count_pa_only[i, pitch_angle_bin] += 1
+                rebinned_summed_counts_by_pa_only[i, pitch_angle_bin] += count
+
+    rebinned_summed_counts_by_pa_and_gyro[rebinned_summed_counts_by_pa_and_gyro == 0] = np.nan
+    rebinned_summed_counts_by_pa_only[rebinned_summed_counts_by_pa_only == 0] = np.nan
+
+    averaged_rebinned_intensity_by_pa_and_gyro = np.divide(
+        rebinned_summed_by_pa_and_gyro,
+        rebinned_count_by_pa_and_gyro,
+        out=np.full_like(
+            rebinned_count_by_pa_and_gyro, np.nan),
+        where=rebinned_count_by_pa_and_gyro != 0)
+
+    averaged_rebinned_intensity_by_pa_only = np.divide(rebinned_summed_pa_only,
+                                                       rebinned_count_pa_only,
+                                                       out=np.full_like(
+                                                           rebinned_count_pa_only,
+                                                           np.nan),
+                                                       where=rebinned_count_pa_only != 0)
+
+    uncertainties_by_pa_and_gyro = averaged_rebinned_intensity_by_pa_and_gyro / np.sqrt(
+        rebinned_summed_counts_by_pa_and_gyro)
+    uncertainties_by_pa_only = averaged_rebinned_intensity_by_pa_only / np.sqrt(rebinned_summed_counts_by_pa_only)
+
+    return (
+        averaged_rebinned_intensity_by_pa_and_gyro, averaged_rebinned_intensity_by_pa_only,
+        uncertainties_by_pa_and_gyro,
+        uncertainties_by_pa_only)

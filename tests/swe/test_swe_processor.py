@@ -162,9 +162,9 @@ class TestSweProcessor(unittest.TestCase):
         np.testing.assert_array_equal(swe_l3_data.energy_delta_plus, swe_config["energy_delta_plus"])
         np.testing.assert_array_equal(swe_l3_data.energy_delta_minus, swe_config["energy_delta_minus"])
         np.testing.assert_array_equal(swe_l3_data.pitch_angle, swe_config["pitch_angle_bins"])
-        np.testing.assert_array_equal(swe_l3_data.pitch_angle_delta, swe_config["pitch_angle_delta"])
+        np.testing.assert_array_equal(swe_l3_data.pitch_angle_delta, swe_config["pitch_angle_deltas"])
         np.testing.assert_array_equal(swe_l3_data.gyrophase_bins, swe_config["gyrophase_bins"])
-        np.testing.assert_array_equal(swe_l3_data.gyrophase_delta, swe_config["gyrophase_delta"])
+        np.testing.assert_array_equal(swe_l3_data.gyrophase_delta, swe_config["gyrophase_deltas"])
         np.testing.assert_array_equal(swe_l3_data.intensity_by_pitch_angle_and_gyrophase,
                                       sentinel.intensity_by_pitch_angle_and_gyrophase)
         np.testing.assert_array_equal(swe_l3_data.intensity_by_pitch_angle, sentinel.intensity_by_pitch_angle)
@@ -187,7 +187,7 @@ class TestSweProcessor(unittest.TestCase):
         self.assertEqual(sentinel.expected_phase_space_density_by_pitch_angle_and_gyrophase,
                          swe_l3_data.phase_space_density_by_pitch_angle_and_gyrophase)
 
-    @patch('imap_l3_processing.swe.swe_processor.rebin_intensity_by_pitch_angle')
+    @patch('imap_l3_processing.swe.swe_processor.swe_rebin_intensity_by_pitch_angle_and_gyrophase')
     @patch('imap_l3_processing.swe.swe_processor.calculate_velocity_in_dsp_frame_km_s')
     @patch('imap_l3_processing.swe.swe_processor.average_over_look_directions')
     @patch('imap_l3_processing.swe.swe_processor.find_breakpoints')
@@ -203,7 +203,7 @@ class TestSweProcessor(unittest.TestCase):
                                                           mock_calculate_solar_wind_velocity_vector,
                                                           _,
                                                           mock_average_over_look_directions,
-                                                          mock_calculate_velocities, mock_rebin_intensity):
+                                                          mock_calculate_velocities, mock_swe_rebin_intensity):
         epochs = datetime.now() + np.arange(3) * timedelta(minutes=1)
         mag_epochs = datetime.now() - timedelta(seconds=15) + np.arange(10) * timedelta(minutes=.5)
         swapi_epochs = datetime.now() - timedelta(seconds=15) + np.arange(10) * timedelta(minutes=.5)
@@ -273,7 +273,7 @@ class TestSweProcessor(unittest.TestCase):
         expected_intensity_by_pa = np.arange(9).reshape(3, 3) + 26
         expected_uncertainty_by_pa_and_gyro = np.arange(27).reshape(3, 3, 3) + 27
         expected_uncertainty_by_pa = np.arange(27).reshape(3, 3, 3) + 28
-        mock_rebin_intensity.side_effect = [
+        mock_swe_rebin_intensity.side_effect = [
             (expected_intensity_by_pa_and_gyro[0], expected_intensity_by_pa[0], expected_uncertainty_by_pa_and_gyro[0],
              expected_uncertainty_by_pa[0]),
             (expected_intensity_by_pa_and_gyro[1], expected_intensity_by_pa[1], expected_uncertainty_by_pa_and_gyro[1],
@@ -379,13 +379,13 @@ class TestSweProcessor(unittest.TestCase):
 
         mock_rebin_intensity_expected_calls = [
             call_with_array_matchers(swe_l2_data.flux[0], counts[0], mock_calculate_velocities.return_value,
-                                     closest_mag_data[0]),
+                                     closest_mag_data[0], swe_config),
             call_with_array_matchers(swe_l2_data.flux[1], counts[1], mock_calculate_velocities.return_value,
-                                     closest_mag_data[1]),
+                                     closest_mag_data[1], swe_config),
             call_with_array_matchers(swe_l2_data.flux[2], counts[2], mock_calculate_velocities.return_value,
-                                     closest_mag_data[2])
+                                     closest_mag_data[2], swe_config)
         ]
-        self.assertEqual(mock_rebin_intensity_expected_calls, mock_rebin_intensity.call_args_list)
+        self.assertEqual(mock_rebin_intensity_expected_calls, mock_swe_rebin_intensity.call_args_list)
 
         mock_integrate_distribution_to_get_1d_spectrum.assert_has_calls([
             call(rebinned_by_pitch_list[0], swe_config),
@@ -405,6 +405,8 @@ class TestSweProcessor(unittest.TestCase):
         swapi_epochs = np.array([datetime(2025, 3, 6)])
 
         pitch_angle_bins = [70, 100, 130]
+
+        gyrophase_bins = [0, 180, 360]
 
         num_energies = 9
         num_epochs = 1
@@ -445,9 +447,9 @@ class TestSweProcessor(unittest.TestCase):
         swe_config = build_swe_configuration(
             geometric_fractions=geometric_fractions,
             pitch_angle_bins=pitch_angle_bins,
-            pitch_angle_delta=[15, 15, 15],
-            gyrophase_bins=[0, 180, 360],
-            gyrophase_delta=[180, 180],
+            pitch_angle_deltas=[15, 15, 15],
+            gyrophase_bins=gyrophase_bins,
+            gyrophase_deltas=[180, 180],
             energy_bins=energy_bins,
             energy_delta_plus=[2, 20, 200],
             energy_delta_minus=[8, 80, 800],
@@ -467,7 +469,7 @@ class TestSweProcessor(unittest.TestCase):
         self.assertEqual(UpstreamDataDependency("swe", "l3", datetime(2025, 2, 21),
                                                 datetime(2025, 2, 22), "v001", "sci"), swe_l3_data.input_metadata)
         self.assertEqual(swe_l3_data.pitch_angle, swel3_dependency.configuration["pitch_angle_bins"])
-        self.assertEqual(swe_l3_data.pitch_angle_delta, swel3_dependency.configuration["pitch_angle_delta"])
+        self.assertEqual(swe_l3_data.pitch_angle_delta, swel3_dependency.configuration["pitch_angle_deltas"])
         self.assertEqual(swe_l3_data.energy, swel3_dependency.configuration["energy_bins"])
         self.assertEqual(swe_l3_data.energy_delta_plus, swel3_dependency.configuration["energy_delta_plus"])
         self.assertEqual(swe_l3_data.energy_delta_minus, swel3_dependency.configuration["energy_delta_minus"])
@@ -480,13 +482,15 @@ class TestSweProcessor(unittest.TestCase):
         np.testing.assert_array_equal(swe_l3_data.energy_spectrum_outbound,
                                       np.full((len(epochs), len(energy_bins)), np.nan))
         np.testing.assert_array_equal(swe_l3_data.intensity_by_pitch_angle,
-                                      np.full((len(epochs), num_energies, 7), np.nan))
+                                      np.full((len(epochs), num_energies, len(pitch_angle_bins)), np.nan))
         np.testing.assert_array_equal(swe_l3_data.intensity_by_pitch_angle_and_gyrophase,
-                                      np.full((len(epochs), num_energies, 7, 30), np.nan))
+                                      np.full((len(epochs), num_energies, len(pitch_angle_bins), len(gyrophase_bins)),
+                                              np.nan))
         np.testing.assert_array_equal(swe_l3_data.intensity_uncertainty_by_pitch_angle,
-                                      np.full((len(epochs), num_energies, 7), np.nan))
+                                      np.full((len(epochs), num_energies, len(pitch_angle_bins)), np.nan))
         np.testing.assert_array_equal(swe_l3_data.intensity_uncertainty_by_pitch_angle_and_gyrophase,
-                                      np.full((len(epochs), num_energies, 7, 30), np.nan))
+                                      np.full((len(epochs), num_energies, len(pitch_angle_bins), len(gyrophase_bins)),
+                                              np.nan))
 
     @patch("imap_l3_processing.swe.swe_processor.SweProcessor.calculate_moment_products")
     def test_calculate_pitch_angle_products_without_mocks(self, _):
@@ -536,7 +540,7 @@ class TestSweProcessor(unittest.TestCase):
         swe_config = build_swe_configuration(
             geometric_fractions=geometric_fractions,
             pitch_angle_bins=pitch_angle_bins,
-            pitch_angle_delta=[15, 15, 15],
+            pitch_angle_deltas=[15, 15, 15],
             energy_bins=energy_bins,
             energy_delta_plus=[2, 20, 200],
             energy_delta_minus=[8, 80, 800],
@@ -546,7 +550,7 @@ class TestSweProcessor(unittest.TestCase):
             core_halo_breakpoint_initial_guess=90,
             in_vs_out_energy_index=len(energy_bins) - 1,
             gyrophase_bins=[90, 180, 270],
-            gyrophase_delta=[90, 90, 90]
+            gyrophase_deltas=[45, 45, 45]
         )
 
         input_metadata = InputMetadata("swe", "l3", datetime(2025, 2, 21),
@@ -559,12 +563,12 @@ class TestSweProcessor(unittest.TestCase):
         self.assertEqual(UpstreamDataDependency("swe", "l3", datetime(2025, 2, 21),
                                                 datetime(2025, 2, 22), "v001", "sci"), swe_l3_data.input_metadata)
         self.assertEqual(swe_l3_data.pitch_angle, swel3_dependency.configuration["pitch_angle_bins"])
-        self.assertEqual(swe_l3_data.pitch_angle_delta, swel3_dependency.configuration["pitch_angle_delta"])
+        self.assertEqual(swe_l3_data.pitch_angle_delta, swel3_dependency.configuration["pitch_angle_deltas"])
         self.assertEqual(swe_l3_data.energy, swel3_dependency.configuration["energy_bins"])
         self.assertEqual(swe_l3_data.energy_delta_plus, swel3_dependency.configuration["energy_delta_plus"])
         self.assertEqual(swe_l3_data.energy_delta_minus, swel3_dependency.configuration["energy_delta_minus"])
         self.assertEqual(swe_l3_data.gyrophase_bins, swel3_dependency.configuration["gyrophase_bins"])
-        self.assertEqual(swe_l3_data.gyrophase_delta, swel3_dependency.configuration["gyrophase_delta"])
+        self.assertEqual(swe_l3_data.gyrophase_delta, swel3_dependency.configuration["gyrophase_deltas"])
         np.testing.assert_allclose(swe_l3_data.phase_space_density_by_pitch_angle,
                                    np.array([[[np.nan, 194.772034, 270.312835],
                                               [211.672665, 273.136802, 363.195552],
@@ -575,13 +579,12 @@ class TestSweProcessor(unittest.TestCase):
         np.testing.assert_allclose(swe_l3_data.energy_spectrum_inbound, np.array([[0, 104.147588, 154.42602]]))
         np.testing.assert_allclose(swe_l3_data.energy_spectrum_outbound,
                                    np.array([[208.855516, 286.519101, 206.376298]]))
-        self.assertEqual((1, 9, 7, 30), swe_l3_data.intensity_by_pitch_angle_and_gyrophase.shape)
-        self.assertEqual((1, 9, 7), swe_l3_data.intensity_by_pitch_angle.shape)
-        np.testing.assert_allclose(swe_l3_data.intensity_by_pitch_angle[0, 1, 3:6],
-                                   np.array([49, 52.15789474,
-                                             53.09090909]))
-        np.testing.assert_allclose(swe_l3_data.intensity_by_pitch_angle_and_gyrophase[0, 1, 3, 15:17],
-                                   np.array([63, 45.5]))
+        self.assertEqual((1, 9, 3, 3), swe_l3_data.intensity_by_pitch_angle_and_gyrophase.shape)
+        self.assertEqual((1, 9, 3), swe_l3_data.intensity_by_pitch_angle.shape)
+        np.testing.assert_allclose(swe_l3_data.intensity_by_pitch_angle[0, 1, 1:3],
+                                   np.array([50, 53.5]))
+        np.testing.assert_allclose(swe_l3_data.intensity_by_pitch_angle_and_gyrophase[0, 0, 1, 1],
+                                   np.array([15.909091]))
         # np.testing.assert_allclose(swe_l3_data)
         # assert output uncertainties
 

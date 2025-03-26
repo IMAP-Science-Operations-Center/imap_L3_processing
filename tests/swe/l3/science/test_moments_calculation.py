@@ -257,6 +257,40 @@ class TestMomentsCalculation(unittest.TestCase):
             call(sentinel.fit_function_1),
         ])
 
+    @patch('imap_l3_processing.swe.l3.science.moment_calculations.regress')
+    @patch('imap_l3_processing.swe.l3.science.moment_calculations.calculate_fit_temperature_density_velocity')
+    @patch('imap_l3_processing.swe.l3.science.moment_calculations.filter_and_flatten_regress_parameters')
+    def test_fit_moments_retrying_on_failure_should_stop_retrying_with_few_energies_and_return_none_if_no_density(
+            self,
+            mock_filter_and_flatten_regress_parameters,
+            mock_calculate_fit_temp_dens_velocity,
+            mock_regress):
+        density_history = np.array([100, 89, 72])
+
+        high_density_value = 200
+
+        calculated_moments = create_dataclass_mock(Moments, density=None)
+        mock_calculate_fit_temp_dens_velocity.side_effect = [
+            calculated_moments,
+        ]
+
+        mock_filter_and_flatten_regress_parameters.side_effect = [
+            (sentinel.filtered_velocity_vectors, sentinel.filtered_weights, sentinel.filtered_yreg)
+        ]
+
+        mock_regress.side_effect = [
+            (sentinel.fit_function_1, sentinel.chisq_1),
+        ]
+
+        result = core_fit_moments_retrying_on_failure(sentinel.corrected_energy_bins,
+                                                      sentinel.velocity_vectors,
+                                                      sentinel.phase_space_density,
+                                                      sentinel.weights,
+                                                      0,
+                                                      3,
+                                                      density_history)
+        self.assertIsNone(result)
+
     def test_compute_maxwellian_weight_factors_reproduces_heritage_results(self):
         counts = np.array([[[536.0, 20000, 536.0], [1.2, 3072.0000001359296, 1.2]]])
         acquisition_duration = np.array([[80000., 40000.]])
