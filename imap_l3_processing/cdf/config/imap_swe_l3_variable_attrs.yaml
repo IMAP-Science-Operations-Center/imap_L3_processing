@@ -160,7 +160,7 @@ intensity_by_pitch_angle:
   CATDESC: Intensity organized by pitch angle
   DEPEND_0: epoch
   DEPEND_1: energy
-  DEPEND_2: pitch_angle_
+  DEPEND_2: pitch_angle
   DELTA_PLUS_VAR: intensity_uncertainty_by_pitch_angle
   DELTA_MINUS_VAR: intensity_uncertainty_by_pitch_angle
   VAR_TYPE: data
