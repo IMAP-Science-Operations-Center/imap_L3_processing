@@ -166,7 +166,7 @@ class SweProcessor(Processor):
                     i])
 
             weights: np.ndarray[float] = compute_maxwellian_weight_factors(swe_l1b_data.count_rates[i],
-                                                                           swe_l2_data.acquisition_duration[i])
+                                                                           swe_l2_data.acquisition_duration[i] / 1e6)
 
             ifit = next(
                 index for index, energy in enumerate(swe_l2_data.energy) if energy >= spacecraft_potential[i])
@@ -458,8 +458,8 @@ class SweProcessor(Processor):
                                                             from_data=solar_wind_vectors,
                                                             to_epoch=swe_epoch,
                                                             maximum_distance=swapi_max_distance)
-
-        counts = dependencies.swe_l1b_data.count_rates * swe_l2_data.acquisition_duration[..., np.newaxis]
+        # acquisition_duration_to_seconds = swe_l2_data.acquisition_duration[..., np.newaxis] / 1e6
+        counts = dependencies.swe_l1b_data.count_rates * (swe_l2_data.acquisition_duration[..., np.newaxis] / 1e6)
 
         phase_space_density_by_pitch_angle = []
         phase_space_density_by_pitch_angle_and_gyrophase = []
