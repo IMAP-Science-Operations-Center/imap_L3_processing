@@ -1,9 +1,11 @@
 import unittest
 from datetime import datetime, timedelta
 
+from astropy.time import Time
 from spacepy.pycdf import CDF
 
-from imap_l3_processing.glows.l3b.utils import read_glows_l3a_data
+from imap_l3_processing.glows.l3b.models import CRToProcess
+from imap_l3_processing.glows.l3b.utils import read_glows_l3a_data, find_unprocessed_carrington_rotations
 from tests.test_helpers import get_test_data_path
 
 
@@ -43,3 +45,56 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(0.0014979999978095293, actual_glows_lightcurve.spin_period_ground_std_dev[0])
         self.assertEqual(0.0, actual_glows_lightcurve.spin_period_std_dev[0])
         self.assertEqual(0.0, actual_glows_lightcurve.time_dependent_background[0][0])
+
+    def test_find_unprocessed_carrington_rotations(self):
+        l3a_files_january = [
+            self.create_imap_data_access_json(
+                file_path=f'imap/glows/l3a/2010/01/imap_glows_l3a_hist_201001{str(i).zfill(2)}_v001.pkts',
+                data_level='l3a', start_date=f'201001{str(i).zfill(2)}') for i in range(1, 32)
+        ]
+        l3a_files_february = [
+            self.create_imap_data_access_json(
+                file_path=f'imap/glows/l3a/2010/01/imap_glows_l3a_hist_201002{str(i).zfill(2)}_v001.pkts',
+                data_level='l3a', start_date=f'201002{str(i).zfill(2)}') for i in range(1, 29)
+        ]
+        l3a_files_march = [
+            self.create_imap_data_access_json(
+                file_path=f'imap/glows/l3a/2010/01/imap_glows_l3a_hist_201003{str(i).zfill(2)}_v001.pkts',
+                data_level='l3a', start_date=f'201003{str(i).zfill(2)}') for i in range(1, 32)
+        ]
+
+        l3a_files = l3a_files_february + l3a_files_march + l3a_files_january
+
+        l3b_files = [
+            self.create_imap_data_access_json(
+                file_path=f'imap/glows/l3b/2010/01/imap_glows_l3b_hist_20100213_v001.pkts',
+                data_level='l3b', start_date=f'20100213')
+        ]
+
+        expected_l3a_january_paths = [self.create_l3a_path_by_date(f'201001{str(i).zfill(2)}') for i in range(3, 31)]
+        expected_l3a_march_paths = [self.create_l3a_path_by_date(f'20100227'),
+                                    self.create_l3a_path_by_date(f'20100228')] + [
+                                       self.create_l3a_path_by_date(f'201003{str(i).zfill(2)}') for i in range(1, 27)]
+
+        actual_crs_to_process: [CRToProcess] = find_unprocessed_carrington_rotations(l3a_files, l3b_files)
+
+        self.assertEqual(2, len(actual_crs_to_process))
+        self.assertEqual(expected_l3a_january_paths, actual_crs_to_process[0].l3a_paths)
+        self.assertEqual(Time('2010-01-03 11:33:04.320').value, actual_crs_to_process[0].carrington_start_date.value)
+        self.assertEqual(Time('2010-01-30 18:09:30.240').value, actual_crs_to_process[0].carrington_end_date.value)
+        self.assertEqual(2092, actual_crs_to_process[0].carrington_rotation)
+
+        self.assertEqual(expected_l3a_march_paths, actual_crs_to_process[1].l3a_paths)
+        self.assertEqual(Time('2010-02-27 00:45:56.160').value, actual_crs_to_process[1].carrington_start_date.value)
+        self.assertEqual(Time('2010-03-26 07:22:22.080').value, actual_crs_to_process[1].carrington_end_date.value)
+        # todo resolve why our times do not match what we expected given outside references
+        self.assertFalse(True)
+        self.assertEqual(2094, actual_crs_to_process[1].carrington_rotation)
+
+    def create_imap_data_access_json(self, file_path: str, data_level: str, start_date: str) -> dict:
+        return {'file_path': file_path, 'instrument': 'glows', 'data_level': data_level, 'descriptor': 'hist',
+                'start_date': start_date, 'repointing': None, 'version': 'v001', 'extension': 'pkts',
+                'ingestion_date': '2024-10-11 15:28:32'}
+
+    def create_l3a_path_by_date(self, file_date: str) -> str:
+        return f'imap/glows/l3a/2010/01/imap_glows_l3a_hist_{file_date}_v001.pkts'

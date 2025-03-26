@@ -1,5 +1,7 @@
+from collections import defaultdict
 from datetime import timedelta
 
+from astropy.time import Time
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.glows.l3a.models import GlowsL3LightCurve, PHOTON_FLUX_UNCERTAINTY_CDF_VAR_NAME, \
@@ -14,6 +16,8 @@ from imap_l3_processing.glows.l3a.models import GlowsL3LightCurve, PHOTON_FLUX_U
     SPIN_AXIS_ORIENTATION_AVERAGE_CDF_VAR_NAME, SPIN_AXIS_ORIENTATION_STD_DEV_CDF_VAR_NAME, \
     SPACECRAFT_LOCATION_AVERAGE_CDF_VAR_NAME, SPACECRAFT_LOCATION_STD_DEV_CDF_VAR_NAME, \
     SPACECRAFT_VELOCITY_AVERAGE_CDF_VAR_NAME
+from imap_l3_processing.glows.l3b.l3b_toolkit.constants_and_functions import carrington, jd_fm_Carrington
+from imap_l3_processing.glows.l3b.models import CRToProcess
 
 
 def read_glows_l3a_data(cdf: CDF) -> GlowsL3LightCurve:
@@ -51,3 +55,50 @@ def read_glows_l3a_data(cdf: CDF) -> GlowsL3LightCurve:
                              spacecraft_velocity_average=cdf[SPACECRAFT_VELOCITY_AVERAGE_CDF_VAR_NAME][...],
                              spacecraft_velocity_std_dev=cdf[SPACECRAFT_VELOCITY_STD_DEV_CDF_VAR_NAME][...],
                              )
+
+
+def find_unprocessed_carrington_rotations(l3a_inputs: list[dict], l3b_inputs: list[dict]) -> [CRToProcess]:
+    l3bs_carringtons: set = set()
+    for l3b in l3b_inputs:
+        current_date = get_astropy_time_from_yyyymmdd(l3b["start_date"])
+        current_rounded_cr = int(carrington(current_date.jd))
+        l3bs_carringtons.add(current_rounded_cr)
+
+    sorted_l3a_inputs = sorted(l3a_inputs, key=lambda entry: entry['start_date'])
+
+    l3as_by_carrington: dict = defaultdict(list)
+
+    prior_cr: int = 0
+    prior_jd: float = 1.0
+    for index, l3a in enumerate(sorted_l3a_inputs):
+        current_date: Time = get_astropy_time_from_yyyymmdd(l3a["start_date"])
+        current_rounded_cr = int(carrington(current_date.jd))
+        if (current_rounded_cr - prior_cr == 1) and (current_date.jd - prior_jd == 1):
+            l3as_by_carrington[current_rounded_cr].append(sorted_l3a_inputs[index - 1]['file_path'])
+        l3as_by_carrington[current_rounded_cr].append(l3a['file_path'])
+        prior_jd = current_date.jd
+        prior_cr = current_rounded_cr
+
+    crs_to_process = []
+    for k, v in l3as_by_carrington.items():
+        if k not in l3bs_carringtons and len(v) == 28:
+            carrington_start_date = jd_fm_Carrington(float(k))
+            date_time = Time(carrington_start_date, format='jd')
+            date_time.format = 'iso'
+
+            carrington_end_date_non_inclusive = jd_fm_Carrington(k + 1)
+            date_time_end_date = Time(carrington_end_date_non_inclusive, format='jd')
+            date_time_end_date.format = 'iso'
+
+            crs_to_process.append(CRToProcess(
+                l3a_paths=v,
+                carrington_start_date=date_time,
+                carrington_end_date=date_time_end_date,
+                carrington_rotation=k
+            ))
+
+    return crs_to_process
+
+
+def get_astropy_time_from_yyyymmdd(date_string: str) -> Time:
+    return Time(f'{date_string[0:4]}-{date_string[4:6]}-{date_string[6:8]}')
