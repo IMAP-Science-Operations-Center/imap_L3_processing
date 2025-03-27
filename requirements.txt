@@ -1,3 +1,5 @@
+astropy==7.0.1
+astropy-iers-data==0.2025.3.24.0.35.32
 contourpy==1.2.1
 cycler==0.12.1
 fonttools==4.53.1
@@ -10,6 +12,7 @@ naif-leapseconds==2023.5.31
 numpy==2.0.1
 packaging==24.1
 pillow==10.4.0
+pyerfa==2.0.1.5
 pyparsing==3.1.2
 python-dateutil==2.9.0.post0
 scipy==1.13.1
