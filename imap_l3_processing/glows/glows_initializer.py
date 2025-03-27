@@ -1,10 +1,25 @@
-from imap_l3_processing.glows.l3b.glows_l3b_dependencies import GlowsInitializerDependencies, F107_INDEX_KEY, \
-    LYMAN_ALPHA_COMPOSITE_KEY, OMNI2_DATA_KEY
+from dataclasses import fields
+
+from imap_data_access import query
+
+from imap_l3_processing.glows.l3b.glows_initializer_ancillary_dependencies import GlowsInitializerAncillaryDependencies
+from imap_l3_processing.glows.l3b.utils import find_unprocessed_carrington_rotations
 
 
 class GlowsInitializer:
-    def should_process(self, glows_l3b_dependencies: GlowsInitializerDependencies) -> bool:
-        f107_exists = glows_l3b_dependencies.ancillary_files[F107_INDEX_KEY] is not None
-        lyman_alpha_exists = glows_l3b_dependencies.ancillary_files[LYMAN_ALPHA_COMPOSITE_KEY] is not None
-        omni2_exists = glows_l3b_dependencies.ancillary_files[OMNI2_DATA_KEY] is not None
-        return f107_exists and lyman_alpha_exists and omni2_exists
+    @staticmethod
+    def validate_and_initialize(version: str):
+        glows_ancillary_dependencies = GlowsInitializerAncillaryDependencies.fetch_dependencies()
+        if not _should_process(glows_ancillary_dependencies):
+            return []
+        l3a_files = query(instrument="glows", version=version, data_level="l3a")
+        l3b_files = query(instrument="glows", version=version, data_level="l3b")
+
+        find_unprocessed_carrington_rotations(l3a_files, l3b_files)
+
+
+def _should_process(glows_l3b_dependencies: GlowsInitializerAncillaryDependencies) -> bool:
+    for field in fields(glows_l3b_dependencies):
+        if getattr(glows_l3b_dependencies, field.name) is None:
+            return False
+    return True
