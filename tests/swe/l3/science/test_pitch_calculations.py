@@ -296,7 +296,8 @@ class TestPitchCalculations(unittest.TestCase):
             ("b[4] <= 15", [1, 3, 10, 2, 12, 1], 2, 15),
             ("b[2] <= energies[0]", [1, 3, 0.8, 2, 80, 1], 2, 15),
             ("b[2] >= 20", [1, 3, 25, 2, 80, 1], 2, 15),
-            ("b[2] >= 2x spacecraft potential", [1, 3, 15, 2, 80, 1], 2, 6)
+            ("b[2] >= 2x spacecraft potential", [1, 3, 15, 2, 80, 1], 2, 6),
+            ("b[4] > 500, condition not in C code", [1, 3, 10, 2, 600, 1], 2, 15),
         ]
 
         for name, curve_fit_first_result, call_count, latest_spacecraft_potential in cases:
