@@ -128,7 +128,7 @@ def calculate_phase(phase, spin_period):
     N_PHI_LEVEL1 = 30
     K_FOR_THIS_MODE = 3.1845564
     SWE_MOUNTING_ANGLE = 153
-    phi = np.zeros((24, 30))
+    phi = np.zeros((20, 30))
     for i in range(N_ENERGIES):
         for k in range(30):
             rrr = i % N_ENERGIES_LEVEL1
@@ -215,16 +215,11 @@ new_ds = xarray_data['DNSWE_COUNT'].transpose('fakeDim32', 'fakeDim33', 'fakeDim
 new_ds = new_ds.stack(merged_dim=("fakeDim33", "fakeDim35"))
 new_ds = new_ds.assign_coords({"merged_dim": range(20)})
 new_ds = new_ds.transpose('fakeDim32', 'merged_dim', 'fakeDim34', 'fakeDim36')
-new_shape = (num_epochs, 24, 30, 7)
-expanded_data = np.zeros(new_shape)  # Initialize with zeros
 
 epochs = get_epochs_from_output_file("instrument_team_data/swe/swepam-nswe-1999-159.v1-02.hdf")
 
-# Step 2: Copy the original data into the new array (first 20 slices remain unchanged)
-expanded_data[:, :20, :, :] = new_ds.values
-ds = new_ds
 ds_expanded = xr.DataArray(
-    expanded_data,
+    new_ds.values,
     dims=("dim1", "dim2", "dim3", "dim4"),
     coords={
         "dim1": 'epoch',  # Keep original coordinates
@@ -233,7 +228,6 @@ ds_expanded = xr.DataArray(
         "dim4": 'cem'
     }
 )
-# print(ds_expanded)
 decompress_table = decompression_table = np.array([decompressed_counts(i) for i in range(256)])
 counts = decompress_table[ds_expanded.values.astype(int)]
 sample_time = 0.10031
@@ -248,11 +242,22 @@ acquisition_time = []
 for i in range(len(phase)):
     acquisition_time.append(calculate_acquisition_time(phase[i], spin[i], epochs[i]))
 
+time_between_data_points = 128 * 1e6
+
+settle_duration_needed_to_fill_time_between_points = time_between_data_points / (20 * 30) - sample_time_microseconds
+
 shutil.copy("imap_swe_l1b_sci_20240510_v002.cdf", "imap_swe_l1b_sci_20250630_v003.cdf")
 with CDF("imap_swe_l1b_sci_20250630_v003.cdf", readonly=False) as cdf:
+    del cdf['science_data']
+    del cdf['acquisition_time']
+    del cdf['acq_duration']
+    del cdf['settle_duration']
+    del cdf['esa_step']
     cdf['epoch'] = epochs
     cdf['science_data'] = rates
-    cdf['acquisition_time'] = acquisition_time
-    cdf['acq_duration'] = np.full((674, 24, 30), sample_time_microseconds)
-    cdf['settle_duration'] = np.full((674, 4), 3e3)
+    cdf['acquisition_time'] = np.array(acquisition_time)
+    cdf['acq_duration'] = np.full((674, 20, 30), sample_time_microseconds)
+    cdf['settle_duration'] = np.full((674, 4), round(settle_duration_needed_to_fill_time_between_points))
     cdf['esa_table_num'] = np.full((674, 4), 0)
+    cdf.new('esa_step', np.arange(20), recVary=False)
+    cdf['esa_step'].attrs['VAR_TYPE'] = 'support_data'

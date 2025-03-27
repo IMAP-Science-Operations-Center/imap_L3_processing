@@ -157,6 +157,8 @@ class SweProcessor(Processor):
         core_temperature_tensor_integrated = np.full((number_of_points, 6), np.nan)
         halo_temperature_tensor_integrated = np.full((number_of_points, 6), np.nan)
         total_temperature_tensor_integrated = np.full((number_of_points, 6), np.nan)
+        sin_theta = np.sin(np.deg2rad(swe_l2_data.inst_el))
+        cos_theta = np.cos(np.deg2rad(swe_l2_data.inst_el))
 
         for i in range(len(swe_l2_data.epoch)):
             velocity_vectors_cm_per_s: np.ndarray = 1000 * 100 * calculate_velocity_in_dsp_frame_km_s(
@@ -204,8 +206,6 @@ class SweProcessor(Processor):
                                                                             core_moment.beta)
                 core_temp_theta_rtns[i] = core_temp_theta_rtn
                 core_temp_phi_rtns[i] = core_temp_phi_rtn
-                sin_theta = np.sin(np.deg2rad(swe_l2_data.inst_el))
-                cos_theta = np.cos(np.deg2rad(swe_l2_data.inst_el))
                 core_temp_avg = (2 * core_moment.t_perpendicular + core_moment.t_parallel) / 3
 
                 if 1e3 < core_temp_avg < 1e7:
