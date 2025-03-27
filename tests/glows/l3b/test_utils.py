@@ -87,8 +87,6 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(expected_l3a_march_paths, actual_crs_to_process[1].l3a_paths)
         self.assertEqual(Time('2010-02-27 00:45:56.160').value, actual_crs_to_process[1].carrington_start_date.value)
         self.assertEqual(Time('2010-03-26 07:22:22.080').value, actual_crs_to_process[1].carrington_end_date.value)
-        # todo resolve why our times do not match what we expected given outside references
-        self.assertFalse(True)
         self.assertEqual(2094, actual_crs_to_process[1].carrington_rotation)
 
     def create_imap_data_access_json(self, file_path: str, data_level: str, start_date: str) -> dict:
