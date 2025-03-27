@@ -86,7 +86,7 @@ class TestGlowsProcessor(unittest.TestCase):
 
     @patch("imap_l3_processing.glows.glows_processor.imap_data_access")
     @patch("imap_l3_processing.glows.glows_processor.save_data")
-    @patch("imap_l3_processing.glows.glows_processor.GlowsL3BDependencies")
+    @patch("imap_l3_processing.glows.glows_processor.GlowsInitializerDependencies")
     @patch("imap_l3_processing.glows.glows_processor.GlowsInitializer")
     def test_does_not_process_l3b_if_should_not_process(self, mock_glows_initializer_class,
                                                         mock_glows_l3b_dependencies_class,
@@ -115,7 +115,7 @@ class TestGlowsProcessor(unittest.TestCase):
 
     @patch("imap_l3_processing.glows.glows_processor.imap_data_access")
     @patch("imap_l3_processing.glows.glows_processor.save_data")
-    @patch("imap_l3_processing.glows.glows_processor.GlowsL3BDependencies")
+    @patch("imap_l3_processing.glows.glows_processor.GlowsInitializerDependencies")
     @patch("imap_l3_processing.glows.glows_processor.GlowsInitializer")
     def test_processes_l3b_if_should_process(self, mock_glows_initializer_class,
                                              mock_glows_l3b_dependencies_class,

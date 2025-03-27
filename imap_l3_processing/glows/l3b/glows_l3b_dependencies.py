@@ -15,7 +15,6 @@ from imap_l3_processing.utils import download_dependency, download_external_depe
 F107_FLUX_TABLE_URL = "https://www.spaceweather.gc.ca/solar_flux_data/daily_flux_values/fluxtable.txt"
 LYMAN_ALPHA_COMPOSITE_INDEX_URL = "http://lasp.colorado.edu/data/timed_see/composite_lya/lyman_alpha_composite.nc"
 OMNI2_URL = "https://spdf.gsfc.nasa.gov/pub/data/omni/low_res_omni/omni2_all_years.dat"
-BAD_DAY_KEY = "bad_day_list"
 UV_ANISOTROPY_KEY = "uv_anisotropy_factor"
 WAW_HELIOION_MP_KEY = "waw_helioion_mp"
 F107_INDEX_KEY = "f107_index"
@@ -24,7 +23,7 @@ OMNI2_DATA_KEY = "omni2_data"
 
 
 @dataclass
-class GlowsL3BDependencies:
+class GlowsInitializerDependencies:
     glows_l3a_data: GlowsL3LightCurve
     swapi_l3a_alpha_sw_data: SwapiL3AlphaSolarWindData
     ancillary_files: dict[str, Path]
@@ -36,7 +35,6 @@ class GlowsL3BDependencies:
         swapi_l3a_dependency = next(dep
                                     for dep in dependencies if dep.descriptor.startswith(SWAPI_L3A_ALPHA_SW_DESCRIPTOR))
 
-        bad_day_list_dependency = cls.create_ancillary_dependency("bad-day-list")
         uv_anisotropy_factor_dependency = cls.create_ancillary_dependency("uv-anisotropy-factor")
         waw_helioion_mp_dependency = cls.create_ancillary_dependency("waw-helioion-mp")
 
@@ -48,7 +46,6 @@ class GlowsL3BDependencies:
         swapi_l3a_cdf = CDF(str(swapi_l3a_path))
         swapi_l3a_alpha_sw_data = read_l3a_alpha_sw_swapi_data(swapi_l3a_cdf)
 
-        bad_day_list_path = download_dependency(bad_day_list_dependency)
         uv_anisotropy_path = download_dependency(uv_anisotropy_factor_dependency)
         waw_helioion_mp_path = download_dependency(waw_helioion_mp_dependency)
 
@@ -57,7 +54,6 @@ class GlowsL3BDependencies:
         omni2_data_path = download_external_dependency(OMNI2_URL, 'omni2_all_years.dat')
 
         ancillary_files = {
-            BAD_DAY_KEY: bad_day_list_path,
             UV_ANISOTROPY_KEY: uv_anisotropy_path,
             WAW_HELIOION_MP_KEY: waw_helioion_mp_path,
             F107_INDEX_KEY: f107_index_file_path,

@@ -8,7 +8,7 @@ from imap_l3_processing.glows.glows_toolkit.l3a_data import L3aData
 from imap_l3_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
 from imap_l3_processing.glows.l3a.models import GlowsL3LightCurve
 from imap_l3_processing.glows.l3a.utils import create_glows_l3a_from_dictionary
-from imap_l3_processing.glows.l3b.glows_l3b_dependencies import GlowsL3BDependencies
+from imap_l3_processing.glows.l3b.glows_l3b_dependencies import GlowsInitializerDependencies
 from imap_l3_processing.processor import Processor
 from imap_l3_processing.utils import save_data
 
@@ -22,7 +22,7 @@ class GlowsProcessor(Processor):
             proton_cdf = save_data(l3a_output)
             imap_data_access.upload(proton_cdf)
         elif self.input_metadata.data_level == "l3b":
-            l3b_dependencies = GlowsL3BDependencies.fetch_dependencies(self.dependencies)
+            l3b_dependencies = GlowsInitializerDependencies.fetch_dependencies(self.dependencies)
             initializer = GlowsInitializer()
             if initializer.should_process(l3b_dependencies):
                 save_data(None)
