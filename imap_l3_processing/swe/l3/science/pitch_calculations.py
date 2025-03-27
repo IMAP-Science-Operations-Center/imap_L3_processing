@@ -75,6 +75,7 @@ def try_curve_fit_until_valid(energies: np.ndarray, log_psd: np.ndarray, initial
                 b[2] >= b[4] or
                 b[4] <= 15 or
                 b[2] <= energies[0] or
+                b[4] > 500 or
                 b[2] >= 20 or
                 b[2] >= 2 * latest_spacecraft_potential)
 

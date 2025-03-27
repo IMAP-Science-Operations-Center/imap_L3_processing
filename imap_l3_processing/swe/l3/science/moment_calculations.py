@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Optional, Union
 
 import numpy as np
-from spiceypy import spiceypy
+from spiceypy import spiceypy, SpiceyError
 
 from imap_l3_processing.constants import ELECTRON_MASS_KG, \
     BOLTZMANN_CONSTANT_JOULES_PER_KELVIN, METERS_PER_KILOMETER, \
@@ -374,8 +374,11 @@ def filter_and_flatten_regress_parameters(corrected_energy_bins: np.ndarray,
 
 def rotate_dps_vector_to_rtn(epoch: datetime, vector: np.ndarray) -> np.ndarray:
     et_time = spiceypy.datetime2et(epoch)
-    rotation_matrix = spiceypy.pxform("IMAP_DPS", "IMAP_RTN", et_time)
-    return rotation_matrix @ vector
+    try:
+        rotation_matrix = spiceypy.pxform("IMAP_DPS", "IMAP_RTN", et_time)
+        return rotation_matrix @ vector
+    except SpiceyError:
+        return np.full(3, np.nan)
 
 
 def rotate_temperature(epoch: datetime, alpha: float, beta: float) -> tuple[float, float]:

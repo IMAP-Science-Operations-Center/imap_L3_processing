@@ -223,7 +223,7 @@ class TestSweProcessor(unittest.TestCase):
             inst_el=np.array([]),
             inst_az_spin_sector=np.arange(10, 19).reshape(3, 3),
             acquisition_time=np.array([]),
-            acquisition_duration=np.arange(9).reshape(3, 3) + 5
+            acquisition_duration=(np.arange(9).reshape(3, 3) + 5) * 1e6
         )
 
         swe_l1b_data = SweL1bData(
@@ -244,7 +244,7 @@ class TestSweProcessor(unittest.TestCase):
             proton_sw_clock_angle=np.array([]),
             proton_sw_deflection_angle=np.array([]),
         )
-        counts = swe_l1b_data.count_rates * swe_l2_data.acquisition_duration[:, :, np.newaxis]
+        counts = swe_l1b_data.count_rates * swe_l2_data.acquisition_duration[:, :, np.newaxis] / 1e6
         mock_average_over_look_directions.return_value = np.array([5, 10, 15])
         closest_mag_data = np.arange(9).reshape(3, 3)
         closest_swapi_data = np.arange(8, 17).reshape(3, 3)
@@ -517,7 +517,8 @@ class TestSweProcessor(unittest.TestCase):
 
         swe_l1b_data = SweL1bData(
             epoch=epochs,
-            count_rates=np.arange(num_epochs * num_energies * 5 * 7).reshape(num_epochs, num_energies, 5, 7) + 350,
+            count_rates=(np.arange(num_epochs * num_energies * 5 * 7).reshape(num_epochs, num_energies, 5,
+                                                                              7) + 350) * 1e6,
             settle_duration=np.full((num_epochs, 3), 333)
 
         )
@@ -585,8 +586,11 @@ class TestSweProcessor(unittest.TestCase):
                                    np.array([50, 53.5]))
         np.testing.assert_allclose(swe_l3_data.intensity_by_pitch_angle_and_gyrophase[0, 0, 1, 1],
                                    np.array([15.909091]))
-        # np.testing.assert_allclose(swe_l3_data)
-        # assert output uncertainties
+
+        np.testing.assert_allclose(swe_l3_data.intensity_uncertainty_by_pitch_angle[0, 0, 1:3],
+                                   np.array([0.000887, 0.000659]), atol=1e-6)
+        np.testing.assert_allclose(swe_l3_data.intensity_uncertainty_by_pitch_angle_and_gyrophase[0, 0, 1:3, 1],
+                                   np.array([0.000887, 0.000659]), atol=1e-6)
 
     @patch('imap_l3_processing.swe.swe_processor.rotate_temperature_tensor_to_mag')
     @patch('imap_l3_processing.swe.swe_processor.calculate_primary_eigenvector')
@@ -623,14 +627,13 @@ class TestSweProcessor(unittest.TestCase):
             inst_el=instrument_elevation,
             inst_az_spin_sector=np.arange(10, 19).reshape(3, 3),
             acquisition_time=np.array([]),
-            acquisition_duration=[sentinel.acquisition_duration_1, sentinel.acquisition_duration_2,
-                                  sentinel.acquisition_duration_3],
+            acquisition_duration=[1e7, 2e7, 3e7],
         )
         expected_sin_theta = np.sin(np.deg2rad(instrument_elevation))
         expected_cos_theta = np.cos(np.deg2rad(instrument_elevation))
         swe_l1_data = SweL1bData(epoch=epochs,
                                  count_rates=[sentinel.l1b_count_rates_1, sentinel.l1b_count_rates_2,
-                                              sentinel.count_rates_3],
+                                              sentinel.l1b_count_rates_3],
                                  settle_duration=Mock())
 
         spacecraft_potential = np.array([12, 14, 16])
@@ -789,9 +792,12 @@ class TestSweProcessor(unittest.TestCase):
         np.testing.assert_array_equal(swe_l2_data.inst_el, calculate_velocity_call_3.args[1])
         np.testing.assert_array_equal(swe_l2_data.inst_az_spin_sector[2], calculate_velocity_call_3.args[2])
 
+        self.assertEqual(3, mock_compute_maxwellian_weight_factors.call_count)
         mock_compute_maxwellian_weight_factors.assert_has_calls(
-            [call(sentinel.l1b_count_rates_1, sentinel.acquisition_duration_1),
-             call(sentinel.l1b_count_rates_2, sentinel.acquisition_duration_2)])
+            [call(sentinel.l1b_count_rates_1, 10.0),
+             call(sentinel.l1b_count_rates_2, 20.0),
+             call(sentinel.l1b_count_rates_3, 30.0),
+             ])
 
         self.assertEqual(3, mock_core_fit_moments_retrying_on_failure.call_count)
         self.assertEqual(3, mock_halo_fit_moments_retrying_on_failure.call_count)
@@ -1166,7 +1172,7 @@ class TestSweProcessor(unittest.TestCase):
             inst_el=instrument_elevation,
             inst_az_spin_sector=np.arange(16, 32).reshape(4, 4),
             acquisition_time=np.array([]),
-            acquisition_duration=[Mock(), Mock(), Mock(), Mock()],
+            acquisition_duration=[2e7, 2e7, 2e7, 2e7],
         )
         swe_l1_data = SweL1bData(epoch=epochs,
                                  count_rates=[Mock(), Mock(), Mock(), Mock()],

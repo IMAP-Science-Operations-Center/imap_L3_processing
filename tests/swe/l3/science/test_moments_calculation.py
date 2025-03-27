@@ -5,6 +5,7 @@ from datetime import datetime
 from unittest.mock import patch, call, sentinel
 
 import numpy as np
+import spiceypy.utils.exceptions
 
 from imap_l3_processing.swe.l3.science import moment_calculations
 from imap_l3_processing.swe.l3.science.moment_calculations import compute_maxwellian_weight_factors, \
@@ -402,6 +403,20 @@ class TestMomentsCalculation(unittest.TestCase):
         mock_pxform.assert_called_once_with("IMAP_DPS", "IMAP_RTN", mock_datetime2et.return_value)
 
         np.testing.assert_array_equal(rtn_vector, rotation_matrix @ dsp_vector)
+
+    @patch('spiceypy.spiceypy.pxform')
+    @patch('spiceypy.spiceypy.datetime2et')
+    def test_rotate_dps_vector_to_rtn_excepts_and_catches(self, mock_datetime2et, mock_pxform):
+        epoch = datetime(year=2020, month=3, day=10)
+        dsp_vector = np.array([0, 1, 0])
+        mock_pxform.side_effect = spiceypy.utils.exceptions.SpiceyError("Missing coverage for IMAP_DPS")
+
+        rtn_vector = rotate_dps_vector_to_rtn(epoch, dsp_vector)
+        mock_datetime2et.assert_called_once_with(epoch)
+
+        mock_pxform.assert_called_once_with("IMAP_DPS", "IMAP_RTN", mock_datetime2et.return_value)
+
+        np.testing.assert_array_equal(rtn_vector, np.full(3, np.nan))
 
     @patch('spiceypy.spiceypy.pxform')
     @patch('spiceypy.spiceypy.datetime2et')
