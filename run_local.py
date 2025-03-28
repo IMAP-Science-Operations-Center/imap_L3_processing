@@ -8,7 +8,6 @@ import numpy as np
 from bitstring import BitStream
 from spacepy.pycdf import CDF
 
-from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
 from imap_l3_processing.glows.descriptors import GLOWS_L2_DESCRIPTOR
 from imap_l3_processing.glows.glows_processor import GlowsProcessor
 from imap_l3_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
@@ -26,7 +25,7 @@ from imap_l3_processing.hit.l3.pha.science.gain_lookup_table import GainLookupTa
 from imap_l3_processing.hit.l3.pha.science.hit_event_type_lookup import HitEventTypeLookup
 from imap_l3_processing.hit.l3.pha.science.range_fit_lookup import RangeFitLookup
 from imap_l3_processing.hit.l3.utils import read_l2_hit_data
-from imap_l3_processing.models import InputMetadata, UpstreamDataDependency, DataProduct
+from imap_l3_processing.models import InputMetadata, UpstreamDataDependency
 from imap_l3_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density import \
     AlphaTemperatureDensityCalibrationTable
 from imap_l3_processing.swapi.l3a.science.calculate_pickup_ion import DensityOfNeutralHeliumLookupTable
@@ -44,7 +43,7 @@ from imap_l3_processing.swapi.l3b.swapi_l3b_dependencies import SwapiL3BDependen
 from imap_l3_processing.swapi.swapi_processor import SwapiProcessor
 from imap_l3_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies
 from imap_l3_processing.swe.swe_processor import SweProcessor
-from imap_l3_processing.utils import save_data, read_l1d_mag_data, format_time
+from imap_l3_processing.utils import save_data, read_l1d_mag_data
 from tests.test_helpers import get_test_data_path
 
 
@@ -134,8 +133,8 @@ def create_swe_product(dependencies: SweL3Dependencies) -> str:
     input_metadata = InputMetadata(
         instrument='swe',
         data_level='l3',
-        start_date=datetime(2010, 1, 1),
-        end_date=datetime(2010, 1, 2),
+        start_date=datetime(2025, 6, 30),
+        end_date=datetime(2025, 7, 1),
         version='v000')
     processor = SweProcessor(None, input_metadata)
     output_data = processor.calculate_products(dependencies)
@@ -213,7 +212,7 @@ def process_hit_pha():
         get_test_data_path("hit/pha_events/imap_hit_l3_range3B-fit-text-not-cdf_20250203_v001.cdf"),
         get_test_data_path("hit/pha_events/imap_hit_l3_range4B-fit-text-not-cdf_20250203_v001.cdf"),
     )
-    processed_events = [process_pha_event(e, cosine_table, gain_table, range_fit_lookup) for e
+    processed_events = [process_pha_event(e, cosine_table, gain_table, range_fit_lookup, None) for e
                         in events]
     print(processed_events)
 
@@ -326,7 +325,7 @@ if __name__ == "__main__":
     if "swe-fake-spice" in sys.argv:
         dependencies = SweL3Dependencies.from_file_paths(
             get_test_data_path("swe/imap_swe_l2_sci_20250630_v002.cdf"),
-            get_test_data_path("swe/imap_swe_l1b_sci_202502630_v003.cdf"),
+            get_test_data_path("swe/imap_swe_l1b_sci_20250630_v003.cdf"),
             get_test_data_path("swe/imap_mag_l1d_mago-normal_20250630_v001.cdf"),
             get_test_data_path("swe/imap_swapi_l3a_proton-sw_20250630_v001.cdf"),
             get_test_data_path("swe/example_swe_config.json"),
