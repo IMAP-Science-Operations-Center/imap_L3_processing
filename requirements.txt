@@ -24,4 +24,4 @@ zipp==3.19.2
 sammi-cdf==1.0.0
 healpy==1.18; sys_platform!='win32'
 bitstring==4.3.0
-imap-processing==0.11.0
+imap-processing @git+https://github.com/IMAP-Science-Operations-Center/imap_processing.git
