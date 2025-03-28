@@ -618,7 +618,7 @@ class TestSweProcessor(unittest.TestCase):
                                        mock_rotate_temperature_tensor_to_mag):
         epochs = datetime.now() + np.arange(3) * timedelta(minutes=1)
 
-        instrument_elevation = np.array([-70, -50, -30, 0, 30, 50, 70])
+        instrument_elevation = np.array([-63, -42, -21, 0, 21, 42, 63])
         swe_l2_data = SweL2Data(
             epoch=epochs,
             phase_space_density=np.arange(9).reshape(3, 3) + 100,
@@ -629,8 +629,10 @@ class TestSweProcessor(unittest.TestCase):
             acquisition_time=np.array([]),
             acquisition_duration=[1e7, 2e7, 3e7],
         )
-        expected_sin_theta = np.sin(np.deg2rad(instrument_elevation))
-        expected_cos_theta = np.cos(np.deg2rad(instrument_elevation))
+        expected_sin_theta = np.sin(np.deg2rad(90 - instrument_elevation))
+        expected_cos_theta = np.cos(np.deg2rad(90 - instrument_elevation))
+        np.testing.assert_allclose(expected_cos_theta,
+        [-0.9034, -0.6947, -0.3730, 0.0, 0.3714, 0.6896,0.8996], atol=0.03)
         swe_l1_data = SweL1bData(epoch=epochs,
                                  count_rates=[sentinel.l1b_count_rates_1, sentinel.l1b_count_rates_2,
                                               sentinel.l1b_count_rates_3],

@@ -157,8 +157,8 @@ class SweProcessor(Processor):
         core_temperature_tensor_integrated = np.full((number_of_points, 6), np.nan)
         halo_temperature_tensor_integrated = np.full((number_of_points, 6), np.nan)
         total_temperature_tensor_integrated = np.full((number_of_points, 6), np.nan)
-        sin_theta = np.sin(np.deg2rad(swe_l2_data.inst_el))
-        cos_theta = np.cos(np.deg2rad(swe_l2_data.inst_el))
+        sin_theta = np.sin(np.deg2rad(90 - swe_l2_data.inst_el))
+        cos_theta = np.cos(np.deg2rad(90 - swe_l2_data.inst_el))
 
         for i in range(len(swe_l2_data.epoch)):
             velocity_vectors_cm_per_s: np.ndarray = 1000 * 100 * calculate_velocity_in_dsp_frame_km_s(
@@ -458,7 +458,7 @@ class SweProcessor(Processor):
                                                             from_data=solar_wind_vectors,
                                                             to_epoch=swe_epoch,
                                                             maximum_distance=swapi_max_distance)
-        # acquisition_duration_to_seconds = swe_l2_data.acquisition_duration[..., np.newaxis] / 1e6
+
         counts = dependencies.swe_l1b_data.count_rates * (swe_l2_data.acquisition_duration[..., np.newaxis] / 1e6)
 
         phase_space_density_by_pitch_angle = []
