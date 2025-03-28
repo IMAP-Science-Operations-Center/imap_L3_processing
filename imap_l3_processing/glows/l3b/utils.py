@@ -1,5 +1,6 @@
 from collections import defaultdict
 from datetime import timedelta
+from pathlib import Path
 
 from astropy.time import Time
 from spacepy.pycdf import CDF
@@ -17,6 +18,7 @@ from imap_l3_processing.glows.l3a.models import GlowsL3LightCurve, PHOTON_FLUX_U
     SPACECRAFT_LOCATION_AVERAGE_CDF_VAR_NAME, SPACECRAFT_LOCATION_STD_DEV_CDF_VAR_NAME, \
     SPACECRAFT_VELOCITY_AVERAGE_CDF_VAR_NAME
 from imap_l3_processing.glows.l3b.l3b_toolkit.constants_and_functions import carrington, jd_fm_Carrington
+from imap_l3_processing.glows.l3b.l3b_toolkit.dependency_validator import validate_dependencies
 from imap_l3_processing.glows.l3b.models import CRToProcess
 
 
@@ -57,7 +59,8 @@ def read_glows_l3a_data(cdf: CDF) -> GlowsL3LightCurve:
                              )
 
 
-def find_unprocessed_carrington_rotations(l3a_inputs: list[dict], l3b_inputs: list[dict]) -> [CRToProcess]:
+def find_unprocessed_carrington_rotations(l3a_inputs: list[dict], l3b_inputs: list[dict], omni2_path: Path | str) -> [
+    CRToProcess]:
     l3bs_carringtons: set = set()
     for l3b in l3b_inputs:
         current_date = get_astropy_time_from_yyyymmdd(l3b["start_date"])
@@ -80,21 +83,25 @@ def find_unprocessed_carrington_rotations(l3a_inputs: list[dict], l3b_inputs: li
         prior_cr = current_rounded_cr
 
     crs_to_process = []
-    for k, v in l3as_by_carrington.items():
-        if k not in l3bs_carringtons and len(v) == 28:
-            carrington_start_date = jd_fm_Carrington(float(k))
+    for carrington_number, l3a_files in l3as_by_carrington.items():
+        if carrington_number not in l3bs_carringtons and len(l3a_files) == 28:
+            carrington_start_date = jd_fm_Carrington(float(carrington_number))
             date_time = Time(carrington_start_date, format='jd')
             date_time.format = 'iso'
-
-            carrington_end_date_non_inclusive = jd_fm_Carrington(k + 1)
+            carrington_end_date_non_inclusive = jd_fm_Carrington(carrington_number + 1)
             date_time_end_date = Time(carrington_end_date_non_inclusive, format='jd')
             date_time_end_date.format = 'iso'
+            is_valid = validate_dependencies(date_time, date_time_end_date + timedelta(days=1),
+                                             omni2_path)
+
+            if not is_valid:
+                continue
 
             crs_to_process.append(CRToProcess(
-                l3a_paths=v,
+                l3a_paths=l3a_files,
                 carrington_start_date=date_time,
                 carrington_end_date=date_time_end_date,
-                carrington_rotation=k
+                carrington_rotation=carrington_number
             ))
 
     return crs_to_process
