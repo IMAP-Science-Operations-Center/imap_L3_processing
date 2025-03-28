@@ -82,15 +82,14 @@ class TestUtils(unittest.TestCase):
         mock_validate_dependencies.side_effect = [True, False, True]
 
         expected_l3a_january_paths = [self.create_l3a_path_by_date(f'201001{str(i).zfill(2)}') for i in range(3, 31)]
-        expected_l3a_march_paths = [self.create_l3a_path_by_date(f'20100227'),
-                                    self.create_l3a_path_by_date(f'20100228')] + [
-                                       self.create_l3a_path_by_date(f'201003{str(i).zfill(2)}') for i in range(1, 27)]
 
         expected_l3a_april_paths = [self.create_l3a_path_by_date(f'201003{str(i).zfill(2)}') for i in range(26, 32)] + [
             self.create_l3a_path_by_date(f'201004{str(i).zfill(2)}') for i in range(1, 23)]
 
-        omni2_path = "some_path"
-        actual_crs_to_process: [CRToProcess] = find_unprocessed_carrington_rotations(l3a_files, l3b_files, omni2_path)
+        omni2_path = "omni path"
+        flux_table_path = "flux path"
+        actual_crs_to_process: [CRToProcess] = find_unprocessed_carrington_rotations(l3a_files, l3b_files, omni2_path,
+                                                                                     flux_table_path)
 
         self.assertEqual(2, len(actual_crs_to_process))
         self.assertEqual(expected_l3a_january_paths, actual_crs_to_process[0].l3a_paths)
@@ -108,18 +107,21 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(Time('2010-01-31 18:09:30.240').value,
                          mock_validate_dependencies.call_args_list[0][0][1].value)
         self.assertEqual(omni2_path, mock_validate_dependencies.call_args_list[0][0][2])
+        self.assertEqual(flux_table_path, mock_validate_dependencies.call_args_list[0][0][3])
 
         self.assertEqual(Time('2010-02-27 00:45:56.160').value,
                          mock_validate_dependencies.call_args_list[1][0][0].value)
         self.assertEqual(Time('2010-03-27 07:22:22.080').value,
                          mock_validate_dependencies.call_args_list[1][0][1].value)
         self.assertEqual(omni2_path, mock_validate_dependencies.call_args_list[1][0][2])
+        self.assertEqual(flux_table_path, mock_validate_dependencies.call_args_list[1][0][3])
 
         self.assertEqual(Time('2010-03-26 07:22:22.080').value,
                          mock_validate_dependencies.call_args_list[2][0][0].value)
         self.assertEqual(Time('2010-04-23 13:58:48.000').value,
                          mock_validate_dependencies.call_args_list[2][0][1].value)
         self.assertEqual(omni2_path, mock_validate_dependencies.call_args_list[2][0][2])
+        self.assertEqual(flux_table_path, mock_validate_dependencies.call_args_list[2][0][3])
 
     def create_imap_data_access_json(self, file_path: str, data_level: str, start_date: str) -> dict:
         return {'file_path': file_path, 'instrument': 'glows', 'data_level': data_level, 'descriptor': 'hist',

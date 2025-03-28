@@ -59,7 +59,8 @@ def read_glows_l3a_data(cdf: CDF) -> GlowsL3LightCurve:
                              )
 
 
-def find_unprocessed_carrington_rotations(l3a_inputs: list[dict], l3b_inputs: list[dict], omni2_path: Path | str) -> [
+def find_unprocessed_carrington_rotations(l3a_inputs: list[dict], l3b_inputs: list[dict], omni2_path: Path | str,
+                                          fluxtable_path: Path | str) -> [
     CRToProcess]:
     l3bs_carringtons: set = set()
     for l3b in l3b_inputs:
@@ -92,7 +93,7 @@ def find_unprocessed_carrington_rotations(l3a_inputs: list[dict], l3b_inputs: li
             date_time_end_date = Time(carrington_end_date_non_inclusive, format='jd')
             date_time_end_date.format = 'iso'
             is_valid = validate_dependencies(date_time, date_time_end_date + timedelta(days=1),
-                                             omni2_path)
+                                             omni2_path, fluxtable_path)
 
             if not is_valid:
                 continue
