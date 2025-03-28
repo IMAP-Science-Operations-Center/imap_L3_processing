@@ -95,8 +95,8 @@ class TestSweProcessor(unittest.TestCase):
 
         mock_calculate_pitch_angle_products.return_value = (
             sentinel.expected_phase_space_density_by_pitch_angle,
-            sentinel.expected_phase_space_density_by_pitch_angle_and_gyrophase, sentinel.expected_energy_spectrum,
-            sentinel.expected_energy_spectrum_inbound, sentinel.expected_energy_spectrum_outbound,
+            sentinel.expected_phase_space_density_by_pitch_angle_and_gyrophase, sentinel.expected_intensity,
+            sentinel.expected_intensity_inward, sentinel.expected_intensity_outward,
             sentinel.intensity_by_pitch_angle_and_gyrophase, sentinel.intensity_by_pitch_angle,
             sentinel.uncertainty_by_pitch_angle_and_gyrophase, sentinel.uncertainty_by_pitch_angle)
 
@@ -180,9 +180,9 @@ class TestSweProcessor(unittest.TestCase):
         # pitch angle specific
         self.assertEqual(sentinel.expected_phase_space_density_by_pitch_angle,
                          swe_l3_data.phase_space_density_by_pitch_angle)
-        self.assertEqual(sentinel.expected_energy_spectrum, swe_l3_data.energy_spectrum)
-        self.assertEqual(sentinel.expected_energy_spectrum_inbound, swe_l3_data.energy_spectrum_inbound)
-        self.assertEqual(sentinel.expected_energy_spectrum_outbound, swe_l3_data.energy_spectrum_outbound)
+        self.assertEqual(sentinel.expected_intensity, swe_l3_data.intensity)
+        self.assertEqual(sentinel.expected_intensity_inward, swe_l3_data.intensity_inward)
+        self.assertEqual(sentinel.expected_intensity_outward, swe_l3_data.intensity_outward)
         self.assertEqual(mock_moment_data, swe_l3_data.moment_data)
         self.assertEqual(sentinel.expected_phase_space_density_by_pitch_angle_and_gyrophase,
                          swe_l3_data.phase_space_density_by_pitch_angle_and_gyrophase)
@@ -476,10 +476,10 @@ class TestSweProcessor(unittest.TestCase):
         np.testing.assert_array_equal(swe_l3_data.phase_space_density_by_pitch_angle,
                                       np.full((len(epochs), len(energy_bins), len(pitch_angle_bins)), np.nan))
         np.testing.assert_array_equal(swe_l3_data.epoch, swe_l2_data.epoch)
-        np.testing.assert_array_equal(swe_l3_data.energy_spectrum, np.full((len(epochs), len(energy_bins)), np.nan))
-        np.testing.assert_array_equal(swe_l3_data.energy_spectrum_inbound,
+        np.testing.assert_array_equal(swe_l3_data.intensity, np.full((len(epochs), len(energy_bins)), np.nan))
+        np.testing.assert_array_equal(swe_l3_data.intensity_inward,
                                       np.full((len(epochs), len(energy_bins)), np.nan))
-        np.testing.assert_array_equal(swe_l3_data.energy_spectrum_outbound,
+        np.testing.assert_array_equal(swe_l3_data.intensity_outward,
                                       np.full((len(epochs), len(energy_bins)), np.nan))
         np.testing.assert_array_equal(swe_l3_data.intensity_by_pitch_angle,
                                       np.full((len(epochs), num_energies, len(pitch_angle_bins)), np.nan))
@@ -576,9 +576,9 @@ class TestSweProcessor(unittest.TestCase):
                                               [313.860051, 400.23009, np.nan]]]))
         np.testing.assert_allclose(swe_l3_data.epoch_delta, np.array([1807492500]))
         np.testing.assert_array_equal(swe_l3_data.epoch, swe_l2_data.epoch)
-        np.testing.assert_allclose(swe_l3_data.energy_spectrum, np.array([[104.427758, 195.333344, 180.401159]]))
-        np.testing.assert_allclose(swe_l3_data.energy_spectrum_inbound, np.array([[0, 104.147588, 154.42602]]))
-        np.testing.assert_allclose(swe_l3_data.energy_spectrum_outbound,
+        np.testing.assert_allclose(swe_l3_data.intensity, np.array([[104.427758, 195.333344, 180.401159]]))
+        np.testing.assert_allclose(swe_l3_data.intensity_inward, np.array([[0, 104.147588, 154.42602]]))
+        np.testing.assert_allclose(swe_l3_data.intensity_outward,
                                    np.array([[208.855516, 286.519101, 206.376298]]))
         self.assertEqual((1, 9, 3, 3), swe_l3_data.intensity_by_pitch_angle_and_gyrophase.shape)
         self.assertEqual((1, 9, 3), swe_l3_data.intensity_by_pitch_angle.shape)

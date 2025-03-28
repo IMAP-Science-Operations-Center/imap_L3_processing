@@ -17,9 +17,9 @@ GYROPHASE_BINS_CDF_VAR_NAME = "gyrophase"
 GYROPHASE_DELTA_CDF_VAR_NAME = "gyrophase_delta"
 PHASE_SPACE_DENSITY_BY_PITCH_ANGLE_CDF_VAR_NAME = "phase_space_density_by_pitch_angle"
 PHASE_SPACE_DENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_CDF_VAR_NAME = "phase_space_density_by_pitch_angle_and_gyrophase"
-ENERGY_SPECTRUM_CDF_VAR_NAME = "energy_spectrum"
-ENERGY_SPECTRUM_INBOUND_CDF_VAR_NAME = "energy_spectrum_inbound"
-ENERGY_SPECTRUM_OUTBOUND_CDF_VAR_NAME = "energy_spectrum_outbound"
+INTENSITY_CDF_VAR_NAME = "intensity"
+INTENSITY_INWARD_CDF_VAR_NAME = "intensity_inward"
+INTENSITY_OUTWARD_CDF_VAR_NAME = "intensity_outward"
 INTENSITY_BY_PITCH_ANGLE_CDF_VAR_NAME = "intensity_by_pitch_angle"
 INTENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_CDF_VAR_NAME = "intensity_by_pitch_angle_and_gyrophase"
 INTENSITY_UNCERTAINTY_BY_PITCH_ANGLE_CDF_VAR_NAME = "intensity_uncertainty_by_pitch_angle"
@@ -194,9 +194,9 @@ class SweL3Data(DataProduct):
     # pitch angle specific
     phase_space_density_by_pitch_angle: np.ndarray
     phase_space_density_by_pitch_angle_and_gyrophase: np.ndarray
-    energy_spectrum: np.ndarray
-    energy_spectrum_inbound: np.ndarray
-    energy_spectrum_outbound: np.ndarray
+    intensity: np.ndarray
+    intensity_inward: np.ndarray
+    intensity_outward: np.ndarray
     # fit moments
     moment_data: SweL3MomentData
 
@@ -225,12 +225,12 @@ class SweL3Data(DataProduct):
             DataProductVariable(PHASE_SPACE_DENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_CDF_VAR_NAME,
                                 value=self.phase_space_density_by_pitch_angle_and_gyrophase,
                                 cdf_data_type=pycdf.const.CDF_REAL4),
-            DataProductVariable(ENERGY_SPECTRUM_CDF_VAR_NAME,
-                                value=self.energy_spectrum, cdf_data_type=pycdf.const.CDF_REAL4),
-            DataProductVariable(ENERGY_SPECTRUM_INBOUND_CDF_VAR_NAME,
-                                value=self.energy_spectrum_inbound, cdf_data_type=pycdf.const.CDF_REAL4),
-            DataProductVariable(ENERGY_SPECTRUM_OUTBOUND_CDF_VAR_NAME,
-                                value=self.energy_spectrum_outbound, cdf_data_type=pycdf.const.CDF_REAL4),
+            DataProductVariable(INTENSITY_CDF_VAR_NAME,
+                                value=self.intensity, cdf_data_type=pycdf.const.CDF_REAL4),
+            DataProductVariable(INTENSITY_INWARD_CDF_VAR_NAME,
+                                value=self.intensity_inward, cdf_data_type=pycdf.const.CDF_REAL4),
+            DataProductVariable(INTENSITY_OUTWARD_CDF_VAR_NAME,
+                                value=self.intensity_outward, cdf_data_type=pycdf.const.CDF_REAL4),
             DataProductVariable(INTENSITY_BY_PITCH_ANGLE_CDF_VAR_NAME,
                                 value=self.intensity_by_pitch_angle, cdf_data_type=pycdf.const.CDF_REAL4),
             DataProductVariable(INTENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_CDF_VAR_NAME,
