@@ -1,3 +1,4 @@
+from datetime import datetime
 from pathlib import Path
 
 import numpy as np
@@ -35,5 +36,18 @@ def validate_omni2_dependency(start_date_inclusive: Time,
     return bool(np.all(mask_fill_density_rows & mask_fill_speed_rows & mask_fill_alpha_rows))
 
 
-def validate_dependencies(start_date_inclusive: Time, end_date_exclusive: Time, omni2_file_path: Path):
-    return validate_omni2_dependency(start_date_inclusive, end_date_exclusive, omni2_file_path)
+def validate_dependencies(start_date_inclusive: Time, end_date_exclusive: Time, omni2_file_path: Path,
+                          fluxtable_file_path: Path):
+    omni_condition = validate_omni2_dependency(start_date_inclusive, end_date_exclusive, omni2_file_path)
+    f107_condition = validate_f107_fluxtable_dependency(start_date_inclusive, end_date_exclusive,
+                                                        fluxtable_file_path)
+    return omni_condition and f107_condition
+
+
+def validate_f107_fluxtable_dependency(start_date_inclusive: Time,
+                                       end_date_exclusive: Time, file_path: Path) -> bool:
+    f107_data = np.loadtxt(file_path, dtype=str)
+
+    times = Time([datetime.strptime(row[0], "%Y%m%d") for row in f107_data], format="datetime")
+
+    return end_date_exclusive < times[-1] and start_date_inclusive > times[0]
