@@ -7,7 +7,7 @@ from imap_l3_processing.swe.l3.models import SweL3Data, EPOCH_CDF_VAR_NAME, EPOC
     ENERGY_CDF_VAR_NAME, \
     ENERGY_DELTA_PLUS_CDF_VAR_NAME, ENERGY_DELTA_MINUS_CDF_VAR_NAME, PITCH_ANGLE_CDF_VAR_NAME, \
     PITCH_ANGLE_DELTA_CDF_VAR_NAME, PHASE_SPACE_DENSITY_BY_PITCH_ANGLE_CDF_VAR_NAME, \
-    ENERGY_SPECTRUM_CDF_VAR_NAME, ENERGY_SPECTRUM_OUTBOUND_CDF_VAR_NAME, ENERGY_SPECTRUM_INBOUND_CDF_VAR_NAME, \
+    INTENSITY_CDF_VAR_NAME, INTENSITY_OUTWARD_CDF_VAR_NAME, INTENSITY_INWARD_CDF_VAR_NAME, \
     SPACECRAFT_POTENTIAL_CDF_VAR_NAME, CORE_HALO_BREAKPOINT_CDF_VAR_NAME, CORE_FIT_NUM_POINTS_CDF_VAR_NAME, \
     CHISQ_C_CDF_VAR_NAME, CHISQ_H_CDF_VAR_NAME, CORE_DENSITY_FIT_CDF_VAR_NAME, HALO_DENSITY_FIT_CDF_VAR_NAME, \
     CORE_T_PARALLEL_FIT_CDF_VAR_NAME, HALO_T_PARALLEL_FIT_CDF_VAR_NAME, CORE_T_PERPENDICULAR_FIT_CDF_VAR_NAME, \
@@ -131,9 +131,9 @@ class TestModels(CdfModelTestCase):
                          gyrophase_delta=gyrophase_delta,
                          phase_space_density_by_pitch_angle=psd_by_pitch_angle,
                          phase_space_density_by_pitch_angle_and_gyrophase=psd_by_pitch_angle_and_gyrophase,
-                         energy_spectrum=energy_spectrum,
-                         energy_spectrum_inbound=energy_spectrum_inbound,
-                         energy_spectrum_outbound=energy_spectrum_outbound,
+                         intensity=energy_spectrum,
+                         intensity_inward=energy_spectrum_inbound,
+                         intensity_outward=energy_spectrum_outbound,
                          intensity_by_pitch_angle=intensity_by_pitch_angle,
                          intensity_by_pitch_angle_and_gyrophase=intensity_by_pitch_angle_and_gyrophase,
                          intensity_uncertainty_by_pitch_angle=intensity_uncertainty_by_pitch_angle,
@@ -234,11 +234,11 @@ class TestModels(CdfModelTestCase):
             next(variables), psd_by_pitch_angle_and_gyrophase,
             PHASE_SPACE_DENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
         self.assert_variable_attributes(
-            next(variables), energy_spectrum, ENERGY_SPECTRUM_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+            next(variables), energy_spectrum, INTENSITY_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
         self.assert_variable_attributes(
-            next(variables), energy_spectrum_inbound, ENERGY_SPECTRUM_INBOUND_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+            next(variables), energy_spectrum_inbound, INTENSITY_INWARD_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
         self.assert_variable_attributes(
-            next(variables), energy_spectrum_outbound, ENERGY_SPECTRUM_OUTBOUND_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
+            next(variables), energy_spectrum_outbound, INTENSITY_OUTWARD_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
         self.assert_variable_attributes(
             next(variables), intensity_by_pitch_angle, INTENSITY_BY_PITCH_ANGLE_CDF_VAR_NAME, pycdf.const.CDF_REAL4)
         self.assert_variable_attributes(
