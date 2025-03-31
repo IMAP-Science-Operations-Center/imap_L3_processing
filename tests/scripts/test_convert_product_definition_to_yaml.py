@@ -58,7 +58,6 @@ class TestConvertProductDefinitionToYamlTest(unittest.TestCase):
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
    LABL_PTRS: ' '
-   UNIT_PTR: ' '
    VARIABLE_PURPOSE: primary var, summary
 """
         actual_yaml = convert_csv_to_yaml(filePath)
@@ -213,7 +212,6 @@ class TestConvertProductDefinitionToYamlTest(unittest.TestCase):
    VALIDMAX: 1
    FILLVAL: -1.28E+02
    LABL_PTRS: ' '
-   UNIT_PTR: ' '
    SCALE_TYP: linear
 """
 

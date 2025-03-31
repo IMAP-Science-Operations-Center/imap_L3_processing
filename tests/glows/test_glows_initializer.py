@@ -53,6 +53,7 @@ class TestGlowsInitializer(unittest.TestCase):
 
         mock_find_unprocessed_carrington_rotations.assert_called_once_with(mock_l3a, mock_l3b,
                                                                            ancillary_dependencies.omni2_data_path,
-                                                                           ancillary_dependencies.f107_index_file_path)
+                                                                           ancillary_dependencies.f107_index_file_path,
+                                                                           ancillary_dependencies.lyman_alpha_path)
 
         mock_glows_initializer_ancillary_dependencies.fetch_dependencies.assert_called_once()

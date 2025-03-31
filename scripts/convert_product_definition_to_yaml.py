@@ -18,6 +18,7 @@ def convert_csv_to_yaml(file_path):
     with open(file_path, "r") as f:
         csvreader = csv.reader(f)
         row_headers = next(csvreader)
+        units_units_ptr_inclusion = [False, False]
         for row in csvreader:
             yaml_text += f"{row[0]}:\n"
 
@@ -32,6 +33,11 @@ def convert_csv_to_yaml(file_path):
                         required_for_data + non_required_columns)
                 if column_is_empty_and_not_required or column_not_listed_in_specified_list:
                     continue
+
+                if row_headers[index] in ["UNITS", "UNIT_PTR"]:
+                    units_units_ptr_inclusion[1 if row_headers[index] == "UNITS" else 0] = True
+                    if all(status == True for status in units_units_ptr_inclusion):
+                        continue
                 yaml_text += f"   {row_headers[index]}: {display_rowitem}\n"
 
     return yaml_text

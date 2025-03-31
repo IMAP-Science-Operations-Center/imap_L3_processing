@@ -16,7 +16,8 @@ class GlowsInitializer:
         l3b_files = query(instrument="glows", version=version, data_level="l3b")
 
         find_unprocessed_carrington_rotations(l3a_files, l3b_files, glows_ancillary_dependencies.omni2_data_path,
-                                              glows_ancillary_dependencies.f107_index_file_path)
+                                              glows_ancillary_dependencies.f107_index_file_path,
+                                              glows_ancillary_dependencies.lyman_alpha_path)
 
 
 def _should_process(glows_l3b_dependencies: GlowsInitializerAncillaryDependencies) -> bool:

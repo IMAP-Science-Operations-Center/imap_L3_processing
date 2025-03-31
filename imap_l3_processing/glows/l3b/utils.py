@@ -17,8 +17,8 @@ from imap_l3_processing.glows.l3a.models import GlowsL3LightCurve, PHOTON_FLUX_U
     SPIN_AXIS_ORIENTATION_AVERAGE_CDF_VAR_NAME, SPIN_AXIS_ORIENTATION_STD_DEV_CDF_VAR_NAME, \
     SPACECRAFT_LOCATION_AVERAGE_CDF_VAR_NAME, SPACECRAFT_LOCATION_STD_DEV_CDF_VAR_NAME, \
     SPACECRAFT_VELOCITY_AVERAGE_CDF_VAR_NAME
-from imap_l3_processing.glows.l3b.l3b_toolkit.constants_and_functions import carrington, jd_fm_Carrington
-from imap_l3_processing.glows.l3b.l3b_toolkit.dependency_validator import validate_dependencies
+from imap_l3_processing.glows.l3b.dependency_validator import validate_dependencies
+from imap_l3_processing.glows.l3b.l3bc_toolkit.funcs import carrington, jd_fm_Carrington
 from imap_l3_processing.glows.l3b.models import CRToProcess
 
 
@@ -60,7 +60,7 @@ def read_glows_l3a_data(cdf: CDF) -> GlowsL3LightCurve:
 
 
 def find_unprocessed_carrington_rotations(l3a_inputs: list[dict], l3b_inputs: list[dict], omni2_path: Path | str,
-                                          fluxtable_path: Path | str) -> [
+                                          fluxtable_path: Path | str, lyman_alpha_path: Path | str) -> [
     CRToProcess]:
     l3bs_carringtons: set = set()
     for l3b in l3b_inputs:
@@ -93,7 +93,7 @@ def find_unprocessed_carrington_rotations(l3a_inputs: list[dict], l3b_inputs: li
             date_time_end_date = Time(carrington_end_date_non_inclusive, format='jd')
             date_time_end_date.format = 'iso'
             is_valid = validate_dependencies(date_time, date_time_end_date + timedelta(days=1),
-                                             omni2_path, fluxtable_path)
+                                             omni2_path, fluxtable_path, lyman_alpha_path)
 
             if not is_valid:
                 continue
