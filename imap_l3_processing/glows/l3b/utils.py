@@ -17,8 +17,8 @@ from imap_l3_processing.glows.l3a.models import GlowsL3LightCurve, PHOTON_FLUX_U
     SPIN_AXIS_ORIENTATION_AVERAGE_CDF_VAR_NAME, SPIN_AXIS_ORIENTATION_STD_DEV_CDF_VAR_NAME, \
     SPACECRAFT_LOCATION_AVERAGE_CDF_VAR_NAME, SPACECRAFT_LOCATION_STD_DEV_CDF_VAR_NAME, \
     SPACECRAFT_VELOCITY_AVERAGE_CDF_VAR_NAME
-from imap_l3_processing.glows.l3b.l3b_toolkit.constants_and_functions import carrington, jd_fm_Carrington
-from imap_l3_processing.glows.l3b.l3b_toolkit.dependency_validator import validate_dependencies
+from imap_l3_processing.glows.l3b.dependency_validator import validate_dependencies
+from imap_l3_processing.glows.l3b.l3bc_toolkit.funcs import carrington, jd_fm_Carrington
 from imap_l3_processing.glows.l3b.models import CRToProcess
 
 

@@ -1,5 +1,5 @@
 FROM python:3.12-slim
-RUN apt-get update && apt-get install -y git
+RUN apt-get update && apt-get install -y git libhdf5-dev libnetcdf-dev
 RUN pip install --upgrade pip
 RUN mkdir temp_cdf_data
 RUN mkdir -p /mnt/spice
