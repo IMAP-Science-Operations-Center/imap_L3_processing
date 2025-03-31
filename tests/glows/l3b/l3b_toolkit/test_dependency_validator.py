@@ -4,7 +4,7 @@ from unittest.mock import patch, Mock
 
 from astropy.time import Time
 
-from imap_l3_processing.glows.l3b.l3b_toolkit.dependency_validator import validate_omni2_dependency, \
+from imap_l3_processing.glows.l3b.dependency_validator import validate_omni2_dependency, \
     validate_dependencies, validate_f107_fluxtable_dependency, validate_lyman_alpha_dependency
 from tests.test_helpers import get_test_data_path
 
@@ -38,8 +38,8 @@ class TestDependencyValidator(unittest.TestCase):
                 self.assertEqual(expected, actual)
 
     @patch("imap_l3_processing.glows.l3b.l3b_toolkit.dependency_validator.validate_lyman_alpha_dependency")
-    @patch("imap_l3_processing.glows.l3b.l3b_toolkit.dependency_validator.validate_f107_fluxtable_dependency")
-    @patch("imap_l3_processing.glows.l3b.l3b_toolkit.dependency_validator.validate_omni2_dependency")
+    @patch("imap_l3_processing.glows.l3b.dependency_validator.validate_f107_fluxtable_dependency")
+    @patch("imap_l3_processing.glows.l3b.dependency_validator.validate_omni2_dependency")
     def test_validate_dependencies(self, mock_validate_omni2_dependency: Mock,
                                    mock_validate_f107_fluxtable_dependency: Mock,
                                    mock_validate_lyman_alpha_dependency: Mock):

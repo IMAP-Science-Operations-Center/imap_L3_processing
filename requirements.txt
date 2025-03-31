@@ -19,9 +19,11 @@ scipy==1.13.1
 six==1.16.0
 spacepy==0.7.0
 spiceypy==6.0.0
+scikit-learn==1.6.1
 uncertainties==3.2.2
 zipp==3.19.2
 sammi-cdf==1.0.0
 healpy==1.18; sys_platform!='win32'
 bitstring==4.3.0
 imap-processing==0.11.0
+netCDF4==1.7.2
