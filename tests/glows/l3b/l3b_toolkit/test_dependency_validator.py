@@ -37,7 +37,7 @@ class TestDependencyValidator(unittest.TestCase):
                                                    end_date_exclusive=end_date)
                 self.assertEqual(expected, actual)
 
-    @patch("imap_l3_processing.glows.l3b.l3b_toolkit.dependency_validator.validate_lyman_alpha_dependency")
+    @patch("imap_l3_processing.glows.l3b.dependency_validator.validate_lyman_alpha_dependency")
     @patch("imap_l3_processing.glows.l3b.dependency_validator.validate_f107_fluxtable_dependency")
     @patch("imap_l3_processing.glows.l3b.dependency_validator.validate_omni2_dependency")
     def test_validate_dependencies(self, mock_validate_omni2_dependency: Mock,
