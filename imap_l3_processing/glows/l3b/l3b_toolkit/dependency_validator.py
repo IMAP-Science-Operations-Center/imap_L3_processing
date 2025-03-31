@@ -1,6 +1,7 @@
 from datetime import datetime
 from pathlib import Path
 
+import netCDF4
 import numpy as np
 from astropy.time import Time
 from numpy import ndarray
@@ -37,11 +38,13 @@ def validate_omni2_dependency(start_date_inclusive: Time,
 
 
 def validate_dependencies(start_date_inclusive: Time, end_date_exclusive: Time, omni2_file_path: Path,
-                          fluxtable_file_path: Path):
+                          fluxtable_file_path: Path, lyman_alpha_path: Path) -> bool:
     omni_condition = validate_omni2_dependency(start_date_inclusive, end_date_exclusive, omni2_file_path)
     f107_condition = validate_f107_fluxtable_dependency(start_date_inclusive, end_date_exclusive,
                                                         fluxtable_file_path)
-    return omni_condition and f107_condition
+    lyman_alpha_condition = validate_lyman_alpha_dependency(end_date_exclusive, lyman_alpha_path)
+
+    return omni_condition and f107_condition and lyman_alpha_condition
 
 
 def validate_f107_fluxtable_dependency(start_date_inclusive: Time,
@@ -51,3 +54,9 @@ def validate_f107_fluxtable_dependency(start_date_inclusive: Time,
     times = Time([datetime.strptime(row[0], "%Y%m%d") for row in f107_data], format="datetime")
 
     return end_date_exclusive < times[-1] and start_date_inclusive > times[0]
+
+
+def validate_lyman_alpha_dependency(end_date_exclusive: Time, file_path: Path) -> bool:
+    cdf = netCDF4.Dataset(file_path)
+
+    return end_date_exclusive < cdf.time_coverage_end
