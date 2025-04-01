@@ -2,8 +2,12 @@ import enum
 
 import numpy as np
 import xarray as xr
-from imap_processing.ena_maps.ena_maps import RectangularPointingSet, RectangularSkyMap, AbstractSkyMap
+from imap_processing.ena_maps.ena_maps import RectangularPointingSet, RectangularSkyMap, AbstractSkyMap, PointingSet
+from imap_processing.ena_maps.utils import spatial_utils
 from imap_processing.ena_maps.utils.coordinates import CoordNames
+from imap_processing.spice import geometry
+
+from scripts.glows.create_example_glows_l3e_survival_probabilities_cdf import survival_probabilities
 
 
 class Sensor(enum.Enum):
@@ -16,38 +20,30 @@ class Sensor(enum.Enum):
         return sensor_angles[sensor_name]
 
 
-class HiSurvivalProbabilityPointingSet(RectangularPointingSet):
+class HiSurvivalProbabilityPointingSet(PointingSet):
     def __init__(self, l1c_dataset: xr.Dataset, sensor: Sensor, glows_dataset: xr.Dataset):
-        num_epochs = len(l1c_dataset["epoch"].values)
-        num_energies = len(l1c_dataset["esa_energy_step"].values)
+        super().__init__(xr.Dataset(), geometry.SpiceFrame.IMAP_DPS)
+        glows_spin_bin_count = len(glows_dataset['spin_angle_bin'].values)
+        survival_probabilities = np.empty(shape=(1, len(l1c_dataset["esa_energy_step"].values), glows_spin_bin_count))
+        for spin_angle_index in range(glows_spin_bin_count):
+            survival_probabilities[0, :, spin_angle_index] = np.interp(
+                np.log10(l1c_dataset['esa_energy_step'].values),
+                np.log10(glows_dataset['energy'].values),
+                glows_dataset["probability_of_survival"].values[0, :, spin_angle_index], )
+        survival_probabilities = np.repeat(survival_probabilities, 10, axis=2)
 
         azimuth_range = (0, 360)
-        elevation_range = (-90, 90)
         deg_spacing = 0.1
 
         half_bin_width = deg_spacing / 2
-        elevations = np.arange(*elevation_range, deg_spacing) + half_bin_width
-        azimuths = np.arange(*azimuth_range, deg_spacing) + half_bin_width
 
         sensor_angle = Sensor.get_sensor_angle(sensor.value)
+        self.azimuths = np.arange(*azimuth_range, deg_spacing) + half_bin_width
+        self.elevations = np.repeat(sensor_angle, 3600)
+        self.az_el_points = np.column_stack([self.azimuths, self.elevations])
 
-        elevation_bin_edges = np.concatenate([elevations - half_bin_width, [elevations[-1] + half_bin_width]])
-        elevation_bin_for_sensor_angle = np.digitize(sensor_angle, elevation_bin_edges)
-
-        survival_probabilities = np.full((num_epochs, num_energies, len(azimuths), len(elevations)), 0)
-        survival_probablities_raw = np.repeat(glows_dataset['probability_of_survival'].values, axis=2, repeats=10)
-        for spin_angle_index in range(len(glows_dataset['spin_angle_bin'].values) * 10):
-            survival_probabilities[0, :, spin_angle_index, elevation_bin_for_sensor_angle] = np.interp(
-                np.log10(l1c_dataset['esa_energy_step'].values),
-                np.log10(glows_dataset['energy'].values),
-                survival_probablities_raw[0, :, spin_angle_index], )
-        exposure = np.full(
-            (num_epochs, num_energies, len(azimuths), len(elevations)),
-            fill_value=0, dtype=np.float64)
-
-        exposure[:, :, :, elevation_bin_for_sensor_angle] = l1c_dataset['exposure_times'].values
-
-        survival_probabilities_by_exposure = survival_probabilities * exposure
+        self.num_points = l1c_dataset["exposure_times"].values.shape[-1]
+        self.spatial_coords = [CoordNames.AZIMUTH_L1C.value]
 
         self.data = xr.Dataset({
             "survival_probability_times_exposure": (
@@ -55,25 +51,34 @@ class HiSurvivalProbabilityPointingSet(RectangularPointingSet):
                     CoordNames.TIME.value,
                     CoordNames.ENERGY.value,
                     CoordNames.AZIMUTH_L1C.value,
-                    CoordNames.ELEVATION_L1C.value,
                 ],
-                survival_probabilities_by_exposure,
+                survival_probabilities * l1c_dataset['exposure_times'].values,
             ),
             "exposure": (
                 [
                     CoordNames.TIME.value,
                     CoordNames.ENERGY.value,
                     CoordNames.AZIMUTH_L1C.value,
-                    CoordNames.ELEVATION_L1C.value,
                 ],
-                exposure,
+                l1c_dataset['exposure_times'].values,
             )
         },
             coords={
                 CoordNames.TIME.value: l1c_dataset["epoch"].values,
                 CoordNames.ENERGY.value: l1c_dataset["esa_energy_step"].values,
-                CoordNames.AZIMUTH_L1C.value: azimuths,
-                CoordNames.ELEVATION_L1C.value: elevations,
+                CoordNames.AZIMUTH_L1C.value: self.azimuths,
             }
         )
-        super().__init__(self.data)
+
+
+class HiSurvivalProbabilitySkyMap(RectangularSkyMap):
+    def __init__(self, survival_probability_pointing_sets: list[HiSurvivalProbabilityPointingSet],
+                 spacing_degree: float, spice_frame: geometry.SpiceFrame):
+        super().__init__(spacing_degree, spice_frame)
+        for sp_pset in survival_probability_pointing_sets:
+            self.project_pset_values_to_map(sp_pset, ["survival_probability_times_exposure", "exposure"])
+
+        self.data_1d = xr.Dataset({
+            "exposure_weighted_survival_probabilities": self.data_1d["survival_probability_times_exposure"] /
+                                                        self.data_1d["exposure"]
+        })
