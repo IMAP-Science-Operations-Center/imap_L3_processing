@@ -6,16 +6,18 @@ from pathlib import Path
 
 
 def convert_csv_to_yaml(file_path):
-    required_for_support_data = ["NAME", "DATA_TYPE", "CATDESC", "VAR_TYPE", "DEPEND_0", "FIELDNAM", "FORMAT",
-                                 "LABLAXIS", "UNITS", "VALIDMIN", "VALIDMAX", "FILLVAL", "RECORD_VARYING"]
+    required_for_support_data = ["NAME", "DATA_TYPE", "CATDESC", "VAR_TYPE", "DEPEND_0", "FIELDNAM", "FORMAT", "UNITS",
+                                 "VALIDMIN", "VALIDMAX", "FILLVAL", "RECORD_VARYING"]
 
     required_for_data = required_for_support_data + ["DISPLAY_TYPE"]
+
+    required_for_metadata = ["NAME", "DATA_TYPE", "CATDESC", "VAR_TYPE", "VAR_TYPE", "FIELDNAM", "FORMAT", ]
 
     non_required_columns = ["SCALE_TYP", "SCAL_PTR", "VAR_NOTES", "TIME_BASE", "TIME_SCALE", "LEAP_SECONDS_INCLUDED",
                             "ABSOLUTE_ERROR", "AVG_TYPE", "BIN_LOCATION", "DELTA_PLUS_VAR", "DELTA_MINUS_VAR",
                             "DERIVN", "DICT_KEY", "MONOTON", "SCALEMIN", "SCALEMAX", "REFERENCE_POSITION",
                             "RELATIVE_ERROR", "RESOLUTION", "SI_CONVERSION", "DEPEND_1", "DEPEND_2", "DEPEND_3",
-                            "VARIABLE_PURPOSE", "UNIT_PTR", "LABL_PTR_1", "LABL_PTR_2", "LABL_PTR_3", ]
+                            "VARIABLE_PURPOSE", "UNIT_PTR", "LABL_PTR_1", "LABL_PTR_2", "LABL_PTR_3", "LABLAXIS"]
     yaml_text = ""
     try:
         with open(file_path, "r") as f:
@@ -33,6 +35,8 @@ def convert_csv_to_yaml(file_path):
                     if row[header_to_index["RECORD_VARYING"]].lower() == "nrv":
                         required_variables = [variable for variable in required_for_support_data if
                                               variable != "DEPEND_0"]
+                elif row[header_to_index["VAR_TYPE"]] == "metadata":
+                    required_variables = required_for_metadata
                 else:
                     required_variables = required_for_data
 

@@ -7,37 +7,38 @@ from scripts.convert_product_definition_to_yaml import convert_csv_to_yaml
 class TestConvertProductDefinitionToYamlTest(unittest.TestCase):
 
     def test_parse_required_for_data_with_multiple_depend(self):
-        required_for_data = ["NAME", "DATA_TYPE", "CATDESC", "VAR_TYPE", "DEPEND_0", "DEPEND_1", "DEPEND_2", "DEPEND_3",
-                             "DISPLAY_TYPE", "FIELDNAM", "FORMAT", "UNITS", "VALIDMIN", "VALIDMAX", "FILLVAL",
-                             "LABL_PTR_1", "LABL_PTR_2", "LABL_PTR_3", "VARIABLE_PURPOSE"]
+        row_columns = {
+            "NAME": ["intensity_by_pitch_angle_and_gyrophase", "energy_label", "pitch_angle_label"],
+            "DATA_TYPE": ["float32", "str", "str"],
+            "CATDESC": ["Intensity organized by pitch angle and gyrophase",
+                        "energy label", "pitch angle label"],
+            "VAR_TYPE": ["data", "metadata", "metadata"],
+            "DEPEND_0": ["epoch", "", ""],
+            "DEPEND_1": ["energy", "", ""],
+            "DEPEND_2": ["pitch_angle", "", ""],
+            "DISPLAY_TYPE": ["spectrogram", "", ""],
+            "FIELDNAM": ["Electron Intensity", "energy label", "pitch angle label"],
+            "FORMAT": ["F9.3", "a20", "a20"],
+            "UNITS": ["cm^-2 sr^-1 s^-1 eV^-1", "", ""],
+            "VALIDMIN": ["1E-40", "", ""],
+            "VALIDMAX": ["", "", ""],
+            "FILLVAL": ["-1.00E+31", "", ""],
+            "LABL_PTR_1": ["energy_label", "", ""],
+            "LABL_PTR_2": ["pitch_angle_label", "", ""],
+            "VARIABLE_PURPOSE": ["primary var, summary", "", ""]
+        }
 
-        test_csv_values = [
-            "intensity_by_pitch_angle_and_gyrophase",
-            "float32",
-            "Intensity organized by pitch angle and gyrophase",
-            "data",
-            "epoch",
-            "energy",
-            "pitch_angle",
-            "gyrophase",
-            "spectrogram",
-            "Electron Intensity",
-            "F9.3",
-            "cm^-2 sr^-1 s^-1 eV^-1",
-            "1E-40",
-            "",
-            "-1.00E+31",
-            "energy",
-            "pitch_angle",
-            "gyrophase",
-            "primary var, summary",
+        rows = [
+            [k for k in row_columns.keys()],
+            [v[0] for v in row_columns.values()],
+            [v[1] for v in row_columns.values()],
+            [v[2] for v in row_columns.values()],
         ]
 
         filePath = "csv_test_file.csv"
         with open(filePath, "w", newline='') as csvfile:
             test_csv_writer = csv.writer(csvfile)
-            test_csv_writer.writerow(required_for_data)
-            test_csv_writer.writerow(test_csv_values)
+            test_csv_writer.writerows(rows)
 
         expected_yaml = """intensity_by_pitch_angle_and_gyrophase:
    NAME: intensity_by_pitch_angle_and_gyrophase
@@ -47,7 +48,6 @@ class TestConvertProductDefinitionToYamlTest(unittest.TestCase):
    DEPEND_0: epoch
    DEPEND_1: energy
    DEPEND_2: pitch_angle
-   DEPEND_3: gyrophase
    DISPLAY_TYPE: spectrogram
    FIELDNAM: Electron Intensity
    FORMAT: F9.3
@@ -55,10 +55,23 @@ class TestConvertProductDefinitionToYamlTest(unittest.TestCase):
    VALIDMIN: 1E-40
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
-   LABL_PTR_1: energy
-   LABL_PTR_2: pitch_angle
-   LABL_PTR_3: gyrophase
-   VARIABLE_PURPOSE: primary var, summary"""
+   LABL_PTR_1: energy_label 
+   LABL_PTR_2: pitch_angle_label
+   VARIABLE_PURPOSE: primary var, summary
+energy_label:
+   NAME: energy_label
+   DATA_TYPE: str
+   CATDESC: energy label
+   VAR_TYPE: metadata
+   FIELDNAM: energy label
+   FORMAT: a20
+pitch_angle_label:
+   NAME: pitch_angle_label
+   DATA_TYPE: str
+   CATDESC: pitch angle label
+   VAR_TYPE: metadata
+   FIELDNAM: pitch angle label
+   FORMAT: a20"""
         actual_yaml = convert_csv_to_yaml(filePath)
 
         self.assertEqual(expected_yaml, actual_yaml)

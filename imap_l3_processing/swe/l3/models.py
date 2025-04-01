@@ -205,7 +205,7 @@ class SweL3Data(DataProduct):
             DataProductVariable(EPOCH_CDF_VAR_NAME, value=self.epoch, cdf_data_type=pycdf.const.CDF_TIME_TT2000),
             DataProductVariable(EPOCH_DELTA_CDF_VAR_NAME, value=self.epoch_delta,
                                 cdf_data_type=pycdf.const.CDF_INT8),
-            DataProductVariable(ENERGY_CDF_VAR_NAME, value=self.energy, cdf_data_type=pycdf.const.CDF_REAL4,
+            DataProductVariable(ENERGY_CDF_VAR_NAME, value=self.energy,
                                 record_varying=False),
             DataProductVariable(ENERGY_DELTA_PLUS_CDF_VAR_NAME, value=self.energy_delta_plus,
                                 cdf_data_type=pycdf.const.CDF_REAL4, record_varying=False),
@@ -394,6 +394,15 @@ class SweL3Data(DataProduct):
             DataProductVariable(TOTAL_TEMPERATURE_TENSOR_INTEGRATED_CDF_VAR_NAME,
                                 value=self.moment_data.total_temperature_tensor_integrated,
                                 cdf_data_type=pycdf.const.CDF_REAL4),
+            DataProductVariable("energy_label",
+                                value=[f"Energy Label {str(i + 1)}" for i in range(len(self.energy))],
+                                ),
+            DataProductVariable("pitch_angle_label",
+                                value=[f"Pitch Angle Label {str(i + 1)}" for i in range(len(self.pitch_angle))],
+                                ),
+            DataProductVariable("gyrophase_label",
+                                value=[f"Gyrophase Label {str(i + 1)}" for i in range(len(self.gyrophase_bins))],
+                                ),
         ]
 
 

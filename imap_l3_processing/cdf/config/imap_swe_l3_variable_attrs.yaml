@@ -1,6 +1,6 @@
 epoch:
    NAME: epoch
-   DATA_TYPE: TT2000
+   DATA_TYPE: CDF_TIME_TT2000
    CATDESC: Time, number of nanoseconds since J2000 with leap seconds included
    VAR_TYPE: support_data
    RECORD_VARYING: RV
@@ -21,7 +21,7 @@ epoch:
    SI_CONVERSION: 1e-9>seconds
 energy:
    NAME: energy
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: Bin Energy
    VAR_TYPE: support_data
    RECORD_VARYING: NRV
@@ -40,7 +40,7 @@ energy:
    SI_CONVERSION: 1.602176634e-19>joules
 pitch_angle:
    NAME: pitch_angle
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: Pitch Angle
    VAR_TYPE: support_data
    RECORD_VARYING: NRV
@@ -59,7 +59,7 @@ pitch_angle:
    SI_CONVERSION: 1.745329e-2>radians
 gyrophase:
    NAME: gyrophase
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: Gyrophase
    VAR_TYPE: support_data
    RECORD_VARYING: NRV
@@ -78,7 +78,7 @@ gyrophase:
    SI_CONVERSION: 1.745329e-2>radians
 epoch_delta:
    NAME: epoch_delta
-   DATA_TYPE: int64
+   DATA_TYPE: CDF_INT8
    CATDESC: Time bin half-width in nanoseconds
    DEPEND_0: epoch
    VAR_TYPE: support_data
@@ -89,12 +89,12 @@ epoch_delta:
    UNITS: ns
    VALIDMIN: 0
    VALIDMAX: 10000000000
-   FILLVAL: -2147483648
+   FILLVAL: -9223372036854775808
    SCALE_TYP: linear
    SI_CONVERSION: 1e-9>seconds
 energy_delta_plus:
    NAME: energy_delta_plus
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: Energy bin half-width
    VAR_TYPE: support_data
    RECORD_VARYING: NRV
@@ -109,7 +109,7 @@ energy_delta_plus:
    SI_CONVERSION: 1.602176634e-19>joules
 energy_delta_minus:
    NAME: energy_delta_minus
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: Energy bin half-width
    VAR_TYPE: support_data
    RECORD_VARYING: NRV
@@ -124,7 +124,7 @@ energy_delta_minus:
    SI_CONVERSION: 1.602176634e-19>joules
 pitch_angle_delta:
    NAME: pitch_angle_delta
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: Pitch Angle bin half-width
    VAR_TYPE: support_data
    RECORD_VARYING: NRV
@@ -139,7 +139,7 @@ pitch_angle_delta:
    SI_CONVERSION: 1.745329e-2>radians
 gyrophase_delta:
    NAME: gyrophase_delta
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: Gyrophase bin half-width
    VAR_TYPE: support_data
    RECORD_VARYING: NRV
@@ -154,7 +154,7 @@ gyrophase_delta:
    SI_CONVERSION: 1.745329e-2>radians
 temperature_tensor_component:
    NAME: temperature_tensor_component
-   DATA_TYPE: int64
+   DATA_TYPE: CDF_INT8
    CATDESC: Temperature tensor component index, 6 values
    DEPEND_0: ' '
    VAR_TYPE: support_data
@@ -170,7 +170,7 @@ temperature_tensor_component:
    SI_CONVERSION: 1.745329e-2>radians
 intensity_by_pitch_angle:
    NAME: intensity_by_pitch_angle
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: Intensity organized by pitch angle
    DEPEND_0: epoch
    DEPEND_1: energy
@@ -181,17 +181,18 @@ intensity_by_pitch_angle:
    VARIABLE_PURPOSE: primary var, summary
    FIELDNAM: Electron Intensity
    FORMAT: F9.3
-   LABLAXIS: ' '
    UNITS: cm^-2 sr^-1 s^-1 eV^-1
    VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
+   LABL_PTR_1: energy_label
+   LABL_PTR_2: pitch_angle_label
    SCALE_TYP: linear
    DELTA_PLUS_VAR: intensity_uncertainty_by_pitch_angle
    DELTA_MINUS_VAR: intensity_uncertainty_by_pitch_angle
 intensity_by_pitch_angle_and_gyrophase:
    NAME: intensity_by_pitch_angle_and_gyrophase
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: Intensity organized by pitch angle and gyrophase
    DEPEND_0: epoch
    DEPEND_1: energy
@@ -203,17 +204,19 @@ intensity_by_pitch_angle_and_gyrophase:
    VARIABLE_PURPOSE: primary var, summary
    FIELDNAM: Electron Intensity
    FORMAT: F9.3
-   LABLAXIS: ' '
    UNITS: cm^-2 sr^-1 s^-1 eV^-1
    VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
+   LABL_PTR_1: energy_label
+   LABL_PTR_2: pitch_angle_label
+   LABL_PTR_3: gyrophase_label
    SCALE_TYP: linear
    DELTA_PLUS_VAR: intensity_uncertainty_by_pitch_angle_and_gyrophase
    DELTA_MINUS_VAR: intensity_uncertainty_by_pitch_angle_and_gyrophase
 intensity_uncertainty_by_pitch_angle:
    NAME: intensity_uncertainty_by_pitch_angle
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: Uncertainty of Intensity organized by pitch angle
    DEPEND_0: epoch
    DEPEND_1: energy
@@ -224,15 +227,16 @@ intensity_uncertainty_by_pitch_angle:
    VARIABLE_PURPOSE: primary var, summary
    FIELDNAM: Electron Intensity Uncertainty
    FORMAT: F9.3
-   LABLAXIS: ' '
    UNITS: cm^-2 sr^-1 s^-1 eV^-1
    VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
+   LABL_PTR_1: energy_label
+   LABL_PTR_2: pitch_angle_label
    SCALE_TYP: linear
 intensity_uncertainty_by_pitch_angle_and_gyrophase:
    NAME: intensity_uncertainty_by_pitch_angle_and_gyrophase
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: Uncertainty of Intensity organized by pitch angle and gyrophase
    DEPEND_0: epoch
    DEPEND_1: energy
@@ -244,15 +248,17 @@ intensity_uncertainty_by_pitch_angle_and_gyrophase:
    VARIABLE_PURPOSE: primary var, summary
    FIELDNAM: Electron Intensity Uncertainty
    FORMAT: F9.3
-   LABLAXIS: ' '
    UNITS: cm^-2 sr^-1 s^-1 eV^-1
    VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
+   LABL_PTR_1: energy_label
+   LABL_PTR_2: pitch_angle_label
+   LABL_PTR_3: gyrophase_label
    SCALE_TYP: linear
 phase_space_density_by_pitch_angle_and_gyrophase:
    NAME: phase_space_density_by_pitch_angle_and_gyrophase
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: Phase space density organized by pitch angle and gyrophase
    DEPEND_0: epoch
    DEPEND_1: energy
@@ -264,16 +270,18 @@ phase_space_density_by_pitch_angle_and_gyrophase:
    VARIABLE_PURPOSE: primary var, summary
    FIELDNAM: Electron Phase Space Density 
    FORMAT: F9.3
-   LABLAXIS: PSD
    UNITS: s^3 cm^-6
    VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
+   LABL_PTR_1: energy_label
+   LABL_PTR_2: pitch_angle_label
+   LABL_PTR_3: gyrophase_label
    SCALE_TYP: log
    SI_CONVERSION: 1e12>s^3 m^-6
 phase_space_density_by_pitch_angle:
    NAME: phase_space_density_by_pitch_angle
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: Phase space density organized by pitch angle
    DEPEND_0: epoch
    DEPEND_1: energy
@@ -284,16 +292,17 @@ phase_space_density_by_pitch_angle:
    VARIABLE_PURPOSE: primary var, summary
    FIELDNAM: Electron Phase Space Density 
    FORMAT: F9.3
-   LABLAXIS: PSD
    UNITS: s^3 cm^-6
    VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
+   LABL_PTR_1: energy_label
+   LABL_PTR_2: pitch_angle_label
    SCALE_TYP: log
    SI_CONVERSION: 1e12>s^3 m^-6
 intensity:
    NAME: intensity
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: Electon Intensity
    DEPEND_0: epoch
    DEPEND_1: energy
@@ -308,11 +317,12 @@ intensity:
    VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
+   LABL_PTR_1: energy_label
    SCALE_TYP: log
    SI_CONVERSION: 6.241509e22>m^-2 radian^-2 s^-1 J^-1
 intensity_inward:
    NAME: intensity_inward
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: Electron Intensity (Inward)
    DEPEND_0: epoch
    DEPEND_1: energy
@@ -327,11 +337,12 @@ intensity_inward:
    VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
+   LABL_PTR_1: energy_label
    SCALE_TYP: log
    SI_CONVERSION: 6.241509e22>m^-2 radian^-2 s^-1 J^-1
 intensity_outward:
    NAME: intensity_outward
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: Electron Intensity (Outward)
    DEPEND_0: epoch
    DEPEND_1: energy
@@ -346,11 +357,12 @@ intensity_outward:
    VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
+   LABL_PTR_1: energy_label
    SCALE_TYP: log
    SI_CONVERSION: 6.241509e22>m^-2 radian^-2 s^-1 J^-1
 spacecraft_potential:
    NAME: spacecraft_potential
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: IMAP Spacecraft potential
    DEPEND_0: epoch
    VAR_TYPE: data
@@ -369,7 +381,7 @@ spacecraft_potential:
    SCALEMAX: 20
 core_halo_breakpoint:
    NAME: core_halo_breakpoint
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: SW Electron Core/Halo breakpoint
    DEPEND_0: epoch
    VAR_TYPE: data
@@ -389,7 +401,7 @@ core_halo_breakpoint:
    SI_CONVERSION: 1.602176634e-19>joules
 quality_flag:
    NAME: quality_flag
-   DATA_TYPE: uint8 (+ if more)
+   DATA_TYPE: CDF_UINT4
    CATDESC: Quality Flags
    DEPEND_0: epoch
    VAR_TYPE: support_data
@@ -403,21 +415,20 @@ quality_flag:
    FILLVAL: 255
 core_fit_num_points:
    NAME: core_fit_num_points
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: Number of energies used on core fit
    DEPEND_0: epoch
    VAR_TYPE: support_data
    RECORD_VARYING: RV
    FIELDNAM: ' '
    FORMAT: ' '
-   LABLAXIS: ' '
    UNITS: ' '
    VALIDMIN: ' '
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
 halo_fit_num_points:
    NAME: halo_fit_num_points
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: ' '
    DEPEND_0: epoch
    VAR_TYPE: data
@@ -425,14 +436,13 @@ halo_fit_num_points:
    DISPLAY_TYPE: no_plot
    FIELDNAM: ' '
    FORMAT: ' '
-   LABLAXIS: ' '
    UNITS: ' '
    VALIDMIN: ' '
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
 core_chisq:
    NAME: core_chisq
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: Chi Square Error for core moment fitting
    DEPEND_0: epoch
    VAR_TYPE: data
@@ -442,12 +452,12 @@ core_chisq:
    FORMAT: F9.3
    LABLAXIS: core_chisq
    UNITS: ' '
-   VALIDMIN: ' '
+   VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
 halo_chisq:
    NAME: halo_chisq
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: Chi Square Error for halo moment fitting
    DEPEND_0: epoch
    VAR_TYPE: data
@@ -457,12 +467,12 @@ halo_chisq:
    FORMAT: F9.3
    LABLAXIS: halo_chisq
    UNITS: ' '
-   VALIDMIN: ' '
+   VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
 core_density_fit:
    NAME: core_density_fit
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: Density of Core Electrons found through Maxwellian fitting
    DEPEND_0: epoch
    VAR_TYPE: data
@@ -472,12 +482,12 @@ core_density_fit:
    FORMAT: F9.3
    LABLAXIS: core_density_fit
    UNITS: ' '
-   VALIDMIN: ' '
+   VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
 halo_density_fit:
    NAME: halo_density_fit
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: Density of Halo Electrons found through Maxwellian fitting
    DEPEND_0: epoch
    VAR_TYPE: data
@@ -487,12 +497,12 @@ halo_density_fit:
    FORMAT: F9.3
    LABLAXIS: halo_density_fit
    UNITS: ' '
-   VALIDMIN: ' '
+   VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
 core_t_parallel_fit:
    NAME: core_t_parallel_fit
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: Fitted t_parallel
    DEPEND_0: epoch
    VAR_TYPE: data
@@ -502,12 +512,12 @@ core_t_parallel_fit:
    FORMAT: F9.3
    LABLAXIS: core_t_parallel_fit
    UNITS: ' '
-   VALIDMIN: ' '
+   VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
 halo_t_parallel_fit:
    NAME: halo_t_parallel_fit
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: ' '
    DEPEND_0: epoch
    VAR_TYPE: data
@@ -517,12 +527,12 @@ halo_t_parallel_fit:
    FORMAT: F9.3
    LABLAXIS: halo_t_parallel_fit
    UNITS: ' '
-   VALIDMIN: ' '
+   VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
 core_t_perpendicular_fit:
    NAME: core_t_perpendicular_fit
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: ' '
    DEPEND_0: epoch
    VAR_TYPE: data
@@ -532,12 +542,12 @@ core_t_perpendicular_fit:
    FORMAT: F9.3
    LABLAXIS: core_t_perpendicular_fit
    UNITS: ' '
-   VALIDMIN: ' '
+   VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
 halo_t_perpendicular_fit:
    NAME: halo_t_perpendicular_fit
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: ' '
    DEPEND_0: epoch
    VAR_TYPE: data
@@ -547,12 +557,12 @@ halo_t_perpendicular_fit:
    FORMAT: F9.3
    LABLAXIS: halo_t_perpendicular_fit
    UNITS: ' '
-   VALIDMIN: ' '
+   VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
 core_temperature_phi_rtn_fit:
    NAME: core_temperature_phi_rtn_fit
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: should match heritage
    DEPEND_0: epoch
    VAR_TYPE: data
@@ -562,12 +572,12 @@ core_temperature_phi_rtn_fit:
    FORMAT: F9.3
    LABLAXIS: core_temperature_phi_rtn_fit
    UNITS: K
-   VALIDMIN: ' '
+   VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
 halo_temperature_phi_rtn_fit:
    NAME: halo_temperature_phi_rtn_fit
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: should match heritage
    DEPEND_0: epoch
    VAR_TYPE: data
@@ -577,12 +587,12 @@ halo_temperature_phi_rtn_fit:
    FORMAT: F9.3
    LABLAXIS: halo_temperature_phi_rtn_fit
    UNITS: K
-   VALIDMIN: ' '
+   VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
 core_temperature_theta_rtn_fit:
    NAME: core_temperature_theta_rtn_fit
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: should match heritage
    DEPEND_0: epoch
    VAR_TYPE: data
@@ -592,12 +602,12 @@ core_temperature_theta_rtn_fit:
    FORMAT: F9.3
    LABLAXIS: core_temperature_theta_rtn_fit
    UNITS: K
-   VALIDMIN: ' '
+   VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
 halo_temperature_theta_rtn_fit:
    NAME: halo_temperature_theta_rtn_fit
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: should match heritage
    DEPEND_0: epoch
    VAR_TYPE: data
@@ -607,12 +617,12 @@ halo_temperature_theta_rtn_fit:
    FORMAT: F9.3
    LABLAXIS: halo_temperature_theta_rtn_fit
    UNITS: K
-   VALIDMIN: ' '
+   VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
 core_speed_fit:
    NAME: core_speed_fit
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: ' '
    DEPEND_0: epoch
    VAR_TYPE: data
@@ -622,12 +632,12 @@ core_speed_fit:
    FORMAT: F9.3
    LABLAXIS: core_speed_fit
    UNITS: ' '
-   VALIDMIN: ' '
+   VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
 halo_speed_fit:
    NAME: halo_speed_fit
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: ' '
    DEPEND_0: epoch
    VAR_TYPE: data
@@ -637,12 +647,12 @@ halo_speed_fit:
    FORMAT: F9.3
    LABLAXIS: halo_speed_fit
    UNITS: ' '
-   VALIDMIN: ' '
+   VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
 core_velocity_vector_rtn_fit:
    NAME: core_velocity_vector_rtn_fit
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: ' '
    DEPEND_0: epoch
    VAR_TYPE: data
@@ -652,12 +662,12 @@ core_velocity_vector_rtn_fit:
    FORMAT: F9.3
    LABLAXIS: core_velocity_vector_rtn_fit
    UNITS: ' '
-   VALIDMIN: ' '
+   VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
 halo_velocity_vector_rtn_fit:
    NAME: halo_velocity_vector_rtn_fit
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: ' '
    DEPEND_0: epoch
    VAR_TYPE: data
@@ -667,12 +677,12 @@ halo_velocity_vector_rtn_fit:
    FORMAT: F9.3
    LABLAXIS: halo_velocity_vector_rtn_fit
    UNITS: ' '
-   VALIDMIN: ' '
+   VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
 core_density_integrated:
    NAME: core_density_integrated
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: Density halo/suprathermal electrons (high energy) integrated
    DEPEND_0: epoch
    VAR_TYPE: data
@@ -681,14 +691,13 @@ core_density_integrated:
    VARIABLE_PURPOSE: primary var, summary
    FIELDNAM: Core Density Integrated
    FORMAT: F9.3
-   LABLAXIS: ' '
    UNITS: ' '
-   VALIDMIN: ' '
+   VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
 halo_density_integrated:
    NAME: halo_density_integrated
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: ' '
    DEPEND_0: epoch
    VAR_TYPE: data
@@ -697,14 +706,13 @@ halo_density_integrated:
    VARIABLE_PURPOSE: primary var, summary
    FIELDNAM: Halo Density Integrated
    FORMAT: F9.3
-   LABLAXIS: ' '
    UNITS: ' '
-   VALIDMIN: ' '
+   VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
 total_density_integrated:
    NAME: total_density_integrated
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: ' '
    DEPEND_0: epoch
    VAR_TYPE: data
@@ -713,14 +721,13 @@ total_density_integrated:
    VARIABLE_PURPOSE: primary var, summary
    FIELDNAM: Total Density Integrated
    FORMAT: F9.3
-   LABLAXIS: ' '
    UNITS: ' '
-   VALIDMIN: ' '
+   VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
 core_velocity_vector_rtn_integrated:
    NAME: core_velocity_vector_rtn_integrated
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: ' '
    DEPEND_0: epoch
    VAR_TYPE: data
@@ -729,14 +736,13 @@ core_velocity_vector_rtn_integrated:
    VARIABLE_PURPOSE: primary var, summary
    FIELDNAM: Core Velocity Vector Rtn Integrated
    FORMAT: F9.3
-   LABLAXIS: ' '
    UNITS: ' '
-   VALIDMIN: ' '
+   VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
 halo_velocity_vector_rtn_integrated:
    NAME: halo_velocity_vector_rtn_integrated
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: ' '
    DEPEND_0: epoch
    VAR_TYPE: data
@@ -745,14 +751,13 @@ halo_velocity_vector_rtn_integrated:
    VARIABLE_PURPOSE: primary var, summary
    FIELDNAM: Halo Velocity Vector Rtn Integrated
    FORMAT: F9.3
-   LABLAXIS: ' '
    UNITS: ' '
-   VALIDMIN: ' '
+   VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
 total_velocity_vector_rtn_integrated:
    NAME: total_velocity_vector_rtn_integrated
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: ' '
    DEPEND_0: epoch
    VAR_TYPE: data
@@ -761,14 +766,13 @@ total_velocity_vector_rtn_integrated:
    VARIABLE_PURPOSE: primary var, summary
    FIELDNAM: Total Velocity Vector Rtn Integrated
    FORMAT: F9.3
-   LABLAXIS: ' '
    UNITS: ' '
-   VALIDMIN: ' '
+   VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
 core_speed_integrated:
    NAME: core_speed_integrated
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: ' '
    DEPEND_0: epoch
    VAR_TYPE: data
@@ -777,14 +781,13 @@ core_speed_integrated:
    VARIABLE_PURPOSE: primary var, summary
    FIELDNAM: Core Speed Integrated
    FORMAT: F9.3
-   LABLAXIS: ' '
    UNITS: ' '
-   VALIDMIN: ' '
+   VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
 halo_speed_integrated:
    NAME: halo_speed_integrated
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: ' '
    DEPEND_0: epoch
    VAR_TYPE: data
@@ -793,14 +796,13 @@ halo_speed_integrated:
    VARIABLE_PURPOSE: primary var, summary
    FIELDNAM: Halo Speed Integrated
    FORMAT: F9.3
-   LABLAXIS: ' '
    UNITS: ' '
-   VALIDMIN: ' '
+   VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
 total_speed_integrated:
    NAME: total_speed_integrated
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: ' '
    DEPEND_0: epoch
    VAR_TYPE: data
@@ -809,14 +811,13 @@ total_speed_integrated:
    VARIABLE_PURPOSE: primary var, summary
    FIELDNAM: Total Speed Integrated
    FORMAT: F9.3
-   LABLAXIS: ' '
    UNITS: ' '
-   VALIDMIN: ' '
+   VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
 core_t_parallel_integrated:
    NAME: core_t_parallel_integrated
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: ' '
    DEPEND_0: epoch
    VAR_TYPE: data
@@ -825,14 +826,13 @@ core_t_parallel_integrated:
    VARIABLE_PURPOSE: primary var, summary
    FIELDNAM: Core t Parallel Integrated
    FORMAT: F9.3
-   LABLAXIS: ' '
    UNITS: ' '
-   VALIDMIN: ' '
+   VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
 halo_t_parallel_integrated:
    NAME: halo_t_parallel_integrated
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: ' '
    DEPEND_0: epoch
    VAR_TYPE: data
@@ -841,14 +841,13 @@ halo_t_parallel_integrated:
    VARIABLE_PURPOSE: primary var, summary
    FIELDNAM: Halo t Parallel Integrated
    FORMAT: F9.3
-   LABLAXIS: ' '
    UNITS: ' '
-   VALIDMIN: ' '
+   VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
 total_t_parallel_integrated:
    NAME: total_t_parallel_integrated
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: ' '
    DEPEND_0: epoch
    VAR_TYPE: data
@@ -857,14 +856,13 @@ total_t_parallel_integrated:
    VARIABLE_PURPOSE: primary var, summary
    FIELDNAM: Total t Parallel Integrated
    FORMAT: F9.3
-   LABLAXIS: ' '
    UNITS: ' '
-   VALIDMIN: ' '
+   VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
 core_t_perpendicular_integrated:
    NAME: core_t_perpendicular_integrated
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: Average of perpendicular core temperature eigenvalues
    DEPEND_0: epoch
    VAR_TYPE: data
@@ -873,14 +871,13 @@ core_t_perpendicular_integrated:
    VARIABLE_PURPOSE: primary var, summary
    FIELDNAM: Core t Perpendicular Integrated
    FORMAT: F9.3
-   LABLAXIS: ' '
    UNITS: K
-   VALIDMIN: ' '
+   VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
 halo_t_perpendicular_integrated:
    NAME: halo_t_perpendicular_integrated
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: Average of perpendicular halo temperature eigenvalues
    DEPEND_0: epoch
    VAR_TYPE: data
@@ -889,14 +886,13 @@ halo_t_perpendicular_integrated:
    VARIABLE_PURPOSE: primary var, summary
    FIELDNAM: Halo t Perpendicular Integrated
    FORMAT: F9.3
-   LABLAXIS: ' '
    UNITS: K
-   VALIDMIN: ' '
+   VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
 total_t_perpendicular_integrated:
    NAME: total_t_perpendicular_integrated
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: Average of perpendicular total temperature eigenvalues
    DEPEND_0: epoch
    VAR_TYPE: data
@@ -905,14 +901,13 @@ total_t_perpendicular_integrated:
    VARIABLE_PURPOSE: primary var, summary
    FIELDNAM: Total t Perpendicular Integrated
    FORMAT: F9.3
-   LABLAXIS: ' '
    UNITS: K
-   VALIDMIN: ' '
+   VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
 core_t_perpendicular_ratio_integrated:
    NAME: core_t_perpendicular_ratio_integrated
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: Ratio of perpendicular core temperature eigenvalues
    DEPEND_0: epoch
    VAR_TYPE: data
@@ -921,14 +916,13 @@ core_t_perpendicular_ratio_integrated:
    VARIABLE_PURPOSE: primary var, summary
    FIELDNAM: Core t Perpendicular Integrated
    FORMAT: F9.3
-   LABLAXIS: ' '
    UNITS: ' '
-   VALIDMIN: ' '
+   VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
 halo_t_perpendicular_ratio_integrated:
    NAME: halo_t_perpendicular_ratio_integrated
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: Ratio of perpendicular halo temperature eigenvalues
    DEPEND_0: epoch
    VAR_TYPE: data
@@ -937,14 +931,13 @@ halo_t_perpendicular_ratio_integrated:
    VARIABLE_PURPOSE: primary var, summary
    FIELDNAM: Halo t Perpendicular Integrated
    FORMAT: F9.3
-   LABLAXIS: ' '
    UNITS: ' '
-   VALIDMIN: ' '
+   VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
 total_t_perpendicular_ratio_integrated:
    NAME: total_t_perpendicular_ratio_integrated
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: Ratio of perpendicular total temperature eigenvalues
    DEPEND_0: epoch
    VAR_TYPE: data
@@ -953,14 +946,13 @@ total_t_perpendicular_ratio_integrated:
    VARIABLE_PURPOSE: primary var, summary
    FIELDNAM: Total t Perpendicular Integrated
    FORMAT: F9.3
-   LABLAXIS: ' '
    UNITS: ' '
-   VALIDMIN: ' '
+   VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
 core_temperature_phi_rtn_integrated:
    NAME: core_temperature_phi_rtn_integrated
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: ' '
    DEPEND_0: epoch
    VAR_TYPE: data
@@ -968,14 +960,13 @@ core_temperature_phi_rtn_integrated:
    DISPLAY_TYPE: time_series
    FIELDNAM: Core Temperature phi Rtn Integrated
    FORMAT: F9.3
-   LABLAXIS: ' '
    UNITS: K
-   VALIDMIN: ' '
+   VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
 halo_temperature_phi_rtn_integrated:
    NAME: halo_temperature_phi_rtn_integrated
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: ' '
    DEPEND_0: epoch
    VAR_TYPE: data
@@ -983,14 +974,13 @@ halo_temperature_phi_rtn_integrated:
    DISPLAY_TYPE: time_series
    FIELDNAM: Halo Temperature phi Rtn Integrated
    FORMAT: F9.3
-   LABLAXIS: ' '
    UNITS: K
-   VALIDMIN: ' '
+   VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
 total_temperature_phi_rtn_integrated:
    NAME: total_temperature_phi_rtn_integrated
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: ' '
    DEPEND_0: epoch
    VAR_TYPE: data
@@ -998,14 +988,13 @@ total_temperature_phi_rtn_integrated:
    DISPLAY_TYPE: time_series
    FIELDNAM: Total Temperature phi Rtn Integrated
    FORMAT: F9.3
-   LABLAXIS: ' '
    UNITS: K
-   VALIDMIN: ' '
+   VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
 core_temperature_theta_rtn_integrated:
    NAME: core_temperature_theta_rtn_integrated
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: ' '
    DEPEND_0: epoch
    VAR_TYPE: data
@@ -1013,14 +1002,13 @@ core_temperature_theta_rtn_integrated:
    DISPLAY_TYPE: time_series
    FIELDNAM: Core Temperature theta Rtn Integrated
    FORMAT: F9.3
-   LABLAXIS: ' '
    UNITS: K
-   VALIDMIN: ' '
+   VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
 halo_temperature_theta_rtn_integrated:
    NAME: halo_temperature_theta_rtn_integrated
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: ' '
    DEPEND_0: epoch
    VAR_TYPE: data
@@ -1028,14 +1016,13 @@ halo_temperature_theta_rtn_integrated:
    DISPLAY_TYPE: time_series
    FIELDNAM: Halo Temperature theta Rtn Integrated
    FORMAT: F9.3
-   LABLAXIS: ' '
    UNITS: K
-   VALIDMIN: ' '
+   VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
 total_temperature_theta_rtn_integrated:
    NAME: total_temperature_theta_rtn_integrated
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: ' '
    DEPEND_0: epoch
    VAR_TYPE: data
@@ -1043,14 +1030,13 @@ total_temperature_theta_rtn_integrated:
    DISPLAY_TYPE: time_series
    FIELDNAM: Total Temperature theta Rtn Integrated
    FORMAT: F9.3
-   LABLAXIS: ' '
    UNITS: K
-   VALIDMIN: ' '
+   VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
 core_temperature_tensor_integrated:
    NAME: core_temperature_tensor_integrated
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: ' '
    DEPEND_0: epoch
    VAR_TYPE: data
@@ -1058,14 +1044,13 @@ core_temperature_tensor_integrated:
    DISPLAY_TYPE: time_series
    FIELDNAM: Core Temperature Tensor Integrated
    FORMAT: ' '
-   LABLAXIS: ' '
    UNITS: ' '
-   VALIDMIN: ' '
+   VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
 halo_temperature_tensor_integrated:
    NAME: halo_temperature_tensor_integrated
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: ' '
    DEPEND_0: epoch
    VAR_TYPE: data
@@ -1073,14 +1058,13 @@ halo_temperature_tensor_integrated:
    DISPLAY_TYPE: time_series
    FIELDNAM: Halo Temperature Tensor Integrated
    FORMAT: ' '
-   LABLAXIS: ' '
    UNITS: ' '
-   VALIDMIN: ' '
+   VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
 total_temperature_tensor_integrated:
    NAME: total_temperature_tensor_integrated
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: ' '
    DEPEND_0: epoch
    VAR_TYPE: data
@@ -1088,14 +1072,13 @@ total_temperature_tensor_integrated:
    DISPLAY_TYPE: time_series
    FIELDNAM: Total Temperature Tensor Integrated
    FORMAT: ' '
-   LABLAXIS: ' '
    UNITS: ' '
-   VALIDMIN: ' '
+   VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
 core_heat_flux_magnitude_integrated:
    NAME: core_heat_flux_magnitude_integrated
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: ' '
    DEPEND_0: epoch
    VAR_TYPE: data
@@ -1103,14 +1086,13 @@ core_heat_flux_magnitude_integrated:
    DISPLAY_TYPE: time_series
    FIELDNAM: Core Heat Flux Magnitude Integrated
    FORMAT: ' '
-   LABLAXIS: ' '
    UNITS: ' '
-   VALIDMIN: ' '
+   VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
 core_heat_flux_theta_integrated:
    NAME: core_heat_flux_theta_integrated
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: ' '
    DEPEND_0: epoch
    VAR_TYPE: data
@@ -1118,14 +1100,13 @@ core_heat_flux_theta_integrated:
    DISPLAY_TYPE: time_series
    FIELDNAM: Core Heat Flux theta Integrated
    FORMAT: ' '
-   LABLAXIS: ' '
    UNITS: ' '
-   VALIDMIN: ' '
+   VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
 core_heat_flux_phi_integrated:
    NAME: core_heat_flux_phi_integrated
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: ' '
    DEPEND_0: epoch
    VAR_TYPE: data
@@ -1133,14 +1114,13 @@ core_heat_flux_phi_integrated:
    DISPLAY_TYPE: time_series
    FIELDNAM: Core Heat Flux phi Integrated
    FORMAT: ' '
-   LABLAXIS: ' '
    UNITS: ' '
-   VALIDMIN: ' '
+   VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
 halo_heat_flux_magnitude_integrated:
    NAME: halo_heat_flux_magnitude_integrated
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: ' '
    DEPEND_0: epoch
    VAR_TYPE: data
@@ -1148,14 +1128,13 @@ halo_heat_flux_magnitude_integrated:
    DISPLAY_TYPE: time_series
    FIELDNAM: Halo Heat Flux Magnitude Integrated
    FORMAT: ' '
-   LABLAXIS: ' '
    UNITS: ' '
-   VALIDMIN: ' '
+   VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
 halo_heat_flux_theta_integrated:
    NAME: halo_heat_flux_theta_integrated
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: ' '
    DEPEND_0: epoch
    VAR_TYPE: data
@@ -1163,14 +1142,13 @@ halo_heat_flux_theta_integrated:
    DISPLAY_TYPE: time_series
    FIELDNAM: Halo Heat Flux theta Integrated
    FORMAT: ' '
-   LABLAXIS: ' '
    UNITS: ' '
-   VALIDMIN: ' '
+   VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
 halo_heat_flux_phi_integrated:
    NAME: halo_heat_flux_phi_integrated
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: ' '
    DEPEND_0: epoch
    VAR_TYPE: data
@@ -1178,14 +1156,13 @@ halo_heat_flux_phi_integrated:
    DISPLAY_TYPE: time_series
    FIELDNAM: Halo Heat Flux phi Integrated
    FORMAT: ' '
-   LABLAXIS: ' '
    UNITS: ' '
-   VALIDMIN: ' '
+   VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
 total_heat_flux_magnitude_integrated:
    NAME: total_heat_flux_magnitude_integrated
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: ' '
    DEPEND_0: epoch
    VAR_TYPE: data
@@ -1193,14 +1170,13 @@ total_heat_flux_magnitude_integrated:
    DISPLAY_TYPE: time_series
    FIELDNAM: Total Heat Flux Magnitude Integrated
    FORMAT: ' '
-   LABLAXIS: ' '
    UNITS: ' '
-   VALIDMIN: ' '
+   VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
 total_heat_flux_theta_integrated:
    NAME: total_heat_flux_theta_integrated
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: ' '
    DEPEND_0: epoch
    VAR_TYPE: data
@@ -1208,14 +1184,13 @@ total_heat_flux_theta_integrated:
    DISPLAY_TYPE: time_series
    FIELDNAM: Total Heat Flux theta Integrated
    FORMAT: ' '
-   LABLAXIS: ' '
    UNITS: ' '
-   VALIDMIN: ' '
+   VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
 total_heat_flux_phi_integrated:
    NAME: total_heat_flux_phi_integrated
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: ' '
    DEPEND_0: epoch
    VAR_TYPE: data
@@ -1223,14 +1198,13 @@ total_heat_flux_phi_integrated:
    DISPLAY_TYPE: time_series
    FIELDNAM: Total Heat Flux phi Integrated
    FORMAT: ' '
-   LABLAXIS: ' '
    UNITS: ' '
-   VALIDMIN: ' '
+   VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
 core_temperature_parallel_to_mag:
    NAME: core_temperature_parallel_to_mag
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: ' '
    DEPEND_0: epoch
    VAR_TYPE: data
@@ -1238,14 +1212,13 @@ core_temperature_parallel_to_mag:
    DISPLAY_TYPE: time_series
    FIELDNAM: Core t Parallel to Mag
    FORMAT: ' '
-   LABLAXIS: ' '
    UNITS: ' '
-   VALIDMIN: ' '
+   VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
 halo_temperature_parallel_to_mag:
    NAME: halo_temperature_parallel_to_mag
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: ' '
    DEPEND_0: epoch
    VAR_TYPE: data
@@ -1253,14 +1226,13 @@ halo_temperature_parallel_to_mag:
    DISPLAY_TYPE: time_series
    FIELDNAM: Halo t Parallel to Mag
    FORMAT: ' '
-   LABLAXIS: ' '
    UNITS: ' '
-   VALIDMIN: ' '
+   VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
 total_temperature_parallel_to_mag:
    NAME: total_temperature_parallel_to_mag
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: ' '
    DEPEND_0: epoch
    VAR_TYPE: data
@@ -1268,14 +1240,13 @@ total_temperature_parallel_to_mag:
    DISPLAY_TYPE: time_series
    FIELDNAM: Total t Parallel to Mag
    FORMAT: ' '
-   LABLAXIS: ' '
    UNITS: ' '
-   VALIDMIN: ' '
+   VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
 core_temperature_perpendicular_to_mag:
    NAME: core_temperature_perpendicular_to_mag
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: ' '
    DEPEND_0: epoch
    VAR_TYPE: data
@@ -1283,14 +1254,13 @@ core_temperature_perpendicular_to_mag:
    DISPLAY_TYPE: time_series
    FIELDNAM: Core t Perpendicular to Mag
    FORMAT: ' '
-   LABLAXIS: ' '
    UNITS: ' '
-   VALIDMIN: ' '
+   VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
 halo_temperature_perpendicular_to_mag:
    NAME: halo_temperature_perpendicular_to_mag
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: ' '
    DEPEND_0: epoch
    VAR_TYPE: data
@@ -1298,14 +1268,13 @@ halo_temperature_perpendicular_to_mag:
    DISPLAY_TYPE: time_series
    FIELDNAM: Halo t Perpendicular to Mag
    FORMAT: ' '
-   LABLAXIS: ' '
    UNITS: ' '
-   VALIDMIN: ' '
+   VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
 total_temperature_perpendicular_to_mag:
    NAME: total_temperature_perpendicular_to_mag
-   DATA_TYPE: float32
+   DATA_TYPE: CDF_FLOAT
    CATDESC: ' '
    DEPEND_0: epoch
    VAR_TYPE: data
@@ -1313,8 +1282,28 @@ total_temperature_perpendicular_to_mag:
    DISPLAY_TYPE: time_series
    FIELDNAM: Total t Perpendicular to Mag
    FORMAT: ' '
-   LABLAXIS: ' '
    UNITS: ' '
-   VALIDMIN: ' '
+   VALIDMIN: 0
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
+energy_label:
+   NAME: energy_label
+   DATA_TYPE: CDF_CHAR
+   CATDESC: Label for energy bins
+   VAR_TYPE: metadata
+   FIELDNAM: energy_label
+   FORMAT: a20
+pitch_angle_label:
+   NAME: pitch_angle_label
+   DATA_TYPE: CDF_CHAR
+   CATDESC: Lable for pitch angle bins
+   VAR_TYPE: metadata
+   FIELDNAM: pitch_angle_label
+   FORMAT: a20
+gyrophase_label:
+   NAME: gyrophase_label
+   DATA_TYPE: CDF_CHAR
+   CATDESC: Lable for gyrophase bins
+   VAR_TYPE: metadata
+   FIELDNAM: gyrophase_label
+   FORMAT: a20
