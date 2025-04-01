@@ -54,23 +54,23 @@ class TestUtils(unittest.TestCase):
     @patch("imap_l3_processing.glows.l3b.utils.validate_dependencies")
     def test_find_unprocessed_carrington_rotations(self, mock_validate_dependencies: Mock):
         l3a_files_january = [
-            self.create_imap_data_access_json(
+            create_imap_data_access_json(
                 file_path=f'imap/glows/l3a/2010/01/imap_glows_l3a_hist_201001{str(i).zfill(2)}_v001.pkts',
                 data_level='l3a', start_date=f'201001{str(i).zfill(2)}') for i in range(1, 32)
         ]
         l3a_files_february = [
-            self.create_imap_data_access_json(
+            create_imap_data_access_json(
                 file_path=f'imap/glows/l3a/2010/01/imap_glows_l3a_hist_201002{str(i).zfill(2)}_v001.pkts',
                 data_level='l3a', start_date=f'201002{str(i).zfill(2)}') for i in range(1, 29)
         ]
         l3a_files_march = [
-            self.create_imap_data_access_json(
+            create_imap_data_access_json(
                 file_path=f'imap/glows/l3a/2010/01/imap_glows_l3a_hist_201003{str(i).zfill(2)}_v001.pkts',
                 data_level='l3a', start_date=f'201003{str(i).zfill(2)}') for i in range(1, 32)
         ]
 
         l3a_files_april = [
-            self.create_imap_data_access_json(
+            create_imap_data_access_json(
                 file_path=f'imap/glows/l3a/2010/01/imap_glows_l3a_hist_201004{str(i).zfill(2)}_v001.pkts',
                 data_level='l3a', start_date=f'201004{str(i).zfill(2)}') for i in range(1, 31)
         ]
@@ -78,17 +78,17 @@ class TestUtils(unittest.TestCase):
         l3a_files = l3a_files_february + l3a_files_march + l3a_files_january + l3a_files_april
 
         l3b_files = [
-            self.create_imap_data_access_json(
+            create_imap_data_access_json(
                 file_path=f'imap/glows/l3b/2010/01/imap_glows_l3b_hist_20100213_v001.pkts',
                 data_level='l3b', start_date=f'20100213')
         ]
 
         mock_validate_dependencies.side_effect = [True, False, True]
 
-        expected_l3a_january_paths = [self.create_l3a_path_by_date(f'201001{str(i).zfill(2)}') for i in range(3, 31)]
+        expected_l3a_january_paths = [create_l3a_path_by_date(f'201001{str(i).zfill(2)}') for i in range(3, 31)]
 
-        expected_l3a_april_paths = [self.create_l3a_path_by_date(f'201003{str(i).zfill(2)}') for i in range(26, 32)] + [
-            self.create_l3a_path_by_date(f'201004{str(i).zfill(2)}') for i in range(1, 23)]
+        expected_l3a_april_paths = [create_l3a_path_by_date(f'201003{str(i).zfill(2)}') for i in range(26, 32)] + [
+            create_l3a_path_by_date(f'201004{str(i).zfill(2)}') for i in range(1, 23)]
 
         initializer_dependencies = GlowsInitializerAncillaryDependencies(uv_anisotropy_path="uv_anisotropy",
                                                                          lyman_alpha_path=Path("lyman_alpha"),
@@ -184,10 +184,13 @@ class TestUtils(unittest.TestCase):
             call(expected_json_filename)
         ])
 
-    def create_imap_data_access_json(self, file_path: str, data_level: str, start_date: str) -> dict:
-        return {'file_path': file_path, 'instrument': 'glows', 'data_level': data_level, 'descriptor': 'hist',
-                'start_date': start_date, 'repointing': None, 'version': 'v001', 'extension': 'pkts',
-                'ingestion_date': '2024-10-11 15:28:32'}
 
-    def create_l3a_path_by_date(self, file_date: str) -> str:
-        return f'imap/glows/l3a/2010/01/imap_glows_l3a_hist_{file_date}_v001.pkts'
+def create_imap_data_access_json(file_path: str, data_level: str, start_date: str,
+                                 descriptor: str = "hist", version: str = "v001") -> dict:
+    return {'file_path': file_path, 'instrument': 'glows', 'data_level': data_level, 'descriptor': descriptor,
+            'start_date': start_date, 'repointing': None, 'version': version, 'extension': 'pkts',
+            'ingestion_date': '2024-10-11 15:28:32'}
+
+
+def create_l3a_path_by_date(file_date: str) -> str:
+    return f'imap/glows/l3a/2010/01/imap_glows_l3a_hist_{file_date}_v001.pkts'
