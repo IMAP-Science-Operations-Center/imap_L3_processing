@@ -101,6 +101,13 @@ def create_glows_l3a_from_dictionary(data: dict, input_metadata: UpstreamDataDep
     )
 
 
+def create_glows_l3a_dictionary_from_cdf(cdf_file_path: Path) -> dict:
+    cdf = CDF(str(cdf_file_path))
+    return {
+        "daily_light_curve": cdf
+    }
+
+
 def get_lon_lat(data: dict) -> np.ndarray:
     return np.array([[data["lon"], data["lat"]]])
 

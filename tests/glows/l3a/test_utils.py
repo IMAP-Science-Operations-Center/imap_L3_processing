@@ -6,7 +6,8 @@ import numpy as np
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.glows.l3a.models import GlowsL2Data, GlowsL2Header
-from imap_l3_processing.glows.l3a.utils import read_l2_glows_data, create_glows_l3a_from_dictionary
+from imap_l3_processing.glows.l3a.utils import read_l2_glows_data, create_glows_l3a_from_dictionary, \
+    create_glows_l3a_dictionary_from_cdf
 from imap_l3_processing.models import UpstreamDataDependency
 from tests.test_helpers import get_test_data_path
 
@@ -192,6 +193,14 @@ class TestUtils(unittest.TestCase):
             np.testing.assert_array_equal([1.421e+05, 6.001e+05, 4.082e+01], result.spacecraft_location_std_dev[0])
             np.testing.assert_array_equal([6.669, 28.805, -0.002], result.spacecraft_velocity_average[0])
             np.testing.assert_array_equal([1.188e-01, 2.961e-02, 4.337e-19], result.spacecraft_velocity_std_dev[0])
+
+    def test_create_glows_l3a_dictionary_from_cdf(self):
+        cdf_path = get_test_data_path("imap_glows_l3a_histogram_20130908_v003.cdf")
+        actual_dictionary = create_glows_l3a_dictionary_from_cdf(cdf_path)
+
+        # todo date times
+        self.assertEqual(620.9, actual_dictionary['daily_lightcurve']['photon_flux'][0])
+        self.assertEqual(635.5, actual_dictionary['daily_lightcurve']['photon_flux'][-1])
 
 
 if __name__ == '__main__':
