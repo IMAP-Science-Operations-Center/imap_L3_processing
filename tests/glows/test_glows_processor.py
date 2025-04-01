@@ -86,10 +86,10 @@ class TestGlowsProcessor(unittest.TestCase):
 
     @patch("imap_l3_processing.glows.glows_processor.imap_data_access")
     @patch("imap_l3_processing.glows.glows_processor.save_data")
-    @patch("imap_l3_processing.glows.glows_processor.GlowsInitializerDependencies")
+    @patch("imap_l3_processing.glows.glows_processor.GlowsInitializerAncillaryDependencies")
     @patch("imap_l3_processing.glows.glows_processor.GlowsInitializer")
     def test_does_not_process_l3b_if_should_not_process(self, mock_glows_initializer_class,
-                                                        mock_glows_l3b_dependencies_class,
+                                                        mock_glows_l3b_ancillary_dependencies_class,
                                                         mock_save_data,
                                                         mock_imap_data_access):
         mock_glows_initializer = mock_glows_initializer_class.return_value
@@ -107,15 +107,15 @@ class TestGlowsProcessor(unittest.TestCase):
         processor = GlowsProcessor(dependencies=dependencies, input_metadata=input_metadata)
         processor.process()
 
-        mock_glows_l3b_dependencies_class.fetch_dependencies.assert_called_with(dependencies)
+        mock_glows_l3b_ancillary_dependencies_class.fetch_dependencies.assert_called_with(dependencies)
         mock_glows_initializer.should_process.assert_called_with(
-            mock_glows_l3b_dependencies_class.fetch_dependencies.return_value)
+            mock_glows_l3b_ancillary_dependencies_class.fetch_dependencies.return_value)
         mock_save_data.assert_not_called()
         mock_imap_data_access.upload.assert_not_called()
 
     @patch("imap_l3_processing.glows.glows_processor.imap_data_access")
     @patch("imap_l3_processing.glows.glows_processor.save_data")
-    @patch("imap_l3_processing.glows.glows_processor.GlowsInitializerDependencies")
+    @patch("imap_l3_processing.glows.glows_processor.GlowsInitializerAncillaryDependencies")
     @patch("imap_l3_processing.glows.glows_processor.GlowsInitializer")
     def test_processes_l3b_if_should_process(self, mock_glows_initializer_class,
                                              mock_glows_l3b_dependencies_class,

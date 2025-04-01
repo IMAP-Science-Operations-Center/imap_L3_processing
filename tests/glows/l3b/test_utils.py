@@ -1,5 +1,6 @@
 import unittest
 from datetime import datetime, timedelta
+from unittest.mock import patch, Mock
 
 from astropy.time import Time
 from spacepy.pycdf import CDF
@@ -46,7 +47,8 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(0.0, actual_glows_lightcurve.spin_period_std_dev[0])
         self.assertEqual(0.0, actual_glows_lightcurve.time_dependent_background[0][0])
 
-    def test_find_unprocessed_carrington_rotations(self):
+    @patch("imap_l3_processing.glows.l3b.utils.validate_dependencies")
+    def test_find_unprocessed_carrington_rotations(self, mock_validate_dependencies: Mock):
         l3a_files_january = [
             self.create_imap_data_access_json(
                 file_path=f'imap/glows/l3a/2010/01/imap_glows_l3a_hist_201001{str(i).zfill(2)}_v001.pkts',
@@ -63,7 +65,13 @@ class TestUtils(unittest.TestCase):
                 data_level='l3a', start_date=f'201003{str(i).zfill(2)}') for i in range(1, 32)
         ]
 
-        l3a_files = l3a_files_february + l3a_files_march + l3a_files_january
+        l3a_files_april = [
+            self.create_imap_data_access_json(
+                file_path=f'imap/glows/l3a/2010/01/imap_glows_l3a_hist_201004{str(i).zfill(2)}_v001.pkts',
+                data_level='l3a', start_date=f'201004{str(i).zfill(2)}') for i in range(1, 31)
+        ]
+
+        l3a_files = l3a_files_february + l3a_files_march + l3a_files_january + l3a_files_april
 
         l3b_files = [
             self.create_imap_data_access_json(
@@ -71,12 +79,18 @@ class TestUtils(unittest.TestCase):
                 data_level='l3b', start_date=f'20100213')
         ]
 
-        expected_l3a_january_paths = [self.create_l3a_path_by_date(f'201001{str(i).zfill(2)}') for i in range(3, 31)]
-        expected_l3a_march_paths = [self.create_l3a_path_by_date(f'20100227'),
-                                    self.create_l3a_path_by_date(f'20100228')] + [
-                                       self.create_l3a_path_by_date(f'201003{str(i).zfill(2)}') for i in range(1, 27)]
+        mock_validate_dependencies.side_effect = [True, False, True]
 
-        actual_crs_to_process: [CRToProcess] = find_unprocessed_carrington_rotations(l3a_files, l3b_files)
+        expected_l3a_january_paths = [self.create_l3a_path_by_date(f'201001{str(i).zfill(2)}') for i in range(3, 31)]
+
+        expected_l3a_april_paths = [self.create_l3a_path_by_date(f'201003{str(i).zfill(2)}') for i in range(26, 32)] + [
+            self.create_l3a_path_by_date(f'201004{str(i).zfill(2)}') for i in range(1, 23)]
+
+        omni2_path = "omni path"
+        flux_table_path = "flux path"
+        lyman_alpha_path = "lyman alpha path"
+        actual_crs_to_process: [CRToProcess] = find_unprocessed_carrington_rotations(l3a_files, l3b_files, omni2_path,
+                                                                                     flux_table_path, lyman_alpha_path)
 
         self.assertEqual(2, len(actual_crs_to_process))
         self.assertEqual(expected_l3a_january_paths, actual_crs_to_process[0].l3a_paths)
@@ -84,10 +98,34 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(Time('2010-01-30 18:09:30.240').value, actual_crs_to_process[0].carrington_end_date.value)
         self.assertEqual(2092, actual_crs_to_process[0].carrington_rotation)
 
-        self.assertEqual(expected_l3a_march_paths, actual_crs_to_process[1].l3a_paths)
-        self.assertEqual(Time('2010-02-27 00:45:56.160').value, actual_crs_to_process[1].carrington_start_date.value)
-        self.assertEqual(Time('2010-03-26 07:22:22.080').value, actual_crs_to_process[1].carrington_end_date.value)
-        self.assertEqual(2094, actual_crs_to_process[1].carrington_rotation)
+        self.assertEqual(expected_l3a_april_paths, actual_crs_to_process[1].l3a_paths)
+        self.assertEqual(Time('2010-03-26 07:22:22.080').value, actual_crs_to_process[1].carrington_start_date.value)
+        self.assertEqual(Time('2010-04-22 13:58:48.000').value, actual_crs_to_process[1].carrington_end_date.value)
+        self.assertEqual(2095, actual_crs_to_process[1].carrington_rotation)
+
+        self.assertEqual(Time('2010-01-03 11:33:04.320').value,
+                         mock_validate_dependencies.call_args_list[0][0][0].value)
+        self.assertEqual(Time('2010-01-31 18:09:30.240').value,
+                         mock_validate_dependencies.call_args_list[0][0][1].value)
+        self.assertEqual(omni2_path, mock_validate_dependencies.call_args_list[0][0][2])
+        self.assertEqual(flux_table_path, mock_validate_dependencies.call_args_list[0][0][3])
+        self.assertEqual(lyman_alpha_path, mock_validate_dependencies.call_args_list[0][0][4])
+
+        self.assertEqual(Time('2010-02-27 00:45:56.160').value,
+                         mock_validate_dependencies.call_args_list[1][0][0].value)
+        self.assertEqual(Time('2010-03-27 07:22:22.080').value,
+                         mock_validate_dependencies.call_args_list[1][0][1].value)
+        self.assertEqual(omni2_path, mock_validate_dependencies.call_args_list[1][0][2])
+        self.assertEqual(flux_table_path, mock_validate_dependencies.call_args_list[1][0][3])
+        self.assertEqual(lyman_alpha_path, mock_validate_dependencies.call_args_list[1][0][4])
+
+        self.assertEqual(Time('2010-03-26 07:22:22.080').value,
+                         mock_validate_dependencies.call_args_list[2][0][0].value)
+        self.assertEqual(Time('2010-04-23 13:58:48.000').value,
+                         mock_validate_dependencies.call_args_list[2][0][1].value)
+        self.assertEqual(omni2_path, mock_validate_dependencies.call_args_list[2][0][2])
+        self.assertEqual(flux_table_path, mock_validate_dependencies.call_args_list[2][0][3])
+        self.assertEqual(lyman_alpha_path, mock_validate_dependencies.call_args_list[2][0][4])
 
     def create_imap_data_access_json(self, file_path: str, data_level: str, start_date: str) -> dict:
         return {'file_path': file_path, 'instrument': 'glows', 'data_level': data_level, 'descriptor': 'hist',

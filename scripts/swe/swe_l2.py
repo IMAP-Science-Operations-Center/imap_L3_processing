@@ -1,6 +1,7 @@
 import glob
 import os
 import math
+import shutil
 
 import pandas as pd
 import xarray as xr
@@ -55,8 +56,10 @@ if use_l0_data:
     l1b_path = write_cdf(l1b_dataset[0])
     loaded_l1b_dataset = load_cdf(l1b_path)
 else:
-    loaded_l1b_dataset = load_cdf("imap_swe_l1b_sci_20250630_v003.cdf")  # .isel(epoch=slice(None, 20))
+    loaded_l1b_dataset = load_cdf(
+        "tests/test_data/swe/imap_swe_l1b_sci_20250630_v003.cdf")  # .isel(epoch=slice(None, 20))
 l2_dataset = swe_l2(loaded_l1b_dataset, "002")
 path = write_cdf(l2_dataset, compression=7, terminate_on_warning=False)
+shutil.move(path, "tests/test_data/swe/imap_swe_l2_sci_20250630_v002.cdf")
 
 print("wrote cdf to ", path)
