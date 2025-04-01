@@ -50,7 +50,7 @@ def validate_dependencies(start_date_inclusive: Time, end_date_exclusive: Time, 
 def validate_f107_fluxtable_dependency(start_date_inclusive: Time,
                                        end_date_exclusive: Time, file_path: Path) -> bool:
     f107_data = np.loadtxt(file_path, dtype=str)
-
+    f107_data = f107_data[2:]
     times = Time([datetime.strptime(row[0], "%Y%m%d") for row in f107_data], format="datetime")
 
     return end_date_exclusive < times[-1] and start_date_inclusive > times[0]

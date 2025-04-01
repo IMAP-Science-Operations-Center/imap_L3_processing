@@ -20,9 +20,9 @@ class GlowsInitializerAncillaryDependencies:
 
     @classmethod
     def fetch_dependencies(cls):
-        uv_anisotropy_factor_dependency = query(instrument="glows", data_level="l3", descriptor="uv-anisotropy-factor",
+        uv_anisotropy_factor_dependency = query(instrument="glows", descriptor="uv-anisotropy-1CR",
                                                 version="latest")
-        waw_helioion_mp_dependency = query(instrument="glows", data_level="l3", descriptor="waw-helioion-mp",
+        waw_helioion_mp_dependency = query(instrument="glows", descriptor="WawHelioIonMP",
                                            version="latest")
 
         f107_index_file_path = download_external_dependency(F107_FLUX_TABLE_URL, 'f107_fluxtable.txt')

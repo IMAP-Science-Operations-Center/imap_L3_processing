@@ -12,11 +12,11 @@ class TestGlowsInitializerAncillaryDependencies(unittest.TestCase):
     @patch("imap_l3_processing.glows.l3b.glows_initializer_ancillary_dependencies.query")
     @patch("imap_l3_processing.glows.l3b.glows_initializer_ancillary_dependencies.download_external_dependency")
     def test_fetch_dependencies(self, mock_download_external_dependency, mock_query):
-        uv_anisotropy_factor = create_imap_data_access_json(file_path="path_to_uv_file", data_level="l3",
-                                                            start_date=None, descriptor="uv-anisotropy-factor",
+        uv_anisotropy_factor = create_imap_data_access_json(file_path="path_to_uv_file", data_level=None,
+                                                            start_date=None, descriptor="uv-anisotropy-1CR",
                                                             version="latest")
-        waw_helioion_mp = create_imap_data_access_json(file_path="path_to_waw_file", data_level="l3",
-                                                       start_date=None, descriptor="waw-helioion-mp",
+        waw_helioion_mp = create_imap_data_access_json(file_path="path_to_waw_file", data_level=None,
+                                                       start_date=None, descriptor="WawHelioIonMP",
                                                        version="latest")
 
         mock_query.side_effect = [
@@ -44,8 +44,8 @@ class TestGlowsInitializerAncillaryDependencies(unittest.TestCase):
         self.assertEqual(omni_2_path, actual_dependencies.omni2_data_path)
 
         self.assertEqual([
-            call(instrument="glows", data_level="l3", descriptor="uv-anisotropy-factor", version="latest"),
-            call(instrument="glows", data_level="l3", descriptor="waw-helioion-mp", version="latest"),
+            call(instrument="glows", descriptor="uv-anisotropy-1CR", version="latest"),
+            call(instrument="glows", descriptor="WawHelioIonMP", version="latest"),
         ], mock_query.call_args_list)
 
         self.assertEqual([

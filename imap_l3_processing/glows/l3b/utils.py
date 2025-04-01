@@ -128,5 +128,11 @@ def archive_dependencies(cr_to_process: CRToProcess, version: str,
         file.write(ancillary_dependencies.omni2_data_path)
         file.write(ancillary_dependencies.f107_index_file_path)
         with open(json_filename, "w") as json_file:
-            dump(cr_to_process, json_file)
+            cr = {"cr_rotation_number": cr_to_process.cr_rotation_number,
+                  "l3a_paths": cr_to_process.l3a_paths,
+                  "cr_midpoint": cr_to_process.cr_midpoint,
+                  "waw_helioion_mp": cr_to_process.waw_helioion_mp,
+                  "uv_anisotropy": cr_to_process.uv_anisotropy
+                  }
+            dump(cr, json_file)
         file.write(json_filename)

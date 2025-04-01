@@ -1,3 +1,4 @@
+import os
 import sys
 import uuid
 from datetime import datetime, timedelta
@@ -9,6 +10,7 @@ from bitstring import BitStream
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.glows.descriptors import GLOWS_L2_DESCRIPTOR
+from imap_l3_processing.glows.glows_initializer import GlowsInitializer
 from imap_l3_processing.glows.glows_processor import GlowsProcessor
 from imap_l3_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
 from imap_l3_processing.glows.l3a.utils import read_l2_glows_data
@@ -264,6 +266,26 @@ def create_hit_direct_event_cdf():
     return file_path
 
 
+@patch('imap_l3_processing.glows.l3b.glows_initializer_ancillary_dependencies.query')
+@patch('imap_l3_processing.glows.glows_initializer.query')
+def run_l3b_initializer(mock_query, mock_ancillary_query):
+    local_cdfs = os.listdir(get_test_data_path("glows/l3a_products"))
+
+    l3a_dicts = [{'file_path': "glows/l3a_products" + file_path,
+                  'start_date': file_path.split('_')[4]
+                  } for file_path in local_cdfs]
+
+    mock_query.side_effect = [
+        l3a_dicts, []
+    ]
+
+    mock_ancillary_query.side_effect = [
+        [{'file_path': str(get_test_data_path("glows/imap_glows_uv-anisotropy-1CR_20100101_v001.json"))}],
+        [{'file_path': str(get_test_data_path("glows/imap_glows_WawHelioIonMP_20100101_v002.json"))}]
+    ]
+    GlowsInitializer.validate_and_initialize('v001')
+
+
 if __name__ == "__main__":
     if "swapi" in sys.argv:
         if "l3a" in sys.argv:
@@ -284,22 +306,25 @@ if __name__ == "__main__":
                 "tests/test_data/swapi/imap_swapi_l2_sci_20100101_v001.cdf")
             print(path)
     if "glows" in sys.argv:
-        cdf_data = CDF("tests/test_data/glows/imap_glows_l2_hist_20130908_v003.cdf")
-        l2_glows_data = read_l2_glows_data(cdf_data)
+        if "pre-b" in sys.argv:
+            run_l3b_initializer()
+        else:
+            cdf_data = CDF("tests/test_data/glows/imap_glows_l2_hist_20130908_v003.cdf")
+            l2_glows_data = read_l2_glows_data(cdf_data)
 
-        dependencies = GlowsL3ADependencies(l2_glows_data, {
-            "calibration_data": Path(
-                "instrument_team_data/glows/imap_glows_l3a_calibration-data-text-not-cdf_20250707_v002.cdf"),
-            "settings": Path(
-                "instrument_team_data/glows/imap_glows_l3a_pipeline-settings-json-not-cdf_20250707_v002.cdf"),
-            "time_dependent_bckgrd": Path(
-                "instrument_team_data/glows/imap_glows_l3a_time-dep-bckgrd-text-not-cdf_20250707_v001.cdf"),
-            "extra_heliospheric_bckgrd": Path(
-                "instrument_team_data/glows/imap_glows_l3a_map-of-extra-helio-bckgrd-text-not-cdf_20250707_v001.cdf"),
-        })
+            dependencies = GlowsL3ADependencies(l2_glows_data, {
+                "calibration_data": Path(
+                    "instrument_team_data/glows/imap_glows_l3a_calibration-data-text-not-cdf_20250707_v002.cdf"),
+                "settings": Path(
+                    "instrument_team_data/glows/imap_glows_l3a_pipeline-settings-json-not-cdf_20250707_v002.cdf"),
+                "time_dependent_bckgrd": Path(
+                    "instrument_team_data/glows/imap_glows_l3a_time-dep-bckgrd-text-not-cdf_20250707_v001.cdf"),
+                "extra_heliospheric_bckgrd": Path(
+                    "instrument_team_data/glows/imap_glows_l3a_map-of-extra-helio-bckgrd-text-not-cdf_20250707_v001.cdf"),
+            })
 
-        path = create_glows_l3a_cdf(dependencies)
-        print(path)
+            path = create_glows_l3a_cdf(dependencies)
+            print(path)
 
     if "hit" in sys.argv:
         if "direct_event" in sys.argv:

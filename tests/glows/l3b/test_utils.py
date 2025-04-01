@@ -158,10 +158,17 @@ class TestUtils(unittest.TestCase):
                                                              f107_index_file_path=Path("f107"),
                                                              waw_helioion_mp_path="waw_helioion")
 
-        cr_to_process: CRToProcess = CRToProcess(cr_rotation_number=2095, l3a_paths=[],
+        cr_to_process: CRToProcess = CRToProcess(cr_rotation_number=2095, l3a_paths=["file1", "file2"],
                                                  cr_midpoint="20250314",
                                                  waw_helioion_mp=dependencies.waw_helioion_mp_path,
                                                  uv_anisotropy=dependencies.uv_anisotropy_path)
+
+        expected_json_to_serialize = {"cr_rotation_number": 2095,
+                                      "l3a_paths": ["file1", "file2"],
+                                      "cr_midpoint": "20250314",
+                                      "waw_helioion_mp": dependencies.waw_helioion_mp_path,
+                                      "uv_anisotropy": dependencies.uv_anisotropy_path
+                                      }
 
         mock_zip_file = MagicMock()
         mock_zip.return_value.__enter__.return_value = mock_zip_file
@@ -175,7 +182,7 @@ class TestUtils(unittest.TestCase):
         mock_zip.assert_called_with(expected_filename, "w", ZIP_DEFLATED)
         mocked_open.assert_called_once_with(expected_json_filename, "w")
 
-        mock_dump.assert_called_once_with(cr_to_process, mock_json_file)
+        mock_dump.assert_called_once_with(expected_json_to_serialize, mock_json_file)
 
         mock_zip_file.write.assert_has_calls([
             call(dependencies.lyman_alpha_path),
