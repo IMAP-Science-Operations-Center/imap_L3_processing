@@ -137,8 +137,8 @@ def calculate_phase(phase, spin_period):
             f2 = 120 * sss + N_ENERGIES_LEVEL1 * k + rrr + 1
             offset = (0.0547645 + f1 * 0.0575027 + (f2 - 0.5) * K_FOR_THIS_MODE) * 12.0 / spin_period
             phi[i][k] = phase + offset
-
-    return (phi - SWE_MOUNTING_ANGLE) % 360
+    CONVERT_PHI_TO_IMAP_AZIMUTH = 270
+    return (phi + CONVERT_PHI_TO_IMAP_AZIMUTH - SWE_MOUNTING_ANGLE) % 360
 
 
 def calculate_acquisition_time(phase: float, spin_period: float, epoch: datetime) -> np.ndarray:
@@ -207,7 +207,7 @@ def get_epochs_from_output_file(filepath: str) -> np.array:
 
 initial_epoch = datetime.fromisoformat("2025-06-30T12:00:00")
 initial_epoch_in_met_time = 488980803.0
-num_epochs = 674
+truncate_to = 10
 # File path to the HDF4 file
 file_path = "instrument_team_data/swe/ACE_LV1_1999-159.swepam.hdf"
 xarray_data = hdf4_to_xarray(file_path)
@@ -246,18 +246,19 @@ time_between_data_points = 128 * 1e6
 
 settle_duration_needed_to_fill_time_between_points = time_between_data_points / (20 * 30) - sample_time_microseconds
 
-shutil.copy("imap_swe_l1b_sci_20240510_v002.cdf", "imap_swe_l1b_sci_20250630_v003.cdf")
-with CDF("imap_swe_l1b_sci_20250630_v003.cdf", readonly=False) as cdf:
+output_path = "tests/test_data/swe/imap_swe_l1b_sci_20250630_v003.cdf"
+shutil.copy("imap_swe_l1b_sci_20240510_v002.cdf", output_path)
+with CDF(output_path, readonly=False) as cdf:
     del cdf['science_data']
     del cdf['acquisition_time']
     del cdf['acq_duration']
     del cdf['settle_duration']
     del cdf['esa_step']
-    cdf['epoch'] = epochs
-    cdf['science_data'] = rates
-    cdf['acquisition_time'] = np.array(acquisition_time)
-    cdf['acq_duration'] = np.full((674, 20, 30), sample_time_microseconds)
-    cdf['settle_duration'] = np.full((674, 4), round(settle_duration_needed_to_fill_time_between_points))
-    cdf['esa_table_num'] = np.full((674, 4), 0)
+    cdf['epoch'] = epochs[:truncate_to]
+    cdf['science_data'] = rates[:truncate_to, :, :, ::-1]
+    cdf['acquisition_time'] = np.array(acquisition_time[:truncate_to])
+    cdf['acq_duration'] = np.full((truncate_to, 20, 30), sample_time_microseconds)
+    cdf['settle_duration'] = np.full((truncate_to, 4), round(settle_duration_needed_to_fill_time_between_points))
+    cdf['esa_table_num'] = np.full((truncate_to, 4), 0)
     cdf.new('esa_step', np.arange(20), recVary=False)
     cdf['esa_step'].attrs['VAR_TYPE'] = 'support_data'
