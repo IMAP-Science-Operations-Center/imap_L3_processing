@@ -65,6 +65,35 @@ class TestUtils(TestCase):
 
         self.assertEqual(expected_file_path, returned_file_path)
 
+    @patch("imap_l3_processing.utils.ImapAttributeManager")
+    @patch("imap_l3_processing.utils.date")
+    @patch("imap_l3_processing.utils.write_cdf")
+    def test_save_data_custom_path(self, mock_write_cdf, mock_today, _):
+        mock_today.today.return_value = date(2024, 9, 16)
+
+        input_metadata = UpstreamDataDependency("swapi", "l2", datetime(2024, 9, 17), datetime(2024, 9, 18), "v2",
+                                                "descriptor")
+        epoch = np.array([1, 2, 3])
+        alpha_sw_speed = np.array([4, 5, 6])
+        alpha_sw_density = np.array([5, 5, 5])
+        alpha_sw_temperature = np.array([4, 3, 5])
+
+        data_product = SwapiL3AlphaSolarWindData(input_metadata=input_metadata, epoch=epoch,
+                                                 alpha_sw_speed=alpha_sw_speed,
+                                                 alpha_sw_temperature=alpha_sw_temperature,
+                                                 alpha_sw_density=alpha_sw_density)
+
+        custom_path = "fancy_path"
+        returned_file_path = save_data(data_product, folder_path=custom_path)
+
+        mock_write_cdf.assert_called_once()
+        actual_file_path = mock_write_cdf.call_args.args[0]
+
+        expected_file_path = f"{custom_path}/imap_swapi_l2_descriptor_20240917_v2.cdf"
+        self.assertEqual(expected_file_path, actual_file_path)
+
+        self.assertEqual(expected_file_path, returned_file_path)
+
     def test_format_time(self):
         time = datetime(2024, 7, 9)
         actual_time = format_time(time)

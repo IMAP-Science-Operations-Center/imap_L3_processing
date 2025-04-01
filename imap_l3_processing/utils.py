@@ -21,12 +21,12 @@ def load_spice_kernels():
     spiceypy.furnsh(kernel_paths)
 
 
-def save_data(data: DataProduct, delete_if_present: bool = False) -> str:
+def save_data(data: DataProduct, delete_if_present: bool = False, folder_path: str = TEMP_CDF_FOLDER_PATH) -> str:
     formatted_start_date = format_time(data.input_metadata.start_date)
     logical_source = data.input_metadata.logical_source
     logical_file_id = f'{logical_source}_{formatted_start_date}_{data.input_metadata.version}'
-    Path(TEMP_CDF_FOLDER_PATH).mkdir(exist_ok=True)
-    file_path = f'{TEMP_CDF_FOLDER_PATH}/{logical_file_id}.cdf'
+    Path(folder_path).mkdir(exist_ok=True)
+    file_path = f'{folder_path}/{logical_file_id}.cdf'
 
     if delete_if_present:
         Path(file_path).unlink(missing_ok=True)
