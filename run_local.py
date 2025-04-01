@@ -334,6 +334,6 @@ if __name__ == "__main__":
 
     if "hi" in sys.argv:
         dependencies = HiL3Dependencies.from_file_paths(
-            get_test_data_path("hvset_noSP_ram_cg_2013.cdf")
+            get_test_data_path("hi45-zirnstein-mondel-6months.cdf")
         )
         print(create_hi_cdf(dependencies))

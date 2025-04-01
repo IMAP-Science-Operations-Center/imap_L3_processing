@@ -1,5 +1,4 @@
-from datetime import datetime
-from datetime import timedelta
+from datetime import datetime, timedelta
 from pathlib import Path
 from unittest import skipIf
 from unittest.mock import patch, Mock

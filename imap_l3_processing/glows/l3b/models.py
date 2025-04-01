@@ -2,7 +2,6 @@ from dataclasses import dataclass
 from datetime import datetime
 
 import numpy as np
-from astropy.time import Time
 
 from imap_l3_processing.models import DataProduct, DataProductVariable
 
@@ -10,9 +9,10 @@ from imap_l3_processing.models import DataProduct, DataProductVariable
 @dataclass
 class CRToProcess:
     l3a_paths: list[str]
-    carrington_end_date: Time
-    carrington_start_date: Time
-    carrington_rotation: int
+    cr_midpoint: str
+    cr_rotation_number: int
+    uv_anisotropy: str
+    waw_helioion_mp: str
 
 
 @dataclass
