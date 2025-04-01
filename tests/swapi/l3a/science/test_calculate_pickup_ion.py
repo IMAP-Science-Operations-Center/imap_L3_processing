@@ -1,7 +1,7 @@
-from datetime import datetime, timedelta
 from datetime import datetime
+from datetime import timedelta
 from pathlib import Path
-from unittest import skip, skipIf
+from unittest import skipIf
 from unittest.mock import patch, Mock
 
 import numpy as np
@@ -466,7 +466,7 @@ class TestCalculatePickupIon(SpiceTestCase):
                                                   fitting_params)
         self.assertAlmostEqual(24456817.05142866, result)
 
-    LAST_SUCCESSFUL_RUN = datetime(2025, 3, 24, 13, 00)
+    LAST_SUCCESSFUL_RUN = datetime(2025, 4, 1, 13, 00)
     ALLOWED_GAP_TIME = timedelta(days=7)
 
     @skipIf(datetime.now() < LAST_SUCCESSFUL_RUN + ALLOWED_GAP_TIME, "expensive test already run in last week")
