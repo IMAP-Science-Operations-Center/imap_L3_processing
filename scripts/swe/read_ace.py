@@ -207,7 +207,7 @@ def get_epochs_from_output_file(filepath: str) -> np.array:
 
 initial_epoch = datetime.fromisoformat("2025-06-30T12:00:00")
 initial_epoch_in_met_time = 488980803.0
-num_epochs = 674
+truncate_to = 10
 # File path to the HDF4 file
 file_path = "instrument_team_data/swe/ACE_LV1_1999-159.swepam.hdf"
 xarray_data = hdf4_to_xarray(file_path)
@@ -254,11 +254,11 @@ with CDF(output_path, readonly=False) as cdf:
     del cdf['acq_duration']
     del cdf['settle_duration']
     del cdf['esa_step']
-    cdf['epoch'] = epochs
-    cdf['science_data'] = rates[:, :, :, ::-1]
-    cdf['acquisition_time'] = np.array(acquisition_time)
-    cdf['acq_duration'] = np.full((674, 20, 30), sample_time_microseconds)
-    cdf['settle_duration'] = np.full((674, 4), round(settle_duration_needed_to_fill_time_between_points))
-    cdf['esa_table_num'] = np.full((674, 4), 0)
+    cdf['epoch'] = epochs[:truncate_to]
+    cdf['science_data'] = rates[:truncate_to, :, :, ::-1]
+    cdf['acquisition_time'] = np.array(acquisition_time[:truncate_to])
+    cdf['acq_duration'] = np.full((truncate_to, 20, 30), sample_time_microseconds)
+    cdf['settle_duration'] = np.full((truncate_to, 4), round(settle_duration_needed_to_fill_time_between_points))
+    cdf['esa_table_num'] = np.full((truncate_to, 4), 0)
     cdf.new('esa_step', np.arange(20), recVary=False)
     cdf['esa_step'].attrs['VAR_TYPE'] = 'support_data'
