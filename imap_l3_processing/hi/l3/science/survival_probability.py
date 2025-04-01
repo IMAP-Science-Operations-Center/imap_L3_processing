@@ -39,8 +39,8 @@ class HiSurvivalProbabilityPointingSet(RectangularPointingSet):
         for spin_angle_index in range(len(glows_dataset['spin_angle_bin'].values) * 10):
             survival_probabilities[0, :, spin_angle_index, elevation_bin_for_sensor_angle] = np.interp(
                 np.log10(l1c_dataset['esa_energy_step'].values),
-                survival_probablities_raw[0, :, spin_angle_index],
-                np.log10(glows_dataset['energy'].values))
+                np.log10(glows_dataset['energy'].values),
+                survival_probablities_raw[0, :, spin_angle_index], )
         exposure = np.full(
             (num_epochs, num_energies, len(azimuths), len(elevations)),
             fill_value=0, dtype=np.float64)

@@ -52,17 +52,11 @@ class TestSurvivalProbability(unittest.TestCase):
     @patch('imap_l3_processing.hi.l3.science.survival_probability.RectangularPointingSet.__init__')
     def test_survival_probability_pointing_set_calls_parent_constructor(self,
                                                                         mock_rectangular_pointing_set_constructor):
-        pointing_set = HiSurvivalProbabilityPointingSet(self.l1c_hi_dataset, Sensor.Hi45)
+        pointing_set = HiSurvivalProbabilityPointingSet(self.l1c_hi_dataset, Sensor.Hi45, self.glows_data)
         self.assertIsInstance(pointing_set, RectangularPointingSet)
         mock_rectangular_pointing_set_constructor.assert_called_once_with(pointing_set.data)
 
     def test_survival_probability_pointing_set(self):
-        self.l1c_hi_dataset["esa_energy_step"].values = np.array([10, 10_000])
-        self.glows_data["energy"].values = np.array([1, 100, 100_000])
-        self.glows_data["probability_of_survival"].values[:, 0] = [2, 4, 7]
-
-        expected_interpolated_survival_probabilities = np.array([3, 6])
-
         test_cases = [
             (Sensor.Hi90, 901),
             (Sensor.Hi45, 451)
@@ -70,7 +64,7 @@ class TestSurvivalProbability(unittest.TestCase):
 
         for sensor, expected_skygrid_elevation_index in test_cases:
             with self.subTest(f"{sensor.value}"):
-                pointing_set = HiSurvivalProbabilityPointingSet(self.l1c_hi_dataset, sensor)
+                pointing_set = HiSurvivalProbabilityPointingSet(self.l1c_hi_dataset, sensor, self.glows_data)
                 self.assertIsInstance(pointing_set, RectangularPointingSet)
 
                 skygrid_pointing_mask = np.full((1, self.num_energies, 3600, 1800), False)
@@ -100,8 +94,8 @@ class TestSurvivalProbability(unittest.TestCase):
                                               pointing_set.data[CoordNames.TIME.value].values)
 
     def test_exposure_weighting_with_interpolated_survival_probabilities(self):
-        self.l1c_hi_dataset.assign_coords(esa_energy_step=np.array([10, 10_000]))
-        self.glows_data.assign_coords(energy=np.array([1, 100, 100_000]))
+        self.l1c_hi_dataset = self.l1c_hi_dataset.assign_coords(esa_energy_step=np.array([10, 10_000]))
+        self.glows_data = self.glows_data.assign_coords(energy=np.array([1, 100, 100_000]))
         self.glows_data["probability_of_survival"].values[0, :, 0] = [2, 4, 7]
 
         expected_interpolated_survival_probabilities = np.array([3, 6])
