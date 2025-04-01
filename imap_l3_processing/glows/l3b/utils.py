@@ -1,6 +1,7 @@
 from collections import defaultdict
 from datetime import timedelta
-from pathlib import Path
+from json import dump
+from zipfile import ZipFile, ZIP_DEFLATED
 
 from astropy.time import Time
 from spacepy.pycdf import CDF
@@ -18,6 +19,7 @@ from imap_l3_processing.glows.l3a.models import GlowsL3LightCurve, PHOTON_FLUX_U
     SPACECRAFT_LOCATION_AVERAGE_CDF_VAR_NAME, SPACECRAFT_LOCATION_STD_DEV_CDF_VAR_NAME, \
     SPACECRAFT_VELOCITY_AVERAGE_CDF_VAR_NAME
 from imap_l3_processing.glows.l3b.dependency_validator import validate_dependencies
+from imap_l3_processing.glows.l3b.glows_initializer_ancillary_dependencies import GlowsInitializerAncillaryDependencies
 from imap_l3_processing.glows.l3b.l3bc_toolkit.funcs import carrington, jd_fm_Carrington
 from imap_l3_processing.glows.l3b.models import CRToProcess
 
@@ -59,8 +61,8 @@ def read_glows_l3a_data(cdf: CDF) -> GlowsL3LightCurve:
                              )
 
 
-def find_unprocessed_carrington_rotations(l3a_inputs: list[dict], l3b_inputs: list[dict], omni2_path: Path | str,
-                                          fluxtable_path: Path | str, lyman_alpha_path: Path | str) -> [
+def find_unprocessed_carrington_rotations(l3a_inputs: list[dict], l3b_inputs: list[dict],
+                                          dependencies: GlowsInitializerAncillaryDependencies) -> [
     CRToProcess]:
     l3bs_carringtons: set = set()
     for l3b in l3b_inputs:
@@ -93,16 +95,21 @@ def find_unprocessed_carrington_rotations(l3a_inputs: list[dict], l3b_inputs: li
             date_time_end_date = Time(carrington_end_date_non_inclusive, format='jd')
             date_time_end_date.format = 'iso'
             is_valid = validate_dependencies(date_time, date_time_end_date + timedelta(days=1),
-                                             omni2_path, fluxtable_path, lyman_alpha_path)
+                                             dependencies.omni2_data_path, dependencies.f107_index_file_path,
+                                             dependencies.lyman_alpha_path)
 
             if not is_valid:
                 continue
 
+            date_midpoint = (date_time.jd + date_time_end_date.jd) / 2
+            date_time_midpoint = Time(date_midpoint, format='jd')
+
             crs_to_process.append(CRToProcess(
                 l3a_paths=l3a_files,
-                carrington_start_date=date_time,
-                carrington_end_date=date_time_end_date,
-                carrington_rotation=carrington_number
+                cr_midpoint=date_time_midpoint.strftime('%Y%m%d'),
+                cr_rotation_number=carrington_number,
+                uv_anisotropy=dependencies.uv_anisotropy_path,
+                waw_helioion_mp=dependencies.waw_helioion_mp_path
             ))
 
     return crs_to_process
@@ -110,3 +117,16 @@ def find_unprocessed_carrington_rotations(l3a_inputs: list[dict], l3b_inputs: li
 
 def get_astropy_time_from_yyyymmdd(date_string: str) -> Time:
     return Time(f'{date_string[0:4]}-{date_string[4:6]}-{date_string[6:8]}')
+
+
+def archive_dependencies(cr_to_process: CRToProcess, version: str,
+                         ancillary_dependencies: GlowsInitializerAncillaryDependencies):
+    filename = f"imap_glows_l3pre-b_l3b-archive_{cr_to_process.cr_midpoint}_{version}.zip"
+    json_filename = "cr_to_process.json"
+    with ZipFile(filename, "w", ZIP_DEFLATED) as file:
+        file.write(ancillary_dependencies.lyman_alpha_path)
+        file.write(ancillary_dependencies.omni2_data_path)
+        file.write(ancillary_dependencies.f107_index_file_path)
+        with open(json_filename, "w") as json_file:
+            dump(cr_to_process, json_file)
+        file.write(json_filename)

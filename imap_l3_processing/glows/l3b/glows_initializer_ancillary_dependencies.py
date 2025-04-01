@@ -11,8 +11,8 @@ OMNI2_URL = "https://spdf.gsfc.nasa.gov/pub/data/omni/low_res_omni/omni2_all_yea
 
 @dataclass
 class GlowsInitializerAncillaryDependencies:
-    uv_anisotropy_path: Path
-    waw_helioion_mp_path: Path
+    uv_anisotropy_path: str
+    waw_helioion_mp_path: str
     f107_index_file_path: Path
     lyman_alpha_path: Path
     omni2_data_path: Path

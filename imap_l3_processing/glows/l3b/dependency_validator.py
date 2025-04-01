@@ -38,10 +38,10 @@ def validate_omni2_dependency(start_date_inclusive: Time,
 
 
 def validate_dependencies(start_date_inclusive: Time, end_date_exclusive: Time, omni2_file_path: Path,
-                          fluxtable_file_path: Path, lyman_alpha_path: Path) -> bool:
+                          f107_index_path: Path, lyman_alpha_path: Path) -> bool:
     omni_condition = validate_omni2_dependency(start_date_inclusive, end_date_exclusive, omni2_file_path)
     f107_condition = validate_f107_fluxtable_dependency(start_date_inclusive, end_date_exclusive,
-                                                        fluxtable_file_path)
+                                                        f107_index_path)
     lyman_alpha_condition = validate_lyman_alpha_dependency(end_date_exclusive, lyman_alpha_path)
 
     return omni_condition and f107_condition and lyman_alpha_condition
