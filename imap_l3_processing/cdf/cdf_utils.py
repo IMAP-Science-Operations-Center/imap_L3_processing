@@ -36,6 +36,8 @@ def write_cdf(file_path: str, data: DataProduct, attribute_manager: ImapAttribut
             for k, v in variable_attributes.items():
                 if k == 'DEPEND_0' and v == '':
                     continue
+                if k in ['DATA_TYPE', 'RECORD_VARYING']:
+                    continue
                 if k == 'FILLVAL' and data_type is not None:
                     cdf[var_name].attrs.new(k, v, data_type)
                 else:
