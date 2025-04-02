@@ -53,7 +53,7 @@ class TestUtils(TestCase):
         self.assertIs(data_product, actual_data)
 
         actual_attribute_manager.add_global_attribute.assert_has_calls([
-            call("Data_version", "v2"),
+            call("Data_version", "2"),
             call("Generation_date", "20240916"),
             call("Logical_source", "imap_swapi_l2_descriptor"),
             call("Logical_file_id", "imap_swapi_l2_descriptor_20240917_v2")

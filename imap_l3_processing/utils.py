@@ -32,7 +32,7 @@ def save_data(data: DataProduct, delete_if_present: bool = False, folder_path: s
         Path(file_path).unlink(missing_ok=True)
 
     attribute_manager = ImapAttributeManager()
-    attribute_manager.add_global_attribute("Data_version", data.input_metadata.version)
+    attribute_manager.add_global_attribute("Data_version", data.input_metadata.version.replace('v', ''))
     attribute_manager.add_instrument_attrs(data.input_metadata.instrument, data.input_metadata.data_level,
                                            data.input_metadata.descriptor)
     attribute_manager.add_global_attribute("Generation_date", date.today().strftime("%Y%m%d"))
