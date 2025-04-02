@@ -55,7 +55,7 @@ class TestConvertProductDefinitionToYamlTest(unittest.TestCase):
    VALIDMIN: 1E-40
    VALIDMAX: ' '
    FILLVAL: -1.00E+31
-   LABL_PTR_1: energy_label 
+   LABL_PTR_1: energy_label
    LABL_PTR_2: pitch_angle_label
    VARIABLE_PURPOSE: primary var, summary
 energy_label:
@@ -111,7 +111,6 @@ pitch_angle_label:
    DEPEND_0: epoch
    FIELDNAM: ' '
    FORMAT: ' '
-   LABLAXIS: ' '
    UNITS: ' '
    VALIDMIN: ' '
    VALIDMAX: ' '
@@ -152,7 +151,6 @@ pitch_angle_label:
    RECORD_VARYING: NRV
    FIELDNAM: ' '
    FORMAT: ' '
-   LABLAXIS: ' '
    UNITS: ' '
    VALIDMIN: ' '
    VALIDMAX: ' '
@@ -192,7 +190,6 @@ pitch_angle_label:
    VAR_TYPE: support_data
    FIELDNAM: ' '
    FORMAT: ' '
-   LABLAXIS: ' '
    UNITS: ' '
    VALIDMIN: ' '
    VALIDMAX: ' '
@@ -301,7 +298,6 @@ pitch_angle_label:
    DEPEND_0: epoch
    FIELDNAM: stim_tag
    FORMAT: ' '
-   LABLAXIS: ' '
    UNITS: ' '
    VALIDMIN: 0
    VALIDMAX: 1

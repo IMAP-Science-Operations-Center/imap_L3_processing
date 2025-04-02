@@ -16,14 +16,3 @@ attribute_key:
       whether or not the data variable is record varying
     required: true
     valid_values: RV, NRV
-
-#  LABL_PTR_2:
-#    description: >
-#      should be a short character string for label 2
-#    required: false
-#    valid_values: null
-#  LABL_PTR_3:
-#    description: >
-#      should be a short character string for label 3
-#    required: false
-#    valid_values: null
