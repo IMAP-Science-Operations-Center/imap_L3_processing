@@ -3,6 +3,7 @@ from datetime import datetime
 from typing import Self
 
 import numpy as np
+from spacepy import pycdf
 
 from imap_l3_processing.constants import CARRINGTON_ROTATION_IN_NANOSECONDS
 from imap_l3_processing.glows.l3bc.l3bc_toolkit.l3b_CarringtonIonRate import CarringtonIonizationRate
@@ -67,3 +68,39 @@ class GlowsL3BIonizationRate(DataProduct):
             cx_uncert=np.array([model.carr_ion_rate["cx_rate_uncert"]]),
             lat_grid_label=[f"{x}°" for x in latitude_grid],
         )
+
+
+@dataclass
+class GlowsL3CSolarWind(DataProduct):
+    epoch: np.ndarray[datetime]
+    epoch_delta: np.ndarray[float]
+    cr: np.ndarray[float]
+    lat_grid: np.ndarray[float]
+    lat_grid_delta: np.ndarray[float]
+    lat_grid_label: list[str]
+    plasma_speed_ecliptic: np.ndarray[float]
+    proton_density_ecliptic: np.ndarray[float]
+    alpha_abundance_ecliptic: np.ndarray[float]
+    plasma_speed_profile: np.ndarray[float]
+    proton_density_profile: np.ndarray[float]
+
+    def to_data_product_variables(self) -> list[DataProductVariable]:
+        return [
+            DataProductVariable("epoch", self.epoch, cdf_data_type=pycdf.const.CDF_TIME_TT2000),
+            DataProductVariable("epoch_delta", self.epoch_delta, cdf_data_type=pycdf.const.CDF_INT8),
+            DataProductVariable("cr", self.cr, cdf_data_type=pycdf.const.CDF_INT2),
+            DataProductVariable("lat_grid", self.lat_grid, cdf_data_type=pycdf.const.CDF_FLOAT, record_varying=False),
+            DataProductVariable("lat_grid_delta", self.lat_grid_delta, cdf_data_type=pycdf.const.CDF_FLOAT,
+                                record_varying=False),
+            DataProductVariable("lat_grid_label", self.lat_grid_label, cdf_data_type=pycdf.const.CDF_CHAR,
+                                record_varying=False),
+            DataProductVariable("plasma_speed_ecliptic", self.plasma_speed_ecliptic,
+                                cdf_data_type=pycdf.const.CDF_FLOAT),
+            DataProductVariable("proton_density_ecliptic", self.proton_density_ecliptic,
+                                cdf_data_type=pycdf.const.CDF_FLOAT),
+            DataProductVariable("alpha_abundance_ecliptic", self.alpha_abundance_ecliptic,
+                                cdf_data_type=pycdf.const.CDF_FLOAT),
+            DataProductVariable("plasma_speed_profile", self.plasma_speed_profile, cdf_data_type=pycdf.const.CDF_FLOAT),
+            DataProductVariable("proton_density_profile", self.proton_density_profile,
+                                cdf_data_type=pycdf.const.CDF_FLOAT),
+        ]
