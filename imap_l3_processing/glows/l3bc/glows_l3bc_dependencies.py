@@ -3,8 +3,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from zipfile import ZipFile
 
-from cdflib import CDF
-
 from imap_l3_processing.models import UpstreamDataDependency
 from imap_l3_processing.utils import download_dependency, download_dependency_from_path
 
@@ -17,7 +15,6 @@ class GlowsL3BCDependencies:
 
     @classmethod
     def fetch_dependencies(cls, dependencies: list[UpstreamDataDependency]):
-        CDF
         external_files = {}
         zip_file_path = download_dependency(dependencies[0])
         with ZipFile(zip_file_path, 'r') as zip_file:

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import numpy as np
@@ -99,6 +99,69 @@ def create_glows_l3a_from_dictionary(data: dict, input_metadata: UpstreamDataDep
         spacecraft_velocity_average=get_xyz(data["spacecraft_velocity_average"]),
         spacecraft_velocity_std_dev=get_xyz(data["spacecraft_velocity_std_dev"]),
     )
+
+
+def create_glows_l3a_dictionary_from_cdf(cdf_file_path: Path) -> dict:
+    cdf = CDF(str(cdf_file_path))
+    time_delta = timedelta(seconds=cdf['epoch_delta'][0] / 1e9)
+    start_time = cdf['epoch'][0] - time_delta
+    end_time = cdf['epoch'][0] + time_delta
+    return {
+        'start_time': start_time.strftime("%Y-%m-%d, %H:%M:%S"),
+        'end_time': end_time.strftime("%Y-%m-%d, %H:%M:%S"),
+        'daily_lightcurve': {
+            'ecliptic_lat': cdf['ecliptic_lat'][0],
+            'ecliptic_lon': cdf['ecliptic_lon'][0],
+            'exposure_times': cdf['exposure_times'][0],
+            'photon_flux': cdf['photon_flux'][0],
+            'flux_uncertainties': cdf['photon_flux_uncertainty'][0],
+            'extra_heliospheric_bckgrd': cdf['extra_heliospheric_bckgrd'][0],
+            'time_dependent_bckgrd': cdf['time_dependent_bckgrd'][0],
+            'spin_angle': cdf['spin_angle'][...],
+            'raw_histogram': cdf['raw_histogram'][0],
+            'number_of_bins': cdf['number_of_bins'][...]
+        },
+        'filter_temperature_average': cdf['filter_temperature_average'][0],
+        'filter_temperature_std_dev': cdf['filter_temperature_std_dev'][0],
+        'hv_voltage_average': cdf['hv_voltage_average'][0],
+        'hv_voltage_std_dev': cdf['hv_voltage_std_dev'][0],
+        'spin_period_average': cdf['spin_period_average'][0],
+        'spin_period_std_dev': cdf['spin_period_std_dev'][0],
+        'spin_period_ground_average': cdf['spin_period_ground_average'][0],
+        'spin_period_ground_std_dev': cdf['spin_period_ground_std_dev'][0],
+        'pulse_length_average': cdf['pulse_length_average'][0],
+        'pulse_length_std_dev': cdf['pulse_length_std_dev'][0],
+        'position_angle_offset_average': cdf['position_angle_offset_average'][0],
+        'position_angle_offset_std_dev': cdf['position_angle_offset_std_dev'][0],
+        'spin_axis_orientation_average': {
+            'lon': cdf['spin_axis_orientation_average'][0][0],
+            'lat': cdf['spin_axis_orientation_average'][0][1],
+        },
+        'spin_axis_orientation_std_dev': {
+            'lon': cdf['spin_axis_orientation_std_dev'][0][0],
+            'lat': cdf['spin_axis_orientation_std_dev'][0][1],
+        },
+        'spacecraft_location_average': {
+            'x': cdf['spacecraft_location_average'][0][0],
+            'y': cdf['spacecraft_location_average'][0][1],
+            'z': cdf['spacecraft_location_average'][0][2],
+        },
+        'spacecraft_location_std_dev': {
+            'x': cdf['spacecraft_location_std_dev'][0][0],
+            'y': cdf['spacecraft_location_std_dev'][0][1],
+            'z': cdf['spacecraft_location_std_dev'][0][2],
+        },
+        'spacecraft_velocity_average': {
+            'x': cdf['spacecraft_velocity_average'][0][0],
+            'y': cdf['spacecraft_velocity_average'][0][1],
+            'z': cdf['spacecraft_velocity_average'][0][2],
+        },
+        'spacecraft_velocity_std_dev': {
+            'x': cdf['spacecraft_velocity_std_dev'][0][0],
+            'y': cdf['spacecraft_velocity_std_dev'][0][1],
+            'z': cdf['spacecraft_velocity_std_dev'][0][2],
+        },
+    }
 
 
 def get_lon_lat(data: dict) -> np.ndarray:

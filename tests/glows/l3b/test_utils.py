@@ -7,9 +7,9 @@ from zipfile import ZIP_DEFLATED
 from astropy.time import Time
 from spacepy.pycdf import CDF
 
-from imap_l3_processing.glows.l3b.glows_initializer_ancillary_dependencies import GlowsInitializerAncillaryDependencies
-from imap_l3_processing.glows.l3b.models import CRToProcess
-from imap_l3_processing.glows.l3b.utils import read_glows_l3a_data, find_unprocessed_carrington_rotations, \
+from imap_l3_processing.glows.l3bc.glows_initializer_ancillary_dependencies import GlowsInitializerAncillaryDependencies
+from imap_l3_processing.glows.l3bc.models import CRToProcess
+from imap_l3_processing.glows.l3bc.utils import read_glows_l3a_data, find_unprocessed_carrington_rotations, \
     archive_dependencies
 from tests.test_helpers import get_test_data_path
 
@@ -41,8 +41,8 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(142100.0, actual_glows_lightcurve.spacecraft_location_std_dev[0][0])
         self.assertEqual(6.669000148773193, actual_glows_lightcurve.spacecraft_velocity_average[0][0])
         self.assertEqual(0.11879999935626984, actual_glows_lightcurve.spacecraft_velocity_std_dev[0][0])
-        self.assertEqual(2.0, actual_glows_lightcurve.spin_angle[0][0])
-        self.assertEqual(2.0, actual_glows_lightcurve.spin_angle_delta[0][0])
+        self.assertEqual(2.0, actual_glows_lightcurve.spin_angle[0])
+        self.assertEqual(2.0, actual_glows_lightcurve.spin_angle_delta[0])
         self.assertEqual(162.0919952392578, actual_glows_lightcurve.spin_axis_orientation_average[0][0])
         self.assertEqual(0.2345000058412552, actual_glows_lightcurve.spin_axis_orientation_std_dev[0][0])
         self.assertEqual(15.0, actual_glows_lightcurve.spin_period_average[0])
@@ -51,7 +51,7 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(0.0, actual_glows_lightcurve.spin_period_std_dev[0])
         self.assertEqual(0.0, actual_glows_lightcurve.time_dependent_background[0][0])
 
-    @patch("imap_l3_processing.glows.l3b.utils.validate_dependencies")
+    @patch("imap_l3_processing.glows.l3bc.utils.validate_dependencies")
     def test_find_unprocessed_carrington_rotations(self, mock_validate_dependencies: Mock):
         l3a_files_january = [
             create_imap_data_access_json(
@@ -79,7 +79,7 @@ class TestUtils(unittest.TestCase):
 
         l3b_files = [
             create_imap_data_access_json(
-                file_path=f'imap/glows/l3b/2010/01/imap_glows_l3b_hist_20100213_v001.pkts',
+                file_path=f'imap/glows/l3bc/2010/01/imap_glows_l3b_hist_20100213_v001.pkts',
                 data_level='l3b', start_date=f'20100213')
         ]
 
@@ -145,8 +145,8 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(initializer_dependencies.lyman_alpha_path,
                          mock_validate_dependencies.call_args_list[2][0][4])
 
-    @patch("imap_l3_processing.glows.l3b.utils.dump")
-    @patch("imap_l3_processing.glows.l3b.utils.ZipFile")
+    @patch("imap_l3_processing.glows.l3bc.utils.dump")
+    @patch("imap_l3_processing.glows.l3bc.utils.ZipFile")
     @patch('builtins.open', new_callable=mock_open, create=True)
     def test_archive_dependencies(self, mocked_open, mock_zip, mock_dump):
         expected_filename = "imap_glows_l3pre-b_l3b-archive_20250314_v001.zip"

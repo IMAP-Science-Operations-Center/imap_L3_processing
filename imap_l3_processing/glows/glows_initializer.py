@@ -2,8 +2,8 @@ from dataclasses import fields
 
 from imap_data_access import query
 
-from imap_l3_processing.glows.l3b.glows_initializer_ancillary_dependencies import GlowsInitializerAncillaryDependencies
-from imap_l3_processing.glows.l3b.utils import find_unprocessed_carrington_rotations, archive_dependencies
+from imap_l3_processing.glows.l3bc.glows_initializer_ancillary_dependencies import GlowsInitializerAncillaryDependencies
+from imap_l3_processing.glows.l3bc.utils import find_unprocessed_carrington_rotations, archive_dependencies
 
 
 class GlowsInitializer:
