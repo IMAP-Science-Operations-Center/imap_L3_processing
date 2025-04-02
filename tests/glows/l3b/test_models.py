@@ -2,16 +2,17 @@ import unittest
 from unittest.mock import sentinel
 
 import numpy as np
+from spacepy import pycdf
 
 from imap_l3_processing.constants import CARRINGTON_ROTATION_IN_NANOSECONDS
 from imap_l3_processing.glows.l3bc.l3bc_toolkit.l3b_CarringtonIonRate import CarringtonIonizationRate
-from imap_l3_processing.glows.l3bc.models import GlowsL3BIonizationRate
+from imap_l3_processing.glows.l3bc.models import GlowsL3BIonizationRate, GlowsL3CSolarWind
 from tests.swapi.cdf_model_test_case import CdfModelTestCase
 from tests.test_helpers import get_test_instrument_team_data_path
 
 
 class TestModels(CdfModelTestCase):
-    def test_to_data_product_variables(self):
+    def test_l3b_to_data_product_variables(self):
         data = GlowsL3BIonizationRate(input_metadata=sentinel.input_metadata,
                                       epoch=sentinel.epoch,
                                       epoch_delta=sentinel.epoch_delta,
@@ -88,6 +89,47 @@ class TestModels(CdfModelTestCase):
         self.assertEqual([sentinel.cx_rate_uncert], result.cx_uncert)
         self.assertEqual(["-90°", "-45°", "0°", "45°", "90°"], result.lat_grid_label)
         self.assertEqual((5,), result.lat_grid_delta.shape)
+
+    def test_l3c_to_data_product_variables(self):
+        data = GlowsL3CSolarWind(input_metadata=sentinel.input_metadata,
+                                 epoch=sentinel.epoch,
+                                 epoch_delta=sentinel.epoch_delta,
+                                 cr=sentinel.cr,
+                                 lat_grid=sentinel.lat_grid,
+                                 lat_grid_delta=sentinel.lat_grid_delta,
+                                 lat_grid_label=sentinel.lat_grid_label,
+                                 plasma_speed_ecliptic=sentinel.plasma_speed_ecliptic,
+                                 proton_density_ecliptic=sentinel.proton_density_ecliptic,
+                                 alpha_abundance_ecliptic=sentinel.alpha_abundance_ecliptic,
+                                 plasma_speed_profile=sentinel.plasma_speed_profile,
+                                 proton_density_profile=sentinel.proton_density_profile,
+                                 )
+
+        variables = data.to_data_product_variables()
+        self.assertEqual(11, len(variables))
+
+        variables = iter(variables)
+        self.assert_variable_attributes(next(variables), sentinel.epoch, "epoch",
+                                        expected_data_type=pycdf.const.CDF_TIME_TT2000)
+        self.assert_variable_attributes(next(variables), sentinel.epoch_delta, "epoch_delta",
+                                        expected_data_type=pycdf.const.CDF_INT8)
+        self.assert_variable_attributes(next(variables), sentinel.cr, "cr", expected_data_type=pycdf.const.CDF_INT2)
+        self.assert_variable_attributes(next(variables), sentinel.lat_grid, "lat_grid",
+                                        expected_data_type=pycdf.const.CDF_FLOAT, expected_record_varying=False)
+        self.assert_variable_attributes(next(variables), sentinel.lat_grid_delta, "lat_grid_delta",
+                                        expected_data_type=pycdf.const.CDF_FLOAT, expected_record_varying=False)
+        self.assert_variable_attributes(next(variables), sentinel.lat_grid_label, "lat_grid_label",
+                                        expected_data_type=pycdf.const.CDF_CHAR, expected_record_varying=False)
+        self.assert_variable_attributes(next(variables), sentinel.plasma_speed_ecliptic, "plasma_speed_ecliptic",
+                                        expected_data_type=pycdf.const.CDF_FLOAT)
+        self.assert_variable_attributes(next(variables), sentinel.proton_density_ecliptic, "proton_density_ecliptic",
+                                        expected_data_type=pycdf.const.CDF_FLOAT)
+        self.assert_variable_attributes(next(variables), sentinel.alpha_abundance_ecliptic, "alpha_abundance_ecliptic",
+                                        expected_data_type=pycdf.const.CDF_FLOAT)
+        self.assert_variable_attributes(next(variables), sentinel.plasma_speed_profile, "plasma_speed_profile",
+                                        expected_data_type=pycdf.const.CDF_FLOAT)
+        self.assert_variable_attributes(next(variables), sentinel.proton_density_profile, "proton_density_profile",
+                                        expected_data_type=pycdf.const.CDF_FLOAT)
 
 
 if __name__ == '__main__':
