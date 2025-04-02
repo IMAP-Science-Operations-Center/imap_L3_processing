@@ -158,4 +158,7 @@ def filter_out_bad_days(l3a_data: [dict], bad_day_list_path: Path) -> [dict]:
             else:
                 bad_day_list_index += 1
 
+        if l3a_data_index < len(l3a_data):
+            filtered_data += l3a_data[l3a_data_index:]
+
     return filtered_data
