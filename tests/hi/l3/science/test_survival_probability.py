@@ -161,3 +161,9 @@ class TestSurvivalProbability(unittest.TestCase):
         expected_skygrid_1d = np.divide(summed_survivals, summed_exposure).reshape(1, 2, -1)
         np.testing.assert_equal(actual_skymap.data_1d['exposure_weighted_survival_probabilities'].values,
                                 expected_skygrid_1d)
+
+        survival_probability_dataset = actual_skymap.to_dataset()
+
+        self.assertIn("exposure_weighted_survival_probabilities", survival_probability_dataset)
+        self.assertEqual((1, 2, 3600, 1800),
+                         survival_probability_dataset["exposure_weighted_survival_probabilities"].values.shape)
