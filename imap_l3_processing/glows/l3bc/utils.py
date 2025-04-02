@@ -18,10 +18,10 @@ from imap_l3_processing.glows.l3a.models import GlowsL3LightCurve, PHOTON_FLUX_U
     SPIN_AXIS_ORIENTATION_AVERAGE_CDF_VAR_NAME, SPIN_AXIS_ORIENTATION_STD_DEV_CDF_VAR_NAME, \
     SPACECRAFT_LOCATION_AVERAGE_CDF_VAR_NAME, SPACECRAFT_LOCATION_STD_DEV_CDF_VAR_NAME, \
     SPACECRAFT_VELOCITY_AVERAGE_CDF_VAR_NAME
-from imap_l3_processing.glows.l3b.dependency_validator import validate_dependencies
-from imap_l3_processing.glows.l3b.glows_initializer_ancillary_dependencies import GlowsInitializerAncillaryDependencies
-from imap_l3_processing.glows.l3b.l3bc_toolkit.funcs import carrington, jd_fm_Carrington
-from imap_l3_processing.glows.l3b.models import CRToProcess
+from imap_l3_processing.glows.l3bc.dependency_validator import validate_dependencies
+from imap_l3_processing.glows.l3bc.glows_initializer_ancillary_dependencies import GlowsInitializerAncillaryDependencies
+from imap_l3_processing.glows.l3bc.l3bc_toolkit.funcs import carrington, jd_fm_Carrington
+from imap_l3_processing.glows.l3bc.models import CRToProcess
 
 
 def read_glows_l3a_data(cdf: CDF) -> GlowsL3LightCurve:
@@ -108,8 +108,6 @@ def find_unprocessed_carrington_rotations(l3a_inputs: list[dict], l3b_inputs: li
                 l3a_paths=l3a_files,
                 cr_midpoint=date_time_midpoint.strftime('%Y%m%d'),
                 cr_rotation_number=carrington_number,
-                uv_anisotropy=dependencies.uv_anisotropy_path,
-                waw_helioion_mp=dependencies.waw_helioion_mp_path
             ))
 
     return crs_to_process
@@ -128,5 +126,13 @@ def archive_dependencies(cr_to_process: CRToProcess, version: str,
         file.write(ancillary_dependencies.omni2_data_path)
         file.write(ancillary_dependencies.f107_index_file_path)
         with open(json_filename, "w") as json_file:
-            dump(cr_to_process, json_file)
+            cr = {"cr_rotation_number": cr_to_process.cr_rotation_number,
+                  "l3a_paths": cr_to_process.l3a_paths,
+                  "cr_midpoint": cr_to_process.cr_midpoint,
+                  "bad_days_list": ancillary_dependencies.bad_days_list,
+                  "pipeline_settings": ancillary_dependencies.pipeline_settings,
+                  "waw_helioion_mp": ancillary_dependencies.waw_helioion_mp_path,
+                  "uv_anisotropy": ancillary_dependencies.uv_anisotropy_path
+                  }
+            dump(cr, json_file)
         file.write(json_filename)

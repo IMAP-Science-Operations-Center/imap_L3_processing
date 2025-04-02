@@ -32,7 +32,7 @@ def save_data(data: DataProduct, delete_if_present: bool = False, folder_path: s
         Path(file_path).unlink(missing_ok=True)
 
     attribute_manager = ImapAttributeManager()
-    attribute_manager.add_global_attribute("Data_version", data.input_metadata.version)
+    attribute_manager.add_global_attribute("Data_version", data.input_metadata.version.replace('v', ''))
     attribute_manager.add_instrument_attrs(data.input_metadata.instrument, data.input_metadata.data_level,
                                            data.input_metadata.descriptor)
     attribute_manager.add_global_attribute("Generation_date", date.today().strftime("%Y%m%d"))
@@ -61,6 +61,10 @@ def download_dependency(dependency: UpstreamDataDependency) -> Path:
         raise ValueError(f"{files_to_download}. Expected one file to download, found {len(files_to_download)}.")
 
     return imap_data_access.download(files_to_download[0])
+
+
+def download_dependency_from_path(path_str: str) -> Path:
+    return imap_data_access.download(path_str)
 
 
 def download_external_dependency(dependency_url: str, filename: str) -> Path | None:
