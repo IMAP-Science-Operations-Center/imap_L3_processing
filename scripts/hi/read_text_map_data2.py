@@ -24,7 +24,7 @@ for folder in parent.iterdir():
             energy = float(energy_string.replace('p', '.'))
             data[sub_folder.name][energy] = np.loadtxt(file, delimiter=",")
     assert (data['flux'].keys() == data['sigma'].keys())
-    energy = np.array([key for key in data['flux'].keys()])
+    energy = np.array([key for key in sorted(data['flux'].keys())])
     flux = np.array([data['flux'][key] for key in sorted(data['flux'].keys())]).T
     sigma = np.array([data['sigma'][key] for key in sorted(data['sigma'].keys())]).T
     variance = sigma ** 2
