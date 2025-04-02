@@ -64,7 +64,7 @@ def download_dependency(dependency: UpstreamDataDependency) -> Path:
 
 
 def download_dependency_from_path(path_str: str) -> Path:
-    raise NotImplemented
+    return imap_data_access.download(path_str)
 
 
 def download_external_dependency(dependency_url: str, filename: str) -> Path | None:
