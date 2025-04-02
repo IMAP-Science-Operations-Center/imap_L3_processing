@@ -6,7 +6,8 @@ import numpy as np
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.glows.l3a.models import GlowsL2Data, GlowsL2Header
-from imap_l3_processing.glows.l3a.utils import read_l2_glows_data, create_glows_l3a_from_dictionary
+from imap_l3_processing.glows.l3a.utils import read_l2_glows_data, create_glows_l3a_from_dictionary, \
+    create_glows_l3a_dictionary_from_cdf
 from imap_l3_processing.models import UpstreamDataDependency
 from tests.test_helpers import get_test_data_path
 
@@ -192,6 +193,70 @@ class TestUtils(unittest.TestCase):
             np.testing.assert_array_equal([1.421e+05, 6.001e+05, 4.082e+01], result.spacecraft_location_std_dev[0])
             np.testing.assert_array_equal([6.669, 28.805, -0.002], result.spacecraft_velocity_average[0])
             np.testing.assert_array_equal([1.188e-01, 2.961e-02, 4.337e-19], result.spacecraft_velocity_std_dev[0])
+
+    def test_create_glows_l3a_dictionary_from_cdf(self):
+        cdf_path = get_test_data_path("glows") / "imap_glows_l3a_hist_20100101_v001.cdf"
+        actual_dictionary = create_glows_l3a_dictionary_from_cdf(cdf_path)
+
+        self.assertEqual("imap_glows_l3a_hist_20100101_v001.cdf", actual_dictionary["filename"])
+        self.assertEqual(datetime(2013, 9, 8, 8, 52, 14).strftime("%Y-%m-%d, %H:%M:%S"),
+                         actual_dictionary['start_time'])
+        self.assertEqual(datetime(2013, 9, 9, 4, 58, 14).strftime("%Y-%m-%d, %H:%M:%S"), actual_dictionary['end_time'])
+
+        self.assertEqual(74.87028793594668, actual_dictionary['daily_lightcurve']['ecliptic_lat'][0])
+        self.assertEqual(74.87028793594668, actual_dictionary['daily_lightcurve']['ecliptic_lat'][-1])
+        self.assertEqual(154.67118387992855, actual_dictionary['daily_lightcurve']['ecliptic_lon'][0])
+        self.assertEqual(169.51280659858702, actual_dictionary['daily_lightcurve']['ecliptic_lon'][-1])
+        self.assertEqual(802.8, actual_dictionary['daily_lightcurve']['exposure_times'][0])
+        self.assertEqual(80.28, actual_dictionary['daily_lightcurve']['exposure_times'][2])
+        self.assertAlmostEqual(620.93173891, actual_dictionary['daily_lightcurve']['photon_flux'][0])
+        self.assertAlmostEqual(635.46586946, actual_dictionary['daily_lightcurve']['photon_flux'][-1])
+        self.assertAlmostEqual(0.87946437, actual_dictionary['daily_lightcurve']['flux_uncertainties'][0])
+        self.assertAlmostEqual(0.88969763, actual_dictionary['daily_lightcurve']['flux_uncertainties'][-1])
+        self.assertAlmostEqual(7.20014416e-04, actual_dictionary['daily_lightcurve']['extra_heliospheric_bckgrd'][0])
+        self.assertAlmostEqual(3.66514655e-04, actual_dictionary['daily_lightcurve']['extra_heliospheric_bckgrd'][-1])
+        self.assertEqual(0, actual_dictionary['daily_lightcurve']['time_dependent_bckgrd'][0])
+        self.assertEqual(1.0000e-02, actual_dictionary['daily_lightcurve']['time_dependent_bckgrd'][10])
+        self.assertEqual(2, actual_dictionary['daily_lightcurve']['spin_angle'][0])
+        self.assertEqual(358, actual_dictionary['daily_lightcurve']['spin_angle'][-1])
+        self.assertEqual(498484, actual_dictionary['daily_lightcurve']['raw_histogram'][0])
+        self.assertEqual(510152, actual_dictionary['daily_lightcurve']['raw_histogram'][-1])
+        self.assertEqual(65, actual_dictionary['daily_lightcurve']['number_of_bins'])
+
+        self.assertEqual(-27.84000015258789, actual_dictionary['filter_temperature_average'])
+        self.assertEqual(0.0, actual_dictionary['filter_temperature_std_dev'])
+        self.assertEqual(1527.0999755859375, actual_dictionary['hv_voltage_average'])
+        self.assertEqual(87.94999694824219, actual_dictionary['hv_voltage_std_dev'])
+        self.assertEqual(15.0, actual_dictionary['spin_period_average'])
+        self.assertEqual(0.0, actual_dictionary['spin_period_std_dev'])
+        self.assertEqual(15.236681938171387, actual_dictionary['spin_period_ground_average'])
+        self.assertEqual(0.0014979999978095293, actual_dictionary['spin_period_ground_std_dev'])
+        self.assertEqual(0.29899999499320984, actual_dictionary['pulse_length_average'])
+        self.assertEqual(0.017260000109672546, actual_dictionary['pulse_length_std_dev'])
+
+        self.assertEqual(91.5780029296875, actual_dictionary['position_angle_offset_average'])
+        self.assertEqual(0.009991000406444073, actual_dictionary['position_angle_offset_std_dev'])
+
+        self.assertAlmostEqual(162.09199524, actual_dictionary['spin_axis_orientation_average']['lon'])
+        self.assertAlmostEqual(0.0, actual_dictionary['spin_axis_orientation_average']['lat'])
+        self.assertAlmostEqual(0.23450001, actual_dictionary['spin_axis_orientation_std_dev']['lon'])
+        self.assertAlmostEqual(0.0, actual_dictionary['spin_axis_orientation_std_dev']['lat'])
+
+        self.assertAlmostEqual(1.46231104e+08, actual_dictionary['spacecraft_location_average']['x'])
+        self.assertAlmostEqual(-3.62120560e+07, actual_dictionary['spacecraft_location_average']['y'])
+        self.assertAlmostEqual(1049.300048828125, actual_dictionary['spacecraft_location_average']['z'])
+
+        self.assertAlmostEqual(1.42100000e+05, actual_dictionary['spacecraft_location_std_dev']['x'])
+        self.assertAlmostEqual(6.00100000e+05, actual_dictionary['spacecraft_location_std_dev']['y'])
+        self.assertAlmostEqual(4.08199997e+01, actual_dictionary['spacecraft_location_std_dev']['z'])
+
+        self.assertAlmostEqual(6.66900015e+00, actual_dictionary['spacecraft_velocity_average']['x'])
+        self.assertAlmostEqual(2.88050003e+01, actual_dictionary['spacecraft_velocity_average']['y'])
+        self.assertAlmostEqual(-2.00000009e-03, actual_dictionary['spacecraft_velocity_average']['z'])
+
+        self.assertAlmostEqual(1.18799999e-01, actual_dictionary['spacecraft_velocity_std_dev']['x'])
+        self.assertAlmostEqual(2.96100006e-02, actual_dictionary['spacecraft_velocity_std_dev']['y'])
+        self.assertAlmostEqual(4.33699998e-19, actual_dictionary['spacecraft_velocity_std_dev']['z'])
 
 
 if __name__ == '__main__':

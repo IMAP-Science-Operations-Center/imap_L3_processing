@@ -11,7 +11,8 @@ class TestImapCdfManager(TestCase):
     def setUp(self):
         self.config_folder_path = Path(imap_l3_processing.__file__).parent.resolve() / 'cdf/config'
         self.base_manager = CdfAttributeManager(
-            variable_schema_layers=[self.config_folder_path / 'imap_l3_variable_cdf_attrs_schema.yaml'],
+            variable_schema_layers=[self.config_folder_path / 'imap_l3_variable_cdf_attrs_schema.yaml',
+                                    self.config_folder_path / 'default_variable_cdf_attrs_schema.yaml'],
             use_defaults=True)
         self.base_manager.load_global_attributes(self.config_folder_path / 'imap_default_global_cdf_attrs.yaml')
 

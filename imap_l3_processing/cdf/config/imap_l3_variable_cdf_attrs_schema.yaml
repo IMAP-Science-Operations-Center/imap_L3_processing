@@ -6,3 +6,13 @@ attribute_key:
     required: false # not required if using LABL_PTR_i
     valid_values: null
     alternate: LABL_PTR_1
+  DATA_TYPE:
+    description: >
+      the data type
+    required: true
+    valid_values: null
+  RECORD_VARYING:
+    description: >
+      whether or not the data variable is record varying
+    required: true
+    valid_values: RV, NRV

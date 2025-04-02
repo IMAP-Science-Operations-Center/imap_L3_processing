@@ -73,6 +73,7 @@ class TestSwapiProcessor(TestCase):
         version = 'f'
         outgoing_data_level = "l3a"
         start_date = datetime.now() - timedelta(days=1)
+        input_version = "v12345"
         outgoing_version = "12345"
 
         start_date_as_str = datetime.strftime(start_date, "%Y%m%d")
@@ -118,8 +119,7 @@ class TestSwapiProcessor(TestCase):
             [chunk_of_fifty],
         ]
 
-        input_metadata = InputMetadata(instrument, outgoing_data_level, start_date, end_date,
-                                       outgoing_version)
+        input_metadata = InputMetadata(instrument, outgoing_data_level, start_date, end_date, input_version)
 
         proton_solar_wind_data = mock_proton_solar_wind_data_constructor.return_value
         expected_proton_metadata = input_metadata.to_upstream_data_dependency("proton-sw")
@@ -270,27 +270,27 @@ class TestSwapiProcessor(TestCase):
         mock_calculate_ten_minute_velocities.assert_called_with([returned_proton_sw_speed.nominal_value],
                                                                 [returned_proton_sw_deflection_angle.nominal_value],
                                                                 [returned_proton_sw_clock_angle.nominal_value])
-        proton_cdf_path = f"{self.temp_directory}/imap_swapi_l3a_proton-sw_{start_date_as_str}_12345.cdf"
-        alpha_cdf_path = f"{self.temp_directory}/imap_swapi_l3a_alpha-sw_{start_date_as_str}_12345.cdf"
-        pui_cdf_path = f"{self.temp_directory}/imap_swapi_l3a_pui-he_{start_date_as_str}_12345.cdf"
+        proton_cdf_path = f"{self.temp_directory}/imap_swapi_l3a_proton-sw_{start_date_as_str}_{input_version}.cdf"
+        alpha_cdf_path = f"{self.temp_directory}/imap_swapi_l3a_alpha-sw_{start_date_as_str}_{input_version}.cdf"
+        pui_cdf_path = f"{self.temp_directory}/imap_swapi_l3a_pui-he_{start_date_as_str}_{input_version}.cdf"
         mock_manager.add_global_attribute.assert_has_calls([call("Data_version", outgoing_version),
                                                             call("Generation_date", date.today().strftime("%Y%m%d")),
                                                             call("Logical_source",
                                                                  "imap_swapi_l3a_proton-sw"),
                                                             call("Logical_file_id",
-                                                                 f"imap_swapi_l3a_proton-sw_{start_date_as_str}_12345"),
+                                                                 f"imap_swapi_l3a_proton-sw_{start_date_as_str}_{input_version}"),
                                                             call("Data_version", outgoing_version),
                                                             call("Generation_date", date.today().strftime("%Y%m%d")),
                                                             call("Logical_source",
                                                                  "imap_swapi_l3a_alpha-sw"),
                                                             call("Logical_file_id",
-                                                                 f"imap_swapi_l3a_alpha-sw_{start_date_as_str}_12345"),
+                                                                 f"imap_swapi_l3a_alpha-sw_{start_date_as_str}_{input_version}"),
                                                             call("Data_version", outgoing_version),
                                                             call("Generation_date", date.today().strftime("%Y%m%d")),
                                                             call("Logical_source",
                                                                  "imap_swapi_l3a_pui-he"),
                                                             call("Logical_file_id",
-                                                                 f"imap_swapi_l3a_pui-he_{start_date_as_str}_12345"),
+                                                                 f"imap_swapi_l3a_pui-he_{start_date_as_str}_{input_version}"),
                                                             ])
 
         actual_alpha_metadata, actual_alpha_epoch, actual_alpha_sw_speed, actual_alpha_sw_temperature, actual_alpha_sw_density = mock_alpha_solar_wind_data_constructor.call_args.args

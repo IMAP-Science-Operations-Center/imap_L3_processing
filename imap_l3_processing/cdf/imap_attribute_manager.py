@@ -7,7 +7,9 @@ from sammi.cdf_attribute_manager import CdfAttributeManager
 class ImapAttributeManager(CdfAttributeManager):
     def __init__(self):
         super().__init__(variable_schema_layers=[
-            Path(f'{Path(__file__).parent.resolve()}/config/imap_l3_variable_cdf_attrs_schema.yaml')],
+            Path(f'{Path(__file__).parent.resolve()}/config/imap_l3_variable_cdf_attrs_schema.yaml'),
+            Path(f'{Path(__file__).parent.resolve()}/config/default_variable_cdf_attrs_schema.yaml')
+        ],
             use_defaults=True)
         self.config_folder_path = Path(f'{Path(__file__).parent.resolve()}/config')
 
