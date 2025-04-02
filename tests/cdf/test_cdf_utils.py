@@ -74,6 +74,10 @@ class TestCdfUtils(TempFileTestCase):
             self.assertEqual(pycdf.const.CDF_INT4.value, actual_cdf[non_rec_varying_var.name].type())
             self.assertFalse(actual_cdf[non_rec_varying_var.name].rv())
 
+            actual_var_attributes = [attribute for k, v in actual_cdf.items() for attribute in v.attrs]
+            self.assertNotIn("DATA_TYPE", actual_var_attributes)
+            self.assertNotIn("RECORD_VARYING", actual_var_attributes)
+
     def test_write_cdf_trims_numbers_in_logical_source_when_fetching_global_metadata(self):
         path = str(self.temp_directory / "write_cdf.cdf")
         data = TestDataProduct()
