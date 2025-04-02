@@ -9,7 +9,7 @@ from dataclasses import dataclass
 import numpy as np
 from astropy import units as u
 
-import funcs as fun
+from . import funcs as fun
 from .constants import VERSION
 
 logging.basicConfig(level=logging.ERROR)
