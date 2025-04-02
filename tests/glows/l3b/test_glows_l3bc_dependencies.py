@@ -10,11 +10,10 @@ class TestGlowsL3BCDependencies(unittest.TestCase):
 
     @patch('builtins.open', new_callable=mock_open, create=False)
     @patch('imap_l3_processing.glows.l3b.glows_l3bc_dependencies.ZipFile')
-    @patch('imap_l3_processing.glows.l3b.glows_l3bc_dependencies.CDF')
     @patch('imap_l3_processing.glows.l3b.glows_l3bc_dependencies.download_dependency')
     @patch('imap_l3_processing.glows.l3b.glows_l3bc_dependencies.download_dependency_from_path')
     def test_fetch_dependencies(self, mock_download_dependencies_from_path, mock_download_dependencies,
-                                mock_cdf_constructor, mock_zip_file_class,
+                                mock_zip_file_class,
                                 mock_open_file):
         mock_zip_file_path = Mock()
         mock_download_dependencies.side_effect = [mock_zip_file_path]
