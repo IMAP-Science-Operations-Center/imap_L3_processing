@@ -1,8 +1,13 @@
 import unittest
 from unittest.mock import sentinel
 
+import numpy as np
+
+from imap_l3_processing.constants import CARRINGTON_ROTATION_IN_NANOSECONDS
+from imap_l3_processing.glows.l3bc.l3bc_toolkit.l3b_CarringtonIonRate import CarringtonIonizationRate
 from imap_l3_processing.glows.l3bc.models import GlowsL3BIonizationRate
 from tests.swapi.cdf_model_test_case import CdfModelTestCase
+from tests.test_helpers import get_test_instrument_team_data_path
 
 
 class TestModels(CdfModelTestCase):
@@ -40,6 +45,49 @@ class TestModels(CdfModelTestCase):
         self.assert_variable_attributes(next(variables), sentinel.ph_uncert, "ph_uncert")
         self.assert_variable_attributes(next(variables), sentinel.cx_uncert, "cx_uncert")
         self.assert_variable_attributes(next(variables), sentinel.lat_grid_label, "lat_grid_label")
+
+    def test_from_instrument_team_model(self):
+        pipeline_settings_path = get_test_instrument_team_data_path("glows/imap_glows_pipeline-settings-L3bc_v001.json")
+        model = CarringtonIonizationRate(l3a_fn_list=[],
+                                         anc_input_from_instr_team={
+                                             "pipeline_settings": pipeline_settings_path,
+                                         },
+                                         ext_dependencies={
+                                             "f107_raw_data": []
+                                         })
+
+        model.carr_ion_rate["date"] = sentinel.date
+        model.carr_ion_rate["CR"] = sentinel.CR
+        latitude_grid = np.array([-90, -45, 0, 45, 90])
+        model.carr_ion_rate["ion_grid"] = latitude_grid
+        model.carr_ion_rate["ion_rate"] = sentinel.ion_rate
+        model.carr_ion_rate["ph_rate"] = sentinel.ph_rate
+        model.carr_ion_rate["cx_rate"] = sentinel.cx_rate
+        model.carr_ion_rate["ion_rate_uncert"] = sentinel.ion_rate_uncert
+        model.carr_ion_rate["ph_rate_uncert"] = sentinel.ph_rate_uncert
+        model.carr_ion_rate["cx_rate_uncert"] = sentinel.cx_rate_uncert
+
+        model.uv_anisotropy = sentinel.uv_anisotropy
+
+        result = GlowsL3BIonizationRate.from_instrument_team_object(model, sentinel.input_metadata)
+
+        self.assertIsInstance(result, GlowsL3BIonizationRate)
+
+        self.assertEqual(sentinel.input_metadata, result.input_metadata)
+        self.assertEqual([sentinel.date], result.epoch)
+        np.testing.assert_equal([CARRINGTON_ROTATION_IN_NANOSECONDS / 2], result.epoch_delta)
+
+        self.assertEqual([sentinel.CR], result.cr)
+        self.assertEqual([sentinel.uv_anisotropy], result.uv_anisotropy_factor)
+        np.testing.assert_equal(latitude_grid, result.lat_grid)
+        self.assertEqual([sentinel.ion_rate], result.sum_rate)
+        self.assertEqual([sentinel.ph_rate], result.ph_rate)
+        self.assertEqual([sentinel.cx_rate], result.cx_rate)
+        self.assertEqual([sentinel.ion_rate_uncert], result.sum_uncert)
+        self.assertEqual([sentinel.ph_rate_uncert], result.ph_uncert)
+        self.assertEqual([sentinel.cx_rate_uncert], result.cx_uncert)
+        self.assertEqual(["-90°", "-45°", "0°", "45°", "90°"], result.lat_grid_label)
+        self.assertEqual((5,), result.lat_grid_delta.shape)
 
 
 if __name__ == '__main__':
