@@ -8,18 +8,21 @@ from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDepen
 
 class TestGlowsL3BCDependencies(unittest.TestCase):
 
+    @patch('imap_l3_processing.glows.l3bc.glows_l3bc_dependencies.create_glows_l3a_dictionary_from_cdf')
     @patch('builtins.open', new_callable=mock_open, create=False)
     @patch('imap_l3_processing.glows.l3bc.glows_l3bc_dependencies.ZipFile')
     @patch('imap_l3_processing.glows.l3bc.glows_l3bc_dependencies.download_dependency')
     @patch('imap_l3_processing.glows.l3bc.glows_l3bc_dependencies.download_dependency_from_path')
     def test_fetch_dependencies(self, mock_download_dependencies_from_path, mock_download_dependencies,
                                 mock_zip_file_class,
-                                mock_open_file):
+                                mock_open_file, mock_create_dictionary_from_cdf):
         mock_zip_file_path = Mock()
         mock_download_dependencies.side_effect = [mock_zip_file_path]
         mock_download_dependencies_from_path.side_effect = [
             sentinel.uv_anisotropy_downloaded_path,
-            sentinel.waw_downloaded_path
+            sentinel.waw_downloaded_path,
+            sentinel.l3a_downloaded_path_1,
+            sentinel.l3a_downloaded_path_2,
         ]
 
         mock_zip_file = MagicMock()
@@ -29,6 +32,11 @@ class TestGlowsL3BCDependencies(unittest.TestCase):
         mock_open_file.return_value.__enter__.return_value = mock_json_file
         mock_json_file.read.return_value = '{"l3a_paths":["l3a_path_1", "l3a_path_2"], "uv_anisotropy":"uv_anisotropy_path", "waw_helioion_mp":"waw_path"}'
 
+        mock_create_dictionary_from_cdf.side_effect = [
+            sentinel.l3a_dictionary_1,
+            sentinel.l3a_dictionary_2,
+        ]
+
         dependency: GlowsL3BCDependencies = GlowsL3BCDependencies.fetch_dependencies([sentinel.zip_dependency])
 
         mock_zip_file_class.assert_called_with(mock_zip_file_path, 'r')
@@ -37,8 +45,12 @@ class TestGlowsL3BCDependencies(unittest.TestCase):
 
         mock_download_dependencies.assert_called_once_with(sentinel.zip_dependency)
 
+        self.assertEqual([call(sentinel.l3a_downloaded_path_1), call(sentinel.l3a_downloaded_path_2)],
+                         mock_create_dictionary_from_cdf.call_args_list)
         self.assertEqual([call("uv_anisotropy_path"),
-                          call("waw_path")
+                          call("waw_path"),
+                          call("l3a_path_1"),
+                          call("l3a_path_2"),
                           ], mock_download_dependencies_from_path.call_args_list)
 
         self.assertEqual(base_dir_file_path / 'f107_fluxtable.txt', dependency.external_files['f107_raw_data'])
@@ -46,3 +58,6 @@ class TestGlowsL3BCDependencies(unittest.TestCase):
 
         self.assertEqual(sentinel.uv_anisotropy_downloaded_path, dependency.ancillary_files['uv_anisotropy'])
         self.assertEqual(sentinel.waw_downloaded_path, dependency.ancillary_files['waw_helioion_mp'])
+
+        self.assertEqual(sentinel.l3a_dictionary_1, dependency.l3a_data[0])
+        self.assertEqual(sentinel.l3a_dictionary_2, dependency.l3a_data[1])
