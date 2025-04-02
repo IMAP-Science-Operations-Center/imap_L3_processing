@@ -18,10 +18,10 @@ from imap_l3_processing.glows.l3a.models import GlowsL3LightCurve, PHOTON_FLUX_U
     SPIN_AXIS_ORIENTATION_AVERAGE_CDF_VAR_NAME, SPIN_AXIS_ORIENTATION_STD_DEV_CDF_VAR_NAME, \
     SPACECRAFT_LOCATION_AVERAGE_CDF_VAR_NAME, SPACECRAFT_LOCATION_STD_DEV_CDF_VAR_NAME, \
     SPACECRAFT_VELOCITY_AVERAGE_CDF_VAR_NAME
-from imap_l3_processing.glows.l3b.dependency_validator import validate_dependencies
-from imap_l3_processing.glows.l3b.glows_initializer_ancillary_dependencies import GlowsInitializerAncillaryDependencies
-from imap_l3_processing.glows.l3b.l3bc_toolkit.funcs import carrington, jd_fm_Carrington
-from imap_l3_processing.glows.l3b.models import CRToProcess
+from imap_l3_processing.glows.l3bc.dependency_validator import validate_dependencies
+from imap_l3_processing.glows.l3bc.glows_initializer_ancillary_dependencies import GlowsInitializerAncillaryDependencies
+from imap_l3_processing.glows.l3bc.l3bc_toolkit.funcs import carrington, jd_fm_Carrington
+from imap_l3_processing.glows.l3bc.models import CRToProcess
 
 
 def read_glows_l3a_data(cdf: CDF) -> GlowsL3LightCurve:

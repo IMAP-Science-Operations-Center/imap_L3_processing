@@ -3,8 +3,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from zipfile import ZipFile
 
-from cdflib import CDF
-
+from imap_l3_processing.glows.l3a.utils import create_glows_l3a_dictionary_from_cdf
 from imap_l3_processing.models import UpstreamDataDependency
 from imap_l3_processing.utils import download_dependency, download_dependency_from_path
 
@@ -17,7 +16,6 @@ class GlowsL3BCDependencies:
 
     @classmethod
     def fetch_dependencies(cls, dependencies: list[UpstreamDataDependency]):
-        CDF
         external_files = {}
         zip_file_path = download_dependency(dependencies[0])
         with ZipFile(zip_file_path, 'r') as zip_file:
@@ -36,4 +34,9 @@ class GlowsL3BCDependencies:
             'waw_helioion_mp': download_dependency_from_path(paths_to_download['waw_helioion_mp'])
         }
 
-        return cls(l3a_data=[], external_files=external_files, ancillary_files=ancillary_files)
+        l3a_paths = paths_to_download['l3a_paths']
+        l3a_data = []
+        for path in l3a_paths:
+            l3a_data.append(create_glows_l3a_dictionary_from_cdf(download_dependency_from_path(path)))
+
+        return cls(l3a_data=l3a_data, external_files=external_files, ancillary_files=ancillary_files)

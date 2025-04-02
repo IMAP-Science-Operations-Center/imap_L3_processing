@@ -2,7 +2,7 @@ import unittest
 from unittest.mock import Mock, patch, call, sentinel
 
 from imap_l3_processing.glows.glows_initializer import GlowsInitializer
-from imap_l3_processing.glows.l3b.glows_initializer_ancillary_dependencies import GlowsInitializerAncillaryDependencies
+from imap_l3_processing.glows.l3bc.glows_initializer_ancillary_dependencies import GlowsInitializerAncillaryDependencies
 
 
 class TestGlowsInitializer(unittest.TestCase):

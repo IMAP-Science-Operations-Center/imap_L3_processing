@@ -53,8 +53,8 @@ def create_glows_l3a_cdf(dependencies: GlowsL3ADependencies):
     input_metadata = InputMetadata(
         instrument='glows',
         data_level='l3a',
-        start_date=datetime(2010, 1, 1),
-        end_date=datetime(2010, 1, 2),
+        start_date=datetime(2013, 9, 8),
+        end_date=datetime(2013, 9, 8),
         version='v001')
 
     upstream_dependencies = [

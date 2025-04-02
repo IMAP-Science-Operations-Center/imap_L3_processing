@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import sentinel
 
-from imap_l3_processing.glows.l3b.models import GlowsL3BIonizationRate
+from imap_l3_processing.glows.l3bc.models import GlowsL3BIonizationRate
 from tests.swapi.cdf_model_test_case import CdfModelTestCase
 
 

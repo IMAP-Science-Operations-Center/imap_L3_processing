@@ -2,7 +2,7 @@ import os
 from datetime import datetime, date
 from pathlib import Path
 from unittest import TestCase
-from unittest.mock import patch, call, Mock
+from unittest.mock import patch, call, Mock, sentinel
 from urllib.error import HTTPError
 
 import numpy as np
@@ -12,7 +12,7 @@ from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
 from imap_l3_processing.models import UpstreamDataDependency
 from imap_l3_processing.swapi.l3a.models import SwapiL3AlphaSolarWindData
 from imap_l3_processing.utils import format_time, download_dependency, read_l1d_mag_data, save_data, \
-    download_external_dependency
+    download_external_dependency, download_dependency_from_path
 
 
 class TestUtils(TestCase):
@@ -53,7 +53,7 @@ class TestUtils(TestCase):
         self.assertIs(data_product, actual_data)
 
         actual_attribute_manager.add_global_attribute.assert_has_calls([
-            call("Data_version", "v2"),
+            call("Data_version", "2"),
             call("Generation_date", "20240916"),
             call("Logical_source", "imap_swapi_l2_descriptor"),
             call("Logical_file_id", "imap_swapi_l2_descriptor_20240917_v2")
@@ -184,3 +184,10 @@ class TestUtils(TestCase):
 
                 np.testing.assert_array_equal(epoch, results.epoch)
                 np.testing.assert_array_equal(trimmed_vectors, results.mag_data)
+
+    @patch('imap_l3_processing.utils.imap_data_access')
+    def test_download_dependency_from_path(self, mock_data_access):
+        local_path = download_dependency_from_path(sentinel.sdc_path)
+
+        self.assertEqual(mock_data_access.download.return_value, local_path)
+        mock_data_access.download.assert_called_once_with(sentinel.sdc_path)
