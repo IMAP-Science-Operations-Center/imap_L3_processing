@@ -2,15 +2,16 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch, call
 
-from imap_l3_processing.glows.l3b.glows_initializer_ancillary_dependencies import GlowsInitializerAncillaryDependencies, \
+from imap_l3_processing.glows.l3bc.glows_initializer_ancillary_dependencies import \
+    GlowsInitializerAncillaryDependencies, \
     F107_FLUX_TABLE_URL, \
     LYMAN_ALPHA_COMPOSITE_INDEX_URL, OMNI2_URL
 from tests.glows.l3b.test_utils import create_imap_data_access_json
 
 
 class TestGlowsInitializerAncillaryDependencies(unittest.TestCase):
-    @patch("imap_l3_processing.glows.l3b.glows_initializer_ancillary_dependencies.query")
-    @patch("imap_l3_processing.glows.l3b.glows_initializer_ancillary_dependencies.download_external_dependency")
+    @patch("imap_l3_processing.glows.l3bc.glows_initializer_ancillary_dependencies.query")
+    @patch("imap_l3_processing.glows.l3bc.glows_initializer_ancillary_dependencies.download_external_dependency")
     def test_fetch_dependencies(self, mock_download_external_dependency, mock_query):
         uv_anisotropy_factor = create_imap_data_access_json(file_path="path_to_uv_file", data_level="l3",
                                                             start_date=None, descriptor="uv-anisotropy-factor",
