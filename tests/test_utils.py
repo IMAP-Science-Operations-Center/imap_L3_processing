@@ -2,7 +2,7 @@ import os
 from datetime import datetime, date
 from pathlib import Path
 from unittest import TestCase
-from unittest.mock import patch, call, Mock
+from unittest.mock import patch, call, Mock, sentinel
 from urllib.error import HTTPError
 
 import numpy as np
@@ -12,7 +12,7 @@ from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
 from imap_l3_processing.models import UpstreamDataDependency
 from imap_l3_processing.swapi.l3a.models import SwapiL3AlphaSolarWindData
 from imap_l3_processing.utils import format_time, download_dependency, read_l1d_mag_data, save_data, \
-    download_external_dependency
+    download_external_dependency, download_dependency_from_path
 
 
 class TestUtils(TestCase):
@@ -53,7 +53,7 @@ class TestUtils(TestCase):
         self.assertIs(data_product, actual_data)
 
         actual_attribute_manager.add_global_attribute.assert_has_calls([
-            call("Data_version", "v2"),
+            call("Data_version", "2"),
             call("Generation_date", "20240916"),
             call("Logical_source", "imap_swapi_l2_descriptor"),
             call("Logical_file_id", "imap_swapi_l2_descriptor_20240917_v2")
@@ -62,6 +62,35 @@ class TestUtils(TestCase):
         actual_attribute_manager.add_instrument_attrs.assert_called_with(
             "swapi", "l2", input_metadata.descriptor
         )
+
+        self.assertEqual(expected_file_path, returned_file_path)
+
+    @patch("imap_l3_processing.utils.ImapAttributeManager")
+    @patch("imap_l3_processing.utils.date")
+    @patch("imap_l3_processing.utils.write_cdf")
+    def test_save_data_custom_path(self, mock_write_cdf, mock_today, _):
+        mock_today.today.return_value = date(2024, 9, 16)
+
+        input_metadata = UpstreamDataDependency("swapi", "l2", datetime(2024, 9, 17), datetime(2024, 9, 18), "v2",
+                                                "descriptor")
+        epoch = np.array([1, 2, 3])
+        alpha_sw_speed = np.array([4, 5, 6])
+        alpha_sw_density = np.array([5, 5, 5])
+        alpha_sw_temperature = np.array([4, 3, 5])
+
+        data_product = SwapiL3AlphaSolarWindData(input_metadata=input_metadata, epoch=epoch,
+                                                 alpha_sw_speed=alpha_sw_speed,
+                                                 alpha_sw_temperature=alpha_sw_temperature,
+                                                 alpha_sw_density=alpha_sw_density)
+
+        custom_path = "fancy_path"
+        returned_file_path = save_data(data_product, folder_path=custom_path)
+
+        mock_write_cdf.assert_called_once()
+        actual_file_path = mock_write_cdf.call_args.args[0]
+
+        expected_file_path = f"{custom_path}/imap_swapi_l2_descriptor_20240917_v2.cdf"
+        self.assertEqual(expected_file_path, actual_file_path)
 
         self.assertEqual(expected_file_path, returned_file_path)
 
@@ -155,3 +184,10 @@ class TestUtils(TestCase):
 
                 np.testing.assert_array_equal(epoch, results.epoch)
                 np.testing.assert_array_equal(trimmed_vectors, results.mag_data)
+
+    @patch('imap_l3_processing.utils.imap_data_access')
+    def test_download_dependency_from_path(self, mock_data_access):
+        local_path = download_dependency_from_path(sentinel.sdc_path)
+
+        self.assertEqual(mock_data_access.download.return_value, local_path)
+        mock_data_access.download.assert_called_once_with(sentinel.sdc_path)
