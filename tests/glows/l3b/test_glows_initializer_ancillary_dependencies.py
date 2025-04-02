@@ -18,10 +18,18 @@ class TestGlowsInitializerAncillaryDependencies(unittest.TestCase):
         waw_helioion_mp = create_imap_data_access_json(file_path="path_to_waw_file", data_level=None,
                                                        start_date=None, descriptor="WawHelioIonMP",
                                                        version="latest")
+        bad_days_list = create_imap_data_access_json(file_path="path_to_bad_days_list", data_level=None,
+                                                     start_date=None, descriptor="bad-day-list",
+                                                     version="latest")
+        pipeline_settings = create_imap_data_access_json(file_path="path_to_pipeline_settings", data_level=None,
+                                                         start_date=None, descriptor="pipeline-settings",
+                                                         version="latest")
 
         mock_query.side_effect = [
             [uv_anisotropy_factor],
-            [waw_helioion_mp]
+            [waw_helioion_mp],
+            [bad_days_list],
+            [pipeline_settings]
         ]
 
         f107_index_path = Path("f107_fluxtable.txt")
@@ -39,6 +47,8 @@ class TestGlowsInitializerAncillaryDependencies(unittest.TestCase):
 
         self.assertEqual(uv_anisotropy_factor["file_path"], actual_dependencies.uv_anisotropy_path)
         self.assertEqual(waw_helioion_mp["file_path"], actual_dependencies.waw_helioion_mp_path)
+        self.assertEqual(bad_days_list["file_path"], actual_dependencies.bad_days_list)
+        self.assertEqual(pipeline_settings["file_path"], actual_dependencies.pipeline_settings)
         self.assertEqual(f107_index_path, actual_dependencies.f107_index_file_path)
         self.assertEqual(lyman_alpha_path, actual_dependencies.lyman_alpha_path)
         self.assertEqual(omni_2_path, actual_dependencies.omni2_data_path)
@@ -46,6 +56,8 @@ class TestGlowsInitializerAncillaryDependencies(unittest.TestCase):
         self.assertEqual([
             call(instrument="glows", descriptor="uv-anisotropy-1CR", version="latest"),
             call(instrument="glows", descriptor="WawHelioIonMP", version="latest"),
+            call(instrument="glows", descriptor="bad-day-list", version="latest"),
+            call(instrument="glows", descriptor="pipeline-settings", version="latest"),
         ], mock_query.call_args_list)
 
         self.assertEqual([

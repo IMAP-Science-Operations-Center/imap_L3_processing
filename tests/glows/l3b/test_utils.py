@@ -91,10 +91,12 @@ class TestUtils(unittest.TestCase):
             create_l3a_path_by_date(f'201004{str(i).zfill(2)}') for i in range(1, 23)]
 
         initializer_dependencies = GlowsInitializerAncillaryDependencies(uv_anisotropy_path="uv_anisotropy",
+                                                                         waw_helioion_mp_path="waw_helioion",
+                                                                         bad_days_list="bad_days_list",
+                                                                         pipeline_settings="pipeline_settings",
                                                                          lyman_alpha_path=Path("lyman_alpha"),
                                                                          omni2_data_path=Path("omni"),
-                                                                         f107_index_file_path=Path("f107"),
-                                                                         waw_helioion_mp_path="waw_helioion")
+                                                                         f107_index_file_path=Path("f107"))
 
         actual_crs_to_process: [CRToProcess] = find_unprocessed_carrington_rotations(l3a_files, l3b_files,
                                                                                      initializer_dependencies)
@@ -103,14 +105,10 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(expected_l3a_january_paths, actual_crs_to_process[0].l3a_paths)
         self.assertEqual('20100117', actual_crs_to_process[0].cr_midpoint)
         self.assertEqual(2092, actual_crs_to_process[0].cr_rotation_number)
-        self.assertEqual(initializer_dependencies.uv_anisotropy_path, actual_crs_to_process[0].uv_anisotropy)
-        self.assertEqual(initializer_dependencies.waw_helioion_mp_path, actual_crs_to_process[0].waw_helioion_mp)
 
         self.assertEqual(expected_l3a_april_paths, actual_crs_to_process[1].l3a_paths)
         self.assertEqual('20100408', actual_crs_to_process[1].cr_midpoint)
         self.assertEqual(2095, actual_crs_to_process[1].cr_rotation_number)
-        self.assertEqual(initializer_dependencies.uv_anisotropy_path, actual_crs_to_process[1].uv_anisotropy)
-        self.assertEqual(initializer_dependencies.waw_helioion_mp_path, actual_crs_to_process[1].waw_helioion_mp)
 
         self.assertEqual(Time('2010-01-03 11:33:04.320').value,
                          mock_validate_dependencies.call_args_list[0][0][0].value)
@@ -153,19 +151,22 @@ class TestUtils(unittest.TestCase):
         expected_json_filename = "cr_to_process.json"
 
         dependencies = GlowsInitializerAncillaryDependencies(uv_anisotropy_path="uv_anisotropy",
+                                                             waw_helioion_mp_path="waw_helioion",
+                                                             bad_days_list="bad_days",
+                                                             pipeline_settings="pipeline_settings",
                                                              lyman_alpha_path=Path("lyman_alpha"),
                                                              omni2_data_path=Path("omni"),
                                                              f107_index_file_path=Path("f107"),
-                                                             waw_helioion_mp_path="waw_helioion")
+                                                             )
 
         cr_to_process: CRToProcess = CRToProcess(cr_rotation_number=2095, l3a_paths=["file1", "file2"],
-                                                 cr_midpoint="20250314",
-                                                 waw_helioion_mp=dependencies.waw_helioion_mp_path,
-                                                 uv_anisotropy=dependencies.uv_anisotropy_path)
+                                                 cr_midpoint="20250314")
 
         expected_json_to_serialize = {"cr_rotation_number": 2095,
                                       "l3a_paths": ["file1", "file2"],
                                       "cr_midpoint": "20250314",
+                                      "bad_days_list": dependencies.bad_days_list,
+                                      "pipeline_settings": dependencies.pipeline_settings,
                                       "waw_helioion_mp": dependencies.waw_helioion_mp_path,
                                       "uv_anisotropy": dependencies.uv_anisotropy_path
                                       }
