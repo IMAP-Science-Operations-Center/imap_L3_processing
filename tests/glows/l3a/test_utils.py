@@ -198,6 +198,7 @@ class TestUtils(unittest.TestCase):
         cdf_path = get_test_data_path("glows") / "imap_glows_l3a_hist_20100101_v001.cdf"
         actual_dictionary = create_glows_l3a_dictionary_from_cdf(cdf_path)
 
+        self.assertEqual("imap_glows_l3a_hist_20100101_v001.cdf", actual_dictionary["filename"])
         self.assertEqual(datetime(2013, 9, 8, 8, 52, 14).strftime("%Y-%m-%d, %H:%M:%S"),
                          actual_dictionary['start_time'])
         self.assertEqual(datetime(2013, 9, 9, 4, 58, 14).strftime("%Y-%m-%d, %H:%M:%S"), actual_dictionary['end_time'])

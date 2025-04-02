@@ -21,6 +21,8 @@ class TestGlowsL3BCDependencies(unittest.TestCase):
         mock_download_dependencies_from_path.side_effect = [
             sentinel.uv_anisotropy_downloaded_path,
             sentinel.waw_downloaded_path,
+            sentinel.bad_day_list_downloaded_path,
+            sentinel.settings_downloaded_path,
             sentinel.l3a_downloaded_path_1,
             sentinel.l3a_downloaded_path_2,
         ]
@@ -30,7 +32,10 @@ class TestGlowsL3BCDependencies(unittest.TestCase):
 
         mock_json_file = MagicMock()
         mock_open_file.return_value.__enter__.return_value = mock_json_file
-        mock_json_file.read.return_value = '{"l3a_paths":["l3a_path_1", "l3a_path_2"], "uv_anisotropy":"uv_anisotropy_path", "waw_helioion_mp":"waw_path"}'
+        mock_json_file.read.return_value = '{"l3a_paths":["l3a_path_1", "l3a_path_2"],' \
+                                           '"uv_anisotropy":"uv_anisotropy_path", "waw_helioion_mp":"waw_path",' \
+                                           '"bad_days_list":"bad_days_list_path", "pipeline_settings":"pipeline_settings_path",' \
+                                           '"cr_rotation_number":"2296"}'
 
         mock_create_dictionary_from_cdf.side_effect = [
             sentinel.l3a_dictionary_1,
@@ -49,6 +54,8 @@ class TestGlowsL3BCDependencies(unittest.TestCase):
                          mock_create_dictionary_from_cdf.call_args_list)
         self.assertEqual([call("uv_anisotropy_path"),
                           call("waw_path"),
+                          call("bad_days_list_path"),
+                          call("pipeline_settings_path"),
                           call("l3a_path_1"),
                           call("l3a_path_2"),
                           ], mock_download_dependencies_from_path.call_args_list)
@@ -57,7 +64,10 @@ class TestGlowsL3BCDependencies(unittest.TestCase):
         self.assertEqual(base_dir_file_path / 'omni2_all_years.dat', dependency.external_files['omni_raw_data'])
 
         self.assertEqual(sentinel.uv_anisotropy_downloaded_path, dependency.ancillary_files['uv_anisotropy'])
-        self.assertEqual(sentinel.waw_downloaded_path, dependency.ancillary_files['waw_helioion_mp'])
+        self.assertEqual(sentinel.waw_downloaded_path, dependency.ancillary_files['WawHelioIonMP_parameters'])
+        self.assertEqual(sentinel.bad_day_list_downloaded_path, dependency.ancillary_files['bad_days_list'])
+        self.assertEqual(sentinel.settings_downloaded_path, dependency.ancillary_files['pipeline_settings'])
 
         self.assertEqual(sentinel.l3a_dictionary_1, dependency.l3a_data[0])
         self.assertEqual(sentinel.l3a_dictionary_2, dependency.l3a_data[1])
+        self.assertEqual(2296, dependency.carrington_rotation_number)
