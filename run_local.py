@@ -137,7 +137,7 @@ def create_swe_product(dependencies: SweL3Dependencies) -> str:
         data_level='l3',
         start_date=datetime(2025, 6, 30),
         end_date=datetime(2025, 7, 1),
-        version='000')
+        version='v000')
     processor = SweProcessor(None, input_metadata)
     output_data = processor.calculate_products(dependencies)
     cdf_path = save_data(output_data, delete_if_present=True)
