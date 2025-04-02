@@ -13,6 +13,7 @@ class GlowsL3BCDependencies:
     l3a_data: [dict]
     external_files: dict[str, Path]
     ancillary_files: dict[str, Path]
+    carrington_rotation_number: int
 
     @classmethod
     def fetch_dependencies(cls, dependencies: list[UpstreamDataDependency]):
@@ -31,7 +32,9 @@ class GlowsL3BCDependencies:
 
         ancillary_files = {
             'uv_anisotropy': download_dependency_from_path(paths_to_download['uv_anisotropy']),
-            'waw_helioion_mp': download_dependency_from_path(paths_to_download['waw_helioion_mp'])
+            'WawHelioIonMP_parameters': download_dependency_from_path(paths_to_download['waw_helioion_mp']),
+            'bad_days_list': download_dependency_from_path(paths_to_download['bad_days_list']),
+            'pipeline_settings': download_dependency_from_path(paths_to_download['pipeline_settings'])
         }
 
         l3a_paths = paths_to_download['l3a_paths']
@@ -39,4 +42,5 @@ class GlowsL3BCDependencies:
         for path in l3a_paths:
             l3a_data.append(create_glows_l3a_dictionary_from_cdf(download_dependency_from_path(path)))
 
-        return cls(l3a_data=l3a_data, external_files=external_files, ancillary_files=ancillary_files)
+        return cls(l3a_data=l3a_data, external_files=external_files, ancillary_files=ancillary_files,
+                   carrington_rotation_number=int(paths_to_download['cr_rotation_number']))

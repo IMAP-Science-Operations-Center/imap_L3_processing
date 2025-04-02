@@ -293,19 +293,15 @@ class DailyIonizationRate():
                 if np.logical_or(self.lcrv['ecl_lon'] >= ini, self.lcrv['ecl_lon'] <= fin): k = i
         return k
 
-    def read_l3a(self, filename):
+    def read_l3a(self, data_l3a: dict):
         '''
-        Read light curve from the L3a json file
+        Read light curve from the L3a
 
         Parameters
         -----------
-        filename : str
-            Path to the L3a data product file
+        data_l3a : dict
+            L3a data product dict
         '''
-        # Open and load json file with L3a data
-        data_l3a = fun.read_json(filename)
-
-        self.header['l3a_input_filename'] = filename
         self.spacecraft_location = list(data_l3a['spacecraft_location_average'].values())
         self.lcrv['ecl_lon'] = np.degrees(fun.get_spher_coord_rad(np.array(self.spacecraft_location))[1])
         self.lcrv['date'] = Time(data_l3a['start_time'])

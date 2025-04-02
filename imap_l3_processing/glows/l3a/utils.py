@@ -1,3 +1,4 @@
+import os
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -107,6 +108,7 @@ def create_glows_l3a_dictionary_from_cdf(cdf_file_path: Path) -> dict:
     start_time = cdf['epoch'][0] - time_delta
     end_time = cdf['epoch'][0] + time_delta
     return {
+        'filename': f'{os.path.basename(cdf_file_path)}',
         'start_time': start_time.strftime("%Y-%m-%d, %H:%M:%S"),
         'end_time': end_time.strftime("%Y-%m-%d, %H:%M:%S"),
         'daily_lightcurve': {
