@@ -76,4 +76,4 @@ def generate_l3bc(dependencies: GlowsL3BCDependencies):
     solar_wind_Carr.read_l3b(l3b_data)
     solar_wind_Carr.calculate_sw_profile()
 
-    return ion_rate_Carr, solar_wind_Carr
+    return l3b_data, solar_wind_Carr.generate_l3c_output()

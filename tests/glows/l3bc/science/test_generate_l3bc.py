@@ -31,7 +31,7 @@ class TestGenerateL3BC(TestCase):
         dependencies = GlowsL3BCDependencies(l3a_data=l3a_data, external_files=external_files,
                                              ancillary_files=ancillary_files, carrington_rotation_number=cr)
 
-        ion_rate_carr, solar_wind_carr = generate_l3bc(dependencies)
+        actual_l3b, actual_l3c = generate_l3bc(dependencies)
 
         with open(get_test_instrument_team_data_path("glows/imap_glows_l3b_cr_2091_v00.json")) as f:
             expected_l3b = json.load(f)
@@ -40,8 +40,6 @@ class TestGenerateL3BC(TestCase):
             expected_l3c = json.load(f)
         del expected_l3b["header"]
         del expected_l3c["header"]
-        actual_l3b = ion_rate_carr.generate_l3b_output()
-        actual_l3c = solar_wind_carr.generate_l3c_output()
         del actual_l3b["header"]
         del actual_l3c["header"]
         assert_dict_close(expected_l3b, actual_l3b)

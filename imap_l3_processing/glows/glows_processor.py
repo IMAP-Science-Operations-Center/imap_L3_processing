@@ -47,7 +47,9 @@ class GlowsProcessor(Processor):
     def process_l3bc(self, dependencies: GlowsL3BCDependencies):
         filtered_days = filter_out_bad_days(dependencies.l3a_data, dependencies.ancillary_files['bad_days_list'])
         l3b_data, _ = generate_l3bc(replace(dependencies, l3a_data=filtered_days))
-        return GlowsL3BIonizationRate.from_instrument_team_object(l3b_data)
+        return GlowsL3BIonizationRate.from_instrument_team_dictionary(l3b_data,
+                                                                      self.input_metadata.to_upstream_data_dependency(
+                                                                          "sci"))
 
     @staticmethod
     def add_spin_angle_delta(data: dict, ancillary_files: dict) -> dict:
