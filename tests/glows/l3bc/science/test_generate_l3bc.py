@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 from unittest import TestCase
 
 import numpy as np
@@ -29,7 +30,8 @@ class TestGenerateL3BC(TestCase):
             l3a_data.append(create_glows_l3a_dictionary_from_cdf(l3a_data_folder_path / name))
 
         dependencies = GlowsL3BCDependencies(l3a_data=l3a_data, external_files=external_files,
-                                             ancillary_files=ancillary_files, carrington_rotation_number=cr)
+                                             ancillary_files=ancillary_files, carrington_rotation_number=cr,
+                                             start_date=datetime(2025, 4, 3), end_date=datetime(2025, 4, 4))
 
         actual_l3b, actual_l3c = generate_l3bc(dependencies)
 

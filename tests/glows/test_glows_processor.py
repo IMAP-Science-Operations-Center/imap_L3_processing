@@ -167,13 +167,17 @@ class TestGlowsProcessor(unittest.TestCase):
                                                  ancillary_files={
                                                      'bad_days_list': sentinel.bad_days_list_1,
                                                  },
-                                                 carrington_rotation_number=sentinel.cr_1)
+                                                 carrington_rotation_number=sentinel.cr_1,
+                                                 start_date=datetime(2024, 1, 1),
+                                                 end_date=datetime(2024, 1, 30))
         second_dependency = GlowsL3BCDependencies(l3a_data=sentinel.l3a_data_2,
                                                   external_files=sentinel.external_files_2,
                                                   ancillary_files={
                                                       'bad_days_list': sentinel.bad_days_list_2,
                                                   },
-                                                  carrington_rotation_number=sentinel.cr_2)
+                                                  carrington_rotation_number=sentinel.cr_2,
+                                                  start_date=datetime(2024, 2, 1),
+                                                  end_date=datetime(2024, 2, 28))
 
         mock_l3bc_dependencies.fetch_dependencies.side_effect = [first_dependency, second_dependency]
 
@@ -210,13 +214,21 @@ class TestGlowsProcessor(unittest.TestCase):
         mock_generate_l3bc.assert_has_calls(
             [call(dependencies_with_filtered_list_1), call(dependencies_with_filtered_list_2)])
 
+        expected_l3b_metadata_1 = UpstreamDataDependency("glows", "l3b", first_dependency.start_date,
+                                                         first_dependency.end_date, 'v02', "sci")
+        expected_l3b_metadata_2 = UpstreamDataDependency("glows", "l3b", second_dependency.start_date,
+                                                         second_dependency.end_date, 'v02', "sci")
+        expected_l3c_metadata_1 = UpstreamDataDependency("glows", "l3c", first_dependency.start_date,
+                                                         first_dependency.end_date, 'v02', "sci")
+        expected_l3c_metadata_2 = UpstreamDataDependency("glows", "l3c", second_dependency.start_date,
+                                                         second_dependency.end_date, 'v02', "sci")
         mock_l3b_model_class.from_instrument_team_dictionary.assert_has_calls(
-            [call(sentinel.l3b_data_1, input_metadata.to_upstream_data_dependency("sci")),
-             call(sentinel.l3b_data_2, input_metadata.to_upstream_data_dependency("sci"))])
+            [call(sentinel.l3b_data_1, expected_l3b_metadata_1),
+             call(sentinel.l3b_data_2, expected_l3b_metadata_2)])
 
         mock_l3c_model_class.from_instrument_team_dictionary.assert_has_calls(
-            [call(sentinel.l3c_data_1, input_metadata.to_upstream_data_dependency("sci")),
-             call(sentinel.l3c_data_2, input_metadata.to_upstream_data_dependency("sci"))])
+            [call(sentinel.l3c_data_1, expected_l3c_metadata_1),
+             call(sentinel.l3c_data_2, expected_l3c_metadata_2)])
 
         mock_save_data.assert_has_calls(
             [call(sentinel.l3b_1), call(sentinel.l3c_1), call(sentinel.l3b_2), call(sentinel.l3c_2)])
