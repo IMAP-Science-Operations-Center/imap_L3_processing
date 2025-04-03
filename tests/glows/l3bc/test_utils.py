@@ -103,11 +103,13 @@ class TestUtils(unittest.TestCase):
 
         self.assertEqual(2, len(actual_crs_to_process))
         self.assertEqual(expected_l3a_january_paths, actual_crs_to_process[0].l3a_paths)
-        self.assertEqual('20100117', actual_crs_to_process[0].cr_midpoint)
+        self.assertEqual(Time('2010-01-03 11:33:04.320').value, actual_crs_to_process[0].cr_start_date.value)
+        self.assertEqual(Time('2010-01-30 18:09:30.240').value, actual_crs_to_process[0].cr_end_date.value)
         self.assertEqual(2092, actual_crs_to_process[0].cr_rotation_number)
 
         self.assertEqual(expected_l3a_april_paths, actual_crs_to_process[1].l3a_paths)
-        self.assertEqual('20100408', actual_crs_to_process[1].cr_midpoint)
+        self.assertEqual(Time('2010-03-26 07:22:22.080').value, actual_crs_to_process[1].cr_start_date.value)
+        self.assertEqual(Time('2010-04-22 13:58:48.000').value, actual_crs_to_process[1].cr_end_date.value)
         self.assertEqual(2095, actual_crs_to_process[1].cr_rotation_number)
 
         self.assertEqual(Time('2010-01-03 11:33:04.320').value,
@@ -160,11 +162,13 @@ class TestUtils(unittest.TestCase):
                                                              )
 
         cr_to_process: CRToProcess = CRToProcess(cr_rotation_number=2095, l3a_paths=["file1", "file2"],
-                                                 cr_midpoint="20250314")
+                                                 cr_start_date=Time("2025-03-14 12:34:56.789"),
+                                                 cr_end_date=Time("2025-03-24 12:34:56.789"))
 
         expected_json_to_serialize = {"cr_rotation_number": 2095,
                                       "l3a_paths": ["file1", "file2"],
-                                      "cr_midpoint": "20250314",
+                                      "cr_start_date": "2025-03-14 12:34:56.789",
+                                      "cr_end_date": "2025-03-24 12:34:56.789",
                                       "bad_days_list": dependencies.bad_days_list,
                                       "pipeline_settings": dependencies.pipeline_settings,
                                       "waw_helioion_mp": dependencies.waw_helioion_mp_path,

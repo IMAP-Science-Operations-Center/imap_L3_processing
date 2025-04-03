@@ -6,15 +6,16 @@ import numpy as np
 from spacepy import pycdf
 
 from imap_l3_processing.constants import CARRINGTON_ROTATION_IN_NANOSECONDS
-from imap_l3_processing.glows.l3bc.l3bc_toolkit.l3b_CarringtonIonRate import CarringtonIonizationRate
-from imap_l3_processing.glows.l3bc.l3bc_toolkit.l3c_CarringtonSolarWind import CarringtonSolarWind
 from imap_l3_processing.models import DataProduct, DataProductVariable, UpstreamDataDependency
+
+from astropy.time import Time
 
 
 @dataclass
 class CRToProcess:
     l3a_paths: list[str]
-    cr_midpoint: str
+    cr_start_date: Time
+    cr_end_date: Time
     cr_rotation_number: int
 
 
