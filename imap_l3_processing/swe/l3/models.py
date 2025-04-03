@@ -62,10 +62,13 @@ TOTAL_HEAT_FLUX_THETA_INTEGRATED_CDF_VAR_NAME = "total_heat_flux_theta_integrate
 TOTAL_HEAT_FLUX_PHI_INTEGRATED_CDF_VAR_NAME = "total_heat_flux_phi_integrated"
 CORE_T_PARALLEL_INTEGRATED_CDF_VAR_NAME = "core_t_parallel_integrated"
 CORE_T_PERPENDICULAR_INTEGRATED_CDF_VAR_NAME = "core_t_perpendicular_integrated"
+CORE_T_PERPENDICULAR_RATIO_INTEGRATED_CDF_VAR_NAME = "core_t_ratio_perpendicular_integrated"
 HALO_T_PARALLEL_INTEGRATED_CDF_VAR_NAME = "halo_t_parallel_integrated"
 HALO_T_PERPENDICULAR_INTEGRATED_CDF_VAR_NAME = "halo_t_perpendicular_integrated"
+HALO_T_PERPENDICULAR_RATIO_INTEGRATED_CDF_VAR_NAME = "halo_t_ratio_perpendicular_integrated"
 TOTAL_T_PARALLEL_INTEGRATED_CDF_VAR_NAME = "total_t_parallel_integrated"
 TOTAL_T_PERPENDICULAR_INTEGRATED_CDF_VAR_NAME = "total_t_perpendicular_integrated"
+TOTAL_T_PERPENDICULAR_RATIO_INTEGRATED_CDF_VAR_NAME = "total_t_ratio_perpendicular_integrated"
 CORE_TEMPERATURE_THETA_RTN_INTEGRATED_CDF_VAR_NAME = "core_temperature_theta_rtn_integrated"
 CORE_TEMPERATURE_PHI_RTN_INTEGRATED_CDF_VAR_NAME = "core_temperature_phi_rtn_integrated"
 HALO_TEMPERATURE_THETA_RTN_INTEGRATED_CDF_VAR_NAME = "halo_temperature_theta_rtn_integrated"
@@ -74,10 +77,13 @@ TOTAL_TEMPERATURE_THETA_RTN_INTEGRATED_CDF_VAR_NAME = "total_temperature_theta_r
 TOTAL_TEMPERATURE_PHI_RTN_INTEGRATED_CDF_VAR_NAME = "total_temperature_phi_rtn_integrated"
 CORE_TEMPERATURE_PARALLEL_TO_MAG_CDF_VAR_NAME = "core_temperature_parallel_to_mag"
 CORE_TEMPERATURE_PERPENDICULAR_TO_MAG_CDF_VAR_NAME = "core_temperature_perpendicular_to_mag"
+CORE_TEMPERATURE_RATIO_PERPENDICULAR_TO_MAG_CDF_VAR_NAME = "core_temperature_ratio_perpendicular_to_mag"
 HALO_TEMPERATURE_PARALLEL_TO_MAG_CDF_VAR_NAME = "halo_temperature_parallel_to_mag"
 HALO_TEMPERATURE_PERPENDICULAR_TO_MAG_CDF_VAR_NAME = "halo_temperature_perpendicular_to_mag"
+HALO_TEMPERATURE_RATIO_PERPENDICULAR_TO_MAG_CDF_VAR_NAME = "halo_temperature_ratio_perpendicular_to_mag"
 TOTAL_TEMPERATURE_PARALLEL_TO_MAG_CDF_VAR_NAME = "total_temperature_parallel_to_mag"
 TOTAL_TEMPERATURE_PERPENDICULAR_TO_MAG_CDF_VAR_NAME = "total_temperature_perpendicular_to_mag"
+TOTAL_TEMPERATURE_RATIO_PERPENDICULAR_TO_MAG_CDF_VAR_NAME = "total_temperature_ratio_perpendicular_to_mag"
 CORE_TEMPERATURE_TENSOR_INTEGRATED_CDF_VAR_NAME = "core_temperature_tensor_integrated"
 HALO_TEMPERATURE_TENSOR_INTEGRATED_CDF_VAR_NAME = "halo_temperature_tensor_integrated"
 TOTAL_TEMPERATURE_TENSOR_INTEGRATED_CDF_VAR_NAME = "total_temperature_tensor_integrated"
@@ -312,15 +318,21 @@ class SweL3Data(DataProduct):
             DataProductVariable(CORE_T_PARALLEL_INTEGRATED_CDF_VAR_NAME,
                                 value=self.moment_data.core_t_parallel_integrated),
             DataProductVariable(CORE_T_PERPENDICULAR_INTEGRATED_CDF_VAR_NAME,
-                                value=self.moment_data.core_t_perpendicular_integrated),
+                                value=self.moment_data.core_t_perpendicular_integrated[:, 0]),
+            DataProductVariable(CORE_T_PERPENDICULAR_RATIO_INTEGRATED_CDF_VAR_NAME,
+                                value=self.moment_data.core_t_perpendicular_integrated[:, 1]),
             DataProductVariable(HALO_T_PARALLEL_INTEGRATED_CDF_VAR_NAME,
                                 value=self.moment_data.halo_t_parallel_integrated),
             DataProductVariable(HALO_T_PERPENDICULAR_INTEGRATED_CDF_VAR_NAME,
-                                value=self.moment_data.halo_t_perpendicular_integrated),
+                                value=self.moment_data.halo_t_perpendicular_integrated[:, 0]),
+            DataProductVariable(HALO_T_PERPENDICULAR_RATIO_INTEGRATED_CDF_VAR_NAME,
+                                value=self.moment_data.halo_t_perpendicular_integrated[:, 1]),
             DataProductVariable(TOTAL_T_PARALLEL_INTEGRATED_CDF_VAR_NAME,
                                 value=self.moment_data.total_t_parallel_integrated),
             DataProductVariable(TOTAL_T_PERPENDICULAR_INTEGRATED_CDF_VAR_NAME,
-                                value=self.moment_data.total_t_perpendicular_integrated),
+                                value=self.moment_data.total_t_perpendicular_integrated[:, 0]),
+            DataProductVariable(TOTAL_T_PERPENDICULAR_RATIO_INTEGRATED_CDF_VAR_NAME,
+                                value=self.moment_data.total_t_perpendicular_integrated[:, 1]),
             DataProductVariable(CORE_TEMPERATURE_THETA_RTN_INTEGRATED_CDF_VAR_NAME,
                                 value=self.moment_data.core_temperature_theta_rtn_integrated),
             DataProductVariable(CORE_TEMPERATURE_PHI_RTN_INTEGRATED_CDF_VAR_NAME,
@@ -336,15 +348,21 @@ class SweL3Data(DataProduct):
             DataProductVariable(CORE_TEMPERATURE_PARALLEL_TO_MAG_CDF_VAR_NAME,
                                 value=self.moment_data.core_temperature_parallel_to_mag),
             DataProductVariable(CORE_TEMPERATURE_PERPENDICULAR_TO_MAG_CDF_VAR_NAME,
-                                value=self.moment_data.core_temperature_perpendicular_to_mag),
+                                value=self.moment_data.core_temperature_perpendicular_to_mag[:, 0]),
+            DataProductVariable(CORE_TEMPERATURE_RATIO_PERPENDICULAR_TO_MAG_CDF_VAR_NAME,
+                                value=self.moment_data.core_temperature_perpendicular_to_mag[:, 1]),
             DataProductVariable(HALO_TEMPERATURE_PARALLEL_TO_MAG_CDF_VAR_NAME,
                                 value=self.moment_data.halo_temperature_parallel_to_mag),
             DataProductVariable(HALO_TEMPERATURE_PERPENDICULAR_TO_MAG_CDF_VAR_NAME,
-                                value=self.moment_data.halo_temperature_perpendicular_to_mag),
+                                value=self.moment_data.halo_temperature_perpendicular_to_mag[:, 0]),
+            DataProductVariable(HALO_TEMPERATURE_RATIO_PERPENDICULAR_TO_MAG_CDF_VAR_NAME,
+                                value=self.moment_data.halo_temperature_perpendicular_to_mag[:, 1]),
             DataProductVariable(TOTAL_TEMPERATURE_PARALLEL_TO_MAG_CDF_VAR_NAME,
                                 value=self.moment_data.total_temperature_parallel_to_mag),
             DataProductVariable(TOTAL_TEMPERATURE_PERPENDICULAR_TO_MAG_CDF_VAR_NAME,
-                                value=self.moment_data.total_temperature_perpendicular_to_mag),
+                                value=self.moment_data.total_temperature_perpendicular_to_mag[:, 0]),
+            DataProductVariable(TOTAL_TEMPERATURE_RATIO_PERPENDICULAR_TO_MAG_CDF_VAR_NAME,
+                                value=self.moment_data.total_temperature_perpendicular_to_mag[:, 1]),
             DataProductVariable(CORE_TEMPERATURE_TENSOR_INTEGRATED_CDF_VAR_NAME,
                                 value=self.moment_data.core_temperature_tensor_integrated),
             DataProductVariable(HALO_TEMPERATURE_TENSOR_INTEGRATED_CDF_VAR_NAME,
