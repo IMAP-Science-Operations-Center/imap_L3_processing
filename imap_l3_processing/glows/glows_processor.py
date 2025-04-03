@@ -10,8 +10,8 @@ from imap_l3_processing.glows.l3a.glows_toolkit.l3a_data import L3aData
 from imap_l3_processing.glows.l3a.models import GlowsL3LightCurve
 from imap_l3_processing.glows.l3a.utils import create_glows_l3a_from_dictionary
 from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDependencies
-from imap_l3_processing.glows.l3bc.l3bc_toolkit.generate_l3bc import generate_l3bc
 from imap_l3_processing.glows.l3bc.models import GlowsL3BIonizationRate
+from imap_l3_processing.glows.l3bc.science.generate_l3bc import generate_l3bc
 from imap_l3_processing.glows.l3bc.utils import filter_out_bad_days
 from imap_l3_processing.processor import Processor
 from imap_l3_processing.utils import save_data
