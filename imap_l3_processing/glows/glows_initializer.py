@@ -1,4 +1,5 @@
 from dataclasses import fields
+from pathlib import Path
 
 from imap_data_access import query
 
@@ -8,7 +9,7 @@ from imap_l3_processing.glows.l3bc.utils import find_unprocessed_carrington_rota
 
 class GlowsInitializer:
     @staticmethod
-    def validate_and_initialize(version: str):
+    def validate_and_initialize(version: str) -> list[Path]:
         glows_ancillary_dependencies = GlowsInitializerAncillaryDependencies.fetch_dependencies()
         if not _should_process(glows_ancillary_dependencies):
             return []
@@ -17,8 +18,13 @@ class GlowsInitializer:
 
         crs_to_process = find_unprocessed_carrington_rotations(l3a_files, l3b_files, glows_ancillary_dependencies)
 
+        zip_file_paths = []
+
         for cr_to_process in crs_to_process:
-            archive_dependencies(cr_to_process, version, glows_ancillary_dependencies)
+            path = archive_dependencies(cr_to_process, version, glows_ancillary_dependencies)
+            zip_file_paths.append(path)
+
+        return zip_file_paths
 
 
 def _should_process(glows_l3b_dependencies: GlowsInitializerAncillaryDependencies) -> bool:

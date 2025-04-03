@@ -5,7 +5,7 @@ from copy import deepcopy
 from dataclasses import replace
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import patch, Mock, sentinel
+from unittest.mock import patch, Mock, sentinel, call
 
 import numpy as np
 
@@ -88,13 +88,12 @@ class TestGlowsProcessor(unittest.TestCase):
 
     @patch("imap_l3_processing.glows.glows_processor.imap_data_access")
     @patch("imap_l3_processing.glows.glows_processor.save_data")
-    @patch("imap_l3_processing.glows.glows_processor.GlowsInitializerAncillaryDependencies")
     @patch("imap_l3_processing.glows.glows_processor.GlowsInitializer")
-    def test_does_not_process_l3b_if_should_not_process(self, mock_glows_initializer_class,
-                                                        mock_glows_l3b_ancillary_dependencies_class,
-                                                        mock_save_data,
-                                                        mock_imap_data_access):
-        mock_glows_initializer = mock_glows_initializer_class.return_value
+    def test_does_not_process_l3b_if_no_zip_files(self, mock_glows_initializer_class,
+                                                  mock_save_data,
+                                                  mock_imap_data_access):
+
+        mock_glows_initializer_class.validate_and_initialize.return_value = []
 
         input_metadata = InputMetadata('glows', "l3b", datetime(2024, 10, 7, 10, 00, 00),
                                        datetime(2024, 10, 8, 10, 00, 00),
@@ -104,26 +103,23 @@ class TestGlowsProcessor(unittest.TestCase):
                                    'v001', GLOWS_L2_DESCRIPTOR + '00001'),
         ]
 
-        mock_glows_initializer.should_process.return_value = False
-
         processor = GlowsProcessor(dependencies=dependencies, input_metadata=input_metadata)
         processor.process()
 
-        mock_glows_l3b_ancillary_dependencies_class.fetch_dependencies.assert_called_with(dependencies)
-        mock_glows_initializer.should_process.assert_called_with(
-            mock_glows_l3b_ancillary_dependencies_class.fetch_dependencies.return_value)
+        mock_glows_initializer_class.validate_and_initialize.assert_called_with(input_metadata.version)
         mock_save_data.assert_not_called()
         mock_imap_data_access.upload.assert_not_called()
 
     @patch("imap_l3_processing.glows.glows_processor.imap_data_access")
     @patch("imap_l3_processing.glows.glows_processor.save_data")
-    @patch("imap_l3_processing.glows.glows_processor.GlowsInitializerAncillaryDependencies")
     @patch("imap_l3_processing.glows.glows_processor.GlowsInitializer")
     def test_processes_l3b_if_should_process(self, mock_glows_initializer_class,
-                                             mock_glows_l3b_dependencies_class,
                                              mock_save_data,
                                              mock_imap_data_access):
-        mock_glows_initializer = mock_glows_initializer_class.return_value
+        mock_glows_initializer_class.validate_and_initialize.return_value = [
+            sentinel.zip_file_path_1,
+            sentinel.zip_file_path_2,
+        ]
 
         input_metadata = InputMetadata('glows', "l3b", datetime(2024, 10, 7, 10, 00, 00),
                                        datetime(2024, 10, 8, 10, 00, 00),
@@ -133,16 +129,16 @@ class TestGlowsProcessor(unittest.TestCase):
                                    'v001', GLOWS_L2_DESCRIPTOR + '00001'),
         ]
 
-        mock_glows_initializer.should_process.return_value = True
-
         processor = GlowsProcessor(dependencies=dependencies, input_metadata=input_metadata)
         processor.process()
 
-        mock_glows_l3b_dependencies_class.fetch_dependencies.assert_called_with(dependencies)
-        mock_glows_initializer.should_process.assert_called_with(
-            mock_glows_l3b_dependencies_class.fetch_dependencies.return_value)
-        mock_save_data.assert_called_once()
-        mock_imap_data_access.upload.assert_called_once()
+        mock_glows_initializer_class.validate_and_initialize.assert_called_with(input_metadata.version)
+
+        self.assertEqual(2, mock_save_data.call_count)
+        mock_save_data.assert_has_calls([call(None), call(None)])
+
+        self.assertEqual(2, mock_imap_data_access.upload.call_count)
+        mock_imap_data_access.upload.assert_has_calls([call(""), call("")])
 
     def test_add_spin_angle_delta(self):
         cases = [

@@ -120,7 +120,7 @@ def get_astropy_time_from_yyyymmdd(date_string: str) -> Time:
 
 
 def archive_dependencies(cr_to_process: CRToProcess, version: str,
-                         ancillary_dependencies: GlowsInitializerAncillaryDependencies):
+                         ancillary_dependencies: GlowsInitializerAncillaryDependencies) -> Path:
     filename = f"imap_glows_l3pre-b_l3b-archive_{cr_to_process.cr_midpoint}_{version}.zip"
     json_filename = "cr_to_process.json"
     with ZipFile(filename, "w", ZIP_DEFLATED) as file:
@@ -138,6 +138,7 @@ def archive_dependencies(cr_to_process: CRToProcess, version: str,
                   }
             dump(cr, json_file)
         file.write(json_filename)
+    return Path(filename)
 
 
 def filter_out_bad_days(l3a_data: [dict], bad_day_list_path: Path) -> [dict]:

@@ -178,7 +178,9 @@ class TestUtils(unittest.TestCase):
         mocked_open.return_value.__enter__.return_value = mock_json_file
 
         version_number = "v001"
-        archive_dependencies(cr_to_process, version_number, dependencies)
+        actual_zip_file_name = archive_dependencies(cr_to_process, version_number, dependencies)
+
+        self.assertEqual(Path(expected_filename), actual_zip_file_name)
 
         mock_zip.assert_called_with(expected_filename, "w", ZIP_DEFLATED)
         mocked_open.assert_called_once_with(expected_json_filename, "w")

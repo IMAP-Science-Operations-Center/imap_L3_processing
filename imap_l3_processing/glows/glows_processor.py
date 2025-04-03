@@ -9,7 +9,6 @@ from imap_l3_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependen
 from imap_l3_processing.glows.l3a.glows_toolkit.l3a_data import L3aData
 from imap_l3_processing.glows.l3a.models import GlowsL3LightCurve
 from imap_l3_processing.glows.l3a.utils import create_glows_l3a_from_dictionary
-from imap_l3_processing.glows.l3bc.glows_initializer_ancillary_dependencies import GlowsInitializerAncillaryDependencies
 from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDependencies
 from imap_l3_processing.glows.l3bc.l3bc_toolkit.generate_l3bc import generate_l3bc
 from imap_l3_processing.glows.l3bc.models import GlowsL3BIonizationRate
@@ -27,9 +26,8 @@ class GlowsProcessor(Processor):
             proton_cdf = save_data(l3a_output)
             imap_data_access.upload(proton_cdf)
         elif self.input_metadata.data_level == "l3b":
-            l3b_dependencies = GlowsInitializerAncillaryDependencies.fetch_dependencies(self.dependencies)
-            initializer = GlowsInitializer()
-            if initializer.should_process(l3b_dependencies):
+            zip_files = GlowsInitializer.validate_and_initialize(self.input_metadata.version)
+            for zip_file in zip_files:
                 save_data(None)
                 imap_data_access.upload("")
 
