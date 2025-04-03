@@ -15,7 +15,7 @@ from spacepy.pycdf import CDF
 from spiceypy import spiceypy
 import enum
 
-from scripts.glows.create_example_glows_l3e_survival_probabilities_cdf import survival_probabilities
+from scripts.glows.create_example_glows_l3e_survival_probabilities_cdf import create_survival_probabilities_file
 
 
 class IncludedSensors(enum.Enum):
@@ -126,13 +126,12 @@ if __name__ == '__main__':
             "epoch": [datetime(2009, 1, 1)]
         })
 
+    survival_probabilities_135, survival_probabilities_90 = create_survival_probabilities_file()
     glows_cdf = CDF(
         r"C:\Users\Harrison\Development\imap_L3_processing\tests\test_data\glows\imap_glows_l3e_survival-probabilities-hi_20250324_v001.cdf")
 
     elongations = glows_cdf['elongation'][...]
     survival_probabilities_combined = glows_cdf["probability_of_survival"][...]
-    survival_probabilities_135 = survival_probabilities[0]
-    survival_probabilities_90 = survival_probabilities[1]
 
     glows_pointing_set = [HiSurvivalProbabilityPointingSet(l1c_dataset, glows_cdf)]
     survival_probability_skymap = HiSurvivalProbabilitySkyMap(glows_pointing_set)

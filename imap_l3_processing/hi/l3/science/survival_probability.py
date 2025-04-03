@@ -2,12 +2,9 @@ import enum
 
 import numpy as np
 import xarray as xr
-from imap_processing.ena_maps.ena_maps import RectangularPointingSet, RectangularSkyMap, AbstractSkyMap, PointingSet
-from imap_processing.ena_maps.utils import spatial_utils
+from imap_processing.ena_maps.ena_maps import RectangularSkyMap, PointingSet
 from imap_processing.ena_maps.utils.coordinates import CoordNames
 from imap_processing.spice import geometry
-
-from scripts.glows.create_example_glows_l3e_survival_probabilities_cdf import survival_probabilities
 
 
 class Sensor(enum.Enum):
