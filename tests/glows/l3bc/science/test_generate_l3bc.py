@@ -63,7 +63,8 @@ class TestGenerateL3BC(TestCase):
             create_glows_l3a_dictionary_from_cdf(l3a_data_folder_path / 'imap_glows_l3a_hist_20100201_v001.cdf')]
 
         dependencies = GlowsL3BCDependencies(l3a_data=l3a_data, external_files=external_files,
-                                             ancillary_files=ancillary_files, carrington_rotation_number=cr)
+                                             ancillary_files=ancillary_files, carrington_rotation_number=cr,
+                                             start_date=datetime(2025, 4, 3), end_date=datetime(2025, 4, 4))
 
         with self.assertRaises(CannotProcessCarringtonRotationError) as context:
             generate_l3bc(dependencies)
