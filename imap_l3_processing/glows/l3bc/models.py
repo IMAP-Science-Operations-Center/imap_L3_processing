@@ -3,6 +3,7 @@ from datetime import datetime
 from typing import Self
 
 import numpy as np
+from astropy.time import Time
 from spacepy import pycdf
 
 from imap_l3_processing.constants import CARRINGTON_ROTATION_IN_NANOSECONDS
@@ -12,7 +13,8 @@ from imap_l3_processing.models import DataProduct, DataProductVariable, Upstream
 @dataclass
 class CRToProcess:
     l3a_paths: list[str]
-    cr_start_date: str
+    cr_start_date: Time
+    cr_end_date: Time
     cr_rotation_number: int
 
 
