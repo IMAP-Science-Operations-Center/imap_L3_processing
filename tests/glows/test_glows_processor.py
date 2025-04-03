@@ -2,14 +2,16 @@ import json
 import tempfile
 import unittest
 from copy import deepcopy
+from dataclasses import replace
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import patch, Mock
+from unittest.mock import patch, Mock, sentinel
 
 import numpy as np
 
 from imap_l3_processing.glows.descriptors import GLOWS_L2_DESCRIPTOR
 from imap_l3_processing.glows.glows_processor import GlowsProcessor
+from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDependencies
 from imap_l3_processing.models import UpstreamDataDependency, InputMetadata
 from tests.test_helpers import get_test_instrument_team_data_path, get_test_data_path
 
@@ -178,6 +180,39 @@ class TestGlowsProcessor(unittest.TestCase):
                 spin_angle_delta = result["daily_lightcurve"]["spin_angle_delta"]
                 self.assertEqual(len(example_data["daily_lightcurve"]["spin_angle"]), len(spin_angle_delta))
                 self.assertTrue(np.all(spin_angle_delta == expected_delta))
+
+    @patch("imap_l3_processing.glows.glows_processor.GlowsInitializer")
+    @patch('imap_l3_processing.glows.glows_processor.GlowsL3BIonizationRate')
+    @patch('imap_l3_processing.glows.glows_processor.filter_out_bad_days')
+    @patch('imap_l3_processing.glows.glows_processor.generate_l3bc')
+    def test_process_l3bc(self, mock_generate_l3bc, mock_filter_bad_days, mock_ion_rate_model_class, _):
+        dependencies = GlowsL3BCDependencies(l3a_data=sentinel.l3a_data,
+                                             external_files={
+                                                 'f107_raw_data': sentinel.f107_raw_data,
+                                                 'omni_raw_data': sentinel.omni_raw_data
+                                             },
+                                             ancillary_files={
+                                                 'uv_anisotropy': sentinel.uv_anisotropy,
+                                                 'WawHelioIonMP_parameters': sentinel.WawHelioIonMP_parameters,
+                                                 'bad_days_list': sentinel.bad_days_list,
+                                                 'pipeline_settings': sentinel.pipeline_settings
+                                             },
+                                             carrington_rotation_number=sentinel.cr_num)
+
+        mock_generate_l3bc.return_value = sentinel.l3b_data, sentinel.l3c_data
+        mock_filter_bad_days.return_value = sentinel.filtered_days
+
+        processor = GlowsProcessor(dependencies=Mock(), input_metadata=Mock())
+
+        data_product = processor.process_l3bc(dependencies)
+
+        dependencies_with_filtered_list = replace(dependencies, l3a_data=sentinel.filtered_days)
+
+        mock_filter_bad_days.assert_called_once_with(dependencies.l3a_data, sentinel.bad_days_list)
+        mock_generate_l3bc.assert_called_once_with(dependencies_with_filtered_list)
+
+        mock_ion_rate_model_class.from_instrument_team_object.assert_called_once_with(sentinel.l3b_data)
+        self.assertEqual(mock_ion_rate_model_class.from_instrument_team_object.return_value, data_product)
 
 
 if __name__ == '__main__':
