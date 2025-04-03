@@ -1,0 +1,88 @@
+{
+   "header": {
+      "software_version": "1.0",
+      "filename": "data_l3c/imap_glows_l3c_cr_2091_v00.json",
+      "ancillary_data_files": {
+         "WawHelioIonMP_parameters": "data_ancillary/imap_glows_WawHelioIonMP_v002.json",
+         "bad_day_list": "data_ancillary/imap_glows_bad-days-list_v001.dat",
+         "pipeline_settings": "data_ancillary/imap_glows_pipeline-settings-L3bc_v001.json",
+         "uv_anisotropy": "data_ancillary/imap_glows_uv-anisotropy-1CR_v001.json"
+      },
+      "external_dependeciens": [
+         "external_dependencies/omni_2010.dat"
+      ],
+      "l3b_input_filename": "data_l3b/imap_glows_l3b_cr_2091_v00.json"
+   },
+   "date": "2010-01-02 00:00:00.000",
+   "CR": 2091,
+   "solar_wind_ecliptic": {
+      "plasma_speed": 287.28333333333336,
+      "proton_density": 7.119753756835134,
+      "alpha_abundance": 0.010754716981132076
+   },
+   "solar_wind_profile": {
+      "lat_grid": [
+         -90,
+         -80,
+         -70,
+         -60,
+         -50,
+         -40,
+         -30,
+         -20,
+         -10,
+         0,
+         10,
+         20,
+         30,
+         40,
+         50,
+         60,
+         70,
+         80,
+         90
+      ],
+      "plasma_speed": [
+         453.0,
+         454.0,
+         458.0,
+         439.0,
+         398.0,
+         340.0,
+         267.0,
+         219.0,
+         208.0,
+         213.0,
+         207.0,
+         217.0,
+         279.0,
+         356.0,
+         403.0,
+         434.0,
+         449.0,
+         451.0,
+         451.0
+      ],
+      "proton_density": [
+         2.936401698812127,
+         2.925411597024053,
+         2.8819711530156464,
+         3.095939554040045,
+         3.631912590932598,
+         4.617541406882666,
+         6.455419442182627,
+         8.297793085231074,
+         8.833222369834132,
+         8.583335562240263,
+         8.884574837547618,
+         8.391307715264956,
+         6.089652089978192,
+         4.313387528483556,
+         3.5604414160542746,
+         3.1555937101455265,
+         2.9808916518764184,
+         2.958540118287262,
+         2.958540118287262
+      ]
+   }
+}

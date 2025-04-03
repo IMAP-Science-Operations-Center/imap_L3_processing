@@ -199,9 +199,9 @@ class TestUtils(unittest.TestCase):
         actual_dictionary = create_glows_l3a_dictionary_from_cdf(cdf_path)
 
         self.assertEqual("imap_glows_l3a_hist_20100101_v001.cdf", actual_dictionary["filename"])
-        self.assertEqual(datetime(2013, 9, 8, 8, 52, 14).strftime("%Y-%m-%d, %H:%M:%S"),
+        self.assertEqual(datetime(2013, 9, 8, 8, 52, 14).strftime("%Y-%m-%d %H:%M:%S"),
                          actual_dictionary['start_time'])
-        self.assertEqual(datetime(2013, 9, 9, 4, 58, 14).strftime("%Y-%m-%d, %H:%M:%S"), actual_dictionary['end_time'])
+        self.assertEqual(datetime(2013, 9, 9, 4, 58, 14).strftime("%Y-%m-%d %H:%M:%S"), actual_dictionary['end_time'])
 
         self.assertEqual(74.87028793594668, actual_dictionary['daily_lightcurve']['ecliptic_lat'][0])
         self.assertEqual(74.87028793594668, actual_dictionary['daily_lightcurve']['ecliptic_lat'][-1])
