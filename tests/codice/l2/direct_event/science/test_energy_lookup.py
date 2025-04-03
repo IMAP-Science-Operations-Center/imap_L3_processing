@@ -1,58 +1,57 @@
 import csv
+import tempfile
 import unittest
+from pathlib import Path
+
+from imap_l3_processing.codice.l2.direct_event.science.energy_lookup import EnergyLookup
 
 
-class EnergyLookup(unittest.TestCase):
+class TestEnergyLookup(unittest.TestCase):
     def test_find_energy_bin(self):
         test_energy_lookup_csv_path = "test_energy_lookup.csv"
         test_energy_bin_csv_path = " test_energy_bin.csv"
 
         header_row = ["SSD 0 - LG", "SSD 0 - MG", "SSD 0 - HG", "SSD 1 - LG", "SSD 1 - MG", "SSD 1 - HG"]
-        energy_index_row_0 = [0, 1, 2, 10, 11, 12]
-        energy_index_row_1 = [100, 101, 102, 1000, 1001, 1002]
 
-        all_energy_index_rows = energy_index_row_0.copy()
+        ssd_lookup_table = []
+        energy_bins_table = []
 
-        all_energy_index_rows.extend(energy_index_row_1)
-        energy_index_rows = [energy_index_row_0, energy_index_row_1]
+        for energy_index_row in range(2):
+            ssd_lookup_row = []
+            for ssd_id in range(2):
+                for gain in range(3):
+                    val = ssd_id * 3 + gain
+                    energy_bin = energy_index_row * 6 + val
+                    ssd_lookup_row.append(energy_bin)
+                    energy_bins_table.append([
+                        int(f"{ssd_id}{gain}{energy_index_row}1"),
+                        int(f"{ssd_id}{gain}{energy_index_row}2"),
+                        int(f"{ssd_id}{gain}{energy_index_row}3"),
+                    ])
 
-        mev_rows = []
-        for i in all_energy_index_rows:
-            mev_row = [i]
-            mev_row.extend([(i * 10) + j for j in range(1, 4)])
-            mev_rows.append(mev_row)
+            ssd_lookup_table.append(ssd_lookup_row)
 
-        with open(test_energy_lookup_csv_path, newline='') as test_energy_lookup_csv:
-            csv_writer = csv.writer(test_energy_lookup_csv, delimiter=',')
+        with tempfile.TemporaryDirectory() as tempdir:
+            temp_energy_file = Path(tempdir) / test_energy_lookup_csv_path
+            with open(temp_energy_file, 'w', newline='') as test_energy_lookup_csv:
+                csv_writer = csv.writer(test_energy_lookup_csv, delimiter=',')
 
-            csv_writer.writerow(header_row)
-            csv_writer.writerow(energy_index_row_0)
-            csv_writer.writerow(energy_index_row_1)
+                csv_writer.writerow(header_row)
+                csv_writer.writerows(ssd_lookup_table)
 
-        with open(test_energy_bin_csv_path, newline='') as test_energy_bin_lookup_csv:
-            csv_writer = csv.writer(test_energy_bin_lookup_csv, delimiter=',')
-            header_row = ["Energy (MeV)", "E lower (MeV)", "E upper (MeV)"]
-            csv_writer.writerow(header_row)
-            csv_writer.writerows(mev_rows)
+            temp_bin_file = Path(tempdir) / test_energy_bin_csv_path
+            with open(temp_bin_file, 'w', newline='') as test_energy_bin_lookup_csv:
+                csv_writer = csv.writer(test_energy_bin_lookup_csv, delimiter=',')
+                header_row = ["Energy (MeV)", "E lower (MeV)", "E upper (MeV)"]
+                csv_writer.writerow(header_row)
+                csv_writer.writerows(energy_bins_table)
 
-        energy_lookup = EnergyLookup.from_files(test_energy_lookup_csv_path, test_energy_bin_csv_path)
+            energy_lookup = EnergyLookup.from_files(temp_energy_file, temp_bin_file)
 
-        ssd_id = [0, 1]
-        energy_range = [0, 1, 2]
-        ssd_energy = [0, 1]
-
-        energy_lower, energy, energy_upper = energy_lookup.convert_to_mev(ssd_id, ssd_energy, energy_range)
-        self.assertEqual(mev_rows[0:], [energy_lower, energy, energy_upper])
-
-        ssd_id = 0  # 0 #100
-        energy_range = 1  # 10 #20 #30
-        ssd_energy = 1  # 1 2 3
-        expected_mev = [mev_row[1:] for mev_row in mev_rows if mev_row[0] == energy_index_rows[ssd_energy][ssd_id]]
-        test_cases = [
-            # sssid, energy_range, energy_row
-            (0, 1, 1, mev_row)
-        ]
-
-
-if __name__ == '__main__':
-    unittest.main()
+            for row in range(2):
+                for ssd_id in range(2):
+                    for gain in range(3):
+                        energy_vals = energy_lookup.convert_to_mev(ssd_id, gain, row)
+                        self.assertEqual(energy_vals[0], int(f"{ssd_id}{gain}{row}1"))
+                        self.assertEqual(energy_vals[1], int(f"{ssd_id}{gain}{row}2"))
+                        self.assertEqual(energy_vals[2], int(f"{ssd_id}{gain}{row}3"))
