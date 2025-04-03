@@ -5,7 +5,7 @@ import numpy as np
 
 from imap_l3_processing.models import DataProduct, DataProductVariable
 
-TENSOR_ID_LABEL = "tensor_id"
+TENSOR_ID = "tensor_id"
 
 EPOCH_CDF_VAR_NAME = "epoch"
 EPOCH_DELTA_CDF_VAR_NAME = "epoch_delta"
@@ -386,10 +386,7 @@ class SweL3Data(DataProduct):
             DataProductVariable(TEMPERATURE_TENSOR_LABEL,
                                 value=["Tensor 1", "Tensor 2", "Tensor 3", "Tensor 4", "Tensor 5", "Tensor 6"],
                                 ),
-            DataProductVariable(INTEGRATED_LABEL,
-                                value=["Integrated 1", "Integrated 2", ]
-                                ),
-            DataProductVariable(TENSOR_ID_LABEL, value=np.array([1, 2, 3, 4, 5, 6]))
+            DataProductVariable(TENSOR_ID, value=np.array([1, 2, 3, 4, 5, 6]))
         ]
 
 

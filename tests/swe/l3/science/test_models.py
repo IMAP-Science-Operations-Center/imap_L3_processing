@@ -42,7 +42,7 @@ from imap_l3_processing.swe.l3.models import SweL3Data, EPOCH_CDF_VAR_NAME, EPOC
     HALO_T_PERPENDICULAR_RATIO_INTEGRATED_CDF_VAR_NAME, TOTAL_T_PERPENDICULAR_RATIO_INTEGRATED_CDF_VAR_NAME, \
     CORE_TEMPERATURE_RATIO_PERPENDICULAR_TO_MAG_CDF_VAR_NAME, HALO_TEMPERATURE_RATIO_PERPENDICULAR_TO_MAG_CDF_VAR_NAME, \
     TOTAL_TEMPERATURE_RATIO_PERPENDICULAR_TO_MAG_CDF_VAR_NAME, TEMPERATURE_TENSOR_LABEL, INTEGRATED_LABEL, \
-    TENSOR_ID_LABEL
+    TENSOR_ID
 from tests.swapi.cdf_model_test_case import CdfModelTestCase
 
 
@@ -390,9 +390,7 @@ class TestModels(CdfModelTestCase):
             next(variables), ["R", "T", "N"], RTN_LABEL)
         self.assert_variable_attributes(
             next(variables), ["Tensor 1", "Tensor 2", "Tensor 3", "Tensor 4", "Tensor 5", "Tensor 6"], TEMPERATURE_TENSOR_LABEL)
-        self.assert_variable_attributes(
-            next(variables), ["Integrated 1", "Integrated 2", ], INTEGRATED_LABEL)
-        self.assert_variable_attributes(next(variables),[1,2,3,4,5, 6], TENSOR_ID_LABEL)
+        self.assert_variable_attributes(next(variables),[1,2,3,4,5, 6], TENSOR_ID)
 
         self.assertEqual([], list(variables), "unexpected variable found")
 
