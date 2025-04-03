@@ -17,7 +17,6 @@ from imap_l3_processing.glows.l3bc.l3bc_toolkit import l3c_EclipticSolarWind as 
 
 def generate_l3bc(dependencies: GlowsL3BCDependencies):
     CR = dependencies.carrington_rotation_number
-    print('Processing CR=' + str(CR))
 
     # Daily ionization rate from the daily light curves
     daily_ion_rate = []
@@ -76,4 +75,4 @@ def generate_l3bc(dependencies: GlowsL3BCDependencies):
     solar_wind_Carr.read_l3b(l3b_data)
     solar_wind_Carr.calculate_sw_profile()
 
-    return ion_rate_Carr, solar_wind_Carr
+    return l3b_data, solar_wind_Carr.generate_l3c_output()
