@@ -147,7 +147,7 @@ class TestUtils(unittest.TestCase):
     @patch("imap_l3_processing.glows.l3bc.utils.ZipFile")
     @patch('builtins.open', new_callable=mock_open, create=True)
     def test_archive_dependencies(self, mocked_open, mock_zip, mock_dump):
-        expected_filename = "imap_glows_l3pre-b_l3b-archive_20250314_v001.zip"
+        expected_filename = "imap_glows_l3b-archive_20250314_v001.zip"
         expected_json_filename = "cr_to_process.json"
 
         dependencies = GlowsInitializerAncillaryDependencies(uv_anisotropy_path="uv_anisotropy",
