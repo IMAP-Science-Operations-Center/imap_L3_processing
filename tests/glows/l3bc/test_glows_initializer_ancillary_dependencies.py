@@ -6,7 +6,7 @@ from imap_l3_processing.glows.l3bc.glows_initializer_ancillary_dependencies impo
     GlowsInitializerAncillaryDependencies, \
     F107_FLUX_TABLE_URL, \
     LYMAN_ALPHA_COMPOSITE_INDEX_URL, OMNI2_URL
-from tests.glows.l3b.test_utils import create_imap_data_access_json
+from tests.glows.l3bc.test_utils import create_imap_data_access_json
 
 
 class TestGlowsInitializerAncillaryDependencies(unittest.TestCase):

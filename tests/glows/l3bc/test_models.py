@@ -6,6 +6,7 @@ from spacepy import pycdf
 
 from imap_l3_processing.constants import CARRINGTON_ROTATION_IN_NANOSECONDS
 from imap_l3_processing.glows.l3bc.l3bc_toolkit.l3b_CarringtonIonRate import CarringtonIonizationRate
+from imap_l3_processing.glows.l3bc.l3bc_toolkit.l3c_CarringtonSolarWind import CarringtonSolarWind
 from imap_l3_processing.glows.l3bc.models import GlowsL3BIonizationRate, GlowsL3CSolarWind
 from tests.swapi.cdf_model_test_case import CdfModelTestCase
 from tests.test_helpers import get_test_instrument_team_data_path
@@ -47,7 +48,7 @@ class TestModels(CdfModelTestCase):
         self.assert_variable_attributes(next(variables), sentinel.cx_uncert, "cx_uncert")
         self.assert_variable_attributes(next(variables), sentinel.lat_grid_label, "lat_grid_label")
 
-    def test_from_instrument_team_model(self):
+    def test_l3b_from_instrument_team_model(self):
         pipeline_settings_path = get_test_instrument_team_data_path("glows/imap_glows_pipeline-settings-L3bc_v001.json")
         model = CarringtonIonizationRate(l3a_fn_list=[],
                                          anc_input_from_instr_team={
@@ -130,6 +131,42 @@ class TestModels(CdfModelTestCase):
                                         expected_data_type=pycdf.const.CDF_FLOAT)
         self.assert_variable_attributes(next(variables), sentinel.proton_density_profile, "proton_density_profile",
                                         expected_data_type=pycdf.const.CDF_FLOAT)
+
+    def test_l3c_from_instrument_team_model(self):
+        pipeline_settings_path = get_test_instrument_team_data_path("glows/imap_glows_pipeline-settings-L3bc_v001.json")
+        model = CarringtonSolarWind(anc_input_from_instr_team={
+            "pipeline_settings": pipeline_settings_path,
+        })
+
+        model.sw_profile["date"] = sentinel.date
+        model.sw_profile["CR"] = sentinel.CR
+        latitude_grid = np.array([-90, -45, 0, 45, 90])
+        model.sw_profile["grid"] = latitude_grid
+        model.sw_profile["plasma_speed"] = sentinel.plasma_speed
+        model.sw_profile["proton_density"] = sentinel.proton_density
+
+        model.sw_ecliptic["mean_speed"] = sentinel.mean_speed
+        model.sw_ecliptic["mean_proton_density"] = sentinel.mean_proton_density
+        model.sw_ecliptic["mean_alpha_abundance"] = sentinel.mean_alpha_abundance
+
+        result = GlowsL3CSolarWind.from_instrument_team_object(model, sentinel.input_metadata)
+
+        self.assertIsInstance(result, GlowsL3CSolarWind)
+
+        self.assertEqual(sentinel.input_metadata, result.input_metadata)
+        self.assertEqual([sentinel.date], result.epoch)
+        np.testing.assert_equal([CARRINGTON_ROTATION_IN_NANOSECONDS / 2], result.epoch_delta)
+
+        self.assertEqual([sentinel.CR], result.cr)
+        np.testing.assert_equal(latitude_grid, result.lat_grid)
+        self.assertEqual(["-90°", "-45°", "0°", "45°", "90°"], result.lat_grid_label)
+        self.assertEqual((5,), result.lat_grid_delta.shape)
+        self.assertEqual([sentinel.plasma_speed], result.plasma_speed_profile)
+        self.assertEqual([sentinel.proton_density], result.proton_density_profile)
+
+        self.assertEqual([sentinel.mean_speed], result.plasma_speed_ecliptic)
+        self.assertEqual([sentinel.mean_proton_density], result.proton_density_ecliptic)
+        self.assertEqual([sentinel.mean_alpha_abundance], result.alpha_abundance_ecliptic)
 
 
 if __name__ == '__main__':

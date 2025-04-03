@@ -11,7 +11,7 @@ import astropy.units as u
 import numpy as np
 from astropy.time import Time
 
-import funcs as fun
+from . import funcs as fun
 from .constants import VERSION, PHISICAL_CONSTANTS
 
 logging.basicConfig(level=logging.ERROR)
@@ -129,7 +129,7 @@ class CarringtonSolarWind():
             self.settings['plasma_speed_numerical_grid']) * u.km / u.s  # numerical grid to solve equations [km/s]
         cs_grid = fun.cross_section_cx(fun.v2E(v_grid))  # cross section for charge exchange for speed grid [cm^2]
         rho_grid = invariant / (const.m_p + p_alpha * PHISICAL_CONSTANTS['m_alpha']) / (
-                    0.5 * v_grid ** 2 + const.GM_sun / const.R_sun)
+                0.5 * v_grid ** 2 + const.GM_sun / const.R_sun)
 
         # calculation of the charge exchange rate for each speed in speed grid
         cx_grid = (rho_grid * cs_grid).to('1/s')

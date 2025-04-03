@@ -1,6 +1,8 @@
 import unittest
 from unittest.mock import Mock
 
+import numpy as np
+
 from imap_l3_processing.swe.l3.models import SweL3Data, EPOCH_CDF_VAR_NAME, EPOCH_DELTA_CDF_VAR_NAME, \
     ENERGY_CDF_VAR_NAME, \
     ENERGY_DELTA_PLUS_CDF_VAR_NAME, ENERGY_DELTA_MINUS_CDF_VAR_NAME, PITCH_ANGLE_CDF_VAR_NAME, \
@@ -36,7 +38,11 @@ from imap_l3_processing.swe.l3.models import SweL3Data, EPOCH_CDF_VAR_NAME, EPOC
     PHASE_SPACE_DENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_CDF_VAR_NAME, GYROPHASE_DELTA_CDF_VAR_NAME, \
     GYROPHASE_BINS_CDF_VAR_NAME, INTENSITY_UNCERTAINTY_BY_PITCH_ANGLE_AND_GYROPHASE_CDF_VAR_NAME, \
     INTENSITY_UNCERTAINTY_BY_PITCH_ANGLE_CDF_VAR_NAME, ENERGY_LABEL, PITCH_ANGLE_LABEL, GYROPHASE_LABEL, RTN_LABEL, \
-    TEMPERATURE_TENSOR_LABEL, INTEGRATED_LABEL
+    CORE_T_PERPENDICULAR_RATIO_INTEGRATED_CDF_VAR_NAME, \
+    HALO_T_PERPENDICULAR_RATIO_INTEGRATED_CDF_VAR_NAME, TOTAL_T_PERPENDICULAR_RATIO_INTEGRATED_CDF_VAR_NAME, \
+    CORE_TEMPERATURE_RATIO_PERPENDICULAR_TO_MAG_CDF_VAR_NAME, HALO_TEMPERATURE_RATIO_PERPENDICULAR_TO_MAG_CDF_VAR_NAME, \
+    TOTAL_TEMPERATURE_RATIO_PERPENDICULAR_TO_MAG_CDF_VAR_NAME, TEMPERATURE_TENSOR_LABEL, INTEGRATED_LABEL, \
+    TENSOR_ID
 from tests.swapi.cdf_model_test_case import CdfModelTestCase
 
 
@@ -98,11 +104,11 @@ class TestModels(CdfModelTestCase):
         total_heat_flux_theta_integrated = Mock()
         total_heat_flux_phi_integrated = Mock()
         core_t_parallel_integrated = Mock()
-        core_t_perpendicular_integrated = Mock()
+        core_t_perpendicular_integrated = np.array([[1, 2], [3, 4]])
         halo_t_parallel_integrated = Mock()
-        halo_t_perpendicular_integrated = Mock()
+        halo_t_perpendicular_integrated = np.array([[5, 6], [7, 8]])
         total_t_parallel_integrated = Mock()
-        total_t_perpendicular_integrated = Mock()
+        total_t_perpendicular_integrated = np.array([[9, 10], [11, 12]])
         core_temperature_theta_rtn_integrated = Mock()
         core_temperature_phi_rtn_integrated = Mock()
         halo_temperature_theta_rtn_integrated = Mock()
@@ -110,11 +116,11 @@ class TestModels(CdfModelTestCase):
         total_temperature_theta_rtn_integrated = Mock()
         total_temperature_phi_rtn_integrated = Mock()
         core_temperature_parallel_to_mag = Mock()
-        core_temperature_perpendicular_to_mag = Mock()
+        core_temperature_perpendicular_to_mag = np.array([[11, 12], [13, 14]])
         halo_temperature_parallel_to_mag = Mock()
-        halo_temperature_perpendicular_to_mag = Mock()
+        halo_temperature_perpendicular_to_mag = np.array([[15, 16], [17, 18]])
         total_temperature_parallel_to_mag = Mock()
-        total_temperature_perpendicular_to_mag = Mock()
+        total_temperature_perpendicular_to_mag = np.array([[19, 20], [21, 22]])
         core_temperature_tensor_integrated = Mock()
         halo_temperature_tensor_integrated = Mock()
         total_temperature_tensor_integrated = Mock()
@@ -320,15 +326,21 @@ class TestModels(CdfModelTestCase):
         self.assert_variable_attributes(
             next(variables), core_t_parallel_integrated, CORE_T_PARALLEL_INTEGRATED_CDF_VAR_NAME)
         self.assert_variable_attributes(
-            next(variables), core_t_perpendicular_integrated, CORE_T_PERPENDICULAR_INTEGRATED_CDF_VAR_NAME)
+            next(variables), [1,3], CORE_T_PERPENDICULAR_INTEGRATED_CDF_VAR_NAME)
+        self.assert_variable_attributes(
+            next(variables), [2,4], CORE_T_PERPENDICULAR_RATIO_INTEGRATED_CDF_VAR_NAME)
         self.assert_variable_attributes(
             next(variables), halo_t_parallel_integrated, HALO_T_PARALLEL_INTEGRATED_CDF_VAR_NAME)
         self.assert_variable_attributes(
-            next(variables), halo_t_perpendicular_integrated, HALO_T_PERPENDICULAR_INTEGRATED_CDF_VAR_NAME)
+            next(variables), [5,7], HALO_T_PERPENDICULAR_INTEGRATED_CDF_VAR_NAME)
+        self.assert_variable_attributes(
+            next(variables), [6,8], HALO_T_PERPENDICULAR_RATIO_INTEGRATED_CDF_VAR_NAME)
         self.assert_variable_attributes(
             next(variables), total_t_parallel_integrated, TOTAL_T_PARALLEL_INTEGRATED_CDF_VAR_NAME)
         self.assert_variable_attributes(
-            next(variables), total_t_perpendicular_integrated, TOTAL_T_PERPENDICULAR_INTEGRATED_CDF_VAR_NAME)
+            next(variables), [9,11], TOTAL_T_PERPENDICULAR_INTEGRATED_CDF_VAR_NAME)
+        self.assert_variable_attributes(
+            next(variables), [10,12], TOTAL_T_PERPENDICULAR_RATIO_INTEGRATED_CDF_VAR_NAME)
         self.assert_variable_attributes(
             next(variables), core_temperature_theta_rtn_integrated, CORE_TEMPERATURE_THETA_RTN_INTEGRATED_CDF_VAR_NAME)
         self.assert_variable_attributes(
@@ -345,16 +357,23 @@ class TestModels(CdfModelTestCase):
         self.assert_variable_attributes(
             next(variables), core_temperature_parallel_to_mag, CORE_TEMPERATURE_PARALLEL_TO_MAG_CDF_VAR_NAME)
         self.assert_variable_attributes(
-            next(variables), core_temperature_perpendicular_to_mag, CORE_TEMPERATURE_PERPENDICULAR_TO_MAG_CDF_VAR_NAME)
+            next(variables), [11,13], CORE_TEMPERATURE_PERPENDICULAR_TO_MAG_CDF_VAR_NAME)
+        self.assert_variable_attributes(
+            next(variables), [12,14], CORE_TEMPERATURE_RATIO_PERPENDICULAR_TO_MAG_CDF_VAR_NAME)
         self.assert_variable_attributes(
             next(variables), halo_temperature_parallel_to_mag, HALO_TEMPERATURE_PARALLEL_TO_MAG_CDF_VAR_NAME)
         self.assert_variable_attributes(
-            next(variables), halo_temperature_perpendicular_to_mag, HALO_TEMPERATURE_PERPENDICULAR_TO_MAG_CDF_VAR_NAME)
+            next(variables), [15,17], HALO_TEMPERATURE_PERPENDICULAR_TO_MAG_CDF_VAR_NAME)
+        self.assert_variable_attributes(
+            next(variables), [16,18], HALO_TEMPERATURE_RATIO_PERPENDICULAR_TO_MAG_CDF_VAR_NAME)
         self.assert_variable_attributes(
             next(variables), total_temperature_parallel_to_mag, TOTAL_TEMPERATURE_PARALLEL_TO_MAG_CDF_VAR_NAME)
         self.assert_variable_attributes(
-            next(variables), total_temperature_perpendicular_to_mag,
+            next(variables), [19,21],
             TOTAL_TEMPERATURE_PERPENDICULAR_TO_MAG_CDF_VAR_NAME)
+        self.assert_variable_attributes(
+            next(variables), [20,22],
+            TOTAL_TEMPERATURE_RATIO_PERPENDICULAR_TO_MAG_CDF_VAR_NAME)
         self.assert_variable_attributes(
             next(variables), core_temperature_tensor_integrated, CORE_TEMPERATURE_TENSOR_INTEGRATED_CDF_VAR_NAME)
         self.assert_variable_attributes(
@@ -371,8 +390,7 @@ class TestModels(CdfModelTestCase):
             next(variables), ["R", "T", "N"], RTN_LABEL)
         self.assert_variable_attributes(
             next(variables), ["Tensor 1", "Tensor 2", "Tensor 3", "Tensor 4", "Tensor 5", "Tensor 6"], TEMPERATURE_TENSOR_LABEL)
-        self.assert_variable_attributes(
-            next(variables), ["Integrated 1", "Integrated 2", ], INTEGRATED_LABEL)
+        self.assert_variable_attributes(next(variables),[1,2,3,4,5, 6], TENSOR_ID)
 
         self.assertEqual([], list(variables), "unexpected variable found")
 
