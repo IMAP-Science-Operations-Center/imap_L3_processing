@@ -88,7 +88,7 @@ epoch_delta:
    LABLAXIS: Time
    UNITS: ns
    VALIDMIN: 0
-   VALIDMAX: 10000000000
+   VALIDMAX: 600000000000
    FILLVAL: -9223372036854775808
    SCALE_TYP: linear
    SI_CONVERSION: 1e-9>seconds
@@ -903,7 +903,6 @@ core_t_perpendicular_integrated:
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
-   LABL_PTR_1: integrated_label
 halo_t_perpendicular_integrated:
    NAME: halo_t_perpendicular_integrated
    DATA_TYPE: CDF_REAL4
@@ -920,7 +919,6 @@ halo_t_perpendicular_integrated:
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
-   LABL_PTR_1: integrated_label
 total_t_perpendicular_integrated:
    NAME: total_t_perpendicular_integrated
    DATA_TYPE: CDF_REAL4
@@ -937,7 +935,6 @@ total_t_perpendicular_integrated:
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
-   LABL_PTR_1: integrated_label
 core_t_ratio_perpendicular_integrated:
    NAME: core_t_ratio_perpendicular_integrated
    DATA_TYPE: CDF_REAL4
@@ -1002,7 +999,6 @@ core_temperature_phi_rtn_integrated:
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
-   LABL_PTR_1: rtn_label
 halo_temperature_phi_rtn_integrated:
    NAME: halo_temperature_phi_rtn_integrated
    DATA_TYPE: CDF_REAL4
@@ -1019,7 +1015,6 @@ halo_temperature_phi_rtn_integrated:
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
-   LABL_PTR_1: rtn_label
 total_temperature_phi_rtn_integrated:
    NAME: total_temperature_phi_rtn_integrated
    DATA_TYPE: CDF_REAL4
@@ -1036,7 +1031,6 @@ total_temperature_phi_rtn_integrated:
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
-   LABL_PTR_1: rtn_label
 core_temperature_theta_rtn_integrated:
    NAME: core_temperature_theta_rtn_integrated
    DATA_TYPE: CDF_REAL4
@@ -1099,7 +1093,7 @@ core_temperature_tensor_integrated:
    FORMAT: F15.3
    LABLAXIS: Core Temperature Tensor Integrated
    UNITS: ' '
-   VALIDMIN: 0
+   VALIDMIN: -10000000000
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
    LABL_PTR_1: temperature_tensor_label
@@ -1117,7 +1111,7 @@ halo_temperature_tensor_integrated:
    FORMAT: F15.3
    LABLAXIS: Halo Temperature Tensor Integrated
    UNITS: ' '
-   VALIDMIN: 0
+   VALIDMIN: -10000000000
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
    LABL_PTR_1: temperature_tensor_label
@@ -1135,7 +1129,7 @@ total_temperature_tensor_integrated:
    FORMAT: F15.3
    LABLAXIS: Total Temperature Tensor Integrated
    UNITS: ' '
-   VALIDMIN: 0
+   VALIDMIN: -10000000000
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
    LABL_PTR_1: temperature_tensor_label
@@ -1347,7 +1341,6 @@ core_temperature_perpendicular_to_mag:
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
-   LABL_PTR_1: integrated_label
 halo_temperature_perpendicular_to_mag:
    NAME: halo_temperature_perpendicular_to_mag
    DATA_TYPE: CDF_REAL4
@@ -1364,7 +1357,6 @@ halo_temperature_perpendicular_to_mag:
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
-   LABL_PTR_1: integrated_label
 total_temperature_perpendicular_to_mag:
    NAME: total_temperature_perpendicular_to_mag
    DATA_TYPE: CDF_REAL4
@@ -1381,7 +1373,6 @@ total_temperature_perpendicular_to_mag:
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
-   LABL_PTR_1: integrated_label
 core_temperature_ratio_perpendicular_to_mag:
    NAME: core_temperature_ratio_perpendicular_to_mag
    DATA_TYPE: CDF_REAL4
@@ -1398,7 +1389,6 @@ core_temperature_ratio_perpendicular_to_mag:
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
-   LABL_PTR_1: integrated_label
 halo_temperature_ratio_perpendicular_to_mag:
    NAME: halo_temperature_ratio_perpendicular_to_mag
    DATA_TYPE: CDF_REAL4
@@ -1415,7 +1405,6 @@ halo_temperature_ratio_perpendicular_to_mag:
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
-   LABL_PTR_1: integrated_label
 total_temperature_ratio_perpendicular_to_mag:
    NAME: total_temperature_ratio_perpendicular_to_mag
    DATA_TYPE: CDF_REAL4
@@ -1432,7 +1421,6 @@ total_temperature_ratio_perpendicular_to_mag:
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
-   LABL_PTR_1: integrated_label
 energy_label:
    NAME: energy_label
    DATA_TYPE: CDF_CHAR
@@ -1454,13 +1442,6 @@ gyrophase_label:
    VAR_TYPE: metadata
    FIELDNAM: Gyrophase Label
    FORMAT: a20
-intensity_label:
-   NAME: intensity_label
-   DATA_TYPE: CDF_CHAR
-   CATDESC: Label for intensity
-   VAR_TYPE: metadata
-   FIELDNAM: Intensity Label
-   FORMAT: a20
 rtn_label:
    NAME: rtn_label
    DATA_TYPE: CDF_CHAR
@@ -1475,16 +1456,9 @@ temperature_tensor_label:
    VAR_TYPE: metadata
    FIELDNAM: Temperature Tensor Label
    FORMAT: a20
-integrated_label:
-   NAME: integrated_label
-   DATA_TYPE: CDF_CHAR
-   CATDESC: Label for core temp perpendicular integrated
-   VAR_TYPE: metadata
-   FIELDNAM: Temperature Tensor Label
-   FORMAT: a20
 tensor_id:
    NAME: tensor_id
-   DATA_TYPE: CDF_UINT4
+   DATA_TYPE: CDF_UINT1
    CATDESC: Tensor Id
    VAR_TYPE: support_data
    RECORD_VARYING: NRV
