@@ -10,7 +10,7 @@ from spacepy.pycdf import CDF
 from imap_l3_processing.glows.l3bc.glows_initializer_ancillary_dependencies import GlowsInitializerAncillaryDependencies
 from imap_l3_processing.glows.l3bc.models import CRToProcess
 from imap_l3_processing.glows.l3bc.utils import read_glows_l3a_data, find_unprocessed_carrington_rotations, \
-    archive_dependencies
+    archive_dependencies, filter_out_bad_days
 from tests.test_helpers import get_test_data_path
 
 
@@ -147,7 +147,7 @@ class TestUtils(unittest.TestCase):
     @patch("imap_l3_processing.glows.l3bc.utils.ZipFile")
     @patch('builtins.open', new_callable=mock_open, create=True)
     def test_archive_dependencies(self, mocked_open, mock_zip, mock_dump):
-        expected_filename = "imap_glows_l3pre-b_l3b-archive_20250314_v001.zip"
+        expected_filename = "imap_glows_l3b-archive_20250314_v001.zip"
         expected_json_filename = "cr_to_process.json"
 
         dependencies = GlowsInitializerAncillaryDependencies(uv_anisotropy_path="uv_anisotropy",
@@ -178,7 +178,9 @@ class TestUtils(unittest.TestCase):
         mocked_open.return_value.__enter__.return_value = mock_json_file
 
         version_number = "v001"
-        archive_dependencies(cr_to_process, version_number, dependencies)
+        actual_zip_file_name = archive_dependencies(cr_to_process, version_number, dependencies)
+
+        self.assertEqual(Path(expected_filename), actual_zip_file_name)
 
         mock_zip.assert_called_with(expected_filename, "w", ZIP_DEFLATED)
         mocked_open.assert_called_once_with(expected_json_filename, "w")
@@ -191,6 +193,36 @@ class TestUtils(unittest.TestCase):
             call(dependencies.f107_index_file_path),
             call(expected_json_filename)
         ])
+
+    def test_filter_out_bad_days(self):
+        l3a_data = [
+            create_l3a_dict("2010-01-05 00:00:00", "2010-01-05 07:28:00"),
+            create_l3a_dict("2010-01-06 00:00:00", "2010-01-06 07:28:00"),
+            create_l3a_dict("2010-01-10 00:00:00", "2010-01-10 07:28:00"),
+            create_l3a_dict("2010-01-11 00:00:00", "2010-01-11 07:28:00"),
+            create_l3a_dict("2010-01-15 00:00:00", "2010-01-15 07:28:00"),
+            create_l3a_dict("2010-01-16 00:00:00", "2010-01-16 07:28:00"),
+            create_l3a_dict("2010-01-30 00:00:00", "2010-01-30 07:28:00")
+        ]
+
+        expected_filtered_list = [
+            create_l3a_dict("2010-01-05 00:00:00", "2010-01-05 07:28:00"),
+            create_l3a_dict("2010-01-06 00:00:00", "2010-01-06 07:28:00"),
+            create_l3a_dict("2010-01-16 00:00:00", "2010-01-16 07:28:00"),
+            create_l3a_dict("2010-01-30 00:00:00", "2010-01-30 07:28:00"),
+        ]
+
+        filtered_list = filter_out_bad_days(l3a_data=l3a_data, bad_day_list_path=get_test_data_path(
+            "glows") / "imap_glows_bad-days-list_v001.dat")
+        self.assertEqual(4, len(filtered_list))
+        self.assertEqual(expected_filtered_list, filtered_list)
+
+
+def create_l3a_dict(start_date: str, end_date: str) -> dict:
+    return {
+        'start_time': start_date,
+        'end_time': end_date,
+    }
 
 
 def create_imap_data_access_json(file_path: str, data_level: str, start_date: str,

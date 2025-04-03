@@ -109,8 +109,8 @@ def create_glows_l3a_dictionary_from_cdf(cdf_file_path: Path) -> dict:
     end_time = cdf['epoch'][0] + time_delta
     return {
         'filename': f'{os.path.basename(cdf_file_path)}',
-        'start_time': start_time.strftime("%Y-%m-%d, %H:%M:%S"),
-        'end_time': end_time.strftime("%Y-%m-%d, %H:%M:%S"),
+        'start_time': start_time.strftime("%Y-%m-%d %H:%M:%S"),
+        'end_time': end_time.strftime("%Y-%m-%d %H:%M:%S"),
         'daily_lightcurve': {
             'ecliptic_lat': cdf['ecliptic_lat'][0],
             'ecliptic_lon': cdf['ecliptic_lon'][0],

@@ -44,6 +44,10 @@ class TestGlowsInitializer(unittest.TestCase):
             mock_l3a,
             mock_l3b
         ]
+        mock_archive_dependencies.side_effect = [
+            sentinel.zip_path_1,
+            sentinel.zip_path_2
+        ]
 
         ancillary_dependencies = GlowsInitializerAncillaryDependencies(Mock(), Mock(), Mock(), Mock(), Mock(), Mock(),
                                                                        Mock())
@@ -51,7 +55,7 @@ class TestGlowsInitializer(unittest.TestCase):
         mock_glows_initializer_ancillary_dependencies.fetch_dependencies.return_value = ancillary_dependencies
         mock_find_unprocessed_carrington_rotations.return_value = [sentinel.cr_to_process1, sentinel.cr_to_process2]
 
-        GlowsInitializer.validate_and_initialize(version)
+        actual_zip_paths = GlowsInitializer.validate_and_initialize(version)
 
         self.assertEqual(2, mock_query.call_count)
         mock_query.assert_has_calls([call(instrument="glows", version=version, data_level="l3a"),
@@ -65,3 +69,7 @@ class TestGlowsInitializer(unittest.TestCase):
             call(sentinel.cr_to_process1, version, ancillary_dependencies),
             call(sentinel.cr_to_process2, version, ancillary_dependencies),
         ])
+
+        self.assertEqual(2, len(actual_zip_paths))
+        self.assertEqual(sentinel.zip_path_1, actual_zip_paths[0])
+        self.assertEqual(sentinel.zip_path_2, actual_zip_paths[1])

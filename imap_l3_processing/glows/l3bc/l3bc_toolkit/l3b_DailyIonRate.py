@@ -13,7 +13,7 @@ from astropy.coordinates import SkyCoord
 from astropy.time import Time
 from sklearn.linear_model import LinearRegression, Lasso, Ridge
 
-import funcs as fun
+from . import funcs as fun
 from .constants import VERSION
 
 logging.basicConfig(level=logging.ERROR)

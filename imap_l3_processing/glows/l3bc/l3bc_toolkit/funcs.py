@@ -412,7 +412,7 @@ def read_f107_raw_data(fn):
     flux_adjusted: F10.7 flux adjusted to 1au (10^(-22) W/m^2/Hz)    
     '''
 
-    data = np.loadtxt(fn)
+    data = np.loadtxt(fn, skiprows=2)
 
     jd = data[:, 2]  # time of observation in JD
     flux_adjusted = data[:,
