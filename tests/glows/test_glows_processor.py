@@ -152,9 +152,10 @@ class TestGlowsProcessor(unittest.TestCase):
     @patch("imap_l3_processing.glows.glows_processor.save_data")
     @patch("imap_l3_processing.glows.glows_processor.GlowsInitializer")
     @patch('imap_l3_processing.glows.glows_processor.GlowsL3BIonizationRate')
+    @patch('imap_l3_processing.glows.glows_processor.GlowsL3CSolarWind')
     @patch('imap_l3_processing.glows.glows_processor.filter_out_bad_days')
     @patch('imap_l3_processing.glows.glows_processor.generate_l3bc')
-    def test_process_l3bc(self, mock_generate_l3bc, mock_filter_bad_days, mock_ion_rate_model_class,
+    def test_process_l3bc(self, mock_generate_l3bc, mock_filter_bad_days, mock_l3c_model_class, mock_l3b_model_class,
                           mock_glows_initializer_class, mock_save_data, mock_imap_data_access, mock_l3bc_dependencies):
         mock_glows_initializer_class.validate_and_initialize.return_value = [
             sentinel.zip_file_path_1,
@@ -180,9 +181,14 @@ class TestGlowsProcessor(unittest.TestCase):
                                           (sentinel.l3b_data_2, sentinel.l3c_data_2)]
         mock_filter_bad_days.side_effect = [sentinel.filtered_days_1, sentinel.filtered_days_2]
 
-        mock_ion_rate_model_class.from_instrument_team_dictionary.side_effect = [sentinel.ion_rate_1,
-                                                                                 sentinel.ion_rate_2]
-        mock_save_data.side_effect = [sentinel.l3b_cdf_path_1, sentinel.l3b_cdf_path_2]
+        mock_l3b_model_class.from_instrument_team_dictionary.side_effect = [sentinel.l3b_1,
+                                                                            sentinel.l3b_2]
+        mock_l3c_model_class.from_instrument_team_dictionary.side_effect = [sentinel.l3c_1,
+                                                                            sentinel.l3c_2]
+        mock_save_data.side_effect = [sentinel.l3b_cdf_path_1,
+                                      sentinel.l3c_cdf_path_1,
+                                      sentinel.l3b_cdf_path_2,
+                                      sentinel.l3c_cdf_path_2]
 
         input_metadata = InputMetadata('glows', "l3b", datetime(2024, 10, 7, 10, 00, 00),
                                        datetime(2024, 10, 8, 10, 00, 00),
@@ -204,18 +210,24 @@ class TestGlowsProcessor(unittest.TestCase):
         mock_generate_l3bc.assert_has_calls(
             [call(dependencies_with_filtered_list_1), call(dependencies_with_filtered_list_2)])
 
-        mock_ion_rate_model_class.from_instrument_team_dictionary.assert_has_calls(
+        mock_l3b_model_class.from_instrument_team_dictionary.assert_has_calls(
             [call(sentinel.l3b_data_1, input_metadata.to_upstream_data_dependency("sci")),
              call(sentinel.l3b_data_2, input_metadata.to_upstream_data_dependency("sci"))])
 
-        mock_save_data.assert_has_calls([call(sentinel.ion_rate_1), call(sentinel.ion_rate_2)])
-        mock_save_data.assert_has_calls([call(sentinel.ion_rate_1), call(sentinel.ion_rate_2)])
+        mock_l3c_model_class.from_instrument_team_dictionary.assert_has_calls(
+            [call(sentinel.l3c_data_1, input_metadata.to_upstream_data_dependency("sci")),
+             call(sentinel.l3c_data_2, input_metadata.to_upstream_data_dependency("sci"))])
+
+        mock_save_data.assert_has_calls(
+            [call(sentinel.l3b_1), call(sentinel.l3c_1), call(sentinel.l3b_2), call(sentinel.l3c_2)])
 
         mock_imap_data_access.upload.assert_has_calls([
             call(sentinel.zip_file_path_1),
             call(sentinel.l3b_cdf_path_1),
+            call(sentinel.l3c_cdf_path_1),
             call(sentinel.zip_file_path_2),
             call(sentinel.l3b_cdf_path_2),
+            call(sentinel.l3c_cdf_path_2),
         ])
 
 
