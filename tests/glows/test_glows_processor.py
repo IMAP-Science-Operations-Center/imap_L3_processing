@@ -110,36 +110,6 @@ class TestGlowsProcessor(unittest.TestCase):
         mock_save_data.assert_not_called()
         mock_imap_data_access.upload.assert_not_called()
 
-    @patch("imap_l3_processing.glows.glows_processor.imap_data_access")
-    @patch("imap_l3_processing.glows.glows_processor.save_data")
-    @patch("imap_l3_processing.glows.glows_processor.GlowsInitializer")
-    def test_processes_l3b_if_should_process(self, mock_glows_initializer_class,
-                                             mock_save_data,
-                                             mock_imap_data_access):
-        mock_glows_initializer_class.validate_and_initialize.return_value = [
-            sentinel.zip_file_path_1,
-            sentinel.zip_file_path_2,
-        ]
-
-        input_metadata = InputMetadata('glows', "l3b", datetime(2024, 10, 7, 10, 00, 00),
-                                       datetime(2024, 10, 8, 10, 00, 00),
-                                       'v02')
-        dependencies = [
-            UpstreamDataDependency('glows', 'l3a', datetime(2024, 10, 7, 10, 00, 00), datetime(2024, 10, 8, 10, 00, 00),
-                                   'v001', GLOWS_L2_DESCRIPTOR + '00001'),
-        ]
-
-        processor = GlowsProcessor(dependencies=dependencies, input_metadata=input_metadata)
-        processor.process()
-
-        mock_glows_initializer_class.validate_and_initialize.assert_called_with(input_metadata.version)
-
-        self.assertEqual(2, mock_save_data.call_count)
-        mock_save_data.assert_has_calls([call(None), call(None)])
-        
-        self.assertEqual(2, mock_imap_data_access.upload.call_count)
-        mock_imap_data_access.upload.assert_has_calls([call(sentinel.zip_file_path_1), call(sentinel.zip_file_path_2)])
-
     def test_add_spin_angle_delta(self):
         cases = [
             (60, 3),
@@ -239,7 +209,12 @@ class TestGlowsProcessor(unittest.TestCase):
         mock_save_data.assert_has_calls([call(sentinel.ion_rate_1), call(sentinel.ion_rate_2)])
         mock_save_data.assert_has_calls([call(sentinel.ion_rate_1), call(sentinel.ion_rate_2)])
 
-        mock_imap_data_access.upload.assert_has_calls([call(sentinel.l3b_cdf_path_1), call(sentinel.l3b_cdf_path_2)])
+        mock_imap_data_access.upload.assert_has_calls([
+            call(sentinel.zip_file_path_1),
+            call(sentinel.l3b_cdf_path_1),
+            call(sentinel.zip_file_path_2),
+            call(sentinel.l3b_cdf_path_2),
+        ])
 
 
 if __name__ == '__main__':
