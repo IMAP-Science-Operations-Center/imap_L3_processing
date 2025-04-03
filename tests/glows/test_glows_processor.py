@@ -136,9 +136,9 @@ class TestGlowsProcessor(unittest.TestCase):
 
         self.assertEqual(2, mock_save_data.call_count)
         mock_save_data.assert_has_calls([call(None), call(None)])
-
+        
         self.assertEqual(2, mock_imap_data_access.upload.call_count)
-        mock_imap_data_access.upload.assert_has_calls([call(""), call("")])
+        mock_imap_data_access.upload.assert_has_calls([call(sentinel.zip_file_path_1), call(sentinel.zip_file_path_2)])
 
     def test_add_spin_angle_delta(self):
         cases = [

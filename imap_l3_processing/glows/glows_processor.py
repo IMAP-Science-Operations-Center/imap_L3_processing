@@ -28,6 +28,7 @@ class GlowsProcessor(Processor):
         elif self.input_metadata.data_level == "l3b":
             zip_files = GlowsInitializer.validate_and_initialize(self.input_metadata.version)
             for zip_file in zip_files:
+                imap_data_access.upload(zip_file)
                 dependencies = GlowsL3BCDependencies.fetch_dependencies(zip_file)
                 l3b_data = self.process_l3bc(dependencies)
                 l3b_cdf = save_data(l3b_data)
