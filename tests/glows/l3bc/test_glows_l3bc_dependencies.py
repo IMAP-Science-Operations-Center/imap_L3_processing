@@ -11,13 +11,11 @@ class TestGlowsL3BCDependencies(unittest.TestCase):
     @patch('imap_l3_processing.glows.l3bc.glows_l3bc_dependencies.create_glows_l3a_dictionary_from_cdf')
     @patch('builtins.open', new_callable=mock_open, create=False)
     @patch('imap_l3_processing.glows.l3bc.glows_l3bc_dependencies.ZipFile')
-    @patch('imap_l3_processing.glows.l3bc.glows_l3bc_dependencies.download_dependency')
     @patch('imap_l3_processing.glows.l3bc.glows_l3bc_dependencies.download_dependency_from_path')
-    def test_fetch_dependencies(self, mock_download_dependencies_from_path, mock_download_dependencies,
+    def test_fetch_dependencies(self, mock_download_dependencies_from_path,
                                 mock_zip_file_class,
                                 mock_open_file, mock_create_dictionary_from_cdf):
         mock_zip_file_path = Mock()
-        mock_download_dependencies.side_effect = [mock_zip_file_path]
         mock_download_dependencies_from_path.side_effect = [
             sentinel.uv_anisotropy_downloaded_path,
             sentinel.waw_downloaded_path,
@@ -42,13 +40,11 @@ class TestGlowsL3BCDependencies(unittest.TestCase):
             sentinel.l3a_dictionary_2,
         ]
 
-        dependency: GlowsL3BCDependencies = GlowsL3BCDependencies.fetch_dependencies([sentinel.zip_dependency])
+        dependency: GlowsL3BCDependencies = GlowsL3BCDependencies.fetch_dependencies(mock_zip_file_path)
 
         mock_zip_file_class.assert_called_with(mock_zip_file_path, 'r')
         base_dir_file_path = Path(glows_l3bc_dependencies.__file__).parent / 'glows_l3b_files'
         mock_zip_file.extract.assert_called_once_with(str(base_dir_file_path))
-
-        mock_download_dependencies.assert_called_once_with(sentinel.zip_dependency)
 
         self.assertEqual([call(sentinel.l3a_downloaded_path_1), call(sentinel.l3a_downloaded_path_2)],
                          mock_create_dictionary_from_cdf.call_args_list)
