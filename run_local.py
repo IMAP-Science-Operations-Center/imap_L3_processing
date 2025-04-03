@@ -365,19 +365,20 @@ def survival_correct_l2_map_with_fake_survivals(l2_or_l3_flux: np.ndarray[(EPOCH
     for i in range(num_psets):
         epoch = map_start_time + i * pset_time_delta
 
-        survival_values = [0.5, 0.75] if i % 2 == 0 else [0.75, 0.5]
-        sp_strip = np.ravel(np.repeat([survival_values], 180, axis=0)).reshape(1, 1, -1)
+        # survival_values = [0.5, 0.75] if i % 2 == 0 else [0.75, 0.5]
+        # sp_strip = np.ravel(np.repeat([survival_values], 180, axis=0)).reshape(1, 1, -1)
+        sp_strip = np.repeat(1 / (i + 1), 360).reshape(1, 1, -1)
         survival_probability = np.repeat(sp_strip, 16, axis=1)
         glows_l3e_dataset = create_empty_glows_l3e_dataset(epoch, survival_probability)
 
-        # psets.append(
-        #     HiSurvivalProbabilityPointingSet(create_empty_hi_l1c_dataset(epoch, energies=np.geomspace(1, 10000, 23)),
-        #                                      Sensor.Hi45, glows_l3e_dataset))
+        psets.append(
+            HiSurvivalProbabilityPointingSet(create_empty_hi_l1c_dataset(epoch, energies=np.geomspace(1, 10000, 23)),
+                                             Sensor.Hi45, glows_l3e_dataset))
         psets.append(
             HiSurvivalProbabilityPointingSet(create_empty_hi_l1c_dataset(epoch, energies=np.geomspace(1, 10000, 23)),
                                              Sensor.Hi90, glows_l3e_dataset))
 
-    survival_probability_map = HiSurvivalProbabilitySkyMap(psets, spacing_degree, SpiceFrame.J2000)
+    survival_probability_map = HiSurvivalProbabilitySkyMap(psets, spacing_degree, SpiceFrame.ECLIPJ2000)
     survival_dataset = survival_probability_map.to_dataset()['exposure_weighted_survival_probabilities'].values
     survival_dataset = survival_dataset.transpose(0, 2, 3, 1)
 

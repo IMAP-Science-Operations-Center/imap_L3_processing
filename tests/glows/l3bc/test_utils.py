@@ -4,7 +4,7 @@ from pathlib import Path
 from unittest.mock import patch, Mock, MagicMock, call, mock_open
 from zipfile import ZIP_DEFLATED
 
-from astropy.time import Time
+from astropy.time import Time, TimeDelta
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.glows.l3bc.glows_initializer_ancillary_dependencies import GlowsInitializerAncillaryDependencies
@@ -96,6 +96,8 @@ class TestUtils(unittest.TestCase):
                                                                          pipeline_settings="pipeline_settings",
                                                                          lyman_alpha_path=Path("lyman_alpha"),
                                                                          omni2_data_path=Path("omni"),
+                                                                         initializer_time_buffer=TimeDelta(52,
+                                                                                                           format="jd"),
                                                                          f107_index_file_path=Path("f107"))
 
         actual_crs_to_process: [CRToProcess] = find_unprocessed_carrington_rotations(l3a_files, l3b_files,
@@ -110,9 +112,9 @@ class TestUtils(unittest.TestCase):
         self.assertEqual('20100408', actual_crs_to_process[1].cr_midpoint)
         self.assertEqual(2095, actual_crs_to_process[1].cr_rotation_number)
 
-        self.assertEqual(Time('2010-01-03 11:33:04.320').value,
+        self.assertEqual(Time('2010-01-30 18:09:30.240').value,
                          mock_validate_dependencies.call_args_list[0][0][0].value)
-        self.assertEqual(Time('2010-01-31 18:09:30.240').value,
+        self.assertEqual(initializer_dependencies.initializer_time_buffer.value,
                          mock_validate_dependencies.call_args_list[0][0][1].value)
         self.assertEqual(initializer_dependencies.omni2_data_path,
                          mock_validate_dependencies.call_args_list[0][0][2])
@@ -121,9 +123,9 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(initializer_dependencies.lyman_alpha_path,
                          mock_validate_dependencies.call_args_list[0][0][4])
 
-        self.assertEqual(Time('2010-02-27 00:45:56.160').value,
+        self.assertEqual(Time('2010-03-26 07:22:22.080').value,
                          mock_validate_dependencies.call_args_list[1][0][0].value)
-        self.assertEqual(Time('2010-03-27 07:22:22.080').value,
+        self.assertEqual(initializer_dependencies.initializer_time_buffer.value,
                          mock_validate_dependencies.call_args_list[1][0][1].value)
         self.assertEqual(initializer_dependencies.omni2_data_path,
                          mock_validate_dependencies.call_args_list[1][0][2])
@@ -132,9 +134,9 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(initializer_dependencies.lyman_alpha_path,
                          mock_validate_dependencies.call_args_list[1][0][4])
 
-        self.assertEqual(Time('2010-03-26 07:22:22.080').value,
+        self.assertEqual(Time('2010-04-22 13:58:48.000').value,
                          mock_validate_dependencies.call_args_list[2][0][0].value)
-        self.assertEqual(Time('2010-04-23 13:58:48.000').value,
+        self.assertEqual(initializer_dependencies.initializer_time_buffer.value,
                          mock_validate_dependencies.call_args_list[2][0][1].value)
         self.assertEqual(initializer_dependencies.omni2_data_path,
                          mock_validate_dependencies.call_args_list[2][0][2])
@@ -157,6 +159,7 @@ class TestUtils(unittest.TestCase):
                                                              lyman_alpha_path=Path("lyman_alpha"),
                                                              omni2_data_path=Path("omni"),
                                                              f107_index_file_path=Path("f107"),
+                                                             initializer_time_buffer=TimeDelta(42, format="jd"),
                                                              )
 
         cr_to_process: CRToProcess = CRToProcess(cr_rotation_number=2095, l3a_paths=["file1", "file2"],
