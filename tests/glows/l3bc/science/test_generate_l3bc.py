@@ -5,7 +5,7 @@ import numpy as np
 
 from imap_l3_processing.glows.l3a.utils import create_glows_l3a_dictionary_from_cdf
 from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDependencies
-from imap_l3_processing.glows.l3bc.l3bc_toolkit.generate_l3bc import generate_l3bc
+from imap_l3_processing.glows.l3bc.science.generate_l3bc import generate_l3bc
 from tests.test_helpers import get_test_data_path, get_test_instrument_team_data_path
 
 
