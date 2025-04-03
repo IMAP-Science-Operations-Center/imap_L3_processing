@@ -3,17 +3,16 @@ Author: Izabela Kowalska-Leszczynska, ikowalska@cbk.waw.pl
 Modified by Menlo
 Main procedure to generate GLOWS L3b and L3c data products
 '''
-import warnings
 
 import numpy as np
 from astropy.time import Time
 
-from . import funcs as fun
-from . import l3b_CarringtonIonRate as cir
-from . import l3b_DailyIonRate as dir
-from . import l3c_CarringtonSolarWind as csw
-from . import l3c_EclipticSolarWind as esw
 from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDependencies
+from imap_l3_processing.glows.l3bc.l3bc_toolkit import funcs as fun
+from imap_l3_processing.glows.l3bc.l3bc_toolkit import l3b_CarringtonIonRate as cir
+from imap_l3_processing.glows.l3bc.l3bc_toolkit import l3b_DailyIonRate as dir
+from imap_l3_processing.glows.l3bc.l3bc_toolkit import l3c_CarringtonSolarWind as csw
+from imap_l3_processing.glows.l3bc.l3bc_toolkit import l3c_EclipticSolarWind as esw
 
 
 def generate_l3bc(dependencies: GlowsL3BCDependencies):
@@ -41,8 +40,7 @@ def generate_l3bc(dependencies: GlowsL3BCDependencies):
     ion_rate_Carr = cir.CarringtonIonizationRate(l3a_used_fn, dependencies.ancillary_files, dependencies.external_files)
     solar_wind_Carr = csw.CarringtonSolarWind(dependencies.ancillary_files)
 
-    l3a_date_list = Time([l3a['start_time'] for l3a in
-                          dependencies.l3a_data])  # TODO: Menlo - determine which dates, start, center, middle, are needed
+    l3a_date_list = Time([l3a['start_time'] for l3a in dependencies.l3a_data])
 
     # Save daily ionization rates into CarringtonIonizationRate structure
     ion_rate_Carr.daily_ion_rate['date'] = l3a_date_list
@@ -78,4 +76,4 @@ def generate_l3bc(dependencies: GlowsL3BCDependencies):
     solar_wind_Carr.read_l3b(l3b_data)
     solar_wind_Carr.calculate_sw_profile()
 
-    return ion_rate_Carr, solar_wind_Carr
+    return l3b_data, solar_wind_Carr.generate_l3c_output()

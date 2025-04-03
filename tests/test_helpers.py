@@ -65,3 +65,17 @@ class NumpyArrayMatcher:
 
     def __repr__(self):
         return repr(self.array)
+
+
+def assert_dict_close(x, y, rtol=1e-7, path=None):
+    if path is None:
+        path = []
+    path_str = " > ".join(path)
+    if isinstance(x, dict) and isinstance(y, dict):
+        assert set(x.keys()) == set(y.keys()), f"keys differ at {path_str}"
+        for k in x:
+            assert_dict_close(x[k], y[k], rtol, path.copy() + [k])
+    elif isinstance(x, (list, np.ndarray)):
+        np.testing.assert_allclose(x, y, rtol=rtol, err_msg=f"path to failure: {path_str}")
+    else:
+        assert x == y, f"{x} != {y} at path {path_str}"
