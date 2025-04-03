@@ -1,5 +1,6 @@
 '''
 Author: Izabela Kowalska-Leszczynska, ikowalska@cbk.waw.pl
+Modified by Menlo
 Main procedure to generate GLOWS L3b and L3c data products
 '''
 import warnings

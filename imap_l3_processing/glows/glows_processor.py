@@ -4,7 +4,7 @@ import imap_data_access
 import numpy as np
 
 from imap_l3_processing.glows.glows_initializer import GlowsInitializer
-from imap_l3_processing.glows.glows_toolkit.l3a_data import L3aData
+from imap_l3_processing.glows.l3a.glows_toolkit.l3a_data import L3aData
 from imap_l3_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
 from imap_l3_processing.glows.l3a.models import GlowsL3LightCurve
 from imap_l3_processing.glows.l3a.utils import create_glows_l3a_from_dictionary

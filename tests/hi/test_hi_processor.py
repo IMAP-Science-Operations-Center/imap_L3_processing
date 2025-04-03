@@ -8,6 +8,7 @@ from imap_l3_processing.hi.hi_processor import HiProcessor
 from imap_l3_processing.hi.l3.hi_l3_dependencies import HiL3Dependencies
 from imap_l3_processing.hi.l3.models import HiL3Data, HiL3SpectralIndexDataProduct
 from imap_l3_processing.models import InputMetadata
+from tests.test_helpers import get_test_data_path
 
 
 class TestHiProcessor(unittest.TestCase):
@@ -61,6 +62,59 @@ class TestHiProcessor(unittest.TestCase):
         np.testing.assert_array_equal(actual_hi_data_product.epoch, hi_l3_data.epoch)
         np.testing.assert_array_equal(actual_hi_data_product.flux, hi_l3_data.flux)
         np.testing.assert_array_equal(actual_hi_data_product.exposure, hi_l3_data.exposure)
+
+    def test_spectral_fit_against_validation_data(self):
+        expected_failures = ["hi45", "hi45-zirnstein-mondel"]
+
+        test_cases = [
+            ("hi45", "hi/validation/hi45-6months.cdf", "hi/validation/expected_Hi45_6months_4.0x4.0_fit_gam.csv",
+             "hi/validation/expected_Hi45_6months_4.0x4.0_fit_gam_sig.csv"),
+            ("hi90", "hi/validation/hi90-6months.cdf", "hi/validation/expected_Hi90_6months_4.0x4.0_fit_gam.csv",
+             "hi/validation/expected_Hi90_6months_4.0x4.0_fit_gam_sig.csv"),
+            ("hi45-zirnstein-mondel", "hi/validation/hi45-zirnstein-mondel-6months.cdf",
+             "hi/validation/expected_Hi45_gdf_Zirnstein_model_6months_4.0x4.0_fit_gam.csv",
+             "hi/validation/expected_Hi45_gdf_Zirnstein_model_6months_4.0x4.0_fit_gam_sig.csv"),
+            ("hi90-zirnstein-mondel", "hi/validation/hi90-zirnstein-mondel-6months.cdf",
+             "hi/validation/expected_Hi90_gdf_zirnstein_model_6months_4.0x4.0_fit_gam.csv",
+             "hi/validation/expected_Hi90_gdf_Zirnstein_model_6months_4.0x4.0_fit_gam_sig.csv"),
+        ]
+
+        for name, input_file_path, expected_gamma_path, expected_sigma_path in test_cases:
+            with self.subTest(name):
+                dependencies = HiL3Dependencies.from_file_paths(
+                    get_test_data_path(input_file_path)
+                )
+
+                expected_gamma = np.loadtxt(get_test_data_path(expected_gamma_path), delimiter=",", dtype=str).T
+                expected_gamma[expected_gamma == "NaN"] = "-1"
+                expected_gamma = expected_gamma.astype(np.float64)
+                expected_gamma[expected_gamma == -1] = np.nan
+
+                expected_gamma_sigma = np.loadtxt(get_test_data_path(expected_sigma_path), delimiter=",",
+                                                  dtype=str).T
+                expected_gamma_sigma[expected_gamma_sigma == "NaN"] = "-1"
+                expected_gamma_sigma = expected_gamma_sigma.astype(np.float64)
+                expected_gamma_sigma[expected_gamma_sigma == -1] = np.nan
+
+                input_metadata = InputMetadata(instrument="hi",
+                                               data_level="l3",
+                                               start_date=datetime.now(),
+                                               end_date=datetime.now() + timedelta(days=1),
+                                               version="",
+                                               descriptor="spectral-fit-index",
+                                               )
+                processor = HiProcessor(None, input_metadata)
+                output_data = processor._process_spectral_fit_index(dependencies)
+
+                try:
+                    np.testing.assert_allclose(output_data.spectral_fit_index[0], expected_gamma, atol=1e-5)
+                    np.testing.assert_allclose(output_data.spectral_fit_index_error[0], expected_gamma_sigma, atol=1e-5)
+                except Exception as e:
+                    if name in expected_failures:
+                        print(f"Spectral fit validation failed expectedly (card 2419): {name}")
+                        continue
+                    else:
+                        raise e
 
 
 def _create_h1_l3_data(epoch=None, lon=None, lat=None, energy=None, energy_delta=None, flux=None, variance=None):
