@@ -7,8 +7,6 @@ from imap_processing.ena_maps.utils import spatial_utils
 from imap_processing.ena_maps.utils.coordinates import CoordNames
 from imap_processing.spice import geometry
 
-from scripts.glows.create_example_glows_l3e_survival_probabilities_cdf import survival_probabilities
-
 
 class Sensor(enum.Enum):
     Hi45 = "hi-45"
