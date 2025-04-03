@@ -1,20 +1,30 @@
+from __future__ import annotations
+
+import os
 import sys
 import uuid
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import Optional, TypeVar
 from unittest.mock import patch
+import xarray as xr
 
 import numpy as np
 from bitstring import BitStream
+from imap_processing.spice.geometry import SpiceFrame
+from matplotlib import pyplot as plt
 from spacepy.pycdf import CDF
 
-from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
+from imap_l3_processing import spice_wrapper
 from imap_l3_processing.glows.descriptors import GLOWS_L2_DESCRIPTOR
+from imap_l3_processing.glows.glows_initializer import GlowsInitializer
 from imap_l3_processing.glows.glows_processor import GlowsProcessor
 from imap_l3_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
 from imap_l3_processing.glows.l3a.utils import read_l2_glows_data
 from imap_l3_processing.hi.hi_processor import HiProcessor
 from imap_l3_processing.hi.l3.hi_l3_dependencies import HiL3Dependencies
+from imap_l3_processing.hi.l3.science.survival_probability import HiSurvivalProbabilitySkyMap, \
+    HiSurvivalProbabilityPointingSet, Sensor
 from imap_l3_processing.hit.l3.hit_l3_sectored_dependencies import HITL3SectoredDependencies
 from imap_l3_processing.hit.l3.hit_processor import HitProcessor
 from imap_l3_processing.hit.l3.models import HitL1Data
@@ -26,7 +36,7 @@ from imap_l3_processing.hit.l3.pha.science.gain_lookup_table import GainLookupTa
 from imap_l3_processing.hit.l3.pha.science.hit_event_type_lookup import HitEventTypeLookup
 from imap_l3_processing.hit.l3.pha.science.range_fit_lookup import RangeFitLookup
 from imap_l3_processing.hit.l3.utils import read_l2_hit_data
-from imap_l3_processing.models import InputMetadata, UpstreamDataDependency, DataProduct
+from imap_l3_processing.models import InputMetadata, UpstreamDataDependency
 from imap_l3_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density import \
     AlphaTemperatureDensityCalibrationTable
 from imap_l3_processing.swapi.l3a.science.calculate_pickup_ion import DensityOfNeutralHeliumLookupTable
@@ -44,7 +54,7 @@ from imap_l3_processing.swapi.l3b.swapi_l3b_dependencies import SwapiL3BDependen
 from imap_l3_processing.swapi.swapi_processor import SwapiProcessor
 from imap_l3_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies
 from imap_l3_processing.swe.swe_processor import SweProcessor
-from imap_l3_processing.utils import save_data, read_l1d_mag_data, format_time
+from imap_l3_processing.utils import save_data, read_l1d_mag_data
 from tests.test_helpers import get_test_data_path
 
 
@@ -52,8 +62,8 @@ def create_glows_l3a_cdf(dependencies: GlowsL3ADependencies):
     input_metadata = InputMetadata(
         instrument='glows',
         data_level='l3a',
-        start_date=datetime(2010, 1, 1),
-        end_date=datetime(2010, 1, 2),
+        start_date=datetime(2013, 9, 8),
+        end_date=datetime(2013, 9, 8),
         version='v001')
 
     upstream_dependencies = [
@@ -134,8 +144,8 @@ def create_swe_product(dependencies: SweL3Dependencies) -> str:
     input_metadata = InputMetadata(
         instrument='swe',
         data_level='l3',
-        start_date=datetime(2010, 1, 1),
-        end_date=datetime(2010, 1, 2),
+        start_date=datetime(2025, 6, 29),
+        end_date=datetime(2025, 7, 1),
         version='v000')
     processor = SweProcessor(None, input_metadata)
     output_data = processor.calculate_products(dependencies)
@@ -213,7 +223,7 @@ def process_hit_pha():
         get_test_data_path("hit/pha_events/imap_hit_l3_range3B-fit-text-not-cdf_20250203_v001.cdf"),
         get_test_data_path("hit/pha_events/imap_hit_l3_range4B-fit-text-not-cdf_20250203_v001.cdf"),
     )
-    processed_events = [process_pha_event(e, cosine_table, gain_table, range_fit_lookup) for e
+    processed_events = [process_pha_event(e, cosine_table, gain_table, range_fit_lookup, None) for e
                         in events]
     print(processed_events)
 
@@ -265,6 +275,115 @@ def create_hit_direct_event_cdf():
     return file_path
 
 
+@patch('imap_l3_processing.glows.l3b.glows_initializer_ancillary_dependencies.query')
+@patch('imap_l3_processing.glows.glows_initializer.query')
+def run_l3b_initializer(mock_query, mock_ancillary_query):
+    local_cdfs = os.listdir(get_test_data_path("glows/l3a_products"))
+
+    l3a_dicts = [{'file_path': "glows/l3a_products" + file_path,
+                  'start_date': file_path.split('_')[4]
+                  } for file_path in local_cdfs]
+
+    mock_query.side_effect = [
+        l3a_dicts, []
+    ]
+
+    mock_ancillary_query.side_effect = [
+        [{'file_path': str(get_test_data_path("glows/imap_glows_uv-anisotropy-1CR_20100101_v001.json"))}],
+        [{'file_path': str(get_test_data_path("glows/imap_glows_WawHelioIonMP_20100101_v002.json"))}]
+    ]
+    GlowsInitializer.validate_and_initialize('v001')
+
+
+def create_empty_hi_l1c_dataset(epoch: datetime, exposures: Optional[np.ndarray] = None,
+                                spin_angles: Optional[np.ndarray] = None,
+                                energies: Optional[np.ndarray] = None):
+    energies = energies if energies is not None else np.geomspace(1, 10000, 9)
+    spin_angles = spin_angles if spin_angles is not None else np.arange(0, 360, 0.1) + 0.05
+    exposures = exposures if exposures is not None else np.ones(shape=(1, len(energies), len(spin_angles)))
+
+    return xr.Dataset({
+        "exposure_times": (
+            [
+                "epoch",
+                "esa_energy_step",
+                "hi_pset_spin_angle_bin"
+            ],
+            exposures
+        ),
+    },
+        coords={
+            "epoch": [epoch],
+            "esa_energy_step": energies,
+            "hi_pset_spin_angle_bin": spin_angles,
+        }
+    )
+
+
+def create_empty_glows_l3e_dataset(epoch: datetime, survival_probabilities: np.ndarray,
+                                   spin_angles: Optional[np.ndarray] = None,
+                                   energies: Optional[np.ndarray] = None):
+    energies = energies or np.geomspace(1, 10000, 16)
+    spin_angles = spin_angles or np.arange(0, 360, 1) + 0.5
+
+    return xr.Dataset({
+        "probability_of_survival": (
+            [
+                "epoch",
+                "energy",
+                "spin_angle_bin"
+            ],
+            survival_probabilities
+        )
+    },
+        coords={
+            "epoch": [epoch],
+            "energy": energies,
+            "spin_angle_bin": spin_angles,
+        })
+
+
+EPOCH = TypeVar("EPOCH")
+ENERGY = TypeVar("ENERGY")
+LONGITUDE = TypeVar("LONGITUDE")
+LATITUDE = TypeVar("LATITUDE")
+
+
+def survival_correct_l2_map_with_fake_survivals(l2_or_l3_flux: np.ndarray[(EPOCH, LONGITUDE, LATITUDE, ENERGY)]):
+    longitude_spacing = 360 / l2_or_l3_flux.shape[1]
+    latitude_spacing = 180 / l2_or_l3_flux.shape[2]
+    assert longitude_spacing == latitude_spacing
+    spacing_degree = longitude_spacing
+    assert spacing_degree in [2, 4]  # 6 blows up
+
+    # pull out script for generating fake glows CDF or add to existing script
+    map_start_time = datetime(month=4, day=16, year=2025 - 30)
+    pset_time_delta = timedelta(days=1)
+    num_psets = 90
+
+    psets = []
+    for i in range(num_psets):
+        epoch = map_start_time + i * pset_time_delta
+
+        survival_values = [0.5, 0.75] if i % 2 == 0 else [0.75, 0.5]
+        sp_strip = np.ravel(np.repeat([survival_values], 180, axis=0)).reshape(1, 1, -1)
+        survival_probability = np.repeat(sp_strip, 16, axis=1)
+        glows_l3e_dataset = create_empty_glows_l3e_dataset(epoch, survival_probability)
+
+        # psets.append(
+        #     HiSurvivalProbabilityPointingSet(create_empty_hi_l1c_dataset(epoch, energies=np.geomspace(1, 10000, 23)),
+        #                                      Sensor.Hi45, glows_l3e_dataset))
+        psets.append(
+            HiSurvivalProbabilityPointingSet(create_empty_hi_l1c_dataset(epoch, energies=np.geomspace(1, 10000, 23)),
+                                             Sensor.Hi90, glows_l3e_dataset))
+
+    survival_probability_map = HiSurvivalProbabilitySkyMap(psets, spacing_degree, SpiceFrame.J2000)
+    survival_dataset = survival_probability_map.to_dataset()['exposure_weighted_survival_probabilities'].values
+    survival_dataset = survival_dataset.transpose(0, 2, 3, 1)
+
+    return l2_or_l3_flux / survival_dataset
+
+
 if __name__ == "__main__":
     if "swapi" in sys.argv:
         if "l3a" in sys.argv:
@@ -285,22 +404,25 @@ if __name__ == "__main__":
                 "tests/test_data/swapi/imap_swapi_l2_sci_20100101_v001.cdf")
             print(path)
     if "glows" in sys.argv:
-        cdf_data = CDF("tests/test_data/glows/imap_glows_l2_hist_20130908_v003.cdf")
-        l2_glows_data = read_l2_glows_data(cdf_data)
+        if "pre-b" in sys.argv:
+            run_l3b_initializer()
+        else:
+            cdf_data = CDF("tests/test_data/glows/imap_glows_l2_hist_20130908_v003.cdf")
+            l2_glows_data = read_l2_glows_data(cdf_data)
 
-        dependencies = GlowsL3ADependencies(l2_glows_data, {
-            "calibration_data": Path(
-                "instrument_team_data/glows/imap_glows_l3a_calibration-data-text-not-cdf_20250707_v002.cdf"),
-            "settings": Path(
-                "instrument_team_data/glows/imap_glows_l3a_pipeline-settings-json-not-cdf_20250707_v002.cdf"),
-            "time_dependent_bckgrd": Path(
-                "instrument_team_data/glows/imap_glows_l3a_time-dep-bckgrd-text-not-cdf_20250707_v001.cdf"),
-            "extra_heliospheric_bckgrd": Path(
-                "instrument_team_data/glows/imap_glows_l3a_map-of-extra-helio-bckgrd-text-not-cdf_20250707_v001.cdf"),
-        })
+            dependencies = GlowsL3ADependencies(l2_glows_data, {
+                "calibration_data": Path(
+                    "instrument_team_data/glows/imap_glows_l3a_calibration-data-text-not-cdf_20250707_v002.cdf"),
+                "settings": Path(
+                    "instrument_team_data/glows/imap_glows_l3a_pipeline-settings-json-not-cdf_20250707_v002.cdf"),
+                "time_dependent_bckgrd": Path(
+                    "instrument_team_data/glows/imap_glows_l3a_time-dep-bckgrd-text-not-cdf_20250707_v001.cdf"),
+                "extra_heliospheric_bckgrd": Path(
+                    "instrument_team_data/glows/imap_glows_l3a_map-of-extra-helio-bckgrd-text-not-cdf_20250707_v001.cdf"),
+            })
 
-        path = create_glows_l3a_cdf(dependencies)
-        print(path)
+            path = create_glows_l3a_cdf(dependencies)
+            print(path)
 
     if "hit" in sys.argv:
         if "direct_event" in sys.argv:
@@ -315,26 +437,36 @@ if __name__ == "__main__":
 
     if "swe" in sys.argv:
         dependencies = SweL3Dependencies.from_file_paths(
-            get_test_data_path("swe/imap_swe_l2_sci-with-ace-data_20100101_v002.cdf"),
-            get_test_data_path("swe/imap_swe_l1b_sci-with-ace-data_20100101_v002.cdf"),
-            get_test_data_path("swe/imap_mag_l1d_mago-normal_20100101_v001.cdf"),
-            get_test_data_path("swe/imap_swapi_l3a_proton-sw_20100101_v001.cdf"),
+            get_test_data_path("swe/imap_swe_l2_sci_20250630_v002.cdf"),
+            get_test_data_path("swe/imap_swe_l1b_sci_20250630_v003.cdf"),
+            get_test_data_path("swe/imap_mag_l1d_mago-normal_20250630_v001.cdf"),
+            get_test_data_path("swe/imap_swapi_l3a_proton-sw_20250630_v001.cdf"),
             get_test_data_path("swe/example_swe_config.json"),
         )
         print(create_swe_product(dependencies))
 
     if "swe-fake-spice" in sys.argv:
         dependencies = SweL3Dependencies.from_file_paths(
-            get_test_data_path("swe/imap_swe_l2_sci-with-ace-data_20100101_v002.cdf"),
-            get_test_data_path("swe/imap_swe_l1b_sci-with-ace-data_20100101_v002.cdf"),
-            get_test_data_path("swe/imap_mag_l1d_mago-normal_20100101_v001.cdf"),
-            get_test_data_path("swe/imap_swapi_l3a_proton-sw_20100101_v001.cdf"),
+            get_test_data_path("swe/imap_swe_l2_sci_20250630_v002.cdf"),
+            get_test_data_path("swe/imap_swe_l1b_sci_20250630_v003.cdf"),
+            get_test_data_path("swe/imap_mag_l1d_mago-normal_20250630_v001.cdf"),
+            get_test_data_path("swe/imap_swapi_l3a_proton-sw_20250630_v001.cdf"),
             get_test_data_path("swe/example_swe_config.json"),
         )
         print(create_swe_product_with_fake_spice(dependencies))
 
+    if "survival-probability" in sys.argv:
+        spice_wrapper.furnish()
+        with CDF("temp_cdf_data/test_survival_corrected.cdf",
+                 masterpath=str(get_test_data_path("hi/IMAP_HI_90_maps_20000101_v02.cdf"))) as cdf:
+            survival_prob_map = survival_correct_l2_map_with_fake_survivals(np.ones_like(cdf["flux"][...]))
+            plt.imshow(survival_prob_map[0, :, :, 0].T)
+            plt.show()
+            cdf["flux"] = survival_prob_map
+            cdf["flux"].attrs["CATDESC"] = "Survival corrected all ones flux"
+
     if "hi" in sys.argv:
         dependencies = HiL3Dependencies.from_file_paths(
-            get_test_data_path("hvset_noSP_ram_cg_2013.cdf")
+            get_test_data_path("hi45-zirnstein-mondel-6months.cdf")
         )
         print(create_hi_cdf(dependencies))

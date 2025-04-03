@@ -5,6 +5,7 @@ from datetime import datetime
 from unittest.mock import patch, call, sentinel
 
 import numpy as np
+import spiceypy.utils.exceptions
 
 from imap_l3_processing.swe.l3.science import moment_calculations
 from imap_l3_processing.swe.l3.science.moment_calculations import compute_maxwellian_weight_factors, \
@@ -257,6 +258,40 @@ class TestMomentsCalculation(unittest.TestCase):
             call(sentinel.fit_function_1),
         ])
 
+    @patch('imap_l3_processing.swe.l3.science.moment_calculations.regress')
+    @patch('imap_l3_processing.swe.l3.science.moment_calculations.calculate_fit_temperature_density_velocity')
+    @patch('imap_l3_processing.swe.l3.science.moment_calculations.filter_and_flatten_regress_parameters')
+    def test_fit_moments_retrying_on_failure_should_stop_retrying_with_few_energies_and_return_none_if_no_density(
+            self,
+            mock_filter_and_flatten_regress_parameters,
+            mock_calculate_fit_temp_dens_velocity,
+            mock_regress):
+        density_history = np.array([100, 89, 72])
+
+        high_density_value = 200
+
+        calculated_moments = create_dataclass_mock(Moments, density=None)
+        mock_calculate_fit_temp_dens_velocity.side_effect = [
+            calculated_moments,
+        ]
+
+        mock_filter_and_flatten_regress_parameters.side_effect = [
+            (sentinel.filtered_velocity_vectors, sentinel.filtered_weights, sentinel.filtered_yreg)
+        ]
+
+        mock_regress.side_effect = [
+            (sentinel.fit_function_1, sentinel.chisq_1),
+        ]
+
+        result = core_fit_moments_retrying_on_failure(sentinel.corrected_energy_bins,
+                                                      sentinel.velocity_vectors,
+                                                      sentinel.phase_space_density,
+                                                      sentinel.weights,
+                                                      0,
+                                                      3,
+                                                      density_history)
+        self.assertIsNone(result)
+
     def test_compute_maxwellian_weight_factors_reproduces_heritage_results(self):
         counts = np.array([[[536.0, 20000, 536.0], [1.2, 3072.0000001359296, 1.2]]])
         acquisition_duration = np.array([[80000., 40000.]])
@@ -368,6 +403,20 @@ class TestMomentsCalculation(unittest.TestCase):
         mock_pxform.assert_called_once_with("IMAP_DPS", "IMAP_RTN", mock_datetime2et.return_value)
 
         np.testing.assert_array_equal(rtn_vector, rotation_matrix @ dsp_vector)
+
+    @patch('spiceypy.spiceypy.pxform')
+    @patch('spiceypy.spiceypy.datetime2et')
+    def test_rotate_dps_vector_to_rtn_excepts_and_catches(self, mock_datetime2et, mock_pxform):
+        epoch = datetime(year=2020, month=3, day=10)
+        dsp_vector = np.array([0, 1, 0])
+        mock_pxform.side_effect = spiceypy.utils.exceptions.SpiceyError("Missing coverage for IMAP_DPS")
+
+        rtn_vector = rotate_dps_vector_to_rtn(epoch, dsp_vector)
+        mock_datetime2et.assert_called_once_with(epoch)
+
+        mock_pxform.assert_called_once_with("IMAP_DPS", "IMAP_RTN", mock_datetime2et.return_value)
+
+        np.testing.assert_array_equal(rtn_vector, np.full(3, np.nan))
 
     @patch('spiceypy.spiceypy.pxform')
     @patch('spiceypy.spiceypy.datetime2et')

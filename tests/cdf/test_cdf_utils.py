@@ -18,11 +18,14 @@ class TestCdfUtils(TempFileTestCase):
         attribute_manager = Mock(spec=ImapAttributeManager)
         attribute_manager.get_global_attributes.return_value = {"global1": "global_val1", "global2": "global_val2"}
         attribute_manager.get_variable_attributes.side_effect = [
-            {"variable_attr1": "var_val1"},
-            {"variable_attr1": "var_val1", "FILLVAL": -9223372036854775808},
-            {"variable_attr1": "var_val1", "FILLVAL": -1e31},
-            {"variable_attr3": "var_val3", "FILLVAL": -9223372036854775808},
-            {"variable_attr5": "var_val5", "variable_attr6": "var_val6"},
+            {"variable_attr1": "var_val1", "DATA_TYPE": "CDF_REAL4", "RECORD_VARYING": "RV"},
+            {"variable_attr1": "var_val1", "FILLVAL": -9223372036854775808, "DATA_TYPE": "CDF_INT8",
+             "RECORD_VARYING": "RV"},
+            {"variable_attr1": "var_val1", "FILLVAL": -1e31, "DATA_TYPE": "CDF_REAL4", "RECORD_VARYING": "RV"},
+            {"variable_attr3": "var_val3", "FILLVAL": -9223372036854775808, "DATA_TYPE": "CDF_TIME_TT2000",
+             "RECORD_VARYING": "NRV"},
+            {"variable_attr5": "var_val5", "variable_attr6": "var_val6", "DATA_TYPE": "CDF_INT4",
+             "RECORD_VARYING": "NRV"},
         ]
 
         write_cdf(path, data, attribute_manager)
@@ -41,7 +44,7 @@ class TestCdfUtils(TempFileTestCase):
             np.testing.assert_array_equal(var_without_explicit_type.value,
                                           actual_cdf[var_without_explicit_type.name][...])
             self.assertEqual('var_val1', actual_cdf[var_without_explicit_type.name].attrs['variable_attr1'])
-            self.assertEqual(pycdf.const.CDF_INT8.value, actual_cdf[var_without_explicit_type.name].type())
+            self.assertEqual(pycdf.const.CDF_REAL4.value, actual_cdf[var_without_explicit_type.name].type())
             self.assertTrue(actual_cdf[var_without_explicit_type.name].rv())
 
             np.testing.assert_array_equal(int_var.value, actual_cdf.raw_var(int_var.name))
@@ -63,13 +66,17 @@ class TestCdfUtils(TempFileTestCase):
             self.assertEqual(datetime(9999, 12, 31, 23, 59, 59, 999999), actual_cdf[time_var.name].attrs['FILLVAL'])
             self.assertEqual(pycdf.const.CDF_TIME_TT2000.value, actual_cdf[time_var.name].attrs.type("FILLVAL"))
             self.assertEqual(pycdf.const.CDF_TIME_TT2000.value, actual_cdf[time_var.name].type())
-            self.assertTrue(actual_cdf[time_var.name].rv())
+            self.assertFalse(actual_cdf[time_var.name].rv())
 
-            self.assertEqual(non_rec_varying_var.value, actual_cdf[non_rec_varying_var.name][...])
             self.assertEqual('var_val5', actual_cdf[non_rec_varying_var.name].attrs['variable_attr5'])
             self.assertEqual('var_val6', actual_cdf[non_rec_varying_var.name].attrs['variable_attr6'])
-            self.assertEqual(pycdf.const.CDF_BYTE.value, actual_cdf[non_rec_varying_var.name].type())
+            self.assertEqual(non_rec_varying_var.value, actual_cdf[non_rec_varying_var.name][...])
+            self.assertEqual(pycdf.const.CDF_INT4.value, actual_cdf[non_rec_varying_var.name].type())
             self.assertFalse(actual_cdf[non_rec_varying_var.name].rv())
+
+            actual_var_attributes = [attribute for k, v in actual_cdf.items() for attribute in v.attrs]
+            self.assertNotIn("DATA_TYPE", actual_var_attributes)
+            self.assertNotIn("RECORD_VARYING", actual_var_attributes)
 
     def test_write_cdf_trims_numbers_in_logical_source_when_fetching_global_metadata(self):
         path = str(self.temp_directory / "write_cdf.cdf")
@@ -77,7 +84,7 @@ class TestCdfUtils(TempFileTestCase):
         attribute_manager = Mock(spec=ImapAttributeManager)
         attribute_manager.get_global_attributes.side_effect = [KeyError("Logical Source Not Found"),
                                                                {"global1": "global_val1", "global2": "global_val2"}]
-        attribute_manager.get_variable_attributes.return_value = {}
+        attribute_manager.get_variable_attributes.return_value = {"DATA_TYPE": "CDF_REAL4", "RECORD_VARYING": "NRV"}
         expected_data_product_logical_source = "imap_instrument_data-level_descriptor-10100"
         data.input_metadata.descriptor = "descriptor-10100"
 
@@ -110,8 +117,9 @@ class TestCdfUtils(TempFileTestCase):
         attribute_manager = Mock(spec=ImapAttributeManager)
         attribute_manager.get_global_attributes.return_value = {}
         attribute_manager.get_variable_attributes.side_effect = [
-            {"VAR_NAME": "epoch", "FILLVAL": datetime.fromisoformat("9999-12-31T23:59:59.999999")},
-            {"VAR_NAME": "float_var", "FILLVAL": -1e31},
+            {"VAR_NAME": "epoch", "FILLVAL": datetime.fromisoformat("9999-12-31T23:59:59.999999"),
+             "DATA_TYPE": "CDF_TIME_TT2000", "RECORD_VARYING": "NRV"},
+            {"VAR_NAME": "float_var", "FILLVAL": -1e31, "DATA_TYPE": "CDF_REAL4", "RECORD_VARYING": "NRV"},
         ]
 
         write_cdf(path, data, attribute_manager)
@@ -128,11 +136,18 @@ class TestCdfUtils(TempFileTestCase):
         attribute_manager = Mock(spec=ImapAttributeManager)
         attribute_manager.get_global_attributes.return_value = {"global1": "global_val1", "global2": "global_val2"}
         attribute_manager.get_variable_attributes.side_effect = [
-            {"ignored_attr": "var_val3", "variable_attr4": "var_val4", "DEPEND_0": ""},
-            {"ignored_attr": "var_val3", "variable_attr4": "var_val4", "DEPEND_0": ""},
-            {"variable_attr1": "var_val1", "variable_attr2": "var_val2", "DEPEND_0": "epoch"},
-            {"variable_attr3": "var_val3", "variable_attr4": "var_val4", "DEPEND_0": ""},
-            {"variable_attr5": "var_val5", "variable_attr6": "var_val6", "DEPEND_0": ""},
+            {"ignored_attr": "var_val3", "variable_attr4": "var_val4", "DATA_TYPE": "CDF_REAL4",
+             "RECORD_VARYING": "NRV",
+             "DEPEND_0": ""},
+            {"ignored_attr": "var_val3", "variable_attr4": "var_val4", "DATA_TYPE": "CDF_REAL4",
+             "RECORD_VARYING": "NRV",
+             "DEPEND_0": ""},
+            {"variable_attr1": "var_val1", "variable_attr2": "var_val2", "DATA_TYPE": "CDF_REAL4",
+             "RECORD_VARYING": "RV", "DEPEND_0": "epoch"},
+            {"variable_attr3": "var_val3", "variable_attr4": "var_val4", "DATA_TYPE": "CDF_REAL4",
+             "RECORD_VARYING": "NRV", "DEPEND_0": ""},
+            {"variable_attr5": "var_val5", "variable_attr6": "var_val6", "DATA_TYPE": "CDF_REAL4",
+             "RECORD_VARYING": "NRV", "DEPEND_0": ""},
         ]
 
         write_cdf(path, data, attribute_manager)
@@ -164,8 +179,8 @@ class TestDataProduct(DataProduct):
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
             DataProductVariable("var_without_explicit_type", np.arange(0, 10)),
-            DataProductVariable("int_var", np.arange(0, 10), pycdf.const.CDF_INT8),
-            DataProductVariable("float_var", np.arange(0, 10), pycdf.const.CDF_REAL4),
-            DataProductVariable("time_var", np.arange(10, 20), pycdf.const.CDF_TIME_TT2000),
-            DataProductVariable("non_record_varying", 100, pycdf.const.CDF_BYTE, record_varying=False)
+            DataProductVariable("int_var", np.arange(0, 10)),
+            DataProductVariable("float_var", np.arange(0, 10)),
+            DataProductVariable("time_var", np.arange(10, 20)),
+            DataProductVariable("non_record_varying", 100)
         ]

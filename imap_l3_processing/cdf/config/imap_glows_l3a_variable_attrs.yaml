@@ -5,6 +5,7 @@ max_uint16: &max_uint16 65535
 data_defaults: &data_defaults
   DEPEND_0: epoch
   VAR_TYPE: data
+  VARIABLE_PURPOSE: primary var, summary
   FORMAT: F12.6
   FILLVAL: *float_fillval
 
@@ -18,9 +19,16 @@ spectrogram_defaults: &spectrogram_defaults
   DISPLAY_TYPE: spectrogram
 
 support_data_defaults: &support_data_defaults
-  <<: *data_defaults
   VAR_TYPE: support_data
   DISPLAY_TYPE: no_plot
+  DEPEND_0: epoch
+  FORMAT: F12.6
+  FILLVAL: *float_fillval
+
+debug_data_defaults: &debug_data_defaults
+  <<: *data_defaults
+  DISPLAY_TYPE: no_plot
+  VARIABLE_PURPOSE: ' '
 
 photon_flux:
   <<: *spectrogram_defaults
@@ -86,7 +94,7 @@ time_dependent_bckgrd:
   SCALETYP: linear
 
 number_of_bins:
-  <<: *support_data_defaults
+  <<: *debug_data_defaults
   CATDESC: Number of histogram bins
   FIELDNAM: Number of histogram bins
   FILLVAL: *max_uint16
@@ -142,7 +150,6 @@ epoch_delta:
   FORMAT: 19I
 
 spin_angle:
-  <<: *support_data_defaults
   CATDESC: Spin angle at center of bin in Degrees for GLOWS histogram
   FIELDNAM: Histogram Spin Angle
   LABLAXIS: Spin Angle
@@ -151,15 +158,22 @@ spin_angle:
   VALIDMIN: 0.0
   DELTA_PLUS_VAR: spin_angle_delta
   DELTA_MINUS_VAR: spin_angle_delta
+  VAR_TYPE: support_data
+  DISPLAY_TYPE: no_plot
+  FORMAT: F12.6
+  FILLVAL: *float_fillval
 
 spin_angle_delta:
-  <<: *support_data_defaults
   CATDESC: Spin angle bin half width in Degrees for GLOWS histogram
   FIELDNAM: Histogram Spin Angle Delta
   LABLAXIS: Spin Angle Delta
   UNITS: degrees
   VALIDMAX: 180.0
   VALIDMIN: 0.0
+  VAR_TYPE: support_data
+  DISPLAY_TYPE: no_plot
+  FORMAT: F12.6
+  FILLVAL: *float_fillval
 
 ecliptic_lat:
   <<: *spectrogram_defaults
@@ -184,7 +198,7 @@ ecliptic_lon:
   SCALEMIN: 0.0
 
 filter_temperature_average:
-  <<: *support_data_defaults
+  <<: *debug_data_defaults
   CATDESC: Observational-day-averaged filter temperature
   FIELDNAM: filter temperature average
   LABLAXIS: filter temperature average
@@ -204,12 +218,12 @@ filter_temperature_std_dev:
   VALIDMIN: 0.0
 
 hv_voltage_average:
-  <<: *support_data_defaults
+  <<: *debug_data_defaults
   CATDESC: Observational-day-averaged channeltron voltage
   FIELDNAM: hv voltage average
   LABLAXIS: hv voltage average
   UNITS: V
-  VALIDMAX: 1.0
+  VALIDMAX: 2000
   VALIDMIN: 0.0
   DELTA_PLUS_VAR: hv_voltage_std_dev
   DELTA_MINUS_VAR: hv_voltage_std_dev
@@ -220,16 +234,16 @@ hv_voltage_std_dev:
   FIELDNAM: hv voltage std dev
   LABLAXIS: hv voltage std dev
   UNITS: V
-  VALIDMAX: 1.0
+  VALIDMAX: 1000
   VALIDMIN: 0.0
 
 spin_period_average:
-  <<: *support_data_defaults
+  <<: *debug_data_defaults
   CATDESC: Observational-day-averaged spin period
   FIELDNAM: spin period average
   LABLAXIS: spin period average
   UNITS: s
-  VALIDMAX: 1.0
+  VALIDMAX: 20
   VALIDMIN: 0.0
   DELTA_PLUS_VAR: spin_period_std_dev
   DELTA_MINUS_VAR: spin_period_std_dev
@@ -244,12 +258,12 @@ spin_period_std_dev:
   VALIDMIN: 0.0
 
 spin_period_ground_average:
-  <<: *support_data_defaults
+  <<: *debug_data_defaults
   CATDESC: Observational-day-averaged spin period (ground value)
   FIELDNAM: spin period ground average
   LABLAXIS: spin period ground average
   UNITS: s
-  VALIDMAX: 1.0
+  VALIDMAX: 20
   VALIDMIN: 0.0
   DELTA_PLUS_VAR: spin_period_ground_std_dev
   DELTA_MINUS_VAR: spin_period_ground_std_dev
@@ -264,7 +278,7 @@ spin_period_ground_std_dev:
   VALIDMIN: 0.0
 
 pulse_length_average:
-  <<: *support_data_defaults
+  <<: *debug_data_defaults
   CATDESC: Observational-day-averaged pulse length
   FIELDNAM: pulse length average
   LABLAXIS: pulse length average
@@ -284,12 +298,12 @@ pulse_length_std_dev:
   VALIDMIN: 0.0
 
 position_angle_offset_average:
-  <<: *support_data_defaults
+  <<: *debug_data_defaults
   CATDESC: Observational-day-averaged GLOWS angular offset
   FIELDNAM: position angle offset average
   LABLAXIS: position angle offset average
   UNITS: degrees
-  VALIDMAX: 1.0
+  VALIDMAX: 360
   VALIDMIN: 0.0
   DELTA_PLUS_VAR: position_angle_offset_std_dev
   DELTA_MINUS_VAR: position_angle_offset_std_dev
@@ -300,18 +314,25 @@ position_angle_offset_std_dev:
   FIELDNAM: position angle offset std dev
   LABLAXIS: position angle offset std dev
   UNITS: degrees
-  VALIDMAX: 1.0
+  VALIDMAX: 30
   VALIDMIN: 0.0
 
 lon_lat:
   CATDESC: component index for coordinate data
-  FORMAT: I10
-  VAR_TYPE: metadata
+  FORMAT: I1
+  VAR_TYPE: support_data
+  DISPLAY_TYPE: no_plot
+  FIELDNAM: lon_lat
+  UNITS: ' '
+  VALIDMAX: 1
+  VALIDMIN: 0
 
 lon_lat_labels:
   CATDESC: label names for coordinate data
   VAR_TYPE: metadata
   FORMAT: A3
+  DISPLAY_TYPE: no_plot
+  FIELDNAM: lon_lat_labels
 
 spin_axis_orientation_average:
   <<: *timeseries_defaults
@@ -338,12 +359,19 @@ spin_axis_orientation_std_dev:
 x_y_z:
   CATDESC: component index for ecliptic coordinate data
   FORMAT: I10
-  VAR_TYPE: metadata
+  DISPLAY_TYPE: no_plot
+  FIELDNAM: x_y_z
+  UNITS: ' '
+  VALIDMAX: 2
+  VALIDMIN: 0
+  VAR_TYPE: support_data
 
 x_y_z_labels:
   CATDESC: label names for ecliptic coordinate data
   VAR_TYPE: metadata
   FORMAT: A1
+  DISPLAY_TYPE: no_plot
+  FIELDNAM: x_y_z_labels
 
 spacecraft_location_average:
   <<: *timeseries_defaults
@@ -372,7 +400,7 @@ spacecraft_location_std_dev:
 
 
 spacecraft_velocity_average:
-  <<: *support_data_defaults
+  <<: *debug_data_defaults
   CATDESC: Observational-day-averaged values VX, VY, VZ of IMAP velocity components (Cartesian ecliptic frame)
   FIELDNAM: spacecraft velocity average
   UNITS: km/s

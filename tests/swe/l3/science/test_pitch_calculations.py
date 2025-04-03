@@ -7,7 +7,7 @@ from imap_l3_processing.swe.l3.science.pitch_calculations import piece_wise_mode
     average_over_look_directions, calculate_velocity_in_dsp_frame_km_s, calculate_look_directions, rebin_by_pitch_angle, \
     correct_and_rebin, calculate_energy_in_ev_from_velocity_in_km_per_second, integrate_distribution_to_get_1d_spectrum, \
     integrate_distribution_to_get_inbound_and_outbound_1d_spectrum, try_curve_fit_until_valid, \
-    rebin_flux_by_pitch_angle, rebin_by_pitch_angle_and_gyrophase
+    rebin_by_pitch_angle_and_gyrophase, swe_rebin_intensity_by_pitch_angle_and_gyrophase
 from tests.test_helpers import build_swe_configuration, NumpyArrayMatcher
 
 
@@ -296,7 +296,8 @@ class TestPitchCalculations(unittest.TestCase):
             ("b[4] <= 15", [1, 3, 10, 2, 12, 1], 2, 15),
             ("b[2] <= energies[0]", [1, 3, 0.8, 2, 80, 1], 2, 15),
             ("b[2] >= 20", [1, 3, 25, 2, 80, 1], 2, 15),
-            ("b[2] >= 2x spacecraft potential", [1, 3, 15, 2, 80, 1], 2, 6)
+            ("b[2] >= 2x spacecraft potential", [1, 3, 15, 2, 80, 1], 2, 6),
+            ("b[4] > 500, condition not in C code", [1, 3, 10, 2, 600, 1], 2, 15),
         ]
 
         for name, curve_fit_first_result, call_count, latest_spacecraft_potential in cases:
@@ -366,7 +367,7 @@ class TestPitchCalculations(unittest.TestCase):
 
         config = build_swe_configuration(
             pitch_angle_bins=[45, 135],
-            pitch_angle_delta=[45, 45],
+            pitch_angle_deltas=[45, 45],
             energy_bins=[10]
         )
 
@@ -396,10 +397,10 @@ class TestPitchCalculations(unittest.TestCase):
 
         config = build_swe_configuration(
             pitch_angle_bins=[45, 135],
-            pitch_angle_delta=[45, 45],
+            pitch_angle_deltas=[45, 45],
             energy_bins=[central_energy_value],
             gyrophase_bins=[90, 270],
-            gyrophase_delta=[90, 90]
+            gyrophase_deltas=[90, 90]
         )
 
         rebinned_by_gyro = rebin_by_pitch_angle_and_gyrophase(psd, pitch_angle, gyrophase, energy, config)
@@ -420,7 +421,7 @@ class TestPitchCalculations(unittest.TestCase):
 
         config = build_swe_configuration(
             pitch_angle_bins=[45, 135],
-            pitch_angle_delta=[45, 45],
+            pitch_angle_deltas=[45, 45],
             energy_bins=[10]
         )
 
@@ -438,7 +439,7 @@ class TestPitchCalculations(unittest.TestCase):
 
         config = build_swe_configuration(
             pitch_angle_bins=[90],
-            pitch_angle_delta=[90],
+            pitch_angle_deltas=[90],
             energy_bins=[10],
             energy_bin_low_multiplier=0.7,
             energy_bin_high_multiplier=1.5,
@@ -457,7 +458,7 @@ class TestPitchCalculations(unittest.TestCase):
 
         config = build_swe_configuration(
             pitch_angle_bins=[45, 135],
-            pitch_angle_delta=[45, 45],
+            pitch_angle_deltas=[45, 45],
             energy_bins=[10, 50],
             energy_bin_low_multiplier=0.6,
             energy_bin_high_multiplier=1.4,
@@ -490,7 +491,7 @@ class TestPitchCalculations(unittest.TestCase):
             with self.subTest(case):
                 config = build_swe_configuration(
                     pitch_angle_bins=[45],
-                    pitch_angle_delta=[45],
+                    pitch_angle_deltas=[45],
                     energy_bins=[10],
                     energy_bin_low_multiplier=0.6,
                     energy_bin_high_multiplier=1.4,
@@ -514,7 +515,8 @@ class TestPitchCalculations(unittest.TestCase):
         pitch_angle_bins = np.linspace(0, 180, 20, endpoint=False) + 4.5
         pitch_angle_deltas = np.repeat(4.5, 20)
         energy_bins = np.geomspace(2, 5000, 24)
-        config = build_swe_configuration(pitch_angle_bins=pitch_angle_bins, pitch_angle_delta=pitch_angle_deltas,
+        config = build_swe_configuration(pitch_angle_bins=pitch_angle_bins,
+                                         pitch_angle_deltas=pitch_angle_deltas,
                                          energy_bins=energy_bins)
         result = rebin_by_pitch_angle(flux, pitch_angle, energy, config)
         self.assertEqual((24, 20), result.shape)
@@ -598,7 +600,7 @@ class TestPitchCalculations(unittest.TestCase):
         pitch_angle_bins = [30, 90]
         pitch_angle_deltas = [15, 15]
         configuration = build_swe_configuration(pitch_angle_bins=pitch_angle_bins,
-                                                pitch_angle_delta=pitch_angle_deltas,
+                                                pitch_angle_deltas=pitch_angle_deltas,
                                                 in_vs_out_energy_index=1,
                                                 )
 
@@ -623,7 +625,7 @@ class TestPitchCalculations(unittest.TestCase):
         pitch_angle_bins = [30, 90]
         pitch_angle_deltas = [15, 15]
         configuration = build_swe_configuration(pitch_angle_bins=pitch_angle_bins,
-                                                pitch_angle_delta=pitch_angle_deltas,
+                                                pitch_angle_deltas=pitch_angle_deltas,
                                                 in_vs_out_energy_index=1,
                                                 )
 
@@ -679,7 +681,7 @@ class TestPitchCalculations(unittest.TestCase):
         for index, expected_in, expected_out in cases:
             with self.subTest(index):
                 configuration = build_swe_configuration(pitch_angle_bins=pitch_angle_bins,
-                                                        pitch_angle_delta=pitch_angle_deltas,
+                                                        pitch_angle_deltas=pitch_angle_deltas,
                                                         in_vs_out_energy_index=index)
 
                 in_spectrum, out_spectrum = integrate_distribution_to_get_inbound_and_outbound_1d_spectrum(
@@ -717,7 +719,7 @@ class TestPitchCalculations(unittest.TestCase):
         ]
 
         configuration = build_swe_configuration(pitch_angle_bins=pitch_angle_bins,
-                                                pitch_angle_delta=pitch_angle_deltas,
+                                                pitch_angle_deltas=pitch_angle_deltas,
                                                 in_vs_out_energy_index=0)
 
         in_spectrum, out_spectrum = integrate_distribution_to_get_inbound_and_outbound_1d_spectrum(
@@ -730,10 +732,35 @@ class TestPitchCalculations(unittest.TestCase):
     @patch('imap_l3_processing.swe.l3.science.pitch_calculations.calculate_unit_vector')
     @patch('imap_l3_processing.swe.l3.science.pitch_calculations.calculate_pitch_angle')
     @patch('imap_l3_processing.swe.l3.science.pitch_calculations.calculate_gyrophase')
-    @patch('imap_l3_processing.swe.l3.science.pitch_calculations.rebin_intensity_by_pitch_angle_and_gyrophase')
-    def test_rebin_intensity_by_pitch_angle(self, mock_rebin_by_pa_gyro, mock_calculate_gyrophases,
-                                            mock_calculate_pitch_angles, mock_calculate_unit_vector):
-        mag_vectors = np.array([
+    def test_rebin_swe_intensity(self, mock_calculate_gyrophases, mock_calculate_pitch_angles,
+                                 mock_calculate_unit_vector):
+        intensity_data_for_energy_1 = [[0, 1, 2, 3], [4, 5, 6, 7]]
+        intensity_data_for_energy_2 = [[8, 9, 10, 11], [12, 13, 14, 15]]
+        intensity = np.array([
+            intensity_data_for_energy_1,
+            intensity_data_for_energy_2
+        ])
+
+        pitch_angles = np.array(
+            [
+                [[45, 45, 135, 135], [45, 45, 135, 135]],
+                [[45, 45, 135, 135], [45, 45, 135, 135]],
+            ])
+        mock_calculate_pitch_angles.return_value = pitch_angles
+
+        gyrophases = np.array(
+            [
+                [[135, 225, 225, 135], [45, 315, 315, 45]],
+                [[135, 225, 225, 135], [45, 315, 315, 45]]
+            ])
+        mock_calculate_gyrophases.return_value = gyrophases
+
+        counts = np.array([
+            [[4, 9, 49, 36], [0, 16, 64, 25]],
+            [[4 * 4, 4 * 9, 4 * 49, 4 * 36], [4 * 1, 4 * 16, 4 * 64, 4 * 25]],
+        ])
+
+        normalized_mag_vectors = np.array([
             [
                 [1, 0, 0],
                 [0, 1, 0],
@@ -753,24 +780,44 @@ class TestPitchCalculations(unittest.TestCase):
                 [[1, 1, 1]],
             ],
         ])
-        intensity = sentinel.intensity
-        intensity_delta_plus = sentinel.intensity_delta_minus
-        intensity_delta_minus = sentinel.intensity_delta_minus
+        mock_calculate_unit_vector.side_effect = [sentinel.normalized_dsp_velocities, normalized_mag_vectors]
 
-        mock_calculate_unit_vector.side_effect = [sentinel.normalized_dsp_velocities, mag_vectors]
+        config = build_swe_configuration(
+            pitch_angle_bins=np.array([45, 135]),
+            pitch_angle_deltas=np.array([45, 45]),
+            gyrophase_bins=np.array([45, 135, 225, 315]),
+            gyrophase_deltas=np.array([45, 45, 45, 45]),
+        )
+        expected_intensity_by_pa_and_gyro = np.array([
+            [[4, 0, 1, 5], [7, 3, 2, 6]],
+            [[12, 8, 9, 13], [15, 11, 10, 14]]
+        ])
+        expected_intensity_by_pa = np.array([[2.5, 4.5], [10.5, 12.5]])
 
-        intensity_by_pitch_angle = rebin_flux_by_pitch_angle(intensity, intensity_delta_plus, intensity_delta_minus,
-                                                             sentinel.dsp_velocities, sentinel.mag_vectors)
+        expected_uncertainty_by_pa_gyro = expected_intensity_by_pa_and_gyro * np.array([
+            [[np.nan, 1 / 2, 1 / 3, 1 / 4], [1 / 5, 1 / 6, 1 / 7, 1 / 8]],
+            [[1 / 2, 1 / 4, 1 / 6, 1 / 8], [1 / 10, 1 / 12, 1 / 14, 1 / 16]]
+        ])
+        expected_uncertainty_by_pa = expected_intensity_by_pa * np.array(
+            [[1 / np.sqrt(4 + 9 + 0 + 16), 1 / np.sqrt(49 + 36 + 64 + 25)],
+             [1 / (2 * np.sqrt(4 + 9 + 1 + 16)),
+              1 / (2 * np.sqrt(49 + 36 + 64 + 25))]])
+
+        rebinned_data = swe_rebin_intensity_by_pitch_angle_and_gyrophase(intensity,
+                                                                         counts,
+                                                                         sentinel.dsp_velocities,
+                                                                         sentinel.mag_vectors, config)
         mock_calculate_unit_vector.assert_has_calls([call(sentinel.dsp_velocities), call(sentinel.mag_vectors)])
         mock_calculate_pitch_angles.assert_called_once_with(sentinel.normalized_dsp_velocities,
                                                             NumpyArrayMatcher(expected_mag_vectors_with_cem_axis))
         mock_calculate_gyrophases.assert_called_once_with(sentinel.normalized_dsp_velocities,
                                                           NumpyArrayMatcher(expected_mag_vectors_with_cem_axis))
-        mock_rebin_by_pa_gyro.assert_called_once_with(intensity, intensity_delta_plus,
-                                                      intensity_delta_minus, mock_calculate_pitch_angles.return_value,
-                                                      mock_calculate_gyrophases.return_value,
-                                                      7, 30)
-        self.assertEqual(mock_rebin_by_pa_gyro.return_value, intensity_by_pitch_angle)
+        actual_rebinned_by_pa_and_gyro, actual_rebinned_by_pa, actual_intensity_uncertainty_by_pa_and_gyro, actual_intensity_uncertainty_by_pa = rebinned_data
+        np.testing.assert_equal(actual_rebinned_by_pa_and_gyro, expected_intensity_by_pa_and_gyro)
+        np.testing.assert_equal(actual_rebinned_by_pa, expected_intensity_by_pa)
+        np.testing.assert_array_almost_equal(actual_intensity_uncertainty_by_pa_and_gyro,
+                                             expected_uncertainty_by_pa_gyro)
+        np.testing.assert_array_almost_equal(actual_intensity_uncertainty_by_pa, expected_uncertainty_by_pa)
 
 
 if __name__ == '__main__':

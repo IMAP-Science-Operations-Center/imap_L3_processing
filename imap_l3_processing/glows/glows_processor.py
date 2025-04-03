@@ -1,13 +1,18 @@
-import dataclasses
 import json
+from dataclasses import replace
 
 import imap_data_access
 import numpy as np
 
-from imap_l3_processing.glows.glows_toolkit.l3a_data import L3aData
+from imap_l3_processing.glows.glows_initializer import GlowsInitializer
 from imap_l3_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
+from imap_l3_processing.glows.l3a.glows_toolkit.l3a_data import L3aData
 from imap_l3_processing.glows.l3a.models import GlowsL3LightCurve
 from imap_l3_processing.glows.l3a.utils import create_glows_l3a_from_dictionary
+from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDependencies
+from imap_l3_processing.glows.l3bc.models import GlowsL3BIonizationRate
+from imap_l3_processing.glows.l3bc.science.generate_l3bc import generate_l3bc
+from imap_l3_processing.glows.l3bc.utils import filter_out_bad_days
 from imap_l3_processing.processor import Processor
 from imap_l3_processing.utils import save_data
 
@@ -20,6 +25,14 @@ class GlowsProcessor(Processor):
             l3a_output = self.process_l3a(l3a_dependencies)
             proton_cdf = save_data(l3a_output)
             imap_data_access.upload(proton_cdf)
+        elif self.input_metadata.data_level == "l3b":
+            zip_files = GlowsInitializer.validate_and_initialize(self.input_metadata.version)
+            for zip_file in zip_files:
+                imap_data_access.upload(zip_file)
+                dependencies = GlowsL3BCDependencies.fetch_dependencies(zip_file)
+                l3b_data = self.process_l3bc(dependencies)
+                l3b_cdf = save_data(l3b_data)
+                imap_data_access.upload(l3b_cdf)
 
     def process_l3a(self, dependencies: GlowsL3ADependencies) -> GlowsL3LightCurve:
         data = dependencies.data
@@ -30,6 +43,11 @@ class GlowsProcessor(Processor):
 
         return create_glows_l3a_from_dictionary(data_with_spin_angle, self.input_metadata.to_upstream_data_dependency(
             self.dependencies[0].descriptor))
+
+    def process_l3bc(self, dependencies: GlowsL3BCDependencies):
+        filtered_days = filter_out_bad_days(dependencies.l3a_data, dependencies.ancillary_files['bad_days_list'])
+        l3b_data, _ = generate_l3bc(replace(dependencies, l3a_data=filtered_days))
+        return GlowsL3BIonizationRate.from_instrument_team_object(l3b_data)
 
     @staticmethod
     def add_spin_angle_delta(data: dict, ancillary_files: dict) -> dict:
