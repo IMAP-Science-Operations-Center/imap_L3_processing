@@ -8,14 +8,12 @@ import warnings
 import numpy as np
 from astropy.time import Time
 
-import funcs as fun
-import l3b_CarringtonIonRate as cir
-import l3b_DailyIonRate as dir
-import l3c_CarringtonSolarWind as csw
-import l3c_EclipticSolarWind as esw
+from . import funcs as fun
+from . import l3b_CarringtonIonRate as cir
+from . import l3b_DailyIonRate as dir
+from . import l3c_CarringtonSolarWind as csw
+from . import l3c_EclipticSolarWind as esw
 from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDependencies
-
-warnings.filterwarnings("ignore")
 
 
 def generate_l3bc(dependencies: GlowsL3BCDependencies):
