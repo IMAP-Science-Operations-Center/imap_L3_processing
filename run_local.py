@@ -135,7 +135,7 @@ def create_swe_product(dependencies: SweL3Dependencies) -> str:
     input_metadata = InputMetadata(
         instrument='swe',
         data_level='l3',
-        start_date=datetime(2025, 6, 30),
+        start_date=datetime(2025, 6, 29),
         end_date=datetime(2025, 7, 1),
         version='v000')
     processor = SweProcessor(None, input_metadata)

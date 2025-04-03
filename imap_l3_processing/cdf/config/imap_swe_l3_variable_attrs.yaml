@@ -1090,12 +1090,14 @@ core_temperature_tensor_integrated:
    DATA_TYPE: CDF_REAL4
    CATDESC: Core Temperature Tensor Integrated
    DEPEND_0: epoch
+   DEPEND_1: tensor_id
    VAR_TYPE: data
    RECORD_VARYING: RV
    DISPLAY_TYPE: time_series
    VARIABLE_PURPOSE: primary var, summary
    FIELDNAM: Core Temperature Tensor Integrated
    FORMAT: F15.3
+   LABLAXIS: Core Temperature Tensor Integrated
    UNITS: ' '
    VALIDMIN: 0
    VALIDMAX: 10000000000
@@ -1106,12 +1108,14 @@ halo_temperature_tensor_integrated:
    DATA_TYPE: CDF_REAL4
    CATDESC: Halo Temperature Tensor Integrated
    DEPEND_0: epoch
+   DEPEND_1: tensor_id
    VAR_TYPE: data
    RECORD_VARYING: RV
    DISPLAY_TYPE: time_series
    VARIABLE_PURPOSE: primary var, summary
    FIELDNAM: Halo Temperature Tensor Integrated
    FORMAT: F15.3
+   LABLAXIS: Halo Temperature Tensor Integrated
    UNITS: ' '
    VALIDMIN: 0
    VALIDMAX: 10000000000
@@ -1122,12 +1126,14 @@ total_temperature_tensor_integrated:
    DATA_TYPE: CDF_REAL4
    CATDESC: Total Temperature Tensor Integrated
    DEPEND_0: epoch
+   DEPEND_1: tensor_id
    VAR_TYPE: data
    RECORD_VARYING: RV
    DISPLAY_TYPE: time_series
    VARIABLE_PURPOSE: primary var, summary
    FIELDNAM: Total Temperature Tensor Integrated
    FORMAT: F15.3
+   LABLAXIS: Total Temperature Tensor Integrated
    UNITS: ' '
    VALIDMIN: 0
    VALIDMAX: 10000000000
@@ -1425,3 +1431,16 @@ integrated_label:
    VAR_TYPE: metadata
    FIELDNAM: Temperature Tensor Label
    FORMAT: a20
+tensor_id:
+   NAME: tensor_id
+   DATA_TYPE: CDF_UINT4
+   CATDESC: Tensor Id
+   VAR_TYPE: support_data
+   RECORD_VARYING: NRV
+   FIELDNAM: Tensor Id
+   FORMAT: I4
+   LABLAXIS: Tensor Id
+   UNITS: ' '
+   VALIDMIN: 0
+   VALIDMAX: 255
+   FILLVAL: 255

@@ -63,14 +63,20 @@ def convert_csv_to_yaml(file_path):
 
 def process_csv():
     parser = argparse.ArgumentParser()
-    parser.add_argument("csv")
+    parser.add_argument("instrument")
     parser.add_argument("--generate-cdf-for-instrument")
 
     args = parser.parse_args()
 
-    yaml_text = convert_csv_to_yaml(args.csv)
+    instrument_to_file_path = {
+        "swe": "imap_l3_processing/cdf/data_product_definition_csv/imap_swe_l3_variable_attrs.csv",
+        "glows": "imap_l3_processing/cdf/data_product_definition_csv/imap_glows_l3b_variable_attrs.csv",
+    }
+    file_path = instrument_to_file_path[args.instrument]
 
-    filename_without_extension = Path(args.csv).name.split(".")[0]
+    yaml_text = convert_csv_to_yaml(file_path)
+
+    filename_without_extension = Path(file_path).name.split(".")[0]
     print(filename_without_extension)
     yaml_file_name = f"imap_l3_processing/cdf/config/{filename_without_extension}.yaml"
     if os.path.isfile(yaml_file_name):

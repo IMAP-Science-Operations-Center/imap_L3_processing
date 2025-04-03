@@ -36,7 +36,7 @@ from imap_l3_processing.swe.l3.models import SweL3Data, EPOCH_CDF_VAR_NAME, EPOC
     PHASE_SPACE_DENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_CDF_VAR_NAME, GYROPHASE_DELTA_CDF_VAR_NAME, \
     GYROPHASE_BINS_CDF_VAR_NAME, INTENSITY_UNCERTAINTY_BY_PITCH_ANGLE_AND_GYROPHASE_CDF_VAR_NAME, \
     INTENSITY_UNCERTAINTY_BY_PITCH_ANGLE_CDF_VAR_NAME, ENERGY_LABEL, PITCH_ANGLE_LABEL, GYROPHASE_LABEL, RTN_LABEL, \
-    TEMPERATURE_TENSOR_LABEL, INTEGRATED_LABEL
+    TEMPERATURE_TENSOR_LABEL, INTEGRATED_LABEL, TENSOR_ID_LABEL
 from tests.swapi.cdf_model_test_case import CdfModelTestCase
 
 
@@ -373,6 +373,7 @@ class TestModels(CdfModelTestCase):
             next(variables), ["Tensor 1", "Tensor 2", "Tensor 3", "Tensor 4", "Tensor 5", "Tensor 6"], TEMPERATURE_TENSOR_LABEL)
         self.assert_variable_attributes(
             next(variables), ["Integrated 1", "Integrated 2", ], INTEGRATED_LABEL)
+        self.assert_variable_attributes(next(variables),[1,2,3,4,5, 6], TENSOR_ID_LABEL)
 
         self.assertEqual([], list(variables), "unexpected variable found")
 
