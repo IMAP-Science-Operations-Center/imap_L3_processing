@@ -429,7 +429,7 @@ core_fit_num_points:
 halo_fit_num_points:
    NAME: halo_fit_num_points
    DATA_TYPE: CDF_INT4
-   CATDESC: ' '
+   CATDESC: Number of energies used on halo fit
    DEPEND_0: epoch
    VAR_TYPE: support_data
    RECORD_VARYING: RV
@@ -938,8 +938,8 @@ total_t_perpendicular_integrated:
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
    LABL_PTR_1: integrated_label
-core_t_perpendicular_ratio_integrated:
-   NAME: core_t_perpendicular_ratio_integrated
+core_t_ratio_perpendicular_integrated:
+   NAME: core_t_ratio_perpendicular_integrated
    DATA_TYPE: CDF_REAL4
    CATDESC: Ratio of perpendicular core temperature eigenvalues
    DEPEND_0: epoch
@@ -947,15 +947,15 @@ core_t_perpendicular_ratio_integrated:
    RECORD_VARYING: RV
    DISPLAY_TYPE: time_series
    VARIABLE_PURPOSE: primary var, summary
-   FIELDNAM: Core t Perpendicular Integrated
+   FIELDNAM: Core T Ratio Perpendicular Integrated
    FORMAT: F15.3
-   LABLAXIS: Core T Perpendicular Ratio Integrated
+   LABLAXIS: Core T Ratio
    UNITS: ' '
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
-halo_t_perpendicular_ratio_integrated:
-   NAME: halo_t_perpendicular_ratio_integrated
+halo_t_ratio_perpendicular_integrated:
+   NAME: halo_t_ratio_perpendicular_integrated
    DATA_TYPE: CDF_REAL4
    CATDESC: Ratio of perpendicular halo temperature eigenvalues
    DEPEND_0: epoch
@@ -963,15 +963,15 @@ halo_t_perpendicular_ratio_integrated:
    RECORD_VARYING: RV
    DISPLAY_TYPE: time_series
    VARIABLE_PURPOSE: primary var, summary
-   FIELDNAM: Halo t Perpendicular Integrated
+   FIELDNAM: Halo T Ratio Perpendicular Integrated
    FORMAT: F15.3
-   LABLAXIS: Halo T Perpendicular Ratio Integrated
+   LABLAXIS: Halo T Ratio
    UNITS: ' '
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
-total_t_perpendicular_ratio_integrated:
-   NAME: total_t_perpendicular_ratio_integrated
+total_t_ratio_perpendicular_integrated:
+   NAME: total_t_ratio_perpendicular_integrated
    DATA_TYPE: CDF_REAL4
    CATDESC: Ratio of perpendicular total temperature eigenvalues
    DEPEND_0: epoch
@@ -979,9 +979,9 @@ total_t_perpendicular_ratio_integrated:
    RECORD_VARYING: RV
    DISPLAY_TYPE: time_series
    VARIABLE_PURPOSE: primary var, summary
-   FIELDNAM: Total t Perpendicular Integrated
+   FIELDNAM: Total T Ratio Perpendicular Integrated
    FORMAT: F15.3
-   LABLAXIS: Total T Perpendicular Ratio Integrated
+   LABLAXIS: Total T Ratio
    UNITS: ' '
    VALIDMIN: 0
    VALIDMAX: 10000000000
@@ -1295,7 +1295,7 @@ core_temperature_parallel_to_mag:
    FIELDNAM: Core t Parallel to Mag
    FORMAT: F15.3
    LABLAXIS: Core Temperature Parallel To Mag
-   UNITS: ' '
+   UNITS: K
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
@@ -1311,7 +1311,7 @@ halo_temperature_parallel_to_mag:
    FIELDNAM: Halo t Parallel to Mag
    FORMAT: F15.3
    LABLAXIS: Halo Temperature Parallel To Mag
-   UNITS: ' '
+   UNITS: K
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
@@ -1327,7 +1327,7 @@ total_temperature_parallel_to_mag:
    FIELDNAM: Total t Parallel to Mag
    FORMAT: F15.3
    LABLAXIS: Total Temperature Parallel To Mag
-   UNITS: ' '
+   UNITS: K
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
@@ -1343,7 +1343,7 @@ core_temperature_perpendicular_to_mag:
    FIELDNAM: Core t Perpendicular to Mag
    FORMAT: F15.3
    LABLAXIS: Core Temperature Perpendicular To Mag
-   UNITS: ' '
+   UNITS: K
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
@@ -1360,7 +1360,7 @@ halo_temperature_perpendicular_to_mag:
    FIELDNAM: Halo t Perpendicular to Mag
    FORMAT: F15.3
    LABLAXIS: Halo Temperature Perpendicular To Mag
-   UNITS: ' '
+   UNITS: K
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
@@ -1377,6 +1377,57 @@ total_temperature_perpendicular_to_mag:
    FIELDNAM: Total t Perpendicular to Mag
    FORMAT: F15.3
    LABLAXIS: Total Temperature Perpendicular To Mag
+   UNITS: K
+   VALIDMIN: 0
+   VALIDMAX: 10000000000
+   FILLVAL: -1.00E+31
+   LABL_PTR_1: integrated_label
+core_temperature_ratio_perpendicular_to_mag:
+   NAME: core_temperature_ratio_perpendicular_to_mag
+   DATA_TYPE: CDF_REAL4
+   CATDESC: Ratio of Core Temperatures Perpendicular To Mag
+   DEPEND_0: epoch
+   VAR_TYPE: data
+   RECORD_VARYING: RV
+   DISPLAY_TYPE: time_series
+   VARIABLE_PURPOSE: primary var, summary
+   FIELDNAM: Core T Ratio Perpendicular to Mag
+   FORMAT: F15.3
+   LABLAXIS: Core T Ratio
+   UNITS: ' '
+   VALIDMIN: 0
+   VALIDMAX: 10000000000
+   FILLVAL: -1.00E+31
+   LABL_PTR_1: integrated_label
+halo_temperature_ratio_perpendicular_to_mag:
+   NAME: halo_temperature_ratio_perpendicular_to_mag
+   DATA_TYPE: CDF_REAL4
+   CATDESC: Ratio of Halo Temperatures Perpendicular To Mag
+   DEPEND_0: epoch
+   VAR_TYPE: data
+   RECORD_VARYING: RV
+   DISPLAY_TYPE: time_series
+   VARIABLE_PURPOSE: primary var, summary
+   FIELDNAM: Halo T Ratio Perpendicular to Mag
+   FORMAT: F15.3
+   LABLAXIS: Halo T Ratio
+   UNITS: ' '
+   VALIDMIN: 0
+   VALIDMAX: 10000000000
+   FILLVAL: -1.00E+31
+   LABL_PTR_1: integrated_label
+total_temperature_ratio_perpendicular_to_mag:
+   NAME: total_temperature_ratio_perpendicular_to_mag
+   DATA_TYPE: CDF_REAL4
+   CATDESC: Ratio of Total Temperatures Perpendicular To Mag
+   DEPEND_0: epoch
+   VAR_TYPE: data
+   RECORD_VARYING: RV
+   DISPLAY_TYPE: time_series
+   VARIABLE_PURPOSE: primary var, summary
+   FIELDNAM: Total T Ratio Perpendicular to Mag
+   FORMAT: F15.3
+   LABLAXIS: Total T Ratio
    UNITS: ' '
    VALIDMIN: 0
    VALIDMAX: 10000000000
