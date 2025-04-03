@@ -4,8 +4,7 @@ from pathlib import Path
 from zipfile import ZipFile
 
 from imap_l3_processing.glows.l3a.utils import create_glows_l3a_dictionary_from_cdf
-from imap_l3_processing.models import UpstreamDataDependency
-from imap_l3_processing.utils import download_dependency, download_dependency_from_path
+from imap_l3_processing.utils import download_dependency_from_path
 
 
 @dataclass
@@ -16,9 +15,8 @@ class GlowsL3BCDependencies:
     carrington_rotation_number: int
 
     @classmethod
-    def fetch_dependencies(cls, dependencies: list[UpstreamDataDependency]):
+    def fetch_dependencies(cls, zip_file_path):
         external_files = {}
-        zip_file_path = download_dependency(dependencies[0])
         with ZipFile(zip_file_path, 'r') as zip_file:
             downloaded_file_dir = Path(__file__).parent / 'glows_l3b_files'
             zip_file.extract(str(downloaded_file_dir))
