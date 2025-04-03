@@ -1,14 +1,21 @@
+from __future__ import annotations
+
 import os
 import sys
 import uuid
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import Optional, TypeVar
 from unittest.mock import patch
+import xarray as xr
 
 import numpy as np
 from bitstring import BitStream
+from imap_processing.spice.geometry import SpiceFrame
+from matplotlib import pyplot as plt
 from spacepy.pycdf import CDF
 
+from imap_l3_processing import spice_wrapper
 from imap_l3_processing.glows.descriptors import GLOWS_L2_DESCRIPTOR
 from imap_l3_processing.glows.glows_initializer import GlowsInitializer
 from imap_l3_processing.glows.glows_processor import GlowsProcessor
@@ -16,6 +23,8 @@ from imap_l3_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependen
 from imap_l3_processing.glows.l3a.utils import read_l2_glows_data
 from imap_l3_processing.hi.hi_processor import HiProcessor
 from imap_l3_processing.hi.l3.hi_l3_dependencies import HiL3Dependencies
+from imap_l3_processing.hi.l3.science.survival_probability import HiSurvivalProbabilitySkyMap, \
+    HiSurvivalProbabilityPointingSet, Sensor
 from imap_l3_processing.hit.l3.hit_l3_sectored_dependencies import HITL3SectoredDependencies
 from imap_l3_processing.hit.l3.hit_processor import HitProcessor
 from imap_l3_processing.hit.l3.models import HitL1Data
@@ -286,6 +295,95 @@ def run_l3b_initializer(mock_query, mock_ancillary_query):
     GlowsInitializer.validate_and_initialize('v001')
 
 
+def create_empty_hi_l1c_dataset(epoch: datetime, exposures: Optional[np.ndarray] = None,
+                                spin_angles: Optional[np.ndarray] = None,
+                                energies: Optional[np.ndarray] = None):
+    energies = energies if energies is not None else np.geomspace(1, 10000, 9)
+    spin_angles = spin_angles if spin_angles is not None else np.arange(0, 360, 0.1) + 0.05
+    exposures = exposures if exposures is not None else np.ones(shape=(1, len(energies), len(spin_angles)))
+
+    return xr.Dataset({
+        "exposure_times": (
+            [
+                "epoch",
+                "esa_energy_step",
+                "hi_pset_spin_angle_bin"
+            ],
+            exposures
+        ),
+    },
+        coords={
+            "epoch": [epoch],
+            "esa_energy_step": energies,
+            "hi_pset_spin_angle_bin": spin_angles,
+        }
+    )
+
+
+def create_empty_glows_l3e_dataset(epoch: datetime, survival_probabilities: np.ndarray,
+                                   spin_angles: Optional[np.ndarray] = None,
+                                   energies: Optional[np.ndarray] = None):
+    energies = energies or np.geomspace(1, 10000, 16)
+    spin_angles = spin_angles or np.arange(0, 360, 1) + 0.5
+
+    return xr.Dataset({
+        "probability_of_survival": (
+            [
+                "epoch",
+                "energy",
+                "spin_angle_bin"
+            ],
+            survival_probabilities
+        )
+    },
+        coords={
+            "epoch": [epoch],
+            "energy": energies,
+            "spin_angle_bin": spin_angles,
+        })
+
+
+EPOCH = TypeVar("EPOCH")
+ENERGY = TypeVar("ENERGY")
+LONGITUDE = TypeVar("LONGITUDE")
+LATITUDE = TypeVar("LATITUDE")
+
+
+def survival_correct_l2_map_with_fake_survivals(l2_or_l3_flux: np.ndarray[(EPOCH, LONGITUDE, LATITUDE, ENERGY)]):
+    longitude_spacing = 360 / l2_or_l3_flux.shape[1]
+    latitude_spacing = 180 / l2_or_l3_flux.shape[2]
+    assert longitude_spacing == latitude_spacing
+    spacing_degree = longitude_spacing
+    assert spacing_degree in [2, 4]  # 6 blows up
+
+    # pull out script for generating fake glows CDF or add to existing script
+    map_start_time = datetime(month=4, day=16, year=2025 - 30)
+    pset_time_delta = timedelta(days=1)
+    num_psets = 90
+
+    psets = []
+    for i in range(num_psets):
+        epoch = map_start_time + i * pset_time_delta
+
+        survival_values = [0.5, 0.75] if i % 2 == 0 else [0.75, 0.5]
+        sp_strip = np.ravel(np.repeat([survival_values], 180, axis=0)).reshape(1, 1, -1)
+        survival_probability = np.repeat(sp_strip, 16, axis=1)
+        glows_l3e_dataset = create_empty_glows_l3e_dataset(epoch, survival_probability)
+
+        # psets.append(
+        #     HiSurvivalProbabilityPointingSet(create_empty_hi_l1c_dataset(epoch, energies=np.geomspace(1, 10000, 23)),
+        #                                      Sensor.Hi45, glows_l3e_dataset))
+        psets.append(
+            HiSurvivalProbabilityPointingSet(create_empty_hi_l1c_dataset(epoch, energies=np.geomspace(1, 10000, 23)),
+                                             Sensor.Hi90, glows_l3e_dataset))
+
+    survival_probability_map = HiSurvivalProbabilitySkyMap(psets, spacing_degree, SpiceFrame.J2000)
+    survival_dataset = survival_probability_map.to_dataset()['exposure_weighted_survival_probabilities'].values
+    survival_dataset = survival_dataset.transpose(0, 2, 3, 1)
+
+    return l2_or_l3_flux / survival_dataset
+
+
 if __name__ == "__main__":
     if "swapi" in sys.argv:
         if "l3a" in sys.argv:
@@ -356,6 +454,16 @@ if __name__ == "__main__":
             get_test_data_path("swe/example_swe_config.json"),
         )
         print(create_swe_product_with_fake_spice(dependencies))
+
+    if "survival-probability" in sys.argv:
+        spice_wrapper.furnish()
+        with CDF("temp_cdf_data/test_survival_corrected.cdf",
+                 masterpath=str(get_test_data_path("hi/IMAP_HI_90_maps_20000101_v02.cdf"))) as cdf:
+            survival_prob_map = survival_correct_l2_map_with_fake_survivals(np.ones_like(cdf["flux"][...]))
+            plt.imshow(survival_prob_map[0, :, :, 0].T)
+            plt.show()
+            cdf["flux"] = survival_prob_map
+            cdf["flux"].attrs["CATDESC"] = "Survival corrected all ones flux"
 
     if "hi" in sys.argv:
         dependencies = HiL3Dependencies.from_file_paths(
