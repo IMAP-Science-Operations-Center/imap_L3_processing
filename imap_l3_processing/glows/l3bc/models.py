@@ -3,12 +3,11 @@ from datetime import datetime
 from typing import Self
 
 import numpy as np
+from astropy.time import Time
 from spacepy import pycdf
 
 from imap_l3_processing.constants import CARRINGTON_ROTATION_IN_NANOSECONDS
 from imap_l3_processing.models import DataProduct, DataProductVariable, UpstreamDataDependency
-
-from astropy.time import Time
 
 
 @dataclass

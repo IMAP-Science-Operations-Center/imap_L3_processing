@@ -4,7 +4,7 @@ from json import dump
 from pathlib import Path
 from zipfile import ZipFile, ZIP_DEFLATED
 
-from astropy.time import Time
+from astropy.time import Time, TimeDelta
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.glows.l3a.models import GlowsL3LightCurve, PHOTON_FLUX_UNCERTAINTY_CDF_VAR_NAME, \
@@ -67,7 +67,7 @@ def find_unprocessed_carrington_rotations(l3a_inputs: list[dict], l3b_inputs: li
     CRToProcess]:
     l3bs_carringtons: set = set()
     for l3b in l3b_inputs:
-        current_date = get_astropy_time_from_yyyymmdd(l3b["start_date"])
+        current_date = get_astropy_time_from_yyyymmdd(l3b["start_date"]) + TimeDelta(1, format='jd')
         current_rounded_cr = int(carrington(current_date.jd))
         l3bs_carringtons.add(current_rounded_cr)
 
@@ -80,8 +80,10 @@ def find_unprocessed_carrington_rotations(l3a_inputs: list[dict], l3b_inputs: li
     for index, l3a in enumerate(sorted_l3a_inputs):
         current_date: Time = get_astropy_time_from_yyyymmdd(l3a["start_date"])
         current_rounded_cr = int(carrington(current_date.jd))
+
         if (current_rounded_cr - prior_cr == 1) and (current_date.jd - prior_jd == 1):
             l3as_by_carrington[current_rounded_cr].append(sorted_l3a_inputs[index - 1]['file_path'])
+
         l3as_by_carrington[current_rounded_cr].append(l3a['file_path'])
         prior_jd = current_date.jd
         prior_cr = current_rounded_cr
@@ -95,7 +97,7 @@ def find_unprocessed_carrington_rotations(l3a_inputs: list[dict], l3b_inputs: li
             carrington_end_date_non_inclusive = jd_fm_Carrington(carrington_number + 1)
             date_time_end_date = Time(carrington_end_date_non_inclusive, format='jd')
             date_time_end_date.format = 'iso'
-            is_valid = validate_dependencies(date_time, date_time_end_date + timedelta(days=1),
+            is_valid = validate_dependencies(date_time_end_date, dependencies.initializer_time_buffer,
                                              dependencies.omni2_data_path, dependencies.f107_index_file_path,
                                              dependencies.lyman_alpha_path)
 
