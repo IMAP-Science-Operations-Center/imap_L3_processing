@@ -1,423 +1,605 @@
-float_fillval: &float_fillval -1.000000e+31
-uint4_fillval: &uint4_fillval 4294967295
-max_uint16: &max_uint16 65535
-
-data_defaults: &data_defaults
-  DEPEND_0: epoch
-  VAR_TYPE: data
-  VARIABLE_PURPOSE: primary var, summary
-  FORMAT: F12.6
-  FILLVAL: *float_fillval
-
-timeseries_defaults: &timeseries_defaults
-  <<: *data_defaults
-  DISPLAY_TYPE: time_series
-
-spectrogram_defaults: &spectrogram_defaults
-  <<: *data_defaults
-  DEPEND_1: spin_angle
-  DISPLAY_TYPE: spectrogram
-
-support_data_defaults: &support_data_defaults
-  VAR_TYPE: support_data
-  DISPLAY_TYPE: no_plot
-  DEPEND_0: epoch
-  FORMAT: F12.6
-  FILLVAL: *float_fillval
-
-debug_data_defaults: &debug_data_defaults
-  <<: *data_defaults
-  DISPLAY_TYPE: no_plot
-  VARIABLE_PURPOSE: ' '
-
-photon_flux:
-  <<: *spectrogram_defaults
-  CATDESC: Histogram of photon flux in scanning-circle bins
-  FIELDNAM: Histogram of photon flux
-  LABLAXIS: Flux
-  UNITS: Rayleigh
-  DELTA_MINUS_VAR: photon_flux_uncertainty
-  DELTA_PLUS_VAR: photon_flux_uncertainty
-  SCALEMIN: 0
-  SCALEMAX: 1000
-  SCALETYP: linear
-  VALIDMIN: 0.0
-  VALIDMAX: 2000.0
-
-photon_flux_uncertainty:
-  <<: *support_data_defaults
-  DEPEND_1: spin_angle
-  CATDESC: Uncertainty of photon flux
-  FIELDNAM: Uncertainty of photon flux
-  LABLAXIS: Flux Uncertainty
-  UNITS: Rayleigh
-  VALIDMIN: 0.0
-  VALIDMAX: 2000.0
-
-raw_histogram:
-  <<: *spectrogram_defaults
-  CATDESC: Raw daily counts in lightcurve bins
-  FIELDNAM: Raw daily counts
-  LABLAXIS: Counts
-  FILLVAL: *uint4_fillval
-  FORMAT: I10
-  UNITS: counts
-  SCALETYP: linear
-  SCALEMIN: 0
-  SCALEMAX: 1000000
-  VALIDMIN: 0
-  VALIDMAX: 1000000
-
-
-extra_heliospheric_bckgrd:
-  <<: *spectrogram_defaults
-  CATDESC: Extra-heliospheric background estimate
-  FIELDNAM: Extra-heliospheric background
-  LABLAXIS: Extra-heliospheric background
-  UNITS: Rayleigh
-  VALIDMIN: 0.0
-  VALIDMAX: 2000.0
-  SCALEMIN: 0
-  SCALEMAX: 1000
-  SCALETYP: linear
-
-time_dependent_bckgrd:
-  <<: *spectrogram_defaults
-  CATDESC: Time-dependent background estimate
-  FIELDNAM: Time-dependent background
-  LABLAXIS: Time-dependent background
-  UNITS: Rayleigh
-  VALIDMIN: 0.0
-  VALIDMAX: 2000.0
-  SCALEMIN: 0
-  SCALEMAX: 1000
-  SCALETYP: linear
-
-number_of_bins:
-  <<: *debug_data_defaults
-  CATDESC: Number of histogram bins
-  FIELDNAM: Number of histogram bins
-  FILLVAL: *max_uint16
-  FORMAT: I5
-  LABLAXIS: Num of bins
-  UNITS: ' '
-  VALIDMAX: 3600
-  VALIDMIN: 1
-
-exposure_times:
-  <<: *spectrogram_defaults
-  CATDESC: Exposure time in seconds for GLOWS histogram
-  FIELDNAM: Histogram exposure time
-  LABLAXIS: Duration
-  UNITS: seconds
-  VALIDMAX: 4000.0
-  VALIDMIN: 0.0
-  SCALEMAX: 4000.0
-  SCALEMIN: 0.0
-
 epoch:
-  CATDESC: Time, number of nanoseconds since J2000 with leap seconds included
-  FIELDNAM: epoch
-  LABLAXIS: epoch
-  UNITS: ns
-  VAR_TYPE: support_data
-  SCALETYP: linear
-  MONOTON: INCREASE
-  TIME_BASE: J2000
-  TIME_SCALE: Terrestrial Time
-  REFERENCE_POSITION: Rotating Earth Geoid
-  DELTA_MINUS_VAR: epoch_delta
-  DELTA_PLUS_VAR: epoch_delta
-  FILLVAL: 9999-12-31T23:59:59.999999999
-  VALIDMIN: 2010-01-01T00:00:00.000000000
-  VALIDMAX: 2040-01-01T00:00:00.000000000
-  FORMAT: " "
-  DISPLAY_TYPE: no_plot
-
+   NAME: epoch
+   DATA_TYPE: CDF_TIME_TT2000
+   CATDESC: Time, number of nanoseconds since J2000 with leap seconds included
+   VAR_TYPE: support_data
+   RECORD_VARYING: RV
+   FIELDNAM: Epoch
+   FORMAT: ' '
+   LABLAXIS: epoch
+   UNITS: ns
+   VALIDMIN: 2010-01-01T00:00:00.000000000
+   VALIDMAX: 2059-12-31T23:59:58.999000000
+   FILLVAL: 9999-12-31T23:59:59.999999999
+   SCALE_TYP: linear
+   TIME_BASE: J2000
+   TIME_SCALE: TT
+   DELTA_PLUS_VAR: epoch_delta
+   DELTA_MINUS_VAR: epoch_delta
+   MONOTON: INCREASE
+   REFERENCE_POSITION: Rotating Earth Geoid
+   SI_CONVERSION: 1e-9>seconds
 epoch_delta:
-  CATDESC: epoch_DELTA
-  DEPEND_0: epoch
-  DISPLAY_TYPE: time_series
-  FIELDNAM: epoch_delta
-  FILLVAL: -9223372036854775808
-  VALIDMIN: 0
-  VALIDMAX: 86000000000000
-  SCALEMIN: 0
-  SCALEMAX: 86000000000000
-  SCALETYP: linear
-  UNITS: ns
-  VAR_TYPE: support_data
-  FORMAT: 19I
-
+   NAME: epoch_delta
+   DATA_TYPE: CDF_INT8
+   CATDESC: epoch_DELTA
+   DEPEND_0: epoch
+   VAR_TYPE: support_data
+   RECORD_VARYING: RV
+   FIELDNAM: epoch_delta
+   FORMAT: I19
+   UNITS: ns
+   VALIDMIN: 0
+   VALIDMAX: 86000000000000
+   FILLVAL: -9223372036854775808
+   SCALE_TYP: linear
+   SCALEMIN: 0
+   SCALEMAX: 86000000000000
+   SI_CONVERSION: 1e-9>seconds
+photon_flux:
+   NAME: photon_flux
+   DATA_TYPE: CDF_FLOAT
+   CATDESC: Histogram of photon flux density in scanning-circle bins
+   DEPEND_0: epoch
+   DEPEND_1: spin_angle
+   VAR_TYPE: data
+   RECORD_VARYING: RV
+   DISPLAY_TYPE: spectrogram
+   VARIABLE_PURPOSE: primary var, summary
+   FIELDNAM: Histogram of photon flux
+   FORMAT: F12.6
+   LABLAXIS: Flux
+   UNITS: Rayleigh
+   VALIDMIN: 0.0
+   VALIDMAX: 2000.0
+   FILLVAL: -1.000000E+31
+   SCALE_TYP: linear
+   DELTA_PLUS_VAR: photon_flux_uncertainty
+   DELTA_MINUS_VAR: photon_flux_uncertainty
+   SCALEMIN: 0
+   SCALEMAX: 1000
+   SI_CONVERSION: 1e10>s^-1 m^-2
+photon_flux_uncertainty:
+   NAME: photon_flux_uncertainty
+   DATA_TYPE: CDF_FLOAT
+   CATDESC: Uncertainty of photon flux density
+   DEPEND_0: epoch
+   DEPEND_1: spin_angle
+   VAR_TYPE: support_data
+   RECORD_VARYING: RV
+   FIELDNAM: Uncertainty of photon flux
+   FORMAT: F12.6
+   LABLAXIS: Flux Uncertainty
+   UNITS: Rayleigh
+   VALIDMIN: 0.0
+   VALIDMAX: 2000.0
+   FILLVAL: -1.000000e+31
+   SCALE_TYP: linear
+   SI_CONVERSION: 1e10>s^-1 m^-2
+raw_histogram:
+   NAME: raw_histogram
+   DATA_TYPE: CDF_UINT4
+   CATDESC: Raw daily counts in lightcurve bins
+   DEPEND_0: epoch
+   DEPEND_1: spin_angle
+   VAR_TYPE: data
+   RECORD_VARYING: RV
+   DISPLAY_TYPE: spectrogram
+   VARIABLE_PURPOSE: primary var, summary
+   FIELDNAM: Raw daily counts
+   FORMAT: I10
+   LABLAXIS: Counts
+   UNITS: counts
+   VALIDMIN: 0
+   VALIDMAX: 1000000
+   FILLVAL: 4294967295
+   SCALE_TYP: linear
+   SCALEMIN: 0
+   SCALEMAX: 1000000
+extra_heliospheric_bckgrd:
+   NAME: extra_heliospheric_bckgrd
+   DATA_TYPE: CDF_FLOAT
+   CATDESC: Extra-heliospheric background estimate
+   DEPEND_0: epoch
+   DEPEND_1: spin_angle
+   VAR_TYPE: data
+   RECORD_VARYING: RV
+   DISPLAY_TYPE: spectrogram
+   VARIABLE_PURPOSE: primary var, summary
+   FIELDNAM: Extra-heliospheric background
+   FORMAT: F12.6
+   LABLAXIS: Extra-heliospheric background
+   UNITS: Rayleigh
+   VALIDMIN: 0.0
+   VALIDMAX: 2000.0
+   FILLVAL: -1.000000E+31
+   SCALE_TYP: linear
+   SCALEMIN: 0
+   SCALEMAX: 1000
+   SI_CONVERSION: 1e10>s^-1 m^-2
+time_dependent_bckgrd:
+   NAME: time_dependent_bckgrd
+   DATA_TYPE: CDF_FLOAT
+   CATDESC: Time-dependent background estimate
+   DEPEND_0: epoch
+   DEPEND_1: spin_angle
+   VAR_TYPE: data
+   RECORD_VARYING: RV
+   DISPLAY_TYPE: spectrogram
+   VARIABLE_PURPOSE: primary var, summary
+   FIELDNAM: Time-dependent background
+   FORMAT: F12.6
+   LABLAXIS: Time-dependent background
+   UNITS: Rayleigh
+   VALIDMIN: 0.0
+   VALIDMAX: 2000.0
+   FILLVAL: -1.000000E+31
+   SCALE_TYP: linear
+   SCALEMIN: 0
+   SCALEMAX: 1000
+   SI_CONVERSION: 1e10>s^-1 m^-2
+number_of_bins:
+   NAME: number_of_bins
+   DATA_TYPE: CDF_UINT2
+   CATDESC: Number of histogram bins
+   VAR_TYPE: support_data
+   RECORD_VARYING: NRV
+   FIELDNAM: Number of histogram bins
+   FORMAT: I5
+   LABLAXIS: Num of bins
+   UNITS: ' '
+   VALIDMIN: 1
+   VALIDMAX: 3600
+   FILLVAL: 65535
+exposure_times:
+   NAME: exposure_times
+   DATA_TYPE: CDF_FLOAT
+   CATDESC: Exposure time in seconds for GLOWS histogram
+   DEPEND_0: epoch
+   DEPEND_1: spin_angle
+   VAR_TYPE: data
+   RECORD_VARYING: RV
+   DISPLAY_TYPE: spectrogram
+   VARIABLE_PURPOSE: primary var, summary
+   FIELDNAM: Histogram exposure time
+   FORMAT: F12.6
+   LABLAXIS: Duration
+   UNITS: s
+   VALIDMIN: 0.0
+   VALIDMAX: 4000.0
+   FILLVAL: -1.000000E+31
+   SCALE_TYP: linear
+   SCALEMIN: 0
+   SCALEMAX: 4000
 spin_angle:
-  CATDESC: Spin angle at center of bin in Degrees for GLOWS histogram
-  FIELDNAM: Histogram Spin Angle
-  LABLAXIS: Spin Angle
-  UNITS: degrees
-  VALIDMAX: 360.0
-  VALIDMIN: 0.0
-  DELTA_PLUS_VAR: spin_angle_delta
-  DELTA_MINUS_VAR: spin_angle_delta
-  VAR_TYPE: support_data
-  DISPLAY_TYPE: no_plot
-  FORMAT: F12.6
-  FILLVAL: *float_fillval
-
+   NAME: spin_angle
+   DATA_TYPE: CDF_FLOAT
+   CATDESC: Spin angle at center of bin in Degrees for GLOWS histogram
+   VAR_TYPE: support_data
+   RECORD_VARYING: NRV
+   FIELDNAM: Histogram Spin Angle
+   FORMAT: F12.6
+   LABLAXIS: Spin Angle
+   UNITS: degrees
+   VALIDMIN: 0.0
+   VALIDMAX: 360.0
+   FILLVAL: -1.000000e+31
+   SCALE_TYP: linear
+   DELTA_PLUS_VAR: spin_angle_delta
+   DELTA_MINUS_VAR: spin_angle_delta
+   SI_CONVERSION: 1.745329e-2>radians
 spin_angle_delta:
-  CATDESC: Spin angle bin half width in Degrees for GLOWS histogram
-  FIELDNAM: Histogram Spin Angle Delta
-  LABLAXIS: Spin Angle Delta
-  UNITS: degrees
-  VALIDMAX: 180.0
-  VALIDMIN: 0.0
-  VAR_TYPE: support_data
-  DISPLAY_TYPE: no_plot
-  FORMAT: F12.6
-  FILLVAL: *float_fillval
-
+   NAME: spin_angle_delta
+   DATA_TYPE: CDF_FLOAT
+   CATDESC: Spin angle bin half width in Degrees for GLOWS histogram
+   VAR_TYPE: support_data
+   RECORD_VARYING: NRV
+   FIELDNAM: Histogram Spin Angle Delta
+   FORMAT: F12.6
+   LABLAXIS: Spin Angle Delta
+   UNITS: degrees
+   VALIDMIN: 0.0
+   VALIDMAX: 180.0
+   FILLVAL: -1.000000e+31
+   SCALE_TYP: linear
+   SI_CONVERSION: 1.745329e-2>radians
 ecliptic_lat:
-  <<: *spectrogram_defaults
-  CATDESC: Latitude in ECLIPJ2000 at center of bin in Degrees
-  FIELDNAM: Histogram Latitude
-  LABLAXIS: Ecliptic Latitude
-  UNITS: degrees
-  VALIDMAX: 90.0
-  VALIDMIN: -90.0
-  SCALEMAX: 90.0
-  SCALEMIN: -90.0
-
+   NAME: ecliptic_lat
+   DATA_TYPE: CDF_FLOAT
+   CATDESC: Latitude in ECLIPJ2000 at center of bin in Degrees
+   DEPEND_0: epoch
+   DEPEND_1: spin_angle
+   VAR_TYPE: data
+   RECORD_VARYING: RV
+   DISPLAY_TYPE: spectrogram
+   VARIABLE_PURPOSE: primary var, summary
+   FIELDNAM: Histogram Latitude
+   FORMAT: F12.6
+   LABLAXIS: Ecliptic Latitude
+   UNITS: degrees
+   VALIDMIN: -90.0
+   VALIDMAX: 90.0
+   FILLVAL: -1.000000E+31
+   SCALE_TYP: linear
+   SCALEMIN: -90.0
+   SCALEMAX: 90.0
+   SI_CONVERSION: 1.745329e-2>radians
 ecliptic_lon:
-  <<: *spectrogram_defaults
-  CATDESC: Longitude in ECLIPJ2000 at center of bin in Degrees
-  FIELDNAM: Histogram Longitude
-  LABLAXIS: Ecliptic Longitude
-  UNITS: degrees
-  VALIDMAX: 360.0
-  VALIDMIN: 0.0
-  SCALEMAX: 360.0
-  SCALEMIN: 0.0
-
+   NAME: ecliptic_lon
+   DATA_TYPE: CDF_FLOAT
+   CATDESC: Longitude in ECLIPJ2000 at center of bin in Degrees
+   DEPEND_0: epoch
+   DEPEND_1: spin_angle
+   VAR_TYPE: data
+   RECORD_VARYING: RV
+   DISPLAY_TYPE: spectrogram
+   VARIABLE_PURPOSE: primary var, summary
+   FIELDNAM: Histogram Longitude
+   FORMAT: F12.6
+   LABLAXIS: Ecliptic Longitude
+   UNITS: degrees
+   VALIDMIN: 0.0
+   VALIDMAX: 360.0
+   FILLVAL: -1.000000E+31
+   SCALE_TYP: linear
+   SCALEMIN: 0.0
+   SCALEMAX: 360.0
+   SI_CONVERSION: 1.745329e-2>radians
 filter_temperature_average:
-  <<: *debug_data_defaults
-  CATDESC: Observational-day-averaged filter temperature
-  FIELDNAM: filter temperature average
-  LABLAXIS: filter temperature average
-  UNITS: Celsius
-  VALIDMAX: 1.0
-  VALIDMIN: -273.15
-  DELTA_PLUS_VAR: filter_temperature_std_dev
-  DELTA_MINUS_VAR: filter_temperature_std_dev
-
+   NAME: filter_temperature_average
+   DATA_TYPE: CDF_FLOAT
+   CATDESC: Observational-day-averaged filter temperature
+   DEPEND_0: epoch
+   VAR_TYPE: data
+   RECORD_VARYING: RV
+   DISPLAY_TYPE: no_plot
+   FIELDNAM: filter temperature average
+   FORMAT: F12.6
+   LABLAXIS: filter temperature average
+   UNITS: Celsius
+   VALIDMIN: -273.15
+   VALIDMAX: 1.0
+   FILLVAL: -1.000000E+31
+   SCALE_TYP: linear
+   DELTA_PLUS_VAR: filter_temperature_std_dev
+   DELTA_MINUS_VAR: filter_temperature_std_dev
 filter_temperature_std_dev:
-  <<: *support_data_defaults
-  CATDESC: standard deviation for filter temperature
-  FIELDNAM: filter temperature std dev
-  LABLAXIS: filter temperature std dev
-  UNITS: Celsius
-  VALIDMAX: 1.0
-  VALIDMIN: 0.0
-
+   NAME: filter_temperature_std_dev
+   DATA_TYPE: CDF_FLOAT
+   CATDESC: standard deviation for filter temperature
+   DEPEND_0: epoch
+   VAR_TYPE: data
+   RECORD_VARYING: RV
+   DISPLAY_TYPE: no_plot
+   FIELDNAM: filter temperature std dev
+   FORMAT: F12.6
+   LABLAXIS: filter temperature std dev
+   UNITS: Celsius
+   VALIDMIN: 0
+   VALIDMAX: 1.0
+   FILLVAL: -1.000000E+31
+   SCALE_TYP: linear
 hv_voltage_average:
-  <<: *debug_data_defaults
-  CATDESC: Observational-day-averaged channeltron voltage
-  FIELDNAM: hv voltage average
-  LABLAXIS: hv voltage average
-  UNITS: V
-  VALIDMAX: 2000
-  VALIDMIN: 0.0
-  DELTA_PLUS_VAR: hv_voltage_std_dev
-  DELTA_MINUS_VAR: hv_voltage_std_dev
-
+   NAME: hv_voltage_average
+   DATA_TYPE: CDF_FLOAT
+   CATDESC: Observational-day-averaged channeltron voltage
+   DEPEND_0: epoch
+   VAR_TYPE: data
+   RECORD_VARYING: RV
+   DISPLAY_TYPE: no_plot
+   FIELDNAM: hv voltage average
+   FORMAT: F12.6
+   LABLAXIS: hv voltage average
+   UNITS: V
+   VALIDMIN: 0.0
+   VALIDMAX: 2000.0
+   FILLVAL: -1.000000E+31
+   SCALE_TYP: linear
+   DELTA_PLUS_VAR: hv_voltage_std_dev
+   DELTA_MINUS_VAR: hv_voltage_std_dev
 hv_voltage_std_dev:
-  <<: *support_data_defaults
-  CATDESC: standard deviation for channeltron voltage
-  FIELDNAM: hv voltage std dev
-  LABLAXIS: hv voltage std dev
-  UNITS: V
-  VALIDMAX: 1000
-  VALIDMIN: 0.0
-
+   NAME: hv_voltage_std_dev
+   DATA_TYPE: CDF_FLOAT
+   CATDESC: standard deviation for channeltron voltage
+   DEPEND_0: epoch
+   VAR_TYPE: support_data
+   RECORD_VARYING: RV
+   FIELDNAM: hv voltage std dev
+   FORMAT: F12.6
+   LABLAXIS: hv voltage std dev
+   UNITS: V
+   VALIDMIN: 0.0
+   VALIDMAX: 1000
+   FILLVAL: -1.000000E+31
+   SCALE_TYP: linear
 spin_period_average:
-  <<: *debug_data_defaults
-  CATDESC: Observational-day-averaged spin period
-  FIELDNAM: spin period average
-  LABLAXIS: spin period average
-  UNITS: s
-  VALIDMAX: 20
-  VALIDMIN: 0.0
-  DELTA_PLUS_VAR: spin_period_std_dev
-  DELTA_MINUS_VAR: spin_period_std_dev
-
+   NAME: spin_period_average
+   DATA_TYPE: CDF_FLOAT
+   CATDESC: Observational-day-averaged spin period
+   DEPEND_0: epoch
+   VAR_TYPE: data
+   RECORD_VARYING: RV
+   DISPLAY_TYPE: no_plot
+   FIELDNAM: spin period average
+   FORMAT: F12.6
+   LABLAXIS: spin period average
+   UNITS: s
+   VALIDMIN: 0.0
+   VALIDMAX: 20.0
+   FILLVAL: -1.000000E+31
+   SCALE_TYP: linear
+   DELTA_PLUS_VAR: spin_period_std_dev
+   DELTA_MINUS_VAR: spin_period_std_dev
 spin_period_std_dev:
-  <<: *support_data_defaults
-  CATDESC: standard deviation for spin period
-  FIELDNAM: spin period std dev
-  LABLAXIS: spin period std dev
-  UNITS: s
-  VALIDMAX: 1.0
-  VALIDMIN: 0.0
-
+   NAME: spin_period_std_dev
+   DATA_TYPE: CDF_FLOAT
+   CATDESC: standard deviation for spin period
+   DEPEND_0: epoch
+   VAR_TYPE: support_data
+   RECORD_VARYING: RV
+   FIELDNAM: spin period std dev
+   FORMAT: F12.6
+   LABLAXIS: spin period std dev
+   UNITS: s
+   VALIDMIN: 0.0
+   VALIDMAX: 1.0
+   FILLVAL: -1.000000E+31
+   SCALE_TYP: linear
 spin_period_ground_average:
-  <<: *debug_data_defaults
-  CATDESC: Observational-day-averaged spin period (ground value)
-  FIELDNAM: spin period ground average
-  LABLAXIS: spin period ground average
-  UNITS: s
-  VALIDMAX: 20
-  VALIDMIN: 0.0
-  DELTA_PLUS_VAR: spin_period_ground_std_dev
-  DELTA_MINUS_VAR: spin_period_ground_std_dev
-
+   NAME: spin_period_ground_average
+   DATA_TYPE: CDF_FLOAT
+   CATDESC: Observational-day-averaged spin period (ground value)
+   DEPEND_0: epoch
+   VAR_TYPE: data
+   RECORD_VARYING: RV
+   DISPLAY_TYPE: no_plot
+   FIELDNAM: spin period ground average
+   FORMAT: F12.6
+   LABLAXIS: spin period ground average
+   UNITS: s
+   VALIDMIN: 0.0
+   VALIDMAX: 20.0
+   FILLVAL: -1.000000E+31
+   SCALE_TYP: linear
+   DELTA_PLUS_VAR: spin_period_ground_std_dev
+   DELTA_MINUS_VAR: spin_period_ground_std_dev
 spin_period_ground_std_dev:
-  <<: *support_data_defaults
-  CATDESC: standard deviation for spin period (ground value)
-  FIELDNAM: spin period ground std dev
-  LABLAXIS: spin period ground std dev
-  UNITS: s
-  VALIDMAX: 1.0
-  VALIDMIN: 0.0
-
+   NAME: spin_period_ground_std_dev
+   DATA_TYPE: CDF_FLOAT
+   CATDESC: standard deviation for spin period (ground value)
+   DEPEND_0: epoch
+   VAR_TYPE: support_data
+   RECORD_VARYING: RV
+   FIELDNAM: spin period ground std dev
+   FORMAT: F12.6
+   LABLAXIS: spin period ground std dev
+   UNITS: s
+   VALIDMIN: 0.0
+   VALIDMAX: 1.0
+   FILLVAL: -1.000000E+31
+   SCALE_TYP: linear
 pulse_length_average:
-  <<: *debug_data_defaults
-  CATDESC: Observational-day-averaged pulse length
-  FIELDNAM: pulse length average
-  LABLAXIS: pulse length average
-  UNITS: microsecond
-  VALIDMAX: 1.0
-  VALIDMIN: 0.0
-  DELTA_PLUS_VAR: pulse_length_std_dev
-  DELTA_MINUS_VAR: pulse_length_std_dev
-
+   NAME: pulse_length_average
+   DATA_TYPE: CDF_FLOAT
+   CATDESC: Observational-day-averaged pulse length
+   DEPEND_0: epoch
+   VAR_TYPE: data
+   RECORD_VARYING: RV
+   DISPLAY_TYPE: no_plot
+   FIELDNAM: pulse length average
+   FORMAT: F12.6
+   LABLAXIS: pulse length average
+   UNITS: µs
+   VALIDMIN: 0.0
+   VALIDMAX: 1.0
+   FILLVAL: -1.000000E+31
+   SCALE_TYP: linear
+   DELTA_PLUS_VAR: pulse_length_std_dev
+   DELTA_MINUS_VAR: pulse_length_std_dev
+   SI_CONVERSION: 1.0e-6>s
 pulse_length_std_dev:
-  <<: *support_data_defaults
-  CATDESC: standard deviation for pulse length
-  FIELDNAM: pulse length std dev
-  LABLAXIS: pulse length std dev
-  UNITS: microsecond
-  VALIDMAX: 1.0
-  VALIDMIN: 0.0
-
+   NAME: pulse_length_std_dev
+   DATA_TYPE: CDF_FLOAT
+   CATDESC: standard deviation for pulse length
+   DEPEND_0: epoch
+   VAR_TYPE: support_data
+   RECORD_VARYING: RV
+   FIELDNAM: pulse length std dev
+   FORMAT: F12.6
+   LABLAXIS: pulse length std dev
+   UNITS: µs
+   VALIDMIN: 0.0
+   VALIDMAX: 1.0
+   FILLVAL: -1.000000E+31
+   SCALE_TYP: linear
+   SI_CONVERSION: 1.0e-6>s
 position_angle_offset_average:
-  <<: *debug_data_defaults
-  CATDESC: Observational-day-averaged GLOWS angular offset
-  FIELDNAM: position angle offset average
-  LABLAXIS: position angle offset average
-  UNITS: degrees
-  VALIDMAX: 360
-  VALIDMIN: 0.0
-  DELTA_PLUS_VAR: position_angle_offset_std_dev
-  DELTA_MINUS_VAR: position_angle_offset_std_dev
-
+   NAME: position_angle_offset_average
+   DATA_TYPE: CDF_FLOAT
+   CATDESC: Observational-day-averaged GLOWS angular offset
+   DEPEND_0: epoch
+   VAR_TYPE: data
+   RECORD_VARYING: RV
+   DISPLAY_TYPE: no_plot
+   FIELDNAM: position angle offset average
+   FORMAT: F12.6
+   LABLAXIS: position angle offset average
+   UNITS: degrees
+   VALIDMIN: 0.0
+   VALIDMAX: 360
+   FILLVAL: -1.000000E+31
+   SCALE_TYP: linear
+   DELTA_PLUS_VAR: position_angle_offset_std_dev
+   DELTA_MINUS_VAR: position_angle_offset_std_dev
+   SI_CONVERSION: 1.745329e-2>radians
 position_angle_offset_std_dev:
-  <<: *support_data_defaults
-  CATDESC: position angle offset standard deviation
-  FIELDNAM: position angle offset std dev
-  LABLAXIS: position angle offset std dev
-  UNITS: degrees
-  VALIDMAX: 30
-  VALIDMIN: 0.0
-
+   NAME: position_angle_offset_std_dev
+   DATA_TYPE: CDF_FLOAT
+   CATDESC: position angle offset standard deviation
+   DEPEND_0: epoch
+   VAR_TYPE: support_data
+   RECORD_VARYING: RV
+   FIELDNAM: position angle offset std dev
+   FORMAT: F12.6
+   LABLAXIS: position angle offset std dev
+   UNITS: degrees
+   VALIDMIN: 0.0
+   VALIDMAX: 30.0
+   FILLVAL: -1.000000E+31
+   SCALE_TYP: linear
+   SI_CONVERSION: 1.745329e-2>radians
 lon_lat:
-  CATDESC: component index for coordinate data
-  FORMAT: I1
-  VAR_TYPE: support_data
-  DISPLAY_TYPE: no_plot
-  FIELDNAM: lon_lat
-  UNITS: ' '
-  VALIDMAX: 1
-  VALIDMIN: 0
-
+   NAME: lon_lat
+   DATA_TYPE: CDF_INT1
+   CATDESC: component index for coordinate data
+   VAR_TYPE: support_data
+   RECORD_VARYING: NRV
+   FIELDNAM: lon_lat
+   FORMAT: I1
+   LABLAXIS: lon_lat
+   UNITS: ' '
+   VALIDMIN: 0
+   VALIDMAX: 1
+   FILLVAL: -128
+   SCALE_TYP: linear
 lon_lat_labels:
-  CATDESC: label names for coordinate data
-  VAR_TYPE: metadata
-  FORMAT: A3
-  DISPLAY_TYPE: no_plot
-  FIELDNAM: lon_lat_labels
-
+   NAME: lon_lat_labels
+   DATA_TYPE: CDF_CHAR
+   CATDESC: label names for coordinate data
+   VAR_TYPE: metadata
+   FIELDNAM: lon_lat_labels
+   FORMAT: A3
 spin_axis_orientation_average:
-  <<: *timeseries_defaults
-  CATDESC: Observational-day-averaged spin-axis ecliptic longitude and latitude
-  FIELDNAM: spin axis orientation average
-  UNITS: degrees
-  VALIDMAX: 360.0
-  VALIDMIN: -90.0
-  DELTA_PLUS_VAR: spin_axis_orientation_std_dev
-  DELTA_MINUS_VAR: spin_axis_orientation_std_dev
-  DEPEND_1: lon_lat
-  LABL_PTR_1: lon_lat_labels
-
+   NAME: spin_axis_orientation_average
+   DATA_TYPE: CDF_FLOAT
+   CATDESC: Observational-day-averaged spin-axis ecliptic longitude and latitude
+   DEPEND_0: epoch
+   DEPEND_1: lon_lat
+   VAR_TYPE: data
+   RECORD_VARYING: RV
+   DISPLAY_TYPE: time_series
+   VARIABLE_PURPOSE: primary var, summary
+   FIELDNAM: spin axis orientation average
+   FORMAT: F12.6
+   UNITS: degrees
+   VALIDMIN: -90.0
+   VALIDMAX: 360.0
+   FILLVAL: -1.00E+31
+   LABL_PTR_1: lon_lat_labels
+   SCALE_TYP: linear
+   DELTA_PLUS_VAR: spin_axis_orientation_std_dev
+   DELTA_MINUS_VAR: spin_axis_orientation_std_dev
+   SI_CONVERSION: 1.745329e-2>radians
 spin_axis_orientation_std_dev:
-  <<: *support_data_defaults
-  CATDESC: Standard deviation for spin-axis longitude and latitude
-  FIELDNAM: spin axis orientation std dev
-  UNITS: degrees
-  VALIDMAX: 360.0
-  VALIDMIN: -90.0
-  DEPEND_1: lon_lat
-  LABL_PTR_1: lon_lat_labels
-
+   NAME: spin_axis_orientation_std_dev
+   DATA_TYPE: CDF_FLOAT
+   CATDESC: Standard deviation for spin-axis longitude and latitude
+   DEPEND_0: epoch
+   DEPEND_1: lon_lat
+   VAR_TYPE: support_data
+   RECORD_VARYING: RV
+   FIELDNAM: spin axis orientation std dev
+   FORMAT: F12.6
+   UNITS: degrees
+   VALIDMIN: -90.0
+   VALIDMAX: 360.0
+   FILLVAL: -1.00E+31
+   LABL_PTR_1: lon_lat_labels
+   SCALE_TYP: linear
+   SI_CONVERSION: 1.745329e-2>radians
 x_y_z:
-  CATDESC: component index for ecliptic coordinate data
-  FORMAT: I10
-  DISPLAY_TYPE: no_plot
-  FIELDNAM: x_y_z
-  UNITS: ' '
-  VALIDMAX: 2
-  VALIDMIN: 0
-  VAR_TYPE: support_data
-
+   NAME: x_y_z
+   DATA_TYPE: CDF_INT1
+   CATDESC: component index for ecliptic coordinate data
+   VAR_TYPE: support_data
+   RECORD_VARYING: NRV
+   FIELDNAM: x_y_z
+   FORMAT: I10
+   LABLAXIS: x_y_z
+   UNITS: ' '
+   VALIDMIN: 0
+   VALIDMAX: 2
+   FILLVAL: -128
 x_y_z_labels:
-  CATDESC: label names for ecliptic coordinate data
-  VAR_TYPE: metadata
-  FORMAT: A1
-  DISPLAY_TYPE: no_plot
-  FIELDNAM: x_y_z_labels
-
+   NAME: x_y_z_labels
+   DATA_TYPE: CDF_CHAR
+   CATDESC: label names for ecliptic coordinate data
+   VAR_TYPE: metadata
+   FIELDNAM: x_y_z_labels
+   FORMAT: A1
+   SCALE_TYP: linear
 spacecraft_location_average:
-  <<: *timeseries_defaults
-  CATDESC: Observational-day-averaged Cartesian ecliptic coordinates X, Y, Z of IMAP
-  FIELDNAM: spacecraft location average
-  UNITS: km
-  VALIDMAX: 2.0e+8
-  VALIDMIN: -2.0e+8
-  DELTA_PLUS_VAR: spacecraft_location_std_dev
-  DELTA_MINUS_VAR: spacecraft_location_std_dev
-  FORMAT: E12.5E1
-  DEPEND_1: x_y_z
-  LABL_PTR_1: x_y_z_labels
-
-
+   NAME: spacecraft_location_average
+   DATA_TYPE: CDF_FLOAT
+   CATDESC: Observational-day-averaged Cartesian ecliptic coordinates X, Y, Z of IMAP
+   DEPEND_0: epoch
+   DEPEND_1: x_y_z
+   VAR_TYPE: data
+   RECORD_VARYING: RV
+   DISPLAY_TYPE: time_series
+   VARIABLE_PURPOSE: primary var, summary
+   FIELDNAM: spacecraft location average
+   FORMAT: E12.5E1
+   UNITS: km
+   VALIDMIN: -2.0e+8
+   VALIDMAX: 2.0e+8
+   FILLVAL: -1.000000E+31
+   LABL_PTR_1: x_y_z_labels
+   SCALE_TYP: linear
+   DELTA_PLUS_VAR: spacecraft_location_std_dev
+   DELTA_MINUS_VAR: spacecraft_location_std_dev
+   SI_CONVERSION: 1.0e3>m
 spacecraft_location_std_dev:
-  <<: *support_data_defaults
-  CATDESC: Standard deviation for ecliptic coordinates of IMAP
-  FIELDNAM: spacecraft location std dev
-  UNITS: km
-  VALIDMAX: 3.0e+6
-  VALIDMIN: -3.0e+6
-  FORMAT: E12.5E1
-  DEPEND_1: x_y_z
-  LABL_PTR_1: x_y_z_labels
-
-
+   NAME: spacecraft_location_std_dev
+   DATA_TYPE: CDF_FLOAT
+   CATDESC: Standard deviation for ecliptic coordinates of IMAP
+   DEPEND_0: epoch
+   DEPEND_1: x_y_z
+   VAR_TYPE: support_data
+   RECORD_VARYING: RV
+   FIELDNAM: spacecraft_location_std_dev
+   FORMAT: E12.5E1
+   UNITS: km
+   VALIDMIN: -3.0e+6
+   VALIDMAX: 3.0e+6
+   FILLVAL: -1.000000E+31
+   LABL_PTR_1: x_y_z_labels
+   SCALE_TYP: linear
+   SI_CONVERSION: 1.0e3>m
 spacecraft_velocity_average:
-  <<: *debug_data_defaults
-  CATDESC: Observational-day-averaged values VX, VY, VZ of IMAP velocity components (Cartesian ecliptic frame)
-  FIELDNAM: spacecraft velocity average
-  UNITS: km/s
-  VALIDMAX: 50.0
-  VALIDMIN: -50.0
-  DELTA_PLUS_VAR: spacecraft_velocity_std_dev
-  DELTA_MINUS_VAR: spacecraft_velocity_std_dev
-  DEPEND_1: x_y_z
-  LABL_PTR_1: x_y_z_labels
-
-
+   NAME: spacecraft_velocity_average
+   DATA_TYPE: CDF_FLOAT
+   CATDESC: Observational-day-averaged values VX, VY, VZ of IMAP velocity components (Cartesian ecliptic frame)
+   DEPEND_0: epoch
+   DEPEND_1: x_y_z
+   VAR_TYPE: data
+   RECORD_VARYING: RV
+   DISPLAY_TYPE: no_plot
+   FIELDNAM: spacecraft velocity average
+   FORMAT: F12.6
+   UNITS: km/s
+   VALIDMIN: -50.0
+   VALIDMAX: 50.0
+   FILLVAL: -1.00E+31
+   LABL_PTR_1: x_y_z_labels
+   SCALE_TYP: linear
+   DELTA_PLUS_VAR: spacecraft_velocity_std_dev
+   DELTA_MINUS_VAR: spacecraft_velocity_std_dev
+   SI_CONVERSION: 1.0e3>m/s
 spacecraft_velocity_std_dev:
-  <<: *support_data_defaults
-  CATDESC: standard deviation for velocity components of IMAP
-  FIELDNAM: spacecraft velocity std dev
-  UNITS: km/s
-  VALIDMAX: 1.0
-  VALIDMIN: -1.0
-  DEPEND_1: x_y_z
-  LABL_PTR_1: x_y_z_labels
+   NAME: spacecraft_velocity_std_dev
+   DATA_TYPE: CDF_FLOAT
+   CATDESC: standard deviation for velocity components of IMAP
+   DEPEND_0: epoch
+   DEPEND_1: x_y_z
+   VAR_TYPE: support_data
+   RECORD_VARYING: RV
+   FIELDNAM: spacecraft velocity std dev
+   FORMAT: E12.5E1
+   UNITS: km/s
+   VALIDMIN: -1.0
+   VALIDMAX: 1.0
+   FILLVAL: -1.000000E+31
+   LABL_PTR_1: x_y_z_labels
+   SCALE_TYP: linear
+   SI_CONVERSION: 1.0e3>m/s
