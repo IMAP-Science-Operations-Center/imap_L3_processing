@@ -96,7 +96,7 @@ def find_unprocessed_carrington_rotations(l3a_inputs: list[dict], l3b_inputs: li
             carrington_end_date_non_inclusive = jd_fm_Carrington(carrington_number + 1)
             date_time_end_date = Time(carrington_end_date_non_inclusive, format='jd')
             date_time_end_date.format = 'iso'
-            is_valid = validate_dependencies(date_time, date_time_end_date + timedelta(days=1),
+            is_valid = validate_dependencies(date_time_end_date, dependencies.initializer_time_buffer,
                                              dependencies.omni2_data_path, dependencies.f107_index_file_path,
                                              dependencies.lyman_alpha_path)
 
