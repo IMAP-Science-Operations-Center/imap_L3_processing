@@ -7,6 +7,7 @@ from spacepy import pycdf
 
 from imap_l3_processing.constants import CARRINGTON_ROTATION_IN_NANOSECONDS
 from imap_l3_processing.glows.l3bc.l3bc_toolkit.l3b_CarringtonIonRate import CarringtonIonizationRate
+from imap_l3_processing.glows.l3bc.l3bc_toolkit.l3c_CarringtonSolarWind import CarringtonSolarWind
 from imap_l3_processing.models import DataProduct, DataProductVariable, UpstreamDataDependency
 
 
@@ -104,3 +105,22 @@ class GlowsL3CSolarWind(DataProduct):
             DataProductVariable("proton_density_profile", self.proton_density_profile,
                                 cdf_data_type=pycdf.const.CDF_FLOAT),
         ]
+
+    @classmethod
+    def from_instrument_team_object(cls, model: CarringtonSolarWind,
+                                    input_metadata: UpstreamDataDependency) -> Self:
+        latitude_grid = model.sw_profile['grid']
+        return cls(
+            input_metadata=input_metadata,
+            epoch=np.array([model.sw_profile['date']]),
+            epoch_delta=np.array([CARRINGTON_ROTATION_IN_NANOSECONDS / 2]),
+            cr=np.array([model.sw_profile['CR']]),
+            lat_grid=np.array(latitude_grid),
+            lat_grid_delta=np.zeros(len(latitude_grid)),
+            lat_grid_label=[f"{x}°" for x in latitude_grid],
+            plasma_speed_ecliptic=np.array([model.sw_ecliptic['mean_speed']]),
+            proton_density_ecliptic=np.array([model.sw_ecliptic['mean_proton_density']]),
+            alpha_abundance_ecliptic=np.array([model.sw_ecliptic['mean_alpha_abundance']]),
+            plasma_speed_profile=np.array([model.sw_profile['plasma_speed']]),
+            proton_density_profile=np.array([model.sw_profile['proton_density']]),
+        )
