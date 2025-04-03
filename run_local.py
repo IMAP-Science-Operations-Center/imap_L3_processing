@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import argparse
+import enum
 import os
 import sys
 import uuid
@@ -349,7 +351,19 @@ LONGITUDE = TypeVar("LONGITUDE")
 LATITUDE = TypeVar("LATITUDE")
 
 
-def survival_correct_l2_map_with_fake_survivals(l2_or_l3_flux: np.ndarray[(EPOCH, LONGITUDE, LATITUDE, ENERGY)]):
+class IncludedSensors(enum.Enum):
+    Hi45 = "45"
+    Hi90 = "90"
+    Combined = "combined"
+
+
+def read_glows_survival_probability_data_from_cdf() -> tuple[np.ndarray, np.ndarray]:
+    l3e = CDF(str(get_test_data_path("glows/imap_glows_l3e_survival-probabilities-hi_20250324_v001.cdf")))
+    return l3e["probability_of_survival"][...][:, 0], l3e["probability_of_survival"][...][:, 1]
+
+
+def survival_correct_l2_map_with_fake_survivals(number_of_days: int, included_sensor: IncludedSensors,
+                                                l2_or_l3_flux: np.ndarray[(EPOCH, LONGITUDE, LATITUDE, ENERGY)]):
     longitude_spacing = 360 / l2_or_l3_flux.shape[1]
     latitude_spacing = 180 / l2_or_l3_flux.shape[2]
     assert longitude_spacing == latitude_spacing
@@ -359,7 +373,7 @@ def survival_correct_l2_map_with_fake_survivals(l2_or_l3_flux: np.ndarray[(EPOCH
     # pull out script for generating fake glows CDF or add to existing script
     map_start_time = datetime(month=4, day=16, year=2025 - 30)
     pset_time_delta = timedelta(days=1)
-    num_psets = 90
+    num_psets = number_of_days
 
     psets = []
     for i in range(num_psets):
@@ -367,21 +381,31 @@ def survival_correct_l2_map_with_fake_survivals(l2_or_l3_flux: np.ndarray[(EPOCH
 
         # survival_values = [0.5, 0.75] if i % 2 == 0 else [0.75, 0.5]
         # sp_strip = np.ravel(np.repeat([survival_values], 180, axis=0)).reshape(1, 1, -1)
-        sp_strip = np.repeat(1 / (i + 1), 360).reshape(1, 1, -1)
-        survival_probability = np.repeat(sp_strip, 16, axis=1)
-        glows_l3e_dataset = create_empty_glows_l3e_dataset(epoch, survival_probability)
+        # sp_strip = np.repeat(1 / (i + 1), 360).reshape(1, 1, -1)
+        # survival_probability = np.repeat(sp_strip, 16, axis=1)
+        # glows_l3e_dataset = create_empty_glows_l3e_dataset(epoch, survival_probability)
 
-        psets.append(
-            HiSurvivalProbabilityPointingSet(create_empty_hi_l1c_dataset(epoch, energies=np.geomspace(1, 10000, 23)),
-                                             Sensor.Hi45, glows_l3e_dataset))
-        psets.append(
-            HiSurvivalProbabilityPointingSet(create_empty_hi_l1c_dataset(epoch, energies=np.geomspace(1, 10000, 23)),
-                                             Sensor.Hi90, glows_l3e_dataset))
+        hi45_probability, hi90_probability = read_glows_survival_probability_data_from_cdf()
+
+        if included_sensor in [IncludedSensors.Hi45, IncludedSensors.Combined]:
+            glows_l3e_dataset = create_empty_glows_l3e_dataset(epoch, hi45_probability)
+            l1c_dataset = create_empty_hi_l1c_dataset(epoch, energies=np.geomspace(1, 10000, 23))
+            # exposures=np.full(shape=(1, 23, 3600), fill_value=0.5), )
+            psets.append(HiSurvivalProbabilityPointingSet(
+                l1c_dataset,
+                Sensor.Hi45, glows_l3e_dataset))
+        if included_sensor in [IncludedSensors.Hi90, IncludedSensors.Combined]:
+            glows_l3e_dataset = create_empty_glows_l3e_dataset(epoch, hi90_probability)
+            psets.append(
+                HiSurvivalProbabilityPointingSet(
+                    create_empty_hi_l1c_dataset(epoch, energies=np.geomspace(1, 10000, 23)),
+                    Sensor.Hi90, glows_l3e_dataset))
 
     survival_probability_map = HiSurvivalProbabilitySkyMap(psets, spacing_degree, SpiceFrame.ECLIPJ2000)
     survival_dataset = survival_probability_map.to_dataset()['exposure_weighted_survival_probabilities'].values
     survival_dataset = survival_dataset.transpose(0, 2, 3, 1)
 
+    # return survival_dataset
     return l2_or_l3_flux / survival_dataset
 
 
@@ -457,14 +481,27 @@ if __name__ == "__main__":
         print(create_swe_product_with_fake_spice(dependencies))
 
     if "survival-probability" in sys.argv:
+        parser = argparse.ArgumentParser()
+        parser.add_argument("run_local_type")
+        parser.add_argument("--sensor", choices=["90", "45", "combined"])
+        parser.add_argument("--days", type=int)
+        parser.add_argument("--description")
+
+        args = parser.parse_args()
+
+        logical_source = f"imap_hi_l3_fake-hae-survival-corrected-sensor-hi-{args.sensor}-days-{args.days}-{uuid.uuid4()}"
+        output_filename = f"temp_cdf_data/{logical_source}.cdf"
+
         spice_wrapper.furnish()
-        with CDF("temp_cdf_data/test_survival_corrected.cdf",
+        with CDF(output_filename,
                  masterpath=str(get_test_data_path("hi/IMAP_HI_90_maps_20000101_v02.cdf"))) as cdf:
-            survival_prob_map = survival_correct_l2_map_with_fake_survivals(np.ones_like(cdf["flux"][...]))
+            cdf.attrs["Logical_source"] = logical_source
+            survival_prob_map = survival_correct_l2_map_with_fake_survivals(args.days, IncludedSensors(args.sensor),
+                                                                            cdf["flux"][...])
             plt.imshow(survival_prob_map[0, :, :, 0].T)
             plt.show()
             cdf["flux"] = survival_prob_map
-            cdf["flux"].attrs["CATDESC"] = "Survival corrected all ones flux"
+            cdf["flux"].attrs["CATDESC"] = args.description
 
     if "hi" in sys.argv:
         dependencies = HiL3Dependencies.from_file_paths(

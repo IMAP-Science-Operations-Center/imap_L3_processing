@@ -104,11 +104,13 @@ class TestUtils(unittest.TestCase):
 
         # self.assertEqual(2, len(actual_crs_to_process))
         self.assertEqual(expected_l3a_january_paths, actual_crs_to_process[0].l3a_paths)
-        self.assertEqual('20100103', actual_crs_to_process[0].cr_start_date)
+        self.assertEqual(Time('2010-01-03 11:33:04.320').value, actual_crs_to_process[0].cr_start_date.value)
+        self.assertEqual(Time('2010-01-30 18:09:30.240').value, actual_crs_to_process[0].cr_end_date.value)
         self.assertEqual(2092, actual_crs_to_process[0].cr_rotation_number)
 
         self.assertEqual(expected_l3a_april_paths, actual_crs_to_process[1].l3a_paths)
-        self.assertEqual('20100326', actual_crs_to_process[1].cr_start_date)
+        self.assertEqual(Time('2010-03-26 07:22:22.080').value, actual_crs_to_process[1].cr_start_date.value)
+        self.assertEqual(Time('2010-04-22 13:58:48.000').value, actual_crs_to_process[1].cr_end_date.value)
         self.assertEqual(2095, actual_crs_to_process[1].cr_rotation_number)
 
         self.assertEqual(Time('2010-01-30 18:09:30.240').value,
@@ -148,7 +150,7 @@ class TestUtils(unittest.TestCase):
     @patch("imap_l3_processing.glows.l3bc.utils.ZipFile")
     @patch('builtins.open', new_callable=mock_open, create=True)
     def test_archive_dependencies(self, mocked_open, mock_zip, mock_dump):
-        expected_filename = "imap_glows_l3b-archive_20250227_v001.zip"
+        expected_filename = "imap_glows_l3b-archive_20250314_v001.zip"
         expected_json_filename = "cr_to_process.json"
 
         dependencies = GlowsInitializerAncillaryDependencies(uv_anisotropy_path="uv_anisotropy",
@@ -162,10 +164,13 @@ class TestUtils(unittest.TestCase):
                                                              )
 
         cr_to_process: CRToProcess = CRToProcess(cr_rotation_number=2095, l3a_paths=["file1", "file2"],
-                                                 cr_start_date="20250227")
+                                                 cr_start_date=Time("2025-03-14 12:34:56.789"),
+                                                 cr_end_date=Time("2025-03-24 12:34:56.789"))
 
         expected_json_to_serialize = {"cr_rotation_number": 2095,
                                       "l3a_paths": ["file1", "file2"],
+                                      "cr_start_date": "2025-03-14 12:34:56.789",
+                                      "cr_end_date": "2025-03-24 12:34:56.789",
                                       "bad_days_list": dependencies.bad_days_list,
                                       "pipeline_settings": dependencies.pipeline_settings,
                                       "waw_helioion_mp": dependencies.waw_helioion_mp_path,

@@ -105,7 +105,8 @@ def find_unprocessed_carrington_rotations(l3a_inputs: list[dict], l3b_inputs: li
 
             crs_to_process.append(CRToProcess(
                 l3a_paths=l3a_files,
-                cr_start_date=date_time.strftime('%Y%m%d'),
+                cr_start_date=date_time,
+                cr_end_date=date_time_end_date,
                 cr_rotation_number=carrington_number,
             ))
 
@@ -118,7 +119,8 @@ def get_astropy_time_from_yyyymmdd(date_string: str) -> Time:
 
 def archive_dependencies(cr_to_process: CRToProcess, version: str,
                          ancillary_dependencies: GlowsInitializerAncillaryDependencies) -> Path:
-    filename = f"imap_glows_l3b-archive_{cr_to_process.cr_start_date}_{version}.zip"
+    start_date = cr_to_process.cr_start_date.strftime("%Y%m%d")
+    filename = f"imap_glows_l3b-archive_{start_date}_{version}.zip"
     json_filename = "cr_to_process.json"
     with ZipFile(filename, "w", ZIP_DEFLATED) as file:
         file.write(ancillary_dependencies.lyman_alpha_path)
@@ -127,6 +129,8 @@ def archive_dependencies(cr_to_process: CRToProcess, version: str,
         with open(json_filename, "w") as json_file:
             cr = {"cr_rotation_number": cr_to_process.cr_rotation_number,
                   "l3a_paths": cr_to_process.l3a_paths,
+                  "cr_start_date": cr_to_process.cr_start_date.value,
+                  "cr_end_date": cr_to_process.cr_end_date.value,
                   "bad_days_list": ancillary_dependencies.bad_days_list,
                   "pipeline_settings": ancillary_dependencies.pipeline_settings,
                   "waw_helioion_mp": ancillary_dependencies.waw_helioion_mp_path,
