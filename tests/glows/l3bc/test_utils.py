@@ -79,8 +79,8 @@ class TestUtils(unittest.TestCase):
 
         l3b_files = [
             create_imap_data_access_json(
-                file_path=f'imap/glows/l3bc/2010/01/imap_glows_l3b_hist_20100213_v001.pkts',
-                data_level='l3b', start_date=f'20100213')
+                file_path=f'imap/glows/l3bc/2010/01/imap_glows_l3b_hist_20100130_v001.pkts',
+                data_level='l3b', start_date=f'20100130')
         ]
 
         mock_validate_dependencies.side_effect = [True, False, True]
@@ -105,11 +105,11 @@ class TestUtils(unittest.TestCase):
 
         self.assertEqual(2, len(actual_crs_to_process))
         self.assertEqual(expected_l3a_january_paths, actual_crs_to_process[0].l3a_paths)
-        self.assertEqual('20100117', actual_crs_to_process[0].cr_midpoint)
+        self.assertEqual('20100103', actual_crs_to_process[0].cr_start_date)
         self.assertEqual(2092, actual_crs_to_process[0].cr_rotation_number)
 
         self.assertEqual(expected_l3a_april_paths, actual_crs_to_process[1].l3a_paths)
-        self.assertEqual('20100408', actual_crs_to_process[1].cr_midpoint)
+        self.assertEqual('20100326', actual_crs_to_process[1].cr_start_date)
         self.assertEqual(2095, actual_crs_to_process[1].cr_rotation_number)
 
         self.assertEqual(Time('2010-01-30 18:09:30.240').value,
@@ -149,7 +149,7 @@ class TestUtils(unittest.TestCase):
     @patch("imap_l3_processing.glows.l3bc.utils.ZipFile")
     @patch('builtins.open', new_callable=mock_open, create=True)
     def test_archive_dependencies(self, mocked_open, mock_zip, mock_dump):
-        expected_filename = "imap_glows_l3b-archive_20250314_v001.zip"
+        expected_filename = "imap_glows_l3b-archive_20250227_v001.zip"
         expected_json_filename = "cr_to_process.json"
 
         dependencies = GlowsInitializerAncillaryDependencies(uv_anisotropy_path="uv_anisotropy",
@@ -163,11 +163,10 @@ class TestUtils(unittest.TestCase):
                                                              )
 
         cr_to_process: CRToProcess = CRToProcess(cr_rotation_number=2095, l3a_paths=["file1", "file2"],
-                                                 cr_midpoint="20250314")
+                                                 cr_start_date="20250227")
 
         expected_json_to_serialize = {"cr_rotation_number": 2095,
                                       "l3a_paths": ["file1", "file2"],
-                                      "cr_midpoint": "20250314",
                                       "bad_days_list": dependencies.bad_days_list,
                                       "pipeline_settings": dependencies.pipeline_settings,
                                       "waw_helioion_mp": dependencies.waw_helioion_mp_path,
