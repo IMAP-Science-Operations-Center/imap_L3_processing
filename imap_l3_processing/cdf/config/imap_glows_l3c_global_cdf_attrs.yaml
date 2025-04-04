@@ -1,0 +1,4 @@
+imap_glows_l3c_sci:
+  Data_level: "3c"
+  Data_type: L3C_sci>Level-3C
+  Logical_source_description: IMAP Mission GLOWS Carrington period-averaged solar wind plasma speed and proton density profiles

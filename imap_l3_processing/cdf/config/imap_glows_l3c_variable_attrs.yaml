@@ -49,24 +49,26 @@ cr:
    VALIDMAX: 3000
    FILLVAL: -32768
    SCALE_TYP: linear
-uv_anisotropy_factor:
-   NAME: uv_anisotropy_factor
+plasma_speed_ecliptic:
+   NAME: plasma_speed_ecliptic
    DATA_TYPE: CDF_FLOAT
-   CATDESC: UV anisotropy factor
+   CATDESC: Averaged solar wind plasma speed in the ecliptic plane
    DEPEND_0: epoch
    VAR_TYPE: data
    RECORD_VARYING: RV
-   DISPLAY_TYPE: ' '
-   FIELDNAM: UV anisotropy factor
+   DISPLAY_TYPE: time_series
+   VARIABLE_PURPOSE: primary var, summary
+   FIELDNAM: Plasma speed
    FORMAT: F9.3
-   LABLAXIS: UV anisotropy factor
-   UNITS: ' '
+   LABLAXIS: Speed
+   UNITS: km/s
    VALIDMIN: 0
-   VALIDMAX: 10
+   VALIDMAX: 10000.0
    FILLVAL: -1.00E+31
    SCALE_TYP: linear
    SCALEMIN: 0
-   SCALEMAX: 10
+   SCALEMAX: 1000.0
+   SI_CONVERSION: 1e3>m/s
 lat_grid:
    NAME: lat_grid
    DATA_TYPE: CDF_FLOAT
@@ -98,123 +100,6 @@ lat_grid_delta:
    SCALE_TYP: linear
    DELTA_PLUS_VAR: lat_grid_delta
    DELTA_MINUS_VAR: lat_grid_delta
-sum_rate:
-   NAME: sum_rate
-   DATA_TYPE: CDF_FLOAT
-   CATDESC: averaged ionization rate profile obtained from lightcurve
-   DEPEND_0: epoch
-   DEPEND_1: lat_grid
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: spectrogram
-   VARIABLE_PURPOSE: primary var, summary
-   FIELDNAM: Sum rate
-   FORMAT: F9.3
-   LABLAXIS: Sum rate
-   UNITS: s^-1
-   VALIDMIN: 0
-   VALIDMAX: 1.0
-   FILLVAL: -1.00E+31
-   SCALE_TYP: linear
-   DELTA_PLUS_VAR: sum_uncert
-   DELTA_MINUS_VAR: sum_uncert
-   SCALEMIN: 0
-   SCALEMAX: 1.0e-6
-ph_rate:
-   NAME: ph_rate
-   DATA_TYPE: CDF_FLOAT
-   CATDESC: averaged photoionization rate profile
-   DEPEND_0: epoch
-   DEPEND_1: lat_grid
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: spectrogram
-   VARIABLE_PURPOSE: primary var, summary
-   FIELDNAM: Photoionization rate
-   FORMAT: F9.3
-   LABLAXIS: Photoionization rate
-   UNITS: s^-1
-   VALIDMIN: 0
-   VALIDMAX: 1.0
-   FILLVAL: -1.00E+31
-   SCALE_TYP: linear
-   DELTA_PLUS_VAR: ph_uncert
-   DELTA_MINUS_VAR: ph_uncert
-   SCALEMIN: 0
-   SCALEMAX: 1.0e-6
-cx_rate:
-   NAME: cx_rate
-   DATA_TYPE: CDF_FLOAT
-   CATDESC: averaged charge exchange rate profile (stationary atom approximation)
-   DEPEND_0: epoch
-   DEPEND_1: lat_grid
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: spectrogram
-   VARIABLE_PURPOSE: primary var, summary
-   FIELDNAM: Charge exchange rate
-   FORMAT: F9.3
-   LABLAXIS: Charge exchange rate
-   UNITS: s^-1
-   VALIDMIN: 0
-   VALIDMAX: 1.0
-   FILLVAL: -1.00E+31
-   SCALE_TYP: linear
-   DELTA_PLUS_VAR: cx_uncert
-   DELTA_MINUS_VAR: cx_uncert
-   SCALEMIN: 0
-   SCALEMAX: 1.0e-6
-sum_uncert:
-   NAME: sum_uncert
-   DATA_TYPE: CDF_FLOAT
-   CATDESC: averaged ionization rate profile uncertainty
-   DEPEND_0: epoch
-   DEPEND_1: lat_grid
-   VAR_TYPE: support_data
-   RECORD_VARYING: RV
-   VARIABLE_PURPOSE: primary var, summary
-   FIELDNAM: Sum rate uncertainty
-   FORMAT: F9.3
-   LABLAXIS: Sum rate uncertainty
-   UNITS: s^-1
-   VALIDMIN: 0
-   VALIDMAX: 1.0
-   FILLVAL: -1.00E+31
-   SCALE_TYP: linear
-ph_uncert:
-   NAME: ph_uncert
-   DATA_TYPE: CDF_FLOAT
-   CATDESC: averaged photoionization rate profile uncertainty
-   DEPEND_0: epoch
-   DEPEND_1: lat_grid
-   VAR_TYPE: support_data
-   RECORD_VARYING: RV
-   VARIABLE_PURPOSE: primary var, summary
-   FIELDNAM: Photoionization rate uncertainty
-   FORMAT: F9.3
-   LABLAXIS: Photoionization rate uncertainty
-   UNITS: s^-1
-   VALIDMIN: 0
-   VALIDMAX: 1.0
-   FILLVAL: -1.00E+31
-   SCALE_TYP: linear
-cx_uncert:
-   NAME: cx_uncert
-   DATA_TYPE: CDF_FLOAT
-   CATDESC: averaged charge exchange rate profile uncertainty
-   DEPEND_0: epoch
-   DEPEND_1: lat_grid
-   VAR_TYPE: support_data
-   RECORD_VARYING: RV
-   VARIABLE_PURPOSE: primary var, summary
-   FIELDNAM: Charge exchange rate uncertainty
-   FORMAT: F9.3
-   LABLAXIS: Charge exchange rate uncertainty
-   UNITS: s^-1
-   VALIDMIN: 0
-   VALIDMAX: 1.0
-   FILLVAL: -1.00E+31
-   SCALE_TYP: linear
 lat_grid_label:
    NAME: lat_grid_label
    DATA_TYPE: CDF_CHAR
@@ -222,3 +107,86 @@ lat_grid_label:
    VAR_TYPE: metadata
    FIELDNAM: lat grid label
    FORMAT: a20
+proton_density_ecliptic:
+   NAME: proton_density_ecliptic
+   DATA_TYPE: CDF_FLOAT
+   CATDESC: Averaged proton density in the ecliptic plane adjusted to 1 au
+   DEPEND_0: epoch
+   VAR_TYPE: data
+   RECORD_VARYING: RV
+   DISPLAY_TYPE: time_series
+   VARIABLE_PURPOSE: primary var, summary
+   FIELDNAM: Proton density
+   FORMAT: F9.3
+   LABLAXIS: Density
+   UNITS: cm^-3
+   VALIDMIN: 0
+   VALIDMAX: 1.0e+6
+   FILLVAL: -1.00E+31
+   SCALE_TYP: linear
+   SCALEMIN: 0
+   SCALEMAX: 10.0
+   SI_CONVERSION: 1e6>m^-3
+alpha_abundance_ecliptic:
+   NAME: alpha_abundance_ecliptic
+   DATA_TYPE: CDF_FLOAT
+   CATDESC: Averaged α-particles to protons ratio in the ecliptic plane
+   DEPEND_0: epoch
+   VAR_TYPE: data
+   RECORD_VARYING: RV
+   DISPLAY_TYPE: time_series
+   VARIABLE_PURPOSE: primary var, summary
+   FIELDNAM: Alpha abundance
+   FORMAT: F9.3
+   LABLAXIS: Abundance
+   UNITS: ' '
+   VALIDMIN: 0
+   VALIDMAX: 1.0
+   FILLVAL: -1.00E+31
+   SCALE_TYP: linear
+   SCALEMIN: 0
+   SCALEMAX: 0.02
+plasma_speed_profile:
+   NAME: plasma_speed_profile
+   DATA_TYPE: CDF_FLOAT
+   CATDESC: Averaged profile of solar wind plasma speed
+   DEPEND_0: epoch
+   DEPEND_1: lat_grid
+   VAR_TYPE: data
+   RECORD_VARYING: RV
+   DISPLAY_TYPE: spectrogram
+   VARIABLE_PURPOSE: primary var, summary
+   FIELDNAM: Plasma speed
+   FORMAT: F9.3
+   LABLAXIS: Speed
+   UNITS: km/s
+   VALIDMIN: 0
+   VALIDMAX: 10000.0
+   FILLVAL: -1.00E+31
+   LABL_PTR_1: lat_grid_label
+   SCALE_TYP: linear
+   SCALEMIN: 0
+   SCALEMAX: 1000.0
+   SI_CONVERSION: 1e3>m/s
+proton_density_profile:
+   NAME: proton_density_profile
+   DATA_TYPE: CDF_FLOAT
+   CATDESC: Averaged profile of proton density adjusted to 1 au
+   DEPEND_0: epoch
+   DEPEND_1: lat_grid
+   VAR_TYPE: data
+   RECORD_VARYING: RV
+   DISPLAY_TYPE: spectrogram
+   VARIABLE_PURPOSE: primary var, summary
+   FIELDNAM: Proton density
+   FORMAT: F9.3
+   LABLAXIS: Density
+   UNITS: cm^-3
+   VALIDMIN: 0
+   VALIDMAX: 1.0e+6
+   FILLVAL: -1.00E+31
+   LABL_PTR_1: lat_grid_label
+   SCALE_TYP: linear
+   SCALEMIN: 0
+   SCALEMAX: 10.0
+   SI_CONVERSION: 1e6>m^-3

@@ -12,7 +12,6 @@ from unittest.mock import patch
 
 import numpy as np
 import xarray as xr
-from bitstring import BitStream
 from imap_processing.spice.geometry import SpiceFrame
 from matplotlib import pyplot as plt
 from spacepy.pycdf import CDF
@@ -22,7 +21,8 @@ from imap_l3_processing.glows.descriptors import GLOWS_L2_DESCRIPTOR
 from imap_l3_processing.glows.glows_initializer import GlowsInitializer
 from imap_l3_processing.glows.glows_processor import GlowsProcessor
 from imap_l3_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
-from imap_l3_processing.glows.l3a.utils import read_l2_glows_data
+from imap_l3_processing.glows.l3a.utils import read_l2_glows_data, create_glows_l3a_dictionary_from_cdf
+from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDependencies
 from imap_l3_processing.hi.hi_processor import HiProcessor
 from imap_l3_processing.hi.l3.hi_l3_dependencies import HiL3Dependencies
 from imap_l3_processing.hi.l3.science.survival_probability import HiSurvivalProbabilitySkyMap, \
@@ -31,8 +31,6 @@ from imap_l3_processing.hit.l3.hit_l3_sectored_dependencies import HITL3Sectored
 from imap_l3_processing.hit.l3.hit_processor import HitProcessor
 from imap_l3_processing.hit.l3.models import HitL1Data
 from imap_l3_processing.hit.l3.pha.hit_l3_pha_dependencies import HitL3PhaDependencies
-from imap_l3_processing.hit.l3.pha.pha_event_reader import PHAEventReader
-from imap_l3_processing.hit.l3.pha.science.calculate_pha import process_pha_event
 from imap_l3_processing.hit.l3.pha.science.cosine_correction_lookup_table import CosineCorrectionLookupTable
 from imap_l3_processing.hit.l3.pha.science.gain_lookup_table import GainLookupTable
 from imap_l3_processing.hit.l3.pha.science.hit_event_type_lookup import HitEventTypeLookup
@@ -57,7 +55,7 @@ from imap_l3_processing.swapi.swapi_processor import SwapiProcessor
 from imap_l3_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies
 from imap_l3_processing.swe.swe_processor import SweProcessor
 from imap_l3_processing.utils import save_data, read_l1d_mag_data
-from tests.test_helpers import get_test_data_path
+from tests.test_helpers import get_test_data_path, get_test_instrument_team_data_path
 
 
 def create_glows_l3a_cdf(dependencies: GlowsL3ADependencies):
@@ -201,35 +199,6 @@ def create_hit_sectored_cdf(dependencies: HITL3SectoredDependencies) -> str:
     return cdf_path
 
 
-def process_hit_pha():
-    bitstream = BitStream(filename=get_test_data_path("hit/pha_events/full_event_record_buffer.bin"))
-    events = PHAEventReader.read_all_pha_events(bitstream.bin)
-
-    cosine_table = CosineCorrectionLookupTable(
-        get_test_data_path("hit/pha_events/imap_hit_l3_r2A-cosines-text-not-cdf_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_r3A-cosines-text-not-cdf_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_r4A-cosines-text-not-cdf_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_r2B-cosines-text-not-cdf_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_r3B-cosines-text-not-cdf_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_r4B-cosines-text-not-cdf_20250203_v001.cdf"),
-    )
-    gain_table = GainLookupTable.from_file(
-        get_test_data_path("hit/pha_events/imap_hit_l3_high-gains-text-not-cdf_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_low-gains-text-not-cdf_20250203_v001.cdf"))
-
-    range_fit_lookup = RangeFitLookup.from_files(
-        get_test_data_path("hit/pha_events/imap_hit_l3_range2A-fit-text-not-cdf_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_range3A-fit-text-not-cdf_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_range4A-fit-text-not-cdf_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_range2B-fit-text-not-cdf_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_range3B-fit-text-not-cdf_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_range4B-fit-text-not-cdf_20250203_v001.cdf"),
-    )
-    processed_events = [process_pha_event(e, cosine_table, gain_table, range_fit_lookup, None) for e
-                        in events]
-    print(processed_events)
-
-
 def create_hit_direct_event_cdf():
     cosine_table = CosineCorrectionLookupTable(
         get_test_data_path("hit/pha_events/imap_hit_l3_range-2A-cosine-lookup_20250203_v001.cdf"),
@@ -289,6 +258,51 @@ def run_l3b_initializer(mock_query):
         l3a_dicts, []
     ]
     GlowsInitializer.validate_and_initialize('v001')
+
+
+def run_glows_l3bc():
+    input_metadata = InputMetadata(
+        instrument='glows',
+        data_level='l3a',
+        start_date=datetime(2013, 9, 8),
+        end_date=datetime(2013, 9, 8),
+        version='v001')
+
+    cr = 2091
+    external_files = {
+        'f107_raw_data': get_test_instrument_team_data_path('glows/f107_fluxtable.txt'),
+        'omni_raw_data': get_test_instrument_team_data_path('glows/omni_2010.dat')
+    }
+    ancillary_files = {
+        'uv_anisotropy': get_test_data_path('glows/imap_glows_uv-anisotropy-1CR_20100101_v001.json'),
+        'WawHelioIonMP_parameters': get_test_data_path('glows/imap_glows_WawHelioIonMP_20100101_v002.json'),
+        'bad_days_list': get_test_data_path('glows/imap_glows_bad-days-list_v001.dat'),
+        'pipeline_settings': get_test_instrument_team_data_path('glows/imap_glows_pipeline-settings-L3bc_v001.json')
+    }
+    l3a_data_folder_path = get_test_data_path('glows/l3a_products')
+    l3a_data = []
+    l3a_file_names = [f"imap_glows_l3a_hist_2010010{x}_v001.cdf" for x in (1, 2, 3)]
+    for name in l3a_file_names:
+        l3a_data.append(create_glows_l3a_dictionary_from_cdf(l3a_data_folder_path / name))
+
+    dependencies = GlowsL3BCDependencies(l3a_data=l3a_data, external_files=external_files,
+                                         ancillary_files=ancillary_files, carrington_rotation_number=cr,
+                                         start_date=datetime(2025, 4, 3), end_date=datetime(2025, 4, 4))
+
+    upstream_dependencies = [
+        UpstreamDataDependency(input_metadata.instrument,
+                               "l3b",
+                               input_metadata.start_date,
+                               input_metadata.end_date,
+                               input_metadata.version,
+                               GLOWS_L2_DESCRIPTOR)
+    ]
+    processor = GlowsProcessor(upstream_dependencies, input_metadata)
+
+    l3b_data_product, l3c_data_product = processor.process_l3bc(dependencies)
+
+    print(save_data(l3b_data_product, delete_if_present=True))
+    print(save_data(l3c_data_product, delete_if_present=True))
 
 
 def create_empty_hi_l1c_dataset(epoch: datetime, exposures: Optional[np.ndarray] = None,
@@ -425,6 +439,8 @@ if __name__ == "__main__":
     if "glows" in sys.argv:
         if "pre-b" in sys.argv:
             run_l3b_initializer()
+        elif "l3bc" in sys.argv:
+            run_glows_l3bc()
         else:
             cdf_data = CDF("tests/test_data/glows/imap_glows_l2_hist_20130908_v003.cdf")
             l2_glows_data = read_l2_glows_data(cdf_data)
