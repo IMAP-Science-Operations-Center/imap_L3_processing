@@ -8,7 +8,8 @@ from uncertainties.unumpy import uarray, nominal_values
 from imap_l3_processing import spice_wrapper
 from imap_l3_processing.constants import THIRTY_SECONDS_IN_NANOSECONDS, FIVE_MINUTES_IN_NANOSECONDS
 from imap_l3_processing.processor import Processor
-from imap_l3_processing.swapi.l3a.models import SwapiL3ProtonSolarWindData, SwapiL3AlphaSolarWindData, SwapiL3PickupIonData
+from imap_l3_processing.swapi.l3a.models import SwapiL3ProtonSolarWindData, SwapiL3AlphaSolarWindData, \
+    SwapiL3PickupIonData
 from imap_l3_processing.swapi.l3a.science.calculate_alpha_solar_wind_speed import calculate_alpha_solar_wind_speed, \
     calculate_combined_sweeps
 from imap_l3_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density import \
@@ -38,12 +39,16 @@ class SwapiProcessor(Processor):
             l3a_dependencies = SwapiL3ADependencies.fetch_dependencies(self.dependencies)
             data = read_l2_swapi_data(l3a_dependencies.data)
             proton_data, alpha_data, pui_he_data = self.process_l3a(data, l3a_dependencies)
-            proton_cdf = save_data(proton_data)
-            alpha_cdf = save_data(alpha_data)
-            pui_he_cdf = save_data(pui_he_data)
-            imap_data_access.upload(proton_cdf)
-            imap_data_access.upload(alpha_cdf)
-            imap_data_access.upload(pui_he_cdf)
+
+            if self.input_metadata.descriptor == 'proton-sw':
+                proton_cdf = save_data(proton_data)
+                imap_data_access.upload(proton_cdf)
+            elif self.input_metadata.descriptor == 'alpha-sw':
+                alpha_cdf = save_data(alpha_data)
+                imap_data_access.upload(alpha_cdf)
+            elif self.input_metadata.descriptor == 'pui-he':
+                pui_he_cdf = save_data(pui_he_data)
+                imap_data_access.upload(pui_he_cdf)
         elif self.input_metadata.data_level == "l3b":
             l3b_dependencies = SwapiL3BDependencies.fetch_dependencies(self.dependencies)
             data = read_l2_swapi_data(l3b_dependencies.data)

@@ -30,9 +30,9 @@ class GlowsInitializerAncillaryDependencies:
                                                 version="latest")
         waw_helioion_mp_dependency = query(instrument="glows", descriptor="WawHelioIonMP",
                                            version="latest")
-        bad_day_dependency = query(instrument="glows", descriptor="bad-day-list",
+        bad_day_dependency = query(instrument="glows", descriptor="bad-days-list",
                                    version="latest")
-        pipeline_settings_dependency = query(instrument="glows", descriptor="pipeline-settings",
+        pipeline_settings_dependency = query(instrument="glows", descriptor="pipeline-settings-L3bc",
                                              version="latest")
 
         f107_index_file_path = download_external_dependency(F107_FLUX_TABLE_URL, 'f107_fluxtable.txt')
@@ -40,7 +40,7 @@ class GlowsInitializerAncillaryDependencies:
         omni2_data_path = download_external_dependency(OMNI2_URL, 'omni2_all_years.dat')
 
         pipeline_settings_path = download_dependency(
-            UpstreamDataDependency(instrument='glows', data_level='l3b', start_date=None, end_date=None,
+            UpstreamDataDependency(instrument='glows', data_level='l3', start_date=None, end_date=None,
                                    version='latest', descriptor='pipeline-settings-L3bc'))
 
         with open(pipeline_settings_path) as f:

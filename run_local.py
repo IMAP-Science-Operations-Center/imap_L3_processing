@@ -245,22 +245,16 @@ def create_hit_direct_event_cdf():
     return file_path
 
 
-@patch('imap_l3_processing.glows.l3b.glows_initializer_ancillary_dependencies.query')
 @patch('imap_l3_processing.glows.glows_initializer.query')
-def run_l3b_initializer(mock_query, mock_ancillary_query):
+def run_l3b_initializer(mock_query):
     local_cdfs = os.listdir(get_test_data_path("glows/l3a_products"))
 
-    l3a_dicts = [{'file_path': "glows/l3a_products" + file_path,
+    l3a_dicts = [{'file_path': "glows/l3a_products/" + file_path,
                   'start_date': file_path.split('_')[4]
                   } for file_path in local_cdfs]
 
     mock_query.side_effect = [
         l3a_dicts, []
-    ]
-
-    mock_ancillary_query.side_effect = [
-        [{'file_path': str(get_test_data_path("glows/imap_glows_uv-anisotropy-1CR_20100101_v001.json"))}],
-        [{'file_path': str(get_test_data_path("glows/imap_glows_WawHelioIonMP_20100101_v002.json"))}]
     ]
     GlowsInitializer.validate_and_initialize('v001')
 
