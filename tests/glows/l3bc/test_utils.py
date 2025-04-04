@@ -58,7 +58,7 @@ class TestUtils(unittest.TestCase):
         l3a_files_january = [
             create_imap_data_access_json(
                 file_path=f'imap/glows/l3a/2010/01/imap_glows_l3a_hist_201001{str(i).zfill(2)}_v001.pkts',
-                data_level='l3a', start_date=f'201001{str(i).zfill(2)}') for i in range(3, 32)
+                data_level='l3a', start_date=f'201001{str(i).zfill(2)}') for i in range(4, 32)
         ]
         l3a_files_february = [
             create_imap_data_access_json(
@@ -74,10 +74,18 @@ class TestUtils(unittest.TestCase):
         l3a_files_april = [
             create_imap_data_access_json(
                 file_path=f'imap/glows/l3a/2010/01/imap_glows_l3a_hist_20100403_v001.pkts',
-                data_level='l3a', start_date=f'20100403')
+                data_level='l3a', start_date=f'20100403'),
+            create_imap_data_access_json(
+                file_path=f'imap/glows/l3a/2010/01/imap_glows_l3a_hist_20100423_v001.pkts',
+                data_level='l3a', start_date=f'20100423'),
+        ]
+        l3a_files_june = [
+            create_imap_data_access_json(
+                file_path=f'imap/glows/l3a/2010/01/imap_glows_l3a_hist_2010711_v001.pkts',
+                data_level='l3a', start_date=f'20100711'),
         ]
 
-        l3a_files = l3a_files_february + l3a_files_march + l3a_files_january + l3a_files_april
+        l3a_files = l3a_files_february + l3a_files_march + l3a_files_january + l3a_files_april + l3a_files_june
 
         l3b_files = [
             create_imap_data_access_json(
@@ -85,11 +93,13 @@ class TestUtils(unittest.TestCase):
                 data_level='l3b', start_date=f'20100130')
         ]
 
-        mock_validate_dependencies.side_effect = [True, False, True]
+        mock_validate_dependencies.side_effect = [True, False, True, True]
 
-        expected_l3a_january_paths = [create_l3a_path_by_date(f'201001{str(i).zfill(2)}') for i in range(3, 31)]
+        expected_l3a_2092 = [create_l3a_path_by_date(f'201001{str(i).zfill(2)}') for i in range(4, 31)]
 
-        expected_l3a_april_paths = [create_l3a_path_by_date('20100326'), create_l3a_path_by_date('20100403')]
+        expected_l3a_2095 = [create_l3a_path_by_date('20100326'), create_l3a_path_by_date('20100403')]
+
+        expected_l3a_2096 = [create_l3a_path_by_date('20100423')]
 
         initializer_dependencies = GlowsInitializerAncillaryDependencies(uv_anisotropy_path="uv_anisotropy",
                                                                          waw_helioion_mp_path="waw_helioion",
@@ -104,16 +114,24 @@ class TestUtils(unittest.TestCase):
         actual_crs_to_process: [CRToProcess] = find_unprocessed_carrington_rotations(l3a_files, l3b_files,
                                                                                      initializer_dependencies)
 
-        # self.assertEqual(2, len(actual_crs_to_process))
-        self.assertEqual(expected_l3a_january_paths, actual_crs_to_process[0].l3a_paths)
-        self.assertEqual(Time('2010-01-03 11:33:04.320').value, actual_crs_to_process[0].cr_start_date.value)
-        self.assertEqual(Time('2010-01-30 18:09:30.240').value, actual_crs_to_process[0].cr_end_date.value)
-        self.assertEqual(2092, actual_crs_to_process[0].cr_rotation_number)
+        self.assertEqual(3, len(actual_crs_to_process))
+        cr_to_process_2092 = actual_crs_to_process[0]
+        self.assertEqual(expected_l3a_2092, cr_to_process_2092.l3a_paths)
+        self.assertEqual(Time('2010-01-03 11:33:04.320').value, cr_to_process_2092.cr_start_date.value)
+        self.assertEqual(Time('2010-01-30 18:09:30.240').value, cr_to_process_2092.cr_end_date.value)
+        self.assertEqual(2092, cr_to_process_2092.cr_rotation_number)
 
-        self.assertEqual(expected_l3a_april_paths, actual_crs_to_process[1].l3a_paths)
-        self.assertEqual(Time('2010-03-26 07:22:22.080').value, actual_crs_to_process[1].cr_start_date.value)
-        self.assertEqual(Time('2010-04-22 13:58:48.000').value, actual_crs_to_process[1].cr_end_date.value)
-        self.assertEqual(2095, actual_crs_to_process[1].cr_rotation_number)
+        cr_to_process_2095 = actual_crs_to_process[1]
+        self.assertEqual(expected_l3a_2095, cr_to_process_2095.l3a_paths)
+        self.assertEqual(Time('2010-03-26 07:22:22.080').value, cr_to_process_2095.cr_start_date.value)
+        self.assertEqual(Time('2010-04-22 13:58:48.000').value, cr_to_process_2095.cr_end_date.value)
+        self.assertEqual(2095, cr_to_process_2095.cr_rotation_number)
+
+        cr_to_process_2096 = actual_crs_to_process[2]
+        self.assertEqual(expected_l3a_2096, cr_to_process_2096.l3a_paths)
+        self.assertEqual(Time('2010-04-22 13:58:48.000').value, cr_to_process_2096.cr_start_date.value)
+        self.assertEqual(Time('2010-05-19 20:35:13.920').value, cr_to_process_2096.cr_end_date.value)
+        self.assertEqual(2096, cr_to_process_2096.cr_rotation_number)
 
         self.assertEqual(Time('2010-01-30 18:09:30.240').value,
                          mock_validate_dependencies.call_args_list[0][0][0].value)
@@ -147,6 +165,17 @@ class TestUtils(unittest.TestCase):
                          mock_validate_dependencies.call_args_list[2][0][3])
         self.assertEqual(initializer_dependencies.lyman_alpha_path,
                          mock_validate_dependencies.call_args_list[2][0][4])
+
+        self.assertEqual(Time('2010-05-19 20:35:13.920').value,
+                         mock_validate_dependencies.call_args_list[3][0][0].value)
+        self.assertEqual(initializer_dependencies.initializer_time_buffer.value,
+                         mock_validate_dependencies.call_args_list[3][0][1].value)
+        self.assertEqual(initializer_dependencies.omni2_data_path,
+                         mock_validate_dependencies.call_args_list[3][0][2])
+        self.assertEqual(initializer_dependencies.f107_index_file_path,
+                         mock_validate_dependencies.call_args_list[3][0][3])
+        self.assertEqual(initializer_dependencies.lyman_alpha_path,
+                         mock_validate_dependencies.call_args_list[3][0][4])
 
     @patch("imap_l3_processing.glows.l3bc.utils.dump")
     @patch("imap_l3_processing.glows.l3bc.utils.ZipFile")

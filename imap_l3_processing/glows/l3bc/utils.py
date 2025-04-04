@@ -78,6 +78,8 @@ def find_unprocessed_carrington_rotations(l3a_inputs: list[dict], l3b_inputs: li
 
     l3as_by_carrington: dict = defaultdict(list)
 
+    latest_l3a_file = get_astropy_time_from_yyyymmdd(sorted_l3a_inputs[-1]["start_date"])
+
     for index, l3a in enumerate(sorted_l3a_inputs):
         current_date: Time = get_astropy_time_from_yyyymmdd(l3a["start_date"])
         current_rounded_cr = int(carrington(current_date.jd))
@@ -85,20 +87,24 @@ def find_unprocessed_carrington_rotations(l3a_inputs: list[dict], l3b_inputs: li
         tomorrow = current_date + TimeDelta(1, format="jd")
         tomorrow_rounded_cr = int(carrington(tomorrow.jd))
 
-        if (tomorrow_rounded_cr - current_rounded_cr == 1) and (tomorrow - current_date == 1):
+        if tomorrow_rounded_cr - current_rounded_cr == 1:
             l3as_by_carrington[tomorrow_rounded_cr].append(l3a['file_path'])
 
         l3as_by_carrington[current_rounded_cr].append(l3a['file_path'])
 
     crs_to_process = []
     for carrington_number, l3a_files in l3as_by_carrington.items():
-        if carrington_number not in l3bs_carringtons and len(l3a_files) >= 2:
+        if carrington_number not in l3bs_carringtons:
             carrington_start_date = jd_fm_Carrington(float(carrington_number))
             date_time = Time(carrington_start_date, format='jd')
             date_time.format = 'iso'
             carrington_end_date_non_inclusive = jd_fm_Carrington(carrington_number + 1)
             date_time_end_date = Time(carrington_end_date_non_inclusive, format='jd')
             date_time_end_date.format = 'iso'
+
+            if latest_l3a_file < date_time_end_date + dependencies.initializer_time_buffer:
+                continue
+                
             is_valid = validate_dependencies(date_time_end_date, dependencies.initializer_time_buffer,
                                              dependencies.omni2_data_path, dependencies.f107_index_file_path,
                                              dependencies.lyman_alpha_path)
