@@ -1,4 +1,4 @@
-imap_glows_l3b_sci:
+imap_glows_l3b_ion-rate-profile:
   Data_level: "3b"
-  Data_type: L3B_sci>Level-3B
+  Data_type: L3B_ion-rate-profile>Level-3B Ion Rate Profile
   Logical_source_description: IMAP Mission GLOWS Carrington averaged ionization rate profiles

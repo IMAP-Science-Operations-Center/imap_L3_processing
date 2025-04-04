@@ -215,13 +215,13 @@ class TestGlowsProcessor(unittest.TestCase):
             [call(dependencies_with_filtered_list_1), call(dependencies_with_filtered_list_2)])
 
         expected_l3b_metadata_1 = UpstreamDataDependency("glows", "l3b", first_dependency.start_date,
-                                                         first_dependency.end_date, 'v02', "sci")
+                                                         first_dependency.end_date, 'v02', "ion-rate-profile")
         expected_l3b_metadata_2 = UpstreamDataDependency("glows", "l3b", second_dependency.start_date,
-                                                         second_dependency.end_date, 'v02', "sci")
+                                                         second_dependency.end_date, 'v02', "ion-rate-profile")
         expected_l3c_metadata_1 = UpstreamDataDependency("glows", "l3c", first_dependency.start_date,
-                                                         first_dependency.end_date, 'v02', "sci")
+                                                         first_dependency.end_date, 'v02', "sw-profile")
         expected_l3c_metadata_2 = UpstreamDataDependency("glows", "l3c", second_dependency.start_date,
-                                                         second_dependency.end_date, 'v02', "sci")
+                                                         second_dependency.end_date, 'v02', "sw-profile")
         mock_l3b_model_class.from_instrument_team_dictionary.assert_has_calls(
             [call(sentinel.l3b_data_1, expected_l3b_metadata_1),
              call(sentinel.l3b_data_2, expected_l3b_metadata_2)])
