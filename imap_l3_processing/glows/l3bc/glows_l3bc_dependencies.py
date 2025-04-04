@@ -1,5 +1,6 @@
 import json
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 from zipfile import ZipFile
 
@@ -13,6 +14,8 @@ class GlowsL3BCDependencies:
     external_files: dict[str, Path]
     ancillary_files: dict[str, Path]
     carrington_rotation_number: int
+    start_date: datetime
+    end_date: datetime
 
     @classmethod
     def fetch_dependencies(cls, zip_file_path):
@@ -32,7 +35,7 @@ class GlowsL3BCDependencies:
             'uv_anisotropy': download_dependency_from_path(paths_to_download['uv_anisotropy']),
             'WawHelioIonMP_parameters': download_dependency_from_path(paths_to_download['waw_helioion_mp']),
             'bad_days_list': download_dependency_from_path(paths_to_download['bad_days_list']),
-            'pipeline_settings': download_dependency_from_path(paths_to_download['pipeline_settings'])
+            'pipeline_settings': download_dependency_from_path(paths_to_download['pipeline_settings']),
         }
 
         l3a_paths = paths_to_download['l3a_paths']
@@ -41,4 +44,6 @@ class GlowsL3BCDependencies:
             l3a_data.append(create_glows_l3a_dictionary_from_cdf(download_dependency_from_path(path)))
 
         return cls(l3a_data=l3a_data, external_files=external_files, ancillary_files=ancillary_files,
-                   carrington_rotation_number=int(paths_to_download['cr_rotation_number']))
+                   carrington_rotation_number=int(paths_to_download['cr_rotation_number']),
+                   start_date=datetime.fromisoformat(paths_to_download['start_date']),
+                   end_date=datetime.fromisoformat(paths_to_download['end_date']))

@@ -7,6 +7,7 @@ Main procedure to generate GLOWS L3b and L3c data products
 import numpy as np
 from astropy.time import Time
 
+from imap_l3_processing.glows.l3bc.cannot_process_carrington_rotation_error import CannotProcessCarringtonRotationError
 from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDependencies
 from imap_l3_processing.glows.l3bc.l3bc_toolkit import funcs as fun
 from imap_l3_processing.glows.l3bc.l3bc_toolkit import l3b_CarringtonIonRate as cir
@@ -33,7 +34,8 @@ def generate_l3bc(dependencies: GlowsL3BCDependencies):
         ion_rate_daily.calculate_daily_ionization_rate()  # conversion to the daily ionization rate profile
         daily_ion_rate.append(ion_rate_daily.ion['ion_rate'])
 
-    # if len(daily_ion_rate) == 0: continue  # TODO: Menlo figure out how and where in the code we want to handle all days are in a bad season
+    if len(daily_ion_rate) == 0:
+        raise CannotProcessCarringtonRotationError("All days for Carrington Rotation are in a bad season.")
 
     # Carrington averaged ionization rate (L3b) and Carrington averaged solar wind parameters  objects initialization
     ion_rate_Carr = cir.CarringtonIonizationRate(l3a_used_fn, dependencies.ancillary_files, dependencies.external_files)

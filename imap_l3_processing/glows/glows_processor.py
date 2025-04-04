@@ -13,6 +13,7 @@ from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDepen
 from imap_l3_processing.glows.l3bc.models import GlowsL3BIonizationRate, GlowsL3CSolarWind
 from imap_l3_processing.glows.l3bc.science.filter_out_bad_days import filter_out_bad_days
 from imap_l3_processing.glows.l3bc.science.generate_l3bc import generate_l3bc
+from imap_l3_processing.models import UpstreamDataDependency
 from imap_l3_processing.processor import Processor
 from imap_l3_processing.utils import save_data
 
@@ -49,9 +50,13 @@ class GlowsProcessor(Processor):
     def process_l3bc(self, dependencies: GlowsL3BCDependencies) -> tuple[GlowsL3BIonizationRate, GlowsL3CSolarWind]:
         filtered_days = filter_out_bad_days(dependencies.l3a_data, dependencies.ancillary_files['bad_days_list'])
         l3b_data, l3c_data = generate_l3bc(replace(dependencies, l3a_data=filtered_days))
-        upstream_data_dependency = self.input_metadata.to_upstream_data_dependency("sci")
-        l3b_data_product = GlowsL3BIonizationRate.from_instrument_team_dictionary(l3b_data, upstream_data_dependency)
-        l3c_data_product = GlowsL3CSolarWind.from_instrument_team_dictionary(l3c_data, upstream_data_dependency)
+        l3b_metadata = UpstreamDataDependency("glows", "l3b", dependencies.start_date, dependencies.end_date,
+                                              self.input_metadata.version, "sci")
+        l3c_metadata = UpstreamDataDependency("glows", "l3c", dependencies.start_date, dependencies.end_date,
+                                              self.input_metadata.version, "sci")
+
+        l3b_data_product = GlowsL3BIonizationRate.from_instrument_team_dictionary(l3b_data, l3b_metadata)
+        l3c_data_product = GlowsL3CSolarWind.from_instrument_team_dictionary(l3c_data, l3c_metadata)
         return l3b_data_product, l3c_data_product
 
     @staticmethod
