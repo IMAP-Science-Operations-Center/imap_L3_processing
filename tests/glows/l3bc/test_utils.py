@@ -4,14 +4,16 @@ from pathlib import Path
 from unittest.mock import patch, Mock, MagicMock, call, mock_open
 from zipfile import ZIP_DEFLATED
 
+import numpy as np
 from astropy.time import Time, TimeDelta
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.glows.l3bc.glows_initializer_ancillary_dependencies import GlowsInitializerAncillaryDependencies
+from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDependencies
 from imap_l3_processing.glows.l3bc.models import CRToProcess
 from imap_l3_processing.glows.l3bc.utils import read_glows_l3a_data, find_unprocessed_carrington_rotations, \
-    archive_dependencies
-from tests.test_helpers import get_test_data_path
+    archive_dependencies, make_l3b_data_with_fill
+from tests.test_helpers import get_test_data_path, get_test_instrument_team_data_path
 
 
 class TestUtils(unittest.TestCase):
@@ -199,6 +201,43 @@ class TestUtils(unittest.TestCase):
             call(dependencies.f107_index_file_path),
             call(expected_json_filename)
         ])
+
+    def test_make_l3b_data_with_fill(self):
+        cr = 2091
+        ancillary_files = {
+            'uv_anisotropy': get_test_data_path('glows/imap_glows_uv-anisotropy-1CR_20100101_v001.json'),
+            'pipeline_settings': get_test_instrument_team_data_path(
+                'glows/imap_glows_pipeline-settings-L3bc_v001.json'),
+        }
+
+        dependencies = GlowsL3BCDependencies(l3a_data=Mock(), external_files=Mock(),
+                                             ancillary_files=ancillary_files, carrington_rotation_number=cr,
+                                             start_date=datetime(2025, 1, 1), end_date=datetime(2025, 1, 3))
+        l3b_data_with_fill = make_l3b_data_with_fill(dependencies)
+
+        num_lat_grid_values = 19
+        self.assertEqual([-90, -80, -70, -60, -50, -40, -30, -20, -10,
+                          0, 10, 20, 30, 40, 50, 60, 70, 80, 90],
+                         l3b_data_with_fill['ion_rate_profile']['lat_grid'])
+
+        self.assertEqual("2025-01-02T00:00:00", l3b_data_with_fill['date'])
+        self.assertEqual(2091, l3b_data_with_fill['CR'])
+
+        np.testing.assert_array_equal(l3b_data_with_fill['uv_anisotropy_factor'],
+                                      np.full(num_lat_grid_values, 1))
+
+        np.testing.assert_array_equal(l3b_data_with_fill['ion_rate_profile']['sum_rate'],
+                                      np.full(num_lat_grid_values, np.nan))
+        np.testing.assert_array_equal(l3b_data_with_fill['ion_rate_profile']['ph_rate'],
+                                      np.full(num_lat_grid_values, np.nan))
+        np.testing.assert_array_equal(l3b_data_with_fill['ion_rate_profile']['cx_rate'],
+                                      np.full(num_lat_grid_values, np.nan))
+        np.testing.assert_array_equal(l3b_data_with_fill['ion_rate_profile']['sum_uncert'],
+                                      np.full(num_lat_grid_values, np.nan))
+        np.testing.assert_array_equal(l3b_data_with_fill['ion_rate_profile']['ph_uncert'],
+                                      np.full(num_lat_grid_values, np.nan))
+        np.testing.assert_array_equal(l3b_data_with_fill['ion_rate_profile']['cx_uncert'],
+                                      np.full(num_lat_grid_values, np.nan))
 
 
 def create_imap_data_access_json(file_path: str, data_level: str, start_date: str,

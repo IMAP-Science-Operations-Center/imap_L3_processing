@@ -1,9 +1,11 @@
+import json
 from collections import defaultdict
 from datetime import timedelta
 from json import dump
 from pathlib import Path
 from zipfile import ZipFile, ZIP_DEFLATED
 
+import numpy as np
 from astropy.time import Time, TimeDelta
 from spacepy.pycdf import CDF
 
@@ -21,6 +23,7 @@ from imap_l3_processing.glows.l3a.models import GlowsL3LightCurve, PHOTON_FLUX_U
     SPACECRAFT_VELOCITY_AVERAGE_CDF_VAR_NAME
 from imap_l3_processing.glows.l3bc.dependency_validator import validate_dependencies
 from imap_l3_processing.glows.l3bc.glows_initializer_ancillary_dependencies import GlowsInitializerAncillaryDependencies
+from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDependencies
 from imap_l3_processing.glows.l3bc.l3bc_toolkit.funcs import carrington, jd_fm_Carrington
 from imap_l3_processing.glows.l3bc.models import CRToProcess
 
@@ -139,3 +142,31 @@ def archive_dependencies(cr_to_process: CRToProcess, version: str,
             dump(cr, json_file)
         file.write(json_filename)
     return Path(filename)
+
+
+def make_l3b_data_with_fill(dependencies: GlowsL3BCDependencies):
+    model = {}
+    uv_anisotropy_file = dependencies.ancillary_files['uv_anisotropy']
+    epoch = dependencies.start_date + (dependencies.end_date - dependencies.start_date) / 2
+    model['date'] = epoch.isoformat()
+    model['ion_rate_profile'] = {}
+    model['CR'] = dependencies.carrington_rotation_number
+
+    with open(uv_anisotropy_file, 'r') as file:
+        text = file.read()
+        contents = json.loads(text)
+        model['uv_anisotropy_factor'] = contents['anisotropy_factor']
+        model['ion_rate_profile']['lat_grid'] = contents['lat_grid']
+
+    model['ion_rate_profile']['sum_rate'] = np.full(len(contents['lat_grid']), np.nan)
+    model['ion_rate_profile']['ph_rate'] = np.full(len(contents['lat_grid']), np.nan)
+    model['ion_rate_profile']['cx_rate'] = np.full(len(contents['lat_grid']), np.nan)
+    model['ion_rate_profile']['sum_uncert'] = np.full(len(contents['lat_grid']), np.nan)
+    model['ion_rate_profile']['ph_uncert'] = np.full(len(contents['lat_grid']), np.nan)
+    model['ion_rate_profile']['cx_uncert'] = np.full(len(contents['lat_grid']), np.nan)
+
+    return model
+
+
+def make_l3c_data_with_fill():
+    raise NotImplemented
