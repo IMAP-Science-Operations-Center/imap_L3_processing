@@ -9,10 +9,9 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Optional, TypeVar
 from unittest.mock import patch
-import xarray as xr
 
 import numpy as np
-from bitstring import BitStream
+import xarray as xr
 from imap_processing.spice.geometry import SpiceFrame
 from matplotlib import pyplot as plt
 from spacepy.pycdf import CDF
@@ -31,8 +30,6 @@ from imap_l3_processing.hit.l3.hit_l3_sectored_dependencies import HITL3Sectored
 from imap_l3_processing.hit.l3.hit_processor import HitProcessor
 from imap_l3_processing.hit.l3.models import HitL1Data
 from imap_l3_processing.hit.l3.pha.hit_l3_pha_dependencies import HitL3PhaDependencies
-from imap_l3_processing.hit.l3.pha.pha_event_reader import PHAEventReader
-from imap_l3_processing.hit.l3.pha.science.calculate_pha import process_pha_event
 from imap_l3_processing.hit.l3.pha.science.cosine_correction_lookup_table import CosineCorrectionLookupTable
 from imap_l3_processing.hit.l3.pha.science.gain_lookup_table import GainLookupTable
 from imap_l3_processing.hit.l3.pha.science.hit_event_type_lookup import HitEventTypeLookup
@@ -199,35 +196,6 @@ def create_hit_sectored_cdf(dependencies: HITL3SectoredDependencies) -> str:
     output_data = processor.process_pitch_angle_product(dependencies)
     cdf_path = save_data(output_data, delete_if_present=True)
     return cdf_path
-
-
-def process_hit_pha():
-    bitstream = BitStream(filename=get_test_data_path("hit/pha_events/full_event_record_buffer.bin"))
-    events = PHAEventReader.read_all_pha_events(bitstream.bin)
-
-    cosine_table = CosineCorrectionLookupTable(
-        get_test_data_path("hit/pha_events/imap_hit_l3_r2A-cosines-text-not-cdf_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_r3A-cosines-text-not-cdf_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_r4A-cosines-text-not-cdf_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_r2B-cosines-text-not-cdf_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_r3B-cosines-text-not-cdf_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_r4B-cosines-text-not-cdf_20250203_v001.cdf"),
-    )
-    gain_table = GainLookupTable.from_file(
-        get_test_data_path("hit/pha_events/imap_hit_l3_high-gains-text-not-cdf_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_low-gains-text-not-cdf_20250203_v001.cdf"))
-
-    range_fit_lookup = RangeFitLookup.from_files(
-        get_test_data_path("hit/pha_events/imap_hit_l3_range2A-fit-text-not-cdf_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_range3A-fit-text-not-cdf_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_range4A-fit-text-not-cdf_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_range2B-fit-text-not-cdf_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_range3B-fit-text-not-cdf_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_range4B-fit-text-not-cdf_20250203_v001.cdf"),
-    )
-    processed_events = [process_pha_event(e, cosine_table, gain_table, range_fit_lookup, None) for e
-                        in events]
-    print(processed_events)
 
 
 def create_hit_direct_event_cdf():
