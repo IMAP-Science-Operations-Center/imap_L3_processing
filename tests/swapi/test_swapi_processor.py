@@ -75,7 +75,6 @@ class TestSwapiProcessor(TestCase):
         start_date = datetime.now() - timedelta(days=1)
         input_version = "v12345"
         outgoing_version = "12345"
-
         start_date_as_str = datetime.strftime(start_date, "%Y%m%d")
 
         returned_proton_sw_speed = ufloat(400000, 2)
@@ -110,13 +109,25 @@ class TestSwapiProcessor(TestCase):
         coincidence_count_rate_uncertainty = np.array(
             [[0.1, 0.2, 0.3, 0.4, 0.5], [0.1, 0.2, 0.3, 0.4, 0.5], [0.1, 0.2, 0.3, 0.4, 0.5],
              [0.1, 0.2, 0.3, 0.4, 0.5]])
+
         chunk_of_five = SwapiL2Data(epoch, energy, coincidence_count_rate,
                                     coincidence_count_rate_uncertainty)
         chunk_of_fifty = SwapiL2Data(epoch_for_fifty_sweeps, energy * 2, coincidence_count_rate * 2,
                                      coincidence_count_rate_uncertainty * 2)
-        mock_chunk_l2_data.side_effect = [
-            [chunk_of_five],
-            [chunk_of_fifty],
+
+        expected_fitting_params = FittingParameters(1, 2, 3, 4)
+        mock_calculate_pickup_ion.return_value = expected_fitting_params
+        mock_calculate_helium_pui_density.return_value = 5
+        mock_calculate_helium_pui_temperature.return_value = 6
+        mock_calculate_ten_minute_velocities.return_value = np.array([
+            [17, 18, 19]
+        ])
+
+        dependency_start_date = datetime(2025, 1, 1)
+        dependency_end_date = datetime(2025, 2, 1)
+        dependencies = [
+            UpstreamDataDependency(instrument, incoming_data_level, dependency_start_date, dependency_end_date,
+                                   version, descriptor),
         ]
 
         input_metadata = InputMetadata(instrument, outgoing_data_level, start_date, end_date, input_version)
@@ -133,199 +144,218 @@ class TestSwapiProcessor(TestCase):
         expected_pickup_ion_metadata = input_metadata.to_upstream_data_dependency("pui-he")
         pickup_ion_data.input_metadata = expected_pickup_ion_metadata
 
-        mock_manager = mock_imap_attribute_manager.return_value
-
-        expected_fitting_params = FittingParameters(1, 2, 3, 4)
-        mock_calculate_pickup_ion.return_value = expected_fitting_params
-        mock_calculate_helium_pui_density.return_value = 5
-        mock_calculate_helium_pui_temperature.return_value = 6
-        mock_calculate_ten_minute_velocities.return_value = np.array([
-            [17, 18, 19]
-        ])
-
-        dependency_start_date = datetime(2025, 1, 1)
-        dependency_end_date = datetime(2025, 2, 1)
-
-        dependencies = [
-            UpstreamDataDependency(instrument, incoming_data_level, dependency_start_date, dependency_end_date,
-                                   version, descriptor),
+        test_cases = [
+            ("generate proton sw", "proton-sw", proton_solar_wind_data),
+            ("generate alpha sw", "alpha-sw", alpha_solar_wind_data),
+            ("generate pui", "pui-he", pickup_ion_data)
         ]
 
-        swapi_processor = SwapiProcessor(
-            dependencies, input_metadata)
-        swapi_processor.process()
+        for test_name, descriptor_to_generate, expected_data_product in test_cases:
+            with self.subTest(test_name):
+                self.mock_imap_api.reset_mock()
+                mock_calculate_helium_pui_temperature.reset_mock()
+                mock_calculate_helium_pui_density.reset_mock()
+                mock_calculate_ten_minute_velocities.reset_mock()
+                mock_calculate_pickup_ion.reset_mock()
+                mock_swapi_l3_dependencies_class.reset_mock()
+                mock_calculate_deflection_angle.reset_mock()
+                mock_calculate_clock_angle.reset_mock()
+                mock_alpha_calculate_temperature_and_density.reset_mock()
+                mock_proton_calculate_temperature_and_density.reset_mock()
+                mock_calculate_alpha_solar_wind_speed.reset_mock()
+                mock_calculate_proton_solar_wind_speed.reset_mock()
+                mock_read_l2_swapi_data.reset_mock()
+                mock_chunk_l2_data.reset_mock()
+                mock_write_cdf.reset_mock()
+                mock_proton_solar_wind_data_constructor.reset_mock()
+                mock_alpha_solar_wind_data_constructor.reset_mock()
+                mock_pickup_ion_data_constructor.reset_mock()
+                mock_imap_attribute_manager.reset_mock()
+                mock_swapi_l3_dependencies_class.fetch_dependencies.reset_mock()
 
-        self.assertEqual(swapi_processor.dependencies[0].start_date, dependency_start_date)
-        self.assertEqual(swapi_processor.dependencies[0].end_date, dependency_end_date)
+                input_metadata.descriptor = descriptor_to_generate
 
-        mock_swapi_l3_dependencies_class.fetch_dependencies.assert_called_once_with(dependencies)
+                expected_cdf_path = f"{self.temp_directory}/imap_swapi_l3a_{descriptor_to_generate}_{start_date_as_str}_{input_version}.cdf"
 
-        mock_proton_temperature_density_calibration_table = mock_swapi_l3_dependencies_class.fetch_dependencies.return_value.proton_temperature_density_calibration_table
-        mock_alpha_temperature_density_calibration_table = mock_swapi_l3_dependencies_class.fetch_dependencies.return_value.alpha_temperature_density_calibration_table
-        mock_clock_angle_and_flow_deflection_calibration_table = mock_swapi_l3_dependencies_class.fetch_dependencies.return_value.clock_angle_and_flow_deflection_calibration_table
-        mock_instrument_response_calibration_table = mock_swapi_l3_dependencies_class.fetch_dependencies.return_value.instrument_response_calibration_table
-        mock_geometric_factor_calibration_table = mock_swapi_l3_dependencies_class.fetch_dependencies.return_value.geometric_factor_calibration_table
-        mock_density_of_neutral_helium_calibration_table = mock_swapi_l3_dependencies_class.fetch_dependencies.return_value.density_of_neutral_helium_calibration_table
+                mock_chunk_l2_data.side_effect = [
+                    [chunk_of_five],
+                    [chunk_of_fifty],
+                ]
 
-        mock_read_l2_swapi_data.assert_called_once_with(
-            mock_swapi_l3_dependencies_class.fetch_dependencies.return_value.data)
+                mock_manager = mock_imap_attribute_manager.return_value
 
-        mock_chunk_l2_data.side_effect = []
-        mock_chunk_l2_data.assert_has_calls([call(mock_read_l2_swapi_data.return_value, 5),
-                                             call(mock_read_l2_swapi_data.return_value, 50)])
+                swapi_processor = SwapiProcessor(
+                    dependencies, input_metadata)
+                swapi_processor.process()
 
-        expected_count_rate_with_uncertainties = uarray(coincidence_count_rate, coincidence_count_rate_uncertainty)
-        np.testing.assert_array_equal(nominal_values(expected_count_rate_with_uncertainties),
-                                      nominal_values(mock_calculate_proton_solar_wind_speed.call_args_list[0].args[0]))
-        np.testing.assert_array_equal(std_devs(expected_count_rate_with_uncertainties),
-                                      std_devs(mock_calculate_proton_solar_wind_speed.call_args_list[0].args[0]))
-        np.testing.assert_array_equal(energy, mock_calculate_proton_solar_wind_speed.call_args_list[0].args[1])
-        np.testing.assert_array_equal(epoch, mock_calculate_proton_solar_wind_speed.call_args_list[0].args[2])
+                self.assertEqual(swapi_processor.dependencies[0].start_date, dependency_start_date)
+                self.assertEqual(swapi_processor.dependencies[0].end_date, dependency_end_date)
 
-        mock_spice_wrapper_furnish.assert_called()
+                mock_swapi_l3_dependencies_class.fetch_dependencies.assert_called_once_with(dependencies)
 
-        self.assertEqual(
-            call(mock_clock_angle_and_flow_deflection_calibration_table, returned_proton_sw_speed, sentinel.a,
-                 sentinel.phi, sentinel.b), mock_calculate_clock_angle.call_args)
+                mock_proton_temperature_density_calibration_table = mock_swapi_l3_dependencies_class.fetch_dependencies.return_value.proton_temperature_density_calibration_table
+                mock_alpha_temperature_density_calibration_table = mock_swapi_l3_dependencies_class.fetch_dependencies.return_value.alpha_temperature_density_calibration_table
+                mock_clock_angle_and_flow_deflection_calibration_table = mock_swapi_l3_dependencies_class.fetch_dependencies.return_value.clock_angle_and_flow_deflection_calibration_table
+                mock_instrument_response_calibration_table = mock_swapi_l3_dependencies_class.fetch_dependencies.return_value.instrument_response_calibration_table
+                mock_geometric_factor_calibration_table = mock_swapi_l3_dependencies_class.fetch_dependencies.return_value.geometric_factor_calibration_table
+                mock_density_of_neutral_helium_calibration_table = mock_swapi_l3_dependencies_class.fetch_dependencies.return_value.density_of_neutral_helium_calibration_table
 
-        self.assertEqual(
-            call(mock_clock_angle_and_flow_deflection_calibration_table, returned_proton_sw_speed, sentinel.a,
-                 sentinel.phi, sentinel.b), mock_calculate_deflection_angle.call_args)
+                mock_read_l2_swapi_data.assert_called_once_with(
+                    mock_swapi_l3_dependencies_class.fetch_dependencies.return_value.data)
 
-        self.assertEqual(mock_proton_temperature_density_calibration_table,
-                         mock_proton_calculate_temperature_and_density.call_args_list[0].args[0])
-        self.assert_ufloat_equal(returned_proton_sw_speed,
-                                 mock_proton_calculate_temperature_and_density.call_args_list[0].args[1])
-        self.assert_ufloat_equal(returned_proton_sw_deflection_angle,
-                                 mock_proton_calculate_temperature_and_density.call_args_list[0].args[2])
-        self.assertEqual(returned_proton_sw_clock_angle,
-                         mock_proton_calculate_temperature_and_density.call_args_list[0].args[3])
-        np.testing.assert_array_equal(nominal_values(expected_count_rate_with_uncertainties),
-                                      nominal_values(
-                                          mock_proton_calculate_temperature_and_density.call_args_list[0].args[4]))
-        np.testing.assert_array_equal(std_devs(expected_count_rate_with_uncertainties),
-                                      std_devs(mock_proton_calculate_temperature_and_density.call_args_list[0].args[4]))
-        np.testing.assert_array_equal(energy, mock_proton_calculate_temperature_and_density.call_args_list[0].args[5])
+                mock_chunk_l2_data.side_effect = []
 
-        self.assertEqual(mock_alpha_temperature_density_calibration_table,
-                         mock_alpha_calculate_temperature_and_density.call_args_list[0].args[0])
-        self.assert_ufloat_equal(returned_alpha_speed,
-                                 mock_alpha_calculate_temperature_and_density.call_args_list[0].args[1])
-        np.testing.assert_array_equal(nominal_values(expected_count_rate_with_uncertainties),
-                                      nominal_values(
-                                          mock_alpha_calculate_temperature_and_density.call_args_list[0].args[2]))
-        np.testing.assert_array_equal(std_devs(expected_count_rate_with_uncertainties),
-                                      std_devs(mock_alpha_calculate_temperature_and_density.call_args_list[0].args[2]))
-        np.testing.assert_array_equal(energy, mock_alpha_calculate_temperature_and_density.call_args_list[0].args[3])
+                mock_chunk_l2_data.assert_has_calls([call(mock_read_l2_swapi_data.return_value, 5),
+                                                     call(mock_read_l2_swapi_data.return_value, 50)])
 
-        np.testing.assert_array_equal(nominal_values(expected_count_rate_with_uncertainties),
-                                      nominal_values(mock_calculate_alpha_solar_wind_speed.call_args_list[0].args[0]))
-        np.testing.assert_array_equal(std_devs(expected_count_rate_with_uncertainties),
-                                      std_devs(mock_calculate_alpha_solar_wind_speed.call_args_list[0].args[0]))
-        np.testing.assert_array_equal(energy, mock_calculate_alpha_solar_wind_speed.call_args_list[0].args[1])
+                expected_count_rate_with_uncertainties = uarray(coincidence_count_rate,
+                                                                coincidence_count_rate_uncertainty)
+                np.testing.assert_array_equal(nominal_values(expected_count_rate_with_uncertainties),
+                                              nominal_values(
+                                                  mock_calculate_proton_solar_wind_speed.call_args_list[0].args[0]))
+                np.testing.assert_array_equal(std_devs(expected_count_rate_with_uncertainties),
+                                              std_devs(
+                                                  mock_calculate_proton_solar_wind_speed.call_args_list[0].args[0]))
+                np.testing.assert_array_equal(energy, mock_calculate_proton_solar_wind_speed.call_args_list[0].args[1])
+                np.testing.assert_array_equal(epoch, mock_calculate_proton_solar_wind_speed.call_args_list[0].args[2])
 
-        (actual_proton_metadata, actual_proton_epoch, actual_proton_sw_speed, actual_proton_sw_temperature,
-         actual_proton_sw_density, actual_proton_sw_clock_angle,
-         actual_proton_sw_deflection_angle) = mock_proton_solar_wind_data_constructor.call_args.args
+                mock_spice_wrapper_furnish.assert_called()
 
-        self.assertEqual(expected_proton_metadata, actual_proton_metadata)
+                self.assertEqual(
+                    call(mock_clock_angle_and_flow_deflection_calibration_table, returned_proton_sw_speed, sentinel.a,
+                         sentinel.phi, sentinel.b), mock_calculate_clock_angle.call_args)
 
-        np.testing.assert_array_equal(np.array([initial_epoch + THIRTY_SECONDS_IN_NANOSECONDS]), actual_proton_epoch,
-                                      strict=True)
-        np.testing.assert_array_equal(np.array([returned_proton_sw_speed]), actual_proton_sw_speed, strict=True)
-        np.testing.assert_array_equal(np.array([returned_proton_sw_temp]), actual_proton_sw_temperature, strict=True)
-        np.testing.assert_array_equal(np.array([returned_proton_sw_density]), actual_proton_sw_density, strict=True)
-        np.testing.assert_array_equal(np.array([returned_proton_sw_clock_angle]), actual_proton_sw_clock_angle,
-                                      strict=True)
-        np.testing.assert_array_equal(np.array([returned_proton_sw_deflection_angle]),
-                                      actual_proton_sw_deflection_angle,
-                                      strict=True)
+                self.assertEqual(
+                    call(mock_clock_angle_and_flow_deflection_calibration_table, returned_proton_sw_speed, sentinel.a,
+                         sentinel.phi, sentinel.b), mock_calculate_deflection_angle.call_args)
 
-        instrument_response_lut, geometric_factor_lut, energies, count_rates, epoch, background_rate_cutoff, \
-            sw_velocity_vector, density_of_neutral_helium_lut = mock_calculate_pickup_ion.call_args.args
+                self.assertEqual(mock_proton_temperature_density_calibration_table,
+                                 mock_proton_calculate_temperature_and_density.call_args_list[0].args[0])
+                self.assert_ufloat_equal(returned_proton_sw_speed,
+                                         mock_proton_calculate_temperature_and_density.call_args_list[0].args[1])
+                self.assert_ufloat_equal(returned_proton_sw_deflection_angle,
+                                         mock_proton_calculate_temperature_and_density.call_args_list[0].args[2])
+                self.assertEqual(returned_proton_sw_clock_angle,
+                                 mock_proton_calculate_temperature_and_density.call_args_list[0].args[3])
+                np.testing.assert_array_equal(nominal_values(expected_count_rate_with_uncertainties),
+                                              nominal_values(
+                                                  mock_proton_calculate_temperature_and_density.call_args_list[0].args[
+                                                      4]))
+                np.testing.assert_array_equal(std_devs(expected_count_rate_with_uncertainties),
+                                              std_devs(
+                                                  mock_proton_calculate_temperature_and_density.call_args_list[0].args[
+                                                      4]))
+                np.testing.assert_array_equal(energy,
+                                              mock_proton_calculate_temperature_and_density.call_args_list[0].args[5])
 
-        self.assertEqual(mock_instrument_response_calibration_table, instrument_response_lut)
-        self.assertEqual(mock_geometric_factor_calibration_table, geometric_factor_lut)
-        self.assertEqual(mock_density_of_neutral_helium_calibration_table, density_of_neutral_helium_lut)
-        np.testing.assert_array_equal(chunk_of_fifty.energy, energies)
-        np.testing.assert_array_equal(chunk_of_fifty.coincidence_count_rate, count_rates)
-        self.assertEqual(chunk_of_fifty.epoch[0] + FIVE_MINUTES_IN_NANOSECONDS, epoch)
-        self.assertEqual(0.1, background_rate_cutoff)
-        np.testing.assert_array_equal([17, 18, 19], sw_velocity_vector)
+                self.assertEqual(mock_alpha_temperature_density_calibration_table,
+                                 mock_alpha_calculate_temperature_and_density.call_args_list[0].args[0])
+                self.assert_ufloat_equal(returned_alpha_speed,
+                                         mock_alpha_calculate_temperature_and_density.call_args_list[0].args[1])
+                np.testing.assert_array_equal(nominal_values(expected_count_rate_with_uncertainties),
+                                              nominal_values(
+                                                  mock_alpha_calculate_temperature_and_density.call_args_list[0].args[
+                                                      2]))
+                np.testing.assert_array_equal(std_devs(expected_count_rate_with_uncertainties),
+                                              std_devs(
+                                                  mock_alpha_calculate_temperature_and_density.call_args_list[0].args[
+                                                      2]))
+                np.testing.assert_array_equal(energy,
+                                              mock_alpha_calculate_temperature_and_density.call_args_list[0].args[3])
 
-        epoch, sw_velocity_vector, density_of_neutral_helium_lut, passed_in_fitting_params = mock_calculate_helium_pui_density.call_args.args
+                np.testing.assert_array_equal(nominal_values(expected_count_rate_with_uncertainties),
+                                              nominal_values(
+                                                  mock_calculate_alpha_solar_wind_speed.call_args_list[0].args[0]))
+                np.testing.assert_array_equal(std_devs(expected_count_rate_with_uncertainties),
+                                              std_devs(mock_calculate_alpha_solar_wind_speed.call_args_list[0].args[0]))
+                np.testing.assert_array_equal(energy, mock_calculate_alpha_solar_wind_speed.call_args_list[0].args[1])
 
-        self.assertEqual(chunk_of_fifty.epoch[0] + FIVE_MINUTES_IN_NANOSECONDS, epoch)
-        np.testing.assert_array_equal([17, 18, 19], sw_velocity_vector)
-        self.assertEqual(mock_density_of_neutral_helium_calibration_table, density_of_neutral_helium_lut)
-        self.assertEqual(expected_fitting_params, passed_in_fitting_params)
+                (actual_proton_metadata, actual_proton_epoch, actual_proton_sw_speed, actual_proton_sw_temperature,
+                 actual_proton_sw_density, actual_proton_sw_clock_angle,
+                 actual_proton_sw_deflection_angle) = mock_proton_solar_wind_data_constructor.call_args.args
 
-        epoch, sw_velocity_vector, density_of_neutral_helium_lut, passed_in_fitting_params = mock_calculate_helium_pui_temperature.call_args.args
+                self.assertEqual(expected_proton_metadata, actual_proton_metadata)
 
-        self.assertEqual(chunk_of_fifty.epoch[0] + FIVE_MINUTES_IN_NANOSECONDS, epoch)
-        np.testing.assert_array_equal([17, 18, 19], sw_velocity_vector)
-        self.assertEqual(mock_density_of_neutral_helium_calibration_table, density_of_neutral_helium_lut)
-        self.assertEqual(expected_fitting_params, passed_in_fitting_params)
+                np.testing.assert_array_equal(np.array([initial_epoch + THIRTY_SECONDS_IN_NANOSECONDS]),
+                                              actual_proton_epoch,
+                                              strict=True)
+                np.testing.assert_array_equal(np.array([returned_proton_sw_speed]), actual_proton_sw_speed, strict=True)
+                np.testing.assert_array_equal(np.array([returned_proton_sw_temp]), actual_proton_sw_temperature,
+                                              strict=True)
+                np.testing.assert_array_equal(np.array([returned_proton_sw_density]), actual_proton_sw_density,
+                                              strict=True)
+                np.testing.assert_array_equal(np.array([returned_proton_sw_clock_angle]), actual_proton_sw_clock_angle,
+                                              strict=True)
+                np.testing.assert_array_equal(np.array([returned_proton_sw_deflection_angle]),
+                                              actual_proton_sw_deflection_angle,
+                                              strict=True)
 
-        mock_calculate_ten_minute_velocities.assert_called_with([returned_proton_sw_speed.nominal_value],
-                                                                [returned_proton_sw_deflection_angle.nominal_value],
-                                                                [returned_proton_sw_clock_angle.nominal_value])
-        proton_cdf_path = f"{self.temp_directory}/imap_swapi_l3a_proton-sw_{start_date_as_str}_{input_version}.cdf"
-        alpha_cdf_path = f"{self.temp_directory}/imap_swapi_l3a_alpha-sw_{start_date_as_str}_{input_version}.cdf"
-        pui_cdf_path = f"{self.temp_directory}/imap_swapi_l3a_pui-he_{start_date_as_str}_{input_version}.cdf"
-        mock_manager.add_global_attribute.assert_has_calls([call("Data_version", outgoing_version),
-                                                            call("Generation_date", date.today().strftime("%Y%m%d")),
-                                                            call("Logical_source",
-                                                                 "imap_swapi_l3a_proton-sw"),
-                                                            call("Logical_file_id",
-                                                                 f"imap_swapi_l3a_proton-sw_{start_date_as_str}_{input_version}"),
-                                                            call("Data_version", outgoing_version),
-                                                            call("Generation_date", date.today().strftime("%Y%m%d")),
-                                                            call("Logical_source",
-                                                                 "imap_swapi_l3a_alpha-sw"),
-                                                            call("Logical_file_id",
-                                                                 f"imap_swapi_l3a_alpha-sw_{start_date_as_str}_{input_version}"),
-                                                            call("Data_version", outgoing_version),
-                                                            call("Generation_date", date.today().strftime("%Y%m%d")),
-                                                            call("Logical_source",
-                                                                 "imap_swapi_l3a_pui-he"),
-                                                            call("Logical_file_id",
-                                                                 f"imap_swapi_l3a_pui-he_{start_date_as_str}_{input_version}"),
-                                                            ])
+                instrument_response_lut, geometric_factor_lut, energies, count_rates, pui_epoch, background_rate_cutoff, \
+                    sw_velocity_vector, density_of_neutral_helium_lut = mock_calculate_pickup_ion.call_args.args
 
-        actual_alpha_metadata, actual_alpha_epoch, actual_alpha_sw_speed, actual_alpha_sw_temperature, actual_alpha_sw_density = mock_alpha_solar_wind_data_constructor.call_args.args
-        self.assertEqual(expected_alpha_metadata, actual_alpha_metadata)
+                self.assertEqual(mock_instrument_response_calibration_table, instrument_response_lut)
+                self.assertEqual(mock_geometric_factor_calibration_table, geometric_factor_lut)
+                self.assertEqual(mock_density_of_neutral_helium_calibration_table, density_of_neutral_helium_lut)
+                np.testing.assert_array_equal(chunk_of_fifty.energy, energies)
+                np.testing.assert_array_equal(chunk_of_fifty.coincidence_count_rate, count_rates)
+                self.assertEqual(chunk_of_fifty.epoch[0] + FIVE_MINUTES_IN_NANOSECONDS, pui_epoch)
+                self.assertEqual(0.1, background_rate_cutoff)
+                np.testing.assert_array_equal([17, 18, 19], sw_velocity_vector)
 
-        np.testing.assert_array_equal(np.array([initial_epoch + THIRTY_SECONDS_IN_NANOSECONDS]), actual_alpha_epoch)
-        np.testing.assert_array_equal(np.array([mock_calculate_alpha_solar_wind_speed.return_value]),
-                                      actual_alpha_sw_speed)
-        np.testing.assert_array_equal(np.array([mock_alpha_calculate_temperature_and_density.return_value[0]]),
-                                      actual_alpha_sw_temperature)
-        np.testing.assert_array_equal(np.array([mock_alpha_calculate_temperature_and_density.return_value[1]]),
-                                      actual_alpha_sw_density)
+                actual_he_epoch, sw_velocity_vector, density_of_neutral_helium_lut, passed_in_fitting_params = mock_calculate_helium_pui_density.call_args.args
 
-        actual_pui_metadata, actual_pui_epoch, actual_pui_cooling_index, actual_pui_ionization_rate, \
-            actual_pui_cutoff_speed, actual_pui_background_rate, actual_pui_density, actual_pui_temperature = mock_pickup_ion_data_constructor.call_args.args
-        self.assertEqual(expected_pickup_ion_metadata, actual_pui_metadata)
-        np.testing.assert_array_equal(np.array([initial_epoch + FIVE_MINUTES_IN_NANOSECONDS]), actual_pui_epoch)
-        np.testing.assert_array_equal(np.array([1]), actual_pui_cooling_index)
-        np.testing.assert_array_equal(np.array([2]), actual_pui_ionization_rate)
-        np.testing.assert_array_equal(np.array([3]), actual_pui_cutoff_speed)
-        np.testing.assert_array_equal(np.array([4]), actual_pui_background_rate)
-        np.testing.assert_array_equal(np.array([5]), actual_pui_density)
-        np.testing.assert_array_equal(np.array([6]), actual_pui_temperature)
+                self.assertEqual(chunk_of_fifty.epoch[0] + FIVE_MINUTES_IN_NANOSECONDS, actual_he_epoch)
+                np.testing.assert_array_equal([17, 18, 19], sw_velocity_vector)
+                self.assertEqual(mock_density_of_neutral_helium_calibration_table, density_of_neutral_helium_lut)
+                self.assertEqual(expected_fitting_params, passed_in_fitting_params)
 
-        mock_manager.add_instrument_attrs.assert_has_calls(
-            [call("swapi", "l3a", "proton-sw"),
-             call("swapi", "l3a", "alpha-sw"),
-             call("swapi", "l3a", "pui-he")]
-        )
-        mock_write_cdf.assert_has_calls([
-            call(proton_cdf_path, proton_solar_wind_data, mock_manager),
-            call(alpha_cdf_path, alpha_solar_wind_data, mock_manager),
-            call(pui_cdf_path, pickup_ion_data, mock_manager),
-        ])
-        self.mock_imap_api.upload.assert_has_calls([call(proton_cdf_path), call(alpha_cdf_path), call(pui_cdf_path)])
+                actual_he_epoch, sw_velocity_vector, density_of_neutral_helium_lut, passed_in_fitting_params = mock_calculate_helium_pui_temperature.call_args.args
+
+                self.assertEqual(chunk_of_fifty.epoch[0] + FIVE_MINUTES_IN_NANOSECONDS, actual_he_epoch)
+                np.testing.assert_array_equal([17, 18, 19], sw_velocity_vector)
+                self.assertEqual(mock_density_of_neutral_helium_calibration_table, density_of_neutral_helium_lut)
+                self.assertEqual(expected_fitting_params, passed_in_fitting_params)
+
+                mock_calculate_ten_minute_velocities.assert_called_with([returned_proton_sw_speed.nominal_value],
+                                                                        [
+                                                                            returned_proton_sw_deflection_angle.nominal_value],
+                                                                        [returned_proton_sw_clock_angle.nominal_value])
+                mock_manager.add_global_attribute.assert_has_calls([call("Data_version", outgoing_version),
+                                                                    call("Generation_date",
+                                                                         date.today().strftime("%Y%m%d")),
+                                                                    call("Logical_source",
+                                                                         f"imap_swapi_l3a_{descriptor_to_generate}"),
+                                                                    call("Logical_file_id",
+                                                                         f"imap_swapi_l3a_{descriptor_to_generate}_{start_date_as_str}_{input_version}"),
+                                                                    ])
+
+                actual_alpha_metadata, actual_alpha_epoch, actual_alpha_sw_speed, actual_alpha_sw_temperature, actual_alpha_sw_density = mock_alpha_solar_wind_data_constructor.call_args.args
+                self.assertEqual(expected_alpha_metadata, actual_alpha_metadata)
+
+                np.testing.assert_array_equal(np.array([initial_epoch + THIRTY_SECONDS_IN_NANOSECONDS]),
+                                              actual_alpha_epoch)
+                np.testing.assert_array_equal(np.array([mock_calculate_alpha_solar_wind_speed.return_value]),
+                                              actual_alpha_sw_speed)
+                np.testing.assert_array_equal(np.array([mock_alpha_calculate_temperature_and_density.return_value[0]]),
+                                              actual_alpha_sw_temperature)
+                np.testing.assert_array_equal(np.array([mock_alpha_calculate_temperature_and_density.return_value[1]]),
+                                              actual_alpha_sw_density)
+
+                actual_pui_metadata, actual_pui_epoch, actual_pui_cooling_index, actual_pui_ionization_rate, \
+                    actual_pui_cutoff_speed, actual_pui_background_rate, actual_pui_density, actual_pui_temperature = mock_pickup_ion_data_constructor.call_args.args
+                self.assertEqual(expected_pickup_ion_metadata, actual_pui_metadata)
+                np.testing.assert_array_equal(np.array([initial_epoch + FIVE_MINUTES_IN_NANOSECONDS]), actual_pui_epoch)
+                np.testing.assert_array_equal(np.array([1]), actual_pui_cooling_index)
+                np.testing.assert_array_equal(np.array([2]), actual_pui_ionization_rate)
+                np.testing.assert_array_equal(np.array([3]), actual_pui_cutoff_speed)
+                np.testing.assert_array_equal(np.array([4]), actual_pui_background_rate)
+                np.testing.assert_array_equal(np.array([5]), actual_pui_density)
+                np.testing.assert_array_equal(np.array([6]), actual_pui_temperature)
+
+                mock_manager.add_instrument_attrs.assert_called_once_with("swapi", "l3a", descriptor_to_generate)
+
+                mock_write_cdf.assert_called_once_with(expected_cdf_path, expected_data_product, mock_manager)
+                self.mock_imap_api.upload.assert_called_once_with(expected_cdf_path)
 
     @patch('imap_l3_processing.swapi.swapi_processor.imap_data_access')
     @patch('imap_l3_processing.swapi.swapi_processor.calculate_delta_minus_plus')
