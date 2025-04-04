@@ -7,6 +7,7 @@ from astropy.time import Time
 from spacepy import pycdf
 
 from imap_l3_processing.constants import CARRINGTON_ROTATION_IN_NANOSECONDS
+from imap_l3_processing.glows.l3bc.l3bc_toolkit.funcs import jd_fm_Carrington
 from imap_l3_processing.models import DataProduct, DataProductVariable, UpstreamDataDependency
 
 
@@ -52,9 +53,10 @@ class GlowsL3BIonizationRate(DataProduct):
     @classmethod
     def from_instrument_team_dictionary(cls, model: dict, input_metadata: UpstreamDataDependency) -> Self:
         latitude_grid = model["ion_rate_profile"]["lat_grid"]
+        carrington_center_point = Time(jd_fm_Carrington(model["CR"] + 0.5), format="jd").datetime
         return cls(
             input_metadata=input_metadata,
-            epoch=np.array([datetime.fromisoformat(model["date"])]),
+            epoch=np.array([carrington_center_point]),
             epoch_delta=np.array([CARRINGTON_ROTATION_IN_NANOSECONDS / 2]),
             cr=np.array([model["CR"]]),
             uv_anisotropy_factor=np.array([model["uv_anisotropy_factor"]]),
@@ -108,9 +110,10 @@ class GlowsL3CSolarWind(DataProduct):
     @classmethod
     def from_instrument_team_dictionary(cls, model: dict, input_metadata: UpstreamDataDependency) -> Self:
         latitude_grid = model["solar_wind_profile"]["lat_grid"]
+        carrington_center_point = Time(jd_fm_Carrington(model["CR"] + 0.5), format="jd").datetime
         return cls(
             input_metadata=input_metadata,
-            epoch=np.array([datetime.fromisoformat(model['date'])]),
+            epoch=np.array([carrington_center_point]),
             epoch_delta=np.array([CARRINGTON_ROTATION_IN_NANOSECONDS / 2]),
             cr=np.array([model['CR']]),
             lat_grid=np.array(latitude_grid),

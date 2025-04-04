@@ -62,7 +62,7 @@ class TestModels(CdfModelTestCase):
 
         self.assertEqual(sentinel.input_metadata, result.input_metadata)
 
-        self.assertEqual([datetime(2010, 1, 2)], result.epoch)
+        self.assertEqual([datetime(2009, 12, 20, 20, 14, 51, 359974)], result.epoch)
         np.testing.assert_equal([CARRINGTON_ROTATION_IN_NANOSECONDS / 2], result.epoch_delta)
 
         self.assertEqual([2091], result.cr)
@@ -130,7 +130,7 @@ class TestModels(CdfModelTestCase):
         self.assertIsInstance(result, GlowsL3CSolarWind)
 
         self.assertEqual(sentinel.input_metadata, result.input_metadata)
-        self.assertEqual([datetime(2010, 1, 2)], result.epoch)
+        self.assertEqual([datetime(2009, 12, 20, 20, 14, 51, 359974)], result.epoch)
         np.testing.assert_equal([CARRINGTON_ROTATION_IN_NANOSECONDS / 2], result.epoch_delta)
 
         self.assertEqual([2091], result.cr)
