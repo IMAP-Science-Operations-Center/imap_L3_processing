@@ -9,9 +9,9 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Optional, TypeVar
 from unittest.mock import patch
-import xarray as xr
 
 import numpy as np
+import xarray as xr
 from bitstring import BitStream
 from imap_processing.spice.geometry import SpiceFrame
 from matplotlib import pyplot as plt
@@ -277,9 +277,10 @@ def create_hit_direct_event_cdf():
     return file_path
 
 
-@patch('imap_l3_processing.glows.l3b.glows_initializer_ancillary_dependencies.query')
+@patch('imap_l3_processing.glows.l3bc.glows_initializer_ancillary_dependencies.download_dependency')
+@patch('imap_l3_processing.glows.l3bc.glows_initializer_ancillary_dependencies.query')
 @patch('imap_l3_processing.glows.glows_initializer.query')
-def run_l3b_initializer(mock_query, mock_ancillary_query):
+def run_l3b_initializer(mock_query, mock_ancillary_query, mock_ancillary_download_dependency):
     local_cdfs = os.listdir(get_test_data_path("glows/l3a_products"))
 
     l3a_dicts = [{'file_path': "glows/l3a_products" + file_path,
@@ -290,9 +291,15 @@ def run_l3b_initializer(mock_query, mock_ancillary_query):
         l3a_dicts, []
     ]
 
+    mock_ancillary_download_dependency.side_effect = [
+        get_test_data_path("glows/imap_glows_pipeline-settings-L3bc.json")
+    ]
+
     mock_ancillary_query.side_effect = [
         [{'file_path': str(get_test_data_path("glows/imap_glows_uv-anisotropy-1CR_20100101_v001.json"))}],
-        [{'file_path': str(get_test_data_path("glows/imap_glows_WawHelioIonMP_20100101_v002.json"))}]
+        [{'file_path': str(get_test_data_path("glows/imap_glows_WawHelioIonMP_20100101_v002.json"))}],
+        [{'file_path': str(get_test_data_path("glows/imap_glows_bad-days-list_20100101_v001.dat"))}],
+        [{'file_path': str(get_test_data_path("glows/imap_glows_pipeline-settings-L3bc.json"))}],
     ]
     GlowsInitializer.validate_and_initialize('v001')
 

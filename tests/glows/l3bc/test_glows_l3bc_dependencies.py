@@ -1,4 +1,5 @@
 import unittest
+from datetime import datetime
 from pathlib import Path
 from unittest.mock import patch, sentinel, call, Mock, MagicMock, mock_open
 
@@ -33,7 +34,8 @@ class TestGlowsL3BCDependencies(unittest.TestCase):
         mock_json_file.read.return_value = '{"l3a_paths":["l3a_path_1", "l3a_path_2"],' \
                                            '"uv_anisotropy":"uv_anisotropy_path", "waw_helioion_mp":"waw_path",' \
                                            '"bad_days_list":"bad_days_list_path", "pipeline_settings":"pipeline_settings_path",' \
-                                           '"cr_rotation_number":"2296"}'
+                                           '"cr_rotation_number":"2296", "start_date":"2024-10-24 12:34:56.789",' \
+                                           '"end_date":"2024-11-24 12:34:56.789"}'
 
         mock_create_dictionary_from_cdf.side_effect = [
             sentinel.l3a_dictionary_1,
@@ -67,3 +69,6 @@ class TestGlowsL3BCDependencies(unittest.TestCase):
         self.assertEqual(sentinel.l3a_dictionary_1, dependency.l3a_data[0])
         self.assertEqual(sentinel.l3a_dictionary_2, dependency.l3a_data[1])
         self.assertEqual(2296, dependency.carrington_rotation_number)
+
+        self.assertEqual(datetime.fromisoformat("2024-10-24 12:34:56.789"), dependency.start_date)
+        self.assertEqual(datetime.fromisoformat("2024-11-24 12:34:56.789"), dependency.end_date)
