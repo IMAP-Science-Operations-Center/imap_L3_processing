@@ -28,7 +28,7 @@ class TestGlowsInitializerAncillaryDependencies(unittest.TestCase):
                                                      start_date=None, descriptor="bad-day-list",
                                                      version="latest")
         pipeline_settings = create_imap_data_access_json(file_path="path_to_pipeline_settings", data_level=None,
-                                                         start_date=None, descriptor="pipeline-settings",
+                                                         start_date=None, descriptor="pipeline-settings-L3bc",
                                                          version="latest")
 
         mock_query.side_effect = [
@@ -38,7 +38,7 @@ class TestGlowsInitializerAncillaryDependencies(unittest.TestCase):
             [pipeline_settings]
         ]
 
-        pipeline_settings_upstream_dependency = UpstreamDataDependency("glows", "l3b",
+        pipeline_settings_upstream_dependency = UpstreamDataDependency("glows", "l3",
                                                                        None, None, "latest",
                                                                        descriptor="pipeline-settings-L3bc")
         mock_download_dependency.return_value = get_test_data_path("glows/imap_glows_pipeline-settings-L3bc.json")
@@ -61,8 +61,8 @@ class TestGlowsInitializerAncillaryDependencies(unittest.TestCase):
         self.assertEqual([
             call(instrument="glows", descriptor="uv-anisotropy-1CR", version="latest"),
             call(instrument="glows", descriptor="WawHelioIonMP", version="latest"),
-            call(instrument="glows", descriptor="bad-day-list", version="latest"),
-            call(instrument="glows", descriptor="pipeline-settings", version="latest"),
+            call(instrument="glows", descriptor="bad-days-list", version="latest"),
+            call(instrument="glows", descriptor="pipeline-settings-L3bc", version="latest"),
         ], mock_query.call_args_list)
 
         self.assertEqual([
