@@ -12,7 +12,6 @@ from unittest.mock import patch
 
 import numpy as np
 import xarray as xr
-from bitstring import BitStream
 from imap_processing.spice.geometry import SpiceFrame
 from matplotlib import pyplot as plt
 from spacepy.pycdf import CDF
@@ -32,8 +31,6 @@ from imap_l3_processing.hit.l3.hit_l3_sectored_dependencies import HITL3Sectored
 from imap_l3_processing.hit.l3.hit_processor import HitProcessor
 from imap_l3_processing.hit.l3.models import HitL1Data
 from imap_l3_processing.hit.l3.pha.hit_l3_pha_dependencies import HitL3PhaDependencies
-from imap_l3_processing.hit.l3.pha.pha_event_reader import PHAEventReader
-from imap_l3_processing.hit.l3.pha.science.calculate_pha import process_pha_event
 from imap_l3_processing.hit.l3.pha.science.cosine_correction_lookup_table import CosineCorrectionLookupTable
 from imap_l3_processing.hit.l3.pha.science.gain_lookup_table import GainLookupTable
 from imap_l3_processing.hit.l3.pha.science.hit_event_type_lookup import HitEventTypeLookup
@@ -202,35 +199,6 @@ def create_hit_sectored_cdf(dependencies: HITL3SectoredDependencies) -> str:
     return cdf_path
 
 
-def process_hit_pha():
-    bitstream = BitStream(filename=get_test_data_path("hit/pha_events/full_event_record_buffer.bin"))
-    events = PHAEventReader.read_all_pha_events(bitstream.bin)
-
-    cosine_table = CosineCorrectionLookupTable(
-        get_test_data_path("hit/pha_events/imap_hit_l3_r2A-cosines-text-not-cdf_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_r3A-cosines-text-not-cdf_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_r4A-cosines-text-not-cdf_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_r2B-cosines-text-not-cdf_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_r3B-cosines-text-not-cdf_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_r4B-cosines-text-not-cdf_20250203_v001.cdf"),
-    )
-    gain_table = GainLookupTable.from_file(
-        get_test_data_path("hit/pha_events/imap_hit_l3_high-gains-text-not-cdf_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_low-gains-text-not-cdf_20250203_v001.cdf"))
-
-    range_fit_lookup = RangeFitLookup.from_files(
-        get_test_data_path("hit/pha_events/imap_hit_l3_range2A-fit-text-not-cdf_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_range3A-fit-text-not-cdf_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_range4A-fit-text-not-cdf_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_range2B-fit-text-not-cdf_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_range3B-fit-text-not-cdf_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_range4B-fit-text-not-cdf_20250203_v001.cdf"),
-    )
-    processed_events = [process_pha_event(e, cosine_table, gain_table, range_fit_lookup, None) for e
-                        in events]
-    print(processed_events)
-
-
 def create_hit_direct_event_cdf():
     cosine_table = CosineCorrectionLookupTable(
         get_test_data_path("hit/pha_events/imap_hit_l3_range-2A-cosine-lookup_20250203_v001.cdf"),
@@ -278,29 +246,16 @@ def create_hit_direct_event_cdf():
     return file_path
 
 
-@patch('imap_l3_processing.glows.l3bc.glows_initializer_ancillary_dependencies.download_dependency')
-@patch('imap_l3_processing.glows.l3bc.glows_initializer_ancillary_dependencies.query')
 @patch('imap_l3_processing.glows.glows_initializer.query')
-def run_l3b_initializer(mock_query, mock_ancillary_query, mock_ancillary_download_dependency):
+def run_l3b_initializer(mock_query):
     local_cdfs = os.listdir(get_test_data_path("glows/l3a_products"))
 
-    l3a_dicts = [{'file_path': "glows/l3a_products" + file_path,
+    l3a_dicts = [{'file_path': "glows/l3a_products/" + file_path,
                   'start_date': file_path.split('_')[4]
                   } for file_path in local_cdfs]
 
     mock_query.side_effect = [
         l3a_dicts, []
-    ]
-
-    mock_ancillary_download_dependency.side_effect = [
-        get_test_data_path("glows/imap_glows_pipeline-settings-L3bc.json")
-    ]
-
-    mock_ancillary_query.side_effect = [
-        [{'file_path': str(get_test_data_path("glows/imap_glows_uv-anisotropy-1CR_20100101_v001.json"))}],
-        [{'file_path': str(get_test_data_path("glows/imap_glows_WawHelioIonMP_20100101_v002.json"))}],
-        [{'file_path': str(get_test_data_path("glows/imap_glows_bad-days-list_20100101_v001.dat"))}],
-        [{'file_path': str(get_test_data_path("glows/imap_glows_pipeline-settings-L3bc.json"))}],
     ]
     GlowsInitializer.validate_and_initialize('v001')
 

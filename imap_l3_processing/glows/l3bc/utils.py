@@ -82,7 +82,7 @@ def find_unprocessed_carrington_rotations(l3a_inputs: list[dict], l3b_inputs: li
         tomorrow = current_date + TimeDelta(1, format="jd")
         tomorrow_rounded_cr = int(carrington(tomorrow.jd))
 
-        if (tomorrow_rounded_cr - current_rounded_cr == 1) and (tomorrow - current_date == 1):
+        if tomorrow_rounded_cr - current_rounded_cr == 1:
             l3as_by_carrington[tomorrow_rounded_cr].append(l3a['file_path'])
 
         l3as_by_carrington[current_rounded_cr].append(l3a['file_path'])
