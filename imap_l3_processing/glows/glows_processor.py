@@ -9,10 +9,12 @@ from imap_l3_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependen
 from imap_l3_processing.glows.l3a.glows_toolkit.l3a_data import L3aData
 from imap_l3_processing.glows.l3a.models import GlowsL3LightCurve
 from imap_l3_processing.glows.l3a.utils import create_glows_l3a_from_dictionary
+from imap_l3_processing.glows.l3bc.cannot_process_carrington_rotation_error import CannotProcessCarringtonRotationError
 from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDependencies
 from imap_l3_processing.glows.l3bc.models import GlowsL3BIonizationRate, GlowsL3CSolarWind
 from imap_l3_processing.glows.l3bc.science.filter_out_bad_days import filter_out_bad_days
 from imap_l3_processing.glows.l3bc.science.generate_l3bc import generate_l3bc
+from imap_l3_processing.glows.l3bc.utils import make_l3b_data_with_fill, make_l3c_data_with_fill
 from imap_l3_processing.models import UpstreamDataDependency
 from imap_l3_processing.processor import Processor
 from imap_l3_processing.utils import save_data
@@ -49,14 +51,24 @@ class GlowsProcessor(Processor):
 
     def process_l3bc(self, dependencies: GlowsL3BCDependencies) -> tuple[GlowsL3BIonizationRate, GlowsL3CSolarWind]:
         filtered_days = filter_out_bad_days(dependencies.l3a_data, dependencies.ancillary_files['bad_days_list'])
-        l3b_data, l3c_data = generate_l3bc(replace(dependencies, l3a_data=filtered_days))
         l3b_metadata = UpstreamDataDependency("glows", "l3b", dependencies.start_date, dependencies.end_date,
                                               self.input_metadata.version, "ion-rate-profile")
         l3c_metadata = UpstreamDataDependency("glows", "l3c", dependencies.start_date, dependencies.end_date,
                                               self.input_metadata.version, "sw-profile")
 
-        l3b_data_product = GlowsL3BIonizationRate.from_instrument_team_dictionary(l3b_data, l3b_metadata)
-        l3c_data_product = GlowsL3CSolarWind.from_instrument_team_dictionary(l3c_data, l3c_metadata)
+        try:
+            l3b_data, l3c_data = generate_l3bc(replace(dependencies, l3a_data=filtered_days))
+            l3b_data_product = GlowsL3BIonizationRate.from_instrument_team_dictionary(l3b_data,
+                                                                                      l3b_metadata)
+            l3c_data_product = GlowsL3CSolarWind.from_instrument_team_dictionary(l3c_data, l3c_metadata)
+        except CannotProcessCarringtonRotationError:
+            l3b_data_with_fills = make_l3b_data_with_fill(dependencies)
+            l3c_data_with_fills = make_l3c_data_with_fill()
+            l3b_data_product = GlowsL3BIonizationRate.from_instrument_team_dictionary(l3b_data_with_fills,
+                                                                                      l3b_metadata)
+            l3c_data_product = GlowsL3CSolarWind.from_instrument_team_dictionary(l3c_data_with_fills,
+                                                                                 l3c_metadata)
+
         return l3b_data_product, l3c_data_product
 
     @staticmethod
