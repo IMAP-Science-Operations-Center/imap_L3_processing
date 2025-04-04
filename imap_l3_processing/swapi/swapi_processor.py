@@ -38,15 +38,16 @@ class SwapiProcessor(Processor):
         if self.input_metadata.data_level == "l3a":
             l3a_dependencies = SwapiL3ADependencies.fetch_dependencies(self.dependencies)
             data = read_l2_swapi_data(l3a_dependencies.data)
-            proton_data, alpha_data, pui_he_data = self.process_l3a(data, l3a_dependencies)
-
             if self.input_metadata.descriptor == 'proton-sw':
+                proton_data = self.process_l3a_proton_sw(data, l3a_dependencies)
                 proton_cdf = save_data(proton_data)
                 imap_data_access.upload(proton_cdf)
             elif self.input_metadata.descriptor == 'alpha-sw':
+                alpha_data = self.process_l3a_alpha_sw(data, l3a_dependencies)
                 alpha_cdf = save_data(alpha_data)
                 imap_data_access.upload(alpha_cdf)
             elif self.input_metadata.descriptor == 'pui-he':
+                pui_he_data = self.process_l3a_pui_he(data, l3a_dependencies)
                 pui_he_cdf = save_data(pui_he_data)
                 imap_data_access.upload(pui_he_cdf)
         elif self.input_metadata.data_level == "l3b":
@@ -56,16 +57,9 @@ class SwapiProcessor(Processor):
             cdf_path = save_data(l3b_combined_vdf)
             imap_data_access.upload(cdf_path)
 
-    def process_l3a(self, data, dependencies) -> tuple[
-        SwapiL3ProtonSolarWindData, SwapiL3AlphaSolarWindData, SwapiL3PickupIonData]:
+    def process_l3a_alpha_sw(self, data, dependencies) -> SwapiL3AlphaSolarWindData:
         spice_wrapper.furnish()
         epochs = []
-
-        proton_solar_wind_speeds = []
-        proton_solar_wind_temperatures = []
-        proton_solar_wind_density = []
-        proton_solar_wind_clock_angles = []
-        proton_solar_wind_deflection_angles = []
 
         alpha_solar_wind_speeds = []
         alpha_solar_wind_densities = []
@@ -74,31 +68,7 @@ class SwapiProcessor(Processor):
         for data_chunk in chunk_l2_data(data, 5):
             coincidence_count_rates_with_uncertainty = uarray(data_chunk.coincidence_count_rate,
                                                               data_chunk.coincidence_count_rate_uncertainty)
-            proton_solar_wind_speed, a, phi, b = calculate_proton_solar_wind_speed(
-                coincidence_count_rates_with_uncertainty, data_chunk.energy, data_chunk.epoch)
-            proton_solar_wind_speeds.append(proton_solar_wind_speed)
-
-            clock_angle = calculate_clock_angle(dependencies.clock_angle_and_flow_deflection_calibration_table,
-                                                proton_solar_wind_speed, a, phi, b)
-
-            deflection_angle = calculate_deflection_angle(
-                dependencies.clock_angle_and_flow_deflection_calibration_table,
-                proton_solar_wind_speed, a, phi, b)
-
-            proton_solar_wind_clock_angles.append(clock_angle)
-            proton_solar_wind_deflection_angles.append(deflection_angle)
-
-            proton_temperature, proton_density = calculate_proton_solar_wind_temperature_and_density(
-                dependencies.proton_temperature_density_calibration_table,
-                proton_solar_wind_speed,
-                deflection_angle,
-                clock_angle,
-                coincidence_count_rates_with_uncertainty,
-                data_chunk.energy)
-
-            proton_solar_wind_temperatures.append(proton_temperature)
-            proton_solar_wind_density.append(proton_density)
-
+            coincidence_count_rates.append(coincidence_count_rates_with_uncertainty)
             epochs.append(data_chunk.epoch[0] + THIRTY_SECONDS_IN_NANOSECONDS)
 
             alpha_solar_wind_speed = calculate_alpha_solar_wind_speed(coincidence_count_rates_with_uncertainty,
@@ -112,6 +82,17 @@ class SwapiProcessor(Processor):
 
             alpha_solar_wind_densities.append(alpha_density)
             alpha_solar_wind_temperatures.append(alpha_temperature)
+
+        alpha_solar_wind_speed_metadata = self.input_metadata.to_upstream_data_dependency("alpha-sw")
+        alpha_solar_wind_l3_data = SwapiL3AlphaSolarWindData(alpha_solar_wind_speed_metadata, np.array(epochs),
+                                                             np.array(alpha_solar_wind_speeds),
+                                                             np.array(alpha_solar_wind_temperatures),
+                                                             np.array(alpha_solar_wind_densities))
+        return alpha_solar_wind_l3_data
+
+    def process_l3a_pui_he(self, data, dependencies) -> SwapiL3PickupIonData:
+        proton_solar_wind_speeds, proton_solar_wind_deflection_angles, proton_solar_wind_clock_angles = self.compute_l3a_proton_speed(
+            data, dependencies)
 
         ten_minute_solar_wind_velocities = calculate_ten_minute_velocities(
             nominal_values(proton_solar_wind_speeds),
@@ -143,27 +124,81 @@ class SwapiProcessor(Processor):
             temperature = calculate_helium_pui_temperature(
                 epoch, sw_velocity, dependencies.density_of_neutral_helium_calibration_table, fit_params)
             pui_temperature.append(temperature)
+
         pui_metadata = self.input_metadata.to_upstream_data_dependency("pui-he")
         pui_data = SwapiL3PickupIonData(pui_metadata, np.array(pui_epochs), np.array(pui_cooling_index),
                                         np.array(pui_ionization_rate),
                                         np.array(pui_cutoff_speed), np.array(pui_background_rate),
                                         np.array(pui_density), np.array(pui_temperature))
 
-        proton_solar_wind_speed_metadata = self.input_metadata.to_upstream_data_dependency("proton-sw")
+        return pui_data
 
+    def compute_l3a_proton_speed(self, data, dependencies) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+        l2_coincidence_count_rates = []
+        l2_energies = []
+        proton_solar_wind_speeds = []
+        proton_solar_wind_deflection_angles = []
+        proton_solar_wind_clock_angles = []
+
+        for data_chunk in chunk_l2_data(data, 5):
+            coincidence_count_rates_with_uncertainty = uarray(data_chunk.coincidence_count_rate,
+                                                              data_chunk.coincidence_count_rate_uncertainty)
+            l2_coincidence_count_rates.append(coincidence_count_rates_with_uncertainty)
+            l2_energies.append(data_chunk.energy)
+            proton_solar_wind_speed, a, phi, b = calculate_proton_solar_wind_speed(
+                coincidence_count_rates_with_uncertainty, data_chunk.energy, data_chunk.epoch)
+            proton_solar_wind_speeds.append(proton_solar_wind_speed)
+
+            clock_angle = calculate_clock_angle(dependencies.clock_angle_and_flow_deflection_calibration_table,
+                                                proton_solar_wind_speed, a, phi, b)
+
+            deflection_angle = calculate_deflection_angle(
+                dependencies.clock_angle_and_flow_deflection_calibration_table,
+                proton_solar_wind_speed, a, phi, b)
+
+            proton_solar_wind_clock_angles.append(clock_angle)
+            proton_solar_wind_deflection_angles.append(deflection_angle)
+
+        return np.array(l2_coincidence_count_rates), np.array(l2_energies), np.array(
+            proton_solar_wind_speeds), np.array(
+            proton_solar_wind_deflection_angles), np.array(
+            proton_solar_wind_clock_angles)
+
+    def process_l3a_proton_sw(self, data, dependencies) -> SwapiL3ProtonSolarWindData:
+        spice_wrapper.furnish()
+        epochs = []
+
+        proton_solar_wind_temperatures = []
+        proton_solar_wind_density = []
+
+        l2_coincidence_count_rates, l2_energies, proton_solar_wind_speeds, proton_solar_wind_deflection_angles, proton_solar_wind_clock_angles = self.compute_l3a_proton_speed(
+            data, dependencies)
+
+        for coincidence_count_rates_with_uncertainty, l2_energy, proton_solar_wind_speed, deflection_angle, clock_angle in zip(
+                l2_coincidence_count_rates,
+                l2_energies,
+                proton_solar_wind_speeds,
+                proton_solar_wind_deflection_angles,
+                proton_solar_wind_clock_angles):
+            proton_temperature, proton_density = calculate_proton_solar_wind_temperature_and_density(
+                dependencies.proton_temperature_density_calibration_table,
+                proton_solar_wind_speed,
+                deflection_angle,
+                clock_angle,
+                coincidence_count_rates_with_uncertainty,
+                l2_energy)
+
+            proton_solar_wind_temperatures.append(proton_temperature)
+            proton_solar_wind_density.append(proton_density)
+
+        proton_solar_wind_speed_metadata = self.input_metadata.to_upstream_data_dependency("proton-sw")
         proton_solar_wind_l3_data = SwapiL3ProtonSolarWindData(proton_solar_wind_speed_metadata, np.array(epochs),
-                                                               np.array(proton_solar_wind_speeds),
+                                                               proton_solar_wind_speeds,
                                                                np.array(proton_solar_wind_temperatures),
                                                                np.array(proton_solar_wind_density),
-                                                               np.array(proton_solar_wind_clock_angles),
-                                                               np.array(proton_solar_wind_deflection_angles))
-
-        alpha_solar_wind_speed_metadata = self.input_metadata.to_upstream_data_dependency("alpha-sw")
-        alpha_solar_wind_l3_data = SwapiL3AlphaSolarWindData(alpha_solar_wind_speed_metadata, np.array(epochs),
-                                                             np.array(alpha_solar_wind_speeds),
-                                                             np.array(alpha_solar_wind_temperatures),
-                                                             np.array(alpha_solar_wind_densities))
-        return proton_solar_wind_l3_data, alpha_solar_wind_l3_data, pui_data
+                                                               proton_solar_wind_clock_angles,
+                                                               proton_solar_wind_deflection_angles)
+        return proton_solar_wind_l3_data
 
     def process_l3b(self, data, dependencies):
         epochs = []

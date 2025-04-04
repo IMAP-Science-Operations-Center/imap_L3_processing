@@ -31,10 +31,6 @@ class TestSwapiProcessor(TestCase):
         shutil.rmtree(self.temp_directory)
         self.mock_imap_patcher.stop()
 
-    @patch('imap_l3_processing.swapi.swapi_processor.spice_wrapper.furnish')
-    @patch('imap_l3_processing.utils.ImapAttributeManager')
-    @patch('imap_l3_processing.swapi.swapi_processor.SwapiL3PickupIonData')
-    @patch('imap_l3_processing.swapi.swapi_processor.SwapiL3AlphaSolarWindData')
     @patch('imap_l3_processing.swapi.swapi_processor.SwapiL3ProtonSolarWindData')
     @patch('imap_l3_processing.utils.write_cdf')
     @patch('imap_l3_processing.swapi.swapi_processor.chunk_l2_data')
@@ -42,11 +38,76 @@ class TestSwapiProcessor(TestCase):
     @patch('imap_l3_processing.swapi.swapi_processor.calculate_proton_solar_wind_speed')
     @patch('imap_l3_processing.swapi.swapi_processor.calculate_alpha_solar_wind_speed')
     @patch('imap_l3_processing.swapi.swapi_processor.calculate_proton_solar_wind_temperature_and_density')
-    @patch(
-        'imap_l3_processing.swapi.swapi_processor.calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps')
     @patch('imap_l3_processing.swapi.swapi_processor.calculate_clock_angle')
     @patch('imap_l3_processing.swapi.swapi_processor.calculate_deflection_angle')
     @patch('imap_l3_processing.swapi.swapi_processor.SwapiL3ADependencies')
+    @patch('imap_l3_processing.swapi.swapi_processor.spice_wrapper.furnish')
+    @patch('imap_l3_processing.utils.ImapAttributeManager')
+    def test_process_proton_sw(self, mock_chunk_l2_data,
+                               mock_read_l2_swapi_data,
+                               mock_calculate_proton_solar_wind_speed,
+                               mock_calculate_alpha_solar_wind_speed,
+                               mock_calculate_proton_solar_wind_temperature_and_density,
+                               mock_calculate_clock_angle,
+                               mock_calculate_deflection_angle,
+                               mock_SwapiL3ADependencies, ):
+        instrument = 'swapi'
+        incoming_data_level = 'l2'
+        descriptor = SWAPI_L2_DESCRIPTOR
+        end_date = datetime.now()
+        version = 'f'
+        outgoing_data_level = "l3a"
+        start_date = datetime.now() - timedelta(days=1)
+        input_version = "v12345"
+        outgoing_version = "12345"
+        start_date_as_str = datetime.strftime(start_date, "%Y%m%d")
+
+        returned_proton_sw_speed = ufloat(400000, 2)
+        mock_calculate_proton_solar_wind_speed.return_value = (
+            returned_proton_sw_speed, sentinel.a, sentinel.phi, sentinel.b)
+
+        returned_proton_sw_temp = ufloat(99000, 1000)
+        returned_proton_sw_density = ufloat(4.97, 0.25)
+        mock_calculate_proton_solar_wind_temperature_and_density.return_value = (
+            returned_proton_sw_temp, returned_proton_sw_density)
+
+        returned_proton_sw_clock_angle = ufloat(200, 0.25)
+        mock_calculate_clock_angle.return_value = returned_proton_sw_clock_angle
+
+        returned_proton_sw_deflection_angle = ufloat(5, 0.001)
+        mock_calculate_deflection_angle.return_value = returned_proton_sw_deflection_angle
+
+        initial_epoch = 10
+        epoch = np.array([initial_epoch, 11, 12, 13])
+        epoch_for_fifty_sweeps = np.arange(initial_epoch, 50)
+        energy = np.array([15000, 16000, 17000, 18000, 19000])
+        coincidence_count_rate = np.array(
+            [[4, 5, 6, 7, 8], [9, 10, 11, 12, 13], [14, 15, 16, 17, 18], [19, 20, 21, 22, 23]])
+        coincidence_count_rate_uncertainty = np.array(
+            [[0.1, 0.2, 0.3, 0.4, 0.5], [0.1, 0.2, 0.3, 0.4, 0.5], [0.1, 0.2, 0.3, 0.4, 0.5],
+             [0.1, 0.2, 0.3, 0.4, 0.5]])
+
+        chunk_of_five = SwapiL2Data(epoch, energy, coincidence_count_rate,
+                                    coincidence_count_rate_uncertainty)
+        chunk_of_fifty = SwapiL2Data(epoch_for_fifty_sweeps, energy * 2, coincidence_count_rate * 2,
+                                     coincidence_count_rate_uncertainty * 2)
+
+    # @patch('imap_l3_processing.swapi.swapi_processor.spice_wrapper.furnish')
+    # @patch('imap_l3_processing.utils.ImapAttributeManager')
+    @patch('imap_l3_processing.swapi.swapi_processor.SwapiL3PickupIonData')
+    @patch('imap_l3_processing.swapi.swapi_processor.SwapiL3AlphaSolarWindData')
+    # @patch('imap_l3_processing.swapi.swapi_processor.SwapiL3ProtonSolarWindData')
+    # @patch('imap_l3_processing.utils.write_cdf')
+    # @patch('imap_l3_processing.swapi.swapi_processor.chunk_l2_data')
+    # @patch('imap_l3_processing.swapi.swapi_processor.read_l2_swapi_data')
+    # @patch('imap_l3_processing.swapi.swapi_processor.calculate_proton_solar_wind_speed')
+    # @patch('imap_l3_processing.swapi.swapi_processor.calculate_alpha_solar_wind_speed')
+    # @patch('imap_l3_processing.swapi.swapi_processor.calculate_proton_solar_wind_temperature_and_density')
+    @patch(
+        'imap_l3_processing.swapi.swapi_processor.calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps')
+    # @patch('imap_l3_processing.swapi.swapi_processor.calculate_clock_angle')
+    # @patch('imap_l3_processing.swapi.swapi_processor.calculate_deflection_angle')
+    # @patch('imap_l3_processing.swapi.swapi_processor.SwapiL3ADependencies')
     @patch('imap_l3_processing.swapi.swapi_processor.calculate_pickup_ion_values')
     @patch('imap_l3_processing.swapi.swapi_processor.calculate_ten_minute_velocities')
     @patch('imap_l3_processing.swapi.swapi_processor.calculate_helium_pui_density')
@@ -77,43 +138,43 @@ class TestSwapiProcessor(TestCase):
         outgoing_version = "12345"
         start_date_as_str = datetime.strftime(start_date, "%Y%m%d")
 
-        returned_proton_sw_speed = ufloat(400000, 2)
-        mock_calculate_proton_solar_wind_speed.return_value = (
-            returned_proton_sw_speed, sentinel.a, sentinel.phi, sentinel.b)
-
+        # returned_proton_sw_speed = ufloat(400000, 2)
+        # mock_calculate_proton_solar_wind_speed.return_value = (
+        #     returned_proton_sw_speed, sentinel.a, sentinel.phi, sentinel.b)
+        #
         returned_alpha_temperature = ufloat(400000, 2000)
         returned_alpha_density = ufloat(0.15, 0.01)
         mock_alpha_calculate_temperature_and_density.return_value = (returned_alpha_temperature, returned_alpha_density)
 
         returned_alpha_speed = ufloat(450000, 1000)
         mock_calculate_alpha_solar_wind_speed.return_value = ufloat(450000, 1000)
+        #
+        # returned_proton_sw_temp = ufloat(99000, 1000)
+        # returned_proton_sw_density = ufloat(4.97, 0.25)
+        # mock_proton_calculate_temperature_and_density.return_value = (
+        #     returned_proton_sw_temp, returned_proton_sw_density)
+        #
+        # returned_proton_sw_clock_angle = ufloat(200, 0.25)
+        # mock_calculate_clock_angle.return_value = returned_proton_sw_clock_angle
+        #
+        # returned_proton_sw_deflection_angle = ufloat(5, 0.001)
+        # mock_calculate_deflection_angle.return_value = returned_proton_sw_deflection_angle
 
-        returned_proton_sw_temp = ufloat(99000, 1000)
-        returned_proton_sw_density = ufloat(4.97, 0.25)
-        mock_proton_calculate_temperature_and_density.return_value = (
-            returned_proton_sw_temp, returned_proton_sw_density)
-
-        returned_proton_sw_clock_angle = ufloat(200, 0.25)
-        mock_calculate_clock_angle.return_value = returned_proton_sw_clock_angle
-
-        returned_proton_sw_deflection_angle = ufloat(5, 0.001)
-        mock_calculate_deflection_angle.return_value = returned_proton_sw_deflection_angle
-
-        initial_epoch = 10
-
-        epoch = np.array([initial_epoch, 11, 12, 13])
-        epoch_for_fifty_sweeps = np.arange(initial_epoch, 50)
-        energy = np.array([15000, 16000, 17000, 18000, 19000])
-        coincidence_count_rate = np.array(
-            [[4, 5, 6, 7, 8], [9, 10, 11, 12, 13], [14, 15, 16, 17, 18], [19, 20, 21, 22, 23]])
-        coincidence_count_rate_uncertainty = np.array(
-            [[0.1, 0.2, 0.3, 0.4, 0.5], [0.1, 0.2, 0.3, 0.4, 0.5], [0.1, 0.2, 0.3, 0.4, 0.5],
-             [0.1, 0.2, 0.3, 0.4, 0.5]])
-
-        chunk_of_five = SwapiL2Data(epoch, energy, coincidence_count_rate,
-                                    coincidence_count_rate_uncertainty)
-        chunk_of_fifty = SwapiL2Data(epoch_for_fifty_sweeps, energy * 2, coincidence_count_rate * 2,
-                                     coincidence_count_rate_uncertainty * 2)
+        # initial_epoch = 10
+        #
+        # epoch = np.array([initial_epoch, 11, 12, 13])
+        # epoch_for_fifty_sweeps = np.arange(initial_epoch, 50)
+        # energy = np.array([15000, 16000, 17000, 18000, 19000])
+        # coincidence_count_rate = np.array(
+        #     [[4, 5, 6, 7, 8], [9, 10, 11, 12, 13], [14, 15, 16, 17, 18], [19, 20, 21, 22, 23]])
+        # coincidence_count_rate_uncertainty = np.array(
+        #     [[0.1, 0.2, 0.3, 0.4, 0.5], [0.1, 0.2, 0.3, 0.4, 0.5], [0.1, 0.2, 0.3, 0.4, 0.5],
+        #      [0.1, 0.2, 0.3, 0.4, 0.5]])
+        #
+        # chunk_of_five = SwapiL2Data(epoch, energy, coincidence_count_rate,
+        #                             coincidence_count_rate_uncertainty)
+        # chunk_of_fifty = SwapiL2Data(epoch_for_fifty_sweeps, energy * 2, coincidence_count_rate * 2,
+        #                              coincidence_count_rate_uncertainty * 2)
 
         expected_fitting_params = FittingParameters(1, 2, 3, 4)
         mock_calculate_pickup_ion.return_value = expected_fitting_params
