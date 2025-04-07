@@ -10,7 +10,7 @@ HI_L3_DESCRIPTOR = "spectral-fit-index"
 
 
 @dataclass
-class HiL3Dependencies:
+class HiL3SpectralFitDependencies:
     hi_l3_data: HiL3Data
 
     @classmethod

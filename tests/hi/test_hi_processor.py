@@ -5,14 +5,14 @@ from unittest.mock import patch, Mock, call, sentinel
 import numpy as np
 
 from imap_l3_processing.hi.hi_processor import HiProcessor
-from imap_l3_processing.hi.l3.hi_l3_dependencies import HiL3Dependencies
+from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3SpectralFitDependencies
 from imap_l3_processing.hi.l3.models import HiL3Data, HiL3SpectralIndexDataProduct
 from imap_l3_processing.models import InputMetadata
 from tests.test_helpers import get_test_data_path
 
 
 class TestHiProcessor(unittest.TestCase):
-    @patch('imap_l3_processing.hi.hi_processor.HiL3Dependencies.fetch_dependencies')
+    @patch('imap_l3_processing.hi.hi_processor.HiL3SpectralFitDependencies.fetch_dependencies')
     @patch('imap_l3_processing.hi.hi_processor.spectral_fit')
     @patch('imap_l3_processing.hi.hi_processor.save_data')
     def test_process(self, mock_save_data, mock_spectral_fit, mock_fetch_dependencies):
@@ -25,7 +25,7 @@ class TestHiProcessor(unittest.TestCase):
 
         hi_l3_data = _create_h1_l3_data(lat=lat, lon=long, energy=energy, epoch=epoch, flux=flux, variance=variance,
                                         energy_delta=sentinel.energy_delta)
-        dependencies = HiL3Dependencies(hi_l3_data=hi_l3_data)
+        dependencies = HiL3SpectralFitDependencies(hi_l3_data=hi_l3_data)
         upstream_dependencies = [Mock()]
         mock_fetch_dependencies.return_value = dependencies
 
@@ -81,7 +81,7 @@ class TestHiProcessor(unittest.TestCase):
 
         for name, input_file_path, expected_gamma_path, expected_sigma_path in test_cases:
             with self.subTest(name):
-                dependencies = HiL3Dependencies.from_file_paths(
+                dependencies = HiL3SpectralFitDependencies.from_file_paths(
                     get_test_data_path(input_file_path)
                 )
 
