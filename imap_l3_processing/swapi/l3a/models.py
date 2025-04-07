@@ -2,7 +2,6 @@ from dataclasses import dataclass
 from datetime import datetime
 
 import numpy as np
-from spacepy import pycdf
 from uncertainties.unumpy import nominal_values, std_devs
 
 from imap_l3_processing.constants import THIRTY_SECONDS_IN_NANOSECONDS, FIVE_MINUTES_IN_NANOSECONDS
@@ -49,10 +48,10 @@ class SwapiL3ProtonSolarWindData(DataProduct):
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
-            DataProductVariable(EPOCH_CDF_VAR_NAME, self.epoch, cdf_data_type=pycdf.const.CDF_TIME_TT2000),
+            DataProductVariable(EPOCH_CDF_VAR_NAME, self.epoch),
             DataProductVariable(PROTON_SOLAR_WIND_SPEED_CDF_VAR_NAME, nominal_values(self.proton_sw_speed)),
             DataProductVariable(PROTON_SOLAR_WIND_SPEED_UNCERTAINTY_CDF_VAR_NAME, std_devs(self.proton_sw_speed)),
-            DataProductVariable(EPOCH_DELTA_CDF_VAR_NAME, THIRTY_SECONDS_IN_NANOSECONDS, record_varying=False),
+            DataProductVariable(EPOCH_DELTA_CDF_VAR_NAME, THIRTY_SECONDS_IN_NANOSECONDS),
             DataProductVariable(PROTON_SOLAR_WIND_TEMPERATURE_CDF_VAR_NAME, nominal_values(self.proton_sw_temperature)),
             DataProductVariable(PROTON_SOLAR_WIND_TEMPERATURE_UNCERTAINTY_CDF_VAR_NAME,
                                 std_devs(self.proton_sw_temperature)),
@@ -78,8 +77,8 @@ class SwapiL3AlphaSolarWindData(DataProduct):
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
-            DataProductVariable(EPOCH_CDF_VAR_NAME, self.epoch, cdf_data_type=pycdf.const.CDF_TIME_TT2000),
-            DataProductVariable(EPOCH_DELTA_CDF_VAR_NAME, THIRTY_SECONDS_IN_NANOSECONDS, record_varying=False),
+            DataProductVariable(EPOCH_CDF_VAR_NAME, self.epoch),
+            DataProductVariable(EPOCH_DELTA_CDF_VAR_NAME, THIRTY_SECONDS_IN_NANOSECONDS),
             DataProductVariable(ALPHA_SOLAR_WIND_SPEED_CDF_VAR_NAME, nominal_values(self.alpha_sw_speed)),
             DataProductVariable(ALPHA_SOLAR_WIND_SPEED_UNCERTAINTY_CDF_VAR_NAME, std_devs(self.alpha_sw_speed)),
             DataProductVariable(ALPHA_SOLAR_WIND_TEMPERATURE_CDF_VAR_NAME, nominal_values(self.alpha_sw_temperature)),
@@ -102,8 +101,8 @@ class SwapiL3PickupIonData(DataProduct):
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
-            DataProductVariable(EPOCH_CDF_VAR_NAME, self.epoch, cdf_data_type=pycdf.const.CDF_TIME_TT2000),
-            DataProductVariable(EPOCH_DELTA_CDF_VAR_NAME, FIVE_MINUTES_IN_NANOSECONDS, record_varying=False),
+            DataProductVariable(EPOCH_CDF_VAR_NAME, self.epoch),
+            DataProductVariable(EPOCH_DELTA_CDF_VAR_NAME, FIVE_MINUTES_IN_NANOSECONDS),
             DataProductVariable(PUI_COOLING_INDEX_CDF_VAR_NAME, self.cooling_index),
             DataProductVariable(PUI_IONIZATION_RATE_CDF_VAR_NAME, self.ionization_rate),
             DataProductVariable(PUI_CUTOFF_SPEED_CDF_VAR_NAME, self.cutoff_speed),
