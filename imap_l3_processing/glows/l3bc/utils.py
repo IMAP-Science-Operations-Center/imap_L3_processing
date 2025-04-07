@@ -104,7 +104,7 @@ def find_unprocessed_carrington_rotations(l3a_inputs: list[dict], l3b_inputs: li
 
             if latest_l3a_file < date_time_end_date + dependencies.initializer_time_buffer:
                 continue
-                
+
             is_valid = validate_dependencies(date_time_end_date, dependencies.initializer_time_buffer,
                                              dependencies.omni2_data_path, dependencies.f107_index_file_path,
                                              dependencies.lyman_alpha_path)
@@ -153,8 +153,6 @@ def archive_dependencies(cr_to_process: CRToProcess, version: str,
 def make_l3b_data_with_fill(dependencies: GlowsL3BCDependencies):
     model = {}
     uv_anisotropy_file = dependencies.ancillary_files['uv_anisotropy']
-    epoch = dependencies.start_date + (dependencies.end_date - dependencies.start_date) / 2
-    model['date'] = epoch.isoformat()
     model['ion_rate_profile'] = {}
     model['CR'] = dependencies.carrington_rotation_number
 

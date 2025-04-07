@@ -219,13 +219,13 @@ class TestGlowsProcessor(unittest.TestCase):
             [call(dependencies_with_filtered_list_1), call(dependencies_with_filtered_list_2)])
 
         expected_l3b_metadata_1 = UpstreamDataDependency("glows", "l3b", first_dependency.start_date,
-                                                         first_dependency.end_date, 'v02', "sci")
+                                                         first_dependency.end_date, 'v02', "ion-rate-profile")
         expected_l3b_metadata_2 = UpstreamDataDependency("glows", "l3b", second_dependency.start_date,
-                                                         second_dependency.end_date, 'v02', "sci")
+                                                         second_dependency.end_date, 'v02', "ion-rate-profile")
         expected_l3c_metadata_1 = UpstreamDataDependency("glows", "l3c", first_dependency.start_date,
-                                                         first_dependency.end_date, 'v02', "sci")
+                                                         first_dependency.end_date, 'v02', "sw-profile")
         expected_l3c_metadata_2 = UpstreamDataDependency("glows", "l3c", second_dependency.start_date,
-                                                         second_dependency.end_date, 'v02', "sci")
+                                                         second_dependency.end_date, 'v02', "sw-profile")
         mock_l3b_model_class.from_instrument_team_dictionary.assert_has_calls(
             [call(sentinel.l3b_data_1, expected_l3b_metadata_1),
              call(sentinel.l3b_data_2, expected_l3b_metadata_2)])
@@ -270,10 +270,10 @@ class TestGlowsProcessor(unittest.TestCase):
                                              carrington_rotation_number=sentinel.cr,
                                              start_date=sentinel.start_time, end_date=sentinel.end_time)
         l3b_metadata = UpstreamDataDependency("glows", "l3b", dependencies.start_date,
-                                              dependencies.end_date, 'v02', "sci")
+                                              dependencies.end_date, 'v02', "ion-rate-profile")
 
         l3c_metadata = UpstreamDataDependency("glows", "l3c", dependencies.start_date,
-                                              dependencies.end_date, 'v02', "sci")
+                                              dependencies.end_date, 'v02', "sw-profile")
 
         mock_filter_bad_days.return_value = sentinel.filtered_days
 
@@ -299,7 +299,7 @@ class TestGlowsProcessor(unittest.TestCase):
         cr = 2093
         start_date = datetime(2025, 4, 3)
         end_date = datetime(2025, 4, 5)
-        input_metadata = UpstreamDataDependency('glows', "l3b", start_date, end_date, 'v02', 'sci')
+        input_metadata = UpstreamDataDependency('glows', "l3b", start_date, end_date, 'v02', 'ion-rate-profile')
         external_files = {
             'f107_raw_data': get_test_instrument_team_data_path('glows/f107_fluxtable.txt'),
             'omni_raw_data': get_test_instrument_team_data_path('glows/omni_2010.dat')
@@ -325,7 +325,7 @@ class TestGlowsProcessor(unittest.TestCase):
                              0, 10, 20, 30, 40, 50, 60, 70, 80, 90]
         expected_l3b = GlowsL3BIonizationRate(
             input_metadata=input_metadata,
-            epoch=np.array([datetime(2025, 4, 4)]),
+            epoch=np.array([datetime(2010, 2, 13, 9, 27, 43, 199991)]),
             epoch_delta=np.array([CARRINGTON_ROTATION_IN_NANOSECONDS / 2]),
             cr=np.array([cr]),
             uv_anisotropy_factor=np.full((1, 19), 1),

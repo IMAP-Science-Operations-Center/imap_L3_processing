@@ -23,11 +23,11 @@ epoch_delta:
    NAME: epoch_delta
    DATA_TYPE: CDF_INT8
    CATDESC: Time bin of half a carrington rotation
-   DEPEND_0: ' '
+   DEPEND_0: epoch
    VAR_TYPE: support_data
    RECORD_VARYING: RV
    FIELDNAM: Epoch delta
-   FORMAT: ' '
+   FORMAT: I19
    LABLAXIS: Epoch delta
    UNITS: ns
    VALIDMIN: 0
@@ -38,7 +38,7 @@ cr:
    NAME: cr
    DATA_TYPE: CDF_INT2
    CATDESC: Carrington rotation number
-   DEPEND_0: ' '
+   DEPEND_0: epoch
    VAR_TYPE: support_data
    RECORD_VARYING: RV
    FIELDNAM: Carrington rotation
@@ -54,9 +54,9 @@ uv_anisotropy_factor:
    DATA_TYPE: CDF_FLOAT
    CATDESC: UV anisotropy factor
    DEPEND_0: epoch
-   VAR_TYPE: data
+   DEPEND_1: lat_grid
+   VAR_TYPE: support_data
    RECORD_VARYING: RV
-   DISPLAY_TYPE: ' '
    FIELDNAM: UV anisotropy factor
    FORMAT: F9.3
    LABLAXIS: UV anisotropy factor

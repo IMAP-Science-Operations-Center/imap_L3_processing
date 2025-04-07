@@ -52,9 +52,9 @@ class GlowsProcessor(Processor):
     def process_l3bc(self, dependencies: GlowsL3BCDependencies) -> tuple[GlowsL3BIonizationRate, GlowsL3CSolarWind]:
         filtered_days = filter_out_bad_days(dependencies.l3a_data, dependencies.ancillary_files['bad_days_list'])
         l3b_metadata = UpstreamDataDependency("glows", "l3b", dependencies.start_date, dependencies.end_date,
-                                              self.input_metadata.version, "sci")
+                                              self.input_metadata.version, "ion-rate-profile")
         l3c_metadata = UpstreamDataDependency("glows", "l3c", dependencies.start_date, dependencies.end_date,
-                                              self.input_metadata.version, "sci")
+                                              self.input_metadata.version, "sw-profile")
 
         try:
             l3b_data, l3c_data = generate_l3bc(replace(dependencies, l3a_data=filtered_days))

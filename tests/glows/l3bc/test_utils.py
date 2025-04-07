@@ -249,7 +249,6 @@ class TestUtils(unittest.TestCase):
                           0, 10, 20, 30, 40, 50, 60, 70, 80, 90],
                          l3b_data_with_fill['ion_rate_profile']['lat_grid'])
 
-        self.assertEqual("2025-01-02T00:00:00", l3b_data_with_fill['date'])
         self.assertEqual(2091, l3b_data_with_fill['CR'])
 
         np.testing.assert_array_equal(l3b_data_with_fill['uv_anisotropy_factor'],

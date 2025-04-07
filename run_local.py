@@ -287,7 +287,7 @@ def run_glows_l3bc():
 
     dependencies = GlowsL3BCDependencies(l3a_data=l3a_data, external_files=external_files,
                                          ancillary_files=ancillary_files, carrington_rotation_number=cr,
-                                         start_date=datetime(2025, 4, 3), end_date=datetime(2025, 4, 4))
+                                         start_date=datetime(2009, 12, 20), end_date=datetime(2009, 12, 21))
 
     upstream_dependencies = [
         UpstreamDataDependency(input_metadata.instrument,
