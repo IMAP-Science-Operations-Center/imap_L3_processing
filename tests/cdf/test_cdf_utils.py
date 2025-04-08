@@ -175,6 +175,7 @@ class TestDataProduct(DataProduct):
                                        datetime(year=2025, month=5, day=12), "v003")
 
         self.input_metadata = input_metadata.to_upstream_data_dependency("descriptor")
+        self.parent_file_names = []
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [

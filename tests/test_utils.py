@@ -13,9 +13,8 @@ from imap_l3_processing.models import UpstreamDataDependency
 from imap_l3_processing.swapi.l3a.models import SwapiL3AlphaSolarWindData
 from imap_l3_processing.utils import format_time, download_dependency, read_l1d_mag_data, save_data, \
     download_external_dependency, download_dependency_from_path, download_dependency_with_repointing
-from tests.cdf.test_cdf_utils import TestDataProduct
-    download_external_dependency, download_dependency_from_path
 from imap_l3_processing.version import VERSION
+from tests.cdf.test_cdf_utils import TestDataProduct
 
 
 class TestUtils(TestCase):
