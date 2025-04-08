@@ -238,11 +238,18 @@ class TestUtils(unittest.TestCase):
             'pipeline_settings': get_test_instrument_team_data_path(
                 'glows/imap_glows_pipeline-settings-L3bc_v001.json'),
         }
+        external_files = Mock()
 
-        dependencies = GlowsL3BCDependencies(l3a_data=Mock(), external_files=Mock(),
+        dependencies = GlowsL3BCDependencies(l3a_data=Mock(), external_files=external_files,
                                              ancillary_files=ancillary_files, carrington_rotation_number=cr,
                                              start_date=datetime(2025, 1, 1), end_date=datetime(2025, 1, 3))
         l3b_data_with_fill = make_l3b_data_with_fill(dependencies)
+
+        self.assertEqual({
+            'ancillary_data_files': ancillary_files,
+            'external_dependeciens': external_files,
+            'l3a_input_files_name': [],
+        }, l3b_data_with_fill['header'])
 
         num_lat_grid_values = 19
         self.assertEqual([-90, -80, -70, -60, -50, -40, -30, -20, -10,

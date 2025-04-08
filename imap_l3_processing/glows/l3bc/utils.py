@@ -152,6 +152,11 @@ def archive_dependencies(cr_to_process: CRToProcess, version: str,
 
 def make_l3b_data_with_fill(dependencies: GlowsL3BCDependencies):
     model = {}
+    model['header'] = {
+        'ancillary_data_files': dependencies.ancillary_files,
+        'external_dependeciens': dependencies.external_files,
+        'l3a_input_files_name': []
+    }
     uv_anisotropy_file = dependencies.ancillary_files['uv_anisotropy']
     model['ion_rate_profile'] = {}
     model['CR'] = dependencies.carrington_rotation_number
