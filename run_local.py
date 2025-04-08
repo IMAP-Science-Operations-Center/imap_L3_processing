@@ -446,10 +446,10 @@ if __name__ == "__main__":
         elif "l3bc" in sys.argv:
             run_glows_l3bc()
         else:
-            cdf_data = CDF("tests/test_data/glows/imap_glows_l2_hist_20130908_v003.cdf")
+            cdf_data = CDF("tests/test_data/glows/imap_glows_l2_hist_20130908-repoint00001_v003.cdf")
             l2_glows_data = read_l2_glows_data(cdf_data)
 
-            dependencies = GlowsL3ADependencies(l2_glows_data, {
+            dependencies = GlowsL3ADependencies(l2_glows_data, 5, {
                 "calibration_data": Path(
                     "instrument_team_data/glows/imap_glows_l3a_calibration-data-text-not-cdf_20250707_v002.cdf"),
                 "settings": Path(

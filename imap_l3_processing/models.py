@@ -2,7 +2,7 @@ import abc
 import ctypes
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Union
+from typing import Union, Optional
 
 import numpy as np
 
@@ -17,10 +17,11 @@ class InputMetadata:
     end_date: datetime
     version: str
     descriptor: str = ""
+    repointing: Optional[int] = None
 
     def to_upstream_data_dependency(self, descriptor: str):
         return UpstreamDataDependency(self.instrument, self.data_level, self.start_date, self.end_date, self.version,
-                                      descriptor)
+                                      descriptor, self.repointing)
 
 
 @dataclass

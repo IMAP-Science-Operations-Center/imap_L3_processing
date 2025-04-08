@@ -107,7 +107,7 @@ class TestUtils(unittest.TestCase):
         for path in [pathname, Path(pathname)]:
             with self.subTest(path=path):
                 result = read_hi_l1c_data(path)
-                np.testing.assert_array_equal(epoch, result.epoch)
+                self.assertEqual(epoch[0], result.epoch)
                 np.testing.assert_array_equal(exposure_times, result.exposure_times)
                 np.testing.assert_array_equal(energy_step, result.esa_energy_step)
 
@@ -116,7 +116,7 @@ class TestUtils(unittest.TestCase):
         result = read_hi_l1c_data(path)
 
         with CDF(str(path)) as cdf:
-            np.testing.assert_array_equal(result.epoch, cdf['epoch'])
+            self.assertEqual(result.epoch, cdf['epoch'][0])
             np.testing.assert_array_equal(result.esa_energy_step, cdf['esa_energy_step'])
             np.testing.assert_array_equal(result.exposure_times, np.full_like(cdf['exposure_times'], np.nan))
 
@@ -141,7 +141,7 @@ class TestUtils(unittest.TestCase):
             with self.subTest(path=path):
                 result = read_glows_l3e_data(path)
 
-                np.testing.assert_array_equal(epoch, result.epoch)
+                self.assertEqual(epoch[0], result.epoch)
                 np.testing.assert_array_equal(energy, result.energy)
                 np.testing.assert_array_equal(spin_angle, result.spin_angle)
                 np.testing.assert_array_equal(probability_of_survival, result.probability_of_survival)
@@ -151,7 +151,7 @@ class TestUtils(unittest.TestCase):
         result = read_glows_l3e_data(path)
 
         with CDF(str(path)) as cdf:
-            np.testing.assert_array_equal(result.epoch, cdf['epoch'])
+            self.assertEqual(result.epoch, cdf['epoch'][0])
             np.testing.assert_array_equal(result.energy, np.full_like(cdf['energy'], np.nan))
             np.testing.assert_array_equal(result.spin_angle, np.full_like(cdf['spin_angle'], np.nan))
             np.testing.assert_array_equal(result.probability_of_survival,

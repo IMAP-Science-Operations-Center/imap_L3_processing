@@ -9,8 +9,8 @@ from imap_processing.ena_maps.ena_maps import RectangularPointingSet, Rectangula
 from imap_processing.ena_maps.utils.coordinates import CoordNames
 from imap_processing.spice import geometry
 from imap_processing.spice.geometry import SpiceFrame
-from numpy.random import geometric
 
+from imap_l3_processing.hi.l3.models import HiL1cData, GlowsL3eData
 from imap_l3_processing.hi.l3.science.survival_probability import Sensor, \
     HiSurvivalProbabilitySkyMap, HiSurvivalProbabilityPointingSet
 
@@ -20,38 +20,18 @@ class TestSurvivalProbability(unittest.TestCase):
         self.num_energies = 2
         self.epoch = datetime.now()
 
-        self.l1c_hi_dataset = xr.Dataset({
-            "exposure_times": (
-                [
-                    "epoch",
-                    "esa_energy_step",
-                    "hi_pset_spin_angle_bin"
-                ],
-                np.arange(self.num_energies * 3600).reshape((1, self.num_energies, 3600)) + 1.1
-            ),
-        },
-            coords={
-                "epoch": [self.epoch],
-                "esa_energy_step": np.geomspace(1, 10000, self.num_energies),
-                "hi_pset_spin_angle_bin": np.arange(0, 360, 0.1) + 0.05,
-            }
+        self.l1c_hi_dataset = HiL1cData(
+            epoch=self.epoch,
+            exposure_times=np.arange(self.num_energies * 3600).reshape((1, self.num_energies, 3600)) + 1.1,
+            esa_energy_step=np.geomspace(1, 10000, self.num_energies),
         )
 
-        self.glows_data = xr.Dataset({
-            "probability_of_survival": (
-                [
-                    "epoch",
-                    "energy",
-                    "spin_angle_bin"
-                ],
-                np.arange((self.num_energies + 1) * 360).reshape((1, self.num_energies + 1, 360)) + 5.4,
-            )
-        },
-            coords={
-                "epoch": [self.epoch],
-                "energy": np.geomspace(1, 10000, self.num_energies + 1),
-                "spin_angle_bin": np.arange(0, 360, 1) + 0.5,
-            })
+        self.glows_data = GlowsL3eData(
+            epoch=self.epoch,
+            energy=np.geomspace(1, 10000, self.num_energies + 1),
+            spin_angle=np.arange(0, 360, 1) + 0.5,
+            probability_of_survival=np.arange((self.num_energies + 1) * 360).reshape(
+                (1, self.num_energies + 1, 360)) + 5.4)
 
     @patch('imap_l3_processing.hi.l3.science.survival_probability.PointingSet.__init__')
     def test_survival_probability_pointing_set_calls_parent_constructor(self,
@@ -76,18 +56,18 @@ class TestSurvivalProbability(unittest.TestCase):
                 self.assertIn("exposure", pointing_set.data.data_vars)
                 np.testing.assert_array_equal(
                     pointing_set.data["exposure"].values,
-                    self.l1c_hi_dataset["exposure_times"].values)
+                    self.l1c_hi_dataset.exposure_times)
 
                 self.assertIn(CoordNames.AZIMUTH_L1C.value, pointing_set.data.coords)
                 np.testing.assert_array_equal(np.arange(0, 360, 0.1) + 0.05,
                                               pointing_set.data[CoordNames.AZIMUTH_L1C.value].values)
 
                 self.assertIn(CoordNames.ENERGY.value, pointing_set.data.coords)
-                np.testing.assert_array_equal(self.l1c_hi_dataset["esa_energy_step"].values,
+                np.testing.assert_array_equal(self.l1c_hi_dataset.esa_energy_step,
                                               pointing_set.data[CoordNames.ENERGY.value].values)
 
                 self.assertIn(CoordNames.TIME.value, pointing_set.data.coords)
-                np.testing.assert_array_equal(self.l1c_hi_dataset["epoch"].values,
+                np.testing.assert_array_equal(np.array([self.l1c_hi_dataset.epoch]).astype(np.datetime64),
                                               pointing_set.data[CoordNames.TIME.value].values)
 
                 np.testing.assert_array_equal(pointing_set.az_el_points[:, 0],
@@ -96,9 +76,9 @@ class TestSurvivalProbability(unittest.TestCase):
                 np.testing.assert_array_equal(pointing_set.az_el_points[:, 1], np.repeat(expected_sensor_angle, 3600))
 
     def test_exposure_weighting_with_interpolated_survival_probabilities(self):
-        self.l1c_hi_dataset = self.l1c_hi_dataset.assign_coords(esa_energy_step=np.array([10, 10_000]))
-        self.glows_data = self.glows_data.assign_coords(energy=np.array([1, 100, 100_000]))
-        self.glows_data["probability_of_survival"].values[0, :, 0] = [2, 4, 7]
+        self.l1c_hi_dataset.esa_energy_step = np.array([10, 10_000])
+        self.glows_data.energy = np.array([1, 100, 100_000])
+        self.glows_data.probability_of_survival[0, :, 0] = [2, 4, 7]
 
         expected_interpolated_survival_probabilities = np.array([3, 6])
 
@@ -109,14 +89,13 @@ class TestSurvivalProbability(unittest.TestCase):
         self.assertEqual((1, self.num_energies, 3600),
                          pointing_set.data["survival_probability_times_exposure"].values.shape)
 
-        survivals = pointing_set.data["survival_probability_times_exposure"].values / self.l1c_hi_dataset[
-            "exposure_times"].values
+        survivals = pointing_set.data["survival_probability_times_exposure"].values / self.l1c_hi_dataset.exposure_times
         every_tenth_value = survivals[:, :, ::10, np.newaxis]
         groups_of_ten = survivals.reshape(1, self.num_energies, 360, 10)
         self.assertTrue(np.all(np.isclose(every_tenth_value, groups_of_ten)))
 
         np.testing.assert_array_equal(
-            expected_interpolated_survival_probabilities * self.l1c_hi_dataset["exposure_times"].values[0, :, 0],
+            expected_interpolated_survival_probabilities * self.l1c_hi_dataset.exposure_times[0, :, 0],
             pointing_set.data["survival_probability_times_exposure"].values[0, :, 0])
 
     @patch('imap_l3_processing.hi.l3.science.survival_probability.RectangularSkyMap.project_pset_values_to_map')

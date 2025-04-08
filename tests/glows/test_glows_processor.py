@@ -12,22 +12,23 @@ import numpy as np
 from imap_l3_processing.constants import CARRINGTON_ROTATION_IN_NANOSECONDS
 from imap_l3_processing.glows.descriptors import GLOWS_L2_DESCRIPTOR
 from imap_l3_processing.glows.glows_processor import GlowsProcessor
-from imap_l3_processing.glows.l3a.utils import create_glows_l3a_dictionary_from_cdf
+from imap_l3_processing.glows.l3a.utils import create_glows_l3a_dictionary_from_cdf, create_glows_l3a_from_dictionary
 from imap_l3_processing.glows.l3bc.cannot_process_carrington_rotation_error import CannotProcessCarringtonRotationError
 from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDependencies
 from imap_l3_processing.glows.l3bc.models import GlowsL3BIonizationRate
 from imap_l3_processing.models import UpstreamDataDependency, InputMetadata
-from tests.test_helpers import get_test_instrument_team_data_path, get_test_data_path
+from tests.test_helpers import get_test_instrument_team_data_path, get_test_data_path, get_test_data_folder, \
+    assert_dataclass_fields
 
 
 class TestGlowsProcessor(unittest.TestCase):
 
     @patch("imap_l3_processing.glows.glows_processor.GlowsInitializer")
     @patch('imap_l3_processing.glows.glows_processor.GlowsL3ADependencies')
-    @patch('imap_l3_processing.glows.glows_processor.GlowsProcessor.process_l3a')
+    @patch('imap_l3_processing.glows.glows_processor.L3aData')
     @patch('imap_l3_processing.glows.glows_processor.save_data')
     @patch('imap_l3_processing.glows.glows_processor.imap_data_access.upload')
-    def test_processor_handles_l3a(self, mock_upload, mock_save_data, mock_process_l3a_method,
+    def test_processor_handles_l3a(self, mock_upload, mock_save_data, mock_L3aData,
                                    mock_glows_dependencies_class, mock_glows_initializer):
         instrument = 'glows'
         incoming_data_level = 'l2'
@@ -40,7 +41,12 @@ class TestGlowsProcessor(unittest.TestCase):
         outgoing_version = 'v02'
 
         mock_fetched_dependencies = mock_glows_dependencies_class.fetch_dependencies.return_value
-        mock_light_curve = mock_process_l3a_method.return_value
+        mock_fetched_dependencies.ancillary_files = {"settings": get_test_instrument_team_data_path(
+            "glows/imap_glows_l3a_pipeline-settings-json-not-cdf_20250707_v002.cdf")}
+        mock_fetched_dependencies.repointing = 5
+        l3a_json_path = get_test_data_folder() / "glows" / "imap_glows_l3a_20130908085214_orbX_modX_p_v00.json"
+        with open(l3a_json_path) as f:
+            mock_L3aData.return_value.data = json.load(f)
         mock_cdf_path = mock_save_data.return_value
 
         input_metadata = InputMetadata(instrument, outgoing_data_level, start_date, end_date,
@@ -56,8 +62,12 @@ class TestGlowsProcessor(unittest.TestCase):
         processor.process()
         mock_glows_initializer.assert_not_called()
         mock_glows_dependencies_class.fetch_dependencies.assert_called_with(dependencies)
-        mock_process_l3a_method.assert_called_with(mock_fetched_dependencies)
-        mock_save_data.assert_called_with(mock_light_curve)
+        expected_data_to_save = create_glows_l3a_from_dictionary(
+            mock_L3aData.return_value.data, input_metadata.to_upstream_data_dependency(
+                descriptor))
+        expected_data_to_save.input_metadata.repointing = mock_fetched_dependencies.repointing
+        actual_data = mock_save_data.call_args.args[0]
+        assert_dataclass_fields(expected_data_to_save, actual_data)
         mock_upload.assert_called_with(mock_cdf_path)
 
     @patch('imap_l3_processing.glows.glows_processor.create_glows_l3a_from_dictionary')
