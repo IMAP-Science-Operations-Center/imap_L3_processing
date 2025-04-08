@@ -90,7 +90,6 @@ class TestImapL3DataProcessor(TestCase):
         mock_argument_parser.parse_args.return_value.start_date = start_date_argument
         mock_argument_parser.parse_args.return_value.version = version_argument
 
-        print(mock_argument_parser.parse_args.return_value.dependency)
         mock_processor = mock_processor_class.return_value
 
         for input_end_date, expected_end_date, data_level, descriptor in cases:
