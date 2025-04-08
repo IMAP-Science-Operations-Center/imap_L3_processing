@@ -1,0 +1,1 @@
+echo "VERSION='$( git rev-list --count HEAD ):$( git rev-parse HEAD )'" > imap_l3_processing/version.py

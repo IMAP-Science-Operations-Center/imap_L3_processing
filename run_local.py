@@ -24,7 +24,7 @@ from imap_l3_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependen
 from imap_l3_processing.glows.l3a.utils import read_l2_glows_data, create_glows_l3a_dictionary_from_cdf
 from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDependencies
 from imap_l3_processing.hi.hi_processor import HiProcessor
-from imap_l3_processing.hi.l3.hi_l3_dependencies import HiL3Dependencies
+from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3SpectralFitDependencies
 from imap_l3_processing.hi.l3.science.survival_probability import HiSurvivalProbabilitySkyMap, \
     HiSurvivalProbabilityPointingSet, Sensor
 from imap_l3_processing.hit.l3.hit_l3_sectored_dependencies import HITL3SectoredDependencies
@@ -171,7 +171,7 @@ def create_swe_product_with_fake_spice(dependencies: SweL3Dependencies, mock_spi
     return cdf_path
 
 
-def create_hi_cdf(dependencies: HiL3Dependencies) -> str:
+def create_hi_cdf(dependencies: HiL3SpectralFitDependencies) -> str:
     input_metadata = InputMetadata(instrument="hi",
                                    data_level="l3",
                                    start_date=datetime.now(),
@@ -287,7 +287,8 @@ def run_glows_l3bc():
 
     dependencies = GlowsL3BCDependencies(l3a_data=l3a_data, external_files=external_files,
                                          ancillary_files=ancillary_files, carrington_rotation_number=cr,
-                                         start_date=datetime(2025, 4, 3), end_date=datetime(2025, 4, 4))
+                                         start_date=datetime(2009, 12, 20), end_date=datetime(2009, 12, 21),
+                                         zip_file_path=Path("fake/path/to/file.zip"))
 
     upstream_dependencies = [
         UpstreamDataDependency(input_metadata.instrument,
@@ -301,7 +302,10 @@ def run_glows_l3bc():
 
     l3b_data_product, l3c_data_product = processor.process_l3bc(dependencies)
 
-    print(save_data(l3b_data_product, delete_if_present=True))
+    l3b_cdf = save_data(l3b_data_product, delete_if_present=True)
+    print(l3b_cdf)
+
+    l3c_data_product.parent_file_names.append(Path(l3b_cdf).name)
     print(save_data(l3c_data_product, delete_if_present=True))
 
 
@@ -514,7 +518,7 @@ if __name__ == "__main__":
             cdf["flux"].attrs["CATDESC"] = args.description
 
     if "hi" in sys.argv:
-        dependencies = HiL3Dependencies.from_file_paths(
+        dependencies = HiL3SpectralFitDependencies.from_file_paths(
             get_test_data_path("hi45-zirnstein-mondel-6months.cdf")
         )
         print(create_hi_cdf(dependencies))

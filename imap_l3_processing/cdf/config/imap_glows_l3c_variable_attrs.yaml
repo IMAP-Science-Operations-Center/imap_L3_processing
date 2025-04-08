@@ -23,11 +23,11 @@ epoch_delta:
    NAME: epoch_delta
    DATA_TYPE: CDF_INT8
    CATDESC: Time bin of half a carrington rotation
-   DEPEND_0: ' '
+   DEPEND_0: epoch
    VAR_TYPE: support_data
    RECORD_VARYING: RV
    FIELDNAM: Epoch delta
-   FORMAT: ' '
+   FORMAT: I19
    LABLAXIS: Epoch delta
    UNITS: ns
    VALIDMIN: 0
@@ -38,7 +38,7 @@ cr:
    NAME: cr
    DATA_TYPE: CDF_INT2
    CATDESC: Carrington rotation number
-   DEPEND_0: ' '
+   DEPEND_0: epoch
    VAR_TYPE: support_data
    RECORD_VARYING: RV
    FIELDNAM: Carrington rotation
@@ -117,7 +117,7 @@ proton_density_ecliptic:
    DISPLAY_TYPE: time_series
    VARIABLE_PURPOSE: primary var, summary
    FIELDNAM: Proton density
-   FORMAT: F9.3
+   FORMAT: F12.3
    LABLAXIS: Density
    UNITS: cm^-3
    VALIDMIN: 0
@@ -130,7 +130,7 @@ proton_density_ecliptic:
 alpha_abundance_ecliptic:
    NAME: alpha_abundance_ecliptic
    DATA_TYPE: CDF_FLOAT
-   CATDESC: Averaged α-particles to protons ratio in the ecliptic plane
+   CATDESC: Averaged alpha-particles to protons ratio in the ecliptic plane
    DEPEND_0: epoch
    VAR_TYPE: data
    RECORD_VARYING: RV
@@ -179,7 +179,7 @@ proton_density_profile:
    DISPLAY_TYPE: spectrogram
    VARIABLE_PURPOSE: primary var, summary
    FIELDNAM: Proton density
-   FORMAT: F9.3
+   FORMAT: F12.3
    LABLAXIS: Density
    UNITS: cm^-3
    VALIDMIN: 0

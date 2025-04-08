@@ -14,6 +14,8 @@ from imap_l3_processing.swapi.l3a.models import SwapiL3AlphaSolarWindData
 from imap_l3_processing.utils import format_time, download_dependency, read_l1d_mag_data, save_data, \
     download_external_dependency, download_dependency_from_path, download_dependency_with_repointing
 from tests.cdf.test_cdf_utils import TestDataProduct
+    download_external_dependency, download_dependency_from_path
+from imap_l3_processing.version import VERSION
 
 
 class TestUtils(TestCase):
@@ -41,7 +43,8 @@ class TestUtils(TestCase):
         data_product = SwapiL3AlphaSolarWindData(input_metadata=input_metadata, epoch=epoch,
                                                  alpha_sw_speed=alpha_sw_speed,
                                                  alpha_sw_temperature=alpha_sw_temperature,
-                                                 alpha_sw_density=alpha_sw_density)
+                                                 alpha_sw_density=alpha_sw_density,
+                                                 parent_file_names=sentinel.parent_files)
         returned_file_path = save_data(data_product)
 
         mock_write_cdf.assert_called_once()
@@ -57,7 +60,9 @@ class TestUtils(TestCase):
             call("Data_version", "2"),
             call("Generation_date", "20240916"),
             call("Logical_source", "imap_swapi_l2_descriptor"),
-            call("Logical_file_id", "imap_swapi_l2_descriptor_20240917_v2")
+            call("Logical_file_id", "imap_swapi_l2_descriptor_20240917_v2"),
+            call("ground_software_version", VERSION),
+            call("Parents", sentinel.parent_files),
         ])
 
         actual_attribute_manager.add_instrument_attrs.assert_called_with(
@@ -93,6 +98,36 @@ class TestUtils(TestCase):
         ])
 
         self.assertEqual(expected_file_path, returned_file_path)
+
+    @patch("imap_l3_processing.utils.ImapAttributeManager")
+    @patch("imap_l3_processing.utils.date")
+    @patch("imap_l3_processing.utils.write_cdf")
+    def test_save_data_does_not_add_parent_attribute_if_empty(self, mock_write_cdf, mock_today, _):
+        mock_today.today.return_value = date(2024, 9, 16)
+
+        input_metadata = UpstreamDataDependency("swapi", "l2", datetime(2024, 9, 17), datetime(2024, 9, 18), "v2",
+                                                "descriptor")
+        epoch = np.array([1, 2, 3])
+        alpha_sw_speed = np.array([4, 5, 6])
+        alpha_sw_density = np.array([5, 5, 5])
+        alpha_sw_temperature = np.array([4, 3, 5])
+
+        data_product = SwapiL3AlphaSolarWindData(input_metadata=input_metadata, epoch=epoch,
+                                                 alpha_sw_speed=alpha_sw_speed,
+                                                 alpha_sw_temperature=alpha_sw_temperature,
+                                                 alpha_sw_density=alpha_sw_density)
+        returned_file_path = save_data(data_product)
+
+        mock_write_cdf.assert_called_once()
+        actual_attribute_manager = mock_write_cdf.call_args.args[2]
+
+        self.assertEqual([
+            call("Data_version", "2"),
+            call("Generation_date", "20240916"),
+            call("Logical_source", "imap_swapi_l2_descriptor"),
+            call("Logical_file_id", "imap_swapi_l2_descriptor_20240917_v2"),
+            call("ground_software_version", VERSION)
+        ], actual_attribute_manager.add_global_attribute.call_args_list)
 
     @patch("imap_l3_processing.utils.ImapAttributeManager")
     @patch("imap_l3_processing.utils.date")
