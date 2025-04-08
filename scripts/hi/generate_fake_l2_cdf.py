@@ -28,9 +28,10 @@ end_date = max(dates)
 template_map_cdf = Path(args.template) if args.template is not None else get_test_data_path(
     "hi/IMAP_HI_90_maps_20000101_v02.cdf")
 
-filename = f"imap_hi_45sensor-spacecraft-map_{start_date.strftime("%Y%m%d")}_{end_date.strftime("%Y%m%d")}_v001.cdf"
+filename = f"imap_hi_45sensor-spacecraft-full-2deg-map_{start_date.strftime("%Y%m%d")}_{end_date.strftime("%Y%m%d")}_v001.cdf"
 file_path = get_test_data_path("hi/fake_l2_maps") / filename
 
 with CDF(str(file_path), masterpath=str(template_map_cdf)) as cdf:
     cdf.attrs["parents"] = ",".join(l1c_files)
     cdf["epoch"] = [start_date + (end_date - start_date) / 2]
+    cdf["variance"].attrs["FILLVAL"] = -1e31

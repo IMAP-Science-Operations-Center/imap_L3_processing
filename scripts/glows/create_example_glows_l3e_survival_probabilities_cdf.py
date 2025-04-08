@@ -34,6 +34,10 @@ def create_survival_probabilities_file(glows_file_path: Path, date_for_file: dat
         c.new("spin_angle", spin_angles, pycdf.const.CDF_FLOAT, recVary=False)
         c.new("probability_of_survival", np.array(survival_probabilities)[np.newaxis, ...], pycdf.const.CDF_FLOAT)
 
+        c["energy"].attrs["FILLVAL"] = -1e31
+        c["spin_angle"].attrs["FILLVAL"] = -1e31
+        c["probability_of_survival"].attrs["FILLVAL"] = -1e31
+
     return survival_probabilities
 
 

@@ -216,7 +216,7 @@ class TestHiProcessor(unittest.TestCase):
         mock_survival_skymap.return_value.to_dataset.assert_called_once_with()
 
         mock_data_product_class.assert_called_once_with(
-            input_metadata=input_metadata,
+            input_metadata=input_metadata.to_upstream_data_dependency(input_metadata.descriptor),
             epoch=input_map.epoch,
             energy=input_map.energy,
             energy_deltas=input_map.energy_deltas,

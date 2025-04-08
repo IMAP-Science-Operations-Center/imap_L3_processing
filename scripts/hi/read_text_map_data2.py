@@ -25,8 +25,8 @@ for folder in parent.iterdir():
             data[sub_folder.name][energy] = np.loadtxt(file, delimiter=",")
     assert (data['flux'].keys() == data['sigma'].keys())
     energy = np.array([key for key in sorted(data['flux'].keys())])
-    flux = np.array([data['flux'][key] for key in sorted(data['flux'].keys())]).T
-    sigma = np.array([data['sigma'][key] for key in sorted(data['sigma'].keys())]).T
+    flux = np.array([data['flux'][key] for key in sorted(data['flux'].keys())])
+    sigma = np.array([data['sigma'][key] for key in sorted(data['sigma'].keys())])
     variance = sigma ** 2
 
     flux = flux.reshape(1, *flux.shape)
@@ -60,5 +60,3 @@ for folder in parent.iterdir():
 
         for var in cdf:
             cdf[var].attrs['FILLVAL'] = 1e-31
-
-print("hello")
