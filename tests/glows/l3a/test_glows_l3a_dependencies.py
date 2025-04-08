@@ -9,10 +9,12 @@ from imap_l3_processing.models import UpstreamDataDependency
 
 class TestGlowsL3aDependencies(unittest.TestCase):
 
+    @patch('imap_l3_processing.glows.l3a.glows_l3a_dependencies.download_dependency_with_repointing')
     @patch('imap_l3_processing.glows.l3a.glows_l3a_dependencies.CDF')
     @patch('imap_l3_processing.glows.l3a.glows_l3a_dependencies.download_dependency')
     @patch('imap_l3_processing.glows.l3a.glows_l3a_dependencies.read_l2_glows_data')
-    def test_fetch_dependencies(self, mock_read_l2_glows_data, mock_download_dependency, mock_cdf_constructor):
+    def test_fetch_dependencies(self, mock_read_l2_glows_data, mock_download_dependency, mock_cdf_constructor,
+                                mock_download_dependency_with_repointing):
         ignored_dependency = UpstreamDataDependency("glows", "l2b", datetime(2023, 1, 1), datetime(2023, 2, 1),
                                                     "1",
                                                     descriptor="ignored-data")
@@ -39,12 +41,13 @@ class TestGlowsL3aDependencies(unittest.TestCase):
         extra_heliospheric_background = Path("extra_heliospheric_background.dat")
 
         mock_download_dependency.side_effect = [
-            cdf_path_name,
             calibration_data,
             extra_heliospheric_background,
             time_dependent_background_path,
             settings,
         ]
+
+        mock_download_dependency_with_repointing.return_value = (cdf_path_name, 2)
 
         result = GlowsL3ADependencies.fetch_dependencies([ignored_dependency, cdf_dependency])
 
@@ -59,9 +62,11 @@ class TestGlowsL3aDependencies(unittest.TestCase):
                          result.ancillary_files["time_dependent_bckgrd"])
         self.assertEqual(extra_heliospheric_background,
                          result.ancillary_files["extra_heliospheric_bckgrd"])
+        self.assertEqual(2, result.repointing)
+
+        mock_download_dependency_with_repointing.assert_called_once_with(cdf_dependency)
 
         self.assertEqual([
-            call(cdf_dependency),
             call(calibration_data_dependency),
             call(extra_heliospheric_background_dependency),
             call(time_dependent_background_dependency),

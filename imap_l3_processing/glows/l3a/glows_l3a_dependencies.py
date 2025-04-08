@@ -9,12 +9,13 @@ from imap_l3_processing.glows.descriptors import GLOWS_L2_DESCRIPTOR, GLOWS_TIME
 from imap_l3_processing.glows.l3a.models import GlowsL2Data
 from imap_l3_processing.glows.l3a.utils import read_l2_glows_data
 from imap_l3_processing.models import UpstreamDataDependency
-from imap_l3_processing.utils import download_dependency
+from imap_l3_processing.utils import download_dependency, download_dependency_with_repointing
 
 
 @dataclass
 class GlowsL3ADependencies:
     data: GlowsL2Data
+    repointing: int
     ancillary_files: dict[str, Path]
 
     @classmethod
@@ -22,10 +23,9 @@ class GlowsL3ADependencies:
         dependency = next(dep
                           for dep in dependencies if dep.descriptor.startswith(GLOWS_L2_DESCRIPTOR))
 
-        l2_cdf_path = download_dependency(dependency)
+        l2_cdf_path, repointing_number = download_dependency_with_repointing(dependency)
         cdf = CDF(str(l2_cdf_path))
         l2_glows_data = read_l2_glows_data(cdf)
-
         calibration_dependency = UpstreamDataDependency("glows", "l3a", None, None, "latest",
                                                         descriptor=GLOWS_CALIBRATION_DATA_DESCRIPTOR)
         time_dependent_background_dependency = UpstreamDataDependency("glows", "l3a", None,
@@ -49,4 +49,4 @@ class GlowsL3ADependencies:
             "time_dependent_bckgrd": time_dependent_background_path,
             "extra_heliospheric_bckgrd": extra_heliospheric_background,
         }
-        return cls(l2_glows_data, ancillary_files)
+        return cls(l2_glows_data, repointing_number, ancillary_files)
