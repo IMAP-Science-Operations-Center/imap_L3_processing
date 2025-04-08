@@ -1,3 +1,5 @@
+source scripts/update_version.sh
+
 if [[ "$1" == "swapi" ]]; then
 python imap_l3_data_processor.py --instrument swapi --data-level l3a --start-date 20250606 \
 --version v003 --dependency \

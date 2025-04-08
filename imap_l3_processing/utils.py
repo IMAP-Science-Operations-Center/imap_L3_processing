@@ -13,6 +13,7 @@ from imap_l3_processing.cdf.cdf_utils import write_cdf, read_variable
 from imap_l3_processing.cdf.imap_attribute_manager import ImapAttributeManager
 from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
 from imap_l3_processing.models import UpstreamDataDependency, DataProduct, MagL1dData
+from imap_l3_processing.version import VERSION
 
 
 def load_spice_kernels():
@@ -38,6 +39,7 @@ def save_data(data: DataProduct, delete_if_present: bool = False, folder_path: s
     attribute_manager.add_global_attribute("Generation_date", date.today().strftime("%Y%m%d"))
     attribute_manager.add_global_attribute("Logical_source", logical_source)
     attribute_manager.add_global_attribute("Logical_file_id", logical_file_id)
+    attribute_manager.add_global_attribute("ground_software_version", VERSION)
     if data.parent_file_names:
         attribute_manager.add_global_attribute("Parents", data.parent_file_names)
     write_cdf(file_path, data, attribute_manager)

@@ -41,6 +41,7 @@ jobs:
           REPOSITORY: ${{ inputs.instrument_name}}-l3-repo
           IMAGE_TAG: latest
         run: |
+          source scripts/update_version.sh
           docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG \
             --build-arg GIT_URL=${{ inputs.git_url }} \
             -f Dockerfile .
