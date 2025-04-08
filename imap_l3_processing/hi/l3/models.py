@@ -75,3 +75,18 @@ class HiL3Data:
     lon: np.ndarray
     sensitivity: np.ndarray
     variance: np.ndarray
+
+
+@dataclass
+class HiL1cData:
+    epoch: np.ndarray
+    exposure_times: np.ndarray
+    esa_energy_step: np.ndarray
+
+
+@dataclass
+class GlowsL3eData:
+    epoch: np.ndarray
+    energy: np.ndarray
+    spin_angle: np.ndarray
+    probability_of_survival: np.ndarray
