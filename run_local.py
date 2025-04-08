@@ -287,7 +287,8 @@ def run_glows_l3bc():
 
     dependencies = GlowsL3BCDependencies(l3a_data=l3a_data, external_files=external_files,
                                          ancillary_files=ancillary_files, carrington_rotation_number=cr,
-                                         start_date=datetime(2009, 12, 20), end_date=datetime(2009, 12, 21))
+                                         start_date=datetime(2009, 12, 20), end_date=datetime(2009, 12, 21),
+                                         zip_file_path=Path("fake/path/to/file.zip"))
 
     upstream_dependencies = [
         UpstreamDataDependency(input_metadata.instrument,
@@ -301,7 +302,10 @@ def run_glows_l3bc():
 
     l3b_data_product, l3c_data_product = processor.process_l3bc(dependencies)
 
-    print(save_data(l3b_data_product, delete_if_present=True))
+    l3b_cdf = save_data(l3b_data_product, delete_if_present=True)
+    print(l3b_cdf)
+
+    l3c_data_product.parent_file_names.append(Path(l3b_cdf).name)
     print(save_data(l3c_data_product, delete_if_present=True))
 
 

@@ -242,7 +242,9 @@ class TestUtils(unittest.TestCase):
 
         dependencies = GlowsL3BCDependencies(l3a_data=Mock(), external_files=external_files,
                                              ancillary_files=ancillary_files, carrington_rotation_number=cr,
-                                             start_date=datetime(2025, 1, 1), end_date=datetime(2025, 1, 3))
+                                             start_date=datetime(2025, 1, 1),
+                                             end_date=datetime(2025, 1, 3),
+                                             zip_file_path=Path("file.zip"))
         l3b_data_with_fill = make_l3b_data_with_fill(dependencies)
 
         self.assertEqual({

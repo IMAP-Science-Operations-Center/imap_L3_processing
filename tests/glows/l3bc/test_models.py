@@ -162,7 +162,6 @@ class TestModels(CdfModelTestCase):
             "imap_glows_pipeline-settings-L3bc_v001.json",
             "imap_glows_uv-anisotropy-1CR_v001.json",
             "omni_2010.dat",
-            "imap_glows_l3b_cr_2091_v00.json",
         ], result.parent_file_names)
 
 

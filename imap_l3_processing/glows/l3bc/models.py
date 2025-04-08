@@ -121,7 +121,6 @@ class GlowsL3CSolarWind(DataProduct):
         parent_file_names = []
         parent_file_names += collect_file_names(model['header']['ancillary_data_files'])
         parent_file_names += collect_file_names(model['header']['external_dependeciens'])
-        parent_file_names += collect_file_names(model['header']['l3b_input_filename'])
         return cls(
             input_metadata=input_metadata,
             epoch=np.array([carrington_center_point]),
