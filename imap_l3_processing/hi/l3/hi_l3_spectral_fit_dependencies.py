@@ -6,7 +6,7 @@ from imap_l3_processing.hi.l3.utils import read_hi_l2_data
 from imap_l3_processing.models import UpstreamDataDependency
 from imap_l3_processing.utils import download_dependency
 
-HI_L3_DESCRIPTOR = "spectral-fit-index"
+HI_L3_SPECTRAL_FIT_DESCRIPTOR = "spectral-fit-index"
 
 
 @dataclass
@@ -18,7 +18,7 @@ class HiL3SpectralFitDependencies:
         try:
             hi_l3_dependency = next(
                 dependency for dependency in dependencies if dependency.instrument == "hi"
-                and dependency.descriptor == HI_L3_DESCRIPTOR)
+                and dependency.descriptor == HI_L3_SPECTRAL_FIT_DESCRIPTOR)
         except StopIteration:
             raise ValueError("Missing Hi dependency.")
 

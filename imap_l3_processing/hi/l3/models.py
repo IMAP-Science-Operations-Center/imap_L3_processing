@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime
 
 import numpy as np
 from spacepy import pycdf
@@ -79,14 +80,14 @@ class HiL3Data:
 
 @dataclass
 class HiL1cData:
-    epoch: np.ndarray
+    epoch: datetime
     exposure_times: np.ndarray
     esa_energy_step: np.ndarray
 
 
 @dataclass
 class GlowsL3eData:
-    epoch: np.ndarray
+    epoch: datetime
     energy: np.ndarray
     spin_angle: np.ndarray
     probability_of_survival: np.ndarray

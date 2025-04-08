@@ -61,9 +61,12 @@ class TestHiL3SurvivalDependencies(unittest.TestCase):
             mock_read_glows_l3e.assert_has_calls([call(path) for path in glows_file_paths])
 
             self.assertEqual(actual.l2_data, mock_read_hi_l2.return_value)
-            self.assertEqual(actual.pset_data, [(sentinel.l1c_data_1, sentinel.glows_data_1),
-                                                (sentinel.l1c_data_2, sentinel.glows_data_2),
-                                                (sentinel.l1c_data_3, sentinel.glows_data_3)])
+            self.assertEqual(actual.hi_l1c_data, [sentinel.l1c_data_1,
+                                                  sentinel.l1c_data_2,
+                                                  sentinel.l1c_data_3])
+            self.assertEqual(actual.glows_l3e_data, [sentinel.glows_data_1,
+                                                     sentinel.glows_data_2,
+                                                     sentinel.glows_data_3, ])
 
     @patch("imap_l3_processing.hi.l3.hi_l3_survival_dependencies.imap_data_access.query")
     def test_find_glows_l3e_dependencies(self, mock_data_access_query):

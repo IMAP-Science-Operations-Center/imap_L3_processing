@@ -27,13 +27,13 @@ def read_hi_l2_data(cdf_path) -> HiL3Data:
 
 def read_hi_l1c_data(path: Union[Path, str]) -> HiL1cData:
     with CDF(str(path)) as cdf:
-        return HiL1cData(epoch=cdf["epoch"][...], exposure_times=read_variable(cdf["exposure_times"]),
+        return HiL1cData(epoch=cdf["epoch"][0], exposure_times=read_variable(cdf["exposure_times"]),
                          esa_energy_step=cdf["esa_energy_step"][...])
 
 
 def read_glows_l3e_data(cdf_path: Union[Path, str]) -> GlowsL3eData:
     with CDF(str(cdf_path)) as cdf:
-        return GlowsL3eData(epoch=cdf["epoch"][...],
+        return GlowsL3eData(epoch=cdf["epoch"][0],
                             energy=read_variable(cdf["energy"]),
                             spin_angle=read_variable(cdf["spin_angle"]),
                             probability_of_survival=read_variable(cdf["probability_of_survival"]))
