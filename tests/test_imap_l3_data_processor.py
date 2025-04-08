@@ -2,6 +2,9 @@ from datetime import datetime
 from unittest import TestCase
 from unittest.mock import patch, call
 
+from imap_data_access.processing_input import ProcessingInputType, ScienceInput, ProcessingInputCollection, \
+    AncillaryInput
+
 from imap_l3_data_processor import imap_l3_processor
 from imap_l3_processing.models import InputMetadata, UpstreamDataDependency
 
@@ -18,15 +21,14 @@ class TestImapL3DataProcessor(TestCase):
         start_date_argument = "20160630"
         version_argument = "v092"
         descriptor_argument = "proton"
-        dependencies_argument = (
-            "[{'instrument':'not_swapi', 'data_level':'l1000', 'descriptor':'science', 'version':'v112',"
-            "'start_date':'20250101'}]")
+        science_input = ScienceInput("imap_swapi_l3a_science_20250101_v112.cdf")
+        imap_data_access_dependency = ProcessingInputCollection(science_input)
 
         mock_argument_parser = mock_argparse.ArgumentParser.return_value
 
         mock_argument_parser.parse_args.return_value.instrument = instrument_argument
         mock_argument_parser.parse_args.return_value.data_level = data_level_argument
-        mock_argument_parser.parse_args.return_value.dependency = dependencies_argument
+        mock_argument_parser.parse_args.return_value.dependency = imap_data_access_dependency.serialize()
         mock_argument_parser.parse_args.return_value.start_date = start_date_argument
         mock_argument_parser.parse_args.return_value.version = version_argument
         mock_argument_parser.parse_args.return_value.version = version_argument
@@ -53,10 +55,10 @@ class TestImapL3DataProcessor(TestCase):
                          help="Upload completed output files to the IMAP SDC.")
                 ])
 
-                expected_input_dependencies = [UpstreamDataDependency("not_swapi",
-                                                                      "l1000",
+                expected_input_dependencies = [UpstreamDataDependency("swapi",
+                                                                      "l3a",
                                                                       datetime(2025, 1, 1),
-                                                                      None,
+                                                                      datetime(2025, 1, 1),
                                                                       "v112",
                                                                       "science")]
 
@@ -78,17 +80,17 @@ class TestImapL3DataProcessor(TestCase):
         instrument_argument = "glows"
         start_date_argument = "20160630"
         version_argument = "v092"
-        dependencies_argument = (
-            "[{'instrument':'not_swapi', 'data_level':'l1000', 'descriptor':'science', 'version':'v112',"
-            "'start_date':'20250101','end_date':'20250202'}]")
+        science_input = ScienceInput("imap_glows_l1_science_20250101_v112.cdf")
+        imap_data_access_dependency = ProcessingInputCollection(science_input)
 
         mock_argument_parser = mock_argparse.ArgumentParser.return_value
 
         mock_argument_parser.parse_args.return_value.instrument = instrument_argument
-        mock_argument_parser.parse_args.return_value.dependency = dependencies_argument
+        mock_argument_parser.parse_args.return_value.dependency = imap_data_access_dependency.serialize()
         mock_argument_parser.parse_args.return_value.start_date = start_date_argument
         mock_argument_parser.parse_args.return_value.version = version_argument
 
+        print(mock_argument_parser.parse_args.return_value.dependency)
         mock_processor = mock_processor_class.return_value
 
         for input_end_date, expected_end_date, data_level, descriptor in cases:
@@ -112,10 +114,10 @@ class TestImapL3DataProcessor(TestCase):
                          help="Upload completed output files to the IMAP SDC.")
                 ])
 
-                expected_input_dependencies = [UpstreamDataDependency("not_swapi",
-                                                                      "l1000",
+                expected_input_dependencies = [UpstreamDataDependency("glows",
+                                                                      "l1",
                                                                       datetime(2025, 1, 1),
-                                                                      datetime(2025, 2, 2),
+                                                                      datetime(2025, 1, 1),
                                                                       "v112",
                                                                       "science")]
 
@@ -136,15 +138,14 @@ class TestImapL3DataProcessor(TestCase):
         start_date_argument = "20160630"
         version_argument = "v092"
         descriptor_argument = "pitch-angle"
-        dependencies_argument = (
-            "[{'instrument':'swe', 'data_level':'l1000', 'descriptor':'science', 'version':'v112',"
-            "'start_date':'20250101','end_date':'20250202'}]")
+        science_input = ScienceInput("imap_swe_l1_science_20250101_v112.cdf")
+        imap_data_access_dependency = ProcessingInputCollection(science_input)
 
         mock_argument_parser = mock_argparse.ArgumentParser.return_value
 
         mock_argument_parser.parse_args.return_value.instrument = instrument_argument
         mock_argument_parser.parse_args.return_value.data_level = data_level_argument
-        mock_argument_parser.parse_args.return_value.dependency = dependencies_argument
+        mock_argument_parser.parse_args.return_value.dependency = imap_data_access_dependency.serialize()
         mock_argument_parser.parse_args.return_value.start_date = start_date_argument
         mock_argument_parser.parse_args.return_value.version = version_argument
         mock_argument_parser.parse_args.return_value.descriptor = descriptor_argument
@@ -171,11 +172,84 @@ class TestImapL3DataProcessor(TestCase):
                 ])
 
                 expected_input_dependencies = [UpstreamDataDependency("swe",
-                                                                      "l1000",
+                                                                      "l1",
                                                                       datetime(2025, 1, 1),
-                                                                      datetime(2025, 2, 2),
+                                                                      datetime(2025, 1, 1),
                                                                       "v112",
                                                                       "science")]
+
+                expected_input_metadata = InputMetadata("swe", "l3", datetime(year=2016, month=6, day=30),
+                                                        expected_end_date, "v092", "pitch-angle")
+
+                mock_processor_class.assert_called_with(expected_input_dependencies, expected_input_metadata)
+
+                mock_processor.process.assert_called()
+
+    @patch('imap_l3_data_processor.SweProcessor')
+    @patch('imap_l3_data_processor.argparse')
+    def test_only_uses_science_files_as_input(self, mock_argparse, mock_processor_class):
+        cases = [("20170630", datetime(2017, 6, 30)), (None, datetime(2016, 6, 30))]
+
+        instrument_argument = "swe"
+        data_level_argument = "l3"
+        start_date_argument = "20160630"
+        version_argument = "v092"
+        descriptor_argument = "pitch-angle"
+        science_input_1 = ScienceInput("imap_swe_l1_science_20250101_v112.cdf", "imap_swe_l1_science_20250102_v112.cdf")
+        science_input_2 = ScienceInput("imap_mag_l1_science_20250101_v112.cdf")
+        ancillary_input = AncillaryInput("imap_swe_ancillary_20250101_v112.cdf")
+        imap_data_access_dependency = ProcessingInputCollection(science_input_1, science_input_2, ancillary_input)
+
+        mock_argument_parser = mock_argparse.ArgumentParser.return_value
+
+        mock_argument_parser.parse_args.return_value.instrument = instrument_argument
+        mock_argument_parser.parse_args.return_value.data_level = data_level_argument
+        mock_argument_parser.parse_args.return_value.dependency = imap_data_access_dependency.serialize()
+        mock_argument_parser.parse_args.return_value.start_date = start_date_argument
+        mock_argument_parser.parse_args.return_value.version = version_argument
+        mock_argument_parser.parse_args.return_value.descriptor = descriptor_argument
+
+        mock_processor = mock_processor_class.return_value
+
+        for input_end_date, expected_end_date in cases:
+            with self.subTest(input_end_date):
+                mock_argument_parser.parse_args.return_value.end_date = input_end_date
+
+                imap_l3_processor()
+
+                parser = mock_argparse.ArgumentParser()
+                parser.add_argument.assert_has_calls([
+                    call("--instrument"),
+                    call("--data-level"),
+                    call("--descriptor"),
+                    call("--start-date"),
+                    call("--end-date", required=False),
+                    call("--version"),
+                    call("--dependency"),
+                    call("--upload-to-sdc", action="store_true", required=False,
+                         help="Upload completed output files to the IMAP SDC.")
+                ])
+
+                expected_input_dependencies = [
+                    UpstreamDataDependency("swe",
+                                           "l1",
+                                           datetime(2025, 1, 1),
+                                           datetime(2025, 1, 1),
+                                           "v112",
+                                           "science"),
+                    UpstreamDataDependency("swe",
+                                           "l1",
+                                           datetime(2025, 1, 2),
+                                           datetime(2025, 1, 2),
+                                           "v112",
+                                           "science"),
+                    UpstreamDataDependency("mag",
+                                           "l1",
+                                           datetime(2025, 1, 1),
+                                           datetime(2025, 1, 1),
+                                           "v112",
+                                           "science"),
+                ]
 
                 expected_input_metadata = InputMetadata("swe", "l3", datetime(year=2016, month=6, day=30),
                                                         expected_end_date, "v092", "pitch-angle")
@@ -195,13 +269,12 @@ class TestImapL3DataProcessor(TestCase):
         start_date_argument = "20160630"
         version_argument = "v092"
         descriptor_argument = "A descriptor"
-        dependencies_argument = (
-            "[{'instrument':'dependent_instrument', 'data_level':'l1000', 'descriptor':'science', 'version':'v112',"
-            "'start_date':'20250101'}]")
+        science_input = ScienceInput("imap_hit_l1_science_20250101_v112.cdf")
+        imap_data_access_dependency = ProcessingInputCollection(science_input)
 
         mock_argument_parser = mock_argparse.ArgumentParser.return_value
         mock_argument_parser.parse_args.return_value.instrument = instrument_argument
-        mock_argument_parser.parse_args.return_value.dependency = dependencies_argument
+        mock_argument_parser.parse_args.return_value.dependency = imap_data_access_dependency.serialize()
         mock_argument_parser.parse_args.return_value.start_date = start_date_argument
         mock_argument_parser.parse_args.return_value.version = version_argument
         mock_argument_parser.parse_args.return_value.descriptor = descriptor_argument
@@ -226,10 +299,10 @@ class TestImapL3DataProcessor(TestCase):
                          help="Upload completed output files to the IMAP SDC.")
                 ])
 
-                expected_input_dependencies = [UpstreamDataDependency("dependent_instrument",
-                                                                      "l1000",
+                expected_input_dependencies = [UpstreamDataDependency("hit",
+                                                                      "l1",
                                                                       datetime(2025, 1, 1),
-                                                                      None,
+                                                                      datetime(2025, 1, 1),
                                                                       "v112",
                                                                       "science")]
 
@@ -247,13 +320,14 @@ class TestImapL3DataProcessor(TestCase):
         start_date_argument = "20160630"
         end_date_argument = None
         version_argument = "v092"
-        dependencies_argument = "[{'instrument':'not_swapi', 'data_level':'l1000', 'descriptor':'science', 'version':'v112', 'start_date': '20250101'}]"
+        science_input = ScienceInput("imap_glows_l1_science_20250101_v112.cdf")
+        imap_data_access_dependency = ProcessingInputCollection(science_input)
 
         mock_argument_parser = mock_argparse.ArgumentParser.return_value
 
         mock_argument_parser.parse_args.return_value.instrument = instrument_argument
         mock_argument_parser.parse_args.return_value.data_level = data_level_argument
-        mock_argument_parser.parse_args.return_value.dependency = dependencies_argument
+        mock_argument_parser.parse_args.return_value.dependency = imap_data_access_dependency.serialize()
         mock_argument_parser.parse_args.return_value.start_date = start_date_argument
         mock_argument_parser.parse_args.return_value.end_date = end_date_argument
         mock_argument_parser.parse_args.return_value.version = version_argument
@@ -270,13 +344,14 @@ class TestImapL3DataProcessor(TestCase):
         start_date_argument = "20160630"
         end_date_argument = "20160701"
         version_argument = "v092"
-        dependencies_argument = "[{'instrument':'not_swapi', 'data_level':'l1000', 'descriptor':'science', 'version':'v112', 'start_date':'20250101'}]"
+        science_input = ScienceInput("imap_swapi_l3_science_20250101_v112.cdf")
+        imap_data_access_dependency = ProcessingInputCollection(science_input)
 
         mock_argument_parser = mock_argparse.ArgumentParser.return_value
 
         mock_argument_parser.parse_args.return_value.instrument = instrument_argument
         mock_argument_parser.parse_args.return_value.data_level = data_level_argument
-        mock_argument_parser.parse_args.return_value.dependency = dependencies_argument
+        mock_argument_parser.parse_args.return_value.dependency = imap_data_access_dependency.serialize()
         mock_argument_parser.parse_args.return_value.start_date = start_date_argument
         mock_argument_parser.parse_args.return_value.end_date = end_date_argument
         mock_argument_parser.parse_args.return_value.version = version_argument
