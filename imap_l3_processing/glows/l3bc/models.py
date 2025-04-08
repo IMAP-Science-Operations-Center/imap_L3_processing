@@ -1,5 +1,7 @@
+from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import datetime
+from pathlib import Path
 from typing import Self
 
 import numpy as np
@@ -54,8 +56,13 @@ class GlowsL3BIonizationRate(DataProduct):
     def from_instrument_team_dictionary(cls, model: dict, input_metadata: UpstreamDataDependency) -> Self:
         latitude_grid = model["ion_rate_profile"]["lat_grid"]
         carrington_center_point = Time(jd_fm_Carrington(model["CR"] + 0.5), format="jd").datetime
+        parent_file_names = []
+        parent_file_names += collect_file_names(model['header']['ancillary_data_files'])
+        parent_file_names += collect_file_names(model['header']['external_dependeciens'])
+        parent_file_names += collect_file_names(model['header']['l3a_input_files_name'])
         return cls(
             input_metadata=input_metadata,
+            parent_file_names=parent_file_names,
             epoch=np.array([carrington_center_point]),
             epoch_delta=np.array([CARRINGTON_ROTATION_IN_NANOSECONDS / 2]),
             cr=np.array([model["CR"]]),
@@ -111,6 +118,9 @@ class GlowsL3CSolarWind(DataProduct):
     def from_instrument_team_dictionary(cls, model: dict, input_metadata: UpstreamDataDependency) -> Self:
         latitude_grid = model["solar_wind_profile"]["lat_grid"]
         carrington_center_point = Time(jd_fm_Carrington(model["CR"] + 0.5), format="jd").datetime
+        parent_file_names = []
+        parent_file_names += collect_file_names(model['header']['ancillary_data_files'])
+        parent_file_names += collect_file_names(model['header']['external_dependeciens'])
         return cls(
             input_metadata=input_metadata,
             epoch=np.array([carrington_center_point]),
@@ -124,4 +134,18 @@ class GlowsL3CSolarWind(DataProduct):
             alpha_abundance_ecliptic=np.array([model["solar_wind_ecliptic"]['alpha_abundance']]),
             plasma_speed_profile=np.array([model["solar_wind_profile"]['plasma_speed']]),
             proton_density_profile=np.array([model["solar_wind_profile"]['proton_density']]),
+            parent_file_names=parent_file_names,
         )
+
+
+def collect_values(source: dict | list | str) -> Iterable[str]:
+    if isinstance(source, dict):
+        return source.values()
+    elif isinstance(source, list):
+        return source
+    else:
+        return [source]
+
+
+def collect_file_names(source: dict | list | str) -> list[str]:
+    return [Path(file).name for file in collect_values(source)]

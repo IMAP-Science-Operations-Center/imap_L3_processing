@@ -173,7 +173,8 @@ class TestGlowsProcessor(unittest.TestCase):
                                                  },
                                                  carrington_rotation_number=sentinel.cr_1,
                                                  start_date=datetime(2024, 1, 1),
-                                                 end_date=datetime(2024, 1, 30))
+                                                 end_date=datetime(2024, 1, 30),
+                                                 zip_file_path=Path('some/path1.zip'))
         second_dependency = GlowsL3BCDependencies(l3a_data=sentinel.l3a_data_2,
                                                   external_files=sentinel.external_files_2,
                                                   ancillary_files={
@@ -181,7 +182,8 @@ class TestGlowsProcessor(unittest.TestCase):
                                                   },
                                                   carrington_rotation_number=sentinel.cr_2,
                                                   start_date=datetime(2024, 2, 1),
-                                                  end_date=datetime(2024, 2, 28))
+                                                  end_date=datetime(2024, 2, 28),
+                                                  zip_file_path=Path('some/path2.zip'))
 
         mock_l3bc_dependencies.fetch_dependencies.side_effect = [first_dependency, second_dependency]
 
@@ -189,13 +191,21 @@ class TestGlowsProcessor(unittest.TestCase):
                                           (sentinel.l3b_data_2, sentinel.l3c_data_2)]
         mock_filter_bad_days.side_effect = [sentinel.filtered_days_1, sentinel.filtered_days_2]
 
-        mock_l3b_model_class.from_instrument_team_dictionary.side_effect = [sentinel.l3b_1,
-                                                                            sentinel.l3b_2]
-        mock_l3c_model_class.from_instrument_team_dictionary.side_effect = [sentinel.l3c_1,
-                                                                            sentinel.l3c_2]
-        mock_save_data.side_effect = [sentinel.l3b_cdf_path_1,
+        l3b_model_1 = Mock()
+        l3b_model_1.parent_file_names = ["file1"]
+        l3b_model_2 = Mock()
+        l3b_model_2.parent_file_names = ["file2"]
+        l3c_model_1 = Mock()
+        l3c_model_1.parent_file_names = ["file3"]
+        l3c_model_2 = Mock()
+        l3c_model_2.parent_file_names = ["file4"]
+        mock_l3b_model_class.from_instrument_team_dictionary.side_effect = [l3b_model_1,
+                                                                            l3b_model_2]
+        mock_l3c_model_class.from_instrument_team_dictionary.side_effect = [l3c_model_1,
+                                                                            l3c_model_2]
+        mock_save_data.side_effect = ["path/to/l3b_file_1.cdf",
                                       sentinel.l3c_cdf_path_1,
-                                      sentinel.l3b_cdf_path_2,
+                                      "path/to/l3b_file_2.cdf",
                                       sentinel.l3c_cdf_path_2]
 
         input_metadata = InputMetadata('glows', "l3b", datetime(2024, 10, 7, 10, 00, 00),
@@ -235,14 +245,17 @@ class TestGlowsProcessor(unittest.TestCase):
              call(sentinel.l3c_data_2, expected_l3c_metadata_2)])
 
         mock_save_data.assert_has_calls(
-            [call(sentinel.l3b_1), call(sentinel.l3c_1), call(sentinel.l3b_2), call(sentinel.l3c_2)])
-
+            [call(l3b_model_1), call(l3c_model_1), call(l3b_model_2), call(l3c_model_2)])
+        self.assertEqual(["file1", "path1.zip"], l3b_model_1.parent_file_names)
+        self.assertEqual(["file2", "path2.zip"], l3b_model_2.parent_file_names)
+        self.assertEqual(["file3", "path1.zip", "l3b_file_1.cdf"], l3c_model_1.parent_file_names)
+        self.assertEqual(["file4", "path2.zip", "l3b_file_2.cdf"], l3c_model_2.parent_file_names)
         mock_imap_data_access.upload.assert_has_calls([
             call(sentinel.zip_file_path_1),
-            call(sentinel.l3b_cdf_path_1),
+            call("path/to/l3b_file_1.cdf"),
             call(sentinel.l3c_cdf_path_1),
             call(sentinel.zip_file_path_2),
-            call(sentinel.l3b_cdf_path_2),
+            call("path/to/l3b_file_2.cdf"),
             call(sentinel.l3c_cdf_path_2),
         ])
 
@@ -268,7 +281,8 @@ class TestGlowsProcessor(unittest.TestCase):
                                                  'bad_days_list': sentinel.bad_days_list,
                                              },
                                              carrington_rotation_number=sentinel.cr,
-                                             start_date=sentinel.start_time, end_date=sentinel.end_time)
+                                             start_date=sentinel.start_time, end_date=sentinel.end_time,
+                                             zip_file_path=Path('some/path.zip'))
         l3b_metadata = UpstreamDataDependency("glows", "l3b", dependencies.start_date,
                                               dependencies.end_date, 'v02', "ion-rate-profile")
 
@@ -280,22 +294,27 @@ class TestGlowsProcessor(unittest.TestCase):
         mock_make_l3b_data_with_fill.return_value = sentinel.l3b_fill
         mock_make_l3c_data_with_fill.return_value = sentinel.l3c_fill
 
-        mock_l3b_model_class.from_instrument_team_dictionary.return_value = sentinel.l3b_data
-        mock_l3c_model_class.from_instrument_team_dictionary.return_value = sentinel.l3c_data
+        l3b_model = Mock()
+        l3b_model.parent_file_names = []
+        l3c_model = Mock()
+        l3c_model.parent_file_names = []
+
+        mock_l3b_model_class.from_instrument_team_dictionary.return_value = l3b_model
+        mock_l3c_model_class.from_instrument_team_dictionary.return_value = l3c_model
 
         processor = GlowsProcessor(dependencies=Mock(), input_metadata=input_metadata)
-        processor.process_l3bc(dependencies)
+        result_l3b, result_l3c = processor.process_l3bc(dependencies)
 
         self.assertEqual([call(dependencies)], mock_make_l3b_data_with_fill.call_args_list)
-        mock_make_l3c_data_with_fill.assert_called_once()
+        self.assertEqual([call(dependencies)], mock_make_l3c_data_with_fill.call_args_list)
         mock_l3b_model_class.from_instrument_team_dictionary.assert_called_once_with(sentinel.l3b_fill,
                                                                                      l3b_metadata)
         mock_l3c_model_class.from_instrument_team_dictionary.assert_called_once_with(sentinel.l3c_fill,
                                                                                      l3c_metadata)
+        self.assertEqual(l3b_model, result_l3b)
+        self.assertEqual(l3c_model, result_l3c)
 
-    @patch('imap_l3_processing.glows.glows_processor.make_l3c_data_with_fill')
-    @patch('imap_l3_processing.glows.glows_processor.GlowsL3CSolarWind')
-    def test_process_l3bc_all_data_in_bad_season_returns_data_products_with_fill_values(self, _, __):
+    def test_process_l3bc_all_data_in_bad_season_returns_data_products_with_fill_values(self):
         cr = 2093
         start_date = datetime(2025, 4, 3)
         end_date = datetime(2025, 4, 5)
@@ -316,7 +335,8 @@ class TestGlowsProcessor(unittest.TestCase):
 
         dependencies = GlowsL3BCDependencies(l3a_data=l3a_data, external_files=external_files,
                                              ancillary_files=ancillary_files, carrington_rotation_number=cr,
-                                             start_date=start_date, end_date=end_date)
+                                             start_date=start_date, end_date=end_date,
+                                             zip_file_path=Path('some/path.zip'))
 
         processor = GlowsProcessor(dependencies=Mock(), input_metadata=input_metadata)
         actual_l3b, actual_l3c = processor.process_l3bc(dependencies)

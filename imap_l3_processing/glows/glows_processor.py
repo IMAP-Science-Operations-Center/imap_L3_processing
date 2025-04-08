@@ -1,5 +1,6 @@
 import json
 from dataclasses import replace
+from pathlib import Path
 
 import imap_data_access
 import numpy as np
@@ -35,6 +36,7 @@ class GlowsProcessor(Processor):
                 dependencies = GlowsL3BCDependencies.fetch_dependencies(zip_file)
                 l3b_data_product, l3c_data_product = self.process_l3bc(dependencies)
                 l3b_cdf = save_data(l3b_data_product)
+                l3c_data_product.parent_file_names.append(Path(l3b_cdf).name)
                 l3c_cdf = save_data(l3c_data_product)
                 imap_data_access.upload(l3b_cdf)
                 imap_data_access.upload(l3c_cdf)
@@ -63,12 +65,13 @@ class GlowsProcessor(Processor):
             l3c_data_product = GlowsL3CSolarWind.from_instrument_team_dictionary(l3c_data, l3c_metadata)
         except CannotProcessCarringtonRotationError:
             l3b_data_with_fills = make_l3b_data_with_fill(dependencies)
-            l3c_data_with_fills = make_l3c_data_with_fill()
+            l3c_data_with_fills = make_l3c_data_with_fill(dependencies)
             l3b_data_product = GlowsL3BIonizationRate.from_instrument_team_dictionary(l3b_data_with_fills,
                                                                                       l3b_metadata)
             l3c_data_product = GlowsL3CSolarWind.from_instrument_team_dictionary(l3c_data_with_fills,
                                                                                  l3c_metadata)
-
+        l3b_data_product.parent_file_names.append(dependencies.zip_file_path.name)
+        l3c_data_product.parent_file_names.append(dependencies.zip_file_path.name)
         return l3b_data_product, l3c_data_product
 
     @staticmethod

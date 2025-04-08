@@ -1,5 +1,6 @@
 import json
 from datetime import datetime
+from pathlib import Path
 from unittest import TestCase
 
 from imap_l3_processing.glows.l3a.utils import create_glows_l3a_dictionary_from_cdf
@@ -30,7 +31,9 @@ class TestGenerateL3BC(TestCase):
 
         dependencies = GlowsL3BCDependencies(l3a_data=l3a_data, external_files=external_files,
                                              ancillary_files=ancillary_files, carrington_rotation_number=cr,
-                                             start_date=datetime(2025, 4, 3), end_date=datetime(2025, 4, 4))
+                                             start_date=datetime(2025, 4, 3),
+                                             end_date=datetime(2025, 4, 4),
+                                             zip_file_path=Path('some/path.zip'))
 
         actual_l3b, actual_l3c = generate_l3bc(dependencies)
 
@@ -64,7 +67,9 @@ class TestGenerateL3BC(TestCase):
 
         dependencies = GlowsL3BCDependencies(l3a_data=l3a_data, external_files=external_files,
                                              ancillary_files=ancillary_files, carrington_rotation_number=cr,
-                                             start_date=datetime(2025, 4, 3), end_date=datetime(2025, 4, 4))
+                                             start_date=datetime(2025, 4, 3),
+                                             end_date=datetime(2025, 4, 4),
+                                             zip_file_path=Path('some/path.zip'))
 
         with self.assertRaises(CannotProcessCarringtonRotationError) as context:
             generate_l3bc(dependencies)

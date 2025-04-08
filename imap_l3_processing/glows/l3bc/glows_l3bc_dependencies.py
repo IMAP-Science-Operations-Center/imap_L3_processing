@@ -16,6 +16,7 @@ class GlowsL3BCDependencies:
     carrington_rotation_number: int
     start_date: datetime
     end_date: datetime
+    zip_file_path: Path
 
     @classmethod
     def fetch_dependencies(cls, zip_file_path):
@@ -46,4 +47,4 @@ class GlowsL3BCDependencies:
         return cls(l3a_data=l3a_data, external_files=external_files, ancillary_files=ancillary_files,
                    carrington_rotation_number=int(paths_to_download['cr_rotation_number']),
                    start_date=datetime.fromisoformat(paths_to_download['start_date']),
-                   end_date=datetime.fromisoformat(paths_to_download['end_date']))
+                   end_date=datetime.fromisoformat(paths_to_download['end_date']), zip_file_path=zip_file_path)

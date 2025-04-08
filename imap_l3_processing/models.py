@@ -1,6 +1,6 @@
 import abc
 import ctypes
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Union
 
@@ -42,6 +42,8 @@ class DataProductVariable:
 @dataclass
 class DataProduct(metaclass=abc.ABCMeta):
     input_metadata: UpstreamDataDependency
+
+    parent_file_names: list[str] = field(default_factory=list, kw_only=True)
 
     @abc.abstractmethod
     def to_data_product_variables(self) -> list[DataProductVariable]:

@@ -38,6 +38,8 @@ def save_data(data: DataProduct, delete_if_present: bool = False, folder_path: s
     attribute_manager.add_global_attribute("Generation_date", date.today().strftime("%Y%m%d"))
     attribute_manager.add_global_attribute("Logical_source", logical_source)
     attribute_manager.add_global_attribute("Logical_file_id", logical_file_id)
+    if data.parent_file_names:
+        attribute_manager.add_global_attribute("Parents", data.parent_file_names)
     write_cdf(file_path, data, attribute_manager)
     return file_path
 

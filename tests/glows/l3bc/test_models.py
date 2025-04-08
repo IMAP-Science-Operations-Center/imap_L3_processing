@@ -78,6 +78,16 @@ class TestModels(CdfModelTestCase):
             ['-90°', '-80°', '-70°', '-60°', '-50°', '-40°', '-30°', '-20°', '-10°', '0°', '10°', '20°', '30°', '40°',
              '50°', '60°', '70°', '80°', '90°'], result.lat_grid_label)
         self.assertEqual(latitude_grid.shape, result.lat_grid_delta.shape)
+        self.assertEqual([
+            "imap_glows_WawHelioIonMP_v002.json",
+            "imap_glows_bad-days-list_v001.dat",
+            "imap_glows_pipeline-settings-L3bc_v001.json",
+            "imap_glows_uv-anisotropy-1CR_v001.json",
+            "f107_fluxtable.txt",
+            "imap_glows_l3a_20100101000000_orbX_modX_p_v00.json",
+            "imap_glows_l3a_20100102000000_orbX_modX_p_v00.json",
+            "imap_glows_l3a_20100103000000_orbX_modX_p_v00.json",
+        ], result.parent_file_names)
 
     def test_l3c_to_data_product_variables(self):
         data = GlowsL3CSolarWind(input_metadata=sentinel.input_metadata,
@@ -145,6 +155,14 @@ class TestModels(CdfModelTestCase):
         self.assertEqual([model["solar_wind_ecliptic"]["plasma_speed"]], result.plasma_speed_ecliptic)
         self.assertEqual([model["solar_wind_ecliptic"]["proton_density"]], result.proton_density_ecliptic)
         self.assertEqual([model["solar_wind_ecliptic"]["alpha_abundance"]], result.alpha_abundance_ecliptic)
+
+        self.assertEqual([
+            "imap_glows_WawHelioIonMP_v002.json",
+            "imap_glows_bad-days-list_v001.dat",
+            "imap_glows_pipeline-settings-L3bc_v001.json",
+            "imap_glows_uv-anisotropy-1CR_v001.json",
+            "omni_2010.dat",
+        ], result.parent_file_names)
 
 
 if __name__ == '__main__':
