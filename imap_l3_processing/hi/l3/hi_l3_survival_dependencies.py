@@ -7,7 +7,7 @@ from pathlib import Path
 import imap_data_access
 from spacepy.pycdf import CDF
 
-from imap_l3_processing.hi.l3.models import HiL3Data, HiL1cData, GlowsL3eData
+from imap_l3_processing.hi.l3.models import HiMapData, HiL1cData, GlowsL3eData
 from imap_l3_processing.hi.l3.utils import read_hi_l2_data, read_hi_l1c_data, read_glows_l3e_data
 from imap_l3_processing.models import UpstreamDataDependency
 from imap_l3_processing.utils import download_dependency, download_dependency_from_path
@@ -34,7 +34,7 @@ def find_glows_l3e_dependencies(l1c_filenames: list[Path]) -> list[Path]:
 
 @dataclass
 class HiL3SurvivalDependencies:
-    l2_data: HiL3Data
+    l2_data: HiMapData
     hi_l1c_data: list[HiL1cData]
     glows_l3e_data: list[GlowsL3eData]
 

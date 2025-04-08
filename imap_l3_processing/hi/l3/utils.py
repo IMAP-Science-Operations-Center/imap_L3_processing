@@ -4,12 +4,12 @@ from typing import Union
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.cdf.cdf_utils import read_variable
-from imap_l3_processing.hi.l3.models import HiL3Data, HiL1cData, GlowsL3eData
+from imap_l3_processing.hi.l3.models import HiMapData, HiL1cData, GlowsL3eData
 
 
-def read_hi_l2_data(cdf_path) -> HiL3Data:
+def read_hi_l2_data(cdf_path) -> HiMapData:
     with CDF(str(cdf_path)) as cdf:
-        return HiL3Data(
+        return HiMapData(
             epoch=cdf["Epoch"][...],
             energy=cdf["bin"][...],
             energy_deltas=cdf["bin_boundaries"][...],

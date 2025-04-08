@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from unittest.mock import patch, Mock, call, sentinel
 
 import numpy as np
+from imap_processing.ena_maps.utils.coordinates import CoordNames
 from imap_processing.spice.geometry import SpiceFrame
 
 from imap_l3_processing.hi.hi_processor import HiProcessor, combine_glows_l3e_hi_l1c, MapDescriptorParts, \
@@ -10,10 +11,11 @@ from imap_l3_processing.hi.hi_processor import HiProcessor, combine_glows_l3e_hi
 from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3SpectralFitDependencies, \
     HI_L3_SPECTRAL_FIT_DESCRIPTOR
 from imap_l3_processing.hi.l3.hi_l3_survival_dependencies import HiL3SurvivalDependencies
-from imap_l3_processing.hi.l3.models import HiL3Data, HiL3SpectralIndexDataProduct, GlowsL3eData, HiL1cData
+from imap_l3_processing.hi.l3.models import HiMapData, HiL3SpectralIndexDataProduct, GlowsL3eData, HiL1cData
 from imap_l3_processing.hi.l3.science.survival_probability import Sensor
 from imap_l3_processing.models import InputMetadata
-from tests.test_helpers import get_test_data_path
+from tests.test_helpers import get_test_data_path, NumpyArrayMatcher
+import xarray as xr
 
 
 class TestHiProcessor(unittest.TestCase):
@@ -121,6 +123,8 @@ class TestHiProcessor(unittest.TestCase):
                     else:
                         raise e
 
+    @patch('imap_l3_processing.hi.hi_processor.save_data')
+    @patch("imap_l3_processing.hi.hi_processor.HiL3SurvivalCorrectedDataProduct")
     @patch("imap_l3_processing.hi.hi_processor.parse_map_descriptor")
     @patch('imap_l3_processing.hi.hi_processor.HiSurvivalProbabilitySkyMap')
     @patch('imap_l3_processing.hi.hi_processor.HiSurvivalProbabilityPointingSet')
@@ -128,8 +132,29 @@ class TestHiProcessor(unittest.TestCase):
     @patch('imap_l3_processing.hi.hi_processor.HiL3SurvivalDependencies.fetch_dependencies')
     def test_process_survival_probability(self, mock_fetch_dependencies, mock_combine_glows_l3e_hi_l1c,
                                           mock_survival_probability_pointing_set, mock_survival_skymap,
-                                          mock_parse_map_descriptor):
-        mock_fetch_dependencies.return_value = HiL3SurvivalDependencies(l2_data=sentinel.l2_data,
+                                          mock_parse_map_descriptor, mock_data_product_class, mock_save_data):
+
+        rng = np.random.default_rng()
+        input_map_flux = rng.random((1, 9, 90, 45))
+
+        epoch = datetime.now()
+
+        input_map = HiMapData(
+            epoch=np.array([epoch]),
+            energy=rng.random((1,)),
+            energy_deltas=rng.random((1,)),
+            counts=rng.random((1,)),
+            counts_uncertainty=rng.random((1,)),
+            epoch_delta=rng.random((1,)),
+            exposure=rng.random((1,)),
+            flux=input_map_flux,
+            lat=rng.random((1,)),
+            lon=rng.random((1,)),
+            sensitivity=rng.random((1,)),
+            variance=rng.random((1,)),
+        )
+
+        mock_fetch_dependencies.return_value = HiL3SurvivalDependencies(l2_data=input_map,
                                                                         hi_l1c_data=sentinel.hi_l1c_data,
                                                                         glows_l3e_data=sentinel.glows_l3e_data, )
 
@@ -150,6 +175,25 @@ class TestHiProcessor(unittest.TestCase):
                                        descriptor=f"45sensor-spacecraft-survival-full-4deg-map",
                                        )
 
+        computed_survival_probabilities = rng.random((1, 9, 90, 45))
+        mock_survival_skymap.return_value.to_dataset.return_value = xr.Dataset({
+            "exposure_weighted_survival_probabilities": (
+                [
+                    CoordNames.TIME.value,
+                    CoordNames.ENERGY.value,
+                    CoordNames.AZIMUTH_L2.value,
+                    CoordNames.ELEVATION_L2.value,
+                ],
+                computed_survival_probabilities
+            )
+        },
+            coords={
+                CoordNames.TIME.value: [epoch],
+                CoordNames.ENERGY.value: rng.random((9,)),
+                CoordNames.AZIMUTH_L2.value: rng.random((90,)),
+                CoordNames.ELEVATION_L2.value: rng.random((45,)),
+            })
+
         processor = HiProcessor(sentinel.dependencies, input_metadata)
         processor.process()
 
@@ -168,6 +212,26 @@ class TestHiProcessor(unittest.TestCase):
         mock_survival_skymap.assert_called_once_with([sentinel.pset_1, sentinel.pset_2, sentinel.pset_3],
                                                      sentinel.grid_size,
                                                      SpiceFrame.ECLIPJ2000)
+
+        mock_survival_skymap.return_value.to_dataset.assert_called_once_with()
+
+        mock_data_product_class.assert_called_once_with(
+            input_metadata=input_metadata,
+            epoch=input_map.epoch,
+            energy=input_map.energy,
+            energy_deltas=input_map.energy_deltas,
+            counts=input_map.counts,
+            counts_uncertainty=input_map.counts_uncertainty,
+            epoch_delta=input_map.epoch_delta,
+            exposure=input_map.exposure,
+            flux=NumpyArrayMatcher(input_map.flux / computed_survival_probabilities),
+            lat=input_map.lat,
+            lon=input_map.lon,
+            sensitivity=input_map.sensitivity,
+            variance=input_map.variance,
+        )
+
+        mock_save_data.assert_called_once_with(mock_data_product_class.return_value)
 
     def test_parse_map_descriptor(self):
         test_cases = [
@@ -222,7 +286,7 @@ def _create_h1_l3_data(epoch=None, lon=None, lat=None, energy=None, energy_delta
                                                              fill_value=1)
     epoch = epoch if epoch is not None else np.array([datetime.now()])
 
-    return HiL3Data(
+    return HiMapData(
         epoch=epoch,
         energy=energy,
         flux=flux,

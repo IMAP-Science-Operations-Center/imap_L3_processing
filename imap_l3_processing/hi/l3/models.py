@@ -23,21 +23,24 @@ SPECTRAL_FIT_INDEX_ERROR_VAR_NAME = "spectral_fit_index_error"
 
 
 @dataclass
-class HiL3SpectralIndexDataProduct(DataProduct):
-    input_metadata: InputMetadata
+class HiMapData:
     epoch: np.ndarray
     energy: np.ndarray
-    variance: np.ndarray
-    flux: np.ndarray
-    lat: np.ndarray
-    lon: np.ndarray
-    spectral_fit_index: np.ndarray
     energy_deltas: np.ndarray
     counts: np.ndarray
     counts_uncertainty: np.ndarray
     epoch_delta: np.ndarray
     exposure: np.ndarray
+    flux: np.ndarray
+    lat: np.ndarray
+    lon: np.ndarray
     sensitivity: np.ndarray
+    variance: np.ndarray
+
+
+@dataclass
+class HiL3SpectralIndexDataProduct(DataProduct, HiMapData):
+    spectral_fit_index: np.ndarray
     spectral_fit_index_error: np.ndarray
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
@@ -62,20 +65,9 @@ class HiL3SpectralIndexDataProduct(DataProduct):
         ]
 
 
-@dataclass
-class HiL3Data:
-    epoch: np.ndarray
-    energy: np.ndarray
-    energy_deltas: np.ndarray
-    counts: np.ndarray
-    counts_uncertainty: np.ndarray
-    epoch_delta: np.ndarray
-    exposure: np.ndarray
-    flux: np.ndarray
-    lat: np.ndarray
-    lon: np.ndarray
-    sensitivity: np.ndarray
-    variance: np.ndarray
+class HiL3SurvivalCorrectedDataProduct(DataProduct, HiMapData):
+    def to_data_product_variables(self) -> list[DataProductVariable]:
+        return []
 
 
 @dataclass
