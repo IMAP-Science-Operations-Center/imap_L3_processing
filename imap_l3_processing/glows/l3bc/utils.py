@@ -177,5 +177,27 @@ def make_l3b_data_with_fill(dependencies: GlowsL3BCDependencies):
     return model
 
 
-def make_l3c_data_with_fill():
-    raise NotImplemented
+def make_l3c_data_with_fill(dependencies: GlowsL3BCDependencies) -> dict:
+    model = {}
+    model['header'] = {
+        'ancillary_data_files': dependencies.ancillary_files,
+        'external_dependeciens': dependencies.external_files,
+    }
+    model['solar_wind_profile'] = {}
+    model['solar_wind_ecliptic'] = {}
+    model['CR'] = dependencies.carrington_rotation_number
+
+    model['solar_wind_ecliptic']["plasma_speed"] = np.nan
+    model['solar_wind_ecliptic']["proton_density"] = np.nan
+    model['solar_wind_ecliptic']["alpha_abundance"] = np.nan
+    with open(dependencies.ancillary_files["pipeline_settings"], 'r') as file:
+        settings = json.load(file)
+
+    lat_grid = settings['ion_rate_grid']
+    model['solar_wind_profile']['lat_grid'] = lat_grid
+    grid_size = len(lat_grid)
+
+    model['solar_wind_profile']['plasma_speed'] = np.full(grid_size, np.nan)
+    model['solar_wind_profile']['proton_density'] = np.full(grid_size, np.nan)
+
+    return model

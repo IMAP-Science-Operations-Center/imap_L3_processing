@@ -65,7 +65,7 @@ class GlowsProcessor(Processor):
             l3c_data_product = GlowsL3CSolarWind.from_instrument_team_dictionary(l3c_data, l3c_metadata)
         except CannotProcessCarringtonRotationError:
             l3b_data_with_fills = make_l3b_data_with_fill(dependencies)
-            l3c_data_with_fills = make_l3c_data_with_fill()
+            l3c_data_with_fills = make_l3c_data_with_fill(dependencies)
             l3b_data_product = GlowsL3BIonizationRate.from_instrument_team_dictionary(l3b_data_with_fills,
                                                                                       l3b_metadata)
             l3c_data_product = GlowsL3CSolarWind.from_instrument_team_dictionary(l3c_data_with_fills,

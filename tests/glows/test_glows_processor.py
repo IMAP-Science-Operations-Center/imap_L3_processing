@@ -306,7 +306,7 @@ class TestGlowsProcessor(unittest.TestCase):
         result_l3b, result_l3c = processor.process_l3bc(dependencies)
 
         self.assertEqual([call(dependencies)], mock_make_l3b_data_with_fill.call_args_list)
-        mock_make_l3c_data_with_fill.assert_called_once()
+        self.assertEqual([call(dependencies)], mock_make_l3c_data_with_fill.call_args_list)
         mock_l3b_model_class.from_instrument_team_dictionary.assert_called_once_with(sentinel.l3b_fill,
                                                                                      l3b_metadata)
         mock_l3c_model_class.from_instrument_team_dictionary.assert_called_once_with(sentinel.l3c_fill,
@@ -314,9 +314,7 @@ class TestGlowsProcessor(unittest.TestCase):
         self.assertEqual(l3b_model, result_l3b)
         self.assertEqual(l3c_model, result_l3c)
 
-    @patch('imap_l3_processing.glows.glows_processor.make_l3c_data_with_fill')
-    @patch('imap_l3_processing.glows.glows_processor.GlowsL3CSolarWind')
-    def test_process_l3bc_all_data_in_bad_season_returns_data_products_with_fill_values(self, _, __):
+    def test_process_l3bc_all_data_in_bad_season_returns_data_products_with_fill_values(self):
         cr = 2093
         start_date = datetime(2025, 4, 3)
         end_date = datetime(2025, 4, 5)
