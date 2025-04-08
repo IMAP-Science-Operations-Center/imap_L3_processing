@@ -13,6 +13,7 @@ from imap_l3_processing.models import UpstreamDataDependency
 from imap_l3_processing.swapi.l3a.models import SwapiL3AlphaSolarWindData
 from imap_l3_processing.utils import format_time, download_dependency, read_l1d_mag_data, save_data, \
     download_external_dependency, download_dependency_from_path
+from imap_l3_processing.version import VERSION
 
 
 class TestUtils(TestCase):
@@ -58,6 +59,7 @@ class TestUtils(TestCase):
             call("Generation_date", "20240916"),
             call("Logical_source", "imap_swapi_l2_descriptor"),
             call("Logical_file_id", "imap_swapi_l2_descriptor_20240917_v2"),
+            call("ground_software_version", VERSION),
             call("Parents", sentinel.parent_files),
         ])
 
@@ -94,6 +96,7 @@ class TestUtils(TestCase):
             call("Generation_date", "20240916"),
             call("Logical_source", "imap_swapi_l2_descriptor"),
             call("Logical_file_id", "imap_swapi_l2_descriptor_20240917_v2"),
+            call("ground_software_version", VERSION)
         ], actual_attribute_manager.add_global_attribute.call_args_list)
 
     @patch("imap_l3_processing.utils.ImapAttributeManager")

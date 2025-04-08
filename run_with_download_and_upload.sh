@@ -1,3 +1,5 @@
+source scripts/update_version.sh
+
 if [[ "$1" == "swapi" ]]; then
 python imap_l3_data_processor.py --instrument swapi --data-level l3a --start-date 20250606 \
 --version v003 --dependency \
@@ -10,3 +12,5 @@ python imap_l3_data_processor.py --instrument glows --data-level l3a --start-dat
 --version v020 --dependency \
 """[{'instrument':'glows', 'data_level':'l2', 'descriptor':'histogram-00001', 'version':'v003', 'start_date':'20130908'}]"""
 fi
+
+git restore imap_l3_processing/version.py
