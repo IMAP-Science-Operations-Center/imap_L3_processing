@@ -13,6 +13,7 @@ class TestImapCdfManager(TestCase):
         self.base_manager = CdfAttributeManager(
             variable_schema_layers=[self.config_folder_path / 'imap_l3_variable_cdf_attrs_schema.yaml',
                                     self.config_folder_path / 'default_variable_cdf_attrs_schema.yaml'],
+            global_schema_layers=[self.config_folder_path / 'default_global_cdf_attrs_schema.yaml'],
             use_defaults=True)
         self.base_manager.load_global_attributes(self.config_folder_path / 'imap_default_global_cdf_attrs.yaml')
 
@@ -25,10 +26,12 @@ class TestImapCdfManager(TestCase):
     def test_load_instrument_and_variable_attributes_with_level(self):
         manager = ImapAttributeManager()
         manager.add_instrument_attrs('swapi', 'l3a', "descriptor")
+        manager.add_global_attribute('ground_software_version', 'test version')
 
         self.base_manager.load_global_attributes(self.config_folder_path / 'imap_swapi_global_cdf_attrs.yaml')
         self.base_manager.load_global_attributes(self.config_folder_path / 'imap_swapi_l3a_global_cdf_attrs.yaml')
         self.base_manager.load_variable_attributes(self.config_folder_path / 'imap_swapi_l3a_variable_attrs.yaml')
+        self.base_manager.add_global_attribute('ground_software_version', 'test version')
 
         self.assertEqual(self.base_manager.get_global_attributes(), manager.get_global_attributes())
         self.assertEqual(self.base_manager.get_variable_attributes('epoch'), manager.get_variable_attributes('epoch'))
