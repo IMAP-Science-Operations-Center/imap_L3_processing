@@ -135,9 +135,9 @@ def archive_dependencies(cr_to_process: CRToProcess, version: str,
     zip_path = TEMP_CDF_FOLDER_PATH / f"imap_glows_l3b-archive-zip_{start_date}_{version}.cdf"
     json_filename = "cr_to_process.json"
     with ZipFile(zip_path, "w", ZIP_DEFLATED) as file:
-        file.write(ancillary_dependencies.lyman_alpha_path)
-        file.write(ancillary_dependencies.omni2_data_path)
-        file.write(ancillary_dependencies.f107_index_file_path)
+        file.write(ancillary_dependencies.lyman_alpha_path, "lyman_alpha_composite.nc")
+        file.write(ancillary_dependencies.omni2_data_path, "omni2_all_years.dat")
+        file.write(ancillary_dependencies.f107_index_file_path, "f107_fluxtable.txt")
         cr = {"cr_rotation_number": cr_to_process.cr_rotation_number,
               "l3a_paths": cr_to_process.l3a_paths,
               "cr_start_date": cr_to_process.cr_start_date.value,

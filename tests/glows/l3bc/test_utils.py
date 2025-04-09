@@ -233,9 +233,9 @@ class TestUtils(unittest.TestCase):
         mock_json.dumps.assert_called_once_with(expected_json_to_serialize)
 
         mock_zip_file.write.assert_has_calls([
-            call(dependencies.lyman_alpha_path),
-            call(dependencies.omni2_data_path),
-            call(dependencies.f107_index_file_path),
+            call(dependencies.lyman_alpha_path, "lyman_alpha_composite.nc"),
+            call(dependencies.omni2_data_path, "omni2_all_years.dat"),
+            call(dependencies.f107_index_file_path, "f107_fluxtable.txt"),
         ])
         mock_zip_file.writestr.assert_called_once_with(expected_json_filename, mock_json.dumps.return_value)
 
