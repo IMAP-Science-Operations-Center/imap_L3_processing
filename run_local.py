@@ -268,7 +268,7 @@ def run_glows_l3bc():
         end_date=datetime(2013, 9, 8),
         version='v001')
 
-    cr = 2091
+    cr = 2093
     external_files = {
         'f107_raw_data': get_test_instrument_team_data_path('glows/f107_fluxtable.txt'),
         'omni_raw_data': get_test_instrument_team_data_path('glows/omni_2010.dat')
@@ -281,7 +281,8 @@ def run_glows_l3bc():
     }
     l3a_data_folder_path = get_test_data_path('glows/l3a_products')
     l3a_data = []
-    l3a_file_names = [f"imap_glows_l3a_hist_2010010{x}_v001.cdf" for x in (1, 2, 3)]
+    # l3a_file_names = [f"imap_glows_l3a_hist_2010010{x}_v001.cdf" for x in (1, 2, 3)]
+    l3a_file_names = ["imap_glows_l3a_hist_20100201_v001.cdf"]
     for name in l3a_file_names:
         l3a_data.append(create_glows_l3a_dictionary_from_cdf(l3a_data_folder_path / name))
 

@@ -5,6 +5,7 @@ from unittest.mock import patch, sentinel, call, Mock, MagicMock, mock_open
 
 from imap_l3_processing.glows.l3bc import glows_l3bc_dependencies
 from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDependencies
+from tests.test_helpers import get_test_data_path
 
 
 class TestGlowsL3BCDependencies(unittest.TestCase):
@@ -74,3 +75,7 @@ class TestGlowsL3BCDependencies(unittest.TestCase):
         self.assertEqual(datetime.fromisoformat("2024-11-24 12:34:56.789"), dependency.end_date)
 
         self.assertEqual(mock_zip_file_path, dependency.zip_file_path)
+
+    @patch('imap_l3_processing.glows.l3bc.glows_l3bc_dependencies.download_dependency_from_path')
+    def test_fetch_dependencies_no_mocks(self, mock_download_dependencies):
+        zip_file_path = get_test_data_path('glows/')
