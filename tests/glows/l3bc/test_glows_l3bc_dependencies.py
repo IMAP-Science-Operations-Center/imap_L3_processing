@@ -72,3 +72,5 @@ class TestGlowsL3BCDependencies(unittest.TestCase):
 
         self.assertEqual(datetime.fromisoformat("2024-10-24 12:34:56.789"), dependency.start_date)
         self.assertEqual(datetime.fromisoformat("2024-11-24 12:34:56.789"), dependency.end_date)
+
+        self.assertEqual(mock_zip_file_path, dependency.zip_file_path)

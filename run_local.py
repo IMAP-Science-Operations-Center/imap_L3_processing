@@ -21,9 +21,10 @@ from imap_l3_processing.glows.descriptors import GLOWS_L2_DESCRIPTOR
 from imap_l3_processing.glows.glows_initializer import GlowsInitializer
 from imap_l3_processing.glows.glows_processor import GlowsProcessor
 from imap_l3_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
-from imap_l3_processing.glows.l3a.utils import read_l2_glows_data
+from imap_l3_processing.glows.l3a.utils import read_l2_glows_data, create_glows_l3a_dictionary_from_cdf
+from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDependencies
 from imap_l3_processing.hi.hi_processor import HiProcessor
-from imap_l3_processing.hi.l3.hi_l3_dependencies import HiL3Dependencies
+from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3SpectralFitDependencies
 from imap_l3_processing.hi.l3.science.survival_probability import HiSurvivalProbabilitySkyMap, \
     HiSurvivalProbabilityPointingSet, Sensor
 from imap_l3_processing.hit.l3.hit_l3_sectored_dependencies import HITL3SectoredDependencies
@@ -54,7 +55,7 @@ from imap_l3_processing.swapi.swapi_processor import SwapiProcessor
 from imap_l3_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies
 from imap_l3_processing.swe.swe_processor import SweProcessor
 from imap_l3_processing.utils import save_data, read_l1d_mag_data
-from tests.test_helpers import get_test_data_path
+from tests.test_helpers import get_test_data_path, get_test_instrument_team_data_path
 
 
 def create_glows_l3a_cdf(dependencies: GlowsL3ADependencies):
@@ -170,7 +171,7 @@ def create_swe_product_with_fake_spice(dependencies: SweL3Dependencies, mock_spi
     return cdf_path
 
 
-def create_hi_cdf(dependencies: HiL3Dependencies) -> str:
+def create_hi_cdf(dependencies: HiL3SpectralFitDependencies) -> str:
     input_metadata = InputMetadata(instrument="hi",
                                    data_level="l3",
                                    start_date=datetime.now(),
@@ -257,6 +258,55 @@ def run_l3b_initializer(mock_query):
         l3a_dicts, []
     ]
     GlowsInitializer.validate_and_initialize('v001')
+
+
+def run_glows_l3bc():
+    input_metadata = InputMetadata(
+        instrument='glows',
+        data_level='l3a',
+        start_date=datetime(2013, 9, 8),
+        end_date=datetime(2013, 9, 8),
+        version='v001')
+
+    cr = 2091
+    external_files = {
+        'f107_raw_data': get_test_instrument_team_data_path('glows/f107_fluxtable.txt'),
+        'omni_raw_data': get_test_instrument_team_data_path('glows/omni_2010.dat')
+    }
+    ancillary_files = {
+        'uv_anisotropy': get_test_data_path('glows/imap_glows_uv-anisotropy-1CR_20100101_v001.json'),
+        'WawHelioIonMP_parameters': get_test_data_path('glows/imap_glows_WawHelioIonMP_20100101_v002.json'),
+        'bad_days_list': get_test_data_path('glows/imap_glows_bad-days-list_v001.dat'),
+        'pipeline_settings': get_test_instrument_team_data_path('glows/imap_glows_pipeline-settings-L3bc_v001.json')
+    }
+    l3a_data_folder_path = get_test_data_path('glows/l3a_products')
+    l3a_data = []
+    l3a_file_names = [f"imap_glows_l3a_hist_2010010{x}_v001.cdf" for x in (1, 2, 3)]
+    for name in l3a_file_names:
+        l3a_data.append(create_glows_l3a_dictionary_from_cdf(l3a_data_folder_path / name))
+
+    dependencies = GlowsL3BCDependencies(l3a_data=l3a_data, external_files=external_files,
+                                         ancillary_files=ancillary_files, carrington_rotation_number=cr,
+                                         start_date=datetime(2009, 12, 20), end_date=datetime(2009, 12, 21),
+                                         zip_file_path=Path("fake/path/to/file.zip"))
+
+    upstream_dependencies = [
+        UpstreamDataDependency(input_metadata.instrument,
+                               "l3b",
+                               input_metadata.start_date,
+                               input_metadata.end_date,
+                               input_metadata.version,
+                               GLOWS_L2_DESCRIPTOR)
+    ]
+    processor = GlowsProcessor(upstream_dependencies, input_metadata)
+
+    l3b_data_product, l3c_data_product = processor.process_l3bc(dependencies)
+
+    l3b_cdf = save_data(l3b_data_product, delete_if_present=True)
+    print(l3b_cdf)
+
+    l3c_data_product.parent_file_names.append(Path(l3b_cdf).name)
+    print(save_data(l3c_data_product, delete_if_present=True))
 
 
 def create_empty_hi_l1c_dataset(epoch: datetime, exposures: Optional[np.ndarray] = None,
@@ -393,11 +443,13 @@ if __name__ == "__main__":
     if "glows" in sys.argv:
         if "pre-b" in sys.argv:
             run_l3b_initializer()
+        elif "l3bc" in sys.argv:
+            run_glows_l3bc()
         else:
-            cdf_data = CDF("tests/test_data/glows/imap_glows_l2_hist_20130908_v003.cdf")
+            cdf_data = CDF("tests/test_data/glows/imap_glows_l2_hist_20130908-repoint00001_v003.cdf")
             l2_glows_data = read_l2_glows_data(cdf_data)
 
-            dependencies = GlowsL3ADependencies(l2_glows_data, {
+            dependencies = GlowsL3ADependencies(l2_glows_data, 5, {
                 "calibration_data": Path(
                     "instrument_team_data/glows/imap_glows_l3a_calibration-data-text-not-cdf_20250707_v002.cdf"),
                 "settings": Path(
@@ -466,7 +518,7 @@ if __name__ == "__main__":
             cdf["flux"].attrs["CATDESC"] = args.description
 
     if "hi" in sys.argv:
-        dependencies = HiL3Dependencies.from_file_paths(
+        dependencies = HiL3SpectralFitDependencies.from_file_paths(
             get_test_data_path("hi45-zirnstein-mondel-6months.cdf")
         )
         print(create_hi_cdf(dependencies))

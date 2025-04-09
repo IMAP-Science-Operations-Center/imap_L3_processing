@@ -492,6 +492,7 @@ core_density_fit:
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
+   VAR_NOTES: Analytically calculated from Bi-Maxellian fit
 halo_density_fit:
    NAME: halo_density_fit
    DATA_TYPE: CDF_REAL4
@@ -508,6 +509,7 @@ halo_density_fit:
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
+   VAR_NOTES: Analytically calculated from Bi-Maxellian fit
 core_t_parallel_fit:
    NAME: core_t_parallel_fit
    DATA_TYPE: CDF_REAL4
@@ -524,6 +526,7 @@ core_t_parallel_fit:
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
+   VAR_NOTES: Analytically calculated from Bi-Maxellian fit
 halo_t_parallel_fit:
    NAME: halo_t_parallel_fit
    DATA_TYPE: CDF_REAL4
@@ -540,6 +543,7 @@ halo_t_parallel_fit:
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
+   VAR_NOTES: Analytically calculated from Bi-Maxellian fit
 core_t_perpendicular_fit:
    NAME: core_t_perpendicular_fit
    DATA_TYPE: CDF_REAL4
@@ -556,6 +560,7 @@ core_t_perpendicular_fit:
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
+   VAR_NOTES: Analytically calculated from Bi-Maxellian fit
 halo_t_perpendicular_fit:
    NAME: halo_t_perpendicular_fit
    DATA_TYPE: CDF_REAL4
@@ -572,6 +577,7 @@ halo_t_perpendicular_fit:
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
+   VAR_NOTES: Analytically calculated from Bi-Maxellian fit
 core_temperature_phi_rtn_fit:
    NAME: core_temperature_phi_rtn_fit
    DATA_TYPE: CDF_REAL4
@@ -588,6 +594,7 @@ core_temperature_phi_rtn_fit:
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
+   VAR_NOTES: Analytically calculated from Bi-Maxellian fit
 halo_temperature_phi_rtn_fit:
    NAME: halo_temperature_phi_rtn_fit
    DATA_TYPE: CDF_REAL4
@@ -604,6 +611,7 @@ halo_temperature_phi_rtn_fit:
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
+   VAR_NOTES: Analytically calculated from Bi-Maxellian fit
 core_temperature_theta_rtn_fit:
    NAME: core_temperature_theta_rtn_fit
    DATA_TYPE: CDF_REAL4
@@ -620,6 +628,7 @@ core_temperature_theta_rtn_fit:
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
+   VAR_NOTES: Analytically calculated from Bi-Maxellian fit
 halo_temperature_theta_rtn_fit:
    NAME: halo_temperature_theta_rtn_fit
    DATA_TYPE: CDF_REAL4
@@ -636,6 +645,7 @@ halo_temperature_theta_rtn_fit:
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
+   VAR_NOTES: Analytically calculated from Bi-Maxellian fit
 core_speed_fit:
    NAME: core_speed_fit
    DATA_TYPE: CDF_REAL4
@@ -652,6 +662,7 @@ core_speed_fit:
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
+   VAR_NOTES: Analytically calculated from Bi-Maxellian fit
 halo_speed_fit:
    NAME: halo_speed_fit
    DATA_TYPE: CDF_REAL4
@@ -668,6 +679,7 @@ halo_speed_fit:
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
+   VAR_NOTES: Analytically calculated from Bi-Maxellian fit
 core_velocity_vector_rtn_fit:
    NAME: core_velocity_vector_rtn_fit
    DATA_TYPE: CDF_REAL4
@@ -684,7 +696,7 @@ core_velocity_vector_rtn_fit:
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
    LABL_PTR_1: rtn_label
-   VAR_NOTES: Analytically calculated from Maxwellian fit
+   VAR_NOTES: Analytically calculated from Bi-Maxellian fit
 halo_velocity_vector_rtn_fit:
    NAME: halo_velocity_vector_rtn_fit
    DATA_TYPE: CDF_REAL4
@@ -701,6 +713,7 @@ halo_velocity_vector_rtn_fit:
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
    LABL_PTR_1: rtn_label
+   VAR_NOTES: Analytically calculated from Bi-Maxellian fit
 core_density_integrated:
    NAME: core_density_integrated
    DATA_TYPE: CDF_REAL4
@@ -734,6 +747,7 @@ halo_density_integrated:
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
+   VAR_NOTES: Calculated by integration over the measured phase space distribution
 total_density_integrated:
    NAME: total_density_integrated
    DATA_TYPE: CDF_REAL4
@@ -750,6 +764,7 @@ total_density_integrated:
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
+   VAR_NOTES: Calculated by integration over the measured phase space distribution
 core_velocity_vector_rtn_integrated:
    NAME: core_velocity_vector_rtn_integrated
    DATA_TYPE: CDF_REAL4
@@ -766,6 +781,7 @@ core_velocity_vector_rtn_integrated:
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
    LABL_PTR_1: rtn_label
+   VAR_NOTES: Calculated by integration over the measured phase space distribution
 halo_velocity_vector_rtn_integrated:
    NAME: halo_velocity_vector_rtn_integrated
    DATA_TYPE: CDF_REAL4
@@ -782,6 +798,7 @@ halo_velocity_vector_rtn_integrated:
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
    LABL_PTR_1: rtn_label
+   VAR_NOTES: Calculated by integration over the measured phase space distribution
 total_velocity_vector_rtn_integrated:
    NAME: total_velocity_vector_rtn_integrated
    DATA_TYPE: CDF_REAL4
@@ -798,6 +815,7 @@ total_velocity_vector_rtn_integrated:
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
    LABL_PTR_1: rtn_label
+   VAR_NOTES: Calculated by integration over the measured phase space distribution
 core_speed_integrated:
    NAME: core_speed_integrated
    DATA_TYPE: CDF_REAL4
@@ -814,6 +832,7 @@ core_speed_integrated:
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
+   VAR_NOTES: Calculated by integration over the measured phase space distribution
 halo_speed_integrated:
    NAME: halo_speed_integrated
    DATA_TYPE: CDF_REAL4
@@ -830,6 +849,7 @@ halo_speed_integrated:
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
+   VAR_NOTES: Calculated by integration over the measured phase space distribution
 total_speed_integrated:
    NAME: total_speed_integrated
    DATA_TYPE: CDF_REAL4
@@ -846,6 +866,7 @@ total_speed_integrated:
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
+   VAR_NOTES: Calculated by integration over the measured phase space distribution
 core_t_parallel_integrated:
    NAME: core_t_parallel_integrated
    DATA_TYPE: CDF_REAL4
@@ -862,6 +883,7 @@ core_t_parallel_integrated:
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
+   VAR_NOTES: Calculated by integration over the measured phase space distribution
 halo_t_parallel_integrated:
    NAME: halo_t_parallel_integrated
    DATA_TYPE: CDF_REAL4
@@ -878,6 +900,7 @@ halo_t_parallel_integrated:
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
+   VAR_NOTES: Calculated by integration over the measured phase space distribution
 total_t_parallel_integrated:
    NAME: total_t_parallel_integrated
    DATA_TYPE: CDF_REAL4
@@ -894,6 +917,7 @@ total_t_parallel_integrated:
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
+   VAR_NOTES: Calculated by integration over the measured phase space distribution
 core_t_perpendicular_integrated:
    NAME: core_t_perpendicular_integrated
    DATA_TYPE: CDF_REAL4
@@ -910,6 +934,7 @@ core_t_perpendicular_integrated:
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
+   VAR_NOTES: Calculated by integration over the measured phase space distribution
 halo_t_perpendicular_integrated:
    NAME: halo_t_perpendicular_integrated
    DATA_TYPE: CDF_REAL4
@@ -926,6 +951,7 @@ halo_t_perpendicular_integrated:
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
+   VAR_NOTES: Calculated by integration over the measured phase space distribution
 total_t_perpendicular_integrated:
    NAME: total_t_perpendicular_integrated
    DATA_TYPE: CDF_REAL4
@@ -942,6 +968,7 @@ total_t_perpendicular_integrated:
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
+   VAR_NOTES: Calculated by integration over the measured phase space distribution
 core_t_ratio_perpendicular_integrated:
    NAME: core_t_ratio_perpendicular_integrated
    DATA_TYPE: CDF_REAL4
@@ -958,6 +985,7 @@ core_t_ratio_perpendicular_integrated:
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
+   VAR_NOTES: Calculated by integration over the measured phase space distribution
 halo_t_ratio_perpendicular_integrated:
    NAME: halo_t_ratio_perpendicular_integrated
    DATA_TYPE: CDF_REAL4
@@ -974,6 +1002,7 @@ halo_t_ratio_perpendicular_integrated:
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
+   VAR_NOTES: Calculated by integration over the measured phase space distribution
 total_t_ratio_perpendicular_integrated:
    NAME: total_t_ratio_perpendicular_integrated
    DATA_TYPE: CDF_REAL4
@@ -990,6 +1019,7 @@ total_t_ratio_perpendicular_integrated:
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
+   VAR_NOTES: Calculated by integration over the measured phase space distribution
 core_temperature_phi_rtn_integrated:
    NAME: core_temperature_phi_rtn_integrated
    DATA_TYPE: CDF_REAL4
@@ -1006,6 +1036,7 @@ core_temperature_phi_rtn_integrated:
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
+   VAR_NOTES: Calculated by integration over the measured phase space distribution
 halo_temperature_phi_rtn_integrated:
    NAME: halo_temperature_phi_rtn_integrated
    DATA_TYPE: CDF_REAL4
@@ -1022,6 +1053,7 @@ halo_temperature_phi_rtn_integrated:
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
+   VAR_NOTES: Calculated by integration over the measured phase space distribution
 total_temperature_phi_rtn_integrated:
    NAME: total_temperature_phi_rtn_integrated
    DATA_TYPE: CDF_REAL4
@@ -1038,6 +1070,7 @@ total_temperature_phi_rtn_integrated:
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
+   VAR_NOTES: Calculated by integration over the measured phase space distribution
 core_temperature_theta_rtn_integrated:
    NAME: core_temperature_theta_rtn_integrated
    DATA_TYPE: CDF_REAL4
@@ -1054,6 +1087,7 @@ core_temperature_theta_rtn_integrated:
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
+   VAR_NOTES: Calculated by integration over the measured phase space distribution
 halo_temperature_theta_rtn_integrated:
    NAME: halo_temperature_theta_rtn_integrated
    DATA_TYPE: CDF_REAL4
@@ -1070,6 +1104,7 @@ halo_temperature_theta_rtn_integrated:
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
+   VAR_NOTES: Calculated by integration over the measured phase space distribution
 total_temperature_theta_rtn_integrated:
    NAME: total_temperature_theta_rtn_integrated
    DATA_TYPE: CDF_REAL4
@@ -1086,6 +1121,7 @@ total_temperature_theta_rtn_integrated:
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
+   VAR_NOTES: Calculated by integration over the measured phase space distribution
 core_temperature_tensor_integrated:
    NAME: core_temperature_tensor_integrated
    DATA_TYPE: CDF_REAL4
@@ -1104,6 +1140,7 @@ core_temperature_tensor_integrated:
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
    LABL_PTR_1: temperature_tensor_label
+   VAR_NOTES: Calculated by integration over the measured phase space distribution
 halo_temperature_tensor_integrated:
    NAME: halo_temperature_tensor_integrated
    DATA_TYPE: CDF_REAL4
@@ -1122,6 +1159,7 @@ halo_temperature_tensor_integrated:
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
    LABL_PTR_1: temperature_tensor_label
+   VAR_NOTES: Calculated by integration over the measured phase space distribution
 total_temperature_tensor_integrated:
    NAME: total_temperature_tensor_integrated
    DATA_TYPE: CDF_REAL4
@@ -1140,6 +1178,7 @@ total_temperature_tensor_integrated:
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
    LABL_PTR_1: temperature_tensor_label
+   VAR_NOTES: Calculated by integration over the measured phase space distribution
 core_heat_flux_magnitude_integrated:
    NAME: core_heat_flux_magnitude_integrated
    DATA_TYPE: CDF_REAL4
@@ -1156,6 +1195,7 @@ core_heat_flux_magnitude_integrated:
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
+   VAR_NOTES: Calculated by integration over the measured phase space distribution
 core_heat_flux_theta_integrated:
    NAME: core_heat_flux_theta_integrated
    DATA_TYPE: CDF_REAL4
@@ -1172,6 +1212,7 @@ core_heat_flux_theta_integrated:
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
+   VAR_NOTES: Calculated by integration over the measured phase space distribution
 core_heat_flux_phi_integrated:
    NAME: core_heat_flux_phi_integrated
    DATA_TYPE: CDF_REAL4
@@ -1188,6 +1229,7 @@ core_heat_flux_phi_integrated:
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
+   VAR_NOTES: Calculated by integration over the measured phase space distribution
 halo_heat_flux_magnitude_integrated:
    NAME: halo_heat_flux_magnitude_integrated
    DATA_TYPE: CDF_REAL4
@@ -1204,6 +1246,7 @@ halo_heat_flux_magnitude_integrated:
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
+   VAR_NOTES: Calculated by integration over the measured phase space distribution
 halo_heat_flux_theta_integrated:
    NAME: halo_heat_flux_theta_integrated
    DATA_TYPE: CDF_REAL4
@@ -1220,6 +1263,7 @@ halo_heat_flux_theta_integrated:
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
+   VAR_NOTES: Calculated by integration over the measured phase space distribution
 halo_heat_flux_phi_integrated:
    NAME: halo_heat_flux_phi_integrated
    DATA_TYPE: CDF_REAL4
@@ -1236,6 +1280,7 @@ halo_heat_flux_phi_integrated:
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
+   VAR_NOTES: Calculated by integration over the measured phase space distribution
 total_heat_flux_magnitude_integrated:
    NAME: total_heat_flux_magnitude_integrated
    DATA_TYPE: CDF_REAL4
@@ -1252,6 +1297,7 @@ total_heat_flux_magnitude_integrated:
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
+   VAR_NOTES: Calculated by integration over the measured phase space distribution
 total_heat_flux_theta_integrated:
    NAME: total_heat_flux_theta_integrated
    DATA_TYPE: CDF_REAL4
@@ -1268,6 +1314,7 @@ total_heat_flux_theta_integrated:
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
+   VAR_NOTES: Calculated by integration over the measured phase space distribution
 total_heat_flux_phi_integrated:
    NAME: total_heat_flux_phi_integrated
    DATA_TYPE: CDF_REAL4
@@ -1284,6 +1331,7 @@ total_heat_flux_phi_integrated:
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
+   VAR_NOTES: Calculated by integration over the measured phase space distribution
 core_temperature_parallel_to_mag:
    NAME: core_temperature_parallel_to_mag
    DATA_TYPE: CDF_REAL4
@@ -1300,6 +1348,7 @@ core_temperature_parallel_to_mag:
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
+   VAR_NOTES: Calculated by integration over the measured phase space distribution
 halo_temperature_parallel_to_mag:
    NAME: halo_temperature_parallel_to_mag
    DATA_TYPE: CDF_REAL4
@@ -1316,6 +1365,7 @@ halo_temperature_parallel_to_mag:
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
+   VAR_NOTES: Calculated by integration over the measured phase space distribution
 total_temperature_parallel_to_mag:
    NAME: total_temperature_parallel_to_mag
    DATA_TYPE: CDF_REAL4
@@ -1332,6 +1382,7 @@ total_temperature_parallel_to_mag:
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
+   VAR_NOTES: Calculated by integration over the measured phase space distribution
 core_temperature_perpendicular_to_mag:
    NAME: core_temperature_perpendicular_to_mag
    DATA_TYPE: CDF_REAL4
@@ -1348,6 +1399,7 @@ core_temperature_perpendicular_to_mag:
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
+   VAR_NOTES: Calculated by integration over the measured phase space distribution
 halo_temperature_perpendicular_to_mag:
    NAME: halo_temperature_perpendicular_to_mag
    DATA_TYPE: CDF_REAL4
@@ -1364,6 +1416,7 @@ halo_temperature_perpendicular_to_mag:
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
+   VAR_NOTES: Calculated by integration over the measured phase space distribution
 total_temperature_perpendicular_to_mag:
    NAME: total_temperature_perpendicular_to_mag
    DATA_TYPE: CDF_REAL4
@@ -1380,6 +1433,7 @@ total_temperature_perpendicular_to_mag:
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
+   VAR_NOTES: Calculated by integration over the measured phase space distribution
 core_temperature_ratio_perpendicular_to_mag:
    NAME: core_temperature_ratio_perpendicular_to_mag
    DATA_TYPE: CDF_REAL4
@@ -1396,6 +1450,7 @@ core_temperature_ratio_perpendicular_to_mag:
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
+   VAR_NOTES: Calculated by integration over the measured phase space distribution
 halo_temperature_ratio_perpendicular_to_mag:
    NAME: halo_temperature_ratio_perpendicular_to_mag
    DATA_TYPE: CDF_REAL4
@@ -1412,6 +1467,7 @@ halo_temperature_ratio_perpendicular_to_mag:
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
+   VAR_NOTES: Calculated by integration over the measured phase space distribution
 total_temperature_ratio_perpendicular_to_mag:
    NAME: total_temperature_ratio_perpendicular_to_mag
    DATA_TYPE: CDF_REAL4
@@ -1428,6 +1484,7 @@ total_temperature_ratio_perpendicular_to_mag:
    VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.00E+31
+   VAR_NOTES: Calculated by integration over the measured phase space distribution
 energy_label:
    NAME: energy_label
    DATA_TYPE: CDF_CHAR

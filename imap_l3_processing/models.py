@@ -1,8 +1,8 @@
 import abc
 import ctypes
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Union
+from typing import Union, Optional
 
 import numpy as np
 
@@ -17,10 +17,11 @@ class InputMetadata:
     end_date: datetime
     version: str
     descriptor: str = ""
+    repointing: Optional[int] = None
 
     def to_upstream_data_dependency(self, descriptor: str):
         return UpstreamDataDependency(self.instrument, self.data_level, self.start_date, self.end_date, self.version,
-                                      descriptor)
+                                      descriptor, self.repointing)
 
 
 @dataclass
@@ -42,6 +43,8 @@ class DataProductVariable:
 @dataclass
 class DataProduct(metaclass=abc.ABCMeta):
     input_metadata: UpstreamDataDependency
+
+    parent_file_names: list[str] = field(default_factory=list, kw_only=True)
 
     @abc.abstractmethod
     def to_data_product_variables(self) -> list[DataProductVariable]:

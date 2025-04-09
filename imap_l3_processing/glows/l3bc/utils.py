@@ -1,9 +1,11 @@
+import json
 from collections import defaultdict
 from datetime import timedelta
 from json import dump
 from pathlib import Path
 from zipfile import ZipFile, ZIP_DEFLATED
 
+import numpy as np
 from astropy.time import Time, TimeDelta
 from spacepy.pycdf import CDF
 
@@ -21,6 +23,7 @@ from imap_l3_processing.glows.l3a.models import GlowsL3LightCurve, PHOTON_FLUX_U
     SPACECRAFT_VELOCITY_AVERAGE_CDF_VAR_NAME
 from imap_l3_processing.glows.l3bc.dependency_validator import validate_dependencies
 from imap_l3_processing.glows.l3bc.glows_initializer_ancillary_dependencies import GlowsInitializerAncillaryDependencies
+from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDependencies
 from imap_l3_processing.glows.l3bc.l3bc_toolkit.funcs import carrington, jd_fm_Carrington
 from imap_l3_processing.glows.l3bc.models import CRToProcess
 
@@ -75,6 +78,8 @@ def find_unprocessed_carrington_rotations(l3a_inputs: list[dict], l3b_inputs: li
 
     l3as_by_carrington: dict = defaultdict(list)
 
+    latest_l3a_file = get_astropy_time_from_yyyymmdd(sorted_l3a_inputs[-1]["start_date"])
+
     for index, l3a in enumerate(sorted_l3a_inputs):
         current_date: Time = get_astropy_time_from_yyyymmdd(l3a["start_date"])
         current_rounded_cr = int(carrington(current_date.jd))
@@ -89,13 +94,17 @@ def find_unprocessed_carrington_rotations(l3a_inputs: list[dict], l3b_inputs: li
 
     crs_to_process = []
     for carrington_number, l3a_files in l3as_by_carrington.items():
-        if carrington_number not in l3bs_carringtons and len(l3a_files) >= 2:
+        if carrington_number not in l3bs_carringtons:
             carrington_start_date = jd_fm_Carrington(float(carrington_number))
             date_time = Time(carrington_start_date, format='jd')
             date_time.format = 'iso'
             carrington_end_date_non_inclusive = jd_fm_Carrington(carrington_number + 1)
             date_time_end_date = Time(carrington_end_date_non_inclusive, format='jd')
             date_time_end_date.format = 'iso'
+
+            if latest_l3a_file < date_time_end_date + dependencies.initializer_time_buffer:
+                continue
+
             is_valid = validate_dependencies(date_time_end_date, dependencies.initializer_time_buffer,
                                              dependencies.omni2_data_path, dependencies.f107_index_file_path,
                                              dependencies.lyman_alpha_path)
@@ -139,3 +148,56 @@ def archive_dependencies(cr_to_process: CRToProcess, version: str,
             dump(cr, json_file)
         file.write(json_filename)
     return Path(filename)
+
+
+def make_l3b_data_with_fill(dependencies: GlowsL3BCDependencies):
+    model = {}
+    model['header'] = {
+        'ancillary_data_files': dependencies.ancillary_files,
+        'external_dependeciens': dependencies.external_files,
+        'l3a_input_files_name': []
+    }
+    uv_anisotropy_file = dependencies.ancillary_files['uv_anisotropy']
+    model['ion_rate_profile'] = {}
+    model['CR'] = dependencies.carrington_rotation_number
+
+    with open(uv_anisotropy_file, 'r') as file:
+        text = file.read()
+        contents = json.loads(text)
+        model['uv_anisotropy_factor'] = contents['anisotropy_factor']
+        model['ion_rate_profile']['lat_grid'] = contents['lat_grid']
+
+    model['ion_rate_profile']['sum_rate'] = np.full(len(contents['lat_grid']), np.nan)
+    model['ion_rate_profile']['ph_rate'] = np.full(len(contents['lat_grid']), np.nan)
+    model['ion_rate_profile']['cx_rate'] = np.full(len(contents['lat_grid']), np.nan)
+    model['ion_rate_profile']['sum_uncert'] = np.full(len(contents['lat_grid']), np.nan)
+    model['ion_rate_profile']['ph_uncert'] = np.full(len(contents['lat_grid']), np.nan)
+    model['ion_rate_profile']['cx_uncert'] = np.full(len(contents['lat_grid']), np.nan)
+
+    return model
+
+
+def make_l3c_data_with_fill(dependencies: GlowsL3BCDependencies) -> dict:
+    model = {}
+    model['header'] = {
+        'ancillary_data_files': dependencies.ancillary_files,
+        'external_dependeciens': dependencies.external_files,
+    }
+    model['solar_wind_profile'] = {}
+    model['solar_wind_ecliptic'] = {}
+    model['CR'] = dependencies.carrington_rotation_number
+
+    model['solar_wind_ecliptic']["plasma_speed"] = np.nan
+    model['solar_wind_ecliptic']["proton_density"] = np.nan
+    model['solar_wind_ecliptic']["alpha_abundance"] = np.nan
+    with open(dependencies.ancillary_files["pipeline_settings"], 'r') as file:
+        settings = json.load(file)
+
+    lat_grid = settings['ion_rate_grid']
+    model['solar_wind_profile']['lat_grid'] = lat_grid
+    grid_size = len(lat_grid)
+
+    model['solar_wind_profile']['plasma_speed'] = np.full(grid_size, np.nan)
+    model['solar_wind_profile']['proton_density'] = np.full(grid_size, np.nan)
+
+    return model

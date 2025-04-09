@@ -8,16 +8,15 @@ from imap_l3_processing.glows.l3bc.glows_initializer_ancillary_dependencies impo
     GlowsInitializerAncillaryDependencies, \
     F107_FLUX_TABLE_URL, \
     LYMAN_ALPHA_COMPOSITE_INDEX_URL, OMNI2_URL
-from imap_l3_processing.models import UpstreamDataDependency
 from tests.glows.l3bc.test_utils import create_imap_data_access_json
 from tests.test_helpers import get_test_data_path
 
 
 class TestGlowsInitializerAncillaryDependencies(unittest.TestCase):
-    @patch("imap_l3_processing.glows.l3bc.glows_initializer_ancillary_dependencies.download_dependency")
+    @patch("imap_l3_processing.glows.l3bc.glows_initializer_ancillary_dependencies.download")
     @patch("imap_l3_processing.glows.l3bc.glows_initializer_ancillary_dependencies.query")
     @patch("imap_l3_processing.glows.l3bc.glows_initializer_ancillary_dependencies.download_external_dependency")
-    def test_fetch_dependencies(self, mock_download_external_dependency, mock_query, mock_download_dependency):
+    def test_fetch_dependencies(self, mock_download_external_dependency, mock_query, mock_download):
         uv_anisotropy_factor = create_imap_data_access_json(file_path="path_to_uv_file", data_level=None,
                                                             start_date=None, descriptor="uv-anisotropy-1CR",
                                                             version="latest")
@@ -38,10 +37,7 @@ class TestGlowsInitializerAncillaryDependencies(unittest.TestCase):
             [pipeline_settings]
         ]
 
-        pipeline_settings_upstream_dependency = UpstreamDataDependency("glows", "l3",
-                                                                       None, None, "latest",
-                                                                       descriptor="pipeline-settings-L3bc")
-        mock_download_dependency.return_value = get_test_data_path("glows/imap_glows_pipeline-settings-L3bc.json")
+        mock_download.return_value = get_test_data_path("glows/imap_glows_pipeline-settings-L3bc.json")
 
         f107_index_path = Path("f107_fluxtable.txt")
         lyman_alpha_path = Path("lyman_alpha_composite.nc")
@@ -56,7 +52,7 @@ class TestGlowsInitializerAncillaryDependencies(unittest.TestCase):
         actual_dependencies = GlowsInitializerAncillaryDependencies.fetch_dependencies()
         self.assertIsInstance(actual_dependencies, GlowsInitializerAncillaryDependencies)
 
-        mock_download_dependency.assert_called_once_with(pipeline_settings_upstream_dependency)
+        mock_download.assert_called_once_with(pipeline_settings['file_path'])
 
         self.assertEqual([
             call(instrument="glows", descriptor="uv-anisotropy-1CR", version="latest"),

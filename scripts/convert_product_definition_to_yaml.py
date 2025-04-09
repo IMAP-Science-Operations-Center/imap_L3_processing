@@ -72,6 +72,8 @@ def process_csv():
         "swe": "imap_l3_processing/cdf/data_product_definition_csv/imap_swe_l3_variable_attrs.csv",
         "glows-l3a": "imap_l3_processing/cdf/data_product_definition_csv/imap_glows_l3a_variable_attrs.csv",
         "glows-l3b": "imap_l3_processing/cdf/data_product_definition_csv/imap_glows_l3b_variable_attrs.csv",
+        "glows-l3c": "imap_l3_processing/cdf/data_product_definition_csv/imap_glows_l3c_variable_attrs.csv",
+        "swapi-l3a": "imap_l3_processing/cdf/data_product_definition_csv/imap_swapi_l3a_variable_attrs.csv",
     }
     file_path = instrument_to_file_path[args.instrument]
 
