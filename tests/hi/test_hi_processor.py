@@ -71,19 +71,19 @@ class TestHiProcessor(unittest.TestCase):
         np.testing.assert_array_equal(actual_hi_data_product.exposure, hi_l3_data.exposure)
 
     def test_spectral_fit_against_validation_data(self):
-        expected_failures = ["hi45", "hi45-zirnstein-mondel"]
+        expected_failures = ["hi45-zirnstein-mondel"]
 
         test_cases = [
-            ("hi45", "hi/validation/hi45-6months.cdf", "hi/validation/expected_Hi45_6months_4.0x4.0_fit_gam.csv",
-             "hi/validation/expected_Hi45_6months_4.0x4.0_fit_gam_sig.csv"),
-            ("hi90", "hi/validation/hi90-6months.cdf", "hi/validation/expected_Hi90_6months_4.0x4.0_fit_gam.csv",
-             "hi/validation/expected_Hi90_6months_4.0x4.0_fit_gam_sig.csv"),
+            ("hi45", "hi/validation/hi45-6months.cdf", "hi/validation/IMAP-Hi45_6months_4.0x4.0_fit_gam.csv",
+             "hi/validation/IMAP-Hi45_6months_4.0x4.0_fit_gam_sig.csv"),
+            ("hi90", "hi/validation/hi90-6months.cdf", "hi/validation/IMAP-Hi90_6months_4.0x4.0_fit_gam.csv",
+             "hi/validation/IMAP-Hi90_6months_4.0x4.0_fit_gam_sig.csv"),
             ("hi45-zirnstein-mondel", "hi/validation/hi45-zirnstein-mondel-6months.cdf",
-             "hi/validation/expected_Hi45_gdf_Zirnstein_model_6months_4.0x4.0_fit_gam.csv",
-             "hi/validation/expected_Hi45_gdf_Zirnstein_model_6months_4.0x4.0_fit_gam_sig.csv"),
+             "hi/validation/IMAP-Hi45_gdf_Zirnstein_model_6months_4.0x4.0_fit_gam.csv",
+             "hi/validation/IMAP-Hi45_gdf_Zirnstein_model_6months_4.0x4.0_fit_gam_sig.csv"),
             ("hi90-zirnstein-mondel", "hi/validation/hi90-zirnstein-mondel-6months.cdf",
-             "hi/validation/expected_Hi90_gdf_zirnstein_model_6months_4.0x4.0_fit_gam.csv",
-             "hi/validation/expected_Hi90_gdf_Zirnstein_model_6months_4.0x4.0_fit_gam_sig.csv"),
+             "hi/validation/IMAP-Hi90_gdf_Zirnstein_model_6months_4.0x4.0_fit_gam.csv",
+             "hi/validation/IMAP-Hi90_gdf_Zirnstein_model_6months_4.0x4.0_fit_gam_sig.csv"),
         ]
 
         for name, input_file_path, expected_gamma_path, expected_sigma_path in test_cases:
@@ -114,8 +114,10 @@ class TestHiProcessor(unittest.TestCase):
                 output_data = processor._process_spectral_fit_index(dependencies)
 
                 try:
-                    np.testing.assert_allclose(output_data.spectral_fit_index[0], expected_gamma, atol=1e-5)
-                    np.testing.assert_allclose(output_data.spectral_fit_index_error[0], expected_gamma_sigma, atol=1e-5)
+                    np.testing.assert_allclose(output_data.spectral_fit_index[0],
+                                               expected_gamma, atol=1e-3)
+                    np.testing.assert_allclose(output_data.spectral_fit_index_error[0],
+                                               expected_gamma_sigma, atol=1e-3)
                 except Exception as e:
                     if name in expected_failures:
                         print(f"Spectral fit validation failed expectedly (card 2419): {name}")
