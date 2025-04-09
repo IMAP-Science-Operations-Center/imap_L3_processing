@@ -7,6 +7,8 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 import imap_data_access
+from imap_data_access import ScienceFilePath
+from imap_data_access.processing_input import ProcessingInputCollection
 
 from imap_l3_processing.glows.glows_processor import GlowsProcessor
 from imap_l3_processing.hit.l3.hit_processor import HitProcessor
@@ -32,7 +34,8 @@ def imap_l3_processor():
     )
 
     args = parser.parse_args()
-    dependencies_list = json.loads(args.dependency.replace("'", '"'))
+    processing_input_collection = ProcessingInputCollection()
+    processing_input_collection.deserialize(args.dependency)
 
     def convert_to_datetime(date):
         if date is None:
@@ -40,10 +43,15 @@ def imap_l3_processor():
         else:
             return datetime.strptime(date, "%Y%m%d")
 
-    dependencies = [UpstreamDataDependency(d['instrument'], d['data_level'],
-                                           convert_to_datetime(d['start_date']),
-                                           convert_to_datetime(d.get('end_date', None)),
-                                           d['version'], d['descriptor']) for d in dependencies_list]
+    dependencies = []
+    for dependency in processing_input_collection.get_science_inputs():
+        for file_path in dependency.imap_file_paths:
+            file_path: ScienceFilePath
+            dependencies.append(UpstreamDataDependency(
+                file_path.instrument, file_path.data_level, convert_to_datetime(file_path.start_date),
+                convert_to_datetime(file_path.start_date), file_path.version, file_path.descriptor
+            ))
+
     input_dependency = InputMetadata(args.instrument,
                                      args.data_level,
                                      convert_to_datetime(args.start_date),

@@ -26,6 +26,7 @@ class GlowsProcessor(Processor):
     def process(self):
         if self.input_metadata.data_level == "l3a":
             l3a_dependencies = GlowsL3ADependencies.fetch_dependencies(self.dependencies)
+            self.input_metadata.repointing = l3a_dependencies.repointing
             l3a_output = self.process_l3a(l3a_dependencies)
             proton_cdf = save_data(l3a_output)
             imap_data_access.upload(proton_cdf)

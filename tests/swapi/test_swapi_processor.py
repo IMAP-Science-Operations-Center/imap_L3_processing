@@ -20,7 +20,7 @@ from imap_l3_processing.swapi.swapi_processor import SwapiProcessor
 
 class TestSwapiProcessor(TestCase):
     def setUp(self) -> None:
-        self.temp_directory = f"{TEMP_CDF_FOLDER_PATH}"
+        self.temp_directory = TEMP_CDF_FOLDER_PATH
         if os.path.exists(self.temp_directory):
             shutil.rmtree(self.temp_directory)
         os.mkdir(self.temp_directory)

@@ -1,4 +1,5 @@
 import json
+import os
 from dataclasses import fields
 from pathlib import Path
 from typing import Type, T
@@ -79,3 +80,33 @@ def assert_dict_close(x, y, rtol=1e-7, path=None):
         np.testing.assert_allclose(x, y, rtol=rtol, err_msg=f"path to failure: {path_str}")
     else:
         assert x == y, f"{x} != {y} at path {path_str}"
+
+
+def assert_dataclass_fields(expected_obj, actual_obj, omit=None):
+    omit = omit or []
+    for field in [f for f in fields(actual_obj) if f not in omit]:
+        expected = getattr(expected_obj, field.name)
+        actual = getattr(actual_obj, field.name)
+        if isinstance(actual, (list, np.ndarray, float)):
+            np.testing.assert_array_equal(actual, expected)
+        elif isinstance(actual, dict):
+            assert_dict_close(expected, actual, rtol=1e-20)
+        else:
+            assert expected == actual, f"{expected} != {actual} for field {field.name}"
+
+
+def environment_variables(vars: dict):
+    def decorator(func):
+        old_vars = {k: os.environ.get(v) for k, v in vars.items() if os.environ.get(str(v)) is not None}
+        for k, v in vars.items():
+            os.environ[k] = str(v)
+
+        def wrapper(*args, **kwargs):
+            return func(*args, **kwargs)
+
+        for k, v in old_vars.items():
+            os.environ[k] = v
+
+        return wrapper
+
+    return decorator

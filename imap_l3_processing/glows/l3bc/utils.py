@@ -6,7 +6,10 @@ from pathlib import Path
 from zipfile import ZipFile, ZIP_DEFLATED
 
 import numpy as np
+import pandas as pd
 from astropy.time import Time, TimeDelta
+from imap_processing.spice.repoint import get_repoint_data
+from imap_processing.spice.time import met_to_datetime64
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.glows.l3a.models import GlowsL3LightCurve, PHOTON_FLUX_UNCERTAINTY_CDF_VAR_NAME, \
@@ -201,3 +204,13 @@ def make_l3c_data_with_fill(dependencies: GlowsL3BCDependencies) -> dict:
     model['solar_wind_profile']['proton_density'] = np.full(grid_size, np.nan)
 
     return model
+
+
+def get_repoint_date_range(repointing: int) -> (np.datetime64, np.datetime64):
+    repointing_df: pd.DataFrame = get_repoint_data()
+    matching_rows = repointing_df[repointing_df['repoint_id'] == repointing]
+    repointing_data = matching_rows.iloc[0]
+    start_time = repointing_data['repoint_start_met']
+    end_time = repointing_data['repoint_end_met']
+
+    return met_to_datetime64(start_time), met_to_datetime64(end_time)
