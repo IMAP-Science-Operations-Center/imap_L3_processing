@@ -65,7 +65,7 @@ class TestCodiceL2Dependencies(unittest.TestCase):
     @patch("imap_l3_processing.codice.l2.direct_event.science.energy_lookup.EnergyLookup.from_files")
     @patch("imap_l3_processing.codice.l2.direct_event.science.time_of_flight_lookup.TimeOfFlightLookup.from_files")
     @patch("imap_l3_processing.codice.l2.direct_event.science.azimuth_lookup.AzimuthLookup.from_files")
-    @patch("imap_l3_processing.codice.l2.direct_event.codice_l2_dependencies.CodiceL1aHiData.read_from_cdf")
+    @patch("imap_l3_processing.codice.l2.direct_event.codice_l2_dependencies.CodiceL2HiData.read_from_cdf")
     def test_can_load_from_files(self, mock_read_from_cdf, mock_azimuth_lookup_from_file, mock_tof_lookup_from_file,
                                  mock_energy_lookup_from_files):
         energy_lookup_file = Path("energy")

@@ -1,15 +1,12 @@
 from dataclasses import dataclass
-from datetime import datetime
 
 import numpy as np
 from numpy import ndarray
 from spacepy.pycdf import CDF
 
-from imap_l3_processing.models import DataProduct, DataProductVariable
-
 
 @dataclass
-class PriorityEventL1:
+class PriorityEventL2:
     data_quality: ndarray
     energy_range: ndarray
     multi_flag: ndarray
@@ -23,14 +20,14 @@ class PriorityEventL1:
 
 
 @dataclass
-class CodiceL1aHiData:
+class CodiceL2HiData:
     epochs: ndarray
-    priority_event_0: PriorityEventL1
-    priority_event_1: PriorityEventL1
-    priority_event_2: PriorityEventL1
-    priority_event_3: PriorityEventL1
-    priority_event_4: PriorityEventL1
-    priority_event_5: PriorityEventL1
+    priority_event_0: PriorityEventL2
+    priority_event_1: PriorityEventL2
+    priority_event_2: PriorityEventL2
+    priority_event_3: PriorityEventL2
+    priority_event_4: PriorityEventL2
+    priority_event_5: PriorityEventL2
 
     names = ["DataQuality",
              "ERGE",
@@ -43,6 +40,11 @@ class CodiceL1aHiData:
              ("TOF", "tof"),
              ("Type", "type")]
 
+    @property
+    def priority_events(self):
+        return [self.priority_event_0, self.priority_event_1, self.priority_event_2,
+                self.priority_event_3, self.priority_event_4, self.priority_event_5]
+        
     @classmethod
     def read_from_cdf(cls, filename):
         names = [("DataQuality", "data_quality"), ("ERGE", "energy_range"), ("MultiFlag", "multi_flag"),
@@ -60,7 +62,7 @@ class CodiceL1aHiData:
                     cdf_variable_name = f"P{p}_{cdf_name}"
                     priority_event_data[class_attribute] = np.array(cdf[cdf_variable_name])
 
-                priority_events.append(PriorityEventL1(**priority_event_data))
+                priority_events.append(PriorityEventL2(**priority_event_data))
 
             return cls(epochs, *priority_events)
 
@@ -75,31 +77,3 @@ SPIN_SECTOR_VAR_NAME = "spin_sector"
 SPIN_NUMBER_VAR_NAME = "spin_number"
 TIME_OF_FLIGHT_VAR_NAME = "tof"
 PRIORITY_VAR_NAME = "priority"
-
-
-@dataclass
-class CodiceL2HiDataProduct(DataProduct):
-    epoch: ndarray[datetime]
-    data_quality: ndarray
-    energy_range: ndarray
-    multi_flag: ndarray
-    number_of_events: ndarray
-    energy: ndarray
-    spin_sector: ndarray
-    spin_number: ndarray
-    time_of_flight: ndarray
-    priority: ndarray
-
-    def to_data_product_variables(self) -> list[DataProductVariable]:
-        return [
-            DataProductVariable(EPOCH_VAR_NAME, self.epoch),
-            DataProductVariable(DATA_QUALITY_VAR_NAME, self.data_quality),
-            DataProductVariable(ENERGY_RANGE_VAR_NAME, self.energy_range),
-            DataProductVariable(MULTI_FLAG_VAR_NAME, self.multi_flag),
-            DataProductVariable(NUMBER_OF_EVENTS_VAR_NAME, self.number_of_events),
-            DataProductVariable(ENERGY_VAR_NAME, self.energy),
-            DataProductVariable(SPIN_SECTOR_VAR_NAME, self.spin_sector),
-            DataProductVariable(SPIN_NUMBER_VAR_NAME, self.spin_number),
-            DataProductVariable(TIME_OF_FLIGHT_VAR_NAME, self.time_of_flight),
-            DataProductVariable(PRIORITY_VAR_NAME, self.priority),
-        ]
