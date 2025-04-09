@@ -65,6 +65,7 @@ class HiL3SpectralIndexDataProduct(DataProduct, HiMapData):
         ]
 
 
+@dataclass
 class HiL3SurvivalCorrectedDataProduct(DataProduct, HiMapData):
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return []

@@ -22,7 +22,7 @@ for folder in parent.iterdir():
         for file in sub_folder.iterdir():
             energy_string = re.search(r"_(\d*p\d*)keV", file.name).group(1)
             energy = float(energy_string.replace('p', '.'))
-            data[sub_folder.name][energy] = np.loadtxt(file, delimiter=",")
+            data[sub_folder.name][energy] = np.loadtxt(file, delimiter=",").T
     assert (data['flux'].keys() == data['sigma'].keys())
     energy = np.array([key for key in sorted(data['flux'].keys())])
     flux = np.array([data['flux'][key] for key in sorted(data['flux'].keys())])

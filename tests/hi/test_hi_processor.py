@@ -11,7 +11,8 @@ from imap_l3_processing.hi.hi_processor import HiProcessor, combine_glows_l3e_hi
 from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3SpectralFitDependencies, \
     HI_L3_SPECTRAL_FIT_DESCRIPTOR
 from imap_l3_processing.hi.l3.hi_l3_survival_dependencies import HiL3SurvivalDependencies
-from imap_l3_processing.hi.l3.models import HiMapData, HiL3SpectralIndexDataProduct, GlowsL3eData, HiL1cData
+from imap_l3_processing.hi.l3.models import HiMapData, HiL3SpectralIndexDataProduct, GlowsL3eData, HiL1cData, \
+    HiL3SurvivalCorrectedDataProduct
 from imap_l3_processing.hi.l3.science.survival_probability import Sensor
 from imap_l3_processing.models import InputMetadata
 from tests.test_helpers import get_test_data_path, NumpyArrayMatcher
@@ -126,7 +127,6 @@ class TestHiProcessor(unittest.TestCase):
                         raise e
 
     @patch('imap_l3_processing.hi.hi_processor.save_data')
-    @patch("imap_l3_processing.hi.hi_processor.HiL3SurvivalCorrectedDataProduct")
     @patch("imap_l3_processing.hi.hi_processor.parse_map_descriptor")
     @patch('imap_l3_processing.hi.hi_processor.HiSurvivalProbabilitySkyMap')
     @patch('imap_l3_processing.hi.hi_processor.HiSurvivalProbabilityPointingSet')
@@ -134,7 +134,7 @@ class TestHiProcessor(unittest.TestCase):
     @patch('imap_l3_processing.hi.hi_processor.HiL3SurvivalDependencies.fetch_dependencies')
     def test_process_survival_probability(self, mock_fetch_dependencies, mock_combine_glows_l3e_hi_l1c,
                                           mock_survival_probability_pointing_set, mock_survival_skymap,
-                                          mock_parse_map_descriptor, mock_data_product_class, mock_save_data):
+                                          mock_parse_map_descriptor, mock_save_data):
 
         rng = np.random.default_rng()
         input_map_flux = rng.random((1, 9, 90, 45))
@@ -217,23 +217,23 @@ class TestHiProcessor(unittest.TestCase):
 
         mock_survival_skymap.return_value.to_dataset.assert_called_once_with()
 
-        mock_data_product_class.assert_called_once_with(
-            input_metadata=input_metadata.to_upstream_data_dependency(input_metadata.descriptor),
-            epoch=input_map.epoch,
-            energy=input_map.energy,
-            energy_deltas=input_map.energy_deltas,
-            counts=input_map.counts,
-            counts_uncertainty=input_map.counts_uncertainty,
-            epoch_delta=input_map.epoch_delta,
-            exposure=input_map.exposure,
-            flux=NumpyArrayMatcher(input_map.flux / computed_survival_probabilities),
-            lat=input_map.lat,
-            lon=input_map.lon,
-            sensitivity=input_map.sensitivity,
-            variance=input_map.variance,
-        )
+        mock_save_data.assert_called_once()
+        survival_data_product: HiL3SurvivalCorrectedDataProduct = mock_save_data.call_args_list[0].args[0]
 
-        mock_save_data.assert_called_once_with(mock_data_product_class.return_value)
+        self.assertEqual(input_metadata.to_upstream_data_dependency(input_metadata.descriptor),
+                         survival_data_product.input_metadata)
+        self.assertEqual(input_map.epoch, survival_data_product.epoch)
+        self.assertEqual(input_map.energy, survival_data_product.energy)
+        self.assertEqual(input_map.energy_deltas, survival_data_product.energy_deltas)
+        self.assertEqual(input_map.counts, survival_data_product.counts)
+        self.assertEqual(input_map.counts_uncertainty, survival_data_product.counts_uncertainty)
+        self.assertEqual(input_map.epoch_delta, survival_data_product.epoch_delta)
+        self.assertEqual(input_map.exposure, survival_data_product.exposure)
+        np.testing.assert_array_equal(survival_data_product.flux, input_map.flux / computed_survival_probabilities)
+        self.assertEqual(input_map.lat, survival_data_product.lat)
+        self.assertEqual(input_map.lon, survival_data_product.lon)
+        self.assertEqual(input_map.sensitivity, survival_data_product.sensitivity)
+        self.assertEqual(input_map.variance, survival_data_product.variance)
 
     def test_parse_map_descriptor(self):
         test_cases = [

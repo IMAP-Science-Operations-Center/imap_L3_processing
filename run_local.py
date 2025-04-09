@@ -523,6 +523,7 @@ if __name__ == "__main__":
             hi_l1c_paths=hi_l1c_paths,
             glows_l3e_paths=glows_l3_paths)
         print(create_hi_l3_survival_corrected_cdf(survival_dependencies, spacing_degree=4))
+        
         # parser = argparse.ArgumentParser()
         # parser.add_argument("run_local_type")
         # parser.add_argument("--sensor", choices=["90", "45", "combined"])
