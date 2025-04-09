@@ -12,8 +12,10 @@ from imap_l3_processing.glows.l3bc.glows_initializer_ancillary_dependencies impo
 from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDependencies
 from imap_l3_processing.glows.l3bc.models import CRToProcess
 from imap_l3_processing.glows.l3bc.utils import read_glows_l3a_data, find_unprocessed_carrington_rotations, \
-    archive_dependencies, make_l3b_data_with_fill, make_l3c_data_with_fill
-from tests.test_helpers import get_test_data_path, get_test_instrument_team_data_path
+    archive_dependencies, make_l3b_data_with_fill, make_l3c_data_with_fill, get_repoint_date_range
+from tests.test_helpers import get_test_data_path, get_test_instrument_team_data_path, environment_variables
+
+REPOINT_DATA_FILEPATH = get_test_data_path("fake_repointing_file.csv")
 
 
 class TestUtils(unittest.TestCase):
@@ -52,6 +54,16 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(0.0014979999978095293, actual_glows_lightcurve.spin_period_ground_std_dev[0])
         self.assertEqual(0.0, actual_glows_lightcurve.spin_period_std_dev[0])
         self.assertEqual(0.0, actual_glows_lightcurve.time_dependent_background[0][0])
+
+    @environment_variables({"REPOINT_DATA_FILEPATH": REPOINT_DATA_FILEPATH})
+    def test_get_repoint_date_range(self):
+        repointing_number = 12
+        actual_start, actual_end = get_repoint_date_range(repointing_number)
+        expected_start = np.datetime64(datetime(year=2010, month=1, day=13).isoformat())
+        expected_end = np.datetime64(datetime(year=2010, month=1, day=13, hour=23, minute=30).isoformat())
+
+        np.testing.assert_array_equal(actual_start, expected_start)
+        np.testing.assert_array_equal(actual_end, expected_end)
 
     @patch("imap_l3_processing.glows.l3bc.utils.validate_dependencies")
     def test_find_unprocessed_carrington_rotations(self, mock_validate_dependencies: Mock):
