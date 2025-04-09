@@ -67,7 +67,7 @@ class HiSurvivalProbabilityPointingSet(PointingSet):
             )
         },
             coords={
-                CoordNames.TIME.value: np.array([l1c_dataset.epoch]).astype(np.datetime64) - TTJ2000_EPOCH,
+                CoordNames.TIME.value: l1c_dataset.epoch_j2000,
                 CoordNames.ENERGY.value: l1c_dataset.esa_energy_step,
                 CoordNames.AZIMUTH_L1C.value: self.azimuths,
             }

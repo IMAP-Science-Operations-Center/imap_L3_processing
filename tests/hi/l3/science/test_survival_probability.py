@@ -22,6 +22,7 @@ class TestSurvivalProbability(unittest.TestCase):
 
         self.l1c_hi_dataset = HiL1cData(
             epoch=self.epoch,
+            epoch_j2000=np.array([43264184000000]),
             exposure_times=np.arange(self.num_energies * 3600).reshape((1, self.num_energies, 3600)) + 1.1,
             esa_energy_step=np.geomspace(1, 10000, self.num_energies),
         )
@@ -67,7 +68,7 @@ class TestSurvivalProbability(unittest.TestCase):
                                               pointing_set.data[CoordNames.ENERGY.value].values)
 
                 self.assertIn(CoordNames.TIME.value, pointing_set.data.coords)
-                np.testing.assert_array_equal(np.array([self.l1c_hi_dataset.epoch]).astype(np.datetime64),
+                np.testing.assert_array_equal(self.l1c_hi_dataset.epoch_j2000,
                                               pointing_set.data[CoordNames.TIME.value].values)
 
                 np.testing.assert_array_equal(pointing_set.az_el_points[:, 0],

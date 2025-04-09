@@ -251,21 +251,25 @@ class TestHiProcessor(unittest.TestCase):
 
     def test_combine_glows_l3e_hi_l1c(self):
         glows_l3e_data = [
-            GlowsL3eData(epoch=datetime.fromisoformat("2023-01-01T00:00:00Z"), spin_angle=None, energy=None,
-                         probability_of_survival=None),
-            GlowsL3eData(epoch=datetime.fromisoformat("2023-01-02T00:00:00Z"), spin_angle=None, energy=None,
-                         probability_of_survival=None),
-            GlowsL3eData(epoch=datetime.fromisoformat("2023-01-03T00:00:00Z"), spin_angle=None, energy=None,
-                         probability_of_survival=None),
-            GlowsL3eData(epoch=datetime.fromisoformat("2023-01-05T00:00:00Z"), spin_angle=None, energy=None,
-                         probability_of_survival=None),
+            GlowsL3eData(epoch=datetime.fromisoformat("2023-01-01T00:00:00Z"), spin_angle=None,
+                         energy=None, probability_of_survival=None),
+            GlowsL3eData(epoch=datetime.fromisoformat("2023-01-02T00:00:00Z"), spin_angle=None,
+                         energy=None, probability_of_survival=None),
+            GlowsL3eData(epoch=datetime.fromisoformat("2023-01-03T00:00:00Z"), spin_angle=None,
+                         energy=None, probability_of_survival=None),
+            GlowsL3eData(epoch=datetime.fromisoformat("2023-01-05T00:00:00Z"), spin_angle=None,
+                         energy=None, probability_of_survival=None),
         ]
 
         hi_l1c_data = [
-            HiL1cData(epoch=datetime.fromisoformat("2023-01-02T00:00:00Z"), exposure_times=None, esa_energy_step=None),
-            HiL1cData(epoch=datetime.fromisoformat("2023-01-04T00:00:00Z"), exposure_times=None, esa_energy_step=None),
-            HiL1cData(epoch=datetime.fromisoformat("2023-01-05T00:00:00Z"), exposure_times=None, esa_energy_step=None),
-            HiL1cData(epoch=datetime.fromisoformat("2023-01-06T00:00:00Z"), exposure_times=None, esa_energy_step=None),
+            HiL1cData(epoch=datetime.fromisoformat("2023-01-02T00:00:00Z"), epoch_j2000=None, exposure_times=None,
+                      esa_energy_step=None),
+            HiL1cData(epoch=datetime.fromisoformat("2023-01-04T00:00:00Z"), epoch_j2000=None, exposure_times=None,
+                      esa_energy_step=None),
+            HiL1cData(epoch=datetime.fromisoformat("2023-01-05T00:00:00Z"), epoch_j2000=None, exposure_times=None,
+                      esa_energy_step=None),
+            HiL1cData(epoch=datetime.fromisoformat("2023-01-06T00:00:00Z"), epoch_j2000=None, exposure_times=None,
+                      esa_energy_step=None),
         ]
 
         expected = [

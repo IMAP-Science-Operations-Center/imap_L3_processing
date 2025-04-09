@@ -73,6 +73,7 @@ class HiL3SurvivalCorrectedDataProduct(DataProduct, HiMapData):
 @dataclass
 class HiL1cData:
     epoch: datetime
+    epoch_j2000: np.ndarray
     exposure_times: np.ndarray
     esa_energy_step: np.ndarray
 

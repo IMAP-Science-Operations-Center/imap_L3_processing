@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 
-import numpy as np
+from spacepy import pycdf
 from spacepy.pycdf import CDF
 
 from tests.test_helpers import get_test_data_path
@@ -13,4 +13,5 @@ for i in range(num_fake_files):
     output_filename = str(get_test_data_path(f"hi/fake_l1c/{logical_source}.cdf"))
     with CDF(output_filename,
              masterpath=str(get_test_data_path("hi/imap_hi_l1c_45sensor-pset_20250415_v001.cdf"))) as cdf:
-        cdf['epoch'] = np.array([date_to_set])
+        del cdf['epoch']
+        cdf.new("epoch", [date_to_set], type=pycdf.const.CDF_TIME_TT2000)

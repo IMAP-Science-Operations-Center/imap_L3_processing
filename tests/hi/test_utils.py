@@ -4,6 +4,7 @@ from datetime import datetime
 from pathlib import Path
 
 import numpy as np
+from spacepy import pycdf
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.constants import FIVE_MINUTES_IN_NANOSECONDS
@@ -94,11 +95,11 @@ class TestUtils(unittest.TestCase):
         pathname = "test_cdf"
 
         with CDF(pathname, '') as cdf:
-            epoch = np.array([datetime(2000, 1, 1)])
+            epoch = np.array([datetime(2000, 1, 2)])
             exposure_times = rng.random((1, 9, 3600))
             energy_step = rng.random((9))
 
-            cdf["epoch"] = epoch
+            cdf.new("epoch", epoch, type=pycdf.const.CDF_TIME_TT2000)
             cdf["exposure_times"] = exposure_times
             cdf["esa_energy_step"] = energy_step
             for var in cdf:
@@ -108,6 +109,7 @@ class TestUtils(unittest.TestCase):
             with self.subTest(path=path):
                 result = read_hi_l1c_data(path)
                 self.assertEqual(epoch[0], result.epoch)
+                self.assertEqual([43264184000000], result.epoch_j2000)
                 np.testing.assert_array_equal(exposure_times, result.exposure_times)
                 np.testing.assert_array_equal(energy_step, result.esa_energy_step)
 
