@@ -3,7 +3,7 @@ from datetime import datetime, date
 from pathlib import Path
 from unittest import TestCase
 from unittest.mock import patch, call, Mock, sentinel
-from urllib.error import HTTPError
+from urllib.error import URLError
 
 import numpy as np
 from spacepy.pycdf import CDF
@@ -237,7 +237,7 @@ class TestUtils(TestCase):
     def test_download_external_dependency_error_case(self, mock_urlretrieve):
         expected_url = "https://www.spaceweather.gc.ca/solar_flux_data/daily_flux_values/no_such_file.txt"
         expected_filename = "f107_fluxtable.txt"
-        mock_urlretrieve.side_effect = HTTPError(url="url", code=404, msg="not there", hdrs=Mock(), fp=Mock())
+        mock_urlretrieve.side_effect = URLError("server is down")
         returned = download_external_dependency(expected_url, expected_filename)
         self.assertIsNone(returned)
 

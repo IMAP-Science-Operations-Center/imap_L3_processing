@@ -55,7 +55,7 @@ from imap_l3_processing.swapi.swapi_processor import SwapiProcessor
 from imap_l3_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies
 from imap_l3_processing.swe.swe_processor import SweProcessor
 from imap_l3_processing.utils import save_data, read_l1d_mag_data
-from tests.test_helpers import get_test_data_path, get_test_instrument_team_data_path
+from tests.test_helpers import get_test_data_path, get_test_instrument_team_data_path, environment_variables
 
 
 def create_glows_l3a_cdf(dependencies: GlowsL3ADependencies):
@@ -246,12 +246,14 @@ def create_hit_direct_event_cdf():
     return file_path
 
 
+@environment_variables({"REPOINT_DATA_FILEPATH": get_test_data_path("fake_1_day_repointing_file.csv")})
 @patch('imap_l3_processing.glows.glows_initializer.query')
 def run_l3b_initializer(mock_query):
     local_cdfs = os.listdir(get_test_data_path("glows/l3a_products"))
 
     l3a_dicts = [{'file_path': "glows/l3a_products/" + file_path,
-                  'start_date': file_path.split('_')[4]
+                  'start_date': file_path.split('_')[4].split('-')[0],
+                  'repointing': int(file_path.split('_')[4].split('-repoint')[1])
                   } for file_path in local_cdfs]
 
     mock_query.side_effect = [

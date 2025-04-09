@@ -69,8 +69,7 @@ def read_glows_l3a_data(cdf: CDF) -> GlowsL3LightCurve:
 
 
 def find_unprocessed_carrington_rotations(l3a_inputs: list[dict], l3b_inputs: list[dict],
-                                          dependencies: GlowsInitializerAncillaryDependencies) -> [
-    CRToProcess]:
+                                          dependencies: GlowsInitializerAncillaryDependencies) -> [CRToProcess]:
     l3bs_carringtons: set = set()
     for l3b in l3b_inputs:
         current_date = get_astropy_time_from_yyyymmdd(l3b["start_date"]) + TimeDelta(1, format='jd')
@@ -84,16 +83,14 @@ def find_unprocessed_carrington_rotations(l3a_inputs: list[dict], l3b_inputs: li
     latest_l3a_file = get_astropy_time_from_yyyymmdd(sorted_l3a_inputs[-1]["start_date"])
 
     for index, l3a in enumerate(sorted_l3a_inputs):
-        current_date: Time = get_astropy_time_from_yyyymmdd(l3a["start_date"])
-        current_rounded_cr = int(carrington(current_date.jd))
+        repointing_start, repointing_end = get_repoint_date_range(l3a["repointing"])
+        start_cr = int(carrington(Time(repointing_start, format="datetime64").jd))
+        end_cr = int(carrington(Time(repointing_end, format="datetime64").jd))
 
-        tomorrow = current_date + TimeDelta(1, format="jd")
-        tomorrow_rounded_cr = int(carrington(tomorrow.jd))
+        if end_cr - start_cr == 1:
+            l3as_by_carrington[end_cr].append(l3a['file_path'])
 
-        if tomorrow_rounded_cr - current_rounded_cr == 1:
-            l3as_by_carrington[tomorrow_rounded_cr].append(l3a['file_path'])
-
-        l3as_by_carrington[current_rounded_cr].append(l3a['file_path'])
+        l3as_by_carrington[start_cr].append(l3a['file_path'])
 
     crs_to_process = []
     for carrington_number, l3a_files in l3as_by_carrington.items():
@@ -209,6 +206,8 @@ def make_l3c_data_with_fill(dependencies: GlowsL3BCDependencies) -> dict:
 def get_repoint_date_range(repointing: int) -> (np.datetime64, np.datetime64):
     repointing_df: pd.DataFrame = get_repoint_data()
     matching_rows = repointing_df[repointing_df['repoint_id'] == repointing]
+    if len(matching_rows) == 0:
+        raise ValueError(f"No pointing found for pointing: {repointing}")
     repointing_data = matching_rows.iloc[0]
     start_time = repointing_data['repoint_start_met']
     end_time = repointing_data['repoint_end_met']
