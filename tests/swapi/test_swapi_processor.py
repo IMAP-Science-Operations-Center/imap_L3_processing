@@ -175,7 +175,8 @@ class TestSwapiProcessor(TestCase):
 
                 input_metadata.descriptor = descriptor_to_generate
 
-                expected_cdf_path = f"{self.temp_directory}/imap_swapi_l3a_{descriptor_to_generate}_{start_date_as_str}_{input_version}.cdf"
+                expected_cdf_path = str(
+                    self.temp_directory / f"imap_swapi_l3a_{descriptor_to_generate}_{start_date_as_str}_{input_version}.cdf")
 
                 mock_chunk_l2_data.side_effect = [
                     [chunk_of_five],

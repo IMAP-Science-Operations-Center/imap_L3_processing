@@ -51,7 +51,7 @@ class TestUtils(TestCase):
         actual_data = mock_write_cdf.call_args.args[1]
         actual_attribute_manager = mock_write_cdf.call_args.args[2]
 
-        expected_file_path = f"{TEMP_CDF_FOLDER_PATH}/imap_swapi_l2_descriptor_20240917_v2.cdf"
+        expected_file_path = str(TEMP_CDF_FOLDER_PATH / "imap_swapi_l2_descriptor_20240917_v2.cdf")
         self.assertEqual(expected_file_path, actual_file_path)
         self.assertIs(data_product, actual_data)
 
@@ -85,7 +85,8 @@ class TestUtils(TestCase):
 
         actual_attribute_manager = mock_write_cdf.call_args.args[2]
 
-        expected_file_path = f"{TEMP_CDF_FOLDER_PATH}/imap_instrument_data-level_descriptor_20250510-repoint0000{expected_repointing}_v003.cdf"
+        expected_file_path = str(
+            TEMP_CDF_FOLDER_PATH / f"imap_instrument_data-level_descriptor_20250510-repoint0000{expected_repointing}_v003.cdf")
         self.assertEqual(expected_file_path, actual_file_path)
 
         actual_attribute_manager.add_global_attribute.assert_has_calls([
