@@ -146,13 +146,13 @@ class TestUtils(TestCase):
                                                  alpha_sw_temperature=alpha_sw_temperature,
                                                  alpha_sw_density=alpha_sw_density)
 
-        custom_path = "fancy_path"
+        custom_path = TEMP_CDF_FOLDER_PATH / "fancy_path"
         returned_file_path = save_data(data_product, folder_path=custom_path)
 
         mock_write_cdf.assert_called_once()
         actual_file_path = mock_write_cdf.call_args.args[0]
 
-        expected_file_path = f"{custom_path}/imap_swapi_l2_descriptor_20240917_v2.cdf"
+        expected_file_path = str(custom_path / "imap_swapi_l2_descriptor_20240917_v2.cdf")
         self.assertEqual(expected_file_path, actual_file_path)
 
         self.assertEqual(expected_file_path, returned_file_path)
