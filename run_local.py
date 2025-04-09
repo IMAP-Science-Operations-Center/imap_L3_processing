@@ -446,7 +446,7 @@ if __name__ == "__main__":
         elif "l3bc" in sys.argv:
             run_glows_l3bc()
         else:
-            cdf_data = CDF("tests/test_data/glows/imap_glows_l2_hist_20130908-repoint00001_v003.cdf")
+            cdf_data = CDF("tests/test_data/glows/imap_glows_l2_hist_20130908-repoint00001_v004.cdf")
             l2_glows_data = read_l2_glows_data(cdf_data)
 
             dependencies = GlowsL3ADependencies(l2_glows_data, 5, {
