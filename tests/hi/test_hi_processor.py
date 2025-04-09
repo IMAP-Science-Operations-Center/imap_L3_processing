@@ -72,8 +72,6 @@ class TestHiProcessor(unittest.TestCase):
         np.testing.assert_array_equal(actual_hi_data_product.exposure, hi_l3_data.exposure)
 
     def test_spectral_fit_against_validation_data(self):
-        expected_failures = ["hi45-zirnstein-mondel"]
-
         test_cases = [
             ("hi45", "hi/validation/hi45-6months.cdf", "hi/validation/IMAP-Hi45_6months_4.0x4.0_fit_gam.csv",
              "hi/validation/IMAP-Hi45_6months_4.0x4.0_fit_gam_sig.csv"),
@@ -114,17 +112,10 @@ class TestHiProcessor(unittest.TestCase):
                 processor = HiProcessor(None, input_metadata)
                 output_data = processor._process_spectral_fit_index(dependencies)
 
-                try:
-                    np.testing.assert_allclose(output_data.spectral_fit_index[0],
-                                               expected_gamma, atol=1e-3)
-                    np.testing.assert_allclose(output_data.spectral_fit_index_error[0],
-                                               expected_gamma_sigma, atol=1e-3)
-                except Exception as e:
-                    if name in expected_failures:
-                        print(f"Spectral fit validation failed expectedly (card 2419): {name}")
-                        continue
-                    else:
-                        raise e
+                np.testing.assert_allclose(output_data.spectral_fit_index[0],
+                                           expected_gamma, atol=1e-3)
+                np.testing.assert_allclose(output_data.spectral_fit_index_error[0],
+                                           expected_gamma_sigma, atol=1e-3)
 
     @patch('imap_l3_processing.hi.hi_processor.save_data')
     @patch("imap_l3_processing.hi.hi_processor.parse_map_descriptor")
