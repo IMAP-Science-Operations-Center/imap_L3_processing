@@ -20,7 +20,7 @@ from imap_l3_processing.swapi.swapi_processor import SwapiProcessor
 
 class TestSwapiProcessor(TestCase):
     def setUp(self) -> None:
-        self.temp_directory = f"{TEMP_CDF_FOLDER_PATH}"
+        self.temp_directory = TEMP_CDF_FOLDER_PATH
         if os.path.exists(self.temp_directory):
             shutil.rmtree(self.temp_directory)
         os.mkdir(self.temp_directory)
@@ -175,7 +175,8 @@ class TestSwapiProcessor(TestCase):
 
                 input_metadata.descriptor = descriptor_to_generate
 
-                expected_cdf_path = f"{self.temp_directory}/imap_swapi_l3a_{descriptor_to_generate}_{start_date_as_str}_{input_version}.cdf"
+                expected_cdf_path = str(
+                    self.temp_directory / f"imap_swapi_l3a_{descriptor_to_generate}_{start_date_as_str}_{input_version}.cdf")
 
                 mock_chunk_l2_data.side_effect = [
                     [chunk_of_five],

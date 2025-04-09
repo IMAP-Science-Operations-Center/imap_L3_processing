@@ -22,7 +22,7 @@ def load_spice_kernels():
     spiceypy.furnsh(kernel_paths)
 
 
-def save_data(data: DataProduct, delete_if_present: bool = False, folder_path: str = TEMP_CDF_FOLDER_PATH) -> str:
+def save_data(data: DataProduct, delete_if_present: bool = False, folder_path: Path = TEMP_CDF_FOLDER_PATH) -> str:
     formatted_start_date = format_time(data.input_metadata.start_date)
     logical_source = data.input_metadata.logical_source
     if data.input_metadata.repointing is not None:
@@ -30,11 +30,11 @@ def save_data(data: DataProduct, delete_if_present: bool = False, folder_path: s
     else:
         repointing = ''
     logical_file_id = f'{logical_source}_{formatted_start_date}{repointing}_{data.input_metadata.version}'
-    Path(folder_path).mkdir(exist_ok=True)
-    file_path = f'{folder_path}/{logical_file_id}.cdf'
+    folder_path.mkdir(exist_ok=True)
+    file_path = folder_path / f"{logical_file_id}.cdf"
 
     if delete_if_present:
-        Path(file_path).unlink(missing_ok=True)
+        file_path.unlink(missing_ok=True)
 
     attribute_manager = ImapAttributeManager()
     attribute_manager.add_global_attribute("Data_version", data.input_metadata.version.replace('v', ''))
@@ -46,8 +46,9 @@ def save_data(data: DataProduct, delete_if_present: bool = False, folder_path: s
     attribute_manager.add_global_attribute("ground_software_version", VERSION)
     if data.parent_file_names:
         attribute_manager.add_global_attribute("Parents", data.parent_file_names)
-    write_cdf(file_path, data, attribute_manager)
-    return file_path
+    file_path_str = str(file_path)
+    write_cdf(file_path_str, data, attribute_manager)
+    return file_path_str
 
 
 def format_time(t: Optional[datetime]) -> Optional[str]:

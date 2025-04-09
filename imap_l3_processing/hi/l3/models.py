@@ -65,6 +65,7 @@ class HiL3SpectralIndexDataProduct(DataProduct, HiMapData):
         ]
 
 
+@dataclass
 class HiL3SurvivalCorrectedDataProduct(DataProduct, HiMapData):
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return []
@@ -73,6 +74,7 @@ class HiL3SurvivalCorrectedDataProduct(DataProduct, HiMapData):
 @dataclass
 class HiL1cData:
     epoch: datetime
+    epoch_j2000: np.ndarray
     exposure_times: np.ndarray
     esa_energy_step: np.ndarray
 

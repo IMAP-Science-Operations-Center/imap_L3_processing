@@ -1,7 +1,6 @@
 import json
 from collections import defaultdict
 from datetime import timedelta
-from json import dump
 from pathlib import Path
 from zipfile import ZipFile, ZIP_DEFLATED
 
@@ -12,6 +11,7 @@ from imap_processing.spice.repoint import get_repoint_data
 from imap_processing.spice.time import met_to_datetime64
 from spacepy.pycdf import CDF
 
+from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
 from imap_l3_processing.glows.l3a.models import GlowsL3LightCurve, PHOTON_FLUX_UNCERTAINTY_CDF_VAR_NAME, \
     PHOTON_FLUX_CDF_VAR_NAME, RAW_HISTOGRAM_CDF_VAR_NAME, EXPOSURE_TIMES_CDF_VAR_NAME, EPOCH_CDF_VAR_NAME, \
     EPOCH_DELTA_CDF_VAR_NAME, SPIN_ANGLE_CDF_VAR_NAME, SPIN_ANGLE_DELTA_CDF_VAR_NAME, LATITUDE_CDF_VAR_NAME, \
@@ -129,25 +129,24 @@ def get_astropy_time_from_yyyymmdd(date_string: str) -> Time:
 def archive_dependencies(cr_to_process: CRToProcess, version: str,
                          ancillary_dependencies: GlowsInitializerAncillaryDependencies) -> Path:
     start_date = cr_to_process.cr_start_date.strftime("%Y%m%d")
-    filename = f"imap_glows_l3b-archive_{start_date}_{version}.zip"
+    zip_path = TEMP_CDF_FOLDER_PATH / f"imap_glows_l3b-archive-zip_{start_date}_{version}.cdf"
     json_filename = "cr_to_process.json"
-    with ZipFile(filename, "w", ZIP_DEFLATED) as file:
-        file.write(ancillary_dependencies.lyman_alpha_path)
-        file.write(ancillary_dependencies.omni2_data_path)
-        file.write(ancillary_dependencies.f107_index_file_path)
-        with open(json_filename, "w") as json_file:
-            cr = {"cr_rotation_number": cr_to_process.cr_rotation_number,
-                  "l3a_paths": cr_to_process.l3a_paths,
-                  "cr_start_date": cr_to_process.cr_start_date.value,
-                  "cr_end_date": cr_to_process.cr_end_date.value,
-                  "bad_days_list": ancillary_dependencies.bad_days_list,
-                  "pipeline_settings": ancillary_dependencies.pipeline_settings,
-                  "waw_helioion_mp": ancillary_dependencies.waw_helioion_mp_path,
-                  "uv_anisotropy": ancillary_dependencies.uv_anisotropy_path
-                  }
-            dump(cr, json_file)
-        file.write(json_filename)
-    return Path(filename)
+    with ZipFile(zip_path, "w", ZIP_DEFLATED) as file:
+        file.write(ancillary_dependencies.lyman_alpha_path, "lyman_alpha_composite.nc")
+        file.write(ancillary_dependencies.omni2_data_path, "omni2_all_years.dat")
+        file.write(ancillary_dependencies.f107_index_file_path, "f107_fluxtable.txt")
+        cr = {"cr_rotation_number": cr_to_process.cr_rotation_number,
+              "l3a_paths": cr_to_process.l3a_paths,
+              "cr_start_date": cr_to_process.cr_start_date.value,
+              "cr_end_date": cr_to_process.cr_end_date.value,
+              "bad_days_list": ancillary_dependencies.bad_days_list,
+              "pipeline_settings": ancillary_dependencies.pipeline_settings,
+              "waw_helioion_mp": ancillary_dependencies.waw_helioion_mp_path,
+              "uv_anisotropy": ancillary_dependencies.uv_anisotropy_path
+              }
+        json_string = json.dumps(cr)
+        file.writestr(json_filename, json_string)
+    return zip_path
 
 
 def make_l3b_data_with_fill(dependencies: GlowsL3BCDependencies):

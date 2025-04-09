@@ -27,7 +27,8 @@ def read_hi_l2_data(cdf_path) -> HiMapData:
 
 def read_hi_l1c_data(path: Union[Path, str]) -> HiL1cData:
     with CDF(str(path)) as cdf:
-        return HiL1cData(epoch=cdf["epoch"][0], exposure_times=read_variable(cdf["exposure_times"]),
+        return HiL1cData(epoch=cdf["epoch"][0], epoch_j2000=cdf.raw_var("epoch")[...],
+                         exposure_times=read_variable(cdf["exposure_times"]),
                          esa_energy_step=cdf["esa_energy_step"][...])
 
 

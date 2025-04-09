@@ -5,6 +5,7 @@ from pathlib import Path
 from astropy.time import TimeDelta
 from imap_data_access import query, download
 
+from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
 from imap_l3_processing.utils import download_external_dependency
 
 F107_FLUX_TABLE_URL = "https://www.spaceweather.gc.ca/solar_flux_data/daily_flux_values/fluxtable.txt"
@@ -34,9 +35,11 @@ class GlowsInitializerAncillaryDependencies:
         pipeline_settings_dependency = query(instrument="glows", descriptor="pipeline-settings-L3bc",
                                              version="latest")
         pipeline_settings_path = download(pipeline_settings_dependency[0]["file_path"])
-        f107_index_file_path = download_external_dependency(F107_FLUX_TABLE_URL, 'f107_fluxtable.txt')
-        lyman_alpha_path = download_external_dependency(LYMAN_ALPHA_COMPOSITE_INDEX_URL, 'lyman_alpha_composite.nc')
-        omni2_data_path = download_external_dependency(OMNI2_URL, 'omni2_all_years.dat')
+        f107_index_file_path = download_external_dependency(F107_FLUX_TABLE_URL,
+                                                            TEMP_CDF_FOLDER_PATH / 'f107_fluxtable.txt')
+        lyman_alpha_path = download_external_dependency(LYMAN_ALPHA_COMPOSITE_INDEX_URL,
+                                                        TEMP_CDF_FOLDER_PATH / 'lyman_alpha_composite.nc')
+        omni2_data_path = download_external_dependency(OMNI2_URL, TEMP_CDF_FOLDER_PATH / 'omni2_all_years.dat')
 
         with open(pipeline_settings_path) as f:
             settings = json.load(f)

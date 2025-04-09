@@ -2,13 +2,14 @@ import unittest
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Optional
-from unittest.mock import patch, Mock, MagicMock, call, mock_open
+from unittest.mock import patch, Mock, MagicMock, call
 from zipfile import ZIP_DEFLATED
 
 import numpy as np
 from astropy.time import Time, TimeDelta
 from spacepy.pycdf import CDF
 
+from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
 from imap_l3_processing.glows.l3bc.glows_initializer_ancillary_dependencies import GlowsInitializerAncillaryDependencies
 from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDependencies
 from imap_l3_processing.glows.l3bc.models import CRToProcess
@@ -238,11 +239,10 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(Time('2010-02-27 00:45:56.160').value, cr_to_process_2093.cr_end_date.value)
         self.assertEqual(2093, cr_to_process_2093.cr_rotation_number)
 
-    @patch("imap_l3_processing.glows.l3bc.utils.dump")
+    @patch("imap_l3_processing.glows.l3bc.utils.json")
     @patch("imap_l3_processing.glows.l3bc.utils.ZipFile")
-    @patch('builtins.open', new_callable=mock_open, create=True)
-    def test_archive_dependencies(self, mocked_open, mock_zip, mock_dump):
-        expected_filename = "imap_glows_l3b-archive_20250314_v001.zip"
+    def test_archive_dependencies(self, mock_zip, mock_json):
+        expected_filepath = TEMP_CDF_FOLDER_PATH / "imap_glows_l3b-archive-zip_20250314_v001.cdf"
         expected_json_filename = "cr_to_process.json"
 
         dependencies = GlowsInitializerAncillaryDependencies(uv_anisotropy_path="uv_anisotropy",
@@ -272,25 +272,21 @@ class TestUtils(unittest.TestCase):
         mock_zip_file = MagicMock()
         mock_zip.return_value.__enter__.return_value = mock_zip_file
 
-        mock_json_file = MagicMock()
-        mocked_open.return_value.__enter__.return_value = mock_json_file
-
         version_number = "v001"
         actual_zip_file_name = archive_dependencies(cr_to_process, version_number, dependencies)
 
-        self.assertEqual(Path(expected_filename), actual_zip_file_name)
+        self.assertEqual(expected_filepath, actual_zip_file_name)
 
-        mock_zip.assert_called_with(expected_filename, "w", ZIP_DEFLATED)
-        mocked_open.assert_called_once_with(expected_json_filename, "w")
+        mock_zip.assert_called_with(expected_filepath, "w", ZIP_DEFLATED)
 
-        mock_dump.assert_called_once_with(expected_json_to_serialize, mock_json_file)
+        mock_json.dumps.assert_called_once_with(expected_json_to_serialize)
 
         mock_zip_file.write.assert_has_calls([
-            call(dependencies.lyman_alpha_path),
-            call(dependencies.omni2_data_path),
-            call(dependencies.f107_index_file_path),
-            call(expected_json_filename)
+            call(dependencies.lyman_alpha_path, "lyman_alpha_composite.nc"),
+            call(dependencies.omni2_data_path, "omni2_all_years.dat"),
+            call(dependencies.f107_index_file_path, "f107_fluxtable.txt"),
         ])
+        mock_zip_file.writestr.assert_called_once_with(expected_json_filename, mock_json.dumps.return_value)
 
     def test_make_l3b_data_with_fill(self):
         cr = 2091

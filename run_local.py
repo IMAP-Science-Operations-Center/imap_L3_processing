@@ -25,6 +25,7 @@ from imap_l3_processing.glows.l3a.utils import read_l2_glows_data, create_glows_
 from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDependencies
 from imap_l3_processing.hi.hi_processor import HiProcessor
 from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3SpectralFitDependencies
+from imap_l3_processing.hi.l3.hi_l3_survival_dependencies import HiL3SurvivalDependencies
 from imap_l3_processing.hi.l3.science.survival_probability import HiSurvivalProbabilitySkyMap, \
     HiSurvivalProbabilityPointingSet, Sensor
 from imap_l3_processing.hit.l3.hit_l3_sectored_dependencies import HITL3SectoredDependencies
@@ -423,6 +424,21 @@ def survival_correct_l2_map_with_fake_survivals(number_of_days: int, included_se
     return l2_or_l3_flux / survival_dataset
 
 
+def create_hi_l3_survival_corrected_cdf(survival_dependencies: HiL3SurvivalDependencies, spacing_degree: int) -> str:
+    input_metadata = InputMetadata(instrument="hi",
+                                   data_level="l3",
+                                   start_date=datetime.now(),
+                                   end_date=datetime.now() + timedelta(days=1),
+                                   version="",
+                                   descriptor=f"45sensor-spacecraft-survival-full-{spacing_degree}deg-map",
+                                   )
+
+    processor = HiProcessor(None, input_metadata)
+    survival_corrected_product = processor._process_survival_probabilities(survival_dependencies)
+
+    return save_data(survival_corrected_product)
+
+
 if __name__ == "__main__":
     if "swapi" in sys.argv:
         if "l3a" in sys.argv:
@@ -497,27 +513,40 @@ if __name__ == "__main__":
         print(create_swe_product_with_fake_spice(dependencies))
 
     if "survival-probability" in sys.argv:
-        parser = argparse.ArgumentParser()
-        parser.add_argument("run_local_type")
-        parser.add_argument("--sensor", choices=["90", "45", "combined"])
-        parser.add_argument("--days", type=int)
-        parser.add_argument("--description")
+        hi_l1c_folder = get_test_data_path("hi/fake_l1c")
+        glows_l3e_folder = get_test_data_path("hi/fake_l3e_survival_probabilities")
 
-        args = parser.parse_args()
+        hi_l1c_paths = list(hi_l1c_folder.iterdir())
+        glows_l3_paths = list(glows_l3e_folder.iterdir())
 
-        logical_source = f"imap_hi_l3_fake-hae-survival-corrected-sensor-hi-{args.sensor}-days-{args.days}-{uuid.uuid4()}"
-        output_filename = f"temp_cdf_data/{logical_source}.cdf"
-
-        spice_wrapper.furnish()
-        with CDF(output_filename,
-                 masterpath=str(get_test_data_path("hi/IMAP_HI_90_maps_20000101_v02.cdf"))) as cdf:
-            cdf.attrs["Logical_source"] = logical_source
-            survival_prob_map = survival_correct_l2_map_with_fake_survivals(args.days, IncludedSensors(args.sensor),
-                                                                            cdf["flux"][...])
-            plt.imshow(survival_prob_map[0, :, :, 0].T)
-            plt.show()
-            cdf["flux"] = survival_prob_map
-            cdf["flux"].attrs["CATDESC"] = args.description
+        survival_dependencies = HiL3SurvivalDependencies.from_file_paths(
+            map_file_path=get_test_data_path(
+                "hi/fake_l2_maps/hi90-6months.cdf"),
+            hi_l1c_paths=hi_l1c_paths,
+            glows_l3e_paths=glows_l3_paths)
+        print(create_hi_l3_survival_corrected_cdf(survival_dependencies, spacing_degree=4))
+        
+        # parser = argparse.ArgumentParser()
+        # parser.add_argument("run_local_type")
+        # parser.add_argument("--sensor", choices=["90", "45", "combined"])
+        # parser.add_argument("--days", type=int)
+        # parser.add_argument("--description")
+        #
+        # args = parser.parse_args()
+        #
+        # logical_source = f"imap_hi_l3_fake-hae-survival-corrected-sensor-hi-{args.sensor}-days-{args.days}-{uuid.uuid4()}"
+        # output_filename = f"temp_cdf_data/{logical_source}.cdf"
+        #
+        # spice_wrapper.furnish()
+        # with CDF(output_filename,
+        #          masterpath=str(get_test_data_path("hi/IMAP_HI_90_maps_20000101_v02.cdf"))) as cdf:
+        #     cdf.attrs["Logical_source"] = logical_source
+        #     survival_prob_map = survival_correct_l2_map_with_fake_survivals(args.days, IncludedSensors(args.sensor),
+        #                                                                     cdf["flux"][...])
+        #     plt.imshow(survival_prob_map[0, :, :, 0].T)
+        #     plt.show()
+        #     cdf["flux"] = survival_prob_map
+        #     cdf["flux"].attrs["CATDESC"] = args.description
 
     if "hi" in sys.argv:
         dependencies = HiL3SpectralFitDependencies.from_file_paths(
