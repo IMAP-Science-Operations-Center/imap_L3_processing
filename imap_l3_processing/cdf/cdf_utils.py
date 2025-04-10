@@ -29,7 +29,7 @@ def write_cdf(file_path: str, data: DataProduct, attribute_manager: ImapAttribut
             if 'FILLVAL' in variable_attributes and np.issubdtype(data_array.dtype, np.floating):
                 data_array = np.where(np.isnan(data_array), variable_attributes["FILLVAL"], data_array)
 
-            record_varying = variable_attributes["RECORD_VARYING"] == "RV"
+            record_varying = variable_attributes["RECORD_VARYING"].lower() == "rv"
             cdf.new(var_name, data_array,
                     recVary=record_varying,
                     type=data_type)
