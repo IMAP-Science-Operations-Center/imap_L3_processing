@@ -1,4 +1,4 @@
-Epoch:
+epoch:
   DATA_TYPE: int64
   CATDESC: Time, number of nanoseconds since J2000 with leap seconds included
   VAR_TYPE: support_data
