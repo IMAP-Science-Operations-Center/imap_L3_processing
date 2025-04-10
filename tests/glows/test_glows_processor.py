@@ -261,12 +261,12 @@ class TestGlowsProcessor(unittest.TestCase):
         self.assertEqual(["file3", "path1.zip", "l3b_file_1.cdf"], l3c_model_1.parent_file_names)
         self.assertEqual(["file4", "path2.zip", "l3b_file_2.cdf"], l3c_model_2.parent_file_names)
         mock_imap_data_access.upload.assert_has_calls([
-            call(sentinel.zip_file_path_1),
             call("path/to/l3b_file_1.cdf"),
             call(sentinel.l3c_cdf_path_1),
-            call(sentinel.zip_file_path_2),
+            call(sentinel.zip_file_path_1),
             call("path/to/l3b_file_2.cdf"),
             call(sentinel.l3c_cdf_path_2),
+            call(sentinel.zip_file_path_2),
         ])
 
     @patch('imap_l3_processing.glows.glows_processor.make_l3c_data_with_fill')
