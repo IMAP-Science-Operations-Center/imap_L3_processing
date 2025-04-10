@@ -46,9 +46,9 @@ counts:
    DATA_TYPE: CDF_INT8
    CATDESC: counts
    DEPEND_0: epoch
-   DEPEND_1: lon
-   DEPEND_2: lat
-   DEPEND_3: energy
+   DEPEND_1: energy
+   DEPEND_2: lon
+   DEPEND_3: lat
    VAR_TYPE: data
    RECORD_VARYING: rv
    DISPLAY_TYPE: spectrogram
@@ -69,9 +69,9 @@ counts_uncertainty:
    DATA_TYPE: CDF_REAL4
    CATDESC: counts_uncertainty
    DEPEND_0: epoch
-   DEPEND_1: lon
-   DEPEND_2: lat
-   DEPEND_3: energy
+   DEPEND_1: energy
+   DEPEND_2: lon
+   DEPEND_3: lat
    VAR_TYPE: data
    RECORD_VARYING: rv
    DISPLAY_TYPE: spectrogram
@@ -103,9 +103,9 @@ exposure:
    DATA_TYPE: CDF_REAL4
    CATDESC: exposure
    DEPEND_0: epoch
-   DEPEND_1: lon
-   DEPEND_2: lat
-   DEPEND_3: energy
+   DEPEND_1: energy
+   DEPEND_2: lon
+   DEPEND_3: lat
    VAR_TYPE: data
    RECORD_VARYING: rv
    DISPLAY_TYPE: ' '
@@ -123,9 +123,9 @@ flux:
    DATA_TYPE: CDF_REAL4
    CATDESC: flux
    DEPEND_0: epoch
-   DEPEND_1: lon
-   DEPEND_2: lat
-   DEPEND_3: energy
+   DEPEND_1: energy
+   DEPEND_2: lon
+   DEPEND_3: lat
    VAR_TYPE: data
    RECORD_VARYING: rv
    DISPLAY_TYPE: ' '
@@ -167,9 +167,9 @@ sensitivity:
    DATA_TYPE: CDF_REAL4
    CATDESC: sensitivity
    DEPEND_0: epoch
-   DEPEND_1: lon
-   DEPEND_2: lat
-   DEPEND_3: energy
+   DEPEND_1: energy
+   DEPEND_2: lon
+   DEPEND_3: lat
    VAR_TYPE: data
    RECORD_VARYING: rv
    DISPLAY_TYPE: spectrogram
@@ -188,9 +188,9 @@ variance:
    DATA_TYPE: CDF_REAL4
    CATDESC: variance
    DEPEND_0: epoch
-   DEPEND_1: lon
-   DEPEND_2: lat
-   DEPEND_3: energy
+   DEPEND_1: energy
+   DEPEND_2: lon
+   DEPEND_3: lat
    VAR_TYPE: data
    RECORD_VARYING: rv
    DISPLAY_TYPE: spectrogram
