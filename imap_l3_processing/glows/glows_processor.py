@@ -33,7 +33,6 @@ class GlowsProcessor(Processor):
         elif self.input_metadata.data_level == "l3b":
             zip_files = GlowsInitializer.validate_and_initialize(self.input_metadata.version)
             for zip_file in zip_files:
-                imap_data_access.upload(zip_file)
                 dependencies = GlowsL3BCDependencies.fetch_dependencies(zip_file)
                 l3b_data_product, l3c_data_product = self.process_l3bc(dependencies)
                 l3b_cdf = save_data(l3b_data_product)
@@ -41,6 +40,7 @@ class GlowsProcessor(Processor):
                 l3c_cdf = save_data(l3c_data_product)
                 imap_data_access.upload(l3b_cdf)
                 imap_data_access.upload(l3c_cdf)
+                imap_data_access.upload(zip_file)
 
     def process_l3a(self, dependencies: GlowsL3ADependencies) -> GlowsL3LightCurve:
         data = dependencies.data

@@ -261,12 +261,12 @@ class TestGlowsProcessor(unittest.TestCase):
         self.assertEqual(["file3", "path1.zip", "l3b_file_1.cdf"], l3c_model_1.parent_file_names)
         self.assertEqual(["file4", "path2.zip", "l3b_file_2.cdf"], l3c_model_2.parent_file_names)
         mock_imap_data_access.upload.assert_has_calls([
-            call(sentinel.zip_file_path_1),
             call("path/to/l3b_file_1.cdf"),
             call(sentinel.l3c_cdf_path_1),
-            call(sentinel.zip_file_path_2),
+            call(sentinel.zip_file_path_1),
             call("path/to/l3b_file_2.cdf"),
             call(sentinel.l3c_cdf_path_2),
+            call(sentinel.zip_file_path_2),
         ])
 
     @patch('imap_l3_processing.glows.glows_processor.make_l3c_data_with_fill')
@@ -341,7 +341,8 @@ class TestGlowsProcessor(unittest.TestCase):
         }
         l3a_data_folder_path = get_test_data_path('glows/l3a_products')
         l3a_data = [
-            create_glows_l3a_dictionary_from_cdf(l3a_data_folder_path / 'imap_glows_l3a_hist_20100201_v001.cdf')]
+            create_glows_l3a_dictionary_from_cdf(
+                l3a_data_folder_path / 'imap_glows_l3a_hist_20100201-repoint00032_v001.cdf')]
 
         dependencies = GlowsL3BCDependencies(l3a_data=l3a_data, external_files=external_files,
                                              ancillary_files=ancillary_files, carrington_rotation_number=cr,

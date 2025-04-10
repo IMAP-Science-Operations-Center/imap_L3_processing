@@ -1,9 +1,9 @@
 import unittest
-from pathlib import Path
 from unittest.mock import patch, call
 
 from astropy.time import TimeDelta
 
+from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
 from imap_l3_processing.glows.l3bc.glows_initializer_ancillary_dependencies import \
     GlowsInitializerAncillaryDependencies, \
     F107_FLUX_TABLE_URL, \
@@ -39,9 +39,9 @@ class TestGlowsInitializerAncillaryDependencies(unittest.TestCase):
 
         mock_download.return_value = get_test_data_path("glows/imap_glows_pipeline-settings-L3bc.json")
 
-        f107_index_path = Path("f107_fluxtable.txt")
-        lyman_alpha_path = Path("lyman_alpha_composite.nc")
-        omni_2_path = Path("omni2_all_years.dat")
+        f107_index_path = TEMP_CDF_FOLDER_PATH / "f107_fluxtable.txt"
+        lyman_alpha_path = TEMP_CDF_FOLDER_PATH / "lyman_alpha_composite.nc"
+        omni_2_path = TEMP_CDF_FOLDER_PATH / "omni2_all_years.dat"
 
         mock_download_external_dependency.side_effect = [
             f107_index_path,
@@ -62,9 +62,9 @@ class TestGlowsInitializerAncillaryDependencies(unittest.TestCase):
         ], mock_query.call_args_list)
 
         self.assertEqual([
-            call(F107_FLUX_TABLE_URL, f107_index_path.name),
-            call(LYMAN_ALPHA_COMPOSITE_INDEX_URL, lyman_alpha_path.name),
-            call(OMNI2_URL, omni_2_path.name)
+            call(F107_FLUX_TABLE_URL, f107_index_path),
+            call(LYMAN_ALPHA_COMPOSITE_INDEX_URL, lyman_alpha_path),
+            call(OMNI2_URL, omni_2_path)
         ], mock_download_external_dependency.call_args_list)
 
         self.assertEqual(uv_anisotropy_factor["file_path"], actual_dependencies.uv_anisotropy_path)

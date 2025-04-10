@@ -2,7 +2,7 @@ import os
 from datetime import datetime, date
 from pathlib import Path
 from typing import Optional, Union
-from urllib.error import HTTPError
+from urllib.error import URLError
 from urllib.request import urlretrieve
 
 import imap_data_access
@@ -96,7 +96,7 @@ def download_external_dependency(dependency_url: str, filename: str) -> Path | N
     try:
         saved_path, _ = urlretrieve(dependency_url, filename)
         return Path(saved_path)
-    except HTTPError:
+    except URLError:
         return None
 
 

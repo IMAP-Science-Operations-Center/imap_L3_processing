@@ -95,17 +95,23 @@ def assert_dataclass_fields(expected_obj, actual_obj, omit=None):
             assert expected == actual, f"{expected} != {actual} for field {field.name}"
 
 
-def environment_variables(vars: dict):
+def environment_variables(env_vars: dict):
     def decorator(func):
-        old_vars = {k: os.environ.get(v) for k, v in vars.items() if os.environ.get(str(v)) is not None}
-        for k, v in vars.items():
-            os.environ[k] = str(v)
 
         def wrapper(*args, **kwargs):
-            return func(*args, **kwargs)
+            old_vars = {k: os.environ.get(v) for k, v in env_vars.items() if os.environ.get(str(v)) is not None}
+            for k, v in env_vars.items():
+                os.environ[k] = str(v)
 
-        for k, v in old_vars.items():
-            os.environ[k] = v
+            func_result = func(*args, **kwargs)
+
+            for k in env_vars.keys():
+                del os.environ[k]
+
+            for k, v in old_vars.items():
+                os.environ[k] = v
+
+            return func_result
 
         return wrapper
 
