@@ -5,7 +5,7 @@ import numpy as np
 from spacepy import pycdf
 
 from imap_l3_processing.hi.l3 import models
-from imap_l3_processing.hi.l3.models import HiL3SpectralIndexDataProduct
+from imap_l3_processing.hi.l3.models import HiL3SpectralIndexDataProduct, HiL3SurvivalCorrectedDataProduct
 from imap_l3_processing.models import InputMetadata, DataProductVariable
 
 
@@ -76,5 +76,64 @@ class TestModels(unittest.TestCase):
         )
 
         actual_variables = spectral_index_product.to_data_product_variables()
+
+        self.assertEqual(expected_variables, actual_variables)
+
+    def test_survival_probability_to_data_product_variables(self):
+        input_metadata = InputMetadata(instrument="hi",
+                                       data_level="",
+                                       start_date=datetime.now(),
+                                       end_date=datetime.now() + timedelta(days=1),
+                                       version="",
+                                       descriptor="",
+                                       )
+
+        flux = np.array([[[[1, 2], [10, 20]], [[100, 200], [1000, 2000]]]])
+
+        energy = np.array([10, 20])
+        lat_data = np.array([0, 45])
+        lon_data = np.array([0, 90])
+        input_data = {
+            "lat": lat_data,
+            "lon": lon_data,
+            "energy": energy,
+            "epoch": np.array([datetime.now()]),
+            "flux": flux,
+            "variance": np.ones_like(flux),
+            "energy_deltas": np.arange(2 * 2).reshape(2, 2),
+            "counts": np.arange(2 * 2 * 2).reshape(1, 2, 2, 2) * 104.3,
+            "counts_uncertainty": np.arange(2 * 2 * 2).reshape(1, 2, 2, 2) * 56.8,
+            "epoch_delta": np.arange(1) * timedelta(hours=1),
+            "exposure": np.arange(2 * 2).reshape(1, 2, 2) * 20.4,
+            "sensitivity": np.arange(2 * 2 * 2).reshape(1, 2, 2, 2),
+        }
+
+        hi_l3_survival_corrected_data_product = HiL3SurvivalCorrectedDataProduct(input_metadata=input_metadata,
+                                                                                 **input_data)
+
+        actual_variables = hi_l3_survival_corrected_data_product.to_data_product_variables()
+
+        expected_variables = [
+            DataProductVariable(models.EPOCH_VAR_NAME, input_data["epoch"]),
+            DataProductVariable(models.ENERGY_VAR_NAME, input_data["energy"]),
+            DataProductVariable(models.ENERGY_DELTAS_VAR_NAME, input_data["energy_deltas"],
+                                ),
+            DataProductVariable(models.COUNTS_VAR_NAME, input_data["counts"]),
+            DataProductVariable(models.COUNTS_UNCERTAINTY_VAR_NAME, input_data["counts_uncertainty"],
+                                ),
+            DataProductVariable(models.EPOCH_DELTA_VAR_NAME, input_data["epoch_delta"],
+                                ),
+            DataProductVariable(models.EXPOSURE_VAR_NAME, input_data["exposure"]),
+            DataProductVariable(models.FLUX_VAR_NAME, flux),
+            DataProductVariable(models.LAT_VAR_NAME, input_data["lat"]),
+            DataProductVariable(models.LONG_VAR_NAME, input_data["lon"]),
+            DataProductVariable(models.SENSITIVITY_VAR_NAME, input_data["sensitivity"],
+                                ),
+            DataProductVariable(models.VARIANCE_VAR_NAME, input_data["variance"]),
+            DataProductVariable(models.ENERGY_LABEL_VAR_NAME,
+                                [f"Energy Bin {e}" for e in energy]),
+            DataProductVariable(models.LON_LABEL_VAR_NAME, [f"Lon {lon}" for lon in lon_data]),
+            DataProductVariable(models.LAT_LABEL_VAR_NAME, [f"Lat {lat}" for lat in lat_data]),
+        ]
 
         self.assertEqual(expected_variables, actual_variables)
