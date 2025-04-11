@@ -24,7 +24,8 @@ class TestCdfUtils(TempFileTestCase):
             {"variable_attr1": "var_val1", "FILLVAL": -1e31, "DATA_TYPE": "CDF_REAL4", "RECORD_VARYING": "RV"},
             {"variable_attr3": "var_val3", "FILLVAL": -9223372036854775808, "DATA_TYPE": "CDF_TIME_TT2000",
              "RECORD_VARYING": "NRV"},
-            {"variable_attr5": "var_val5", "variable_attr6": "var_val6", "DATA_TYPE": "CDF_INT4",
+            {"variable_attr5": "var_val5", "variable_attr6": "var_val6", "DATA_TY"
+                                                                         "PE": "CDF_INT4",
              "RECORD_VARYING": "NRV"},
         ]
 
