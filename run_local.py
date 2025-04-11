@@ -427,9 +427,9 @@ def survival_correct_l2_map_with_fake_survivals(number_of_days: int, included_se
 def create_hi_l3_survival_corrected_cdf(survival_dependencies: HiL3SurvivalDependencies, spacing_degree: int) -> str:
     input_metadata = InputMetadata(instrument="hi",
                                    data_level="l3",
-                                   start_date=datetime.now(),
-                                   end_date=datetime.now() + timedelta(days=1),
-                                   version="",
+                                   start_date=datetime(2025, 4, 9),
+                                   end_date=datetime(2025, 4, 10),
+                                   version="v001",
                                    descriptor=f"45sensor-spacecraft-survival-full-{spacing_degree}deg-map",
                                    )
 
