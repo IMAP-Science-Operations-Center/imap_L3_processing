@@ -1,4 +1,6 @@
-TEMP_CDF_FOLDER_PATH = "temp_cdf_data"
+from pathlib import Path
+
+TEMP_CDF_FOLDER_PATH = Path(__file__).parent.parent / "temp_cdf_data"
 
 ELECTRON_MASS_KG = 9.109_383_7139e-31
 PROTON_CHARGE_COULOMBS = 1.602176634e-19

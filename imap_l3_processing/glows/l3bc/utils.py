@@ -1,14 +1,17 @@
 import json
 from collections import defaultdict
 from datetime import timedelta
-from json import dump
 from pathlib import Path
 from zipfile import ZipFile, ZIP_DEFLATED
 
 import numpy as np
+import pandas as pd
 from astropy.time import Time, TimeDelta
+from imap_processing.spice.repoint import get_repoint_data
+from imap_processing.spice.time import met_to_datetime64
 from spacepy.pycdf import CDF
 
+from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
 from imap_l3_processing.glows.l3a.models import GlowsL3LightCurve, PHOTON_FLUX_UNCERTAINTY_CDF_VAR_NAME, \
     PHOTON_FLUX_CDF_VAR_NAME, RAW_HISTOGRAM_CDF_VAR_NAME, EXPOSURE_TIMES_CDF_VAR_NAME, EPOCH_CDF_VAR_NAME, \
     EPOCH_DELTA_CDF_VAR_NAME, SPIN_ANGLE_CDF_VAR_NAME, SPIN_ANGLE_DELTA_CDF_VAR_NAME, LATITUDE_CDF_VAR_NAME, \
@@ -66,8 +69,7 @@ def read_glows_l3a_data(cdf: CDF) -> GlowsL3LightCurve:
 
 
 def find_unprocessed_carrington_rotations(l3a_inputs: list[dict], l3b_inputs: list[dict],
-                                          dependencies: GlowsInitializerAncillaryDependencies) -> [
-    CRToProcess]:
+                                          dependencies: GlowsInitializerAncillaryDependencies) -> [CRToProcess]:
     l3bs_carringtons: set = set()
     for l3b in l3b_inputs:
         current_date = get_astropy_time_from_yyyymmdd(l3b["start_date"]) + TimeDelta(1, format='jd')
@@ -81,16 +83,14 @@ def find_unprocessed_carrington_rotations(l3a_inputs: list[dict], l3b_inputs: li
     latest_l3a_file = get_astropy_time_from_yyyymmdd(sorted_l3a_inputs[-1]["start_date"])
 
     for index, l3a in enumerate(sorted_l3a_inputs):
-        current_date: Time = get_astropy_time_from_yyyymmdd(l3a["start_date"])
-        current_rounded_cr = int(carrington(current_date.jd))
+        repointing_start, repointing_end = get_repoint_date_range(l3a["repointing"])
+        start_cr = int(carrington(Time(repointing_start, format="datetime64").jd))
+        end_cr = int(carrington(Time(repointing_end, format="datetime64").jd))
 
-        tomorrow = current_date + TimeDelta(1, format="jd")
-        tomorrow_rounded_cr = int(carrington(tomorrow.jd))
+        if end_cr - start_cr == 1:
+            l3as_by_carrington[end_cr].append(l3a['file_path'])
 
-        if tomorrow_rounded_cr - current_rounded_cr == 1:
-            l3as_by_carrington[tomorrow_rounded_cr].append(l3a['file_path'])
-
-        l3as_by_carrington[current_rounded_cr].append(l3a['file_path'])
+        l3as_by_carrington[start_cr].append(l3a['file_path'])
 
     crs_to_process = []
     for carrington_number, l3a_files in l3as_by_carrington.items():
@@ -129,25 +129,24 @@ def get_astropy_time_from_yyyymmdd(date_string: str) -> Time:
 def archive_dependencies(cr_to_process: CRToProcess, version: str,
                          ancillary_dependencies: GlowsInitializerAncillaryDependencies) -> Path:
     start_date = cr_to_process.cr_start_date.strftime("%Y%m%d")
-    filename = f"imap_glows_l3b-archive_{start_date}_{version}.zip"
+    zip_path = TEMP_CDF_FOLDER_PATH / f"imap_glows_l3b-archive-zip_{start_date}_{version}.cdf"
     json_filename = "cr_to_process.json"
-    with ZipFile(filename, "w", ZIP_DEFLATED) as file:
-        file.write(ancillary_dependencies.lyman_alpha_path)
-        file.write(ancillary_dependencies.omni2_data_path)
-        file.write(ancillary_dependencies.f107_index_file_path)
-        with open(json_filename, "w") as json_file:
-            cr = {"cr_rotation_number": cr_to_process.cr_rotation_number,
-                  "l3a_paths": cr_to_process.l3a_paths,
-                  "cr_start_date": cr_to_process.cr_start_date.value,
-                  "cr_end_date": cr_to_process.cr_end_date.value,
-                  "bad_days_list": ancillary_dependencies.bad_days_list,
-                  "pipeline_settings": ancillary_dependencies.pipeline_settings,
-                  "waw_helioion_mp": ancillary_dependencies.waw_helioion_mp_path,
-                  "uv_anisotropy": ancillary_dependencies.uv_anisotropy_path
-                  }
-            dump(cr, json_file)
-        file.write(json_filename)
-    return Path(filename)
+    with ZipFile(zip_path, "w", ZIP_DEFLATED) as file:
+        file.write(ancillary_dependencies.lyman_alpha_path, "lyman_alpha_composite.nc")
+        file.write(ancillary_dependencies.omni2_data_path, "omni2_all_years.dat")
+        file.write(ancillary_dependencies.f107_index_file_path, "f107_fluxtable.txt")
+        cr = {"cr_rotation_number": cr_to_process.cr_rotation_number,
+              "l3a_paths": cr_to_process.l3a_paths,
+              "cr_start_date": cr_to_process.cr_start_date.value,
+              "cr_end_date": cr_to_process.cr_end_date.value,
+              "bad_days_list": ancillary_dependencies.bad_days_list,
+              "pipeline_settings": ancillary_dependencies.pipeline_settings,
+              "waw_helioion_mp": ancillary_dependencies.waw_helioion_mp_path,
+              "uv_anisotropy": ancillary_dependencies.uv_anisotropy_path
+              }
+        json_string = json.dumps(cr)
+        file.writestr(json_filename, json_string)
+    return zip_path
 
 
 def make_l3b_data_with_fill(dependencies: GlowsL3BCDependencies):
@@ -201,3 +200,15 @@ def make_l3c_data_with_fill(dependencies: GlowsL3BCDependencies) -> dict:
     model['solar_wind_profile']['proton_density'] = np.full(grid_size, np.nan)
 
     return model
+
+
+def get_repoint_date_range(repointing: int) -> (np.datetime64, np.datetime64):
+    repointing_df: pd.DataFrame = get_repoint_data()
+    matching_rows = repointing_df[repointing_df['repoint_id'] == repointing]
+    if len(matching_rows) == 0:
+        raise ValueError(f"No pointing found for pointing: {repointing}")
+    repointing_data = matching_rows.iloc[0]
+    start_time = repointing_data['repoint_start_met']
+    end_time = repointing_data['repoint_end_met']
+
+    return met_to_datetime64(start_time), met_to_datetime64(end_time)

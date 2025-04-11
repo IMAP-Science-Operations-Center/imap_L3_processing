@@ -6,11 +6,11 @@ from spacepy import pycdf
 
 from imap_l3_processing.models import InputMetadata, DataProduct, DataProductVariable
 
-EPOCH_VAR_NAME = "Epoch"
+EPOCH_VAR_NAME = "epoch"
 LAT_VAR_NAME = "lat"
 LONG_VAR_NAME = "lon"
-ENERGY_VAR_NAME = "bin"
-FLUX_VAR_NAME = "intensity"
+ENERGY_VAR_NAME = "energy"
+FLUX_VAR_NAME = "flux"
 VARIANCE_VAR_NAME = "variance"
 ENERGY_DELTAS_VAR_NAME = "energy_deltas"
 COUNTS_VAR_NAME = "counts"
@@ -20,6 +20,9 @@ EXPOSURE_VAR_NAME = "exposure"
 SENSITIVITY_VAR_NAME = "sensitivity"
 SPECTRAL_FIT_INDEX_VAR_NAME = "spectral_fit_index"
 SPECTRAL_FIT_INDEX_ERROR_VAR_NAME = "spectral_fit_index_error"
+ENERGY_LABEL_VAR_NAME = "energy_label"
+LON_LABEL_VAR_NAME = "lon_label"
+LAT_LABEL_VAR_NAME = "lat_label"
 
 
 @dataclass
@@ -65,14 +68,32 @@ class HiL3SpectralIndexDataProduct(DataProduct, HiMapData):
         ]
 
 
+@dataclass
 class HiL3SurvivalCorrectedDataProduct(DataProduct, HiMapData):
     def to_data_product_variables(self) -> list[DataProductVariable]:
-        return []
+        return [
+            DataProductVariable(EPOCH_VAR_NAME, self.epoch),
+            DataProductVariable(ENERGY_VAR_NAME, self.energy),
+            DataProductVariable(ENERGY_DELTAS_VAR_NAME, self.energy_deltas),
+            DataProductVariable(COUNTS_VAR_NAME, self.counts),
+            DataProductVariable(COUNTS_UNCERTAINTY_VAR_NAME, self.counts_uncertainty),
+            DataProductVariable(EPOCH_DELTA_VAR_NAME, self.epoch_delta),
+            DataProductVariable(EXPOSURE_VAR_NAME, self.exposure),
+            DataProductVariable(FLUX_VAR_NAME, self.flux),
+            DataProductVariable(LAT_VAR_NAME, self.lat),
+            DataProductVariable(LONG_VAR_NAME, self.lon),
+            DataProductVariable(SENSITIVITY_VAR_NAME, self.sensitivity),
+            DataProductVariable(VARIANCE_VAR_NAME, self.variance),
+            DataProductVariable(ENERGY_LABEL_VAR_NAME, [f"Energy Bin {energy}" for energy in self.energy]),
+            DataProductVariable(LON_LABEL_VAR_NAME, [f"Lon {lon}" for lon in self.lon]),
+            DataProductVariable(LAT_LABEL_VAR_NAME, [f"Lat {lat}" for lat in self.lat]),
+        ]
 
 
 @dataclass
 class HiL1cData:
     epoch: datetime
+    epoch_j2000: np.ndarray
     exposure_times: np.ndarray
     esa_energy_step: np.ndarray
 

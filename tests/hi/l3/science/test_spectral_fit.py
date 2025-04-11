@@ -133,7 +133,7 @@ class TestHiProcessor(unittest.TestCase):
         variance = np.array(errors).reshape(1, 1, 1, len(energies))
 
         result, result_error = spectral_fit(num_epochs, num_lons, num_lats, flux, variance, energies)
-        np.testing.assert_array_almost_equal(result, np.array(1.959853).reshape(1, 1, 1))
+        np.testing.assert_array_almost_equal(result, np.array(1.599474).reshape(1, 1, 1))
 
     def test_returns_nan_when_only_one_point_is_valid(self):
         energies = np.geomspace(1, 1e10, 5)

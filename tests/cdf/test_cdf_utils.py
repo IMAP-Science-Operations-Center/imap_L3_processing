@@ -18,7 +18,7 @@ class TestCdfUtils(TempFileTestCase):
         attribute_manager = Mock(spec=ImapAttributeManager)
         attribute_manager.get_global_attributes.return_value = {"global1": "global_val1", "global2": "global_val2"}
         attribute_manager.get_variable_attributes.side_effect = [
-            {"variable_attr1": "var_val1", "DATA_TYPE": "CDF_REAL4", "RECORD_VARYING": "RV"},
+            {"variable_attr1": "var_val1", "DATA_TYPE": "CDF_REAL4", "RECORD_VARYING": "rV"},
             {"variable_attr1": "var_val1", "FILLVAL": -9223372036854775808, "DATA_TYPE": "CDF_INT8",
              "RECORD_VARYING": "RV"},
             {"variable_attr1": "var_val1", "FILLVAL": -1e31, "DATA_TYPE": "CDF_REAL4", "RECORD_VARYING": "RV"},

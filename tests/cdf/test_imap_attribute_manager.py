@@ -97,3 +97,13 @@ class TestImapCdfManager(TestCase):
                          manager.get_variable_attributes('combined_differential_flux'))
         self.assertEqual(self.base_manager.get_variable_attributes('combined_differential_flux_delta'),
                          manager.get_variable_attributes('combined_differential_flux_delta'))
+
+    def test_gets_global_attrs_from_global_file_when_descriptor_specific_variable_file_exists_and_global_does_not(self):
+        manager = ImapAttributeManager()
+        manager.add_instrument_attrs('hi', 'l3', '45sensor-spacecraft-survival-full-4deg-map')
+
+        self.base_manager.load_global_attributes(self.config_folder_path / 'imap_hi_l3_global_cdf_attrs.yaml')
+        self.base_manager.load_global_attributes(
+            self.config_folder_path / 'imap_hi_global_cdf_attrs.yaml')
+
+        self.assertEqual(self.base_manager.get_global_attributes(), manager.get_global_attributes())

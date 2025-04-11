@@ -39,6 +39,6 @@ for file in files_to_convert:
                                                             input_metadata.to_upstream_data_dependency("hist"))
 
     cdf_path = save_data(glows_l3a_lightcurve, delete_if_present=True,
-                         folder_path=str(get_test_data_path("glows/l3a_products")))
+                         folder_path=get_test_data_path("glows/l3a_products"))
 
     print("cdf written to", cdf_path)

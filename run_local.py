@@ -25,6 +25,7 @@ from imap_l3_processing.glows.l3a.utils import read_l2_glows_data, create_glows_
 from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDependencies
 from imap_l3_processing.hi.hi_processor import HiProcessor
 from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3SpectralFitDependencies
+from imap_l3_processing.hi.l3.hi_l3_survival_dependencies import HiL3SurvivalDependencies
 from imap_l3_processing.hi.l3.science.survival_probability import HiSurvivalProbabilitySkyMap, \
     HiSurvivalProbabilityPointingSet, Sensor
 from imap_l3_processing.hit.l3.hit_l3_sectored_dependencies import HITL3SectoredDependencies
@@ -55,7 +56,7 @@ from imap_l3_processing.swapi.swapi_processor import SwapiProcessor
 from imap_l3_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies
 from imap_l3_processing.swe.swe_processor import SweProcessor
 from imap_l3_processing.utils import save_data, read_l1d_mag_data
-from tests.test_helpers import get_test_data_path, get_test_instrument_team_data_path
+from tests.test_helpers import get_test_data_path, get_test_instrument_team_data_path, environment_variables
 
 
 def create_glows_l3a_cdf(dependencies: GlowsL3ADependencies):
@@ -93,7 +94,7 @@ def create_swapi_l3b_cdf(geometric_calibration_file, efficiency_calibration_file
         data_level='l3b',
         start_date=datetime(2010, 1, 1),
         end_date=datetime(2010, 1, 2),
-        version='v999')
+        version='v000')
     processor = SwapiProcessor(None, input_metadata)
 
     l3b_combined_vdf = processor.process_l3b(swapi_data, swapi_l3_dependencies)
@@ -130,7 +131,7 @@ def create_swapi_l3a_cdf(proton_temperature_density_calibration_file, alpha_temp
         data_level='l3a',
         start_date=datetime(2025, 10, 23),
         end_date=datetime(2025, 10, 24),
-        version='v999')
+        version='v000')
     processor = SwapiProcessor(None, input_metadata)
 
     l3a_proton_sw, l3a_alpha_sw, l3a_pui_he = processor.process_l3a(swapi_data, swapi_l3_dependencies)
@@ -246,12 +247,14 @@ def create_hit_direct_event_cdf():
     return file_path
 
 
+@environment_variables({"REPOINT_DATA_FILEPATH": get_test_data_path("fake_1_day_repointing_file.csv")})
 @patch('imap_l3_processing.glows.glows_initializer.query')
 def run_l3b_initializer(mock_query):
     local_cdfs = os.listdir(get_test_data_path("glows/l3a_products"))
 
     l3a_dicts = [{'file_path': "glows/l3a_products/" + file_path,
-                  'start_date': file_path.split('_')[4]
+                  'start_date': file_path.split('_')[4].split('-')[0],
+                  'repointing': int(file_path.split('_')[4].split('-repoint')[1])
                   } for file_path in local_cdfs]
 
     mock_query.side_effect = [
@@ -421,6 +424,21 @@ def survival_correct_l2_map_with_fake_survivals(number_of_days: int, included_se
     return l2_or_l3_flux / survival_dataset
 
 
+def create_hi_l3_survival_corrected_cdf(survival_dependencies: HiL3SurvivalDependencies, spacing_degree: int) -> str:
+    input_metadata = InputMetadata(instrument="hi",
+                                   data_level="l3",
+                                   start_date=datetime(2025, 4, 9),
+                                   end_date=datetime(2025, 4, 10),
+                                   version="v001",
+                                   descriptor=f"45sensor-spacecraft-survival-full-{spacing_degree}deg-map",
+                                   )
+
+    processor = HiProcessor(None, input_metadata)
+    survival_corrected_product = processor._process_survival_probabilities(survival_dependencies)
+
+    return save_data(survival_corrected_product, delete_if_present=True)
+
+
 if __name__ == "__main__":
     if "swapi" in sys.argv:
         if "l3a" in sys.argv:
@@ -446,7 +464,7 @@ if __name__ == "__main__":
         elif "l3bc" in sys.argv:
             run_glows_l3bc()
         else:
-            cdf_data = CDF("tests/test_data/glows/imap_glows_l2_hist_20130908-repoint00001_v003.cdf")
+            cdf_data = CDF("tests/test_data/glows/imap_glows_l2_hist_20130908-repoint00001_v004.cdf")
             l2_glows_data = read_l2_glows_data(cdf_data)
 
             dependencies = GlowsL3ADependencies(l2_glows_data, 5, {
@@ -495,30 +513,21 @@ if __name__ == "__main__":
         print(create_swe_product_with_fake_spice(dependencies))
 
     if "survival-probability" in sys.argv:
-        parser = argparse.ArgumentParser()
-        parser.add_argument("run_local_type")
-        parser.add_argument("--sensor", choices=["90", "45", "combined"])
-        parser.add_argument("--days", type=int)
-        parser.add_argument("--description")
+        hi_l1c_folder = get_test_data_path("hi/fake_l1c")
+        glows_l3e_folder = get_test_data_path("hi/fake_l3e_survival_probabilities")
 
-        args = parser.parse_args()
+        hi_l1c_paths = list(hi_l1c_folder.iterdir())
+        glows_l3_paths = list(glows_l3e_folder.iterdir())
 
-        logical_source = f"imap_hi_l3_fake-hae-survival-corrected-sensor-hi-{args.sensor}-days-{args.days}-{uuid.uuid4()}"
-        output_filename = f"temp_cdf_data/{logical_source}.cdf"
-
-        spice_wrapper.furnish()
-        with CDF(output_filename,
-                 masterpath=str(get_test_data_path("hi/IMAP_HI_90_maps_20000101_v02.cdf"))) as cdf:
-            cdf.attrs["Logical_source"] = logical_source
-            survival_prob_map = survival_correct_l2_map_with_fake_survivals(args.days, IncludedSensors(args.sensor),
-                                                                            cdf["flux"][...])
-            plt.imshow(survival_prob_map[0, :, :, 0].T)
-            plt.show()
-            cdf["flux"] = survival_prob_map
-            cdf["flux"].attrs["CATDESC"] = args.description
+        survival_dependencies = HiL3SurvivalDependencies.from_file_paths(
+            map_file_path=get_test_data_path(
+                "hi/fake_l2_maps/hi90-6months.cdf"),
+            hi_l1c_paths=hi_l1c_paths,
+            glows_l3e_paths=glows_l3_paths)
+        print(create_hi_l3_survival_corrected_cdf(survival_dependencies, spacing_degree=4))
 
     if "hi" in sys.argv:
         dependencies = HiL3SpectralFitDependencies.from_file_paths(
-            get_test_data_path("hi45-zirnstein-mondel-6months.cdf")
+            get_test_data_path("hi/validation/hi45-zirnstein-mondel-6months.cdf")
         )
         print(create_hi_cdf(dependencies))

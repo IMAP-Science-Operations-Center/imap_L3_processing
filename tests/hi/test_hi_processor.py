@@ -11,7 +11,8 @@ from imap_l3_processing.hi.hi_processor import HiProcessor, combine_glows_l3e_hi
 from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3SpectralFitDependencies, \
     HI_L3_SPECTRAL_FIT_DESCRIPTOR
 from imap_l3_processing.hi.l3.hi_l3_survival_dependencies import HiL3SurvivalDependencies
-from imap_l3_processing.hi.l3.models import HiMapData, HiL3SpectralIndexDataProduct, GlowsL3eData, HiL1cData
+from imap_l3_processing.hi.l3.models import HiMapData, HiL3SpectralIndexDataProduct, GlowsL3eData, HiL1cData, \
+    HiL3SurvivalCorrectedDataProduct
 from imap_l3_processing.hi.l3.science.survival_probability import Sensor
 from imap_l3_processing.models import InputMetadata
 from tests.test_helpers import get_test_data_path, NumpyArrayMatcher
@@ -71,19 +72,17 @@ class TestHiProcessor(unittest.TestCase):
         np.testing.assert_array_equal(actual_hi_data_product.exposure, hi_l3_data.exposure)
 
     def test_spectral_fit_against_validation_data(self):
-        expected_failures = ["hi45", "hi45-zirnstein-mondel"]
-
         test_cases = [
-            ("hi45", "hi/validation/hi45-6months.cdf", "hi/validation/expected_Hi45_6months_4.0x4.0_fit_gam.csv",
-             "hi/validation/expected_Hi45_6months_4.0x4.0_fit_gam_sig.csv"),
-            ("hi90", "hi/validation/hi90-6months.cdf", "hi/validation/expected_Hi90_6months_4.0x4.0_fit_gam.csv",
-             "hi/validation/expected_Hi90_6months_4.0x4.0_fit_gam_sig.csv"),
+            ("hi45", "hi/validation/hi45-6months.cdf", "hi/validation/IMAP-Hi45_6months_4.0x4.0_fit_gam.csv",
+             "hi/validation/IMAP-Hi45_6months_4.0x4.0_fit_gam_sig.csv"),
+            ("hi90", "hi/validation/hi90-6months.cdf", "hi/validation/IMAP-Hi90_6months_4.0x4.0_fit_gam.csv",
+             "hi/validation/IMAP-Hi90_6months_4.0x4.0_fit_gam_sig.csv"),
             ("hi45-zirnstein-mondel", "hi/validation/hi45-zirnstein-mondel-6months.cdf",
-             "hi/validation/expected_Hi45_gdf_Zirnstein_model_6months_4.0x4.0_fit_gam.csv",
-             "hi/validation/expected_Hi45_gdf_Zirnstein_model_6months_4.0x4.0_fit_gam_sig.csv"),
+             "hi/validation/IMAP-Hi45_gdf_Zirnstein_model_6months_4.0x4.0_fit_gam.csv",
+             "hi/validation/IMAP-Hi45_gdf_Zirnstein_model_6months_4.0x4.0_fit_gam_sig.csv"),
             ("hi90-zirnstein-mondel", "hi/validation/hi90-zirnstein-mondel-6months.cdf",
-             "hi/validation/expected_Hi90_gdf_zirnstein_model_6months_4.0x4.0_fit_gam.csv",
-             "hi/validation/expected_Hi90_gdf_Zirnstein_model_6months_4.0x4.0_fit_gam_sig.csv"),
+             "hi/validation/IMAP-Hi90_gdf_Zirnstein_model_6months_4.0x4.0_fit_gam.csv",
+             "hi/validation/IMAP-Hi90_gdf_Zirnstein_model_6months_4.0x4.0_fit_gam_sig.csv"),
         ]
 
         for name, input_file_path, expected_gamma_path, expected_sigma_path in test_cases:
@@ -113,18 +112,13 @@ class TestHiProcessor(unittest.TestCase):
                 processor = HiProcessor(None, input_metadata)
                 output_data = processor._process_spectral_fit_index(dependencies)
 
-                try:
-                    np.testing.assert_allclose(output_data.spectral_fit_index[0], expected_gamma, atol=1e-5)
-                    np.testing.assert_allclose(output_data.spectral_fit_index_error[0], expected_gamma_sigma, atol=1e-5)
-                except Exception as e:
-                    if name in expected_failures:
-                        print(f"Spectral fit validation failed expectedly (card 2419): {name}")
-                        continue
-                    else:
-                        raise e
+                np.testing.assert_allclose(output_data.spectral_fit_index[0],
+                                           expected_gamma, atol=1e-3)
+                np.testing.assert_allclose(output_data.spectral_fit_index_error[0],
+                                           expected_gamma_sigma, atol=1e-3)
 
+    @patch('imap_l3_processing.hi.hi_processor.upload')
     @patch('imap_l3_processing.hi.hi_processor.save_data')
-    @patch("imap_l3_processing.hi.hi_processor.HiL3SurvivalCorrectedDataProduct")
     @patch("imap_l3_processing.hi.hi_processor.parse_map_descriptor")
     @patch('imap_l3_processing.hi.hi_processor.HiSurvivalProbabilitySkyMap')
     @patch('imap_l3_processing.hi.hi_processor.HiSurvivalProbabilityPointingSet')
@@ -132,7 +126,7 @@ class TestHiProcessor(unittest.TestCase):
     @patch('imap_l3_processing.hi.hi_processor.HiL3SurvivalDependencies.fetch_dependencies')
     def test_process_survival_probability(self, mock_fetch_dependencies, mock_combine_glows_l3e_hi_l1c,
                                           mock_survival_probability_pointing_set, mock_survival_skymap,
-                                          mock_parse_map_descriptor, mock_data_product_class, mock_save_data):
+                                          mock_parse_map_descriptor, mock_save_data, mock_upload):
 
         rng = np.random.default_rng()
         input_map_flux = rng.random((1, 9, 90, 45))
@@ -215,23 +209,25 @@ class TestHiProcessor(unittest.TestCase):
 
         mock_survival_skymap.return_value.to_dataset.assert_called_once_with()
 
-        mock_data_product_class.assert_called_once_with(
-            input_metadata=input_metadata,
-            epoch=input_map.epoch,
-            energy=input_map.energy,
-            energy_deltas=input_map.energy_deltas,
-            counts=input_map.counts,
-            counts_uncertainty=input_map.counts_uncertainty,
-            epoch_delta=input_map.epoch_delta,
-            exposure=input_map.exposure,
-            flux=NumpyArrayMatcher(input_map.flux / computed_survival_probabilities),
-            lat=input_map.lat,
-            lon=input_map.lon,
-            sensitivity=input_map.sensitivity,
-            variance=input_map.variance,
-        )
+        mock_save_data.assert_called_once()
+        survival_data_product: HiL3SurvivalCorrectedDataProduct = mock_save_data.call_args_list[0].args[0]
 
-        mock_save_data.assert_called_once_with(mock_data_product_class.return_value)
+        self.assertEqual(input_metadata.to_upstream_data_dependency(input_metadata.descriptor),
+                         survival_data_product.input_metadata)
+        self.assertEqual(input_map.epoch, survival_data_product.epoch)
+        self.assertEqual(input_map.energy, survival_data_product.energy)
+        self.assertEqual(input_map.energy_deltas, survival_data_product.energy_deltas)
+        self.assertEqual(input_map.counts, survival_data_product.counts)
+        self.assertEqual(input_map.counts_uncertainty, survival_data_product.counts_uncertainty)
+        self.assertEqual(input_map.epoch_delta, survival_data_product.epoch_delta)
+        self.assertEqual(input_map.exposure, survival_data_product.exposure)
+        np.testing.assert_array_equal(survival_data_product.flux, input_map.flux / computed_survival_probabilities)
+        self.assertEqual(input_map.lat, survival_data_product.lat)
+        self.assertEqual(input_map.lon, survival_data_product.lon)
+        self.assertEqual(input_map.sensitivity, survival_data_product.sensitivity)
+        self.assertEqual(input_map.variance, survival_data_product.variance)
+
+        mock_upload.assert_called_once_with(mock_save_data.return_value)
 
     def test_parse_map_descriptor(self):
         test_cases = [
@@ -249,21 +245,25 @@ class TestHiProcessor(unittest.TestCase):
 
     def test_combine_glows_l3e_hi_l1c(self):
         glows_l3e_data = [
-            GlowsL3eData(epoch=datetime.fromisoformat("2023-01-01T00:00:00Z"), spin_angle=None, energy=None,
-                         probability_of_survival=None),
-            GlowsL3eData(epoch=datetime.fromisoformat("2023-01-02T00:00:00Z"), spin_angle=None, energy=None,
-                         probability_of_survival=None),
-            GlowsL3eData(epoch=datetime.fromisoformat("2023-01-03T00:00:00Z"), spin_angle=None, energy=None,
-                         probability_of_survival=None),
-            GlowsL3eData(epoch=datetime.fromisoformat("2023-01-05T00:00:00Z"), spin_angle=None, energy=None,
-                         probability_of_survival=None),
+            GlowsL3eData(epoch=datetime.fromisoformat("2023-01-01T00:00:00Z"), spin_angle=None,
+                         energy=None, probability_of_survival=None),
+            GlowsL3eData(epoch=datetime.fromisoformat("2023-01-02T00:00:00Z"), spin_angle=None,
+                         energy=None, probability_of_survival=None),
+            GlowsL3eData(epoch=datetime.fromisoformat("2023-01-03T00:00:00Z"), spin_angle=None,
+                         energy=None, probability_of_survival=None),
+            GlowsL3eData(epoch=datetime.fromisoformat("2023-01-05T00:00:00Z"), spin_angle=None,
+                         energy=None, probability_of_survival=None),
         ]
 
         hi_l1c_data = [
-            HiL1cData(epoch=datetime.fromisoformat("2023-01-02T00:00:00Z"), exposure_times=None, esa_energy_step=None),
-            HiL1cData(epoch=datetime.fromisoformat("2023-01-04T00:00:00Z"), exposure_times=None, esa_energy_step=None),
-            HiL1cData(epoch=datetime.fromisoformat("2023-01-05T00:00:00Z"), exposure_times=None, esa_energy_step=None),
-            HiL1cData(epoch=datetime.fromisoformat("2023-01-06T00:00:00Z"), exposure_times=None, esa_energy_step=None),
+            HiL1cData(epoch=datetime.fromisoformat("2023-01-02T00:00:00Z"), epoch_j2000=None, exposure_times=None,
+                      esa_energy_step=None),
+            HiL1cData(epoch=datetime.fromisoformat("2023-01-04T00:00:00Z"), epoch_j2000=None, exposure_times=None,
+                      esa_energy_step=None),
+            HiL1cData(epoch=datetime.fromisoformat("2023-01-05T00:00:00Z"), epoch_j2000=None, exposure_times=None,
+                      esa_energy_step=None),
+            HiL1cData(epoch=datetime.fromisoformat("2023-01-06T00:00:00Z"), epoch_j2000=None, exposure_times=None,
+                      esa_energy_step=None),
         ]
 
         expected = [

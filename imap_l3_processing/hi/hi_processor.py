@@ -1,8 +1,10 @@
 from dataclasses import dataclass
 
 import numpy as np
+from imap_data_access import upload
 from imap_processing.spice.geometry import SpiceFrame
 
+from imap_l3_processing import spice_wrapper
 from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3SpectralFitDependencies, \
     HI_L3_SPECTRAL_FIT_DESCRIPTOR
 from imap_l3_processing.hi.l3.hi_l3_survival_dependencies import HiL3SurvivalDependencies
@@ -20,7 +22,8 @@ class HiProcessor(Processor):
         if "survival" in self.input_metadata.descriptor:
             hi_l3_survival_probabilities_dependencies = HiL3SurvivalDependencies.fetch_dependencies(self.dependencies)
             data_product = self._process_survival_probabilities(hi_l3_survival_probabilities_dependencies)
-            save_data(data_product)
+            cdf_path = save_data(data_product)
+            upload(cdf_path)
         else:
             hi_l3_spectral_fit_dependencies = HiL3SpectralFitDependencies.fetch_dependencies(self.dependencies)
             data_product = self._process_spectral_fit_index(hi_l3_spectral_fit_dependencies)
@@ -59,6 +62,7 @@ class HiProcessor(Processor):
         return data_product
 
     def _process_survival_probabilities(self, hi_survival_probabilities_dependencies: HiL3SurvivalDependencies):
+        spice_wrapper.furnish()
         combined_glows_hi = combine_glows_l3e_hi_l1c(hi_survival_probabilities_dependencies.glows_l3e_data,
                                                      hi_survival_probabilities_dependencies.hi_l1c_data)
         map_descriptor = parse_map_descriptor(self.input_metadata.descriptor)
@@ -72,7 +76,7 @@ class HiProcessor(Processor):
         survival_dataset = hi_survival_sky_map.to_dataset()
 
         data_product = HiL3SurvivalCorrectedDataProduct(
-            input_metadata=self.input_metadata,
+            input_metadata=self.input_metadata.to_upstream_data_dependency(self.input_metadata.descriptor),
             epoch=hi_survival_probabilities_dependencies.l2_data.epoch,
             energy=hi_survival_probabilities_dependencies.l2_data.energy,
             energy_deltas=hi_survival_probabilities_dependencies.l2_data.energy_deltas,

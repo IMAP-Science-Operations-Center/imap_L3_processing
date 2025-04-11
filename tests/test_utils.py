@@ -3,7 +3,7 @@ from datetime import datetime, date
 from pathlib import Path
 from unittest import TestCase
 from unittest.mock import patch, call, Mock, sentinel
-from urllib.error import HTTPError
+from urllib.error import URLError
 
 import numpy as np
 from spacepy.pycdf import CDF
@@ -51,7 +51,7 @@ class TestUtils(TestCase):
         actual_data = mock_write_cdf.call_args.args[1]
         actual_attribute_manager = mock_write_cdf.call_args.args[2]
 
-        expected_file_path = f"{TEMP_CDF_FOLDER_PATH}/imap_swapi_l2_descriptor_20240917_v2.cdf"
+        expected_file_path = str(TEMP_CDF_FOLDER_PATH / "imap_swapi_l2_descriptor_20240917_v2.cdf")
         self.assertEqual(expected_file_path, actual_file_path)
         self.assertIs(data_product, actual_data)
 
@@ -85,7 +85,8 @@ class TestUtils(TestCase):
 
         actual_attribute_manager = mock_write_cdf.call_args.args[2]
 
-        expected_file_path = f"{TEMP_CDF_FOLDER_PATH}/imap_instrument_data-level_descriptor_20250510-repoint0000{expected_repointing}_v003.cdf"
+        expected_file_path = str(
+            TEMP_CDF_FOLDER_PATH / f"imap_instrument_data-level_descriptor_20250510-repoint0000{expected_repointing}_v003.cdf")
         self.assertEqual(expected_file_path, actual_file_path)
 
         actual_attribute_manager.add_global_attribute.assert_has_calls([
@@ -146,13 +147,13 @@ class TestUtils(TestCase):
                                                  alpha_sw_temperature=alpha_sw_temperature,
                                                  alpha_sw_density=alpha_sw_density)
 
-        custom_path = "fancy_path"
+        custom_path = TEMP_CDF_FOLDER_PATH / "fancy_path"
         returned_file_path = save_data(data_product, folder_path=custom_path)
 
         mock_write_cdf.assert_called_once()
         actual_file_path = mock_write_cdf.call_args.args[0]
 
-        expected_file_path = f"{custom_path}/imap_swapi_l2_descriptor_20240917_v2.cdf"
+        expected_file_path = str(custom_path / "imap_swapi_l2_descriptor_20240917_v2.cdf")
         self.assertEqual(expected_file_path, actual_file_path)
 
         self.assertEqual(expected_file_path, returned_file_path)
@@ -237,7 +238,7 @@ class TestUtils(TestCase):
     def test_download_external_dependency_error_case(self, mock_urlretrieve):
         expected_url = "https://www.spaceweather.gc.ca/solar_flux_data/daily_flux_values/no_such_file.txt"
         expected_filename = "f107_fluxtable.txt"
-        mock_urlretrieve.side_effect = HTTPError(url="url", code=404, msg="not there", hdrs=Mock(), fp=Mock())
+        mock_urlretrieve.side_effect = URLError("server is down")
         returned = download_external_dependency(expected_url, expected_filename)
         self.assertIsNone(returned)
 

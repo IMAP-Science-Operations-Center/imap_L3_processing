@@ -1,4 +1,5 @@
 import json
+import os
 from dataclasses import fields
 from pathlib import Path
 from typing import Type, T
@@ -92,3 +93,26 @@ def assert_dataclass_fields(expected_obj, actual_obj, omit=None):
             assert_dict_close(expected, actual, rtol=1e-20)
         else:
             assert expected == actual, f"{expected} != {actual} for field {field.name}"
+
+
+def environment_variables(env_vars: dict):
+    def decorator(func):
+
+        def wrapper(*args, **kwargs):
+            old_vars = {k: os.environ.get(v) for k, v in env_vars.items() if os.environ.get(str(v)) is not None}
+            for k, v in env_vars.items():
+                os.environ[k] = str(v)
+
+            func_result = func(*args, **kwargs)
+
+            for k in env_vars.keys():
+                del os.environ[k]
+
+            for k, v in old_vars.items():
+                os.environ[k] = v
+
+            return func_result
+
+        return wrapper
+
+    return decorator

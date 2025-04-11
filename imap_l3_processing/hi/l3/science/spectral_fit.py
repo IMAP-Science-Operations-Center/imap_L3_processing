@@ -4,7 +4,12 @@ from imap_l3_processing.hi.l3.science.mpfit import mpfit
 
 
 def spectral_fit(num_epochs, num_lons, num_lats, fluxes, variances, energy):
-    initial_parameters = (100, 2)
+    initial_parameters = (10, 2)
+
+    par_info = [
+        {'limits': [0.0, 1000.0]},
+        {'limits': [0.0, 1000.0]},
+    ]
 
     gammas = np.full((num_epochs, num_lons, num_lats), fill_value=np.nan, dtype=float)
     errors = np.full_like(gammas, np.nan)
@@ -19,7 +24,7 @@ def spectral_fit(num_epochs, num_lons, num_lats, fluxes, variances, energy):
                 variance = variance[~flux_or_error_is_invalid]
                 filtered_energy = energy[~flux_or_error_is_invalid]
                 keywords = {'xval': filtered_energy, 'yval': flux, 'errval': np.sqrt(variance)}
-                fit = mpfit(power_law, initial_parameters, keywords, nprint=0)
+                fit = mpfit(power_law, initial_parameters, keywords, par_info, nprint=0)
 
                 a, gamma = fit.params
                 if fit.status > 0:
