@@ -12,19 +12,26 @@ from imap_l3_processing.models import InputMetadata
 
 
 class TestCodiceProcessor(unittest.TestCase):
-
     @patch("imap_l3_processing.codice.codice_processor.CodiceL3Dependencies.fetch_dependencies")
     @patch("imap_l3_processing.codice.codice_processor.CodiceProcessor.process_l3a")
-    def test_process_l3a(self, mock_process_l3a, mock_fetch_dependencies):
+    @patch("imap_l3_processing.codice.codice_processor.save_data")
+    @patch("imap_l3_processing.codice.codice_processor.upload")
+    def test_process_l3a(self, mock_upload, mock_save_data, mock_process_l3a, mock_fetch_dependencies):
         start_date = datetime(2024, 10, 7, 10, 00, 00)
         end_date = datetime(2024, 10, 8, 10, 00, 00)
         input_metadata = InputMetadata('codice', "l3a", start_date, end_date, 'v02')
+        mock_processed_direct_events = Mock()
+        mock_process_l3a.return_value = mock_processed_direct_events
+        mock_expected_cdf = Mock()
+        mock_save_data.return_value = mock_expected_cdf
 
         processor = CodiceProcessor(sentinel.processing_input_collection, input_metadata)
         processor.process()
 
         mock_fetch_dependencies.assert_called_with(sentinel.processing_input_collection)
         mock_process_l3a.assert_called_with(mock_fetch_dependencies.return_value)
+        mock_save_data.assert_called_with(mock_processed_direct_events)
+        mock_upload.assert_called_with(mock_expected_cdf)
 
     @patch("imap_l3_processing.codice.codice_processor.CodiceL3Dependencies.fetch_dependencies")
     @patch("imap_l3_processing.codice.codice_processor.CodiceProcessor.process_l3a")
