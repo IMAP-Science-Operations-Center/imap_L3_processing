@@ -9,9 +9,9 @@ from spacepy.pycdf import CDF
 from tests.test_helpers import get_test_data_path
 
 
-def create_survival_probabilities_file(glows_file_path: Path, date_for_file: datetime):
-    filename = f"imap_glows_l3e_survival-probabilities-hi_{date_for_file.strftime("%Y%m%d")}_v001.cdf"
-    cdf_file_path = get_test_data_path(f"hi/fake_l3e_survival_probabilities/{filename}")
+def create_survival_probabilities_file(glows_file_path: Path, date_for_file: datetime, sensor: str):
+    filename = f"imap_glows_l3e_survival-probabilities-hi-{sensor}_{date_for_file.strftime("%Y%m%d")}_v001.cdf"
+    cdf_file_path = get_test_data_path(f"hi/fake_l3e_survival_probabilities/{sensor}/{filename}")
 
     cdf_file_path.unlink(missing_ok=True)
     with open(glows_file_path) as input_data:
@@ -53,4 +53,4 @@ if __name__ == "__main__":
 
     for i in range(num_psets_to_generate):
         date_to_set = start_date + timedelta(days=i)
-        create_survival_probabilities_file(input_file_paths["hi45"], date_to_set)
+        create_survival_probabilities_file(input_file_paths["hi90"], date_to_set, "90")

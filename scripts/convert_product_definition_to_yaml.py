@@ -74,7 +74,7 @@ def process_csv():
         "glows-l3b": "imap_l3_processing/cdf/data_product_definition_csv/imap_glows_l3b_variable_attrs.csv",
         "glows-l3c": "imap_l3_processing/cdf/data_product_definition_csv/imap_glows_l3c_variable_attrs.csv",
         "swapi-l3a": "imap_l3_processing/cdf/data_product_definition_csv/imap_swapi_l3a_variable_attrs.csv",
-        "hi-l3-survival-probability": "imap_l3_processing/cdf/data_product_definition_csv/imap_hi_l3_45sensor-spacecraft-survival-full-4deg-map_variable_attrs.csv",
+        "hi-l3-survival-probability": "imap_l3_processing/cdf/data_product_definition_csv/imap_hi_l3_90sensor-spacecraft-survival-full-4deg-map_variable_attrs.csv",
     }
     file_path = instrument_to_file_path[args.instrument]
 
