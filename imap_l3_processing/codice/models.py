@@ -80,6 +80,12 @@ P0_SPIN_ANGLE_VAR_NAME = "p0_spin_angle"
 P0_SPIN_NUMBER_VAR_NAME = "p0_spin_number"
 P0_TOF_VAR_NAME = "p0_tof"
 P0_TYPE_VAR_NAME = "p0_type"
+P0_ENERGY_PER_NUC_LOWER = "p0_energy_per_nuc_lower"
+P0_ENERGY_PER_NUC = "p0_energy_per_nuc"
+P0_ENERGY_PER_NUC_UPPER = "p0_energy_per_nuc_upper"
+P0_ESTIMATED_MASS_LOWER = "p0_estimated_mass_lower"
+P0_ESTIMATED_MASS = "p0_estimated_mass"
+P0_ESTIMATED_MASS_UPPER = "p0_estimated_mass_upper"
 P1_DATA_QUALITY_VAR_NAME = "p1_data_quality"
 P1_ERGE_VAR_NAME = "p1_erge"
 P1_MULTI_FLAG_VAR_NAME = "p1_multi_flag"
@@ -90,6 +96,12 @@ P1_SPIN_ANGLE_VAR_NAME = "p1_spin_angle"
 P1_SPIN_NUMBER_VAR_NAME = "p1_spin_number"
 P1_TOF_VAR_NAME = "p1_tof"
 P1_TYPE_VAR_NAME = "p1_type"
+P1_ENERGY_PER_NUC_LOWER = "p1_energy_per_nuc_lower"
+P1_ENERGY_PER_NUC = "p1_energy_per_nuc"
+P1_ENERGY_PER_NUC_UPPER = "p1_energy_per_nuc_upper"
+P1_ESTIMATED_MASS_LOWER = "p1_estimated_mass_lower"
+P1_ESTIMATED_MASS = "p1_estimated_mass"
+P1_ESTIMATED_MASS_UPPER = "p1_estimated_mass_upper"
 P2_DATA_QUALITY_VAR_NAME = "p2_data_quality"
 P2_ERGE_VAR_NAME = "p2_erge"
 P2_MULTI_FLAG_VAR_NAME = "p2_multi_flag"
@@ -100,6 +112,12 @@ P2_SPIN_ANGLE_VAR_NAME = "p2_spin_angle"
 P2_SPIN_NUMBER_VAR_NAME = "p2_spin_number"
 P2_TOF_VAR_NAME = "p2_tof"
 P2_TYPE_VAR_NAME = "p2_type"
+P2_ENERGY_PER_NUC_LOWER = "p2_energy_per_nuc_lower"
+P2_ENERGY_PER_NUC = "p2_energy_per_nuc"
+P2_ENERGY_PER_NUC_UPPER = "p2_energy_per_nuc_upper"
+P2_ESTIMATED_MASS_LOWER = "p2_estimated_mass_lower"
+P2_ESTIMATED_MASS = "p2_estimated_mass"
+P2_ESTIMATED_MASS_UPPER = "p2_estimated_mass_upper"
 P3_DATA_QUALITY_VAR_NAME = "p3_data_quality"
 P3_ERGE_VAR_NAME = "p3_erge"
 P3_MULTI_FLAG_VAR_NAME = "p3_multi_flag"
@@ -110,6 +128,12 @@ P3_SPIN_ANGLE_VAR_NAME = "p3_spin_angle"
 P3_SPIN_NUMBER_VAR_NAME = "p3_spin_number"
 P3_TOF_VAR_NAME = "p3_tof"
 P3_TYPE_VAR_NAME = "p3_type"
+P3_ENERGY_PER_NUC_LOWER = "p3_energy_per_nuc_lower"
+P3_ENERGY_PER_NUC = "p3_energy_per_nuc"
+P3_ENERGY_PER_NUC_UPPER = "p3_energy_per_nuc_upper"
+P3_ESTIMATED_MASS_LOWER = "p3_estimated_mass_lower"
+P3_ESTIMATED_MASS = "p3_estimated_mass"
+P3_ESTIMATED_MASS_UPPER = "p3_estimated_mass_upper"
 P4_DATA_QUALITY_VAR_NAME = "p4_data_quality"
 P4_ERGE_VAR_NAME = "p4_erge"
 P4_MULTI_FLAG_VAR_NAME = "p4_multi_flag"
@@ -120,6 +144,12 @@ P4_SPIN_ANGLE_VAR_NAME = "p4_spin_angle"
 P4_SPIN_NUMBER_VAR_NAME = "p4_spin_number"
 P4_TOF_VAR_NAME = "p4_tof"
 P4_TYPE_VAR_NAME = "p4_type"
+P4_ENERGY_PER_NUC_LOWER = "p4_energy_per_nuc_lower"
+P4_ENERGY_PER_NUC = "p4_energy_per_nuc"
+P4_ENERGY_PER_NUC_UPPER = "p4_energy_per_nuc_upper"
+P4_ESTIMATED_MASS_LOWER = "p4_estimated_mass_lower"
+P4_ESTIMATED_MASS = "p4_estimated_mass"
+P4_ESTIMATED_MASS_UPPER = "p4_estimated_mass_upper"
 P5_DATA_QUALITY_VAR_NAME = "p5_data_quality"
 P5_ERGE_VAR_NAME = "p5_erge"
 P5_MULTI_FLAG_VAR_NAME = "p5_multi_flag"
@@ -130,6 +160,12 @@ P5_SPIN_ANGLE_VAR_NAME = "p5_spin_angle"
 P5_SPIN_NUMBER_VAR_NAME = "p5_spin_number"
 P5_TOF_VAR_NAME = "p5_tof"
 P5_TYPE_VAR_NAME = "p5_type"
+P5_ENERGY_PER_NUC_LOWER = "p5_energy_per_nuc_lower"
+P5_ENERGY_PER_NUC = "p5_energy_per_nuc"
+P5_ENERGY_PER_NUC_UPPER = "p5_energy_per_nuc_upper"
+P5_ESTIMATED_MASS_LOWER = "p5_estimated_mass_lower"
+P5_ESTIMATED_MASS = "p5_estimated_mass"
+P5_ESTIMATED_MASS_UPPER = "p5_estimated_mass_upper"
 
 
 @dataclass
@@ -245,6 +281,12 @@ class CodiceL3HiDirectEvents(DataProduct):
             DataProductVariable(P0_SPIN_NUMBER_VAR_NAME, self.p0_spin_number),
             DataProductVariable(P0_TOF_VAR_NAME, self.p0_tof),
             DataProductVariable(P0_TYPE_VAR_NAME, self.p0_type),
+            DataProductVariable(P0_ENERGY_PER_NUC_LOWER, self.p0_energy_per_nuc_lower),
+            DataProductVariable(P0_ENERGY_PER_NUC, self.p0_energy_per_nuc),
+            DataProductVariable(P0_ENERGY_PER_NUC_UPPER, self.p0_energy_per_nuc_upper),
+            DataProductVariable(P0_ESTIMATED_MASS_LOWER, self.p0_estimated_mass_lower),
+            DataProductVariable(P0_ESTIMATED_MASS, self.p0_estimated_mass),
+            DataProductVariable(P0_ESTIMATED_MASS_UPPER, self.p0_estimated_mass_upper),
             DataProductVariable(P1_DATA_QUALITY_VAR_NAME, self.p1_data_quality),
             DataProductVariable(P1_ERGE_VAR_NAME, self.p1_erge),
             DataProductVariable(P1_MULTI_FLAG_VAR_NAME, self.p1_multi_flag),
@@ -255,6 +297,12 @@ class CodiceL3HiDirectEvents(DataProduct):
             DataProductVariable(P1_SPIN_NUMBER_VAR_NAME, self.p1_spin_number),
             DataProductVariable(P1_TOF_VAR_NAME, self.p1_tof),
             DataProductVariable(P1_TYPE_VAR_NAME, self.p1_type),
+            DataProductVariable(P1_ENERGY_PER_NUC_LOWER, self.p1_energy_per_nuc_lower),
+            DataProductVariable(P1_ENERGY_PER_NUC, self.p1_energy_per_nuc),
+            DataProductVariable(P1_ENERGY_PER_NUC_UPPER, self.p1_energy_per_nuc_upper),
+            DataProductVariable(P1_ESTIMATED_MASS_LOWER, self.p1_estimated_mass_lower),
+            DataProductVariable(P1_ESTIMATED_MASS, self.p1_estimated_mass),
+            DataProductVariable(P1_ESTIMATED_MASS_UPPER, self.p1_estimated_mass_upper),
             DataProductVariable(P2_DATA_QUALITY_VAR_NAME, self.p2_data_quality),
             DataProductVariable(P2_ERGE_VAR_NAME, self.p2_erge),
             DataProductVariable(P2_MULTI_FLAG_VAR_NAME, self.p2_multi_flag),
@@ -265,6 +313,12 @@ class CodiceL3HiDirectEvents(DataProduct):
             DataProductVariable(P2_SPIN_NUMBER_VAR_NAME, self.p2_spin_number),
             DataProductVariable(P2_TOF_VAR_NAME, self.p2_tof),
             DataProductVariable(P2_TYPE_VAR_NAME, self.p2_type),
+            DataProductVariable(P2_ENERGY_PER_NUC_LOWER, self.p2_energy_per_nuc_lower),
+            DataProductVariable(P2_ENERGY_PER_NUC, self.p2_energy_per_nuc),
+            DataProductVariable(P2_ENERGY_PER_NUC_UPPER, self.p2_energy_per_nuc_upper),
+            DataProductVariable(P2_ESTIMATED_MASS_LOWER, self.p2_estimated_mass_lower),
+            DataProductVariable(P2_ESTIMATED_MASS, self.p2_estimated_mass),
+            DataProductVariable(P2_ESTIMATED_MASS_UPPER, self.p2_estimated_mass_upper),
             DataProductVariable(P3_DATA_QUALITY_VAR_NAME, self.p3_data_quality),
             DataProductVariable(P3_ERGE_VAR_NAME, self.p3_erge),
             DataProductVariable(P3_MULTI_FLAG_VAR_NAME, self.p3_multi_flag),
@@ -275,6 +329,12 @@ class CodiceL3HiDirectEvents(DataProduct):
             DataProductVariable(P3_SPIN_NUMBER_VAR_NAME, self.p3_spin_number),
             DataProductVariable(P3_TOF_VAR_NAME, self.p3_tof),
             DataProductVariable(P3_TYPE_VAR_NAME, self.p3_type),
+            DataProductVariable(P3_ENERGY_PER_NUC_LOWER, self.p3_energy_per_nuc_lower),
+            DataProductVariable(P3_ENERGY_PER_NUC, self.p3_energy_per_nuc),
+            DataProductVariable(P3_ENERGY_PER_NUC_UPPER, self.p3_energy_per_nuc_upper),
+            DataProductVariable(P3_ESTIMATED_MASS_LOWER, self.p3_estimated_mass_lower),
+            DataProductVariable(P3_ESTIMATED_MASS, self.p3_estimated_mass),
+            DataProductVariable(P3_ESTIMATED_MASS_UPPER, self.p3_estimated_mass_upper),
             DataProductVariable(P4_DATA_QUALITY_VAR_NAME, self.p4_data_quality),
             DataProductVariable(P4_ERGE_VAR_NAME, self.p4_erge),
             DataProductVariable(P4_MULTI_FLAG_VAR_NAME, self.p4_multi_flag),
@@ -285,6 +345,12 @@ class CodiceL3HiDirectEvents(DataProduct):
             DataProductVariable(P4_SPIN_NUMBER_VAR_NAME, self.p4_spin_number),
             DataProductVariable(P4_TOF_VAR_NAME, self.p4_tof),
             DataProductVariable(P4_TYPE_VAR_NAME, self.p4_type),
+            DataProductVariable(P4_ENERGY_PER_NUC_LOWER, self.p4_energy_per_nuc_lower),
+            DataProductVariable(P4_ENERGY_PER_NUC, self.p4_energy_per_nuc),
+            DataProductVariable(P4_ENERGY_PER_NUC_UPPER, self.p4_energy_per_nuc_upper),
+            DataProductVariable(P4_ESTIMATED_MASS_LOWER, self.p4_estimated_mass_lower),
+            DataProductVariable(P4_ESTIMATED_MASS, self.p4_estimated_mass),
+            DataProductVariable(P4_ESTIMATED_MASS_UPPER, self.p4_estimated_mass_upper),
             DataProductVariable(P5_DATA_QUALITY_VAR_NAME, self.p5_data_quality),
             DataProductVariable(P5_ERGE_VAR_NAME, self.p5_erge),
             DataProductVariable(P5_MULTI_FLAG_VAR_NAME, self.p5_multi_flag),
@@ -295,6 +361,12 @@ class CodiceL3HiDirectEvents(DataProduct):
             DataProductVariable(P5_SPIN_NUMBER_VAR_NAME, self.p5_spin_number),
             DataProductVariable(P5_TOF_VAR_NAME, self.p5_tof),
             DataProductVariable(P5_TYPE_VAR_NAME, self.p5_type),
+            DataProductVariable(P5_ENERGY_PER_NUC_LOWER, self.p5_energy_per_nuc_lower),
+            DataProductVariable(P5_ENERGY_PER_NUC, self.p5_energy_per_nuc),
+            DataProductVariable(P5_ENERGY_PER_NUC_UPPER, self.p5_energy_per_nuc_upper),
+            DataProductVariable(P5_ESTIMATED_MASS_LOWER, self.p5_estimated_mass_lower),
+            DataProductVariable(P5_ESTIMATED_MASS, self.p5_estimated_mass),
+            DataProductVariable(P5_ESTIMATED_MASS_UPPER, self.p5_estimated_mass_upper)
         ]
 
 
