@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 import numpy as np
+from imap_data_access import upload
 from imap_processing.spice.geometry import SpiceFrame
 
 from imap_l3_processing import spice_wrapper
@@ -21,7 +22,8 @@ class HiProcessor(Processor):
         if "survival" in self.input_metadata.descriptor:
             hi_l3_survival_probabilities_dependencies = HiL3SurvivalDependencies.fetch_dependencies(self.dependencies)
             data_product = self._process_survival_probabilities(hi_l3_survival_probabilities_dependencies)
-            save_data(data_product)
+            cdf_path = save_data(data_product)
+            upload(cdf_path)
         else:
             hi_l3_spectral_fit_dependencies = HiL3SpectralFitDependencies.fetch_dependencies(self.dependencies)
             data_product = self._process_spectral_fit_index(hi_l3_spectral_fit_dependencies)

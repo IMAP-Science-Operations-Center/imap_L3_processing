@@ -94,7 +94,7 @@ def create_swapi_l3b_cdf(geometric_calibration_file, efficiency_calibration_file
         data_level='l3b',
         start_date=datetime(2010, 1, 1),
         end_date=datetime(2010, 1, 2),
-        version='v999')
+        version='v000')
     processor = SwapiProcessor(None, input_metadata)
 
     l3b_combined_vdf = processor.process_l3b(swapi_data, swapi_l3_dependencies)
@@ -131,7 +131,7 @@ def create_swapi_l3a_cdf(proton_temperature_density_calibration_file, alpha_temp
         data_level='l3a',
         start_date=datetime(2025, 10, 23),
         end_date=datetime(2025, 10, 24),
-        version='v999')
+        version='v000')
     processor = SwapiProcessor(None, input_metadata)
 
     l3a_proton_sw, l3a_alpha_sw, l3a_pui_he = processor.process_l3a(swapi_data, swapi_l3_dependencies)
@@ -427,9 +427,9 @@ def survival_correct_l2_map_with_fake_survivals(number_of_days: int, included_se
 def create_hi_l3_survival_corrected_cdf(survival_dependencies: HiL3SurvivalDependencies, spacing_degree: int) -> str:
     input_metadata = InputMetadata(instrument="hi",
                                    data_level="l3",
-                                   start_date=datetime.now(),
-                                   end_date=datetime.now() + timedelta(days=1),
-                                   version="",
+                                   start_date=datetime(2025, 4, 9),
+                                   end_date=datetime(2025, 4, 10),
+                                   version="v001",
                                    descriptor=f"45sensor-spacecraft-survival-full-{spacing_degree}deg-map",
                                    )
 
