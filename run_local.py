@@ -436,7 +436,7 @@ def create_hi_l3_survival_corrected_cdf(survival_dependencies: HiL3SurvivalDepen
     processor = HiProcessor(None, input_metadata)
     survival_corrected_product = processor._process_survival_probabilities(survival_dependencies)
 
-    return save_data(survival_corrected_product)
+    return save_data(survival_corrected_product, delete_if_present=True)
 
 
 if __name__ == "__main__":
@@ -525,31 +525,9 @@ if __name__ == "__main__":
             hi_l1c_paths=hi_l1c_paths,
             glows_l3e_paths=glows_l3_paths)
         print(create_hi_l3_survival_corrected_cdf(survival_dependencies, spacing_degree=4))
-        
-        # parser = argparse.ArgumentParser()
-        # parser.add_argument("run_local_type")
-        # parser.add_argument("--sensor", choices=["90", "45", "combined"])
-        # parser.add_argument("--days", type=int)
-        # parser.add_argument("--description")
-        #
-        # args = parser.parse_args()
-        #
-        # logical_source = f"imap_hi_l3_fake-hae-survival-corrected-sensor-hi-{args.sensor}-days-{args.days}-{uuid.uuid4()}"
-        # output_filename = f"temp_cdf_data/{logical_source}.cdf"
-        #
-        # spice_wrapper.furnish()
-        # with CDF(output_filename,
-        #          masterpath=str(get_test_data_path("hi/IMAP_HI_90_maps_20000101_v02.cdf"))) as cdf:
-        #     cdf.attrs["Logical_source"] = logical_source
-        #     survival_prob_map = survival_correct_l2_map_with_fake_survivals(args.days, IncludedSensors(args.sensor),
-        #                                                                     cdf["flux"][...])
-        #     plt.imshow(survival_prob_map[0, :, :, 0].T)
-        #     plt.show()
-        #     cdf["flux"] = survival_prob_map
-        #     cdf["flux"].attrs["CATDESC"] = args.description
 
     if "hi" in sys.argv:
         dependencies = HiL3SpectralFitDependencies.from_file_paths(
-            get_test_data_path("hi45-zirnstein-mondel-6months.cdf")
+            get_test_data_path("hi/validation/hi45-zirnstein-mondel-6months.cdf")
         )
         print(create_hi_cdf(dependencies))

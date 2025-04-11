@@ -1,0 +1,224 @@
+epoch:
+   NAME: epoch
+   DATA_TYPE: CDF_TIME_TT2000
+   CATDESC: epoch
+   VAR_TYPE: support_data
+   RECORD_VARYING: nrv
+   FIELDNAM: Epoch
+   FORMAT: ' '
+   LABLAXIS: Epoch
+   UNITS: ns
+   VALIDMIN: 2010-01-01T00:00:00.000000000
+   VALIDMAX: 2059-12-31T23:59:58.999000000
+   FILLVAL: 9999-12-31T23:59:59.999999999
+   DELTA_PLUS_VAR: epoch_delta
+   DELTA_MINUS_VAR: epoch_delta
+energy:
+   NAME: energy
+   DATA_TYPE: CDF_REAL4
+   CATDESC: energy
+   VAR_TYPE: support_data
+   RECORD_VARYING: nrv
+   FIELDNAM: Energy
+   FORMAT: F9.3
+   LABLAXIS: Energy
+   UNITS: eV
+   VALIDMIN: 0
+   VALIDMAX: 1e9
+   FILLVAL: -1.00E+31
+   DELTA_PLUS_VAR: energy_deltas
+   DELTA_MINUS_VAR: energy_deltas
+energy_deltas:
+   NAME: energy_deltas
+   DATA_TYPE: CDF_REAL4
+   CATDESC: energy_deltas
+   VAR_TYPE: support_data
+   RECORD_VARYING: nrv
+   FIELDNAM: Energy deltas
+   FORMAT: F9.3
+   LABLAXIS: Energy deltas
+   UNITS: ' '
+   VALIDMIN: 0
+   VALIDMAX: 1e9
+   FILLVAL: -1.00E+31
+counts:
+   NAME: counts
+   DATA_TYPE: CDF_INT8
+   CATDESC: counts
+   DEPEND_0: epoch
+   DEPEND_1: energy
+   DEPEND_2: lon
+   DEPEND_3: lat
+   VAR_TYPE: data
+   RECORD_VARYING: rv
+   DISPLAY_TYPE: spectrogram
+   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+   FIELDNAM: Counts
+   FORMAT: I14
+   UNITS: ' '
+   VALIDMIN: 0
+   VALIDMAX: 1e9
+   FILLVAL: -9223372036854775808
+   LABL_PTR_1: lon_label
+   LABL_PTR_2: lat_label
+   LABL_PTR_3: energy_label
+   DELTA_PLUS_VAR: counts_uncertainty
+   DELTA_MINUS_VAR: counts_uncertainty
+counts_uncertainty:
+   NAME: counts_uncertainty
+   DATA_TYPE: CDF_REAL4
+   CATDESC: counts_uncertainty
+   DEPEND_0: epoch
+   DEPEND_1: energy
+   DEPEND_2: lon
+   DEPEND_3: lat
+   VAR_TYPE: data
+   RECORD_VARYING: rv
+   DISPLAY_TYPE: spectrogram
+   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+   FIELDNAM: Counts uncertainty
+   FORMAT: F9.3
+   UNITS: ' '
+   VALIDMIN: 0
+   VALIDMAX: 1e9
+   FILLVAL: -1.00E+31
+   LABL_PTR_1: lon_label
+   LABL_PTR_2: lat_label
+   LABL_PTR_3: energy_label
+epoch_delta:
+   NAME: epoch_delta
+   DATA_TYPE: CDF_INT8
+   CATDESC: epoch_delta
+   VAR_TYPE: support_data
+   RECORD_VARYING: nrv
+   FIELDNAM: Epoch delta
+   FORMAT: I14
+   LABLAXIS: Epoch delta
+   UNITS: ' '
+   VALIDMIN: 0
+   VALIDMAX: 1e9
+   FILLVAL: -9223372036854775808
+exposure:
+   NAME: exposure
+   DATA_TYPE: CDF_REAL4
+   CATDESC: exposure
+   DEPEND_0: epoch
+   DEPEND_1: energy
+   DEPEND_2: lon
+   DEPEND_3: lat
+   VAR_TYPE: data
+   RECORD_VARYING: rv
+   DISPLAY_TYPE: ' '
+   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+   FIELDNAM: Exposure
+   FORMAT: F9.3
+   UNITS: s
+   VALIDMIN: 0
+   VALIDMAX: 1e9
+   FILLVAL: -1.00E+31
+   LABL_PTR_1: lon_label
+   LABL_PTR_2: lat_label
+flux:
+   NAME: flux
+   DATA_TYPE: CDF_REAL4
+   CATDESC: flux
+   DEPEND_0: epoch
+   DEPEND_1: energy
+   DEPEND_2: lon
+   DEPEND_3: lat
+   VAR_TYPE: data
+   RECORD_VARYING: rv
+   DISPLAY_TYPE: ' '
+   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+   FIELDNAM: Flux
+   FORMAT: F9.3
+   UNITS: cm -2 s -1 sr -1 keV -1
+   VALIDMIN: 0
+   VALIDMAX: 1e9
+   FILLVAL: -1.00E+31
+lat:
+   NAME: lat
+   DATA_TYPE: CDF_REAL4
+   CATDESC: lat
+   VAR_TYPE: support_data
+   RECORD_VARYING: nrv
+   FIELDNAM: Latitude
+   FORMAT: F9.3
+   LABLAXIS: Latitude
+   UNITS: degrees
+   VALIDMIN: 0
+   VALIDMAX: 1e9
+   FILLVAL: -1.00E+31
+lon:
+   NAME: lon
+   DATA_TYPE: CDF_REAL4
+   CATDESC: lon
+   VAR_TYPE: support_data
+   RECORD_VARYING: nrv
+   FIELDNAM: Longitude
+   FORMAT: F9.3
+   LABLAXIS: Longitude
+   UNITS: degrees
+   VALIDMIN: 0
+   VALIDMAX: 1e9
+   FILLVAL: -1.00E+31
+sensitivity:
+   NAME: sensitivity
+   DATA_TYPE: CDF_REAL4
+   CATDESC: sensitivity
+   DEPEND_0: epoch
+   DEPEND_1: energy
+   DEPEND_2: lon
+   DEPEND_3: lat
+   VAR_TYPE: data
+   RECORD_VARYING: rv
+   DISPLAY_TYPE: spectrogram
+   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+   FIELDNAM: Sensitivity
+   FORMAT: F9.3
+   UNITS: ' '
+   VALIDMIN: 0
+   VALIDMAX: 1e9
+   FILLVAL: -1.00E+31
+   LABL_PTR_1: lon_label
+   LABL_PTR_2: lat_label
+   LABL_PTR_3: energy_label
+variance:
+   NAME: variance
+   DATA_TYPE: CDF_REAL4
+   CATDESC: variance
+   DEPEND_0: epoch
+   DEPEND_1: energy
+   DEPEND_2: lon
+   DEPEND_3: lat
+   VAR_TYPE: data
+   RECORD_VARYING: rv
+   DISPLAY_TYPE: spectrogram
+   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+   FIELDNAM: Variance
+   FORMAT: F9.3
+   UNITS: ' '
+   VALIDMIN: 0
+   VALIDMAX: 1e9
+   FILLVAL: -1.00E+31
+energy_label:
+   NAME: energy_label
+   DATA_TYPE: CDF_CHAR
+   CATDESC: energy_label
+   VAR_TYPE: metadata
+   FIELDNAM: Energy label
+   FORMAT: a20
+lon_label:
+   NAME: lon_label
+   DATA_TYPE: CDF_CHAR
+   CATDESC: lon_label
+   VAR_TYPE: metadata
+   FIELDNAM: Longitude label
+   FORMAT: a20
+lat_label:
+   NAME: lat_label
+   DATA_TYPE: CDF_CHAR
+   CATDESC: lat_label
+   VAR_TYPE: metadata
+   FIELDNAM: Latitude label
+   FORMAT: a20

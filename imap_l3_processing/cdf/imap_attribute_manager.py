@@ -17,13 +17,22 @@ class ImapAttributeManager(CdfAttributeManager):
         self.load_global_attributes(self.config_folder_path / 'imap_default_global_cdf_attrs.yaml')
 
     def add_instrument_attrs(self, instrument: str, level: str, descriptor: str):
-        descriptor_field = ""
-        if os.path.exists(self.config_folder_path / f"imap_{instrument}_{level}_{descriptor}_variable_attrs.yaml"):
-            descriptor_field = f"{descriptor}_"
+        self._load_variable_attributes_if_file_exists(
+            self.config_folder_path / f"imap_{instrument}_{level}_variable_attrs.yaml")
+        self._load_variable_attributes_if_file_exists(
+            self.config_folder_path / f"imap_{instrument}_{level}_{descriptor}_variable_attrs.yaml")
 
-        self.load_variable_attributes(
-            self.config_folder_path / f"imap_{instrument}_{level}_{descriptor_field}variable_attrs.yaml")
-        self.load_global_attributes(
-            self.config_folder_path / f"imap_{instrument}_{level}_{descriptor_field}global_cdf_attrs.yaml")
+        self._load_global_attributes_if_file_exists(
+            self.config_folder_path / f"imap_{instrument}_global_cdf_attrs.yaml")
+        self._load_global_attributes_if_file_exists(
+            self.config_folder_path / f"imap_{instrument}_{level}_global_cdf_attrs.yaml")
+        self._load_global_attributes_if_file_exists(
+            self.config_folder_path / f"imap_{instrument}_{level}_{descriptor}_global_cdf_attrs.yaml")
 
-        self.load_global_attributes(self.config_folder_path / f"imap_{instrument}_global_cdf_attrs.yaml")
+    def _load_variable_attributes_if_file_exists(self, path: Path):
+        if path.exists():
+            self.load_variable_attributes(path)
+
+    def _load_global_attributes_if_file_exists(self, path: Path):
+        if path.exists():
+            self.load_global_attributes(path)
