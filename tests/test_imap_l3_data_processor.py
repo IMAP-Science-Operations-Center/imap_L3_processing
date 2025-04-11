@@ -312,6 +312,42 @@ class TestImapL3DataProcessor(TestCase):
                                                         expected_input_metadata)
                 mock_processor_class.return_value.process.assert_called()
 
+    @patch('imap_l3_data_processor.HiProcessor')
+    @patch('imap_l3_data_processor.argparse')
+    def test_runs_hi_processor_when_instrument_argument_is_hi(self, mock_argparse, mock_processor_class):
+        instrument_argument = "hi"
+        start_date_argument = "20160630"
+        version_argument = "v001"
+        descriptor_argument = "A descriptor"
+        science_input = ScienceInput("imap_hi_l2_science_20250101_v001.cdf")
+        imap_data_access_dependency = ProcessingInputCollection(science_input)
+
+        mock_argument_parser = mock_argparse.ArgumentParser.return_value
+        mock_argument_parser.parse_args.return_value.instrument = instrument_argument
+        mock_argument_parser.parse_args.return_value.dependency = imap_data_access_dependency.serialize()
+        mock_argument_parser.parse_args.return_value.start_date = start_date_argument
+        mock_argument_parser.parse_args.return_value.version = version_argument
+        mock_argument_parser.parse_args.return_value.descriptor = descriptor_argument
+
+        mock_argument_parser.parse_args.return_value.data_level = "l3"
+        mock_argument_parser.parse_args.return_value.end_date = None
+
+        imap_l3_processor()
+
+        expected_input_dependencies = [UpstreamDataDependency("hi",
+                                                              "l2",
+                                                              datetime(2025, 1, 1),
+                                                              datetime(2025, 1, 1),
+                                                              "v001",
+                                                              "science")]
+
+        expected_input_metadata = InputMetadata("hi", "l3", datetime(year=2016, month=6, day=30),
+                                                datetime(year=2016, month=6, day=30), "v001", "A descriptor")
+
+        mock_processor_class.assert_called_with(expected_input_dependencies,
+                                                expected_input_metadata)
+        mock_processor_class.return_value.process.assert_called()
+
     @patch('imap_l3_data_processor.argparse')
     def test_throws_exception_for_unimplemented_instrument(self, mock_argparse):
         instrument_argument = "new_instrument"

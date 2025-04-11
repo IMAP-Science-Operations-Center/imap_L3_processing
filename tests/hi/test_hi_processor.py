@@ -117,6 +117,7 @@ class TestHiProcessor(unittest.TestCase):
                 np.testing.assert_allclose(output_data.spectral_fit_index_error[0],
                                            expected_gamma_sigma, atol=1e-3)
 
+    @patch('imap_l3_processing.hi.hi_processor.upload')
     @patch('imap_l3_processing.hi.hi_processor.save_data')
     @patch("imap_l3_processing.hi.hi_processor.parse_map_descriptor")
     @patch('imap_l3_processing.hi.hi_processor.HiSurvivalProbabilitySkyMap')
@@ -125,7 +126,7 @@ class TestHiProcessor(unittest.TestCase):
     @patch('imap_l3_processing.hi.hi_processor.HiL3SurvivalDependencies.fetch_dependencies')
     def test_process_survival_probability(self, mock_fetch_dependencies, mock_combine_glows_l3e_hi_l1c,
                                           mock_survival_probability_pointing_set, mock_survival_skymap,
-                                          mock_parse_map_descriptor, mock_save_data):
+                                          mock_parse_map_descriptor, mock_save_data, mock_upload):
 
         rng = np.random.default_rng()
         input_map_flux = rng.random((1, 9, 90, 45))
@@ -225,6 +226,8 @@ class TestHiProcessor(unittest.TestCase):
         self.assertEqual(input_map.lon, survival_data_product.lon)
         self.assertEqual(input_map.sensitivity, survival_data_product.sensitivity)
         self.assertEqual(input_map.variance, survival_data_product.variance)
+
+        mock_upload.assert_called_once_with(mock_save_data.return_value)
 
     def test_parse_map_descriptor(self):
         test_cases = [
