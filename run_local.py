@@ -261,7 +261,7 @@ def run_l3b_initializer(mock_query):
     GlowsInitializer.validate_and_initialize('v001')
 
 
-@environment_variables({"REPOINT_DATA_FILEPATH": get_test_data_path("fake_1_day_repointing_file.csv")})
+@environment_variables({"REPOINT_DATA_FILEPATH": get_test_data_path("fake_2_day_repointing_on_may18_file.csv")})
 @patch('imap_l3_processing.glows.glows_initializer.query')
 @patch('imap_l3_processing.glows.glows_processor.imap_data_access.upload')
 def run_glows_l3bc_processor_and_initializer(_, mock_query):
@@ -270,7 +270,7 @@ def run_glows_l3bc_processor_and_initializer(_, mock_query):
         data_level='l3b',
         start_date=datetime(2013, 9, 8),
         end_date=datetime(2013, 9, 8),
-        version='v010')
+        version='v011')
 
     upstream_dependencies = [
         UpstreamDataDependency(input_metadata.instrument,
@@ -281,7 +281,7 @@ def run_glows_l3bc_processor_and_initializer(_, mock_query):
                                GLOWS_L2_DESCRIPTOR)
     ]
     l3a_files = imap_data_access.query(instrument='glows', version=input_metadata.version, data_level='l3a',
-                                       start_date='20100422', end_date='20100519')
+                                       start_date='20100422', end_date='20100625')
 
     l3a_files_2 = imap_data_access.query(instrument='glows', version=input_metadata.version, data_level='l3a',
                                          start_date='20100922', end_date='20101123')
