@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import argparse
 import enum
 import os
 import sys
@@ -10,13 +9,12 @@ from pathlib import Path
 from typing import Optional, TypeVar
 from unittest.mock import patch
 
+import imap_data_access
 import numpy as np
 import xarray as xr
 from imap_processing.spice.geometry import SpiceFrame
-from matplotlib import pyplot as plt
 from spacepy.pycdf import CDF
 
-from imap_l3_processing import spice_wrapper
 from imap_l3_processing.glows.descriptors import GLOWS_L2_DESCRIPTOR
 from imap_l3_processing.glows.glows_initializer import GlowsInitializer
 from imap_l3_processing.glows.glows_processor import GlowsProcessor
@@ -263,10 +261,40 @@ def run_l3b_initializer(mock_query):
     GlowsInitializer.validate_and_initialize('v001')
 
 
+@environment_variables({"REPOINT_DATA_FILEPATH": get_test_data_path("fake_2_day_repointing_on_may18_file.csv")})
+@patch('imap_l3_processing.glows.glows_initializer.query')
+@patch('imap_l3_processing.glows.glows_processor.imap_data_access.upload')
+def run_glows_l3bc_processor_and_initializer(_, mock_query):
+    input_metadata = InputMetadata(
+        instrument='glows',
+        data_level='l3b',
+        start_date=datetime(2013, 9, 8),
+        end_date=datetime(2013, 9, 8),
+        version='v011')
+
+    upstream_dependencies = [
+        UpstreamDataDependency(input_metadata.instrument,
+                               "l3b",
+                               input_metadata.start_date,
+                               input_metadata.end_date,
+                               input_metadata.version,
+                               GLOWS_L2_DESCRIPTOR)
+    ]
+    l3a_files = imap_data_access.query(instrument='glows', version=input_metadata.version, data_level='l3a',
+                                       start_date='20100422', end_date='20100625')
+
+    l3a_files_2 = imap_data_access.query(instrument='glows', version=input_metadata.version, data_level='l3a',
+                                         start_date='20100922', end_date='20101123')
+    mock_query.side_effect = [l3a_files + l3a_files_2, []]
+
+    processor = GlowsProcessor(input_metadata=input_metadata, dependencies=upstream_dependencies)
+    processor.process()
+
+
 def run_glows_l3bc():
     input_metadata = InputMetadata(
         instrument='glows',
-        data_level='l3a',
+        data_level='l3b',
         start_date=datetime(2013, 9, 8),
         end_date=datetime(2013, 9, 8),
         version='v001')
@@ -463,6 +491,8 @@ if __name__ == "__main__":
             run_l3b_initializer()
         elif "l3bc" in sys.argv:
             run_glows_l3bc()
+        elif "init-l3bc" in sys.argv:
+            run_glows_l3bc_processor_and_initializer()
         else:
             cdf_data = CDF("tests/test_data/glows/imap_glows_l2_hist_20130908-repoint00001_v004.cdf")
             l2_glows_data = read_l2_glows_data(cdf_data)
