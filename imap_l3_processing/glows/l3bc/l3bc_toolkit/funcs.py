@@ -371,9 +371,9 @@ def make_lsq_matrix(psi, base_funcs):
     return lsq_mtrx
 
 
-def process_omni_param(omni_raw, param_settings):
+def process_omni_param(omni_raw, cr_grid, param_settings):
     '''
-    Processes OMNI2 raw data to obtain datily solar wind speed, density and alpha-particles abundance
+    Processes OMNI2 raw data to obtain averaged solar wind speed, density and alpha-particles abundance
     '''
 
     # select from the raw data columns relevant for a given parameter
@@ -395,7 +395,14 @@ def process_omni_param(omni_raw, param_settings):
     # calculate averaged over 1 Carrington time and parameter value
     param_value = np.array([p.mean() for p in param_s])
 
-    return param_cr, param_value
+    # interpolate into cr_grid
+    if np.logical_and(param_cr[0] <= cr_grid[0], param_cr[-1] >= cr_grid[-1]):
+        param_value_interp = np.interp(cr_grid, param_cr, param_value)
+    else:
+        logging.info('There are gaps in the OMNI2 data that cannot be filled by the interpolation')
+        raise Exception('OMNI Error: not enough data for interpolation')
+
+    return param_value_interp
 
 
 def read_f107_raw_data(fn):
@@ -412,7 +419,7 @@ def read_f107_raw_data(fn):
     flux_adjusted: F10.7 flux adjusted to 1au (10^(-22) W/m^2/Hz)    
     '''
 
-    data = np.loadtxt(fn, skiprows=2)
+    data = np.loadtxt(fn)
 
     jd = data[:, 2]  # time of observation in JD
     flux_adjusted = data[:,
@@ -420,6 +427,20 @@ def read_f107_raw_data(fn):
     t0 = Time(jd, format='jd')  # time converted to astropy.time format
 
     return t0, flux_adjusted
+
+
+def read_hdr_txt(fn, N):
+    '''
+    Reads header from the text file and preapers it to the further analysis
+    '''
+
+    # open file and read header
+    with open(fn) as file:
+        hdr = [next(file) for _ in range(N)]
+
+    # remove hash 
+    hdr_str = remove_hash(hdr)
+    return hdr_str
 
 
 def read_lya_data(fn):
@@ -456,7 +477,7 @@ def read_lya_raw_data(filename):
     return t, flux, flux_uncert
 
 
-def read_raw_OMNI_data(ext_dependencies, t_window):
+def read_raw_OMNI_data(ext_dependencies, t_window=None):
     '''
     Reads 3 types of data from OMNI2 database: plasma speed, proton density, and alpha-particles abundance in the ecliptic plane
      
@@ -472,19 +493,34 @@ def read_raw_OMNI_data(ext_dependencies, t_window):
     omni_raw = np.loadtxt(ext_dependencies['omni_raw_data'], usecols=(0, 1, 2, 5, 23, 24, 27, 30, 31, 34))
     omni_raw_date = time_from_yday(omni_raw[:, (0, 1, 2)])
 
-    idx_ini = np.abs(omni_raw_date - t_window[0]).argmin()
-    idx_fin = np.abs(omni_raw_date - t_window[1]).argmin()
+    if t_window == None:
+        out = omni_raw
+    else:
+        idx_ini = np.abs(omni_raw_date - t_window[0]).argmin()
+        idx_fin = np.abs(omni_raw_date - t_window[1]).argmin()
 
-    out = omni_raw[idx_ini:idx_fin]
+        out = omni_raw[idx_ini:idx_fin]
 
     return out
 
 
 def read_json(fn):
+    '''
+    Opens, reads and returns the content of the json file
+    '''
     fp = open(fn, 'r')
     data = json.load(fp)
     fp.close()
     return data
+
+
+def remove_hash(hdr):
+    '''
+    Removes # from the header that is read from the text files and returns string that will 
+    be used to generate another header
+    '''
+    hdr_str = [l[2:] for l in hdr]
+    return hdr_str
 
 
 def resize_by_carr(t, flux):
@@ -522,6 +558,25 @@ def scale_density(date, dens):
     dens_1au = dens * (r_obs / u.au) ** 2
 
     return dens_1au
+
+
+def select_data_window(data, t_window):
+    '''
+    Selects data whitin a given time window
+
+    Parameters:
+    ----------------
+    data: [time, value]
+        list of two 1D vectors 
+    t_ini: astropy.time
+    t_end: astropy.time
+
+    '''
+    idx = np.where(np.logical_and(data[0] >= t_window[0], data[0] <= t_window[1]))[0]
+    t = data[0][idx]
+    data = data[1][idx]
+
+    return [t, data]
 
 
 def select_noon(t_pen):

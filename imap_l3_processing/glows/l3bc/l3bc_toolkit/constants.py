@@ -5,7 +5,7 @@ Constants used in the pipeline
 
 import astropy.units as u
 
-VERSION = "1.0" # version of ground processing software
+VERSION = "1.1" # version of ground processing software
 
 # dictionary with names of ancillary input files expected from IMAP/GLOWS Instrument Team
 ANC_INPUT_FROM_INSTRUMENT_TEAM = {
@@ -17,7 +17,7 @@ ANC_INPUT_FROM_INSTRUMENT_TEAM = {
 
 EXT_DEPENDENCIES={
     'f107_raw_data': 'external_dependencies/f107_fluxtable.txt',
-    'omni_raw_data': 'external_dependencies/omni_2010.dat'
+    'omni_raw_data': 'external_dependencies/omni2_all_years.dat'
 }
 
 PHISICAL_CONSTANTS={

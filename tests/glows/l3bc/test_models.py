@@ -7,8 +7,6 @@ import numpy as np
 from spacepy import pycdf
 
 from imap_l3_processing.constants import CARRINGTON_ROTATION_IN_NANOSECONDS
-from imap_l3_processing.glows.l3bc.l3bc_toolkit.l3b_CarringtonIonRate import CarringtonIonizationRate
-from imap_l3_processing.glows.l3bc.l3bc_toolkit.l3c_CarringtonSolarWind import CarringtonSolarWind
 from imap_l3_processing.glows.l3bc.models import GlowsL3BIonizationRate, GlowsL3CSolarWind
 from tests.swapi.cdf_model_test_case import CdfModelTestCase
 from tests.test_helpers import get_test_instrument_team_data_path
@@ -161,7 +159,7 @@ class TestModels(CdfModelTestCase):
             "imap_glows_bad-days-list_v001.dat",
             "imap_glows_pipeline-settings-L3bc_v001.json",
             "imap_glows_uv-anisotropy-1CR_v001.json",
-            "omni_2010.dat",
+            "omni2_all_years.dat",
         ], result.parent_file_names)
 
 

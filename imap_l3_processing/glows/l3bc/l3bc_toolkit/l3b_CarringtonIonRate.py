@@ -8,6 +8,7 @@ from dataclasses import dataclass
 
 import numpy as np
 from astropy import units as u
+from astropy.time import Time
 
 from . import funcs as fun
 from .constants import VERSION
@@ -191,24 +192,49 @@ class CarringtonIonizationRate():
         # raw data from the same period as available daily profiles
         t_ini = self.daily_ion_rate['date'][0]
         t_end = self.daily_ion_rate['date'][-1]
+        t_mid = t_ini + (t_end - t_ini) / 2
 
         # read F10.7 file (the raw data from LASP)
         t_raw, flux_raw = fun.read_f107_raw_data(ext_dependencies['f107_raw_data'])
 
         # select data from the window
-        idx = np.where(np.logical_and(t_raw >= t_ini, t_raw <= t_end))[0]
-        t_window = t_raw[idx]
-        flux_window = flux_raw[idx]
+        data_window = fun.select_data_window([t_raw, flux_raw], [t_ini, t_end])
 
-        # calculate daily data (without multiple measurements, but with gaps if there are no data)
-        t_daily, flux_daily = fun.f107_daily_data(t_window, flux_window)
+        # check if there are at least 2 data points in the window
+        photoion_daily = []
 
-        # apply correlation between photoion and F10.7
-        photoion_daily = self._calculate_photoion_from_f107(flux_daily)
+        if len(data_window[0]) > 2:
+            # calculate daily data (without multiple measurements, but with gaps if there are no data)
+            _, flux_daily = fun.f107_daily_data(data_window[0], data_window[1])
 
-        # average daily photoionization
-        photoion_mean = photoion_daily.mean()
-        photoion_std = np.std(photoion_daily, ddof=1)
+            # apply correlation between photoion and F10.7
+            photoion_daily = self._calculate_photoion_from_f107(flux_daily)
+
+            # average daily photoionization
+            photoion_mean = photoion_daily.mean()
+            photoion_std = np.std(photoion_daily, ddof=1)
+        else:
+            # if there are less than 2 data points in the time window, we want to interpolate
+            # between mean values of the previous and next CR
+            t_ini_next = Time(fun.jd_fm_Carrington(self.carr_ion_rate['CR'] + 1), format='jd')
+            t_end_next = Time(fun.jd_fm_Carrington(self.carr_ion_rate['CR'] + 2), format='jd')
+            data_window_next = fun.select_data_window([t_raw, flux_raw], [t_ini_next, t_end_next])
+            if len(data_window_next[0]) > 2:
+                # if there are at least data points in the next CR, then we can interpolate
+                t_ini_prev = Time(fun.jd_fm_Carrington(self.carr_ion_rate['CR'] - 1), format='jd')
+                t_end_prev = Time(fun.jd_fm_Carrington(self.carr_ion_rate['CR']), format='jd')
+                data_window_prev = fun.select_data_window([t_raw, flux_raw], [t_ini_prev, t_end_prev])
+
+                data_next_mean = [data_window_next[0].mean(), data_window_next[1].mean()]
+                data_prev_mean = [data_window_prev[0].mean(), data_window_prev[1].mean()]
+
+                data_mean = [t_mid, np.interp(t_mid.jd, np.array([data_next_mean[0].jd, data_prev_mean[0].jd]),
+                                              np.array([data_next_mean[1], data_prev_mean[1]]))]
+
+                photoion_mean = self._calculate_photoion_from_f107(data_mean[1])
+            else:
+                # if there are no data in the next CR, then we need to wait for another CR
+                raise Exception("There are no data to interpolate F10.7 for CR=%d", self.carr_ion_rate['CR'])
 
         # including latitudinal anisotropy factor
         self._read_uv_anisotrpy(anc_input_from_instr_team['uv_anisotropy'])

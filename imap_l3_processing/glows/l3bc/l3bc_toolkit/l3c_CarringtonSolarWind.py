@@ -137,7 +137,10 @@ class CarringtonSolarWind():
         for i in np.arange(len(plasma_speed_profile)):
             # charge exchane rate obtained from lcrv
             cx_obs = self.cx_profile['rate'][i]
-
+            if cx_obs < cx_grid.value.min():
+                logging.info('lat= %lf deg: observed cx rate is smaller than min of the cx_grid',
+                             self.sw_profile['grid'][i])
+                raise Exception('L3c not generated: observed cx rate is smaller than min of the cx_grid')
             # Searching for a measured charge exchange in the cx_grid. In that way we will find sw speed
             idx = np.abs(cx_grid.value - cx_obs).argmin()
             plasma_speed_profile[i] = v_grid[idx].to('km.s-1').value
