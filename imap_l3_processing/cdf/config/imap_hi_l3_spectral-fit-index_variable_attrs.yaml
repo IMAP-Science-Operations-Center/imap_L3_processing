@@ -1,123 +1,224 @@
 epoch:
-  DATA_TYPE: int64
-  CATDESC: Time, number of nanoseconds since J2000 with leap seconds included
-  VAR_TYPE: support_data
-  DISPLAY_TYPE: no_plot
-  FIELDNAM: epoch
-  LABLAXIS: epoch
-  UNITS: ns
-  VALIDMIN: 1990-01-01T00:00:00.000000000
-  VALIDMAX: 2099-12-31T00:00:00.000000000
-  FILLVAL: 9999-12-31T23:59:59.999999999
-  SCALETYP: linear
-  TIME_BASE: J2000
-  TIME_SCALE: Terrestrial Time
-  DELTA_PLUS_VAR: epoch_delta
-  DELTA_MINUS_VAR: epoch_delta
-  MONOTON: INCREASE
-  REFERENCE_POSITION: Rotating Earth Geoid
-
+   NAME: epoch
+   DATA_TYPE: CDF_TIME_TT2000
+   CATDESC: Time, number of nanoseconds since J2000 with leap seconds included
+   VAR_TYPE: support_data
+   RECORD_VARYING: RV
+   FIELDNAM: epoch
+   FORMAT: ' '
+   UNITS: ' '
+   VALIDMIN: 2010-01-01T00:00:00.000000000
+   VALIDMAX: 2059-12-31T23:59:58.999000000
+   FILLVAL: 9999-12-31T23:59:59.999999999
 epoch_delta:
-  DATA_TYPE: int64
-  CATDESC: epoch_delta
-  VAR_TYPE: support_data
-  DISPLAY_TYPE: no_plot
-  FIELDNAM: epoch_delta
-  LABLAXIS: epoch_delta
-  UNITS: ns
-  VALIDMIN: 0
-  VALIDMAX: 86000000000000
-  FILLVAL: -9223372036854770000
-  SCALETYP: linear
-
+   NAME: epoch_delta
+   DATA_TYPE: CDF_INT8
+   CATDESC: epoch_delta
+   DEPEND_0: epoch
+   VAR_TYPE: support_data
+   RECORD_VARYING: RV
+   FIELDNAM: epoch_delta
+   FORMAT: I19
+   UNITS: ' '
+   VALIDMIN: 0
+   VALIDMAX: 86000000000000
+   FILLVAL: -9223372036854775808
 lat:
-  DATA_TYPE: float64
-  VAR_TYPE: support_data
-  FILLVAL: -1.00E+31
-
+   NAME: lat
+   DATA_TYPE: CDF_FLOAT
+   CATDESC: Latitude
+   VAR_TYPE: support_data
+   RECORD_VARYING: NRV
+   FIELDNAM: lat
+   FORMAT: F12.6
+   UNITS: ' '
+   VALIDMIN: -90.0
+   VALIDMAX: 90.0
+   FILLVAL: -1.00E+31
 lon:
-  DATA_TYPE: float64
-  VAR_TYPE: support_data
-  FILLVAL: -1.00E+31
-
-bin:
-  DATA_TYPE: float64
-  VAR_TYPE: support_data
-  FILLVAL: -1.00E+31
-
-intensity:
-  DATA_TYPE: float64
-  VAR_TYPE: data
-  DEPEND_0: Epoch
-  DEPEND_1: lon
-  DEPEND_2: lat
-  DEPEND_3: bin
-  FILLVAL: -1.00E+31
-
-variance:
-  DATA_TYPE: float64
-  VAR_TYPE: support_data
-  DEPEND_0: Epoch
-  DEPEND_1: lon
-  DEPEND_2: lat
-  DEPEND_3: bin
-  FILLVAL: -1.00E+31
-
+   NAME: lon
+   DATA_TYPE: CDF_FLOAT
+   CATDESC: Longitude
+   VAR_TYPE: support_data
+   RECORD_VARYING: NRV
+   FIELDNAM: lon
+   FORMAT: F12.6
+   UNITS: ' '
+   VALIDMIN: 0.0
+   VALIDMAX: 360.0
+   FILLVAL: -1.00E+31
+energy:
+   NAME: energy
+   DATA_TYPE: CDF_FLOAT
+   CATDESC: Energy bins used for spectral fit
+   VAR_TYPE: support_data
+   RECORD_VARYING: NRV
+   FIELDNAM: energy
+   FORMAT: F12.6
+   UNITS: ' '
+   VALIDMIN: 0.0
+   VALIDMAX: 1.00E+9
+   FILLVAL: -1.00E+31
 energy_deltas:
-  DATA_TYPE: float64
-  VAR_TYPE: support_data
-  DEPEND_0: Epoch
-  DEPEND_1: bin
-  FILLVAL: -1.00E+31
-
+   NAME: energy_deltas
+   DATA_TYPE: CDF_FLOAT
+   CATDESC: Energy bin deltas used for spectral fit
+   DEPEND_1: energy
+   VAR_TYPE: support_data
+   RECORD_VARYING: NRV
+   FIELDNAM: energy_deltas
+   FORMAT: F12.6
+   UNITS: ' '
+   VALIDMIN: 0.0
+   VALIDMAX: 1.00E+9
+   FILLVAL: -1.00E+31
+intensity:
+   NAME: intensity
+   DATA_TYPE: CDF_FLOAT
+   CATDESC: Intensity used for spectral fit
+   DEPEND_0: epoch
+   DEPEND_1: lon
+   DEPEND_2: lat
+   DEPEND_3: energy
+   VAR_TYPE: data
+   RECORD_VARYING: RV
+   DISPLAY_TYPE: image
+   FIELDNAM: intensity
+   FORMAT: F12.6
+   UNITS: ' '
+   VALIDMIN: 0.0
+   VALIDMAX: 1.00E+9
+   FILLVAL: -1.00E+31
+variance:
+   NAME: variance
+   DATA_TYPE: CDF_FLOAT
+   CATDESC: Variance used for spectral fit
+   DEPEND_0: epoch
+   DEPEND_1: lon
+   DEPEND_2: lat
+   DEPEND_3: energy
+   VAR_TYPE: support_data
+   RECORD_VARYING: RV
+   FIELDNAM: variance
+   FORMAT: F12.6
+   UNITS: ' '
+   VALIDMIN: 0.0
+   VALIDMAX: 1.00E+9
+   FILLVAL: -1.00E+31
 counts:
-  DATA_TYPE: float64
-  VAR_TYPE: support_data
-  DEPEND_0: Epoch
-  DEPEND_1: lon
-  DEPEND_2: lat
-  DEPEND_3: bin
-  FILLVAL: -1.00E+31
-
+   NAME: counts
+   DATA_TYPE: CDF_FLOAT
+   CATDESC: Counts used for spectral fit 
+   DEPEND_0: epoch
+   DEPEND_1: lon
+   DEPEND_2: lat
+   DEPEND_3: energy
+   VAR_TYPE: support_data
+   RECORD_VARYING: RV
+   FIELDNAM: counts
+   FORMAT: F12.6
+   UNITS: ' '
+   VALIDMIN: 0.0
+   VALIDMAX: 1.00E+9
+   FILLVAL: -1.00E+31
 counts_uncertainty:
-  DATA_TYPE: float64
-  VAR_TYPE: support_data
-  DEPEND_0: Epoch
-  DEPEND_1: lon
-  DEPEND_2: lat
-  DEPEND_3: bin
-  FILLVAL: -1.00E+31
-
+   NAME: counts_uncertainty
+   DATA_TYPE: CDF_FLOAT
+   CATDESC: Counts uncertainty used for spectral fit
+   DEPEND_0: epoch
+   DEPEND_1: lon
+   DEPEND_2: lat
+   DEPEND_3: energy
+   VAR_TYPE: support_data
+   RECORD_VARYING: RV
+   FIELDNAM: counts_uncertainty
+   FORMAT: F12.6
+   UNITS: ' '
+   VALIDMIN: 0.0
+   VALIDMAX: 1.00E+9
+   FILLVAL: -1.00E+31
 exposure:
-  DATA_TYPE: float64
-  VAR_TYPE: support_data
-  DEPEND_0: Epoch
-  DEPEND_1: lon
-  DEPEND_2: lat
-  FILLVAL: -1.00E+31
-
+   NAME: exposure
+   DATA_TYPE: CDF_FLOAT
+   CATDESC: Exposure used for spectral fit
+   DEPEND_0: epoch
+   DEPEND_1: lon
+   DEPEND_2: lat
+   VAR_TYPE: support_data
+   RECORD_VARYING: RV
+   FIELDNAM: exposure
+   FORMAT: F12.6
+   UNITS: ' '
+   VALIDMIN: 0.0
+   VALIDMAX: 1.00E+9
+   FILLVAL: -1.00E+31
 sensitivity:
-  DATA_TYPE: float64
-  VAR_TYPE: support_data
-  DEPEND_0: Epoch
-  DEPEND_1: lon
-  DEPEND_2: lat
-  DEPEND_3: bin
-  FILLVAL: -1.00E+31
-
+   NAME: sensitivity
+   DATA_TYPE: CDF_FLOAT
+   CATDESC: Sensitivity used for spectral fit
+   DEPEND_0: epoch
+   DEPEND_1: lon
+   DEPEND_2: lat
+   DEPEND_3: energy
+   VAR_TYPE: support_data
+   RECORD_VARYING: RV
+   FIELDNAM: sensitivity
+   FORMAT: F12.6
+   UNITS: ' '
+   VALIDMIN: 0.0
+   VALIDMAX: 1.00E+9
+   FILLVAL: -1.00E+31
 spectral_fit_index:
-  DATA_TYPE: float64
-  VAR_TYPE: data
-  DEPEND_0: Epoch
-  DEPEND_1: lon
-  DEPEND_2: lat
-  FILLVAL: -1.00E+31
-
+   NAME: spectral_fit_index
+   DATA_TYPE: CDF_FLOAT
+   CATDESC: Spectral fit index
+   DEPEND_0: epoch
+   DEPEND_1: lon
+   DEPEND_2: lat
+   VAR_TYPE: data
+   RECORD_VARYING: RV
+   DISPLAY_TYPE: image
+   VARIABLE_PURPOSE: primary var, summary
+   FIELDNAM: spectral_fit_index
+   FORMAT: F12.6
+   UNITS: ' '
+   VALIDMIN: 0.0
+   VALIDMAX: 1.00E+9
+   FILLVAL: -1.00E+31
 spectral_fit_index_error:
-  DATA_TYPE: float64
-  VAR_TYPE: data
-  DEPEND_0: Epoch
-  DEPEND_1: lon
-  DEPEND_2: lat
-  FILLVAL: -1.00E+31
-
+   NAME: spectral_fit_index_error
+   DATA_TYPE: CDF_FLOAT
+   CATDESC: Spectral fit index error
+   DEPEND_0: epoch
+   DEPEND_1: lon
+   DEPEND_2: lat
+   VAR_TYPE: data
+   RECORD_VARYING: RV
+   DISPLAY_TYPE: no_plot
+   FIELDNAM: spectral_fit_index_error
+   FORMAT: F12.6
+   UNITS: ' '
+   VALIDMIN: 0.0
+   VALIDMAX: 1.00E+9
+   FILLVAL: -1.00E+31
+lon_label:
+   NAME: lon_label
+   DATA_TYPE: CDF_CHAR
+   CATDESC: lon_label
+   VAR_TYPE: metadata
+   FIELDNAM: Longitude label
+   FORMAT: A6
+lat_label:
+   NAME: lat_label
+   DATA_TYPE: CDF_CHAR
+   CATDESC: lat_label
+   VAR_TYPE: metadata
+   FIELDNAM: Latitude label
+   FORMAT: A6
+energy_label:
+   NAME: energy_label
+   DATA_TYPE: CDF_CHAR
+   CATDESC: energy_label
+   VAR_TYPE: metadata
+   FIELDNAM: Energy label
+   FORMAT: A8
