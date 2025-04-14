@@ -75,6 +75,7 @@ def process_csv():
         "glows-l3c": "imap_l3_processing/cdf/data_product_definition_csv/imap_glows_l3c_variable_attrs.csv",
         "swapi-l3a": "imap_l3_processing/cdf/data_product_definition_csv/imap_swapi_l3a_variable_attrs.csv",
         "hi-l3-survival-probability": "imap_l3_processing/cdf/data_product_definition_csv/imap_hi_l3_90sensor-spacecraft-survival-full-4deg-map_variable_attrs.csv",
+        "hi-l3-spectral-index": "imap_l3_processing/cdf/data_product_definition_csv/imap_hi_l3_spectral-fit-index_variable_attrs.csv"
     }
     file_path = instrument_to_file_path[args.instrument]
 
