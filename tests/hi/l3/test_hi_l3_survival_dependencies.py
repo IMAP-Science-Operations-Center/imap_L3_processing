@@ -22,6 +22,7 @@ class TestHiL3SurvivalDependencies(unittest.TestCase):
                                 mock_download_dependency_from_path, mock_find_glows_l3e_dependencies):
         l1c_file_paths = ["imap_hi_l1c_45sensor-pset_20201001_v001.cdf", "imap_hi_l1c_45sensor-pset_20201002_v002.cdf",
                           "imap_hi_l1c_45sensor-pset_20201003_v001.cdf"]
+        parents = l1c_file_paths + ["imap_hi_ancil-settings_20100101_v001.json"]
         glows_file_paths = [
             "imap_glows_l3e_survival-probability-hi-45_20201001_v001.cdf",
             "imap_glows_l3e_survival-probability-hi-45_20201002_v002.cdf",
@@ -30,7 +31,7 @@ class TestHiL3SurvivalDependencies(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             l2_map_path = Path(tmpdir) / "l2_map.cdf"
             with CDF(str(l2_map_path), masterpath='') as l2_map:
-                l2_map.attrs["PARENTS"] = ",".join(l1c_file_paths)
+                l2_map.attrs["Parents"] = parents
 
             hi_l2_dependency = UpstreamDataDependency("hi", "l2", None, None, "latest", "45sensor-spacecraft-map")
             glows_dependency = UpstreamDataDependency("glows", "l3e", None, None, "latest", "not-used")
@@ -39,7 +40,8 @@ class TestHiL3SurvivalDependencies(unittest.TestCase):
             mock_download_dependency.return_value = l2_map_path
 
             mock_download_dependency_from_path.side_effect = [sentinel.l1c_file_path_1, sentinel.l1c_file_path_2,
-                                                              sentinel.l1c_file_path_3]
+                                                              sentinel.l1c_file_path_3, sentinel.glows_file_path_1,
+                                                              sentinel.glows_file_path_2, sentinel.glows_file_path_3]
             mock_read_hi_l1c.side_effect = [sentinel.l1c_data_1, sentinel.l1c_data_2, sentinel.l1c_data_3]
 
             mock_find_glows_l3e_dependencies.return_value = glows_file_paths
@@ -49,8 +51,10 @@ class TestHiL3SurvivalDependencies(unittest.TestCase):
 
             mock_download_dependency.assert_called_once_with(hi_l2_dependency)
             mock_read_hi_l2.assert_called_once_with(mock_download_dependency.return_value)
+            mock_find_glows_l3e_dependencies.assert_called_with(l1c_file_paths)
+            expected_download_from_path_calls = [call(path) for path in l1c_file_paths + glows_file_paths]
 
-            mock_download_dependency_from_path.assert_has_calls([call(path) for path in l1c_file_paths])
+            mock_download_dependency_from_path.assert_has_calls(expected_download_from_path_calls)
 
             mock_read_hi_l1c.assert_has_calls([
                 call(sentinel.l1c_file_path_1),
@@ -58,7 +62,11 @@ class TestHiL3SurvivalDependencies(unittest.TestCase):
                 call(sentinel.l1c_file_path_3)
             ])
 
-            mock_read_glows_l3e.assert_has_calls([call(path) for path in glows_file_paths])
+            mock_read_glows_l3e.assert_has_calls([
+                call(sentinel.glows_file_path_1),
+                call(sentinel.glows_file_path_2),
+                call(sentinel.glows_file_path_3)
+            ])
 
             self.assertEqual(actual.l2_data, mock_read_hi_l2.return_value)
             self.assertEqual(actual.hi_l1c_data, [sentinel.l1c_data_1,
@@ -70,12 +78,12 @@ class TestHiL3SurvivalDependencies(unittest.TestCase):
 
     @patch("imap_l3_processing.hi.l3.hi_l3_survival_dependencies.imap_data_access.query")
     def test_find_glows_l3e_dependencies(self, mock_data_access_query):
-        l1c_90sensor_file_paths = [Path("imap_hi_l1c_90sensor-pset_20201001_v001.cdf"),
-                                   Path("imap_hi_l1c_90sensor-pset_20201002_v002.cdf"),
-                                   Path("imap_hi_l1c_90sensor-pset_20201003_v001.cdf")]
-        l1c_45sensor_file_paths = [Path("imap_hi_l1c_45sensor-pset_20210509_v001.cdf"),
-                                   Path("imap_hi_l1c_45sensor-pset_20210508_v002.cdf"),
-                                   Path("imap_hi_l1c_45sensor-pset_20210507_v001.cdf")]
+        l1c_90sensor_file_paths = ["imap_hi_l1c_90sensor-pset_20201001_v001.cdf",
+                                   "imap_hi_l1c_90sensor-pset_20201002_v002.cdf",
+                                   "imap_hi_l1c_90sensor-pset_20201003_v001.cdf"]
+        l1c_45sensor_file_paths = ["imap_hi_l1c_45sensor-pset_20210509_v001.cdf",
+                                   "imap_hi_l1c_45sensor-pset_20210508_v002.cdf",
+                                   "imap_hi_l1c_45sensor-pset_20210507_v001.cdf"]
 
         test_cases = [
             (l1c_90sensor_file_paths, "90", "20201001", "20201003"),
@@ -97,5 +105,5 @@ class TestHiL3SurvivalDependencies(unittest.TestCase):
                                                           end_date=expected_end_date,
                                                           version="latest")
 
-                self.assertEqual([Path("glows_1"), Path("glows_2"), Path("glows_3")],
+                self.assertEqual(["glows_1", "glows_2", "glows_3"],
                                  glows_file_paths)
