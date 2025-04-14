@@ -3,13 +3,13 @@ Author: Izabela Kowalska-Leszczynska (ikowalska@cbk.waw.pl)
 Solar wind parameters data in the ecliptic plane
 '''
 
-from dataclasses import dataclass
-import numpy as np
-from astropy.time import Time
-from astropy import units as u
-from . import funcs as fun
-
 import logging
+from dataclasses import dataclass
+
+import numpy as np
+from astropy import units as u
+
+from . import funcs as fun
 
 logging.basicConfig(level=logging.ERROR)
 
@@ -107,27 +107,27 @@ class EclipticSolarWind():
         # Read OMNI2 data (hour resolution) from last few CR (exact number is specified in pipeline settings)
         cr_n = self.settings['invariant_average_Carr_number']
         cr_ini = self.CR - cr_n
-        t_window = [Time(fun.jd_fm_Carrington(cr_ini), format='jd'),
-                    Time(fun.jd_fm_Carrington(self.CR + 1), format='jd')]
+        cr_grid = np.arange(cr_ini, self.CR + 1)
+        # t_window=[Time(fun.jd_fm_Carrington(cr_ini),format='jd'),Time(fun.jd_fm_Carrington(self.CR+1),format='jd')]
 
-        omni_raw = fun.read_raw_OMNI_data(ext_dependencies, t_window)
+        omni_raw = fun.read_raw_OMNI_data(ext_dependencies)
 
         param_settings = {'density': {'column_numbers': (0, 1, 2, 4, 7), 'gap_marker': 999.9, 'scale': True},
                           'speed': {'column_numbers': (0, 1, 2, 5, 8), 'gap_marker': 9999, 'scale': False},
                           'alpha': {'column_numbers': (0, 1, 2, 6, 9), 'gap_marker': 9.999, 'scale': False}
                           }
 
-        proton_dens_cr, proton_dens_carr = fun.process_omni_param(omni_raw, param_settings['density'])
-        plasma_speed_cr, plasma_speed_carr = fun.process_omni_param(omni_raw, param_settings['speed'])
-        p_alpha_cr, p_alpha_carr = fun.process_omni_param(omni_raw, param_settings['alpha'])
+        proton_dens_carr = fun.process_omni_param(omni_raw, cr_grid, param_settings['density'])
+        plasma_speed_carr = fun.process_omni_param(omni_raw, cr_grid, param_settings['speed'])
+        p_alpha_carr = fun.process_omni_param(omni_raw, cr_grid, param_settings['alpha'])
 
         self.external_dependeciens = [ext_dependencies['omni_raw_data']]
-        self.CR_grid = proton_dens_cr
+        self.CR_grid = cr_grid
         self.mean_speed = plasma_speed_carr
         self.mean_proton_density = proton_dens_carr
         self.mean_alpha_abundance = p_alpha_carr
 
-        return proton_dens_cr, proton_dens_carr, plasma_speed_carr, p_alpha_carr
+        return cr_grid, proton_dens_carr, plasma_speed_carr, p_alpha_carr
 
     def _read_SWAPI_data(self, ext_dependencies):
         '''
