@@ -8,8 +8,8 @@ class EnergyLookup:
     energy_lookup_table: np.ndarray
     energy_bin_table: np.ndarray
 
-    def convert_to_mev(self, ssd_id=None, gain_id=None, row_id=None):
-        bin_id = self.energy_lookup_table[row_id][ssd_id][gain_id]
+    def convert_to_mev(self, ssd_id=None, gain_id=None, ssd_energy=None):
+        bin_id = self.energy_lookup_table[ssd_energy][ssd_id][gain_id]
         return self.energy_bin_table[bin_id][0], self.energy_bin_table[bin_id][1], self.energy_bin_table[bin_id][2],
 
     @classmethod

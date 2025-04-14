@@ -4,14 +4,14 @@ from pathlib import Path
 from imap_l3_processing.codice.l2.direct_event.science.azimuth_lookup import AzimuthLookup
 from imap_l3_processing.codice.l2.direct_event.science.energy_lookup import EnergyLookup
 from imap_l3_processing.codice.l2.direct_event.science.time_of_flight_lookup import TimeOfFlightLookup
-from imap_l3_processing.codice.models import CodiceL1aHiData
+from imap_l3_processing.codice.models import CodiceL2HiData
 from imap_l3_processing.models import UpstreamDataDependency
 from imap_l3_processing.utils import download_dependency
 
 
 @dataclass
 class CodiceL2Dependencies:
-    codice_l1a_hi_data: CodiceL1aHiData
+    codice_l1a_hi_data: CodiceL2HiData
     energy_lookup_table: EnergyLookup
     azimuth_lookup_table: AzimuthLookup
     time_of_flight_lookup_table: TimeOfFlightLookup
@@ -40,7 +40,7 @@ class CodiceL2Dependencies:
         energy_lookup = EnergyLookup.from_files(energy_lookup_file, energy_bin_lookup_file)
         time_of_flight_lookup = TimeOfFlightLookup.from_files(time_of_flight_lookup_file)
         azimuth_lookup = AzimuthLookup.from_files(azimuth_lookup_file)
-        codice_hi_l1_cdf = CodiceL1aHiData.read_from_cdf(codice_hi_l1_cdf_path)
+        codice_hi_l1_cdf = CodiceL2HiData.read_from_cdf(codice_hi_l1_cdf_path)
 
         return cls(codice_hi_l1_cdf, energy_lookup, azimuth_lookup, time_of_flight_lookup)
 

@@ -430,7 +430,7 @@ def create_hi_l3_survival_corrected_cdf(survival_dependencies: HiL3SurvivalDepen
                                    start_date=datetime(2025, 4, 9),
                                    end_date=datetime(2025, 4, 10),
                                    version="v001",
-                                   descriptor=f"45sensor-spacecraft-survival-full-{spacing_degree}deg-map",
+                                   descriptor=f"90sensor-spacecraft-survival-full-{spacing_degree}deg-map",
                                    )
 
     processor = HiProcessor(None, input_metadata)
@@ -513,8 +513,8 @@ if __name__ == "__main__":
         print(create_swe_product_with_fake_spice(dependencies))
 
     if "survival-probability" in sys.argv:
-        hi_l1c_folder = get_test_data_path("hi/fake_l1c")
-        glows_l3e_folder = get_test_data_path("hi/fake_l3e_survival_probabilities")
+        hi_l1c_folder = get_test_data_path("hi/fake_l1c/90")
+        glows_l3e_folder = get_test_data_path("hi/fake_l3e_survival_probabilities/90")
 
         hi_l1c_paths = list(hi_l1c_folder.iterdir())
         glows_l3_paths = list(glows_l3e_folder.iterdir())
