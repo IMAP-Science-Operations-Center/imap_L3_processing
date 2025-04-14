@@ -53,8 +53,8 @@ class DataProduct(metaclass=abc.ABCMeta):
 
 @dataclass
 class MagL1dData:
-    epoch: np.ndarray[float]
-    mag_data: np.ndarray[float]
+    epoch: np.ndarray
+    mag_data: np.ndarray
 
     def rebin_to(self, epoch: np.ndarray[float], epoch_delta: np.ndarray[float]) -> np.ndarray[float]:
         return rebin(self.epoch, self.mag_data, epoch, epoch_delta)

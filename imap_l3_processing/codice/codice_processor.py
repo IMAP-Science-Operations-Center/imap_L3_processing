@@ -3,8 +3,11 @@ from imap_data_access import upload
 from imap_data_access.processing_input import ProcessingInputCollection
 
 from imap_l3_processing.codice.l3.direct_event.codice_l3_dependencies import CodiceL3Dependencies
-from imap_l3_processing.codice.models import CodiceL3HiDirectEvents, CodiceL3HiDirectEventsBuilder
+from imap_l3_processing.codice.l3.pitch_angle.codice_pitch_angle_dependencies import CodicePitchAngleDependencies
+from imap_l3_processing.codice.models import CodiceL3HiDirectEvents, CodiceL3HiDirectEventsBuilder, \
+    CodiceHiL3PitchAngleDataProduct
 from imap_l3_processing.models import InputMetadata
+from imap_l3_processing.pitch_angles import calculate_pitch_angle
 from imap_l3_processing.processor import Processor
 from imap_l3_processing.utils import save_data
 
@@ -42,4 +45,7 @@ class CodiceProcessor(Processor):
                             .updated_priority_event_5(energy_per_nucleons_per_priority_event[5], estimated_mass_with_bounds[5])
                             .convert())
 
-
+    def process_l3b(self, dependencies: CodicePitchAngleDependencies):
+        calculate_pitch_angle
+        data_product = CodiceHiL3PitchAngleDataProduct()
+        return data_product.to_data_product_variables()
