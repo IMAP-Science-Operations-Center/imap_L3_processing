@@ -1,10 +1,11 @@
 import unittest
-from unittest.mock import patch, call
+from unittest.mock import patch, call, sentinel
 
 import imap_data_access
 from imap_data_access.processing_input import ProcessingInputCollection, ScienceInput, AncillaryInput
 
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_dependencies import CodiceLoL3aDependencies
+from tests import test_helpers
 
 
 class TestCodiceLoL3aDependencies(unittest.TestCase):
@@ -42,8 +43,19 @@ class TestCodiceLoL3aDependencies(unittest.TestCase):
             call(expected_download_ancillary_path),
         ])
 
-        mock_from_file_paths.assert_called_with(expected_download_science_path, expected_download_ancillary_path)
+        # TODO: get rid of test path once the algorithm doc is updated
+        test_lookup_path = test_helpers.get_test_data_path(r'codice\test_mass_per_charge_lookup.csv')
+        mock_from_file_paths.assert_called_with(expected_download_science_path, test_lookup_path)
         self.assertEqual(mock_from_file_paths.return_value, codice_l3_dependencies)
+
+    @patch('imap_l3_processing.codice.l3.lo.codice_lo_l3a_dependencies.CodiceLoL2Data.read_from_cdf')
+    @patch('imap_l3_processing.codice.l3.lo.codice_lo_l3a_dependencies.MassPerChargeLookup.read_from_file')
+    def test_from_file_paths(self, mock_read_from_file, mock_read_from_cdf):
+        actual_dependencies = CodiceLoL3aDependencies.from_file_paths(sentinel.cdf_path, sentinel.lookup_path)
+        mock_read_from_file.assert_called_once_with(sentinel.lookup_path)
+        mock_read_from_cdf.assert_called_once_with(sentinel.cdf_path)
+        self.assertEqual(mock_read_from_cdf.return_value, actual_dependencies.codice_l2_lo_data)
+        self.assertEqual(mock_read_from_file.return_value, actual_dependencies.mass_per_charge_lookup)
 
 
 if __name__ == '__main__':
