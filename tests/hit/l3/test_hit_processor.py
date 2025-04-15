@@ -63,6 +63,7 @@ class TestHitProcessor(TestCase):
         )
 
         epochs = np.array([123, 234])
+        epochs = np.array([123, 234])
         epoch_deltas = np.array([12, 13])
         averaged_mag_vectors = [sentinel.mag_vector1, sentinel.mag_vector2]
 

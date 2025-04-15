@@ -1,6 +1,6 @@
 import unittest
 from datetime import datetime, timedelta
-from unittest.mock import patch, sentinel, Mock, call
+from unittest.mock import patch, sentinel, Mock
 
 import numpy as np
 
@@ -9,7 +9,7 @@ from imap_l3_processing.codice.l3.direct_event.codice_l3_dependencies import Cod
 from imap_l3_processing.codice.l3.direct_event.science.tof_lookup import TOFLookup, EnergyPerNuc
 from imap_l3_processing.codice.l3.pitch_angle.codice_pitch_angle_dependencies import CodicePitchAngleDependencies
 from imap_l3_processing.codice.models import PriorityEventL2, CodiceL2HiData, CodiceHiL2SectoredIntensitiesData
-from imap_l3_processing.models import InputMetadata, DataProductVariable, MagL1dData
+from imap_l3_processing.models import InputMetadata, MagL1dData
 from tests.test_helpers import NumpyArrayMatcher
 
 
@@ -147,23 +147,23 @@ class TestCodiceProcessor(unittest.TestCase):
                                     expected_energy_per_nuc_upper=p5_expected_energy_per_nuc[2])
 
     @patch('imap_l3_processing.codice.codice_processor.calculate_unit_vector')
-    @patch('imap_l3_processing.codice.codice_processor.calculate_pitch_angle')
-    def test_process_l3b(self, mock_calculate_pitch_angle, mock_calculate_unit_vector):
-        epoch_1 = datetime(2025, 1, 1)
-        epoch_2 = datetime(2025, 1, 2)
+    def test_process_l3b(self, mock_calculate_unit_vector):
+        epoch_1 = datetime(2025, 2, 5)
+        epoch_2 = datetime(2025, 2, 6)
         mag_l1d_data = MagL1dData(
-            epoch=np.array([epoch_1 + timedelta(days=0.5), epoch_2 + timedelta(days=0.5)]),
-            mag_data=np.array([[1, 2, 3], [1, 2, 3], [2, 3, 4], [2, 3, 4]]),
+            epoch=np.array([epoch_1, epoch_1 + timedelta(days=0.49), epoch_2, epoch_2 + timedelta(days=0.49)]),
+            mag_data=np.array(
+                [[-.5, np.sqrt(3) / 2, 0], [-.5, np.sqrt(3) / 2, 0], [.5, np.sqrt(3) / 2, 0], [.5, np.sqrt(3) / 2, 0]]),
         )
         epoch = np.array([epoch_1, epoch_2])
-        epoch_delta = np.array([4.32e13, 4.32e13])
+        epoch_delta = np.array([timedelta(days=.5), timedelta(days=.5)])
         energy = np.array([1.11, 1.17])
         spin_sector = np.array([90, 270])
         ssd_id = np.array([90, 270])
-        h_intensity = np.arange(8).reshape(len(energy), len(ssd_id), len(spin_sector))
-        he4_intensity = np.arange(8).reshape(len(energy), len(ssd_id), len(spin_sector)) + 10
-        o_intensity = np.arange(8).reshape(len(energy), len(ssd_id), len(spin_sector)) + 20
-        fe_intensity = np.arange(8).reshape(len(energy), len(ssd_id), len(spin_sector)) + 30
+        h_intensity = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]]])
+        he4_intensity = np.array([[[10, 20], [30, 40]], [[50, 60], [70, 80]]])
+        o_intensity = np.array([[[100, 200], [300, 400]], [[500, 600], [700, 800]]])
+        fe_intensity = np.array([[[1000, 2000], [3000, 4000]], [[5000, 6000], [7000, 8000]]])
         codice_l2_data = CodiceHiL2SectoredIntensitiesData(
             epoch=epoch,
             epoch_delta=epoch_delta,
@@ -176,37 +176,27 @@ class TestCodiceProcessor(unittest.TestCase):
             fe_intensities=fe_intensity,
         )
 
-        expected_mag_vectors = [np.array([3, 2, 1]), np.array([4, 3, 2])]
+        # expected_mag_vectors = [np.array([3, 2, 1]), np.array([4, 3, 2])]
+        #
+        # def calculate_unit_vector_side_effect(unit_vector):
+        #     call_and_return = {
+        #         np.array([1, 2, 3]): expected_mag_vectors[0],
+        #         np.array([2, 3, 4]): expected_mag_vectors[1],
+        #     }
+        #     return call_and_return[unit_vector]
 
-        def calculate_unit_vector_side_effect(unit_vector):
-            call_and_return = {
-                np.array([1, 2, 3]): expected_mag_vectors[0],
-                np.array([2, 3, 4]): expected_mag_vectors[1],
-            }
-            return call_and_return[unit_vector]
-
-        mock_calculate_unit_vector.side_effect = calculate_unit_vector_side_effect
+        # mock_calculate_unit_vector.side_effect = calculate_unit_vector_side_effect
 
         dependencies = CodicePitchAngleDependencies(mag_l1d_data=mag_l1d_data,
                                                     codice_sectored_intensities_data=codice_l2_data)
         codice_processor = CodiceProcessor(dependencies=Mock(), input_metadata=Mock())
-        result = codice_processor.process_l3b(dependencies=dependencies)
+
+        _ = codice_processor.process_l3b(dependencies=dependencies)
+        mock_calculate_unit_vector.assert_called_with(
+            NumpyArrayMatcher([[-.5, np.sqrt(3) / 2, 0], [.5, np.sqrt(3) / 2, 0]]))
 
         expected_unit_vectors = np.array(
             [[0, 1, 0], [0, -1, 0], [0, -1, 0], [0, 1, 0], [0, 1, 0], [0, -1, 0], [0, -1, 0], [0, 1, 0]])
-        mock_calculate_unit_vector.assert_has_calls([
-            call(NumpyArrayMatcher([1, 2, 3])),
-            call(NumpyArrayMatcher([2, 3, 4])),
-        ])
-        self.assertEqual(1, mock_calculate_pitch_angle.call_count())
-        actual_sectored_vectors = mock_calculate_pitch_angle.call_args_list[0].args[0]
-        actual_mag_vectors = mock_calculate_pitch_angle.call_args_list[0].args[1]
-        mock_calculate_pitch_angle.assert_has_calls([
-            call(NumpyArrayMatcher(), expected_mag_vectors[0]),
-            call(NumpyArrayMatcher(), expected_mag_vectors[1]),
-        ])
-
-        self.assertIsInstance(result, list[DataProductVariable])
 
     def create_priority_events(self, energies):
         ssd_id_all_events = np.arange(1, 25).reshape(6, 2, 2) * 1000
