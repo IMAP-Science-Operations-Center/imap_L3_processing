@@ -5,13 +5,13 @@ from unittest.mock import patch, call
 import imap_data_access
 from imap_data_access.processing_input import ProcessingInputCollection, ScienceInput, AncillaryInput
 
-from imap_l3_processing.codice.l3.direct_event.codice_l3_dependencies import CodiceL3Dependencies
+from imap_l3_processing.codice.l3.hi.direct_event.codice_l3_dependencies import CodiceL3Dependencies
 
 
 class TestCodiceL3Dependencies(unittest.TestCase):
 
-    @patch("imap_l3_processing.codice.l3.direct_event.codice_l3_dependencies.download")
-    @patch("imap_l3_processing.codice.l3.direct_event.codice_l3_dependencies.CodiceL3Dependencies.from_file_paths")
+    @patch("imap_l3_processing.codice.l3.hi.direct_event.codice_l3_dependencies.download")
+    @patch("imap_l3_processing.codice.l3.hi.direct_event.codice_l3_dependencies.CodiceL3Dependencies.from_file_paths")
     def test_fetch_dependencies(self, mock_from_file_paths, mock_download):
         input_collection = ProcessingInputCollection()
 
@@ -45,8 +45,8 @@ class TestCodiceL3Dependencies(unittest.TestCase):
         mock_from_file_paths.assert_called_with(expected_download_science_path, expected_download_ancillary_path)
         self.assertEqual(mock_from_file_paths.return_value, codice_l3_dependencies)
 
-    @patch("imap_l3_processing.codice.models.CodiceL2HiData.read_from_cdf")
-    @patch("imap_l3_processing.codice.l3.direct_event.science.tof_lookup.TOFLookup.read_from_file")
+    @patch("imap_l3_processing.codice.l3.hi.models.CodiceL2HiData.read_from_cdf")
+    @patch("imap_l3_processing.codice.l3.hi.direct_event.science.tof_lookup.TOFLookup.read_from_file")
     def test_can_load_from_files(self, mock_tof_lookup_from_file, mock_read_cdf):
         tof_lookup_file = Path("energy_per_nuc")
         codice_l2_cdf_file = Path("CodiceL2CDF")

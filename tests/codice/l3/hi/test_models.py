@@ -6,7 +6,7 @@ from unittest.mock import Mock
 import numpy as np
 from spacepy.pycdf import CDF
 
-from imap_l3_processing.codice.models import CodiceL2HiData, PriorityEventL2, CodiceL3HiDirectEvents, \
+from imap_l3_processing.codice.l3.hi.models import CodiceL2HiData, PriorityEventL2, CodiceL3HiDirectEvents, \
     CodiceL3HiDirectEventsBuilder
 
 

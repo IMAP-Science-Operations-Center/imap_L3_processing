@@ -4,18 +4,18 @@ from unittest.mock import patch, sentinel, Mock
 
 import numpy as np
 
-from imap_l3_processing.codice.codice_processor import CodiceProcessor
-from imap_l3_processing.codice.l3.direct_event.codice_l3_dependencies import CodiceL3Dependencies
-from imap_l3_processing.codice.l3.direct_event.science.tof_lookup import TOFLookup, EnergyPerNuc
-from imap_l3_processing.codice.models import PriorityEventL2, CodiceL2HiData
+from imap_l3_processing.codice.l3.hi.codice_processor import CodiceProcessor
+from imap_l3_processing.codice.l3.hi.direct_event.codice_l3_dependencies import CodiceL3Dependencies
+from imap_l3_processing.codice.l3.hi.direct_event.science.tof_lookup import TOFLookup, EnergyPerNuc
+from imap_l3_processing.codice.l3.hi.models import PriorityEventL2, CodiceL2HiData
 from imap_l3_processing.models import InputMetadata
 
 
 class TestCodiceProcessor(unittest.TestCase):
-    @patch("imap_l3_processing.codice.codice_processor.CodiceL3Dependencies.fetch_dependencies")
-    @patch("imap_l3_processing.codice.codice_processor.CodiceProcessor.process_l3a")
-    @patch("imap_l3_processing.codice.codice_processor.save_data")
-    @patch("imap_l3_processing.codice.codice_processor.upload")
+    @patch("imap_l3_processing.codice.l3.hi.codice_processor.CodiceL3Dependencies.fetch_dependencies")
+    @patch("imap_l3_processing.codice.l3.hi.codice_processor.CodiceProcessor.process_l3a")
+    @patch("imap_l3_processing.codice.l3.hi.codice_processor.save_data")
+    @patch("imap_l3_processing.codice.l3.hi.codice_processor.upload")
     def test_process_l3a(self, mock_upload, mock_save_data, mock_process_l3a, mock_fetch_dependencies):
         start_date = datetime(2024, 10, 7, 10, 00, 00)
         end_date = datetime(2024, 10, 8, 10, 00, 00)
@@ -33,8 +33,8 @@ class TestCodiceProcessor(unittest.TestCase):
         mock_save_data.assert_called_with(mock_processed_direct_events)
         mock_upload.assert_called_with(mock_expected_cdf)
 
-    @patch("imap_l3_processing.codice.codice_processor.CodiceL3Dependencies.fetch_dependencies")
-    @patch("imap_l3_processing.codice.codice_processor.CodiceProcessor.process_l3a")
+    @patch("imap_l3_processing.codice.l3.hi.codice_processor.CodiceL3Dependencies.fetch_dependencies")
+    @patch("imap_l3_processing.codice.l3.hi.codice_processor.CodiceProcessor.process_l3a")
     def test_ignores_non_l3_input_metadata(self, mock_process_l3a, mock_fetch_dependencies):
         start_date = datetime(2024, 10, 7, 10, 00, 00)
         end_date = datetime(2024, 10, 8, 10, 00, 00)
