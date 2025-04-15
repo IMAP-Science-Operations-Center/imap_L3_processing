@@ -79,7 +79,7 @@ class HiProcessor(Processor):
             input_metadata=self.input_metadata.to_upstream_data_dependency(self.input_metadata.descriptor),
             epoch=hi_survival_probabilities_dependencies.l2_data.epoch,
             energy=hi_survival_probabilities_dependencies.l2_data.energy,
-            energy_deltas=hi_survival_probabilities_dependencies.l2_data.energy_deltas,
+            energy_deltas_plus=hi_survival_probabilities_dependencies.l2_data.energy_deltas,
             counts=hi_survival_probabilities_dependencies.l2_data.counts,
             counts_uncertainty=hi_survival_probabilities_dependencies.l2_data.counts_uncertainty,
             epoch_delta=hi_survival_probabilities_dependencies.l2_data.epoch_delta,
