@@ -129,7 +129,7 @@ def get_astropy_time_from_yyyymmdd(date_string: str) -> Time:
 def archive_dependencies(cr_to_process: CRToProcess, version: str,
                          ancillary_dependencies: GlowsInitializerAncillaryDependencies) -> Path:
     start_date = cr_to_process.cr_start_date.strftime("%Y%m%d")
-    zip_path = TEMP_CDF_FOLDER_PATH / f"imap_glows_l3b-archive-zip_{start_date}_{version}.cdf"
+    zip_path = TEMP_CDF_FOLDER_PATH / f"imap_glows_l3b-archive_{start_date}_{version}.zip"
     json_filename = "cr_to_process.json"
     with ZipFile(zip_path, "w", ZIP_DEFLATED) as file:
         file.write(ancillary_dependencies.lyman_alpha_path, "lyman_alpha_composite.nc")
