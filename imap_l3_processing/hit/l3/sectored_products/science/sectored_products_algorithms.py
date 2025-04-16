@@ -29,6 +29,19 @@ def get_sector_unit_vectors(declinations_degrees: np.ndarray, inclinations_degre
     return stacked
 
 
+def get_sector_unit_vectors_codice(elevation: np.ndarray, azimuth: np.ndarray) -> np.ndarray:
+    elevations = np.deg2rad(elevation)
+    azimuths = np.deg2rad(azimuth)
+    elevations = elevations[:, np.newaxis]
+    z = np.cos(elevations)
+    sin_dec = np.sin(elevations)
+    x = sin_dec * np.cos(azimuths)
+    y = sin_dec * np.sin(azimuths)
+
+    stacked = np.stack(np.broadcast_arrays(x, y, z), axis=-1)
+    return stacked
+
+
 def hit_rebin_by_pitch_angle_and_gyrophase(intensity_data: np.array,
                                            intensity_delta_plus: np.array,
                                            intensity_delta_minus: np.array,

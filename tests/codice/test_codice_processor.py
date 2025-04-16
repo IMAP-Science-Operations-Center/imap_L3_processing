@@ -146,21 +146,31 @@ class TestCodiceProcessor(unittest.TestCase):
                                     expected_energy_per_nuc=p5_expected_energy_per_nuc[1],
                                     expected_energy_per_nuc_upper=p5_expected_energy_per_nuc[2])
 
-    @patch('imap_l3_processing.codice.codice_processor.calculate_unit_vector')
-    def test_process_l3b(self, mock_calculate_unit_vector):
+    @patch('imap_l3_processing.codice.codice_processor.hit_rebin_by_pitch_angle_and_gyrophase')
+    def test_process_l3b(self, mock_rebin):
         epoch_1 = datetime(2025, 2, 5)
         epoch_2 = datetime(2025, 2, 6)
         mag_l1d_data = MagL1dData(
             epoch=np.array([epoch_1, epoch_1 + timedelta(days=0.49), epoch_2, epoch_2 + timedelta(days=0.49)]),
             mag_data=np.array(
-                [[-.5, np.sqrt(3) / 2, 0], [-.5, np.sqrt(3) / 2, 0], [.5, np.sqrt(3) / 2, 0], [.5, np.sqrt(3) / 2, 0]]),
+                [[1, 0, 0], [1, 0, 0],
+                 [0, 0, 1], [0, 0, 1]]),
         )
+        spin_sector = np.array([90, 90])
+        ssd_id = np.array([0, 90])
+
         epoch = np.array([epoch_1, epoch_2])
         epoch_delta = np.array([timedelta(days=.5), timedelta(days=.5)])
         energy = np.array([1.11, 1.17])
-        spin_sector = np.array([90, 270])
-        ssd_id = np.array([90, 270])
-        h_intensity = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]]])
+
+        h_intensity = (np.array([[
+            [1, 2],
+            [3, 4]],
+            [
+                [5, 6],
+                [7, 8]]
+        ]
+        ))
         he4_intensity = np.array([[[10, 20], [30, 40]], [[50, 60], [70, 80]]])
         o_intensity = np.array([[[100, 200], [300, 400]], [[500, 600], [700, 800]]])
         fe_intensity = np.array([[[1000, 2000], [3000, 4000]], [[5000, 6000], [7000, 8000]]])
@@ -176,27 +186,23 @@ class TestCodiceProcessor(unittest.TestCase):
             fe_intensities=fe_intensity,
         )
 
-        # expected_mag_vectors = [np.array([3, 2, 1]), np.array([4, 3, 2])]
-        #
-        # def calculate_unit_vector_side_effect(unit_vector):
-        #     call_and_return = {
-        #         np.array([1, 2, 3]): expected_mag_vectors[0],
-        #         np.array([2, 3, 4]): expected_mag_vectors[1],
-        #     }
-        #     return call_and_return[unit_vector]
-
-        # mock_calculate_unit_vector.side_effect = calculate_unit_vector_side_effect
-
         dependencies = CodicePitchAngleDependencies(mag_l1d_data=mag_l1d_data,
                                                     codice_sectored_intensities_data=codice_l2_data)
         codice_processor = CodiceProcessor(dependencies=Mock(), input_metadata=Mock())
 
         _ = codice_processor.process_l3b(dependencies=dependencies)
-        mock_calculate_unit_vector.assert_called_with(
-            NumpyArrayMatcher([[-.5, np.sqrt(3) / 2, 0], [.5, np.sqrt(3) / 2, 0]]))
 
-        expected_unit_vectors = np.array(
-            [[0, 1, 0], [0, -1, 0], [0, -1, 0], [0, 1, 0], [0, 1, 0], [0, -1, 0], [0, -1, 0], [0, 1, 0]])
+        expected_pitch_angles = np.array([[0., 90.], [0., 90.]])
+        expected_gyrophase = np.array([[270, 0], [270, 0]])
+
+        mock_rebin.assert_called_with(
+            intensity_data=NumpyArrayMatcher(he4_intensity),
+            intensity_delta_plus=NumpyArrayMatcher(np.full_like(he4_intensity, 0)),
+            intensity_delta_minus=NumpyArrayMatcher(np.full_like(he4_intensity, 0)),
+            gyrophases=NumpyArrayMatcher(expected_gyrophase, almost_equal=True),
+            pitch_angles=NumpyArrayMatcher(expected_pitch_angles),
+            number_of_pitch_angle_bins=2,
+            number_of_gyrophase_bins=2)
 
     def create_priority_events(self, energies):
         ssd_id_all_events = np.arange(1, 25).reshape(6, 2, 2) * 1000
