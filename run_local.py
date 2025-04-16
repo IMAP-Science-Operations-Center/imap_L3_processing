@@ -558,6 +558,6 @@ if __name__ == "__main__":
 
     if "hi" in sys.argv:
         dependencies = HiL3SpectralFitDependencies.from_file_paths(
-            get_test_data_path("hi/validation/hi45-zirnstein-mondel-6months.cdf")
+            get_test_data_path("hi/fake_l2_maps/hi45-zirnstein-mondel-6months.cdf")
         )
         print(create_hi_cdf(dependencies))

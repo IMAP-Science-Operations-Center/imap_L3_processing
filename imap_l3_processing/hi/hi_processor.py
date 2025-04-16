@@ -29,34 +29,41 @@ class HiProcessor(Processor):
             data_product = self._process_spectral_fit_index(hi_l3_spectral_fit_dependencies)
             save_data(data_product)
 
-    def _process_spectral_fit_index(self, hi_l3_spectral_fit_dependencies):
-        hi_l3_data = hi_l3_spectral_fit_dependencies.hi_l3_data
+    def _process_spectral_fit_index(self,
+                                    hi_l3_spectral_fit_dependencies: HiL3SpectralFitDependencies) -> HiL3SpectralIndexDataProduct:
+        input_data = hi_l3_spectral_fit_dependencies.hi_l3_data
+        hi_l3_data = input_data
 
         epochs = hi_l3_data.epoch
         energy = hi_l3_data.energy
-        fluxes = hi_l3_data.flux
-        lons = hi_l3_data.lon
-        lats = hi_l3_data.lat
-        variances = hi_l3_data.variance
+        fluxes = hi_l3_data.ena_intensity
+        lons = hi_l3_data.longitude
+        lats = hi_l3_data.latitude
+        variances = np.square(hi_l3_data.ena_intensity_stat_unc)
 
         gammas, errors = spectral_fit(len(epochs), len(lons), len(lats), fluxes, variances, energy)
 
         data_product = HiL3SpectralIndexDataProduct(
-            energy=hi_l3_spectral_fit_dependencies.hi_l3_data.energy,
-            epoch=hi_l3_spectral_fit_dependencies.hi_l3_data.epoch,
-            spectral_fit_index_error=errors,
-            spectral_fit_index=gammas,
-            variance=hi_l3_spectral_fit_dependencies.hi_l3_data.variance,
-            epoch_delta=hi_l3_spectral_fit_dependencies.hi_l3_data.epoch_delta,
-            energy_deltas=hi_l3_spectral_fit_dependencies.hi_l3_data.energy_deltas,
-            lat=hi_l3_spectral_fit_dependencies.hi_l3_data.lat,
-            lon=hi_l3_spectral_fit_dependencies.hi_l3_data.lon,
-            exposure=hi_l3_spectral_fit_dependencies.hi_l3_data.exposure,
-            sensitivity=hi_l3_spectral_fit_dependencies.hi_l3_data.sensitivity,
             input_metadata=self.input_metadata.to_upstream_data_dependency(HI_L3_SPECTRAL_FIT_DESCRIPTOR),
-            counts_uncertainty=hi_l3_spectral_fit_dependencies.hi_l3_data.counts_uncertainty,
-            flux=hi_l3_spectral_fit_dependencies.hi_l3_data.flux,
-            counts=hi_l3_spectral_fit_dependencies.hi_l3_data.counts,
+            ena_spectral_index_stat_unc=errors,
+            ena_spectral_index_sys_err=errors,
+            ena_spectral_index=gammas,
+            epoch=input_data.epoch,
+            epoch_delta=input_data.epoch_delta,
+            energy=input_data.energy,
+            energy_delta_plus=input_data.energy_delta_plus,
+            energy_delta_minus=input_data.energy_delta_minus,
+            energy_label=input_data.energy_label,
+            latitude=input_data.latitude,
+            latitude_delta=input_data.latitude_delta,
+            latitude_label=input_data.latitude_label,
+            longitude=input_data.longitude,
+            longitude_delta=input_data.longitude_delta,
+            longitude_label=input_data.longitude_label,
+            exposure_factor=input_data.exposure_factor,
+            obs_date=input_data.obs_date,
+            obs_date_range=input_data.obs_date_range,
+            solid_angle=input_data.solid_angle,
         )
 
         return data_product
@@ -75,21 +82,34 @@ class HiProcessor(Processor):
 
         survival_dataset = hi_survival_sky_map.to_dataset()
 
+        input_data = hi_survival_probabilities_dependencies.l2_data
+        survival_probabilities = survival_dataset["exposure_weighted_survival_probabilities"].values
+
+        survival_corrected_intensity = input_data.ena_intensity / survival_probabilities
+        corrected_stat_unc = input_data.ena_intensity_stat_unc / survival_probabilities
+        corrected_sys_unc = input_data.ena_intensity_sys_err / survival_probabilities
+
         data_product = HiL3SurvivalCorrectedDataProduct(
             input_metadata=self.input_metadata.to_upstream_data_dependency(self.input_metadata.descriptor),
-            epoch=hi_survival_probabilities_dependencies.l2_data.epoch,
-            energy=hi_survival_probabilities_dependencies.l2_data.energy,
-            energy_deltas_plus=hi_survival_probabilities_dependencies.l2_data.energy_deltas,
-            counts=hi_survival_probabilities_dependencies.l2_data.counts,
-            counts_uncertainty=hi_survival_probabilities_dependencies.l2_data.counts_uncertainty,
-            epoch_delta=hi_survival_probabilities_dependencies.l2_data.epoch_delta,
-            exposure=hi_survival_probabilities_dependencies.l2_data.exposure,
-            flux=hi_survival_probabilities_dependencies.l2_data.flux / survival_dataset[
-                "exposure_weighted_survival_probabilities"].values,
-            lat=hi_survival_probabilities_dependencies.l2_data.lat,
-            lon=hi_survival_probabilities_dependencies.l2_data.lon,
-            sensitivity=hi_survival_probabilities_dependencies.l2_data.sensitivity,
-            variance=hi_survival_probabilities_dependencies.l2_data.variance,
+            ena_intensity_stat_unc=corrected_stat_unc,
+            ena_intensity_sys_err=corrected_sys_unc,
+            ena_intensity=survival_corrected_intensity,
+            epoch=input_data.epoch,
+            epoch_delta=input_data.epoch_delta,
+            energy=input_data.energy,
+            energy_delta_plus=input_data.energy_delta_plus,
+            energy_delta_minus=input_data.energy_delta_minus,
+            energy_label=input_data.energy_label,
+            latitude=input_data.latitude,
+            latitude_delta=input_data.latitude_delta,
+            latitude_label=input_data.latitude_label,
+            longitude=input_data.longitude,
+            longitude_delta=input_data.longitude_delta,
+            longitude_label=input_data.longitude_label,
+            exposure_factor=input_data.exposure_factor,
+            obs_date=input_data.obs_date,
+            obs_date_range=input_data.obs_date_range,
+            solid_angle=input_data.solid_angle,
         )
 
         return data_product
