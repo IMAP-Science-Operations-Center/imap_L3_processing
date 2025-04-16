@@ -32,13 +32,14 @@ def convert_csv_to_yaml(file_path):
                                           variable != "DEPEND_0"]
                 elif row[header_to_index["VAR_TYPE"]] == "support_data":
                     required_variables = required_for_support_data
-                    if row[header_to_index["RECORD_VARYING"]].lower() == "nrv":
-                        required_variables = [variable for variable in required_for_support_data if
-                                              variable != "DEPEND_0"]
                 elif row[header_to_index["VAR_TYPE"]] == "metadata":
                     required_variables = required_for_metadata
                 else:
                     required_variables = required_for_data
+
+                if row[header_to_index["RECORD_VARYING"]].lower() == "nrv":
+                    required_variables = [variable for variable in required_variables if
+                                          variable != "DEPEND_0"]
 
                 for index, rowitem in enumerate(row):
                     if rowitem == "":
