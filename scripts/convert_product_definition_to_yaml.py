@@ -74,6 +74,8 @@ def process_csv():
         "glows-l3b": "imap_l3_processing/cdf/data_product_definition_csv/imap_glows_l3b_variable_attrs.csv",
         "glows-l3c": "imap_l3_processing/cdf/data_product_definition_csv/imap_glows_l3c_variable_attrs.csv",
         "swapi-l3a": "imap_l3_processing/cdf/data_product_definition_csv/imap_swapi_l3a_variable_attrs.csv",
+        "hit-l3-direct-event": "imap_l3_processing/cdf/data_product_definition_csv/imap_hit_l3_direct-events_variable_attrs.csv",
+        "hit-l3-macropixel": "imap_l3_processing/cdf/data_product_definition_csv/imap_hit_l3_macropixel_variable_attrs.csv",
         "hi-l3-survival-probability": "imap_l3_processing/cdf/data_product_definition_csv/imap_hi_l3_90sensor-spacecraft-survival-full-4deg-map_variable_attrs.csv",
         "hi-l3-spectral-index": "imap_l3_processing/cdf/data_product_definition_csv/imap_hi_l3_spectral-fit-index_variable_attrs.csv"
     }
@@ -86,7 +88,7 @@ def process_csv():
     yaml_file_name = f"imap_l3_processing/cdf/config/{filename_without_extension}.yaml"
     if os.path.isfile(yaml_file_name):
         if input(
-                "The Yaml already exists in the config folder! Are your sure your want to overwrite the other pairs work? [Y/n]") != "n":
+                "The Yaml already exists in the config folder! Are you sure you want to overwrite the other pairs work? [Y/n]") != "n":
             os.remove(yaml_file_name)
 
     with open(yaml_file_name, "w") as yaml_file:
