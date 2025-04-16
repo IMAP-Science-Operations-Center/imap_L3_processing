@@ -13,6 +13,5 @@ output_file_name = args.template_cdf[:-4] + "-all-fill.cdf"
 shutil.copy(args.template_cdf, output_file_name)
 with CDF(output_file_name, readonly=False) as cdf:
     for var in cdf:
-        if var not in ["Epoch", "epoch"]:
-            print(var)
+        if var not in ["Epoch", "epoch"] and cdf[var].attrs.get("VAR_TYPE") != "metadata":
             cdf[var] = np.full_like(cdf[var], cdf[var].attrs["FILLVAL"])

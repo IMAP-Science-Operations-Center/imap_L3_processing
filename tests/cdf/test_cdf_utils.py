@@ -99,8 +99,11 @@ class TestCdfUtils(TempFileTestCase):
             self.assertEqual('global_val1', str(actual_cdf.attrs['global1']))
             self.assertEqual('global_val2', str(actual_cdf.attrs['global2']))
 
-    def test_write_cdf_replaces_nan_with_fill_value(self):
-        epoch_data = [datetime(2025, 3, 7, 17, 0)]
+    def test_write_cdf_replaces_nan_and_masked_with_fill_value(self):
+        epoch_fillval = datetime.fromisoformat("9999-12-31T23:59:59.999999")
+
+        epoch_data = np.ma.masked_array([datetime(2025, 3, 7, 17, 0), None], mask=[False, True])
+        expected_cdf_epoch_data = np.array([datetime(2025, 3, 7, 17, 0), epoch_fillval])
 
         class DataProductWithNan(DataProduct):
             def __init__(self):
@@ -118,7 +121,7 @@ class TestCdfUtils(TempFileTestCase):
         attribute_manager = Mock(spec=ImapAttributeManager)
         attribute_manager.get_global_attributes.return_value = {}
         attribute_manager.get_variable_attributes.side_effect = [
-            {"VAR_NAME": "epoch", "FILLVAL": datetime.fromisoformat("9999-12-31T23:59:59.999999"),
+            {"VAR_NAME": "epoch", "FILLVAL": epoch_fillval,
              "DATA_TYPE": "CDF_TIME_TT2000", "RECORD_VARYING": "NRV"},
             {"VAR_NAME": "float_var", "FILLVAL": -1e31, "DATA_TYPE": "CDF_REAL4", "RECORD_VARYING": "NRV"},
         ]
@@ -128,7 +131,7 @@ class TestCdfUtils(TempFileTestCase):
             self.assertFalse(np.any(np.isnan(actual_cdf["float_var"][...])))
             np.testing.assert_array_equal(np.array([3, 5, -1e31, 9, -1e31, -1e31], dtype=np.float32),
                                           actual_cdf["float_var"][...], strict=True)
-            np.testing.assert_array_equal(actual_cdf["epoch"][...], np.array(epoch_data), strict=True)
+            np.testing.assert_array_equal(actual_cdf["epoch"][...], expected_cdf_epoch_data, strict=True)
 
     def test_does_not_write_depend_0_variable_attribute_if_it_is_empty(self):
         path = str(self.temp_directory / "write_cdf.cdf")

@@ -39,12 +39,12 @@ class TestUtils(unittest.TestCase):
 
             epoch = np.array([datetime.now()])
             epoch_delta = np.array([FIVE_MINUTES_IN_NANOSECONDS])
-            exposure = np.full(ena_intensity.shape[:-1], 1)
-            lat = np.arange(-88, 92, 4)
-            lat_delta = np.full(lat.shape, 2)
+            exposure = np.full(ena_intensity.shape[:-1], 1.0)
+            lat = np.arange(-88.0, 92.0, 4.0)
+            lat_delta = np.full(lat.shape, 2.0)
             lat_label = [f"{x} deg" for x in lat]
-            lon = np.arange(0, 360, 4)
-            lon_delta = np.full(lon.shape, 2)
+            lon = np.arange(0.0, 360.0, 4.0)
+            lon_delta = np.full(lon.shape, 2.0)
             lon_label = [f"{x} deg" for x in lon]
 
             obs_date = np.full(ena_intensity.shape, datetime.now())
@@ -100,26 +100,30 @@ class TestUtils(unittest.TestCase):
                 np.testing.assert_array_equal(solid_angle, result.solid_angle)
 
     def test_fill_values_create_nan_data(self):
-        path = get_test_data_folder() / 'hi' / 'l2_map_with_fill_values.cdf'
+        path = get_test_data_folder() / 'hi' / 'fake_l2_maps' / 'l2_map_with_fill_values.cdf'
         result = read_hi_l2_data(path)
 
         with CDF(str(path)) as cdf:
-            np.testing.assert_array_equal(result.epoch, cdf["Epoch"])
+            np.testing.assert_array_equal(result.epoch, cdf["Epoch"], )
+
+            self.assertTrue(np.all(result.epoch_delta.mask))
+            self.assertTrue(np.all(result.obs_date.mask))
+            self.assertTrue(np.all(result.obs_date_range.mask))
+
             np.testing.assert_array_equal(result.energy, np.full_like(cdf["energy"], np.nan))
-            np.testing.assert_array_equal(result.lat, np.full_like(cdf["latitude"], np.nan))
-            np.testing.assert_array_equal(result.lon, np.full_like(cdf["longitude"], np.nan))
-            np.testing.assert_array_equal(result.ena_intensity, np.full_like(cdf["ena_intensity"], np.nan))
-            np.testing.assert_array_equal(result.ena_intensity_random_unc,
-                                          np.full_like(cdf["ena_intensity_random_unc"], np.nan))
-            np.testing.assert_array_equal(result.ena_intensity_systematic_unc,
-                                          np.full_like(cdf["ena_intensity_systematic_unc"], np.nan))
-            np.testing.assert_array_equal(result.exposure_factor, np.full_like(cdf["exposure_factor"], np.nan))
-            np.testing.assert_array_equal(result.obs_date, cdf["obs_date"])
-            np.testing.assert_array_equal(result.obs_date_range, cdf["obs_date_range"])
-            np.testing.assert_array_equal(result.solid_angle, np.full_like(cdf["solid_angle"], np.nan))
-            np.testing.assert_array_equal(result.epoch_delta, cdf["epoch_delta"])
             np.testing.assert_array_equal(result.energy_delta_plus, np.full_like(cdf["energy_delta_plus"], np.nan))
             np.testing.assert_array_equal(result.energy_delta_minus, np.full_like(cdf["energy_delta_minus"], np.nan))
+            np.testing.assert_array_equal(result.latitude, np.full_like(cdf["latitude"], np.nan))
+            np.testing.assert_array_equal(result.latitude_delta, np.full_like(cdf["latitude_delta"], np.nan))
+            np.testing.assert_array_equal(result.longitude, np.full_like(cdf["longitude"], np.nan))
+            np.testing.assert_array_equal(result.longitude_delta, np.full_like(cdf["longitude_delta"], np.nan))
+            np.testing.assert_array_equal(result.ena_intensity, np.full_like(cdf["ena_intensity"], np.nan))
+            np.testing.assert_array_equal(result.ena_intensity_stat_unc,
+                                          np.full_like(cdf["ena_intensity_stat_unc"], np.nan))
+            np.testing.assert_array_equal(result.ena_intensity_sys_err,
+                                          np.full_like(cdf["ena_intensity_sys_err"], np.nan))
+            np.testing.assert_array_equal(result.exposure_factor, np.full_like(cdf["exposure_factor"], np.nan))
+            np.testing.assert_array_equal(result.solid_angle, np.full_like(cdf["solid_angle"], np.nan))
 
     def test_read_l1c_data(self):
         rng = np.random.default_rng()

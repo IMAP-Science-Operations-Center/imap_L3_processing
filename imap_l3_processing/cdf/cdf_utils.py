@@ -24,10 +24,14 @@ def write_cdf(file_path: str, data: DataProduct, attribute_manager: ImapAttribut
             var_name = data_product.name
             variable_attributes = attribute_manager.get_variable_attributes(var_name)
             data_type = getattr(pycdf.const, variable_attributes["DATA_TYPE"])
-            data_array = np.asarray(data_product.value)
+            data_array = np.asanyarray(data_product.value)
 
-            if 'FILLVAL' in variable_attributes and np.issubdtype(data_array.dtype, np.floating):
-                data_array = np.where(np.isnan(data_array), variable_attributes["FILLVAL"], data_array)
+            if 'FILLVAL' in variable_attributes:
+                if np.issubdtype(data_array.dtype, np.floating):
+                    data_array = np.ma.masked_invalid(data_array)
+                data_array = np.ma.filled(data_array, variable_attributes['FILLVAL'])
+            else:
+                assert not np.ma.isMaskedArray(data_array)
 
             record_varying = variable_attributes["RECORD_VARYING"].lower() == "rv"
             cdf.new(var_name, data_array,

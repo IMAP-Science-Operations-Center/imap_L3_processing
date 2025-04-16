@@ -30,20 +30,20 @@ for folder in parent.iterdir():
     energy = np.array([key for key in sorted(data['flux'].keys())])
     intensity = np.array([data['flux'][key] for key in sorted(data['flux'].keys())])
     ena_intensity = intensity.reshape(1, *intensity.shape)
-    energy_delta_plus = np.full(energy.shape, 1)
-    energy_delta_minus = np.full(energy.shape, 1)
+    energy_delta_plus = np.full(energy.shape, 1.0)
+    energy_delta_minus = np.full(energy.shape, 1.0)
     energy_label = energy.astype(str)
     ena_intensity_stat_unc = np.array([data['sigma'][key] for key in sorted(data['sigma'].keys())])[np.newaxis, ...]
     ena_intensity_sys_err = ena_intensity_stat_unc / 2
 
     epoch = np.array([datetime.now()])
     epoch_delta = np.array([FIVE_MINUTES_IN_NANOSECONDS])
-    exposure_factor = np.full(intensity.shape, 1)
-    lat = np.arange(-88, 92, 4)
-    lat_delta = np.full(lat.shape, 2)
+    exposure_factor = np.full(intensity.shape, 1.0)
+    lat = np.arange(-88.0, 92.0, 4.0)
+    lat_delta = np.full(lat.shape, 2.0)
     lat_label = [f"{x} deg" for x in lat]
-    lon = np.arange(0, 360, 4)
-    lon_delta = np.full(lon.shape, 2)
+    lon = np.arange(0.0, 360.0, 4.0)
+    lon_delta = np.full(lon.shape, 2.0)
     lon_label = [f"{x} deg" for x in lon]
 
     obs_date = np.full(ena_intensity.shape, datetime.now())
@@ -75,6 +75,9 @@ for folder in parent.iterdir():
         cdf.new("energy_delta_plus", energy_delta_plus, recVary=False, type=pycdf.const.CDF_FLOAT)
         cdf.new("energy_delta_minus", energy_delta_minus, recVary=False, type=pycdf.const.CDF_FLOAT)
         cdf.new("energy_label", energy_label, recVary=False, type=pycdf.const.CDF_CHAR)
+
+        for metadata_var_names in ["latitude_label", "longitude_label", "energy_label"]:
+            cdf[metadata_var_names].attrs["VAR_TYPE"] = "metadata"
 
         for var in cdf:
             if cdf[var].type() == pycdf.const.CDF_TIME_TT2000.value:
