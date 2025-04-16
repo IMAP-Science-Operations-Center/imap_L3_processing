@@ -7,8 +7,8 @@ import numpy as np
 from imap_l3_processing.codice.l3.hi.codice_processor import CodiceProcessor
 from imap_l3_processing.codice.l3.hi.direct_event.codice_l3_dependencies import CodiceL3Dependencies
 from imap_l3_processing.codice.l3.hi.direct_event.science.tof_lookup import TOFLookup, EnergyPerNuc
-from imap_l3_processing.codice.l3.hi.pitch_angle.codice_pitch_angle_dependencies import CodicePitchAngleDependencies
 from imap_l3_processing.codice.l3.hi.models import PriorityEventL2, CodiceL2HiData, CodiceHiL2SectoredIntensitiesData
+from imap_l3_processing.codice.l3.hi.pitch_angle.codice_pitch_angle_dependencies import CodicePitchAngleDependencies
 from imap_l3_processing.models import InputMetadata, MagL1dData
 from tests.test_helpers import NumpyArrayMatcher
 
@@ -146,7 +146,7 @@ class TestCodiceProcessor(unittest.TestCase):
                                     expected_energy_per_nuc=p5_expected_energy_per_nuc[1],
                                     expected_energy_per_nuc_upper=p5_expected_energy_per_nuc[2])
 
-    @patch('imap_l3_processing.codice.codice_processor.hit_rebin_by_pitch_angle_and_gyrophase')
+    @patch('imap_l3_processing.codice.l3.hi.codice_processor.hit_rebin_by_pitch_angle_and_gyrophase')
     def test_process_l3b(self, mock_rebin):
         epoch_1 = datetime(2025, 2, 5)
         epoch_2 = datetime(2025, 2, 6)
