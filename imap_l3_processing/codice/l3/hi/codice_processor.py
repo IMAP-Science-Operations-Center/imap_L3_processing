@@ -2,9 +2,11 @@ import numpy as np
 from imap_data_access import upload
 from imap_data_access.processing_input import ProcessingInputCollection
 
-from imap_l3_processing.codice.l3.direct_event.codice_l3_dependencies import CodiceL3Dependencies
-from imap_l3_processing.codice.models import CodiceL3HiDirectEvents, CodiceL3HiDirectEventsBuilder
+from imap_l3_processing.codice.l3.hi.direct_event.codice_l3_dependencies import CodiceL3Dependencies
+from imap_l3_processing.codice.l3.hi.models import CodiceL3HiDirectEvents, CodiceL3HiDirectEventsBuilder
+from imap_l3_processing.codice.l3.hi.pitch_angle.codice_pitch_angle_dependencies import CodicePitchAngleDependencies
 from imap_l3_processing.models import InputMetadata
+from imap_l3_processing.pitch_angles import calculate_unit_vector
 from imap_l3_processing.processor import Processor
 from imap_l3_processing.utils import save_data
 
@@ -42,4 +44,11 @@ class CodiceProcessor(Processor):
                             .updated_priority_event_5(energy_per_nucleons_per_priority_event[5], estimated_mass_with_bounds[5])
                             .convert())
 
+    def process_l3b(self, dependencies: CodicePitchAngleDependencies):
+        mag_data = dependencies.mag_l1d_data
+        sectored_intensities = dependencies.codice_sectored_intensities_data
+        rebinned_mag_data = mag_data.rebin_to(sectored_intensities.epoch, sectored_intensities.epoch_delta)
 
+        mag_unit_vectors = calculate_unit_vector(rebinned_mag_data)
+
+        return None

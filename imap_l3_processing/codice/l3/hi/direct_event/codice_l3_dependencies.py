@@ -4,8 +4,8 @@ from pathlib import Path
 from imap_data_access import download
 from imap_data_access.processing_input import ProcessingInputCollection
 
-from imap_l3_processing.codice.l3.direct_event.science.tof_lookup import TOFLookup
-from imap_l3_processing.codice.models import CodiceL2HiData
+from imap_l3_processing.codice.l3.hi.direct_event.science.tof_lookup import TOFLookup
+from imap_l3_processing.codice.l3.hi.models import CodiceL2HiData
 
 
 @dataclass

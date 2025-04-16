@@ -167,6 +167,23 @@ P5_ESTIMATED_MASS_LOWER_VAR_NAME = "p5_estimated_mass_lower"
 P5_ESTIMATED_MASS_VAR_NAME = "p5_estimated_mass"
 P5_ESTIMATED_MASS_UPPER_VAR_NAME = "p5_estimated_mass_upper"
 
+EPOCH_DELTA_VAR_NAME = "epoch_delta"
+ENERGY_VAR_NAME = "energy"
+ENERGY_DELTA_PLUS_VAR_NAME = "energy_delta_plus"
+ENERGY_DELTA_MINUS_VAR_NAME = "energy_delta_minus"
+PITCH_ANGLE_VAR_NAME = "pitch_angle"
+PITCH_ANGLE_DELTA_VAR_NAME = "pitch_angle_delta"
+GYROPHASE_VAR_NAME = "gyrophase"
+GYROPHASE_DELTA_VAR_NAME = "gyrophase_delta"
+H_INTENSITY_BY_PITCH_ANGLE_VAR_NAME = "h_intensity_by_pitch_angle"
+H_INTENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_VAR_NAME = "h_intensity_by_pitch_angle_and_gyrophase"
+HE4_INTENSITY_BY_PITCH_ANGLE_VAR_NAME = "he4_intensity_by_pitch_angle"
+HE4_INTENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_VAR_NAME = "he4_intensity_by_pitch_angle_and_gyrophase"
+O_INTENSITY_BY_PITCH_ANGLE_VAR_NAME = "o_intensity_by_pitch_angle"
+O_INTENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_VAR_NAME = "o_intensity_by_pitch_angle_and_gyrophase"
+FE_INTENSITY_BY_PITCH_ANGLE_VAR_NAME = "fe_intensity_by_pitch_angle"
+FE_INTENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_VAR_NAME = "fe_intensity_by_pitch_angle_and_gyrophase"
+
 
 @dataclass
 class CodiceL3HiDirectEvents(DataProduct):
@@ -498,3 +515,77 @@ class CodiceL3HiDirectEventsBuilder:
             kwargs.update(priority_attrs)
 
         return CodiceL3HiDirectEvents(input_metadata=None, epoch=self.l2_data.epochs, **kwargs)
+
+
+@dataclass
+class CodiceHiL3PitchAngleDataProduct(DataProduct):
+    epoch: ndarray
+    epoch_delta: ndarray
+    energy: ndarray
+    energy_delta_plus: ndarray
+    energy_delta_minus: ndarray
+    pitch_angle: ndarray
+    pitch_angle_delta: ndarray
+    gyrophase: ndarray
+    gyrophase_delta: ndarray
+    h_intensity_by_pitch_angle: ndarray
+    h_intensity_by_pitch_angle_and_gyrophase: ndarray
+    he4_intensity_by_pitch_angle: ndarray
+    he4_intensity_by_pitch_angle_and_gyrophase: ndarray
+    o_intensity_by_pitch_angle: ndarray
+    o_intensity_by_pitch_angle_and_gyrophase: ndarray
+    fe_intensity_by_pitch_angle: ndarray
+    fe_intensity_by_pitch_angle_and_gyrophase: ndarray
+
+    def to_data_product_variables(self) -> list[DataProductVariable]:
+        return [
+            DataProductVariable(EPOCH_VAR_NAME, self.epoch),
+            DataProductVariable(EPOCH_DELTA_VAR_NAME, self.epoch_delta),
+            DataProductVariable(ENERGY_VAR_NAME, self.energy),
+            DataProductVariable(ENERGY_DELTA_PLUS_VAR_NAME, self.energy_delta_plus),
+            DataProductVariable(ENERGY_DELTA_MINUS_VAR_NAME, self.energy_delta_minus),
+            DataProductVariable(PITCH_ANGLE_VAR_NAME, self.pitch_angle),
+            DataProductVariable(PITCH_ANGLE_DELTA_VAR_NAME, self.pitch_angle_delta),
+            DataProductVariable(GYROPHASE_VAR_NAME, self.gyrophase),
+            DataProductVariable(GYROPHASE_DELTA_VAR_NAME, self.gyrophase_delta),
+            DataProductVariable(H_INTENSITY_BY_PITCH_ANGLE_VAR_NAME, self.h_intensity_by_pitch_angle),
+            DataProductVariable(H_INTENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_VAR_NAME,
+                                self.h_intensity_by_pitch_angle_and_gyrophase),
+            DataProductVariable(HE4_INTENSITY_BY_PITCH_ANGLE_VAR_NAME, self.he4_intensity_by_pitch_angle),
+            DataProductVariable(HE4_INTENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_VAR_NAME,
+                                self.he4_intensity_by_pitch_angle_and_gyrophase),
+            DataProductVariable(O_INTENSITY_BY_PITCH_ANGLE_VAR_NAME, self.o_intensity_by_pitch_angle),
+            DataProductVariable(O_INTENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_VAR_NAME,
+                                self.o_intensity_by_pitch_angle_and_gyrophase),
+            DataProductVariable(FE_INTENSITY_BY_PITCH_ANGLE_VAR_NAME, self.fe_intensity_by_pitch_angle),
+            DataProductVariable(FE_INTENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_VAR_NAME,
+                                self.fe_intensity_by_pitch_angle_and_gyrophase),
+        ]
+
+
+@dataclass
+class CodiceHiL2SectoredIntensitiesData:
+    epoch: ndarray
+    epoch_delta: ndarray
+    h_intensities: ndarray
+    he4_intensities: ndarray
+    o_intensities: ndarray
+    fe_intensities: ndarray
+    ssd_id: ndarray
+    spin_sector: ndarray
+    energy: ndarray
+
+    @classmethod
+    def read_from_cdf(cls, l2_sectored_intensities_cdf):
+        with CDF(str(l2_sectored_intensities_cdf)) as cdf:
+            return cls(
+                epoch=cdf["epoch"][...],
+                epoch_delta=cdf["epoch_delta"][...],
+                h_intensities=cdf["h_intensities"][...],
+                he4_intensities=cdf["he4_intensities"][...],
+                o_intensities=cdf["o_intensities"][...],
+                fe_intensities=cdf["fe_intensities"][...],
+                ssd_id=cdf["ssd_id"][...],
+                spin_sector=cdf["spin_sector"][...],
+                energy=cdf["energy"][...],
+            )
