@@ -1,4 +1,5 @@
 import argparse
+import os
 import re
 from collections import defaultdict
 from datetime import datetime, timedelta
@@ -38,7 +39,7 @@ for folder in parent.iterdir():
 
     epoch = np.array([datetime.now()])
     epoch_delta = np.array([FIVE_MINUTES_IN_NANOSECONDS])
-    exposure_factor = np.full(intensity.shape, 1.0)
+    exposure_factor = np.full(ena_intensity.shape, 1.0)
     lat = np.arange(-88.0, 92.0, 4.0)
     lat_delta = np.full(lat.shape, 2.0)
     lat_label = [f"{x} deg" for x in lat]
@@ -50,9 +51,9 @@ for folder in parent.iterdir():
     obs_date_range = np.full(ena_intensity.shape, ONE_SECOND_IN_NANOSECONDS * SECONDS_PER_DAY * 2)
 
     solid_angle = build_solid_angle_map(4)
-    solid_angle = solid_angle[np.newaxis, ...]
 
     pathname = f"C://Users//Harrison//Development//imap_L3_processing//tests//test_data//hi//fake_l2_maps//{folder.name}.cdf"
+    Path(pathname).unlink(missing_ok=True)
     with CDF(pathname, '') as cdf:
         cdf.col_major(True)
 
@@ -86,7 +87,3 @@ for folder in parent.iterdir():
                 cdf[var].attrs['FILLVAL'] = -9223372036854775808
             elif cdf[var].type() == pycdf.const.CDF_FLOAT.value:
                 cdf[var].attrs['FILLVAL'] = -1e31
-            else:
-                print(var)
-                # raise NotImplementedError(cdf[var].type(), pycdf.const.CDF_TIME_TT2000, pycdf.const.CDF_INT8,
-                #                           pycdf.const.CDF_FLOAT)
