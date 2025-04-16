@@ -3,222 +3,316 @@ epoch:
    DATA_TYPE: CDF_TIME_TT2000
    CATDESC: Time, number of nanoseconds since J2000 with leap seconds included
    VAR_TYPE: support_data
-   RECORD_VARYING: RV
-   FIELDNAM: epoch
+   RECORD_VARYING: rv
+   FIELDNAM: J2000 Nanoseconds
    FORMAT: ' '
-   UNITS: ' '
+   LABLAXIS: epoch
+   UNITS: ns
    VALIDMIN: 2010-01-01T00:00:00.000000000
    VALIDMAX: 2059-12-31T23:59:58.999000000
    FILLVAL: 9999-12-31T23:59:59.999999999
+   SCALE_TYP: linear
+   TIME_BASE: J2000
+   TIME_SCALE: TT
+   DELTA_PLUS_VAR: epoch_delta
+   DELTA_MINUS_VAR: epoch_delta
+   MONOTON: INCREASE
+   REFERENCE_POSITION: Rotating Earth Geoid
+   SI_CONVERSION: 1e-9>seconds
 epoch_delta:
    NAME: epoch_delta
    DATA_TYPE: CDF_INT8
    CATDESC: epoch_delta
    DEPEND_0: epoch
    VAR_TYPE: support_data
-   RECORD_VARYING: RV
-   FIELDNAM: epoch_delta
+   RECORD_VARYING: rv
+   FIELDNAM: Epoch delta
    FORMAT: I19
-   UNITS: ' '
+   LABLAXIS: Epoch delta
+   UNITS: ns
    VALIDMIN: 0
-   VALIDMAX: 86000000000000
+   VALIDMAX: 31536000000000000
    FILLVAL: -9223372036854775808
-lat:
-   NAME: lat
-   DATA_TYPE: CDF_FLOAT
-   CATDESC: Latitude
+energy:
+   NAME: energy
+   DATA_TYPE: CDF_REAL4
+   CATDESC: energy
    VAR_TYPE: support_data
-   RECORD_VARYING: NRV
-   FIELDNAM: lat
-   FORMAT: F12.6
-   UNITS: ' '
+   RECORD_VARYING: nrv
+   FIELDNAM: Energy
+   FORMAT: F6.2
+   LABLAXIS: Energy
+   UNITS: keV
+   VALIDMIN: 0.0
+   VALIDMAX: 100.0
+   FILLVAL: -1.00E+31
+   SCALE_TYP: linear
+   DELTA_PLUS_VAR: energy_delta_plus
+   DELTA_MINUS_VAR: energy_delta_minus
+   MONOTON: INCREASE
+energy_label:
+   NAME: energy_label
+   DATA_TYPE: CDF_CHAR
+   CATDESC: Label variable for energy coordinate
+   DEPEND_1: energy
+   VAR_TYPE: metadata
+   FIELDNAM: Energy label
+   FORMAT: A16
+energy_delta_minus:
+   NAME: energy_delta_minus
+   DATA_TYPE: CDF_REAL4
+   CATDESC: Lower bound of energy range
+   DEPEND_1: energy
+   VAR_TYPE: support_data
+   RECORD_VARYING: nrv
+   FIELDNAM: Energy delta minus
+   FORMAT: F6.2
+   LABLAXIS: Energy delta minus
+   UNITS: keV
+   VALIDMIN: 0.0
+   VALIDMAX: 100.0
+   FILLVAL: -1.00E+31
+   SCALE_TYP: linear
+energy_delta_plus:
+   NAME: energy_delta_plus
+   DATA_TYPE: CDF_REAL4
+   CATDESC: Upper bound of energy range
+   DEPEND_1: energy
+   VAR_TYPE: support_data
+   RECORD_VARYING: nrv
+   FIELDNAM: Energy delta plus
+   FORMAT: F6.2
+   LABLAXIS: Energy delta plus
+   UNITS: keV
+   VALIDMIN: 0.0
+   VALIDMAX: 100.0
+   FILLVAL: -1.00E+31
+   SCALE_TYP: linear
+latitude:
+   NAME: latitude
+   DATA_TYPE: CDF_REAL4
+   CATDESC: Pixel center latitude
+   VAR_TYPE: support_data
+   RECORD_VARYING: nrv
+   FIELDNAM: HAE Latitude
+   FORMAT: F6.1
+   LABLAXIS: Latitude
+   UNITS: deg
    VALIDMIN: -90.0
    VALIDMAX: 90.0
    FILLVAL: -1.00E+31
-lon:
-   NAME: lon
-   DATA_TYPE: CDF_FLOAT
-   CATDESC: Longitude
+   SCALE_TYP: linear
+   DELTA_PLUS_VAR: latitude_delta
+   DELTA_MINUS_VAR: latitude_delta
+   MONOTON: INCREASE
+latitude_label:
+   NAME: latitude_label
+   DATA_TYPE: CDF_CHAR
+   CATDESC: Label variable for latitude coordinate
+   DEPEND_1: latitude
+   VAR_TYPE: metadata
+   FIELDNAM: Latitude label
+   FORMAT: A16
+latitude_delta:
+   NAME: latitude_delta
+   DATA_TYPE: CDF_REAL4
+   CATDESC: Half-width of latitude pixel
+   DEPEND_1: latitude
    VAR_TYPE: support_data
-   RECORD_VARYING: NRV
-   FIELDNAM: lon
-   FORMAT: F12.6
-   UNITS: ' '
+   RECORD_VARYING: nrv
+   FIELDNAM: Latitude delta
+   FORMAT: F12.1
+   LABLAXIS: Latitude delta
+   UNITS: deg
+   VALIDMIN: 0.0
+   VALIDMAX: 90.0
+   FILLVAL: -1.00E+31
+   SCALE_TYP: linear
+longitude:
+   NAME: longitude
+   DATA_TYPE: CDF_REAL4
+   CATDESC: Pixel center longitude
+   VAR_TYPE: support_data
+   RECORD_VARYING: nrv
+   FIELDNAM: HAE Longitude
+   FORMAT: F6.1
+   LABLAXIS: Longitude
+   UNITS: deg
    VALIDMIN: 0.0
    VALIDMAX: 360.0
    FILLVAL: -1.00E+31
-energy:
-   NAME: energy
-   DATA_TYPE: CDF_FLOAT
-   CATDESC: Energy bins used for spectral fit
+   SCALE_TYP: linear
+   DELTA_PLUS_VAR: longitude_delta
+   DELTA_MINUS_VAR: longitude_delta
+   MONOTON: INCREASE
+longitude_label:
+   NAME: longitude_label
+   DATA_TYPE: CDF_CHAR
+   CATDESC: Label variable for longitude coordinate
+   DEPEND_1: longitude
+   VAR_TYPE: metadata
+   FIELDNAM: Longitude label
+   FORMAT: A16
+longitude_delta:
+   NAME: longitude_delta
+   DATA_TYPE: CDF_REAL4
+   CATDESC: Half-width of longitude pixel
+   DEPEND_1: longitude
    VAR_TYPE: support_data
-   RECORD_VARYING: NRV
-   FIELDNAM: energy
-   FORMAT: F12.6
-   UNITS: ' '
-   VALIDMIN: 0.0
-   VALIDMAX: 1.00E+9
+   RECORD_VARYING: nrv
+   FIELDNAM: Longitude delta
+   FORMAT: F12.1
+   LABLAXIS: Longitude delta
+   UNITS: deg
+   VALIDMIN: 0
+   VALIDMAX: 180.0
    FILLVAL: -1.00E+31
-energy_deltas:
-   NAME: energy_deltas
-   DATA_TYPE: CDF_FLOAT
-   CATDESC: Energy bin deltas used for spectral fit
+   SCALE_TYP: linear
+exposure_factor:
+   NAME: exposure_factor
+   DATA_TYPE: CDF_REAL4
+   CATDESC: Exact or approximate exposure time over which counts in a pixel are accumulated.  Used as a weighting factor for combining data quantities sensibly.
+   DEPEND_0: epoch
    DEPEND_1: energy
-   VAR_TYPE: support_data
-   RECORD_VARYING: NRV
-   FIELDNAM: energy_deltas
-   FORMAT: F12.6
-   UNITS: ' '
+   DEPEND_2: longitude
+   DEPEND_3: latitude
+   VAR_TYPE: data
+   RECORD_VARYING: rv
+   DISPLAY_TYPE: no_plot
+   FIELDNAM: Exposure Times
+   FORMAT: F12.1
+   LABLAXIS: Exposure
+   UNITS: s
    VALIDMIN: 0.0
    VALIDMAX: 1.00E+9
    FILLVAL: -1.00E+31
-intensity:
-   NAME: intensity
-   DATA_TYPE: CDF_FLOAT
-   CATDESC: Intensity used for spectral fit
+   LABL_PTR_1: energy_label
+   LABL_PTR_2: longitude_label
+   LABL_PTR_3: latitude_label
+   SCALE_TYP: linear
+obs_date:
+   NAME: obs_date
+   DATA_TYPE: CDF_TIME_TT2000
+   CATDESC: Mean collection date of data in a pixel
    DEPEND_0: epoch
-   DEPEND_1: lon
-   DEPEND_2: lat
-   DEPEND_3: energy
+   DEPEND_1: energy
+   DEPEND_2: longitude
+   DEPEND_3: latitude
+   VAR_TYPE: data
+   RECORD_VARYING: rv
+   DISPLAY_TYPE: image
+   FIELDNAM: J2000 Nanoseconds
+   FORMAT: ' '
+   LABLAXIS: epoch
+   UNITS: ns
+   VALIDMIN: 2010-01-01T00:00:00.000000000
+   VALIDMAX: 2059-12-31T23:59:58.999000000
+   FILLVAL: 9999-12-31T23:59:59.999999999
+   LABL_PTR_1: energy_label
+   LABL_PTR_2: longitude_label
+   LABL_PTR_3: latitude_label
+   SCALE_TYP: linear
+obs_date_range:
+   NAME: obs_date_range
+   DATA_TYPE: CDF_INT8
+   CATDESC: Standard deviation of the observation date
+   DEPEND_0: epoch
+   DEPEND_1: energy
+   DEPEND_2: longitude
+   DEPEND_3: latitude
+   VAR_TYPE: data
+   RECORD_VARYING: rv
+   DISPLAY_TYPE: image
+   FIELDNAM: J2000 Nanoseconds
+   FORMAT: I19
+   LABLAXIS: epoch
+   UNITS: ns
+   VALIDMIN: 0
+   VALIDMAX: 31536000000000000
+   FILLVAL: -9223372036854775808
+   LABL_PTR_1: energy_label
+   LABL_PTR_2: longitude_label
+   LABL_PTR_3: latitude_label
+   SCALE_TYP: linear
+solid_angle:
+   NAME: solid_angle
+   DATA_TYPE: CDF_REAL4
+   CATDESC: Solid angle of subtended by each pixel
+   DEPEND_1: longitude
+   DEPEND_2: latitude
+   VAR_TYPE: data
+   RECORD_VARYING: nrv
+   DISPLAY_TYPE: image
+   FIELDNAM: Solid Angle
+   FORMAT: F6.2
+   LABLAXIS: Solid Angle
+   UNITS: sr
+   VALIDMIN: 0.0
+   VALIDMAX: 12.56637061
+   FILLVAL: -1.00E+31
+   LABL_PTR_1: longitude_label
+   LABL_PTR_2: latitude_label
+   SCALE_TYP: linear
+ena_spectral_index:
+   NAME: ena_spectral_index
+   DATA_TYPE: CDF_REAL4
+   CATDESC: ENA spectral index.
+   DEPEND_0: epoch
+   DEPEND_1: longitude
+   DEPEND_2: latitude
    VAR_TYPE: data
    RECORD_VARYING: RV
    DISPLAY_TYPE: image
-   FIELDNAM: intensity
-   FORMAT: F12.6
-   UNITS: ' '
-   VALIDMIN: 0.0
-   VALIDMAX: 1.00E+9
-   FILLVAL: -1.00E+31
-variance:
-   NAME: variance
-   DATA_TYPE: CDF_FLOAT
-   CATDESC: Variance used for spectral fit
-   DEPEND_0: epoch
-   DEPEND_1: lon
-   DEPEND_2: lat
-   DEPEND_3: energy
-   VAR_TYPE: support_data
-   RECORD_VARYING: RV
-   FIELDNAM: variance
-   FORMAT: F12.6
-   UNITS: ' '
-   VALIDMIN: 0.0
-   VALIDMAX: 1.00E+9
-   FILLVAL: -1.00E+31
-counts:
-   NAME: counts
-   DATA_TYPE: CDF_FLOAT
-   CATDESC: Counts used for spectral fit 
-   DEPEND_0: epoch
-   DEPEND_1: lon
-   DEPEND_2: lat
-   DEPEND_3: energy
-   VAR_TYPE: support_data
-   RECORD_VARYING: RV
-   FIELDNAM: counts
-   FORMAT: F12.6
-   UNITS: ' '
-   VALIDMIN: 0.0
-   VALIDMAX: 1.00E+9
-   FILLVAL: -1.00E+31
-counts_uncertainty:
-   NAME: counts_uncertainty
-   DATA_TYPE: CDF_FLOAT
-   CATDESC: Counts uncertainty used for spectral fit
-   DEPEND_0: epoch
-   DEPEND_1: lon
-   DEPEND_2: lat
-   DEPEND_3: energy
-   VAR_TYPE: support_data
-   RECORD_VARYING: RV
-   FIELDNAM: counts_uncertainty
-   FORMAT: F12.6
-   UNITS: ' '
-   VALIDMIN: 0.0
-   VALIDMAX: 1.00E+9
-   FILLVAL: -1.00E+31
-exposure:
-   NAME: exposure
-   DATA_TYPE: CDF_FLOAT
-   CATDESC: Exposure used for spectral fit
-   DEPEND_0: epoch
-   DEPEND_1: lon
-   DEPEND_2: lat
-   VAR_TYPE: support_data
-   RECORD_VARYING: RV
-   FIELDNAM: exposure
-   FORMAT: F12.6
-   UNITS: ' '
-   VALIDMIN: 0.0
-   VALIDMAX: 1.00E+9
-   FILLVAL: -1.00E+31
-sensitivity:
-   NAME: sensitivity
-   DATA_TYPE: CDF_FLOAT
-   CATDESC: Sensitivity used for spectral fit
-   DEPEND_0: epoch
-   DEPEND_1: lon
-   DEPEND_2: lat
-   DEPEND_3: energy
-   VAR_TYPE: support_data
-   RECORD_VARYING: RV
-   FIELDNAM: sensitivity
-   FORMAT: F12.6
-   UNITS: ' '
-   VALIDMIN: 0.0
-   VALIDMAX: 1.00E+9
-   FILLVAL: -1.00E+31
-spectral_fit_index:
-   NAME: spectral_fit_index
-   DATA_TYPE: CDF_FLOAT
-   CATDESC: Spectral fit index
-   DEPEND_0: epoch
-   DEPEND_1: lon
-   DEPEND_2: lat
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: image
-   VARIABLE_PURPOSE: primary var, summary
+   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
    FIELDNAM: spectral_fit_index
    FORMAT: F12.6
+   LABLAXIS: Index
    UNITS: ' '
    VALIDMIN: 0.0
-   VALIDMAX: 1.00E+9
+   VALIDMAX: 100
    FILLVAL: -1.00E+31
-spectral_fit_index_error:
-   NAME: spectral_fit_index_error
-   DATA_TYPE: CDF_FLOAT
-   CATDESC: Spectral fit index error
+   LABL_PTR_1: longitude_label
+   LABL_PTR_2: latitude_label
+   SCALE_TYP: linear
+   DELTA_PLUS_VAR: ena_spectral_index_stat_unc
+   DELTA_MINUS_VAR: ena_spectral_index_stat_unc
+ena_spectral_index_stat_unc:
+   NAME: ena_spectral_index_stat_unc
+   DATA_TYPE: CDF_REAL4
+   CATDESC: ENA spectral index statistical uncertainty.
    DEPEND_0: epoch
-   DEPEND_1: lon
-   DEPEND_2: lat
+   DEPEND_1: longitude
+   DEPEND_2: latitude
    VAR_TYPE: data
    RECORD_VARYING: RV
    DISPLAY_TYPE: no_plot
    FIELDNAM: spectral_fit_index_error
    FORMAT: F12.6
+   LABLAXIS: Index Error
    UNITS: ' '
    VALIDMIN: 0.0
-   VALIDMAX: 1.00E+9
+   VALIDMAX: 100
    FILLVAL: -1.00E+31
-lon_label:
-   NAME: lon_label
-   DATA_TYPE: CDF_CHAR
-   CATDESC: lon_label
-   VAR_TYPE: metadata
-   FIELDNAM: Longitude label
-   FORMAT: A6
-lat_label:
-   NAME: lat_label
-   DATA_TYPE: CDF_CHAR
-   CATDESC: lat_label
-   VAR_TYPE: metadata
-   FIELDNAM: Latitude label
-   FORMAT: A6
-energy_label:
-   NAME: energy_label
-   DATA_TYPE: CDF_CHAR
-   CATDESC: energy_label
-   VAR_TYPE: metadata
-   FIELDNAM: Energy label
-   FORMAT: A8
+   LABL_PTR_1: longitude_label
+   LABL_PTR_2: latitude_label
+   SCALE_TYP: linear
+ena_spectral_index_sys_err:
+   NAME: ena_spectral_index_sys_err
+   DATA_TYPE: CDF_REAL4
+   CATDESC: ENA spectral index systematic error.
+   DEPEND_0: epoch
+   DEPEND_1: longitude
+   DEPEND_2: latitude
+   VAR_TYPE: data
+   RECORD_VARYING: RV
+   DISPLAY_TYPE: no_plot
+   FIELDNAM: spectral_fit_index_error
+   FORMAT: F12.6
+   LABLAXIS: Index Error
+   UNITS: ' '
+   VALIDMIN: 0.0
+   VALIDMAX: 100
+   FILLVAL: -1.00E+31
+   LABL_PTR_1: longitude_label
+   LABL_PTR_2: latitude_label
+   SCALE_TYP: linear

@@ -174,7 +174,7 @@ def create_hi_cdf(dependencies: HiL3SpectralFitDependencies) -> str:
                                    data_level="l3",
                                    start_date=datetime.now(),
                                    end_date=datetime.now() + timedelta(days=1),
-                                   version="",
+                                   version="v000",
                                    descriptor="spectral-fit-index",
                                    )
     processor = HiProcessor(None, input_metadata)
