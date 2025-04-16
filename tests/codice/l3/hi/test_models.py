@@ -1,13 +1,15 @@
 import os
+import tempfile
 import unittest
 from datetime import datetime
+from pathlib import Path
 from unittest.mock import Mock
 
 import numpy as np
 from spacepy.pycdf import CDF
 
-from imap_l3_processing.codice.models import CodiceL2HiData, PriorityEventL2, CodiceL3HiDirectEvents, \
-    CodiceL3HiDirectEventsBuilder
+from imap_l3_processing.codice.l3.hi.models import CodiceL2HiData, PriorityEventL2, CodiceL3HiDirectEvents, \
+    CodiceL3HiDirectEventsBuilder, CodiceHiL2SectoredIntensitiesData, CodiceHiL3PitchAngleDataProduct
 
 
 class TestModels(unittest.TestCase):
@@ -321,7 +323,6 @@ class TestModels(unittest.TestCase):
             np.testing.assert_array_equal(expected_estimated_mass[index, :, :, 1], getattr(l3_data_product, f'p{index}_estimated_mass'))
             np.testing.assert_array_equal(expected_estimated_mass[index, :, :, 2], getattr(l3_data_product, f'p{index}_estimated_mass_upper'))
 
-
     def test_to_codice_hi_l3_direct_events_to_data_product(self):
         rng = np.random.default_rng()
 
@@ -436,3 +437,84 @@ class TestModels(unittest.TestCase):
             input_name, _ = kwarg_codice_data_products
             self.assertEqual(data_product_variable.name, input_name)
             np.testing.assert_array_equal(getattr(data_product, input_name), data_product_variable.value)
+
+    def test_codice_hi_l3_pitch_angle_to_data_product(self):
+        expected_variables = []
+
+        epoch_data = np.array([datetime.now()])
+        energy_data = np.array([100, 200])
+        pitch_angle = np.array([100, 200])
+        gyrophase = np.array([100, 200])
+        pitch_angle_size =  len(epoch_data) * len(energy_data) * len(pitch_angle)
+        pitch_angle_and_gyrophase_size =  len(epoch_data) * len(energy_data) * len(pitch_angle) * len(gyrophase)
+
+        inputted_data_product_kwargs = {
+            "epoch":epoch_data,
+            "epoch_delta":np.array([10]),
+            "energy":energy_data,
+            "energy_delta_plus":np.array([100, 200]),
+            "energy_delta_minus":np.array([100, 200]),
+            "pitch_angle":pitch_angle,
+            "pitch_angle_delta":np.array([100, 200]),
+            "gyrophase":gyrophase,
+            "gyrophase_delta":np.array([100, 200]),
+            "h_intensity_by_pitch_angle":np.arange(pitch_angle_size).reshape(len(epoch_data), len(energy_data), len(pitch_angle)) + 1,
+            "h_intensity_by_pitch_angle_and_gyrophase": np.arange(pitch_angle_and_gyrophase_size).reshape(len(epoch_data), len(energy_data), len(pitch_angle), len(gyrophase)) +2,
+            "he4_intensity_by_pitch_angle":np.arange(pitch_angle_size).reshape(len(epoch_data), len(energy_data), len(pitch_angle)),
+            "he4_intensity_by_pitch_angle_and_gyrophase":np.arange(pitch_angle_and_gyrophase_size).reshape(len(epoch_data), len(energy_data), len(pitch_angle), len(gyrophase)) + 3,
+            "o_intensity_by_pitch_angle":np.arange(pitch_angle_size).reshape(len(epoch_data), len(energy_data), len(pitch_angle)) + 4,
+            "o_intensity_by_pitch_angle_and_gyrophase":np.arange(pitch_angle_and_gyrophase_size).reshape(len(epoch_data), len(energy_data), len(pitch_angle), len(gyrophase)) + 5,
+            "fe_intensity_by_pitch_angle":np.arange(pitch_angle_size).reshape(len(epoch_data), len(energy_data), len(pitch_angle)) + 6,
+            "fe_intensity_by_pitch_angle_and_gyrophase":np.arange(pitch_angle_and_gyrophase_size).reshape(len(epoch_data), len(energy_data), len(pitch_angle), len(gyrophase)) + 7,
+        }
+
+        data_product = CodiceHiL3PitchAngleDataProduct(
+            input_metadata=Mock(),
+            **inputted_data_product_kwargs
+           )
+        actual_data_product_variables = data_product.to_data_product_variables()
+
+        for input_variable, actual_data_product_variable in zip(inputted_data_product_kwargs.items(), actual_data_product_variables):
+            input_name, expected_value = input_variable
+
+            np.testing.assert_array_equal(actual_data_product_variable.value, getattr(data_product, input_name))
+            self.assertEqual(input_name, actual_data_product_variable.name)
+
+
+    def test_l2_sectored_intensities_read_from_cdf(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            cdf_file_path = Path(tmpdir) / "test_cdf.cdf"
+            rng = np.random.default_rng()
+            with CDF(str(cdf_file_path), readonly=False, masterpath="") as cdf_file:
+                epoch = np.array([datetime(2010, 1, 1), datetime(2010, 1, 2)])
+                epoch_delta = np.repeat(len(epoch), 2)
+                energy = np.geomspace(2, 1000)
+                spin_sector = np.linspace(0, 360, 24)
+                ssd_id = np.linspace(0, 360, 16)
+                h_intensities = rng.random((len(epoch), len(energy), len(spin_sector), len(ssd_id)))
+                he4_intensities = rng.random((len(epoch), len(energy), len(spin_sector), len(ssd_id)))
+                o_intensities = rng.random((len(epoch), len(energy), len(spin_sector), len(ssd_id)))
+                fe_intensities = rng.random((len(epoch), len(energy), len(spin_sector), len(ssd_id)))
+                cdf_file['epoch'] = epoch
+                cdf_file['epoch_delta'] = epoch_delta
+                cdf_file['energy'] = energy
+                cdf_file['spin_sector'] = spin_sector
+                cdf_file['ssd_id'] = ssd_id
+                cdf_file['h_intensities'] = h_intensities
+                cdf_file['he4_intensities'] = he4_intensities
+                cdf_file['o_intensities'] = o_intensities
+                cdf_file['fe_intensities'] = fe_intensities
+
+            result: CodiceHiL2SectoredIntensitiesData = CodiceHiL2SectoredIntensitiesData.read_from_cdf(cdf_file_path)
+            np.testing.assert_array_equal(result.epoch, epoch)
+            np.testing.assert_array_equal(result.epoch_delta, epoch_delta)
+            np.testing.assert_array_equal(result.energy, energy)
+            np.testing.assert_array_equal(result.spin_sector, spin_sector)
+            np.testing.assert_array_equal(result.ssd_id, ssd_id)
+            np.testing.assert_array_equal(result.h_intensities, h_intensities)
+            np.testing.assert_array_equal(result.he4_intensities, he4_intensities)
+            np.testing.assert_array_equal(result.o_intensities, o_intensities)
+            np.testing.assert_array_equal(result.fe_intensities, fe_intensities)
+
+
+
