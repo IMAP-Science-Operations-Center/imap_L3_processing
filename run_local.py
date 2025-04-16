@@ -23,8 +23,6 @@ from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDepen
 from imap_l3_processing.hi.hi_processor import HiProcessor
 from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3SpectralFitDependencies
 from imap_l3_processing.hi.l3.hi_l3_survival_dependencies import HiL3SurvivalDependencies
-from imap_l3_processing.hi.l3.science.survival_probability import HiSurvivalProbabilitySkyMap, \
-    HiSurvivalProbabilityPointingSet, Sensor
 from imap_l3_processing.hit.l3.hit_l3_sectored_dependencies import HITL3SectoredDependencies
 from imap_l3_processing.hit.l3.hit_processor import HitProcessor
 from imap_l3_processing.hit.l3.models import HitL1Data
@@ -402,53 +400,6 @@ class IncludedSensors(enum.Enum):
 def read_glows_survival_probability_data_from_cdf() -> tuple[np.ndarray, np.ndarray]:
     l3e = CDF(str(get_test_data_path("glows/imap_glows_l3e_survival-probabilities-hi_20250324_v001.cdf")))
     return l3e["probability_of_survival"][...][:, 0], l3e["probability_of_survival"][...][:, 1]
-
-
-def survival_correct_l2_map_with_fake_survivals(number_of_days: int, included_sensor: IncludedSensors,
-                                                l2_or_l3_flux: np.ndarray[(EPOCH, LONGITUDE, LATITUDE, ENERGY)]):
-    longitude_spacing = 360 / l2_or_l3_flux.shape[1]
-    latitude_spacing = 180 / l2_or_l3_flux.shape[2]
-    assert longitude_spacing == latitude_spacing
-    spacing_degree = longitude_spacing
-    assert spacing_degree in [2, 4]  # 6 blows up
-
-    # pull out script for generating fake glows CDF or add to existing script
-    map_start_time = datetime(month=4, day=16, year=2025 - 30)
-    pset_time_delta = timedelta(days=1)
-    num_psets = number_of_days
-
-    psets = []
-    for i in range(num_psets):
-        epoch = map_start_time + i * pset_time_delta
-
-        # survival_values = [0.5, 0.75] if i % 2 == 0 else [0.75, 0.5]
-        # sp_strip = np.ravel(np.repeat([survival_values], 180, axis=0)).reshape(1, 1, -1)
-        # sp_strip = np.repeat(1 / (i + 1), 360).reshape(1, 1, -1)
-        # survival_probability = np.repeat(sp_strip, 16, axis=1)
-        # glows_l3e_dataset = create_empty_glows_l3e_dataset(epoch, survival_probability)
-
-        hi45_probability, hi90_probability = read_glows_survival_probability_data_from_cdf()
-
-        if included_sensor in [IncludedSensors.Hi45, IncludedSensors.Combined]:
-            glows_l3e_dataset = create_empty_glows_l3e_dataset(epoch, hi45_probability)
-            l1c_dataset = create_empty_hi_l1c_dataset(epoch, energies=np.geomspace(1, 10000, 23))
-            # exposures=np.full(shape=(1, 23, 3600), fill_value=0.5), )
-            psets.append(HiSurvivalProbabilityPointingSet(
-                l1c_dataset,
-                Sensor.Hi45, glows_l3e_dataset))
-        if included_sensor in [IncludedSensors.Hi90, IncludedSensors.Combined]:
-            glows_l3e_dataset = create_empty_glows_l3e_dataset(epoch, hi90_probability)
-            psets.append(
-                HiSurvivalProbabilityPointingSet(
-                    create_empty_hi_l1c_dataset(epoch, energies=np.geomspace(1, 10000, 23)),
-                    Sensor.Hi90, glows_l3e_dataset))
-
-    survival_probability_map = HiSurvivalProbabilitySkyMap(psets, spacing_degree, SpiceFrame.ECLIPJ2000)
-    survival_dataset = survival_probability_map.to_dataset()['exposure_weighted_survival_probabilities'].values
-    survival_dataset = survival_dataset.transpose(0, 2, 3, 1)
-
-    # return survival_dataset
-    return l2_or_l3_flux / survival_dataset
 
 
 def create_hi_l3_survival_corrected_cdf(survival_dependencies: HiL3SurvivalDependencies, spacing_degree: int) -> str:
