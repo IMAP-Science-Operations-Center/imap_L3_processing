@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from pathlib import Path
 
-from imap_l3_processing.hi.l3.models import HiMapData
+from imap_l3_processing.hi.l3.models import HiMapData, HiIntensityMapData
 from imap_l3_processing.hi.l3.utils import read_hi_l2_data
 from imap_l3_processing.models import UpstreamDataDependency
 from imap_l3_processing.utils import download_dependency
@@ -11,7 +11,7 @@ HI_L3_SPECTRAL_FIT_DESCRIPTOR = "spectral-fit-index"
 
 @dataclass
 class HiL3SpectralFitDependencies:
-    hi_l3_data: HiMapData
+    hi_l3_data: HiIntensityMapData
 
     @classmethod
     def fetch_dependencies(cls, dependencies: list[UpstreamDataDependency]):

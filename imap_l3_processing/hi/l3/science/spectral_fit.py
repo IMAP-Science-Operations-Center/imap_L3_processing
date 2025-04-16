@@ -16,8 +16,8 @@ def spectral_fit(num_epochs, num_lons, num_lats, fluxes, variances, energy):
     for epoch in range(num_epochs):
         for lon in range(num_lons):
             for lat in range(num_lats):
-                flux = fluxes[epoch][lon][lat]
-                variance = variances[epoch][lon][lat]
+                flux = fluxes[epoch, :, lon, lat]
+                variance = variances[epoch, :, lon, lat]
                 flux_and_variance_are_zero = np.equal(flux, 0) & np.equal(variance, 0)
                 flux_or_error_is_invalid = np.isnan(flux) | np.isnan(variance) | flux_and_variance_are_zero
                 flux = flux[~flux_or_error_is_invalid]

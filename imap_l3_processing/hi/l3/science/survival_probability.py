@@ -5,8 +5,6 @@ import xarray as xr
 from imap_processing.ena_maps.ena_maps import RectangularSkyMap, PointingSet
 from imap_processing.ena_maps.utils.coordinates import CoordNames
 from imap_processing.spice import geometry
-from imap_processing.spice.time import TTJ2000_EPOCH
-from spiceypy import spiceypy
 
 from imap_l3_processing.hi.l3.models import HiL1cData, GlowsL3eData
 
@@ -70,7 +68,7 @@ class HiSurvivalProbabilityPointingSet(PointingSet):
                 CoordNames.TIME.value: l1c_dataset.epoch_j2000,
                 CoordNames.ENERGY.value: l1c_dataset.esa_energy_step,
                 CoordNames.AZIMUTH_L1C.value: self.azimuths,
-            }
+            },
         )
 
 

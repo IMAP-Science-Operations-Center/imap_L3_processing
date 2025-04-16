@@ -3,7 +3,6 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 import numpy as np
-from spacepy import pycdf
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.hit.l3 import models
@@ -85,45 +84,42 @@ class TestModels(CdfModelTestCase):
                                                  dac_value=dac_value, )
 
         expected_variables = [
-            DataProductVariable(models.EPOCH_VAR_NAME, epoch, cdf_data_type=pycdf.const.CDF_TIME_TT2000),
-            DataProductVariable(models.EPOCH_DELTA_VAR_NAME, 1, record_varying=False),
-            DataProductVariable(models.CHARGE_VAR_NAME, charge, cdf_data_type=pycdf.const.CDF_FLOAT),
-            DataProductVariable(models.ENERGY_VAR_NAME, energy, cdf_data_type=pycdf.const.CDF_FLOAT),
-            DataProductVariable(models.E_DELTA_VAR_NAME, e_delta, cdf_data_type=pycdf.const.CDF_FLOAT),
-            DataProductVariable(models.E_PRIME_VAR_NAME, e_prime, cdf_data_type=pycdf.const.CDF_FLOAT),
-            DataProductVariable(models.DETECTED_RANGE_VAR_NAME, detected_range, cdf_data_type=pycdf.const.CDF_UINT1),
-            DataProductVariable(models.PARTICLE_ID_VAR_NAME, particle, cdf_data_type=pycdf.const.CDF_UINT2),
-            DataProductVariable(models.PRIORITY_BUFFER_NUMBER_VAR_NAME, priority_buffer_number,
-                                cdf_data_type=pycdf.const.CDF_UINT1),
-            DataProductVariable(models.LATENCY_VAR_NAME, latency,
-                                cdf_data_type=pycdf.const.CDF_UINT1),
-            DataProductVariable(models.STIM_TAG_VAR_NAME, stim_tag, cdf_data_type=pycdf.const.CDF_INT1),
-            DataProductVariable(models.LONG_EVENT_FLAG_VAR_NAME, long_event_flag, cdf_data_type=pycdf.const.CDF_INT1),
-            DataProductVariable(models.HAZ_TAG_VAR_NAME, haz_tag, cdf_data_type=pycdf.const.CDF_INT1),
-            DataProductVariable(models.A_B_SIDE_VAR_NAME, a_b_side, cdf_data_type=pycdf.const.CDF_INT1),
-            DataProductVariable(models.HAS_UNREAD_FLAG_VAR_NAME, has_unread_adcs, cdf_data_type=pycdf.const.CDF_INT1),
-            DataProductVariable(models.CULLING_FLAG_VAR_NAME, culling_flag, cdf_data_type=pycdf.const.CDF_INT1),
-            DataProductVariable(models.PHA_VALUE_VAR_NAME, pha_value,
-                                cdf_data_type=pycdf.const.CDF_UINT2),
-            DataProductVariable(models.ENERGY_AT_DETECTOR_VAR_NAME, energy_at_detector,
-                                cdf_data_type=pycdf.const.CDF_FLOAT),
-            DataProductVariable(models.IS_LOW_GAIN_VAR_NAME, is_low_gain, cdf_data_type=pycdf.const.CDF_INT1),
-            DataProductVariable(models.DETECTOR_FLAGS_VAR_NAME, detector_flags, cdf_data_type=pycdf.const.CDF_UINT2),
-            DataProductVariable(models.DEINDEX_VAR_NAME, deindex,
-                                cdf_data_type=pycdf.const.CDF_UINT2),
-            DataProductVariable(models.EPINDEX_VAR_NAME, epindex,
-                                cdf_data_type=pycdf.const.CDF_UINT2),
-            DataProductVariable(models.STIM_GAIN_VAR_NAME, stim_gain, cdf_data_type=pycdf.const.CDF_INT1),
-            DataProductVariable(models.A_L_STIM_VAR_NAME, a_l_stim, cdf_data_type=pycdf.const.CDF_INT1),
-            DataProductVariable(models.STIM_STEP_VAR_NAME, stim_step,
-                                cdf_data_type=pycdf.const.CDF_UINT1),
-            DataProductVariable(models.DAC_VALUE_VAR_NAME, dac_value,
-                                cdf_data_type=pycdf.const.CDF_UINT2)
+            DataProductVariable(models.EPOCH_VAR_NAME, epoch),
+            DataProductVariable(models.EPOCH_DELTA_VAR_NAME, 1),
+            DataProductVariable(models.CHARGE_VAR_NAME, charge),
+            DataProductVariable(models.ENERGY_VAR_NAME, energy),
+            DataProductVariable(models.E_DELTA_VAR_NAME, e_delta),
+            DataProductVariable(models.E_PRIME_VAR_NAME, e_prime),
+            DataProductVariable(models.DETECTED_RANGE_VAR_NAME, detected_range),
+            DataProductVariable(models.PARTICLE_ID_VAR_NAME, particle),
+            DataProductVariable(models.PRIORITY_BUFFER_NUMBER_VAR_NAME, priority_buffer_number),
+            DataProductVariable(models.LATENCY_VAR_NAME, latency),
+            DataProductVariable(models.STIM_TAG_VAR_NAME, stim_tag),
+            DataProductVariable(models.LONG_EVENT_FLAG_VAR_NAME, long_event_flag),
+            DataProductVariable(models.HAZ_TAG_VAR_NAME, haz_tag),
+            DataProductVariable(models.A_B_SIDE_VAR_NAME, a_b_side),
+            DataProductVariable(models.HAS_UNREAD_FLAG_VAR_NAME, has_unread_adcs),
+            DataProductVariable(models.CULLING_FLAG_VAR_NAME, culling_flag),
+            DataProductVariable(models.PHA_VALUE_VAR_NAME, pha_value),
+            DataProductVariable(models.ENERGY_IN_DETECTOR_VAR_NAME, energy_at_detector),
+            DataProductVariable(models.IS_LOW_GAIN_VAR_NAME, is_low_gain),
+            DataProductVariable(models.DETECTOR_FLAGS_VAR_NAME, detector_flags),
+            DataProductVariable(models.DEINDEX_VAR_NAME, deindex),
+            DataProductVariable(models.EPINDEX_VAR_NAME, epindex),
+            DataProductVariable(models.STIM_GAIN_VAR_NAME, stim_gain),
+            DataProductVariable(models.A_L_STIM_VAR_NAME, a_l_stim),
+            DataProductVariable(models.STIM_STEP_VAR_NAME, stim_step),
+            DataProductVariable(models.DAC_VALUE_VAR_NAME, dac_value),
+            DataProductVariable(models.DETECTOR_ID_VAR_NAME, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
+                                                              17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
+                                                              31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44,
+                                                              45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58,
+                                                              59, 60, 61, 62, 63]),
         ]
 
         actual_variables = direct_event.to_data_product_variables()
 
-        self.assertEqual(26, len(actual_variables))
+        self.assertEqual(27, len(actual_variables))
         for expected_variable, actual_variable in zip(expected_variables, actual_variables):
             self.assert_variable_attributes(actual_variable, expected_variable.value, expected_variable.name,
                                             expected_variable.cdf_data_type, expected_variable.record_varying)
