@@ -348,7 +348,7 @@ class TestImapL3DataProcessor(TestCase):
                                                 expected_input_metadata)
         mock_processor_class.return_value.process.assert_called()
 
-    @patch('imap_l3_data_processor.CodiceProcessor')
+    @patch('imap_l3_data_processor.CodiceHiProcessor')
     @patch('imap_l3_data_processor.argparse')
     @patch('imap_l3_data_processor.ProcessingInputCollection')
     def test_runs_codice_processor_when_instrument_argument_is_codice(self, mock_processing_input_collection,

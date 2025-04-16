@@ -4,8 +4,8 @@ from unittest.mock import patch, sentinel, Mock
 
 import numpy as np
 
-from imap_l3_processing.codice.l3.hi.codice_processor import CodiceProcessor
-from imap_l3_processing.codice.l3.hi.direct_event.codice_l3_dependencies import CodiceL3Dependencies
+from imap_l3_processing.codice.l3.hi.codice_hi_processor import CodiceHiProcessor
+from imap_l3_processing.codice.l3.hi.direct_event.codice_hi_l3_dependencies import CodiceHiL3Dependencies
 from imap_l3_processing.codice.l3.hi.direct_event.science.tof_lookup import TOFLookup, EnergyPerNuc
 from imap_l3_processing.codice.l3.hi.pitch_angle.codice_pitch_angle_dependencies import CodicePitchAngleDependencies
 from imap_l3_processing.codice.l3.hi.models import PriorityEventL2, CodiceL2HiData, CodiceHiL2SectoredIntensitiesData
@@ -13,11 +13,11 @@ from imap_l3_processing.models import InputMetadata, MagL1dData
 from tests.test_helpers import NumpyArrayMatcher
 
 
-class TestCodiceProcessor(unittest.TestCase):
-    @patch("imap_l3_processing.codice.l3.hi.codice_processor.CodiceL3Dependencies.fetch_dependencies")
-    @patch("imap_l3_processing.codice.l3.hi.codice_processor.CodiceProcessor.process_l3a")
-    @patch("imap_l3_processing.codice.l3.hi.codice_processor.save_data")
-    @patch("imap_l3_processing.codice.l3.hi.codice_processor.upload")
+class TestCodiceHiProcessor(unittest.TestCase):
+    @patch("imap_l3_processing.codice.l3.hi.codice_hi_processor.CodiceHiL3Dependencies.fetch_dependencies")
+    @patch("imap_l3_processing.codice.l3.hi.codice_hi_processor.CodiceHiProcessor.process_l3a")
+    @patch("imap_l3_processing.codice.l3.hi.codice_hi_processor.save_data")
+    @patch("imap_l3_processing.codice.l3.hi.codice_hi_processor.upload")
     def test_process_l3a(self, mock_upload, mock_save_data, mock_process_l3a, mock_fetch_dependencies):
         start_date = datetime(2024, 10, 7, 10, 00, 00)
         end_date = datetime(2024, 10, 8, 10, 00, 00)
@@ -27,7 +27,7 @@ class TestCodiceProcessor(unittest.TestCase):
         mock_expected_cdf = Mock()
         mock_save_data.return_value = mock_expected_cdf
 
-        processor = CodiceProcessor(sentinel.processing_input_collection, input_metadata)
+        processor = CodiceHiProcessor(sentinel.processing_input_collection, input_metadata)
         processor.process()
 
         mock_fetch_dependencies.assert_called_with(sentinel.processing_input_collection)
@@ -35,14 +35,14 @@ class TestCodiceProcessor(unittest.TestCase):
         mock_save_data.assert_called_with(mock_processed_direct_events)
         mock_upload.assert_called_with(mock_expected_cdf)
 
-    @patch("imap_l3_processing.codice.l3.hi.codice_processor.CodiceL3Dependencies.fetch_dependencies")
-    @patch("imap_l3_processing.codice.l3.hi.codice_processor.CodiceProcessor.process_l3a")
+    @patch("imap_l3_processing.codice.l3.hi.codice_hi_processor.CodiceHiL3Dependencies.fetch_dependencies")
+    @patch("imap_l3_processing.codice.l3.hi.codice_hi_processor.CodiceHiProcessor.process_l3a")
     def test_ignores_non_l3_input_metadata(self, mock_process_l3a, mock_fetch_dependencies):
         start_date = datetime(2024, 10, 7, 10, 00, 00)
         end_date = datetime(2024, 10, 8, 10, 00, 00)
         input_metadata = InputMetadata('codice', "l2a", start_date, end_date, 'v02')
 
-        processor = CodiceProcessor(sentinel.processing_input_collection, input_metadata)
+        processor = CodiceHiProcessor(sentinel.processing_input_collection, input_metadata)
         processor.process()
 
         mock_fetch_dependencies.assert_not_called()
@@ -54,9 +54,9 @@ class TestCodiceProcessor(unittest.TestCase):
         l2_data = CodiceL2HiData(epochs, *self.create_priority_events(energies))
         energy_per_nuc_dictionary = {i: EnergyPerNuc(i * 10, i * 100, i * 1000) for i in np.arange(1, 25)}
         tof_lookup = TOFLookup(energy_per_nuc_dictionary)
-        dependencies = CodiceL3Dependencies(tof_lookup=tof_lookup, codice_l2_hi_data=l2_data)
+        dependencies = CodiceHiL3Dependencies(tof_lookup=tof_lookup, codice_l2_hi_data=l2_data)
 
-        processor = CodiceProcessor(Mock(), Mock())
+        processor = CodiceHiProcessor(Mock(), Mock())
         codice_direct_event_product = processor.process_l3a(dependencies)
 
         p0_expected_energy_per_nuc = np.array([[10, 20], [30, 40]])
@@ -146,7 +146,7 @@ class TestCodiceProcessor(unittest.TestCase):
                                     expected_energy_per_nuc=p5_expected_energy_per_nuc[1],
                                     expected_energy_per_nuc_upper=p5_expected_energy_per_nuc[2])
 
-    @patch('imap_l3_processing.codice.l3.hi.codice_processor.calculate_unit_vector')
+    @patch('imap_l3_processing.codice.l3.hi.codice_hi_processor.calculate_unit_vector')
     def test_process_l3b(self, mock_calculate_unit_vector):
         epoch_1 = datetime(2025, 2, 5)
         epoch_2 = datetime(2025, 2, 6)
@@ -189,7 +189,7 @@ class TestCodiceProcessor(unittest.TestCase):
 
         dependencies = CodicePitchAngleDependencies(mag_l1d_data=mag_l1d_data,
                                                     codice_sectored_intensities_data=codice_l2_data)
-        codice_processor = CodiceProcessor(dependencies=Mock(), input_metadata=Mock())
+        codice_processor = CodiceHiProcessor(dependencies=Mock(), input_metadata=Mock())
 
         _ = codice_processor.process_l3b(dependencies=dependencies)
         mock_calculate_unit_vector.assert_called_with(
