@@ -9,7 +9,7 @@ from imap_l3_processing.codice.l3.hi.models import CodiceL2HiData
 
 
 @dataclass
-class CodiceL3Dependencies:
+class CodiceHiL3Dependencies:
     tof_lookup: TOFLookup
     codice_l2_hi_data: CodiceL2HiData
 

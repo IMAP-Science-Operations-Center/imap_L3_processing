@@ -2,7 +2,7 @@ import numpy as np
 from imap_data_access import upload
 from imap_data_access.processing_input import ProcessingInputCollection
 
-from imap_l3_processing.codice.l3.hi.direct_event.codice_l3_dependencies import CodiceL3Dependencies
+from imap_l3_processing.codice.l3.hi.direct_event.codice_hi_l3_dependencies import CodiceHiL3Dependencies
 from imap_l3_processing.codice.l3.hi.models import CodiceL3HiDirectEvents, CodiceL3HiDirectEventsBuilder
 from imap_l3_processing.codice.l3.hi.pitch_angle.codice_pitch_angle_dependencies import CodicePitchAngleDependencies
 from imap_l3_processing.models import InputMetadata
@@ -11,18 +11,18 @@ from imap_l3_processing.processor import Processor
 from imap_l3_processing.utils import save_data
 
 
-class CodiceProcessor(Processor):
+class CodiceHiProcessor(Processor):
     def __init__(self, dependencies: ProcessingInputCollection, input_metadata: InputMetadata):
         super().__init__(dependencies, input_metadata)
 
     def process(self):
         if self.input_metadata.data_level == "l3a":
-            dependencies = CodiceL3Dependencies.fetch_dependencies(self.dependencies)
+            dependencies = CodiceHiL3Dependencies.fetch_dependencies(self.dependencies)
             processed_codice_direct_events = self.process_l3a(dependencies)
             saved_cdf = save_data(processed_codice_direct_events)
             upload(saved_cdf)
 
-    def process_l3a(self, dependencies: CodiceL3Dependencies) -> CodiceL3HiDirectEvents:
+    def process_l3a(self, dependencies: CodiceHiL3Dependencies) -> CodiceL3HiDirectEvents:
         tof_lookup = dependencies.tof_lookup
         l2_data = dependencies.codice_l2_hi_data
 
