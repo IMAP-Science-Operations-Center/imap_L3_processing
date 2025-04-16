@@ -1,5 +1,5 @@
 imap_hit_l3_direct-events:
   Data_level: "3"
   Instrument_type: Particles (space)
-  Data_type: L3_SCI>Level-3 Science data
+  Data_type: L3_direct-events>Level-3 Science data
   Logical_source_description: HIT Instrument Level-3 Direct Event Science Data

@@ -242,7 +242,7 @@ class TestUtils(unittest.TestCase):
     @patch("imap_l3_processing.glows.l3bc.utils.json")
     @patch("imap_l3_processing.glows.l3bc.utils.ZipFile")
     def test_archive_dependencies(self, mock_zip, mock_json):
-        expected_filepath = TEMP_CDF_FOLDER_PATH / "imap_glows_l3b-archive-zip_20250314_v001.cdf"
+        expected_filepath = TEMP_CDF_FOLDER_PATH / "imap_glows_l3b-archive_20250314_v001.zip"
         expected_json_filename = "cr_to_process.json"
 
         dependencies = GlowsInitializerAncillaryDependencies(uv_anisotropy_path="uv_anisotropy",

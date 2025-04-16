@@ -3,7 +3,6 @@ from __future__ import annotations
 import enum
 import os
 import sys
-import uuid
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Optional, TypeVar
@@ -235,7 +234,7 @@ def create_hit_direct_event_cdf():
         data_level="l3",
         start_date=datetime.now(),
         end_date=datetime.now() + timedelta(days=1),
-        version=str(uuid.uuid4()),
+        version="v001",
         descriptor="direct-events"
     )
     processor = HitProcessor(None, input_metadata)
