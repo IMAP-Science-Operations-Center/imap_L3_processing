@@ -64,6 +64,10 @@ HE4_ENERGY_LABEL_VAR_NAME = "he4_energy_label"
 CNO_ENERGY_LABEL_VAR_NAME = "cno_energy_label"
 NE_MG_SI_ENERGY_LABEL_VAR_NAME = "nemgsi_energy_label"
 IRON_ENERGY_LABEL_VAR_NAME = "fe_energy_label"
+DECLINATION_INDEX_VAR_NAME = "declination_idx"
+AZIMUTH_INDEX_VAR_NAME = "azimuth_idx"
+DECLINATION_INDEX_LABEL_VAR_NAME = "declination_idx_label"
+AZIMUTH_INDEX_LABEL_VAR_NAME = "azimuth_idx_label"
 
 
 @dataclass
@@ -192,4 +196,10 @@ class HitPitchAngleDataProduct(DataProduct):
                                 [f"NeMgSi Energy Label {str(i + 1)}" for i in range(len(self.ne_mg_si_energies))]),
             DataProductVariable(IRON_ENERGY_LABEL_VAR_NAME,
                                 [f"Fe Energy Label {str(i + 1)}" for i in range(len(self.iron_energies))]),
+            DataProductVariable(DECLINATION_INDEX_VAR_NAME, list(range(0, self.measurement_pitch_angle.shape[1]))),
+            DataProductVariable(AZIMUTH_INDEX_VAR_NAME, list(range(0, self.measurement_pitch_angle.shape[2]))),
+            DataProductVariable(DECLINATION_INDEX_LABEL_VAR_NAME, [f"Declination Index Label {i}" for i in
+                                                                   range(0, self.measurement_pitch_angle.shape[1])]),
+            DataProductVariable(AZIMUTH_INDEX_LABEL_VAR_NAME, [f"Azimuth Index Label {i}" for i in
+                                                               range(0, self.measurement_pitch_angle.shape[2])]),
         ]

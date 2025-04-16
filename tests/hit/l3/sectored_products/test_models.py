@@ -1,6 +1,6 @@
 from datetime import timedelta
 from unittest import TestCase
-from unittest.mock import sentinel
+from unittest.mock import sentinel, Mock
 
 import numpy as np
 
@@ -19,6 +19,9 @@ class TestHitPitchAngleDataProduct(TestCase):
         cno_energy = np.array([13, 14, 15, 16])
         nemgsi_energy = np.array([17, 18, 19, 20])
         fe_energy = np.array([21, 22, 23, 24])
+
+        mock_measurement_pitch_angle = Mock()
+        mock_measurement_pitch_angle.shape = (1, 8, 15)
 
         data = HitPitchAngleDataProduct(sentinel.input_meta_data,
                                         sentinel.epochs,
@@ -72,7 +75,7 @@ class TestHitPitchAngleDataProduct(TestCase):
                                         fe_energy,
                                         sentinel.iron_energy_delta_plus,
                                         sentinel.iron_energy_delta_minus,
-                                        sentinel.measurement_pitch_angle,
+                                        mock_measurement_pitch_angle,
                                         sentinel.measurement_gyrophase
                                         )
 
@@ -130,7 +133,7 @@ class TestHitPitchAngleDataProduct(TestCase):
             DataProductVariable("fe_energy", fe_energy),
             DataProductVariable("fe_energy_delta_plus", sentinel.iron_energy_delta_plus),
             DataProductVariable("fe_energy_delta_minus", sentinel.iron_energy_delta_minus),
-            DataProductVariable("measurement_pitch_angle", sentinel.measurement_pitch_angle),
+            DataProductVariable("measurement_pitch_angle", mock_measurement_pitch_angle),
             DataProductVariable("measurement_gyrophase", sentinel.measurement_gyrophase),
             DataProductVariable("pitch_angle_label",
                                 ["Pitch Angle Label 1", "Pitch Angle Label 2", "Pitch Angle Label 3",
@@ -148,6 +151,19 @@ class TestHitPitchAngleDataProduct(TestCase):
                                  "NeMgSi Energy Label 4"]),
             DataProductVariable("fe_energy_label",
                                 ["Fe Energy Label 1", "Fe Energy Label 2", "Fe Energy Label 3", "Fe Energy Label 4"]),
+            DataProductVariable("declination_idx", [0, 1, 2, 3, 4, 5, 6, 7]),
+            DataProductVariable("azimuth_idx", [0, 1, 2, 3, 4, 5, 6, 7,
+                                                8, 9, 10, 11, 12, 13, 14]),
+            DataProductVariable("declination_idx_label",
+                                ["Declination Index Label 0", "Declination Index Label 1", "Declination Index Label 2",
+                                 "Declination Index Label 3", "Declination Index Label 4", "Declination Index Label 5",
+                                 "Declination Index Label 6", "Declination Index Label 7"]),
+            DataProductVariable("azimuth_idx_label",
+                                ['Azimuth Index Label 0', 'Azimuth Index Label 1', 'Azimuth Index Label 2',
+                                 'Azimuth Index Label 3', 'Azimuth Index Label 4', 'Azimuth Index Label 5',
+                                 'Azimuth Index Label 6', 'Azimuth Index Label 7', 'Azimuth Index Label 8',
+                                 'Azimuth Index Label 9', 'Azimuth Index Label 10', 'Azimuth Index Label 11',
+                                 'Azimuth Index Label 12', 'Azimuth Index Label 13', 'Azimuth Index Label 14'])
         ]
 
         self.assertEqual(expected_data_product_variables, data_product_variables)

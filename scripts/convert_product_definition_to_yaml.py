@@ -88,7 +88,7 @@ def process_csv():
     yaml_file_name = f"imap_l3_processing/cdf/config/{filename_without_extension}.yaml"
     if os.path.isfile(yaml_file_name):
         if input(
-                "The Yaml already exists in the config folder! Are your sure your want to overwrite the other pairs work? [Y/n]") != "n":
+                "The Yaml already exists in the config folder! Are you sure you want to overwrite the other pairs work? [Y/n]") != "n":
             os.remove(yaml_file_name)
 
     with open(yaml_file_name, "w") as yaml_file:
