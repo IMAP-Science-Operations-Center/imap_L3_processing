@@ -4,14 +4,14 @@ from unittest.mock import patch, call, sentinel
 import imap_data_access
 from imap_data_access.processing_input import ProcessingInputCollection, ScienceInput
 
-from imap_l3_processing.codice.l3.pitch_angle.codice_pitch_angle_dependencies import CodicePitchAngleDependencies
+from imap_l3_processing.codice.l3.hi.pitch_angle.codice_pitch_angle_dependencies import CodicePitchAngleDependencies
 
 
 class TestCodicePitchAngleDependencies(unittest.TestCase):
 
     @patch(
-        "imap_l3_processing.codice.l3.pitch_angle.codice_pitch_angle_dependencies.CodicePitchAngleDependencies.from_file_paths")
-    @patch("imap_l3_processing.codice.l3.pitch_angle.codice_pitch_angle_dependencies.download")
+        "imap_l3_processing.codice.l3.hi.pitch_angle.codice_pitch_angle_dependencies.CodicePitchAngleDependencies.from_file_paths")
+    @patch("imap_l3_processing.codice.l3.hi.pitch_angle.codice_pitch_angle_dependencies.download")
     def test_fetch_dependencies(self, mock_download, mock_from_files):
         expected_codice_science_file_download_path = "imap/codice/l2/2010/01/imap_codice_l2_sectored-intensities_20100105_v010.cdf"
         codice_sectored_intensities_input_file_name = "imap_codice_l2_sectored-intensities_20100105_v010.cdf"
@@ -41,9 +41,9 @@ class TestCodicePitchAngleDependencies(unittest.TestCase):
         mock_from_files.assert_called_with(expected_mag_science_file_path, expected_codice_science_file_path)
         self.assertEqual(mock_from_files.return_value, dependencies)
 
-    @patch('imap_l3_processing.codice.l3.pitch_angle.codice_pitch_angle_dependencies.read_l1d_mag_data')
+    @patch('imap_l3_processing.codice.l3.hi.pitch_angle.codice_pitch_angle_dependencies.read_l1d_mag_data')
     @patch(
-        'imap_l3_processing.codice.l3.pitch_angle.codice_pitch_angle_dependencies.CodiceHiL2SectoredIntensitiesData.read_from_cdf')
+        'imap_l3_processing.codice.l3.hi.pitch_angle.codice_pitch_angle_dependencies.CodiceHiL2SectoredIntensitiesData.read_from_cdf')
     def test_from_file_paths(self, mock_codice_l2_data, mock_read_mag_data):
         codice_file_path = sentinel.codice_file_path
         mag_file_path = sentinel.mag_file_path

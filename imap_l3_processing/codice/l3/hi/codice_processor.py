@@ -4,7 +4,7 @@ from imap_data_access.processing_input import ProcessingInputCollection
 
 from imap_l3_processing.codice.l3.hi.direct_event.codice_l3_dependencies import CodiceL3Dependencies
 from imap_l3_processing.codice.l3.hi.models import CodiceL3HiDirectEvents, CodiceL3HiDirectEventsBuilder
-from imap_l3_processing.codice.l3.pitch_angle.codice_pitch_angle_dependencies import CodicePitchAngleDependencies
+from imap_l3_processing.codice.l3.hi.pitch_angle.codice_pitch_angle_dependencies import CodicePitchAngleDependencies
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.pitch_angles import calculate_unit_vector
 from imap_l3_processing.processor import Processor

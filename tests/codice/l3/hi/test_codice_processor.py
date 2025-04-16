@@ -7,7 +7,7 @@ import numpy as np
 from imap_l3_processing.codice.l3.hi.codice_processor import CodiceProcessor
 from imap_l3_processing.codice.l3.hi.direct_event.codice_l3_dependencies import CodiceL3Dependencies
 from imap_l3_processing.codice.l3.hi.direct_event.science.tof_lookup import TOFLookup, EnergyPerNuc
-from imap_l3_processing.codice.l3.pitch_angle.codice_pitch_angle_dependencies import CodicePitchAngleDependencies
+from imap_l3_processing.codice.l3.hi.pitch_angle.codice_pitch_angle_dependencies import CodicePitchAngleDependencies
 from imap_l3_processing.codice.l3.hi.models import PriorityEventL2, CodiceL2HiData, CodiceHiL2SectoredIntensitiesData
 from imap_l3_processing.models import InputMetadata, MagL1dData
 from tests.test_helpers import NumpyArrayMatcher

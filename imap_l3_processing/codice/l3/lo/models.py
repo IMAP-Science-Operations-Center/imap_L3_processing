@@ -4,6 +4,24 @@ from pathlib import Path
 from numpy import ndarray
 from spacepy.pycdf import CDF
 
+from imap_l3_processing.models import DataProductVariable
+
+EPOCH_VAR_NAME = "epoch"
+EPOCH_DELTA_VAR_NAME = "epoch_delta"
+H_PARTIAL_DENSITY_VAR_NAME = "h_partial_density"
+HE_PARTIAL_DENSITY_VAR_NAME = "he_partial_density"
+C4_PARTIAL_DENSITY_VAR_NAME = "c4_partial_density"
+C5_PARTIAL_DENSITY_VAR_NAME = "c5_partial_density"
+C6_PARTIAL_DENSITY_VAR_NAME = "c6_partial_density"
+O5_PARTIAL_DENSITY_VAR_NAME = "o5_partial_density"
+O6_PARTIAL_DENSITY_VAR_NAME = "o6_partial_density"
+O7_PARTIAL_DENSITY_VAR_NAME = "o7_partial_density"
+O8_PARTIAL_DENSITY_VAR_NAME = "o8_partial_density"
+MG_PARTIAL_DENSITY_VAR_NAME = "mg_partial_density"
+SI_PARTIAL_DENSITY_VAR_NAME = "si_partial_density"
+FE_LOW_PARTIAL_DENSITY_VAR_NAME = "fe_low_partial_density"
+FE_HIGH_PARTIAL_DENSITY_VAR_NAME = "fe_high_partial_density"
+
 
 @dataclass
 class CodiceLoL2Data:
@@ -49,3 +67,58 @@ class CodiceLoL2Data:
                 fe_low_intensities=cdf["fe_low_intensities"][...],
                 fe_high_intensities=cdf["fe_high_intensities"][...],
             )
+
+    def get_species_intensities(self) -> dict:
+        return {
+            "H+": self.h_intensities,
+            "He++": self.he_intensities,
+            "C+4": self.c4_intensities,
+            "C+5": self.c5_intensities,
+            "C+6": self.c6_intensities,
+            "O+5": self.o5_intensities,
+            "O+6": self.o6_intensities,
+            "O+7": self.o7_intensities,
+            "O+8": self.o8_intensities,
+            "Mg": self.mg_intensities,
+            "Si": self.si_intensities,
+            "Fe (low Q)": self.fe_low_intensities,
+            "Fe (high Q)": self.fe_high_intensities,
+        }
+
+
+@dataclass
+class CodiceLoL3aDataProduct:
+    epoch: ndarray
+    epoch_delta: ndarray
+    h_partial_density: ndarray
+    he_partial_density: ndarray
+    c4_partial_density: ndarray
+    c5_partial_density: ndarray
+    c6_partial_density: ndarray
+    o5_partial_density: ndarray
+    o6_partial_density: ndarray
+    o7_partial_density: ndarray
+    o8_partial_density: ndarray
+    mg_partial_density: ndarray
+    si_partial_density: ndarray
+    fe_low_partial_density: ndarray
+    fe_high_partial_density: ndarray
+
+    def to_data_product_variables(self) -> list[DataProductVariable]:
+        return [
+            DataProductVariable(EPOCH_VAR_NAME, self.epoch),
+            DataProductVariable(EPOCH_DELTA_VAR_NAME, self.epoch_delta),
+            DataProductVariable(H_PARTIAL_DENSITY_VAR_NAME, self.h_partial_density),
+            DataProductVariable(HE_PARTIAL_DENSITY_VAR_NAME, self.he_partial_density),
+            DataProductVariable(C4_PARTIAL_DENSITY_VAR_NAME, self.c4_partial_density),
+            DataProductVariable(C5_PARTIAL_DENSITY_VAR_NAME, self.c5_partial_density),
+            DataProductVariable(C6_PARTIAL_DENSITY_VAR_NAME, self.c6_partial_density),
+            DataProductVariable(O5_PARTIAL_DENSITY_VAR_NAME, self.o5_partial_density),
+            DataProductVariable(O6_PARTIAL_DENSITY_VAR_NAME, self.o6_partial_density),
+            DataProductVariable(O7_PARTIAL_DENSITY_VAR_NAME, self.o7_partial_density),
+            DataProductVariable(O8_PARTIAL_DENSITY_VAR_NAME, self.o8_partial_density),
+            DataProductVariable(MG_PARTIAL_DENSITY_VAR_NAME, self.mg_partial_density),
+            DataProductVariable(SI_PARTIAL_DENSITY_VAR_NAME, self.si_partial_density),
+            DataProductVariable(FE_LOW_PARTIAL_DENSITY_VAR_NAME, self.fe_low_partial_density),
+            DataProductVariable(FE_HIGH_PARTIAL_DENSITY_VAR_NAME, self.fe_high_partial_density),
+        ]
