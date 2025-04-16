@@ -3,7 +3,6 @@ from __future__ import annotations
 import enum
 import os
 import sys
-import uuid
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Optional, TypeVar
@@ -235,7 +234,7 @@ def create_hit_direct_event_cdf():
         data_level="l3",
         start_date=datetime.now(),
         end_date=datetime.now() + timedelta(days=1),
-        version=str(uuid.uuid4()),
+        version="v001",
         descriptor="direct-events"
     )
     processor = HitProcessor(None, input_metadata)
@@ -312,7 +311,7 @@ def run_glows_l3bc():
     }
     l3a_data_folder_path = get_test_data_path('glows/l3a_products')
     l3a_data = []
-    l3a_file_names = [f"imap_glows_l3a_hist_2010010{x}_v001.cdf" for x in (1, 2, 3)]
+    l3a_file_names = [f"imap_glows_l3a_hist_2010010{x}-repoint0000{x}_v001.cdf" for x in (1, 2, 3)]
     for name in l3a_file_names:
         l3a_data.append(create_glows_l3a_dictionary_from_cdf(l3a_data_folder_path / name))
 
@@ -558,6 +557,6 @@ if __name__ == "__main__":
 
     if "hi" in sys.argv:
         dependencies = HiL3SpectralFitDependencies.from_file_paths(
-            get_test_data_path("hi/validation/hi45-zirnstein-mondel-6months.cdf")
+            get_test_data_path("hi/fake_l2_maps/hi45-zirnstein-mondel-6months.cdf")
         )
         print(create_hi_cdf(dependencies))

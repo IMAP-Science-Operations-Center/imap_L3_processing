@@ -10,6 +10,8 @@ from spacepy.pycdf import CDF
 from imap_l3_processing.constants import FIVE_MINUTES_IN_NANOSECONDS
 from imap_l3_processing.hi.l3.utils import read_hi_l2_data, read_hi_l1c_data, read_glows_l3e_data
 from tests.test_helpers import get_test_data_folder
+from imap_processing.ena_maps.utils.spatial_utils import build_solid_angle_map
+from imap_l3_processing.constants import FIVE_MINUTES_IN_NANOSECONDS, ONE_SECOND_IN_NANOSECONDS, SECONDS_PER_DAY
 
 
 class TestUtils(unittest.TestCase):
@@ -27,31 +29,48 @@ class TestUtils(unittest.TestCase):
         with CDF(pathname, '') as cdf:
             cdf.col_major(True)
 
-            epoch = np.array([datetime(2000, 1, 1)])
-            bins = np.arange(23)
-            bin_boundaries = np.repeat(np.arange(23), 2)
-            counts = rng.random((2, 180, 90, 23))
-            counts_uncertainty = rng.random((2, 180, 90, 23))
-            epoch_delta = np.array([FIVE_MINUTES_IN_NANOSECONDS])
-            exposure = rng.random((2, 180, 90))
-            flux = rng.random((2, 180, 90, 23))
-            lat = np.arange(90)
-            lon = np.arange(180)
-            sensitivity = rng.random((2, 180, 90, 23))
-            variance = rng.random((2, 180, 90, 23))
+            ena_intensity = rng.random((1, 9, 90, 45))
+            energy = rng.random(9)
+            energy_delta_plus = rng.random(9)
+            energy_delta_minus = rng.random(9)
+            energy_label = energy.astype(str)
+            ena_intensity_stat_unc = rng.random(ena_intensity.shape)
+            ena_intensity_sys_err = rng.random(ena_intensity.shape)
 
-            cdf["Epoch"] = epoch
-            cdf.new("bin", bins, recVary=False)
-            cdf.new("bin_boundaries", bin_boundaries, recVary=False)
-            cdf["counts"] = counts
-            cdf["counts_uncertainty"] = counts_uncertainty
-            cdf["epoch_delta"] = epoch_delta
-            cdf["exposure"] = exposure
-            cdf["flux"] = flux
-            cdf.new("lat", lat, recVary=False)
-            cdf.new("lon", lon, recVary=False)
-            cdf["sensitivity"] = sensitivity
-            cdf["variance"] = variance
+            epoch = np.array([datetime.now()])
+            epoch_delta = np.array([FIVE_MINUTES_IN_NANOSECONDS])
+            exposure = np.full(ena_intensity.shape[:-1], 1.0)
+            lat = np.arange(-88.0, 92.0, 4.0)
+            lat_delta = np.full(lat.shape, 2.0)
+            lat_label = [f"{x} deg" for x in lat]
+            lon = np.arange(0.0, 360.0, 4.0)
+            lon_delta = np.full(lon.shape, 2.0)
+            lon_label = [f"{x} deg" for x in lon]
+
+            obs_date = np.full(ena_intensity.shape, datetime.now())
+            obs_date_range = np.full(ena_intensity.shape, ONE_SECOND_IN_NANOSECONDS * SECONDS_PER_DAY * 2)
+            solid_angle = build_solid_angle_map(4)
+            solid_angle = solid_angle[np.newaxis, ...]
+
+            cdf.new("Epoch", epoch)
+            cdf.new("energy", energy, recVary=False)
+            cdf.new("latitude", lat, recVary=False)
+            cdf.new("latitude_delta", lat_delta, recVary=False)
+            cdf.new("latitude_label", lat_label, recVary=False)
+            cdf.new("longitude", lon, recVary=False)
+            cdf.new("longitude_delta", lon_delta, recVary=False)
+            cdf.new("longitude_label", lon_label, recVary=False)
+            cdf.new("ena_intensity", ena_intensity, recVary=True)
+            cdf.new("ena_intensity_stat_unc", ena_intensity_stat_unc, recVary=True)
+            cdf.new("ena_intensity_sys_err", ena_intensity_sys_err, recVary=True)
+            cdf.new("exposure_factor", exposure, recVary=True)
+            cdf.new("obs_date", obs_date, recVary=True)
+            cdf.new("obs_date_range", obs_date_range, recVary=True)
+            cdf.new("solid_angle", solid_angle, recVary=True)
+            cdf.new("epoch_delta", epoch_delta, recVary=True)
+            cdf.new("energy_delta_plus", energy_delta_plus, recVary=False)
+            cdf.new("energy_delta_minus", energy_delta_minus, recVary=False)
+            cdf.new("energy_label", energy_label, recVary=False)
 
             for var in cdf:
                 cdf[var].attrs['FILLVAL'] = 1000000
@@ -61,34 +80,50 @@ class TestUtils(unittest.TestCase):
                 result = read_hi_l2_data(path)
 
                 np.testing.assert_array_equal(epoch, result.epoch)
-                np.testing.assert_array_equal(bins, result.energy)
-                np.testing.assert_array_equal(bin_boundaries, result.energy_deltas)
-                np.testing.assert_array_equal(counts, result.counts)
-                np.testing.assert_array_equal(counts_uncertainty, result.counts_uncertainty)
                 np.testing.assert_array_equal(epoch_delta, result.epoch_delta)
-                np.testing.assert_array_equal(exposure, result.exposure)
-                np.testing.assert_array_equal(flux, result.flux)
-                np.testing.assert_array_equal(lat, result.lat)
-                np.testing.assert_array_equal(lon, result.lon)
-                np.testing.assert_array_equal(sensitivity, result.sensitivity)
-                np.testing.assert_array_equal(variance, result.variance)
+                np.testing.assert_array_equal(energy, result.energy)
+                np.testing.assert_array_equal(energy_delta_plus, result.energy_delta_plus)
+                np.testing.assert_array_equal(energy_delta_minus, result.energy_delta_minus)
+                np.testing.assert_array_equal(energy_label, result.energy_label)
+                np.testing.assert_array_equal(lat, result.latitude)
+                np.testing.assert_array_equal(lat_delta, result.latitude_delta)
+                np.testing.assert_array_equal(lat_label, result.latitude_label)
+                np.testing.assert_array_equal(lon, result.longitude)
+                np.testing.assert_array_equal(lon_delta, result.longitude_delta)
+                np.testing.assert_array_equal(lon_label, result.longitude_label)
+                np.testing.assert_array_equal(ena_intensity, result.ena_intensity)
+                np.testing.assert_array_equal(ena_intensity_stat_unc, result.ena_intensity_stat_unc)
+                np.testing.assert_array_equal(ena_intensity_sys_err, result.ena_intensity_sys_err)
+                np.testing.assert_array_equal(exposure, result.exposure_factor)
+                np.testing.assert_array_equal(obs_date, result.obs_date)
+                np.testing.assert_array_equal(obs_date_range, result.obs_date_range)
+                np.testing.assert_array_equal(solid_angle, result.solid_angle)
 
     def test_fill_values_create_nan_data(self):
-        path = get_test_data_folder() / 'hi' / 'l2_map_with_fill_values.cdf'
+        path = get_test_data_folder() / 'hi' / 'fake_l2_maps' / 'l2_map_with_fill_values.cdf'
         result = read_hi_l2_data(path)
 
         with CDF(str(path)) as cdf:
-            np.testing.assert_array_equal(result.epoch, cdf['Epoch'])
-            np.testing.assert_array_equal(result.energy, cdf['bin'])
-            np.testing.assert_array_equal(result.counts, np.full_like(cdf['counts'], np.nan))
-            np.testing.assert_array_equal(result.counts_uncertainty, np.full_like(cdf['counts_uncertainty'], np.nan))
-            np.testing.assert_array_equal(result.epoch_delta, cdf['epoch_delta'])
-            np.testing.assert_array_equal(result.exposure, np.full_like(cdf['exposure'], np.nan))
-            np.testing.assert_array_equal(result.flux, np.full_like(cdf['flux'], np.nan))
-            np.testing.assert_array_equal(result.lat, cdf['lat'])
-            np.testing.assert_array_equal(result.lon, cdf['lon'])
-            np.testing.assert_array_equal(result.sensitivity, np.full_like(cdf['sensitivity'], np.nan))
-            np.testing.assert_array_equal(result.variance, np.full_like(cdf['variance'], np.nan))
+            np.testing.assert_array_equal(result.epoch, cdf["Epoch"], )
+
+            self.assertTrue(np.all(result.epoch_delta.mask))
+            self.assertTrue(np.all(result.obs_date.mask))
+            self.assertTrue(np.all(result.obs_date_range.mask))
+
+            np.testing.assert_array_equal(result.energy, np.full_like(cdf["energy"], np.nan))
+            np.testing.assert_array_equal(result.energy_delta_plus, np.full_like(cdf["energy_delta_plus"], np.nan))
+            np.testing.assert_array_equal(result.energy_delta_minus, np.full_like(cdf["energy_delta_minus"], np.nan))
+            np.testing.assert_array_equal(result.latitude, np.full_like(cdf["latitude"], np.nan))
+            np.testing.assert_array_equal(result.latitude_delta, np.full_like(cdf["latitude_delta"], np.nan))
+            np.testing.assert_array_equal(result.longitude, np.full_like(cdf["longitude"], np.nan))
+            np.testing.assert_array_equal(result.longitude_delta, np.full_like(cdf["longitude_delta"], np.nan))
+            np.testing.assert_array_equal(result.ena_intensity, np.full_like(cdf["ena_intensity"], np.nan))
+            np.testing.assert_array_equal(result.ena_intensity_stat_unc,
+                                          np.full_like(cdf["ena_intensity_stat_unc"], np.nan))
+            np.testing.assert_array_equal(result.ena_intensity_sys_err,
+                                          np.full_like(cdf["ena_intensity_sys_err"], np.nan))
+            np.testing.assert_array_equal(result.exposure_factor, np.full_like(cdf["exposure_factor"], np.nan))
+            np.testing.assert_array_equal(result.solid_angle, np.full_like(cdf["solid_angle"], np.nan))
 
     def test_read_l1c_data(self):
         rng = np.random.default_rng()
