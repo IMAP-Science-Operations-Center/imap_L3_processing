@@ -1,6 +1,6 @@
 imap_hi_l3_spectral-fit-index:
-  Data_level: 3
-  Data_type: L3_SFI>Level-3 Spectral Fit Index
+  Data_level: "3"
+  Data_type: L3_spectral-fit-index>Level-3 Spectral Fit Index
   Logical_source: imap_hi_l3_spectral-fit-index
   Logical_source_description: IMAP-Hi Instrument Level-3 Spectral Fit Index.
 

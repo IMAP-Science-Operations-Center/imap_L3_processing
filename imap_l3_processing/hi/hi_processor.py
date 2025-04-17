@@ -75,7 +75,8 @@ class HiProcessor(Processor):
         map_descriptor = parse_map_descriptor(self.input_metadata.descriptor)
         pointing_sets = []
         for hi_l1c, glows_l3e in combined_glows_hi:
-            pointing_sets.append(HiSurvivalProbabilityPointingSet(hi_l1c, map_descriptor.sensor, glows_l3e))
+            pointing_sets.append(HiSurvivalProbabilityPointingSet(hi_l1c, map_descriptor.sensor, glows_l3e,
+                                                                  hi_survival_probabilities_dependencies.l2_data.energy))
 
         hi_survival_sky_map = HiSurvivalProbabilitySkyMap(pointing_sets, map_descriptor.grid_size,
                                                           SpiceFrame.ECLIPJ2000)

@@ -1,3 +1,4 @@
+import os
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -32,8 +33,9 @@ class CodiceLoL3aDependencies:
             download_dependency_from_path(file_path)
 
         # TODO: get the actual path from instrument team/algorithm doc
-        test_mpc_lookup_path = test_helpers.get_test_data_path(r'codice\test_mass_per_charge_lookup.csv')
-        test_esa_step_lookup_path = test_helpers.get_test_data_path(r'codice\esa_step_lookup.csv')
+        test_mpc_lookup_path = test_helpers.get_test_data_path(
+            os.path.join('codice', 'test_mass_per_charge_lookup.csv'))
+        test_esa_step_lookup_path = test_helpers.get_test_data_path(os.path.join('codice', 'esa_step_lookup.csv'))
         return cls.from_file_paths(science_file_paths[0], test_mpc_lookup_path, test_esa_step_lookup_path)
 
     @classmethod
