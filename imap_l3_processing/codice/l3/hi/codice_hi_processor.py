@@ -4,10 +4,8 @@ import numpy as np
 from imap_data_access import upload
 from imap_data_access.processing_input import ProcessingInputCollection
 
-from imap_l3_processing.codice.l3.hi.direct_event.codice_l3_dependencies import CodiceL3Dependencies
-from imap_l3_processing.codice.l3.hi.models import CodiceL3HiDirectEvents, CodiceL3HiDirectEventsBuilder, \
-    CodiceHiL3PitchAngleDataProduct
 from imap_l3_processing.codice.l3.hi.direct_event.codice_hi_l3_dependencies import CodiceHiL3Dependencies
+from imap_l3_processing.codice.l3.hi.models import CodiceHiL3PitchAngleDataProduct
 from imap_l3_processing.codice.l3.hi.models import CodiceL3HiDirectEvents, CodiceL3HiDirectEventsBuilder
 from imap_l3_processing.codice.l3.hi.pitch_angle.codice_pitch_angle_dependencies import CodicePitchAngleDependencies
 from imap_l3_processing.hit.l3.sectored_products.science.sectored_products_algorithms import \
