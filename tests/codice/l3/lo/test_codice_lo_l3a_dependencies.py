@@ -1,3 +1,4 @@
+import os
 import unittest
 from unittest.mock import patch, call, sentinel
 
@@ -5,7 +6,6 @@ import imap_data_access
 from imap_data_access.processing_input import ProcessingInputCollection, ScienceInput, AncillaryInput
 
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_dependencies import CodiceLoL3aDependencies
-from tests import test_helpers
 from tests.test_helpers import get_test_data_path
 
 
@@ -51,8 +51,8 @@ class TestCodiceLoL3aDependencies(unittest.TestCase):
         ])
 
         # TODO: get rid of test path once the algorithm doc is updated
-        test_mass_per_charge_lookup_path = get_test_data_path(r'codice\test_mass_per_charge_lookup.csv')
-        test_esa_lookup_path = get_test_data_path('codice/esa_step_lookup.csv')
+        test_mass_per_charge_lookup_path = get_test_data_path(os.path.join('codice', 'test_mass_per_charge_lookup.csv'))
+        test_esa_lookup_path = get_test_data_path(os.path.join('codice', 'esa_step_lookup.csv'))
         mock_from_file_paths.assert_called_with(expected_download_science_path, test_mass_per_charge_lookup_path,
                                                 test_esa_lookup_path)
         self.assertEqual(mock_from_file_paths.return_value, codice_l3_dependencies)

@@ -20,13 +20,14 @@ class Sensor(enum.Enum):
 
 
 class HiSurvivalProbabilityPointingSet(PointingSet):
-    def __init__(self, l1c_dataset: HiL1cData, sensor: Sensor, glows_dataset: GlowsL3eData):
+    def __init__(self, l1c_dataset: HiL1cData, sensor: Sensor, glows_dataset: GlowsL3eData,
+                 energies: np.ndarray):
         super().__init__(xr.Dataset(), geometry.SpiceFrame.IMAP_DPS)
         glows_spin_bin_count = len(glows_dataset.spin_angle)
-        survival_probabilities = np.empty(shape=(1, len(l1c_dataset.esa_energy_step), glows_spin_bin_count))
+        survival_probabilities = np.empty(shape=(1, len(energies), glows_spin_bin_count))
         for spin_angle_index in range(glows_spin_bin_count):
             survival_probabilities[0, :, spin_angle_index] = np.interp(
-                np.log10(l1c_dataset.esa_energy_step),
+                np.log10(energies),
                 np.log10(glows_dataset.energy),
                 glows_dataset.probability_of_survival[0, :, spin_angle_index], )
         survival_probabilities = np.repeat(survival_probabilities, 10, axis=2)
@@ -43,8 +44,6 @@ class HiSurvivalProbabilityPointingSet(PointingSet):
 
         self.num_points = l1c_dataset.exposure_times.shape[-1]
         self.spatial_coords = [CoordNames.AZIMUTH_L1C.value]
-
-        # et_time = spiceypy.datetime2et(l1c_dataset.epoch)
 
         self.data = xr.Dataset({
             "survival_probability_times_exposure": (

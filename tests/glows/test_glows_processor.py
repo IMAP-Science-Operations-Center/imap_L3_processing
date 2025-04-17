@@ -10,7 +10,7 @@ from unittest.mock import patch, Mock, sentinel, call
 import numpy as np
 
 from imap_l3_processing.constants import CARRINGTON_ROTATION_IN_NANOSECONDS
-from imap_l3_processing.glows.descriptors import GLOWS_L2_DESCRIPTOR
+from imap_l3_processing.glows.descriptors import GLOWS_L2_DESCRIPTOR, GLOWS_L3D_DESCRIPTOR
 from imap_l3_processing.glows.glows_processor import GlowsProcessor
 from imap_l3_processing.glows.l3a.utils import create_glows_l3a_dictionary_from_cdf, create_glows_l3a_from_dictionary
 from imap_l3_processing.glows.l3bc.cannot_process_carrington_rotation_error import CannotProcessCarringtonRotationError
@@ -385,6 +385,19 @@ class TestGlowsProcessor(unittest.TestCase):
         np.testing.assert_array_equal(expected_l3b.ph_uncert, actual_l3b.ph_uncert)
         np.testing.assert_array_equal(expected_l3b.cx_uncert, actual_l3b.cx_uncert)
         self.assertEqual(expected_l3b.lat_grid_label, actual_l3b.lat_grid_label)
+
+    @patch("imap_l3_processing.glows.glows_processor.GlowsL3EDependencies")
+    def test_process_l3e(self, mock_l3e_dependencies):
+        input_metadata = InputMetadata('glows', "l3d", datetime(2024, 10, 7, 10, 00, 00),
+                                       datetime(2024, 10, 8, 10, 00, 00),
+                                       'v001')
+        dependencies = [
+            UpstreamDataDependency('glows', 'l3d', datetime(2024, 10, 7, 10, 00, 00), datetime(2024, 10, 8, 10, 00, 00),
+                                   'v001', GLOWS_L3D_DESCRIPTOR),
+        ]
+        processor = GlowsProcessor(dependencies=dependencies, input_metadata=input_metadata)
+        actual = processor.process_l3e()
+        mock_l3e_dependencies.fetch_dependencies.assert_called_once_with(dependencies)
 
 
 if __name__ == '__main__':

@@ -113,8 +113,6 @@ class TestHiProcessor(unittest.TestCase):
                                            expected_gamma, atol=1e-3)
                 np.testing.assert_allclose(output_data.ena_spectral_index_stat_unc[0],
                                            expected_gamma_sigma, atol=1e-3)
-                np.testing.assert_allclose(output_data.ena_spectral_index_sys_err[0],
-                                           expected_gamma_sigma, atol=1e-3)
 
     @patch('imap_l3_processing.hi.hi_processor.upload')
     @patch('imap_l3_processing.hi.hi_processor.save_data')
@@ -132,6 +130,8 @@ class TestHiProcessor(unittest.TestCase):
         epoch = datetime.now()
 
         input_map: HiIntensityMapData = _create_h1_l3_data(epoch=[epoch], flux=input_map_flux)
+
+        input_map.energy = sentinel.hi_l2_energies
 
         mock_fetch_dependencies.return_value = HiL3SurvivalDependencies(l2_data=input_map,
                                                                         hi_l1c_data=sentinel.hi_l1c_data,
@@ -183,9 +183,9 @@ class TestHiProcessor(unittest.TestCase):
         mock_combine_glows_l3e_hi_l1c.assert_called_once_with(sentinel.glows_l3e_data, sentinel.hi_l1c_data)
 
         mock_survival_probability_pointing_set.assert_has_calls([
-            call(sentinel.hi_l1c_1, sentinel.sensor, sentinel.glows_l3e_1),
-            call(sentinel.hi_l1c_2, sentinel.sensor, sentinel.glows_l3e_2),
-            call(sentinel.hi_l1c_3, sentinel.sensor, sentinel.glows_l3e_3)
+            call(sentinel.hi_l1c_1, sentinel.sensor, sentinel.glows_l3e_1, sentinel.hi_l2_energies),
+            call(sentinel.hi_l1c_2, sentinel.sensor, sentinel.glows_l3e_2, sentinel.hi_l2_energies),
+            call(sentinel.hi_l1c_3, sentinel.sensor, sentinel.glows_l3e_3, sentinel.hi_l2_energies)
         ])
 
         mock_survival_skymap.assert_called_once_with([sentinel.pset_1, sentinel.pset_2, sentinel.pset_3],

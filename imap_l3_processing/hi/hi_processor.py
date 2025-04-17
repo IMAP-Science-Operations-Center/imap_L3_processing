@@ -46,7 +46,6 @@ class HiProcessor(Processor):
         data_product = HiL3SpectralIndexDataProduct(
             input_metadata=self.input_metadata.to_upstream_data_dependency(HI_L3_SPECTRAL_FIT_DESCRIPTOR),
             ena_spectral_index_stat_unc=errors,
-            ena_spectral_index_sys_err=errors,
             ena_spectral_index=gammas,
             epoch=input_data.epoch,
             epoch_delta=input_data.epoch_delta,
@@ -75,7 +74,8 @@ class HiProcessor(Processor):
         map_descriptor = parse_map_descriptor(self.input_metadata.descriptor)
         pointing_sets = []
         for hi_l1c, glows_l3e in combined_glows_hi:
-            pointing_sets.append(HiSurvivalProbabilityPointingSet(hi_l1c, map_descriptor.sensor, glows_l3e))
+            pointing_sets.append(HiSurvivalProbabilityPointingSet(hi_l1c, map_descriptor.sensor, glows_l3e,
+                                                                  hi_survival_probabilities_dependencies.l2_data.energy))
 
         hi_survival_sky_map = HiSurvivalProbabilitySkyMap(pointing_sets, map_descriptor.grid_size,
                                                           SpiceFrame.ECLIPJ2000)

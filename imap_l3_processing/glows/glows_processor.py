@@ -16,6 +16,7 @@ from imap_l3_processing.glows.l3bc.models import GlowsL3BIonizationRate, GlowsL3
 from imap_l3_processing.glows.l3bc.science.filter_out_bad_days import filter_out_bad_days
 from imap_l3_processing.glows.l3bc.science.generate_l3bc import generate_l3bc
 from imap_l3_processing.glows.l3bc.utils import make_l3b_data_with_fill, make_l3c_data_with_fill
+from imap_l3_processing.glows.l3e.glows_l3e_dependencies import GlowsL3EDependencies
 from imap_l3_processing.models import UpstreamDataDependency
 from imap_l3_processing.processor import Processor
 from imap_l3_processing.utils import save_data
@@ -74,6 +75,9 @@ class GlowsProcessor(Processor):
         l3b_data_product.parent_file_names.append(dependencies.zip_file_path.name)
         l3c_data_product.parent_file_names.append(dependencies.zip_file_path.name)
         return l3b_data_product, l3c_data_product
+
+    def process_l3e(self):
+        l3e_dependencies = GlowsL3EDependencies.fetch_dependencies(self.dependencies)
 
     @staticmethod
     def add_spin_angle_delta(data: dict, ancillary_files: dict) -> dict:
