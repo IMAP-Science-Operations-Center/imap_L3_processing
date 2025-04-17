@@ -42,7 +42,6 @@ class TestModels(unittest.TestCase):
             solid_angle=sentinel.solid_angle,
             ena_spectral_index=sentinel.ena_spectral_index,
             ena_spectral_index_stat_unc=sentinel.ena_spectral_index_stat_unc,
-            ena_spectral_index_sys_err=sentinel.ena_spectral_index_sys_err
         )
 
         actual_variables = hi_l3_spectral_index_data_product.to_data_product_variables()
@@ -66,7 +65,6 @@ class TestModels(unittest.TestCase):
             DataProductVariable(models.SOLID_ANGLE_VAR_NAME, sentinel.solid_angle),
             DataProductVariable(models.ENA_SPECTRAL_INDEX_VAR_NAME, sentinel.ena_spectral_index),
             DataProductVariable(models.ENA_SPECTRAL_INDEX_STAT_UNC_VAR_NAME, sentinel.ena_spectral_index_stat_unc),
-            DataProductVariable(models.ENA_SPECTRAL_INDEX_SYS_ERR_VAR_NAME, sentinel.ena_spectral_index_sys_err),
         ]
 
         self.assertEqual(expected_variables, actual_variables)
