@@ -182,8 +182,6 @@ class TestCodiceHiProcessor(unittest.TestCase):
         expected_o_rebinned_pitch_angles = np.mean(o_intensity, axis=2)
         expected_fe_rebinned_pitch_angles = np.mean(fe_intensity, axis=2)
 
-        expected_h_rebinned_by_pitch_angle_and_gyrophase = np.mean(h_intensity, axis=1)
-
         codice_l2_data = CodiceHiL2SectoredIntensitiesData(
             epoch=epoch,
             epoch_delta=epoch_delta,
@@ -202,8 +200,8 @@ class TestCodiceHiProcessor(unittest.TestCase):
                                                     codice_sectored_intensities_data=codice_l2_data)
         codice_processor = CodiceHiProcessor(dependencies=Mock(), input_metadata=Mock())
 
-        expected_pitch_angles = np.array([[104.477512, 30.], [85.019075, 10.]])
-        expected_gyrophase = np.array([[130.893395, 60.], [283.064313, 240.]])
+        expected_pitch_angles = np.array([[81.406148, 138.590378], [56.104664, 115.658906]])
+        expected_gyrophase = np.array([[26.890815, 49.106605], [291.063267, 286.102114]])
 
         expected_pitch_angle_delta = np.array([15, 15])
         expected_gyrophase_delta = np.array([30, 30])
@@ -214,9 +212,9 @@ class TestCodiceHiProcessor(unittest.TestCase):
         np.testing.assert_array_equal(energy, codice_hi_data_product.energy)
         np.testing.assert_array_equal(energy_delta_plus, codice_hi_data_product.energy_delta_plus)
         np.testing.assert_array_equal(energy_delta_minus, codice_hi_data_product.energy_delta_minus)
-        # np.testing.assert_array_almost_equal([], codice_hi_data_product.pitch_angle)
+        np.testing.assert_array_almost_equal(expected_pitch_angles, codice_hi_data_product.pitch_angle)
         np.testing.assert_array_equal(expected_pitch_angle_delta, codice_hi_data_product.pitch_angle_delta)
-        # np.testing.assert_array_almost_equal(expected_gyrophase, codice_hi_data_product.gyrophase)
+        np.testing.assert_array_almost_equal(expected_gyrophase, codice_hi_data_product.gyrophase)
         np.testing.assert_array_equal(expected_gyrophase_delta, codice_hi_data_product.gyrophase_delta)
 
         np.testing.assert_array_equal(expected_h_rebinned_pitch_angles,
