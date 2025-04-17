@@ -574,6 +574,8 @@ class CodiceHiL2SectoredIntensitiesData:
     ssd_id: ndarray
     spin_sector: ndarray
     energy: ndarray
+    energy_delta_minus: ndarray
+    energy_delta_plus: ndarray
 
     @classmethod
     def read_from_cdf(cls, l2_sectored_intensities_cdf):
@@ -588,4 +590,6 @@ class CodiceHiL2SectoredIntensitiesData:
                 ssd_id=cdf["ssd_id"][...],
                 spin_sector=cdf["spin_sector"][...],
                 energy=cdf["energy"][...],
+                energy_delta_minus=cdf["energy_delta_minus"][...],
+                energy_delta_plus=cdf["energy_delta_plus"][...],
             )
