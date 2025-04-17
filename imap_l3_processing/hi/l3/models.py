@@ -25,7 +25,6 @@ OBS_DATE_RANGE_VAR_NAME = "obs_date_range"
 SOLID_ANGLE_VAR_NAME = "solid_angle"
 ENA_SPECTRAL_INDEX_VAR_NAME = "ena_spectral_index"
 ENA_SPECTRAL_INDEX_STAT_UNC_VAR_NAME = "ena_spectral_index_stat_unc"
-ENA_SPECTRAL_INDEX_SYS_ERR_VAR_NAME = "ena_spectral_index_sys_err"
 
 ENA_INTENSITY_VAR_NAME = "ena_intensity"
 ENA_INTENSITY_STAT_UNC_VAR_NAME = "ena_intensity_stat_unc"
@@ -85,13 +84,11 @@ class HiDataProduct(DataProduct, HiMapData):
 class HiL3SpectralIndexDataProduct(HiDataProduct):
     ena_spectral_index: np.ndarray
     ena_spectral_index_stat_unc: np.ndarray
-    ena_spectral_index_sys_err: np.ndarray
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return super().to_data_product_variables() + [
             DataProductVariable(ENA_SPECTRAL_INDEX_VAR_NAME, self.ena_spectral_index),
             DataProductVariable(ENA_SPECTRAL_INDEX_STAT_UNC_VAR_NAME, self.ena_spectral_index_stat_unc),
-            DataProductVariable(ENA_SPECTRAL_INDEX_SYS_ERR_VAR_NAME, self.ena_spectral_index_sys_err),
         ]
 
 

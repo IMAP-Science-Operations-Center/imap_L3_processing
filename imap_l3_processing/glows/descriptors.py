@@ -5,3 +5,4 @@ GLOWS_EXTRA_HELIOSPHERIC_BACKGROUND_DESCRIPTOR = "map-of-extra-helio-bckgrd-text
 GLOWS_PIPELINE_SETTINGS_DESCRIPTOR = "pipeline-settings-json-not-cdf"
 
 GLOWS_L3A_DESCRIPTOR = "hist"
+GLOWS_L3D_DESCRIPTOR = 'solar-hist'

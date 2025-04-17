@@ -46,7 +46,6 @@ class HiProcessor(Processor):
         data_product = HiL3SpectralIndexDataProduct(
             input_metadata=self.input_metadata.to_upstream_data_dependency(HI_L3_SPECTRAL_FIT_DESCRIPTOR),
             ena_spectral_index_stat_unc=errors,
-            ena_spectral_index_sys_err=errors,
             ena_spectral_index=gammas,
             epoch=input_data.epoch,
             epoch_delta=input_data.epoch_delta,

@@ -1,0 +1,30 @@
+from datetime import datetime
+
+import numpy as np
+from spiceypy import datetime2et, spkezr, reclat, pxform
+
+from imap_l3_processing.constants import ONE_AU_IN_KM
+
+
+def determine_call_args_for_l3e_executable(epoch: datetime, elongation: float) -> str:
+    ephemeris_time = datetime2et(epoch)
+
+    [x, y, z, vx, vy, vz], _ = spkezr("IMAP", ephemeris_time, "ECLIPJ2000", "NONE", "SUN")
+
+    radius, longitude, latitude = reclat([x, y, z])
+
+    rotation_matrix = pxform("IMAP_DPS", "ECLIPJ2000", ephemeris_time)
+    spin_axis = rotation_matrix @ [0, 0, 1]
+
+    _, spin_axis_long, spin_axis_lat = reclat(spin_axis)
+
+    formatted_date = epoch.strftime("%Y%m%d_%H%M%S")
+    decimal_date = _decimal_time(epoch)
+
+    return f"{formatted_date} {decimal_date} {radius / ONE_AU_IN_KM} {np.rad2deg(longitude) % 360} {np.rad2deg(latitude)} {vx} {vy} {vz} {np.rad2deg(spin_axis_long) % 360} {spin_axis_lat:.4f} {elongation:.3f}"
+
+
+def _decimal_time(t: datetime) -> str:
+    year_start = datetime(t.year, 1, 1)
+    year_end = datetime(t.year + 1, 1, 1)
+    return "{:10.5f}".format(t.year + (t - year_start) / (year_end - year_start))
