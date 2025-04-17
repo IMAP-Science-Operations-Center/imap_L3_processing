@@ -1,8 +1,5 @@
-import dataclasses
-
 import imap_data_access
 import numpy as np
-from uncertainties import ufloat
 from uncertainties.unumpy import uarray, nominal_values
 
 from imap_l3_processing import spice_wrapper
@@ -38,6 +35,7 @@ class SwapiProcessor(Processor):
         if self.input_metadata.data_level == "l3a":
             l3a_dependencies = SwapiL3ADependencies.fetch_dependencies(self.dependencies)
             data = read_l2_swapi_data(l3a_dependencies.data)
+            self.get_parent_file_names()
             proton_data, alpha_data, pui_he_data = self.process_l3a(data, l3a_dependencies)
 
             if self.input_metadata.descriptor == 'proton-sw':

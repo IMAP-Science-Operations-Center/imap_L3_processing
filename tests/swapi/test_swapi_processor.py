@@ -1,5 +1,3 @@
-import os
-import shutil
 from datetime import datetime, timedelta, date
 from unittest import TestCase
 from unittest.mock import patch, sentinel, call
@@ -46,6 +44,7 @@ class TestSwapiProcessor(TestCase):
     @patch('imap_l3_processing.swapi.swapi_processor.calculate_ten_minute_velocities')
     @patch('imap_l3_processing.swapi.swapi_processor.calculate_helium_pui_density')
     @patch('imap_l3_processing.swapi.swapi_processor.calculate_helium_pui_temperature')
+    @patch('imap_l3_processing.processor.spiceypy')
     def test_process_l3a(self, mock_calculate_helium_pui_temperature, mock_calculate_helium_pui_density,
                          mock_calculate_ten_minute_velocities,
                          mock_calculate_pickup_ion,
