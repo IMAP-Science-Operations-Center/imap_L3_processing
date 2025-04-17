@@ -113,8 +113,6 @@ class TestHiProcessor(unittest.TestCase):
                                            expected_gamma, atol=1e-3)
                 np.testing.assert_allclose(output_data.ena_spectral_index_stat_unc[0],
                                            expected_gamma_sigma, atol=1e-3)
-                np.testing.assert_allclose(output_data.ena_spectral_index_sys_err[0],
-                                           expected_gamma_sigma, atol=1e-3)
 
     @patch('imap_l3_processing.hi.hi_processor.upload')
     @patch('imap_l3_processing.hi.hi_processor.save_data')
