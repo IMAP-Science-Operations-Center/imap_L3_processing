@@ -23,34 +23,34 @@ class CodiceLoProcessor(Processor):
     def process_l3a(self, dependencies: CodiceLoL3aDependencies):
         species_index = 1
         for species_name, species_intensities in dependencies.codice_l2_lo_data.get_species_intensities().items():
-            density_average = calculate_partial_densities(species_intensities)
+            partial_density = calculate_partial_densities(species_intensities)
             match species_name:
                 case "H+":
-                    h_partial_density = density_average
+                    h_partial_density = partial_density
                 case "He++":
-                    he_partial_density = density_average
+                    he_partial_density = partial_density
                 case "C+4":
-                    c4_partial_density = density_average
+                    c4_partial_density = partial_density
                 case "C+5":
-                    c5_partial_density = density_average
+                    c5_partial_density = partial_density
                 case "C+6":
-                    c6_partial_density = density_average
+                    c6_partial_density = partial_density
                 case "O+5":
-                    o5_partial_density = density_average
+                    o5_partial_density = partial_density
                 case "O+6":
-                    o6_partial_density = density_average
+                    o6_partial_density = partial_density
                 case "O+7":
-                    o7_partial_density = density_average
+                    o7_partial_density = partial_density
                 case "O+8":
-                    o8_partial_density = density_average
+                    o8_partial_density = partial_density
                 case "Mg":
-                    mg_partial_density = density_average
+                    mg_partial_density = partial_density
                 case "Si":
-                    si_partial_density = density_average
+                    si_partial_density = partial_density
                 case "Fe (low Q)":
-                    fe_low_partial_density = density_average
+                    fe_low_partial_density = partial_density
                 case "Fe (high Q)":
-                    fe_high_partial_density = density_average
+                    fe_high_partial_density = partial_density
                 case _:
                     raise NotImplementedError
         epoch = np.array([np.nan])

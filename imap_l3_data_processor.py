@@ -11,6 +11,7 @@ from imap_data_access import ScienceFilePath
 from imap_data_access.processing_input import ProcessingInputCollection
 
 from imap_l3_processing.codice.l3.hi.codice_hi_processor import CodiceHiProcessor
+from imap_l3_processing.codice.l3.lo.codice_lo_processor import CodiceLoProcessor
 from imap_l3_processing.glows.glows_processor import GlowsProcessor
 from imap_l3_processing.hi.hi_processor import HiProcessor
 from imap_l3_processing.hit.l3.hit_processor import HitProcessor
@@ -81,6 +82,9 @@ def imap_l3_processor():
         processor.process()
     elif args.instrument == 'codice-hi':
         processor = CodiceHiProcessor(processing_input_collection, input_dependency)
+        processor.process()
+    elif args.instrument == 'codice-lo':
+        processor = CodiceLoProcessor(processing_input_collection, input_dependency)
         processor.process()
     else:
         raise NotImplementedError(
