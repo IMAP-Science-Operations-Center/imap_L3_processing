@@ -22,7 +22,7 @@ class GlowsL3eSpiceInput:
     spin_axis_latitude: float
 
     def format(self):
-        return f"{self.radius} {self.ecliptic_longitude} {self.ecliptic_latitude} {self.vx} {self.vy} {self.vz} {self.spin_axis_longitude} {self.spin_axis_latitude}"
+        return f"{self.radius} {self.ecliptic_longitude} {self.ecliptic_latitude} {self.vx} {self.vy} {self.vz} {self.spin_axis_longitude} {self.spin_axis_latitude:.4f}"
 
 
 def fetch_spice_for_glows_l3e(epoch: datetime) -> GlowsL3eSpiceInput:
@@ -43,15 +43,15 @@ def fetch_spice_for_glows_l3e(epoch: datetime) -> GlowsL3eSpiceInput:
         vx=vx,
         vy=vy,
         vz=vz,
-        spin_axis_longitude=np.rad2deg(spin_axis_long),
+        spin_axis_longitude=np.rad2deg(spin_axis_long) % 360,
         spin_axis_latitude=np.rad2deg(spin_axis_lat),
     )
 
 
-def decimal_time(t: datetime) -> float:
+def decimal_time(t: datetime) -> str:
     year_start = datetime(t.year, 1, 1)
     year_end = datetime(t.year + 1, 1, 1)
-    return t.year + (t - year_start) / (year_end - year_start)
+    return "{:10.5f}".format(t.year + (t - year_start) / (year_end - year_start))
 
 
 start_time = datetime(2025, 4, 15, 12)
@@ -65,9 +65,9 @@ def make_input_args(start_time, number_of_points, elongation):
 
         formatted_time = fake_time.strftime("%Y%m%d_%H%M%S")
         spice_data = fetch_spice_for_glows_l3e(t)
-        lines.append(f"{formatted_time} {decimal_time(fake_time)} {spice_data.format()} {elongation}")
+        lines.append(f"{formatted_time} {decimal_time(fake_time)} {spice_data.format()} {elongation:.3f}")
     return lines
 
 
 for line in make_input_args(start_time, 365, 90):
-    print(line)
+    print(f"./survProbHi {line}")
