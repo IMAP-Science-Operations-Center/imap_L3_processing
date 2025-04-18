@@ -10,7 +10,8 @@ from imap_l3_processing.hi.l3.models import HiL3SpectralIndexDataProduct, GlowsL
 from imap_l3_processing.hi.l3.science.spectral_fit import spectral_fit
 from imap_l3_processing.hi.l3.science.survival_probability import HiSurvivalProbabilityPointingSet, \
     HiSurvivalProbabilitySkyMap
-from imap_l3_processing.hi.l3.utils import parse_map_descriptor, MapQuantity, MapDescriptorParts
+from imap_l3_processing.hi.l3.utils import parse_map_descriptor, MapQuantity, MapDescriptorParts, SurvivalCorrection, \
+    SpinPhase, Duration
 from imap_l3_processing.processor import Processor
 from imap_l3_processing.utils import save_data
 
@@ -18,16 +19,21 @@ from imap_l3_processing.utils import save_data
 class HiProcessor(Processor):
     def process(self):
         parsed_descriptor = parse_map_descriptor(self.input_metadata.descriptor)
-        if parsed_descriptor.quantity is MapQuantity.Intensity:
-            hi_l3_survival_probabilities_dependencies = HiL3SurvivalDependencies.fetch_dependencies(self.dependencies)
-            data_product = self._process_survival_probabilities(parsed_descriptor,
-                                                                hi_l3_survival_probabilities_dependencies)
-            cdf_path = save_data(data_product)
-            upload(cdf_path)
-        else:
-            hi_l3_spectral_fit_dependencies = HiL3SpectralFitDependencies.fetch_dependencies(self.dependencies)
-            data_product = self._process_spectral_fit_index(hi_l3_spectral_fit_dependencies)
-            save_data(data_product)
+        match parsed_descriptor:
+            case MapDescriptorParts(quantity=MapQuantity.SpectralIndex):
+                hi_l3_spectral_fit_dependencies = HiL3SpectralFitDependencies.fetch_dependencies(self.dependencies)
+                data_product = self._process_spectral_fit_index(hi_l3_spectral_fit_dependencies)
+                save_data(data_product)
+            case MapDescriptorParts(survival_correction=SurvivalCorrection.SurvivalCorrected,
+                                    spin_phase=SpinPhase.FullSpin, duration=Duration.SixMonths):
+                hi_l3_survival_probabilities_dependencies = HiL3SurvivalDependencies.fetch_dependencies(
+                    self.dependencies)
+                data_product = self._process_survival_probabilities(parsed_descriptor,
+                                                                    hi_l3_survival_probabilities_dependencies)
+                cdf_path = save_data(data_product)
+                upload(cdf_path)
+            case _:
+                raise NotImplementedError
 
     def _process_spectral_fit_index(self,
                                     hi_l3_spectral_fit_dependencies: HiL3SpectralFitDependencies) -> HiL3SpectralIndexDataProduct:
