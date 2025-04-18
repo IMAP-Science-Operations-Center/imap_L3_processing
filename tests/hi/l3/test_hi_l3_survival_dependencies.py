@@ -5,7 +5,7 @@ from unittest.mock import patch, Mock, sentinel, call
 
 from spacepy.pycdf import CDF
 
-from imap_l3_processing.hi.l3.hi_l3_survival_dependencies import HiL3SurvivalDependencies, find_glows_l3e_dependencies
+from imap_l3_processing.hi.l3.hi_l3_survival_dependencies import HiL3SurvivalDependencies
 from imap_l3_processing.models import UpstreamDataDependency
 
 
@@ -51,7 +51,7 @@ class TestHiL3SurvivalDependencies(unittest.TestCase):
 
             mock_download_dependency.assert_called_once_with(hi_l2_dependency)
             mock_read_hi_l2.assert_called_once_with(mock_download_dependency.return_value)
-            mock_find_glows_l3e_dependencies.assert_called_with(l1c_file_paths)
+            mock_find_glows_l3e_dependencies.assert_called_with(l1c_file_paths, "hi")
             expected_download_from_path_calls = [call(path) for path in l1c_file_paths + glows_file_paths]
 
             mock_download_dependency_from_path.assert_has_calls(expected_download_from_path_calls)
@@ -75,35 +75,3 @@ class TestHiL3SurvivalDependencies(unittest.TestCase):
             self.assertEqual(actual.glows_l3e_data, [sentinel.glows_data_1,
                                                      sentinel.glows_data_2,
                                                      sentinel.glows_data_3, ])
-
-    @patch("imap_l3_processing.hi.l3.hi_l3_survival_dependencies.imap_data_access.query")
-    def test_find_glows_l3e_dependencies(self, mock_data_access_query):
-        l1c_90sensor_file_paths = ["imap_hi_l1c_90sensor-pset_20201001_v001.cdf",
-                                   "imap_hi_l1c_90sensor-pset_20201002_v002.cdf",
-                                   "imap_hi_l1c_90sensor-pset_20201003_v001.cdf"]
-        l1c_45sensor_file_paths = ["imap_hi_l1c_45sensor-pset_20210509_v001.cdf",
-                                   "imap_hi_l1c_45sensor-pset_20210508_v002.cdf",
-                                   "imap_hi_l1c_45sensor-pset_20210507_v001.cdf"]
-
-        test_cases = [
-            (l1c_90sensor_file_paths, "90", "20201001", "20201003"),
-            (l1c_45sensor_file_paths, "45", "20210507", "20210509"),
-        ]
-
-        mock_data_access_query.return_value = [{"file_path": "glows_1"},
-                                               {"file_path": "glows_2"},
-                                               {"file_path": "glows_3"}]
-
-        for l1c_file_paths, sensor, expected_start_date, expected_end_date in test_cases:
-            with self.subTest(f"sensor: {sensor}"):
-                glows_file_paths = find_glows_l3e_dependencies(l1c_file_paths)
-
-                mock_data_access_query.assert_called_with(instrument="glows",
-                                                          data_level="l3e",
-                                                          descriptor=f"survival-probabilities-hi-{sensor}",
-                                                          start_date=expected_start_date,
-                                                          end_date=expected_end_date,
-                                                          version="latest")
-
-                self.assertEqual(["glows_1", "glows_2", "glows_3"],
-                                 glows_file_paths)

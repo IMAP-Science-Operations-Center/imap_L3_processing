@@ -18,6 +18,7 @@ from imap_l3_processing.hit.l3.hit_processor import HitProcessor
 from imap_l3_processing.models import UpstreamDataDependency, InputMetadata
 from imap_l3_processing.swapi.swapi_processor import SwapiProcessor
 from imap_l3_processing.swe.swe_processor import SweProcessor
+from imap_l3_processing.ultra.l3.ultra_processor import UltraProcessor
 
 
 def _parse_cli_arguments():
@@ -79,6 +80,9 @@ def imap_l3_processor():
         processor.process()
     elif args.instrument == 'hi':
         processor = HiProcessor(dependencies, input_dependency)
+        processor.process()
+    elif args.instrument == 'ultra':
+        processor = UltraProcessor(processing_input_collection, input_dependency)
         processor.process()
     elif args.instrument == 'codice-hi':
         processor = CodiceHiProcessor(processing_input_collection, input_dependency)
