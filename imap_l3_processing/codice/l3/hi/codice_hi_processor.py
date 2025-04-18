@@ -9,7 +9,7 @@ from imap_l3_processing.codice.l3.hi.models import CodiceHiL3PitchAngleDataProdu
 from imap_l3_processing.codice.l3.hi.models import CodiceL3HiDirectEvents, CodiceL3HiDirectEventsBuilder
 from imap_l3_processing.codice.l3.hi.pitch_angle.codice_pitch_angle_dependencies import CodicePitchAngleDependencies
 from imap_l3_processing.hit.l3.sectored_products.science.sectored_products_algorithms import \
-    hit_rebin_by_pitch_angle_and_gyrophase, get_sector_unit_vectors_codice
+    hit_rebin_by_pitch_angle_and_gyrophase, get_sector_unit_vectors
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.pitch_angles import calculate_unit_vector, calculate_pitch_angle, calculate_gyrophase
 from imap_l3_processing.processor import Processor
@@ -58,7 +58,7 @@ class CodiceHiProcessor(Processor):
         rebinned_mag_data = mag_data.rebin_to(sectored_intensities.epoch, sectored_intensities.epoch_delta)
 
         mag_unit_vectors = calculate_unit_vector(rebinned_mag_data)
-        sector_unit = get_sector_unit_vectors_codice(sectored_intensities.spin_sector, sectored_intensities.ssd_id)
+        sector_unit = get_sector_unit_vectors(sectored_intensities.spin_sector, sectored_intensities.ssd_id)
         sector_unit_vectors = calculate_unit_vector(sector_unit)
         particle_unit_vectors = -1 * sector_unit_vectors
         pitch_angles = calculate_pitch_angle(particle_unit_vectors, mag_unit_vectors)
@@ -96,8 +96,8 @@ class CodiceHiProcessor(Processor):
                     intensity_delta_minus=h_intensities_delta_minus,
                     gyrophases=gyrophase,
                     pitch_angles=pitch_angles,
-                    number_of_pitch_angle_bins=2,
-                    number_of_gyrophase_bins=2)
+                    number_of_pitch_angle_bins=pitch_angles.shape[-1],
+                    number_of_gyrophase_bins=gyrophase.shape[-1])
 
                 species_intensity.intensity_by_pa[time_index] = rebinned_intensities_by_pa
                 species_intensity.intensity_by_pa_and_gyro[time_index] = rebinned_intensities_by_pa_and_gyro
