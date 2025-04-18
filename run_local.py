@@ -10,6 +10,7 @@ from unittest.mock import patch, Mock
 import imap_data_access
 import numpy as np
 import xarray as xr
+from imap_data_access.processing_input import ProcessingInputCollection
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.glows.descriptors import GLOWS_L2_DESCRIPTOR
@@ -79,9 +80,10 @@ def create_glows_l3a_cdf(dependencies: GlowsL3ADependencies):
 def create_swapi_l3b_cdf(geometric_calibration_file, efficiency_calibration_file, cdf_file):
     geometric_calibration = GeometricFactorCalibrationTable.from_file(geometric_calibration_file)
     efficiency_calibration = EfficiencyCalibrationTable(efficiency_calibration_file)
-    cdf_data = CDF(cdf_file)
-    swapi_l3_dependencies = SwapiL3BDependencies(cdf_data, geometric_calibration, efficiency_calibration)
-    swapi_data = read_l2_swapi_data(swapi_l3_dependencies.data)
+    swapi_cdf_data = CDF(cdf_file)
+    swapi_data = read_l2_swapi_data(swapi_cdf_data)
+
+    swapi_l3_dependencies = SwapiL3BDependencies(swapi_data, geometric_calibration, efficiency_calibration)
 
     input_metadata = InputMetadata(
         instrument='swapi',
@@ -111,14 +113,14 @@ def create_swapi_l3a_cdf(proton_temperature_density_calibration_file, alpha_temp
         instrument_response_calibration_file)
     density_of_neutral_helium_calibration_table = DensityOfNeutralHeliumLookupTable.from_file(
         density_of_neutral_helium_calibration_file)
-    cdf_data = CDF(cdf_file)
-    swapi_l3_dependencies = SwapiL3ADependencies(cdf_data, proton_temperature_density_calibration_table,
+    swapi_cdf_data = CDF(cdf_file)
+    swapi_data = read_l2_swapi_data(swapi_cdf_data)
+    swapi_l3_dependencies = SwapiL3ADependencies(swapi_data, proton_temperature_density_calibration_table,
                                                  alpha_temperature_density_calibration_table,
                                                  clock_angle_and_flow_deflection_calibration_table,
                                                  geometric_factor_calibration_table,
                                                  instrument_response_calibration_table,
                                                  density_of_neutral_helium_calibration_table)
-    swapi_data = read_l2_swapi_data(swapi_l3_dependencies.data)
 
     input_metadata = InputMetadata(
         instrument='swapi',
@@ -126,7 +128,7 @@ def create_swapi_l3a_cdf(proton_temperature_density_calibration_file, alpha_temp
         start_date=datetime(2025, 10, 23),
         end_date=datetime(2025, 10, 24),
         version='v000')
-    processor = SwapiProcessor(None, input_metadata)
+    processor = SwapiProcessor(ProcessingInputCollection(), input_metadata)
 
     l3a_proton_sw, l3a_alpha_sw, l3a_pui_he = processor.process_l3a(swapi_data, swapi_l3_dependencies)
     proton_cdf_path = save_data(l3a_proton_sw, delete_if_present=True)

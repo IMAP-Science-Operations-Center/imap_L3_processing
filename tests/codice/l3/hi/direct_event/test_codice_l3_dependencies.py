@@ -8,7 +8,7 @@ from imap_data_access.processing_input import ProcessingInputCollection, Science
 from imap_l3_processing.codice.l3.hi.direct_event.codice_hi_l3_dependencies import CodiceHiL3Dependencies
 
 
-class TestCodiceL3Dependencies(unittest.TestCase):
+class TestCodiceHiL3Dependencies(unittest.TestCase):
 
     @patch("imap_l3_processing.codice.l3.hi.direct_event.codice_hi_l3_dependencies.download")
     @patch(

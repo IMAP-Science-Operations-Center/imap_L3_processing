@@ -5,7 +5,8 @@ from unittest.mock import patch, Mock, sentinel, call
 
 from spacepy.pycdf import CDF
 
-from imap_l3_processing.hi.l3.hi_l3_survival_dependencies import HiL3SurvivalDependencies, find_glows_l3e_dependencies
+from imap_l3_processing.hi.l3.hi_l3_survival_dependencies import HiL3SurvivalDependencies, find_glows_l3e_dependencies, \
+    HiL3SingleSensorFullSpinDependencies
 from imap_l3_processing.models import UpstreamDataDependency
 
 
@@ -107,3 +108,19 @@ class TestHiL3SurvivalDependencies(unittest.TestCase):
 
                 self.assertEqual(["glows_1", "glows_2", "glows_3"],
                                  glows_file_paths)
+
+    @patch("imap_l3_processing.hi.l3.hi_l3_survival_dependencies.HiL3SurvivalDependencies.fetch_dependencies")
+    def test_fetch_single_sensor_full_spin_dependencies(self, mock_fetch_dependencies):
+        ram_dependency = UpstreamDataDependency("hi", "l2", None, None, "latest", "h90-sf-ram-hae-4deg-6mo")
+        antiram_dependency = UpstreamDataDependency("hi", "l2", None, None, "latest", "h90-sf-anti-hae-4deg-6mo")
+        glows_dependency = UpstreamDataDependency("glows", "l3e", None, None, "latest", "not-used")
+        mock_fetch_dependencies.side_effect = [sentinel.ram_data, sentinel.antiram_data]
+
+        result = HiL3SingleSensorFullSpinDependencies.fetch_dependencies(
+            [ram_dependency, antiram_dependency, glows_dependency])
+
+        mock_fetch_dependencies.assert_has_calls([call([ram_dependency]), call([antiram_dependency])])
+
+        self.assertIsInstance(result, HiL3SingleSensorFullSpinDependencies)
+        self.assertEqual(result.ram_dependencies, sentinel.ram_data)
+        self.assertEqual(result.antiram_dependencies, sentinel.antiram_data)

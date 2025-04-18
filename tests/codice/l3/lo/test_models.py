@@ -7,7 +7,7 @@ from unittest.mock import Mock, sentinel
 import numpy as np
 from spacepy.pycdf import CDF
 
-from imap_l3_processing.codice.l3.lo.models import CodiceLoL2Data, CodiceLoL3aDataProduct
+from imap_l3_processing.codice.l3.lo.models import CodiceLoL2Data, CodiceLoL3aDataProduct, CodiceLoL2DirectEventData
 
 
 class TestModels(unittest.TestCase):
@@ -73,6 +73,62 @@ class TestModels(unittest.TestCase):
             np.testing.assert_array_equal(result.mg_intensities, mg_intensities)
             np.testing.assert_array_equal(result.si_intensities, si_intensities)
             np.testing.assert_array_equal(result.fe_low_intensities, fe_low_intensities)
+
+    def test_codice_lo_l2_direct_event_read_from_cdf(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            cdf_file_path = Path(tmpdir) / "test_cdf.cdf"
+            rng = np.random.default_rng()
+            with CDF(str(cdf_file_path), readonly=False, masterpath="") as cdf_file:
+                epoch = np.array([datetime(2011, 5, 5), datetime(2011, 5, 6)])
+                epoch_delta = np.repeat(len(epoch), 2)
+                cdf_file['epoch'] = epoch
+                expected_event_num = np.arange(77)
+                cdf_file['event_num'] = expected_event_num
+
+                expected_values = {}
+                for index in range(8):
+                    expected_values.update(
+                        {
+                            f"P{index}_APDEnergy": rng.random((7, 10)),
+                            f"P{index}_APDGain": rng.random((7, 10)),
+                            f"P{index}_APD_ID": rng.random(7),
+                            f"P{index}_DataQuality": rng.random((7, 10)),
+                            f"P{index}_EnergyStep": rng.random((7, 10)),
+                            f"P{index}_MultiFlag": rng.random(7),
+                            f"P{index}_NumEvents": rng.random((7, 10)),
+                            f"P{index}_PHAType": rng.random((7, 10)),
+                            f"P{index}_SpinAngle": rng.random((7, 10)),
+                            f"P{index}_TOF": rng.random((7, 10)),
+                        })
+
+                    cdf_file[f"P{index}_APDEnergy"] = expected_values[f"P{index}_APDEnergy"]
+                    cdf_file[f"P{index}_APDGain"] = expected_values[f"P{index}_APDGain"]
+                    cdf_file[f"P{index}_APD_ID"] = expected_values[f"P{index}_APD_ID"]
+                    cdf_file[f"P{index}_DataQuality"] = expected_values[f"P{index}_DataQuality"]
+                    cdf_file[f"P{index}_EnergyStep"] = expected_values[f"P{index}_EnergyStep"]
+                    cdf_file[f"P{index}_MultiFlag"] = expected_values[f"P{index}_MultiFlag"]
+                    cdf_file[f"P{index}_NumEvents"] = expected_values[f"P{index}_NumEvents"]
+                    cdf_file[f"P{index}_PHAType"] = expected_values[f"P{index}_PHAType"]
+                    cdf_file[f"P{index}_SpinAngle"] = expected_values[f"P{index}_SpinAngle"]
+                    cdf_file[f"P{index}_TOF"] = expected_values[f"P{index}_TOF"]
+
+            result: CodiceLoL2DirectEventData = CodiceLoL2DirectEventData.read_from_cdf(cdf_file_path)
+            np.testing.assert_array_equal(result.epoch, epoch)
+            np.testing.assert_array_equal(result.event_num, expected_event_num)
+
+            # @formatter:off
+            for index in range(8):
+                np.testing.assert_array_equal(getattr(result, f"p{index}_apdenergy"), expected_values[f"P{index}_APDEnergy"])
+                np.testing.assert_array_equal(getattr(result, f"p{index}_apdgain"), expected_values[f"P{index}_APDGain"])
+                np.testing.assert_array_equal(getattr(result, f"p{index}_apd_id"), expected_values[f"P{index}_APD_ID"])
+                np.testing.assert_array_equal(getattr(result, f"p{index}_dataquality"),expected_values[f"P{index}_DataQuality"])
+                np.testing.assert_array_equal(getattr(result, f"p{index}_energystep"), expected_values[f"P{index}_EnergyStep"])
+                np.testing.assert_array_equal(getattr(result, f"p{index}_multiflag"), expected_values[f"P{index}_MultiFlag"])
+                np.testing.assert_array_equal(getattr(result, f"p{index}_numevents"), expected_values[f"P{index}_NumEvents"])
+                np.testing.assert_array_equal(getattr(result, f"p{index}_phatype"), expected_values[f"P{index}_PHAType"])
+                np.testing.assert_array_equal(getattr(result, f"p{index}_spinangle"), expected_values[f"P{index}_SpinAngle"])
+                np.testing.assert_array_equal(getattr(result, f"p{index}_tof"), expected_values[f"P{index}_TOF"])
+            # @formatter:on
 
     def test_get_species(self):
         h_intensities = np.array([sentinel.h_intensities])
