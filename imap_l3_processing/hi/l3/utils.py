@@ -116,7 +116,7 @@ def parse_map_descriptor(descriptor: str) -> MapDescriptorParts:
         """
 
     descriptor_part_match = re.search(descriptor_regex, descriptor, flags=re.VERBOSE)
-    assert descriptor_part_match is not None
+    assert descriptor_part_match is not None, f"could not parse descriptor {descriptor}"
 
     sensors = {"h45": Sensor.Hi45, "h90": Sensor.Hi90}
     cg_corrections = {"sf": CGCorrection.NotCGCorrected, "hf": CGCorrection.CGCorrected}

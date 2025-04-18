@@ -24,7 +24,7 @@ class HiProcessor(Processor):
                 hi_l3_spectral_fit_dependencies = HiL3SpectralFitDependencies.fetch_dependencies(self.dependencies)
                 data_product = self._process_spectral_fit_index(hi_l3_spectral_fit_dependencies)
             case MapDescriptorParts(survival_correction=SurvivalCorrection.SurvivalCorrected,
-                                    spin_phase=SpinPhase.FullSpin, duration=Duration.SixMonths):
+                                    spin_phase=SpinPhase.RamOnly | SpinPhase.AntiRamOnly, duration=Duration.SixMonths):
                 hi_l3_survival_probabilities_dependencies = HiL3SurvivalDependencies.fetch_dependencies(
                     self.dependencies)
                 data_product = self._process_survival_probabilities(parsed_descriptor,
@@ -80,8 +80,9 @@ class HiProcessor(Processor):
                                                      hi_survival_probabilities_dependencies.hi_l1c_data)
         pointing_sets = []
         for hi_l1c, glows_l3e in combined_glows_hi:
-            pointing_sets.append(HiSurvivalProbabilityPointingSet(hi_l1c, parsed_descriptor.sensor, glows_l3e,
-                                                                  hi_survival_probabilities_dependencies.l2_data.energy))
+            pointing_sets.append(HiSurvivalProbabilityPointingSet(
+                hi_l1c, parsed_descriptor.sensor, parsed_descriptor.spin_phase, glows_l3e,
+                hi_survival_probabilities_dependencies.l2_data.energy))
         assert len(pointing_sets) > 0
 
         hi_survival_sky_map = HiSurvivalProbabilitySkyMap(pointing_sets, parsed_descriptor.grid_size,
