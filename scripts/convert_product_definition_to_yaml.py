@@ -78,8 +78,8 @@ def process_csv():
         "swapi-l3b": "imap_l3_processing/cdf/data_product_definition_csv/imap_swapi_l3b_variable_attrs.csv",
         "hit-l3-direct-event": "imap_l3_processing/cdf/data_product_definition_csv/imap_hit_l3_direct-events_variable_attrs.csv",
         "hit-l3-macropixel": "imap_l3_processing/cdf/data_product_definition_csv/imap_hit_l3_macropixel_variable_attrs.csv",
-        "hi-l3-survival-probability": "imap_l3_processing/cdf/data_product_definition_csv/imap_hi_l3_90sensor-spacecraft-survival-full-4deg-map_variable_attrs.csv",
-        "hi-l3-spectral-index": "imap_l3_processing/cdf/data_product_definition_csv/imap_hi_l3_spectral-fit-index_variable_attrs.csv"
+        "hi-l3-survival-probability": "imap_l3_processing/cdf/data_product_definition_csv/imap_hi_l3_h90-sf-sp-hae-4deg-6mo_variable_attrs.csv",
+        "hi-l3-spectral-index": "imap_l3_processing/cdf/data_product_definition_csv/imap_hi_l3_h90-hf-sp-hae-4deg-6mo-spectral_variable_attrs.csv"
     }
     file_path = instrument_to_file_path[args.instrument]
 

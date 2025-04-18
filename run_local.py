@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import enum
 import os
 import sys
 from datetime import datetime, timedelta
@@ -11,7 +10,6 @@ from unittest.mock import patch
 import imap_data_access
 import numpy as np
 import xarray as xr
-from imap_processing.spice.geometry import SpiceFrame
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.glows.descriptors import GLOWS_L2_DESCRIPTOR
@@ -23,6 +21,7 @@ from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDepen
 from imap_l3_processing.hi.hi_processor import HiProcessor
 from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3SpectralFitDependencies
 from imap_l3_processing.hi.l3.hi_l3_survival_dependencies import HiL3SurvivalDependencies
+from imap_l3_processing.hi.l3.utils import parse_map_descriptor
 from imap_l3_processing.hit.l3.hit_l3_sectored_dependencies import HITL3SectoredDependencies
 from imap_l3_processing.hit.l3.hit_processor import HitProcessor
 from imap_l3_processing.hit.l3.models import HitL1Data
@@ -173,7 +172,7 @@ def create_hi_cdf(dependencies: HiL3SpectralFitDependencies) -> str:
                                    start_date=datetime.now(),
                                    end_date=datetime.now() + timedelta(days=1),
                                    version="v000",
-                                   descriptor="spectral-fit-index",
+                                   descriptor="h90-hf-sp-hae-4deg-6mo-spectral",
                                    )
     processor = HiProcessor(None, input_metadata)
     output_data = processor._process_spectral_fit_index(dependencies)
@@ -391,12 +390,6 @@ LONGITUDE = TypeVar("LONGITUDE")
 LATITUDE = TypeVar("LATITUDE")
 
 
-class IncludedSensors(enum.Enum):
-    Hi45 = "45"
-    Hi90 = "90"
-    Combined = "combined"
-
-
 def read_glows_survival_probability_data_from_cdf() -> tuple[np.ndarray, np.ndarray]:
     l3e = CDF(str(get_test_data_path("glows/imap_glows_l3e_survival-probabilities-hi_20250324_v001.cdf")))
     return l3e["probability_of_survival"][...][:, 0], l3e["probability_of_survival"][...][:, 1]
@@ -408,11 +401,13 @@ def create_hi_l3_survival_corrected_cdf(survival_dependencies: HiL3SurvivalDepen
                                    start_date=datetime(2025, 4, 9),
                                    end_date=datetime(2025, 4, 10),
                                    version="v001",
-                                   descriptor=f"90sensor-spacecraft-survival-full-{spacing_degree}deg-map",
+                                   descriptor=f"h90-sf-sp-hae-{spacing_degree}deg-6mo",
                                    )
 
     processor = HiProcessor(None, input_metadata)
-    survival_corrected_product = processor._process_survival_probabilities(survival_dependencies)
+    survival_corrected_product = processor._process_survival_probabilities(
+        parse_map_descriptor(input_metadata.descriptor),
+        survival_dependencies)
 
     return save_data(survival_corrected_product, delete_if_present=True)
 

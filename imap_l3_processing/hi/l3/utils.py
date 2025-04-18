@@ -1,3 +1,6 @@
+import enum
+import re
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Union
 
@@ -45,3 +48,90 @@ def read_glows_l3e_data(cdf_path: Union[Path, str]) -> GlowsL3eData:
                             energy=read_numeric_variable(cdf["energy"]),
                             spin_angle=read_numeric_variable(cdf["spin_angle"]),
                             probability_of_survival=read_numeric_variable(cdf["probability_of_survival"]))
+
+
+class Sensor(enum.Enum):
+    Hi45 = "45"
+    Hi90 = "90"
+
+    @staticmethod
+    def get_sensor_angle(sensor_name):
+        sensor_angles = {Sensor.Hi45.value: -45, Sensor.Hi90.value: 0}
+        return sensor_angles[sensor_name]
+
+
+class CGCorrection(enum.Enum):
+    CGCorrected = "CGCorrected"
+    NotCGCorrected = "NotCGCorrected"
+
+
+class SurvivalCorrection(enum.Enum):
+    SurvivalCorrected = "SurvivalCorrected"
+    NotSurvivalCorrected = "NotSurvivalCorrected"
+
+
+class SpinPhase(enum.Enum):
+    RamOnly = "RamOnly"
+    AntiRamOnly = "AntiRamOnly"
+    FullSpin = "FullSpin"
+
+
+class Duration(enum.Enum):
+    ThreeMonths = "ThreeMonths"
+    SixMonths = "SixMonths"
+    OneYear = "OneYear"
+
+
+class PixelSize(enum.IntEnum):
+    FourDegrees = 4
+    SixDegrees = 6
+
+
+class MapQuantity(enum.Enum):
+    Intensity = "Intensity"
+    SpectralIndex = "SpectralIndex"
+
+
+@dataclass
+class MapDescriptorParts:
+    sensor: Sensor
+    cg_correction: CGCorrection
+    survival_correction: SurvivalCorrection
+    spin_phase: SpinPhase
+    grid_size: PixelSize
+    duration: Duration
+    quantity: MapQuantity
+
+
+def parse_map_descriptor(descriptor: str) -> MapDescriptorParts:
+    descriptor_regex = """
+        (?P<sensor>h45|h90)-
+        (?P<cg_corrected>sf|hf)-
+        ((?P<survival_corrected>sp)-)?
+        ((?P<spin_phase>ram|anti)-)?
+        hae-
+        (?P<pixel_spacing>4|6)deg-
+        (?P<duration>3mo|6mo|1yr)
+        (-(?P<quantity>spectral))?
+        """
+
+    descriptor_part_match = re.search(descriptor_regex, descriptor, flags=re.VERBOSE)
+    assert descriptor_part_match is not None
+
+    sensors = {"h45": Sensor.Hi45, "h90": Sensor.Hi90}
+    cg_corrections = {"sf": CGCorrection.NotCGCorrected, "hf": CGCorrection.CGCorrected}
+    survival_corrections = {"sp": SurvivalCorrection.SurvivalCorrected, None: SurvivalCorrection.NotSurvivalCorrected}
+    spin_phases = {"ram": SpinPhase.RamOnly, "anti": SpinPhase.AntiRamOnly, None: SpinPhase.FullSpin}
+    durations = {"3mo": Duration.ThreeMonths, "6mo": Duration.SixMonths, "1yr": Duration.OneYear}
+    grid_sizes = {"4": PixelSize.FourDegrees, "6": PixelSize.SixDegrees}
+    quantities = {"spectral": MapQuantity.SpectralIndex, None: MapQuantity.Intensity}
+
+    return MapDescriptorParts(
+        sensor=sensors[descriptor_part_match["sensor"]],
+        cg_correction=cg_corrections[descriptor_part_match["cg_corrected"]],
+        survival_correction=survival_corrections[descriptor_part_match["survival_corrected"]],
+        spin_phase=spin_phases[descriptor_part_match["spin_phase"]],
+        duration=durations[descriptor_part_match["duration"]],
+        grid_size=grid_sizes[descriptor_part_match["pixel_spacing"]],
+        quantity=quantities[descriptor_part_match["quantity"]],
+    )
