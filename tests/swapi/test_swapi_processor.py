@@ -3,12 +3,17 @@ from unittest import TestCase
 from unittest.mock import patch, sentinel, call
 
 import numpy as np
+from imap_data_access.processing_input import ProcessingInputCollection, ScienceInput
 from uncertainties import ufloat
 from uncertainties.unumpy import uarray, nominal_values, std_devs
 
 from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH, THIRTY_SECONDS_IN_NANOSECONDS, \
     FIVE_MINUTES_IN_NANOSECONDS
-from imap_l3_processing.models import UpstreamDataDependency, InputMetadata
+from imap_l3_processing.models import InputMetadata
+from imap_l3_processing.swapi.descriptors import PROTON_TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR, \
+    DENSITY_OF_NEUTRAL_HELIUM_DESCRIPTOR, INSTRUMENT_RESPONSE_LOOKUP_TABLE_DESCRIPTOR, \
+    EFFICIENCY_LOOKUP_TABLE_DESCRIPTOR, GEOMETRIC_FACTOR_LOOKUP_TABLE_DESCRIPTOR, \
+    CLOCK_ANGLE_AND_FLOW_DEFLECTION_LOOKUP_TABLE_DESCRIPTOR, ALPHA_TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR
 from imap_l3_processing.swapi.l3a.models import SwapiL2Data
 from imap_l3_processing.swapi.l3a.science.calculate_pickup_ion import FittingParameters
 from imap_l3_processing.swapi.l3a.swapi_l3a_dependencies import SWAPI_L2_DESCRIPTOR
@@ -31,7 +36,6 @@ class TestSwapiProcessor(TestCase):
     @patch('imap_l3_processing.swapi.swapi_processor.SwapiL3ProtonSolarWindData')
     @patch('imap_l3_processing.utils.write_cdf')
     @patch('imap_l3_processing.swapi.swapi_processor.chunk_l2_data')
-    @patch('imap_l3_processing.swapi.swapi_processor.read_l2_swapi_data')
     @patch('imap_l3_processing.swapi.swapi_processor.calculate_proton_solar_wind_speed')
     @patch('imap_l3_processing.swapi.swapi_processor.calculate_alpha_solar_wind_speed')
     @patch('imap_l3_processing.swapi.swapi_processor.calculate_proton_solar_wind_temperature_and_density')
@@ -45,31 +49,27 @@ class TestSwapiProcessor(TestCase):
     @patch('imap_l3_processing.swapi.swapi_processor.calculate_helium_pui_density')
     @patch('imap_l3_processing.swapi.swapi_processor.calculate_helium_pui_temperature')
     @patch('imap_l3_processing.processor.spiceypy')
-    def test_process_l3a(self, mock_calculate_helium_pui_temperature, mock_calculate_helium_pui_density,
-                         mock_calculate_ten_minute_velocities,
-                         mock_calculate_pickup_ion,
-                         mock_swapi_l3_dependencies_class,
-                         mock_calculate_deflection_angle,
-                         mock_calculate_clock_angle,
-                         mock_alpha_calculate_temperature_and_density,
-                         mock_proton_calculate_temperature_and_density,
-                         mock_calculate_alpha_solar_wind_speed,
-                         mock_calculate_proton_solar_wind_speed,
-                         mock_read_l2_swapi_data, mock_chunk_l2_data, mock_write_cdf,
+    def test_process_l3a(self, mock_spicepy, mock_calculate_helium_pui_temperature, mock_calculate_helium_pui_density,
+                         mock_calculate_ten_minute_velocities, mock_calculate_pickup_ion,
+                         mock_swapi_l3_dependencies_class, mock_calculate_deflection_angle,
+                         mock_calculate_clock_angle, mock_alpha_calculate_temperature_and_density,
+                         mock_proton_calculate_temperature_and_density, mock_calculate_alpha_solar_wind_speed,
+                         mock_calculate_proton_solar_wind_speed, mock_chunk_l2_data, mock_write_cdf,
                          mock_proton_solar_wind_data_constructor, mock_alpha_solar_wind_data_constructor,
-                         mock_pickup_ion_data_constructor,
-                         mock_imap_attribute_manager,
-                         mock_spice_wrapper_furnish):
+                         mock_pickup_ion_data_constructor, mock_imap_attribute_manager, mock_spice_wrapper_furnish
+                         ):
         instrument = 'swapi'
         incoming_data_level = 'l2'
-        descriptor = SWAPI_L2_DESCRIPTOR
+        dependency_start_date = datetime.strftime(datetime(2025, 1, 1), "%Y%m%d")
+        version = 'v001'
         end_date = datetime.now()
-        version = 'f'
         outgoing_data_level = "l3a"
         start_date = datetime.now() - timedelta(days=1)
         input_version = "v12345"
         outgoing_version = "12345"
         start_date_as_str = datetime.strftime(start_date, "%Y%m%d")
+
+        mock_spicepy.ktotal.return_value = 0
 
         returned_proton_sw_speed = ufloat(400000, 2)
         mock_calculate_proton_solar_wind_speed.return_value = (
@@ -117,12 +117,19 @@ class TestSwapiProcessor(TestCase):
             [17, 18, 19]
         ])
 
-        dependency_start_date = datetime(2025, 1, 1)
-        dependency_end_date = datetime(2025, 2, 1)
-        dependencies = [
-            UpstreamDataDependency(instrument, incoming_data_level, dependency_start_date, dependency_end_date,
-                                   version, descriptor),
+        input_file_names = [
+            f'imap_{instrument}_{incoming_data_level}_{SWAPI_L2_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
+            f'imap_{instrument}_{incoming_data_level}_{PROTON_TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
+            f'imap_{instrument}_{incoming_data_level}_{ALPHA_TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
+            f'imap_{instrument}_{incoming_data_level}_{CLOCK_ANGLE_AND_FLOW_DEFLECTION_LOOKUP_TABLE_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
+            f'imap_{instrument}_{incoming_data_level}_{GEOMETRIC_FACTOR_LOOKUP_TABLE_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
+            f'imap_{instrument}_{incoming_data_level}_{INSTRUMENT_RESPONSE_LOOKUP_TABLE_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
+            f'imap_{instrument}_{incoming_data_level}_{DENSITY_OF_NEUTRAL_HELIUM_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
         ]
+
+        science_inputs = [ScienceInput(file_name) for file_name in input_file_names]
+
+        dependencies = ProcessingInputCollection(*science_inputs)
 
         input_metadata = InputMetadata(instrument, outgoing_data_level, start_date, end_date, input_version)
 
@@ -158,7 +165,6 @@ class TestSwapiProcessor(TestCase):
                 mock_proton_calculate_temperature_and_density.reset_mock()
                 mock_calculate_alpha_solar_wind_speed.reset_mock()
                 mock_calculate_proton_solar_wind_speed.reset_mock()
-                mock_read_l2_swapi_data.reset_mock()
                 mock_chunk_l2_data.reset_mock()
                 mock_write_cdf.reset_mock()
                 mock_proton_solar_wind_data_constructor.reset_mock()
@@ -177,14 +183,16 @@ class TestSwapiProcessor(TestCase):
                     [chunk_of_fifty],
                 ]
 
+                mock_swapi_l3_dependencies_class.fetch_dependencies.return_value.data = sentinel.swapi_l2_data
+
                 mock_manager = mock_imap_attribute_manager.return_value
 
                 swapi_processor = SwapiProcessor(
                     dependencies, input_metadata)
                 swapi_processor.process()
 
-                self.assertEqual(swapi_processor.dependencies[0].start_date, dependency_start_date)
-                self.assertEqual(swapi_processor.dependencies[0].end_date, dependency_end_date)
+                actual_science_input = swapi_processor.dependencies.get_science_inputs()[0]
+                self.assertEqual(actual_science_input.get_time_range()[0].strftime("%Y%m%d"), dependency_start_date)
 
                 mock_swapi_l3_dependencies_class.fetch_dependencies.assert_called_once_with(dependencies)
 
@@ -195,13 +203,10 @@ class TestSwapiProcessor(TestCase):
                 mock_geometric_factor_calibration_table = mock_swapi_l3_dependencies_class.fetch_dependencies.return_value.geometric_factor_calibration_table
                 mock_density_of_neutral_helium_calibration_table = mock_swapi_l3_dependencies_class.fetch_dependencies.return_value.density_of_neutral_helium_calibration_table
 
-                mock_read_l2_swapi_data.assert_called_once_with(
-                    mock_swapi_l3_dependencies_class.fetch_dependencies.return_value.data)
-
                 mock_chunk_l2_data.side_effect = []
 
-                mock_chunk_l2_data.assert_has_calls([call(mock_read_l2_swapi_data.return_value, 5),
-                                                     call(mock_read_l2_swapi_data.return_value, 50)])
+                mock_chunk_l2_data.assert_has_calls([call(sentinel.swapi_l2_data, 5),
+                                                     call(sentinel.swapi_l2_data, 50)])
 
                 expected_count_rate_with_uncertainties = uarray(coincidence_count_rate,
                                                                 coincidence_count_rate_uncertainty)
@@ -349,6 +354,7 @@ class TestSwapiProcessor(TestCase):
 
                 mock_manager.add_instrument_attrs.assert_called_once_with("swapi", "l3a", descriptor_to_generate)
 
+                self.assertEqual(input_file_names, expected_data_product.parent_file_names)
                 mock_write_cdf.assert_called_once_with(expected_cdf_path, expected_data_product, mock_manager)
                 self.mock_imap_api.upload.assert_called_once_with(expected_cdf_path)
 
@@ -358,30 +364,32 @@ class TestSwapiProcessor(TestCase):
     @patch('imap_l3_processing.swapi.swapi_processor.SwapiL3BCombinedVDF')
     @patch('imap_l3_processing.swapi.swapi_processor.calculate_combined_sweeps')
     @patch('imap_l3_processing.swapi.swapi_processor.chunk_l2_data')
-    @patch('imap_l3_processing.swapi.swapi_processor.read_l2_swapi_data')
     @patch('imap_l3_processing.swapi.swapi_processor.SwapiL3BDependencies')
     @patch('imap_l3_processing.swapi.swapi_processor.calculate_alpha_solar_wind_vdf')
     @patch('imap_l3_processing.swapi.swapi_processor.calculate_proton_solar_wind_vdf')
     @patch('imap_l3_processing.swapi.swapi_processor.calculate_pui_solar_wind_vdf')
     @patch('imap_l3_processing.swapi.swapi_processor.calculate_combined_solar_wind_differential_flux')
-    def test_process_l3b(self, mock_calculate_combined_solar_wind_differential_flux, mock_calculate_pui_solar_wind_vdf,
+    @patch('imap_l3_processing.processor.spiceypy')
+    def test_process_l3b(self, mock_spiceypy, mock_calculate_combined_solar_wind_differential_flux,
+                         mock_calculate_pui_solar_wind_vdf,
                          mock_calculate_proton_solar_wind_vdf,
                          mock_calculate_alpha_solar_wind_vdf,
                          mock_swapi_l3b_dependencies_class,
-                         mock_read_l2_swapi_data, mock_chunk_l2_data,
+                         mock_chunk_l2_data,
                          mock_calculate_combined_sweeps, mock_combined_vdf_data,
                          mock_save_data,
                          mock_calculate_delta_minus_plus,
                          mock_imap_data_access):
         instrument = 'swapi'
         incoming_data_level = 'l2'
-        descriptor = SWAPI_L2_DESCRIPTOR
         end_date = datetime.now()
-        version = 'f'
+        version = 'v001'
         outgoing_data_level = "l3b"
+        dependency_start_date = "20250101"
         start_date = datetime.now() - timedelta(days=1)
         outgoing_version = "12345"
 
+        mock_spiceypy.ktotal.return_value = 0
         mock_calculate_proton_solar_wind_vdf.side_effect = [
             (sentinel.proton_calculated_velocities1, sentinel.proton_calculated_probabilities1),
             (sentinel.proton_calculated_velocities2, sentinel.proton_calculated_probabilities2),
@@ -440,10 +448,16 @@ class TestSwapiProcessor(TestCase):
 
         input_metadata = InputMetadata(instrument, outgoing_data_level, start_date, end_date,
                                        outgoing_version)
-        dependencies = [
-            UpstreamDataDependency(instrument, incoming_data_level, start_date, end_date,
-                                   version, descriptor),
+
+        input_file_names = [
+            f'imap_{instrument}_{incoming_data_level}_{SWAPI_L2_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
+            f'imap_{instrument}_{incoming_data_level}_{GEOMETRIC_FACTOR_LOOKUP_TABLE_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
+            f'imap_{instrument}_{incoming_data_level}_{EFFICIENCY_LOOKUP_TABLE_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
         ]
+
+        science_inputs = [ScienceInput(file_name) for file_name in input_file_names]
+
+        dependencies = ProcessingInputCollection(*science_inputs)
 
         swapi_processor = SwapiProcessor(
             dependencies, input_metadata)
@@ -454,10 +468,8 @@ class TestSwapiProcessor(TestCase):
         mock_geometric_factor_calibration_table = mock_swapi_l3b_dependencies_class.fetch_dependencies.return_value.geometric_factor_calibration_table
         mock_efficiency_table = mock_swapi_l3b_dependencies_class.fetch_dependencies.return_value.efficiency_calibration_table
 
-        mock_read_l2_swapi_data.assert_called_once_with(
-            mock_swapi_l3b_dependencies_class.fetch_dependencies.return_value.data)
-
-        mock_chunk_l2_data.assert_called_with(mock_read_l2_swapi_data.return_value, 50)
+        mock_chunk_l2_data.assert_called_with(mock_swapi_l3b_dependencies_class.fetch_dependencies.return_value.data,
+                                              50)
 
         np.testing.assert_array_equal(coincidence_count_rate,
                                       nominal_values(mock_calculate_combined_sweeps.call_args_list[0].args[0]))
@@ -580,6 +592,7 @@ class TestSwapiProcessor(TestCase):
             [sentinel.calculated_diffential_flux1, sentinel.calculated_diffential_flux2],
             mock_combined_vdf_data.call_args_list[0].kwargs["combined_differential_flux"])
 
+        self.assertEqual(input_file_names, mock_combined_vdf_data.return_value.parent_file_names)
         mock_save_data.assert_called_once_with(mock_combined_vdf_data.return_value)
         mock_imap_data_access.upload.assert_called_with(mock_save_data.return_value)
 

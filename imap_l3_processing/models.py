@@ -19,6 +19,10 @@ class InputMetadata:
     descriptor: str = ""
     repointing: Optional[int] = None
 
+    @property
+    def logical_source(self):
+        return f"imap_{self.instrument}_{self.data_level}_{self.descriptor}"
+
     def to_upstream_data_dependency(self, descriptor: str):
         return UpstreamDataDependency(self.instrument, self.data_level, self.start_date, self.end_date, self.version,
                                       descriptor, self.repointing)
@@ -26,10 +30,7 @@ class InputMetadata:
 
 @dataclass
 class UpstreamDataDependency(InputMetadata):
-
-    @property
-    def logical_source(self):
-        return f"imap_{self.instrument}_{self.data_level}_{self.descriptor}"
+    pass
 
 
 @dataclass
@@ -42,7 +43,7 @@ class DataProductVariable:
 
 @dataclass
 class DataProduct(metaclass=abc.ABCMeta):
-    input_metadata: UpstreamDataDependency
+    input_metadata: InputMetadata
 
     parent_file_names: list[str] = field(default_factory=list, kw_only=True)
 
