@@ -1,27 +1,33 @@
 from dataclasses import dataclass
 from pathlib import Path
 
+from imap_data_access import download
+from imap_data_access.processing_input import ProcessingInputCollection
 from spacepy.pycdf import CDF
 
-from imap_l3_processing.models import UpstreamDataDependency
-from imap_l3_processing.swapi.descriptors import SWAPI_L2_DESCRIPTOR, PROTON_TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR, \
+from imap_l3_processing.swapi.descriptors import SWAPI_L2_DESCRIPTOR, \
+    PROTON_TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR, \
     ALPHA_TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR, CLOCK_ANGLE_AND_FLOW_DEFLECTION_LOOKUP_TABLE_DESCRIPTOR, \
-    GEOMETRIC_FACTOR_LOOKUP_TABLE_DESCRIPTOR, INSTRUMENT_RESPONSE_LOOKUP_TABLE, DENSITY_OF_NEUTRAL_HELIUM
+    GEOMETRIC_FACTOR_LOOKUP_TABLE_DESCRIPTOR, INSTRUMENT_RESPONSE_LOOKUP_TABLE_DESCRIPTOR, \
+    DENSITY_OF_NEUTRAL_HELIUM_DESCRIPTOR
+from imap_l3_processing.swapi.l3a.models import SwapiL2Data
 from imap_l3_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density import \
     AlphaTemperatureDensityCalibrationTable
 from imap_l3_processing.swapi.l3a.science.calculate_proton_solar_wind_clock_and_deflection_angles import \
     ClockAngleCalibrationTable
 from imap_l3_processing.swapi.l3a.science.calculate_proton_solar_wind_temperature_and_density import \
     ProtonTemperatureAndDensityCalibrationTable
-from imap_l3_processing.swapi.l3a.science.density_of_neutral_helium_lookup_table import DensityOfNeutralHeliumLookupTable
+from imap_l3_processing.swapi.l3a.science.density_of_neutral_helium_lookup_table import \
+    DensityOfNeutralHeliumLookupTable
+from imap_l3_processing.swapi.l3a.utils import read_l2_swapi_data
 from imap_l3_processing.swapi.l3b.science.geometric_factor_calibration_table import GeometricFactorCalibrationTable
-from imap_l3_processing.swapi.l3b.science.instrument_response_lookup_table import InstrumentResponseLookupTableCollection
-from imap_l3_processing.utils import download_dependency
+from imap_l3_processing.swapi.l3b.science.instrument_response_lookup_table import \
+    InstrumentResponseLookupTableCollection
 
 
 @dataclass
 class SwapiL3ADependencies:
-    data: CDF
+    data: SwapiL2Data
     proton_temperature_density_calibration_table: ProtonTemperatureAndDensityCalibrationTable
     alpha_temperature_density_calibration_table: AlphaTemperatureDensityCalibrationTable
     clock_angle_and_flow_deflection_calibration_table: ClockAngleCalibrationTable
@@ -30,44 +36,59 @@ class SwapiL3ADependencies:
     density_of_neutral_helium_calibration_table: DensityOfNeutralHeliumLookupTable
 
     @classmethod
-    def fetch_dependencies(cls, dependencies: list[UpstreamDataDependency]):
-        try:
-            data_dependency = next(
-                dep for dep in dependencies if dep.descriptor == SWAPI_L2_DESCRIPTOR)
-        except StopIteration:
-            raise ValueError(f"Missing {SWAPI_L2_DESCRIPTOR} dependency.")
-        try:
-            data_dependency_path = download_dependency(data_dependency)
+    def fetch_dependencies(cls, dependencies: ProcessingInputCollection):
+        science_dependency_file = dependencies.get_file_paths(source='swapi', descriptor=SWAPI_L2_DESCRIPTOR)
+        proton_density_and_temperature_calibration_file = dependencies.get_file_paths(source='swapi',
+                                                                                      descriptor=PROTON_TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR)
+        alpha_density_and_temperature_calibration_file = dependencies.get_file_paths(source='swapi',
+                                                                                     descriptor=ALPHA_TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR)
+        clock_and_deflection_file = dependencies.get_file_paths(source='swapi',
+                                                                descriptor=CLOCK_ANGLE_AND_FLOW_DEFLECTION_LOOKUP_TABLE_DESCRIPTOR)
+        geometric_factor_calibration_table = dependencies.get_file_paths(source='swapi',
+                                                                         descriptor=GEOMETRIC_FACTOR_LOOKUP_TABLE_DESCRIPTOR)
+        instrument_response_table = dependencies.get_file_paths(source='swapi',
+                                                                descriptor=INSTRUMENT_RESPONSE_LOOKUP_TABLE_DESCRIPTOR)
+        neutral_helium_table = dependencies.get_file_paths(source='swapi',
+                                                           descriptor=DENSITY_OF_NEUTRAL_HELIUM_DESCRIPTOR)
 
-            proton_density_and_temperature_calibration_file_path = cls.get_lookup_table_with_descriptor(
-                PROTON_TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR)
-            alpha_density_and_temperature_calibration_file_path = cls.get_lookup_table_with_descriptor(
-                ALPHA_TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR)
-            clock_and_deflection_file_path = cls.get_lookup_table_with_descriptor(
-                CLOCK_ANGLE_AND_FLOW_DEFLECTION_LOOKUP_TABLE_DESCRIPTOR)
-            geometric_factor_calibration_table_path = cls.get_lookup_table_with_descriptor(
-                GEOMETRIC_FACTOR_LOOKUP_TABLE_DESCRIPTOR)
-            instrument_response_table_path = cls.get_lookup_table_with_descriptor(INSTRUMENT_RESPONSE_LOOKUP_TABLE)
-            neutral_helium_table_path = cls.get_lookup_table_with_descriptor(DENSITY_OF_NEUTRAL_HELIUM)
-        except ValueError as e:
-            raise ValueError(f"Unexpected files found for SWAPI L3:"
-                             f"{e}")
+        download(science_dependency_file[0])
+        download(proton_density_and_temperature_calibration_file[0])
+        download(alpha_density_and_temperature_calibration_file[0])
+        download(clock_and_deflection_file[0])
+        download(geometric_factor_calibration_table[0])
+        download(instrument_response_table[0])
+        download(neutral_helium_table[0])
 
-        data_file = CDF(str(data_dependency_path))
-        proton_temperature_and_density_calibration_table = ProtonTemperatureAndDensityCalibrationTable.from_file(
-            proton_density_and_temperature_calibration_file_path)
-        alpha_density_and_temperature_calibration_table = AlphaTemperatureDensityCalibrationTable.from_file(
-            alpha_density_and_temperature_calibration_file_path)
-        clock_angle_calibration_table = ClockAngleCalibrationTable.from_file(clock_and_deflection_file_path)
-        geometric_factor_table = GeometricFactorCalibrationTable.from_file(geometric_factor_calibration_table_path)
-        instrument_response_table = InstrumentResponseLookupTableCollection.from_file(instrument_response_table_path)
-        helium_table = DensityOfNeutralHeliumLookupTable.from_file(neutral_helium_table_path)
+        return cls.from_file_paths(
+            science_dependency_file[0],
+            proton_density_and_temperature_calibration_file[0],
+            alpha_density_and_temperature_calibration_file[0],
+            clock_and_deflection_file[0],
+            geometric_factor_calibration_table[0],
+            instrument_response_table[0],
+            neutral_helium_table[0],
+        )
 
-        return cls(data_file, proton_temperature_and_density_calibration_table,
-                   alpha_density_and_temperature_calibration_table, clock_angle_calibration_table,
-                   geometric_factor_table, instrument_response_table, helium_table)
+    @classmethod
+    def from_file_paths(cls, science_dependency_path: Path, proton_density_and_temperature_calibration_path: Path,
+                        alpha_density_and_temperature_calibration_path: Path, clock_and_deflection_file_path: Path,
+                        geometric_factor_calibration_path: Path, instrument_response_path: Path,
+                        neutral_helium_path: Path):
+        swapi_l2_data = read_l2_swapi_data(CDF(str(science_dependency_path)))
+        proton_density_temp_lookup = ProtonTemperatureAndDensityCalibrationTable.from_file(
+            proton_density_and_temperature_calibration_path)
+        alpha_density_temp_lookup = AlphaTemperatureDensityCalibrationTable.from_file(
+            alpha_density_and_temperature_calibration_path)
+        clock_deflection_lookup = ClockAngleCalibrationTable.from_file(clock_and_deflection_file_path)
+        geometric_factor_calibration_lookup = GeometricFactorCalibrationTable.from_file(
+            geometric_factor_calibration_path)
+        instrument_response_lookup = InstrumentResponseLookupTableCollection.from_file(instrument_response_path)
+        neutral_helium_lookup = DensityOfNeutralHeliumLookupTable.from_file(neutral_helium_path)
 
-    @staticmethod
-    def get_lookup_table_with_descriptor(descriptor: str) -> Path:
-        dependency = UpstreamDataDependency("swapi", "l2", None, None, "latest", descriptor)
-        return download_dependency(dependency)
+        return cls(swapi_l2_data,
+                   proton_density_temp_lookup,
+                   alpha_density_temp_lookup,
+                   clock_deflection_lookup,
+                   geometric_factor_calibration_lookup,
+                   instrument_response_lookup,
+                   neutral_helium_lookup, )

@@ -66,7 +66,7 @@ def imap_l3_processor():
                                      _convert_to_datetime(args.end_date or args.start_date),
                                      args.version, descriptor=args.descriptor)
     if args.instrument == 'swapi' and (args.data_level == 'l3a' or args.data_level == 'l3b'):
-        processor = SwapiProcessor(dependencies, input_dependency)
+        processor = SwapiProcessor(processing_input_collection, input_dependency)
         processor.process()
     elif args.instrument == 'glows':
         processor = GlowsProcessor(dependencies, input_dependency)

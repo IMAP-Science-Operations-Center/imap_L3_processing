@@ -1,11 +1,13 @@
 import unittest
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
-from unittest.mock import patch, sentinel, call
+from unittest.mock import patch, call, sentinel
 
-import imap_l3_processing
-from imap_l3_processing.models import UpstreamDataDependency
-from imap_l3_processing.swapi.descriptors import SWAPI_L2_DESCRIPTOR
+import imap_data_access
+from imap_data_access.processing_input import ScienceInput, ProcessingInputCollection
+
+from imap_l3_processing.swapi.descriptors import SWAPI_L2_DESCRIPTOR, GEOMETRIC_FACTOR_LOOKUP_TABLE_DESCRIPTOR, \
+    EFFICIENCY_LOOKUP_TABLE_DESCRIPTOR
 from imap_l3_processing.swapi.l3b.swapi_l3b_dependencies import SwapiL3BDependencies
 
 
@@ -13,98 +15,76 @@ class TestSwapiL3BDependencies(unittest.TestCase):
     def setUp(self) -> None:
         self.mock_imap_patcher = patch('imap_l3_processing.utils.imap_data_access')
         self.mock_imap_api = self.mock_imap_patcher.start()
-        self.mock_imap_api.query.side_effect = [
-            [{'file_path': sentinel.data_file_path}],
-            [{'file_path': sentinel.energy_gf_file_path}],
-            [{'file_path': sentinel.efficiency_calibration_table_file_path}],
-        ]
+
+    @patch(
+        "imap_l3_processing.swapi.l3b.swapi_l3b_dependencies.SwapiL3BDependencies.from_file_paths")
+    @patch(
+        "imap_l3_processing.swapi.l3b.swapi_l3b_dependencies.download")
+    def test_fetch_dependencies(self, mock_download, mock_from_file_paths):
+        incoming_data_level = 'l2'
+        version = 'v002'
+        start_date = datetime(2025, 1, 1).strftime("%Y%m%d")
+
+        science_file_path = f'imap_swapi_{incoming_data_level}_{SWAPI_L2_DESCRIPTOR}_{start_date}_{version}.cdf'
+        geometric_calibration_path = f'imap_swapi_{incoming_data_level}_{GEOMETRIC_FACTOR_LOOKUP_TABLE_DESCRIPTOR}_{start_date}_{version}.cdf'
+        efficiency_table_path = f'imap_swapi_{incoming_data_level}_{EFFICIENCY_LOOKUP_TABLE_DESCRIPTOR}_{start_date}_{version}.cdf'
+
+        science_input = ScienceInput(science_file_path)
+        geometric_calibration_input = ScienceInput(geometric_calibration_path)
+        efficiency_table_input = ScienceInput(efficiency_table_path)
+        dependencies = ProcessingInputCollection(science_input, geometric_calibration_input, efficiency_table_input)
+
+        actual_swapi_l3b_dependencies = SwapiL3BDependencies.fetch_dependencies(dependencies)
+
+        data_dir = imap_data_access.config["DATA_DIR"] / 'imap' / 'swapi' / 'l2' / '2025' / '01'
+
+        expected_download_science_path = data_dir / science_file_path
+        expected_geometric_calibration_path = data_dir / geometric_calibration_path
+        expected_efficiency_table_path = data_dir / efficiency_table_path
+
+        mock_download.assert_has_calls([
+            call(expected_download_science_path),
+            call(expected_geometric_calibration_path),
+            call(expected_efficiency_table_path),
+        ])
+
+        mock_from_file_paths.assert_called_with(
+            expected_download_science_path,
+            expected_geometric_calibration_path,
+            expected_efficiency_table_path,
+        )
+
+        self.assertEqual(mock_from_file_paths.return_value, actual_swapi_l3b_dependencies)
 
     @patch('imap_l3_processing.swapi.l3b.swapi_l3b_dependencies.CDF')
-    @patch('imap_l3_processing.swapi.l3b.swapi_l3b_dependencies.GeometricFactorCalibrationTable')
     @patch('imap_l3_processing.swapi.l3b.swapi_l3b_dependencies.EfficiencyCalibrationTable')
-    def test_fetch_dependencies(self, mock_efficiency_calibration_table_class, mock_geometric_factor_calibration_table,
-                                mock_cdf_constructor):
+    @patch('imap_l3_processing.swapi.l3b.swapi_l3b_dependencies.GeometricFactorCalibrationTable.from_file')
+    @patch('imap_l3_processing.swapi.l3b.swapi_l3b_dependencies.read_l2_swapi_data')
+    def test_from_file_paths(self, mock_read_l2_swapi, mock_read_geometric_factor, mock_efficiency_calibration,
+                             mock_cdf):
+        start_date = '20100105'
+        mission = 'imap'
         instrument = 'swapi'
-        incoming_data_level = 'l2'
-        descriptor = SWAPI_L2_DESCRIPTOR
-        end_date = datetime.now()
-        version = 'v002'
-        start_date = datetime.now() - timedelta(days=1)
+        data_level = 'l2'
+        version = 'v010'
 
-        dependencies = UpstreamDataDependency(instrument, incoming_data_level, start_date, end_date,
-                                              version, descriptor)
+        swapi_science_file_download_path = f"{mission}_{instrument}_{data_level}_{SWAPI_L2_DESCRIPTOR}_{start_date}_{version}.cdf"
+        swapi_geometric_factor_calibration_file_name = f"{mission}_{instrument}_{data_level}_{GEOMETRIC_FACTOR_LOOKUP_TABLE_DESCRIPTOR}_{start_date}_{version}.cdf"
+        swapi_efficiency_calibration_file_name = f"{mission}_{instrument}_{data_level}_{EFFICIENCY_LOOKUP_TABLE_DESCRIPTOR}_{start_date}_{version}.cdf"
 
-        data_file_path = Path(
-            imap_l3_processing.__file__).parent.parent / 'swapi/test_data/imap_swapi_l2_fake-menlo-5-sweeps_20100101_v002.cdf'
+        mock_read_l2_swapi.return_value = sentinel.swapi_l2_data
+        mock_read_geometric_factor.return_value = sentinel.geometric_factor_data
+        mock_efficiency_calibration.return_value = sentinel.efficiency_calibration_data
 
-        self.mock_imap_api.download.side_effect = [
-            data_file_path,
-            sentinel.energy_gf_local_file_path,
-            sentinel.efficiency_calibration_table_local_file_path
-        ]
+        expected_dependencies = SwapiL3BDependencies(sentinel.swapi_l2_data,
+                                                     sentinel.geometric_factor_data,
+                                                     sentinel.efficiency_calibration_data,
+                                                     )
 
-        fetched_dependencies = SwapiL3BDependencies.fetch_dependencies([dependencies])
+        actual_dependencies = SwapiL3BDependencies.from_file_paths(
+            Path(swapi_science_file_download_path),
+            Path(swapi_geometric_factor_calibration_file_name),
+            Path(swapi_efficiency_calibration_file_name)
+        )
 
-        start_date_as_str = start_date.strftime("%Y%m%d")
-        end_date_as_str = end_date.strftime("%Y%m%d")
-        self.mock_imap_api.query.assert_has_calls([call(instrument=instrument, data_level=incoming_data_level,
-                                                        descriptor=descriptor, start_date=start_date_as_str,
-                                                        end_date=end_date_as_str, version=version),
-                                                   call(instrument=instrument, data_level=incoming_data_level,
-                                                        descriptor="energy-gf-lut-not-cdf",
-                                                        start_date=None,
-                                                        end_date=None,
-                                                        version='latest'),
-                                                   call(instrument=instrument, data_level=incoming_data_level,
-                                                        descriptor="efficiency-lut-text-not-cdf",
-                                                        start_date=None,
-                                                        end_date=None,
-                                                        version='latest'),
-                                                   ])
-        self.mock_imap_api.download.assert_has_calls(
-            [call(sentinel.data_file_path), call(sentinel.energy_gf_file_path),
-             call(sentinel.efficiency_calibration_table_file_path)])
-
-        mock_cdf_constructor.assert_called_with(str(data_file_path))
-        mock_geometric_factor_calibration_table.from_file.assert_called_with(
-            sentinel.energy_gf_local_file_path)
-        mock_efficiency_calibration_table_class.assert_called_with(
-            sentinel.efficiency_calibration_table_local_file_path)
-
-        self.assertIs(mock_cdf_constructor.return_value,
-                      fetched_dependencies.data)
-        self.assertIs(mock_geometric_factor_calibration_table.from_file.return_value,
-                      fetched_dependencies.geometric_factor_calibration_table)
-        self.assertIs(mock_efficiency_calibration_table_class.return_value,
-                      fetched_dependencies.efficiency_calibration_table)
-
-    def test_throws_exception_when_more_than_one_file_is_downloaded(self):
-        file_path = Path(
-            imap_l3_processing.__file__).parent.parent / 'swapi/test_data/imap_swapi_l2_fake-menlo-5-sweeps_20100101_v002.cdf'
-
-        self.mock_imap_api.download.return_value = file_path
-
-        self.mock_imap_api.query.side_effect = [
-            [{'file_path': '1 thing'}],
-            [{'file_path': '2 thing'}, {'file_path': '3 thing'}]
-        ]
-
-        dependencies = [UpstreamDataDependency('swapi', 'l2', datetime.now() - timedelta(days=1),
-                                               datetime.now(), 'f', SWAPI_L2_DESCRIPTOR)]
-
-        with self.assertRaises(ValueError) as cm:
-            SwapiL3BDependencies.fetch_dependencies(dependencies)
-        exception = cm.exception
-        self.assertEqual(f"Unexpected files found for SWAPI L3:"
-                         f"{['2 thing', '3 thing']}. Expected one file to download, found 2.",
-                         str(exception))
-
-    def test_throws_exception_when_missing_swapi_data(self):
-        dependencies = [
-            UpstreamDataDependency('swapi', 'l2', datetime.now() - timedelta(days=1), datetime.now(), 'f', 'data')]
-
-        with self.assertRaises(ValueError) as cm:
-            SwapiL3BDependencies.fetch_dependencies(dependencies)
-        exception = cm.exception
-        self.assertEqual(f"Missing {SWAPI_L2_DESCRIPTOR} dependency.",
-                         str(exception))
+        self.assertEqual(expected_dependencies, actual_dependencies)

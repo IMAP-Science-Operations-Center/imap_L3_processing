@@ -7,9 +7,7 @@ from imap_data_access.processing_input import ProcessingInputCollection
 
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_dependencies import CodiceLoL3aDependencies
 from imap_l3_processing.codice.l3.lo.codice_lo_processor import CodiceLoProcessor
-from imap_l3_processing.codice.l3.lo.models import CodiceLoL2Data, CodiceLoL3aDataProduct
-from imap_l3_processing.codice.l3.lo.sectored_intensities.science.esa_step_lookup import ESAStepLookup
-from imap_l3_processing.codice.l3.lo.sectored_intensities.science.mass_per_charge_lookup import MassPerChargeLookup
+from imap_l3_processing.codice.l3.lo.models import CodiceLoL3aDataProduct
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
 

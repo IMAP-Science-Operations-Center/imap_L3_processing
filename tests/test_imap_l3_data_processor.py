@@ -12,10 +12,9 @@ from imap_l3_processing.models import InputMetadata, UpstreamDataDependency
 class TestImapL3DataProcessor(TestCase):
     @patch('imap_l3_data_processor.SwapiProcessor')
     @patch('imap_l3_data_processor.argparse')
-    def test_runs_swapi_processor_when_instrument_argument_is_swapi(self, mock_argparse, mock_swapi_processor_class):
-
-        cases = [("20170630", datetime(2017, 6, 30)), (None, datetime(2016, 6, 30))]
-
+    @patch('imap_l3_data_processor.ProcessingInputCollection')
+    def test_runs_swapi_processor_when_instrument_argument_is_swapi(self, mock_processing_input_collection,
+                                                                    mock_argparse, mock_swapi_processor_class):
         instrument_argument = "swapi"
         data_level_argument = "l3a"
         start_date_argument = "20160630"
@@ -23,6 +22,12 @@ class TestImapL3DataProcessor(TestCase):
         descriptor_argument = "proton"
         science_input = ScienceInput("imap_swapi_l3a_science_20250101_v112.cdf")
         imap_data_access_dependency = ProcessingInputCollection(science_input)
+
+        cases = [("20170630", datetime(2017, 6, 30)), (None, datetime(2016, 6, 30))]
+
+        mock_processing_input_collection.return_value = imap_data_access_dependency
+        mock_processing_input_collection.deserialize = Mock()
+        mock_processing_input_collection.get_science_inputs = Mock(return_value=[])
 
         mock_argument_parser = mock_argparse.ArgumentParser.return_value
 
@@ -55,19 +60,12 @@ class TestImapL3DataProcessor(TestCase):
                          help="Upload completed output files to the IMAP SDC.")
                 ])
 
-                expected_input_dependencies = [UpstreamDataDependency("swapi",
-                                                                      "l3a",
-                                                                      datetime(2025, 1, 1),
-                                                                      datetime(2025, 1, 1),
-                                                                      "v112",
-                                                                      "science")]
-
                 expected_input_metadata = InputMetadata("swapi", "l3a", datetime(year=2016, month=6, day=30),
                                                         expected_end_date, "v092", "proton")
 
-                mock_swapi_processor_class.assert_called_with(expected_input_dependencies, expected_input_metadata)
-
                 mock_swapi_processor.process.assert_called()
+
+                mock_swapi_processor_class.assert_called_with(imap_data_access_dependency, expected_input_metadata)
 
     @patch('imap_l3_data_processor.GlowsProcessor')
     @patch('imap_l3_data_processor.argparse')
