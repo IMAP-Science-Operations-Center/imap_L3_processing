@@ -200,19 +200,22 @@ class TestUtils(unittest.TestCase):
         sp = SurvivalCorrection.SurvivalCorrected
         no_sp = SurvivalCorrection.NotSurvivalCorrected
         test_cases = [
-            ("h45-sf-sp-anti-hae-4deg-3mo", Sensor.Hi45, no_cg, sp, SpinPhase.AntiRamOnly,
-             PixelSize.FourDegrees, Duration.ThreeMonths, MapQuantity.Intensity),
-            ("h90-hf-ram-hae-6deg-1yr", Sensor.Hi90, cg, no_sp, SpinPhase.RamOnly,
-             PixelSize.SixDegrees, Duration.OneYear, MapQuantity.Intensity),
-            ("h90-hf-hae-6deg-6mo", Sensor.Hi90, cg, no_sp, SpinPhase.FullSpin,
-             PixelSize.SixDegrees, Duration.SixMonths, MapQuantity.Intensity),
-            ("h45-hf-sp-hae-4deg-6mo-spectral", Sensor.Hi45, cg, sp, SpinPhase.FullSpin,
-             PixelSize.FourDegrees, Duration.SixMonths, MapQuantity.SpectralIndex),
+            ("h45-sf-sp-anti-hae-4deg-3mo", MapDescriptorParts(Sensor.Hi45, no_cg, sp, SpinPhase.AntiRamOnly,
+                                                               PixelSize.FourDegrees, Duration.ThreeMonths,
+                                                               MapQuantity.Intensity)),
+            ("h90-hf-ram-hae-6deg-1yr", MapDescriptorParts(Sensor.Hi90, cg, no_sp, SpinPhase.RamOnly,
+                                                           PixelSize.SixDegrees, Duration.OneYear,
+                                                           MapQuantity.Intensity)),
+            ("h90-hf-hae-6deg-6mo", MapDescriptorParts(Sensor.Hi90, cg, no_sp, SpinPhase.FullSpin,
+                                                       PixelSize.SixDegrees, Duration.SixMonths,
+                                                       MapQuantity.Intensity)),
+            ("h45-hf-sp-hae-4deg-6mo-spectral", MapDescriptorParts(Sensor.Hi45, cg, sp, SpinPhase.FullSpin,
+                                                                   PixelSize.FourDegrees, Duration.SixMonths,
+                                                                   MapQuantity.SpectralIndex)),
+            ("not-valid-at-all", None)
         ]
 
-        for case in test_cases:
-            descriptor = case[0]
-            expected = MapDescriptorParts(*case[1:])
+        for descriptor, expected in test_cases:
             with self.subTest(descriptor):
                 descriptor_parts = parse_map_descriptor(descriptor)
                 self.assertEqual(expected, descriptor_parts)
