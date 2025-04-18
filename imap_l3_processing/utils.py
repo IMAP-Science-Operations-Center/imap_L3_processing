@@ -9,7 +9,7 @@ import imap_data_access
 from spacepy.pycdf import CDF
 from spiceypy import spiceypy
 
-from imap_l3_processing.cdf.cdf_utils import write_cdf, read_float_variable
+from imap_l3_processing.cdf.cdf_utils import write_cdf, read_numeric_variable
 from imap_l3_processing.cdf.imap_attribute_manager import ImapAttributeManager
 from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
 from imap_l3_processing.models import UpstreamDataDependency, DataProduct, MagL1dData
@@ -104,4 +104,4 @@ def read_l1d_mag_data(cdf_path: Union[str, Path]) -> MagL1dData:
     with CDF(str(cdf_path)) as cdf:
         return MagL1dData(
             epoch=cdf['epoch'][...],
-            mag_data=read_float_variable(cdf["vectors"])[:, :3])
+            mag_data=read_numeric_variable(cdf["vectors"])[:, :3])

@@ -52,7 +52,6 @@ def read_variable_and_mask_fill_values(var: pycdf.Var) -> np.ma.masked_array:
     return np.ma.masked_equal(var[...], var.attrs['FILLVAL'])
 
 
-def read_float_variable(var: pycdf.Var) -> np.ndarray:
-    assert np.issubdtype(var.dtype, np.floating)
-
+def read_numeric_variable(var: pycdf.Var) -> np.ndarray:
+    assert np.issubdtype(var.dtype, np.number)
     return np.where(var[...] == var.attrs['FILLVAL'], np.nan, var[...])

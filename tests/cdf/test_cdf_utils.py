@@ -4,7 +4,7 @@ from unittest.mock import Mock, call
 import numpy as np
 from spacepy import pycdf
 
-from imap_l3_processing.cdf.cdf_utils import write_cdf, read_variable_and_mask_fill_values, read_float_variable
+from imap_l3_processing.cdf.cdf_utils import write_cdf, read_variable_and_mask_fill_values, read_numeric_variable
 from imap_l3_processing.cdf.imap_attribute_manager import ImapAttributeManager
 from imap_l3_processing.models import DataProduct, DataProductVariable, InputMetadata
 from tests.temp_file_test_case import TempFileTestCase
@@ -185,12 +185,16 @@ class TestCdfUtils(TempFileTestCase):
     def test_read_variable_replaces_fill_values_with_nan(self):
         path = str(self.temp_directory / "cdf.cdf")
         with pycdf.CDF(path, create=True) as actual_cdf:
-            actual_cdf['var'] = np.array([1, 2, -1e31, 4, 5])
+            actual_cdf['var'] = np.array([1, 2, -1e31, 4, 5], dtype=np.float64)
             actual_cdf['var'].attrs['FILLVAL'] = -1e31
+            actual_cdf['int_var'] = np.array([1, 2, 3, 4, 5], dtype=np.int32)
+            actual_cdf['int_var'].attrs['FILLVAL'] = 5
 
-            data = read_float_variable(actual_cdf['var'])
+            data = read_numeric_variable(actual_cdf['var'])
+            int_data = read_numeric_variable(actual_cdf['int_var'])
 
         np.testing.assert_equal(data, np.array([1, 2, np.nan, 4, 5]))
+        np.testing.assert_equal(int_data, np.array([1, 2, 3, 4, np.nan]))
 
 
 class TestDataProduct(DataProduct):
