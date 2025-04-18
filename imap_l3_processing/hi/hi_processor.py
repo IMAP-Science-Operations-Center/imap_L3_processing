@@ -1,12 +1,15 @@
+import dataclasses
+
 import numpy as np
 from imap_data_access import upload
 from imap_processing.spice.geometry import SpiceFrame
 
 from imap_l3_processing import spice_wrapper
 from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3SpectralFitDependencies
-from imap_l3_processing.hi.l3.hi_l3_survival_dependencies import HiL3SurvivalDependencies
+from imap_l3_processing.hi.l3.hi_l3_survival_dependencies import HiL3SurvivalDependencies, \
+    HiL3SingleSensorFullSpinDependencies
 from imap_l3_processing.hi.l3.models import HiL3SpectralIndexDataProduct, GlowsL3eData, HiL1cData, \
-    HiL3SurvivalCorrectedDataProduct
+    HiL3SurvivalCorrectedDataProduct, combine_maps
 from imap_l3_processing.hi.l3.science.spectral_fit import spectral_fit
 from imap_l3_processing.hi.l3.science.survival_probability import HiSurvivalProbabilityPointingSet, \
     HiSurvivalProbabilitySkyMap
@@ -29,11 +32,27 @@ class HiProcessor(Processor):
                     self.dependencies)
                 data_product = self._process_survival_probabilities(parsed_descriptor,
                                                                     hi_l3_survival_probabilities_dependencies)
+            case MapDescriptorParts(survival_correction=SurvivalCorrection.SurvivalCorrected,
+                                    spin_phase=SpinPhase.FullSpin, duration=Duration.SixMonths):
+                hi_l3_full_spin_dependencies = HiL3SingleSensorFullSpinDependencies.fetch_dependencies(
+                    self.dependencies)
+                data_product = self._process_full_spin_single_sensor(parsed_descriptor, hi_l3_full_spin_dependencies)
             case _:
                 raise NotImplementedError(self.input_metadata.descriptor)
 
         cdf_path = save_data(data_product)
         upload(cdf_path)
+
+    def _process_full_spin_single_sensor(self, parsed_descriptor: MapDescriptorParts,
+                                         hi_l3_full_spin_dependencies: HiL3SingleSensorFullSpinDependencies) -> HiL3SurvivalCorrectedDataProduct:
+        ram_data_product = self._process_survival_probabilities(
+            dataclasses.replace(parsed_descriptor, spin_phase=SpinPhase.RamOnly),
+            hi_l3_full_spin_dependencies.ram_dependencies)
+        antiram_data_product = self._process_survival_probabilities(
+            dataclasses.replace(parsed_descriptor, spin_phase=SpinPhase.AntiRamOnly),
+            hi_l3_full_spin_dependencies.antiram_dependencies)
+
+        return combine_maps([ram_data_product, antiram_data_product])
 
     def _process_spectral_fit_index(self,
                                     hi_l3_spectral_fit_dependencies: HiL3SpectralFitDependencies) -> HiL3SpectralIndexDataProduct:
