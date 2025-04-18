@@ -54,13 +54,17 @@ def create_dataclass_mock(obj: Type[T], **kwargs) -> T:
 
 
 class NumpyArrayMatcher:
-    def __init__(self, array, equal_nan=True):
+    def __init__(self, array, equal_nan=True, almost_equal=False):
         self.equal_nan = equal_nan
         self.array = array
+        self.almost_equal = almost_equal
 
     def __eq__(self, other):
         if isinstance(self.array, (np.ndarray, list)):
-            return np.array_equal(self.array, other, equal_nan=self.equal_nan)
+            if not self.almost_equal:
+                return np.array_equal(self.array, other, equal_nan=self.equal_nan)
+            else:
+                return np.allclose(self.array, other)
         else:
             return self.array == other
 

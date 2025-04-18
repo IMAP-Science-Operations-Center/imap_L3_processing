@@ -9,10 +9,27 @@ from imap_l3_processing.hit.l3.sectored_products.science.sectored_products_algor
 class TestSectoredProductsAlgorithms(TestCase):
 
     def test_get_sector_unit_vectors(self):
-        sector_vectors = get_sector_unit_vectors([0, 90], [0, 90])
-        self.assertEqual((2, 2, 3), sector_vectors.shape)
-        np.testing.assert_array_almost_equal(sector_vectors[0], [[0, 0, 1], [0, 0, 1]])
-        np.testing.assert_array_almost_equal(sector_vectors[1], [[1, 0, 0], [0, 1, 0]])
+        test_cases = [
+
+            ([0], [0], [[[0, 0, 1]]]),
+            ([0], [90], [[[0, 0, 1]]]),
+            ([0], [180], [[[0, 0, 1]]]),
+            ([0], [270], [[[0, 0, 1]]]),
+            # ([0], [360], [[[0, 0, 1]]]),
+
+            ([90], [0], [[[1, 0, 0]]]),
+            ([90], [90], [[[0, 1, 0]]]),
+            ([90], [180], [[[-1, 0, 0]]]),
+            ([90], [270], [[[0, -1, 0]]]),
+
+            ([180], [0], [[[0, 0, -1]]]),
+            ([180], [90], [[[0, 0, -1]]]),
+
+        ]
+
+        for elevation, azimuth, expected in test_cases:
+            with self.subTest(elevation=elevation, azimuth=azimuth, expected=expected):
+                np.testing.assert_array_almost_equal(get_sector_unit_vectors(elevation, azimuth), expected)
 
     def test_get_hit_bin_polar_coordinates(self):
         declinations, azimuths, declination_delta, azimuth_delta = get_hit_bin_polar_coordinates()

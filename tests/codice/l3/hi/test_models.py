@@ -489,6 +489,8 @@ class TestModels(unittest.TestCase):
                 epoch = np.array([datetime(2010, 1, 1), datetime(2010, 1, 2)])
                 epoch_delta = np.repeat(len(epoch), 2)
                 energy = np.geomspace(2, 1000)
+                energy_delta_minus = energy - .4
+                energy_delta_plus = energy * 1.6
                 spin_sector = np.linspace(0, 360, 24)
                 ssd_id = np.linspace(0, 360, 16)
                 h_intensities = rng.random((len(epoch), len(energy), len(spin_sector), len(ssd_id)))
@@ -498,6 +500,8 @@ class TestModels(unittest.TestCase):
                 cdf_file['epoch'] = epoch
                 cdf_file['epoch_delta'] = epoch_delta
                 cdf_file['energy'] = energy
+                cdf_file['energy_delta_minus'] = energy_delta_minus
+                cdf_file['energy_delta_plus'] = energy_delta_plus
                 cdf_file['spin_sector'] = spin_sector
                 cdf_file['ssd_id'] = ssd_id
                 cdf_file['h_intensities'] = h_intensities
@@ -509,6 +513,8 @@ class TestModels(unittest.TestCase):
             np.testing.assert_array_equal(result.epoch, epoch)
             np.testing.assert_array_equal(result.epoch_delta, epoch_delta)
             np.testing.assert_array_equal(result.energy, energy)
+            np.testing.assert_array_equal(result.energy_delta_minus, energy_delta_minus)
+            np.testing.assert_array_equal(result.energy_delta_plus, energy_delta_plus)
             np.testing.assert_array_equal(result.spin_sector, spin_sector)
             np.testing.assert_array_equal(result.ssd_id, ssd_id)
             np.testing.assert_array_equal(result.h_intensities, h_intensities)
