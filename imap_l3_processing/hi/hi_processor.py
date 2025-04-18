@@ -82,6 +82,7 @@ class HiProcessor(Processor):
         for hi_l1c, glows_l3e in combined_glows_hi:
             pointing_sets.append(HiSurvivalProbabilityPointingSet(hi_l1c, parsed_descriptor.sensor, glows_l3e,
                                                                   hi_survival_probabilities_dependencies.l2_data.energy))
+        assert len(pointing_sets) > 0
 
         hi_survival_sky_map = HiSurvivalProbabilitySkyMap(pointing_sets, parsed_descriptor.grid_size,
                                                           SpiceFrame.ECLIPJ2000)
