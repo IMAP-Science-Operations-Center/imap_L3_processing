@@ -1,12 +1,11 @@
+import json
 from dataclasses import dataclass
 from pathlib import Path
 from shutil import move
 
 from imap_data_access.processing_input import ProcessingInputCollection
 
-from imap_l3_processing.glows.descriptors import GLOWS_L3D_DESCRIPTOR
-from imap_l3_processing.models import UpstreamDataDependency
-from imap_l3_processing.utils import download_dependency, download_dependency_with_repointing, \
+from imap_l3_processing.utils import \
     download_dependency_from_path
 
 
@@ -24,6 +23,7 @@ class GlowsL3EDependencies:
     density_3d_sw: Path
     phion_hydrogen: Path
     sw_eqtr_electrons: Path
+    ionization_files: Path
     pipeline_settings: dict
 
     @classmethod
@@ -40,6 +40,8 @@ class GlowsL3EDependencies:
         density_3d_dependency = dependencies.get_file_paths(source='glows', descriptor='density-3d')
         phion_hydrogen_dependency = dependencies.get_file_paths(source='glows', descriptor='phion-hydrogen')
         sw_eqtr_electrons_dependency = dependencies.get_file_paths(source='glows', descriptor='sw-eqtr-electrons')
+        ionization_files_dependency = dependencies.get_file_paths(source='glows', descriptor='ionization-files')
+        pipeline_settings_dependency = dependencies.get_file_paths(source='glows', descriptor='pipeline-settings-l3e')
 
         solar_hist_path = download_dependency_from_path(str(solar_hist_dependency[0]))
         energy_grid_lo_path = download_dependency_from_path(str(energy_grid_lo_dependency[0]))
@@ -48,11 +50,16 @@ class GlowsL3EDependencies:
         tess_xyz_path = download_dependency_from_path(str(tess_xyz_dependency[0]))
         tess_ang_path = download_dependency_from_path(str(tess_ang_dependency[0]))
         lya_series_path = download_dependency_from_path(str(lya_series_dependency[0]))
-        solar_uv_anisotropy__path = download_dependency_from_path(str(solar_uv_anisotropy_dependency[0]))
+        solar_uv_anisotropy_path = download_dependency_from_path(str(solar_uv_anisotropy_dependency[0]))
         speed_3d_path = download_dependency_from_path(str(speed_3d_dependency[0]))
         density_3d_path = download_dependency_from_path(str(density_3d_dependency[0]))
         phion_hydrogen_path = download_dependency_from_path(str(phion_hydrogen_dependency[0]))
         sw_eqtr_electrons_path = download_dependency_from_path(str(sw_eqtr_electrons_dependency[0]))
+        ionization_files_path = download_dependency_from_path(str(ionization_files_dependency[0]))
+        pipeline_settings_path = download_dependency_from_path(str(pipeline_settings_dependency[0]))
+
+        with open(pipeline_settings_path) as f:
+            pipeline_settings = json.load(f)
 
         repointing_number = int(str(solar_hist_path).split('_')[-2][-5:])
 
@@ -64,12 +71,13 @@ class GlowsL3EDependencies:
             tess_xyz_path,
             tess_ang_path,
             lya_series_path,
-            solar_uv_anisotropy__path,
+            solar_uv_anisotropy_path,
             speed_3d_path,
             density_3d_path,
             phion_hydrogen_path,
             sw_eqtr_electrons_path,
-            {},
+            ionization_files_path,
+            pipeline_settings,
         ), repointing_number
 
     def rename_dependencies(self):
@@ -83,5 +91,5 @@ class GlowsL3EDependencies:
         move(self.speed_3d_sw, self.pipeline_settings['executable_dependency_paths']['speed-3d'])
         move(self.density_3d_sw, self.pipeline_settings['executable_dependency_paths']['density-3d'])
         move(self.phion_hydrogen, self.pipeline_settings['executable_dependency_paths']['phion-hydrogen'])
-        move(self.sw_eqtr_electrons,
-             self.pipeline_settings['executable_dependency_paths']['sw-eqtr-electrons'])
+        move(self.sw_eqtr_electrons, self.pipeline_settings['executable_dependency_paths']['sw-eqtr-electrons'])
+        move(self.ionization_files, self.pipeline_settings['executable_dependency_paths']['ionization-files'])

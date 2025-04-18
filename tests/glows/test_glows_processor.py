@@ -386,11 +386,13 @@ class TestGlowsProcessor(unittest.TestCase):
         np.testing.assert_array_equal(expected_l3b.cx_uncert, actual_l3b.cx_uncert)
         self.assertEqual(expected_l3b.lat_grid_label, actual_l3b.lat_grid_label)
 
+    @patch("imap_l3_processing.glows.glows_processor.spice_wrapper")
     @patch("imap_l3_processing.glows.glows_processor.run")
     @patch("imap_l3_processing.glows.glows_processor.determine_call_args_for_l3e_executable")
     @patch("imap_l3_processing.glows.glows_processor.get_repoint_date_range")
     @patch("imap_l3_processing.glows.glows_processor.GlowsL3EDependencies")
-    def test_process_l3e(self, mock_l3e_dependencies, mock_get_repoint_date_range, mock_determine_call_args, mock_run):
+    def test_process_l3e(self, mock_l3e_dependencies, mock_get_repoint_date_range, mock_determine_call_args, mock_run,
+                         mock_spice_wrapper):
         input_metadata = InputMetadata('glows', "l3d", datetime(2024, 10, 7, 10, 00, 00),
                                        datetime(2024, 10, 8, 10, 00, 00),
                                        'v001')
@@ -418,24 +420,38 @@ class TestGlowsProcessor(unittest.TestCase):
         processor = GlowsProcessor(dependencies=dependencies, input_metadata=input_metadata)
         actual = processor.process_l3e()
 
+        mock_spice_wrapper.furnish.assert_called_once()
+
         mock_l3e_dependencies.fetch_dependencies.assert_called_once_with(dependencies)
 
         mock_l3e_dependencies.fetch_dependencies.return_value[0].rename_dependencies.assert_called_once()
 
         mock_get_repoint_date_range.assert_called_once_with(repointing)
 
+        self.assertIsInstance(mock_determine_call_args.call_args_list[0][0][0], datetime)
+        self.assertIsInstance(mock_determine_call_args.call_args_list[0][0][1], datetime)
+
+        self.assertIsInstance(mock_determine_call_args.call_args_list[1][0][0], datetime)
+        self.assertIsInstance(mock_determine_call_args.call_args_list[1][0][1], datetime)
+
+        self.assertIsInstance(mock_determine_call_args.call_args_list[2][0][0], datetime)
+        self.assertIsInstance(mock_determine_call_args.call_args_list[2][0][1], datetime)
+
+        self.assertIsInstance(mock_determine_call_args.call_args_list[3][0][0], datetime)
+        self.assertIsInstance(mock_determine_call_args.call_args_list[3][0][1], datetime)
+
         mock_determine_call_args.assert_has_calls([
-            call(start_date.astype(datetime), datetime(year=2024, month=10, day=7, hour=11, minute=30), 90),
-            call(start_date.astype(datetime), datetime(year=2024, month=10, day=7, hour=11, minute=30), 90),
-            call(start_date.astype(datetime), datetime(year=2024, month=10, day=7, hour=11, minute=30), 135),
-            call(start_date.astype(datetime), datetime(year=2024, month=10, day=7, hour=11, minute=30), 30)
+            call(datetime(year=2024, month=10, day=7), datetime(year=2024, month=10, day=7, hour=11, minute=30), 90),
+            call(datetime(year=2024, month=10, day=7), datetime(year=2024, month=10, day=7, hour=11, minute=30), 90),
+            call(datetime(year=2024, month=10, day=7), datetime(year=2024, month=10, day=7, hour=11, minute=30), 135),
+            call(datetime(year=2024, month=10, day=7), datetime(year=2024, month=10, day=7, hour=11, minute=30), 30)
         ])
 
         mock_run.assert_has_calls([
-            call(["survProbLo", "call", "args", "1"]),
-            call(["survProbHi", "call", "args", "2"]),
-            call(["survProbHi", "call", "args", "3"]),
-            call(["survProbUltra", "call", "args", "4"])
+            call(["./survProbLo", "call", "args", "1"]),
+            call(["./survProbHi", "call", "args", "2"]),
+            call(["./survProbHi", "call", "args", "3"]),
+            call(["./survProbUltra", "call", "args", "4"])
         ])
 
 

@@ -2,10 +2,12 @@ import json
 from dataclasses import replace
 from pathlib import Path
 from subprocess import run
+from datetime import datetime
 
 import imap_data_access
 import numpy as np
 
+from imap_l3_processing import spice_wrapper
 from imap_l3_processing.glows.glows_initializer import GlowsInitializer
 from imap_l3_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
 from imap_l3_processing.glows.l3a.glows_toolkit.l3a_data import L3aData
@@ -79,6 +81,7 @@ class GlowsProcessor(Processor):
         return l3b_data_product, l3c_data_product
 
     def process_l3e(self):
+        spice_wrapper.furnish()
         l3e_dependencies, repointing = GlowsL3EDependencies.fetch_dependencies(self.dependencies)
 
         l3e_dependencies.rename_dependencies()
@@ -87,20 +90,24 @@ class GlowsProcessor(Processor):
 
         mid_point = repointing_start_date + ((repointing_end_date - repointing_start_date) / 2)
 
-        lo_call_args = determine_call_args_for_l3e_executable(repointing_start_date, mid_point, 90)
-        hi90_call_args = determine_call_args_for_l3e_executable(repointing_start_date, mid_point, 90)
-        hi45_call_args = determine_call_args_for_l3e_executable(repointing_start_date, mid_point, 135)
-        ultra_call_args = determine_call_args_for_l3e_executable(repointing_start_date, mid_point, 30)
+        lo_call_args = determine_call_args_for_l3e_executable(repointing_start_date.astype(datetime)
+                                                              , mid_point.astype(datetime), 90)
+        hi90_call_args = determine_call_args_for_l3e_executable(repointing_start_date.astype(datetime),
+                                                                mid_point.astype(datetime), 90)
+        hi45_call_args = determine_call_args_for_l3e_executable(repointing_start_date.astype(datetime),
+                                                                mid_point.astype(datetime), 135)
+        ultra_call_args = determine_call_args_for_l3e_executable(repointing_start_date.astype(datetime),
+                                                                 mid_point.astype(datetime), 30)
 
         lo_call_args_array = [arg for arg in lo_call_args.split(' ')]
         hi90_call_args_array = [arg for arg in hi90_call_args.split(' ')]
         hi45_call_args_array = [arg for arg in hi45_call_args.split(' ')]
         ultra_call_args_array = [arg for arg in ultra_call_args.split(' ')]
 
-        run(['survProbLo'] + lo_call_args_array)
-        run(['survProbHi'] + hi90_call_args_array)
-        run(['survProbHi'] + hi45_call_args_array)
-        run(['survProbUltra'] + ultra_call_args_array)
+        run(['./survProbLo'] + lo_call_args_array)
+        run(['./survProbHi'] + hi90_call_args_array)
+        run(['./survProbHi'] + hi45_call_args_array)
+        run(['./survProbUltra'] + ultra_call_args_array)
 
     @staticmethod
     def add_spin_angle_delta(data: dict, ancillary_files: dict) -> dict:
