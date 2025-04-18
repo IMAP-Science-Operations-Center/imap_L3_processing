@@ -18,11 +18,12 @@ from tests.test_helpers import get_test_data_path
 
 
 class TestHiProcessor(unittest.TestCase):
+    @patch('imap_l3_processing.hi.hi_processor.upload')
     @patch('imap_l3_processing.hi.hi_processor.HiL3SpectralFitDependencies.fetch_dependencies')
     @patch('imap_l3_processing.hi.hi_processor.spectral_fit')
     @patch('imap_l3_processing.hi.hi_processor.save_data')
     def test_process_spectral_fit(self, mock_save_data, mock_spectral_fit,
-                                  mock_fetch_dependencies):
+                                  mock_fetch_dependencies, mock_upload):
         lat = np.array([0, 45])
         long = np.array([0, 45, 90])
         energy = sentinel.energy
@@ -68,6 +69,8 @@ class TestHiProcessor(unittest.TestCase):
         np.testing.assert_array_equal(actual_hi_data_product.longitude, hi_l3_data.longitude)
         np.testing.assert_array_equal(actual_hi_data_product.epoch, hi_l3_data.epoch)
         np.testing.assert_array_equal(actual_hi_data_product.exposure_factor, hi_l3_data.exposure_factor)
+
+        mock_upload.assert_called_once_with(mock_save_data.return_value)
 
     def test_spectral_fit_against_validation_data(self):
         test_cases = [

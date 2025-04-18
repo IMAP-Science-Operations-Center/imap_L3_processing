@@ -23,17 +23,17 @@ class HiProcessor(Processor):
             case MapDescriptorParts(quantity=MapQuantity.SpectralIndex):
                 hi_l3_spectral_fit_dependencies = HiL3SpectralFitDependencies.fetch_dependencies(self.dependencies)
                 data_product = self._process_spectral_fit_index(hi_l3_spectral_fit_dependencies)
-                save_data(data_product)
             case MapDescriptorParts(survival_correction=SurvivalCorrection.SurvivalCorrected,
                                     spin_phase=SpinPhase.FullSpin, duration=Duration.SixMonths):
                 hi_l3_survival_probabilities_dependencies = HiL3SurvivalDependencies.fetch_dependencies(
                     self.dependencies)
                 data_product = self._process_survival_probabilities(parsed_descriptor,
                                                                     hi_l3_survival_probabilities_dependencies)
-                cdf_path = save_data(data_product)
-                upload(cdf_path)
             case _:
-                raise NotImplementedError
+                raise NotImplementedError(self.input_metadata.descriptor)
+
+        cdf_path = save_data(data_product)
+        upload(cdf_path)
 
     def _process_spectral_fit_index(self,
                                     hi_l3_spectral_fit_dependencies: HiL3SpectralFitDependencies) -> HiL3SpectralIndexDataProduct:
