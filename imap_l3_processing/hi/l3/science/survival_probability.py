@@ -7,16 +7,7 @@ from imap_processing.ena_maps.utils.coordinates import CoordNames
 from imap_processing.spice import geometry
 
 from imap_l3_processing.hi.l3.models import HiL1cData, GlowsL3eData
-
-
-class Sensor(enum.Enum):
-    Hi45 = "45"
-    Hi90 = "90"
-
-    @staticmethod
-    def get_sensor_angle(sensor_name):
-        sensor_angles = {Sensor.Hi45.value: -45, Sensor.Hi90.value: 0}
-        return sensor_angles[sensor_name]
+from imap_l3_processing.hi.l3.utils import Sensor
 
 
 class HiSurvivalProbabilityPointingSet(PointingSet):

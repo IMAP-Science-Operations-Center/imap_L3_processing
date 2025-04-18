@@ -3,33 +3,43 @@ from datetime import datetime, timedelta
 from unittest.mock import patch, Mock, call, sentinel
 
 import numpy as np
+import xarray as xr
 from imap_processing.ena_maps.utils.coordinates import CoordNames
 from imap_processing.spice.geometry import SpiceFrame
 
-from imap_l3_processing.hi.hi_processor import HiProcessor, combine_glows_l3e_hi_l1c, MapDescriptorParts, \
-    parse_map_descriptor
-from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3SpectralFitDependencies, \
-    HI_L3_SPECTRAL_FIT_DESCRIPTOR
+from imap_l3_processing.hi.hi_processor import HiProcessor, combine_glows_l3e_hi_l1c
+from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3SpectralFitDependencies
 from imap_l3_processing.hi.l3.hi_l3_survival_dependencies import HiL3SurvivalDependencies
-from imap_l3_processing.hi.l3.models import HiMapData, HiL3SpectralIndexDataProduct, GlowsL3eData, HiL1cData, \
+from imap_l3_processing.hi.l3.models import HiL3SpectralIndexDataProduct, GlowsL3eData, HiL1cData, \
     HiL3SurvivalCorrectedDataProduct, HiIntensityMapData
-from imap_l3_processing.hi.l3.science.survival_probability import Sensor
+from imap_l3_processing.hi.l3.utils import MapDescriptorParts, MapQuantity
 from imap_l3_processing.models import InputMetadata
-from tests.test_helpers import get_test_data_path, NumpyArrayMatcher
-import xarray as xr
+from tests.test_helpers import get_test_data_path
 
 
 class TestHiProcessor(unittest.TestCase):
+    @patch("imap_l3_processing.hi.hi_processor.parse_map_descriptor")
     @patch('imap_l3_processing.hi.hi_processor.HiL3SpectralFitDependencies.fetch_dependencies')
     @patch('imap_l3_processing.hi.hi_processor.spectral_fit')
     @patch('imap_l3_processing.hi.hi_processor.save_data')
-    def test_process_spectral_fit(self, mock_save_data, mock_spectral_fit, mock_fetch_dependencies):
+    def test_process_spectral_fit(self, mock_save_data, mock_spectral_fit,
+                                  mock_fetch_dependencies, mock_parse_map_descriptor):
         lat = np.array([0, 45])
         long = np.array([0, 45, 90])
         energy = sentinel.energy
         epoch = np.array([datetime.now()])
         flux = sentinel.flux
         intensity_stat_unc = 5
+
+        mock_parse_map_descriptor.return_value = MapDescriptorParts(
+            sensor=sentinel.sensor,
+            cg_correction=sentinel.cg_correction,
+            survival_correction=sentinel.survival_correction,
+            spin_phase=sentinel.spin_phase,
+            duration=sentinel.duration,
+            grid_size=sentinel.grid_size,
+            quantity=MapQuantity.SpectralIndex
+        )
 
         hi_l3_data = _create_h1_l3_data(lat=lat, lon=long, energy=energy, epoch=epoch, flux=flux,
                                         intensity_stat_unc=intensity_stat_unc,
@@ -43,12 +53,14 @@ class TestHiProcessor(unittest.TestCase):
                                        start_date=datetime.now(),
                                        end_date=datetime.now() + timedelta(days=1),
                                        version="",
-                                       descriptor=HI_L3_SPECTRAL_FIT_DESCRIPTOR,
+                                       descriptor="h45-hf-sp-hae-4deg-6mo-spectral",
                                        )
 
         mock_spectral_fit.return_value = sentinel.gammas, sentinel.errors
         processor = HiProcessor(upstream_dependencies, input_metadata)
         processor.process()
+
+        mock_parse_map_descriptor.assert_called_once_with(input_metadata.descriptor)
 
         mock_fetch_dependencies.assert_called_with(upstream_dependencies)
         mock_spectral_fit.assert_called_once_with(len(epoch), len(long), len(lat), hi_l3_data.ena_intensity,
@@ -58,6 +70,8 @@ class TestHiProcessor(unittest.TestCase):
         mock_save_data.assert_called_once()
         actual_hi_data_product: HiL3SpectralIndexDataProduct = mock_save_data.call_args_list[0].args[0]
 
+        self.assertEqual(input_metadata.to_upstream_data_dependency(input_metadata.descriptor),
+                         actual_hi_data_product.input_metadata)
         self.assertEqual(sentinel.gammas, actual_hi_data_product.ena_spectral_index)
         self.assertEqual(sentinel.errors, actual_hi_data_product.ena_spectral_index_stat_unc)
         self.assertEqual(sentinel.energy_delta, actual_hi_data_product.energy_delta_minus)
@@ -124,7 +138,6 @@ class TestHiProcessor(unittest.TestCase):
     def test_process_survival_probability(self, mock_fetch_dependencies, mock_combine_glows_l3e_hi_l1c,
                                           mock_survival_probability_pointing_set, mock_survival_skymap,
                                           mock_parse_map_descriptor, mock_save_data, mock_upload):
-
         rng = np.random.default_rng()
         input_map_flux = rng.random((1, 9, 90, 45))
         epoch = datetime.now()
@@ -143,15 +156,22 @@ class TestHiProcessor(unittest.TestCase):
 
         mock_survival_probability_pointing_set.side_effect = [sentinel.pset_1, sentinel.pset_2, sentinel.pset_3]
 
-        mock_parse_map_descriptor.return_value = MapDescriptorParts(sensor=sentinel.sensor,
-                                                                    grid_size=sentinel.grid_size)
+        mock_parse_map_descriptor.return_value = MapDescriptorParts(
+            sensor=sentinel.sensor,
+            cg_correction=sentinel.cg_correction,
+            survival_correction=sentinel.survival_correction,
+            spin_phase=sentinel.spin_phase,
+            duration=sentinel.duration,
+            grid_size=sentinel.grid_size,
+            quantity=MapQuantity.Intensity
+        )
 
         input_metadata = InputMetadata(instrument="hi",
                                        data_level="l3",
                                        start_date=datetime.now(),
                                        end_date=datetime.now() + timedelta(days=1),
                                        version="",
-                                       descriptor=f"45sensor-spacecraft-survival-full-4deg-map",
+                                       descriptor=f"h90-sf-sp-hae-4deg-6mo",
                                        )
 
         computed_survival_probabilities = rng.random((1, 9, 90, 45))
@@ -225,20 +245,6 @@ class TestHiProcessor(unittest.TestCase):
         np.testing.assert_array_equal(survival_data_product.solid_angle, input_map.solid_angle)
 
         mock_upload.assert_called_once_with(mock_save_data.return_value)
-
-    def test_parse_map_descriptor(self):
-        test_cases = [
-            ("45sensor-spacecraft-survival-full-4deg-map", Sensor.Hi45, 4),
-            ("45sensor-spacecraft-survival-full-6deg-map", Sensor.Hi45, 6),
-            ("90sensor-spacecraft-survival-full-4deg-map", Sensor.Hi90, 4),
-            ("90sensor-spacecraft-survival-full-6deg-map", Sensor.Hi90, 6)
-        ]
-
-        for descriptor, expected_sensor, expected_grid_size in test_cases:
-            with self.subTest(f"{expected_sensor}-{expected_grid_size}"):
-                descriptor_parts = parse_map_descriptor(descriptor)
-                self.assertEqual(MapDescriptorParts(sensor=expected_sensor, grid_size=expected_grid_size),
-                                 descriptor_parts)
 
     def test_combine_glows_l3e_hi_l1c(self):
         glows_l3e_data = [
