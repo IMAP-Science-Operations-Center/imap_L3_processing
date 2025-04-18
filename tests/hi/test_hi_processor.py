@@ -12,7 +12,7 @@ from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3Spectra
 from imap_l3_processing.hi.l3.hi_l3_survival_dependencies import HiL3SurvivalDependencies
 from imap_l3_processing.hi.l3.models import HiL3SpectralIndexDataProduct, GlowsL3eData, HiL1cData, \
     HiL3SurvivalCorrectedDataProduct, HiIntensityMapData
-from imap_l3_processing.hi.l3.utils import Sensor, PixelSize
+from imap_l3_processing.hi.l3.utils import Sensor, PixelSize, SpinPhase
 from imap_l3_processing.models import InputMetadata
 from tests.test_helpers import get_test_data_path
 
@@ -153,7 +153,7 @@ class TestHiProcessor(unittest.TestCase):
                                        start_date=datetime.now(),
                                        end_date=datetime.now() + timedelta(days=1),
                                        version="",
-                                       descriptor=f"h90-sf-sp-hae-4deg-6mo",
+                                       descriptor=f"h90-sf-sp-ram-hae-4deg-6mo",
                                        )
 
         computed_survival_probabilities = rng.random((1, 9, 90, 45))
@@ -183,9 +183,9 @@ class TestHiProcessor(unittest.TestCase):
         mock_combine_glows_l3e_hi_l1c.assert_called_once_with(sentinel.glows_l3e_data, sentinel.hi_l1c_data)
 
         mock_survival_probability_pointing_set.assert_has_calls([
-            call(sentinel.hi_l1c_1, expected_sensor, sentinel.glows_l3e_1, sentinel.hi_l2_energies),
-            call(sentinel.hi_l1c_2, expected_sensor, sentinel.glows_l3e_2, sentinel.hi_l2_energies),
-            call(sentinel.hi_l1c_3, expected_sensor, sentinel.glows_l3e_3, sentinel.hi_l2_energies)
+            call(sentinel.hi_l1c_1, expected_sensor, SpinPhase.RamOnly, sentinel.glows_l3e_1, sentinel.hi_l2_energies),
+            call(sentinel.hi_l1c_2, expected_sensor, SpinPhase.RamOnly, sentinel.glows_l3e_2, sentinel.hi_l2_energies),
+            call(sentinel.hi_l1c_3, expected_sensor, SpinPhase.RamOnly, sentinel.glows_l3e_3, sentinel.hi_l2_energies)
         ])
 
         mock_survival_skymap.assert_called_once_with([sentinel.pset_1, sentinel.pset_2, sentinel.pset_3],

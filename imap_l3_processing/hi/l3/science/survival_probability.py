@@ -1,5 +1,3 @@
-import enum
-
 import numpy as np
 import xarray as xr
 from imap_processing.ena_maps.ena_maps import RectangularSkyMap, PointingSet
@@ -7,11 +5,11 @@ from imap_processing.ena_maps.utils.coordinates import CoordNames
 from imap_processing.spice import geometry
 
 from imap_l3_processing.hi.l3.models import HiL1cData, GlowsL3eData
-from imap_l3_processing.hi.l3.utils import Sensor
+from imap_l3_processing.hi.l3.utils import Sensor, SpinPhase
 
 
 class HiSurvivalProbabilityPointingSet(PointingSet):
-    def __init__(self, l1c_dataset: HiL1cData, sensor: Sensor, glows_dataset: GlowsL3eData,
+    def __init__(self, l1c_dataset: HiL1cData, sensor: Sensor, spin_phase: SpinPhase, glows_dataset: GlowsL3eData,
                  energies: np.ndarray):
         super().__init__(xr.Dataset(), geometry.SpiceFrame.IMAP_DPS)
         glows_spin_bin_count = len(glows_dataset.spin_angle)
@@ -22,6 +20,18 @@ class HiSurvivalProbabilityPointingSet(PointingSet):
                 np.log10(glows_dataset.energy),
                 glows_dataset.probability_of_survival[0, :, spin_angle_index], )
         survival_probabilities = np.repeat(survival_probabilities, 10, axis=2)
+
+        exposure_mask = np.full((3600,), False)
+
+        if spin_phase == SpinPhase.RamOnly:
+            exposure_mask[0:900] = True
+            exposure_mask[2700:3600] = True
+        elif spin_phase == SpinPhase.AntiRamOnly:
+            exposure_mask[900:2700] = True
+        else:
+            raise ValueError("Should not survival correct a full spin map!")
+
+        exposure = l1c_dataset.exposure_times * exposure_mask
 
         azimuth_range = (0, 360)
         deg_spacing = 0.1
@@ -43,7 +53,7 @@ class HiSurvivalProbabilityPointingSet(PointingSet):
                     CoordNames.ENERGY.value,
                     CoordNames.AZIMUTH_L1C.value,
                 ],
-                survival_probabilities * l1c_dataset.exposure_times,
+                survival_probabilities * exposure,
             ),
             "exposure": (
                 [
@@ -51,7 +61,7 @@ class HiSurvivalProbabilityPointingSet(PointingSet):
                     CoordNames.ENERGY.value,
                     CoordNames.AZIMUTH_L1C.value,
                 ],
-                l1c_dataset.exposure_times,
+                exposure,
             )
         },
             coords={
