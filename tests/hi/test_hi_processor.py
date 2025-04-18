@@ -12,34 +12,24 @@ from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3Spectra
 from imap_l3_processing.hi.l3.hi_l3_survival_dependencies import HiL3SurvivalDependencies
 from imap_l3_processing.hi.l3.models import HiL3SpectralIndexDataProduct, GlowsL3eData, HiL1cData, \
     HiL3SurvivalCorrectedDataProduct, HiIntensityMapData
-from imap_l3_processing.hi.l3.utils import MapDescriptorParts, MapQuantity
+from imap_l3_processing.hi.l3.utils import Sensor, PixelSize, SpinPhase
 from imap_l3_processing.models import InputMetadata
 from tests.test_helpers import get_test_data_path
 
 
 class TestHiProcessor(unittest.TestCase):
-    @patch("imap_l3_processing.hi.hi_processor.parse_map_descriptor")
+    @patch('imap_l3_processing.hi.hi_processor.upload')
     @patch('imap_l3_processing.hi.hi_processor.HiL3SpectralFitDependencies.fetch_dependencies')
     @patch('imap_l3_processing.hi.hi_processor.spectral_fit')
     @patch('imap_l3_processing.hi.hi_processor.save_data')
     def test_process_spectral_fit(self, mock_save_data, mock_spectral_fit,
-                                  mock_fetch_dependencies, mock_parse_map_descriptor):
+                                  mock_fetch_dependencies, mock_upload):
         lat = np.array([0, 45])
         long = np.array([0, 45, 90])
         energy = sentinel.energy
         epoch = np.array([datetime.now()])
         flux = sentinel.flux
         intensity_stat_unc = 5
-
-        mock_parse_map_descriptor.return_value = MapDescriptorParts(
-            sensor=sentinel.sensor,
-            cg_correction=sentinel.cg_correction,
-            survival_correction=sentinel.survival_correction,
-            spin_phase=sentinel.spin_phase,
-            duration=sentinel.duration,
-            grid_size=sentinel.grid_size,
-            quantity=MapQuantity.SpectralIndex
-        )
 
         hi_l3_data = _create_h1_l3_data(lat=lat, lon=long, energy=energy, epoch=epoch, flux=flux,
                                         intensity_stat_unc=intensity_stat_unc,
@@ -60,8 +50,6 @@ class TestHiProcessor(unittest.TestCase):
         processor = HiProcessor(upstream_dependencies, input_metadata)
         processor.process()
 
-        mock_parse_map_descriptor.assert_called_once_with(input_metadata.descriptor)
-
         mock_fetch_dependencies.assert_called_with(upstream_dependencies)
         mock_spectral_fit.assert_called_once_with(len(epoch), len(long), len(lat), hi_l3_data.ena_intensity,
                                                   np.square(hi_l3_data.ena_intensity_stat_unc),
@@ -81,6 +69,8 @@ class TestHiProcessor(unittest.TestCase):
         np.testing.assert_array_equal(actual_hi_data_product.longitude, hi_l3_data.longitude)
         np.testing.assert_array_equal(actual_hi_data_product.epoch, hi_l3_data.epoch)
         np.testing.assert_array_equal(actual_hi_data_product.exposure_factor, hi_l3_data.exposure_factor)
+
+        mock_upload.assert_called_once_with(mock_save_data.return_value)
 
     def test_spectral_fit_against_validation_data(self):
         test_cases = [
@@ -130,14 +120,13 @@ class TestHiProcessor(unittest.TestCase):
 
     @patch('imap_l3_processing.hi.hi_processor.upload')
     @patch('imap_l3_processing.hi.hi_processor.save_data')
-    @patch("imap_l3_processing.hi.hi_processor.parse_map_descriptor")
     @patch('imap_l3_processing.hi.hi_processor.HiSurvivalProbabilitySkyMap')
     @patch('imap_l3_processing.hi.hi_processor.HiSurvivalProbabilityPointingSet')
     @patch('imap_l3_processing.hi.hi_processor.combine_glows_l3e_hi_l1c')
     @patch('imap_l3_processing.hi.hi_processor.HiL3SurvivalDependencies.fetch_dependencies')
     def test_process_survival_probability(self, mock_fetch_dependencies, mock_combine_glows_l3e_hi_l1c,
-                                          mock_survival_probability_pointing_set, mock_survival_skymap,
-                                          mock_parse_map_descriptor, mock_save_data, mock_upload):
+                                          mock_survival_probability_pointing_set, mock_survival_skymap, mock_save_data,
+                                          mock_upload):
         rng = np.random.default_rng()
         input_map_flux = rng.random((1, 9, 90, 45))
         epoch = datetime.now()
@@ -156,22 +145,15 @@ class TestHiProcessor(unittest.TestCase):
 
         mock_survival_probability_pointing_set.side_effect = [sentinel.pset_1, sentinel.pset_2, sentinel.pset_3]
 
-        mock_parse_map_descriptor.return_value = MapDescriptorParts(
-            sensor=sentinel.sensor,
-            cg_correction=sentinel.cg_correction,
-            survival_correction=sentinel.survival_correction,
-            spin_phase=sentinel.spin_phase,
-            duration=sentinel.duration,
-            grid_size=sentinel.grid_size,
-            quantity=MapQuantity.Intensity
-        )
+        expected_grid_size = PixelSize.FourDegrees
+        expected_sensor = Sensor.Hi90
 
         input_metadata = InputMetadata(instrument="hi",
                                        data_level="l3",
                                        start_date=datetime.now(),
                                        end_date=datetime.now() + timedelta(days=1),
                                        version="",
-                                       descriptor=f"h90-sf-sp-hae-4deg-6mo",
+                                       descriptor=f"h90-sf-sp-ram-hae-4deg-6mo",
                                        )
 
         computed_survival_probabilities = rng.random((1, 9, 90, 45))
@@ -198,18 +180,16 @@ class TestHiProcessor(unittest.TestCase):
 
         mock_fetch_dependencies.assert_called_once_with(sentinel.dependencies)
 
-        mock_parse_map_descriptor.assert_called_once_with(input_metadata.descriptor)
-
         mock_combine_glows_l3e_hi_l1c.assert_called_once_with(sentinel.glows_l3e_data, sentinel.hi_l1c_data)
 
         mock_survival_probability_pointing_set.assert_has_calls([
-            call(sentinel.hi_l1c_1, sentinel.sensor, sentinel.glows_l3e_1, sentinel.hi_l2_energies),
-            call(sentinel.hi_l1c_2, sentinel.sensor, sentinel.glows_l3e_2, sentinel.hi_l2_energies),
-            call(sentinel.hi_l1c_3, sentinel.sensor, sentinel.glows_l3e_3, sentinel.hi_l2_energies)
+            call(sentinel.hi_l1c_1, expected_sensor, SpinPhase.RamOnly, sentinel.glows_l3e_1, sentinel.hi_l2_energies),
+            call(sentinel.hi_l1c_2, expected_sensor, SpinPhase.RamOnly, sentinel.glows_l3e_2, sentinel.hi_l2_energies),
+            call(sentinel.hi_l1c_3, expected_sensor, SpinPhase.RamOnly, sentinel.glows_l3e_3, sentinel.hi_l2_energies)
         ])
 
         mock_survival_skymap.assert_called_once_with([sentinel.pset_1, sentinel.pset_2, sentinel.pset_3],
-                                                     sentinel.grid_size,
+                                                     expected_grid_size,
                                                      SpiceFrame.ECLIPJ2000)
 
         mock_survival_skymap.return_value.to_dataset.assert_called_once_with()
