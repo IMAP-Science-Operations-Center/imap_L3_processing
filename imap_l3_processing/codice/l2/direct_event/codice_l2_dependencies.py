@@ -4,7 +4,7 @@ from pathlib import Path
 from imap_l3_processing.codice.l2.direct_event.science.azimuth_lookup import AzimuthLookup
 from imap_l3_processing.codice.l2.direct_event.science.energy_lookup import EnergyLookup
 from imap_l3_processing.codice.l2.direct_event.science.time_of_flight_lookup import TimeOfFlightLookup
-from imap_l3_processing.codice.models import CodiceL2HiData
+from imap_l3_processing.codice.l3.hi.models import CodiceL2HiData
 from imap_l3_processing.models import UpstreamDataDependency
 from imap_l3_processing.utils import download_dependency
 

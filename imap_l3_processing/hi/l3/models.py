@@ -1,3 +1,4 @@
+import dataclasses
 from dataclasses import dataclass
 from datetime import datetime
 
@@ -25,7 +26,6 @@ OBS_DATE_RANGE_VAR_NAME = "obs_date_range"
 SOLID_ANGLE_VAR_NAME = "solid_angle"
 ENA_SPECTRAL_INDEX_VAR_NAME = "ena_spectral_index"
 ENA_SPECTRAL_INDEX_STAT_UNC_VAR_NAME = "ena_spectral_index_stat_unc"
-ENA_SPECTRAL_INDEX_SYS_ERR_VAR_NAME = "ena_spectral_index_sys_err"
 
 ENA_INTENSITY_VAR_NAME = "ena_intensity"
 ENA_INTENSITY_STAT_UNC_VAR_NAME = "ena_intensity_stat_unc"
@@ -85,13 +85,11 @@ class HiDataProduct(DataProduct, HiMapData):
 class HiL3SpectralIndexDataProduct(HiDataProduct):
     ena_spectral_index: np.ndarray
     ena_spectral_index_stat_unc: np.ndarray
-    ena_spectral_index_sys_err: np.ndarray
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return super().to_data_product_variables() + [
             DataProductVariable(ENA_SPECTRAL_INDEX_VAR_NAME, self.ena_spectral_index),
             DataProductVariable(ENA_SPECTRAL_INDEX_STAT_UNC_VAR_NAME, self.ena_spectral_index_stat_unc),
-            DataProductVariable(ENA_SPECTRAL_INDEX_SYS_ERR_VAR_NAME, self.ena_spectral_index_sys_err),
         ]
 
 
@@ -119,3 +117,35 @@ class GlowsL3eData:
     energy: np.ndarray
     spin_angle: np.ndarray
     probability_of_survival: np.ndarray
+
+
+def combine_maps(maps: list[HiL3SurvivalCorrectedDataProduct]) -> HiL3SurvivalCorrectedDataProduct:
+    first_map = maps[0]
+
+    first_map_dict = dataclasses.asdict(first_map)
+
+    fields_which_may_differ = {"ena_intensity", "ena_intensity_stat_unc", "ena_intensity_sys_err",
+                               "exposure_factor", "obs_date", "obs_date_range", "parent_file_names", "input_metadata"}
+    for field in dataclasses.fields(first_map):
+        if field.name not in fields_which_may_differ:
+            assert np.all(
+                [dataclasses.asdict(m)[field.name] == first_map_dict[field.name] for m in maps]), f"{field.name}"
+
+    intensities = np.array([m.ena_intensity for m in maps])
+    intensity_sys_err = np.array([m.ena_intensity_sys_err for m in maps])
+    intensity_stat_unc = np.array([m.ena_intensity_stat_unc for m in maps])
+    exposures = np.array([m.exposure_factor for m in maps])
+
+    intensities = np.where(exposures == 0, 0, intensities)
+    intensity_sys_err = np.where(exposures == 0, 0, intensity_sys_err)
+    intensity_stat_unc = np.where(exposures == 0, 0, intensity_stat_unc)
+
+    combined_intensity_stat_unc = np.sqrt((np.sum(np.square(intensity_stat_unc * exposures), axis=0) /
+                                           np.square(np.sum(exposures, axis=0))))
+
+    return dataclasses.replace(first_map,
+                               ena_intensity=np.average(intensities, axis=0, weights=exposures),
+                               exposure_factor=np.sum(exposures, axis=0),
+                               ena_intensity_sys_err=np.average(intensity_sys_err, axis=0, weights=exposures),
+                               ena_intensity_stat_unc=combined_intensity_stat_unc
+                               )

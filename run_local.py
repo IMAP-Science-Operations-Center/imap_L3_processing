@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-import enum
 import os
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Optional, TypeVar
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 
 import imap_data_access
 import numpy as np
@@ -23,6 +22,7 @@ from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDepen
 from imap_l3_processing.hi.hi_processor import HiProcessor
 from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3SpectralFitDependencies
 from imap_l3_processing.hi.l3.hi_l3_survival_dependencies import HiL3SurvivalDependencies
+from imap_l3_processing.hi.l3.utils import parse_map_descriptor
 from imap_l3_processing.hit.l3.hit_l3_sectored_dependencies import HITL3SectoredDependencies
 from imap_l3_processing.hit.l3.hit_processor import HitProcessor
 from imap_l3_processing.hit.l3.models import HitL1Data
@@ -174,7 +174,7 @@ def create_hi_cdf(dependencies: HiL3SpectralFitDependencies) -> str:
                                    start_date=datetime.now(),
                                    end_date=datetime.now() + timedelta(days=1),
                                    version="v000",
-                                   descriptor="spectral-fit-index",
+                                   descriptor="h90-hf-sp-hae-4deg-6mo-spectral",
                                    )
     processor = HiProcessor(None, input_metadata)
     output_data = processor._process_spectral_fit_index(dependencies)
@@ -289,6 +289,47 @@ def run_glows_l3bc_processor_and_initializer(_, mock_query):
     processor.process()
 
 
+@environment_variables({"REPOINT_DATA_FILEPATH": get_test_data_path("fake_1_day_repointing_file.csv")})
+@patch("imap_l3_processing.glows.glows_processor.get_repoint_date_range")
+@patch("imap_l3_processing.glows.l3e.glows_l3e_dependencies.download_dependency_from_path")
+def run_glows_l3e(mock_download_dependency_from_path, mock_get_repoint_date_range):
+    mock_processing_input_collection = Mock()
+    mock_processing_input_collection.get_file_paths.return_value = [Path("one path")]
+
+    mock_download_dependency_from_path.side_effect = [
+        Path("imap_glows_l3d_solar-hist_20250501-repoint00005_v001.cdf"),
+        Path("instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/Example/Example/EnGridLo.dat"),
+        Path("instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/Example/Example/EnGridHi.dat"),
+        Path("instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/Example/Example/EnGridUltra.dat"),
+        Path("instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/Example/Example/tessXYZ8.dat"),
+        Path("instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/Example/Example/tessAng16.dat"),
+        Path("instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/Example/Example/lyaSeriesV4_2021b.dat"),
+        Path(
+            "instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/Example/Example/solar_uv_anisotropy_NP.1.0_SP.1.0.dat"),
+        Path("instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/Example/Example/speed3D.v01.Legendre.2021b.dat"),
+        Path("instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/Example/Example/density3D.v01.Legendre.2021b.dat"),
+        Path("instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/Example/Example/phion_Hydrogen_T12F107_2021b.dat"),
+        Path("instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/Example/Example/swEqtrElectrons5_2021b.dat"),
+        Path("instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/Example/Example/ionization.files.dat"),
+        get_test_data_path("glows/l3e_pipeline_settings.json")
+    ]
+
+    input_metadata = InputMetadata(
+        instrument='glows',
+        data_level='l3e',
+        start_date=datetime(2015, 4, 10),
+        end_date=datetime(2015, 4, 11),
+        version='v001')
+
+    mock_get_repoint_date_range.return_value = (
+        np.datetime64(datetime.fromisoformat("2025-04-20T00:00:00")),
+        np.datetime64(datetime.fromisoformat("2025-04-21T00:00:00")))
+
+    glows_processor: GlowsProcessor = GlowsProcessor(mock_processing_input_collection, input_metadata)
+
+    glows_processor.process_l3e()
+
+
 def run_glows_l3bc():
     input_metadata = InputMetadata(
         instrument='glows',
@@ -392,12 +433,6 @@ LONGITUDE = TypeVar("LONGITUDE")
 LATITUDE = TypeVar("LATITUDE")
 
 
-class IncludedSensors(enum.Enum):
-    Hi45 = "45"
-    Hi90 = "90"
-    Combined = "combined"
-
-
 def read_glows_survival_probability_data_from_cdf() -> tuple[np.ndarray, np.ndarray]:
     l3e = CDF(str(get_test_data_path("glows/imap_glows_l3e_survival-probabilities-hi_20250324_v001.cdf")))
     return l3e["probability_of_survival"][...][:, 0], l3e["probability_of_survival"][...][:, 1]
@@ -409,11 +444,13 @@ def create_hi_l3_survival_corrected_cdf(survival_dependencies: HiL3SurvivalDepen
                                    start_date=datetime(2025, 4, 9),
                                    end_date=datetime(2025, 4, 10),
                                    version="v001",
-                                   descriptor=f"90sensor-spacecraft-survival-full-{spacing_degree}deg-map",
+                                   descriptor=f"h90-sf-sp-hae-{spacing_degree}deg-6mo",
                                    )
 
     processor = HiProcessor(None, input_metadata)
-    survival_corrected_product = processor._process_survival_probabilities(survival_dependencies)
+    survival_corrected_product = processor._process_survival_probabilities(
+        parse_map_descriptor(input_metadata.descriptor),
+        survival_dependencies)
 
     return save_data(survival_corrected_product, delete_if_present=True)
 
@@ -444,6 +481,8 @@ if __name__ == "__main__":
             run_glows_l3bc()
         elif "init-l3bc" in sys.argv:
             run_glows_l3bc_processor_and_initializer()
+        elif "l3e" in sys.argv:
+            run_glows_l3e()
         else:
             cdf_data = CDF("tests/test_data/glows/imap_glows_l2_hist_20130908-repoint00001_v004.cdf")
             l2_glows_data = read_l2_glows_data(cdf_data)
