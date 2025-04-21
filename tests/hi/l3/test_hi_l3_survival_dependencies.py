@@ -12,6 +12,7 @@ from imap_l3_processing.models import UpstreamDataDependency
 
 class TestHiL3SurvivalDependencies(unittest.TestCase):
 
+    @patch("imap_l3_processing.hi.l3.hi_l3_survival_dependencies.parse_map_descriptor")
     @patch("imap_l3_processing.hi.l3.hi_l3_survival_dependencies.find_glows_l3e_dependencies")
     @patch("imap_l3_processing.hi.l3.hi_l3_survival_dependencies.download_dependency_from_path")
     @patch("imap_l3_processing.hi.l3.hi_l3_survival_dependencies.download_dependency")
@@ -20,7 +21,8 @@ class TestHiL3SurvivalDependencies(unittest.TestCase):
     @patch("imap_l3_processing.hi.l3.hi_l3_survival_dependencies.read_hi_l2_data")
     def test_fetch_dependencies(self, mock_read_hi_l2: Mock, mock_read_hi_l1c, mock_read_glows_l3e,
                                 mock_download_dependency,
-                                mock_download_dependency_from_path, mock_find_glows_l3e_dependencies):
+                                mock_download_dependency_from_path, mock_find_glows_l3e_dependencies,
+                                mock_parse_map_descriptor):
         l1c_file_paths = ["imap_hi_l1c_45sensor-pset_20201001_v001.cdf", "imap_hi_l1c_45sensor-pset_20201002_v002.cdf",
                           "imap_hi_l1c_45sensor-pset_20201003_v001.cdf"]
         parents = l1c_file_paths + ["imap_hi_ancil-settings_20100101_v001.json"]
@@ -34,7 +36,7 @@ class TestHiL3SurvivalDependencies(unittest.TestCase):
             with CDF(str(l2_map_path), masterpath='') as l2_map:
                 l2_map.attrs["Parents"] = parents
 
-            hi_l2_dependency = UpstreamDataDependency("hi", "l2", None, None, "latest", "45sensor-spacecraft-map")
+            hi_l2_dependency = UpstreamDataDependency("hi", "l2", None, None, "latest", sentinel.l2_map_descriptor)
             glows_dependency = UpstreamDataDependency("glows", "l3e", None, None, "latest", "not-used")
             dependencies = [glows_dependency, hi_l2_dependency]
 
@@ -69,6 +71,8 @@ class TestHiL3SurvivalDependencies(unittest.TestCase):
                 call(sentinel.glows_file_path_3)
             ])
 
+            mock_parse_map_descriptor.assert_called_once_with(sentinel.l2_map_descriptor)
+
             self.assertEqual(actual.l2_data, mock_read_hi_l2.return_value)
             self.assertEqual(actual.hi_l1c_data, [sentinel.l1c_data_1,
                                                   sentinel.l1c_data_2,
@@ -76,6 +80,7 @@ class TestHiL3SurvivalDependencies(unittest.TestCase):
             self.assertEqual(actual.glows_l3e_data, [sentinel.glows_data_1,
                                                      sentinel.glows_data_2,
                                                      sentinel.glows_data_3, ])
+            self.assertEqual(actual.l2_map_descriptor_parts, mock_parse_map_descriptor.return_value)
 
     @patch("imap_l3_processing.hi.l3.hi_l3_survival_dependencies.imap_data_access.query")
     def test_find_glows_l3e_dependencies(self, mock_data_access_query):

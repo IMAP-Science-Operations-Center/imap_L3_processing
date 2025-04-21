@@ -212,7 +212,10 @@ class TestUtils(unittest.TestCase):
             ("h45-hf-sp-hae-4deg-6mo-spectral", MapDescriptorParts(Sensor.Hi45, cg, sp, SpinPhase.FullSpin,
                                                                    PixelSize.FourDegrees, Duration.SixMonths,
                                                                    MapQuantity.SpectralIndex)),
-            ("not-valid-at-all", None)
+            ("h-hf-hae-6deg-6mo", MapDescriptorParts(Sensor.Combined, cg, no_sp, SpinPhase.FullSpin,
+                                                     PixelSize.SixDegrees, Duration.SixMonths,
+                                                     MapQuantity.Intensity)),
+            ("not-valid-at-all", None),
         ]
 
         for descriptor, expected in test_cases:
