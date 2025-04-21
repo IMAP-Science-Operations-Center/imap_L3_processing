@@ -87,7 +87,7 @@ class CodiceLoL2Data:
 
 
 @dataclass
-class CodiceLoL1bPriorityRates:
+class CodiceLoL2bPriorityRates:
     epoch: ndarray
     energy: ndarray
     inst_az: ndarray

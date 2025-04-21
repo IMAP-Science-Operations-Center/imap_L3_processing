@@ -8,7 +8,7 @@ import numpy as np
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.codice.l3.lo.models import CodiceLoL2Data, CodiceLoL3aDataProduct, CodiceLoL2DirectEventData, \
-    CodiceLoL1bPriorityRates
+    CodiceLoL2bPriorityRates
 
 
 class TestModels(unittest.TestCase):
@@ -331,7 +331,7 @@ class TestModels(unittest.TestCase):
                 cdf_file["lo_nsw_species_heplus"] = lo_nsw_species_heplus
                 cdf_file["lo_nsw_species_cnoplus"] = lo_nsw_species_cnoplus
 
-            result = CodiceLoL1bPriorityRates.read_from_cdf(cdf_file_path)
+            result = CodiceLoL2bPriorityRates.read_from_cdf(cdf_file_path)
 
             np.testing.assert_array_equal(result.epoch, epoch)
             np.testing.assert_array_equal(result.energy, energy)
