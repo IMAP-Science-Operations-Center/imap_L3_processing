@@ -1,11 +1,12 @@
 import unittest
+from dataclasses import replace
 from datetime import datetime, timedelta
 from unittest.mock import patch, call, Mock, sentinel
 
 import numpy as np
 from imap_data_access.processing_input import ScienceInput, ProcessingInputCollection, AncillaryInput
 
-from imap_l3_processing.models import MagL1dData, InputMetadata, UpstreamDataDependency
+from imap_l3_processing.models import MagL1dData, InputMetadata
 from imap_l3_processing.swe.l3.models import SweL2Data, SwapiL3aProtonData, SweL1bData
 from imap_l3_processing.swe.l3.models import SweL3MomentData
 from imap_l3_processing.swe.l3.science.moment_calculations import MomentFitResults, ScaleDensityOutput
@@ -173,7 +174,7 @@ class TestSweProcessor(unittest.TestCase):
                                       expected_corrected_energy_bins)
 
         # @formatter:off
-        self.assertEqual(swe_l3_data.input_metadata, swe_processor.input_metadata.to_upstream_data_dependency("sci"))
+        self.assertEqual(swe_l3_data.input_metadata, replace(input_metadata, descriptor="sci"))
         # pass through from l2
         np.testing.assert_array_equal(swe_l3_data.epoch, swe_l2_data.epoch)
         np.testing.assert_array_equal(swe_l3_data.epoch_delta, mock_compute_epoch_delta_in_ns.return_value)
@@ -483,11 +484,10 @@ class TestSweProcessor(unittest.TestCase):
         input_metadata = InputMetadata("swe", "l3", datetime(2025, 2, 21),
                                        datetime(2025, 2, 22), "v001")
         swel3_dependency = SweL3Dependencies(swe_l2_data, swe_l1b_data, mag_l1d_data, swapi_l3a_proton_data, swe_config)
-        swe_processor = SweProcessor(dependencies=[], input_metadata=input_metadata)
+        swe_processor = SweProcessor(ProcessingInputCollection(), input_metadata=input_metadata)
         swe_l3_data = swe_processor.calculate_products(swel3_dependency)
 
-        self.assertEqual(UpstreamDataDependency("swe", "l3", datetime(2025, 2, 21),
-                                                datetime(2025, 2, 22), "v001", "sci"), swe_l3_data.input_metadata)
+        self.assertEqual(replace(input_metadata, descriptor="sci"), swe_l3_data.input_metadata)
         self.assertEqual(swe_l3_data.pitch_angle, swel3_dependency.configuration["pitch_angle_bins"])
         self.assertEqual(swe_l3_data.pitch_angle_delta, swel3_dependency.configuration["pitch_angle_deltas"])
         self.assertEqual(swe_l3_data.energy, swel3_dependency.configuration["energy_bins"])
@@ -578,11 +578,10 @@ class TestSweProcessor(unittest.TestCase):
                                        datetime(2025, 2, 22), "v001")
 
         swel3_dependency = SweL3Dependencies(swe_l2_data, swe_l1b_data, mag_l1d_data, swapi_l3a_proton_data, swe_config)
-        swe_processor = SweProcessor(dependencies=[], input_metadata=input_metadata)
+        swe_processor = SweProcessor(ProcessingInputCollection(), input_metadata=input_metadata)
         swe_l3_data = swe_processor.calculate_products(swel3_dependency)
 
-        self.assertEqual(UpstreamDataDependency("swe", "l3", datetime(2025, 2, 21),
-                                                datetime(2025, 2, 22), "v001", "sci"), swe_l3_data.input_metadata)
+        self.assertEqual(replace(input_metadata, descriptor="sci"), swe_l3_data.input_metadata)
         self.assertEqual(swe_l3_data.pitch_angle, swel3_dependency.configuration["pitch_angle_bins"])
         self.assertEqual(swe_l3_data.pitch_angle_delta, swel3_dependency.configuration["pitch_angle_deltas"])
         self.assertEqual(swe_l3_data.energy, swel3_dependency.configuration["energy_bins"])

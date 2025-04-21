@@ -1,4 +1,5 @@
 import datetime
+from dataclasses import replace
 from datetime import timedelta
 
 import numpy as np
@@ -86,7 +87,7 @@ class SweProcessor(Processor):
         ) = self.calculate_pitch_angle_products(dependencies, corrected_energy_bins)
 
         return SweL3Data(
-            input_metadata=self.input_metadata.to_upstream_data_dependency("sci"),
+            input_metadata=replace(self.input_metadata, descriptor="sci"),
             epoch=swe_epoch,
             epoch_delta=epoch_delta,
             energy=config["energy_bins"],
