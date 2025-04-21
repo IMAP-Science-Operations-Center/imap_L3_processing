@@ -2,7 +2,7 @@ import enum
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Union
+from typing import Union, Optional
 
 from spacepy.pycdf import CDF
 
@@ -103,7 +103,7 @@ class MapDescriptorParts:
     quantity: MapQuantity
 
 
-def parse_map_descriptor(descriptor: str) -> MapDescriptorParts:
+def parse_map_descriptor(descriptor: str) -> Optional[MapDescriptorParts]:
     descriptor_regex = """
         (?P<sensor>h45|h90)-
         (?P<cg_corrected>sf|hf)-
@@ -116,7 +116,8 @@ def parse_map_descriptor(descriptor: str) -> MapDescriptorParts:
         """
 
     descriptor_part_match = re.search(descriptor_regex, descriptor, flags=re.VERBOSE)
-    assert descriptor_part_match is not None, f"could not parse descriptor {descriptor}"
+    if descriptor_part_match is None:
+        return None
 
     sensors = {"h45": Sensor.Hi45, "h90": Sensor.Hi90}
     cg_corrections = {"sf": CGCorrection.NotCGCorrected, "hf": CGCorrection.CGCorrected}
