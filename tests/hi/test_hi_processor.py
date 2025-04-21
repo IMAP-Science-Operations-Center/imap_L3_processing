@@ -1,19 +1,19 @@
 import unittest
 from datetime import datetime, timedelta
-from unittest.mock import patch, Mock, call, sentinel
+from unittest.mock import patch, Mock, call, sentinel, MagicMock
 
 import numpy as np
 import xarray as xr
-from imap_processing.ena_maps.utils.coordinates import CoordNames
-from imap_processing.spice.geometry import SpiceFrame
-
 from imap_l3_processing.hi.hi_processor import HiProcessor, combine_glows_l3e_hi_l1c
 from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3SpectralFitDependencies
-from imap_l3_processing.hi.l3.hi_l3_survival_dependencies import HiL3SurvivalDependencies
+from imap_l3_processing.hi.l3.hi_l3_survival_dependencies import HiL3SurvivalDependencies, \
+    HiL3SingleSensorFullSpinDependencies
 from imap_l3_processing.hi.l3.models import HiL3SpectralIndexDataProduct, GlowsL3eData, HiL1cData, \
     HiL3SurvivalCorrectedDataProduct, HiIntensityMapData
-from imap_l3_processing.hi.l3.utils import Sensor, PixelSize, SpinPhase
+from imap_l3_processing.hi.l3.utils import PixelSize, MapDescriptorParts
 from imap_l3_processing.models import InputMetadata
+from imap_processing.ena_maps.utils.coordinates import CoordNames
+from imap_processing.spice.geometry import SpiceFrame
 from tests.test_helpers import get_test_data_path
 
 
@@ -135,9 +135,18 @@ class TestHiProcessor(unittest.TestCase):
 
         input_map.energy = sentinel.hi_l2_energies
 
+        mock_l2_grid_size = MagicMock(spec=PixelSize.FourDegrees)
+
+        expected_grid_size = int(rng.integers(0, 10000000000))
+        mock_l2_grid_size.__int__.return_value = expected_grid_size
+
+        l2_descriptor_parts = MapDescriptorParts(sentinel.l2_sensor, sentinel.l2_cg, sentinel.l2_survival,
+                                                 sentinel.l2_spin, mock_l2_grid_size, sentinel.l2_duration,
+                                                 sentinel.l2_quantity)
         mock_fetch_dependencies.return_value = HiL3SurvivalDependencies(l2_data=input_map,
                                                                         hi_l1c_data=sentinel.hi_l1c_data,
-                                                                        glows_l3e_data=sentinel.glows_l3e_data, )
+                                                                        glows_l3e_data=sentinel.glows_l3e_data,
+                                                                        l2_map_descriptor_parts=l2_descriptor_parts)
 
         mock_combine_glows_l3e_hi_l1c.return_value = [(sentinel.hi_l1c_1, sentinel.glows_l3e_1),
                                                       (sentinel.hi_l1c_2, sentinel.glows_l3e_2),
@@ -145,15 +154,12 @@ class TestHiProcessor(unittest.TestCase):
 
         mock_survival_probability_pointing_set.side_effect = [sentinel.pset_1, sentinel.pset_2, sentinel.pset_3]
 
-        expected_grid_size = PixelSize.FourDegrees
-        expected_sensor = Sensor.Hi90
-
         input_metadata = InputMetadata(instrument="hi",
                                        data_level="l3",
                                        start_date=datetime.now(),
                                        end_date=datetime.now() + timedelta(days=1),
                                        version="",
-                                       descriptor=f"h90-sf-sp-ram-hae-4deg-6mo",
+                                       descriptor="h90-sf-sp-ram-hae-4deg-6mo",
                                        )
 
         computed_survival_probabilities = rng.random((1, 9, 90, 45))
@@ -183,9 +189,11 @@ class TestHiProcessor(unittest.TestCase):
         mock_combine_glows_l3e_hi_l1c.assert_called_once_with(sentinel.glows_l3e_data, sentinel.hi_l1c_data)
 
         mock_survival_probability_pointing_set.assert_has_calls([
-            call(sentinel.hi_l1c_1, expected_sensor, SpinPhase.RamOnly, sentinel.glows_l3e_1, sentinel.hi_l2_energies),
-            call(sentinel.hi_l1c_2, expected_sensor, SpinPhase.RamOnly, sentinel.glows_l3e_2, sentinel.hi_l2_energies),
-            call(sentinel.hi_l1c_3, expected_sensor, SpinPhase.RamOnly, sentinel.glows_l3e_3, sentinel.hi_l2_energies)
+            call(sentinel.hi_l1c_1, sentinel.l2_sensor, sentinel.l2_spin, sentinel.glows_l3e_1,
+                 sentinel.hi_l2_energies),
+            call(sentinel.hi_l1c_2, sentinel.l2_sensor, sentinel.l2_spin, sentinel.glows_l3e_2,
+                 sentinel.hi_l2_energies),
+            call(sentinel.hi_l1c_3, sentinel.l2_sensor, sentinel.l2_spin, sentinel.glows_l3e_3, sentinel.hi_l2_energies)
         ])
 
         mock_survival_skymap.assert_called_once_with([sentinel.pset_1, sentinel.pset_2, sentinel.pset_3],
@@ -257,6 +265,69 @@ class TestHiProcessor(unittest.TestCase):
         actual = combine_glows_l3e_hi_l1c(glows_l3e_data, hi_l1c_data)
 
         self.assertEqual(expected, actual)
+
+    @patch("imap_l3_processing.hi.hi_processor.HiL3SingleSensorFullSpinDependencies.fetch_dependencies")
+    @patch("imap_l3_processing.hi.hi_processor.HiProcessor._process_survival_probabilities")
+    @patch("imap_l3_processing.hi.hi_processor.combine_maps")
+    @patch('imap_l3_processing.hi.hi_processor.save_data')
+    @patch('imap_l3_processing.hi.hi_processor.upload')
+    def test_process_full_spin_single_sensor_map(self, mock_upload, mock_save_data, mock_combine_maps,
+                                                 mock_process_survival_prob,
+                                                 mock_fetch_full_spin_single_sensor_dependencies):
+        input_metadata = InputMetadata(instrument="hi",
+                                       data_level="l3",
+                                       start_date=datetime.now(),
+                                       end_date=datetime.now() + timedelta(days=1),
+                                       version="",
+                                       descriptor="h90-sf-sp-hae-4deg-6mo",
+                                       )
+
+        full_spin_dependencies: HiL3SingleSensorFullSpinDependencies = mock_fetch_full_spin_single_sensor_dependencies.return_value
+
+        mock_process_survival_prob.side_effect = [
+            sentinel.survival_corrected_ram,
+            sentinel.survival_corrected_antiram,
+        ]
+
+        processor = HiProcessor(sentinel.dependencies, input_metadata)
+        processor.process()
+
+        mock_fetch_full_spin_single_sensor_dependencies.assert_called_once_with(sentinel.dependencies)
+
+        mock_process_survival_prob.assert_has_calls([
+            call(full_spin_dependencies.ram_dependencies),
+            call(full_spin_dependencies.antiram_dependencies)
+        ])
+
+        mock_combine_maps.assert_called_once_with([
+            sentinel.survival_corrected_ram,
+            sentinel.survival_corrected_antiram,
+        ])
+
+        mock_save_data.assert_called_once_with(mock_combine_maps.return_value)
+        mock_upload.assert_called_once_with(mock_save_data.return_value)
+
+    def test_raises_error_for_currently_unimplemented_maps(self):
+        cases = [
+            "h-sf-hae-6deg-6mo",
+            "h-sf-sp-hae-6deg-6mo",
+            "h-sf-sp-ram-hae-6deg-6mo",
+            "h-sf-hae-6deg-12mo",
+            "h45-hf-hae-6deg-6mo",
+        ]
+        for descriptor in cases:
+            with self.subTest(descriptor):
+                input_metadata = InputMetadata(instrument="hi",
+                                               data_level="l3",
+                                               start_date=datetime.now(),
+                                               end_date=datetime.now() + timedelta(days=1),
+                                               version="",
+                                               descriptor=descriptor,
+                                               )
+
+                processor = HiProcessor(sentinel.dependencies, input_metadata)
+                with self.assertRaises(NotImplementedError):
+                    processor.process()
 
 
 def _create_h1_l3_data(epoch=None, lon=None, lat=None, energy=None, energy_delta=None, flux=None,

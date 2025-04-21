@@ -5,7 +5,7 @@ from pathlib import Path
 
 import numpy as np
 
-from imap_l3_processing.models import DataProduct, DataProductVariable, UpstreamDataDependency
+from imap_l3_processing.models import DataProduct, DataProductVariable, InputMetadata
 
 EPOCH_CDF_VAR_NAME = "epoch"
 EPOCH_DELTA_CDF_VAR_NAME = "epoch_delta"
@@ -23,7 +23,7 @@ class GlowsL3EHiData(DataProduct):
     probability_of_survival: np.ndarray
 
     @classmethod
-    def convert_dat_to_glows_l3e_hi_product(cls, input_metadata: UpstreamDataDependency, file_path: Path,
+    def convert_dat_to_glows_l3e_hi_product(cls, input_metadata: InputMetadata, file_path: Path,
                                             epoch: np.ndarray[datetime],
                                             epoch_delta: np.ndarray[timedelta]):
         with open(file_path) as input_data:
