@@ -1,3 +1,5 @@
+from dataclasses import replace
+
 import imap_data_access
 import numpy as np
 from imap_data_access.processing_input import ProcessingInputCollection
@@ -145,14 +147,14 @@ class SwapiProcessor(Processor):
             temperature = calculate_helium_pui_temperature(
                 epoch, sw_velocity, dependencies.density_of_neutral_helium_calibration_table, fit_params)
             pui_temperature.append(temperature)
-        pui_metadata = self.input_metadata.to_upstream_data_dependency("pui-he")
+
+        pui_metadata = replace(self.input_metadata, descriptor="pui-he")
         pui_data = SwapiL3PickupIonData(pui_metadata, np.array(pui_epochs), np.array(pui_cooling_index),
                                         np.array(pui_ionization_rate),
                                         np.array(pui_cutoff_speed), np.array(pui_background_rate),
                                         np.array(pui_density), np.array(pui_temperature))
 
-        proton_solar_wind_speed_metadata = self.input_metadata.to_upstream_data_dependency("proton-sw")
-
+        proton_solar_wind_speed_metadata = replace(self.input_metadata, descriptor="proton-sw")
         proton_solar_wind_l3_data = SwapiL3ProtonSolarWindData(proton_solar_wind_speed_metadata, np.array(epochs),
                                                                np.array(proton_solar_wind_speeds),
                                                                np.array(proton_solar_wind_temperatures),
@@ -160,7 +162,7 @@ class SwapiProcessor(Processor):
                                                                np.array(proton_solar_wind_clock_angles),
                                                                np.array(proton_solar_wind_deflection_angles))
 
-        alpha_solar_wind_speed_metadata = self.input_metadata.to_upstream_data_dependency("alpha-sw")
+        alpha_solar_wind_speed_metadata = replace(self.input_metadata, descriptor="alpha-sw")
         alpha_solar_wind_l3_data = SwapiL3AlphaSolarWindData(alpha_solar_wind_speed_metadata, np.array(epochs),
                                                              np.array(alpha_solar_wind_speeds),
                                                              np.array(alpha_solar_wind_temperatures),
@@ -226,7 +228,8 @@ class SwapiProcessor(Processor):
             combined_energies.append(energies)
             combined_energy_deltas.append(calculate_delta_minus_plus(energies))
 
-        l3b_combined_metadata = self.input_metadata.to_upstream_data_dependency("combined")
+        l3b_combined_metadata = self.input_metadata
+        l3b_combined_metadata.descriptor = 'combined'
         l3b_combined_vdf = SwapiL3BCombinedVDF(input_metadata=l3b_combined_metadata,
                                                epoch=np.array(epochs),
                                                proton_sw_velocities=np.array(cdf_proton_velocities),

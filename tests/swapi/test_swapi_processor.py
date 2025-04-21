@@ -1,3 +1,4 @@
+from dataclasses import replace
 from datetime import datetime, timedelta, date
 from unittest import TestCase
 from unittest.mock import patch, sentinel, call
@@ -134,15 +135,15 @@ class TestSwapiProcessor(TestCase):
         input_metadata = InputMetadata(instrument, outgoing_data_level, start_date, end_date, input_version)
 
         proton_solar_wind_data = mock_proton_solar_wind_data_constructor.return_value
-        expected_proton_metadata = input_metadata.to_upstream_data_dependency("proton-sw")
+        expected_proton_metadata = replace(input_metadata, descriptor="proton-sw")
         proton_solar_wind_data.input_metadata = expected_proton_metadata
 
         alpha_solar_wind_data = mock_alpha_solar_wind_data_constructor.return_value
-        expected_alpha_metadata = input_metadata.to_upstream_data_dependency("alpha-sw")
+        expected_alpha_metadata = replace(input_metadata, descriptor='alpha-sw')
         alpha_solar_wind_data.input_metadata = expected_alpha_metadata
 
         pickup_ion_data = mock_pickup_ion_data_constructor.return_value
-        expected_pickup_ion_metadata = input_metadata.to_upstream_data_dependency("pui-he")
+        expected_pickup_ion_metadata = replace(input_metadata, descriptor="pui-he")
         pickup_ion_data.input_metadata = expected_pickup_ion_metadata
 
         test_cases = [
@@ -539,7 +540,10 @@ class TestSwapiProcessor(TestCase):
             call(energy),
         ])
 
-        expected_combined_metadata = input_metadata.to_upstream_data_dependency("combined")
+        expected_combined_metadata = InputMetadata(descriptor="combined", data_level=outgoing_data_level,
+                                                   start_date=start_date, end_date=end_date, instrument=instrument,
+                                                   version=outgoing_version)
+
         self.assertEqual(expected_combined_metadata, mock_combined_vdf_data.call_args_list[0].kwargs["input_metadata"])
 
         np.testing.assert_array_equal(np.array([first_chunk_initial_epoch + FIVE_MINUTES_IN_NANOSECONDS,
