@@ -143,7 +143,6 @@ class TestL3eHiModel(unittest.TestCase):
 
         self.assertEqual(expected_epoch, l3e_hi_product.epoch)
         self.assertEqual(expected_time_delta, l3e_hi_product.epoch_delta)
-        self.assertEqual(expected_time_delta, l3e_hi_product.epoch_delta)
         np.testing.assert_array_equal(l3e_hi_product.energy, expected_energy)
         np.testing.assert_array_equal(l3e_hi_product.spin_angle, expected_spin_angle)
         np.testing.assert_array_equal(l3e_hi_product.probability_of_survival.shape, expected_survival_probability_shape)

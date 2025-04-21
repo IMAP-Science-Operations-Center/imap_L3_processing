@@ -1,10 +1,12 @@
 import unittest
+from dataclasses import replace
 from datetime import datetime, timedelta
 from unittest.mock import patch, call, Mock, sentinel
 
 import numpy as np
+from imap_data_access.processing_input import ScienceInput, ProcessingInputCollection, AncillaryInput
 
-from imap_l3_processing.models import MagL1dData, InputMetadata, UpstreamDataDependency
+from imap_l3_processing.models import MagL1dData, InputMetadata
 from imap_l3_processing.swe.l3.models import SweL2Data, SwapiL3aProtonData, SweL1bData
 from imap_l3_processing.swe.l3.models import SweL3MomentData
 from imap_l3_processing.swe.l3.science.moment_calculations import MomentFitResults, ScaleDensityOutput
@@ -16,15 +18,34 @@ from tests.test_helpers import NumpyArrayMatcher, build_swe_configuration, creat
 
 
 class TestSweProcessor(unittest.TestCase):
+    @patch('imap_l3_processing.processor.spiceypy')
     @patch('imap_l3_processing.swe.swe_processor.upload')
     @patch('imap_l3_processing.swe.swe_processor.save_data')
     @patch('imap_l3_processing.swe.swe_processor.SweL3Dependencies.fetch_dependencies')
     @patch('imap_l3_processing.swe.swe_processor.SweProcessor.calculate_products')
-    def test_process(self, mock_calculate_products, mock_fetch_dependencies, mock_save_data, mock_upload):
-        mock_dependencies = Mock()
+    def test_process(self, mock_calculate_products, mock_fetch_dependencies, mock_save_data, mock_upload,
+                     mock_spiceypy):
+        input_file_names = [
+            "imap_swe_l2_sci_20200101_v000.cdf",
+            "imap_swe_l1b_sci_20200101_v000.cdf",
+            "imap_mag_l1d_norm-mago_20200101_v000.cdf",
+            "imap_swapi_l3_proton-sw_20200101_v000.cdf",
+            "imap_swe_config-json-not-cdf_20200101_v000.cdf"
+        ]
+
+        mock_spiceypy.ktotal.return_value = 0
+
+        science_inputs = [ScienceInput(file_name) for file_name in input_file_names[0:4]]
+        config_input = AncillaryInput(input_file_names[4])
+        mock_dependencies = ProcessingInputCollection(*science_inputs, config_input)
+
         mock_input_metadata = Mock()
+        calculate_products_return = Mock()
+        mock_calculate_products.return_value = calculate_products_return
         swe_processor = SweProcessor(mock_dependencies, mock_input_metadata)
         swe_processor.process()
+
+        self.assertEqual(calculate_products_return.parent_file_names, input_file_names)
 
         mock_fetch_dependencies.assert_called_once_with(mock_dependencies)
         mock_calculate_products.assert_called_once_with(mock_fetch_dependencies.return_value)
@@ -153,7 +174,7 @@ class TestSweProcessor(unittest.TestCase):
                                       expected_corrected_energy_bins)
 
         # @formatter:off
-        self.assertEqual(swe_l3_data.input_metadata, swe_processor.input_metadata.to_upstream_data_dependency("sci"))
+        self.assertEqual(swe_l3_data.input_metadata, replace(input_metadata, descriptor="sci"))
         # pass through from l2
         np.testing.assert_array_equal(swe_l3_data.epoch, swe_l2_data.epoch)
         np.testing.assert_array_equal(swe_l3_data.epoch_delta, mock_compute_epoch_delta_in_ns.return_value)
@@ -463,11 +484,10 @@ class TestSweProcessor(unittest.TestCase):
         input_metadata = InputMetadata("swe", "l3", datetime(2025, 2, 21),
                                        datetime(2025, 2, 22), "v001")
         swel3_dependency = SweL3Dependencies(swe_l2_data, swe_l1b_data, mag_l1d_data, swapi_l3a_proton_data, swe_config)
-        swe_processor = SweProcessor(dependencies=[], input_metadata=input_metadata)
+        swe_processor = SweProcessor(ProcessingInputCollection(), input_metadata=input_metadata)
         swe_l3_data = swe_processor.calculate_products(swel3_dependency)
 
-        self.assertEqual(UpstreamDataDependency("swe", "l3", datetime(2025, 2, 21),
-                                                datetime(2025, 2, 22), "v001", "sci"), swe_l3_data.input_metadata)
+        self.assertEqual(replace(input_metadata, descriptor="sci"), swe_l3_data.input_metadata)
         self.assertEqual(swe_l3_data.pitch_angle, swel3_dependency.configuration["pitch_angle_bins"])
         self.assertEqual(swe_l3_data.pitch_angle_delta, swel3_dependency.configuration["pitch_angle_deltas"])
         self.assertEqual(swe_l3_data.energy, swel3_dependency.configuration["energy_bins"])
@@ -558,11 +578,10 @@ class TestSweProcessor(unittest.TestCase):
                                        datetime(2025, 2, 22), "v001")
 
         swel3_dependency = SweL3Dependencies(swe_l2_data, swe_l1b_data, mag_l1d_data, swapi_l3a_proton_data, swe_config)
-        swe_processor = SweProcessor(dependencies=[], input_metadata=input_metadata)
+        swe_processor = SweProcessor(ProcessingInputCollection(), input_metadata=input_metadata)
         swe_l3_data = swe_processor.calculate_products(swel3_dependency)
 
-        self.assertEqual(UpstreamDataDependency("swe", "l3", datetime(2025, 2, 21),
-                                                datetime(2025, 2, 22), "v001", "sci"), swe_l3_data.input_metadata)
+        self.assertEqual(replace(input_metadata, descriptor="sci"), swe_l3_data.input_metadata)
         self.assertEqual(swe_l3_data.pitch_angle, swel3_dependency.configuration["pitch_angle_bins"])
         self.assertEqual(swe_l3_data.pitch_angle_delta, swel3_dependency.configuration["pitch_angle_deltas"])
         self.assertEqual(swe_l3_data.energy, swel3_dependency.configuration["energy_bins"])
@@ -632,7 +651,7 @@ class TestSweProcessor(unittest.TestCase):
         expected_sin_theta = np.sin(np.deg2rad(90 - instrument_elevation))
         expected_cos_theta = np.cos(np.deg2rad(90 - instrument_elevation))
         np.testing.assert_allclose(expected_cos_theta,
-        [-0.9034, -0.6947, -0.3730, 0.0, 0.3714, 0.6896,0.8996], atol=0.03)
+                                   [-0.9034, -0.6947, -0.3730, 0.0, 0.3714, 0.6896, 0.8996], atol=0.03)
         swe_l1_data = SweL1bData(epoch=epochs,
                                  count_rates=[sentinel.l1b_count_rates_1, sentinel.l1b_count_rates_2,
                                               sentinel.l1b_count_rates_3],
