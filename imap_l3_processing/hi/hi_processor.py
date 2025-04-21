@@ -1,19 +1,19 @@
 import numpy as np
 from imap_data_access import upload
-from imap_processing.spice.geometry import SpiceFrame
-
 from imap_l3_processing import spice_wrapper
 from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3SpectralFitDependencies
-from imap_l3_processing.hi.l3.hi_l3_survival_dependencies import HiL3SurvivalDependencies
+from imap_l3_processing.hi.l3.hi_l3_survival_dependencies import HiL3SurvivalDependencies, \
+    HiL3SingleSensorFullSpinDependencies
 from imap_l3_processing.hi.l3.models import HiL3SpectralIndexDataProduct, GlowsL3eData, HiL1cData, \
-    HiL3SurvivalCorrectedDataProduct
+    HiL3SurvivalCorrectedDataProduct, combine_maps
 from imap_l3_processing.hi.l3.science.spectral_fit import spectral_fit
 from imap_l3_processing.hi.l3.science.survival_probability import HiSurvivalProbabilityPointingSet, \
     HiSurvivalProbabilitySkyMap
 from imap_l3_processing.hi.l3.utils import parse_map_descriptor, MapQuantity, MapDescriptorParts, SurvivalCorrection, \
-    SpinPhase, Duration
+    SpinPhase, Duration, Sensor
 from imap_l3_processing.processor import Processor
 from imap_l3_processing.utils import save_data
+from imap_processing.spice.geometry import SpiceFrame
 
 
 class HiProcessor(Processor):
@@ -24,16 +24,31 @@ class HiProcessor(Processor):
                 hi_l3_spectral_fit_dependencies = HiL3SpectralFitDependencies.fetch_dependencies(self.dependencies)
                 data_product = self._process_spectral_fit_index(hi_l3_spectral_fit_dependencies)
             case MapDescriptorParts(survival_correction=SurvivalCorrection.SurvivalCorrected,
-                                    spin_phase=SpinPhase.RamOnly | SpinPhase.AntiRamOnly, duration=Duration.SixMonths):
+                                    sensor=Sensor.Hi90 | Sensor.Hi45,
+                                    spin_phase=SpinPhase.RamOnly | SpinPhase.AntiRamOnly,
+                                    duration=Duration.SixMonths):
                 hi_l3_survival_probabilities_dependencies = HiL3SurvivalDependencies.fetch_dependencies(
                     self.dependencies)
-                data_product = self._process_survival_probabilities(parsed_descriptor,
-                                                                    hi_l3_survival_probabilities_dependencies)
+                data_product = self._process_survival_probabilities(hi_l3_survival_probabilities_dependencies)
+            case MapDescriptorParts(survival_correction=SurvivalCorrection.SurvivalCorrected,
+                                    sensor=Sensor.Hi90 | Sensor.Hi45,
+                                    spin_phase=SpinPhase.FullSpin,
+                                    duration=Duration.SixMonths):
+                hi_l3_full_spin_dependencies = HiL3SingleSensorFullSpinDependencies.fetch_dependencies(
+                    self.dependencies)
+                data_product = self._process_full_spin_single_sensor(hi_l3_full_spin_dependencies)
             case _:
                 raise NotImplementedError(self.input_metadata.descriptor)
 
         cdf_path = save_data(data_product)
         upload(cdf_path)
+
+    def _process_full_spin_single_sensor(self,
+                                         hi_l3_full_spin_dependencies: HiL3SingleSensorFullSpinDependencies) -> HiL3SurvivalCorrectedDataProduct:
+        ram_data_product = self._process_survival_probabilities(hi_l3_full_spin_dependencies.ram_dependencies)
+        antiram_data_product = self._process_survival_probabilities(hi_l3_full_spin_dependencies.antiram_dependencies)
+
+        return combine_maps([ram_data_product, antiram_data_product])
 
     def _process_spectral_fit_index(self,
                                     hi_l3_spectral_fit_dependencies: HiL3SpectralFitDependencies) -> HiL3SpectralIndexDataProduct:
@@ -73,19 +88,20 @@ class HiProcessor(Processor):
 
         return data_product
 
-    def _process_survival_probabilities(self, parsed_descriptor: MapDescriptorParts,
-                                        hi_survival_probabilities_dependencies: HiL3SurvivalDependencies):
+    def _process_survival_probabilities(self, hi_survival_probabilities_dependencies: HiL3SurvivalDependencies):
+        l2_descriptor_parts = hi_survival_probabilities_dependencies.l2_map_descriptor_parts
+
         spice_wrapper.furnish()
         combined_glows_hi = combine_glows_l3e_hi_l1c(hi_survival_probabilities_dependencies.glows_l3e_data,
                                                      hi_survival_probabilities_dependencies.hi_l1c_data)
         pointing_sets = []
         for hi_l1c, glows_l3e in combined_glows_hi:
             pointing_sets.append(HiSurvivalProbabilityPointingSet(
-                hi_l1c, parsed_descriptor.sensor, parsed_descriptor.spin_phase, glows_l3e,
+                hi_l1c, l2_descriptor_parts.sensor, l2_descriptor_parts.spin_phase, glows_l3e,
                 hi_survival_probabilities_dependencies.l2_data.energy))
         assert len(pointing_sets) > 0
 
-        hi_survival_sky_map = HiSurvivalProbabilitySkyMap(pointing_sets, parsed_descriptor.grid_size,
+        hi_survival_sky_map = HiSurvivalProbabilitySkyMap(pointing_sets, int(l2_descriptor_parts.grid_size),
                                                           SpiceFrame.ECLIPJ2000)
 
         survival_dataset = hi_survival_sky_map.to_dataset()
