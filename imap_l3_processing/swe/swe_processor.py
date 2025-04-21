@@ -33,6 +33,7 @@ class SweProcessor(Processor):
     def process(self):
         dependencies = SweL3Dependencies.fetch_dependencies(self.dependencies)
         output_data = self.calculate_products(dependencies)
+        output_data.parent_file_names = self.get_parent_file_names()
         output_cdf = save_data(output_data)
         upload(output_cdf)
 

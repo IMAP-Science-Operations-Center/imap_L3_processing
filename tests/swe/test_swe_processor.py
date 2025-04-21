@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from unittest.mock import patch, call, Mock, sentinel
 
 import numpy as np
+from imap_data_access.processing_input import ScienceInput, ProcessingInputCollection, AncillaryInput
 
 from imap_l3_processing.models import MagL1dData, InputMetadata, UpstreamDataDependency
 from imap_l3_processing.swe.l3.models import SweL2Data, SwapiL3aProtonData, SweL1bData
@@ -16,15 +17,34 @@ from tests.test_helpers import NumpyArrayMatcher, build_swe_configuration, creat
 
 
 class TestSweProcessor(unittest.TestCase):
+    @patch('imap_l3_processing.processor.spiceypy')
     @patch('imap_l3_processing.swe.swe_processor.upload')
     @patch('imap_l3_processing.swe.swe_processor.save_data')
     @patch('imap_l3_processing.swe.swe_processor.SweL3Dependencies.fetch_dependencies')
     @patch('imap_l3_processing.swe.swe_processor.SweProcessor.calculate_products')
-    def test_process(self, mock_calculate_products, mock_fetch_dependencies, mock_save_data, mock_upload):
-        mock_dependencies = Mock()
+    def test_process(self, mock_calculate_products, mock_fetch_dependencies, mock_save_data, mock_upload,
+                     mock_spiceypy):
+        input_file_names = [
+            "imap_swe_l2_sci_20200101_v000.cdf",
+            "imap_swe_l1b_sci_20200101_v000.cdf",
+            "imap_mag_l1d_norm-mago_20200101_v000.cdf",
+            "imap_swapi_l3_proton-sw_20200101_v000.cdf",
+            "imap_swe_config-json-not-cdf_20200101_v000.cdf"
+        ]
+
+        mock_spiceypy.ktotal.return_value = 0
+
+        science_inputs = [ScienceInput(file_name) for file_name in input_file_names[0:4]]
+        config_input = AncillaryInput(input_file_names[4])
+        mock_dependencies = ProcessingInputCollection(*science_inputs, config_input)
+
         mock_input_metadata = Mock()
+        calculate_products_return = Mock()
+        mock_calculate_products.return_value = calculate_products_return
         swe_processor = SweProcessor(mock_dependencies, mock_input_metadata)
         swe_processor.process()
+
+        self.assertEqual(calculate_products_return.parent_file_names, input_file_names)
 
         mock_fetch_dependencies.assert_called_once_with(mock_dependencies)
         mock_calculate_products.assert_called_once_with(mock_fetch_dependencies.return_value)
@@ -632,7 +652,7 @@ class TestSweProcessor(unittest.TestCase):
         expected_sin_theta = np.sin(np.deg2rad(90 - instrument_elevation))
         expected_cos_theta = np.cos(np.deg2rad(90 - instrument_elevation))
         np.testing.assert_allclose(expected_cos_theta,
-        [-0.9034, -0.6947, -0.3730, 0.0, 0.3714, 0.6896,0.8996], atol=0.03)
+                                   [-0.9034, -0.6947, -0.3730, 0.0, 0.3714, 0.6896, 0.8996], atol=0.03)
         swe_l1_data = SweL1bData(epoch=epochs,
                                  count_rates=[sentinel.l1b_count_rates_1, sentinel.l1b_count_rates_2,
                                               sentinel.l1b_count_rates_3],
