@@ -1,9 +1,11 @@
+import re
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+from pathlib import Path
 
 import numpy as np
 
-from imap_l3_processing.models import DataProduct, DataProductVariable
+from imap_l3_processing.models import DataProduct, DataProductVariable, InputMetadata
 
 EPOCH_CDF_VAR_NAME = "epoch"
 EPOCH_DELTA_CDF_VAR_NAME = "epoch_delta"
@@ -19,6 +21,20 @@ class GlowsL3ELoData(DataProduct):
     energy: np.ndarray
     spin_angle: np.ndarray
     probability_of_survival: np.ndarray
+
+    @classmethod
+    def convert_dat_to_glows_l3e_lo_product(cls, input_metadata: InputMetadata, file_path: Path,
+                                            epoch: np.ndarray[datetime],
+                                            epoch_delta: np.ndarray[timedelta]):
+        with open(file_path) as input_data:
+            energy_line = [line for line in input_data.readlines() if line.startswith("#energy_grid")]
+            energies = np.array([float(i) for i in re.findall(r"\d+.\d+", energy_line[0])])
+
+        spin_angle_and_survival_probabilities = np.loadtxt(file_path, skiprows=200)
+        spin_angles = spin_angle_and_survival_probabilities[:, 0]
+        survival_probabilities = np.array([spin_angle_and_survival_probabilities[:, 1:].T])
+
+        return cls(input_metadata, epoch, epoch_delta, energies, spin_angles, survival_probabilities)
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [

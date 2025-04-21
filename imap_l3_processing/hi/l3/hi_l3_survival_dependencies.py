@@ -9,8 +9,9 @@ from imap_data_access import ScienceFilePath
 from imap_data_access.file_validation import generate_imap_file_path
 from spacepy.pycdf import CDF
 
-from imap_l3_processing.hi.l3.models import HiMapData, HiL1cData, GlowsL3eData, HiIntensityMapData
-from imap_l3_processing.hi.l3.utils import read_hi_l2_data, read_hi_l1c_data, read_glows_l3e_data
+from imap_l3_processing.hi.l3.models import HiL1cData, GlowsL3eData, HiIntensityMapData
+from imap_l3_processing.hi.l3.utils import read_hi_l2_data, read_hi_l1c_data, read_glows_l3e_data, SpinPhase, \
+    parse_map_descriptor, MapDescriptorParts
 from imap_l3_processing.models import UpstreamDataDependency
 from imap_l3_processing.utils import download_dependency, download_dependency_from_path
 
@@ -39,6 +40,7 @@ class HiL3SurvivalDependencies:
     l2_data: HiIntensityMapData
     hi_l1c_data: list[HiL1cData]
     glows_l3e_data: list[GlowsL3eData]
+    l2_map_descriptor_parts: MapDescriptorParts
 
     @classmethod
     def fetch_dependencies(cls, dependencies: list[UpstreamDataDependency]) -> HiL3SurvivalDependencies:
@@ -54,12 +56,38 @@ class HiL3SurvivalDependencies:
 
         glows_l3e_file_names = find_glows_l3e_dependencies(l1c_file_names)
         glows_file_paths = [download_dependency_from_path(path) for path in glows_l3e_file_names]
-        return cls.from_file_paths(map_file_path, hi_l1c_paths, glows_file_paths)
+        return cls.from_file_paths(map_file_path, hi_l1c_paths, glows_file_paths, upstream_map_dependency.descriptor)
 
     @classmethod
     def from_file_paths(cls, map_file_path: Path, hi_l1c_paths: list[Path],
-                        glows_l3e_paths: list[Path]) -> HiL3SurvivalDependencies:
+                        glows_l3e_paths: list[Path], l2_descriptor: str) -> HiL3SurvivalDependencies:
         glows_l3e_data = list(map(read_glows_l3e_data, glows_l3e_paths))
         l1c_data = list(map(read_hi_l1c_data, hi_l1c_paths))
 
-        return cls(l2_data=read_hi_l2_data(map_file_path), hi_l1c_data=l1c_data, glows_l3e_data=glows_l3e_data)
+        return cls(l2_data=read_hi_l2_data(map_file_path), hi_l1c_data=l1c_data, glows_l3e_data=glows_l3e_data,
+                   l2_map_descriptor_parts=parse_map_descriptor(l2_descriptor))
+
+
+@dataclass
+class HiL3SingleSensorFullSpinDependencies:
+    ram_dependencies: HiL3SurvivalDependencies
+    antiram_dependencies: HiL3SurvivalDependencies
+
+    @classmethod
+    def fetch_dependencies(cls, dependencies: list[UpstreamDataDependency]) -> HiL3SingleSensorFullSpinDependencies:
+        ram_dependencies = []
+        antiram_dependencies = []
+
+        for dep in dependencies:
+            map_descriptor_parts = parse_map_descriptor(dep.descriptor)
+            if map_descriptor_parts is not None:
+                match map_descriptor_parts.spin_phase:
+                    case SpinPhase.RamOnly:
+                        ram_dependencies.append(dep)
+                    case SpinPhase.AntiRamOnly:
+                        antiram_dependencies.append(dep)
+
+        assert len(ram_dependencies) == 1 and len(antiram_dependencies) == 1
+
+        return cls(ram_dependencies=HiL3SurvivalDependencies.fetch_dependencies(ram_dependencies),
+                   antiram_dependencies=HiL3SurvivalDependencies.fetch_dependencies(antiram_dependencies))

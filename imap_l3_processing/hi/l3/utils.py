@@ -2,12 +2,11 @@ import enum
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Union
-
-from spacepy.pycdf import CDF
+from typing import Union, Optional
 
 from imap_l3_processing.cdf.cdf_utils import read_numeric_variable, read_variable_and_mask_fill_values
 from imap_l3_processing.hi.l3.models import HiL1cData, GlowsL3eData, HiIntensityMapData
+from spacepy.pycdf import CDF
 
 
 def read_hi_l2_data(cdf_path) -> HiIntensityMapData:
@@ -53,6 +52,7 @@ def read_glows_l3e_data(cdf_path: Union[Path, str]) -> GlowsL3eData:
 class Sensor(enum.Enum):
     Hi45 = "45"
     Hi90 = "90"
+    Combined = "Combined"
 
     @staticmethod
     def get_sensor_angle(sensor_name):
@@ -103,9 +103,9 @@ class MapDescriptorParts:
     quantity: MapQuantity
 
 
-def parse_map_descriptor(descriptor: str) -> MapDescriptorParts:
+def parse_map_descriptor(descriptor: str) -> Optional[MapDescriptorParts]:
     descriptor_regex = """
-        (?P<sensor>h45|h90)-
+        (?P<sensor>h|h45|h90)-
         (?P<cg_corrected>sf|hf)-
         ((?P<survival_corrected>sp)-)?
         ((?P<spin_phase>ram|anti)-)?
@@ -116,9 +116,10 @@ def parse_map_descriptor(descriptor: str) -> MapDescriptorParts:
         """
 
     descriptor_part_match = re.search(descriptor_regex, descriptor, flags=re.VERBOSE)
-    assert descriptor_part_match is not None, f"could not parse descriptor {descriptor}"
+    if descriptor_part_match is None:
+        return None
 
-    sensors = {"h45": Sensor.Hi45, "h90": Sensor.Hi90}
+    sensors = {"h": Sensor.Combined, "h45": Sensor.Hi45, "h90": Sensor.Hi90}
     cg_corrections = {"sf": CGCorrection.NotCGCorrected, "hf": CGCorrection.CGCorrected}
     survival_corrections = {"sp": SurvivalCorrection.SurvivalCorrected, None: SurvivalCorrection.NotSurvivalCorrected}
     spin_phases = {"ram": SpinPhase.RamOnly, "anti": SpinPhase.AntiRamOnly, None: SpinPhase.FullSpin}

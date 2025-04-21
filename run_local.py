@@ -11,8 +11,6 @@ import imap_data_access
 import numpy as np
 import xarray as xr
 from imap_data_access.processing_input import ProcessingInputCollection
-from spacepy.pycdf import CDF
-
 from imap_l3_processing.glows.descriptors import GLOWS_L2_DESCRIPTOR
 from imap_l3_processing.glows.glows_initializer import GlowsInitializer
 from imap_l3_processing.glows.glows_processor import GlowsProcessor
@@ -51,6 +49,7 @@ from imap_l3_processing.swapi.swapi_processor import SwapiProcessor
 from imap_l3_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies
 from imap_l3_processing.swe.swe_processor import SweProcessor
 from imap_l3_processing.utils import save_data, read_l1d_mag_data
+from spacepy.pycdf import CDF
 from tests.test_helpers import get_test_data_path, get_test_instrument_team_data_path, environment_variables
 
 
@@ -543,7 +542,8 @@ if __name__ == "__main__":
             map_file_path=get_test_data_path(
                 "hi/fake_l2_maps/hi90-6months.cdf"),
             hi_l1c_paths=hi_l1c_paths,
-            glows_l3e_paths=glows_l3_paths)
+            glows_l3e_paths=glows_l3_paths,
+            l2_descriptor="h90-sf-ram-hae-4deg-6mo")
         print(create_hi_l3_survival_corrected_cdf(survival_dependencies, spacing_degree=4))
 
     if "hi" in sys.argv:

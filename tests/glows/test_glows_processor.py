@@ -386,13 +386,14 @@ class TestGlowsProcessor(unittest.TestCase):
         np.testing.assert_array_equal(expected_l3b.cx_uncert, actual_l3b.cx_uncert)
         self.assertEqual(expected_l3b.lat_grid_label, actual_l3b.lat_grid_label)
 
+    @patch("imap_l3_processing.glows.glows_processor.GlowsL3EHiData.convert_dat_to_glows_l3e_hi_product")
     @patch("imap_l3_processing.glows.glows_processor.spice_wrapper")
     @patch("imap_l3_processing.glows.glows_processor.run")
     @patch("imap_l3_processing.glows.glows_processor.determine_call_args_for_l3e_executable")
     @patch("imap_l3_processing.glows.glows_processor.get_repoint_date_range")
     @patch("imap_l3_processing.glows.glows_processor.GlowsL3EDependencies")
     def test_process_l3e(self, mock_l3e_dependencies, mock_get_repoint_date_range, mock_determine_call_args, mock_run,
-                         mock_spice_wrapper):
+                         mock_spice_wrapper, mock_convert_dat_to_glows_l3e_hi_product):
         input_metadata = InputMetadata('glows', "l3d", datetime(2024, 10, 7, 10, 00, 00),
                                        datetime(2024, 10, 8, 10, 00, 00),
                                        'v001')
@@ -405,15 +406,20 @@ class TestGlowsProcessor(unittest.TestCase):
         repointing = 10
 
         mock_l3e_dependencies.fetch_dependencies.return_value = (l3e_dependencies, repointing)
+        epoch = datetime(year=2024, month=10, day=7)
+        end_date = datetime(year=2024, month=10, day=7, hour=23)
 
-        start_date = np.datetime64(datetime(year=2024, month=10, day=7).isoformat())
-        end_date = np.datetime64(datetime(year=2024, month=10, day=7, hour=23).isoformat())
+        epoch_delta = (end_date - epoch) / 2
+
+        start_date = np.datetime64(epoch.isoformat())
+
+        end_date = np.datetime64(end_date.isoformat())
         mock_get_repoint_date_range.return_value = (start_date, end_date)
 
-        call_args_1 = "call args 1"
-        call_args_2 = "call args 2"
-        call_args_3 = "call args 3"
-        call_args_4 = "call args 4"
+        call_args_1 = "20241007_000000 2024.765 vx vy vz 90.000"
+        call_args_2 = "20241007_000000 2024.765 vx vy vz 90.000"
+        call_args_3 = "20241007_000000 2024.765 vx vy vz 135.000"
+        call_args_4 = "20241007_000000 2024.765 vx vy vz 30.000"
 
         mock_determine_call_args.side_effect = [call_args_1, call_args_2, call_args_3, call_args_4]
 
@@ -441,17 +447,24 @@ class TestGlowsProcessor(unittest.TestCase):
         self.assertIsInstance(mock_determine_call_args.call_args_list[3][0][1], datetime)
 
         mock_determine_call_args.assert_has_calls([
-            call(datetime(year=2024, month=10, day=7), datetime(year=2024, month=10, day=7, hour=11, minute=30), 90),
-            call(datetime(year=2024, month=10, day=7), datetime(year=2024, month=10, day=7, hour=11, minute=30), 90),
-            call(datetime(year=2024, month=10, day=7), datetime(year=2024, month=10, day=7, hour=11, minute=30), 135),
-            call(datetime(year=2024, month=10, day=7), datetime(year=2024, month=10, day=7, hour=11, minute=30), 30)
+            call(epoch, datetime(year=2024, month=10, day=7, hour=11, minute=30), 90),
+            call(epoch, datetime(year=2024, month=10, day=7, hour=11, minute=30), 90),
+            call(epoch, datetime(year=2024, month=10, day=7, hour=11, minute=30), 135),
+            call(epoch, datetime(year=2024, month=10, day=7, hour=11, minute=30), 30)
         ])
 
         mock_run.assert_has_calls([
-            call(["./survProbLo", "call", "args", "1"]),
-            call(["./survProbHi", "call", "args", "2"]),
-            call(["./survProbHi", "call", "args", "3"]),
-            call(["./survProbUltra", "call", "args", "4"])
+            call(["./survProbLo", "20241007_000000", "2024.765", "vx", "vy", "vz", "90.000"]),
+            call(["./survProbHi", "20241007_000000", "2024.765", "vx", "vy", "vz", "90.000"]),
+            call(["./survProbHi", "20241007_000000", "2024.765", "vx", "vy", "vz", "135.000"]),
+            call(["./survProbUltra", "20241007_000000", "2024.765", "vx", "vy", "vz", "30.000"])
+        ])
+
+        mock_convert_dat_to_glows_l3e_hi_product.assert_has_calls([
+            call(input_metadata, Path("probSur.Imap.Hi_20241007_000000_2024.765_135.0.dat"), np.array(epoch),
+                 np.array(epoch_delta)),
+            call(input_metadata, Path("probSur.Imap.Hi_20241007_000000_2024.765_90.00.dat"), np.array(epoch),
+                 np.array(epoch_delta)),
         ])
 
 
