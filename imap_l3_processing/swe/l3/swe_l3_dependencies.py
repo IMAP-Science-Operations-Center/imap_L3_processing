@@ -3,11 +3,14 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from imap_l3_processing.models import MagL1dData, UpstreamDataDependency
+from imap_data_access import download
+from imap_data_access.processing_input import ProcessingInputCollection
+
+from imap_l3_processing.models import MagL1dData
 from imap_l3_processing.swe.l3.models import SweL2Data, SweConfiguration, SwapiL3aProtonData, SweL1bData
 from imap_l3_processing.swe.l3.utils import read_l2_swe_data, read_l3a_swapi_proton_data, read_swe_config, \
     read_l1b_swe_data
-from imap_l3_processing.utils import read_l1d_mag_data, download_dependency
+from imap_l3_processing.utils import read_l1d_mag_data
 
 MAG_L1D_DESCRIPTOR = "norm-mago"
 SWAPI_L3A_PROTON_DESCRIPTOR = "proton-sw"
@@ -23,37 +26,38 @@ class SweL3Dependencies:
     configuration: SweConfiguration
 
     @classmethod
-    def fetch_dependencies(cls, dependencies: list[UpstreamDataDependency]) -> SweL3Dependencies:
-        swe_config_dependency = UpstreamDataDependency("swe", "l3", None, None, "latest", SWE_CONFIG_DESCRIPTOR)
+    def fetch_dependencies(cls, dependencies: ProcessingInputCollection) -> SweL3Dependencies:
+        science_files = dependencies.processing_input
+        swe_config_dependency = dependencies.get_file_paths(source='swe', descriptor=SWE_CONFIG_DESCRIPTOR)[0]
 
         try:
             swe_l2_dependency = next(
-                d for d in dependencies if d.instrument == "swe" and d.data_level == "l2")
+                d.imap_file_paths[0] for d in science_files if d.source == "swe" and d.data_type == "l2")
         except StopIteration:
-            raise ValueError(f"Missing SWE dependency.")
+            raise ValueError(f"Missing SWE l2 dependency.")
         try:
             swe_l1b_dependency = next(
-                d for d in dependencies if d.instrument == "swe" and d.data_level == "l1b")
+                d.imap_file_paths[0] for d in science_files if d.source == "swe" and d.data_type == "l1b")
         except StopIteration:
-            raise ValueError(f"Missing SWE dependency.")
+            raise ValueError(f"Missing SWE l1b dependency.")
         try:
             mag_dependency = next(
-                d for d in dependencies if d.instrument == "mag"
+                d.imap_file_paths[0] for d in science_files if d.source == "mag"
                 and d.descriptor == MAG_L1D_DESCRIPTOR)
         except StopIteration:
             raise ValueError(f"Missing MAG {MAG_L1D_DESCRIPTOR} dependency.")
         try:
             swapi_dependency = next(
-                d for d in dependencies if d.instrument == "swapi"
+                d.imap_file_paths[0] for d in science_files if d.source == "swapi"
                 and d.descriptor == SWAPI_L3A_PROTON_DESCRIPTOR)
         except StopIteration:
             raise ValueError(f"Missing SWAPI {SWAPI_L3A_PROTON_DESCRIPTOR} dependency.")
 
-        swe_l2_file = download_dependency(swe_l2_dependency)
-        swe_l1b_file = download_dependency(swe_l1b_dependency)
-        mag_file = download_dependency(mag_dependency)
-        swapi_file = download_dependency(swapi_dependency)
-        swe_config = download_dependency(swe_config_dependency)
+        swe_l2_file = download(swe_l2_dependency.construct_path())
+        swe_l1b_file = download(swe_l1b_dependency.construct_path())
+        mag_file = download(mag_dependency.construct_path())
+        swapi_file = download(swapi_dependency.construct_path())
+        swe_config = download(swe_config_dependency)
 
         return cls.from_file_paths(swe_l2_file, swe_l1b_file, mag_file, swapi_file, swe_config)
 

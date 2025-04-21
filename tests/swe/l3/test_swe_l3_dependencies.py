@@ -1,10 +1,10 @@
 import unittest
-from datetime import datetime
 from pathlib import Path
 from unittest.mock import patch, Mock, call
 
-from imap_l3_processing.models import UpstreamDataDependency
-from imap_l3_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies, SWE_CONFIG_DESCRIPTOR
+from imap_data_access.processing_input import ScienceInput, AncillaryInput, ProcessingInputCollection
+
+from imap_l3_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies
 
 
 class TestSweL3Dependencies(unittest.TestCase):
@@ -36,21 +36,18 @@ class TestSweL3Dependencies(unittest.TestCase):
         self.assertEqual(mock_read_swapi_data.return_value, result.swapi_l3a_proton_data)
         self.assertEqual(mock_read_swe_config.return_value, result.configuration)
 
-    @patch("imap_l3_processing.swe.l3.swe_l3_dependencies.download_dependency")
+    @patch("imap_l3_processing.swe.l3.swe_l3_dependencies.download")
     @patch("imap_l3_processing.swe.l3.swe_l3_dependencies.SweL3Dependencies.from_file_paths")
     def test_fetch_dependencies(self, mock_from_file_paths, mock_download_dependency):
-        swe_l2_dependency = UpstreamDataDependency("swe", "l2", datetime(2020, 1, 1), datetime(2020, 1, 1),
-                                                   version="v0.00",
-                                                   descriptor="sci")
-        swe_l1b_dependency = UpstreamDataDependency("swe", "l1b", datetime(2020, 1, 1), datetime(2020, 1, 1),
-                                                    version="v0.00",
-                                                    descriptor="sci")
-        mag_l1d_dependency = UpstreamDataDependency("mag", "l1d", datetime(2020, 1, 1), datetime(2020, 1, 1),
-                                                    version="v0.00",
-                                                    descriptor="norm-mago")
-        swapi_l3a_dependency = UpstreamDataDependency("swapi", "l3", datetime(2020, 1, 1), datetime(2020, 1, 1),
-                                                      version="v0.00",
-                                                      descriptor="proton-sw")
+        swe_l2_dependency = ScienceInput("imap_swe_l2_sci_20200101_v000.cdf")
+        swe_l1b_dependency = ScienceInput("imap_swe_l1b_sci_20200101_v000.cdf")
+        mag_l1d_dependency = ScienceInput("imap_mag_l1d_norm-mago_20200101_v000.cdf")
+        swapi_l3a_dependency = ScienceInput("imap_swapi_l3_proton-sw_20200101_v000.cdf")
+        config_dependency = AncillaryInput("imap_swe_config-json-not-cdf_20200101_v000.cdf")
+
+        processing_input_collection = ProcessingInputCollection(swe_l2_dependency, swe_l1b_dependency,
+                                                                mag_l1d_dependency, swapi_l3a_dependency,
+                                                                config_dependency)
 
         expected_swe_path = Mock()
         expected_swe_l1b_path = Mock()
@@ -61,17 +58,14 @@ class TestSweL3Dependencies(unittest.TestCase):
                                                 expected_swapi_path,
                                                 expected_config_path]
 
-        result = SweL3Dependencies.fetch_dependencies(
-            [swe_l2_dependency, swe_l1b_dependency, mag_l1d_dependency, swapi_l3a_dependency])
+        result = SweL3Dependencies.fetch_dependencies(processing_input_collection)
 
-        config_dependency = UpstreamDataDependency("swe", "l3", None, None, "latest",
-                                                   SWE_CONFIG_DESCRIPTOR)
-
-        mock_download_dependency.assert_has_calls([call(swe_l2_dependency),
-                                                   call(swe_l1b_dependency),
-                                                   call(mag_l1d_dependency),
-                                                   call(swapi_l3a_dependency),
-                                                   call(config_dependency)], any_order=False)
+        mock_download_dependency.assert_has_calls([call(swe_l2_dependency.imap_file_paths[0].construct_path()),
+                                                   call(swe_l1b_dependency.imap_file_paths[0].construct_path()),
+                                                   call(mag_l1d_dependency.imap_file_paths[0].construct_path()),
+                                                   call(swapi_l3a_dependency.imap_file_paths[0].construct_path()),
+                                                   call(config_dependency.imap_file_paths[0].construct_path())],
+                                                  any_order=False)
 
         mock_from_file_paths.assert_called_with(expected_swe_path, expected_swe_l1b_path, expected_mag_path,
                                                 expected_swapi_path,
