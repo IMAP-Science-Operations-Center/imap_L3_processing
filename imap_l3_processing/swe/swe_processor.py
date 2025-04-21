@@ -1,11 +1,14 @@
 import datetime
+from dataclasses import replace
 from datetime import timedelta
 
 import numpy as np
 from imap_data_access import upload
+from imap_data_access.processing_input import ProcessingInputCollection
 
 from imap_l3_processing import spice_wrapper
 from imap_l3_processing.data_utils import find_closest_neighbor
+from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
 from imap_l3_processing.swapi.l3a.science.calculate_pickup_ion import calculate_solar_wind_velocity_vector
 from imap_l3_processing.swe.l3.models import SweL3Data, SweL1bData, SweL2Data, SweL3MomentData, SweConfiguration
@@ -25,9 +28,13 @@ from imap_l3_processing.utils import save_data
 
 
 class SweProcessor(Processor):
+    def __init__(self, dependencies: ProcessingInputCollection, input_metadata: InputMetadata):
+        super().__init__(dependencies, input_metadata)
+
     def process(self):
         dependencies = SweL3Dependencies.fetch_dependencies(self.dependencies)
         output_data = self.calculate_products(dependencies)
+        output_data.parent_file_names = self.get_parent_file_names()
         output_cdf = save_data(output_data)
         upload(output_cdf)
 
@@ -80,7 +87,7 @@ class SweProcessor(Processor):
         ) = self.calculate_pitch_angle_products(dependencies, corrected_energy_bins)
 
         return SweL3Data(
-            input_metadata=self.input_metadata.to_upstream_data_dependency("sci"),
+            input_metadata=replace(self.input_metadata, descriptor="sci"),
             epoch=swe_epoch,
             epoch_delta=epoch_delta,
             energy=config["energy_bins"],

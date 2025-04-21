@@ -127,7 +127,9 @@ class TestImapL3DataProcessor(TestCase):
 
     @patch('imap_l3_data_processor.SweProcessor')
     @patch('imap_l3_data_processor.argparse')
-    def test_runs_swe_processor_when_instrument_argument_is_swe(self, mock_argparse, mock_processor_class):
+    @patch('imap_l3_data_processor.ProcessingInputCollection')
+    def test_runs_swe_processor_when_instrument_argument_is_swe(self, mock_processing_input_collection, mock_argparse,
+                                                                mock_processor_class):
         cases = [("20170630", datetime(2017, 6, 30)), (None, datetime(2016, 6, 30))]
 
         instrument_argument = "swe"
@@ -137,6 +139,10 @@ class TestImapL3DataProcessor(TestCase):
         descriptor_argument = "pitch-angle"
         science_input = ScienceInput("imap_swe_l1_science_20250101_v112.cdf")
         imap_data_access_dependency = ProcessingInputCollection(science_input)
+
+        mock_processing_input_collection.return_value = imap_data_access_dependency
+        mock_processing_input_collection.deserialize = Mock()
+        mock_processing_input_collection.get_science_inputs = Mock(return_value=[])
 
         mock_argument_parser = mock_argparse.ArgumentParser.return_value
 
@@ -168,23 +174,18 @@ class TestImapL3DataProcessor(TestCase):
                          help="Upload completed output files to the IMAP SDC.")
                 ])
 
-                expected_input_dependencies = [UpstreamDataDependency("swe",
-                                                                      "l1",
-                                                                      datetime(2025, 1, 1),
-                                                                      datetime(2025, 1, 1),
-                                                                      "v112",
-                                                                      "science")]
-
                 expected_input_metadata = InputMetadata("swe", "l3", datetime(year=2016, month=6, day=30),
                                                         expected_end_date, "v092", "pitch-angle")
 
-                mock_processor_class.assert_called_with(expected_input_dependencies, expected_input_metadata)
+                mock_processor_class.assert_called_with(imap_data_access_dependency, expected_input_metadata)
 
                 mock_processor.process.assert_called()
 
+    @patch('imap_l3_data_processor.ProcessingInputCollection')
     @patch('imap_l3_data_processor.SweProcessor')
     @patch('imap_l3_data_processor.argparse')
-    def test_only_uses_science_files_as_input(self, mock_argparse, mock_processor_class):
+    def test_only_uses_science_files_as_input(self, mock_argparse, mock_processor_class,
+                                              mock_processing_input_collection):
         cases = [("20170630", datetime(2017, 6, 30)), (None, datetime(2016, 6, 30))]
 
         instrument_argument = "swe"
@@ -196,6 +197,10 @@ class TestImapL3DataProcessor(TestCase):
         science_input_2 = ScienceInput("imap_mag_l1_science_20250101_v112.cdf")
         ancillary_input = AncillaryInput("imap_swe_ancillary_20250101_v112.cdf")
         imap_data_access_dependency = ProcessingInputCollection(science_input_1, science_input_2, ancillary_input)
+
+        mock_processing_input_collection.return_value = imap_data_access_dependency
+        mock_processing_input_collection.deserialize = Mock()
+        mock_processing_input_collection.get_science_inputs = Mock(return_value=[])
 
         mock_argument_parser = mock_argparse.ArgumentParser.return_value
 
@@ -251,7 +256,7 @@ class TestImapL3DataProcessor(TestCase):
                 expected_input_metadata = InputMetadata("swe", "l3", datetime(year=2016, month=6, day=30),
                                                         expected_end_date, "v092", "pitch-angle")
 
-                mock_processor_class.assert_called_with(expected_input_dependencies, expected_input_metadata)
+                mock_processor_class.assert_called_with(imap_data_access_dependency, expected_input_metadata)
 
                 mock_processor.process.assert_called()
 
