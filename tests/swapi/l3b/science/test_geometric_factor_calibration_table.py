@@ -6,7 +6,7 @@ from tests.test_helpers import get_test_data_path
 
 class TestGeometricFactorTable(unittest.TestCase):
     def test_geometric_factor_table_from_file(self):
-        file_path = get_test_data_path("swapi/imap_swapi_l2_energy-gf-lut-not-cdf_20240923_v002.cdf")
+        file_path = get_test_data_path("swapi/imap_swapi_energy-gf-lut_20240923_v000.dat")
 
         calibration_table = GeometricFactorCalibrationTable.from_file(file_path)
 

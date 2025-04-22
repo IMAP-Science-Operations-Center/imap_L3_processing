@@ -65,7 +65,7 @@ def run_example_dat_files():
     alpha_speed = calculate_alpha_solar_wind_speed(coincident_count_rate, energy)
 
     temperature_density_lut = AlphaTemperatureDensityCalibrationTable.from_file(
-        r"swapi/test_data/imap_swapi_l2_alpha-density-temperature-lut-text-not-cdf_20240920_v004.cdf")
+        r"swapi/test_data/imap_swapi_alpha-density-temperature-lut_20240920_v000.dat")
     alpha_temperature, alpha_density = calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps(
         temperature_density_lut, alpha_speed,
         coincident_count_rate, energy)
@@ -125,7 +125,7 @@ def main(file_path):
     alpha_speed = calculate_alpha_solar_wind_speed(coincident_count_rate, energy)
 
     temperature_density_lut = AlphaTemperatureDensityCalibrationTable.from_file(
-        r"../../tests/test_data/swapi/imap_swapi_l2_alpha-density-temperature-lut-text-not-cdf_20240920_v004.cdf")
+        r"../../tests/test_data/swapi/imap_swapi_alpha-density-temperature-lut_20240920_v000.dat")
     alpha_temperature, alpha_density = plot_and_calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps(
         temperature_density_lut, alpha_speed,
         coincident_count_rate, energy)

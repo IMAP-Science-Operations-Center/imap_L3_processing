@@ -22,12 +22,12 @@ class TestCalculateAlphaSolarWindTemperatureAndDensity(TestCase):
             self.count_rate_delta = cdf["swp_coin_unc"][...]
 
         lookup_table_file_path = Path(
-            imap_l3_processing.__file__).parent.parent / 'tests' / 'test_data' / 'swapi' / "imap_swapi_l2_alpha-density-temperature-lut-text-not-cdf_20240920_v004.cdf"
+            imap_l3_processing.__file__).parent.parent / 'tests' / 'test_data' / 'swapi' / "imap_swapi_alpha-density-temperature-lut_20240920_v000.dat"
         self.calibration_table = AlphaTemperatureDensityCalibrationTable.from_file(lookup_table_file_path)
 
     def test_temperature_and_density_calibration_table_from_file(self):
         file_path = Path(
-            imap_l3_processing.__file__).parent.parent / 'tests' / 'test_data' / 'swapi' / "imap_swapi_l2_alpha-density-temperature-lut-text-not-cdf_20240920_v004.cdf"
+            imap_l3_processing.__file__).parent.parent / 'tests' / 'test_data' / 'swapi' / "imap_swapi_alpha-density-temperature-lut_20240920_v000.dat"
 
         calibration_table = AlphaTemperatureDensityCalibrationTable.from_file(file_path)
 
