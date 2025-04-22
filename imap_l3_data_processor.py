@@ -79,7 +79,7 @@ def imap_l3_processor():
         processor = HitProcessor(dependencies, input_dependency)
         processor.process()
     elif args.instrument == 'hi':
-        processor = HiProcessor(dependencies, input_dependency)
+        processor = HiProcessor(processing_input_collection, input_dependency)
         processor.process()
     elif args.instrument == 'ultra':
         processor = UltraProcessor(processing_input_collection, input_dependency)
