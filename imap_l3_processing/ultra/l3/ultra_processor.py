@@ -4,11 +4,11 @@ from imap_data_access import upload
 from imap_processing.spice import geometry
 
 from imap_l3_processing.processor import Processor
-from imap_l3_processing.ultra.l3.models import UltraL3SurvivalCorrectedDataProduct, UltraGlowsL3eData, UltraL1CPSet
-from imap_l3_processing.ultra.l3.science.ultra_survival_probability import Sensor, UltraSurvivalProbability, \
+from imap_l3_processing.ultra.l3.models import UltraL3SurvivalCorrectedDataProduct
+from imap_l3_processing.ultra.l3.science.ultra_survival_probability import UltraSurvivalProbability, \
     UltraSurvivalProbabilitySkyMap
 from imap_l3_processing.ultra.l3.ultra_l3_dependencies import UltraL3Dependencies
-from imap_l3_processing.utils import save_data
+from imap_l3_processing.utils import save_data, combine_glows_l3e_with_l1c_pointing
 
 
 class UltraProcessor(Processor):
@@ -23,7 +23,7 @@ class UltraProcessor(Processor):
 
     def _process_survival_probability(self, deps: UltraL3Dependencies) -> UltraL3SurvivalCorrectedDataProduct:
         # spice furnish?
-        combined_psets = combine_glows_l3e_ultra_l1c(deps.ultra_l1c_pset, deps.glows_l3e_sp)
+        combined_psets = combine_glows_l3e_with_l1c_pointing(deps.glows_l3e_sp, deps.ultra_l1c_pset, )
         survival_probability_psets = [UltraSurvivalProbability(_l1c, _l3e, deps.ultra_l2_map.energy) for _l1c, _l3e in
                                       combined_psets]
 
@@ -60,18 +60,12 @@ class UltraProcessor(Processor):
         )
 
 
-def combine_glows_l3e_ultra_l1c(ultra_l1c: list[UltraL1CPSet], glows_l3e: list[UltraGlowsL3eData]):
-    raise NotImplementedError
-
-
 @dataclass
 class UltraMapDescriptorParts:
-    sensor: Sensor
     grid_size: int
 
 
 def parse_map_descriptor(descriptor: str) -> UltraMapDescriptorParts:
-    sensor = Sensor(descriptor[:2])
     grid_size = int(descriptor.split("-")[4][0])
 
-    return UltraMapDescriptorParts(sensor, grid_size)
+    return UltraMapDescriptorParts(grid_size)

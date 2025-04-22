@@ -1,5 +1,3 @@
-import enum
-
 import numpy as np
 import spiceypy
 from astropy.units import Quantity
@@ -11,15 +9,6 @@ from xarray import Dataset
 
 from imap_l3_processing.constants import ONE_SECOND_IN_NANOSECONDS
 from imap_l3_processing.ultra.l3.models import UltraL1CPSet, UltraGlowsL3eData
-
-
-class Sensor(enum.Enum):
-    Ultra45 = "45"
-    Ultra90 = "90"
-
-    @staticmethod
-    def get_sensor_angle(sensor_name):
-        raise NotImplementedError
 
 
 class UltraSurvivalProbability(UltraPointingSet):
