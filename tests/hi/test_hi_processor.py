@@ -1,9 +1,13 @@
 import unittest
 from datetime import datetime, timedelta
-from unittest.mock import patch, Mock, call, sentinel, MagicMock
+from unittest.mock import patch, call, sentinel, MagicMock
 
 import numpy as np
 import xarray as xr
+from imap_data_access.processing_input import ProcessingInputCollection
+from imap_processing.ena_maps.utils.coordinates import CoordNames
+from imap_processing.spice.geometry import SpiceFrame
+
 from imap_l3_processing.hi.hi_processor import HiProcessor, combine_glows_l3e_hi_l1c
 from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3SpectralFitDependencies
 from imap_l3_processing.hi.l3.hi_l3_survival_dependencies import HiL3SurvivalDependencies, \
@@ -12,8 +16,6 @@ from imap_l3_processing.hi.l3.models import HiL3SpectralIndexDataProduct, GlowsL
     HiL3SurvivalCorrectedDataProduct, HiIntensityMapData
 from imap_l3_processing.hi.l3.utils import PixelSize, MapDescriptorParts
 from imap_l3_processing.models import InputMetadata
-from imap_processing.ena_maps.utils.coordinates import CoordNames
-from imap_processing.spice.geometry import SpiceFrame
 from tests.test_helpers import get_test_data_path
 
 
@@ -35,7 +37,9 @@ class TestHiProcessor(unittest.TestCase):
                                         intensity_stat_unc=intensity_stat_unc,
                                         energy_delta=sentinel.energy_delta)
         dependencies = HiL3SpectralFitDependencies(hi_l3_data=hi_l3_data)
-        upstream_dependencies = [Mock()]
+
+        upstream_dependencies = ProcessingInputCollection()
+
         mock_fetch_dependencies.return_value = dependencies
 
         input_metadata = InputMetadata(instrument="hi",

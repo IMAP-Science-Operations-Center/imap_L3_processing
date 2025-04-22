@@ -19,8 +19,8 @@ from imap_l3_processing.glows.l3a.utils import read_l2_glows_data, create_glows_
 from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDependencies
 from imap_l3_processing.hi.hi_processor import HiProcessor
 from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3SpectralFitDependencies
-from imap_l3_processing.hi.l3.hi_l3_survival_dependencies import HiL3SurvivalDependencies
-from imap_l3_processing.hi.l3.utils import parse_map_descriptor
+from imap_l3_processing.hi.l3.hi_l3_survival_dependencies import HiL3SurvivalDependencies, \
+    HiL3SingleSensorFullSpinDependencies
 from imap_l3_processing.hit.l3.hit_l3_sectored_dependencies import HITL3SectoredDependencies
 from imap_l3_processing.hit.l3.hit_processor import HitProcessor
 from imap_l3_processing.hit.l3.models import HitL1Data
@@ -167,7 +167,21 @@ def create_swe_product_with_fake_spice(dependencies: SweL3Dependencies, mock_spi
     return cdf_path
 
 
-def create_hi_cdf(dependencies: HiL3SpectralFitDependencies) -> str:
+def create_survival_corrected_full_spin_cdf(dependencies: HiL3SingleSensorFullSpinDependencies) -> str:
+    input_metadata = InputMetadata(instrument="hi",
+                                   data_level="l3",
+                                   start_date=datetime.now(),
+                                   end_date=datetime.now() + timedelta(days=1),
+                                   version="v000",
+                                   descriptor="h90-sf-sp-hae-4deg-6mo",
+                                   )
+    processor = HiProcessor(None, input_metadata)
+    output_data = processor._process_full_spin_single_sensor(dependencies)
+    cdf_path = save_data(output_data, delete_if_present=True)
+    return cdf_path
+
+
+def create_spectral_index_cdf(dependencies: HiL3SpectralFitDependencies) -> str:
     input_metadata = InputMetadata(instrument="hi",
                                    data_level="l3",
                                    start_date=datetime.now(),
@@ -443,12 +457,11 @@ def create_hi_l3_survival_corrected_cdf(survival_dependencies: HiL3SurvivalDepen
                                    start_date=datetime(2025, 4, 9),
                                    end_date=datetime(2025, 4, 10),
                                    version="v001",
-                                   descriptor=f"h90-sf-sp-hae-{spacing_degree}deg-6mo",
+                                   descriptor="h90-sf-sp-hae-4deg-6mo",
                                    )
 
     processor = HiProcessor(None, input_metadata)
     survival_corrected_product = processor._process_survival_probabilities(
-        parse_map_descriptor(input_metadata.descriptor),
         survival_dependencies)
 
     return save_data(survival_corrected_product, delete_if_present=True)
@@ -531,23 +544,55 @@ if __name__ == "__main__":
         )
         print(create_swe_product_with_fake_spice(dependencies))
 
-    if "survival-probability" in sys.argv:
-        hi_l1c_folder = get_test_data_path("hi/fake_l1c/90")
-        glows_l3e_folder = get_test_data_path("hi/fake_l3e_survival_probabilities/90")
-
-        hi_l1c_paths = list(hi_l1c_folder.iterdir())
-        glows_l3_paths = list(glows_l3e_folder.iterdir())
-
-        survival_dependencies = HiL3SurvivalDependencies.from_file_paths(
-            map_file_path=get_test_data_path(
-                "hi/fake_l2_maps/hi90-6months.cdf"),
-            hi_l1c_paths=hi_l1c_paths,
-            glows_l3e_paths=glows_l3_paths,
-            l2_descriptor="h90-sf-ram-hae-4deg-6mo")
-        print(create_hi_l3_survival_corrected_cdf(survival_dependencies, spacing_degree=4))
-
     if "hi" in sys.argv:
-        dependencies = HiL3SpectralFitDependencies.from_file_paths(
-            get_test_data_path("hi/fake_l2_maps/hi45-zirnstein-mondel-6months.cdf")
-        )
-        print(create_hi_cdf(dependencies))
+        hi_targets = ["survival-probability", "spectral-index", "full-spin"]
+        do_all = not np.any([t in sys.argv for t in hi_targets])
+
+        if do_all or "survival-probability" in sys.argv:
+            hi_l1c_folder = get_test_data_path("hi/fake_l1c/90")
+            glows_l3e_folder = get_test_data_path("hi/fake_l3e_survival_probabilities/90")
+
+            hi_l1c_paths = list(hi_l1c_folder.iterdir())
+            glows_l3_paths = list(glows_l3e_folder.iterdir())
+
+            survival_dependencies = HiL3SurvivalDependencies.from_file_paths(
+                map_file_path=get_test_data_path(
+                    "hi/fake_l2_maps/hi90-6months.cdf"),
+                hi_l1c_paths=hi_l1c_paths,
+                glows_l3e_paths=glows_l3_paths,
+                l2_descriptor="h90-sf-anti-hae-4deg-6mo")
+            print(create_hi_l3_survival_corrected_cdf(survival_dependencies, spacing_degree=4))
+
+        if do_all or "spectral-index" in sys.argv:
+            dependencies = HiL3SpectralFitDependencies.from_file_paths(
+                get_test_data_path("hi/fake_l2_maps/hi45-zirnstein-mondel-6months.cdf")
+            )
+            print(create_spectral_index_cdf(dependencies))
+
+        if do_all or "full-spin" in sys.argv:
+            hi_l1c_folder = get_test_data_path("hi/fake_l1c/90")
+            glows_l3e_folder = get_test_data_path("hi/fake_l3e_survival_probabilities/90")
+
+            hi_l1c_paths = list(hi_l1c_folder.iterdir())
+            glows_l3_paths = list(glows_l3e_folder.iterdir())
+
+            ram_survival_dependencies = HiL3SurvivalDependencies.from_file_paths(
+                map_file_path=get_test_data_path(
+                    "hi/fake_l2_maps/hi90-ram-3month.cdf"),
+                hi_l1c_paths=hi_l1c_paths,
+                glows_l3e_paths=glows_l3_paths,
+                l2_descriptor="h90-sf-ram-hae-4deg-6mo")
+
+            antiram_survival_dependencies = HiL3SurvivalDependencies.from_file_paths(
+                map_file_path=get_test_data_path(
+                    "hi/fake_l2_maps/hi90-anti-3month.cdf"),
+                hi_l1c_paths=hi_l1c_paths,
+                glows_l3e_paths=glows_l3_paths,
+                l2_descriptor="h90-sf-anti-hae-4deg-6mo")
+
+            full_spin_dependencies = HiL3SingleSensorFullSpinDependencies(
+                ram_dependencies=ram_survival_dependencies,
+                antiram_dependencies=antiram_survival_dependencies
+            )
+
+            print(create_survival_corrected_full_spin_cdf(full_spin_dependencies))

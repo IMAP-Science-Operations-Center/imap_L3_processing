@@ -127,7 +127,9 @@ class TestImapL3DataProcessor(TestCase):
 
     @patch('imap_l3_data_processor.SweProcessor')
     @patch('imap_l3_data_processor.argparse')
-    def test_runs_swe_processor_when_instrument_argument_is_swe(self, mock_argparse, mock_processor_class):
+    @patch('imap_l3_data_processor.ProcessingInputCollection')
+    def test_runs_swe_processor_when_instrument_argument_is_swe(self, mock_processing_input_collection, mock_argparse,
+                                                                mock_processor_class):
         cases = [("20170630", datetime(2017, 6, 30)), (None, datetime(2016, 6, 30))]
 
         instrument_argument = "swe"
@@ -137,6 +139,10 @@ class TestImapL3DataProcessor(TestCase):
         descriptor_argument = "pitch-angle"
         science_input = ScienceInput("imap_swe_l1_science_20250101_v112.cdf")
         imap_data_access_dependency = ProcessingInputCollection(science_input)
+
+        mock_processing_input_collection.return_value = imap_data_access_dependency
+        mock_processing_input_collection.deserialize = Mock()
+        mock_processing_input_collection.get_science_inputs = Mock(return_value=[])
 
         mock_argument_parser = mock_argparse.ArgumentParser.return_value
 
@@ -168,23 +174,18 @@ class TestImapL3DataProcessor(TestCase):
                          help="Upload completed output files to the IMAP SDC.")
                 ])
 
-                expected_input_dependencies = [UpstreamDataDependency("swe",
-                                                                      "l1",
-                                                                      datetime(2025, 1, 1),
-                                                                      datetime(2025, 1, 1),
-                                                                      "v112",
-                                                                      "science")]
-
                 expected_input_metadata = InputMetadata("swe", "l3", datetime(year=2016, month=6, day=30),
                                                         expected_end_date, "v092", "pitch-angle")
 
-                mock_processor_class.assert_called_with(expected_input_dependencies, expected_input_metadata)
+                mock_processor_class.assert_called_with(imap_data_access_dependency, expected_input_metadata)
 
                 mock_processor.process.assert_called()
 
+    @patch('imap_l3_data_processor.ProcessingInputCollection')
     @patch('imap_l3_data_processor.SweProcessor')
     @patch('imap_l3_data_processor.argparse')
-    def test_only_uses_science_files_as_input(self, mock_argparse, mock_processor_class):
+    def test_only_uses_science_files_as_input(self, mock_argparse, mock_processor_class,
+                                              mock_processing_input_collection):
         cases = [("20170630", datetime(2017, 6, 30)), (None, datetime(2016, 6, 30))]
 
         instrument_argument = "swe"
@@ -196,6 +197,10 @@ class TestImapL3DataProcessor(TestCase):
         science_input_2 = ScienceInput("imap_mag_l1_science_20250101_v112.cdf")
         ancillary_input = AncillaryInput("imap_swe_ancillary_20250101_v112.cdf")
         imap_data_access_dependency = ProcessingInputCollection(science_input_1, science_input_2, ancillary_input)
+
+        mock_processing_input_collection.return_value = imap_data_access_dependency
+        mock_processing_input_collection.deserialize = Mock()
+        mock_processing_input_collection.get_science_inputs = Mock(return_value=[])
 
         mock_argument_parser = mock_argparse.ArgumentParser.return_value
 
@@ -251,7 +256,7 @@ class TestImapL3DataProcessor(TestCase):
                 expected_input_metadata = InputMetadata("swe", "l3", datetime(year=2016, month=6, day=30),
                                                         expected_end_date, "v092", "pitch-angle")
 
-                mock_processor_class.assert_called_with(expected_input_dependencies, expected_input_metadata)
+                mock_processor_class.assert_called_with(imap_data_access_dependency, expected_input_metadata)
 
                 mock_processor.process.assert_called()
 
@@ -312,13 +317,18 @@ class TestImapL3DataProcessor(TestCase):
 
     @patch('imap_l3_data_processor.HiProcessor')
     @patch('imap_l3_data_processor.argparse')
-    def test_runs_hi_processor_when_instrument_argument_is_hi(self, mock_argparse, mock_processor_class):
+    @patch('imap_l3_data_processor.ProcessingInputCollection')
+    def test_runs_hi_processor_when_instrument_argument_is_hi(self, mock_processing_input_collection,
+                                                              mock_argparse, mock_processor_class):
         instrument_argument = "hi"
         start_date_argument = "20160630"
         version_argument = "v001"
         descriptor_argument = "A descriptor"
         science_input = ScienceInput("imap_hi_l2_science_20250101_v001.cdf")
         imap_data_access_dependency = ProcessingInputCollection(science_input)
+        mock_processing_input_collection.return_value = imap_data_access_dependency
+        mock_processing_input_collection.deserialize = Mock()
+        mock_processing_input_collection.get_science_inputs = Mock(return_value=[])
 
         mock_argument_parser = mock_argparse.ArgumentParser.return_value
         mock_argument_parser.parse_args.return_value.instrument = instrument_argument
@@ -332,17 +342,10 @@ class TestImapL3DataProcessor(TestCase):
 
         imap_l3_processor()
 
-        expected_input_dependencies = [UpstreamDataDependency("hi",
-                                                              "l2",
-                                                              datetime(2025, 1, 1),
-                                                              datetime(2025, 1, 1),
-                                                              "v001",
-                                                              "science")]
-
         expected_input_metadata = InputMetadata("hi", "l3", datetime(year=2016, month=6, day=30),
                                                 datetime(year=2016, month=6, day=30), "v001", "A descriptor")
 
-        mock_processor_class.assert_called_with(expected_input_dependencies,
+        mock_processor_class.assert_called_with(imap_data_access_dependency,
                                                 expected_input_metadata)
         mock_processor_class.return_value.process.assert_called()
 
@@ -390,6 +393,7 @@ class TestImapL3DataProcessor(TestCase):
         version_argument = "v001"
         descriptor_argument = "A descriptor"
         science_input = ScienceInput("imap_codice_l2_science_20250101_v001.cdf")
+
         imap_data_access_dependency = ProcessingInputCollection(science_input)
         mock_processing_input_collection.return_value = imap_data_access_dependency
         mock_processing_input_collection.deserialize = Mock()
@@ -413,6 +417,40 @@ class TestImapL3DataProcessor(TestCase):
         mock_processor_class.assert_called_with(imap_data_access_dependency,
                                                 expected_input_metadata)
         mock_processor_class.return_value.process.assert_called()
+
+    @patch('imap_l3_data_processor.UltraProcessor')
+    @patch('imap_l3_data_processor.argparse')
+    @patch('imap_l3_data_processor.ProcessingInputCollection')
+    def test_runs_ultra_processor_when_argument_is_ultra(self, mock_processing_input_collection, mock_argparse,
+                                                         mock_ultra_processor):
+        instrument_arg = "ultra"
+        start_date_arg = "20250418"
+        version_arg = "v001"
+        descriptor_arg = "desc"
+        science_input = ScienceInput("imap_ultra_l3_science_20250418_v001.cdf")
+
+        processing_input_collection = ProcessingInputCollection(science_input)
+        mock_processing_input_collection.return_value = processing_input_collection
+        mock_processing_input_collection.deserialize = Mock()
+        mock_processing_input_collection.get_science_inputs = Mock(return_value=[])
+
+        mock_argument_parser = mock_argparse.ArgumentParser.return_value
+        mock_argument_parser.parse_args.return_value.instrument = instrument_arg
+        mock_argument_parser.parse_args.return_value.dependency = processing_input_collection.serialize()
+        mock_argument_parser.parse_args.return_value.start_date = start_date_arg
+        mock_argument_parser.parse_args.return_value.version = version_arg
+        mock_argument_parser.parse_args.return_value.descriptor = descriptor_arg
+
+        mock_argument_parser.parse_args.return_value.data_level = "l3"
+        mock_argument_parser.parse_args.return_value.end_date = None
+
+        imap_l3_processor()
+
+        expected_input_metadata = InputMetadata("ultra", "l3", datetime(year=2025, month=4, day=18),
+                                                datetime(year=2025, month=4, day=18), "v001", descriptor_arg)
+
+        mock_ultra_processor.assert_called_with(processing_input_collection, expected_input_metadata)
+        mock_ultra_processor.return_value.process.assert_called()
 
     @patch('imap_l3_data_processor.argparse')
     def test_throws_exception_for_unimplemented_instrument(self, mock_argparse):

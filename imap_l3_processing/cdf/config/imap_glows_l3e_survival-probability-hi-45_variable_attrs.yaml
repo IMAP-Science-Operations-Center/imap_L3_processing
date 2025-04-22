@@ -1,0 +1,74 @@
+epoch:
+   NAME: epoch
+   DATA_TYPE: CDF_TIME_TT2000
+   CATDESC: Time, number of nanoseconds since J2000 with leap seconds included
+   VAR_TYPE: support_data
+   RECORD_VARYING: RV
+   FIELDNAM: epoch
+   FORMAT: ' '
+   LABLAXIS: epoch
+   UNITS: ns
+   VALIDMIN: 1990-01-01T00:00:00.000000000
+   VALIDMAX: 2099-12-31T00:00:00.000000000
+   FILLVAL: 9999-12-31T23:59:59.999999999
+   TIME_BASE: J2000
+   TIME_SCALE: Terrestrial Time
+   DELTA_PLUS_VAR: epoch_delta
+   DELTA_MINUS_VAR: epoch_delta
+   MONOTON: INCREASE
+   REFERENCE_POSITION: Rotating Earth Geoid
+epoch_delta:
+   NAME: epoch_delta
+   DATA_TYPE: CDF_INT8
+   CATDESC: epoch_delta
+   VAR_TYPE: support_data
+   RECORD_VARYING: RV
+   DEPEND_0: ' '
+   FIELDNAM: epoch_delta
+   FORMAT: ' '
+   LABLAXIS: epoch_delta
+   UNITS: ns
+   VALIDMIN: 0
+   VALIDMAX: 86000000000000
+   FILLVAL: -9223372036854770000
+energy:
+   NAME: energy
+   DATA_TYPE: CDF_FLOAT
+   CATDESC: Energies associated with the survival probabilites for IMAP-Hi
+   VAR_TYPE: support_data
+   RECORD_VARYING: NRV
+   FIELDNAM: ' '
+   FORMAT: g9.3
+   UNITS: kEV
+   VALIDMIN: ' '
+   VALIDMAX: 10000000000
+   FILLVAL: -1.0000E+31
+spin_angle:
+   NAME: spin_angle
+   DATA_TYPE: CDF_FLOAT
+   CATDESC: Angle on the circle around axis rotation, with the radius elongation angle. The 0 spin_angle is the direction nearest north pole.
+   VAR_TYPE: support_data
+   RECORD_VARYING: NRV
+   FIELDNAM: ' '
+   FORMAT: g9.3
+   UNITS: degree
+   VALIDMIN: ' '
+   VALIDMAX: 10000000000
+   FILLVAL: -1.0000E+31
+probability_of_survival:
+   NAME: probability_of_survival
+   DATA_TYPE: CDF_FLOAT
+   CATDESC: Survival probabilities for IMAP-Hi
+   VAR_TYPE: data
+   RECORD_VARYING: RV
+   DEPEND_0: epoch
+   DEPEND_1: energy
+   DEPEND_2: spin_angle
+   DISPLAY_TYPE: no_plot
+   VARIABLE_PURPOSE: primary var, summary
+   FIELDNAM: ' '
+   FORMAT: g9.3
+   UNITS: ' '
+   VALIDMIN: ' '
+   VALIDMAX: 10000000000
+   FILLVAL: -1.0000E+31
