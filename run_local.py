@@ -560,7 +560,7 @@ if __name__ == "__main__":
                     "hi/fake_l2_maps/hi90-6months.cdf"),
                 hi_l1c_paths=hi_l1c_paths,
                 glows_l3e_paths=glows_l3_paths,
-                l2_descriptor="h90-sf-ram-hae-4deg-6mo")
+                l2_descriptor="h90-sf-anti-hae-4deg-6mo")
             print(create_hi_l3_survival_corrected_cdf(survival_dependencies, spacing_degree=4))
 
         if do_all or "spectral-index" in sys.argv:
@@ -578,14 +578,14 @@ if __name__ == "__main__":
 
             ram_survival_dependencies = HiL3SurvivalDependencies.from_file_paths(
                 map_file_path=get_test_data_path(
-                    "hi/fake_l2_maps/hi90-6months.cdf"),
+                    "hi/fake_l2_maps/hi90-ram-3month.cdf"),
                 hi_l1c_paths=hi_l1c_paths,
                 glows_l3e_paths=glows_l3_paths,
                 l2_descriptor="h90-sf-ram-hae-4deg-6mo")
 
             antiram_survival_dependencies = HiL3SurvivalDependencies.from_file_paths(
                 map_file_path=get_test_data_path(
-                    "hi/fake_l2_maps/hi90-6months.cdf"),
+                    "hi/fake_l2_maps/hi90-anti-3month.cdf"),
                 hi_l1c_paths=hi_l1c_paths,
                 glows_l3e_paths=glows_l3_paths,
                 l2_descriptor="h90-sf-anti-hae-4deg-6mo")
