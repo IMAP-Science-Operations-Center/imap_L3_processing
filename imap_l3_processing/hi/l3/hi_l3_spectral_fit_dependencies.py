@@ -1,12 +1,13 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
 from pathlib import Path
 
-from imap_l3_processing.hi.l3.models import HiMapData, HiIntensityMapData
-from imap_l3_processing.hi.l3.utils import read_hi_l2_data
-from imap_l3_processing.models import UpstreamDataDependency
-from imap_l3_processing.utils import download_dependency
+import imap_data_access
+from imap_data_access.processing_input import ProcessingInputCollection
 
-HI_L3_SPECTRAL_FIT_DESCRIPTOR = "spectral-fit-index"
+from imap_l3_processing.hi.l3.models import HiIntensityMapData
+from imap_l3_processing.hi.l3.utils import read_hi_l2_data
 
 
 @dataclass
@@ -14,17 +15,15 @@ class HiL3SpectralFitDependencies:
     hi_l3_data: HiIntensityMapData
 
     @classmethod
-    def fetch_dependencies(cls, dependencies: list[UpstreamDataDependency]):
-        try:
-            hi_l3_dependency = next(
-                dependency for dependency in dependencies if dependency.instrument == "hi"
-                and dependency.descriptor == HI_L3_SPECTRAL_FIT_DESCRIPTOR)
-        except StopIteration:
+    def fetch_dependencies(cls, dependencies: ProcessingInputCollection) -> HiL3SpectralFitDependencies:
+        input_map_filenames = dependencies.get_file_paths(source="hi")
+
+        if len(input_map_filenames) != 1:
             raise ValueError("Missing Hi dependency.")
 
-        hi_l3_file = download_dependency(hi_l3_dependency)
+        hi_l3_file = imap_data_access.download(input_map_filenames[0].name)
         return cls.from_file_paths(hi_l3_file)
 
     @classmethod
-    def from_file_paths(cls, hi_l3_path: Path):
+    def from_file_paths(cls, hi_l3_path: Path) -> HiL3SpectralFitDependencies:
         return cls(read_hi_l2_data(hi_l3_path))
