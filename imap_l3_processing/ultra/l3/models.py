@@ -3,6 +3,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Self
 
+import xarray as xr
+from imap_processing.ena_maps.utils.coordinates import CoordNames
 from numpy import ndarray
 from spacepy.pycdf import CDF
 
@@ -128,3 +130,46 @@ class UltraL1CPSet:
                 healpix_index=cdf["healpix_index"][...],
                 sensitivity=read_numeric_variable(cdf["sensitivity"]),
             )
+
+    def to_xarray(self):
+        return xr.Dataset(
+            {
+                "counts": (
+                    [
+                        CoordNames.TIME.value,
+                        CoordNames.ENERGY.value,
+                        CoordNames.HEALPIX_INDEX.value,
+                    ],
+                    self.counts,
+                ),
+                "exposure_time": (
+                    [CoordNames.TIME.value,
+                     CoordNames.ENERGY.value,
+                     CoordNames.HEALPIX_INDEX.value],
+                    self.exposure,
+                ),
+                "sensitivity": (
+                    [
+                        CoordNames.TIME.value,
+                        CoordNames.ENERGY.value,
+                        CoordNames.HEALPIX_INDEX.value,
+                    ],
+                    self.sensitivity,
+                ),
+                CoordNames.AZIMUTH_L1C.value: (
+                    [CoordNames.HEALPIX_INDEX.value],
+                    self.longitude,
+                ),
+                CoordNames.ELEVATION_L1C.value: (
+                    [CoordNames.HEALPIX_INDEX.value],
+                    self.latitude,
+                ),
+            },
+            coords={
+                CoordNames.TIME.value: [
+                    self.epoch,
+                ],
+                CoordNames.ENERGY.value: self.energy,
+                CoordNames.HEALPIX_INDEX.value: self.healpix_index,
+            }
+        )

@@ -1,6 +1,7 @@
 import enum
 
-from imap_processing.ena_maps.ena_maps import UltraPointingSet
+from imap_processing.ena_maps.ena_maps import UltraPointingSet, HealpixSkyMap
+from imap_processing.spice import geometry
 
 from imap_l3_processing.ultra.l3.models import UltraL1CPSet, UltraGlowsL3eData
 
@@ -16,9 +17,9 @@ class Sensor(enum.Enum):
 
 class UltraSurvivalProbability(UltraPointingSet):
     def __init__(self, l1c_pset: UltraL1CPSet, l3e_glows: UltraGlowsL3eData):
-        return NotImplementedError
+        super().__init__(l1c_pset.to_xarray(), geometry.SpiceFrame.IMAP_DPS)
 
 
-class UltraSurvivalProbabilitySkyMap():
-    def __init__(self, sp: list[UltraSurvivalProbability]):
+class UltraSurvivalProbabilitySkyMap(HealpixSkyMap):
+    def __init__(self, sp: list[UltraSurvivalProbability], spice_frame: geometry.SpiceFrame):
         return NotImplementedError

@@ -43,7 +43,6 @@ class DataProductVariable:
 @dataclass
 class DataProduct(metaclass=abc.ABCMeta):
     input_metadata: UpstreamDataDependency
-
     parent_file_names: list[str] = field(default_factory=list, kw_only=True)
 
     @abc.abstractmethod

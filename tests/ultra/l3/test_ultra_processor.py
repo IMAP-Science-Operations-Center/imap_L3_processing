@@ -26,10 +26,11 @@ class TestHiProcessor(unittest.TestCase):
                                           mock_survival_probability_pointing_set, mock_survival_skymap,
                                           mock_parse_map_descriptor, mock_save_data, mock_upload):
         rng = np.random.default_rng()
-        input_map_flux = rng.random((1, 9, 90, 45))
+        healpix_indices = np.arange(12)
+        input_map_flux = rng.random((1, 9, 12))
         epoch = datetime.now()
 
-        input_l2_map = _create_ultra_l2_data(epoch=[epoch], flux=input_map_flux)
+        input_l2_map = _create_ultra_l2_data(epoch=[epoch], flux=input_map_flux, healpix_indices=healpix_indices)
 
         input_l2_map.energy = sentinel.ultra_l2_energies
 
@@ -55,7 +56,7 @@ class TestHiProcessor(unittest.TestCase):
                                        descriptor=f"45sensor-spacecraft-survival-full-4deg-map",
                                        )
 
-        computed_survival_probabilities = rng.random((1, 9, 9, 90, 45))
+        computed_survival_probabilities = rng.random((1, 9, healpix_indices.shape[0]))
 
         mock_survival_skymap.return_value.to_dataset.return_value = xr.Dataset({
             "exposure_weighted_survival_probabilities": (
@@ -63,8 +64,6 @@ class TestHiProcessor(unittest.TestCase):
                     CoordNames.TIME.value,
                     CoordNames.ENERGY.value,
                     CoordNames.HEALPIX_INDEX.value,
-                    CoordNames.AZIMUTH_L2.value,
-                    CoordNames.ELEVATION_L2.value,
                 ],
                 computed_survival_probabilities
             )
@@ -72,9 +71,7 @@ class TestHiProcessor(unittest.TestCase):
             coords={
                 CoordNames.TIME.value: [epoch],
                 CoordNames.ENERGY.value: rng.random((9,)),
-                CoordNames.HEALPIX_INDEX.value: rng.random((9,)),
-                CoordNames.AZIMUTH_L2.value: rng.random((90,)),
-                CoordNames.ELEVATION_L2.value: rng.random((45,)),
+                CoordNames.HEALPIX_INDEX.value: healpix_indices,
             })
 
         processor = UltraProcessor(sentinel.dependencies, input_metadata)
@@ -84,16 +81,15 @@ class TestHiProcessor(unittest.TestCase):
 
         mock_parse_map_descriptor.assert_called_once_with(input_metadata.descriptor)
 
-        mock_combine_glows_l3e_ultra_l1c.assert_called_once_with(sentinel.ultra_l1c_data, sentinel.glows_l3e_data)
+        mock_combine_glows_l3e_ultra_l1c.assert_called_once_with(sentinel.ultra_l1c_pset, sentinel.glows_l3e_sp)
 
         mock_survival_probability_pointing_set.assert_has_calls([
-            call(sentinel.ultra_l1c_1, sentinel.sensor, sentinel.glows_l3e_1, sentinel.ultra_l2_energies),
-            call(sentinel.ultra_l1c_2, sentinel.sensor, sentinel.glows_l3e_2, sentinel.ultra_l2_energies),
-            call(sentinel.ultra_l1c_3, sentinel.sensor, sentinel.glows_l3e_3, sentinel.ultra_l2_energies)
+            call(sentinel.ultra_l1c_1, sentinel.glows_l3e_1, sentinel.ultra_l2_energies),
+            call(sentinel.ultra_l1c_2, sentinel.glows_l3e_2, sentinel.ultra_l2_energies),
+            call(sentinel.ultra_l1c_3, sentinel.glows_l3e_3, sentinel.ultra_l2_energies)
         ])
 
         mock_survival_skymap.assert_called_once_with([sentinel.pset_1, sentinel.pset_2, sentinel.pset_3],
-                                                     sentinel.grid_size,
                                                      SpiceFrame.ECLIPJ2000)
 
         mock_survival_skymap.return_value.to_dataset.assert_called_once_with()
@@ -118,11 +114,7 @@ class TestHiProcessor(unittest.TestCase):
         np.testing.assert_array_equal(survival_data_product.energy_delta_minus, input_l2_map.energy_delta_minus)
         np.testing.assert_array_equal(survival_data_product.energy_label, input_l2_map.energy_label)
         np.testing.assert_array_equal(survival_data_product.latitude, input_l2_map.latitude)
-        np.testing.assert_array_equal(survival_data_product.latitude_delta, input_l2_map.latitude_delta)
-        np.testing.assert_array_equal(survival_data_product.latitude_label, input_l2_map.latitude_label)
         np.testing.assert_array_equal(survival_data_product.longitude, input_l2_map.longitude)
-        np.testing.assert_array_equal(survival_data_product.longitude_delta, input_l2_map.longitude_delta)
-        np.testing.assert_array_equal(survival_data_product.longitude_label, input_l2_map.longitude_label)
         np.testing.assert_array_equal(survival_data_product.exposure_factor, input_l2_map.exposure_factor)
         np.testing.assert_array_equal(survival_data_product.obs_date, input_l2_map.obs_date)
         np.testing.assert_array_equal(survival_data_product.obs_date_range, input_l2_map.obs_date_range)
@@ -132,14 +124,15 @@ class TestHiProcessor(unittest.TestCase):
 
 
 def _create_ultra_l2_data(epoch=None, lon=None, lat=None, energy=None, energy_delta=None, flux=None,
-                          intensity_stat_unc=None):
+                          intensity_stat_unc=None, healpix_indices=None):
     lon = lon if lon is not None else np.array([1.0])
     lat = lat if lat is not None else np.array([1.0])
+    healpix_indices = healpix_indices if healpix_indices is not None else np.arange(12)
     energy = energy if energy is not None else np.array([1.0])
     energy_delta = energy_delta if energy_delta is not None else np.full((len(energy), 2), 1)
-    flux = flux if flux is not None else np.full((len(epoch), len(lon), len(lat), len(energy)), fill_value=1)
+    flux = flux if flux is not None else np.full((len(epoch), len(energy), len(healpix_indices)), fill_value=1)
     intensity_stat_unc = intensity_stat_unc if intensity_stat_unc is not None else np.full(
-        (len(epoch), len(lon), len(lat), len(energy)),
+        flux.shape,
         fill_value=1)
     epoch = epoch if epoch is not None else np.array([datetime.now()])
 
@@ -164,6 +157,6 @@ def _create_ultra_l2_data(epoch=None, lon=None, lat=None, energy=None, energy_de
         ena_intensity=flux,
         ena_intensity_stat_unc=intensity_stat_unc,
         ena_intensity_sys_err=np.full_like(flux, 0),
-        pixel_index=np.full(len(lon), 0),
-        pixel_index_label=np.array(["healpix index label"])
+        pixel_index=healpix_indices,
+        pixel_index_label=np.full(healpix_indices.shape, "healpix index label")
     )
