@@ -4,7 +4,7 @@ from imap_data_access.processing_input import ProcessingInputCollection
 
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_dependencies import CodiceLoL3aDependencies
 from imap_l3_processing.codice.l3.lo.models import CodiceLoL3aDataProduct
-from imap_l3_processing.codice.l3.lo.science.esa_calculations import calculate_partial_densities
+from imap_l3_processing.codice.l3.lo.science.codice_lo_calculations import calculate_partial_densities
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
 from imap_l3_processing.utils import save_data

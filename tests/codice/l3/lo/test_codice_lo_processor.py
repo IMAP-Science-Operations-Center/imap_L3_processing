@@ -76,7 +76,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
             sentinel.fe_high_partial_density,
         ]
 
-        codice_lo_dependencies = CodiceLoL3aDependencies(codice_lo_l2_data, Mock(), Mock())
+        codice_lo_dependencies = CodiceLoL3aDependencies(codice_lo_l2_data, Mock(), Mock(), Mock())
         result = processor.process_l3a(codice_lo_dependencies)
 
         self.assertEqual(num_species, mock_calculate_partial_densities.call_count)

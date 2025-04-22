@@ -1,6 +1,8 @@
+from collections import namedtuple, Counter
 from dataclasses import dataclass
 from pathlib import Path
 
+import numpy as np
 from numpy import ndarray
 from spacepy.pycdf import CDF
 
@@ -220,90 +222,67 @@ class CodiceLoL2bPriorityRates:
             )
 
 
+EnergyAndSpinAngle = namedtuple(typename="EnergyAndSpinAngle", field_names=["energy", "spin_angle"])
+
+
+@dataclass
+class PriortyEvent:
+    apd_energy: ndarray
+    apd_gain: ndarray
+    apd_id: ndarray
+    data_quality: ndarray
+    energy_step: ndarray
+    multi_flag: ndarray
+    num_events: ndarray
+    pha_type: ndarray
+    spin_angle: ndarray
+    tof: ndarray
+
+    @property
+    def total_events_binned_by_energy_step_and_spin_angle(self) -> [dict[EnergyAndSpinAngle, int]]:
+        all_epoch_to_energy_and_spin_angle = np.stack((self.energy_step, self.spin_angle), axis=-1)
+        total_events_by_energy_and_spin_angle = []
+
+        for epoch_to_energy_and_spin_angle in all_epoch_to_energy_and_spin_angle:
+            energy_step_and_spin_angle = [EnergyAndSpinAngle(*energy_step_and_spin_angle)
+                                          for energy_step_and_spin_angle in epoch_to_energy_and_spin_angle
+                                          if not any(np.isnan(energy_step_and_spin_angle))]
+
+            total_events_by_energy_and_spin_angle.append(dict(Counter(energy_step_and_spin_angle)))
+
+        return total_events_by_energy_and_spin_angle
+
+
 @dataclass
 class CodiceLoL2DirectEventData:
     epoch: ndarray
     event_num: ndarray
-    p0_apdenergy: ndarray
-    p0_apdgain: ndarray
-    p0_apd_id: ndarray
-    p0_dataquality: ndarray
-    p0_energystep: ndarray
-    p0_multiflag: ndarray
-    p0_numevents: ndarray
-    p0_phatype: ndarray
-    p0_spinangle: ndarray
-    p0_tof: ndarray
-    p1_apdenergy: ndarray
-    p1_apdgain: ndarray
-    p1_apd_id: ndarray
-    p1_dataquality: ndarray
-    p1_energystep: ndarray
-    p1_multiflag: ndarray
-    p1_numevents: ndarray
-    p1_phatype: ndarray
-    p1_spinangle: ndarray
-    p1_tof: ndarray
-    p2_apdenergy: ndarray
-    p2_apdgain: ndarray
-    p2_apd_id: ndarray
-    p2_dataquality: ndarray
-    p2_energystep: ndarray
-    p2_multiflag: ndarray
-    p2_numevents: ndarray
-    p2_phatype: ndarray
-    p2_spinangle: ndarray
-    p2_tof: ndarray
-    p3_apdenergy: ndarray
-    p3_apdgain: ndarray
-    p3_apd_id: ndarray
-    p3_dataquality: ndarray
-    p3_energystep: ndarray
-    p3_multiflag: ndarray
-    p3_numevents: ndarray
-    p3_phatype: ndarray
-    p3_spinangle: ndarray
-    p3_tof: ndarray
-    p4_apdenergy: ndarray
-    p4_apdgain: ndarray
-    p4_apd_id: ndarray
-    p4_dataquality: ndarray
-    p4_energystep: ndarray
-    p4_multiflag: ndarray
-    p4_numevents: ndarray
-    p4_phatype: ndarray
-    p4_spinangle: ndarray
-    p4_tof: ndarray
-    p5_apdenergy: ndarray
-    p5_apdgain: ndarray
-    p5_apd_id: ndarray
-    p5_dataquality: ndarray
-    p5_energystep: ndarray
-    p5_multiflag: ndarray
-    p5_numevents: ndarray
-    p5_phatype: ndarray
-    p5_spinangle: ndarray
-    p5_tof: ndarray
-    p6_apdenergy: ndarray
-    p6_apdgain: ndarray
-    p6_apd_id: ndarray
-    p6_dataquality: ndarray
-    p6_energystep: ndarray
-    p6_multiflag: ndarray
-    p6_numevents: ndarray
-    p6_phatype: ndarray
-    p6_spinangle: ndarray
-    p6_tof: ndarray
-    p7_apdenergy: ndarray
-    p7_apdgain: ndarray
-    p7_apd_id: ndarray
-    p7_dataquality: ndarray
-    p7_energystep: ndarray
-    p7_multiflag: ndarray
-    p7_numevents: ndarray
-    p7_phatype: ndarray
-    p7_spinangle: ndarray
-    p7_tof: ndarray
+    priority_event_0: PriortyEvent
+    priority_event_1: PriortyEvent
+    priority_event_2: PriortyEvent
+    priority_event_3: PriortyEvent
+    priority_event_4: PriortyEvent
+    priority_event_5: PriortyEvent
+    priority_event_6: PriortyEvent
+    priority_event_7: PriortyEvent
+
+    @classmethod
+    def _read_priority_event(cls, cdf):
+        values = {}
+        for index in range(8):
+            priority_event = PriortyEvent(cdf[f"P{index}_APDEnergy"][...],
+                                          cdf[f"P{index}_APDGain"][...],
+                                          cdf[f"P{index}_APD_ID"][...],
+                                          cdf[f"P{index}_DataQuality"][...],
+                                          cdf[f"P{index}_EnergyStep"][...],
+                                          cdf[f"P{index}_MultiFlag"][...],
+                                          cdf[f"P{index}_NumEvents"][...],
+                                          cdf[f"P{index}_PHAType"][...],
+                                          cdf[f"P{index}_SpinAngle"][...],
+                                          cdf[f"P{index}_TOF"][...])
+
+            values.update({f"priority_event_{index}": priority_event})
+        return values
 
     @classmethod
     def read_from_cdf(cls, l2_direct_event_cdf: Path):
@@ -311,88 +290,16 @@ class CodiceLoL2DirectEventData:
             return cls(
                 epoch=cdf["epoch"][...],
                 event_num=cdf["event_num"][...],
-                p0_apdenergy=cdf["P0_APDEnergy"][...],
-                p0_apdgain=cdf["P0_APDGain"][...],
-                p0_apd_id=cdf["P0_APD_ID"][...],
-                p0_dataquality=cdf["P0_DataQuality"][...],
-                p0_energystep=cdf["P0_EnergyStep"][...],
-                p0_multiflag=cdf["P0_MultiFlag"][...],
-                p0_numevents=cdf["P0_NumEvents"][...],
-                p0_phatype=cdf["P0_PHAType"][...],
-                p0_spinangle=cdf["P0_SpinAngle"][...],
-                p0_tof=cdf["P0_TOF"][...],
-                p1_apdenergy=cdf["P1_APDEnergy"][...],
-                p1_apdgain=cdf["P1_APDGain"][...],
-                p1_apd_id=cdf["P1_APD_ID"][...],
-                p1_dataquality=cdf["P1_DataQuality"][...],
-                p1_energystep=cdf["P1_EnergyStep"][...],
-                p1_multiflag=cdf["P1_MultiFlag"][...],
-                p1_numevents=cdf["P1_NumEvents"][...],
-                p1_phatype=cdf["P1_PHAType"][...],
-                p1_spinangle=cdf["P1_SpinAngle"][...],
-                p1_tof=cdf["P1_TOF"][...],
-                p2_apdenergy=cdf["P2_APDEnergy"][...],
-                p2_apdgain=cdf["P2_APDGain"][...],
-                p2_apd_id=cdf["P2_APD_ID"][...],
-                p2_dataquality=cdf["P2_DataQuality"][...],
-                p2_energystep=cdf["P2_EnergyStep"][...],
-                p2_multiflag=cdf["P2_MultiFlag"][...],
-                p2_numevents=cdf["P2_NumEvents"][...],
-                p2_phatype=cdf["P2_PHAType"][...],
-                p2_spinangle=cdf["P2_SpinAngle"][...],
-                p2_tof=cdf["P2_TOF"][...],
-                p3_apdenergy=cdf["P3_APDEnergy"][...],
-                p3_apdgain=cdf["P3_APDGain"][...],
-                p3_apd_id=cdf["P3_APD_ID"][...],
-                p3_dataquality=cdf["P3_DataQuality"][...],
-                p3_energystep=cdf["P3_EnergyStep"][...],
-                p3_multiflag=cdf["P3_MultiFlag"][...],
-                p3_numevents=cdf["P3_NumEvents"][...],
-                p3_phatype=cdf["P3_PHAType"][...],
-                p3_spinangle=cdf["P3_SpinAngle"][...],
-                p3_tof=cdf["P3_TOF"][...],
-                p4_apdenergy=cdf["P4_APDEnergy"][...],
-                p4_apdgain=cdf["P4_APDGain"][...],
-                p4_apd_id=cdf["P4_APD_ID"][...],
-                p4_dataquality=cdf["P4_DataQuality"][...],
-                p4_energystep=cdf["P4_EnergyStep"][...],
-                p4_multiflag=cdf["P4_MultiFlag"][...],
-                p4_numevents=cdf["P4_NumEvents"][...],
-                p4_phatype=cdf["P4_PHAType"][...],
-                p4_spinangle=cdf["P4_SpinAngle"][...],
-                p4_tof=cdf["P4_TOF"][...],
-                p5_apdenergy=cdf["P5_APDEnergy"][...],
-                p5_apdgain=cdf["P5_APDGain"][...],
-                p5_apd_id=cdf["P5_APD_ID"][...],
-                p5_dataquality=cdf["P5_DataQuality"][...],
-                p5_energystep=cdf["P5_EnergyStep"][...],
-                p5_multiflag=cdf["P5_MultiFlag"][...],
-                p5_numevents=cdf["P5_NumEvents"][...],
-                p5_phatype=cdf["P5_PHAType"][...],
-                p5_spinangle=cdf["P5_SpinAngle"][...],
-                p5_tof=cdf["P5_TOF"][...],
-                p6_apdenergy=cdf["P6_APDEnergy"][...],
-                p6_apdgain=cdf["P6_APDGain"][...],
-                p6_apd_id=cdf["P6_APD_ID"][...],
-                p6_dataquality=cdf["P6_DataQuality"][...],
-                p6_energystep=cdf["P6_EnergyStep"][...],
-                p6_multiflag=cdf["P6_MultiFlag"][...],
-                p6_numevents=cdf["P6_NumEvents"][...],
-                p6_phatype=cdf["P6_PHAType"][...],
-                p6_spinangle=cdf["P6_SpinAngle"][...],
-                p6_tof=cdf["P6_TOF"][...],
-                p7_apdenergy=cdf["P7_APDEnergy"][...],
-                p7_apdgain=cdf["P7_APDGain"][...],
-                p7_apd_id=cdf["P7_APD_ID"][...],
-                p7_dataquality=cdf["P7_DataQuality"][...],
-                p7_energystep=cdf["P7_EnergyStep"][...],
-                p7_multiflag=cdf["P7_MultiFlag"][...],
-                p7_numevents=cdf["P7_NumEvents"][...],
-                p7_phatype=cdf["P7_PHAType"][...],
-                p7_spinangle=cdf["P7_SpinAngle"][...],
-                p7_tof=cdf["P7_TOF"][...],
+                **cls._read_priority_event(cdf)
 
             )
+
+    @property
+    def priority_events(self):
+        return [
+            self.priority_event_0, self.priority_event_1, self.priority_event_2, self.priority_event_3,
+            self.priority_event_4, self.priority_event_5, self.priority_event_6, self.priority_event_7
+        ]
 
 
 @dataclass
