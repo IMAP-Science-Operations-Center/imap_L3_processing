@@ -3,6 +3,7 @@ from pathlib import Path
 from unittest.mock import patch, call, Mock
 
 import imap_l3_processing
+from imap_l3_processing import spice_wrapper
 from imap_l3_processing.spice_wrapper import furnish
 
 
@@ -11,6 +12,7 @@ class TestSpiceWrapper(unittest.TestCase):
     @patch('imap_l3_processing.spice_wrapper.Path')
     @patch('imap_l3_processing.spice_wrapper.spiceypy.furnsh')
     def test_furnish_with_spice_dir_mounted(self, mock_furnsh, mock_path_constructor, _mock_logging):
+        spice_wrapper.furnished = False
         mock_mnt_spice_path = Mock()
         mock_imap_processing_path = Mock()
         mock_path_constructor.side_effect = [mock_imap_processing_path, mock_mnt_spice_path]
@@ -46,6 +48,8 @@ class TestSpiceWrapper(unittest.TestCase):
     @patch('imap_l3_processing.spice_wrapper.Path')
     @patch('imap_l3_processing.spice_wrapper.spiceypy.furnsh')
     def test_furnish_with_spice_dir_unmounted(self, mock_furnsh, mock_path_constructor):
+        spice_wrapper.furnished = False
+
         mock_mnt_spice_path = Mock()
         mock_imap_processing_path = Mock()
         mock_path_constructor.side_effect = [mock_imap_processing_path, mock_mnt_spice_path]

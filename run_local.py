@@ -19,6 +19,7 @@ from imap_l3_processing.glows.glows_processor import GlowsProcessor
 from imap_l3_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
 from imap_l3_processing.glows.l3a.utils import read_l2_glows_data, create_glows_l3a_dictionary_from_cdf
 from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDependencies
+from imap_l3_processing.glows.l3e.glows_l3e_dependencies import GlowsL3EDependencies
 from imap_l3_processing.hi.hi_processor import HiProcessor
 from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3SpectralFitDependencies
 from imap_l3_processing.hi.l3.hi_l3_survival_dependencies import HiL3SurvivalDependencies, \
@@ -304,13 +305,17 @@ def run_glows_l3bc_processor_and_initializer(_, mock_query):
 
 
 @environment_variables({"REPOINT_DATA_FILEPATH": get_test_data_path("fake_1_day_repointing_file.csv")})
+@patch("imap_l3_processing.glows.glows_processor.GlowsL3EDependencies")
+@patch("imap_l3_processing.glows.glows_processor.imap_data_access.upload")
+@patch("imap_l3_processing.glows.glows_processor.Path")
+@patch("imap_l3_processing.glows.glows_processor.run")
 @patch("imap_l3_processing.glows.glows_processor.get_repoint_date_range")
-@patch("imap_l3_processing.glows.l3e.glows_l3e_dependencies.download_dependency_from_path")
-def run_glows_l3e(mock_download_dependency_from_path, mock_get_repoint_date_range):
+def run_glows_l3e(mock_get_repoint_date_range, _, mock_path, mock_upload,
+                  mock_l3e_dependencies_class):
     mock_processing_input_collection = Mock()
     mock_processing_input_collection.get_file_paths.return_value = [Path("one path")]
 
-    mock_download_dependency_from_path.side_effect = [
+    mock_l3e_dependencies: GlowsL3EDependencies = GlowsL3EDependencies(
         Path("imap_glows_l3d_solar-hist_20250501-repoint00005_v001.cdf"),
         Path("instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/Example/Example/EnGridLo.dat"),
         Path("instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/Example/Example/EnGridHi.dat"),
@@ -325,7 +330,30 @@ def run_glows_l3e(mock_download_dependency_from_path, mock_get_repoint_date_rang
         Path("instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/Example/Example/phion_Hydrogen_T12F107_2021b.dat"),
         Path("instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/Example/Example/swEqtrElectrons5_2021b.dat"),
         Path("instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/Example/Example/ionization.files.dat"),
-        get_test_data_path("glows/l3e_pipeline_settings.json")
+        {"executable_dependency_paths": {
+            "energy-grid-lo": "EnGridLo.dat",
+            "energy-grid-hi": "EnGridHi.dat",
+            "energy-grid-ultra": "EnGridUltra.dat",
+            "tess-xyz-8": "tessXYZ8.dat",
+            "tess-ang-16": "tessAng16.dat",
+            "lya-series": "lyaSeriesV4_2021b.dat",
+            "solar-uv-anistropy": "solar_uv_anisotropy_NP.1.0_SP.1.0.dat",
+            "speed-3d": "speed3D.v01.Legendre.2021b.dat",
+            "density-3d": "density3D.v01.Legendre.2021b.dat",
+            "phion-hydrogen": "phion_Hydrogen_T12F107_2021b.dat",
+            "sw-eqtr-electrons": "swEqtrElectrons5_2021b.dat",
+            "ionization-files": "ionization.files.dat",
+        }}
+    )
+
+    mock_l3e_dependencies.rename_dependencies = Mock()
+    mock_l3e_dependencies_class.fetch_dependencies.return_value = (mock_l3e_dependencies, 5)
+
+    mock_path.side_effect = [
+        Path(get_test_instrument_team_data_path("glows/probSur.Imap.Lo_20090101_010101_2009.000_60.00.txt")),
+        Path(get_test_instrument_team_data_path("glows/probSur.Imap.Hi_2009.000_135.0.txt")),
+        Path(get_test_instrument_team_data_path("glows/probSur.Imap.Hi_2009.000_90.00.txt")),
+        Path(get_test_instrument_team_data_path("glows/probSur.Imap.Ul_20090101_010101_2009.000.txt")),
     ]
 
     input_metadata = InputMetadata(
@@ -341,7 +369,7 @@ def run_glows_l3e(mock_download_dependency_from_path, mock_get_repoint_date_rang
 
     glows_processor: GlowsProcessor = GlowsProcessor(mock_processing_input_collection, input_metadata)
 
-    glows_processor.process_l3e()
+    glows_processor.process()
 
 
 def run_glows_l3bc():

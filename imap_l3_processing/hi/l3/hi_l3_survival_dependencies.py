@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import imap_data_access
@@ -21,6 +21,8 @@ class HiL3SurvivalDependencies:
     hi_l1c_data: list[HiL1cData]
     glows_l3e_data: list[GlowsL3eData]
     l2_map_descriptor_parts: MapDescriptorParts
+
+    dependency_file_paths: list[Path] = field(default_factory=list)
 
     @classmethod
     def fetch_dependencies(cls, dependencies: ProcessingInputCollection) -> HiL3SurvivalDependencies:
@@ -45,8 +47,10 @@ class HiL3SurvivalDependencies:
         glows_l3e_data = list(map(read_glows_l3e_data, glows_l3e_paths))
         l1c_data = list(map(read_hi_l1c_data, hi_l1c_paths))
 
+        paths = [map_file_path] + hi_l1c_paths + glows_l3e_paths
         return cls(l2_data=read_hi_l2_data(map_file_path), hi_l1c_data=l1c_data, glows_l3e_data=glows_l3e_data,
-                   l2_map_descriptor_parts=parse_map_descriptor(l2_descriptor))
+                   l2_map_descriptor_parts=parse_map_descriptor(l2_descriptor),
+                   dependency_file_paths=paths)
 
 
 @dataclass
@@ -67,3 +71,7 @@ class HiL3SingleSensorFullSpinDependencies:
             ram_dependencies=HiL3SurvivalDependencies.fetch_dependencies(ProcessingInputCollection(*ram_dependencies)),
             antiram_dependencies=HiL3SurvivalDependencies.fetch_dependencies(
                 ProcessingInputCollection(*antiram_dependencies)))
+
+    @property
+    def dependency_file_paths(self) -> list[Path]:
+        return self.ram_dependencies.dependency_file_paths + self.antiram_dependencies.dependency_file_paths

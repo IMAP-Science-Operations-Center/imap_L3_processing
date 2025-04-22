@@ -1,6 +1,6 @@
 import unittest
-from unittest.mock import patch, Mock, call
 from datetime import datetime
+from unittest.mock import patch, Mock
 
 import numpy as np
 
@@ -9,10 +9,10 @@ from imap_l3_processing.glows.l3e.glows_l3e_utils import determine_call_args_for
 
 class TestGlowsL3EUtils(unittest.TestCase):
 
-    @patch("imap_l3_processing.glows.l3e.glows_l3e_utils.datetime2et")
-    @patch("imap_l3_processing.glows.l3e.glows_l3e_utils.spkezr")
-    @patch("imap_l3_processing.glows.l3e.glows_l3e_utils.reclat")
-    @patch("imap_l3_processing.glows.l3e.glows_l3e_utils.pxform")
+    @patch("imap_l3_processing.glows.l3e.glows_l3e_utils.spiceypy.datetime2et")
+    @patch("imap_l3_processing.glows.l3e.glows_l3e_utils.spiceypy.spkezr")
+    @patch("imap_l3_processing.glows.l3e.glows_l3e_utils.spiceypy.reclat")
+    @patch("imap_l3_processing.glows.l3e.glows_l3e_utils.spiceypy.pxform")
     def test_determine_call_args_for_l3e_executable(self, mock_pxform: Mock, mock_reclat: Mock, mock_spkezr: Mock,
                                                     mock_date_time_2et: Mock):
         start_time = datetime.fromisoformat("2025-05-01T00:00:00")

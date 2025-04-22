@@ -1,5 +1,6 @@
 import unittest
 from datetime import datetime, timedelta
+from pathlib import Path
 from unittest.mock import patch, call, sentinel, MagicMock
 
 import numpy as np
@@ -20,12 +21,15 @@ from tests.test_helpers import get_test_data_path
 
 
 class TestHiProcessor(unittest.TestCase):
+    @patch('imap_l3_processing.hi.hi_processor.Processor.get_parent_file_names')
     @patch('imap_l3_processing.hi.hi_processor.upload')
     @patch('imap_l3_processing.hi.hi_processor.HiL3SpectralFitDependencies.fetch_dependencies')
     @patch('imap_l3_processing.hi.hi_processor.spectral_fit')
     @patch('imap_l3_processing.hi.hi_processor.save_data')
     def test_process_spectral_fit(self, mock_save_data, mock_spectral_fit,
-                                  mock_fetch_dependencies, mock_upload):
+                                  mock_fetch_dependencies, mock_upload,
+                                  mock_get_parent_file_names):
+        mock_get_parent_file_names.return_value = ["l2_or_l3_map"]
         lat = np.array([0, 45])
         long = np.array([0, 45, 90])
         energy = sentinel.energy
@@ -73,6 +77,7 @@ class TestHiProcessor(unittest.TestCase):
         np.testing.assert_array_equal(actual_hi_data_product.longitude, hi_l3_data.longitude)
         np.testing.assert_array_equal(actual_hi_data_product.epoch, hi_l3_data.epoch)
         np.testing.assert_array_equal(actual_hi_data_product.exposure_factor, hi_l3_data.exposure_factor)
+        self.assertEqual(["l2_or_l3_map"], actual_hi_data_product.parent_file_names)
 
         mock_upload.assert_called_once_with(mock_save_data.return_value)
 
@@ -122,6 +127,7 @@ class TestHiProcessor(unittest.TestCase):
                 np.testing.assert_allclose(output_data.ena_spectral_index_stat_unc[0],
                                            expected_gamma_sigma, atol=1e-3)
 
+    @patch('imap_l3_processing.hi.hi_processor.Processor.get_parent_file_names')
     @patch('imap_l3_processing.hi.hi_processor.upload')
     @patch('imap_l3_processing.hi.hi_processor.save_data')
     @patch('imap_l3_processing.hi.hi_processor.HiSurvivalProbabilitySkyMap')
@@ -130,7 +136,8 @@ class TestHiProcessor(unittest.TestCase):
     @patch('imap_l3_processing.hi.hi_processor.HiL3SurvivalDependencies.fetch_dependencies')
     def test_process_survival_probability(self, mock_fetch_dependencies, mock_combine_glows_l3e_hi_l1c,
                                           mock_survival_probability_pointing_set, mock_survival_skymap, mock_save_data,
-                                          mock_upload):
+                                          mock_upload, mock_get_parent_file_names):
+        mock_get_parent_file_names.return_value = ["l2_map", "spice1"]
         rng = np.random.default_rng()
         input_map_flux = rng.random((1, 9, 90, 45))
         epoch = datetime.now()
@@ -150,7 +157,9 @@ class TestHiProcessor(unittest.TestCase):
         mock_fetch_dependencies.return_value = HiL3SurvivalDependencies(l2_data=input_map,
                                                                         hi_l1c_data=sentinel.hi_l1c_data,
                                                                         glows_l3e_data=sentinel.glows_l3e_data,
-                                                                        l2_map_descriptor_parts=l2_descriptor_parts)
+                                                                        l2_map_descriptor_parts=l2_descriptor_parts,
+                                                                        dependency_file_paths=[Path("foo/l2_map"),
+                                                                                               Path("foo/l1c_map")], )
 
         mock_combine_glows_l3e_hi_l1c.return_value = [(sentinel.hi_l1c_1, sentinel.glows_l3e_1),
                                                       (sentinel.hi_l1c_2, sentinel.glows_l3e_2),
@@ -236,6 +245,8 @@ class TestHiProcessor(unittest.TestCase):
         np.testing.assert_array_equal(survival_data_product.obs_date_range, input_map.obs_date_range)
         np.testing.assert_array_equal(survival_data_product.solid_angle, input_map.solid_angle)
 
+        self.assertEqual(["l1c_map", "l2_map", "spice1"], survival_data_product.parent_file_names)
+
         mock_upload.assert_called_once_with(mock_save_data.return_value)
 
     def test_combine_glows_l3e_hi_l1c(self):
@@ -270,6 +281,7 @@ class TestHiProcessor(unittest.TestCase):
 
         self.assertEqual(expected, actual)
 
+    @patch('imap_l3_processing.hi.hi_processor.Processor.get_parent_file_names')
     @patch("imap_l3_processing.hi.hi_processor.HiL3SingleSensorFullSpinDependencies.fetch_dependencies")
     @patch("imap_l3_processing.hi.hi_processor.HiProcessor._process_survival_probabilities")
     @patch("imap_l3_processing.hi.hi_processor.combine_maps")
@@ -277,7 +289,9 @@ class TestHiProcessor(unittest.TestCase):
     @patch('imap_l3_processing.hi.hi_processor.upload')
     def test_process_full_spin_single_sensor_map(self, mock_upload, mock_save_data, mock_combine_maps,
                                                  mock_process_survival_prob,
-                                                 mock_fetch_full_spin_single_sensor_dependencies):
+                                                 mock_fetch_full_spin_single_sensor_dependencies,
+                                                 mock_get_parent_file_names):
+        mock_get_parent_file_names.return_value = ["ram_map", "antiram_map"]
         input_metadata = InputMetadata(instrument="hi",
                                        data_level="l3",
                                        start_date=datetime.now(),
@@ -287,6 +301,8 @@ class TestHiProcessor(unittest.TestCase):
                                        )
 
         full_spin_dependencies: HiL3SingleSensorFullSpinDependencies = mock_fetch_full_spin_single_sensor_dependencies.return_value
+        full_spin_dependencies.dependency_file_paths = [
+            Path("folder/ram_map", Path("folder/antiram_map"), Path("folder/l1c"))]
 
         mock_process_survival_prob.side_effect = [
             sentinel.survival_corrected_ram,
@@ -307,6 +323,8 @@ class TestHiProcessor(unittest.TestCase):
             sentinel.survival_corrected_ram,
             sentinel.survival_corrected_antiram,
         ])
+
+        self.assertEqual(["antiram_map", "l1c", "ram_map"], mock_combine_maps.return_value.parent_file_names)
 
         mock_save_data.assert_called_once_with(mock_combine_maps.return_value)
         mock_upload.assert_called_once_with(mock_save_data.return_value)
@@ -329,7 +347,7 @@ class TestHiProcessor(unittest.TestCase):
                                                descriptor=descriptor,
                                                )
 
-                processor = HiProcessor(sentinel.dependencies, input_metadata)
+                processor = HiProcessor(ProcessingInputCollection(), input_metadata)
                 with self.assertRaises(NotImplementedError):
                     processor.process()
 
