@@ -40,10 +40,12 @@ class TestHiL3SurvivalDependencies(unittest.TestCase):
 
             dependencies = ProcessingInputCollection(ScienceInput(hi_l2_filename), ScienceInput(glows_l3e_filename))
 
-            mock_imap_data_access_download.side_effect = [l2_map_path, sentinel.l1c_file_path_1,
-                                                          sentinel.l1c_file_path_2,
-                                                          sentinel.l1c_file_path_3, sentinel.glows_file_path_1,
-                                                          sentinel.glows_file_path_2, sentinel.glows_file_path_3]
+            downloaded_files = [l2_map_path, sentinel.l1c_file_path_1,
+                                sentinel.l1c_file_path_2,
+                                sentinel.l1c_file_path_3, sentinel.glows_file_path_1,
+                                sentinel.glows_file_path_2, sentinel.glows_file_path_3]
+
+            mock_imap_data_access_download.side_effect = downloaded_files
             mock_read_hi_l1c.side_effect = [sentinel.l1c_data_1, sentinel.l1c_data_2, sentinel.l1c_data_3]
 
             mock_find_glows_l3e_dependencies.return_value = glows_file_paths
@@ -81,6 +83,7 @@ class TestHiL3SurvivalDependencies(unittest.TestCase):
                                                      sentinel.glows_data_2,
                                                      sentinel.glows_data_3, ])
             self.assertEqual(actual.l2_map_descriptor_parts, mock_parse_map_descriptor.return_value)
+            self.assertEqual(actual.dependency_file_paths, downloaded_files)
 
     @patch("imap_l3_processing.hi.l3.hi_l3_survival_dependencies.HiL3SurvivalDependencies.fetch_dependencies")
     def test_fetch_single_sensor_full_spin_dependencies(self, mock_fetch_dependencies):
@@ -96,12 +99,17 @@ class TestHiL3SurvivalDependencies(unittest.TestCase):
         glows_input = ScienceInput(glows_l3e_filename)
         dependencies = ProcessingInputCollection(ram_input, anti_input, glows_input)
 
-        mock_fetch_dependencies.side_effect = [sentinel.ram_data, sentinel.antiram_data]
+        mock_ram_survival_dependencies = Mock(spec=HiL3SurvivalDependencies)
+        mock_ram_survival_dependencies.dependency_file_paths = [Path("ram_input1"), Path("ram_input2")]
+        mock_antiram_survival_dependencies = Mock(spec=HiL3SurvivalDependencies)
+        mock_antiram_survival_dependencies.dependency_file_paths = [Path("antiram_input1"), Path("antiram_input2")]
+
+        mock_fetch_dependencies.side_effect = [mock_ram_survival_dependencies, mock_antiram_survival_dependencies]
 
         result = HiL3SingleSensorFullSpinDependencies.fetch_dependencies(dependencies)
         self.assertIsInstance(result, HiL3SingleSensorFullSpinDependencies)
-        self.assertEqual(result.ram_dependencies, sentinel.ram_data)
-        self.assertEqual(result.antiram_dependencies, sentinel.antiram_data)
+        self.assertEqual(result.ram_dependencies, mock_ram_survival_dependencies)
+        self.assertEqual(result.antiram_dependencies, mock_antiram_survival_dependencies)
 
         [ram_dependencies] = mock_fetch_dependencies.call_args_list[0].args
         self.assertIsInstance(ram_dependencies, ProcessingInputCollection)
@@ -110,3 +118,6 @@ class TestHiL3SurvivalDependencies(unittest.TestCase):
         [antiram_dependencies] = mock_fetch_dependencies.call_args_list[1].args
         self.assertIsInstance(antiram_dependencies, ProcessingInputCollection)
         self.assertEqual([anti_input, glows_input], antiram_dependencies.processing_input)
+
+        self.assertEqual([Path("ram_input1"), Path("ram_input2"), Path("antiram_input1"), Path("antiram_input2")],
+                         result.dependency_file_paths)

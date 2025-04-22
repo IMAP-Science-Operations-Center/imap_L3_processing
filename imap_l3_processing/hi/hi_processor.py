@@ -1,5 +1,7 @@
 import numpy as np
 from imap_data_access import upload
+from imap_processing.spice.geometry import SpiceFrame
+
 from imap_l3_processing import spice_wrapper
 from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3SpectralFitDependencies
 from imap_l3_processing.hi.l3.hi_l3_survival_dependencies import HiL3SurvivalDependencies, \
@@ -13,11 +15,14 @@ from imap_l3_processing.hi.l3.utils import parse_map_descriptor, MapQuantity, Ma
     SpinPhase, Duration, Sensor
 from imap_l3_processing.processor import Processor
 from imap_l3_processing.utils import save_data
-from imap_processing.spice.geometry import SpiceFrame
 
 
 class HiProcessor(Processor):
     def process(self):
+        spice_wrapper.furnish()
+        
+        set_of_parent_file_names = set(self.get_parent_file_names())
+
         parsed_descriptor = parse_map_descriptor(self.input_metadata.descriptor)
         match parsed_descriptor:
             case MapDescriptorParts(quantity=MapQuantity.SpectralIndex):
@@ -30,6 +35,8 @@ class HiProcessor(Processor):
                 hi_l3_survival_probabilities_dependencies = HiL3SurvivalDependencies.fetch_dependencies(
                     self.dependencies)
                 data_product = self._process_survival_probabilities(hi_l3_survival_probabilities_dependencies)
+                set_of_parent_file_names.update(
+                    p.name for p in hi_l3_survival_probabilities_dependencies.dependency_file_paths)
             case MapDescriptorParts(survival_correction=SurvivalCorrection.SurvivalCorrected,
                                     sensor=Sensor.Hi90 | Sensor.Hi45,
                                     spin_phase=SpinPhase.FullSpin,
@@ -37,8 +44,11 @@ class HiProcessor(Processor):
                 hi_l3_full_spin_dependencies = HiL3SingleSensorFullSpinDependencies.fetch_dependencies(
                     self.dependencies)
                 data_product = self._process_full_spin_single_sensor(hi_l3_full_spin_dependencies)
+                set_of_parent_file_names.update(p.name for p in hi_l3_full_spin_dependencies.dependency_file_paths)
             case _:
                 raise NotImplementedError(self.input_metadata.descriptor)
+
+        data_product.parent_file_names = sorted(set_of_parent_file_names)
 
         cdf_path = save_data(data_product)
         upload(cdf_path)
