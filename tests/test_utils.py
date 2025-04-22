@@ -12,6 +12,7 @@ from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
 from imap_l3_processing.models import UpstreamDataDependency
 from imap_l3_processing.swapi.l3a.models import SwapiL3AlphaSolarWindData
 from imap_l3_processing.utils import format_time, download_dependency, read_l1d_mag_data, save_data, \
+    find_glows_l3e_dependencies, \
     download_external_dependency, download_dependency_from_path, download_dependency_with_repointing
 from imap_l3_processing.version import VERSION
 from tests.cdf.test_cdf_utils import TestDataProduct
@@ -293,3 +294,37 @@ class TestUtils(TestCase):
 
         self.assertEqual(mock_data_access.download.return_value, local_path)
         mock_data_access.download.assert_called_once_with(sentinel.sdc_path)
+
+    @patch('imap_l3_processing.utils.imap_data_access.query')
+    def test_find_glows_l3e_dependencies(self, mock_data_access_query):
+        l1c_90sensor_file_paths = ["imap_hi_l1c_90sensor-pset_20201001_v001.cdf",
+                                   "imap_hi_l1c_90sensor-pset_20201002_v002.cdf",
+                                   "imap_hi_l1c_90sensor-pset_20201003_v001.cdf"]
+        l1c_45sensor_file_paths = ["imap_hi_l1c_45sensor-pset_20210509_v001.cdf",
+                                   "imap_hi_l1c_45sensor-pset_20210508_v002.cdf",
+                                   "imap_hi_l1c_45sensor-pset_20210507_v001.cdf"]
+
+        test_cases = [
+            (l1c_90sensor_file_paths, "90", "20201001", "20201003", "hi"),
+            (l1c_45sensor_file_paths, "45", "20210507", "20210509", "hi"),
+            (l1c_90sensor_file_paths, "90", "20201001", "20201003", "ultra"),
+            (l1c_45sensor_file_paths, "45", "20210507", "20210509", "ultra"),
+        ]
+
+        mock_data_access_query.return_value = [{"file_path": "glows_1"},
+                                               {"file_path": "glows_2"},
+                                               {"file_path": "glows_3"}]
+
+        for l1c_file_paths, sensor, expected_start_date, expected_end_date, instrument in test_cases:
+            with self.subTest(f"sensor: {sensor}"):
+                glows_file_paths = find_glows_l3e_dependencies(l1c_file_paths, instrument)
+
+                mock_data_access_query.assert_called_with(instrument="glows",
+                                                          data_level="l3e",
+                                                          descriptor=f"survival-probabilities-{instrument}-{sensor}",
+                                                          start_date=expected_start_date,
+                                                          end_date=expected_end_date,
+                                                          version="latest")
+
+                self.assertEqual(["glows_1", "glows_2", "glows_3"],
+                                 glows_file_paths)

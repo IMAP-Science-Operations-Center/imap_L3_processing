@@ -3,7 +3,6 @@ from dataclasses import dataclass
 from datetime import datetime
 
 import numpy as np
-
 from imap_l3_processing.models import DataProduct, DataProductVariable
 
 EPOCH_VAR_NAME = "epoch"
@@ -140,12 +139,21 @@ def combine_maps(maps: list[HiL3SurvivalCorrectedDataProduct]) -> HiL3SurvivalCo
     intensity_sys_err = np.where(exposures == 0, 0, intensity_sys_err)
     intensity_stat_unc = np.where(exposures == 0, 0, intensity_stat_unc)
 
-    combined_intensity_stat_unc = np.sqrt((np.sum(np.square(intensity_stat_unc * exposures), axis=0) /
-                                           np.square(np.sum(exposures, axis=0))))
+    combined_intensity_stat_unc = np.sqrt(
+        safe_divide(np.sum(np.square(intensity_stat_unc * exposures), axis=0),
+                    np.square(np.sum(exposures, axis=0)))
+    )
+
+    ena_intensity = np.ma.average(intensities, weights=exposures, axis=0).filled(np.nan)
+    ena_intensity_sys_err = np.ma.average(intensity_sys_err, weights=exposures, axis=0).filled(np.nan)
 
     return dataclasses.replace(first_map,
-                               ena_intensity=np.average(intensities, axis=0, weights=exposures),
+                               ena_intensity=ena_intensity,
                                exposure_factor=np.sum(exposures, axis=0),
-                               ena_intensity_sys_err=np.average(intensity_sys_err, axis=0, weights=exposures),
+                               ena_intensity_sys_err=ena_intensity_sys_err,
                                ena_intensity_stat_unc=combined_intensity_stat_unc
                                )
+
+
+def safe_divide(numerator: np.ndarray, denominator: np.ndarray) -> np.ndarray:
+    return np.divide(numerator, denominator, where=denominator != 0, out=np.full(denominator.shape, np.nan))

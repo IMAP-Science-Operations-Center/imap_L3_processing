@@ -1,11 +1,10 @@
 import numpy as np
 import xarray as xr
+from imap_l3_processing.hi.l3.models import HiL1cData, GlowsL3eData
+from imap_l3_processing.hi.l3.utils import Sensor, SpinPhase
 from imap_processing.ena_maps.ena_maps import RectangularSkyMap, PointingSet
 from imap_processing.ena_maps.utils.coordinates import CoordNames
 from imap_processing.spice import geometry
-
-from imap_l3_processing.hi.l3.models import HiL1cData, GlowsL3eData
-from imap_l3_processing.hi.l3.utils import Sensor, SpinPhase
 
 
 class HiSurvivalProbabilityPointingSet(PointingSet):
@@ -21,7 +20,9 @@ class HiSurvivalProbabilityPointingSet(PointingSet):
                 glows_dataset.probability_of_survival[0, :, spin_angle_index], )
         survival_probabilities = np.repeat(survival_probabilities, 10, axis=2)
 
-        exposure_mask = np.full((3600,), False)
+        num_spin_angle_bins = l1c_dataset.exposure_times.shape[-1]
+
+        exposure_mask = np.full(num_spin_angle_bins, False)
 
         if spin_phase == SpinPhase.RamOnly:
             exposure_mask[0:900] = True
@@ -33,17 +34,20 @@ class HiSurvivalProbabilityPointingSet(PointingSet):
 
         exposure = l1c_dataset.exposure_times * exposure_mask
 
-        azimuth_range = (0, 360)
-        deg_spacing = 0.1
+        spin_angle_range = (0, 360)
+        deg_spacing = 360 / num_spin_angle_bins
 
         half_bin_width = deg_spacing / 2
 
+        spin_angles = np.linspace(spin_angle_range[0], spin_angle_range[1], num_spin_angle_bins,
+                                  endpoint=False) + half_bin_width
+
         sensor_angle = Sensor.get_sensor_angle(sensor.value)
-        self.azimuths = np.arange(*azimuth_range, deg_spacing) + half_bin_width
-        self.elevations = np.repeat(sensor_angle, 3600)
+        self.azimuths = spin_angles + 90
+        self.elevations = np.repeat(sensor_angle, num_spin_angle_bins)
         self.az_el_points = np.column_stack([self.azimuths, self.elevations])
 
-        self.num_points = l1c_dataset.exposure_times.shape[-1]
+        self.num_points = num_spin_angle_bins
         self.spatial_coords = [CoordNames.AZIMUTH_L1C.value]
 
         self.data = xr.Dataset({
