@@ -43,7 +43,7 @@ class TestSweL3Dependencies(unittest.TestCase):
         swe_l1b_dependency = ScienceInput("imap_swe_l1b_sci_20200101_v000.cdf")
         mag_l1d_dependency = ScienceInput("imap_mag_l1d_norm-mago_20200101_v000.cdf")
         swapi_l3a_dependency = ScienceInput("imap_swapi_l3_proton-sw_20200101_v000.cdf")
-        config_dependency = AncillaryInput("imap_swe_config-json-not-cdf_20200101_v000.cdf")
+        config_dependency = AncillaryInput("imap_swe_config_20250101_v000.json")
 
         processing_input_collection = ProcessingInputCollection(swe_l2_dependency, swe_l1b_dependency,
                                                                 mag_l1d_dependency, swapi_l3a_dependency,

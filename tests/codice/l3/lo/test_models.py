@@ -7,8 +7,9 @@ from unittest.mock import Mock, sentinel
 import numpy as np
 from spacepy.pycdf import CDF
 
-from imap_l3_processing.codice.l3.lo.models import CodiceLoL2Data, CodiceLoL3aDataProduct, CodiceLoL2DirectEventData, \
-    CodiceLoL2bPriorityRates
+from imap_l3_processing.codice.l3.lo.models import CodiceLoL2Data, CodiceLoL3aPartialDensityDataProduct, \
+    CodiceLoL2DirectEventData, \
+    CodiceLoL2bPriorityRates, PriortyEvent, EnergyAndSpinAngle
 
 
 class TestModels(unittest.TestCase):
@@ -81,7 +82,6 @@ class TestModels(unittest.TestCase):
             rng = np.random.default_rng()
             with CDF(str(cdf_file_path), readonly=False, masterpath="") as cdf_file:
                 epoch = np.array([datetime(2011, 5, 5), datetime(2011, 5, 6)])
-                epoch_delta = np.repeat(len(epoch), 2)
                 cdf_file['epoch'] = epoch
                 expected_event_num = np.arange(77)
                 cdf_file['event_num'] = expected_event_num
@@ -119,17 +119,52 @@ class TestModels(unittest.TestCase):
 
             # @formatter:off
             for index in range(8):
-                np.testing.assert_array_equal(getattr(result, f"p{index}_apdenergy"), expected_values[f"P{index}_APDEnergy"])
-                np.testing.assert_array_equal(getattr(result, f"p{index}_apdgain"), expected_values[f"P{index}_APDGain"])
-                np.testing.assert_array_equal(getattr(result, f"p{index}_apd_id"), expected_values[f"P{index}_APD_ID"])
-                np.testing.assert_array_equal(getattr(result, f"p{index}_dataquality"),expected_values[f"P{index}_DataQuality"])
-                np.testing.assert_array_equal(getattr(result, f"p{index}_energystep"), expected_values[f"P{index}_EnergyStep"])
-                np.testing.assert_array_equal(getattr(result, f"p{index}_multiflag"), expected_values[f"P{index}_MultiFlag"])
-                np.testing.assert_array_equal(getattr(result, f"p{index}_numevents"), expected_values[f"P{index}_NumEvents"])
-                np.testing.assert_array_equal(getattr(result, f"p{index}_phatype"), expected_values[f"P{index}_PHAType"])
-                np.testing.assert_array_equal(getattr(result, f"p{index}_spinangle"), expected_values[f"P{index}_SpinAngle"])
-                np.testing.assert_array_equal(getattr(result, f"p{index}_tof"), expected_values[f"P{index}_TOF"])
+                priority_event = getattr(result, f"priority_event_{index}")
+                np.testing.assert_array_equal(priority_event.apd_energy, expected_values[f"P{index}_APDEnergy"])
+                np.testing.assert_array_equal(priority_event.apd_gain, expected_values[f"P{index}_APDGain"])
+                np.testing.assert_array_equal(priority_event.apd_id, expected_values[f"P{index}_APD_ID"])
+                np.testing.assert_array_equal(priority_event.data_quality,expected_values[f"P{index}_DataQuality"])
+                np.testing.assert_array_equal(priority_event.energy_step, expected_values[f"P{index}_EnergyStep"])
+                np.testing.assert_array_equal(priority_event.multi_flag, expected_values[f"P{index}_MultiFlag"])
+                np.testing.assert_array_equal(priority_event.num_events, expected_values[f"P{index}_NumEvents"])
+                np.testing.assert_array_equal(priority_event.pha_type, expected_values[f"P{index}_PHAType"])
+                np.testing.assert_array_equal(priority_event.spin_angle, expected_values[f"P{index}_SpinAngle"])
+                np.testing.assert_array_equal(priority_event.tof, expected_values[f"P{index}_TOF"])
             # @formatter:on
+
+    def test_codice_lo_l2_direct_event_priority_events(self):
+        expected_events = [Mock(), Mock(), Mock(), Mock(), Mock(), Mock(), Mock(), Mock()]
+        event_data = CodiceLoL2DirectEventData(Mock(), Mock(), *expected_events)
+
+        self.assertEqual(expected_events, event_data.priority_events)
+
+    def test_calculate_total_number_of_events(self):
+        energy_step = np.array([[1, 4, 4, 2, 0],
+                                [4, 4, 1, 2, np.nan]])
+
+        spin_angle = np.array([[0, 30, 30, 40, 0],
+                               [30, 30, 50, 40, np.nan]])
+
+        priority_event = PriortyEvent(np.array([]), np.array([]), np.array([]), np.array([]), energy_step,
+                                      np.array([]), np.array([]), np.array([]), spin_angle, np.array([]))
+
+        expected_total_events_by_energy_step_and_spin_angle = [
+            {
+                EnergyAndSpinAngle(energy=1, spin_angle=0): 1,
+                EnergyAndSpinAngle(energy=4, spin_angle=30): 2,
+                EnergyAndSpinAngle(energy=2, spin_angle=40): 1,
+                EnergyAndSpinAngle(energy=0, spin_angle=0): 1,
+            },
+            {
+                EnergyAndSpinAngle(energy=4, spin_angle=30): 2,
+                EnergyAndSpinAngle(energy=1, spin_angle=50): 1,
+                EnergyAndSpinAngle(energy=2, spin_angle=40): 1,
+            }
+        ]
+        # print(np.stack((spin_angle, energy_step), axis=-1))
+
+        self.assertEqual(expected_total_events_by_energy_step_and_spin_angle,
+                         priority_event.total_events_binned_by_energy_step_and_spin_angle)
 
     def test_get_species(self):
         h_intensities = np.array([sentinel.h_intensities])
@@ -167,7 +202,7 @@ class TestModels(unittest.TestCase):
         np.testing.assert_array_equal(species_intensities['Fe (low Q)'], fe_low_intensities)
         np.testing.assert_array_equal(species_intensities['Fe (high Q)'], fe_high_intensities)
 
-    def test_codice_lo_l3a_to_data_product(self):
+    def test_codice_lo_l3a_partial_density_to_data_product(self):
         epoch_data = np.array([datetime.now()])
 
         input_data_product_kwargs = {
@@ -188,7 +223,7 @@ class TestModels(unittest.TestCase):
             "fe_high_partial_density": np.array([15]),
         }
 
-        data_product = CodiceLoL3aDataProduct(
+        data_product = CodiceLoL3aPartialDensityDataProduct(
             **input_data_product_kwargs
         )
         actual_data_product_variables = data_product.to_data_product_variables()
