@@ -4,7 +4,7 @@ from unittest import TestCase
 from unittest.mock import patch, sentinel, call
 
 import numpy as np
-from imap_data_access.processing_input import ProcessingInputCollection, ScienceInput
+from imap_data_access.processing_input import ProcessingInputCollection, ScienceInput, AncillaryInput
 from uncertainties import ufloat
 from uncertainties.unumpy import uarray, nominal_values, std_devs
 
@@ -118,19 +118,22 @@ class TestSwapiProcessor(TestCase):
             [17, 18, 19]
         ])
 
+        science_input = ScienceInput(
+            f'imap_{instrument}_{incoming_data_level}_{SWAPI_L2_DESCRIPTOR}_{dependency_start_date}_{version}.cdf')
+
         input_file_names = [
             f'imap_{instrument}_{incoming_data_level}_{SWAPI_L2_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
-            f'imap_{instrument}_{incoming_data_level}_{PROTON_TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
-            f'imap_{instrument}_{incoming_data_level}_{ALPHA_TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
-            f'imap_{instrument}_{incoming_data_level}_{CLOCK_ANGLE_AND_FLOW_DEFLECTION_LOOKUP_TABLE_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
-            f'imap_{instrument}_{incoming_data_level}_{GEOMETRIC_FACTOR_LOOKUP_TABLE_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
-            f'imap_{instrument}_{incoming_data_level}_{INSTRUMENT_RESPONSE_LOOKUP_TABLE_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
-            f'imap_{instrument}_{incoming_data_level}_{DENSITY_OF_NEUTRAL_HELIUM_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
+            f'imap_{instrument}_{PROTON_TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
+            f'imap_{instrument}_{ALPHA_TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
+            f'imap_{instrument}_{CLOCK_ANGLE_AND_FLOW_DEFLECTION_LOOKUP_TABLE_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
+            f'imap_{instrument}_{GEOMETRIC_FACTOR_LOOKUP_TABLE_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
+            f'imap_{instrument}_{INSTRUMENT_RESPONSE_LOOKUP_TABLE_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
+            f'imap_{instrument}_{DENSITY_OF_NEUTRAL_HELIUM_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
         ]
 
-        science_inputs = [ScienceInput(file_name) for file_name in input_file_names]
+        ancillary_inputs = [AncillaryInput(file_name) for file_name in input_file_names[1:]]
 
-        dependencies = ProcessingInputCollection(*science_inputs)
+        dependencies = ProcessingInputCollection(science_input, *ancillary_inputs)
 
         input_metadata = InputMetadata(instrument, outgoing_data_level, start_date, end_date, input_version)
 

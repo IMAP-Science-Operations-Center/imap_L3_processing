@@ -27,6 +27,16 @@ class TestSwapiL3ADependencies(unittest.TestCase):
         data_level = 'l2'
         version = 'v010'
 
+        mock_download.side_effect = [
+            sentinel.swapi_l2_data,
+            sentinel.proton_density_and_temperature_calibration_file,
+            sentinel.alpha_density_and_temperature_calibration_file,
+            sentinel.clock_and_deflection_file,
+            sentinel.geometric_factor_calibration_table,
+            sentinel.instrument_response_table,
+            sentinel.neutral_helium_table,
+        ]
+
         swapi_science_file_download_path = f"{mission}_{instrument}_{data_level}_{SWAPI_L2_DESCRIPTOR}_{start_date}_{version}.cdf"
         swapi_clock_angle_calibration_table_file_name = f"{mission}_{instrument}_{data_level}_{CLOCK_ANGLE_AND_FLOW_DEFLECTION_LOOKUP_TABLE_DESCRIPTOR}_{start_date}_{version}.cdf"
         swapi_alpha_temp_density_calibration_file_name = f"{mission}_{instrument}_{data_level}_{ALPHA_TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR}_{start_date}_{version}.cdf"
@@ -72,13 +82,13 @@ class TestSwapiL3ADependencies(unittest.TestCase):
         ])
 
         mock_from_file_paths.assert_called_with(
-            expected_download_science_path,
-            expected_download_ancillary_path1,
-            expected_download_ancillary_path2,
-            expected_download_ancillary_path3,
-            expected_download_ancillary_path4,
-            expected_download_ancillary_path5,
-            expected_download_ancillary_path6,
+            sentinel.swapi_l2_data,
+            sentinel.proton_density_and_temperature_calibration_file,
+            sentinel.alpha_density_and_temperature_calibration_file,
+            sentinel.clock_and_deflection_file,
+            sentinel.geometric_factor_calibration_table,
+            sentinel.instrument_response_table,
+            sentinel.neutral_helium_table,
         )
 
         self.assertEqual(mock_from_file_paths.return_value, actual_swapi_l3_dependencies)
