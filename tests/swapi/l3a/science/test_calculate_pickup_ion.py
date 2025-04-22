@@ -347,7 +347,7 @@ class TestCalculatePickupIon(SpiceTestCase):
             instrument_response_collection = InstrumentResponseLookupTableCollection.from_file(response_lut_path)
 
             geometric_factor_lut_path = Path(
-                imap_l3_processing.__file__).parent.parent / 'tests' / 'test_data' / 'swapi' / "imap_swapi_l2_energy-gf-lut-not-cdf_20240923_v002.cdf"
+                imap_l3_processing.__file__).parent.parent / 'tests' / 'test_data' / 'swapi' / "imap_swapi_energy-gf-lut_20240923_v000.dat"
 
             geometric_factor_lut = GeometricFactorCalibrationTable.from_file(geometric_factor_lut_path)
             background_count_rate_cutoff = 0.1
@@ -498,12 +498,12 @@ class TestCalculatePickupIon(SpiceTestCase):
             count_rate = cdf["swp_coin_rate"][...]
 
             response_lut_path = get_test_data_path(
-                "swapi/imap_swapi_l2_instrument-response-lut-zip-not-cdf_20241023_v001.cdf")
+                "swapi/imap_swapi_instrument-response-lut_20241023_v000.zip")
 
             instrument_response_collection = InstrumentResponseLookupTableCollection.from_file(response_lut_path)
 
             geometric_factor_lut_path = get_test_data_path(
-                "swapi/imap_swapi_l2_energy-gf-lut-not-cdf_20240923_v002.cdf")
+                "swapi/imap_swapi_energy-gf-lut_20240923_v000.dat")
 
             geometric_factor_lut = GeometricFactorCalibrationTable.from_file(geometric_factor_lut_path)
             background_count_rate_cutoff = 0.1
