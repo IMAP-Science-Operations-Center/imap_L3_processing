@@ -57,7 +57,7 @@ class TestL3eUltraModel(unittest.TestCase):
              25.4914514, 33.1831812, 43.1957952, 56.2295915, 73.1961745, 95.2822137, 124.0324417, 161.4576950,
              210.1755551, 273.5934261, 356.1468544])
 
-        row_1_expected_latitude = 87.07582
+        row_1_expected_latitude = 87.07581964
         row_1_expected_longitude = 45.00000
         row_1_probability_of_survival = np.array(
             [0.86450643E+00, 0.87973395E+00, 0.89379058E+00, 0.90690377E+00, 0.91915602E+00, 0.93067239E+00,
@@ -65,15 +65,15 @@ class TestL3eUltraModel(unittest.TestCase):
              0.98846694E+00, 0.99120292E+00, 0.99291842E+00, 0.99405812E+00, 0.99489599E+00, 0.99556132E+00,
              0.99611769E+00, 0.99659974E+00])
 
-        row_915_expected_latitude = np.nan
-        row_915_expected_longitude = np.nan
+        row_915_expected_latitude = 24.62431835
+        row_915_expected_longitude = 289.6875
 
         row_915_probability_of_survival = np.array([np.nan, np.nan, np.nan, np.nan, np.nan, np.nan,
                                                     np.nan, np.nan, np.nan, np.nan, np.nan, np.nan,
                                                     np.nan, np.nan, np.nan, np.nan, np.nan, np.nan,
                                                     np.nan, np.nan])
 
-        row_3071_expected_latitude = -87.07582
+        row_3071_expected_latitude = -87.07581964
         row_3071_expected_longitude = 315.00000
         row_3071_expected_probability_of_survival = np.array([
             0.87503997, 0.88938004, 0.90261715, 0.91481741, 0.92617171, 0.93674534, 0.94667530, 0.95597378, 0.96467314,
@@ -99,16 +99,16 @@ class TestL3eUltraModel(unittest.TestCase):
 
         self.assertEqual(expected_survival_probability_shape, l3e_ul_product.probability_of_survival.shape)
 
-        np.testing.assert_array_equal(l3e_ul_product.longitude[0], row_1_expected_longitude)
-        np.testing.assert_array_equal(l3e_ul_product.latitude[0], row_1_expected_latitude)
+        np.testing.assert_allclose(l3e_ul_product.longitude[0], row_1_expected_longitude, atol=1e-6)
+        np.testing.assert_allclose(l3e_ul_product.latitude[0], row_1_expected_latitude, atol=1e-6)
         np.testing.assert_array_equal(l3e_ul_product.probability_of_survival[0].T[0, :], row_1_probability_of_survival)
 
-        np.testing.assert_array_equal(l3e_ul_product.longitude[915], row_915_expected_longitude)
-        np.testing.assert_array_equal(l3e_ul_product.latitude[915], row_915_expected_latitude)
+        np.testing.assert_allclose(l3e_ul_product.longitude[915], row_915_expected_longitude, atol=1e-6)
+        np.testing.assert_allclose(l3e_ul_product.latitude[915], row_915_expected_latitude, atol=1e-6)
         np.testing.assert_array_equal(l3e_ul_product.probability_of_survival[0].T[915, :],
                                       row_915_probability_of_survival)
 
-        np.testing.assert_array_equal(l3e_ul_product.longitude[3071], row_3071_expected_longitude)
-        np.testing.assert_array_equal(l3e_ul_product.latitude[3071], row_3071_expected_latitude)
+        np.testing.assert_allclose(l3e_ul_product.longitude[3071], row_3071_expected_longitude, atol=1e-6)
+        np.testing.assert_allclose(l3e_ul_product.latitude[3071], row_3071_expected_latitude, atol=1e-6)
         np.testing.assert_array_equal(l3e_ul_product.probability_of_survival[0].T[3071, :],
                                       row_3071_expected_probability_of_survival)

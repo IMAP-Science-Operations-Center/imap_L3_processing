@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 import numpy as np
+from astropy_healpix import HEALPix
 
 from imap_l3_processing.models import DataProduct, DataProductVariable, InputMetadata
 
@@ -33,32 +34,37 @@ class GlowsL3EUltraData(DataProduct):
                                             epoch: np.ndarray[datetime],
                                             epoch_delta: np.ndarray[timedelta]):
         with open(file_path) as input_data:
-            energy_line = [line for line in input_data.readlines() if line.startswith("#energy_grid")]
+            lines = input_data.readlines()
+
+            energy_line = [line for line in lines if line.startswith("#energy_grid")]
             energies = np.array([float(i) for i in re.findall(r"\d+.\d+", energy_line[0])])
+
+            tesselation_line = [line for line in lines if line.startswith("# Numerical parameters")]
+            nside = [int(i) for i in re.findall(r"\d+", tesselation_line[0])][0]
+
+        num_pixels = 12 * (nside ** 2)
+
+        healpix_pixels = np.arange(num_pixels)
+
+        healpix_grid = HEALPix(nside)
+        longitude, latitude = healpix_grid.healpix_to_lonlat(healpix_pixels)
 
         data_table = np.loadtxt(file_path, skiprows=200)
 
         healpix_indexes = np.arange(0, 3072)
 
         existing_healpix = data_table[:, 0]
-        existing_latitudes = data_table[:, 1]
-        existing_longitudes = data_table[:, 2]
         probability_of_survival = data_table[:, 3:-1]
 
-        latitude_to_return = np.full_like(healpix_indexes, np.nan, dtype=float)
-        longitude_to_return = np.full_like(healpix_indexes, np.nan, dtype=float)
         probability_of_survival_to_return = np.full((len(energies), len(healpix_indexes)), np.nan, dtype=float)
 
-        for healpix, latitude, longitude, prob_sur in zip(existing_healpix, existing_latitudes, existing_longitudes,
-                                                          probability_of_survival):
-            latitude_to_return[int(healpix)] = latitude
-            longitude_to_return[int(healpix)] = longitude
+        for healpix, prob_sur in zip(existing_healpix, probability_of_survival):
             probability_of_survival_to_return[:, int(healpix)] = prob_sur
 
         transposed_prob_sur = np.array([probability_of_survival_to_return])
 
         return cls(input_metadata, epoch, epoch_delta.astype('timedelta64[ns]').astype(float), energies,
-                   latitude_to_return, longitude_to_return,
+                   np.rad2deg(latitude.value), np.rad2deg(longitude.value),
                    healpix_indexes, transposed_prob_sur)
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
