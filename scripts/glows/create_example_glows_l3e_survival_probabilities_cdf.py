@@ -12,7 +12,7 @@ from tests.test_helpers import get_test_data_path
 
 
 def create_survival_probabilities_file(glows_file_path: Path, date_for_file: datetime, sensor: str):
-    filename = f"imap_glows_l3e_survival-probabilities-hi-{sensor}_{date_for_file.strftime("%Y%m%d")}_v001.cdf"
+    filename = f"imap_glows_l3e_survival-probabilities-hi-{sensor}_{date_for_file.strftime('%Y%m%d')}_v001.cdf"
     cdf_file_path = get_test_data_path(f"hi/fake_l3e_survival_probabilities/{sensor}/{filename}")
 
     cdf_file_path.unlink(missing_ok=True)

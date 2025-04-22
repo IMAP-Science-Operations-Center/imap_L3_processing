@@ -395,6 +395,7 @@ class TestImapL3DataProcessor(TestCase):
         version_argument = "v001"
         descriptor_argument = "A descriptor"
         science_input = ScienceInput("imap_codice_l2_science_20250101_v001.cdf")
+
         imap_data_access_dependency = ProcessingInputCollection(science_input)
         mock_processing_input_collection.return_value = imap_data_access_dependency
         mock_processing_input_collection.deserialize = Mock()
@@ -418,6 +419,40 @@ class TestImapL3DataProcessor(TestCase):
         mock_processor_class.assert_called_with(imap_data_access_dependency,
                                                 expected_input_metadata)
         mock_processor_class.return_value.process.assert_called()
+
+    @patch('imap_l3_data_processor.UltraProcessor')
+    @patch('imap_l3_data_processor.argparse')
+    @patch('imap_l3_data_processor.ProcessingInputCollection')
+    def test_runs_ultra_processor_when_argument_is_ultra(self, mock_processing_input_collection, mock_argparse,
+                                                         mock_ultra_processor):
+        instrument_arg = "ultra"
+        start_date_arg = "20250418"
+        version_arg = "v001"
+        descriptor_arg = "desc"
+        science_input = ScienceInput("imap_ultra_l3_science_20250418_v001.cdf")
+
+        processing_input_collection = ProcessingInputCollection(science_input)
+        mock_processing_input_collection.return_value = processing_input_collection
+        mock_processing_input_collection.deserialize = Mock()
+        mock_processing_input_collection.get_science_inputs = Mock(return_value=[])
+
+        mock_argument_parser = mock_argparse.ArgumentParser.return_value
+        mock_argument_parser.parse_args.return_value.instrument = instrument_arg
+        mock_argument_parser.parse_args.return_value.dependency = processing_input_collection.serialize()
+        mock_argument_parser.parse_args.return_value.start_date = start_date_arg
+        mock_argument_parser.parse_args.return_value.version = version_arg
+        mock_argument_parser.parse_args.return_value.descriptor = descriptor_arg
+
+        mock_argument_parser.parse_args.return_value.data_level = "l3"
+        mock_argument_parser.parse_args.return_value.end_date = None
+
+        imap_l3_processor()
+
+        expected_input_metadata = InputMetadata("ultra", "l3", datetime(year=2025, month=4, day=18),
+                                                datetime(year=2025, month=4, day=18), "v001", descriptor_arg)
+
+        mock_ultra_processor.assert_called_with(processing_input_collection, expected_input_metadata)
+        mock_ultra_processor.return_value.process.assert_called()
 
     @patch('imap_l3_data_processor.argparse')
     def test_throws_exception_for_unimplemented_instrument(self, mock_argparse):
