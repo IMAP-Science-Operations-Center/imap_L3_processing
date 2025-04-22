@@ -390,13 +390,15 @@ class TestGlowsProcessor(unittest.TestCase):
     @patch('imap_l3_processing.glows.glows_processor.imap_data_access.upload')
     @patch("imap_l3_processing.glows.glows_processor.GlowsL3ELoData.convert_dat_to_glows_l3e_lo_product")
     @patch("imap_l3_processing.glows.glows_processor.GlowsL3EHiData.convert_dat_to_glows_l3e_hi_product")
+    @patch("imap_l3_processing.glows.glows_processor.GlowsL3EUltraData.convert_dat_to_glows_l3e_ul_product")
     @patch("imap_l3_processing.glows.glows_processor.spice_wrapper")
     @patch("imap_l3_processing.glows.glows_processor.run")
     @patch("imap_l3_processing.glows.glows_processor.determine_call_args_for_l3e_executable")
     @patch("imap_l3_processing.glows.glows_processor.get_repoint_date_range")
     @patch("imap_l3_processing.glows.glows_processor.GlowsL3EDependencies")
     def test_process_l3e(self, mock_l3e_dependencies, mock_get_repoint_date_range, mock_determine_call_args, mock_run,
-                         mock_spice_wrapper, mock_convert_dat_to_glows_l3e_hi_product,
+                         mock_spice_wrapper, mock_convert_dat_to_glows_l3e_ul_product,
+                         mock_convert_dat_to_glows_l3e_hi_product,
                          mock_convert_dat_to_glows_l3e_lo_product, mock_upload, mock_save_data):
         input_metadata = InputMetadata('glows', "l3e", datetime(2024, 10, 7, 10, 00, 00),
                                        datetime(2024, 10, 8, 10, 00, 00),
@@ -427,10 +429,11 @@ class TestGlowsProcessor(unittest.TestCase):
 
         mock_determine_call_args.side_effect = [call_args_1, call_args_2, call_args_3, call_args_4]
 
+        mock_convert_dat_to_glows_l3e_ul_product.side_effect = [sentinel.ultra_data]
         mock_convert_dat_to_glows_l3e_hi_product.side_effect = [sentinel.hi_45_data, sentinel.hi_90_data]
         mock_convert_dat_to_glows_l3e_lo_product.side_effect = [sentinel.lo_data]
 
-        mock_save_data.side_effect = [sentinel.lo_path, sentinel.hi45_path, sentinel.hi90_path]
+        mock_save_data.side_effect = [sentinel.lo_path, sentinel.hi45_path, sentinel.hi90_path, sentinel.ultra_path]
 
         processor = GlowsProcessor(dependencies=dependencies, input_metadata=input_metadata)
         processor.process()
@@ -478,14 +481,15 @@ class TestGlowsProcessor(unittest.TestCase):
                  np.array(epoch),
                  np.array(epoch_delta))
         ])
+
         expected_hi45_survival_probability = InputMetadata(input_metadata.instrument, input_metadata.data_level,
                                                            input_metadata.start_date,
                                                            input_metadata.end_date, input_metadata.version,
-                                                           descriptor="survival-probability-hi45")
+                                                           descriptor="survival-probability-hi-45")
         expected_hi90_survival_probability = InputMetadata(input_metadata.instrument, input_metadata.data_level,
                                                            input_metadata.start_date,
                                                            input_metadata.end_date, input_metadata.version,
-                                                           descriptor="survival-probability-hi90")
+                                                           descriptor="survival-probability-hi-90")
         mock_convert_dat_to_glows_l3e_hi_product.assert_has_calls([
             call(expected_hi45_survival_probability, Path("probSur.Imap.Hi_20241007_000000_2024.765_135.0.dat"),
                  np.array(epoch),
@@ -495,9 +499,22 @@ class TestGlowsProcessor(unittest.TestCase):
                  np.array(epoch_delta)),
         ])
 
-        mock_save_data.assert_has_calls([call(sentinel.lo_data), call(sentinel.hi_45_data), call(sentinel.hi_90_data)])
+        expected_ultra_survival_probability = InputMetadata(input_metadata.instrument, input_metadata.data_level,
+                                                            input_metadata.start_date,
+                                                            input_metadata.end_date, input_metadata.version,
+                                                            descriptor="survival-probability-ul")
 
-        mock_upload.assert_has_calls([call(sentinel.lo_path), call(sentinel.hi45_path), call(sentinel.hi90_path)])
+        mock_convert_dat_to_glows_l3e_ul_product.assert_has_calls([
+            call(expected_ultra_survival_probability, Path("probSur.Imap.Ul_20241007_000000_2024.765.dat"),
+                 np.array(epoch),
+                 np.array(epoch_delta)),
+        ])
+
+        mock_save_data.assert_has_calls(
+            [call(sentinel.lo_data), call(sentinel.hi_45_data), call(sentinel.hi_90_data), call(sentinel.ultra_data)])
+
+        mock_upload.assert_has_calls(
+            [call(sentinel.lo_path), call(sentinel.hi45_path), call(sentinel.hi90_path), call(sentinel.ultra_path)])
 
 
 if __name__ == '__main__':

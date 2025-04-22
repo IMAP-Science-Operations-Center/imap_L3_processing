@@ -14,7 +14,7 @@ from imap_l3_processing.utils import read_l1d_mag_data
 
 MAG_L1D_DESCRIPTOR = "norm-mago"
 SWAPI_L3A_PROTON_DESCRIPTOR = "proton-sw"
-SWE_CONFIG_DESCRIPTOR = "config-json-not-cdf"
+SWE_CONFIG_DESCRIPTOR = "config"
 
 
 @dataclass

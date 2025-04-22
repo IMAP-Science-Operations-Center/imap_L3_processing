@@ -317,13 +317,18 @@ class TestImapL3DataProcessor(TestCase):
 
     @patch('imap_l3_data_processor.HiProcessor')
     @patch('imap_l3_data_processor.argparse')
-    def test_runs_hi_processor_when_instrument_argument_is_hi(self, mock_argparse, mock_processor_class):
+    @patch('imap_l3_data_processor.ProcessingInputCollection')
+    def test_runs_hi_processor_when_instrument_argument_is_hi(self, mock_processing_input_collection,
+                                                              mock_argparse, mock_processor_class):
         instrument_argument = "hi"
         start_date_argument = "20160630"
         version_argument = "v001"
         descriptor_argument = "A descriptor"
         science_input = ScienceInput("imap_hi_l2_science_20250101_v001.cdf")
         imap_data_access_dependency = ProcessingInputCollection(science_input)
+        mock_processing_input_collection.return_value = imap_data_access_dependency
+        mock_processing_input_collection.deserialize = Mock()
+        mock_processing_input_collection.get_science_inputs = Mock(return_value=[])
 
         mock_argument_parser = mock_argparse.ArgumentParser.return_value
         mock_argument_parser.parse_args.return_value.instrument = instrument_argument
@@ -337,17 +342,10 @@ class TestImapL3DataProcessor(TestCase):
 
         imap_l3_processor()
 
-        expected_input_dependencies = [UpstreamDataDependency("hi",
-                                                              "l2",
-                                                              datetime(2025, 1, 1),
-                                                              datetime(2025, 1, 1),
-                                                              "v001",
-                                                              "science")]
-
         expected_input_metadata = InputMetadata("hi", "l3", datetime(year=2016, month=6, day=30),
                                                 datetime(year=2016, month=6, day=30), "v001", "A descriptor")
 
-        mock_processor_class.assert_called_with(expected_input_dependencies,
+        mock_processor_class.assert_called_with(imap_data_access_dependency,
                                                 expected_input_metadata)
         mock_processor_class.return_value.process.assert_called()
 
