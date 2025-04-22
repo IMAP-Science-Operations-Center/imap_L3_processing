@@ -1,3 +1,4 @@
+from datetime import datetime
 from pathlib import Path
 
 TEMP_CDF_FOLDER_PATH = Path(__file__).parent.parent / "temp_cdf_data"
@@ -36,6 +37,8 @@ HELIUM_INFLOW_LONGITUDE_DEGREES_IN_ECLIPJ2000 = 255.7
 HELIUM_INFLOW_LATITUDE_DEGREES_IN_ECLIPJ2000 = 5.1
 
 ONE_AU_IN_KM = 149_597_870.7
+
+TT2000_EPOCH = datetime(2000, 1, 12)
 
 FLOAT4_FILL_VALUE = -1.0E31
 FLOAT8_FILL_VALUE = -1.0E31
