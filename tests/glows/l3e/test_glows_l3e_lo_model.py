@@ -4,7 +4,7 @@ from unittest.mock import sentinel, Mock
 
 import numpy as np
 
-from imap_l3_processing.glows.l3e.l3e_glows_lo_model import GlowsL3ELoData
+from imap_l3_processing.glows.l3e.glows_l3e_lo_model import GlowsL3ELoData
 from imap_l3_processing.models import DataProductVariable
 from tests.test_helpers import get_test_instrument_team_data_path
 

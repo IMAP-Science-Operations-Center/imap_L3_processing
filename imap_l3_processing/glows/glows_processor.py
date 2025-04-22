@@ -22,8 +22,9 @@ from imap_l3_processing.glows.l3bc.science.generate_l3bc import generate_l3bc
 from imap_l3_processing.glows.l3bc.utils import make_l3b_data_with_fill, make_l3c_data_with_fill, get_repoint_date_range
 from imap_l3_processing.glows.l3e.glows_l3e_dependencies import GlowsL3EDependencies
 from imap_l3_processing.glows.l3e.glows_l3e_utils import determine_call_args_for_l3e_executable
-from imap_l3_processing.glows.l3e.l3e_glows_hi_model import GlowsL3EHiData
-from imap_l3_processing.glows.l3e.l3e_glows_lo_model import GlowsL3ELoData
+from imap_l3_processing.glows.l3e.glows_l3e_hi_model import GlowsL3EHiData
+from imap_l3_processing.glows.l3e.glows_l3e_lo_model import GlowsL3ELoData
+from imap_l3_processing.glows.l3e.glows_l3e_ultra_model import GlowsL3EUltraData
 from imap_l3_processing.models import UpstreamDataDependency
 from imap_l3_processing.processor import Processor
 from imap_l3_processing.utils import save_data
@@ -50,15 +51,17 @@ class GlowsProcessor(Processor):
                 imap_data_access.upload(l3c_cdf)
                 imap_data_access.upload(zip_file)
         elif self.input_metadata.data_level == "l3e":
-            lo_data, hi45_data, hi90_data = self.process_l3e()
+            lo_data, hi45_data, hi90_data, ultra_data = self.process_l3e()
 
             lo_cdf = save_data(lo_data)
             hi45_cdf = save_data(hi45_data)
             hi90_cdf = save_data(hi90_data)
+            ultra_cdf = save_data(ultra_data)
 
             imap_data_access.upload(lo_cdf)
             imap_data_access.upload(hi45_cdf)
             imap_data_access.upload(hi90_cdf)
+            imap_data_access.upload(ultra_cdf)
 
     def process_l3a(self, dependencies: GlowsL3ADependencies) -> GlowsL3LightCurve:
         data = dependencies.data
@@ -136,7 +139,7 @@ class GlowsProcessor(Processor):
             f'probSur.Imap.Hi_{hi45_call_args_array[0]}_{hi45_call_args_array[1][:8]}_{hi45_call_args_array[-1][:5]}.dat')
 
         hi45_input_metadata = copy(self.input_metadata)
-        hi45_input_metadata.descriptor = 'survival-probability-hi45'
+        hi45_input_metadata.descriptor = 'survival-probability-hi-45'
         hi_45_data = GlowsL3EHiData.convert_dat_to_glows_l3e_hi_product(hi45_input_metadata,
                                                                         hi_45_path,
                                                                         np.array([repointing_start_date]),
@@ -146,13 +149,24 @@ class GlowsProcessor(Processor):
             f'probSur.Imap.Hi_{hi90_call_args_array[0]}_{hi90_call_args_array[1][:8]}_{hi90_call_args_array[-1][:5]}.dat')
 
         hi90_input_metadata = copy(self.input_metadata)
-        hi90_input_metadata.descriptor = 'survival-probability-hi90'
+        hi90_input_metadata.descriptor = 'survival-probability-hi-90'
+
         hi_90_data = GlowsL3EHiData.convert_dat_to_glows_l3e_hi_product(hi90_input_metadata,
                                                                         hi_90_path,
                                                                         np.array([repointing_start_date]),
                                                                         np.array([epoch_delta]))
 
-        return lo_data, hi_45_data, hi_90_data
+        ultra_path = Path(
+            f'probSur.Imap.Ul_{ultra_call_args_array[0]}_{ultra_call_args_array[1][:8]}.dat')
+
+        ultra_input_metadata = copy(self.input_metadata)
+        ultra_input_metadata.descriptor = 'survival-probability-ul'
+        ultra_data = GlowsL3EUltraData.convert_dat_to_glows_l3e_ul_product(ultra_input_metadata,
+                                                                           ultra_path,
+                                                                           np.array([repointing_start_date]),
+                                                                           np.array([epoch_delta]))
+
+        return lo_data, hi_45_data, hi_90_data, ultra_data
 
     @staticmethod
     def add_spin_angle_delta(data: dict, ancillary_files: dict) -> dict:
