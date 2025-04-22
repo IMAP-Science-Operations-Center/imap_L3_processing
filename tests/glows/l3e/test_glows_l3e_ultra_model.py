@@ -23,6 +23,15 @@ class TestL3eUltraModel(unittest.TestCase):
             sentinel.probability_of_survival
         )
 
+        expected_energy_labels = ['Energy Label 1', 'Energy Label 2', 'Energy Label 3', 'Energy Label 4',
+                                  'Energy Label 5', 'Energy Label 6', 'Energy Label 7', 'Energy Label 8',
+                                  'Energy Label 9', 'Energy Label 10', 'Energy Label 11', 'Energy Label 12',
+                                  'Energy Label 13', 'Energy Label 14', 'Energy Label 15', 'Energy Label 16',
+                                  'Energy Label 17', 'Energy Label 18', 'Energy Label 19', 'Energy Label 20',
+                                  ]
+
+        expected_healpix_labels = [f'Heal Pixel Label {i}' for i in range(0, 3072)]
+
         data_products = l3e_ultra.to_data_product_variables()
         expected_data_products = [
             DataProductVariable("epoch", sentinel.epochs),
@@ -32,6 +41,8 @@ class TestL3eUltraModel(unittest.TestCase):
             DataProductVariable("longitude", sentinel.longitude),
             DataProductVariable("healpix_index", sentinel.healpix_index),
             DataProductVariable("probability_of_survival", sentinel.probability_of_survival),
+            DataProductVariable("energy_label", expected_energy_labels),
+            DataProductVariable("healpix_index_label", expected_healpix_labels),
         ]
 
         self.assertEqual(expected_data_products, data_products)
@@ -80,7 +91,7 @@ class TestL3eUltraModel(unittest.TestCase):
                                                                                                   expected_epoch,
                                                                                                   expected_time_delta)
         self.assertEqual(expected_epoch, l3e_ul_product.epoch)
-        self.assertEqual(expected_time_delta, l3e_ul_product.epoch_delta)
+        np.testing.assert_array_equal(l3e_ul_product.epoch_delta, np.array([12 * 60 * 60 * 1e9]))
 
         np.testing.assert_array_equal(l3e_ul_product.energy, expected_energy)
 

@@ -80,10 +80,10 @@ def process_csv():
         "hit-l3-macropixel": "imap_l3_processing/cdf/data_product_definition_csv/imap_hit_l3_macropixel_variable_attrs.csv",
         "hi-l3-survival-probability": "imap_l3_processing/cdf/data_product_definition_csv/imap_hi_l3_h90-sf-sp-hae-4deg-6mo_variable_attrs.csv",
         "hi-l3-spectral-index": "imap_l3_processing/cdf/data_product_definition_csv/imap_hi_l3_h90-hf-sp-hae-4deg-6mo-spectral_variable_attrs.csv",
-        "glows-l3e-lo": "imap_l3_processing/cdf/data_product_definition_csv/imap_glows_l3e_survival-probability-lo.csv",
-        "glows-l3e-hi-45": "imap_l3_processing/cdf/data_product_definition_csv/imap_glows_l3e_survival-probability-hi-45.csv",
-        "glows-l3e-hi-90": "imap_l3_processing/cdf/data_product_definition_csv/imap_glows_l3e_survival-probability-hi-90.csv",
-        "glows-l3e-ul": "imap_l3_processing/cdf/data_product_definition_csv/imap_glows_l3e_survival-probability-ul.csv",
+        "glows-l3e-lo": "imap_l3_processing/cdf/data_product_definition_csv/imap_glows_l3e_survival-probability-lo_variable_attrs.csv",
+        "glows-l3e-hi-45": "imap_l3_processing/cdf/data_product_definition_csv/imap_glows_l3e_survival-probability-hi-45_variable_attrs.csv",
+        "glows-l3e-hi-90": "imap_l3_processing/cdf/data_product_definition_csv/imap_glows_l3e_survival-probability-hi-90_variable_attrs.csv",
+        "glows-l3e-ul": "imap_l3_processing/cdf/data_product_definition_csv/imap_glows_l3e_survival-probability-ul_variable_attrs.csv",
     }
     file_path = instrument_to_file_path[args.instrument]
 

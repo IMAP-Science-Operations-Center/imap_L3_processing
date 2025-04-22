@@ -104,17 +104,20 @@ class GlowsProcessor(Processor):
 
         repointing_start_date, repointing_end_date = get_repoint_date_range(repointing)
 
+        repointing_start_date = repointing_start_date.astype(datetime)
+        repointing_end_date = repointing_end_date.astype(datetime)
+
         epoch_delta = (repointing_end_date - repointing_start_date) / 2
         mid_point = repointing_start_date + epoch_delta
 
-        lo_call_args = determine_call_args_for_l3e_executable(repointing_start_date.astype(datetime)
-                                                              , mid_point.astype(datetime), 90)
-        hi90_call_args = determine_call_args_for_l3e_executable(repointing_start_date.astype(datetime),
-                                                                mid_point.astype(datetime), 90)
-        hi45_call_args = determine_call_args_for_l3e_executable(repointing_start_date.astype(datetime),
-                                                                mid_point.astype(datetime), 135)
-        ultra_call_args = determine_call_args_for_l3e_executable(repointing_start_date.astype(datetime),
-                                                                 mid_point.astype(datetime), 30)
+        lo_call_args = determine_call_args_for_l3e_executable(repointing_start_date
+                                                              , mid_point, 90)
+        hi90_call_args = determine_call_args_for_l3e_executable(repointing_start_date,
+                                                                mid_point, 90)
+        hi45_call_args = determine_call_args_for_l3e_executable(repointing_start_date,
+                                                                mid_point, 135)
+        ultra_call_args = determine_call_args_for_l3e_executable(repointing_start_date,
+                                                                 mid_point, 30)
 
         lo_call_args_array = [arg for arg in lo_call_args.split(' ')]
         hi90_call_args_array = [arg for arg in hi90_call_args.split(' ')]

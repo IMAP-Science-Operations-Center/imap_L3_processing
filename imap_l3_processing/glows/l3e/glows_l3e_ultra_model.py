@@ -14,6 +14,8 @@ PROBABILITY_OF_SURVIVAL_VAR_NAME = "probability_of_survival"
 LATITUDE_VAR_NAME = "latitude"
 LONGITUDE_VAR_NAME = "longitude"
 HEALPIX_INDEX_VAR_NAME = "healpix_index"
+ENERGY_LABEL_VAR_NAME = "energy_label"
+SPIN_ANGLE_LABEL_VAR_NAME = "healpix_index_label"
 
 
 @dataclass
@@ -55,10 +57,13 @@ class GlowsL3EUltraData(DataProduct):
 
         transposed_prob_sur = np.array([probability_of_survival_to_return])
 
-        return cls(input_metadata, epoch, epoch_delta, energies, latitude_to_return, longitude_to_return,
+        return cls(input_metadata, epoch, epoch_delta.astype('timedelta64[ns]').astype(float), energies,
+                   latitude_to_return, longitude_to_return,
                    healpix_indexes, transposed_prob_sur)
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
+        energy_labels = [f"Energy Label {i}" for i in range(1, 21)]
+        spin_angle_labels = [f"Heal Pixel Label {i}" for i in range(0, 3072)]
         return [
             DataProductVariable(EPOCH_CDF_VAR_NAME, self.epoch),
             DataProductVariable(EPOCH_DELTA_CDF_VAR_NAME, self.epoch_delta),
@@ -66,5 +71,8 @@ class GlowsL3EUltraData(DataProduct):
             DataProductVariable(LATITUDE_VAR_NAME, self.latitude),
             DataProductVariable(LONGITUDE_VAR_NAME, self.longitude),
             DataProductVariable(HEALPIX_INDEX_VAR_NAME, self.healpix_index),
-            DataProductVariable(PROBABILITY_OF_SURVIVAL_VAR_NAME, self.probability_of_survival)
+            DataProductVariable(PROBABILITY_OF_SURVIVAL_VAR_NAME, self.probability_of_survival),
+            DataProductVariable(ENERGY_LABEL_VAR_NAME, energy_labels),
+            DataProductVariable(SPIN_ANGLE_LABEL_VAR_NAME, spin_angle_labels)
+
         ]
