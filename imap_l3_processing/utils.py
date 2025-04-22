@@ -6,6 +6,7 @@ from urllib.error import URLError
 from urllib.request import urlretrieve
 
 import imap_data_access
+from imap_data_access import ScienceFilePath
 from spacepy.pycdf import CDF
 from spiceypy import spiceypy
 
@@ -105,3 +106,22 @@ def read_l1d_mag_data(cdf_path: Union[str, Path]) -> MagL1dData:
         return MagL1dData(
             epoch=cdf['epoch'][...],
             mag_data=read_numeric_variable(cdf["vectors"])[:, :3])
+
+
+def find_glows_l3e_dependencies(l1c_filenames: list[str], instrument: str) -> list[str]:
+    dates = [datetime.strptime(ScienceFilePath(l1c_filename).start_date, "%Y%m%d") for l1c_filename in l1c_filenames]
+
+    start_date = min(dates).strftime("%Y%m%d")
+    end_date = max(dates).strftime("%Y%m%d")
+
+    sensor = l1c_filenames[0].split("_")[3][:2]
+    descriptor = f"survival-probabilities-{instrument}-{sensor}"
+
+    survival_probabilities = [result["file_path"] for result in imap_data_access.query(instrument="glows",
+                                                                                       data_level="l3e",
+                                                                                       descriptor=descriptor,
+                                                                                       start_date=start_date,
+                                                                                       end_date=end_date,
+                                                                                       version="latest")]
+
+    return survival_probabilities

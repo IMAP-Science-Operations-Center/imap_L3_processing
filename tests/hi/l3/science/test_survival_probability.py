@@ -3,15 +3,14 @@ from datetime import datetime
 from unittest.mock import patch, sentinel, call, MagicMock
 
 import numpy as np
-from imap_processing.ena_maps.ena_maps import RectangularSkyMap, PointingSet
-from imap_processing.ena_maps.utils.coordinates import CoordNames
-from imap_processing.spice import geometry
-from imap_processing.spice.geometry import SpiceFrame
-
 from imap_l3_processing.hi.l3.models import HiL1cData, GlowsL3eData
 from imap_l3_processing.hi.l3.science.survival_probability import Sensor, \
     HiSurvivalProbabilitySkyMap, HiSurvivalProbabilityPointingSet
 from imap_l3_processing.hi.l3.utils import SpinPhase
+from imap_processing.ena_maps.ena_maps import RectangularSkyMap, PointingSet
+from imap_processing.ena_maps.utils.coordinates import CoordNames
+from imap_processing.spice import geometry
+from imap_processing.spice.geometry import SpiceFrame
 
 
 class TestSurvivalProbability(unittest.TestCase):
@@ -71,7 +70,7 @@ class TestSurvivalProbability(unittest.TestCase):
                     self.l1c_hi_dataset.exposure_times * expected_mask)
 
                 self.assertIn(CoordNames.AZIMUTH_L1C.value, pointing_set.data.coords)
-                np.testing.assert_array_equal(np.arange(0, 360, 0.1) + 0.05,
+                np.testing.assert_array_equal(np.arange(0, 360, 0.1) + 0.05 + 90,
                                               pointing_set.data[CoordNames.AZIMUTH_L1C.value].values)
 
                 self.assertIn(CoordNames.ENERGY.value, pointing_set.data.coords)
@@ -156,23 +155,30 @@ class TestSurvivalProbability(unittest.TestCase):
         pset1.data = pset1.data.assign(
             exposure=2 * pset1.data["exposure"])
 
-        summed_survivals = np.empty((1, 2, 3600, 1800))
-        summed_survivals[0, :, :, 900] = pset1.data["survival_probability_times_exposure"].values + pset2.data[
+        summed_pset_survival_prob_by_spin_angle = pset1.data["survival_probability_times_exposure"].values + pset2.data[
             "survival_probability_times_exposure"].values
-        summed_exposure = np.empty((1, 2, 3600, 1800))
-        summed_exposure[0, :, :, 900] = pset1.data["exposure"].values + pset2.data["exposure"].values
+        summed_pset_survival_prob_by_azimuth = np.roll(summed_pset_survival_prob_by_spin_angle, 900, axis=-1)
+
+        summed_pset_exposure_by_spin_angle = pset1.data["exposure"].values + pset2.data["exposure"].values
+        summed_pset_exposure_by_azimuth = np.roll(summed_pset_exposure_by_spin_angle, 900, axis=-1)
+
+        survival_prob_in_skygrid_shape = np.zeros((1, 2, 3600, 1800))
+        survival_prob_in_skygrid_shape[:, :, :, 900] = summed_pset_survival_prob_by_azimuth
+
+        summed_exposure = np.zeros((1, 2, 3600, 1800))
+        summed_exposure[:, :, :, 900] = summed_pset_exposure_by_azimuth
         summed_exposure[summed_exposure == 0] = np.nan
 
         spice_frame = SpiceFrame.IMAP_DPS
         actual_skymap = HiSurvivalProbabilitySkyMap([pset1, pset2],
                                                     0.1, spice_frame)
 
-        expected_skygrid_1d = np.divide(summed_survivals, summed_exposure).reshape(1, 2, -1)
-        np.testing.assert_equal(actual_skymap.data_1d['exposure_weighted_survival_probabilities'].values,
-                                expected_skygrid_1d)
+        expected_exposure_weighted_survival_skygrid = np.divide(survival_prob_in_skygrid_shape, summed_exposure)
 
         survival_probability_dataset = actual_skymap.to_dataset()
 
         self.assertIn("exposure_weighted_survival_probabilities", survival_probability_dataset)
         self.assertEqual((1, 2, 3600, 1800),
                          survival_probability_dataset["exposure_weighted_survival_probabilities"].values.shape)
+        np.testing.assert_array_equal(expected_exposure_weighted_survival_skygrid,
+                                      survival_probability_dataset["exposure_weighted_survival_probabilities"].values)

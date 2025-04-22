@@ -4,7 +4,6 @@ from datetime import datetime, timedelta
 from unittest.mock import sentinel
 
 import numpy as np
-
 from imap_l3_processing.hi.l3 import models
 from imap_l3_processing.hi.l3.models import HiL3SpectralIndexDataProduct, HiL3SurvivalCorrectedDataProduct, \
     combine_maps
@@ -183,22 +182,22 @@ class TestModels(unittest.TestCase):
 
     def test_combine_maps_does_a_time_weighted_average_of_intensity(self):
         map_1 = self.construct_map_data_product_with_all_zero_fields()
-        map_1.ena_intensity = np.array([1, np.nan, 3, 4])
-        map_1.exposure_factor = np.array([1, 0, 5, 6])
-        map_1.ena_intensity_sys_err = np.array([1, np.nan, 10, 100])
-        map_1.ena_intensity_stat_unc = np.array([10, np.nan, 10, 10])
+        map_1.ena_intensity = np.array([1, np.nan, 3, 4, np.nan])
+        map_1.exposure_factor = np.array([1, 0, 5, 6, 0])
+        map_1.ena_intensity_sys_err = np.array([1, np.nan, 10, 100, np.nan])
+        map_1.ena_intensity_stat_unc = np.array([10, np.nan, 10, 10, np.nan])
 
         map_2 = self.construct_map_data_product_with_all_zero_fields()
-        map_2.ena_intensity = np.array([5, 6, 7, 8])
-        map_2.exposure_factor = np.array([3, 1, 5, 2])
-        map_2.ena_intensity_sys_err = np.array([9, 4, 2, 0])
-        map_2.ena_intensity_stat_unc = np.array([1, 2, 3, 4])
+        map_2.ena_intensity = np.array([5, 6, 7, 8, np.nan])
+        map_2.exposure_factor = np.array([3, 1, 5, 2, 0])
+        map_2.ena_intensity_sys_err = np.array([9, 4, 2, 0, np.nan])
+        map_2.ena_intensity_stat_unc = np.array([1, 2, 3, 4, np.nan])
 
-        expected_combined_exposure = [4, 1, 10, 8]
-        expected_combined_intensity = [4, 6, 5, 5]
-        expected_sys_err = [7, 4, 6, 75]
+        expected_combined_exposure = [4, 1, 10, 8, 0]
+        expected_combined_intensity = [4, 6, 5, 5, np.nan]
+        expected_sys_err = [7, 4, 6, 75, np.nan]
         expected_stat_unc = [np.sqrt((1 * 100 + 9 * 1) / 16), 2, np.sqrt((25 * 100 + 25 * 9) / 100),
-                             np.sqrt((36 * 100 + 16 * 4) / 64)]
+                             np.sqrt((36 * 100 + 16 * 4) / 64), np.nan]
 
         combine_two = combine_maps([map_1, map_2])
         np.testing.assert_equal(combine_two.ena_intensity, expected_combined_intensity)

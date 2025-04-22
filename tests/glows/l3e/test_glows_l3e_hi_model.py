@@ -4,7 +4,7 @@ from unittest.mock import sentinel, Mock
 
 import numpy as np
 
-from imap_l3_processing.glows.l3e.l3e_glows_hi_model import GlowsL3EHiData
+from imap_l3_processing.glows.l3e.glows_l3e_hi_model import GlowsL3EHiData
 from imap_l3_processing.models import DataProductVariable
 from tests.test_helpers import get_test_instrument_team_data_path
 
@@ -142,7 +142,6 @@ class TestL3eHiModel(unittest.TestCase):
                                                                                             expected_time_delta)
 
         self.assertEqual(expected_epoch, l3e_hi_product.epoch)
-        self.assertEqual(expected_time_delta, l3e_hi_product.epoch_delta)
         self.assertEqual(expected_time_delta, l3e_hi_product.epoch_delta)
         np.testing.assert_array_equal(l3e_hi_product.energy, expected_energy)
         np.testing.assert_array_equal(l3e_hi_product.spin_angle, expected_spin_angle)
