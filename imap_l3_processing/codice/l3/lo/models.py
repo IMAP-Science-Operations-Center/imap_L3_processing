@@ -303,7 +303,7 @@ class CodiceLoL2DirectEventData:
 
 
 @dataclass
-class CodiceLoL3aDataProduct:
+class CodiceLoL3aPartialDensityDataProduct:
     epoch: ndarray
     epoch_delta: ndarray
     h_partial_density: ndarray

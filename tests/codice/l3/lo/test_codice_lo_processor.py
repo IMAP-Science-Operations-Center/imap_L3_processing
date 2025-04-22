@@ -7,7 +7,7 @@ from imap_data_access.processing_input import ProcessingInputCollection
 
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_dependencies import CodiceLoL3aDependencies
 from imap_l3_processing.codice.l3.lo.codice_lo_processor import CodiceLoProcessor
-from imap_l3_processing.codice.l3.lo.models import CodiceLoL3aDataProduct
+from imap_l3_processing.codice.l3.lo.models import CodiceLoL3aPartialDensityDataProduct
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
 
@@ -93,7 +93,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
                                                            call(sentinel.si_intensities),
                                                            call(sentinel.fe_low_intensities),
                                                            call(sentinel.fe_high_intensities)])
-        self.assertIsInstance(result, CodiceLoL3aDataProduct)
+        self.assertIsInstance(result, CodiceLoL3aPartialDensityDataProduct)
 
         np.testing.assert_array_equal(result.epoch, np.full(1, np.nan))
         np.testing.assert_array_equal(result.epoch_delta, np.full(1, 4.8e+11))

@@ -7,7 +7,8 @@ from unittest.mock import Mock, sentinel
 import numpy as np
 from spacepy.pycdf import CDF
 
-from imap_l3_processing.codice.l3.lo.models import CodiceLoL2Data, CodiceLoL3aDataProduct, CodiceLoL2DirectEventData, \
+from imap_l3_processing.codice.l3.lo.models import CodiceLoL2Data, CodiceLoL3aPartialDensityDataProduct, \
+    CodiceLoL2DirectEventData, \
     CodiceLoL2bPriorityRates, PriortyEvent, EnergyAndSpinAngle
 
 
@@ -201,7 +202,7 @@ class TestModels(unittest.TestCase):
         np.testing.assert_array_equal(species_intensities['Fe (low Q)'], fe_low_intensities)
         np.testing.assert_array_equal(species_intensities['Fe (high Q)'], fe_high_intensities)
 
-    def test_codice_lo_l3a_to_data_product(self):
+    def test_codice_lo_l3a_partial_density_to_data_product(self):
         epoch_data = np.array([datetime.now()])
 
         input_data_product_kwargs = {
@@ -222,7 +223,7 @@ class TestModels(unittest.TestCase):
             "fe_high_partial_density": np.array([15]),
         }
 
-        data_product = CodiceLoL3aDataProduct(
+        data_product = CodiceLoL3aPartialDensityDataProduct(
             **input_data_product_kwargs
         )
         actual_data_product_variables = data_product.to_data_product_variables()

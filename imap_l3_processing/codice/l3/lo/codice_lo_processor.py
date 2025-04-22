@@ -3,7 +3,7 @@ from imap_data_access import upload
 from imap_data_access.processing_input import ProcessingInputCollection
 
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_dependencies import CodiceLoL3aDependencies
-from imap_l3_processing.codice.l3.lo.models import CodiceLoL3aDataProduct
+from imap_l3_processing.codice.l3.lo.models import CodiceLoL3aPartialDensityDataProduct
 from imap_l3_processing.codice.l3.lo.science.codice_lo_calculations import calculate_partial_densities
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
@@ -55,11 +55,17 @@ class CodiceLoProcessor(Processor):
                     raise NotImplementedError
         epoch = np.array([np.nan])
         epoch_delta = np.full(len(epoch), 4.8e+11)
-        return CodiceLoL3aDataProduct(epoch=epoch, epoch_delta=epoch_delta, h_partial_density=h_partial_density,
-                                      he_partial_density=he_partial_density, c4_partial_density=c4_partial_density,
-                                      c5_partial_density=c5_partial_density, c6_partial_density=c6_partial_density,
-                                      o5_partial_density=o5_partial_density, o6_partial_density=o6_partial_density,
-                                      o7_partial_density=o7_partial_density, o8_partial_density=o8_partial_density,
-                                      mg_partial_density=mg_partial_density, si_partial_density=si_partial_density,
-                                      fe_low_partial_density=fe_low_partial_density,
-                                      fe_high_partial_density=fe_high_partial_density)
+        return CodiceLoL3aPartialDensityDataProduct(epoch=epoch, epoch_delta=epoch_delta,
+                                                    h_partial_density=h_partial_density,
+                                                    he_partial_density=he_partial_density,
+                                                    c4_partial_density=c4_partial_density,
+                                                    c5_partial_density=c5_partial_density,
+                                                    c6_partial_density=c6_partial_density,
+                                                    o5_partial_density=o5_partial_density,
+                                                    o6_partial_density=o6_partial_density,
+                                                    o7_partial_density=o7_partial_density,
+                                                    o8_partial_density=o8_partial_density,
+                                                    mg_partial_density=mg_partial_density,
+                                                    si_partial_density=si_partial_density,
+                                                    fe_low_partial_density=fe_low_partial_density,
+                                                    fe_high_partial_density=fe_high_partial_density)
