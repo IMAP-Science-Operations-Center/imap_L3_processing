@@ -2,7 +2,6 @@ import numpy as np
 from imap_data_access import upload
 from imap_processing.spice.geometry import SpiceFrame
 
-from imap_l3_processing import spice_wrapper
 from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3SpectralFitDependencies
 from imap_l3_processing.hi.l3.hi_l3_survival_dependencies import HiL3SurvivalDependencies, \
     HiL3SingleSensorFullSpinDependencies
@@ -19,8 +18,6 @@ from imap_l3_processing.utils import save_data
 
 class HiProcessor(Processor):
     def process(self):
-        spice_wrapper.furnish()
-        
         set_of_parent_file_names = set(self.get_parent_file_names())
 
         parsed_descriptor = parse_map_descriptor(self.input_metadata.descriptor)
@@ -101,7 +98,6 @@ class HiProcessor(Processor):
     def _process_survival_probabilities(self, hi_survival_probabilities_dependencies: HiL3SurvivalDependencies):
         l2_descriptor_parts = hi_survival_probabilities_dependencies.l2_map_descriptor_parts
 
-        spice_wrapper.furnish()
         combined_glows_hi = combine_glows_l3e_hi_l1c(hi_survival_probabilities_dependencies.glows_l3e_data,
                                                      hi_survival_probabilities_dependencies.hi_l1c_data)
         pointing_sets = []

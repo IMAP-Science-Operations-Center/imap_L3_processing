@@ -55,11 +55,10 @@ class TestSweProcessor(unittest.TestCase):
     @patch("imap_l3_processing.swe.swe_processor.compute_epoch_delta_in_ns")
     @patch('imap_l3_processing.swe.swe_processor.average_over_look_directions')
     @patch('imap_l3_processing.swe.swe_processor.find_breakpoints')
-    @patch('imap_l3_processing.swe.swe_processor.spice_wrapper')
     @patch('imap_l3_processing.swe.swe_processor.SweProcessor.calculate_pitch_angle_products')
     @patch('imap_l3_processing.swe.swe_processor.SweProcessor.calculate_moment_products')
     def test_calculate_products(self, mock_calculate_moment_products, mock_calculate_pitch_angle_products,
-                                mock_spice_wrapper, mock_find_breakpoints, mock_average_over_look_directions,
+                                mock_find_breakpoints, mock_average_over_look_directions,
                                 mock_compute_epoch_delta_in_ns):
         mock_compute_epoch_delta_in_ns.return_value = [30e9, 40e9]
         epochs = datetime.now() + np.arange(2) * timedelta(minutes=1)
@@ -131,8 +130,6 @@ class TestSweProcessor(unittest.TestCase):
 
         mock_compute_epoch_delta_in_ns.assert_called_once_with(swe_l2_data.acquisition_duration,
                                                                swe_l1b_data.settle_duration)
-
-        mock_spice_wrapper.furnish.assert_called_once()
 
         self.assertEqual(2, mock_average_over_look_directions.call_count)
         first_average_over_look_directions_call_args = mock_average_over_look_directions.call_args_list[0].args

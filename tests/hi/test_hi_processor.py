@@ -127,7 +127,6 @@ class TestHiProcessor(unittest.TestCase):
                 np.testing.assert_allclose(output_data.ena_spectral_index_stat_unc[0],
                                            expected_gamma_sigma, atol=1e-3)
 
-    @patch("imap_l3_processing.spice_wrapper.furnish")
     @patch('imap_l3_processing.hi.hi_processor.Processor.get_parent_file_names')
     @patch('imap_l3_processing.hi.hi_processor.upload')
     @patch('imap_l3_processing.hi.hi_processor.save_data')
@@ -137,15 +136,8 @@ class TestHiProcessor(unittest.TestCase):
     @patch('imap_l3_processing.hi.hi_processor.HiL3SurvivalDependencies.fetch_dependencies')
     def test_process_survival_probability(self, mock_fetch_dependencies, mock_combine_glows_l3e_hi_l1c,
                                           mock_survival_probability_pointing_set, mock_survival_skymap, mock_save_data,
-                                          mock_upload, mock_get_parent_file_names, mock_spice_wrapper_furnish):
-        parent_file_names = ["l2_map"]
-
-        def spice_wrapper_furnish():
-            parent_file_names.append("spice1")
-
-        mock_spice_wrapper_furnish.side_effect = spice_wrapper_furnish
-
-        mock_get_parent_file_names.return_value = parent_file_names
+                                          mock_upload, mock_get_parent_file_names):
+        mock_get_parent_file_names.return_value = ["l2_map", "spice1"]
         rng = np.random.default_rng()
         input_map_flux = rng.random((1, 9, 90, 45))
         epoch = datetime.now()

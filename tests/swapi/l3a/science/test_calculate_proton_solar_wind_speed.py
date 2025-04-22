@@ -4,13 +4,13 @@ from pathlib import Path
 from unittest.mock import patch
 
 import numpy as np
-import spiceypy
 from spacepy.pycdf import CDF
 from uncertainties import ufloat
 from uncertainties.unumpy import uarray, std_devs, nominal_values
 
 import imap_l3_processing
 from imap_l3_processing.constants import METERS_PER_KILOMETER, ONE_SECOND_IN_NANOSECONDS
+from imap_l3_processing.spice_wrapper import spiceypy
 from imap_l3_processing.swapi.l3a.science.calculate_proton_solar_wind_speed import calculate_proton_solar_wind_speed, \
     get_peak_indices, find_peak_center_of_mass_index, interpolate_energy, fit_energy_per_charge_peak_variations, \
     calculate_sw_speed_h_plus, get_proton_peak_indices, interpolate_angle, get_angle, \
@@ -297,9 +297,9 @@ class TestCalculateProtonSolarWindSpeed(SpiceTestCase):
         result = calculate_sw_speed_h_plus(energy)
         np.testing.assert_array_equal(expected, result)
 
-    @patch('spiceypy.spiceypy.pxform')
-    @patch('spiceypy.spiceypy.unitim')
-    @patch('spiceypy.spiceypy.reclat')
+    @patch('imap_l3_processing.swapi.l3a.science.calculate_proton_solar_wind_speed.spiceypy.pxform')
+    @patch('imap_l3_processing.swapi.l3a.science.calculate_proton_solar_wind_speed.spiceypy.unitim')
+    @patch('imap_l3_processing.swapi.l3a.science.calculate_proton_solar_wind_speed.spiceypy.reclat')
     def test_get_angle(self, mock_reclat, mock_unitim, mock_pxform):
         mock_reclat.return_value = (1, 3 * np.pi, 2 * np.pi)
         mock_pxform.return_value = np.array([[1, 1, 1], [2, 2, 2], [3, 3, 3]])
