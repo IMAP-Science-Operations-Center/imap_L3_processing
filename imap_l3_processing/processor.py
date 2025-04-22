@@ -1,9 +1,9 @@
 from typing import List
 
 from imap_data_access.processing_input import ProcessingInputCollection
-from spiceypy import spiceypy
 
 from imap_l3_processing.models import UpstreamDataDependency, InputMetadata
+from imap_l3_processing.spice_wrapper import spiceypy
 
 
 class Processor:
