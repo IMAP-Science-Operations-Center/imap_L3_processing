@@ -6,7 +6,6 @@ import numpy as np
 from imap_data_access import upload
 from imap_data_access.processing_input import ProcessingInputCollection
 
-from imap_l3_processing import spice_wrapper
 from imap_l3_processing.data_utils import find_closest_neighbor
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
@@ -39,7 +38,6 @@ class SweProcessor(Processor):
         upload(output_cdf)
 
     def calculate_products(self, dependencies: SweL3Dependencies) -> SweL3Data:
-        spice_wrapper.furnish()
         swe_l2_data = dependencies.swe_l2_data
         swe_epoch = swe_l2_data.epoch
         epoch_delta = compute_epoch_delta_in_ns(swe_l2_data.acquisition_duration,

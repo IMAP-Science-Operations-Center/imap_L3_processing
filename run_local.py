@@ -144,7 +144,7 @@ def create_swe_product(dependencies: SweL3Dependencies) -> str:
         start_date=datetime(2025, 6, 29),
         end_date=datetime(2025, 7, 1),
         version='v000')
-    processor = SweProcessor(None, input_metadata)
+    processor = SweProcessor(ProcessingInputCollection(), input_metadata)
     output_data = processor.calculate_products(dependencies)
     cdf_path = save_data(output_data, delete_if_present=True)
     return cdf_path
@@ -529,7 +529,7 @@ if __name__ == "__main__":
         dependencies = SweL3Dependencies.from_file_paths(
             get_test_data_path("swe/imap_swe_l2_sci_20250630_v002.cdf"),
             get_test_data_path("swe/imap_swe_l1b_sci_20250630_v003.cdf"),
-            get_test_data_path("swe/imap_mag_l1d_mago-normal_20250630_v001.cdf"),
+            get_test_data_path("swe/imap_mag_l1d_norm-mago_20250630_v001.cdf"),
             get_test_data_path("swe/imap_swapi_l3a_proton-sw_20250630_v001.cdf"),
             get_test_data_path("swe/example_swe_config.json"),
         )
@@ -539,7 +539,7 @@ if __name__ == "__main__":
         dependencies = SweL3Dependencies.from_file_paths(
             get_test_data_path("swe/imap_swe_l2_sci_20250630_v002.cdf"),
             get_test_data_path("swe/imap_swe_l1b_sci_20250630_v003.cdf"),
-            get_test_data_path("swe/imap_mag_l1d_mago-normal_20250630_v001.cdf"),
+            get_test_data_path("swe/imap_mag_l1d_norm-mago_20250630_v001.cdf"),
             get_test_data_path("swe/imap_swapi_l3a_proton-sw_20250630_v001.cdf"),
             get_test_data_path("swe/example_swe_config.json"),
         )

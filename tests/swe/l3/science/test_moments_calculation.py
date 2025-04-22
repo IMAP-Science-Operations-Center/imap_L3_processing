@@ -5,8 +5,8 @@ from datetime import datetime
 from unittest.mock import patch, call, sentinel
 
 import numpy as np
-import spiceypy.utils.exceptions
 
+from imap_l3_processing.spice_wrapper import spiceypy
 from imap_l3_processing.swe.l3.science import moment_calculations
 from imap_l3_processing.swe.l3.science.moment_calculations import compute_maxwellian_weight_factors, \
     filter_and_flatten_regress_parameters, regress, calculate_fit_temperature_density_velocity, rotate_temperature, \
@@ -389,8 +389,8 @@ class TestMomentsCalculation(unittest.TestCase):
         np.testing.assert_array_equal(actual_weights, [3, 1e-36, 10, 11, 12])
         np.testing.assert_array_equal(yreg, [np.log(3), -80.6, np.log(10), np.log(11), np.log(12)])
 
-    @patch('spiceypy.spiceypy.pxform')
-    @patch('spiceypy.spiceypy.datetime2et')
+    @patch('imap_l3_processing.swe.l3.science.moment_calculations.spiceypy.pxform')
+    @patch('imap_l3_processing.swe.l3.science.moment_calculations.spiceypy.datetime2et')
     def test_rotate_dps_vector_to_rtn(self, mock_datetime2et, mock_pxform):
         epoch = datetime(year=2020, month=3, day=10)
         dsp_vector = np.array([0, 1, 0])
@@ -404,8 +404,8 @@ class TestMomentsCalculation(unittest.TestCase):
 
         np.testing.assert_array_equal(rtn_vector, rotation_matrix @ dsp_vector)
 
-    @patch('spiceypy.spiceypy.pxform')
-    @patch('spiceypy.spiceypy.datetime2et')
+    @patch('imap_l3_processing.swe.l3.science.moment_calculations.spiceypy.pxform')
+    @patch('imap_l3_processing.swe.l3.science.moment_calculations.spiceypy.datetime2et')
     def test_rotate_dps_vector_to_rtn_excepts_and_catches(self, mock_datetime2et, mock_pxform):
         epoch = datetime(year=2020, month=3, day=10)
         dsp_vector = np.array([0, 1, 0])
@@ -418,8 +418,8 @@ class TestMomentsCalculation(unittest.TestCase):
 
         np.testing.assert_array_equal(rtn_vector, np.full(3, np.nan))
 
-    @patch('spiceypy.spiceypy.pxform')
-    @patch('spiceypy.spiceypy.datetime2et')
+    @patch('imap_l3_processing.swe.l3.science.moment_calculations.spiceypy.pxform')
+    @patch('imap_l3_processing.swe.l3.science.moment_calculations.spiceypy.datetime2et')
     def test_rotate_temperature(self, mock_datetime2et, mock_pxform):
         epoch = datetime(year=2020, month=3, day=11)
         temperature_alpha = math.pi / 4
@@ -816,8 +816,8 @@ class TestMomentsCalculation(unittest.TestCase):
         np.testing.assert_allclose(np.array([-67.071986, 60.433456, -14.211044, 129.49805, 161.93695, 72.622535]),
                                    scaled_density.temperature, rtol=3e-5)
 
-    @patch('spiceypy.spiceypy.pxform')
-    @patch('spiceypy.spiceypy.datetime2et')
+    @patch('imap_l3_processing.swe.l3.science.moment_calculations.spiceypy.pxform')
+    @patch('imap_l3_processing.swe.l3.science.moment_calculations.spiceypy.datetime2et')
     def test_rotate_heat_flux(self, mock_datetime2et, mock_pxform):
         cases = [
             ([0, 1, 0], 1, math.pi / 2, 0),

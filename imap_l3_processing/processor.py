@@ -1,9 +1,9 @@
 from typing import List
 
 from imap_data_access.processing_input import ProcessingInputCollection
-from spiceypy import spiceypy
 
 from imap_l3_processing.models import UpstreamDataDependency, InputMetadata
+from imap_l3_processing.spice_wrapper import spiceypy
 
 
 class Processor:
@@ -12,7 +12,7 @@ class Processor:
         self.input_metadata = input_metadata
         self.dependencies = dependencies
 
-    def get_parent_file_names(self):
+    def get_parent_file_names(self) -> list[str]:
         parent_file_names = [parent_file_name.name for parent_file_name in self.dependencies.get_file_paths()]
 
         count = spiceypy.ktotal('ALL')
