@@ -13,7 +13,6 @@ from imap_l3_processing.constants import HYDROGEN_INFLOW_SPEED_IN_KM_PER_SECOND,
     HYDROGEN_INFLOW_LONGITUDE_DEGREES_IN_ECLIPJ2000, HYDROGEN_INFLOW_LATITUDE_DEGREES_IN_ECLIPJ2000, PROTON_MASS_KG, \
     PROTON_CHARGE_COULOMBS, ONE_AU_IN_KM, ONE_SECOND_IN_NANOSECONDS, \
     HELIUM_INFLOW_LONGITUDE_DEGREES_IN_ECLIPJ2000, HE_PUI_PARTICLE_MASS_KG, BOLTZMANN_CONSTANT_JOULES_PER_KELVIN
-from imap_l3_processing.spice_wrapper import FAKE_ROTATION_MATRIX_FROM_PSP
 from imap_l3_processing.swapi.l3a.science.calculate_alpha_solar_wind_speed import calculate_combined_sweeps
 from imap_l3_processing.swapi.l3a.science.calculate_pickup_ion import calculate_pui_energy_cutoff, \
     extract_pui_energy_bins, \
@@ -29,6 +28,14 @@ from imap_l3_processing.swapi.l3b.science.instrument_response_lookup_table impor
     InstrumentResponseLookupTableCollection
 from tests.spice_test_case import SpiceTestCase
 from tests.test_helpers import get_test_data_path
+
+FAKE_ROTATION_MATRIX_FROM_PSP = np.array(
+    [[-8.03319036e-01, -5.95067395e-01, -2.39441182e-02, 0.00000000e+00, 0.00000000e+00, 0.00000000e+00],
+     [5.94803234e-01, -8.03675802e-01, 1.77289947e-02, 0.00000000e+00, 0.00000000e+00, 0.00000000e+00],
+     [-2.97932551e-02, 0.00000000e+00, 9.99556082e-01, 0.00000000e+00, 0.00000000e+00, 0.00000000e+00],
+     [-1.16314295e-06, 1.56750981e-06, 6.68593934e-08, -8.03319036e-01, -5.95067395e-01, -2.39441182e-02],
+     [-1.56457525e-06, -1.16063465e-06, -1.21809529e-07, 5.94803234e-01, -8.03675802e-01, 1.77289947e-02],
+     [1.26218156e-07, 5.29395592e-23, 3.76211978e-09, -2.97932551e-02, 0.00000000e+00, 9.99556082e-01]])
 
 
 class TestCalculatePickupIon(SpiceTestCase):

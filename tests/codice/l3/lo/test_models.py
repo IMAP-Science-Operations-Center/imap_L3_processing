@@ -9,7 +9,7 @@ from spacepy.pycdf import CDF
 
 from imap_l3_processing.codice.l3.lo.models import CodiceLoL2Data, CodiceLoL3aPartialDensityDataProduct, \
     CodiceLoL2DirectEventData, \
-    CodiceLoL2bPriorityRates, PriortyEvent, EnergyAndSpinAngle
+    CodiceLoL2bPriorityRates, PriorityEvent, EnergyAndSpinAngle, CodiceLoL3aDirectEventDataProduct
 
 
 class TestModels(unittest.TestCase):
@@ -130,6 +130,7 @@ class TestModels(unittest.TestCase):
                 np.testing.assert_array_equal(priority_event.pha_type, expected_values[f"P{index}_PHAType"])
                 np.testing.assert_array_equal(priority_event.spin_angle, expected_values[f"P{index}_SpinAngle"])
                 np.testing.assert_array_equal(priority_event.tof, expected_values[f"P{index}_TOF"])
+                self.assertEqual(priority_event.priority_index, index)
             # @formatter:on
 
     def test_codice_lo_l2_direct_event_priority_events(self):
@@ -145,8 +146,8 @@ class TestModels(unittest.TestCase):
         spin_angle = np.array([[0, 30, 30, 40, 0],
                                [30, 30, 50, 40, np.nan]])
 
-        priority_event = PriortyEvent(np.array([]), np.array([]), np.array([]), np.array([]), energy_step,
-                                      np.array([]), np.array([]), np.array([]), spin_angle, np.array([]))
+        priority_event = PriorityEvent(np.array([]), np.array([]), np.array([]), np.array([]), energy_step,
+                                       np.array([]), np.array([]), np.array([]), spin_angle, np.array([]), 1)
 
         expected_total_events_by_energy_step_and_spin_angle = [
             {
@@ -161,7 +162,6 @@ class TestModels(unittest.TestCase):
                 EnergyAndSpinAngle(energy=2, spin_angle=40): 1,
             }
         ]
-        # print(np.stack((spin_angle, energy_step), axis=-1))
 
         self.assertEqual(expected_total_events_by_energy_step_and_spin_angle,
                          priority_event.total_events_binned_by_energy_step_and_spin_angle)
@@ -433,3 +433,35 @@ class TestModels(unittest.TestCase):
             np.testing.assert_array_equal(result.lo_nsw_species_fe, lo_nsw_species_fe)
             np.testing.assert_array_equal(result.lo_nsw_species_heplus, lo_nsw_species_heplus)
             np.testing.assert_array_equal(result.lo_nsw_species_cnoplus, lo_nsw_species_cnoplus)
+
+    def test_codice_lo_l3a_direct_event_to_data_product(self):
+        rng = np.random.default_rng()
+
+        epoch = np.array([datetime(2022, 3, 5), datetime(2022, 3, 6)])
+        spin_angle = np.array([30, 60, 90])
+        energy_step = np.array([5.5, 6.6, 7.7])
+        priority = np.array([0, 1, 2, 3, 4, 5, 6, 7])
+        event_num = np.arange(10_000)
+
+        direct_event = CodiceLoL3aDirectEventDataProduct(
+            input_metadata=Mock(),
+            epoch=epoch,
+            priority=priority,
+            event_num=event_num,
+            normalization=rng.random((len(epoch), len(priority), len(spin_angle), len(energy_step))),
+            data_quality=rng.random((len(epoch), len(priority))),
+            multi_flag=rng.random((len(epoch), len(priority), len(event_num))),
+            num_events=rng.random((len(epoch), len(priority))),
+            pha_type=rng.random((len(epoch), len(priority), len(event_num))),
+            tof=rng.random((len(epoch), len(priority), len(event_num))))
+
+        np.testing.assert_array_equal(direct_event.spin_angle,
+                                      np.array([0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330]))
+        np.testing.assert_array_equal(direct_event.energy_step, np.arange(128))
+
+        data_products = direct_event.to_data_product_variables()
+
+        self.assertEqual(len(data_products), 11)
+        for data_product in data_products:
+            self.assertIsNotNone(getattr(direct_event, data_product.name))
+            np.testing.assert_array_equal(getattr(direct_event, data_product.name), data_product.value)

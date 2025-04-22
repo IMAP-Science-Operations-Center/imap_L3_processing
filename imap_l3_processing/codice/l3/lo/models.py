@@ -6,7 +6,7 @@ import numpy as np
 from numpy import ndarray
 from spacepy.pycdf import CDF
 
-from imap_l3_processing.models import DataProductVariable
+from imap_l3_processing.models import DataProductVariable, DataProduct
 
 EPOCH_VAR_NAME = "epoch"
 EPOCH_DELTA_VAR_NAME = "epoch_delta"
@@ -226,7 +226,7 @@ EnergyAndSpinAngle = namedtuple(typename="EnergyAndSpinAngle", field_names=["ene
 
 
 @dataclass
-class PriortyEvent:
+class PriorityEvent:
     apd_energy: ndarray
     apd_gain: ndarray
     apd_id: ndarray
@@ -237,6 +237,7 @@ class PriortyEvent:
     pha_type: ndarray
     spin_angle: ndarray
     tof: ndarray
+    priority_index: int
 
     @property
     def total_events_binned_by_energy_step_and_spin_angle(self) -> [dict[EnergyAndSpinAngle, int]]:
@@ -257,29 +258,30 @@ class PriortyEvent:
 class CodiceLoL2DirectEventData:
     epoch: ndarray
     event_num: ndarray
-    priority_event_0: PriortyEvent
-    priority_event_1: PriortyEvent
-    priority_event_2: PriortyEvent
-    priority_event_3: PriortyEvent
-    priority_event_4: PriortyEvent
-    priority_event_5: PriortyEvent
-    priority_event_6: PriortyEvent
-    priority_event_7: PriortyEvent
+    priority_event_0: PriorityEvent
+    priority_event_1: PriorityEvent
+    priority_event_2: PriorityEvent
+    priority_event_3: PriorityEvent
+    priority_event_4: PriorityEvent
+    priority_event_5: PriorityEvent
+    priority_event_6: PriorityEvent
+    priority_event_7: PriorityEvent
 
     @classmethod
     def _read_priority_event(cls, cdf):
         values = {}
         for index in range(8):
-            priority_event = PriortyEvent(cdf[f"P{index}_APDEnergy"][...],
-                                          cdf[f"P{index}_APDGain"][...],
-                                          cdf[f"P{index}_APD_ID"][...],
-                                          cdf[f"P{index}_DataQuality"][...],
-                                          cdf[f"P{index}_EnergyStep"][...],
-                                          cdf[f"P{index}_MultiFlag"][...],
-                                          cdf[f"P{index}_NumEvents"][...],
-                                          cdf[f"P{index}_PHAType"][...],
-                                          cdf[f"P{index}_SpinAngle"][...],
-                                          cdf[f"P{index}_TOF"][...])
+            priority_event = PriorityEvent(cdf[f"P{index}_APDEnergy"][...],
+                                           cdf[f"P{index}_APDGain"][...],
+                                           cdf[f"P{index}_APD_ID"][...],
+                                           cdf[f"P{index}_DataQuality"][...],
+                                           cdf[f"P{index}_EnergyStep"][...],
+                                           cdf[f"P{index}_MultiFlag"][...],
+                                           cdf[f"P{index}_NumEvents"][...],
+                                           cdf[f"P{index}_PHAType"][...],
+                                           cdf[f"P{index}_SpinAngle"][...],
+                                           cdf[f"P{index}_TOF"][...],
+                                           index)
 
             values.update({f"priority_event_{index}": priority_event})
         return values
@@ -337,4 +339,47 @@ class CodiceLoL3aPartialDensityDataProduct:
             DataProductVariable(SI_PARTIAL_DENSITY_VAR_NAME, self.si_partial_density),
             DataProductVariable(FE_LOW_PARTIAL_DENSITY_VAR_NAME, self.fe_low_partial_density),
             DataProductVariable(FE_HIGH_PARTIAL_DENSITY_VAR_NAME, self.fe_high_partial_density),
+        ]
+
+
+SPIN_ANGLE_VAR_NAME = "spin_angle"
+ENERGY_STEP_VAR_NAME = "energy_step"
+PRIORITY_VAR_NAME = "priority"
+EVENT_NUM_VAR_NAME = "event_num"
+NORMALIZATION_VAR_NAME = "normalization"
+DATA_QUALITY_VAR_NAME = "data_quality"
+MULTI_FLAG_VAR_NAME = "multi_flag"
+NUM_EVENTS_VAR_NAME = "num_events"
+PHA_TYPE_VAR_NAME = "pha_type"
+TOF_VAR_NAME = "tof"
+
+
+@dataclass
+class CodiceLoL3aDirectEventDataProduct(DataProduct):
+    epoch: ndarray
+    priority: ndarray
+    event_num: ndarray
+    normalization: ndarray
+    data_quality: ndarray
+    multi_flag: ndarray
+    num_events: ndarray
+    pha_type: ndarray
+    tof: ndarray
+
+    spin_angle = np.array([0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330])
+    energy_step = np.arange(128)
+
+    def to_data_product_variables(self) -> list[DataProductVariable]:
+        return [
+            DataProductVariable(EPOCH_VAR_NAME, self.epoch),
+            DataProductVariable(SPIN_ANGLE_VAR_NAME, self.spin_angle),
+            DataProductVariable(ENERGY_STEP_VAR_NAME, self.energy_step),
+            DataProductVariable(PRIORITY_VAR_NAME, self.priority),
+            DataProductVariable(EVENT_NUM_VAR_NAME, self.event_num),
+            DataProductVariable(NORMALIZATION_VAR_NAME, self.normalization),
+            DataProductVariable(DATA_QUALITY_VAR_NAME, self.data_quality),
+            DataProductVariable(MULTI_FLAG_VAR_NAME, self.multi_flag),
+            DataProductVariable(NUM_EVENTS_VAR_NAME, self.num_events),
+            DataProductVariable(PHA_TYPE_VAR_NAME, self.pha_type),
+            DataProductVariable(TOF_VAR_NAME, self.tof),
         ]

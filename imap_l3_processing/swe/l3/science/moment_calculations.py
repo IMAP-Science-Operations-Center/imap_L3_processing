@@ -4,12 +4,12 @@ from datetime import datetime
 from typing import Optional, Union
 
 import numpy as np
-from spiceypy import spiceypy, SpiceyError
 
 from imap_l3_processing.constants import ELECTRON_MASS_KG, \
     BOLTZMANN_CONSTANT_JOULES_PER_KELVIN, METERS_PER_KILOMETER, \
     CENTIMETERS_PER_METER, PROTON_CHARGE_COULOMBS
 from imap_l3_processing.pitch_angles import calculate_unit_vector
+from imap_l3_processing.spice_wrapper import spiceypy
 
 ELECTRON_MASS_OVER_BOLTZMANN_IN_CGS_UNITS = ELECTRON_MASS_KG / BOLTZMANN_CONSTANT_JOULES_PER_KELVIN * 1e-4
 NUMBER_OF_DETECTORS = 7
@@ -377,7 +377,7 @@ def rotate_dps_vector_to_rtn(epoch: datetime, vector: np.ndarray) -> np.ndarray:
     try:
         rotation_matrix = spiceypy.pxform("IMAP_DPS", "IMAP_RTN", et_time)
         return rotation_matrix @ vector
-    except SpiceyError:
+    except spiceypy.SpiceyError:
         return np.full(3, np.nan)
 
 

@@ -30,7 +30,6 @@ class TestSwapiProcessor(TestCase):
     def tearDown(self) -> None:
         self.mock_imap_patcher.stop()
 
-    @patch('imap_l3_processing.swapi.swapi_processor.spice_wrapper.furnish')
     @patch('imap_l3_processing.utils.ImapAttributeManager')
     @patch('imap_l3_processing.swapi.swapi_processor.SwapiL3PickupIonData')
     @patch('imap_l3_processing.swapi.swapi_processor.SwapiL3AlphaSolarWindData')
@@ -57,7 +56,7 @@ class TestSwapiProcessor(TestCase):
                          mock_proton_calculate_temperature_and_density, mock_calculate_alpha_solar_wind_speed,
                          mock_calculate_proton_solar_wind_speed, mock_chunk_l2_data, mock_write_cdf,
                          mock_proton_solar_wind_data_constructor, mock_alpha_solar_wind_data_constructor,
-                         mock_pickup_ion_data_constructor, mock_imap_attribute_manager, mock_spice_wrapper_furnish
+                         mock_pickup_ion_data_constructor, mock_imap_attribute_manager
                          ):
         instrument = 'swapi'
         incoming_data_level = 'l2'
@@ -219,8 +218,6 @@ class TestSwapiProcessor(TestCase):
                                                   mock_calculate_proton_solar_wind_speed.call_args_list[0].args[0]))
                 np.testing.assert_array_equal(energy, mock_calculate_proton_solar_wind_speed.call_args_list[0].args[1])
                 np.testing.assert_array_equal(epoch, mock_calculate_proton_solar_wind_speed.call_args_list[0].args[2])
-
-                mock_spice_wrapper_furnish.assert_called()
 
                 self.assertEqual(
                     call(mock_clock_angle_and_flow_deflection_calibration_table, returned_proton_sw_speed, sentinel.a,

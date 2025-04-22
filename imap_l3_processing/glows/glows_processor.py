@@ -1,14 +1,13 @@
 import json
 from copy import copy
 from dataclasses import replace
+from datetime import datetime
 from pathlib import Path
 from subprocess import run
-from datetime import datetime
 
 import imap_data_access
 import numpy as np
 
-from imap_l3_processing import spice_wrapper
 from imap_l3_processing.glows.glows_initializer import GlowsInitializer
 from imap_l3_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
 from imap_l3_processing.glows.l3a.glows_toolkit.l3a_data import L3aData
@@ -21,10 +20,10 @@ from imap_l3_processing.glows.l3bc.science.filter_out_bad_days import filter_out
 from imap_l3_processing.glows.l3bc.science.generate_l3bc import generate_l3bc
 from imap_l3_processing.glows.l3bc.utils import make_l3b_data_with_fill, make_l3c_data_with_fill, get_repoint_date_range
 from imap_l3_processing.glows.l3e.glows_l3e_dependencies import GlowsL3EDependencies
-from imap_l3_processing.glows.l3e.glows_l3e_utils import determine_call_args_for_l3e_executable
 from imap_l3_processing.glows.l3e.glows_l3e_hi_model import GlowsL3EHiData
 from imap_l3_processing.glows.l3e.glows_l3e_lo_model import GlowsL3ELoData
 from imap_l3_processing.glows.l3e.glows_l3e_ultra_model import GlowsL3EUltraData
+from imap_l3_processing.glows.l3e.glows_l3e_utils import determine_call_args_for_l3e_executable
 from imap_l3_processing.models import UpstreamDataDependency
 from imap_l3_processing.processor import Processor
 from imap_l3_processing.utils import save_data
@@ -97,7 +96,6 @@ class GlowsProcessor(Processor):
         return l3b_data_product, l3c_data_product
 
     def process_l3e(self):
-        spice_wrapper.furnish()
         l3e_dependencies, repointing = GlowsL3EDependencies.fetch_dependencies(self.dependencies)
 
         l3e_dependencies.rename_dependencies()

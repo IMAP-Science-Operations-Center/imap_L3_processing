@@ -1,4 +1,3 @@
-import os
 from datetime import datetime, date
 from pathlib import Path
 from typing import Optional, Union
@@ -8,19 +7,12 @@ from urllib.request import urlretrieve
 import imap_data_access
 from imap_data_access import ScienceFilePath
 from spacepy.pycdf import CDF
-from spiceypy import spiceypy
 
 from imap_l3_processing.cdf.cdf_utils import write_cdf, read_numeric_variable
 from imap_l3_processing.cdf.imap_attribute_manager import ImapAttributeManager
 from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
 from imap_l3_processing.models import UpstreamDataDependency, DataProduct, MagL1dData
 from imap_l3_processing.version import VERSION
-
-
-def load_spice_kernels():
-    kernel_dir = "/mnt/spice"
-    kernel_paths = [os.path.join(kernel_dir, name) for name in os.listdir(kernel_dir)]
-    spiceypy.furnsh(kernel_paths)
 
 
 def save_data(data: DataProduct, delete_if_present: bool = False, folder_path: Path = TEMP_CDF_FOLDER_PATH) -> str:

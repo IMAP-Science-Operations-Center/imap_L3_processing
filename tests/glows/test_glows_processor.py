@@ -391,13 +391,12 @@ class TestGlowsProcessor(unittest.TestCase):
     @patch("imap_l3_processing.glows.glows_processor.GlowsL3ELoData.convert_dat_to_glows_l3e_lo_product")
     @patch("imap_l3_processing.glows.glows_processor.GlowsL3EHiData.convert_dat_to_glows_l3e_hi_product")
     @patch("imap_l3_processing.glows.glows_processor.GlowsL3EUltraData.convert_dat_to_glows_l3e_ul_product")
-    @patch("imap_l3_processing.glows.glows_processor.spice_wrapper")
     @patch("imap_l3_processing.glows.glows_processor.run")
     @patch("imap_l3_processing.glows.glows_processor.determine_call_args_for_l3e_executable")
     @patch("imap_l3_processing.glows.glows_processor.get_repoint_date_range")
     @patch("imap_l3_processing.glows.glows_processor.GlowsL3EDependencies")
     def test_process_l3e(self, mock_l3e_dependencies, mock_get_repoint_date_range, mock_determine_call_args, mock_run,
-                         mock_spice_wrapper, mock_convert_dat_to_glows_l3e_ul_product,
+                         mock_convert_dat_to_glows_l3e_ul_product,
                          mock_convert_dat_to_glows_l3e_hi_product,
                          mock_convert_dat_to_glows_l3e_lo_product, mock_upload, mock_save_data):
         input_metadata = InputMetadata('glows', "l3e", datetime(2024, 10, 7, 10, 00, 00),
@@ -437,8 +436,6 @@ class TestGlowsProcessor(unittest.TestCase):
 
         processor = GlowsProcessor(dependencies=dependencies, input_metadata=input_metadata)
         processor.process()
-
-        mock_spice_wrapper.furnish.assert_called_once()
 
         mock_l3e_dependencies.fetch_dependencies.assert_called_once_with(dependencies)
 
