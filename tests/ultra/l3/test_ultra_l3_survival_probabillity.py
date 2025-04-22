@@ -33,7 +33,7 @@ class TestUltraSurvivalProbability(unittest.TestCase):
 
     @patch('imap_l3_processing.ultra.l3.science.ultra_survival_probability.geometry.frame_transform_az_el')
     def test_ultra_survival_probability_rotates_to_glows_frame(self, mock_frame_transform_az_el):
-        glows_energies = np.arange(2)
+        glows_energies = np.array([1, 2])
         input_l1c_pset = _create_ultra_l1c_pset(glows_energies, np.full((1, 2, 12), 1))
         glows_surv_prob = np.array([[[1] * 6 + [0] * 6, [2] * 6 + [3] * 6]])
 
@@ -53,7 +53,7 @@ class TestUltraSurvivalProbability(unittest.TestCase):
 
     @patch('imap_l3_processing.ultra.l3.science.ultra_survival_probability.geometry.frame_transform_az_el')
     def test_ultra_survival_probability_is_multiplied_by_exposure(self, mock_frame_transform_az_el):
-        glows_energies = np.arange(1)
+        glows_energies = np.array([1])
         input_l1c_pset = _create_ultra_l1c_pset(glows_energies, np.full((1, 1, 12), 2))
         glows_surv_prob = np.array([[[1] * 6 + [0] * 6]])
 
@@ -116,7 +116,7 @@ class TestUltraSurvivalProbability(unittest.TestCase):
 
 
 def _build_glows_l3e_ultra(survival_probabilities: np.ndarray = None, energies: np.ndarray = None, nside: int = 16):
-    energies = np.arange(20) if energies is None else energies
+    energies = np.arange(1, 21) if energies is None else energies
     num_pixels = 12 * (nside ** 2)
     survival_probabilities = np.random.rand(1, len(energies),
                                             num_pixels) if survival_probabilities is None else survival_probabilities

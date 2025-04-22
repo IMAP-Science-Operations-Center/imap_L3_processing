@@ -1,9 +1,8 @@
 import enum
 
-import healpy
 import numpy as np
 from astropy.units import Quantity
-from astropy_healpix import HEALPix
+from astropy_healpix import HEALPix, npix_to_nside
 from imap_processing.ena_maps.ena_maps import UltraPointingSet, HealpixSkyMap
 from imap_processing.ena_maps.utils.coordinates import CoordNames
 from imap_processing.spice import geometry
@@ -25,7 +24,7 @@ class UltraSurvivalProbability(UltraPointingSet):
         super().__init__(l1c_pset.to_xarray(), geometry.SpiceFrame.IMAP_DPS)
         rotated_az_el_points = geometry.frame_transform_az_el(0, self.az_el_points, geometry.SpiceFrame.IMAP_DPS,
                                                               geometry.SpiceFrame.ECLIPJ2000)
-        glows_nside = healpy.npix2nside(len(l3e_glows.healpix_index))
+        glows_nside = npix_to_nside(len(l3e_glows.healpix_index))
         glows_healpix = HEALPix(nside=glows_nside)
 
         npixels = len(l1c_pset.healpix_index)
