@@ -7,7 +7,8 @@ from unittest.mock import Mock, sentinel
 import numpy as np
 from spacepy.pycdf import CDF
 
-from imap_l3_processing.codice.l3.lo.models import CodiceLoL2Data, CodiceLoL3aDataProduct
+from imap_l3_processing.codice.l3.lo.models import CodiceLoL2Data, CodiceLoL3aDataProduct, CodiceLoL2DirectEventData, \
+    CodiceLoL2bPriorityRates
 
 
 class TestModels(unittest.TestCase):
@@ -73,6 +74,62 @@ class TestModels(unittest.TestCase):
             np.testing.assert_array_equal(result.mg_intensities, mg_intensities)
             np.testing.assert_array_equal(result.si_intensities, si_intensities)
             np.testing.assert_array_equal(result.fe_low_intensities, fe_low_intensities)
+
+    def test_codice_lo_l2_direct_event_read_from_cdf(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            cdf_file_path = Path(tmpdir) / "test_cdf.cdf"
+            rng = np.random.default_rng()
+            with CDF(str(cdf_file_path), readonly=False, masterpath="") as cdf_file:
+                epoch = np.array([datetime(2011, 5, 5), datetime(2011, 5, 6)])
+                epoch_delta = np.repeat(len(epoch), 2)
+                cdf_file['epoch'] = epoch
+                expected_event_num = np.arange(77)
+                cdf_file['event_num'] = expected_event_num
+
+                expected_values = {}
+                for index in range(8):
+                    expected_values.update(
+                        {
+                            f"P{index}_APDEnergy": rng.random((7, 10)),
+                            f"P{index}_APDGain": rng.random((7, 10)),
+                            f"P{index}_APD_ID": rng.random(7),
+                            f"P{index}_DataQuality": rng.random((7, 10)),
+                            f"P{index}_EnergyStep": rng.random((7, 10)),
+                            f"P{index}_MultiFlag": rng.random(7),
+                            f"P{index}_NumEvents": rng.random((7, 10)),
+                            f"P{index}_PHAType": rng.random((7, 10)),
+                            f"P{index}_SpinAngle": rng.random((7, 10)),
+                            f"P{index}_TOF": rng.random((7, 10)),
+                        })
+
+                    cdf_file[f"P{index}_APDEnergy"] = expected_values[f"P{index}_APDEnergy"]
+                    cdf_file[f"P{index}_APDGain"] = expected_values[f"P{index}_APDGain"]
+                    cdf_file[f"P{index}_APD_ID"] = expected_values[f"P{index}_APD_ID"]
+                    cdf_file[f"P{index}_DataQuality"] = expected_values[f"P{index}_DataQuality"]
+                    cdf_file[f"P{index}_EnergyStep"] = expected_values[f"P{index}_EnergyStep"]
+                    cdf_file[f"P{index}_MultiFlag"] = expected_values[f"P{index}_MultiFlag"]
+                    cdf_file[f"P{index}_NumEvents"] = expected_values[f"P{index}_NumEvents"]
+                    cdf_file[f"P{index}_PHAType"] = expected_values[f"P{index}_PHAType"]
+                    cdf_file[f"P{index}_SpinAngle"] = expected_values[f"P{index}_SpinAngle"]
+                    cdf_file[f"P{index}_TOF"] = expected_values[f"P{index}_TOF"]
+
+            result: CodiceLoL2DirectEventData = CodiceLoL2DirectEventData.read_from_cdf(cdf_file_path)
+            np.testing.assert_array_equal(result.epoch, epoch)
+            np.testing.assert_array_equal(result.event_num, expected_event_num)
+
+            # @formatter:off
+            for index in range(8):
+                np.testing.assert_array_equal(getattr(result, f"p{index}_apdenergy"), expected_values[f"P{index}_APDEnergy"])
+                np.testing.assert_array_equal(getattr(result, f"p{index}_apdgain"), expected_values[f"P{index}_APDGain"])
+                np.testing.assert_array_equal(getattr(result, f"p{index}_apd_id"), expected_values[f"P{index}_APD_ID"])
+                np.testing.assert_array_equal(getattr(result, f"p{index}_dataquality"),expected_values[f"P{index}_DataQuality"])
+                np.testing.assert_array_equal(getattr(result, f"p{index}_energystep"), expected_values[f"P{index}_EnergyStep"])
+                np.testing.assert_array_equal(getattr(result, f"p{index}_multiflag"), expected_values[f"P{index}_MultiFlag"])
+                np.testing.assert_array_equal(getattr(result, f"p{index}_numevents"), expected_values[f"P{index}_NumEvents"])
+                np.testing.assert_array_equal(getattr(result, f"p{index}_phatype"), expected_values[f"P{index}_PHAType"])
+                np.testing.assert_array_equal(getattr(result, f"p{index}_spinangle"), expected_values[f"P{index}_SpinAngle"])
+                np.testing.assert_array_equal(getattr(result, f"p{index}_tof"), expected_values[f"P{index}_TOF"])
+            # @formatter:on
 
     def test_get_species(self):
         h_intensities = np.array([sentinel.h_intensities])
@@ -142,3 +199,202 @@ class TestModels(unittest.TestCase):
 
             np.testing.assert_array_equal(actual_data_product_variable.value, getattr(data_product, input_name))
             self.assertEqual(input_name, actual_data_product_variable.name)
+
+    def test_codice_lo_l1b_priority_rates_read_from_cdf(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            rng = np.random.default_rng()
+            epoch = np.array([datetime(2025, 4, 18), datetime(2025, 4, 18)])
+            energy = rng.random((7, 10))
+            inst_az = rng.random((7, 10))
+            spin_sector = rng.random((7, 10))
+            energy_label = rng.random((7, 10))
+            acquisition_times = rng.random((7, 10))
+            counters = rng.random((7, 10))
+            esa_sweep = rng.random((7, 10))
+            hi_counters_aggregated_aggregated = rng.random((7, 10))
+            hi_counters_singles_tcr = rng.random((7, 10))
+            hi_counters_singles_ssdo = rng.random((7, 10))
+            hi_counters_singles_stssd = rng.random((7, 10))
+            hi_omni_h = rng.random((7, 10))
+            hi_omni_he3 = rng.random((7, 10))
+            hi_omni_he4 = rng.random((7, 10))
+            hi_omni_c = rng.random((7, 10))
+            hi_omni_o = rng.random((7, 10))
+            hi_omni_ne_mg_si = rng.random((7, 10))
+            hi_omni_fe = rng.random((7, 10))
+            hi_omni_uh = rng.random((7, 10))
+            hi_sectored_h = rng.random((7, 10))
+            hi_sectored_he3he4 = rng.random((7, 10))
+            hi_sectored_cno = rng.random((7, 10))
+            hi_sectored_fe = rng.random((7, 10))
+            lo_counters_aggregated_aggregated = rng.random((7, 10))
+            lo_counters_singles_apd_singles = rng.random((7, 10))
+            lo_sw_angular_hplus = rng.random((7, 10))
+            lo_sw_angular_heplusplus = rng.random((7, 10))
+            lo_sw_angular_oplus6 = rng.random((7, 10))
+            lo_sw_angular_fe_loq = rng.random((7, 10))
+            lo_nsw_angular_heplusplus = rng.random((7, 10))
+            lo_sw_priority_p0_tcrs = rng.random((7, 10))
+            lo_sw_priority_p1_hplus = rng.random((7, 10))
+            lo_sw_priority_p2_heplusplus = rng.random((7, 10))
+            lo_sw_priority_p3_heavies = rng.random((7, 10))
+            lo_sw_priority_p4_dcrs = rng.random((7, 10))
+            lo_nsw_priority_p5_heavies = rng.random((7, 10))
+            lo_nsw_priority_p6_hplus_heplusplus = rng.random((7, 10))
+            lo_sw_species_hplus = rng.random((7, 10))
+            lo_sw_species_heplusplus = rng.random((7, 10))
+            lo_sw_species_cplus4 = rng.random((7, 10))
+            lo_sw_species_cplus5 = rng.random((7, 10))
+            lo_sw_species_cplus6 = rng.random((7, 10))
+            lo_sw_species_oplus5 = rng.random((7, 10))
+            lo_sw_species_oplus6 = rng.random((7, 10))
+            lo_sw_species_oplus7 = rng.random((7, 10))
+            lo_sw_species_oplus8 = rng.random((7, 10))
+            lo_sw_species_ne = rng.random((7, 10))
+            lo_sw_species_mg = rng.random((7, 10))
+            lo_sw_species_si = rng.random((7, 10))
+            lo_sw_species_fe_loq = rng.random((7, 10))
+            lo_sw_species_fe_hiq = rng.random((7, 10))
+            lo_sw_species_heplus = rng.random((7, 10))
+            lo_sw_species_cnoplus = rng.random((7, 10))
+            lo_nsw_species_hplus = rng.random((7, 10))
+            lo_nsw_species_heplusplus = rng.random((7, 10))
+            lo_nsw_species_c = rng.random((7, 10))
+            lo_nsw_species_o = rng.random((7, 10))
+            lo_nsw_species_ne_si_mg = rng.random((7, 10))
+            lo_nsw_species_fe = rng.random((7, 10))
+            lo_nsw_species_heplus = rng.random((7, 10))
+            lo_nsw_species_cnoplus = rng.random((7, 10))
+
+            cdf_file_path = Path(tmpdir) / "test_cdf.cdf"
+            with CDF(str(cdf_file_path), readonly=False, masterpath="") as cdf_file:
+                cdf_file["epoch"] = epoch
+                cdf_file["energy"] = energy
+                cdf_file["inst_az"] = inst_az
+                cdf_file["spin_sector"] = spin_sector
+                cdf_file["energy_label"] = energy_label
+                cdf_file["acquisition_times"] = acquisition_times
+                cdf_file["counters"] = counters
+                cdf_file["esa_sweep"] = esa_sweep
+                cdf_file["hi_counters_aggregated_aggregated"] = hi_counters_aggregated_aggregated
+                cdf_file["hi_counters_singles_tcr"] = hi_counters_singles_tcr
+                cdf_file["hi_counters_singles_ssdo"] = hi_counters_singles_ssdo
+                cdf_file["hi_counters_singles_stssd"] = hi_counters_singles_stssd
+                cdf_file["hi_omni_h"] = hi_omni_h
+                cdf_file["hi_omni_he3"] = hi_omni_he3
+                cdf_file["hi_omni_he4"] = hi_omni_he4
+                cdf_file["hi_omni_c"] = hi_omni_c
+                cdf_file["hi_omni_o"] = hi_omni_o
+                cdf_file["hi_omni_ne_mg_si"] = hi_omni_ne_mg_si
+                cdf_file["hi_omni_fe"] = hi_omni_fe
+                cdf_file["hi_omni_uh"] = hi_omni_uh
+                cdf_file["hi_sectored_h"] = hi_sectored_h
+                cdf_file["hi_sectored_he3he4"] = hi_sectored_he3he4
+                cdf_file["hi_sectored_cno"] = hi_sectored_cno
+                cdf_file["hi_sectored_fe"] = hi_sectored_fe
+                cdf_file["lo_counters_aggregated_aggregated"] = lo_counters_aggregated_aggregated
+                cdf_file["lo_counters_singles_apd_singles"] = lo_counters_singles_apd_singles
+                cdf_file["lo_sw_angular_hplus"] = lo_sw_angular_hplus
+                cdf_file["lo_sw_angular_heplusplus"] = lo_sw_angular_heplusplus
+                cdf_file["lo_sw_angular_oplus6"] = lo_sw_angular_oplus6
+                cdf_file["lo_sw_angular_fe_loq"] = lo_sw_angular_fe_loq
+                cdf_file["lo_nsw_angular_heplusplus"] = lo_nsw_angular_heplusplus
+                cdf_file["lo_sw_priority_p0_tcrs"] = lo_sw_priority_p0_tcrs
+                cdf_file["lo_sw_priority_p1_hplus"] = lo_sw_priority_p1_hplus
+                cdf_file["lo_sw_priority_p2_heplusplus"] = lo_sw_priority_p2_heplusplus
+                cdf_file["lo_sw_priority_p3_heavies"] = lo_sw_priority_p3_heavies
+                cdf_file["lo_sw_priority_p4_dcrs"] = lo_sw_priority_p4_dcrs
+                cdf_file["lo_nsw_priority_p5_heavies"] = lo_nsw_priority_p5_heavies
+                cdf_file["lo_nsw_priority_p6_hplus_heplusplus"] = lo_nsw_priority_p6_hplus_heplusplus
+                cdf_file["lo_sw_species_hplus"] = lo_sw_species_hplus
+                cdf_file["lo_sw_species_heplusplus"] = lo_sw_species_heplusplus
+                cdf_file["lo_sw_species_cplus4"] = lo_sw_species_cplus4
+                cdf_file["lo_sw_species_cplus5"] = lo_sw_species_cplus5
+                cdf_file["lo_sw_species_cplus6"] = lo_sw_species_cplus6
+                cdf_file["lo_sw_species_oplus5"] = lo_sw_species_oplus5
+                cdf_file["lo_sw_species_oplus6"] = lo_sw_species_oplus6
+                cdf_file["lo_sw_species_oplus7"] = lo_sw_species_oplus7
+                cdf_file["lo_sw_species_oplus8"] = lo_sw_species_oplus8
+                cdf_file["lo_sw_species_ne"] = lo_sw_species_ne
+                cdf_file["lo_sw_species_mg"] = lo_sw_species_mg
+                cdf_file["lo_sw_species_si"] = lo_sw_species_si
+                cdf_file["lo_sw_species_fe_loq"] = lo_sw_species_fe_loq
+                cdf_file["lo_sw_species_fe_hiq"] = lo_sw_species_fe_hiq
+                cdf_file["lo_sw_species_heplus"] = lo_sw_species_heplus
+                cdf_file["lo_sw_species_cnoplus"] = lo_sw_species_cnoplus
+                cdf_file["lo_nsw_species_hplus"] = lo_nsw_species_hplus
+                cdf_file["lo_nsw_species_heplusplus"] = lo_nsw_species_heplusplus
+                cdf_file["lo_nsw_species_c"] = lo_nsw_species_c
+                cdf_file["lo_nsw_species_o"] = lo_nsw_species_o
+                cdf_file["lo_nsw_species_ne_si_mg"] = lo_nsw_species_ne_si_mg
+                cdf_file["lo_nsw_species_fe"] = lo_nsw_species_fe
+                cdf_file["lo_nsw_species_heplus"] = lo_nsw_species_heplus
+                cdf_file["lo_nsw_species_cnoplus"] = lo_nsw_species_cnoplus
+
+            result = CodiceLoL2bPriorityRates.read_from_cdf(cdf_file_path)
+
+            np.testing.assert_array_equal(result.epoch, epoch)
+            np.testing.assert_array_equal(result.energy, energy)
+            np.testing.assert_array_equal(result.inst_az, inst_az)
+            np.testing.assert_array_equal(result.spin_sector, spin_sector)
+            np.testing.assert_array_equal(result.energy_label, energy_label)
+            np.testing.assert_array_equal(result.acquisition_times, acquisition_times)
+            np.testing.assert_array_equal(result.counters, counters)
+            np.testing.assert_array_equal(result.esa_sweep, esa_sweep)
+            np.testing.assert_array_equal(result.hi_counters_aggregated_aggregated,
+                                          hi_counters_aggregated_aggregated)
+            np.testing.assert_array_equal(result.hi_counters_singles_tcr, hi_counters_singles_tcr)
+            np.testing.assert_array_equal(result.hi_counters_singles_ssdo, hi_counters_singles_ssdo)
+            np.testing.assert_array_equal(result.hi_counters_singles_stssd, hi_counters_singles_stssd)
+            np.testing.assert_array_equal(result.hi_omni_h, hi_omni_h)
+            np.testing.assert_array_equal(result.hi_omni_he3, hi_omni_he3)
+            np.testing.assert_array_equal(result.hi_omni_he4, hi_omni_he4)
+            np.testing.assert_array_equal(result.hi_omni_c, hi_omni_c)
+            np.testing.assert_array_equal(result.hi_omni_o, hi_omni_o)
+            np.testing.assert_array_equal(result.hi_omni_ne_mg_si, hi_omni_ne_mg_si)
+            np.testing.assert_array_equal(result.hi_omni_fe, hi_omni_fe)
+            np.testing.assert_array_equal(result.hi_omni_uh, hi_omni_uh)
+            np.testing.assert_array_equal(result.hi_sectored_h, hi_sectored_h)
+            np.testing.assert_array_equal(result.hi_sectored_he3he4, hi_sectored_he3he4)
+            np.testing.assert_array_equal(result.hi_sectored_cno, hi_sectored_cno)
+            np.testing.assert_array_equal(result.hi_sectored_fe, hi_sectored_fe)
+            np.testing.assert_array_equal(result.lo_counters_aggregated_aggregated,
+                                          lo_counters_aggregated_aggregated)
+            np.testing.assert_array_equal(result.lo_counters_singles_apd_singles, lo_counters_singles_apd_singles)
+            np.testing.assert_array_equal(result.lo_sw_angular_hplus, lo_sw_angular_hplus)
+            np.testing.assert_array_equal(result.lo_sw_angular_heplusplus, lo_sw_angular_heplusplus)
+            np.testing.assert_array_equal(result.lo_sw_angular_oplus6, lo_sw_angular_oplus6)
+            np.testing.assert_array_equal(result.lo_sw_angular_fe_loq, lo_sw_angular_fe_loq)
+            np.testing.assert_array_equal(result.lo_nsw_angular_heplusplus, lo_nsw_angular_heplusplus)
+            np.testing.assert_array_equal(result.lo_sw_priority_p0_tcrs, lo_sw_priority_p0_tcrs)
+            np.testing.assert_array_equal(result.lo_sw_priority_p1_hplus, lo_sw_priority_p1_hplus)
+            np.testing.assert_array_equal(result.lo_sw_priority_p2_heplusplus, lo_sw_priority_p2_heplusplus)
+            np.testing.assert_array_equal(result.lo_sw_priority_p3_heavies, lo_sw_priority_p3_heavies)
+            np.testing.assert_array_equal(result.lo_sw_priority_p4_dcrs, lo_sw_priority_p4_dcrs)
+            np.testing.assert_array_equal(result.lo_nsw_priority_p5_heavies, lo_nsw_priority_p5_heavies)
+            np.testing.assert_array_equal(result.lo_nsw_priority_p6_hplus_heplusplus,
+                                          lo_nsw_priority_p6_hplus_heplusplus)
+            np.testing.assert_array_equal(result.lo_sw_species_hplus, lo_sw_species_hplus)
+            np.testing.assert_array_equal(result.lo_sw_species_heplusplus, lo_sw_species_heplusplus)
+            np.testing.assert_array_equal(result.lo_sw_species_cplus4, lo_sw_species_cplus4)
+            np.testing.assert_array_equal(result.lo_sw_species_cplus5, lo_sw_species_cplus5)
+            np.testing.assert_array_equal(result.lo_sw_species_cplus6, lo_sw_species_cplus6)
+            np.testing.assert_array_equal(result.lo_sw_species_oplus5, lo_sw_species_oplus5)
+            np.testing.assert_array_equal(result.lo_sw_species_oplus6, lo_sw_species_oplus6)
+            np.testing.assert_array_equal(result.lo_sw_species_oplus7, lo_sw_species_oplus7)
+            np.testing.assert_array_equal(result.lo_sw_species_oplus8, lo_sw_species_oplus8)
+            np.testing.assert_array_equal(result.lo_sw_species_ne, lo_sw_species_ne)
+            np.testing.assert_array_equal(result.lo_sw_species_mg, lo_sw_species_mg)
+            np.testing.assert_array_equal(result.lo_sw_species_si, lo_sw_species_si)
+            np.testing.assert_array_equal(result.lo_sw_species_fe_loq, lo_sw_species_fe_loq)
+            np.testing.assert_array_equal(result.lo_sw_species_fe_hiq, lo_sw_species_fe_hiq)
+            np.testing.assert_array_equal(result.lo_sw_species_heplus, lo_sw_species_heplus)
+            np.testing.assert_array_equal(result.lo_sw_species_cnoplus, lo_sw_species_cnoplus)
+            np.testing.assert_array_equal(result.lo_nsw_species_hplus, lo_nsw_species_hplus)
+            np.testing.assert_array_equal(result.lo_nsw_species_heplusplus, lo_nsw_species_heplusplus)
+            np.testing.assert_array_equal(result.lo_nsw_species_c, lo_nsw_species_c)
+            np.testing.assert_array_equal(result.lo_nsw_species_o, lo_nsw_species_o)
+            np.testing.assert_array_equal(result.lo_nsw_species_ne_si_mg, lo_nsw_species_ne_si_mg)
+            np.testing.assert_array_equal(result.lo_nsw_species_fe, lo_nsw_species_fe)
+            np.testing.assert_array_equal(result.lo_nsw_species_heplus, lo_nsw_species_heplus)
+            np.testing.assert_array_equal(result.lo_nsw_species_cnoplus, lo_nsw_species_cnoplus)

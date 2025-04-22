@@ -1,10 +1,14 @@
 import json
+from copy import copy
 from dataclasses import replace
 from pathlib import Path
+from subprocess import run
+from datetime import datetime
 
 import imap_data_access
 import numpy as np
 
+from imap_l3_processing import spice_wrapper
 from imap_l3_processing.glows.glows_initializer import GlowsInitializer
 from imap_l3_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
 from imap_l3_processing.glows.l3a.glows_toolkit.l3a_data import L3aData
@@ -15,8 +19,11 @@ from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDepen
 from imap_l3_processing.glows.l3bc.models import GlowsL3BIonizationRate, GlowsL3CSolarWind
 from imap_l3_processing.glows.l3bc.science.filter_out_bad_days import filter_out_bad_days
 from imap_l3_processing.glows.l3bc.science.generate_l3bc import generate_l3bc
-from imap_l3_processing.glows.l3bc.utils import make_l3b_data_with_fill, make_l3c_data_with_fill
+from imap_l3_processing.glows.l3bc.utils import make_l3b_data_with_fill, make_l3c_data_with_fill, get_repoint_date_range
 from imap_l3_processing.glows.l3e.glows_l3e_dependencies import GlowsL3EDependencies
+from imap_l3_processing.glows.l3e.glows_l3e_utils import determine_call_args_for_l3e_executable
+from imap_l3_processing.glows.l3e.l3e_glows_hi_model import GlowsL3EHiData
+from imap_l3_processing.glows.l3e.l3e_glows_lo_model import GlowsL3ELoData
 from imap_l3_processing.models import UpstreamDataDependency
 from imap_l3_processing.processor import Processor
 from imap_l3_processing.utils import save_data
@@ -42,6 +49,16 @@ class GlowsProcessor(Processor):
                 imap_data_access.upload(l3b_cdf)
                 imap_data_access.upload(l3c_cdf)
                 imap_data_access.upload(zip_file)
+        elif self.input_metadata.data_level == "l3e":
+            lo_data, hi45_data, hi90_data = self.process_l3e()
+
+            lo_cdf = save_data(lo_data)
+            hi45_cdf = save_data(hi45_data)
+            hi90_cdf = save_data(hi90_data)
+
+            imap_data_access.upload(lo_cdf)
+            imap_data_access.upload(hi45_cdf)
+            imap_data_access.upload(hi90_cdf)
 
     def process_l3a(self, dependencies: GlowsL3ADependencies) -> GlowsL3LightCurve:
         data = dependencies.data
@@ -77,7 +94,65 @@ class GlowsProcessor(Processor):
         return l3b_data_product, l3c_data_product
 
     def process_l3e(self):
-        l3e_dependencies = GlowsL3EDependencies.fetch_dependencies(self.dependencies)
+        spice_wrapper.furnish()
+        l3e_dependencies, repointing = GlowsL3EDependencies.fetch_dependencies(self.dependencies)
+
+        l3e_dependencies.rename_dependencies()
+
+        repointing_start_date, repointing_end_date = get_repoint_date_range(repointing)
+
+        epoch_delta = (repointing_end_date - repointing_start_date) / 2
+        mid_point = repointing_start_date + epoch_delta
+
+        lo_call_args = determine_call_args_for_l3e_executable(repointing_start_date.astype(datetime)
+                                                              , mid_point.astype(datetime), 90)
+        hi90_call_args = determine_call_args_for_l3e_executable(repointing_start_date.astype(datetime),
+                                                                mid_point.astype(datetime), 90)
+        hi45_call_args = determine_call_args_for_l3e_executable(repointing_start_date.astype(datetime),
+                                                                mid_point.astype(datetime), 135)
+        ultra_call_args = determine_call_args_for_l3e_executable(repointing_start_date.astype(datetime),
+                                                                 mid_point.astype(datetime), 30)
+
+        lo_call_args_array = [arg for arg in lo_call_args.split(' ')]
+        hi90_call_args_array = [arg for arg in hi90_call_args.split(' ')]
+        hi45_call_args_array = [arg for arg in hi45_call_args.split(' ')]
+        ultra_call_args_array = [arg for arg in ultra_call_args.split(' ')]
+
+        run(['./survProbLo'] + lo_call_args_array)
+        run(['./survProbHi'] + hi90_call_args_array)
+        run(['./survProbHi'] + hi45_call_args_array)
+        run(['./survProbUltra'] + ultra_call_args_array)
+
+        lo_data_path = Path(
+            f'probSur.Imap.Lo_{lo_call_args_array[0]}_{lo_call_args_array[1][:8]}_{lo_call_args_array[-1][:5]}.dat')
+
+        lo_input_metadata = copy(self.input_metadata)
+        lo_input_metadata.descriptor = 'survival-probability-lo'
+        lo_data = GlowsL3ELoData.convert_dat_to_glows_l3e_lo_product(lo_input_metadata,
+                                                                     lo_data_path,
+                                                                     np.array([repointing_start_date]),
+                                                                     np.array([epoch_delta]))
+        hi_45_path = Path(
+            f'probSur.Imap.Hi_{hi45_call_args_array[0]}_{hi45_call_args_array[1][:8]}_{hi45_call_args_array[-1][:5]}.dat')
+
+        hi45_input_metadata = copy(self.input_metadata)
+        hi45_input_metadata.descriptor = 'survival-probability-hi45'
+        hi_45_data = GlowsL3EHiData.convert_dat_to_glows_l3e_hi_product(hi45_input_metadata,
+                                                                        hi_45_path,
+                                                                        np.array([repointing_start_date]),
+                                                                        np.array([epoch_delta]))
+
+        hi_90_path = Path(
+            f'probSur.Imap.Hi_{hi90_call_args_array[0]}_{hi90_call_args_array[1][:8]}_{hi90_call_args_array[-1][:5]}.dat')
+
+        hi90_input_metadata = copy(self.input_metadata)
+        hi90_input_metadata.descriptor = 'survival-probability-hi90'
+        hi_90_data = GlowsL3EHiData.convert_dat_to_glows_l3e_hi_product(hi90_input_metadata,
+                                                                        hi_90_path,
+                                                                        np.array([repointing_start_date]),
+                                                                        np.array([epoch_delta]))
+
+        return lo_data, hi_45_data, hi_90_data
 
     @staticmethod
     def add_spin_angle_delta(data: dict, ancillary_files: dict) -> dict:

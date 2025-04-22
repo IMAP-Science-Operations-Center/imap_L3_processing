@@ -4,14 +4,14 @@ from datetime import datetime
 from pathlib import Path
 
 import numpy as np
+from imap_processing.ena_maps.utils.spatial_utils import build_solid_angle_map
 from spacepy import pycdf
 from spacepy.pycdf import CDF
 
-from imap_l3_processing.constants import FIVE_MINUTES_IN_NANOSECONDS
-from imap_l3_processing.hi.l3.utils import read_hi_l2_data, read_hi_l1c_data, read_glows_l3e_data
-from tests.test_helpers import get_test_data_folder
-from imap_processing.ena_maps.utils.spatial_utils import build_solid_angle_map
 from imap_l3_processing.constants import FIVE_MINUTES_IN_NANOSECONDS, ONE_SECOND_IN_NANOSECONDS, SECONDS_PER_DAY
+from imap_l3_processing.hi.l3.utils import read_hi_l2_data, read_hi_l1c_data, read_glows_l3e_data, CGCorrection, \
+    SurvivalCorrection, PixelSize, Sensor, MapDescriptorParts, parse_map_descriptor, SpinPhase, Duration, MapQuantity
+from tests.test_helpers import get_test_data_folder
 
 
 class TestUtils(unittest.TestCase):
@@ -193,3 +193,32 @@ class TestUtils(unittest.TestCase):
             np.testing.assert_array_equal(result.spin_angle, np.full_like(cdf['spin_angle'], np.nan))
             np.testing.assert_array_equal(result.probability_of_survival,
                                           np.full_like(cdf['probability_of_survival'], np.nan))
+
+    def test_parse_map_descriptor(self):
+        cg = CGCorrection.CGCorrected
+        no_cg = CGCorrection.NotCGCorrected
+        sp = SurvivalCorrection.SurvivalCorrected
+        no_sp = SurvivalCorrection.NotSurvivalCorrected
+        test_cases = [
+            ("h45-sf-sp-anti-hae-4deg-3mo", MapDescriptorParts(Sensor.Hi45, no_cg, sp, SpinPhase.AntiRamOnly,
+                                                               PixelSize.FourDegrees, Duration.ThreeMonths,
+                                                               MapQuantity.Intensity)),
+            ("h90-hf-ram-hae-6deg-1yr", MapDescriptorParts(Sensor.Hi90, cg, no_sp, SpinPhase.RamOnly,
+                                                           PixelSize.SixDegrees, Duration.OneYear,
+                                                           MapQuantity.Intensity)),
+            ("h90-hf-hae-6deg-6mo", MapDescriptorParts(Sensor.Hi90, cg, no_sp, SpinPhase.FullSpin,
+                                                       PixelSize.SixDegrees, Duration.SixMonths,
+                                                       MapQuantity.Intensity)),
+            ("h45-hf-sp-hae-4deg-6mo-spectral", MapDescriptorParts(Sensor.Hi45, cg, sp, SpinPhase.FullSpin,
+                                                                   PixelSize.FourDegrees, Duration.SixMonths,
+                                                                   MapQuantity.SpectralIndex)),
+            ("h-hf-hae-6deg-6mo", MapDescriptorParts(Sensor.Combined, cg, no_sp, SpinPhase.FullSpin,
+                                                     PixelSize.SixDegrees, Duration.SixMonths,
+                                                     MapQuantity.Intensity)),
+            ("not-valid-at-all", None),
+        ]
+
+        for descriptor, expected in test_cases:
+            with self.subTest(descriptor):
+                descriptor_parts = parse_map_descriptor(descriptor)
+                self.assertEqual(expected, descriptor_parts)
