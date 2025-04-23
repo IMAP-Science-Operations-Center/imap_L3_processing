@@ -12,15 +12,9 @@ from spacepy.pycdf import CDF
 from imap_l3_processing.constants import FIVE_MINUTES_IN_NANOSECONDS, ONE_SECOND_IN_NANOSECONDS, SECONDS_PER_DAY
 from tests.test_helpers import get_test_data_folder
 
-parser = argparse.ArgumentParser()
-parser.add_argument("map_folder")
 
-args = parser.parse_args()
-
-parent = Path(args.map_folder)
-
-data = defaultdict(lambda: {})
-for folder in parent.iterdir():
+def create_l2_map_from_instrument_team(folder: Path, output_dir: Path) -> Path:
+    data = defaultdict(lambda: {})
     for sub_folder in folder.iterdir():
         for file in sub_folder.iterdir():
             energy_string = re.search(r"_(\d*p\d*)keV", file.name).group(1)
@@ -51,14 +45,13 @@ for folder in parent.iterdir():
 
     solid_angle = build_solid_angle_map(4)
 
-    pathname = get_test_data_folder() / 'hi' / 'fake_l2_maps' / f'{folder.name}.cdf'
+    pathname = output_dir / f'{folder.name}.cdf'
 
-    # pathname = f"/Users/harrison/Development/imap_L3_processing/tests/test_data/hi/fake_l2_maps/{folder.name}.cdf"
     Path(pathname).unlink(missing_ok=True)
     with CDF(str(pathname), '') as cdf:
         cdf.col_major(True)
 
-        cdf.new("Epoch", epoch, type=pycdf.const.CDF_TIME_TT2000)
+        cdf.new("epoch", epoch, type=pycdf.const.CDF_TIME_TT2000)
         cdf.new("energy", energy, recVary=False, type=pycdf.const.CDF_FLOAT)
         cdf.new("latitude", lat, recVary=False, type=pycdf.const.CDF_FLOAT)
         cdf.new("latitude_delta", lat_delta, recVary=False, type=pycdf.const.CDF_FLOAT)
@@ -88,3 +81,14 @@ for folder in parent.iterdir():
                 cdf[var].attrs['FILLVAL'] = -9223372036854775808
             elif cdf[var].type() == pycdf.const.CDF_FLOAT.value:
                 cdf[var].attrs['FILLVAL'] = -1e31
+    return pathname
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument("map_folder")
+    args = parser.parse_args()
+    parent = Path(args.map_folder)
+
+    for folder in parent.iterdir():
+        print(create_l2_map_from_instrument_team(folder, output_dir=get_test_data_folder() / 'hi' / 'fake_l2_maps'))

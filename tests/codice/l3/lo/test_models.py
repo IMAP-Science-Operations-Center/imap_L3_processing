@@ -276,6 +276,7 @@ class TestModels(unittest.TestCase):
             lo_sw_priority_p4_dcrs = rng.random((7, 10))
             lo_nsw_priority_p5_heavies = rng.random((7, 10))
             lo_nsw_priority_p6_hplus_heplusplus = rng.random((7, 10))
+            lo_nsw_priority_p7_missing = rng.random((7, 10))
             lo_sw_species_hplus = rng.random((7, 10))
             lo_sw_species_heplusplus = rng.random((7, 10))
             lo_sw_species_cplus4 = rng.random((7, 10))
@@ -341,6 +342,7 @@ class TestModels(unittest.TestCase):
                 cdf_file["lo_sw_priority_p4_dcrs"] = lo_sw_priority_p4_dcrs
                 cdf_file["lo_nsw_priority_p5_heavies"] = lo_nsw_priority_p5_heavies
                 cdf_file["lo_nsw_priority_p6_hplus_heplusplus"] = lo_nsw_priority_p6_hplus_heplusplus
+                cdf_file["lo_nsw_priority_p7_missing"] = lo_nsw_priority_p7_missing
                 cdf_file["lo_sw_species_hplus"] = lo_sw_species_hplus
                 cdf_file["lo_sw_species_heplusplus"] = lo_sw_species_heplusplus
                 cdf_file["lo_sw_species_cplus4"] = lo_sw_species_cplus4
@@ -409,6 +411,8 @@ class TestModels(unittest.TestCase):
             np.testing.assert_array_equal(result.lo_nsw_priority_p5_heavies, lo_nsw_priority_p5_heavies)
             np.testing.assert_array_equal(result.lo_nsw_priority_p6_hplus_heplusplus,
                                           lo_nsw_priority_p6_hplus_heplusplus)
+            np.testing.assert_array_equal(result.lo_nsw_priority_p7_missing,
+                                          lo_nsw_priority_p7_missing)
             np.testing.assert_array_equal(result.lo_sw_species_hplus, lo_sw_species_hplus)
             np.testing.assert_array_equal(result.lo_sw_species_heplusplus, lo_sw_species_heplusplus)
             np.testing.assert_array_equal(result.lo_sw_species_cplus4, lo_sw_species_cplus4)
@@ -441,27 +445,21 @@ class TestModels(unittest.TestCase):
         spin_angle = np.array([30, 60, 90])
         energy_step = np.array([5.5, 6.6, 7.7])
         priority = np.array([0, 1, 2, 3, 4, 5, 6, 7])
-        event_num = np.arange(10_000)
 
         direct_event = CodiceLoL3aDirectEventDataProduct(
             input_metadata=Mock(),
             epoch=epoch,
-            priority=priority,
-            event_num=event_num,
             normalization=rng.random((len(epoch), len(priority), len(spin_angle), len(energy_step))),
-            data_quality=rng.random((len(epoch), len(priority))),
-            multi_flag=rng.random((len(epoch), len(priority), len(event_num))),
-            num_events=rng.random((len(epoch), len(priority))),
-            pha_type=rng.random((len(epoch), len(priority), len(event_num))),
-            tof=rng.random((len(epoch), len(priority), len(event_num))))
+        )
 
         np.testing.assert_array_equal(direct_event.spin_angle,
                                       np.array([0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330]))
         np.testing.assert_array_equal(direct_event.energy_step, np.arange(128))
+        np.testing.assert_array_equal(direct_event.priority, priority)
 
         data_products = direct_event.to_data_product_variables()
 
-        self.assertEqual(len(data_products), 11)
+        self.assertEqual(len(data_products), 5)
         for data_product in data_products:
             self.assertIsNotNone(getattr(direct_event, data_product.name))
             np.testing.assert_array_equal(getattr(direct_event, data_product.name), data_product.value)

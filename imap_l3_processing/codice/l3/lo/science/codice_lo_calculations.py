@@ -7,10 +7,11 @@ def calculate_partial_densities(species_intensities: np.ndarray):
     return NotImplementedError
 
 
-def calculate_total_number_of_events(priority_rate_variable: np.ndarray, acquisition_time: np.ndarray) -> float:
+def calculate_total_number_of_events(priority_rate_variable: np.ndarray, acquisition_time: np.ndarray) -> np.ndarray[
+    int]:
     acquisition_time_in_seconds = acquisition_time / 1_000_000
-
-    return np.sum(priority_rate_variable * acquisition_time_in_seconds, dtype=float)
+    counts = priority_rate_variable * acquisition_time_in_seconds
+    return np.sum(counts, axis=(1, 2), dtype=int)
 
 
 def calculate_normalization_ratio(energy_and_spin_angle_counts: dict[EnergyAndSpinAngle, int],
