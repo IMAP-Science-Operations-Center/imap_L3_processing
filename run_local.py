@@ -584,8 +584,8 @@ if __name__ == "__main__":
 
         missing_paths, run_local_paths = try_get_many_run_local_paths([
             "hi/full_spin_deps/l1c",
-            "hi/full_spin_deps/imap_hi_l3_h90-sf-ram-hae-4deg-6mo_20250415_v001.cdf",
-            "hi/full_spin_deps/imap_hi_l3_h90-sf-anti-hae-4deg-6mo_20250415_v001.cdf"
+            "hi/full_spin_deps/imap_hi_l2_h90-sf-ram-hae-4deg-6mo_20250415_v001.cdf",
+            "hi/full_spin_deps/imap_hi_l2_h90-sf-anti-hae-4deg-6mo_20250415_v001.cdf"
         ])
 
         if missing_paths:
