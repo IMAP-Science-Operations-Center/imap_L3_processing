@@ -53,7 +53,7 @@ for folder in parent.iterdir():
     with CDF(pathname, '') as cdf:
         cdf.col_major(True)
 
-        cdf.new("Epoch", epoch, type=pycdf.const.CDF_TIME_TT2000)
+        cdf.new("epoch", epoch, type=pycdf.const.CDF_TIME_TT2000)
         cdf.new("energy", energy, recVary=False, type=pycdf.const.CDF_FLOAT)
         cdf.new("latitude", lat, recVary=False, type=pycdf.const.CDF_FLOAT)
         cdf.new("longitude", lon, recVary=False, type=pycdf.const.CDF_FLOAT)

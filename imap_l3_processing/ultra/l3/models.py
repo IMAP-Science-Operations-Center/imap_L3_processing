@@ -3,6 +3,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Self
 
+import numpy as np
 import xarray as xr
 from imap_processing.ena_maps.utils.coordinates import CoordNames
 from numpy import ndarray
@@ -41,7 +42,7 @@ class UltraL2Map(IntensityMapData, HealPixCoords):
     def read_from_path(cls, file_path: Path):
         with CDF(str(file_path)) as cdf:
             return UltraL2Map(
-                epoch=read_variable_and_mask_fill_values(cdf["Epoch"]),
+                epoch=read_variable_and_mask_fill_values(cdf["epoch"]),
                 epoch_delta=read_variable_and_mask_fill_values(cdf["epoch_delta"]),
                 energy=read_numeric_variable(cdf["energy"]),
                 energy_delta_plus=read_numeric_variable(cdf["energy_delta_plus"]),
@@ -59,6 +60,10 @@ class UltraL2Map(IntensityMapData, HealPixCoords):
                 pixel_index=read_numeric_variable(cdf["pixel_index"]),
                 pixel_index_label=cdf["pixel_index_label"][...]
             )
+
+    @property
+    def nside(self) -> int:
+        return int(np.sqrt(len(self.pixel_index) / 12))
 
 
 @dataclass
