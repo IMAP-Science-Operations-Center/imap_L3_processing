@@ -1,5 +1,6 @@
 from copy import deepcopy
 from datetime import datetime
+from pathlib import Path
 from typing import TypeVar
 from unittest import TestCase
 from unittest.mock import sentinel, patch, call, Mock
@@ -9,14 +10,14 @@ import numpy as np
 from imap_l3_processing.constants import UNSIGNED_INT2_FILL_VALUE, UNSIGNED_INT1_FILL_VALUE
 from imap_l3_processing.hit.l3.hit_l3_sectored_dependencies import HITL3SectoredDependencies
 from imap_l3_processing.hit.l3.hit_processor import HitProcessor
-from imap_l3_processing.hit.l3.models import HitL2Data
+from imap_l3_processing.hit.l3.models import HitL2Data, HitL1Data
 from imap_l3_processing.hit.l3.pha.pha_event_reader import PHAWord, Detector, RawPHAEvent, PHAExtendedHeader, StimBlock, \
     ExtendedStimHeader
 from imap_l3_processing.hit.l3.pha.science.calculate_pha import EventOutput
 from imap_l3_processing.hit.l3.pha.science.cosine_correction_lookup_table import DetectedRange, DetectorSide, \
     DetectorRange
 from imap_l3_processing.hit.l3.sectored_products.models import HitPitchAngleDataProduct
-from imap_l3_processing.models import MagL1dData, InputMetadata, UpstreamDataDependency
+from imap_l3_processing.models import MagL1dData, InputMetadata
 from imap_l3_processing.processor import Processor
 from tests.test_helpers import NumpyArrayMatcher, create_dataclass_mock
 
@@ -24,10 +25,11 @@ from tests.test_helpers import NumpyArrayMatcher, create_dataclass_mock
 class TestHitProcessor(TestCase):
     def test_is_a_processor(self):
         self.assertIsInstance(
-            HitProcessor([], Mock()),
+            HitProcessor(Mock(), Mock()),
             Processor
         )
 
+    @patch("imap_l3_processing.processor.spiceypy")
     @patch('imap_l3_processing.hit.l3.hit_processor.imap_data_access.upload')
     @patch('imap_l3_processing.hit.l3.hit_processor.save_data')
     @patch('imap_l3_processing.hit.l3.hit_processor.HITL3SectoredDependencies.fetch_dependencies')
@@ -44,7 +46,9 @@ class TestHitProcessor(TestCase):
                                          mock_get_sector_unit_vectors, mock_get_hit_bin_polar_coordinates,
                                          mock_calculate_unit_vector,
                                          mock_fetch_dependencies, mock_save_data,
-                                         mock_imap_data_access_upload):
+                                         mock_imap_data_access_upload, mock_spiceypy):
+        mock_spiceypy.ktotal.return_value = 0
+
         input_metadata = InputMetadata(
             instrument="hit",
             data_level="l3",
@@ -53,16 +57,10 @@ class TestHitProcessor(TestCase):
             version="",
             descriptor="macropixel"
         )
-        expected_upstream_data_dependencies = UpstreamDataDependency(
-            instrument="hit",
-            data_level="l3",
-            start_date=None,
-            end_date=None,
-            version="",
-            descriptor="macropixel"
-        )
 
-        epochs = np.array([123, 234])
+        mock_processing_input_collection = Mock()
+        mock_processing_input_collection.get_file_paths.return_value = [Path("test/parent_path")]
+
         epochs = np.array([123, 234])
         epoch_deltas = np.array([12, 13])
         averaged_mag_vectors = [sentinel.mag_vector1, sentinel.mag_vector2]
@@ -231,9 +229,9 @@ class TestHitProcessor(TestCase):
              rebinned_pa_iron_time2, rebinned_pa_iron_delta_plus_time2, rebinned_pa_iron_delta_minus_time2),
         ]
 
-        processor = HitProcessor(sentinel.upstream_dependency, input_metadata)
+        processor = HitProcessor(mock_processing_input_collection, input_metadata)
         processor.process()
-        mock_fetch_dependencies.assert_called_once_with(sentinel.upstream_dependency)
+        mock_fetch_dependencies.assert_called_once_with(mock_processing_input_collection)
 
         mock_mag_data.rebin_to.assert_called_once_with(mock_hit_data.epoch, mock_hit_data.epoch_delta)
 
@@ -314,7 +312,8 @@ class TestHitProcessor(TestCase):
 
         saved_data_product: HitPitchAngleDataProduct = mock_save_data.call_args_list[0].args[0]
 
-        self.assertEqual(expected_upstream_data_dependencies, saved_data_product.input_metadata)
+        self.assertEqual(input_metadata, saved_data_product.input_metadata)
+        self.assertEqual(["parent_path"], saved_data_product.parent_file_names)
         np.testing.assert_array_equal(saved_data_product.epochs, epochs)
         np.testing.assert_array_equal(saved_data_product.epoch_deltas, epoch_deltas)
 
@@ -439,13 +438,15 @@ class TestHitProcessor(TestCase):
 
         mock_imap_data_access_upload.assert_called_once_with(mock_save_data.return_value)
 
+    @patch("imap_l3_processing.processor.spiceypy")
     @patch("imap_l3_processing.hit.l3.hit_processor.imap_data_access.upload")
     @patch("imap_l3_processing.hit.l3.hit_processor.save_data")
     @patch("imap_l3_processing.hit.l3.hit_processor.process_pha_event", autospec=True)
     @patch("imap_l3_processing.hit.l3.hit_processor.HitL3PhaDependencies.fetch_dependencies")
     @patch("imap_l3_processing.hit.l3.hit_processor.PHAEventReader.read_all_pha_events")
     def test_process_direct_event_product(self, mock_read_all_events, mock_fetch_dependencies, mock_process_pha_event,
-                                          mock_save_data, mock_imap_data_access_upload):
+                                          mock_save_data, mock_imap_data_access_upload, mock_spiceypy):
+        mock_spiceypy.ktotal.return_value = 0
         pha_word_1 = PHAWord(adc_overflow=False, adc_value=11,
                              detector=Detector(layer=1, side="A", segment="1A", address=2, group="L1A4"),
                              is_last_pha=True,
@@ -498,7 +499,9 @@ class TestHitProcessor(TestCase):
             descriptor="direct-events"
         )
 
-        dependencies = []
+        mock_processing_input_collection = Mock()
+        mock_processing_input_collection.get_file_paths.return_value = [Path("test/parent_path")]
+
         mock_hit_l3_pha_dependencies = mock_fetch_dependencies.return_value
         mock_hit_l3_pha_dependencies.hit_l1_data.epoch = [datetime(year=2020, month=2, day=1),
                                                           datetime(year=2020, month=2, day=1, hour=1)]
@@ -507,10 +510,10 @@ class TestHitProcessor(TestCase):
         mock_process_pha_event.side_effect = [event_output_1, event_output_2, event_output_3]
         mock_read_all_events.side_effect = [[raw_pha_event_1, raw_pha_event_2], [raw_pha_event_3]]
 
-        processor = HitProcessor(dependencies, input_metadata)
+        processor = HitProcessor(mock_processing_input_collection, input_metadata)
         processor.process()
 
-        mock_fetch_dependencies.assert_called_once_with(dependencies)
+        mock_fetch_dependencies.assert_called_once_with(mock_processing_input_collection)
         mock_read_all_events.assert_has_calls([call(sentinel.binary_stream_1), call(sentinel.binary_stream_2)])
 
         mock_process_pha_event.assert_has_calls(
@@ -530,8 +533,8 @@ class TestHitProcessor(TestCase):
         mock_imap_data_access_upload.assert_called_once_with(mock_save_data.return_value)
 
         direct_event_product = mock_save_data.call_args_list[0].args[0]
-        self.assertEqual(input_metadata.to_upstream_data_dependency("direct-events"),
-                         direct_event_product.input_metadata)
+        self.assertEqual(input_metadata, direct_event_product.input_metadata)
+        self.assertEqual(["parent_path"], direct_event_product.parent_file_names)
 
         np.testing.assert_array_equal(direct_event_product.epoch, np.array(
             [datetime(year=2020, month=2, day=1), datetime(year=2020, month=2, day=1),
@@ -591,18 +594,14 @@ class TestHitProcessor(TestCase):
         np.testing.assert_array_equal(direct_event_product.dac_value,
                                       np.array([UNSIGNED_INT2_FILL_VALUE, UNSIGNED_INT2_FILL_VALUE, 123]))
 
-    @patch("imap_l3_processing.hit.l3.hit_processor.imap_data_access.upload")
-    @patch("imap_l3_processing.hit.l3.hit_processor.save_data")
-    @patch("imap_l3_processing.hit.l3.hit_processor.process_pha_event", autospec=True)
-    @patch("imap_l3_processing.hit.l3.hit_processor.HitL3PhaDependencies.fetch_dependencies")
     @patch("imap_l3_processing.hit.l3.hit_processor.PHAEventReader.read_all_pha_events")
-    def test_direct_event_parsing_errors_result_in_skipped_event(self, mock_read_all_events, mock_fetch_dependencies,
-                                                                 mock_process_pha_event,
-                                                                 mock_save_data, mock_imap_data_access_upload):
-        mock_hit_l3_pha_dependencies = mock_fetch_dependencies.return_value
-        mock_hit_l3_pha_dependencies.hit_l1_data.epoch = [datetime(year=2020, month=2, day=1),
-                                                          datetime(year=2020, month=2, day=1, hour=1)]
-        mock_hit_l3_pha_dependencies.hit_l1_data.event_binary = [sentinel.binary_stream_1, sentinel.binary_stream_2]
+    @patch("imap_l3_processing.hit.l3.hit_processor.process_pha_event", autospec=True)
+    def test_direct_event_parsing_errors_result_in_skipped_event(self, mock_process_pha_event, mock_read_all_events):
+        hit_l1_data = HitL1Data(epoch=np.array([datetime(year=2020, month=2, day=1),
+                                                datetime(year=2020, month=2, day=1, hour=1)]),
+                                event_binary=np.array([sentinel.binary_stream_1, sentinel.binary_stream_2]))
+        mock_direct_event_dependencies = Mock()
+        mock_direct_event_dependencies.hit_l1_data = hit_l1_data
 
         event = RawPHAEvent(
             particle_id=1,
@@ -629,12 +628,11 @@ class TestHitProcessor(TestCase):
             descriptor="direct-events"
         )
 
-        processor = HitProcessor([], input_metadata)
-        processor.process()
+        processor = HitProcessor(Mock(), input_metadata)
+        actual_product = processor.process_direct_event_product(mock_direct_event_dependencies)
 
-        result = mock_save_data.call_args.args[0]
-        self.assertEqual(1, len(result.epoch))
-        self.assertEqual(datetime(year=2020, month=2, day=1, hour=1), result.epoch[0])
+        self.assertEqual(1, len(actual_product.epoch))
+        self.assertEqual(datetime(year=2020, month=2, day=1, hour=1), actual_product.epoch[0])
 
     def test_raise_error_if_descriptor_doesnt_match(self):
         input_metadata = InputMetadata(

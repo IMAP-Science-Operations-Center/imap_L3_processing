@@ -1,5 +1,6 @@
 import imap_data_access
 import numpy as np
+from imap_data_access.processing_input import ProcessingInputCollection
 
 from imap_l3_processing.constants import UNSIGNED_INT1_FILL_VALUE, UNSIGNED_INT2_FILL_VALUE
 from imap_l3_processing.hit.l3.hit_l3_sectored_dependencies import HITL3SectoredDependencies
@@ -10,6 +11,7 @@ from imap_l3_processing.hit.l3.pha.science.calculate_pha import process_pha_even
 from imap_l3_processing.hit.l3.sectored_products.models import HitPitchAngleDataProduct
 from imap_l3_processing.hit.l3.sectored_products.science.sectored_products_algorithms import get_sector_unit_vectors, \
     get_hit_bin_polar_coordinates, hit_rebin_by_pitch_angle_and_gyrophase
+from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.pitch_angles import calculate_unit_vector, calculate_pitch_angle, calculate_gyrophase, \
     rotate_particle_vectors_from_hit_despun_to_imap_despun
 from imap_l3_processing.processor import Processor
@@ -17,15 +19,20 @@ from imap_l3_processing.utils import save_data
 
 
 class HitProcessor(Processor):
+    def __init__(self, dependencies: ProcessingInputCollection, input_metadata: InputMetadata):
+        super().__init__(dependencies, input_metadata)
+
     def process(self):
         if self.input_metadata.descriptor == "macropixel":
             dependencies = HITL3SectoredDependencies.fetch_dependencies(self.dependencies)
             pitch_angle_data_product = self.process_pitch_angle_product(dependencies)
+            pitch_angle_data_product.parent_file_names = self.get_parent_file_names()
             cdf_file_path = save_data(pitch_angle_data_product)
             imap_data_access.upload(cdf_file_path)
         elif self.input_metadata.descriptor == "direct-events":
             direct_event_dependencies = HitL3PhaDependencies.fetch_dependencies(self.dependencies)
             direct_event_data_product = self.process_direct_event_product(direct_event_dependencies)
+            direct_event_data_product.parent_file_names = self.get_parent_file_names()
             cdf_file_path = save_data(direct_event_data_product)
             imap_data_access.upload(cdf_file_path)
         else:
@@ -144,8 +151,7 @@ class HitProcessor(Processor):
                                          a_l_stim=a_l_stim,
                                          stim_step=stim_step,
                                          dac_value=dac_value,
-                                         input_metadata=self.input_metadata.to_upstream_data_dependency(
-                                             "direct-events"))
+                                         input_metadata=self.input_metadata)
 
     def process_pitch_angle_product(self, dependencies: HITL3SectoredDependencies) -> HitPitchAngleDataProduct:
         number_of_pitch_angle_bins = 8
@@ -213,7 +219,7 @@ class HitProcessor(Processor):
                 rebinned_pa_only_intensity_by_species[species][1][time_index] = intensity_delta_plus_by_pa
                 rebinned_pa_only_intensity_by_species[species][2][time_index] = intensity_delta_minus_by_pa
 
-        return HitPitchAngleDataProduct(self.input_metadata.to_upstream_data_dependency("macropixel"), hit_data.epoch,
+        return HitPitchAngleDataProduct(self.input_metadata, hit_data.epoch,
                                         hit_data.epoch_delta, pitch_angles, pitch_angle_deltas,
                                         gyrophases,
                                         gyrophase_delta,
