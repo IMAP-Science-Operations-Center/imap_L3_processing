@@ -52,7 +52,9 @@ from imap_l3_processing.swapi.swapi_processor import SwapiProcessor
 from imap_l3_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies
 from imap_l3_processing.swe.swe_processor import SweProcessor
 from imap_l3_processing.utils import save_data, read_l1d_mag_data
-from tests.test_helpers import get_test_data_path, get_test_instrument_team_data_path, environment_variables
+from scripts.hi.create_hi_full_spin_deps import create_hi_full_spin_deps
+from tests.test_helpers import get_test_data_path, get_test_instrument_team_data_path, environment_variables, \
+    try_get_many_run_local_paths
 
 
 def create_glows_l3a_cdf(dependencies: GlowsL3ADependencies):
@@ -577,19 +579,27 @@ if __name__ == "__main__":
         hi_targets = ["survival-probability", "spectral-index", "full-spin"]
         do_all = not np.any([t in sys.argv for t in hi_targets])
 
+        glows_l3e_folder = get_test_data_path("hi/fake_l3e_survival_probabilities/90")
+        glows_l3_paths = list(glows_l3e_folder.iterdir())
+
+        missing_paths, run_local_paths = try_get_many_run_local_paths([
+            "hi/full_spin_deps/l1c",
+            "hi/full_spin_deps/imap_hi_l2_h90-sf-ram-hae-4deg-6mo_20250415_v001.cdf",
+            "hi/full_spin_deps/imap_hi_l2_h90-sf-anti-hae-4deg-6mo_20250415_v001.cdf"
+        ])
+
+        if missing_paths:
+            create_hi_full_spin_deps()
+
+        [hi_l1c_folder, l2_ram_map_path, l2_antiram_map_path] = run_local_paths
+        hi_l1c_paths = list(hi_l1c_folder.iterdir())
+
         if do_all or "survival-probability" in sys.argv:
-            hi_l1c_folder = get_test_data_path("hi/fake_l1c/90")
-            glows_l3e_folder = get_test_data_path("hi/fake_l3e_survival_probabilities/90")
-
-            hi_l1c_paths = list(hi_l1c_folder.iterdir())
-            glows_l3_paths = list(glows_l3e_folder.iterdir())
-
             survival_dependencies = HiL3SurvivalDependencies.from_file_paths(
-                map_file_path=get_test_data_path(
-                    "hi/fake_l2_maps/hi90-6months.cdf"),
+                map_file_path=l2_ram_map_path,
                 hi_l1c_paths=hi_l1c_paths,
                 glows_l3e_paths=glows_l3_paths,
-                l2_descriptor="h90-sf-anti-hae-4deg-6mo")
+                l2_descriptor="h90-sf-ram-hae-4deg-6mo")
             print(create_hi_l3_survival_corrected_cdf(survival_dependencies, spacing_degree=4))
 
         if do_all or "spectral-index" in sys.argv:
@@ -599,22 +609,14 @@ if __name__ == "__main__":
             print(create_spectral_index_cdf(dependencies))
 
         if do_all or "full-spin" in sys.argv:
-            hi_l1c_folder = get_test_data_path("hi/fake_l1c/90")
-            glows_l3e_folder = get_test_data_path("hi/fake_l3e_survival_probabilities/90")
-
-            hi_l1c_paths = list(hi_l1c_folder.iterdir())
-            glows_l3_paths = list(glows_l3e_folder.iterdir())
-
             ram_survival_dependencies = HiL3SurvivalDependencies.from_file_paths(
-                map_file_path=get_test_data_path(
-                    "hi/fake_l2_maps/hi90-ram-3month.cdf"),
+                map_file_path=l2_ram_map_path,
                 hi_l1c_paths=hi_l1c_paths,
                 glows_l3e_paths=glows_l3_paths,
                 l2_descriptor="h90-sf-ram-hae-4deg-6mo")
 
             antiram_survival_dependencies = HiL3SurvivalDependencies.from_file_paths(
-                map_file_path=get_test_data_path(
-                    "hi/fake_l2_maps/hi90-anti-3month.cdf"),
+                map_file_path=l2_antiram_map_path,
                 hi_l1c_paths=hi_l1c_paths,
                 glows_l3e_paths=glows_l3_paths,
                 l2_descriptor="h90-sf-anti-hae-4deg-6mo")

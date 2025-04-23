@@ -52,7 +52,7 @@ class TestUtils(unittest.TestCase):
             solid_angle = build_solid_angle_map(4)
             solid_angle = solid_angle[np.newaxis, ...]
 
-            cdf.new("Epoch", epoch)
+            cdf.new("epoch", epoch)
             cdf.new("energy", energy, recVary=False)
             cdf.new("latitude", lat, recVary=False)
             cdf.new("latitude_delta", lat_delta, recVary=False)
@@ -104,7 +104,7 @@ class TestUtils(unittest.TestCase):
         result = read_hi_l2_data(path)
 
         with CDF(str(path)) as cdf:
-            np.testing.assert_array_equal(result.epoch, cdf["Epoch"], )
+            np.testing.assert_array_equal(result.epoch, cdf["epoch"], )
 
             self.assertTrue(np.all(result.epoch_delta.mask))
             self.assertTrue(np.all(result.obs_date.mask))

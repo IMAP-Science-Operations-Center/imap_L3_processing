@@ -12,6 +12,20 @@ from imap_l3_processing.swe.l3.models import SweConfiguration
 from imap_l3_processing.swe.l3.science.moment_calculations import Moments, MomentFitResults
 
 
+def get_run_local_data_path(extension: str) -> Path:
+    return Path(tests.__file__).parent.parent / "run_local_input_data" / extension
+
+
+def try_get_many_run_local_paths(extensions: list[str]) -> tuple[bool, list[Path]]:
+    missing_path = False
+    paths = []
+    for extension in extensions:
+        paths.append(get_run_local_data_path(extension))
+        if not paths[-1].exists():
+            missing_path = True
+    return missing_path, paths
+
+
 def get_test_data_path(filename: str) -> Path:
     return Path(tests.__file__).parent / "test_data" / filename
 
