@@ -8,6 +8,7 @@ from subprocess import run
 import imap_data_access
 import numpy as np
 
+from imap_l3_processing.glows.descriptors import GLOWS_L3A_DESCRIPTOR
 from imap_l3_processing.glows.glows_initializer import GlowsInitializer
 from imap_l3_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
 from imap_l3_processing.glows.l3a.glows_toolkit.l3a_data import L3aData
@@ -36,6 +37,7 @@ class GlowsProcessor(Processor):
             l3a_dependencies = GlowsL3ADependencies.fetch_dependencies(self.dependencies)
             self.input_metadata.repointing = l3a_dependencies.repointing
             l3a_output = self.process_l3a(l3a_dependencies)
+            l3a_output.parent_file_names = self.get_parent_file_names()
             proton_cdf = save_data(l3a_output)
             imap_data_access.upload(proton_cdf)
         elif self.input_metadata.data_level == "l3b":
@@ -75,8 +77,8 @@ class GlowsProcessor(Processor):
         l3_data.generate_l3a_data(dependencies.ancillary_files)
         data_with_spin_angle = self.add_spin_angle_delta(l3_data.data, dependencies.ancillary_files)
 
-        return create_glows_l3a_from_dictionary(data_with_spin_angle, self.input_metadata.to_upstream_data_dependency(
-            self.dependencies[0].descriptor))
+        return create_glows_l3a_from_dictionary(data_with_spin_angle,
+                                                replace(self.input_metadata, descriptor=GLOWS_L3A_DESCRIPTOR))
 
     def process_l3bc(self, dependencies: GlowsL3BCDependencies) -> tuple[GlowsL3BIonizationRate, GlowsL3CSolarWind]:
         filtered_days = filter_out_bad_days(dependencies.l3a_data, dependencies.ancillary_files['bad_days_list'])

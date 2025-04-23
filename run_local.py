@@ -530,13 +530,13 @@ if __name__ == "__main__":
 
             dependencies = GlowsL3ADependencies(l2_glows_data, 5, {
                 "calibration_data": Path(
-                    "instrument_team_data/glows/imap_glows_l3a_calibration-data-text-not-cdf_20250707_v002.cdf"),
+                    "instrument_team_data/glows/imap_glows_calibration-data_20250707_v000.dat"),
                 "settings": Path(
-                    "instrument_team_data/glows/imap_glows_l3a_pipeline-settings-json-not-cdf_20250707_v002.cdf"),
+                    "instrument_team_data/glows/imap_glows_pipeline-settings_20250707_v002.json"),
                 "time_dependent_bckgrd": Path(
-                    "instrument_team_data/glows/imap_glows_l3a_time-dep-bckgrd-text-not-cdf_20250707_v001.cdf"),
+                    "instrument_team_data/glows/imap_glows_time-dep-bckgrd_20250707_v000.dat"),
                 "extra_heliospheric_bckgrd": Path(
-                    "instrument_team_data/glows/imap_glows_l3a_map-of-extra-helio-bckgrd-text-not-cdf_20250707_v001.cdf"),
+                    "instrument_team_data/glows/imap_glows_map-of-extra-helio-bckgrd_20250707_v000.dat"),
             })
 
             path = create_glows_l3a_cdf(dependencies)
