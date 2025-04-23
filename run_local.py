@@ -10,10 +10,8 @@ from unittest.mock import patch, Mock, MagicMock
 import imap_data_access
 import numpy as np
 import xarray as xr
-from imap_data_access.processing_input import ProcessingInputCollection
 from spacepy.pycdf import CDF
 
-from imap_l3_processing.glows.descriptors import GLOWS_L2_DESCRIPTOR
 from imap_l3_processing.glows.glows_initializer import GlowsInitializer
 from imap_l3_processing.glows.glows_processor import GlowsProcessor
 from imap_l3_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
@@ -33,7 +31,7 @@ from imap_l3_processing.hit.l3.pha.science.gain_lookup_table import GainLookupTa
 from imap_l3_processing.hit.l3.pha.science.hit_event_type_lookup import HitEventTypeLookup
 from imap_l3_processing.hit.l3.pha.science.range_fit_lookup import RangeFitLookup
 from imap_l3_processing.hit.l3.utils import read_l2_hit_data
-from imap_l3_processing.models import InputMetadata, UpstreamDataDependency
+from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density import \
     AlphaTemperatureDensityCalibrationTable
 from imap_l3_processing.swapi.l3a.science.calculate_pickup_ion import DensityOfNeutralHeliumLookupTable
@@ -52,7 +50,9 @@ from imap_l3_processing.swapi.swapi_processor import SwapiProcessor
 from imap_l3_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies
 from imap_l3_processing.swe.swe_processor import SweProcessor
 from imap_l3_processing.utils import save_data, read_l1d_mag_data
-from tests.test_helpers import get_test_data_path, get_test_instrument_team_data_path, environment_variables
+from scripts.hi.create_hi_full_spin_deps import create_hi_full_spin_deps
+from tests.test_helpers import get_test_data_path, get_test_instrument_team_data_path, environment_variables, \
+    try_get_many_run_local_paths
 
 
 def create_glows_l3a_cdf(dependencies: GlowsL3ADependencies):
@@ -63,15 +63,7 @@ def create_glows_l3a_cdf(dependencies: GlowsL3ADependencies):
         end_date=datetime(2013, 9, 8),
         version='v001')
 
-    upstream_dependencies = [
-        UpstreamDataDependency(input_metadata.instrument,
-                               "l2",
-                               input_metadata.start_date,
-                               input_metadata.end_date,
-                               input_metadata.version,
-                               GLOWS_L2_DESCRIPTOR)
-    ]
-    processor = GlowsProcessor(upstream_dependencies, input_metadata)
+    processor = GlowsProcessor(Mock(), input_metadata)
 
     l3a_data = processor.process_l3a(dependencies)
     cdf_path = save_data(l3a_data, delete_if_present=True)
@@ -92,7 +84,7 @@ def create_swapi_l3b_cdf(geometric_calibration_file, efficiency_calibration_file
         start_date=datetime(2010, 1, 1),
         end_date=datetime(2010, 1, 2),
         version='v000')
-    processor = SwapiProcessor(None, input_metadata)
+    processor = SwapiProcessor(Mock(), input_metadata)
 
     l3b_combined_vdf = processor.process_l3b(swapi_data, swapi_l3_dependencies)
     cdf_path = save_data(l3b_combined_vdf, delete_if_present=True)
@@ -129,7 +121,7 @@ def create_swapi_l3a_cdf(proton_temperature_density_calibration_file, alpha_temp
         start_date=datetime(2025, 10, 23),
         end_date=datetime(2025, 10, 24),
         version='v000')
-    processor = SwapiProcessor(ProcessingInputCollection(), input_metadata)
+    processor = SwapiProcessor(Mock(), input_metadata)
 
     l3a_proton_sw, l3a_alpha_sw, l3a_pui_he = processor.process_l3a(swapi_data, swapi_l3_dependencies)
     proton_cdf_path = save_data(l3a_proton_sw, delete_if_present=True)
@@ -145,7 +137,7 @@ def create_swe_product(dependencies: SweL3Dependencies) -> str:
         start_date=datetime(2025, 6, 29),
         end_date=datetime(2025, 7, 1),
         version='v000')
-    processor = SweProcessor(ProcessingInputCollection(), input_metadata)
+    processor = SweProcessor(Mock(), input_metadata)
     output_data = processor.calculate_products(dependencies)
     cdf_path = save_data(output_data, delete_if_present=True)
     return cdf_path
@@ -163,7 +155,7 @@ def create_swe_product_with_fake_spice(dependencies: SweL3Dependencies, mock_spi
         start_date=datetime(2010, 1, 1),
         end_date=datetime(2010, 1, 2),
         version='v000')
-    processor = SweProcessor(None, input_metadata)
+    processor = SweProcessor(Mock(), input_metadata)
     output_data = processor.calculate_products(dependencies)
     cdf_path = save_data(output_data, delete_if_present=True)
     return cdf_path
@@ -177,7 +169,7 @@ def create_survival_corrected_full_spin_cdf(dependencies: HiL3SingleSensorFullSp
                                    version="v000",
                                    descriptor="h90-sf-sp-hae-4deg-6mo",
                                    )
-    processor = HiProcessor(None, input_metadata)
+    processor = HiProcessor(Mock(), input_metadata)
     output_data = processor._process_full_spin_single_sensor(dependencies)
     cdf_path = save_data(output_data, delete_if_present=True)
     return cdf_path
@@ -191,7 +183,7 @@ def create_spectral_index_cdf(dependencies: HiL3SpectralFitDependencies) -> str:
                                    version="v000",
                                    descriptor="h90-hf-sp-hae-4deg-6mo-spectral",
                                    )
-    processor = HiProcessor(None, input_metadata)
+    processor = HiProcessor(Mock(), input_metadata)
     output_data = processor._process_spectral_fit_index(dependencies)
     cdf_path = save_data(output_data, delete_if_present=True)
     return cdf_path
@@ -205,7 +197,7 @@ def create_hit_sectored_cdf(dependencies: HITL3SectoredDependencies) -> str:
         start_date=datetime(2025, 1, 1),
         end_date=datetime(2025, 1, 2),
         version='v000')
-    processor = HitProcessor(None, input_metadata)
+    processor = HitProcessor(Mock(), input_metadata)
     output_data = processor.process_pitch_angle_product(dependencies)
     cdf_path = save_data(output_data, delete_if_present=True)
     return cdf_path
@@ -251,7 +243,7 @@ def create_hit_direct_event_cdf():
         version="v001",
         descriptor="direct-events"
     )
-    processor = HitProcessor(None, input_metadata)
+    processor = HitProcessor(Mock(), input_metadata)
 
     product = processor.process_direct_event_product(direct_event_dependencies)
     file_path = save_data(product, delete_if_present=True)
@@ -285,14 +277,6 @@ def run_glows_l3bc_processor_and_initializer(_, mock_query):
         end_date=datetime(2013, 9, 8),
         version='v011')
 
-    upstream_dependencies = [
-        UpstreamDataDependency(input_metadata.instrument,
-                               "l3b",
-                               input_metadata.start_date,
-                               input_metadata.end_date,
-                               input_metadata.version,
-                               GLOWS_L2_DESCRIPTOR)
-    ]
     l3a_files = imap_data_access.query(instrument='glows', version=input_metadata.version, data_level='l3a',
                                        start_date='20100422', end_date='20100625')
 
@@ -300,7 +284,7 @@ def run_glows_l3bc_processor_and_initializer(_, mock_query):
                                          start_date='20100922', end_date='20101123')
     mock_query.side_effect = [l3a_files + l3a_files_2, []]
 
-    processor = GlowsProcessor(input_metadata=input_metadata, dependencies=upstream_dependencies)
+    processor = GlowsProcessor(dependencies=Mock(), input_metadata=input_metadata)
     processor.process()
 
 
@@ -486,15 +470,7 @@ def run_glows_l3bc():
                                          start_date=datetime(2009, 12, 20), end_date=datetime(2009, 12, 21),
                                          zip_file_path=Path("fake/path/to/file.zip"))
 
-    upstream_dependencies = [
-        UpstreamDataDependency(input_metadata.instrument,
-                               "l3b",
-                               input_metadata.start_date,
-                               input_metadata.end_date,
-                               input_metadata.version,
-                               GLOWS_L2_DESCRIPTOR)
-    ]
-    processor = GlowsProcessor(upstream_dependencies, input_metadata)
+    processor = GlowsProcessor(Mock(), input_metadata)
 
     l3b_data_product, l3c_data_product = processor.process_l3bc(dependencies)
 
@@ -573,7 +549,7 @@ def create_hi_l3_survival_corrected_cdf(survival_dependencies: HiL3SurvivalDepen
                                    descriptor="h90-sf-sp-hae-4deg-6mo",
                                    )
 
-    processor = HiProcessor(None, input_metadata)
+    processor = HiProcessor(Mock(), input_metadata)
     survival_corrected_product = processor._process_survival_probabilities(
         survival_dependencies)
 
@@ -617,13 +593,13 @@ if __name__ == "__main__":
 
             dependencies = GlowsL3ADependencies(l2_glows_data, 5, {
                 "calibration_data": Path(
-                    "instrument_team_data/glows/imap_glows_l3a_calibration-data-text-not-cdf_20250707_v002.cdf"),
+                    "instrument_team_data/glows/imap_glows_calibration-data_20250707_v000.dat"),
                 "settings": Path(
-                    "instrument_team_data/glows/imap_glows_l3a_pipeline-settings-json-not-cdf_20250707_v002.cdf"),
+                    "instrument_team_data/glows/imap_glows_pipeline-settings_20250707_v002.json"),
                 "time_dependent_bckgrd": Path(
-                    "instrument_team_data/glows/imap_glows_l3a_time-dep-bckgrd-text-not-cdf_20250707_v001.cdf"),
+                    "instrument_team_data/glows/imap_glows_time-dep-bckgrd_20250707_v000.dat"),
                 "extra_heliospheric_bckgrd": Path(
-                    "instrument_team_data/glows/imap_glows_l3a_map-of-extra-helio-bckgrd-text-not-cdf_20250707_v001.cdf"),
+                    "instrument_team_data/glows/imap_glows_map-of-extra-helio-bckgrd_20250707_v000.dat"),
             })
 
             path = create_glows_l3a_cdf(dependencies)
@@ -664,19 +640,27 @@ if __name__ == "__main__":
         hi_targets = ["survival-probability", "spectral-index", "full-spin"]
         do_all = not np.any([t in sys.argv for t in hi_targets])
 
+        glows_l3e_folder = get_test_data_path("hi/fake_l3e_survival_probabilities/90")
+        glows_l3_paths = list(glows_l3e_folder.iterdir())
+
+        missing_paths, run_local_paths = try_get_many_run_local_paths([
+            "hi/full_spin_deps/l1c",
+            "hi/full_spin_deps/imap_hi_l2_h90-sf-ram-hae-4deg-6mo_20250415_v001.cdf",
+            "hi/full_spin_deps/imap_hi_l2_h90-sf-anti-hae-4deg-6mo_20250415_v001.cdf"
+        ])
+
+        if missing_paths:
+            create_hi_full_spin_deps()
+
+        [hi_l1c_folder, l2_ram_map_path, l2_antiram_map_path] = run_local_paths
+        hi_l1c_paths = list(hi_l1c_folder.iterdir())
+
         if do_all or "survival-probability" in sys.argv:
-            hi_l1c_folder = get_test_data_path("hi/fake_l1c/90")
-            glows_l3e_folder = get_test_data_path("hi/fake_l3e_survival_probabilities/90")
-
-            hi_l1c_paths = list(hi_l1c_folder.iterdir())
-            glows_l3_paths = list(glows_l3e_folder.iterdir())
-
             survival_dependencies = HiL3SurvivalDependencies.from_file_paths(
-                map_file_path=get_test_data_path(
-                    "hi/fake_l2_maps/hi90-6months.cdf"),
+                map_file_path=l2_ram_map_path,
                 hi_l1c_paths=hi_l1c_paths,
                 glows_l3e_paths=glows_l3_paths,
-                l2_descriptor="h90-sf-anti-hae-4deg-6mo")
+                l2_descriptor="h90-sf-ram-hae-4deg-6mo")
             print(create_hi_l3_survival_corrected_cdf(survival_dependencies, spacing_degree=4))
 
         if do_all or "spectral-index" in sys.argv:
@@ -686,22 +670,14 @@ if __name__ == "__main__":
             print(create_spectral_index_cdf(dependencies))
 
         if do_all or "full-spin" in sys.argv:
-            hi_l1c_folder = get_test_data_path("hi/fake_l1c/90")
-            glows_l3e_folder = get_test_data_path("hi/fake_l3e_survival_probabilities/90")
-
-            hi_l1c_paths = list(hi_l1c_folder.iterdir())
-            glows_l3_paths = list(glows_l3e_folder.iterdir())
-
             ram_survival_dependencies = HiL3SurvivalDependencies.from_file_paths(
-                map_file_path=get_test_data_path(
-                    "hi/fake_l2_maps/hi90-ram-3month.cdf"),
+                map_file_path=l2_ram_map_path,
                 hi_l1c_paths=hi_l1c_paths,
                 glows_l3e_paths=glows_l3_paths,
                 l2_descriptor="h90-sf-ram-hae-4deg-6mo")
 
             antiram_survival_dependencies = HiL3SurvivalDependencies.from_file_paths(
-                map_file_path=get_test_data_path(
-                    "hi/fake_l2_maps/hi90-anti-3month.cdf"),
+                map_file_path=l2_antiram_map_path,
                 hi_l1c_paths=hi_l1c_paths,
                 glows_l3e_paths=glows_l3_paths,
                 l2_descriptor="h90-sf-anti-hae-4deg-6mo")

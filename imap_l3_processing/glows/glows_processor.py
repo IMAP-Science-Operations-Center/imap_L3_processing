@@ -7,7 +7,9 @@ from subprocess import run
 
 import imap_data_access
 import numpy as np
+from imap_data_access.processing_input import ProcessingInputCollection
 
+from imap_l3_processing.glows.descriptors import GLOWS_L3A_DESCRIPTOR
 from imap_l3_processing.glows.glows_initializer import GlowsInitializer
 from imap_l3_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
 from imap_l3_processing.glows.l3a.glows_toolkit.l3a_data import L3aData
@@ -24,22 +26,25 @@ from imap_l3_processing.glows.l3e.glows_l3e_hi_model import GlowsL3EHiData
 from imap_l3_processing.glows.l3e.glows_l3e_lo_model import GlowsL3ELoData
 from imap_l3_processing.glows.l3e.glows_l3e_ultra_model import GlowsL3EUltraData
 from imap_l3_processing.glows.l3e.glows_l3e_utils import determine_call_args_for_l3e_executable
-from imap_l3_processing.models import UpstreamDataDependency
+from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
 from imap_l3_processing.utils import save_data
 
 
 class GlowsProcessor(Processor):
+    def __init__(self, dependencies: ProcessingInputCollection, input_metadata: InputMetadata):
+        super().__init__(dependencies, input_metadata)
 
     def process(self):
         if self.input_metadata.data_level == "l3a":
             l3a_dependencies = GlowsL3ADependencies.fetch_dependencies(self.dependencies)
             self.input_metadata.repointing = l3a_dependencies.repointing
             l3a_output = self.process_l3a(l3a_dependencies)
+            l3a_output.parent_file_names = self.get_parent_file_names()
             proton_cdf = save_data(l3a_output)
             imap_data_access.upload(proton_cdf)
         elif self.input_metadata.data_level == "l3b":
-            zip_files = GlowsInitializer.validate_and_initialize(self.input_metadata.version)
+            zip_files = GlowsInitializer.validate_and_initialize(self.input_metadata.version, self.dependencies)
             for zip_file in zip_files:
                 dependencies = GlowsL3BCDependencies.fetch_dependencies(zip_file)
                 l3b_data_product, l3c_data_product = self.process_l3bc(dependencies)
@@ -75,15 +80,15 @@ class GlowsProcessor(Processor):
         l3_data.generate_l3a_data(dependencies.ancillary_files)
         data_with_spin_angle = self.add_spin_angle_delta(l3_data.data, dependencies.ancillary_files)
 
-        return create_glows_l3a_from_dictionary(data_with_spin_angle, self.input_metadata.to_upstream_data_dependency(
-            self.dependencies[0].descriptor))
+        return create_glows_l3a_from_dictionary(data_with_spin_angle,
+                                                replace(self.input_metadata, descriptor=GLOWS_L3A_DESCRIPTOR))
 
     def process_l3bc(self, dependencies: GlowsL3BCDependencies) -> tuple[GlowsL3BIonizationRate, GlowsL3CSolarWind]:
         filtered_days = filter_out_bad_days(dependencies.l3a_data, dependencies.ancillary_files['bad_days_list'])
-        l3b_metadata = UpstreamDataDependency("glows", "l3b", dependencies.start_date, dependencies.end_date,
-                                              self.input_metadata.version, "ion-rate-profile")
-        l3c_metadata = UpstreamDataDependency("glows", "l3c", dependencies.start_date, dependencies.end_date,
-                                              self.input_metadata.version, "sw-profile")
+        l3b_metadata = InputMetadata("glows", "l3b", dependencies.start_date, dependencies.end_date,
+                                     self.input_metadata.version, "ion-rate-profile")
+        l3c_metadata = InputMetadata("glows", "l3c", dependencies.start_date, dependencies.end_date,
+                                     self.input_metadata.version, "sw-profile")
 
         try:
             l3b_data, l3c_data = generate_l3bc(replace(dependencies, l3a_data=filtered_days))
@@ -97,8 +102,8 @@ class GlowsProcessor(Processor):
                                                                                       l3b_metadata)
             l3c_data_product = GlowsL3CSolarWind.from_instrument_team_dictionary(l3c_data_with_fills,
                                                                                  l3c_metadata)
-        l3b_data_product.parent_file_names.append(dependencies.zip_file_path.name)
-        l3c_data_product.parent_file_names.append(dependencies.zip_file_path.name)
+        l3b_data_product.parent_file_names += self.get_parent_file_names([dependencies.zip_file_path])
+        l3c_data_product.parent_file_names += self.get_parent_file_names([dependencies.zip_file_path])
         return l3b_data_product, l3c_data_product
 
     def process_l3e_lo(self, epoch: datetime, epoch_delta: timedelta):

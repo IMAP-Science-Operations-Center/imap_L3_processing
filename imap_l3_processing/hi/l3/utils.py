@@ -13,7 +13,7 @@ from imap_l3_processing.hi.l3.models import HiL1cData, HiGlowsL3eData, HiIntensi
 def read_hi_l2_data(cdf_path) -> HiIntensityMapData:
     with CDF(str(cdf_path)) as cdf:
         return HiIntensityMapData(
-            epoch=read_variable_and_mask_fill_values(cdf["Epoch"]),
+            epoch=read_variable_and_mask_fill_values(cdf["epoch"]),
             epoch_delta=read_variable_and_mask_fill_values(cdf["epoch_delta"]),
             energy=read_numeric_variable(cdf["energy"]),
             energy_delta_plus=read_numeric_variable(cdf["energy_delta_plus"]),

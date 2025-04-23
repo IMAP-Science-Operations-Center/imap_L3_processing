@@ -6,7 +6,7 @@ from imap_data_access.processing_input import ScienceInput, ProcessingInputColle
     AncillaryInput
 
 from imap_l3_data_processor import imap_l3_processor
-from imap_l3_processing.models import InputMetadata, UpstreamDataDependency
+from imap_l3_processing.models import InputMetadata
 
 
 class TestImapL3DataProcessor(TestCase):
@@ -69,7 +69,9 @@ class TestImapL3DataProcessor(TestCase):
 
     @patch('imap_l3_data_processor.GlowsProcessor')
     @patch('imap_l3_data_processor.argparse')
-    def test_runs_glows_processor_when_instrument_argument_is_glows(self, mock_argparse, mock_processor_class):
+    @patch('imap_l3_data_processor.ProcessingInputCollection')
+    def test_runs_glows_processor_when_instrument_argument_is_glows(self, mock_processing_input_collection,
+                                                                    mock_argparse, mock_processor_class):
         cases = [("20170630", datetime(2017, 6, 30), "l3a", "lightcurve"),
                  (None, datetime(2016, 6, 30), "l3a", "lightcurve"),
                  ("20170630", datetime(2017, 6, 30), "l3b", "ionization-rates"),
@@ -80,6 +82,10 @@ class TestImapL3DataProcessor(TestCase):
         version_argument = "v092"
         science_input = ScienceInput("imap_glows_l1_science_20250101_v112.cdf")
         imap_data_access_dependency = ProcessingInputCollection(science_input)
+
+        mock_processing_input_collection.return_value = imap_data_access_dependency
+        mock_processing_input_collection.deserialize = Mock()
+        mock_processing_input_collection.get_science_inputs = Mock(return_value=[])
 
         mock_argument_parser = mock_argparse.ArgumentParser.return_value
 
@@ -111,17 +117,10 @@ class TestImapL3DataProcessor(TestCase):
                          help="Upload completed output files to the IMAP SDC.")
                 ])
 
-                expected_input_dependencies = [UpstreamDataDependency("glows",
-                                                                      "l1",
-                                                                      datetime(2025, 1, 1),
-                                                                      datetime(2025, 1, 1),
-                                                                      "v112",
-                                                                      "science")]
-
                 expected_input_metadata = InputMetadata("glows", data_level, datetime(year=2016, month=6, day=30),
                                                         expected_end_date, "v092", descriptor=descriptor)
 
-                mock_processor_class.assert_called_with(expected_input_dependencies, expected_input_metadata)
+                mock_processor_class.assert_called_with(imap_data_access_dependency, expected_input_metadata)
 
                 mock_processor.process.assert_called()
 
@@ -231,27 +230,6 @@ class TestImapL3DataProcessor(TestCase):
                     call("--upload-to-sdc", action="store_true", required=False,
                          help="Upload completed output files to the IMAP SDC.")
                 ])
-
-                expected_input_dependencies = [
-                    UpstreamDataDependency("swe",
-                                           "l1",
-                                           datetime(2025, 1, 1),
-                                           datetime(2025, 1, 1),
-                                           "v112",
-                                           "science"),
-                    UpstreamDataDependency("swe",
-                                           "l1",
-                                           datetime(2025, 1, 2),
-                                           datetime(2025, 1, 2),
-                                           "v112",
-                                           "science"),
-                    UpstreamDataDependency("mag",
-                                           "l1",
-                                           datetime(2025, 1, 1),
-                                           datetime(2025, 1, 1),
-                                           "v112",
-                                           "science"),
-                ]
 
                 expected_input_metadata = InputMetadata("swe", "l3", datetime(year=2016, month=6, day=30),
                                                         expected_end_date, "v092", "pitch-angle")

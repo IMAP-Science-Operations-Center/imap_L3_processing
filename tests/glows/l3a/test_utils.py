@@ -8,7 +8,7 @@ from spacepy.pycdf import CDF
 from imap_l3_processing.glows.l3a.models import GlowsL2Data, GlowsL2Header
 from imap_l3_processing.glows.l3a.utils import read_l2_glows_data, create_glows_l3a_from_dictionary, \
     create_glows_l3a_dictionary_from_cdf
-from imap_l3_processing.models import UpstreamDataDependency
+from imap_l3_processing.models import InputMetadata
 from tests.test_helpers import get_test_data_path
 
 
@@ -112,11 +112,11 @@ class TestUtils(unittest.TestCase):
             expected_spin_delta = 3
             data["daily_lightcurve"]['spin_angle_delta'] = np.full_like(data['daily_lightcurve']['spin_angle'],
                                                                         expected_spin_delta)
+            input_metadata = InputMetadata(instrument='glows', data_level='l3a',
+                                           descriptor='hist', start_date=datetime(2013, 9, 8),
+                                           end_date=datetime(2013, 9, 9), version="v003")
 
-            upstream_data_dependency = UpstreamDataDependency(instrument='glows', data_level='l3a',
-                                                              descriptor='histogram', start_date=datetime(2013, 9, 8),
-                                                              end_date=datetime(2013, 9, 9), version="v003")
-            result = create_glows_l3a_from_dictionary(data, upstream_data_dependency)
+            result = create_glows_l3a_from_dictionary(data, input_metadata)
 
             self.assertEqual(1, len(result.epoch))
             self.assertEqual(datetime(2013, 9, 8, 18, 55, 14), result.epoch[0])
@@ -154,7 +154,7 @@ class TestUtils(unittest.TestCase):
             self.assertEqual((1, 65), result.time_dependent_background.shape)
             self.assertEqual(1.66, result.time_dependent_background[0, 15])
 
-            self.assertEqual(upstream_data_dependency, result.input_metadata)
+            self.assertEqual(input_metadata, result.input_metadata)
 
             self.assertEqual((1,), result.filter_temperature_average.shape)
             self.assertEqual((1,), result.filter_temperature_std_dev.shape)

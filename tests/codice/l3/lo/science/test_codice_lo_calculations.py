@@ -13,19 +13,25 @@ class TestCodiceLoCalculations(unittest.TestCase):
         result = calculate_partial_densities(sentinel.intensity)
 
     def test_calculate_total_number_of_events(self):
-        priority_0_tcrs = np.array([[1, 2, 3],
-                                    [4, 5, 6],
-                                    [7, 8, 9]
-                                    ])
-        acquisition_time = np.array([[2, 2, 2],
-                                     [3, 3, 3],
-                                     [1, 1, 1]
-                                     ]) * 1_000_000
+        priority_0_tcrs = np.array([
+            [[1, 2, 3],
+             [4, 5, 6],
+             [7, 8, 9]],
+            [[1, 2, 3],
+             [4, 5, 6],
+             [7, 8, 9]]])
+        acquisition_time = np.array([
+            [[2, 2, 2],
+             [3, 3, 3],
+             [1, 1, 1]],
+            [[2, 2, 2],
+             [3, 3, 3],
+             [1, 1, 1]]]) * 1_000_000
 
-        expected_total_number_of_events = 12 + 45 + 24
+        expected_total_number_of_events = [12 + 45 + 24, 12 + 45 + 24]
 
         actual_total_number_of_events = calculate_total_number_of_events(priority_0_tcrs, acquisition_time)
-        self.assertEqual(expected_total_number_of_events, actual_total_number_of_events)
+        np.testing.assert_array_equal(actual_total_number_of_events, expected_total_number_of_events)
 
     def test_calculate_normalization_ratio(self):
         energy_and_spin_angle_counts = {
