@@ -128,6 +128,8 @@ class CodiceLoL2bPriorityRates:
     lo_sw_priority_p4_dcrs: ndarray
     lo_nsw_priority_p5_heavies: ndarray
     lo_nsw_priority_p6_hplus_heplusplus: ndarray
+    # TODO - there is no p7 variable in the l1a cdf. Update when we know what the name is
+    lo_nsw_priority_p7_missing: ndarray
     lo_sw_species_hplus: ndarray
     lo_sw_species_heplusplus: ndarray
     lo_sw_species_cplus4: ndarray
@@ -195,6 +197,7 @@ class CodiceLoL2bPriorityRates:
                 lo_sw_priority_p4_dcrs=cdf_file["lo_sw_priority_p4_dcrs"][...],
                 lo_nsw_priority_p5_heavies=cdf_file["lo_nsw_priority_p5_heavies"][...],
                 lo_nsw_priority_p6_hplus_heplusplus=cdf_file["lo_nsw_priority_p6_hplus_heplusplus"][...],
+                lo_nsw_priority_p7_missing=cdf_file["lo_nsw_priority_p7_missing"][...],
                 lo_sw_species_hplus=cdf_file["lo_sw_species_hplus"][...],
                 lo_sw_species_heplusplus=cdf_file["lo_sw_species_heplusplus"][...],
                 lo_sw_species_cplus4=cdf_file["lo_sw_species_cplus4"][...],
@@ -345,29 +348,17 @@ class CodiceLoL3aPartialDensityDataProduct:
 SPIN_ANGLE_VAR_NAME = "spin_angle"
 ENERGY_STEP_VAR_NAME = "energy_step"
 PRIORITY_VAR_NAME = "priority"
-EVENT_NUM_VAR_NAME = "event_num"
 NORMALIZATION_VAR_NAME = "normalization"
-DATA_QUALITY_VAR_NAME = "data_quality"
-MULTI_FLAG_VAR_NAME = "multi_flag"
-NUM_EVENTS_VAR_NAME = "num_events"
-PHA_TYPE_VAR_NAME = "pha_type"
-TOF_VAR_NAME = "tof"
 
 
 @dataclass
 class CodiceLoL3aDirectEventDataProduct(DataProduct):
     epoch: ndarray
-    priority: ndarray
-    event_num: ndarray
     normalization: ndarray
-    data_quality: ndarray
-    multi_flag: ndarray
-    num_events: ndarray
-    pha_type: ndarray
-    tof: ndarray
 
     spin_angle = np.array([0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330])
     energy_step = np.arange(128)
+    priority = np.arange(8)
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
@@ -375,11 +366,5 @@ class CodiceLoL3aDirectEventDataProduct(DataProduct):
             DataProductVariable(SPIN_ANGLE_VAR_NAME, self.spin_angle),
             DataProductVariable(ENERGY_STEP_VAR_NAME, self.energy_step),
             DataProductVariable(PRIORITY_VAR_NAME, self.priority),
-            DataProductVariable(EVENT_NUM_VAR_NAME, self.event_num),
             DataProductVariable(NORMALIZATION_VAR_NAME, self.normalization),
-            DataProductVariable(DATA_QUALITY_VAR_NAME, self.data_quality),
-            DataProductVariable(MULTI_FLAG_VAR_NAME, self.multi_flag),
-            DataProductVariable(NUM_EVENTS_VAR_NAME, self.num_events),
-            DataProductVariable(PHA_TYPE_VAR_NAME, self.pha_type),
-            DataProductVariable(TOF_VAR_NAME, self.tof),
         ]
