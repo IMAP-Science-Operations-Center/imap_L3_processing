@@ -1,6 +1,6 @@
 from datetime import datetime, date
 from pathlib import Path
-from typing import Optional, Union
+from typing import Optional, Union, TypeVar
 from urllib.error import URLError
 from urllib.request import urlretrieve
 
@@ -11,7 +11,9 @@ from spacepy.pycdf import CDF
 from imap_l3_processing.cdf.cdf_utils import write_cdf, read_numeric_variable
 from imap_l3_processing.cdf.imap_attribute_manager import ImapAttributeManager
 from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
+from imap_l3_processing.hi.l3.models import HiL1cData, HiGlowsL3eData
 from imap_l3_processing.models import UpstreamDataDependency, DataProduct, MagL1dData
+from imap_l3_processing.ultra.l3.models import UltraL1CPSet, UltraGlowsL3eData
 from imap_l3_processing.version import VERSION
 
 
@@ -117,3 +119,17 @@ def find_glows_l3e_dependencies(l1c_filenames: list[str], instrument: str) -> li
                                                                                        version="latest")]
 
     return survival_probabilities
+
+
+L1CPointingSet = TypeVar("L1CPointingSet", bound=Union[HiL1cData, UltraL1CPSet])
+GlowsL3eData = TypeVar("GlowsL3eData", bound=Union[HiGlowsL3eData, UltraGlowsL3eData])
+
+
+def combine_glows_l3e_with_l1c_pointing(glows_l3e_data: list[GlowsL3eData], l1c_data: list[L1CPointingSet]) -> list[
+    tuple[L1CPointingSet, GlowsL3eData]]:
+    l1c_by_epoch = {l1c.epoch: l1c for l1c in l1c_data}
+    glows_by_epoch = {l3e.epoch: l3e for l3e in glows_l3e_data}
+
+    epochs = sorted(set(l1c_by_epoch.keys()).intersection(set(glows_by_epoch.keys())))
+
+    return [(l1c_by_epoch[epoch], glows_by_epoch[epoch]) for epoch in epochs]

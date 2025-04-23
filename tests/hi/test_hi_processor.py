@@ -9,12 +9,12 @@ from imap_data_access.processing_input import ProcessingInputCollection
 from imap_processing.ena_maps.utils.coordinates import CoordNames
 from imap_processing.spice.geometry import SpiceFrame
 
-from imap_l3_processing.hi.hi_processor import HiProcessor, combine_glows_l3e_hi_l1c
+from imap_l3_processing.hi.hi_processor import HiProcessor
 from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3SpectralFitDependencies
 from imap_l3_processing.hi.l3.hi_l3_survival_dependencies import HiL3SurvivalDependencies, \
     HiL3SingleSensorFullSpinDependencies
-from imap_l3_processing.hi.l3.models import HiL3SpectralIndexDataProduct, GlowsL3eData, HiL1cData, \
-    HiL3SurvivalCorrectedDataProduct, HiIntensityMapData
+from imap_l3_processing.hi.l3.models import HiL3SpectralIndexDataProduct, HiL3SurvivalCorrectedDataProduct, \
+    HiIntensityMapData
 from imap_l3_processing.hi.l3.utils import PixelSize, MapDescriptorParts
 from imap_l3_processing.models import InputMetadata
 from tests.test_helpers import get_test_data_path
@@ -132,9 +132,9 @@ class TestHiProcessor(unittest.TestCase):
     @patch('imap_l3_processing.hi.hi_processor.save_data')
     @patch('imap_l3_processing.hi.hi_processor.HiSurvivalProbabilitySkyMap')
     @patch('imap_l3_processing.hi.hi_processor.HiSurvivalProbabilityPointingSet')
-    @patch('imap_l3_processing.hi.hi_processor.combine_glows_l3e_hi_l1c')
+    @patch('imap_l3_processing.hi.hi_processor.combine_glows_l3e_with_l1c_pointing')
     @patch('imap_l3_processing.hi.hi_processor.HiL3SurvivalDependencies.fetch_dependencies')
-    def test_process_survival_probability(self, mock_fetch_dependencies, mock_combine_glows_l3e_hi_l1c,
+    def test_process_survival_probability(self, mock_fetch_dependencies, mock_combine_glows_l3e_with_l1c_pointing,
                                           mock_survival_probability_pointing_set, mock_survival_skymap, mock_save_data,
                                           mock_upload, mock_get_parent_file_names):
         mock_get_parent_file_names.return_value = ["l2_map", "spice1"]
@@ -161,9 +161,9 @@ class TestHiProcessor(unittest.TestCase):
                                                                         dependency_file_paths=[Path("foo/l2_map"),
                                                                                                Path("foo/l1c_map")], )
 
-        mock_combine_glows_l3e_hi_l1c.return_value = [(sentinel.hi_l1c_1, sentinel.glows_l3e_1),
-                                                      (sentinel.hi_l1c_2, sentinel.glows_l3e_2),
-                                                      (sentinel.hi_l1c_3, sentinel.glows_l3e_3)]
+        mock_combine_glows_l3e_with_l1c_pointing.return_value = [(sentinel.hi_l1c_1, sentinel.glows_l3e_1),
+                                                                 (sentinel.hi_l1c_2, sentinel.glows_l3e_2),
+                                                                 (sentinel.hi_l1c_3, sentinel.glows_l3e_3)]
 
         mock_survival_probability_pointing_set.side_effect = [sentinel.pset_1, sentinel.pset_2, sentinel.pset_3]
 
@@ -199,7 +199,7 @@ class TestHiProcessor(unittest.TestCase):
 
         mock_fetch_dependencies.assert_called_once_with(sentinel.dependencies)
 
-        mock_combine_glows_l3e_hi_l1c.assert_called_once_with(sentinel.glows_l3e_data, sentinel.hi_l1c_data)
+        mock_combine_glows_l3e_with_l1c_pointing.assert_called_once_with(sentinel.glows_l3e_data, sentinel.hi_l1c_data)
 
         mock_survival_probability_pointing_set.assert_has_calls([
             call(sentinel.hi_l1c_1, sentinel.l2_sensor, sentinel.l2_spin, sentinel.glows_l3e_1,
@@ -248,38 +248,6 @@ class TestHiProcessor(unittest.TestCase):
         self.assertEqual(["l1c_map", "l2_map", "spice1"], survival_data_product.parent_file_names)
 
         mock_upload.assert_called_once_with(mock_save_data.return_value)
-
-    def test_combine_glows_l3e_hi_l1c(self):
-        glows_l3e_data = [
-            GlowsL3eData(epoch=datetime.fromisoformat("2023-01-01T00:00:00Z"), spin_angle=None,
-                         energy=None, probability_of_survival=None),
-            GlowsL3eData(epoch=datetime.fromisoformat("2023-01-02T00:00:00Z"), spin_angle=None,
-                         energy=None, probability_of_survival=None),
-            GlowsL3eData(epoch=datetime.fromisoformat("2023-01-03T00:00:00Z"), spin_angle=None,
-                         energy=None, probability_of_survival=None),
-            GlowsL3eData(epoch=datetime.fromisoformat("2023-01-05T00:00:00Z"), spin_angle=None,
-                         energy=None, probability_of_survival=None),
-        ]
-
-        hi_l1c_data = [
-            HiL1cData(epoch=datetime.fromisoformat("2023-01-02T00:00:00Z"), epoch_j2000=None, exposure_times=None,
-                      esa_energy_step=None),
-            HiL1cData(epoch=datetime.fromisoformat("2023-01-04T00:00:00Z"), epoch_j2000=None, exposure_times=None,
-                      esa_energy_step=None),
-            HiL1cData(epoch=datetime.fromisoformat("2023-01-05T00:00:00Z"), epoch_j2000=None, exposure_times=None,
-                      esa_energy_step=None),
-            HiL1cData(epoch=datetime.fromisoformat("2023-01-06T00:00:00Z"), epoch_j2000=None, exposure_times=None,
-                      esa_energy_step=None),
-        ]
-
-        expected = [
-            (hi_l1c_data[0], glows_l3e_data[1],),
-            (hi_l1c_data[2], glows_l3e_data[3],),
-        ]
-
-        actual = combine_glows_l3e_hi_l1c(glows_l3e_data, hi_l1c_data)
-
-        self.assertEqual(expected, actual)
 
     @patch('imap_l3_processing.hi.hi_processor.Processor.get_parent_file_names')
     @patch("imap_l3_processing.hi.hi_processor.HiL3SingleSensorFullSpinDependencies.fetch_dependencies")
