@@ -87,7 +87,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
             sentinel.fe_high_partial_density,
         ]
 
-        codice_lo_dependencies = CodiceLoL3aDependencies(codice_lo_l2_data, Mock(), Mock(), Mock(), Mock())
+        codice_lo_dependencies = CodiceLoL3aDependencies(codice_lo_l2_data, Mock(), Mock(), Mock(), Mock(), Mock())
         result = processor.process_l3a(codice_lo_dependencies)
 
         self.assertEqual(num_species, mock_calculate_partial_densities.call_count)
@@ -173,7 +173,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
                                                   priority_event_2, priority_event_3, priority_event_4,
                                                   priority_event_5, priority_event_6, priority_event_7)
 
-        dependencies = CodiceLoL3aDependencies(Mock(), priority_rates, direct_events, Mock(), Mock())
+        dependencies = CodiceLoL3aDependencies(Mock(), priority_rates, direct_events, Mock(), Mock(), Mock())
 
         input_collection = ProcessingInputCollection()
         input_metadata = InputMetadata('codice', "l3a", Mock(spec=datetime), Mock(spec=datetime), 'v02')
