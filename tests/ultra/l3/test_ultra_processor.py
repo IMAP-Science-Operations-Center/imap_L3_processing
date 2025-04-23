@@ -83,9 +83,9 @@ class TestHiProcessor(unittest.TestCase):
         mock_combine_glows_l3e_with_l1c_pointing.assert_called_once_with(sentinel.glows_l3e_sp, sentinel.ultra_l1c_pset)
 
         mock_survival_probability_pointing_set.assert_has_calls([
-            call(sentinel.ultra_l1c_1, sentinel.glows_l3e_1, sentinel.ultra_l2_energies),
-            call(sentinel.ultra_l1c_2, sentinel.glows_l3e_2, sentinel.ultra_l2_energies),
-            call(sentinel.ultra_l1c_3, sentinel.glows_l3e_3, sentinel.ultra_l2_energies)
+            call(sentinel.ultra_l1c_1, sentinel.glows_l3e_1),
+            call(sentinel.ultra_l1c_2, sentinel.glows_l3e_2),
+            call(sentinel.ultra_l1c_3, sentinel.glows_l3e_3)
         ])
 
         mock_survival_skymap.assert_called_once_with([sentinel.pset_1, sentinel.pset_2, sentinel.pset_3],
