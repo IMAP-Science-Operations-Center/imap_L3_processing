@@ -5,15 +5,14 @@ from imap_processing.spice.geometry import SpiceFrame
 from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3SpectralFitDependencies
 from imap_l3_processing.hi.l3.hi_l3_survival_dependencies import HiL3SurvivalDependencies, \
     HiL3SingleSensorFullSpinDependencies
-from imap_l3_processing.hi.l3.models import HiL3SpectralIndexDataProduct, GlowsL3eData, HiL1cData, \
-    HiL3SurvivalCorrectedDataProduct, combine_maps
+from imap_l3_processing.hi.l3.models import HiL3SpectralIndexDataProduct, HiL3SurvivalCorrectedDataProduct, combine_maps
 from imap_l3_processing.hi.l3.science.spectral_fit import spectral_fit
 from imap_l3_processing.hi.l3.science.survival_probability import HiSurvivalProbabilityPointingSet, \
     HiSurvivalProbabilitySkyMap
 from imap_l3_processing.hi.l3.utils import parse_map_descriptor, MapQuantity, MapDescriptorParts, SurvivalCorrection, \
     SpinPhase, Duration, Sensor
 from imap_l3_processing.processor import Processor
-from imap_l3_processing.utils import save_data
+from imap_l3_processing.utils import save_data, combine_glows_l3e_with_l1c_pointing
 
 
 class HiProcessor(Processor):
@@ -98,8 +97,8 @@ class HiProcessor(Processor):
     def _process_survival_probabilities(self, hi_survival_probabilities_dependencies: HiL3SurvivalDependencies):
         l2_descriptor_parts = hi_survival_probabilities_dependencies.l2_map_descriptor_parts
 
-        combined_glows_hi = combine_glows_l3e_hi_l1c(hi_survival_probabilities_dependencies.glows_l3e_data,
-                                                     hi_survival_probabilities_dependencies.hi_l1c_data)
+        combined_glows_hi = combine_glows_l3e_with_l1c_pointing(hi_survival_probabilities_dependencies.glows_l3e_data,
+                                                                hi_survival_probabilities_dependencies.hi_l1c_data)
         pointing_sets = []
         for hi_l1c, glows_l3e in combined_glows_hi:
             pointing_sets.append(HiSurvivalProbabilityPointingSet(
@@ -143,13 +142,3 @@ class HiProcessor(Processor):
         )
 
         return data_product
-
-
-def combine_glows_l3e_hi_l1c(glows_l3e_data: list[GlowsL3eData], hi_l1c_data: list[HiL1cData]) -> list[
-    tuple[HiL1cData, GlowsL3eData]]:
-    l1c_by_epoch = {l1c.epoch: l1c for l1c in hi_l1c_data}
-    glows_by_epoch = {l3e.epoch: l3e for l3e in glows_l3e_data}
-
-    epochs = sorted(set(l1c_by_epoch.keys()).intersection(set(glows_by_epoch.keys())))
-
-    return [(l1c_by_epoch[epoch], glows_by_epoch[epoch]) for epoch in epochs]

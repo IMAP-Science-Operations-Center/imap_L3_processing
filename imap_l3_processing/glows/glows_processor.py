@@ -1,7 +1,7 @@
 import json
 from copy import copy
 from dataclasses import replace
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from subprocess import run
 
@@ -50,18 +50,23 @@ class GlowsProcessor(Processor):
                 imap_data_access.upload(l3c_cdf)
                 imap_data_access.upload(zip_file)
         elif self.input_metadata.data_level == "l3e":
-            lo_data, hi45_data, hi90_data, ultra_data = self.process_l3e()
+            l3e_dependencies, repointing_number = GlowsL3EDependencies.fetch_dependencies(self.dependencies)
+            epoch, epoch_end = get_repoint_date_range(repointing_number)
+            epoch = epoch.astype(datetime)
+            epoch_end = epoch_end.astype(datetime)
+            epoch_delta = (epoch_end - epoch) / 2
 
-            lo_cdf = save_data(lo_data)
-            hi45_cdf = save_data(hi45_data)
-            hi90_cdf = save_data(hi90_data)
-            ultra_cdf = save_data(ultra_data)
+            l3e_dependencies.rename_dependencies()
 
-            imap_data_access.upload(lo_cdf)
-            imap_data_access.upload(hi45_cdf)
-            imap_data_access.upload(hi90_cdf)
-            imap_data_access.upload(ultra_cdf)
-
+            if self.input_metadata.descriptor == "survival-probability-lo":
+                self.process_l3e_lo(epoch, epoch_delta)
+            elif self.input_metadata.descriptor == "survival-probability-hi-45":
+                self.process_l3e_hi(epoch, epoch_delta, 135)
+            elif self.input_metadata.descriptor == "survival-probability-hi-90":
+                self.process_l3e_hi(epoch, epoch_delta, 90)
+            elif self.input_metadata.descriptor == "survival-probability-ul":
+                self.process_l3e_ul(epoch, epoch_delta)
+      
     def process_l3a(self, dependencies: GlowsL3ADependencies) -> GlowsL3LightCurve:
         data = dependencies.data
         l3_data = L3aData(dependencies.ancillary_files)
@@ -95,6 +100,41 @@ class GlowsProcessor(Processor):
         l3c_data_product.parent_file_names.append(dependencies.zip_file_path.name)
         return l3b_data_product, l3c_data_product
 
+    def process_l3e_lo(self, epoch: datetime, epoch_delta: timedelta):
+        call_args = determine_call_args_for_l3e_executable(epoch, epoch + epoch_delta, 90)
+
+        run(["./survProbLo"] + call_args)
+
+        output_path = Path(f'probSur.Imap.Lo_{call_args[0]}_{call_args[1][:8]}_{call_args[-1][:5]}.dat')
+        lo_data = GlowsL3ELoData.convert_dat_to_glows_l3e_lo_product(self.input_metadata, output_path,
+                                                                     np.array([epoch]), np.array([epoch_delta]))
+
+        lo_cdf = save_data(lo_data)
+        imap_data_access.upload(lo_cdf)
+
+    def process_l3e_hi(self, epoch: datetime, epoch_delta: timedelta, elongation: int):
+        call_args = determine_call_args_for_l3e_executable(epoch, epoch + epoch_delta, elongation)
+        run(["./survProbHi"] + call_args)
+
+        output_path = Path(f'probSur.Imap.Hi_{call_args[0]}_{call_args[1][:8]}_{call_args[-1][:5]}.dat')
+        hi_data = GlowsL3EHiData.convert_dat_to_glows_l3e_hi_product(self.input_metadata, output_path,
+                                                                     np.array([epoch]), np.array([epoch_delta]))
+
+        hi_cdf = save_data(hi_data)
+        imap_data_access.upload(hi_cdf)
+
+    def process_l3e_ul(self, epoch: datetime, epoch_delta: timedelta):
+        call_args = determine_call_args_for_l3e_executable(epoch, epoch + epoch_delta, 30)
+
+        run(["./survProbUltra"] + call_args)
+
+        output_path = Path(f'probSur.Imap.Ul_{call_args[0]}_{call_args[1][:8]}.dat')
+        ul_data = GlowsL3EUltraData.convert_dat_to_glows_l3e_ul_product(self.input_metadata, output_path,
+                                                                        np.array([epoch]), np.array([epoch_delta]))
+
+        ul_cdf = save_data(ul_data)
+        imap_data_access.upload(ul_cdf)
+
     def process_l3e(self):
         l3e_dependencies, repointing = GlowsL3EDependencies.fetch_dependencies(self.dependencies)
 
@@ -102,17 +142,20 @@ class GlowsProcessor(Processor):
 
         repointing_start_date, repointing_end_date = get_repoint_date_range(repointing)
 
+        repointing_start_date = repointing_start_date.astype(datetime)
+        repointing_end_date = repointing_end_date.astype(datetime)
+
         epoch_delta = (repointing_end_date - repointing_start_date) / 2
         mid_point = repointing_start_date + epoch_delta
 
-        lo_call_args = determine_call_args_for_l3e_executable(repointing_start_date.astype(datetime)
-                                                              , mid_point.astype(datetime), 90)
-        hi90_call_args = determine_call_args_for_l3e_executable(repointing_start_date.astype(datetime),
-                                                                mid_point.astype(datetime), 90)
-        hi45_call_args = determine_call_args_for_l3e_executable(repointing_start_date.astype(datetime),
-                                                                mid_point.astype(datetime), 135)
-        ultra_call_args = determine_call_args_for_l3e_executable(repointing_start_date.astype(datetime),
-                                                                 mid_point.astype(datetime), 30)
+        lo_call_args = determine_call_args_for_l3e_executable(repointing_start_date
+                                                              , mid_point, 90)
+        hi90_call_args = determine_call_args_for_l3e_executable(repointing_start_date,
+                                                                mid_point, 90)
+        hi45_call_args = determine_call_args_for_l3e_executable(repointing_start_date,
+                                                                mid_point, 135)
+        ultra_call_args = determine_call_args_for_l3e_executable(repointing_start_date,
+                                                                 mid_point, 30)
 
         lo_call_args_array = [arg for arg in lo_call_args.split(' ')]
         hi90_call_args_array = [arg for arg in hi90_call_args.split(' ')]

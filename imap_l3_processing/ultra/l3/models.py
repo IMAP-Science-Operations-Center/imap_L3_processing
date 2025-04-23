@@ -3,12 +3,14 @@ from datetime import datetime
 from pathlib import Path
 from typing import Self
 
+import numpy as np
 import xarray as xr
 from imap_processing.ena_maps.utils.coordinates import CoordNames
 from numpy import ndarray
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.cdf.cdf_utils import read_numeric_variable, read_variable_and_mask_fill_values
+from imap_l3_processing.constants import TT2000_EPOCH, ONE_SECOND_IN_NANOSECONDS
 from imap_l3_processing.models import DataProduct, DataProductVariable, IntensityMapData, HealPixCoords
 
 EPOCH_VAR_NAME = "epoch"
@@ -40,7 +42,7 @@ class UltraL2Map(IntensityMapData, HealPixCoords):
     def read_from_path(cls, file_path: Path):
         with CDF(str(file_path)) as cdf:
             return UltraL2Map(
-                epoch=read_variable_and_mask_fill_values(cdf["Epoch"]),
+                epoch=read_variable_and_mask_fill_values(cdf["epoch"]),
                 epoch_delta=read_variable_and_mask_fill_values(cdf["epoch_delta"]),
                 energy=read_numeric_variable(cdf["energy"]),
                 energy_delta_plus=read_numeric_variable(cdf["energy_delta_plus"]),
@@ -58,6 +60,10 @@ class UltraL2Map(IntensityMapData, HealPixCoords):
                 pixel_index=read_numeric_variable(cdf["pixel_index"]),
                 pixel_index_label=cdf["pixel_index_label"][...]
             )
+
+    @property
+    def nside(self) -> int:
+        return int(np.sqrt(len(self.pixel_index) / 12))
 
 
 @dataclass
@@ -167,7 +173,7 @@ class UltraL1CPSet:
             },
             coords={
                 CoordNames.TIME.value: [
-                    self.epoch,
+                    (self.epoch - TT2000_EPOCH).total_seconds() * ONE_SECOND_IN_NANOSECONDS,
                 ],
                 CoordNames.ENERGY.value: self.energy,
                 CoordNames.HEALPIX_INDEX.value: self.healpix_index,

@@ -20,6 +20,13 @@ class TestL3eLoModel(unittest.TestCase):
             sentinel.probability_of_survival
         )
 
+        expected_energy_labels = ['Energy Label 1', 'Energy Label 2', 'Energy Label 3', 'Energy Label 4',
+                                  'Energy Label 5', 'Energy Label 6', 'Energy Label 7', 'Energy Label 8',
+                                  'Energy Label 9', 'Energy Label 10', 'Energy Label 11', 'Energy Label 12',
+                                  'Energy Label 13']
+
+        expected_spin_angle_labels = [f"Spin Angle Label {i}" for i in range(1, 361)]
+
         data_products = l3e_lo.to_data_product_variables()
         expected_data_products = [
             DataProductVariable("epoch", sentinel.epochs),
@@ -27,6 +34,8 @@ class TestL3eLoModel(unittest.TestCase):
             DataProductVariable("energy", sentinel.energy),
             DataProductVariable("spin_angle", sentinel.spin_angle),
             DataProductVariable("probability_of_survival", sentinel.probability_of_survival),
+            DataProductVariable("energy_label", expected_energy_labels),
+            DataProductVariable("spin_angle_label", expected_spin_angle_labels),
         ]
 
         self.assertEqual(expected_data_products, data_products)
@@ -112,8 +121,7 @@ class TestL3eLoModel(unittest.TestCase):
                                                                                             expected_time_delta)
 
         self.assertEqual(epoch, l3e_lo_product.epoch)
-        self.assertEqual(expected_time_delta, l3e_lo_product.epoch_delta)
-        self.assertEqual(expected_time_delta, l3e_lo_product.epoch_delta)
+        np.testing.assert_array_equal(l3e_lo_product.epoch_delta, np.array([12 * 60 * 60 * 1e9]))
         np.testing.assert_array_equal(l3e_lo_product.energy, expected_energy)
         np.testing.assert_array_equal(l3e_lo_product.spin_angle, expected_spin_angle)
         np.testing.assert_array_equal(l3e_lo_product.probability_of_survival.shape, expected_survival_probability_shape)

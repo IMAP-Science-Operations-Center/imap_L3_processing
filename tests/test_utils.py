@@ -9,11 +9,13 @@ import numpy as np
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
+from imap_l3_processing.hi.l3.models import HiL1cData, HiGlowsL3eData
 from imap_l3_processing.models import UpstreamDataDependency
 from imap_l3_processing.swapi.l3a.models import SwapiL3AlphaSolarWindData
 from imap_l3_processing.utils import format_time, download_dependency, read_l1d_mag_data, save_data, \
     find_glows_l3e_dependencies, \
-    download_external_dependency, download_dependency_from_path, download_dependency_with_repointing
+    download_external_dependency, download_dependency_from_path, download_dependency_with_repointing, \
+    combine_glows_l3e_with_l1c_pointing
 from imap_l3_processing.version import VERSION
 from tests.cdf.test_cdf_utils import TestDataProduct
 
@@ -328,3 +330,35 @@ class TestUtils(TestCase):
 
                 self.assertEqual(["glows_1", "glows_2", "glows_3"],
                                  glows_file_paths)
+
+    def test_combine_glows_l3e_with_l1c_pointing(self):
+        glows_l3e_data = [
+            HiGlowsL3eData(epoch=datetime.fromisoformat("2023-01-01T00:00:00Z"), spin_angle=None,
+                           energy=None, probability_of_survival=None),
+            HiGlowsL3eData(epoch=datetime.fromisoformat("2023-01-02T00:00:00Z"), spin_angle=None,
+                           energy=None, probability_of_survival=None),
+            HiGlowsL3eData(epoch=datetime.fromisoformat("2023-01-03T00:00:00Z"), spin_angle=None,
+                           energy=None, probability_of_survival=None),
+            HiGlowsL3eData(epoch=datetime.fromisoformat("2023-01-05T00:00:00Z"), spin_angle=None,
+                           energy=None, probability_of_survival=None),
+        ]
+
+        hi_l1c_data = [
+            HiL1cData(epoch=datetime.fromisoformat("2023-01-02T00:00:00Z"), epoch_j2000=None, exposure_times=None,
+                      esa_energy_step=None),
+            HiL1cData(epoch=datetime.fromisoformat("2023-01-04T00:00:00Z"), epoch_j2000=None, exposure_times=None,
+                      esa_energy_step=None),
+            HiL1cData(epoch=datetime.fromisoformat("2023-01-05T00:00:00Z"), epoch_j2000=None, exposure_times=None,
+                      esa_energy_step=None),
+            HiL1cData(epoch=datetime.fromisoformat("2023-01-06T00:00:00Z"), epoch_j2000=None, exposure_times=None,
+                      esa_energy_step=None),
+        ]
+
+        expected = [
+            (hi_l1c_data[0], glows_l3e_data[1],),
+            (hi_l1c_data[2], glows_l3e_data[3],),
+        ]
+
+        actual = combine_glows_l3e_with_l1c_pointing(glows_l3e_data, hi_l1c_data)
+
+        self.assertEqual(expected, actual)

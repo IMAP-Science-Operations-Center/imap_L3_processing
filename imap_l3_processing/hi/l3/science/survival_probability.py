@@ -4,7 +4,7 @@ from imap_processing.ena_maps.ena_maps import RectangularSkyMap, PointingSet
 from imap_processing.ena_maps.utils.coordinates import CoordNames
 from imap_processing.spice import geometry
 
-from imap_l3_processing.hi.l3.models import HiL1cData, GlowsL3eData
+from imap_l3_processing.hi.l3.models import HiL1cData, HiGlowsL3eData
 from imap_l3_processing.hi.l3.utils import Sensor, SpinPhase
 
 
@@ -20,7 +20,7 @@ def interpolate_angular_data_to_nearest_neighbor(input_azimuths: np.array, glows
 
 
 class HiSurvivalProbabilityPointingSet(PointingSet):
-    def __init__(self, l1c_dataset: HiL1cData, sensor: Sensor, spin_phase: SpinPhase, glows_dataset: GlowsL3eData,
+    def __init__(self, l1c_dataset: HiL1cData, sensor: Sensor, spin_phase: SpinPhase, glows_dataset: HiGlowsL3eData,
                  energies: np.ndarray):
         super().__init__(xr.Dataset(), geometry.SpiceFrame.IMAP_DPS)
         num_spin_angle_bins = l1c_dataset.exposure_times.shape[-1]

@@ -8,7 +8,7 @@ from imap_processing.ena_maps.utils.coordinates import CoordNames
 from imap_processing.spice import geometry
 from imap_processing.spice.geometry import SpiceFrame
 
-from imap_l3_processing.hi.l3.models import HiL1cData, GlowsL3eData
+from imap_l3_processing.hi.l3.models import HiL1cData, HiGlowsL3eData
 from imap_l3_processing.hi.l3.science.survival_probability import Sensor, \
     HiSurvivalProbabilitySkyMap, HiSurvivalProbabilityPointingSet, interpolate_angular_data_to_nearest_neighbor
 from imap_l3_processing.hi.l3.utils import SpinPhase
@@ -28,7 +28,7 @@ class TestSurvivalProbability(unittest.TestCase):
             esa_energy_step=np.arange(self.num_energies),
         )
 
-        self.glows_data = GlowsL3eData(
+        self.glows_data = HiGlowsL3eData(
             epoch=self.epoch,
             energy=np.geomspace(1, 10000, self.num_energies + 1),
             spin_angle=np.arange(0, 360, 1) + 0.5,
