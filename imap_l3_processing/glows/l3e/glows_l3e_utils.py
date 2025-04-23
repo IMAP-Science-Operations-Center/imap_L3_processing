@@ -7,7 +7,7 @@ from imap_l3_processing.spice_wrapper import spiceypy
 
 
 def determine_call_args_for_l3e_executable(start_date: datetime, repointing_midpoint: datetime,
-                                           elongation: float) -> str:
+                                           elongation: float) -> list[str]:
     ephemeris_time = spiceypy.datetime2et(repointing_midpoint)
 
     [x, y, z, vx, vy, vz], _ = spiceypy.spkezr("IMAP", ephemeris_time, "ECLIPJ2000", "NONE", "SUN")
@@ -22,7 +22,8 @@ def determine_call_args_for_l3e_executable(start_date: datetime, repointing_midp
     formatted_date = start_date.strftime("%Y%m%d_%H%M%S")
     decimal_date = _decimal_time(repointing_midpoint)
 
-    return f"{formatted_date} {decimal_date} {radius / ONE_AU_IN_KM} {np.rad2deg(longitude) % 360} {np.rad2deg(latitude)} {vx} {vy} {vz} {np.rad2deg(spin_axis_long) % 360} {spin_axis_lat:.4f} {elongation:.3f}"
+    return f"{formatted_date} {decimal_date} {radius / ONE_AU_IN_KM} {np.rad2deg(longitude) % 360} {np.rad2deg(latitude)} {vx} {vy} {vz} {np.rad2deg(spin_axis_long) % 360} {spin_axis_lat:.4f} {elongation:.3f}".split(
+        " ")
 
 
 def _decimal_time(t: datetime) -> str:
