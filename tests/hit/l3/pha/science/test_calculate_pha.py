@@ -315,12 +315,12 @@ class TestCalculatePHA(unittest.TestCase):
         detected_range_2 = DetectedRange(range=DetectorRange.R3, side=DetectorSide.B)
         detected_range_3 = DetectedRange(range=DetectorRange.R4, side=DetectorSide.A)
         range_fit_lookup_table = RangeFitLookup.from_files(
-            get_test_data_path("hit/pha_events/imap_hit_l3_range-2A-charge-fit-lookup_20250319_v001.cdf"),
-            get_test_data_path("hit/pha_events/imap_hit_l3_range-3A-charge-fit-lookup_20250319_v001.cdf"),
-            get_test_data_path("hit/pha_events/imap_hit_l3_range-4A-charge-fit-lookup_20250319_v001.cdf"),
-            get_test_data_path("hit/pha_events/imap_hit_l3_range-2B-charge-fit-lookup_20250319_v001.cdf"),
-            get_test_data_path("hit/pha_events/imap_hit_l3_range-3B-charge-fit-lookup_20250319_v001.cdf"),
-            get_test_data_path("hit/pha_events/imap_hit_l3_range-4B-charge-fit-lookup_20250319_v001.cdf"),
+            get_test_data_path("hit/pha_events/imap_hit_range-2A-charge-fit-lookup_20250319_v000.csv"),
+            get_test_data_path("hit/pha_events/imap_hit_range-3A-charge-fit-lookup_20250319_v000.csv"),
+            get_test_data_path("hit/pha_events/imap_hit_range-4A-charge-fit-lookup_20250319_v000.csv"),
+            get_test_data_path("hit/pha_events/imap_hit_range-2B-charge-fit-lookup_20250319_v000.csv"),
+            get_test_data_path("hit/pha_events/imap_hit_range-3B-charge-fit-lookup_20250319_v000.csv"),
+            get_test_data_path("hit/pha_events/imap_hit_range-4B-charge-fit-lookup_20250319_v000.csv"),
         )
         test_cases = [
             ("detector 1 - delta_e over max", detected_range_1, 430.1, 860, True),

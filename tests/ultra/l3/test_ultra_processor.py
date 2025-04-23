@@ -89,7 +89,7 @@ class TestHiProcessor(unittest.TestCase):
         ])
 
         mock_survival_skymap.assert_called_once_with([sentinel.pset_1, sentinel.pset_2, sentinel.pset_3],
-                                                     SpiceFrame.ECLIPJ2000)
+                                                     SpiceFrame.ECLIPJ2000, input_l2_map.nside)
 
         mock_survival_skymap.return_value.to_dataset.assert_called_once_with()
 

@@ -8,9 +8,9 @@ class TestGainLookupTable(unittest.TestCase):
     def test_loads_from_file(self):
         lookup = GainLookupTable.from_file(
             high_gain_file_path=get_test_data_path(
-                'hit/pha_events/imap_hit_l3_hi-gain-lookup_20250203_v001.cdf'),
+                'hit/pha_events/imap_hit_hi-gain-lookup_20250203_v000.csv'),
             low_gain_file_path=get_test_data_path(
-                'hit/pha_events/imap_hit_l3_lo-gain-lookup_20250203_v001.cdf'))
+                'hit/pha_events/imap_hit_lo-gain-lookup_20250203_v000.csv'))
 
         self.assertEqual(2, len(lookup))
 

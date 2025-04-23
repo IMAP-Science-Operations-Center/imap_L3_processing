@@ -27,9 +27,10 @@ class UltraProcessor(Processor):
                                       combined_psets]
 
         map_descriptor = parse_map_descriptor(self.input_metadata.descriptor)
-        corrected_skymap = UltraSurvivalProbabilitySkyMap(survival_probability_psets, geometry.SpiceFrame.ECLIPJ2000, )
-        survival_probability_map = corrected_skymap.to_dataset()["exposure_weighted_survival_probabilities"].values
         input_data = deps.ultra_l2_map
+        corrected_skymap = UltraSurvivalProbabilitySkyMap(survival_probability_psets, geometry.SpiceFrame.ECLIPJ2000,
+                                                          input_data.nside)
+        survival_probability_map = corrected_skymap.to_dataset()["exposure_weighted_survival_probabilities"].values
 
         corrected_intensity = input_data.ena_intensity / survival_probability_map
         corrected_stat_unc = input_data.ena_intensity_stat_unc / survival_probability_map
