@@ -398,11 +398,7 @@ class TestGlowsProcessor(unittest.TestCase):
         input_metadata = InputMetadata('glows', "l3e", datetime(2024, 10, 7, 10, 00, 00),
                                        datetime(2024, 10, 8, 10, 00, 00),
                                        'v001', descriptor='survival-probability-ul')
-        dependencies = [
-            UpstreamDataDependency('glows', 'l3d', datetime(2024, 10, 7, 10, 00, 00),
-                                   datetime(2024, 10, 8, 10, 00, 00),
-                                   'v001', GLOWS_L3D_DESCRIPTOR),
-        ]
+        dependencies = Mock()
 
         l3e_dependencies = Mock()
         repointing = 10
@@ -475,11 +471,8 @@ class TestGlowsProcessor(unittest.TestCase):
                 input_metadata = InputMetadata('glows', "l3e", datetime(2024, 10, 7, 10, 00, 00),
                                                datetime(2024, 10, 8, 10, 00, 00),
                                                'v001', descriptor=f'survival-probability-hi-{descriptor}')
-                dependencies = [
-                    UpstreamDataDependency('glows', 'l3d', datetime(2024, 10, 7, 10, 00, 00),
-                                           datetime(2024, 10, 8, 10, 00, 00),
-                                           'v001', GLOWS_L3D_DESCRIPTOR),
-                ]
+
+                dependencies = Mock()
 
                 l3e_dependencies = Mock()
                 repointing = 10
@@ -544,11 +537,7 @@ class TestGlowsProcessor(unittest.TestCase):
         input_metadata = InputMetadata('glows', "l3e", datetime(2024, 10, 7, 10, 00, 00),
                                        datetime(2024, 10, 8, 10, 00, 00),
                                        'v001', descriptor='survival-probability-lo')
-        dependencies = [
-            UpstreamDataDependency('glows', 'l3d', datetime(2024, 10, 7, 10, 00, 00),
-                                   datetime(2024, 10, 8, 10, 00, 00),
-                                   'v001', GLOWS_L3D_DESCRIPTOR),
-        ]
+        dependencies = Mock()
 
         l3e_dependencies = Mock()
         repointing = 10
@@ -559,7 +548,7 @@ class TestGlowsProcessor(unittest.TestCase):
 
         epoch_delta = (end_date - epoch) / 2
 
-        start_date = np.datetime64(epoch.isoformat())
+        start_date = np.datetime64("2024-10-07T00:00:00.000000000")
 
         end_date = np.datetime64(end_date.isoformat())
         mock_get_repoint_date_range.return_value = (start_date, end_date)

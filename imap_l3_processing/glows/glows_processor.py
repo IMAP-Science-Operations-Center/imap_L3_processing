@@ -53,20 +53,20 @@ class GlowsProcessor(Processor):
             l3e_dependencies, repointing_number = GlowsL3EDependencies.fetch_dependencies(self.dependencies,
                                                                                           self.input_metadata.descriptor)
             epoch, epoch_end = get_repoint_date_range(repointing_number)
-            epoch = epoch.astype(datetime)
-            epoch_end = epoch_end.astype(datetime)
-            epoch_delta = (epoch_end - epoch) / 2
+            epoch_dt: datetime = epoch.astype('datetime64[us]').astype(datetime)
+            epoch_end_dt: datetime = epoch_end.astype('datetime64[us]').astype(datetime)
+            epoch_delta: timedelta = (epoch_end_dt - epoch_dt) / 2
 
             l3e_dependencies.rename_dependencies()
 
             if self.input_metadata.descriptor == "survival-probability-lo":
-                self.process_l3e_lo(epoch, epoch_delta)
+                self.process_l3e_lo(epoch_dt, epoch_delta)
             elif self.input_metadata.descriptor == "survival-probability-hi-45":
-                self.process_l3e_hi(epoch, epoch_delta, 135)
+                self.process_l3e_hi(epoch_dt, epoch_delta, 135)
             elif self.input_metadata.descriptor == "survival-probability-hi-90":
-                self.process_l3e_hi(epoch, epoch_delta, 90)
+                self.process_l3e_hi(epoch_dt, epoch_delta, 90)
             elif self.input_metadata.descriptor == "survival-probability-ul":
-                self.process_l3e_ul(epoch, epoch_delta)
+                self.process_l3e_ul(epoch_dt, epoch_delta)
 
     def process_l3a(self, dependencies: GlowsL3ADependencies) -> GlowsL3LightCurve:
         data = dependencies.data
