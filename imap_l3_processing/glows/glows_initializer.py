@@ -2,6 +2,7 @@ from dataclasses import fields
 from pathlib import Path
 
 from imap_data_access import query
+from imap_data_access.processing_input import ProcessingInputCollection
 
 from imap_l3_processing.glows.l3bc.glows_initializer_ancillary_dependencies import GlowsInitializerAncillaryDependencies
 from imap_l3_processing.glows.l3bc.utils import find_unprocessed_carrington_rotations, archive_dependencies
@@ -9,8 +10,9 @@ from imap_l3_processing.glows.l3bc.utils import find_unprocessed_carrington_rota
 
 class GlowsInitializer:
     @staticmethod
-    def validate_and_initialize(version: str) -> list[Path]:
-        glows_ancillary_dependencies = GlowsInitializerAncillaryDependencies.fetch_dependencies()
+    def validate_and_initialize(version: str, processing_input_collection: ProcessingInputCollection) -> list[Path]:
+        glows_ancillary_dependencies = GlowsInitializerAncillaryDependencies.fetch_dependencies(
+            processing_input_collection)
         if not _should_process(glows_ancillary_dependencies):
             return []
         l3a_files = query(instrument="glows", version=version, data_level="l3a")
