@@ -19,8 +19,13 @@ class CodiceLoProcessor(Processor):
     def process(self):
         dependencies = CodiceLoL3aDependencies.fetch_dependencies(self.dependencies)
         l3a_data = self.process_l3a(dependencies)
-        saved_cdf = save_data(l3a_data)
-        upload(saved_cdf)
+        l3a_direct_event_data = self._process_l3a_direct_event_data_product(dependencies)
+        
+        saved_l3a_cdf = save_data(l3a_data)
+        saved_l3a_direct_event_cdf = save_data(l3a_direct_event_data)
+
+        upload(saved_l3a_cdf)
+        upload(saved_l3a_direct_event_cdf)
 
     def process_l3a(self, dependencies: CodiceLoL3aDependencies):
 
