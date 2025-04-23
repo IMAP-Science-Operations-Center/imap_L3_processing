@@ -100,7 +100,7 @@ class TestModels(unittest.TestCase):
             np.testing.assert_array_equal(expected["sensitivity"][...], actual.sensitivity)
 
     def test_ultra_l2_map_read_from_file(self):
-        path_to_cdf = get_test_data_folder() / 'ultra' / 'fake_l2_maps' / 'hi45-6months.cdf'
+        path_to_cdf = get_test_data_folder() / 'ultra' / 'fake_l2_maps' / 'ultra45-6months-copied-from-hi.cdf'
 
         actual = UltraL2Map.read_from_path(path_to_cdf)
 
@@ -126,3 +126,11 @@ class TestModels(unittest.TestCase):
             np.testing.assert_array_equal(expected["ena_intensity_sys_err"][...], actual.ena_intensity_sys_err)
             np.testing.assert_array_equal(expected["pixel_index"][...], actual.pixel_index)
             np.testing.assert_array_equal(expected["pixel_index_label"][...], actual.pixel_index_label)
+
+    def test_ultra_l2_nside_property(self):
+        path_to_cdf = get_test_data_folder() / 'ultra' / 'fake_l2_maps' / 'test_map.cdf'
+        actual = UltraL2Map.read_from_path(path_to_cdf)
+        expected_nside = 16
+
+        self.assertIsInstance(actual.nside, int)
+        self.assertEqual(expected_nside, actual.nside)

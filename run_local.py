@@ -19,6 +19,7 @@ from imap_l3_processing.glows.glows_processor import GlowsProcessor
 from imap_l3_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
 from imap_l3_processing.glows.l3a.utils import read_l2_glows_data, create_glows_l3a_dictionary_from_cdf
 from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDependencies
+from imap_l3_processing.glows.l3e.glows_l3e_dependencies import GlowsL3EDependencies
 from imap_l3_processing.hi.hi_processor import HiProcessor
 from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3SpectralFitDependencies
 from imap_l3_processing.hi.l3.hi_l3_survival_dependencies import HiL3SurvivalDependencies, \
@@ -212,28 +213,28 @@ def create_hit_sectored_cdf(dependencies: HITL3SectoredDependencies) -> str:
 
 def create_hit_direct_event_cdf():
     cosine_table = CosineCorrectionLookupTable(
-        get_test_data_path("hit/pha_events/imap_hit_l3_range-2A-cosine-lookup_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_range-2B-cosine-lookup_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_range-3A-cosine-lookup_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_range-3B-cosine-lookup_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_range-4A-cosine-lookup_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_range-4B-cosine-lookup_20250203_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_range-2A-cosine-lookup_20250203_v000.csv"),
+        get_test_data_path("hit/pha_events/imap_hit_range-2B-cosine-lookup_20250203_v000.csv"),
+        get_test_data_path("hit/pha_events/imap_hit_range-3A-cosine-lookup_20250203_v000.csv"),
+        get_test_data_path("hit/pha_events/imap_hit_range-3B-cosine-lookup_20250203_v000.csv"),
+        get_test_data_path("hit/pha_events/imap_hit_range-4A-cosine-lookup_20250203_v000.csv"),
+        get_test_data_path("hit/pha_events/imap_hit_range-4B-cosine-lookup_20250203_v000.csv"),
     )
     gain_table = GainLookupTable.from_file(
-        get_test_data_path("hit/pha_events/imap_hit_l3_hi-gain-lookup_20250203_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_lo-gain-lookup_20250203_v001.cdf"))
+        get_test_data_path("hit/pha_events/imap_hit_hi-gain-lookup_20250203_v000.csv"),
+        get_test_data_path("hit/pha_events/imap_hit_lo-gain-lookup_20250203_v000.csv"))
 
     range_fit_lookup = RangeFitLookup.from_files(
-        get_test_data_path("hit/pha_events/imap_hit_l3_range-2A-charge-fit-lookup_20250319_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_range-3A-charge-fit-lookup_20250319_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_range-4A-charge-fit-lookup_20250319_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_range-2B-charge-fit-lookup_20250319_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_range-3B-charge-fit-lookup_20250319_v001.cdf"),
-        get_test_data_path("hit/pha_events/imap_hit_l3_range-4B-charge-fit-lookup_20250319_v001.cdf"),
+        get_test_data_path("hit/pha_events/imap_hit_range-2A-charge-fit-lookup_20250319_v000.csv"),
+        get_test_data_path("hit/pha_events/imap_hit_range-3A-charge-fit-lookup_20250319_v000.csv"),
+        get_test_data_path("hit/pha_events/imap_hit_range-4A-charge-fit-lookup_20250319_v000.csv"),
+        get_test_data_path("hit/pha_events/imap_hit_range-2B-charge-fit-lookup_20250319_v000.csv"),
+        get_test_data_path("hit/pha_events/imap_hit_range-3B-charge-fit-lookup_20250319_v000.csv"),
+        get_test_data_path("hit/pha_events/imap_hit_range-4B-charge-fit-lookup_20250319_v000.csv"),
     )
 
     event_type_look = HitEventTypeLookup.from_csv(
-        get_test_data_path("hit/pha_events/imap_hit_l3_hit-event-type-lookup_20250228_v001.cdf"))
+        get_test_data_path("hit/pha_events/imap_hit_hit-event-type-lookup_20250228_v000.csv"))
 
     hit_l1_data = HitL1Data.read_from_cdf(
         get_test_data_path("hit/pha_events/imap_hit_l1a_direct-events_20100105_v009.cdf"))
@@ -303,29 +304,55 @@ def run_glows_l3bc_processor_and_initializer(_, mock_query):
     processor.process()
 
 
-@environment_variables({"REPOINT_DATA_FILEPATH": get_test_data_path("fake_1_day_repointing_file.csv")})
+@patch("imap_l3_processing.glows.glows_processor.GlowsL3EDependencies")
+@patch("imap_l3_processing.glows.glows_processor.imap_data_access.upload")
+@patch("imap_l3_processing.glows.glows_processor.Path")
+@patch("imap_l3_processing.glows.glows_processor.run")
 @patch("imap_l3_processing.glows.glows_processor.get_repoint_date_range")
-@patch("imap_l3_processing.glows.l3e.glows_l3e_dependencies.download_dependency_from_path")
-def run_glows_l3e(mock_download_dependency_from_path, mock_get_repoint_date_range):
+def run_glows_l3e_lo_with_mocks(mock_get_repoint_date_range, _, mock_path, mock_upload,
+                                mock_l3e_dependencies_class):
     mock_processing_input_collection = Mock()
     mock_processing_input_collection.get_file_paths.return_value = [Path("one path")]
 
-    mock_download_dependency_from_path.side_effect = [
+    mock_l3e_dependencies: GlowsL3EDependencies = GlowsL3EDependencies(
         Path("imap_glows_l3d_solar-hist_20250501-repoint00005_v001.cdf"),
-        Path("instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/Example/Example/EnGridLo.dat"),
-        Path("instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/Example/Example/EnGridHi.dat"),
-        Path("instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/Example/Example/EnGridUltra.dat"),
-        Path("instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/Example/Example/tessXYZ8.dat"),
-        Path("instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/Example/Example/tessAng16.dat"),
-        Path("instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/Example/Example/lyaSeriesV4_2021b.dat"),
+        Path("instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/EnGridLo.dat"),
+        Path("instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/EnGridHi.dat"),
+        Path("instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/EnGridUltra.dat"),
+        Path("instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/tessXYZ8.dat"),
+        Path("instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/tessAng16.dat"),
+        Path("instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/lyaSeriesV4_2021b.dat"),
         Path(
-            "instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/Example/Example/solar_uv_anisotropy_NP.1.0_SP.1.0.dat"),
-        Path("instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/Example/Example/speed3D.v01.Legendre.2021b.dat"),
-        Path("instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/Example/Example/density3D.v01.Legendre.2021b.dat"),
-        Path("instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/Example/Example/phion_Hydrogen_T12F107_2021b.dat"),
-        Path("instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/Example/Example/swEqtrElectrons5_2021b.dat"),
-        Path("instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/Example/Example/ionization.files.dat"),
-        get_test_data_path("glows/l3e_pipeline_settings.json")
+            "instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/solar_uv_anisotropy_NP.1.0_SP.1.0.dat"),
+        Path("instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/speed3D.v01.Legendre.2021b.dat"),
+        Path("instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/density3D.v01.Legendre.2021b.dat"),
+        Path("instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/phion_Hydrogen_T12F107_2021b.dat"),
+        Path("instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/swEqtrElectrons5_2021b.dat"),
+        Path("instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/ionization.files.dat"),
+        {"executable_dependency_paths": {
+            "energy-grid-lo": "EnGridLo.dat",
+            "energy-grid-hi": "EnGridHi.dat",
+            "energy-grid-ultra": "EnGridUltra.dat",
+            "tess-xyz-8": "tessXYZ8.dat",
+            "tess-ang-16": "tessAng16.dat",
+            "lya-series": "lyaSeriesV4_2021b.dat",
+            "solar-uv-anistropy": "solar_uv_anisotropy_NP.1.0_SP.1.0.dat",
+            "speed-3d": "speed3D.v01.Legendre.2021b.dat",
+            "density-3d": "density3D.v01.Legendre.2021b.dat",
+            "phion-hydrogen": "phion_Hydrogen_T12F107_2021b.dat",
+            "sw-eqtr-electrons": "swEqtrElectrons5_2021b.dat",
+            "ionization-files": "ionization.files.dat",
+        }}
+    )
+
+    mock_l3e_dependencies.rename_dependencies = Mock()
+    mock_l3e_dependencies_class.fetch_dependencies.return_value = (mock_l3e_dependencies, 5)
+
+    mock_path.side_effect = [
+        Path(get_test_instrument_team_data_path("glows/probSur.Imap.Lo_20090101_010101_2009.000_60.00.txt")),
+        Path(get_test_instrument_team_data_path("glows/probSur.Imap.Hi_2009.000_135.0.txt")),
+        Path(get_test_instrument_team_data_path("glows/probSur.Imap.Hi_2009.000_90.00.txt")),
+        Path(get_test_instrument_team_data_path("glows/probSur.Imap.Ul_20090101_010101_2009.000.txt")),
     ]
 
     input_metadata = InputMetadata(
@@ -333,7 +360,8 @@ def run_glows_l3e(mock_download_dependency_from_path, mock_get_repoint_date_rang
         data_level='l3e',
         start_date=datetime(2015, 4, 10),
         end_date=datetime(2015, 4, 11),
-        version='v001')
+        version='v001',
+        descriptor='survival-probability-lo')
 
     mock_get_repoint_date_range.return_value = (
         np.datetime64(datetime.fromisoformat("2025-04-20T00:00:00")),
@@ -341,7 +369,7 @@ def run_glows_l3e(mock_download_dependency_from_path, mock_get_repoint_date_rang
 
     glows_processor: GlowsProcessor = GlowsProcessor(mock_processing_input_collection, input_metadata)
 
-    glows_processor.process_l3e()
+    glows_processor.process()
 
 
 def run_glows_l3bc():
@@ -494,21 +522,21 @@ if __name__ == "__main__":
             run_glows_l3bc()
         elif "init-l3bc" in sys.argv:
             run_glows_l3bc_processor_and_initializer()
-        elif "l3e" in sys.argv:
-            run_glows_l3e()
+        elif "l3e" in sys.argv and "mock" in sys.argv:
+            run_glows_l3e_lo_with_mocks()
         else:
             cdf_data = CDF("tests/test_data/glows/imap_glows_l2_hist_20130908-repoint00001_v004.cdf")
             l2_glows_data = read_l2_glows_data(cdf_data)
 
             dependencies = GlowsL3ADependencies(l2_glows_data, 5, {
                 "calibration_data": Path(
-                    "instrument_team_data/glows/imap_glows_l3a_calibration-data-text-not-cdf_20250707_v002.cdf"),
+                    "instrument_team_data/glows/imap_glows_calibration-data_20250707_v000.dat"),
                 "settings": Path(
-                    "instrument_team_data/glows/imap_glows_l3a_pipeline-settings-json-not-cdf_20250707_v002.cdf"),
+                    "instrument_team_data/glows/imap_glows_pipeline-settings_20250707_v002.json"),
                 "time_dependent_bckgrd": Path(
-                    "instrument_team_data/glows/imap_glows_l3a_time-dep-bckgrd-text-not-cdf_20250707_v001.cdf"),
+                    "instrument_team_data/glows/imap_glows_time-dep-bckgrd_20250707_v000.dat"),
                 "extra_heliospheric_bckgrd": Path(
-                    "instrument_team_data/glows/imap_glows_l3a_map-of-extra-helio-bckgrd-text-not-cdf_20250707_v001.cdf"),
+                    "instrument_team_data/glows/imap_glows_map-of-extra-helio-bckgrd_20250707_v000.dat"),
             })
 
             path = create_glows_l3a_cdf(dependencies)

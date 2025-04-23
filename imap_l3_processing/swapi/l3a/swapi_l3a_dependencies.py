@@ -51,22 +51,24 @@ class SwapiL3ADependencies:
         neutral_helium_table = dependencies.get_file_paths(source='swapi',
                                                            descriptor=DENSITY_OF_NEUTRAL_HELIUM_DESCRIPTOR)
 
-        download(science_dependency_file[0])
-        download(proton_density_and_temperature_calibration_file[0])
-        download(alpha_density_and_temperature_calibration_file[0])
-        download(clock_and_deflection_file[0])
-        download(geometric_factor_calibration_table[0])
-        download(instrument_response_table[0])
-        download(neutral_helium_table[0])
+        science_download_path = download(science_dependency_file[0])
+        proton_density_and_temperature_calibration_file_path = download(
+            proton_density_and_temperature_calibration_file[0])
+        alpha_density_and_temperature_calibration_file_path = download(
+            alpha_density_and_temperature_calibration_file[0])
+        clock_and_deflection_file_path = download(clock_and_deflection_file[0])
+        geometric_factor_calibration_table_path = download(geometric_factor_calibration_table[0])
+        instrument_response_table_path = download(instrument_response_table[0])
+        neutral_helium_table_path = download(neutral_helium_table[0])
 
         return cls.from_file_paths(
-            science_dependency_file[0],
-            proton_density_and_temperature_calibration_file[0],
-            alpha_density_and_temperature_calibration_file[0],
-            clock_and_deflection_file[0],
-            geometric_factor_calibration_table[0],
-            instrument_response_table[0],
-            neutral_helium_table[0],
+            science_download_path,
+            proton_density_and_temperature_calibration_file_path,
+            alpha_density_and_temperature_calibration_file_path,
+            clock_and_deflection_file_path,
+            geometric_factor_calibration_table_path,
+            instrument_response_table_path,
+            neutral_helium_table_path,
         )
 
     @classmethod

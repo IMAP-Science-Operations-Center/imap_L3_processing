@@ -4,9 +4,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Union, Optional
 
-from imap_l3_processing.cdf.cdf_utils import read_numeric_variable, read_variable_and_mask_fill_values
-from imap_l3_processing.hi.l3.models import HiL1cData, GlowsL3eData, HiIntensityMapData
 from spacepy.pycdf import CDF
+
+from imap_l3_processing.cdf.cdf_utils import read_numeric_variable, read_variable_and_mask_fill_values
+from imap_l3_processing.hi.l3.models import HiL1cData, HiGlowsL3eData, HiIntensityMapData
 
 
 def read_hi_l2_data(cdf_path) -> HiIntensityMapData:
@@ -41,12 +42,12 @@ def read_hi_l1c_data(path: Union[Path, str]) -> HiL1cData:
                          esa_energy_step=cdf["esa_energy_step"][...])
 
 
-def read_glows_l3e_data(cdf_path: Union[Path, str]) -> GlowsL3eData:
+def read_glows_l3e_data(cdf_path: Union[Path, str]) -> HiGlowsL3eData:
     with CDF(str(cdf_path)) as cdf:
-        return GlowsL3eData(epoch=cdf["epoch"][0],
-                            energy=read_numeric_variable(cdf["energy"]),
-                            spin_angle=read_numeric_variable(cdf["spin_angle"]),
-                            probability_of_survival=read_numeric_variable(cdf["probability_of_survival"]))
+        return HiGlowsL3eData(epoch=cdf["epoch"][0],
+                              energy=read_numeric_variable(cdf["energy"]),
+                              spin_angle=read_numeric_variable(cdf["spin_angle"]),
+                              probability_of_survival=read_numeric_variable(cdf["probability_of_survival"]))
 
 
 class Sensor(enum.Enum):

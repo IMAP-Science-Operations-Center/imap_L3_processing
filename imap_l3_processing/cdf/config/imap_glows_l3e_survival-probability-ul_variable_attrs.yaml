@@ -25,22 +25,23 @@ epoch_delta:
    RECORD_VARYING: RV
    DEPEND_0: epoch
    FIELDNAM: epoch_delta
-   FORMAT: ' '
+   FORMAT: I19
    LABLAXIS: epoch_delta
    UNITS: ns
    VALIDMIN: 0
    VALIDMAX: 86000000000000
-   FILLVAL: -9223372036854770000
+   FILLVAL: -9223372036854775808
 energy:
    NAME: energy
    DATA_TYPE: CDF_FLOAT
    CATDESC: Energies associated with the survival probabilites for IMAP-Ultra
    VAR_TYPE: support_data
    RECORD_VARYING: NRV
-   FIELDNAM: ' '
+   FIELDNAM: energy
    FORMAT: g9.3
+   LABLAXIS: energy
    UNITS: kEV
-   VALIDMIN: ' '
+   VALIDMIN: 0
    VALIDMAX: 10000000000
    FILLVAL: -1.0000E+31
 healpix_index:
@@ -49,38 +50,41 @@ healpix_index:
    CATDESC: Heal pixel index
    VAR_TYPE: support_data
    RECORD_VARYING: NRV
-   FIELDNAM: ' '
-   FORMAT: ' '
+   FIELDNAM: healpix_index
+   FORMAT: I19
+   LABLAXIS: healpix_index
    UNITS: ' '
-   VALIDMIN: ' '
-   VALIDMAX: 10000000000
+   VALIDMIN: 0
+   VALIDMAX: 3072
    FILLVAL: -9223372036854770000
 latitude:
    NAME: latitude
-   DATA_TYPE: CDF_FLOAT
+   DATA_TYPE: CDF_INT2
    CATDESC: Latitude Ecliptic Degree
    VAR_TYPE: data
    RECORD_VARYING: NRV
    DISPLAY_TYPE: no_plot
-   FIELDNAM: ' '
-   FORMAT: g9.3
+   FIELDNAM: latitude
+   FORMAT: I8
+   LABLAXIS: latitude
    UNITS: degree
    VALIDMIN: -90
    VALIDMAX: 90
-   FILLVAL: -1.0000E+31
+   FILLVAL: -32768
 longitude:
    NAME: longitude
-   DATA_TYPE: CDF_FLOAT
+   DATA_TYPE: CDF_INT2
    CATDESC: Longitude Ecliptic Degree
    VAR_TYPE: data
    RECORD_VARYING: NRV
    DISPLAY_TYPE: no_plot
-   FIELDNAM: ' '
-   FORMAT: g9.3
+   FIELDNAM: longitude
+   FORMAT: I8
+   LABLAXIS: longitude
    UNITS: degree
    VALIDMIN: 0
    VALIDMAX: 360
-   FILLVAL: -1.0000E+31
+   FILLVAL: -32768
 probability_of_survival:
    NAME: probability_of_survival
    DATA_TYPE: CDF_FLOAT
@@ -92,9 +96,28 @@ probability_of_survival:
    DEPEND_2: healpix_index
    DISPLAY_TYPE: spectrogram
    VARIABLE_PURPOSE: primary var, summary
-   FIELDNAM: ' '
+   FIELDNAM: probability_of_survival
    FORMAT: g9.3
+   LABLAXIS: probability_of_survival
    UNITS: ' '
    VALIDMIN: 0
    VALIDMAX: 1
    FILLVAL: -1.0000E+31
+   LABL_PTR_1: energy_label
+   LABL_PTR_2: healpix_index_label
+energy_label:
+   NAME: energy_label
+   DATA_TYPE: CDF_CHAR
+   CATDESC: Label for energy
+   VAR_TYPE: metadata
+   FIELDNAM: ' '
+   FORMAT: a20
+   LABLAXIS: energy_label
+healpix_index_label:
+   NAME: healpix_index_label
+   DATA_TYPE: CDF_CHAR
+   CATDESC: Label for heal pixels
+   VAR_TYPE: metadata
+   FIELDNAM: ' '
+   FORMAT: a20
+   LABLAXIS: healpix_index_label

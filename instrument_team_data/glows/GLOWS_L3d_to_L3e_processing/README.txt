@@ -1,0 +1,1 @@
+Execute run_example_L3d_to_L3e.sh to generate probSur.Imap.*.dat text files with L3e survival probabilities

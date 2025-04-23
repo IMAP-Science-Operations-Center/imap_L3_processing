@@ -7,7 +7,7 @@ from spacepy.pycdf import CDF
 
 from imap_l3_processing.glows.l3a.models import GlowsL2Data, GlowsL2LightCurve, GlowsLatLon, GlowsL3LightCurve, XYZ, \
     GlowsL2Header
-from imap_l3_processing.models import UpstreamDataDependency
+from imap_l3_processing.models import InputMetadata
 
 
 def read_l2_glows_data(cdf: CDF) -> GlowsL2Data:
@@ -62,7 +62,7 @@ def _read_xyz(cdf: CDF, variable_name: str) -> XYZ:
     return {k: cdf[f'{variable_name}_{k}'][0] for k in "xyz"}
 
 
-def create_glows_l3a_from_dictionary(data: dict, input_metadata: UpstreamDataDependency) -> GlowsL3LightCurve:
+def create_glows_l3a_from_dictionary(data: dict, input_metadata: InputMetadata) -> GlowsL3LightCurve:
     start_time = datetime.fromisoformat(data["start_time"])
     end_time = datetime.fromisoformat(data["end_time"])
     total_time = end_time - start_time

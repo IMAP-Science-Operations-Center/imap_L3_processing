@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from datetime import datetime
 
 import numpy as np
+
 from imap_l3_processing.models import DataProduct, DataProductVariable
 
 EPOCH_VAR_NAME = "epoch"
@@ -111,7 +112,7 @@ class HiL1cData:
 
 
 @dataclass
-class GlowsL3eData:
+class HiGlowsL3eData:
     epoch: datetime
     energy: np.ndarray
     spin_angle: np.ndarray
