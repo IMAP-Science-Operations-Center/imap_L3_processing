@@ -50,7 +50,8 @@ class GlowsProcessor(Processor):
                 imap_data_access.upload(l3c_cdf)
                 imap_data_access.upload(zip_file)
         elif self.input_metadata.data_level == "l3e":
-            l3e_dependencies, repointing_number = GlowsL3EDependencies.fetch_dependencies(self.dependencies)
+            l3e_dependencies, repointing_number = GlowsL3EDependencies.fetch_dependencies(self.dependencies,
+                                                                                          self.input_metadata.descriptor)
             epoch, epoch_end = get_repoint_date_range(repointing_number)
             epoch = epoch.astype(datetime)
             epoch_end = epoch_end.astype(datetime)
@@ -66,7 +67,7 @@ class GlowsProcessor(Processor):
                 self.process_l3e_hi(epoch, epoch_delta, 90)
             elif self.input_metadata.descriptor == "survival-probability-ul":
                 self.process_l3e_ul(epoch, epoch_delta)
-      
+
     def process_l3a(self, dependencies: GlowsL3ADependencies) -> GlowsL3LightCurve:
         data = dependencies.data
         l3_data = L3aData(dependencies.ancillary_files)

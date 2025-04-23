@@ -429,7 +429,7 @@ class TestGlowsProcessor(unittest.TestCase):
         processor = GlowsProcessor(dependencies=dependencies, input_metadata=input_metadata)
         processor.process()
 
-        mock_l3e_dependencies.fetch_dependencies.assert_called_once_with(dependencies)
+        mock_l3e_dependencies.fetch_dependencies.assert_called_once_with(dependencies, input_metadata.descriptor)
 
         mock_l3e_dependencies.fetch_dependencies.return_value[0].rename_dependencies.assert_called_once()
 
@@ -506,7 +506,8 @@ class TestGlowsProcessor(unittest.TestCase):
                 processor = GlowsProcessor(dependencies=dependencies, input_metadata=input_metadata)
                 processor.process()
 
-                mock_l3e_dependencies.fetch_dependencies.assert_called_once_with(dependencies)
+                mock_l3e_dependencies.fetch_dependencies.assert_called_once_with(dependencies,
+                                                                                 input_metadata.descriptor)
 
                 mock_l3e_dependencies.fetch_dependencies.return_value[0].rename_dependencies.assert_called_once()
 
@@ -574,7 +575,7 @@ class TestGlowsProcessor(unittest.TestCase):
         processor = GlowsProcessor(dependencies=dependencies, input_metadata=input_metadata)
         processor.process()
 
-        mock_l3e_dependencies.fetch_dependencies.assert_called_once_with(dependencies)
+        mock_l3e_dependencies.fetch_dependencies.assert_called_once_with(dependencies, input_metadata.descriptor)
 
         mock_l3e_dependencies.fetch_dependencies.return_value[0].rename_dependencies.assert_called_once()
 
