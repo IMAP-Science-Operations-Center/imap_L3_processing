@@ -7,6 +7,7 @@ from subprocess import run
 
 import imap_data_access
 import numpy as np
+from imap_data_access.processing_input import ProcessingInputCollection
 
 from imap_l3_processing.glows.descriptors import GLOWS_L3A_DESCRIPTOR
 from imap_l3_processing.glows.glows_initializer import GlowsInitializer
@@ -25,12 +26,14 @@ from imap_l3_processing.glows.l3e.glows_l3e_hi_model import GlowsL3EHiData
 from imap_l3_processing.glows.l3e.glows_l3e_lo_model import GlowsL3ELoData
 from imap_l3_processing.glows.l3e.glows_l3e_ultra_model import GlowsL3EUltraData
 from imap_l3_processing.glows.l3e.glows_l3e_utils import determine_call_args_for_l3e_executable
-from imap_l3_processing.models import UpstreamDataDependency
+from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
 from imap_l3_processing.utils import save_data
 
 
 class GlowsProcessor(Processor):
+    def __init__(self, dependencies: ProcessingInputCollection, input_metadata: InputMetadata):
+        super().__init__(dependencies, input_metadata)
 
     def process(self):
         if self.input_metadata.data_level == "l3a":
@@ -41,7 +44,7 @@ class GlowsProcessor(Processor):
             proton_cdf = save_data(l3a_output)
             imap_data_access.upload(proton_cdf)
         elif self.input_metadata.data_level == "l3b":
-            zip_files = GlowsInitializer.validate_and_initialize(self.input_metadata.version)
+            zip_files = GlowsInitializer.validate_and_initialize(self.input_metadata.version, self.dependencies)
             for zip_file in zip_files:
                 dependencies = GlowsL3BCDependencies.fetch_dependencies(zip_file)
                 l3b_data_product, l3c_data_product = self.process_l3bc(dependencies)
@@ -55,20 +58,20 @@ class GlowsProcessor(Processor):
             l3e_dependencies, repointing_number = GlowsL3EDependencies.fetch_dependencies(self.dependencies,
                                                                                           self.input_metadata.descriptor)
             epoch, epoch_end = get_repoint_date_range(repointing_number)
-            epoch = epoch.astype(datetime)
-            epoch_end = epoch_end.astype(datetime)
-            epoch_delta = (epoch_end - epoch) / 2
+            epoch_dt: datetime = epoch.astype('datetime64[us]').astype(datetime)
+            epoch_end_dt: datetime = epoch_end.astype('datetime64[us]').astype(datetime)
+            epoch_delta: timedelta = (epoch_end_dt - epoch_dt) / 2
 
             l3e_dependencies.rename_dependencies()
 
             if self.input_metadata.descriptor == "survival-probability-lo":
-                self.process_l3e_lo(epoch, epoch_delta)
+                self.process_l3e_lo(epoch_dt, epoch_delta)
             elif self.input_metadata.descriptor == "survival-probability-hi-45":
-                self.process_l3e_hi(epoch, epoch_delta, 135)
+                self.process_l3e_hi(epoch_dt, epoch_delta, 135)
             elif self.input_metadata.descriptor == "survival-probability-hi-90":
-                self.process_l3e_hi(epoch, epoch_delta, 90)
+                self.process_l3e_hi(epoch_dt, epoch_delta, 90)
             elif self.input_metadata.descriptor == "survival-probability-ul":
-                self.process_l3e_ul(epoch, epoch_delta)
+                self.process_l3e_ul(epoch_dt, epoch_delta)
 
     def process_l3a(self, dependencies: GlowsL3ADependencies) -> GlowsL3LightCurve:
         data = dependencies.data
@@ -82,10 +85,10 @@ class GlowsProcessor(Processor):
 
     def process_l3bc(self, dependencies: GlowsL3BCDependencies) -> tuple[GlowsL3BIonizationRate, GlowsL3CSolarWind]:
         filtered_days = filter_out_bad_days(dependencies.l3a_data, dependencies.ancillary_files['bad_days_list'])
-        l3b_metadata = UpstreamDataDependency("glows", "l3b", dependencies.start_date, dependencies.end_date,
-                                              self.input_metadata.version, "ion-rate-profile")
-        l3c_metadata = UpstreamDataDependency("glows", "l3c", dependencies.start_date, dependencies.end_date,
-                                              self.input_metadata.version, "sw-profile")
+        l3b_metadata = InputMetadata("glows", "l3b", dependencies.start_date, dependencies.end_date,
+                                     self.input_metadata.version, "ion-rate-profile")
+        l3c_metadata = InputMetadata("glows", "l3c", dependencies.start_date, dependencies.end_date,
+                                     self.input_metadata.version, "sw-profile")
 
         try:
             l3b_data, l3c_data = generate_l3bc(replace(dependencies, l3a_data=filtered_days))
@@ -99,8 +102,8 @@ class GlowsProcessor(Processor):
                                                                                       l3b_metadata)
             l3c_data_product = GlowsL3CSolarWind.from_instrument_team_dictionary(l3c_data_with_fills,
                                                                                  l3c_metadata)
-        l3b_data_product.parent_file_names.append(dependencies.zip_file_path.name)
-        l3c_data_product.parent_file_names.append(dependencies.zip_file_path.name)
+        l3b_data_product.parent_file_names += self.get_parent_file_names([dependencies.zip_file_path])
+        l3c_data_product.parent_file_names += self.get_parent_file_names([dependencies.zip_file_path])
         return l3b_data_product, l3c_data_product
 
     def process_l3e_lo(self, epoch: datetime, epoch_delta: timedelta):

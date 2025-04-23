@@ -10,7 +10,7 @@ from spacepy import pycdf
 
 from imap_l3_processing.constants import CARRINGTON_ROTATION_IN_NANOSECONDS
 from imap_l3_processing.glows.l3bc.l3bc_toolkit.funcs import jd_fm_Carrington
-from imap_l3_processing.models import DataProduct, DataProductVariable, UpstreamDataDependency
+from imap_l3_processing.models import DataProduct, DataProductVariable, InputMetadata
 
 
 @dataclass
@@ -53,7 +53,7 @@ class GlowsL3BIonizationRate(DataProduct):
                 DataProductVariable("lat_grid_label", self.lat_grid_label)]
 
     @classmethod
-    def from_instrument_team_dictionary(cls, model: dict, input_metadata: UpstreamDataDependency) -> Self:
+    def from_instrument_team_dictionary(cls, model: dict, input_metadata: InputMetadata) -> Self:
         latitude_grid = model["ion_rate_profile"]["lat_grid"]
         carrington_center_point = Time(jd_fm_Carrington(model["CR"] + 0.5), format="jd").datetime
         parent_file_names = []
@@ -115,7 +115,7 @@ class GlowsL3CSolarWind(DataProduct):
         ]
 
     @classmethod
-    def from_instrument_team_dictionary(cls, model: dict, input_metadata: UpstreamDataDependency) -> Self:
+    def from_instrument_team_dictionary(cls, model: dict, input_metadata: InputMetadata) -> Self:
         latitude_grid = model["solar_wind_profile"]["lat_grid"]
         carrington_center_point = Time(jd_fm_Carrington(model["CR"] + 0.5), format="jd").datetime
         parent_file_names = []

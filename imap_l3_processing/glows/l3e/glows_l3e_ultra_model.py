@@ -54,7 +54,7 @@ class GlowsL3EUltraData(DataProduct):
         healpix_indexes = np.arange(0, 3072)
 
         existing_healpix = data_table[:, 0]
-        probability_of_survival = data_table[:, 3:-1]
+        probability_of_survival = data_table[:, 3:]
 
         probability_of_survival_to_return = np.full((len(energies), len(healpix_indexes)), np.nan, dtype=float)
 

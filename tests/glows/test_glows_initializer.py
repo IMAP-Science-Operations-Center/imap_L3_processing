@@ -29,7 +29,7 @@ class TestGlowsInitializer(unittest.TestCase):
                     lyman_alpha_path,
                     omni_data_path)
 
-                self.assertEqual([], GlowsInitializer.validate_and_initialize(""))
+                self.assertEqual([], GlowsInitializer.validate_and_initialize("", Mock()))
 
     @patch("imap_l3_processing.glows.glows_initializer.archive_dependencies")
     @patch("imap_l3_processing.glows.glows_initializer.GlowsInitializerAncillaryDependencies")
@@ -57,7 +57,9 @@ class TestGlowsInitializer(unittest.TestCase):
         mock_glows_initializer_ancillary_dependencies.fetch_dependencies.return_value = ancillary_dependencies
         mock_find_unprocessed_carrington_rotations.return_value = [sentinel.cr_to_process1, sentinel.cr_to_process2]
 
-        actual_zip_paths = GlowsInitializer.validate_and_initialize(version)
+        mock_dependencies = Mock()
+
+        actual_zip_paths = GlowsInitializer.validate_and_initialize(version, mock_dependencies)
 
         self.assertEqual(2, mock_query.call_count)
         mock_query.assert_has_calls([call(instrument="glows", version=version, data_level="l3a"),
@@ -65,7 +67,7 @@ class TestGlowsInitializer(unittest.TestCase):
 
         mock_find_unprocessed_carrington_rotations.assert_called_once_with(mock_l3a, mock_l3b, ancillary_dependencies)
 
-        mock_glows_initializer_ancillary_dependencies.fetch_dependencies.assert_called_once()
+        mock_glows_initializer_ancillary_dependencies.fetch_dependencies.assert_called_once_with(mock_dependencies)
 
         mock_archive_dependencies.assert_has_calls([
             call(sentinel.cr_to_process1, version, ancillary_dependencies),

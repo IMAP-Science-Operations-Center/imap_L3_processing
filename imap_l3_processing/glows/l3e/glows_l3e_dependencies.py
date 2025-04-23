@@ -40,7 +40,6 @@ class GlowsL3EDependencies:
         pipeline_settings_dependency = dependencies.get_file_paths(source='glows', descriptor='pipeline-settings-l3e')
 
         solar_hist_path = download_dependency_from_path(str(solar_hist_dependency[0]))
-
         lya_series_path = download_dependency_from_path(str(lya_series_dependency[0]))
         solar_uv_anisotropy_path = download_dependency_from_path(str(solar_uv_anisotropy_dependency[0]))
         speed_3d_path = download_dependency_from_path(str(speed_3d_dependency[0]))
@@ -69,9 +68,6 @@ class GlowsL3EDependencies:
             tess_ang_dependency = dependencies.get_file_paths(source='glows', descriptor='tess-ang-16')
             energy_grid_ultra_path = download_dependency_from_path(str(energy_grid_ultra_dependency[0]))
             tess_ang_path = download_dependency_from_path(str(tess_ang_dependency[0]))
-
-        #
-        #
 
         with open(pipeline_settings_path) as f:
             pipeline_settings = json.load(f)

@@ -70,7 +70,7 @@ def imap_l3_processor():
         processor = SwapiProcessor(processing_input_collection, input_dependency)
         processor.process()
     elif args.instrument == 'glows':
-        processor = GlowsProcessor(dependencies, input_dependency)
+        processor = GlowsProcessor(processing_input_collection, input_dependency)
         processor.process()
     elif args.instrument == 'swe' and args.data_level == 'l3':
         processor = SweProcessor(processing_input_collection, input_dependency)
