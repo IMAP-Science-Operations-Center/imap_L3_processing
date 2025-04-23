@@ -1,26 +1,47 @@
 import numpy as np
 import xarray as xr
-from imap_l3_processing.hi.l3.models import HiL1cData, GlowsL3eData
-from imap_l3_processing.hi.l3.utils import Sensor, SpinPhase
 from imap_processing.ena_maps.ena_maps import RectangularSkyMap, PointingSet
 from imap_processing.ena_maps.utils.coordinates import CoordNames
 from imap_processing.spice import geometry
+
+from imap_l3_processing.hi.l3.models import HiL1cData, GlowsL3eData
+from imap_l3_processing.hi.l3.utils import Sensor, SpinPhase
+
+
+def interpolate_angular_data_to_nearest_neighbor(input_azimuths: np.array, glows_azimuths: np.array,
+                                                 glows_data: np.array) -> np.array:
+    expanded_az = np.concatenate([glows_azimuths - 360, glows_azimuths, glows_azimuths + 360])
+    expanded_glows_data = np.concatenate([glows_data, glows_data, glows_data])
+    sort = np.argsort(expanded_az)
+    sorted_az = expanded_az[sort]
+    sorted_data = expanded_glows_data[sort]
+    bin_edges = sorted_az[:-1] + np.diff(sorted_az) / 2
+    return sorted_data[np.digitize(input_azimuths, bin_edges, right=True)]
 
 
 class HiSurvivalProbabilityPointingSet(PointingSet):
     def __init__(self, l1c_dataset: HiL1cData, sensor: Sensor, spin_phase: SpinPhase, glows_dataset: GlowsL3eData,
                  energies: np.ndarray):
         super().__init__(xr.Dataset(), geometry.SpiceFrame.IMAP_DPS)
+        num_spin_angle_bins = l1c_dataset.exposure_times.shape[-1]
+        deg_spacing = 360 / num_spin_angle_bins
+        half_bin_width = deg_spacing / 2
+        spin_angles = np.linspace(0, 360, num_spin_angle_bins,
+                                  endpoint=False) + half_bin_width
+        self.azimuths = np.mod(spin_angles + 90, 360)
+
         glows_spin_bin_count = len(glows_dataset.spin_angle)
-        survival_probabilities = np.empty(shape=(1, len(energies), glows_spin_bin_count))
+        sp_interpolated_to_hi_energies = np.empty(shape=(len(energies), glows_spin_bin_count))
         for spin_angle_index in range(glows_spin_bin_count):
-            survival_probabilities[0, :, spin_angle_index] = np.interp(
+            sp_interpolated_to_hi_energies[:, spin_angle_index] = np.interp(
                 np.log10(energies),
                 np.log10(glows_dataset.energy),
                 glows_dataset.probability_of_survival[0, :, spin_angle_index], )
-        survival_probabilities = np.repeat(survival_probabilities, 10, axis=2)
 
-        num_spin_angle_bins = l1c_dataset.exposure_times.shape[-1]
+        sp_interpolated_to_pset_angles = np.zeros((1, len(energies), 3600))
+        for e_index in range(len(energies)):
+            sp_interpolated_to_pset_angles[0, e_index] = interpolate_angular_data_to_nearest_neighbor(
+                self.azimuths, glows_dataset.spin_angle, sp_interpolated_to_hi_energies[e_index])
 
         exposure_mask = np.full(num_spin_angle_bins, False)
 
@@ -34,16 +55,7 @@ class HiSurvivalProbabilityPointingSet(PointingSet):
 
         exposure = l1c_dataset.exposure_times * exposure_mask
 
-        spin_angle_range = (0, 360)
-        deg_spacing = 360 / num_spin_angle_bins
-
-        half_bin_width = deg_spacing / 2
-
-        spin_angles = np.linspace(spin_angle_range[0], spin_angle_range[1], num_spin_angle_bins,
-                                  endpoint=False) + half_bin_width
-
         sensor_angle = Sensor.get_sensor_angle(sensor.value)
-        self.azimuths = spin_angles + 90
         self.elevations = np.repeat(sensor_angle, num_spin_angle_bins)
         self.az_el_points = np.column_stack([self.azimuths, self.elevations])
 
@@ -57,7 +69,7 @@ class HiSurvivalProbabilityPointingSet(PointingSet):
                     CoordNames.ENERGY.value,
                     CoordNames.AZIMUTH_L1C.value,
                 ],
-                survival_probabilities * exposure,
+                sp_interpolated_to_pset_angles * exposure,
             ),
             "exposure": (
                 [

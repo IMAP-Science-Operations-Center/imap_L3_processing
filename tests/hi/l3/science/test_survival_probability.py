@@ -3,14 +3,15 @@ from datetime import datetime
 from unittest.mock import patch, sentinel, call, MagicMock
 
 import numpy as np
-from imap_l3_processing.hi.l3.models import HiL1cData, GlowsL3eData
-from imap_l3_processing.hi.l3.science.survival_probability import Sensor, \
-    HiSurvivalProbabilitySkyMap, HiSurvivalProbabilityPointingSet
-from imap_l3_processing.hi.l3.utils import SpinPhase
 from imap_processing.ena_maps.ena_maps import RectangularSkyMap, PointingSet
 from imap_processing.ena_maps.utils.coordinates import CoordNames
 from imap_processing.spice import geometry
 from imap_processing.spice.geometry import SpiceFrame
+
+from imap_l3_processing.hi.l3.models import HiL1cData, GlowsL3eData
+from imap_l3_processing.hi.l3.science.survival_probability import Sensor, \
+    HiSurvivalProbabilitySkyMap, HiSurvivalProbabilityPointingSet, interpolate_angular_data_to_nearest_neighbor
+from imap_l3_processing.hi.l3.utils import SpinPhase
 
 
 class TestSurvivalProbability(unittest.TestCase):
@@ -70,8 +71,9 @@ class TestSurvivalProbability(unittest.TestCase):
                     self.l1c_hi_dataset.exposure_times * expected_mask)
 
                 self.assertIn(CoordNames.AZIMUTH_L1C.value, pointing_set.data.coords)
-                np.testing.assert_array_equal(np.arange(0, 360, 0.1) + 0.05 + 90,
-                                              pointing_set.data[CoordNames.AZIMUTH_L1C.value].values)
+                np.testing.assert_array_almost_equal(
+                    np.concatenate([np.arange(90, 360, 0.1), np.arange(0, 90, 0.1)]) + 0.05,
+                    pointing_set.data[CoordNames.AZIMUTH_L1C.value].values)
 
                 self.assertIn(CoordNames.ENERGY.value, pointing_set.data.coords)
                 np.testing.assert_array_equal(self.l1c_hi_dataset.esa_energy_step,
@@ -124,6 +126,69 @@ class TestSurvivalProbability(unittest.TestCase):
         every_tenth_value = survivals[:, :, ::10, np.newaxis]
         groups_of_ten = survivals.reshape(1, self.num_energies, 360, 10)
         self.assertTrue(np.all(np.isclose(every_tenth_value, groups_of_ten)))
+
+    @patch("imap_l3_processing.hi.l3.science.survival_probability.interpolate_angular_data_to_nearest_neighbor")
+    def test_survivals_matched_with_corresponding_exposures(self, mock_interpolate):
+        self.hi_energies = np.array([1, 100])
+        self.glows_data.energy = np.array([1, 100, 100_000])
+
+        first_energy_corresponding_glows_data = np.linspace(0, 1, 3600)
+        second_energy_corresponding_glows_data = np.linspace(0, 1, 3600) + 100.2
+
+        mock_interpolate.side_effect = [first_energy_corresponding_glows_data,
+                                        second_energy_corresponding_glows_data]
+
+        pointing_set = HiSurvivalProbabilityPointingSet(self.l1c_hi_dataset, Sensor.Hi90, SpinPhase.RamOnly,
+                                                        self.glows_data,
+                                                        self.hi_energies)
+
+        pset_spin_angles = np.linspace(0, 360, 3600, endpoint=False) + 0.05
+        pset_azimuths = np.mod(pset_spin_angles + 90, 360)
+
+        self.assertEqual(2, mock_interpolate.call_count)
+        get_glows_data_for_first_energy_args = mock_interpolate.call_args_list[0].args
+        np.testing.assert_array_equal(pset_azimuths, get_glows_data_for_first_energy_args[0])
+        np.testing.assert_array_equal(self.glows_data.spin_angle, get_glows_data_for_first_energy_args[1])
+        np.testing.assert_array_equal(self.glows_data.probability_of_survival[0, 0],
+                                      get_glows_data_for_first_energy_args[2])
+
+        get_glows_data_for_second_energy_args = mock_interpolate.call_args_list[1].args
+        np.testing.assert_array_equal(pset_azimuths, get_glows_data_for_second_energy_args[0])
+        np.testing.assert_array_equal(self.glows_data.spin_angle, get_glows_data_for_second_energy_args[1])
+        np.testing.assert_array_equal(self.glows_data.probability_of_survival[0, 1],
+                                      get_glows_data_for_second_energy_args[2])
+
+        corresponding_glows_data = np.array(
+            [first_energy_corresponding_glows_data, second_energy_corresponding_glows_data])[np.newaxis, ...]
+
+        np.testing.assert_array_almost_equal(pointing_set.data["survival_probability_times_exposure"].values,
+                                             corresponding_glows_data * self.l1c_hi_dataset.exposure_times * self.ram_mask)
+
+    def test_interpolate_angular_data_to_nearest_neighbor(self):
+        input_cases = [
+            (0, 360),
+            (0.1, 360),
+            (0.4, 360),
+            (0.5, 360),
+            (0.6, 1),
+            (120.2, 120),
+            (359.4, 359),
+            (359.6, 360),
+            (360, 360),
+        ]
+        basic_glows_spin_angles = np.linspace(1, 360, 360, endpoint=True)
+        basic_glows_data = np.linspace(1, 360, 360, endpoint=True) + 1000
+        glows_cases = [
+            ("basic", basic_glows_spin_angles, basic_glows_data),
+            ("0 instead of 360", np.mod(basic_glows_spin_angles, 360), basic_glows_data),
+            ("with 0 at start", np.roll(np.mod(basic_glows_spin_angles, 360), 1), np.roll(basic_glows_data, 1)),
+            ("rolled", np.roll(basic_glows_spin_angles, 90), np.roll(basic_glows_data, 90)),
+        ]
+        for name, glows_spin_angles, glows_data in glows_cases:
+            with self.subTest(name):
+                input_angles, expected_output = np.array(input_cases).T
+                result = interpolate_angular_data_to_nearest_neighbor(input_angles, glows_spin_angles, glows_data)
+                np.testing.assert_array_equal(expected_output + 1000, result)
 
     @patch('imap_l3_processing.hi.l3.science.survival_probability.RectangularSkyMap.project_pset_values_to_map')
     @patch('imap_l3_processing.hi.l3.science.survival_probability.RectangularSkyMap.__init__')
