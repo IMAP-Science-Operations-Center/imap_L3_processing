@@ -1,6 +1,7 @@
 import numpy as np
 
-from imap_l3_processing.codice.l3.lo.models import EnergyAndSpinAngle
+from imap_l3_processing.codice.l3.lo.direct_events.science.mass_coefficient_lookup import MassCoefficientLookup
+from imap_l3_processing.codice.l3.lo.models import EnergyAndSpinAngle, PriorityEvent
 
 
 def calculate_partial_densities(species_intensities: np.ndarray):
@@ -20,3 +21,12 @@ def calculate_normalization_ratio(energy_and_spin_angle_counts: dict[EnergyAndSp
     for (energy, spin_angle), counts in energy_and_spin_angle_counts.items():
         normalization_ratio[energy, spin_angle] = total_number_of_events / counts
     return normalization_ratio
+
+
+def calculate_mass(priority_event: PriorityEvent, mass_coefficients: MassCoefficientLookup) -> np.ndarray:
+    energy = np.log(priority_event.apd_energy)
+    tof = np.log(priority_event.tof)
+
+    return mass_coefficients[0] + (mass_coefficients[1] * energy) + (mass_coefficients[2] * tof) + (
+            mass_coefficients[3] * energy * tof) + (mass_coefficients[4] * np.power(energy, 2)) + (
+                mass_coefficients[5] * np.power(tof, 3))
