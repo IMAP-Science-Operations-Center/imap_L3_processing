@@ -96,11 +96,17 @@ class GlowsL3EDependencies:
         ), repointing_number
 
     def rename_dependencies(self):
-        move(self.energy_grid_lo, self.pipeline_settings['executable_dependency_paths']['energy-grid-lo'])
-        move(self.energy_grid_hi, self.pipeline_settings['executable_dependency_paths']['energy-grid-hi'])
-        move(self.energy_grid_ultra, self.pipeline_settings['executable_dependency_paths']['energy-grid-ultra'])
-        move(self.tess_xyz_8, self.pipeline_settings['executable_dependency_paths']['tess-xyz-8'])
-        move(self.tess_ang16, self.pipeline_settings['executable_dependency_paths']['tess-ang-16'])
+        if self.energy_grid_lo is not None:
+            move(self.energy_grid_lo, self.pipeline_settings['executable_dependency_paths']['energy-grid-lo'])
+        if self.energy_grid_hi is not None:
+            move(self.energy_grid_hi, self.pipeline_settings['executable_dependency_paths']['energy-grid-hi'])
+        if self.energy_grid_ultra is not None:
+            move(self.energy_grid_ultra, self.pipeline_settings['executable_dependency_paths']['energy-grid-ultra'])
+        if self.tess_xyz_8 is not None:
+            move(self.tess_xyz_8, self.pipeline_settings['executable_dependency_paths']['tess-xyz-8'])
+        if self.tess_ang16 is not None:
+            move(self.tess_ang16, self.pipeline_settings['executable_dependency_paths']['tess-ang-16'])
+
         move(self.lya_series, self.pipeline_settings['executable_dependency_paths']['lya-series'])
         move(self.solar_uv_anisotropy, self.pipeline_settings['executable_dependency_paths']['solar-uv-anistropy'])
         move(self.speed_3d_sw, self.pipeline_settings['executable_dependency_paths']['speed-3d'])

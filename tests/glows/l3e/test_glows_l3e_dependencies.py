@@ -308,10 +308,10 @@ class TestGlowsL3EDependencies(unittest.TestCase):
     def test_rename_dependencies(self, mock_move):
         glows_l3e_dependencies = GlowsL3EDependencies(Path('2025/05/03/imap_glows_l3d_data'),
                                                       Path('2025/05/03/imap_glows_energy_grid_lo'),
-                                                      Path('2025/05/03/imap_glows_energy_grid_hi'),
-                                                      Path('2025/05/03/imap_glows_energy_grid_ultra'),
+                                                      None,
+                                                      None,
                                                       Path('2025/05/03/imap_glows_tess_xyz_8'),
-                                                      Path('2025/05/03/imap_glows_tess_ang16'),
+                                                      None,
                                                       Path('2025/05/03/imap_glows_lya_series'),
                                                       Path('2025/05/03/imap_glows_solar_uv_anisotropy'),
                                                       Path('2025/05/03/imap_glows_speed_3d_sw'),
@@ -337,10 +337,7 @@ class TestGlowsL3EDependencies(unittest.TestCase):
                                                       })
 
         expected_energy_grid_lo = 'EnGridLo.dat'
-        expected_energy_grid_hi = 'EnGridHi.dat'
-        expected_energy_grid_ultra = 'EnGridUltra.dat'
         expected_tess_xyz_8 = 'tessXYZ8.dat'
-        expected_tess_ang16 = 'tessAng16.dat'
         expected_lya_series = 'lyaSeriesV4_2021b.dat'
         expected_solar_uv_anisotropy = 'solar_uv_anisotropy_NP.1.0_SP.1.0.dat'
         expected_speed_3d_sw = 'speed3D.v01.Legendre.2021b.dat'
@@ -353,9 +350,50 @@ class TestGlowsL3EDependencies(unittest.TestCase):
 
         mock_move.assert_has_calls([
             call(glows_l3e_dependencies.energy_grid_lo, expected_energy_grid_lo),
-            call(glows_l3e_dependencies.energy_grid_hi, expected_energy_grid_hi),
-            call(glows_l3e_dependencies.energy_grid_ultra, expected_energy_grid_ultra),
             call(glows_l3e_dependencies.tess_xyz_8, expected_tess_xyz_8),
+            call(glows_l3e_dependencies.lya_series, expected_lya_series),
+            call(glows_l3e_dependencies.solar_uv_anisotropy, expected_solar_uv_anisotropy),
+            call(glows_l3e_dependencies.speed_3d_sw, expected_speed_3d_sw),
+            call(glows_l3e_dependencies.density_3d_sw, expected_density_3d_sw),
+            call(glows_l3e_dependencies.phion_hydrogen, expected_phion_hydrogen),
+            call(glows_l3e_dependencies.sw_eqtr_electrons, expected_sw_eqtr_electrons),
+            call(glows_l3e_dependencies.ionization_files, expected_ionization_files),
+        ])
+
+        mock_move.reset_mock()
+
+        expected_energy_grid_hi = 'EnGridHi.dat'
+
+        glows_l3e_dependencies.energy_grid_lo = None
+        glows_l3e_dependencies.energy_grid_hi = Path('2025/05/03/imap_glows_energy_grid_hi')
+        glows_l3e_dependencies.tess_xyz_8 = None
+
+        glows_l3e_dependencies.rename_dependencies()
+
+        mock_move.assert_has_calls([
+            call(glows_l3e_dependencies.energy_grid_hi, expected_energy_grid_hi),
+            call(glows_l3e_dependencies.lya_series, expected_lya_series),
+            call(glows_l3e_dependencies.solar_uv_anisotropy, expected_solar_uv_anisotropy),
+            call(glows_l3e_dependencies.speed_3d_sw, expected_speed_3d_sw),
+            call(glows_l3e_dependencies.density_3d_sw, expected_density_3d_sw),
+            call(glows_l3e_dependencies.phion_hydrogen, expected_phion_hydrogen),
+            call(glows_l3e_dependencies.sw_eqtr_electrons, expected_sw_eqtr_electrons),
+            call(glows_l3e_dependencies.ionization_files, expected_ionization_files),
+        ])
+
+        mock_move.reset_mock()
+
+        glows_l3e_dependencies.energy_grid_hi = None
+        glows_l3e_dependencies.energy_grid_ultra = Path('2025/05/03/imap_glows_energy_grid_ultra')
+        glows_l3e_dependencies.tess_ang16 = Path('2025/05/03/imap_glows_tess_ang16')
+
+        expected_energy_grid_ultra = 'EnGridUltra.dat'
+        expected_tess_ang16 = 'tessAng16.dat'
+
+        glows_l3e_dependencies.rename_dependencies()
+
+        mock_move.assert_has_calls([
+            call(glows_l3e_dependencies.energy_grid_ultra, expected_energy_grid_ultra),
             call(glows_l3e_dependencies.tess_ang16, expected_tess_ang16),
             call(glows_l3e_dependencies.lya_series, expected_lya_series),
             call(glows_l3e_dependencies.solar_uv_anisotropy, expected_solar_uv_anisotropy),
