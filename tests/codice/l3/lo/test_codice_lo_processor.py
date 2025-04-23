@@ -23,18 +23,26 @@ class TestCodiceLoProcessor(unittest.TestCase):
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.upload')
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.CodiceLoL3aDependencies.fetch_dependencies')
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.CodiceLoProcessor.process_l3a')
+    @patch(
+        'imap_l3_processing.codice.l3.lo.codice_lo_processor.CodiceLoProcessor._process_l3a_direct_event_data_product')
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.save_data')
-    def test_process(self, mock_save_data, mock_process_l3a, mock_fetch_dependencies, mock_upload):
+    def test_process(self, mock_save_data, mock_process_direct_event, mock_process_l3a, mock_fetch_dependencies,
+                     mock_upload):
         input_collection = ProcessingInputCollection()
         input_metadata = InputMetadata('codice', "l3a", Mock(spec=datetime), Mock(spec=datetime), 'v02')
 
+        mock_save_data.side_effect = ["file1", "file2"]
         processor = CodiceLoProcessor(dependencies=input_collection, input_metadata=input_metadata)
         processor.process()
 
         mock_fetch_dependencies.assert_called_once_with(processor.dependencies)
         mock_process_l3a.assert_called_once_with(mock_fetch_dependencies.return_value)
-        mock_save_data.assert_called_once_with(mock_process_l3a.return_value)
-        mock_upload.assert_called_once_with(mock_save_data.return_value)
+        mock_process_direct_event.assert_called_once_with(mock_fetch_dependencies.return_value)
+
+        mock_save_data.assert_has_calls(
+            [call(mock_process_l3a.return_value), call(mock_process_direct_event.return_value)])
+
+        mock_upload.assert_has_calls([call("file1"), call("file2")])
 
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.calculate_partial_densities')
     def test_process_l3a(self, mock_calculate_partial_densities):
