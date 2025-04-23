@@ -20,9 +20,9 @@ class TestHiProcessor(unittest.TestCase):
     @patch("imap_l3_processing.ultra.l3.ultra_processor.parse_map_descriptor")
     @patch('imap_l3_processing.ultra.l3.ultra_processor.UltraSurvivalProbabilitySkyMap')
     @patch('imap_l3_processing.ultra.l3.ultra_processor.UltraSurvivalProbability')
-    @patch('imap_l3_processing.ultra.l3.ultra_processor.combine_glows_l3e_ultra_l1c')
+    @patch('imap_l3_processing.ultra.l3.ultra_processor.combine_glows_l3e_with_l1c_pointing')
     @patch('imap_l3_processing.ultra.l3.ultra_processor.UltraL3Dependencies.fetch_dependencies')
-    def test_process_survival_probability(self, mock_fetch_dependencies, mock_combine_glows_l3e_ultra_l1c,
+    def test_process_survival_probability(self, mock_fetch_dependencies, mock_combine_glows_l3e_with_l1c_pointing,
                                           mock_survival_probability_pointing_set, mock_survival_skymap,
                                           mock_parse_map_descriptor, mock_save_data, mock_upload):
         rng = np.random.default_rng()
@@ -39,14 +39,13 @@ class TestHiProcessor(unittest.TestCase):
             ultra_l1c_pset=sentinel.ultra_l1c_pset,
             glows_l3e_sp=sentinel.glows_l3e_sp)
 
-        mock_combine_glows_l3e_ultra_l1c.return_value = [(sentinel.ultra_l1c_1, sentinel.glows_l3e_1),
-                                                         (sentinel.ultra_l1c_2, sentinel.glows_l3e_2),
-                                                         (sentinel.ultra_l1c_3, sentinel.glows_l3e_3)]
+        mock_combine_glows_l3e_with_l1c_pointing.return_value = [(sentinel.ultra_l1c_1, sentinel.glows_l3e_1),
+                                                                 (sentinel.ultra_l1c_2, sentinel.glows_l3e_2),
+                                                                 (sentinel.ultra_l1c_3, sentinel.glows_l3e_3)]
 
         mock_survival_probability_pointing_set.side_effect = [sentinel.pset_1, sentinel.pset_2, sentinel.pset_3]
 
-        mock_parse_map_descriptor.return_value = UltraMapDescriptorParts(sensor=sentinel.sensor,
-                                                                         grid_size=sentinel.grid_size)
+        mock_parse_map_descriptor.return_value = UltraMapDescriptorParts(grid_size=sentinel.grid_size)
 
         input_metadata = InputMetadata(instrument="ultra",
                                        data_level="l3",
@@ -81,12 +80,12 @@ class TestHiProcessor(unittest.TestCase):
 
         mock_parse_map_descriptor.assert_called_once_with(input_metadata.descriptor)
 
-        mock_combine_glows_l3e_ultra_l1c.assert_called_once_with(sentinel.ultra_l1c_pset, sentinel.glows_l3e_sp)
+        mock_combine_glows_l3e_with_l1c_pointing.assert_called_once_with(sentinel.glows_l3e_sp, sentinel.ultra_l1c_pset)
 
         mock_survival_probability_pointing_set.assert_has_calls([
-            call(sentinel.ultra_l1c_1, sentinel.glows_l3e_1, sentinel.ultra_l2_energies),
-            call(sentinel.ultra_l1c_2, sentinel.glows_l3e_2, sentinel.ultra_l2_energies),
-            call(sentinel.ultra_l1c_3, sentinel.glows_l3e_3, sentinel.ultra_l2_energies)
+            call(sentinel.ultra_l1c_1, sentinel.glows_l3e_1),
+            call(sentinel.ultra_l1c_2, sentinel.glows_l3e_2),
+            call(sentinel.ultra_l1c_3, sentinel.glows_l3e_3)
         ])
 
         mock_survival_skymap.assert_called_once_with([sentinel.pset_1, sentinel.pset_2, sentinel.pset_3],
