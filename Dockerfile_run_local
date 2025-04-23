@@ -12,8 +12,8 @@ COPY imap_l3_processing imap_l3_processing
 COPY imap_l3_data_processor.py .
 COPY tests tests
 COPY instrument_team_data instrument_team_data
-COPY instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/Example/Example/survProbHi survProbHi
-COPY instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/Example/Example/survProbLo survProbLo
-COPY instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/Example/Example/survProbUltra survProbUltra
+COPY instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/survProbHi survProbHi
+COPY instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/survProbLo survProbLo
+COPY instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/survProbUltra survProbUltra
 COPY run_local.py .
 #ENTRYPOINT ["python","run_local.py", "glows", "l3e"]

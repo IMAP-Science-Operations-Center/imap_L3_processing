@@ -12,11 +12,11 @@ from imap_l3_processing.utils import \
 @dataclass
 class GlowsL3EDependencies:
     l3d_data: Path
-    energy_grid_lo: Path
-    energy_grid_hi: Path
-    energy_grid_ultra: Path
-    tess_xyz_8: Path
-    tess_ang16: Path
+    energy_grid_lo: Path | None
+    energy_grid_hi: Path | None
+    energy_grid_ultra: Path | None
+    tess_xyz_8: Path | None
+    tess_ang16: Path | None
     lya_series: Path
     solar_uv_anisotropy: Path
     speed_3d_sw: Path
@@ -27,13 +27,9 @@ class GlowsL3EDependencies:
     pipeline_settings: dict
 
     @classmethod
-    def fetch_dependencies(cls, dependencies: ProcessingInputCollection):
+    def fetch_dependencies(cls, dependencies: ProcessingInputCollection, descriptor: str):
         solar_hist_dependency = dependencies.get_file_paths(source='glows', descriptor='solar-hist')
-        energy_grid_lo_dependency = dependencies.get_file_paths(source='glows', descriptor='energy-grid-lo')
-        energy_grid_hi_dependency = dependencies.get_file_paths(source='glows', descriptor='energy-grid-hi')
-        energy_grid_ultra_dependency = dependencies.get_file_paths(source='glows', descriptor='energy-grid-ultra')
-        tess_xyz_dependency = dependencies.get_file_paths(source='glows', descriptor='tess-xyz-8')
-        tess_ang_dependency = dependencies.get_file_paths(source='glows', descriptor='tess-ang-16')
+
         lya_series_dependency = dependencies.get_file_paths(source='glows', descriptor='lya-series')
         solar_uv_anisotropy_dependency = dependencies.get_file_paths(source='glows', descriptor='solar-uv-anistropy')
         speed_3d_dependency = dependencies.get_file_paths(source='glows', descriptor='speed-3d')
@@ -44,11 +40,7 @@ class GlowsL3EDependencies:
         pipeline_settings_dependency = dependencies.get_file_paths(source='glows', descriptor='pipeline-settings-l3e')
 
         solar_hist_path = download_dependency_from_path(str(solar_hist_dependency[0]))
-        energy_grid_lo_path = download_dependency_from_path(str(energy_grid_lo_dependency[0]))
-        energy_grid_hi_path = download_dependency_from_path(str(energy_grid_hi_dependency[0]))
-        energy_grid_ultra_path = download_dependency_from_path(str(energy_grid_ultra_dependency[0]))
-        tess_xyz_path = download_dependency_from_path(str(tess_xyz_dependency[0]))
-        tess_ang_path = download_dependency_from_path(str(tess_ang_dependency[0]))
+
         lya_series_path = download_dependency_from_path(str(lya_series_dependency[0]))
         solar_uv_anisotropy_path = download_dependency_from_path(str(solar_uv_anisotropy_dependency[0]))
         speed_3d_path = download_dependency_from_path(str(speed_3d_dependency[0]))
@@ -57,6 +49,29 @@ class GlowsL3EDependencies:
         sw_eqtr_electrons_path = download_dependency_from_path(str(sw_eqtr_electrons_dependency[0]))
         ionization_files_path = download_dependency_from_path(str(ionization_files_dependency[0]))
         pipeline_settings_path = download_dependency_from_path(str(pipeline_settings_dependency[0]))
+
+        energy_grid_lo_path = None
+        energy_grid_hi_path = None
+        energy_grid_ultra_path = None
+        tess_xyz_path = None
+        tess_ang_path = None
+
+        if descriptor == "survival-probability-lo":
+            energy_grid_lo_dependency = dependencies.get_file_paths(source='glows', descriptor='energy-grid-lo')
+            tess_xyz_dependency = dependencies.get_file_paths(source='glows', descriptor='tess-xyz-8')
+            energy_grid_lo_path = download_dependency_from_path(str(energy_grid_lo_dependency[0]))
+            tess_xyz_path = download_dependency_from_path(str(tess_xyz_dependency[0]))
+        elif descriptor == "survival-probability-hi-45" or descriptor == "survival-probability-hi-90":
+            energy_grid_hi_dependency = dependencies.get_file_paths(source='glows', descriptor='energy-grid-hi')
+            energy_grid_hi_path = download_dependency_from_path(str(energy_grid_hi_dependency[0]))
+        elif descriptor == "survival-probability-ul":
+            energy_grid_ultra_dependency = dependencies.get_file_paths(source='glows', descriptor='energy-grid-ultra')
+            tess_ang_dependency = dependencies.get_file_paths(source='glows', descriptor='tess-ang-16')
+            energy_grid_ultra_path = download_dependency_from_path(str(energy_grid_ultra_dependency[0]))
+            tess_ang_path = download_dependency_from_path(str(tess_ang_dependency[0]))
+
+        #
+        #
 
         with open(pipeline_settings_path) as f:
             pipeline_settings = json.load(f)
@@ -81,11 +96,17 @@ class GlowsL3EDependencies:
         ), repointing_number
 
     def rename_dependencies(self):
-        move(self.energy_grid_lo, self.pipeline_settings['executable_dependency_paths']['energy-grid-lo'])
-        move(self.energy_grid_hi, self.pipeline_settings['executable_dependency_paths']['energy-grid-hi'])
-        move(self.energy_grid_ultra, self.pipeline_settings['executable_dependency_paths']['energy-grid-ultra'])
-        move(self.tess_xyz_8, self.pipeline_settings['executable_dependency_paths']['tess-xyz-8'])
-        move(self.tess_ang16, self.pipeline_settings['executable_dependency_paths']['tess-ang-16'])
+        if self.energy_grid_lo is not None:
+            move(self.energy_grid_lo, self.pipeline_settings['executable_dependency_paths']['energy-grid-lo'])
+        if self.energy_grid_hi is not None:
+            move(self.energy_grid_hi, self.pipeline_settings['executable_dependency_paths']['energy-grid-hi'])
+        if self.energy_grid_ultra is not None:
+            move(self.energy_grid_ultra, self.pipeline_settings['executable_dependency_paths']['energy-grid-ultra'])
+        if self.tess_xyz_8 is not None:
+            move(self.tess_xyz_8, self.pipeline_settings['executable_dependency_paths']['tess-xyz-8'])
+        if self.tess_ang16 is not None:
+            move(self.tess_ang16, self.pipeline_settings['executable_dependency_paths']['tess-ang-16'])
+
         move(self.lya_series, self.pipeline_settings['executable_dependency_paths']['lya-series'])
         move(self.solar_uv_anisotropy, self.pipeline_settings['executable_dependency_paths']['solar-uv-anistropy'])
         move(self.speed_3d_sw, self.pipeline_settings['executable_dependency_paths']['speed-3d'])
