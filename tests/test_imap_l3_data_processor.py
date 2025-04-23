@@ -6,7 +6,7 @@ from imap_data_access.processing_input import ScienceInput, ProcessingInputColle
     AncillaryInput
 
 from imap_l3_data_processor import imap_l3_processor
-from imap_l3_processing.models import InputMetadata, UpstreamDataDependency
+from imap_l3_processing.models import InputMetadata
 
 
 class TestImapL3DataProcessor(TestCase):
@@ -230,27 +230,6 @@ class TestImapL3DataProcessor(TestCase):
                     call("--upload-to-sdc", action="store_true", required=False,
                          help="Upload completed output files to the IMAP SDC.")
                 ])
-
-                expected_input_dependencies = [
-                    UpstreamDataDependency("swe",
-                                           "l1",
-                                           datetime(2025, 1, 1),
-                                           datetime(2025, 1, 1),
-                                           "v112",
-                                           "science"),
-                    UpstreamDataDependency("swe",
-                                           "l1",
-                                           datetime(2025, 1, 2),
-                                           datetime(2025, 1, 2),
-                                           "v112",
-                                           "science"),
-                    UpstreamDataDependency("mag",
-                                           "l1",
-                                           datetime(2025, 1, 1),
-                                           datetime(2025, 1, 1),
-                                           "v112",
-                                           "science"),
-                ]
 
                 expected_input_metadata = InputMetadata("swe", "l3", datetime(year=2016, month=6, day=30),
                                                         expected_end_date, "v092", "pitch-angle")

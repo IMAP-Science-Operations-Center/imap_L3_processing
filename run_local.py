@@ -10,10 +10,8 @@ from unittest.mock import patch, Mock
 import imap_data_access
 import numpy as np
 import xarray as xr
-from imap_data_access.processing_input import ProcessingInputCollection
 from spacepy.pycdf import CDF
 
-from imap_l3_processing.glows.descriptors import GLOWS_L2_DESCRIPTOR
 from imap_l3_processing.glows.glows_initializer import GlowsInitializer
 from imap_l3_processing.glows.glows_processor import GlowsProcessor
 from imap_l3_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
@@ -33,7 +31,7 @@ from imap_l3_processing.hit.l3.pha.science.gain_lookup_table import GainLookupTa
 from imap_l3_processing.hit.l3.pha.science.hit_event_type_lookup import HitEventTypeLookup
 from imap_l3_processing.hit.l3.pha.science.range_fit_lookup import RangeFitLookup
 from imap_l3_processing.hit.l3.utils import read_l2_hit_data
-from imap_l3_processing.models import InputMetadata, UpstreamDataDependency
+from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density import \
     AlphaTemperatureDensityCalibrationTable
 from imap_l3_processing.swapi.l3a.science.calculate_pickup_ion import DensityOfNeutralHeliumLookupTable
@@ -65,15 +63,7 @@ def create_glows_l3a_cdf(dependencies: GlowsL3ADependencies):
         end_date=datetime(2013, 9, 8),
         version='v001')
 
-    upstream_dependencies = [
-        UpstreamDataDependency(input_metadata.instrument,
-                               "l2",
-                               input_metadata.start_date,
-                               input_metadata.end_date,
-                               input_metadata.version,
-                               GLOWS_L2_DESCRIPTOR)
-    ]
-    processor = GlowsProcessor(upstream_dependencies, input_metadata)
+    processor = GlowsProcessor(Mock(), input_metadata)
 
     l3a_data = processor.process_l3a(dependencies)
     cdf_path = save_data(l3a_data, delete_if_present=True)
@@ -94,7 +84,7 @@ def create_swapi_l3b_cdf(geometric_calibration_file, efficiency_calibration_file
         start_date=datetime(2010, 1, 1),
         end_date=datetime(2010, 1, 2),
         version='v000')
-    processor = SwapiProcessor(None, input_metadata)
+    processor = SwapiProcessor(Mock(), input_metadata)
 
     l3b_combined_vdf = processor.process_l3b(swapi_data, swapi_l3_dependencies)
     cdf_path = save_data(l3b_combined_vdf, delete_if_present=True)
@@ -131,7 +121,7 @@ def create_swapi_l3a_cdf(proton_temperature_density_calibration_file, alpha_temp
         start_date=datetime(2025, 10, 23),
         end_date=datetime(2025, 10, 24),
         version='v000')
-    processor = SwapiProcessor(ProcessingInputCollection(), input_metadata)
+    processor = SwapiProcessor(Mock(), input_metadata)
 
     l3a_proton_sw, l3a_alpha_sw, l3a_pui_he = processor.process_l3a(swapi_data, swapi_l3_dependencies)
     proton_cdf_path = save_data(l3a_proton_sw, delete_if_present=True)
@@ -147,7 +137,7 @@ def create_swe_product(dependencies: SweL3Dependencies) -> str:
         start_date=datetime(2025, 6, 29),
         end_date=datetime(2025, 7, 1),
         version='v000')
-    processor = SweProcessor(ProcessingInputCollection(), input_metadata)
+    processor = SweProcessor(Mock(), input_metadata)
     output_data = processor.calculate_products(dependencies)
     cdf_path = save_data(output_data, delete_if_present=True)
     return cdf_path
@@ -165,7 +155,7 @@ def create_swe_product_with_fake_spice(dependencies: SweL3Dependencies, mock_spi
         start_date=datetime(2010, 1, 1),
         end_date=datetime(2010, 1, 2),
         version='v000')
-    processor = SweProcessor(None, input_metadata)
+    processor = SweProcessor(Mock(), input_metadata)
     output_data = processor.calculate_products(dependencies)
     cdf_path = save_data(output_data, delete_if_present=True)
     return cdf_path
@@ -179,7 +169,7 @@ def create_survival_corrected_full_spin_cdf(dependencies: HiL3SingleSensorFullSp
                                    version="v000",
                                    descriptor="h90-sf-sp-hae-4deg-6mo",
                                    )
-    processor = HiProcessor(None, input_metadata)
+    processor = HiProcessor(Mock(), input_metadata)
     output_data = processor._process_full_spin_single_sensor(dependencies)
     cdf_path = save_data(output_data, delete_if_present=True)
     return cdf_path
@@ -193,7 +183,7 @@ def create_spectral_index_cdf(dependencies: HiL3SpectralFitDependencies) -> str:
                                    version="v000",
                                    descriptor="h90-hf-sp-hae-4deg-6mo-spectral",
                                    )
-    processor = HiProcessor(None, input_metadata)
+    processor = HiProcessor(Mock(), input_metadata)
     output_data = processor._process_spectral_fit_index(dependencies)
     cdf_path = save_data(output_data, delete_if_present=True)
     return cdf_path
@@ -207,7 +197,7 @@ def create_hit_sectored_cdf(dependencies: HITL3SectoredDependencies) -> str:
         start_date=datetime(2025, 1, 1),
         end_date=datetime(2025, 1, 2),
         version='v000')
-    processor = HitProcessor(None, input_metadata)
+    processor = HitProcessor(Mock(), input_metadata)
     output_data = processor.process_pitch_angle_product(dependencies)
     cdf_path = save_data(output_data, delete_if_present=True)
     return cdf_path
@@ -253,7 +243,7 @@ def create_hit_direct_event_cdf():
         version="v001",
         descriptor="direct-events"
     )
-    processor = HitProcessor(None, input_metadata)
+    processor = HitProcessor(Mock(), input_metadata)
 
     product = processor.process_direct_event_product(direct_event_dependencies)
     file_path = save_data(product, delete_if_present=True)
@@ -287,14 +277,6 @@ def run_glows_l3bc_processor_and_initializer(_, mock_query):
         end_date=datetime(2013, 9, 8),
         version='v011')
 
-    upstream_dependencies = [
-        UpstreamDataDependency(input_metadata.instrument,
-                               "l3b",
-                               input_metadata.start_date,
-                               input_metadata.end_date,
-                               input_metadata.version,
-                               GLOWS_L2_DESCRIPTOR)
-    ]
     l3a_files = imap_data_access.query(instrument='glows', version=input_metadata.version, data_level='l3a',
                                        start_date='20100422', end_date='20100625')
 
@@ -302,7 +284,7 @@ def run_glows_l3bc_processor_and_initializer(_, mock_query):
                                          start_date='20100922', end_date='20101123')
     mock_query.side_effect = [l3a_files + l3a_files_2, []]
 
-    processor = GlowsProcessor(input_metadata=input_metadata, dependencies=upstream_dependencies)
+    processor = GlowsProcessor(dependencies=Mock(), input_metadata=input_metadata)
     processor.process()
 
 
@@ -404,15 +386,7 @@ def run_glows_l3bc():
                                          start_date=datetime(2009, 12, 20), end_date=datetime(2009, 12, 21),
                                          zip_file_path=Path("fake/path/to/file.zip"))
 
-    upstream_dependencies = [
-        UpstreamDataDependency(input_metadata.instrument,
-                               "l3b",
-                               input_metadata.start_date,
-                               input_metadata.end_date,
-                               input_metadata.version,
-                               GLOWS_L2_DESCRIPTOR)
-    ]
-    processor = GlowsProcessor(upstream_dependencies, input_metadata)
+    processor = GlowsProcessor(Mock(), input_metadata)
 
     l3b_data_product, l3c_data_product = processor.process_l3bc(dependencies)
 
@@ -491,7 +465,7 @@ def create_hi_l3_survival_corrected_cdf(survival_dependencies: HiL3SurvivalDepen
                                    descriptor="h90-sf-sp-hae-4deg-6mo",
                                    )
 
-    processor = HiProcessor(None, input_metadata)
+    processor = HiProcessor(Mock(), input_metadata)
     survival_corrected_product = processor._process_survival_probabilities(
         survival_dependencies)
 
