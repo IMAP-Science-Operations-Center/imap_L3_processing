@@ -43,7 +43,6 @@ def write_cdf(file_path: str, data: DataProduct, attribute_manager: ImapAttribut
                 if k in ['DATA_TYPE', 'RECORD_VARYING']:
                     continue
                 if k == 'FILLVAL' and data_type is not None:
-                    print(var_name)
                     cdf[var_name].attrs.new(k, v, data_type)
                 else:
                     cdf[var_name].attrs[k] = v
