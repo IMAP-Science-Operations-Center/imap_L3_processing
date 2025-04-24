@@ -451,7 +451,7 @@ def run_glows_l3bc():
     cr = 2091
     external_files = {
         'f107_raw_data': get_test_instrument_team_data_path('glows/f107_fluxtable.txt'),
-        'omni_raw_data': get_test_instrument_team_data_path('glows/omni_2010.dat')
+        'omni_raw_data': get_test_instrument_team_data_path('glows/omni2_all_years.dat')
     }
     ancillary_files = {
         'uv_anisotropy': get_test_data_path('glows/imap_glows_uv-anisotropy-1CR_20100101_v001.json'),
