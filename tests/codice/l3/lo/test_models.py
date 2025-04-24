@@ -1,5 +1,6 @@
 import tempfile
 import unittest
+from dataclasses import fields
 from datetime import datetime
 from pathlib import Path
 from unittest.mock import Mock, sentinel
@@ -130,7 +131,6 @@ class TestModels(unittest.TestCase):
                 np.testing.assert_array_equal(priority_event.pha_type, expected_values[f"P{index}_PHAType"])
                 np.testing.assert_array_equal(priority_event.spin_angle, expected_values[f"P{index}_SpinAngle"])
                 np.testing.assert_array_equal(priority_event.tof, expected_values[f"P{index}_TOF"])
-                self.assertEqual(priority_event.priority_index, index)
             # @formatter:on
 
     def test_codice_lo_l2_direct_event_priority_events(self):
@@ -147,7 +147,7 @@ class TestModels(unittest.TestCase):
                                [30, 30, 50, 40, np.nan]])
 
         priority_event = PriorityEvent(np.array([]), np.array([]), np.array([]), np.array([]), energy_step,
-                                       np.array([]), np.array([]), np.array([]), spin_angle, np.array([]), 1)
+                                       np.array([]), np.array([]), np.array([]), spin_angle, np.array([]))
 
         expected_total_events_by_energy_step_and_spin_angle = [
             {
@@ -164,7 +164,7 @@ class TestModels(unittest.TestCase):
         ]
 
         self.assertEqual(expected_total_events_by_energy_step_and_spin_angle,
-                         priority_event.total_events_binned_by_energy_step_and_spin_angle)
+                         priority_event.total_events_binned_by_energy_step_and_spin_angle())
 
     def test_get_species(self):
         h_intensities = np.array([sentinel.h_intensities])
@@ -442,6 +442,7 @@ class TestModels(unittest.TestCase):
         rng = np.random.default_rng()
 
         epoch = np.array([datetime(2022, 3, 5), datetime(2022, 3, 6)])
+        event_num = np.array([1, 2, 3, 4])
         spin_angle = np.array([30, 60, 90])
         energy_step = np.array([5.5, 6.6, 7.7])
         priority = np.array([0, 1, 2, 3, 4, 5, 6, 7])
@@ -449,7 +450,18 @@ class TestModels(unittest.TestCase):
         direct_event = CodiceLoL3aDirectEventDataProduct(
             input_metadata=Mock(),
             epoch=epoch,
+            event_num=event_num,
             normalization=rng.random((len(epoch), len(priority), len(spin_angle), len(energy_step))),
+            mass_per_charge=rng.random((len(epoch), len(priority), len(event_num))),
+            mass=rng.random((len(epoch), len(priority), len(event_num))),
+            energy=rng.random((len(epoch), len(priority), len(event_num))),
+            gain=rng.random((len(epoch), len(priority), len(event_num))),
+            apd_id=rng.random((len(epoch), len(priority), len(event_num))),
+            multi_flag=rng.random((len(epoch), len(priority), len(event_num))),
+            num_events=rng.random((len(epoch), len(priority), len(event_num))),
+            data_quality=rng.random((len(epoch), len(priority))),
+            pha_type=rng.random((len(epoch), len(priority), len(event_num))),
+            tof=rng.random((len(epoch), len(priority), len(event_num))),
         )
 
         np.testing.assert_array_equal(direct_event.spin_angle,
@@ -459,7 +471,9 @@ class TestModels(unittest.TestCase):
 
         data_products = direct_event.to_data_product_variables()
 
-        self.assertEqual(len(data_products), 5)
+        non_parent_fields = [f for f in fields(CodiceLoL3aDirectEventDataProduct)
+                             if f.name in CodiceLoL3aDirectEventDataProduct.__annotations__]
+
+        self.assertEqual(len(data_products), len(non_parent_fields))
         for data_product in data_products:
-            self.assertIsNotNone(getattr(direct_event, data_product.name))
             np.testing.assert_array_equal(getattr(direct_event, data_product.name), data_product.value)
