@@ -24,8 +24,6 @@ class GlowsL3EUltraData(DataProduct):
     epoch: np.ndarray[datetime]
     epoch_delta: np.ndarray[timedelta]
     energy: np.ndarray
-    latitude: np.ndarray
-    longitude: np.ndarray
     healpix_index: np.ndarray
     probability_of_survival: np.ndarray
 
@@ -39,22 +37,12 @@ class GlowsL3EUltraData(DataProduct):
             energy_line = [line for line in lines if line.startswith("#energy_grid")]
             energies = np.array([float(i) for i in re.findall(r"\d+.\d+", energy_line[0])])
 
-            tesselation_line = [line for line in lines if line.startswith("# Numerical parameters")]
-            nside = [int(i) for i in re.findall(r"\d+", tesselation_line[0])][0]
-
-        num_pixels = 12 * (nside ** 2)
-
-        healpix_pixels = np.arange(num_pixels)
-
-        healpix_grid = HEALPix(nside)
-        longitude, latitude = healpix_grid.healpix_to_lonlat(healpix_pixels)
-
         data_table = np.loadtxt(file_path, skiprows=200)
 
         healpix_indexes = np.arange(0, 3072)
 
         existing_healpix = data_table[:, 0]
-        probability_of_survival = data_table[:, 3:-1]
+        probability_of_survival = data_table[:, 3:]
 
         probability_of_survival_to_return = np.full((len(energies), len(healpix_indexes)), np.nan, dtype=float)
 
@@ -64,7 +52,6 @@ class GlowsL3EUltraData(DataProduct):
         transposed_prob_sur = np.array([probability_of_survival_to_return])
 
         return cls(input_metadata, epoch, epoch_delta.astype('timedelta64[ns]').astype(float), energies,
-                   np.rad2deg(latitude.value), np.rad2deg(longitude.value),
                    healpix_indexes, transposed_prob_sur)
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
@@ -74,8 +61,6 @@ class GlowsL3EUltraData(DataProduct):
             DataProductVariable(EPOCH_CDF_VAR_NAME, self.epoch),
             DataProductVariable(EPOCH_DELTA_CDF_VAR_NAME, self.epoch_delta),
             DataProductVariable(ENERGY_VAR_NAME, self.energy),
-            DataProductVariable(LATITUDE_VAR_NAME, self.latitude),
-            DataProductVariable(LONGITUDE_VAR_NAME, self.longitude),
             DataProductVariable(HEALPIX_INDEX_VAR_NAME, self.healpix_index),
             DataProductVariable(PROBABILITY_OF_SURVIVAL_VAR_NAME, self.probability_of_survival),
             DataProductVariable(ENERGY_LABEL_VAR_NAME, energy_labels),

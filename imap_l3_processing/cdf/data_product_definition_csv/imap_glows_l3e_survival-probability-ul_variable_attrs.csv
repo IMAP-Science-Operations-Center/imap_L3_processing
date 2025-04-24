@@ -3,8 +3,6 @@ epoch,(1) center time of pointing,CDF_TIME_TT2000,"Time, number of nanoseconds s
 epoch_delta,(1) range of pointing,CDF_INT8,epoch_delta,support_data,RV,epoch,,,,no_plot,,epoch_delta,I19,epoch_delta,ns,0,86000000000000,-9223372036854775808,,,,,linear,,,,,,,,,,,,,,,,,,,
 energy,(20) non record varying,CDF_FLOAT,Energies associated with the survival probabilites for IMAP-Ultra,support_data,NRV,,,,,no_plot,,energy,g9.3,energy,kEV,0,10000000000,-1.0000E+31,,,,,linear,,,,,,,,,,,,,,,,,,,
 healpix_index,(3072) non record varying ,CDF_INT8,Heal pixel index,support_data,NRV,,,,,no_plot,,healpix_index,I19,healpix_index,,0,3072,-9223372036854770000,,,,,linear,,,,,,,,,,,,,,,,,,,
-latitude,(3072) record varying ,CDF_INT2,Latitude Ecliptic Degree,data,NRV,,,,,no_plot,,latitude,I8,latitude,degree,-90,90,-32768,,,,,linear,,,,,,,,,,,,,,,,,,,
-longitude,(3072) record varying ,CDF_INT2,Longitude Ecliptic Degree,data,NRV,,,,,no_plot,,longitude,I8,longitude,degree,0,360,-32768,,,,,linear,,,,,,,,,,,,,,,,,,,
 probability_of_survival,"(epoch, energy, healpix_index)",CDF_FLOAT,Survival probabilities for IMAP-Ultra,data,RV,epoch,energy,healpix_index,,spectrogram,"primary var, summary",probability_of_survival,g9.3,probability_of_survival,,0,1,-1.0000E+31,energy_label,healpix_index_label,,,linear,,,,,,,,,,,,,,,,,,,
 energy_label,,CDF_CHAR,Label for energy,metadata,,,,,,,,,a20,energy_label,,,,,,,,,,,,,,,,,,,,,,,,,,,,
 healpix_index_label,,CDF_CHAR,Label for heal pixels,metadata,,,,,,,,,a20,healpix_index_label,,,,,,,,,,,,,,,,,,,,,,,,,,,,

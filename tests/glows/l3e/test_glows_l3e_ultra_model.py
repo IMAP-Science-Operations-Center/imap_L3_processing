@@ -17,8 +17,6 @@ class TestL3eUltraModel(unittest.TestCase):
             sentinel.epochs,
             sentinel.epoch_deltas,
             sentinel.energy,
-            sentinel.latitude,
-            sentinel.longitude,
             sentinel.healpix_index,
             sentinel.probability_of_survival
         )
@@ -37,8 +35,6 @@ class TestL3eUltraModel(unittest.TestCase):
             DataProductVariable("epoch", sentinel.epochs),
             DataProductVariable("epoch_delta", sentinel.epoch_deltas),
             DataProductVariable("energy", sentinel.energy),
-            DataProductVariable("latitude", sentinel.latitude),
-            DataProductVariable("longitude", sentinel.longitude),
             DataProductVariable("healpix_index", sentinel.healpix_index),
             DataProductVariable("probability_of_survival", sentinel.probability_of_survival),
             DataProductVariable("energy_label", expected_energy_labels),
@@ -48,7 +44,7 @@ class TestL3eUltraModel(unittest.TestCase):
         self.assertEqual(expected_data_products, data_products)
 
     def test_convert_dat_to_glows_l3e_ul_product(self):
-        ul_file_path = get_test_instrument_team_data_path("glows/probSur.Imap.Ul_20090101_010101_2009.000.txt")
+        ul_file_path = get_test_instrument_team_data_path("glows/probSur.Imap.Ul_20250420_000000_2025.300.txt")
         expected_epoch = np.array(datetime(year=2009, month=1, day=1))
         expected_time_delta = np.array(timedelta(hours=12))
 
@@ -57,29 +53,22 @@ class TestL3eUltraModel(unittest.TestCase):
              25.4914514, 33.1831812, 43.1957952, 56.2295915, 73.1961745, 95.2822137, 124.0324417, 161.4576950,
              210.1755551, 273.5934261, 356.1468544])
 
-        row_1_expected_latitude = 87.07581964
-        row_1_expected_longitude = 45.00000
         row_1_probability_of_survival = np.array(
-            [0.86450643E+00, 0.87973395E+00, 0.89379058E+00, 0.90690377E+00, 0.91915602E+00, 0.93067239E+00,
-             0.94156318E+00, 0.95180802E+00, 0.96145060E+00, 0.97033853E+00, 0.97807026E+00, 0.98418278E+00,
-             0.98846694E+00, 0.99120292E+00, 0.99291842E+00, 0.99405812E+00, 0.99489599E+00, 0.99556132E+00,
-             0.99611769E+00, 0.99659974E+00])
+            [0.84827693E+00, 0.86517360E+00, 0.88086645E+00, 0.89551288E+00, 0.90925039E+00, 0.92211605E+00,
+             0.93428862E+00, 0.94576000E+00, 0.95660359E+00, 0.96660933E+00, 0.97533752E+00, 0.98226689E+00,
+             0.98714107E+00, 0.99025210E+00, 0.99218849E+00, 0.99346478E+00, 0.99439230E+00, 0.99512632E+00,
+             0.99574163E+00, 0.99627086E+00])
 
-        row_915_expected_latitude = 24.62431835
-        row_915_expected_longitude = 289.6875
-
-        row_915_probability_of_survival = np.array([np.nan, np.nan, np.nan, np.nan, np.nan, np.nan,
+        row_804_probability_of_survival = np.array([np.nan, np.nan, np.nan, np.nan, np.nan, np.nan,
                                                     np.nan, np.nan, np.nan, np.nan, np.nan, np.nan,
                                                     np.nan, np.nan, np.nan, np.nan, np.nan, np.nan,
                                                     np.nan, np.nan])
 
-        row_3071_expected_latitude = -87.07581964
-        row_3071_expected_longitude = 315.00000
-        row_3071_expected_probability_of_survival = np.array([
-            0.87503997, 0.88938004, 0.90261715, 0.91481741, 0.92617171, 0.93674534, 0.94667530, 0.95597378, 0.96467314,
-            0.97260995, 0.97946208, 0.98487928, 0.98871799, 0.99122513, 0.99284000, 0.99395244, 0.99478699, 0.99545964,
-            0.99602705, 0.99651490
-        ])
+        row_3071_expected_probability_of_survival = np.array(
+            [0.84498413E+00, 0.86231633E+00, 0.87840630E+00, 0.89344499E+00, 0.90753390E+00, 0.92079246E+00,
+             0.93326641E+00, 0.94509283E+00, 0.95623858E+00, 0.96649540E+00, 0.97543873E+00, 0.98248159E+00,
+             0.98738469E+00, 0.99048237E+00, 0.99239223E+00, 0.99364490E+00, 0.99455000E+00, 0.99526291E+00,
+             0.99585178E+00, 0.99635733E+00])
 
         expected_survival_probability_shape = (1, 20, 3072)
 
@@ -99,16 +88,10 @@ class TestL3eUltraModel(unittest.TestCase):
 
         self.assertEqual(expected_survival_probability_shape, l3e_ul_product.probability_of_survival.shape)
 
-        np.testing.assert_allclose(l3e_ul_product.longitude[0], row_1_expected_longitude, atol=1e-6)
-        np.testing.assert_allclose(l3e_ul_product.latitude[0], row_1_expected_latitude, atol=1e-6)
         np.testing.assert_array_equal(l3e_ul_product.probability_of_survival[0].T[0, :], row_1_probability_of_survival)
 
-        np.testing.assert_allclose(l3e_ul_product.longitude[915], row_915_expected_longitude, atol=1e-6)
-        np.testing.assert_allclose(l3e_ul_product.latitude[915], row_915_expected_latitude, atol=1e-6)
-        np.testing.assert_array_equal(l3e_ul_product.probability_of_survival[0].T[915, :],
-                                      row_915_probability_of_survival)
+        np.testing.assert_array_equal(l3e_ul_product.probability_of_survival[0].T[804, :],
+                                      row_804_probability_of_survival)
 
-        np.testing.assert_allclose(l3e_ul_product.longitude[3071], row_3071_expected_longitude, atol=1e-6)
-        np.testing.assert_allclose(l3e_ul_product.latitude[3071], row_3071_expected_latitude, atol=1e-6)
         np.testing.assert_array_equal(l3e_ul_product.probability_of_survival[0].T[3071, :],
                                       row_3071_expected_probability_of_survival)

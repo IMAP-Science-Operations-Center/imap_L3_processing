@@ -3,9 +3,10 @@ from unittest.mock import sentinel
 
 import numpy as np
 
-from imap_l3_processing.codice.l3.lo.models import EnergyAndSpinAngle
+from imap_l3_processing.codice.l3.lo.direct_events.science.mass_coefficient_lookup import MassCoefficientLookup
+from imap_l3_processing.codice.l3.lo.models import EnergyAndSpinAngle, PriorityEvent
 from imap_l3_processing.codice.l3.lo.science.codice_lo_calculations import calculate_partial_densities, \
-    calculate_total_number_of_events, calculate_normalization_ratio
+    calculate_total_number_of_events, calculate_normalization_ratio, calculate_mass
 
 
 class TestCodiceLoCalculations(unittest.TestCase):
@@ -50,3 +51,32 @@ class TestCodiceLoCalculations(unittest.TestCase):
         expected_normalization_ratio[3][4] = 15
 
         np.testing.assert_array_equal(expected_normalization_ratio, normalization_ratios)
+
+    def test_calculate_mass(self):
+        priority_event = PriorityEvent(
+            apd_energy=np.array([
+                [np.exp(1)], [np.exp(2)],
+            ]),
+            tof=np.array([
+                [np.exp(50)], [np.exp(60)],
+            ]),
+            apd_gain=np.array([]),
+            apd_id=np.array([]),
+            data_quality=np.array([]),
+            energy_step=np.array([]),
+            multi_flag=np.array([]),
+            num_events=np.array([]),
+            pha_type=np.array([]),
+            spin_angle=np.array([]),
+            priority_index=1
+        )
+        lookup = MassCoefficientLookup(np.array([100_000, 10_000, 1000, 100, 10, 1]))
+        actual_mass = calculate_mass(priority_event, lookup)
+
+        expected_mass_1 = lookup[0] + lookup[1] * 1 + lookup[2] * 50 + lookup[3] * 1 * 50 + lookup[4] * 1 + lookup[
+            5] * np.power(50, 3)
+        expected_mass_2 = lookup[0] + lookup[1] * 2 + lookup[2] * 60 + lookup[3] * 2 * 60 + lookup[4] * np.power(2, 2) + \
+                          lookup[
+                              5] * np.power(60, 3)
+
+        np.testing.assert_array_equal(actual_mass, np.array([[expected_mass_1], [expected_mass_2]]))
