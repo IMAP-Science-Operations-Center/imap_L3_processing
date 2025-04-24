@@ -31,7 +31,7 @@ class GlowsL3EDependencies:
         solar_hist_dependency = dependencies.get_file_paths(source='glows', descriptor='solar-hist')
 
         lya_series_dependency = dependencies.get_file_paths(source='glows', descriptor='lya-series')
-        solar_uv_anisotropy_dependency = dependencies.get_file_paths(source='glows', descriptor='solar-uv-anistropy')
+        solar_uv_anisotropy_dependency = dependencies.get_file_paths(source='glows', descriptor='solar-uv-anisotropy')
         speed_3d_dependency = dependencies.get_file_paths(source='glows', descriptor='speed-3d')
         density_3d_dependency = dependencies.get_file_paths(source='glows', descriptor='density-3d')
         phion_hydrogen_dependency = dependencies.get_file_paths(source='glows', descriptor='phion-hydrogen')
@@ -104,7 +104,7 @@ class GlowsL3EDependencies:
             move(self.tess_ang16, self.pipeline_settings['executable_dependency_paths']['tess-ang-16'])
 
         move(self.lya_series, self.pipeline_settings['executable_dependency_paths']['lya-series'])
-        move(self.solar_uv_anisotropy, self.pipeline_settings['executable_dependency_paths']['solar-uv-anistropy'])
+        move(self.solar_uv_anisotropy, self.pipeline_settings['executable_dependency_paths']['solar-uv-anisotropy'])
         move(self.speed_3d_sw, self.pipeline_settings['executable_dependency_paths']['speed-3d'])
         move(self.density_3d_sw, self.pipeline_settings['executable_dependency_paths']['density-3d'])
         move(self.phion_hydrogen, self.pipeline_settings['executable_dependency_paths']['phion-hydrogen'])
