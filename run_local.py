@@ -404,36 +404,36 @@ def run_glows_l3e_lo_with_less_mocks(_, mock_download_dependency_from_path, mock
         get_test_data_path("glows/l3e_pipeline_settings.json"),
         Path(get_test_instrument_team_data_path("glows/GLOWS_L3d_to_L3e_processing/EnGridUltra.dat")),
         Path(get_test_instrument_team_data_path("glows/GLOWS_L3d_to_L3e_processing/tessAng16.dat")),
-
     ]
 
     mock_get_repoint_date_range.return_value = (
         np.datetime64(datetime.fromisoformat("2025-04-20T00:00:00.000000000")),
         np.datetime64(datetime.fromisoformat("2025-04-21T00:00:00.000000000")))
 
+    version = 'v006'
     lo_input_metadata = InputMetadata(instrument='glows', data_level='l3e', start_date=datetime(2015, 4, 10),
-                                      end_date=datetime(2015, 4, 11), version='v004',
+                                      end_date=datetime(2015, 4, 11), version=version,
                                       descriptor='survival-probability-lo')
 
     glows_processor: GlowsProcessor = GlowsProcessor(MagicMock(), lo_input_metadata)
     glows_processor.process()
 
     hi_45_input_metadata = InputMetadata(instrument='glows', data_level='l3e', start_date=datetime(2015, 4, 10),
-                                         end_date=datetime(2015, 4, 11), version='v004',
+                                         end_date=datetime(2015, 4, 11), version=version,
                                          descriptor='survival-probability-hi-45')
 
     glows_processor: GlowsProcessor = GlowsProcessor(MagicMock(), hi_45_input_metadata)
     glows_processor.process()
 
     hi_90_input_metadata = InputMetadata(instrument='glows', data_level='l3e', start_date=datetime(2015, 4, 10),
-                                         end_date=datetime(2015, 4, 11), version='v004',
+                                         end_date=datetime(2015, 4, 11), version=version,
                                          descriptor='survival-probability-hi-90')
 
     glows_processor: GlowsProcessor = GlowsProcessor(MagicMock(), hi_90_input_metadata)
     glows_processor.process()
 
     ul_input_metadata = InputMetadata(instrument='glows', data_level='l3e', start_date=datetime(2015, 4, 10),
-                                      end_date=datetime(2015, 4, 11), version='v004',
+                                      end_date=datetime(2015, 4, 11), version=version,
                                       descriptor='survival-probability-ul')
 
     glows_processor: GlowsProcessor = GlowsProcessor(MagicMock(), ul_input_metadata)

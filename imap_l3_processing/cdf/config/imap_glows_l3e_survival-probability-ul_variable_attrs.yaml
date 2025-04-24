@@ -57,34 +57,6 @@ healpix_index:
    VALIDMIN: 0
    VALIDMAX: 3072
    FILLVAL: -9223372036854770000
-latitude:
-   NAME: latitude
-   DATA_TYPE: CDF_INT2
-   CATDESC: Latitude Ecliptic Degree
-   VAR_TYPE: data
-   RECORD_VARYING: NRV
-   DISPLAY_TYPE: no_plot
-   FIELDNAM: latitude
-   FORMAT: I8
-   LABLAXIS: latitude
-   UNITS: degree
-   VALIDMIN: -90
-   VALIDMAX: 90
-   FILLVAL: -32768
-longitude:
-   NAME: longitude
-   DATA_TYPE: CDF_INT2
-   CATDESC: Longitude Ecliptic Degree
-   VAR_TYPE: data
-   RECORD_VARYING: NRV
-   DISPLAY_TYPE: no_plot
-   FIELDNAM: longitude
-   FORMAT: I8
-   LABLAXIS: longitude
-   UNITS: degree
-   VALIDMIN: 0
-   VALIDMAX: 360
-   FILLVAL: -32768
 probability_of_survival:
    NAME: probability_of_survival
    DATA_TYPE: CDF_FLOAT
