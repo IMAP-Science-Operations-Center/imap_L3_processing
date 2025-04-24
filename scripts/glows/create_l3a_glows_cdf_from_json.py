@@ -26,7 +26,9 @@ for file in files_to_convert:
         data_level='l3a',
         start_date=start_date,
         end_date=start_date + timedelta(days=1),
-        version='v001')
+        version='v001',
+        descriptor='hist'
+    )
 
     files = {
         "settings":
@@ -36,7 +38,7 @@ for file in files_to_convert:
     data_with_spin_angle = GlowsProcessor.add_spin_angle_delta(data, files)
 
     glows_l3a_lightcurve = create_glows_l3a_from_dictionary(data_with_spin_angle,
-                                                            input_metadata.to_upstream_data_dependency("hist"))
+                                                            input_metadata)
 
     cdf_path = save_data(glows_l3a_lightcurve, delete_if_present=True,
                          folder_path=get_test_data_path("glows/l3a_products"))
