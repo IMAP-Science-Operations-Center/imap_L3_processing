@@ -6,7 +6,7 @@ from imap_l3_processing.codice.l3.lo.codice_lo_l3a_dependencies import CodiceLoL
 from imap_l3_processing.codice.l3.lo.models import CodiceLoL3aPartialDensityDataProduct, CodiceLoL2DirectEventData, \
     CodiceLoL3aDirectEventDataProduct
 from imap_l3_processing.codice.l3.lo.science.codice_lo_calculations import calculate_partial_densities, \
-    calculate_normalization_ratio, calculate_total_number_of_events
+    calculate_normalization_ratio, calculate_total_number_of_events, calculate_mass, calculate_mass_per_charge
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
 from imap_l3_processing.utils import save_data
@@ -20,7 +20,7 @@ class CodiceLoProcessor(Processor):
         dependencies = CodiceLoL3aDependencies.fetch_dependencies(self.dependencies)
         l3a_data = self.process_l3a(dependencies)
         l3a_direct_event_data = self._process_l3a_direct_event_data_product(dependencies)
-        
+
         saved_l3a_cdf = save_data(l3a_data)
         saved_l3a_direct_event_cdf = save_data(l3a_direct_event_data)
 
@@ -82,6 +82,8 @@ class CodiceLoProcessor(Processor):
                                                dependencies: CodiceLoL3aDependencies) -> CodiceLoL3aDirectEventDataProduct:
         codice_priority_rates_l2_data = dependencies.codice_l2b_lo_priority_rates
         codice_direct_events: CodiceLoL2DirectEventData = dependencies.codice_l2_direct_events
+        event_number = codice_direct_events.event_num
+        mass_coefficient_lookup = dependencies.mass_coefficient_lookup
         priority_rates_for_events = [
             codice_priority_rates_l2_data.lo_sw_priority_p0_tcrs,
             codice_priority_rates_l2_data.lo_sw_priority_p1_hplus,
@@ -94,14 +96,36 @@ class CodiceLoProcessor(Processor):
         ]
 
         normalization = np.full((len(codice_direct_events.epoch), len(priority_rates_for_events), 128, 12), np.nan)
+
+        (mass_per_charge, mass, energy, gain, apd_id, multi_flag, pha_type,
+         tof) = [
+            np.full((len(codice_direct_events.epoch), len(priority_rates_for_events), len(event_number)),
+                    np.nan) for _ in range(8)]
+
+        (data_quality, num_events) = [np.full((len(codice_direct_events.epoch), len(priority_rates_for_events)), np.nan)
+                                      for _ in range(2)]
+
         for priority_index, (priority_event, priority_rate) in enumerate(
                 zip(codice_direct_events.priority_events, priority_rates_for_events)):
 
             total_by_epoch: np.ndarray[int] = calculate_total_number_of_events(priority_rate,
                                                                                codice_priority_rates_l2_data.acquisition_times)
+
+            mass_per_charge[:, priority_index, :] = calculate_mass_per_charge(priority_event)
+            mass[:, priority_index, :] = calculate_mass(priority_event, mass_coefficient_lookup)
+            energy[:, priority_index, :] = priority_event.apd_energy
+            gain[:, priority_index, :] = priority_event.apd_gain
+            apd_id[:, priority_index, :] = priority_event.apd_id
+            multi_flag[:, priority_index, :] = priority_event.multi_flag
+            pha_type[:, priority_index, :] = priority_event.pha_type
+            tof[:, priority_index, :] = priority_event.tof
+
+            data_quality[:, priority_index] = priority_event.data_quality
+            num_events[:, priority_index] = priority_event.num_events
+
             for e in range(len(codice_direct_events.epoch)):
                 norm = calculate_normalization_ratio(
-                    priority_event.total_events_binned_by_energy_step_and_spin_angle[e],
+                    priority_event.total_events_binned_by_energy_step_and_spin_angle()[e],
                     total_by_epoch[e])
 
                 normalization[e][priority_index] = norm
@@ -109,5 +133,16 @@ class CodiceLoProcessor(Processor):
         return CodiceLoL3aDirectEventDataProduct(
             input_metadata=self.input_metadata,
             epoch=codice_direct_events.epoch,
+            event_num=codice_direct_events.event_num,
             normalization=normalization,
+            mass_per_charge=mass_per_charge,
+            mass=mass,
+            energy=energy,
+            gain=gain,
+            apd_id=apd_id,
+            multi_flag=multi_flag,
+            num_events=num_events,
+            pha_type=pha_type,
+            tof=tof,
+            data_quality=data_quality,
         )

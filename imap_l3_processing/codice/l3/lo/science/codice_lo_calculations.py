@@ -3,6 +3,10 @@ import numpy as np
 from imap_l3_processing.codice.l3.lo.direct_events.science.mass_coefficient_lookup import MassCoefficientLookup
 from imap_l3_processing.codice.l3.lo.models import EnergyAndSpinAngle, PriorityEvent
 
+POST_ACCELERATION_VOLTAGE_IN_KV = 15
+ENERGY_LOST_IN_CARBON_FOIL = 0
+CONVERSION_CONSTANT_K = 1.692e-5
+
 
 def calculate_partial_densities(species_intensities: np.ndarray):
     return NotImplementedError
@@ -27,6 +31,12 @@ def calculate_mass(priority_event: PriorityEvent, mass_coefficients: MassCoeffic
     energy = np.log(priority_event.apd_energy)
     tof = np.log(priority_event.tof)
 
-    return mass_coefficients[0] + (mass_coefficients[1] * energy) + (mass_coefficients[2] * tof) + (
+    mass_calculation = mass_coefficients[0] + (mass_coefficients[1] * energy) + (mass_coefficients[2] * tof) + (
             mass_coefficients[3] * energy * tof) + (mass_coefficients[4] * np.power(energy, 2)) + (
-                mass_coefficients[5] * np.power(tof, 3))
+                               mass_coefficients[5] * np.power(tof, 3))
+    return np.e ** mass_calculation
+
+
+def calculate_mass_per_charge(priority_event: PriorityEvent) -> np.ndarray:
+    return (priority_event.energy_step + POST_ACCELERATION_VOLTAGE_IN_KV - ENERGY_LOST_IN_CARBON_FOIL) * (
+            priority_event.tof ** 2) * CONVERSION_CONSTANT_K

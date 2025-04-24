@@ -6,7 +6,7 @@ import numpy as np
 from imap_l3_processing.codice.l3.lo.direct_events.science.mass_coefficient_lookup import MassCoefficientLookup
 from imap_l3_processing.codice.l3.lo.models import EnergyAndSpinAngle, PriorityEvent
 from imap_l3_processing.codice.l3.lo.science.codice_lo_calculations import calculate_partial_densities, \
-    calculate_total_number_of_events, calculate_normalization_ratio, calculate_mass
+    calculate_total_number_of_events, calculate_normalization_ratio, calculate_mass, calculate_mass_per_charge
 
 
 class TestCodiceLoCalculations(unittest.TestCase):
@@ -68,15 +68,49 @@ class TestCodiceLoCalculations(unittest.TestCase):
             num_events=np.array([]),
             pha_type=np.array([]),
             spin_angle=np.array([]),
-            priority_index=1
         )
-        lookup = MassCoefficientLookup(np.array([100_000, 10_000, 1000, 100, 10, 1]))
+
+        lookup = MassCoefficientLookup(np.array([10e-1, 10e-2, 10e-3, 10e-4, 10e-5, 10e-6]))
         actual_mass = calculate_mass(priority_event, lookup)
 
         expected_mass_1 = lookup[0] + lookup[1] * 1 + lookup[2] * 50 + lookup[3] * 1 * 50 + lookup[4] * 1 + lookup[
             5] * np.power(50, 3)
         expected_mass_2 = lookup[0] + lookup[1] * 2 + lookup[2] * 60 + lookup[3] * 2 * 60 + lookup[4] * np.power(2, 2) + \
-                          lookup[
-                              5] * np.power(60, 3)
+                          lookup[5] * np.power(60, 3)
 
-        np.testing.assert_array_equal(actual_mass, np.array([[expected_mass_1], [expected_mass_2]]))
+        expected_mass_calculation = np.array([
+            [np.e ** expected_mass_1],
+            [np.e ** expected_mass_2]])
+
+        np.testing.assert_array_equal(actual_mass, expected_mass_calculation)
+
+    def test_calculate_mass_per_charge(self):
+        priority_event = PriorityEvent(
+            apd_energy=np.array([]),
+            tof=np.array([
+                [5], [6],
+            ]),
+            apd_gain=np.array([]),
+            apd_id=np.array([]),
+            data_quality=np.array([]),
+            energy_step=np.array([
+                [1], [2],
+            ]),
+            multi_flag=np.array([]),
+            num_events=np.array([]),
+            pha_type=np.array([]),
+            spin_angle=np.array([]),
+        )
+
+        POST_ACCELERATION_VOLTAGE_IN_KV = 15
+        ENERGY_LOST_IN_CARBON_FOIL = 0
+        CONVERSION_CONSTANT_K = 1.692e-5
+
+        mass_per_charge_1 = (1 + POST_ACCELERATION_VOLTAGE_IN_KV - ENERGY_LOST_IN_CARBON_FOIL) * (
+                5 ** 2) * CONVERSION_CONSTANT_K
+
+        mass_per_charge_2 = (2 + POST_ACCELERATION_VOLTAGE_IN_KV - ENERGY_LOST_IN_CARBON_FOIL) * (
+                6 ** 2) * CONVERSION_CONSTANT_K
+
+        actual_mass_per_charge = calculate_mass_per_charge(priority_event)
+        np.testing.assert_array_equal(actual_mass_per_charge, np.array([[mass_per_charge_1], [mass_per_charge_2]]))
