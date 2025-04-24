@@ -67,10 +67,10 @@ class TestUtils(unittest.TestCase):
 
     @environment_variables({"REPOINT_DATA_FILEPATH": get_test_data_path("fake_1_day_repointing_file.csv")})
     def test_get_repoint_date_range_handles_no_pointing(self):
-        repointing_number = 2050
+        repointing_number = 7000
         with self.assertRaises(ValueError) as err:
             _, _ = get_repoint_date_range(repointing_number)
-        self.assertEqual(str(err.exception), f"No pointing found for pointing: 2050")
+        self.assertEqual(str(err.exception), f"No pointing found for pointing: 7000")
 
     @environment_variables({"REPOINT_DATA_FILEPATH": get_test_data_path("fake_1_day_repointing_file.csv")})
     @patch("imap_l3_processing.glows.l3bc.utils.validate_dependencies")
