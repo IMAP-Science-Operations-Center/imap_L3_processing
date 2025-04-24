@@ -10,6 +10,7 @@ from unittest.mock import patch, Mock
 import imap_data_access
 import numpy as np
 import xarray as xr
+from imap_data_access.processing_input import AncillaryInput, ProcessingInputCollection
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.glows.glows_initializer import GlowsInitializer
@@ -253,7 +254,8 @@ def create_hit_direct_event_cdf():
 @environment_variables({"REPOINT_DATA_FILEPATH": get_test_data_path("fake_1_day_repointing_file.csv")})
 @patch('imap_l3_processing.glows.glows_initializer.query')
 def run_l3b_initializer(mock_query):
-    local_cdfs = os.listdir(get_test_data_path("glows/l3a_products"))
+    local_cdfs: list[str] = os.listdir(get_test_data_path("glows/l3a_products"))
+    local_cdfs.remove('.DS_Store')
 
     l3a_dicts = [{'file_path': "glows/l3a_products/" + file_path,
                   'start_date': file_path.split('_')[4].split('-')[0],
@@ -263,7 +265,14 @@ def run_l3b_initializer(mock_query):
     mock_query.side_effect = [
         l3a_dicts, []
     ]
-    GlowsInitializer.validate_and_initialize('v001')
+
+    bad_days_list = AncillaryInput('imap_glows_bad-days-list_20100101_v001.dat')
+    waw_helio_ion = AncillaryInput('imap_glows_WawHelioIonMP_20100101_v002.json')
+    uv_anisotropy = AncillaryInput('imap_glows_uv-anisotropy-1CR_20100101_v001.json')
+    pipeline_settings = AncillaryInput('imap_glows_pipeline-settings-L3bc_20250707_v002.json')
+    input_collection = ProcessingInputCollection(bad_days_list, waw_helio_ion, uv_anisotropy, pipeline_settings)
+
+    GlowsInitializer.validate_and_initialize('v001', input_collection)
 
 
 @environment_variables({"REPOINT_DATA_FILEPATH": get_test_data_path("fake_2_day_repointing_on_may18_file.csv")})
@@ -284,7 +293,13 @@ def run_glows_l3bc_processor_and_initializer(_, mock_query):
                                          start_date='20100922', end_date='20101123')
     mock_query.side_effect = [l3a_files + l3a_files_2, []]
 
-    processor = GlowsProcessor(dependencies=Mock(), input_metadata=input_metadata)
+    bad_days_list = AncillaryInput('imap_glows_bad-days-list_20100101_v001.dat')
+    waw_helio_ion = AncillaryInput('imap_glows_WawHelioIonMP_20100101_v002.json')
+    uv_anisotropy = AncillaryInput('imap_glows_uv-anisotropy-1CR_20100101_v001.json')
+    pipeline_settings = AncillaryInput('imap_glows_pipeline-settings-L3bc_20250707_v002.json')
+    input_collection = ProcessingInputCollection(bad_days_list, waw_helio_ion, uv_anisotropy, pipeline_settings)
+
+    processor = GlowsProcessor(dependencies=input_collection, input_metadata=input_metadata)
     processor.process()
 
 
@@ -373,7 +388,8 @@ def run_glows_l3bc():
         'uv_anisotropy': get_test_data_path('glows/imap_glows_uv-anisotropy-1CR_20100101_v001.json'),
         'WawHelioIonMP_parameters': get_test_data_path('glows/imap_glows_WawHelioIonMP_20100101_v002.json'),
         'bad_days_list': get_test_data_path('glows/imap_glows_bad-days-list_v001.dat'),
-        'pipeline_settings': get_test_instrument_team_data_path('glows/imap_glows_pipeline-settings-L3bc_v001.json')
+        'pipeline_settings': get_test_instrument_team_data_path(
+            'glows/imap_glows_pipeline-settings-L3bc_20250707_v002.json')
     }
     l3a_data_folder_path = get_test_data_path('glows/l3a_products')
     l3a_data = []

@@ -49,8 +49,12 @@ class TestModels(CdfModelTestCase):
         self.assert_variable_attributes(next(variables), sentinel.lat_grid_label, "lat_grid_label")
 
     def test_l3b_from_instrument_team_dictionary(self):
-        with open(get_test_instrument_team_data_path("glows/imap_glows_l3b_cr_2091_v00.json")) as f:
+        glows_instrument_team_data_path = get_test_instrument_team_data_path('glows')
+        with open(glows_instrument_team_data_path / 'imap_glows_l3b_cr_2091_v00.json') as f:
             instrument_team_l3b_dict = json.load(f)
+
+        instrument_team_l3b_dict['header']['ancillary_data_files'][
+            'pipeline_settings'] = glows_instrument_team_data_path / 'imap_glows_pipeline-settings-L3bc_20250707_v002.json'
 
         result = GlowsL3BIonizationRate.from_instrument_team_dictionary(instrument_team_l3b_dict,
                                                                         sentinel.input_metadata)
@@ -79,7 +83,7 @@ class TestModels(CdfModelTestCase):
         self.assertEqual([
             "imap_glows_WawHelioIonMP_v002.json",
             "imap_glows_bad-days-list_v001.dat",
-            "imap_glows_pipeline-settings-L3bc_v001.json",
+            "imap_glows_pipeline-settings-L3bc_20250707_v002.json",
             "imap_glows_uv-anisotropy-1CR_v001.json",
             "f107_fluxtable.txt",
             "imap_glows_l3a_20100101000000_orbX_modX_p_v00.json",
@@ -129,8 +133,11 @@ class TestModels(CdfModelTestCase):
                                         expected_data_type=pycdf.const.CDF_FLOAT)
 
     def test_l3c_from_instrument_team_dictionary(self):
-        with open(get_test_instrument_team_data_path("glows/imap_glows_l3c_cr_2091_v00.json")) as f:
+        glows_instrument_team_data_path = get_test_instrument_team_data_path('glows')
+        with open(glows_instrument_team_data_path / 'imap_glows_l3c_cr_2091_v00.json') as f:
             model = json.load(f)
+        model['header']['ancillary_data_files'][
+            'pipeline_settings'] = glows_instrument_team_data_path / 'imap_glows_pipeline-settings-L3bc_20250707_v002.json'
         latitude_grid = model["solar_wind_profile"]["lat_grid"]
         result = GlowsL3CSolarWind.from_instrument_team_dictionary(
             model, sentinel.input_metadata)
@@ -157,7 +164,7 @@ class TestModels(CdfModelTestCase):
         self.assertEqual([
             "imap_glows_WawHelioIonMP_v002.json",
             "imap_glows_bad-days-list_v001.dat",
-            "imap_glows_pipeline-settings-L3bc_v001.json",
+            "imap_glows_pipeline-settings-L3bc_20250707_v002.json",
             "imap_glows_uv-anisotropy-1CR_v001.json",
             "omni2_all_years.dat",
         ], result.parent_file_names)
