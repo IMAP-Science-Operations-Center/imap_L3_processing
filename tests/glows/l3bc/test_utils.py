@@ -293,7 +293,7 @@ class TestUtils(unittest.TestCase):
         ancillary_files = {
             'uv_anisotropy': get_test_data_path('glows/imap_glows_uv-anisotropy-1CR_20100101_v001.json'),
             'pipeline_settings': get_test_instrument_team_data_path(
-                'glows/imap_glows_pipeline-settings-L3bc_v001.json'),
+                'glows/imap_glows_pipeline-settings-L3bc_20250707_v002.json'),
         }
         external_files = Mock()
 
@@ -338,7 +338,7 @@ class TestUtils(unittest.TestCase):
         ancillary_files = {
             'uv_anisotropy': get_test_data_path('glows/imap_glows_uv-anisotropy-1CR_20100101_v001.json'),
             'pipeline_settings': get_test_instrument_team_data_path(
-                'glows/imap_glows_pipeline-settings-L3bc_v001.json'),
+                'glows/imap_glows_pipeline-settings-L3bc_20250707_v002.json'),
         }
         external_files = Mock()
 
