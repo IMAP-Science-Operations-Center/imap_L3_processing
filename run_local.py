@@ -358,8 +358,8 @@ def run_glows_l3e_lo_with_mocks(mock_get_repoint_date_range, _, mock_path, mock_
 
 @patch("imap_l3_processing.glows.glows_processor.get_repoint_date_range")
 @patch("imap_l3_processing.glows.l3e.glows_l3e_dependencies.download_dependency_from_path")
-# @patch("imap_l3_processing.glows.glows_processor.imap_data_access.upload")
-def run_glows_l3e_lo_with_less_mocks(mock_download_dependency_from_path, mock_get_repoint_date_range):
+@patch("imap_l3_processing.glows.glows_processor.imap_data_access.upload")
+def run_glows_l3e_lo_with_less_mocks(_, mock_download_dependency_from_path, mock_get_repoint_date_range):
     mock_download_dependency_from_path.side_effect = [
         Path("imap_glows_l3d_solar-hist_20250501-repoint00110_v001.cdf"),
         Path(get_test_instrument_team_data_path("glows/GLOWS_L3d_to_L3e_processing/lyaSeriesV4_2021b.dat")),

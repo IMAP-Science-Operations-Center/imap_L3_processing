@@ -9,6 +9,7 @@ COPY spice_kernels spice_kernels
 COPY tests/test_data/fake_1_day_repointing_file.csv fake_1_day_repointing_file.csv
 ENV REPOINT_DATA_FILEPATH=fake_1_day_repointing_file.csv
 COPY imap_l3_processing imap_l3_processing
+COPY scripts scripts
 COPY imap_l3_data_processor.py .
 COPY tests tests
 COPY instrument_team_data instrument_team_data
