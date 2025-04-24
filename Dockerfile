@@ -10,7 +10,7 @@ COPY tests/test_data/fake_1_day_repointing_file.csv fake_1_day_repointing_file.c
 ENV REPOINT_DATA_FILEPATH=fake_1_day_repointing_file.csv
 COPY imap_l3_processing imap_l3_processing
 COPY imap_l3_data_processor.py .
-COPY instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/survProbHi survProbHi
-COPY instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/survProbLo survProbLo
-COPY instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/survProbUltra survProbUltra
+COPY imap_l3_processing/glows/l3e/l3e_toolkit/survProbHi survProbHi
+COPY imap_l3_processing/glows/l3e/l3e_toolkit/survProbLo survProbLo
+COPY imap_l3_processing/glows/l3e/l3e_toolkit/survProbUltra survProbUltra
 ENTRYPOINT ["python","imap_l3_data_processor.py"]
