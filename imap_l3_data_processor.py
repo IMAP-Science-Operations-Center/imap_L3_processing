@@ -7,7 +7,6 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 import imap_data_access
-from imap_data_access import ScienceFilePath
 from imap_data_access.processing_input import ProcessingInputCollection
 
 from imap_l3_processing.codice.l3.hi.codice_hi_processor import CodiceHiProcessor
@@ -15,7 +14,7 @@ from imap_l3_processing.codice.l3.lo.codice_lo_processor import CodiceLoProcesso
 from imap_l3_processing.glows.glows_processor import GlowsProcessor
 from imap_l3_processing.hi.hi_processor import HiProcessor
 from imap_l3_processing.hit.l3.hit_processor import HitProcessor
-from imap_l3_processing.models import UpstreamDataDependency, InputMetadata
+from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.swapi.swapi_processor import SwapiProcessor
 from imap_l3_processing.swe.swe_processor import SweProcessor
 from imap_l3_processing.ultra.l3.ultra_processor import UltraProcessor
@@ -51,15 +50,6 @@ def imap_l3_processor():
     args = _parse_cli_arguments()
     processing_input_collection = ProcessingInputCollection()
     processing_input_collection.deserialize(args.dependency)
-
-    dependencies = []
-    for dependency in processing_input_collection.get_science_inputs():
-        for file_path in dependency.imap_file_paths:
-            file_path: ScienceFilePath
-            dependencies.append(UpstreamDataDependency(
-                file_path.instrument, file_path.data_level, _convert_to_datetime(file_path.start_date),
-                _convert_to_datetime(file_path.start_date), file_path.version, file_path.descriptor
-            ))
 
     input_dependency = InputMetadata(args.instrument,
                                      args.data_level,
