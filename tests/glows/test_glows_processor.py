@@ -10,14 +10,16 @@ from unittest.mock import patch, Mock, sentinel, call
 import numpy as np
 
 from imap_l3_processing.constants import CARRINGTON_ROTATION_IN_NANOSECONDS
-from imap_l3_processing.glows.descriptors import GLOWS_L3D_DESCRIPTOR, \
-    GLOWS_L3A_DESCRIPTOR
+from imap_l3_processing.glows.descriptors import GLOWS_L3A_DESCRIPTOR
 from imap_l3_processing.glows.glows_processor import GlowsProcessor
 from imap_l3_processing.glows.l3a.utils import create_glows_l3a_dictionary_from_cdf, create_glows_l3a_from_dictionary
 from imap_l3_processing.glows.l3bc.cannot_process_carrington_rotation_error import CannotProcessCarringtonRotationError
 from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDependencies
 from imap_l3_processing.glows.l3bc.models import GlowsL3BIonizationRate
-from imap_l3_processing.models import UpstreamDataDependency, InputMetadata
+from imap_l3_processing.glows.l3e.glows_l3e_lo_model import GlowsL3ELoData
+from imap_l3_processing.glows.l3e.glows_l3e_hi_model import GlowsL3EHiData
+from imap_l3_processing.glows.l3e.glows_l3e_ultra_model import GlowsL3EUltraData
+from imap_l3_processing.models import InputMetadata
 from tests.test_helpers import get_test_instrument_team_data_path, get_test_data_path, get_test_data_folder, \
     assert_dataclass_fields
 
@@ -386,6 +388,7 @@ class TestGlowsProcessor(unittest.TestCase):
         np.testing.assert_array_equal(expected_l3b.cx_uncert, actual_l3b.cx_uncert)
         self.assertEqual(expected_l3b.lat_grid_label, actual_l3b.lat_grid_label)
 
+    @patch('imap_l3_processing.hi.hi_processor.Processor.get_parent_file_names')
     @patch('imap_l3_processing.glows.glows_processor.save_data')
     @patch('imap_l3_processing.glows.glows_processor.imap_data_access.upload')
     @patch("imap_l3_processing.glows.glows_processor.GlowsL3EUltraData.convert_dat_to_glows_l3e_ul_product")
@@ -394,7 +397,9 @@ class TestGlowsProcessor(unittest.TestCase):
     @patch("imap_l3_processing.glows.glows_processor.get_repoint_date_range")
     @patch("imap_l3_processing.glows.glows_processor.GlowsL3EDependencies")
     def test_process_l3e_ultra(self, mock_l3e_dependencies, mock_get_repoint_date_range, mock_determine_call_args,
-                               mock_run, mock_convert_dat_to_glows_l3e_ul_product, mock_upload, mock_save_data):
+                               mock_run, mock_convert_dat_to_glows_l3e_ul_product, mock_upload, mock_save_data,
+                               mock_get_parent_file_names):
+        mock_get_parent_file_names.return_value = ["l3d_file", "ancillary_1", "ancillary_2", "ancillary_3"]
         input_metadata = InputMetadata('glows', "l3e", datetime(2024, 10, 7, 10, 00, 00),
                                        datetime(2024, 10, 8, 10, 00, 00),
                                        'v001', descriptor='survival-probability-ul')
@@ -418,7 +423,8 @@ class TestGlowsProcessor(unittest.TestCase):
 
         mock_determine_call_args.return_value = ultra_args
 
-        mock_convert_dat_to_glows_l3e_ul_product.return_value = sentinel.ultra_data
+        ultra_data = Mock()
+        mock_convert_dat_to_glows_l3e_ul_product.return_value = ultra_data
 
         mock_save_data.return_value = sentinel.ultra_path
 
@@ -442,10 +448,14 @@ class TestGlowsProcessor(unittest.TestCase):
         mock_convert_dat_to_glows_l3e_ul_product.assert_called_once_with(input_metadata, Path(
             "probSur.Imap.Ul_20241007_000000_2024.765.dat"), np.array(epoch), np.array(epoch_delta))
 
-        mock_save_data.assert_called_once_with(sentinel.ultra_data)
+        mock_save_data.assert_called_once_with(ultra_data)
+        survival_data_product: GlowsL3EUltraData = mock_save_data.call_args_list[0].args[0]
+        self.assertEqual(["l3d_file", "ancillary_1", "ancillary_2", "ancillary_3"],
+                         survival_data_product.parent_file_names)
 
         mock_upload.assert_called_once_with(sentinel.ultra_path)
 
+    @patch('imap_l3_processing.hi.hi_processor.Processor.get_parent_file_names')
     @patch('imap_l3_processing.glows.glows_processor.imap_data_access.upload')
     @patch('imap_l3_processing.glows.glows_processor.save_data')
     @patch("imap_l3_processing.glows.glows_processor.GlowsL3EHiData.convert_dat_to_glows_l3e_hi_product")
@@ -454,8 +464,9 @@ class TestGlowsProcessor(unittest.TestCase):
     @patch("imap_l3_processing.glows.glows_processor.get_repoint_date_range")
     @patch("imap_l3_processing.glows.glows_processor.GlowsL3EDependencies")
     def test_process_l3e_hi(self, mock_l3e_dependencies, mock_get_repoint_date_range, mock_determine_call_args,
-                            mock_run, mock_convert_dat_to_glows_l3e_hi_product, mock_save_data, mock_upload):
-
+                            mock_run, mock_convert_dat_to_glows_l3e_hi_product, mock_save_data, mock_upload,
+                            mock_get_parent_file_names):
+        mock_get_parent_file_names.return_value = ["l3d_file", "ancillary_1", "ancillary_2", "ancillary_3"]
         test_cases = [("hi45", "45", "135.000"), ("hi90", "90", "90.000")]
 
         for test_name, descriptor, elongation in test_cases:
@@ -494,7 +505,8 @@ class TestGlowsProcessor(unittest.TestCase):
 
                 mock_convert_dat_to_glows_l3e_hi_product.return_value = sentinel.hi_data
 
-                mock_save_data.return_value = sentinel.hi_path
+                hi_data = Mock()
+                mock_save_data.return_value = hi_data
 
                 processor = GlowsProcessor(dependencies=dependencies, input_metadata=input_metadata)
                 processor.process()
@@ -522,9 +534,13 @@ class TestGlowsProcessor(unittest.TestCase):
                 )
 
                 mock_save_data.assert_called_once_with(sentinel.hi_data)
+                survival_data_product: GlowsL3EHiData = mock_save_data.call_args_list[0].args[0]
+                self.assertEqual(["l3d_file", "ancillary_1", "ancillary_2", "ancillary_3"],
+                                 survival_data_product.parent_file_names)
 
-                mock_upload.assert_called_once_with(sentinel.hi_path)
+                mock_upload.assert_called_once_with(hi_data)
 
+    @patch('imap_l3_processing.hi.hi_processor.Processor.get_parent_file_names')
     @patch('imap_l3_processing.glows.glows_processor.imap_data_access.upload')
     @patch('imap_l3_processing.glows.glows_processor.save_data')
     @patch("imap_l3_processing.glows.glows_processor.GlowsL3ELoData.convert_dat_to_glows_l3e_lo_product")
@@ -533,7 +549,9 @@ class TestGlowsProcessor(unittest.TestCase):
     @patch("imap_l3_processing.glows.glows_processor.get_repoint_date_range")
     @patch("imap_l3_processing.glows.glows_processor.GlowsL3EDependencies")
     def test_process_l3e_lo(self, mock_l3e_dependencies, mock_get_repoint_date_range, mock_determine_call_args,
-                            mock_run, mock_convert_dat_to_glows_l3e_lo_product, mock_save_data, mock_upload):
+                            mock_run, mock_convert_dat_to_glows_l3e_lo_product, mock_save_data, mock_upload,
+                            mock_get_parent_file_names):
+        mock_get_parent_file_names.return_value = ["l3d_file", "ancillary_1", "ancillary_2", "ancillary_3"]
         input_metadata = InputMetadata('glows', "l3e", datetime(2024, 10, 7, 10, 00, 00),
                                        datetime(2024, 10, 8, 10, 00, 00),
                                        'v001', descriptor='survival-probability-lo')
@@ -557,7 +575,8 @@ class TestGlowsProcessor(unittest.TestCase):
 
         mock_determine_call_args.return_value = call_args_1
 
-        mock_convert_dat_to_glows_l3e_lo_product.return_value = sentinel.lo_data
+        lo_data = Mock()
+        mock_convert_dat_to_glows_l3e_lo_product.return_value = lo_data
 
         mock_save_data.return_value = sentinel.lo_path
 
@@ -585,7 +604,10 @@ class TestGlowsProcessor(unittest.TestCase):
             np.array(epoch), np.array(epoch_delta)
         )
 
-        mock_save_data.assert_called_once_with(sentinel.lo_data)
+        mock_save_data.assert_called_once_with(lo_data)
+        survival_data_product: GlowsL3ELoData = mock_save_data.call_args_list[0].args[0]
+        self.assertEqual(["l3d_file", "ancillary_1", "ancillary_2", "ancillary_3"],
+                         survival_data_product.parent_file_names)
 
         mock_upload.assert_called_once_with(sentinel.lo_path)
 
