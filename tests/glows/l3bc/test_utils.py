@@ -67,10 +67,10 @@ class TestUtils(unittest.TestCase):
 
     @environment_variables({"REPOINT_DATA_FILEPATH": get_test_data_path("fake_1_day_repointing_file.csv")})
     def test_get_repoint_date_range_handles_no_pointing(self):
-        repointing_number = 2050
+        repointing_number = 7000
         with self.assertRaises(ValueError) as err:
             _, _ = get_repoint_date_range(repointing_number)
-        self.assertEqual(str(err.exception), f"No pointing found for pointing: 2050")
+        self.assertEqual(str(err.exception), f"No pointing found for pointing: 7000")
 
     @environment_variables({"REPOINT_DATA_FILEPATH": get_test_data_path("fake_1_day_repointing_file.csv")})
     @patch("imap_l3_processing.glows.l3bc.utils.validate_dependencies")
@@ -293,7 +293,7 @@ class TestUtils(unittest.TestCase):
         ancillary_files = {
             'uv_anisotropy': get_test_data_path('glows/imap_glows_uv-anisotropy-1CR_20100101_v001.json'),
             'pipeline_settings': get_test_instrument_team_data_path(
-                'glows/imap_glows_pipeline-settings-L3bc_v001.json'),
+                'glows/imap_glows_pipeline-settings-L3bc_20250707_v002.json'),
         }
         external_files = Mock()
 
@@ -338,7 +338,7 @@ class TestUtils(unittest.TestCase):
         ancillary_files = {
             'uv_anisotropy': get_test_data_path('glows/imap_glows_uv-anisotropy-1CR_20100101_v001.json'),
             'pipeline_settings': get_test_instrument_team_data_path(
-                'glows/imap_glows_pipeline-settings-L3bc_v001.json'),
+                'glows/imap_glows_pipeline-settings-L3bc_20250707_v002.json'),
         }
         external_files = Mock()
 

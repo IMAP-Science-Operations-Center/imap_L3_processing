@@ -10,6 +10,7 @@ from unittest.mock import patch, Mock, MagicMock
 import imap_data_access
 import numpy as np
 import xarray as xr
+from imap_data_access.processing_input import AncillaryInput, ProcessingInputCollection, ScienceInput
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.glows.glows_initializer import GlowsInitializer
@@ -253,7 +254,8 @@ def create_hit_direct_event_cdf():
 @environment_variables({"REPOINT_DATA_FILEPATH": get_test_data_path("fake_1_day_repointing_file.csv")})
 @patch('imap_l3_processing.glows.glows_initializer.query')
 def run_l3b_initializer(mock_query):
-    local_cdfs = os.listdir(get_test_data_path("glows/l3a_products"))
+    local_cdfs: list[str] = os.listdir(get_test_data_path("glows/l3a_products"))
+    local_cdfs.remove('.DS_Store')
 
     l3a_dicts = [{'file_path': "glows/l3a_products/" + file_path,
                   'start_date': file_path.split('_')[4].split('-')[0],
@@ -263,7 +265,14 @@ def run_l3b_initializer(mock_query):
     mock_query.side_effect = [
         l3a_dicts, []
     ]
-    GlowsInitializer.validate_and_initialize('v001')
+
+    bad_days_list = AncillaryInput('imap_glows_bad-days-list_20100101_v001.dat')
+    waw_helio_ion = AncillaryInput('imap_glows_WawHelioIonMP_20100101_v002.json')
+    uv_anisotropy = AncillaryInput('imap_glows_uv-anisotropy-1CR_20100101_v001.json')
+    pipeline_settings = AncillaryInput('imap_glows_pipeline-settings-L3bc_20250707_v002.json')
+    input_collection = ProcessingInputCollection(bad_days_list, waw_helio_ion, uv_anisotropy, pipeline_settings)
+
+    GlowsInitializer.validate_and_initialize('v001', input_collection)
 
 
 @environment_variables({"REPOINT_DATA_FILEPATH": get_test_data_path("fake_2_day_repointing_on_may18_file.csv")})
@@ -284,7 +293,13 @@ def run_glows_l3bc_processor_and_initializer(_, mock_query):
                                          start_date='20100922', end_date='20101123')
     mock_query.side_effect = [l3a_files + l3a_files_2, []]
 
-    processor = GlowsProcessor(dependencies=Mock(), input_metadata=input_metadata)
+    bad_days_list = AncillaryInput('imap_glows_bad-days-list_20100101_v001.dat')
+    waw_helio_ion = AncillaryInput('imap_glows_WawHelioIonMP_20100101_v002.json')
+    uv_anisotropy = AncillaryInput('imap_glows_uv-anisotropy-1CR_20100101_v001.json')
+    pipeline_settings = AncillaryInput('imap_glows_pipeline-settings-L3bc_20250707_v002.json')
+    input_collection = ProcessingInputCollection(bad_days_list, waw_helio_ion, uv_anisotropy, pipeline_settings)
+
+    processor = GlowsProcessor(dependencies=input_collection, input_metadata=input_metadata)
     processor.process()
 
 
@@ -356,87 +371,93 @@ def run_glows_l3e_lo_with_mocks(mock_get_repoint_date_range, _, mock_path, mock_
     glows_processor.process()
 
 
-@patch("imap_l3_processing.glows.glows_processor.get_repoint_date_range")
-@patch("imap_l3_processing.glows.l3e.glows_l3e_dependencies.download_dependency_from_path")
-# @patch("imap_l3_processing.glows.glows_processor.imap_data_access.upload")
-def run_glows_l3e_lo_with_less_mocks(mock_download_dependency_from_path, mock_get_repoint_date_range):
-    mock_download_dependency_from_path.side_effect = [
-        Path("imap_glows_l3d_solar-hist_20250501-repoint00110_v001.cdf"),
-        Path(get_test_instrument_team_data_path("glows/GLOWS_L3d_to_L3e_processing/lyaSeriesV4_2021b.dat")),
-        Path(get_test_instrument_team_data_path(
-            "glows/GLOWS_L3d_to_L3e_processing/solar_uv_anisotropy_NP.1.0_SP.1.0.dat")),
-        Path(get_test_instrument_team_data_path("glows/GLOWS_L3d_to_L3e_processing/speed3D.v01.Legendre.2021b.dat")),
-        Path(get_test_instrument_team_data_path("glows/GLOWS_L3d_to_L3e_processing/density3D.v01.Legendre.2021b.dat")),
-        Path(get_test_instrument_team_data_path("glows/GLOWS_L3d_to_L3e_processing/phion_Hydrogen_T12F107_2021b.dat")),
-        Path(get_test_instrument_team_data_path("glows/GLOWS_L3d_to_L3e_processing/swEqtrElectrons5_2021b.dat")),
-        Path(get_test_instrument_team_data_path("glows/GLOWS_L3d_to_L3e_processing/ionization.files.dat")),
-        get_test_data_path("glows/l3e_pipeline_settings.json"),
-        Path(get_test_instrument_team_data_path("glows/GLOWS_L3d_to_L3e_processing/EnGridLo.dat")),
-        Path(get_test_instrument_team_data_path("glows/GLOWS_L3d_to_L3e_processing/tessXYZ8.dat")),
-        Path("imap_glows_l3d_solar-hist_20250501-repoint00110_v001.cdf"),
-        Path("lyaSeriesV4_2021b.dat"),
-        Path("solar_uv_anisotropy_NP.1.0_SP.1.0.dat"),
-        Path("speed3D.v01.Legendre.2021b.dat"),
-        Path("density3D.v01.Legendre.2021b.dat"),
-        Path("phion_Hydrogen_T12F107_2021b.dat"),
-        Path("swEqtrElectrons5_2021b.dat"),
-        Path("ionization.files.dat"),
-        get_test_data_path("glows/l3e_pipeline_settings.json"),
-        Path(get_test_instrument_team_data_path("glows/GLOWS_L3d_to_L3e_processing/EnGridHi.dat")),
-        Path("imap_glows_l3d_solar-hist_20250501-repoint00110_v001.cdf"),
-        Path("lyaSeriesV4_2021b.dat"),
-        Path("solar_uv_anisotropy_NP.1.0_SP.1.0.dat"),
-        Path("speed3D.v01.Legendre.2021b.dat"),
-        Path("density3D.v01.Legendre.2021b.dat"),
-        Path("phion_Hydrogen_T12F107_2021b.dat"),
-        Path("swEqtrElectrons5_2021b.dat"),
-        Path("ionization.files.dat"),
-        get_test_data_path("glows/l3e_pipeline_settings.json"),
-        Path("EnGridHi.dat"),
-        Path("imap_glows_l3d_solar-hist_20250501-repoint00110_v001.cdf"),
-        Path("lyaSeriesV4_2021b.dat"),
-        Path("solar_uv_anisotropy_NP.1.0_SP.1.0.dat"),
-        Path("speed3D.v01.Legendre.2021b.dat"),
-        Path("density3D.v01.Legendre.2021b.dat"),
-        Path("phion_Hydrogen_T12F107_2021b.dat"),
-        Path("swEqtrElectrons5_2021b.dat"),
-        Path("ionization.files.dat"),
-        get_test_data_path("glows/l3e_pipeline_settings.json"),
-        Path(get_test_instrument_team_data_path("glows/GLOWS_L3d_to_L3e_processing/EnGridUltra.dat")),
-        Path(get_test_instrument_team_data_path("glows/GLOWS_L3d_to_L3e_processing/tessAng16.dat")),
+@environment_variables({"REPOINT_DATA_FILEPATH": get_test_data_path("fake_1_day_repointing_file.csv")})
+@patch("imap_l3_processing.glows.glows_processor.imap_data_access.upload")
+def run_glows_l3e_lo_with_less_mocks(_):
+    l3d_file = "imap_glows_l3d_solar-hist_20250501-repoint05599_v002.cdf"
+    lo_processing_input_collection = ProcessingInputCollection(
+        AncillaryInput("imap_glows_density-3d_20100101_v001.dat"),
+        AncillaryInput("imap_glows_energy-grid-lo_20100101_v001.dat"),
+        AncillaryInput("imap_glows_ionization-files_20100101_v001.dat"),
+        AncillaryInput("imap_glows_lya-series_20100101_v001.dat"),
+        AncillaryInput("imap_glows_phion-hydrogen_20100101_v001.dat"),
+        AncillaryInput("imap_glows_pipeline-settings-l3e_20100101_v002.json"),
+        AncillaryInput("imap_glows_solar-uv-anisotropy_20100101_v001.dat"),
+        AncillaryInput("imap_glows_speed-3d_20100101_v001.dat"),
+        AncillaryInput("imap_glows_sw-eqtr-electrons_20100101_v001.dat"),
+        AncillaryInput("imap_glows_tess-xyz-8_20100101_v001.dat"),
+        ScienceInput(l3d_file)
+    )
 
-    ]
+    hi_45_processing_input_collection = ProcessingInputCollection(
+        AncillaryInput("imap_glows_density-3d_20100101_v001.dat"),
+        AncillaryInput("imap_glows_energy-grid-hi_20100101_v001.dat"),
+        AncillaryInput("imap_glows_ionization-files_20100101_v001.dat"),
+        AncillaryInput("imap_glows_lya-series_20100101_v001.dat"),
+        AncillaryInput("imap_glows_phion-hydrogen_20100101_v001.dat"),
+        AncillaryInput("imap_glows_pipeline-settings-l3e_20100101_v002.json"),
+        AncillaryInput("imap_glows_solar-uv-anisotropy_20100101_v001.dat"),
+        AncillaryInput("imap_glows_speed-3d_20100101_v001.dat"),
+        AncillaryInput("imap_glows_sw-eqtr-electrons_20100101_v001.dat"),
+        ScienceInput(l3d_file)
+    )
+    hi_90_processing_input_collection = ProcessingInputCollection(
+        AncillaryInput("imap_glows_density-3d_20100101_v001.dat"),
+        AncillaryInput("imap_glows_energy-grid-hi_20100101_v001.dat"),
+        AncillaryInput("imap_glows_ionization-files_20100101_v001.dat"),
+        AncillaryInput("imap_glows_lya-series_20100101_v001.dat"),
+        AncillaryInput("imap_glows_phion-hydrogen_20100101_v001.dat"),
+        AncillaryInput("imap_glows_pipeline-settings-l3e_20100101_v002.json"),
+        AncillaryInput("imap_glows_solar-uv-anisotropy_20100101_v001.dat"),
+        AncillaryInput("imap_glows_speed-3d_20100101_v001.dat"),
+        AncillaryInput("imap_glows_sw-eqtr-electrons_20100101_v001.dat"),
+        ScienceInput(l3d_file)
+    )
 
-    mock_get_repoint_date_range.return_value = (
-        np.datetime64(datetime.fromisoformat("2025-04-20T00:00:00.000000000")),
-        np.datetime64(datetime.fromisoformat("2025-04-21T00:00:00.000000000")))
+    ul_processing_input_collection = ProcessingInputCollection(
+        AncillaryInput("imap_glows_density-3d_20100101_v001.dat"),
+        AncillaryInput("imap_glows_energy-grid-ultra_20100101_v001.dat"),
+        AncillaryInput("imap_glows_ionization-files_20100101_v001.dat"),
+        AncillaryInput("imap_glows_lya-series_20100101_v001.dat"),
+        AncillaryInput("imap_glows_phion-hydrogen_20100101_v001.dat"),
+        AncillaryInput("imap_glows_pipeline-settings-l3e_20100101_v002.json"),
+        AncillaryInput("imap_glows_solar-uv-anisotropy_20100101_v001.dat"),
+        AncillaryInput("imap_glows_speed-3d_20100101_v001.dat"),
+        AncillaryInput("imap_glows_sw-eqtr-electrons_20100101_v001.dat"),
+        AncillaryInput("imap_glows_tess-ang-16_20100101_v001.dat"),
+        ScienceInput(l3d_file)
+    )
 
-    lo_input_metadata = InputMetadata(instrument='glows', data_level='l3e', start_date=datetime(2015, 4, 10),
-                                      end_date=datetime(2015, 4, 11), version='v004',
+    version = 'v007'
+    start_date = datetime(2025, 5, 1)
+    end_date = datetime(2025, 5, 2)
+
+    lo_input_metadata = InputMetadata(instrument='glows', data_level='l3e', start_date=start_date,
+                                      end_date=end_date, version=version,
                                       descriptor='survival-probability-lo')
 
-    glows_processor: GlowsProcessor = GlowsProcessor(MagicMock(), lo_input_metadata)
+    glows_processor: GlowsProcessor = GlowsProcessor(lo_processing_input_collection, lo_input_metadata)
     glows_processor.process()
 
-    hi_45_input_metadata = InputMetadata(instrument='glows', data_level='l3e', start_date=datetime(2015, 4, 10),
-                                         end_date=datetime(2015, 4, 11), version='v004',
+    hi_45_input_metadata = InputMetadata(instrument='glows', data_level='l3e', start_date=start_date,
+                                         end_date=end_date, version=version,
                                          descriptor='survival-probability-hi-45')
 
-    glows_processor: GlowsProcessor = GlowsProcessor(MagicMock(), hi_45_input_metadata)
+    glows_processor: GlowsProcessor = GlowsProcessor(hi_45_processing_input_collection, hi_45_input_metadata)
     glows_processor.process()
 
-    hi_90_input_metadata = InputMetadata(instrument='glows', data_level='l3e', start_date=datetime(2015, 4, 10),
-                                         end_date=datetime(2015, 4, 11), version='v004',
+    hi_90_input_metadata = InputMetadata(instrument='glows', data_level='l3e', start_date=start_date,
+                                         end_date=end_date, version=version,
                                          descriptor='survival-probability-hi-90')
 
-    glows_processor: GlowsProcessor = GlowsProcessor(MagicMock(), hi_90_input_metadata)
+    glows_processor: GlowsProcessor = GlowsProcessor(hi_90_processing_input_collection, hi_90_input_metadata)
     glows_processor.process()
 
-    ul_input_metadata = InputMetadata(instrument='glows', data_level='l3e', start_date=datetime(2015, 4, 10),
-                                      end_date=datetime(2015, 4, 11), version='v004',
+    ul_input_metadata = InputMetadata(instrument='glows', data_level='l3e', start_date=start_date,
+                                      end_date=end_date, version=version,
                                       descriptor='survival-probability-ul')
 
-    glows_processor: GlowsProcessor = GlowsProcessor(MagicMock(), ul_input_metadata)
+    glows_processor: GlowsProcessor = GlowsProcessor(ul_processing_input_collection, ul_input_metadata)
     glows_processor.process()
 
 
@@ -451,13 +472,14 @@ def run_glows_l3bc():
     cr = 2091
     external_files = {
         'f107_raw_data': get_test_instrument_team_data_path('glows/f107_fluxtable.txt'),
-        'omni_raw_data': get_test_instrument_team_data_path('glows/omni_2010.dat')
+        'omni_raw_data': get_test_instrument_team_data_path('glows/omni2_all_years.dat')
     }
     ancillary_files = {
         'uv_anisotropy': get_test_data_path('glows/imap_glows_uv-anisotropy-1CR_20100101_v001.json'),
         'WawHelioIonMP_parameters': get_test_data_path('glows/imap_glows_WawHelioIonMP_20100101_v002.json'),
         'bad_days_list': get_test_data_path('glows/imap_glows_bad-days-list_v001.dat'),
-        'pipeline_settings': get_test_instrument_team_data_path('glows/imap_glows_pipeline-settings-L3bc_v001.json')
+        'pipeline_settings': get_test_instrument_team_data_path(
+            'glows/imap_glows_pipeline-settings-L3bc_20250707_v002.json')
     }
     l3a_data_folder_path = get_test_data_path('glows/l3a_products')
     l3a_data = []
