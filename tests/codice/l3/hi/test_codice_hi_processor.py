@@ -47,10 +47,12 @@ class TestCodiceHiProcessor(unittest.TestCase):
         mock_fetch_dependencies.assert_not_called()
         mock_process_l3a.assert_not_called()
 
-    def test_process_l3a_returns(self):
-        epochs = np.array([datetime(2025, 1, 1, 0, 0, 0), datetime(2025, 1, 1, 0, 0, 0)])
+    def test_process_l3a_returns_data_product(self):
+        epochs = np.array([datetime(2025, 1, 1), datetime(2025, 1, 1)])
         energies = np.array([[2, 4], [6, 8]])
-        l2_data = CodiceL2HiData(epochs, *self.create_priority_events(energies))
+
+        l2_priority_events, reshaped_l2_values = self.create_priority_events(energies)
+        l2_data = CodiceL2HiData(epochs, *l2_priority_events)
         energy_per_nuc_dictionary = {i: EnergyPerNuc(i * 10, i * 100, i * 1000) for i in np.arange(1, 25)}
         tof_lookup = TOFLookup(energy_per_nuc_dictionary)
         dependencies = CodiceHiL3Dependencies(tof_lookup=tof_lookup, codice_l2_hi_data=l2_data)
@@ -58,92 +60,37 @@ class TestCodiceHiProcessor(unittest.TestCase):
         processor = CodiceHiProcessor(Mock(), Mock())
         codice_direct_event_product = processor.process_l3a(dependencies)
 
-        p0_expected_energy_per_nuc = np.array([[10, 20], [30, 40]])
-        p1_expected_energy_per_nuc = np.array([[50, 60], [70, 80]])
-        p2_expected_energy_per_nuc = np.array([[90, 100], [110, 120]])
-        p3_expected_energy_per_nuc = np.array([[130, 140], [150, 160]])
-        p4_expected_energy_per_nuc = np.array([[170, 180], [190, 200]])
-        p5_expected_energy_per_nuc = np.array([[210, 220], [230, 240]])
+        expected_energy_per_nuc = np.array(
+            [energy_per_nuc.energy for energy_per_nuc in energy_per_nuc_dictionary.values()]).reshape(2, 6, 2)
+        expected_energy_per_nuc = np.stack(expected_energy_per_nuc.reshape(6, 2, 2), axis=1)
 
-        # @formatter: off
-        p0_expected_energy_per_nuc = (
-            p0_expected_energy_per_nuc, p0_expected_energy_per_nuc * 10, p0_expected_energy_per_nuc * 100)
-        p1_expected_energy_per_nuc = (
-            p1_expected_energy_per_nuc, p1_expected_energy_per_nuc * 10, p1_expected_energy_per_nuc * 100)
-        p2_expected_energy_per_nuc = (
-            p2_expected_energy_per_nuc, p2_expected_energy_per_nuc * 10, p2_expected_energy_per_nuc * 100)
-        p3_expected_energy_per_nuc = (
-            p3_expected_energy_per_nuc, p3_expected_energy_per_nuc * 10, p3_expected_energy_per_nuc * 100)
-        p4_expected_energy_per_nuc = (
-            p4_expected_energy_per_nuc, p4_expected_energy_per_nuc * 10, p4_expected_energy_per_nuc * 100)
-        p5_expected_energy_per_nuc = (
-            p5_expected_energy_per_nuc, p5_expected_energy_per_nuc * 10, p5_expected_energy_per_nuc * 100)
+        (reshaped_l2_data_quality,
+         reshaped_l2_energy_range,
+         reshaped_l2_multi_flag,
+         reshaped_l2_number_of_events,
+         reshaped_l2_ssd_energy,
+         reshaped_l2_ssd_id,
+         reshaped_l2_spin_angle,
+         reshaped_l2_spin_number,
+         reshaped_l2_time_of_flight,
+         reshaped_l2_type) = reshaped_l2_values
 
-        self._assert_estimated_mass(l2_priority_event=l2_data.priority_event_0,
-                                    actual_calculated_mass_lower=codice_direct_event_product.p0_estimated_mass_lower,
-                                    actual_calculated_mass=codice_direct_event_product.p0_estimated_mass,
-                                    actual_calculated_mass_upper=codice_direct_event_product.p0_estimated_mass_upper,
-                                    actual_energy_per_nuc_lower=codice_direct_event_product.p0_energy_per_nuc_lower,
-                                    actual_energy_per_nuc=codice_direct_event_product.p0_energy_per_nuc,
-                                    actual_energy_per_nuc_upper=codice_direct_event_product.p0_energy_per_nuc_upper,
-                                    expected_energy_per_nuc_lower=p0_expected_energy_per_nuc[0],
-                                    expected_energy_per_nuc=p0_expected_energy_per_nuc[1],
-                                    expected_energy_per_nuc_upper=p0_expected_energy_per_nuc[2])
+        np.testing.assert_array_equal(codice_direct_event_product.epoch, l2_data.epochs)
+        np.testing.assert_array_equal(codice_direct_event_product.data_quality, reshaped_l2_data_quality)
+        np.testing.assert_array_equal(codice_direct_event_product.erge, reshaped_l2_energy_range)
+        np.testing.assert_array_equal(codice_direct_event_product.multi_flag, reshaped_l2_multi_flag)
+        np.testing.assert_array_equal(codice_direct_event_product.num_of_events, reshaped_l2_number_of_events)
+        np.testing.assert_array_equal(codice_direct_event_product.ssd_energy, reshaped_l2_ssd_energy)
+        np.testing.assert_array_equal(codice_direct_event_product.ssd_id, reshaped_l2_ssd_id)
+        np.testing.assert_array_equal(codice_direct_event_product.spin_angle, reshaped_l2_spin_angle)
+        np.testing.assert_array_equal(codice_direct_event_product.spin_number, reshaped_l2_spin_number)
+        np.testing.assert_array_equal(codice_direct_event_product.tof, reshaped_l2_time_of_flight)
+        np.testing.assert_array_equal(codice_direct_event_product.type, reshaped_l2_type)
 
-        self._assert_estimated_mass(l2_priority_event=l2_data.priority_event_1,
-                                    actual_calculated_mass_lower=codice_direct_event_product.p1_estimated_mass_lower,
-                                    actual_calculated_mass=codice_direct_event_product.p1_estimated_mass,
-                                    actual_calculated_mass_upper=codice_direct_event_product.p1_estimated_mass_upper,
-                                    actual_energy_per_nuc_lower=codice_direct_event_product.p1_energy_per_nuc_lower,
-                                    actual_energy_per_nuc=codice_direct_event_product.p1_energy_per_nuc,
-                                    actual_energy_per_nuc_upper=codice_direct_event_product.p1_energy_per_nuc_upper,
-                                    expected_energy_per_nuc_lower=p1_expected_energy_per_nuc[0],
-                                    expected_energy_per_nuc=p1_expected_energy_per_nuc[1],
-                                    expected_energy_per_nuc_upper=p1_expected_energy_per_nuc[2])
+        np.testing.assert_array_equal(codice_direct_event_product.ssd_energy / expected_energy_per_nuc,
+                                      codice_direct_event_product.estimated_mass)
 
-        self._assert_estimated_mass(l2_priority_event=l2_data.priority_event_2,
-                                    actual_calculated_mass_lower=codice_direct_event_product.p2_estimated_mass_lower,
-                                    actual_calculated_mass=codice_direct_event_product.p2_estimated_mass,
-                                    actual_calculated_mass_upper=codice_direct_event_product.p2_estimated_mass_upper,
-                                    actual_energy_per_nuc_lower=codice_direct_event_product.p2_energy_per_nuc_lower,
-                                    actual_energy_per_nuc=codice_direct_event_product.p2_energy_per_nuc,
-                                    actual_energy_per_nuc_upper=codice_direct_event_product.p2_energy_per_nuc_upper,
-                                    expected_energy_per_nuc_lower=p2_expected_energy_per_nuc[0],
-                                    expected_energy_per_nuc=p2_expected_energy_per_nuc[1],
-                                    expected_energy_per_nuc_upper=p2_expected_energy_per_nuc[2])
-
-        self._assert_estimated_mass(l2_priority_event=l2_data.priority_event_3,
-                                    actual_calculated_mass_lower=codice_direct_event_product.p3_estimated_mass_lower,
-                                    actual_calculated_mass=codice_direct_event_product.p3_estimated_mass,
-                                    actual_calculated_mass_upper=codice_direct_event_product.p3_estimated_mass_upper,
-                                    actual_energy_per_nuc_lower=codice_direct_event_product.p3_energy_per_nuc_lower,
-                                    actual_energy_per_nuc=codice_direct_event_product.p3_energy_per_nuc,
-                                    actual_energy_per_nuc_upper=codice_direct_event_product.p3_energy_per_nuc_upper,
-                                    expected_energy_per_nuc_lower=p3_expected_energy_per_nuc[0],
-                                    expected_energy_per_nuc=p3_expected_energy_per_nuc[1],
-                                    expected_energy_per_nuc_upper=p3_expected_energy_per_nuc[2])
-
-        self._assert_estimated_mass(l2_priority_event=l2_data.priority_event_4,
-                                    actual_calculated_mass_lower=codice_direct_event_product.p4_estimated_mass_lower,
-                                    actual_calculated_mass=codice_direct_event_product.p4_estimated_mass,
-                                    actual_calculated_mass_upper=codice_direct_event_product.p4_estimated_mass_upper,
-                                    actual_energy_per_nuc_lower=codice_direct_event_product.p4_energy_per_nuc_lower,
-                                    actual_energy_per_nuc=codice_direct_event_product.p4_energy_per_nuc,
-                                    actual_energy_per_nuc_upper=codice_direct_event_product.p4_energy_per_nuc_upper,
-                                    expected_energy_per_nuc_lower=p4_expected_energy_per_nuc[0],
-                                    expected_energy_per_nuc=p4_expected_energy_per_nuc[1],
-                                    expected_energy_per_nuc_upper=p4_expected_energy_per_nuc[2])
-
-        self._assert_estimated_mass(l2_priority_event=l2_data.priority_event_5,
-                                    actual_calculated_mass_lower=codice_direct_event_product.p5_estimated_mass_lower,
-                                    actual_calculated_mass=codice_direct_event_product.p5_estimated_mass,
-                                    actual_calculated_mass_upper=codice_direct_event_product.p5_estimated_mass_upper,
-                                    actual_energy_per_nuc_lower=codice_direct_event_product.p5_energy_per_nuc_lower,
-                                    actual_energy_per_nuc=codice_direct_event_product.p5_energy_per_nuc,
-                                    actual_energy_per_nuc_upper=codice_direct_event_product.p5_energy_per_nuc_upper,
-                                    expected_energy_per_nuc_lower=p5_expected_energy_per_nuc[0],
-                                    expected_energy_per_nuc=p5_expected_energy_per_nuc[1],
-                                    expected_energy_per_nuc_upper=p5_expected_energy_per_nuc[2])
+        np.testing.assert_array_equal(expected_energy_per_nuc, codice_direct_event_product.energy_per_nuc)
 
     def test_process_l3b(self):
         rng = np.random.default_rng()
@@ -245,6 +192,18 @@ class TestCodiceHiProcessor(unittest.TestCase):
         ssd_id_all_events = np.arange(1, 25).reshape(6, 2, 2) * 1000
         tof_all_events = np.arange(1, 25).reshape(6, 2, 2)
 
+        (reshaped_l2_data_quality,
+         reshaped_l2_number_of_events) = [np.full((2, 6), np.nan) for _ in range(2)]
+
+        (reshaped_l2_energy_range,
+         reshaped_l2_multi_flag,
+         reshaped_l2_ssd_energy,
+         reshaped_l2_ssd_id,
+         reshaped_l2_spin_angle,
+         reshaped_l2_spin_number,
+         reshaped_l2_time_of_flight,
+         reshaped_l2_type) = [np.full((2, 6, 2), np.nan) for _ in range(8)]
+
         events = []
         for i in range(6):
             data_quality = np.arange(2) * 1
@@ -259,19 +218,26 @@ class TestCodiceHiProcessor(unittest.TestCase):
             type = np.arange(4).reshape(2, 2) * i
             events.append(PriorityEventL2(data_quality, energy_range, multi_flag, number_of_events, ssd_energy, ssd_id,
                                           spin_angle, spin_number, time_of_flight, type))
+            reshaped_l2_data_quality[:, i] = data_quality
+            reshaped_l2_energy_range[:, i, :] = energy_range
+            reshaped_l2_multi_flag[:, i, :] = multi_flag
+            reshaped_l2_number_of_events[:, i] = number_of_events
+            reshaped_l2_ssd_energy[:, i, :] = ssd_energy
+            reshaped_l2_ssd_id[:, i, :] = ssd_id
+            reshaped_l2_spin_angle[:, i, :] = spin_angle
+            reshaped_l2_spin_number[:, i, :] = spin_number
+            reshaped_l2_time_of_flight[:, i, :] = time_of_flight
+            reshaped_l2_type[:, i, :] = type
 
-        return events
+        return events, (
+            reshaped_l2_data_quality, reshaped_l2_energy_range, reshaped_l2_multi_flag, reshaped_l2_number_of_events,
+            reshaped_l2_ssd_energy, reshaped_l2_ssd_id, reshaped_l2_spin_angle, reshaped_l2_spin_number,
+            reshaped_l2_time_of_flight, reshaped_l2_type)
 
     def _assert_estimated_mass(self, l2_priority_event,
                                actual_calculated_mass_lower, actual_calculated_mass, actual_calculated_mass_upper,
                                actual_energy_per_nuc_lower, actual_energy_per_nuc, actual_energy_per_nuc_upper,
                                expected_energy_per_nuc_lower, expected_energy_per_nuc, expected_energy_per_nuc_upper):
-        np.testing.assert_array_equal(l2_priority_event.ssd_energy / expected_energy_per_nuc_lower,
-                                      actual_calculated_mass_lower)
         np.testing.assert_array_equal(l2_priority_event.ssd_energy / expected_energy_per_nuc, actual_calculated_mass)
-        np.testing.assert_array_equal(l2_priority_event.ssd_energy / expected_energy_per_nuc_upper,
-                                      actual_calculated_mass_upper)
 
-        np.testing.assert_array_equal(expected_energy_per_nuc_lower, actual_energy_per_nuc_lower)
         np.testing.assert_array_equal(expected_energy_per_nuc, actual_energy_per_nuc)
-        np.testing.assert_array_equal(expected_energy_per_nuc_upper, actual_energy_per_nuc_upper)

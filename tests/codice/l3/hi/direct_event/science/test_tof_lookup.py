@@ -3,6 +3,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
+import numpy as np
+
 from imap_l3_processing.codice.l3.hi.direct_event.science.tof_lookup import TOFLookup
 
 
@@ -27,6 +29,4 @@ class TestTOFLookup(unittest.TestCase):
             tof_lookup = TOFLookup.read_from_file(temp_tof_csv_file)
 
             for tof_bit in range(1024):
-                self.assertEqual(tof_lookup_rows[tof_bit][0], tof_lookup[tof_bit].lower_bound)
-                self.assertEqual(tof_lookup_rows[tof_bit][1], tof_lookup[tof_bit].energy)
-                self.assertEqual(tof_lookup_rows[tof_bit][2], tof_lookup[tof_bit].upper_bound)
+                np.testing.assert_array_equal(tof_lookup_rows[tof_bit], tof_lookup[tof_bit])
