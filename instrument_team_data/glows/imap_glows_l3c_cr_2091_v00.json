@@ -1,88 +1,88 @@
 {
-   "header": {
-      "software_version": "1.1",
-      "filename": "data_l3c/imap_glows_l3c_cr_2091_v00.json",
-      "ancillary_data_files": {
-         "WawHelioIonMP_parameters": "data_ancillary/imap_glows_WawHelioIonMP_v002.json",
-         "bad_day_list": "data_ancillary/imap_glows_bad-days-list_v001.dat",
-         "pipeline_settings": "data_ancillary/imap_glows_pipeline-settings-L3bc_v001.json",
-         "uv_anisotropy": "data_ancillary/imap_glows_uv-anisotropy-1CR_v001.json"
-      },
-      "external_dependeciens": [
-         "external_dependencies/omni2_all_years.dat"
-      ],
-      "l3b_input_filename": "data_l3b/imap_glows_l3b_cr_2091_v00.json"
-   },
-   "date": "2010-01-02 00:00:00.000",
-   "CR": 2091,
-   "solar_wind_ecliptic": {
-      "plasma_speed": 322.32977099236643,
-      "proton_density": 6.485230490346382,
-      "alpha_abundance": 0.010973509933774835
-   },
-   "solar_wind_profile": {
-      "lat_grid": [
-         -90,
-         -80,
-         -70,
-         -60,
-         -50,
-         -40,
-         -30,
-         -20,
-         -10,
-         0,
-         10,
-         20,
-         30,
-         40,
-         50,
-         60,
-         70,
-         80,
-         90
-      ],
-      "plasma_speed": [
-         485.0,
-         486.0,
-         490.0,
-         472.0,
-         430.0,
-         372.0,
-         298.0,
-         248.0,
-         237.0,
-         241.0,
-         235.0,
-         246.0,
-         309.0,
-         388.0,
-         435.0,
-         466.0,
-         481.0,
-         484.0,
-         484.0
-      ],
-      "proton_density": [
-         2.7564574007971876,
-         2.746461677575121,
-         2.706933665005411,
-         2.8906876298799866,
-         3.385255859429423,
-         4.263166508464801,
-         5.882809837707946,
-         7.50445511298568,
-         7.94848019871567,
-         7.782558058794736,
-         8.033453169791333,
-         7.582376531809572,
-         5.59397437010548,
-         3.9939519182226797,
-         3.3209869807290895,
-         2.9554311933726125,
-         2.7969030832753043,
-         2.766499136393851,
-         2.766499136393851
-      ]
-   }
+  "header": {
+    "software_version": "1.1",
+    "filename": "data_l3c/imap_glows_l3c_cr_2091_v00.json",
+    "ancillary_data_files": {
+      "WawHelioIonMP_parameters": "data_ancillary/imap_glows_WawHelioIonMP_v002.json",
+      "bad_day_list": "data_ancillary/imap_glows_bad-days-list_v001.dat",
+      "pipeline_settings": "data_ancillary/imap_glows_pipeline-settings-L3bc_v001.json",
+      "uv_anisotropy": "data_ancillary/imap_glows_uv-anisotropy-1CR_v001.json"
+    },
+    "external_dependeciens": [
+      "external_dependencies/omni2_all_years.dat"
+    ],
+    "l3b_input_filename": "data_l3b/imap_glows_l3b_cr_2091_v00.json"
+  },
+  "date": "2010-01-02 00:00:00.000",
+  "CR": 2091,
+  "solar_wind_ecliptic": {
+    "plasma_speed": 322.32977099236643,
+    "proton_density": 6.485230490346382,
+    "alpha_abundance": 0.010973509933774835
+  },
+  "solar_wind_profile": {
+    "lat_grid": [
+      -90,
+      -80,
+      -70,
+      -60,
+      -50,
+      -40,
+      -30,
+      -20,
+      -10,
+      0,
+      10,
+      20,
+      30,
+      40,
+      50,
+      60,
+      70,
+      80,
+      90
+    ],
+    "plasma_speed": [
+      605.0,
+      606.0,
+      610.0,
+      591.0,
+      549.0,
+      491.0,
+      416.0,
+      365.0,
+      354.0,
+      358.0,
+      352.0,
+      362.0,
+      428.0,
+      508.0,
+      555.0,
+      586.0,
+      601.0,
+      604.0,
+      604.0
+    ],
+    "proton_density": [
+      2.4547181047349254,
+      2.4467038403148997,
+      2.4149720038860267,
+      2.570441359036487,
+      2.9610887036269116,
+      3.6316400602923613,
+      4.812154122520405,
+      5.9089294594522785,
+      6.187611857856551,
+      6.084287990327043,
+      6.2401531851527565,
+      5.9832497125614985,
+      4.59334774596852,
+      3.416904484347662,
+      2.9009393237821866,
+      2.613418752872842,
+      2.4871052155632594,
+      2.4627652119710146,
+      2.4627652119710146
+    ]
+  }
 }
