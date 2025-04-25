@@ -20,62 +20,77 @@ class TestModels(unittest.TestCase):
             rng = np.random.default_rng()
             with CDF(str(cdf_file_path), readonly=False, masterpath="") as cdf_file:
                 epoch = np.array([datetime(2010, 1, 1), datetime(2010, 1, 2)])
-                epoch_delta = np.repeat(len(epoch), 2)
-                energy = np.geomspace(2, 1000)
+                epoch_delta_minus = rng.random(len(epoch))
+                epoch_delta_plus = rng.random(len(epoch))
+                energy_table = np.geomspace(2, 1000)
                 spin_sector = np.linspace(0, 360, 24)
-                ssd_id = np.linspace(0, 360, 16)
-                h_intensities = rng.random((len(epoch), len(energy), len(spin_sector), len(ssd_id)))
-                he_intensities = rng.random((len(epoch), len(energy), len(spin_sector), len(ssd_id)))
-                c4_intensities = rng.random((len(epoch), len(energy), len(spin_sector), len(ssd_id)))
-                c5_intensities = rng.random((len(epoch), len(energy), len(spin_sector), len(ssd_id)))
-                c6_intensities = rng.random((len(epoch), len(energy), len(spin_sector), len(ssd_id)))
-                o5_intensities = rng.random((len(epoch), len(energy), len(spin_sector), len(ssd_id)))
-                o6_intensities = rng.random((len(epoch), len(energy), len(spin_sector), len(ssd_id)))
-                o7_intensities = rng.random((len(epoch), len(energy), len(spin_sector), len(ssd_id)))
-                o8_intensities = rng.random((len(epoch), len(energy), len(spin_sector), len(ssd_id)))
-                mg_intensities = rng.random((len(epoch), len(energy), len(spin_sector), len(ssd_id)))
-                si_intensities = rng.random((len(epoch), len(energy), len(spin_sector), len(ssd_id)))
-                fe_low_intensities = rng.random((len(epoch), len(energy), len(spin_sector), len(ssd_id)))
-                fe_high_intensities = rng.random((len(epoch), len(energy), len(spin_sector), len(ssd_id)))
+                hplus = rng.random((len(epoch), len(energy_table), len(spin_sector)))
+                heplus = rng.random((len(epoch), len(energy_table), len(spin_sector)))
+                heplusplus = rng.random((len(epoch), len(energy_table), len(spin_sector)))
+                ne = rng.random((len(epoch), len(energy_table), len(spin_sector)))
+                cplus4 = rng.random((len(epoch), len(energy_table), len(spin_sector)))
+                cplus5 = rng.random((len(epoch), len(energy_table), len(spin_sector)))
+                cplus6 = rng.random((len(epoch), len(energy_table), len(spin_sector)))
+                oplus5 = rng.random((len(epoch), len(energy_table), len(spin_sector)))
+                oplus6 = rng.random((len(epoch), len(energy_table), len(spin_sector)))
+                oplus7 = rng.random((len(epoch), len(energy_table), len(spin_sector)))
+                oplus8 = rng.random((len(epoch), len(energy_table), len(spin_sector)))
+                mg = rng.random((len(epoch), len(energy_table), len(spin_sector)))
+                si = rng.random((len(epoch), len(energy_table), len(spin_sector)))
+                cnoplus = rng.random((len(epoch), len(energy_table)))
+                fe_loq = rng.random((len(epoch), len(energy_table), len(spin_sector)))
+                fe_hiq = rng.random((len(epoch), len(energy_table), len(spin_sector)))
+                data_quality = rng.random(len(epoch))
+                spin_sector_index = np.array([1])
 
                 cdf_file['epoch'] = epoch
-                cdf_file['epoch_delta'] = epoch_delta
-                cdf_file['energy'] = energy
+                cdf_file['epoch_delta_minus'] = epoch_delta_minus
+                cdf_file['epoch_delta_plus'] = epoch_delta_plus
+                cdf_file['energy_table'] = energy_table
                 cdf_file['spin_sector'] = spin_sector
-                cdf_file['ssd_id'] = ssd_id
-                cdf_file['h_intensities'] = h_intensities
-                cdf_file['he_intensities'] = he_intensities
-                cdf_file['c4_intensities'] = c4_intensities
-                cdf_file['c5_intensities'] = c5_intensities
-                cdf_file['c6_intensities'] = c6_intensities
-                cdf_file['o5_intensities'] = o5_intensities
-                cdf_file['o6_intensities'] = o6_intensities
-                cdf_file['o7_intensities'] = o7_intensities
-                cdf_file['o8_intensities'] = o8_intensities
-                cdf_file['mg_intensities'] = mg_intensities
-                cdf_file['si_intensities'] = si_intensities
-                cdf_file['fe_low_intensities'] = fe_low_intensities
-                cdf_file['fe_high_intensities'] = fe_high_intensities
+                cdf_file['hplus'] = hplus
+                cdf_file['heplusplus'] = heplusplus
+                cdf_file['heplus'] = heplus
+                cdf_file['ne'] = ne
+                cdf_file['cplus4'] = cplus4
+                cdf_file['cplus5'] = cplus5
+                cdf_file['cplus6'] = cplus6
+                cdf_file['oplus5'] = oplus5
+                cdf_file['oplus6'] = oplus6
+                cdf_file['oplus7'] = oplus7
+                cdf_file['oplus8'] = oplus8
+                cdf_file['cnoplus'] = cnoplus
+                cdf_file['mg'] = mg
+                cdf_file['si'] = si
+                cdf_file['fe_loq'] = fe_loq
+                cdf_file['fe_hiq'] = fe_hiq
+                cdf_file['data_quality'] = data_quality
+                cdf_file['spin_sector_index'] = spin_sector_index
 
             result: CodiceLoL2Data = CodiceLoL2Data.read_from_cdf(cdf_file_path)
             np.testing.assert_array_equal(result.epoch, epoch)
-            np.testing.assert_array_equal(result.epoch_delta, epoch_delta)
-            np.testing.assert_array_equal(result.energy, energy)
+            np.testing.assert_array_equal(result.epoch_delta_minus, epoch_delta_minus)
+            np.testing.assert_array_equal(result.epoch_delta_plus, epoch_delta_plus)
+            np.testing.assert_array_equal(result.energy_table, energy_table)
             np.testing.assert_array_equal(result.spin_sector, spin_sector)
-            np.testing.assert_array_equal(result.ssd_id, ssd_id)
-            np.testing.assert_array_equal(result.h_intensities, h_intensities)
-            np.testing.assert_array_equal(result.he_intensities, he_intensities)
-            np.testing.assert_array_equal(result.he_intensities, he_intensities)
-            np.testing.assert_array_equal(result.c4_intensities, c4_intensities)
-            np.testing.assert_array_equal(result.c5_intensities, c5_intensities)
-            np.testing.assert_array_equal(result.c6_intensities, c6_intensities)
-            np.testing.assert_array_equal(result.o5_intensities, o5_intensities)
-            np.testing.assert_array_equal(result.o6_intensities, o6_intensities)
-            np.testing.assert_array_equal(result.o7_intensities, o7_intensities)
-            np.testing.assert_array_equal(result.o8_intensities, o8_intensities)
-            np.testing.assert_array_equal(result.mg_intensities, mg_intensities)
-            np.testing.assert_array_equal(result.si_intensities, si_intensities)
-            np.testing.assert_array_equal(result.fe_low_intensities, fe_low_intensities)
+            np.testing.assert_array_equal(result.hplus, hplus)
+            np.testing.assert_array_equal(result.heplusplus, heplusplus)
+            np.testing.assert_array_equal(result.heplus, heplus)
+            np.testing.assert_array_equal(result.ne, ne)
+            np.testing.assert_array_equal(result.cplus4, cplus4)
+            np.testing.assert_array_equal(result.cplus5, cplus5)
+            np.testing.assert_array_equal(result.cplus6, cplus6)
+            np.testing.assert_array_equal(result.oplus5, oplus5)
+            np.testing.assert_array_equal(result.oplus6, oplus6)
+            np.testing.assert_array_equal(result.oplus7, oplus7)
+            np.testing.assert_array_equal(result.oplus8, oplus8)
+            np.testing.assert_array_equal(result.cnoplus, cnoplus)
+            np.testing.assert_array_equal(result.mg, mg)
+            np.testing.assert_array_equal(result.si, si)
+            np.testing.assert_array_equal(result.fe_loq, fe_loq)
+            np.testing.assert_array_equal(result.fe_hiq, fe_hiq)
+            np.testing.assert_array_equal(result.data_quality, data_quality)
+            np.testing.assert_array_equal(result.spin_sector_index, spin_sector_index)
 
     def test_codice_lo_l2_direct_event_read_from_cdf(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -124,7 +139,7 @@ class TestModels(unittest.TestCase):
                 np.testing.assert_array_equal(priority_event.apd_energy, expected_values[f"P{index}_APDEnergy"])
                 np.testing.assert_array_equal(priority_event.apd_gain, expected_values[f"P{index}_APDGain"])
                 np.testing.assert_array_equal(priority_event.apd_id, expected_values[f"P{index}_APD_ID"])
-                np.testing.assert_array_equal(priority_event.data_quality,expected_values[f"P{index}_DataQuality"])
+                np.testing.assert_array_equal(priority_event.data_quality, expected_values[f"P{index}_DataQuality"])
                 np.testing.assert_array_equal(priority_event.energy_step, expected_values[f"P{index}_EnergyStep"])
                 np.testing.assert_array_equal(priority_event.multi_flag, expected_values[f"P{index}_MultiFlag"])
                 np.testing.assert_array_equal(priority_event.num_events, expected_values[f"P{index}_NumEvents"])
@@ -167,40 +182,62 @@ class TestModels(unittest.TestCase):
                          priority_event.total_events_binned_by_energy_step_and_spin_angle())
 
     def test_get_species(self):
-        h_intensities = np.array([sentinel.h_intensities])
-        he_intensities = np.array([sentinel.he_intensities])
-        c4_intensities = np.array([sentinel.c4_intensities])
-        c5_intensities = np.array([sentinel.c5_intensities])
-        c6_intensities = np.array([sentinel.c6_intensities])
-        o5_intensities = np.array([sentinel.o5_intensities])
-        o6_intensities = np.array([sentinel.o6_intensities])
-        o7_intensities = np.array([sentinel.o7_intensities])
-        o8_intensities = np.array([sentinel.o8_intensities])
-        mg_intensities = np.array([sentinel.mg_intensities])
-        si_intensities = np.array([sentinel.si_intensities])
-        fe_low_intensities = np.array([sentinel.fe_low_intensities])
-        fe_high_intensities = np.array([sentinel.fe_high_intensities])
+        hplus = np.array([sentinel.hplus])
+        heplusplus = np.array([sentinel.heplusplus])
+        heplus = np.array([sentinel.heplus])
+        ne = np.array([sentinel.ne])
+        cplus4 = np.array([sentinel.cplus4])
+        cplus5 = np.array([sentinel.cplus5])
+        cplus6 = np.array([sentinel.cplus6])
+        oplus5 = np.array([sentinel.oplus5])
+        oplus6 = np.array([sentinel.oplus6])
+        oplus7 = np.array([sentinel.oplus7])
+        oplus8 = np.array([sentinel.oplus8])
+        cnoplus = np.array([sentinel.cnoplus])
+        mg = np.array([sentinel.mg])
+        si = np.array([sentinel.si])
+        fe_loq = np.array([sentinel.fe_loq])
+        fe_hiq = np.array([sentinel.fe_hiq])
 
-        l2_data_product = CodiceLoL2Data(Mock(), Mock(), Mock(), Mock(), Mock(), h_intensities, he_intensities,
-                                         c4_intensities, c5_intensities, c6_intensities, o5_intensities, o6_intensities,
-                                         o7_intensities, o8_intensities, mg_intensities, si_intensities,
-                                         fe_low_intensities, fe_high_intensities)
+        l2_data_product = CodiceLoL2Data(Mock(), Mock(), Mock(), Mock(), Mock(),
+                                         sentinel.hplus,
+                                         sentinel.heplusplus,
+                                         sentinel.heplus,
+                                         sentinel.ne,
+                                         sentinel.cplus4,
+                                         sentinel.cplus5,
+                                         sentinel.cplus6,
+                                         sentinel.oplus5,
+                                         sentinel.oplus6,
+                                         sentinel.oplus7,
+                                         sentinel.oplus8,
+                                         sentinel.cnoplus,
+                                         sentinel.mg,
+                                         sentinel.si,
+                                         sentinel.fe_loq,
+                                         sentinel.fe_hiq,
+                                         Mock(),
+                                         Mock(),
+                                         )
 
         species_intensities = l2_data_product.get_species_intensities()
 
-        np.testing.assert_array_equal(species_intensities['H+'], h_intensities)
-        np.testing.assert_array_equal(species_intensities['He++'], he_intensities)
-        np.testing.assert_array_equal(species_intensities['C+4'], c4_intensities)
-        np.testing.assert_array_equal(species_intensities['C+5'], c5_intensities)
-        np.testing.assert_array_equal(species_intensities['C+6'], c6_intensities)
-        np.testing.assert_array_equal(species_intensities['O+5'], o5_intensities)
-        np.testing.assert_array_equal(species_intensities['O+6'], o6_intensities)
-        np.testing.assert_array_equal(species_intensities['O+7'], o7_intensities)
-        np.testing.assert_array_equal(species_intensities['O+8'], o8_intensities)
-        np.testing.assert_array_equal(species_intensities['Mg'], mg_intensities)
-        np.testing.assert_array_equal(species_intensities['Si'], si_intensities)
-        np.testing.assert_array_equal(species_intensities['Fe (low Q)'], fe_low_intensities)
-        np.testing.assert_array_equal(species_intensities['Fe (high Q)'], fe_high_intensities)
+        np.testing.assert_array_equal(species_intensities['H+'], hplus)
+        np.testing.assert_array_equal(species_intensities['He++'], heplusplus)
+        np.testing.assert_array_equal(species_intensities['He+'], heplus)
+        np.testing.assert_array_equal(species_intensities['Ne'], ne)
+        np.testing.assert_array_equal(species_intensities['C+4'], cplus4)
+        np.testing.assert_array_equal(species_intensities['C+5'], cplus5)
+        np.testing.assert_array_equal(species_intensities['C+6'], cplus6)
+        np.testing.assert_array_equal(species_intensities['O+5'], oplus5)
+        np.testing.assert_array_equal(species_intensities['O+6'], oplus6)
+        np.testing.assert_array_equal(species_intensities['O+7'], oplus7)
+        np.testing.assert_array_equal(species_intensities['O+8'], oplus8)
+        np.testing.assert_array_equal(species_intensities['CNO+'], cnoplus)
+        np.testing.assert_array_equal(species_intensities['Mg'], mg)
+        np.testing.assert_array_equal(species_intensities['Si'], si)
+        np.testing.assert_array_equal(species_intensities['Fe (low Q)'], fe_loq)
+        np.testing.assert_array_equal(species_intensities['Fe (high Q)'], fe_hiq)
 
     def test_codice_lo_l3a_partial_density_to_data_product(self):
         epoch_data = np.array([datetime.now()])
