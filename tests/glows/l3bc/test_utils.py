@@ -1,5 +1,5 @@
 import unittest
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 from typing import Optional
 from unittest.mock import patch, Mock, MagicMock, call
@@ -27,8 +27,9 @@ class TestUtils(unittest.TestCase):
         self.assertAlmostEqual(7.48702879e+01, actual_glows_lightcurve.latitude[0][0])
         self.assertAlmostEqual(154.67118388, actual_glows_lightcurve.longitude[0][0])
         self.assertEqual(datetime(2013, 9, 8, 18, 55, 14), actual_glows_lightcurve.epoch[0])
-        self.assertEqual(timedelta(seconds=36180), actual_glows_lightcurve.epoch_delta[0])
+        self.assertEqual(36180, actual_glows_lightcurve.epoch_delta[0])
         self.assertEqual(802.8, actual_glows_lightcurve.exposure_times[0][0])
+        self.assertEqual(65, actual_glows_lightcurve.number_of_bins)
         self.assertEqual(0.0007200144163580106, actual_glows_lightcurve.extra_heliospheric_background[0][0])
         self.assertEqual(-27.84000015258789, actual_glows_lightcurve.filter_temperature_average[0])
         self.assertEqual(0.0, actual_glows_lightcurve.filter_temperature_std_dev[0])

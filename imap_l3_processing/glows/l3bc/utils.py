@@ -23,7 +23,7 @@ from imap_l3_processing.glows.l3a.models import GlowsL3LightCurve, PHOTON_FLUX_U
     POSITION_ANGLE_OFFSET_AVERAGE_CDF_VAR_NAME, POSITION_ANGLE_OFFSET_STD_DEV_CDF_VAR_NAME, \
     SPIN_AXIS_ORIENTATION_AVERAGE_CDF_VAR_NAME, SPIN_AXIS_ORIENTATION_STD_DEV_CDF_VAR_NAME, \
     SPACECRAFT_LOCATION_AVERAGE_CDF_VAR_NAME, SPACECRAFT_LOCATION_STD_DEV_CDF_VAR_NAME, \
-    SPACECRAFT_VELOCITY_AVERAGE_CDF_VAR_NAME
+    SPACECRAFT_VELOCITY_AVERAGE_CDF_VAR_NAME, NUM_OF_BINS_CDF_VAR_NAME
 from imap_l3_processing.glows.l3bc.dependency_validator import validate_dependencies
 from imap_l3_processing.glows.l3bc.glows_initializer_ancillary_dependencies import GlowsInitializerAncillaryDependencies
 from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDependencies
@@ -33,11 +33,12 @@ from imap_l3_processing.glows.l3bc.models import CRToProcess
 
 def read_glows_l3a_data(cdf: CDF) -> GlowsL3LightCurve:
     epoch_delta_s = cdf[EPOCH_DELTA_CDF_VAR_NAME][...] / 1e9
-    epoch_delta = [timedelta(seconds=x) for x in epoch_delta_s]
+    epoch_delta = np.array([timedelta(seconds=x).total_seconds() for x in epoch_delta_s])
     return GlowsL3LightCurve(None,
                              photon_flux=cdf[PHOTON_FLUX_CDF_VAR_NAME][...],
                              photon_flux_uncertainty=cdf[PHOTON_FLUX_UNCERTAINTY_CDF_VAR_NAME][...],
                              raw_histogram=cdf[RAW_HISTOGRAM_CDF_VAR_NAME][...],
+                             number_of_bins=cdf[NUM_OF_BINS_CDF_VAR_NAME][...],
                              exposure_times=cdf[EXPOSURE_TIMES_CDF_VAR_NAME][...],
                              epoch=cdf[EPOCH_CDF_VAR_NAME][...],
                              epoch_delta=epoch_delta,

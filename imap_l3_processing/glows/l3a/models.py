@@ -3,7 +3,6 @@ from datetime import datetime
 from typing import TypedDict
 
 import numpy as np
-from spacepy import pycdf
 
 from imap_l3_processing.models import DataProduct, DataProductVariable
 
@@ -103,6 +102,7 @@ class GlowsL3LightCurve(DataProduct):
     photon_flux_uncertainty: np.ndarray[float]
     raw_histogram: np.ndarray[float]
     exposure_times: np.ndarray[float]
+    number_of_bins: np.ndarray[int]
     epoch: np.ndarray[datetime]
     epoch_delta: np.ndarray[float]
     spin_angle: np.ndarray[float]
@@ -136,14 +136,13 @@ class GlowsL3LightCurve(DataProduct):
         return [
             DataProductVariable(PHOTON_FLUX_CDF_VAR_NAME, self.photon_flux),
             DataProductVariable(PHOTON_FLUX_UNCERTAINTY_CDF_VAR_NAME, self.photon_flux_uncertainty),
-            DataProductVariable(RAW_HISTOGRAM_CDF_VAR_NAME, self.raw_histogram, cdf_data_type=pycdf.const.CDF_UINT4),
+            DataProductVariable(RAW_HISTOGRAM_CDF_VAR_NAME, self.raw_histogram),
             DataProductVariable(EXPOSURE_TIMES_CDF_VAR_NAME, self.exposure_times),
-            DataProductVariable(NUM_OF_BINS_CDF_VAR_NAME, len(self.photon_flux[-1]), record_varying=False,
-                                cdf_data_type=pycdf.const.CDF_UINT2),
-            DataProductVariable(EPOCH_CDF_VAR_NAME, self.epoch, cdf_data_type=pycdf.const.CDF_TIME_TT2000),
-            DataProductVariable(EPOCH_DELTA_CDF_VAR_NAME, self.epoch_delta, cdf_data_type=pycdf.const.CDF_INT8),
-            DataProductVariable(SPIN_ANGLE_CDF_VAR_NAME, self.spin_angle, record_varying=False),
-            DataProductVariable(SPIN_ANGLE_DELTA_CDF_VAR_NAME, self.spin_angle_delta, record_varying=False),
+            DataProductVariable(NUM_OF_BINS_CDF_VAR_NAME, self.number_of_bins),
+            DataProductVariable(EPOCH_CDF_VAR_NAME, self.epoch),
+            DataProductVariable(EPOCH_DELTA_CDF_VAR_NAME, self.epoch_delta),
+            DataProductVariable(SPIN_ANGLE_CDF_VAR_NAME, self.spin_angle),
+            DataProductVariable(SPIN_ANGLE_DELTA_CDF_VAR_NAME, self.spin_angle_delta),
             DataProductVariable(LATITUDE_CDF_VAR_NAME, self.latitude),
             DataProductVariable(LONGITUDE_CDF_VAR_NAME, self.longitude),
             DataProductVariable(EXTRA_HELIOSPHERIC_BACKGROUND_CDF_VAR_NAME, self.extra_heliospheric_background),
@@ -168,8 +167,8 @@ class GlowsL3LightCurve(DataProduct):
             DataProductVariable(SPACECRAFT_VELOCITY_AVERAGE_CDF_VAR_NAME, self.spacecraft_velocity_average),
             DataProductVariable(SPACECRAFT_VELOCITY_STD_DEV_CDF_VAR_NAME, self.spacecraft_velocity_std_dev),
 
-            DataProductVariable("lon_lat", np.arange(2), record_varying=False),
-            DataProductVariable("lon_lat_labels", ["lon", "lat"], record_varying=False),
-            DataProductVariable("x_y_z", np.arange(3), record_varying=False),
-            DataProductVariable("x_y_z_labels", ["X", "Y", "Z"], record_varying=False),
+            DataProductVariable("lon_lat", np.arange(2)),
+            DataProductVariable("lon_lat_labels", ["lon", "lat"]),
+            DataProductVariable("x_y_z", np.arange(3)),
+            DataProductVariable("x_y_z_labels", ["X", "Y", "Z"]),
         ]
