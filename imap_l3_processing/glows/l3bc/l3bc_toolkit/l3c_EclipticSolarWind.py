@@ -127,7 +127,7 @@ class EclipticSolarWind():
         self.mean_proton_density = proton_dens_carr
         self.mean_alpha_abundance = p_alpha_carr
 
-        return cr_grid, proton_dens_carr, plasma_speed_carr, p_alpha_carr
+        return cr_grid, plasma_speed_carr, proton_dens_carr, p_alpha_carr
 
     def _read_SWAPI_data(self, ext_dependencies):
         '''
