@@ -6,7 +6,7 @@ from imap_data_access.processing_input import ProcessingInputCollection
 
 from imap_l3_processing.codice.l3.hi.direct_event.codice_hi_l3_dependencies import CodiceHiL3Dependencies
 from imap_l3_processing.codice.l3.hi.models import CodiceHiL3PitchAngleDataProduct
-from imap_l3_processing.codice.l3.hi.models import CodiceL3HiDirectEvents, CodiceL3HiDirectEventsBuilder
+from imap_l3_processing.codice.l3.hi.models import CodiceL3HiDirectEvents
 from imap_l3_processing.codice.l3.hi.pitch_angle.codice_pitch_angle_dependencies import CodicePitchAngleDependencies
 from imap_l3_processing.hit.l3.sectored_products.science.sectored_products_algorithms import \
     hit_rebin_by_pitch_angle_and_gyrophase, get_sector_unit_vectors
@@ -31,24 +31,57 @@ class CodiceHiProcessor(Processor):
         tof_lookup = dependencies.tof_lookup
         l2_data = dependencies.codice_l2_hi_data
 
-        estimated_mass_with_bounds = []
-        energy_per_nucleons_per_priority_event = []
-        for index, priority_event in enumerate(l2_data.priority_events):
-            tof = priority_event.time_of_flight
-            energy_per_nuc_with_bounds = np.array([e for t in tof.flat for e in tof_lookup[t]]).reshape((*tof.shape, 3))
-            estimated_mass_with_bounds.append(priority_event.ssd_energy[:, :, np.newaxis] / energy_per_nuc_with_bounds)
-            energy_per_nucleons_per_priority_event.append(energy_per_nuc_with_bounds)
+        (data_quality,
+         num_of_events) = [np.full((len(l2_data.epochs), len(l2_data.priority_events)), np.nan) for _ in range(2)]
 
-        # @formatter:off
-        return (CodiceL3HiDirectEventsBuilder(l2_data)
-                            .updated_priority_event_0(energy_per_nucleons_per_priority_event[0], estimated_mass_with_bounds[0])
-                            .updated_priority_event_1(energy_per_nucleons_per_priority_event[1], estimated_mass_with_bounds[1])
-                            .updated_priority_event_2(energy_per_nucleons_per_priority_event[2], estimated_mass_with_bounds[2])
-                            .updated_priority_event_3(energy_per_nucleons_per_priority_event[3], estimated_mass_with_bounds[3])
-                            .updated_priority_event_4(energy_per_nucleons_per_priority_event[4], estimated_mass_with_bounds[4])
-                            .updated_priority_event_5(energy_per_nucleons_per_priority_event[5], estimated_mass_with_bounds[5])
-                            .convert())
-        # @formatter:on
+        (erge,
+         multi_flag,
+         ssd_energy,
+         ssd_id,
+         spin_angle,
+         spin_number,
+         tof,
+         type,
+         energy_per_nuc,
+         estimated_mass) = [np.full((len(l2_data.epochs), len(l2_data.priority_events), len(num_of_events)), np.nan)
+                            for _ in range(10)]
+
+        for index, priority_event in enumerate(l2_data.priority_events):
+            event_tof = priority_event.time_of_flight
+            event_energy_per_nuc = np.array([tof_lookup[t].energy for t in event_tof.flat]).reshape(
+                (event_tof.shape))
+            event_estimated_mass = (priority_event.ssd_energy / event_energy_per_nuc)
+
+            erge[:, index, :] = priority_event.energy_range
+            multi_flag[:, index, :] = priority_event.multi_flag
+            ssd_energy[:, index, :] = priority_event.ssd_energy
+            ssd_id[:, index, :] = priority_event.ssd_id
+            spin_angle[:, index, :] = priority_event.spin_angle
+            spin_number[:, index, :] = priority_event.spin_number
+            tof[:, index, :] = priority_event.time_of_flight
+            type[:, index, :] = priority_event.type
+            energy_per_nuc[:, index, :] = event_energy_per_nuc
+            estimated_mass[:, index, :] = event_estimated_mass
+
+            data_quality[:, index] = priority_event.data_quality
+            num_of_events[:, index] = priority_event.number_of_events
+
+        return CodiceL3HiDirectEvents(
+            input_metadata=self.input_metadata,
+            epoch=l2_data.epochs,
+            data_quality=data_quality,
+            erge=erge,
+            multi_flag=multi_flag,
+            num_of_events=num_of_events,
+            ssd_energy=ssd_energy,
+            ssd_id=ssd_id,
+            spin_angle=spin_angle,
+            spin_number=spin_number,
+            tof=tof,
+            type=type,
+            energy_per_nuc=energy_per_nuc,
+            estimated_mass=estimated_mass
+        )
 
     def process_l3b(self, dependencies: CodicePitchAngleDependencies) -> CodiceHiL3PitchAngleDataProduct:
         mag_data = dependencies.mag_l1d_data

@@ -13,8 +13,8 @@ COPY scripts scripts
 COPY imap_l3_data_processor.py .
 COPY tests tests
 COPY instrument_team_data instrument_team_data
-COPY instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/survProbHi survProbHi
-COPY instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/survProbLo survProbLo
-COPY instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/survProbUltra survProbUltra
+COPY imap_l3_processing/glows/l3e/l3e_toolkit/survProbHi survProbHi
+COPY imap_l3_processing/glows/l3e/l3e_toolkit/survProbLo survProbLo
+COPY imap_l3_processing/glows/l3e/l3e_toolkit/survProbUltra survProbUltra
 COPY run_local.py .
 #ENTRYPOINT ["python","run_local.py", "glows", "l3e"]
