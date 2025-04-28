@@ -21,6 +21,7 @@ from imap_l3_processing.glows.l3bc.models import GlowsL3BIonizationRate, GlowsL3
 from imap_l3_processing.glows.l3bc.science.filter_out_bad_days import filter_out_bad_days
 from imap_l3_processing.glows.l3bc.science.generate_l3bc import generate_l3bc
 from imap_l3_processing.glows.l3bc.utils import make_l3b_data_with_fill, make_l3c_data_with_fill, get_repoint_date_range
+from imap_l3_processing.glows.l3d.glows_l3d_dependencies import GlowsL3DDependencies
 from imap_l3_processing.glows.l3e.glows_l3e_dependencies import GlowsL3EDependencies
 from imap_l3_processing.glows.l3e.glows_l3e_hi_model import GlowsL3EHiData
 from imap_l3_processing.glows.l3e.glows_l3e_lo_model import GlowsL3ELoData
@@ -72,6 +73,8 @@ class GlowsProcessor(Processor):
                 self.process_l3e_hi(epoch_dt, epoch_delta, 90)
             elif self.input_metadata.descriptor == "survival-probability-ul":
                 self.process_l3e_ul(epoch_dt, epoch_delta)
+        elif self.input_metadata.data_level == "l3d":
+            GlowsL3DDependencies.fetch_dependencies(self.dependencies)
 
     def process_l3a(self, dependencies: GlowsL3ADependencies) -> GlowsL3LightCurve:
         data = dependencies.data
