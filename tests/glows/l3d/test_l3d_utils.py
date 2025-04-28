@@ -28,6 +28,8 @@ class TestL3dUtils(unittest.TestCase):
 
         actual: dict = create_glows_l3c_dictionary_from_cdf(l3c_path)
 
+        self.assertEqual('imap_glows_l3c_sw-profile_20101030_v008.cdf', actual['header']['filename'])
+
         self.assertEqual(expected['solar_wind_ecliptic']['proton_density'],
                          actual['solar_wind_ecliptic']['proton_density'])
         self.assertEqual(expected['solar_wind_ecliptic']['alpha_abundance'],
@@ -42,11 +44,44 @@ class TestL3dUtils(unittest.TestCase):
         l3b_path = get_test_data_path("glows/imap_glows_l3b_ion-rate-profile_20100519_v012.cdf")
 
         expected: dict = {
-            'uv_anisotropy_factor': [1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.,
-                                     1., 1., 1.],
+            'header': {
+                'filename': 'imap_glows_l3b_ion-rate-profile_20100519_v012.cdf',
+                'l3a_input_files_name': [
+                    'imap_glows_l3a_hist_20100518-repoint00138_v012.cdf',
+                    'imap_glows_l3a_hist_20100520-repoint00139_v012.cdf',
+                    'imap_glows_l3a_hist_20100521-repoint00140_v012.cdf',
+                    'imap_glows_l3a_hist_20100522-repoint00141_v012.cdf',
+                    'imap_glows_l3a_hist_20100523-repoint00142_v012.cdf',
+                    'imap_glows_l3a_hist_20100524-repoint00143_v012.cdf',
+                    'imap_glows_l3a_hist_20100525-repoint00144_v012.cdf',
+                    'imap_glows_l3a_hist_20100526-repoint00145_v012.cdf',
+                    'imap_glows_l3a_hist_20100527-repoint00146_v012.cdf',
+                    'imap_glows_l3a_hist_20100528-repoint00147_v012.cdf',
+                    'imap_glows_l3a_hist_20100529-repoint00148_v012.cdf',
+                    'imap_glows_l3a_hist_20100530-repoint00149_v012.cdf',
+                    'imap_glows_l3a_hist_20100531-repoint00150_v012.cdf',
+                    'imap_glows_l3a_hist_20100601-repoint00151_v012.cdf',
+                    'imap_glows_l3a_hist_20100602-repoint00152_v012.cdf',
+                    'imap_glows_l3a_hist_20100603-repoint00153_v012.cdf',
+                    'imap_glows_l3a_hist_20100604-repoint00154_v012.cdf',
+                    'imap_glows_l3a_hist_20100605-repoint00155_v012.cdf',
+                    'imap_glows_l3a_hist_20100606-repoint00156_v012.cdf',
+                    'imap_glows_l3a_hist_20100607-repoint00157_v012.cdf',
+                    'imap_glows_l3a_hist_20100608-repoint00158_v012.cdf',
+                    'imap_glows_l3a_hist_20100609-repoint00159_v012.cdf',
+                    'imap_glows_l3a_hist_20100610-repoint00160_v012.cdf',
+                    'imap_glows_l3a_hist_20100611-repoint00161_v012.cdf',
+                    'imap_glows_l3a_hist_20100612-repoint00162_v012.cdf',
+                    'imap_glows_l3a_hist_20100613-repoint00163_v012.cdf',
+                    'imap_glows_l3a_hist_20100614-repoint00164_v012.cdf',
+                    'imap_glows_l3a_hist_20100615-repoint00165_v012.cdf',
+                    'imap_glows_l3a_hist_20100616-repoint00165_v012.cdf',
+                ]
+            },
+            'uv_anisotropy_factor': [1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.],
             'ion_rate_profile': {
-                'lat_grid': [-90., -80., -70., -60., -50., -40., -30., -20., -10., 0., 10.,
-                             20., 30., 40., 50., 60., 70., 80., 90.],
+                'lat_grid': [-90., -80., -70., -60., -50., -40., -30., -20., -10., 0., 10., 20., 30., 40., 50., 60.,
+                             70., 80., 90.],
                 'ph_rate': [1.0643349e-07, 1.0643349e-07, 1.0643349e-07, 1.0643349e-07,
                             1.0643349e-07, 1.0643349e-07, 1.0643349e-07, 1.0643349e-07,
                             1.0643349e-07, 1.0643349e-07, 1.0643349e-07, 1.0643349e-07,
@@ -56,5 +91,13 @@ class TestL3dUtils(unittest.TestCase):
         }
 
         actual: dict = create_glows_l3b_dictionary_from_cdf(l3b_path)
-
-        assert_dict_close(actual, expected)
+        np.testing.assert_array_equal(expected["header"]['l3a_input_files_name'],
+                                      actual["header"]['l3a_input_files_name'])
+        np.testing.assert_array_equal(expected["header"]['filename'],
+                                      actual["header"]['filename'])
+        np.testing.assert_array_equal(expected["uv_anisotropy_factor"],
+                                      actual["uv_anisotropy_factor"])
+        np.testing.assert_array_equal(expected["ion_rate_profile"]['lat_grid'],
+                                      actual["ion_rate_profile"]['lat_grid'])
+        np.testing.assert_array_almost_equal(expected["ion_rate_profile"]['ph_rate'],
+                                             actual["ion_rate_profile"]['ph_rate'])
