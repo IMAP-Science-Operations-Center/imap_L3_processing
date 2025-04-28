@@ -7,9 +7,14 @@ POST_ACCELERATION_VOLTAGE_IN_KV = 15
 ENERGY_LOST_IN_CARBON_FOIL = 0
 CONVERSION_CONSTANT_K = 1.692e-5
 
+AZIMUTH_STEP_SIZE = np.deg2rad(30)
+ELEVATION_STEP_SIZE = np.deg2rad(30)
+ENERGY_STEP_SIZE = 100
 
-def calculate_partial_densities(species_intensities: np.ndarray):
-    return NotImplementedError
+
+def calculate_partial_densities(intensities: np.ndarray, esa_steps: np.ndarray, mass_per_charge: float):
+    return np.sum((1 / np.sqrt(2)) * AZIMUTH_STEP_SIZE * ELEVATION_STEP_SIZE * ENERGY_STEP_SIZE * intensities * np.sqrt(
+        esa_steps[np.newaxis, :, np.newaxis]) * np.sqrt(mass_per_charge), axis=(1, 2))
 
 
 def calculate_total_number_of_events(priority_rate_variable: np.ndarray, acquisition_time: np.ndarray) -> np.ndarray[

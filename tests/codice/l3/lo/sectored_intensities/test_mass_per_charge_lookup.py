@@ -10,22 +10,19 @@ class TestMassPerChargeLookup(unittest.TestCase):
 
         mass_per_charge_lookup = MassPerChargeLookup.read_from_file(mass_per_charge_csv_path)
 
-        expected_lookup_values = [(1, "H+", 1),
-                                  (2, "He++", 2),
-                                  (3, "C+4", 3),
-                                  (4, "C+5", 2.4),
-                                  (5, "C+6", 2),
-                                  (6, "O+5", 3.2),
-                                  (7, "O+6", 2.7),
-                                  (8, "O+7", 2.28),
-                                  (9, "O+8", 2),
-                                  (10, "Mg", 3.5),
-                                  (11, "Si", 4),
-                                  (13, "Fe (low Q)", 3.85),
-                                  (14, "Fe (high Q)", 7.25),
-                                  ]
-
-        self.assertEqual(expected_lookup_values, mass_per_charge_lookup.mass_per_charge)
+        self.assertEqual(1, mass_per_charge_lookup.hplus)
+        self.assertEqual(2, mass_per_charge_lookup.heplusplus)
+        self.assertEqual(3, mass_per_charge_lookup.cplus4)
+        self.assertEqual(2.4, mass_per_charge_lookup.cplus5)
+        self.assertEqual(2, mass_per_charge_lookup.cplus6)
+        self.assertEqual(3.2, mass_per_charge_lookup.oplus5)
+        self.assertEqual(2.7, mass_per_charge_lookup.oplus6)
+        self.assertEqual(2.28, mass_per_charge_lookup.oplus7)
+        self.assertEqual(2, mass_per_charge_lookup.oplus8)
+        self.assertEqual(3.5, mass_per_charge_lookup.mg)
+        self.assertEqual(4, mass_per_charge_lookup.si)
+        self.assertEqual(3.85, mass_per_charge_lookup.fe_loq)
+        self.assertEqual(7.25, mass_per_charge_lookup.fe_hiq)
 
 
 if __name__ == '__main__':

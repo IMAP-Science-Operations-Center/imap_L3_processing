@@ -5,7 +5,7 @@ import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Optional, TypeVar
-from unittest.mock import patch, Mock, MagicMock
+from unittest.mock import patch, Mock
 
 import imap_data_access
 import numpy as np
@@ -13,6 +13,10 @@ import xarray as xr
 from imap_data_access.processing_input import AncillaryInput, ProcessingInputCollection, ScienceInput
 from spacepy.pycdf import CDF
 
+from imap_l3_processing.codice.l3.lo.codice_lo_l3a_dependencies import CodiceLoL3aDependencies
+from imap_l3_processing.codice.l3.lo.codice_lo_processor import CodiceLoProcessor
+from imap_l3_processing.codice.l3.lo.models import CodiceLoL2SWSpeciesData
+from imap_l3_processing.codice.l3.lo.sectored_intensities.science.mass_per_charge_lookup import MassPerChargeLookup
 from imap_l3_processing.glows.glows_initializer import GlowsInitializer
 from imap_l3_processing.glows.glows_processor import GlowsProcessor
 from imap_l3_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
@@ -68,6 +72,25 @@ def create_glows_l3a_cdf(dependencies: GlowsL3ADependencies):
 
     l3a_data = processor.process_l3a(dependencies)
     cdf_path = save_data(l3a_data, delete_if_present=True)
+    return cdf_path
+
+
+def create_codice_lo_l3a_partial_densities_cdf():
+    codice_lo_l2_data = CodiceLoL2SWSpeciesData.read_from_cdf(
+        get_test_instrument_team_data_path('codice/lo/imap_codice_l2_lo-sw-species_20241110193900_v0.0.2.cdf'))
+    mpc_lookup = MassPerChargeLookup.read_from_file(get_test_data_path('codice/test_mass_per_charge_lookup.csv'))
+    deps = CodiceLoL3aDependencies(codice_lo_l2_data, mpc_lookup, Mock(), Mock(), Mock())
+
+    input_metadata = InputMetadata(
+        instrument='codice-lo',
+        data_level='l3a',
+        start_date=datetime(2025, 1, 1),
+        end_date=datetime(2025, 1, 2),
+        version='v000')
+
+    codice_lo_processor = CodiceLoProcessor(ProcessingInputCollection(), input_metadata)
+    partial_densities_data = codice_lo_processor.process_l3a(deps)
+    cdf_path = save_data(partial_densities_data, delete_if_present=True)
     return cdf_path
 
 
@@ -579,6 +602,15 @@ def create_hi_l3_survival_corrected_cdf(survival_dependencies: HiL3SurvivalDepen
 
 
 if __name__ == "__main__":
+    if "codice-lo" in sys.argv:
+        if "l3a" in sys.argv:
+            if "partial-densities" in sys.argv:
+                path = create_codice_lo_l3a_partial_densities_cdf()
+                print(path)
+            elif "direct-events" in sys.argv:
+                pass
+            elif "3d-instrument-frame" in sys.argv:
+                pass
     if "swapi" in sys.argv:
         if "l3a" in sys.argv:
             paths = create_swapi_l3a_cdf(

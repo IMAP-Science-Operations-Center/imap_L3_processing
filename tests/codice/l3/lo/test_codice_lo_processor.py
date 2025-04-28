@@ -9,7 +9,8 @@ from imap_data_access.processing_input import ProcessingInputCollection
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_dependencies import CodiceLoL3aDependencies
 from imap_l3_processing.codice.l3.lo.codice_lo_processor import CodiceLoProcessor
 from imap_l3_processing.codice.l3.lo.models import CodiceLoL3aPartialDensityDataProduct, CodiceLoL2bPriorityRates, \
-    CodiceLoL2DirectEventData, CodiceLoL3aDirectEventDataProduct, PriorityEvent
+    CodiceLoL2DirectEventData, CodiceLoL3aDirectEventDataProduct, PriorityEvent, CodiceLoL2SWSpeciesData
+from imap_l3_processing.codice.l3.lo.sectored_intensities.science.mass_per_charge_lookup import MassPerChargeLookup
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
 from tests.test_helpers import NumpyArrayMatcher
@@ -52,76 +53,71 @@ class TestCodiceLoProcessor(unittest.TestCase):
 
         epochs = np.array([datetime(2025, 1, 1), datetime(2025, 1, 2), datetime(2025, 1, 3)])
         num_species = 13
-        codice_lo_l2_data = Mock()
-        codice_lo_l2_data.get_species_intensities = Mock()
-        codice_lo_l2_data.get_species_intensities.return_value = {
-            "H+": sentinel.h_intensities,
-            "He++": sentinel.he_intensities,
-            "C+4": sentinel.c4_intensities,
-            "C+5": sentinel.c5_intensities,
-            "C+6": sentinel.c6_intensities,
-            "O+5": sentinel.o5_intensities,
-            "O+6": sentinel.o6_intensities,
-            "O+7": sentinel.o7_intensities,
-            "O+8": sentinel.o8_intensities,
-            "Mg": sentinel.mg_intensities,
-            "Si": sentinel.si_intensities,
-            "Fe (low Q)": sentinel.fe_low_intensities,
-            "Fe (high Q)": sentinel.fe_high_intensities
-        }
+
+        codice_lo_l2_data = CodiceLoL2SWSpeciesData(
+            *[Mock() for _ in range(len(fields(CodiceLoL2SWSpeciesData)))],
+        )
+
+        mass_per_charge_lookup = MassPerChargeLookup(*[i for i in range(len(fields(MassPerChargeLookup)))])
+
         codice_lo_l2_data.epoch = epochs
 
         mock_calculate_partial_densities.side_effect = [
-            sentinel.h_partial_density,
-            sentinel.he_partial_density,
-            sentinel.c4_partial_density,
-            sentinel.c5_partial_density,
-            sentinel.c6_partial_density,
-            sentinel.o5_partial_density,
-            sentinel.o6_partial_density,
-            sentinel.o7_partial_density,
-            sentinel.o8_partial_density,
+            sentinel.hplus_partial_density,
+            sentinel.heplusplus_partial_density,
+            sentinel.cplus4_partial_density,
+            sentinel.cplus5_partial_density,
+            sentinel.cplus6_partial_density,
+            sentinel.oplus5_partial_density,
+            sentinel.oplus6_partial_density,
+            sentinel.oplus7_partial_density,
+            sentinel.oplus8_partial_density,
             sentinel.mg_partial_density,
             sentinel.si_partial_density,
-            sentinel.fe_low_partial_density,
-            sentinel.fe_high_partial_density,
+            sentinel.fe_loq_partial_density,
+            sentinel.fe_hiq_partial_density,
         ]
 
-        codice_lo_dependencies = CodiceLoL3aDependencies(codice_lo_l2_data, Mock(), Mock(), Mock(), Mock(), Mock())
+        codice_lo_dependencies = CodiceLoL3aDependencies(codice_lo_l2_data, Mock(), Mock(), mass_per_charge_lookup,
+                                                         Mock())
         result = processor.process_l3a(codice_lo_dependencies)
 
         self.assertEqual(num_species, mock_calculate_partial_densities.call_count)
 
-        mock_calculate_partial_densities.assert_has_calls([call(sentinel.h_intensities),
-                                                           call(sentinel.he_intensities),
-                                                           call(sentinel.c4_intensities),
-                                                           call(sentinel.c5_intensities),
-                                                           call(sentinel.c6_intensities),
-                                                           call(sentinel.o5_intensities),
-                                                           call(sentinel.o6_intensities),
-                                                           call(sentinel.o7_intensities),
-                                                           call(sentinel.o8_intensities),
-                                                           call(sentinel.mg_intensities),
-                                                           call(sentinel.si_intensities),
-                                                           call(sentinel.fe_low_intensities),
-                                                           call(sentinel.fe_high_intensities)])
-        self.assertIsInstance(result, CodiceLoL3aPartialDensityDataProduct)
+        mock_calculate_partial_densities.assert_has_calls(
+            [call(codice_lo_l2_data.hplus, codice_lo_l2_data.energy_table, mass_per_charge_lookup.hplus),
+             call(codice_lo_l2_data.heplusplus, codice_lo_l2_data.energy_table, mass_per_charge_lookup.heplusplus),
+             call(codice_lo_l2_data.cplus4, codice_lo_l2_data.energy_table, mass_per_charge_lookup.cplus4),
+             call(codice_lo_l2_data.cplus5, codice_lo_l2_data.energy_table, mass_per_charge_lookup.cplus5),
+             call(codice_lo_l2_data.cplus6, codice_lo_l2_data.energy_table, mass_per_charge_lookup.cplus6),
+             call(codice_lo_l2_data.oplus5, codice_lo_l2_data.energy_table, mass_per_charge_lookup.oplus5),
+             call(codice_lo_l2_data.oplus6, codice_lo_l2_data.energy_table, mass_per_charge_lookup.oplus6),
+             call(codice_lo_l2_data.oplus7, codice_lo_l2_data.energy_table, mass_per_charge_lookup.oplus7),
+             call(codice_lo_l2_data.oplus8, codice_lo_l2_data.energy_table, mass_per_charge_lookup.oplus8),
+             call(codice_lo_l2_data.mg, codice_lo_l2_data.energy_table, mass_per_charge_lookup.mg),
+             call(codice_lo_l2_data.si, codice_lo_l2_data.energy_table, mass_per_charge_lookup.si),
+             call(codice_lo_l2_data.fe_loq, codice_lo_l2_data.energy_table, mass_per_charge_lookup.fe_loq),
+             call(codice_lo_l2_data.fe_hiq, codice_lo_l2_data.energy_table, mass_per_charge_lookup.fe_hiq)])
 
-        np.testing.assert_array_equal(result.epoch, np.full(1, np.nan))
-        np.testing.assert_array_equal(result.epoch_delta, np.full(1, 4.8e+11))
-        self.assertEqual(sentinel.h_partial_density, result.h_partial_density),
-        self.assertEqual(sentinel.he_partial_density, result.he_partial_density),
-        self.assertEqual(sentinel.c4_partial_density, result.c4_partial_density),
-        self.assertEqual(sentinel.c5_partial_density, result.c5_partial_density),
-        self.assertEqual(sentinel.c6_partial_density, result.c6_partial_density),
-        self.assertEqual(sentinel.o5_partial_density, result.o5_partial_density),
-        self.assertEqual(sentinel.o6_partial_density, result.o6_partial_density),
-        self.assertEqual(sentinel.o7_partial_density, result.o7_partial_density),
-        self.assertEqual(sentinel.o8_partial_density, result.o8_partial_density),
+        self.assertIsInstance(result, CodiceLoL3aPartialDensityDataProduct)
+        self.assertEqual(input_metadata, result.input_metadata)
+
+        np.testing.assert_array_equal(result.epoch, codice_lo_l2_data.epoch)
+        np.testing.assert_array_equal(result.epoch_delta_plus, codice_lo_l2_data.epoch_delta_plus)
+        np.testing.assert_array_equal(result.epoch_delta_minus, codice_lo_l2_data.epoch_delta_minus)
+        self.assertEqual(sentinel.hplus_partial_density, result.hplus_partial_density),
+        self.assertEqual(sentinel.heplusplus_partial_density, result.heplusplus_partial_density),
+        self.assertEqual(sentinel.cplus4_partial_density, result.cplus4_partial_density),
+        self.assertEqual(sentinel.cplus5_partial_density, result.cplus5_partial_density),
+        self.assertEqual(sentinel.cplus6_partial_density, result.cplus6_partial_density),
+        self.assertEqual(sentinel.oplus5_partial_density, result.oplus5_partial_density),
+        self.assertEqual(sentinel.oplus6_partial_density, result.oplus6_partial_density),
+        self.assertEqual(sentinel.oplus7_partial_density, result.oplus7_partial_density),
+        self.assertEqual(sentinel.oplus8_partial_density, result.oplus8_partial_density),
         self.assertEqual(sentinel.mg_partial_density, result.mg_partial_density),
         self.assertEqual(sentinel.si_partial_density, result.si_partial_density),
-        self.assertEqual(sentinel.fe_low_partial_density, result.fe_low_partial_density),
-        self.assertEqual(sentinel.fe_high_partial_density, result.fe_high_partial_density),
+        self.assertEqual(sentinel.fe_loq_partial_density, result.fe_loq_partial_density),
+        self.assertEqual(sentinel.fe_hiq_partial_density, result.fe_hiq_partial_density),
 
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.calculate_total_number_of_events')
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.calculate_normalization_ratio')
@@ -201,7 +197,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
 
         direct_events = CodiceLoL2DirectEventData(epochs, event_num, *priority_events)
 
-        dependencies = CodiceLoL3aDependencies(Mock(), priority_rates, direct_events, Mock(), Mock(), Mock())
+        dependencies = CodiceLoL3aDependencies(Mock(), priority_rates, direct_events, Mock(), Mock())
 
         input_collection = ProcessingInputCollection()
         input_metadata = InputMetadata('codice', "l3a", Mock(spec=datetime), Mock(spec=datetime), 'v02')

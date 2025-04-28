@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import sentinel
+from datetime import datetime, timedelta
 
 import numpy as np
 
@@ -10,8 +10,6 @@ from imap_l3_processing.codice.l3.lo.science.codice_lo_calculations import calcu
 
 
 class TestCodiceLoCalculations(unittest.TestCase):
-    def test_calculate_partial_densities(self):
-        result = calculate_partial_densities(sentinel.intensity)
 
     def test_calculate_total_number_of_events(self):
         priority_0_tcrs = np.array([
@@ -114,3 +112,18 @@ class TestCodiceLoCalculations(unittest.TestCase):
 
         actual_mass_per_charge = calculate_mass_per_charge(priority_event)
         np.testing.assert_array_equal(actual_mass_per_charge, np.array([[mass_per_charge_1], [mass_per_charge_2]]))
+
+    def test_calculate_partial_densities(self):
+        rng = np.random.default_rng()
+        epochs = np.array([datetime.now(), datetime.now() + timedelta(days=1)])
+        energy_steps = np.geomspace(100000, 1, num=128)
+        intensities = rng.random((len(epochs), len(energy_steps), 1))
+        mass_per_charge = 10
+
+        partial_densities = calculate_partial_densities(intensities, energy_steps, mass_per_charge)
+
+        expected_partial_densities = np.sum(
+            (1 / np.sqrt(2)) * np.deg2rad(30) * np.deg2rad(30) * 100 * intensities * np.sqrt(
+                energy_steps[np.newaxis, :, np.newaxis]) * np.sqrt(mass_per_charge), axis=(1, 2))
+
+        np.testing.assert_array_equal(expected_partial_densities, partial_densities)

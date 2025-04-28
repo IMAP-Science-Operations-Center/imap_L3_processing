@@ -28,55 +28,65 @@ class CodiceLoProcessor(Processor):
         upload(saved_l3a_direct_event_cdf)
 
     def process_l3a(self, dependencies: CodiceLoL3aDependencies):
-
-        for species_name, species_intensities in dependencies.codice_l2_lo_data.get_species_intensities().items():
-            partial_density = calculate_partial_densities(species_intensities)
-
-            match species_name:
-                case "H+":
-                    h_partial_density = partial_density
-                case "He++":
-                    he_partial_density = partial_density
-                case "C+4":
-                    c4_partial_density = partial_density
-                case "C+5":
-                    c5_partial_density = partial_density
-                case "C+6":
-                    c6_partial_density = partial_density
-                case "O+5":
-                    o5_partial_density = partial_density
-                case "O+6":
-                    o6_partial_density = partial_density
-                case "O+7":
-                    o7_partial_density = partial_density
-                case "O+8":
-                    o8_partial_density = partial_density
-                case "Mg":
-                    mg_partial_density = partial_density
-                case "Si":
-                    si_partial_density = partial_density
-                case "Fe (low Q)":
-                    fe_low_partial_density = partial_density
-                case "Fe (high Q)":
-                    fe_high_partial_density = partial_density
-                case _:
-                    raise NotImplementedError
-        epoch = np.array([np.nan])
-        epoch_delta = np.full(len(epoch), 4.8e+11)
-        return CodiceLoL3aPartialDensityDataProduct(epoch=epoch, epoch_delta=epoch_delta,
-                                                    h_partial_density=h_partial_density,
-                                                    he_partial_density=he_partial_density,
-                                                    c4_partial_density=c4_partial_density,
-                                                    c5_partial_density=c5_partial_density,
-                                                    c6_partial_density=c6_partial_density,
-                                                    o5_partial_density=o5_partial_density,
-                                                    o6_partial_density=o6_partial_density,
-                                                    o7_partial_density=o7_partial_density,
-                                                    o8_partial_density=o8_partial_density,
-                                                    mg_partial_density=mg_partial_density,
-                                                    si_partial_density=si_partial_density,
-                                                    fe_low_partial_density=fe_low_partial_density,
-                                                    fe_high_partial_density=fe_high_partial_density)
+        codice_lo_l2_data = dependencies.codice_l2_lo_data
+        mass_per_charge_lookup = dependencies.mass_per_charge_lookup
+        return CodiceLoL3aPartialDensityDataProduct(
+            input_metadata=self.input_metadata,
+            epoch=codice_lo_l2_data.epoch,
+            epoch_delta_plus=codice_lo_l2_data.epoch_delta_plus,
+            epoch_delta_minus=codice_lo_l2_data.epoch_delta_minus,
+            hplus_partial_density=calculate_partial_densities(
+                codice_lo_l2_data.hplus,
+                codice_lo_l2_data.energy_table,
+                mass_per_charge_lookup.hplus),
+            heplusplus_partial_density=calculate_partial_densities(
+                codice_lo_l2_data.heplusplus,
+                codice_lo_l2_data.energy_table,
+                mass_per_charge_lookup.heplusplus),
+            cplus4_partial_density=calculate_partial_densities(
+                codice_lo_l2_data.cplus4,
+                codice_lo_l2_data.energy_table,
+                mass_per_charge_lookup.cplus4),
+            cplus5_partial_density=calculate_partial_densities(
+                codice_lo_l2_data.cplus5,
+                codice_lo_l2_data.energy_table,
+                mass_per_charge_lookup.cplus5),
+            cplus6_partial_density=calculate_partial_densities(
+                codice_lo_l2_data.cplus6,
+                codice_lo_l2_data.energy_table,
+                mass_per_charge_lookup.cplus6),
+            oplus5_partial_density=calculate_partial_densities(
+                codice_lo_l2_data.oplus5,
+                codice_lo_l2_data.energy_table,
+                mass_per_charge_lookup.oplus5),
+            oplus6_partial_density=calculate_partial_densities(
+                codice_lo_l2_data.oplus6,
+                codice_lo_l2_data.energy_table,
+                mass_per_charge_lookup.oplus6),
+            oplus7_partial_density=calculate_partial_densities(
+                codice_lo_l2_data.oplus7,
+                codice_lo_l2_data.energy_table,
+                mass_per_charge_lookup.oplus7),
+            oplus8_partial_density=calculate_partial_densities(
+                codice_lo_l2_data.oplus8,
+                codice_lo_l2_data.energy_table,
+                mass_per_charge_lookup.oplus8),
+            mg_partial_density=calculate_partial_densities(
+                codice_lo_l2_data.mg,
+                codice_lo_l2_data.energy_table,
+                mass_per_charge_lookup.mg),
+            si_partial_density=calculate_partial_densities(
+                codice_lo_l2_data.si,
+                codice_lo_l2_data.energy_table,
+                mass_per_charge_lookup.si),
+            fe_loq_partial_density=calculate_partial_densities(
+                codice_lo_l2_data.fe_loq,
+                codice_lo_l2_data.energy_table,
+                mass_per_charge_lookup.fe_loq),
+            fe_hiq_partial_density=calculate_partial_densities(
+                codice_lo_l2_data.fe_hiq,
+                codice_lo_l2_data.energy_table,
+                mass_per_charge_lookup.fe_hiq))
 
     def _process_l3a_direct_event_data_product(self,
                                                dependencies: CodiceLoL3aDependencies) -> CodiceLoL3aDirectEventDataProduct:
