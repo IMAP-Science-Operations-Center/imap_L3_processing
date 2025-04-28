@@ -99,6 +99,7 @@ def create_glows_l3a_from_dictionary(data: dict, input_metadata: InputMetadata) 
         spacecraft_location_std_dev=get_xyz(data["spacecraft_location_std_dev"]),
         spacecraft_velocity_average=get_xyz(data["spacecraft_velocity_average"]),
         spacecraft_velocity_std_dev=get_xyz(data["spacecraft_velocity_std_dev"]),
+        number_of_bins=np.array([data['daily_lightcurve']['number_of_bins']]),
     )
 
 

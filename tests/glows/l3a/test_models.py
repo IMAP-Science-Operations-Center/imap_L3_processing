@@ -4,7 +4,6 @@ from unittest.mock import Mock
 
 import numpy as np
 from numpy import ndarray
-from spacepy import pycdf
 
 from imap_l3_processing.glows.l3a.models import GlowsL3LightCurve, PHOTON_FLUX_CDF_VAR_NAME, \
     EXPOSURE_TIMES_CDF_VAR_NAME, \
@@ -36,7 +35,7 @@ class TestModels(CdfModelTestCase):
         longitudes: ndarray = (np.arange(360) + 180).reshape(1, -1)
         extra_heliospheric_background: ndarray = (np.arange(360) + 25).reshape(1, -1)
         time_dependent_background: ndarray = (np.arange(360) + 10).reshape(1, -1)
-        number_of_bins: int = 360
+        number_of_bins: ndarray = np.array([360])
 
         filter_temperature_average = Mock()
         filter_temperature_std_dev = Mock()
@@ -59,7 +58,10 @@ class TestModels(CdfModelTestCase):
         spacecraft_velocity_std_dev = Mock()
 
         data = GlowsL3LightCurve(input_metadata=Mock(),
+                                 parent_file_names=Mock(),
                                  exposure_times=exposure_times,
+                                 raw_histogram=raw_histogram,
+                                 number_of_bins=number_of_bins,
                                  photon_flux=photon_flux, epoch=epoch,
                                  epoch_delta=epoch_delta, spin_angle=spin_angle,
                                  spin_angle_delta=spin_angle_delta,
@@ -85,7 +87,8 @@ class TestModels(CdfModelTestCase):
                                  spacecraft_location_average=spacecraft_location_average,
                                  spacecraft_location_std_dev=spacecraft_location_std_dev,
                                  spacecraft_velocity_average=spacecraft_velocity_average,
-                                 spacecraft_velocity_std_dev=spacecraft_velocity_std_dev, raw_histogram=raw_histogram)
+                                 spacecraft_velocity_std_dev=spacecraft_velocity_std_dev,
+                                 )
 
         variables = data.to_data_product_variables()
         self.assertEqual(35, len(variables))
@@ -94,17 +97,13 @@ class TestModels(CdfModelTestCase):
         # @formatter:off
         self.assert_variable_attributes(next(variables), photon_flux, PHOTON_FLUX_CDF_VAR_NAME)
         self.assert_variable_attributes(next(variables), photon_flux_uncertainty, PHOTON_FLUX_UNCERTAINTY_CDF_VAR_NAME)
-        self.assert_variable_attributes(next(variables), raw_histogram, RAW_HISTOGRAM_CDF_VAR_NAME,
-                                        expected_data_type=pycdf.const.CDF_UINT4)
+        self.assert_variable_attributes(next(variables), raw_histogram, RAW_HISTOGRAM_CDF_VAR_NAME)
         self.assert_variable_attributes(next(variables), exposure_times, EXPOSURE_TIMES_CDF_VAR_NAME)
-        self.assert_variable_attributes(next(variables), number_of_bins, NUM_OF_BINS_CDF_VAR_NAME,
-                                        expected_record_varying=False, expected_data_type=pycdf.const.CDF_UINT2)
-        self.assert_variable_attributes(next(variables), epoch, EPOCH_CDF_VAR_NAME,
-                                        expected_data_type=pycdf.const.CDF_TIME_TT2000)
-        self.assert_variable_attributes(next(variables), epoch_delta, EPOCH_DELTA_CDF_VAR_NAME,
-                                        expected_data_type=pycdf.const.CDF_INT8)
-        self.assert_variable_attributes(next(variables), spin_angle, SPIN_ANGLE_CDF_VAR_NAME, expected_record_varying=False)
-        self.assert_variable_attributes(next(variables), spin_angle_delta, SPIN_ANGLE_DELTA_CDF_VAR_NAME,  expected_record_varying=False)
+        self.assert_variable_attributes(next(variables), number_of_bins, NUM_OF_BINS_CDF_VAR_NAME)
+        self.assert_variable_attributes(next(variables), epoch, EPOCH_CDF_VAR_NAME)
+        self.assert_variable_attributes(next(variables), epoch_delta, EPOCH_DELTA_CDF_VAR_NAME)
+        self.assert_variable_attributes(next(variables), spin_angle, SPIN_ANGLE_CDF_VAR_NAME)
+        self.assert_variable_attributes(next(variables), spin_angle_delta, SPIN_ANGLE_DELTA_CDF_VAR_NAME)
         self.assert_variable_attributes(next(variables), latitudes, LATITUDE_CDF_VAR_NAME)
         self.assert_variable_attributes(next(variables), longitudes, LONGITUDE_CDF_VAR_NAME)
         self.assert_variable_attributes(next(variables), extra_heliospheric_background,
@@ -142,11 +141,10 @@ class TestModels(CdfModelTestCase):
         self.assert_variable_attributes(next(variables), spacecraft_velocity_std_dev,
                                         SPACECRAFT_VELOCITY_STD_DEV_CDF_VAR_NAME)
 
-        self.assert_variable_attributes(next(variables), [0, 1], "lon_lat", expected_record_varying=False)
-        self.assert_variable_attributes(next(variables), ["lon", "lat"], "lon_lat_labels",
-                                        expected_record_varying=False)
-        self.assert_variable_attributes(next(variables), [0, 1, 2], "x_y_z", expected_record_varying=False)
-        self.assert_variable_attributes(next(variables), ["X", "Y", "Z"], "x_y_z_labels", expected_record_varying=False)
+        self.assert_variable_attributes(next(variables), [0, 1], "lon_lat")
+        self.assert_variable_attributes(next(variables), ["lon", "lat"], "lon_lat_labels")
+        self.assert_variable_attributes(next(variables), [0, 1, 2], "x_y_z")
+        self.assert_variable_attributes(next(variables), ["X", "Y", "Z"], "x_y_z_labels")
 
 
 if __name__ == '__main__':

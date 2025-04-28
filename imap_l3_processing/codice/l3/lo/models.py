@@ -28,63 +28,76 @@ FE_HIGH_PARTIAL_DENSITY_VAR_NAME = "fe_high_partial_density"
 @dataclass
 class CodiceLoL2Data:
     epoch: ndarray
-    epoch_delta: ndarray
-    energy: ndarray
+    epoch_delta_minus: ndarray
+    epoch_delta_plus: ndarray
+    energy_table: ndarray
     spin_sector: ndarray
-    ssd_id: ndarray
-    h_intensities: ndarray
-    he_intensities: ndarray
-    c4_intensities: ndarray
-    c5_intensities: ndarray
-    c6_intensities: ndarray
-    o5_intensities: ndarray
-    o6_intensities: ndarray
-    o7_intensities: ndarray
-    o8_intensities: ndarray
-    mg_intensities: ndarray
-    si_intensities: ndarray
-    fe_low_intensities: ndarray
-    fe_high_intensities: ndarray
+    hplus: ndarray
+    heplusplus: ndarray
+    heplus: ndarray
+    ne: ndarray
+    cplus4: ndarray
+    cplus5: ndarray
+    cplus6: ndarray
+    oplus5: ndarray
+    oplus6: ndarray
+    oplus7: ndarray
+    oplus8: ndarray
+    cnoplus: ndarray
+    mg: ndarray
+    si: ndarray
+    fe_loq: ndarray
+    fe_hiq: ndarray
+    data_quality: ndarray
+    spin_sector_index: ndarray
 
     @classmethod
     def read_from_cdf(cls, l2_sectored_intensities_cdf: Path):
         with CDF(str(l2_sectored_intensities_cdf)) as cdf:
             return cls(
                 epoch=cdf["epoch"][...],
-                epoch_delta=cdf["epoch_delta"][...],
-                energy=cdf["energy"][...],
+                epoch_delta_minus=cdf["epoch_delta_minus"][...],
+                epoch_delta_plus=cdf["epoch_delta_plus"][...],
+                energy_table=cdf["energy_table"][...],
                 spin_sector=cdf["spin_sector"][...],
-                ssd_id=cdf["ssd_id"][...],
-                h_intensities=cdf["h_intensities"][...],
-                he_intensities=cdf["he_intensities"][...],
-                c4_intensities=cdf["c4_intensities"][...],
-                c5_intensities=cdf["c5_intensities"][...],
-                c6_intensities=cdf["c6_intensities"][...],
-                o5_intensities=cdf["o5_intensities"][...],
-                o6_intensities=cdf["o6_intensities"][...],
-                o7_intensities=cdf["o7_intensities"][...],
-                o8_intensities=cdf["o8_intensities"][...],
-                mg_intensities=cdf["mg_intensities"][...],
-                si_intensities=cdf["si_intensities"][...],
-                fe_low_intensities=cdf["fe_low_intensities"][...],
-                fe_high_intensities=cdf["fe_high_intensities"][...],
+                hplus=cdf["hplus"][...],
+                heplusplus=cdf["heplusplus"][...],
+                heplus=cdf["heplus"][...],
+                ne=cdf["ne"][...],
+                cplus4=cdf["cplus4"][...],
+                cplus5=cdf["cplus5"][...],
+                cplus6=cdf["cplus6"][...],
+                oplus5=cdf["oplus5"][...],
+                oplus6=cdf["oplus6"][...],
+                oplus7=cdf["oplus7"][...],
+                oplus8=cdf["oplus8"][...],
+                cnoplus=cdf["cnoplus"][...],
+                mg=cdf["mg"][...],
+                si=cdf["si"][...],
+                fe_loq=cdf["fe_loq"][...],
+                fe_hiq=cdf["fe_hiq"][...],
+                data_quality=cdf["data_quality"][...],
+                spin_sector_index=cdf["spin_sector_index"][...],
             )
 
     def get_species_intensities(self) -> dict:
         return {
-            "H+": self.h_intensities,
-            "He++": self.he_intensities,
-            "C+4": self.c4_intensities,
-            "C+5": self.c5_intensities,
-            "C+6": self.c6_intensities,
-            "O+5": self.o5_intensities,
-            "O+6": self.o6_intensities,
-            "O+7": self.o7_intensities,
-            "O+8": self.o8_intensities,
-            "Mg": self.mg_intensities,
-            "Si": self.si_intensities,
-            "Fe (low Q)": self.fe_low_intensities,
-            "Fe (high Q)": self.fe_high_intensities,
+            "H+": self.hplus,
+            "He++": self.heplusplus,
+            "He+": self.heplus,
+            "Ne": self.ne,
+            "C+4": self.cplus4,
+            "C+5": self.cplus5,
+            "C+6": self.cplus6,
+            "O+5": self.oplus5,
+            "O+6": self.oplus6,
+            "O+7": self.oplus7,
+            "O+8": self.oplus8,
+            "CNO+": self.cnoplus,
+            "Mg": self.mg,
+            "Si": self.si,
+            "Fe (low Q)": self.fe_loq,
+            "Fe (high Q)": self.fe_hiq,
         }
 
 

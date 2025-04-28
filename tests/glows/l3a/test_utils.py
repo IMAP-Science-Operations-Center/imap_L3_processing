@@ -174,6 +174,7 @@ class TestUtils(unittest.TestCase):
             self.assertEqual((1, 3), result.spacecraft_location_std_dev.shape)
             self.assertEqual((1, 3), result.spacecraft_velocity_average.shape)
             self.assertEqual((1, 3), result.spacecraft_velocity_std_dev.shape)
+            self.assertEqual(result.epoch.shape, result.number_of_bins.shape)
 
             self.assertEqual(-27.84, result.filter_temperature_average[0])
             self.assertEqual(0.000e+00, result.filter_temperature_std_dev[0])
@@ -187,6 +188,8 @@ class TestUtils(unittest.TestCase):
             self.assertEqual(1.726e-02, result.pulse_length_std_dev[0])
             self.assertEqual(91.578, result.position_angle_offset_average[0])
             self.assertEqual(9.991e-03, result.position_angle_offset_std_dev[0])
+            np.testing.assert_array_equal(65, result.number_of_bins[0])
+
             np.testing.assert_array_equal([162.092, 0.000], result.spin_axis_orientation_average[0])
             np.testing.assert_array_equal([2.345e-01, 0.000e+00], result.spin_axis_orientation_std_dev[0])
             np.testing.assert_array_equal([146231106.1, -36212054.4, 1049.3], result.spacecraft_location_average[0])
