@@ -79,7 +79,11 @@ def create_codice_lo_l3a_partial_densities_cdf():
     codice_lo_l2_data = CodiceLoL2SWSpeciesData.read_from_cdf(
         get_test_instrument_team_data_path('codice/lo/imap_codice_l2_lo-sw-species_20241110193900_v0.0.2.cdf'))
     mpc_lookup = MassPerChargeLookup.read_from_file(get_test_data_path('codice/test_mass_per_charge_lookup.csv'))
-    deps = CodiceLoL3aDependencies(codice_lo_l2_data, mpc_lookup, Mock(), Mock(), Mock())
+    deps = CodiceLoL3aDependencies(codice_l2_lo_data=codice_lo_l2_data,
+                                   mass_per_charge_lookup=mpc_lookup,
+                                   codice_l2b_lo_priority_rates=Mock(),
+                                   codice_l2_direct_events=Mock(),
+                                   mass_coefficient_lookup=Mock())
 
     input_metadata = InputMetadata(
         instrument='codice-lo',

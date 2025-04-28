@@ -9,6 +9,12 @@ from imap_l3_processing.codice.l3.lo.models import CodiceLoL2SWSpeciesData, Codi
 from imap_l3_processing.codice.l3.lo.sectored_intensities.science.mass_per_charge_lookup import MassPerChargeLookup
 from imap_l3_processing.utils import download_dependency_from_path
 
+SW_SPECIES_DESCRIPTOR = 'sw-species'
+MASS_PER_CHARGE_DESCRIPTOR = 'mass-per-charge'
+DIRECT_EVENTS_DESCRIPTOR = 'direct-events'
+PRIORITY_RATES_DESCRIPTOR = 'priority-rates'
+MASS_COEFFICIENT_DESCRIPTOR = 'mass-coefficient-lookup'
+
 
 @dataclass
 class CodiceLoL3aDependencies:
@@ -24,14 +30,14 @@ class CodiceLoL3aDependencies:
             if dep.data_type[:2] != 'l2':
                 dependencies.processing_input.remove(dep)
 
-        priority_rates_paths = dependencies.get_file_paths(source='codice', descriptor='priority-rates')
+        priority_rates_paths = dependencies.get_file_paths(source='codice', descriptor=PRIORITY_RATES_DESCRIPTOR)
         sectored_intensities_file_paths = dependencies.get_file_paths(source='codice',
-                                                                      descriptor='sectored-intensities')
-        direct_events_path = dependencies.get_file_paths(source='codice', descriptor='direct-events')
+                                                                      descriptor=SW_SPECIES_DESCRIPTOR)
+        direct_events_path = dependencies.get_file_paths(source='codice', descriptor=DIRECT_EVENTS_DESCRIPTOR)
         mass_per_charge_ancillary_file_path = dependencies.get_file_paths(source='codice',
-                                                                          descriptor='mass-per-charge-lookup')
+                                                                          descriptor=MASS_PER_CHARGE_DESCRIPTOR)
         mass_coefficients_file_path = dependencies.get_file_paths(source='codice',
-                                                                  descriptor='mass-coefficient-lookup')
+                                                                  descriptor=MASS_COEFFICIENT_DESCRIPTOR)
 
         for file_path in [*priority_rates_paths, *sectored_intensities_file_paths, *direct_events_path,
                           *mass_per_charge_ancillary_file_path, *mass_coefficients_file_path]:
