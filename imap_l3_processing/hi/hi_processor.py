@@ -71,7 +71,7 @@ class HiProcessor(Processor):
         gammas, errors = spectral_fit(len(epochs), len(lons), len(lats), fluxes, variances, energy)
 
         data_product = HiL3SpectralIndexDataProduct(
-            input_metadata=self.input_metadata.to_upstream_data_dependency(self.input_metadata.descriptor),
+            input_metadata=self.input_metadata,
             ena_spectral_index_stat_unc=errors,
             ena_spectral_index=gammas,
             epoch=input_data.epoch,
@@ -119,7 +119,7 @@ class HiProcessor(Processor):
         corrected_sys_unc = input_data.ena_intensity_sys_err / survival_probabilities
 
         data_product = HiL3SurvivalCorrectedDataProduct(
-            input_metadata=self.input_metadata.to_upstream_data_dependency(self.input_metadata.descriptor),
+            input_metadata=self.input_metadata,
             ena_intensity_stat_unc=corrected_stat_unc,
             ena_intensity_sys_err=corrected_sys_unc,
             ena_intensity=survival_corrected_intensity,

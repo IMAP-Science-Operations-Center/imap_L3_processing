@@ -66,8 +66,7 @@ class TestHiProcessor(unittest.TestCase):
         mock_save_data.assert_called_once()
         actual_hi_data_product: HiL3SpectralIndexDataProduct = mock_save_data.call_args_list[0].args[0]
 
-        self.assertEqual(input_metadata.to_upstream_data_dependency(input_metadata.descriptor),
-                         actual_hi_data_product.input_metadata)
+        self.assertEqual(input_metadata, actual_hi_data_product.input_metadata)
         self.assertEqual(sentinel.gammas, actual_hi_data_product.ena_spectral_index)
         self.assertEqual(sentinel.errors, actual_hi_data_product.ena_spectral_index_stat_unc)
         self.assertEqual(sentinel.energy_delta, actual_hi_data_product.energy_delta_minus)
@@ -218,8 +217,7 @@ class TestHiProcessor(unittest.TestCase):
         mock_save_data.assert_called_once()
         survival_data_product: HiL3SurvivalCorrectedDataProduct = mock_save_data.call_args_list[0].args[0]
 
-        self.assertEqual(input_metadata.to_upstream_data_dependency(input_metadata.descriptor),
-                         survival_data_product.input_metadata)
+        self.assertEqual(input_metadata, survival_data_product.input_metadata)
 
         np.testing.assert_array_equal(survival_data_product.ena_intensity,
                                       input_map.ena_intensity / computed_survival_probabilities)
