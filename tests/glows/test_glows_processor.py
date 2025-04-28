@@ -611,6 +611,18 @@ class TestGlowsProcessor(unittest.TestCase):
 
         mock_upload.assert_called_once_with(sentinel.lo_path)
 
+    @patch("imap_l3_processing.glows.glows_processor.GlowsL3DDependencies")
+    def test_process_l3d(self, mock_l3d_dependencies):
+        input_metadata = InputMetadata('glows', "l3d", datetime(2024, 10, 7, 10, 00, 00),
+                                       datetime(2024, 10, 8, 10, 00, 00),
+                                       'v001', descriptor='solar-hist')
+
+        input_data_collection = Mock()
+
+        processor = GlowsProcessor(input_data_collection, input_metadata)
+        processor.process()
+        mock_l3d_dependencies.fetch_dependencies.assert_called_once_with(input_data_collection)
+
 
 if __name__ == '__main__':
     unittest.main()
