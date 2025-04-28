@@ -3,18 +3,18 @@ import unittest
 from dataclasses import fields
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import Mock, sentinel
+from unittest.mock import Mock
 
 import numpy as np
 from spacepy.pycdf import CDF
 
-from imap_l3_processing.codice.l3.lo.models import CodiceLoL2Data, CodiceLoL3aPartialDensityDataProduct, \
+from imap_l3_processing.codice.l3.lo.models import CodiceLoL2SWSpeciesData, CodiceLoL3aPartialDensityDataProduct, \
     CodiceLoL2DirectEventData, \
     CodiceLoL2bPriorityRates, PriorityEvent, EnergyAndSpinAngle, CodiceLoL3aDirectEventDataProduct
 
 
 class TestModels(unittest.TestCase):
-    def test_lo_l2_sectored_intensities_read_from_cdf(self):
+    def test_lo_l2_sw_species_read_from_cdf(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             cdf_file_path = Path(tmpdir) / "test_cdf.cdf"
             rng = np.random.default_rng()
@@ -67,12 +67,11 @@ class TestModels(unittest.TestCase):
                 cdf_file['data_quality'] = data_quality
                 cdf_file['spin_sector_index'] = spin_sector_index
 
-            result: CodiceLoL2Data = CodiceLoL2Data.read_from_cdf(cdf_file_path)
+            result: CodiceLoL2SWSpeciesData = CodiceLoL2SWSpeciesData.read_from_cdf(cdf_file_path)
             np.testing.assert_array_equal(result.epoch, epoch)
             np.testing.assert_array_equal(result.epoch_delta_minus, epoch_delta_minus)
             np.testing.assert_array_equal(result.epoch_delta_plus, epoch_delta_plus)
             np.testing.assert_array_equal(result.energy_table, energy_table)
-            np.testing.assert_array_equal(result.spin_sector, spin_sector)
             np.testing.assert_array_equal(result.hplus, hplus)
             np.testing.assert_array_equal(result.heplusplus, heplusplus)
             np.testing.assert_array_equal(result.heplus, heplus)
@@ -181,87 +180,30 @@ class TestModels(unittest.TestCase):
         self.assertEqual(expected_total_events_by_energy_step_and_spin_angle,
                          priority_event.total_events_binned_by_energy_step_and_spin_angle())
 
-    def test_get_species(self):
-        hplus = np.array([sentinel.hplus])
-        heplusplus = np.array([sentinel.heplusplus])
-        heplus = np.array([sentinel.heplus])
-        ne = np.array([sentinel.ne])
-        cplus4 = np.array([sentinel.cplus4])
-        cplus5 = np.array([sentinel.cplus5])
-        cplus6 = np.array([sentinel.cplus6])
-        oplus5 = np.array([sentinel.oplus5])
-        oplus6 = np.array([sentinel.oplus6])
-        oplus7 = np.array([sentinel.oplus7])
-        oplus8 = np.array([sentinel.oplus8])
-        cnoplus = np.array([sentinel.cnoplus])
-        mg = np.array([sentinel.mg])
-        si = np.array([sentinel.si])
-        fe_loq = np.array([sentinel.fe_loq])
-        fe_hiq = np.array([sentinel.fe_hiq])
-
-        l2_data_product = CodiceLoL2Data(Mock(), Mock(), Mock(), Mock(), Mock(),
-                                         sentinel.hplus,
-                                         sentinel.heplusplus,
-                                         sentinel.heplus,
-                                         sentinel.ne,
-                                         sentinel.cplus4,
-                                         sentinel.cplus5,
-                                         sentinel.cplus6,
-                                         sentinel.oplus5,
-                                         sentinel.oplus6,
-                                         sentinel.oplus7,
-                                         sentinel.oplus8,
-                                         sentinel.cnoplus,
-                                         sentinel.mg,
-                                         sentinel.si,
-                                         sentinel.fe_loq,
-                                         sentinel.fe_hiq,
-                                         Mock(),
-                                         Mock(),
-                                         )
-
-        species_intensities = l2_data_product.get_species_intensities()
-
-        np.testing.assert_array_equal(species_intensities['H+'], hplus)
-        np.testing.assert_array_equal(species_intensities['He++'], heplusplus)
-        np.testing.assert_array_equal(species_intensities['He+'], heplus)
-        np.testing.assert_array_equal(species_intensities['Ne'], ne)
-        np.testing.assert_array_equal(species_intensities['C+4'], cplus4)
-        np.testing.assert_array_equal(species_intensities['C+5'], cplus5)
-        np.testing.assert_array_equal(species_intensities['C+6'], cplus6)
-        np.testing.assert_array_equal(species_intensities['O+5'], oplus5)
-        np.testing.assert_array_equal(species_intensities['O+6'], oplus6)
-        np.testing.assert_array_equal(species_intensities['O+7'], oplus7)
-        np.testing.assert_array_equal(species_intensities['O+8'], oplus8)
-        np.testing.assert_array_equal(species_intensities['CNO+'], cnoplus)
-        np.testing.assert_array_equal(species_intensities['Mg'], mg)
-        np.testing.assert_array_equal(species_intensities['Si'], si)
-        np.testing.assert_array_equal(species_intensities['Fe (low Q)'], fe_loq)
-        np.testing.assert_array_equal(species_intensities['Fe (high Q)'], fe_hiq)
-
     def test_codice_lo_l3a_partial_density_to_data_product(self):
         epoch_data = np.array([datetime.now()])
 
         input_data_product_kwargs = {
             "epoch": epoch_data,
-            "epoch_delta": np.array([10]),
-            "h_partial_density": np.array([15]),
-            "he_partial_density": np.array([15]),
-            "c4_partial_density": np.array([15]),
-            "c5_partial_density": np.array([15]),
-            "c6_partial_density": np.array([15]),
-            "o5_partial_density": np.array([15]),
-            "o6_partial_density": np.array([15]),
-            "o7_partial_density": np.array([15]),
-            "o8_partial_density": np.array([15]),
+            "epoch_delta_plus": np.array([1]),
+            "epoch_delta_minus": np.array([-1]),
+            "hplus_partial_density": np.array([15]),
+            "heplusplus_partial_density": np.array([15]),
+            "cplus4_partial_density": np.array([15]),
+            "cplus5_partial_density": np.array([15]),
+            "cplus6_partial_density": np.array([15]),
+            "oplus5_partial_density": np.array([15]),
+            "oplus6_partial_density": np.array([15]),
+            "oplus7_partial_density": np.array([15]),
+            "oplus8_partial_density": np.array([15]),
             "mg_partial_density": np.array([15]),
             "si_partial_density": np.array([15]),
-            "fe_low_partial_density": np.array([15]),
-            "fe_high_partial_density": np.array([15]),
+            "fe_loq_partial_density": np.array([15]),
+            "fe_hiq_partial_density": np.array([15]),
         }
 
         data_product = CodiceLoL3aPartialDensityDataProduct(
-            **input_data_product_kwargs
+            Mock(), **input_data_product_kwargs
         )
         actual_data_product_variables = data_product.to_data_product_variables()
 

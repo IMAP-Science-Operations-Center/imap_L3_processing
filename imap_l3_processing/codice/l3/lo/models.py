@@ -9,29 +9,29 @@ from spacepy.pycdf import CDF
 from imap_l3_processing.models import DataProductVariable, DataProduct
 
 EPOCH_VAR_NAME = "epoch"
-EPOCH_DELTA_VAR_NAME = "epoch_delta"
-H_PARTIAL_DENSITY_VAR_NAME = "h_partial_density"
-HE_PARTIAL_DENSITY_VAR_NAME = "he_partial_density"
-C4_PARTIAL_DENSITY_VAR_NAME = "c4_partial_density"
-C5_PARTIAL_DENSITY_VAR_NAME = "c5_partial_density"
-C6_PARTIAL_DENSITY_VAR_NAME = "c6_partial_density"
-O5_PARTIAL_DENSITY_VAR_NAME = "o5_partial_density"
-O6_PARTIAL_DENSITY_VAR_NAME = "o6_partial_density"
-O7_PARTIAL_DENSITY_VAR_NAME = "o7_partial_density"
-O8_PARTIAL_DENSITY_VAR_NAME = "o8_partial_density"
+EPOCH_DELTA_PLUS_VAR_NAME = "epoch_delta_plus"
+EPOCH_DELTA_MINUS_VAR_NAME = "epoch_delta_minus"
+H_PARTIAL_DENSITY_VAR_NAME = "hplus_partial_density"
+HE_PARTIAL_DENSITY_VAR_NAME = "heplusplus_partial_density"
+C4_PARTIAL_DENSITY_VAR_NAME = "cplus4_partial_density"
+C5_PARTIAL_DENSITY_VAR_NAME = "cplus5_partial_density"
+C6_PARTIAL_DENSITY_VAR_NAME = "cplus6_partial_density"
+O5_PARTIAL_DENSITY_VAR_NAME = "oplus5_partial_density"
+O6_PARTIAL_DENSITY_VAR_NAME = "oplus6_partial_density"
+O7_PARTIAL_DENSITY_VAR_NAME = "oplus7_partial_density"
+O8_PARTIAL_DENSITY_VAR_NAME = "oplus8_partial_density"
 MG_PARTIAL_DENSITY_VAR_NAME = "mg_partial_density"
 SI_PARTIAL_DENSITY_VAR_NAME = "si_partial_density"
-FE_LOW_PARTIAL_DENSITY_VAR_NAME = "fe_low_partial_density"
-FE_HIGH_PARTIAL_DENSITY_VAR_NAME = "fe_high_partial_density"
+FE_LOW_PARTIAL_DENSITY_VAR_NAME = "fe_loq_partial_density"
+FE_HIGH_PARTIAL_DENSITY_VAR_NAME = "fe_hiq_partial_density"
 
 
 @dataclass
-class CodiceLoL2Data:
+class CodiceLoL2SWSpeciesData:
     epoch: ndarray
     epoch_delta_minus: ndarray
     epoch_delta_plus: ndarray
     energy_table: ndarray
-    spin_sector: ndarray
     hplus: ndarray
     heplusplus: ndarray
     heplus: ndarray
@@ -59,7 +59,6 @@ class CodiceLoL2Data:
                 epoch_delta_minus=cdf["epoch_delta_minus"][...],
                 epoch_delta_plus=cdf["epoch_delta_plus"][...],
                 energy_table=cdf["energy_table"][...],
-                spin_sector=cdf["spin_sector"][...],
                 hplus=cdf["hplus"][...],
                 heplusplus=cdf["heplusplus"][...],
                 heplus=cdf["heplus"][...],
@@ -79,26 +78,6 @@ class CodiceLoL2Data:
                 data_quality=cdf["data_quality"][...],
                 spin_sector_index=cdf["spin_sector_index"][...],
             )
-
-    def get_species_intensities(self) -> dict:
-        return {
-            "H+": self.hplus,
-            "He++": self.heplusplus,
-            "He+": self.heplus,
-            "Ne": self.ne,
-            "C+4": self.cplus4,
-            "C+5": self.cplus5,
-            "C+6": self.cplus6,
-            "O+5": self.oplus5,
-            "O+6": self.oplus6,
-            "O+7": self.oplus7,
-            "O+8": self.oplus8,
-            "CNO+": self.cnoplus,
-            "Mg": self.mg,
-            "Si": self.si,
-            "Fe (low Q)": self.fe_loq,
-            "Fe (high Q)": self.fe_hiq,
-        }
 
 
 @dataclass
@@ -319,40 +298,42 @@ class CodiceLoL2DirectEventData:
 
 
 @dataclass
-class CodiceLoL3aPartialDensityDataProduct:
+class CodiceLoL3aPartialDensityDataProduct(DataProduct):
     epoch: ndarray
-    epoch_delta: ndarray
-    h_partial_density: ndarray
-    he_partial_density: ndarray
-    c4_partial_density: ndarray
-    c5_partial_density: ndarray
-    c6_partial_density: ndarray
-    o5_partial_density: ndarray
-    o6_partial_density: ndarray
-    o7_partial_density: ndarray
-    o8_partial_density: ndarray
+    epoch_delta_plus: ndarray
+    epoch_delta_minus: ndarray
+    hplus_partial_density: ndarray
+    heplusplus_partial_density: ndarray
+    cplus4_partial_density: ndarray
+    cplus5_partial_density: ndarray
+    cplus6_partial_density: ndarray
+    oplus5_partial_density: ndarray
+    oplus6_partial_density: ndarray
+    oplus7_partial_density: ndarray
+    oplus8_partial_density: ndarray
     mg_partial_density: ndarray
     si_partial_density: ndarray
-    fe_low_partial_density: ndarray
-    fe_high_partial_density: ndarray
+    fe_loq_partial_density: ndarray
+    fe_hiq_partial_density: ndarray
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
             DataProductVariable(EPOCH_VAR_NAME, self.epoch),
-            DataProductVariable(EPOCH_DELTA_VAR_NAME, self.epoch_delta),
-            DataProductVariable(H_PARTIAL_DENSITY_VAR_NAME, self.h_partial_density),
-            DataProductVariable(HE_PARTIAL_DENSITY_VAR_NAME, self.he_partial_density),
-            DataProductVariable(C4_PARTIAL_DENSITY_VAR_NAME, self.c4_partial_density),
-            DataProductVariable(C5_PARTIAL_DENSITY_VAR_NAME, self.c5_partial_density),
-            DataProductVariable(C6_PARTIAL_DENSITY_VAR_NAME, self.c6_partial_density),
-            DataProductVariable(O5_PARTIAL_DENSITY_VAR_NAME, self.o5_partial_density),
-            DataProductVariable(O6_PARTIAL_DENSITY_VAR_NAME, self.o6_partial_density),
-            DataProductVariable(O7_PARTIAL_DENSITY_VAR_NAME, self.o7_partial_density),
-            DataProductVariable(O8_PARTIAL_DENSITY_VAR_NAME, self.o8_partial_density),
+            DataProductVariable(EPOCH_DELTA_PLUS_VAR_NAME, self.epoch_delta_plus),
+            DataProductVariable(EPOCH_DELTA_MINUS_VAR_NAME, self.epoch_delta_minus),
+            DataProductVariable(H_PARTIAL_DENSITY_VAR_NAME, self.hplus_partial_density),
+            DataProductVariable(HE_PARTIAL_DENSITY_VAR_NAME, self.heplusplus_partial_density),
+            DataProductVariable(C4_PARTIAL_DENSITY_VAR_NAME, self.cplus4_partial_density),
+            DataProductVariable(C5_PARTIAL_DENSITY_VAR_NAME, self.cplus5_partial_density),
+            DataProductVariable(C6_PARTIAL_DENSITY_VAR_NAME, self.cplus6_partial_density),
+            DataProductVariable(O5_PARTIAL_DENSITY_VAR_NAME, self.oplus5_partial_density),
+            DataProductVariable(O6_PARTIAL_DENSITY_VAR_NAME, self.oplus6_partial_density),
+            DataProductVariable(O7_PARTIAL_DENSITY_VAR_NAME, self.oplus7_partial_density),
+            DataProductVariable(O8_PARTIAL_DENSITY_VAR_NAME, self.oplus8_partial_density),
             DataProductVariable(MG_PARTIAL_DENSITY_VAR_NAME, self.mg_partial_density),
             DataProductVariable(SI_PARTIAL_DENSITY_VAR_NAME, self.si_partial_density),
-            DataProductVariable(FE_LOW_PARTIAL_DENSITY_VAR_NAME, self.fe_low_partial_density),
-            DataProductVariable(FE_HIGH_PARTIAL_DENSITY_VAR_NAME, self.fe_high_partial_density),
+            DataProductVariable(FE_LOW_PARTIAL_DENSITY_VAR_NAME, self.fe_loq_partial_density),
+            DataProductVariable(FE_HIGH_PARTIAL_DENSITY_VAR_NAME, self.fe_hiq_partial_density),
         ]
 
 
