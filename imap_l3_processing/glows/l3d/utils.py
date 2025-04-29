@@ -36,6 +36,12 @@ def create_glows_l3b_dictionary_from_cdf(cdf_file_path: Path) -> dict:
         }
 
 
+def get_l3a_parent_files_from_l3b(l3b_file: Path) -> list[str]:
+    with CDF(str(l3b_file)) as cdf:
+        parent_files = cdf.attrs['Parents'][...]
+        return [name for name in parent_files if name.startswith("imap_glows") and name.split('_')[2] == "l3a"]
+
+
 def convert_json_l3d_to_cdf(json_file_path: Path, path_to_write_cdf_to: Path) -> Path:
     with open(json_file_path, 'r') as json_file:
         l3d_json_dict = json.load(json_file)
