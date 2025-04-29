@@ -38,7 +38,7 @@ def create_hi_full_spin_deps(
                                                                      "h90-ena-h-sf-nsp-anti-hae-4deg-6mo")
 
     processor = HiProcessor(None, InputMetadata("hi", "l3", None, None, "v001", "h90-ena-h-sf-sp-full-hae-4deg-6mo"))
-    ram_data = processor._process_survival_probabilities(ramified_map_deps)
+    ram_data = processor.process_survival_probabilities(ramified_map_deps)
     ram_exposure_is_zero = np.isnan(ram_data.ena_intensity)
 
     ram_cdf_path = save_data(ram_data, delete_if_present=True, folder_path=output_dir)
@@ -53,7 +53,7 @@ def create_hi_full_spin_deps(
 
     shutil.move(ram_cdf_path, output_dir / f"{ram_logical_source}.cdf")
 
-    antiram_data = processor._process_survival_probabilities(antiramified_map_deps)
+    antiram_data = processor.process_survival_probabilities(antiramified_map_deps)
     antiram_exposure_is_zero = np.isnan(antiram_data.ena_intensity)
 
     antiram_cdf_path = save_data(antiram_data, delete_if_present=True, folder_path=output_dir)

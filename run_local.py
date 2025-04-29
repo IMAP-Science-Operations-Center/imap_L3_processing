@@ -198,7 +198,7 @@ def create_survival_corrected_full_spin_cdf(dependencies: HiL3SingleSensorFullSp
                                    descriptor="h90-ena-h-sf-sp-full-hae-4deg-6mo",
                                    )
     processor = HiProcessor(Mock(), input_metadata)
-    output_data = processor._process_full_spin_single_sensor(dependencies)
+    output_data = processor.process_full_spin_single_sensor(dependencies)
     cdf_path = save_data(output_data, delete_if_present=True)
     return cdf_path
 
@@ -212,7 +212,7 @@ def create_spectral_index_cdf(dependencies: HiL3SpectralFitDependencies) -> str:
                                    descriptor="h90-spx-h-hf-sp-full-hae-4deg-6mo",
                                    )
     processor = HiProcessor(Mock(), input_metadata)
-    output_data = processor._process_spectral_fit_index(dependencies)
+    output_data = processor.process_spectral_fit_index(dependencies)
     cdf_path = save_data(output_data, delete_if_present=True)
     return cdf_path
 
@@ -599,7 +599,7 @@ def create_hi_l3_survival_corrected_cdf(survival_dependencies: HiL3SurvivalDepen
                                    )
 
     processor = HiProcessor(Mock(), input_metadata)
-    survival_corrected_product = processor._process_survival_probabilities(
+    survival_corrected_product = processor.process_survival_probabilities(
         survival_dependencies)
 
     return save_data(survival_corrected_product, delete_if_present=True)
