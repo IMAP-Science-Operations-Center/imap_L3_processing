@@ -10,7 +10,7 @@ from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.utils import save_data
 from tests.test_helpers import get_test_data_path
 
-input_file_directory = "/Users/harrison/Downloads/glows_L3bc_pipeline/data_l3a"
+input_file_directory = r"C:\Users\Harrison\Downloads\l3a_file"
 
 files_to_convert = os.listdir(input_file_directory)
 for file in files_to_convert:
