@@ -51,6 +51,7 @@ class HiSurvivalProbabilityPointingSet(PointingSet):
 
         exposure_mask = np.full(num_spin_angle_bins, False)
 
+        assert num_spin_angle_bins == 3600, "unexpected number of spin angles"
         if spin_phase == SpinPhase.RamOnly:
             exposure_mask[0:900] = True
             exposure_mask[2700:3600] = True
