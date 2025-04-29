@@ -19,6 +19,7 @@ epoch:
    MONOTON: INCREASE
    REFERENCE_POSITION: Rotating Earth Geoid
    SI_CONVERSION: 1e-9>seconds
+   DICT_KEY: SPASE>Support>SupportQuantity:Temporal
 energy:
    NAME: energy
    DATA_TYPE: CDF_REAL4
@@ -38,6 +39,7 @@ energy:
    SCALEMIN: 1
    SCALEMAX: 10000
    SI_CONVERSION: 1.602176634e-19>joules
+   DICT_KEY: SPASE>Particle>ParticleType:Electron,ParticleQuantity:Energy
 pitch_angle:
    NAME: pitch_angle
    DATA_TYPE: CDF_REAL4
@@ -57,6 +59,7 @@ pitch_angle:
    SCALEMIN: 0
    SCALEMAX: 180
    SI_CONVERSION: 1.745329e-2>radians
+   DICT_KEY: SPASE>Particle>ParticleType:Electron,ParticleQuantity:ArrivalDirection,Qualifier:DirectionAngle.PolarAngle
 gyrophase:
    NAME: gyrophase
    DATA_TYPE: CDF_REAL4
@@ -76,6 +79,7 @@ gyrophase:
    SCALEMIN: 0
    SCALEMAX: 360
    SI_CONVERSION: 1.745329e-2>radians
+   DICT_KEY: SPASE>Particle>ParticleType:Electron,ParticleQuantity:ArrivalDirection,Qualifier:DirectionAngle.AzimuthAngle
 epoch_delta:
    NAME: epoch_delta
    DATA_TYPE: CDF_INT8
@@ -92,6 +96,7 @@ epoch_delta:
    FILLVAL: -9223372036854775808
    SCALE_TYP: linear
    SI_CONVERSION: 1e-9>seconds
+   DICT_KEY: SPASE>Support>SupportQuantity:Temporal
 energy_delta_plus:
    NAME: energy_delta_plus
    DATA_TYPE: CDF_REAL4
@@ -107,6 +112,7 @@ energy_delta_plus:
    FILLVAL: -1.00E+31
    SCALE_TYP: log
    SI_CONVERSION: 1.602176634e-19>joules
+   DICT_KEY: SPASE>Particle>ParticleType:Electron,ParticleQuantity:Energy,Qualifier:Maximum
 energy_delta_minus:
    NAME: energy_delta_minus
    DATA_TYPE: CDF_REAL4
@@ -122,6 +128,7 @@ energy_delta_minus:
    FILLVAL: -1.00E+31
    SCALE_TYP: log
    SI_CONVERSION: 1.602176634e-19>joules
+   DICT_KEY: SPASE>Particle>ParticleType:Electron,ParticleQuantity:Energy,Qualifier:Minimum
 pitch_angle_delta:
    NAME: pitch_angle_delta
    DATA_TYPE: CDF_REAL4
@@ -137,6 +144,7 @@ pitch_angle_delta:
    FILLVAL: -1.00E+31
    SCALE_TYP: linear
    SI_CONVERSION: 1.745329e-2>radians
+   DICT_KEY: SPASE>Particle>ParticleType:Electron,ParticleQuantity:ArrivalDirection,Qualifier:DirectionAngle.PolarAngle
 gyrophase_delta:
    NAME: gyrophase_delta
    DATA_TYPE: CDF_REAL4
@@ -152,6 +160,7 @@ gyrophase_delta:
    FILLVAL: -1.00E+31
    SCALE_TYP: linear
    SI_CONVERSION: 1.745329e-2>radians
+   DICT_KEY: SPASE>Particle>ParticleType:Electron,ParticleQuantity:ArrivalDirection,Qualifier:DirectionAngle.AzimuthAngle
 temperature_tensor_component:
    NAME: temperature_tensor_component
    DATA_TYPE: CDF_INT1
@@ -167,6 +176,7 @@ temperature_tensor_component:
    VALIDMAX: 9
    FILLVAL: -1.00E+31
    SCALE_TYP: linear
+   DICT_KEY: SPASE>Support>SupportQuantity:Other,Qualifier:Component
 intensity_by_pitch_angle:
    NAME: intensity_by_pitch_angle
    DATA_TYPE: CDF_REAL4
@@ -190,6 +200,7 @@ intensity_by_pitch_angle:
    SCALE_TYP: linear
    DELTA_PLUS_VAR: intensity_uncertainty_by_pitch_angle
    DELTA_MINUS_VAR: intensity_uncertainty_by_pitch_angle
+   DICT_KEY: SPASE>Particle>ParticleType:Electron,ParticleQuantity:NumberFlux,Qualifier:Directional,Qualifier:Differential
 intensity_by_pitch_angle_and_gyrophase:
    NAME: intensity_by_pitch_angle_and_gyrophase
    DATA_TYPE: CDF_REAL4
@@ -215,6 +226,7 @@ intensity_by_pitch_angle_and_gyrophase:
    SCALE_TYP: linear
    DELTA_PLUS_VAR: intensity_uncertainty_by_pitch_angle_and_gyrophase
    DELTA_MINUS_VAR: intensity_uncertainty_by_pitch_angle_and_gyrophase
+   DICT_KEY: SPASE>Particle>ParticleType:Electron,ParticleQuantity:NumberFlux,Qualifier:Directional,Qualifier:Differential
 intensity_uncertainty_by_pitch_angle:
    NAME: intensity_uncertainty_by_pitch_angle
    DATA_TYPE: CDF_REAL4
@@ -236,6 +248,7 @@ intensity_uncertainty_by_pitch_angle:
    LABL_PTR_1: energy_label
    LABL_PTR_2: pitch_angle_label
    SCALE_TYP: linear
+   DICT_KEY: SPASE>Particle>ParticleType:Electron,ParticleQuantity:NumberFlux,Qualifier:Directional,Qualifier:Differential,Qualifier:Uncertainty
 intensity_uncertainty_by_pitch_angle_and_gyrophase:
    NAME: intensity_uncertainty_by_pitch_angle_and_gyrophase
    DATA_TYPE: CDF_REAL4
@@ -259,6 +272,7 @@ intensity_uncertainty_by_pitch_angle_and_gyrophase:
    LABL_PTR_2: pitch_angle_label
    LABL_PTR_3: gyrophase_label
    SCALE_TYP: linear
+   DICT_KEY: SPASE>Particle>ParticleType:Electron,ParticleQuantity:NumberFlux,Qualifier:Directional,Qualifier:Differential,Qualifier:Uncertainty
 phase_space_density_by_pitch_angle_and_gyrophase:
    NAME: phase_space_density_by_pitch_angle_and_gyrophase
    DATA_TYPE: CDF_REAL4
@@ -283,6 +297,7 @@ phase_space_density_by_pitch_angle_and_gyrophase:
    LABL_PTR_3: gyrophase_label
    SCALE_TYP: log
    SI_CONVERSION: 1e12>s^3 m^-6
+   DICT_KEY: SPASE>Particle>ParticleType:Electron,ParticleQuantity:PhaseSpaceDensity
 phase_space_density_by_pitch_angle:
    NAME: phase_space_density_by_pitch_angle
    DATA_TYPE: CDF_REAL4
@@ -305,6 +320,7 @@ phase_space_density_by_pitch_angle:
    LABL_PTR_2: pitch_angle_label
    SCALE_TYP: log
    SI_CONVERSION: 1e12>s^3 m^-6
+   DICT_KEY: SPASE>Particle>ParticleType:Electron,ParticleQuantity:PhaseSpaceDensity
 intensity:
    NAME: intensity
    DATA_TYPE: CDF_REAL4
@@ -325,6 +341,7 @@ intensity:
    LABL_PTR_1: energy_label
    SCALE_TYP: log
    SI_CONVERSION: 6.241509e22>m^-2 radian^-2 s^-1 J^-1
+   DICT_KEY: SPASE>Particle>ParticleType:Electron,ParticleQuantity:NumberFlux,Qualifier:Differential
 intensity_inward:
    NAME: intensity_inward
    DATA_TYPE: CDF_REAL4
@@ -345,6 +362,7 @@ intensity_inward:
    LABL_PTR_1: energy_label
    SCALE_TYP: log
    SI_CONVERSION: 6.241509e22>m^-2 radian^-2 s^-1 J^-1
+   DICT_KEY: SPASE>Particle>ParticleType:Electron,ParticleQuantity:NumberFlux,Qualifier:Directional,Qualifier:Differential
 intensity_outward:
    NAME: intensity_outward
    DATA_TYPE: CDF_REAL4
@@ -365,6 +383,7 @@ intensity_outward:
    LABL_PTR_1: energy_label
    SCALE_TYP: log
    SI_CONVERSION: 6.241509e22>m^-2 radian^-2 s^-1 J^-1
+   DICT_KEY: SPASE>Particle>ParticleType:Electron,ParticleQuantity:NumberFlux,Qualifier:Directional,Qualifier:Differential
 spacecraft_potential:
    NAME: spacecraft_potential
    DATA_TYPE: CDF_REAL4
