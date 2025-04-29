@@ -51,7 +51,7 @@ class TestHiProcessor(unittest.TestCase):
                                        start_date=datetime.now(),
                                        end_date=datetime.now() + timedelta(days=1),
                                        version="",
-                                       descriptor="h45-hf-sp-hae-4deg-6mo-spectral",
+                                       descriptor="h90-spx-h-hf-sp-full-hae-4deg-6mo",
                                        )
 
         mock_spectral_fit.return_value = sentinel.gammas, sentinel.errors
@@ -171,7 +171,7 @@ class TestHiProcessor(unittest.TestCase):
                                        start_date=datetime.now(),
                                        end_date=datetime.now() + timedelta(days=1),
                                        version="",
-                                       descriptor="h90-sf-sp-ram-hae-4deg-6mo",
+                                       descriptor="h90-ena-h-sf-sp-ram-hae-4deg-6mo",
                                        )
 
         computed_survival_probabilities = rng.random((1, 9, 90, 45))
@@ -263,7 +263,7 @@ class TestHiProcessor(unittest.TestCase):
                                        start_date=datetime.now(),
                                        end_date=datetime.now() + timedelta(days=1),
                                        version="",
-                                       descriptor="h90-sf-sp-hae-4deg-6mo",
+                                       descriptor="h90-ena-h-sf-sp-full-hae-4deg-6mo",
                                        )
 
         full_spin_dependencies: HiL3SingleSensorFullSpinDependencies = mock_fetch_full_spin_single_sensor_dependencies.return_value
@@ -297,11 +297,11 @@ class TestHiProcessor(unittest.TestCase):
 
     def test_raises_error_for_currently_unimplemented_maps(self):
         cases = [
-            "h-sf-hae-6deg-6mo",
-            "h-sf-sp-hae-6deg-6mo",
-            "h-sf-sp-ram-hae-6deg-6mo",
-            "h-sf-hae-6deg-12mo",
-            "h45-hf-hae-6deg-6mo",
+            "hic-ena-h-sf-nsp-full-hae-6deg-6mo",
+            "hic-ena-h-sf-sp-full-hae-6deg-6mo",
+            "hic-ena-h-sf-sp-ram-hae-6deg-6mo",
+            "hic-ena-h-sf-nsp-full-hae-6deg-12mo",
+            "h45-ena-h-hf-nsp-full-hae-6deg-6mo",
         ]
         for descriptor in cases:
             with self.subTest(descriptor):

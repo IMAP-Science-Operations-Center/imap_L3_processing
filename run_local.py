@@ -195,7 +195,7 @@ def create_survival_corrected_full_spin_cdf(dependencies: HiL3SingleSensorFullSp
                                    start_date=datetime.now(),
                                    end_date=datetime.now() + timedelta(days=1),
                                    version="v000",
-                                   descriptor="h90-sf-sp-hae-4deg-6mo",
+                                   descriptor="h90-ena-h-sf-sp-full-hae-4deg-6mo",
                                    )
     processor = HiProcessor(Mock(), input_metadata)
     output_data = processor._process_full_spin_single_sensor(dependencies)
@@ -209,7 +209,7 @@ def create_spectral_index_cdf(dependencies: HiL3SpectralFitDependencies) -> str:
                                    start_date=datetime.now(),
                                    end_date=datetime.now() + timedelta(days=1),
                                    version="v000",
-                                   descriptor="h90-hf-sp-hae-4deg-6mo-spectral",
+                                   descriptor="h90-spx-h-hf-sp-full-hae-4deg-6mo",
                                    )
     processor = HiProcessor(Mock(), input_metadata)
     output_data = processor._process_spectral_fit_index(dependencies)
@@ -595,7 +595,7 @@ def create_hi_l3_survival_corrected_cdf(survival_dependencies: HiL3SurvivalDepen
                                    start_date=datetime(2025, 4, 9),
                                    end_date=datetime(2025, 4, 10),
                                    version="v001",
-                                   descriptor="h90-sf-sp-hae-4deg-6mo",
+                                   descriptor="h90-ena-h-sf-sp-ram-hae-4deg-6mo",
                                    )
 
     processor = HiProcessor(Mock(), input_metadata)
@@ -703,8 +703,8 @@ if __name__ == "__main__":
 
         missing_paths, run_local_paths = try_get_many_run_local_paths([
             "hi/full_spin_deps/l1c",
-            "hi/full_spin_deps/imap_hi_l2_h90-sf-ram-hae-4deg-6mo_20250415_v001.cdf",
-            "hi/full_spin_deps/imap_hi_l2_h90-sf-anti-hae-4deg-6mo_20250415_v001.cdf"
+            "hi/full_spin_deps/imap_hi_l2_h90-ena-h-sf-nsp-ram-hae-4deg-6mo_20250415_v001.cdf",
+            "hi/full_spin_deps/imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-6mo_20250415_v001.cdf"
         ])
 
         if missing_paths:
@@ -718,7 +718,7 @@ if __name__ == "__main__":
                 map_file_path=l2_ram_map_path,
                 hi_l1c_paths=hi_l1c_paths,
                 glows_l3e_paths=glows_l3_paths,
-                l2_descriptor="h90-sf-ram-hae-4deg-6mo")
+                l2_descriptor="h90-ena-h-sf-nsp-ram-hae-4deg-6mo")
             print(create_hi_l3_survival_corrected_cdf(survival_dependencies, spacing_degree=4))
 
         if do_all or "spectral-index" in sys.argv:
@@ -732,13 +732,13 @@ if __name__ == "__main__":
                 map_file_path=l2_ram_map_path,
                 hi_l1c_paths=hi_l1c_paths,
                 glows_l3e_paths=glows_l3_paths,
-                l2_descriptor="h90-sf-ram-hae-4deg-6mo")
+                l2_descriptor="h90-ena-h-sf-nsp-ram-hae-4deg-6mo")
 
             antiram_survival_dependencies = HiL3SurvivalDependencies.from_file_paths(
                 map_file_path=l2_antiram_map_path,
                 hi_l1c_paths=hi_l1c_paths,
                 glows_l3e_paths=glows_l3_paths,
-                l2_descriptor="h90-sf-anti-hae-4deg-6mo")
+                l2_descriptor="h90-ena-h-sf-nsp-anti-hae-4deg-6mo")
 
             full_spin_dependencies = HiL3SingleSensorFullSpinDependencies(
                 ram_dependencies=ram_survival_dependencies,

@@ -31,18 +31,18 @@ def create_hi_full_spin_deps(
         original_intensity = cdf["ena_intensity"][...]
 
     ramified_map_deps = HiL3SurvivalDependencies.from_file_paths(original_full_spin_map_path, l1c_files, glows_files,
-                                                                 "h90-sf-ram-hae-4deg-6mo")
+                                                                 "h90-ena-h-sf-nsp-ram-hae-4deg-6mo")
 
     antiramified_map_deps = HiL3SurvivalDependencies.from_file_paths(original_full_spin_map_path, l1c_files,
                                                                      glows_files,
-                                                                     "h90-sf-anti-hae-4deg-6mo")
+                                                                     "h90-ena-h-sf-nsp-anti-hae-4deg-6mo")
 
-    processor = HiProcessor(None, InputMetadata("hi", "l3", None, None, "v001", "h90-sf-sp-hae-4deg-6mo"))
+    processor = HiProcessor(None, InputMetadata("hi", "l3", None, None, "v001", "h90-ena-h-sf-sp-full-hae-4deg-6mo"))
     ram_data = processor._process_survival_probabilities(ramified_map_deps)
     ram_exposure_is_zero = np.isnan(ram_data.ena_intensity)
 
     ram_cdf_path = save_data(ram_data, delete_if_present=True, folder_path=output_dir)
-    ram_logical_source = "imap_hi_l2_h90-sf-ram-hae-4deg-6mo_20250415_v001"
+    ram_logical_source = "imap_hi_l2_h90-ena-h-sf-nsp-ram-hae-4deg-6mo_20250415_v001"
     with CDF(ram_cdf_path, readonly=False) as ram:
         ram["exposure_factor"] = np.where(ram_exposure_is_zero, 0, ram_data.exposure_factor)
         ram["ena_intensity"] = np.where(ram_exposure_is_zero, ram["ena_intensity"].attrs["FILLVAL"],
@@ -57,7 +57,7 @@ def create_hi_full_spin_deps(
     antiram_exposure_is_zero = np.isnan(antiram_data.ena_intensity)
 
     antiram_cdf_path = save_data(antiram_data, delete_if_present=True, folder_path=output_dir)
-    antiram_logical_source = "imap_hi_l2_h90-sf-anti-hae-4deg-6mo_20250415_v001"
+    antiram_logical_source = "imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-6mo_20250415_v001"
 
     with CDF(antiram_cdf_path, readonly=False) as antiram:
         antiram["exposure_factor"] = np.where(antiram_exposure_is_zero, 0, antiram_data.exposure_factor)

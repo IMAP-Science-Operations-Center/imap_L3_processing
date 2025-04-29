@@ -106,7 +106,7 @@ class HiProcessor(Processor):
                 hi_survival_probabilities_dependencies.l2_data.energy))
         assert len(pointing_sets) > 0
 
-        hi_survival_sky_map = HiSurvivalProbabilitySkyMap(pointing_sets, int(l2_descriptor_parts.grid_size),
+        hi_survival_sky_map = HiSurvivalProbabilitySkyMap(pointing_sets, int(l2_descriptor_parts.grid),
                                                           SpiceFrame.ECLIPJ2000)
 
         survival_dataset = hi_survival_sky_map.to_dataset()
