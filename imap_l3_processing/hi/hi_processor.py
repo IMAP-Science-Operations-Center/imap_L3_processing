@@ -23,14 +23,14 @@ class HiProcessor(Processor):
         match parsed_descriptor:
             case MapDescriptorParts(quantity=MapQuantity.SpectralIndex):
                 hi_l3_spectral_fit_dependencies = HiL3SpectralFitDependencies.fetch_dependencies(self.dependencies)
-                data_product = self._process_spectral_fit_index(hi_l3_spectral_fit_dependencies)
+                data_product = self.process_spectral_fit_index(hi_l3_spectral_fit_dependencies)
             case MapDescriptorParts(survival_correction=SurvivalCorrection.SurvivalCorrected,
                                     sensor=Sensor.Hi90 | Sensor.Hi45,
                                     spin_phase=SpinPhase.RamOnly | SpinPhase.AntiRamOnly,
                                     duration=Duration.SixMonths):
                 hi_l3_survival_probabilities_dependencies = HiL3SurvivalDependencies.fetch_dependencies(
                     self.dependencies)
-                data_product = self._process_survival_probabilities(hi_l3_survival_probabilities_dependencies)
+                data_product = self.process_survival_probabilities(hi_l3_survival_probabilities_dependencies)
                 set_of_parent_file_names.update(
                     p.name for p in hi_l3_survival_probabilities_dependencies.dependency_file_paths)
             case MapDescriptorParts(survival_correction=SurvivalCorrection.SurvivalCorrected,
@@ -39,7 +39,7 @@ class HiProcessor(Processor):
                                     duration=Duration.SixMonths):
                 hi_l3_full_spin_dependencies = HiL3SingleSensorFullSpinDependencies.fetch_dependencies(
                     self.dependencies)
-                data_product = self._process_full_spin_single_sensor(hi_l3_full_spin_dependencies)
+                data_product = self.process_full_spin_single_sensor(hi_l3_full_spin_dependencies)
                 set_of_parent_file_names.update(p.name for p in hi_l3_full_spin_dependencies.dependency_file_paths)
             case _:
                 raise NotImplementedError(self.input_metadata.descriptor)
@@ -49,15 +49,15 @@ class HiProcessor(Processor):
         cdf_path = save_data(data_product)
         upload(cdf_path)
 
-    def _process_full_spin_single_sensor(self,
-                                         hi_l3_full_spin_dependencies: HiL3SingleSensorFullSpinDependencies) -> HiL3SurvivalCorrectedDataProduct:
-        ram_data_product = self._process_survival_probabilities(hi_l3_full_spin_dependencies.ram_dependencies)
-        antiram_data_product = self._process_survival_probabilities(hi_l3_full_spin_dependencies.antiram_dependencies)
+    def process_full_spin_single_sensor(self,
+                                        hi_l3_full_spin_dependencies: HiL3SingleSensorFullSpinDependencies) -> HiL3SurvivalCorrectedDataProduct:
+        ram_data_product = self.process_survival_probabilities(hi_l3_full_spin_dependencies.ram_dependencies)
+        antiram_data_product = self.process_survival_probabilities(hi_l3_full_spin_dependencies.antiram_dependencies)
 
         return combine_maps([ram_data_product, antiram_data_product])
 
-    def _process_spectral_fit_index(self,
-                                    hi_l3_spectral_fit_dependencies: HiL3SpectralFitDependencies) -> HiL3SpectralIndexDataProduct:
+    def process_spectral_fit_index(self,
+                                   hi_l3_spectral_fit_dependencies: HiL3SpectralFitDependencies) -> HiL3SpectralIndexDataProduct:
         input_data = hi_l3_spectral_fit_dependencies.hi_l3_data
         hi_l3_data = input_data
 
@@ -71,7 +71,7 @@ class HiProcessor(Processor):
         gammas, errors = spectral_fit(len(epochs), len(lons), len(lats), fluxes, variances, energy)
 
         data_product = HiL3SpectralIndexDataProduct(
-            input_metadata=self.input_metadata.to_upstream_data_dependency(self.input_metadata.descriptor),
+            input_metadata=self.input_metadata,
             ena_spectral_index_stat_unc=errors,
             ena_spectral_index=gammas,
             epoch=input_data.epoch,
@@ -94,7 +94,7 @@ class HiProcessor(Processor):
 
         return data_product
 
-    def _process_survival_probabilities(self, hi_survival_probabilities_dependencies: HiL3SurvivalDependencies):
+    def process_survival_probabilities(self, hi_survival_probabilities_dependencies: HiL3SurvivalDependencies):
         l2_descriptor_parts = hi_survival_probabilities_dependencies.l2_map_descriptor_parts
 
         combined_glows_hi = combine_glows_l3e_with_l1c_pointing(hi_survival_probabilities_dependencies.glows_l3e_data,
@@ -106,7 +106,7 @@ class HiProcessor(Processor):
                 hi_survival_probabilities_dependencies.l2_data.energy))
         assert len(pointing_sets) > 0
 
-        hi_survival_sky_map = HiSurvivalProbabilitySkyMap(pointing_sets, int(l2_descriptor_parts.grid_size),
+        hi_survival_sky_map = HiSurvivalProbabilitySkyMap(pointing_sets, int(l2_descriptor_parts.grid),
                                                           SpiceFrame.ECLIPJ2000)
 
         survival_dataset = hi_survival_sky_map.to_dataset()
@@ -119,7 +119,7 @@ class HiProcessor(Processor):
         corrected_sys_unc = input_data.ena_intensity_sys_err / survival_probabilities
 
         data_product = HiL3SurvivalCorrectedDataProduct(
-            input_metadata=self.input_metadata.to_upstream_data_dependency(self.input_metadata.descriptor),
+            input_metadata=self.input_metadata,
             ena_intensity_stat_unc=corrected_stat_unc,
             ena_intensity_sys_err=corrected_sys_unc,
             ena_intensity=survival_corrected_intensity,

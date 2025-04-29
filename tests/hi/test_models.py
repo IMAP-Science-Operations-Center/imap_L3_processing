@@ -4,21 +4,22 @@ from datetime import datetime, timedelta
 from unittest.mock import sentinel
 
 import numpy as np
+
 from imap_l3_processing.hi.l3 import models
 from imap_l3_processing.hi.l3.models import HiL3SpectralIndexDataProduct, HiL3SurvivalCorrectedDataProduct, \
     combine_maps
-from imap_l3_processing.models import DataProductVariable, UpstreamDataDependency
+from imap_l3_processing.models import DataProductVariable, InputMetadata
 
 
 class TestModels(unittest.TestCase):
     def test_spectral_index_to_data_products(self):
-        input_metadata = UpstreamDataDependency(instrument="hi",
-                                                data_level="",
-                                                start_date=datetime.now(),
-                                                end_date=datetime.now() + timedelta(days=1),
-                                                version="",
-                                                descriptor="",
-                                                )
+        input_metadata = InputMetadata(instrument="hi",
+                                       data_level="",
+                                       start_date=datetime.now(),
+                                       end_date=datetime.now() + timedelta(days=1),
+                                       version="",
+                                       descriptor="",
+                                       )
 
         hi_l3_spectral_index_data_product = HiL3SpectralIndexDataProduct(
             input_metadata=input_metadata,
@@ -68,13 +69,13 @@ class TestModels(unittest.TestCase):
         self.assertEqual(expected_variables, actual_variables)
 
     def test_survival_probability_to_data_product_variables(self):
-        input_metadata = UpstreamDataDependency(instrument="hi",
-                                                data_level="",
-                                                start_date=datetime.now(),
-                                                end_date=datetime.now() + timedelta(days=1),
-                                                version="",
-                                                descriptor="",
-                                                )
+        input_metadata = InputMetadata(instrument="hi",
+                                       data_level="",
+                                       start_date=datetime.now(),
+                                       end_date=datetime.now() + timedelta(days=1),
+                                       version="",
+                                       descriptor="",
+                                       )
 
         hi_l3_survival_corrected_data_product = HiL3SurvivalCorrectedDataProduct(
             input_metadata=input_metadata,
@@ -126,13 +127,13 @@ class TestModels(unittest.TestCase):
         self.assertEqual(expected_variables, actual_variables)
 
     def construct_map_data_product_with_all_zero_fields(self) -> HiL3SurvivalCorrectedDataProduct:
-        input_metadata = UpstreamDataDependency(instrument="hi",
-                                                data_level="",
-                                                start_date=datetime.now(),
-                                                end_date=datetime.now() + timedelta(days=1),
-                                                version="",
-                                                descriptor="",
-                                                )
+        input_metadata = InputMetadata(instrument="hi",
+                                       data_level="",
+                                       start_date=datetime.now(),
+                                       end_date=datetime.now() + timedelta(days=1),
+                                       version="",
+                                       descriptor="",
+                                       )
 
         return HiL3SurvivalCorrectedDataProduct(
             input_metadata=input_metadata,

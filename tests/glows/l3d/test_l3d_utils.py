@@ -1,9 +1,12 @@
+import tempfile
 import unittest
+from pathlib import Path
 
 import numpy as np
+from spacepy.pycdf import CDF
 
 from imap_l3_processing.glows.l3d.utils import create_glows_l3c_dictionary_from_cdf, \
-    create_glows_l3b_dictionary_from_cdf
+    create_glows_l3b_dictionary_from_cdf, convert_json_l3d_to_cdf
 from tests.test_helpers import get_test_data_path, assert_dict_close
 
 
@@ -101,3 +104,61 @@ class TestL3dUtils(unittest.TestCase):
                                       actual["ion_rate_profile"]['lat_grid'])
         np.testing.assert_array_almost_equal(expected["ion_rate_profile"]['ph_rate'],
                                              actual["ion_rate_profile"]['ph_rate'])
+
+    def test_convert_json_l3d_to_cdf(self):
+        with tempfile.TemporaryDirectory() as tempdir:
+            convert_json_l3d_to_cdf(get_test_data_path('glows/imap_glows_l3d_cr_2095_v00.json'), Path(tempdir))
+            with CDF(str(Path(tempdir) / 'imap_glows_l3d_solar-param-hist_20100326_v000.cdf')) as cdf:
+                np.testing.assert_array_equal(
+                    [-90, -80, -70, -60, -50, -40, -30, -20, -10, 0, 10, 20, 30, 40, 50, 60, 70, 80, 90],
+                    cdf['lat_grid'][...])
+
+                self.assertEqual(846, len(cdf['cr_grid'][...]))
+                self.assertEqual(1250.5, cdf['cr_grid'][0])
+                self.assertEqual(2095.5, cdf['cr_grid'][-1])
+
+                self.assertEqual(846, len(cdf['time_grid'][...]))
+                self.assertEqual("1947-03-03 07:35:32.640", cdf['time_grid'][0])
+                self.assertEqual("2010-04-08 22:40:35.040", cdf['time_grid'][-1])
+
+                self.assertEqual(846, len(cdf['speed'][...]))
+                np.testing.assert_allclose(
+                    [-1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0,
+                     -1.0, -1.0, -1.0], cdf['speed'][0], rtol=1e-6)
+                np.testing.assert_allclose(
+                    [557.4973128404005, 559.2167280154983, 566.8138038909882, 536.7419914396169, 482.3895941633434,
+                     436.7778976653025, 395.8709957198084, 373.2087723735307, 358.453450972747, 352.50397782098383,
+                     353.5757902723552, 361.29520544745316, 399.6768439688289, 446.0225762645189, 490.864330739225,
+                     554.518598443535, 594.9787143968655, 599.4175447470614, 599.4175447470614], cdf['speed'][-1],
+                    rtol=1e-6)
+
+                self.assertEqual(846, len(cdf['p_dens'][...]))
+                np.testing.assert_allclose(
+                    [-1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0,
+                     -1.0, -1.0, -1.0], cdf['p_dens'][0], rtol=1e-6)
+                np.testing.assert_allclose(
+                    [2.7539010174985328, 2.737096030276837, 2.6641209660214256, 2.9648193397292495, 3.6167913862691368,
+                     4.267522103200842, 4.954865982954802, 5.4089727098360765, 5.753718175867142, 5.912686119174109,
+                     5.875275512094413, 5.687043093803157, 4.889661092087035, 4.129209143417914, 3.496191265226951,
+                     2.764380801055958, 2.403839571256985, 2.3686555409547543, 2.3686555409547543
+                     ], cdf['p_dens'][-1], rtol=1e-6)
+
+                self.assertEqual(846, len(cdf['uv_anis'][...]))
+                np.testing.assert_allclose(
+                    [-1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0,
+                     -1.0, -1.0, -1.0], cdf['uv_anis'][0], rtol=1e-6)
+                np.testing.assert_allclose(
+                    [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0
+                     ], cdf['uv_anis'][-1], rtol=1e-6)
+
+                self.assertEqual(846, len(cdf['phion'][...]))
+                np.testing.assert_allclose(1.830438692701064e-07, cdf['phion'][0], rtol=1e-6)
+                np.testing.assert_allclose(1.0870768678455447e-07, cdf['phion'][-1], rtol=1e-6)
+
+                self.assertEqual(846, len(cdf['lya'][...]))
+                np.testing.assert_allclose(619975763789.9209, cdf['lya'][0], rtol=1e-6)
+                np.testing.assert_allclose(391561526005.0816, cdf['lya'][-1], rtol=1e-6)
+
+                self.assertEqual(846, len(cdf['e_dens'][...]))
+                self.assertEqual(-1.0, cdf['e_dens'][0])
+                np.testing.assert_allclose(5.7140570690060715, cdf['e_dens'][-1], rtol=1e-6)

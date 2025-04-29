@@ -126,10 +126,8 @@ GlowsL3eData = TypeVar("GlowsL3eData", bound=Union[HiGlowsL3eData, UltraGlowsL3e
 
 
 def combine_glows_l3e_with_l1c_pointing(glows_l3e_data: list[GlowsL3eData], l1c_data: list[L1CPointingSet]) -> list[
-    tuple[L1CPointingSet, GlowsL3eData]]:
+    tuple[L1CPointingSet, Optional[GlowsL3eData]]]:
     l1c_by_epoch = {l1c.epoch: l1c for l1c in l1c_data}
     glows_by_epoch = {l3e.epoch: l3e for l3e in glows_l3e_data}
 
-    epochs = sorted(set(l1c_by_epoch.keys()).intersection(set(glows_by_epoch.keys())))
-
-    return [(l1c_by_epoch[epoch], glows_by_epoch[epoch]) for epoch in epochs]
+    return [(l1c_by_epoch[epoch], glows_by_epoch.get(epoch, None)) for epoch in l1c_by_epoch.keys()]

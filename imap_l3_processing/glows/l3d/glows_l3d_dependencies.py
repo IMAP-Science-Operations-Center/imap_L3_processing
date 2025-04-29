@@ -5,13 +5,12 @@ from zipfile import ZipFile
 from imap_data_access.processing_input import ProcessingInputCollection
 
 from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
-from imap_l3_processing.glows.l3d.utils import create_glows_l3c_dictionary_from_cdf
-from imap_l3_processing.utils import download_dependency_from_path
+from imap_data_access import download
 
 
 @dataclass
 class GlowsL3DDependencies:
-    l3c_data: [dict]
+    l3d_path: Path | None
     external_files: dict[str, Path]
     ancillary_files: dict[str, Path]
 
@@ -25,19 +24,17 @@ class GlowsL3DDependencies:
         electron_density_path = dependencies.get_file_paths(source='glows', descriptor='electron-density')
         pipeline_settings_l3bc_path = dependencies.get_file_paths(source='glows', descriptor='pipeline-settings-l3bc')
         external_archive = dependencies.get_file_paths(source='glows', descriptor='l3b-archive')
-        l3c_solar_params_path = dependencies.get_file_paths(source='glows', descriptor='solar-params')
+        l3d_remote_path = dependencies.get_file_paths(source='glows', descriptor='solar-params-history')
 
-        plasma_speed_legendre = download_dependency_from_path(str(plasma_speed_legendre_path[0]))
-        proton_density_legendre = download_dependency_from_path(str(proton_density_legendre_path[0]))
-        uv_anisotropy = download_dependency_from_path(str(uv_anisotropy_path[0]))
-        photoion = download_dependency_from_path(str(photoion_path[0]))
-        lya_2010a = download_dependency_from_path(str(lya_path[0]))
-        electron_density = download_dependency_from_path(str(electron_density_path[0]))
-        pipeline_settings_l3bc = download_dependency_from_path(str(pipeline_settings_l3bc_path[0]))
-        archive_dependency = download_dependency_from_path(str(external_archive[0]))
-        l3c_cdf = download_dependency_from_path(str(l3c_solar_params_path[0]))
-
-        l3_c_dict = create_glows_l3c_dictionary_from_cdf(l3c_cdf)
+        plasma_speed_legendre = download(str(plasma_speed_legendre_path[0]))
+        proton_density_legendre = download(str(proton_density_legendre_path[0]))
+        uv_anisotropy = download(str(uv_anisotropy_path[0]))
+        photoion = download(str(photoion_path[0]))
+        lya_2010a = download(str(lya_path[0]))
+        electron_density = download(str(electron_density_path[0]))
+        pipeline_settings_l3bc = download(str(pipeline_settings_l3bc_path[0]))
+        archive_dependency = download(str(external_archive[0]))
+        l3d_path = download(str(l3d_remote_path[0])) if l3d_remote_path else None
 
         with ZipFile(archive_dependency, 'r') as archive:
             archive.extract('lyman_alpha_composite.nc', TEMP_CDF_FOLDER_PATH)
@@ -57,4 +54,4 @@ class GlowsL3DDependencies:
             'lya_raw_data': TEMP_CDF_FOLDER_PATH / 'lyman_alpha_composite.nc'
         }
 
-        return cls(l3_c_dict, external_dict, ancillary_dict)
+        return cls(l3d_path, external_dict, ancillary_dict)

@@ -26,7 +26,6 @@ class UltraProcessor(Processor):
         survival_probability_psets = [UltraSurvivalProbability(_l1c, _l3e) for _l1c, _l3e in
                                       combined_psets]
 
-        map_descriptor = parse_map_descriptor(self.input_metadata.descriptor)
         input_data = deps.ultra_l2_map
         corrected_skymap = UltraSurvivalProbabilitySkyMap(survival_probability_psets, geometry.SpiceFrame.ECLIPJ2000,
                                                           input_data.nside)

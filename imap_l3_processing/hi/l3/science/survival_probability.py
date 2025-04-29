@@ -1,3 +1,5 @@
+from typing import Optional
+
 import numpy as np
 import xarray as xr
 from imap_processing.ena_maps.ena_maps import RectangularSkyMap, PointingSet
@@ -20,7 +22,8 @@ def interpolate_angular_data_to_nearest_neighbor(input_azimuths: np.array, glows
 
 
 class HiSurvivalProbabilityPointingSet(PointingSet):
-    def __init__(self, l1c_dataset: HiL1cData, sensor: Sensor, spin_phase: SpinPhase, glows_dataset: HiGlowsL3eData,
+    def __init__(self, l1c_dataset: HiL1cData, sensor: Sensor, spin_phase: SpinPhase,
+                 glows_dataset: Optional[HiGlowsL3eData],
                  energies: np.ndarray):
         super().__init__(xr.Dataset(), geometry.SpiceFrame.IMAP_DPS)
         num_spin_angle_bins = l1c_dataset.exposure_times.shape[-1]
@@ -30,21 +33,25 @@ class HiSurvivalProbabilityPointingSet(PointingSet):
                                   endpoint=False) + half_bin_width
         self.azimuths = np.mod(spin_angles + 90, 360)
 
-        glows_spin_bin_count = len(glows_dataset.spin_angle)
-        sp_interpolated_to_hi_energies = np.empty(shape=(len(energies), glows_spin_bin_count))
-        for spin_angle_index in range(glows_spin_bin_count):
-            sp_interpolated_to_hi_energies[:, spin_angle_index] = np.interp(
-                np.log10(energies),
-                np.log10(glows_dataset.energy),
-                glows_dataset.probability_of_survival[0, :, spin_angle_index], )
+        if glows_dataset is not None:
+            glows_spin_bin_count = len(glows_dataset.spin_angle)
+            sp_interpolated_to_hi_energies = np.empty(shape=(len(energies), glows_spin_bin_count))
+            for spin_angle_index in range(glows_spin_bin_count):
+                sp_interpolated_to_hi_energies[:, spin_angle_index] = np.interp(
+                    np.log10(energies),
+                    np.log10(glows_dataset.energy),
+                    glows_dataset.probability_of_survival[0, :, spin_angle_index], )
 
-        sp_interpolated_to_pset_angles = np.zeros((1, len(energies), 3600))
-        for e_index in range(len(energies)):
-            sp_interpolated_to_pset_angles[0, e_index] = interpolate_angular_data_to_nearest_neighbor(
-                self.azimuths, glows_dataset.spin_angle, sp_interpolated_to_hi_energies[e_index])
+            sp_interpolated_to_pset_angles = np.zeros((1, len(energies), 3600))
+            for e_index in range(len(energies)):
+                sp_interpolated_to_pset_angles[0, e_index] = interpolate_angular_data_to_nearest_neighbor(
+                    self.azimuths, glows_dataset.spin_angle, sp_interpolated_to_hi_energies[e_index])
+        else:
+            sp_interpolated_to_pset_angles = np.full((1, len(energies), 3600), np.nan)
 
         exposure_mask = np.full(num_spin_angle_bins, False)
 
+        assert num_spin_angle_bins == 3600, "unexpected number of spin angles"
         if spin_phase == SpinPhase.RamOnly:
             exposure_mask[0:900] = True
             exposure_mask[2700:3600] = True
