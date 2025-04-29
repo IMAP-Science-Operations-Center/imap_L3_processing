@@ -84,11 +84,11 @@ class TestModels(unittest.TestCase):
             np.testing.assert_array_equal(expected['probability_of_survival'][...], actual.survival_probability)
 
     def test_ultra_l1c_read_from_file(self):
-        path_to_cdf = get_test_data_folder() / 'ultra' / 'fake_l1c_psets' / 'imap_ultra_l1c_45sensor-pset_20250101_v001.cdf'
+        path_to_cdf = get_test_data_folder() / 'ultra' / 'fake_l1c_psets' / 'test_pset_nside1.cdf'
 
         actual = UltraL1CPSet.read_from_path(path_to_cdf)
 
-        expected_epoch = datetime(2025, 1, 1, 0, 0)
+        expected_epoch = datetime(2025, 9, 1, 0, 0)
         with CDF(str(path_to_cdf)) as expected:
             self.assertEqual(expected_epoch, actual.epoch)
             np.testing.assert_array_equal(expected["counts"][...], actual.counts)
@@ -128,9 +128,9 @@ class TestModels(unittest.TestCase):
             np.testing.assert_array_equal(expected["pixel_index_label"][...], actual.pixel_index_label)
 
     def test_ultra_l2_nside_property(self):
-        path_to_cdf = get_test_data_folder() / 'ultra' / 'fake_l2_maps' / 'test_map.cdf'
+        path_to_cdf = get_test_data_folder() / 'ultra' / 'fake_l2_maps' / 'test_l2_map.cdf'
         actual = UltraL2Map.read_from_path(path_to_cdf)
-        expected_nside = 16
+        expected_nside = 2
 
         self.assertIsInstance(actual.nside, int)
         self.assertEqual(expected_nside, actual.nside)

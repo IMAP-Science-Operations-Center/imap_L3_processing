@@ -10,21 +10,20 @@ from imap_processing.spice.geometry import SpiceFrame
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.ultra.l3.models import UltraL3SurvivalCorrectedDataProduct, UltraL2Map
 from imap_l3_processing.ultra.l3.ultra_l3_dependencies import UltraL3Dependencies
-from imap_l3_processing.ultra.l3.ultra_processor import UltraProcessor, UltraMapDescriptorParts
+from imap_l3_processing.ultra.l3.ultra_processor import UltraProcessor
 
 
-class TestHiProcessor(unittest.TestCase):
+class TestUltraProcessor(unittest.TestCase):
 
     @patch('imap_l3_processing.ultra.l3.ultra_processor.upload')
     @patch('imap_l3_processing.ultra.l3.ultra_processor.save_data')
-    @patch("imap_l3_processing.ultra.l3.ultra_processor.parse_map_descriptor")
     @patch('imap_l3_processing.ultra.l3.ultra_processor.UltraSurvivalProbabilitySkyMap')
     @patch('imap_l3_processing.ultra.l3.ultra_processor.UltraSurvivalProbability')
     @patch('imap_l3_processing.ultra.l3.ultra_processor.combine_glows_l3e_with_l1c_pointing')
     @patch('imap_l3_processing.ultra.l3.ultra_processor.UltraL3Dependencies.fetch_dependencies')
     def test_process_survival_probability(self, mock_fetch_dependencies, mock_combine_glows_l3e_with_l1c_pointing,
                                           mock_survival_probability_pointing_set, mock_survival_skymap,
-                                          mock_parse_map_descriptor, mock_save_data, mock_upload):
+                                          mock_save_data, mock_upload):
         rng = np.random.default_rng()
         healpix_indices = np.arange(12)
         input_map_flux = rng.random((1, 9, 12))
@@ -44,8 +43,6 @@ class TestHiProcessor(unittest.TestCase):
                                                                  (sentinel.ultra_l1c_3, sentinel.glows_l3e_3)]
 
         mock_survival_probability_pointing_set.side_effect = [sentinel.pset_1, sentinel.pset_2, sentinel.pset_3]
-
-        mock_parse_map_descriptor.return_value = UltraMapDescriptorParts(grid_size=sentinel.grid_size)
 
         input_metadata = InputMetadata(instrument="ultra",
                                        data_level="l3",
@@ -77,8 +74,6 @@ class TestHiProcessor(unittest.TestCase):
         processor.process()
 
         mock_fetch_dependencies.assert_called_once_with(sentinel.dependencies)
-
-        mock_parse_map_descriptor.assert_called_once_with(input_metadata.descriptor)
 
         mock_combine_glows_l3e_with_l1c_pointing.assert_called_once_with(sentinel.glows_l3e_sp, sentinel.ultra_l1c_pset)
 

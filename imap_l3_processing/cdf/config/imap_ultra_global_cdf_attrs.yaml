@@ -1,0 +1,8 @@
+Descriptor: Ultra>IMAP Ultra-Energy (IMAP-Ultra) Energetic Neutral Atom Imager
+TEXT: &txt >
+  Ultra captures images of very energetic neutral atoms, particularly hydrogen (H) atoms,
+  produced in the solar system at the heliosheath, the region where the solar wind slows,
+  compresses, and becomes much hotter as it meets the interstellar medium (ISM).
+  The instrument also measures the distribution of solar wind electrons and protons, and
+  the magnetic field. See https://imap.princeton.edu/instruments/ultra for more details.
+Instrument_type: Particles (space)

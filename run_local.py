@@ -54,8 +54,13 @@ from imap_l3_processing.swapi.l3b.swapi_l3b_dependencies import SwapiL3BDependen
 from imap_l3_processing.swapi.swapi_processor import SwapiProcessor
 from imap_l3_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies
 from imap_l3_processing.swe.swe_processor import SweProcessor
+from imap_l3_processing.ultra.l3.models import UltraL1CPSet, UltraGlowsL3eData, UltraL2Map
+from imap_l3_processing.ultra.l3.ultra_l3_dependencies import UltraL3Dependencies
+from imap_l3_processing.ultra.l3.ultra_processor import UltraProcessor
 from imap_l3_processing.utils import save_data, read_l1d_mag_data
 from scripts.hi.create_hi_full_spin_deps import create_hi_full_spin_deps
+from scripts.ultra.create_example_ultra_l1c_pset import _write_ultra_l1c_cdf_with_parents
+from scripts.ultra.create_example_ultra_l2_map import _write_ultra_l2_cdf_with_parents
 from tests.test_helpers import get_test_data_path, get_test_instrument_team_data_path, environment_variables, \
     try_get_many_run_local_paths
 
@@ -746,3 +751,40 @@ if __name__ == "__main__":
             )
 
             print(create_survival_corrected_full_spin_cdf(full_spin_dependencies))
+    if "ultra" in sys.argv:
+        if "survival" in sys.argv:
+
+            missing_paths, [l1c_dependency_path, l2_map_path] = try_get_many_run_local_paths([
+                "ultra/fake_l1c_psets/test_pset.cdf",
+                "ultra/fake_l2_maps/test_map.cdf"
+            ])
+
+            if missing_paths:
+                _write_ultra_l1c_cdf_with_parents()
+                _write_ultra_l2_cdf_with_parents()
+
+            l1c_dependency = UltraL1CPSet.read_from_path(l1c_dependency_path)
+
+            l3e_glows_paths = [
+                get_test_data_path(
+                    "ultra/fake_l3e_survival_probabilities/imap_glows_l3e_survival-probabilities-ultra_20250901_v001.cdf")
+            ]
+            l3e_dependencies = [UltraGlowsL3eData.read_from_path(path) for path in l3e_glows_paths]
+            l2_map_dependency = UltraL2Map.read_from_path(l2_map_path)
+
+            processor_input_metadata = InputMetadata(
+                instrument="ultra",
+                start_date=datetime(year=2025, month=9, day=1),
+                end_date=datetime(year=2025, month=9, day=1),
+                data_level="l3",
+                version="v001",
+                descriptor="u90-sp-4deg"
+            )
+
+            dependencies = UltraL3Dependencies(ultra_l1c_pset=[l1c_dependency], glows_l3e_sp=l3e_dependencies,
+                                               ultra_l2_map=l2_map_dependency)
+
+            processor = UltraProcessor(input_metadata=processor_input_metadata, dependencies=None)
+            output = processor._process_survival_probability(deps=dependencies)
+
+            print(save_data(output, True))

@@ -2,6 +2,7 @@
 data
 test_data/*
 temp_cdf_data/*
+run_local_input_data/*
 __pycache__
 venv
 .venv
