@@ -515,7 +515,9 @@ def run_glows_l3bc():
     }
     l3a_data_folder_path = get_test_data_path('glows/l3a_products')
     l3a_data = []
-    l3a_file_names = [f"imap_glows_l3a_hist_2010010{x}-repoint0000{x}_v001.cdf" for x in (1, 2, 3)]
+    l3a_file_names = [f"imap_glows_l3a_hist_201004{x}_v001.cdf" for x in range(22, 31)]
+    l3a_file_names += [f"imap_glows_l3a_hist_201005{x:02d}_v001.cdf" for x in range(1, 32)]
+    l3a_file_names += [f"imap_glows_l3a_hist_201006{x:02d}_v001.cdf" for x in range(1, 17)]
     for name in l3a_file_names:
         l3a_data.append(create_glows_l3a_dictionary_from_cdf(l3a_data_folder_path / name))
 
