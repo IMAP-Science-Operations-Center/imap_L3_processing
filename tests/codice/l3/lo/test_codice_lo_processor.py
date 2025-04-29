@@ -9,8 +9,9 @@ from imap_data_access.processing_input import ProcessingInputCollection
 
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_dependencies import CodiceLoL3aDependencies
 from imap_l3_processing.codice.l3.lo.codice_lo_processor import CodiceLoProcessor
-from imap_l3_processing.codice.l3.lo.models import CodiceLoL3aPartialDensityDataProduct, CodiceLoL2bPriorityRates, \
-    CodiceLoL2DirectEventData, CodiceLoL3aDirectEventDataProduct, PriorityEvent, CodiceLoL2SWSpeciesData
+from imap_l3_processing.codice.l3.lo.models import CodiceLoL3aPartialDensityDataProduct, CodiceLoL2DirectEventData, \
+    CodiceLoL3aDirectEventDataProduct, PriorityEvent, CodiceLoL2SWSpeciesData, \
+    CodiceLoL1aSWPriorityRates, CodiceLoL1aNSWPriorityRates
 from imap_l3_processing.codice.l3.lo.sectored_intensities.science.mass_per_charge_lookup import MassPerChargeLookup
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
@@ -83,7 +84,8 @@ class TestCodiceLoProcessor(unittest.TestCase):
             sentinel.fe_hiq_partial_density,
         ]
 
-        codice_lo_dependencies = CodiceLoL3aDependencies(codice_lo_l2_data, Mock(), Mock(), mass_per_charge_lookup,
+        codice_lo_dependencies = CodiceLoL3aDependencies(Mock(), Mock(), codice_lo_l2_data, Mock(),
+                                                         mass_per_charge_lookup,
                                                          Mock())
         result = processor.process_l3a(codice_lo_dependencies)
 
@@ -131,31 +133,36 @@ class TestCodiceLoProcessor(unittest.TestCase):
     def test_process_l3a_direct_events(self, mock_calculate_mass, mock_calculate_mass_per_charge,
                                        mock_calculate_normalization_ratio, mock_total_number_of_events):
         rng = np.random.default_rng()
-        parameters = {f.name: None for f in fields(CodiceLoL2bPriorityRates)}
+        sw_priority_rate_parameters = {f.name: None for f in fields(CodiceLoL1aSWPriorityRates)}
+        nsw_priority_rate_parameters = {f.name: None for f in fields(CodiceLoL1aNSWPriorityRates)}
 
-        priority_rates = CodiceLoL2bPriorityRates(
-            **parameters,
+        sw_priority_rates = CodiceLoL1aSWPriorityRates(
+            **sw_priority_rate_parameters,
+        )
+
+        nsw_priority_rates = CodiceLoL1aNSWPriorityRates(
+            **nsw_priority_rate_parameters,
         )
 
         epochs = np.array([datetime.now(), datetime.now() + timedelta(hours=1)])
         event_num = np.arange(10)
 
-        priority_rates.epoch = epochs
-        (priority_rates.acquisition_times,
-         priority_rates.lo_sw_priority_p0_tcrs,
-         priority_rates.lo_sw_priority_p1_hplus,
-         priority_rates.lo_sw_priority_p2_heplusplus,
-         priority_rates.lo_sw_priority_p3_heavies,
-         priority_rates.lo_sw_priority_p4_dcrs,
-         priority_rates.lo_nsw_priority_p5_heavies,
-         priority_rates.lo_nsw_priority_p6_hplus_heplusplus,
-         priority_rates.lo_nsw_priority_p7_missing) = [rng.random((len(epochs), 2, 2)) for _ in range(9)]
+        sw_priority_rates.epoch = epochs
+        nsw_priority_rates.epoch = epochs
+        (sw_priority_rates.acquisition_time_per_step,
+         sw_priority_rates.p0_tcrs,
+         sw_priority_rates.p1_hplus,
+         sw_priority_rates.p2_heplusplus,
+         sw_priority_rates.p3_heavies,
+         sw_priority_rates.p4_dcrs,
+         nsw_priority_rates.p5_heavies,
+         nsw_priority_rates.p6_hplus_heplusplus) = [rng.random((len(epochs), 2, 2)) for _ in range(8)]
 
         expected_total_events = np.arange(1, 17).reshape(8, 2)
         expected_total_by_energy_and_spin_angle = [rng.random((128, 12)) for _ in range(16)]
 
-        mass_per_charge_side_effect = [rng.random((len(epochs), len(event_num))) for _ in range(8)]
-        mass_side_effect = [rng.random((len(epochs), len(event_num))) for _ in range(8)]
+        mass_per_charge_side_effect = [rng.random((len(epochs), len(event_num))) for _ in range(7)]
+        mass_side_effect = [rng.random((len(epochs), len(event_num))) for _ in range(7)]
 
         (expected_mass,
          expected_mass_per_charge,
@@ -164,10 +171,10 @@ class TestCodiceLoProcessor(unittest.TestCase):
          expected_apd_id,
          expected_multi_flag,
          expected_pha_type,
-         expected_tof) = [np.full((len(epochs), 8, len(event_num)), np.nan) for _ in range(8)]
+         expected_tof) = [np.full((len(epochs), 7, len(event_num)), np.nan) for _ in range(8)]
 
         (expected_data_quality,
-         expected_num_events) = [np.full((len(epochs), 8), np.nan) for _ in range(2)]
+         expected_num_events) = [np.full((len(epochs), 7), np.nan) for _ in range(2)]
 
         mock_calculate_mass_per_charge.side_effect = mass_per_charge_side_effect
         mock_calculate_mass.side_effect = mass_side_effect
@@ -200,9 +207,13 @@ class TestCodiceLoProcessor(unittest.TestCase):
             expected_data_quality[:, i] = np.copy(priority_event.data_quality)
             expected_num_events[:, i] = np.copy(priority_event.num_events)
 
+        empty_priority_7 = PriorityEvent(
+            **{f.name: rng.random((len(epochs), len(event_num))) for f in fields(PriorityEvent)})
+        priority_events.append(empty_priority_7)
         direct_events = CodiceLoL2DirectEventData(epochs, event_num, *priority_events)
 
-        dependencies = CodiceLoL3aDependencies(Mock(), priority_rates, direct_events, Mock(), Mock())
+        dependencies = CodiceLoL3aDependencies(sw_priority_rates, nsw_priority_rates, Mock(), direct_events, Mock(),
+                                               Mock())
 
         input_collection = ProcessingInputCollection()
         input_metadata = InputMetadata('codice', "l3a", Mock(spec=datetime), Mock(spec=datetime), 'v02')
@@ -214,7 +225,8 @@ class TestCodiceLoProcessor(unittest.TestCase):
         expected_calculate_normalization_calls = []
         expected_calculate_mass_calls = []
         expected_calculate_mass_per_charge_calls = []
-        for index, priority_event in enumerate(direct_events.priority_events):
+        for index in range(0, len(direct_events.priority_events) - 1):
+            priority_event = direct_events.priority_events[index]
             epoch_call_1 = call(priority_event.total_events_binned_by_energy_step_and_spin_angle.return_value[0],
                                 expected_total_events[index][0])
             epoch_call_2 = call(priority_event.total_events_binned_by_energy_step_and_spin_angle.return_value[0],
@@ -242,29 +254,26 @@ class TestCodiceLoProcessor(unittest.TestCase):
         mock_calculate_mass.assert_has_calls(expected_calculate_mass_calls)
 
         mock_total_number_of_events.assert_has_calls([
-            call(NumpyArrayMatcher(priority_rates.lo_sw_priority_p0_tcrs),
-                 NumpyArrayMatcher(priority_rates.acquisition_times)),
+            call(NumpyArrayMatcher(sw_priority_rates.p0_tcrs),
+                 NumpyArrayMatcher(sw_priority_rates.acquisition_time_per_step)),
 
-            call(NumpyArrayMatcher(priority_rates.lo_sw_priority_p1_hplus),
-                 NumpyArrayMatcher(priority_rates.acquisition_times)),
+            call(NumpyArrayMatcher(sw_priority_rates.p1_hplus),
+                 NumpyArrayMatcher(sw_priority_rates.acquisition_time_per_step)),
 
-            call(NumpyArrayMatcher(priority_rates.lo_sw_priority_p2_heplusplus),
-                 NumpyArrayMatcher(priority_rates.acquisition_times)),
+            call(NumpyArrayMatcher(sw_priority_rates.p2_heplusplus),
+                 NumpyArrayMatcher(sw_priority_rates.acquisition_time_per_step)),
 
-            call(NumpyArrayMatcher(priority_rates.lo_sw_priority_p3_heavies),
-                 NumpyArrayMatcher(priority_rates.acquisition_times)),
+            call(NumpyArrayMatcher(sw_priority_rates.p3_heavies),
+                 NumpyArrayMatcher(sw_priority_rates.acquisition_time_per_step)),
 
-            call(NumpyArrayMatcher(priority_rates.lo_sw_priority_p4_dcrs),
-                 NumpyArrayMatcher(priority_rates.acquisition_times)),
+            call(NumpyArrayMatcher(sw_priority_rates.p4_dcrs),
+                 NumpyArrayMatcher(sw_priority_rates.acquisition_time_per_step)),
 
-            call(NumpyArrayMatcher(priority_rates.lo_nsw_priority_p5_heavies),
-                 NumpyArrayMatcher(priority_rates.acquisition_times)),
+            call(NumpyArrayMatcher(nsw_priority_rates.p5_heavies),
+                 NumpyArrayMatcher(sw_priority_rates.acquisition_time_per_step)),
 
-            call(NumpyArrayMatcher(priority_rates.lo_nsw_priority_p6_hplus_heplusplus),
-                 NumpyArrayMatcher(priority_rates.acquisition_times)),
-
-            call(NumpyArrayMatcher(priority_rates.lo_nsw_priority_p7_missing),
-                 NumpyArrayMatcher(priority_rates.acquisition_times)),
+            call(NumpyArrayMatcher(nsw_priority_rates.p6_hplus_heplusplus),
+                 NumpyArrayMatcher(sw_priority_rates.acquisition_time_per_step))
 
         ], any_order=False)
 

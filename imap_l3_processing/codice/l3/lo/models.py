@@ -80,143 +80,6 @@ class CodiceLoL2SWSpeciesData:
             )
 
 
-@dataclass
-class CodiceLoL2bPriorityRates:
-    epoch: ndarray
-    energy: ndarray
-    inst_az: ndarray
-    spin_sector: ndarray
-    energy_label: ndarray
-    acquisition_times: ndarray
-    counters: ndarray
-    esa_sweep: ndarray
-    hi_counters_aggregated_aggregated: ndarray
-    hi_counters_singles_tcr: ndarray
-    hi_counters_singles_ssdo: ndarray
-    hi_counters_singles_stssd: ndarray
-    hi_omni_h: ndarray
-    hi_omni_he3: ndarray
-    hi_omni_he4: ndarray
-    hi_omni_c: ndarray
-    hi_omni_o: ndarray
-    hi_omni_ne_mg_si: ndarray
-    hi_omni_fe: ndarray
-    hi_omni_uh: ndarray
-    hi_sectored_h: ndarray
-    hi_sectored_he3he4: ndarray
-    hi_sectored_cno: ndarray
-    hi_sectored_fe: ndarray
-    lo_counters_aggregated_aggregated: ndarray
-    lo_counters_singles_apd_singles: ndarray
-    lo_sw_angular_hplus: ndarray
-    lo_sw_angular_heplusplus: ndarray
-    lo_sw_angular_oplus6: ndarray
-    lo_sw_angular_fe_loq: ndarray
-    lo_nsw_angular_heplusplus: ndarray
-    lo_sw_priority_p0_tcrs: ndarray
-    lo_sw_priority_p1_hplus: ndarray
-    lo_sw_priority_p2_heplusplus: ndarray
-    lo_sw_priority_p3_heavies: ndarray
-    lo_sw_priority_p4_dcrs: ndarray
-    lo_nsw_priority_p5_heavies: ndarray
-    lo_nsw_priority_p6_hplus_heplusplus: ndarray
-    # TODO - there is no p7 variable in the l1a cdf. Update when we know what the name is
-    lo_nsw_priority_p7_missing: ndarray
-    lo_sw_species_hplus: ndarray
-    lo_sw_species_heplusplus: ndarray
-    lo_sw_species_cplus4: ndarray
-    lo_sw_species_cplus5: ndarray
-    lo_sw_species_cplus6: ndarray
-    lo_sw_species_oplus5: ndarray
-    lo_sw_species_oplus6: ndarray
-    lo_sw_species_oplus7: ndarray
-    lo_sw_species_oplus8: ndarray
-    lo_sw_species_ne: ndarray
-    lo_sw_species_mg: ndarray
-    lo_sw_species_si: ndarray
-    lo_sw_species_fe_loq: ndarray
-    lo_sw_species_fe_hiq: ndarray
-    lo_sw_species_heplus: ndarray
-    lo_sw_species_cnoplus: ndarray
-    lo_nsw_species_hplus: ndarray
-    lo_nsw_species_heplusplus: ndarray
-    lo_nsw_species_c: ndarray
-    lo_nsw_species_o: ndarray
-    lo_nsw_species_ne_si_mg: ndarray
-    lo_nsw_species_fe: ndarray
-    lo_nsw_species_heplus: ndarray
-    lo_nsw_species_cnoplus: ndarray
-
-    @classmethod
-    def read_from_cdf(cls, codice_l1b_cdf: Path):
-        with CDF(str(codice_l1b_cdf)) as cdf_file:
-            return cls(
-                epoch=cdf_file["epoch"][...],
-                energy=cdf_file["energy"][...],
-                inst_az=cdf_file["inst_az"][...],
-                spin_sector=cdf_file["spin_sector"][...],
-                energy_label=cdf_file["energy_label"][...],
-                acquisition_times=cdf_file["acquisition_times"][...],
-                counters=cdf_file["counters"][...],
-                esa_sweep=cdf_file["esa_sweep"][...],
-                hi_counters_aggregated_aggregated=cdf_file["hi_counters_aggregated_aggregated"][...],
-                hi_counters_singles_tcr=cdf_file["hi_counters_singles_tcr"][...],
-                hi_counters_singles_ssdo=cdf_file["hi_counters_singles_ssdo"][...],
-                hi_counters_singles_stssd=cdf_file["hi_counters_singles_stssd"][...],
-                hi_omni_h=cdf_file["hi_omni_h"][...],
-                hi_omni_he3=cdf_file["hi_omni_he3"][...],
-                hi_omni_he4=cdf_file["hi_omni_he4"][...],
-                hi_omni_c=cdf_file["hi_omni_c"][...],
-                hi_omni_o=cdf_file["hi_omni_o"][...],
-                hi_omni_ne_mg_si=cdf_file["hi_omni_ne_mg_si"][...],
-                hi_omni_fe=cdf_file["hi_omni_fe"][...],
-                hi_omni_uh=cdf_file["hi_omni_uh"][...],
-                hi_sectored_h=cdf_file["hi_sectored_h"][...],
-                hi_sectored_he3he4=cdf_file["hi_sectored_he3he4"][...],
-                hi_sectored_cno=cdf_file["hi_sectored_cno"][...],
-                hi_sectored_fe=cdf_file["hi_sectored_fe"][...],
-                lo_counters_aggregated_aggregated=cdf_file["lo_counters_aggregated_aggregated"][...],
-                lo_counters_singles_apd_singles=cdf_file["lo_counters_singles_apd_singles"][...],
-                lo_sw_angular_hplus=cdf_file["lo_sw_angular_hplus"][...],
-                lo_sw_angular_heplusplus=cdf_file["lo_sw_angular_heplusplus"][...],
-                lo_sw_angular_oplus6=cdf_file["lo_sw_angular_oplus6"][...],
-                lo_sw_angular_fe_loq=cdf_file["lo_sw_angular_fe_loq"][...],
-                lo_nsw_angular_heplusplus=cdf_file["lo_nsw_angular_heplusplus"][...],
-                lo_sw_priority_p0_tcrs=cdf_file["lo_sw_priority_p0_tcrs"][...],
-                lo_sw_priority_p1_hplus=cdf_file["lo_sw_priority_p1_hplus"][...],
-                lo_sw_priority_p2_heplusplus=cdf_file["lo_sw_priority_p2_heplusplus"][...],
-                lo_sw_priority_p3_heavies=cdf_file["lo_sw_priority_p3_heavies"][...],
-                lo_sw_priority_p4_dcrs=cdf_file["lo_sw_priority_p4_dcrs"][...],
-                lo_nsw_priority_p5_heavies=cdf_file["lo_nsw_priority_p5_heavies"][...],
-                lo_nsw_priority_p6_hplus_heplusplus=cdf_file["lo_nsw_priority_p6_hplus_heplusplus"][...],
-                lo_nsw_priority_p7_missing=cdf_file["lo_nsw_priority_p7_missing"][...],
-                lo_sw_species_hplus=cdf_file["lo_sw_species_hplus"][...],
-                lo_sw_species_heplusplus=cdf_file["lo_sw_species_heplusplus"][...],
-                lo_sw_species_cplus4=cdf_file["lo_sw_species_cplus4"][...],
-                lo_sw_species_cplus5=cdf_file["lo_sw_species_cplus5"][...],
-                lo_sw_species_cplus6=cdf_file["lo_sw_species_cplus6"][...],
-                lo_sw_species_oplus5=cdf_file["lo_sw_species_oplus5"][...],
-                lo_sw_species_oplus6=cdf_file["lo_sw_species_oplus6"][...],
-                lo_sw_species_oplus7=cdf_file["lo_sw_species_oplus7"][...],
-                lo_sw_species_oplus8=cdf_file["lo_sw_species_oplus8"][...],
-                lo_sw_species_ne=cdf_file["lo_sw_species_ne"][...],
-                lo_sw_species_mg=cdf_file["lo_sw_species_mg"][...],
-                lo_sw_species_si=cdf_file["lo_sw_species_si"][...],
-                lo_sw_species_fe_loq=cdf_file["lo_sw_species_fe_loq"][...],
-                lo_sw_species_fe_hiq=cdf_file["lo_sw_species_fe_hiq"][...],
-                lo_sw_species_heplus=cdf_file["lo_sw_species_heplus"][...],
-                lo_sw_species_cnoplus=cdf_file["lo_sw_species_cnoplus"][...],
-                lo_nsw_species_hplus=cdf_file["lo_nsw_species_hplus"][...],
-                lo_nsw_species_heplusplus=cdf_file["lo_nsw_species_heplusplus"][...],
-                lo_nsw_species_c=cdf_file["lo_nsw_species_c"][...],
-                lo_nsw_species_o=cdf_file["lo_nsw_species_o"][...],
-                lo_nsw_species_ne_si_mg=cdf_file["lo_nsw_species_ne_si_mg"][...],
-                lo_nsw_species_fe=cdf_file["lo_nsw_species_fe"][...],
-                lo_nsw_species_heplus=cdf_file["lo_nsw_species_heplus"][...],
-                lo_nsw_species_cnoplus=cdf_file["lo_nsw_species_cnoplus"][...]
-            )
-
-
 EnergyAndSpinAngle = namedtuple(typename="EnergyAndSpinAngle", field_names=["energy", "spin_angle"])
 
 
@@ -295,6 +158,78 @@ class CodiceLoL2DirectEventData:
             self.priority_event_0, self.priority_event_1, self.priority_event_2, self.priority_event_3,
             self.priority_event_4, self.priority_event_5, self.priority_event_6, self.priority_event_7
         ]
+
+
+@dataclass
+class CodiceLoL1aSWPriorityRates:
+    epoch: np.ndarray
+    epoch_delta_plus: np.ndarray
+    epoch_delta_minus: np.ndarray
+    energy_table: np.ndarray
+    acquisition_time_per_step: np.ndarray
+    spin_sector_index: np.ndarray
+    rgfo_half_spin: np.ndarray
+    nso_half_spin: np.ndarray
+    sw_bias_gain_mode: np.ndarray
+    st_bias_gain_mode: np.ndarray
+    data_quality: np.ndarray
+    spin_period: np.ndarray
+    p0_tcrs: np.ndarray
+    p1_hplus: np.ndarray
+    p2_heplusplus: np.ndarray
+    p3_heavies: np.ndarray
+    p4_dcrs: np.ndarray
+
+    @classmethod
+    def read_from_cdf(cls, cdf_path: Path):
+        with CDF(str(cdf_path)) as cdf:
+            return cls(
+                epoch=cdf["epoch"][...],
+                epoch_delta_plus=cdf["epoch_delta_plus"][...],
+                epoch_delta_minus=cdf["epoch_delta_minus"][...],
+                energy_table=cdf["energy_table"][...],
+                acquisition_time_per_step=cdf["acquisition_time_per_step"][...],
+                spin_sector_index=cdf["spin_sector_index"][...],
+                rgfo_half_spin=cdf["rgfo_half_spin"][...],
+                nso_half_spin=cdf["nso_half_spin"][...],
+                sw_bias_gain_mode=cdf["sw_bias_gain_mode"][...],
+                st_bias_gain_mode=cdf["st_bias_gain_mode"][...],
+                data_quality=cdf["data_quality"][...],
+                spin_period=cdf["spin_period"][...],
+                p0_tcrs=cdf["p0_tcrs"][...],
+                p1_hplus=cdf["p1_hplus"][...],
+                p2_heplusplus=cdf["p2_heplusplus"][...],
+                p3_heavies=cdf["p3_heavies"][...],
+                p4_dcrs=cdf["p4_dcrs"][...]
+            )
+
+
+@dataclass
+class CodiceLoL1aNSWPriorityRates:
+    epoch: np.ndarray
+    epoch_delta_plus: np.ndarray
+    epoch_delta_minus: np.ndarray
+    energy_table: np.ndarray
+    spin_sector_index: np.ndarray
+    rgfo_half_spin: np.ndarray
+    data_quality: np.ndarray
+    p5_heavies: np.ndarray
+    p6_hplus_heplusplus: np.ndarray
+
+    @classmethod
+    def read_from_cdf(cls, cdf_path: Path):
+        with CDF(str(cdf_path)) as cdf:
+            return cls(
+                epoch=cdf["epoch"][...],
+                epoch_delta_plus=cdf["epoch_delta_plus"][...],
+                epoch_delta_minus=cdf["epoch_delta_minus"][...],
+                energy_table=cdf["energy_table"][...],
+                spin_sector_index=cdf["spin_sector_index"][...],
+                rgfo_half_spin=cdf["rgfo_half_spin"][...],
+                data_quality=cdf["data_quality"][...],
+                p5_heavies=cdf["p5_heavies"][...],
+                p6_hplus_heplusplus=cdf["p6_hplus_heplusplus"][...],
+            )
 
 
 @dataclass
