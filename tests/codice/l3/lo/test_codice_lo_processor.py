@@ -1,7 +1,8 @@
 import unittest
 from dataclasses import fields
 from datetime import datetime, timedelta
-from unittest.mock import Mock, patch, call, sentinel
+from pathlib import Path
+from unittest.mock import Mock, patch, call, sentinel, MagicMock
 
 import numpy as np
 from imap_data_access.processing_input import ProcessingInputCollection
@@ -27,10 +28,13 @@ class TestCodiceLoProcessor(unittest.TestCase):
     @patch(
         'imap_l3_processing.codice.l3.lo.codice_lo_processor.CodiceLoProcessor._process_l3a_direct_event_data_product')
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.save_data')
-    def test_process(self, mock_save_data, mock_process_direct_event, mock_process_l3a, mock_fetch_dependencies,
-                     mock_upload):
-        input_collection = ProcessingInputCollection()
+    @patch('imap_l3_processing.processor.spiceypy')
+    def test_process(self, mock_spiceypy, mock_save_data, mock_process_direct_event, mock_process_l3a,
+                     mock_fetch_dependencies, mock_upload):
+        input_collection = MagicMock()
+        input_collection.get_file_paths.return_value = [Path('path/to/parent_file_1'), Path('path/to/parent_file_2')]
         input_metadata = InputMetadata('codice', "l3a", Mock(spec=datetime), Mock(spec=datetime), 'v02')
+        mock_spiceypy.ktotal.return_value = 0
 
         mock_save_data.side_effect = ["file1", "file2"]
         processor = CodiceLoProcessor(dependencies=input_collection, input_metadata=input_metadata)
@@ -43,6 +47,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
         mock_save_data.assert_has_calls(
             [call(mock_process_l3a.return_value), call(mock_process_direct_event.return_value)])
 
+        self.assertEqual(['parent_file_1', 'parent_file_2'], mock_process_l3a.return_value.parent_file_names)
         mock_upload.assert_has_calls([call("file1"), call("file2")])
 
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.calculate_partial_densities')

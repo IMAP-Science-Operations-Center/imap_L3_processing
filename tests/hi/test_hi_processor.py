@@ -9,13 +9,14 @@ from imap_data_access.processing_input import ProcessingInputCollection
 from imap_processing.ena_maps.utils.coordinates import CoordNames
 from imap_processing.spice.geometry import SpiceFrame
 
+from imap_l3_processing import spice_wrapper
 from imap_l3_processing.hi.hi_processor import HiProcessor
 from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3SpectralFitDependencies
 from imap_l3_processing.hi.l3.hi_l3_survival_dependencies import HiL3SurvivalDependencies, \
     HiL3SingleSensorFullSpinDependencies
 from imap_l3_processing.hi.l3.models import HiL3SpectralIndexDataProduct, HiL3SurvivalCorrectedDataProduct, \
-    HiIntensityMapData
-from imap_l3_processing.hi.l3.utils import PixelSize, MapDescriptorParts
+    HiIntensityMapData, HiL1cData, HiGlowsL3eData
+from imap_l3_processing.hi.l3.utils import PixelSize, MapDescriptorParts, parse_map_descriptor
 from imap_l3_processing.models import InputMetadata
 from tests.test_helpers import get_test_data_path
 
@@ -51,7 +52,7 @@ class TestHiProcessor(unittest.TestCase):
                                        start_date=datetime.now(),
                                        end_date=datetime.now() + timedelta(days=1),
                                        version="",
-                                       descriptor="h45-hf-sp-hae-4deg-6mo-spectral",
+                                       descriptor="h90-spx-h-hf-sp-full-hae-4deg-6mo",
                                        )
 
         mock_spectral_fit.return_value = sentinel.gammas, sentinel.errors
@@ -66,8 +67,7 @@ class TestHiProcessor(unittest.TestCase):
         mock_save_data.assert_called_once()
         actual_hi_data_product: HiL3SpectralIndexDataProduct = mock_save_data.call_args_list[0].args[0]
 
-        self.assertEqual(input_metadata.to_upstream_data_dependency(input_metadata.descriptor),
-                         actual_hi_data_product.input_metadata)
+        self.assertEqual(input_metadata, actual_hi_data_product.input_metadata)
         self.assertEqual(sentinel.gammas, actual_hi_data_product.ena_spectral_index)
         self.assertEqual(sentinel.errors, actual_hi_data_product.ena_spectral_index_stat_unc)
         self.assertEqual(sentinel.energy_delta, actual_hi_data_product.energy_delta_minus)
@@ -120,7 +120,7 @@ class TestHiProcessor(unittest.TestCase):
                                                descriptor="spectral-fit-index",
                                                )
                 processor = HiProcessor(None, input_metadata)
-                output_data = processor._process_spectral_fit_index(dependencies)
+                output_data = processor.process_spectral_fit_index(dependencies)
 
                 np.testing.assert_allclose(output_data.ena_spectral_index[0],
                                            expected_gamma, atol=1e-3)
@@ -172,7 +172,7 @@ class TestHiProcessor(unittest.TestCase):
                                        start_date=datetime.now(),
                                        end_date=datetime.now() + timedelta(days=1),
                                        version="",
-                                       descriptor="h90-sf-sp-ram-hae-4deg-6mo",
+                                       descriptor="h90-ena-h-sf-sp-ram-hae-4deg-6mo",
                                        )
 
         computed_survival_probabilities = rng.random((1, 9, 90, 45))
@@ -218,8 +218,7 @@ class TestHiProcessor(unittest.TestCase):
         mock_save_data.assert_called_once()
         survival_data_product: HiL3SurvivalCorrectedDataProduct = mock_save_data.call_args_list[0].args[0]
 
-        self.assertEqual(input_metadata.to_upstream_data_dependency(input_metadata.descriptor),
-                         survival_data_product.input_metadata)
+        self.assertEqual(input_metadata, survival_data_product.input_metadata)
 
         np.testing.assert_array_equal(survival_data_product.ena_intensity,
                                       input_map.ena_intensity / computed_survival_probabilities)
@@ -251,7 +250,7 @@ class TestHiProcessor(unittest.TestCase):
 
     @patch('imap_l3_processing.hi.hi_processor.Processor.get_parent_file_names')
     @patch("imap_l3_processing.hi.hi_processor.HiL3SingleSensorFullSpinDependencies.fetch_dependencies")
-    @patch("imap_l3_processing.hi.hi_processor.HiProcessor._process_survival_probabilities")
+    @patch("imap_l3_processing.hi.hi_processor.HiProcessor.process_survival_probabilities")
     @patch("imap_l3_processing.hi.hi_processor.combine_maps")
     @patch('imap_l3_processing.hi.hi_processor.save_data')
     @patch('imap_l3_processing.hi.hi_processor.upload')
@@ -265,7 +264,7 @@ class TestHiProcessor(unittest.TestCase):
                                        start_date=datetime.now(),
                                        end_date=datetime.now() + timedelta(days=1),
                                        version="",
-                                       descriptor="h90-sf-sp-hae-4deg-6mo",
+                                       descriptor="h90-ena-h-sf-sp-full-hae-4deg-6mo",
                                        )
 
         full_spin_dependencies: HiL3SingleSensorFullSpinDependencies = mock_fetch_full_spin_single_sensor_dependencies.return_value
@@ -299,11 +298,11 @@ class TestHiProcessor(unittest.TestCase):
 
     def test_raises_error_for_currently_unimplemented_maps(self):
         cases = [
-            "h-sf-hae-6deg-6mo",
-            "h-sf-sp-hae-6deg-6mo",
-            "h-sf-sp-ram-hae-6deg-6mo",
-            "h-sf-hae-6deg-12mo",
-            "h45-hf-hae-6deg-6mo",
+            "hic-ena-h-sf-nsp-full-hae-6deg-6mo",
+            "hic-ena-h-sf-sp-full-hae-6deg-6mo",
+            "hic-ena-h-sf-sp-ram-hae-6deg-6mo",
+            "hic-ena-h-sf-nsp-full-hae-6deg-12mo",
+            "h45-ena-h-hf-nsp-full-hae-6deg-6mo",
         ]
         for descriptor in cases:
             with self.subTest(descriptor):
@@ -319,6 +318,38 @@ class TestHiProcessor(unittest.TestCase):
                 with self.assertRaises(NotImplementedError):
                     processor.process()
 
+    def test_integration_uses_fill_values_for_missing_l3e_data(self):
+        t1 = datetime(2025, 4, 29, 12)
+        t2 = datetime(2025, 5, 7, 12)
+        t3 = datetime(2025, 5, 8, 12)
+        t4 = datetime(2025, 5, 15, 12)
+        l1c_psets = [create_l1c_pset(t1), create_l1c_pset(t2), create_l1c_pset(t3), create_l1c_pset(t4)]
+        l3e_psets = [create_l3e_pset(t1), create_l3e_pset(t3), create_l3e_pset(t4)]
+        l2_intensity_map = _create_h1_l3_data()
+
+        descriptor = parse_map_descriptor("h90-ena-h-sf-nsp-ram-hae-4deg-3mo")
+        survival_dependencies = HiL3SurvivalDependencies(l2_intensity_map, l1c_psets, l3e_psets, descriptor)
+
+        processor = HiProcessor(sentinel.dependencies, sentinel.input_metadata)
+        output_map = processor.process_survival_probabilities(survival_dependencies)
+        np.testing.assert_equal(output_map.ena_intensity[0, 0, 76, :], np.full(45, 2.0))
+        np.testing.assert_equal(output_map.ena_intensity[0, 0, 78, :], np.full(45, np.nan))
+        np.testing.assert_equal(output_map.ena_intensity[0, 0, 80, :], np.full(45, 2.0))
+
+
+def create_l1c_pset(epoch: datetime) -> HiL1cData:
+    epoch_j2000 = np.array([spice_wrapper.spice.datetime2et(epoch)]) * 1e9
+    energy_steps = np.array([1])
+    exposures = np.full(shape=(1, energy_steps.shape[0], 3600), fill_value=1.)
+    return HiL1cData(epoch, epoch_j2000, exposures, energy_steps)
+
+
+def create_l3e_pset(epoch) -> HiGlowsL3eData:
+    energy_steps = np.array([0.5, 5.0, 12.0])
+    spin_angle = np.arange(0, 360)
+    sp = np.full(shape=(1, len(energy_steps), len(spin_angle)), fill_value=0.5)
+    return HiGlowsL3eData(epoch, energy_steps, spin_angle, sp)
+
 
 def _create_h1_l3_data(epoch=None, lon=None, lat=None, energy=None, energy_delta=None, flux=None,
                        intensity_stat_unc=None):
@@ -326,11 +357,11 @@ def _create_h1_l3_data(epoch=None, lon=None, lat=None, energy=None, energy_delta
     lat = lat if lat is not None else np.array([1.0])
     energy = energy if energy is not None else np.array([1.0])
     energy_delta = energy_delta if energy_delta is not None else np.full((len(energy), 2), 1)
+    epoch = epoch if epoch is not None else np.array([datetime.now()])
     flux = flux if flux is not None else np.full((len(epoch), len(lon), len(lat), len(energy)), fill_value=1)
     intensity_stat_unc = intensity_stat_unc if intensity_stat_unc is not None else np.full(
         (len(epoch), len(lon), len(lat), len(energy)),
         fill_value=1)
-    epoch = epoch if epoch is not None else np.array([datetime.now()])
 
     if isinstance(flux, np.ndarray):
         more_real_flux = flux

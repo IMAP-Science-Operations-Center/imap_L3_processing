@@ -33,8 +33,7 @@ class TestHiL3SurvivalDependencies(unittest.TestCase):
             l2_map_path = Path(tmpdir) / "l2_map.cdf"
             with CDF(str(l2_map_path), masterpath='') as l2_map:
                 l2_map.attrs["Parents"] = parents
-
-            l2_map_descriptor = "h90-hf-ram-hae-6deg-1yr"
+            l2_map_descriptor = "h90-ena-h-hf-nsp-ram-hae-6deg-1yr"
             hi_l2_filename = f"imap_hi_l2_{l2_map_descriptor}_20250415_v001.cdf"
             glows_l3e_filename = "imap_glows_l3e_not-used_20250415_v001.cdf"
 
@@ -87,10 +86,10 @@ class TestHiL3SurvivalDependencies(unittest.TestCase):
 
     @patch("imap_l3_processing.hi.l3.hi_l3_survival_dependencies.HiL3SurvivalDependencies.fetch_dependencies")
     def test_fetch_single_sensor_full_spin_dependencies(self, mock_fetch_dependencies):
-        ram_map_descriptor = "h90-hf-ram-hae-6deg-1yr"
+        ram_map_descriptor = "h90-ena-h-hf-nsp-ram-hae-6deg-1yr"
         ram_l2_filename = f"imap_hi_l2_{ram_map_descriptor}_20250415_v001.cdf"
 
-        anti_map_descriptor = "h90-hf-anti-hae-6deg-1yr"
+        anti_map_descriptor = "h90-ena-h-hf-nsp-anti-hae-6deg-1yr"
         anti_l2_filename = f"imap_hi_l2_{anti_map_descriptor}_20250415_v001.cdf"
         glows_l3e_filename = "imap_glows_l3e_not-used_20250415_v001.cdf"
 

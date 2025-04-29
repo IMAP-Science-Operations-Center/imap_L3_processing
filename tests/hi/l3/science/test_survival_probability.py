@@ -164,6 +164,29 @@ class TestSurvivalProbability(unittest.TestCase):
         np.testing.assert_array_almost_equal(pointing_set.data["survival_probability_times_exposure"].values,
                                              corresponding_glows_data * self.l1c_hi_dataset.exposure_times * self.ram_mask)
 
+    def test_survivals_are_nan_when_glows_data_is_none(self):
+        self.hi_energies = np.array([1, 100])
+        self.glows_data.energy = np.array([1, 100, 100_000])
+
+        pointing_set_no_glows = HiSurvivalProbabilityPointingSet(self.l1c_hi_dataset, Sensor.Hi90, SpinPhase.RamOnly,
+                                                                 None,
+                                                                 self.hi_energies)
+        pointing_set_yes_glows = HiSurvivalProbabilityPointingSet(self.l1c_hi_dataset, Sensor.Hi90, SpinPhase.RamOnly,
+                                                                  self.glows_data,
+                                                                  self.hi_energies)
+
+        np.testing.assert_array_almost_equal(pointing_set_no_glows.data["survival_probability_times_exposure"].values,
+                                             np.full_like(self.l1c_hi_dataset.exposure_times,
+                                                          np.nan))
+
+        np.testing.assert_array_almost_equal(pointing_set_no_glows.data["exposure"].values,
+                                             self.l1c_hi_dataset.exposure_times * self.ram_mask)
+
+        np.testing.assert_array_almost_equal(pointing_set_no_glows.azimuths, pointing_set_yes_glows.azimuths)
+        np.testing.assert_array_almost_equal(pointing_set_no_glows.elevations, pointing_set_yes_glows.elevations)
+        np.testing.assert_array_almost_equal(pointing_set_no_glows.az_el_points, pointing_set_yes_glows.az_el_points)
+        np.testing.assert_array_almost_equal(pointing_set_no_glows.num_points, pointing_set_yes_glows.num_points)
+
     def test_interpolate_angular_data_to_nearest_neighbor(self):
         input_cases = [
             (0, 360),

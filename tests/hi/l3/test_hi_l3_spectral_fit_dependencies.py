@@ -23,7 +23,7 @@ class TestHiL3SpectralFitDependencies(unittest.TestCase):
     @patch("imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies.imap_data_access.download")
     @patch("imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies.read_hi_l2_data")
     def test_fetch_dependencies(self, mock_read_hi_l2_data, mock_download):
-        file_name = "imap_hi_l3_h90-hf-sp-hae-4deg-6mo_20250422_v001.cdf"
+        file_name = "imap_hi_l3_h90-spx-h-hf-sp-full-hae-4deg-6mo_20250422_v001.cdf"
         processing_input = ProcessingInputCollection(
             ScienceInput(file_name))
 
@@ -34,7 +34,7 @@ class TestHiL3SpectralFitDependencies(unittest.TestCase):
         self.assertEqual(mock_read_hi_l2_data.return_value, dependency.hi_l3_data)
 
     def test_raises_value_error_if_instrument_doesnt_match(self):
-        file_name = "imap_lo_l3_h90-hf-sp-hae-4deg-6mo_20250422_v001.cdf"
+        file_name = "imap_lo_l3_h90-spx-h-hf-sp-full-hae-4deg-6mo_20250422_v001.cdf"
         processing_input = ProcessingInputCollection(
             ScienceInput(file_name))
 

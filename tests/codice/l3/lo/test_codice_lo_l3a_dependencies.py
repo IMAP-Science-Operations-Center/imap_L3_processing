@@ -4,7 +4,8 @@ from unittest.mock import patch, call, sentinel
 import imap_data_access
 from imap_data_access.processing_input import ProcessingInputCollection, ScienceInput, AncillaryInput
 
-from imap_l3_processing.codice.l3.lo.codice_lo_l3a_dependencies import CodiceLoL3aDependencies
+from imap_l3_processing.codice.l3.lo.codice_lo_l3a_dependencies import CodiceLoL3aDependencies, SW_SPECIES_DESCRIPTOR, \
+    MASS_PER_CHARGE_DESCRIPTOR, DIRECT_EVENTS_DESCRIPTOR, PRIORITY_RATES_DESCRIPTOR, MASS_COEFFICIENT_DESCRIPTOR
 
 
 class TestCodiceLoL3aDependencies(unittest.TestCase):
@@ -13,17 +14,17 @@ class TestCodiceLoL3aDependencies(unittest.TestCase):
     @patch("imap_l3_processing.codice.l3.lo.codice_lo_l3a_dependencies.CodiceLoL3aDependencies.from_file_paths")
     def test_fetch_dependencies(self, mock_from_file_paths, mock_utils_download):
         processing_input_collection = ProcessingInputCollection()
-        expected_codice_science_file_download_path = "imap/codice/l2/2010/01/imap_codice_l2_sectored-intensities_20100105_v010.cdf"
-        expected_direct_events_science_file_download_path = "imap/codice/l2b/2010/01/imap_codice_l2b_direct-events_20100105_v010.cdf"
-        expected_priority_rates_science_file_download_path = "imap/codice/l2b/2010/01/imap_codice_l2b_priority-rates_20100105_v010.cdf"
-        expected_mass_per_charge_file_download_path = "imap/ancillary/codice/imap_codice_mass-per-charge-lookup_20100105_v001.csv"
-        expected_mass_coefficient_file_download_path = "imap/ancillary/codice/imap_codice_mass-coefficient-lookup_20100105_v001.csv"
+        expected_codice_science_file_download_path = f"imap/codice/l2/2010/01/imap_codice_l2_{SW_SPECIES_DESCRIPTOR}_20100105_v010.cdf"
+        expected_direct_events_science_file_download_path = f"imap/codice/l2b/2010/01/imap_codice_l2b_{DIRECT_EVENTS_DESCRIPTOR}_20100105_v010.cdf"
+        expected_priority_rates_science_file_download_path = f"imap/codice/l2b/2010/01/imap_codice_l2b_{PRIORITY_RATES_DESCRIPTOR}_20100105_v010.cdf"
+        expected_mass_per_charge_file_download_path = f"imap/ancillary/codice/imap_codice_{MASS_PER_CHARGE_DESCRIPTOR}_20100105_v001.csv"
+        expected_mass_coefficient_file_download_path = f"imap/ancillary/codice/imap_codice_{MASS_COEFFICIENT_DESCRIPTOR}_20100105_v001.csv"
 
-        codice_sectored_intensity_input_file_name = "imap_codice_l2_sectored-intensities_20100105_v010.cdf"
-        codice_priority_rates_input_file_name = "imap_codice_l2b_priority-rates_20100105_v010.cdf"
-        codice_direct_events_input_file_name = "imap_codice_l2b_direct-events_20100105_v010.cdf"
-        mass_per_charge_lookup_file = "imap_codice_mass-per-charge-lookup_20100105_v001.csv"
-        mass_coefficient_lookup_file = "imap_codice_mass-coefficient-lookup_20100105_v001.csv"
+        codice_sectored_intensity_input_file_name = f"imap_codice_l2_{SW_SPECIES_DESCRIPTOR}_20100105_v010.cdf"
+        codice_priority_rates_input_file_name = f"imap_codice_l2b_{PRIORITY_RATES_DESCRIPTOR}_20100105_v010.cdf"
+        codice_direct_events_input_file_name = f"imap_codice_l2b_{DIRECT_EVENTS_DESCRIPTOR}_20100105_v010.cdf"
+        mass_per_charge_lookup_file = f"imap_codice_{MASS_PER_CHARGE_DESCRIPTOR}_20100105_v001.csv"
+        mass_coefficient_lookup_file = f"imap_codice_{MASS_COEFFICIENT_DESCRIPTOR}_20100105_v001.csv"
 
         sectored_science_input = ScienceInput(codice_sectored_intensity_input_file_name)
         ancillary_input_1 = AncillaryInput(mass_per_charge_lookup_file)
