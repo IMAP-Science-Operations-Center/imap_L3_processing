@@ -298,15 +298,20 @@ class TestModels(unittest.TestCase):
             energy_table = rng.random(128)
             spin_sector_index = rng.random(12)
             expected_values = {
+                "energy_table": energy_table,
+                "acquisition_time_per_step": rng.random(len(energy_table)),
                 "epoch": epoch,
                 "epoch_delta_plus": np.repeat(1, len(epoch)),
                 "epoch_delta_minus": np.repeat(1, len(epoch)),
-                "energy_table": energy_table,
                 "spin_sector_index": spin_sector_index,
                 "rgfo_half_spin": rng.random(len(epoch)),
                 "data_quality": rng.random(len(epoch)),
                 "p5_heavies": rng.random((len(epoch), len(energy_table), len(spin_sector_index))),
                 "p6_hplus_heplusplus": rng.random((len(epoch), len(energy_table), len(spin_sector_index))),
+                "nso_half_spin": rng.random(len(epoch)),
+                "sw_bias_gain_mode": rng.random(len(epoch)),
+                "st_bias_gain_mode": rng.random(len(epoch)),
+                "spin_period": rng.random(len(epoch))
             }
 
             cdf_file_path = Path(tmpdir) / "test_cdf.cdf"
