@@ -91,19 +91,19 @@ class CodiceLoProcessor(Processor):
 
     def _process_l3a_direct_event_data_product(self,
                                                dependencies: CodiceLoL3aDependencies) -> CodiceLoL3aDirectEventDataProduct:
-        codice_priority_rates_l2_data = dependencies.codice_l2b_lo_priority_rates
+        codice_sw_priority_rates_l1a_data = dependencies.codice_lo_l1a_sw_priority_rates
+        codice_nsw_priority_rates_l1a_data = dependencies.codice_lo_l1a_nsw_priority_rates
         codice_direct_events: CodiceLoL2DirectEventData = dependencies.codice_l2_direct_events
         event_number = codice_direct_events.event_num
         mass_coefficient_lookup = dependencies.mass_coefficient_lookup
         priority_rates_for_events = [
-            codice_priority_rates_l2_data.lo_sw_priority_p0_tcrs,
-            codice_priority_rates_l2_data.lo_sw_priority_p1_hplus,
-            codice_priority_rates_l2_data.lo_sw_priority_p2_heplusplus,
-            codice_priority_rates_l2_data.lo_sw_priority_p3_heavies,
-            codice_priority_rates_l2_data.lo_sw_priority_p4_dcrs,
-            codice_priority_rates_l2_data.lo_nsw_priority_p5_heavies,
-            codice_priority_rates_l2_data.lo_nsw_priority_p6_hplus_heplusplus,
-            codice_priority_rates_l2_data.lo_nsw_priority_p7_missing,
+            codice_sw_priority_rates_l1a_data.p0_tcrs,
+            codice_sw_priority_rates_l1a_data.p1_hplus,
+            codice_sw_priority_rates_l1a_data.p2_heplusplus,
+            codice_sw_priority_rates_l1a_data.p3_heavies,
+            codice_sw_priority_rates_l1a_data.p4_dcrs,
+            codice_nsw_priority_rates_l1a_data.p5_heavies,
+            codice_nsw_priority_rates_l1a_data.p6_hplus_heplusplus
         ]
 
         normalization = np.full((len(codice_direct_events.epoch), len(priority_rates_for_events), 128, 12), np.nan)
@@ -120,7 +120,7 @@ class CodiceLoProcessor(Processor):
                 zip(codice_direct_events.priority_events, priority_rates_for_events)):
 
             total_by_epoch: np.ndarray[int] = calculate_total_number_of_events(priority_rate,
-                                                                               codice_priority_rates_l2_data.acquisition_times)
+                                                                               codice_sw_priority_rates_l1a_data.acquisition_time_per_step)
 
             mass_per_charge[:, priority_index, :] = calculate_mass_per_charge(priority_event)
             mass[:, priority_index, :] = calculate_mass(priority_event, mass_coefficient_lookup)

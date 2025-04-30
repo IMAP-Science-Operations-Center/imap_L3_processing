@@ -10,7 +10,7 @@ from spacepy import pycdf
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.spice_wrapper import spiceypy
-from tests.test_helpers import get_test_data_folder
+from tests.test_helpers import get_run_local_data_path
 
 DEFAULT_RECT_SPACING_DEG_L1C = 0.5
 DEFAULT_HEALPIX_NSIDE_L1C = 16
@@ -22,7 +22,7 @@ def create_example_ultra_l2_map(  # noqa: PLR0913
         width_scale: float = 180.0,
         counts_scaling_params: tuple[int, float] = (100, 0.01),
         peak_exposure: float = 1000.0,
-        timestr: str = "2025-01-01T00:00:00",
+        timestr: str = "2025-09-01T00:00:00",
         head: str = "45",
 ) -> xr.Dataset:
     """
@@ -185,17 +185,17 @@ def create_example_ultra_l2_map(  # noqa: PLR0913
     return pset_product
 
 
-if __name__ == "__main__":
-    out_path = get_test_data_folder() / "ultra" / "fake_l2_maps" / "test_map.cdf"
-    out_xarray = create_example_ultra_l2_map()
+def _write_ultra_l2_cdf_with_parents(out_path=get_run_local_data_path("ultra/fake_l2_maps/test_l2_map.cdf")):
+    out_xarray = create_example_ultra_l2_map(nside=2)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.unlink(missing_ok=True)
 
     with CDF(str(out_path), readonly=False, masterpath="") as cdf:
         cdf.new("ena_intensity", out_xarray["counts"].values)
         cdf.new("exposure_factor", out_xarray["exposure_time"].values)
         cdf.new("sensitivity", out_xarray["sensitivity"].values)
-        cdf.new("latitude", out_xarray[CoordNames.AZIMUTH_L1C.value].values, recVary=False)
-        cdf.new("longitude", out_xarray[CoordNames.ELEVATION_L1C.value].values, recVary=False)
+        cdf.new("latitude", out_xarray[CoordNames.ELEVATION_L1C.value].values, recVary=False)
+        cdf.new("longitude", out_xarray[CoordNames.AZIMUTH_L1C.value].values, recVary=False)
         cdf.new("epoch", out_xarray[CoordNames.TIME.value].values, recVary=False,
                 type=pycdf.const.CDF_TIME_TT2000.value)
         cdf.new("energy", out_xarray[CoordNames.ENERGY.value].values, recVary=False)
@@ -218,3 +218,7 @@ if __name__ == "__main__":
                 cdf[var].attrs['FILLVAL'] = -9223372036854775808
             elif cdf[var].type() == pycdf.const.CDF_FLOAT.value or pycdf.const.CDF_DOUBLE.value:
                 cdf[var].attrs['FILLVAL'] = -1e31
+
+
+if __name__ == "__main__":
+    _write_ultra_l2_cdf_with_parents()

@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 import numpy as np
+from astropy_healpix import HEALPix
 from spacepy import pycdf
 from spacepy.pycdf import CDF
 
@@ -22,10 +23,22 @@ def create_survival_probabilities_file(glows_file_path: Path, date_for_file: dat
 
         energies = np.array(match)
 
-    spin_angle_and_survival_probabilities = np.loadtxt(glows_file_path, skiprows=200)
+    spin_angle_and_survival_probabilities = np.loadtxt(glows_file_path)
+    output_survival_probabilities = np.full((len(energies), 3072), 0, dtype=np.float64)
     healpix_index = spin_angle_and_survival_probabilities[:, 0]
-    latitude = spin_angle_and_survival_probabilities[:, 1]
-    longitude = spin_angle_and_survival_probabilities[:, 2]
+    output_healpix_index = np.arange(0, 3072)
+    healpix = HEALPix(nside=16)
+    lons, lats = healpix.healpix_to_lonlat(output_healpix_index)
+
+    latitude = lats.value
+    longitude = lons.value
+    skips = 0
+    for i in range(0, 3072):
+        if i in healpix_index:
+            output_survival_probabilities[:, i] = spin_angle_and_survival_probabilities[i - skips, 3:-1].T
+        else:
+            skips += 1
+            output_survival_probabilities[:, i] = 0
 
     # Removing last column as it appears to be extra
     survival_probabilities = spin_angle_and_survival_probabilities[:, 3:-1].T
@@ -37,8 +50,9 @@ def create_survival_probabilities_file(glows_file_path: Path, date_for_file: dat
         c['energy'].attrs["UNITS"] = energy_units
         c.new("latitude", latitude, pycdf.const.CDF_FLOAT, recVary=False)
         c.new("longitude", longitude, pycdf.const.CDF_FLOAT, recVary=False)
-        c.new("healpix_index", healpix_index, pycdf.const.CDF_INT2, recVary=False)
-        c.new("probability_of_survival", np.array(survival_probabilities)[np.newaxis, ...], pycdf.const.CDF_FLOAT)
+        c.new("healpix_index", output_healpix_index, pycdf.const.CDF_INT2, recVary=False)
+        c.new("probability_of_survival", np.array(output_survival_probabilities)[np.newaxis, ...],
+              pycdf.const.CDF_FLOAT)
 
         c["energy"].attrs["FILLVAL"] = -1e31
         c["latitude"].attrs["FILLVAL"] = -1e31
@@ -51,9 +65,9 @@ def create_survival_probabilities_file(glows_file_path: Path, date_for_file: dat
 
 if __name__ == "__main__":
     path = Path(__file__)
-    input_file_path = path.parent.parent.parent / "instrument_team_data" / "glows" / "probSur.Imap.Ul_2009.000.dat"
+    input_file_path = path.parent.parent.parent / "instrument_team_data" / "glows" / "probSur.Imap.Ul.V0_2009.000.dat"
 
-    start_date = datetime(month=4, year=2025, day=16, hour=12)
+    start_date = datetime(year=2025, month=9, day=1)
     num_psets_to_generate = 1
 
     for i in range(num_psets_to_generate):

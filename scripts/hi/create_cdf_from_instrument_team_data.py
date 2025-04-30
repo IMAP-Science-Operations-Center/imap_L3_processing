@@ -24,8 +24,8 @@ def create_l2_map_from_instrument_team(folder: Path, output_dir: Path) -> Path:
     energy = np.array([key for key in sorted(data['flux'].keys())])
     intensity = np.array([data['flux'][key] for key in sorted(data['flux'].keys())])
     ena_intensity = intensity.reshape(1, *intensity.shape)
-    energy_delta_plus = np.full(energy.shape, 1.0)
-    energy_delta_minus = np.full(energy.shape, 1.0)
+    energy_delta_plus = np.full(energy.shape, 0.25)
+    energy_delta_minus = np.full(energy.shape, 0.25)
     energy_label = energy.astype(str)
     ena_intensity_stat_unc = np.array([data['sigma'][key] for key in sorted(data['sigma'].keys())])[np.newaxis, ...]
     ena_intensity_sys_err = ena_intensity_stat_unc / 2
