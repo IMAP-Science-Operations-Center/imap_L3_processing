@@ -5,14 +5,18 @@ from zipfile import ZipFile
 from imap_data_access.processing_input import ProcessingInputCollection
 
 from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
-from imap_data_access import download
+from imap_data_access import download, query
+
+from imap_l3_processing.glows.l3d.utils import get_l3a_parent_files_from_l3b
 
 
 @dataclass
 class GlowsL3DDependencies:
-    l3d_path: Path | None
     external_files: dict[str, Path]
     ancillary_files: dict[str, Path]
+    l3b_file_paths: list[Path]
+    l3c_file_paths: list[Path]
+    l3a_filenames: list[str]
 
     @classmethod
     def fetch_dependencies(cls, dependencies: ProcessingInputCollection):
@@ -24,7 +28,6 @@ class GlowsL3DDependencies:
         electron_density_path = dependencies.get_file_paths(source='glows', descriptor='electron-density')
         pipeline_settings_l3bc_path = dependencies.get_file_paths(source='glows', descriptor='pipeline-settings-l3bc')
         external_archive = dependencies.get_file_paths(source='glows', descriptor='l3b-archive')
-        l3d_remote_path = dependencies.get_file_paths(source='glows', descriptor='solar-params-history')
 
         plasma_speed_legendre = download(str(plasma_speed_legendre_path[0]))
         proton_density_legendre = download(str(proton_density_legendre_path[0]))
@@ -34,7 +37,17 @@ class GlowsL3DDependencies:
         electron_density = download(str(electron_density_path[0]))
         pipeline_settings_l3bc = download(str(pipeline_settings_l3bc_path[0]))
         archive_dependency = download(str(external_archive[0]))
-        l3d_path = download(str(l3d_remote_path[0])) if l3d_remote_path else None
+
+        l3b_file_names = query(instrument='glows', descriptor='ion-rate-profile', version='latest')
+        l3c_file_names = query(instrument='glows', descriptor='sw-profile', version='latest')
+
+        l3b_file_paths = [download(l3b['file_path']) for l3b in l3b_file_names]
+        l3c_file_paths = [download(l3c['file_path']) for l3c in l3c_file_names]
+
+        l3a_file_names = []
+        for l3b in l3b_file_paths:
+            l3a_file_names.extend(get_l3a_parent_files_from_l3b(l3b))
+        unique_l3a_files = list(set(l3a_file_names))
 
         with ZipFile(archive_dependency, 'r') as archive:
             archive.extract('lyman_alpha_composite.nc', TEMP_CDF_FOLDER_PATH)
@@ -54,4 +67,4 @@ class GlowsL3DDependencies:
             'lya_raw_data': TEMP_CDF_FOLDER_PATH / 'lyman_alpha_composite.nc'
         }
 
-        return cls(l3d_path, external_dict, ancillary_dict)
+        return cls(external_dict, ancillary_dict, l3b_file_paths, l3c_file_paths, unique_l3a_files)
