@@ -206,29 +206,39 @@ class CodiceLoL1aSWPriorityRates:
 
 @dataclass
 class CodiceLoL1aNSWPriorityRates:
+    energy_table: np.ndarray
+    acquisition_time_per_step: np.ndarray
     epoch: np.ndarray
     epoch_delta_plus: np.ndarray
     epoch_delta_minus: np.ndarray
-    energy_table: np.ndarray
     spin_sector_index: np.ndarray
     rgfo_half_spin: np.ndarray
     data_quality: np.ndarray
     p5_heavies: np.ndarray
     p6_hplus_heplusplus: np.ndarray
+    nso_half_spin: np.ndarray
+    sw_bias_gain_mode: np.ndarray
+    st_bias_gain_mode: np.ndarray
+    spin_period: np.ndarray
 
     @classmethod
     def read_from_cdf(cls, cdf_path: Path):
         with CDF(str(cdf_path)) as cdf:
             return cls(
+                energy_table=cdf["energy_table"][...],
+                acquisition_time_per_step=cdf["acquisition_time_per_step"][...],
                 epoch=cdf["epoch"][...],
                 epoch_delta_plus=cdf["epoch_delta_plus"][...],
                 epoch_delta_minus=cdf["epoch_delta_minus"][...],
-                energy_table=cdf["energy_table"][...],
                 spin_sector_index=cdf["spin_sector_index"][...],
                 rgfo_half_spin=cdf["rgfo_half_spin"][...],
                 data_quality=cdf["data_quality"][...],
                 p5_heavies=cdf["p5_heavies"][...],
                 p6_hplus_heplusplus=cdf["p6_hplus_heplusplus"][...],
+                nso_half_spin=cdf["nso_half_spin"][...],
+                sw_bias_gain_mode=cdf["sw_bias_gain_mode"][...],
+                st_bias_gain_mode=cdf["st_bias_gain_mode"][...],
+                spin_period=cdf["spin_period"][...],
             )
 
 
