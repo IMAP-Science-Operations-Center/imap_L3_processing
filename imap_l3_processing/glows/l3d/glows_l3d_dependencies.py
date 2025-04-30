@@ -7,8 +7,6 @@ from imap_data_access.processing_input import ProcessingInputCollection
 from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
 from imap_data_access import download, query
 
-from imap_l3_processing.glows.l3d.utils import get_l3a_parent_files_from_l3b
-
 
 @dataclass
 class GlowsL3DDependencies:
@@ -16,7 +14,6 @@ class GlowsL3DDependencies:
     ancillary_files: dict[str, Path]
     l3b_file_paths: list[Path]
     l3c_file_paths: list[Path]
-    l3a_filenames: list[str]
 
     @classmethod
     def fetch_dependencies(cls, dependencies: ProcessingInputCollection):
@@ -44,11 +41,6 @@ class GlowsL3DDependencies:
         l3b_file_paths = [download(l3b['file_path']) for l3b in l3b_file_names]
         l3c_file_paths = [download(l3c['file_path']) for l3c in l3c_file_names]
 
-        l3a_file_names = []
-        for l3b in l3b_file_paths:
-            l3a_file_names.extend(get_l3a_parent_files_from_l3b(l3b))
-        unique_l3a_files = list(set(l3a_file_names))
-
         with ZipFile(archive_dependency, 'r') as archive:
             archive.extract('lyman_alpha_composite.nc', TEMP_CDF_FOLDER_PATH)
 
@@ -67,4 +59,4 @@ class GlowsL3DDependencies:
             'lya_raw_data': TEMP_CDF_FOLDER_PATH / 'lyman_alpha_composite.nc'
         }
 
-        return cls(external_dict, ancillary_dict, l3b_file_paths, l3c_file_paths, unique_l3a_files)
+        return cls(external_dict, ancillary_dict, l3b_file_paths, l3c_file_paths)

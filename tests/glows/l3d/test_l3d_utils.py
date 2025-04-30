@@ -1,17 +1,23 @@
+import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch, mock_open, MagicMock
 
 import numpy as np
 from spacepy.pycdf import CDF
 
-from imap_l3_processing.glows.l3d.utils import create_glows_l3c_dictionary_from_cdf, \
-    create_glows_l3b_dictionary_from_cdf, convert_json_l3d_to_cdf, get_l3a_parent_files_from_l3b
-from tests.test_helpers import get_test_data_path, assert_dict_close
+import imap_l3_processing
+from imap_l3_processing.glows.l3d.utils import create_glows_l3b_dictionary_from_cdf, convert_json_l3d_to_cdf, \
+    create_glows_l3c_json_file_from_cdf
+from tests.test_helpers import get_test_data_path
 
 
 class TestL3dUtils(unittest.TestCase):
-    def test_create_glows_l3c_dictionary_from_cdf(self):
+
+    @patch('imap_l3_processing.glows.l3d.utils.json')
+    @patch('builtins.open', new_callable=mock_open, create=False)
+    def test_create_glows_l3c_json_file_from_cdf(self, mock_open_file, mock_json):
         expected: dict = {
             'solar_wind_profile': {
                 'proton_density': np.array([2.3197076, 2.2874057, 2.1938286, 2.5905547, 3.4460852, 4.4701824,
@@ -29,8 +35,18 @@ class TestL3dUtils(unittest.TestCase):
 
         l3c_path = get_test_data_path('glows/imap_glows_l3c_sw-profile_20101030_v008.cdf')
 
-        actual: dict = create_glows_l3c_dictionary_from_cdf(l3c_path)
+        json_file = MagicMock()
+        mock_open_file.return_value.__enter__.return_value = json_file
 
+        create_glows_l3c_json_file_from_cdf(l3c_path)
+
+        mock_open_file.assert_called_once_with(
+            Path(
+                imap_l3_processing.__file__) / 'glows' / 'l3d' / 'toolkit' / 'data_l3c' / 'imap_glows_l3c_cr_2103_v008.json')
+
+        mock_json.dump.assert_called_once()
+        actual = mock_json.dump.call_args.args[0]
+        self.assertEqual(json_file, mock_json.dump.call_args.args[1])
         self.assertEqual('imap_glows_l3c_sw-profile_20101030_v008.cdf', actual['header']['filename'])
 
         self.assertEqual(expected['solar_wind_ecliptic']['proton_density'],
@@ -43,7 +59,9 @@ class TestL3dUtils(unittest.TestCase):
         np.testing.assert_array_equal(actual['solar_wind_profile']['plasma_speed'],
                                       expected['solar_wind_profile']['plasma_speed'])
 
-    def test_create_glows_l3d_dictionary_from_cdf(self):
+    @patch('imap_l3_processing.glows.l3d.utils.json')
+    @patch('builtins.open', new_callable=mock_open, create=False)
+    def test_create_glows_l3b_dictionary_from_cdf(self, mock_open_file, mock_json):
         l3b_path = get_test_data_path("glows/imap_glows_l3b_ion-rate-profile_20100519_v012.cdf")
 
         expected: dict = {
@@ -93,11 +111,25 @@ class TestL3dUtils(unittest.TestCase):
             }
         }
 
-        actual: dict = create_glows_l3b_dictionary_from_cdf(l3b_path)
-        np.testing.assert_array_equal(expected["header"]['l3a_input_files_name'],
-                                      actual["header"]['l3a_input_files_name'])
+        json_file = MagicMock()
+        mock_open_file.return_value.__enter__.return_value = json_file
+
+        create_glows_l3b_dictionary_from_cdf(l3b_path)
+
+        mock_json.dump.assert_called_once()
+        actual = mock_json.dump.call_args.args[0]
+        self.assertEqual(json_file, mock_json.dump.call_args.args[1])
+
+        mock_open_file.assert_called_once_with(
+            Path(
+                imap_l3_processing.__file__) / 'glows' / 'l3d' / 'toolkit' / 'data_l3b' / 'imap_glows_l3b_cr_2097_v012.json')
+
         np.testing.assert_array_equal(expected["header"]['filename'],
                                       actual["header"]['filename'])
+
+        np.testing.assert_array_equal(expected["header"]['l3a_input_files_name'],
+                                      actual["header"]['l3a_input_files_name'])
+
         np.testing.assert_array_equal(expected["uv_anisotropy_factor"],
                                       actual["uv_anisotropy_factor"])
         np.testing.assert_array_equal(expected["ion_rate_profile"]['lat_grid'],
@@ -105,27 +137,10 @@ class TestL3dUtils(unittest.TestCase):
         np.testing.assert_array_almost_equal(expected["ion_rate_profile"]['ph_rate'],
                                              actual["ion_rate_profile"]['ph_rate'])
 
-    def test_get_l3a_parent_files_from_l3b(self):
-        expected_filenames = [
-            'imap_glows_l3a_hist_20100511-repoint00131_v011.cdf',
-            'imap_glows_l3a_hist_20100512-repoint00132_v011.cdf',
-            'imap_glows_l3a_hist_20100513-repoint00133_v011.cdf',
-            'imap_glows_l3a_hist_20100514-repoint00134_v011.cdf',
-            'imap_glows_l3a_hist_20100515-repoint00135_v011.cdf',
-            'imap_glows_l3a_hist_20100516-repoint00136_v011.cdf',
-            'imap_glows_l3a_hist_20100517-repoint00137_v011.cdf',
-            'imap_glows_l3a_hist_20100518-repoint00138_v011.cdf',
-        ]
-
-        actual_file_names = get_l3a_parent_files_from_l3b(
-            get_test_data_path('glows/imap_glows_l3b_ion-rate-profile_20100422_v011.cdf'))
-
-        self.assertEqual(expected_filenames, actual_file_names)
-
     def test_convert_json_l3d_to_cdf(self):
         with tempfile.TemporaryDirectory() as tempdir:
             convert_json_l3d_to_cdf(get_test_data_path('glows/imap_glows_l3d_cr_2095_v00.json'), Path(tempdir))
-            with CDF(str(Path(tempdir) / 'imap_glows_l3d_solar-param-hist_20100326_v000.cdf')) as cdf:
+            with CDF(str(Path(tempdir) / 'imap_glows_l3d_solar-params-history_20100326_v000.cdf')) as cdf:
                 np.testing.assert_array_equal(
                     [-90, -80, -70, -60, -50, -40, -30, -20, -10, 0, 10, 20, 30, 40, 50, 60, 70, 80, 90],
                     cdf['lat_grid'][...])

@@ -3,10 +3,14 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from spacepy.pycdf import CDF
 
+import imap_l3_processing
 
-def create_glows_l3c_dictionary_from_cdf(cdf_file_path: Path) -> dict:
+PATH_TO_L3D_TOOLKIT = Path(imap_l3_processing.__file__) / 'glows' / 'l3d' / 'toolkit'
+
+
+def create_glows_l3c_json_file_from_cdf(cdf_file_path: Path):
     with CDF(str(cdf_file_path)) as cdf:
-        return {
+        json_dict = {
             'header': {
                 'filename': cdf_file_path.name
             },
@@ -19,11 +23,17 @@ def create_glows_l3c_dictionary_from_cdf(cdf_file_path: Path) -> dict:
                 'alpha_abundance': cdf["alpha_abundance_ecliptic"][0],
             }
         }
+        cr_number = cdf['cr'][...][0]
+        version = cdf_file_path.name.split('_')[-1].split('.')[0]
+        json_file_name = f'imap_glows_l3c_cr_{cr_number}_{version}.json'
+
+        with open(PATH_TO_L3D_TOOLKIT / 'data_l3c' / json_file_name) as fp:
+            json.dump(json_dict, fp)
 
 
-def create_glows_l3b_dictionary_from_cdf(cdf_file_path: Path) -> dict:
+def create_glows_l3b_dictionary_from_cdf(cdf_file_path: Path):
     with CDF(str(cdf_file_path)) as cdf:
-        return {
+        json_dict = {
             'header': {
                 'filename': cdf_file_path.name,
                 'l3a_input_files_name': [file for file in cdf.attrs['Parents'] if 'l3a' in file]
@@ -35,11 +45,12 @@ def create_glows_l3b_dictionary_from_cdf(cdf_file_path: Path) -> dict:
             }
         }
 
+        cr_number = cdf['cr'][...][0]
+        version = cdf_file_path.name.split('_')[-1].split('.')[0]
+        json_file_name = f'imap_glows_l3b_cr_{cr_number}_{version}.json'
 
-def get_l3a_parent_files_from_l3b(l3b_file: Path) -> list[str]:
-    with CDF(str(l3b_file)) as cdf:
-        parent_files = cdf.attrs['Parents'][...]
-        return [name for name in parent_files if name.startswith("imap_glows") and name.split('_')[2] == "l3a"]
+        with open(PATH_TO_L3D_TOOLKIT / 'data_l3b' / json_file_name) as fp:
+            json.dump(json_dict, fp)
 
 
 def convert_json_l3d_to_cdf(json_file_path: Path, path_to_write_cdf_to: Path) -> Path:
@@ -49,7 +60,8 @@ def convert_json_l3d_to_cdf(json_file_path: Path, path_to_write_cdf_to: Path) ->
     start_date = (datetime.fromisoformat(l3d_json_dict['time_grid'][-1]) - (timedelta(days=27.25) / 2)).strftime(
         '%Y%m%d')
 
-    with CDF(str(path_to_write_cdf_to / f'imap_glows_l3d_solar-param-hist_{start_date}_v000.cdf'), create=True) as cdf:
+    with CDF(str(path_to_write_cdf_to / f'imap_glows_l3d_solar-params-history_{start_date}_v000.cdf'),
+             create=True) as cdf:
         cdf['lat_grid'] = l3d_json_dict['lat_grid']
         cdf['cr_grid'] = l3d_json_dict['cr_grid']
         cdf['time_grid'] = l3d_json_dict['time_grid']
@@ -60,4 +72,4 @@ def convert_json_l3d_to_cdf(json_file_path: Path, path_to_write_cdf_to: Path) ->
         cdf['lya'] = l3d_json_dict['solar_params']['lya']
         cdf['e_dens'] = l3d_json_dict['solar_params']['e-dens']
 
-    return path_to_write_cdf_to / f'imap_glows_l3d_solar-param-hist_{start_date}_v000.cdf'
+    return path_to_write_cdf_to / f'imap_glows_l3d_solar-params-history_{start_date}_v000.cdf'
