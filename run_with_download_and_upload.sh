@@ -16,6 +16,10 @@ python imap_l3_data_processor.py --instrument hi --data-level l3 --start-date 20
 --version v002 --descriptor "h90-ena-h-sf-sp-full-hae-4deg-6mo" --dependency \
 '[{"type": "science", "files": ["imap_hi_l2_h90-ena-h-sf-nsp-ram-hae-4deg-6mo_20250415_v001.cdf"]},
 {"type": "science", "files": ["imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-6mo_20250415_v001.cdf"]}]'
+elif [[ "$1" == "hi-spx" ]]; then
+python imap_l3_data_processor.py --instrument hi --data-level l3 --start-date 20250415 \
+--version v002 --descriptor "h90-spx-h-hf-sp-full-hae-4deg-6mo" --dependency \
+'[{"type": "science", "files": ["imap_hi_l2_h90-ena-h-sf-nsp-ram-hae-4deg-6mo_20250415_v002.cdf"]}]'
 fi
 
 git restore imap_l3_processing/version.py

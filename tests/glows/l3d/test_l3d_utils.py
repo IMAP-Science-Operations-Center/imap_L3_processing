@@ -6,7 +6,7 @@ import numpy as np
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.glows.l3d.utils import create_glows_l3c_dictionary_from_cdf, \
-    create_glows_l3b_dictionary_from_cdf, convert_json_l3d_to_cdf
+    create_glows_l3b_dictionary_from_cdf, convert_json_l3d_to_cdf, get_l3a_parent_files_from_l3b
 from tests.test_helpers import get_test_data_path, assert_dict_close
 
 
@@ -104,6 +104,23 @@ class TestL3dUtils(unittest.TestCase):
                                       actual["ion_rate_profile"]['lat_grid'])
         np.testing.assert_array_almost_equal(expected["ion_rate_profile"]['ph_rate'],
                                              actual["ion_rate_profile"]['ph_rate'])
+
+    def test_get_l3a_parent_files_from_l3b(self):
+        expected_filenames = [
+            'imap_glows_l3a_hist_20100511-repoint00131_v011.cdf',
+            'imap_glows_l3a_hist_20100512-repoint00132_v011.cdf',
+            'imap_glows_l3a_hist_20100513-repoint00133_v011.cdf',
+            'imap_glows_l3a_hist_20100514-repoint00134_v011.cdf',
+            'imap_glows_l3a_hist_20100515-repoint00135_v011.cdf',
+            'imap_glows_l3a_hist_20100516-repoint00136_v011.cdf',
+            'imap_glows_l3a_hist_20100517-repoint00137_v011.cdf',
+            'imap_glows_l3a_hist_20100518-repoint00138_v011.cdf',
+        ]
+
+        actual_file_names = get_l3a_parent_files_from_l3b(
+            get_test_data_path('glows/imap_glows_l3b_ion-rate-profile_20100422_v011.cdf'))
+
+        self.assertEqual(expected_filenames, actual_file_names)
 
     def test_convert_json_l3d_to_cdf(self):
         with tempfile.TemporaryDirectory() as tempdir:

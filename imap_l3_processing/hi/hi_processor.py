@@ -2,6 +2,7 @@ import numpy as np
 from imap_data_access import upload
 from imap_processing.spice.geometry import SpiceFrame
 
+from imap_l3_processing.constants import TT2000_EPOCH
 from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3SpectralFitDependencies
 from imap_l3_processing.hi.l3.hi_l3_survival_dependencies import HiL3SurvivalDependencies, \
     HiL3SingleSensorFullSpinDependencies
@@ -70,25 +71,35 @@ class HiProcessor(Processor):
 
         gammas, errors = spectral_fit(len(epochs), len(lons), len(lats), fluxes, variances, energy)
 
+        min_energy = hi_l3_data.energy[0] - hi_l3_data.energy_delta_minus[0]
+        max_energy = hi_l3_data.energy[-1] + hi_l3_data.energy_delta_plus[-1]
+        mean_energy = np.sqrt(min_energy * max_energy)
+
+        new_energy_label = f"{min_energy} - {max_energy} keV"
+
+        mean_obs_date = np.mean(input_data.obs_date - TT2000_EPOCH, axis=1, keepdims=True) + TT2000_EPOCH
+        mean_obs_date_range = np.mean(input_data.obs_date_range, axis=1, keepdims=True)
+        total_exposure_factor = np.sum(input_data.exposure_factor, axis=1, keepdims=True)
+
         data_product = HiL3SpectralIndexDataProduct(
             input_metadata=self.input_metadata,
-            ena_spectral_index_stat_unc=errors,
-            ena_spectral_index=gammas,
+            ena_spectral_index_stat_unc=errors[:, np.newaxis, :, :],
+            ena_spectral_index=gammas[:, np.newaxis, :, :],
             epoch=input_data.epoch,
             epoch_delta=input_data.epoch_delta,
-            energy=input_data.energy,
-            energy_delta_plus=input_data.energy_delta_plus,
-            energy_delta_minus=input_data.energy_delta_minus,
-            energy_label=input_data.energy_label,
+            energy=np.array([mean_energy]),
+            energy_delta_plus=np.array([max_energy - mean_energy]),
+            energy_delta_minus=np.array([mean_energy - min_energy]),
+            energy_label=np.array([new_energy_label]),
             latitude=input_data.latitude,
             latitude_delta=input_data.latitude_delta,
             latitude_label=input_data.latitude_label,
             longitude=input_data.longitude,
             longitude_delta=input_data.longitude_delta,
             longitude_label=input_data.longitude_label,
-            exposure_factor=input_data.exposure_factor,
-            obs_date=input_data.obs_date,
-            obs_date_range=input_data.obs_date_range,
+            exposure_factor=total_exposure_factor,
+            obs_date=mean_obs_date,
+            obs_date_range=mean_obs_date_range,
             solid_angle=input_data.solid_angle,
         )
 

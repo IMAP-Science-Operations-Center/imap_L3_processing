@@ -322,8 +322,9 @@ ena_spectral_index:
   DATA_TYPE: CDF_REAL4
   CATDESC: ENA spectral index.
   DEPEND_0: epoch
-  DEPEND_1: longitude
-  DEPEND_2: latitude
+  DEPEND_1: energy
+  DEPEND_2: longitude
+  DEPEND_3: latitude
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: image
@@ -335,8 +336,9 @@ ena_spectral_index:
   VALIDMIN: 0.0
   VALIDMAX: 100
   FILLVAL: -1.00E+31
-  LABL_PTR_1: longitude_label
-  LABL_PTR_2: latitude_label
+  LABL_PTR_1: energy_label
+  LABL_PTR_2: longitude_label
+  LABL_PTR_3: latitude_label
   SCALE_TYP: linear
   DELTA_PLUS_VAR: ena_spectral_index_stat_unc
   DELTA_MINUS_VAR: ena_spectral_index_stat_unc
@@ -345,8 +347,9 @@ ena_spectral_index_stat_unc:
   DATA_TYPE: CDF_REAL4
   CATDESC: ENA spectral index statistical uncertainty.
   DEPEND_0: epoch
-  DEPEND_1: longitude
-  DEPEND_2: latitude
+  DEPEND_1: energy
+  DEPEND_2: longitude
+  DEPEND_3: latitude
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: no_plot
@@ -357,6 +360,7 @@ ena_spectral_index_stat_unc:
   VALIDMIN: 0.0
   VALIDMAX: 100
   FILLVAL: -1.00E+31
-  LABL_PTR_1: longitude_label
-  LABL_PTR_2: latitude_label
+  LABL_PTR_1: energy_label
+  LABL_PTR_2: longitude_label
+  LABL_PTR_3: latitude_label
   SCALE_TYP: linear
