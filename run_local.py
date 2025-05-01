@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import shutil
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -22,6 +23,7 @@ from imap_l3_processing.glows.glows_processor import GlowsProcessor
 from imap_l3_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
 from imap_l3_processing.glows.l3a.utils import read_l2_glows_data, create_glows_l3a_dictionary_from_cdf
 from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDependencies
+from imap_l3_processing.glows.l3d.glows_l3d_dependencies import GlowsL3DDependencies
 from imap_l3_processing.glows.l3e.glows_l3e_dependencies import GlowsL3EDependencies
 from imap_l3_processing.hi.hi_processor import HiProcessor
 from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3SpectralFitDependencies
@@ -537,6 +539,53 @@ def run_glows_l3bc():
     print(save_data(l3c_data_product, delete_if_present=True))
 
 
+@patch('imap_l3_processing.glows.glows_processor.shutil')
+def run_glows_l3d(mock_shutil):
+    mock_shutil.move = shutil.copy
+
+    input_metadata = InputMetadata(
+        instrument='glows',
+        data_level='l3d',
+        start_date=datetime(2013, 9, 8),
+        end_date=datetime(2013, 9, 8),
+        version='v001')
+
+    external_files = {
+        'lya_raw_data': get_test_data_path('glows/lyman_alpha_composite.nc'),
+    }
+
+    ancillary_files = {
+        'WawHelioIon': {
+            'speed': get_test_data_path('glows/imap_glows_plasma-speed-Legendre-2010a_v001.dat'),
+            'p-dens': get_test_data_path('glows/imap_glows_proton-density-Legendre-2010a_v001.dat'),
+            'uv-anis': get_test_data_path('glows/imap_glows_uv-anisotropy-2010a_v001.dat'),
+            'phion': get_test_data_path('glows/imap_glows_photoion-2010a_v001.dat'),
+            'lya': get_test_data_path('glows/imap_glows_lya-2010a_v001.dat'),
+            'e-dens': get_test_data_path('glows/imap_glows_electron-density-2010a_v001.dat'),
+        },
+        'pipeline_settings': get_test_instrument_team_data_path(
+            'glows/imap_glows_pipeline-settings-L3bc_20250707_v002.json')
+    }
+
+    l3b_file_paths = [
+        get_test_data_path('glows/imap_glows_l3b_ion-rate-profile_20100422_v011.cdf'),
+        get_test_data_path('glows/imap_glows_l3b_ion-rate-profile_20100519_v011.cdf')
+    ]
+
+    l3c_file_paths = [
+        get_test_data_path('glows/imap_glows_l3c_sw-profile_20100422_v011.cdf'),
+        get_test_data_path('glows/imap_glows_l3c_sw-profile_20100519_v011.cdf')
+    ]
+
+    l3d_dependencies: GlowsL3DDependencies = GlowsL3DDependencies(external_files=external_files,
+                                                                  ancillary_files=ancillary_files,
+                                                                  l3b_file_paths=l3b_file_paths,
+                                                                  l3c_file_paths=l3c_file_paths)
+
+    processor = GlowsProcessor(ProcessingInputCollection(), input_metadata)
+    processor.process_l3d(l3d_dependencies)
+
+
 def create_empty_hi_l1c_dataset(epoch: datetime, exposures: Optional[np.ndarray] = None,
                                 spin_angles: Optional[np.ndarray] = None,
                                 energies: Optional[np.ndarray] = None):
@@ -647,6 +696,8 @@ if __name__ == "__main__":
             run_glows_l3bc()
         elif "init-l3bc" in sys.argv:
             run_glows_l3bc_processor_and_initializer()
+        elif "l3d" in sys.argv:
+            run_glows_l3d()
         elif "l3e" in sys.argv:
             if "mock" in sys.argv:
                 run_glows_l3e_lo_with_mocks()
