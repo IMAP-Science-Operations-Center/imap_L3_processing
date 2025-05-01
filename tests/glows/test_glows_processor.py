@@ -16,6 +16,8 @@ from imap_l3_processing.glows.l3a.utils import create_glows_l3a_dictionary_from_
 from imap_l3_processing.glows.l3bc.cannot_process_carrington_rotation_error import CannotProcessCarringtonRotationError
 from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDependencies
 from imap_l3_processing.glows.l3bc.models import GlowsL3BIonizationRate
+from imap_l3_processing.glows.l3d.glows_l3d_dependencies import GlowsL3DDependencies
+from imap_l3_processing.glows.l3d.utils import PATH_TO_L3D_TOOLKIT
 from imap_l3_processing.glows.l3e.glows_l3e_lo_model import GlowsL3ELoData
 from imap_l3_processing.glows.l3e.glows_l3e_hi_model import GlowsL3EHiData
 from imap_l3_processing.glows.l3e.glows_l3e_ultra_model import GlowsL3EUltraData
@@ -611,17 +613,71 @@ class TestGlowsProcessor(unittest.TestCase):
 
         mock_upload.assert_called_once_with(sentinel.lo_path)
 
+    @patch('imap_l3_processing.glows.glows_processor.os')
+    @patch('imap_l3_processing.glows.glows_processor.shutil')
+    @patch("imap_l3_processing.glows.glows_processor.create_glows_l3c_json_file_from_cdf")
+    @patch("imap_l3_processing.glows.glows_processor.create_glows_l3b_json_file_from_cdf")
     @patch("imap_l3_processing.glows.glows_processor.GlowsL3DDependencies")
-    def test_process_l3d(self, mock_l3d_dependencies):
+    def test_process_l3d(self, mock_l3d_dependencies_constructor, mock_create_glows_l3b_json_file_from_cdf,
+                         mock_create_glows_l3c_json_file_from_cdf, mock_shutil, mock_os):
         input_metadata = InputMetadata('glows', "l3d", datetime(2024, 10, 7, 10, 00, 00),
                                        datetime(2024, 10, 8, 10, 00, 00),
                                        'v001', descriptor='solar-hist')
 
         input_data_collection = Mock()
 
+        mock_l3d_dependencies = Mock(spec=GlowsL3DDependencies)
+        mock_l3d_dependencies.ancillary_files = {
+            'pipeline_settings': Path('path/to/pipeline_settings'),
+            'WawHelioIon': {
+                'speed': Path('path/to/speed'),
+                'p-dens': Path('path/to/p-dens'),
+                'uv-anis': Path('path/to/uv-anis'),
+                'phion': Path('path/to/phion'),
+                'lya': Path('path/to/lya'),
+                'e-dens': Path('path/to/e-dens')
+            }
+        }
+        mock_l3d_dependencies.external_files = {
+            'lya_raw_data': Path('path/to/lya'),
+        }
+        mock_l3d_dependencies.l3b_file_paths = [sentinel.l3b_file_1, sentinel.l3b_file_2]
+        mock_l3d_dependencies.l3c_file_paths = [sentinel.l3c_file_1, sentinel.l3c_file_2]
+        mock_l3d_dependencies_constructor.fetch_dependencies.return_value = mock_l3d_dependencies
+
         processor = GlowsProcessor(input_data_collection, input_metadata)
         processor.process()
-        mock_l3d_dependencies.fetch_dependencies.assert_called_once_with(input_data_collection)
+
+        mock_os.makedirs.assert_has_calls([
+            call(PATH_TO_L3D_TOOLKIT / 'data_ancillary', exist_ok=True),
+            call(PATH_TO_L3D_TOOLKIT / 'external_dependencies', exist_ok=True)
+        ])
+
+        mock_shutil.move.assert_has_calls([
+            call(Path('path/to/pipeline_settings'),
+                 PATH_TO_L3D_TOOLKIT / 'data_ancillary' / 'imap_glows_pipeline-settings-L3bc_v001.json'),
+            call(Path('path/to/speed'),
+                 PATH_TO_L3D_TOOLKIT / 'data_ancillary' / 'imap_glows_plasma-speed-Legendre-2010a_v001.dat'),
+            call(Path('path/to/p-dens'),
+                 PATH_TO_L3D_TOOLKIT / 'data_ancillary' / 'imap_glows_proton-density-Legendre-2010a_v001.dat'),
+            call(Path('path/to/uv-anis'),
+                 PATH_TO_L3D_TOOLKIT / 'data_ancillary' / 'imap_glows_uv-anisotropy-2010a_v001.dat'),
+            call(Path('path/to/phion'), PATH_TO_L3D_TOOLKIT / 'data_ancillary' / 'imap_glows_photoion-2010a_v001.dat'),
+            call(Path('path/to/lya'), PATH_TO_L3D_TOOLKIT / 'data_ancillary' / 'imap_glows_lya-2010a_v001.dat'),
+            call(Path('path/to/e-dens'),
+                 PATH_TO_L3D_TOOLKIT / 'data_ancillary' / 'imap_glows_electron-density-2010a_v001.dat'),
+            call(Path('path/to/lya'), PATH_TO_L3D_TOOLKIT / 'external_dependencies' / 'lyman_alpha_composite.nc'),
+        ])
+
+        mock_l3d_dependencies_constructor.fetch_dependencies.assert_called_once_with(input_data_collection)
+
+        mock_create_glows_l3c_json_file_from_cdf.assert_has_calls([
+            call(sentinel.l3c_file_1), call(sentinel.l3c_file_2)
+        ])
+
+        mock_create_glows_l3b_json_file_from_cdf.assert_has_calls([
+            call(sentinel.l3b_file_1), call(sentinel.l3b_file_2)
+        ])
 
 
 if __name__ == '__main__':
