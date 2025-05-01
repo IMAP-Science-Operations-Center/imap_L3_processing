@@ -222,6 +222,8 @@ class TestUtils(unittest.TestCase):
                                                                       PixelSize.SixDegrees, Duration.SixMonths,
                                                                       MapQuantity.Intensity)),
             ("not-valid-at-all", None),
+            ("invalid_prefix-hic-ena-h-hf-nsp-full-hae-6deg-6mo", None),
+            ("hic-ena-h-hf-nsp-full-hae-6deg-6mo-invalid-suffix", None),
         ]
 
         for descriptor, expected in test_cases:
