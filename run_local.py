@@ -26,9 +26,11 @@ from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDepen
 from imap_l3_processing.glows.l3d.glows_l3d_dependencies import GlowsL3DDependencies
 from imap_l3_processing.glows.l3e.glows_l3e_dependencies import GlowsL3EDependencies
 from imap_l3_processing.hi.hi_processor import HiProcessor
+from imap_l3_processing.hi.l3.hi_l3_combined_sensor_dependencies import HiL3CombinedMapDependencies
 from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3SpectralFitDependencies
 from imap_l3_processing.hi.l3.hi_l3_survival_dependencies import HiL3SurvivalDependencies, \
     HiL3SingleSensorFullSpinDependencies
+from imap_l3_processing.hi.l3.models import HiL3SpectralIndexDataProduct, HiL3IntensityDataProduct, combine_maps
 from imap_l3_processing.hit.l3.hit_l3_sectored_dependencies import HITL3SectoredDependencies
 from imap_l3_processing.hit.l3.hit_processor import HitProcessor
 from imap_l3_processing.hit.l3.models import HitL1Data
@@ -206,7 +208,9 @@ def create_survival_corrected_full_spin_cdf(dependencies: HiL3SingleSensorFullSp
                                    )
     processor = HiProcessor(Mock(), input_metadata)
     output_data = processor.process_full_spin_single_sensor(dependencies)
-    cdf_path = save_data(output_data, delete_if_present=True)
+
+    data_product = HiL3IntensityDataProduct(data=output_data, input_metadata=input_metadata)
+    cdf_path = save_data(data_product, delete_if_present=True)
     return cdf_path
 
 
@@ -220,7 +224,8 @@ def create_spectral_index_cdf(dependencies: HiL3SpectralFitDependencies) -> str:
                                    )
     processor = HiProcessor(Mock(), input_metadata)
     output_data = processor.process_spectral_fit_index(dependencies)
-    cdf_path = save_data(output_data, delete_if_present=True)
+    data_product = HiL3SpectralIndexDataProduct(data=output_data, input_metadata=input_metadata)
+    cdf_path = save_data(data_product, delete_if_present=True)
     return cdf_path
 
 
@@ -655,10 +660,25 @@ def create_hi_l3_survival_corrected_cdf(survival_dependencies: HiL3SurvivalDepen
                                    )
 
     processor = HiProcessor(Mock(), input_metadata)
-    survival_corrected_product = processor.process_survival_probabilities(
-        survival_dependencies)
+    output_data = processor.process_survival_probabilities(survival_dependencies)
 
-    return save_data(survival_corrected_product, delete_if_present=True)
+    data_product = HiL3IntensityDataProduct(data=output_data, input_metadata=input_metadata)
+    return save_data(data_product, delete_if_present=True)
+
+
+def create_combined_sensor_cdf(combined_dependencies: HiL3CombinedMapDependencies) -> str:
+    input_metadata = InputMetadata(
+        instrument="hi",
+        data_level="l3",
+        start_date=datetime(2025, 4, 9),
+        end_date=datetime(2025, 4, 10),
+        version="v001",
+        descriptor="hic-ena-h-sf-sp-full-hae-4deg-1yr"
+    )
+    combined_map = combine_maps(combined_dependencies.maps)
+
+    data_product = HiL3IntensityDataProduct(data=combined_map, input_metadata=input_metadata)
+    return save_data(data_product, delete_if_present=True)
 
 
 if __name__ == "__main__":
@@ -753,7 +773,7 @@ if __name__ == "__main__":
         print(create_swe_product_with_fake_spice(dependencies))
 
     if "hi" in sys.argv:
-        hi_targets = ["survival-probability", "spectral-index", "full-spin"]
+        hi_targets = ["survival-probability", "spectral-index", "full-spin", "combined-sensors"]
         do_all = not np.any([t in sys.argv for t in hi_targets])
 
         glows_l3e_folder = get_test_data_path("hi/fake_l3e_survival_probabilities/90")
@@ -762,18 +782,23 @@ if __name__ == "__main__":
         missing_paths, run_local_paths = try_get_many_run_local_paths([
             "hi/full_spin_deps/l1c",
             "hi/full_spin_deps/imap_hi_l2_h90-ena-h-sf-nsp-ram-hae-4deg-6mo_20250415_v001.cdf",
-            "hi/full_spin_deps/imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-6mo_20250415_v001.cdf"
+            "hi/full_spin_deps/imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-6mo_20250415_v001.cdf",
+            "hi/full_spin_deps/imap_hi_l2_h45-ena-h-sf-nsp-ram-hae-4deg-6mo_20250415_v001.cdf",
+            "hi/full_spin_deps/imap_hi_l2_h45-ena-h-sf-nsp-anti-hae-4deg-6mo_20250415_v001.cdf"
         ])
 
         if missing_paths:
-            create_hi_full_spin_deps()
+            create_hi_full_spin_deps(sensor="90")
+            create_hi_full_spin_deps(sensor="45")
 
-        [hi_l1c_folder, l2_ram_map_path, l2_antiram_map_path] = run_local_paths
+        [hi_l1c_folder, *map_paths] = run_local_paths
+        [l2_ram_90_map_path, l2_antiram_90_map_path,
+         l2_ram_45_map_path, l2_antiram_45_map_path] = map_paths
         hi_l1c_paths = list(hi_l1c_folder.iterdir())
 
         if do_all or "survival-probability" in sys.argv:
             survival_dependencies = HiL3SurvivalDependencies.from_file_paths(
-                map_file_path=l2_ram_map_path,
+                map_file_path=l2_ram_90_map_path,
                 hi_l1c_paths=hi_l1c_paths,
                 glows_l3e_paths=glows_l3_paths,
                 l2_descriptor="h90-ena-h-sf-nsp-ram-hae-4deg-6mo")
@@ -787,13 +812,13 @@ if __name__ == "__main__":
 
         if do_all or "full-spin" in sys.argv:
             ram_survival_dependencies = HiL3SurvivalDependencies.from_file_paths(
-                map_file_path=l2_ram_map_path,
+                map_file_path=l2_ram_90_map_path,
                 hi_l1c_paths=hi_l1c_paths,
                 glows_l3e_paths=glows_l3_paths,
                 l2_descriptor="h90-ena-h-sf-nsp-ram-hae-4deg-6mo")
 
             antiram_survival_dependencies = HiL3SurvivalDependencies.from_file_paths(
-                map_file_path=l2_antiram_map_path,
+                map_file_path=l2_antiram_90_map_path,
                 hi_l1c_paths=hi_l1c_paths,
                 glows_l3e_paths=glows_l3_paths,
                 l2_descriptor="h90-ena-h-sf-nsp-anti-hae-4deg-6mo")
@@ -804,6 +829,10 @@ if __name__ == "__main__":
             )
 
             print(create_survival_corrected_full_spin_cdf(full_spin_dependencies))
+        if do_all or "combined-sensors" in sys.argv:
+            combined_dependencies = HiL3CombinedMapDependencies.from_file_paths(map_paths)
+            print(create_combined_sensor_cdf(combined_dependencies))
+
     if "ultra" in sys.argv:
         if "survival" in sys.argv:
 

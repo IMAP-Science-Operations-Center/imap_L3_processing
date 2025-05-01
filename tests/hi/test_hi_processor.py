@@ -14,8 +14,8 @@ from imap_l3_processing.hi.hi_processor import HiProcessor
 from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3SpectralFitDependencies
 from imap_l3_processing.hi.l3.hi_l3_survival_dependencies import HiL3SurvivalDependencies, \
     HiL3SingleSensorFullSpinDependencies
-from imap_l3_processing.hi.l3.models import HiL3SpectralIndexDataProduct, HiL3SurvivalCorrectedDataProduct, \
-    HiIntensityMapData, HiL1cData, HiGlowsL3eData
+from imap_l3_processing.hi.l3.models import HiL3SpectralIndexDataProduct, HiL3IntensityDataProduct, \
+    HiIntensityMapData, HiL1cData, HiGlowsL3eData, HiSpectralMapData
 from imap_l3_processing.hi.l3.utils import PixelSize, MapDescriptorParts, parse_map_descriptor
 from imap_l3_processing.models import InputMetadata
 from tests.test_helpers import get_test_data_path
@@ -70,21 +70,22 @@ class TestHiProcessor(unittest.TestCase):
 
         mock_save_data.assert_called_once()
         actual_hi_data_product: HiL3SpectralIndexDataProduct = mock_save_data.call_args_list[0].args[0]
+        actual_hi_data: HiSpectralMapData = actual_hi_data_product.data
         expected_energy_delta_minus = np.array([3])
         expected_energy_delta_plus = np.array([12])
         expected_energy = np.array([4])
         expected_exposure = np.full((1, 1, 3, 2), 2)
         self.assertEqual(input_metadata, actual_hi_data_product.input_metadata)
-        np.testing.assert_array_equal(expected_energy_delta_minus, actual_hi_data_product.energy_delta_minus)
-        np.testing.assert_array_equal(expected_energy_delta_plus, actual_hi_data_product.energy_delta_plus)
-        np.testing.assert_array_equal(expected_index[:, np.newaxis, :, :], actual_hi_data_product.ena_spectral_index)
+        np.testing.assert_array_equal(expected_energy_delta_minus, actual_hi_data.energy_delta_minus)
+        np.testing.assert_array_equal(expected_energy_delta_plus, actual_hi_data.energy_delta_plus)
+        np.testing.assert_array_equal(expected_index[:, np.newaxis, :, :], actual_hi_data.ena_spectral_index)
         np.testing.assert_array_equal(expected_unc[:, np.newaxis, :, :],
-                                      actual_hi_data_product.ena_spectral_index_stat_unc)
-        np.testing.assert_array_equal(actual_hi_data_product.energy, expected_energy)
-        np.testing.assert_array_equal(actual_hi_data_product.latitude, hi_l3_data.latitude)
-        np.testing.assert_array_equal(actual_hi_data_product.longitude, hi_l3_data.longitude)
-        np.testing.assert_array_equal(actual_hi_data_product.epoch, hi_l3_data.epoch)
-        np.testing.assert_array_equal(actual_hi_data_product.exposure_factor, expected_exposure)
+                                      actual_hi_data.ena_spectral_index_stat_unc)
+        np.testing.assert_array_equal(actual_hi_data.energy, expected_energy)
+        np.testing.assert_array_equal(actual_hi_data.latitude, hi_l3_data.latitude)
+        np.testing.assert_array_equal(actual_hi_data.longitude, hi_l3_data.longitude)
+        np.testing.assert_array_equal(actual_hi_data.epoch, hi_l3_data.epoch)
+        np.testing.assert_array_equal(actual_hi_data.exposure_factor, expected_exposure)
         self.assertEqual(["l2_or_l3_map"], actual_hi_data_product.parent_file_names)
 
         mock_upload.assert_called_once_with(mock_save_data.return_value)
@@ -260,33 +261,34 @@ class TestHiProcessor(unittest.TestCase):
         mock_survival_skymap.return_value.to_dataset.assert_called_once_with()
 
         mock_save_data.assert_called_once()
-        survival_data_product: HiL3SurvivalCorrectedDataProduct = mock_save_data.call_args_list[0].args[0]
+        survival_data_product: HiL3IntensityDataProduct = mock_save_data.call_args_list[0].args[0]
+        survival_data: HiIntensityMapData = survival_data_product.data
 
         self.assertEqual(input_metadata, survival_data_product.input_metadata)
 
-        np.testing.assert_array_equal(survival_data_product.ena_intensity,
+        np.testing.assert_array_equal(survival_data.ena_intensity,
                                       input_map.ena_intensity / computed_survival_probabilities)
-        np.testing.assert_array_equal(survival_data_product.ena_intensity_stat_unc,
+        np.testing.assert_array_equal(survival_data.ena_intensity_stat_unc,
                                       input_map.ena_intensity_stat_unc / computed_survival_probabilities)
-        np.testing.assert_array_equal(survival_data_product.ena_intensity_sys_err,
+        np.testing.assert_array_equal(survival_data.ena_intensity_sys_err,
                                       input_map.ena_intensity_sys_err / computed_survival_probabilities)
 
-        np.testing.assert_array_equal(survival_data_product.epoch, input_map.epoch)
-        np.testing.assert_array_equal(survival_data_product.epoch_delta, input_map.epoch_delta)
-        np.testing.assert_array_equal(survival_data_product.energy, input_map.energy)
-        np.testing.assert_array_equal(survival_data_product.energy_delta_plus, input_map.energy_delta_plus)
-        np.testing.assert_array_equal(survival_data_product.energy_delta_minus, input_map.energy_delta_minus)
-        np.testing.assert_array_equal(survival_data_product.energy_label, input_map.energy_label)
-        np.testing.assert_array_equal(survival_data_product.latitude, input_map.latitude)
-        np.testing.assert_array_equal(survival_data_product.latitude_delta, input_map.latitude_delta)
-        np.testing.assert_array_equal(survival_data_product.latitude_label, input_map.latitude_label)
-        np.testing.assert_array_equal(survival_data_product.longitude, input_map.longitude)
-        np.testing.assert_array_equal(survival_data_product.longitude_delta, input_map.longitude_delta)
-        np.testing.assert_array_equal(survival_data_product.longitude_label, input_map.longitude_label)
-        np.testing.assert_array_equal(survival_data_product.exposure_factor, input_map.exposure_factor)
-        np.testing.assert_array_equal(survival_data_product.obs_date, input_map.obs_date)
-        np.testing.assert_array_equal(survival_data_product.obs_date_range, input_map.obs_date_range)
-        np.testing.assert_array_equal(survival_data_product.solid_angle, input_map.solid_angle)
+        np.testing.assert_array_equal(survival_data.epoch, input_map.epoch)
+        np.testing.assert_array_equal(survival_data.epoch_delta, input_map.epoch_delta)
+        np.testing.assert_array_equal(survival_data.energy, input_map.energy)
+        np.testing.assert_array_equal(survival_data.energy_delta_plus, input_map.energy_delta_plus)
+        np.testing.assert_array_equal(survival_data.energy_delta_minus, input_map.energy_delta_minus)
+        np.testing.assert_array_equal(survival_data.energy_label, input_map.energy_label)
+        np.testing.assert_array_equal(survival_data.latitude, input_map.latitude)
+        np.testing.assert_array_equal(survival_data.latitude_delta, input_map.latitude_delta)
+        np.testing.assert_array_equal(survival_data.latitude_label, input_map.latitude_label)
+        np.testing.assert_array_equal(survival_data.longitude, input_map.longitude)
+        np.testing.assert_array_equal(survival_data.longitude_delta, input_map.longitude_delta)
+        np.testing.assert_array_equal(survival_data.longitude_label, input_map.longitude_label)
+        np.testing.assert_array_equal(survival_data.exposure_factor, input_map.exposure_factor)
+        np.testing.assert_array_equal(survival_data.obs_date, input_map.obs_date)
+        np.testing.assert_array_equal(survival_data.obs_date_range, input_map.obs_date_range)
+        np.testing.assert_array_equal(survival_data.solid_angle, input_map.solid_angle)
 
         self.assertEqual(["l1c_map", "l2_map", "spice1"], survival_data_product.parent_file_names)
 
@@ -335,17 +337,61 @@ class TestHiProcessor(unittest.TestCase):
             sentinel.survival_corrected_antiram,
         ])
 
-        self.assertEqual(["antiram_map", "l1c", "ram_map"], mock_combine_maps.return_value.parent_file_names)
-
-        mock_save_data.assert_called_once_with(mock_combine_maps.return_value)
+        mock_save_data.assert_called_once_with(HiL3IntensityDataProduct(
+            input_metadata=input_metadata,
+            parent_file_names=["antiram_map", "l1c", "ram_map"],
+            data=mock_combine_maps.return_value))
         mock_upload.assert_called_once_with(mock_save_data.return_value)
+
+    @patch('imap_l3_processing.hi.hi_processor.combine_maps')
+    @patch('imap_l3_processing.hi.hi_processor.upload')
+    @patch('imap_l3_processing.hi.hi_processor.save_data')
+    @patch('imap_l3_processing.hi.hi_processor.Processor.get_parent_file_names')
+    @patch("imap_l3_processing.hi.hi_processor.HiL3CombinedMapDependencies.fetch_dependencies")
+    def test_process_combined_sensor_calls_with_correct_descriptor(self, mock_fetch_dependencies,
+                                                                   mock_get_parent_file_names,
+                                                                   mock_save_data,
+                                                                   mock_upload,
+                                                                   mock_combine_maps):
+        valid_descriptors = [
+            "hic-ena-h-hf-sp-full-hae-4deg-1yr",
+            "hic-ena-h-hf-nsp-full-hae-4deg-1yr",
+            "hic-ena-h-hf-sp-full-hae-6deg-1yr",
+            "hic-ena-h-hf-nsp-full-hae-6deg-1yr",
+        ]
+
+        mock_get_parent_file_names.return_value = ["spice_file"]
+
+        for descriptor in valid_descriptors:
+            with self.subTest(descriptor=descriptor):
+                input_metadata = InputMetadata(instrument="hi",
+                                               data_level="l3",
+                                               start_date=datetime.now(),
+                                               end_date=datetime.now() + timedelta(days=1),
+                                               version="",
+                                               descriptor=descriptor,
+                                               )
+
+                processor = HiProcessor(sentinel.dependencies, input_metadata)
+                processor.process()
+
+                mock_fetch_dependencies.assert_called_with(sentinel.dependencies)
+                mock_upload.assert_called_with(mock_save_data.return_value)
+
+                mock_combine_maps.assert_called_with(mock_fetch_dependencies.return_value.maps)
+                mock_save_data.assert_called_with(
+                    HiL3IntensityDataProduct(
+                        data=mock_combine_maps.return_value,
+                        input_metadata=input_metadata,
+                        parent_file_names=["spice_file"],
+                    ),
+                )
 
     def test_raises_error_for_currently_unimplemented_maps(self):
         cases = [
             "hic-ena-h-sf-nsp-full-hae-6deg-6mo",
             "hic-ena-h-sf-sp-full-hae-6deg-6mo",
             "hic-ena-h-sf-sp-ram-hae-6deg-6mo",
-            "hic-ena-h-sf-nsp-full-hae-6deg-12mo",
             "h45-ena-h-hf-nsp-full-hae-6deg-6mo",
         ]
         for descriptor in cases:

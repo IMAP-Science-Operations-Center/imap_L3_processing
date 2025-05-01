@@ -43,6 +43,7 @@ def read_hi_l1c_data(path: Union[Path, str]) -> HiL1cData:
 
 
 def read_glows_l3e_data(cdf_path: Union[Path, str]) -> HiGlowsL3eData:
+    print(cdf_path)
     with CDF(str(cdf_path)) as cdf:
         return HiGlowsL3eData(epoch=cdf["epoch"][0],
                               energy=read_numeric_variable(cdf["energy"]),
@@ -118,7 +119,7 @@ def parse_map_descriptor(descriptor: str) -> Optional[MapDescriptorParts]:
         (?P<duration>3mo|6mo|1yr)
         """
 
-    descriptor_part_match = re.search(descriptor_regex, descriptor, flags=re.VERBOSE)
+    descriptor_part_match = re.fullmatch(descriptor_regex, descriptor, flags=re.VERBOSE)
     if descriptor_part_match is None:
         return None
 
