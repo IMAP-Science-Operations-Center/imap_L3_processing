@@ -1,6 +1,8 @@
 import json
 import os
 import shutil
+import subprocess
+import sys
 from dataclasses import replace
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -10,6 +12,7 @@ import imap_data_access
 import numpy as np
 from imap_data_access.processing_input import ProcessingInputCollection
 
+from imap_l3_processing.glows import l3d
 from imap_l3_processing.glows.descriptors import GLOWS_L3A_DESCRIPTOR
 from imap_l3_processing.glows.glows_initializer import GlowsInitializer
 from imap_l3_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
@@ -24,7 +27,7 @@ from imap_l3_processing.glows.l3bc.science.generate_l3bc import generate_l3bc
 from imap_l3_processing.glows.l3bc.utils import make_l3b_data_with_fill, make_l3c_data_with_fill, get_repoint_date_range
 from imap_l3_processing.glows.l3d.glows_l3d_dependencies import GlowsL3DDependencies
 from imap_l3_processing.glows.l3d.utils import create_glows_l3b_json_file_from_cdf, create_glows_l3c_json_file_from_cdf, \
-    PATH_TO_L3D_TOOLKIT
+    PATH_TO_L3D_TOOLKIT, convert_json_l3d_to_cdf
 from imap_l3_processing.glows.l3e.glows_l3e_dependencies import GlowsL3EDependencies
 from imap_l3_processing.glows.l3e.glows_l3e_hi_model import GlowsL3EHiData
 from imap_l3_processing.glows.l3e.glows_l3e_lo_model import GlowsL3ELoData
@@ -58,6 +61,9 @@ class GlowsProcessor(Processor):
                 imap_data_access.upload(l3b_cdf)
                 imap_data_access.upload(l3c_cdf)
                 imap_data_access.upload(zip_file)
+        elif self.input_metadata.data_level == "l3d":
+            l3d_dependencies = GlowsL3DDependencies.fetch_dependencies(self.dependencies)
+            self.process_l3d(l3d_dependencies)
         elif self.input_metadata.data_level == "l3e":
             l3e_dependencies, repointing_number = GlowsL3EDependencies.fetch_dependencies(self.dependencies,
                                                                                           self.input_metadata.descriptor)
@@ -76,9 +82,6 @@ class GlowsProcessor(Processor):
                 self.process_l3e_hi(epoch_dt, epoch_delta, 90)
             elif self.input_metadata.descriptor == "survival-probability-ul":
                 self.process_l3e_ul(epoch_dt, epoch_delta)
-        elif self.input_metadata.data_level == "l3d":
-            l3d_dependencies = GlowsL3DDependencies.fetch_dependencies(self.dependencies)
-            self.process_l3d(l3d_dependencies)
 
     def process_l3a(self, dependencies: GlowsL3ADependencies) -> GlowsL3LightCurve:
         data = dependencies.data
@@ -145,6 +148,25 @@ class GlowsProcessor(Processor):
                     ancillary_path / 'imap_glows_electron-density-2010a_v001.dat')
 
         shutil.move(dependencies.external_files['lya_raw_data'], external_path / 'lyman_alpha_composite.nc')
+
+        working_dir = Path(l3d.__file__).parent / 'science'
+
+        last_processed_cr = None
+        try:
+            while True:
+                output: subprocess.CompletedProcess = run([sys.executable, './generate_l3d.py'],
+                                                          cwd=str(working_dir),
+                                                          check=True,
+                                                          capture_output=True, text=True)
+                if output.stdout:
+                    last_processed_cr = int(output.stdout.split('= ')[-1])
+        except subprocess.CalledProcessError as e:
+            if 'L3d not generated: there is not enough L3bc data to interpolate' not in e.stderr:
+                raise Exception(e.stderr) from e
+
+        if last_processed_cr:
+            file_name = f'imap_glows_l3d_cr_{last_processed_cr}_v00.json'
+            convert_json_l3d_to_cdf(working_dir / 'data_l3d' / file_name, 'l3d.cdf')
 
     def process_l3e_lo(self, epoch: datetime, epoch_delta: timedelta):
         call_args = determine_call_args_for_l3e_executable(epoch, epoch + epoch_delta, 90)
