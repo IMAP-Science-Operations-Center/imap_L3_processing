@@ -1,10 +1,11 @@
 import json
 import os
-from datetime import datetime, timedelta
 from pathlib import Path
 from spacepy.pycdf import CDF
 
 import imap_l3_processing
+from imap_l3_processing.glows.l3d.models import GlowsL3DSolarParamsHistory
+from imap_l3_processing.models import InputMetadata
 
 PATH_TO_L3D_TOOLKIT = Path(imap_l3_processing.__file__).parent / 'glows' / 'l3d' / 'science'
 
@@ -58,23 +59,21 @@ def create_glows_l3b_json_file_from_cdf(cdf_file_path: Path):
             json.dump(json_dict, fp)
 
 
-def convert_json_l3d_to_cdf(json_file_path: Path, path_to_write_cdf_to: Path) -> Path:
+def convert_json_to_l3d_data_product(json_file_path: Path, input_metadata: InputMetadata,
+                                     parent_file_names: list[str]) -> GlowsL3DSolarParamsHistory:
     with open(json_file_path, 'r') as json_file:
         l3d_json_dict = json.load(json_file)
 
-    start_date = (datetime.fromisoformat(l3d_json_dict['time_grid'][-1]) - (timedelta(days=27.25) / 2)).strftime(
-        '%Y%m%d')
-
-    with CDF(str(path_to_write_cdf_to / f'imap_glows_l3d_solar-params-history_{start_date}_v000.cdf'),
-             create=True) as cdf:
-        cdf['lat_grid'] = l3d_json_dict['lat_grid']
-        cdf['cr_grid'] = l3d_json_dict['cr_grid']
-        cdf['time_grid'] = l3d_json_dict['time_grid']
-        cdf['speed'] = l3d_json_dict['solar_params']['speed']
-        cdf['p_dens'] = l3d_json_dict['solar_params']['p-dens']
-        cdf['uv_anis'] = l3d_json_dict['solar_params']['uv-anis']
-        cdf['phion'] = l3d_json_dict['solar_params']['phion']
-        cdf['lya'] = l3d_json_dict['solar_params']['lya']
-        cdf['e_dens'] = l3d_json_dict['solar_params']['e-dens']
-
-    return path_to_write_cdf_to / f'imap_glows_l3d_solar-params-history_{start_date}_v000.cdf'
+    return GlowsL3DSolarParamsHistory(
+        input_metadata=input_metadata,
+        parent_file_names=parent_file_names,
+        lat_grid=l3d_json_dict['lat_grid'],
+        cr_grid=l3d_json_dict['cr_grid'],
+        time_grid=l3d_json_dict['time_grid'],
+        speed=l3d_json_dict['solar_params']['speed'],
+        p_dens=l3d_json_dict['solar_params']['p-dens'],
+        uv_anis=l3d_json_dict['solar_params']['uv-anis'],
+        phion=l3d_json_dict['solar_params']['phion'],
+        lya=l3d_json_dict['solar_params']['lya'],
+        e_dens=l3d_json_dict['solar_params']['e-dens'],
+    )

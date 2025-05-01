@@ -13,4 +13,5 @@ imap_l3_processing/glows/l3d/science/data_ancillary
 imap_l3_processing/glows/l3d/science/data_l3b
 imap_l3_processing/glows/l3d/science/data_l3c
 imap_l3_processing/glows/l3d/science/data_l3d
+imap_l3_processing/glows/l3d/science/data_l3d_txt
 imap_l3_processing/glows/l3d/science/external_dependencies
