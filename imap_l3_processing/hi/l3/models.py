@@ -4,7 +4,7 @@ from datetime import datetime
 
 import numpy as np
 
-from imap_l3_processing.models import DataProduct, DataProductVariable
+from imap_l3_processing.models import DataProductVariable, DataProduct
 
 EPOCH_VAR_NAME = "epoch"
 EPOCH_DELTA_VAR_NAME = "epoch_delta"
@@ -59,47 +59,53 @@ class HiIntensityMapData(HiMapData):
     ena_intensity_sys_err: np.ndarray
 
 
-class HiDataProduct(DataProduct, HiMapData):
-    def to_data_product_variables(self) -> list[DataProductVariable]:
-        return [
-            DataProductVariable(EPOCH_VAR_NAME, self.epoch),
-            DataProductVariable(EPOCH_DELTA_VAR_NAME, self.epoch_delta),
-            DataProductVariable(ENERGY_VAR_NAME, self.energy),
-            DataProductVariable(ENERGY_DELTA_PLUS_VAR_NAME, self.energy_delta_plus),
-            DataProductVariable(ENERGY_DELTA_MINUS_VAR_NAME, self.energy_delta_minus),
-            DataProductVariable(ENERGY_LABEL_VAR_NAME, self.energy_label),
-            DataProductVariable(LATITUDE_VAR_NAME, self.latitude),
-            DataProductVariable(LATITUDE_DELTA_VAR_NAME, self.latitude_delta),
-            DataProductVariable(LATITUDE_LABEL_VAR_NAME, self.latitude_label),
-            DataProductVariable(LONGITUDE_VAR_NAME, self.longitude),
-            DataProductVariable(LONGITUDE_DELTA_VAR_NAME, self.longitude_delta),
-            DataProductVariable(LONGITUDE_LABEL_VAR_NAME, self.longitude_label),
-            DataProductVariable(EXPOSURE_FACTOR_VAR_NAME, self.exposure_factor),
-            DataProductVariable(OBS_DATE_VAR_NAME, self.obs_date),
-            DataProductVariable(OBS_DATE_RANGE_VAR_NAME, self.obs_date_range),
-            DataProductVariable(SOLID_ANGLE_VAR_NAME, self.solid_angle),
-        ]
-
-
 @dataclass
-class HiL3SpectralIndexDataProduct(HiDataProduct):
+class HiSpectralMapData(HiMapData):
     ena_spectral_index: np.ndarray
     ena_spectral_index_stat_unc: np.ndarray
 
+
+def hi_data_to_product(data: HiMapData) -> list[DataProductVariable]:
+    return [
+        DataProductVariable(EPOCH_VAR_NAME, data.epoch),
+        DataProductVariable(EPOCH_DELTA_VAR_NAME, data.epoch_delta),
+        DataProductVariable(ENERGY_VAR_NAME, data.energy),
+        DataProductVariable(ENERGY_DELTA_PLUS_VAR_NAME, data.energy_delta_plus),
+        DataProductVariable(ENERGY_DELTA_MINUS_VAR_NAME, data.energy_delta_minus),
+        DataProductVariable(ENERGY_LABEL_VAR_NAME, data.energy_label),
+        DataProductVariable(LATITUDE_VAR_NAME, data.latitude),
+        DataProductVariable(LATITUDE_DELTA_VAR_NAME, data.latitude_delta),
+        DataProductVariable(LATITUDE_LABEL_VAR_NAME, data.latitude_label),
+        DataProductVariable(LONGITUDE_VAR_NAME, data.longitude),
+        DataProductVariable(LONGITUDE_DELTA_VAR_NAME, data.longitude_delta),
+        DataProductVariable(LONGITUDE_LABEL_VAR_NAME, data.longitude_label),
+        DataProductVariable(EXPOSURE_FACTOR_VAR_NAME, data.exposure_factor),
+        DataProductVariable(OBS_DATE_VAR_NAME, data.obs_date),
+        DataProductVariable(OBS_DATE_RANGE_VAR_NAME, data.obs_date_range),
+        DataProductVariable(SOLID_ANGLE_VAR_NAME, data.solid_angle),
+    ]
+
+
+@dataclass
+class HiL3SpectralIndexDataProduct(DataProduct):
+    data: HiSpectralMapData
+
     def to_data_product_variables(self) -> list[DataProductVariable]:
-        return super().to_data_product_variables() + [
-            DataProductVariable(ENA_SPECTRAL_INDEX_VAR_NAME, self.ena_spectral_index),
-            DataProductVariable(ENA_SPECTRAL_INDEX_STAT_UNC_VAR_NAME, self.ena_spectral_index_stat_unc),
+        return hi_data_to_product(self.data) + [
+            DataProductVariable(ENA_SPECTRAL_INDEX_VAR_NAME, self.data.ena_spectral_index),
+            DataProductVariable(ENA_SPECTRAL_INDEX_STAT_UNC_VAR_NAME, self.data.ena_spectral_index_stat_unc),
         ]
 
 
 @dataclass
-class HiL3SurvivalCorrectedDataProduct(HiDataProduct, HiIntensityMapData):
+class HiL3IntensityDataProduct(DataProduct):
+    data: HiIntensityMapData
+
     def to_data_product_variables(self) -> list[DataProductVariable]:
-        return super().to_data_product_variables() + [
-            DataProductVariable(ENA_INTENSITY_VAR_NAME, self.ena_intensity),
-            DataProductVariable(ENA_INTENSITY_STAT_UNC_VAR_NAME, self.ena_intensity_stat_unc),
-            DataProductVariable(ENA_INTENSITY_SYS_ERR_VAR_NAME, self.ena_intensity_sys_err),
+        return hi_data_to_product(self.data) + [
+            DataProductVariable(ENA_INTENSITY_VAR_NAME, self.data.ena_intensity),
+            DataProductVariable(ENA_INTENSITY_STAT_UNC_VAR_NAME, self.data.ena_intensity_stat_unc),
+            DataProductVariable(ENA_INTENSITY_SYS_ERR_VAR_NAME, self.data.ena_intensity_sys_err)
         ]
 
 
@@ -119,15 +125,18 @@ class HiGlowsL3eData:
     probability_of_survival: np.ndarray
 
 
-def combine_maps(maps: list[HiL3SurvivalCorrectedDataProduct]) -> HiL3SurvivalCorrectedDataProduct:
+def combine_maps(maps: list[HiIntensityMapData]) -> HiIntensityMapData:
     first_map = maps[0]
 
     first_map_dict = dataclasses.asdict(first_map)
 
     fields_which_may_differ = {"ena_intensity", "ena_intensity_stat_unc", "ena_intensity_sys_err",
-                               "exposure_factor", "obs_date", "obs_date_range", "parent_file_names", "input_metadata"}
+                               "exposure_factor", "obs_date", "obs_date_range"}
+
+    differing_fields = []
     for field in dataclasses.fields(first_map):
         if field.name not in fields_which_may_differ:
+            differing_fields.append(field.name)
             assert np.all(
                 [dataclasses.asdict(m)[field.name] == first_map_dict[field.name] for m in maps]), f"{field.name}"
 

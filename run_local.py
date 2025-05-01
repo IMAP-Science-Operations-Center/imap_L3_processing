@@ -27,6 +27,7 @@ from imap_l3_processing.hi.hi_processor import HiProcessor
 from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3SpectralFitDependencies
 from imap_l3_processing.hi.l3.hi_l3_survival_dependencies import HiL3SurvivalDependencies, \
     HiL3SingleSensorFullSpinDependencies
+from imap_l3_processing.hi.l3.models import HiL3SpectralIndexDataProduct, HiL3IntensityDataProduct
 from imap_l3_processing.hit.l3.hit_l3_sectored_dependencies import HITL3SectoredDependencies
 from imap_l3_processing.hit.l3.hit_processor import HitProcessor
 from imap_l3_processing.hit.l3.models import HitL1Data
@@ -204,7 +205,9 @@ def create_survival_corrected_full_spin_cdf(dependencies: HiL3SingleSensorFullSp
                                    )
     processor = HiProcessor(Mock(), input_metadata)
     output_data = processor.process_full_spin_single_sensor(dependencies)
-    cdf_path = save_data(output_data, delete_if_present=True)
+
+    data_product = HiL3IntensityDataProduct(data=output_data, input_metadata=input_metadata)
+    cdf_path = save_data(data_product, delete_if_present=True)
     return cdf_path
 
 
@@ -218,7 +221,8 @@ def create_spectral_index_cdf(dependencies: HiL3SpectralFitDependencies) -> str:
                                    )
     processor = HiProcessor(Mock(), input_metadata)
     output_data = processor.process_spectral_fit_index(dependencies)
-    cdf_path = save_data(output_data, delete_if_present=True)
+    data_product = HiL3SpectralIndexDataProduct(data=output_data, input_metadata=input_metadata)
+    cdf_path = save_data(data_product, delete_if_present=True)
     return cdf_path
 
 
@@ -606,10 +610,10 @@ def create_hi_l3_survival_corrected_cdf(survival_dependencies: HiL3SurvivalDepen
                                    )
 
     processor = HiProcessor(Mock(), input_metadata)
-    survival_corrected_product = processor.process_survival_probabilities(
-        survival_dependencies)
+    output_data = processor.process_survival_probabilities(survival_dependencies)
 
-    return save_data(survival_corrected_product, delete_if_present=True)
+    data_product = HiL3IntensityDataProduct(data=output_data, input_metadata=input_metadata)
+    return save_data(data_product, delete_if_present=True)
 
 
 if __name__ == "__main__":
