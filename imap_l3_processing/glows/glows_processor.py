@@ -1,5 +1,6 @@
 import json
-from copy import copy
+import os
+import shutil
 from dataclasses import replace
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -22,6 +23,8 @@ from imap_l3_processing.glows.l3bc.science.filter_out_bad_days import filter_out
 from imap_l3_processing.glows.l3bc.science.generate_l3bc import generate_l3bc
 from imap_l3_processing.glows.l3bc.utils import make_l3b_data_with_fill, make_l3c_data_with_fill, get_repoint_date_range
 from imap_l3_processing.glows.l3d.glows_l3d_dependencies import GlowsL3DDependencies
+from imap_l3_processing.glows.l3d.utils import create_glows_l3b_json_file_from_cdf, create_glows_l3c_json_file_from_cdf, \
+    PATH_TO_L3D_TOOLKIT
 from imap_l3_processing.glows.l3e.glows_l3e_dependencies import GlowsL3EDependencies
 from imap_l3_processing.glows.l3e.glows_l3e_hi_model import GlowsL3EHiData
 from imap_l3_processing.glows.l3e.glows_l3e_lo_model import GlowsL3ELoData
@@ -74,7 +77,8 @@ class GlowsProcessor(Processor):
             elif self.input_metadata.descriptor == "survival-probability-ul":
                 self.process_l3e_ul(epoch_dt, epoch_delta)
         elif self.input_metadata.data_level == "l3d":
-            GlowsL3DDependencies.fetch_dependencies(self.dependencies)
+            l3d_dependencies = GlowsL3DDependencies.fetch_dependencies(self.dependencies)
+            self.process_l3d(l3d_dependencies)
 
     def process_l3a(self, dependencies: GlowsL3ADependencies) -> GlowsL3LightCurve:
         data = dependencies.data
@@ -108,6 +112,39 @@ class GlowsProcessor(Processor):
         l3b_data_product.parent_file_names += self.get_parent_file_names([dependencies.zip_file_path])
         l3c_data_product.parent_file_names += self.get_parent_file_names([dependencies.zip_file_path])
         return l3b_data_product, l3c_data_product
+
+    def process_l3d(self, dependencies: GlowsL3DDependencies):
+        [create_glows_l3b_json_file_from_cdf(l3b) for l3b in dependencies.l3b_file_paths]
+        [create_glows_l3c_json_file_from_cdf(l3c) for l3c in dependencies.l3c_file_paths]
+
+        ancillary_path = PATH_TO_L3D_TOOLKIT / 'data_ancillary'
+        external_path = PATH_TO_L3D_TOOLKIT / 'external_dependencies'
+
+        os.makedirs(ancillary_path, exist_ok=True)
+        os.makedirs(external_path, exist_ok=True)
+
+        shutil.move(dependencies.ancillary_files['pipeline_settings'],
+                    ancillary_path / 'imap_glows_pipeline-settings-L3bc_v001.json')
+
+        shutil.move(dependencies.ancillary_files['WawHelioIon']['speed'],
+                    ancillary_path / 'imap_glows_plasma-speed-Legendre-2010a_v001.dat')
+
+        shutil.move(dependencies.ancillary_files['WawHelioIon']['p-dens'],
+                    ancillary_path / 'imap_glows_proton-density-Legendre-2010a_v001.dat')
+
+        shutil.move(dependencies.ancillary_files['WawHelioIon']['uv-anis'],
+                    ancillary_path / 'imap_glows_uv-anisotropy-2010a_v001.dat')
+
+        shutil.move(dependencies.ancillary_files['WawHelioIon']['phion'],
+                    ancillary_path / 'imap_glows_photoion-2010a_v001.dat')
+
+        shutil.move(dependencies.ancillary_files['WawHelioIon']['lya'],
+                    ancillary_path / 'imap_glows_lya-2010a_v001.dat')
+
+        shutil.move(dependencies.ancillary_files['WawHelioIon']['e-dens'],
+                    ancillary_path / 'imap_glows_electron-density-2010a_v001.dat')
+
+        shutil.move(dependencies.external_files['lya_raw_data'], external_path / 'lyman_alpha_composite.nc')
 
     def process_l3e_lo(self, epoch: datetime, epoch_delta: timedelta):
         call_args = determine_call_args_for_l3e_executable(epoch, epoch + epoch_delta, 90)

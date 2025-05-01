@@ -1,4 +1,5 @@
 import json
+import os
 from datetime import datetime, timedelta
 from pathlib import Path
 from spacepy.pycdf import CDF
@@ -26,12 +27,14 @@ def create_glows_l3c_json_file_from_cdf(cdf_file_path: Path):
         cr_number = cdf['cr'][...][0]
         version = cdf_file_path.name.split('_')[-1].split('.')[0]
         json_file_name = f'imap_glows_l3c_cr_{cr_number}_{version}.json'
+        
+        os.makedirs(PATH_TO_L3D_TOOLKIT / 'data_l3c', exist_ok=True)
 
         with open(PATH_TO_L3D_TOOLKIT / 'data_l3c' / json_file_name) as fp:
             json.dump(json_dict, fp)
 
 
-def create_glows_l3b_dictionary_from_cdf(cdf_file_path: Path):
+def create_glows_l3b_json_file_from_cdf(cdf_file_path: Path):
     with CDF(str(cdf_file_path)) as cdf:
         json_dict = {
             'header': {
@@ -49,6 +52,7 @@ def create_glows_l3b_dictionary_from_cdf(cdf_file_path: Path):
         version = cdf_file_path.name.split('_')[-1].split('.')[0]
         json_file_name = f'imap_glows_l3b_cr_{cr_number}_{version}.json'
 
+        os.makedirs(PATH_TO_L3D_TOOLKIT / 'data_l3b', exist_ok=True)
         with open(PATH_TO_L3D_TOOLKIT / 'data_l3b' / json_file_name) as fp:
             json.dump(json_dict, fp)
 

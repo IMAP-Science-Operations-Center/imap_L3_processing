@@ -8,16 +8,17 @@ import numpy as np
 from spacepy.pycdf import CDF
 
 import imap_l3_processing
-from imap_l3_processing.glows.l3d.utils import create_glows_l3b_dictionary_from_cdf, convert_json_l3d_to_cdf, \
+from imap_l3_processing.glows.l3d.utils import create_glows_l3b_json_file_from_cdf, convert_json_l3d_to_cdf, \
     create_glows_l3c_json_file_from_cdf
 from tests.test_helpers import get_test_data_path
 
 
 class TestL3dUtils(unittest.TestCase):
 
+    @patch('imap_l3_processing.glows.l3d.utils.os')
     @patch('imap_l3_processing.glows.l3d.utils.json')
     @patch('builtins.open', new_callable=mock_open, create=False)
-    def test_create_glows_l3c_json_file_from_cdf(self, mock_open_file, mock_json):
+    def test_create_glows_l3c_json_file_from_cdf(self, mock_open_file, mock_json, mock_os):
         expected: dict = {
             'solar_wind_profile': {
                 'proton_density': np.array([2.3197076, 2.2874057, 2.1938286, 2.5905547, 3.4460852, 4.4701824,
@@ -40,6 +41,9 @@ class TestL3dUtils(unittest.TestCase):
 
         create_glows_l3c_json_file_from_cdf(l3c_path)
 
+        mock_os.makedirs.assert_called_once_with(
+            Path(imap_l3_processing.__file__) / 'glows' / 'l3d' / 'toolkit' / 'data_l3c', exist_ok=True)
+
         mock_open_file.assert_called_once_with(
             Path(
                 imap_l3_processing.__file__) / 'glows' / 'l3d' / 'toolkit' / 'data_l3c' / 'imap_glows_l3c_cr_2103_v008.json')
@@ -59,9 +63,10 @@ class TestL3dUtils(unittest.TestCase):
         np.testing.assert_array_equal(actual['solar_wind_profile']['plasma_speed'],
                                       expected['solar_wind_profile']['plasma_speed'])
 
+    @patch('imap_l3_processing.glows.l3d.utils.os')
     @patch('imap_l3_processing.glows.l3d.utils.json')
     @patch('builtins.open', new_callable=mock_open, create=False)
-    def test_create_glows_l3b_dictionary_from_cdf(self, mock_open_file, mock_json):
+    def test_create_glows_l3b_json_file_from_cdf(self, mock_open_file, mock_json, mock_os):
         l3b_path = get_test_data_path("glows/imap_glows_l3b_ion-rate-profile_20100519_v012.cdf")
 
         expected: dict = {
@@ -114,7 +119,10 @@ class TestL3dUtils(unittest.TestCase):
         json_file = MagicMock()
         mock_open_file.return_value.__enter__.return_value = json_file
 
-        create_glows_l3b_dictionary_from_cdf(l3b_path)
+        create_glows_l3b_json_file_from_cdf(l3b_path)
+
+        mock_os.makedirs.assert_called_once_with(
+            Path(imap_l3_processing.__file__) / 'glows' / 'l3d' / 'toolkit' / 'data_l3b', exist_ok=True)
 
         mock_json.dump.assert_called_once()
         actual = mock_json.dump.call_args.args[0]

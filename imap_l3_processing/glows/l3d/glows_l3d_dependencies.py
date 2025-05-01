@@ -11,7 +11,7 @@ from imap_data_access import download, query
 @dataclass
 class GlowsL3DDependencies:
     external_files: dict[str, Path]
-    ancillary_files: dict[str, Path]
+    ancillary_files: dict[str, Path | dict[str, Path]]
     l3b_file_paths: list[Path]
     l3c_file_paths: list[Path]
 
