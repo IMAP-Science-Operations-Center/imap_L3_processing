@@ -30,7 +30,7 @@ def create_l2_map_from_instrument_team(folder: Path, output_dir: Path) -> Path:
     ena_intensity_stat_unc = np.array([data['sigma'][key] for key in sorted(data['sigma'].keys())])[np.newaxis, ...]
     ena_intensity_sys_err = ena_intensity_stat_unc / 2
 
-    epoch = np.array([datetime.now()])
+    epoch = np.array([datetime(2025, 5, 1)])
     epoch_delta = np.array([FIVE_MINUTES_IN_NANOSECONDS])
     exposure_factor = np.full(ena_intensity.shape, 1.0)
     lat = np.arange(-88.0, 92.0, 4.0)
