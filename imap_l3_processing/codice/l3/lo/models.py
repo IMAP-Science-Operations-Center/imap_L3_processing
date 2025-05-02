@@ -25,6 +25,9 @@ MG_PARTIAL_DENSITY_VAR_NAME = "mg_partial_density"
 SI_PARTIAL_DENSITY_VAR_NAME = "si_partial_density"
 FE_LOW_PARTIAL_DENSITY_VAR_NAME = "fe_loq_partial_density"
 FE_HIGH_PARTIAL_DENSITY_VAR_NAME = "fe_hiq_partial_density"
+C_TO_O_RATIO_VAR_NAME = "c_to_o_ratio"
+MG_TO_O_RATIO_VAR_NAME = "mg_to_o_ratio"
+FE_TO_O_RATIO_VAR_NAME = "fe_to_o_ratio"
 
 
 @dataclass
@@ -262,6 +265,9 @@ class CodiceLoL3aPartialDensityDataProduct(DataProduct):
     si_partial_density: ndarray
     fe_loq_partial_density: ndarray
     fe_hiq_partial_density: ndarray
+    c_to_o_ratio: ndarray
+    mg_to_o_ratio: ndarray
+    fe_to_o_ratio: ndarray
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
@@ -282,6 +288,9 @@ class CodiceLoL3aPartialDensityDataProduct(DataProduct):
             DataProductVariable(SI_PARTIAL_DENSITY_VAR_NAME, self.si_partial_density),
             DataProductVariable(FE_LOW_PARTIAL_DENSITY_VAR_NAME, self.fe_loq_partial_density),
             DataProductVariable(FE_HIGH_PARTIAL_DENSITY_VAR_NAME, self.fe_hiq_partial_density),
+            DataProductVariable(C_TO_O_RATIO_VAR_NAME, self.c_to_o_ratio),
+            DataProductVariable(MG_TO_O_RATIO_VAR_NAME, self.mg_to_o_ratio),
+            DataProductVariable(FE_TO_O_RATIO_VAR_NAME, self.fe_to_o_ratio),
         ]
 
 
