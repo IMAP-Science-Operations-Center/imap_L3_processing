@@ -673,7 +673,7 @@ def create_combined_sensor_cdf(combined_dependencies: HiL3CombinedMapDependencie
         start_date=datetime(2025, 4, 9),
         end_date=datetime(2025, 4, 10),
         version="v001",
-        descriptor="hic-ena-h-sf-sp-full-hae-4deg-1yr"
+        descriptor="hic-ena-h-hf-nsp-full-hae-4deg-1yr"
     )
     combined_map = combine_maps(combined_dependencies.maps)
 
@@ -830,12 +830,28 @@ if __name__ == "__main__":
 
             print(create_survival_corrected_full_spin_cdf(full_spin_dependencies))
         if do_all or "combined-sensors" in sys.argv:
+
+            missing_paths, run_local_paths = try_get_many_run_local_paths([
+                "hi/full_spin_deps/hi90-6months.cdf",
+                "hi/full_spin_deps/hi45-6months.cdf",
+                "hi/full_spin_deps/imap_hi_l2_h90-ena-h-hf-nsp-ram-hae-4deg-1yr_20250415_v001.cdf",
+                "hi/full_spin_deps/imap_hi_l2_h90-ena-h-hf-nsp-anti-hae-4deg-1yr_20250415_v001.cdf",
+                "hi/full_spin_deps/imap_hi_l2_h45-ena-h-hf-nsp-ram-hae-4deg-1yr_20250415_v001.cdf",
+                "hi/full_spin_deps/imap_hi_l2_h45-ena-h-hf-nsp-anti-hae-4deg-1yr_20250415_v001.cdf"
+            ])
+            hi90_path, hi45_path, ram90_path, anti90_path, ram45_path, anti45_path = run_local_paths
+            if missing_paths:
+                shutil.copyfile(hi90_path, ram90_path)
+                shutil.copyfile(hi90_path, anti90_path)
+                shutil.copyfile(hi45_path, ram45_path)
+                shutil.copyfile(hi45_path, anti45_path)
+
             combined_dependencies = HiL3CombinedMapDependencies.from_file_paths(
                 [
-                    l2_ram_90_map_path,
-                    l2_antiram_90_map_path,
-                    l2_ram_45_map_path,
-                    l2_antiram_45_map_path,
+                    ram90_path,
+                    anti90_path,
+                    ram45_path,
+                    anti45_path,
                 ])
             print(create_combined_sensor_cdf(combined_dependencies))
 
