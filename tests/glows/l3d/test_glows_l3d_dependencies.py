@@ -73,12 +73,12 @@ class TestGlowsL3DDependencies(unittest.TestCase):
         ])
 
         mock_processing_input_collection.get_file_paths.assert_has_calls([
-            call(source='glows', descriptor='plasma-speed-legendre'),
-            call(source='glows', descriptor='proton-density-legendre'),
-            call(source='glows', descriptor='uv-anisotropy'),
-            call(source='glows', descriptor='photoion'),
-            call(source='glows', descriptor='lya'),
-            call(source='glows', descriptor='electron-density'),
+            call(source='glows', descriptor='plasma-speed-Legendre-2010a'),
+            call(source='glows', descriptor='proton-density-Legendre-2010a'),
+            call(source='glows', descriptor='uv-anisotropy-2010a'),
+            call(source='glows', descriptor='photoion-2010a'),
+            call(source='glows', descriptor='lya-2010a'),
+            call(source='glows', descriptor='electron-density-2010a'),
             call(source='glows', descriptor='pipeline-settings-l3bc'),
             call(source='glows', descriptor='l3b-archive'),
         ])
