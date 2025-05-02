@@ -3,18 +3,19 @@ import unittest
 from dataclasses import fields
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import Mock, sentinel
+from unittest.mock import Mock
 
 import numpy as np
 from spacepy.pycdf import CDF
 
-from imap_l3_processing.codice.l3.lo.models import CodiceLoL2Data, CodiceLoL3aPartialDensityDataProduct, \
+from imap_l3_processing.codice.l3.lo.models import CodiceLoL2SWSpeciesData, CodiceLoL3aPartialDensityDataProduct, \
     CodiceLoL2DirectEventData, \
-    CodiceLoL2bPriorityRates, PriorityEvent, EnergyAndSpinAngle, CodiceLoL3aDirectEventDataProduct
+    PriorityEvent, EnergyAndSpinAngle, CodiceLoL3aDirectEventDataProduct, \
+    CodiceLoL1aSWPriorityRates, CodiceLoL1aNSWPriorityRates
 
 
 class TestModels(unittest.TestCase):
-    def test_lo_l2_sectored_intensities_read_from_cdf(self):
+    def test_lo_l2_sw_species_read_from_cdf(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             cdf_file_path = Path(tmpdir) / "test_cdf.cdf"
             rng = np.random.default_rng()
@@ -67,12 +68,11 @@ class TestModels(unittest.TestCase):
                 cdf_file['data_quality'] = data_quality
                 cdf_file['spin_sector_index'] = spin_sector_index
 
-            result: CodiceLoL2Data = CodiceLoL2Data.read_from_cdf(cdf_file_path)
+            result: CodiceLoL2SWSpeciesData = CodiceLoL2SWSpeciesData.read_from_cdf(cdf_file_path)
             np.testing.assert_array_equal(result.epoch, epoch)
             np.testing.assert_array_equal(result.epoch_delta_minus, epoch_delta_minus)
             np.testing.assert_array_equal(result.epoch_delta_plus, epoch_delta_plus)
             np.testing.assert_array_equal(result.energy_table, energy_table)
-            np.testing.assert_array_equal(result.spin_sector, spin_sector)
             np.testing.assert_array_equal(result.hplus, hplus)
             np.testing.assert_array_equal(result.heplusplus, heplusplus)
             np.testing.assert_array_equal(result.heplus, heplus)
@@ -181,87 +181,30 @@ class TestModels(unittest.TestCase):
         self.assertEqual(expected_total_events_by_energy_step_and_spin_angle,
                          priority_event.total_events_binned_by_energy_step_and_spin_angle())
 
-    def test_get_species(self):
-        hplus = np.array([sentinel.hplus])
-        heplusplus = np.array([sentinel.heplusplus])
-        heplus = np.array([sentinel.heplus])
-        ne = np.array([sentinel.ne])
-        cplus4 = np.array([sentinel.cplus4])
-        cplus5 = np.array([sentinel.cplus5])
-        cplus6 = np.array([sentinel.cplus6])
-        oplus5 = np.array([sentinel.oplus5])
-        oplus6 = np.array([sentinel.oplus6])
-        oplus7 = np.array([sentinel.oplus7])
-        oplus8 = np.array([sentinel.oplus8])
-        cnoplus = np.array([sentinel.cnoplus])
-        mg = np.array([sentinel.mg])
-        si = np.array([sentinel.si])
-        fe_loq = np.array([sentinel.fe_loq])
-        fe_hiq = np.array([sentinel.fe_hiq])
-
-        l2_data_product = CodiceLoL2Data(Mock(), Mock(), Mock(), Mock(), Mock(),
-                                         sentinel.hplus,
-                                         sentinel.heplusplus,
-                                         sentinel.heplus,
-                                         sentinel.ne,
-                                         sentinel.cplus4,
-                                         sentinel.cplus5,
-                                         sentinel.cplus6,
-                                         sentinel.oplus5,
-                                         sentinel.oplus6,
-                                         sentinel.oplus7,
-                                         sentinel.oplus8,
-                                         sentinel.cnoplus,
-                                         sentinel.mg,
-                                         sentinel.si,
-                                         sentinel.fe_loq,
-                                         sentinel.fe_hiq,
-                                         Mock(),
-                                         Mock(),
-                                         )
-
-        species_intensities = l2_data_product.get_species_intensities()
-
-        np.testing.assert_array_equal(species_intensities['H+'], hplus)
-        np.testing.assert_array_equal(species_intensities['He++'], heplusplus)
-        np.testing.assert_array_equal(species_intensities['He+'], heplus)
-        np.testing.assert_array_equal(species_intensities['Ne'], ne)
-        np.testing.assert_array_equal(species_intensities['C+4'], cplus4)
-        np.testing.assert_array_equal(species_intensities['C+5'], cplus5)
-        np.testing.assert_array_equal(species_intensities['C+6'], cplus6)
-        np.testing.assert_array_equal(species_intensities['O+5'], oplus5)
-        np.testing.assert_array_equal(species_intensities['O+6'], oplus6)
-        np.testing.assert_array_equal(species_intensities['O+7'], oplus7)
-        np.testing.assert_array_equal(species_intensities['O+8'], oplus8)
-        np.testing.assert_array_equal(species_intensities['CNO+'], cnoplus)
-        np.testing.assert_array_equal(species_intensities['Mg'], mg)
-        np.testing.assert_array_equal(species_intensities['Si'], si)
-        np.testing.assert_array_equal(species_intensities['Fe (low Q)'], fe_loq)
-        np.testing.assert_array_equal(species_intensities['Fe (high Q)'], fe_hiq)
-
     def test_codice_lo_l3a_partial_density_to_data_product(self):
         epoch_data = np.array([datetime.now()])
 
         input_data_product_kwargs = {
             "epoch": epoch_data,
-            "epoch_delta": np.array([10]),
-            "h_partial_density": np.array([15]),
-            "he_partial_density": np.array([15]),
-            "c4_partial_density": np.array([15]),
-            "c5_partial_density": np.array([15]),
-            "c6_partial_density": np.array([15]),
-            "o5_partial_density": np.array([15]),
-            "o6_partial_density": np.array([15]),
-            "o7_partial_density": np.array([15]),
-            "o8_partial_density": np.array([15]),
+            "epoch_delta_plus": np.array([1]),
+            "epoch_delta_minus": np.array([-1]),
+            "hplus_partial_density": np.array([15]),
+            "heplusplus_partial_density": np.array([15]),
+            "cplus4_partial_density": np.array([15]),
+            "cplus5_partial_density": np.array([15]),
+            "cplus6_partial_density": np.array([15]),
+            "oplus5_partial_density": np.array([15]),
+            "oplus6_partial_density": np.array([15]),
+            "oplus7_partial_density": np.array([15]),
+            "oplus8_partial_density": np.array([15]),
             "mg_partial_density": np.array([15]),
             "si_partial_density": np.array([15]),
-            "fe_low_partial_density": np.array([15]),
-            "fe_high_partial_density": np.array([15]),
+            "fe_loq_partial_density": np.array([15]),
+            "fe_hiq_partial_density": np.array([15]),
         }
 
         data_product = CodiceLoL3aPartialDensityDataProduct(
-            **input_data_product_kwargs
+            Mock(), **input_data_product_kwargs
         )
         actual_data_product_variables = data_product.to_data_product_variables()
 
@@ -271,209 +214,6 @@ class TestModels(unittest.TestCase):
 
             np.testing.assert_array_equal(actual_data_product_variable.value, getattr(data_product, input_name))
             self.assertEqual(input_name, actual_data_product_variable.name)
-
-    def test_codice_lo_l1b_priority_rates_read_from_cdf(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            rng = np.random.default_rng()
-            epoch = np.array([datetime(2025, 4, 18), datetime(2025, 4, 18)])
-            energy = rng.random((7, 10))
-            inst_az = rng.random((7, 10))
-            spin_sector = rng.random((7, 10))
-            energy_label = rng.random((7, 10))
-            acquisition_times = rng.random((7, 10))
-            counters = rng.random((7, 10))
-            esa_sweep = rng.random((7, 10))
-            hi_counters_aggregated_aggregated = rng.random((7, 10))
-            hi_counters_singles_tcr = rng.random((7, 10))
-            hi_counters_singles_ssdo = rng.random((7, 10))
-            hi_counters_singles_stssd = rng.random((7, 10))
-            hi_omni_h = rng.random((7, 10))
-            hi_omni_he3 = rng.random((7, 10))
-            hi_omni_he4 = rng.random((7, 10))
-            hi_omni_c = rng.random((7, 10))
-            hi_omni_o = rng.random((7, 10))
-            hi_omni_ne_mg_si = rng.random((7, 10))
-            hi_omni_fe = rng.random((7, 10))
-            hi_omni_uh = rng.random((7, 10))
-            hi_sectored_h = rng.random((7, 10))
-            hi_sectored_he3he4 = rng.random((7, 10))
-            hi_sectored_cno = rng.random((7, 10))
-            hi_sectored_fe = rng.random((7, 10))
-            lo_counters_aggregated_aggregated = rng.random((7, 10))
-            lo_counters_singles_apd_singles = rng.random((7, 10))
-            lo_sw_angular_hplus = rng.random((7, 10))
-            lo_sw_angular_heplusplus = rng.random((7, 10))
-            lo_sw_angular_oplus6 = rng.random((7, 10))
-            lo_sw_angular_fe_loq = rng.random((7, 10))
-            lo_nsw_angular_heplusplus = rng.random((7, 10))
-            lo_sw_priority_p0_tcrs = rng.random((7, 10))
-            lo_sw_priority_p1_hplus = rng.random((7, 10))
-            lo_sw_priority_p2_heplusplus = rng.random((7, 10))
-            lo_sw_priority_p3_heavies = rng.random((7, 10))
-            lo_sw_priority_p4_dcrs = rng.random((7, 10))
-            lo_nsw_priority_p5_heavies = rng.random((7, 10))
-            lo_nsw_priority_p6_hplus_heplusplus = rng.random((7, 10))
-            lo_nsw_priority_p7_missing = rng.random((7, 10))
-            lo_sw_species_hplus = rng.random((7, 10))
-            lo_sw_species_heplusplus = rng.random((7, 10))
-            lo_sw_species_cplus4 = rng.random((7, 10))
-            lo_sw_species_cplus5 = rng.random((7, 10))
-            lo_sw_species_cplus6 = rng.random((7, 10))
-            lo_sw_species_oplus5 = rng.random((7, 10))
-            lo_sw_species_oplus6 = rng.random((7, 10))
-            lo_sw_species_oplus7 = rng.random((7, 10))
-            lo_sw_species_oplus8 = rng.random((7, 10))
-            lo_sw_species_ne = rng.random((7, 10))
-            lo_sw_species_mg = rng.random((7, 10))
-            lo_sw_species_si = rng.random((7, 10))
-            lo_sw_species_fe_loq = rng.random((7, 10))
-            lo_sw_species_fe_hiq = rng.random((7, 10))
-            lo_sw_species_heplus = rng.random((7, 10))
-            lo_sw_species_cnoplus = rng.random((7, 10))
-            lo_nsw_species_hplus = rng.random((7, 10))
-            lo_nsw_species_heplusplus = rng.random((7, 10))
-            lo_nsw_species_c = rng.random((7, 10))
-            lo_nsw_species_o = rng.random((7, 10))
-            lo_nsw_species_ne_si_mg = rng.random((7, 10))
-            lo_nsw_species_fe = rng.random((7, 10))
-            lo_nsw_species_heplus = rng.random((7, 10))
-            lo_nsw_species_cnoplus = rng.random((7, 10))
-
-            cdf_file_path = Path(tmpdir) / "test_cdf.cdf"
-            with CDF(str(cdf_file_path), readonly=False, masterpath="") as cdf_file:
-                cdf_file["epoch"] = epoch
-                cdf_file["energy"] = energy
-                cdf_file["inst_az"] = inst_az
-                cdf_file["spin_sector"] = spin_sector
-                cdf_file["energy_label"] = energy_label
-                cdf_file["acquisition_times"] = acquisition_times
-                cdf_file["counters"] = counters
-                cdf_file["esa_sweep"] = esa_sweep
-                cdf_file["hi_counters_aggregated_aggregated"] = hi_counters_aggregated_aggregated
-                cdf_file["hi_counters_singles_tcr"] = hi_counters_singles_tcr
-                cdf_file["hi_counters_singles_ssdo"] = hi_counters_singles_ssdo
-                cdf_file["hi_counters_singles_stssd"] = hi_counters_singles_stssd
-                cdf_file["hi_omni_h"] = hi_omni_h
-                cdf_file["hi_omni_he3"] = hi_omni_he3
-                cdf_file["hi_omni_he4"] = hi_omni_he4
-                cdf_file["hi_omni_c"] = hi_omni_c
-                cdf_file["hi_omni_o"] = hi_omni_o
-                cdf_file["hi_omni_ne_mg_si"] = hi_omni_ne_mg_si
-                cdf_file["hi_omni_fe"] = hi_omni_fe
-                cdf_file["hi_omni_uh"] = hi_omni_uh
-                cdf_file["hi_sectored_h"] = hi_sectored_h
-                cdf_file["hi_sectored_he3he4"] = hi_sectored_he3he4
-                cdf_file["hi_sectored_cno"] = hi_sectored_cno
-                cdf_file["hi_sectored_fe"] = hi_sectored_fe
-                cdf_file["lo_counters_aggregated_aggregated"] = lo_counters_aggregated_aggregated
-                cdf_file["lo_counters_singles_apd_singles"] = lo_counters_singles_apd_singles
-                cdf_file["lo_sw_angular_hplus"] = lo_sw_angular_hplus
-                cdf_file["lo_sw_angular_heplusplus"] = lo_sw_angular_heplusplus
-                cdf_file["lo_sw_angular_oplus6"] = lo_sw_angular_oplus6
-                cdf_file["lo_sw_angular_fe_loq"] = lo_sw_angular_fe_loq
-                cdf_file["lo_nsw_angular_heplusplus"] = lo_nsw_angular_heplusplus
-                cdf_file["lo_sw_priority_p0_tcrs"] = lo_sw_priority_p0_tcrs
-                cdf_file["lo_sw_priority_p1_hplus"] = lo_sw_priority_p1_hplus
-                cdf_file["lo_sw_priority_p2_heplusplus"] = lo_sw_priority_p2_heplusplus
-                cdf_file["lo_sw_priority_p3_heavies"] = lo_sw_priority_p3_heavies
-                cdf_file["lo_sw_priority_p4_dcrs"] = lo_sw_priority_p4_dcrs
-                cdf_file["lo_nsw_priority_p5_heavies"] = lo_nsw_priority_p5_heavies
-                cdf_file["lo_nsw_priority_p6_hplus_heplusplus"] = lo_nsw_priority_p6_hplus_heplusplus
-                cdf_file["lo_nsw_priority_p7_missing"] = lo_nsw_priority_p7_missing
-                cdf_file["lo_sw_species_hplus"] = lo_sw_species_hplus
-                cdf_file["lo_sw_species_heplusplus"] = lo_sw_species_heplusplus
-                cdf_file["lo_sw_species_cplus4"] = lo_sw_species_cplus4
-                cdf_file["lo_sw_species_cplus5"] = lo_sw_species_cplus5
-                cdf_file["lo_sw_species_cplus6"] = lo_sw_species_cplus6
-                cdf_file["lo_sw_species_oplus5"] = lo_sw_species_oplus5
-                cdf_file["lo_sw_species_oplus6"] = lo_sw_species_oplus6
-                cdf_file["lo_sw_species_oplus7"] = lo_sw_species_oplus7
-                cdf_file["lo_sw_species_oplus8"] = lo_sw_species_oplus8
-                cdf_file["lo_sw_species_ne"] = lo_sw_species_ne
-                cdf_file["lo_sw_species_mg"] = lo_sw_species_mg
-                cdf_file["lo_sw_species_si"] = lo_sw_species_si
-                cdf_file["lo_sw_species_fe_loq"] = lo_sw_species_fe_loq
-                cdf_file["lo_sw_species_fe_hiq"] = lo_sw_species_fe_hiq
-                cdf_file["lo_sw_species_heplus"] = lo_sw_species_heplus
-                cdf_file["lo_sw_species_cnoplus"] = lo_sw_species_cnoplus
-                cdf_file["lo_nsw_species_hplus"] = lo_nsw_species_hplus
-                cdf_file["lo_nsw_species_heplusplus"] = lo_nsw_species_heplusplus
-                cdf_file["lo_nsw_species_c"] = lo_nsw_species_c
-                cdf_file["lo_nsw_species_o"] = lo_nsw_species_o
-                cdf_file["lo_nsw_species_ne_si_mg"] = lo_nsw_species_ne_si_mg
-                cdf_file["lo_nsw_species_fe"] = lo_nsw_species_fe
-                cdf_file["lo_nsw_species_heplus"] = lo_nsw_species_heplus
-                cdf_file["lo_nsw_species_cnoplus"] = lo_nsw_species_cnoplus
-
-            result = CodiceLoL2bPriorityRates.read_from_cdf(cdf_file_path)
-
-            np.testing.assert_array_equal(result.epoch, epoch)
-            np.testing.assert_array_equal(result.energy, energy)
-            np.testing.assert_array_equal(result.inst_az, inst_az)
-            np.testing.assert_array_equal(result.spin_sector, spin_sector)
-            np.testing.assert_array_equal(result.energy_label, energy_label)
-            np.testing.assert_array_equal(result.acquisition_times, acquisition_times)
-            np.testing.assert_array_equal(result.counters, counters)
-            np.testing.assert_array_equal(result.esa_sweep, esa_sweep)
-            np.testing.assert_array_equal(result.hi_counters_aggregated_aggregated,
-                                          hi_counters_aggregated_aggregated)
-            np.testing.assert_array_equal(result.hi_counters_singles_tcr, hi_counters_singles_tcr)
-            np.testing.assert_array_equal(result.hi_counters_singles_ssdo, hi_counters_singles_ssdo)
-            np.testing.assert_array_equal(result.hi_counters_singles_stssd, hi_counters_singles_stssd)
-            np.testing.assert_array_equal(result.hi_omni_h, hi_omni_h)
-            np.testing.assert_array_equal(result.hi_omni_he3, hi_omni_he3)
-            np.testing.assert_array_equal(result.hi_omni_he4, hi_omni_he4)
-            np.testing.assert_array_equal(result.hi_omni_c, hi_omni_c)
-            np.testing.assert_array_equal(result.hi_omni_o, hi_omni_o)
-            np.testing.assert_array_equal(result.hi_omni_ne_mg_si, hi_omni_ne_mg_si)
-            np.testing.assert_array_equal(result.hi_omni_fe, hi_omni_fe)
-            np.testing.assert_array_equal(result.hi_omni_uh, hi_omni_uh)
-            np.testing.assert_array_equal(result.hi_sectored_h, hi_sectored_h)
-            np.testing.assert_array_equal(result.hi_sectored_he3he4, hi_sectored_he3he4)
-            np.testing.assert_array_equal(result.hi_sectored_cno, hi_sectored_cno)
-            np.testing.assert_array_equal(result.hi_sectored_fe, hi_sectored_fe)
-            np.testing.assert_array_equal(result.lo_counters_aggregated_aggregated,
-                                          lo_counters_aggregated_aggregated)
-            np.testing.assert_array_equal(result.lo_counters_singles_apd_singles, lo_counters_singles_apd_singles)
-            np.testing.assert_array_equal(result.lo_sw_angular_hplus, lo_sw_angular_hplus)
-            np.testing.assert_array_equal(result.lo_sw_angular_heplusplus, lo_sw_angular_heplusplus)
-            np.testing.assert_array_equal(result.lo_sw_angular_oplus6, lo_sw_angular_oplus6)
-            np.testing.assert_array_equal(result.lo_sw_angular_fe_loq, lo_sw_angular_fe_loq)
-            np.testing.assert_array_equal(result.lo_nsw_angular_heplusplus, lo_nsw_angular_heplusplus)
-            np.testing.assert_array_equal(result.lo_sw_priority_p0_tcrs, lo_sw_priority_p0_tcrs)
-            np.testing.assert_array_equal(result.lo_sw_priority_p1_hplus, lo_sw_priority_p1_hplus)
-            np.testing.assert_array_equal(result.lo_sw_priority_p2_heplusplus, lo_sw_priority_p2_heplusplus)
-            np.testing.assert_array_equal(result.lo_sw_priority_p3_heavies, lo_sw_priority_p3_heavies)
-            np.testing.assert_array_equal(result.lo_sw_priority_p4_dcrs, lo_sw_priority_p4_dcrs)
-            np.testing.assert_array_equal(result.lo_nsw_priority_p5_heavies, lo_nsw_priority_p5_heavies)
-            np.testing.assert_array_equal(result.lo_nsw_priority_p6_hplus_heplusplus,
-                                          lo_nsw_priority_p6_hplus_heplusplus)
-            np.testing.assert_array_equal(result.lo_nsw_priority_p7_missing,
-                                          lo_nsw_priority_p7_missing)
-            np.testing.assert_array_equal(result.lo_sw_species_hplus, lo_sw_species_hplus)
-            np.testing.assert_array_equal(result.lo_sw_species_heplusplus, lo_sw_species_heplusplus)
-            np.testing.assert_array_equal(result.lo_sw_species_cplus4, lo_sw_species_cplus4)
-            np.testing.assert_array_equal(result.lo_sw_species_cplus5, lo_sw_species_cplus5)
-            np.testing.assert_array_equal(result.lo_sw_species_cplus6, lo_sw_species_cplus6)
-            np.testing.assert_array_equal(result.lo_sw_species_oplus5, lo_sw_species_oplus5)
-            np.testing.assert_array_equal(result.lo_sw_species_oplus6, lo_sw_species_oplus6)
-            np.testing.assert_array_equal(result.lo_sw_species_oplus7, lo_sw_species_oplus7)
-            np.testing.assert_array_equal(result.lo_sw_species_oplus8, lo_sw_species_oplus8)
-            np.testing.assert_array_equal(result.lo_sw_species_ne, lo_sw_species_ne)
-            np.testing.assert_array_equal(result.lo_sw_species_mg, lo_sw_species_mg)
-            np.testing.assert_array_equal(result.lo_sw_species_si, lo_sw_species_si)
-            np.testing.assert_array_equal(result.lo_sw_species_fe_loq, lo_sw_species_fe_loq)
-            np.testing.assert_array_equal(result.lo_sw_species_fe_hiq, lo_sw_species_fe_hiq)
-            np.testing.assert_array_equal(result.lo_sw_species_heplus, lo_sw_species_heplus)
-            np.testing.assert_array_equal(result.lo_sw_species_cnoplus, lo_sw_species_cnoplus)
-            np.testing.assert_array_equal(result.lo_nsw_species_hplus, lo_nsw_species_hplus)
-            np.testing.assert_array_equal(result.lo_nsw_species_heplusplus, lo_nsw_species_heplusplus)
-            np.testing.assert_array_equal(result.lo_nsw_species_c, lo_nsw_species_c)
-            np.testing.assert_array_equal(result.lo_nsw_species_o, lo_nsw_species_o)
-            np.testing.assert_array_equal(result.lo_nsw_species_ne_si_mg, lo_nsw_species_ne_si_mg)
-            np.testing.assert_array_equal(result.lo_nsw_species_fe, lo_nsw_species_fe)
-            np.testing.assert_array_equal(result.lo_nsw_species_heplus, lo_nsw_species_heplus)
-            np.testing.assert_array_equal(result.lo_nsw_species_cnoplus, lo_nsw_species_cnoplus)
 
     def test_codice_lo_l3a_direct_event_to_data_product(self):
         rng = np.random.default_rng()
@@ -514,3 +254,72 @@ class TestModels(unittest.TestCase):
         self.assertEqual(len(data_products), len(non_parent_fields))
         for data_product in data_products:
             np.testing.assert_array_equal(getattr(direct_event, data_product.name), data_product.value)
+
+    def test_codice_lo_l1a_sw_priority_read_from_cdf(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            epoch = np.array([datetime(2025, 4, 18), datetime(2025, 4, 18)])
+            rng = np.random.default_rng()
+            energy_table = rng.random(128)
+            spin_sector_index = rng.random(12)
+            expected_values = {
+                "epoch": epoch,
+                "epoch_delta_plus": np.repeat(1, len(epoch)),
+                "epoch_delta_minus": np.repeat(1, len(epoch)),
+                "energy_table": energy_table,
+                "acquisition_time_per_step": rng.random((len(epoch), len(energy_table))),
+                "spin_sector_index": spin_sector_index,
+                "rgfo_half_spin": rng.random(len(epoch)),
+                "nso_half_spin": rng.random(len(epoch)),
+                "sw_bias_gain_mode": rng.random(len(epoch)),
+                "st_bias_gain_mode": rng.random(len(epoch)),
+                "data_quality": rng.random(len(epoch)),
+                "spin_period": rng.random(len(epoch)),
+                "p0_tcrs": rng.random((len(epoch), len(energy_table), len(spin_sector_index))),
+                "p1_hplus": rng.random((len(epoch), len(energy_table), len(spin_sector_index))),
+                "p2_heplusplus": rng.random((len(epoch), len(energy_table), len(spin_sector_index))),
+                "p3_heavies": rng.random((len(epoch), len(energy_table), len(spin_sector_index))),
+                "p4_dcrs": rng.random((len(epoch), len(energy_table), len(spin_sector_index))),
+            }
+
+            cdf_file_path = Path(tmpdir) / "test_cdf.cdf"
+            with CDF(str(cdf_file_path), readonly=False, masterpath="") as cdf_file:
+                for k, v in expected_values.items():
+                    cdf_file[k] = v
+
+            result = CodiceLoL1aSWPriorityRates.read_from_cdf(cdf_file_path)
+
+            for k, v in expected_values.items():
+                np.testing.assert_array_equal(getattr(result, k), v)
+
+    def test_codice_lo_l1a_nsw_priority_read_from_cdf(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            epoch = np.array([datetime(2025, 4, 18), datetime(2025, 4, 18)])
+            rng = np.random.default_rng()
+            energy_table = rng.random(128)
+            spin_sector_index = rng.random(12)
+            expected_values = {
+                "energy_table": energy_table,
+                "acquisition_time_per_step": rng.random(len(energy_table)),
+                "epoch": epoch,
+                "epoch_delta_plus": np.repeat(1, len(epoch)),
+                "epoch_delta_minus": np.repeat(1, len(epoch)),
+                "spin_sector_index": spin_sector_index,
+                "rgfo_half_spin": rng.random(len(epoch)),
+                "data_quality": rng.random(len(epoch)),
+                "p5_heavies": rng.random((len(epoch), len(energy_table), len(spin_sector_index))),
+                "p6_hplus_heplusplus": rng.random((len(epoch), len(energy_table), len(spin_sector_index))),
+                "nso_half_spin": rng.random(len(epoch)),
+                "sw_bias_gain_mode": rng.random(len(epoch)),
+                "st_bias_gain_mode": rng.random(len(epoch)),
+                "spin_period": rng.random(len(epoch))
+            }
+
+            cdf_file_path = Path(tmpdir) / "test_cdf.cdf"
+            with CDF(str(cdf_file_path), readonly=False, masterpath="") as cdf_file:
+                for k, v in expected_values.items():
+                    cdf_file[k] = v
+
+            result = CodiceLoL1aNSWPriorityRates.read_from_cdf(cdf_file_path)
+
+            for k, v in expected_values.items():
+                np.testing.assert_array_equal(getattr(result, k), v)

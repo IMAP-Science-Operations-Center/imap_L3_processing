@@ -61,9 +61,10 @@ class Sensor(enum.Enum):
         return sensor_angles[sensor_name]
 
 
-class CGCorrection(enum.Enum):
-    CGCorrected = "CGCorrected"
-    NotCGCorrected = "NotCGCorrected"
+class ReferenceFrame(enum.Enum):
+    Heliospheric = "Heliospheric"
+    Spacecraft = "Spacecraft"
+    HeliosphericKinematic = "HeliosphericKinematic"
 
 
 class SurvivalCorrection(enum.Enum):
@@ -96,44 +97,45 @@ class MapQuantity(enum.Enum):
 @dataclass
 class MapDescriptorParts:
     sensor: Sensor
-    cg_correction: CGCorrection
+    reference_frame: ReferenceFrame
     survival_correction: SurvivalCorrection
     spin_phase: SpinPhase
-    grid_size: PixelSize
+    grid: PixelSize
     duration: Duration
     quantity: MapQuantity
 
 
 def parse_map_descriptor(descriptor: str) -> Optional[MapDescriptorParts]:
     descriptor_regex = """
-        (?P<sensor>h|h45|h90)-
-        (?P<cg_corrected>sf|hf)-
-        ((?P<survival_corrected>sp)-)?
-        ((?P<spin_phase>ram|anti)-)?
-        hae-
-        (?P<pixel_spacing>4|6)deg-
+        (?P<sensor>hic|h45|h90)-
+        (?P<quantity>ena|spx)-
+        (?P<species>h)-
+        (?P<frame>sf|hf)-
+        (?P<survival_corrected>sp|nsp)-
+        (?P<spin_phase>ram|anti|full)-
+        (?P<coord>hae)-
+        (?P<grid>4deg|6deg)-
         (?P<duration>3mo|6mo|1yr)
-        (-(?P<quantity>spectral))?
         """
 
-    descriptor_part_match = re.search(descriptor_regex, descriptor, flags=re.VERBOSE)
+    descriptor_part_match = re.fullmatch(descriptor_regex, descriptor, flags=re.VERBOSE)
     if descriptor_part_match is None:
         return None
 
-    sensors = {"h": Sensor.Combined, "h45": Sensor.Hi45, "h90": Sensor.Hi90}
-    cg_corrections = {"sf": CGCorrection.NotCGCorrected, "hf": CGCorrection.CGCorrected}
-    survival_corrections = {"sp": SurvivalCorrection.SurvivalCorrected, None: SurvivalCorrection.NotSurvivalCorrected}
-    spin_phases = {"ram": SpinPhase.RamOnly, "anti": SpinPhase.AntiRamOnly, None: SpinPhase.FullSpin}
+    sensors = {"hic": Sensor.Combined, "h45": Sensor.Hi45, "h90": Sensor.Hi90}
+    cg_corrections = {"sf": ReferenceFrame.Spacecraft, "hf": ReferenceFrame.Heliospheric}
+    survival_corrections = {"sp": SurvivalCorrection.SurvivalCorrected, "nsp": SurvivalCorrection.NotSurvivalCorrected}
+    spin_phases = {"ram": SpinPhase.RamOnly, "anti": SpinPhase.AntiRamOnly, "full": SpinPhase.FullSpin}
     durations = {"3mo": Duration.ThreeMonths, "6mo": Duration.SixMonths, "1yr": Duration.OneYear}
-    grid_sizes = {"4": PixelSize.FourDegrees, "6": PixelSize.SixDegrees}
-    quantities = {"spectral": MapQuantity.SpectralIndex, None: MapQuantity.Intensity}
+    grid_sizes = {"4deg": PixelSize.FourDegrees, "6deg": PixelSize.SixDegrees}
+    quantities = {"spx": MapQuantity.SpectralIndex, "ena": MapQuantity.Intensity}
 
     return MapDescriptorParts(
         sensor=sensors[descriptor_part_match["sensor"]],
-        cg_correction=cg_corrections[descriptor_part_match["cg_corrected"]],
+        quantity=quantities[descriptor_part_match["quantity"]],
+        reference_frame=cg_corrections[descriptor_part_match["frame"]],
         survival_correction=survival_corrections[descriptor_part_match["survival_corrected"]],
         spin_phase=spin_phases[descriptor_part_match["spin_phase"]],
+        grid=grid_sizes[descriptor_part_match["grid"]],
         duration=durations[descriptor_part_match["duration"]],
-        grid_size=grid_sizes[descriptor_part_match["pixel_spacing"]],
-        quantity=quantities[descriptor_part_match["quantity"]],
     )

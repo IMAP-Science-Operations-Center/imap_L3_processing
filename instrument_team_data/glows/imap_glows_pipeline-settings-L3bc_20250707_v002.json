@@ -3,6 +3,8 @@
   "version": "0.1",
   "date_of_creation_yyyymmdd": "20250311",
   "initializer_time_delta_days": 56,
+  "WawHelioIonGlows_fill_value": -1,
+  "hdr_txt_lines_number": 30,
   "ion_rate_grid": [
     -90,
     -80,

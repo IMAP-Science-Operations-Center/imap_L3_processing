@@ -19,6 +19,7 @@ class CodiceLoProcessor(Processor):
     def process(self):
         dependencies = CodiceLoL3aDependencies.fetch_dependencies(self.dependencies)
         l3a_data = self.process_l3a(dependencies)
+        l3a_data.parent_file_names = self.get_parent_file_names()
         l3a_direct_event_data = self._process_l3a_direct_event_data_product(dependencies)
 
         saved_l3a_cdf = save_data(l3a_data)
@@ -28,71 +29,81 @@ class CodiceLoProcessor(Processor):
         upload(saved_l3a_direct_event_cdf)
 
     def process_l3a(self, dependencies: CodiceLoL3aDependencies):
-
-        for species_name, species_intensities in dependencies.codice_l2_lo_data.get_species_intensities().items():
-            partial_density = calculate_partial_densities(species_intensities)
-
-            match species_name:
-                case "H+":
-                    h_partial_density = partial_density
-                case "He++":
-                    he_partial_density = partial_density
-                case "C+4":
-                    c4_partial_density = partial_density
-                case "C+5":
-                    c5_partial_density = partial_density
-                case "C+6":
-                    c6_partial_density = partial_density
-                case "O+5":
-                    o5_partial_density = partial_density
-                case "O+6":
-                    o6_partial_density = partial_density
-                case "O+7":
-                    o7_partial_density = partial_density
-                case "O+8":
-                    o8_partial_density = partial_density
-                case "Mg":
-                    mg_partial_density = partial_density
-                case "Si":
-                    si_partial_density = partial_density
-                case "Fe (low Q)":
-                    fe_low_partial_density = partial_density
-                case "Fe (high Q)":
-                    fe_high_partial_density = partial_density
-                case _:
-                    raise NotImplementedError
-        epoch = np.array([np.nan])
-        epoch_delta = np.full(len(epoch), 4.8e+11)
-        return CodiceLoL3aPartialDensityDataProduct(epoch=epoch, epoch_delta=epoch_delta,
-                                                    h_partial_density=h_partial_density,
-                                                    he_partial_density=he_partial_density,
-                                                    c4_partial_density=c4_partial_density,
-                                                    c5_partial_density=c5_partial_density,
-                                                    c6_partial_density=c6_partial_density,
-                                                    o5_partial_density=o5_partial_density,
-                                                    o6_partial_density=o6_partial_density,
-                                                    o7_partial_density=o7_partial_density,
-                                                    o8_partial_density=o8_partial_density,
-                                                    mg_partial_density=mg_partial_density,
-                                                    si_partial_density=si_partial_density,
-                                                    fe_low_partial_density=fe_low_partial_density,
-                                                    fe_high_partial_density=fe_high_partial_density)
+        codice_lo_l2_data = dependencies.codice_l2_lo_data
+        mass_per_charge_lookup = dependencies.mass_per_charge_lookup
+        return CodiceLoL3aPartialDensityDataProduct(
+            input_metadata=self.input_metadata,
+            epoch=codice_lo_l2_data.epoch,
+            epoch_delta_plus=codice_lo_l2_data.epoch_delta_plus,
+            epoch_delta_minus=codice_lo_l2_data.epoch_delta_minus,
+            hplus_partial_density=calculate_partial_densities(
+                codice_lo_l2_data.hplus,
+                codice_lo_l2_data.energy_table,
+                mass_per_charge_lookup.hplus),
+            heplusplus_partial_density=calculate_partial_densities(
+                codice_lo_l2_data.heplusplus,
+                codice_lo_l2_data.energy_table,
+                mass_per_charge_lookup.heplusplus),
+            cplus4_partial_density=calculate_partial_densities(
+                codice_lo_l2_data.cplus4,
+                codice_lo_l2_data.energy_table,
+                mass_per_charge_lookup.cplus4),
+            cplus5_partial_density=calculate_partial_densities(
+                codice_lo_l2_data.cplus5,
+                codice_lo_l2_data.energy_table,
+                mass_per_charge_lookup.cplus5),
+            cplus6_partial_density=calculate_partial_densities(
+                codice_lo_l2_data.cplus6,
+                codice_lo_l2_data.energy_table,
+                mass_per_charge_lookup.cplus6),
+            oplus5_partial_density=calculate_partial_densities(
+                codice_lo_l2_data.oplus5,
+                codice_lo_l2_data.energy_table,
+                mass_per_charge_lookup.oplus5),
+            oplus6_partial_density=calculate_partial_densities(
+                codice_lo_l2_data.oplus6,
+                codice_lo_l2_data.energy_table,
+                mass_per_charge_lookup.oplus6),
+            oplus7_partial_density=calculate_partial_densities(
+                codice_lo_l2_data.oplus7,
+                codice_lo_l2_data.energy_table,
+                mass_per_charge_lookup.oplus7),
+            oplus8_partial_density=calculate_partial_densities(
+                codice_lo_l2_data.oplus8,
+                codice_lo_l2_data.energy_table,
+                mass_per_charge_lookup.oplus8),
+            mg_partial_density=calculate_partial_densities(
+                codice_lo_l2_data.mg,
+                codice_lo_l2_data.energy_table,
+                mass_per_charge_lookup.mg),
+            si_partial_density=calculate_partial_densities(
+                codice_lo_l2_data.si,
+                codice_lo_l2_data.energy_table,
+                mass_per_charge_lookup.si),
+            fe_loq_partial_density=calculate_partial_densities(
+                codice_lo_l2_data.fe_loq,
+                codice_lo_l2_data.energy_table,
+                mass_per_charge_lookup.fe_loq),
+            fe_hiq_partial_density=calculate_partial_densities(
+                codice_lo_l2_data.fe_hiq,
+                codice_lo_l2_data.energy_table,
+                mass_per_charge_lookup.fe_hiq))
 
     def _process_l3a_direct_event_data_product(self,
                                                dependencies: CodiceLoL3aDependencies) -> CodiceLoL3aDirectEventDataProduct:
-        codice_priority_rates_l2_data = dependencies.codice_l2b_lo_priority_rates
+        codice_sw_priority_rates_l1a_data = dependencies.codice_lo_l1a_sw_priority_rates
+        codice_nsw_priority_rates_l1a_data = dependencies.codice_lo_l1a_nsw_priority_rates
         codice_direct_events: CodiceLoL2DirectEventData = dependencies.codice_l2_direct_events
         event_number = codice_direct_events.event_num
         mass_coefficient_lookup = dependencies.mass_coefficient_lookup
         priority_rates_for_events = [
-            codice_priority_rates_l2_data.lo_sw_priority_p0_tcrs,
-            codice_priority_rates_l2_data.lo_sw_priority_p1_hplus,
-            codice_priority_rates_l2_data.lo_sw_priority_p2_heplusplus,
-            codice_priority_rates_l2_data.lo_sw_priority_p3_heavies,
-            codice_priority_rates_l2_data.lo_sw_priority_p4_dcrs,
-            codice_priority_rates_l2_data.lo_nsw_priority_p5_heavies,
-            codice_priority_rates_l2_data.lo_nsw_priority_p6_hplus_heplusplus,
-            codice_priority_rates_l2_data.lo_nsw_priority_p7_missing,
+            codice_sw_priority_rates_l1a_data.p0_tcrs,
+            codice_sw_priority_rates_l1a_data.p1_hplus,
+            codice_sw_priority_rates_l1a_data.p2_heplusplus,
+            codice_sw_priority_rates_l1a_data.p3_heavies,
+            codice_sw_priority_rates_l1a_data.p4_dcrs,
+            codice_nsw_priority_rates_l1a_data.p5_heavies,
+            codice_nsw_priority_rates_l1a_data.p6_hplus_heplusplus
         ]
 
         normalization = np.full((len(codice_direct_events.epoch), len(priority_rates_for_events), 128, 12), np.nan)
@@ -109,7 +120,7 @@ class CodiceLoProcessor(Processor):
                 zip(codice_direct_events.priority_events, priority_rates_for_events)):
 
             total_by_epoch: np.ndarray[int] = calculate_total_number_of_events(priority_rate,
-                                                                               codice_priority_rates_l2_data.acquisition_times)
+                                                                               codice_sw_priority_rates_l1a_data.acquisition_time_per_step)
 
             mass_per_charge[:, priority_index, :] = calculate_mass_per_charge(priority_event)
             mass[:, priority_index, :] = calculate_mass(priority_event, mass_coefficient_lookup)

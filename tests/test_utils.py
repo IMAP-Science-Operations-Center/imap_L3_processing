@@ -356,7 +356,9 @@ class TestUtils(TestCase):
 
         expected = [
             (hi_l1c_data[0], glows_l3e_data[1],),
+            (hi_l1c_data[1], None,),
             (hi_l1c_data[2], glows_l3e_data[3],),
+            (hi_l1c_data[3], None,),
         ]
 
         actual = combine_glows_l3e_with_l1c_pointing(glows_l3e_data, hi_l1c_data)

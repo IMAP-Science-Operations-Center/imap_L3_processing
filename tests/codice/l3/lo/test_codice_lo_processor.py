@@ -1,15 +1,18 @@
 import unittest
 from dataclasses import fields
 from datetime import datetime, timedelta
-from unittest.mock import Mock, patch, call, sentinel
+from pathlib import Path
+from unittest.mock import Mock, patch, call, sentinel, MagicMock
 
 import numpy as np
 from imap_data_access.processing_input import ProcessingInputCollection
 
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_dependencies import CodiceLoL3aDependencies
 from imap_l3_processing.codice.l3.lo.codice_lo_processor import CodiceLoProcessor
-from imap_l3_processing.codice.l3.lo.models import CodiceLoL3aPartialDensityDataProduct, CodiceLoL2bPriorityRates, \
-    CodiceLoL2DirectEventData, CodiceLoL3aDirectEventDataProduct, PriorityEvent
+from imap_l3_processing.codice.l3.lo.models import CodiceLoL3aPartialDensityDataProduct, CodiceLoL2DirectEventData, \
+    CodiceLoL3aDirectEventDataProduct, PriorityEvent, CodiceLoL2SWSpeciesData, \
+    CodiceLoL1aSWPriorityRates, CodiceLoL1aNSWPriorityRates
+from imap_l3_processing.codice.l3.lo.sectored_intensities.science.mass_per_charge_lookup import MassPerChargeLookup
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
 from tests.test_helpers import NumpyArrayMatcher
@@ -26,10 +29,13 @@ class TestCodiceLoProcessor(unittest.TestCase):
     @patch(
         'imap_l3_processing.codice.l3.lo.codice_lo_processor.CodiceLoProcessor._process_l3a_direct_event_data_product')
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.save_data')
-    def test_process(self, mock_save_data, mock_process_direct_event, mock_process_l3a, mock_fetch_dependencies,
-                     mock_upload):
-        input_collection = ProcessingInputCollection()
+    @patch('imap_l3_processing.processor.spiceypy')
+    def test_process(self, mock_spiceypy, mock_save_data, mock_process_direct_event, mock_process_l3a,
+                     mock_fetch_dependencies, mock_upload):
+        input_collection = MagicMock()
+        input_collection.get_file_paths.return_value = [Path('path/to/parent_file_1'), Path('path/to/parent_file_2')]
         input_metadata = InputMetadata('codice', "l3a", Mock(spec=datetime), Mock(spec=datetime), 'v02')
+        mock_spiceypy.ktotal.return_value = 0
 
         mock_save_data.side_effect = ["file1", "file2"]
         processor = CodiceLoProcessor(dependencies=input_collection, input_metadata=input_metadata)
@@ -42,6 +48,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
         mock_save_data.assert_has_calls(
             [call(mock_process_l3a.return_value), call(mock_process_direct_event.return_value)])
 
+        self.assertEqual(['parent_file_1', 'parent_file_2'], mock_process_l3a.return_value.parent_file_names)
         mock_upload.assert_has_calls([call("file1"), call("file2")])
 
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.calculate_partial_densities')
@@ -52,76 +59,72 @@ class TestCodiceLoProcessor(unittest.TestCase):
 
         epochs = np.array([datetime(2025, 1, 1), datetime(2025, 1, 2), datetime(2025, 1, 3)])
         num_species = 13
-        codice_lo_l2_data = Mock()
-        codice_lo_l2_data.get_species_intensities = Mock()
-        codice_lo_l2_data.get_species_intensities.return_value = {
-            "H+": sentinel.h_intensities,
-            "He++": sentinel.he_intensities,
-            "C+4": sentinel.c4_intensities,
-            "C+5": sentinel.c5_intensities,
-            "C+6": sentinel.c6_intensities,
-            "O+5": sentinel.o5_intensities,
-            "O+6": sentinel.o6_intensities,
-            "O+7": sentinel.o7_intensities,
-            "O+8": sentinel.o8_intensities,
-            "Mg": sentinel.mg_intensities,
-            "Si": sentinel.si_intensities,
-            "Fe (low Q)": sentinel.fe_low_intensities,
-            "Fe (high Q)": sentinel.fe_high_intensities
-        }
+
+        codice_lo_l2_data = CodiceLoL2SWSpeciesData(
+            *[Mock() for _ in range(len(fields(CodiceLoL2SWSpeciesData)))],
+        )
+
+        mass_per_charge_lookup = MassPerChargeLookup(*[i for i in range(len(fields(MassPerChargeLookup)))])
+
         codice_lo_l2_data.epoch = epochs
 
         mock_calculate_partial_densities.side_effect = [
-            sentinel.h_partial_density,
-            sentinel.he_partial_density,
-            sentinel.c4_partial_density,
-            sentinel.c5_partial_density,
-            sentinel.c6_partial_density,
-            sentinel.o5_partial_density,
-            sentinel.o6_partial_density,
-            sentinel.o7_partial_density,
-            sentinel.o8_partial_density,
+            sentinel.hplus_partial_density,
+            sentinel.heplusplus_partial_density,
+            sentinel.cplus4_partial_density,
+            sentinel.cplus5_partial_density,
+            sentinel.cplus6_partial_density,
+            sentinel.oplus5_partial_density,
+            sentinel.oplus6_partial_density,
+            sentinel.oplus7_partial_density,
+            sentinel.oplus8_partial_density,
             sentinel.mg_partial_density,
             sentinel.si_partial_density,
-            sentinel.fe_low_partial_density,
-            sentinel.fe_high_partial_density,
+            sentinel.fe_loq_partial_density,
+            sentinel.fe_hiq_partial_density,
         ]
 
-        codice_lo_dependencies = CodiceLoL3aDependencies(codice_lo_l2_data, Mock(), Mock(), Mock(), Mock(), Mock())
+        codice_lo_dependencies = CodiceLoL3aDependencies(Mock(), Mock(), codice_lo_l2_data, Mock(),
+                                                         mass_per_charge_lookup,
+                                                         Mock())
         result = processor.process_l3a(codice_lo_dependencies)
 
         self.assertEqual(num_species, mock_calculate_partial_densities.call_count)
 
-        mock_calculate_partial_densities.assert_has_calls([call(sentinel.h_intensities),
-                                                           call(sentinel.he_intensities),
-                                                           call(sentinel.c4_intensities),
-                                                           call(sentinel.c5_intensities),
-                                                           call(sentinel.c6_intensities),
-                                                           call(sentinel.o5_intensities),
-                                                           call(sentinel.o6_intensities),
-                                                           call(sentinel.o7_intensities),
-                                                           call(sentinel.o8_intensities),
-                                                           call(sentinel.mg_intensities),
-                                                           call(sentinel.si_intensities),
-                                                           call(sentinel.fe_low_intensities),
-                                                           call(sentinel.fe_high_intensities)])
-        self.assertIsInstance(result, CodiceLoL3aPartialDensityDataProduct)
+        mock_calculate_partial_densities.assert_has_calls(
+            [call(codice_lo_l2_data.hplus, codice_lo_l2_data.energy_table, mass_per_charge_lookup.hplus),
+             call(codice_lo_l2_data.heplusplus, codice_lo_l2_data.energy_table, mass_per_charge_lookup.heplusplus),
+             call(codice_lo_l2_data.cplus4, codice_lo_l2_data.energy_table, mass_per_charge_lookup.cplus4),
+             call(codice_lo_l2_data.cplus5, codice_lo_l2_data.energy_table, mass_per_charge_lookup.cplus5),
+             call(codice_lo_l2_data.cplus6, codice_lo_l2_data.energy_table, mass_per_charge_lookup.cplus6),
+             call(codice_lo_l2_data.oplus5, codice_lo_l2_data.energy_table, mass_per_charge_lookup.oplus5),
+             call(codice_lo_l2_data.oplus6, codice_lo_l2_data.energy_table, mass_per_charge_lookup.oplus6),
+             call(codice_lo_l2_data.oplus7, codice_lo_l2_data.energy_table, mass_per_charge_lookup.oplus7),
+             call(codice_lo_l2_data.oplus8, codice_lo_l2_data.energy_table, mass_per_charge_lookup.oplus8),
+             call(codice_lo_l2_data.mg, codice_lo_l2_data.energy_table, mass_per_charge_lookup.mg),
+             call(codice_lo_l2_data.si, codice_lo_l2_data.energy_table, mass_per_charge_lookup.si),
+             call(codice_lo_l2_data.fe_loq, codice_lo_l2_data.energy_table, mass_per_charge_lookup.fe_loq),
+             call(codice_lo_l2_data.fe_hiq, codice_lo_l2_data.energy_table, mass_per_charge_lookup.fe_hiq)])
 
-        np.testing.assert_array_equal(result.epoch, np.full(1, np.nan))
-        np.testing.assert_array_equal(result.epoch_delta, np.full(1, 4.8e+11))
-        self.assertEqual(sentinel.h_partial_density, result.h_partial_density),
-        self.assertEqual(sentinel.he_partial_density, result.he_partial_density),
-        self.assertEqual(sentinel.c4_partial_density, result.c4_partial_density),
-        self.assertEqual(sentinel.c5_partial_density, result.c5_partial_density),
-        self.assertEqual(sentinel.c6_partial_density, result.c6_partial_density),
-        self.assertEqual(sentinel.o5_partial_density, result.o5_partial_density),
-        self.assertEqual(sentinel.o6_partial_density, result.o6_partial_density),
-        self.assertEqual(sentinel.o7_partial_density, result.o7_partial_density),
-        self.assertEqual(sentinel.o8_partial_density, result.o8_partial_density),
+        self.assertIsInstance(result, CodiceLoL3aPartialDensityDataProduct)
+        self.assertEqual(input_metadata, result.input_metadata)
+
+        np.testing.assert_array_equal(result.epoch, codice_lo_l2_data.epoch)
+        np.testing.assert_array_equal(result.epoch_delta_plus, codice_lo_l2_data.epoch_delta_plus)
+        np.testing.assert_array_equal(result.epoch_delta_minus, codice_lo_l2_data.epoch_delta_minus)
+        self.assertEqual(sentinel.hplus_partial_density, result.hplus_partial_density),
+        self.assertEqual(sentinel.heplusplus_partial_density, result.heplusplus_partial_density),
+        self.assertEqual(sentinel.cplus4_partial_density, result.cplus4_partial_density),
+        self.assertEqual(sentinel.cplus5_partial_density, result.cplus5_partial_density),
+        self.assertEqual(sentinel.cplus6_partial_density, result.cplus6_partial_density),
+        self.assertEqual(sentinel.oplus5_partial_density, result.oplus5_partial_density),
+        self.assertEqual(sentinel.oplus6_partial_density, result.oplus6_partial_density),
+        self.assertEqual(sentinel.oplus7_partial_density, result.oplus7_partial_density),
+        self.assertEqual(sentinel.oplus8_partial_density, result.oplus8_partial_density),
         self.assertEqual(sentinel.mg_partial_density, result.mg_partial_density),
         self.assertEqual(sentinel.si_partial_density, result.si_partial_density),
-        self.assertEqual(sentinel.fe_low_partial_density, result.fe_low_partial_density),
-        self.assertEqual(sentinel.fe_high_partial_density, result.fe_high_partial_density),
+        self.assertEqual(sentinel.fe_loq_partial_density, result.fe_loq_partial_density),
+        self.assertEqual(sentinel.fe_hiq_partial_density, result.fe_hiq_partial_density),
 
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.calculate_total_number_of_events')
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.calculate_normalization_ratio')
@@ -130,31 +133,36 @@ class TestCodiceLoProcessor(unittest.TestCase):
     def test_process_l3a_direct_events(self, mock_calculate_mass, mock_calculate_mass_per_charge,
                                        mock_calculate_normalization_ratio, mock_total_number_of_events):
         rng = np.random.default_rng()
-        parameters = {f.name: None for f in fields(CodiceLoL2bPriorityRates)}
+        sw_priority_rate_parameters = {f.name: None for f in fields(CodiceLoL1aSWPriorityRates)}
+        nsw_priority_rate_parameters = {f.name: None for f in fields(CodiceLoL1aNSWPriorityRates)}
 
-        priority_rates = CodiceLoL2bPriorityRates(
-            **parameters,
+        sw_priority_rates = CodiceLoL1aSWPriorityRates(
+            **sw_priority_rate_parameters,
+        )
+
+        nsw_priority_rates = CodiceLoL1aNSWPriorityRates(
+            **nsw_priority_rate_parameters,
         )
 
         epochs = np.array([datetime.now(), datetime.now() + timedelta(hours=1)])
         event_num = np.arange(10)
 
-        priority_rates.epoch = epochs
-        (priority_rates.acquisition_times,
-         priority_rates.lo_sw_priority_p0_tcrs,
-         priority_rates.lo_sw_priority_p1_hplus,
-         priority_rates.lo_sw_priority_p2_heplusplus,
-         priority_rates.lo_sw_priority_p3_heavies,
-         priority_rates.lo_sw_priority_p4_dcrs,
-         priority_rates.lo_nsw_priority_p5_heavies,
-         priority_rates.lo_nsw_priority_p6_hplus_heplusplus,
-         priority_rates.lo_nsw_priority_p7_missing) = [rng.random((len(epochs), 2, 2)) for _ in range(9)]
+        sw_priority_rates.epoch = epochs
+        nsw_priority_rates.epoch = epochs
+        (sw_priority_rates.acquisition_time_per_step,
+         sw_priority_rates.p0_tcrs,
+         sw_priority_rates.p1_hplus,
+         sw_priority_rates.p2_heplusplus,
+         sw_priority_rates.p3_heavies,
+         sw_priority_rates.p4_dcrs,
+         nsw_priority_rates.p5_heavies,
+         nsw_priority_rates.p6_hplus_heplusplus) = [rng.random((len(epochs), 2, 2)) for _ in range(8)]
 
         expected_total_events = np.arange(1, 17).reshape(8, 2)
         expected_total_by_energy_and_spin_angle = [rng.random((128, 12)) for _ in range(16)]
 
-        mass_per_charge_side_effect = [rng.random((len(epochs), len(event_num))) for _ in range(8)]
-        mass_side_effect = [rng.random((len(epochs), len(event_num))) for _ in range(8)]
+        mass_per_charge_side_effect = [rng.random((len(epochs), len(event_num))) for _ in range(7)]
+        mass_side_effect = [rng.random((len(epochs), len(event_num))) for _ in range(7)]
 
         (expected_mass,
          expected_mass_per_charge,
@@ -163,10 +171,10 @@ class TestCodiceLoProcessor(unittest.TestCase):
          expected_apd_id,
          expected_multi_flag,
          expected_pha_type,
-         expected_tof) = [np.full((len(epochs), 8, len(event_num)), np.nan) for _ in range(8)]
+         expected_tof) = [np.full((len(epochs), 7, len(event_num)), np.nan) for _ in range(8)]
 
         (expected_data_quality,
-         expected_num_events) = [np.full((len(epochs), 8), np.nan) for _ in range(2)]
+         expected_num_events) = [np.full((len(epochs), 7), np.nan) for _ in range(2)]
 
         mock_calculate_mass_per_charge.side_effect = mass_per_charge_side_effect
         mock_calculate_mass.side_effect = mass_side_effect
@@ -199,9 +207,13 @@ class TestCodiceLoProcessor(unittest.TestCase):
             expected_data_quality[:, i] = np.copy(priority_event.data_quality)
             expected_num_events[:, i] = np.copy(priority_event.num_events)
 
+        empty_priority_7 = PriorityEvent(
+            **{f.name: rng.random((len(epochs), len(event_num))) for f in fields(PriorityEvent)})
+        priority_events.append(empty_priority_7)
         direct_events = CodiceLoL2DirectEventData(epochs, event_num, *priority_events)
 
-        dependencies = CodiceLoL3aDependencies(Mock(), priority_rates, direct_events, Mock(), Mock(), Mock())
+        dependencies = CodiceLoL3aDependencies(sw_priority_rates, nsw_priority_rates, Mock(), direct_events, Mock(),
+                                               Mock())
 
         input_collection = ProcessingInputCollection()
         input_metadata = InputMetadata('codice', "l3a", Mock(spec=datetime), Mock(spec=datetime), 'v02')
@@ -213,7 +225,8 @@ class TestCodiceLoProcessor(unittest.TestCase):
         expected_calculate_normalization_calls = []
         expected_calculate_mass_calls = []
         expected_calculate_mass_per_charge_calls = []
-        for index, priority_event in enumerate(direct_events.priority_events):
+        for index in range(0, len(direct_events.priority_events) - 1):
+            priority_event = direct_events.priority_events[index]
             epoch_call_1 = call(priority_event.total_events_binned_by_energy_step_and_spin_angle.return_value[0],
                                 expected_total_events[index][0])
             epoch_call_2 = call(priority_event.total_events_binned_by_energy_step_and_spin_angle.return_value[0],
@@ -241,29 +254,26 @@ class TestCodiceLoProcessor(unittest.TestCase):
         mock_calculate_mass.assert_has_calls(expected_calculate_mass_calls)
 
         mock_total_number_of_events.assert_has_calls([
-            call(NumpyArrayMatcher(priority_rates.lo_sw_priority_p0_tcrs),
-                 NumpyArrayMatcher(priority_rates.acquisition_times)),
+            call(NumpyArrayMatcher(sw_priority_rates.p0_tcrs),
+                 NumpyArrayMatcher(sw_priority_rates.acquisition_time_per_step)),
 
-            call(NumpyArrayMatcher(priority_rates.lo_sw_priority_p1_hplus),
-                 NumpyArrayMatcher(priority_rates.acquisition_times)),
+            call(NumpyArrayMatcher(sw_priority_rates.p1_hplus),
+                 NumpyArrayMatcher(sw_priority_rates.acquisition_time_per_step)),
 
-            call(NumpyArrayMatcher(priority_rates.lo_sw_priority_p2_heplusplus),
-                 NumpyArrayMatcher(priority_rates.acquisition_times)),
+            call(NumpyArrayMatcher(sw_priority_rates.p2_heplusplus),
+                 NumpyArrayMatcher(sw_priority_rates.acquisition_time_per_step)),
 
-            call(NumpyArrayMatcher(priority_rates.lo_sw_priority_p3_heavies),
-                 NumpyArrayMatcher(priority_rates.acquisition_times)),
+            call(NumpyArrayMatcher(sw_priority_rates.p3_heavies),
+                 NumpyArrayMatcher(sw_priority_rates.acquisition_time_per_step)),
 
-            call(NumpyArrayMatcher(priority_rates.lo_sw_priority_p4_dcrs),
-                 NumpyArrayMatcher(priority_rates.acquisition_times)),
+            call(NumpyArrayMatcher(sw_priority_rates.p4_dcrs),
+                 NumpyArrayMatcher(sw_priority_rates.acquisition_time_per_step)),
 
-            call(NumpyArrayMatcher(priority_rates.lo_nsw_priority_p5_heavies),
-                 NumpyArrayMatcher(priority_rates.acquisition_times)),
+            call(NumpyArrayMatcher(nsw_priority_rates.p5_heavies),
+                 NumpyArrayMatcher(sw_priority_rates.acquisition_time_per_step)),
 
-            call(NumpyArrayMatcher(priority_rates.lo_nsw_priority_p6_hplus_heplusplus),
-                 NumpyArrayMatcher(priority_rates.acquisition_times)),
-
-            call(NumpyArrayMatcher(priority_rates.lo_nsw_priority_p7_missing),
-                 NumpyArrayMatcher(priority_rates.acquisition_times)),
+            call(NumpyArrayMatcher(nsw_priority_rates.p6_hplus_heplusplus),
+                 NumpyArrayMatcher(sw_priority_rates.acquisition_time_per_step))
 
         ], any_order=False)
 

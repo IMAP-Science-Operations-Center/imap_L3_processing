@@ -1,0 +1,5 @@
+imap_ultra_l3_u90-sp-4deg:
+  Data_level: "3"
+  Data_type: L3_u90-sp-4deg>Level-3 Survival Corrected Full 4 degree
+  Logical_source: imap_ultra_l3_u90-sp-4deg
+  Logical_source_description: IMAP-Ultra Instrument Level-3 Survival Corrected Full 4 degree.

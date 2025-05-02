@@ -49,9 +49,8 @@ class TestCodiceHiProcessor(unittest.TestCase):
 
     def test_process_l3a_returns_data_product(self):
         epochs = np.array([datetime(2025, 1, 1), datetime(2025, 1, 1)])
-        energies = np.array([[2, 4], [6, 8]])
 
-        l2_priority_events, reshaped_l2_values = self.create_priority_events(energies)
+        l2_priority_events, reshaped_l2_values = self.create_priority_events()
         l2_data = CodiceL2HiData(epochs, *l2_priority_events)
         energy_per_nuc_dictionary = {i: EnergyPerNuc(i * 10, i * 100, i * 1000) for i in np.arange(1, 25)}
         tof_lookup = TOFLookup(energy_per_nuc_dictionary)
@@ -188,7 +187,7 @@ class TestCodiceHiProcessor(unittest.TestCase):
         np.testing.assert_array_equal(codice_hi_data_product.fe_intensity_by_pitch_angle_and_gyrophase,
                                       expected_fe_rebinned_pitch_angles_and_gyrophase)
 
-    def create_priority_events(self, energies):
+    def create_priority_events(self):
         ssd_id_all_events = np.arange(1, 25).reshape(6, 2, 2) * 1000
         tof_all_events = np.arange(1, 25).reshape(6, 2, 2)
 
@@ -234,10 +233,7 @@ class TestCodiceHiProcessor(unittest.TestCase):
             reshaped_l2_ssd_energy, reshaped_l2_ssd_id, reshaped_l2_spin_angle, reshaped_l2_spin_number,
             reshaped_l2_time_of_flight, reshaped_l2_type)
 
-    def _assert_estimated_mass(self, l2_priority_event,
-                               actual_calculated_mass_lower, actual_calculated_mass, actual_calculated_mass_upper,
-                               actual_energy_per_nuc_lower, actual_energy_per_nuc, actual_energy_per_nuc_upper,
-                               expected_energy_per_nuc_lower, expected_energy_per_nuc, expected_energy_per_nuc_upper):
+    def _assert_estimated_mass(self, l2_priority_event, actual_calculated_mass, actual_energy_per_nuc,
+                               expected_energy_per_nuc):
         np.testing.assert_array_equal(l2_priority_event.ssd_energy / expected_energy_per_nuc, actual_calculated_mass)
-
         np.testing.assert_array_equal(expected_energy_per_nuc, actual_energy_per_nuc)

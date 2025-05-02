@@ -1,5 +1,8 @@
 import json
-from copy import copy
+import os
+import shutil
+import subprocess
+import sys
 from dataclasses import replace
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -9,6 +12,7 @@ import imap_data_access
 import numpy as np
 from imap_data_access.processing_input import ProcessingInputCollection
 
+from imap_l3_processing.glows import l3d
 from imap_l3_processing.glows.descriptors import GLOWS_L3A_DESCRIPTOR
 from imap_l3_processing.glows.glows_initializer import GlowsInitializer
 from imap_l3_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
@@ -21,6 +25,9 @@ from imap_l3_processing.glows.l3bc.models import GlowsL3BIonizationRate, GlowsL3
 from imap_l3_processing.glows.l3bc.science.filter_out_bad_days import filter_out_bad_days
 from imap_l3_processing.glows.l3bc.science.generate_l3bc import generate_l3bc
 from imap_l3_processing.glows.l3bc.utils import make_l3b_data_with_fill, make_l3c_data_with_fill, get_repoint_date_range
+from imap_l3_processing.glows.l3d.glows_l3d_dependencies import GlowsL3DDependencies
+from imap_l3_processing.glows.l3d.utils import create_glows_l3b_json_file_from_cdf, create_glows_l3c_json_file_from_cdf, \
+    PATH_TO_L3D_TOOLKIT, convert_json_to_l3d_data_product
 from imap_l3_processing.glows.l3e.glows_l3e_dependencies import GlowsL3EDependencies
 from imap_l3_processing.glows.l3e.glows_l3e_hi_model import GlowsL3EHiData
 from imap_l3_processing.glows.l3e.glows_l3e_lo_model import GlowsL3ELoData
@@ -54,6 +61,11 @@ class GlowsProcessor(Processor):
                 imap_data_access.upload(l3b_cdf)
                 imap_data_access.upload(l3c_cdf)
                 imap_data_access.upload(zip_file)
+        elif self.input_metadata.data_level == "l3d":
+            l3d_dependencies = GlowsL3DDependencies.fetch_dependencies(self.dependencies)
+            data_product = self.process_l3d(l3d_dependencies)
+            cdf = save_data(data_product)
+            imap_data_access.upload(cdf)
         elif self.input_metadata.data_level == "l3e":
             l3e_dependencies, repointing_number = GlowsL3EDependencies.fetch_dependencies(self.dependencies,
                                                                                           self.input_metadata.descriptor)
@@ -105,6 +117,60 @@ class GlowsProcessor(Processor):
         l3b_data_product.parent_file_names += self.get_parent_file_names([dependencies.zip_file_path])
         l3c_data_product.parent_file_names += self.get_parent_file_names([dependencies.zip_file_path])
         return l3b_data_product, l3c_data_product
+
+    def process_l3d(self, dependencies: GlowsL3DDependencies):
+        [create_glows_l3b_json_file_from_cdf(l3b) for l3b in dependencies.l3b_file_paths]
+        [create_glows_l3c_json_file_from_cdf(l3c) for l3c in dependencies.l3c_file_paths]
+
+        ancillary_path = PATH_TO_L3D_TOOLKIT / 'data_ancillary'
+        external_path = PATH_TO_L3D_TOOLKIT / 'external_dependencies'
+
+        os.makedirs(ancillary_path, exist_ok=True)
+        os.makedirs(external_path, exist_ok=True)
+        os.makedirs(PATH_TO_L3D_TOOLKIT / 'data_l3d', exist_ok=True)
+        os.makedirs(PATH_TO_L3D_TOOLKIT / 'data_l3d_txt', exist_ok=True)
+
+        shutil.move(dependencies.ancillary_files['pipeline_settings'],
+                    ancillary_path / 'imap_glows_pipeline-settings-L3bc_v001.json')
+
+        shutil.move(dependencies.ancillary_files['WawHelioIon']['speed'],
+                    ancillary_path / 'imap_glows_plasma-speed-Legendre-2010a_v001.dat')
+
+        shutil.move(dependencies.ancillary_files['WawHelioIon']['p-dens'],
+                    ancillary_path / 'imap_glows_proton-density-Legendre-2010a_v001.dat')
+
+        shutil.move(dependencies.ancillary_files['WawHelioIon']['uv-anis'],
+                    ancillary_path / 'imap_glows_uv-anisotropy-2010a_v001.dat')
+
+        shutil.move(dependencies.ancillary_files['WawHelioIon']['phion'],
+                    ancillary_path / 'imap_glows_photoion-2010a_v001.dat')
+
+        shutil.move(dependencies.ancillary_files['WawHelioIon']['lya'],
+                    ancillary_path / 'imap_glows_lya-2010a_v001.dat')
+
+        shutil.move(dependencies.ancillary_files['WawHelioIon']['e-dens'],
+                    ancillary_path / 'imap_glows_electron-density-2010a_v001.dat')
+
+        shutil.move(dependencies.external_files['lya_raw_data'], external_path / 'lyman_alpha_composite.nc')
+
+        working_dir = Path(l3d.__file__).parent / 'science'
+
+        last_processed_cr = None
+        try:
+            while True:
+                output: subprocess.CompletedProcess = run([sys.executable, './generate_l3d.py'],
+                                                          cwd=str(working_dir),
+                                                          check=True,
+                                                          capture_output=True, text=True)
+                if output.stdout:
+                    last_processed_cr = int(output.stdout.split('= ')[-1])
+        except subprocess.CalledProcessError as e:
+            if 'L3d not generated: there is not enough L3bc data to interpolate' not in e.stderr:
+                raise Exception(e.stderr) from e
+
+        if last_processed_cr:
+            file_name = f'imap_glows_l3d_cr_{last_processed_cr}_v00.json'
+            return convert_json_to_l3d_data_product(working_dir / 'data_l3d' / file_name, 'l3d.cdf')
 
     def process_l3e_lo(self, epoch: datetime, epoch_delta: timedelta):
         call_args = determine_call_args_for_l3e_executable(epoch, epoch + epoch_delta, 90)
