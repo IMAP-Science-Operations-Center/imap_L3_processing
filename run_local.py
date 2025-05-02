@@ -90,16 +90,19 @@ def create_codice_lo_l3a_partial_densities_cdf():
     mpc_lookup = MassPerChargeLookup.read_from_file(get_test_data_path('codice/test_mass_per_charge_lookup.csv'))
     deps = CodiceLoL3aDependencies(codice_l2_lo_data=codice_lo_l2_data,
                                    mass_per_charge_lookup=mpc_lookup,
-                                   codice_l2b_lo_priority_rates=Mock(),
+                                   codice_lo_l1a_sw_priority_rates=Mock(),
+                                   codice_lo_l1a_nsw_priority_rates=Mock(),
                                    codice_l2_direct_events=Mock(),
                                    mass_coefficient_lookup=Mock())
 
     input_metadata = InputMetadata(
-        instrument='codice-lo',
+        instrument='codice',
         data_level='l3a',
         start_date=datetime(2025, 1, 1),
         end_date=datetime(2025, 1, 2),
-        version='v000')
+        version='v000',
+        descriptor='partial-densities'
+    )
 
     codice_lo_processor = CodiceLoProcessor(ProcessingInputCollection(), input_metadata)
     partial_densities_data = codice_lo_processor.process_l3a(deps)

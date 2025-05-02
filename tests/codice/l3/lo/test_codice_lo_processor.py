@@ -58,7 +58,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
         processor = CodiceLoProcessor(dependencies=input_collection, input_metadata=input_metadata)
 
         epochs = np.array([datetime(2025, 1, 1), datetime(2025, 1, 2), datetime(2025, 1, 3)])
-        num_species = 13
+        num_species = 14
 
         codice_lo_l2_data = CodiceLoL2SWSpeciesData(
             *[Mock() for _ in range(len(fields(CodiceLoL2SWSpeciesData)))],
@@ -78,6 +78,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
             sentinel.oplus6_partial_density,
             sentinel.oplus7_partial_density,
             sentinel.oplus8_partial_density,
+            sentinel.ne_partial_density,
             sentinel.mg_partial_density,
             sentinel.si_partial_density,
             sentinel.fe_loq_partial_density,
@@ -101,6 +102,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
              call(codice_lo_l2_data.oplus6, codice_lo_l2_data.energy_table, mass_per_charge_lookup.oplus6),
              call(codice_lo_l2_data.oplus7, codice_lo_l2_data.energy_table, mass_per_charge_lookup.oplus7),
              call(codice_lo_l2_data.oplus8, codice_lo_l2_data.energy_table, mass_per_charge_lookup.oplus8),
+             call(codice_lo_l2_data.ne, codice_lo_l2_data.energy_table, mass_per_charge_lookup.ne),
              call(codice_lo_l2_data.mg, codice_lo_l2_data.energy_table, mass_per_charge_lookup.mg),
              call(codice_lo_l2_data.si, codice_lo_l2_data.energy_table, mass_per_charge_lookup.si),
              call(codice_lo_l2_data.fe_loq, codice_lo_l2_data.energy_table, mass_per_charge_lookup.fe_loq),
@@ -121,6 +123,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
         self.assertEqual(sentinel.oplus6_partial_density, result.oplus6_partial_density),
         self.assertEqual(sentinel.oplus7_partial_density, result.oplus7_partial_density),
         self.assertEqual(sentinel.oplus8_partial_density, result.oplus8_partial_density),
+        self.assertEqual(sentinel.ne_partial_density, result.ne_partial_density),
         self.assertEqual(sentinel.mg_partial_density, result.mg_partial_density),
         self.assertEqual(sentinel.si_partial_density, result.si_partial_density),
         self.assertEqual(sentinel.fe_loq_partial_density, result.fe_loq_partial_density),

@@ -197,6 +197,7 @@ class TestModels(unittest.TestCase):
             "oplus6_partial_density": np.array([15]),
             "oplus7_partial_density": np.array([15]),
             "oplus8_partial_density": np.array([15]),
+            "ne_partial_density": np.array([15]),
             "mg_partial_density": np.array([15]),
             "si_partial_density": np.array([15]),
             "fe_loq_partial_density": np.array([15]),

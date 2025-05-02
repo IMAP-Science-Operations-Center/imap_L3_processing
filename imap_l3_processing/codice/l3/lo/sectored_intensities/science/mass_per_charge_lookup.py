@@ -14,6 +14,7 @@ class MassPerChargeLookup:
     oplus6: float
     oplus7: float
     oplus8: float
+    ne: float
     mg: float
     si: float
     fe_loq: float
@@ -38,6 +39,7 @@ class MassPerChargeLookup:
             oplus6=mass_per_charge["O+6"],
             oplus7=mass_per_charge["O+7"],
             oplus8=mass_per_charge["O+8"],
+            ne=mass_per_charge["Ne"],
             mg=mass_per_charge["Mg"],
             si=mass_per_charge["Si"],
             fe_loq=mass_per_charge["Fe (low Q)"],
