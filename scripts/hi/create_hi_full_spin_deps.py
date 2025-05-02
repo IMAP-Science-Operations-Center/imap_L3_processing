@@ -49,7 +49,7 @@ def create_hi_full_spin_deps(
     processor = HiProcessor(None,
                             input_metadata)
     ram_data = processor.process_survival_probabilities(ramified_map_deps)
-    ram_exposure_is_zero = np.isnan(ram_data.ena_intensity)
+    ram_exposure_is_zero = np.isnan(ram_data.ena_intensity) | (ram_data.ena_intensity == 0)
 
     ram_cdf_path = save_data(
         HiL3IntensityDataProduct(input_metadata, ram_data),
@@ -66,7 +66,7 @@ def create_hi_full_spin_deps(
     shutil.move(ram_cdf_path, output_dir / f"{ram_logical_source}.cdf")
 
     antiram_data = processor.process_survival_probabilities(antiramified_map_deps)
-    antiram_exposure_is_zero = np.isnan(antiram_data.ena_intensity)
+    antiram_exposure_is_zero = np.isnan(antiram_data.ena_intensity) | (antiram_data.ena_intensity == 0)
 
     antiram_cdf_path = save_data(
         HiL3IntensityDataProduct(input_metadata, antiram_data),

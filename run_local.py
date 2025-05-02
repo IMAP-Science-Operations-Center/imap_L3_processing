@@ -830,7 +830,13 @@ if __name__ == "__main__":
 
             print(create_survival_corrected_full_spin_cdf(full_spin_dependencies))
         if do_all or "combined-sensors" in sys.argv:
-            combined_dependencies = HiL3CombinedMapDependencies.from_file_paths(map_paths)
+            combined_dependencies = HiL3CombinedMapDependencies.from_file_paths(
+                [
+                    l2_ram_90_map_path,
+                    l2_antiram_90_map_path,
+                    l2_ram_45_map_path,
+                    l2_antiram_45_map_path,
+                ])
             print(create_combined_sensor_cdf(combined_dependencies))
 
     if "ultra" in sys.argv:
