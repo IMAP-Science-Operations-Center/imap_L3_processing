@@ -10,16 +10,13 @@ from subprocess import CalledProcessError, CompletedProcess
 from unittest.mock import patch, Mock, sentinel, call
 
 import numpy as np
-from imap_data_access.processing_input import ScienceInput
 
-from imap_l3_processing.constants import CARRINGTON_ROTATION_IN_NANOSECONDS
 from imap_l3_processing.glows import l3d
 from imap_l3_processing.glows.descriptors import GLOWS_L3A_DESCRIPTOR
 from imap_l3_processing.glows.glows_processor import GlowsProcessor
 from imap_l3_processing.glows.l3a.utils import create_glows_l3a_dictionary_from_cdf, create_glows_l3a_from_dictionary
 from imap_l3_processing.glows.l3bc.cannot_process_carrington_rotation_error import CannotProcessCarringtonRotationError
 from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDependencies
-from imap_l3_processing.glows.l3bc.models import GlowsL3BIonizationRate
 from imap_l3_processing.glows.l3d.glows_l3d_dependencies import GlowsL3DDependencies
 from imap_l3_processing.glows.l3d.utils import PATH_TO_L3D_TOOLKIT
 from imap_l3_processing.glows.l3e.glows_l3e_lo_model import GlowsL3ELoData
@@ -287,62 +284,7 @@ class TestGlowsProcessor(unittest.TestCase):
             call(sentinel.zip_file_path_2),
         ])
 
-    @patch('imap_l3_processing.glows.glows_processor.make_l3c_data_with_fill')
-    @patch('imap_l3_processing.glows.glows_processor.make_l3b_data_with_fill')
-    @patch('imap_l3_processing.glows.glows_processor.GlowsL3BIonizationRate')
-    @patch('imap_l3_processing.glows.glows_processor.GlowsL3CSolarWind')
-    @patch('imap_l3_processing.glows.glows_processor.filter_out_bad_days')
-    @patch('imap_l3_processing.glows.glows_processor.generate_l3bc',
-           side_effect=CannotProcessCarringtonRotationError(""))
-    def test_create_fill_val_when_generate_l3bc_throws_exception(self, _, mock_filter_bad_days,
-                                                                 mock_l3c_model_class, mock_l3b_model_class,
-                                                                 mock_make_l3b_data_with_fill,
-                                                                 mock_make_l3c_data_with_fill):
-
-        input_metadata = InputMetadata('glows', "l3b", sentinel.start_time,
-                                       sentinel.end_time,
-                                       'v02')
-
-        dependencies = GlowsL3BCDependencies(l3a_data=sentinel.l3a_data,
-                                             external_files=sentinel.external_files,
-                                             ancillary_files={
-                                                 'bad_days_list': sentinel.bad_days_list,
-                                             },
-                                             carrington_rotation_number=sentinel.cr,
-                                             start_date=sentinel.start_time, end_date=sentinel.end_time,
-                                             zip_file_path=Path('some/path.zip'))
-        l3b_metadata = InputMetadata("glows", "l3b", dependencies.start_date,
-                                     dependencies.end_date, 'v02', "ion-rate-profile")
-
-        l3c_metadata = InputMetadata("glows", "l3c", dependencies.start_date,
-                                     dependencies.end_date, 'v02', "sw-profile")
-
-        mock_filter_bad_days.return_value = sentinel.filtered_days
-
-        mock_make_l3b_data_with_fill.return_value = sentinel.l3b_fill
-        mock_make_l3c_data_with_fill.return_value = sentinel.l3c_fill
-
-        l3b_model = Mock()
-        l3b_model.parent_file_names = []
-        l3c_model = Mock()
-        l3c_model.parent_file_names = []
-
-        mock_l3b_model_class.from_instrument_team_dictionary.return_value = l3b_model
-        mock_l3c_model_class.from_instrument_team_dictionary.return_value = l3c_model
-
-        processor = GlowsProcessor(dependencies=Mock(), input_metadata=input_metadata)
-        result_l3b, result_l3c = processor.process_l3bc(dependencies)
-
-        self.assertEqual([call(dependencies)], mock_make_l3b_data_with_fill.call_args_list)
-        self.assertEqual([call(dependencies)], mock_make_l3c_data_with_fill.call_args_list)
-        mock_l3b_model_class.from_instrument_team_dictionary.assert_called_once_with(sentinel.l3b_fill,
-                                                                                     l3b_metadata)
-        mock_l3c_model_class.from_instrument_team_dictionary.assert_called_once_with(sentinel.l3c_fill,
-                                                                                     l3c_metadata)
-        self.assertEqual(l3b_model, result_l3b)
-        self.assertEqual(l3c_model, result_l3c)
-
-    def test_process_l3bc_all_data_in_bad_season_returns_data_products_with_fill_values(self):
+    def test_process_l3bc_all_data_in_bad_season_throws_exception(self):
         cr = 2093
         start_date = datetime(2025, 4, 3)
         end_date = datetime(2025, 4, 5)
@@ -369,41 +311,9 @@ class TestGlowsProcessor(unittest.TestCase):
                                              zip_file_path=Path('some/path.zip'))
 
         processor = GlowsProcessor(dependencies=Mock(), input_metadata=input_metadata)
-        actual_l3b, actual_l3c = processor.process_l3bc(dependencies)
-
-        expected_lat_grid = [-90, -80, -70, -60, -50, -40, -30, -20, -10,
-                             0, 10, 20, 30, 40, 50, 60, 70, 80, 90]
-        expected_l3b = GlowsL3BIonizationRate(
-            input_metadata=input_metadata,
-            epoch=np.array([datetime(2010, 2, 13, 9, 27, 43, 199991)]),
-            epoch_delta=np.array([CARRINGTON_ROTATION_IN_NANOSECONDS / 2]),
-            cr=np.array([cr]),
-            uv_anisotropy_factor=np.full((1, 19), 1),
-            lat_grid=np.array(expected_lat_grid),
-            lat_grid_delta=np.zeros(19),
-            sum_rate=np.full((1, 19), np.nan),
-            ph_rate=np.full((1, 19), np.nan),
-            cx_rate=np.full((1, 19), np.nan),
-            sum_uncert=np.full((1, 19), np.nan),
-            ph_uncert=np.full((1, 19), np.nan),
-            cx_uncert=np.full((1, 19), np.nan),
-            lat_grid_label=[f"{x}°" for x in expected_lat_grid],
-        )
-
-        self.assertEqual(expected_l3b.input_metadata, actual_l3b.input_metadata)
-        np.testing.assert_array_equal(expected_l3b.epoch, actual_l3b.epoch)
-        np.testing.assert_array_equal(expected_l3b.epoch_delta, actual_l3b.epoch_delta)
-        np.testing.assert_array_equal(expected_l3b.cr, actual_l3b.cr)
-        np.testing.assert_array_equal(expected_l3b.uv_anisotropy_factor, actual_l3b.uv_anisotropy_factor)
-        np.testing.assert_array_equal(expected_l3b.lat_grid, actual_l3b.lat_grid)
-        np.testing.assert_array_equal(expected_l3b.lat_grid_delta, actual_l3b.lat_grid_delta)
-        np.testing.assert_array_equal(expected_l3b.sum_rate, actual_l3b.sum_rate)
-        np.testing.assert_array_equal(expected_l3b.ph_rate, actual_l3b.ph_rate)
-        np.testing.assert_array_equal(expected_l3b.cx_rate, actual_l3b.cx_rate)
-        np.testing.assert_array_equal(expected_l3b.sum_uncert, actual_l3b.sum_uncert)
-        np.testing.assert_array_equal(expected_l3b.ph_uncert, actual_l3b.ph_uncert)
-        np.testing.assert_array_equal(expected_l3b.cx_uncert, actual_l3b.cx_uncert)
-        self.assertEqual(expected_l3b.lat_grid_label, actual_l3b.lat_grid_label)
+        with self.assertRaises(CannotProcessCarringtonRotationError) as context:
+            processor.process_l3bc(dependencies)
+        self.assertTrue("All days for Carrington Rotation are in a bad season." in str(context.exception))
 
     @patch('imap_l3_processing.hi.hi_processor.Processor.get_parent_file_names')
     @patch('imap_l3_processing.glows.glows_processor.save_data')

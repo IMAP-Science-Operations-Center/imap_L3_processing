@@ -11,8 +11,6 @@ from subprocess import run
 import imap_data_access
 import numpy as np
 from imap_data_access.processing_input import ProcessingInputCollection
-
-from imap_l3_processing.glows import l3d
 from imap_l3_processing.glows.descriptors import GLOWS_L3A_DESCRIPTOR
 from imap_l3_processing.glows.glows_initializer import GlowsInitializer
 from imap_l3_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
@@ -24,7 +22,7 @@ from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDepen
 from imap_l3_processing.glows.l3bc.models import GlowsL3BIonizationRate, GlowsL3CSolarWind
 from imap_l3_processing.glows.l3bc.science.filter_out_bad_days import filter_out_bad_days
 from imap_l3_processing.glows.l3bc.science.generate_l3bc import generate_l3bc
-from imap_l3_processing.glows.l3bc.utils import make_l3b_data_with_fill, make_l3c_data_with_fill, get_repoint_date_range
+from imap_l3_processing.glows.l3bc.utils import get_repoint_date_range
 from imap_l3_processing.glows.l3d.glows_l3d_dependencies import GlowsL3DDependencies
 from imap_l3_processing.glows.l3d.utils import create_glows_l3b_json_file_from_cdf, create_glows_l3c_json_file_from_cdf, \
     PATH_TO_L3D_TOOLKIT, convert_json_to_l3d_data_product, get_parent_file_names_from_l3d_json
@@ -106,16 +104,13 @@ class GlowsProcessor(Processor):
 
         try:
             l3b_data, l3c_data = generate_l3bc(replace(dependencies, l3a_data=filtered_days))
-            l3b_data_product = GlowsL3BIonizationRate.from_instrument_team_dictionary(l3b_data,
-                                                                                      l3b_metadata)
-            l3c_data_product = GlowsL3CSolarWind.from_instrument_team_dictionary(l3c_data, l3c_metadata)
-        except CannotProcessCarringtonRotationError:
-            l3b_data_with_fills = make_l3b_data_with_fill(dependencies)
-            l3c_data_with_fills = make_l3c_data_with_fill(dependencies)
-            l3b_data_product = GlowsL3BIonizationRate.from_instrument_team_dictionary(l3b_data_with_fills,
-                                                                                      l3b_metadata)
-            l3c_data_product = GlowsL3CSolarWind.from_instrument_team_dictionary(l3c_data_with_fills,
-                                                                                 l3c_metadata)
+        except CannotProcessCarringtonRotationError as e:
+            raise e
+
+        l3b_data_product = GlowsL3BIonizationRate.from_instrument_team_dictionary(l3b_data,
+                                                                                  l3b_metadata)
+        l3c_data_product = GlowsL3CSolarWind.from_instrument_team_dictionary(l3c_data, l3c_metadata)
+
         l3b_data_product.parent_file_names += self.get_parent_file_names([dependencies.zip_file_path])
         l3c_data_product.parent_file_names += self.get_parent_file_names([dependencies.zip_file_path])
         return l3b_data_product, l3c_data_product

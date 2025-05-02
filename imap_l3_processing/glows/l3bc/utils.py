@@ -150,59 +150,6 @@ def archive_dependencies(cr_to_process: CRToProcess, version: str,
     return zip_path
 
 
-def make_l3b_data_with_fill(dependencies: GlowsL3BCDependencies):
-    model = {}
-    model['header'] = {
-        'ancillary_data_files': dependencies.ancillary_files,
-        'external_dependeciens': dependencies.external_files,
-        'l3a_input_files_name': []
-    }
-    uv_anisotropy_file = dependencies.ancillary_files['uv_anisotropy']
-    model['ion_rate_profile'] = {}
-    model['CR'] = dependencies.carrington_rotation_number
-
-    with open(uv_anisotropy_file, 'r') as file:
-        text = file.read()
-        contents = json.loads(text)
-        model['uv_anisotropy_factor'] = contents['anisotropy_factor']
-        model['ion_rate_profile']['lat_grid'] = contents['lat_grid']
-
-    model['ion_rate_profile']['sum_rate'] = np.full(len(contents['lat_grid']), np.nan)
-    model['ion_rate_profile']['ph_rate'] = np.full(len(contents['lat_grid']), np.nan)
-    model['ion_rate_profile']['cx_rate'] = np.full(len(contents['lat_grid']), np.nan)
-    model['ion_rate_profile']['sum_uncert'] = np.full(len(contents['lat_grid']), np.nan)
-    model['ion_rate_profile']['ph_uncert'] = np.full(len(contents['lat_grid']), np.nan)
-    model['ion_rate_profile']['cx_uncert'] = np.full(len(contents['lat_grid']), np.nan)
-
-    return model
-
-
-def make_l3c_data_with_fill(dependencies: GlowsL3BCDependencies) -> dict:
-    model = {}
-    model['header'] = {
-        'ancillary_data_files': dependencies.ancillary_files,
-        'external_dependeciens': dependencies.external_files,
-    }
-    model['solar_wind_profile'] = {}
-    model['solar_wind_ecliptic'] = {}
-    model['CR'] = dependencies.carrington_rotation_number
-
-    model['solar_wind_ecliptic']["plasma_speed"] = np.nan
-    model['solar_wind_ecliptic']["proton_density"] = np.nan
-    model['solar_wind_ecliptic']["alpha_abundance"] = np.nan
-    with open(dependencies.ancillary_files["pipeline_settings"], 'r') as file:
-        settings = json.load(file)
-
-    lat_grid = settings['ion_rate_grid']
-    model['solar_wind_profile']['lat_grid'] = lat_grid
-    grid_size = len(lat_grid)
-
-    model['solar_wind_profile']['plasma_speed'] = np.full(grid_size, np.nan)
-    model['solar_wind_profile']['proton_density'] = np.full(grid_size, np.nan)
-
-    return model
-
-
 def get_repoint_date_range(repointing: int) -> (np.datetime64, np.datetime64):
     repointing_df: pd.DataFrame = get_repoint_data()
     matching_rows = repointing_df[repointing_df['repoint_id'] == repointing]
