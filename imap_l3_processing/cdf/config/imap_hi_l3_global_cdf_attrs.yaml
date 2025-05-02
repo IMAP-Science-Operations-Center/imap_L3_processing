@@ -2,22 +2,40 @@ imap_hi_l3_h90-spx-h-hf-sp-full-hae-4deg-6mo:
   Data_level: "3"
   Data_type: L3_h90-spx-h-hf-sp-full-hae-4deg-6mo>Level-3 Spectral Fit Index
   Logical_source: imap_hi_l3_h90-spx-h-hf-sp-full-hae-4deg-6mo
-  Logical_source_description: IMAP-Hi Instrument Level-3 Spectral Fit Index.
+  Logical_source_description: IMAP-Hi Instrument Level-3 Spectral Index, Hi-90 sensor, Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin, HAE, 4 Degree Rectangular Pixels, 6 Month Map
 
 imap_hi_l3_h90-ena-h-sf-sp-full-hae-4deg-6mo:
   Data_level: "3"
   Data_type: L3_h90-ena-h-sf-sp-full-hae-4deg-6mo>Level-3 Survival Corrected Full 4 degree
   Logical_source: imap_hi_l3_h90-ena-h-sf-sp-full-hae-4deg-6mo
-  Logical_source_description: IMAP-Hi Instrument Level-3 Survival Corrected Full 4 degree
+  Logical_source_description: IMAP-Hi Instrument Level-3 ENA Intensity, Hi-90 sensor, Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin, HAE, 4 Degree Rectangular Pixels, 6 Month Map
 
 imap_hi_l3_h90-ena-h-sf-sp-ram-hae-4deg-6mo:
   Data_level: "3"
-  Data_type: L3_h90-ena-h-sf-sp-full-hae-4deg-6mo>Level-3 Survival Corrected Full 4 degree
-  Logical_source: imap_hi_l3_h90-ena-h-sf-sp-full-hae-4deg-6mo
-  Logical_source_description: IMAP-Hi Instrument Level-3 Survival Corrected Full 4 degree
+  Data_type: L3_h90-ena-h-sf-sp-ram-hae-4deg-6mo>Level-3 Survival Corrected Full 4 degree
+  Logical_source: imap_hi_l3_h90-ena-h-sf-sp-ram-hae-4deg-6mo
+  Logical_source_description: IMAP-Hi Instrument Level-3 ENA Intensity, Hi-90 sensor, Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Ram-Only, HAE, 4 Degree Rectangular Pixels, 6 Month Map
 
 imap_hi_l3_hic-ena-h-hf-nsp-full-hae-4deg-1yr:
   Data_level: "3"
   Data_type: l3_hic-ena-h-hf-nsp-full-hae-4deg-1yr>Level-3 Combined Sensor Full 4 degree
   Logical_source: imap_hi_l3_hic-ena-h-hf-nsp-full-hae-4deg-1yr
-  Logical_source_description: IMAP-Hi Instrument Level-3 Combined Sensor Full 4 degree
+  Logical_source_description: IMAP-Hi Instrument Level-3 ENA Intensity, Combined Sensors, Hydrogen, Heliospheric Frame, Non-Survival Probability-Corrected, Full Spin, HAE, 4 Degree Rectangular Pixels, One Year Map
+
+imap_hi_l3_hic-ena-h-hf-nsp-full-hae-6deg-1yr:
+  Data_level: "3"
+  Data_type: l3_hic-ena-h-hf-nsp-full-hae-6deg-1yr>Level-3 Combined Sensor Full 6 degree
+  Logical_source: imap_hi_l3_hic-ena-h-hf-nsp-full-hae-6deg-1yr
+  Logical_source_description: IMAP-Hi Instrument Level-3 ENA Intensity, Combined Sensors, Hydrogen, Heliospheric Frame, Non-Survival Probability-Corrected, Full Spin, HAE, 6 Degree Rectangular Pixels, One Year Map
+
+imap_hi_l3_hic-ena-h-hf-sp-full-hae-4deg-1yr:
+  Data_level: "3"
+  Data_type: l3_hic-ena-h-hf-sp-full-hae-4deg-1yr>Level-3 Combined Sensor Full 4 degree
+  Logical_source: imap_hi_l3_hic-ena-h-hf-sp-full-hae-4deg-1yr
+  Logical_source_description: IMAP-Hi Instrument Level-3 ENA Intensity, Combined Sensors, Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin, HAE, 4 Degree Rectangular Pixels, One Year Map
+
+imap_hi_l3_hic-ena-h-hf-sp-full-hae-6deg-1yr:
+  Data_level: "3"
+  Data_type: l3_hic-ena-h-hf-sp-full-hae-6deg-1yr>Level-3 Combined Sensor Full 6 degree
+  Logical_source: imap_hi_l3_hic-ena-h-hf-sp-full-hae-6deg-1yr
+  Logical_source_description: IMAP-Hi Instrument Level-3 ENA Intensity, Combined Sensors, Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin, HAE, 6 Degree Rectangular Pixels, One Year Map
