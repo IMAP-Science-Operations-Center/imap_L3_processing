@@ -43,7 +43,6 @@ def read_hi_l1c_data(path: Union[Path, str]) -> HiL1cData:
 
 
 def read_glows_l3e_data(cdf_path: Union[Path, str]) -> HiGlowsL3eData:
-    print(cdf_path)
     with CDF(str(cdf_path)) as cdf:
         return HiGlowsL3eData(epoch=cdf["epoch"][0],
                               energy=read_numeric_variable(cdf["energy"]),
