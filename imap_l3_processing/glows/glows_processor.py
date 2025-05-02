@@ -27,7 +27,7 @@ from imap_l3_processing.glows.l3bc.science.generate_l3bc import generate_l3bc
 from imap_l3_processing.glows.l3bc.utils import make_l3b_data_with_fill, make_l3c_data_with_fill, get_repoint_date_range
 from imap_l3_processing.glows.l3d.glows_l3d_dependencies import GlowsL3DDependencies
 from imap_l3_processing.glows.l3d.utils import create_glows_l3b_json_file_from_cdf, create_glows_l3c_json_file_from_cdf, \
-    PATH_TO_L3D_TOOLKIT, convert_json_l3d_to_cdf
+    PATH_TO_L3D_TOOLKIT, convert_json_to_l3d_data_product
 from imap_l3_processing.glows.l3e.glows_l3e_dependencies import GlowsL3EDependencies
 from imap_l3_processing.glows.l3e.glows_l3e_hi_model import GlowsL3EHiData
 from imap_l3_processing.glows.l3e.glows_l3e_lo_model import GlowsL3ELoData
@@ -63,7 +63,9 @@ class GlowsProcessor(Processor):
                 imap_data_access.upload(zip_file)
         elif self.input_metadata.data_level == "l3d":
             l3d_dependencies = GlowsL3DDependencies.fetch_dependencies(self.dependencies)
-            self.process_l3d(l3d_dependencies)
+            data_product = self.process_l3d(l3d_dependencies)
+            cdf = save_data(data_product)
+            imap_data_access.upload(cdf)
         elif self.input_metadata.data_level == "l3e":
             l3e_dependencies, repointing_number = GlowsL3EDependencies.fetch_dependencies(self.dependencies,
                                                                                           self.input_metadata.descriptor)
@@ -125,6 +127,8 @@ class GlowsProcessor(Processor):
 
         os.makedirs(ancillary_path, exist_ok=True)
         os.makedirs(external_path, exist_ok=True)
+        os.makedirs(PATH_TO_L3D_TOOLKIT / 'data_l3d', exist_ok=True)
+        os.makedirs(PATH_TO_L3D_TOOLKIT / 'data_l3d_txt', exist_ok=True)
 
         shutil.move(dependencies.ancillary_files['pipeline_settings'],
                     ancillary_path / 'imap_glows_pipeline-settings-L3bc_v001.json')
@@ -166,7 +170,7 @@ class GlowsProcessor(Processor):
 
         if last_processed_cr:
             file_name = f'imap_glows_l3d_cr_{last_processed_cr}_v00.json'
-            convert_json_l3d_to_cdf(working_dir / 'data_l3d' / file_name, 'l3d.cdf')
+            return convert_json_to_l3d_data_product(working_dir / 'data_l3d' / file_name, 'l3d.cdf')
 
     def process_l3e_lo(self, epoch: datetime, epoch_delta: timedelta):
         call_args = determine_call_args_for_l3e_executable(epoch, epoch + epoch_delta, 90)

@@ -616,7 +616,31 @@ class TestGlowsProcessor(unittest.TestCase):
 
         mock_upload.assert_called_once_with(sentinel.lo_path)
 
-    @patch('imap_l3_processing.glows.glows_processor.convert_json_l3d_to_cdf')
+    @patch('imap_l3_processing.glows.glows_processor.shutil')
+    @patch('imap_l3_processing.glows.glows_processor.os')
+    @patch('imap_l3_processing.glows.glows_processor.run')
+    @patch('imap_l3_processing.glows.glows_processor.convert_json_to_l3d_data_product')
+    @patch('imap_l3_processing.glows.glows_processor.GlowsL3DDependencies.fetch_dependencies')
+    @patch('imap_l3_processing.glows.glows_processor.imap_data_access.upload')
+    @patch('imap_l3_processing.glows.glows_processor.save_data')
+    def test_processor_handles_l3d(self, mock_save_data, mock_upload, mock_fetch_dependencies, mock_convert_json_to_l3d,
+                                   mock_run, _, __):
+        processing_input_collection = Mock()
+        input_metadata = InputMetadata('glows', "l3d", datetime(2024, 10, 7, 10, 00, 00),
+                                       datetime(2024, 10, 8, 10, 00, 00),
+                                       'v001', descriptor='solar-params-history')
+
+        ran_out_of_l3b_exception = 'Exception: L3d not generated: there is not enough L3bc data to interpolate'
+        mock_run.side_effect = [CompletedProcess(args=[], returncode=0, stdout=f'Processed CR= {2091}'),
+                                CalledProcessError(cmd="", returncode=1, stderr=ran_out_of_l3b_exception)]
+
+        processor = GlowsProcessor(processing_input_collection, input_metadata)
+        processor.process()
+        mock_fetch_dependencies.assert_called_once_with(processing_input_collection)
+        mock_save_data.assert_called_once_with(mock_convert_json_to_l3d.return_value)
+        mock_upload.assert_called_once_with(mock_save_data.return_value)
+
+    @patch('imap_l3_processing.glows.glows_processor.convert_json_to_l3d_data_product')
     @patch('imap_l3_processing.glows.glows_processor.run')
     @patch('imap_l3_processing.glows.glows_processor.os')
     @patch('imap_l3_processing.glows.glows_processor.shutil')
@@ -625,11 +649,11 @@ class TestGlowsProcessor(unittest.TestCase):
     @patch("imap_l3_processing.glows.glows_processor.GlowsL3DDependencies")
     def test_process_l3d(self, mock_l3d_dependencies_constructor, mock_create_glows_l3b_json_file_from_cdf,
                          mock_create_glows_l3c_json_file_from_cdf, mock_shutil, mock_os, mock_run,
-                         mock_convert_json_l3d_to_cdf):
+                         mock_convert_json_to_l3d_data_product):
 
         input_metadata = InputMetadata('glows', "l3d", datetime(2024, 10, 7, 10, 00, 00),
                                        datetime(2024, 10, 8, 10, 00, 00),
-                                       'v001', descriptor='solar-hist')
+                                       'v001', descriptor='solar-params-history')
 
         input_data_collection = Mock()
 
@@ -668,16 +692,16 @@ class TestGlowsProcessor(unittest.TestCase):
         mock_run.side_effect = [CompletedProcess(args=[], returncode=0, stdout=f'Processed CR= {cr_number}'),
                                 CalledProcessError(cmd="", returncode=1, stderr=ran_out_of_l3b_exception)]
 
-        mock_convert_json_l3d_to_cdf.return_value = sentinel.l3d_cdf_path
+        mock_convert_json_to_l3d_data_product.return_value = sentinel.l3d_data_product
 
         processor = GlowsProcessor(input_data_collection, input_metadata)
-        processor.process()
-
-        mock_l3d_dependencies_constructor.fetch_dependencies.assert_called_once_with(input_data_collection)
+        actual_l3d_data_product = processor.process_l3d(mock_l3d_dependencies)
 
         mock_os.makedirs.assert_has_calls([
             call(PATH_TO_L3D_TOOLKIT / 'data_ancillary', exist_ok=True),
-            call(PATH_TO_L3D_TOOLKIT / 'external_dependencies', exist_ok=True)
+            call(PATH_TO_L3D_TOOLKIT / 'external_dependencies', exist_ok=True),
+            call(PATH_TO_L3D_TOOLKIT / 'data_l3d', exist_ok=True),
+            call(PATH_TO_L3D_TOOLKIT / 'data_l3d_txt', exist_ok=True),
         ])
 
         mock_shutil.move.assert_has_calls([
@@ -714,15 +738,17 @@ class TestGlowsProcessor(unittest.TestCase):
                  capture_output=True, text=True),
         ])
 
-        mock_convert_json_l3d_to_cdf.assert_called_once_with(
+        mock_convert_json_to_l3d_data_product.assert_called_once_with(
             expected_working_directory / 'data_l3d' / f'imap_glows_l3d_cr_{cr_number}_v00.json', 'l3d.cdf')
+
+        self.assertEqual(sentinel.l3d_data_product, actual_l3d_data_product)
 
     @patch('imap_l3_processing.glows.glows_processor.os')
     @patch('imap_l3_processing.glows.glows_processor.shutil')
-    @patch('imap_l3_processing.glows.glows_processor.convert_json_l3d_to_cdf')
+    @patch('imap_l3_processing.glows.glows_processor.convert_json_to_l3d_data_product')
     @patch('imap_l3_processing.glows.glows_processor.run')
-    def test_process_l3d_handles_unexpcted_exception_from_science(self, mock_run,
-                                                                  mock_convert_json_l3d_to_cdf, _, __):
+    def test_process_l3d_handles_unexpected_exception_from_science(self, mock_run,
+                                                                   mock_convert_json_to_l3d_data_product, _, __):
         ancillary_files = {
             'pipeline_settings': Path('path/to/pipeline_settings'),
             'WawHelioIon': {
@@ -768,7 +794,7 @@ class TestGlowsProcessor(unittest.TestCase):
             processor.process_l3d(l3d_dependencies)
         self.assertEqual(unexpected_exception, str(context.exception))
 
-        mock_convert_json_l3d_to_cdf.assert_not_called()
+        mock_convert_json_to_l3d_data_product.assert_not_called()
 
 
 if __name__ == '__main__':
