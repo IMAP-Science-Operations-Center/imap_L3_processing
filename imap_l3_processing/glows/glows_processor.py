@@ -63,9 +63,11 @@ class GlowsProcessor(Processor):
                 imap_data_access.upload(zip_file)
         elif self.input_metadata.data_level == "l3d":
             l3d_dependencies = GlowsL3DDependencies.fetch_dependencies(self.dependencies)
-            data_product = self.process_l3d(l3d_dependencies)
+            data_product, l3d_txt_paths = self.process_l3d(l3d_dependencies)
             cdf = save_data(data_product)
             imap_data_access.upload(cdf)
+            for txt_path in l3d_txt_paths:
+                imap_data_access.upload(txt_path)
         elif self.input_metadata.data_level == "l3e":
             l3e_dependencies, repointing_number = GlowsL3EDependencies.fetch_dependencies(self.dependencies,
                                                                                           self.input_metadata.descriptor)
@@ -169,8 +171,13 @@ class GlowsProcessor(Processor):
             file_name = f'imap_glows_l3d_cr_{last_processed_cr}_v00.json'
 
             parent_file_names = get_parent_file_names_from_l3d_json(PATH_TO_L3D_TOOLKIT / 'data_l3d')
+
+            output_txt_files = [PATH_TO_L3D_TOOLKIT / 'data_l3d_txt' / last_cr_txt_file for last_cr_txt_file in
+                                os.listdir(PATH_TO_L3D_TOOLKIT / 'data_l3d_txt') if
+                                str(last_processed_cr) in last_cr_txt_file]
+
             return convert_json_to_l3d_data_product(PATH_TO_L3D_TOOLKIT / 'data_l3d' / file_name, self.input_metadata,
-                                                    parent_file_names)
+                                                    parent_file_names), output_txt_files
 
     def process_l3e_lo(self, epoch: datetime, epoch_delta: timedelta):
         call_args = determine_call_args_for_l3e_executable(epoch, epoch + epoch_delta, 90)
