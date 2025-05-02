@@ -23,8 +23,9 @@ epoch:
   NAME: epoch
   CATDESC: Time, number of nanoseconds since J2000 with leap seconds included
   VAR_TYPE: support_data
+  DISPLAY_TYPE: no_plot
   DATA_TYPE: CDF_TIME_TT2000
-  FIELDNAM: epoch
+  FIELDNAM: Epoch
   RECORD_VARYING: RV
   LABLAXIS: epoch
   UNITS: ns
@@ -33,7 +34,7 @@ epoch:
   FILLVAL: 9999-12-31T23:59:59.999999999
   SCALE_TYP: linear
   TIME_BASE: J2000
-  TIME_SCALE: Terrestrial Time
+  TIME_SCALE: TT
   DELTA_PLUS_VAR: epoch_delta
   DELTA_MINUS_VAR: epoch_delta
   MONOTON: INCREASE
