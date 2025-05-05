@@ -539,6 +539,7 @@ class TestGlowsProcessor(unittest.TestCase):
         mock_upload.assert_called_once_with(sentinel.lo_path)
 
     @patch('imap_l3_processing.glows.glows_processor.shutil')
+    @patch('imap_l3_processing.glows.glows_processor.get_parent_file_names_from_l3d_json')
     @patch('imap_l3_processing.glows.glows_processor.os')
     @patch('imap_l3_processing.glows.glows_processor.run')
     @patch('imap_l3_processing.glows.glows_processor.convert_json_to_l3d_data_product')
@@ -546,7 +547,7 @@ class TestGlowsProcessor(unittest.TestCase):
     @patch('imap_l3_processing.glows.glows_processor.imap_data_access.upload')
     @patch('imap_l3_processing.glows.glows_processor.save_data')
     def test_processor_handles_l3d(self, mock_save_data, mock_upload, mock_fetch_dependencies, mock_convert_json_to_l3d,
-                                   mock_run, mock_os, __):
+                                   mock_run, mock_os, _, __):
         processing_input_collection = Mock()
         input_metadata = InputMetadata('glows', "l3d", datetime(2024, 10, 7, 10, 00, 00),
                                        datetime(2024, 10, 8, 10, 00, 00),
