@@ -19,6 +19,7 @@ class TestMassPerChargeLookup(unittest.TestCase):
         self.assertEqual(2.7, mass_per_charge_lookup.oplus6)
         self.assertEqual(2.28, mass_per_charge_lookup.oplus7)
         self.assertEqual(2, mass_per_charge_lookup.oplus8)
+        self.assertEqual(3.6, mass_per_charge_lookup.ne)
         self.assertEqual(3.5, mass_per_charge_lookup.mg)
         self.assertEqual(4, mass_per_charge_lookup.si)
         self.assertEqual(3.85, mass_per_charge_lookup.fe_loq)

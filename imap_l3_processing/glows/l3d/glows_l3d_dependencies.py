@@ -7,25 +7,24 @@ from imap_data_access.processing_input import ProcessingInputCollection
 from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
 from imap_data_access import download, query
 
-from imap_l3_processing.glows.l3d.utils import get_l3a_parent_files_from_l3b
-
 
 @dataclass
 class GlowsL3DDependencies:
     external_files: dict[str, Path]
-    ancillary_files: dict[str, Path]
+    ancillary_files: dict[str, Path | dict[str, Path]]
     l3b_file_paths: list[Path]
     l3c_file_paths: list[Path]
-    l3a_filenames: list[str]
 
     @classmethod
     def fetch_dependencies(cls, dependencies: ProcessingInputCollection):
-        plasma_speed_legendre_path = dependencies.get_file_paths(source='glows', descriptor='plasma-speed-legendre')
-        proton_density_legendre_path = dependencies.get_file_paths(source='glows', descriptor='proton-density-legendre')
-        uv_anisotropy_path = dependencies.get_file_paths(source='glows', descriptor='uv-anisotropy')
-        photoion_path = dependencies.get_file_paths(source='glows', descriptor='photoion')
-        lya_path = dependencies.get_file_paths(source='glows', descriptor='lya')
-        electron_density_path = dependencies.get_file_paths(source='glows', descriptor='electron-density')
+        plasma_speed_legendre_path = dependencies.get_file_paths(source='glows',
+                                                                 descriptor='plasma-speed-Legendre-2010a')
+        proton_density_legendre_path = dependencies.get_file_paths(source='glows',
+                                                                   descriptor='proton-density-Legendre-2010a')
+        uv_anisotropy_path = dependencies.get_file_paths(source='glows', descriptor='uv-anisotropy-2010a')
+        photoion_path = dependencies.get_file_paths(source='glows', descriptor='photoion-2010a')
+        lya_path = dependencies.get_file_paths(source='glows', descriptor='lya-2010a')
+        electron_density_path = dependencies.get_file_paths(source='glows', descriptor='electron-density-2010a')
         pipeline_settings_l3bc_path = dependencies.get_file_paths(source='glows', descriptor='pipeline-settings-l3bc')
         external_archive = dependencies.get_file_paths(source='glows', descriptor='l3b-archive')
 
@@ -43,11 +42,6 @@ class GlowsL3DDependencies:
 
         l3b_file_paths = [download(l3b['file_path']) for l3b in l3b_file_names]
         l3c_file_paths = [download(l3c['file_path']) for l3c in l3c_file_names]
-
-        l3a_file_names = []
-        for l3b in l3b_file_paths:
-            l3a_file_names.extend(get_l3a_parent_files_from_l3b(l3b))
-        unique_l3a_files = list(set(l3a_file_names))
 
         with ZipFile(archive_dependency, 'r') as archive:
             archive.extract('lyman_alpha_composite.nc', TEMP_CDF_FOLDER_PATH)
@@ -67,4 +61,4 @@ class GlowsL3DDependencies:
             'lya_raw_data': TEMP_CDF_FOLDER_PATH / 'lyman_alpha_composite.nc'
         }
 
-        return cls(external_dict, ancillary_dict, l3b_file_paths, l3c_file_paths, unique_l3a_files)
+        return cls(external_dict, ancillary_dict, l3b_file_paths, l3c_file_paths)

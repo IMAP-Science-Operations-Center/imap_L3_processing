@@ -204,8 +204,10 @@ def _write_ultra_l2_cdf_with_parents(out_path=get_run_local_data_path("ultra/fak
         cdf.new("energy_delta_plus", np.full_like(out_xarray[CoordNames.ENERGY.value].values, 1))
         cdf.new("energy_delta_minus", np.full_like(out_xarray[CoordNames.ENERGY.value].values, 1))
         cdf.new("energy_label", [str(val) for val in out_xarray[CoordNames.ENERGY.value].values])
-        cdf.new("obs_date", [datetime.datetime.now()])
-        cdf.new("obs_date_range", np.full_like(out_xarray[CoordNames.TIME.value].values, 1))
+        cdf.new("obs_date", np.full(out_xarray["counts"].shape,
+                                    spiceypy.unitim(datetime.datetime.now().timestamp(), "ET", "TT") * 1e9),
+                type=pycdf.const.CDF_TIME_TT2000.value)
+        cdf.new("obs_date_range", np.full_like(out_xarray["counts"].values, 1))
         cdf.new("solid_angle", np.full_like(out_xarray[CoordNames.HEALPIX_INDEX.value].values, 1))
         cdf.new("ena_intensity_stat_unc", np.full_like(out_xarray["counts"].values, 1))
         cdf.new("ena_intensity_sys_err", np.full_like(out_xarray["counts"].values, 1))

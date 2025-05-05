@@ -189,16 +189,22 @@ class TestModels(unittest.TestCase):
             "oplus6_partial_density": np.array([15]),
             "oplus7_partial_density": np.array([15]),
             "oplus8_partial_density": np.array([15]),
+            "ne_partial_density": np.array([15]),
             "mg_partial_density": np.array([15]),
             "si_partial_density": np.array([15]),
             "fe_loq_partial_density": np.array([15]),
             "fe_hiq_partial_density": np.array([15]),
+            "c_to_o_ratio": np.array([15]),
+            "mg_to_o_ratio": np.array([15]),
+            "fe_to_o_ratio": np.array([15]),
         }
 
         data_product = CodiceLoL3aPartialDensityDataProduct(
             Mock(), **input_data_product_kwargs
         )
         actual_data_product_variables = data_product.to_data_product_variables()
+
+        self.assertEqual(20, len(actual_data_product_variables))
 
         for input_variable, actual_data_product_variable in zip(input_data_product_kwargs.items(),
                                                                 actual_data_product_variables):

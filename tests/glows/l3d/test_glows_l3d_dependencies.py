@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import Mock, sentinel, patch, call, MagicMock
 
-from imap_data_access.processing_input import ProcessingInputCollection, AncillaryInput, ScienceInput
+from imap_data_access.processing_input import ProcessingInputCollection
 
 from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
 from imap_l3_processing.glows.l3d.glows_l3d_dependencies import GlowsL3DDependencies
@@ -10,12 +10,10 @@ from tests.test_helpers import get_test_data_path
 
 class TestGlowsL3DDependencies(unittest.TestCase):
 
-    @patch('imap_l3_processing.glows.l3d.glows_l3d_dependencies.get_l3a_parent_files_from_l3b')
     @patch('imap_l3_processing.glows.l3d.glows_l3d_dependencies.query')
     @patch('imap_l3_processing.glows.l3d.glows_l3d_dependencies.ZipFile')
     @patch('imap_l3_processing.glows.l3d.glows_l3d_dependencies.download')
-    def test_fetch_dependencies(self, mock_download, mock_zip_file_class, mock_query,
-                                mock_get_l3a_parent_files_from_l3b):
+    def test_fetch_dependencies(self, mock_download, mock_zip_file_class, mock_query):
         waw_helio_ion_mp_speed = get_test_data_path("glows/imap_glows_plasma-speed-Legendre-2010a_v001.dat")
         waw_helio_ion_mp_p_dens = get_test_data_path("glows/imap_glows_proton-density-Legendre-2010a_v001.dat")
         waw_helio_ion_mp_uv_anis = get_test_data_path("glows/imap_glows_uv-anisotropy-2010a_v001.dat")
@@ -66,11 +64,6 @@ class TestGlowsL3DDependencies(unittest.TestCase):
         mock_zip_file = MagicMock()
         mock_zip_file_class.return_value.__enter__.return_value = mock_zip_file
 
-        mock_get_l3a_parent_files_from_l3b.side_effect = [
-            [sentinel.l3a_path_1, sentinel.l3a_path_2, sentinel.l3a_path_3],
-            [sentinel.l3a_path_3, sentinel.l3a_path_4, sentinel.l3a_path_5],
-        ]
-
         actual_dependencies: GlowsL3DDependencies = GlowsL3DDependencies.fetch_dependencies(
             mock_processing_input_collection)
 
@@ -80,12 +73,12 @@ class TestGlowsL3DDependencies(unittest.TestCase):
         ])
 
         mock_processing_input_collection.get_file_paths.assert_has_calls([
-            call(source='glows', descriptor='plasma-speed-legendre'),
-            call(source='glows', descriptor='proton-density-legendre'),
-            call(source='glows', descriptor='uv-anisotropy'),
-            call(source='glows', descriptor='photoion'),
-            call(source='glows', descriptor='lya'),
-            call(source='glows', descriptor='electron-density'),
+            call(source='glows', descriptor='plasma-speed-Legendre-2010a'),
+            call(source='glows', descriptor='proton-density-Legendre-2010a'),
+            call(source='glows', descriptor='uv-anisotropy-2010a'),
+            call(source='glows', descriptor='photoion-2010a'),
+            call(source='glows', descriptor='lya-2010a'),
+            call(source='glows', descriptor='electron-density-2010a'),
             call(source='glows', descriptor='pipeline-settings-l3bc'),
             call(source='glows', descriptor='l3b-archive'),
         ])
@@ -103,11 +96,6 @@ class TestGlowsL3DDependencies(unittest.TestCase):
             call(l3b_file_2['file_path']),
             call(l3c_file_1['file_path']),
             call(l3c_file_2['file_path']),
-        ])
-
-        mock_get_l3a_parent_files_from_l3b.assert_has_calls([
-            call(sentinel.l3b_downloaded_path_1),
-            call(sentinel.l3b_downloaded_path_2),
         ])
 
         mock_zip_file_class.assert_called_with(external_dependency_zip_path, 'r')
@@ -131,10 +119,6 @@ class TestGlowsL3DDependencies(unittest.TestCase):
 
         self.assertEqual([sentinel.l3c_downloaded_path_1, sentinel.l3c_downloaded_path_2],
                          actual_dependencies.l3c_file_paths)
-
-        self.assertCountEqual(
-            [sentinel.l3a_path_1, sentinel.l3a_path_2, sentinel.l3a_path_3, sentinel.l3a_path_4,
-             sentinel.l3a_path_5], actual_dependencies.l3a_filenames)
 
         self.assertEqual({
             'lya_raw_data': TEMP_CDF_FOLDER_PATH / 'lyman_alpha_composite.nc'

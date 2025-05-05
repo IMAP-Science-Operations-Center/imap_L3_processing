@@ -118,7 +118,7 @@ def parse_map_descriptor(descriptor: str) -> Optional[MapDescriptorParts]:
         (?P<duration>3mo|6mo|1yr)
         """
 
-    descriptor_part_match = re.search(descriptor_regex, descriptor, flags=re.VERBOSE)
+    descriptor_part_match = re.fullmatch(descriptor_regex, descriptor, flags=re.VERBOSE)
     if descriptor_part_match is None:
         return None
 
