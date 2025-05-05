@@ -5,10 +5,12 @@ from spacepy import pycdf
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.cdf.imap_attribute_manager import ImapAttributeManager
+from imap_l3_processing.models import FrameAttribute
 from imap_l3_processing.swapi.l3a.models import DataProduct
 
 
-def write_cdf(file_path: str, data: DataProduct, attribute_manager: ImapAttributeManager):
+def write_cdf(file_path: str, data: DataProduct, attribute_manager: ImapAttributeManager,
+              to_frame: FrameAttribute = None):
     with CDF(file_path, '') as cdf:
         cdf.col_major(True)
         try:
@@ -25,6 +27,12 @@ def write_cdf(file_path: str, data: DataProduct, attribute_manager: ImapAttribut
             variable_attributes = attribute_manager.get_variable_attributes(var_name)
             data_type = getattr(pycdf.const, variable_attributes["DATA_TYPE"])
             data_array = np.asanyarray(data_product.value)
+
+            if "COORDINATE_SYSTEM" in variable_attributes and to_frame is not None:
+                print(var_name, variable_attributes)
+
+                # from_frame = FrameAttribute(variable_attributes["COORDINATE_SYSTEM"],
+                #                            variable_attributes["FRAME_VELOCITY"], variable_attributes["FRAME_ORIGIN"])
 
             if 'FILLVAL' in variable_attributes:
                 if np.issubdtype(data_array.dtype, np.floating):

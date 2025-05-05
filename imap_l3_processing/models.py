@@ -102,3 +102,10 @@ class IntensityMapData(MapData):
 class SpectralIndexMapData(MapData):
     ena_spectral_index: np.ndarray
     ena_spectral_index_stat_unc: np.ndarray
+
+
+@dataclass
+class FrameAttribute:
+    coordinate_system: str
+    frame_origin: str
+    frame_velocity: str

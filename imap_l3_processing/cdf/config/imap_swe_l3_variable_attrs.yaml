@@ -1,1535 +1,1541 @@
 epoch:
-   NAME: epoch
-   DATA_TYPE: CDF_TIME_TT2000
-   CATDESC: Time since J2000 
-   VAR_TYPE: support_data
-   RECORD_VARYING: RV
-   FIELDNAM: Epoch
-   FORMAT: ' '
-   LABLAXIS: epoch
-   UNITS: ns
-   VALIDMIN: 2010-01-01T00:00:00.000000000
-   VALIDMAX: 2059-12-31T23:59:58.999000000
-   FILLVAL: 9999-12-31T23:59:59.999999999
-   SCALE_TYP: linear
-   TIME_BASE: J2000
-   TIME_SCALE: TT
-   DELTA_PLUS_VAR: epoch_delta
-   DELTA_MINUS_VAR: epoch_delta
-   MONOTON: INCREASE
-   REFERENCE_POSITION: Rotating Earth Geoid
-   SI_CONVERSION: 1e-9>seconds
+  NAME: epoch
+  DATA_TYPE: CDF_TIME_TT2000
+  CATDESC: Time since J2000
+  VAR_TYPE: support_data
+  RECORD_VARYING: RV
+  FIELDNAM: Epoch
+  FORMAT: ' '
+  LABLAXIS: epoch
+  UNITS: ns
+  VALIDMIN: 2010-01-01T00:00:00.000000000
+  VALIDMAX: 2059-12-31T23:59:58.999000000
+  FILLVAL: 9999-12-31T23:59:59.999999999
+  SCALE_TYP: linear
+  TIME_BASE: J2000
+  TIME_SCALE: TT
+  DELTA_PLUS_VAR: epoch_delta
+  DELTA_MINUS_VAR: epoch_delta
+  MONOTON: INCREASE
+  REFERENCE_POSITION: Rotating Earth Geoid
+  SI_CONVERSION: 1e-9>seconds
 energy:
-   NAME: energy
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Bin Center Energy
-   VAR_TYPE: support_data
-   RECORD_VARYING: NRV
-   FIELDNAM: Energy
-   FORMAT: F9.3
-   LABLAXIS: Energy
-   UNITS: eV
-   VALIDMIN: 1
-   VALIDMAX: 10000
-   FILLVAL: -1.00E+31
-   SCALE_TYP: log
-   DELTA_PLUS_VAR: energy_delta_plus
-   DELTA_MINUS_VAR: energy_delta_minus
-   SCALEMIN: 1
-   SCALEMAX: 10000
-   SI_CONVERSION: 1.602176634e-19>joules
+  NAME: energy
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Bin Center Energy
+  VAR_TYPE: support_data
+  RECORD_VARYING: NRV
+  FIELDNAM: Energy
+  FORMAT: F9.3
+  LABLAXIS: Energy
+  UNITS: eV
+  VALIDMIN: 1
+  VALIDMAX: 10000
+  FILLVAL: -1.00E+31
+  SCALE_TYP: log
+  DELTA_PLUS_VAR: energy_delta_plus
+  DELTA_MINUS_VAR: energy_delta_minus
+  SCALEMIN: 1
+  SCALEMAX: 10000
+  SI_CONVERSION: 1.602176634e-19>joules
 pitch_angle:
-   NAME: pitch_angle
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Pitch Angle
-   VAR_TYPE: support_data
-   RECORD_VARYING: NRV
-   FIELDNAM: Pitch Angle
-   FORMAT: F9.3
-   LABLAXIS: Pitch Angle
-   UNITS: degrees
-   VALIDMIN: 0
-   VALIDMAX: 180
-   FILLVAL: -1.00E+31
-   SCALE_TYP: linear
-   DELTA_PLUS_VAR: pitch_angle_delta
-   DELTA_MINUS_VAR: pitch_angle_delta
-   SCALEMIN: 0
-   SCALEMAX: 180
-   SI_CONVERSION: 1.745329e-2>radians
+  NAME: pitch_angle
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Pitch Angle
+  VAR_TYPE: support_data
+  RECORD_VARYING: NRV
+  FIELDNAM: Pitch Angle
+  FORMAT: F9.3
+  LABLAXIS: Pitch Angle
+  UNITS: degrees
+  VALIDMIN: 0
+  VALIDMAX: 180
+  FILLVAL: -1.00E+31
+  SCALE_TYP: linear
+  DELTA_PLUS_VAR: pitch_angle_delta
+  DELTA_MINUS_VAR: pitch_angle_delta
+  SCALEMIN: 0
+  SCALEMAX: 180
+  SI_CONVERSION: 1.745329e-2>radians
 gyrophase:
-   NAME: gyrophase
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Gyrophase
-   VAR_TYPE: support_data
-   RECORD_VARYING: NRV
-   FIELDNAM: Gyrophase
-   FORMAT: F9.3
-   LABLAXIS: Gyrophase
-   UNITS: degrees
-   VALIDMIN: 0
-   VALIDMAX: 360
-   FILLVAL: -1.00E+31
-   SCALE_TYP: linear
-   DELTA_PLUS_VAR: gyrophase_delta
-   DELTA_MINUS_VAR: gyrophase_delta
-   SCALEMIN: 0
-   SCALEMAX: 360
-   SI_CONVERSION: 1.745329e-2>radians
+  NAME: gyrophase
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Gyrophase
+  VAR_TYPE: support_data
+  RECORD_VARYING: NRV
+  FIELDNAM: Gyrophase
+  FORMAT: F9.3
+  LABLAXIS: Gyrophase
+  UNITS: degrees
+  VALIDMIN: 0
+  VALIDMAX: 360
+  FILLVAL: -1.00E+31
+  SCALE_TYP: linear
+  DELTA_PLUS_VAR: gyrophase_delta
+  DELTA_MINUS_VAR: gyrophase_delta
+  SCALEMIN: 0
+  SCALEMAX: 360
+  SI_CONVERSION: 1.745329e-2>radians
 epoch_delta:
-   NAME: epoch_delta
-   DATA_TYPE: CDF_INT8
-   CATDESC: Time bin half-width in nanoseconds
-   DEPEND_0: epoch
-   VAR_TYPE: support_data
-   RECORD_VARYING: RV
-   FIELDNAM: ' '
-   FORMAT: I14
-   LABLAXIS: Time Delta
-   UNITS: ns
-   VALIDMIN: 0
-   VALIDMAX: 600000000000
-   FILLVAL: -9223372036854775808
-   SCALE_TYP: linear
-   SI_CONVERSION: 1e-9>seconds
+  NAME: epoch_delta
+  DATA_TYPE: CDF_INT8
+  CATDESC: Time bin half-width in nanoseconds
+  DEPEND_0: epoch
+  VAR_TYPE: support_data
+  RECORD_VARYING: RV
+  FIELDNAM: ' '
+  FORMAT: I14
+  LABLAXIS: Time Delta
+  UNITS: ns
+  VALIDMIN: 0
+  VALIDMAX: 600000000000
+  FILLVAL: -9223372036854775808
+  SCALE_TYP: linear
+  SI_CONVERSION: 1e-9>seconds
 energy_delta_plus:
-   NAME: energy_delta_plus
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Energy bin half-width to max energy
-   VAR_TYPE: support_data
-   RECORD_VARYING: NRV
-   FIELDNAM: Energy
-   FORMAT: F9.3
-   LABLAXIS: Energy Delta Plus
-   UNITS: eV
-   VALIDMIN: 0
-   VALIDMAX: 10000
-   FILLVAL: -1.00E+31
-   SCALE_TYP: log
-   SI_CONVERSION: 1.602176634e-19>joules
+  NAME: energy_delta_plus
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Energy bin half-width to max energy
+  VAR_TYPE: support_data
+  RECORD_VARYING: NRV
+  FIELDNAM: Energy
+  FORMAT: F9.3
+  LABLAXIS: Energy Delta Plus
+  UNITS: eV
+  VALIDMIN: 0
+  VALIDMAX: 10000
+  FILLVAL: -1.00E+31
+  SCALE_TYP: log
+  SI_CONVERSION: 1.602176634e-19>joules
 energy_delta_minus:
-   NAME: energy_delta_minus
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Energy bin half-width to min energy
-   VAR_TYPE: support_data
-   RECORD_VARYING: NRV
-   FIELDNAM: Energy
-   FORMAT: F9.3
-   LABLAXIS: Energy Delta Minus
-   UNITS: eV
-   VALIDMIN: 0
-   VALIDMAX: 10000
-   FILLVAL: -1.00E+31
-   SCALE_TYP: log
-   SI_CONVERSION: 1.602176634e-19>joules
+  NAME: energy_delta_minus
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Energy bin half-width to min energy
+  VAR_TYPE: support_data
+  RECORD_VARYING: NRV
+  FIELDNAM: Energy
+  FORMAT: F9.3
+  LABLAXIS: Energy Delta Minus
+  UNITS: eV
+  VALIDMIN: 0
+  VALIDMAX: 10000
+  FILLVAL: -1.00E+31
+  SCALE_TYP: log
+  SI_CONVERSION: 1.602176634e-19>joules
 pitch_angle_delta:
-   NAME: pitch_angle_delta
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Pitch Angle bin half-width
-   VAR_TYPE: support_data
-   RECORD_VARYING: NRV
-   FIELDNAM: Pitch Angle
-   FORMAT: F9.3
-   LABLAXIS: Pitch Angle Delta
-   UNITS: degrees
-   VALIDMIN: 0
-   VALIDMAX: 180
-   FILLVAL: -1.00E+31
-   SCALE_TYP: linear
-   SI_CONVERSION: 1.745329e-2>radians
+  NAME: pitch_angle_delta
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Pitch Angle bin half-width
+  VAR_TYPE: support_data
+  RECORD_VARYING: NRV
+  FIELDNAM: Pitch Angle
+  FORMAT: F9.3
+  LABLAXIS: Pitch Angle Delta
+  UNITS: degrees
+  VALIDMIN: 0
+  VALIDMAX: 180
+  FILLVAL: -1.00E+31
+  SCALE_TYP: linear
+  SI_CONVERSION: 1.745329e-2>radians
 gyrophase_delta:
-   NAME: gyrophase_delta
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Gyrophase bin half-width
-   VAR_TYPE: support_data
-   RECORD_VARYING: NRV
-   FIELDNAM: Gyrophase
-   FORMAT: F9.3
-   LABLAXIS: Gyrophase Delta
-   UNITS: degrees
-   VALIDMIN: 0
-   VALIDMAX: 360
-   FILLVAL: -1.00E+31
-   SCALE_TYP: linear
-   SI_CONVERSION: 1.745329e-2>radians
+  NAME: gyrophase_delta
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Gyrophase bin half-width
+  VAR_TYPE: support_data
+  RECORD_VARYING: NRV
+  FIELDNAM: Gyrophase
+  FORMAT: F9.3
+  LABLAXIS: Gyrophase Delta
+  UNITS: degrees
+  VALIDMIN: 0
+  VALIDMAX: 360
+  FILLVAL: -1.00E+31
+  SCALE_TYP: linear
+  SI_CONVERSION: 1.745329e-2>radians
 temperature_tensor_component:
-   NAME: temperature_tensor_component
-   DATA_TYPE: CDF_INT1
-   CATDESC: Temperature tensor component index, 6 values
-   DEPEND_0: ' '
-   VAR_TYPE: support_data
-   RECORD_VARYING: RV
-   FIELDNAM: Tensor component index
-   FORMAT: I1
-   LABLAXIS: Temperature Tensor Component
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 9
-   FILLVAL: -1.00E+31
-   SCALE_TYP: linear
+  NAME: temperature_tensor_component
+  DATA_TYPE: CDF_INT1
+  CATDESC: Temperature tensor component index, 6 values
+  DEPEND_0: ' '
+  VAR_TYPE: support_data
+  RECORD_VARYING: RV
+  FIELDNAM: Tensor component index
+  FORMAT: I1
+  LABLAXIS: Temperature Tensor Component
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 9
+  FILLVAL: -1.00E+31
+  SCALE_TYP: linear
 intensity_by_pitch_angle:
-   NAME: intensity_by_pitch_angle
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Intensity by pitch angle
-   DEPEND_0: epoch
-   DEPEND_1: energy
-   DEPEND_2: pitch_angle
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: spectrogram
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Electron Intensity
-   FORMAT: F15.3
-   LABLAXIS: e- intensity
-   UNITS: cm^-2 sr^-1 s^-1 eV^-1
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   LABL_PTR_1: energy_label
-   LABL_PTR_2: pitch_angle_label
-   SCALE_TYP: linear
-   DELTA_PLUS_VAR: intensity_uncertainty_by_pitch_angle
-   DELTA_MINUS_VAR: intensity_uncertainty_by_pitch_angle
+  NAME: intensity_by_pitch_angle
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Intensity by pitch angle
+  DEPEND_0: epoch
+  DEPEND_1: energy
+  DEPEND_2: pitch_angle
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: spectrogram
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Electron Intensity
+  FORMAT: F15.3
+  LABLAXIS: e- intensity
+  UNITS: cm^-2 sr^-1 s^-1 eV^-1
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  LABL_PTR_1: energy_label
+  LABL_PTR_2: pitch_angle_label
+  SCALE_TYP: linear
+  DELTA_PLUS_VAR: intensity_uncertainty_by_pitch_angle
+  DELTA_MINUS_VAR: intensity_uncertainty_by_pitch_angle
 intensity_by_pitch_angle_and_gyrophase:
-   NAME: intensity_by_pitch_angle_and_gyrophase
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Intensity by pitch angle and gyrophase
-   DEPEND_0: epoch
-   DEPEND_1: energy
-   DEPEND_2: pitch_angle
-   DEPEND_3: gyrophase
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: spectrogram
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Electron Intensity
-   FORMAT: F15.3
-   LABLAXIS: e- intensity
-   UNITS: cm^-2 sr^-1 s^-1 eV^-1
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   LABL_PTR_1: energy_label
-   LABL_PTR_2: pitch_angle_label
-   LABL_PTR_3: gyrophase_label
-   SCALE_TYP: linear
-   DELTA_PLUS_VAR: intensity_uncertainty_by_pitch_angle_and_gyrophase
-   DELTA_MINUS_VAR: intensity_uncertainty_by_pitch_angle_and_gyrophase
+  NAME: intensity_by_pitch_angle_and_gyrophase
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Intensity by pitch angle and gyrophase
+  DEPEND_0: epoch
+  DEPEND_1: energy
+  DEPEND_2: pitch_angle
+  DEPEND_3: gyrophase
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: spectrogram
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Electron Intensity
+  FORMAT: F15.3
+  LABLAXIS: e- intensity
+  UNITS: cm^-2 sr^-1 s^-1 eV^-1
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  LABL_PTR_1: energy_label
+  LABL_PTR_2: pitch_angle_label
+  LABL_PTR_3: gyrophase_label
+  SCALE_TYP: linear
+  DELTA_PLUS_VAR: intensity_uncertainty_by_pitch_angle_and_gyrophase
+  DELTA_MINUS_VAR: intensity_uncertainty_by_pitch_angle_and_gyrophase
 intensity_uncertainty_by_pitch_angle:
-   NAME: intensity_uncertainty_by_pitch_angle
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Uncertainty of Intensity by pitch angle
-   DEPEND_0: epoch
-   DEPEND_1: energy
-   DEPEND_2: pitch_angle
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: spectrogram
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Electron Intensity Uncertainty
-   FORMAT: F15.3
-   LABLAXIS: e- intensity unc.
-   UNITS: cm^-2 sr^-1 s^-1 eV^-1
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   LABL_PTR_1: energy_label
-   LABL_PTR_2: pitch_angle_label
-   SCALE_TYP: linear
+  NAME: intensity_uncertainty_by_pitch_angle
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Uncertainty of Intensity by pitch angle
+  DEPEND_0: epoch
+  DEPEND_1: energy
+  DEPEND_2: pitch_angle
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: spectrogram
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Electron Intensity Uncertainty
+  FORMAT: F15.3
+  LABLAXIS: e- intensity unc.
+  UNITS: cm^-2 sr^-1 s^-1 eV^-1
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  LABL_PTR_1: energy_label
+  LABL_PTR_2: pitch_angle_label
+  SCALE_TYP: linear
 intensity_uncertainty_by_pitch_angle_and_gyrophase:
-   NAME: intensity_uncertainty_by_pitch_angle_and_gyrophase
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Uncertainty of Intensity by pitch angle and gyrophase
-   DEPEND_0: epoch
-   DEPEND_1: energy
-   DEPEND_2: pitch_angle
-   DEPEND_3: gyrophase
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: spectrogram
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Electron Intensity Uncertainty
-   FORMAT: F15.3
-   LABLAXIS: e- intensity unc.
-   UNITS: cm^-2 sr^-1 s^-1 eV^-1
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   LABL_PTR_1: energy_label
-   LABL_PTR_2: pitch_angle_label
-   LABL_PTR_3: gyrophase_label
-   SCALE_TYP: linear
+  NAME: intensity_uncertainty_by_pitch_angle_and_gyrophase
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Uncertainty of Intensity by pitch angle and gyrophase
+  DEPEND_0: epoch
+  DEPEND_1: energy
+  DEPEND_2: pitch_angle
+  DEPEND_3: gyrophase
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: spectrogram
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Electron Intensity Uncertainty
+  FORMAT: F15.3
+  LABLAXIS: e- intensity unc.
+  UNITS: cm^-2 sr^-1 s^-1 eV^-1
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  LABL_PTR_1: energy_label
+  LABL_PTR_2: pitch_angle_label
+  LABL_PTR_3: gyrophase_label
+  SCALE_TYP: linear
 phase_space_density_by_pitch_angle_and_gyrophase:
-   NAME: phase_space_density_by_pitch_angle_and_gyrophase
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Phase space density by pitch angle and gyrophase
-   DEPEND_0: epoch
-   DEPEND_1: energy
-   DEPEND_2: pitch_angle
-   DEPEND_3: gyrophase
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: spectrogram
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Electron Phase Space Density 
-   FORMAT: F15.3
-   LABLAXIS: e- PSD
-   UNITS: s^3 cm^-6
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   LABL_PTR_1: energy_label
-   LABL_PTR_2: pitch_angle_label
-   LABL_PTR_3: gyrophase_label
-   SCALE_TYP: log
-   SI_CONVERSION: 1e12>s^3 m^-6
+  NAME: phase_space_density_by_pitch_angle_and_gyrophase
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Phase space density by pitch angle and gyrophase
+  DEPEND_0: epoch
+  DEPEND_1: energy
+  DEPEND_2: pitch_angle
+  DEPEND_3: gyrophase
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: spectrogram
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Electron Phase Space Density
+  FORMAT: F15.3
+  LABLAXIS: e- PSD
+  UNITS: s^3 cm^-6
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  LABL_PTR_1: energy_label
+  LABL_PTR_2: pitch_angle_label
+  LABL_PTR_3: gyrophase_label
+  SCALE_TYP: log
+  SI_CONVERSION: 1e12>s^3 m^-6
 phase_space_density_by_pitch_angle:
-   NAME: phase_space_density_by_pitch_angle
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Phase space density by pitch angle
-   DEPEND_0: epoch
-   DEPEND_1: energy
-   DEPEND_2: pitch_angle
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: spectrogram
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Electron Phase Space Density 
-   FORMAT: F15.3
-   LABLAXIS: e- PSD
-   UNITS: s^3 cm^-6
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   LABL_PTR_1: energy_label
-   LABL_PTR_2: pitch_angle_label
-   SCALE_TYP: log
-   SI_CONVERSION: 1e12>s^3 m^-6
+  NAME: phase_space_density_by_pitch_angle
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Phase space density by pitch angle
+  DEPEND_0: epoch
+  DEPEND_1: energy
+  DEPEND_2: pitch_angle
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: spectrogram
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Electron Phase Space Density
+  FORMAT: F15.3
+  LABLAXIS: e- PSD
+  UNITS: s^3 cm^-6
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  LABL_PTR_1: energy_label
+  LABL_PTR_2: pitch_angle_label
+  SCALE_TYP: log
+  SI_CONVERSION: 1e12>s^3 m^-6
 intensity:
-   NAME: intensity
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Electon Intensity
-   DEPEND_0: epoch
-   DEPEND_1: energy
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: spectrogram
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Electron Intensity
-   FORMAT: F15.3
-   LABLAXIS: e- Intensity
-   UNITS: cm^-2 sr^-1 s^-1 eV^-1
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   LABL_PTR_1: energy_label
-   SCALE_TYP: log
-   SI_CONVERSION: 6.241509e22>m^-2 radian^-2 s^-1 J^-1
+  NAME: intensity
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Electon Intensity
+  DEPEND_0: epoch
+  DEPEND_1: energy
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: spectrogram
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Electron Intensity
+  FORMAT: F15.3
+  LABLAXIS: e- Intensity
+  UNITS: cm^-2 sr^-1 s^-1 eV^-1
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  LABL_PTR_1: energy_label
+  SCALE_TYP: log
+  SI_CONVERSION: 6.241509e22>m^-2 radian^-2 s^-1 J^-1
 intensity_inward:
-   NAME: intensity_inward
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Electron Intensity (Inward)
-   DEPEND_0: epoch
-   DEPEND_1: energy
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: spectrogram
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Electron Intensity
-   FORMAT: F15.3
-   LABLAXIS: e- Intensity
-   UNITS: cm^-2 sr^-1 s^-1 eV^-1
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   LABL_PTR_1: energy_label
-   SCALE_TYP: log
-   SI_CONVERSION: 6.241509e22>m^-2 radian^-2 s^-1 J^-1
+  NAME: intensity_inward
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Electron Intensity (Inward)
+  DEPEND_0: epoch
+  DEPEND_1: energy
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: spectrogram
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Electron Intensity
+  FORMAT: F15.3
+  LABLAXIS: e- Intensity
+  UNITS: cm^-2 sr^-1 s^-1 eV^-1
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  LABL_PTR_1: energy_label
+  SCALE_TYP: log
+  SI_CONVERSION: 6.241509e22>m^-2 radian^-2 s^-1 J^-1
 intensity_outward:
-   NAME: intensity_outward
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Electron Intensity (Outward)
-   DEPEND_0: epoch
-   DEPEND_1: energy
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: spectrogram
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Electon Intensity
-   FORMAT: F15.3
-   LABLAXIS: e- Intensity
-   UNITS: cm^-2 sr^-1 s^-1 eV^-1
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   LABL_PTR_1: energy_label
-   SCALE_TYP: log
-   SI_CONVERSION: 6.241509e22>m^-2 radian^-2 s^-1 J^-1
+  NAME: intensity_outward
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Electron Intensity (Outward)
+  DEPEND_0: epoch
+  DEPEND_1: energy
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: spectrogram
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Electon Intensity
+  FORMAT: F15.3
+  LABLAXIS: e- Intensity
+  UNITS: cm^-2 sr^-1 s^-1 eV^-1
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  LABL_PTR_1: energy_label
+  SCALE_TYP: log
+  SI_CONVERSION: 6.241509e22>m^-2 radian^-2 s^-1 J^-1
 spacecraft_potential:
-   NAME: spacecraft_potential
-   DATA_TYPE: CDF_REAL4
-   CATDESC: IMAP Spacecraft potential
-   DEPEND_0: epoch
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Spacecraft Potential
-   FORMAT: F9.3
-   LABLAXIS: Potential
-   UNITS: V
-   VALIDMIN: 0
-   VALIDMAX: 100
-   FILLVAL: -1.00E+31
-   SCALE_TYP: linear
-   SCALEMIN: 0
-   SCALEMAX: 20
+  NAME: spacecraft_potential
+  DATA_TYPE: CDF_REAL4
+  CATDESC: IMAP Spacecraft potential
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Spacecraft Potential
+  FORMAT: F9.3
+  LABLAXIS: Potential
+  UNITS: V
+  VALIDMIN: 0
+  VALIDMAX: 100
+  FILLVAL: -1.00E+31
+  SCALE_TYP: linear
+  SCALEMIN: 0
+  SCALEMAX: 20
 core_halo_breakpoint:
-   NAME: core_halo_breakpoint
-   DATA_TYPE: CDF_REAL4
-   CATDESC: SW Electron Core/Halo breakpoint
-   DEPEND_0: epoch
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Core/Halo Breakpoint
-   FORMAT: F9.3
-   LABLAXIS: Core/Halo Break
-   UNITS: eV
-   VALIDMIN: 15
-   VALIDMAX: 200
-   FILLVAL: -1.00E+31
-   SCALE_TYP: linear
-   SCALEMIN: 15
-   SCALEMAX: 100
-   SI_CONVERSION: 1.602176634e-19>joules
+  NAME: core_halo_breakpoint
+  DATA_TYPE: CDF_REAL4
+  CATDESC: SW Electron Core/Halo breakpoint
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Core/Halo Breakpoint
+  FORMAT: F9.3
+  LABLAXIS: Core/Halo Break
+  UNITS: eV
+  VALIDMIN: 15
+  VALIDMAX: 200
+  FILLVAL: -1.00E+31
+  SCALE_TYP: linear
+  SCALEMIN: 15
+  SCALEMAX: 100
+  SI_CONVERSION: 1.602176634e-19>joules
 quality_flag:
-   NAME: quality_flag
-   DATA_TYPE: CDF_UINT4
-   CATDESC: Quality Flags
-   DEPEND_0: epoch
-   VAR_TYPE: support_data
-   RECORD_VARYING: RV
-   FIELDNAM: Quality Flags
-   FORMAT: I4
-   LABLAXIS: Flags
-   UNITS:  
-   VALIDMIN: 0
-   VALIDMAX: 255
-   FILLVAL: 255
+  NAME: quality_flag
+  DATA_TYPE: CDF_UINT4
+  CATDESC: Quality Flags
+  DEPEND_0: epoch
+  VAR_TYPE: support_data
+  RECORD_VARYING: RV
+  FIELDNAM: Quality Flags
+  FORMAT: I4
+  LABLAXIS: Flags
+  UNITS:
+  VALIDMIN: 0
+  VALIDMAX: 255
+  FILLVAL: 255
 core_fit_num_points:
-   NAME: core_fit_num_points
-   DATA_TYPE: CDF_INT4
-   CATDESC: Number of energies used on core fit
-   DEPEND_0: epoch
-   VAR_TYPE: support_data
-   RECORD_VARYING: RV
-   FIELDNAM: ' '
-   FORMAT: I6
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 100
-   FILLVAL: -2147483648
+  NAME: core_fit_num_points
+  DATA_TYPE: CDF_INT4
+  CATDESC: Number of energies used on core fit
+  DEPEND_0: epoch
+  VAR_TYPE: support_data
+  RECORD_VARYING: RV
+  FIELDNAM: ' '
+  FORMAT: I6
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 100
+  FILLVAL: -2147483648
 halo_fit_num_points:
-   NAME: halo_fit_num_points
-   DATA_TYPE: CDF_INT4
-   CATDESC: Number of energies used on halo fit
-   DEPEND_0: epoch
-   VAR_TYPE: support_data
-   RECORD_VARYING: RV
-   FIELDNAM: ' '
-   FORMAT: I6
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 100
-   FILLVAL: -2147483648
+  NAME: halo_fit_num_points
+  DATA_TYPE: CDF_INT4
+  CATDESC: Number of energies used on halo fit
+  DEPEND_0: epoch
+  VAR_TYPE: support_data
+  RECORD_VARYING: RV
+  FIELDNAM: ' '
+  FORMAT: I6
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 100
+  FILLVAL: -2147483648
 core_chisq:
-   NAME: core_chisq
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Chi Square Error for core moment fitting
-   DEPEND_0: epoch
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Core Chi-square
-   FORMAT: F15.3
-   LABLAXIS: Core Chisq
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
+  NAME: core_chisq
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Chi Square Error for core moment fitting
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Core Chi-square
+  FORMAT: F15.3
+  LABLAXIS: Core Chisq
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
 halo_chisq:
-   NAME: halo_chisq
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Chi Square Error for halo moment fitting
-   DEPEND_0: epoch
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Halo Chi-square
-   FORMAT: F15.3
-   LABLAXIS: Halo Chisq
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
+  NAME: halo_chisq
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Chi Square Error for halo moment fitting
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Halo Chi-square
+  FORMAT: F15.3
+  LABLAXIS: Halo Chisq
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
 core_density_fit:
-   NAME: core_density_fit
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Density of Core Electrons found through Maxwellian fitting
-   DEPEND_0: epoch
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Core deinsity fit
-   FORMAT: F15.3
-   LABLAXIS: Core Density Fit
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   VAR_NOTES: Analytically calculated from Bi-Maxellian fit
+  NAME: core_density_fit
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Density of Core Electrons found through Maxwellian fitting
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Core deinsity fit
+  FORMAT: F15.3
+  LABLAXIS: Core Density Fit
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  VAR_NOTES: Analytically calculated from Bi-Maxellian fit
 halo_density_fit:
-   NAME: halo_density_fit
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Density of Halo Electrons found through Maxwellian fitting
-   DEPEND_0: epoch
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Halo density fit
-   FORMAT: F15.3
-   LABLAXIS: Halo Density Fit
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   VAR_NOTES: Analytically calculated from Bi-Maxellian fit
+  NAME: halo_density_fit
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Density of Halo Electrons found through Maxwellian fitting
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Halo density fit
+  FORMAT: F15.3
+  LABLAXIS: Halo Density Fit
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  VAR_NOTES: Analytically calculated from Bi-Maxellian fit
 core_t_parallel_fit:
-   NAME: core_t_parallel_fit
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Fitted t_parallel
-   DEPEND_0: epoch
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Core t parallel fit
-   FORMAT: F15.3
-   LABLAXIS: Core T Parallel Fit
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   VAR_NOTES: Analytically calculated from Bi-Maxellian fit
+  NAME: core_t_parallel_fit
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Fitted t_parallel
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Core t parallel fit
+  FORMAT: F15.3
+  LABLAXIS: Core T Parallel Fit
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  VAR_NOTES: Analytically calculated from Bi-Maxellian fit
 halo_t_parallel_fit:
-   NAME: halo_t_parallel_fit
-   DATA_TYPE: CDF_REAL4
-   CATDESC: halo_t_parallel_fit
-   DEPEND_0: epoch
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Halo t parallel fit
-   FORMAT: F15.3
-   LABLAXIS: Halo T Parallel Fit
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   VAR_NOTES: Analytically calculated from Bi-Maxellian fit
+  NAME: halo_t_parallel_fit
+  DATA_TYPE: CDF_REAL4
+  CATDESC: halo_t_parallel_fit
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Halo t parallel fit
+  FORMAT: F15.3
+  LABLAXIS: Halo T Parallel Fit
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  VAR_NOTES: Analytically calculated from Bi-Maxellian fit
 core_t_perpendicular_fit:
-   NAME: core_t_perpendicular_fit
-   DATA_TYPE: CDF_REAL4
-   CATDESC: core_t_perpendicular_fit
-   DEPEND_0: epoch
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Core t perpendicular fit
-   FORMAT: F15.3
-   LABLAXIS: Core T Perpendicular Fit
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   VAR_NOTES: Analytically calculated from Bi-Maxellian fit
+  NAME: core_t_perpendicular_fit
+  DATA_TYPE: CDF_REAL4
+  CATDESC: core_t_perpendicular_fit
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Core t perpendicular fit
+  FORMAT: F15.3
+  LABLAXIS: Core T Perpendicular Fit
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  VAR_NOTES: Analytically calculated from Bi-Maxellian fit
 halo_t_perpendicular_fit:
-   NAME: halo_t_perpendicular_fit
-   DATA_TYPE: CDF_REAL4
-   CATDESC: halo_t_perpendicular_fit
-   DEPEND_0: epoch
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Halo t perpendicular fit
-   FORMAT: F15.3
-   LABLAXIS: Halo T Perpendicular Fit
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   VAR_NOTES: Analytically calculated from Bi-Maxellian fit
+  NAME: halo_t_perpendicular_fit
+  DATA_TYPE: CDF_REAL4
+  CATDESC: halo_t_perpendicular_fit
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Halo t perpendicular fit
+  FORMAT: F15.3
+  LABLAXIS: Halo T Perpendicular Fit
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  VAR_NOTES: Analytically calculated from Bi-Maxellian fit
 core_temperature_phi_rtn_fit:
-   NAME: core_temperature_phi_rtn_fit
-   DATA_TYPE: CDF_REAL4
-   CATDESC: should match heritage
-   DEPEND_0: epoch
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Core temperature phi rtn fit
-   FORMAT: F15.3
-   LABLAXIS: Core Temperature Phi Rtn Fit
-   UNITS: K
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   VAR_NOTES: Analytically calculated from Bi-Maxellian fit
+  NAME: core_temperature_phi_rtn_fit
+  DATA_TYPE: CDF_REAL4
+  CATDESC: should match heritage
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Core temperature phi rtn fit
+  FORMAT: F15.3
+  LABLAXIS: Core Temperature Phi Rtn Fit
+  UNITS: K
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  VAR_NOTES: Analytically calculated from Bi-Maxellian fit
 halo_temperature_phi_rtn_fit:
-   NAME: halo_temperature_phi_rtn_fit
-   DATA_TYPE: CDF_REAL4
-   CATDESC: should match heritage
-   DEPEND_0: epoch
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Halo temperature phi rtn fit
-   FORMAT: F15.3
-   LABLAXIS: Halo Temperature Phi Rtn Fit
-   UNITS: K
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   VAR_NOTES: Analytically calculated from Bi-Maxellian fit
+  NAME: halo_temperature_phi_rtn_fit
+  DATA_TYPE: CDF_REAL4
+  CATDESC: should match heritage
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Halo temperature phi rtn fit
+  FORMAT: F15.3
+  LABLAXIS: Halo Temperature Phi Rtn Fit
+  UNITS: K
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  VAR_NOTES: Analytically calculated from Bi-Maxellian fit
 core_temperature_theta_rtn_fit:
-   NAME: core_temperature_theta_rtn_fit
-   DATA_TYPE: CDF_REAL4
-   CATDESC: should match heritage
-   DEPEND_0: epoch
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Core temperature theta rtn fit
-   FORMAT: F15.3
-   LABLAXIS: Core Temperature Theta Rtn Fit
-   UNITS: K
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   VAR_NOTES: Analytically calculated from Bi-Maxellian fit
+  NAME: core_temperature_theta_rtn_fit
+  DATA_TYPE: CDF_REAL4
+  CATDESC: should match heritage
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Core temperature theta rtn fit
+  FORMAT: F15.3
+  LABLAXIS: Core Temperature Theta Rtn Fit
+  UNITS: K
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  VAR_NOTES: Analytically calculated from Bi-Maxellian fit
 halo_temperature_theta_rtn_fit:
-   NAME: halo_temperature_theta_rtn_fit
-   DATA_TYPE: CDF_REAL4
-   CATDESC: should match heritage
-   DEPEND_0: epoch
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Halo temperature theta rtn fit
-   FORMAT: F15.3
-   LABLAXIS: Halo Temperature Theta Rtn Fit
-   UNITS: K
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   VAR_NOTES: Analytically calculated from Bi-Maxellian fit
+  NAME: halo_temperature_theta_rtn_fit
+  DATA_TYPE: CDF_REAL4
+  CATDESC: should match heritage
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Halo temperature theta rtn fit
+  FORMAT: F15.3
+  LABLAXIS: Halo Temperature Theta Rtn Fit
+  UNITS: K
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  VAR_NOTES: Analytically calculated from Bi-Maxellian fit
 core_speed_fit:
-   NAME: core_speed_fit
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Core Speed Fit
-   DEPEND_0: epoch
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Core speed fit
-   FORMAT: F15.3
-   LABLAXIS: Core Speed Fit
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   VAR_NOTES: Analytically calculated from Bi-Maxellian fit
+  NAME: core_speed_fit
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Core Speed Fit
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Core speed fit
+  FORMAT: F15.3
+  LABLAXIS: Core Speed Fit
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  VAR_NOTES: Analytically calculated from Bi-Maxellian fit
 halo_speed_fit:
-   NAME: halo_speed_fit
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Halo Speed Fit
-   DEPEND_0: epoch
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Halo speed fit
-   FORMAT: F15.3
-   LABLAXIS: Halo Speed Fit
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   VAR_NOTES: Analytically calculated from Bi-Maxellian fit
+  NAME: halo_speed_fit
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Halo Speed Fit
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Halo speed fit
+  FORMAT: F15.3
+  LABLAXIS: Halo Speed Fit
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  VAR_NOTES: Analytically calculated from Bi-Maxellian fit
 core_velocity_vector_rtn_fit:
-   NAME: core_velocity_vector_rtn_fit
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Core Velocity Vector Rtn Fit
-   DEPEND_0: epoch
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Core velocity vector rtn fit
-   FORMAT: F15.3
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   LABL_PTR_1: rtn_label
-   VAR_NOTES: Analytically calculated from Bi-Maxellian fit
+  NAME: core_velocity_vector_rtn_fit
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Core Velocity Vector Rtn Fit
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Core velocity vector rtn fit
+  FORMAT: F15.3
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  LABL_PTR_1: rtn_label
+  VAR_NOTES: Analytically calculated from Bi-Maxellian fit
+  COORDINATE_SYSTEM: "IMAP_RTN"
+  FRAME_ORIGIN: "IMAP"
+  FRAME_VELOCITY: "OBSERVATORY"
 halo_velocity_vector_rtn_fit:
-   NAME: halo_velocity_vector_rtn_fit
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Halo Velocity Vector Rtn Fit
-   DEPEND_0: epoch
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Halo velocity vectory rtn fit
-   FORMAT: F15.3
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   LABL_PTR_1: rtn_label
-   VAR_NOTES: Analytically calculated from Bi-Maxellian fit
+  NAME: halo_velocity_vector_rtn_fit
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Halo Velocity Vector Rtn Fit
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Halo velocity vectory rtn fit
+  FORMAT: F15.3
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  LABL_PTR_1: rtn_label
+  VAR_NOTES: Analytically calculated from Bi-Maxellian fit
 core_density_integrated:
-   NAME: core_density_integrated
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Density Halo/suprathermal Electrons (high Energy) Integrated
-   DEPEND_0: epoch
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Core Density Integrated
-   FORMAT: F15.3
-   LABLAXIS: Core Density Integrated
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   VAR_NOTES: Numerically integrated
+  NAME: core_density_integrated
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Density Halo/suprathermal Electrons (high Energy) Integrated
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Core Density Integrated
+  FORMAT: F15.3
+  LABLAXIS: Core Density Integrated
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  VAR_NOTES: Numerically integrated
 halo_density_integrated:
-   NAME: halo_density_integrated
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Halo Density Integrated
-   DEPEND_0: epoch
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Halo Density Integrated
-   FORMAT: F15.3
-   LABLAXIS: Halo Density Integrated
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   VAR_NOTES: Calculated by integration over the measured phase space distribution
+  NAME: halo_density_integrated
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Halo Density Integrated
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Halo Density Integrated
+  FORMAT: F15.3
+  LABLAXIS: Halo Density Integrated
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  VAR_NOTES: Calculated by integration over the measured phase space distribution
 total_density_integrated:
-   NAME: total_density_integrated
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Total Density Integrated
-   DEPEND_0: epoch
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Total Density Integrated
-   FORMAT: F15.3
-   LABLAXIS: Total Density Integrated
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   VAR_NOTES: Calculated by integration over the measured phase space distribution
+  NAME: total_density_integrated
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Total Density Integrated
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Total Density Integrated
+  FORMAT: F15.3
+  LABLAXIS: Total Density Integrated
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  VAR_NOTES: Calculated by integration over the measured phase space distribution
 core_velocity_vector_rtn_integrated:
-   NAME: core_velocity_vector_rtn_integrated
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Core Velocity Vector Rtn Integrated
-   DEPEND_0: epoch
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Core Velocity Vector Rtn Integrated
-   FORMAT: F15.3
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   LABL_PTR_1: rtn_label
-   VAR_NOTES: Calculated by integration over the measured phase space distribution
+  NAME: core_velocity_vector_rtn_integrated
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Core Velocity Vector Rtn Integrated
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Core Velocity Vector Rtn Integrated
+  FORMAT: F15.3
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  LABL_PTR_1: rtn_label
+  VAR_NOTES: Calculated by integration over the measured phase space distribution
+  COORDINATE_SYSTEM: "IMAP_RTN"
+  FRAME_ORIGIN: "IMAP"
+  FRAME_VELOCITY: "OBSERVATORY"
 halo_velocity_vector_rtn_integrated:
-   NAME: halo_velocity_vector_rtn_integrated
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Halo Velocity Vector Rtn Integrated
-   DEPEND_0: epoch
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Halo Velocity Vector Rtn Integrated
-   FORMAT: F15.3
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   LABL_PTR_1: rtn_label
-   VAR_NOTES: Calculated by integration over the measured phase space distribution
+  NAME: halo_velocity_vector_rtn_integrated
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Halo Velocity Vector Rtn Integrated
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Halo Velocity Vector Rtn Integrated
+  FORMAT: F15.3
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  LABL_PTR_1: rtn_label
+  VAR_NOTES: Calculated by integration over the measured phase space distribution
 total_velocity_vector_rtn_integrated:
-   NAME: total_velocity_vector_rtn_integrated
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Total Velocity Vector Rtn Integrated
-   DEPEND_0: epoch
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Total Velocity Vector Rtn Integrated
-   FORMAT: F15.3
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   LABL_PTR_1: rtn_label
-   VAR_NOTES: Calculated by integration over the measured phase space distribution
+  NAME: total_velocity_vector_rtn_integrated
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Total Velocity Vector Rtn Integrated
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Total Velocity Vector Rtn Integrated
+  FORMAT: F15.3
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  LABL_PTR_1: rtn_label
+  VAR_NOTES: Calculated by integration over the measured phase space distribution
 core_speed_integrated:
-   NAME: core_speed_integrated
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Core Speed Integrated
-   DEPEND_0: epoch
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Core Speed Integrated
-   FORMAT: F15.3
-   LABLAXIS: Core Speed Integrated
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   VAR_NOTES: Calculated by integration over the measured phase space distribution
+  NAME: core_speed_integrated
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Core Speed Integrated
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Core Speed Integrated
+  FORMAT: F15.3
+  LABLAXIS: Core Speed Integrated
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  VAR_NOTES: Calculated by integration over the measured phase space distribution
 halo_speed_integrated:
-   NAME: halo_speed_integrated
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Halo Speed Integrated
-   DEPEND_0: epoch
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Halo Speed Integrated
-   FORMAT: F15.3
-   LABLAXIS: Halo Speed Integrated
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   VAR_NOTES: Calculated by integration over the measured phase space distribution
+  NAME: halo_speed_integrated
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Halo Speed Integrated
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Halo Speed Integrated
+  FORMAT: F15.3
+  LABLAXIS: Halo Speed Integrated
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  VAR_NOTES: Calculated by integration over the measured phase space distribution
 total_speed_integrated:
-   NAME: total_speed_integrated
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Total Speed Integrated
-   DEPEND_0: epoch
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Total Speed Integrated
-   FORMAT: F15.3
-   LABLAXIS: Total Speed Integrated
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   VAR_NOTES: Calculated by integration over the measured phase space distribution
+  NAME: total_speed_integrated
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Total Speed Integrated
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Total Speed Integrated
+  FORMAT: F15.3
+  LABLAXIS: Total Speed Integrated
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  VAR_NOTES: Calculated by integration over the measured phase space distribution
 core_t_parallel_integrated:
-   NAME: core_t_parallel_integrated
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Core T Parallel Integrated
-   DEPEND_0: epoch
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Core t Parallel Integrated
-   FORMAT: F15.3
-   LABLAXIS: Core T Parallel Integrated
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   VAR_NOTES: Calculated by integration over the measured phase space distribution
+  NAME: core_t_parallel_integrated
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Core T Parallel Integrated
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Core t Parallel Integrated
+  FORMAT: F15.3
+  LABLAXIS: Core T Parallel Integrated
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  VAR_NOTES: Calculated by integration over the measured phase space distribution
 halo_t_parallel_integrated:
-   NAME: halo_t_parallel_integrated
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Halo T Parallel Integrated
-   DEPEND_0: epoch
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Halo t Parallel Integrated
-   FORMAT: F15.3
-   LABLAXIS: Halo T Parallel Integrated
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   VAR_NOTES: Calculated by integration over the measured phase space distribution
+  NAME: halo_t_parallel_integrated
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Halo T Parallel Integrated
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Halo t Parallel Integrated
+  FORMAT: F15.3
+  LABLAXIS: Halo T Parallel Integrated
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  VAR_NOTES: Calculated by integration over the measured phase space distribution
 total_t_parallel_integrated:
-   NAME: total_t_parallel_integrated
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Total T Parallel Integrated
-   DEPEND_0: epoch
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Total t Parallel Integrated
-   FORMAT: F15.3
-   LABLAXIS: Total T Parallel Integrated
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   VAR_NOTES: Calculated by integration over the measured phase space distribution
+  NAME: total_t_parallel_integrated
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Total T Parallel Integrated
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Total t Parallel Integrated
+  FORMAT: F15.3
+  LABLAXIS: Total T Parallel Integrated
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  VAR_NOTES: Calculated by integration over the measured phase space distribution
 core_t_perpendicular_integrated:
-   NAME: core_t_perpendicular_integrated
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Average of perpendicular core temperature eigenvalues
-   DEPEND_0: epoch
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Core t Perpendicular Integrated
-   FORMAT: F15.3
-   LABLAXIS: Core T Perpendicular Integrated
-   UNITS: K
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   VAR_NOTES: Calculated by integration over the measured phase space distribution
+  NAME: core_t_perpendicular_integrated
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Average of perpendicular core temperature eigenvalues
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Core t Perpendicular Integrated
+  FORMAT: F15.3
+  LABLAXIS: Core T Perpendicular Integrated
+  UNITS: K
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  VAR_NOTES: Calculated by integration over the measured phase space distribution
 halo_t_perpendicular_integrated:
-   NAME: halo_t_perpendicular_integrated
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Average of perpendicular halo temperature eigenvalues
-   DEPEND_0: epoch
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Halo t Perpendicular Integrated
-   FORMAT: F15.3
-   LABLAXIS: Halo T Perpendicular Integrated
-   UNITS: K
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   VAR_NOTES: Calculated by integration over the measured phase space distribution
+  NAME: halo_t_perpendicular_integrated
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Average of perpendicular halo temperature eigenvalues
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Halo t Perpendicular Integrated
+  FORMAT: F15.3
+  LABLAXIS: Halo T Perpendicular Integrated
+  UNITS: K
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  VAR_NOTES: Calculated by integration over the measured phase space distribution
 total_t_perpendicular_integrated:
-   NAME: total_t_perpendicular_integrated
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Average of perpendicular total temperature eigenvalues
-   DEPEND_0: epoch
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Total t Perpendicular Integrated
-   FORMAT: F15.3
-   LABLAXIS: Total T Perpendicular Integrated
-   UNITS: K
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   VAR_NOTES: Calculated by integration over the measured phase space distribution
+  NAME: total_t_perpendicular_integrated
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Average of perpendicular total temperature eigenvalues
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Total t Perpendicular Integrated
+  FORMAT: F15.3
+  LABLAXIS: Total T Perpendicular Integrated
+  UNITS: K
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  VAR_NOTES: Calculated by integration over the measured phase space distribution
 core_t_ratio_perpendicular_integrated:
-   NAME: core_t_ratio_perpendicular_integrated
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Ratio of perpendicular core temperature eigenvalues
-   DEPEND_0: epoch
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Core T Ratio Perpendicular Integrated
-   FORMAT: F15.3
-   LABLAXIS: Core T Ratio
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   VAR_NOTES: Calculated by integration over the measured phase space distribution
+  NAME: core_t_ratio_perpendicular_integrated
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Ratio of perpendicular core temperature eigenvalues
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Core T Ratio Perpendicular Integrated
+  FORMAT: F15.3
+  LABLAXIS: Core T Ratio
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  VAR_NOTES: Calculated by integration over the measured phase space distribution
 halo_t_ratio_perpendicular_integrated:
-   NAME: halo_t_ratio_perpendicular_integrated
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Ratio of perpendicular halo temperature eigenvalues
-   DEPEND_0: epoch
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Halo T Ratio Perpendicular Integrated
-   FORMAT: F15.3
-   LABLAXIS: Halo T Ratio
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   VAR_NOTES: Calculated by integration over the measured phase space distribution
+  NAME: halo_t_ratio_perpendicular_integrated
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Ratio of perpendicular halo temperature eigenvalues
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Halo T Ratio Perpendicular Integrated
+  FORMAT: F15.3
+  LABLAXIS: Halo T Ratio
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  VAR_NOTES: Calculated by integration over the measured phase space distribution
 total_t_ratio_perpendicular_integrated:
-   NAME: total_t_ratio_perpendicular_integrated
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Ratio of perpendicular total temperature eigenvalues
-   DEPEND_0: epoch
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Total T Ratio Perpendicular Integrated
-   FORMAT: F15.3
-   LABLAXIS: Total T Ratio
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   VAR_NOTES: Calculated by integration over the measured phase space distribution
+  NAME: total_t_ratio_perpendicular_integrated
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Ratio of perpendicular total temperature eigenvalues
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Total T Ratio Perpendicular Integrated
+  FORMAT: F15.3
+  LABLAXIS: Total T Ratio
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  VAR_NOTES: Calculated by integration over the measured phase space distribution
 core_temperature_phi_rtn_integrated:
-   NAME: core_temperature_phi_rtn_integrated
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Core Temperature Phi Rtn Integrated
-   DEPEND_0: epoch
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Core Temperature phi Rtn Integrated
-   FORMAT: F15.3
-   LABLAXIS: Core Temperature Phi Rtn Integrated
-   UNITS: K
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   VAR_NOTES: Calculated by integration over the measured phase space distribution
+  NAME: core_temperature_phi_rtn_integrated
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Core Temperature Phi Rtn Integrated
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Core Temperature phi Rtn Integrated
+  FORMAT: F15.3
+  LABLAXIS: Core Temperature Phi Rtn Integrated
+  UNITS: K
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  VAR_NOTES: Calculated by integration over the measured phase space distribution
 halo_temperature_phi_rtn_integrated:
-   NAME: halo_temperature_phi_rtn_integrated
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Halo Temperature Phi Rtn Integrated
-   DEPEND_0: epoch
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Halo Temperature phi Rtn Integrated
-   FORMAT: F15.3
-   LABLAXIS: Halo Temperature Phi Rtn Integrated
-   UNITS: K
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   VAR_NOTES: Calculated by integration over the measured phase space distribution
+  NAME: halo_temperature_phi_rtn_integrated
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Halo Temperature Phi Rtn Integrated
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Halo Temperature phi Rtn Integrated
+  FORMAT: F15.3
+  LABLAXIS: Halo Temperature Phi Rtn Integrated
+  UNITS: K
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  VAR_NOTES: Calculated by integration over the measured phase space distribution
 total_temperature_phi_rtn_integrated:
-   NAME: total_temperature_phi_rtn_integrated
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Total Temperature Phi Rtn Integrated
-   DEPEND_0: epoch
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Total Temperature phi Rtn Integrated
-   FORMAT: F15.3
-   LABLAXIS: Total Temperature Phi Rtn Integrated
-   UNITS: K
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   VAR_NOTES: Calculated by integration over the measured phase space distribution
+  NAME: total_temperature_phi_rtn_integrated
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Total Temperature Phi Rtn Integrated
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Total Temperature phi Rtn Integrated
+  FORMAT: F15.3
+  LABLAXIS: Total Temperature Phi Rtn Integrated
+  UNITS: K
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  VAR_NOTES: Calculated by integration over the measured phase space distribution
 core_temperature_theta_rtn_integrated:
-   NAME: core_temperature_theta_rtn_integrated
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Core Temperature Theta Rtn Integrated
-   DEPEND_0: epoch
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Core Temperature theta Rtn Integrated
-   FORMAT: F15.3
-   LABLAXIS: Core Temperature Theta Rtn Integrated
-   UNITS: K
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   VAR_NOTES: Calculated by integration over the measured phase space distribution
+  NAME: core_temperature_theta_rtn_integrated
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Core Temperature Theta Rtn Integrated
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Core Temperature theta Rtn Integrated
+  FORMAT: F15.3
+  LABLAXIS: Core Temperature Theta Rtn Integrated
+  UNITS: K
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  VAR_NOTES: Calculated by integration over the measured phase space distribution
 halo_temperature_theta_rtn_integrated:
-   NAME: halo_temperature_theta_rtn_integrated
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Halo Temperature Theta Rtn Integrated
-   DEPEND_0: epoch
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Halo Temperature theta Rtn Integrated
-   FORMAT: F15.3
-   LABLAXIS: Halo Temperature Theta Rtn Integrated
-   UNITS: K
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   VAR_NOTES: Calculated by integration over the measured phase space distribution
+  NAME: halo_temperature_theta_rtn_integrated
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Halo Temperature Theta Rtn Integrated
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Halo Temperature theta Rtn Integrated
+  FORMAT: F15.3
+  LABLAXIS: Halo Temperature Theta Rtn Integrated
+  UNITS: K
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  VAR_NOTES: Calculated by integration over the measured phase space distribution
 total_temperature_theta_rtn_integrated:
-   NAME: total_temperature_theta_rtn_integrated
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Total Temperature Theta Rtn Integrated
-   DEPEND_0: epoch
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Total Temperature theta Rtn Integrated
-   FORMAT: F15.3
-   LABLAXIS: Total Temperature Theta Rtn Integrated
-   UNITS: K
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   VAR_NOTES: Calculated by integration over the measured phase space distribution
+  NAME: total_temperature_theta_rtn_integrated
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Total Temperature Theta Rtn Integrated
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Total Temperature theta Rtn Integrated
+  FORMAT: F15.3
+  LABLAXIS: Total Temperature Theta Rtn Integrated
+  UNITS: K
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  VAR_NOTES: Calculated by integration over the measured phase space distribution
 core_temperature_tensor_integrated:
-   NAME: core_temperature_tensor_integrated
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Core Temperature Tensor Integrated
-   DEPEND_0: epoch
-   DEPEND_1: tensor_id
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Core Temperature Tensor Integrated
-   FORMAT: F15.3
-   LABLAXIS: Core Temperature Tensor Integrated
-   UNITS: ' '
-   VALIDMIN: -10000000000
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   LABL_PTR_1: temperature_tensor_label
-   VAR_NOTES: Calculated by integration over the measured phase space distribution
+  NAME: core_temperature_tensor_integrated
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Core Temperature Tensor Integrated
+  DEPEND_0: epoch
+  DEPEND_1: tensor_id
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Core Temperature Tensor Integrated
+  FORMAT: F15.3
+  LABLAXIS: Core Temperature Tensor Integrated
+  UNITS: ' '
+  VALIDMIN: -10000000000
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  LABL_PTR_1: temperature_tensor_label
+  VAR_NOTES: Calculated by integration over the measured phase space distribution
 halo_temperature_tensor_integrated:
-   NAME: halo_temperature_tensor_integrated
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Halo Temperature Tensor Integrated
-   DEPEND_0: epoch
-   DEPEND_1: tensor_id
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Halo Temperature Tensor Integrated
-   FORMAT: F15.3
-   LABLAXIS: Halo Temperature Tensor Integrated
-   UNITS: ' '
-   VALIDMIN: -10000000000
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   LABL_PTR_1: temperature_tensor_label
-   VAR_NOTES: Calculated by integration over the measured phase space distribution
+  NAME: halo_temperature_tensor_integrated
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Halo Temperature Tensor Integrated
+  DEPEND_0: epoch
+  DEPEND_1: tensor_id
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Halo Temperature Tensor Integrated
+  FORMAT: F15.3
+  LABLAXIS: Halo Temperature Tensor Integrated
+  UNITS: ' '
+  VALIDMIN: -10000000000
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  LABL_PTR_1: temperature_tensor_label
+  VAR_NOTES: Calculated by integration over the measured phase space distribution
 total_temperature_tensor_integrated:
-   NAME: total_temperature_tensor_integrated
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Total Temperature Tensor Integrated
-   DEPEND_0: epoch
-   DEPEND_1: tensor_id
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Total Temperature Tensor Integrated
-   FORMAT: F15.3
-   LABLAXIS: Total Temperature Tensor Integrated
-   UNITS: ' '
-   VALIDMIN: -10000000000
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   LABL_PTR_1: temperature_tensor_label
-   VAR_NOTES: Calculated by integration over the measured phase space distribution
+  NAME: total_temperature_tensor_integrated
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Total Temperature Tensor Integrated
+  DEPEND_0: epoch
+  DEPEND_1: tensor_id
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Total Temperature Tensor Integrated
+  FORMAT: F15.3
+  LABLAXIS: Total Temperature Tensor Integrated
+  UNITS: ' '
+  VALIDMIN: -10000000000
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  LABL_PTR_1: temperature_tensor_label
+  VAR_NOTES: Calculated by integration over the measured phase space distribution
 core_heat_flux_magnitude_integrated:
-   NAME: core_heat_flux_magnitude_integrated
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Core Heat Flux Magnitude Integrated
-   DEPEND_0: epoch
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Core Heat Flux Magnitude Integrated
-   FORMAT: F15.3
-   LABLAXIS: Core Heat Flux Magnitude Integrated
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   VAR_NOTES: Calculated by integration over the measured phase space distribution
+  NAME: core_heat_flux_magnitude_integrated
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Core Heat Flux Magnitude Integrated
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Core Heat Flux Magnitude Integrated
+  FORMAT: F15.3
+  LABLAXIS: Core Heat Flux Magnitude Integrated
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  VAR_NOTES: Calculated by integration over the measured phase space distribution
 core_heat_flux_theta_integrated:
-   NAME: core_heat_flux_theta_integrated
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Core Heat Flux Theta Integrated
-   DEPEND_0: epoch
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Core Heat Flux theta Integrated
-   FORMAT: F15.3
-   LABLAXIS: Core Heat Flux Theta Integrated
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   VAR_NOTES: Calculated by integration over the measured phase space distribution
+  NAME: core_heat_flux_theta_integrated
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Core Heat Flux Theta Integrated
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Core Heat Flux theta Integrated
+  FORMAT: F15.3
+  LABLAXIS: Core Heat Flux Theta Integrated
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  VAR_NOTES: Calculated by integration over the measured phase space distribution
 core_heat_flux_phi_integrated:
-   NAME: core_heat_flux_phi_integrated
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Core Heat Flux Phi Integrated
-   DEPEND_0: epoch
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Core Heat Flux phi Integrated
-   FORMAT: F15.3
-   LABLAXIS: Core Heat Flux Phi Integrated
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   VAR_NOTES: Calculated by integration over the measured phase space distribution
+  NAME: core_heat_flux_phi_integrated
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Core Heat Flux Phi Integrated
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Core Heat Flux phi Integrated
+  FORMAT: F15.3
+  LABLAXIS: Core Heat Flux Phi Integrated
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  VAR_NOTES: Calculated by integration over the measured phase space distribution
 halo_heat_flux_magnitude_integrated:
-   NAME: halo_heat_flux_magnitude_integrated
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Halo Heat Flux Magnitude Integrated
-   DEPEND_0: epoch
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Halo Heat Flux Magnitude Integrated
-   FORMAT: F15.3
-   LABLAXIS: Halo Heat Flux Magnitude Integrated
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   VAR_NOTES: Calculated by integration over the measured phase space distribution
+  NAME: halo_heat_flux_magnitude_integrated
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Halo Heat Flux Magnitude Integrated
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Halo Heat Flux Magnitude Integrated
+  FORMAT: F15.3
+  LABLAXIS: Halo Heat Flux Magnitude Integrated
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  VAR_NOTES: Calculated by integration over the measured phase space distribution
 halo_heat_flux_theta_integrated:
-   NAME: halo_heat_flux_theta_integrated
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Halo Heat Flux Theta Integrated
-   DEPEND_0: epoch
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Halo Heat Flux theta Integrated
-   FORMAT: F15.3
-   LABLAXIS: Halo Heat Flux Theta Integrated
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   VAR_NOTES: Calculated by integration over the measured phase space distribution
+  NAME: halo_heat_flux_theta_integrated
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Halo Heat Flux Theta Integrated
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Halo Heat Flux theta Integrated
+  FORMAT: F15.3
+  LABLAXIS: Halo Heat Flux Theta Integrated
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  VAR_NOTES: Calculated by integration over the measured phase space distribution
 halo_heat_flux_phi_integrated:
-   NAME: halo_heat_flux_phi_integrated
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Halo Heat Flux Phi Integrated
-   DEPEND_0: epoch
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Halo Heat Flux phi Integrated
-   FORMAT: F15.3
-   LABLAXIS: Halo Heat Flux Phi Integrated
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   VAR_NOTES: Calculated by integration over the measured phase space distribution
+  NAME: halo_heat_flux_phi_integrated
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Halo Heat Flux Phi Integrated
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Halo Heat Flux phi Integrated
+  FORMAT: F15.3
+  LABLAXIS: Halo Heat Flux Phi Integrated
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  VAR_NOTES: Calculated by integration over the measured phase space distribution
 total_heat_flux_magnitude_integrated:
-   NAME: total_heat_flux_magnitude_integrated
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Total Heat Flux Magnitude Integrated
-   DEPEND_0: epoch
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Total Heat Flux Magnitude Integrated
-   FORMAT: F15.3
-   LABLAXIS: Total Heat Flux Magnitude Integrated
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   VAR_NOTES: Calculated by integration over the measured phase space distribution
+  NAME: total_heat_flux_magnitude_integrated
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Total Heat Flux Magnitude Integrated
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Total Heat Flux Magnitude Integrated
+  FORMAT: F15.3
+  LABLAXIS: Total Heat Flux Magnitude Integrated
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  VAR_NOTES: Calculated by integration over the measured phase space distribution
 total_heat_flux_theta_integrated:
-   NAME: total_heat_flux_theta_integrated
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Total Heat Flux Theta Integrated
-   DEPEND_0: epoch
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Total Heat Flux theta Integrated
-   FORMAT: F15.3
-   LABLAXIS: Total Heat Flux Theta Integrated
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   VAR_NOTES: Calculated by integration over the measured phase space distribution
+  NAME: total_heat_flux_theta_integrated
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Total Heat Flux Theta Integrated
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Total Heat Flux theta Integrated
+  FORMAT: F15.3
+  LABLAXIS: Total Heat Flux Theta Integrated
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  VAR_NOTES: Calculated by integration over the measured phase space distribution
 total_heat_flux_phi_integrated:
-   NAME: total_heat_flux_phi_integrated
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Total Heat Flux Phi Integrated
-   DEPEND_0: epoch
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Total Heat Flux phi Integrated
-   FORMAT: F15.3
-   LABLAXIS: Total Heat Flux Phi Integrated
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   VAR_NOTES: Calculated by integration over the measured phase space distribution
+  NAME: total_heat_flux_phi_integrated
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Total Heat Flux Phi Integrated
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Total Heat Flux phi Integrated
+  FORMAT: F15.3
+  LABLAXIS: Total Heat Flux Phi Integrated
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  VAR_NOTES: Calculated by integration over the measured phase space distribution
 core_temperature_parallel_to_mag:
-   NAME: core_temperature_parallel_to_mag
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Core Temperature Parallel To Mag
-   DEPEND_0: epoch
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Core t Parallel to Mag
-   FORMAT: F15.3
-   LABLAXIS: Core Temperature Parallel To Mag
-   UNITS: K
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   VAR_NOTES: Calculated by integration over the measured phase space distribution
+  NAME: core_temperature_parallel_to_mag
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Core Temperature Parallel To Mag
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Core t Parallel to Mag
+  FORMAT: F15.3
+  LABLAXIS: Core Temperature Parallel To Mag
+  UNITS: K
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  VAR_NOTES: Calculated by integration over the measured phase space distribution
 halo_temperature_parallel_to_mag:
-   NAME: halo_temperature_parallel_to_mag
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Halo Temperature Parallel To Mag
-   DEPEND_0: epoch
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Halo t Parallel to Mag
-   FORMAT: F15.3
-   LABLAXIS: Halo Temperature Parallel To Mag
-   UNITS: K
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   VAR_NOTES: Calculated by integration over the measured phase space distribution
+  NAME: halo_temperature_parallel_to_mag
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Halo Temperature Parallel To Mag
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Halo t Parallel to Mag
+  FORMAT: F15.3
+  LABLAXIS: Halo Temperature Parallel To Mag
+  UNITS: K
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  VAR_NOTES: Calculated by integration over the measured phase space distribution
 total_temperature_parallel_to_mag:
-   NAME: total_temperature_parallel_to_mag
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Total Temperature Parallel To Mag
-   DEPEND_0: epoch
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Total t Parallel to Mag
-   FORMAT: F15.3
-   LABLAXIS: Total Temperature Parallel To Mag
-   UNITS: K
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   VAR_NOTES: Calculated by integration over the measured phase space distribution
+  NAME: total_temperature_parallel_to_mag
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Total Temperature Parallel To Mag
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Total t Parallel to Mag
+  FORMAT: F15.3
+  LABLAXIS: Total Temperature Parallel To Mag
+  UNITS: K
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  VAR_NOTES: Calculated by integration over the measured phase space distribution
 core_temperature_perpendicular_to_mag:
-   NAME: core_temperature_perpendicular_to_mag
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Core Temperature Perpendicular To Mag
-   DEPEND_0: epoch
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Core t Perpendicular to Mag
-   FORMAT: F15.3
-   LABLAXIS: Core Temperature Perpendicular To Mag
-   UNITS: K
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   VAR_NOTES: Calculated by integration over the measured phase space distribution
+  NAME: core_temperature_perpendicular_to_mag
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Core Temperature Perpendicular To Mag
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Core t Perpendicular to Mag
+  FORMAT: F15.3
+  LABLAXIS: Core Temperature Perpendicular To Mag
+  UNITS: K
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  VAR_NOTES: Calculated by integration over the measured phase space distribution
 halo_temperature_perpendicular_to_mag:
-   NAME: halo_temperature_perpendicular_to_mag
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Halo Temperature Perpendicular To Mag
-   DEPEND_0: epoch
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Halo t Perpendicular to Mag
-   FORMAT: F15.3
-   LABLAXIS: Halo Temperature Perpendicular To Mag
-   UNITS: K
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   VAR_NOTES: Calculated by integration over the measured phase space distribution
+  NAME: halo_temperature_perpendicular_to_mag
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Halo Temperature Perpendicular To Mag
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Halo t Perpendicular to Mag
+  FORMAT: F15.3
+  LABLAXIS: Halo Temperature Perpendicular To Mag
+  UNITS: K
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  VAR_NOTES: Calculated by integration over the measured phase space distribution
 total_temperature_perpendicular_to_mag:
-   NAME: total_temperature_perpendicular_to_mag
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Total Temperature Perpendicular To Mag
-   DEPEND_0: epoch
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Total t Perpendicular to Mag
-   FORMAT: F15.3
-   LABLAXIS: Total Temperature Perpendicular To Mag
-   UNITS: K
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   VAR_NOTES: Calculated by integration over the measured phase space distribution
+  NAME: total_temperature_perpendicular_to_mag
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Total Temperature Perpendicular To Mag
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Total t Perpendicular to Mag
+  FORMAT: F15.3
+  LABLAXIS: Total Temperature Perpendicular To Mag
+  UNITS: K
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  VAR_NOTES: Calculated by integration over the measured phase space distribution
 core_temperature_ratio_perpendicular_to_mag:
-   NAME: core_temperature_ratio_perpendicular_to_mag
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Ratio of Core Temperatures Perpendicular To Mag
-   DEPEND_0: epoch
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Core T Ratio Perpendicular to Mag
-   FORMAT: F15.3
-   LABLAXIS: Core T Ratio
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   VAR_NOTES: Calculated by integration over the measured phase space distribution
+  NAME: core_temperature_ratio_perpendicular_to_mag
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Ratio of Core Temperatures Perpendicular To Mag
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Core T Ratio Perpendicular to Mag
+  FORMAT: F15.3
+  LABLAXIS: Core T Ratio
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  VAR_NOTES: Calculated by integration over the measured phase space distribution
 halo_temperature_ratio_perpendicular_to_mag:
-   NAME: halo_temperature_ratio_perpendicular_to_mag
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Ratio of Halo Temperatures Perpendicular To Mag
-   DEPEND_0: epoch
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Halo T Ratio Perpendicular to Mag
-   FORMAT: F15.3
-   LABLAXIS: Halo T Ratio
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   VAR_NOTES: Calculated by integration over the measured phase space distribution
+  NAME: halo_temperature_ratio_perpendicular_to_mag
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Ratio of Halo Temperatures Perpendicular To Mag
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Halo T Ratio Perpendicular to Mag
+  FORMAT: F15.3
+  LABLAXIS: Halo T Ratio
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  VAR_NOTES: Calculated by integration over the measured phase space distribution
 total_temperature_ratio_perpendicular_to_mag:
-   NAME: total_temperature_ratio_perpendicular_to_mag
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Ratio of Total Temperatures Perpendicular To Mag
-   DEPEND_0: epoch
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: Total T Ratio Perpendicular to Mag
-   FORMAT: F15.3
-   LABLAXIS: Total T Ratio
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.00E+31
-   VAR_NOTES: Calculated by integration over the measured phase space distribution
+  NAME: total_temperature_ratio_perpendicular_to_mag
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Ratio of Total Temperatures Perpendicular To Mag
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Total T Ratio Perpendicular to Mag
+  FORMAT: F15.3
+  LABLAXIS: Total T Ratio
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.00E+31
+  VAR_NOTES: Calculated by integration over the measured phase space distribution
 energy_label:
-   NAME: energy_label
-   DATA_TYPE: CDF_CHAR
-   CATDESC: Label for energy bins
-   VAR_TYPE: metadata
-   FIELDNAM: Energy Label
-   FORMAT: a20
+  NAME: energy_label
+  DATA_TYPE: CDF_CHAR
+  CATDESC: Label for energy bins
+  VAR_TYPE: metadata
+  FIELDNAM: Energy Label
+  FORMAT: a20
 pitch_angle_label:
-   NAME: pitch_angle_label
-   DATA_TYPE: CDF_CHAR
-   CATDESC: Label for pitch angle bins
-   VAR_TYPE: metadata
-   FIELDNAM: Pitch Angle Label
-   FORMAT: a20
+  NAME: pitch_angle_label
+  DATA_TYPE: CDF_CHAR
+  CATDESC: Label for pitch angle bins
+  VAR_TYPE: metadata
+  FIELDNAM: Pitch Angle Label
+  FORMAT: a20
 gyrophase_label:
-   NAME: gyrophase_label
-   DATA_TYPE: CDF_CHAR
-   CATDESC: Label for gyrophase bins
-   VAR_TYPE: metadata
-   FIELDNAM: Gyrophase Label
-   FORMAT: a20
+  NAME: gyrophase_label
+  DATA_TYPE: CDF_CHAR
+  CATDESC: Label for gyrophase bins
+  VAR_TYPE: metadata
+  FIELDNAM: Gyrophase Label
+  FORMAT: a20
 rtn_label:
-   NAME: rtn_label
-   DATA_TYPE: CDF_CHAR
-   CATDESC: Label for rtn
-   VAR_TYPE: metadata
-   FIELDNAM: Rtn Label
-   FORMAT: a20
+  NAME: rtn_label
+  DATA_TYPE: CDF_CHAR
+  CATDESC: Label for rtn
+  VAR_TYPE: metadata
+  FIELDNAM: Rtn Label
+  FORMAT: a20
 temperature_tensor_label:
-   NAME: temperature_tensor_label
-   DATA_TYPE: CDF_CHAR
-   CATDESC: Label for temperator tensor
-   VAR_TYPE: metadata
-   FIELDNAM: Temperature Tensor Label
-   FORMAT: a20
+  NAME: temperature_tensor_label
+  DATA_TYPE: CDF_CHAR
+  CATDESC: Label for temperator tensor
+  VAR_TYPE: metadata
+  FIELDNAM: Temperature Tensor Label
+  FORMAT: a20
 tensor_id:
-   NAME: tensor_id
-   DATA_TYPE: CDF_UINT1
-   CATDESC: Tensor Id
-   VAR_TYPE: support_data
-   RECORD_VARYING: NRV
-   FIELDNAM: Tensor Id
-   FORMAT: I4
-   LABLAXIS: Tensor Id
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 255
-   FILLVAL: 255
+  NAME: tensor_id
+  DATA_TYPE: CDF_UINT1
+  CATDESC: Tensor Id
+  VAR_TYPE: support_data
+  RECORD_VARYING: NRV
+  FIELDNAM: Tensor Id
+  FORMAT: I4
+  LABLAXIS: Tensor Id
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 255
+  FILLVAL: 255
