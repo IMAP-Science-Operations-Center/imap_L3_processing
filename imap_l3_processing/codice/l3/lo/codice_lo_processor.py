@@ -1,3 +1,5 @@
+from collections import namedtuple
+
 import numpy as np
 from imap_data_access import upload
 from imap_data_access.processing_input import ProcessingInputCollection
@@ -10,6 +12,8 @@ from imap_l3_processing.codice.l3.lo.science.codice_lo_calculations import calcu
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
 from imap_l3_processing.utils import save_data
+
+PriorityRate = namedtuple('PriorityRate', ('epoch', 'energy_table', 'priority_count'))
 
 
 class CodiceLoProcessor(Processor):
@@ -108,10 +112,17 @@ class CodiceLoProcessor(Processor):
 
         normalization = np.full((len(codice_direct_events.epoch), len(priority_rates_for_events), 128, 12), np.nan)
 
-        (mass_per_charge, mass, energy, gain, apd_id, multi_flag, pha_type,
+        (mass_per_charge,
+         mass,
+         energy,
+         gain,
+         apd_id,
+         spin_angle,
+         multi_flag,
+         pha_type,
          tof) = [
-            np.full((len(codice_direct_events.epoch), len(priority_rates_for_events), len(event_number)),
-                    np.nan) for _ in range(8)]
+            np.full((len(codice_direct_events.epoch), len(priority_rates_for_events), len(event_number)), np.nan)
+            for _ in range(9)]
 
         (data_quality, num_events) = [np.full((len(codice_direct_events.epoch), len(priority_rates_for_events)), np.nan)
                                       for _ in range(2)]
@@ -133,7 +144,6 @@ class CodiceLoProcessor(Processor):
 
             data_quality[:, priority_index] = priority_event.data_quality
             num_events[:, priority_index] = priority_event.num_events
-
             for e in range(len(codice_direct_events.epoch)):
                 norm = calculate_normalization_ratio(
                     priority_event.total_events_binned_by_energy_step_and_spin_angle()[e],

@@ -8,10 +8,11 @@ from unittest.mock import Mock
 import numpy as np
 from spacepy.pycdf import CDF
 
+from imap_l3_processing.codice.l3.lo.direct_events.science.mass_species_bin_lookup import EventDirection
 from imap_l3_processing.codice.l3.lo.models import CodiceLoL2SWSpeciesData, CodiceLoL3aPartialDensityDataProduct, \
     CodiceLoL2DirectEventData, \
     PriorityEvent, EnergyAndSpinAngle, CodiceLoL3aDirectEventDataProduct, \
-    CodiceLoL1aSWPriorityRates, CodiceLoL1aNSWPriorityRates
+    CodiceLoL1aSWPriorityRates, CodiceLoL1aNSWPriorityRates, CodiceLo3dData
 
 
 class TestModels(unittest.TestCase):
@@ -133,9 +134,7 @@ class TestModels(unittest.TestCase):
             np.testing.assert_array_equal(result.epoch, epoch)
             np.testing.assert_array_equal(result.event_num, expected_event_num)
 
-            # @formatter:off
-            for index in range(8):
-                priority_event = getattr(result, f"priority_event_{index}")
+            for index, priority_event in enumerate(result.priority_events):
                 np.testing.assert_array_equal(priority_event.apd_energy, expected_values[f"P{index}_APDEnergy"])
                 np.testing.assert_array_equal(priority_event.apd_gain, expected_values[f"P{index}_APDGain"])
                 np.testing.assert_array_equal(priority_event.apd_id, expected_values[f"P{index}_APD_ID"])
@@ -146,13 +145,6 @@ class TestModels(unittest.TestCase):
                 np.testing.assert_array_equal(priority_event.pha_type, expected_values[f"P{index}_PHAType"])
                 np.testing.assert_array_equal(priority_event.spin_angle, expected_values[f"P{index}_SpinAngle"])
                 np.testing.assert_array_equal(priority_event.tof, expected_values[f"P{index}_TOF"])
-            # @formatter:on
-
-    def test_codice_lo_l2_direct_event_priority_events(self):
-        expected_events = [Mock(), Mock(), Mock(), Mock(), Mock(), Mock(), Mock(), Mock()]
-        event_data = CodiceLoL2DirectEventData(Mock(), Mock(), *expected_events)
-
-        self.assertEqual(expected_events, event_data.priority_events)
 
     def test_calculate_total_number_of_events(self):
         energy_step = np.array([[1, 4, 4, 2, 0],
@@ -323,3 +315,16 @@ class TestModels(unittest.TestCase):
 
             for k, v in expected_values.items():
                 np.testing.assert_array_equal(getattr(result, k), v)
+
+    def test_codice_lo_3d_data_get_3d_distribution(self):
+        data_in_bins = np.arange(8).reshape((2, 2, 2))
+        mass_bin_lookup = Mock()
+        mass_bin_lookup.get_species_index.return_value = 1
+        codice_lo_3d_data = CodiceLo3dData(data_in_bins, mass_bin_lookup)
+
+        expected_species_data = data_in_bins[:, 1, ...]
+        actual_species_data = codice_lo_3d_data.get_3d_distribution("H+", EventDirection.Sunward)
+
+        mass_bin_lookup.get_species_index.assert_called_with("H+", EventDirection.Sunward)
+
+        np.testing.assert_array_equal(actual_species_data, expected_species_data)

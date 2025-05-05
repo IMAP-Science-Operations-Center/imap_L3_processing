@@ -6,7 +6,11 @@ import numpy as np
 from numpy import ndarray
 from spacepy.pycdf import CDF
 
+from imap_l3_processing.codice.l3.lo.direct_events.science.mass_species_bin_lookup import MassSpeciesBinLookup, \
+    EventDirection
 from imap_l3_processing.models import DataProductVariable, DataProduct
+
+CODICE_LO_L2_NUM_PRIORITIES = 7
 
 EPOCH_VAR_NAME = "epoch"
 EPOCH_DELTA_PLUS_VAR_NAME = "epoch_delta_plus"
@@ -114,33 +118,24 @@ class PriorityEvent:
 class CodiceLoL2DirectEventData:
     epoch: ndarray
     event_num: ndarray
-    priority_event_0: PriorityEvent
-    priority_event_1: PriorityEvent
-    priority_event_2: PriorityEvent
-    priority_event_3: PriorityEvent
-    priority_event_4: PriorityEvent
-    priority_event_5: PriorityEvent
-    priority_event_6: PriorityEvent
-    priority_event_7: PriorityEvent
+    priority_events: list[PriorityEvent]
 
     @classmethod
     def _read_priority_event(cls, cdf):
-        values = {}
-        for index in range(8):
-            priority_event = PriorityEvent(cdf[f"P{index}_APDEnergy"][...],
-                                           cdf[f"P{index}_APDGain"][...],
-                                           cdf[f"P{index}_APD_ID"][...],
-                                           cdf[f"P{index}_DataQuality"][...],
-                                           cdf[f"P{index}_EnergyStep"][...],
-                                           cdf[f"P{index}_MultiFlag"][...],
-                                           cdf[f"P{index}_NumEvents"][...],
-                                           cdf[f"P{index}_PHAType"][...],
-                                           cdf[f"P{index}_SpinAngle"][...],
-                                           cdf[f"P{index}_TOF"][...]
-                                           )
-
-            values.update({f"priority_event_{index}": priority_event})
-        return values
+        priority_events = []
+        for index in range(CODICE_LO_L2_NUM_PRIORITIES):
+            priority_events.append(PriorityEvent(cdf[f"P{index}_APDEnergy"][...],
+                                                 cdf[f"P{index}_APDGain"][...],
+                                                 cdf[f"P{index}_APD_ID"][...],
+                                                 cdf[f"P{index}_DataQuality"][...],
+                                                 cdf[f"P{index}_EnergyStep"][...],
+                                                 cdf[f"P{index}_MultiFlag"][...],
+                                                 cdf[f"P{index}_NumEvents"][...],
+                                                 cdf[f"P{index}_PHAType"][...],
+                                                 cdf[f"P{index}_SpinAngle"][...],
+                                                 cdf[f"P{index}_TOF"][...]
+                                                 ))
+        return priority_events
 
     @classmethod
     def read_from_cdf(cls, l2_direct_event_cdf: Path):
@@ -148,16 +143,8 @@ class CodiceLoL2DirectEventData:
             return cls(
                 epoch=cdf["epoch"][...],
                 event_num=cdf["event_num"][...],
-                **cls._read_priority_event(cdf)
-
+                priority_events=cls._read_priority_event(cdf)
             )
-
-    @property
-    def priority_events(self):
-        return [
-            self.priority_event_0, self.priority_event_1, self.priority_event_2, self.priority_event_3,
-            self.priority_event_4, self.priority_event_5, self.priority_event_6, self.priority_event_7
-        ]
 
 
 @dataclass
@@ -342,3 +329,13 @@ class CodiceLoL3aDirectEventDataProduct(DataProduct):
             DataProductVariable(DATA_QUALITY_VAR_NAME, self.data_quality),
             DataProductVariable(TOF_VAR_NAME, self.tof),
         ]
+
+
+@dataclass
+class CodiceLo3dData:
+    data_in_3d_bins: np.ndarray
+    mass_bin_lookup: MassSpeciesBinLookup
+
+    def get_3d_distribution(self, species: str, event_direction: EventDirection) -> np.ndarray:
+        species_index = self.mass_bin_lookup.get_species_index(species, event_direction)
+        return self.data_in_3d_bins[:, species_index, ...]

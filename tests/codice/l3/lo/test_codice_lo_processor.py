@@ -210,7 +210,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
         empty_priority_7 = PriorityEvent(
             **{f.name: rng.random((len(epochs), len(event_num))) for f in fields(PriorityEvent)})
         priority_events.append(empty_priority_7)
-        direct_events = CodiceLoL2DirectEventData(epochs, event_num, *priority_events)
+        direct_events = CodiceLoL2DirectEventData(epochs, event_num, priority_events)
 
         dependencies = CodiceLoL3aDependencies(sw_priority_rates, nsw_priority_rates, Mock(), direct_events, Mock(),
                                                Mock())
