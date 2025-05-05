@@ -1,16 +1,13 @@
-import json
-import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import patch, mock_open, MagicMock, Mock, sentinel
+from unittest.mock import patch, mock_open, MagicMock, sentinel
 
 import numpy as np
-from spacepy.pycdf import CDF
 
 import imap_l3_processing
 from imap_l3_processing.glows.l3d.models import GlowsL3DSolarParamsHistory
 from imap_l3_processing.glows.l3d.utils import create_glows_l3b_json_file_from_cdf, convert_json_to_l3d_data_product, \
-    create_glows_l3c_json_file_from_cdf
+    create_glows_l3c_json_file_from_cdf, get_parent_file_names_from_l3d_json
 from tests.test_helpers import get_test_data_path
 
 
@@ -20,6 +17,8 @@ class TestL3dUtils(unittest.TestCase):
     @patch('imap_l3_processing.glows.l3d.utils.json')
     @patch('builtins.open', new_callable=mock_open, create=False)
     def test_create_glows_l3c_json_file_from_cdf(self, mock_open_file, mock_json, mock_os):
+        l3c_path = get_test_data_path('glows/imap_glows_l3c_sw-profile_20101030_v008.cdf')
+
         expected: dict = {
             'solar_wind_profile': {
                 'proton_density': [2.3197076, 2.2874057, 2.1938286, 2.5905547, 3.4460852, 4.4701824,
@@ -34,8 +33,6 @@ class TestL3dUtils(unittest.TestCase):
                 'alpha_abundance': 0.02850634977221489,
             }
         }
-
-        l3c_path = get_test_data_path('glows/imap_glows_l3c_sw-profile_20101030_v008.cdf')
 
         json_file = MagicMock()
         mock_open_file.return_value.__enter__.return_value = json_file
@@ -159,7 +156,7 @@ class TestL3dUtils(unittest.TestCase):
                                              actual["ion_rate_profile"]['ph_rate'])
         self.assertIsInstance(actual["ion_rate_profile"]["ph_rate"], list)
 
-    def test_convert_json_l3d_to_cdf(self):
+    def test_convert_json_l3d_to_data_product(self):
         l3d_data_product: GlowsL3DSolarParamsHistory = convert_json_to_l3d_data_product(
             get_test_data_path('glows/imap_glows_l3d_cr_2095_v00.json'),
             sentinel.input_metadata,
@@ -223,3 +220,26 @@ class TestL3dUtils(unittest.TestCase):
         self.assertEqual(846, len(l3d_data_product.e_dens))
         self.assertEqual(-1.0, l3d_data_product.e_dens[0])
         np.testing.assert_allclose(5.7140570690060715, l3d_data_product.e_dens[-1], rtol=1e-6)
+
+    def test_get_parent_file_names_from_l3d_json(self):
+        path_to_l3d_output_folder = get_test_data_path("glows/science/data_l3d")
+
+        l3bc_filenames = get_parent_file_names_from_l3d_json(path_to_l3d_output_folder)
+
+        expected = [
+            "imap_glows_plasma-speed-Legendre-2010a_v001.dat",
+            "imap_glows_proton-density-Legendre-2010a_v001.dat",
+            "imap_glows_uv-anisotropy-2010a_v001.dat",
+            "imap_glows_photoion-2010a_v001.dat",
+            "imap_glows_lya-2010a_v001.dat",
+            "imap_glows_electron-density-2010a_v001.dat",
+            "imap_glows_l3b_ion-rate-profile_20100326_v011.cdf",
+            "imap_glows_l3b_ion-rate-profile_20100422_v011.cdf",
+            "imap_glows_l3b_ion-rate-profile_20100519_v011.cdf",
+            "imap_glows_l3c_sw-profile_20100326_v011.cdf",
+            "imap_glows_l3c_sw-profile_20100422_v011.cdf",
+            "imap_glows_l3c_sw-profile_20100519_v011.cdf",
+            'lyman_alpha_composite.nc'
+        ]
+
+        self.assertCountEqual(expected, l3bc_filenames)

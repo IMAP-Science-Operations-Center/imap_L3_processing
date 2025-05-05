@@ -77,3 +77,28 @@ def convert_json_to_l3d_data_product(json_file_path: Path, input_metadata: Input
         lya=l3d_json_dict['solar_params']['lya'],
         e_dens=l3d_json_dict['solar_params']['e-dens'],
     )
+
+
+def get_parent_file_names_from_l3d_json(l3d_folder: Path) -> list[str]:
+    parent_file_names = set()
+    l3d_file_paths = sorted(os.listdir(l3d_folder))
+
+    if len(l3d_file_paths) == 0:
+        return []
+
+    with open(l3d_folder / l3d_file_paths[0]) as l3d:
+        l3d_data = json.load(l3d)
+        ancillary_files = [Path(file).name for file in l3d_data['header']['ancillary_data_files']]
+        external_dependencies = Path(l3d_data['header']['external_dependeciens']).name
+        parent_file_names.update(ancillary_files)
+        parent_file_names.add(external_dependencies)
+
+    for file_path in l3d_file_paths:
+        with open(l3d_folder / file_path, 'r') as l3d:
+            l3d_data = json.load(l3d)
+            l3b_parents = [Path(file).name for file in l3d_data['header']['l3b_input_filename']]
+            l3c_parents = [Path(file).name for file in l3d_data['header']['l3c_input_filename']]
+            parent_file_names.update(l3b_parents)
+            parent_file_names.update(l3c_parents)
+
+    return list(parent_file_names)

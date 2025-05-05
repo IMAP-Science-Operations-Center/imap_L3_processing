@@ -17,12 +17,14 @@ class GlowsL3DDependencies:
 
     @classmethod
     def fetch_dependencies(cls, dependencies: ProcessingInputCollection):
-        plasma_speed_legendre_path = dependencies.get_file_paths(source='glows', descriptor='plasma-speed-legendre')
-        proton_density_legendre_path = dependencies.get_file_paths(source='glows', descriptor='proton-density-legendre')
-        uv_anisotropy_path = dependencies.get_file_paths(source='glows', descriptor='uv-anisotropy')
-        photoion_path = dependencies.get_file_paths(source='glows', descriptor='photoion')
-        lya_path = dependencies.get_file_paths(source='glows', descriptor='lya')
-        electron_density_path = dependencies.get_file_paths(source='glows', descriptor='electron-density')
+        plasma_speed_legendre_path = dependencies.get_file_paths(source='glows',
+                                                                 descriptor='plasma-speed-Legendre-2010a')
+        proton_density_legendre_path = dependencies.get_file_paths(source='glows',
+                                                                   descriptor='proton-density-Legendre-2010a')
+        uv_anisotropy_path = dependencies.get_file_paths(source='glows', descriptor='uv-anisotropy-2010a')
+        photoion_path = dependencies.get_file_paths(source='glows', descriptor='photoion-2010a')
+        lya_path = dependencies.get_file_paths(source='glows', descriptor='lya-2010a')
+        electron_density_path = dependencies.get_file_paths(source='glows', descriptor='electron-density-2010a')
         pipeline_settings_l3bc_path = dependencies.get_file_paths(source='glows', descriptor='pipeline-settings-l3bc')
         external_archive = dependencies.get_file_paths(source='glows', descriptor='l3b-archive')
 

@@ -20,10 +20,14 @@ O5_PARTIAL_DENSITY_VAR_NAME = "oplus5_partial_density"
 O6_PARTIAL_DENSITY_VAR_NAME = "oplus6_partial_density"
 O7_PARTIAL_DENSITY_VAR_NAME = "oplus7_partial_density"
 O8_PARTIAL_DENSITY_VAR_NAME = "oplus8_partial_density"
+NE_PARTIAL_DENSITY_VAR_NAME = "ne_partial_density"
 MG_PARTIAL_DENSITY_VAR_NAME = "mg_partial_density"
 SI_PARTIAL_DENSITY_VAR_NAME = "si_partial_density"
 FE_LOW_PARTIAL_DENSITY_VAR_NAME = "fe_loq_partial_density"
 FE_HIGH_PARTIAL_DENSITY_VAR_NAME = "fe_hiq_partial_density"
+C_TO_O_RATIO_VAR_NAME = "c_to_o_ratio"
+MG_TO_O_RATIO_VAR_NAME = "mg_to_o_ratio"
+FE_TO_O_RATIO_VAR_NAME = "fe_to_o_ratio"
 
 
 @dataclass
@@ -256,10 +260,14 @@ class CodiceLoL3aPartialDensityDataProduct(DataProduct):
     oplus6_partial_density: ndarray
     oplus7_partial_density: ndarray
     oplus8_partial_density: ndarray
+    ne_partial_density: ndarray
     mg_partial_density: ndarray
     si_partial_density: ndarray
     fe_loq_partial_density: ndarray
     fe_hiq_partial_density: ndarray
+    c_to_o_ratio: ndarray
+    mg_to_o_ratio: ndarray
+    fe_to_o_ratio: ndarray
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
@@ -275,10 +283,14 @@ class CodiceLoL3aPartialDensityDataProduct(DataProduct):
             DataProductVariable(O6_PARTIAL_DENSITY_VAR_NAME, self.oplus6_partial_density),
             DataProductVariable(O7_PARTIAL_DENSITY_VAR_NAME, self.oplus7_partial_density),
             DataProductVariable(O8_PARTIAL_DENSITY_VAR_NAME, self.oplus8_partial_density),
+            DataProductVariable(NE_PARTIAL_DENSITY_VAR_NAME, self.ne_partial_density),
             DataProductVariable(MG_PARTIAL_DENSITY_VAR_NAME, self.mg_partial_density),
             DataProductVariable(SI_PARTIAL_DENSITY_VAR_NAME, self.si_partial_density),
             DataProductVariable(FE_LOW_PARTIAL_DENSITY_VAR_NAME, self.fe_loq_partial_density),
             DataProductVariable(FE_HIGH_PARTIAL_DENSITY_VAR_NAME, self.fe_hiq_partial_density),
+            DataProductVariable(C_TO_O_RATIO_VAR_NAME, self.c_to_o_ratio),
+            DataProductVariable(MG_TO_O_RATIO_VAR_NAME, self.mg_to_o_ratio),
+            DataProductVariable(FE_TO_O_RATIO_VAR_NAME, self.fe_to_o_ratio),
         ]
 
 

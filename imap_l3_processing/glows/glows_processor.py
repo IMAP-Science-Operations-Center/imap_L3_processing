@@ -11,8 +11,6 @@ from subprocess import run
 import imap_data_access
 import numpy as np
 from imap_data_access.processing_input import ProcessingInputCollection
-
-from imap_l3_processing.glows import l3d
 from imap_l3_processing.glows.descriptors import GLOWS_L3A_DESCRIPTOR
 from imap_l3_processing.glows.glows_initializer import GlowsInitializer
 from imap_l3_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
@@ -24,10 +22,10 @@ from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDepen
 from imap_l3_processing.glows.l3bc.models import GlowsL3BIonizationRate, GlowsL3CSolarWind
 from imap_l3_processing.glows.l3bc.science.filter_out_bad_days import filter_out_bad_days
 from imap_l3_processing.glows.l3bc.science.generate_l3bc import generate_l3bc
-from imap_l3_processing.glows.l3bc.utils import make_l3b_data_with_fill, make_l3c_data_with_fill, get_repoint_date_range
+from imap_l3_processing.glows.l3bc.utils import get_repoint_date_range
 from imap_l3_processing.glows.l3d.glows_l3d_dependencies import GlowsL3DDependencies
 from imap_l3_processing.glows.l3d.utils import create_glows_l3b_json_file_from_cdf, create_glows_l3c_json_file_from_cdf, \
-    PATH_TO_L3D_TOOLKIT, convert_json_to_l3d_data_product
+    PATH_TO_L3D_TOOLKIT, convert_json_to_l3d_data_product, get_parent_file_names_from_l3d_json
 from imap_l3_processing.glows.l3e.glows_l3e_dependencies import GlowsL3EDependencies
 from imap_l3_processing.glows.l3e.glows_l3e_hi_model import GlowsL3EHiData
 from imap_l3_processing.glows.l3e.glows_l3e_lo_model import GlowsL3ELoData
@@ -63,9 +61,11 @@ class GlowsProcessor(Processor):
                 imap_data_access.upload(zip_file)
         elif self.input_metadata.data_level == "l3d":
             l3d_dependencies = GlowsL3DDependencies.fetch_dependencies(self.dependencies)
-            data_product = self.process_l3d(l3d_dependencies)
+            data_product, l3d_txt_paths = self.process_l3d(l3d_dependencies)
             cdf = save_data(data_product)
             imap_data_access.upload(cdf)
+            for txt_path in l3d_txt_paths:
+                imap_data_access.upload(txt_path)
         elif self.input_metadata.data_level == "l3e":
             l3e_dependencies, repointing_number = GlowsL3EDependencies.fetch_dependencies(self.dependencies,
                                                                                           self.input_metadata.descriptor)
@@ -104,16 +104,13 @@ class GlowsProcessor(Processor):
 
         try:
             l3b_data, l3c_data = generate_l3bc(replace(dependencies, l3a_data=filtered_days))
-            l3b_data_product = GlowsL3BIonizationRate.from_instrument_team_dictionary(l3b_data,
-                                                                                      l3b_metadata)
-            l3c_data_product = GlowsL3CSolarWind.from_instrument_team_dictionary(l3c_data, l3c_metadata)
-        except CannotProcessCarringtonRotationError:
-            l3b_data_with_fills = make_l3b_data_with_fill(dependencies)
-            l3c_data_with_fills = make_l3c_data_with_fill(dependencies)
-            l3b_data_product = GlowsL3BIonizationRate.from_instrument_team_dictionary(l3b_data_with_fills,
-                                                                                      l3b_metadata)
-            l3c_data_product = GlowsL3CSolarWind.from_instrument_team_dictionary(l3c_data_with_fills,
-                                                                                 l3c_metadata)
+        except CannotProcessCarringtonRotationError as e:
+            raise e
+
+        l3b_data_product = GlowsL3BIonizationRate.from_instrument_team_dictionary(l3b_data,
+                                                                                  l3b_metadata)
+        l3c_data_product = GlowsL3CSolarWind.from_instrument_team_dictionary(l3c_data, l3c_metadata)
+
         l3b_data_product.parent_file_names += self.get_parent_file_names([dependencies.zip_file_path])
         l3c_data_product.parent_file_names += self.get_parent_file_names([dependencies.zip_file_path])
         return l3b_data_product, l3c_data_product
@@ -121,7 +118,6 @@ class GlowsProcessor(Processor):
     def process_l3d(self, dependencies: GlowsL3DDependencies):
         [create_glows_l3b_json_file_from_cdf(l3b) for l3b in dependencies.l3b_file_paths]
         [create_glows_l3c_json_file_from_cdf(l3c) for l3c in dependencies.l3c_file_paths]
-
         ancillary_path = PATH_TO_L3D_TOOLKIT / 'data_ancillary'
         external_path = PATH_TO_L3D_TOOLKIT / 'external_dependencies'
 
@@ -153,13 +149,11 @@ class GlowsProcessor(Processor):
 
         shutil.move(dependencies.external_files['lya_raw_data'], external_path / 'lyman_alpha_composite.nc')
 
-        working_dir = Path(l3d.__file__).parent / 'science'
-
         last_processed_cr = None
         try:
             while True:
                 output: subprocess.CompletedProcess = run([sys.executable, './generate_l3d.py'],
-                                                          cwd=str(working_dir),
+                                                          cwd=str(PATH_TO_L3D_TOOLKIT),
                                                           check=True,
                                                           capture_output=True, text=True)
                 if output.stdout:
@@ -170,7 +164,15 @@ class GlowsProcessor(Processor):
 
         if last_processed_cr:
             file_name = f'imap_glows_l3d_cr_{last_processed_cr}_v00.json'
-            return convert_json_to_l3d_data_product(working_dir / 'data_l3d' / file_name, 'l3d.cdf')
+
+            parent_file_names = get_parent_file_names_from_l3d_json(PATH_TO_L3D_TOOLKIT / 'data_l3d')
+
+            output_txt_files = [PATH_TO_L3D_TOOLKIT / 'data_l3d_txt' / last_cr_txt_file for last_cr_txt_file in
+                                os.listdir(PATH_TO_L3D_TOOLKIT / 'data_l3d_txt') if
+                                str(last_processed_cr) in last_cr_txt_file]
+
+            return convert_json_to_l3d_data_product(PATH_TO_L3D_TOOLKIT / 'data_l3d' / file_name, self.input_metadata,
+                                                    parent_file_names), output_txt_files
 
     def process_l3e_lo(self, epoch: datetime, epoch_delta: timedelta):
         call_args = determine_call_args_for_l3e_executable(epoch, epoch + epoch_delta, 90)
