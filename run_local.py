@@ -863,7 +863,7 @@ if __name__ == "__main__":
 
             missing_paths, [l1c_dependency_path, l2_map_path] = try_get_many_run_local_paths([
                 "ultra/fake_l1c_psets/test_pset.cdf",
-                "ultra/fake_l2_maps/test_map.cdf"
+                "ultra/fake_l2_maps/test_l2_map.cdf"
             ])
 
             if missing_paths:
@@ -885,7 +885,7 @@ if __name__ == "__main__":
                 end_date=datetime(year=2025, month=9, day=1),
                 data_level="l3",
                 version="v001",
-                descriptor="u90-sp-4deg"
+                descriptor="u90-ena-h-sf-sp-full-hae-128nside-6mo"
             )
 
             dependencies = UltraL3Dependencies(ultra_l1c_pset=[l1c_dependency], glows_l3e_sp=l3e_dependencies,

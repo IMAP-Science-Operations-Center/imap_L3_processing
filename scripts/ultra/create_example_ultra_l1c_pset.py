@@ -17,7 +17,7 @@ DEFAULT_RECT_SPACING_DEG_L1C = 0.5
 DEFAULT_HEALPIX_NSIDE_L1C = 128
 
 
-def create_example_ultra_l1c_pset(  # noqa: PLR0913
+def create_example_ultra_l1c_pset(
         nside: int = DEFAULT_HEALPIX_NSIDE_L1C,
         stripe_center_lat: int = 0,
         width_scale: float = 10.0,
@@ -187,7 +187,7 @@ def create_example_ultra_l1c_pset(  # noqa: PLR0913
 
 
 def _write_ultra_l1c_cdf_with_parents(
-        out_path: Path = get_run_local_data_path("ultra/fake_l1c_psets/test_pset_nside1.cdf")):
+        out_path: Path = get_run_local_data_path("ultra/fake_l1c_psets/test_pset.cdf")):
     out_xarray = create_example_ultra_l1c_pset(nside=1)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.unlink(missing_ok=True)

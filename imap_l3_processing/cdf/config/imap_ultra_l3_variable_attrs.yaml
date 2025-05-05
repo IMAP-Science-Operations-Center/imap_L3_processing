@@ -11,7 +11,6 @@ epoch:
   VALIDMIN: 2010-01-01T00:00:00.000000000
   VALIDMAX: 2059-12-31T23:59:58.999000000
   FILLVAL: 9999-12-31T23:59:59.999999999
-  SCALE_TYP: linear
   TIME_BASE: J2000
   TIME_SCALE: TT
   DELTA_PLUS_VAR: epoch_delta
@@ -44,9 +43,8 @@ energy:
   LABLAXIS: Energy
   UNITS: keV
   VALIDMIN: 0.0
-  VALIDMAX: 100.0
+  VALIDMAX: 400.0
   FILLVAL: -1.00E+31
-  SCALE_TYP: linear
   DELTA_PLUS_VAR: energy_delta_plus
   DELTA_MINUS_VAR: energy_delta_minus
   MONOTON: INCREASE
@@ -86,6 +84,29 @@ energy_delta_plus:
   VALIDMIN: 0.0
   VALIDMAX: 100.0
   FILLVAL: -1.00E+31
+pixel_index:
+  NAME: pixel_index
+  DATA_TYPE: CDF_INT8
+  CATDESC: Index of HEALPix array
+  VAR_TYPE: support_data
+  RECORD_VARYING: nrv
+  FIELDNAM: HEALPix index
+  FORMAT: I8
+  LABLAXIS: HEALPix index
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 12582912
+  FILLVAL: -9223372036854775808
+  LABL_PTR_1: pixel_index_label
+  MONOTON: INCREASE
+pixel_index_label:
+  NAME: pixel_index_label
+  DATA_TYPE: CDF_CHAR
+  CATDESC: Label variable for HEALPix index
+  DEPEND_1: pixel_index
+  VAR_TYPE: metadata
+  FIELDNAM: Label variable for HEALPix index
+  FORMAT: A16
 latitude:
   NAME: latitude
   DATA_TYPE: CDF_REAL4
@@ -99,7 +120,6 @@ latitude:
   VALIDMIN: -90.0
   VALIDMAX: 90.0
   FILLVAL: -1.00E+31
-  SCALE_TYP: linear
   MONOTON: INCREASE
 longitude:
   NAME: longitude
@@ -114,7 +134,6 @@ longitude:
   VALIDMIN: 0.0
   VALIDMAX: 360.0
   FILLVAL: -1.00E+31
-  SCALE_TYP: linear
   MONOTON: INCREASE
 ena_intensity:
   NAME: ena_intensity
@@ -136,7 +155,6 @@ ena_intensity:
   FILLVAL: -1.00E+31
   LABL_PTR_1: energy_label
   LABL_PTR_2: pixel_index_label
-  SCALE_TYP: linear
 ena_intensity_stat_unc:
   NAME: ena_intensity_stat_unc
   DATA_TYPE: CDF_REAL4
@@ -155,7 +173,6 @@ ena_intensity_stat_unc:
   FILLVAL: -1.00E+31
   LABL_PTR_1: energy_label
   LABL_PTR_2: pixel_index_label
-  SCALE_TYP: linear
 ena_intensity_sys_err:
   NAME: ena_intensity_sys_err
   DATA_TYPE: CDF_REAL4
@@ -174,7 +191,6 @@ ena_intensity_sys_err:
   FILLVAL: -1.00E+31
   LABL_PTR_1: energy_label
   LABL_PTR_2: pixel_index_label
-  SCALE_TYP: linear
 exposure_factor:
   NAME: exposure_factor
   DATA_TYPE: CDF_REAL4
@@ -194,7 +210,6 @@ exposure_factor:
   FILLVAL: -1.00E+31
   LABL_PTR_1: energy_label
   LABL_PTR_2: pixel_index_label
-  SCALE_TYP: linear
 obs_date:
   NAME: obs_date
   DATA_TYPE: CDF_TIME_TT2000
@@ -214,7 +229,6 @@ obs_date:
   FILLVAL: 9999-12-31T23:59:59.999999999
   LABL_PTR_1: energy_label
   LABL_PTR_2: pixel_index_label
-  SCALE_TYP: linear
 obs_date_range:
   NAME: obs_date_range
   DATA_TYPE: CDF_INT8
@@ -234,7 +248,6 @@ obs_date_range:
   FILLVAL: -9223372036854775808
   LABL_PTR_1: energy_label
   LABL_PTR_2: pixel_index_label
-  SCALE_TYP: linear
 solid_angle:
   NAME: solid_angle
   DATA_TYPE: CDF_REAL4
@@ -251,27 +264,3 @@ solid_angle:
   VALIDMAX: 12.56637061
   FILLVAL: -1.00E+31
   LABL_PTR_1: pixel_index_label
-  SCALE_TYP: linear
-pixel_index:
-  NAME: pixel_index
-  DATA_TYPE: CDF_INT8
-  CATDESC: HEALPix index
-  VAR_TYPE: support_data
-  RECORD_VARYING: nrv
-  FIELDNAM: HEALPix index
-  FORMAT: ' '
-  LABLAXIS: HEALPix index
-  VALIDMIN: 0
-  VALIDMAX: 12582912
-  FILLVAL: -9223372036854775808
-  SCALE_TYP: linear
-  MONOTON: INCREASE
-  LABL_PTR_1: pixel_index_label
-pixel_index_label:
-  NAME: pixel_index_label
-  DATA_TYPE: CDF_CHAR
-  CATDESC: Label variable for HEALPix index
-  DEPEND_1: pixel_index
-  VAR_TYPE: metadata
-  FIELDNAM: Label variable for HEALPix index
-  FORMAT: A16

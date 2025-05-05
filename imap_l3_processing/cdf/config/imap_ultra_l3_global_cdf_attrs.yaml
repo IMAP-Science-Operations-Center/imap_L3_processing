@@ -1,5 +1,5 @@
-imap_ultra_l3_u90-sp-4deg:
+imap_ultra_l3_u90-ena-h-sf-sp-full-hae-128nside-6mo:
   Data_level: "3"
-  Data_type: L3_u90-sp-4deg>Level-3 Survival Corrected Full 4 degree
-  Logical_source: imap_ultra_l3_u90-sp-4deg
-  Logical_source_description: IMAP-Ultra Instrument Level-3 Survival Corrected Full 4 degree.
+  Data_type: l3_u90-ena-h-sf-sp-full-hae-128nside-6mo>Level-3 Survival Corrected Full 4 degree
+  Logical_source: imap_ultra_l3_u90-ena-h-sf-sp-full-hae-128nside-6mo
+  Logical_source_description: IMAP-Ultra Instrument Level-3 ENA Intensity, Ultra-90 sensor, Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin, HAE, HEALPix nside 128, 6 Month Map

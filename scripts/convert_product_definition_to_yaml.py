@@ -84,6 +84,7 @@ def process_csv():
         "glows-l3e-hi-45": "imap_l3_processing/cdf/data_product_definition_csv/imap_glows_l3e_survival-probability-hi-45_variable_attrs.csv",
         "glows-l3e-hi-90": "imap_l3_processing/cdf/data_product_definition_csv/imap_glows_l3e_survival-probability-hi-90_variable_attrs.csv",
         "glows-l3e-ul": "imap_l3_processing/cdf/data_product_definition_csv/imap_glows_l3e_survival-probability-ul_variable_attrs.csv",
+        "ultra-l3-survival-probability": "imap_l3_processing/cdf/data_product_definition_csv/imap_ultra_l3_variable_attrs.csv"
     }
     file_path = instrument_to_file_path[args.instrument]
 
