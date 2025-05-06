@@ -13,8 +13,7 @@ from imap_l3_processing.models import DataProductVariable, DataProduct
 CODICE_LO_L2_NUM_PRIORITIES = 7
 
 EPOCH_VAR_NAME = "epoch"
-EPOCH_DELTA_PLUS_VAR_NAME = "epoch_delta_plus"
-EPOCH_DELTA_MINUS_VAR_NAME = "epoch_delta_minus"
+EPOCH_DELTA_VAR_NAME = "epoch_delta"
 H_PARTIAL_DENSITY_VAR_NAME = "hplus_partial_density"
 HE_PARTIAL_DENSITY_VAR_NAME = "heplusplus_partial_density"
 C4_PARTIAL_DENSITY_VAR_NAME = "cplus4_partial_density"
@@ -236,8 +235,7 @@ class CodiceLoL1aNSWPriorityRates:
 @dataclass
 class CodiceLoL3aPartialDensityDataProduct(DataProduct):
     epoch: ndarray
-    epoch_delta_plus: ndarray
-    epoch_delta_minus: ndarray
+    epoch_delta: ndarray
     hplus_partial_density: ndarray
     heplusplus_partial_density: ndarray
     cplus4_partial_density: ndarray
@@ -259,8 +257,7 @@ class CodiceLoL3aPartialDensityDataProduct(DataProduct):
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
             DataProductVariable(EPOCH_VAR_NAME, self.epoch),
-            DataProductVariable(EPOCH_DELTA_PLUS_VAR_NAME, self.epoch_delta_plus),
-            DataProductVariable(EPOCH_DELTA_MINUS_VAR_NAME, self.epoch_delta_minus),
+            DataProductVariable(EPOCH_DELTA_VAR_NAME, self.epoch_delta),
             DataProductVariable(H_PARTIAL_DENSITY_VAR_NAME, self.hplus_partial_density),
             DataProductVariable(HE_PARTIAL_DENSITY_VAR_NAME, self.heplusplus_partial_density),
             DataProductVariable(C4_PARTIAL_DENSITY_VAR_NAME, self.cplus4_partial_density),

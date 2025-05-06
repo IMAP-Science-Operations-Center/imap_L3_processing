@@ -80,8 +80,7 @@ class CodiceLoProcessor(Processor):
         return CodiceLoL3aPartialDensityDataProduct(
             input_metadata=self.input_metadata,
             epoch=codice_lo_l2_data.epoch,
-            epoch_delta_plus=codice_lo_l2_data.epoch_delta_plus,
-            epoch_delta_minus=codice_lo_l2_data.epoch_delta_minus,
+            epoch_delta=codice_lo_l2_data.epoch_delta_plus,
             hplus_partial_density=h_plus_partial_density,
             heplusplus_partial_density=heplusplus_partial_density,
             cplus4_partial_density=cplus4_partial_density,

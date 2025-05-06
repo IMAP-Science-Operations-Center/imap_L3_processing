@@ -141,8 +141,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
         self.assertEqual(input_metadata, result.input_metadata)
 
         np.testing.assert_array_equal(result.epoch, codice_lo_l2_data.epoch)
-        np.testing.assert_array_equal(result.epoch_delta_plus, codice_lo_l2_data.epoch_delta_plus)
-        np.testing.assert_array_equal(result.epoch_delta_minus, codice_lo_l2_data.epoch_delta_minus)
+        np.testing.assert_array_equal(result.epoch_delta, codice_lo_l2_data.epoch_delta_plus)
         self.assertEqual(sentinel.hplus_partial_density, result.hplus_partial_density),
         self.assertEqual(sentinel.heplusplus_partial_density, result.heplusplus_partial_density),
         self.assertEqual(cplus4_partial_density, result.cplus4_partial_density),

@@ -178,8 +178,7 @@ class TestModels(unittest.TestCase):
 
         input_data_product_kwargs = {
             "epoch": epoch_data,
-            "epoch_delta_plus": np.array([1]),
-            "epoch_delta_minus": np.array([-1]),
+            "epoch_delta": np.array([1]),
             "hplus_partial_density": np.array([15]),
             "heplusplus_partial_density": np.array([15]),
             "cplus4_partial_density": np.array([15]),
@@ -204,7 +203,7 @@ class TestModels(unittest.TestCase):
         )
         actual_data_product_variables = data_product.to_data_product_variables()
 
-        self.assertEqual(20, len(actual_data_product_variables))
+        self.assertEqual(19, len(actual_data_product_variables))
 
         for input_variable, actual_data_product_variable in zip(input_data_product_kwargs.items(),
                                                                 actual_data_product_variables):

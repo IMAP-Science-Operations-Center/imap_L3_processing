@@ -98,10 +98,10 @@ def create_codice_lo_l3a_partial_densities_cdf():
     input_metadata = InputMetadata(
         instrument='codice',
         data_level='l3a',
-        start_date=datetime(2025, 1, 1),
+        start_date=datetime(2024, 11, 10),
         end_date=datetime(2025, 1, 2),
         version='v000',
-        descriptor='partial-densities'
+        descriptor='lo-partial-densities'
     )
 
     codice_lo_processor = CodiceLoProcessor(ProcessingInputCollection(), input_metadata)

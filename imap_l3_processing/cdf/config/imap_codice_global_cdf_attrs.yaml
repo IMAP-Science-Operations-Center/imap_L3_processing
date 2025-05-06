@@ -1,0 +1,14 @@
+Descriptor: CoDICE>Compact Dual Ion Composition Experiment
+TEXT: >
+  Like its sister instrument Solar Wind and Pickup Ions (SWAPI), the CoDICE instrument collects and 
+  counts two types of particles: ones from the solar wind flowing from the Sun and particles called pick-up ions (PUIs) 
+  that entered the heliosphere from outside our solar neighborhood and traveled inwards where IMAP orbits about a 
+  million miles from the Earth. The solar wind particles CoDICE collects and sorts are highly energized particles, 
+  called suprathermal particles, which are moving faster (and therefore have higher energy) than the solar wind 
+  particles that SWAPI collects. CoDICE also simultaneously measures the velocity, direction of travel, energies, 
+  and types of specific species of PUIs from the local interstellar mediumThe interstellar material surrounding our 
+  solar system found directly outside of the heliosphere.. Some of these are hydrogen and helium ions like SWAPI, 
+  but CoDICE is also able to collect and analyze heavier ions than SWAPI can.
+Instrument_type: Particles (space)
+
+
