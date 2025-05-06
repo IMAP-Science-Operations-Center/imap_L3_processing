@@ -4,7 +4,9 @@ import numpy as np
 from imap_data_access import upload
 from imap_data_access.processing_input import ProcessingInputCollection
 
-from imap_l3_processing.codice.l3.lo.codice_lo_l3a_dependencies import CodiceLoL3aDependencies
+from imap_l3_processing.codice.l3.lo.codice_lo_l3a_direct_events_dependencies import CodiceLoL3aDirectEventsDependencies
+from imap_l3_processing.codice.l3.lo.codice_lo_l3a_partial_densities_dependencies import \
+    CodiceLoL3aPartialDensitiesDependencies
 from imap_l3_processing.codice.l3.lo.models import CodiceLoL3aPartialDensityDataProduct, CodiceLoL2DirectEventData, \
     CodiceLoL3aDirectEventDataProduct
 from imap_l3_processing.codice.l3.lo.science.codice_lo_calculations import calculate_partial_densities, \
@@ -22,18 +24,20 @@ class CodiceLoProcessor(Processor):
         super().__init__(dependencies, input_metadata)
 
     def process(self):
-        dependencies = CodiceLoL3aDependencies.fetch_dependencies(self.dependencies)
-        l3a_data = self.process_l3a(dependencies)
-        l3a_data.parent_file_names = self.get_parent_file_names()
-        l3a_direct_event_data = self._process_l3a_direct_event_data_product(dependencies)
+        if self.input_metadata.descriptor == "lo-partial-densities":
+            dependencies = CodiceLoL3aPartialDensitiesDependencies.fetch_dependencies(self.dependencies)
+            data_product = self.process_l3a_partial_densities(dependencies)
+        elif self.input_metadata.descriptor == "lo-direct-events":
+            dependencies = CodiceLoL3aDirectEventsDependencies.fetch_dependencies(self.dependencies)
+            data_product = self._process_l3a_direct_event_data_product(dependencies)
+        else:
+            raise NotImplementedError
 
-        saved_l3a_cdf = save_data(l3a_data)
-        saved_l3a_direct_event_cdf = save_data(l3a_direct_event_data)
-
+        data_product.parent_file_names = self.get_parent_file_names()
+        saved_l3a_cdf = save_data(data_product)
         upload(saved_l3a_cdf)
-        upload(saved_l3a_direct_event_cdf)
 
-    def process_l3a(self, dependencies: CodiceLoL3aDependencies):
+    def process_l3a_partial_densities(self, dependencies: CodiceLoL3aPartialDensitiesDependencies):
         codice_lo_l2_data = dependencies.codice_l2_lo_data
         mass_per_charge_lookup = dependencies.mass_per_charge_lookup
         h_plus_partial_density = calculate_partial_densities(codice_lo_l2_data.hplus, codice_lo_l2_data.energy_table,
@@ -101,7 +105,7 @@ class CodiceLoProcessor(Processor):
         )
 
     def _process_l3a_direct_event_data_product(self,
-                                               dependencies: CodiceLoL3aDependencies) -> CodiceLoL3aDirectEventDataProduct:
+                                               dependencies: CodiceLoL3aDirectEventsDependencies) -> CodiceLoL3aDirectEventDataProduct:
         codice_sw_priority_rates_l1a_data = dependencies.codice_lo_l1a_sw_priority_rates
         codice_nsw_priority_rates_l1a_data = dependencies.codice_lo_l1a_nsw_priority_rates
         codice_direct_events: CodiceLoL2DirectEventData = dependencies.codice_l2_direct_events

@@ -69,7 +69,6 @@ class TestCodiceLoCalculations(unittest.TestCase):
             energy_step=np.array([]),
             multi_flag=np.array([]),
             num_events=np.array([]),
-            pha_type=np.array([]),
             spin_angle=np.array([]),
         )
 
@@ -101,7 +100,6 @@ class TestCodiceLoCalculations(unittest.TestCase):
             ]),
             multi_flag=np.array([]),
             num_events=np.array([]),
-            pha_type=np.array([]),
             spin_angle=np.array([]),
         )
 

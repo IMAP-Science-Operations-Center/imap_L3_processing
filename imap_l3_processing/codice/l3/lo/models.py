@@ -99,7 +99,6 @@ class PriorityEvent:
     energy_step: ndarray
     multi_flag: ndarray
     num_events: ndarray
-    pha_type: ndarray
     spin_angle: ndarray
     tof: ndarray
 
@@ -120,33 +119,30 @@ class PriorityEvent:
 @dataclass
 class CodiceLoL2DirectEventData:
     epoch: ndarray
-    event_num: ndarray
+    epoch_delta_plus: ndarray
+    epoch_delta_minus: ndarray
     priority_events: list[PriorityEvent]
-
-    @classmethod
-    def _read_priority_event(cls, cdf):
-        priority_events = []
-        for index in range(CODICE_LO_L2_NUM_PRIORITIES):
-            priority_events.append(PriorityEvent(cdf[f"P{index}_APDEnergy"][...],
-                                                 cdf[f"P{index}_APDGain"][...],
-                                                 cdf[f"P{index}_APD_ID"][...],
-                                                 cdf[f"P{index}_DataQuality"][...],
-                                                 cdf[f"P{index}_EnergyStep"][...],
-                                                 cdf[f"P{index}_MultiFlag"][...],
-                                                 cdf[f"P{index}_NumEvents"][...],
-                                                 cdf[f"P{index}_PHAType"][...],
-                                                 cdf[f"P{index}_SpinAngle"][...],
-                                                 cdf[f"P{index}_TOF"][...]
-                                                 ))
-        return priority_events
 
     @classmethod
     def read_from_cdf(cls, l2_direct_event_cdf: Path):
         with CDF(str(l2_direct_event_cdf)) as cdf:
+            priority_events = []
+            for index in range(CODICE_LO_L2_NUM_PRIORITIES):
+                priority_events.append(PriorityEvent(cdf[f"p{index}_apd_energy"][...],
+                                                     cdf[f"p{index}_gain"][...],
+                                                     cdf[f"p{index}_apd_id"][...],
+                                                     cdf[f"p{index}_data_quality"][...],
+                                                     cdf[f"p{index}_energy_step"][...],
+                                                     cdf[f"p{index}_multi_flag"][...],
+                                                     cdf[f"p{index}_num_events"][...],
+                                                     cdf[f"p{index}_spin_sector"][...],
+                                                     cdf[f"p{index}_tof"][...]))
+
             return cls(
                 epoch=cdf["epoch"][...],
-                event_num=cdf["event_num"][...],
-                priority_events=cls._read_priority_event(cdf)
+                epoch_delta_plus=cdf["epoch_delta_plus"][...],
+                epoch_delta_minus=cdf["epoch_delta_minus"][...],
+                priority_events=priority_events
             )
 
 
@@ -196,11 +192,11 @@ class CodiceLoL1aSWPriorityRates:
 
 @dataclass
 class CodiceLoL1aNSWPriorityRates:
-    energy_table: np.ndarray
-    acquisition_time_per_step: np.ndarray
     epoch: np.ndarray
     epoch_delta_plus: np.ndarray
     epoch_delta_minus: np.ndarray
+    energy_table: np.ndarray
+    acquisition_time_per_step: np.ndarray
     spin_sector_index: np.ndarray
     rgfo_half_spin: np.ndarray
     data_quality: np.ndarray
@@ -215,11 +211,11 @@ class CodiceLoL1aNSWPriorityRates:
     def read_from_cdf(cls, cdf_path: Path):
         with CDF(str(cdf_path)) as cdf:
             return cls(
-                energy_table=cdf["energy_table"][...],
-                acquisition_time_per_step=cdf["acquisition_time_per_step"][...],
                 epoch=cdf["epoch"][...],
                 epoch_delta_plus=cdf["epoch_delta_plus"][...],
                 epoch_delta_minus=cdf["epoch_delta_minus"][...],
+                energy_table=cdf["energy_table"][...],
+                acquisition_time_per_step=cdf["acquisition_time_per_step"][...],
                 spin_sector_index=cdf["spin_sector_index"][...],
                 rgfo_half_spin=cdf["rgfo_half_spin"][...],
                 data_quality=cdf["data_quality"][...],

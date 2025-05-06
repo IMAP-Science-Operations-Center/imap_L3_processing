@@ -105,9 +105,12 @@ def create_codice_lo_l3a_partial_densities_cdf():
     )
 
     codice_lo_processor = CodiceLoProcessor(ProcessingInputCollection(), input_metadata)
-    partial_densities_data = codice_lo_processor.process_l3a(deps)
+    partial_densities_data = codice_lo_processor.process_l3a_partial_densities(deps)
     cdf_path = save_data(partial_densities_data, delete_if_present=True)
     return cdf_path
+
+def create_codice_lo_l3a_direct_events_cdf():
+
 
 
 def create_swapi_l3b_cdf(geometric_calibration_file, efficiency_calibration_file, cdf_file):

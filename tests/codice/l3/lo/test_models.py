@@ -12,7 +12,8 @@ from imap_l3_processing.codice.l3.lo.direct_events.science.mass_species_bin_look
 from imap_l3_processing.codice.l3.lo.models import CodiceLoL2SWSpeciesData, CodiceLoL3aPartialDensityDataProduct, \
     CodiceLoL2DirectEventData, \
     PriorityEvent, EnergyAndSpinAngle, CodiceLoL3aDirectEventDataProduct, \
-    CodiceLoL1aSWPriorityRates, CodiceLoL1aNSWPriorityRates, CodiceLo3dData
+    CodiceLoL1aSWPriorityRates, CodiceLoL1aNSWPriorityRates, CodiceLo3dData, CODICE_LO_L2_NUM_PRIORITIES
+from tests.test_helpers import get_test_instrument_team_data_path
 
 
 class TestModels(unittest.TestCase):
@@ -93,58 +94,32 @@ class TestModels(unittest.TestCase):
             np.testing.assert_array_equal(result.data_quality, data_quality)
             np.testing.assert_array_equal(result.spin_sector_index, spin_sector_index)
 
-    def test_codice_lo_l2_direct_event_read_from_cdf(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            cdf_file_path = Path(tmpdir) / "test_cdf.cdf"
-            rng = np.random.default_rng()
-            with CDF(str(cdf_file_path), readonly=False, masterpath="") as cdf_file:
-                epoch = np.array([datetime(2011, 5, 5), datetime(2011, 5, 6)])
-                cdf_file['epoch'] = epoch
-                expected_event_num = np.arange(77)
-                cdf_file['event_num'] = expected_event_num
-
-                expected_values = {}
-                for index in range(8):
-                    expected_values.update(
-                        {
-                            f"P{index}_APDEnergy": rng.random((7, 10)),
-                            f"P{index}_APDGain": rng.random((7, 10)),
-                            f"P{index}_APD_ID": rng.random(7),
-                            f"P{index}_DataQuality": rng.random((7, 10)),
-                            f"P{index}_EnergyStep": rng.random((7, 10)),
-                            f"P{index}_MultiFlag": rng.random(7),
-                            f"P{index}_NumEvents": rng.random((7, 10)),
-                            f"P{index}_PHAType": rng.random((7, 10)),
-                            f"P{index}_SpinAngle": rng.random((7, 10)),
-                            f"P{index}_TOF": rng.random((7, 10)),
-                        })
-
-                    cdf_file[f"P{index}_APDEnergy"] = expected_values[f"P{index}_APDEnergy"]
-                    cdf_file[f"P{index}_APDGain"] = expected_values[f"P{index}_APDGain"]
-                    cdf_file[f"P{index}_APD_ID"] = expected_values[f"P{index}_APD_ID"]
-                    cdf_file[f"P{index}_DataQuality"] = expected_values[f"P{index}_DataQuality"]
-                    cdf_file[f"P{index}_EnergyStep"] = expected_values[f"P{index}_EnergyStep"]
-                    cdf_file[f"P{index}_MultiFlag"] = expected_values[f"P{index}_MultiFlag"]
-                    cdf_file[f"P{index}_NumEvents"] = expected_values[f"P{index}_NumEvents"]
-                    cdf_file[f"P{index}_PHAType"] = expected_values[f"P{index}_PHAType"]
-                    cdf_file[f"P{index}_SpinAngle"] = expected_values[f"P{index}_SpinAngle"]
-                    cdf_file[f"P{index}_TOF"] = expected_values[f"P{index}_TOF"]
-
-            result: CodiceLoL2DirectEventData = CodiceLoL2DirectEventData.read_from_cdf(cdf_file_path)
-            np.testing.assert_array_equal(result.epoch, epoch)
-            np.testing.assert_array_equal(result.event_num, expected_event_num)
-
-            for index, priority_event in enumerate(result.priority_events):
-                np.testing.assert_array_equal(priority_event.apd_energy, expected_values[f"P{index}_APDEnergy"])
-                np.testing.assert_array_equal(priority_event.apd_gain, expected_values[f"P{index}_APDGain"])
-                np.testing.assert_array_equal(priority_event.apd_id, expected_values[f"P{index}_APD_ID"])
-                np.testing.assert_array_equal(priority_event.data_quality, expected_values[f"P{index}_DataQuality"])
-                np.testing.assert_array_equal(priority_event.energy_step, expected_values[f"P{index}_EnergyStep"])
-                np.testing.assert_array_equal(priority_event.multi_flag, expected_values[f"P{index}_MultiFlag"])
-                np.testing.assert_array_equal(priority_event.num_events, expected_values[f"P{index}_NumEvents"])
-                np.testing.assert_array_equal(priority_event.pha_type, expected_values[f"P{index}_PHAType"])
-                np.testing.assert_array_equal(priority_event.spin_angle, expected_values[f"P{index}_SpinAngle"])
-                np.testing.assert_array_equal(priority_event.tof, expected_values[f"P{index}_TOF"])
+    def test_codice_lo_l2_direct_event_read_from_instrument_team_cdf(self):
+        path_to_cdf = get_test_instrument_team_data_path(
+            'codice/lo/imap_codice_l2_lo-direct-events_20241110193700_v0.0.2.cdf')
+        l2_direct_event_data = CodiceLoL2DirectEventData.read_from_cdf(path_to_cdf)
+        with CDF(str(path_to_cdf)) as cdf:
+            np.testing.assert_array_equal(cdf["epoch"], l2_direct_event_data.epoch)
+            np.testing.assert_array_equal(cdf["epoch_delta_plus"], l2_direct_event_data.epoch_delta_plus)
+            np.testing.assert_array_equal(cdf["epoch_delta_minus"], l2_direct_event_data.epoch_delta_minus)
+            for index in range(CODICE_LO_L2_NUM_PRIORITIES):
+                np.testing.assert_array_equal(cdf[f"p{index}_apd_energy"],
+                                              l2_direct_event_data.priority_events[index].apd_energy)
+                np.testing.assert_array_equal(cdf[f"p{index}_gain"],
+                                              l2_direct_event_data.priority_events[index].apd_gain)
+                np.testing.assert_array_equal(cdf[f"p{index}_apd_id"],
+                                              l2_direct_event_data.priority_events[index].apd_id)
+                np.testing.assert_array_equal(cdf[f"p{index}_data_quality"],
+                                              l2_direct_event_data.priority_events[index].data_quality)
+                np.testing.assert_array_equal(cdf[f"p{index}_energy_step"],
+                                              l2_direct_event_data.priority_events[index].energy_step)
+                np.testing.assert_array_equal(cdf[f"p{index}_multi_flag"],
+                                              l2_direct_event_data.priority_events[index].multi_flag)
+                np.testing.assert_array_equal(cdf[f"p{index}_num_events"],
+                                              l2_direct_event_data.priority_events[index].num_events)
+                np.testing.assert_array_equal(cdf[f"p{index}_spin_sector"],
+                                              l2_direct_event_data.priority_events[index].spin_angle)
+                np.testing.assert_array_equal(cdf[f"p{index}_tof"], l2_direct_event_data.priority_events[index].tof)
 
     def test_calculate_total_number_of_events(self):
         energy_step = np.array([[1, 4, 4, 2, 0],
@@ -153,8 +128,16 @@ class TestModels(unittest.TestCase):
         spin_angle = np.array([[0, 30, 30, 40, 0],
                                [30, 30, 50, 40, np.nan]])
 
-        priority_event = PriorityEvent(np.array([]), np.array([]), np.array([]), np.array([]), energy_step,
-                                       np.array([]), np.array([]), np.array([]), spin_angle, np.array([]))
+        priority_event = PriorityEvent(
+            apd_energy=np.array([]),
+            apd_gain=np.array([]),
+            apd_id=np.array([]),
+            data_quality=np.array([]),
+            energy_step=energy_step,
+            multi_flag=np.array([]),
+            num_events=np.array([]),
+            spin_angle=spin_angle,
+            tof=np.array([]))
 
         expected_total_events_by_energy_step_and_spin_angle = [
             {
@@ -252,6 +235,31 @@ class TestModels(unittest.TestCase):
         for data_product in data_products:
             np.testing.assert_array_equal(getattr(direct_event, data_product.name), data_product.value)
 
+    def test_codice_lo_l1a_sw_priority_read_from_instrument_team_cdf(self):
+        instrument_team_cdf_path = get_test_instrument_team_data_path(
+            "codice/lo/imap_codice_l1a_lo-sw-priority_20241110193900_v0.0.2.cdf")
+        actual_l1a_sw_priority_rates = CodiceLoL1aSWPriorityRates.read_from_cdf(instrument_team_cdf_path)
+
+        with CDF(str(instrument_team_cdf_path)) as cdf:
+            np.testing.assert_array_equal(actual_l1a_sw_priority_rates.epoch, cdf["epoch"][...])
+            np.testing.assert_array_equal(actual_l1a_sw_priority_rates.epoch_delta_plus, cdf["epoch_delta_plus"][...])
+            np.testing.assert_array_equal(actual_l1a_sw_priority_rates.epoch_delta_minus, cdf["epoch_delta_minus"][...])
+            np.testing.assert_array_equal(actual_l1a_sw_priority_rates.energy_table, cdf["energy_table"][...])
+            np.testing.assert_array_equal(actual_l1a_sw_priority_rates.acquisition_time_per_step,
+                                          cdf["acquisition_time_per_step"][...])
+            np.testing.assert_array_equal(actual_l1a_sw_priority_rates.spin_sector_index, cdf["spin_sector_index"][...])
+            np.testing.assert_array_equal(actual_l1a_sw_priority_rates.rgfo_half_spin, cdf["rgfo_half_spin"][...])
+            np.testing.assert_array_equal(actual_l1a_sw_priority_rates.nso_half_spin, cdf["nso_half_spin"][...])
+            np.testing.assert_array_equal(actual_l1a_sw_priority_rates.sw_bias_gain_mode, cdf["sw_bias_gain_mode"][...])
+            np.testing.assert_array_equal(actual_l1a_sw_priority_rates.st_bias_gain_mode, cdf["st_bias_gain_mode"][...])
+            np.testing.assert_array_equal(actual_l1a_sw_priority_rates.data_quality, cdf["data_quality"][...])
+            np.testing.assert_array_equal(actual_l1a_sw_priority_rates.spin_period, cdf["spin_period"][...])
+            np.testing.assert_array_equal(actual_l1a_sw_priority_rates.p0_tcrs, cdf["p0_tcrs"][...])
+            np.testing.assert_array_equal(actual_l1a_sw_priority_rates.p1_hplus, cdf["p1_hplus"][...])
+            np.testing.assert_array_equal(actual_l1a_sw_priority_rates.p2_heplusplus, cdf["p2_heplusplus"][...])
+            np.testing.assert_array_equal(actual_l1a_sw_priority_rates.p3_heavies, cdf["p3_heavies"][...])
+            np.testing.assert_array_equal(actual_l1a_sw_priority_rates.p4_dcrs, cdf["p4_dcrs"][...])
+
     def test_codice_lo_l1a_sw_priority_read_from_cdf(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             epoch = np.array([datetime(2025, 4, 18), datetime(2025, 4, 18)])
@@ -320,6 +328,33 @@ class TestModels(unittest.TestCase):
 
             for k, v in expected_values.items():
                 np.testing.assert_array_equal(getattr(result, k), v)
+
+    def test_codice_lo_l1a_nsw_priority_read_from_instrument_team_cdf(self):
+        instrument_team_cdf_path = get_test_instrument_team_data_path(
+            "codice/lo/imap_codice_l1a_lo-nsw-priority_20241110193900_v0.0.2.cdf")
+        actual_l1a_nsw_priority_rates = CodiceLoL1aNSWPriorityRates.read_from_cdf(instrument_team_cdf_path)
+
+        with CDF(str(instrument_team_cdf_path)) as cdf:
+            np.testing.assert_array_equal(actual_l1a_nsw_priority_rates.epoch, cdf["epoch"][...])
+            np.testing.assert_array_equal(actual_l1a_nsw_priority_rates.epoch_delta_plus, cdf["epoch_delta_plus"][...])
+            np.testing.assert_array_equal(actual_l1a_nsw_priority_rates.epoch_delta_minus,
+                                          cdf["epoch_delta_minus"][...])
+            np.testing.assert_array_equal(actual_l1a_nsw_priority_rates.energy_table, cdf["energy_table"][...])
+            np.testing.assert_array_equal(actual_l1a_nsw_priority_rates.acquisition_time_per_step,
+                                          cdf["acquisition_time_per_step"][...])
+            np.testing.assert_array_equal(actual_l1a_nsw_priority_rates.spin_sector_index,
+                                          cdf["spin_sector_index"][...])
+            np.testing.assert_array_equal(actual_l1a_nsw_priority_rates.rgfo_half_spin, cdf["rgfo_half_spin"][...])
+            np.testing.assert_array_equal(actual_l1a_nsw_priority_rates.data_quality, cdf["data_quality"][...])
+            np.testing.assert_array_equal(actual_l1a_nsw_priority_rates.p5_heavies, cdf["p5_heavies"][...])
+            np.testing.assert_array_equal(actual_l1a_nsw_priority_rates.p6_hplus_heplusplus,
+                                          cdf["p6_hplus_heplusplus"][...])
+            np.testing.assert_array_equal(actual_l1a_nsw_priority_rates.nso_half_spin, cdf["nso_half_spin"][...])
+            np.testing.assert_array_equal(actual_l1a_nsw_priority_rates.sw_bias_gain_mode,
+                                          cdf["sw_bias_gain_mode"][...])
+            np.testing.assert_array_equal(actual_l1a_nsw_priority_rates.st_bias_gain_mode,
+                                          cdf["st_bias_gain_mode"][...])
+            np.testing.assert_array_equal(actual_l1a_nsw_priority_rates.spin_period, cdf["spin_period"][...])
 
     def test_codice_lo_3d_data_get_3d_distribution(self):
         data_in_bins = np.arange(8).reshape((2, 2, 2))
