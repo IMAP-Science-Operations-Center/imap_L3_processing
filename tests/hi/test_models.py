@@ -146,7 +146,7 @@ class TestModels(unittest.TestCase):
             longitude_delta=np.array([0]),
             longitude_label=np.array([0]),
             exposure_factor=np.array([1]),
-            obs_date=np.array([0]),
+            obs_date=np.array([datetime(2025, 5, 6)]),
             obs_date_range=np.array([0]),
             solid_angle=np.array([0]),
             ena_intensity=np.array([0]),
@@ -165,8 +165,12 @@ class TestModels(unittest.TestCase):
 
         fields_which_may_differ = {"ena_intensity", "ena_intensity_stat_unc", "ena_intensity_sys_err",
                                    "exposure_factor", "obs_date", "obs_date_range"}
+
+        alternate_values_by_type = {datetime: datetime(2025, 5, 6), str: "label"}
+        generic_value = 10
         for field in dataclasses.fields(HiIntensityMapData):
-            map_with_difference = dataclasses.replace(map_1, **{field.name: np.array([10])})
+            replacement_value = alternate_values_by_type.get(type(getattr(map_1, field.name)[0]), generic_value)
+            map_with_difference = dataclasses.replace(map_1, **{field.name: np.array([replacement_value])})
             if field.name not in fields_which_may_differ:
                 with self.assertRaises(AssertionError, msg=field.name):
                     combine_maps([map_1, map_with_difference])
@@ -182,21 +186,43 @@ class TestModels(unittest.TestCase):
         map_1.exposure_factor = np.array([1, 0, 5, 6, 0])
         map_1.ena_intensity_sys_err = np.array([1, np.nan, 10, 100, np.nan])
         map_1.ena_intensity_stat_unc = np.array([10, np.nan, 10, 10, np.nan])
+        DATETIME_FILL = datetime(9999, 12, 31, 23, 59, 59, 999999)
+        map_1.obs_date = np.ma.masked_equal(
+            [datetime(2025, 5, 5),
+             DATETIME_FILL,
+             datetime(2025, 5, 7),
+             datetime(2025, 5, 8),
+             DATETIME_FILL],
+            DATETIME_FILL)
 
         map_2 = self.construct_intensity_data_with_all_zero_fields()
         map_2.ena_intensity = np.array([5, 6, 7, 8, np.nan])
         map_2.exposure_factor = np.array([3, 1, 5, 2, 0])
         map_2.ena_intensity_sys_err = np.array([9, 4, 2, 0, np.nan])
         map_2.ena_intensity_stat_unc = np.array([1, 2, 3, 4, np.nan])
+        map_2.obs_date = np.ma.masked_equal(
+            [datetime(2025, 5, 9),
+             datetime(2025, 5, 10),
+             datetime(2025, 5, 11),
+             datetime(2025, 5, 12),
+             DATETIME_FILL],
+            DATETIME_FILL)
 
         expected_combined_exposure = [4, 1, 10, 8, 0]
         expected_combined_intensity = [4, 6, 5, 5, np.nan]
         expected_sys_err = [7, 4, 6, 75, np.nan]
         expected_stat_unc = [np.sqrt((1 * 100 + 9 * 1) / 16), 2, np.sqrt((25 * 100 + 25 * 9) / 100),
                              np.sqrt((36 * 100 + 16 * 4) / 64), np.nan]
+        expected_obs_date = np.ma.array(
+            [datetime(2025, 5, 8),
+             datetime(2025, 5, 10),
+             datetime(2025, 5, 9),
+             datetime(2025, 5, 9), np.ma.masked])
 
         combine_two = combine_maps([map_1, map_2])
         np.testing.assert_equal(combine_two.ena_intensity, expected_combined_intensity)
         np.testing.assert_equal(combine_two.ena_intensity_sys_err, expected_sys_err)
         np.testing.assert_equal(combine_two.ena_intensity_stat_unc, expected_stat_unc)
         np.testing.assert_equal(combine_two.exposure_factor, expected_combined_exposure)
+        np.testing.assert_equal(combine_two.obs_date.mask, expected_obs_date.mask)
+        np.testing.assert_equal(combine_two.obs_date, expected_obs_date)
