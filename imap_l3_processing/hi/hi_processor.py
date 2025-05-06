@@ -2,13 +2,13 @@ import numpy as np
 from imap_data_access import upload
 from imap_processing.spice.geometry import SpiceFrame
 
-from imap_l3_processing.constants import TT2000_EPOCH
 from imap_l3_processing.hi.l3.hi_l3_combined_sensor_dependencies import HiL3CombinedMapDependencies
 from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3SpectralFitDependencies
 from imap_l3_processing.hi.l3.hi_l3_survival_dependencies import HiL3SurvivalDependencies, \
     HiL3SingleSensorFullSpinDependencies
 from imap_l3_processing.hi.l3.models import combine_maps, \
-    HiIntensityMapData, HiSpectralMapData, HiL3IntensityDataProduct, HiL3SpectralIndexDataProduct
+    HiIntensityMapData, HiSpectralMapData, HiL3IntensityDataProduct, HiL3SpectralIndexDataProduct, \
+    calculate_datetime_weighted_average
 from imap_l3_processing.hi.l3.science.spectral_fit import spectral_fit
 from imap_l3_processing.hi.l3.science.survival_probability import HiSurvivalProbabilityPointingSet, \
     HiSurvivalProbabilitySkyMap
@@ -102,8 +102,10 @@ class HiProcessor(Processor):
 
         new_energy_label = f"{min_energy} - {max_energy} keV"
 
-        mean_obs_date = np.mean(input_data.obs_date - TT2000_EPOCH, axis=1, keepdims=True) + TT2000_EPOCH
-        mean_obs_date_range = np.mean(input_data.obs_date_range, axis=1, keepdims=True)
+        mean_obs_date = calculate_datetime_weighted_average(input_data.obs_date, weights=input_data.exposure_factor,
+                                                            axis=1, keepdims=True)
+        mean_obs_date_range = np.ma.average(input_data.obs_date_range, weights=input_data.exposure_factor, axis=1,
+                                            keepdims=True)
         total_exposure_factor = np.sum(input_data.exposure_factor, axis=1, keepdims=True)
 
         return HiSpectralMapData(
