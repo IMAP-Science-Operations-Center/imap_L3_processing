@@ -136,7 +136,7 @@ class TestHiProcessor(unittest.TestCase):
                 np.testing.assert_allclose(output_data.ena_spectral_index_stat_unc[0, 0],
                                            expected_gamma_sigma, atol=1e-3)
 
-    def test_spectral_fit_uses_mean_energy(self):
+    def test_spectral_fit_other_fields(self):
         input_energies = np.array([1, 10, 99]) + 0.5
         input_deltas = np.array([0.5, 1, 0.5])
         lat = np.arange(-90, 90, 45)
@@ -144,14 +144,17 @@ class TestHiProcessor(unittest.TestCase):
 
         input_map = _create_h1_l3_data(energy=input_energies, energy_delta=input_deltas, lat=lat, lon=lon)
         input_map.obs_date[0, 0] = datetime(2025, 1, 1)
-        input_map.obs_date[0, 1] = datetime(2026, 1, 1)
+        input_map.obs_date[0, 1] = datetime(2025, 1, 1)
         input_map.obs_date[0, 2] = datetime(2027, 1, 1)
 
+        input_map.exposure_factor[0, 0] = 1.0
+        input_map.exposure_factor[0, 1] = 2.0
+        input_map.exposure_factor[0, 2] = 3.0
+
         input_map.obs_date_range[0, 0] = 1
-        input_map.obs_date_range[0, 1] = 2
+        input_map.obs_date_range[0, 1] = 1
         input_map.obs_date_range[0, 2] = 3
 
-        input_map.exposure_factor = np.full_like(input_map.ena_intensity, 1)
         processor = HiProcessor(sentinel.input_metadata, sentinel.dependencies)
 
         dependencies = HiL3SpectralFitDependencies(input_map)
@@ -170,7 +173,66 @@ class TestHiProcessor(unittest.TestCase):
         np.testing.assert_array_equal(output.ena_spectral_index_stat_unc, np.zeros(expected_ena_shape))
         np.testing.assert_array_equal(output.obs_date, np.full(expected_ena_shape, datetime(2026, 1, 1)))
         np.testing.assert_array_equal(output.obs_date_range, np.full(expected_ena_shape, 2))
-        np.testing.assert_array_equal(output.exposure_factor, np.full(expected_ena_shape, 3))
+        np.testing.assert_array_equal(output.exposure_factor, np.full(expected_ena_shape, 6))
+
+    def test_spectral_fit_other_fields_with_one_zero_exposure(self):
+        input_energies = np.array([1, 10, 99]) + 0.5
+        input_deltas = np.array([0.5, 1, 0.5])
+        lat = np.arange(-90, 90, 45)
+        lon = np.arange(0, 360, 45)
+
+        input_map = _create_h1_l3_data(energy=input_energies, energy_delta=input_deltas, lat=lat, lon=lon)
+        input_map.obs_date[0, 0] = datetime(2025, 1, 1)
+        input_map.obs_date[0, 1] = datetime(2025, 1, 1)
+        input_map.obs_date[0, 2] = datetime(2027, 1, 1)
+        input_map.obs_date.mask = np.ma.getmaskarray(input_map.obs_date)
+        input_map.obs_date.mask[0, 1] = True
+
+        input_map.exposure_factor[0, 0] = 1.0
+        input_map.exposure_factor[0, 1] = 0.0
+        input_map.exposure_factor[0, 2] = 1.0
+
+        input_map.obs_date_range[0, 0] = 1
+        input_map.obs_date_range[0, 1] = 1
+        input_map.obs_date_range[0, 2] = 3
+        input_map.obs_date_range.mask = np.ma.getmaskarray(input_map.obs_date_range)
+        input_map.obs_date_range.mask[0, 1] = True
+
+        processor = HiProcessor(sentinel.input_metadata, sentinel.dependencies)
+
+        dependencies = HiL3SpectralFitDependencies(input_map)
+
+        output = processor.process_spectral_fit_index(dependencies)
+
+        expected_ena_shape = np.array([1, 1, len(lon), len(lat)])
+        np.testing.assert_array_equal(output.obs_date, np.full(expected_ena_shape, datetime(2026, 1, 1)), strict=True)
+        np.testing.assert_array_equal(output.obs_date_range, np.full(expected_ena_shape, 2.0), strict=True)
+
+    def test_spectral_fit_other_fields_with_all_zero_exposure(self):
+        input_energies = np.array([1, 10, 99]) + 0.5
+        input_deltas = np.array([0.5, 1, 0.5])
+        lat = np.arange(-90, 90, 45)
+        lon = np.arange(0, 360, 45)
+
+        input_map = _create_h1_l3_data(energy=input_energies, energy_delta=input_deltas, lat=lat, lon=lon)
+        input_map.obs_date.mask = np.ma.getmaskarray(input_map.obs_date)
+        input_map.obs_date.mask[:] = True
+
+        input_map.exposure_factor[:] = 0.0
+
+        input_map.obs_date_range.mask = np.ma.getmaskarray(input_map.obs_date_range)
+        input_map.obs_date_range.mask[:] = True
+
+        processor = HiProcessor(sentinel.input_metadata, sentinel.dependencies)
+
+        dependencies = HiL3SpectralFitDependencies(input_map)
+
+        output = processor.process_spectral_fit_index(dependencies)
+
+        expected_ena_shape = np.array([1, 1, len(lon), len(lat)])
+
+        np.testing.assert_array_equal(output.obs_date.mask, np.full(expected_ena_shape, True), strict=True)
+        np.testing.assert_array_equal(output.obs_date_range.mask, np.full(expected_ena_shape, True), strict=True)
 
     @patch('imap_l3_processing.hi.hi_processor.Processor.get_parent_file_names')
     @patch('imap_l3_processing.hi.hi_processor.upload')
@@ -447,7 +509,7 @@ def _create_h1_l3_data(epoch=None, lon=None, lat=None, energy=None, energy_delta
     lat = lat if lat is not None else np.array([1.0])
     energy = energy if energy is not None else np.array([1.0])
     energy_delta = energy_delta if energy_delta is not None else np.full((len(energy), 2), 1)
-    epoch = epoch if epoch is not None else np.array([datetime.now()])
+    epoch = epoch if epoch is not None else np.ma.array([datetime.now()])
     flux = flux if flux is not None else np.full((len(epoch), len(energy), len(lon), len(lat)), fill_value=1)
     intensity_stat_unc = intensity_stat_unc if intensity_stat_unc is not None else np.full(
         (len(epoch), len(energy), len(lon), len(lat)),
@@ -460,7 +522,7 @@ def _create_h1_l3_data(epoch=None, lon=None, lat=None, energy=None, energy_delta
 
     return HiIntensityMapData(
         epoch=epoch,
-        epoch_delta=np.array([0]),
+        epoch_delta=np.ma.array([0]),
         energy=energy,
         energy_delta_plus=energy_delta,
         energy_delta_minus=energy_delta,
@@ -472,8 +534,8 @@ def _create_h1_l3_data(epoch=None, lon=None, lat=None, energy=None, energy_delta
         longitude_delta=np.full_like(lon, 0),
         longitude_label=lon.astype(str),
         exposure_factor=np.full_like(flux, 0),
-        obs_date=np.full(more_real_flux.shape, datetime(year=2010, month=1, day=1)),
-        obs_date_range=np.full_like(more_real_flux, 0),
+        obs_date=np.ma.array(np.full(more_real_flux.shape, datetime(year=2010, month=1, day=1))),
+        obs_date_range=np.ma.array(np.full_like(more_real_flux, 0)),
         solid_angle=np.full_like(more_real_flux, 0),
         ena_intensity=flux,
         ena_intensity_stat_unc=intensity_stat_unc,

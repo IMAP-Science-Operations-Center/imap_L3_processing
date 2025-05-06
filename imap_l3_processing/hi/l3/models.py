@@ -161,13 +161,8 @@ def combine_maps(maps: list[HiIntensityMapData]) -> HiIntensityMapData:
     summed_exposures = np.sum(exposures, axis=0)
     ena_intensity = np.ma.average(intensities, weights=exposures, axis=0).filled(np.nan)
     ena_intensity_sys_err = np.ma.average(intensity_sys_err, weights=exposures, axis=0).filled(np.nan)
-    averaged_dates_as_seconds = np.ma.average(observation_dates_as_seconds, weights=exposures,
-                                              axis=0)
 
-    avg_obs_date = np.ma.array(
-        averaged_dates_as_seconds.data * timedelta(seconds=1) + TT2000_EPOCH,
-        mask=averaged_dates_as_seconds.mask,
-    )
+    avg_obs_date = calculate_datetime_weighted_average(np.ma.array([m.obs_date for m in maps]), exposures, 0)
 
     return dataclasses.replace(first_map,
                                ena_intensity=ena_intensity,
@@ -180,3 +175,16 @@ def combine_maps(maps: list[HiIntensityMapData]) -> HiIntensityMapData:
 
 def safe_divide(numerator: np.ndarray, denominator: np.ndarray) -> np.ndarray:
     return np.divide(numerator, denominator, where=denominator != 0, out=np.full(denominator.shape, np.nan))
+
+
+def calculate_datetime_weighted_average(data: np.ndarray, weights: np.ndarray, axis: int, **kwargs) -> np.ndarray:
+    epoch_based_dates = np.array((np.ma.getdata(data) - TT2000_EPOCH) / timedelta(seconds=1),
+                                 dtype=float)
+
+    averaged_dates_as_seconds = np.ma.average(epoch_based_dates, weights=weights,
+                                              axis=axis, **kwargs)
+
+    return np.ma.array(
+        averaged_dates_as_seconds.data * timedelta(seconds=1) + TT2000_EPOCH,
+        mask=averaged_dates_as_seconds.mask,
+    )
