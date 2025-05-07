@@ -2,10 +2,9 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import imap_data_access
-from imap_data_access.processing_input import ProcessingInputCollection, ScienceInput
+from imap_data_access.processing_input import ProcessingInputCollection
 
-from imap_l3_processing.codice.l3.lo.models import CodiceLoL2SWSpeciesData, CodiceLoPartialDensityData
-from imap_l3_processing.codice.l3.lo.sectored_intensities.science.mass_per_charge_lookup import MassPerChargeLookup
+from imap_l3_processing.codice.l3.lo.models import CodiceLoPartialDensityData
 
 PARTIAL_DENSITY_DESCRIPTOR = 'lo-partial-densities'
 
@@ -25,7 +24,7 @@ class CodiceLoL3aRatiosDependencies:
         return cls.from_file_paths(downloaded_file)
 
     @classmethod
-    def from_file_paths(cls, codice_l2_lo_cdf: Path):
+    def from_file_paths(cls, codice_l2_lo_cdf: Path | str):
         partial_density_data = CodiceLoPartialDensityData.read_from_cdf(codice_l2_lo_cdf)
 
         return cls(partial_density_data)

@@ -10,10 +10,12 @@ from imap_data_access.processing_input import ProcessingInputCollection
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_direct_events_dependencies import CodiceLoL3aDirectEventsDependencies
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_partial_densities_dependencies import \
     CodiceLoL3aPartialDensitiesDependencies
+from imap_l3_processing.codice.l3.lo.codice_lo_l3a_ratios_dependencies import CodiceLoL3aRatiosDependencies
 from imap_l3_processing.codice.l3.lo.codice_lo_processor import CodiceLoProcessor
 from imap_l3_processing.codice.l3.lo.models import CodiceLoL3aPartialDensityDataProduct, CodiceLoL2DirectEventData, \
     CodiceLoL3aDirectEventDataProduct, PriorityEvent, CodiceLoL2SWSpeciesData, \
-    CodiceLoL1aSWPriorityRates, CodiceLoL1aNSWPriorityRates, CodiceLoPartialDensityData, CODICE_LO_L2_NUM_PRIORITIES
+    CodiceLoL1aSWPriorityRates, CodiceLoL1aNSWPriorityRates, CodiceLoPartialDensityData, CodiceLoL3aRatiosDataProduct, \
+    CODICE_LO_L2_NUM_PRIORITIES
 from imap_l3_processing.codice.l3.lo.sectored_intensities.science.mass_per_charge_lookup import MassPerChargeLookup
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
@@ -55,6 +57,79 @@ class TestCodiceLoProcessor(unittest.TestCase):
         self.assertEqual(['parent_file_1', 'parent_file_2'],
                          mock_process_l3a_partial_densities.return_value.parent_file_names)
         mock_upload.assert_called_once_with("file1")
+
+    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.upload')
+    @patch(
+        'imap_l3_processing.codice.l3.lo.codice_lo_processor.CodiceLoL3aRatiosDependencies.fetch_dependencies')
+    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.CodiceLoProcessor.process_l3a_ratios')
+    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.save_data')
+    @patch('imap_l3_processing.processor.spiceypy')
+    def test_process_ratios(self, mock_spiceypy, mock_save_data, mock_process_l3a_ratios,
+                            mock_fetch_dependencies, mock_upload):
+        input_collection = MagicMock()
+        input_collection.get_file_paths.return_value = [Path('path/to/parent_file_1')]
+        input_metadata = InputMetadata(instrument='codice',
+                                       data_level="l3a",
+                                       start_date=Mock(spec=datetime),
+                                       end_date=Mock(spec=datetime),
+                                       version='v02',
+                                       descriptor='lo-sw-ratios')
+        mock_spiceypy.ktotal.return_value = 0
+
+        mock_save_data.return_value = "file1"
+        processor = CodiceLoProcessor(dependencies=input_collection, input_metadata=input_metadata)
+        processor.process()
+
+        mock_fetch_dependencies.assert_called_once_with(processor.dependencies)
+        mock_process_l3a_ratios.assert_called_once_with(mock_fetch_dependencies.return_value)
+
+        mock_save_data.assert_called_once_with(mock_process_l3a_ratios.return_value)
+
+        self.assertEqual(['parent_file_1'],
+                         mock_process_l3a_ratios.return_value.parent_file_names)
+        mock_upload.assert_called_once_with("file1")
+
+    def test_process_ratios_calculate_abundance_ratios(self):
+        data = CodiceLoPartialDensityData(
+            epoch=np.array(
+                [datetime.now, datetime.now() + timedelta(minutes=4), datetime.now() + timedelta(minutes=8)]),
+            epoch_delta=np.array([120_000_000_000, 120_000_000_000, 120_000_000_000]),
+            fe_hiq_partial_density=np.array([1, 2, 3]),
+            fe_loq_partial_density=np.array([4, 5, 6]),
+            oplus5_partial_density=np.array([1, 2, 4]),
+            oplus6_partial_density=np.array([5, 6, 7]),
+            oplus7_partial_density=np.array([8, 9, 10]),
+            oplus8_partial_density=np.array([11, 12, 13]),
+            mg_partial_density=np.array([14, 15, 16]),
+            cplus4_partial_density=np.array([17, 18, 19]),
+            cplus5_partial_density=np.array([20, 21, 22]),
+            cplus6_partial_density=np.array([23, 24, 25]),
+            ne_partial_density=np.arange(3),
+            si_partial_density=np.arange(3),
+            heplusplus_partial_density=np.arange(3),
+            hplus_partial_density=np.arange(3),
+        )
+
+        dependency = CodiceLoL3aRatiosDependencies(data)
+        input_metadata = Mock()
+        processor = CodiceLoProcessor(dependencies=Mock(), input_metadata=input_metadata)
+
+        ratios_data_product: CodiceLoL3aRatiosDataProduct = processor.process_l3a_ratios(dependency)
+        self.assertEqual(input_metadata, ratios_data_product.input_metadata)
+        np.testing.assert_array_equal(ratios_data_product.epoch, data.epoch)
+        np.testing.assert_array_equal(ratios_data_product.epoch_delta, data.epoch_delta)
+        np.testing.assert_array_equal(ratios_data_product.fe_to_o_ratio,
+                                      np.array([5 / (1 + 5 + 8 + 11), 7 / (2 + 6 + 9 + 12), 9 / (4 + 7 + 10 + 13)]))
+        np.testing.assert_array_equal(ratios_data_product.mg_to_o_ratio,
+                                      np.array([14 / (1 + 5 + 8 + 11), 15 / (2 + 6 + 9 + 12), 16 / (4 + 7 + 10 + 13)]))
+        np.testing.assert_array_equal(ratios_data_product.c_to_o_ratio, np.array(
+            [(17 + 20 + 23) / (1 + 5 + 8 + 11), (18 + 21 + 24) / (2 + 6 + 9 + 12), (19 + 22 + 25) / (4 + 7 + 10 + 13)]))
+
+        np.testing.assert_array_equal(ratios_data_product.c6_to_c4_ratio, np.array([23 / 17, 24 / 18, 25 / 19]))
+        np.testing.assert_array_equal(ratios_data_product.c6_to_c5_ratio, np.array([23 / 20, 24 / 21, 25 / 22]))
+
+        np.testing.assert_array_equal(ratios_data_product.o7_to_o6_ratio, np.array([8 / 5, 9 / 6, 10 / 7]))
+        np.testing.assert_array_equal(ratios_data_product.felo_to_fehi_ratio, np.array([4 / 1, 5 / 2, 6 / 3]))
 
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.upload')
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.CodiceLoL3aDirectEventsDependencies.fetch_dependencies')
