@@ -1,0 +1,18 @@
+NamingAuthority:NASA
+ObservatoryName:IMAP>Interstellar Mapping and Acceleration Probe
+InstrumentName:SWE>Solar Wind Electron
+DatasetName:Solar Wind Electron (SWE), Level 3 (L3), 1 min Data
+Description:Solar Wind Electron (SWE) electrons, level 3, four spin (nonminally 1min) data. The IMAP SWE instrument measure solar wind
+electrons in the energy range SOMETHING. HOW AN ESA WORKS. Level 3 files provide Phase Space Density in the solar wind frame,
+intensities in the spacecraft frame, and moments.
+Author:
+[PersonGivenName:Jonathan,PersonFamilyName:Niehof,PersonSPASEID:spase://SMWG/Person/Jonathan.Thomas.Niehof,PersonORCID:0000-0001-6286-5809,OrganizationName:University of New Hampshire,OrganizationROR:01rmh9n78,Role:Author]
+PublishedBy:NASA Space Physics Data Facility
+Contact:
+[PersonGivenName:Ruth,PersonFamilyName:Skoug,OrganizationName:Los Alamos National Laboratory]
+AccessInformation:[RepositoryName:NASA SPDF,RepositorySPASEID:spase://SMWG/Repository/NASA/GSFC/
+SPDF,RepositoryROR:https://ror.org/00ryjtt64,URL:https://spdf.gsfc.nasa.gov/,Description:VALUE,Format:CDF,License:http://spdx.org/licenses/CC0-1.0]
+ProviderProcessingLevel:L3>Level 3
+Cadence:PT1M
+MeasurementType:ThermalPlasma
+ObservedRegion:Heliosphere.NearEarth
