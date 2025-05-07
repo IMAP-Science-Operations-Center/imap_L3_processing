@@ -11,7 +11,6 @@ from imap_l3_processing.codice.l3.lo.models import CodiceLoL3aPartialDensityData
     CodiceLoL3aDirectEventDataProduct, CodiceLoPartialDensityData
 from imap_l3_processing.codice.l3.lo.science.codice_lo_calculations import calculate_partial_densities, \
     calculate_normalization_ratio, calculate_total_number_of_events, calculate_mass, calculate_mass_per_charge
-from imap_l3_processing.hi.l3.models import safe_divide
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
 from imap_l3_processing.utils import save_data
@@ -31,7 +30,8 @@ class CodiceLoProcessor(Processor):
             dependencies = CodiceLoL3aDirectEventsDependencies.fetch_dependencies(self.dependencies)
             data_product = self.process_l3a_direct_event_data_product(dependencies)
         else:
-            raise NotImplementedError
+            raise NotImplementedError(
+                f"Unknown data level and descriptor for CoDICE: {self.input_metadata.data_level}, {self.input_metadata.descriptor}")
 
         data_product.parent_file_names = self.get_parent_file_names()
         saved_l3a_cdf = save_data(data_product)

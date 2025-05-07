@@ -85,9 +85,16 @@ class TestCodiceLoProcessor(unittest.TestCase):
 
         mock_upload.assert_called_once_with("file1")
 
-    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.safe_divide')
+    def test_raises_exception_on_non_l3_input_metadata(self):
+        input_metadata = InputMetadata('codice', "L2a", Mock(), Mock(), 'v02', "bad-descriptor")
+
+        processor = CodiceLoProcessor(Mock(), input_metadata)
+        with self.assertRaises(NotImplementedError) as context:
+            processor.process()
+        self.assertEqual("Unknown data level and descriptor for CoDICE: L2a, bad-descriptor", str(context.exception))
+
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.calculate_partial_densities')
-    def test_process_l3a_partial_densities(self, mock_calculate_partial_densities, mock_safe_divide):
+    def test_process_l3a_partial_densities(self, mock_calculate_partial_densities):
         input_collection = ProcessingInputCollection()
         input_metadata = InputMetadata('codice', "l3a", Mock(spec=datetime), Mock(spec=datetime), 'v02',
                                        descriptor='lo-partial-densities')

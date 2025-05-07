@@ -5,7 +5,8 @@ from unittest.mock import patch, sentinel, Mock
 import numpy as np
 
 from imap_l3_processing.codice.l3.hi.codice_hi_processor import CodiceHiProcessor
-from imap_l3_processing.codice.l3.hi.direct_event.codice_hi_l3_dependencies import CodiceHiL3Dependencies
+from imap_l3_processing.codice.l3.hi.direct_event.codice_hi_l3a_direct_events_dependencies import \
+    CodiceHiL3aDirectEventsDependencies
 from imap_l3_processing.codice.l3.hi.direct_event.science.tof_lookup import TOFLookup, EnergyPerNuc
 from imap_l3_processing.codice.l3.hi.models import PriorityEventL2, CodiceL2HiData, CodiceHiL2SectoredIntensitiesData
 from imap_l3_processing.codice.l3.hi.pitch_angle.codice_pitch_angle_dependencies import CodicePitchAngleDependencies
@@ -13,7 +14,7 @@ from imap_l3_processing.models import InputMetadata, MagL1dData
 
 
 class TestCodiceHiProcessor(unittest.TestCase):
-    @patch("imap_l3_processing.codice.l3.hi.codice_hi_processor.CodiceHiL3Dependencies.fetch_dependencies")
+    @patch("imap_l3_processing.codice.l3.hi.codice_hi_processor.CodiceHiL3aDirectEventsDependencies.fetch_dependencies")
     @patch("imap_l3_processing.codice.l3.hi.codice_hi_processor.CodiceHiProcessor.process_l3a_direct_event")
     @patch("imap_l3_processing.codice.l3.hi.codice_hi_processor.save_data")
     @patch("imap_l3_processing.codice.l3.hi.codice_hi_processor.upload")
@@ -34,18 +35,34 @@ class TestCodiceHiProcessor(unittest.TestCase):
         mock_save_data.assert_called_with(mock_processed_direct_events)
         mock_upload.assert_called_with(mock_expected_cdf)
 
-    @patch("imap_l3_processing.codice.l3.hi.codice_hi_processor.CodiceHiL3Dependencies.fetch_dependencies")
-    @patch("imap_l3_processing.codice.l3.hi.codice_hi_processor.CodiceHiProcessor.process_l3a_direct_event")
-    def test_ignores_non_l3_input_metadata(self, mock_process_l3a, mock_fetch_dependencies):
+    @patch("imap_l3_processing.codice.l3.hi.codice_hi_processor.CodicePitchAngleDependencies.fetch_dependencies")
+    @patch("imap_l3_processing.codice.l3.hi.codice_hi_processor.CodiceHiProcessor.process_l3b")
+    @patch("imap_l3_processing.codice.l3.hi.codice_hi_processor.save_data")
+    @patch("imap_l3_processing.codice.l3.hi.codice_hi_processor.upload")
+    def test_process_l3b_saves_and_uploads(self, mock_upload, mock_save_data, mock_process_l3b,
+                                           mock_fetch_dependencies):
         start_date = datetime(2024, 10, 7, 10, 00, 00)
         end_date = datetime(2024, 10, 8, 10, 00, 00)
-        input_metadata = InputMetadata('codice', "l2a", start_date, end_date, 'v02')
+        input_metadata = InputMetadata('codice', "l3b", start_date, end_date, 'v02')
+        mock_process_l3b.return_value = sentinel.mock_processed_pitch_angles
+        mock_expected_cdf = Mock()
+        mock_save_data.return_value = mock_expected_cdf
 
         processor = CodiceHiProcessor(sentinel.processing_input_collection, input_metadata)
         processor.process()
 
-        mock_fetch_dependencies.assert_not_called()
-        mock_process_l3a.assert_not_called()
+        mock_fetch_dependencies.assert_called_with(sentinel.processing_input_collection)
+        mock_process_l3b.assert_called_with(mock_fetch_dependencies.return_value)
+        mock_save_data.assert_called_with(sentinel.mock_processed_pitch_angles)
+        mock_upload.assert_called_with(mock_expected_cdf)
+
+    def test_raises_exception_on_non_l3_input_metadata(self):
+        input_metadata = InputMetadata('codice', "L2a", Mock(), Mock(), 'v02')
+
+        processor = CodiceHiProcessor(Mock(), input_metadata)
+        with self.assertRaises(NotImplementedError) as context:
+            processor.process()
+        self.assertEqual("Unknown data level for CoDICE: L2a", str(context.exception))
 
     def test_process_l3a_returns_data_product(self):
         epochs = np.array([datetime(2025, 1, 1), datetime(2025, 1, 1)])
@@ -54,7 +71,7 @@ class TestCodiceHiProcessor(unittest.TestCase):
         l2_data = CodiceL2HiData(epochs, *l2_priority_events)
         energy_per_nuc_dictionary = {i: EnergyPerNuc(i * 10, i * 100, i * 1000) for i in np.arange(1, 25)}
         tof_lookup = TOFLookup(energy_per_nuc_dictionary)
-        dependencies = CodiceHiL3Dependencies(tof_lookup=tof_lookup, codice_l2_hi_data=l2_data)
+        dependencies = CodiceHiL3aDirectEventsDependencies(tof_lookup=tof_lookup, codice_l2_hi_data=l2_data)
 
         processor = CodiceHiProcessor(Mock(), Mock())
         codice_direct_event_product = processor.process_l3a_direct_event(dependencies)
@@ -144,7 +161,7 @@ class TestCodiceHiProcessor(unittest.TestCase):
 
         dependencies = CodicePitchAngleDependencies(mag_l1d_data=mag_l1d_data,
                                                     codice_sectored_intensities_data=codice_l2_data)
-        codice_processor = CodiceHiProcessor(dependencies=Mock(), input_metadata=Mock())
+        codice_processor = CodiceHiProcessor(dependencies=Mock(), input_metadata=sentinel.input_metadata)
 
         expected_pitch_angles = np.array([[81.406148, 138.590378], [56.104664, 115.658906]])
         expected_gyrophase = np.array([[26.890815, 49.106605], [291.063267, 286.102114]])
@@ -153,6 +170,7 @@ class TestCodiceHiProcessor(unittest.TestCase):
         expected_gyrophase_delta = np.array([30, 30])
 
         codice_hi_data_product = codice_processor.process_l3b(dependencies=dependencies)
+        self.assertEqual(sentinel.input_metadata, codice_hi_data_product.input_metadata)
         np.testing.assert_array_equal(epoch, codice_hi_data_product.epoch)
         np.testing.assert_array_equal(epoch_delta, codice_hi_data_product.epoch_delta)
         np.testing.assert_array_equal(energy, codice_hi_data_product.energy)

@@ -4,7 +4,8 @@ import numpy as np
 from imap_data_access import upload
 from imap_data_access.processing_input import ProcessingInputCollection
 
-from imap_l3_processing.codice.l3.hi.direct_event.codice_hi_l3_dependencies import CodiceHiL3Dependencies
+from imap_l3_processing.codice.l3.hi.direct_event.codice_hi_l3a_direct_events_dependencies import \
+    CodiceHiL3aDirectEventsDependencies
 from imap_l3_processing.codice.l3.hi.models import CodiceHiL3PitchAngleDataProduct
 from imap_l3_processing.codice.l3.hi.models import CodiceL3HiDirectEvents
 from imap_l3_processing.codice.l3.hi.pitch_angle.codice_pitch_angle_dependencies import CodicePitchAngleDependencies
@@ -22,12 +23,18 @@ class CodiceHiProcessor(Processor):
 
     def process(self):
         if self.input_metadata.data_level == "l3a":
-            dependencies = CodiceHiL3Dependencies.fetch_dependencies(self.dependencies)
-            processed_codice_direct_events = self.process_l3a_direct_event(dependencies)
-            saved_cdf = save_data(processed_codice_direct_events)
-            upload(saved_cdf)
+            dependencies = CodiceHiL3aDirectEventsDependencies.fetch_dependencies(self.dependencies)
+            data_product = self.process_l3a_direct_event(dependencies)
+        elif self.input_metadata.data_level == "l3b":
+            dependencies = CodicePitchAngleDependencies.fetch_dependencies(self.dependencies)
+            data_product = self.process_l3b(dependencies)
+        else:
+            raise NotImplementedError(f"Unknown data level for CoDICE: {self.input_metadata.data_level}")
 
-    def process_l3a_direct_event(self, dependencies: CodiceHiL3Dependencies) -> CodiceL3HiDirectEvents:
+        saved_cdf = save_data(data_product)
+        upload(saved_cdf)
+
+    def process_l3a_direct_event(self, dependencies: CodiceHiL3aDirectEventsDependencies) -> CodiceL3HiDirectEvents:
         tof_lookup = dependencies.tof_lookup
         l2_data = dependencies.codice_l2_hi_data
 
@@ -136,7 +143,7 @@ class CodiceHiProcessor(Processor):
                 species_intensity.intensity_by_pa_and_gyro[time_index] = rebinned_intensities_by_pa_and_gyro
 
         return CodiceHiL3PitchAngleDataProduct(
-            input_metadata=None,
+            input_metadata=self.input_metadata,
             epoch=epochs,
             epoch_delta=sectored_intensities.epoch_delta,
             energy=energy_bins,
