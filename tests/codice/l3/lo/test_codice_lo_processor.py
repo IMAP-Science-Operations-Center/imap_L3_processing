@@ -14,11 +14,12 @@ from imap_l3_processing.codice.l3.lo.codice_lo_l3a_ratios_dependencies import Co
 from imap_l3_processing.codice.l3.lo.codice_lo_processor import CodiceLoProcessor
 from imap_l3_processing.codice.l3.lo.models import CodiceLoL3aPartialDensityDataProduct, CodiceLoL2DirectEventData, \
     CodiceLoL3aDirectEventDataProduct, PriorityEvent, CodiceLoL2SWSpeciesData, \
-    CodiceLoL1aSWPriorityRates, CodiceLoL1aNSWPriorityRates, CodiceLoPartialDensityData, CodiceLoL3aRatiosDataProduct
+    CodiceLoL1aSWPriorityRates, CodiceLoL1aNSWPriorityRates, CodiceLoPartialDensityData, CodiceLoL3aRatiosDataProduct, \
+    CODICE_LO_L2_NUM_PRIORITIES
 from imap_l3_processing.codice.l3.lo.sectored_intensities.science.mass_per_charge_lookup import MassPerChargeLookup
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
-from tests.test_helpers import NumpyArrayMatcher, get_test_data_path
+from tests.test_helpers import NumpyArrayMatcher
 
 
 class TestCodiceLoProcessor(unittest.TestCase):
@@ -133,7 +134,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.upload')
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.CodiceLoL3aDirectEventsDependencies.fetch_dependencies')
     @patch(
-        'imap_l3_processing.codice.l3.lo.codice_lo_processor.CodiceLoProcessor._process_l3a_direct_event_data_product')
+        'imap_l3_processing.codice.l3.lo.codice_lo_processor.CodiceLoProcessor.process_l3a_direct_event_data_product')
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.save_data')
     @patch('imap_l3_processing.processor.spiceypy')
     def test_process_direct_events(self, mock_spiceypy, mock_save_data, mock_process_direct_event,
@@ -339,9 +340,9 @@ class TestCodiceLoProcessor(unittest.TestCase):
         input_collection = ProcessingInputCollection()
         input_metadata = InputMetadata('codice', "l3a", Mock(spec=datetime), Mock(spec=datetime), 'v02')
         processor = CodiceLoProcessor(dependencies=input_collection, input_metadata=input_metadata)
-        l3a_direct_event_data_product = processor._process_l3a_direct_event_data_product(dependencies)
+        l3a_direct_event_data_product = processor.process_l3a_direct_event_data_product(dependencies)
 
-        priority_index = np.array([0, 1, 2, 3, 4, 5, 6, 7])
+        priority_index = np.arange(CODICE_LO_L2_NUM_PRIORITIES)
 
         expected_calculate_normalization_calls = []
         expected_calculate_mass_calls = []
@@ -367,7 +368,9 @@ class TestCodiceLoProcessor(unittest.TestCase):
         self.assertEqual(input_metadata, l3a_direct_event_data_product.input_metadata)
 
         np.testing.assert_array_equal(epochs, l3a_direct_event_data_product.epoch)
-        np.testing.assert_array_equal(priority_index, l3a_direct_event_data_product.priority)
+        np.testing.assert_array_equal(direct_events.epoch_delta_plus, l3a_direct_event_data_product.epoch_delta)
+
+        np.testing.assert_array_equal(priority_index, l3a_direct_event_data_product.priority_index)
         np.testing.assert_array_equal(expected_mass_per_charge, l3a_direct_event_data_product.mass_per_charge)
         np.testing.assert_array_equal(expected_mass, l3a_direct_event_data_product.mass)
 
@@ -398,13 +401,12 @@ class TestCodiceLoProcessor(unittest.TestCase):
 
         ], any_order=False)
 
-        np.testing.assert_array_equal(expected_apd_energy, l3a_direct_event_data_product.energy)
+        np.testing.assert_array_equal(expected_apd_energy, l3a_direct_event_data_product.event_energy)
         np.testing.assert_array_equal(expected_apd_gain, l3a_direct_event_data_product.gain)
         np.testing.assert_array_equal(expected_apd_id, l3a_direct_event_data_product.apd_id)
         np.testing.assert_array_equal(expected_multi_flag, l3a_direct_event_data_product.multi_flag)
         np.testing.assert_array_equal(expected_num_events, l3a_direct_event_data_product.num_events)
         np.testing.assert_array_equal(expected_data_quality, l3a_direct_event_data_product.data_quality)
-        np.testing.assert_array_equal(expected_pha_type, l3a_direct_event_data_product.pha_type)
         np.testing.assert_array_equal(expected_tof, l3a_direct_event_data_product.tof)
 
 

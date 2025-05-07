@@ -20,19 +20,15 @@ class TestCodiceLoCalculations(unittest.TestCase):
         priority_0_tcrs = np.array([
             [[1, 2, 3],
              [4, 5, 6],
-             [7, 8, 9]],
-            [[1, 2, 3],
+             [7, 8, 9],
+             [10, 11, 12]],
+            [[2, 2, 3],
              [4, 5, 6],
-             [7, 8, 9]]])
-        acquisition_time = np.array([
-            [[2, 2, 2],
-             [3, 3, 3],
-             [1, 1, 1]],
-            [[2, 2, 2],
-             [3, 3, 3],
-             [1, 1, 1]]]) * 1_000_000
+             [7, 8, 9],
+             [10, 11, 12]]])
+        acquisition_time = np.array([1, 2, 3, 4]) * 1_000_000
 
-        expected_total_number_of_events = [12 + 45 + 24, 12 + 45 + 24]
+        expected_total_number_of_events = [6 + 30 + 72 + 132, 7 + 30 + 72 + 132]
 
         actual_total_number_of_events = calculate_total_number_of_events(priority_0_tcrs, acquisition_time)
         np.testing.assert_array_equal(actual_total_number_of_events, expected_total_number_of_events)
