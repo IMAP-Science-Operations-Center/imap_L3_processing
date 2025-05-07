@@ -13,7 +13,7 @@ from imap_l3_processing.codice.l3.lo.codice_lo_l3a_partial_densities_dependencie
 from imap_l3_processing.codice.l3.lo.codice_lo_processor import CodiceLoProcessor
 from imap_l3_processing.codice.l3.lo.models import CodiceLoL3aPartialDensityDataProduct, CodiceLoL2DirectEventData, \
     CodiceLoL3aDirectEventDataProduct, PriorityEvent, CodiceLoL2SWSpeciesData, \
-    CodiceLoL1aSWPriorityRates, CodiceLoL1aNSWPriorityRates
+    CodiceLoL1aSWPriorityRates, CodiceLoL1aNSWPriorityRates, CodiceLoPartialDensityData
 from imap_l3_processing.codice.l3.lo.sectored_intensities.science.mass_per_charge_lookup import MassPerChargeLookup
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
@@ -132,14 +132,8 @@ class TestCodiceLoProcessor(unittest.TestCase):
             fe_hiq_partial_density,
         ]
 
-        mock_safe_divide.side_effect = [
-            sentinel.c_to_o_ratio,
-            sentinel.mg_to_o_ratio,
-            sentinel.fe_to_o_ratio
-        ]
-
         codice_lo_dependencies = CodiceLoL3aPartialDensitiesDependencies(codice_lo_l2_data, mass_per_charge_lookup)
-        result = processor.process_l3a_partial_densities(codice_lo_dependencies)
+        result_data_product = processor.process_l3a_partial_densities(codice_lo_dependencies)
 
         self.assertEqual(num_species, mock_calculate_partial_densities.call_count)
 
@@ -159,78 +153,27 @@ class TestCodiceLoProcessor(unittest.TestCase):
              call(codice_lo_l2_data.fe_loq, codice_lo_l2_data.energy_table, mass_per_charge_lookup.fe_loq),
              call(codice_lo_l2_data.fe_hiq, codice_lo_l2_data.energy_table, mass_per_charge_lookup.fe_hiq)])
 
-        mock_safe_divide.assert_has_calls([
-            call(cplus4_partial_density + cplus5_partial_density + cplus6_partial_density,
-                 oplus5_partial_density + oplus6_partial_density + oplus7_partial_density + oplus8_partial_density),
+        self.assertIsInstance(result_data_product, CodiceLoL3aPartialDensityDataProduct)
+        self.assertEqual(input_metadata, result_data_product.input_metadata)
+        result_data = result_data_product.data
+        self.assertIsInstance(result_data, CodiceLoPartialDensityData)
 
-            call(mg_partial_density,
-                 oplus5_partial_density + oplus6_partial_density + oplus7_partial_density + oplus8_partial_density),
-
-            call(fe_loq_partial_density + fe_hiq_partial_density,
-                 oplus5_partial_density + oplus6_partial_density + oplus7_partial_density + oplus8_partial_density)
-        ])
-
-        self.assertIsInstance(result, CodiceLoL3aPartialDensityDataProduct)
-        self.assertEqual(input_metadata, result.input_metadata)
-
-        np.testing.assert_array_equal(result.epoch, codice_lo_l2_data.epoch)
-        np.testing.assert_array_equal(result.epoch_delta, codice_lo_l2_data.epoch_delta_plus)
-        self.assertEqual(sentinel.hplus_partial_density, result.hplus_partial_density),
-        self.assertEqual(sentinel.heplusplus_partial_density, result.heplusplus_partial_density),
-        self.assertEqual(cplus4_partial_density, result.cplus4_partial_density),
-        self.assertEqual(cplus5_partial_density, result.cplus5_partial_density),
-        self.assertEqual(cplus6_partial_density, result.cplus6_partial_density),
-        self.assertEqual(oplus5_partial_density, result.oplus5_partial_density),
-        self.assertEqual(oplus6_partial_density, result.oplus6_partial_density),
-        self.assertEqual(oplus7_partial_density, result.oplus7_partial_density),
-        self.assertEqual(oplus8_partial_density, result.oplus8_partial_density),
-        self.assertEqual(sentinel.ne_partial_density, result.ne_partial_density),
-        self.assertEqual(mg_partial_density, result.mg_partial_density),
-        self.assertEqual(sentinel.si_partial_density, result.si_partial_density),
-        self.assertEqual(fe_loq_partial_density, result.fe_loq_partial_density),
-        self.assertEqual(fe_hiq_partial_density, result.fe_hiq_partial_density),
-
-    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.calculate_partial_densities')
-    def test_process_l3a_computes_elemental_abundance_ratios(self, mock_calculate_partial_densities):
-        mass_per_charge_table = MassPerChargeLookup.read_from_file(
-            get_test_data_path('codice/test_mass_per_charge_lookup.csv'))
-        codice_lo_l2_data = CodiceLoL2SWSpeciesData(*[Mock() for i in range(len(fields(CodiceLoL2SWSpeciesData)))])
-
-        codice_lo_dependencies = CodiceLoL3aPartialDensitiesDependencies(
-            mass_per_charge_lookup=mass_per_charge_table,
-            codice_l2_lo_data=codice_lo_l2_data,
-        )
-        epochs = np.array([datetime(2025, 6, 1), datetime(2025, 6, 2)])
-
-        partial_density = np.full(len(epochs), 10)
-
-        mock_calculate_partial_densities.side_effect = [
-            partial_density * 1,
-            partial_density * 2,
-            partial_density * 3,
-            partial_density * 4,
-            partial_density * 5,
-            partial_density * 6,
-            partial_density * 7,
-            partial_density * 8,
-            partial_density * 9,
-            partial_density * 10,
-            partial_density * 11,
-            partial_density * 12,
-            partial_density * 13,
-            partial_density * 14
-        ]
-
-        processor = CodiceLoProcessor(Mock(), Mock())
-        data_product = processor.process_l3a_partial_densities(codice_lo_dependencies)
-
-        expected_c_to_o_ratio = np.full(len(epochs), 12 / 30)
-        expected_mg_to_o_ratio = np.full(len(epochs), 11 / 30)
-        expected_fe_to_o_ratio = np.full(len(epochs), 27 / 30)
-
-        np.testing.assert_array_equal(data_product.c_to_o_ratio, expected_c_to_o_ratio)
-        np.testing.assert_array_equal(data_product.mg_to_o_ratio, expected_mg_to_o_ratio)
-        np.testing.assert_array_equal(data_product.fe_to_o_ratio, expected_fe_to_o_ratio)
+        np.testing.assert_array_equal(result_data.epoch, codice_lo_l2_data.epoch)
+        np.testing.assert_array_equal(result_data.epoch_delta, codice_lo_l2_data.epoch_delta_plus)
+        self.assertEqual(sentinel.hplus_partial_density, result_data.hplus_partial_density),
+        self.assertEqual(sentinel.heplusplus_partial_density, result_data.heplusplus_partial_density),
+        self.assertEqual(cplus4_partial_density, result_data.cplus4_partial_density),
+        self.assertEqual(cplus5_partial_density, result_data.cplus5_partial_density),
+        self.assertEqual(cplus6_partial_density, result_data.cplus6_partial_density),
+        self.assertEqual(oplus5_partial_density, result_data.oplus5_partial_density),
+        self.assertEqual(oplus6_partial_density, result_data.oplus6_partial_density),
+        self.assertEqual(oplus7_partial_density, result_data.oplus7_partial_density),
+        self.assertEqual(oplus8_partial_density, result_data.oplus8_partial_density),
+        self.assertEqual(sentinel.ne_partial_density, result_data.ne_partial_density),
+        self.assertEqual(mg_partial_density, result_data.mg_partial_density),
+        self.assertEqual(sentinel.si_partial_density, result_data.si_partial_density),
+        self.assertEqual(fe_loq_partial_density, result_data.fe_loq_partial_density),
+        self.assertEqual(fe_hiq_partial_density, result_data.fe_hiq_partial_density),
 
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.calculate_total_number_of_events')
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.calculate_normalization_ratio')

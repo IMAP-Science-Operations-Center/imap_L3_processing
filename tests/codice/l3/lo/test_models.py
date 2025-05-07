@@ -1,7 +1,7 @@
 import tempfile
 import unittest
 from dataclasses import fields
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from unittest.mock import Mock
 
@@ -12,7 +12,10 @@ from imap_l3_processing.codice.l3.lo.direct_events.science.mass_species_bin_look
 from imap_l3_processing.codice.l3.lo.models import CodiceLoL2SWSpeciesData, CodiceLoL3aPartialDensityDataProduct, \
     CodiceLoL2DirectEventData, \
     PriorityEvent, EnergyAndSpinAngle, CodiceLoL3aDirectEventDataProduct, \
-    CodiceLoL1aSWPriorityRates, CodiceLoL1aNSWPriorityRates, CodiceLo3dData, CODICE_LO_L2_NUM_PRIORITIES
+    CodiceLoL1aSWPriorityRates, CodiceLoL1aNSWPriorityRates, CodiceLo3dData, CODICE_LO_L2_NUM_PRIORITIES, \
+    CodiceLoL3aRatiosDataProduct, CodiceLoPartialDensityData
+from imap_l3_processing.models import InputMetadata
+from imap_l3_processing.utils import save_data
 from tests.test_helpers import get_test_instrument_team_data_path
 
 
@@ -158,7 +161,6 @@ class TestModels(unittest.TestCase):
 
     def test_codice_lo_l3a_partial_density_to_data_product(self):
         epoch_data = np.array([datetime.now()])
-
         input_data_product_kwargs = {
             "epoch": epoch_data,
             "epoch_delta": np.array([1]),
@@ -176,17 +178,44 @@ class TestModels(unittest.TestCase):
             "si_partial_density": np.array([15]),
             "fe_loq_partial_density": np.array([15]),
             "fe_hiq_partial_density": np.array([15]),
-            "c_to_o_ratio": np.array([15]),
-            "mg_to_o_ratio": np.array([15]),
-            "fe_to_o_ratio": np.array([15]),
         }
 
         data_product = CodiceLoL3aPartialDensityDataProduct(
+            Mock(), CodiceLoPartialDensityData(**input_data_product_kwargs)
+        )
+
+        actual_data_product_variables = data_product.to_data_product_variables()
+
+        self.assertEqual(16, len(actual_data_product_variables))
+
+        for input_variable, actual_data_product_variable in zip(input_data_product_kwargs.items(),
+                                                                actual_data_product_variables):
+            input_name, expected_value = input_variable
+
+            np.testing.assert_array_equal(actual_data_product_variable.value, getattr(data_product.data, input_name))
+            self.assertEqual(input_name, actual_data_product_variable.name)
+
+    def test_codice_lo_l3a_ratios_to_data_product(self):
+        epoch_data = np.array([datetime.now()])
+
+        input_data_product_kwargs = {
+            "epoch": epoch_data,
+            "epoch_delta": np.array([1]),
+            "c_to_o_ratio": np.array([2]),
+            "mg_to_o_ratio": np.array([3]),
+            "fe_to_o_ratio": np.array([4]),
+            "c6_to_c5_ratio": np.array([5]),
+            "c6_to_c4_ratio": np.array([6]),
+            "o7_to_o6_ratio": np.array([7]),
+            "felo_to_fehi_ratio": np.array([8]),
+        }
+
+        data_product = CodiceLoL3aRatiosDataProduct(
             Mock(), **input_data_product_kwargs
         )
         actual_data_product_variables = data_product.to_data_product_variables()
 
-        self.assertEqual(19, len(actual_data_product_variables))
+        self.assertEqual(9, len(actual_data_product_variables))
 
         for input_variable, actual_data_product_variable in zip(input_data_product_kwargs.items(),
                                                                 actual_data_product_variables):
@@ -194,6 +223,39 @@ class TestModels(unittest.TestCase):
 
             np.testing.assert_array_equal(actual_data_product_variable.value, getattr(data_product, input_name))
             self.assertEqual(input_name, actual_data_product_variable.name)
+
+    def test_codice_lo_l3a_ratios_read_from_cdf(self):
+        rng = np.random.default_rng()
+        epoch = [datetime.now(), datetime.now() + timedelta(days=1)]
+        density_data = CodiceLoPartialDensityData(epoch=np.array(epoch), epoch_delta=np.array([2, 2]),
+                                                  hplus_partial_density=rng.random(len(epoch), dtype='float32'),
+                                                  heplusplus_partial_density=rng.random(len(epoch), dtype='float32'),
+                                                  cplus4_partial_density=rng.random(len(epoch), dtype='float32'),
+                                                  cplus5_partial_density=rng.random(len(epoch), dtype='float32'),
+                                                  cplus6_partial_density=rng.random(len(epoch), dtype='float32'),
+                                                  oplus5_partial_density=rng.random(len(epoch), dtype='float32'),
+                                                  oplus6_partial_density=rng.random(len(epoch), dtype='float32'),
+                                                  oplus7_partial_density=rng.random(len(epoch), dtype='float32'),
+                                                  oplus8_partial_density=rng.random(len(epoch), dtype='float32'),
+                                                  ne_partial_density=rng.random(len(epoch), dtype='float32'),
+                                                  mg_partial_density=rng.random(len(epoch), dtype='float32'),
+                                                  si_partial_density=rng.random(len(epoch), dtype='float32'),
+                                                  fe_loq_partial_density=rng.random(len(epoch), dtype='float32'),
+                                                  fe_hiq_partial_density=rng.random(len(epoch), dtype='float32'), )
+
+        input_metadata = InputMetadata("codice", "l3a", datetime.now(), datetime.now(), "v000", "lo-partial-densities")
+
+        codice_lo_l3a_partial_densities = CodiceLoL3aPartialDensityDataProduct(input_metadata, density_data)
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            cdf_path = save_data(codice_lo_l3a_partial_densities, folder_path=Path(tmpdir))
+
+            read_in_density_data = CodiceLoPartialDensityData.read_from_cdf(cdf_path)
+
+        for field in fields(CodiceLoPartialDensityData):
+            np.testing.assert_array_equal(getattr(read_in_density_data, field.name),
+                                          getattr(density_data, field.name),
+                                          strict=True)
 
     def test_codice_lo_l3a_direct_event_to_data_product(self):
         rng = np.random.default_rng()

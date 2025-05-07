@@ -14,7 +14,8 @@ import xarray as xr
 from imap_data_access.processing_input import AncillaryInput, ProcessingInputCollection, ScienceInput
 from spacepy.pycdf import CDF
 
-from imap_l3_processing.codice.l3.lo.codice_lo_l3a_dependencies import CodiceLoL3aDependencies
+from imap_l3_processing.codice.l3.lo.codice_lo_l3a_partial_densities_dependencies import \
+    CodiceLoL3aPartialDensitiesDependencies
 from imap_l3_processing.codice.l3.lo.codice_lo_processor import CodiceLoProcessor
 from imap_l3_processing.codice.l3.lo.models import CodiceLoL2SWSpeciesData
 from imap_l3_processing.codice.l3.lo.sectored_intensities.science.mass_per_charge_lookup import MassPerChargeLookup
@@ -88,12 +89,8 @@ def create_codice_lo_l3a_partial_densities_cdf():
     codice_lo_l2_data = CodiceLoL2SWSpeciesData.read_from_cdf(
         get_test_instrument_team_data_path('codice/lo/imap_codice_l2_lo-sw-species_20241110193900_v0.0.2.cdf'))
     mpc_lookup = MassPerChargeLookup.read_from_file(get_test_data_path('codice/test_mass_per_charge_lookup.csv'))
-    deps = CodiceLoL3aDependencies(codice_l2_lo_data=codice_lo_l2_data,
-                                   mass_per_charge_lookup=mpc_lookup,
-                                   codice_lo_l1a_sw_priority_rates=Mock(),
-                                   codice_lo_l1a_nsw_priority_rates=Mock(),
-                                   codice_l2_direct_events=Mock(),
-                                   mass_coefficient_lookup=Mock())
+    deps = CodiceLoL3aPartialDensitiesDependencies(codice_l2_lo_data=codice_lo_l2_data,
+                                                   mass_per_charge_lookup=mpc_lookup)
 
     input_metadata = InputMetadata(
         instrument='codice',
@@ -108,9 +105,6 @@ def create_codice_lo_l3a_partial_densities_cdf():
     partial_densities_data = codice_lo_processor.process_l3a_partial_densities(deps)
     cdf_path = save_data(partial_densities_data, delete_if_present=True)
     return cdf_path
-
-def create_codice_lo_l3a_direct_events_cdf():
-
 
 
 def create_swapi_l3b_cdf(geometric_calibration_file, efficiency_calibration_file, cdf_file):
