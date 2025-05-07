@@ -87,7 +87,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
 
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.safe_divide')
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.calculate_partial_densities')
-    def test_process_l3a_partial_densities(self, mock_calculate_partial_densities, mock_save_divide):
+    def test_process_l3a_partial_densities(self, mock_calculate_partial_densities, mock_safe_divide):
         input_collection = ProcessingInputCollection()
         input_metadata = InputMetadata('codice', "l3a", Mock(spec=datetime), Mock(spec=datetime), 'v02',
                                        descriptor='lo-partial-densities')
@@ -132,7 +132,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
             fe_hiq_partial_density,
         ]
 
-        mock_save_divide.side_effect = [
+        mock_safe_divide.side_effect = [
             sentinel.c_to_o_ratio,
             sentinel.mg_to_o_ratio,
             sentinel.fe_to_o_ratio
@@ -159,7 +159,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
              call(codice_lo_l2_data.fe_loq, codice_lo_l2_data.energy_table, mass_per_charge_lookup.fe_loq),
              call(codice_lo_l2_data.fe_hiq, codice_lo_l2_data.energy_table, mass_per_charge_lookup.fe_hiq)])
 
-        mock_save_divide.assert_has_calls([
+        mock_safe_divide.assert_has_calls([
             call(cplus4_partial_density + cplus5_partial_density + cplus6_partial_density,
                  oplus5_partial_density + oplus6_partial_density + oplus7_partial_density + oplus8_partial_density),
 
@@ -315,7 +315,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
         empty_priority_7 = PriorityEvent(
             **{f.name: rng.random((len(epochs), len(event_num))) for f in fields(PriorityEvent)})
         priority_events.append(empty_priority_7)
-        direct_events = CodiceLoL2DirectEventData(epochs, priority_events)
+        direct_events = CodiceLoL2DirectEventData(epochs, np.array([]), np.array([]), priority_events)
 
         dependencies = CodiceLoL3aDirectEventsDependencies(sw_priority_rates, nsw_priority_rates, direct_events, Mock())
 
@@ -387,7 +387,6 @@ class TestCodiceLoProcessor(unittest.TestCase):
         np.testing.assert_array_equal(expected_multi_flag, l3a_direct_event_data_product.multi_flag)
         np.testing.assert_array_equal(expected_num_events, l3a_direct_event_data_product.num_events)
         np.testing.assert_array_equal(expected_data_quality, l3a_direct_event_data_product.data_quality)
-        np.testing.assert_array_equal(event_num, l3a_direct_event_data_product.event_num)
         np.testing.assert_array_equal(expected_pha_type, l3a_direct_event_data_product.pha_type)
         np.testing.assert_array_equal(expected_tof, l3a_direct_event_data_product.tof)
 

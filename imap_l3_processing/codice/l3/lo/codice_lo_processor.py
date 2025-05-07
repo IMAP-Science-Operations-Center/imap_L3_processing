@@ -109,7 +109,7 @@ class CodiceLoProcessor(Processor):
         codice_sw_priority_rates_l1a_data = dependencies.codice_lo_l1a_sw_priority_rates
         codice_nsw_priority_rates_l1a_data = dependencies.codice_lo_l1a_nsw_priority_rates
         codice_direct_events: CodiceLoL2DirectEventData = dependencies.codice_l2_direct_events
-        event_number = codice_direct_events.event_num
+        event_buffer = codice_direct_events.priority_events[0].tof.shape[-1]
         mass_coefficient_lookup = dependencies.mass_coefficient_lookup
         priority_rates_for_events = [
             codice_sw_priority_rates_l1a_data.p0_tcrs,
@@ -132,7 +132,7 @@ class CodiceLoProcessor(Processor):
          multi_flag,
          pha_type,
          tof) = [
-            np.full((len(codice_direct_events.epoch), len(priority_rates_for_events), len(event_number)), np.nan)
+            np.full((len(codice_direct_events.epoch), len(priority_rates_for_events), event_buffer), np.nan)
             for _ in range(9)]
 
         (data_quality, num_events) = [np.full((len(codice_direct_events.epoch), len(priority_rates_for_events)), np.nan)
@@ -150,7 +150,6 @@ class CodiceLoProcessor(Processor):
             gain[:, priority_index, :] = priority_event.apd_gain
             apd_id[:, priority_index, :] = priority_event.apd_id
             multi_flag[:, priority_index, :] = priority_event.multi_flag
-            pha_type[:, priority_index, :] = priority_event.pha_type
             tof[:, priority_index, :] = priority_event.tof
 
             data_quality[:, priority_index] = priority_event.data_quality
@@ -165,7 +164,6 @@ class CodiceLoProcessor(Processor):
         return CodiceLoL3aDirectEventDataProduct(
             input_metadata=self.input_metadata,
             epoch=codice_direct_events.epoch,
-            event_num=codice_direct_events.event_num,
             normalization=normalization,
             mass_per_charge=mass_per_charge,
             mass=mass,

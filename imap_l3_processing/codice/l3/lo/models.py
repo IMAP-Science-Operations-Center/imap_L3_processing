@@ -294,7 +294,6 @@ TOF_VAR_NAME = "tof"
 @dataclass
 class CodiceLoL3aDirectEventDataProduct(DataProduct):
     epoch: ndarray
-    event_num: np.ndarray
     normalization: ndarray
     mass_per_charge: np.ndarray
     mass: np.ndarray
@@ -318,7 +317,6 @@ class CodiceLoL3aDirectEventDataProduct(DataProduct):
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
             DataProductVariable(EPOCH_VAR_NAME, self.epoch),
-            DataProductVariable(EVENT_NUM_VAR_NAME, self.event_num),
             DataProductVariable(SPIN_ANGLE_VAR_NAME, self.spin_angle),
             DataProductVariable(ENERGY_STEP_VAR_NAME, self.energy_step),
             DataProductVariable(PRIORITY_VAR_NAME, self.priority),

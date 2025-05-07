@@ -207,7 +207,6 @@ class TestModels(unittest.TestCase):
         direct_event = CodiceLoL3aDirectEventDataProduct(
             input_metadata=Mock(),
             epoch=epoch,
-            event_num=event_num,
             normalization=rng.random((len(epoch), len(priority), len(spin_angle), len(energy_step))),
             mass_per_charge=rng.random((len(epoch), len(priority), len(event_num))),
             mass=rng.random((len(epoch), len(priority), len(event_num))),
