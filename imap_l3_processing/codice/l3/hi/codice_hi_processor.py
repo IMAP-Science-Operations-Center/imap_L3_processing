@@ -38,11 +38,12 @@ class CodiceHiProcessor(Processor):
         tof_lookup = dependencies.tof_lookup
         l2_data = dependencies.codice_l2_hi_data
 
+        event_buffer_size = l2_data.priority_events[0].ssd_id.shape[-1]
+
         (data_quality,
          num_of_events) = [np.full((len(l2_data.epochs), len(l2_data.priority_events)), np.nan) for _ in range(2)]
 
-        (erge,
-         multi_flag,
+        (multi_flag,
          ssd_energy,
          ssd_id,
          spin_angle,
@@ -50,16 +51,14 @@ class CodiceHiProcessor(Processor):
          tof,
          type,
          energy_per_nuc,
-         estimated_mass) = [np.full((len(l2_data.epochs), len(l2_data.priority_events), len(num_of_events)), np.nan)
-                            for _ in range(10)]
+         estimated_mass) = [np.full((len(l2_data.epochs), len(l2_data.priority_events), event_buffer_size), np.nan)
+                            for _ in range(9)]
 
         for index, priority_event in enumerate(l2_data.priority_events):
             event_tof = priority_event.time_of_flight
-            event_energy_per_nuc = np.array([tof_lookup[t].energy for t in event_tof.flat]).reshape(
-                (event_tof.shape))
+            event_energy_per_nuc = np.array([tof_lookup[t].energy for t in event_tof.flat]).reshape(event_tof.shape)
             event_estimated_mass = (priority_event.ssd_energy / event_energy_per_nuc)
 
-            erge[:, index, :] = priority_event.energy_range
             multi_flag[:, index, :] = priority_event.multi_flag
             ssd_energy[:, index, :] = priority_event.ssd_energy
             ssd_id[:, index, :] = priority_event.ssd_id
@@ -77,7 +76,6 @@ class CodiceHiProcessor(Processor):
             input_metadata=self.input_metadata,
             epoch=l2_data.epochs,
             data_quality=data_quality,
-            erge=erge,
             multi_flag=multi_flag,
             num_of_events=num_of_events,
             ssd_energy=ssd_energy,

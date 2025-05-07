@@ -1,4 +1,3 @@
-import csv
 import tempfile
 import unittest
 from pathlib import Path
@@ -16,17 +15,17 @@ class TestTOFLookup(unittest.TestCase):
             energy = tof_bit * 1.0
             lower = tof_bit * 2.0
             upper = tof_bit * 3.0
-            tof_lookup_rows.append([energy, lower, upper])
+            tof_lookup_rows.append([tof_bit, energy, lower, upper])
 
         tof_lookup_csv_path = "tof_lookup.csv"
         with tempfile.TemporaryDirectory() as tmpdir:
             temp_tof_csv_file = Path(tmpdir) / tof_lookup_csv_path
             with open(temp_tof_csv_file, "w") as csv_file:
-                csvwriter = csv.writer(csv_file)
-                csvwriter.writerow(tof_lookup_header_row)
-                csvwriter.writerows(tof_lookup_rows)
+                csv_file.write(",".join(tof_lookup_header_row) + "\n")
+                for row in tof_lookup_rows:
+                    csv_file.write(",".join([str(a) for a in row]) + "\n")
 
             tof_lookup = TOFLookup.read_from_file(temp_tof_csv_file)
 
             for tof_bit in range(1024):
-                np.testing.assert_array_equal(tof_lookup_rows[tof_bit], tof_lookup[tof_bit])
+                np.testing.assert_array_equal(tof_lookup_rows[tof_bit][1:], tof_lookup[tof_bit])

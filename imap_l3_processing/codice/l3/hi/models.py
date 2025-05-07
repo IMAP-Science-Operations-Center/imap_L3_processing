@@ -1,16 +1,16 @@
 from dataclasses import dataclass
 
-import numpy as np
 from numpy import ndarray
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.models import DataProduct, DataProductVariable
 
+CODICE_HI_NUM_L2_PRIORITIES = 6
+
 
 @dataclass
 class PriorityEventL2:
     data_quality: ndarray
-    energy_range: ndarray
     multi_flag: ndarray
     number_of_events: ndarray
     ssd_energy: ndarray
@@ -24,49 +24,29 @@ class PriorityEventL2:
 @dataclass
 class CodiceL2HiData:
     epochs: ndarray
-    priority_event_0: PriorityEventL2
-    priority_event_1: PriorityEventL2
-    priority_event_2: PriorityEventL2
-    priority_event_3: PriorityEventL2
-    priority_event_4: PriorityEventL2
-    priority_event_5: PriorityEventL2
-
-    names = ["DataQuality",
-             "ERGE",
-             ("MultiFlag", "multi_flag"),
-             ("NumEvents", "number_of_events"),
-             ("SSDEnergy", "ssd_energy"),
-             ("SSD_ID", "ssd_id"),
-             ("SpinAngle", "spin_angle"),
-             ("SpinNumber", "spin_number"),
-             ("TOF", "tof"),
-             ("Type", "type")]
-
-    @property
-    def priority_events(self):
-        return [self.priority_event_0, self.priority_event_1, self.priority_event_2,
-                self.priority_event_3, self.priority_event_4, self.priority_event_5]
+    priority_events: list[PriorityEventL2]
 
     @classmethod
     def read_from_cdf(cls, filename):
-        names = [("DataQuality", "data_quality"), ("ERGE", "energy_range"), ("MultiFlag", "multi_flag"),
-                 ("NumEvents", "number_of_events"), ("SSDEnergy", "ssd_energy"), ("SSD_ID", "ssd_id"),
-                 ("SpinAngle", "spin_angle"), ("SpinNumber", "spin_number"), ("TOF", "time_of_flight"),
-                 ("Type", "type")]
+        with CDF(str(filename)) as cdf:
+            epochs = cdf["epoch"][...]
 
-        with CDF(filename) as cdf:
-            epochs = cdf["epoch"]
-
-            priority_event_data = {}
             priority_events = []
-            for p in range(6):
-                for cdf_name, class_attribute in names:
-                    cdf_variable_name = f"P{p}_{cdf_name}"
-                    priority_event_data[class_attribute] = np.array(cdf[cdf_variable_name])
+            for p in range(CODICE_HI_NUM_L2_PRIORITIES):
+                priority_event = PriorityEventL2(
+                    data_quality=cdf[f"p{p}_data_quality"][...],
+                    multi_flag=cdf[f"p{p}_multi_flag"][...],
+                    number_of_events=cdf[f"p{p}_num_events"][...],
+                    ssd_energy=cdf[f"p{p}_ssd_energy"][...],
+                    ssd_id=cdf[f"p{p}_ssd_id"][...],
+                    spin_angle=cdf[f"p{p}_spin_sector"][...],
+                    spin_number=cdf[f"p{p}_spin_number"][...],
+                    time_of_flight=cdf[f"p{p}_tof"][...],
+                    type=cdf[f"p{p}_type"][...],
+                )
+                priority_events.append(priority_event)
 
-                priority_events.append(PriorityEventL2(**priority_event_data))
-
-            return cls(epochs, *priority_events)
+            return cls(epochs, priority_events)
 
 
 EPOCH_VAR_NAME = "epoch"
@@ -109,7 +89,6 @@ FE_INTENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_VAR_NAME = "fe_intensity_by_pitch_angl
 class CodiceL3HiDirectEvents(DataProduct):
     epoch: ndarray
     data_quality: ndarray
-    erge: ndarray
     multi_flag: ndarray
     num_of_events: ndarray
     ssd_energy: ndarray
@@ -125,7 +104,6 @@ class CodiceL3HiDirectEvents(DataProduct):
         return [
             DataProductVariable(EPOCH_VAR_NAME, self.epoch),
             DataProductVariable(DATA_QUALITY_VAR_NAME, self.data_quality),
-            DataProductVariable(ERGE_VAR_NAME, self.erge),
             DataProductVariable(MULTI_FLAG_VAR_NAME, self.multi_flag),
             DataProductVariable(NUM_OF_EVENTS_VAR_NAME, self.num_of_events),
             DataProductVariable(SSD_ENERGY_VAR_NAME, self.ssd_energy),

@@ -1,0 +1,68 @@
+primary_data_variable: &primary_data_variable
+  VAR_TYPE: data
+  VARIABLE_PURPOSE: primary var, summary
+  DEPEND_0: epoch
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+
+support_data: &support_data
+  VAR_TYPE: support_data
+  DISPLAY_TYPE: no_plot
+  RECORD_VARYING: NRV
+
+float_data: &float_data
+  DATA_TYPE: CDF_FLOAT
+  FORMAT: F15.3
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.000000E+31
+
+per_priority: &per_priority
+  <<: *primary_data_variable
+  DEPEND_1: priority_index
+  SCALETYP: linear
+  LABL_PTR_1: priority_index_label
+
+per_event: &per_event
+  <<: *per_priority
+  DEPEND_2: event_index
+  LABL_PTR_2: event_index_label
+
+
+epoch:
+  NAME: epoch
+  CATDESC: Time, number of nanoseconds since J2000 with leap seconds included
+  VAR_TYPE: support_data
+  DISPLAY_TYPE: no_plot
+  DATA_TYPE: CDF_TIME_TT2000
+  FIELDNAM: Epoch
+  RECORD_VARYING: RV
+  LABLAXIS: epoch
+  UNITS: ns
+  VALIDMIN: 2010-01-01T00:00:00.000000000
+  VALIDMAX: 2059-12-31T23:59:58.999000000
+  FILLVAL: 9999-12-31T23:59:59.999999999
+  SCALETYP: linear
+  TIME_BASE: J2000
+  TIME_SCALE: TT
+  DELTA_PLUS_VAR: epoch_delta
+  DELTA_MINUS_VAR: epoch_delta
+  MONOTON: INCREASE
+  REFERENCE_POSITION: Rotating Earth Geoid
+  SI_CONVERSION: 1e-9>seconds
+
+epoch_delta:
+  <<: *support_data
+  NAME: epoch_delta
+  CATDESC: epoch_DELTA
+  FIELDNAM: epoch_delta
+  DATA_TYPE: CDF_INT8
+  FORMAT: I19
+  UNITS: ns
+  VALIDMIN: 0
+  VALIDMAX: 86000000000000
+  FILLVAL: -9223372036854775808
+  SCALETYP: linear
+  SCALEMIN: 0
+  SCALEMAX: 86000000000000
+  SI_CONVERSION: 1e-9>seconds
