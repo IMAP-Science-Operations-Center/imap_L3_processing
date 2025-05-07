@@ -20,7 +20,7 @@ epoch:
 epoch_delta:
   NAME: epoch_delta
   DATA_TYPE: CDF_INT8
-  CATDESC: epoch_delta
+  CATDESC: Epoch delta
   VAR_TYPE: support_data
   RECORD_VARYING: RV
   DEPEND_0: epoch

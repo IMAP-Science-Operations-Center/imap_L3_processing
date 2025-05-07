@@ -22,11 +22,11 @@ epoch:
 epoch_delta:
   NAME: epoch_delta
   DATA_TYPE: CDF_INT8
-  CATDESC: epoch_delta
+  CATDESC: Epoch delta
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: rv
-  FIELDNAM: Epoch delta
+  FIELDNAM: Epoch Delta
   FORMAT: I19
   LABLAXIS: Epoch delta
   UNITS: ns
@@ -170,7 +170,7 @@ longitude_delta:
 ena_intensity:
   NAME: ena_intensity
   DATA_TYPE: CDF_REAL4
-  CATDESC: Survival Probability Corrected ENA intensity.
+  CATDESC: Survival probability corrected ENA intensity
   DEPEND_0: epoch
   DEPEND_1: energy
   DEPEND_2: longitude
@@ -193,7 +193,7 @@ ena_intensity:
 ena_intensity_stat_unc:
   NAME: ena_intensity_stat_unc
   DATA_TYPE: CDF_REAL4
-  CATDESC: ENA intensity statistical uncertainty.
+  CATDESC: ENA intensity statistical uncertainty
   DEPEND_0: epoch
   DEPEND_1: energy
   DEPEND_2: longitude
@@ -214,7 +214,7 @@ ena_intensity_stat_unc:
 ena_intensity_sys_err:
   NAME: ena_intensity_sys_err
   DATA_TYPE: CDF_REAL4
-  CATDESC: ENA intensity systematic uncertainty.
+  CATDESC: ENA intensity systematic uncertainty
   DEPEND_0: epoch
   DEPEND_1: energy
   DEPEND_2: longitude
@@ -349,7 +349,7 @@ ena_spectral_index:
 ena_spectral_index_stat_unc:
   NAME: ena_spectral_index_stat_unc
   DATA_TYPE: CDF_REAL4
-  CATDESC: ENA spectral index statistical uncertainty.
+  CATDESC: ENA spectral index statistical uncertainty
   DEPEND_0: epoch
   DEPEND_1: energy
   DEPEND_2: longitude

@@ -42,8 +42,8 @@ epoch:
 epoch_delta:
   <<: *support_data
   NAME: epoch_delta
-  CATDESC: epoch_DELTA
-  FIELDNAM: epoch_delta
+  CATDESC: Epoch delta
+  FIELDNAM: Epoch Delta
   DATA_TYPE: CDF_INT8
   FORMAT: I19
   UNITS: ns
@@ -200,7 +200,7 @@ c_to_o_ratio:
   <<: *primary_data_variable
   <<: *float_data
   NAME: c_to_o_ratio
-  CATDESC: Elemental Abundance Ratio C to O
+  CATDESC: Elemental abundance ratio C to O
   FIELDNAM: Ratio C to O
   DATA_TYPE: CDF_REAL4
   LABLAXIS: C/O
@@ -211,7 +211,7 @@ mg_to_o_ratio:
   <<: *primary_data_variable
   <<: *float_data
   NAME: mg_to_o_ratio
-  CATDESC: Elemental Abundance Ratio Mg to O
+  CATDESC: Elemental abundance ratio Mg to O
   FIELDNAM: Ratio Mg to O
   DATA_TYPE: CDF_REAL4
   LABLAXIS: Mg/O
@@ -222,7 +222,7 @@ fe_to_o_ratio:
   <<: *primary_data_variable
   <<: *float_data
   NAME: fe_to_o_ratio
-  CATDESC: Elemental Abundance Ratio Fe to O
+  CATDESC: Elemental abundance ratio Fe to O
   FIELDNAM: Ratio Fe to O
   DATA_TYPE: CDF_REAL4
   LABLAXIS: Fe/O

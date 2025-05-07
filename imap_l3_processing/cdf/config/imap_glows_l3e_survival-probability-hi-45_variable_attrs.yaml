@@ -22,11 +22,11 @@ epoch:
 epoch_delta:
   NAME: epoch_delta
   DATA_TYPE: CDF_INT8
-  CATDESC:
+  CATDESC: Epoch delta
   VAR_TYPE: support_data
   RECORD_VARYING: RV
   DEPEND_0: epoch
-  FIELDNAM: epoch delta
+  FIELDNAM: Epoch Delta
   FORMAT: I19
   LABLAXIS: epoch_delta
   UNITS: ns

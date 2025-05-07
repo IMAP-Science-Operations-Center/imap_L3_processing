@@ -22,7 +22,7 @@ epoch:
 epoch_delta:
   NAME: epoch_delta
   DATA_TYPE: CDF_INT8
-  CATDESC: epoch_DELTA
+  CATDESC: Epoch delta
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
   FIELDNAM: Epoch Delta
@@ -39,7 +39,7 @@ epoch_delta:
 combined_energy:
   NAME: combined_energy
   DATA_TYPE: CDF_REAL4
-  CATDESC: Solar Wind Energy
+  CATDESC: Solar wind energy
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
@@ -58,7 +58,7 @@ combined_energy:
 combined_energy_delta_minus:
   NAME: combined_energy_delta_minus
   DATA_TYPE: CDF_REAL4
-  CATDESC: Solar Wind Energy Delta Minus
+  CATDESC: Solar wind energy delta minus
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
@@ -72,7 +72,7 @@ combined_energy_delta_minus:
 combined_energy_delta_plus:
   NAME: combined_energy_delta_plus
   DATA_TYPE: CDF_REAL4
-  CATDESC: Solar Wind Energy Delta Plus
+  CATDESC: Solar wind energy delta plus
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
@@ -86,7 +86,7 @@ combined_energy_delta_plus:
 combined_differential_flux:
   NAME: combined_differential_flux
   DATA_TYPE: CDF_REAL4
-  CATDESC: Combined Differential Flux
+  CATDESC: Combined differential flux
   DEPEND_0: epoch
   DEPEND_1: combined_energy
   VAR_TYPE: data
@@ -109,7 +109,7 @@ combined_differential_flux:
 combined_differential_flux_delta:
   NAME: combined_differential_flux_delta
   DATA_TYPE: CDF_REAL4
-  CATDESC: Combined Differential Flux Uncertainty
+  CATDESC: Combined differential flux uncertainty
   DEPEND_0: epoch
   DEPEND_1: combined_energy
   VAR_TYPE: support_data

@@ -22,7 +22,7 @@ epoch:
 energy:
   NAME: energy
   DATA_TYPE: CDF_REAL4
-  CATDESC: Bin Center Energy
+  CATDESC: Bin center energy
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
   FIELDNAM: Energy
@@ -41,7 +41,7 @@ energy:
 pitch_angle:
   NAME: pitch_angle
   DATA_TYPE: CDF_REAL4
-  CATDESC: Pitch Angle
+  CATDESC: Pitch angle
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
   FIELDNAM: Pitch Angle
@@ -125,7 +125,7 @@ energy_delta_minus:
 pitch_angle_delta:
   NAME: pitch_angle_delta
   DATA_TYPE: CDF_REAL4
-  CATDESC: Pitch Angle bin half-width
+  CATDESC: Pitch angle bin half-width
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
   FIELDNAM: Pitch Angle
@@ -218,7 +218,7 @@ intensity_by_pitch_angle_and_gyrophase:
 intensity_uncertainty_by_pitch_angle:
   NAME: intensity_uncertainty_by_pitch_angle
   DATA_TYPE: CDF_REAL4
-  CATDESC: Uncertainty of Intensity by pitch angle
+  CATDESC: Uncertainty of intensity by pitch angle
   DEPEND_0: epoch
   DEPEND_1: energy
   DEPEND_2: pitch_angle
@@ -239,7 +239,7 @@ intensity_uncertainty_by_pitch_angle:
 intensity_uncertainty_by_pitch_angle_and_gyrophase:
   NAME: intensity_uncertainty_by_pitch_angle_and_gyrophase
   DATA_TYPE: CDF_REAL4
-  CATDESC: Uncertainty of Intensity by pitch angle and gyrophase
+  CATDESC: Uncertainty of intensity by pitch angle and gyrophase
   DEPEND_0: epoch
   DEPEND_1: energy
   DEPEND_2: pitch_angle
@@ -308,7 +308,7 @@ phase_space_density_by_pitch_angle:
 intensity:
   NAME: intensity
   DATA_TYPE: CDF_REAL4
-  CATDESC: Electon Intensity
+  CATDESC: Electron intensity
   DEPEND_0: epoch
   DEPEND_1: energy
   VAR_TYPE: data
@@ -328,7 +328,7 @@ intensity:
 intensity_inward:
   NAME: intensity_inward
   DATA_TYPE: CDF_REAL4
-  CATDESC: Electron Intensity (Inward)
+  CATDESC: Electron intensity (inward)
   DEPEND_0: epoch
   DEPEND_1: energy
   VAR_TYPE: data
@@ -348,7 +348,7 @@ intensity_inward:
 intensity_outward:
   NAME: intensity_outward
   DATA_TYPE: CDF_REAL4
-  CATDESC: Electron Intensity (Outward)
+  CATDESC: Electron intensity (outward)
   DEPEND_0: epoch
   DEPEND_1: energy
   VAR_TYPE: data
@@ -368,7 +368,7 @@ intensity_outward:
 spacecraft_potential:
   NAME: spacecraft_potential
   DATA_TYPE: CDF_REAL4
-  CATDESC: IMAP Spacecraft potential
+  CATDESC: IMAP spacecraft potential
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -387,7 +387,7 @@ spacecraft_potential:
 core_halo_breakpoint:
   NAME: core_halo_breakpoint
   DATA_TYPE: CDF_REAL4
-  CATDESC: SW Electron Core/Halo breakpoint
+  CATDESC: SW electron core/halo breakpoint
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -407,7 +407,7 @@ core_halo_breakpoint:
 quality_flag:
   NAME: quality_flag
   DATA_TYPE: CDF_UINT1
-  CATDESC: Quality Flags
+  CATDESC: Quality flags
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
@@ -449,7 +449,7 @@ halo_fit_num_points:
 core_chisq:
   NAME: core_chisq
   DATA_TYPE: CDF_REAL4
-  CATDESC: Chi Square Error for core moment fitting
+  CATDESC: Chi square error for core moment fitting
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -465,7 +465,7 @@ core_chisq:
 halo_chisq:
   NAME: halo_chisq
   DATA_TYPE: CDF_REAL4
-  CATDESC: Chi Square Error for halo moment fitting
+  CATDESC: Chi square error for halo moment fitting
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -481,7 +481,7 @@ halo_chisq:
 core_density_fit:
   NAME: core_density_fit
   DATA_TYPE: CDF_REAL4
-  CATDESC: Density of Core Electrons found through Maxwellian fitting
+  CATDESC: Density of core electrons found through Maxwellian fitting
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -498,7 +498,7 @@ core_density_fit:
 halo_density_fit:
   NAME: halo_density_fit
   DATA_TYPE: CDF_REAL4
-  CATDESC: Density of Halo Electrons found through Maxwellian fitting
+  CATDESC: Density of halo electrons found through Maxwellian fitting
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -532,7 +532,7 @@ core_t_parallel_fit:
 halo_t_parallel_fit:
   NAME: halo_t_parallel_fit
   DATA_TYPE: CDF_REAL4
-  CATDESC: halo_t_parallel_fit
+  CATDESC: Halo_t parallel fit
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -549,7 +549,7 @@ halo_t_parallel_fit:
 core_t_perpendicular_fit:
   NAME: core_t_perpendicular_fit
   DATA_TYPE: CDF_REAL4
-  CATDESC: core_t_perpendicular_fit
+  CATDESC: Core_t perpendicular fit
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -566,7 +566,7 @@ core_t_perpendicular_fit:
 halo_t_perpendicular_fit:
   NAME: halo_t_perpendicular_fit
   DATA_TYPE: CDF_REAL4
-  CATDESC: halo_t_perpendicular_fit
+  CATDESC: halo_t perpendicular fit
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -651,7 +651,7 @@ halo_temperature_theta_rtn_fit:
 core_speed_fit:
   NAME: core_speed_fit
   DATA_TYPE: CDF_REAL4
-  CATDESC: Core Speed Fit
+  CATDESC: Core speed fit
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -668,7 +668,7 @@ core_speed_fit:
 halo_speed_fit:
   NAME: halo_speed_fit
   DATA_TYPE: CDF_REAL4
-  CATDESC: Halo Speed Fit
+  CATDESC: Halo speed fit
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -685,7 +685,7 @@ halo_speed_fit:
 core_velocity_vector_rtn_fit:
   NAME: core_velocity_vector_rtn_fit
   DATA_TYPE: CDF_REAL4
-  CATDESC: Core Velocity Vector Rtn Fit
+  CATDESC: Core velocity vector RTN fit
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -703,7 +703,7 @@ core_velocity_vector_rtn_fit:
 halo_velocity_vector_rtn_fit:
   NAME: halo_velocity_vector_rtn_fit
   DATA_TYPE: CDF_REAL4
-  CATDESC: Halo Velocity Vector Rtn Fit
+  CATDESC: Halo velocity vector RTN fit
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -721,7 +721,7 @@ halo_velocity_vector_rtn_fit:
 core_density_integrated:
   NAME: core_density_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Density Halo/suprathermal Electrons (high Energy) Integrated
+  CATDESC: Density halo/suprathermal electrons (high energy) integrated
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -738,7 +738,7 @@ core_density_integrated:
 halo_density_integrated:
   NAME: halo_density_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Halo Density Integrated
+  CATDESC: Halo density integrated
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -755,7 +755,7 @@ halo_density_integrated:
 total_density_integrated:
   NAME: total_density_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Total Density Integrated
+  CATDESC: Total density integrated
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -772,7 +772,7 @@ total_density_integrated:
 core_velocity_vector_rtn_integrated:
   NAME: core_velocity_vector_rtn_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Core Velocity Vector Rtn Integrated
+  CATDESC: Core velocity vector RTN integrated
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -790,7 +790,7 @@ core_velocity_vector_rtn_integrated:
 halo_velocity_vector_rtn_integrated:
   NAME: halo_velocity_vector_rtn_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Halo Velocity Vector Rtn Integrated
+  CATDESC: Halo velocity vector RTN integrated
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -808,7 +808,7 @@ halo_velocity_vector_rtn_integrated:
 total_velocity_vector_rtn_integrated:
   NAME: total_velocity_vector_rtn_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Total Velocity Vector Rtn Integrated
+  CATDESC: Total velocity vector RTN integrated
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -826,7 +826,7 @@ total_velocity_vector_rtn_integrated:
 core_speed_integrated:
   NAME: core_speed_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Core Speed Integrated
+  CATDESC: Core speed integrated
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -843,7 +843,7 @@ core_speed_integrated:
 halo_speed_integrated:
   NAME: halo_speed_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Halo Speed Integrated
+  CATDESC: Halo speed integrated
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -860,7 +860,7 @@ halo_speed_integrated:
 total_speed_integrated:
   NAME: total_speed_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Total Speed Integrated
+  CATDESC: Total speed integrated
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -877,7 +877,7 @@ total_speed_integrated:
 core_t_parallel_integrated:
   NAME: core_t_parallel_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Core T Parallel Integrated
+  CATDESC: Core_t parallel integrated
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -894,7 +894,7 @@ core_t_parallel_integrated:
 halo_t_parallel_integrated:
   NAME: halo_t_parallel_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Halo T Parallel Integrated
+  CATDESC: Halo_t parallel integrated
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -911,7 +911,7 @@ halo_t_parallel_integrated:
 total_t_parallel_integrated:
   NAME: total_t_parallel_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Total T Parallel Integrated
+  CATDESC: Total_t parallel integrated
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -928,7 +928,7 @@ total_t_parallel_integrated:
 core_t_perpendicular_integrated:
   NAME: core_t_perpendicular_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Average of perpendicular core temperature eigenvalues
+  CATDESC: Average of perpendicular core_t eigenvalues
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -945,7 +945,7 @@ core_t_perpendicular_integrated:
 halo_t_perpendicular_integrated:
   NAME: halo_t_perpendicular_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Average of perpendicular halo temperature eigenvalues
+  CATDESC: Average of perpendicular halo_t eigenvalues
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -962,7 +962,7 @@ halo_t_perpendicular_integrated:
 total_t_perpendicular_integrated:
   NAME: total_t_perpendicular_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Average of perpendicular total temperature eigenvalues
+  CATDESC: Average of perpendicular total_t eigenvalues
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -979,7 +979,7 @@ total_t_perpendicular_integrated:
 core_t_ratio_perpendicular_integrated:
   NAME: core_t_ratio_perpendicular_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Ratio of perpendicular core temperature eigenvalues
+  CATDESC: Ratio of perpendicular core_t eigenvalues
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -996,7 +996,7 @@ core_t_ratio_perpendicular_integrated:
 halo_t_ratio_perpendicular_integrated:
   NAME: halo_t_ratio_perpendicular_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Ratio of perpendicular halo temperature eigenvalues
+  CATDESC: Ratio of perpendicular halo_t eigenvalues
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -1013,7 +1013,7 @@ halo_t_ratio_perpendicular_integrated:
 total_t_ratio_perpendicular_integrated:
   NAME: total_t_ratio_perpendicular_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Ratio of perpendicular total temperature eigenvalues
+  CATDESC: Ratio of perpendicular total_t eigenvalues
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -1030,7 +1030,7 @@ total_t_ratio_perpendicular_integrated:
 core_temperature_phi_rtn_integrated:
   NAME: core_temperature_phi_rtn_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Core Temperature Phi Rtn Integrated
+  CATDESC: Core_t phi RTN integrated
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -1038,7 +1038,7 @@ core_temperature_phi_rtn_integrated:
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
   FIELDNAM: Core Temperature phi Rtn Integrated
   FORMAT: F15.3
-  LABLAXIS: Core t phi rtn integrated
+  LABLAXIS: Core_t phi RTN integrated
   UNITS: K
   VALIDMIN: 0
   VALIDMAX: 10000000000
@@ -1047,7 +1047,7 @@ core_temperature_phi_rtn_integrated:
 halo_temperature_phi_rtn_integrated:
   NAME: halo_temperature_phi_rtn_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Halo Temperature Phi Rtn Integrated
+  CATDESC: Halo_t phi RTN integrated
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -1064,7 +1064,7 @@ halo_temperature_phi_rtn_integrated:
 total_temperature_phi_rtn_integrated:
   NAME: total_temperature_phi_rtn_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Total Temperature Phi Rtn Integrated
+  CATDESC: Total_t phi RTN integrated
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -1081,7 +1081,7 @@ total_temperature_phi_rtn_integrated:
 core_temperature_theta_rtn_integrated:
   NAME: core_temperature_theta_rtn_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Core Temperature Theta Rtn Integrated
+  CATDESC: Core_t theta RTN integrated
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -1098,7 +1098,7 @@ core_temperature_theta_rtn_integrated:
 halo_temperature_theta_rtn_integrated:
   NAME: halo_temperature_theta_rtn_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Halo Temperature Theta Rtn Integrated
+  CATDESC: Halo_t theta RTN integrated
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -1115,7 +1115,7 @@ halo_temperature_theta_rtn_integrated:
 total_temperature_theta_rtn_integrated:
   NAME: total_temperature_theta_rtn_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Total Temperature Theta Rtn Integrated
+  CATDESC: Total_t theta RTN integrated
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -1132,7 +1132,7 @@ total_temperature_theta_rtn_integrated:
 core_temperature_tensor_integrated:
   NAME: core_temperature_tensor_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Core Temperature Tensor Integrated
+  CATDESC: Core_t tensor integrated
   DEPEND_0: epoch
   DEPEND_1: tensor_id
   VAR_TYPE: data
@@ -1151,7 +1151,7 @@ core_temperature_tensor_integrated:
 halo_temperature_tensor_integrated:
   NAME: halo_temperature_tensor_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Halo Temperature Tensor Integrated
+  CATDESC: Halo_t tensor integrated
   DEPEND_0: epoch
   DEPEND_1: tensor_id
   VAR_TYPE: data
@@ -1170,7 +1170,7 @@ halo_temperature_tensor_integrated:
 total_temperature_tensor_integrated:
   NAME: total_temperature_tensor_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Total Temperature Tensor Integrated
+  CATDESC: Total_t tensor integrated
   DEPEND_0: epoch
   DEPEND_1: tensor_id
   VAR_TYPE: data
@@ -1189,7 +1189,7 @@ total_temperature_tensor_integrated:
 core_heat_flux_magnitude_integrated:
   NAME: core_heat_flux_magnitude_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Core Heat Flux Magnitude Integrated
+  CATDESC: Core heat flux magnitude integrated
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -1206,7 +1206,7 @@ core_heat_flux_magnitude_integrated:
 core_heat_flux_theta_integrated:
   NAME: core_heat_flux_theta_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Core Heat Flux Theta Integrated
+  CATDESC: Core heat flux theta integrated
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -1223,7 +1223,7 @@ core_heat_flux_theta_integrated:
 core_heat_flux_phi_integrated:
   NAME: core_heat_flux_phi_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Core Heat Flux Phi Integrated
+  CATDESC: Core heat flux phi integrated
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -1240,7 +1240,7 @@ core_heat_flux_phi_integrated:
 halo_heat_flux_magnitude_integrated:
   NAME: halo_heat_flux_magnitude_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Halo Heat Flux Magnitude Integrated
+  CATDESC: Halo heat flux magnitude integrated
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -1257,7 +1257,7 @@ halo_heat_flux_magnitude_integrated:
 halo_heat_flux_theta_integrated:
   NAME: halo_heat_flux_theta_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Halo Heat Flux Theta Integrated
+  CATDESC: Halo heat flux theta integrated
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -1274,7 +1274,7 @@ halo_heat_flux_theta_integrated:
 halo_heat_flux_phi_integrated:
   NAME: halo_heat_flux_phi_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Halo Heat Flux Phi Integrated
+  CATDESC: Halo heat flux phi integrated
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -1291,7 +1291,7 @@ halo_heat_flux_phi_integrated:
 total_heat_flux_magnitude_integrated:
   NAME: total_heat_flux_magnitude_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Total Heat Flux Magnitude Integrated
+  CATDESC: Total heat flux magnitude integrated
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -1308,7 +1308,7 @@ total_heat_flux_magnitude_integrated:
 total_heat_flux_theta_integrated:
   NAME: total_heat_flux_theta_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Total Heat Flux Theta Integrated
+  CATDESC: Total heat flux theta integrated
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -1325,7 +1325,7 @@ total_heat_flux_theta_integrated:
 total_heat_flux_phi_integrated:
   NAME: total_heat_flux_phi_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Total Heat Flux Phi Integrated
+  CATDESC: Total heat flux phi integrated
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -1342,7 +1342,7 @@ total_heat_flux_phi_integrated:
 core_temperature_parallel_to_mag:
   NAME: core_temperature_parallel_to_mag
   DATA_TYPE: CDF_REAL4
-  CATDESC: Core Temperature Parallel To Mag
+  CATDESC: Core_t parallel to mag
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -1359,7 +1359,7 @@ core_temperature_parallel_to_mag:
 halo_temperature_parallel_to_mag:
   NAME: halo_temperature_parallel_to_mag
   DATA_TYPE: CDF_REAL4
-  CATDESC: Halo Temperature Parallel To Mag
+  CATDESC: Halo_t parallel to mag
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -1376,7 +1376,7 @@ halo_temperature_parallel_to_mag:
 total_temperature_parallel_to_mag:
   NAME: total_temperature_parallel_to_mag
   DATA_TYPE: CDF_REAL4
-  CATDESC: Total Temperature Parallel To Mag
+  CATDESC: Total_t parallel to mag
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -1393,7 +1393,7 @@ total_temperature_parallel_to_mag:
 core_temperature_perpendicular_to_mag:
   NAME: core_temperature_perpendicular_to_mag
   DATA_TYPE: CDF_REAL4
-  CATDESC: Core Temperature Perpendicular To Mag
+  CATDESC: Core_t perpendicular to mag
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -1410,7 +1410,7 @@ core_temperature_perpendicular_to_mag:
 halo_temperature_perpendicular_to_mag:
   NAME: halo_temperature_perpendicular_to_mag
   DATA_TYPE: CDF_REAL4
-  CATDESC: Halo Temperature Perpendicular To Mag
+  CATDESC: Halo_t perpendicular to mag
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -1427,7 +1427,7 @@ halo_temperature_perpendicular_to_mag:
 total_temperature_perpendicular_to_mag:
   NAME: total_temperature_perpendicular_to_mag
   DATA_TYPE: CDF_REAL4
-  CATDESC: Total Temperature Perpendicular To Mag
+  CATDESC: Total_t perpendicular to mag
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -1444,7 +1444,7 @@ total_temperature_perpendicular_to_mag:
 core_temperature_ratio_perpendicular_to_mag:
   NAME: core_temperature_ratio_perpendicular_to_mag
   DATA_TYPE: CDF_REAL4
-  CATDESC: Ratio of Core Temperatures Perpendicular To Mag
+  CATDESC: Ratio of core_t perpendicular to mag
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -1461,7 +1461,7 @@ core_temperature_ratio_perpendicular_to_mag:
 halo_temperature_ratio_perpendicular_to_mag:
   NAME: halo_temperature_ratio_perpendicular_to_mag
   DATA_TYPE: CDF_REAL4
-  CATDESC: Ratio of Halo Temperatures Perpendicular To Mag
+  CATDESC: Ratio of halo_t perpendicular to mag
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -1478,7 +1478,7 @@ halo_temperature_ratio_perpendicular_to_mag:
 total_temperature_ratio_perpendicular_to_mag:
   NAME: total_temperature_ratio_perpendicular_to_mag
   DATA_TYPE: CDF_REAL4
-  CATDESC: Ratio of Total Temperatures Perpendicular To Mag
+  CATDESC: Ratio of total temperatures perpendicular to mag
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -1516,14 +1516,14 @@ gyrophase_label:
 rtn_label:
   NAME: rtn_label
   DATA_TYPE: CDF_CHAR
-  CATDESC: Label for rtn
+  CATDESC: Label for RTN
   VAR_TYPE: metadata
   FIELDNAM: Rtn Label
   FORMAT: a20
 temperature_tensor_label:
   NAME: temperature_tensor_label
   DATA_TYPE: CDF_CHAR
-  CATDESC: Label for temperator tensor
+  CATDESC: Label for temperature tensor
   VAR_TYPE: metadata
   FIELDNAM: Temperature Tensor Label
   FORMAT: a20

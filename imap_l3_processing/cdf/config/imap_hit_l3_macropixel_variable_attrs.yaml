@@ -20,7 +20,7 @@ epoch:
 epoch_delta:
   NAME: epoch_delta
   DATA_TYPE: CDF_INT8
-  CATDESC: epoch_delta
+  CATDESC: Epoch delta
   VAR_TYPE: support_data
   RECORD_VARYING: RV
   DEPEND_0: epoch
@@ -1056,21 +1056,21 @@ fe_energy_label:
 pitch_angle_label:
   NAME: pitch_angle_label
   DATA_TYPE: CDF_CHAR
-  CATDESC: Label for Pitch Angle
+  CATDESC: Label for pitch angle
   VAR_TYPE: metadata
   FIELDNAM: Pitch Angle Label
   FORMAT: a20
 gyrophase_label:
   NAME: gyrophase_label
   DATA_TYPE: CDF_CHAR
-  CATDESC: Lable for Gyrophase
+  CATDESC: Label for gyrophase
   VAR_TYPE: metadata
   FIELDNAM: Gyrophase Label
   FORMAT: a20
 declination_idx:
   NAME: declination_idx
   DATA_TYPE: CDF_REAL4
-  CATDESC: Declination Index
+  CATDESC: Declination index
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
   FIELDNAM: Declination Idx
@@ -1084,7 +1084,7 @@ declination_idx:
 azimuth_idx:
   NAME: azimuth_idx
   DATA_TYPE: CDF_REAL4
-  CATDESC: Azimuth Index
+  CATDESC: Azimuth index
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
   FIELDNAM: Azimuth Idx
@@ -1098,14 +1098,14 @@ azimuth_idx:
 declination_idx_label:
   NAME: declination_idx_label
   DATA_TYPE: CDF_CHAR
-  CATDESC: Label for Declination Index
+  CATDESC: Label for declination index
   VAR_TYPE: metadata
   FIELDNAM: Declination Idx Label
   FORMAT: a20
 azimuth_idx_label:
   NAME: azimuth_idx_label
   DATA_TYPE: CDF_CHAR
-  CATDESC: Label for Azimuth Index
+  CATDESC: Label for azimuth index
   VAR_TYPE: metadata
   FIELDNAM: Azimuth Idx Label
   FORMAT: a20

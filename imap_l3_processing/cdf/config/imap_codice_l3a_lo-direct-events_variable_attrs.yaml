@@ -53,8 +53,8 @@ epoch:
 epoch_delta:
   <<: *support_data
   NAME: epoch_delta
-  CATDESC: epoch_DELTA
-  FIELDNAM: epoch_delta
+  CATDESC: Epoch delta
+  FIELDNAM: Epoch Delta
   DATA_TYPE: CDF_INT8
   FORMAT: I19
   UNITS: ns
@@ -161,7 +161,7 @@ event_spin_angle:
   <<: *per_event
   <<: *float_data
   NAME: event_spin_angle
-  CATDESC: Spin Angle when event was observed
+  CATDESC: Spin angle when event was observed
   FIELDNAM: Spin angle
   LABLAXIS: m
   UNITS: amu
