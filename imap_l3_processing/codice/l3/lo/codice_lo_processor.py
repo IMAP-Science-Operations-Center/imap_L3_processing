@@ -8,7 +8,7 @@ from imap_l3_processing.codice.l3.lo.codice_lo_l3a_direct_events_dependencies im
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_partial_densities_dependencies import \
     CodiceLoL3aPartialDensitiesDependencies
 from imap_l3_processing.codice.l3.lo.models import CodiceLoL3aPartialDensityDataProduct, CodiceLoL2DirectEventData, \
-    CodiceLoL3aDirectEventDataProduct
+    CodiceLoL3aDirectEventDataProduct, CodiceLoPartialDensityData
 from imap_l3_processing.codice.l3.lo.science.codice_lo_calculations import calculate_partial_densities, \
     calculate_normalization_ratio, calculate_total_number_of_events, calculate_mass, calculate_mass_per_charge
 from imap_l3_processing.hi.l3.models import safe_divide
@@ -70,38 +70,26 @@ class CodiceLoProcessor(Processor):
         fe_hiq_partial_density = calculate_partial_densities(codice_lo_l2_data.fe_hiq, codice_lo_l2_data.energy_table,
                                                              mass_per_charge_lookup.fe_hiq)
 
-        oxygen_total_density = oplus5_partial_density + oplus6_partial_density + oplus7_partial_density + oplus8_partial_density
-
-        c_to_o_ratio = safe_divide(
-            cplus4_partial_density + cplus5_partial_density + cplus6_partial_density, oxygen_total_density)
-
-        mg_to_o_ratio = safe_divide(
-            mg_partial_density, oxygen_total_density)
-
-        fe_to_o_ratio = safe_divide(
-            fe_loq_partial_density + fe_hiq_partial_density, oxygen_total_density)
-
         return CodiceLoL3aPartialDensityDataProduct(
             input_metadata=self.input_metadata,
-            epoch=codice_lo_l2_data.epoch,
-            epoch_delta=codice_lo_l2_data.epoch_delta_plus,
-            hplus_partial_density=h_plus_partial_density,
-            heplusplus_partial_density=heplusplus_partial_density,
-            cplus4_partial_density=cplus4_partial_density,
-            cplus5_partial_density=cplus5_partial_density,
-            cplus6_partial_density=cplus6_partial_density,
-            oplus5_partial_density=oplus5_partial_density,
-            oplus6_partial_density=oplus6_partial_density,
-            oplus7_partial_density=oplus7_partial_density,
-            oplus8_partial_density=oplus8_partial_density,
-            ne_partial_density=ne_partial_density,
-            mg_partial_density=mg_partial_density,
-            si_partial_density=si_partial_density,
-            fe_loq_partial_density=fe_loq_partial_density,
-            fe_hiq_partial_density=fe_hiq_partial_density,
-            c_to_o_ratio=c_to_o_ratio,
-            mg_to_o_ratio=mg_to_o_ratio,
-            fe_to_o_ratio=fe_to_o_ratio,
+            data=CodiceLoPartialDensityData(
+                epoch=codice_lo_l2_data.epoch,
+                epoch_delta=codice_lo_l2_data.epoch_delta_plus,
+                hplus_partial_density=h_plus_partial_density,
+                heplusplus_partial_density=heplusplus_partial_density,
+                cplus4_partial_density=cplus4_partial_density,
+                cplus5_partial_density=cplus5_partial_density,
+                cplus6_partial_density=cplus6_partial_density,
+                oplus5_partial_density=oplus5_partial_density,
+                oplus6_partial_density=oplus6_partial_density,
+                oplus7_partial_density=oplus7_partial_density,
+                oplus8_partial_density=oplus8_partial_density,
+                ne_partial_density=ne_partial_density,
+                mg_partial_density=mg_partial_density,
+                si_partial_density=si_partial_density,
+                fe_loq_partial_density=fe_loq_partial_density,
+                fe_hiq_partial_density=fe_hiq_partial_density,
+            )
         )
 
     def process_l3a_direct_event_data_product(self,
