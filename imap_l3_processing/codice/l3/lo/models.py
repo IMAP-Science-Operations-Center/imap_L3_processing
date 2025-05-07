@@ -28,9 +28,6 @@ MG_PARTIAL_DENSITY_VAR_NAME = "mg_partial_density"
 SI_PARTIAL_DENSITY_VAR_NAME = "si_partial_density"
 FE_LOW_PARTIAL_DENSITY_VAR_NAME = "fe_loq_partial_density"
 FE_HIGH_PARTIAL_DENSITY_VAR_NAME = "fe_hiq_partial_density"
-C_TO_O_RATIO_VAR_NAME = "c_to_o_ratio"
-MG_TO_O_RATIO_VAR_NAME = "mg_to_o_ratio"
-FE_TO_O_RATIO_VAR_NAME = "fe_to_o_ratio"
 
 
 @dataclass
@@ -229,7 +226,7 @@ class CodiceLoL1aNSWPriorityRates:
 
 
 @dataclass
-class CodiceLoL3aPartialDensityDataProduct(DataProduct):
+class CodiceLoPartialDensityData:
     epoch: ndarray
     epoch_delta: ndarray
     hplus_partial_density: ndarray
@@ -246,31 +243,30 @@ class CodiceLoL3aPartialDensityDataProduct(DataProduct):
     si_partial_density: ndarray
     fe_loq_partial_density: ndarray
     fe_hiq_partial_density: ndarray
-    c_to_o_ratio: ndarray
-    mg_to_o_ratio: ndarray
-    fe_to_o_ratio: ndarray
+
+
+@dataclass
+class CodiceLoL3aPartialDensityDataProduct(DataProduct):
+    data: CodiceLoPartialDensityData
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
-            DataProductVariable(EPOCH_VAR_NAME, self.epoch),
-            DataProductVariable(EPOCH_DELTA_VAR_NAME, self.epoch_delta),
-            DataProductVariable(H_PARTIAL_DENSITY_VAR_NAME, self.hplus_partial_density),
-            DataProductVariable(HE_PARTIAL_DENSITY_VAR_NAME, self.heplusplus_partial_density),
-            DataProductVariable(C4_PARTIAL_DENSITY_VAR_NAME, self.cplus4_partial_density),
-            DataProductVariable(C5_PARTIAL_DENSITY_VAR_NAME, self.cplus5_partial_density),
-            DataProductVariable(C6_PARTIAL_DENSITY_VAR_NAME, self.cplus6_partial_density),
-            DataProductVariable(O5_PARTIAL_DENSITY_VAR_NAME, self.oplus5_partial_density),
-            DataProductVariable(O6_PARTIAL_DENSITY_VAR_NAME, self.oplus6_partial_density),
-            DataProductVariable(O7_PARTIAL_DENSITY_VAR_NAME, self.oplus7_partial_density),
-            DataProductVariable(O8_PARTIAL_DENSITY_VAR_NAME, self.oplus8_partial_density),
-            DataProductVariable(NE_PARTIAL_DENSITY_VAR_NAME, self.ne_partial_density),
-            DataProductVariable(MG_PARTIAL_DENSITY_VAR_NAME, self.mg_partial_density),
-            DataProductVariable(SI_PARTIAL_DENSITY_VAR_NAME, self.si_partial_density),
-            DataProductVariable(FE_LOW_PARTIAL_DENSITY_VAR_NAME, self.fe_loq_partial_density),
-            DataProductVariable(FE_HIGH_PARTIAL_DENSITY_VAR_NAME, self.fe_hiq_partial_density),
-            DataProductVariable(C_TO_O_RATIO_VAR_NAME, self.c_to_o_ratio),
-            DataProductVariable(MG_TO_O_RATIO_VAR_NAME, self.mg_to_o_ratio),
-            DataProductVariable(FE_TO_O_RATIO_VAR_NAME, self.fe_to_o_ratio),
+            DataProductVariable(EPOCH_VAR_NAME, self.data.epoch),
+            DataProductVariable(EPOCH_DELTA_VAR_NAME, self.data.epoch_delta),
+            DataProductVariable(H_PARTIAL_DENSITY_VAR_NAME, self.data.hplus_partial_density),
+            DataProductVariable(HE_PARTIAL_DENSITY_VAR_NAME, self.data.heplusplus_partial_density),
+            DataProductVariable(C4_PARTIAL_DENSITY_VAR_NAME, self.data.cplus4_partial_density),
+            DataProductVariable(C5_PARTIAL_DENSITY_VAR_NAME, self.data.cplus5_partial_density),
+            DataProductVariable(C6_PARTIAL_DENSITY_VAR_NAME, self.data.cplus6_partial_density),
+            DataProductVariable(O5_PARTIAL_DENSITY_VAR_NAME, self.data.oplus5_partial_density),
+            DataProductVariable(O6_PARTIAL_DENSITY_VAR_NAME, self.data.oplus6_partial_density),
+            DataProductVariable(O7_PARTIAL_DENSITY_VAR_NAME, self.data.oplus7_partial_density),
+            DataProductVariable(O8_PARTIAL_DENSITY_VAR_NAME, self.data.oplus8_partial_density),
+            DataProductVariable(NE_PARTIAL_DENSITY_VAR_NAME, self.data.ne_partial_density),
+            DataProductVariable(MG_PARTIAL_DENSITY_VAR_NAME, self.data.mg_partial_density),
+            DataProductVariable(SI_PARTIAL_DENSITY_VAR_NAME, self.data.si_partial_density),
+            DataProductVariable(FE_LOW_PARTIAL_DENSITY_VAR_NAME, self.data.fe_loq_partial_density),
+            DataProductVariable(FE_HIGH_PARTIAL_DENSITY_VAR_NAME, self.data.fe_hiq_partial_density)
         ]
 
 
@@ -331,6 +327,41 @@ class CodiceLoL3aDirectEventDataProduct(DataProduct):
             DataProductVariable(PHA_TYPE_VAR_NAME, self.pha_type),
             DataProductVariable(DATA_QUALITY_VAR_NAME, self.data_quality),
             DataProductVariable(TOF_VAR_NAME, self.tof),
+        ]
+
+
+C_TO_O_RATIO_VAR_NAME = "c_to_o_ratio"
+MG_TO_O_RATIO_VAR_NAME = "mg_to_o_ratio"
+FE_TO_O_RATIO_VAR_NAME = "fe_to_o_ratio"
+C6_TO_C5_RATIO_VAR_NAME = "c6_to_c5_ratio"
+C6_TO_C4_RATIO_VAR_NAME = "c6_to_c4_ratio"
+O7_TO_O6_RATIO_VAR_NAME = "o7_to_o6_ratio"
+FELO_TO_FEHI_RATIO_VAR_NAME = "felo_to_fehi_ratio"
+
+
+@dataclass
+class CodiceLoL3aRatiosDataProduct(DataProduct):
+    epoch: ndarray
+    epoch_delta: ndarray
+    c_to_o_ratio: ndarray
+    mg_to_o_ratio: ndarray
+    fe_to_o_ratio: ndarray
+    c6_to_c5_ratio: ndarray
+    c6_to_c4_ratio: ndarray
+    o7_to_o6_ratio: ndarray
+    felo_to_fehi_ratio: ndarray
+
+    def to_data_product_variables(self) -> list[DataProductVariable]:
+        return [
+            DataProductVariable(EPOCH_VAR_NAME, self.epoch),
+            DataProductVariable(EPOCH_DELTA_VAR_NAME, self.epoch_delta),
+            DataProductVariable(C_TO_O_RATIO_VAR_NAME, self.c_to_o_ratio),
+            DataProductVariable(MG_TO_O_RATIO_VAR_NAME, self.mg_to_o_ratio),
+            DataProductVariable(FE_TO_O_RATIO_VAR_NAME, self.fe_to_o_ratio),
+            DataProductVariable(C6_TO_C5_RATIO_VAR_NAME, self.c6_to_c5_ratio),
+            DataProductVariable(C6_TO_C4_RATIO_VAR_NAME, self.c6_to_c4_ratio),
+            DataProductVariable(O7_TO_O6_RATIO_VAR_NAME, self.o7_to_o6_ratio),
+            DataProductVariable(FELO_TO_FEHI_RATIO_VAR_NAME, self.felo_to_fehi_ratio)
         ]
 
 
