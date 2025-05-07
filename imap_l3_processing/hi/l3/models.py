@@ -1,9 +1,10 @@
 import dataclasses
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import numpy as np
 
+from imap_l3_processing.constants import TT2000_EPOCH
 from imap_l3_processing.models import DataProductVariable, DataProduct
 
 EPOCH_VAR_NAME = "epoch"
@@ -145,6 +146,10 @@ def combine_maps(maps: list[HiIntensityMapData]) -> HiIntensityMapData:
     intensity_stat_unc = np.array([m.ena_intensity_stat_unc for m in maps])
     exposures = np.array([m.exposure_factor for m in maps])
 
+    observation_dates_as_seconds = np.array(
+        [(np.ma.getdata(m.obs_date) - TT2000_EPOCH) / timedelta(seconds=1) for m in maps],
+        dtype=float)
+
     intensities = np.where(exposures == 0, 0, intensities)
     intensity_sys_err = np.where(exposures == 0, 0, intensity_sys_err)
     intensity_stat_unc = np.where(exposures == 0, 0, intensity_stat_unc)
@@ -153,17 +158,33 @@ def combine_maps(maps: list[HiIntensityMapData]) -> HiIntensityMapData:
         safe_divide(np.sum(np.square(intensity_stat_unc * exposures), axis=0),
                     np.square(np.sum(exposures, axis=0)))
     )
-
+    summed_exposures = np.sum(exposures, axis=0)
     ena_intensity = np.ma.average(intensities, weights=exposures, axis=0).filled(np.nan)
     ena_intensity_sys_err = np.ma.average(intensity_sys_err, weights=exposures, axis=0).filled(np.nan)
 
+    avg_obs_date = calculate_datetime_weighted_average(np.ma.array([m.obs_date for m in maps]), exposures, 0)
+
     return dataclasses.replace(first_map,
                                ena_intensity=ena_intensity,
-                               exposure_factor=np.sum(exposures, axis=0),
+                               exposure_factor=summed_exposures,
                                ena_intensity_sys_err=ena_intensity_sys_err,
-                               ena_intensity_stat_unc=combined_intensity_stat_unc
+                               ena_intensity_stat_unc=combined_intensity_stat_unc,
+                               obs_date=avg_obs_date
                                )
 
 
 def safe_divide(numerator: np.ndarray, denominator: np.ndarray) -> np.ndarray:
     return np.divide(numerator, denominator, where=denominator != 0, out=np.full(denominator.shape, np.nan))
+
+
+def calculate_datetime_weighted_average(data: np.ndarray, weights: np.ndarray, axis: int, **kwargs) -> np.ndarray:
+    epoch_based_dates = np.array((np.ma.getdata(data) - TT2000_EPOCH) / timedelta(seconds=1),
+                                 dtype=float)
+
+    averaged_dates_as_seconds = np.ma.average(epoch_based_dates, weights=weights,
+                                              axis=axis, **kwargs)
+
+    return np.ma.array(
+        averaged_dates_as_seconds.data * timedelta(seconds=1) + TT2000_EPOCH,
+        mask=averaged_dates_as_seconds.mask,
+    )

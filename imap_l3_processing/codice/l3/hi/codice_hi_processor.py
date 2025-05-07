@@ -23,11 +23,11 @@ class CodiceHiProcessor(Processor):
     def process(self):
         if self.input_metadata.data_level == "l3a":
             dependencies = CodiceHiL3Dependencies.fetch_dependencies(self.dependencies)
-            processed_codice_direct_events = self.process_l3a(dependencies)
+            processed_codice_direct_events = self.process_l3a_direct_event(dependencies)
             saved_cdf = save_data(processed_codice_direct_events)
             upload(saved_cdf)
 
-    def process_l3a(self, dependencies: CodiceHiL3Dependencies) -> CodiceL3HiDirectEvents:
+    def process_l3a_direct_event(self, dependencies: CodiceHiL3Dependencies) -> CodiceL3HiDirectEvents:
         tof_lookup = dependencies.tof_lookup
         l2_data = dependencies.codice_l2_hi_data
 

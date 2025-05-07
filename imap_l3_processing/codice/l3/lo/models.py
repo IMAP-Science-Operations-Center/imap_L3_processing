@@ -6,11 +6,14 @@ import numpy as np
 from numpy import ndarray
 from spacepy.pycdf import CDF
 
+from imap_l3_processing.codice.l3.lo.direct_events.science.mass_species_bin_lookup import MassSpeciesBinLookup, \
+    EventDirection
 from imap_l3_processing.models import DataProductVariable, DataProduct
 
+CODICE_LO_L2_NUM_PRIORITIES = 7
+
 EPOCH_VAR_NAME = "epoch"
-EPOCH_DELTA_PLUS_VAR_NAME = "epoch_delta_plus"
-EPOCH_DELTA_MINUS_VAR_NAME = "epoch_delta_minus"
+EPOCH_DELTA_VAR_NAME = "epoch_delta"
 H_PARTIAL_DENSITY_VAR_NAME = "hplus_partial_density"
 HE_PARTIAL_DENSITY_VAR_NAME = "heplusplus_partial_density"
 C4_PARTIAL_DENSITY_VAR_NAME = "cplus4_partial_density"
@@ -96,7 +99,6 @@ class PriorityEvent:
     energy_step: ndarray
     multi_flag: ndarray
     num_events: ndarray
-    pha_type: ndarray
     spin_angle: ndarray
     tof: ndarray
 
@@ -117,51 +119,31 @@ class PriorityEvent:
 @dataclass
 class CodiceLoL2DirectEventData:
     epoch: ndarray
-    event_num: ndarray
-    priority_event_0: PriorityEvent
-    priority_event_1: PriorityEvent
-    priority_event_2: PriorityEvent
-    priority_event_3: PriorityEvent
-    priority_event_4: PriorityEvent
-    priority_event_5: PriorityEvent
-    priority_event_6: PriorityEvent
-    priority_event_7: PriorityEvent
-
-    @classmethod
-    def _read_priority_event(cls, cdf):
-        values = {}
-        for index in range(8):
-            priority_event = PriorityEvent(cdf[f"P{index}_APDEnergy"][...],
-                                           cdf[f"P{index}_APDGain"][...],
-                                           cdf[f"P{index}_APD_ID"][...],
-                                           cdf[f"P{index}_DataQuality"][...],
-                                           cdf[f"P{index}_EnergyStep"][...],
-                                           cdf[f"P{index}_MultiFlag"][...],
-                                           cdf[f"P{index}_NumEvents"][...],
-                                           cdf[f"P{index}_PHAType"][...],
-                                           cdf[f"P{index}_SpinAngle"][...],
-                                           cdf[f"P{index}_TOF"][...]
-                                           )
-
-            values.update({f"priority_event_{index}": priority_event})
-        return values
+    epoch_delta_plus: ndarray
+    epoch_delta_minus: ndarray
+    priority_events: list[PriorityEvent]
 
     @classmethod
     def read_from_cdf(cls, l2_direct_event_cdf: Path):
         with CDF(str(l2_direct_event_cdf)) as cdf:
+            priority_events = []
+            for index in range(CODICE_LO_L2_NUM_PRIORITIES):
+                priority_events.append(PriorityEvent(cdf[f"p{index}_apd_energy"][...],
+                                                     cdf[f"p{index}_gain"][...],
+                                                     cdf[f"p{index}_apd_id"][...],
+                                                     cdf[f"p{index}_data_quality"][...],
+                                                     cdf[f"p{index}_energy_step"][...],
+                                                     cdf[f"p{index}_multi_flag"][...],
+                                                     cdf[f"p{index}_num_events"][...],
+                                                     cdf[f"p{index}_spin_sector"][...],
+                                                     cdf[f"p{index}_tof"][...]))
+
             return cls(
                 epoch=cdf["epoch"][...],
-                event_num=cdf["event_num"][...],
-                **cls._read_priority_event(cdf)
-
+                epoch_delta_plus=cdf["epoch_delta_plus"][...],
+                epoch_delta_minus=cdf["epoch_delta_minus"][...],
+                priority_events=priority_events
             )
-
-    @property
-    def priority_events(self):
-        return [
-            self.priority_event_0, self.priority_event_1, self.priority_event_2, self.priority_event_3,
-            self.priority_event_4, self.priority_event_5, self.priority_event_6, self.priority_event_7
-        ]
 
 
 @dataclass
@@ -210,11 +192,11 @@ class CodiceLoL1aSWPriorityRates:
 
 @dataclass
 class CodiceLoL1aNSWPriorityRates:
-    energy_table: np.ndarray
-    acquisition_time_per_step: np.ndarray
     epoch: np.ndarray
     epoch_delta_plus: np.ndarray
     epoch_delta_minus: np.ndarray
+    energy_table: np.ndarray
+    acquisition_time_per_step: np.ndarray
     spin_sector_index: np.ndarray
     rgfo_half_spin: np.ndarray
     data_quality: np.ndarray
@@ -229,11 +211,11 @@ class CodiceLoL1aNSWPriorityRates:
     def read_from_cdf(cls, cdf_path: Path):
         with CDF(str(cdf_path)) as cdf:
             return cls(
-                energy_table=cdf["energy_table"][...],
-                acquisition_time_per_step=cdf["acquisition_time_per_step"][...],
                 epoch=cdf["epoch"][...],
                 epoch_delta_plus=cdf["epoch_delta_plus"][...],
                 epoch_delta_minus=cdf["epoch_delta_minus"][...],
+                energy_table=cdf["energy_table"][...],
+                acquisition_time_per_step=cdf["acquisition_time_per_step"][...],
                 spin_sector_index=cdf["spin_sector_index"][...],
                 rgfo_half_spin=cdf["rgfo_half_spin"][...],
                 data_quality=cdf["data_quality"][...],
@@ -249,8 +231,7 @@ class CodiceLoL1aNSWPriorityRates:
 @dataclass
 class CodiceLoL3aPartialDensityDataProduct(DataProduct):
     epoch: ndarray
-    epoch_delta_plus: ndarray
-    epoch_delta_minus: ndarray
+    epoch_delta: ndarray
     hplus_partial_density: ndarray
     heplusplus_partial_density: ndarray
     cplus4_partial_density: ndarray
@@ -272,8 +253,7 @@ class CodiceLoL3aPartialDensityDataProduct(DataProduct):
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
             DataProductVariable(EPOCH_VAR_NAME, self.epoch),
-            DataProductVariable(EPOCH_DELTA_PLUS_VAR_NAME, self.epoch_delta_plus),
-            DataProductVariable(EPOCH_DELTA_MINUS_VAR_NAME, self.epoch_delta_minus),
+            DataProductVariable(EPOCH_DELTA_VAR_NAME, self.epoch_delta),
             DataProductVariable(H_PARTIAL_DENSITY_VAR_NAME, self.hplus_partial_density),
             DataProductVariable(HE_PARTIAL_DENSITY_VAR_NAME, self.heplusplus_partial_density),
             DataProductVariable(C4_PARTIAL_DENSITY_VAR_NAME, self.cplus4_partial_density),
@@ -314,7 +294,6 @@ TOF_VAR_NAME = "tof"
 @dataclass
 class CodiceLoL3aDirectEventDataProduct(DataProduct):
     epoch: ndarray
-    event_num: np.ndarray
     normalization: ndarray
     mass_per_charge: np.ndarray
     mass: np.ndarray
@@ -338,7 +317,6 @@ class CodiceLoL3aDirectEventDataProduct(DataProduct):
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
             DataProductVariable(EPOCH_VAR_NAME, self.epoch),
-            DataProductVariable(EVENT_NUM_VAR_NAME, self.event_num),
             DataProductVariable(SPIN_ANGLE_VAR_NAME, self.spin_angle),
             DataProductVariable(ENERGY_STEP_VAR_NAME, self.energy_step),
             DataProductVariable(PRIORITY_VAR_NAME, self.priority),
@@ -354,3 +332,13 @@ class CodiceLoL3aDirectEventDataProduct(DataProduct):
             DataProductVariable(DATA_QUALITY_VAR_NAME, self.data_quality),
             DataProductVariable(TOF_VAR_NAME, self.tof),
         ]
+
+
+@dataclass
+class CodiceLo3dData:
+    data_in_3d_bins: np.ndarray
+    mass_bin_lookup: MassSpeciesBinLookup
+
+    def get_3d_distribution(self, species: str, event_direction: EventDirection) -> np.ndarray:
+        species_index = self.mass_bin_lookup.get_species_index(species, event_direction)
+        return self.data_in_3d_bins[:, species_index, ...]

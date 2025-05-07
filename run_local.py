@@ -98,16 +98,19 @@ def create_codice_lo_l3a_partial_densities_cdf():
     input_metadata = InputMetadata(
         instrument='codice',
         data_level='l3a',
-        start_date=datetime(2025, 1, 1),
+        start_date=datetime(2024, 11, 10),
         end_date=datetime(2025, 1, 2),
         version='v000',
-        descriptor='partial-densities'
+        descriptor='lo-partial-densities'
     )
 
     codice_lo_processor = CodiceLoProcessor(ProcessingInputCollection(), input_metadata)
-    partial_densities_data = codice_lo_processor.process_l3a(deps)
+    partial_densities_data = codice_lo_processor.process_l3a_partial_densities(deps)
     cdf_path = save_data(partial_densities_data, delete_if_present=True)
     return cdf_path
+
+def create_codice_lo_l3a_direct_events_cdf():
+
 
 
 def create_swapi_l3b_cdf(geometric_calibration_file, efficiency_calibration_file, cdf_file):
@@ -163,7 +166,9 @@ def create_swapi_l3a_cdf(proton_temperature_density_calibration_file, alpha_temp
         version='v000')
     processor = SwapiProcessor(Mock(), input_metadata)
 
-    l3a_proton_sw, l3a_alpha_sw, l3a_pui_he = processor.process_l3a(swapi_data, swapi_l3_dependencies)
+    l3a_proton_sw = processor.process_l3a_proton(swapi_data, swapi_l3_dependencies)
+    l3a_alpha_sw = processor.process_l3a_alpha_solar_wind(swapi_data, swapi_l3_dependencies)
+    l3a_pui_he = processor.process_l3a_pui(swapi_data, swapi_l3_dependencies)
     proton_cdf_path = save_data(l3a_proton_sw, delete_if_present=True)
     alpha_cdf_path = save_data(l3a_alpha_sw, delete_if_present=True)
     pui_he_cdf_path = save_data(l3a_pui_he, delete_if_present=True)

@@ -1,8 +1,12 @@
+from collections import namedtuple
+
 import numpy as np
 from imap_data_access import upload
 from imap_data_access.processing_input import ProcessingInputCollection
 
-from imap_l3_processing.codice.l3.lo.codice_lo_l3a_dependencies import CodiceLoL3aDependencies
+from imap_l3_processing.codice.l3.lo.codice_lo_l3a_direct_events_dependencies import CodiceLoL3aDirectEventsDependencies
+from imap_l3_processing.codice.l3.lo.codice_lo_l3a_partial_densities_dependencies import \
+    CodiceLoL3aPartialDensitiesDependencies
 from imap_l3_processing.codice.l3.lo.models import CodiceLoL3aPartialDensityDataProduct, CodiceLoL2DirectEventData, \
     CodiceLoL3aDirectEventDataProduct
 from imap_l3_processing.codice.l3.lo.science.codice_lo_calculations import calculate_partial_densities, \
@@ -12,24 +16,28 @@ from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
 from imap_l3_processing.utils import save_data
 
+PriorityRate = namedtuple('PriorityRate', ('epoch', 'energy_table', 'priority_count'))
+
 
 class CodiceLoProcessor(Processor):
     def __init__(self, dependencies: ProcessingInputCollection, input_metadata: InputMetadata):
         super().__init__(dependencies, input_metadata)
 
     def process(self):
-        dependencies = CodiceLoL3aDependencies.fetch_dependencies(self.dependencies)
-        l3a_data = self.process_l3a(dependencies)
-        l3a_data.parent_file_names = self.get_parent_file_names()
-        l3a_direct_event_data = self._process_l3a_direct_event_data_product(dependencies)
+        if self.input_metadata.descriptor == "lo-partial-densities":
+            dependencies = CodiceLoL3aPartialDensitiesDependencies.fetch_dependencies(self.dependencies)
+            data_product = self.process_l3a_partial_densities(dependencies)
+        elif self.input_metadata.descriptor == "lo-direct-events":
+            dependencies = CodiceLoL3aDirectEventsDependencies.fetch_dependencies(self.dependencies)
+            data_product = self._process_l3a_direct_event_data_product(dependencies)
+        else:
+            raise NotImplementedError
 
-        saved_l3a_cdf = save_data(l3a_data)
-        saved_l3a_direct_event_cdf = save_data(l3a_direct_event_data)
-
+        data_product.parent_file_names = self.get_parent_file_names()
+        saved_l3a_cdf = save_data(data_product)
         upload(saved_l3a_cdf)
-        upload(saved_l3a_direct_event_cdf)
 
-    def process_l3a(self, dependencies: CodiceLoL3aDependencies):
+    def process_l3a_partial_densities(self, dependencies: CodiceLoL3aPartialDensitiesDependencies):
         codice_lo_l2_data = dependencies.codice_l2_lo_data
         mass_per_charge_lookup = dependencies.mass_per_charge_lookup
         h_plus_partial_density = calculate_partial_densities(codice_lo_l2_data.hplus, codice_lo_l2_data.energy_table,
@@ -76,8 +84,7 @@ class CodiceLoProcessor(Processor):
         return CodiceLoL3aPartialDensityDataProduct(
             input_metadata=self.input_metadata,
             epoch=codice_lo_l2_data.epoch,
-            epoch_delta_plus=codice_lo_l2_data.epoch_delta_plus,
-            epoch_delta_minus=codice_lo_l2_data.epoch_delta_minus,
+            epoch_delta=codice_lo_l2_data.epoch_delta_plus,
             hplus_partial_density=h_plus_partial_density,
             heplusplus_partial_density=heplusplus_partial_density,
             cplus4_partial_density=cplus4_partial_density,
@@ -98,11 +105,11 @@ class CodiceLoProcessor(Processor):
         )
 
     def _process_l3a_direct_event_data_product(self,
-                                               dependencies: CodiceLoL3aDependencies) -> CodiceLoL3aDirectEventDataProduct:
+                                               dependencies: CodiceLoL3aDirectEventsDependencies) -> CodiceLoL3aDirectEventDataProduct:
         codice_sw_priority_rates_l1a_data = dependencies.codice_lo_l1a_sw_priority_rates
         codice_nsw_priority_rates_l1a_data = dependencies.codice_lo_l1a_nsw_priority_rates
         codice_direct_events: CodiceLoL2DirectEventData = dependencies.codice_l2_direct_events
-        event_number = codice_direct_events.event_num
+        event_buffer = codice_direct_events.priority_events[0].tof.shape[-1]
         mass_coefficient_lookup = dependencies.mass_coefficient_lookup
         priority_rates_for_events = [
             codice_sw_priority_rates_l1a_data.p0_tcrs,
@@ -116,10 +123,17 @@ class CodiceLoProcessor(Processor):
 
         normalization = np.full((len(codice_direct_events.epoch), len(priority_rates_for_events), 128, 12), np.nan)
 
-        (mass_per_charge, mass, energy, gain, apd_id, multi_flag, pha_type,
+        (mass_per_charge,
+         mass,
+         energy,
+         gain,
+         apd_id,
+         spin_angle,
+         multi_flag,
+         pha_type,
          tof) = [
-            np.full((len(codice_direct_events.epoch), len(priority_rates_for_events), len(event_number)),
-                    np.nan) for _ in range(8)]
+            np.full((len(codice_direct_events.epoch), len(priority_rates_for_events), event_buffer), np.nan)
+            for _ in range(9)]
 
         (data_quality, num_events) = [np.full((len(codice_direct_events.epoch), len(priority_rates_for_events)), np.nan)
                                       for _ in range(2)]
@@ -136,12 +150,10 @@ class CodiceLoProcessor(Processor):
             gain[:, priority_index, :] = priority_event.apd_gain
             apd_id[:, priority_index, :] = priority_event.apd_id
             multi_flag[:, priority_index, :] = priority_event.multi_flag
-            pha_type[:, priority_index, :] = priority_event.pha_type
             tof[:, priority_index, :] = priority_event.tof
 
             data_quality[:, priority_index] = priority_event.data_quality
             num_events[:, priority_index] = priority_event.num_events
-
             for e in range(len(codice_direct_events.epoch)):
                 norm = calculate_normalization_ratio(
                     priority_event.total_events_binned_by_energy_step_and_spin_angle()[e],
@@ -152,7 +164,6 @@ class CodiceLoProcessor(Processor):
         return CodiceLoL3aDirectEventDataProduct(
             input_metadata=self.input_metadata,
             epoch=codice_direct_events.epoch,
-            event_num=codice_direct_events.event_num,
             normalization=normalization,
             mass_per_charge=mass_per_charge,
             mass=mass,

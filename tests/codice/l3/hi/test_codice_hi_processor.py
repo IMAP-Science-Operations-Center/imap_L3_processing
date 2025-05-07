@@ -14,7 +14,7 @@ from imap_l3_processing.models import InputMetadata, MagL1dData
 
 class TestCodiceHiProcessor(unittest.TestCase):
     @patch("imap_l3_processing.codice.l3.hi.codice_hi_processor.CodiceHiL3Dependencies.fetch_dependencies")
-    @patch("imap_l3_processing.codice.l3.hi.codice_hi_processor.CodiceHiProcessor.process_l3a")
+    @patch("imap_l3_processing.codice.l3.hi.codice_hi_processor.CodiceHiProcessor.process_l3a_direct_event")
     @patch("imap_l3_processing.codice.l3.hi.codice_hi_processor.save_data")
     @patch("imap_l3_processing.codice.l3.hi.codice_hi_processor.upload")
     def test_process_l3a(self, mock_upload, mock_save_data, mock_process_l3a, mock_fetch_dependencies):
@@ -35,7 +35,7 @@ class TestCodiceHiProcessor(unittest.TestCase):
         mock_upload.assert_called_with(mock_expected_cdf)
 
     @patch("imap_l3_processing.codice.l3.hi.codice_hi_processor.CodiceHiL3Dependencies.fetch_dependencies")
-    @patch("imap_l3_processing.codice.l3.hi.codice_hi_processor.CodiceHiProcessor.process_l3a")
+    @patch("imap_l3_processing.codice.l3.hi.codice_hi_processor.CodiceHiProcessor.process_l3a_direct_event")
     def test_ignores_non_l3_input_metadata(self, mock_process_l3a, mock_fetch_dependencies):
         start_date = datetime(2024, 10, 7, 10, 00, 00)
         end_date = datetime(2024, 10, 8, 10, 00, 00)
@@ -57,7 +57,7 @@ class TestCodiceHiProcessor(unittest.TestCase):
         dependencies = CodiceHiL3Dependencies(tof_lookup=tof_lookup, codice_l2_hi_data=l2_data)
 
         processor = CodiceHiProcessor(Mock(), Mock())
-        codice_direct_event_product = processor.process_l3a(dependencies)
+        codice_direct_event_product = processor.process_l3a_direct_event(dependencies)
 
         expected_energy_per_nuc = np.array(
             [energy_per_nuc.energy for energy_per_nuc in energy_per_nuc_dictionary.values()]).reshape(2, 6, 2)

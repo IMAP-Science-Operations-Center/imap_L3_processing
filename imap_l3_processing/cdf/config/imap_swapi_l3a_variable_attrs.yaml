@@ -66,12 +66,12 @@ pui_ionization_rate:
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
   FIELDNAM: pui_ionization_rate
   FORMAT: F19.3
-  LABLAXIS: Pui ionztn rt
+  LABLAXIS: PUI IR
   UNITS: s!E-1!N
   VALIDMIN: 0
   VALIDMAX: 9223372036854775807
   FILLVAL: -1.000000e+31
-  SCALETYP: linear
+  SCALE_TYP: linear
   SCALEMIN: 0
   SCALEMAX: 3.0e-7
 pui_cutoff_speed:

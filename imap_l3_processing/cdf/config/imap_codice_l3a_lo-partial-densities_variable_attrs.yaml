@@ -1,0 +1,230 @@
+primary_data_variable: &primary_data_variable
+  VAR_TYPE: data
+  VARIABLE_PURPOSE: primary var, summary
+  DEPEND_0: epoch
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+
+support_data: &support_data
+  VAR_TYPE: support_data
+  DISPLAY_TYPE: no_plot
+  DEPEND_0: epoch
+  RECORD_VARYING: RV
+
+float_data: &float_data
+  DATA_TYPE: CDF_FLOAT
+  FORMAT: F15.3
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.000000E+31
+
+epoch:
+  NAME: epoch
+  CATDESC: Time, number of nanoseconds since J2000 with leap seconds included
+  VAR_TYPE: support_data
+  DISPLAY_TYPE: no_plot
+  DATA_TYPE: CDF_TIME_TT2000
+  FIELDNAM: Epoch
+  RECORD_VARYING: RV
+  LABLAXIS: epoch
+  UNITS: ns
+  VALIDMIN: 2010-01-01T00:00:00.000000000
+  VALIDMAX: 2059-12-31T23:59:58.999000000
+  FILLVAL: 9999-12-31T23:59:59.999999999
+  SCALETYP: linear
+  TIME_BASE: J2000
+  TIME_SCALE: TT
+  DELTA_PLUS_VAR: epoch_delta
+  DELTA_MINUS_VAR: epoch_delta
+  MONOTON: INCREASE
+  REFERENCE_POSITION: Rotating Earth Geoid
+  SI_CONVERSION: 1e-9>seconds
+epoch_delta:
+  <<: *support_data
+  NAME: epoch_delta
+  CATDESC: epoch_DELTA
+  FIELDNAM: epoch_delta
+  DATA_TYPE: CDF_INT8
+  FORMAT: I19
+  UNITS: ns
+  VALIDMIN: 0
+  VALIDMAX: 86000000000000
+  FILLVAL: -9223372036854775808
+  SCALETYP: linear
+  SCALEMIN: 0
+  SCALEMAX: 86000000000000
+  SI_CONVERSION: 1e-9>seconds
+hplus_partial_density:
+  <<: *primary_data_variable
+  <<: *float_data
+  NAME: hplus_partial_density
+  CATDESC: Partial density of H+
+  FIELDNAM: Partial density of H+
+  DATA_TYPE: CDF_REAL4
+  LABLAXIS: H+ N
+  SCALETYP: linear
+  UNITS: '?'
+heplusplus_partial_density:
+  <<: *primary_data_variable
+  <<: *float_data
+  NAME: heplusplus_partial_density
+  CATDESC: Partial density of He++
+  FIELDNAM: Partial density of He++
+  DATA_TYPE: CDF_REAL4
+  LABLAXIS: He++ N
+  SCALETYP: linear
+  UNITS: '?'
+cplus4_partial_density:
+  <<: *primary_data_variable
+  <<: *float_data
+  NAME: cplus4_partial_density
+  CATDESC: Partial density of C+4
+  FIELDNAM: Partial density of C+4
+  DATA_TYPE: CDF_REAL4
+  LABLAXIS: C+4 N
+  SCALETYP: linear
+  UNITS: '?'
+cplus5_partial_density:
+  <<: *primary_data_variable
+  <<: *float_data
+  NAME: cplus5_partial_density
+  CATDESC: Partial density of C+5
+  FIELDNAM: Partial density of C+5
+  DATA_TYPE: CDF_REAL4
+  LABLAXIS: C+5 N
+  SCALETYP: linear
+  UNITS: '?'
+cplus6_partial_density:
+  <<: *primary_data_variable
+  <<: *float_data
+  NAME: cplus6_partial_density
+  CATDESC: Partial density of C+6
+  FIELDNAM: Partial density of C+6
+  DATA_TYPE: CDF_REAL4
+  LABLAXIS: C+6 N
+  SCALETYP: linear
+  UNITS: '?'
+oplus5_partial_density:
+  <<: *primary_data_variable
+  <<: *float_data
+  NAME: oplus5_partial_density
+  CATDESC: Partial density of O+5
+  FIELDNAM: Partial density of O+5
+  DATA_TYPE: CDF_REAL4
+  LABLAXIS: O+5 N
+  SCALETYP: linear
+  UNITS: '?'
+oplus6_partial_density:
+  <<: *primary_data_variable
+  <<: *float_data
+  NAME: oplus6_partial_density
+  CATDESC: Partial density of O+6
+  FIELDNAM: Partial density of O+6
+  DATA_TYPE: CDF_REAL4
+  LABLAXIS: O+6 N
+  SCALETYP: linear
+  UNITS: '?'
+oplus7_partial_density:
+  <<: *primary_data_variable
+  <<: *float_data
+  NAME: oplus7_partial_density
+  CATDESC: Partial density of O+7
+  FIELDNAM: Partial density of O+7
+  DATA_TYPE: CDF_REAL4
+  LABLAXIS: O+7 N
+  SCALETYP: linear
+  UNITS: '?'
+oplus8_partial_density:
+  <<: *primary_data_variable
+  <<: *float_data
+  NAME: oplus8_partial_density
+  CATDESC: Partial density of O+8
+  FIELDNAM: Partial density of O+8
+  DATA_TYPE: CDF_REAL4
+  LABLAXIS: O+8 N
+  SCALETYP: linear
+  UNITS: '?'
+ne_partial_density:
+  <<: *primary_data_variable
+  <<: *float_data
+  NAME: ne_partial_density
+  CATDESC: Partial density of Ne
+  FIELDNAM: Partial density of Ne
+  DATA_TYPE: CDF_REAL4
+  LABLAXIS: Ne N
+  SCALETYP: linear
+  UNITS: '?'
+mg_partial_density:
+  <<: *primary_data_variable
+  <<: *float_data
+  NAME: mg_partial_density
+  CATDESC: Partial density of Mg
+  FIELDNAM: Partial density of Mg
+  DATA_TYPE: CDF_REAL4
+  LABLAXIS: Mg N
+  SCALETYP: linear
+  UNITS: '?'
+si_partial_density:
+  <<: *primary_data_variable
+  <<: *float_data
+  NAME: si_partial_density
+  CATDESC: Partial density of Si
+  FIELDNAM: Partial density of Si
+  DATA_TYPE: CDF_REAL4
+  LABLAXIS: Si N
+  SCALETYP: linear
+  UNITS: '?'
+fe_loq_partial_density:
+  <<: *primary_data_variable
+  <<: *float_data
+  NAME: fe_loq_partial_density
+  CATDESC: Partial density of Fe (low Q)
+  FIELDNAM: Partial density of Fe (low Q)
+  DATA_TYPE: CDF_REAL4
+  LABLAXIS: Fe (low Q) N
+  SCALETYP: linear
+  UNITS: '?'
+
+fe_hiq_partial_density:
+  <<: *primary_data_variable
+  <<: *float_data
+  NAME: fe_hiq_partial_density
+  CATDESC: Partial density of Fe (high Q)
+  FIELDNAM: Partial density of Fe (high Q)
+  DATA_TYPE: CDF_REAL4
+  LABLAXIS: Fe (high Q) N
+  SCALETYP: linear
+  UNITS: '?'
+
+c_to_o_ratio:
+  <<: *primary_data_variable
+  <<: *float_data
+  NAME: c_to_o_ratio
+  CATDESC: Elemental Abundance Ratio C to O
+  FIELDNAM: Ratio C to O
+  DATA_TYPE: CDF_REAL4
+  LABLAXIS: C/O
+  SCALETYP: linear
+  UNITS: ' '
+
+mg_to_o_ratio:
+  <<: *primary_data_variable
+  <<: *float_data
+  NAME: mg_to_o_ratio
+  CATDESC: Elemental Abundance Ratio Mg to O
+  FIELDNAM: Ratio Mg to O
+  DATA_TYPE: CDF_REAL4
+  LABLAXIS: Mg/O
+  SCALETYP: linear
+  UNITS: ' '
+
+fe_to_o_ratio:
+  <<: *primary_data_variable
+  <<: *float_data
+  NAME: fe_to_o_ratio
+  CATDESC: Elemental Abundance Ratio Fe to O
+  FIELDNAM: Ratio Fe to O
+  DATA_TYPE: CDF_REAL4
+  LABLAXIS: Fe/O
+  SCALETYP: linear
+  UNITS: ' '

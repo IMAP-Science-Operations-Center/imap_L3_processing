@@ -1,7 +1,9 @@
 import numpy as np
 
 from imap_l3_processing.codice.l3.lo.direct_events.science.mass_coefficient_lookup import MassCoefficientLookup
-from imap_l3_processing.codice.l3.lo.models import EnergyAndSpinAngle, PriorityEvent
+from imap_l3_processing.codice.l3.lo.direct_events.science.mass_species_bin_lookup import MassSpeciesBinLookup, \
+    EventDirection
+from imap_l3_processing.codice.l3.lo.models import EnergyAndSpinAngle, PriorityEvent, CodiceLo3dData
 
 POST_ACCELERATION_VOLTAGE_IN_KV = 15
 ENERGY_LOST_IN_CARBON_FOIL = 0
@@ -45,3 +47,39 @@ def calculate_mass(priority_event: PriorityEvent, mass_coefficients: MassCoeffic
 def calculate_mass_per_charge(priority_event: PriorityEvent) -> np.ndarray:
     return (priority_event.energy_step + POST_ACCELERATION_VOLTAGE_IN_KV - ENERGY_LOST_IN_CARBON_FOIL) * (
             priority_event.tof ** 2) * CONVERSION_CONSTANT_K
+
+
+def rebin_to_counts_by_azimuth_spin_sector(mass: np.ndarray, mass_per_charge: np.ndarray, priority_event: PriorityEvent,
+                                           mass_species_bin_lookup: MassSpeciesBinLookup) -> CodiceLo3dData:
+    azimuth_lut = {0: 0, 15: 1, 30: 2}
+    spin_sector_lut = {0: 0, 15: 1, 30: 2}
+
+    num_epochs = len(mass)
+
+    output = np.full((num_epochs, 25, 13, 24, 128), 0)
+
+    def filter_nan(a: np.array) -> np.array:
+        return a[~np.isnan(a)]
+
+    for i in range(num_epochs):
+        apd_id = filter_nan(priority_event.apd_id[i])
+        masked_spin_angle = filter_nan(priority_event.spin_angle[i])
+        masked_num_event = filter_nan(priority_event.num_events[i])
+        masked_mass = filter_nan(mass[i])
+        masked_mass_per_charge = filter_nan(mass_per_charge[i])
+        masked_energy_step = filter_nan(priority_event.energy_step[i])
+
+        species = [mass_species_bin_lookup.get_species(m, mpc, EventDirection.Sunward) for m, mpc in
+                   zip(masked_mass, masked_mass_per_charge)]
+        species_indices = [mass_species_bin_lookup.get_species_index(s, EventDirection.Sunward) for s in species]
+        azimuth_indices = [azimuth_lut[id] for id in apd_id]
+        spin_sector_indices = [spin_sector_lut[spin_angle] for spin_angle in masked_spin_angle]
+
+        indexes = np.column_stack(
+            (species_indices, azimuth_indices, spin_sector_indices, masked_energy_step)).astype(int)
+        counts = masked_num_event
+
+        for index, count in zip(indexes, counts):
+            output[i, *index] += count
+
+    return CodiceLo3dData(data_in_3d_bins=output, mass_bin_lookup=mass_species_bin_lookup)
