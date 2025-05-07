@@ -166,7 +166,9 @@ def create_swapi_l3a_cdf(proton_temperature_density_calibration_file, alpha_temp
         version='v000')
     processor = SwapiProcessor(Mock(), input_metadata)
 
-    l3a_proton_sw, l3a_alpha_sw, l3a_pui_he = processor.process_l3a(swapi_data, swapi_l3_dependencies)
+    l3a_proton_sw = processor.process_l3a_proton(swapi_data, swapi_l3_dependencies)
+    l3a_alpha_sw = processor.process_l3a_alpha_solar_wind(swapi_data, swapi_l3_dependencies)
+    l3a_pui_he = processor.process_l3a_pui(swapi_data, swapi_l3_dependencies)
     proton_cdf_path = save_data(l3a_proton_sw, delete_if_present=True)
     alpha_cdf_path = save_data(l3a_alpha_sw, delete_if_present=True)
     pui_he_cdf_path = save_data(l3a_pui_he, delete_if_present=True)
