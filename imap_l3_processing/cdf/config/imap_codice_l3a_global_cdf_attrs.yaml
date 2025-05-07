@@ -2,3 +2,8 @@ imap_codice_l3a_lo-partial-densities:
   Data_level: "3a"
   Data_type: L3A_lo-partial-densities>Level-3A partial densities
   Logical_source_description: IMAP Mission CoDICE Instrument Partial Densities
+
+imap_codice_l3a_lo-direct-events:
+  Data_level: "3a"
+  Data_type: L3A_lo-direct-events>Level-3A direct events
+  Logical_source_description: IMAP Mission CoDICE Instrument Direct Events

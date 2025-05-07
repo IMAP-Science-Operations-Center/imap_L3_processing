@@ -1,15 +1,272 @@
-event_num:
-spin_angle:
-energy_step:
-priority:
+primary_data_variable: &primary_data_variable
+  VAR_TYPE: data
+  VARIABLE_PURPOSE: primary var, summary
+  DEPEND_0: epoch
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+
+support_data: &support_data
+  VAR_TYPE: support_data
+  DISPLAY_TYPE: no_plot
+  RECORD_VARYING: NRV
+
+float_data: &float_data
+  DATA_TYPE: CDF_FLOAT
+  FORMAT: F15.3
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.000000E+31
+
+per_priority: &per_priority
+  <<: *primary_data_variable
+  DEPEND_1: priority_index
+  SCALETYP: linear
+  LABL_PTR_1: priority_index_label
+
+per_event: &per_event
+  <<: *per_priority
+  DEPEND_2: event_index
+  LABL_PTR_2: event_index_label
+
+epoch:
+  NAME: epoch
+  CATDESC: Time, number of nanoseconds since J2000 with leap seconds included
+  VAR_TYPE: support_data
+  DISPLAY_TYPE: no_plot
+  DATA_TYPE: CDF_TIME_TT2000
+  FIELDNAM: Epoch
+  RECORD_VARYING: RV
+  LABLAXIS: epoch
+  UNITS: ns
+  VALIDMIN: 2010-01-01T00:00:00.000000000
+  VALIDMAX: 2059-12-31T23:59:58.999000000
+  FILLVAL: 9999-12-31T23:59:59.999999999
+  SCALETYP: linear
+  TIME_BASE: J2000
+  TIME_SCALE: TT
+  DELTA_PLUS_VAR: epoch_delta
+  DELTA_MINUS_VAR: epoch_delta
+  MONOTON: INCREASE
+  REFERENCE_POSITION: Rotating Earth Geoid
+  SI_CONVERSION: 1e-9>seconds
+
+epoch_delta:
+  <<: *support_data
+  NAME: epoch_delta
+  CATDESC: epoch_DELTA
+  FIELDNAM: epoch_delta
+  DATA_TYPE: CDF_INT8
+  FORMAT: I19
+  UNITS: ns
+  VALIDMIN: 0
+  VALIDMAX: 86000000000000
+  FILLVAL: -9223372036854775808
+  SCALETYP: linear
+  SCALEMIN: 0
+  SCALEMAX: 86000000000000
+  SI_CONVERSION: 1e-9>seconds
+
+event_index:
+  <<: *support_data
+  NAME: event_index
+  CATDESC: Index of event
+  FIELDNAM: Event Index
+  LABLAXIS: Event
+  DATA_TYPE: CDF_UINT2
+  VALIDMIN: 0
+  VALIDMAX: 10000
+  FILLVAL: 65535
+  SCALETYP: linear
+  UNITS: " "
+  FORMAT: I5
+
+priority_index:
+  <<: *support_data
+  NAME: priority_index
+  CATDESC: Priority number where particle is observed
+  FIELDNAM: Priority index
+  LABLAXIS: Priority num.
+  DATA_TYPE: CDF_UINT1
+  UNITS: " "
+  VALIDMIN: 0
+  VALIDMAX: 7
+  FILLVAL: 255
+  SCALETYP: linear
+  FORMAT: I3
+
+spin_angle_bin:
+  <<: *support_data
+  <<: *float_data
+  NAME: spin_angle_bin
+  CATDESC: Spin angle bin
+  FIELDNAM: Spin angle
+  LABLAXIS: Spin angle
+  UNITS: degrees
+  VALIDMAX: 360
+  SCALETYP: linear
+  SCALEMIN: 0
+  SCALEMAX: 360
+
+energy_bin:
+  <<: *support_data
+  <<: *float_data
+  NAME: energy_bin
+  CATDESC: Energy bins
+  FIELDNAM: Energy bins
+  LABLAXIS: Energy bins
+  UNITS: keV
+
 normalization:
+  <<: *per_priority
+  <<: *float_data
+  NAME: normalization
+  DEPEND_2: energy_bin
+  DEPEND_3: spin_angle_bin
+  CATDESC: Normalization factor
+  FIELDNAM: Normalization factor
+  LABLAXIS: Normalization
+  UNITS: " "
+  SCALETYP: linear
+  LABL_PTR_2: energy_bin_label
+  LABL_PTR_3: spin_angle_bin_label
+
 mass_per_charge:
+  <<: *per_event
+  <<: *float_data
+  NAME: mass_per_charge
+  CATDESC: Mass per charge of event
+  FIELDNAM: Mass per charge
+  LABLAXIS: m/q
+  UNITS: amu/q
+
 mass:
-energy:
+  <<: *per_event
+  <<: *float_data
+  NAME: mass
+  CATDESC: Mass of event
+  FIELDNAM: Mass
+  LABLAXIS: m
+  UNITS: amu
+
+event_energy:
+  <<: *per_event
+  <<: *float_data
+  NAME: event_energy
+  CATDESC: Mass of event
+  FIELDNAM: Mass
+  LABLAXIS: m
+  UNITS: amu
+
+event_spin_angle:
+  <<: *per_event
+  <<: *float_data
+  NAME: event_spin_angle
+  CATDESC: Spin Angle when event was observed
+  FIELDNAM: Spin angle
+  LABLAXIS: m
+  UNITS: amu
+
 gain:
+  <<: *per_event
+  NAME: gain
+  CATDESC: Gain
+  FIELDNAM: Gain
+  LABLAXIS: Gain
+  DATA_TYPE: CDF_UINT1
+  FORMAT: I3
+  VALIDMIN: 0
+  VALIDMAX: 1
+  FILLVAL: 255
+
 apd_id:
+  <<: *per_event
+  NAME: apd_id
+  CATDESC: APD ID
+  FIELDNAM: APD ID
+  LABLAXIS: APD ID
+  DATA_TYPE: CDF_UINT1
+  FORMAT: I3
+  UNITS: " "
+  VALIDMIN: 0
+  VALIDMAX: 24
+  FILLVAL: 255
+
 multi_flag:
+  <<: *per_event
+  NAME: multi_flag
+  CATDESC: Multi flag
+  FIELDNAM: Multi flag
+  LABLAXIS: Multi flag
+  DATA_TYPE: CDF_UINT1
+  FORMAT: I3
+  UNITS: " "
+  VALIDMIN: 0
+  VALIDMAX: 1
+  FILLVAL: 255
+
 num_events:
-pha_type:
+  <<: *per_priority
+  NAME: num_events
+  CATDESC: Number of events
+  FIELDNAM: Number of events
+  LABLAXIS: Num. events
+  DATA_TYPE: CDF_UINT2
+  FORMAT: I5
+  UNITS: " "
+  VALIDMIN: 0
+  VALIDMAX: 10000
+  FILLVAL: 65535
+
 data_quality:
+  <<: *per_priority
+  NAME: data_quality
+  CATDESC: Data quality
+  FIELDNAM: Data quality
+  LABLAXIS: Data quality
+  DATA_TYPE: CDF_UINT1
+  FORMAT: I3
+  UNITS: " "
+  VALIDMIN: 0
+  VALIDMAX: 1
+  FILLVAL: 255
+
 tof:
+  <<: *per_event
+  <<: *float_data
+  NAME: tof
+  CATDESC: Time of flight
+  FIELDNAM: Time of flight
+  LABLAXIS: TOF
+  UNITS: ns
+
+priority_index_label:
+  NAME: priority_index_label
+  CATDESC: Label for priority index
+  FIELDNAM: Priority index label
+  DATA_TYPE: CDF_CHAR
+  FORMAT: a20
+  VAR_TYPE: metadata
+
+event_index_label:
+  NAME: event_index_label
+  CATDESC: Label for event index
+  FIELDNAM: Event index label
+  DATA_TYPE: CDF_CHAR
+  FORMAT: a20
+  VAR_TYPE: metadata
+
+energy_bin_label:
+  NAME: energy_bin_label
+  CATDESC: Label for energy bin
+  FIELDNAM: Energy bin label
+  DATA_TYPE: CDF_CHAR
+  FORMAT: a20
+  VAR_TYPE: metadata
+
+spin_angle_bin_label:
+  NAME: spin_angle_bin_label
+  CATDESC: Label for spin angle bin
+  FIELDNAM: Spin angle bin label
+  DATA_TYPE: CDF_CHAR
+  FORMAT: a20
+  VAR_TYPE: metadata
