@@ -25,7 +25,7 @@ epoch_delta:
   CATDESC: epoch_DELTA
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
-  FIELDNAM: epoch_delta
+  FIELDNAM: Epoch Delta
   FORMAT: I19
   UNITS: ns
   VALIDMIN: 0
@@ -43,7 +43,7 @@ combined_energy:
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: combined_energy
+  FIELDNAM: Combined Energy
   FORMAT: F19.3
   LABLAXIS: Energy
   UNITS: eV/q
@@ -62,7 +62,7 @@ combined_energy_delta_minus:
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: combined_energy_delta_minus
+  FIELDNAM: Combined Energy Delta Minus
   FORMAT: F19.3
   LABLAXIS: Energy Delta Minus
   UNITS: eV/q
@@ -76,7 +76,7 @@ combined_energy_delta_plus:
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: combined_energy_delta_plus
+  FIELDNAM: Combined Energy Delta Plus
   FORMAT: F19.3
   LABLAXIS: Energy Delta Plus
   UNITS: eV/q
@@ -93,7 +93,7 @@ combined_differential_flux:
   RECORD_VARYING: RV
   DISPLAY_TYPE: spectrogram
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: combined_differential_flux
+  FIELDNAM: Combined Differential Flux
   FORMAT: F19.3
   LABLAXIS: Differential Flux
   UNITS: cm!E-2!N sr!E-1!N s!E-1!N (eV/q)!E-1!N'
@@ -114,7 +114,7 @@ combined_differential_flux_delta:
   DEPEND_1: combined_energy
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: combined_differential_flux_delta
+  FIELDNAM: Combined Differential Flux Delta
   FORMAT: F19.3
   LABLAXIS: Differential Flux Uncertainty
   UNITS: cm!E-2!N sr!E-1!N s!E-1!N (eV/q)!E-1!N'

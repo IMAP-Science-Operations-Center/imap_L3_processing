@@ -54,7 +54,7 @@ spin_angle:
   CATDESC: Angle on the circle around axis rotation, with the radius elongation angle. The 0 spin_angle is the direction nearest north pole.
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
-  FIELDNAM: spin_angle
+  FIELDNAM: Spin Angle
   FORMAT: g9.3
   LABLAXIS: spin angle
   UNITS: degrees
@@ -72,7 +72,7 @@ probability_of_survival:
   DEPEND_1: energy
   DEPEND_2: spin_angle
   DISPLAY_TYPE: spectrogram
-  VARIABLE_PURPOSE: primary var, summary
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
   FIELDNAM: Probability of survival
   FORMAT: g9.3
   LABLAXIS: Probability of survival
@@ -95,5 +95,5 @@ spin_angle_label:
   DATA_TYPE: CDF_CHAR
   CATDESC: Label for spin angle
   VAR_TYPE: metadata
-  FIELDNAM: spin_angle_label
+  FIELDNAM: Spin Angle Label
   FORMAT: a20

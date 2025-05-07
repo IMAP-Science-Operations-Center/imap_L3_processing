@@ -24,7 +24,7 @@ epoch_delta:
   VAR_TYPE: support_data
   RECORD_VARYING: RV
   DEPEND_0: epoch
-  FIELDNAM: epoch_delta
+  FIELDNAM: Epoch Delta
   FORMAT: I14
   LABLAXIS: epoch_delta
   UNITS: ns
@@ -43,7 +43,7 @@ h_intensity:
   DEPEND_3: gyrophase
   DISPLAY_TYPE: spectrogram
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: H_Intensity
+  FIELDNAM: H Intensity
   FORMAT: g9.3
   LABLAXIS: H Intensity
   UNITS: 1/(cm^2 s MeV/nuc sr)
@@ -69,7 +69,7 @@ he4_intensity:
   DEPEND_3: gyrophase
   DISPLAY_TYPE: spectrogram
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: He4_Intensity
+  FIELDNAM: He4 Intensity
   FORMAT: g9.3
   LABLAXIS: He4 Intensity
   UNITS: 1/(cm^2 s MeV/nuc sr)
@@ -95,7 +95,7 @@ cno_intensity:
   DEPEND_3: gyrophase
   DISPLAY_TYPE: spectrogram
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: CNO_Intensity
+  FIELDNAM: CNO Intensity
   FORMAT: g9.3
   LABLAXIS: CNO Intensity
   UNITS: 1/(cm^2 s MeV/nuc sr)
@@ -121,7 +121,7 @@ nemgsi_intensity:
   DEPEND_3: gyrophase
   DISPLAY_TYPE: spectrogram
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: NeMgSi_Intensity
+  FIELDNAM: NeMgSi Intensity
   FORMAT: g9.3
   LABLAXIS: NeMgSi Intensity
   UNITS: 1/(cm^2 s MeV/nuc sr)
@@ -147,7 +147,7 @@ fe_intensity:
   DEPEND_3: gyrophase
   DISPLAY_TYPE: spectrogram
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Fe_Intensity
+  FIELDNAM: Fe Intensity
   FORMAT: g9.3
   LABLAXIS: Fe Intensity
   UNITS: 1/(cm^2 s MeV/nuc sr)
@@ -172,7 +172,7 @@ h_intensity_pa:
   DEPEND_2: pitch_angle
   DISPLAY_TYPE: spectrogram
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: H_Intensity_PA
+  FIELDNAM: H Intensity PA
   FORMAT: g9.3
   LABLAXIS: H Intensity PA
   UNITS: 1/(cm^2 s MeV/nuc sr)
@@ -196,7 +196,7 @@ he4_intensity_pa:
   DEPEND_2: pitch_angle
   DISPLAY_TYPE: spectrogram
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: He4_Intensity_PA
+  FIELDNAM: He4 Intensity PA
   FORMAT: g9.3
   LABLAXIS: He4 Intensity PA
   UNITS: 1/(cm^2 s MeV/nuc sr)
@@ -220,7 +220,7 @@ cno_intensity_pa:
   DEPEND_2: pitch_angle
   DISPLAY_TYPE: spectrogram
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: CNO_Intensity_PA
+  FIELDNAM: CNO Intensity PA
   FORMAT: g9.3
   LABLAXIS: CNO Intensity PA
   UNITS: 1/(cm^2 s MeV/nuc sr)
@@ -244,7 +244,7 @@ nemgsi_intensity_pa:
   DEPEND_2: pitch_angle
   DISPLAY_TYPE: spectrogram
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: NeMgSi_Intensity_PA
+  FIELDNAM: NeMgSi Intensity PA
   FORMAT: g9.3
   LABLAXIS: NeMgSi Intensity PA
   UNITS: 1/(cm^2 s MeV/nuc sr)
@@ -268,7 +268,7 @@ fe_intensity_pa:
   DEPEND_2: pitch_angle
   DISPLAY_TYPE: spectrogram
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Fe_Intensity_PA
+  FIELDNAM: Fe Intensity PA
   FORMAT: g9.3
   LABLAXIS: Fe Intensity PA
   UNITS: 1/(cm^2 s MeV/nuc sr)
@@ -291,7 +291,7 @@ h_intensity_delta_plus:
   DEPEND_1: h_energy
   DEPEND_2: pitch_angle
   DEPEND_3: gyrophase
-  FIELDNAM: H_Plus_Uncertainty
+  FIELDNAM: H Plus Uncertainty
   FORMAT: g9.3
   LABLAXIS: H Intensity
   UNITS: 1/(cm^2 s MeV/nuc sr)
@@ -313,7 +313,7 @@ h_intensity_delta_minus:
   DEPEND_1: h_energy
   DEPEND_2: pitch_angle
   DEPEND_3: gyrophase
-  FIELDNAM: H_Minus_Uncertainty
+  FIELDNAM: H Minus Uncertainty
   FORMAT: g9.3
   LABLAXIS: H Intensity
   UNITS: 1/(cm^2 s MeV/nuc sr)
@@ -335,7 +335,7 @@ he4_intensity_delta_plus:
   DEPEND_1: he4_energy
   DEPEND_2: pitch_angle
   DEPEND_3: gyrophase
-  FIELDNAM: He4_Plus_Uncertainty
+  FIELDNAM: He4 Plus Uncertainty
   FORMAT: g9.3
   LABLAXIS: He4 Intensity
   UNITS: 1/(cm^2 s MeV/nuc sr)
@@ -357,7 +357,7 @@ he4_intensity_delta_minus:
   DEPEND_1: he4_energy
   DEPEND_2: pitch_angle
   DEPEND_3: gyrophase
-  FIELDNAM: He4_Minus_Uncertainty
+  FIELDNAM: He4 Minus Uncertainty
   FORMAT: g9.3
   LABLAXIS: He4 Intensity
   UNITS: 1/(cm^2 s MeV/nuc sr)
@@ -379,7 +379,7 @@ cno_intensity_delta_plus:
   DEPEND_1: cno_energy
   DEPEND_2: pitch_angle
   DEPEND_3: gyrophase
-  FIELDNAM: CNO_Plus_Uncertainty
+  FIELDNAM: CNO Plus Uncertainty
   FORMAT: g9.3
   LABLAXIS: CNO Intensity
   UNITS: 1/(cm^2 s MeV/nuc sr)
@@ -401,7 +401,7 @@ cno_intensity_delta_minus:
   DEPEND_1: cno_energy
   DEPEND_2: pitch_angle
   DEPEND_3: gyrophase
-  FIELDNAM: CNO_Minus_Uncertainty
+  FIELDNAM: CNO Minus Uncertainty
   FORMAT: g9.3
   LABLAXIS: CNO Intensity
   UNITS: 1/(cm^2 s MeV/nuc sr)
@@ -423,7 +423,7 @@ nemgsi_intensity_delta_plus:
   DEPEND_1: nemgsi_energy
   DEPEND_2: pitch_angle
   DEPEND_3: gyrophase
-  FIELDNAM: NeMgSi_Plus_Uncertainty
+  FIELDNAM: NeMgSi Plus Uncertainty
   FORMAT: g9.3
   LABLAXIS: NeMgSi Intensity
   UNITS: 1/(cm^2 s MeV/nuc sr)
@@ -445,7 +445,7 @@ nemgsi_intensity_delta_minus:
   DEPEND_1: nemgsi_energy
   DEPEND_2: pitch_angle
   DEPEND_3: gyrophase
-  FIELDNAM: NeMgSi_Minus_Uncertainty
+  FIELDNAM: NeMgSi Minus Uncertainty
   FORMAT: g9.3
   LABLAXIS: NeMgSi Intensity
   UNITS: 1/(cm^2 s MeV/nuc sr)
@@ -467,7 +467,7 @@ fe_intensity_delta_plus:
   DEPEND_1: fe_energy
   DEPEND_2: pitch_angle
   DEPEND_3: gyrophase
-  FIELDNAM: Fe_Plus_Uncertainty
+  FIELDNAM: Fe Plus Uncertainty
   FORMAT: g9.3
   LABLAXIS: Fe Intensity
   UNITS: 1/(cm^2 s MeV/nuc sr)
@@ -489,7 +489,7 @@ fe_intensity_delta_minus:
   DEPEND_1: fe_energy
   DEPEND_2: pitch_angle
   DEPEND_3: gyrophase
-  FIELDNAM: Fe_Minus_Uncertainty
+  FIELDNAM: Fe Minus Uncertainty
   FORMAT: g9.3
   LABLAXIS: Fe Intensity
   UNITS: 1/(cm^2 s MeV/nuc sr)
@@ -510,7 +510,7 @@ h_intensity_pa_delta_plus:
   DEPEND_0: epoch
   DEPEND_1: h_energy
   DEPEND_2: pitch_angle
-  FIELDNAM: H_Plus_PA_Uncertainty
+  FIELDNAM: H Plus PA Uncertainty
   FORMAT: g9.3
   LABLAXIS: H Intensity
   UNITS: 1/(cm^2 s MeV/nuc sr)
@@ -530,7 +530,7 @@ h_intensity_pa_delta_minus:
   DEPEND_0: epoch
   DEPEND_1: h_energy
   DEPEND_2: pitch_angle
-  FIELDNAM: H_Minus_PA_Uncertainty
+  FIELDNAM: H Minus PA Uncertainty
   FORMAT: g9.3
   LABLAXIS: H Intensity
   UNITS: 1/(cm^2 s MeV/nuc sr)
@@ -550,7 +550,7 @@ he4_intensity_pa_delta_plus:
   DEPEND_0: epoch
   DEPEND_1: he4_energy
   DEPEND_2: pitch_angle
-  FIELDNAM: He4_Plus_PA_Uncertainty
+  FIELDNAM: He4 Plus PA Uncertainty
   FORMAT: g9.3
   LABLAXIS: He4 Intensity
   UNITS: 1/(cm^2 s MeV/nuc sr)
@@ -570,7 +570,7 @@ he4_intensity_pa_delta_minus:
   DEPEND_0: epoch
   DEPEND_1: he4_energy
   DEPEND_2: pitch_angle
-  FIELDNAM: He4_Minus_PA_Uncertainty
+  FIELDNAM: He4 Minus PA Uncertainty
   FORMAT: g9.3
   LABLAXIS: He4 Intensity
   UNITS: 1/(cm^2 s MeV/nuc sr)
@@ -590,7 +590,7 @@ cno_intensity_pa_delta_plus:
   DEPEND_0: epoch
   DEPEND_1: cno_energy
   DEPEND_2: pitch_angle
-  FIELDNAM: CNO_Plus_PA_Uncertainty
+  FIELDNAM: CNO Plus PA Uncertainty
   FORMAT: g9.3
   LABLAXIS: CNO Intensity
   UNITS: 1/(cm^2 s MeV/nuc sr)
@@ -610,7 +610,7 @@ cno_intensity_pa_delta_minus:
   DEPEND_0: epoch
   DEPEND_1: cno_energy
   DEPEND_2: pitch_angle
-  FIELDNAM: CNO_Minus_PA_Uncertainty
+  FIELDNAM: CNO Minus PA Uncertainty
   FORMAT: g9.3
   LABLAXIS: CNO Intensity
   UNITS: 1/(cm^2 s MeV/nuc sr)
@@ -630,7 +630,7 @@ nemgsi_intensity_pa_delta_plus:
   DEPEND_0: epoch
   DEPEND_1: nemgsi_energy
   DEPEND_2: pitch_angle
-  FIELDNAM: NeMgSi_Plus_PA_Uncertainty
+  FIELDNAM: NeMgSi Plus PA Uncertainty
   FORMAT: g9.3
   LABLAXIS: NeMgSi Intensity
   UNITS: 1/(cm^2 s MeV/nuc sr)
@@ -650,7 +650,7 @@ nemgsi_intensity_pa_delta_minus:
   DEPEND_0: epoch
   DEPEND_1: nemgsi_energy
   DEPEND_2: pitch_angle
-  FIELDNAM: NeMgSi_Minus_PA_Uncertainty
+  FIELDNAM: NeMgSi Minus PA Uncertainty
   FORMAT: g9.3
   LABLAXIS: NeMgSi Intensity
   UNITS: 1/(cm^2 s MeV/nuc sr)
@@ -670,7 +670,7 @@ fe_intensity_pa_delta_plus:
   DEPEND_0: epoch
   DEPEND_1: fe_energy
   DEPEND_2: pitch_angle
-  FIELDNAM: Fe_Plus_PA_Uncertainty
+  FIELDNAM: Fe Plus PA Uncertainty
   FORMAT: g9.3
   LABLAXIS: Fe Intensity
   UNITS: 1/(cm^2 s MeV/nuc sr)
@@ -690,7 +690,7 @@ fe_intensity_pa_delta_minus:
   DEPEND_0: epoch
   DEPEND_1: fe_energy
   DEPEND_2: pitch_angle
-  FIELDNAM: Fe_Minus_PA_Uncertainty
+  FIELDNAM: Fe Minus PA Uncertainty
   FORMAT: g9.3
   LABLAXIS: Fe Intensity
   UNITS: 1/(cm^2 s MeV/nuc sr)
@@ -707,7 +707,7 @@ h_energy:
   CATDESC: Energy bins for H by pitch angle and gyrophase
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
-  FIELDNAM: H_Energy
+  FIELDNAM: H Energy
   FORMAT: F15.3
   LABLAXIS: Energy
   UNITS: MeV
@@ -722,7 +722,7 @@ he4_energy:
   CATDESC: Energy bins for He4 by pitch angle and gyrophase
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
-  FIELDNAM: He4_Energy
+  FIELDNAM: He4 Energy
   FORMAT: F15.3
   LABLAXIS: Energy
   UNITS: MeV
@@ -737,7 +737,7 @@ cno_energy:
   CATDESC: Energy bins for CNO by pitch angle and gyrophase
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
-  FIELDNAM: CNO_Energy
+  FIELDNAM: CNO Energy
   FORMAT: F15.3
   LABLAXIS: Energy
   UNITS: MeV
@@ -752,7 +752,7 @@ nemgsi_energy:
   CATDESC: Energy bins for NeMgSi by pitch angle and gyrophase
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
-  FIELDNAM: NeMgSi_Energy
+  FIELDNAM: NeMgSi Energy
   FORMAT: F15.3
   LABLAXIS: Energy
   UNITS: MeV
@@ -767,7 +767,7 @@ fe_energy:
   CATDESC: Energy bins for Fe by pitch angle and gyrophase
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
-  FIELDNAM: Fe_Energy
+  FIELDNAM: Fe Energy
   FORMAT: F15.3
   LABLAXIS: Energy
   UNITS: MeV
@@ -782,7 +782,7 @@ h_energy_delta_plus:
   CATDESC: H energy bin Delta plus
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
-  FIELDNAM: h_energy_delta_plus
+  FIELDNAM: H Energy Delta Plus
   FORMAT: F15.3
   LABLAXIS: Energy
   UNITS: MeV
@@ -797,7 +797,7 @@ he4_energy_delta_plus:
   CATDESC: He4 energy bin Delta plus
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
-  FIELDNAM: he4_energy_delta_plus
+  FIELDNAM: He4 Energy Delta Plus
   FORMAT: F15.3
   LABLAXIS: Energy
   UNITS: MeV
@@ -812,7 +812,7 @@ cno_energy_delta_plus:
   CATDESC: CNO energy bin Delta plus
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
-  FIELDNAM: cno_energy_delta_plus
+  FIELDNAM: CNO Energy Delta Plus
   FORMAT: F15.3
   LABLAXIS: Energy
   UNITS: MeV
@@ -827,7 +827,7 @@ nemgsi_energy_delta_plus:
   CATDESC: NeMgSi energy bin Delta plus
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
-  FIELDNAM: nemgsi_energy_delta_plus
+  FIELDNAM: NeMgSi Energy Delta Plus
   FORMAT: F15.3
   LABLAXIS: Energy
   UNITS: MeV
@@ -842,7 +842,7 @@ fe_energy_delta_plus:
   CATDESC: Fe energy bin Delta plus
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
-  FIELDNAM: fe_energy_delta_plus
+  FIELDNAM: Fe Energy Delta Plus
   FORMAT: F15.3
   LABLAXIS: Energy
   UNITS: MeV
@@ -857,7 +857,7 @@ h_energy_delta_minus:
   CATDESC: H energy bin Delta minus
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
-  FIELDNAM: h_energy_delta_minus
+  FIELDNAM: H Energy Delta Minus
   FORMAT: F15.3
   LABLAXIS: Energy
   UNITS: MeV
@@ -872,7 +872,7 @@ he4_energy_delta_minus:
   CATDESC: He4 energy bin Delta minus
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
-  FIELDNAM: he4_energy_delta_minus
+  FIELDNAM: He4 Energy Delta Minus
   FORMAT: F15.3
   LABLAXIS: Energy
   UNITS: MeV
@@ -887,7 +887,7 @@ cno_energy_delta_minus:
   CATDESC: CNO energy bin Delta minus
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
-  FIELDNAM: cno_energy_delta_minus
+  FIELDNAM: CNO Energy Delta Minus
   FORMAT: F15.3
   LABLAXIS: Energy
   UNITS: MeV
@@ -902,7 +902,7 @@ nemgsi_energy_delta_minus:
   CATDESC: NeMgSi energy bin Delta minus
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
-  FIELDNAM: nemgsi_energy_delta_minus
+  FIELDNAM: NeMgSi Energy Delta Minus
   FORMAT: F15.3
   LABLAXIS: Energy
   UNITS: MeV
@@ -917,7 +917,7 @@ fe_energy_delta_minus:
   CATDESC: Fe energy bin Delta minus
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
-  FIELDNAM: fe_energy_delta_minus
+  FIELDNAM: Fe Energy Delta Minus
   FORMAT: F15.3
   LABLAXIS: Energy
   UNITS: MeV
@@ -932,7 +932,7 @@ pitch_angle:
   CATDESC: Pitch Angle Bin
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
-  FIELDNAM: pitch_angle
+  FIELDNAM: Pitch Angle
   FORMAT: F15.3
   LABLAXIS: Pitch Angle
   UNITS: Degrees
@@ -947,7 +947,7 @@ pitch_angle_delta:
   CATDESC: Pitch Angle Bin Delta
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
-  FIELDNAM: pitch_angle_delta
+  FIELDNAM: Pitch Angle Delta
   FORMAT: F15.3
   LABLAXIS: Pitch Angle Delta
   UNITS: Degrees
@@ -975,7 +975,7 @@ gyrophase_delta:
   CATDESC: Gyrophase Delta
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
-  FIELDNAM: gyrophase_delta
+  FIELDNAM: Gyrophase Delta
   FORMAT: F15.3
   LABLAXIS: Gyrophase Delta
   UNITS: Degrees
@@ -992,7 +992,7 @@ measurement_pitch_angle:
   DEPEND_1: declination_idx
   DEPEND_2: azimuth_idx
   DISPLAY_TYPE: no_plot
-  FIELDNAM: measurement_pitch_angle
+  FIELDNAM: Measurement Pitch Angle
   VARIABLE_PURPOSE: ' '
   FORMAT: F15.3
   LABLAXIS: Pitch Angle
@@ -1010,7 +1010,7 @@ measurement_gyrophase:
   DEPEND_1: declination_idx
   DEPEND_2: azimuth_idx
   DISPLAY_TYPE: no_plot
-  FIELDNAM: measurement_gyrophase
+  FIELDNAM: Measurement Gyrophase
   VARIABLE_PURPOSE: ' '
   FORMAT: F15.3
   LABLAXIS: Gyrophase
@@ -1023,49 +1023,49 @@ h_energy_label:
   DATA_TYPE: CDF_CHAR
   CATDESC: Label for H energy
   VAR_TYPE: metadata
-  FIELDNAM: h_energy_label
+  FIELDNAM: H Energy Label
   FORMAT: a20
 he4_energy_label:
   NAME: he4_energy_label
   DATA_TYPE: CDF_CHAR
   CATDESC: Label for He4 energy
   VAR_TYPE: metadata
-  FIELDNAM: he4_energy_label
+  FIELDNAM: He4 Energy Label
   FORMAT: a20
 cno_energy_label:
   NAME: cno_energy_label
   DATA_TYPE: CDF_CHAR
   CATDESC: Label for CNO energy
   VAR_TYPE: metadata
-  FIELDNAM: cno_energy_label
+  FIELDNAM: CNO Energy Label
   FORMAT: a20
 nemgsi_energy_label:
   NAME: nemgsi_energy_label
   DATA_TYPE: CDF_CHAR
   CATDESC: Label for NeMgSi energy
   VAR_TYPE: metadata
-  FIELDNAM: nemgsi_energy_label
+  FIELDNAM: NeMgSi Energy Label
   FORMAT: a20
 fe_energy_label:
   NAME: fe_energy_label
   DATA_TYPE: CDF_CHAR
   CATDESC: Label for Fe energy
   VAR_TYPE: metadata
-  FIELDNAM: fe_energy_label
+  FIELDNAM: Fe Energy Label
   FORMAT: a20
 pitch_angle_label:
   NAME: pitch_angle_label
   DATA_TYPE: CDF_CHAR
   CATDESC: Label for Pitch Angle
   VAR_TYPE: metadata
-  FIELDNAM: pitch_angle_label
+  FIELDNAM: Pitch Angle Label
   FORMAT: a20
 gyrophase_label:
   NAME: gyrophase_label
   DATA_TYPE: CDF_CHAR
   CATDESC: Lable for Gyrophase
   VAR_TYPE: metadata
-  FIELDNAM: gyrophase_label
+  FIELDNAM: Gyrophase Label
   FORMAT: a20
 declination_idx:
   NAME: declination_idx
@@ -1073,7 +1073,7 @@ declination_idx:
   CATDESC: Declination Index
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
-  FIELDNAM: declination_idx
+  FIELDNAM: Declination Idx
   FORMAT: F15.3
   UNITS: ' '
   VALIDMIN: 0
@@ -1087,7 +1087,7 @@ azimuth_idx:
   CATDESC: Azimuth Index
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
-  FIELDNAM: azimuth_idx
+  FIELDNAM: Azimuth Idx
   FORMAT: F15.3
   UNITS: ' '
   VALIDMIN: 0
@@ -1100,12 +1100,12 @@ declination_idx_label:
   DATA_TYPE: CDF_CHAR
   CATDESC: Label for Declination Index
   VAR_TYPE: metadata
-  FIELDNAM: declination_idx_label
+  FIELDNAM: Declination Idx Label
   FORMAT: a20
 azimuth_idx_label:
   NAME: azimuth_idx_label
   DATA_TYPE: CDF_CHAR
   CATDESC: Label for Azimuth Index
   VAR_TYPE: metadata
-  FIELDNAM: nemgsi_idx_label
+  FIELDNAM: Azimuth Idx Label
   FORMAT: a20

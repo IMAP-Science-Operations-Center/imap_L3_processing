@@ -23,7 +23,7 @@ epoch_delta:
   CATDESC: epoch_delta
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
-  FIELDNAM: epoch_delta
+  FIELDNAM: Epoch Delta
   FORMAT: I14
   LABLAXIS: epoch_delta
   UNITS: ns
@@ -106,7 +106,7 @@ delta_e:
   DEPEND_0: epoch
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: delta_e
+  FIELDNAM: Delta E
   FORMAT: F15.3
   LABLAXIS: Delta E
   UNITS: MeV
@@ -124,7 +124,7 @@ e_prime:
   DEPEND_0: epoch
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: e_prime
+  FIELDNAM: E Prime
   FORMAT: F15.3
   LABLAXIS: E Prime
   UNITS: MeV
@@ -141,7 +141,7 @@ particle_id:
   RECORD_VARYING: RV
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
-  FIELDNAM: particle_id
+  FIELDNAM: Particle Id
   VARIABLE_PURPOSE: ' '
   FORMAT: I8
   UNITS: ' '
@@ -156,7 +156,7 @@ priority_buffer_number:
   RECORD_VARYING: RV
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
-  FIELDNAM: priority_buffer_number
+  FIELDNAM: Priority Buffer Number
   VARIABLE_PURPOSE: ' '
   FORMAT: I4
   UNITS: ' '
@@ -186,7 +186,7 @@ stim_tag:
   RECORD_VARYING: RV
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
-  FIELDNAM: stim_tag
+  FIELDNAM: Stim Tag
   VARIABLE_PURPOSE: ' '
   FORMAT: I4
   UNITS: ' '
@@ -201,7 +201,7 @@ long_event_flag:
   RECORD_VARYING: RV
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
-  FIELDNAM: long_event_flag
+  FIELDNAM: Long Event Flag
   VARIABLE_PURPOSE: ' '
   FORMAT: I4
   UNITS: ' '
@@ -216,7 +216,7 @@ haz_tag:
   RECORD_VARYING: RV
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
-  FIELDNAM: haz_tag
+  FIELDNAM: Haz Tag
   VARIABLE_PURPOSE: ' '
   FORMAT: I4
   UNITS: ' '
@@ -231,7 +231,7 @@ side:
   RECORD_VARYING: RV
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
-  FIELDNAM: a_b_side
+  FIELDNAM: A B Side
   VARIABLE_PURPOSE: ' '
   FORMAT: I4
   UNITS: ' '
@@ -246,7 +246,7 @@ has_unread_flag:
   RECORD_VARYING: RV
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
-  FIELDNAM: has_unread_flag
+  FIELDNAM: Has Unread Flag
   VARIABLE_PURPOSE: ' '
   FORMAT: I4
   UNITS: ' '
@@ -261,7 +261,7 @@ culling_flag:
   RECORD_VARYING: RV
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
-  FIELDNAM: culling_flag
+  FIELDNAM: Culling Flag
   VARIABLE_PURPOSE: ' '
   FORMAT: I4
   UNITS: ' '
@@ -278,7 +278,7 @@ pha_value:
   DEPEND_1: detector_id
   DISPLAY_TYPE: spectrogram
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: pha_value
+  FIELDNAM: Pha Value
   FORMAT: I8
   LABLAXIS: PHA Value
   UNITS: ' '
@@ -294,7 +294,7 @@ is_low_gain:
   DEPEND_0: epoch
   DEPEND_1: detector_id
   DISPLAY_TYPE: no_plot
-  FIELDNAM: is_low_gain
+  FIELDNAM: Is Low Gain
   VARIABLE_PURPOSE: ' '
   FORMAT: I4
   UNITS: ' '
@@ -309,7 +309,7 @@ detector_flags:
   RECORD_VARYING: RV
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
-  FIELDNAM: detector_flags
+  FIELDNAM: Detector Flags
   VARIABLE_PURPOSE: ' '
   FORMAT: I8
   UNITS: ' '
@@ -354,7 +354,7 @@ stim_gain:
   RECORD_VARYING: RV
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
-  FIELDNAM: stim_gain
+  FIELDNAM: Stim Gain
   VARIABLE_PURPOSE: ' '
   FORMAT: I4
   UNITS: ' '
@@ -369,7 +369,7 @@ a_l_stim:
   RECORD_VARYING: RV
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
-  FIELDNAM: a_l_stim
+  FIELDNAM: A L Stim
   VARIABLE_PURPOSE: ' '
   FORMAT: I4
   UNITS: ' '
@@ -384,7 +384,7 @@ stim_step:
   RECORD_VARYING: RV
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
-  FIELDNAM: stim_step
+  FIELDNAM: Stim Step
   VARIABLE_PURPOSE: ' '
   FORMAT: I8
   UNITS: ' '
@@ -399,7 +399,7 @@ dac_value:
   RECORD_VARYING: RV
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
-  FIELDNAM: dac_value
+  FIELDNAM: Dac Value
   VARIABLE_PURPOSE: ' '
   FORMAT: I8
   UNITS: ' '
@@ -412,7 +412,7 @@ detector_id:
   CATDESC: index used to support up to 64 detector addresses per event
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
-  FIELDNAM: detector_id
+  FIELDNAM: Detector Id
   FORMAT: I4
   LABLAXIS: Detector Id
   UNITS: ' '

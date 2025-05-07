@@ -1,6 +1,6 @@
 primary_data_variable: &primary_data_variable
   VAR_TYPE: data
-  VARIABLE_PURPOSE: primary var, summary
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
   DEPEND_0: epoch
   RECORD_VARYING: RV
 
@@ -12,7 +12,7 @@ support_data: &support_data
 
 primary_support_data: &primary_support_data
   <<: *support_data
-  VARIABLE_PURPOSE: primary var, summary
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
 
 metadata_variable: &metadata_variable
   DATA_TYPE: CDF_CHAR
@@ -44,7 +44,7 @@ epoch_delta:
   <<: *support_data
   NAME: epoch_delta
   CATDESC: epoch_DELTA
-  FIELDNAM: epoch_delta
+  FIELDNAM: Epoch Delta
   DATA_TYPE: CDF_INT8
   FORMAT: I19
   UNITS: ns
@@ -428,7 +428,7 @@ lon_lat:
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
   DISPLAY_TYPE: no_plot
-  FIELDNAM: lon_lat
+  FIELDNAM: Lon Lat
   DATA_TYPE: CDF_INT1
   FORMAT: I1
   LABLAXIS: lon_lat
@@ -441,7 +441,7 @@ lon_lat_labels:
   <<: *metadata_variable
   NAME: lon_lat_labels
   CATDESC: Label names for ecliptic longitude and latitude
-  FIELDNAM: lon_lat_labels
+  FIELDNAM: Lon Lat Labels
   FORMAT: A3
 spin_axis_orientation_average:
   <<: *primary_support_data
@@ -484,7 +484,7 @@ x_y_z:
   DISPLAY_TYPE: no_plot
   RECORD_VARYING: NRV
   DATA_TYPE: CDF_INT1
-  FIELDNAM: x_y_z
+  FIELDNAM: X Y Z
   FORMAT: I1
   LABLAXIS: x_y_z
   UNITS: ' '
@@ -496,7 +496,7 @@ x_y_z_labels:
   <<: *metadata_variable
   NAME: x_y_z_labels
   CATDESC: Label names for cartesian ecliptic coordinates
-  FIELDNAM: x_y_z_labels
+  FIELDNAM: X Y Z Labels
   FORMAT: A1
 spacecraft_location_average:
   <<: *primary_support_data

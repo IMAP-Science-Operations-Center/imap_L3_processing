@@ -333,7 +333,7 @@ ena_spectral_index:
   RECORD_VARYING: RV
   DISPLAY_TYPE: image
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: spectral_fit_index
+  FIELDNAM: Ena Spectral Index
   FORMAT: F12.6
   LABLAXIS: Index
   UNITS: ' '
@@ -357,7 +357,7 @@ ena_spectral_index_stat_unc:
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: no_plot
-  FIELDNAM: spectral_fit_index_error
+  FIELDNAM: Ena Spectral Index Stat Unc
   VARIABLE_PURPOSE: ' '
   FORMAT: F12.6
   LABLAXIS: Index Error

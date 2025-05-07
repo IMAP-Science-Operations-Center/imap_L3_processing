@@ -24,7 +24,7 @@ epoch_delta:
   VAR_TYPE: support_data
   RECORD_VARYING: RV
   DEPEND_0: epoch
-  FIELDNAM: epoch_delta
+  FIELDNAM: Epoch Delta
   FORMAT: I19
   LABLAXIS: epoch_delta
   UNITS: ns
@@ -50,7 +50,7 @@ healpix_index:
   CATDESC: Heal pixel index
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
-  FIELDNAM: healpix_index
+  FIELDNAM: Healpix Index
   FORMAT: I19
   LABLAXIS: healpix_index
   UNITS: ' '
@@ -67,8 +67,8 @@ probability_of_survival:
   DEPEND_1: energy
   DEPEND_2: healpix_index
   DISPLAY_TYPE: spectrogram
-  VARIABLE_PURPOSE: primary var, summary
-  FIELDNAM: probability_of_survival
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Probability Of Survival
   FORMAT: g9.3
   LABLAXIS: Survival prob.
   UNITS: ' '

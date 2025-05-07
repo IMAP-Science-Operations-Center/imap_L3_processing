@@ -107,7 +107,7 @@ sum_rate:
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: spectrogram
-  VARIABLE_PURPOSE: primary var, summary
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
   FIELDNAM: Sum rate
   FORMAT: F9.3
   LABLAXIS: Sum rate
@@ -129,7 +129,7 @@ ph_rate:
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: spectrogram
-  VARIABLE_PURPOSE: primary var, summary
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
   FIELDNAM: Photoionization rate
   FORMAT: F9.3
   LABLAXIS: Photoionization rate
@@ -151,7 +151,7 @@ cx_rate:
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: spectrogram
-  VARIABLE_PURPOSE: primary var, summary
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
   FIELDNAM: Charge exchange rate
   FORMAT: F9.3
   LABLAXIS: Charge exchange rate
@@ -172,7 +172,7 @@ sum_uncert:
   DEPEND_1: lat_grid
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  VARIABLE_PURPOSE: primary var, summary
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
   FIELDNAM: Sum rate uncertainty
   FORMAT: F9.3
   LABLAXIS: Sum rate uncertainty
@@ -189,7 +189,7 @@ ph_uncert:
   DEPEND_1: lat_grid
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  VARIABLE_PURPOSE: primary var, summary
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
   FIELDNAM: Photoionization rate uncertainty
   FORMAT: F9.3
   LABLAXIS: Photoionization rate uncertainty
@@ -206,7 +206,7 @@ cx_uncert:
   DEPEND_1: lat_grid
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  VARIABLE_PURPOSE: primary var, summary
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
   FIELDNAM: Charge exchange rate uncertainty
   FORMAT: F9.3
   LABLAXIS: Charge exchange rate uncertainty

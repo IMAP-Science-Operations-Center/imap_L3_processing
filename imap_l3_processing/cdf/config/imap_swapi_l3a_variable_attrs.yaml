@@ -25,7 +25,7 @@ epoch_delta:
   CATDESC: epoch_DELTA
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
-  FIELDNAM: epoch_delta
+  FIELDNAM: Epoch Delta
   FORMAT: I19
   UNITS: ns
   VALIDMIN: 0
@@ -45,7 +45,7 @@ pui_cooling_index:
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: pui_cooling_index
+  FIELDNAM: Pui Cooling Index
   FORMAT: F19.3
   LABLAXIS: PUI cooling idx
   UNITS: ' '
@@ -64,7 +64,7 @@ pui_ionization_rate:
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: pui_ionization_rate
+  FIELDNAM: Pui Ionization Rate
   FORMAT: F19.3
   LABLAXIS: PUI IR
   UNITS: s!E-1!N
@@ -83,7 +83,7 @@ pui_cutoff_speed:
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: pui_cutoff_speed
+  FIELDNAM: Pui Cutoff Speed
   FORMAT: F19.3
   LABLAXIS: PUI Cutoff Speed
   UNITS: km/s
@@ -102,7 +102,7 @@ pui_background_count_rate:
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: pui_background_count_rate
+  FIELDNAM: Pui Background Count Rate
   FORMAT: F19.3
   LABLAXIS: PUI Background Count Rate
   UNITS: s!E-1!N
@@ -121,7 +121,7 @@ pui_density:
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: pui_density
+  FIELDNAM: Pui Density
   FORMAT: F19.3
   LABLAXIS: PUI Density
   UNITS: cm!E-3!N
@@ -140,7 +140,7 @@ pui_temperature:
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: pui_temperature
+  FIELDNAM: Pui Temperature
   FORMAT: F19.3
   LABLAXIS: PUI Temperature
   UNITS: K
@@ -159,7 +159,7 @@ proton_sw_speed:
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: proton_sw_speed
+  FIELDNAM: Proton SW Speed
   FORMAT: F19.3
   LABLAXIS: Proton Solar Wind Speed
   UNITS: km/s
@@ -178,7 +178,7 @@ proton_sw_speed_delta:
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: proton_sw_speed_delta
+  FIELDNAM: Proton SW Speed Delta
   FORMAT: F19.3
   UNITS: km/s
   VALIDMIN: 0
@@ -193,8 +193,8 @@ proton_sw_temperature:
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
-  VARIABLE_PURPOSE: PRIMARY_VAR, SUMMARY
-  FIELDNAM: proton_sw_temperature
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Proton SW Temperature
   FORMAT: F19.3
   LABLAXIS: Proton Solar Wind Temperature
   UNITS: K
@@ -213,7 +213,7 @@ proton_sw_temperature_delta:
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: proton_sw_temperature_delta
+  FIELDNAM: Proton SW Temperature Delta
   FORMAT: F19.3
   UNITS: K
   VALIDMIN: 0
@@ -228,8 +228,8 @@ proton_sw_density:
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
-  VARIABLE_PURPOSE: PRIMARY_VAR, SUMMARY
-  FIELDNAM: proton_sw_density
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Proton SW Density
   FORMAT: F19.3
   LABLAXIS: H+ SW density
   UNITS: cm!E-3!N
@@ -248,7 +248,7 @@ proton_sw_density_delta:
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: proton_sw_density_delta
+  FIELDNAM: Proton SW Density Delta
   FORMAT: F19.3
   UNITS: cm!E-3!N
   VALIDMIN: 0
@@ -263,8 +263,8 @@ proton_sw_clock_angle:
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
-  VARIABLE_PURPOSE: PRIMARY_VAR, SUMMARY
-  FIELDNAM: proton_sw_clock_angle
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Proton SW Clock Angle
   FORMAT: F19.3
   LABLAXIS: Proton Solar Wind Clock Angle
   UNITS: Degrees
@@ -283,7 +283,7 @@ proton_sw_clock_angle_delta:
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: proton_sw_clock_angle_delta
+  FIELDNAM: Proton SW Clock Angle Delta
   FORMAT: F19.3
   UNITS: Degrees
   VALIDMIN: 0
@@ -298,8 +298,8 @@ proton_sw_deflection_angle:
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
-  VARIABLE_PURPOSE: PRIMARY_VAR, SUMMARY
-  FIELDNAM: proton_sw_deflection_angle
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Proton SW Deflection Angle
   FORMAT: F19.3
   LABLAXIS: Proton Solar Wind Deflection Angle
   UNITS: Degrees
@@ -318,7 +318,7 @@ proton_sw_deflection_angle_delta:
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: proton_sw_deflection_angle_delta
+  FIELDNAM: Proton SW Deflection Angle Delta
   FORMAT: F19.3
   UNITS: Degrees
   VALIDMIN: 0
@@ -333,8 +333,8 @@ alpha_sw_speed:
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
-  VARIABLE_PURPOSE: PRIMARY_VAR, SUMMARY
-  FIELDNAM: alpha_sw_speed
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Alpha SW Speed
   FORMAT: F19.3
   LABLAXIS: Alpha Solar Wind Speed
   UNITS: km/s
@@ -353,7 +353,7 @@ alpha_sw_speed_delta:
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: alpha_sw_speed_delta
+  FIELDNAM: Alpha SW Speed Delta
   FORMAT: F19.3
   UNITS: km/s
   VALIDMIN: 0
@@ -368,8 +368,8 @@ alpha_sw_temperature:
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
-  VARIABLE_PURPOSE: PRIMARY_VAR, SUMMARY
-  FIELDNAM: alpha_sw_temperature
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Alpha SW Temperature
   FORMAT: F19.3
   LABLAXIS: Alpha Solar Wind Temperature
   UNITS: K
@@ -388,7 +388,7 @@ alpha_sw_temperature_delta:
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: alpha_sw_temperature_delta
+  FIELDNAM: Alpha SW Temperature Delta
   FORMAT: F19.3
   UNITS: K
   VALIDMIN: 0
@@ -403,8 +403,8 @@ alpha_sw_density:
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
-  VARIABLE_PURPOSE: PRIMARY_VAR, SUMMARY
-  FIELDNAM: alpha_sw_density
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Alpha SW Density
   FORMAT: F19.3
   LABLAXIS: Alpha Solar Wind Density
   UNITS: cm!E-3!N
@@ -423,7 +423,7 @@ alpha_sw_density_delta:
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: alpha_sw_density_delta
+  FIELDNAM: Alpha SW Density Delta
   FORMAT: F19.3
   UNITS: cm!E-3!N
   VALIDMIN: 0
