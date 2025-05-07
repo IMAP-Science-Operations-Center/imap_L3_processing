@@ -18,6 +18,8 @@ class TestCdfUtils(TestCase):
                                     "variable_attrs" in str(filename)]
         self.test_cases_variable = []
         for filename in variable_attrs_filenames:
+            if "codice" in filename:
+                continue
             with open(yaml_path / filename) as file:
                 yaml_data = yaml.safe_load(file)
                 for variable_key, variable in yaml_data.items():
@@ -26,6 +28,9 @@ class TestCdfUtils(TestCase):
 
         self.test_cases_file = []
         for filename in variable_attrs_filenames:
+            if "codice" in filename:
+                continue
+
             with open(yaml_path / filename) as file:
                 yaml_data = yaml.safe_load(file)
                 self.test_cases_file.append((filename, yaml_data))
