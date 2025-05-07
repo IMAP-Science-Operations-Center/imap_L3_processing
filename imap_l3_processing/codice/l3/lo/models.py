@@ -6,6 +6,7 @@ import numpy as np
 from numpy import ndarray
 from spacepy.pycdf import CDF
 
+from imap_l3_processing.cdf.cdf_utils import read_numeric_variable
 from imap_l3_processing.codice.l3.lo.direct_events.science.mass_species_bin_lookup import MassSpeciesBinLookup, \
     EventDirection
 from imap_l3_processing.models import DataProductVariable, DataProduct
@@ -243,6 +244,28 @@ class CodiceLoPartialDensityData:
     si_partial_density: ndarray
     fe_loq_partial_density: ndarray
     fe_hiq_partial_density: ndarray
+
+    @classmethod
+    def read_from_cdf(cls, cdf_path: Path | str):
+        with CDF(str(cdf_path)) as cdf:
+            return cls(
+                epoch=cdf[EPOCH_VAR_NAME][...],
+                epoch_delta=cdf[EPOCH_DELTA_VAR_NAME][...],
+                hplus_partial_density=read_numeric_variable(cdf[H_PARTIAL_DENSITY_VAR_NAME]),
+                heplusplus_partial_density=read_numeric_variable(cdf[HE_PARTIAL_DENSITY_VAR_NAME]),
+                cplus4_partial_density=read_numeric_variable(cdf[C4_PARTIAL_DENSITY_VAR_NAME]),
+                cplus5_partial_density=read_numeric_variable(cdf[C5_PARTIAL_DENSITY_VAR_NAME]),
+                cplus6_partial_density=read_numeric_variable(cdf[C6_PARTIAL_DENSITY_VAR_NAME]),
+                oplus5_partial_density=read_numeric_variable(cdf[O5_PARTIAL_DENSITY_VAR_NAME]),
+                oplus6_partial_density=read_numeric_variable(cdf[O6_PARTIAL_DENSITY_VAR_NAME]),
+                oplus7_partial_density=read_numeric_variable(cdf[O7_PARTIAL_DENSITY_VAR_NAME]),
+                oplus8_partial_density=read_numeric_variable(cdf[O8_PARTIAL_DENSITY_VAR_NAME]),
+                ne_partial_density=read_numeric_variable(cdf[NE_PARTIAL_DENSITY_VAR_NAME]),
+                mg_partial_density=read_numeric_variable(cdf[MG_PARTIAL_DENSITY_VAR_NAME]),
+                si_partial_density=read_numeric_variable(cdf[SI_PARTIAL_DENSITY_VAR_NAME]),
+                fe_loq_partial_density=read_numeric_variable(cdf[FE_LOW_PARTIAL_DENSITY_VAR_NAME]),
+                fe_hiq_partial_density=read_numeric_variable(cdf[FE_HIGH_PARTIAL_DENSITY_VAR_NAME]),
+            )
 
 
 @dataclass
