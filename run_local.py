@@ -14,9 +14,11 @@ import xarray as xr
 from imap_data_access.processing_input import AncillaryInput, ProcessingInputCollection, ScienceInput
 from spacepy.pycdf import CDF
 
-from imap_l3_processing.codice.l3.lo.codice_lo_l3a_dependencies import CodiceLoL3aDependencies
+from imap_l3_processing.codice.l3.lo.codice_lo_l3a_direct_events_dependencies import CodiceLoL3aDirectEventsDependencies
 from imap_l3_processing.codice.l3.lo.codice_lo_processor import CodiceLoProcessor
-from imap_l3_processing.codice.l3.lo.models import CodiceLoL2SWSpeciesData
+from imap_l3_processing.codice.l3.lo.direct_events.science.mass_coefficient_lookup import MassCoefficientLookup
+from imap_l3_processing.codice.l3.lo.models import CodiceLoL2SWSpeciesData, CodiceLoL2DirectEventData, \
+    CodiceLoL1aSWPriorityRates, CodiceLoL1aNSWPriorityRates
 from imap_l3_processing.codice.l3.lo.sectored_intensities.science.mass_per_charge_lookup import MassPerChargeLookup
 from imap_l3_processing.glows.glows_initializer import GlowsInitializer
 from imap_l3_processing.glows.glows_processor import GlowsProcessor
@@ -109,8 +111,35 @@ def create_codice_lo_l3a_partial_densities_cdf():
     cdf_path = save_data(partial_densities_data, delete_if_present=True)
     return cdf_path
 
-def create_codice_lo_l3a_direct_events_cdf():
 
+def create_codice_lo_l3a_direct_events_cdf():
+    codice_lo_l2_direct_events = CodiceLoL2DirectEventData.read_from_cdf(
+        get_test_instrument_team_data_path('codice/lo/imap_codice_l2_lo-direct-events_20241110193700_v0.0.2.cdf'))
+    codice_lo_l1a_sw_priority = CodiceLoL1aSWPriorityRates.read_from_cdf(
+        get_test_instrument_team_data_path('codice/lo/imap_codice_l1a_lo-sw-priority_20241110193900_v0.0.2.cdf'))
+    codice_lo_l1a_nsw_priority = CodiceLoL1aNSWPriorityRates.read_from_cdf(
+        get_test_instrument_team_data_path('codice/lo/imap_codice_l1a_lo-nsw-priority_20241110193900_v0.0.2.cdf'))
+
+    mass_coefficient_lookup = MassCoefficientLookup.read_from_csv(
+        get_test_data_path('codice/mass_coefficient_lookup.csv'))
+
+    deps = CodiceLoL3aDirectEventsDependencies(codice_l2_direct_events=codice_lo_l2_direct_events,
+                                               codice_lo_l1a_sw_priority_rates=codice_lo_l1a_sw_priority,
+                                               codice_lo_l1a_nsw_priority_rates=codice_lo_l1a_nsw_priority,
+                                               mass_coefficient_lookup=mass_coefficient_lookup)
+
+    input_metadata = InputMetadata(
+        instrument='codice',
+        data_level='l3a',
+        start_date=datetime(2024, 11, 10),
+        end_date=datetime(2025, 1, 2),
+        version='v000',
+        descriptor='lo-direct-events'
+    )
+
+    codice_lo_processor = CodiceLoProcessor(Mock(), input_metadata)
+    direct_event_data = codice_lo_processor.process_l3a_direct_event_data_product(deps)
+    return save_data(direct_event_data, delete_if_present=True)
 
 
 def create_swapi_l3b_cdf(geometric_calibration_file, efficiency_calibration_file, cdf_file):
@@ -693,10 +722,9 @@ if __name__ == "__main__":
     if "codice-lo" in sys.argv:
         if "l3a" in sys.argv:
             if "partial-densities" in sys.argv:
-                path = create_codice_lo_l3a_partial_densities_cdf()
-                print(path)
+                print(create_codice_lo_l3a_partial_densities_cdf())
             elif "direct-events" in sys.argv:
-                pass
+                print(create_codice_lo_l3a_direct_events_cdf())
             elif "3d-instrument-frame" in sys.argv:
                 pass
     if "swapi" in sys.argv:

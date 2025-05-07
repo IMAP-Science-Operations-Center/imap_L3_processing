@@ -199,31 +199,40 @@ class TestModels(unittest.TestCase):
         rng = np.random.default_rng()
 
         epoch = np.array([datetime(2022, 3, 5), datetime(2022, 3, 6)])
+        epoch_delta = np.full(len(epoch), 1)
         event_num = np.array([1, 2, 3, 4])
         spin_angle = np.array([30, 60, 90])
         energy_step = np.array([5.5, 6.6, 7.7])
-        priority = np.array([0, 1, 2, 3, 4, 5, 6, 7])
+        priority = np.arange(CODICE_LO_L2_NUM_PRIORITIES)
 
         direct_event = CodiceLoL3aDirectEventDataProduct(
             input_metadata=Mock(),
             epoch=epoch,
+            epoch_delta=epoch_delta,
             normalization=rng.random((len(epoch), len(priority), len(spin_angle), len(energy_step))),
             mass_per_charge=rng.random((len(epoch), len(priority), len(event_num))),
             mass=rng.random((len(epoch), len(priority), len(event_num))),
-            energy=rng.random((len(epoch), len(priority), len(event_num))),
+            event_energy=rng.random((len(epoch), len(priority), len(event_num))),
             gain=rng.random((len(epoch), len(priority), len(event_num))),
             apd_id=rng.random((len(epoch), len(priority), len(event_num))),
             multi_flag=rng.random((len(epoch), len(priority), len(event_num))),
             num_events=rng.random((len(epoch), len(priority), len(event_num))),
             data_quality=rng.random((len(epoch), len(priority))),
-            pha_type=rng.random((len(epoch), len(priority), len(event_num))),
             tof=rng.random((len(epoch), len(priority), len(event_num))),
         )
 
-        np.testing.assert_array_equal(direct_event.spin_angle,
-                                      np.array([0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330]))
-        np.testing.assert_array_equal(direct_event.energy_step, np.arange(128))
-        np.testing.assert_array_equal(direct_event.priority, priority)
+        spin_angle_bins = np.array([0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330])
+        np.testing.assert_array_equal(direct_event.spin_angle_bin,
+                                      spin_angle_bins)
+        np.testing.assert_array_equal(direct_event.energy_bin, np.arange(128))
+        np.testing.assert_array_equal(direct_event.priority_index, priority)
+        np.testing.assert_array_equal(direct_event.event_index, np.arange(len(event_num)))
+        np.testing.assert_array_equal(direct_event.priority_index_label, np.array(["0", "1", "2", "3", "4", "5", "6"]))
+        np.testing.assert_array_equal(direct_event.event_index_label, np.array([str(i) for i in range(len(event_num))]))
+        np.testing.assert_array_equal(direct_event.energy_bin_label,
+                                      np.array([str(e) for e in np.arange(128)]))
+        np.testing.assert_array_equal(direct_event.spin_angle_bin_label,
+                                      np.array([str(spin_angle) for spin_angle in spin_angle_bins]))
 
         data_products = direct_event.to_data_product_variables()
 

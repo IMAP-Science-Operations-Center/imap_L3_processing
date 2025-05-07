@@ -274,63 +274,84 @@ class CodiceLoL3aPartialDensityDataProduct(DataProduct):
         ]
 
 
-EVENT_NUM_VAR_NAME = "event_num"
-SPIN_ANGLE_VAR_NAME = "spin_angle"
-ENERGY_STEP_VAR_NAME = "energy_step"
-PRIORITY_VAR_NAME = "priority"
+EVENT_INDEX_VAR_NAME = "event_index"
+SPIN_ANGLE_BIN_VAR_NAME = "spin_angle_bin"
+ENERGY_BIN_VAR_NAME = "energy_bin"
+PRIORITY_INDEX_VAR_NAME = "priority_index"
 NORMALIZATION_VAR_NAME = "normalization"
 MASS_PER_CHARGE_VAR_NAME = "mass_per_charge"
 MASS_VAR_NAME = "mass"
-ENERGY_VAR_NAME = "energy"
+EVENT_ENERGY_VAR_NAME = "event_energy"
 GAIN_VAR_NAME = "gain"
 APD_ID_VAR_NAME = "apd_id"
 MULTI_FLAG_VAR_NAME = "multi_flag"
 NUM_EVENTS_VAR_NAME = "num_events"
-PHA_TYPE_VAR_NAME = "pha_type"
 DATA_QUALITY_VAR_NAME = "data_quality"
 TOF_VAR_NAME = "tof"
+PRIORITY_INDEX_LABEL_VAR_NAME = "priority_index_label"
+EVENT_INDEX_LABEL_VAR_NAME = "event_index_label"
+ENERGY_BIN_LABEL_VAR_NAME = "energy_bin_label"
+SPIN_ANGLE_BIN_LABEL_VAR_NAME = "spin_angle_bin_label"
 
 
 @dataclass
 class CodiceLoL3aDirectEventDataProduct(DataProduct):
     epoch: ndarray
+    epoch_delta: ndarray
     normalization: ndarray
     mass_per_charge: np.ndarray
     mass: np.ndarray
-    energy: np.ndarray
+    event_energy: np.ndarray
     gain: np.ndarray
     apd_id: np.ndarray
     multi_flag: np.ndarray
     num_events: np.ndarray
-    pha_type: np.ndarray
     data_quality: np.ndarray
     tof: np.ndarray
-    spin_angle: np.ndarray = field(init=False)
-    energy_step: np.ndarray = field(init=False)
-    priority: np.ndarray = field(init=False)
+    spin_angle_bin: np.ndarray = field(init=False)
+    energy_bin: np.ndarray = field(init=False)
+    priority_index: np.ndarray = field(init=False)
+    event_index: np.ndarray = field(init=False)
+    priority_index_label: np.ndarray = field(init=False)
+    event_index_label: np.ndarray = field(init=False)
+    energy_bin_label: np.ndarray = field(init=False)
+    spin_angle_bin_label: np.ndarray = field(init=False)
 
     def __post_init__(self):
-        self.spin_angle = np.array([0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330])
-        self.energy_step = np.arange(128)
-        self.priority = np.arange(8)
+        self.spin_angle_bin = np.array([0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330])
+        self.energy_bin = np.arange(128)
+        self.priority_index = np.arange(CODICE_LO_L2_NUM_PRIORITIES)
+        self.event_index = np.arange(self.mass_per_charge.shape[-1])
+        self.priority_index_label = self.priority_index.astype(str)
+        self.event_index_label = self.event_index.astype(str)
+        self.energy_bin_label = self.energy_bin.astype(str)
+        self.spin_angle_bin_label = self.spin_angle_bin.astype(str)
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
             DataProductVariable(EPOCH_VAR_NAME, self.epoch),
-            DataProductVariable(SPIN_ANGLE_VAR_NAME, self.spin_angle),
-            DataProductVariable(ENERGY_STEP_VAR_NAME, self.energy_step),
-            DataProductVariable(PRIORITY_VAR_NAME, self.priority),
+            DataProductVariable(EPOCH_DELTA_VAR_NAME, self.epoch_delta),
+            DataProductVariable(PRIORITY_INDEX_VAR_NAME, self.priority_index),
+            DataProductVariable(EVENT_INDEX_VAR_NAME, self.event_index),
+            DataProductVariable(MASS_VAR_NAME, self.mass),
+
+            DataProductVariable(SPIN_ANGLE_BIN_VAR_NAME, self.spin_angle_bin),
+            DataProductVariable(ENERGY_BIN_VAR_NAME, self.energy_bin),
+
             DataProductVariable(NORMALIZATION_VAR_NAME, self.normalization),
             DataProductVariable(MASS_PER_CHARGE_VAR_NAME, self.mass_per_charge),
-            DataProductVariable(MASS_VAR_NAME, self.mass),
-            DataProductVariable(ENERGY_VAR_NAME, self.energy),
+            DataProductVariable(EVENT_ENERGY_VAR_NAME, self.event_energy),
             DataProductVariable(GAIN_VAR_NAME, self.gain),
             DataProductVariable(APD_ID_VAR_NAME, self.apd_id),
             DataProductVariable(MULTI_FLAG_VAR_NAME, self.multi_flag),
             DataProductVariable(NUM_EVENTS_VAR_NAME, self.num_events),
-            DataProductVariable(PHA_TYPE_VAR_NAME, self.pha_type),
             DataProductVariable(DATA_QUALITY_VAR_NAME, self.data_quality),
             DataProductVariable(TOF_VAR_NAME, self.tof),
+
+            DataProductVariable(PRIORITY_INDEX_LABEL_VAR_NAME, self.priority_index_label),
+            DataProductVariable(EVENT_INDEX_LABEL_VAR_NAME, self.event_index_label),
+            DataProductVariable(ENERGY_BIN_LABEL_VAR_NAME, self.energy_bin_label),
+            DataProductVariable(SPIN_ANGLE_BIN_LABEL_VAR_NAME, self.spin_angle_bin_label),
         ]
 
 

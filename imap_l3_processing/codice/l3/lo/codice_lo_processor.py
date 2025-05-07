@@ -29,7 +29,7 @@ class CodiceLoProcessor(Processor):
             data_product = self.process_l3a_partial_densities(dependencies)
         elif self.input_metadata.descriptor == "lo-direct-events":
             dependencies = CodiceLoL3aDirectEventsDependencies.fetch_dependencies(self.dependencies)
-            data_product = self._process_l3a_direct_event_data_product(dependencies)
+            data_product = self.process_l3a_direct_event_data_product(dependencies)
         else:
             raise NotImplementedError
 
@@ -104,8 +104,8 @@ class CodiceLoProcessor(Processor):
             fe_to_o_ratio=fe_to_o_ratio,
         )
 
-    def _process_l3a_direct_event_data_product(self,
-                                               dependencies: CodiceLoL3aDirectEventsDependencies) -> CodiceLoL3aDirectEventDataProduct:
+    def process_l3a_direct_event_data_product(self,
+                                              dependencies: CodiceLoL3aDirectEventsDependencies) -> CodiceLoL3aDirectEventDataProduct:
         codice_sw_priority_rates_l1a_data = dependencies.codice_lo_l1a_sw_priority_rates
         codice_nsw_priority_rates_l1a_data = dependencies.codice_lo_l1a_nsw_priority_rates
         codice_direct_events: CodiceLoL2DirectEventData = dependencies.codice_l2_direct_events
@@ -137,42 +137,45 @@ class CodiceLoProcessor(Processor):
 
         (data_quality, num_events) = [np.full((len(codice_direct_events.epoch), len(priority_rates_for_events)), np.nan)
                                       for _ in range(2)]
+        try:
+            for priority_index, (priority_event, priority_rate) in enumerate(
+                    zip(codice_direct_events.priority_events, priority_rates_for_events)):
 
-        for priority_index, (priority_event, priority_rate) in enumerate(
-                zip(codice_direct_events.priority_events, priority_rates_for_events)):
+                total_by_epoch: np.ndarray[int] = calculate_total_number_of_events(priority_rate,
+                                                                                   codice_sw_priority_rates_l1a_data.acquisition_time_per_step)
 
-            total_by_epoch: np.ndarray[int] = calculate_total_number_of_events(priority_rate,
-                                                                               codice_sw_priority_rates_l1a_data.acquisition_time_per_step)
+                mass_per_charge[:, priority_index, :] = calculate_mass_per_charge(priority_event)
+                mass[:, priority_index, :] = calculate_mass(priority_event, mass_coefficient_lookup)
+                energy[:, priority_index, :] = priority_event.apd_energy
+                gain[:, priority_index, :] = priority_event.apd_gain
+                apd_id[:, priority_index, :] = priority_event.apd_id
+                multi_flag[:, priority_index, :] = priority_event.multi_flag
+                tof[:, priority_index, :] = priority_event.tof
 
-            mass_per_charge[:, priority_index, :] = calculate_mass_per_charge(priority_event)
-            mass[:, priority_index, :] = calculate_mass(priority_event, mass_coefficient_lookup)
-            energy[:, priority_index, :] = priority_event.apd_energy
-            gain[:, priority_index, :] = priority_event.apd_gain
-            apd_id[:, priority_index, :] = priority_event.apd_id
-            multi_flag[:, priority_index, :] = priority_event.multi_flag
-            tof[:, priority_index, :] = priority_event.tof
+                data_quality[:, priority_index] = priority_event.data_quality
+                num_events[:, priority_index] = priority_event.num_events
+                priority_event_binned_by_energy_and_spin_angle = priority_event.total_events_binned_by_energy_step_and_spin_angle()
+                for e in range(len(codice_direct_events.epoch)):
+                    norm = calculate_normalization_ratio(
+                        priority_event_binned_by_energy_and_spin_angle[e],
+                        total_by_epoch[e])
 
-            data_quality[:, priority_index] = priority_event.data_quality
-            num_events[:, priority_index] = priority_event.num_events
-            for e in range(len(codice_direct_events.epoch)):
-                norm = calculate_normalization_ratio(
-                    priority_event.total_events_binned_by_energy_step_and_spin_angle()[e],
-                    total_by_epoch[e])
-
-                normalization[e][priority_index] = norm
+                    normalization[e][priority_index] = norm
+        except Exception as e:
+            print(e)
 
         return CodiceLoL3aDirectEventDataProduct(
             input_metadata=self.input_metadata,
             epoch=codice_direct_events.epoch,
+            epoch_delta=codice_direct_events.epoch_delta_plus,
             normalization=normalization,
             mass_per_charge=mass_per_charge,
             mass=mass,
-            energy=energy,
+            event_energy=energy,
             gain=gain,
             apd_id=apd_id,
             multi_flag=multi_flag,
             num_events=num_events,
-            pha_type=pha_type,
             tof=tof,
             data_quality=data_quality,
         )
