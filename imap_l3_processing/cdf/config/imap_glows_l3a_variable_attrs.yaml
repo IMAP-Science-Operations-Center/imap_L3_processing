@@ -461,6 +461,7 @@ spin_axis_orientation_average:
   DELTA_PLUS_VAR: spin_axis_orientation_std_dev
   DELTA_MINUS_VAR: spin_axis_orientation_std_dev
   SI_CONVERSION: 1.745329e-2>radians
+  LABLAXIS: Spin axis orien. avg
 spin_axis_orientation_std_dev:
   <<: *support_data
   NAME: spin_axis_orientation_std_dev
@@ -515,6 +516,7 @@ spacecraft_location_average:
   DELTA_PLUS_VAR: spacecraft_location_std_dev
   DELTA_MINUS_VAR: spacecraft_location_std_dev
   SI_CONVERSION: 1.0e3>m
+  LABLAXIS: SPC loc avg
 spacecraft_location_std_dev:
   <<: *support_data
   NAME: spacecraft_location_std_dev
@@ -548,6 +550,7 @@ spacecraft_velocity_average:
   DELTA_PLUS_VAR: spacecraft_velocity_std_dev
   DELTA_MINUS_VAR: spacecraft_velocity_std_dev
   SI_CONVERSION: 1.0e3>m/s
+  LABLAXIS: SPC vel avg
 spacecraft_velocity_std_dev:
   <<: *support_data
   NAME: spacecraft_velocity_std_dev

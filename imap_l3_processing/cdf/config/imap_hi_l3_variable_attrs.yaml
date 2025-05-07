@@ -11,7 +11,7 @@ epoch:
   VALIDMIN: 2010-01-01T00:00:00.000000000
   VALIDMAX: 2059-12-31T23:59:58.999000000
   FILLVAL: 9999-12-31T23:59:59.999999999
-  SCALE_TYP: linear
+  SCALETYP: linear
   TIME_BASE: J2000
   TIME_SCALE: TT
   DELTA_PLUS_VAR: epoch_delta
@@ -46,7 +46,7 @@ energy:
   VALIDMIN: 0.0
   VALIDMAX: 100.0
   FILLVAL: -1.00E+31
-  SCALE_TYP: linear
+  SCALETYP: linear
   DELTA_PLUS_VAR: energy_delta_plus
   DELTA_MINUS_VAR: energy_delta_minus
   MONOTON: INCREASE
@@ -72,7 +72,7 @@ energy_delta_minus:
   VALIDMIN: 0.0
   VALIDMAX: 100.0
   FILLVAL: -1.00E+31
-  SCALE_TYP: linear
+  SCALETYP: linear
 energy_delta_plus:
   NAME: energy_delta_plus
   DATA_TYPE: CDF_REAL4
@@ -87,7 +87,7 @@ energy_delta_plus:
   VALIDMIN: 0.0
   VALIDMAX: 100.0
   FILLVAL: -1.00E+31
-  SCALE_TYP: linear
+  SCALETYP: linear
 latitude:
   NAME: latitude
   DATA_TYPE: CDF_REAL4
@@ -101,7 +101,7 @@ latitude:
   VALIDMIN: -90.0
   VALIDMAX: 90.0
   FILLVAL: -1.00E+31
-  SCALE_TYP: linear
+  SCALETYP: linear
   DELTA_PLUS_VAR: latitude_delta
   DELTA_MINUS_VAR: latitude_delta
   MONOTON: INCREASE
@@ -127,7 +127,7 @@ latitude_delta:
   VALIDMIN: 0.0
   VALIDMAX: 90.0
   FILLVAL: -1.00E+31
-  SCALE_TYP: linear
+  SCALETYP: linear
 longitude:
   NAME: longitude
   DATA_TYPE: CDF_REAL4
@@ -141,7 +141,7 @@ longitude:
   VALIDMIN: 0.0
   VALIDMAX: 360.0
   FILLVAL: -1.00E+31
-  SCALE_TYP: linear
+  SCALETYP: linear
   DELTA_PLUS_VAR: longitude_delta
   DELTA_MINUS_VAR: longitude_delta
   MONOTON: INCREASE
@@ -189,7 +189,7 @@ ena_intensity:
   LABL_PTR_1: energy_label
   LABL_PTR_2: longitude_label
   LABL_PTR_3: latitude_label
-  SCALE_TYP: linear
+  SCALETYP: linear
 ena_intensity_stat_unc:
   NAME: ena_intensity_stat_unc
   DATA_TYPE: CDF_REAL4
@@ -210,7 +210,7 @@ ena_intensity_stat_unc:
   LABL_PTR_1: energy_label
   LABL_PTR_2: longitude_label
   LABL_PTR_3: latitude_label
-  SCALE_TYP: linear
+  SCALETYP: linear
 ena_intensity_sys_err:
   NAME: ena_intensity_sys_err
   DATA_TYPE: CDF_REAL4
@@ -231,7 +231,7 @@ ena_intensity_sys_err:
   LABL_PTR_1: energy_label
   LABL_PTR_2: longitude_label
   LABL_PTR_3: latitude_label
-  SCALE_TYP: linear
+  SCALETYP: linear
 exposure_factor:
   NAME: exposure_factor
   DATA_TYPE: CDF_REAL4
@@ -244,6 +244,7 @@ exposure_factor:
   RECORD_VARYING: rv
   DISPLAY_TYPE: no_plot
   FIELDNAM: Exposure Times
+  VARIABLE_PURPOSE: ' '
   FORMAT: F12.1
   LABLAXIS: Exposure
   UNITS: s
@@ -253,7 +254,7 @@ exposure_factor:
   LABL_PTR_1: energy_label
   LABL_PTR_2: longitude_label
   LABL_PTR_3: latitude_label
-  SCALE_TYP: linear
+  SCALETYP: linear
 obs_date:
   NAME: obs_date
   DATA_TYPE: CDF_TIME_TT2000
@@ -266,6 +267,7 @@ obs_date:
   RECORD_VARYING: rv
   DISPLAY_TYPE: image
   FIELDNAM: J2000 Nanoseconds
+  VARIABLE_PURPOSE: ' '
   FORMAT: ' '
   LABLAXIS: epoch
   UNITS: ns
@@ -275,7 +277,7 @@ obs_date:
   LABL_PTR_1: energy_label
   LABL_PTR_2: longitude_label
   LABL_PTR_3: latitude_label
-  SCALE_TYP: linear
+  SCALETYP: linear
 obs_date_range:
   NAME: obs_date_range
   DATA_TYPE: CDF_INT8
@@ -288,6 +290,7 @@ obs_date_range:
   RECORD_VARYING: rv
   DISPLAY_TYPE: image
   FIELDNAM: J2000 Nanoseconds
+  VARIABLE_PURPOSE: ' '
   FORMAT: I19
   LABLAXIS: epoch
   UNITS: ns
@@ -297,7 +300,7 @@ obs_date_range:
   LABL_PTR_1: energy_label
   LABL_PTR_2: longitude_label
   LABL_PTR_3: latitude_label
-  SCALE_TYP: linear
+  SCALETYP: linear
 solid_angle:
   NAME: solid_angle
   DATA_TYPE: CDF_REAL4
@@ -308,6 +311,7 @@ solid_angle:
   RECORD_VARYING: nrv
   DISPLAY_TYPE: image
   FIELDNAM: Solid Angle
+  VARIABLE_PURPOSE: ' '
   FORMAT: F6.2
   LABLAXIS: Solid Angle
   UNITS: sr
@@ -316,7 +320,7 @@ solid_angle:
   FILLVAL: -1.00E+31
   LABL_PTR_1: longitude_label
   LABL_PTR_2: latitude_label
-  SCALE_TYP: linear
+  SCALETYP: linear
 ena_spectral_index:
   NAME: ena_spectral_index
   DATA_TYPE: CDF_REAL4
@@ -339,7 +343,7 @@ ena_spectral_index:
   LABL_PTR_1: energy_label
   LABL_PTR_2: longitude_label
   LABL_PTR_3: latitude_label
-  SCALE_TYP: linear
+  SCALETYP: linear
   DELTA_PLUS_VAR: ena_spectral_index_stat_unc
   DELTA_MINUS_VAR: ena_spectral_index_stat_unc
 ena_spectral_index_stat_unc:
@@ -354,6 +358,7 @@ ena_spectral_index_stat_unc:
   RECORD_VARYING: RV
   DISPLAY_TYPE: no_plot
   FIELDNAM: spectral_fit_index_error
+  VARIABLE_PURPOSE: ' '
   FORMAT: F12.6
   LABLAXIS: Index Error
   UNITS: ' '
@@ -363,4 +368,4 @@ ena_spectral_index_stat_unc:
   LABL_PTR_1: energy_label
   LABL_PTR_2: longitude_label
   LABL_PTR_3: latitude_label
-  SCALE_TYP: linear
+  SCALETYP: linear

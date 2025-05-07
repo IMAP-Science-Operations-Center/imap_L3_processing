@@ -1,402 +1,421 @@
 epoch:
-   NAME: epoch
-   DATA_TYPE: CDF_TIME_TT2000
-   CATDESC: Time, number of nanoseconds since J2000 with leap seconds included
-   VAR_TYPE: support_data
-   RECORD_VARYING: RV
-   FIELDNAM: epoch
-   FORMAT: ' '
-   LABLAXIS: epoch
-   UNITS: ns
-   VALIDMIN: 1990-01-01T00:00:00.000000000
-   VALIDMAX: 2099-12-31T00:00:00.000000000
-   FILLVAL: 9999-12-31T23:59:59.999999999
-   TIME_BASE: J2000
-   TIME_SCALE: Terrestrial Time
-   DELTA_PLUS_VAR: epoch_delta
-   DELTA_MINUS_VAR: epoch_delta
-   MONOTON: INCREASE
-   REFERENCE_POSITION: Rotating Earth Geoid
+  NAME: epoch
+  DATA_TYPE: CDF_TIME_TT2000
+  CATDESC: Time, number of nanoseconds since J2000 with leap seconds included
+  VAR_TYPE: support_data
+  RECORD_VARYING: RV
+  FIELDNAM: epoch
+  FORMAT: ' '
+  LABLAXIS: epoch
+  UNITS: ns
+  VALIDMIN: 1990-01-01T00:00:00.000000000
+  VALIDMAX: 2099-12-31T00:00:00.000000000
+  FILLVAL: 9999-12-31T23:59:59.999999999
+  TIME_BASE: J2000
+  TIME_SCALE: Terrestrial Time
+  DELTA_PLUS_VAR: epoch_delta
+  DELTA_MINUS_VAR: epoch_delta
+  MONOTON: INCREASE
+  REFERENCE_POSITION: Rotating Earth Geoid
 epoch_delta:
-   NAME: epoch_delta
-   DATA_TYPE: CDF_INT8
-   CATDESC: epoch_delta
-   VAR_TYPE: support_data
-   RECORD_VARYING: NRV
-   FIELDNAM: epoch_delta
-   FORMAT: I14
-   LABLAXIS: epoch_delta
-   UNITS: ns
-   VALIDMIN: 0
-   VALIDMAX: 86000000000000
-   FILLVAL: -9.22337E+18
+  NAME: epoch_delta
+  DATA_TYPE: CDF_INT8
+  CATDESC: epoch_delta
+  VAR_TYPE: support_data
+  RECORD_VARYING: NRV
+  FIELDNAM: epoch_delta
+  FORMAT: I14
+  LABLAXIS: epoch_delta
+  UNITS: ns
+  VALIDMIN: 0
+  VALIDMAX: 86000000000000
+  FILLVAL: -9223372036854775808
 charge:
-   NAME: charge
-   DATA_TYPE: CDF_FLOAT
-   CATDESC: Particle Atomic Charge (Element) estimate (float)
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DEPEND_0: epoch
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: charge
-   FORMAT: F15.3
-   LABLAXIS: Charge
-   UNITS: MeV
-   VALIDMIN: 0
-   VALIDMAX: 200
-   FILLVAL: -1.00E+31
+  NAME: charge
+  DATA_TYPE: CDF_FLOAT
+  CATDESC: Particle Atomic Charge (Element) estimate (float)
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DEPEND_0: epoch
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: charge
+  FORMAT: F15.3
+  LABLAXIS: Charge
+  UNITS: MeV
+  VALIDMIN: 0
+  VALIDMAX: 200
+  FILLVAL: -1.00E+31
 energy:
-   NAME: energy
-   DATA_TYPE: CDF_FLOAT
-   CATDESC: Energy (sum of all delta-Es with cosine correction)
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DEPEND_0: epoch
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: energy
-   FORMAT: F15.3
-   LABLAXIS: Energy
-   UNITS: MeV
-   VALIDMIN: 1
-   VALIDMAX: 10000
-   FILLVAL: -1.00E+31
-   SCALEMIN: 0.0001
-   SCALEMAX: 10000
+  NAME: energy
+  DATA_TYPE: CDF_FLOAT
+  CATDESC: Energy (sum of all delta-Es with cosine correction)
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DEPEND_0: epoch
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: energy
+  FORMAT: F15.3
+  LABLAXIS: Energy
+  UNITS: MeV
+  VALIDMIN: 1
+  VALIDMAX: 10000
+  FILLVAL: -1.00E+31
+  SCALEMIN: 0.0001
+  SCALEMAX: 10000
 energy_in_detector:
-   NAME: energy_in_detector
-   DATA_TYPE: CDF_FLOAT
-   CATDESC: Energy In Detector (delta-E in detector_id detector with cosine correction)
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DEPEND_0: epoch
-   DEPEND_1: detector_id
-   DISPLAY_TYPE: no_plot
-   FIELDNAM: energy_at_detector
-   FORMAT: F15.3
-   UNITS: ' '
-   VALIDMIN: 1
-   VALIDMAX: 10000
-   FILLVAL: -1.00E+31
-   SCALEMIN: 0.0001
-   SCALEMAX: 10000
+  NAME: energy_in_detector
+  DATA_TYPE: CDF_FLOAT
+  CATDESC: Energy In Detector (delta-E in detector_id detector with cosine correction)
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DEPEND_0: epoch
+  DEPEND_1: detector_id
+  DISPLAY_TYPE: no_plot
+  FIELDNAM: Energy in detector
+  VARIABLE_PURPOSE: ' '
+  FORMAT: F15.3
+  UNITS: ' '
+  VALIDMIN: 1
+  VALIDMAX: 10000
+  FILLVAL: -1.00E+31
+  SCALEMIN: 0.0001
+  SCALEMAX: 10000
 range:
-   NAME: range
-   DATA_TYPE: CDF_UINT1
-   CATDESC: Particle Range (2 = L1L2, 3=L1L2L3, 4=L1L2L3L3)
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DEPEND_0: epoch
-   DISPLAY_TYPE: no_plot
-   FIELDNAM: range
-   FORMAT: I4
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 4
-   FILLVAL: 255
+  NAME: range
+  DATA_TYPE: CDF_UINT1
+  CATDESC: Particle Range (2 = L1L2, 3=L1L2L3, 4=L1L2L3L3)
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DEPEND_0: epoch
+  DISPLAY_TYPE: no_plot
+  FIELDNAM: range
+  VARIABLE_PURPOSE: ' '
+  FORMAT: I4
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 4
+  FILLVAL: 255
 delta_e:
-   NAME: delta_e
-   DATA_TYPE: CDF_FLOAT
-   CATDESC: Delta E (Energy deposited in detector that particle fully penetrates)
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DEPEND_0: epoch
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: delta_e
-   FORMAT: F15.3
-   LABLAXIS: Delta E
-   UNITS: MeV
-   VALIDMIN: 1
-   VALIDMAX: 10000
-   FILLVAL: -1.00E+31
-   SCALEMIN: 0.0001
-   SCALEMAX: 10000
+  NAME: delta_e
+  DATA_TYPE: CDF_FLOAT
+  CATDESC: Delta E (Energy deposited in detector that particle fully penetrates)
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DEPEND_0: epoch
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: delta_e
+  FORMAT: F15.3
+  LABLAXIS: Delta E
+  UNITS: MeV
+  VALIDMIN: 1
+  VALIDMAX: 10000
+  FILLVAL: -1.00E+31
+  SCALEMIN: 0.0001
+  SCALEMAX: 10000
 e_prime:
-   NAME: e_prime
-   DATA_TYPE: CDF_FLOAT
-   CATDESC: E Prime (Energy deposited in stopping detector)
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DEPEND_0: epoch
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: e_prime
-   FORMAT: F15.3
-   LABLAXIS: E Prime
-   UNITS: MeV
-   VALIDMIN: 1
-   VALIDMAX: 10000
-   FILLVAL: -1.00E+31
-   SCALEMIN: 0.0001
-   SCALEMAX: 10000
+  NAME: e_prime
+  DATA_TYPE: CDF_FLOAT
+  CATDESC: E Prime (Energy deposited in stopping detector)
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DEPEND_0: epoch
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: e_prime
+  FORMAT: F15.3
+  LABLAXIS: E Prime
+  UNITS: MeV
+  VALIDMIN: 1
+  VALIDMAX: 10000
+  FILLVAL: -1.00E+31
+  SCALEMIN: 0.0001
+  SCALEMAX: 10000
 particle_id:
-   NAME: particle_id
-   DATA_TYPE: CDF_UINT2
-   CATDESC: Particle Id (instrument internal identification number)
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DEPEND_0: epoch
-   DISPLAY_TYPE: no_plot
-   FIELDNAM: particle_id
-   FORMAT: I8
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 255
-   FILLVAL: 65535
+  NAME: particle_id
+  DATA_TYPE: CDF_UINT2
+  CATDESC: Particle Id (instrument internal identification number)
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DEPEND_0: epoch
+  DISPLAY_TYPE: no_plot
+  FIELDNAM: particle_id
+  VARIABLE_PURPOSE: ' '
+  FORMAT: I8
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 255
+  FILLVAL: 65535
 priority_buffer_number:
-   NAME: priority_buffer_number
-   DATA_TYPE: CDF_UINT1
-   CATDESC: Priority Buffer Number (instrument has multiple buffers to prioritize events to be transmitted to ground)
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DEPEND_0: epoch
-   DISPLAY_TYPE: no_plot
-   FIELDNAM: priority_buffer_number
-   FORMAT: I4
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 254
-   FILLVAL: 255
+  NAME: priority_buffer_number
+  DATA_TYPE: CDF_UINT1
+  CATDESC: Priority Buffer Number (instrument has multiple buffers to prioritize events to be transmitted to ground)
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DEPEND_0: epoch
+  DISPLAY_TYPE: no_plot
+  FIELDNAM: priority_buffer_number
+  VARIABLE_PURPOSE: ' '
+  FORMAT: I4
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 254
+  FILLVAL: 255
 latency:
-   NAME: latency
-   DATA_TYPE: CDF_UINT1
-   CATDESC: Latency (delay between particle entering and leaving Priority Buffer)
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DEPEND_0: epoch
-   DISPLAY_TYPE: no_plot
-   FIELDNAM: latency
-   FORMAT: I4
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 16
-   FILLVAL: 255
+  NAME: latency
+  DATA_TYPE: CDF_UINT1
+  CATDESC: Latency (delay between particle entering and leaving Priority Buffer)
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DEPEND_0: epoch
+  DISPLAY_TYPE: no_plot
+  FIELDNAM: latency
+  VARIABLE_PURPOSE: ' '
+  FORMAT: I4
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 16
+  FILLVAL: 255
 stim_tag:
-   NAME: stim_tag
-   DATA_TYPE: CDF_INT1
-   CATDESC: Stim Tag (1 = Indicates Stimulus event, charge from pulsers not real event)
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DEPEND_0: epoch
-   DISPLAY_TYPE: no_plot
-   FIELDNAM: stim_tag
-   FORMAT: I4
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 1
-   FILLVAL: -1.28E+02
+  NAME: stim_tag
+  DATA_TYPE: CDF_INT1
+  CATDESC: Stim Tag (1 = Indicates Stimulus event, charge from pulsers not real event)
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DEPEND_0: epoch
+  DISPLAY_TYPE: no_plot
+  FIELDNAM: stim_tag
+  VARIABLE_PURPOSE: ' '
+  FORMAT: I4
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 1
+  FILLVAL: -1.28E+02
 long_event_flag:
-   NAME: long_event_flag
-   DATA_TYPE: CDF_INT1
-   CATDESC: Long Event Flag (1 if extra fields in transmitted event)
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DEPEND_0: epoch
-   DISPLAY_TYPE: no_plot
-   FIELDNAM: long_event_flag
-   FORMAT: I4
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 1
-   FILLVAL: -1.28E+02
+  NAME: long_event_flag
+  DATA_TYPE: CDF_INT1
+  CATDESC: Long Event Flag (1 if extra fields in transmitted event)
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DEPEND_0: epoch
+  DISPLAY_TYPE: no_plot
+  FIELDNAM: long_event_flag
+  VARIABLE_PURPOSE: ' '
+  FORMAT: I4
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 1
+  FILLVAL: -1.28E+02
 haz_tag:
-   NAME: haz_tag
-   DATA_TYPE: CDF_INT1
-   CATDESC: Haz Tag (Hazard, 1 if second event occured too soon after first event)
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DEPEND_0: epoch
-   DISPLAY_TYPE: no_plot
-   FIELDNAM: haz_tag
-   FORMAT: I4
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 1
-   FILLVAL: -1.28E+02
+  NAME: haz_tag
+  DATA_TYPE: CDF_INT1
+  CATDESC: Haz Tag (Hazard, 1 if second event occured too soon after first event)
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DEPEND_0: epoch
+  DISPLAY_TYPE: no_plot
+  FIELDNAM: haz_tag
+  VARIABLE_PURPOSE: ' '
+  FORMAT: I4
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 1
+  FILLVAL: -1.28E+02
 side:
-   NAME: side
-   DATA_TYPE: CDF_INT1
-   CATDESC: A B Side (0 = A-side, opposite Sun, 1 = B-side, Sunward)
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DEPEND_0: epoch
-   DISPLAY_TYPE: no_plot
-   FIELDNAM: a_b_side
-   FORMAT: I4
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 1
-   FILLVAL: -1.28E+02
+  NAME: side
+  DATA_TYPE: CDF_INT1
+  CATDESC: A B Side (0 = A-side, opposite Sun, 1 = B-side, Sunward)
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DEPEND_0: epoch
+  DISPLAY_TYPE: no_plot
+  FIELDNAM: a_b_side
+  VARIABLE_PURPOSE: ' '
+  FORMAT: I4
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 1
+  FILLVAL: -1.28E+02
 has_unread_flag:
-   NAME: has_unread_flag
-   DATA_TYPE: CDF_INT1
-   CATDESC: Has Unread Flag (1 if not all triggered PHA channels transmitted with event)
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DEPEND_0: epoch
-   DISPLAY_TYPE: no_plot
-   FIELDNAM: has_unread_flag
-   FORMAT: I4
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 1
-   FILLVAL: -1.28E+02
+  NAME: has_unread_flag
+  DATA_TYPE: CDF_INT1
+  CATDESC: Has Unread Flag (1 if not all triggered PHA channels transmitted with event)
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DEPEND_0: epoch
+  DISPLAY_TYPE: no_plot
+  FIELDNAM: has_unread_flag
+  VARIABLE_PURPOSE: ' '
+  FORMAT: I4
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 1
+  FILLVAL: -1.28E+02
 culling_flag:
-   NAME: culling_flag
-   DATA_TYPE: CDF_INT1
-   CATDESC: Culling Flag (1 if onboard DPU removed some PHA channels)
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DEPEND_0: epoch
-   DISPLAY_TYPE: no_plot
-   FIELDNAM: culling_flag
-   FORMAT: I4
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 1
-   FILLVAL: -1.28E+02
+  NAME: culling_flag
+  DATA_TYPE: CDF_INT1
+  CATDESC: Culling Flag (1 if onboard DPU removed some PHA channels)
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DEPEND_0: epoch
+  DISPLAY_TYPE: no_plot
+  FIELDNAM: culling_flag
+  VARIABLE_PURPOSE: ' '
+  FORMAT: I4
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 1
+  FILLVAL: -1.28E+02
 pha_value:
-   NAME: pha_value
-   DATA_TYPE: CDF_UINT2
-   CATDESC: Pha Value (raw pulse height value)
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DEPEND_0: epoch
-   DEPEND_1: detector_id
-   DISPLAY_TYPE: spectrogram
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: pha_value
-   FORMAT: I8
-   LABLAXIS: PHA Value
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 65534
-   FILLVAL: 65535
+  NAME: pha_value
+  DATA_TYPE: CDF_UINT2
+  CATDESC: Pha Value (raw pulse height value)
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DEPEND_0: epoch
+  DEPEND_1: detector_id
+  DISPLAY_TYPE: spectrogram
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: pha_value
+  FORMAT: I8
+  LABLAXIS: PHA Value
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 65534
+  FILLVAL: 65535
 is_low_gain:
-   NAME: is_low_gain
-   DATA_TYPE: CDF_INT1
-   CATDESC: Is Low Gain (1 if pha_value is from low-gain channel)
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DEPEND_0: epoch
-   DEPEND_1: detector_id
-   DISPLAY_TYPE: no_plot
-   FIELDNAM: is_low_gain
-   FORMAT: I4
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 1
-   FILLVAL: -128
+  NAME: is_low_gain
+  DATA_TYPE: CDF_INT1
+  CATDESC: Is Low Gain (1 if pha_value is from low-gain channel)
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DEPEND_0: epoch
+  DEPEND_1: detector_id
+  DISPLAY_TYPE: no_plot
+  FIELDNAM: is_low_gain
+  VARIABLE_PURPOSE: ' '
+  FORMAT: I4
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 1
+  FILLVAL: -128
 detector_flags:
-   NAME: detector_flags
-   DATA_TYPE: CDF_UINT2
-   CATDESC: Detector Flags (bit 0 = L1A, 1 = L2A, 2 = L3A, 3 = L1B, 4 = L2B, 5 = L3B, 6 = L4A, 7 = L4B)
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DEPEND_0: epoch
-   DISPLAY_TYPE: no_plot
-   FIELDNAM: detector_flags
-   FORMAT: I8
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 65534
-   FILLVAL: 65535
+  NAME: detector_flags
+  DATA_TYPE: CDF_UINT2
+  CATDESC: Detector Flags (bit 0 = L1A, 1 = L2A, 2 = L3A, 3 = L1B, 4 = L2B, 5 = L3B, 6 = L4A, 7 = L4B)
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DEPEND_0: epoch
+  DISPLAY_TYPE: no_plot
+  FIELDNAM: detector_flags
+  VARIABLE_PURPOSE: ' '
+  FORMAT: I8
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 65534
+  FILLVAL: 65535
 deindex:
-   NAME: deindex
-   DATA_TYPE: CDF_UINT2
-   CATDESC: Index of Delta E (range 0 - 399)
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DEPEND_0: epoch
-   DISPLAY_TYPE: no_plot
-   FIELDNAM: deindex
-   FORMAT: I8
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 65534
-   FILLVAL: 65535
+  NAME: deindex
+  DATA_TYPE: CDF_UINT2
+  CATDESC: Index of Delta E (range 0 - 399)
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DEPEND_0: epoch
+  DISPLAY_TYPE: no_plot
+  FIELDNAM: deindex
+  VARIABLE_PURPOSE: ' '
+  FORMAT: I8
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 65534
+  FILLVAL: 65535
 epindex:
-   NAME: epindex
-   DATA_TYPE: CDF_UINT2
-   CATDESC: Index of E Prime (range 0 - 127)
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DEPEND_0: epoch
-   DISPLAY_TYPE: no_plot
-   FIELDNAM: epindex
-   FORMAT: I8
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 65534
-   FILLVAL: 65535
+  NAME: epindex
+  DATA_TYPE: CDF_UINT2
+  CATDESC: Index of E Prime (range 0 - 127)
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DEPEND_0: epoch
+  DISPLAY_TYPE: no_plot
+  FIELDNAM: epindex
+  VARIABLE_PURPOSE: ' '
+  FORMAT: I8
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 65534
+  FILLVAL: 65535
 stim_gain:
-   NAME: stim_gain
-   DATA_TYPE: CDF_INT1
-   CATDESC: Stim Gain (gain of pulser for stim)
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DEPEND_0: epoch
-   DISPLAY_TYPE: no_plot
-   FIELDNAM: stim_gain
-   FORMAT: I4
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 1
-   FILLVAL: -128
+  NAME: stim_gain
+  DATA_TYPE: CDF_INT1
+  CATDESC: Stim Gain (gain of pulser for stim)
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DEPEND_0: epoch
+  DISPLAY_TYPE: no_plot
+  FIELDNAM: stim_gain
+  VARIABLE_PURPOSE: ' '
+  FORMAT: I4
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 1
+  FILLVAL: -128
 a_l_stim:
-   NAME: a_l_stim
-   DATA_TYPE: CDF_INT1
-   CATDESC: A L Stim (0 = ADC Stim event, 1 = Livetime Stim event)
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DEPEND_0: epoch
-   DISPLAY_TYPE: no_plot
-   FIELDNAM: a_l_stim
-   FORMAT: I4
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 1
-   FILLVAL: -128
+  NAME: a_l_stim
+  DATA_TYPE: CDF_INT1
+  CATDESC: A L Stim (0 = ADC Stim event, 1 = Livetime Stim event)
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DEPEND_0: epoch
+  DISPLAY_TYPE: no_plot
+  FIELDNAM: a_l_stim
+  VARIABLE_PURPOSE: ' '
+  FORMAT: I4
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 1
+  FILLVAL: -128
 stim_step:
-   NAME: stim_step
-   DATA_TYPE: CDF_UINT1
-   CATDESC: Stim Step (index of table of stim steps)
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DEPEND_0: epoch
-   DISPLAY_TYPE: no_plot
-   FIELDNAM: stim_step
-   FORMAT: I8
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 254
-   FILLVAL: 255
+  NAME: stim_step
+  DATA_TYPE: CDF_UINT1
+  CATDESC: Stim Step (index of table of stim steps)
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DEPEND_0: epoch
+  DISPLAY_TYPE: no_plot
+  FIELDNAM: stim_step
+  VARIABLE_PURPOSE: ' '
+  FORMAT: I8
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 254
+  FILLVAL: 255
 dac_value:
-   NAME: dac_value
-   DATA_TYPE: CDF_UINT2
-   CATDESC: Dac Value (pulser dac that controls voltage)
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DEPEND_0: epoch
-   DISPLAY_TYPE: no_plot
-   FIELDNAM: dac_value
-   FORMAT: I8
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 10000
-   FILLVAL: 65535
+  NAME: dac_value
+  DATA_TYPE: CDF_UINT2
+  CATDESC: Dac Value (pulser dac that controls voltage)
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DEPEND_0: epoch
+  DISPLAY_TYPE: no_plot
+  FIELDNAM: dac_value
+  VARIABLE_PURPOSE: ' '
+  FORMAT: I8
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 10000
+  FILLVAL: 65535
 detector_id:
-   NAME: detector_id
-   DATA_TYPE: CDF_UINT1
-   CATDESC: index used to support up to 64 detector addresses per event
-   VAR_TYPE: support_data
-   RECORD_VARYING: NRV
-   FIELDNAM: detector_id
-   FORMAT: I4
-   LABLAXIS: Detector Id
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 64
-   FILLVAL: 255
+  NAME: detector_id
+  DATA_TYPE: CDF_UINT1
+  CATDESC: index used to support up to 64 detector addresses per event
+  VAR_TYPE: support_data
+  RECORD_VARYING: NRV
+  FIELDNAM: detector_id
+  FORMAT: I4
+  LABLAXIS: Detector Id
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 64
+  FILLVAL: 255

@@ -11,7 +11,7 @@ epoch:
   VALIDMIN: 1990-01-01T00:00:00.000000000
   VALIDMAX: 2099-12-31T00:00:00.000000000
   FILLVAL: 9999-12-31T23:59:59.999999999
-  SCALE_TYP: linear
+  SCALETYP: linear
   TIME_BASE: J2000
   TIME_SCALE: TT
   DELTA_PLUS_VAR: epoch_delta
@@ -22,7 +22,7 @@ epoch:
 epoch_delta:
   NAME: epoch_delta
   DATA_TYPE: CDF_INT8
-  CATDESC: epoch_delta
+  CATDESC:
   VAR_TYPE: support_data
   RECORD_VARYING: RV
   DEPEND_0: epoch

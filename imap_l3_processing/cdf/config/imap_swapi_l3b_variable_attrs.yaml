@@ -1,130 +1,131 @@
 epoch:
-   NAME: epoch
-   DATA_TYPE: CDF_TIME_TT2000
-   CATDESC: Time, number of nanoseconds since J2000 with leap seconds included
-   VAR_TYPE: support_data
-   RECORD_VARYING: RV
-   FIELDNAM: epoch
-   FORMAT: ' '
-   LABLAXIS: epoch
-   UNITS: ns
-   VALIDMIN: 2010-01-01T00:00:00.000000000
-   VALIDMAX: 2040-01-01T00:00:00.000000000
-   FILLVAL: 9999-12-31T23:59:59.999999999
-   SCALE_TYP: linear
-   TIME_BASE: J2000
-   TIME_SCALE: Terrestrial Time
-   DELTA_PLUS_VAR: epoch_delta
-   DELTA_MINUS_VAR: epoch_delta
-   MONOTON: INCREASE
-   REFERENCE_POSITION: Rotating Earth Geoid
-   SI_CONVERSION: 1e-9>seconds
+  NAME: epoch
+  DATA_TYPE: CDF_TIME_TT2000
+  CATDESC: Time, number of nanoseconds since J2000 with leap seconds included
+  VAR_TYPE: support_data
+  RECORD_VARYING: RV
+  FIELDNAM: epoch
+  FORMAT: ' '
+  LABLAXIS: epoch
+  UNITS: ns
+  VALIDMIN: 2010-01-01T00:00:00.000000000
+  VALIDMAX: 2040-01-01T00:00:00.000000000
+  FILLVAL: 9999-12-31T23:59:59.999999999
+  SCALETYP: linear
+  TIME_BASE: J2000
+  TIME_SCALE: Terrestrial Time
+  DELTA_PLUS_VAR: epoch_delta
+  DELTA_MINUS_VAR: epoch_delta
+  MONOTON: INCREASE
+  REFERENCE_POSITION: Rotating Earth Geoid
+  SI_CONVERSION: 1e-9>seconds
 epoch_delta:
-   NAME: epoch_delta
-   DATA_TYPE: CDF_INT8
-   CATDESC: epoch_DELTA
-   VAR_TYPE: support_data
-   RECORD_VARYING: NRV
-   FIELDNAM: epoch_delta
-   FORMAT: I19
-   UNITS: ns
-   VALIDMIN: 0
-   VALIDMAX: 86000000000000
-   FILLVAL: -9223372036854775808
-   SCALE_TYP: linear
-   SCALEMIN: 0
-   SCALEMAX: 86000000000000
-   SI_CONVERSION: 1e-9>seconds
+  NAME: epoch_delta
+  DATA_TYPE: CDF_INT8
+  CATDESC: epoch_DELTA
+  VAR_TYPE: support_data
+  RECORD_VARYING: NRV
+  FIELDNAM: epoch_delta
+  FORMAT: I19
+  UNITS: ns
+  VALIDMIN: 0
+  VALIDMAX: 86000000000000
+  FILLVAL: -9223372036854775808
+  SCALETYP: linear
+  SCALEMIN: 0
+  SCALEMAX: 86000000000000
+  SI_CONVERSION: 1e-9>seconds
+  LABLAXIS: Epoch delta
 combined_energy:
-   NAME: combined_energy
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Solar Wind Energy
-   DEPEND_0: epoch
-   VAR_TYPE: support_data
-   RECORD_VARYING: RV
-   FIELDNAM: combined_energy
-   FORMAT: F19.3
-   LABLAXIS: Energy
-   UNITS: eV/q
-   VALIDMIN: 0
-   VALIDMAX: 9223372036854775807
-   FILLVAL: -1.000000e+31
-   SCALE_TYP: log
-   DELTA_PLUS_VAR: combined_energy_delta_minus
-   DELTA_MINUS_VAR: combined_energy_delta_plus
-   SCALEMIN: 0
-   SCALEMAX: 1000
+  NAME: combined_energy
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Solar Wind Energy
+  DEPEND_0: epoch
+  VAR_TYPE: support_data
+  RECORD_VARYING: RV
+  FIELDNAM: combined_energy
+  FORMAT: F19.3
+  LABLAXIS: Energy
+  UNITS: eV/q
+  VALIDMIN: 0
+  VALIDMAX: 9223372036854775807
+  FILLVAL: -1.000000e+31
+  SCALETYP: log
+  DELTA_PLUS_VAR: combined_energy_delta_minus
+  DELTA_MINUS_VAR: combined_energy_delta_plus
+  SCALEMIN: 0
+  SCALEMAX: 1000
 combined_energy_delta_minus:
-   NAME: combined_energy_delta_minus
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Solar Wind Energy Delta Minus
-   DEPEND_0: epoch
-   VAR_TYPE: support_data
-   RECORD_VARYING: RV
-   FIELDNAM: combined_energy_delta_minus
-   FORMAT: F19.3
-   LABLAXIS: Energy Delta Minus
-   UNITS: eV/q
-   VALIDMIN: 0
-   VALIDMAX: 9223372036854775807
-   FILLVAL: -1.000000e+31
+  NAME: combined_energy_delta_minus
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Solar Wind Energy Delta Minus
+  DEPEND_0: epoch
+  VAR_TYPE: support_data
+  RECORD_VARYING: RV
+  FIELDNAM: combined_energy_delta_minus
+  FORMAT: F19.3
+  LABLAXIS: Energy Delta Minus
+  UNITS: eV/q
+  VALIDMIN: 0
+  VALIDMAX: 9223372036854775807
+  FILLVAL: -1.000000e+31
 combined_energy_delta_plus:
-   NAME: combined_energy_delta_plus
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Solar Wind Energy Delta Plus
-   DEPEND_0: epoch
-   VAR_TYPE: support_data
-   RECORD_VARYING: RV
-   FIELDNAM: combined_energy_delta_plus
-   FORMAT: F19.3
-   LABLAXIS: Energy Delta Plus
-   UNITS: eV/q
-   VALIDMIN: 0
-   VALIDMAX: 9223372036854775807
-   FILLVAL: -1.000000e+31
+  NAME: combined_energy_delta_plus
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Solar Wind Energy Delta Plus
+  DEPEND_0: epoch
+  VAR_TYPE: support_data
+  RECORD_VARYING: RV
+  FIELDNAM: combined_energy_delta_plus
+  FORMAT: F19.3
+  LABLAXIS: Energy Delta Plus
+  UNITS: eV/q
+  VALIDMIN: 0
+  VALIDMAX: 9223372036854775807
+  FILLVAL: -1.000000e+31
 combined_differential_flux:
-   NAME: combined_differential_flux
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Combined Differential Flux
-   DEPEND_0: epoch
-   DEPEND_1: combined_energy
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: spectrogram
-   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-   FIELDNAM: combined_differential_flux
-   FORMAT: F19.3
-   LABLAXIS: Differential Flux
-   UNITS: cm!E-2!N sr!E-1!N s!E-1!N (eV/q)!E-1!N'
-   VALIDMIN: 0
-   VALIDMAX: 9223372036854775807
-   FILLVAL: -1.000000e+31
-   LABL_PTR_1: combined_energy_label
-   SCALE_TYP: log
-   DELTA_PLUS_VAR: combined_differential_flux_delta
-   DELTA_MINUS_VAR: combined_differential_flux_delta
-   SCALEMIN: .000001
-   SCALEMAX: 1000000
+  NAME: combined_differential_flux
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Combined Differential Flux
+  DEPEND_0: epoch
+  DEPEND_1: combined_energy
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: spectrogram
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: combined_differential_flux
+  FORMAT: F19.3
+  LABLAXIS: Differential Flux
+  UNITS: cm!E-2!N sr!E-1!N s!E-1!N (eV/q)!E-1!N'
+  VALIDMIN: 0
+  VALIDMAX: 9223372036854775807
+  FILLVAL: -1.000000e+31
+  LABL_PTR_1: combined_energy_label
+  SCALETYP: log
+  DELTA_PLUS_VAR: combined_differential_flux_delta
+  DELTA_MINUS_VAR: combined_differential_flux_delta
+  SCALEMIN: .000001
+  SCALEMAX: 1000000
 combined_differential_flux_delta:
-   NAME: combined_differential_flux_delta
-   DATA_TYPE: CDF_REAL4
-   CATDESC: Combined Differential Flux Uncertainty
-   DEPEND_0: epoch
-   DEPEND_1: combined_energy
-   VAR_TYPE: support_data
-   RECORD_VARYING: RV
-   FIELDNAM: combined_differential_flux_delta
-   FORMAT: F19.3
-   LABLAXIS: Differential Flux Uncertainty
-   UNITS: cm!E-2!N sr!E-1!N s!E-1!N (eV/q)!E-1!N'
-   VALIDMIN: 0
-   VALIDMAX: 9223372036854775807
-   FILLVAL: -1.000000e+31
-   LABL_PTR_1: combined_energy_label
+  NAME: combined_differential_flux_delta
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Combined Differential Flux Uncertainty
+  DEPEND_0: epoch
+  DEPEND_1: combined_energy
+  VAR_TYPE: support_data
+  RECORD_VARYING: RV
+  FIELDNAM: combined_differential_flux_delta
+  FORMAT: F19.3
+  LABLAXIS: Differential Flux Uncertainty
+  UNITS: cm!E-2!N sr!E-1!N s!E-1!N (eV/q)!E-1!N'
+  VALIDMIN: 0
+  VALIDMAX: 9223372036854775807
+  FILLVAL: -1.000000e+31
+  LABL_PTR_1: combined_energy_label
 combined_energy_label:
-   NAME: combined_energy_label
-   DATA_TYPE: CDF_CHAR
-   CATDESC: Label for combined energy
-   VAR_TYPE: metadata
-   FIELDNAM: Combined Energy Label
-   FORMAT: a20
+  NAME: combined_energy_label
+  DATA_TYPE: CDF_CHAR
+  CATDESC: Label for combined energy
+  VAR_TYPE: metadata
+  FIELDNAM: Combined Energy Label
+  FORMAT: a20
