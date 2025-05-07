@@ -11,7 +11,7 @@ epoch:
   VALIDMIN: 2010-01-01T00:00:00.000000000
   VALIDMAX: 2059-12-31T23:59:58.999000000
   FILLVAL: 9999-12-31T23:59:59.999999999
-  SCALE_TYP: linear
+  SCALETYP: linear
   TIME_BASE: J2000
   TIME_SCALE: TT
   DELTA_PLUS_VAR: epoch_delta
@@ -22,48 +22,49 @@ epoch:
 epoch_delta:
   NAME: epoch_delta
   DATA_TYPE: CDF_INT8
-  CATDESC: epoch_DELTA
+  CATDESC: Epoch delta
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
-  FIELDNAM: epoch_delta
+  FIELDNAM: Epoch Delta
   FORMAT: I19
   UNITS: ns
   VALIDMIN: 0
   VALIDMAX: 86000000000000
   FILLVAL: -9223372036854775808
-  SCALE_TYP: linear
+  SCALETYP: linear
   SCALEMIN: 0
   SCALEMAX: 86000000000000
   SI_CONVERSION: 1e-9>seconds
+  LABLAXIS: Epoch delta
 pui_cooling_index:
   NAME: pui_cooling_index
   DATA_TYPE: CDF_REAL4
-  CATDESC: Pickup Ion Cooling Index
+  CATDESC: Pickup ion cooling index
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: pui_cooling_index
+  FIELDNAM: Pui Cooling Index
   FORMAT: F19.3
-  LABLAXIS: PUI Cooling Index
+  LABLAXIS: PUI cooling idx
   UNITS: ' '
   VALIDMIN: 0
   VALIDMAX: 9223372036854775807
   FILLVAL: -1.000000e+31
-  SCALE_TYP: linear
+  SCALETYP: linear
   SCALEMIN: 0
   SCALEMAX: 5
 pui_ionization_rate:
   NAME: pui_ionization_rate
   DATA_TYPE: CDF_REAL4
-  CATDESC: Pickup Ion Ionization Rate
+  CATDESC: Pickup ion ionization rate
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: pui_ionization_rate
+  FIELDNAM: Pui Ionization Rate
   FORMAT: F19.3
   LABLAXIS: PUI IR
   UNITS: s!E-1!N
@@ -76,96 +77,96 @@ pui_ionization_rate:
 pui_cutoff_speed:
   NAME: pui_cutoff_speed
   DATA_TYPE: CDF_REAL4
-  CATDESC: Pickup Ion Cutoff Speed
+  CATDESC: Pickup ion cutoff speed
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: pui_cutoff_speed
+  FIELDNAM: Pui Cutoff Speed
   FORMAT: F19.3
   LABLAXIS: PUI Cutoff Speed
   UNITS: km/s
   VALIDMIN: 0
   VALIDMAX: 9223372036854775807
   FILLVAL: -1.000000e+31
-  SCALE_TYP: linear
+  SCALETYP: linear
   SCALEMIN: 0
   SCALEMAX: 1000
 pui_background_count_rate:
   NAME: pui_background_count_rate
   DATA_TYPE: CDF_REAL4
-  CATDESC: Pickup Ion Background Count Rate
+  CATDESC: Pickup ion background count rate
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: pui_background_count_rate
+  FIELDNAM: Pui Background Count Rate
   FORMAT: F19.3
   LABLAXIS: PUI Background Count Rate
   UNITS: s!E-1!N
   VALIDMIN: 0
   VALIDMAX: 9223372036854775807
   FILLVAL: -1.000000e+31
-  SCALE_TYP: linear
+  SCALETYP: linear
   SCALEMIN: 0
   SCALEMAX: 0.2
 pui_density:
   NAME: pui_density
   DATA_TYPE: CDF_REAL4
-  CATDESC: Pickup Ion Density
+  CATDESC: Pickup ion density
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: pui_density
+  FIELDNAM: Pui Density
   FORMAT: F19.3
   LABLAXIS: PUI Density
   UNITS: cm!E-3!N
   VALIDMIN: 0
   VALIDMAX: 9223372036854775807
   FILLVAL: -1.000000e+31
-  SCALE_TYP: linear
+  SCALETYP: linear
   SCALEMIN: 0
   SCALEMAX: 0.001
 pui_temperature:
   NAME: pui_temperature
   DATA_TYPE: CDF_REAL4
-  CATDESC: Pickup Ion Temperature
+  CATDESC: Pickup ion temperature
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: pui_temperature
+  FIELDNAM: Pui Temperature
   FORMAT: F19.3
   LABLAXIS: PUI Temperature
   UNITS: K
   VALIDMIN: 0
   VALIDMAX: 9223372036854775807
   FILLVAL: -1.000000e+31
-  SCALE_TYP: linear
+  SCALETYP: linear
   SCALEMIN: 0
   SCALEMAX: 50000000
 proton_sw_speed:
   NAME: proton_sw_speed
   DATA_TYPE: CDF_REAL4
-  CATDESC: Speed of Proton Solar Wind
+  CATDESC: Speed of proton solar wind
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: proton_sw_speed
+  FIELDNAM: Proton SW Speed
   FORMAT: F19.3
   LABLAXIS: Proton Solar Wind Speed
   UNITS: km/s
   VALIDMIN: 0
   VALIDMAX: 9223372036854775807
   FILLVAL: -1.000000e+31
-  SCALE_TYP: linear
+  SCALETYP: linear
   DELTA_PLUS_VAR: proton_sw_speed_delta
   DELTA_MINUS_VAR: proton_sw_speed_delta
   SCALEMIN: 0
@@ -173,33 +174,34 @@ proton_sw_speed:
 proton_sw_speed_delta:
   NAME: proton_sw_speed_delta
   DATA_TYPE: CDF_REAL4
-  CATDESC: Proton Solar Wind Speed Uncertainty
+  CATDESC: Proton solar wind speed uncertainty
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: proton_sw_speed_delta
+  FIELDNAM: Proton SW Speed Delta
   FORMAT: F19.3
   UNITS: km/s
   VALIDMIN: 0
   VALIDMAX: 9223372036854775807
   FILLVAL: -1.000000e+31
+  LABLAXIS: H+ SW speed delta
 proton_sw_temperature:
   NAME: proton_sw_temperature
   DATA_TYPE: CDF_REAL4
-  CATDESC: Temperature of Proton Solar Wind
+  CATDESC: Temperature of proton solar wind
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
-  VARIABLE_PURPOSE: PRIMARY_VAR, SUMMARY
-  FIELDNAM: proton_sw_temperature
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Proton SW Temperature
   FORMAT: F19.3
   LABLAXIS: Proton Solar Wind Temperature
   UNITS: K
   VALIDMIN: 0
   VALIDMAX: 9223372036854775807
   FILLVAL: -1.000000e+31
-  SCALE_TYP: linear
+  SCALETYP: linear
   DELTA_PLUS_VAR: proton_sw_temperature_delta
   DELTA_MINUS_VAR: proton_sw_temperature_delta
   SCALEMIN: 0
@@ -207,33 +209,34 @@ proton_sw_temperature:
 proton_sw_temperature_delta:
   NAME: proton_sw_temperature_delta
   DATA_TYPE: CDF_REAL4
-  CATDESC: Proton Solar Wind Temperature Uncertainty
+  CATDESC: Proton solar wind temperature uncertainty
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: proton_sw_temperature_delta
+  FIELDNAM: Proton SW Temperature Delta
   FORMAT: F19.3
   UNITS: K
   VALIDMIN: 0
   VALIDMAX: 9223372036854775807
   FILLVAL: -1.000000e+31
+  LABLAXIS: H+ SW temp. delta
 proton_sw_density:
   NAME: proton_sw_density
   DATA_TYPE: CDF_REAL4
-  CATDESC: Density of Proton Solar Wind
+  CATDESC: Density of proton solar wind
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
-  VARIABLE_PURPOSE: PRIMARY_VAR, SUMMARY
-  FIELDNAM: proton_sw_density
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Proton SW Density
   FORMAT: F19.3
-  LABLAXIS: Proton Solar Wind Density
+  LABLAXIS: H+ SW density
   UNITS: cm!E-3!N
   VALIDMIN: 0
   VALIDMAX: 9223372036854775807
   FILLVAL: -1.000000e+31
-  SCALE_TYP: linear
+  SCALETYP: linear
   DELTA_PLUS_VAR: proton_sw_density_delta
   DELTA_MINUS_VAR: proton_sw_density_delta
   SCALEMIN: 0
@@ -241,33 +244,34 @@ proton_sw_density:
 proton_sw_density_delta:
   NAME: proton_sw_density_delta
   DATA_TYPE: CDF_REAL4
-  CATDESC: Proton Solar Wind Density Uncertainty
+  CATDESC: Proton solar wind density uncertainty
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: proton_sw_density_delta
+  FIELDNAM: Proton SW Density Delta
   FORMAT: F19.3
   UNITS: cm!E-3!N
   VALIDMIN: 0
   VALIDMAX: 9223372036854775807
   FILLVAL: -1.000000e+31
+  LABLAXIS: H+ SW dens. delta
 proton_sw_clock_angle:
   NAME: proton_sw_clock_angle
   DATA_TYPE: CDF_REAL4
-  CATDESC: Clock Angle of Proton Solar Wind
+  CATDESC: Clock angle of proton solar wind
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
-  VARIABLE_PURPOSE: PRIMARY_VAR, SUMMARY
-  FIELDNAM: proton_sw_clock_angle
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Proton SW Clock Angle
   FORMAT: F19.3
   LABLAXIS: Proton Solar Wind Clock Angle
   UNITS: Degrees
   VALIDMIN: 0
   VALIDMAX: 9223372036854775807
   FILLVAL: -1.000000e+31
-  SCALE_TYP: linear
+  SCALETYP: linear
   DELTA_PLUS_VAR: proton_sw_clock_angle_delta
   DELTA_MINUS_VAR: proton_sw_clock_angle_delta
   SCALEMIN: 0
@@ -275,33 +279,34 @@ proton_sw_clock_angle:
 proton_sw_clock_angle_delta:
   NAME: proton_sw_clock_angle_delta
   DATA_TYPE: CDF_REAL4
-  CATDESC: Proton Solar Wind Clock Angle Uncertainty
+  CATDESC: Proton solar wind clock angle uncertainty
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: proton_sw_clock_angle_delta
+  FIELDNAM: Proton SW Clock Angle Delta
   FORMAT: F19.3
   UNITS: Degrees
   VALIDMIN: 0
   VALIDMAX: 9223372036854775807
   FILLVAL: -1.000000e+31
+  LABLAXIS: H+ SW clock ang. delta
 proton_sw_deflection_angle:
   NAME: proton_sw_deflection_angle
   DATA_TYPE: CDF_REAL4
-  CATDESC: Deflection Angle of Proton Solar Wind
+  CATDESC: Deflection angle of proton solar wind
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
-  VARIABLE_PURPOSE: PRIMARY_VAR, SUMMARY
-  FIELDNAM: proton_sw_deflection_angle
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Proton SW Deflection Angle
   FORMAT: F19.3
   LABLAXIS: Proton Solar Wind Deflection Angle
   UNITS: Degrees
   VALIDMIN: 0
   VALIDMAX: 9223372036854775807
   FILLVAL: -1.000000e+31
-  SCALE_TYP: linear
+  SCALETYP: linear
   DELTA_PLUS_VAR: proton_sw_deflection_angle_delta
   DELTA_MINUS_VAR: proton_sw_deflection_angle_delta
   SCALEMIN: 0
@@ -309,33 +314,34 @@ proton_sw_deflection_angle:
 proton_sw_deflection_angle_delta:
   NAME: proton_sw_deflection_angle_delta
   DATA_TYPE: CDF_REAL4
-  CATDESC: Proton Solar Wind Deflection Angle Uncertainty
+  CATDESC: Proton solar wind deflection angle uncertainty
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: proton_sw_deflection_angle_delta
+  FIELDNAM: Proton SW Deflection Angle Delta
   FORMAT: F19.3
   UNITS: Degrees
   VALIDMIN: 0
   VALIDMAX: 9223372036854775807
   FILLVAL: -1.000000e+31
+  LABLAXIS: H+ SW def. ang. delta
 alpha_sw_speed:
   NAME: alpha_sw_speed
   DATA_TYPE: CDF_REAL4
-  CATDESC: Speed of Alpha Solar Wind
+  CATDESC: Speed of alpha solar wind
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
-  VARIABLE_PURPOSE: PRIMARY_VAR, SUMMARY
-  FIELDNAM: alpha_sw_speed
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Alpha SW Speed
   FORMAT: F19.3
   LABLAXIS: Alpha Solar Wind Speed
   UNITS: km/s
   VALIDMIN: 0
   VALIDMAX: 9223372036854775807
   FILLVAL: -1.000000e+31
-  SCALE_TYP: linear
+  SCALETYP: linear
   DELTA_PLUS_VAR: alpha_sw_speed_delta
   DELTA_MINUS_VAR: alpha_sw_speed_delta
   SCALEMIN: 0
@@ -343,33 +349,34 @@ alpha_sw_speed:
 alpha_sw_speed_delta:
   NAME: alpha_sw_speed_delta
   DATA_TYPE: CDF_REAL4
-  CATDESC: Alpha Solar Wind Speed Uncertainty
+  CATDESC: Alpha solar wind speed uncertainty
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: alpha_sw_speed_delta
+  FIELDNAM: Alpha SW Speed Delta
   FORMAT: F19.3
   UNITS: km/s
   VALIDMIN: 0
   VALIDMAX: 9223372036854775807
   FILLVAL: -1.000000e+31
+  LABLAXIS: Alpha SW speed delta
 alpha_sw_temperature:
   NAME: alpha_sw_temperature
   DATA_TYPE: CDF_REAL4
-  CATDESC: Temperature of Alpha Solar Wind
+  CATDESC: Temperature of alpha solar wind
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
-  VARIABLE_PURPOSE: PRIMARY_VAR, SUMMARY
-  FIELDNAM: alpha_sw_temperature
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Alpha SW Temperature
   FORMAT: F19.3
   LABLAXIS: Alpha Solar Wind Temperature
   UNITS: K
   VALIDMIN: 0
   VALIDMAX: 9223372036854775807
   FILLVAL: -1.000000e+31
-  SCALE_TYP: linear
+  SCALETYP: linear
   DELTA_PLUS_VAR: alpha_sw_temperature_delta
   DELTA_MINUS_VAR: alpha_sw_temperature_delta
   SCALEMIN: 0
@@ -377,33 +384,34 @@ alpha_sw_temperature:
 alpha_sw_temperature_delta:
   NAME: alpha_sw_temperature_delta
   DATA_TYPE: CDF_REAL4
-  CATDESC: Alpha Solar Wind Temperature Uncertainty
+  CATDESC: Alpha solar wind temperature uncertainty
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: alpha_sw_temperature_delta
+  FIELDNAM: Alpha SW Temperature Delta
   FORMAT: F19.3
   UNITS: K
   VALIDMIN: 0
   VALIDMAX: 9223372036854775807
   FILLVAL: -1.000000e+31
+  LABLAXIS: Aplha SW temp. delta
 alpha_sw_density:
   NAME: alpha_sw_density
   DATA_TYPE: CDF_REAL4
-  CATDESC: Density of Alpha Solar Wind
+  CATDESC: Density of alpha solar wind
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
-  VARIABLE_PURPOSE: PRIMARY_VAR, SUMMARY
-  FIELDNAM: alpha_sw_density
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Alpha SW Density
   FORMAT: F19.3
   LABLAXIS: Alpha Solar Wind Density
   UNITS: cm!E-3!N
   VALIDMIN: 0
   VALIDMAX: 9223372036854775807
   FILLVAL: -1.000000e+31
-  SCALE_TYP: linear
+  SCALETYP: linear
   DELTA_PLUS_VAR: alpha_sw_density_delta
   DELTA_MINUS_VAR: alpha_sw_density_delta
   SCALEMIN: 0
@@ -411,13 +419,14 @@ alpha_sw_density:
 alpha_sw_density_delta:
   NAME: alpha_sw_density_delta
   DATA_TYPE: CDF_REAL4
-  CATDESC: Alpha Solar Wind Density Uncertainty
+  CATDESC: Alpha solar wind density uncertainty
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: alpha_sw_density_delta
+  FIELDNAM: Alpha SW Density Delta
   FORMAT: F19.3
   UNITS: cm!E-3!N
   VALIDMIN: 0
   VALIDMAX: 9223372036854775807
   FILLVAL: -1.000000e+31
+  LABLAXIS: Aplha SW dens. delta

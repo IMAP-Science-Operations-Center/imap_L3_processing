@@ -1,192 +1,192 @@
 epoch:
-   NAME: epoch
-   DATA_TYPE: CDF_TIME_TT2000
-   CATDESC: Time, number of nanoseconds since J2000 with leap seconds included for center of CR
-   VAR_TYPE: support_data
-   RECORD_VARYING: RV
-   FIELDNAM: Epoch
-   FORMAT: ' '
-   LABLAXIS: Epoch
-   UNITS: ns
-   VALIDMIN: 2010-01-01T00:00:00.000000000
-   VALIDMAX: 2059-12-31T23:59:58.999000000
-   FILLVAL: 9999-12-31T23:59:59.999999999
-   SCALE_TYP: linear
-   TIME_BASE: J2000
-   TIME_SCALE: TT
-   DELTA_PLUS_VAR: epoch_delta
-   DELTA_MINUS_VAR: epoch_delta
-   MONOTON: INCREASE
-   REFERENCE_POSITION: Rotating Earth Geoid
-   SI_CONVERSION: 1e-9>seconds
+  NAME: epoch
+  DATA_TYPE: CDF_TIME_TT2000
+  CATDESC: Time, number of nanoseconds since J2000 with leap seconds included for center of CR
+  VAR_TYPE: support_data
+  RECORD_VARYING: RV
+  FIELDNAM: Epoch
+  FORMAT: ' '
+  LABLAXIS: Epoch
+  UNITS: ns
+  VALIDMIN: 2010-01-01T00:00:00.000000000
+  VALIDMAX: 2059-12-31T23:59:58.999000000
+  FILLVAL: 9999-12-31T23:59:59.999999999
+  SCALETYP: linear
+  TIME_BASE: J2000
+  TIME_SCALE: TT
+  DELTA_PLUS_VAR: epoch_delta
+  DELTA_MINUS_VAR: epoch_delta
+  MONOTON: INCREASE
+  REFERENCE_POSITION: Rotating Earth Geoid
+  SI_CONVERSION: 1e-9>seconds
 epoch_delta:
-   NAME: epoch_delta
-   DATA_TYPE: CDF_INT8
-   CATDESC: Time bin of half a carrington rotation
-   DEPEND_0: epoch
-   VAR_TYPE: support_data
-   RECORD_VARYING: RV
-   FIELDNAM: Epoch delta
-   FORMAT: I19
-   LABLAXIS: Epoch delta
-   UNITS: ns
-   VALIDMIN: 0
-   VALIDMAX: 2592000000000000
-   FILLVAL: -9223372036854775808
-   SCALE_TYP: linear
+  NAME: epoch_delta
+  DATA_TYPE: CDF_INT8
+  CATDESC: Time bin of half a carrington rotation
+  DEPEND_0: epoch
+  VAR_TYPE: support_data
+  RECORD_VARYING: RV
+  FIELDNAM: Epoch Delta
+  FORMAT: I19
+  LABLAXIS: Epoch delta
+  UNITS: ns
+  VALIDMIN: 0
+  VALIDMAX: 2592000000000000
+  FILLVAL: -9223372036854775808
+  SCALETYP: linear
 cr:
-   NAME: cr
-   DATA_TYPE: CDF_INT2
-   CATDESC: Carrington rotation number
-   DEPEND_0: epoch
-   VAR_TYPE: support_data
-   RECORD_VARYING: RV
-   FIELDNAM: Carrington rotation
-   FORMAT: I14
-   LABLAXIS: Carrington rotation
-   UNITS: ' '
-   VALIDMIN: 2000
-   VALIDMAX: 3000
-   FILLVAL: -32768
-   SCALE_TYP: linear
+  NAME: cr
+  DATA_TYPE: CDF_INT2
+  CATDESC: Carrington rotation number
+  DEPEND_0: epoch
+  VAR_TYPE: support_data
+  RECORD_VARYING: RV
+  FIELDNAM: Carrington rotation
+  FORMAT: I14
+  LABLAXIS: Carrington rotation
+  UNITS: ' '
+  VALIDMIN: 2000
+  VALIDMAX: 3000
+  FILLVAL: -32768
+  SCALETYP: linear
 plasma_speed_ecliptic:
-   NAME: plasma_speed_ecliptic
-   DATA_TYPE: CDF_FLOAT
-   CATDESC: Averaged solar wind plasma speed in the ecliptic plane
-   DEPEND_0: epoch
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: primary var, summary
-   FIELDNAM: Plasma speed
-   FORMAT: F9.3
-   LABLAXIS: Speed
-   UNITS: km/s
-   VALIDMIN: 0
-   VALIDMAX: 10000.0
-   FILLVAL: -1.00E+31
-   SCALE_TYP: linear
-   SCALEMIN: 0
-   SCALEMAX: 1000.0
-   SI_CONVERSION: 1e3>m/s
+  NAME: plasma_speed_ecliptic
+  DATA_TYPE: CDF_FLOAT
+  CATDESC: Averaged solar wind plasma speed in the ecliptic plane
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Plasma speed
+  FORMAT: F9.3
+  LABLAXIS: Speed
+  UNITS: km/s
+  VALIDMIN: 0
+  VALIDMAX: 10000.0
+  FILLVAL: -1.00E+31
+  SCALETYP: linear
+  SCALEMIN: 0
+  SCALEMAX: 1000.0
+  SI_CONVERSION: 1e3>m/s
 lat_grid:
-   NAME: lat_grid
-   DATA_TYPE: CDF_FLOAT
-   CATDESC: latitudinal grid from -90 to 90
-   VAR_TYPE: support_data
-   RECORD_VARYING: NRV
-   FIELDNAM: Lat grid
-   FORMAT: F9.3
-   LABLAXIS: Lat grid
-   UNITS: degrees
-   VALIDMIN: -90
-   VALIDMAX: 90
-   FILLVAL: -1.00E+31
-   LABL_PTR_1: lat_grid_label
-   SCALE_TYP: linear
+  NAME: lat_grid
+  DATA_TYPE: CDF_FLOAT
+  CATDESC: Latitudinal grid from -90 to 90
+  VAR_TYPE: support_data
+  RECORD_VARYING: NRV
+  FIELDNAM: Lat grid
+  FORMAT: F9.3
+  LABLAXIS: Lat grid
+  UNITS: degrees
+  VALIDMIN: -90
+  VALIDMAX: 90
+  FILLVAL: -1.00E+31
+  LABL_PTR_1: lat_grid_label
+  SCALETYP: linear
+  DELTA_PLUS_VAR: lat_grid_delta
+  DELTA_MINUS_VAR: lat_grid_delta
 lat_grid_delta:
-   NAME: lat_grid_delta
-   DATA_TYPE: CDF_FLOAT
-   CATDESC: latitudinal grid delta
-   VAR_TYPE: support_data
-   RECORD_VARYING: NRV
-   FIELDNAM: Lat grid delta
-   FORMAT: F9.3
-   LABLAXIS: Lat grid delta
-   UNITS: degrees
-   VALIDMIN: 0
-   VALIDMAX: 90
-   FILLVAL: -1.00E+31
-   SCALE_TYP: linear
-   DELTA_PLUS_VAR: lat_grid_delta
-   DELTA_MINUS_VAR: lat_grid_delta
+  NAME: lat_grid_delta
+  DATA_TYPE: CDF_FLOAT
+  CATDESC: Latitudinal grid delta
+  VAR_TYPE: support_data
+  RECORD_VARYING: NRV
+  FIELDNAM: Lat grid delta
+  FORMAT: F9.3
+  LABLAXIS: Lat grid delta
+  UNITS: degrees
+  VALIDMIN: 0
+  VALIDMAX: 90
+  FILLVAL: -1.00E+31
+  SCALETYP: linear
 lat_grid_label:
-   NAME: lat_grid_label
-   DATA_TYPE: CDF_CHAR
-   CATDESC: Label for lat grid
-   VAR_TYPE: metadata
-   FIELDNAM: lat grid label
-   FORMAT: a20
+  NAME: lat_grid_label
+  DATA_TYPE: CDF_CHAR
+  CATDESC: Label for lat grid
+  VAR_TYPE: metadata
+  FIELDNAM: lat grid label
+  FORMAT: a20
 proton_density_ecliptic:
-   NAME: proton_density_ecliptic
-   DATA_TYPE: CDF_FLOAT
-   CATDESC: Averaged proton density in the ecliptic plane adjusted to 1 au
-   DEPEND_0: epoch
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: primary var, summary
-   FIELDNAM: Proton density
-   FORMAT: F12.3
-   LABLAXIS: Density
-   UNITS: cm^-3
-   VALIDMIN: 0
-   VALIDMAX: 1.0e+6
-   FILLVAL: -1.00E+31
-   SCALE_TYP: linear
-   SCALEMIN: 0
-   SCALEMAX: 10.0
-   SI_CONVERSION: 1e6>m^-3
+  NAME: proton_density_ecliptic
+  DATA_TYPE: CDF_FLOAT
+  CATDESC: Averaged proton density in the ecliptic plane adjusted to 1 au
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Proton density
+  FORMAT: F12.3
+  LABLAXIS: Density
+  UNITS: cm^-3
+  VALIDMIN: 0
+  VALIDMAX: 1.0e+6
+  FILLVAL: -1.00E+31
+  SCALETYP: linear
+  SCALEMIN: 0
+  SCALEMAX: 10.0
+  SI_CONVERSION: 1e6>m^-3
 alpha_abundance_ecliptic:
-   NAME: alpha_abundance_ecliptic
-   DATA_TYPE: CDF_FLOAT
-   CATDESC: Averaged alpha-particles to protons ratio in the ecliptic plane
-   DEPEND_0: epoch
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: time_series
-   VARIABLE_PURPOSE: primary var, summary
-   FIELDNAM: Alpha abundance
-   FORMAT: F9.3
-   LABLAXIS: Abundance
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 1.0
-   FILLVAL: -1.00E+31
-   SCALE_TYP: linear
-   SCALEMIN: 0
-   SCALEMAX: 0.02
+  NAME: alpha_abundance_ecliptic
+  DATA_TYPE: CDF_FLOAT
+  CATDESC: Averaged alpha-particles to protons ratio in the ecliptic plane
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Alpha abundance
+  FORMAT: F9.3
+  LABLAXIS: Abundance
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 1.0
+  FILLVAL: -1.00E+31
+  SCALETYP: linear
+  SCALEMIN: 0
+  SCALEMAX: 0.02
 plasma_speed_profile:
-   NAME: plasma_speed_profile
-   DATA_TYPE: CDF_FLOAT
-   CATDESC: Averaged profile of solar wind plasma speed
-   DEPEND_0: epoch
-   DEPEND_1: lat_grid
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: spectrogram
-   VARIABLE_PURPOSE: primary var, summary
-   FIELDNAM: Plasma speed
-   FORMAT: F9.3
-   LABLAXIS: Speed
-   UNITS: km/s
-   VALIDMIN: 0
-   VALIDMAX: 10000.0
-   FILLVAL: -1.00E+31
-   LABL_PTR_1: lat_grid_label
-   SCALE_TYP: linear
-   SCALEMIN: 0
-   SCALEMAX: 1000.0
-   SI_CONVERSION: 1e3>m/s
+  NAME: plasma_speed_profile
+  DATA_TYPE: CDF_FLOAT
+  CATDESC: Averaged profile of solar wind plasma speed
+  DEPEND_0: epoch
+  DEPEND_1: lat_grid
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: spectrogram
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Plasma speed
+  FORMAT: F9.3
+  LABLAXIS: Speed
+  UNITS: km/s
+  VALIDMIN: 0
+  VALIDMAX: 10000.0
+  FILLVAL: -1.00E+31
+  LABL_PTR_1: lat_grid_label
+  SCALETYP: linear
+  SCALEMIN: 0
+  SCALEMAX: 1000.0
+  SI_CONVERSION: 1e3>m/s
 proton_density_profile:
-   NAME: proton_density_profile
-   DATA_TYPE: CDF_FLOAT
-   CATDESC: Averaged profile of proton density adjusted to 1 au
-   DEPEND_0: epoch
-   DEPEND_1: lat_grid
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DISPLAY_TYPE: spectrogram
-   VARIABLE_PURPOSE: primary var, summary
-   FIELDNAM: Proton density
-   FORMAT: F12.3
-   LABLAXIS: Density
-   UNITS: cm^-3
-   VALIDMIN: 0
-   VALIDMAX: 1.0e+6
-   FILLVAL: -1.00E+31
-   LABL_PTR_1: lat_grid_label
-   SCALE_TYP: linear
-   SCALEMIN: 0
-   SCALEMAX: 10.0
-   SI_CONVERSION: 1e6>m^-3
+  NAME: proton_density_profile
+  DATA_TYPE: CDF_FLOAT
+  CATDESC: Averaged profile of proton density adjusted to 1 au
+  DEPEND_0: epoch
+  DEPEND_1: lat_grid
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: spectrogram
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Proton density
+  FORMAT: F12.3
+  LABLAXIS: Density
+  UNITS: cm^-3
+  VALIDMIN: 0
+  VALIDMAX: 1.0e+6
+  FILLVAL: -1.00E+31
+  LABL_PTR_1: lat_grid_label
+  SCALETYP: linear
+  SCALEMIN: 0
+  SCALEMAX: 10.0
+  SI_CONVERSION: 1e6>m^-3

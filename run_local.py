@@ -20,6 +20,7 @@ from imap_l3_processing.codice.l3.hi.direct_event.codice_hi_l3a_direct_events_de
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_direct_events_dependencies import CodiceLoL3aDirectEventsDependencies
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_partial_densities_dependencies import \
     CodiceLoL3aPartialDensitiesDependencies
+from imap_l3_processing.codice.l3.lo.codice_lo_l3a_ratios_dependencies import CodiceLoL3aRatiosDependencies
 from imap_l3_processing.codice.l3.lo.codice_lo_processor import CodiceLoProcessor
 from imap_l3_processing.codice.l3.lo.direct_events.science.mass_coefficient_lookup import MassCoefficientLookup
 from imap_l3_processing.codice.l3.lo.models import CodiceLoL2SWSpeciesData, CodiceLoL2DirectEventData, \
@@ -141,6 +142,25 @@ def create_codice_lo_l3a_direct_events_cdf():
     codice_lo_processor = CodiceLoProcessor(Mock(), input_metadata)
     direct_event_data = codice_lo_processor.process_l3a_direct_event_data_product(deps)
     return save_data(direct_event_data, delete_if_present=True)
+
+
+def create_codice_lo_l3a_ratios_cdf():
+    partial_densities_file = create_codice_lo_l3a_partial_densities_cdf()
+
+    deps = CodiceLoL3aRatiosDependencies.from_file_paths(partial_densities_file)
+
+    input_metadata = InputMetadata(
+        instrument='codice',
+        data_level='l3a',
+        start_date=datetime(2024, 11, 10),
+        end_date=datetime(2025, 1, 2),
+        version='v000',
+        descriptor='lo-sw-ratios'
+    )
+
+    codice_lo_processor = CodiceLoProcessor(Mock(), input_metadata)
+    ratios_data = codice_lo_processor.process_l3a_ratios(deps)
+    return save_data(ratios_data, delete_if_present=True)
 
 
 def create_swapi_l3b_cdf(geometric_calibration_file, efficiency_calibration_file, cdf_file):
@@ -751,6 +771,8 @@ if __name__ == "__main__":
                 print(create_codice_lo_l3a_partial_densities_cdf())
             elif "direct-events" in sys.argv:
                 print(create_codice_lo_l3a_direct_events_cdf())
+            elif "ratios" in sys.argv:
+                print(create_codice_lo_l3a_ratios_cdf())
             elif "3d-instrument-frame" in sys.argv:
                 pass
     if "codice-hi" in sys.argv:

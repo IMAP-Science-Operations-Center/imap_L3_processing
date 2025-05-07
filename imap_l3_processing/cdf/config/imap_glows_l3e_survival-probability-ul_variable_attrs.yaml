@@ -1,95 +1,95 @@
 epoch:
-   NAME: epoch
-   DATA_TYPE: CDF_TIME_TT2000
-   CATDESC: Time, number of nanoseconds since J2000 with leap seconds included
-   VAR_TYPE: support_data
-   RECORD_VARYING: RV
-   FIELDNAM: epoch
-   FORMAT: ' '
-   LABLAXIS: epoch
-   UNITS: ns
-   VALIDMIN: 1990-01-01T00:00:00.000000000
-   VALIDMAX: 2099-12-31T00:00:00.000000000
-   FILLVAL: 9999-12-31T23:59:59.999999999
-   TIME_BASE: J2000
-   TIME_SCALE: Terrestrial Time
-   DELTA_PLUS_VAR: epoch_delta
-   DELTA_MINUS_VAR: epoch_delta
-   MONOTON: INCREASE
-   REFERENCE_POSITION: Rotating Earth Geoid
+  NAME: epoch
+  DATA_TYPE: CDF_TIME_TT2000
+  CATDESC: Time, number of nanoseconds since J2000 with leap seconds included
+  VAR_TYPE: support_data
+  RECORD_VARYING: RV
+  FIELDNAM: epoch
+  FORMAT: ' '
+  LABLAXIS: epoch
+  UNITS: ns
+  VALIDMIN: 1990-01-01T00:00:00.000000000
+  VALIDMAX: 2099-12-31T00:00:00.000000000
+  FILLVAL: 9999-12-31T23:59:59.999999999
+  TIME_BASE: J2000
+  TIME_SCALE: Terrestrial Time
+  DELTA_PLUS_VAR: epoch_delta
+  DELTA_MINUS_VAR: epoch_delta
+  MONOTON: INCREASE
+  REFERENCE_POSITION: Rotating Earth Geoid
 epoch_delta:
-   NAME: epoch_delta
-   DATA_TYPE: CDF_INT8
-   CATDESC: epoch_delta
-   VAR_TYPE: support_data
-   RECORD_VARYING: RV
-   DEPEND_0: epoch
-   FIELDNAM: epoch_delta
-   FORMAT: I19
-   LABLAXIS: epoch_delta
-   UNITS: ns
-   VALIDMIN: 0
-   VALIDMAX: 86000000000000
-   FILLVAL: -9223372036854775808
+  NAME: epoch_delta
+  DATA_TYPE: CDF_INT8
+  CATDESC: Epoch delta
+  VAR_TYPE: support_data
+  RECORD_VARYING: RV
+  DEPEND_0: epoch
+  FIELDNAM: Epoch Delta
+  FORMAT: I19
+  LABLAXIS: epoch_delta
+  UNITS: ns
+  VALIDMIN: 0
+  VALIDMAX: 86000000000000
+  FILLVAL: -9223372036854775808
 energy:
-   NAME: energy
-   DATA_TYPE: CDF_FLOAT
-   CATDESC: Energies associated with the survival probabilites for IMAP-Ultra
-   VAR_TYPE: support_data
-   RECORD_VARYING: NRV
-   FIELDNAM: energy
-   FORMAT: g9.3
-   LABLAXIS: energy
-   UNITS: kEV
-   VALIDMIN: 0
-   VALIDMAX: 10000000000
-   FILLVAL: -1.0000E+31
+  NAME: energy
+  DATA_TYPE: CDF_FLOAT
+  CATDESC: Energies associated with the survival probabilites for IMAP-Ultra
+  VAR_TYPE: support_data
+  RECORD_VARYING: NRV
+  FIELDNAM: energy
+  FORMAT: g9.3
+  LABLAXIS: energy
+  UNITS: kEV
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.0000E+31
 healpix_index:
-   NAME: healpix_index
-   DATA_TYPE: CDF_INT8
-   CATDESC: Heal pixel index
-   VAR_TYPE: support_data
-   RECORD_VARYING: NRV
-   FIELDNAM: healpix_index
-   FORMAT: I19
-   LABLAXIS: healpix_index
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 3072
-   FILLVAL: -9223372036854770000
+  NAME: healpix_index
+  DATA_TYPE: CDF_INT8
+  CATDESC: Heal pixel index
+  VAR_TYPE: support_data
+  RECORD_VARYING: NRV
+  FIELDNAM: Healpix Index
+  FORMAT: I19
+  LABLAXIS: healpix_index
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 3072
+  FILLVAL: -9223372036854775808
 probability_of_survival:
-   NAME: probability_of_survival
-   DATA_TYPE: CDF_FLOAT
-   CATDESC: Survival probabilities for IMAP-Ultra
-   VAR_TYPE: data
-   RECORD_VARYING: RV
-   DEPEND_0: epoch
-   DEPEND_1: energy
-   DEPEND_2: healpix_index
-   DISPLAY_TYPE: spectrogram
-   VARIABLE_PURPOSE: primary var, summary
-   FIELDNAM: probability_of_survival
-   FORMAT: g9.3
-   LABLAXIS: probability_of_survival
-   UNITS: ' '
-   VALIDMIN: 0
-   VALIDMAX: 1
-   FILLVAL: -1.0000E+31
-   LABL_PTR_1: energy_label
-   LABL_PTR_2: healpix_index_label
+  NAME: probability_of_survival
+  DATA_TYPE: CDF_FLOAT
+  CATDESC: Survival probabilities for IMAP-Ultra
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DEPEND_0: epoch
+  DEPEND_1: energy
+  DEPEND_2: healpix_index
+  DISPLAY_TYPE: spectrogram
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Probability Of Survival
+  FORMAT: g9.3
+  LABLAXIS: Survival prob.
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 1
+  FILLVAL: -1.0000E+31
+  LABL_PTR_1: energy_label
+  LABL_PTR_2: healpix_index_label
 energy_label:
-   NAME: energy_label
-   DATA_TYPE: CDF_CHAR
-   CATDESC: Label for energy
-   VAR_TYPE: metadata
-   FIELDNAM: ' '
-   FORMAT: a20
-   LABLAXIS: energy_label
+  NAME: energy_label
+  DATA_TYPE: CDF_CHAR
+  CATDESC: Label for energy
+  VAR_TYPE: metadata
+  FIELDNAM: ' '
+  FORMAT: a20
+  LABLAXIS: energy_label
 healpix_index_label:
-   NAME: healpix_index_label
-   DATA_TYPE: CDF_CHAR
-   CATDESC: Label for heal pixels
-   VAR_TYPE: metadata
-   FIELDNAM: ' '
-   FORMAT: a20
-   LABLAXIS: healpix_index_label
+  NAME: healpix_index_label
+  DATA_TYPE: CDF_CHAR
+  CATDESC: Label for heal pixels
+  VAR_TYPE: metadata
+  FIELDNAM: ' '
+  FORMAT: a20
+  LABLAXIS: Healpix index

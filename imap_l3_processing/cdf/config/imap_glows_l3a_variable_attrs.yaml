@@ -1,6 +1,6 @@
 primary_data_variable: &primary_data_variable
   VAR_TYPE: data
-  VARIABLE_PURPOSE: primary var, summary
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
   DEPEND_0: epoch
   RECORD_VARYING: RV
 
@@ -12,7 +12,7 @@ support_data: &support_data
 
 primary_support_data: &primary_support_data
   <<: *support_data
-  VARIABLE_PURPOSE: primary var, summary
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
 
 metadata_variable: &metadata_variable
   DATA_TYPE: CDF_CHAR
@@ -27,12 +27,12 @@ epoch:
   DATA_TYPE: CDF_TIME_TT2000
   FIELDNAM: Epoch
   RECORD_VARYING: RV
-  LABLAXIS: epoch
+  LABLAXIS: Epoch
   UNITS: ns
   VALIDMIN: 2010-01-01T00:00:00.000000000
   VALIDMAX: 2059-12-31T23:59:58.999000000
   FILLVAL: 9999-12-31T23:59:59.999999999
-  SCALE_TYP: linear
+  SCALETYP: linear
   TIME_BASE: J2000
   TIME_SCALE: TT
   DELTA_PLUS_VAR: epoch_delta
@@ -43,15 +43,15 @@ epoch:
 epoch_delta:
   <<: *support_data
   NAME: epoch_delta
-  CATDESC: epoch_DELTA
-  FIELDNAM: epoch_delta
+  CATDESC: Epoch delta
+  FIELDNAM: Epoch Delta
   DATA_TYPE: CDF_INT8
   FORMAT: I19
   UNITS: ns
   VALIDMIN: 0
   VALIDMAX: 86000000000000
   FILLVAL: -9223372036854775808
-  SCALE_TYP: linear
+  SCALETYP: linear
   SCALEMIN: 0
   SCALEMAX: 86000000000000
   SI_CONVERSION: 1e-9>seconds
@@ -69,7 +69,7 @@ photon_flux:
   VALIDMIN: 0.0
   VALIDMAX: 30000.0
   FILLVAL: -1.000000E+31
-  SCALE_TYP: linear
+  SCALETYP: linear
   DELTA_PLUS_VAR: photon_flux_uncertainty
   DELTA_MINUS_VAR: photon_flux_uncertainty
   SCALEMIN: 0
@@ -88,7 +88,7 @@ photon_flux_uncertainty:
   VALIDMIN: 0.0
   VALIDMAX: 30000.0
   FILLVAL: -1.000000e+31
-  SCALE_TYP: linear
+  SCALETYP: linear
   SI_CONVERSION: 1e10>s^-1 m^-2
 raw_histogram:
   <<: *primary_data_variable
@@ -104,7 +104,7 @@ raw_histogram:
   VALIDMIN: 0
   VALIDMAX: 300000000
   FILLVAL: 4294967295
-  SCALE_TYP: linear
+  SCALETYP: linear
   SCALEMIN: 0
   SCALEMAX: 1000000
 extra_heliospheric_bckgrd:
@@ -121,7 +121,7 @@ extra_heliospheric_bckgrd:
   VALIDMIN: 0.0
   VALIDMAX: 30000.0
   FILLVAL: -1.000000E+31
-  SCALE_TYP: linear
+  SCALETYP: linear
   SCALEMIN: 0
   SCALEMAX: 1000
   SI_CONVERSION: 1e10>s^-1 m^-2
@@ -139,7 +139,7 @@ time_dependent_bckgrd:
   VALIDMIN: 0.0
   VALIDMAX: 30000.0
   FILLVAL: -1.000000E+31
-  SCALE_TYP: linear
+  SCALETYP: linear
   SCALEMIN: 0
   SCALEMAX: 1000
   SI_CONVERSION: 1e10>s^-1 m^-2
@@ -156,6 +156,7 @@ number_of_bins:
   VALIDMIN: 30
   VALIDMAX: 3600
   FILLVAL: 65535
+  SCALETYP: linear
 exposure_times:
   <<: *primary_data_variable
   NAME: exposure_times
@@ -170,7 +171,7 @@ exposure_times:
   VALIDMIN: 0.0
   VALIDMAX: 9000.0
   FILLVAL: -1.000000E+31
-  SCALE_TYP: linear
+  SCALETYP: linear
   SCALEMIN: 0
   SCALEMAX: 9000
 spin_angle:
@@ -187,7 +188,7 @@ spin_angle:
   VALIDMIN: 0.0
   VALIDMAX: 360.0
   FILLVAL: -1.000000e+31
-  SCALE_TYP: linear
+  SCALETYP: linear
   DELTA_PLUS_VAR: spin_angle_delta
   DELTA_MINUS_VAR: spin_angle_delta
   SI_CONVERSION: 1.745329e-2>radians
@@ -205,7 +206,7 @@ spin_angle_delta:
   VALIDMIN: 0.05
   VALIDMAX: 6.0
   FILLVAL: -1.000000e+31
-  SCALE_TYP: linear
+  SCALETYP: linear
   SI_CONVERSION: 1.745329e-2>radians
 ecliptic_lat:
   <<: *primary_support_data
@@ -221,7 +222,7 @@ ecliptic_lat:
   VALIDMIN: -90.0
   VALIDMAX: 90.0
   FILLVAL: -1.000000E+31
-  SCALE_TYP: linear
+  SCALETYP: linear
   SCALEMIN: -90.0
   SCALEMAX: 90.0
   SI_CONVERSION: 1.745329e-2>radians
@@ -239,7 +240,7 @@ ecliptic_lon:
   VALIDMIN: 0.0
   VALIDMAX: 360.0
   FILLVAL: -1.000000E+31
-  SCALE_TYP: linear
+  SCALETYP: linear
   SCALEMIN: 0.0
   SCALEMAX: 360.0
   SI_CONVERSION: 1.745329e-2>radians
@@ -256,7 +257,7 @@ filter_temperature_average:
   VALIDMIN: -30.0
   VALIDMAX: 60.0
   FILLVAL: -1.000000E+31
-  SCALE_TYP: linear
+  SCALETYP: linear
   DELTA_PLUS_VAR: filter_temperature_std_dev
   DELTA_MINUS_VAR: filter_temperature_std_dev
 filter_temperature_std_dev:
@@ -271,7 +272,7 @@ filter_temperature_std_dev:
   VALIDMIN: 0
   VALIDMAX: 90.0
   FILLVAL: -1.000000E+31
-  SCALE_TYP: linear
+  SCALETYP: linear
 hv_voltage_average:
   <<: *support_data
   NAME: hv_voltage_average
@@ -285,7 +286,7 @@ hv_voltage_average:
   VALIDMIN: 0.0
   VALIDMAX: 3500.0
   FILLVAL: -1.000000E+31
-  SCALE_TYP: linear
+  SCALETYP: linear
   DELTA_PLUS_VAR: hv_voltage_std_dev
   DELTA_MINUS_VAR: hv_voltage_std_dev
 hv_voltage_std_dev:
@@ -300,7 +301,7 @@ hv_voltage_std_dev:
   VALIDMIN: 0.0
   VALIDMAX: 3500.0
   FILLVAL: -1.000000E+31
-  SCALE_TYP: linear
+  SCALETYP: linear
 spin_period_average:
   <<: *support_data
   NAME: spin_period_average
@@ -314,7 +315,7 @@ spin_period_average:
   VALIDMIN: 14.6
   VALIDMAX: 15.4
   FILLVAL: -1.000000E+31
-  SCALE_TYP: linear
+  SCALETYP: linear
   DELTA_PLUS_VAR: spin_period_std_dev
   DELTA_MINUS_VAR: spin_period_std_dev
 spin_period_std_dev:
@@ -329,7 +330,7 @@ spin_period_std_dev:
   VALIDMIN: 0.0
   VALIDMAX: 9.9
   FILLVAL: -1.000000E+31
-  SCALE_TYP: linear
+  SCALETYP: linear
 spin_period_ground_average:
   <<: *support_data
   NAME: spin_period_ground_average
@@ -343,7 +344,7 @@ spin_period_ground_average:
   VALIDMIN: 14.6
   VALIDMAX: 15.4
   FILLVAL: -1.000000E+31
-  SCALE_TYP: linear
+  SCALETYP: linear
   DELTA_PLUS_VAR: spin_period_ground_std_dev
   DELTA_MINUS_VAR: spin_period_ground_std_dev
 spin_period_ground_std_dev:
@@ -358,7 +359,7 @@ spin_period_ground_std_dev:
   VALIDMIN: 0.0
   VALIDMAX: 9.9
   FILLVAL: -1.000000E+31
-  SCALE_TYP: linear
+  SCALETYP: linear
 pulse_length_average:
   <<: *support_data
   NAME: pulse_length_average
@@ -372,7 +373,7 @@ pulse_length_average:
   VALIDMIN: 0.0
   VALIDMAX: 12.75
   FILLVAL: -1.000000E+31
-  SCALE_TYP: linear
+  SCALETYP: linear
   DELTA_PLUS_VAR: pulse_length_std_dev
   DELTA_MINUS_VAR: pulse_length_std_dev
   SI_CONVERSION: 1.0e-6>s
@@ -388,7 +389,7 @@ pulse_length_std_dev:
   VALIDMIN: 0.0
   VALIDMAX: 12.75
   FILLVAL: -1.000000E+31
-  SCALE_TYP: linear
+  SCALETYP: linear
   SI_CONVERSION: 1.0e-6>s
 position_angle_offset_average:
   <<: *support_data
@@ -403,7 +404,7 @@ position_angle_offset_average:
   VALIDMIN: 0.0
   VALIDMAX: 360.0
   FILLVAL: -1.000000E+31
-  SCALE_TYP: linear
+  SCALETYP: linear
   DELTA_PLUS_VAR: position_angle_offset_std_dev
   DELTA_MINUS_VAR: position_angle_offset_std_dev
   SI_CONVERSION: 1.745329e-2>radians
@@ -419,7 +420,7 @@ position_angle_offset_std_dev:
   VALIDMIN: 0.0
   VALIDMAX: 360.0
   FILLVAL: -1.000000E+31
-  SCALE_TYP: linear
+  SCALETYP: linear
   SI_CONVERSION: 1.745329e-2>radians
 lon_lat:
   NAME: lon_lat
@@ -427,7 +428,7 @@ lon_lat:
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
   DISPLAY_TYPE: no_plot
-  FIELDNAM: lon_lat
+  FIELDNAM: Lon Lat
   DATA_TYPE: CDF_INT1
   FORMAT: I1
   LABLAXIS: lon_lat
@@ -435,12 +436,12 @@ lon_lat:
   VALIDMIN: 0
   VALIDMAX: 1
   FILLVAL: -128
-  SCALE_TYP: linear
+  SCALETYP: linear
 lon_lat_labels:
   <<: *metadata_variable
   NAME: lon_lat_labels
   CATDESC: Label names for ecliptic longitude and latitude
-  FIELDNAM: lon_lat_labels
+  FIELDNAM: Lon Lat Labels
   FORMAT: A3
 spin_axis_orientation_average:
   <<: *primary_support_data
@@ -452,14 +453,15 @@ spin_axis_orientation_average:
   DATA_TYPE: CDF_FLOAT
   FORMAT: F7.3
   UNITS: degrees
-  VALIDMIN: -90.0
+  VALIDMIN: 0.0
   VALIDMAX: 360.0
   FILLVAL: -1.00E+31
   LABL_PTR_1: lon_lat_labels
-  SCALE_TYP: linear
+  SCALETYP: linear
   DELTA_PLUS_VAR: spin_axis_orientation_std_dev
   DELTA_MINUS_VAR: spin_axis_orientation_std_dev
   SI_CONVERSION: 1.745329e-2>radians
+  LABLAXIS: Spin axis orien. avg
 spin_axis_orientation_std_dev:
   <<: *support_data
   NAME: spin_axis_orientation_std_dev
@@ -473,7 +475,7 @@ spin_axis_orientation_std_dev:
   VALIDMAX: 360.0
   FILLVAL: -1.00E+31
   LABL_PTR_1: lon_lat_labels
-  SCALE_TYP: linear
+  SCALETYP: linear
   SI_CONVERSION: 1.745329e-2>radians
 x_y_z:
   CATDESC: Component index for cartesian ecliptic coordinates
@@ -482,20 +484,20 @@ x_y_z:
   DISPLAY_TYPE: no_plot
   RECORD_VARYING: NRV
   DATA_TYPE: CDF_INT1
-  FIELDNAM: x_y_z
+  FIELDNAM: X Y Z
   FORMAT: I1
   LABLAXIS: x_y_z
   UNITS: ' '
   VALIDMIN: 0
   VALIDMAX: 2
   FILLVAL: -128
+  SCALETYP: linear
 x_y_z_labels:
   <<: *metadata_variable
   NAME: x_y_z_labels
   CATDESC: Label names for cartesian ecliptic coordinates
-  FIELDNAM: x_y_z_labels
+  FIELDNAM: X Y Z Labels
   FORMAT: A1
-  SCALE_TYP: linear
 spacecraft_location_average:
   <<: *primary_support_data
   NAME: spacecraft_location_average
@@ -510,10 +512,11 @@ spacecraft_location_average:
   VALIDMAX: 9.999999999E+8
   FILLVAL: -1.000000E+31
   LABL_PTR_1: x_y_z_labels
-  SCALE_TYP: linear
+  SCALETYP: linear
   DELTA_PLUS_VAR: spacecraft_location_std_dev
   DELTA_MINUS_VAR: spacecraft_location_std_dev
   SI_CONVERSION: 1.0e3>m
+  LABLAXIS: SPC loc avg
 spacecraft_location_std_dev:
   <<: *support_data
   NAME: spacecraft_location_std_dev
@@ -527,7 +530,7 @@ spacecraft_location_std_dev:
   VALIDMAX: 15.0e+6
   FILLVAL: -1.000000E+31
   LABL_PTR_1: x_y_z_labels
-  SCALE_TYP: linear
+  SCALETYP: linear
   SI_CONVERSION: 1.0e3>m
 spacecraft_velocity_average:
   <<: *support_data
@@ -543,10 +546,11 @@ spacecraft_velocity_average:
   VALIDMAX: 50.0
   FILLVAL: -1.00E+31
   LABL_PTR_1: x_y_z_labels
-  SCALE_TYP: linear
+  SCALETYP: linear
   DELTA_PLUS_VAR: spacecraft_velocity_std_dev
   DELTA_MINUS_VAR: spacecraft_velocity_std_dev
   SI_CONVERSION: 1.0e3>m/s
+  LABLAXIS: SPC vel avg
 spacecraft_velocity_std_dev:
   <<: *support_data
   NAME: spacecraft_velocity_std_dev
@@ -560,5 +564,5 @@ spacecraft_velocity_std_dev:
   VALIDMAX: 9.9
   FILLVAL: -1.000000E+31
   LABL_PTR_1: x_y_z_labels
-  SCALE_TYP: linear
+  SCALETYP: linear
   SI_CONVERSION: 1.0e3>m/s
