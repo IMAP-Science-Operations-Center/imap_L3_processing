@@ -7,8 +7,9 @@ from imap_data_access.processing_input import ProcessingInputCollection
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_direct_events_dependencies import CodiceLoL3aDirectEventsDependencies
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_partial_densities_dependencies import \
     CodiceLoL3aPartialDensitiesDependencies
+from imap_l3_processing.codice.l3.lo.codice_lo_l3a_ratios_dependencies import CodiceLoL3aRatiosDependencies
 from imap_l3_processing.codice.l3.lo.models import CodiceLoL3aPartialDensityDataProduct, CodiceLoL2DirectEventData, \
-    CodiceLoL3aDirectEventDataProduct, CodiceLoPartialDensityData
+    CodiceLoL3aDirectEventDataProduct, CodiceLoPartialDensityData, CodiceLoL3aRatiosDataProduct
 from imap_l3_processing.codice.l3.lo.science.codice_lo_calculations import calculate_partial_densities, \
     calculate_normalization_ratio, calculate_total_number_of_events, calculate_mass, calculate_mass_per_charge
 from imap_l3_processing.hi.l3.models import safe_divide
@@ -30,12 +31,33 @@ class CodiceLoProcessor(Processor):
         elif self.input_metadata.descriptor == "lo-direct-events":
             dependencies = CodiceLoL3aDirectEventsDependencies.fetch_dependencies(self.dependencies)
             data_product = self._process_l3a_direct_event_data_product(dependencies)
+        elif self.input_metadata.descriptor == "lo-sw-ratios":
+            dependencies = CodiceLoL3aRatiosDependencies.fetch_dependencies(self.dependencies)
+            data_product = self.process_l3a_ratios(dependencies)
         else:
             raise NotImplementedError
 
         data_product.parent_file_names = self.get_parent_file_names()
         saved_l3a_cdf = save_data(data_product)
         upload(saved_l3a_cdf)
+
+    def process_l3a_ratios(self, dependencies: CodiceLoL3aRatiosDependencies) -> CodiceLoL3aRatiosDataProduct:
+        input_data = dependencies.partial_density_data
+        oxygen_density = input_data.oplus5_partial_density + input_data.oplus6_partial_density + input_data.oplus7_partial_density + input_data.oplus8_partial_density
+        iron_density = input_data.fe_hiq_partial_density + input_data.fe_loq_partial_density
+        carbon_density = input_data.cplus4_partial_density + input_data.cplus5_partial_density + input_data.cplus6_partial_density
+        return CodiceLoL3aRatiosDataProduct(
+            input_metadata=self.input_metadata,
+            epoch=input_data.epoch,
+            epoch_delta=input_data.epoch_delta,
+            c_to_o_ratio=carbon_density / oxygen_density,
+            mg_to_o_ratio=input_data.mg_partial_density / oxygen_density,
+            fe_to_o_ratio=iron_density / oxygen_density,
+            c6_to_c5_ratio=input_data.cplus6_partial_density / input_data.cplus5_partial_density,
+            c6_to_c4_ratio=input_data.cplus6_partial_density / input_data.cplus4_partial_density,
+            o7_to_o6_ratio=input_data.oplus7_partial_density / input_data.oplus6_partial_density,
+            felo_to_fehi_ratio=input_data.fe_loq_partial_density / input_data.fe_hiq_partial_density,
+        )
 
     def process_l3a_partial_densities(self, dependencies: CodiceLoL3aPartialDensitiesDependencies):
         codice_lo_l2_data = dependencies.codice_l2_lo_data
