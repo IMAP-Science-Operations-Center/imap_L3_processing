@@ -19,7 +19,6 @@ float_data: &float_data
   FILLVAL: -1.000000E+31
 
 epoch:
-  NAME: epoch
   CATDESC: Time, number of nanoseconds since J2000 with leap seconds included
   VAR_TYPE: support_data
   DISPLAY_TYPE: no_plot
@@ -41,7 +40,6 @@ epoch:
   SI_CONVERSION: 1e-9>seconds
 epoch_delta:
   <<: *support_data
-  NAME: epoch_delta
   CATDESC: epoch_DELTA
   FIELDNAM: epoch_delta
   DATA_TYPE: CDF_INT8
@@ -54,30 +52,52 @@ epoch_delta:
   SCALEMIN: 0
   SCALEMAX: 86000000000000
   SI_CONVERSION: 1e-9>seconds
-oxygen_charge_states:
+oxygen_charge_state_distribution:
   <<: *primary_data_variable
   <<: *float_data
-  NAME: oxygen_charge_states
   CATDESC: Oxygen charge state relative abundances
-  FIELDNAM: O abundances
+  FIELDNAM: O charge state abundances
   DATA_TYPE: CDF_REAL4
-  LABL_PTR_1: oxygen_charge_state_labels
+  DEPEND_1: oxygen_charge_state
+  LABLAXIS: O dist.
   SCALETYP: linear
+  DISPLAY_TYPE: spectrogram
   UNITS: ' '
 
-carbon_charge_states:
+carbon_charge_state_distribution:
   <<: *primary_data_variable
   <<: *float_data
-  NAME: carbon_charge_states
   CATDESC: Carbon charge state relative abundances
-  FIELDNAM: C abundances
+  FIELDNAM: C charge state abundances
   DATA_TYPE: CDF_REAL4
-  LABL_PTR_1: carbon_charge_state_labels
+  DEPEND_1: carbon_charge_state
+  LABLAXIS: C dist.
   SCALETYP: linear
+  DISPLAY_TYPE: spectrogram
   UNITS: ' '
 
-oxygen_charge_state_labels:
-  VAR_TYPE: metadata
+carbon_charge_state:
+  VAR_TYPE: support_data
+  DISPLAY_TYPE: no_plot
+  DATA_TYPE: CDF_INT1
+  FIELDNAM: C Charge
+  LABLAXIS: C Charge
+  FORMAT: I1
+  VALIDMIN: 0
+  VALIDMAX: 6
+  FILLVAL: -128
+  RECORD_VARYING: NRV
+  SCALETYP: linear
 
-carbon_charge_state_labels:
-  VAR_TYPE: metadata
+oxygen_charge_state:
+  VAR_TYPE: support_data
+  DISPLAY_TYPE: no_plot
+  DATA_TYPE: CDF_INT1
+  FIELDNAM: O Charge
+  LABLAXIS: O Charge
+  FORMAT: I1
+  VALIDMIN: 0
+  VALIDMAX: 8
+  FILLVAL: -128
+  RECORD_VARYING: NRV
+  SCALETYP: linear

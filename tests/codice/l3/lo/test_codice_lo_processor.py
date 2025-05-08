@@ -199,7 +199,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
                                       [now, now + timedelta(minutes=4)])
         np.testing.assert_array_equal(abundances_data_product.epoch_delta, [120_000_000_000, 120_000_000_000])
 
-        np.testing.assert_array_almost_equal(abundances_data_product.oxygen_charge_states,
+        np.testing.assert_array_almost_equal(abundances_data_product.oxygen_charge_state_distribution,
                                              np.array(
                                                  [
                                                      [1 / (1 + 5 + 8 + 11), 5 / (1 + 5 + 8 + 11), 8 / (1 + 5 + 8 + 11),
@@ -208,7 +208,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
                                                       12 / (2 + 6 + 9 + 12), ],
                                                  ])
                                              )
-        np.testing.assert_array_almost_equal(abundances_data_product.carbon_charge_states,
+        np.testing.assert_array_almost_equal(abundances_data_product.carbon_charge_state_distribution,
                                              np.array(
                                                  [
                                                      [17 / (17 + 20 + 23), 20 / (17 + 20 + 23), 23 / (17 + 20 + 23)],
