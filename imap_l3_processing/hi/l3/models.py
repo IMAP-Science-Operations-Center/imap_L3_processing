@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 import numpy as np
 
 from imap_l3_processing.constants import TT2000_EPOCH
+from imap_l3_processing.data_utils import safe_divide
 from imap_l3_processing.models import DataProductVariable, DataProduct
 
 EPOCH_VAR_NAME = "epoch"
@@ -171,10 +172,6 @@ def combine_maps(maps: list[HiIntensityMapData]) -> HiIntensityMapData:
                                ena_intensity_stat_unc=combined_intensity_stat_unc,
                                obs_date=avg_obs_date
                                )
-
-
-def safe_divide(numerator: np.ndarray, denominator: np.ndarray) -> np.ndarray:
-    return np.divide(numerator, denominator, where=denominator != 0, out=np.full(denominator.shape, np.nan))
 
 
 def calculate_datetime_weighted_average(data: np.ndarray, weights: np.ndarray, axis: int, **kwargs) -> np.ndarray:

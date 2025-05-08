@@ -13,6 +13,7 @@ from imap_l3_processing.codice.l3.lo.models import CodiceLoL3aPartialDensityData
     CodiceLoL3ChargeStateDistributionsDataProduct
 from imap_l3_processing.codice.l3.lo.science.codice_lo_calculations import calculate_partial_densities, \
     calculate_normalization_ratio, calculate_total_number_of_events, calculate_mass, calculate_mass_per_charge
+from imap_l3_processing.data_utils import safe_divide
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
 from imap_l3_processing.utils import save_data
@@ -73,6 +74,7 @@ class CodiceLoProcessor(Processor):
 
     def process_l3a_abundances(self,
                                dependencies: CodiceLoL3aRatiosDependencies) -> CodiceLoL3ChargeStateDistributionsDataProduct:
+
         o5 = dependencies.partial_density_data.oplus5_partial_density
         o6 = dependencies.partial_density_data.oplus6_partial_density
         o7 = dependencies.partial_density_data.oplus7_partial_density
@@ -81,22 +83,18 @@ class CodiceLoProcessor(Processor):
         c5 = dependencies.partial_density_data.cplus5_partial_density
         c6 = dependencies.partial_density_data.cplus6_partial_density
 
-        o5_abundances = o5 / (o5 + o6 + o7 + o8)
-        o6_abundances = o6 / (o5 + o6 + o7 + o8)
-        o7_abundances = o7 / (o5 + o6 + o7 + o8)
-        o8_abundances = o8 / (o5 + o6 + o7 + o8)
+        o_densities = np.column_stack((o5, o6, o7, o8))
+        o_distribution = safe_divide(o_densities, np.sum(o_densities, axis=1, keepdims=True))
 
-        c4_abundances = c4 / (c4 + c5 + c6)
-        c5_abundances = c5 / (c4 + c5 + c6)
-        c6_abundances = c6 / (c4 + c5 + c6)
+        c_densities = np.column_stack((c4, c5, c6))
+        c_distribution = safe_divide(c_densities, np.sum(c_densities, axis=1, keepdims=True))
 
         return CodiceLoL3ChargeStateDistributionsDataProduct(
             self.input_metadata,
             epoch=dependencies.partial_density_data.epoch,
             epoch_delta=dependencies.partial_density_data.epoch_delta,
-            oxygen_charge_state_distribution=np.column_stack(
-                (o5_abundances, o6_abundances, o7_abundances, o8_abundances)),
-            carbon_charge_state_distribution=np.column_stack((c4_abundances, c5_abundances, c6_abundances))
+            oxygen_charge_state_distribution=o_distribution,
+            carbon_charge_state_distribution=c_distribution
         )
 
     def process_l3a_partial_densities(self, dependencies: CodiceLoL3aPartialDensitiesDependencies):
