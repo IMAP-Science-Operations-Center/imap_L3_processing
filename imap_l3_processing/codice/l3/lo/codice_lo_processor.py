@@ -94,8 +94,9 @@ class CodiceLoProcessor(Processor):
             self.input_metadata,
             epoch=dependencies.partial_density_data.epoch,
             epoch_delta=dependencies.partial_density_data.epoch_delta,
-            oxygen_charge_states=np.column_stack((o5_abundances, o6_abundances, o7_abundances, o8_abundances)),
-            carbon_charge_states=np.column_stack((c4_abundances, c5_abundances, c6_abundances))
+            oxygen_charge_state_distribution=np.column_stack(
+                (o5_abundances, o6_abundances, o7_abundances, o8_abundances)),
+            carbon_charge_state_distribution=np.column_stack((c4_abundances, c5_abundances, c6_abundances))
         )
 
     def process_l3a_partial_densities(self, dependencies: CodiceLoL3aPartialDensitiesDependencies):

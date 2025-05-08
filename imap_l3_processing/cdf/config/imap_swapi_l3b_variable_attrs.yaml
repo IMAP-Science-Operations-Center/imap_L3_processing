@@ -129,3 +129,4 @@ combined_energy_label:
   VAR_TYPE: metadata
   FIELDNAM: Combined Energy Label
   FORMAT: a20
+  FILLVAL: ' '
