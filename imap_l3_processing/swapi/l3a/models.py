@@ -102,7 +102,7 @@ class SwapiL3PickupIonData(DataProduct):
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
             DataProductVariable(EPOCH_CDF_VAR_NAME, self.epoch),
-            DataProductVariable(EPOCH_DELTA_CDF_VAR_NAME, FIVE_MINUTES_IN_NANOSECONDS),
+            DataProductVariable(EPOCH_DELTA_CDF_VAR_NAME, np.full_like(self.epoch, FIVE_MINUTES_IN_NANOSECONDS)),
             DataProductVariable(PUI_COOLING_INDEX_CDF_VAR_NAME, self.cooling_index),
             DataProductVariable(PUI_IONIZATION_RATE_CDF_VAR_NAME, self.ionization_rate),
             DataProductVariable(PUI_CUTOFF_SPEED_CDF_VAR_NAME, self.cutoff_speed),

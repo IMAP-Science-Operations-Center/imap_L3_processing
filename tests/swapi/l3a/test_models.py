@@ -91,6 +91,7 @@ class TestModels(CdfModelTestCase):
 
     def test_getting_pui_data_product_variables(self):
         epoch_data = np.arange(20, step=2)
+        expected_epoch_delta = np.full(10, FIVE_MINUTES_IN_NANOSECONDS)
         expected_cooling_index = np.arange(10, step=1)
         expected_ionization_rate = np.arange(300000, step=30000)
         expected_cutoff_speed = np.arange(50000, step=5000)
@@ -103,7 +104,7 @@ class TestModels(CdfModelTestCase):
 
         self.assertEqual(8, len(variables))
         self.assert_variable_attributes(variables[0], epoch_data, EPOCH_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[1], FIVE_MINUTES_IN_NANOSECONDS, EPOCH_DELTA_CDF_VAR_NAME)
+        self.assert_variable_attributes(variables[1], expected_epoch_delta, EPOCH_DELTA_CDF_VAR_NAME)
         self.assert_variable_attributes(variables[2], expected_cooling_index,
                                         PUI_COOLING_INDEX_CDF_VAR_NAME)
         self.assert_variable_attributes(variables[3], expected_ionization_rate,
