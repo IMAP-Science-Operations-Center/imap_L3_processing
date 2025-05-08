@@ -10,7 +10,8 @@ import numpy as np
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.codice.l3.hi.models import CodiceL2HiData, PriorityEventL2, CodiceL3HiDirectEvents, \
-    CodiceHiL2SectoredIntensitiesData, CodiceHiL3PitchAngleDataProduct
+    CodiceHiL2SectoredIntensitiesData, CodiceHiL3PitchAngleDataProduct, CODICE_HI_NUM_L2_PRIORITIES
+from tests.test_helpers import get_test_instrument_team_data_path
 
 
 class TestModels(unittest.TestCase):
@@ -22,237 +23,41 @@ class TestModels(unittest.TestCase):
         if os.path.exists('test_cdf.cdf'):
             os.remove('test_cdf.cdf')
 
-    def test_get_priority_events(self):
-        codice_l2_data = CodiceL2HiData(epochs=np.array([]), priority_event_0=Mock(), priority_event_1=Mock(),
-                                        priority_event_2=Mock(),
-                                        priority_event_3=Mock(), priority_event_4=Mock(), priority_event_5=Mock())
-        (actual_priority_event_0, actual_priority_event_1, actual_priority_event_2,
-         actual_priority_event_3, actual_priority_event_4, actual_priority_event_5) = codice_l2_data.priority_events
+    def test_codice_hi_l2_data_read_from_instrument_team_cdf(self):
+        l2_path = get_test_instrument_team_data_path(
+            "codice/hi/imap_codice_l2_hi-direct-events_20241110193700_v0.0.2.cdf")
+        l2_direct_event_data = CodiceL2HiData.read_from_cdf(l2_path)
 
-        self.assertEqual(codice_l2_data.priority_event_0, actual_priority_event_0)
-        self.assertEqual(codice_l2_data.priority_event_1, actual_priority_event_1)
-        self.assertEqual(codice_l2_data.priority_event_2, actual_priority_event_2)
-        self.assertEqual(codice_l2_data.priority_event_3, actual_priority_event_3)
-        self.assertEqual(codice_l2_data.priority_event_4, actual_priority_event_4)
-        self.assertEqual(codice_l2_data.priority_event_5, actual_priority_event_5)
+        with CDF(str(l2_path)) as cdf:
+            np.testing.assert_array_equal(l2_direct_event_data.epoch, cdf["epoch"])
+            np.testing.assert_array_equal(l2_direct_event_data.epoch_delta_plus, cdf["epoch_delta_plus"])
 
-    def test_codice_hit_l2_data_read_cdf(self):
-        rng = np.random.default_rng()
-        pathname = "test_cdf"
-        with CDF(pathname, '') as cdf:
-            cdf.col_major(True)
+            for priority_index in range(CODICE_HI_NUM_L2_PRIORITIES):
+                actual_priority_event = l2_direct_event_data.priority_events[priority_index]
 
-            epoch = np.array([datetime(2000, 1, 1)])
-            p0_data_quality = rng.random((len(epoch)))
-            p0_erge = rng.random((len(epoch), 10000))
-            p0_multi_flag = rng.random((len(epoch), 10000))
-            p0_num_of_events = rng.random((len(epoch)))
-            p0_ssd_energy = rng.random((len(epoch), 10000))
-            p0_ssd_id = rng.random((len(epoch), 10000))
-            p0_spin_angle = rng.random((len(epoch), 10000))
-            p0_spin_number = rng.random((len(epoch), 10000))
-            p0_tof = rng.random((len(epoch), 10000))
-            p0_type = rng.random((len(epoch), 10000))
-            p1_data_quality = rng.random((len(epoch)))
-            p1_erge = rng.random((len(epoch), 10000))
-            p1_multi_flag = rng.random((len(epoch), 10000))
-            p1_num_of_events = rng.random((len(epoch)))
-            p1_ssd_energy = rng.random((len(epoch), 10000))
-            p1_ssd_id = rng.random((len(epoch), 10000))
-            p1_spin_angle = rng.random((len(epoch), 10000))
-            p1_spin_number = rng.random((len(epoch), 10000))
-            p1_tof = rng.random((len(epoch), 10000))
-            p1_type = rng.random((len(epoch), 10000))
-            p2_data_quality = rng.random((len(epoch)))
-            p2_erge = rng.random((len(epoch), 10000))
-            p2_multi_flag = rng.random((len(epoch), 10000))
-            p2_num_of_events = rng.random((len(epoch)))
-            p2_ssd_energy = rng.random((len(epoch), 10000))
-            p2_ssd_id = rng.random((len(epoch), 10000))
-            p2_spin_angle = rng.random((len(epoch), 10000))
-            p2_spin_number = rng.random((len(epoch), 10000))
-            p2_tof = rng.random((len(epoch), 10000))
-            p2_type = rng.random((len(epoch), 10000))
-            p3_data_quality = rng.random((len(epoch)))
-            p3_erge = rng.random((len(epoch), 10000))
-            p3_multi_flag = rng.random((len(epoch), 10000))
-            p3_num_of_events = rng.random((len(epoch)))
-            p3_ssd_energy = rng.random((len(epoch), 10000))
-            p3_ssd_id = rng.random((len(epoch), 10000))
-            p3_spin_angle = rng.random((len(epoch), 10000))
-            p3_spin_number = rng.random((len(epoch), 10000))
-            p3_tof = rng.random((len(epoch), 10000))
-            p3_type = rng.random((len(epoch), 10000))
-            p4_data_quality = rng.random((len(epoch)))
-            p4_erge = rng.random((len(epoch), 10000))
-            p4_multi_flag = rng.random((len(epoch), 10000))
-            p4_num_of_events = rng.random((len(epoch)))
-            p4_ssd_energy = rng.random((len(epoch), 10000))
-            p4_ssd_id = rng.random((len(epoch), 10000))
-            p4_spin_angle = rng.random((len(epoch), 10000))
-            p4_spin_number = rng.random((len(epoch), 10000))
-            p4_tof = rng.random((len(epoch), 10000))
-            p4_type = rng.random((len(epoch), 10000))
-            p5_data_quality = rng.random((len(epoch)))
-            p5_erge = rng.random((len(epoch), 10000))
-            p5_multi_flag = rng.random((len(epoch), 10000))
-            p5_num_of_events = rng.random((len(epoch)))
-            p5_ssd_energy = rng.random((len(epoch), 10000))
-            p5_ssd_id = rng.random((len(epoch), 10000))
-            p5_spin_angle = rng.random((len(epoch), 10000))
-            p5_spin_number = rng.random((len(epoch), 10000))
-            p5_tof = rng.random((len(epoch), 10000))
-            p5_type = rng.random((len(epoch), 10000))
-
-            cdf["P0_DataQuality"] = p0_data_quality
-            cdf["P0_ERGE"] = p0_erge
-            cdf["P0_MultiFlag"] = p0_multi_flag
-            cdf["P0_NumEvents"] = p0_num_of_events
-            cdf["P0_SSDEnergy"] = p0_ssd_energy
-            cdf["P0_SSD_ID"] = p0_ssd_id
-            cdf["P0_SpinAngle"] = p0_spin_angle
-            cdf["P0_SpinNumber"] = p0_spin_number
-            cdf["P0_TOF"] = p0_tof
-            cdf["P0_Type"] = p0_type
-            cdf["P1_DataQuality"] = p1_data_quality
-            cdf["P1_ERGE"] = p1_erge
-            cdf["P1_MultiFlag"] = p1_multi_flag
-            cdf["P1_NumEvents"] = p1_num_of_events
-            cdf["P1_SSDEnergy"] = p1_ssd_energy
-            cdf["P1_SSD_ID"] = p1_ssd_id
-            cdf["P1_SpinAngle"] = p1_spin_angle
-            cdf["P1_SpinNumber"] = p1_spin_number
-            cdf["P1_TOF"] = p1_tof
-            cdf["P1_Type"] = p1_type
-            cdf["P2_DataQuality"] = p2_data_quality
-            cdf["P2_ERGE"] = p2_erge
-            cdf["P2_MultiFlag"] = p2_multi_flag
-            cdf["P2_NumEvents"] = p2_num_of_events
-            cdf["P2_SSDEnergy"] = p2_ssd_energy
-            cdf["P2_SSD_ID"] = p2_ssd_id
-            cdf["P2_SpinAngle"] = p2_spin_angle
-            cdf["P2_SpinNumber"] = p2_spin_number
-            cdf["P2_TOF"] = p2_tof
-            cdf["P2_Type"] = p2_type
-            cdf["P3_DataQuality"] = p3_data_quality
-            cdf["P3_ERGE"] = p3_erge
-            cdf["P3_MultiFlag"] = p3_multi_flag
-            cdf["P3_NumEvents"] = p3_num_of_events
-            cdf["P3_SSDEnergy"] = p3_ssd_energy
-            cdf["P3_SSD_ID"] = p3_ssd_id
-            cdf["P3_SpinAngle"] = p3_spin_angle
-            cdf["P3_SpinNumber"] = p3_spin_number
-            cdf["P3_TOF"] = p3_tof
-            cdf["P3_Type"] = p3_type
-            cdf["P4_DataQuality"] = p4_data_quality
-            cdf["P4_ERGE"] = p4_erge
-            cdf["P4_MultiFlag"] = p4_multi_flag
-            cdf["P4_NumEvents"] = p4_num_of_events
-            cdf["P4_SSDEnergy"] = p4_ssd_energy
-            cdf["P4_SSD_ID"] = p4_ssd_id
-            cdf["P4_SpinAngle"] = p4_spin_angle
-            cdf["P4_SpinNumber"] = p4_spin_number
-            cdf["P4_TOF"] = p4_tof
-            cdf["P4_Type"] = p4_type
-            cdf["P5_DataQuality"] = p5_data_quality
-            cdf["P5_ERGE"] = p5_erge
-            cdf["P5_MultiFlag"] = p5_multi_flag
-            cdf["P5_NumEvents"] = p5_num_of_events
-            cdf["P5_SSDEnergy"] = p5_ssd_energy
-            cdf["P5_SSD_ID"] = p5_ssd_id
-            cdf["P5_SpinAngle"] = p5_spin_angle
-            cdf["P5_SpinNumber"] = p5_spin_number
-            cdf["P5_TOF"] = p5_tof
-            cdf["P5_Type"] = p5_type
-
-            cdf["epoch"] = epoch
-
-        for path in [pathname]:
-            with self.subTest(path=path):
-                result: CodiceL2HiData = CodiceL2HiData.read_from_cdf(path)
-
-                priority_event_0: PriorityEventL2 = result.priority_event_0
-                np.testing.assert_array_equal(priority_event_0.number_of_events, p0_num_of_events)
-                np.testing.assert_array_equal(priority_event_0.energy_range, p0_erge)
-                np.testing.assert_array_equal(priority_event_0.ssd_id, p0_ssd_id)
-                np.testing.assert_array_equal(priority_event_0.ssd_energy, p0_ssd_energy)
-                np.testing.assert_array_equal(priority_event_0.type, p0_type)
-                np.testing.assert_array_equal(priority_event_0.data_quality, p0_data_quality)
-                np.testing.assert_array_equal(priority_event_0.multi_flag, p0_multi_flag)
-                np.testing.assert_array_equal(priority_event_0.spin_angle, p0_spin_angle)
-                np.testing.assert_array_equal(priority_event_0.spin_number, p0_spin_number)
-                np.testing.assert_array_equal(priority_event_0.time_of_flight, p0_tof)
-
-                priority_event_1: PriorityEventL2 = result.priority_event_1
-                np.testing.assert_array_equal(priority_event_1.number_of_events, p1_num_of_events)
-                np.testing.assert_array_equal(priority_event_1.energy_range, p1_erge)
-                np.testing.assert_array_equal(priority_event_1.ssd_id, p1_ssd_id)
-                np.testing.assert_array_equal(priority_event_1.ssd_energy, p1_ssd_energy)
-                np.testing.assert_array_equal(priority_event_1.type, p1_type)
-                np.testing.assert_array_equal(priority_event_1.data_quality, p1_data_quality)
-                np.testing.assert_array_equal(priority_event_1.multi_flag, p1_multi_flag)
-                np.testing.assert_array_equal(priority_event_1.spin_angle, p1_spin_angle)
-                np.testing.assert_array_equal(priority_event_1.spin_number, p1_spin_number)
-                np.testing.assert_array_equal(priority_event_1.time_of_flight, p1_tof)
-
-                priority_event_2: PriorityEventL2 = result.priority_event_2
-                np.testing.assert_array_equal(priority_event_2.number_of_events, p2_num_of_events)
-                np.testing.assert_array_equal(priority_event_2.energy_range, p2_erge)
-                np.testing.assert_array_equal(priority_event_2.ssd_id, p2_ssd_id)
-                np.testing.assert_array_equal(priority_event_2.ssd_energy, p2_ssd_energy)
-                np.testing.assert_array_equal(priority_event_2.type, p2_type)
-                np.testing.assert_array_equal(priority_event_2.data_quality, p2_data_quality)
-                np.testing.assert_array_equal(priority_event_2.multi_flag, p2_multi_flag)
-                np.testing.assert_array_equal(priority_event_2.spin_angle, p2_spin_angle)
-                np.testing.assert_array_equal(priority_event_2.spin_number, p2_spin_number)
-                np.testing.assert_array_equal(priority_event_2.time_of_flight, p2_tof)
-
-                priority_event_3: PriorityEventL2 = result.priority_event_3
-                np.testing.assert_array_equal(priority_event_3.number_of_events, p3_num_of_events)
-                np.testing.assert_array_equal(priority_event_3.energy_range, p3_erge)
-                np.testing.assert_array_equal(priority_event_3.ssd_id, p3_ssd_id)
-                np.testing.assert_array_equal(priority_event_3.ssd_energy, p3_ssd_energy)
-                np.testing.assert_array_equal(priority_event_3.type, p3_type)
-                np.testing.assert_array_equal(priority_event_3.data_quality, p3_data_quality)
-                np.testing.assert_array_equal(priority_event_3.multi_flag, p3_multi_flag)
-                np.testing.assert_array_equal(priority_event_3.spin_angle, p3_spin_angle)
-                np.testing.assert_array_equal(priority_event_3.spin_number, p3_spin_number)
-                np.testing.assert_array_equal(priority_event_3.time_of_flight, p3_tof)
-
-                priority_event_4: PriorityEventL2 = result.priority_event_4
-                np.testing.assert_array_equal(priority_event_4.number_of_events, p4_num_of_events)
-                np.testing.assert_array_equal(priority_event_4.energy_range, p4_erge)
-                np.testing.assert_array_equal(priority_event_4.ssd_id, p4_ssd_id)
-                np.testing.assert_array_equal(priority_event_4.ssd_energy, p4_ssd_energy)
-                np.testing.assert_array_equal(priority_event_4.type, p4_type)
-                np.testing.assert_array_equal(priority_event_4.data_quality, p4_data_quality)
-                np.testing.assert_array_equal(priority_event_4.multi_flag, p4_multi_flag)
-                np.testing.assert_array_equal(priority_event_4.spin_angle, p4_spin_angle)
-                np.testing.assert_array_equal(priority_event_4.spin_number, p4_spin_number)
-                np.testing.assert_array_equal(priority_event_4.time_of_flight, p4_tof)
-
-                priority_event_5: PriorityEventL2 = result.priority_event_5
-                np.testing.assert_array_equal(priority_event_5.number_of_events, p5_num_of_events)
-                np.testing.assert_array_equal(priority_event_5.energy_range, p5_erge)
-                np.testing.assert_array_equal(priority_event_5.ssd_id, p5_ssd_id)
-                np.testing.assert_array_equal(priority_event_5.ssd_energy, p5_ssd_energy)
-                np.testing.assert_array_equal(priority_event_5.type, p5_type)
-                np.testing.assert_array_equal(priority_event_5.data_quality, p5_data_quality)
-                np.testing.assert_array_equal(priority_event_5.multi_flag, p5_multi_flag)
-                np.testing.assert_array_equal(priority_event_5.spin_angle, p5_spin_angle)
-                np.testing.assert_array_equal(priority_event_5.spin_number, p5_spin_number)
-                np.testing.assert_array_equal(priority_event_5.time_of_flight, p5_tof)
+                # @formatter:off
+                np.testing.assert_array_equal(actual_priority_event.data_quality, cdf[f"p{priority_index}_data_quality"])
+                np.testing.assert_array_equal(actual_priority_event.multi_flag, cdf[f"p{priority_index}_multi_flag"])
+                np.testing.assert_array_equal(actual_priority_event.number_of_events, cdf[f"p{priority_index}_num_events"])
+                np.testing.assert_array_equal(actual_priority_event.ssd_energy, cdf[f"p{priority_index}_ssd_energy"])
+                np.testing.assert_array_equal(actual_priority_event.ssd_id, cdf[f"p{priority_index}_ssd_id"])
+                np.testing.assert_array_equal(actual_priority_event.spin_angle, cdf[f"p{priority_index}_spin_sector"])
+                np.testing.assert_array_equal(actual_priority_event.spin_number, cdf[f"p{priority_index}_spin_number"])
+                np.testing.assert_array_equal(actual_priority_event.time_of_flight, cdf[f"p{priority_index}_tof"])
+                np.testing.assert_array_equal(actual_priority_event.type, cdf[f"p{priority_index}_type"])
+                # @formatter:on
 
     def test_codice_l3_hi_direct_event_data_products(self):
         rng = np.random.default_rng()
 
         expected_epoch = np.array([datetime.now(), datetime.now() + timedelta(days=1)])
+        expected_epoch_delta = np.full(expected_epoch.shape, 1)
         number_of_priority_events = 6
+        event_buffer_size = 3
 
         (expected_data_quality,
-         expected_erge,
          expected_multi_flag,
-         expected_num_of_events,
+         expected_num_events,
          expected_ssd_energy,
          expected_ssd_id,
          expected_spin_angle,
@@ -260,14 +65,20 @@ class TestModels(unittest.TestCase):
          expected_tof,
          expected_type,
          expected_energy_per_nuc,
-         expected_estimated_mass) = [rng.random((len(expected_epoch), number_of_priority_events, 3, 4)) for _ in
-                                     range(12)]
+         expected_estimated_mass) = [rng.random((len(expected_epoch), number_of_priority_events, event_buffer_size)) for
+                                     _ in
+                                     range(11)]
+
+        expected_priority_index = np.arange(number_of_priority_events)
+        expected_event_index = np.arange(event_buffer_size)
+        expected_priority_index_label = np.array([str(i) for i in range(number_of_priority_events)])
+        expected_event_index_label = np.array([str(i) for i in range(event_buffer_size)])
 
         l3_data_product = CodiceL3HiDirectEvents(Mock(), expected_epoch,
+                                                 expected_epoch_delta,
                                                  expected_data_quality,
-                                                 expected_erge,
                                                  expected_multi_flag,
-                                                 expected_num_of_events,
+                                                 expected_num_events,
                                                  expected_ssd_energy,
                                                  expected_ssd_id,
                                                  expected_spin_angle,
@@ -282,6 +93,11 @@ class TestModels(unittest.TestCase):
                              f.name in CodiceL3HiDirectEvents.__annotations__]
 
         self.assertEqual(len(data_product_variables), len(non_parent_fields))
+
+        np.testing.assert_array_equal(l3_data_product.priority_index, expected_priority_index)
+        np.testing.assert_array_equal(l3_data_product.event_index, expected_event_index)
+        np.testing.assert_array_equal(l3_data_product.priority_index_label, expected_priority_index_label)
+        np.testing.assert_array_equal(l3_data_product.event_index_label, expected_event_index_label)
 
         for data_product_variable in data_product_variables:
             np.testing.assert_array_equal(data_product_variable.value,
@@ -380,8 +196,12 @@ class TestModels(unittest.TestCase):
             np.testing.assert_array_equal(result.fe_intensities, fe_intensities)
 
     def _create_l2_priority_event(self):
-        return PriorityEventL2(data_quality=np.array([]), energy_range=np.array([]),
+        return PriorityEventL2(data_quality=np.array([]),
                                multi_flag=np.array([]),
-                               spin_angle=np.array([]), number_of_events=np.array([]), ssd_id=np.array([]),
-                               ssd_energy=np.array([]), type=np.array([]), spin_number=np.array([]),
+                               spin_angle=np.array([]),
+                               number_of_events=np.array([]),
+                               ssd_id=np.array([]),
+                               ssd_energy=np.array([]),
+                               type=np.array([]),
+                               spin_number=np.array([]),
                                time_of_flight=np.array([]))

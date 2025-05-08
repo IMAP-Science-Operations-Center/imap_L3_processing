@@ -4,7 +4,8 @@ import numpy as np
 from imap_data_access import upload
 from imap_data_access.processing_input import ProcessingInputCollection
 
-from imap_l3_processing.codice.l3.hi.direct_event.codice_hi_l3_dependencies import CodiceHiL3Dependencies
+from imap_l3_processing.codice.l3.hi.direct_event.codice_hi_l3a_direct_events_dependencies import \
+    CodiceHiL3aDirectEventsDependencies
 from imap_l3_processing.codice.l3.hi.models import CodiceHiL3PitchAngleDataProduct
 from imap_l3_processing.codice.l3.hi.models import CodiceL3HiDirectEvents
 from imap_l3_processing.codice.l3.hi.pitch_angle.codice_pitch_angle_dependencies import CodicePitchAngleDependencies
@@ -22,20 +23,27 @@ class CodiceHiProcessor(Processor):
 
     def process(self):
         if self.input_metadata.data_level == "l3a":
-            dependencies = CodiceHiL3Dependencies.fetch_dependencies(self.dependencies)
-            processed_codice_direct_events = self.process_l3a_direct_event(dependencies)
-            saved_cdf = save_data(processed_codice_direct_events)
-            upload(saved_cdf)
+            dependencies = CodiceHiL3aDirectEventsDependencies.fetch_dependencies(self.dependencies)
+            data_product = self.process_l3a_direct_event(dependencies)
+        elif self.input_metadata.data_level == "l3b":
+            dependencies = CodicePitchAngleDependencies.fetch_dependencies(self.dependencies)
+            data_product = self.process_l3b(dependencies)
+        else:
+            raise NotImplementedError(f"Unknown data level for CoDICE: {self.input_metadata.data_level}")
 
-    def process_l3a_direct_event(self, dependencies: CodiceHiL3Dependencies) -> CodiceL3HiDirectEvents:
+        saved_cdf = save_data(data_product)
+        upload(saved_cdf)
+
+    def process_l3a_direct_event(self, dependencies: CodiceHiL3aDirectEventsDependencies) -> CodiceL3HiDirectEvents:
         tof_lookup = dependencies.tof_lookup
         l2_data = dependencies.codice_l2_hi_data
 
-        (data_quality,
-         num_of_events) = [np.full((len(l2_data.epochs), len(l2_data.priority_events)), np.nan) for _ in range(2)]
+        event_buffer_size = l2_data.priority_events[0].ssd_id.shape[-1]
 
-        (erge,
-         multi_flag,
+        (data_quality,
+         num_events) = [np.full((len(l2_data.epoch), len(l2_data.priority_events)), np.nan) for _ in range(2)]
+
+        (multi_flag,
          ssd_energy,
          ssd_id,
          spin_angle,
@@ -43,16 +51,14 @@ class CodiceHiProcessor(Processor):
          tof,
          type,
          energy_per_nuc,
-         estimated_mass) = [np.full((len(l2_data.epochs), len(l2_data.priority_events), len(num_of_events)), np.nan)
-                            for _ in range(10)]
+         estimated_mass) = [np.full((len(l2_data.epoch), len(l2_data.priority_events), event_buffer_size), np.nan)
+                            for _ in range(9)]
 
         for index, priority_event in enumerate(l2_data.priority_events):
             event_tof = priority_event.time_of_flight
-            event_energy_per_nuc = np.array([tof_lookup[t].energy for t in event_tof.flat]).reshape(
-                (event_tof.shape))
+            event_energy_per_nuc = np.array([tof_lookup[t].energy for t in event_tof.flat]).reshape(event_tof.shape)
             event_estimated_mass = (priority_event.ssd_energy / event_energy_per_nuc)
 
-            erge[:, index, :] = priority_event.energy_range
             multi_flag[:, index, :] = priority_event.multi_flag
             ssd_energy[:, index, :] = priority_event.ssd_energy
             ssd_id[:, index, :] = priority_event.ssd_id
@@ -64,15 +70,15 @@ class CodiceHiProcessor(Processor):
             estimated_mass[:, index, :] = event_estimated_mass
 
             data_quality[:, index] = priority_event.data_quality
-            num_of_events[:, index] = priority_event.number_of_events
+            num_events[:, index] = priority_event.number_of_events
 
         return CodiceL3HiDirectEvents(
             input_metadata=self.input_metadata,
-            epoch=l2_data.epochs,
+            epoch=l2_data.epoch,
+            epoch_delta=l2_data.epoch_delta_plus,
             data_quality=data_quality,
-            erge=erge,
             multi_flag=multi_flag,
-            num_of_events=num_of_events,
+            num_events=num_events,
             ssd_energy=ssd_energy,
             ssd_id=ssd_id,
             spin_angle=spin_angle,
@@ -136,7 +142,7 @@ class CodiceHiProcessor(Processor):
                 species_intensity.intensity_by_pa_and_gyro[time_index] = rebinned_intensities_by_pa_and_gyro
 
         return CodiceHiL3PitchAngleDataProduct(
-            input_metadata=None,
+            input_metadata=self.input_metadata,
             epoch=epochs,
             epoch_delta=sectored_intensities.epoch_delta,
             energy=energy_bins,

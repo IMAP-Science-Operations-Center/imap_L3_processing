@@ -15,7 +15,7 @@ from imap_l3_processing.codice.l3.lo.codice_lo_processor import CodiceLoProcesso
 from imap_l3_processing.codice.l3.lo.models import CodiceLoL3aPartialDensityDataProduct, CodiceLoL2DirectEventData, \
     CodiceLoL3aDirectEventDataProduct, PriorityEvent, CodiceLoL2SWSpeciesData, \
     CodiceLoL1aSWPriorityRates, CodiceLoL1aNSWPriorityRates, CodiceLoPartialDensityData, CodiceLoL3aRatiosDataProduct, \
-    CODICE_LO_L2_NUM_PRIORITIES
+    CODICE_LO_L2_NUM_PRIORITIES, CodiceLoL3ChargeStateDistributionsDataProduct
 from imap_l3_processing.codice.l3.lo.sectored_intensities.science.mass_per_charge_lookup import MassPerChargeLookup
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
@@ -89,25 +89,58 @@ class TestCodiceLoProcessor(unittest.TestCase):
                          mock_process_l3a_ratios.return_value.parent_file_names)
         mock_upload.assert_called_once_with("file1")
 
+    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.upload')
+    @patch(
+        'imap_l3_processing.codice.l3.lo.codice_lo_processor.CodiceLoL3aRatiosDependencies.fetch_dependencies')
+    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.CodiceLoProcessor.process_l3a_abundances')
+    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.save_data')
+    @patch('imap_l3_processing.processor.spiceypy')
+    def test_process_abundances(self, mock_spiceypy, mock_save_data, mock_process_l3a_abundances,
+                                mock_fetch_dependencies, mock_upload):
+        input_collection = MagicMock()
+        input_collection.get_file_paths.return_value = [Path('path/to/parent_file_1')]
+        input_metadata = InputMetadata(instrument='codice',
+                                       data_level="l3a",
+                                       start_date=Mock(spec=datetime),
+                                       end_date=Mock(spec=datetime),
+                                       version='v02',
+                                       descriptor='lo-sw-abundances')
+        mock_spiceypy.ktotal.return_value = 0
+
+        mock_save_data.return_value = "file1"
+        processor = CodiceLoProcessor(dependencies=input_collection, input_metadata=input_metadata)
+        processor.process()
+
+        mock_fetch_dependencies.assert_called_once_with(processor.dependencies)
+        mock_process_l3a_abundances.assert_called_once_with(mock_fetch_dependencies.return_value)
+
+        mock_save_data.assert_called_once_with(mock_process_l3a_abundances.return_value)
+
+        self.assertEqual(['parent_file_1'],
+                         mock_process_l3a_abundances.return_value.parent_file_names)
+        mock_upload.assert_called_once_with("file1")
+
     def test_process_ratios_calculate_abundance_ratios(self):
+        now = datetime.now()
         data = CodiceLoPartialDensityData(
             epoch=np.array(
-                [datetime.now, datetime.now() + timedelta(minutes=4), datetime.now() + timedelta(minutes=8)]),
-            epoch_delta=np.array([120_000_000_000, 120_000_000_000, 120_000_000_000]),
-            fe_hiq_partial_density=np.array([1, 2, 3]),
-            fe_loq_partial_density=np.array([4, 5, 6]),
-            oplus5_partial_density=np.array([1, 2, 4]),
-            oplus6_partial_density=np.array([5, 6, 7]),
-            oplus7_partial_density=np.array([8, 9, 10]),
-            oplus8_partial_density=np.array([11, 12, 13]),
-            mg_partial_density=np.array([14, 15, 16]),
-            cplus4_partial_density=np.array([17, 18, 19]),
-            cplus5_partial_density=np.array([20, 21, 22]),
-            cplus6_partial_density=np.array([23, 24, 25]),
-            ne_partial_density=np.arange(3),
-            si_partial_density=np.arange(3),
-            heplusplus_partial_density=np.arange(3),
-            hplus_partial_density=np.arange(3),
+                [now, now + timedelta(minutes=4), now + timedelta(minutes=8),
+                 now + timedelta(minutes=12), now + timedelta(minutes=16)]),
+            epoch_delta=np.array([120_000_000_000, 120_000_000_000, 120_000_000_000, 120_000_000_000, 120_000_000_000]),
+            fe_hiq_partial_density=np.array([1, 2, 3, 10, 12]),
+            fe_loq_partial_density=np.array([4, 5, 6, 11, 13]),
+            oplus5_partial_density=np.array([1, 2, 4, 12, 14]),
+            oplus6_partial_density=np.array([5, 6, 7, 13, 15]),
+            oplus7_partial_density=np.array([8, 9, 10, 14, 16]),
+            oplus8_partial_density=np.array([11, 12, 13, 15, 17]),
+            mg_partial_density=np.array([14, 15, 16, 16, 18]),
+            cplus4_partial_density=np.array([17, 18, 19, 17, 19]),
+            cplus5_partial_density=np.array([20, 21, 22, 18, 20]),
+            cplus6_partial_density=np.array([23, 24, 25, 19, 21]),
+            ne_partial_density=np.arange(5),
+            si_partial_density=np.arange(5),
+            heplusplus_partial_density=np.arange(5),
+            hplus_partial_density=np.arange(5),
         )
 
         dependency = CodiceLoL3aRatiosDependencies(data)
@@ -116,20 +149,72 @@ class TestCodiceLoProcessor(unittest.TestCase):
 
         ratios_data_product: CodiceLoL3aRatiosDataProduct = processor.process_l3a_ratios(dependency)
         self.assertEqual(input_metadata, ratios_data_product.input_metadata)
-        np.testing.assert_array_equal(ratios_data_product.epoch, data.epoch)
-        np.testing.assert_array_equal(ratios_data_product.epoch_delta, data.epoch_delta)
-        np.testing.assert_array_equal(ratios_data_product.fe_to_o_ratio,
-                                      np.array([5 / (1 + 5 + 8 + 11), 7 / (2 + 6 + 9 + 12), 9 / (4 + 7 + 10 + 13)]))
-        np.testing.assert_array_equal(ratios_data_product.mg_to_o_ratio,
-                                      np.array([14 / (1 + 5 + 8 + 11), 15 / (2 + 6 + 9 + 12), 16 / (4 + 7 + 10 + 13)]))
-        np.testing.assert_array_equal(ratios_data_product.c_to_o_ratio, np.array(
-            [(17 + 20 + 23) / (1 + 5 + 8 + 11), (18 + 21 + 24) / (2 + 6 + 9 + 12), (19 + 22 + 25) / (4 + 7 + 10 + 13)]))
+        np.testing.assert_array_equal(ratios_data_product.epoch,
+                                      [now + timedelta(minutes=4), now + timedelta(minutes=14)])
+        np.testing.assert_array_equal(ratios_data_product.epoch_delta, [360_000_000_000, 240_000_000_000])
+        np.testing.assert_array_almost_equal(ratios_data_product.fe_to_o_ratio,
+                                             np.array(
+                                                 [(2 + 5) / (7 / 3 + 6 + 9 + 12), (11 + 12) / (13 + 14 + 15 + 16)]))
+        np.testing.assert_array_almost_equal(ratios_data_product.mg_to_o_ratio,
+                                             np.array([15 / (7 / 3 + 6 + 9 + 12), 17 / (13 + 14 + 15 + 16)]))
+        np.testing.assert_array_almost_equal(ratios_data_product.c_to_o_ratio, np.array(
+            [(18 + 21 + 24) / (7 / 3 + 6 + 9 + 12), (18 + 19 + 20) / (13 + 14 + 15 + 16)]))
 
-        np.testing.assert_array_equal(ratios_data_product.c6_to_c4_ratio, np.array([23 / 17, 24 / 18, 25 / 19]))
-        np.testing.assert_array_equal(ratios_data_product.c6_to_c5_ratio, np.array([23 / 20, 24 / 21, 25 / 22]))
+        np.testing.assert_array_almost_equal(ratios_data_product.c6_to_c4_ratio, np.array([24 / 18, 20 / 18]))
+        np.testing.assert_array_almost_equal(ratios_data_product.c6_to_c5_ratio, np.array([24 / 21, 20 / 19]))
 
-        np.testing.assert_array_equal(ratios_data_product.o7_to_o6_ratio, np.array([8 / 5, 9 / 6, 10 / 7]))
-        np.testing.assert_array_equal(ratios_data_product.felo_to_fehi_ratio, np.array([4 / 1, 5 / 2, 6 / 3]))
+        np.testing.assert_array_almost_equal(ratios_data_product.o7_to_o6_ratio, np.array([9 / 6, 15 / 14]))
+        np.testing.assert_array_almost_equal(ratios_data_product.felo_to_fehi_ratio, np.array([5 / 2, 12 / 11]))
+
+    def test_process_abundances_calculates_abundance_ratios(self):
+        now = datetime.now()
+        data = CodiceLoPartialDensityData(
+            epoch=np.array(
+                [now, now + timedelta(minutes=4)]),
+            epoch_delta=np.array([120_000_000_000, 120_000_000_000]),
+            fe_hiq_partial_density=np.arange(2),
+            fe_loq_partial_density=np.arange(2),
+            oplus5_partial_density=np.array([1, 2]),
+            oplus6_partial_density=np.array([5, 6]),
+            oplus7_partial_density=np.array([8, 9]),
+            oplus8_partial_density=np.array([11, 12]),
+            mg_partial_density=np.arange(2),
+            cplus4_partial_density=np.array([17, 18]),
+            cplus5_partial_density=np.array([20, 21]),
+            cplus6_partial_density=np.array([23, 24]),
+            ne_partial_density=np.arange(2),
+            si_partial_density=np.arange(2),
+            heplusplus_partial_density=np.arange(2),
+            hplus_partial_density=np.arange(2),
+        )
+
+        dependency = CodiceLoL3aRatiosDependencies(data)
+        input_metadata = Mock()
+        processor = CodiceLoProcessor(dependencies=Mock(), input_metadata=input_metadata)
+
+        abundances_data_product = processor.process_l3a_abundances(dependency)
+        self.assertIsInstance(abundances_data_product, CodiceLoL3ChargeStateDistributionsDataProduct)
+        self.assertEqual(input_metadata, abundances_data_product.input_metadata)
+        np.testing.assert_array_equal(abundances_data_product.epoch,
+                                      [now, now + timedelta(minutes=4)])
+        np.testing.assert_array_equal(abundances_data_product.epoch_delta, [120_000_000_000, 120_000_000_000])
+
+        np.testing.assert_array_almost_equal(abundances_data_product.oxygen_charge_states,
+                                             np.array(
+                                                 [
+                                                     [1 / (1 + 5 + 8 + 11), 5 / (1 + 5 + 8 + 11), 8 / (1 + 5 + 8 + 11),
+                                                      11 / (1 + 5 + 8 + 11), ],
+                                                     [2 / (2 + 6 + 9 + 12), 6 / (2 + 6 + 9 + 12), 9 / (2 + 6 + 9 + 12),
+                                                      12 / (2 + 6 + 9 + 12), ],
+                                                 ])
+                                             )
+        np.testing.assert_array_almost_equal(abundances_data_product.carbon_charge_states,
+                                             np.array(
+                                                 [
+                                                     [17 / (17 + 20 + 23), 20 / (17 + 20 + 23), 23 / (17 + 20 + 23)],
+                                                     [18 / (18 + 21 + 24), 21 / (18 + 21 + 24), 24 / (18 + 21 + 24)],
+                                                 ]
+                                             ))
 
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.upload')
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.CodiceLoL3aDirectEventsDependencies.fetch_dependencies')
@@ -160,9 +245,16 @@ class TestCodiceLoProcessor(unittest.TestCase):
 
         mock_upload.assert_called_once_with("file1")
 
-    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.safe_divide')
+    def test_raises_exception_on_non_l3_input_metadata(self):
+        input_metadata = InputMetadata('codice', "L2a", Mock(), Mock(), 'v02', "bad-descriptor")
+
+        processor = CodiceLoProcessor(Mock(), input_metadata)
+        with self.assertRaises(NotImplementedError) as context:
+            processor.process()
+        self.assertEqual("Unknown data level and descriptor for CoDICE: L2a, bad-descriptor", str(context.exception))
+
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.calculate_partial_densities')
-    def test_process_l3a_partial_densities(self, mock_calculate_partial_densities, mock_safe_divide):
+    def test_process_l3a_partial_densities(self, mock_calculate_partial_densities):
         input_collection = ProcessingInputCollection()
         input_metadata = InputMetadata('codice', "l3a", Mock(spec=datetime), Mock(spec=datetime), 'v02',
                                        descriptor='lo-partial-densities')

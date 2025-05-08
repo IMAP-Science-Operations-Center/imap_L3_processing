@@ -14,6 +14,9 @@ import xarray as xr
 from imap_data_access.processing_input import AncillaryInput, ProcessingInputCollection, ScienceInput
 from spacepy.pycdf import CDF
 
+from imap_l3_processing.codice.l3.hi.codice_hi_processor import CodiceHiProcessor
+from imap_l3_processing.codice.l3.hi.direct_event.codice_hi_l3a_direct_events_dependencies import \
+    CodiceHiL3aDirectEventsDependencies
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_direct_events_dependencies import CodiceLoL3aDirectEventsDependencies
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_partial_densities_dependencies import \
     CodiceLoL3aPartialDensitiesDependencies
@@ -736,6 +739,31 @@ def create_combined_sensor_cdf(combined_dependencies: HiL3CombinedMapDependencie
     return save_data(data_product, delete_if_present=True)
 
 
+def create_codice_hi_l3a_direct_events_cdf():
+    codice_hi_de_dependencies = CodiceHiL3aDirectEventsDependencies.from_file_paths(
+        tof_lookup_path=get_test_instrument_team_data_path("codice/hi/imap_codice_tof-lookup_20241110193900_v001.csv"),
+        codice_l2_hi_cdf=get_test_instrument_team_data_path(
+            "codice/hi/imap_codice_l2_hi-direct-events_20241110193700_v0.0.2.cdf"))
+
+    input_metadata = InputMetadata(
+        instrument='codice',
+        data_level='l3a',
+        start_date=datetime(2024, 11, 10),
+        end_date=datetime(2025, 1, 2),
+        version='v000',
+        descriptor='hi-direct-events'
+    )
+
+    codice_lo_processor = CodiceHiProcessor(ProcessingInputCollection(), input_metadata)
+    direct_event_data = codice_lo_processor.process_l3a_direct_event(codice_hi_de_dependencies)
+    cdf_path = save_data(direct_event_data, delete_if_present=True)
+    return cdf_path
+
+
+def create_codice_hi_l3b_pitch_angles_cdf():
+    pass
+
+
 if __name__ == "__main__":
     if "codice-lo" in sys.argv:
         if "l3a" in sys.argv:
@@ -747,6 +775,12 @@ if __name__ == "__main__":
                 print(create_codice_lo_l3a_ratios_cdf())
             elif "3d-instrument-frame" in sys.argv:
                 pass
+    if "codice-hi" in sys.argv:
+        if "l3a" in sys.argv:
+            print(create_codice_hi_l3a_direct_events_cdf())
+        if "l3b" in sys.argv:
+            print(create_codice_hi_l3b_pitch_angles_cdf())
+
     if "swapi" in sys.argv:
         if "l3a" in sys.argv:
             paths = create_swapi_l3a_cdf(

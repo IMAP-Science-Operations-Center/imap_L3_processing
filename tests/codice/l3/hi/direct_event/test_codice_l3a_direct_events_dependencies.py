@@ -5,14 +5,15 @@ from unittest.mock import patch, call
 import imap_data_access
 from imap_data_access.processing_input import ProcessingInputCollection, ScienceInput, AncillaryInput
 
-from imap_l3_processing.codice.l3.hi.direct_event.codice_hi_l3_dependencies import CodiceHiL3Dependencies
+from imap_l3_processing.codice.l3.hi.direct_event.codice_hi_l3a_direct_events_dependencies import \
+    CodiceHiL3aDirectEventsDependencies
 
 
-class TestCodiceHiL3Dependencies(unittest.TestCase):
+class TestCodiceHiL3aDirectEventDependencies(unittest.TestCase):
 
-    @patch("imap_l3_processing.codice.l3.hi.direct_event.codice_hi_l3_dependencies.download")
+    @patch("imap_l3_processing.codice.l3.hi.direct_event.codice_hi_l3a_direct_events_dependencies.download")
     @patch(
-        "imap_l3_processing.codice.l3.hi.direct_event.codice_hi_l3_dependencies.CodiceHiL3Dependencies.from_file_paths")
+        "imap_l3_processing.codice.l3.hi.direct_event.codice_hi_l3a_direct_events_dependencies.CodiceHiL3aDirectEventsDependencies.from_file_paths")
     def test_fetch_dependencies(self, mock_from_file_paths, mock_download):
         input_collection = ProcessingInputCollection()
 
@@ -33,7 +34,7 @@ class TestCodiceHiL3Dependencies(unittest.TestCase):
         input_collection.add([science_input, ancillary_input, non_codice_ancillary_input, non_codice_science_input,
                               non_l2_codice_science_input])
 
-        codice_l3_dependencies = CodiceHiL3Dependencies.fetch_dependencies(input_collection)
+        codice_l3_dependencies = CodiceHiL3aDirectEventsDependencies.fetch_dependencies(input_collection)
 
         data_dir = imap_data_access.config["DATA_DIR"]
         expected_download_science_path = data_dir / expected_codice_science_file_download_path
@@ -52,7 +53,8 @@ class TestCodiceHiL3Dependencies(unittest.TestCase):
         tof_lookup_file = Path("energy_per_nuc")
         codice_l2_cdf_file = Path("CodiceL2CDF")
 
-        codice_l3_dependencies = CodiceHiL3Dependencies.from_file_paths(codice_l2_cdf_file, tof_lookup_file)
+        codice_l3_dependencies = CodiceHiL3aDirectEventsDependencies.from_file_paths(codice_l2_cdf_file,
+                                                                                     tof_lookup_file)
 
         mock_tof_lookup_from_file.assert_called_with(tof_lookup_file)
         mock_read_cdf.assert_called_with(codice_l2_cdf_file)

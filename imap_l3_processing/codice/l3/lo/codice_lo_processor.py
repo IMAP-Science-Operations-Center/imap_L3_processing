@@ -9,10 +9,10 @@ from imap_l3_processing.codice.l3.lo.codice_lo_l3a_partial_densities_dependencie
     CodiceLoL3aPartialDensitiesDependencies
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_ratios_dependencies import CodiceLoL3aRatiosDependencies
 from imap_l3_processing.codice.l3.lo.models import CodiceLoL3aPartialDensityDataProduct, CodiceLoL2DirectEventData, \
-    CodiceLoL3aDirectEventDataProduct, CodiceLoPartialDensityData, CodiceLoL3aRatiosDataProduct
+    CodiceLoL3aDirectEventDataProduct, CodiceLoPartialDensityData, CodiceLoL3aRatiosDataProduct, \
+    CodiceLoL3ChargeStateDistributionsDataProduct
 from imap_l3_processing.codice.l3.lo.science.codice_lo_calculations import calculate_partial_densities, \
     calculate_normalization_ratio, calculate_total_number_of_events, calculate_mass, calculate_mass_per_charge
-from imap_l3_processing.hi.l3.models import safe_divide
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
 from imap_l3_processing.utils import save_data
@@ -34,8 +34,12 @@ class CodiceLoProcessor(Processor):
         elif self.input_metadata.descriptor == "lo-sw-ratios":
             dependencies = CodiceLoL3aRatiosDependencies.fetch_dependencies(self.dependencies)
             data_product = self.process_l3a_ratios(dependencies)
+        elif self.input_metadata.descriptor == "lo-sw-abundances":
+            dependencies = CodiceLoL3aRatiosDependencies.fetch_dependencies(self.dependencies)
+            data_product = self.process_l3a_abundances(dependencies)
         else:
-            raise NotImplementedError
+            raise NotImplementedError(
+                f"Unknown data level and descriptor for CoDICE: {self.input_metadata.data_level}, {self.input_metadata.descriptor}")
 
         data_product.parent_file_names = self.get_parent_file_names()
         saved_l3a_cdf = save_data(data_product)
@@ -43,20 +47,55 @@ class CodiceLoProcessor(Processor):
 
     def process_l3a_ratios(self, dependencies: CodiceLoL3aRatiosDependencies) -> CodiceLoL3aRatiosDataProduct:
         input_data = dependencies.partial_density_data
-        oxygen_density = input_data.oplus5_partial_density + input_data.oplus6_partial_density + input_data.oplus7_partial_density + input_data.oplus8_partial_density
-        iron_density = input_data.fe_hiq_partial_density + input_data.fe_loq_partial_density
-        carbon_density = input_data.cplus4_partial_density + input_data.cplus5_partial_density + input_data.cplus6_partial_density
+        c4 = _average_over_block(input_data.cplus4_partial_density, 3)
+        c5 = _average_over_block(input_data.cplus5_partial_density, 3)
+        c6 = _average_over_block(input_data.cplus6_partial_density, 3)
+        o5 = _average_over_block(input_data.oplus5_partial_density, 3)
+        o6 = _average_over_block(input_data.oplus6_partial_density, 3)
+        o7 = _average_over_block(input_data.oplus7_partial_density, 3)
+        o8 = _average_over_block(input_data.oplus8_partial_density, 3)
+        feloq = _average_over_block(input_data.fe_loq_partial_density, 3)
+        fehiq = _average_over_block(input_data.fe_hiq_partial_density, 3)
+        mg = _average_over_block(input_data.mg_partial_density, 3)
+
         return CodiceLoL3aRatiosDataProduct(
             input_metadata=self.input_metadata,
-            epoch=input_data.epoch,
-            epoch_delta=input_data.epoch_delta,
-            c_to_o_ratio=carbon_density / oxygen_density,
-            mg_to_o_ratio=input_data.mg_partial_density / oxygen_density,
-            fe_to_o_ratio=iron_density / oxygen_density,
-            c6_to_c5_ratio=input_data.cplus6_partial_density / input_data.cplus5_partial_density,
-            c6_to_c4_ratio=input_data.cplus6_partial_density / input_data.cplus4_partial_density,
-            o7_to_o6_ratio=input_data.oplus7_partial_density / input_data.oplus6_partial_density,
-            felo_to_fehi_ratio=input_data.fe_loq_partial_density / input_data.fe_hiq_partial_density,
+            epoch=_average_dates_over_block(input_data.epoch, 3),
+            epoch_delta=_sum_over_block(input_data.epoch_delta, 3),
+            c_to_o_ratio=(c4 + c5 + c6) / (o5 + o6 + o7 + o8),
+            mg_to_o_ratio=mg / (o5 + o6 + o7 + o8),
+            fe_to_o_ratio=(feloq + fehiq) / (o5 + o6 + o7 + o8),
+            c6_to_c5_ratio=c6 / c5,
+            c6_to_c4_ratio=c6 / c4,
+            o7_to_o6_ratio=o7 / o6,
+            felo_to_fehi_ratio=feloq / fehiq,
+        )
+
+    def process_l3a_abundances(self,
+                               dependencies: CodiceLoL3aRatiosDependencies) -> CodiceLoL3ChargeStateDistributionsDataProduct:
+        o5 = dependencies.partial_density_data.oplus5_partial_density
+        o6 = dependencies.partial_density_data.oplus6_partial_density
+        o7 = dependencies.partial_density_data.oplus7_partial_density
+        o8 = dependencies.partial_density_data.oplus8_partial_density
+        c4 = dependencies.partial_density_data.cplus4_partial_density
+        c5 = dependencies.partial_density_data.cplus5_partial_density
+        c6 = dependencies.partial_density_data.cplus6_partial_density
+
+        o5_abundances = o5 / (o5 + o6 + o7 + o8)
+        o6_abundances = o6 / (o5 + o6 + o7 + o8)
+        o7_abundances = o7 / (o5 + o6 + o7 + o8)
+        o8_abundances = o8 / (o5 + o6 + o7 + o8)
+
+        c4_abundances = c4 / (c4 + c5 + c6)
+        c5_abundances = c5 / (c4 + c5 + c6)
+        c6_abundances = c6 / (c4 + c5 + c6)
+
+        return CodiceLoL3ChargeStateDistributionsDataProduct(
+            self.input_metadata,
+            epoch=dependencies.partial_density_data.epoch,
+            epoch_delta=dependencies.partial_density_data.epoch_delta,
+            oxygen_charge_states=np.column_stack((o5_abundances, o6_abundances, o7_abundances, o8_abundances)),
+            carbon_charge_states=np.column_stack((c4_abundances, c5_abundances, c6_abundances))
         )
 
     def process_l3a_partial_densities(self, dependencies: CodiceLoL3aPartialDensitiesDependencies):
@@ -189,3 +228,17 @@ class CodiceLoProcessor(Processor):
             tof=tof,
             data_quality=data_quality,
         )
+
+
+def _average_over_block(data_array: np.ndarray, block_size: int):
+    return np.array([data_array[i:i + block_size].mean() for i in range(0, len(data_array), block_size)])
+
+
+def _sum_over_block(data_array: np.ndarray, block_size: int):
+    return np.array([data_array[i:i + block_size].sum() for i in range(0, len(data_array), block_size)])
+
+
+def _average_dates_over_block(data_array: np.ndarray, block_size: int):
+    dates_as_int = data_array.astype('datetime64[us]').astype('int64')
+    return np.array([dates_as_int[i:i + block_size].mean() for i in range(0, len(dates_as_int), block_size)]).astype(
+        "datetime64[us]").astype('O')

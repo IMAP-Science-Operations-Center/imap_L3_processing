@@ -13,7 +13,7 @@ class TestL3eHiModel(unittest.TestCase):
     def test_l3e_hi_model_to_data_product_variables(self):
         l3e_hi: GlowsL3EHiData = GlowsL3EHiData(
             Mock(),
-            sentinel.epochs,
+            sentinel.epoch,
             sentinel.epoch_deltas,
             sentinel.energy,
             sentinel.spin_angle,
@@ -29,7 +29,7 @@ class TestL3eHiModel(unittest.TestCase):
 
         data_products = l3e_hi.to_data_product_variables()
         expected_data_products = [
-            DataProductVariable("epoch", sentinel.epochs),
+            DataProductVariable("epoch", sentinel.epoch),
             DataProductVariable("epoch_delta", sentinel.epoch_deltas),
             DataProductVariable("energy", sentinel.energy),
             DataProductVariable("spin_angle", sentinel.spin_angle),
