@@ -33,7 +33,7 @@ class TestModels(unittest.TestCase):
             np.testing.assert_array_equal(l2_direct_event_data.epoch_delta_plus, cdf["epoch_delta_plus"])
 
             for priority_index in range(CODICE_HI_NUM_L2_PRIORITIES):
-                actual_priority_event = l2_direct_event_data.priority_events[priority_index]
+                actual_priority_event: PriorityEventL2 = l2_direct_event_data.priority_events[priority_index]
 
                 # @formatter:off
                 np.testing.assert_array_equal(actual_priority_event.data_quality, cdf[f"p{priority_index}_data_quality"])
@@ -45,6 +45,9 @@ class TestModels(unittest.TestCase):
                 np.testing.assert_array_equal(actual_priority_event.spin_number, cdf[f"p{priority_index}_spin_number"])
                 np.testing.assert_array_equal(actual_priority_event.time_of_flight, cdf[f"p{priority_index}_tof"])
                 np.testing.assert_array_equal(actual_priority_event.type, cdf[f"p{priority_index}_type"])
+
+                np.testing.assert_array_equal(actual_priority_event.ssd_energy_plus, cdf[f"p{priority_index}_ssd_energy_plus"])
+                np.testing.assert_array_equal(actual_priority_event.ssd_energy_minus, cdf[f"p{priority_index}_ssd_energy_minus"])
                 # @formatter:on
 
     def test_codice_l3_hi_direct_event_data_products(self):
@@ -59,15 +62,16 @@ class TestModels(unittest.TestCase):
          expected_multi_flag,
          expected_num_events,
          expected_ssd_energy,
+         expected_ssd_energy_plus,
+         expected_ssd_energy_minus,
          expected_ssd_id,
          expected_spin_angle,
          expected_spin_number,
          expected_tof,
          expected_type,
          expected_energy_per_nuc,
-         expected_estimated_mass) = [rng.random((len(expected_epoch), number_of_priority_events, event_buffer_size)) for
-                                     _ in
-                                     range(11)]
+         expected_estimated_mass) = \
+            [rng.random((len(expected_epoch), number_of_priority_events, event_buffer_size)) for _ in range(13)]
 
         expected_priority_index = np.arange(number_of_priority_events)
         expected_event_index = np.arange(event_buffer_size)
@@ -80,6 +84,8 @@ class TestModels(unittest.TestCase):
                                                  expected_multi_flag,
                                                  expected_num_events,
                                                  expected_ssd_energy,
+                                                 expected_ssd_energy_plus,
+                                                 expected_ssd_energy_minus,
                                                  expected_ssd_id,
                                                  expected_spin_angle,
                                                  expected_spin_number,

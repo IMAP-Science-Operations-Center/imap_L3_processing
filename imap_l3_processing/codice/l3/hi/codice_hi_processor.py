@@ -43,16 +43,20 @@ class CodiceHiProcessor(Processor):
         (data_quality,
          num_events) = [np.full((len(l2_data.epoch), len(l2_data.priority_events)), np.nan) for _ in range(2)]
 
+        event_data_output_shape = (len(l2_data.epoch), len(l2_data.priority_events), event_buffer_size)
+
         (multi_flag,
          ssd_energy,
+         ssd_energy_plus,
+         ssd_energy_minus,
          ssd_id,
          spin_angle,
          spin_number,
          tof,
          type,
          energy_per_nuc,
-         estimated_mass) = [np.full((len(l2_data.epoch), len(l2_data.priority_events), event_buffer_size), np.nan)
-                            for _ in range(9)]
+         estimated_mass) = \
+            [np.full(event_data_output_shape, np.nan) for _ in range(11)]
 
         for index, priority_event in enumerate(l2_data.priority_events):
             event_tof = priority_event.time_of_flight
@@ -61,6 +65,9 @@ class CodiceHiProcessor(Processor):
 
             multi_flag[:, index, :] = priority_event.multi_flag
             ssd_energy[:, index, :] = priority_event.ssd_energy
+            ssd_energy_plus[:, index, :] = priority_event.ssd_energy_plus
+            ssd_energy_minus[:, index, :] = priority_event.ssd_energy_minus
+
             ssd_id[:, index, :] = priority_event.ssd_id
             spin_angle[:, index, :] = priority_event.spin_angle
             spin_number[:, index, :] = priority_event.spin_number
@@ -80,6 +87,8 @@ class CodiceHiProcessor(Processor):
             multi_flag=multi_flag,
             num_events=num_events,
             ssd_energy=ssd_energy,
+            ssd_energy_plus=ssd_energy_plus,
+            ssd_energy_minus=ssd_energy_minus,
             ssd_id=ssd_id,
             spin_angle=spin_angle,
             spin_number=spin_number,
