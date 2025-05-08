@@ -1,4 +1,5 @@
 import unittest
+import warnings
 from dataclasses import fields
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -216,6 +217,56 @@ class TestCodiceLoProcessor(unittest.TestCase):
                                                  ]
                                              ))
 
+    def test_process_abundances_uses_safe_divide(self):
+
+        now = datetime.now()
+        data = CodiceLoPartialDensityData(
+            epoch=np.array(
+                [now]),
+            epoch_delta=np.array([120_000_000_000]),
+            fe_hiq_partial_density=np.array([1]),
+            fe_loq_partial_density=np.array([1]),
+            oplus5_partial_density=np.array([0]),
+            oplus6_partial_density=np.array([0]),
+            oplus7_partial_density=np.array([0]),
+            oplus8_partial_density=np.array([0]),
+            mg_partial_density=np.array([1]),
+            cplus4_partial_density=np.array([0]),
+            cplus5_partial_density=np.array([0]),
+            cplus6_partial_density=np.array([0]),
+            ne_partial_density=np.array([1]),
+            si_partial_density=np.array([1]),
+            heplusplus_partial_density=np.array([1]),
+            hplus_partial_density=np.array([1]),
+        )
+        dependency = CodiceLoL3aRatiosDependencies(data)
+        input_metadata = Mock()
+        processor = CodiceLoProcessor(dependencies=Mock(), input_metadata=input_metadata)
+
+        with warnings.catch_warnings(record=True) as w:
+            abundances_data_product = processor.process_l3a_abundances(dependency)
+        self.assertEqual(0, len(w))
+        
+        self.assertIsInstance(abundances_data_product, CodiceLoL3ChargeStateDistributionsDataProduct)
+        self.assertEqual(input_metadata, abundances_data_product.input_metadata)
+        np.testing.assert_array_equal(abundances_data_product.epoch,
+                                      [now])
+        np.testing.assert_array_equal(abundances_data_product.epoch_delta,
+                                      [120_000_000_000])
+
+        np.testing.assert_array_almost_equal(abundances_data_product.oxygen_charge_state_distribution,
+                                             np.array(
+                                                 [
+                                                     [np.nan, np.nan, np.nan, np.nan]
+                                                 ])
+                                             )
+        np.testing.assert_array_almost_equal(abundances_data_product.carbon_charge_state_distribution,
+                                             np.array(
+                                                 [
+                                                     [np.nan, np.nan, np.nan]
+                                                 ]
+                                             ))
+
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.upload')
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.CodiceLoL3aDirectEventsDependencies.fetch_dependencies')
     @patch(
@@ -271,16 +322,16 @@ class TestCodiceLoProcessor(unittest.TestCase):
 
         codice_lo_l2_data.epoch = epochs
 
-        cplus4_partial_density = np.ndarray([1, 1, 1])
-        cplus5_partial_density = np.ndarray([1, 1, 1])
-        cplus6_partial_density = np.ndarray([1, 1, 1])
-        oplus5_partial_density = np.ndarray([1, 1, 1])
-        oplus6_partial_density = np.ndarray([1, 1, 1])
-        oplus7_partial_density = np.ndarray([1, 1, 1])
-        oplus8_partial_density = np.ndarray([1, 1, 1])
-        mg_partial_density = np.ndarray([1, 1, 1])
-        fe_loq_partial_density = np.ndarray([1, 1, 1])
-        fe_hiq_partial_density = np.ndarray([1, 1, 1])
+        cplus4_partial_density = np.array([1])
+        cplus5_partial_density = np.array([2])
+        cplus6_partial_density = np.array([3])
+        oplus5_partial_density = np.array([4])
+        oplus6_partial_density = np.array([5])
+        oplus7_partial_density = np.array([6])
+        oplus8_partial_density = np.array([7])
+        mg_partial_density = np.array([8])
+        fe_loq_partial_density = np.array([9])
+        fe_hiq_partial_density = np.array([10])
 
         mock_calculate_partial_densities.side_effect = [
             sentinel.hplus_partial_density,

@@ -48,3 +48,8 @@ def find_closest_neighbor(from_epoch: np.ndarray[datetime], from_data: np.ndarra
     closest_data[min_outside_range] = np.nan
 
     return closest_data
+
+
+def safe_divide(numerator: np.ndarray, denominator: np.ndarray) -> np.ndarray:
+    out_array = np.full(np.broadcast_shapes(numerator.shape, denominator.shape), np.nan)
+    return np.divide(numerator, denominator, where=denominator != 0, out=out_array)
