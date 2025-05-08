@@ -19,7 +19,7 @@ class CodiceHiL3aDirectEventsDependencies:
             if dep.data_type != "l2":
                 dependencies.processing_input.remove(dep)
 
-        science_file_paths = dependencies.get_file_paths("codice", "direct-events")
+        science_file_paths = dependencies.get_file_paths("codice", "hi-direct-events")
         ancillary_file_paths = dependencies.get_file_paths("codice", "tof-lookup")
 
         for download_location_file_path in [*science_file_paths, *ancillary_file_paths]:

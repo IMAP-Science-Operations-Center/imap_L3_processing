@@ -15,7 +15,7 @@ class CodicePitchAngleDependencies:
 
     @classmethod
     def fetch_dependencies(cls, input_collection: ProcessingInputCollection):
-        codice_file_paths = input_collection.get_file_paths("codice", "sectored-intensities")
+        codice_file_paths = input_collection.get_file_paths("codice", "hi-sectored")
         mag_file_paths = input_collection.get_file_paths("mag", "norm-mago")
 
         for download_location_file_path in [*codice_file_paths, *mag_file_paths]:

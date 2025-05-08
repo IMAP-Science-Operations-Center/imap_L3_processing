@@ -13,8 +13,8 @@ class TestCodicePitchAngleDependencies(unittest.TestCase):
         "imap_l3_processing.codice.l3.hi.pitch_angle.codice_pitch_angle_dependencies.CodicePitchAngleDependencies.from_file_paths")
     @patch("imap_l3_processing.codice.l3.hi.pitch_angle.codice_pitch_angle_dependencies.download")
     def test_fetch_dependencies(self, mock_download, mock_from_files):
-        expected_codice_science_file_download_path = "imap/codice/l2/2010/01/imap_codice_l2_sectored-intensities_20100105_v010.cdf"
-        codice_sectored_intensities_input_file_name = "imap_codice_l2_sectored-intensities_20100105_v010.cdf"
+        expected_codice_science_file_download_path = "imap/codice/l2/2010/01/imap_codice_l2_hi-sectored_20100105_v010.cdf"
+        codice_sectored_intensities_input_file_name = "imap_codice_l2_hi-sectored_20100105_v010.cdf"
 
         expected_mag_download_path = "imap/mag/l1d/2010/01/imap_mag_l1d_norm-mago_20100105_v010.cdf"
         mag_input_file_name = "imap_mag_l1d_norm-mago_20100105_v010.cdf"
