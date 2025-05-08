@@ -37,7 +37,7 @@ epoch_delta:
 energy:
   NAME: energy
   DATA_TYPE: CDF_REAL4
-  CATDESC: energy
+  CATDESC: Energy
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
   FIELDNAM: Energy
@@ -62,7 +62,7 @@ energy_label:
 energy_delta_minus:
   NAME: energy_delta_minus
   DATA_TYPE: CDF_REAL4
-  CATDESC: Lower bound of energy range
+  CATDESC: Lower bound of energy delta range
   DEPEND_1: energy
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
@@ -76,7 +76,7 @@ energy_delta_minus:
 energy_delta_plus:
   NAME: energy_delta_plus
   DATA_TYPE: CDF_REAL4
-  CATDESC: Upper bound of energy range
+  CATDESC: Upper bound of energy delta range
   DEPEND_1: energy
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
@@ -142,7 +142,7 @@ longitude:
 ena_intensity:
   NAME: ena_intensity
   DATA_TYPE: CDF_REAL4
-  CATDESC: Survival probability corrected ENA intensity
+  CATDESC: ENA intensity
   DEPEND_0: epoch
   DEPEND_1: energy
   DEPEND_2: pixel_index
@@ -170,7 +170,7 @@ ena_intensity_stat_unc:
   DEPEND_2: pixel_index
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: Intensity Stat Unc
+  FIELDNAM: Intensity Stat Uncertainty
   FORMAT: F12.1
   LABLAXIS: Statistical unc.
   UNITS: cm -2 s -1 sr -1 keV -1
@@ -182,7 +182,7 @@ ena_intensity_stat_unc:
 ena_intensity_sys_err:
   NAME: ena_intensity_sys_err
   DATA_TYPE: CDF_REAL4
-  CATDESC: ENA intensity systematic uncertainty.
+  CATDESC: ENA intensity systematic uncertainty
   DEPEND_0: epoch
   DEPEND_1: energy
   DEPEND_2: pixel_index
@@ -230,7 +230,7 @@ obs_date:
   VARIABLE_PURPOSE: ' '
   FIELDNAM: J2000 Nanoseconds
   FORMAT: ' '
-  LABLAXIS: epoch
+  LABLAXIS: Epoch
   UNITS: ns
   VALIDMIN: 2010-01-01T00:00:00.000000000
   VALIDMAX: 2099-12-31T00:00:00.000000000
@@ -250,7 +250,7 @@ obs_date_range:
   VARIABLE_PURPOSE: ' '
   FIELDNAM: J2000 Nanoseconds
   FORMAT: I19
-  LABLAXIS: epoch
+  LABLAXIS: Epoch
   UNITS: ns
   VALIDMIN: 0
   VALIDMAX: 31536000000000000
@@ -268,7 +268,7 @@ solid_angle:
   FIELDNAM: Solid Angle
   VARIABLE_PURPOSE: ' '
   FORMAT: F6.2
-  LABLAXIS: Solid Angle
+  LABLAXIS: Solid angle
   UNITS: sr
   VALIDMIN: 0.0
   VALIDMAX: 12.56637061

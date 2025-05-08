@@ -71,7 +71,7 @@ probability_of_survival:
   DEPEND_2: spin_angle
   DISPLAY_TYPE: spectrogram
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Probability of Survival
+  FIELDNAM: Probability Of Survival
   FORMAT: g9.3
   LABLAXIS: probability of survival
   UNITS: ' '
