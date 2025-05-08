@@ -443,6 +443,7 @@ lon_lat_labels:
   CATDESC: Label names for ecliptic longitude and latitude
   FIELDNAM: Lon Lat Labels
   FORMAT: A3
+  FILLVAL: ' '
 spin_axis_orientation_average:
   <<: *primary_support_data
   NAME: spin_axis_orientation_average
@@ -498,6 +499,7 @@ x_y_z_labels:
   CATDESC: Label names for cartesian ecliptic coordinates
   FIELDNAM: X Y Z Labels
   FORMAT: A1
+  FILLVAL: ' '
 spacecraft_location_average:
   <<: *primary_support_data
   NAME: spacecraft_location_average

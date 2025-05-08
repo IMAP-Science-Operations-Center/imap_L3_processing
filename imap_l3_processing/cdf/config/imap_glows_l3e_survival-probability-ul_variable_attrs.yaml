@@ -85,6 +85,7 @@ energy_label:
   FIELDNAM: ' '
   FORMAT: a20
   LABLAXIS: energy_label
+  FILLVAL: ' '
 healpix_index_label:
   NAME: healpix_index_label
   DATA_TYPE: CDF_CHAR
@@ -93,3 +94,4 @@ healpix_index_label:
   FIELDNAM: ' '
   FORMAT: a20
   LABLAXIS: Healpix index
+  FILLVAL: ' '

@@ -1499,6 +1499,7 @@ energy_label:
   VAR_TYPE: metadata
   FIELDNAM: Energy Label
   FORMAT: a20
+  FILLVAL: ' '
 pitch_angle_label:
   NAME: pitch_angle_label
   DATA_TYPE: CDF_CHAR
@@ -1506,6 +1507,7 @@ pitch_angle_label:
   VAR_TYPE: metadata
   FIELDNAM: Pitch Angle Label
   FORMAT: a20
+  FILLVAL: ' '
 gyrophase_label:
   NAME: gyrophase_label
   DATA_TYPE: CDF_CHAR
@@ -1513,6 +1515,7 @@ gyrophase_label:
   VAR_TYPE: metadata
   FIELDNAM: Gyrophase Label
   FORMAT: a20
+  FILLVAL: ' '
 rtn_label:
   NAME: rtn_label
   DATA_TYPE: CDF_CHAR
@@ -1520,6 +1523,7 @@ rtn_label:
   VAR_TYPE: metadata
   FIELDNAM: Rtn Label
   FORMAT: a20
+  FILLVAL: ' '
 temperature_tensor_label:
   NAME: temperature_tensor_label
   DATA_TYPE: CDF_CHAR
@@ -1527,6 +1531,7 @@ temperature_tensor_label:
   VAR_TYPE: metadata
   FIELDNAM: Temperature Tensor Label
   FORMAT: a20
+  FILLVAL: ' '
 tensor_id:
   NAME: tensor_id
   DATA_TYPE: CDF_UINT1

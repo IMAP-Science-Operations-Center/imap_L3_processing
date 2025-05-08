@@ -56,6 +56,7 @@ energy_label:
   VAR_TYPE: metadata
   FIELDNAM: Energy Label
   FORMAT: A16
+  FILLVAL: ' '
 energy_delta_minus:
   NAME: energy_delta_minus
   DATA_TYPE: CDF_REAL4
@@ -107,6 +108,7 @@ pixel_index_label:
   VAR_TYPE: metadata
   FIELDNAM: Label Variable For HEALPix Index
   FORMAT: A16
+  FILLVAL: ' '
 latitude:
   NAME: latitude
   DATA_TYPE: CDF_REAL4

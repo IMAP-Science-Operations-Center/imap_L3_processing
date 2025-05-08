@@ -107,6 +107,7 @@ lat_grid_label:
   VAR_TYPE: metadata
   FIELDNAM: lat grid label
   FORMAT: a20
+  FILLVAL: ' '
 proton_density_ecliptic:
   NAME: proton_density_ecliptic
   DATA_TYPE: CDF_FLOAT

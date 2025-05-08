@@ -1,5 +1,4 @@
 import os
-import unittest
 from datetime import datetime
 from pathlib import Path
 from unittest import TestCase
@@ -67,20 +66,6 @@ class TestCdfUtils(TestCase):
             with self.subTest(f"{filename}:{variable_key}"):
                 self.assertIn('VAR_TYPE', variable.keys(), f'VAR_TYPE should exist for {variable_key}')
 
-    @unittest.skip('skipping because scaletyp/scaleptr are not required because linear is assumed')
-    def test_each_data_variable_has_scaletyp_or_scaleptr(self):
-        for filename, yaml_data, variable_key, variable in self.test_cases_variable:
-            with self.subTest(f"{filename}:{variable_key}"):
-                if variable['VAR_TYPE'] == 'support_data':
-                    self.assertIn('SCALETYP', variable.keys(),
-                                  f'SCALETYP should exist for support_data variable {variable_key}')
-                if variable['VAR_TYPE'] == 'data':
-                    if 'SCALEPTR' not in variable.keys() and 'SCALETYP' not in variable.keys():
-                        self.assertFalse(True, f'SCALETYP or SCALEPTR should exist for data variable {variable_key}')
-                    if 'SCALEPTR' in variable.keys() and 'SCALETYP' in variable.keys():
-                        self.assertFalse(True,
-                                         f"SCALETYP and SCALEPTR  shouldn't both exist for data variable {variable_key}")
-
     def test_each_data_variable_has_a_display_type(self):
         for filename, yaml_data, variable_key, variable in self.test_cases_variable:
             with self.subTest(f"{filename}:{variable_key}"):
@@ -94,14 +79,12 @@ class TestCdfUtils(TestCase):
                 if variable['VAR_TYPE'] == 'data':
                     self.assertIn('VARIABLE_PURPOSE', variable.keys())
 
-    @unittest.skip('only labels do not have fill values currently')
     def test_each_variable_has_data_type_and_fill_value(self):
         for filename, yaml_data, variable_key, variable in self.test_cases_variable:
             with self.subTest(f"{filename}:{variable_key}"):
                 self.assertIn("DATA_TYPE", variable.keys(), f'{variable_key} requires "DATA_TYPE"')
                 self.assertIn("FILLVAL", variable.keys(), f'{variable_key} requires "FILLVAL"')
 
-    @unittest.skip('only labels do not have fill values currently')
     def test_variable_fill_value_matches_data_type(self):
         for filename, yaml_data, variable_key, variable in self.test_cases_variable:
             with self.subTest(f"{filename}:{variable_key}"):

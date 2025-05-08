@@ -222,3 +222,4 @@ lat_grid_label:
   VAR_TYPE: metadata
   FIELDNAM: Lat grid label
   FORMAT: a20
+  FILLVAL: ' '
