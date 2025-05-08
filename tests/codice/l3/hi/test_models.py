@@ -29,7 +29,8 @@ class TestModels(unittest.TestCase):
         l2_direct_event_data = CodiceL2HiData.read_from_cdf(l2_path)
 
         with CDF(str(l2_path)) as cdf:
-            np.testing.assert_array_equal(l2_direct_event_data.epochs, cdf["epoch"])
+            np.testing.assert_array_equal(l2_direct_event_data.epoch, cdf["epoch"])
+            np.testing.assert_array_equal(l2_direct_event_data.epoch_delta_plus, cdf["epoch_delta_plus"])
 
             for priority_index in range(CODICE_HI_NUM_L2_PRIORITIES):
                 actual_priority_event = l2_direct_event_data.priority_events[priority_index]
@@ -50,11 +51,13 @@ class TestModels(unittest.TestCase):
         rng = np.random.default_rng()
 
         expected_epoch = np.array([datetime.now(), datetime.now() + timedelta(days=1)])
+        expected_epoch_delta = np.full(expected_epoch.shape, 1)
         number_of_priority_events = 6
+        event_buffer_size = 3
 
         (expected_data_quality,
          expected_multi_flag,
-         expected_num_of_events,
+         expected_num_events,
          expected_ssd_energy,
          expected_ssd_id,
          expected_spin_angle,
@@ -62,13 +65,20 @@ class TestModels(unittest.TestCase):
          expected_tof,
          expected_type,
          expected_energy_per_nuc,
-         expected_estimated_mass) = [rng.random((len(expected_epoch), number_of_priority_events, 3, 4)) for _ in
+         expected_estimated_mass) = [rng.random((len(expected_epoch), number_of_priority_events, event_buffer_size)) for
+                                     _ in
                                      range(11)]
 
+        expected_priority_index = np.arange(number_of_priority_events)
+        expected_event_index = np.arange(event_buffer_size)
+        expected_priority_index_label = np.array([str(i) for i in range(number_of_priority_events)])
+        expected_event_index_label = np.array([str(i) for i in range(event_buffer_size)])
+
         l3_data_product = CodiceL3HiDirectEvents(Mock(), expected_epoch,
+                                                 expected_epoch_delta,
                                                  expected_data_quality,
                                                  expected_multi_flag,
-                                                 expected_num_of_events,
+                                                 expected_num_events,
                                                  expected_ssd_energy,
                                                  expected_ssd_id,
                                                  expected_spin_angle,
@@ -83,6 +93,11 @@ class TestModels(unittest.TestCase):
                              f.name in CodiceL3HiDirectEvents.__annotations__]
 
         self.assertEqual(len(data_product_variables), len(non_parent_fields))
+
+        np.testing.assert_array_equal(l3_data_product.priority_index, expected_priority_index)
+        np.testing.assert_array_equal(l3_data_product.event_index, expected_event_index)
+        np.testing.assert_array_equal(l3_data_product.priority_index_label, expected_priority_index_label)
+        np.testing.assert_array_equal(l3_data_product.event_index_label, expected_event_index_label)
 
         for data_product_variable in data_product_variables:
             np.testing.assert_array_equal(data_product_variable.value,

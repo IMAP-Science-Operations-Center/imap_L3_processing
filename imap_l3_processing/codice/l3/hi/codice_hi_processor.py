@@ -41,7 +41,7 @@ class CodiceHiProcessor(Processor):
         event_buffer_size = l2_data.priority_events[0].ssd_id.shape[-1]
 
         (data_quality,
-         num_of_events) = [np.full((len(l2_data.epochs), len(l2_data.priority_events)), np.nan) for _ in range(2)]
+         num_events) = [np.full((len(l2_data.epoch), len(l2_data.priority_events)), np.nan) for _ in range(2)]
 
         (multi_flag,
          ssd_energy,
@@ -51,7 +51,7 @@ class CodiceHiProcessor(Processor):
          tof,
          type,
          energy_per_nuc,
-         estimated_mass) = [np.full((len(l2_data.epochs), len(l2_data.priority_events), event_buffer_size), np.nan)
+         estimated_mass) = [np.full((len(l2_data.epoch), len(l2_data.priority_events), event_buffer_size), np.nan)
                             for _ in range(9)]
 
         for index, priority_event in enumerate(l2_data.priority_events):
@@ -70,14 +70,15 @@ class CodiceHiProcessor(Processor):
             estimated_mass[:, index, :] = event_estimated_mass
 
             data_quality[:, index] = priority_event.data_quality
-            num_of_events[:, index] = priority_event.number_of_events
+            num_events[:, index] = priority_event.number_of_events
 
         return CodiceL3HiDirectEvents(
             input_metadata=self.input_metadata,
-            epoch=l2_data.epochs,
+            epoch=l2_data.epoch,
+            epoch_delta=l2_data.epoch_delta_plus,
             data_quality=data_quality,
             multi_flag=multi_flag,
-            num_of_events=num_of_events,
+            num_events=num_events,
             ssd_energy=ssd_energy,
             ssd_id=ssd_id,
             spin_angle=spin_angle,

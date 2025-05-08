@@ -66,11 +66,12 @@ class TestCodiceHiProcessor(unittest.TestCase):
         self.assertEqual("Unknown data level for CoDICE: L2a", str(context.exception))
 
     def test_process_l3a_returns_data_product(self):
-        epochs = np.array([datetime(2025, 1, 1), datetime(2025, 1, 1)])
+        epoch = np.array([datetime(2025, 1, 1), datetime(2025, 1, 1)])
+        epoch_delta_plus = np.full(epoch.shape, 1_000_000)
 
         l2_priority_events, (reshaped_l2_data_quality,
                              reshaped_l2_multi_flag,
-                             reshaped_l2_number_of_events,
+                             reshaped_l2_num_events,
                              reshaped_l2_ssd_energy,
                              reshaped_l2_ssd_id,
                              reshaped_l2_spin_angle,
@@ -78,7 +79,7 @@ class TestCodiceHiProcessor(unittest.TestCase):
                              reshaped_l2_time_of_flight,
                              reshaped_l2_type) = self._create_priority_events()
 
-        l2_data = CodiceL2HiData(epochs, l2_priority_events)
+        l2_data = CodiceL2HiData(epoch, epoch_delta_plus, l2_priority_events)
         multiply_by_100_energy_per_nuc_lookup = TOFLookup(
             {i: EnergyPerNuc(i * 10, i * 100, i * 1000) for i in np.arange(1, 25)})
         dependencies = CodiceHiL3aDirectEventsDependencies(tof_lookup=multiply_by_100_energy_per_nuc_lookup,
@@ -89,10 +90,12 @@ class TestCodiceHiProcessor(unittest.TestCase):
         processor = CodiceHiProcessor(Mock(), Mock())
         codice_direct_event_product = processor.process_l3a_direct_event(dependencies)
 
-        np.testing.assert_array_equal(codice_direct_event_product.epoch, l2_data.epochs)
+        np.testing.assert_array_equal(codice_direct_event_product.epoch, l2_data.epoch)
+        np.testing.assert_array_equal(codice_direct_event_product.epoch_delta, l2_data.epoch_delta_plus)
+
         np.testing.assert_array_equal(codice_direct_event_product.data_quality, reshaped_l2_data_quality)
         np.testing.assert_array_equal(codice_direct_event_product.multi_flag, reshaped_l2_multi_flag)
-        np.testing.assert_array_equal(codice_direct_event_product.num_of_events, reshaped_l2_number_of_events)
+        np.testing.assert_array_equal(codice_direct_event_product.num_events, reshaped_l2_num_events)
         np.testing.assert_array_equal(codice_direct_event_product.ssd_energy, reshaped_l2_ssd_energy)
         np.testing.assert_array_equal(codice_direct_event_product.ssd_id, reshaped_l2_ssd_id)
         np.testing.assert_array_equal(codice_direct_event_product.spin_angle, reshaped_l2_spin_angle)

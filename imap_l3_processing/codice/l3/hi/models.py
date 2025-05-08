@@ -1,5 +1,6 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
+import numpy as np
 from numpy import ndarray
 from spacepy.pycdf import CDF
 
@@ -23,13 +24,15 @@ class PriorityEventL2:
 
 @dataclass
 class CodiceL2HiData:
-    epochs: ndarray
+    epoch: ndarray
+    epoch_delta_plus: ndarray
     priority_events: list[PriorityEventL2]
 
     @classmethod
     def read_from_cdf(cls, filename):
         with CDF(str(filename)) as cdf:
-            epochs = cdf["epoch"][...]
+            epoch = cdf["epoch"][...]
+            epoch_delta_plus = cdf['epoch_delta_plus'][...]
 
             priority_events = []
             for p in range(CODICE_HI_NUM_L2_PRIORITIES):
@@ -46,14 +49,13 @@ class CodiceL2HiData:
                 )
                 priority_events.append(priority_event)
 
-            return cls(epochs, priority_events)
+            return cls(epoch, epoch_delta_plus, priority_events)
 
 
 EPOCH_VAR_NAME = "epoch"
 DATA_QUALITY_VAR_NAME = "data_quality"
-ERGE_VAR_NAME = "erge"
 MULTI_FLAG_VAR_NAME = "multi_flag"
-NUM_OF_EVENTS_VAR_NAME = "num_of_events"
+NUM_EVENTS_VAR_NAME = "num_events"
 SSD_ENERGY_VAR_NAME = "ssd_energy"
 SSD_ID_VAR_NAME = "ssd_id"
 SPIN_ANGLE_VAR_NAME = "spin_angle"
@@ -66,6 +68,10 @@ ENERGY_PER_NUC_UPPER_VAR_NAME = "energy_per_nuc_upper"
 ESTIMATED_MASS_LOWER_VAR_NAME = "estimated_mass_lower"
 ESTIMATED_MASS_VAR_NAME = "estimated_mass"
 ESTIMATED_MASS_UPPER_VAR_NAME = "estimated_mass_upper"
+PRIORITY_INDEX_VAR_NAME = "priority_index"
+EVENT_INDEX_VAR_NAME = "event_index"
+PRIORITY_INDEX_LABEL_VAR_NAME = "priority_index_label"
+EVENT_INDEX_LABEL_VAR_NAME = "event_index_label"
 
 EPOCH_DELTA_VAR_NAME = "epoch_delta"
 ENERGY_VAR_NAME = "energy"
@@ -88,9 +94,10 @@ FE_INTENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_VAR_NAME = "fe_intensity_by_pitch_angl
 @dataclass
 class CodiceL3HiDirectEvents(DataProduct):
     epoch: ndarray
+    epoch_delta: ndarray
     data_quality: ndarray
     multi_flag: ndarray
-    num_of_events: ndarray
+    num_events: ndarray
     ssd_energy: ndarray
     ssd_id: ndarray
     spin_angle: ndarray
@@ -99,13 +106,24 @@ class CodiceL3HiDirectEvents(DataProduct):
     type: ndarray
     energy_per_nuc: ndarray
     estimated_mass: ndarray
+    priority_index: ndarray = field(init=False)
+    event_index: ndarray = field(init=False)
+    priority_index_label: ndarray = field(init=False)
+    event_index_label: ndarray = field(init=False)
+
+    def __post_init__(self):
+        self.priority_index = np.arange(CODICE_HI_NUM_L2_PRIORITIES)
+        self.event_index = np.arange(self.ssd_id.shape[-1])
+        self.priority_index_label = np.array([str(i) for i in range(CODICE_HI_NUM_L2_PRIORITIES)])
+        self.event_index_label = np.array([str(i) for i in range(len(self.event_index))])
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
             DataProductVariable(EPOCH_VAR_NAME, self.epoch),
+            DataProductVariable(EPOCH_DELTA_VAR_NAME, self.epoch_delta),
             DataProductVariable(DATA_QUALITY_VAR_NAME, self.data_quality),
             DataProductVariable(MULTI_FLAG_VAR_NAME, self.multi_flag),
-            DataProductVariable(NUM_OF_EVENTS_VAR_NAME, self.num_of_events),
+            DataProductVariable(NUM_EVENTS_VAR_NAME, self.num_events),
             DataProductVariable(SSD_ENERGY_VAR_NAME, self.ssd_energy),
             DataProductVariable(SSD_ID_VAR_NAME, self.ssd_id),
             DataProductVariable(SPIN_ANGLE_VAR_NAME, self.spin_angle),
@@ -114,6 +132,10 @@ class CodiceL3HiDirectEvents(DataProduct):
             DataProductVariable(TYPE_VAR_NAME, self.type),
             DataProductVariable(ENERGY_PER_NUC_VAR_NAME, self.energy_per_nuc),
             DataProductVariable(ESTIMATED_MASS_VAR_NAME, self.estimated_mass),
+            DataProductVariable(PRIORITY_INDEX_VAR_NAME, self.priority_index),
+            DataProductVariable(EVENT_INDEX_VAR_NAME, self.event_index),
+            DataProductVariable(PRIORITY_INDEX_LABEL_VAR_NAME, self.priority_index_label),
+            DataProductVariable(EVENT_INDEX_LABEL_VAR_NAME, self.event_index_label),
         ]
 
 

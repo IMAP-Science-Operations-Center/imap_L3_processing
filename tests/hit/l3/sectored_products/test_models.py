@@ -24,7 +24,7 @@ class TestHitPitchAngleDataProduct(TestCase):
         mock_measurement_pitch_angle.shape = (1, 8, 15)
 
         data = HitPitchAngleDataProduct(sentinel.input_meta_data,
-                                        sentinel.epochs,
+                                        sentinel.epoch,
                                         epoch_deltas,
                                         pitch_angles,
                                         sentinel.pitch_angles_deltas,
@@ -82,7 +82,7 @@ class TestHitPitchAngleDataProduct(TestCase):
         data_product_variables = data.to_data_product_variables()
         expected_epoch_deltas = np.array([5e9])
         expected_data_product_variables = [
-            DataProductVariable("epoch", sentinel.epochs),
+            DataProductVariable("epoch", sentinel.epoch),
             DataProductVariable("epoch_delta", expected_epoch_deltas),
             DataProductVariable("pitch_angle", pitch_angles),
             DataProductVariable("pitch_angle_delta", sentinel.pitch_angles_deltas),
