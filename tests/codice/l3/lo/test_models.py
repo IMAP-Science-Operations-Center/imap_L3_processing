@@ -13,7 +13,7 @@ from imap_l3_processing.codice.l3.lo.models import CodiceLoL2SWSpeciesData, Codi
     CodiceLoL2DirectEventData, \
     PriorityEvent, EnergyAndSpinAngle, CodiceLoL3aDirectEventDataProduct, \
     CodiceLoL1aSWPriorityRates, CodiceLoL1aNSWPriorityRates, CodiceLo3dData, CODICE_LO_L2_NUM_PRIORITIES, \
-    CodiceLoL3aRatiosDataProduct, CodiceLoPartialDensityData
+    CodiceLoL3aRatiosDataProduct, CodiceLoPartialDensityData, CodiceLoL3ChargeStateDistributionsDataProduct
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.utils import save_data
 from tests.test_helpers import get_test_instrument_team_data_path
@@ -256,6 +256,32 @@ class TestModels(unittest.TestCase):
             np.testing.assert_array_equal(getattr(read_in_density_data, field.name),
                                           getattr(density_data, field.name),
                                           strict=True)
+
+    def test_codice_lo_l3a_charge_state_distributions_to_data_product(self):
+        rng = np.random.default_rng()
+        epoch_data = np.array([datetime.now()])
+        input_data_product_kwargs = {
+            "epoch": epoch_data,
+            "epoch_delta": np.array([1]),
+            "oxygen_charge_states": rng.random((len(epoch_data), 4)),
+            "carbon_charge_states": rng.random((len(epoch_data), 3)),
+        }
+
+        data_product = CodiceLoL3ChargeStateDistributionsDataProduct(Mock(), **input_data_product_kwargs)
+        actual_data_product_variables = data_product.to_data_product_variables()
+        self.assertEqual(6, len(actual_data_product_variables))
+        for input_variable, actual_data_product_variable in zip(input_data_product_kwargs.items(),
+                                                                actual_data_product_variables):
+            input_name, expected_value = input_variable
+
+            np.testing.assert_array_equal(actual_data_product_variable.value, getattr(data_product, input_name))
+            self.assertEqual(input_name, actual_data_product_variable.name)
+
+        self.assertEqual(["O+5", "O+6", "O+7", "O+8"], actual_data_product_variables[-2].value)
+        self.assertEqual("oxygen_charge_state_labels", actual_data_product_variables[-2].name)
+
+        self.assertEqual(["C+4", "C+5", "C+6"], actual_data_product_variables[-1].value)
+        self.assertEqual("carbon_charge_state_labels", actual_data_product_variables[-1].name)
 
     def test_codice_lo_l3a_direct_event_to_data_product(self):
         rng = np.random.default_rng()

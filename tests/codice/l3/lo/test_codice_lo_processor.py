@@ -15,7 +15,7 @@ from imap_l3_processing.codice.l3.lo.codice_lo_processor import CodiceLoProcesso
 from imap_l3_processing.codice.l3.lo.models import CodiceLoL3aPartialDensityDataProduct, CodiceLoL2DirectEventData, \
     CodiceLoL3aDirectEventDataProduct, PriorityEvent, CodiceLoL2SWSpeciesData, \
     CodiceLoL1aSWPriorityRates, CodiceLoL1aNSWPriorityRates, CodiceLoPartialDensityData, CodiceLoL3aRatiosDataProduct, \
-    CODICE_LO_L2_NUM_PRIORITIES
+    CODICE_LO_L2_NUM_PRIORITIES, CodiceLoL3ChargeStateDistributionsDataProduct
 from imap_l3_processing.codice.l3.lo.sectored_intensities.science.mass_per_charge_lookup import MassPerChargeLookup
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
@@ -89,6 +89,37 @@ class TestCodiceLoProcessor(unittest.TestCase):
                          mock_process_l3a_ratios.return_value.parent_file_names)
         mock_upload.assert_called_once_with("file1")
 
+    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.upload')
+    @patch(
+        'imap_l3_processing.codice.l3.lo.codice_lo_processor.CodiceLoL3aRatiosDependencies.fetch_dependencies')
+    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.CodiceLoProcessor.process_l3a_abundances')
+    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.save_data')
+    @patch('imap_l3_processing.processor.spiceypy')
+    def test_process_abundances(self, mock_spiceypy, mock_save_data, mock_process_l3a_abundances,
+                                mock_fetch_dependencies, mock_upload):
+        input_collection = MagicMock()
+        input_collection.get_file_paths.return_value = [Path('path/to/parent_file_1')]
+        input_metadata = InputMetadata(instrument='codice',
+                                       data_level="l3a",
+                                       start_date=Mock(spec=datetime),
+                                       end_date=Mock(spec=datetime),
+                                       version='v02',
+                                       descriptor='lo-sw-abundances')
+        mock_spiceypy.ktotal.return_value = 0
+
+        mock_save_data.return_value = "file1"
+        processor = CodiceLoProcessor(dependencies=input_collection, input_metadata=input_metadata)
+        processor.process()
+
+        mock_fetch_dependencies.assert_called_once_with(processor.dependencies)
+        mock_process_l3a_abundances.assert_called_once_with(mock_fetch_dependencies.return_value)
+
+        mock_save_data.assert_called_once_with(mock_process_l3a_abundances.return_value)
+
+        self.assertEqual(['parent_file_1'],
+                         mock_process_l3a_abundances.return_value.parent_file_names)
+        mock_upload.assert_called_once_with("file1")
+
     def test_process_ratios_calculate_abundance_ratios(self):
         now = datetime.now()
         data = CodiceLoPartialDensityData(
@@ -134,6 +165,56 @@ class TestCodiceLoProcessor(unittest.TestCase):
 
         np.testing.assert_array_almost_equal(ratios_data_product.o7_to_o6_ratio, np.array([9 / 6, 15 / 14]))
         np.testing.assert_array_almost_equal(ratios_data_product.felo_to_fehi_ratio, np.array([5 / 2, 12 / 11]))
+
+    def test_process_abundances_calculates_abundance_ratios(self):
+        now = datetime.now()
+        data = CodiceLoPartialDensityData(
+            epoch=np.array(
+                [now, now + timedelta(minutes=4)]),
+            epoch_delta=np.array([120_000_000_000, 120_000_000_000]),
+            fe_hiq_partial_density=np.arange(2),
+            fe_loq_partial_density=np.arange(2),
+            oplus5_partial_density=np.array([1, 2]),
+            oplus6_partial_density=np.array([5, 6]),
+            oplus7_partial_density=np.array([8, 9]),
+            oplus8_partial_density=np.array([11, 12]),
+            mg_partial_density=np.arange(2),
+            cplus4_partial_density=np.array([17, 18]),
+            cplus5_partial_density=np.array([20, 21]),
+            cplus6_partial_density=np.array([23, 24]),
+            ne_partial_density=np.arange(2),
+            si_partial_density=np.arange(2),
+            heplusplus_partial_density=np.arange(2),
+            hplus_partial_density=np.arange(2),
+        )
+
+        dependency = CodiceLoL3aRatiosDependencies(data)
+        input_metadata = Mock()
+        processor = CodiceLoProcessor(dependencies=Mock(), input_metadata=input_metadata)
+
+        abundances_data_product = processor.process_l3a_abundances(dependency)
+        self.assertIsInstance(abundances_data_product, CodiceLoL3ChargeStateDistributionsDataProduct)
+        self.assertEqual(input_metadata, abundances_data_product.input_metadata)
+        np.testing.assert_array_equal(abundances_data_product.epoch,
+                                      [now, now + timedelta(minutes=4)])
+        np.testing.assert_array_equal(abundances_data_product.epoch_delta, [120_000_000_000, 120_000_000_000])
+
+        np.testing.assert_array_almost_equal(abundances_data_product.oxygen_charge_states,
+                                             np.array(
+                                                 [
+                                                     [1 / (1 + 5 + 8 + 11), 5 / (1 + 5 + 8 + 11), 8 / (1 + 5 + 8 + 11),
+                                                      11 / (1 + 5 + 8 + 11), ],
+                                                     [2 / (2 + 6 + 9 + 12), 6 / (2 + 6 + 9 + 12), 9 / (2 + 6 + 9 + 12),
+                                                      12 / (2 + 6 + 9 + 12), ],
+                                                 ])
+                                             )
+        np.testing.assert_array_almost_equal(abundances_data_product.carbon_charge_states,
+                                             np.array(
+                                                 [
+                                                     [17 / (17 + 20 + 23), 20 / (17 + 20 + 23), 23 / (17 + 20 + 23)],
+                                                     [18 / (18 + 21 + 24), 21 / (18 + 21 + 24), 24 / (18 + 21 + 24)],
+                                                 ]
+                                             ))
 
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.upload')
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.CodiceLoL3aDirectEventsDependencies.fetch_dependencies')
