@@ -263,25 +263,26 @@ class TestModels(unittest.TestCase):
         input_data_product_kwargs = {
             "epoch": epoch_data,
             "epoch_delta": np.array([1]),
-            "oxygen_charge_states": rng.random((len(epoch_data), 4)),
-            "carbon_charge_states": rng.random((len(epoch_data), 3)),
+            "oxygen_charge_state_distribution": rng.random((len(epoch_data), 4)),
+            "carbon_charge_state_distribution": rng.random((len(epoch_data), 3)),
         }
 
         data_product = CodiceLoL3ChargeStateDistributionsDataProduct(Mock(), **input_data_product_kwargs)
         actual_data_product_variables = data_product.to_data_product_variables()
         self.assertEqual(6, len(actual_data_product_variables))
         for input_variable, actual_data_product_variable in zip(input_data_product_kwargs.items(),
-                                                                actual_data_product_variables):
+                                                                actual_data_product_variables[:4]):
             input_name, expected_value = input_variable
 
             np.testing.assert_array_equal(actual_data_product_variable.value, getattr(data_product, input_name))
             self.assertEqual(input_name, actual_data_product_variable.name)
 
-        self.assertEqual(["O+5", "O+6", "O+7", "O+8"], actual_data_product_variables[-2].value)
-        self.assertEqual("oxygen_charge_state_labels", actual_data_product_variables[-2].name)
+        oxygen_charge_states, carbon_charge_states, = actual_data_product_variables[4:]
+        np.testing.assert_array_equal(oxygen_charge_states.value, [5, 6, 7, 8])
+        self.assertEqual("oxygen_charge_state", oxygen_charge_states.name)
 
-        self.assertEqual(["C+4", "C+5", "C+6"], actual_data_product_variables[-1].value)
-        self.assertEqual("carbon_charge_state_labels", actual_data_product_variables[-1].name)
+        np.testing.assert_array_equal(carbon_charge_states.value, [4, 5, 6])
+        self.assertEqual("carbon_charge_state", carbon_charge_states.name)
 
     def test_codice_lo_l3a_direct_event_to_data_product(self):
         rng = np.random.default_rng()
