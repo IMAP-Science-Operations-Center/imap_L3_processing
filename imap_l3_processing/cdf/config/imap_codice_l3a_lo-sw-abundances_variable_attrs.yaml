@@ -19,6 +19,7 @@ float_data: &float_data
   FILLVAL: -1.000000E+31
 
 epoch:
+  NAME: epoch
   CATDESC: Time, number of nanoseconds since J2000 with leap seconds included
   VAR_TYPE: support_data
   DISPLAY_TYPE: no_plot
@@ -40,6 +41,7 @@ epoch:
   SI_CONVERSION: 1e-9>seconds
 epoch_delta:
   <<: *support_data
+  NAME: epoch_delta
   CATDESC: epoch_DELTA
   FIELDNAM: epoch_delta
   DATA_TYPE: CDF_INT8
@@ -55,6 +57,7 @@ epoch_delta:
 oxygen_charge_state_distribution:
   <<: *primary_data_variable
   <<: *float_data
+  NAME: oxygen_charge_state_distribution
   CATDESC: Oxygen charge state relative abundances
   FIELDNAM: O charge state abundances
   DATA_TYPE: CDF_REAL4
@@ -67,6 +70,7 @@ oxygen_charge_state_distribution:
 carbon_charge_state_distribution:
   <<: *primary_data_variable
   <<: *float_data
+  NAME: carbon_charge_state_distribution
   CATDESC: Carbon charge state relative abundances
   FIELDNAM: C charge state abundances
   DATA_TYPE: CDF_REAL4
@@ -77,6 +81,7 @@ carbon_charge_state_distribution:
   UNITS: ' '
 
 carbon_charge_state:
+  NAME: carbon_charge_state
   VAR_TYPE: support_data
   DISPLAY_TYPE: no_plot
   DATA_TYPE: CDF_INT1
@@ -90,6 +95,7 @@ carbon_charge_state:
   SCALETYP: linear
 
 oxygen_charge_state:
+  NAME: oxygen_charge_state
   VAR_TYPE: support_data
   DISPLAY_TYPE: no_plot
   DATA_TYPE: CDF_INT1
