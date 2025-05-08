@@ -163,6 +163,25 @@ def create_codice_lo_l3a_ratios_cdf():
     return save_data(ratios_data, delete_if_present=True)
 
 
+def create_codice_lo_l3a_abundances_cdf():
+    partial_densities_file = create_codice_lo_l3a_partial_densities_cdf()
+
+    deps = CodiceLoL3aRatiosDependencies.from_file_paths(partial_densities_file)
+
+    input_metadata = InputMetadata(
+        instrument='codice',
+        data_level='l3a',
+        start_date=datetime(2024, 11, 10),
+        end_date=datetime(2025, 1, 2),
+        version='v000',
+        descriptor='lo-sw-abundances'
+    )
+
+    codice_lo_processor = CodiceLoProcessor(Mock(), input_metadata)
+    ratios_data = codice_lo_processor.process_l3a_abundances(deps)
+    return save_data(ratios_data, delete_if_present=True)
+
+
 def create_swapi_l3b_cdf(geometric_calibration_file, efficiency_calibration_file, cdf_file):
     geometric_calibration = GeometricFactorCalibrationTable.from_file(geometric_calibration_file)
     efficiency_calibration = EfficiencyCalibrationTable(efficiency_calibration_file)
@@ -773,6 +792,8 @@ if __name__ == "__main__":
                 print(create_codice_lo_l3a_direct_events_cdf())
             elif "ratios" in sys.argv:
                 print(create_codice_lo_l3a_ratios_cdf())
+            elif "abundances" in sys.argv:
+                print(create_codice_lo_l3a_abundances_cdf())
             elif "3d-instrument-frame" in sys.argv:
                 pass
     if "codice-hi" in sys.argv:
