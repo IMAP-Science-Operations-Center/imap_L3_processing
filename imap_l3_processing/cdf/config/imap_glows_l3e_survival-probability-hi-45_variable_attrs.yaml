@@ -28,7 +28,7 @@ epoch_delta:
   DEPEND_0: epoch
   FIELDNAM: Epoch Delta
   FORMAT: I19
-  LABLAXIS: epoch_delta
+  LABLAXIS: Epoch delta
   UNITS: ns
   VALIDMIN: 0
   VALIDMAX: 86000000000000
@@ -90,6 +90,7 @@ energy_label:
   VAR_TYPE: metadata
   FIELDNAM: Energy label
   FORMAT: a20
+  FILLVAL: ' '
 spin_angle_label:
   NAME: spin_angle_label
   DATA_TYPE: CDF_CHAR
@@ -97,3 +98,4 @@ spin_angle_label:
   VAR_TYPE: metadata
   FIELDNAM: Spin Angle Label
   FORMAT: a20
+  FILLVAL: ' '

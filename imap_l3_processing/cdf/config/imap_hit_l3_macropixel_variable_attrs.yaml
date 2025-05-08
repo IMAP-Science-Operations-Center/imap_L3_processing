@@ -4,19 +4,21 @@ epoch:
   CATDESC: Time, number of nanoseconds since J2000 with leap seconds included
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: epoch
+  FIELDNAM: Epoch
   FORMAT: ' '
-  LABLAXIS: epoch
+  LABLAXIS: Epoch
   UNITS: ns
   VALIDMIN: 1990-01-01T00:00:00.000000000
   VALIDMAX: 2099-12-31T00:00:00.000000000
   FILLVAL: 9999-12-31T23:59:59.999999999
   TIME_BASE: J2000
-  TIME_SCALE: Terrestrial Time
+  TIME_SCALE: TT
   DELTA_PLUS_VAR: epoch_delta
   DELTA_MINUS_VAR: epoch_delta
   MONOTON: INCREASE
   REFERENCE_POSITION: Rotating Earth Geoid
+  SCALETYP: linear
+  SI_CONVERSION: 1e-9>seconds
 epoch_delta:
   NAME: epoch_delta
   DATA_TYPE: CDF_INT8
@@ -25,12 +27,13 @@ epoch_delta:
   RECORD_VARYING: RV
   DEPEND_0: epoch
   FIELDNAM: Epoch Delta
-  FORMAT: I14
-  LABLAXIS: epoch_delta
+  FORMAT: I19
+  LABLAXIS: Epoch delta
   UNITS: ns
   VALIDMIN: 0
   VALIDMAX: 86000000000000
   FILLVAL: -9223372036854775808
+  SCALETYP: linear
 h_intensity:
   NAME: h_intensity
   DATA_TYPE: CDF_REAL4
@@ -1025,6 +1028,7 @@ h_energy_label:
   VAR_TYPE: metadata
   FIELDNAM: H Energy Label
   FORMAT: a20
+  FILLVAL: ' '
 he4_energy_label:
   NAME: he4_energy_label
   DATA_TYPE: CDF_CHAR
@@ -1032,6 +1036,7 @@ he4_energy_label:
   VAR_TYPE: metadata
   FIELDNAM: He4 Energy Label
   FORMAT: a20
+  FILLVAL: ' '
 cno_energy_label:
   NAME: cno_energy_label
   DATA_TYPE: CDF_CHAR
@@ -1039,6 +1044,7 @@ cno_energy_label:
   VAR_TYPE: metadata
   FIELDNAM: CNO Energy Label
   FORMAT: a20
+  FILLVAL: ' '
 nemgsi_energy_label:
   NAME: nemgsi_energy_label
   DATA_TYPE: CDF_CHAR
@@ -1046,6 +1052,7 @@ nemgsi_energy_label:
   VAR_TYPE: metadata
   FIELDNAM: NeMgSi Energy Label
   FORMAT: a20
+  FILLVAL: ' '
 fe_energy_label:
   NAME: fe_energy_label
   DATA_TYPE: CDF_CHAR
@@ -1053,6 +1060,7 @@ fe_energy_label:
   VAR_TYPE: metadata
   FIELDNAM: Fe Energy Label
   FORMAT: a20
+  FILLVAL: ' '
 pitch_angle_label:
   NAME: pitch_angle_label
   DATA_TYPE: CDF_CHAR
@@ -1060,6 +1068,7 @@ pitch_angle_label:
   VAR_TYPE: metadata
   FIELDNAM: Pitch Angle Label
   FORMAT: a20
+  FILLVAL: ' '
 gyrophase_label:
   NAME: gyrophase_label
   DATA_TYPE: CDF_CHAR
@@ -1067,6 +1076,7 @@ gyrophase_label:
   VAR_TYPE: metadata
   FIELDNAM: Gyrophase Label
   FORMAT: a20
+  FILLVAL: ' '
 declination_idx:
   NAME: declination_idx
   DATA_TYPE: CDF_REAL4
@@ -1101,6 +1111,7 @@ declination_idx_label:
   CATDESC: Label for declination index
   VAR_TYPE: metadata
   FIELDNAM: Declination Idx Label
+  FILLVAL: ' '
   FORMAT: a20
 azimuth_idx_label:
   NAME: azimuth_idx_label
@@ -1109,3 +1120,4 @@ azimuth_idx_label:
   VAR_TYPE: metadata
   FIELDNAM: Azimuth Idx Label
   FORMAT: a20
+  FILLVAL: ' '

@@ -73,6 +73,8 @@ class TestCodiceHiProcessor(unittest.TestCase):
                              reshaped_l2_multi_flag,
                              reshaped_l2_num_events,
                              reshaped_l2_ssd_energy,
+                             reshaped_l2_ssd_energy_plus,
+                             reshaped_l2_ssd_energy_minus,
                              reshaped_l2_ssd_id,
                              reshaped_l2_spin_angle,
                              reshaped_l2_spin_number,
@@ -96,7 +98,11 @@ class TestCodiceHiProcessor(unittest.TestCase):
         np.testing.assert_array_equal(codice_direct_event_product.data_quality, reshaped_l2_data_quality)
         np.testing.assert_array_equal(codice_direct_event_product.multi_flag, reshaped_l2_multi_flag)
         np.testing.assert_array_equal(codice_direct_event_product.num_events, reshaped_l2_num_events)
+
         np.testing.assert_array_equal(codice_direct_event_product.ssd_energy, reshaped_l2_ssd_energy)
+        np.testing.assert_array_equal(codice_direct_event_product.ssd_energy_plus, reshaped_l2_ssd_energy_plus)
+        np.testing.assert_array_equal(codice_direct_event_product.ssd_energy_minus, reshaped_l2_ssd_energy_minus)
+
         np.testing.assert_array_equal(codice_direct_event_product.ssd_id, reshaped_l2_ssd_id)
         np.testing.assert_array_equal(codice_direct_event_product.spin_angle, reshaped_l2_spin_angle)
         np.testing.assert_array_equal(codice_direct_event_product.spin_number, reshaped_l2_spin_number)
@@ -221,12 +227,14 @@ class TestCodiceHiProcessor(unittest.TestCase):
 
         (reshaped_l2_multi_flag,
          reshaped_l2_ssd_energy,
+         reshaped_l2_ssd_energy_plus,
+         reshaped_l2_ssd_energy_minus,
          reshaped_l2_ssd_id,
          reshaped_l2_spin_angle,
          reshaped_l2_spin_number,
          reshaped_l2_time_of_flight,
          reshaped_l2_type) = [np.full((num_epochs, CODICE_HI_NUM_L2_PRIORITIES, event_buffer_size), np.nan) for _ in
-                              range(7)]
+                              range(9)]
 
         events = []
         for i in range(CODICE_HI_NUM_L2_PRIORITIES):
@@ -234,6 +242,9 @@ class TestCodiceHiProcessor(unittest.TestCase):
             number_of_events = np.arange(num_epochs) + i
 
             ssd_energy = ssd_id_all_events[i]
+            ssd_energy_plus = np.arange(num_epochs * event_buffer_size).reshape(num_epochs, event_buffer_size) + i
+            ssd_energy_minus = np.arange(num_epochs * event_buffer_size).reshape(num_epochs, event_buffer_size) + i
+
             ssd_id = ssd_id_all_events[i]
             time_of_flight = tof_all_events[i]
 
@@ -242,7 +253,8 @@ class TestCodiceHiProcessor(unittest.TestCase):
             spin_number = np.arange(num_epochs * event_buffer_size).reshape(num_epochs, event_buffer_size) * i
             type = np.arange(num_epochs * event_buffer_size).reshape(num_epochs, event_buffer_size) * i
 
-            events.append(PriorityEventL2(data_quality, multi_flag, number_of_events, ssd_energy, ssd_id,
+            events.append(PriorityEventL2(data_quality, multi_flag, number_of_events, ssd_energy, ssd_energy_plus,
+                                          ssd_energy_minus, ssd_id,
                                           spin_angle, spin_number, time_of_flight, type))
 
             reshaped_l2_data_quality[:, i] = data_quality
@@ -255,10 +267,13 @@ class TestCodiceHiProcessor(unittest.TestCase):
             reshaped_l2_spin_number[:, i, :] = spin_number
             reshaped_l2_time_of_flight[:, i, :] = time_of_flight
             reshaped_l2_type[:, i, :] = type
+            reshaped_l2_ssd_energy_plus[:, i, :] = ssd_energy_plus
+            reshaped_l2_ssd_energy_minus[:, i, :] = ssd_energy_minus
 
         return events, (
             reshaped_l2_data_quality, reshaped_l2_multi_flag, reshaped_l2_number_of_events,
-            reshaped_l2_ssd_energy, reshaped_l2_ssd_id, reshaped_l2_spin_angle, reshaped_l2_spin_number,
+            reshaped_l2_ssd_energy, reshaped_l2_ssd_energy_plus, reshaped_l2_ssd_energy_minus, reshaped_l2_ssd_id,
+            reshaped_l2_spin_angle, reshaped_l2_spin_number,
             reshaped_l2_time_of_flight, reshaped_l2_type)
 
     def _assert_estimated_mass(self, l2_priority_event, actual_calculated_mass, actual_energy_per_nuc,

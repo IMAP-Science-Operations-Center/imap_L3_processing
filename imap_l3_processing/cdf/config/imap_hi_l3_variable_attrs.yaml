@@ -3,13 +3,13 @@ epoch:
   DATA_TYPE: CDF_TIME_TT2000
   CATDESC: Time, number of nanoseconds since J2000 with leap seconds included
   VAR_TYPE: support_data
-  RECORD_VARYING: rv
-  FIELDNAM: J2000 Nanoseconds
+  RECORD_VARYING: RV
+  FIELDNAM: Epoch
   FORMAT: ' '
-  LABLAXIS: epoch
+  LABLAXIS: Epoch
   UNITS: ns
   VALIDMIN: 2010-01-01T00:00:00.000000000
-  VALIDMAX: 2059-12-31T23:59:58.999000000
+  VALIDMAX: 2099-12-31T00:00:00.000000000
   FILLVAL: 9999-12-31T23:59:59.999999999
   SCALETYP: linear
   TIME_BASE: J2000
@@ -25,7 +25,7 @@ epoch_delta:
   CATDESC: Epoch delta
   DEPEND_0: epoch
   VAR_TYPE: support_data
-  RECORD_VARYING: rv
+  RECORD_VARYING: RV
   FIELDNAM: Epoch Delta
   FORMAT: I19
   LABLAXIS: Epoch delta
@@ -33,12 +33,13 @@ epoch_delta:
   VALIDMIN: 0
   VALIDMAX: 31536000000000000
   FILLVAL: -9223372036854775808
+  SCALETYP: linear
 energy:
   NAME: energy
   DATA_TYPE: CDF_REAL4
   CATDESC: energy
   VAR_TYPE: support_data
-  RECORD_VARYING: nrv
+  RECORD_VARYING: NRV
   FIELDNAM: Energy
   FORMAT: F6.2
   LABLAXIS: Energy
@@ -56,16 +57,17 @@ energy_label:
   CATDESC: Label variable for energy coordinate
   DEPEND_1: energy
   VAR_TYPE: metadata
-  FIELDNAM: Energy label
+  FIELDNAM: Energy Label
   FORMAT: A16
+  FILLVAL: ' '
 energy_delta_minus:
   NAME: energy_delta_minus
   DATA_TYPE: CDF_REAL4
   CATDESC: Lower bound of energy range
   DEPEND_1: energy
   VAR_TYPE: support_data
-  RECORD_VARYING: nrv
-  FIELDNAM: Energy delta minus
+  RECORD_VARYING: NRV
+  FIELDNAM: Energy Delta Minus
   FORMAT: F6.2
   LABLAXIS: Energy delta minus
   UNITS: keV
@@ -79,8 +81,8 @@ energy_delta_plus:
   CATDESC: Upper bound of energy range
   DEPEND_1: energy
   VAR_TYPE: support_data
-  RECORD_VARYING: nrv
-  FIELDNAM: Energy delta plus
+  RECORD_VARYING: NRV
+  FIELDNAM: Energy Delta Plus
   FORMAT: F6.2
   LABLAXIS: Energy delta plus
   UNITS: keV
@@ -93,11 +95,11 @@ latitude:
   DATA_TYPE: CDF_REAL4
   CATDESC: Pixel center latitude
   VAR_TYPE: support_data
-  RECORD_VARYING: nrv
+  RECORD_VARYING: NRV
   FIELDNAM: HAE Latitude
   FORMAT: F6.1
   LABLAXIS: Latitude
-  UNITS: deg
+  UNITS: degrees
   VALIDMIN: -90.0
   VALIDMAX: 90.0
   FILLVAL: -1.00E+31
@@ -111,19 +113,20 @@ latitude_label:
   CATDESC: Label variable for latitude coordinate
   DEPEND_1: latitude
   VAR_TYPE: metadata
-  FIELDNAM: Latitude label
+  FIELDNAM: Latitude Label
   FORMAT: A16
+  FILLVAL: ' '
 latitude_delta:
   NAME: latitude_delta
   DATA_TYPE: CDF_REAL4
   CATDESC: Half-width of latitude pixel
   DEPEND_1: latitude
   VAR_TYPE: support_data
-  RECORD_VARYING: nrv
+  RECORD_VARYING: NRV
   FIELDNAM: Latitude delta
   FORMAT: F12.1
   LABLAXIS: Latitude delta
-  UNITS: deg
+  UNITS: degrees
   VALIDMIN: 0.0
   VALIDMAX: 90.0
   FILLVAL: -1.00E+31
@@ -133,11 +136,11 @@ longitude:
   DATA_TYPE: CDF_REAL4
   CATDESC: Pixel center longitude
   VAR_TYPE: support_data
-  RECORD_VARYING: nrv
+  RECORD_VARYING: NRV
   FIELDNAM: HAE Longitude
   FORMAT: F6.1
   LABLAXIS: Longitude
-  UNITS: deg
+  UNITS: degrees
   VALIDMIN: 0.0
   VALIDMAX: 360.0
   FILLVAL: -1.00E+31
@@ -153,17 +156,18 @@ longitude_label:
   VAR_TYPE: metadata
   FIELDNAM: Longitude label
   FORMAT: A16
+  FILLVAL: ' '
 longitude_delta:
   NAME: longitude_delta
   DATA_TYPE: CDF_REAL4
   CATDESC: Half-width of longitude pixel
   DEPEND_1: longitude
   VAR_TYPE: support_data
-  RECORD_VARYING: nrv
+  RECORD_VARYING: NRV
   FIELDNAM: Longitude delta
   FORMAT: F12.1
   LABLAXIS: Longitude delta
-  UNITS: deg
+  UNITS: degrees
   VALIDMIN: 0
   VALIDMAX: 180.0
   FILLVAL: -1.00E+31
@@ -176,7 +180,7 @@ ena_intensity:
   DEPEND_2: longitude
   DEPEND_3: latitude
   VAR_TYPE: data
-  RECORD_VARYING: rv
+  RECORD_VARYING: RV
   DISPLAY_TYPE: image
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
   FIELDNAM: Intensity
@@ -199,10 +203,10 @@ ena_intensity_stat_unc:
   DEPEND_2: longitude
   DEPEND_3: latitude
   VAR_TYPE: support_data
-  RECORD_VARYING: rv
-  FIELDNAM: Intensity Uncertainty
+  RECORD_VARYING: RV
+  FIELDNAM: Intensity Stat Unc
   FORMAT: F12.1
-  LABLAXIS: Uncertainty
+  LABLAXIS: Statistical unc.
   UNITS: cm -2 s -1 sr -1 keV -1
   VALIDMIN: 0.0
   VALIDMAX: 1.00E+9
@@ -214,16 +218,16 @@ ena_intensity_stat_unc:
 ena_intensity_sys_err:
   NAME: ena_intensity_sys_err
   DATA_TYPE: CDF_REAL4
-  CATDESC: ENA intensity systematic uncertainty
+  CATDESC: ENA intensity non-statistical error
   DEPEND_0: epoch
   DEPEND_1: energy
   DEPEND_2: longitude
   DEPEND_3: latitude
   VAR_TYPE: support_data
-  RECORD_VARYING: rv
-  FIELDNAM: Intensity Uncertainty
+  RECORD_VARYING: RV
+  FIELDNAM: Intensity non-stat error
   FORMAT: F12.1
-  LABLAXIS: Uncertainty
+  LABLAXIS: Non-statistical Error
   UNITS: cm -2 s -1 sr -1 keV -1
   VALIDMIN: 0.0
   VALIDMAX: 1.00E+9
@@ -241,7 +245,7 @@ exposure_factor:
   DEPEND_2: longitude
   DEPEND_3: latitude
   VAR_TYPE: data
-  RECORD_VARYING: rv
+  RECORD_VARYING: RV
   DISPLAY_TYPE: no_plot
   FIELDNAM: Exposure Times
   VARIABLE_PURPOSE: ' '
@@ -264,7 +268,7 @@ obs_date:
   DEPEND_2: longitude
   DEPEND_3: latitude
   VAR_TYPE: data
-  RECORD_VARYING: rv
+  RECORD_VARYING: RV
   DISPLAY_TYPE: image
   FIELDNAM: J2000 Nanoseconds
   VARIABLE_PURPOSE: ' '
@@ -272,7 +276,7 @@ obs_date:
   LABLAXIS: epoch
   UNITS: ns
   VALIDMIN: 2010-01-01T00:00:00.000000000
-  VALIDMAX: 2059-12-31T23:59:58.999000000
+  VALIDMAX: 2099-12-31T00:00:00.000000000
   FILLVAL: 9999-12-31T23:59:59.999999999
   LABL_PTR_1: energy_label
   LABL_PTR_2: longitude_label
@@ -287,7 +291,7 @@ obs_date_range:
   DEPEND_2: longitude
   DEPEND_3: latitude
   VAR_TYPE: data
-  RECORD_VARYING: rv
+  RECORD_VARYING: RV
   DISPLAY_TYPE: image
   FIELDNAM: J2000 Nanoseconds
   VARIABLE_PURPOSE: ' '
@@ -308,7 +312,7 @@ solid_angle:
   DEPEND_1: longitude
   DEPEND_2: latitude
   VAR_TYPE: data
-  RECORD_VARYING: nrv
+  RECORD_VARYING: NRV
   DISPLAY_TYPE: image
   FIELDNAM: Solid Angle
   VARIABLE_PURPOSE: ' '
@@ -324,7 +328,7 @@ solid_angle:
 ena_spectral_index:
   NAME: ena_spectral_index
   DATA_TYPE: CDF_REAL4
-  CATDESC: ENA spectral index.
+  CATDESC: ENA spectral index
   DEPEND_0: epoch
   DEPEND_1: energy
   DEPEND_2: longitude
@@ -333,9 +337,9 @@ ena_spectral_index:
   RECORD_VARYING: RV
   DISPLAY_TYPE: image
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Ena Spectral Index
+  FIELDNAM: ENA Spectral Index
   FORMAT: F12.6
-  LABLAXIS: Index
+  LABLAXIS: ENA spectral index
   UNITS: ' '
   VALIDMIN: 0.0
   VALIDMAX: 100
@@ -360,7 +364,7 @@ ena_spectral_index_stat_unc:
   FIELDNAM: Ena Spectral Index Stat Unc
   VARIABLE_PURPOSE: ' '
   FORMAT: F12.6
-  LABLAXIS: Index Error
+  LABLAXIS: Statistical unc.
   UNITS: ' '
   VALIDMIN: 0.0
   VALIDMAX: 100

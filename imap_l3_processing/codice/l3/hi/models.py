@@ -15,6 +15,8 @@ class PriorityEventL2:
     multi_flag: ndarray
     number_of_events: ndarray
     ssd_energy: ndarray
+    ssd_energy_plus: ndarray
+    ssd_energy_minus: ndarray
     ssd_id: ndarray
     spin_angle: ndarray
     spin_number: ndarray
@@ -41,6 +43,8 @@ class CodiceL2HiData:
                     multi_flag=cdf[f"p{p}_multi_flag"][...],
                     number_of_events=cdf[f"p{p}_num_events"][...],
                     ssd_energy=cdf[f"p{p}_ssd_energy"][...],
+                    ssd_energy_plus=cdf[f"p{p}_ssd_energy_plus"][...],
+                    ssd_energy_minus=cdf[f"p{p}_ssd_energy_minus"][...],
                     ssd_id=cdf[f"p{p}_ssd_id"][...],
                     spin_angle=cdf[f"p{p}_spin_sector"][...],
                     spin_number=cdf[f"p{p}_spin_number"][...],
@@ -57,6 +61,8 @@ DATA_QUALITY_VAR_NAME = "data_quality"
 MULTI_FLAG_VAR_NAME = "multi_flag"
 NUM_EVENTS_VAR_NAME = "num_events"
 SSD_ENERGY_VAR_NAME = "ssd_energy"
+SSD_ENERGY_PLUS_VAR_NAME = "ssd_energy_plus"
+SSD_ENERGY_MINUS_VAR_NAME = "ssd_energy_minus"
 SSD_ID_VAR_NAME = "ssd_id"
 SPIN_ANGLE_VAR_NAME = "spin_angle"
 SPIN_NUMBER_VAR_NAME = "spin_number"
@@ -99,6 +105,8 @@ class CodiceL3HiDirectEvents(DataProduct):
     multi_flag: ndarray
     num_events: ndarray
     ssd_energy: ndarray
+    ssd_energy_plus: ndarray
+    ssd_energy_minus: ndarray
     ssd_id: ndarray
     spin_angle: ndarray
     spin_number: ndarray
@@ -125,6 +133,8 @@ class CodiceL3HiDirectEvents(DataProduct):
             DataProductVariable(MULTI_FLAG_VAR_NAME, self.multi_flag),
             DataProductVariable(NUM_EVENTS_VAR_NAME, self.num_events),
             DataProductVariable(SSD_ENERGY_VAR_NAME, self.ssd_energy),
+            DataProductVariable(SSD_ENERGY_PLUS_VAR_NAME, self.ssd_energy_plus),
+            DataProductVariable(SSD_ENERGY_MINUS_VAR_NAME, self.ssd_energy_minus),
             DataProductVariable(SSD_ID_VAR_NAME, self.ssd_id),
             DataProductVariable(SPIN_ANGLE_VAR_NAME, self.spin_angle),
             DataProductVariable(SPIN_NUMBER_VAR_NAME, self.spin_number),

@@ -9,7 +9,7 @@ epoch:
   LABLAXIS: Epoch
   UNITS: ns
   VALIDMIN: 2010-01-01T00:00:00.000000000
-  VALIDMAX: 2059-12-31T23:59:58.999000000
+  VALIDMAX: 2099-12-31T00:00:00.000000000
   FILLVAL: 9999-12-31T23:59:59.999999999
   SCALETYP: linear
   TIME_BASE: J2000
@@ -83,15 +83,14 @@ epoch_delta:
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: ' '
-  FORMAT: I14
-  LABLAXIS: Time delta
+  FIELDNAM: Epoch Delta
+  FORMAT: I19
+  LABLAXIS: Epoch delta
   UNITS: ns
   VALIDMIN: 0
   VALIDMAX: 600000000000
   FILLVAL: -9223372036854775808
   SCALETYP: linear
-  SI_CONVERSION: 1e-9>seconds
 energy_delta_plus:
   NAME: energy_delta_plus
   DATA_TYPE: CDF_REAL4
@@ -1499,6 +1498,7 @@ energy_label:
   VAR_TYPE: metadata
   FIELDNAM: Energy Label
   FORMAT: a20
+  FILLVAL: ' '
 pitch_angle_label:
   NAME: pitch_angle_label
   DATA_TYPE: CDF_CHAR
@@ -1506,6 +1506,7 @@ pitch_angle_label:
   VAR_TYPE: metadata
   FIELDNAM: Pitch Angle Label
   FORMAT: a20
+  FILLVAL: ' '
 gyrophase_label:
   NAME: gyrophase_label
   DATA_TYPE: CDF_CHAR
@@ -1513,6 +1514,7 @@ gyrophase_label:
   VAR_TYPE: metadata
   FIELDNAM: Gyrophase Label
   FORMAT: a20
+  FILLVAL: ' '
 rtn_label:
   NAME: rtn_label
   DATA_TYPE: CDF_CHAR
@@ -1520,6 +1522,7 @@ rtn_label:
   VAR_TYPE: metadata
   FIELDNAM: Rtn Label
   FORMAT: a20
+  FILLVAL: ' '
 temperature_tensor_label:
   NAME: temperature_tensor_label
   DATA_TYPE: CDF_CHAR
@@ -1527,6 +1530,7 @@ temperature_tensor_label:
   VAR_TYPE: metadata
   FIELDNAM: Temperature Tensor Label
   FORMAT: a20
+  FILLVAL: ' '
 tensor_id:
   NAME: tensor_id
   DATA_TYPE: CDF_UINT1

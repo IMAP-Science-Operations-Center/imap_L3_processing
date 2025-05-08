@@ -9,7 +9,7 @@ epoch:
   LABLAXIS: Epoch
   UNITS: ns
   VALIDMIN: 2010-01-01T00:00:00.000000000
-  VALIDMAX: 2059-12-31T23:59:58.999000000
+  VALIDMAX: 2099-12-31T00:00:00.000000000
   FILLVAL: 9999-12-31T23:59:59.999999999
   SCALETYP: linear
   TIME_BASE: J2000
@@ -107,6 +107,7 @@ lat_grid_label:
   VAR_TYPE: metadata
   FIELDNAM: lat grid label
   FORMAT: a20
+  FILLVAL: ' '
 proton_density_ecliptic:
   NAME: proton_density_ecliptic
   DATA_TYPE: CDF_FLOAT

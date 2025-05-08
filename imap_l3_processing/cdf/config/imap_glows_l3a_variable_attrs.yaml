@@ -23,14 +23,14 @@ epoch:
   NAME: epoch
   CATDESC: Time, number of nanoseconds since J2000 with leap seconds included
   VAR_TYPE: support_data
-  DISPLAY_TYPE: no_plot
   DATA_TYPE: CDF_TIME_TT2000
   FIELDNAM: Epoch
   RECORD_VARYING: RV
+  FORMAT: ' '
   LABLAXIS: Epoch
   UNITS: ns
   VALIDMIN: 2010-01-01T00:00:00.000000000
-  VALIDMAX: 2059-12-31T23:59:58.999000000
+  VALIDMAX: 2099-12-31T00:00:00.000000000
   FILLVAL: 9999-12-31T23:59:59.999999999
   SCALETYP: linear
   TIME_BASE: J2000
@@ -41,7 +41,6 @@ epoch:
   REFERENCE_POSITION: Rotating Earth Geoid
   SI_CONVERSION: 1e-9>seconds
 epoch_delta:
-  <<: *support_data
   NAME: epoch_delta
   CATDESC: Epoch delta
   FIELDNAM: Epoch Delta
@@ -52,9 +51,10 @@ epoch_delta:
   VALIDMAX: 86000000000000
   FILLVAL: -9223372036854775808
   SCALETYP: linear
-  SCALEMIN: 0
-  SCALEMAX: 86000000000000
-  SI_CONVERSION: 1e-9>seconds
+  LABLAXIS: Epoch delta
+  DEPEND_0: epoch
+  RECORD_VARYING: RV
+  VAR_TYPE: support_data
 photon_flux:
   <<: *primary_data_variable
   NAME: photon_flux
@@ -443,6 +443,7 @@ lon_lat_labels:
   CATDESC: Label names for ecliptic longitude and latitude
   FIELDNAM: Lon Lat Labels
   FORMAT: A3
+  FILLVAL: ' '
 spin_axis_orientation_average:
   <<: *primary_support_data
   NAME: spin_axis_orientation_average
@@ -498,6 +499,7 @@ x_y_z_labels:
   CATDESC: Label names for cartesian ecliptic coordinates
   FIELDNAM: X Y Z Labels
   FORMAT: A1
+  FILLVAL: ' '
 spacecraft_location_average:
   <<: *primary_support_data
   NAME: spacecraft_location_average
