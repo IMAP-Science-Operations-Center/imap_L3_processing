@@ -4,16 +4,16 @@ epoch:
   CATDESC: Time, number of nanoseconds since J2000 with leap seconds included
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: epoch
+  FIELDNAM: Epoch
   FORMAT: ' '
-  LABLAXIS: epoch
+  LABLAXIS: Epoch
   UNITS: ns
   VALIDMIN: 2010-01-01T00:00:00.000000000
-  VALIDMAX: 2040-01-01T00:00:00.000000000
+  VALIDMAX: 2099-12-31T00:00:00.000000000
   FILLVAL: 9999-12-31T23:59:59.999999999
   SCALETYP: linear
   TIME_BASE: J2000
-  TIME_SCALE: Terrestrial Time
+  TIME_SCALE: TT
   DELTA_PLUS_VAR: epoch_delta
   DELTA_MINUS_VAR: epoch_delta
   MONOTON: INCREASE
@@ -24,7 +24,7 @@ epoch_delta:
   DATA_TYPE: CDF_INT8
   CATDESC: Epoch delta
   VAR_TYPE: support_data
-  RECORD_VARYING: NRV
+  RECORD_VARYING: RV
   FIELDNAM: Epoch Delta
   FORMAT: I19
   UNITS: ns
@@ -32,10 +32,8 @@ epoch_delta:
   VALIDMAX: 86000000000000
   FILLVAL: -9223372036854775808
   SCALETYP: linear
-  SCALEMIN: 0
-  SCALEMAX: 86000000000000
-  SI_CONVERSION: 1e-9>seconds
   LABLAXIS: Epoch delta
+  DEPEND_0: epoch
 combined_energy:
   NAME: combined_energy
   DATA_TYPE: CDF_REAL4

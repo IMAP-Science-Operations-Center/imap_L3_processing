@@ -28,7 +28,7 @@ epoch_delta:
   DEPEND_0: epoch
   FIELDNAM: Epoch Delta
   FORMAT: I19
-  LABLAXIS: epoch_delta
+  LABLAXIS: Epoch delta
   UNITS: ns
   VALIDMIN: 0
   VALIDMAX: 86000000000000
