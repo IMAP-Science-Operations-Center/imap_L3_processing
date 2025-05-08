@@ -18,16 +18,24 @@ float_data: &float_data
   FILLVAL: -1.000000E+31
 
 per_priority: &per_priority
-  <<: *primary_data_variable
+  DEPEND_0: epoch
   DEPEND_1: priority_index
   SCALETYP: linear
   LABL_PTR_1: priority_index_label
   DISPLAY_TYPE: spectrogram
 
+per_priority_data: &per_priority_data
+  <<: *primary_data_variable
+  <<: *per_priority
+
 per_event: &per_event
   <<: *per_priority
   DEPEND_2: event_index
   LABL_PTR_2: event_index_label
+
+per_event_data: &per_event_data
+  <<: *per_event
+  <<: *primary_data_variable
 
 epoch:
   NAME: epoch
@@ -68,7 +76,7 @@ epoch_delta:
   SI_CONVERSION: 1e-9>seconds
 
 data_quality:
-  <<: *per_priority
+  <<: *per_priority_data
   NAME: data_quality
   CATDESC: Data quality flags
   FIELDNAM: Data Quality Flags
@@ -81,7 +89,7 @@ data_quality:
   FILLVAL: 255
 
 num_events:
-  <<: *per_priority
+  <<: *per_priority_data
   NAME: num_events
   CATDESC: Number of events
   FIELDNAM: Number of events
@@ -94,7 +102,7 @@ num_events:
   FILLVAL: 65535
 
 multi_flag:
-  <<: *per_event
+  <<: *per_event_data
   NAME: multi_flag
   CATDESC: Multi flag
   FIELDNAM: Multi Flag
@@ -107,16 +115,41 @@ multi_flag:
   FORMAT: I1
 
 ssd_energy:
-  <<: *per_event
+  <<: *per_event_data
   <<: *float_data
   NAME: ssd_energy
   CATDESC: SSD energy
   FIELDNAM: SSD Energy
   LABLAXIS: SSD energy
   UNITS: MeV
+  DELTA_PLUS_VAR: ssd_energy_plus
+  DELTA_MINUS_VAR: ssd_energy_minus
+
+
+ssd_energy_plus:
+  <<: *per_event
+  <<: *float_data
+  VAR_TYPE: support_data
+  NAME: ssd_energy_plus
+  CATDESC: SSD energy plus
+  FIELDNAM: SSD Energy
+  LABLAXIS: SSD energy
+  UNITS: MeV
+  RECORD_VARYING: RV
+
+ssd_energy_minus:
+  <<: *per_event
+  <<: *float_data
+  VAR_TYPE: support_data
+  NAME: ssd_energy_minus
+  CATDESC: SSD energy minus
+  FIELDNAM: SSD Energy
+  LABLAXIS: SSD energy
+  UNITS: MeV
+  RECORD_VARYING: RV
 
 ssd_id:
-  <<: *per_event
+  <<: *per_event_data
   NAME: ssd_id
   CATDESC: SSD ID or azimuth angle
   FIELDNAM: SSD ID or Azimuth Angle
@@ -129,7 +162,7 @@ ssd_id:
   FORMAT: I2
 
 spin_angle:
-  <<: *per_event
+  <<: *per_event_data
   <<: *float_data
   NAME: spin_angle
   CATDESC: Spin angle when event was observed
@@ -138,7 +171,7 @@ spin_angle:
   UNITS: degrees
 
 spin_number:
-  <<: *per_event
+  <<: *per_event_data
   NAME: spin_number
   CATDESC: Spin number
   FIELDNAM: Spin Number
@@ -151,7 +184,7 @@ spin_number:
   FORMAT: I2
 
 tof:
-  <<: *per_event
+  <<: *per_event_data
   NAME: tof
   CATDESC: Time of Flight of Event
   FIELDNAM: Event Time of Flight
@@ -165,7 +198,7 @@ tof:
 
 
 type:
-  <<: *per_event
+  <<: *per_event_data
   NAME: type
   CATDESC: PHA Type
   FIELDNAM: PHA Type
@@ -178,7 +211,7 @@ type:
   FORMAT: I1
 
 energy_per_nuc_lower:
-  <<: *per_event
+  <<: *per_event_data
   <<: *float_data
   NAME: energy_per_nuc_lower
   CATDESC: Energy per nuc lower bound
@@ -188,7 +221,7 @@ energy_per_nuc_lower:
 
 
 energy_per_nuc:
-  <<: *per_event
+  <<: *per_event_data
   <<: *float_data
   NAME: energy_per_nuc
   CATDESC: Energy per nuc
@@ -197,7 +230,7 @@ energy_per_nuc:
   UNITS: MeV/n
 
 energy_per_nuc_upper:
-  <<: *per_event
+  <<: *per_event_data
   <<: *float_data
   NAME: energy_per_nuc_upper
   CATDESC: Energy per nuc upper bound
@@ -206,7 +239,7 @@ energy_per_nuc_upper:
   UNITS: MeV/n
 
 estimated_mass_lower:
-  <<: *per_event
+  <<: *per_event_data
   <<: *float_data
   NAME: estimated_mass_lower
   CATDESC: Estimated mass lower bound
@@ -215,7 +248,7 @@ estimated_mass_lower:
   UNITS: amu
 
 estimated_mass:
-  <<: *per_event
+  <<: *per_event_data
   <<: *float_data
   NAME: estimated_mass
   CATDESC: Estimated mass
@@ -224,7 +257,7 @@ estimated_mass:
   UNITS: amu
 
 estimated_mass_upper:
-  <<: *per_event
+  <<: *per_event_data
   <<: *float_data
   NAME: estimated_mass_upper
   CATDESC: Estimated mass upper bound
