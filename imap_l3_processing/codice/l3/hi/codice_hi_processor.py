@@ -102,50 +102,62 @@ class CodiceHiProcessor(Processor):
         mag_data = dependencies.mag_l1d_data
         sectored_intensities = dependencies.codice_sectored_intensities_data
         epochs = dependencies.codice_sectored_intensities_data.epoch
-        energy_bins = dependencies.codice_sectored_intensities_data.energy
-        rebinned_mag_data = mag_data.rebin_to(sectored_intensities.epoch, sectored_intensities.epoch_delta)
+        h_energy_bins = dependencies.codice_sectored_intensities_data.energy_h.shape[0]
+        he3he4_energy_bins = dependencies.codice_sectored_intensities_data.energy_he3he4.shape[0]
+        cno_energy_bins = dependencies.codice_sectored_intensities_data.energy_cno.shape[0]
+        fe_energy_bins = dependencies.codice_sectored_intensities_data.energy_fe.shape[0]
+        rebinned_mag_data = mag_data.rebin_to(sectored_intensities.epoch, sectored_intensities.epoch_delta_plus)
 
         mag_unit_vectors = calculate_unit_vector(rebinned_mag_data)
-        sector_unit = get_sector_unit_vectors(sectored_intensities.spin_sector, sectored_intensities.ssd_id)
+        sector_unit = get_sector_unit_vectors(sectored_intensities.spin_sector_index, sectored_intensities.ssd_index)
         sector_unit_vectors = calculate_unit_vector(sector_unit)
         particle_unit_vectors = -1 * sector_unit_vectors
-        pitch_angles = calculate_pitch_angle(particle_unit_vectors, mag_unit_vectors)
-        pitch_angle_delta_value = 15
-        gyrophase_delta_value = 30
-        pitch_angle_delta = np.repeat(pitch_angle_delta_value, len(pitch_angles))
-        gyrophase_delta = np.repeat(gyrophase_delta_value, len(pitch_angles))
-        gyrophase = calculate_gyrophase(particle_unit_vectors, mag_unit_vectors)
-        num_pitch_angles = len(pitch_angles)
-        num_gyrophases = len(gyrophase)
-        pa_shape = (len(epochs), len(energy_bins), num_pitch_angles)
-        gyro_shape = (len(epochs), len(energy_bins), num_pitch_angles, num_gyrophases)
+
+        num_pitch_angle_bins = 6
+        num_gyrophase_bins = 12
+        pitch_angle_delta_value = (180 / num_pitch_angle_bins) / 2
+        gyrophase_delta_value = (360 / num_gyrophase_bins) / 2
+        pitch_angle_bins = np.linspace(0, 180, num_pitch_angle_bins, endpoint=False) + pitch_angle_delta_value
+        gyrophase_bins = np.linspace(0, 360, num_gyrophase_bins, endpoint=False) + gyrophase_delta_value
+
+        h_pa_shape = (len(epochs), h_energy_bins, num_pitch_angle_bins)
+        he3he4_pa_shape = (len(epochs), he3he4_energy_bins, num_pitch_angle_bins)
+        cno_pa_shape = (len(epochs), cno_energy_bins, num_pitch_angle_bins)
+        fe_pa_shape = (len(epochs), fe_energy_bins, num_pitch_angle_bins)
+        h_gyro_shape = (len(epochs), h_energy_bins, num_pitch_angle_bins, num_gyrophase_bins)
+        he3he4_gyro_shape = (len(epochs), he3he4_energy_bins, num_pitch_angle_bins, num_gyrophase_bins)
+        cno_gyro_shape = (len(epochs), cno_energy_bins, num_pitch_angle_bins, num_gyrophase_bins)
+        fe_gyro_shape = (len(epochs), fe_energy_bins, num_pitch_angle_bins, num_gyrophase_bins)
 
         SpeciesIntensity = namedtuple("SpeciesIntensity",
                                       ["l2_intensity", "intensity_by_pa", "intensity_by_pa_and_gyro"])
 
         # @formatter:off
         species_intensities: dict[str, SpeciesIntensity] = {
-            "h": SpeciesIntensity(sectored_intensities.h_intensities, *_create_pa_and_gyro_nan_arrays(pa_shape, gyro_shape)),
-            "he4": SpeciesIntensity(sectored_intensities.he4_intensities, *_create_pa_and_gyro_nan_arrays(pa_shape, gyro_shape)),
-            "o": SpeciesIntensity(sectored_intensities.o_intensities, *_create_pa_and_gyro_nan_arrays(pa_shape, gyro_shape)),
-            "fe": SpeciesIntensity(sectored_intensities.fe_intensities,*_create_pa_and_gyro_nan_arrays(pa_shape, gyro_shape))}
+            "h": SpeciesIntensity(sectored_intensities.h_intensities, *_create_pa_and_gyro_nan_arrays(h_pa_shape, h_gyro_shape)),
+            "he4": SpeciesIntensity(sectored_intensities.he3he4_intensities, *_create_pa_and_gyro_nan_arrays(he3he4_pa_shape, he3he4_gyro_shape)),
+            "o": SpeciesIntensity(sectored_intensities.cno_intensities, *_create_pa_and_gyro_nan_arrays(cno_pa_shape, cno_gyro_shape)),
+            "fe": SpeciesIntensity(sectored_intensities.fe_intensities,*_create_pa_and_gyro_nan_arrays(fe_pa_shape, fe_gyro_shape))}
         # @formatter:on
 
-        for species, species_intensity in species_intensities.items():
-            for time_index in range(len(epochs)):
+        for time_index in range(len(epochs)):
+            pitch_angles = calculate_pitch_angle(particle_unit_vectors, mag_unit_vectors[time_index])
+            gyrophases = calculate_gyrophase(particle_unit_vectors, mag_unit_vectors[time_index])
+
+            for species, species_intensity in species_intensities.items():
                 intensity = species_intensity.l2_intensity[time_index]
 
-                h_intensities_delta_plus = np.full_like(intensity, 0)
-                h_intensities_delta_minus = np.full_like(intensity, 0)
+                intensities_delta_plus = np.full_like(intensity, 0)
+                intensities_delta_minus = np.full_like(intensity, 0)
 
                 rebinned_intensities_by_pa_and_gyro, _, _, rebinned_intensities_by_pa, _, _ = hit_rebin_by_pitch_angle_and_gyrophase(
                     intensity_data=intensity,
-                    intensity_delta_plus=h_intensities_delta_plus,
-                    intensity_delta_minus=h_intensities_delta_minus,
-                    gyrophases=gyrophase,
+                    intensity_delta_plus=intensities_delta_plus,
+                    intensity_delta_minus=intensities_delta_minus,
                     pitch_angles=pitch_angles,
-                    number_of_pitch_angle_bins=pitch_angles.shape[-1],
-                    number_of_gyrophase_bins=gyrophase.shape[-1])
+                    gyrophases=gyrophases,
+                    number_of_pitch_angle_bins=num_pitch_angle_bins,
+                    number_of_gyrophase_bins=num_gyrophase_bins)
 
                 species_intensity.intensity_by_pa[time_index] = rebinned_intensities_by_pa
                 species_intensity.intensity_by_pa_and_gyro[time_index] = rebinned_intensities_by_pa_and_gyro
@@ -153,14 +165,19 @@ class CodiceHiProcessor(Processor):
         return CodiceHiL3PitchAngleDataProduct(
             input_metadata=self.input_metadata,
             epoch=epochs,
-            epoch_delta=sectored_intensities.epoch_delta,
-            energy=energy_bins,
-            energy_delta_plus=sectored_intensities.energy_delta_plus,
-            energy_delta_minus=sectored_intensities.energy_delta_minus,
-            pitch_angle=pitch_angles,
-            pitch_angle_delta=pitch_angle_delta,
-            gyrophase=gyrophase,
-            gyrophase_delta=gyrophase_delta,
+            epoch_delta=sectored_intensities.epoch_delta_plus,
+            energy_h=dependencies.codice_sectored_intensities_data.energy_h,
+            energy_h_delta=dependencies.codice_sectored_intensities_data.energy_h_delta,
+            energy_cno=dependencies.codice_sectored_intensities_data.energy_cno,
+            energy_cno_delta=dependencies.codice_sectored_intensities_data.energy_cno_delta,
+            energy_fe=dependencies.codice_sectored_intensities_data.energy_fe,
+            energy_fe_delta=dependencies.codice_sectored_intensities_data.energy_fe_delta,
+            energy_he3he4=dependencies.codice_sectored_intensities_data.energy_he3he4,
+            energy_he3he4_delta=dependencies.codice_sectored_intensities_data.energy_he3he4_delta,
+            pitch_angle=pitch_angle_bins,
+            pitch_angle_delta=np.repeat(pitch_angle_delta_value, num_pitch_angle_bins),
+            gyrophase=gyrophase_bins,
+            gyrophase_delta=np.repeat(gyrophase_delta_value, num_gyrophase_bins),
             h_intensity_by_pitch_angle=species_intensities['h'].intensity_by_pa,
             h_intensity_by_pitch_angle_and_gyrophase=species_intensities['h'].intensity_by_pa_and_gyro,
             he4_intensity_by_pitch_angle=species_intensities['he4'].intensity_by_pa,
