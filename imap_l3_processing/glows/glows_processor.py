@@ -11,6 +11,7 @@ from subprocess import run
 import imap_data_access
 import numpy as np
 from imap_data_access.processing_input import ProcessingInputCollection
+
 from imap_l3_processing.glows.descriptors import GLOWS_L3A_DESCRIPTOR
 from imap_l3_processing.glows.glows_initializer import GlowsInitializer
 from imap_l3_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
@@ -61,8 +62,8 @@ class GlowsProcessor(Processor):
                 imap_data_access.upload(zip_file)
         elif self.input_metadata.data_level == "l3d":
             l3d_dependencies = GlowsL3DDependencies.fetch_dependencies(self.dependencies)
-            data_product, l3d_txt_paths = self.process_l3d(l3d_dependencies)
-            cdf = save_data(data_product)
+            data_product, l3d_txt_paths, last_processed_cr = self.process_l3d(l3d_dependencies)
+            cdf = save_data(data_product, cr_number=last_processed_cr)
             imap_data_access.upload(cdf)
             for txt_path in l3d_txt_paths:
                 imap_data_access.upload(txt_path)
@@ -172,7 +173,7 @@ class GlowsProcessor(Processor):
                                 str(last_processed_cr) in last_cr_txt_file]
 
             return convert_json_to_l3d_data_product(PATH_TO_L3D_TOOLKIT / 'data_l3d' / file_name, self.input_metadata,
-                                                    parent_file_names), output_txt_files
+                                                    parent_file_names), output_txt_files, last_processed_cr
 
     def process_l3e_lo(self, epoch: datetime, epoch_delta: timedelta):
         call_args = determine_call_args_for_l3e_executable(epoch, epoch + epoch_delta, 90)

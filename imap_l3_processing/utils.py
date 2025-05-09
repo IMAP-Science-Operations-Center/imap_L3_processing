@@ -17,14 +17,22 @@ from imap_l3_processing.ultra.l3.models import UltraL1CPSet, UltraGlowsL3eData
 from imap_l3_processing.version import VERSION
 
 
-def save_data(data: DataProduct, delete_if_present: bool = False, folder_path: Path = TEMP_CDF_FOLDER_PATH) -> str:
+def save_data(data: DataProduct, delete_if_present: bool = False, folder_path: Path = TEMP_CDF_FOLDER_PATH,
+              cr_number=None) -> str:
+    assert data.input_metadata.repointing is None or cr_number is None, "You cannot call save_data with both a repointing in the metadata while passing in a CR number"
     formatted_start_date = format_time(data.input_metadata.start_date)
     logical_source = data.input_metadata.logical_source
     if data.input_metadata.repointing is not None:
         repointing = f"-repoint{str(data.input_metadata.repointing).zfill(5)}"
     else:
         repointing = ''
-    logical_file_id = f'{logical_source}_{formatted_start_date}{repointing}_{data.input_metadata.version}'
+
+    if cr_number is not None:
+        cr = f"-cr{str(cr_number).zfill(5)}"
+    else:
+        cr = ''
+
+    logical_file_id = f'{logical_source}_{formatted_start_date}{repointing}{cr}_{data.input_metadata.version}'
     folder_path.mkdir(exist_ok=True)
     file_path = folder_path / f"{logical_file_id}.cdf"
 

@@ -1,0 +1,182 @@
+epoch:
+  NAME: epoch
+  DATA_TYPE: CDF_TIME_TT2000
+  CATDESC: Time, number of nanoseconds since J2000 with leap seconds included for center of CR
+  VAR_TYPE: support_data
+  RECORD_VARYING: RV
+  FIELDNAM: Epoch
+  FORMAT: ' '
+  LABLAXIS: Epoch
+  UNITS: ns
+  VALIDMIN: 1947-01-01T00:00:00.000000000
+  VALIDMAX: 2099-12-31T00:00:00.000000000
+  FILLVAL: 9999-12-31T23:59:59.999999999
+  SCALETYP: linear
+  TIME_BASE: J2000
+  TIME_SCALE: TT
+  DELTA_PLUS_VAR: epoch_delta
+  DELTA_MINUS_VAR: epoch_delta
+  MONOTON: INCREASE
+  REFERENCE_POSITION: Rotating Earth Geoid
+  SI_CONVERSION: 1e-9>seconds
+epoch_delta:
+  NAME: epoch_delta
+  DATA_TYPE: CDF_INT8
+  CATDESC: Time bin of half a carrington rotation
+  DEPEND_0: epoch
+  VAR_TYPE: support_data
+  RECORD_VARYING: RV
+  FIELDNAM: Epoch Delta
+  FORMAT: I19
+  LABLAXIS: Epoch delta
+  UNITS: ns
+  VALIDMIN: 0
+  VALIDMAX: 2592000000000000
+  FILLVAL: -9223372036854775808
+  SCALETYP: linear
+latitude:
+  NAME: latitude
+  DATA_TYPE: CDF_FLOAT
+  CATDESC: Latitudes from -90 to 90
+  VAR_TYPE: support_data
+  RECORD_VARYING: NRV
+  FIELDNAM: Latitude
+  FORMAT: F9.3
+  LABLAXIS: Latitude
+  UNITS: degrees
+  VALIDMIN: -90
+  VALIDMAX: 90
+  FILLVAL: -1.00E+31
+  SCALETYP: linear
+cr:
+  NAME: cr
+  DATA_TYPE: CDF_FLOAT
+  CATDESC: Carrington rotation number
+  DEPEND_0: epoch
+  VAR_TYPE: support_data
+  RECORD_VARYING: RV
+  FIELDNAM: Carrington Rotation
+  FORMAT: I14
+  LABLAXIS: Carrington rotation
+  UNITS: ' '
+  VALIDMIN: 1000
+  VALIDMAX: 3000
+  FILLVAL: -1.00E+31
+  SCALETYP: linear
+speed:
+  NAME: speed
+  DATA_TYPE: CDF_FLOAT
+  CATDESC: Speed of ???
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Speed Of ???
+  FORMAT: F9.3
+  LABLAXIS: Speed of ???
+  DISPLAY_TYPE: spectrogram
+  UNITS: ???
+  VALIDMIN: 0
+  VALIDMAX: 100
+  FILLVAL: -1.00E+31
+  SCALETYP: linear
+  DEPEND_0: epoch
+  DEPEND_1: latitude
+  LABL_PTR_1: latitude_label
+proton_density:
+  NAME: proton_density
+  DATA_TYPE: CDF_FLOAT
+  CATDESC: Proton density
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Proton Density
+  FORMAT: F9.3
+  LABLAXIS: Proton density
+  DISPLAY_TYPE: spectrogram
+  UNITS: ???
+  VALIDMIN: 0
+  VALIDMAX: 100
+  FILLVAL: -1.00E+31
+  SCALETYP: linear
+  DEPEND_0: epoch
+  DEPEND_1: latitude
+  LABL_PTR_1: latitude_label
+ultraviolet_anisotropy:
+  NAME: ultraviolet_anisotropy
+  DATA_TYPE: CDF_FLOAT
+  CATDESC: Ultraviolet anisotropy
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Ultraviolet Anisotropy
+  FORMAT: F9.3
+  LABLAXIS: Ultraviolet Anisotropy
+  DISPLAY_TYPE: spectrogram
+  UNITS: ???
+  VALIDMIN: 0
+  VALIDMAX: 100
+  FILLVAL: -1.00E+31
+  SCALETYP: linear
+  DEPEND_0: epoch
+  DEPEND_1: latitude
+  LABL_PTR_1: latitude_label
+phion:
+  NAME: phion
+  DATA_TYPE: CDF_FLOAT
+  CATDESC: Phion
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Phion
+  FORMAT: F9.3
+  LABLAXIS: Phion
+  DISPLAY_TYPE: time_series
+  UNITS: ???
+  VALIDMIN: 0
+  VALIDMAX: 100
+  FILLVAL: -1.00E+31
+  SCALETYP: linear
+  DEPEND_0: epoch
+lyman_alpha:
+  NAME: lyman_alpha
+  DATA_TYPE: CDF_FLOAT
+  CATDESC: Lyman alpha
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Lyman Alpha
+  FORMAT: F9.3
+  LABLAXIS: Lyman alpha
+  DISPLAY_TYPE: time_series
+  UNITS: ???
+  VALIDMIN: 0
+  VALIDMAX: 100
+  FILLVAL: -1.00E+31
+  SCALETYP: linear
+  DEPEND_0: epoch
+electron_density:
+  NAME: electron_density
+  DATA_TYPE: CDF_FLOAT
+  CATDESC: Electron density
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Electron Density
+  FORMAT: F9.3
+  LABLAXIS: Electron density
+  DISPLAY_TYPE: time_series
+  UNITS: ???
+  VALIDMIN: 0
+  VALIDMAX: 100
+  FILLVAL: -1.00E+31
+  SCALETYP: linear
+  DEPEND_0: epoch
+latitude_label:
+  NAME: latitude_label
+  DATA_TYPE: CDF_CHAR
+  CATDESC: Label variable for latitude coordinate
+  DEPEND_1: latitude
+  VAR_TYPE: metadata
+  FIELDNAM: Latitude Label
+  FORMAT: A16
+  FILLVAL: ' '
