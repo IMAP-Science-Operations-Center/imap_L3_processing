@@ -282,7 +282,7 @@ class TestCodiceHiProcessor(unittest.TestCase):
 
         np.testing.assert_array_equal(codice_hi_data_product.he4_intensity_by_pitch_angle,
                                       expected_he4_intensity_binned_by_pa)
-        np.testing.assert_array_equal(codice_hi_data_product.o_intensity_by_pitch_angle,
+        np.testing.assert_array_equal(codice_hi_data_product.cno_intensity_by_pitch_angle,
                                       expected_cno_intensity_binned_by_pa)
         np.testing.assert_array_equal(codice_hi_data_product.fe_intensity_by_pitch_angle,
                                       expected_fe_intensity_binned_by_pa)
@@ -291,7 +291,7 @@ class TestCodiceHiProcessor(unittest.TestCase):
                                       expected_h_intensity_binned_by_pa_and_gyro)
         np.testing.assert_array_equal(codice_hi_data_product.he4_intensity_by_pitch_angle_and_gyrophase,
                                       expected_he4_intensity_binned_by_pa_and_gyro)
-        np.testing.assert_array_equal(codice_hi_data_product.o_intensity_by_pitch_angle_and_gyrophase,
+        np.testing.assert_array_equal(codice_hi_data_product.cno_intensity_by_pitch_angle_and_gyrophase,
                                       expected_cno_intensity_binned_by_pa_and_gyro)
         np.testing.assert_array_equal(codice_hi_data_product.fe_intensity_by_pitch_angle_and_gyrophase,
                                       expected_fe_intensity_binned_by_pa_and_gyro)

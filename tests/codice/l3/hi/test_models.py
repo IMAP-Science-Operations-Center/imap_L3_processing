@@ -108,8 +108,6 @@ class TestModels(unittest.TestCase):
                                           getattr(l3_data_product, data_product_variable.name))
 
     def test_codice_hi_l3_pitch_angle_to_data_product(self):
-        expected_variables = []
-
         epoch_data = np.array([datetime.now()])
         energy_data = np.array([100, 200])
         pitch_angle = np.array([100, 200])
@@ -117,16 +115,20 @@ class TestModels(unittest.TestCase):
         pitch_angle_size = len(epoch_data) * len(energy_data) * len(pitch_angle)
         pitch_angle_and_gyrophase_size = len(epoch_data) * len(energy_data) * len(pitch_angle) * len(gyrophase)
 
+        energy_h_data = np.array([101, 103])
+        energy_cno_data = np.array([101, 103]) + 2
+        energy_fe_data = np.array([101, 103]) + 4
+        energy_he3he4_data = np.array([101, 103]) + 6
         inputted_data_product_kwargs = {
             "epoch": epoch_data,
-            "epoch_delta": np.array([10]),
-            "energy_h": np.array([101, 103]),
+            "epoch_delta": np.array([timedelta(seconds=10)]),
+            "energy_h": energy_h_data,
             "energy_h_delta": np.array([101, 103]) + 1,
-            "energy_cno": np.array([101, 103]) + 2,
+            "energy_cno": energy_cno_data,
             "energy_cno_delta": np.array([101, 103]) + 3,
-            "energy_fe": np.array([101, 103]) + 4,
+            "energy_fe": energy_fe_data,
             "energy_fe_delta": np.array([101, 103]) + 5,
-            "energy_he3he4": np.array([101, 103]) + 6,
+            "energy_he3he4": energy_he3he4_data,
             "energy_he3he4_delta": np.array([101, 103]) + 7,
             "pitch_angle": pitch_angle,
             "pitch_angle_delta": np.array([100, 200]),
@@ -140,9 +142,9 @@ class TestModels(unittest.TestCase):
                                                                                 len(pitch_angle)),
             "he4_intensity_by_pitch_angle_and_gyrophase": np.arange(pitch_angle_and_gyrophase_size).reshape(
                 len(epoch_data), len(energy_data), len(pitch_angle), len(gyrophase)) + 3,
-            "o_intensity_by_pitch_angle": np.arange(pitch_angle_size).reshape(len(epoch_data), len(energy_data),
-                                                                              len(pitch_angle)) + 4,
-            "o_intensity_by_pitch_angle_and_gyrophase": np.arange(pitch_angle_and_gyrophase_size).reshape(
+            "cno_intensity_by_pitch_angle": np.arange(pitch_angle_size).reshape(len(epoch_data), len(energy_data),
+                                                                                len(pitch_angle)) + 4,
+            "cno_intensity_by_pitch_angle_and_gyrophase": np.arange(pitch_angle_and_gyrophase_size).reshape(
                 len(epoch_data), len(energy_data), len(pitch_angle), len(gyrophase)) + 5,
             "fe_intensity_by_pitch_angle": np.arange(pitch_angle_size).reshape(len(epoch_data), len(energy_data),
                                                                                len(pitch_angle)) + 6,
@@ -154,14 +156,27 @@ class TestModels(unittest.TestCase):
             input_metadata=Mock(),
             **inputted_data_product_kwargs
         )
+
+        np.testing.assert_array_equal(data_product.energy_h_label, np.array([str(v) for v in energy_h_data]))
+        np.testing.assert_array_equal(data_product.energy_cno_label, np.array([str(v) for v in energy_cno_data]))
+        np.testing.assert_array_equal(data_product.energy_fe_label, np.array([str(v) for v in energy_fe_data]))
+        np.testing.assert_array_equal(data_product.energy_he3he4_label, np.array([str(v) for v in energy_he3he4_data]))
+        np.testing.assert_array_equal(data_product.pitch_angle_label, np.array([str(v) for v in pitch_angle]))
+        np.testing.assert_array_equal(data_product.gyrophase_label, np.array([str(v) for v in gyrophase]))
+
         actual_data_product_variables = data_product.to_data_product_variables()
 
-        for input_variable, actual_data_product_variable in zip(inputted_data_product_kwargs.items(),
-                                                                actual_data_product_variables):
-            input_name, expected_value = input_variable
+        non_parent_fields = [f for f in fields(CodiceHiL3PitchAngleDataProduct)
+                             if f.name in CodiceHiL3PitchAngleDataProduct.__annotations__]
+        data_product_fields = [f.name for f in non_parent_fields]
 
-            np.testing.assert_array_equal(actual_data_product_variable.value, getattr(data_product, input_name))
-            self.assertEqual(input_name, actual_data_product_variable.name)
+        self.assertEqual(len(actual_data_product_variables), len(non_parent_fields))
+        for data_product_var in actual_data_product_variables:
+            self.assertIn(data_product_var.name, data_product_fields)
+            if data_product_var.name != 'epoch_delta':
+                np.testing.assert_array_equal(data_product_var.value, getattr(data_product, data_product_var.name))
+            else:
+                np.testing.assert_array_equal(data_product_var.value, np.array([10 * 1e9]))
 
     def test_l2_sectored_intensities_read_from_instrument_team_cdf(self):
         l2_path = get_test_instrument_team_data_path(
@@ -192,14 +207,3 @@ class TestModels(unittest.TestCase):
             np.testing.assert_array_equal(l2_sectored_data.he3he4_intensities, cdf['he3he4'])
             np.testing.assert_array_equal(l2_sectored_data.energy_he3he4, cdf['energy_he3he4'])
             np.testing.assert_array_equal(l2_sectored_data.energy_he3he4_delta, cdf['energy_he3he4_delta'])
-
-    def _create_l2_priority_event(self):
-        return PriorityEventL2(data_quality=np.array([]),
-                               multi_flag=np.array([]),
-                               spin_angle=np.array([]),
-                               number_of_events=np.array([]),
-                               ssd_id=np.array([]),
-                               ssd_energy=np.array([]),
-                               type=np.array([]),
-                               spin_number=np.array([]),
-                               time_of_flight=np.array([]))

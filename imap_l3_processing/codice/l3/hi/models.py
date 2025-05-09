@@ -97,10 +97,16 @@ H_INTENSITY_BY_PITCH_ANGLE_VAR_NAME = "h_intensity_by_pitch_angle"
 H_INTENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_VAR_NAME = "h_intensity_by_pitch_angle_and_gyrophase"
 HE4_INTENSITY_BY_PITCH_ANGLE_VAR_NAME = "he4_intensity_by_pitch_angle"
 HE4_INTENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_VAR_NAME = "he4_intensity_by_pitch_angle_and_gyrophase"
-O_INTENSITY_BY_PITCH_ANGLE_VAR_NAME = "o_intensity_by_pitch_angle"
-O_INTENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_VAR_NAME = "o_intensity_by_pitch_angle_and_gyrophase"
+CNO_INTENSITY_BY_PITCH_ANGLE_VAR_NAME = "cno_intensity_by_pitch_angle"
+CNO_INTENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_VAR_NAME = "cno_intensity_by_pitch_angle_and_gyrophase"
 FE_INTENSITY_BY_PITCH_ANGLE_VAR_NAME = "fe_intensity_by_pitch_angle"
 FE_INTENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_VAR_NAME = "fe_intensity_by_pitch_angle_and_gyrophase"
+ENERGY_H_LABEL_VAR_NAME = "energy_h_label"
+ENERGY_CNO_LABEL_VAR_NAME = "energy_cno_label"
+ENERGY_FE_LABEL_VAR_NAME = "energy_fe_label"
+ENERGY_HE3HE4_LABEL_VAR_NAME = "energy_he3he4_label"
+PITCH_ANGLE_LABEL_VAR_NAME = "pitch_angle_label"
+GYROPHASE_LABEL_VAR_NAME = "gyrophase_label"
 
 
 @dataclass
@@ -175,15 +181,30 @@ class CodiceHiL3PitchAngleDataProduct(DataProduct):
     h_intensity_by_pitch_angle_and_gyrophase: ndarray
     he4_intensity_by_pitch_angle: ndarray
     he4_intensity_by_pitch_angle_and_gyrophase: ndarray
-    o_intensity_by_pitch_angle: ndarray
-    o_intensity_by_pitch_angle_and_gyrophase: ndarray
+    cno_intensity_by_pitch_angle: ndarray
+    cno_intensity_by_pitch_angle_and_gyrophase: ndarray
     fe_intensity_by_pitch_angle: ndarray
     fe_intensity_by_pitch_angle_and_gyrophase: ndarray
+
+    energy_h_label: ndarray = field(init=False)
+    energy_cno_label: ndarray = field(init=False)
+    energy_fe_label: ndarray = field(init=False)
+    energy_he3he4_label: ndarray = field(init=False)
+    pitch_angle_label: ndarray = field(init=False)
+    gyrophase_label: ndarray = field(init=False)
+
+    def __post_init__(self):
+        self.energy_h_label = self.energy_h.astype(str)
+        self.energy_cno_label = self.energy_cno.astype(str)
+        self.energy_fe_label = self.energy_fe.astype(str)
+        self.energy_he3he4_label = self.energy_he3he4.astype(str)
+        self.pitch_angle_label = self.pitch_angle.astype(str)
+        self.gyrophase_label = self.gyrophase.astype(str)
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
             DataProductVariable(EPOCH_VAR_NAME, self.epoch),
-            DataProductVariable(EPOCH_DELTA_VAR_NAME, self.epoch_delta),
+            DataProductVariable(EPOCH_DELTA_VAR_NAME, np.array([t.total_seconds() for t in self.epoch_delta]) * 1e9),
             DataProductVariable(ENERGY_H_VAR_NAME, self.energy_h),
             DataProductVariable(ENERGY_H_DELTA_VAR_NAME, self.energy_h_delta),
             DataProductVariable(ENERGY_CNO_VAR_NAME, self.energy_cno),
@@ -202,12 +223,18 @@ class CodiceHiL3PitchAngleDataProduct(DataProduct):
             DataProductVariable(HE4_INTENSITY_BY_PITCH_ANGLE_VAR_NAME, self.he4_intensity_by_pitch_angle),
             DataProductVariable(HE4_INTENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_VAR_NAME,
                                 self.he4_intensity_by_pitch_angle_and_gyrophase),
-            DataProductVariable(O_INTENSITY_BY_PITCH_ANGLE_VAR_NAME, self.o_intensity_by_pitch_angle),
-            DataProductVariable(O_INTENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_VAR_NAME,
-                                self.o_intensity_by_pitch_angle_and_gyrophase),
+            DataProductVariable(CNO_INTENSITY_BY_PITCH_ANGLE_VAR_NAME, self.cno_intensity_by_pitch_angle),
+            DataProductVariable(CNO_INTENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_VAR_NAME,
+                                self.cno_intensity_by_pitch_angle_and_gyrophase),
             DataProductVariable(FE_INTENSITY_BY_PITCH_ANGLE_VAR_NAME, self.fe_intensity_by_pitch_angle),
             DataProductVariable(FE_INTENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_VAR_NAME,
                                 self.fe_intensity_by_pitch_angle_and_gyrophase),
+            DataProductVariable(ENERGY_H_LABEL_VAR_NAME, self.energy_h_label),
+            DataProductVariable(ENERGY_CNO_LABEL_VAR_NAME, self.energy_cno_label),
+            DataProductVariable(ENERGY_FE_LABEL_VAR_NAME, self.energy_fe_label),
+            DataProductVariable(ENERGY_HE3HE4_LABEL_VAR_NAME, self.energy_he3he4_label),
+            DataProductVariable(PITCH_ANGLE_LABEL_VAR_NAME, self.pitch_angle_label),
+            DataProductVariable(GYROPHASE_LABEL_VAR_NAME, self.gyrophase_label),
         ]
 
 

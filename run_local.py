@@ -789,7 +789,7 @@ def create_codice_hi_l3b_pitch_angles_cdf():
 
     input_metadata = InputMetadata(
         instrument='codice',
-        data_level='l3a',
+        data_level='l3b',
         start_date=datetime(2024, 11, 10),
         end_date=datetime(2025, 1, 2),
         version='v000',

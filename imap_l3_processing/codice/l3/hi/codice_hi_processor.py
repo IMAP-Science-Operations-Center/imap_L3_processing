@@ -179,8 +179,8 @@ class CodiceHiProcessor(Processor):
             h_intensity_by_pitch_angle_and_gyrophase=species_intensities['h'].intensity_by_pa_and_gyro,
             he4_intensity_by_pitch_angle=species_intensities['he4'].intensity_by_pa,
             he4_intensity_by_pitch_angle_and_gyrophase=species_intensities['he4'].intensity_by_pa_and_gyro,
-            o_intensity_by_pitch_angle=species_intensities['o'].intensity_by_pa,
-            o_intensity_by_pitch_angle_and_gyrophase=species_intensities['o'].intensity_by_pa_and_gyro,
+            cno_intensity_by_pitch_angle=species_intensities['o'].intensity_by_pa,
+            cno_intensity_by_pitch_angle_and_gyrophase=species_intensities['o'].intensity_by_pa_and_gyro,
             fe_intensity_by_pitch_angle=species_intensities['fe'].intensity_by_pa,
             fe_intensity_by_pitch_angle_and_gyrophase=species_intensities['fe'].intensity_by_pa_and_gyro
         )

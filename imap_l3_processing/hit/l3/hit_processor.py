@@ -208,12 +208,12 @@ class HitProcessor(Processor):
                                                                                                           0:3]
                 intensity_by_pa, intensity_delta_plus_by_pa, intensity_delta_minus_by_pa = rebinned_result[3:6]
 
-                rebinned_pa_gyro_intensity_by_species[species][0][time_index] = intensity_by_pa_gyro
-                rebinned_pa_gyro_intensity_by_species[species][1][time_index] = intensity_delta_plus_by_pa_gyro
-                rebinned_pa_gyro_intensity_by_species[species][2][time_index] = intensity_delta_minus_by_pa_gyro
-                rebinned_pa_only_intensity_by_species[species][0][time_index] = intensity_by_pa
-                rebinned_pa_only_intensity_by_species[species][1][time_index] = intensity_delta_plus_by_pa
-                rebinned_pa_only_intensity_by_species[species][2][time_index] = intensity_delta_minus_by_pa
+                rebinned_pa_gyro_intensity_by_species[species][0][time_index, ...] = intensity_by_pa_gyro
+                rebinned_pa_gyro_intensity_by_species[species][1][time_index, ...] = intensity_delta_plus_by_pa_gyro
+                rebinned_pa_gyro_intensity_by_species[species][2][time_index, ...] = intensity_delta_minus_by_pa_gyro
+                rebinned_pa_only_intensity_by_species[species][0][time_index, ...] = intensity_by_pa
+                rebinned_pa_only_intensity_by_species[species][1][time_index, ...] = intensity_delta_plus_by_pa
+                rebinned_pa_only_intensity_by_species[species][2][time_index, ...] = intensity_delta_minus_by_pa
 
         return HitPitchAngleDataProduct(self.input_metadata, hit_data.epoch,
                                         hit_data.epoch_delta, pitch_angles, pitch_angle_deltas,

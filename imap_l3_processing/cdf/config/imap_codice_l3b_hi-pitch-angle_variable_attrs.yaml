@@ -1,0 +1,339 @@
+support_data: &support_data
+  VAR_TYPE: support_data
+  DISPLAY_TYPE: no_plot
+  RECORD_VARYING: NRV
+
+primary_data_variable: &primary_data_variable
+  VAR_TYPE: data
+  VARIABLE_PURPOSE: primary var, summary
+  DEPEND_0: epoch
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: spectrogram
+  SCALETYP: linear
+
+float_data: &float_data
+  DATA_TYPE: CDF_FLOAT
+  FORMAT: F15.3
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.000000E+31
+
+epoch:
+  NAME: epoch
+  CATDESC: Time, number of nanoseconds since J2000 with leap seconds included
+  VAR_TYPE: support_data
+  DISPLAY_TYPE: no_plot
+  DATA_TYPE: CDF_TIME_TT2000
+  FIELDNAM: Epoch
+  RECORD_VARYING: RV
+  LABLAXIS: epoch
+  UNITS: ns
+  VALIDMIN: 2010-01-01T00:00:00.000000000
+  VALIDMAX: 2099-12-31T00:00:00.000000000
+  FILLVAL: 9999-12-31T23:59:59.999999999
+  SCALETYP: linear
+  TIME_BASE: J2000
+  TIME_SCALE: TT
+  DELTA_PLUS_VAR: epoch_delta
+  DELTA_MINUS_VAR: epoch_delta
+  MONOTON: INCREASE
+  REFERENCE_POSITION: Rotating Earth Geoid
+  SI_CONVERSION: 1e-9>seconds
+
+epoch_delta:
+  <<: *support_data
+  NAME: epoch_delta
+  CATDESC: epoch_DELTA
+  FIELDNAM: epoch_delta
+  DATA_TYPE: CDF_INT8
+  FORMAT: I19
+  UNITS: ns
+  VALIDMIN: 0
+  VALIDMAX: 86000000000000
+  FILLVAL: -9223372036854775808
+  SCALETYP: linear
+  SCALEMIN: 0
+  SCALEMAX: 86000000000000
+  SI_CONVERSION: 1e-9>seconds
+
+energy_h:
+  <<: *support_data
+  <<: *float_data
+  NAME: energy_h
+  CATDESC: H energy
+  FIELDNAM: H energy
+  LABLAXIS: H energy
+  UNITS: MeV
+  DELTA_PLUS_VAR: energy_h_delta
+  DELTA_MINUS_VAR: energy_h_delta
+
+energy_h_delta:
+  <<: *support_data
+  <<: *float_data
+  NAME: energy_h_delta
+  CATDESC: H energy delta
+  FIELDNAM: H energy delta
+  LABLAXIS: H energy delta
+  UNITS: MeV
+
+energy_cno:
+  <<: *support_data
+  <<: *float_data
+  NAME: energy_cno
+  CATDESC: CNO energy
+  FIELDNAM: CNO energy
+  LABLAXIS: CNO energy
+  UNITS: MeV
+  DELTA_PLUS_VAR: energy_cno_delta
+  DELTA_MINUS_VAR: energy_cno_delta
+
+energy_cno_delta:
+  <<: *support_data
+  <<: *float_data
+  NAME: energy_cno_delta
+  CATDESC: CNO energy delta
+  FIELDNAM: CNO energy delta
+  LABLAXIS: CNO energy delta
+  UNITS: MeV
+
+energy_fe:
+  <<: *support_data
+  <<: *float_data
+  NAME: energy_fe
+  CATDESC: Fe energy
+  FIELDNAM: Fe energy
+  LABLAXIS: Fe energy
+  UNITS: MeV
+  DELTA_PLUS_VAR: energy_fe_delta
+  DELTA_MINUS_VAR: energy_fe_delta
+
+energy_fe_delta:
+  <<: *support_data
+  <<: *float_data
+  NAME: energy_fe_delta
+  CATDESC: Fe energy delta
+  FIELDNAM: Fe energy delta
+  LABLAXIS: Fe energy delta
+  UNITS: MeV
+
+energy_he3he4:
+  <<: *support_data
+  <<: *float_data
+  NAME: energy_he3he4
+  CATDESC: He3He4 energy
+  FIELDNAM: He3He4 energy
+  LABLAXIS: He3He4 energy
+  UNITS: MeV
+
+energy_he3he4_delta:
+  <<: *support_data
+  <<: *float_data
+  NAME: energy_he3he4_delta
+  CATDESC: He3He4 energy delta
+  FIELDNAM: He3He4 energy delta
+  LABLAXIS: He3He4 energy delta
+  UNITS: MeV
+
+pitch_angle:
+  <<: *support_data
+  <<: *float_data
+  NAME: pitch_angle
+  CATDESC: Pitch angle
+  FIELDNAM: Pitch Angle
+  LABLAXIS: Pitch Angle
+  UNITS: degrees
+  DELTA_PLUS_VAR: pitch_angle_delta
+  DELTA_MINUS_VAR: pitch_angle_delta
+
+pitch_angle_delta:
+  <<: *support_data
+  <<: *float_data
+  NAME: pitch_angle_delta
+  CATDESC: Pitch angle delta
+  FIELDNAM: Pitch angle delta
+  LABLAXIS: Pitch angle delta
+  UNITS: degrees
+
+gyrophase:
+  <<: *support_data
+  <<: *float_data
+  NAME: gyrophase
+  CATDESC: Gyrophase
+  FIELDNAM: Gyrophase
+  LABLAXIS: Gyrophase
+  UNITS: degrees
+  DELTA_PLUS_VAR: gyrophase_delta
+  DELTA_MINUS_VAR: gyrophase_delta
+
+gyrophase_delta:
+  <<: *support_data
+  <<: *float_data
+  NAME: gyrophase_delta
+  CATDESC: Gyrophase delta
+  FIELDNAM: Gyrophase delta
+  LABLAXIS: Gyrophase delta
+  UNITS: degrees
+
+h_intensity_by_pitch_angle:
+  <<: *primary_data_variable
+  <<: *float_data
+  NAME: h_intensity_by_pitch_angle
+  DEPEND_1: energy_h
+  DEPEND_2: pitch_angle
+  CATDESC: H intensity binned by pitch angle
+  FIELDNAM: H Intensity
+  LABLAXIS: H Intensity
+  UNITS: 1/(cm^2 s MeV/nuc sr)
+  LABL_PTR_1: energy_h_label
+  LABL_PTR_2: pitch_angle_label
+
+h_intensity_by_pitch_angle_and_gyrophase:
+  <<: *primary_data_variable
+  <<: *float_data
+  NAME: h_intensity_by_pitch_angle_and_gyrophase
+  DEPEND_1: energy_h
+  DEPEND_2: pitch_angle
+  DEPEND_3: gyrophase
+  CATDESC: H intensity binned by pitch angle and gyrophase
+  FIELDNAM: H Intensity
+  LABLAXIS: H Intensity
+  UNITS: 1/(cm^2 s MeV/nuc sr)
+  LABL_PTR_1: energy_h_label
+  LABL_PTR_2: pitch_angle_label
+  LABL_PTR_3: gyrophase_label
+
+he4_intensity_by_pitch_angle:
+  <<: *primary_data_variable
+  <<: *float_data
+  NAME: he4_intensity_by_pitch_angle
+  DEPEND_1: energy_he3he4
+  DEPEND_2: pitch_angle
+  CATDESC: He3He4 intensity binned by pitch angle
+  FIELDNAM: He3He4 Intensity
+  LABLAXIS: He3He4 Intensity
+  UNITS: 1/(cm^2 s MeV/nuc sr)
+  LABL_PTR_1: energy_he3he4_label
+  LABL_PTR_2: pitch_angle_label
+
+he4_intensity_by_pitch_angle_and_gyrophase:
+  <<: *primary_data_variable
+  <<: *float_data
+  NAME: he4_intensity_by_pitch_angle_and_gyrophase
+  DEPEND_1: energy_he3he4
+  DEPEND_2: pitch_angle
+  DEPEND_3: gyrophase
+  CATDESC: He3He4 intensity binned by pitch angle and gyrophase
+  FIELDNAM: He3He4 Intensity
+  LABLAXIS: He3He4 Intensity
+  UNITS: 1/(cm^2 s MeV/nuc sr)
+  LABL_PTR_1: energy_he3he4_label
+  LABL_PTR_2: pitch_angle_label
+  LABL_PTR_3: gyrophase_label
+
+cno_intensity_by_pitch_angle:
+  <<: *primary_data_variable
+  <<: *float_data
+  NAME: o_intensity_by_pitch_angle
+  DEPEND_1: energy_cno
+  DEPEND_2: pitch_angle
+  CATDESC: CNO intensity binned by pitch angle
+  FIELDNAM: CNO Intensity
+  LABLAXIS: CNO Intensity
+  UNITS: 1/(cm^2 s MeV/nuc sr)
+  LABL_PTR_1: energy_cno_label
+  LABL_PTR_2: pitch_angle_label
+
+cno_intensity_by_pitch_angle_and_gyrophase:
+  <<: *primary_data_variable
+  <<: *float_data
+  NAME: o_intensity_by_pitch_angle_and_gyrophase
+  DEPEND_1: energy_cno
+  DEPEND_2: pitch_angle
+  DEPEND_3: gyrophase
+  CATDESC: CNO intensity binned by pitch angle and gyrophase
+  FIELDNAM: CNO Intensity
+  LABLAXIS: CNO Intensity
+  UNITS: 1/(cm^2 s MeV/nuc sr)
+  LABL_PTR_1: energy_cno_label
+  LABL_PTR_2: pitch_angle_label
+  LABL_PTR_3: gyrophase_label
+
+fe_intensity_by_pitch_angle:
+  <<: *primary_data_variable
+  <<: *float_data
+  NAME: fe_intensity_by_pitch_angle
+  DEPEND_1: energy_fe
+  DEPEND_2: pitch_angle
+  CATDESC: Fe intensity binned by pitch angle
+  FIELDNAM: Fe Intensity
+  LABLAXIS: Fe Intensity
+  UNITS: 1/(cm^2 s MeV/nuc sr)
+  LABL_PTR_1: energy_fe_label
+  LABL_PTR_2: pitch_angle_label
+
+fe_intensity_by_pitch_angle_and_gyrophase:
+  <<: *primary_data_variable
+  <<: *float_data
+  NAME: fe_intensity_by_pitch_angle_and_gyrophase
+  DEPEND_1: energy_fe
+  DEPEND_2: pitch_angle
+  DEPEND_3: gyrophase
+  CATDESC: Fe intensity binned by pitch angle and gyrophase
+  FIELDNAM: Fe Intensity
+  LABLAXIS: Fe Intensity
+  UNITS: 1/(cm^2 s MeV/nuc sr)
+  LABL_PTR_1: energy_fe_label
+  LABL_PTR_2: pitch_angle_label
+  LABL_PTR_3: gyrophase_label
+
+energy_h_label:
+  NAME: energy_h_label
+  CATDESC: Label for H energy
+  FIELDNAM: H Energy Label
+  DATA_TYPE: CDF_CHAR
+  FORMAT: a20
+  VAR_TYPE: metadata
+
+energy_cno_label:
+  NAME: energy_cno_label
+  CATDESC: Label for CNO energy
+  FIELDNAM: CNO Energy Label
+  DATA_TYPE: CDF_CHAR
+  FORMAT: a20
+  VAR_TYPE: metadata
+
+energy_fe_label:
+  NAME: energy_fe_label
+  CATDESC: Label for Fe energy
+  FIELDNAM: Fe Energy Label
+  DATA_TYPE: CDF_CHAR
+  FORMAT: a20
+  VAR_TYPE: metadata
+
+energy_he3he4_label:
+  NAME: energy_he3he4_label
+  CATDESC: Label for He3He4 energy
+  FIELDNAM: He3He4 Energy Label
+  DATA_TYPE: CDF_CHAR
+  FORMAT: a20
+  VAR_TYPE: metadata
+
+pitch_angle_label:
+  NAME: pitch_angle_label
+  CATDESC: Label for pitch angle
+  FIELDNAM: Pitch Angle Label
+  DATA_TYPE: CDF_CHAR
+  FORMAT: a20
+  VAR_TYPE: metadata
+
+gyrophase_label:
+  NAME: gyrophase_label
+  CATDESC: Label for gyrophase
+  FIELDNAM: Gyrophase Label
+  DATA_TYPE: CDF_CHAR
+  FORMAT: a20
+  VAR_TYPE: metadata
+
+
+
+
