@@ -4,19 +4,21 @@ epoch:
   CATDESC: Time, number of nanoseconds since J2000 with leap seconds included
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: epoch
+  FIELDNAM: Epoch
   FORMAT: ' '
-  LABLAXIS: epoch
+  LABLAXIS: Epoch
   UNITS: ns
   VALIDMIN: 1990-01-01T00:00:00.000000000
   VALIDMAX: 2099-12-31T00:00:00.000000000
   FILLVAL: 9999-12-31T23:59:59.999999999
   TIME_BASE: J2000
-  TIME_SCALE: Terrestrial Time
+  TIME_SCALE: TT
   DELTA_PLUS_VAR: epoch_delta
   DELTA_MINUS_VAR: epoch_delta
   MONOTON: INCREASE
   REFERENCE_POSITION: Rotating Earth Geoid
+  SCALETYP: linear
+  SI_CONVERSION: 1e-9>seconds
 epoch_delta:
   NAME: epoch_delta
   DATA_TYPE: CDF_INT8
@@ -26,20 +28,21 @@ epoch_delta:
   DEPEND_0: epoch
   FIELDNAM: Epoch Delta
   FORMAT: I19
-  LABLAXIS: epoch_delta
+  LABLAXIS: Epoch delta
   UNITS: ns
   VALIDMIN: 0
   VALIDMAX: 86000000000000
   FILLVAL: -9223372036854775808
+  SCALETYP: linear
 energy:
   NAME: energy
   DATA_TYPE: CDF_FLOAT
   CATDESC: Energies associated with the survival probabilites for IMAP-Ultra
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
-  FIELDNAM: energy
+  FIELDNAM: Energy
   FORMAT: g9.3
-  LABLAXIS: energy
+  LABLAXIS: Energy
   UNITS: kEV
   VALIDMIN: 0
   VALIDMAX: 10000000000
@@ -50,9 +53,9 @@ healpix_index:
   CATDESC: Heal pixel index
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
-  FIELDNAM: Healpix Index
+  FIELDNAM: HEALPix Index
   FORMAT: I19
-  LABLAXIS: healpix_index
+  LABLAXIS: HEALPix index
   UNITS: ' '
   VALIDMIN: 0
   VALIDMAX: 3072
@@ -76,22 +79,22 @@ probability_of_survival:
   VALIDMAX: 1
   FILLVAL: -1.0000E+31
   LABL_PTR_1: energy_label
-  LABL_PTR_2: healpix_index_label
+  LABL_PTR_2: HEALPix_index_label
 energy_label:
   NAME: energy_label
   DATA_TYPE: CDF_CHAR
   CATDESC: Label for energy
   VAR_TYPE: metadata
-  FIELDNAM: ' '
+  FIELDNAM: Energy Label
   FORMAT: a20
-  LABLAXIS: energy_label
+  LABLAXIS: Energy label
   FILLVAL: ' '
 healpix_index_label:
   NAME: healpix_index_label
   DATA_TYPE: CDF_CHAR
   CATDESC: Label for heal pixels
   VAR_TYPE: metadata
-  FIELDNAM: ' '
+  FIELDNAM: HEALPix Index Label
   FORMAT: a20
-  LABLAXIS: Healpix index
+  LABLAXIS: HEALPix index
   FILLVAL: ' '

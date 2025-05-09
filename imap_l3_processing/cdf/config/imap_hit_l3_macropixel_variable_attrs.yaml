@@ -4,19 +4,21 @@ epoch:
   CATDESC: Time, number of nanoseconds since J2000 with leap seconds included
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: epoch
+  FIELDNAM: Epoch
   FORMAT: ' '
-  LABLAXIS: epoch
+  LABLAXIS: Epoch
   UNITS: ns
   VALIDMIN: 1990-01-01T00:00:00.000000000
   VALIDMAX: 2099-12-31T00:00:00.000000000
   FILLVAL: 9999-12-31T23:59:59.999999999
   TIME_BASE: J2000
-  TIME_SCALE: Terrestrial Time
+  TIME_SCALE: TT
   DELTA_PLUS_VAR: epoch_delta
   DELTA_MINUS_VAR: epoch_delta
   MONOTON: INCREASE
   REFERENCE_POSITION: Rotating Earth Geoid
+  SCALETYP: linear
+  SI_CONVERSION: 1e-9>seconds
 epoch_delta:
   NAME: epoch_delta
   DATA_TYPE: CDF_INT8
@@ -25,12 +27,13 @@ epoch_delta:
   RECORD_VARYING: RV
   DEPEND_0: epoch
   FIELDNAM: Epoch Delta
-  FORMAT: I14
-  LABLAXIS: epoch_delta
+  FORMAT: I19
+  LABLAXIS: Epoch delta
   UNITS: ns
   VALIDMIN: 0
   VALIDMAX: 86000000000000
   FILLVAL: -9223372036854775808
+  SCALETYP: linear
 h_intensity:
   NAME: h_intensity
   DATA_TYPE: CDF_REAL4
@@ -45,7 +48,7 @@ h_intensity:
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
   FIELDNAM: H Intensity
   FORMAT: g9.3
-  LABLAXIS: H Intensity
+  LABLAXIS: H intensity
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMIN: 0
   VALIDMAX: 10000000000
@@ -60,7 +63,7 @@ h_intensity:
 he4_intensity:
   NAME: he4_intensity
   DATA_TYPE: CDF_REAL4
-  CATDESC: He4 intensity by pitch angle and gyrophase
+  CATDESC: He4 intensity by energy, pitch angle, and gyrophase
   VAR_TYPE: data
   RECORD_VARYING: RV
   DEPEND_0: epoch
@@ -71,7 +74,7 @@ he4_intensity:
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
   FIELDNAM: He4 Intensity
   FORMAT: g9.3
-  LABLAXIS: He4 Intensity
+  LABLAXIS: He4 intensity
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMIN: 0
   VALIDMAX: 10000000000
@@ -86,7 +89,7 @@ he4_intensity:
 cno_intensity:
   NAME: cno_intensity
   DATA_TYPE: CDF_REAL4
-  CATDESC: CNO intensity by pitch angle and gyrophase
+  CATDESC: CNO intensity by energy, pitch angle, and gyrophase
   VAR_TYPE: data
   RECORD_VARYING: RV
   DEPEND_0: epoch
@@ -97,7 +100,7 @@ cno_intensity:
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
   FIELDNAM: CNO Intensity
   FORMAT: g9.3
-  LABLAXIS: CNO Intensity
+  LABLAXIS: CNO intensity
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMIN: 0
   VALIDMAX: 10000000000
@@ -112,7 +115,7 @@ cno_intensity:
 nemgsi_intensity:
   NAME: nemgsi_intensity
   DATA_TYPE: CDF_REAL4
-  CATDESC: NeMgSi intensity by pitch angle and gyrophase
+  CATDESC: NeMgSi intensity by energy, pitch angle, and gyrophase
   VAR_TYPE: data
   RECORD_VARYING: RV
   DEPEND_0: epoch
@@ -123,7 +126,7 @@ nemgsi_intensity:
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
   FIELDNAM: NeMgSi Intensity
   FORMAT: g9.3
-  LABLAXIS: NeMgSi Intensity
+  LABLAXIS: NeMgSi intensity
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMIN: 0
   VALIDMAX: 10000000000
@@ -138,7 +141,7 @@ nemgsi_intensity:
 fe_intensity:
   NAME: fe_intensity
   DATA_TYPE: CDF_REAL4
-  CATDESC: Fe intensity by pitch angle and gyrophase
+  CATDESC: Fe intensity by energy, pitch angle, and gyrophase
   VAR_TYPE: data
   RECORD_VARYING: RV
   DEPEND_0: epoch
@@ -149,7 +152,7 @@ fe_intensity:
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
   FIELDNAM: Fe Intensity
   FORMAT: g9.3
-  LABLAXIS: Fe Intensity
+  LABLAXIS: Fe intensity
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMIN: 0
   VALIDMAX: 10000000000
@@ -164,7 +167,7 @@ fe_intensity:
 h_intensity_pa:
   NAME: h_intensity_pa
   DATA_TYPE: CDF_REAL4
-  CATDESC: H intensity by pitch angle
+  CATDESC: H intensity by energy and pitch angle
   VAR_TYPE: data
   RECORD_VARYING: RV
   DEPEND_0: epoch
@@ -174,7 +177,7 @@ h_intensity_pa:
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
   FIELDNAM: H Intensity PA
   FORMAT: g9.3
-  LABLAXIS: H Intensity PA
+  LABLAXIS: H intensity PA
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMIN: 0
   VALIDMAX: 10000000000
@@ -188,7 +191,7 @@ h_intensity_pa:
 he4_intensity_pa:
   NAME: he4_intensity_pa
   DATA_TYPE: CDF_REAL4
-  CATDESC: He4 intensity by pitch angle
+  CATDESC: He4 intensity by energy and pitch angle
   VAR_TYPE: data
   RECORD_VARYING: RV
   DEPEND_0: epoch
@@ -198,7 +201,7 @@ he4_intensity_pa:
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
   FIELDNAM: He4 Intensity PA
   FORMAT: g9.3
-  LABLAXIS: He4 Intensity PA
+  LABLAXIS: He4 intensity PA
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMIN: 0
   VALIDMAX: 10000000000
@@ -212,7 +215,7 @@ he4_intensity_pa:
 cno_intensity_pa:
   NAME: cno_intensity_pa
   DATA_TYPE: CDF_REAL4
-  CATDESC: CNO intensity by pitch angle
+  CATDESC: CNO intensity by energy and pitch angle
   VAR_TYPE: data
   RECORD_VARYING: RV
   DEPEND_0: epoch
@@ -222,7 +225,7 @@ cno_intensity_pa:
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
   FIELDNAM: CNO Intensity PA
   FORMAT: g9.3
-  LABLAXIS: CNO Intensity PA
+  LABLAXIS: CNO intensity PA
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMIN: 0
   VALIDMAX: 10000000000
@@ -236,7 +239,7 @@ cno_intensity_pa:
 nemgsi_intensity_pa:
   NAME: nemgsi_intensity_pa
   DATA_TYPE: CDF_REAL4
-  CATDESC: NeMgSi intensity by pitch angle
+  CATDESC: NeMgSi intensity by energy and pitch angle
   VAR_TYPE: data
   RECORD_VARYING: RV
   DEPEND_0: epoch
@@ -246,7 +249,7 @@ nemgsi_intensity_pa:
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
   FIELDNAM: NeMgSi Intensity PA
   FORMAT: g9.3
-  LABLAXIS: NeMgSi Intensity PA
+  LABLAXIS: NeMgSi intensity PA
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMIN: 0
   VALIDMAX: 10000000000
@@ -260,7 +263,7 @@ nemgsi_intensity_pa:
 fe_intensity_pa:
   NAME: fe_intensity_pa
   DATA_TYPE: CDF_REAL4
-  CATDESC: Fe intensity by pitch angle
+  CATDESC: Fe intensity by energy and pitch angle
   VAR_TYPE: data
   RECORD_VARYING: RV
   DEPEND_0: epoch
@@ -270,7 +273,7 @@ fe_intensity_pa:
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
   FIELDNAM: Fe Intensity PA
   FORMAT: g9.3
-  LABLAXIS: Fe Intensity PA
+  LABLAXIS: Fe intensity PA
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMIN: 0
   VALIDMAX: 10000000000
@@ -284,7 +287,7 @@ fe_intensity_pa:
 h_intensity_delta_plus:
   NAME: h_intensity_delta_plus
   DATA_TYPE: CDF_REAL4
-  CATDESC: Plus uncertainty for H by pitch angle and gyrophase
+  CATDESC: Plus uncertainty for H by energy, pitch angle, and gyrophase
   VAR_TYPE: support_data
   RECORD_VARYING: RV
   DEPEND_0: epoch
@@ -293,7 +296,7 @@ h_intensity_delta_plus:
   DEPEND_3: gyrophase
   FIELDNAM: H Plus Uncertainty
   FORMAT: g9.3
-  LABLAXIS: H Intensity
+  LABLAXIS: H unc.
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMIN: 0
   VALIDMAX: 10000000000
@@ -306,7 +309,7 @@ h_intensity_delta_plus:
 h_intensity_delta_minus:
   NAME: h_intensity_delta_minus
   DATA_TYPE: CDF_REAL4
-  CATDESC: Minus uncertainty for H by pitch angle and gyrophase
+  CATDESC: Minus uncertainty for H by energy, pitch angle, and gyrophase
   VAR_TYPE: support_data
   RECORD_VARYING: RV
   DEPEND_0: epoch
@@ -315,7 +318,7 @@ h_intensity_delta_minus:
   DEPEND_3: gyrophase
   FIELDNAM: H Minus Uncertainty
   FORMAT: g9.3
-  LABLAXIS: H Intensity
+  LABLAXIS: H unc.
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMIN: 0
   VALIDMAX: 10000000000
@@ -328,7 +331,7 @@ h_intensity_delta_minus:
 he4_intensity_delta_plus:
   NAME: he4_intensity_delta_plus
   DATA_TYPE: CDF_REAL4
-  CATDESC: Plus uncertainty for He4 by pitch angle and gyrophase
+  CATDESC: Plus uncertainty for He4 by energy, pitch angle, and gyrophase
   VAR_TYPE: support_data
   RECORD_VARYING: RV
   DEPEND_0: epoch
@@ -337,7 +340,7 @@ he4_intensity_delta_plus:
   DEPEND_3: gyrophase
   FIELDNAM: He4 Plus Uncertainty
   FORMAT: g9.3
-  LABLAXIS: He4 Intensity
+  LABLAXIS: He4 unc.
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMIN: 0
   VALIDMAX: 10000000000
@@ -350,7 +353,7 @@ he4_intensity_delta_plus:
 he4_intensity_delta_minus:
   NAME: he4_intensity_delta_minus
   DATA_TYPE: CDF_REAL4
-  CATDESC: Minus uncertainty for He4 by pitch angle and gyrophase
+  CATDESC: Minus uncertainty for He4 by energy, pitch angle, and gyrophase
   VAR_TYPE: support_data
   RECORD_VARYING: RV
   DEPEND_0: epoch
@@ -359,7 +362,7 @@ he4_intensity_delta_minus:
   DEPEND_3: gyrophase
   FIELDNAM: He4 Minus Uncertainty
   FORMAT: g9.3
-  LABLAXIS: He4 Intensity
+  LABLAXIS: He4 unc.
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMIN: 0
   VALIDMAX: 10000000000
@@ -372,7 +375,7 @@ he4_intensity_delta_minus:
 cno_intensity_delta_plus:
   NAME: cno_intensity_delta_plus
   DATA_TYPE: CDF_REAL4
-  CATDESC: Plus uncertainty for CNO by pitch angle and gyrophase
+  CATDESC: Plus uncertainty for CNO by energy, pitch angle, and gyrophase
   VAR_TYPE: support_data
   RECORD_VARYING: RV
   DEPEND_0: epoch
@@ -381,7 +384,7 @@ cno_intensity_delta_plus:
   DEPEND_3: gyrophase
   FIELDNAM: CNO Plus Uncertainty
   FORMAT: g9.3
-  LABLAXIS: CNO Intensity
+  LABLAXIS: CNO unc.
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMIN: 0
   VALIDMAX: 10000000000
@@ -394,7 +397,7 @@ cno_intensity_delta_plus:
 cno_intensity_delta_minus:
   NAME: cno_intensity_delta_minus
   DATA_TYPE: CDF_REAL4
-  CATDESC: Minus uncertainty for CNO by pitch angle and gyrophase
+  CATDESC: Minus uncertainty for CNO by energy, pitch angle, and gyrophase
   VAR_TYPE: support_data
   RECORD_VARYING: RV
   DEPEND_0: epoch
@@ -403,7 +406,7 @@ cno_intensity_delta_minus:
   DEPEND_3: gyrophase
   FIELDNAM: CNO Minus Uncertainty
   FORMAT: g9.3
-  LABLAXIS: CNO Intensity
+  LABLAXIS: CNO unc.
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMIN: 0
   VALIDMAX: 10000000000
@@ -416,7 +419,7 @@ cno_intensity_delta_minus:
 nemgsi_intensity_delta_plus:
   NAME: nemgsi_intensity_delta_plus
   DATA_TYPE: CDF_REAL4
-  CATDESC: Plus uncertainty for NeMgSi by pitch angle and gyrophase
+  CATDESC: Plus uncertainty for NeMgSi by energy, pitch angle, and gyrophase
   VAR_TYPE: support_data
   RECORD_VARYING: RV
   DEPEND_0: epoch
@@ -425,7 +428,7 @@ nemgsi_intensity_delta_plus:
   DEPEND_3: gyrophase
   FIELDNAM: NeMgSi Plus Uncertainty
   FORMAT: g9.3
-  LABLAXIS: NeMgSi Intensity
+  LABLAXIS: NeMgSi unc.
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMIN: 0
   VALIDMAX: 10000000000
@@ -438,7 +441,7 @@ nemgsi_intensity_delta_plus:
 nemgsi_intensity_delta_minus:
   NAME: nemgsi_intensity_delta_minus
   DATA_TYPE: CDF_REAL4
-  CATDESC: Minus uncertainty for NeMgSi by pitch angle and gyrophase
+  CATDESC: Minus uncertainty for NeMgSi by energy, pitch angle, and gyrophase
   VAR_TYPE: support_data
   RECORD_VARYING: RV
   DEPEND_0: epoch
@@ -447,7 +450,7 @@ nemgsi_intensity_delta_minus:
   DEPEND_3: gyrophase
   FIELDNAM: NeMgSi Minus Uncertainty
   FORMAT: g9.3
-  LABLAXIS: NeMgSi Intensity
+  LABLAXIS: NeMgSi unc.
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMIN: 0
   VALIDMAX: 10000000000
@@ -460,7 +463,7 @@ nemgsi_intensity_delta_minus:
 fe_intensity_delta_plus:
   NAME: fe_intensity_delta_plus
   DATA_TYPE: CDF_REAL4
-  CATDESC: Plus uncertainty for Fe by pitch angle and gyrophase
+  CATDESC: Plus uncertainty for Fe by energy, pitch angle, and gyrophase
   VAR_TYPE: support_data
   RECORD_VARYING: RV
   DEPEND_0: epoch
@@ -469,7 +472,7 @@ fe_intensity_delta_plus:
   DEPEND_3: gyrophase
   FIELDNAM: Fe Plus Uncertainty
   FORMAT: g9.3
-  LABLAXIS: Fe Intensity
+  LABLAXIS: Fe unc.
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMIN: 0
   VALIDMAX: 10000000000
@@ -482,7 +485,7 @@ fe_intensity_delta_plus:
 fe_intensity_delta_minus:
   NAME: fe_intensity_delta_minus
   DATA_TYPE: CDF_REAL4
-  CATDESC: Minus uncertainty for Fe by pitch angle and gyrophase
+  CATDESC: Minus uncertainty for Fe by energy, pitch angle, and gyrophase
   VAR_TYPE: support_data
   RECORD_VARYING: RV
   DEPEND_0: epoch
@@ -491,7 +494,7 @@ fe_intensity_delta_minus:
   DEPEND_3: gyrophase
   FIELDNAM: Fe Minus Uncertainty
   FORMAT: g9.3
-  LABLAXIS: Fe Intensity
+  LABLAXIS: Fe unc.
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMIN: 0
   VALIDMAX: 10000000000
@@ -504,7 +507,7 @@ fe_intensity_delta_minus:
 h_intensity_pa_delta_plus:
   NAME: h_intensity_pa_delta_plus
   DATA_TYPE: CDF_REAL4
-  CATDESC: Plus uncertainty for H by pitch angle
+  CATDESC: Plus uncertainty for H by energy and pitch angle
   VAR_TYPE: support_data
   RECORD_VARYING: RV
   DEPEND_0: epoch
@@ -512,7 +515,7 @@ h_intensity_pa_delta_plus:
   DEPEND_2: pitch_angle
   FIELDNAM: H Plus PA Uncertainty
   FORMAT: g9.3
-  LABLAXIS: H Intensity
+  LABLAXIS: H unc.
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMIN: 0
   VALIDMAX: 10000000000
@@ -524,7 +527,7 @@ h_intensity_pa_delta_plus:
 h_intensity_pa_delta_minus:
   NAME: h_intensity_pa_delta_minus
   DATA_TYPE: CDF_REAL4
-  CATDESC: Minus uncertainty for H by pitch angle
+  CATDESC: Minus uncertainty for H by energy and pitch angle
   VAR_TYPE: support_data
   RECORD_VARYING: RV
   DEPEND_0: epoch
@@ -532,7 +535,7 @@ h_intensity_pa_delta_minus:
   DEPEND_2: pitch_angle
   FIELDNAM: H Minus PA Uncertainty
   FORMAT: g9.3
-  LABLAXIS: H Intensity
+  LABLAXIS: H unc.
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMIN: 0
   VALIDMAX: 10000000000
@@ -544,7 +547,7 @@ h_intensity_pa_delta_minus:
 he4_intensity_pa_delta_plus:
   NAME: he4_intensity_pa_delta_plus
   DATA_TYPE: CDF_REAL4
-  CATDESC: Plus uncertainty for He4 by pitch angle
+  CATDESC: Plus uncertainty for He4 by energy and pitch angle
   VAR_TYPE: support_data
   RECORD_VARYING: RV
   DEPEND_0: epoch
@@ -552,7 +555,7 @@ he4_intensity_pa_delta_plus:
   DEPEND_2: pitch_angle
   FIELDNAM: He4 Plus PA Uncertainty
   FORMAT: g9.3
-  LABLAXIS: He4 Intensity
+  LABLAXIS: He4 unc.
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMIN: 0
   VALIDMAX: 10000000000
@@ -564,7 +567,7 @@ he4_intensity_pa_delta_plus:
 he4_intensity_pa_delta_minus:
   NAME: he4_intensity_pa_delta_minus
   DATA_TYPE: CDF_REAL4
-  CATDESC: Minus uncertainty for He4 by pitch angle
+  CATDESC: Minus uncertainty for He4 by energy and pitch angle
   VAR_TYPE: support_data
   RECORD_VARYING: RV
   DEPEND_0: epoch
@@ -572,7 +575,7 @@ he4_intensity_pa_delta_minus:
   DEPEND_2: pitch_angle
   FIELDNAM: He4 Minus PA Uncertainty
   FORMAT: g9.3
-  LABLAXIS: He4 Intensity
+  LABLAXIS: He4 unc.
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMIN: 0
   VALIDMAX: 10000000000
@@ -584,7 +587,7 @@ he4_intensity_pa_delta_minus:
 cno_intensity_pa_delta_plus:
   NAME: cno_intensity_pa_delta_plus
   DATA_TYPE: CDF_REAL4
-  CATDESC: Plus uncertainty for CNO by pitch angle
+  CATDESC: Plus uncertainty for CNO by energy and pitch angle
   VAR_TYPE: support_data
   RECORD_VARYING: RV
   DEPEND_0: epoch
@@ -592,7 +595,7 @@ cno_intensity_pa_delta_plus:
   DEPEND_2: pitch_angle
   FIELDNAM: CNO Plus PA Uncertainty
   FORMAT: g9.3
-  LABLAXIS: CNO Intensity
+  LABLAXIS: CNO unc.
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMIN: 0
   VALIDMAX: 10000000000
@@ -604,7 +607,7 @@ cno_intensity_pa_delta_plus:
 cno_intensity_pa_delta_minus:
   NAME: cno_intensity_pa_delta_minus
   DATA_TYPE: CDF_REAL4
-  CATDESC: Minus uncertainty for CNO by pitch angle
+  CATDESC: Minus uncertainty for CNO by energy and pitch angle
   VAR_TYPE: support_data
   RECORD_VARYING: RV
   DEPEND_0: epoch
@@ -612,7 +615,7 @@ cno_intensity_pa_delta_minus:
   DEPEND_2: pitch_angle
   FIELDNAM: CNO Minus PA Uncertainty
   FORMAT: g9.3
-  LABLAXIS: CNO Intensity
+  LABLAXIS: CNO unc.
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMIN: 0
   VALIDMAX: 10000000000
@@ -624,7 +627,7 @@ cno_intensity_pa_delta_minus:
 nemgsi_intensity_pa_delta_plus:
   NAME: nemgsi_intensity_pa_delta_plus
   DATA_TYPE: CDF_REAL4
-  CATDESC: Plus uncertainty for NeMgSi by pitch angle
+  CATDESC: Plus uncertainty for NeMgSi energy and by pitch angle
   VAR_TYPE: support_data
   RECORD_VARYING: RV
   DEPEND_0: epoch
@@ -632,7 +635,7 @@ nemgsi_intensity_pa_delta_plus:
   DEPEND_2: pitch_angle
   FIELDNAM: NeMgSi Plus PA Uncertainty
   FORMAT: g9.3
-  LABLAXIS: NeMgSi Intensity
+  LABLAXIS: NeMgSi unc.
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMIN: 0
   VALIDMAX: 10000000000
@@ -644,7 +647,7 @@ nemgsi_intensity_pa_delta_plus:
 nemgsi_intensity_pa_delta_minus:
   NAME: nemgsi_intensity_pa_delta_minus
   DATA_TYPE: CDF_REAL4
-  CATDESC: Minus uncertainty for NeMgSi by pitch angle
+  CATDESC: Minus uncertainty for NeMgSi by energy and pitch angle
   VAR_TYPE: support_data
   RECORD_VARYING: RV
   DEPEND_0: epoch
@@ -652,7 +655,7 @@ nemgsi_intensity_pa_delta_minus:
   DEPEND_2: pitch_angle
   FIELDNAM: NeMgSi Minus PA Uncertainty
   FORMAT: g9.3
-  LABLAXIS: NeMgSi Intensity
+  LABLAXIS: NeMgSi unc.
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMIN: 0
   VALIDMAX: 10000000000
@@ -664,7 +667,7 @@ nemgsi_intensity_pa_delta_minus:
 fe_intensity_pa_delta_plus:
   NAME: fe_intensity_pa_delta_plus
   DATA_TYPE: CDF_REAL4
-  CATDESC: Plus uncertainty for Fe by pitch angle
+  CATDESC: Plus uncertainty for Fe by energy and pitch angle
   VAR_TYPE: support_data
   RECORD_VARYING: RV
   DEPEND_0: epoch
@@ -672,7 +675,7 @@ fe_intensity_pa_delta_plus:
   DEPEND_2: pitch_angle
   FIELDNAM: Fe Plus PA Uncertainty
   FORMAT: g9.3
-  LABLAXIS: Fe Intensity
+  LABLAXIS: Fe unc.
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMIN: 0
   VALIDMAX: 10000000000
@@ -684,7 +687,7 @@ fe_intensity_pa_delta_plus:
 fe_intensity_pa_delta_minus:
   NAME: fe_intensity_pa_delta_minus
   DATA_TYPE: CDF_REAL4
-  CATDESC: Minus uncertainty for Fe by pitch angle
+  CATDESC: Minus uncertainty for Fe by energy and pitch angle
   VAR_TYPE: support_data
   RECORD_VARYING: RV
   DEPEND_0: epoch
@@ -692,7 +695,7 @@ fe_intensity_pa_delta_minus:
   DEPEND_2: pitch_angle
   FIELDNAM: Fe Minus PA Uncertainty
   FORMAT: g9.3
-  LABLAXIS: Fe Intensity
+  LABLAXIS: Fe unc.
   UNITS: 1/(cm^2 s MeV/nuc sr)
   VALIDMIN: 0
   VALIDMAX: 10000000000
@@ -704,12 +707,12 @@ fe_intensity_pa_delta_minus:
 h_energy:
   NAME: h_energy
   DATA_TYPE: CDF_REAL4
-  CATDESC: Energy bins for H by pitch angle and gyrophase
+  CATDESC: Energy bins for H by energy, pitch angle, and gyrophase
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
   FIELDNAM: H Energy
   FORMAT: F15.3
-  LABLAXIS: Energy
+  LABLAXIS: H energy
   UNITS: MeV
   VALIDMIN: 0
   VALIDMAX: 1000
@@ -719,12 +722,12 @@ h_energy:
 he4_energy:
   NAME: he4_energy
   DATA_TYPE: CDF_REAL4
-  CATDESC: Energy bins for He4 by pitch angle and gyrophase
+  CATDESC: Energy bins for He4 by energy, pitch angle, and gyrophase
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
   FIELDNAM: He4 Energy
   FORMAT: F15.3
-  LABLAXIS: Energy
+  LABLAXIS: He4 energy
   UNITS: MeV
   VALIDMIN: 0
   VALIDMAX: 1000
@@ -734,12 +737,12 @@ he4_energy:
 cno_energy:
   NAME: cno_energy
   DATA_TYPE: CDF_REAL4
-  CATDESC: Energy bins for CNO by pitch angle and gyrophase
+  CATDESC: Energy bins for CNO by energy, pitch angle, and gyrophase
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
   FIELDNAM: CNO Energy
   FORMAT: F15.3
-  LABLAXIS: Energy
+  LABLAXIS: CNO Energy
   UNITS: MeV
   VALIDMIN: 0
   VALIDMAX: 1000
@@ -749,12 +752,12 @@ cno_energy:
 nemgsi_energy:
   NAME: nemgsi_energy
   DATA_TYPE: CDF_REAL4
-  CATDESC: Energy bins for NeMgSi by pitch angle and gyrophase
+  CATDESC: Energy bins for NeMgSi by energy, pitch angle and gyrophase
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
   FIELDNAM: NeMgSi Energy
   FORMAT: F15.3
-  LABLAXIS: Energy
+  LABLAXIS: NeMgSi energy
   UNITS: MeV
   VALIDMIN: 0
   VALIDMAX: 1000
@@ -764,12 +767,12 @@ nemgsi_energy:
 fe_energy:
   NAME: fe_energy
   DATA_TYPE: CDF_REAL4
-  CATDESC: Energy bins for Fe by pitch angle and gyrophase
+  CATDESC: Energy bins for Fe by energy, pitch angle, and gyrophase
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
   FIELDNAM: Fe Energy
   FORMAT: F15.3
-  LABLAXIS: Energy
+  LABLAXIS: Fe energy
   UNITS: MeV
   VALIDMIN: 0
   VALIDMAX: 1000
@@ -779,12 +782,12 @@ fe_energy:
 h_energy_delta_plus:
   NAME: h_energy_delta_plus
   DATA_TYPE: CDF_REAL4
-  CATDESC: H energy bin Delta plus
+  CATDESC: H energy bin delta plus
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
   FIELDNAM: H Energy Delta Plus
   FORMAT: F15.3
-  LABLAXIS: Energy
+  LABLAXIS: H energy delta plus
   UNITS: MeV
   VALIDMIN: 0
   VALIDMAX: 1000
@@ -794,12 +797,12 @@ h_energy_delta_plus:
 he4_energy_delta_plus:
   NAME: he4_energy_delta_plus
   DATA_TYPE: CDF_REAL4
-  CATDESC: He4 energy bin Delta plus
+  CATDESC: He4 energy bin delta plus
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
   FIELDNAM: He4 Energy Delta Plus
   FORMAT: F15.3
-  LABLAXIS: Energy
+  LABLAXIS: He4 energy delta plus
   UNITS: MeV
   VALIDMIN: 0
   VALIDMAX: 1000
@@ -809,12 +812,12 @@ he4_energy_delta_plus:
 cno_energy_delta_plus:
   NAME: cno_energy_delta_plus
   DATA_TYPE: CDF_REAL4
-  CATDESC: CNO energy bin Delta plus
+  CATDESC: CNO energy bin delta plus
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
   FIELDNAM: CNO Energy Delta Plus
   FORMAT: F15.3
-  LABLAXIS: Energy
+  LABLAXIS: CNO energy delta plus
   UNITS: MeV
   VALIDMIN: 0
   VALIDMAX: 1000
@@ -824,12 +827,12 @@ cno_energy_delta_plus:
 nemgsi_energy_delta_plus:
   NAME: nemgsi_energy_delta_plus
   DATA_TYPE: CDF_REAL4
-  CATDESC: NeMgSi energy bin Delta plus
+  CATDESC: NeMgSi energy bin delta plus
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
   FIELDNAM: NeMgSi Energy Delta Plus
   FORMAT: F15.3
-  LABLAXIS: Energy
+  LABLAXIS: NeMgSi energy delta plus
   UNITS: MeV
   VALIDMIN: 0
   VALIDMAX: 1000
@@ -839,12 +842,12 @@ nemgsi_energy_delta_plus:
 fe_energy_delta_plus:
   NAME: fe_energy_delta_plus
   DATA_TYPE: CDF_REAL4
-  CATDESC: Fe energy bin Delta plus
+  CATDESC: Fe energy bin delta plus
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
   FIELDNAM: Fe Energy Delta Plus
   FORMAT: F15.3
-  LABLAXIS: Energy
+  LABLAXIS: Fe energy delta plus
   UNITS: MeV
   VALIDMIN: 0
   VALIDMAX: 1000
@@ -854,12 +857,12 @@ fe_energy_delta_plus:
 h_energy_delta_minus:
   NAME: h_energy_delta_minus
   DATA_TYPE: CDF_REAL4
-  CATDESC: H energy bin Delta minus
+  CATDESC: H energy bin delta minus
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
   FIELDNAM: H Energy Delta Minus
   FORMAT: F15.3
-  LABLAXIS: Energy
+  LABLAXIS: H energy delta minus
   UNITS: MeV
   VALIDMIN: 0
   VALIDMAX: 1000
@@ -869,12 +872,12 @@ h_energy_delta_minus:
 he4_energy_delta_minus:
   NAME: he4_energy_delta_minus
   DATA_TYPE: CDF_REAL4
-  CATDESC: He4 energy bin Delta minus
+  CATDESC: He4 energy bin delta minus
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
   FIELDNAM: He4 Energy Delta Minus
   FORMAT: F15.3
-  LABLAXIS: Energy
+  LABLAXIS: He4 energy delta minus
   UNITS: MeV
   VALIDMIN: 0
   VALIDMAX: 1000
@@ -884,12 +887,12 @@ he4_energy_delta_minus:
 cno_energy_delta_minus:
   NAME: cno_energy_delta_minus
   DATA_TYPE: CDF_REAL4
-  CATDESC: CNO energy bin Delta minus
+  CATDESC: CNO energy bin delta minus
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
   FIELDNAM: CNO Energy Delta Minus
   FORMAT: F15.3
-  LABLAXIS: Energy
+  LABLAXIS: CNO energy delta minus
   UNITS: MeV
   VALIDMIN: 0
   VALIDMAX: 1000
@@ -899,12 +902,12 @@ cno_energy_delta_minus:
 nemgsi_energy_delta_minus:
   NAME: nemgsi_energy_delta_minus
   DATA_TYPE: CDF_REAL4
-  CATDESC: NeMgSi energy bin Delta minus
+  CATDESC: NeMgSi energy bin delta minus
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
   FIELDNAM: NeMgSi Energy Delta Minus
   FORMAT: F15.3
-  LABLAXIS: Energy
+  LABLAXIS: NeMgSi energy delta minus
   UNITS: MeV
   VALIDMIN: 0
   VALIDMAX: 1000
@@ -914,12 +917,12 @@ nemgsi_energy_delta_minus:
 fe_energy_delta_minus:
   NAME: fe_energy_delta_minus
   DATA_TYPE: CDF_REAL4
-  CATDESC: Fe energy bin Delta minus
+  CATDESC: Fe energy bin delta minus
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
   FIELDNAM: Fe Energy Delta Minus
   FORMAT: F15.3
-  LABLAXIS: Energy
+  LABLAXIS: Fe energy delta minus
   UNITS: MeV
   VALIDMIN: 0
   VALIDMAX: 1000
@@ -929,12 +932,12 @@ fe_energy_delta_minus:
 pitch_angle:
   NAME: pitch_angle
   DATA_TYPE: CDF_REAL4
-  CATDESC: Pitch Angle Bin
+  CATDESC: Pitch angle bin
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
   FIELDNAM: Pitch Angle
   FORMAT: F15.3
-  LABLAXIS: Pitch Angle
+  LABLAXIS: Pitch angle
   UNITS: Degrees
   VALIDMIN: 0
   VALIDMAX: 180
@@ -944,12 +947,12 @@ pitch_angle:
 pitch_angle_delta:
   NAME: pitch_angle_delta
   DATA_TYPE: CDF_REAL4
-  CATDESC: Pitch Angle Bin Delta
+  CATDESC: Pitch angle bin delta
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
   FIELDNAM: Pitch Angle Delta
   FORMAT: F15.3
-  LABLAXIS: Pitch Angle Delta
+  LABLAXIS: Pitch angle delta
   UNITS: Degrees
   VALIDMIN: 0
   VALIDMAX: 180
@@ -960,7 +963,7 @@ gyrophase:
   CATDESC: Gyrophase
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
-  FIELDNAM: gyrophase
+  FIELDNAM: Gyrophase
   FORMAT: F15.3
   LABLAXIS: Gyrophase
   UNITS: Degrees
@@ -972,12 +975,12 @@ gyrophase:
 gyrophase_delta:
   NAME: gyrophase_delta
   DATA_TYPE: CDF_REAL4
-  CATDESC: Gyrophase Delta
+  CATDESC: Gyrophase delta
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
   FIELDNAM: Gyrophase Delta
   FORMAT: F15.3
-  LABLAXIS: Gyrophase Delta
+  LABLAXIS: Gyrophase delta
   UNITS: Degrees
   VALIDMIN: 0
   VALIDMAX: 360
@@ -995,7 +998,7 @@ measurement_pitch_angle:
   FIELDNAM: Measurement Pitch Angle
   VARIABLE_PURPOSE: ' '
   FORMAT: F15.3
-  LABLAXIS: Pitch Angle
+  LABLAXIS: Pitch angle
   UNITS: Degrees
   VALIDMIN: 0
   VALIDMAX: 180

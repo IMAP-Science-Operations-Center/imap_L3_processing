@@ -4,32 +4,36 @@ epoch:
   CATDESC: Time, number of nanoseconds since J2000 with leap seconds included
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: epoch
+  FIELDNAM: Epoch
   FORMAT: ' '
-  LABLAXIS: epoch
+  LABLAXIS: Epoch
   UNITS: ns
   VALIDMIN: 1990-01-01T00:00:00.000000000
   VALIDMAX: 2099-12-31T00:00:00.000000000
   FILLVAL: 9999-12-31T23:59:59.999999999
   TIME_BASE: J2000
-  TIME_SCALE: Terrestrial Time
+  TIME_SCALE: TT
   DELTA_PLUS_VAR: epoch_delta
   DELTA_MINUS_VAR: epoch_delta
   MONOTON: INCREASE
   REFERENCE_POSITION: Rotating Earth Geoid
+  SCALETYP: linear
+  SI_CONVERSION: 1e-9>seconds
 epoch_delta:
   NAME: epoch_delta
   DATA_TYPE: CDF_INT8
   CATDESC: Epoch delta
   VAR_TYPE: support_data
-  RECORD_VARYING: NRV
+  RECORD_VARYING: RV
   FIELDNAM: Epoch Delta
-  FORMAT: I14
-  LABLAXIS: epoch_delta
+  FORMAT: I19
+  LABLAXIS: Epoch delta
   UNITS: ns
   VALIDMIN: 0
   VALIDMAX: 86000000000000
   FILLVAL: -9223372036854775808
+  DEPEND_0: epoch
+  SCALETYP: linear
 charge:
   NAME: charge
   DATA_TYPE: CDF_FLOAT
@@ -39,7 +43,7 @@ charge:
   DEPEND_0: epoch
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: charge
+  FIELDNAM: Charge
   FORMAT: F15.3
   LABLAXIS: Charge
   UNITS: MeV
@@ -55,7 +59,7 @@ energy:
   DEPEND_0: epoch
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: energy
+  FIELDNAM: Energy
   FORMAT: F15.3
   LABLAXIS: Energy
   UNITS: MeV
@@ -73,7 +77,7 @@ energy_in_detector:
   DEPEND_0: epoch
   DEPEND_1: detector_id
   DISPLAY_TYPE: no_plot
-  FIELDNAM: Energy in detector
+  FIELDNAM: Energy In Detector
   VARIABLE_PURPOSE: ' '
   FORMAT: F15.3
   UNITS: ' '
@@ -90,7 +94,7 @@ range:
   RECORD_VARYING: RV
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
-  FIELDNAM: range
+  FIELDNAM: Range
   VARIABLE_PURPOSE: ' '
   FORMAT: I4
   UNITS: ' '
@@ -118,7 +122,7 @@ delta_e:
 e_prime:
   NAME: e_prime
   DATA_TYPE: CDF_FLOAT
-  CATDESC: E Prime (energy deposited in stopping detector)
+  CATDESC: E prime (energy deposited in stopping detector)
   VAR_TYPE: data
   RECORD_VARYING: RV
   DEPEND_0: epoch
@@ -126,7 +130,7 @@ e_prime:
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
   FIELDNAM: E Prime
   FORMAT: F15.3
-  LABLAXIS: E Prime
+  LABLAXIS: E prime
   UNITS: MeV
   VALIDMIN: 1
   VALIDMAX: 10000
@@ -171,7 +175,7 @@ latency:
   RECORD_VARYING: RV
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
-  FIELDNAM: latency
+  FIELDNAM: Latency
   VARIABLE_PURPOSE: ' '
   FORMAT: I4
   UNITS: ' '
@@ -181,7 +185,7 @@ latency:
 stim_tag:
   NAME: stim_tag
   DATA_TYPE: CDF_INT1
-  CATDESC: Stim tag (1 = Indicates Stimulus event, charge from pulsers not real event)
+  CATDESC: Stim tag (1 = indicates stimulus event, charge from pulsers not real event)
   VAR_TYPE: data
   RECORD_VARYING: RV
   DEPEND_0: epoch
@@ -280,7 +284,7 @@ pha_value:
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
   FIELDNAM: Pha Value
   FORMAT: I8
-  LABLAXIS: PHA Value
+  LABLAXIS: PHA value
   UNITS: ' '
   VALIDMIN: 0
   VALIDMAX: 65534
@@ -324,7 +328,7 @@ deindex:
   RECORD_VARYING: RV
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
-  FIELDNAM: deindex
+  FIELDNAM: Deindex
   VARIABLE_PURPOSE: ' '
   FORMAT: I8
   UNITS: ' '
@@ -339,7 +343,7 @@ epindex:
   RECORD_VARYING: RV
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
-  FIELDNAM: epindex
+  FIELDNAM: Epindex
   VARIABLE_PURPOSE: ' '
   FORMAT: I8
   UNITS: ' '

@@ -4,12 +4,12 @@ epoch:
   CATDESC: Time, number of nanoseconds since J2000 with leap seconds included
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: J2000 Nanoseconds
+  FIELDNAM: Epoch
   FORMAT: ' '
-  LABLAXIS: epoch
+  LABLAXIS: Epoch
   UNITS: ns
   VALIDMIN: 2010-01-01T00:00:00.000000000
-  VALIDMAX: 2059-12-31T23:59:58.999000000
+  VALIDMAX: 2099-12-31T00:00:00.000000000
   FILLVAL: 9999-12-31T23:59:59.999999999
   SCALETYP: linear
   TIME_BASE: J2000
@@ -33,6 +33,7 @@ epoch_delta:
   VALIDMIN: 0
   VALIDMAX: 31536000000000000
   FILLVAL: -9223372036854775808
+  SCALETYP: linear
 energy:
   NAME: energy
   DATA_TYPE: CDF_REAL4
@@ -122,7 +123,7 @@ latitude_delta:
   DEPEND_1: latitude
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
-  FIELDNAM: Latitude delta
+  FIELDNAM: Latitude Delta
   FORMAT: F12.1
   LABLAXIS: Latitude delta
   UNITS: degrees
@@ -163,7 +164,7 @@ longitude_delta:
   DEPEND_1: longitude
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
-  FIELDNAM: Longitude delta
+  FIELDNAM: Longitude Delta
   FORMAT: F12.1
   LABLAXIS: Longitude delta
   UNITS: degrees
@@ -173,7 +174,7 @@ longitude_delta:
 ena_intensity:
   NAME: ena_intensity
   DATA_TYPE: CDF_REAL4
-  CATDESC: Survival probability corrected ENA intensity
+  CATDESC: ENA intensity
   DEPEND_0: epoch
   DEPEND_1: energy
   DEPEND_2: longitude
@@ -224,7 +225,7 @@ ena_intensity_sys_err:
   DEPEND_3: latitude
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: Intensity non-stat error
+  FIELDNAM: Intensity Non-stat Error
   FORMAT: F12.1
   LABLAXIS: Non-statistical Error
   UNITS: cm -2 s -1 sr -1 keV -1
@@ -272,10 +273,10 @@ obs_date:
   FIELDNAM: J2000 Nanoseconds
   VARIABLE_PURPOSE: ' '
   FORMAT: ' '
-  LABLAXIS: epoch
+  LABLAXIS: Epoch
   UNITS: ns
   VALIDMIN: 2010-01-01T00:00:00.000000000
-  VALIDMAX: 2059-12-31T23:59:58.999000000
+  VALIDMAX: 2099-12-31T00:00:00.000000000
   FILLVAL: 9999-12-31T23:59:59.999999999
   LABL_PTR_1: energy_label
   LABL_PTR_2: longitude_label
@@ -295,7 +296,7 @@ obs_date_range:
   FIELDNAM: J2000 Nanoseconds
   VARIABLE_PURPOSE: ' '
   FORMAT: I19
-  LABLAXIS: epoch
+  LABLAXIS: Epoch
   UNITS: ns
   VALIDMIN: 0
   VALIDMAX: 31536000000000000
@@ -316,7 +317,7 @@ solid_angle:
   FIELDNAM: Solid Angle
   VARIABLE_PURPOSE: ' '
   FORMAT: F6.2
-  LABLAXIS: Solid Angle
+  LABLAXIS: Solid angle
   UNITS: sr
   VALIDMIN: 0.0
   VALIDMAX: 12.56637061

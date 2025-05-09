@@ -10,7 +10,7 @@ from imap_l3_processing.codice.l3.lo.models import CodiceLoL2DirectEventData, Co
 
 SW_PRIORITY_DESCRIPTOR = 'lo-sw-priority'
 NSW_PRIORITY_DESCRIPTOR = 'lo-nsw-priority'
-DIRECT_EVENTS_DESCRIPTOR = 'direct-events'
+DIRECT_EVENTS_DESCRIPTOR = 'lo-direct-events'
 MASS_COEFFICIENT_DESCRIPTOR = 'mass-coefficient-lookup'
 
 

@@ -17,8 +17,8 @@ class TestCodiceHiL3aDirectEventDependencies(unittest.TestCase):
     def test_fetch_dependencies(self, mock_from_file_paths, mock_download):
         input_collection = ProcessingInputCollection()
 
-        expected_codice_science_file_download_path = "imap/codice/l2/2010/01/imap_codice_l2_direct-events_20100105_v010.cdf"
-        codice_direct_event_input_file_name = "imap_codice_l2_direct-events_20100105_v010.cdf"
+        expected_codice_science_file_download_path = "imap/codice/l2/2010/01/imap_codice_l2_hi-direct-events_20100105_v010.cdf"
+        codice_direct_event_input_file_name = "imap_codice_l2_hi-direct-events_20100105_v010.cdf"
 
         expected_codice_ancillary_file_download_path = "imap/ancillary/codice/imap_codice_tof-lookup_20100105_v001.csv"
         codice_ancillary_file = "imap_codice_tof-lookup_20100105_v001.csv"
@@ -28,8 +28,8 @@ class TestCodiceHiL3aDirectEventDependencies(unittest.TestCase):
 
         non_codice_ancillary_input = AncillaryInput(
             "imap/ancillary/hit/imap_codice_range-2A-cosine-lookup_20250203_v001.csv")
-        non_codice_science_input = ScienceInput("imap/hit/l3/2010/01/imap_hit_l3_direct-events_20100105_v010.cdf")
-        non_l2_codice_science_input = ScienceInput("imap_codice_l1_direct-events_20100105_v010.cdf")
+        non_codice_science_input = ScienceInput("imap/hit/l3/2010/01/imap_hit_l3_hi-direct-events_20100105_v010.cdf")
+        non_l2_codice_science_input = ScienceInput("imap_codice_l1_hi-direct-events_20100105_v010.cdf")
 
         input_collection.add([science_input, ancillary_input, non_codice_ancillary_input, non_codice_science_input,
                               non_l2_codice_science_input])

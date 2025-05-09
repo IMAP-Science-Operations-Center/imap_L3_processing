@@ -45,6 +45,8 @@ class TestCdfUtils(TestCase):
             with self.subTest(filename):
                 self.assertIn('epoch', yaml_data.keys(), "no entry in file for 'epoch'")
                 self.assertEqual('epoch', yaml_data['epoch']['NAME'], "epoch must be lowercase")
+                self._epoch_meets_schema(yaml_data)
+                self._epoch_delta_meets_schema(yaml_data)
 
     def test_delta_vars_have_same_units(self):
         for filename, yaml_data, variable_key, variable in self.test_cases_variable:
@@ -114,3 +116,70 @@ class TestCdfUtils(TestCase):
                         self.assertEqual(fill_val, datetime.fromisoformat('9999-12-31T23:59:59.999999999'))
                     case _:
                         self.assertFalse(True, f"Found unknown DATA_TYPE: {variable['DATA_TYPE']}")
+
+    def _epoch_meets_schema(self, yaml_data: dict):
+        self.assertEqual(20, len(yaml_data['epoch'].keys()))
+        self.assertEqual('CDF_TIME_TT2000', yaml_data['epoch']['DATA_TYPE'],
+                         "epoch type must be CDF_TIME_TT2000")
+        self.assertEqual('support_data', yaml_data['epoch']['VAR_TYPE'],
+                         "epoch VAR_TYPE should be support_data")
+        self.assertEqual('RV', yaml_data['epoch']['RECORD_VARYING'],
+                         "epoch RECORD_VARYING should be RV")
+        self.assertEqual('Epoch', yaml_data['epoch']['FIELDNAM'],
+                         "epoch FIELDNAM should be Epoch")
+        self.assertEqual(' ', yaml_data['epoch']['FORMAT'],
+                         "epoch FORMAT should be ' '")
+        self.assertEqual('Epoch', yaml_data['epoch']['LABLAXIS'],
+                         "epoch LABLAXIS should be Epoch")
+        self.assertEqual('ns', yaml_data['epoch']['UNITS'],
+                         "epoch UNITS should be ns")
+        self.assertEqual(datetime.fromisoformat('2099-12-31T00:00:00.000000000'),
+                         yaml_data['epoch']['VALIDMAX'],
+                         "epoch VALIDMAX should be '2099-12-31T00:00:00.000000000'")
+        self.assertEqual(datetime.fromisoformat('9999-12-31T23:59:59.999999999'),
+                         yaml_data['epoch']['FILLVAL'],
+                         "epoch FILLVAL should be '9999-12-31T23:59:59.999999999'")
+        self.assertEqual("linear", yaml_data['epoch']['SCALETYP'],
+                         "epoch SCALETYP should be linear")
+        self.assertEqual("J2000", yaml_data['epoch']['TIME_BASE'],
+                         "epoch TIME_BASE should be J2000")
+        self.assertEqual("TT", yaml_data['epoch']['TIME_SCALE'],
+                         "epoch TIME_SCALE should be TT")
+        self.assertEqual("epoch_delta", yaml_data['epoch']['DELTA_PLUS_VAR'],
+                         "epoch DELTA_PLUS_VAR should be epoch_delta")
+        self.assertEqual("epoch_delta", yaml_data['epoch']['DELTA_MINUS_VAR'],
+                         "epoch DELTA_MINUS_VAR should be epoch_delta")
+        self.assertEqual("INCREASE", yaml_data['epoch']['MONOTON'],
+                         "epoch MONOTON should be INCREASE")
+        self.assertEqual("Rotating Earth Geoid", yaml_data['epoch']['REFERENCE_POSITION'],
+                         "epoch REFERENCE_POSITION should be Rotating Earth Geoid")
+        self.assertEqual("1e-9>seconds", yaml_data['epoch']['SI_CONVERSION'],
+                         "epoch SI_CONVERSION should be 1e-9>seconds")
+
+    def _epoch_delta_meets_schema(self, yaml_data: dict):
+        self.assertEqual(14, len(yaml_data['epoch_delta'].keys()))
+        self.assertEqual('CDF_INT8', yaml_data['epoch_delta']['DATA_TYPE'],
+                         "epoch_delta type must be CDF_INT8")
+        self.assertEqual('epoch', yaml_data['epoch_delta']['DEPEND_0'],
+                         "DEPEND_0 type must be epoch")
+        self.assertEqual('support_data', yaml_data['epoch_delta']['VAR_TYPE'],
+                         "epoch_delta VAR_TYPE should be 'support_data'")
+        self.assertEqual('RV', yaml_data['epoch_delta']['RECORD_VARYING'],
+                         "epoch_delta RECORD_VARYING should be RV")
+        self.assertEqual('Epoch Delta', yaml_data['epoch_delta']['FIELDNAM'],
+                         "epoch_delta FIELDNAM should be 'Epoch Delta'")
+        self.assertEqual('I19', yaml_data['epoch_delta']['FORMAT'],
+                         "epoch_delta FORMAT should be 'I19'")
+        self.assertEqual('Epoch delta', yaml_data['epoch_delta']['LABLAXIS'],
+                         "epoch_delta LABLAXIS should be 'Epoch delta'")
+        self.assertEqual('ns', yaml_data['epoch_delta']['UNITS'],
+                         "epoch_delta UNITS should be ns")
+        self.assertEqual(0,
+                         yaml_data['epoch_delta']['VALIDMIN'],
+                         "epoch_delta VALIDMIN should be '0'")
+        self.assertEqual(-9223372036854775808,
+                         yaml_data['epoch_delta']['FILLVAL'],
+                         "epoch_delta FILLVAL should be '-9223372036854775808'")
+        self.assertEqual("linear", yaml_data['epoch_delta']['SCALETYP'],
+                         "epoch_delta SCALETYP should be linear")
+

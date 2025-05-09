@@ -9,7 +9,7 @@ epoch:
   LABLAXIS: Epoch
   UNITS: ns
   VALIDMIN: 2010-01-01T00:00:00.000000000
-  VALIDMAX: 2059-12-31T23:59:58.999000000
+  VALIDMAX: 2099-12-31T00:00:00.000000000
   FILLVAL: 9999-12-31T23:59:59.999999999
   SCALETYP: linear
   TIME_BASE: J2000
@@ -41,7 +41,7 @@ cr:
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: Carrington rotation
+  FIELDNAM: Carrington Rotation
   FORMAT: I14
   LABLAXIS: Carrington rotation
   UNITS: ' '
@@ -58,7 +58,7 @@ plasma_speed_ecliptic:
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Plasma speed
+  FIELDNAM: Plasma Speed
   FORMAT: F9.3
   LABLAXIS: Speed
   UNITS: km/s
@@ -75,7 +75,7 @@ lat_grid:
   CATDESC: Latitudinal grid from -90 to 90
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
-  FIELDNAM: Lat grid
+  FIELDNAM: Latitude Grid
   FORMAT: F9.3
   LABLAXIS: Lat grid
   UNITS: degrees
@@ -92,7 +92,7 @@ lat_grid_delta:
   CATDESC: Latitudinal grid delta
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
-  FIELDNAM: Lat grid delta
+  FIELDNAM: Latitude Grid Delta
   FORMAT: F9.3
   LABLAXIS: Lat grid delta
   UNITS: degrees
@@ -105,7 +105,7 @@ lat_grid_label:
   DATA_TYPE: CDF_CHAR
   CATDESC: Label for lat grid
   VAR_TYPE: metadata
-  FIELDNAM: lat grid label
+  FIELDNAM: lat Grid Label
   FORMAT: a20
   FILLVAL: ' '
 proton_density_ecliptic:
@@ -117,7 +117,7 @@ proton_density_ecliptic:
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Proton density
+  FIELDNAM: Proton Density
   FORMAT: F12.3
   LABLAXIS: Density
   UNITS: cm^-3
@@ -137,7 +137,7 @@ alpha_abundance_ecliptic:
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Alpha abundance
+  FIELDNAM: Alpha Abundance
   FORMAT: F9.3
   LABLAXIS: Abundance
   UNITS: ' '
@@ -157,7 +157,7 @@ plasma_speed_profile:
   RECORD_VARYING: RV
   DISPLAY_TYPE: spectrogram
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Plasma speed
+  FIELDNAM: Plasma Speed
   FORMAT: F9.3
   LABLAXIS: Speed
   UNITS: km/s
@@ -179,7 +179,7 @@ proton_density_profile:
   RECORD_VARYING: RV
   DISPLAY_TYPE: spectrogram
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Proton density
+  FIELDNAM: Proton Density
   FORMAT: F12.3
   LABLAXIS: Density
   UNITS: cm^-3

@@ -9,7 +9,7 @@ epoch:
   LABLAXIS: Epoch
   UNITS: ns
   VALIDMIN: 2010-01-01T00:00:00.000000000
-  VALIDMAX: 2059-12-31T23:59:58.999000000
+  VALIDMAX: 2099-12-31T00:00:00.000000000
   FILLVAL: 9999-12-31T23:59:59.999999999
   SCALETYP: linear
   TIME_BASE: J2000
@@ -83,15 +83,14 @@ epoch_delta:
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: ' '
-  FORMAT: I14
-  LABLAXIS: Time delta
+  FIELDNAM: Epoch Delta
+  FORMAT: I19
+  LABLAXIS: Epoch delta
   UNITS: ns
   VALIDMIN: 0
   VALIDMAX: 600000000000
   FILLVAL: -9223372036854775808
   SCALETYP: linear
-  SI_CONVERSION: 1e-9>seconds
 energy_delta_plus:
   NAME: energy_delta_plus
   DATA_TYPE: CDF_REAL4
@@ -487,7 +486,7 @@ core_density_fit:
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Core deinsity fit
+  FIELDNAM: Core Density Fit
   FORMAT: F15.3
   LABLAXIS: Core density fit
   UNITS: ' '
@@ -504,7 +503,7 @@ halo_density_fit:
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Halo density fit
+  FIELDNAM: Halo Density Fit
   FORMAT: F15.3
   LABLAXIS: Halo density fit
   UNITS: ' '
@@ -515,13 +514,13 @@ halo_density_fit:
 core_t_parallel_fit:
   NAME: core_t_parallel_fit
   DATA_TYPE: CDF_REAL4
-  CATDESC: Fitted t_parallel
+  CATDESC: Core t_parallel fit
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Core t parallel fit
+  FIELDNAM: Core T Parallel Fit
   FORMAT: F15.3
   LABLAXIS: Core t parallel fit
   UNITS: ' '
@@ -532,13 +531,13 @@ core_t_parallel_fit:
 halo_t_parallel_fit:
   NAME: halo_t_parallel_fit
   DATA_TYPE: CDF_REAL4
-  CATDESC: Halo_t parallel fit
+  CATDESC: Halo t_parallel fit
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Halo t parallel fit
+  FIELDNAM: Halo T Parallel Fit
   FORMAT: F15.3
   LABLAXIS: Halo t parallel fit
   UNITS: ' '
@@ -549,13 +548,13 @@ halo_t_parallel_fit:
 core_t_perpendicular_fit:
   NAME: core_t_perpendicular_fit
   DATA_TYPE: CDF_REAL4
-  CATDESC: Core_t perpendicular fit
+  CATDESC: Core t_perpendicular fit
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Core t perpendicular fit
+  FIELDNAM: Core T Perpendicular Fit
   FORMAT: F15.3
   LABLAXIS: Core t perpendicular fit
   UNITS: ' '
@@ -566,13 +565,13 @@ core_t_perpendicular_fit:
 halo_t_perpendicular_fit:
   NAME: halo_t_perpendicular_fit
   DATA_TYPE: CDF_REAL4
-  CATDESC: halo_t perpendicular fit
+  CATDESC: Halo t_perpendicular fit
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Halo t perpendicular fit
+  FIELDNAM: Halo T Perpendicular Fit
   FORMAT: F15.3
   LABLAXIS: Halo t perpendicular fit
   UNITS: ' '
@@ -583,15 +582,15 @@ halo_t_perpendicular_fit:
 core_temperature_phi_rtn_fit:
   NAME: core_temperature_phi_rtn_fit
   DATA_TYPE: CDF_REAL4
-  CATDESC: should match heritage
+  CATDESC: Core temperature phi RTN fit
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Core temperature phi rtn fit
+  FIELDNAM: Core Temperature Phi RTN Fit
   FORMAT: F15.3
-  LABLAXIS: Core t phi rtn fit
+  LABLAXIS: Core T phi
   UNITS: K
   VALIDMIN: 0
   VALIDMAX: 10000000000
@@ -600,15 +599,15 @@ core_temperature_phi_rtn_fit:
 halo_temperature_phi_rtn_fit:
   NAME: halo_temperature_phi_rtn_fit
   DATA_TYPE: CDF_REAL4
-  CATDESC: should match heritage
+  CATDESC: Halo temperature phi RTN fit
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Halo temperature phi rtn fit
+  FIELDNAM: Halo Temperature Phi RTN Fit
   FORMAT: F15.3
-  LABLAXIS: Halo t phi rtn fit
+  LABLAXIS: Halo T phi
   UNITS: K
   VALIDMIN: 0
   VALIDMAX: 10000000000
@@ -617,15 +616,15 @@ halo_temperature_phi_rtn_fit:
 core_temperature_theta_rtn_fit:
   NAME: core_temperature_theta_rtn_fit
   DATA_TYPE: CDF_REAL4
-  CATDESC: should match heritage
+  CATDESC: Core temperature theta RTN fit
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Core temperature theta rtn fit
+  FIELDNAM: Core Temperature Theta RTN Fit
   FORMAT: F15.3
-  LABLAXIS: Core t theta rtn fit
+  LABLAXIS: Core T theta
   UNITS: K
   VALIDMIN: 0
   VALIDMAX: 10000000000
@@ -634,15 +633,15 @@ core_temperature_theta_rtn_fit:
 halo_temperature_theta_rtn_fit:
   NAME: halo_temperature_theta_rtn_fit
   DATA_TYPE: CDF_REAL4
-  CATDESC: should match heritage
+  CATDESC: Halo temperature theta RTN fit
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Halo temperature theta rtn fit
+  FIELDNAM: Halo Temperature Theta RTN Fit
   FORMAT: F15.3
-  LABLAXIS: Halo t theta rtn fit
+  LABLAXIS: Halo T theta
   UNITS: K
   VALIDMIN: 0
   VALIDMAX: 10000000000
@@ -657,7 +656,7 @@ core_speed_fit:
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Core speed fit
+  FIELDNAM: Core Speed Fit
   FORMAT: F15.3
   LABLAXIS: Core speed fit
   UNITS: ' '
@@ -674,7 +673,7 @@ halo_speed_fit:
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Halo speed fit
+  FIELDNAM: Halo Speed Fit
   FORMAT: F15.3
   LABLAXIS: Halo speed fit
   UNITS: ' '
@@ -691,7 +690,7 @@ core_velocity_vector_rtn_fit:
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Core velocity vector rtn fit
+  FIELDNAM: Core Velocity Vector RTN Fit
   FORMAT: F15.3
   UNITS: ' '
   VALIDMIN: 0
@@ -709,7 +708,7 @@ halo_velocity_vector_rtn_fit:
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Halo velocity vectory rtn fit
+  FIELDNAM: Halo Velocity Vector RTN Fit
   FORMAT: F15.3
   UNITS: ' '
   VALIDMIN: 0
@@ -778,7 +777,7 @@ core_velocity_vector_rtn_integrated:
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Core Velocity Vector Rtn Integrated
+  FIELDNAM: Core Velocity Vector RTN Integrated
   FORMAT: F15.3
   UNITS: ' '
   VALIDMIN: 0
@@ -796,7 +795,7 @@ halo_velocity_vector_rtn_integrated:
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Halo Velocity Vector Rtn Integrated
+  FIELDNAM: Halo Velocity Vector RTN Integrated
   FORMAT: F15.3
   UNITS: ' '
   VALIDMIN: 0
@@ -814,7 +813,7 @@ total_velocity_vector_rtn_integrated:
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Total Velocity Vector Rtn Integrated
+  FIELDNAM: Total Velocity Vector RTN Integrated
   FORMAT: F15.3
   UNITS: ' '
   VALIDMIN: 0
@@ -877,13 +876,13 @@ total_speed_integrated:
 core_t_parallel_integrated:
   NAME: core_t_parallel_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Core_t parallel integrated
+  CATDESC: Core t_parallel integrated
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Core t Parallel Integrated
+  FIELDNAM: Core T Parallel Integrated
   FORMAT: F15.3
   LABLAXIS: Core t parallel integrated
   UNITS: ' '
@@ -894,13 +893,13 @@ core_t_parallel_integrated:
 halo_t_parallel_integrated:
   NAME: halo_t_parallel_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Halo_t parallel integrated
+  CATDESC: Halo t_parallel integrated
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Halo t Parallel Integrated
+  FIELDNAM: Halo T Parallel Integrated
   FORMAT: F15.3
   LABLAXIS: Halo t parallel integrated
   UNITS: ' '
@@ -911,13 +910,13 @@ halo_t_parallel_integrated:
 total_t_parallel_integrated:
   NAME: total_t_parallel_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Total_t parallel integrated
+  CATDESC: Total t_parallel integrated
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Total t Parallel Integrated
+  FIELDNAM: Total T Parallel Integrated
   FORMAT: F15.3
   LABLAXIS: Total t parallel integrated
   UNITS: ' '
@@ -928,13 +927,13 @@ total_t_parallel_integrated:
 core_t_perpendicular_integrated:
   NAME: core_t_perpendicular_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Average of perpendicular core_t eigenvalues
+  CATDESC: Average of perpendicular core temperature eigenvalues
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Core t Perpendicular Integrated
+  FIELDNAM: Core T Perpendicular Integrated
   FORMAT: F15.3
   LABLAXIS: Core t perpendicular integrated
   UNITS: K
@@ -945,13 +944,13 @@ core_t_perpendicular_integrated:
 halo_t_perpendicular_integrated:
   NAME: halo_t_perpendicular_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Average of perpendicular halo_t eigenvalues
+  CATDESC: Average of perpendicular halo temperature eigenvalues
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Halo t Perpendicular Integrated
+  FIELDNAM: Halo T Perpendicular Integrated
   FORMAT: F15.3
   LABLAXIS: Halo t perpendicular integrated
   UNITS: K
@@ -962,13 +961,13 @@ halo_t_perpendicular_integrated:
 total_t_perpendicular_integrated:
   NAME: total_t_perpendicular_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Average of perpendicular total_t eigenvalues
+  CATDESC: Average of perpendicular total temperature eigenvalues
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Total t Perpendicular Integrated
+  FIELDNAM: Total T Perpendicular Integrated
   FORMAT: F15.3
   LABLAXIS: Total t perpendicular integrated
   UNITS: K
@@ -979,7 +978,7 @@ total_t_perpendicular_integrated:
 core_t_ratio_perpendicular_integrated:
   NAME: core_t_ratio_perpendicular_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Ratio of perpendicular core_t eigenvalues
+  CATDESC: Ratio of perpendicular core temperature eigenvalues
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -996,7 +995,7 @@ core_t_ratio_perpendicular_integrated:
 halo_t_ratio_perpendicular_integrated:
   NAME: halo_t_ratio_perpendicular_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Ratio of perpendicular halo_t eigenvalues
+  CATDESC: Ratio of perpendicular halo temperature eigenvalues
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -1013,7 +1012,7 @@ halo_t_ratio_perpendicular_integrated:
 total_t_ratio_perpendicular_integrated:
   NAME: total_t_ratio_perpendicular_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Ratio of perpendicular total_t eigenvalues
+  CATDESC: Ratio of perpendicular total temperature eigenvalues
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -1030,13 +1029,13 @@ total_t_ratio_perpendicular_integrated:
 core_temperature_phi_rtn_integrated:
   NAME: core_temperature_phi_rtn_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Core_t phi RTN integrated
+  CATDESC: Core temperature phi RTN integrated
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Core Temperature phi Rtn Integrated
+  FIELDNAM: Core Temperature Phi RTN Integrated
   FORMAT: F15.3
   LABLAXIS: Core_t phi RTN integrated
   UNITS: K
@@ -1047,13 +1046,13 @@ core_temperature_phi_rtn_integrated:
 halo_temperature_phi_rtn_integrated:
   NAME: halo_temperature_phi_rtn_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Halo_t phi RTN integrated
+  CATDESC: Halo temperature phi RTN integrated
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Halo Temperature phi Rtn Integrated
+  FIELDNAM: Halo Temperature Phi Rtn Integrated
   FORMAT: F15.3
   LABLAXIS: Halo t phi rtn integrated
   UNITS: K
@@ -1064,13 +1063,13 @@ halo_temperature_phi_rtn_integrated:
 total_temperature_phi_rtn_integrated:
   NAME: total_temperature_phi_rtn_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Total_t phi RTN integrated
+  CATDESC: Total temperature phi RTN integrated
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Total Temperature phi Rtn Integrated
+  FIELDNAM: Total Temperature Phi RTN Integrated
   FORMAT: F15.3
   LABLAXIS: Total t phi rtn integrated
   UNITS: K
@@ -1081,13 +1080,13 @@ total_temperature_phi_rtn_integrated:
 core_temperature_theta_rtn_integrated:
   NAME: core_temperature_theta_rtn_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Core_t theta RTN integrated
+  CATDESC: Core temperature theta RTN integrated
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Core Temperature theta Rtn Integrated
+  FIELDNAM: Core Temperature Theta RT]N Integrated
   FORMAT: F15.3
   LABLAXIS: Core t theta rtn integrated
   UNITS: K
@@ -1098,13 +1097,13 @@ core_temperature_theta_rtn_integrated:
 halo_temperature_theta_rtn_integrated:
   NAME: halo_temperature_theta_rtn_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Halo_t theta RTN integrated
+  CATDESC: Halo temperature theta RTN integrated
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Halo Temperature theta Rtn Integrated
+  FIELDNAM: Halo Temperature Theta RTN Integrated
   FORMAT: F15.3
   LABLAXIS: Halo t theta rtn integrated
   UNITS: K
@@ -1115,13 +1114,13 @@ halo_temperature_theta_rtn_integrated:
 total_temperature_theta_rtn_integrated:
   NAME: total_temperature_theta_rtn_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Total_t theta RTN integrated
+  CATDESC: Total temperature theta RTN integrated
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Total Temperature theta Rtn Integrated
+  FIELDNAM: Total Temperature Theta RTN Integrated
   FORMAT: F15.3
   LABLAXIS: Total t theta rtn integrated
   UNITS: K
@@ -1132,7 +1131,7 @@ total_temperature_theta_rtn_integrated:
 core_temperature_tensor_integrated:
   NAME: core_temperature_tensor_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Core_t tensor integrated
+  CATDESC: Core temperature tensor integrated
   DEPEND_0: epoch
   DEPEND_1: tensor_id
   VAR_TYPE: data
@@ -1151,7 +1150,7 @@ core_temperature_tensor_integrated:
 halo_temperature_tensor_integrated:
   NAME: halo_temperature_tensor_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Halo_t tensor integrated
+  CATDESC: Halo temperature tensor integrated
   DEPEND_0: epoch
   DEPEND_1: tensor_id
   VAR_TYPE: data
@@ -1170,7 +1169,7 @@ halo_temperature_tensor_integrated:
 total_temperature_tensor_integrated:
   NAME: total_temperature_tensor_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Total_t tensor integrated
+  CATDESC: Total temperature tensor integrated
   DEPEND_0: epoch
   DEPEND_1: tensor_id
   VAR_TYPE: data
@@ -1212,7 +1211,7 @@ core_heat_flux_theta_integrated:
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Core Heat Flux theta Integrated
+  FIELDNAM: Core Heat Flux Theta Integrated
   FORMAT: F15.3
   LABLAXIS: Core heat flux theta integrated
   UNITS: ' '
@@ -1229,7 +1228,7 @@ core_heat_flux_phi_integrated:
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Core Heat Flux phi Integrated
+  FIELDNAM: Core Heat Flux Phi Integrated
   FORMAT: F15.3
   LABLAXIS: Core heat flux phi integrated
   UNITS: ' '
@@ -1263,7 +1262,7 @@ halo_heat_flux_theta_integrated:
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Halo Heat Flux theta Integrated
+  FIELDNAM: Halo Heat Flux Theta Integrated
   FORMAT: F15.3
   LABLAXIS: Halo heat flux theta integrated
   UNITS: ' '
@@ -1280,7 +1279,7 @@ halo_heat_flux_phi_integrated:
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Halo Heat Flux phi Integrated
+  FIELDNAM: Halo Heat Flux Phi Integrated
   FORMAT: F15.3
   LABLAXIS: Halo heat flux phi integrated
   UNITS: ' '
@@ -1314,7 +1313,7 @@ total_heat_flux_theta_integrated:
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Total Heat Flux theta Integrated
+  FIELDNAM: Total Heat Flux Theta Integrated
   FORMAT: F15.3
   LABLAXIS: Total heat flux theta integrated
   UNITS: ' '
@@ -1331,7 +1330,7 @@ total_heat_flux_phi_integrated:
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Total Heat Flux phi Integrated
+  FIELDNAM: Total Heat Flux Phi Integrated
   FORMAT: F15.3
   LABLAXIS: Total heat flux phi integrated
   UNITS: ' '
@@ -1342,13 +1341,13 @@ total_heat_flux_phi_integrated:
 core_temperature_parallel_to_mag:
   NAME: core_temperature_parallel_to_mag
   DATA_TYPE: CDF_REAL4
-  CATDESC: Core_t parallel to mag
+  CATDESC: Core temperature parallel to mag
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Core t Parallel to Mag
+  FIELDNAM: Core T Parallel To Mag
   FORMAT: F15.3
   LABLAXIS: Core temperature parallel to mag
   UNITS: K
@@ -1359,13 +1358,13 @@ core_temperature_parallel_to_mag:
 halo_temperature_parallel_to_mag:
   NAME: halo_temperature_parallel_to_mag
   DATA_TYPE: CDF_REAL4
-  CATDESC: Halo_t parallel to mag
+  CATDESC: Halo temperature parallel to mag
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Halo t Parallel to Mag
+  FIELDNAM: Halo T Parallel To Mag
   FORMAT: F15.3
   LABLAXIS: Halo t parallel to mag
   UNITS: K
@@ -1376,13 +1375,13 @@ halo_temperature_parallel_to_mag:
 total_temperature_parallel_to_mag:
   NAME: total_temperature_parallel_to_mag
   DATA_TYPE: CDF_REAL4
-  CATDESC: Total_t parallel to mag
+  CATDESC: Total temperature parallel to mag
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Total t Parallel to Mag
+  FIELDNAM: Total T Parallel To Mag
   FORMAT: F15.3
   LABLAXIS: Total t parallel to mag
   UNITS: K
@@ -1393,13 +1392,13 @@ total_temperature_parallel_to_mag:
 core_temperature_perpendicular_to_mag:
   NAME: core_temperature_perpendicular_to_mag
   DATA_TYPE: CDF_REAL4
-  CATDESC: Core_t perpendicular to mag
+  CATDESC: Core temperature perpendicular to mag
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Core t Perpendicular to Mag
+  FIELDNAM: Core T Perpendicular To Mag
   FORMAT: F15.3
   LABLAXIS: Core t perpendicular to mag
   UNITS: K
@@ -1410,13 +1409,13 @@ core_temperature_perpendicular_to_mag:
 halo_temperature_perpendicular_to_mag:
   NAME: halo_temperature_perpendicular_to_mag
   DATA_TYPE: CDF_REAL4
-  CATDESC: Halo_t perpendicular to mag
+  CATDESC: Halo temperature perpendicular to mag
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Halo t Perpendicular to Mag
+  FIELDNAM: Halo T Perpendicular To Mag
   FORMAT: F15.3
   LABLAXIS: Halo t perpendicular to mag
   UNITS: K
@@ -1427,13 +1426,13 @@ halo_temperature_perpendicular_to_mag:
 total_temperature_perpendicular_to_mag:
   NAME: total_temperature_perpendicular_to_mag
   DATA_TYPE: CDF_REAL4
-  CATDESC: Total_t perpendicular to mag
+  CATDESC: Total temperature perpendicular to mag
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Total t Perpendicular to Mag
+  FIELDNAM: Total T Perpendicular To Mag
   FORMAT: F15.3
   LABLAXIS: Total t perpendicular to mag
   UNITS: K
@@ -1444,13 +1443,13 @@ total_temperature_perpendicular_to_mag:
 core_temperature_ratio_perpendicular_to_mag:
   NAME: core_temperature_ratio_perpendicular_to_mag
   DATA_TYPE: CDF_REAL4
-  CATDESC: Ratio of core_t perpendicular to mag
+  CATDESC: Ratio of core temperatures perpendicular to mag
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Core T Ratio Perpendicular to Mag
+  FIELDNAM: Core T Ratio Perpendicular To Mag
   FORMAT: F15.3
   LABLAXIS: Core t ratio
   UNITS: ' '
@@ -1461,13 +1460,13 @@ core_temperature_ratio_perpendicular_to_mag:
 halo_temperature_ratio_perpendicular_to_mag:
   NAME: halo_temperature_ratio_perpendicular_to_mag
   DATA_TYPE: CDF_REAL4
-  CATDESC: Ratio of halo_t perpendicular to mag
+  CATDESC: Ratio of halo temperatures perpendicular to mag
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Halo T Ratio Perpendicular to Mag
+  FIELDNAM: Halo T Ratio Perpendicular To Mag
   FORMAT: F15.3
   LABLAXIS: Halo t ratio
   UNITS: ' '
@@ -1484,7 +1483,7 @@ total_temperature_ratio_perpendicular_to_mag:
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Total T Ratio Perpendicular to Mag
+  FIELDNAM: Total T Ratio Perpendicular To Mag
   FORMAT: F15.3
   LABLAXIS: Total t ratio
   UNITS: ' '
@@ -1535,7 +1534,7 @@ temperature_tensor_label:
 tensor_id:
   NAME: tensor_id
   DATA_TYPE: CDF_UINT1
-  CATDESC: Tensor Id
+  CATDESC: Tensor id
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
   FIELDNAM: Tensor Id

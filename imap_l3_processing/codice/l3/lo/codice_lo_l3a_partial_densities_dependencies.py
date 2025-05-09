@@ -7,7 +7,7 @@ from imap_data_access.processing_input import ProcessingInputCollection, Science
 from imap_l3_processing.codice.l3.lo.models import CodiceLoL2SWSpeciesData
 from imap_l3_processing.codice.l3.lo.sectored_intensities.science.mass_per_charge_lookup import MassPerChargeLookup
 
-SW_SPECIES_DESCRIPTOR = 'sw-species'
+SW_SPECIES_DESCRIPTOR = 'lo-sw-species'
 MASS_PER_CHARGE_DESCRIPTOR = 'mass-per-charge'
 
 
