@@ -1,0 +1,310 @@
+primary_data_variable: &primary_data_variable
+  VAR_TYPE: data
+  VARIABLE_PURPOSE: primary var, summary
+  DEPEND_0: epoch
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+
+support_data: &support_data
+  VAR_TYPE: support_data
+  DISPLAY_TYPE: no_plot
+  RECORD_VARYING: NRV
+
+float_data: &float_data
+  DATA_TYPE: CDF_FLOAT
+  FORMAT: F15.3
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.000000E+31
+
+per_priority: &per_priority
+  DEPEND_0: epoch
+  DEPEND_1: priority_index
+  SCALETYP: linear
+  LABL_PTR_1: priority_index_label
+  DISPLAY_TYPE: spectrogram
+
+per_priority_data: &per_priority_data
+  <<: *primary_data_variable
+  <<: *per_priority
+
+per_event: &per_event
+  <<: *per_priority
+  DEPEND_2: event_index
+  LABL_PTR_2: event_index_label
+
+per_event_data: &per_event_data
+  <<: *per_event
+  <<: *primary_data_variable
+
+epoch:
+  NAME: epoch
+  CATDESC: Time, number of nanoseconds since J2000 with leap seconds included
+  VAR_TYPE: support_data
+  DISPLAY_TYPE: no_plot
+  DATA_TYPE: CDF_TIME_TT2000
+  FIELDNAM: Epoch
+  RECORD_VARYING: RV
+  LABLAXIS: epoch
+  UNITS: ns
+  VALIDMIN: 2010-01-01T00:00:00.000000000
+  VALIDMAX: 2099-12-31T00:00:00.000000000
+  FILLVAL: 9999-12-31T23:59:59.999999999
+  SCALETYP: linear
+  TIME_BASE: J2000
+  TIME_SCALE: TT
+  DELTA_PLUS_VAR: epoch_delta
+  DELTA_MINUS_VAR: epoch_delta
+  MONOTON: INCREASE
+  REFERENCE_POSITION: Rotating Earth Geoid
+  SI_CONVERSION: 1e-9>seconds
+
+epoch_delta:
+  <<: *support_data
+  NAME: epoch_delta
+  CATDESC: epoch_DELTA
+  FIELDNAM: epoch_delta
+  DATA_TYPE: CDF_INT8
+  FORMAT: I19
+  UNITS: ns
+  VALIDMIN: 0
+  VALIDMAX: 86000000000000
+  FILLVAL: -9223372036854775808
+  SCALETYP: linear
+  SCALEMIN: 0
+  SCALEMAX: 86000000000000
+  SI_CONVERSION: 1e-9>seconds
+
+data_quality:
+  <<: *per_priority_data
+  NAME: data_quality
+  CATDESC: Data quality flags
+  FIELDNAM: Data Quality Flags
+  LABLAXIS: Quality flag
+  UNITS: " "
+  DATA_TYPE: CDF_UINT1
+  FORMAT: I1
+  VALIDMIN: 0
+  VALIDMAX: 1
+  FILLVAL: 255
+
+num_events:
+  <<: *per_priority_data
+  NAME: num_events
+  CATDESC: Number of events
+  FIELDNAM: Number of events
+  LABLAXIS: Num. events
+  DATA_TYPE: CDF_UINT2
+  FORMAT: I5
+  UNITS: " "
+  VALIDMIN: 0
+  VALIDMAX: 10000
+  FILLVAL: 65535
+
+multi_flag:
+  <<: *per_event_data
+  NAME: multi_flag
+  CATDESC: Multi flag
+  FIELDNAM: Multi Flag
+  LABLAXIS: Multi flag
+  UNITS: " "
+  DATA_TYPE: CDF_UINT1
+  VALIDMIN: 0
+  VALIDMAX: 1
+  FILLVAL: 255
+  FORMAT: I1
+
+ssd_energy:
+  <<: *per_event_data
+  <<: *float_data
+  NAME: ssd_energy
+  CATDESC: SSD energy
+  FIELDNAM: SSD Energy
+  LABLAXIS: SSD energy
+  UNITS: MeV
+  DELTA_PLUS_VAR: ssd_energy_plus
+  DELTA_MINUS_VAR: ssd_energy_minus
+
+
+ssd_energy_plus:
+  <<: *per_event
+  <<: *float_data
+  VAR_TYPE: support_data
+  NAME: ssd_energy_plus
+  CATDESC: SSD energy plus
+  FIELDNAM: SSD Energy
+  LABLAXIS: SSD energy
+  UNITS: MeV
+  RECORD_VARYING: RV
+
+ssd_energy_minus:
+  <<: *per_event
+  <<: *float_data
+  VAR_TYPE: support_data
+  NAME: ssd_energy_minus
+  CATDESC: SSD energy minus
+  FIELDNAM: SSD Energy
+  LABLAXIS: SSD energy
+  UNITS: MeV
+  RECORD_VARYING: RV
+
+ssd_id:
+  <<: *per_event_data
+  NAME: ssd_id
+  CATDESC: SSD ID or azimuth angle
+  FIELDNAM: SSD ID or Azimuth Angle
+  LABLAXIS: Azimuth Angle
+  UNITS: " "
+  DATA_TYPE: CDF_UINT1
+  FILLVAL: 255
+  VALIDMIN: 0
+  VALIDMAX: 32
+  FORMAT: I2
+
+spin_angle:
+  <<: *per_event_data
+  <<: *float_data
+  NAME: spin_angle
+  CATDESC: Spin angle when event was observed
+  FIELDNAM: Spin angle
+  LABLAXIS: Spin angle
+  UNITS: degrees
+
+spin_number:
+  <<: *per_event_data
+  NAME: spin_number
+  CATDESC: Spin number
+  FIELDNAM: Spin Number
+  LABLAXIS: Spin number
+  UNITS: " "
+  DATA_TYPE: CDF_UINT1
+  FILLVAL: 255
+  VALIDMIN: 0
+  VALIDMAX: 32
+  FORMAT: I2
+
+tof:
+  <<: *per_event_data
+  NAME: tof
+  CATDESC: Time of Flight of Event
+  FIELDNAM: Event Time of Flight
+  LABLAXIS: TOF
+  UNITS: ns
+  DATA_TYPE: CDF_UINT2
+  FILLVAL: 65535
+  FORMAT: I5
+  VALIDMAX: 1024
+  VALIDMIN: 0
+
+
+type:
+  <<: *per_event_data
+  NAME: type
+  CATDESC: PHA Type
+  FIELDNAM: PHA Type
+  LABLAXIS: PHA Type
+  UNITS: " "
+  DATA_TYPE: CDF_UINT1
+  FILLVAL: 255
+  VALIDMIN: 0
+  VALIDMAX: 3
+  FORMAT: I1
+
+energy_per_nuc_lower:
+  <<: *per_event_data
+  <<: *float_data
+  NAME: energy_per_nuc_lower
+  CATDESC: Energy per nuc lower bound
+  FIELDNAM: Energy per Nuc Lower Bound
+  LABLAXIS: E per nuc low
+  UNITS: MeV/n
+
+
+energy_per_nuc:
+  <<: *per_event_data
+  <<: *float_data
+  NAME: energy_per_nuc
+  CATDESC: Energy per nuc
+  FIELDNAM: Energy per nuc
+  LABLAXIS: Energy per nuc
+  UNITS: MeV/n
+
+energy_per_nuc_upper:
+  <<: *per_event_data
+  <<: *float_data
+  NAME: energy_per_nuc_upper
+  CATDESC: Energy per nuc upper bound
+  FIELDNAM: Energy per nuc upper
+  LABLAXIS: E per nuc high
+  UNITS: MeV/n
+
+estimated_mass_lower:
+  <<: *per_event_data
+  <<: *float_data
+  NAME: estimated_mass_lower
+  CATDESC: Estimated mass lower bound
+  FIELDNAM: Estimated Mass Lower
+  LABLAXIS: m lower bound
+  UNITS: amu
+
+estimated_mass:
+  <<: *per_event_data
+  <<: *float_data
+  NAME: estimated_mass
+  CATDESC: Estimated mass
+  FIELDNAM: Estimated Mass
+  LABLAXIS: Mass Estimate
+  UNITS: amu
+
+estimated_mass_upper:
+  <<: *per_event_data
+  <<: *float_data
+  NAME: estimated_mass_upper
+  CATDESC: Estimated mass upper bound
+  FIELDNAM: Estimated Mass Upper Bound
+  LABLAXIS: m upper bound
+  UNITS: amu
+
+event_index:
+  <<: *support_data
+  NAME: event_index
+  CATDESC: Index of event
+  FIELDNAM: Event Index
+  LABLAXIS: Event
+  DATA_TYPE: CDF_UINT2
+  VALIDMIN: 0
+  VALIDMAX: 10000
+  FILLVAL: 65535
+  SCALETYP: linear
+  UNITS: " "
+  FORMAT: I5
+
+priority_index:
+  <<: *support_data
+  NAME: priority_index
+  CATDESC: Priority number where particle is observed
+  FIELDNAM: Priority index
+  LABLAXIS: Priority num.
+  DATA_TYPE: CDF_UINT1
+  UNITS: " "
+  VALIDMIN: 0
+  VALIDMAX: 7
+  FILLVAL: 255
+  SCALETYP: linear
+  FORMAT: I3
+
+priority_index_label:
+  NAME: priority_index_label
+  CATDESC: Label for priority index
+  FIELDNAM: Priority index label
+  DATA_TYPE: CDF_CHAR
+  FORMAT: a20
+  VAR_TYPE: metadata
+
+event_index_label:
+  NAME: event_index_label
+  CATDESC: Label for event index
+  FIELDNAM: Event index label
+  DATA_TYPE: CDF_CHAR
+  FORMAT: a20
+  VAR_TYPE: metadata

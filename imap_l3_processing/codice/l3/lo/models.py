@@ -410,6 +410,24 @@ class CodiceLoL3aRatiosDataProduct(DataProduct):
 
 
 @dataclass
+class CodiceLoL3ChargeStateDistributionsDataProduct(DataProduct):
+    epoch: np.ndarray
+    epoch_delta: np.ndarray
+    oxygen_charge_state_distribution: np.ndarray
+    carbon_charge_state_distribution: np.ndarray
+
+    def to_data_product_variables(self) -> list[DataProductVariable]:
+        return [
+            DataProductVariable("epoch", self.epoch),
+            DataProductVariable("epoch_delta", self.epoch_delta),
+            DataProductVariable("oxygen_charge_state_distribution", self.oxygen_charge_state_distribution),
+            DataProductVariable("carbon_charge_state_distribution", self.carbon_charge_state_distribution),
+            DataProductVariable("oxygen_charge_state", np.array([5, 6, 7, 8])),
+            DataProductVariable("carbon_charge_state", np.array([4, 5, 6])),
+        ]
+
+
+@dataclass
 class CodiceLo3dData:
     data_in_3d_bins: np.ndarray
     mass_bin_lookup: MassSpeciesBinLookup

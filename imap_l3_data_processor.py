@@ -58,31 +58,28 @@ def imap_l3_processor():
                                      args.version, descriptor=args.descriptor)
     if args.instrument == 'swapi' and (args.data_level == 'l3a' or args.data_level == 'l3b'):
         processor = SwapiProcessor(processing_input_collection, input_dependency)
-        processor.process()
     elif args.instrument == 'glows':
         processor = GlowsProcessor(processing_input_collection, input_dependency)
-        processor.process()
     elif args.instrument == 'swe' and args.data_level == 'l3':
         processor = SweProcessor(processing_input_collection, input_dependency)
-        processor.process()
     elif args.instrument == 'hit':
         processor = HitProcessor(processing_input_collection, input_dependency)
-        processor.process()
     elif args.instrument == 'hi':
         processor = HiProcessor(processing_input_collection, input_dependency)
-        processor.process()
     elif args.instrument == 'ultra':
         processor = UltraProcessor(processing_input_collection, input_dependency)
-        processor.process()
-    elif args.instrument == 'codice-hi':
-        processor = CodiceHiProcessor(processing_input_collection, input_dependency)
-        processor.process()
-    elif args.instrument == 'codice-lo':
-        processor = CodiceLoProcessor(processing_input_collection, input_dependency)
-        processor.process()
+    elif args.instrument == 'codice':
+        if args.descriptor.startswith("hi"):
+            processor = CodiceHiProcessor(processing_input_collection, input_dependency)
+        elif args.descriptor.startswith("lo"):
+            processor = CodiceLoProcessor(processing_input_collection, input_dependency)
+        else:
+            raise NotImplementedError(f"Unknown descriptor '{args.descriptor}' for codice instrument")
     else:
         raise NotImplementedError(
             f'Level {args.data_level} data processing has not yet been implemented for {args.instrument}')
+
+    processor.process()
 
 
 if __name__ == '__main__':

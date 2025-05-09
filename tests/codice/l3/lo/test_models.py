@@ -13,7 +13,7 @@ from imap_l3_processing.codice.l3.lo.models import CodiceLoL2SWSpeciesData, Codi
     CodiceLoL2DirectEventData, \
     PriorityEvent, EnergyAndSpinAngle, CodiceLoL3aDirectEventDataProduct, \
     CodiceLoL1aSWPriorityRates, CodiceLoL1aNSWPriorityRates, CodiceLo3dData, CODICE_LO_L2_NUM_PRIORITIES, \
-    CodiceLoL3aRatiosDataProduct, CodiceLoPartialDensityData
+    CodiceLoL3aRatiosDataProduct, CodiceLoPartialDensityData, CodiceLoL3ChargeStateDistributionsDataProduct
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.utils import save_data
 from tests.test_helpers import get_test_instrument_team_data_path
@@ -256,6 +256,33 @@ class TestModels(unittest.TestCase):
             np.testing.assert_array_equal(getattr(read_in_density_data, field.name),
                                           getattr(density_data, field.name),
                                           strict=True)
+
+    def test_codice_lo_l3a_charge_state_distributions_to_data_product(self):
+        rng = np.random.default_rng()
+        epoch_data = np.array([datetime.now()])
+        input_data_product_kwargs = {
+            "epoch": epoch_data,
+            "epoch_delta": np.array([1]),
+            "oxygen_charge_state_distribution": rng.random((len(epoch_data), 4)),
+            "carbon_charge_state_distribution": rng.random((len(epoch_data), 3)),
+        }
+
+        data_product = CodiceLoL3ChargeStateDistributionsDataProduct(Mock(), **input_data_product_kwargs)
+        actual_data_product_variables = data_product.to_data_product_variables()
+        self.assertEqual(6, len(actual_data_product_variables))
+        for input_variable, actual_data_product_variable in zip(input_data_product_kwargs.items(),
+                                                                actual_data_product_variables[:4]):
+            input_name, expected_value = input_variable
+
+            np.testing.assert_array_equal(actual_data_product_variable.value, getattr(data_product, input_name))
+            self.assertEqual(input_name, actual_data_product_variable.name)
+
+        oxygen_charge_states, carbon_charge_states, = actual_data_product_variables[4:]
+        np.testing.assert_array_equal(oxygen_charge_states.value, [5, 6, 7, 8])
+        self.assertEqual("oxygen_charge_state", oxygen_charge_states.name)
+
+        np.testing.assert_array_equal(carbon_charge_states.value, [4, 5, 6])
+        self.assertEqual("carbon_charge_state", carbon_charge_states.name)
 
     def test_codice_lo_l3a_direct_event_to_data_product(self):
         rng = np.random.default_rng()

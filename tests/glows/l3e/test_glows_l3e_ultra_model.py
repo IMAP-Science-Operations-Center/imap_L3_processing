@@ -4,9 +4,8 @@ from unittest.mock import sentinel, Mock
 
 import numpy as np
 
-from imap_l3_processing.models import DataProductVariable
-
 from imap_l3_processing.glows.l3e.glows_l3e_ultra_model import GlowsL3EUltraData
+from imap_l3_processing.models import DataProductVariable
 from tests.test_helpers import get_test_instrument_team_data_path
 
 
@@ -14,7 +13,7 @@ class TestL3eUltraModel(unittest.TestCase):
     def test_l3e_ultra_model_to_data_product_variables(self):
         l3e_ultra: GlowsL3EUltraData = GlowsL3EUltraData(
             Mock(),
-            sentinel.epochs,
+            sentinel.epoch,
             sentinel.epoch_deltas,
             sentinel.energy,
             sentinel.healpix_index,
@@ -32,7 +31,7 @@ class TestL3eUltraModel(unittest.TestCase):
 
         data_products = l3e_ultra.to_data_product_variables()
         expected_data_products = [
-            DataProductVariable("epoch", sentinel.epochs),
+            DataProductVariable("epoch", sentinel.epoch),
             DataProductVariable("epoch_delta", sentinel.epoch_deltas),
             DataProductVariable("energy", sentinel.energy),
             DataProductVariable("healpix_index", sentinel.healpix_index),

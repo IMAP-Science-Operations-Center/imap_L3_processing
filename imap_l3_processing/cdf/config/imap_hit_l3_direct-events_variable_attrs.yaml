@@ -4,42 +4,46 @@ epoch:
   CATDESC: Time, number of nanoseconds since J2000 with leap seconds included
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: epoch
+  FIELDNAM: Epoch
   FORMAT: ' '
-  LABLAXIS: epoch
+  LABLAXIS: Epoch
   UNITS: ns
   VALIDMIN: 1990-01-01T00:00:00.000000000
   VALIDMAX: 2099-12-31T00:00:00.000000000
   FILLVAL: 9999-12-31T23:59:59.999999999
   TIME_BASE: J2000
-  TIME_SCALE: Terrestrial Time
+  TIME_SCALE: TT
   DELTA_PLUS_VAR: epoch_delta
   DELTA_MINUS_VAR: epoch_delta
   MONOTON: INCREASE
   REFERENCE_POSITION: Rotating Earth Geoid
+  SCALETYP: linear
+  SI_CONVERSION: 1e-9>seconds
 epoch_delta:
   NAME: epoch_delta
   DATA_TYPE: CDF_INT8
-  CATDESC: epoch_delta
+  CATDESC: Epoch delta
   VAR_TYPE: support_data
-  RECORD_VARYING: NRV
+  RECORD_VARYING: RV
   FIELDNAM: Epoch Delta
-  FORMAT: I14
-  LABLAXIS: epoch_delta
+  FORMAT: I19
+  LABLAXIS: Epoch delta
   UNITS: ns
   VALIDMIN: 0
   VALIDMAX: 86000000000000
   FILLVAL: -9223372036854775808
+  DEPEND_0: epoch
+  SCALETYP: linear
 charge:
   NAME: charge
   DATA_TYPE: CDF_FLOAT
-  CATDESC: Particle Atomic Charge (Element) estimate (float)
+  CATDESC: Particle atomic charge (element) estimate (float)
   VAR_TYPE: data
   RECORD_VARYING: RV
   DEPEND_0: epoch
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: charge
+  FIELDNAM: Charge
   FORMAT: F15.3
   LABLAXIS: Charge
   UNITS: MeV
@@ -55,7 +59,7 @@ energy:
   DEPEND_0: epoch
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: energy
+  FIELDNAM: Energy
   FORMAT: F15.3
   LABLAXIS: Energy
   UNITS: MeV
@@ -67,13 +71,13 @@ energy:
 energy_in_detector:
   NAME: energy_in_detector
   DATA_TYPE: CDF_FLOAT
-  CATDESC: Energy In Detector (delta-E in detector_id detector with cosine correction)
+  CATDESC: Energy in detector (delta-E in detector_id detector with cosine correction)
   VAR_TYPE: data
   RECORD_VARYING: RV
   DEPEND_0: epoch
   DEPEND_1: detector_id
   DISPLAY_TYPE: no_plot
-  FIELDNAM: Energy in detector
+  FIELDNAM: Energy In Detector
   VARIABLE_PURPOSE: ' '
   FORMAT: F15.3
   UNITS: ' '
@@ -85,12 +89,12 @@ energy_in_detector:
 range:
   NAME: range
   DATA_TYPE: CDF_UINT1
-  CATDESC: Particle Range (2 = L1L2, 3=L1L2L3, 4=L1L2L3L3)
+  CATDESC: Particle range (2 = L1L2, 3=L1L2L3, 4=L1L2L3L3)
   VAR_TYPE: data
   RECORD_VARYING: RV
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
-  FIELDNAM: range
+  FIELDNAM: Range
   VARIABLE_PURPOSE: ' '
   FORMAT: I4
   UNITS: ' '
@@ -100,7 +104,7 @@ range:
 delta_e:
   NAME: delta_e
   DATA_TYPE: CDF_FLOAT
-  CATDESC: Delta E (Energy deposited in detector that particle fully penetrates)
+  CATDESC: Delta E (energy deposited in detector that particle fully penetrates)
   VAR_TYPE: data
   RECORD_VARYING: RV
   DEPEND_0: epoch
@@ -118,7 +122,7 @@ delta_e:
 e_prime:
   NAME: e_prime
   DATA_TYPE: CDF_FLOAT
-  CATDESC: E Prime (Energy deposited in stopping detector)
+  CATDESC: E prime (energy deposited in stopping detector)
   VAR_TYPE: data
   RECORD_VARYING: RV
   DEPEND_0: epoch
@@ -126,7 +130,7 @@ e_prime:
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
   FIELDNAM: E Prime
   FORMAT: F15.3
-  LABLAXIS: E Prime
+  LABLAXIS: E prime
   UNITS: MeV
   VALIDMIN: 1
   VALIDMAX: 10000
@@ -151,7 +155,7 @@ particle_id:
 priority_buffer_number:
   NAME: priority_buffer_number
   DATA_TYPE: CDF_UINT1
-  CATDESC: Priority Buffer Number (instrument has multiple buffers to prioritize events to be transmitted to ground)
+  CATDESC: Priority buffer number (instrument has multiple buffers to prioritize events to be transmitted to ground)
   VAR_TYPE: data
   RECORD_VARYING: RV
   DEPEND_0: epoch
@@ -166,12 +170,12 @@ priority_buffer_number:
 latency:
   NAME: latency
   DATA_TYPE: CDF_UINT1
-  CATDESC: Latency (delay between particle entering and leaving Priority Buffer)
+  CATDESC: Latency (delay between particle entering and leaving priority buffer)
   VAR_TYPE: data
   RECORD_VARYING: RV
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
-  FIELDNAM: latency
+  FIELDNAM: Latency
   VARIABLE_PURPOSE: ' '
   FORMAT: I4
   UNITS: ' '
@@ -181,7 +185,7 @@ latency:
 stim_tag:
   NAME: stim_tag
   DATA_TYPE: CDF_INT1
-  CATDESC: Stim Tag (1 = Indicates Stimulus event, charge from pulsers not real event)
+  CATDESC: Stim tag (1 = indicates stimulus event, charge from pulsers not real event)
   VAR_TYPE: data
   RECORD_VARYING: RV
   DEPEND_0: epoch
@@ -196,7 +200,7 @@ stim_tag:
 long_event_flag:
   NAME: long_event_flag
   DATA_TYPE: CDF_INT1
-  CATDESC: Long Event Flag (1 if extra fields in transmitted event)
+  CATDESC: Long event flag (1 if extra fields in transmitted event)
   VAR_TYPE: data
   RECORD_VARYING: RV
   DEPEND_0: epoch
@@ -211,7 +215,7 @@ long_event_flag:
 haz_tag:
   NAME: haz_tag
   DATA_TYPE: CDF_INT1
-  CATDESC: Haz Tag (Hazard, 1 if second event occured too soon after first event)
+  CATDESC: Haz tag (hazard, 1 if second event occurred too soon after first event)
   VAR_TYPE: data
   RECORD_VARYING: RV
   DEPEND_0: epoch
@@ -226,7 +230,7 @@ haz_tag:
 side:
   NAME: side
   DATA_TYPE: CDF_INT1
-  CATDESC: A B Side (0 = A-side, opposite Sun, 1 = B-side, Sunward)
+  CATDESC: A B side (0 = A-side, opposite Sun, 1 = B-side, sunward)
   VAR_TYPE: data
   RECORD_VARYING: RV
   DEPEND_0: epoch
@@ -241,7 +245,7 @@ side:
 has_unread_flag:
   NAME: has_unread_flag
   DATA_TYPE: CDF_INT1
-  CATDESC: Has Unread Flag (1 if not all triggered PHA channels transmitted with event)
+  CATDESC: Has unread flag (1 if not all triggered PHA channels transmitted with event)
   VAR_TYPE: data
   RECORD_VARYING: RV
   DEPEND_0: epoch
@@ -256,7 +260,7 @@ has_unread_flag:
 culling_flag:
   NAME: culling_flag
   DATA_TYPE: CDF_INT1
-  CATDESC: Culling Flag (1 if onboard DPU removed some PHA channels)
+  CATDESC: Culling flag (1 if onboard DPU removed some PHA channels)
   VAR_TYPE: data
   RECORD_VARYING: RV
   DEPEND_0: epoch
@@ -271,7 +275,7 @@ culling_flag:
 pha_value:
   NAME: pha_value
   DATA_TYPE: CDF_UINT2
-  CATDESC: Pha Value (raw pulse height value)
+  CATDESC: Pha value (raw pulse height value)
   VAR_TYPE: data
   RECORD_VARYING: RV
   DEPEND_0: epoch
@@ -280,7 +284,7 @@ pha_value:
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
   FIELDNAM: Pha Value
   FORMAT: I8
-  LABLAXIS: PHA Value
+  LABLAXIS: PHA value
   UNITS: ' '
   VALIDMIN: 0
   VALIDMAX: 65534
@@ -288,7 +292,7 @@ pha_value:
 is_low_gain:
   NAME: is_low_gain
   DATA_TYPE: CDF_INT1
-  CATDESC: Is Low Gain (1 if pha_value is from low-gain channel)
+  CATDESC: Is low gain (1 if pha_value is from low-gain channel)
   VAR_TYPE: data
   RECORD_VARYING: RV
   DEPEND_0: epoch
@@ -304,7 +308,7 @@ is_low_gain:
 detector_flags:
   NAME: detector_flags
   DATA_TYPE: CDF_UINT2
-  CATDESC: Detector Flags (bit 0 = L1A, 1 = L2A, 2 = L3A, 3 = L1B, 4 = L2B, 5 = L3B, 6 = L4A, 7 = L4B)
+  CATDESC: Detector flags (bit 0 = L1A, 1 = L2A, 2 = L3A, 3 = L1B, 4 = L2B, 5 = L3B, 6 = L4A, 7 = L4B)
   VAR_TYPE: data
   RECORD_VARYING: RV
   DEPEND_0: epoch
@@ -319,12 +323,12 @@ detector_flags:
 deindex:
   NAME: deindex
   DATA_TYPE: CDF_UINT2
-  CATDESC: Index of Delta E (range 0 - 399)
+  CATDESC: Index of delta E (range 0 - 399)
   VAR_TYPE: data
   RECORD_VARYING: RV
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
-  FIELDNAM: deindex
+  FIELDNAM: Deindex
   VARIABLE_PURPOSE: ' '
   FORMAT: I8
   UNITS: ' '
@@ -334,12 +338,12 @@ deindex:
 epindex:
   NAME: epindex
   DATA_TYPE: CDF_UINT2
-  CATDESC: Index of E Prime (range 0 - 127)
+  CATDESC: Index of E prime (range 0 - 127)
   VAR_TYPE: data
   RECORD_VARYING: RV
   DEPEND_0: epoch
   DISPLAY_TYPE: no_plot
-  FIELDNAM: epindex
+  FIELDNAM: Epindex
   VARIABLE_PURPOSE: ' '
   FORMAT: I8
   UNITS: ' '
@@ -349,7 +353,7 @@ epindex:
 stim_gain:
   NAME: stim_gain
   DATA_TYPE: CDF_INT1
-  CATDESC: Stim Gain (gain of pulser for stim)
+  CATDESC: Stim gain (gain of pulser for stim)
   VAR_TYPE: data
   RECORD_VARYING: RV
   DEPEND_0: epoch
@@ -364,7 +368,7 @@ stim_gain:
 a_l_stim:
   NAME: a_l_stim
   DATA_TYPE: CDF_INT1
-  CATDESC: A L Stim (0 = ADC Stim event, 1 = Livetime Stim event)
+  CATDESC: A L stim (0 = ADC stim event, 1 = livetime stim event)
   VAR_TYPE: data
   RECORD_VARYING: RV
   DEPEND_0: epoch
@@ -379,7 +383,7 @@ a_l_stim:
 stim_step:
   NAME: stim_step
   DATA_TYPE: CDF_UINT1
-  CATDESC: Stim Step (index of table of stim steps)
+  CATDESC: Stim step (index of table of stim steps)
   VAR_TYPE: data
   RECORD_VARYING: RV
   DEPEND_0: epoch
@@ -394,7 +398,7 @@ stim_step:
 dac_value:
   NAME: dac_value
   DATA_TYPE: CDF_UINT2
-  CATDESC: Dac Value (pulser dac that controls voltage)
+  CATDESC: Dac value (pulser dac that controls voltage)
   VAR_TYPE: data
   RECORD_VARYING: RV
   DEPEND_0: epoch

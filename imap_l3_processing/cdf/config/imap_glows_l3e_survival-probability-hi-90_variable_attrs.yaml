@@ -6,31 +6,34 @@ epoch:
   RECORD_VARYING: RV
   FIELDNAM: Epoch
   FORMAT: ' '
-  LABLAXIS: epoch
+  LABLAXIS: Epoch
   UNITS: ns
   VALIDMIN: 1990-01-01T00:00:00.000000000
   VALIDMAX: 2099-12-31T00:00:00.000000000
   FILLVAL: 9999-12-31T23:59:59.999999999
   TIME_BASE: J2000
-  TIME_SCALE: Terrestrial Time
+  TIME_SCALE: TT
   DELTA_PLUS_VAR: epoch_delta
   DELTA_MINUS_VAR: epoch_delta
   MONOTON: INCREASE
   REFERENCE_POSITION: Rotating Earth Geoid
+  SCALETYP: linear
+  SI_CONVERSION: 1e-9>seconds
 epoch_delta:
   NAME: epoch_delta
   DATA_TYPE: CDF_INT8
-  CATDESC: epoch_delta
+  CATDESC: Epoch delta
   VAR_TYPE: support_data
   RECORD_VARYING: RV
   DEPEND_0: epoch
   FIELDNAM: Epoch Delta
   FORMAT: I19
-  LABLAXIS: epoch_delta
+  LABLAXIS: Epoch delta
   UNITS: ns
   VALIDMIN: 0
   VALIDMAX: 86000000000000
   FILLVAL: -9223372036854775808
+  SCALETYP: linear
 energy:
   NAME: energy
   DATA_TYPE: CDF_FLOAT
@@ -68,7 +71,7 @@ probability_of_survival:
   DEPEND_2: spin_angle
   DISPLAY_TYPE: spectrogram
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Probability of Survival
+  FIELDNAM: Probability Of Survival
   FORMAT: g9.3
   LABLAXIS: probability_of_survival
   UNITS: ' '
@@ -84,6 +87,7 @@ energy_label:
   VAR_TYPE: metadata
   FIELDNAM: Energy Label
   FORMAT: a20
+  FILLVAL: ' '
 spin_angle_label:
   NAME: spin_angle_label
   DATA_TYPE: CDF_CHAR
@@ -91,3 +95,4 @@ spin_angle_label:
   VAR_TYPE: metadata
   FIELDNAM: Spin Angle Label
   FORMAT: a20
+  FILLVAL: ' '

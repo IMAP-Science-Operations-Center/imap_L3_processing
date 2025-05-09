@@ -1,9 +1,24 @@
 imap_codice_l3a_lo-partial-densities:
   Data_level: "3a"
   Data_type: L3A_lo-partial-densities>Level-3A partial densities
-  Logical_source_description: IMAP Mission CoDICE Instrument Partial Densities
+  Logical_source_description: IMAP Mission CoDICE Lo Instrument Partial Densities
+
+imap_codice_l3a_lo-sw-ratios:
+  Data_level: "3a"
+  Data_type: L3A_lo-sw-ratios>Level-3A sw ratios
+  Logical_source_description: IMAP Mission CoDICE Lo Instrument SW Ratios
 
 imap_codice_l3a_lo-direct-events:
   Data_level: "3a"
   Data_type: L3A_lo-direct-events>Level-3A direct events
-  Logical_source_description: IMAP Mission CoDICE Instrument Direct Events
+  Logical_source_description: IMAP Mission CoDICE Lo Instrument Direct Events
+
+imap_codice_l3a_lo-sw-abundances:
+  Data_level: "3a"
+  Data_type: L3A_lo-sw-abundances>Level-3A charge state abundances
+  Logical_source_description: IMAP Mission CoDICE Instrument Charge State Relative Abundances
+
+imap_codice_l3a_hi-direct-events:
+  Data_level: "3a"
+  Data_type: L3A_hi-direct-events>Level-3A direct events
+  Logical_source_description: IMAP Mission CoDICE Hi Instrument Direct Events

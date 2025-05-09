@@ -39,7 +39,7 @@ epoch:
   LABLAXIS: epoch
   UNITS: ns
   VALIDMIN: 2010-01-01T00:00:00.000000000
-  VALIDMAX: 2059-12-31T23:59:58.999000000
+  VALIDMAX: 2099-12-31T00:00:00.000000000
   FILLVAL: 9999-12-31T23:59:59.999999999
   SCALETYP: linear
   TIME_BASE: J2000
@@ -53,8 +53,8 @@ epoch:
 epoch_delta:
   <<: *support_data
   NAME: epoch_delta
-  CATDESC: epoch_DELTA
-  FIELDNAM: epoch_delta
+  CATDESC: Epoch delta
+  FIELDNAM: Epoch Delta
   DATA_TYPE: CDF_INT8
   FORMAT: I19
   UNITS: ns
@@ -161,7 +161,7 @@ event_spin_angle:
   <<: *per_event
   <<: *float_data
   NAME: event_spin_angle
-  CATDESC: Spin Angle when event was observed
+  CATDESC: Spin angle when event was observed
   FIELDNAM: Spin angle
   LABLAXIS: m
   UNITS: amu

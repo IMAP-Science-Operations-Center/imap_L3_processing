@@ -4,16 +4,16 @@ epoch:
   CATDESC: Time, number of nanoseconds since J2000 with leap seconds included
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: epoch
+  FIELDNAM: Epoch
   FORMAT: ' '
-  LABLAXIS: epoch
+  LABLAXIS: Epoch
   UNITS: ns
   VALIDMIN: 2010-01-01T00:00:00.000000000
-  VALIDMAX: 2040-01-01T00:00:00.000000000
+  VALIDMAX: 2099-12-31T00:00:00.000000000
   FILLVAL: 9999-12-31T23:59:59.999999999
   SCALETYP: linear
   TIME_BASE: J2000
-  TIME_SCALE: Terrestrial Time
+  TIME_SCALE: TT
   DELTA_PLUS_VAR: epoch_delta
   DELTA_MINUS_VAR: epoch_delta
   MONOTON: INCREASE
@@ -22,9 +22,9 @@ epoch:
 epoch_delta:
   NAME: epoch_delta
   DATA_TYPE: CDF_INT8
-  CATDESC: epoch_DELTA
+  CATDESC: Epoch delta
   VAR_TYPE: support_data
-  RECORD_VARYING: NRV
+  RECORD_VARYING: RV
   FIELDNAM: Epoch Delta
   FORMAT: I19
   UNITS: ns
@@ -32,20 +32,18 @@ epoch_delta:
   VALIDMAX: 86000000000000
   FILLVAL: -9223372036854775808
   SCALETYP: linear
-  SCALEMIN: 0
-  SCALEMAX: 86000000000000
-  SI_CONVERSION: 1e-9>seconds
   LABLAXIS: Epoch delta
+  DEPEND_0: epoch
 combined_energy:
   NAME: combined_energy
   DATA_TYPE: CDF_REAL4
-  CATDESC: Solar Wind Energy
+  CATDESC: Combined solar wind energy
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: Combined Energy
+  FIELDNAM: Combined Solar Wind  Energy
   FORMAT: F19.3
-  LABLAXIS: Energy
+  LABLAXIS: Combined SW energy
   UNITS: eV/q
   VALIDMIN: 0
   VALIDMAX: 9223372036854775807
@@ -58,13 +56,13 @@ combined_energy:
 combined_energy_delta_minus:
   NAME: combined_energy_delta_minus
   DATA_TYPE: CDF_REAL4
-  CATDESC: Solar Wind Energy Delta Minus
+  CATDESC: Combined solar wind energy delta minus
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: Combined Energy Delta Minus
+  FIELDNAM: Combined Solar Wind Energy Delta Minus
   FORMAT: F19.3
-  LABLAXIS: Energy Delta Minus
+  LABLAXIS: Combined SW energy delta minus
   UNITS: eV/q
   VALIDMIN: 0
   VALIDMAX: 9223372036854775807
@@ -72,13 +70,13 @@ combined_energy_delta_minus:
 combined_energy_delta_plus:
   NAME: combined_energy_delta_plus
   DATA_TYPE: CDF_REAL4
-  CATDESC: Solar Wind Energy Delta Plus
+  CATDESC: Combined solar wind energy delta plus
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: Combined Energy Delta Plus
+  FIELDNAM: Combined Solar Wind Energy Delta Plus
   FORMAT: F19.3
-  LABLAXIS: Energy Delta Plus
+  LABLAXIS: Combined energy SW delta plus
   UNITS: eV/q
   VALIDMIN: 0
   VALIDMAX: 9223372036854775807
@@ -86,7 +84,7 @@ combined_energy_delta_plus:
 combined_differential_flux:
   NAME: combined_differential_flux
   DATA_TYPE: CDF_REAL4
-  CATDESC: Combined Differential Flux
+  CATDESC: Combined differential flux
   DEPEND_0: epoch
   DEPEND_1: combined_energy
   VAR_TYPE: data
@@ -95,7 +93,7 @@ combined_differential_flux:
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
   FIELDNAM: Combined Differential Flux
   FORMAT: F19.3
-  LABLAXIS: Differential Flux
+  LABLAXIS: Combined differential flux
   UNITS: cm!E-2!N sr!E-1!N s!E-1!N (eV/q)!E-1!N'
   VALIDMIN: 0
   VALIDMAX: 9223372036854775807
@@ -109,14 +107,14 @@ combined_differential_flux:
 combined_differential_flux_delta:
   NAME: combined_differential_flux_delta
   DATA_TYPE: CDF_REAL4
-  CATDESC: Combined Differential Flux Uncertainty
+  CATDESC: Combined differential flux delta
   DEPEND_0: epoch
   DEPEND_1: combined_energy
   VAR_TYPE: support_data
   RECORD_VARYING: RV
   FIELDNAM: Combined Differential Flux Delta
   FORMAT: F19.3
-  LABLAXIS: Differential Flux Uncertainty
+  LABLAXIS: Combined differential flux delta
   UNITS: cm!E-2!N sr!E-1!N s!E-1!N (eV/q)!E-1!N'
   VALIDMIN: 0
   VALIDMAX: 9223372036854775807
@@ -127,5 +125,6 @@ combined_energy_label:
   DATA_TYPE: CDF_CHAR
   CATDESC: Label for combined energy
   VAR_TYPE: metadata
-  FIELDNAM: Combined Energy Label
+  FIELDNAM: Label For Combined Energy
   FORMAT: a20
+  FILLVAL: ' '

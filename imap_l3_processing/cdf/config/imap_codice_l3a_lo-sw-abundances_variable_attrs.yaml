@@ -1,0 +1,109 @@
+primary_data_variable: &primary_data_variable
+  VAR_TYPE: data
+  VARIABLE_PURPOSE: primary var, summary
+  DEPEND_0: epoch
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+
+support_data: &support_data
+  VAR_TYPE: support_data
+  DISPLAY_TYPE: no_plot
+  DEPEND_0: epoch
+  RECORD_VARYING: RV
+
+float_data: &float_data
+  DATA_TYPE: CDF_FLOAT
+  FORMAT: F15.3
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.000000E+31
+
+epoch:
+  NAME: epoch
+  CATDESC: Time, number of nanoseconds since J2000 with leap seconds included
+  VAR_TYPE: support_data
+  DISPLAY_TYPE: no_plot
+  DATA_TYPE: CDF_TIME_TT2000
+  FIELDNAM: Epoch
+  RECORD_VARYING: RV
+  LABLAXIS: epoch
+  UNITS: ns
+  VALIDMIN: 2010-01-01T00:00:00.000000000
+  VALIDMAX: 2099-12-31T00:00:00.000000000
+  FILLVAL: 9999-12-31T23:59:59.999999999
+  SCALETYP: linear
+  TIME_BASE: J2000
+  TIME_SCALE: TT
+  DELTA_PLUS_VAR: epoch_delta
+  DELTA_MINUS_VAR: epoch_delta
+  MONOTON: INCREASE
+  REFERENCE_POSITION: Rotating Earth Geoid
+  SI_CONVERSION: 1e-9>seconds
+epoch_delta:
+  <<: *support_data
+  NAME: epoch_delta
+  CATDESC: epoch_DELTA
+  FIELDNAM: epoch_delta
+  DATA_TYPE: CDF_INT8
+  FORMAT: I19
+  UNITS: ns
+  VALIDMIN: 0
+  VALIDMAX: 86000000000000
+  FILLVAL: -9223372036854775808
+  SCALETYP: linear
+  SCALEMIN: 0
+  SCALEMAX: 86000000000000
+  SI_CONVERSION: 1e-9>seconds
+oxygen_charge_state_distribution:
+  <<: *primary_data_variable
+  <<: *float_data
+  NAME: oxygen_charge_state_distribution
+  CATDESC: Oxygen charge state relative abundances
+  FIELDNAM: O charge state abundances
+  DATA_TYPE: CDF_REAL4
+  DEPEND_1: oxygen_charge_state
+  LABLAXIS: O dist.
+  SCALETYP: linear
+  DISPLAY_TYPE: spectrogram
+  UNITS: ' '
+
+carbon_charge_state_distribution:
+  <<: *primary_data_variable
+  <<: *float_data
+  NAME: carbon_charge_state_distribution
+  CATDESC: Carbon charge state relative abundances
+  FIELDNAM: C charge state abundances
+  DATA_TYPE: CDF_REAL4
+  DEPEND_1: carbon_charge_state
+  LABLAXIS: C dist.
+  SCALETYP: linear
+  DISPLAY_TYPE: spectrogram
+  UNITS: ' '
+
+carbon_charge_state:
+  NAME: carbon_charge_state
+  VAR_TYPE: support_data
+  DISPLAY_TYPE: no_plot
+  DATA_TYPE: CDF_INT1
+  FIELDNAM: C Charge
+  LABLAXIS: C Charge
+  FORMAT: I1
+  VALIDMIN: 0
+  VALIDMAX: 6
+  FILLVAL: -128
+  RECORD_VARYING: NRV
+  SCALETYP: linear
+
+oxygen_charge_state:
+  NAME: oxygen_charge_state
+  VAR_TYPE: support_data
+  DISPLAY_TYPE: no_plot
+  DATA_TYPE: CDF_INT1
+  FIELDNAM: O Charge
+  LABLAXIS: O Charge
+  FORMAT: I1
+  VALIDMIN: 0
+  VALIDMAX: 8
+  FILLVAL: -128
+  RECORD_VARYING: NRV
+  SCALETYP: linear

@@ -22,13 +22,13 @@ epoch:
 epoch_delta:
   NAME: epoch_delta
   DATA_TYPE: CDF_INT8
-  CATDESC:
+  CATDESC: Epoch delta
   VAR_TYPE: support_data
   RECORD_VARYING: RV
   DEPEND_0: epoch
-  FIELDNAM: epoch delta
+  FIELDNAM: Epoch Delta
   FORMAT: I19
-  LABLAXIS: epoch_delta
+  LABLAXIS: Epoch delta
   UNITS: ns
   VALIDMIN: 0
   VALIDMAX: 86000000000000
@@ -40,7 +40,7 @@ energy:
   CATDESC: Energies associated with the survival probabilities for IMAP-Hi
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
-  FIELDNAM: energy
+  FIELDNAM: Energy
   FORMAT: g9.3
   LABLAXIS: energy
   UNITS: keV
@@ -73,7 +73,7 @@ probability_of_survival:
   DEPEND_2: spin_angle
   DISPLAY_TYPE: spectrogram
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Probability of survival
+  FIELDNAM: Probability Of Survival
   FORMAT: g9.3
   LABLAXIS: Probability of survival
   UNITS: ' '
@@ -88,8 +88,9 @@ energy_label:
   DATA_TYPE: CDF_CHAR
   CATDESC: Label for energy
   VAR_TYPE: metadata
-  FIELDNAM: Energy label
+  FIELDNAM: Energy Label
   FORMAT: a20
+  FILLVAL: ' '
 spin_angle_label:
   NAME: spin_angle_label
   DATA_TYPE: CDF_CHAR
@@ -97,3 +98,4 @@ spin_angle_label:
   VAR_TYPE: metadata
   FIELDNAM: Spin Angle Label
   FORMAT: a20
+  FILLVAL: ' '

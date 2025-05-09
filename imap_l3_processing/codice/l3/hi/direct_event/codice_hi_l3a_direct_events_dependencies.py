@@ -9,7 +9,7 @@ from imap_l3_processing.codice.l3.hi.models import CodiceL2HiData
 
 
 @dataclass
-class CodiceHiL3Dependencies:
+class CodiceHiL3aDirectEventsDependencies:
     tof_lookup: TOFLookup
     codice_l2_hi_data: CodiceL2HiData
 
@@ -19,7 +19,7 @@ class CodiceHiL3Dependencies:
             if dep.data_type != "l2":
                 dependencies.processing_input.remove(dep)
 
-        science_file_paths = dependencies.get_file_paths("codice", "direct-events")
+        science_file_paths = dependencies.get_file_paths("codice", "hi-direct-events")
         ancillary_file_paths = dependencies.get_file_paths("codice", "tof-lookup")
 
         for download_location_file_path in [*science_file_paths, *ancillary_file_paths]:

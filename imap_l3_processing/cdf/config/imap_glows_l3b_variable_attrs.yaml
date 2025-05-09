@@ -9,7 +9,7 @@ epoch:
   LABLAXIS: Epoch
   UNITS: ns
   VALIDMIN: 2010-01-01T00:00:00.000000000
-  VALIDMAX: 2059-12-31T23:59:58.999000000
+  VALIDMAX: 2099-12-31T00:00:00.000000000
   FILLVAL: 9999-12-31T23:59:59.999999999
   SCALETYP: linear
   TIME_BASE: J2000
@@ -26,7 +26,7 @@ epoch_delta:
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: Epoch delta
+  FIELDNAM: Epoch Delta
   FORMAT: I19
   LABLAXIS: Epoch delta
   UNITS: ns
@@ -41,7 +41,7 @@ cr:
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: Carrington rotation
+  FIELDNAM: Carrington Rotation
   FORMAT: I14
   LABLAXIS: Carrington rotation
   UNITS: ' '
@@ -57,7 +57,7 @@ uv_anisotropy_factor:
   DEPEND_1: lat_grid
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: UV anisotropy factor
+  FIELDNAM: UV Anisotropy Factor
   FORMAT: F9.3
   LABLAXIS: UV anisotropy factor
   UNITS: ' '
@@ -73,7 +73,7 @@ lat_grid:
   CATDESC: Latitudinal grid from -90 to 90
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
-  FIELDNAM: Lat grid
+  FIELDNAM: Latitude Grid
   FORMAT: F9.3
   LABLAXIS: Lat grid
   UNITS: degrees
@@ -90,7 +90,7 @@ lat_grid_delta:
   CATDESC: Latitudinal grid delta
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
-  FIELDNAM: Lat grid delta
+  FIELDNAM: Latitude Grid Delta
   FORMAT: F9.3
   LABLAXIS: Lat grid delta
   UNITS: degrees
@@ -108,7 +108,7 @@ sum_rate:
   RECORD_VARYING: RV
   DISPLAY_TYPE: spectrogram
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Sum rate
+  FIELDNAM: Sum Rate
   FORMAT: F9.3
   LABLAXIS: Sum rate
   UNITS: s^-1
@@ -130,7 +130,7 @@ ph_rate:
   RECORD_VARYING: RV
   DISPLAY_TYPE: spectrogram
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Photoionization rate
+  FIELDNAM: Photoionization Rate
   FORMAT: F9.3
   LABLAXIS: Photoionization rate
   UNITS: s^-1
@@ -152,7 +152,7 @@ cx_rate:
   RECORD_VARYING: RV
   DISPLAY_TYPE: spectrogram
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Charge exchange rate
+  FIELDNAM: Charge Exchange Rate
   FORMAT: F9.3
   LABLAXIS: Charge exchange rate
   UNITS: s^-1
@@ -173,7 +173,7 @@ sum_uncert:
   VAR_TYPE: support_data
   RECORD_VARYING: RV
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Sum rate uncertainty
+  FIELDNAM: Sum Rate Uncertainty
   FORMAT: F9.3
   LABLAXIS: Sum rate uncertainty
   UNITS: s^-1
@@ -190,7 +190,7 @@ ph_uncert:
   VAR_TYPE: support_data
   RECORD_VARYING: RV
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Photoionization rate uncertainty
+  FIELDNAM: Photoionization Rate Uncertainty
   FORMAT: F9.3
   LABLAXIS: Photoionization rate uncertainty
   UNITS: s^-1
@@ -207,7 +207,7 @@ cx_uncert:
   VAR_TYPE: support_data
   RECORD_VARYING: RV
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Charge exchange rate uncertainty
+  FIELDNAM: Charge Exchange Rate Uncertainty
   FORMAT: F9.3
   LABLAXIS: Charge exchange rate uncertainty
   UNITS: s^-1
@@ -220,5 +220,6 @@ lat_grid_label:
   DATA_TYPE: CDF_CHAR
   CATDESC: Label for lat grid
   VAR_TYPE: metadata
-  FIELDNAM: Lat grid label
+  FIELDNAM: Latitude Grid Label
   FORMAT: a20
+  FILLVAL: ' '
