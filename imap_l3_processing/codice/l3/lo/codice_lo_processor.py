@@ -83,16 +83,16 @@ class CodiceLoProcessor(Processor):
         c5 = dependencies.partial_density_data.cplus5_partial_density
         c6 = dependencies.partial_density_data.cplus6_partial_density
 
-        o_densities = np.column_stack((o5, o6, o7, o8))
+        o_densities = _average_over_block(np.column_stack((o5, o6, o7, o8)), block_size=3)
         o_distribution = safe_divide(o_densities, np.sum(o_densities, axis=1, keepdims=True))
 
-        c_densities = np.column_stack((c4, c5, c6))
+        c_densities = _average_over_block(np.column_stack((c4, c5, c6)), block_size=3)
         c_distribution = safe_divide(c_densities, np.sum(c_densities, axis=1, keepdims=True))
 
         return CodiceLoL3ChargeStateDistributionsDataProduct(
             self.input_metadata,
-            epoch=dependencies.partial_density_data.epoch,
-            epoch_delta=dependencies.partial_density_data.epoch_delta,
+            epoch=_average_dates_over_block(dependencies.partial_density_data.epoch, 3),
+            epoch_delta=_sum_over_block(dependencies.partial_density_data.epoch_delta, 3),
             oxygen_charge_state_distribution=o_distribution,
             carbon_charge_state_distribution=c_distribution
         )
@@ -230,7 +230,7 @@ class CodiceLoProcessor(Processor):
 
 
 def _average_over_block(data_array: np.ndarray, block_size: int):
-    return np.array([data_array[i:i + block_size].mean() for i in range(0, len(data_array), block_size)])
+    return np.array([data_array[i:i + block_size].mean(axis=0) for i in range(0, len(data_array), block_size)])
 
 
 def _sum_over_block(data_array: np.ndarray, block_size: int):

@@ -213,22 +213,23 @@ class TestCodiceLoProcessor(unittest.TestCase):
         now = datetime.now()
         data = CodiceLoPartialDensityData(
             epoch=np.array(
-                [now, now + timedelta(minutes=4)]),
-            epoch_delta=np.array([120_000_000_000, 120_000_000_000]),
-            fe_hiq_partial_density=np.arange(2),
-            fe_loq_partial_density=np.arange(2),
-            oplus5_partial_density=np.array([1, 2]),
-            oplus6_partial_density=np.array([5, 6]),
-            oplus7_partial_density=np.array([8, 9]),
-            oplus8_partial_density=np.array([11, 12]),
-            mg_partial_density=np.arange(2),
-            cplus4_partial_density=np.array([17, 18]),
-            cplus5_partial_density=np.array([20, 21]),
-            cplus6_partial_density=np.array([23, 24]),
-            ne_partial_density=np.arange(2),
-            si_partial_density=np.arange(2),
-            heplusplus_partial_density=np.arange(2),
-            hplus_partial_density=np.arange(2),
+                [now, now + timedelta(minutes=4), now + timedelta(minutes=8),
+                 now + timedelta(minutes=12), now + timedelta(minutes=16)]),
+            epoch_delta=np.array([120_000_000_000, 120_000_000_000, 120_000_000_000, 120_000_000_000, 120_000_000_000]),
+            fe_hiq_partial_density=np.arange(5),
+            fe_loq_partial_density=np.arange(5),
+            oplus5_partial_density=np.array([0, 1, 2, 2, 2]),
+            oplus6_partial_density=np.array([5, 5, 5, 6, 6]),
+            oplus7_partial_density=np.array([8, 8, 8, 9, 9]),
+            oplus8_partial_density=np.array([11, 11, 11, 12, 12, ]),
+            mg_partial_density=np.arange(5),
+            cplus4_partial_density=np.array([16, 17, 18, 18, 18]),
+            cplus5_partial_density=np.array([20, 20, 20, 21, 21]),
+            cplus6_partial_density=np.array([23, 23, 23, 24, 24]),
+            ne_partial_density=np.arange(5),
+            si_partial_density=np.arange(5),
+            heplusplus_partial_density=np.arange(5),
+            hplus_partial_density=np.arange(5),
         )
 
         dependency = CodiceLoL3aRatiosDependencies(data)
@@ -239,8 +240,8 @@ class TestCodiceLoProcessor(unittest.TestCase):
         self.assertIsInstance(abundances_data_product, CodiceLoL3ChargeStateDistributionsDataProduct)
         self.assertEqual(input_metadata, abundances_data_product.input_metadata)
         np.testing.assert_array_equal(abundances_data_product.epoch,
-                                      [now, now + timedelta(minutes=4)])
-        np.testing.assert_array_equal(abundances_data_product.epoch_delta, [120_000_000_000, 120_000_000_000])
+                                      [now + timedelta(minutes=4), now + timedelta(minutes=14)])
+        np.testing.assert_array_equal(abundances_data_product.epoch_delta, [360_000_000_000, 240_000_000_000])
 
         np.testing.assert_array_almost_equal(abundances_data_product.oxygen_charge_state_distribution,
                                              np.array(
