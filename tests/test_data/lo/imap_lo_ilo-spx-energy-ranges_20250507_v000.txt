@@ -1,0 +1,4 @@
+# Energy Ranges for IMAP-Lo spectral index fitting
+# Energies are specified in keV
+# Columns: lower-bound, upper-bound
+1   2
