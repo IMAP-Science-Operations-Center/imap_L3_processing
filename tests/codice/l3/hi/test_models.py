@@ -23,7 +23,7 @@ class TestModels(unittest.TestCase):
 
     def test_codice_hi_l2_data_read_from_instrument_team_cdf(self):
         l2_path = get_test_instrument_team_data_path(
-            "codice/hi/imap_codice_l2_hi-direct-events_20241110193700_v0.0.2.cdf")
+            "codice/hi/imap_codice_l2_hi-direct-events_20241110_v002.cdf")
         l2_direct_event_data = CodiceL2HiData.read_from_cdf(l2_path)
 
         with CDF(str(l2_path)) as cdf:
@@ -180,7 +180,7 @@ class TestModels(unittest.TestCase):
 
     def test_l2_sectored_intensities_read_from_instrument_team_cdf(self):
         l2_path = get_test_instrument_team_data_path(
-            "codice/hi/imap_codice_l2_hi-sectored_20241110193900_v0.0.2.cdf")
+            "codice/hi/imap_codice_l2_hi-sectored_20241110_v002.cdf")
         l2_sectored_data = CodiceHiL2SectoredIntensitiesData.read_from_cdf(l2_path)
 
         with CDF(str(l2_path)) as cdf:

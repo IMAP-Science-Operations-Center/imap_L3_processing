@@ -6,7 +6,7 @@ from tests.test_helpers import get_test_data_path
 
 class TestMassPerChargeLookup(unittest.TestCase):
     def test_read_from_file(self):
-        mass_per_charge_csv_path = get_test_data_path("codice/test_mass_per_charge_lookup.csv")
+        mass_per_charge_csv_path = get_test_data_path("codice/imap_codice_mass-per-charge_20241110_v002.csv")
 
         mass_per_charge_lookup = MassPerChargeLookup.read_from_file(mass_per_charge_csv_path)
 

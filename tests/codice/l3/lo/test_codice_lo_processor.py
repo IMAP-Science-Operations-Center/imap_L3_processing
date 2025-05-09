@@ -167,6 +167,48 @@ class TestCodiceLoProcessor(unittest.TestCase):
         np.testing.assert_array_almost_equal(ratios_data_product.o7_to_o6_ratio, np.array([9 / 6, 15 / 14]))
         np.testing.assert_array_almost_equal(ratios_data_product.felo_to_fehi_ratio, np.array([5 / 2, 12 / 11]))
 
+    def test_process_ratios_calculate_abundance_ratios_using_safe_divide(self):
+        now = datetime.now()
+        data = CodiceLoPartialDensityData(
+            epoch=np.array(
+                [now, now + timedelta(minutes=4), now + timedelta(minutes=8)]),
+            epoch_delta=np.array([120_000_000_000, 120_000_000_000, 120_000_000_000]),
+            fe_hiq_partial_density=np.array([0, 0, 0]),
+            fe_loq_partial_density=np.array([0, 0, 0]),
+            oplus5_partial_density=np.array([0, 0, 0]),
+            oplus6_partial_density=np.array([0, 0, 0]),
+            oplus7_partial_density=np.array([0, 0, 0]),
+            oplus8_partial_density=np.array([0, 0, 0]),
+            mg_partial_density=np.array([0, 0, 0]),
+            cplus4_partial_density=np.array([0, 0, 0]),
+            cplus5_partial_density=np.array([0, 0, 0]),
+            cplus6_partial_density=np.array([0, 0, 0]),
+            ne_partial_density=np.arange(3),
+            si_partial_density=np.arange(3),
+            heplusplus_partial_density=np.arange(3),
+            hplus_partial_density=np.arange(3),
+        )
+
+        dependency = CodiceLoL3aRatiosDependencies(data)
+        input_metadata = Mock()
+        processor = CodiceLoProcessor(dependencies=Mock(), input_metadata=input_metadata)
+
+        with warnings.catch_warnings(record=True) as w:
+            ratios_data_product = processor.process_l3a_ratios(dependency)
+        self.assertEqual(0, len(w))
+
+        self.assertEqual(input_metadata, ratios_data_product.input_metadata)
+        np.testing.assert_array_equal(ratios_data_product.epoch,
+                                      [now + timedelta(minutes=4)])
+        np.testing.assert_array_equal(ratios_data_product.epoch_delta, [360_000_000_000])
+        np.testing.assert_array_almost_equal(ratios_data_product.fe_to_o_ratio, np.array([np.nan]))
+        np.testing.assert_array_almost_equal(ratios_data_product.mg_to_o_ratio, np.array([np.nan]))
+        np.testing.assert_array_almost_equal(ratios_data_product.c_to_o_ratio, np.array([np.nan]))
+        np.testing.assert_array_almost_equal(ratios_data_product.c6_to_c4_ratio, np.array([np.nan]))
+        np.testing.assert_array_almost_equal(ratios_data_product.c6_to_c5_ratio, np.array([np.nan]))
+        np.testing.assert_array_almost_equal(ratios_data_product.o7_to_o6_ratio, np.array([np.nan]))
+        np.testing.assert_array_almost_equal(ratios_data_product.felo_to_fehi_ratio, np.array([np.nan]))
+
     def test_process_abundances_calculates_abundance_ratios(self):
         now = datetime.now()
         data = CodiceLoPartialDensityData(
@@ -246,7 +288,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
         with warnings.catch_warnings(record=True) as w:
             abundances_data_product = processor.process_l3a_abundances(dependency)
         self.assertEqual(0, len(w))
-        
+
         self.assertIsInstance(abundances_data_product, CodiceLoL3ChargeStateDistributionsDataProduct)
         self.assertEqual(input_metadata, abundances_data_product.input_metadata)
         np.testing.assert_array_equal(abundances_data_product.epoch,

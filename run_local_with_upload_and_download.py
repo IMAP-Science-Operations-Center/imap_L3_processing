@@ -41,5 +41,62 @@ if __name__ == "__main__":
             subprocess.run([sys.executable, 'imap_l3_data_processor.py', '--instrument', 'swapi', '--data-level', 'l3b',
                             '--start-date', '20250606', '--version', 'v003', '--dependency',
                             '[{"type": "science", "files": ["imap_swapi_l2_sci_20250606_v002.cdf"]}]'])
+        case "codice", "lo-direct-events":
+            subprocess.run(
+                [sys.executable, 'imap_l3_data_processor.py', '--instrument', 'codice', '--data-level', 'l3a',
+                 '--descriptor', 'lo-direct-events', '--start-date', '20241110', '--version', 'v000',
+                 '--dependency',
+                 '['
+                 '{"type": "science", "files": ["imap_codice_l1a_lo-sw-priority_20241110_v002.cdf"]},'
+                 '{"type": "science", "files": ["imap_codice_l1a_lo-nsw-priority_20241110_v002.cdf"]},'
+                 '{"type": "science", "files": ["imap_codice_l2_lo-direct-events_20241110_v002.cdf"]},'
+                 '{"type": "ancillary", "files": ["imap_codice_mass-coefficient-lookup_20241110_v002.csv"]}]'
+                 ])
+        case "codice", ("lo-partial-densities" | "partial-densities"):
+            subprocess.run(
+                [sys.executable, 'imap_l3_data_processor.py', '--instrument', 'codice', '--data-level', 'l3a',
+                 '--descriptor', 'lo-partial-densities', '--start-date', '20241110', '--version', 'v000',
+                 '--dependency',
+                 '['
+                 '{"type": "science", "files": ["imap_codice_l2_lo-sw-species_20241110_v002.cdf"]},'
+                 '{"type": "ancillary", "files": ["imap_codice_mass-per-charge_20241110_v002.csv"]}]'
+                 ])
+        case "codice", ("lo-sw-ratios" | "ratios"):
+            subprocess.run(
+                [sys.executable, 'imap_l3_data_processor.py', '--instrument', 'codice', '--data-level', 'l3a',
+                 '--descriptor', 'lo-sw-ratios', '--start-date', '20241110', '--version', 'v000',
+                 '--dependency',
+                 '['
+                 '{"type": "science", "files": ["imap_codice_l3a_lo-partial-densities_20241110_v000.cdf"]}'
+                 ']'
+                 ])
+        case "codice", ("lo-sw-abundances" | "abundances"):
+            subprocess.run(
+                [sys.executable, 'imap_l3_data_processor.py', '--instrument', 'codice', '--data-level', 'l3a',
+                 '--descriptor', 'lo-sw-abundances', '--start-date', '20241110', '--version', 'v000',
+                 '--dependency',
+                 '['
+                 '{"type": "science", "files": ["imap_codice_l3a_lo-partial-densities_20241110_v000.cdf"]}'
+                 ']'
+                 ])
+        case "codice", "hi-direct-events":
+            subprocess.run(
+                [sys.executable, 'imap_l3_data_processor.py', '--instrument', 'codice', '--data-level', 'l3a',
+                 '--descriptor', 'hi-direct-events', '--start-date', '20241110', '--version', 'v000',
+                 '--dependency',
+                 '['
+                 '{"type": "science", "files": ["imap_codice_l2_hi-direct-events_20241110_v002.cdf"]},'
+                 '{"type": "ancillary", "files": ["imap_codice_tof-lookup_20241110_v002.csv"]}]'
+                 ])
+        case "codice", "hi-pitch-angle":
+            subprocess.run(
+                [sys.executable, 'imap_l3_data_processor.py', '--instrument', 'codice', '--data-level', 'l3b',
+                 '--descriptor', 'hi-pitch-angle', '--start-date', '20241110', '--version', 'v000',
+                 '--dependency',
+                 '['
+                 '{"type": "science", "files": ["imap_codice_l2_hi-sectored_20241110_v002.cdf"]},'
+                 '{"type": "science", "files": ["imap_mag_l1d_norm-mago_20250630_v001.cdf"]}'
+                 ']'
+                 ])
         case _:
             raise NotImplementedError("Target instrument or product not implemented")
