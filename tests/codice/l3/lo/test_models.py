@@ -13,10 +13,11 @@ from imap_l3_processing.codice.l3.lo.models import CodiceLoL2SWSpeciesData, Codi
     CodiceLoL2DirectEventData, \
     PriorityEvent, EnergyAndSpinAngle, CodiceLoL3aDirectEventDataProduct, \
     CodiceLoL1aSWPriorityRates, CodiceLoL1aNSWPriorityRates, CodiceLo3dData, CODICE_LO_L2_NUM_PRIORITIES, \
-    CodiceLoL3aRatiosDataProduct, CodiceLoPartialDensityData, CodiceLoL3ChargeStateDistributionsDataProduct
+    CodiceLoL3aRatiosDataProduct, CodiceLoPartialDensityData, CodiceLoL3ChargeStateDistributionsDataProduct, \
+    CodiceLoDirectEventData
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.utils import save_data
-from tests.test_helpers import get_test_instrument_team_data_path
+from tests.test_helpers import get_test_instrument_team_data_path, get_test_data_path
 
 
 class TestModels(unittest.TestCase):
@@ -284,6 +285,60 @@ class TestModels(unittest.TestCase):
         np.testing.assert_array_equal(carbon_charge_states.value, [4, 5, 6])
         self.assertEqual("carbon_charge_state", carbon_charge_states.name)
 
+    def test_codice_lo_l3a_direct_event_read_from_cdf(self):
+        l3a_cdf_path = get_test_data_path("codice/imap_codice_l3a_lo-direct-events_20241110_v000.cdf")
+        actual_event_data = CodiceLoDirectEventData.read_from_cdf(l3a_cdf_path)
+
+        with CDF(str(l3a_cdf_path)) as cdf:
+            np.testing.assert_array_equal(actual_event_data.epoch, cdf["epoch"])
+            np.testing.assert_array_equal(actual_event_data.epoch_delta, cdf["epoch_delta"])
+            np.testing.assert_array_equal(actual_event_data.normalization, cdf["normalization"])
+            np.testing.assert_array_equal(actual_event_data.mass_per_charge, cdf["mass_per_charge"])
+            np.testing.assert_array_equal(actual_event_data.mass, cdf["mass"])
+            np.testing.assert_array_equal(actual_event_data.event_energy, cdf["event_energy"])
+            np.testing.assert_array_equal(actual_event_data.gain, cdf["gain"])
+            np.testing.assert_array_equal(actual_event_data.apd_id, cdf["apd_id"])
+            np.testing.assert_array_equal(actual_event_data.multi_flag, cdf["multi_flag"])
+            np.testing.assert_array_equal(actual_event_data.num_events, cdf["num_events"])
+            np.testing.assert_array_equal(actual_event_data.data_quality, cdf["data_quality"])
+            np.testing.assert_array_equal(actual_event_data.tof, cdf["tof"])
+
+    def test_codice_lo_l3a_direct_event_read_from_cdf_handles_fill_value(self):
+        all_fill_l3a_cdf_path = get_test_data_path("codice/imap_codice_l3a_lo-direct-events_20241110_v000-all-fill.cdf")
+        actual_event_data = CodiceLoDirectEventData.read_from_cdf(all_fill_l3a_cdf_path)
+
+        with CDF(str(all_fill_l3a_cdf_path)) as cdf:
+            # @formatter:off
+            np.testing.assert_array_equal(actual_event_data.normalization, np.full_like(cdf["normalization"][...], np.nan))
+            np.testing.assert_array_equal(actual_event_data.mass_per_charge, np.full_like(cdf["mass_per_charge"][...], np.nan))
+            np.testing.assert_array_equal(actual_event_data.mass, np.full_like(cdf["mass"][...], np.nan))
+            np.testing.assert_array_equal(actual_event_data.event_energy, np.full_like(cdf["event_energy"][...], np.nan))
+
+            self.assertIsInstance(actual_event_data.apd_id, np.ma.masked_array)
+            np.testing.assert_array_equal(actual_event_data.apd_id.data, cdf["apd_id"])
+            self.assertTrue(np.all(actual_event_data.apd_id.mask))
+
+            self.assertIsInstance(actual_event_data.gain, np.ma.masked_array)
+            np.testing.assert_array_equal(actual_event_data.gain.data, cdf["gain"])
+            self.assertTrue(np.all(actual_event_data.gain.mask))
+
+            self.assertIsInstance(actual_event_data.multi_flag, np.ma.masked_array)
+            np.testing.assert_array_equal(actual_event_data.multi_flag.data, cdf["multi_flag"])
+            self.assertTrue(np.all(actual_event_data.multi_flag.mask))
+
+            self.assertIsInstance(actual_event_data.num_events, np.ma.masked_array)
+            np.testing.assert_array_equal(actual_event_data.num_events.data, cdf["num_events"])
+            self.assertTrue(np.all(actual_event_data.num_events.mask))
+
+            self.assertIsInstance(actual_event_data.data_quality, np.ma.masked_array)
+            np.testing.assert_array_equal(actual_event_data.data_quality.data, cdf["data_quality"])
+            self.assertTrue(np.all(actual_event_data.data_quality.mask))
+
+            self.assertIsInstance(actual_event_data.tof, np.ma.masked_array)
+            np.testing.assert_array_equal(actual_event_data.tof.data, cdf["tof"])
+            self.assertTrue(np.all(actual_event_data.tof.mask))
+            # @formatter:on
+
     def test_codice_lo_l3a_direct_event_to_data_product(self):
         rng = np.random.default_rng()
 
@@ -326,7 +381,8 @@ class TestModels(unittest.TestCase):
         data_products = direct_event.to_data_product_variables()
 
         non_parent_fields = [f for f in fields(CodiceLoL3aDirectEventDataProduct)
-                             if f.name in CodiceLoL3aDirectEventDataProduct.__annotations__]
+                             if f.name in CodiceLoL3aDirectEventDataProduct.__annotations__ or
+                             f.name in CodiceLoDirectEventData.__annotations__]
 
         self.assertEqual(len(data_products), len(non_parent_fields))
         for data_product in data_products:
