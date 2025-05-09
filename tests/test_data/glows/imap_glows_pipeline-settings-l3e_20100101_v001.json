@@ -1,0 +1,16 @@
+{
+  "executable_dependency_paths": {
+    "energy-grid-lo": "imap_glows_lo-energy-grid_20100101_v001.dat",
+    "energy-grid-hi": "imap_glows_hi-energy-grid_20100101_v001.dat",
+    "energy-grid-ultra": "imap_glows_ultra-energy-grid_20100101_v001.dat",
+    "tess-xyz-8": "imap_glows_tess-xyz-8_20100101_v001.dat",
+    "tess-ang-16": "imap_glows_tess-ang-16_20100101_v001.dat",
+    "lya-series": "lyaSeriesV4_2021b.dat",
+    "solar-uv-anisotropy": "solar_uv_anisotropy_NP.1.0_SP.1.0.dat",
+    "speed-3d": "speed3D.v01.Legendre.2021b.dat",
+    "density-3d": "density3D.v01.Legendre.2021b.dat",
+    "phion-hydrogen": "phion_Hydrogen_T12F107_2021b.dat",
+    "ionization-files": "ionization.files.dat",
+    "sw-eqtr-electrons": "swEqtrElectrons5_2021b.dat"
+  }
+}
