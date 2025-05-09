@@ -17,6 +17,7 @@ from spacepy.pycdf import CDF
 from imap_l3_processing.codice.l3.hi.codice_hi_processor import CodiceHiProcessor
 from imap_l3_processing.codice.l3.hi.direct_event.codice_hi_l3a_direct_events_dependencies import \
     CodiceHiL3aDirectEventsDependencies
+from imap_l3_processing.codice.l3.hi.pitch_angle.codice_pitch_angle_dependencies import CodicePitchAngleDependencies
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_direct_events_dependencies import CodiceLoL3aDirectEventsDependencies
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_partial_densities_dependencies import \
     CodiceLoL3aPartialDensitiesDependencies
@@ -94,8 +95,9 @@ def create_glows_l3a_cdf(dependencies: GlowsL3ADependencies):
 
 def create_codice_lo_l3a_partial_densities_cdf():
     codice_lo_l2_data = CodiceLoL2SWSpeciesData.read_from_cdf(
-        get_test_instrument_team_data_path('codice/lo/imap_codice_l2_lo-sw-species_20241110193900_v0.0.2.cdf'))
-    mpc_lookup = MassPerChargeLookup.read_from_file(get_test_data_path('codice/test_mass_per_charge_lookup.csv'))
+        get_test_instrument_team_data_path('codice/lo/imap_codice_l2_lo-sw-species_20241110_v002.cdf'))
+    mpc_lookup = MassPerChargeLookup.read_from_file(
+        get_test_data_path('codice/imap_codice_mass-per-charge_20241110_v002.csv'))
     deps = CodiceLoL3aPartialDensitiesDependencies(codice_l2_lo_data=codice_lo_l2_data,
                                                    mass_per_charge_lookup=mpc_lookup)
 
@@ -116,14 +118,14 @@ def create_codice_lo_l3a_partial_densities_cdf():
 
 def create_codice_lo_l3a_direct_events_cdf():
     codice_lo_l2_direct_events = CodiceLoL2DirectEventData.read_from_cdf(
-        get_test_instrument_team_data_path('codice/lo/imap_codice_l2_lo-direct-events_20241110193700_v0.0.2.cdf'))
+        get_test_instrument_team_data_path('codice/lo/imap_codice_l2_lo-direct-events_20241110_v002.cdf'))
     codice_lo_l1a_sw_priority = CodiceLoL1aSWPriorityRates.read_from_cdf(
-        get_test_instrument_team_data_path('codice/lo/imap_codice_l1a_lo-sw-priority_20241110193900_v0.0.2.cdf'))
+        get_test_instrument_team_data_path('codice/lo/imap_codice_l1a_lo-sw-priority_20241110_v002.cdf'))
     codice_lo_l1a_nsw_priority = CodiceLoL1aNSWPriorityRates.read_from_cdf(
-        get_test_instrument_team_data_path('codice/lo/imap_codice_l1a_lo-nsw-priority_20241110193900_v0.0.2.cdf'))
+        get_test_instrument_team_data_path('codice/lo/imap_codice_l1a_lo-nsw-priority_20241110_v002.cdf'))
 
     mass_coefficient_lookup = MassCoefficientLookup.read_from_csv(
-        get_test_data_path('codice/mass_coefficient_lookup.csv'))
+        get_test_data_path('codice/imap_codice_mass-coefficient-lookup_20241110_v002.csv'))
 
     deps = CodiceLoL3aDirectEventsDependencies(codice_l2_direct_events=codice_lo_l2_direct_events,
                                                codice_lo_l1a_sw_priority_rates=codice_lo_l1a_sw_priority,
@@ -763,9 +765,9 @@ def create_combined_sensor_cdf(combined_dependencies: HiL3CombinedMapDependencie
 
 def create_codice_hi_l3a_direct_events_cdf():
     codice_hi_de_dependencies = CodiceHiL3aDirectEventsDependencies.from_file_paths(
-        tof_lookup_path=get_test_instrument_team_data_path("codice/hi/imap_codice_tof-lookup_20241110193900_v001.csv"),
+        tof_lookup_path=get_test_instrument_team_data_path("codice/hi/imap_codice_tof-lookup_20241110_v002.csv"),
         codice_l2_hi_cdf=get_test_instrument_team_data_path(
-            "codice/hi/imap_codice_l2_hi-direct-events_20241110193700_v0.0.2.cdf"))
+            "codice/hi/imap_codice_l2_hi-direct-events_20241110_v002.cdf"))
 
     input_metadata = InputMetadata(
         instrument='codice',
@@ -783,7 +785,25 @@ def create_codice_hi_l3a_direct_events_cdf():
 
 
 def create_codice_hi_l3b_pitch_angles_cdf():
-    pass
+    codice_hi_pitch_angle_dependencies = CodicePitchAngleDependencies.from_file_paths(
+        mag_file_path=get_test_data_path("mag/imap_mag_l1d_norm-mago_20250101_v001.cdf"),
+        codice_l2_sectored_intensities_path=get_test_instrument_team_data_path(
+            "codice/hi/imap_codice_l2_hi-sectored_20241110_v002.cdf")
+    )
+
+    input_metadata = InputMetadata(
+        instrument='codice',
+        data_level='l3b',
+        start_date=datetime(2024, 11, 10),
+        end_date=datetime(2025, 1, 2),
+        version='v000',
+        descriptor='hi-pitch-angle'
+    )
+
+    codice_lo_processor = CodiceHiProcessor(ProcessingInputCollection(), input_metadata)
+    pitch_angle_data = codice_lo_processor.process_l3b(codice_hi_pitch_angle_dependencies)
+    cdf_path = save_data(pitch_angle_data, delete_if_present=True)
+    return cdf_path
 
 
 if __name__ == "__main__":

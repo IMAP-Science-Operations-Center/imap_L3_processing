@@ -1,0 +1,5 @@
+# Energy Ranges for IMAP-Ultra spectral index fitting
+# Energies are specified in keV
+# Columns: lower-bound, upper-bound
+5   15
+15  50

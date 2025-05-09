@@ -10,10 +10,10 @@ from imap_l3_processing.hit.l3.pha.pha_event_reader import PHAEventReader, RawPH
 from imap_l3_processing.hit.l3.pha.science.calculate_pha import process_pha_event
 from imap_l3_processing.hit.l3.sectored_products.models import HitPitchAngleDataProduct
 from imap_l3_processing.hit.l3.sectored_products.science.sectored_products_algorithms import get_sector_unit_vectors, \
-    get_hit_bin_polar_coordinates, hit_rebin_by_pitch_angle_and_gyrophase
+    get_hit_bin_polar_coordinates
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.pitch_angles import calculate_unit_vector, calculate_pitch_angle, calculate_gyrophase, \
-    rotate_particle_vectors_from_hit_despun_to_imap_despun
+    rotate_particle_vectors_from_hit_despun_to_imap_despun, rebin_by_pitch_angle_and_gyrophase
 from imap_l3_processing.processor import Processor
 from imap_l3_processing.utils import save_data
 
@@ -199,25 +199,21 @@ class HitProcessor(Processor):
             measurement_pitch_angle.append(input_bin_pitch_angles)
             measurement_gyrophase.append(input_bin_gyrophases)
             for species, intensity in input_intensity_data_by_species.items():
-                rebinned_result = hit_rebin_by_pitch_angle_and_gyrophase(
-                    intensity[0][time_index],
-                    intensity[1][time_index],
-                    intensity[2][time_index],
-                    input_bin_pitch_angles,
-                    input_bin_gyrophases,
-                    number_of_pitch_angle_bins,
-                    number_of_gyrophase_bins)
+                rebinned_result = rebin_by_pitch_angle_and_gyrophase(intensity[0][time_index], intensity[1][time_index],
+                                                                     intensity[2][time_index], input_bin_pitch_angles,
+                                                                     input_bin_gyrophases, number_of_pitch_angle_bins,
+                                                                     number_of_gyrophase_bins)
 
                 intensity_by_pa_gyro, intensity_delta_plus_by_pa_gyro, intensity_delta_minus_by_pa_gyro = rebinned_result[
                                                                                                           0:3]
                 intensity_by_pa, intensity_delta_plus_by_pa, intensity_delta_minus_by_pa = rebinned_result[3:6]
 
-                rebinned_pa_gyro_intensity_by_species[species][0][time_index] = intensity_by_pa_gyro
-                rebinned_pa_gyro_intensity_by_species[species][1][time_index] = intensity_delta_plus_by_pa_gyro
-                rebinned_pa_gyro_intensity_by_species[species][2][time_index] = intensity_delta_minus_by_pa_gyro
-                rebinned_pa_only_intensity_by_species[species][0][time_index] = intensity_by_pa
-                rebinned_pa_only_intensity_by_species[species][1][time_index] = intensity_delta_plus_by_pa
-                rebinned_pa_only_intensity_by_species[species][2][time_index] = intensity_delta_minus_by_pa
+                rebinned_pa_gyro_intensity_by_species[species][0][time_index, ...] = intensity_by_pa_gyro
+                rebinned_pa_gyro_intensity_by_species[species][1][time_index, ...] = intensity_delta_plus_by_pa_gyro
+                rebinned_pa_gyro_intensity_by_species[species][2][time_index, ...] = intensity_delta_minus_by_pa_gyro
+                rebinned_pa_only_intensity_by_species[species][0][time_index, ...] = intensity_by_pa
+                rebinned_pa_only_intensity_by_species[species][1][time_index, ...] = intensity_delta_plus_by_pa
+                rebinned_pa_only_intensity_by_species[species][2][time_index, ...] = intensity_delta_minus_by_pa
 
         return HitPitchAngleDataProduct(self.input_metadata, hit_data.epoch,
                                         hit_data.epoch_delta, pitch_angles, pitch_angle_deltas,
