@@ -233,7 +233,7 @@ he4_intensity_by_pitch_angle_and_gyrophase:
 cno_intensity_by_pitch_angle:
   <<: *primary_data_variable
   <<: *float_data
-  NAME: o_intensity_by_pitch_angle
+  NAME: cno_intensity_by_pitch_angle
   DEPEND_1: energy_cno
   DEPEND_2: pitch_angle
   CATDESC: CNO intensity binned by pitch angle
@@ -246,7 +246,7 @@ cno_intensity_by_pitch_angle:
 cno_intensity_by_pitch_angle_and_gyrophase:
   <<: *primary_data_variable
   <<: *float_data
-  NAME: o_intensity_by_pitch_angle_and_gyrophase
+  NAME: cno_intensity_by_pitch_angle_and_gyrophase
   DEPEND_1: energy_cno
   DEPEND_2: pitch_angle
   DEPEND_3: gyrophase
@@ -293,6 +293,7 @@ energy_h_label:
   DATA_TYPE: CDF_CHAR
   FORMAT: a20
   VAR_TYPE: metadata
+  FILLVAL: ' '
 
 energy_cno_label:
   NAME: energy_cno_label
@@ -301,6 +302,7 @@ energy_cno_label:
   DATA_TYPE: CDF_CHAR
   FORMAT: a20
   VAR_TYPE: metadata
+  FILLVAL: ' '
 
 energy_fe_label:
   NAME: energy_fe_label
@@ -309,6 +311,7 @@ energy_fe_label:
   DATA_TYPE: CDF_CHAR
   FORMAT: a20
   VAR_TYPE: metadata
+  FILLVAL: ' '
 
 energy_he3he4_label:
   NAME: energy_he3he4_label
@@ -317,6 +320,7 @@ energy_he3he4_label:
   DATA_TYPE: CDF_CHAR
   FORMAT: a20
   VAR_TYPE: metadata
+  FILLVAL: ' '
 
 pitch_angle_label:
   NAME: pitch_angle_label
@@ -325,6 +329,7 @@ pitch_angle_label:
   DATA_TYPE: CDF_CHAR
   FORMAT: a20
   VAR_TYPE: metadata
+  FILLVAL: ' '
 
 gyrophase_label:
   NAME: gyrophase_label
@@ -333,6 +338,7 @@ gyrophase_label:
   DATA_TYPE: CDF_CHAR
   FORMAT: a20
   VAR_TYPE: metadata
+  FILLVAL: ' '
 
 
 

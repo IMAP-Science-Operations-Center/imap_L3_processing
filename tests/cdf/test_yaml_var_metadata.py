@@ -17,8 +17,6 @@ class TestCdfUtils(TestCase):
                                     "variable_attrs" in str(filename)]
         self.test_cases_variable = []
         for filename in variable_attrs_filenames:
-            if "codice" in filename:
-                continue
             with open(yaml_path / filename) as file:
                 yaml_data = yaml.safe_load(file)
                 for variable_key, variable in yaml_data.items():
@@ -182,4 +180,3 @@ class TestCdfUtils(TestCase):
                          "epoch_delta FILLVAL should be '-9223372036854775808'")
         self.assertEqual("linear", yaml_data['epoch_delta']['SCALETYP'],
                          "epoch_delta SCALETYP should be linear")
-
