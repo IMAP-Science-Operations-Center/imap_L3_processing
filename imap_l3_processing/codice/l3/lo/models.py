@@ -6,7 +6,7 @@ import numpy as np
 from numpy import ndarray
 from spacepy.pycdf import CDF
 
-from imap_l3_processing.cdf.cdf_utils import read_numeric_variable
+from imap_l3_processing.cdf.cdf_utils import read_numeric_variable, read_variable_and_mask_fill_values
 from imap_l3_processing.codice.l3.lo.direct_events.science.mass_species_bin_lookup import MassSpeciesBinLookup, \
     EventDirection
 from imap_l3_processing.models import DataProductVariable, DataProduct
@@ -314,7 +314,7 @@ SPIN_ANGLE_BIN_LABEL_VAR_NAME = "spin_angle_bin_label"
 
 
 @dataclass
-class CodiceLoL3aDirectEventDataProduct(DataProduct):
+class CodiceLoDirectEventData:
     epoch: ndarray
     epoch_delta: ndarray
     normalization: ndarray
@@ -327,6 +327,26 @@ class CodiceLoL3aDirectEventDataProduct(DataProduct):
     num_events: np.ndarray
     data_quality: np.ndarray
     tof: np.ndarray
+
+    @classmethod
+    def read_from_cdf(cls, cdf_path: Path | str):
+        with CDF(str(cdf_path)) as cdf:
+            return cls(epoch=cdf[EPOCH_VAR_NAME][...],
+                       epoch_delta=cdf[EPOCH_DELTA_VAR_NAME][...],
+                       normalization=read_numeric_variable(cdf[NORMALIZATION_VAR_NAME]),
+                       mass_per_charge=read_numeric_variable(cdf[MASS_PER_CHARGE_VAR_NAME]),
+                       mass=read_numeric_variable(cdf[MASS_VAR_NAME]),
+                       event_energy=read_numeric_variable(cdf[EVENT_ENERGY_VAR_NAME]),
+                       gain=read_variable_and_mask_fill_values(cdf[GAIN_VAR_NAME]),
+                       apd_id=read_variable_and_mask_fill_values(cdf[APD_ID_VAR_NAME]),
+                       multi_flag=read_variable_and_mask_fill_values(cdf[MULTI_FLAG_VAR_NAME]),
+                       num_events=read_variable_and_mask_fill_values(cdf[NUM_EVENTS_VAR_NAME]),
+                       data_quality=read_variable_and_mask_fill_values(cdf[DATA_QUALITY_VAR_NAME]),
+                       tof=read_variable_and_mask_fill_values(cdf[TOF_VAR_NAME]))
+
+
+@dataclass
+class CodiceLoL3aDirectEventDataProduct(CodiceLoDirectEventData, DataProduct):
     spin_angle_bin: np.ndarray = field(init=False)
     energy_bin: np.ndarray = field(init=False)
     priority_index: np.ndarray = field(init=False)
