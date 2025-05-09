@@ -99,7 +99,7 @@ class TestModels(unittest.TestCase):
 
     def test_codice_lo_l2_direct_event_read_from_instrument_team_cdf(self):
         path_to_cdf = get_test_instrument_team_data_path(
-            'codice/lo/imap_codice_l2_lo-direct-events_20241110193700_v0.0.2.cdf')
+            'codice/lo/imap_codice_l2_lo-direct-events_20241110_v002.cdf')
         l2_direct_event_data = CodiceLoL2DirectEventData.read_from_cdf(path_to_cdf)
         with CDF(str(path_to_cdf)) as cdf:
             np.testing.assert_array_equal(cdf["epoch"], l2_direct_event_data.epoch)
@@ -334,7 +334,7 @@ class TestModels(unittest.TestCase):
 
     def test_codice_lo_l1a_sw_priority_read_from_instrument_team_cdf(self):
         instrument_team_cdf_path = get_test_instrument_team_data_path(
-            "codice/lo/imap_codice_l1a_lo-sw-priority_20241110193900_v0.0.2.cdf")
+            "codice/lo/imap_codice_l1a_lo-sw-priority_20241110_v002.cdf")
         actual_l1a_sw_priority_rates = CodiceLoL1aSWPriorityRates.read_from_cdf(instrument_team_cdf_path)
 
         with CDF(str(instrument_team_cdf_path)) as cdf:
@@ -428,7 +428,7 @@ class TestModels(unittest.TestCase):
 
     def test_codice_lo_l1a_nsw_priority_read_from_instrument_team_cdf(self):
         instrument_team_cdf_path = get_test_instrument_team_data_path(
-            "codice/lo/imap_codice_l1a_lo-nsw-priority_20241110193900_v0.0.2.cdf")
+            "codice/lo/imap_codice_l1a_lo-nsw-priority_20241110_v002.cdf")
         actual_l1a_nsw_priority_rates = CodiceLoL1aNSWPriorityRates.read_from_cdf(instrument_team_cdf_path)
 
         with CDF(str(instrument_team_cdf_path)) as cdf:
