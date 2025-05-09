@@ -119,7 +119,7 @@ class TestCodiceHiProcessor(unittest.TestCase):
     @patch("imap_l3_processing.codice.l3.hi.codice_hi_processor.get_sector_unit_vectors")
     @patch("imap_l3_processing.codice.l3.hi.codice_hi_processor.calculate_pitch_angle")
     @patch("imap_l3_processing.codice.l3.hi.codice_hi_processor.calculate_gyrophase")
-    @patch("imap_l3_processing.codice.l3.hi.codice_hi_processor.hit_rebin_by_pitch_angle_and_gyrophase")
+    @patch("imap_l3_processing.codice.l3.hi.codice_hi_processor.rebin_by_pitch_angle_and_gyrophase")
     def test_process_l3b_with_mocks(self, mock_rebin_by_pitch_angle_and_gyrophase, mock_calculate_gyrophases,
                                     mock_calculate_pitch_angles, mock_get_sector_unit_vectors,
                                     mock_calculate_unit_vector):

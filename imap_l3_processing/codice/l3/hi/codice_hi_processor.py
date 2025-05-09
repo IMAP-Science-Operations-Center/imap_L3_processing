@@ -10,9 +10,10 @@ from imap_l3_processing.codice.l3.hi.models import CodiceHiL3PitchAngleDataProdu
 from imap_l3_processing.codice.l3.hi.models import CodiceL3HiDirectEvents
 from imap_l3_processing.codice.l3.hi.pitch_angle.codice_pitch_angle_dependencies import CodicePitchAngleDependencies
 from imap_l3_processing.hit.l3.sectored_products.science.sectored_products_algorithms import \
-    hit_rebin_by_pitch_angle_and_gyrophase, get_sector_unit_vectors
+    get_sector_unit_vectors
 from imap_l3_processing.models import InputMetadata
-from imap_l3_processing.pitch_angles import calculate_unit_vector, calculate_pitch_angle, calculate_gyrophase
+from imap_l3_processing.pitch_angles import calculate_unit_vector, calculate_pitch_angle, calculate_gyrophase, \
+    rebin_by_pitch_angle_and_gyrophase
 from imap_l3_processing.processor import Processor
 from imap_l3_processing.utils import save_data
 
@@ -150,14 +151,10 @@ class CodiceHiProcessor(Processor):
                 intensities_delta_plus = np.full_like(intensity, 0)
                 intensities_delta_minus = np.full_like(intensity, 0)
 
-                rebinned_intensities_by_pa_and_gyro, _, _, rebinned_intensities_by_pa, _, _ = hit_rebin_by_pitch_angle_and_gyrophase(
-                    intensity_data=intensity,
-                    intensity_delta_plus=intensities_delta_plus,
-                    intensity_delta_minus=intensities_delta_minus,
-                    pitch_angles=pitch_angles,
-                    gyrophases=gyrophases,
-                    number_of_pitch_angle_bins=num_pitch_angle_bins,
-                    number_of_gyrophase_bins=num_gyrophase_bins)
+                rebinned_intensities_by_pa_and_gyro, _, _, rebinned_intensities_by_pa, _, _ = rebin_by_pitch_angle_and_gyrophase(
+                    intensity_data=intensity, intensity_delta_plus=intensities_delta_plus,
+                    intensity_delta_minus=intensities_delta_minus, pitch_angles=pitch_angles, gyrophases=gyrophases,
+                    number_of_pitch_angle_bins=num_pitch_angle_bins, number_of_gyrophase_bins=num_gyrophase_bins)
 
                 species_intensity.intensity_by_pa[time_index] = rebinned_intensities_by_pa
                 species_intensity.intensity_by_pa_and_gyro[time_index] = rebinned_intensities_by_pa_and_gyro

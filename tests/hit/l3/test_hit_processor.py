@@ -38,7 +38,7 @@ class TestHitProcessor(TestCase):
     @patch('imap_l3_processing.hit.l3.hit_processor.get_sector_unit_vectors')
     @patch('imap_l3_processing.hit.l3.hit_processor.calculate_pitch_angle')
     @patch('imap_l3_processing.hit.l3.hit_processor.calculate_gyrophase')
-    @patch('imap_l3_processing.hit.l3.hit_processor.hit_rebin_by_pitch_angle_and_gyrophase')
+    @patch('imap_l3_processing.hit.l3.hit_processor.rebin_by_pitch_angle_and_gyrophase')
     @patch('imap_l3_processing.hit.l3.hit_processor.rotate_particle_vectors_from_hit_despun_to_imap_despun')
     def test_process_pitch_angle_product(self, mock_rotate_particle_vectors_from_hit_despun_to_imap_despun,
                                          mock_hit_rebin, mock_calculate_gyrophase,
