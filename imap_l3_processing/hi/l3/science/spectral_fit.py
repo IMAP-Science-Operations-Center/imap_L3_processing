@@ -3,7 +3,8 @@ import numpy as np
 from imap_l3_processing.hi.l3.science.mpfit import mpfit
 
 
-def spectral_fit(num_epochs, num_lons, num_lats, fluxes, variances, energy):
+def spectral_fit(num_epochs, num_lons, num_lats, fluxes, variances, energy, output_energy=None):
+    output_energy = output_energy or np.array([[-np.inf, np.inf]])
     initial_parameters = (10, 2)
 
     par_info = [
@@ -11,30 +12,40 @@ def spectral_fit(num_epochs, num_lons, num_lats, fluxes, variances, energy):
         {'limits': [0.0, 1000.0]},
     ]
 
-    gammas = np.full((num_epochs, num_lons, num_lats), fill_value=np.nan, dtype=float)
-    errors = np.full_like(gammas, np.nan)
-    for epoch in range(num_epochs):
-        for lon in range(num_lons):
-            for lat in range(num_lats):
-                flux = fluxes[epoch, :, lon, lat]
-                variance = variances[epoch, :, lon, lat]
+    output_shape = (fluxes.shape[0], output_energy.shape[0], *fluxes.shape[2:])
+    output_gammas = np.full(output_shape, np.nan, dtype=float)
+    output_gamma_errors = np.full_like(output_gammas, np.nan)
+
+    for epoch in range(fluxes.shape[0]):
+        for output_energy_index in range(output_energy.shape[0]):
+            intensity = fluxes[epoch].reshape((fluxes[epoch].shape[0], -1))
+            var = variances[epoch].reshape((variances[epoch].shape[0], -1))
+
+            gammas = np.full(intensity.shape[-1], np.nan, dtype=float)
+            errors = np.full_like(gammas, np.nan)
+            for i in range(intensity.shape[-1]):
+                flux = intensity[:, i]
+                variance = var[:, i]
+                # energy_mask = (energy > output_energy[output_energy_index][0]) & (
+                #         energy < output_energy[output_energy_index][1])
+                energy_mask = True
                 flux_and_variance_are_zero = np.equal(flux, 0) & np.equal(variance, 0)
                 flux_or_error_is_invalid = np.isnan(flux) | np.isnan(variance) | flux_and_variance_are_zero
-                flux = flux[~flux_or_error_is_invalid]
-                variance = variance[~flux_or_error_is_invalid]
-                filtered_energy = energy[~flux_or_error_is_invalid]
+                flux = flux[~flux_or_error_is_invalid & energy_mask]
+                variance = variance[~flux_or_error_is_invalid & energy_mask]
+                filtered_energy = energy[~flux_or_error_is_invalid & energy_mask]
                 keywords = {'xval': filtered_energy, 'yval': flux, 'errval': np.sqrt(variance)}
                 fit = mpfit(power_law, initial_parameters, keywords, par_info, nprint=0)
 
                 a, gamma = fit.params
                 if fit.status > 0:
                     a_error, gamma_error = fit.perror
-                    gammas[epoch][lon][lat] = gamma
-                    errors[epoch][lon][lat] = gamma_error
-                else:
-                    gammas[epoch][lon][lat] = np.nan
-                    errors[epoch][lon][lat] = np.nan
-    return gammas, errors
+                    gammas[i] = gamma
+                    errors[i] = gamma_error
+            output_gammas[epoch, output_energy_index] = gammas.reshape(fluxes.shape[2:])
+            output_gamma_errors[epoch, output_energy_index] = errors.reshape(fluxes.shape[2:])
+
+    return output_gammas, output_gamma_errors
 
 
 def power_law(params, **kwargs):
