@@ -16,5 +16,8 @@ COPY instrument_team_data instrument_team_data
 COPY imap_l3_processing/glows/l3e/l3e_toolkit/survProbHi survProbHi
 COPY imap_l3_processing/glows/l3e/l3e_toolkit/survProbLo survProbLo
 COPY imap_l3_processing/glows/l3e/l3e_toolkit/survProbUltra survProbUltra
+RUN chmod +x survProbHi
+RUN chmod +x survProbLo
+RUN chmod +x survProbUltra
 COPY run_local.py .
 #ENTRYPOINT ["python","run_local.py", "glows", "l3e"]

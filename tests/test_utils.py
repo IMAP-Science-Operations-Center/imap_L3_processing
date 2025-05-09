@@ -109,6 +109,50 @@ class TestUtils(TestCase):
     @patch("imap_l3_processing.utils.ImapAttributeManager")
     @patch("imap_l3_processing.utils.date")
     @patch("imap_l3_processing.utils.write_cdf")
+    def test_save_data_adds_CR_if_present(self, mock_write_cdf, mock_today, _):
+        mock_today.today.return_value = date(2024, 9, 16)
+
+        expected_cr = 2
+        data_product = TestDataProduct()
+        data_product.input_metadata.repointing = None
+        returned_file_path = save_data(data_product, cr_number=expected_cr)
+
+        actual_file_path = mock_write_cdf.call_args.args[0]
+
+        actual_attribute_manager = mock_write_cdf.call_args.args[2]
+
+        expected_file_path = str(
+            TEMP_CDF_FOLDER_PATH / f"imap_instrument_data-level_descriptor_20250510-cr0000{expected_cr}_v003.cdf")
+        self.assertEqual(expected_file_path, actual_file_path)
+
+        actual_attribute_manager.add_global_attribute.assert_has_calls([
+            call("Data_version", "003"),
+            call("Generation_date", "20240916"),
+            call("Logical_source", "imap_instrument_data-level_descriptor"),
+            call("Logical_file_id",
+                 f"imap_instrument_data-level_descriptor_20250510-cr0000{expected_cr}_v003")
+        ])
+
+        self.assertEqual(expected_file_path, returned_file_path)
+
+    @patch("imap_l3_processing.utils.ImapAttributeManager")
+    @patch("imap_l3_processing.utils.date")
+    @patch("imap_l3_processing.utils.write_cdf")
+    def test_save_throws_exception_if_given_cr_and_repointing(self, _, mock_today, __):
+        mock_today.today.return_value = date(2024, 9, 16)
+
+        cr = 2
+        data_product = TestDataProduct()
+        data_product.input_metadata.repointing = 3
+        with self.assertRaises(AssertionError) as exception_manager:
+            save_data(data_product, cr_number=cr)
+
+        self.assertEqual(str(exception_manager.exception),
+                         "You cannot call save_data with both a repointing in the metadata while passing in a CR number")
+
+    @patch("imap_l3_processing.utils.ImapAttributeManager")
+    @patch("imap_l3_processing.utils.date")
+    @patch("imap_l3_processing.utils.write_cdf")
     def test_save_data_does_not_add_parent_attribute_if_empty(self, mock_write_cdf, mock_today, _):
         mock_today.today.return_value = date(2024, 9, 16)
 
