@@ -55,6 +55,7 @@ class TestSurvivalProbability(unittest.TestCase):
             (Sensor.Hi90, 0, SpinPhase.AntiRamOnly, self.antiram_mask),
             (Sensor.Hi45, -45, SpinPhase.RamOnly, self.ram_mask),
             (Sensor.Hi45, -45, SpinPhase.AntiRamOnly, self.antiram_mask),
+            (Sensor.Lo90, 0, SpinPhase.AntiRamOnly, self.antiram_mask),
         ]
 
         for sensor, expected_sensor_angle, spin_phase, expected_mask in test_cases:
