@@ -1,7 +1,16 @@
 from dataclasses import dataclass
+<<<<<<< Updated upstream
 
 import numpy as np
 
+=======
+from datetime import timedelta
+
+import numpy as np
+
+from imap_l3_processing.constants import TT2000_EPOCH
+from imap_l3_processing.data_utils import safe_divide
+>>>>>>> Stashed changes
 from imap_l3_processing.models import DataProduct, DataProductVariable
 
 EPOCH_VAR_NAME = "epoch"
@@ -86,6 +95,25 @@ class RectangularSpectralIndexMapData:
 
 
 @dataclass
+<<<<<<< Updated upstream
+=======
+class HealPixIntensityMapData:
+    intensity_map_data: IntensityMapData
+    coords: HealPixCoords
+
+    @classmethod
+    def read_from_path(cls, cdf_path):
+        pass
+
+
+@dataclass
+class HealPixSpectralIndexMapData:
+    spectral_index_map_data: SpectralIndexMapData
+    coords: HealPixCoords
+
+
+@dataclass
+>>>>>>> Stashed changes
 class RectangularSpectralIndexDataProduct(DataProduct):
     data: RectangularSpectralIndexMapData
 
