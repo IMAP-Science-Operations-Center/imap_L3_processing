@@ -5,13 +5,15 @@ from unittest.mock import Mock, call
 import numpy as np
 
 from imap_l3_processing.codice.l3.lo.direct_events.science.angle_lookup import SpinAngleLookup, ElevationLookup
+from imap_l3_processing.codice.l3.lo.direct_events.science.energy_lookup import EnergyLookup
 from imap_l3_processing.codice.l3.lo.direct_events.science.mass_coefficient_lookup import MassCoefficientLookup
 from imap_l3_processing.codice.l3.lo.direct_events.science.mass_species_bin_lookup import MassSpeciesBinLookup, \
     EventDirection
 from imap_l3_processing.codice.l3.lo.models import EnergyAndSpinAngle, PriorityEvent, CodiceLo3dData
 from imap_l3_processing.codice.l3.lo.science.codice_lo_calculations import calculate_partial_densities, \
     calculate_total_number_of_events, calculate_normalization_ratio, calculate_mass, calculate_mass_per_charge, \
-    rebin_to_counts_by_azimuth_spin_sector
+    rebin_to_counts_by_elevation_spin_sector, rebin_counts_by_energy_and_spin_angle
+from tests.test_helpers import create_dataclass_mock
 
 
 class TestCodiceLoCalculations(unittest.TestCase):
@@ -186,9 +188,9 @@ class TestCodiceLoCalculations(unittest.TestCase):
         spin_angle_lut = SpinAngleLookup()
         elevation_lut = ElevationLookup()
 
-        actual_counts_3d_data = rebin_to_counts_by_azimuth_spin_sector(mass, mass_per_charge, energy_step, spin_angle,
-                                                                       elevation, mock_species_mass_range_lookup,
-                                                                       spin_angle_lut, elevation_lut)
+        actual_counts_3d_data = rebin_to_counts_by_elevation_spin_sector(mass, mass_per_charge, energy_step, spin_angle,
+                                                                         elevation, mock_species_mass_range_lookup,
+                                                                         spin_angle_lut, elevation_lut)
 
         mock_species_mass_range_lookup.get_species.assert_has_calls([
             call(mass[0, 0, 0], mass_per_charge[0, 0, 0], EventDirection.Sunward),
@@ -231,3 +233,40 @@ class TestCodiceLoCalculations(unittest.TestCase):
         expected_o_counts[1, 1, 0, 0, 0] = 1
         np.testing.assert_array_equal(actual_counts_3d_data.get_3d_distribution("O+5", EventDirection.Sunward),
                                       expected_o_counts)
+
+    def test_rebin_counts_to_by_energy_and_spin_angle(self):
+        mock_energy_lookup = Mock(spec=EnergyLookup)
+        num_energy_bins = 30
+        mock_energy_lookup.num_bins = num_energy_bins
+        mock_energy_lookup.get_energy_index.side_effect = [
+            np.array([7]),
+            np.array([1, 1]),
+            np.array([1, 3, 1, 4])
+        ]
+
+        mock_spin_angle_lookup = Mock(spec=SpinAngleLookup)
+        num_spin_angle_bins = 20
+        mock_spin_angle_lookup.num_bins = num_spin_angle_bins
+        mock_spin_angle_lookup.get_spin_angle_index.side_effect = [
+            np.array([3]),
+            np.array([2, 2]),
+            np.array([5, 6, 5, 7])
+        ]
+
+        priority_event = create_dataclass_mock(PriorityEvent)
+        rng = np.random.default_rng()
+
+        priority_event.num_events = np.array([1, 2, 4])
+        num_epochs = len(priority_event.num_events)
+        priority_event.spin_angle = rng.random((num_epochs, 15))
+        priority_event.energy_step = rng.random((num_epochs, 15))
+        result = rebin_counts_by_energy_and_spin_angle(priority_event, mock_spin_angle_lookup, mock_energy_lookup)
+
+        expected_rebinned_counts = np.zeros((num_epochs, num_energy_bins, num_spin_angle_bins))
+        expected_rebinned_counts[0, 7, 3] = 1
+        expected_rebinned_counts[1, 1, 2] = 2
+        expected_rebinned_counts[2, 1, 5] = 2
+        expected_rebinned_counts[2, 3, 6] = 1
+        expected_rebinned_counts[2, 4, 7] = 1
+
+        np.testing.assert_array_equal(result, expected_rebinned_counts)
