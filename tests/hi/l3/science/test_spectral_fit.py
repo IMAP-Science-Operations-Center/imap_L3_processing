@@ -164,3 +164,46 @@ class TestSpectralFit(unittest.TestCase):
                 np.testing.assert_array_almost_equal(result, np.array(np.nan).reshape(1, 1, *spacial_dimension_shape))
                 np.testing.assert_array_almost_equal(result_error,
                                                      np.array(np.nan).reshape(1, 1, *spacial_dimension_shape))
+
+    def test_spectral_fit_can_fit_multiple_energy_ranges(self):
+        input_energy_range_1 = np.geomspace(1, 5, 11)
+        input_energy_range_2 = np.geomspace(6, 10, 12)
+        true_A_range_1, true_gamma_range_1 = 2.0, -1.5
+        true_A_range_2, true_gamma_range_2 = 0.1, -3.5
+        flux_data_range_1 = true_A_range_1 * np.power(input_energy_range_1, -true_gamma_range_1)
+        flux_data_range_2 = true_A_range_2 * np.power(input_energy_range_2, -true_gamma_range_2)
+
+        errors_range_1 = 0.2 * np.abs(flux_data_range_1)
+        errors_range_2 = 0.2 * np.abs(flux_data_range_2)
+
+        cases = [
+            ("rectangular", (1, 1)),
+            ("healpix", (1,))
+        ]
+
+        output_energies = np.array([[1, 5.1], [5.1, 10.1]])
+
+        for name, spacial_dimension_shape in cases:
+            with self.subTest(name):
+                flux = np.concat((flux_data_range_1, flux_data_range_2)) \
+                    .reshape(1, len(input_energy_range_1) + len(input_energy_range_2), *spacial_dimension_shape)
+                variance = np.concat((errors_range_1, errors_range_2)) \
+                    .reshape(1, len(input_energy_range_1) + len(input_energy_range_2), *spacial_dimension_shape)
+
+                result, result_error = spectral_fit(flux, variance,
+                                                    np.concat((input_energy_range_1, input_energy_range_2)),
+                                                    output_energies)
+
+                result_range_1 = result[0][0]
+                result_range_2 = result[0][1]
+                result_error_range_1 = result_error[0][0]
+                result_error_range_2 = result_error[0][1]
+
+                np.testing.assert_array_equal(result_range_1,
+                                              np.array(true_gamma_range_1).reshape(*spacial_dimension_shape))
+                np.testing.assert_array_equal(result_range_2,
+                                              np.array(true_gamma_range_2).reshape(*spacial_dimension_shape))
+                np.testing.assert_array_almost_equal(result_error_range_1,
+                                                     np.array([0.104891]).reshape(*spacial_dimension_shape))
+                np.testing.assert_array_almost_equal(result_error_range_2,
+                                                     np.array([0.071839]).reshape(*spacial_dimension_shape))

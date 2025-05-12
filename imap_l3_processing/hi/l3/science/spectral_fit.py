@@ -4,7 +4,7 @@ from imap_l3_processing.hi.l3.science.mpfit import mpfit
 
 
 def spectral_fit(fluxes, variances, energy, output_energy=None):
-    output_energy = output_energy or np.array([[-np.inf, np.inf]])
+    output_energy = output_energy if output_energy is not None else np.array([[-np.inf, np.inf]])
     initial_parameters = (10, 2)
 
     par_info = [
@@ -26,9 +26,8 @@ def spectral_fit(fluxes, variances, energy, output_energy=None):
             for i in range(intensity.shape[-1]):
                 flux = intensity[:, i]
                 variance = var[:, i]
-                # energy_mask = (energy > output_energy[output_energy_index][0]) & (
-                #         energy < output_energy[output_energy_index][1])
-                energy_mask = True
+                energy_mask = (energy >= output_energy[output_energy_index][0]) & (
+                        energy < output_energy[output_energy_index][1])
                 flux_and_variance_are_zero = np.equal(flux, 0) & np.equal(variance, 0)
                 flux_or_error_is_invalid = np.isnan(flux) | np.isnan(variance) | flux_and_variance_are_zero
                 flux = flux[~flux_or_error_is_invalid & energy_mask]
