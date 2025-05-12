@@ -6,33 +6,8 @@ from typing import Union, Optional
 
 from spacepy.pycdf import CDF
 
-from imap_l3_processing.cdf.cdf_utils import read_numeric_variable, read_variable_and_mask_fill_values
-from imap_l3_processing.hi.l3.models import HiL1cData, HiGlowsL3eData, HiIntensityMapData
-
-
-def read_hi_l2_data(cdf_path) -> HiIntensityMapData:
-    with CDF(str(cdf_path)) as cdf:
-        return HiIntensityMapData(
-            epoch=read_variable_and_mask_fill_values(cdf["epoch"]),
-            epoch_delta=read_variable_and_mask_fill_values(cdf["epoch_delta"]),
-            energy=read_numeric_variable(cdf["energy"]),
-            energy_delta_plus=read_numeric_variable(cdf["energy_delta_plus"]),
-            energy_delta_minus=read_numeric_variable(cdf["energy_delta_minus"]),
-            energy_label=cdf["energy_label"][...],
-            latitude=read_numeric_variable(cdf["latitude"]),
-            latitude_delta=read_numeric_variable(cdf["latitude_delta"]),
-            latitude_label=cdf["latitude_label"][...],
-            longitude=read_numeric_variable(cdf["longitude"]),
-            longitude_delta=read_numeric_variable(cdf["longitude_delta"]),
-            longitude_label=cdf["longitude_label"][...],
-            exposure_factor=read_numeric_variable(cdf["exposure_factor"]),
-            obs_date=read_variable_and_mask_fill_values(cdf["obs_date"]),
-            obs_date_range=read_variable_and_mask_fill_values(cdf["obs_date_range"]),
-            solid_angle=read_numeric_variable(cdf["solid_angle"]),
-            ena_intensity=read_numeric_variable(cdf["ena_intensity"]),
-            ena_intensity_stat_unc=read_numeric_variable(cdf["ena_intensity_stat_unc"]),
-            ena_intensity_sys_err=read_numeric_variable(cdf["ena_intensity_sys_err"]),
-        )
+from imap_l3_processing.cdf.cdf_utils import read_numeric_variable
+from imap_l3_processing.hi.l3.models import HiL1cData, HiGlowsL3eData
 
 
 def read_hi_l1c_data(path: Union[Path, str]) -> HiL1cData:

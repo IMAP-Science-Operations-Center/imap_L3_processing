@@ -14,10 +14,11 @@ from imap_l3_processing.hi.hi_processor import HiProcessor
 from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3SpectralFitDependencies
 from imap_l3_processing.hi.l3.hi_l3_survival_dependencies import HiL3SurvivalDependencies, \
     HiL3SingleSensorFullSpinDependencies
-from imap_l3_processing.hi.l3.models import HiL3IntensityDataProduct, \
-    HiIntensityMapData, HiL1cData, HiGlowsL3eData
+from imap_l3_processing.hi.l3.models import \
+    HiL1cData, HiGlowsL3eData
 from imap_l3_processing.hi.l3.utils import PixelSize, MapDescriptorParts, parse_map_descriptor
-from imap_l3_processing.map_models import RectangularSpectralIndexDataProduct
+from imap_l3_processing.map_models import RectangularSpectralIndexDataProduct, IntensityMapData, \
+    RectangularIntensityMapData, RectangularCoords, RectangularIntensityDataProduct
 from imap_l3_processing.models import InputMetadata
 from tests.test_helpers import get_test_data_path
 
@@ -43,7 +44,8 @@ class TestHiProcessor(unittest.TestCase):
         hi_l3_data = _create_h1_l3_data(lat=lat, lon=long, energy=energy, epoch=epoch, flux=flux,
                                         intensity_stat_unc=intensity_stat_unc,
                                         energy_delta=energy_delta)
-        hi_l3_data.exposure_factor = np.full_like(flux, 1)
+        intensity_data = hi_l3_data.intensity_map_data
+        intensity_data.exposure_factor = np.full_like(flux, 1)
         dependencies = HiL3SpectralFitDependencies(hi_l3_data=hi_l3_data)
 
         upstream_dependencies = ProcessingInputCollection()
@@ -65,9 +67,9 @@ class TestHiProcessor(unittest.TestCase):
         processor.process()
 
         mock_fetch_dependencies.assert_called_with(upstream_dependencies)
-        mock_spectral_fit.assert_called_once_with(len(epoch), len(long), len(lat), hi_l3_data.ena_intensity,
-                                                  np.square(hi_l3_data.ena_intensity_stat_unc),
-                                                  hi_l3_data.energy)
+        mock_spectral_fit.assert_called_once_with(len(epoch), len(long), len(lat), intensity_data.ena_intensity,
+                                                  np.square(intensity_data.ena_intensity_stat_unc),
+                                                  intensity_data.energy)
 
         mock_save_data.assert_called_once()
         actual_hi_data_product = mock_save_data.call_args_list[0].args[0]
@@ -75,7 +77,7 @@ class TestHiProcessor(unittest.TestCase):
         self.assertEqual(input_metadata, actual_hi_data_product.input_metadata)
         actual_data = actual_hi_data_product.data
         spectral_index_data = actual_data.spectral_index_map_data
-        coords = actual_data.coords
+        spectral_index_coords = actual_data.coords
         expected_energy_delta_minus = np.array([3])
         expected_energy_delta_plus = np.array([12])
         expected_energy = np.array([4])
@@ -86,15 +88,12 @@ class TestHiProcessor(unittest.TestCase):
         np.testing.assert_array_equal(expected_unc[:, np.newaxis, :, :],
                                       spectral_index_data.ena_spectral_index_stat_unc)
         np.testing.assert_array_equal(spectral_index_data.energy, expected_energy)
-        np.testing.assert_array_equal(spectral_index_data.latitude, hi_l3_data.latitude)
-        np.testing.assert_array_equal(spectral_index_data.longitude, hi_l3_data.longitude)
-        np.testing.assert_array_equal(spectral_index_data.epoch, hi_l3_data.epoch)
+        np.testing.assert_array_equal(spectral_index_data.latitude, intensity_data.latitude)
+        np.testing.assert_array_equal(spectral_index_data.longitude, intensity_data.longitude)
+        np.testing.assert_array_equal(spectral_index_data.epoch, intensity_data.epoch)
         np.testing.assert_array_equal(spectral_index_data.exposure_factor, expected_exposure)
         self.assertEqual(["l2_or_l3_map"], actual_hi_data_product.parent_file_names)
-        np.testing.assert_array_equal(coords.latitude_delta, hi_l3_data.latitude_delta)
-        np.testing.assert_array_equal(coords.longitude_delta, hi_l3_data.longitude_delta)
-        np.testing.assert_array_equal(coords.latitude_label, hi_l3_data.latitude_label)
-        np.testing.assert_array_equal(coords.longitude_label, hi_l3_data.longitude_label)
+        self.assertEqual(hi_l3_data.coords, spectral_index_coords)
 
         mock_upload.assert_called_once_with(mock_save_data.return_value)
 
@@ -151,17 +150,18 @@ class TestHiProcessor(unittest.TestCase):
         lon = np.arange(0, 360, 45)
 
         input_map = _create_h1_l3_data(energy=input_energies, energy_delta=input_deltas, lat=lat, lon=lon)
-        input_map.obs_date[0, 0] = datetime(2025, 1, 1)
-        input_map.obs_date[0, 1] = datetime(2025, 1, 1)
-        input_map.obs_date[0, 2] = datetime(2027, 1, 1)
+        intensity_data = input_map.intensity_map_data
+        intensity_data.obs_date[0, 0] = datetime(2025, 1, 1)
+        intensity_data.obs_date[0, 1] = datetime(2025, 1, 1)
+        intensity_data.obs_date[0, 2] = datetime(2027, 1, 1)
 
-        input_map.exposure_factor[0, 0] = 1.0
-        input_map.exposure_factor[0, 1] = 2.0
-        input_map.exposure_factor[0, 2] = 3.0
+        intensity_data.exposure_factor[0, 0] = 1.0
+        intensity_data.exposure_factor[0, 1] = 2.0
+        intensity_data.exposure_factor[0, 2] = 3.0
 
-        input_map.obs_date_range[0, 0] = 1
-        input_map.obs_date_range[0, 1] = 1
-        input_map.obs_date_range[0, 2] = 3
+        intensity_data.obs_date_range[0, 0] = 1
+        intensity_data.obs_date_range[0, 1] = 1
+        intensity_data.obs_date_range[0, 2] = 3
 
         processor = HiProcessor(sentinel.input_metadata, sentinel.dependencies)
 
@@ -193,21 +193,22 @@ class TestHiProcessor(unittest.TestCase):
         lon = np.arange(0, 360, 45)
 
         input_map = _create_h1_l3_data(energy=input_energies, energy_delta=input_deltas, lat=lat, lon=lon)
-        input_map.obs_date[0, 0] = datetime(2025, 1, 1)
-        input_map.obs_date[0, 1] = datetime(2025, 1, 1)
-        input_map.obs_date[0, 2] = datetime(2027, 1, 1)
-        input_map.obs_date.mask = np.ma.getmaskarray(input_map.obs_date)
-        input_map.obs_date.mask[0, 1] = True
+        intensity_data = input_map.intensity_map_data
+        intensity_data.obs_date[0, 0] = datetime(2025, 1, 1)
+        intensity_data.obs_date[0, 1] = datetime(2025, 1, 1)
+        intensity_data.obs_date[0, 2] = datetime(2027, 1, 1)
+        intensity_data.obs_date.mask = np.ma.getmaskarray(intensity_data.obs_date)
+        intensity_data.obs_date.mask[0, 1] = True
 
-        input_map.exposure_factor[0, 0] = 1.0
-        input_map.exposure_factor[0, 1] = 0.0
-        input_map.exposure_factor[0, 2] = 1.0
+        intensity_data.exposure_factor[0, 0] = 1.0
+        intensity_data.exposure_factor[0, 1] = 0.0
+        intensity_data.exposure_factor[0, 2] = 1.0
 
-        input_map.obs_date_range[0, 0] = 1
-        input_map.obs_date_range[0, 1] = 1
-        input_map.obs_date_range[0, 2] = 3
-        input_map.obs_date_range.mask = np.ma.getmaskarray(input_map.obs_date_range)
-        input_map.obs_date_range.mask[0, 1] = True
+        intensity_data.obs_date_range[0, 0] = 1
+        intensity_data.obs_date_range[0, 1] = 1
+        intensity_data.obs_date_range[0, 2] = 3
+        intensity_data.obs_date_range.mask = np.ma.getmaskarray(intensity_data.obs_date_range)
+        intensity_data.obs_date_range.mask[0, 1] = True
 
         processor = HiProcessor(sentinel.input_metadata, sentinel.dependencies)
 
@@ -228,13 +229,14 @@ class TestHiProcessor(unittest.TestCase):
         lon = np.arange(0, 360, 45)
 
         input_map = _create_h1_l3_data(energy=input_energies, energy_delta=input_deltas, lat=lat, lon=lon)
-        input_map.obs_date.mask = np.ma.getmaskarray(input_map.obs_date)
-        input_map.obs_date.mask[:] = True
+        intensity_data = input_map.intensity_map_data
+        intensity_data.obs_date.mask = np.ma.getmaskarray(intensity_data.obs_date)
+        intensity_data.obs_date.mask[:] = True
 
-        input_map.exposure_factor[:] = 0.0
+        intensity_data.exposure_factor[:] = 0.0
 
-        input_map.obs_date_range.mask = np.ma.getmaskarray(input_map.obs_date_range)
-        input_map.obs_date_range.mask[:] = True
+        intensity_data.obs_date_range.mask = np.ma.getmaskarray(intensity_data.obs_date_range)
+        intensity_data.obs_date_range.mask[:] = True
 
         processor = HiProcessor(sentinel.input_metadata, sentinel.dependencies)
 
@@ -264,9 +266,10 @@ class TestHiProcessor(unittest.TestCase):
         input_map_flux = rng.random((1, 9, 90, 45))
         epoch = datetime.now()
 
-        input_map: HiIntensityMapData = _create_h1_l3_data(epoch=[epoch], flux=input_map_flux)
+        input_map: RectangularIntensityMapData = _create_h1_l3_data(epoch=[epoch], flux=input_map_flux)
 
-        input_map.energy = sentinel.hi_l2_energies
+        intensity_map_data = input_map.intensity_map_data
+        input_map.intensity_map_data.energy = sentinel.hi_l2_energies
 
         mock_l2_grid_size = MagicMock(spec=PixelSize.FourDegrees)
 
@@ -338,34 +341,39 @@ class TestHiProcessor(unittest.TestCase):
         mock_survival_skymap.return_value.to_dataset.assert_called_once_with()
 
         mock_save_data.assert_called_once()
-        survival_data_product: HiL3IntensityDataProduct = mock_save_data.call_args_list[0].args[0]
-        survival_data: HiIntensityMapData = survival_data_product.data
+        survival_data_product: RectangularIntensityDataProduct = mock_save_data.call_args_list[0].args[0]
+        survival_data: RectangularIntensityMapData = survival_data_product.data
 
+        self.assertIsInstance(survival_data_product, RectangularIntensityDataProduct)
         self.assertEqual(input_metadata, survival_data_product.input_metadata)
 
-        np.testing.assert_array_equal(survival_data.ena_intensity,
-                                      input_map.ena_intensity / computed_survival_probabilities)
-        np.testing.assert_array_equal(survival_data.ena_intensity_stat_unc,
-                                      input_map.ena_intensity_stat_unc / computed_survival_probabilities)
-        np.testing.assert_array_equal(survival_data.ena_intensity_sys_err,
-                                      input_map.ena_intensity_sys_err / computed_survival_probabilities)
+        np.testing.assert_array_equal(survival_data.intensity_map_data.ena_intensity,
+                                      intensity_map_data.ena_intensity / computed_survival_probabilities)
+        np.testing.assert_array_equal(survival_data.intensity_map_data.ena_intensity_stat_unc,
+                                      intensity_map_data.ena_intensity_stat_unc / computed_survival_probabilities)
+        np.testing.assert_array_equal(survival_data.intensity_map_data.ena_intensity_sys_err,
+                                      intensity_map_data.ena_intensity_sys_err / computed_survival_probabilities)
 
-        np.testing.assert_array_equal(survival_data.epoch, input_map.epoch)
-        np.testing.assert_array_equal(survival_data.epoch_delta, input_map.epoch_delta)
-        np.testing.assert_array_equal(survival_data.energy, input_map.energy)
-        np.testing.assert_array_equal(survival_data.energy_delta_plus, input_map.energy_delta_plus)
-        np.testing.assert_array_equal(survival_data.energy_delta_minus, input_map.energy_delta_minus)
-        np.testing.assert_array_equal(survival_data.energy_label, input_map.energy_label)
-        np.testing.assert_array_equal(survival_data.latitude, input_map.latitude)
-        np.testing.assert_array_equal(survival_data.latitude_delta, input_map.latitude_delta)
-        np.testing.assert_array_equal(survival_data.latitude_label, input_map.latitude_label)
-        np.testing.assert_array_equal(survival_data.longitude, input_map.longitude)
-        np.testing.assert_array_equal(survival_data.longitude_delta, input_map.longitude_delta)
-        np.testing.assert_array_equal(survival_data.longitude_label, input_map.longitude_label)
-        np.testing.assert_array_equal(survival_data.exposure_factor, input_map.exposure_factor)
-        np.testing.assert_array_equal(survival_data.obs_date, input_map.obs_date)
-        np.testing.assert_array_equal(survival_data.obs_date_range, input_map.obs_date_range)
-        np.testing.assert_array_equal(survival_data.solid_angle, input_map.solid_angle)
+        np.testing.assert_array_equal(survival_data.intensity_map_data.epoch, intensity_map_data.epoch)
+        np.testing.assert_array_equal(survival_data.intensity_map_data.epoch_delta, intensity_map_data.epoch_delta)
+        np.testing.assert_array_equal(survival_data.intensity_map_data.energy, intensity_map_data.energy)
+        np.testing.assert_array_equal(survival_data.intensity_map_data.energy_delta_plus,
+                                      intensity_map_data.energy_delta_plus)
+        np.testing.assert_array_equal(survival_data.intensity_map_data.energy_delta_minus,
+                                      intensity_map_data.energy_delta_minus)
+        np.testing.assert_array_equal(survival_data.intensity_map_data.energy_label, intensity_map_data.energy_label)
+        np.testing.assert_array_equal(survival_data.intensity_map_data.latitude, intensity_map_data.latitude)
+        np.testing.assert_array_equal(survival_data.coords.latitude_delta, input_map.coords.latitude_delta)
+        np.testing.assert_array_equal(survival_data.coords.latitude_label, input_map.coords.latitude_label)
+        np.testing.assert_array_equal(survival_data.intensity_map_data.longitude, intensity_map_data.longitude)
+        np.testing.assert_array_equal(survival_data.coords.longitude_delta, input_map.coords.longitude_delta)
+        np.testing.assert_array_equal(survival_data.coords.longitude_label, input_map.coords.longitude_label)
+        np.testing.assert_array_equal(survival_data.intensity_map_data.exposure_factor,
+                                      intensity_map_data.exposure_factor)
+        np.testing.assert_array_equal(survival_data.intensity_map_data.obs_date, intensity_map_data.obs_date)
+        np.testing.assert_array_equal(survival_data.intensity_map_data.obs_date_range,
+                                      intensity_map_data.obs_date_range)
+        np.testing.assert_array_equal(survival_data.intensity_map_data.solid_angle, intensity_map_data.solid_angle)
 
         self.assertEqual(["l1c_map", "l2_map", "spice1"], survival_data_product.parent_file_names)
 
@@ -374,7 +382,7 @@ class TestHiProcessor(unittest.TestCase):
     @patch('imap_l3_processing.hi.hi_processor.Processor.get_parent_file_names')
     @patch("imap_l3_processing.hi.hi_processor.HiL3SingleSensorFullSpinDependencies.fetch_dependencies")
     @patch("imap_l3_processing.hi.hi_processor.HiProcessor.process_survival_probabilities")
-    @patch("imap_l3_processing.hi.hi_processor.combine_maps")
+    @patch("imap_l3_processing.hi.hi_processor.combine_rectangular_intensity_map_data")
     @patch('imap_l3_processing.hi.hi_processor.save_data')
     @patch('imap_l3_processing.hi.hi_processor.upload')
     def test_process_full_spin_single_sensor_map(self, mock_upload, mock_save_data, mock_combine_maps,
@@ -414,13 +422,13 @@ class TestHiProcessor(unittest.TestCase):
             sentinel.survival_corrected_antiram,
         ])
 
-        mock_save_data.assert_called_once_with(HiL3IntensityDataProduct(
+        mock_save_data.assert_called_once_with(RectangularIntensityDataProduct(
             input_metadata=input_metadata,
             parent_file_names=["antiram_map", "l1c", "ram_map"],
             data=mock_combine_maps.return_value))
         mock_upload.assert_called_once_with(mock_save_data.return_value)
 
-    @patch('imap_l3_processing.hi.hi_processor.combine_maps')
+    @patch('imap_l3_processing.hi.hi_processor.combine_rectangular_intensity_map_data')
     @patch('imap_l3_processing.hi.hi_processor.upload')
     @patch('imap_l3_processing.hi.hi_processor.save_data')
     @patch('imap_l3_processing.hi.hi_processor.Processor.get_parent_file_names')
@@ -457,7 +465,7 @@ class TestHiProcessor(unittest.TestCase):
 
                 mock_combine_maps.assert_called_with(mock_fetch_dependencies.return_value.maps)
                 mock_save_data.assert_called_with(
-                    HiL3IntensityDataProduct(
+                    RectangularIntensityDataProduct(
                         data=mock_combine_maps.return_value,
                         input_metadata=input_metadata,
                         parent_file_names=["spice_file"],
@@ -499,9 +507,9 @@ class TestHiProcessor(unittest.TestCase):
 
         processor = HiProcessor(sentinel.dependencies, sentinel.input_metadata)
         output_map = processor.process_survival_probabilities(survival_dependencies)
-        np.testing.assert_equal(output_map.ena_intensity[0, 0, 76, :], np.full(45, 2.0))
-        np.testing.assert_equal(output_map.ena_intensity[0, 0, 78, :], np.full(45, np.nan))
-        np.testing.assert_equal(output_map.ena_intensity[0, 0, 80, :], np.full(45, 2.0))
+        np.testing.assert_equal(output_map.intensity_map_data.ena_intensity[0, 0, 76, :], np.full(45, 2.0))
+        np.testing.assert_equal(output_map.intensity_map_data.ena_intensity[0, 0, 78, :], np.full(45, np.nan))
+        np.testing.assert_equal(output_map.intensity_map_data.ena_intensity[0, 0, 80, :], np.full(45, 2.0))
 
 
 def create_l1c_pset(epoch: datetime) -> HiL1cData:
@@ -535,24 +543,27 @@ def _create_h1_l3_data(epoch=None, lon=None, lat=None, energy=None, energy_delta
     else:
         more_real_flux = np.full((len(epoch), 9, len(lon), len(lat)), fill_value=1)
 
-    return HiIntensityMapData(
-        epoch=epoch,
-        epoch_delta=np.ma.array([0]),
-        energy=energy,
-        energy_delta_plus=energy_delta,
-        energy_delta_minus=energy_delta,
-        energy_label=np.array(["energy"]),
-        latitude=lat,
-        latitude_delta=np.full_like(lat, 0),
-        latitude_label=lat.astype(str),
-        longitude=lon,
-        longitude_delta=np.full_like(lon, 0),
-        longitude_label=lon.astype(str),
-        exposure_factor=np.full_like(flux, 0),
-        obs_date=np.ma.array(np.full(more_real_flux.shape, datetime(year=2010, month=1, day=1))),
-        obs_date_range=np.ma.array(np.full_like(more_real_flux, 0)),
-        solid_angle=np.full_like(more_real_flux, 0),
-        ena_intensity=flux,
-        ena_intensity_stat_unc=intensity_stat_unc,
-        ena_intensity_sys_err=np.full_like(flux, 0),
+    return RectangularIntensityMapData(
+        intensity_map_data=IntensityMapData(
+            epoch=epoch,
+            epoch_delta=np.ma.array([0]),
+            energy=energy,
+            energy_delta_plus=energy_delta,
+            energy_delta_minus=energy_delta,
+            energy_label=np.array(["energy"]),
+            latitude=lat,
+            longitude=lon,
+            exposure_factor=np.full_like(flux, 0),
+            obs_date=np.ma.array(np.full(more_real_flux.shape, datetime(year=2010, month=1, day=1))),
+            obs_date_range=np.ma.array(np.full_like(more_real_flux, 0)),
+            solid_angle=np.full_like(more_real_flux, 0),
+            ena_intensity=flux,
+            ena_intensity_stat_unc=intensity_stat_unc,
+            ena_intensity_sys_err=np.full_like(flux, 0)),
+        coords=RectangularCoords(
+            latitude_delta=np.full_like(lat, 0),
+            latitude_label=lat.astype(str),
+            longitude_delta=np.full_like(lon, 0),
+            longitude_label=lon.astype(str),
+        )
     )
