@@ -14,9 +14,10 @@ from imap_l3_processing.hi.hi_processor import HiProcessor
 from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3SpectralFitDependencies
 from imap_l3_processing.hi.l3.hi_l3_survival_dependencies import HiL3SurvivalDependencies, \
     HiL3SingleSensorFullSpinDependencies
-from imap_l3_processing.hi.l3.models import HiL3SpectralIndexDataProduct, HiL3IntensityDataProduct, \
-    HiIntensityMapData, HiL1cData, HiGlowsL3eData, HiSpectralMapData
+from imap_l3_processing.hi.l3.models import HiL3IntensityDataProduct, \
+    HiIntensityMapData, HiL1cData, HiGlowsL3eData
 from imap_l3_processing.hi.l3.utils import PixelSize, MapDescriptorParts, parse_map_descriptor
+from imap_l3_processing.map_models import RectangularSpectralIndexDataProduct
 from imap_l3_processing.models import InputMetadata
 from tests.test_helpers import get_test_data_path
 
@@ -69,24 +70,31 @@ class TestHiProcessor(unittest.TestCase):
                                                   hi_l3_data.energy)
 
         mock_save_data.assert_called_once()
-        actual_hi_data_product: HiL3SpectralIndexDataProduct = mock_save_data.call_args_list[0].args[0]
-        actual_hi_data: HiSpectralMapData = actual_hi_data_product.data
+        actual_hi_data_product = mock_save_data.call_args_list[0].args[0]
+        self.assertIsInstance(actual_hi_data_product, RectangularSpectralIndexDataProduct)
+        self.assertEqual(input_metadata, actual_hi_data_product.input_metadata)
+        actual_data = actual_hi_data_product.data
+        spectral_index_data = actual_data.spectral_index_map_data
+        coords = actual_data.coords
         expected_energy_delta_minus = np.array([3])
         expected_energy_delta_plus = np.array([12])
         expected_energy = np.array([4])
         expected_exposure = np.full((1, 1, 3, 2), 2)
-        self.assertEqual(input_metadata, actual_hi_data_product.input_metadata)
-        np.testing.assert_array_equal(expected_energy_delta_minus, actual_hi_data.energy_delta_minus)
-        np.testing.assert_array_equal(expected_energy_delta_plus, actual_hi_data.energy_delta_plus)
-        np.testing.assert_array_equal(expected_index[:, np.newaxis, :, :], actual_hi_data.ena_spectral_index)
+        np.testing.assert_array_equal(expected_energy_delta_minus, spectral_index_data.energy_delta_minus)
+        np.testing.assert_array_equal(expected_energy_delta_plus, spectral_index_data.energy_delta_plus)
+        np.testing.assert_array_equal(expected_index[:, np.newaxis, :, :], spectral_index_data.ena_spectral_index)
         np.testing.assert_array_equal(expected_unc[:, np.newaxis, :, :],
-                                      actual_hi_data.ena_spectral_index_stat_unc)
-        np.testing.assert_array_equal(actual_hi_data.energy, expected_energy)
-        np.testing.assert_array_equal(actual_hi_data.latitude, hi_l3_data.latitude)
-        np.testing.assert_array_equal(actual_hi_data.longitude, hi_l3_data.longitude)
-        np.testing.assert_array_equal(actual_hi_data.epoch, hi_l3_data.epoch)
-        np.testing.assert_array_equal(actual_hi_data.exposure_factor, expected_exposure)
+                                      spectral_index_data.ena_spectral_index_stat_unc)
+        np.testing.assert_array_equal(spectral_index_data.energy, expected_energy)
+        np.testing.assert_array_equal(spectral_index_data.latitude, hi_l3_data.latitude)
+        np.testing.assert_array_equal(spectral_index_data.longitude, hi_l3_data.longitude)
+        np.testing.assert_array_equal(spectral_index_data.epoch, hi_l3_data.epoch)
+        np.testing.assert_array_equal(spectral_index_data.exposure_factor, expected_exposure)
         self.assertEqual(["l2_or_l3_map"], actual_hi_data_product.parent_file_names)
+        np.testing.assert_array_equal(coords.latitude_delta, hi_l3_data.latitude_delta)
+        np.testing.assert_array_equal(coords.longitude_delta, hi_l3_data.longitude_delta)
+        np.testing.assert_array_equal(coords.latitude_label, hi_l3_data.latitude_label)
+        np.testing.assert_array_equal(coords.longitude_label, hi_l3_data.longitude_label)
 
         mock_upload.assert_called_once_with(mock_save_data.return_value)
 
@@ -131,9 +139,9 @@ class TestHiProcessor(unittest.TestCase):
                 processor = HiProcessor(None, input_metadata)
                 output_data = processor.process_spectral_fit_index(dependencies)
 
-                np.testing.assert_allclose(output_data.ena_spectral_index[0, 0],
+                np.testing.assert_allclose(output_data.spectral_index_map_data.ena_spectral_index[0, 0],
                                            expected_gamma, atol=1e-3)
-                np.testing.assert_allclose(output_data.ena_spectral_index_stat_unc[0, 0],
+                np.testing.assert_allclose(output_data.spectral_index_map_data.ena_spectral_index_stat_unc[0, 0],
                                            expected_gamma_sigma, atol=1e-3)
 
     def test_spectral_fit_other_fields(self):
@@ -161,19 +169,22 @@ class TestHiProcessor(unittest.TestCase):
 
         output = processor.process_spectral_fit_index(dependencies)
 
-        self.assertEqual(output.energy.shape[0], 1)
-        self.assertEqual(output.energy[0], 10)
-        np.testing.assert_allclose(output.energy_delta_minus, np.array([9]))
-        np.testing.assert_allclose(output.energy_delta_plus, np.array([90]))
-        self.assertEqual(output.energy_label.shape[0], 1)
-        self.assertEqual("1.0 - 100.0 keV", output.energy_label[0])
+        self.assertEqual(output.spectral_index_map_data.energy.shape[0], 1)
+        self.assertEqual(output.spectral_index_map_data.energy[0], 10)
+        np.testing.assert_allclose(output.spectral_index_map_data.energy_delta_minus, np.array([9]))
+        np.testing.assert_allclose(output.spectral_index_map_data.energy_delta_plus, np.array([90]))
+        self.assertEqual(output.spectral_index_map_data.energy_label.shape[0], 1)
+        self.assertEqual("1.0 - 100.0 keV", output.spectral_index_map_data.energy_label[0])
 
         expected_ena_shape = np.array([1, 1, len(lon), len(lat)])
-        np.testing.assert_array_almost_equal(output.ena_spectral_index, np.zeros(expected_ena_shape))
-        np.testing.assert_array_equal(output.ena_spectral_index_stat_unc, np.zeros(expected_ena_shape))
-        np.testing.assert_array_equal(output.obs_date, np.full(expected_ena_shape, datetime(2026, 1, 1)))
-        np.testing.assert_array_equal(output.obs_date_range, np.full(expected_ena_shape, 2))
-        np.testing.assert_array_equal(output.exposure_factor, np.full(expected_ena_shape, 6))
+        np.testing.assert_array_almost_equal(output.spectral_index_map_data.ena_spectral_index,
+                                             np.zeros(expected_ena_shape))
+        np.testing.assert_array_equal(output.spectral_index_map_data.ena_spectral_index_stat_unc,
+                                      np.zeros(expected_ena_shape))
+        np.testing.assert_array_equal(output.spectral_index_map_data.obs_date,
+                                      np.full(expected_ena_shape, datetime(2026, 1, 1)))
+        np.testing.assert_array_equal(output.spectral_index_map_data.obs_date_range, np.full(expected_ena_shape, 2))
+        np.testing.assert_array_equal(output.spectral_index_map_data.exposure_factor, np.full(expected_ena_shape, 6))
 
     def test_spectral_fit_other_fields_with_one_zero_exposure(self):
         input_energies = np.array([1, 10, 99]) + 0.5
@@ -205,8 +216,10 @@ class TestHiProcessor(unittest.TestCase):
         output = processor.process_spectral_fit_index(dependencies)
 
         expected_ena_shape = np.array([1, 1, len(lon), len(lat)])
-        np.testing.assert_array_equal(output.obs_date, np.full(expected_ena_shape, datetime(2026, 1, 1)), strict=True)
-        np.testing.assert_array_equal(output.obs_date_range, np.full(expected_ena_shape, 2.0), strict=True)
+        np.testing.assert_array_equal(output.spectral_index_map_data.obs_date,
+                                      np.full(expected_ena_shape, datetime(2026, 1, 1)), strict=True)
+        np.testing.assert_array_equal(output.spectral_index_map_data.obs_date_range, np.full(expected_ena_shape, 2.0),
+                                      strict=True)
 
     def test_spectral_fit_other_fields_with_all_zero_exposure(self):
         input_energies = np.array([1, 10, 99]) + 0.5
@@ -231,8 +244,10 @@ class TestHiProcessor(unittest.TestCase):
 
         expected_ena_shape = np.array([1, 1, len(lon), len(lat)])
 
-        np.testing.assert_array_equal(output.obs_date.mask, np.full(expected_ena_shape, True), strict=True)
-        np.testing.assert_array_equal(output.obs_date_range.mask, np.full(expected_ena_shape, True), strict=True)
+        np.testing.assert_array_equal(output.spectral_index_map_data.obs_date.mask, np.full(expected_ena_shape, True),
+                                      strict=True)
+        np.testing.assert_array_equal(output.spectral_index_map_data.obs_date_range.mask,
+                                      np.full(expected_ena_shape, True), strict=True)
 
     @patch('imap_l3_processing.hi.hi_processor.Processor.get_parent_file_names')
     @patch('imap_l3_processing.hi.hi_processor.upload')

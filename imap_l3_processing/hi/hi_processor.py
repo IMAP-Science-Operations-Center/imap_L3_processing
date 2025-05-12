@@ -7,13 +7,14 @@ from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3Spectra
 from imap_l3_processing.hi.l3.hi_l3_survival_dependencies import HiL3SurvivalDependencies, \
     HiL3SingleSensorFullSpinDependencies
 from imap_l3_processing.hi.l3.models import combine_maps, \
-    HiIntensityMapData, HiSpectralMapData, HiL3IntensityDataProduct, HiL3SpectralIndexDataProduct, \
-    calculate_datetime_weighted_average
+    HiIntensityMapData, HiL3IntensityDataProduct, calculate_datetime_weighted_average
 from imap_l3_processing.hi.l3.science.spectral_fit import spectral_fit
 from imap_l3_processing.hi.l3.science.survival_probability import HiSurvivalProbabilityPointingSet, \
     HiSurvivalProbabilitySkyMap
 from imap_l3_processing.hi.l3.utils import parse_map_descriptor, MapQuantity, MapDescriptorParts, SurvivalCorrection, \
     SpinPhase, Duration, Sensor
+from imap_l3_processing.map_models import RectangularSpectralIndexDataProduct, RectangularSpectralIndexMapData, \
+    SpectralIndexMapData, RectangularCoords
 from imap_l3_processing.processor import Processor
 from imap_l3_processing.utils import save_data, combine_glows_l3e_with_l1c_pointing
 
@@ -26,9 +27,9 @@ class HiProcessor(Processor):
         match parsed_descriptor:
             case MapDescriptorParts(quantity=MapQuantity.SpectralIndex):
                 hi_l3_spectral_fit_dependencies = HiL3SpectralFitDependencies.fetch_dependencies(self.dependencies)
-                map = self.process_spectral_fit_index(hi_l3_spectral_fit_dependencies)
-                data_product = HiL3SpectralIndexDataProduct(
-                    data=map,
+                map_data = self.process_spectral_fit_index(hi_l3_spectral_fit_dependencies)
+                data_product = RectangularSpectralIndexDataProduct(
+                    data=map_data,
                     input_metadata=self.input_metadata,
                 )
             case MapDescriptorParts(survival_correction=SurvivalCorrection.SurvivalCorrected,
@@ -75,15 +76,15 @@ class HiProcessor(Processor):
         cdf_path = save_data(data_product)
         upload(cdf_path)
 
-    def process_full_spin_single_sensor(self,
-                                        hi_l3_full_spin_dependencies: HiL3SingleSensorFullSpinDependencies) -> HiIntensityMapData:
+    def process_full_spin_single_sensor(self, hi_l3_full_spin_dependencies: HiL3SingleSensorFullSpinDependencies) \
+            -> HiIntensityMapData:
         ram_data_product = self.process_survival_probabilities(hi_l3_full_spin_dependencies.ram_dependencies)
         antiram_data_product = self.process_survival_probabilities(hi_l3_full_spin_dependencies.antiram_dependencies)
 
         return combine_maps([ram_data_product, antiram_data_product])
 
-    def process_spectral_fit_index(self,
-                                   hi_l3_spectral_fit_dependencies: HiL3SpectralFitDependencies) -> HiSpectralMapData:
+    def process_spectral_fit_index(self, hi_l3_spectral_fit_dependencies: HiL3SpectralFitDependencies) \
+            -> RectangularSpectralIndexMapData:
         input_data = hi_l3_spectral_fit_dependencies.hi_l3_data
         hi_l3_data = input_data
 
@@ -107,26 +108,29 @@ class HiProcessor(Processor):
         mean_obs_date_range = np.ma.average(input_data.obs_date_range, weights=input_data.exposure_factor, axis=1,
                                             keepdims=True)
         total_exposure_factor = np.sum(input_data.exposure_factor, axis=1, keepdims=True)
-
-        return HiSpectralMapData(
-            ena_spectral_index_stat_unc=errors[:, np.newaxis, :, :],
-            ena_spectral_index=gammas[:, np.newaxis, :, :],
-            epoch=input_data.epoch,
-            epoch_delta=input_data.epoch_delta,
-            energy=np.array([mean_energy]),
-            energy_delta_plus=np.array([max_energy - mean_energy]),
-            energy_delta_minus=np.array([mean_energy - min_energy]),
-            energy_label=np.array([new_energy_label]),
-            latitude=input_data.latitude,
-            latitude_delta=input_data.latitude_delta,
-            latitude_label=input_data.latitude_label,
-            longitude=input_data.longitude,
-            longitude_delta=input_data.longitude_delta,
-            longitude_label=input_data.longitude_label,
-            exposure_factor=total_exposure_factor,
-            obs_date=mean_obs_date,
-            obs_date_range=mean_obs_date_range,
-            solid_angle=input_data.solid_angle,
+        return RectangularSpectralIndexMapData(
+            spectral_index_map_data=SpectralIndexMapData(
+                ena_spectral_index_stat_unc=errors[:, np.newaxis, :, :],
+                ena_spectral_index=gammas[:, np.newaxis, :, :],
+                epoch=input_data.epoch,
+                epoch_delta=input_data.epoch_delta,
+                energy=np.array([mean_energy]),
+                energy_delta_plus=np.array([max_energy - mean_energy]),
+                energy_delta_minus=np.array([mean_energy - min_energy]),
+                energy_label=np.array([new_energy_label]),
+                latitude=input_data.latitude,
+                longitude=input_data.longitude,
+                exposure_factor=total_exposure_factor,
+                obs_date=mean_obs_date,
+                obs_date_range=mean_obs_date_range,
+                solid_angle=input_data.solid_angle,
+            ),
+            coords=RectangularCoords(
+                latitude_delta=input_data.latitude_delta,
+                latitude_label=input_data.latitude_label,
+                longitude_delta=input_data.longitude_delta,
+                longitude_label=input_data.longitude_label,
+            )
         )
 
     def process_survival_probabilities(self, hi_survival_probabilities_dependencies: HiL3SurvivalDependencies) \
