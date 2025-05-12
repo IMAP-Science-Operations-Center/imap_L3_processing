@@ -67,6 +67,9 @@ def convert_json_to_l3d_data_product(json_file_path: Path, input_metadata: Input
     with open(json_file_path, 'r') as json_file:
         l3d_json_dict = json.load(json_file)
 
+    new_start = datetime.fromisoformat(l3d_json_dict['time_grid'][0])
+    input_metadata.start_date = new_start.date()
+
     return GlowsL3DSolarParamsHistory(
         input_metadata=input_metadata,
         parent_file_names=parent_file_names,
