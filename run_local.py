@@ -39,7 +39,7 @@ from imap_l3_processing.hi.l3.hi_l3_combined_sensor_dependencies import HiL3Comb
 from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3SpectralFitDependencies
 from imap_l3_processing.hi.l3.hi_l3_survival_dependencies import HiL3SurvivalDependencies, \
     HiL3SingleSensorFullSpinDependencies
-from imap_l3_processing.hi.l3.models import HiL3SpectralIndexDataProduct, HiL3IntensityDataProduct, combine_maps
+from imap_l3_processing.hi.l3.models import HiL3IntensityDataProduct, combine_maps
 from imap_l3_processing.hit.l3.hit_l3_sectored_dependencies import HITL3SectoredDependencies
 from imap_l3_processing.hit.l3.hit_processor import HitProcessor
 from imap_l3_processing.hit.l3.models import HitL1Data
@@ -49,6 +49,7 @@ from imap_l3_processing.hit.l3.pha.science.gain_lookup_table import GainLookupTa
 from imap_l3_processing.hit.l3.pha.science.hit_event_type_lookup import HitEventTypeLookup
 from imap_l3_processing.hit.l3.pha.science.range_fit_lookup import RangeFitLookup
 from imap_l3_processing.hit.l3.utils import read_l2_hit_data
+from imap_l3_processing.map_models import RectangularSpectralIndexDataProduct
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density import \
     AlphaTemperatureDensityCalibrationTable
@@ -303,7 +304,7 @@ def create_spectral_index_cdf(dependencies: HiL3SpectralFitDependencies) -> str:
                                    )
     processor = HiProcessor(Mock(), input_metadata)
     output_data = processor.process_spectral_fit_index(dependencies)
-    data_product = HiL3SpectralIndexDataProduct(data=output_data, input_metadata=input_metadata)
+    data_product = RectangularSpectralIndexDataProduct(data=output_data, input_metadata=input_metadata)
     cdf_path = save_data(data_product, delete_if_present=True)
     return cdf_path
 

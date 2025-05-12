@@ -61,12 +61,6 @@ class HiIntensityMapData(HiMapData):
     ena_intensity_sys_err: np.ndarray
 
 
-@dataclass
-class HiSpectralMapData(HiMapData):
-    ena_spectral_index: np.ndarray
-    ena_spectral_index_stat_unc: np.ndarray
-
-
 def hi_data_to_product(data: HiMapData) -> list[DataProductVariable]:
     return [
         DataProductVariable(EPOCH_VAR_NAME, data.epoch),
@@ -86,17 +80,6 @@ def hi_data_to_product(data: HiMapData) -> list[DataProductVariable]:
         DataProductVariable(OBS_DATE_RANGE_VAR_NAME, data.obs_date_range),
         DataProductVariable(SOLID_ANGLE_VAR_NAME, data.solid_angle),
     ]
-
-
-@dataclass
-class HiL3SpectralIndexDataProduct(DataProduct):
-    data: HiSpectralMapData
-
-    def to_data_product_variables(self) -> list[DataProductVariable]:
-        return hi_data_to_product(self.data) + [
-            DataProductVariable(ENA_SPECTRAL_INDEX_VAR_NAME, self.data.ena_spectral_index),
-            DataProductVariable(ENA_SPECTRAL_INDEX_STAT_UNC_VAR_NAME, self.data.ena_spectral_index_stat_unc),
-        ]
 
 
 @dataclass

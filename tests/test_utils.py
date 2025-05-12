@@ -13,7 +13,8 @@ from spacepy.pycdf import CDF
 from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH, FIVE_MINUTES_IN_NANOSECONDS, ONE_SECOND_IN_NANOSECONDS, \
     SECONDS_PER_DAY
 from imap_l3_processing.hi.l3.models import HiL1cData, HiGlowsL3eData
-from imap_l3_processing.models import UpstreamDataDependency, RectangularIntensityMapData
+from imap_l3_processing.map_models import RectangularIntensityMapData
+from imap_l3_processing.models import UpstreamDataDependency
 from imap_l3_processing.swapi.l3a.models import SwapiL3AlphaSolarWindData
 from imap_l3_processing.utils import format_time, download_dependency, read_l1d_mag_data, save_data, \
     find_glows_l3e_dependencies, \

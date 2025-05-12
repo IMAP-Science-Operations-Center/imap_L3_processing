@@ -67,3 +67,6 @@ class MassSpeciesBinLookup:
             return np.where(self._range_to_species['nsw_species'] == species)[0] + num_sw_species
         else:
             return np.where(self._range_to_species['sw_species'] == species)[0]
+
+    def get_num_species(self):
+        return len(self._range_to_species['sw_species']) + len(self._range_to_species['nsw_species'])

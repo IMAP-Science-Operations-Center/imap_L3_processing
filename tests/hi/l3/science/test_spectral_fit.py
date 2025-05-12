@@ -26,15 +26,12 @@ class TestSpectralFit(unittest.TestCase):
 
         errors = 0.2 * np.abs(flux_data)
 
-        num_lats = 1
-        num_lons = 1
-        num_epochs = 1
-        flux = np.array(flux_data).reshape(num_epochs, len(energies), num_lons, num_lats)
-        variance = np.array(errors).reshape(num_epochs, len(energies), num_lons, num_lats)
+        flux = np.array(flux_data).reshape(1, len(energies), 1, 1)
+        variance = np.array(errors).reshape(1, len(energies), 1, 1)
 
-        result, result_error = spectral_fit(num_epochs, num_lons, num_lats, flux, variance, energies)
-        np.testing.assert_array_equal(result, np.array(true_gamma).reshape(1, 1, 1))
-        np.testing.assert_array_almost_equal(result_error, np.array([0.04120789]).reshape(1, 1, 1))
+        result, result_error = spectral_fit(flux, variance, energies)
+        np.testing.assert_array_equal(result, np.array(true_gamma).reshape(1, 1, 1, 1))
+        np.testing.assert_array_almost_equal(result_error, np.array([0.04120789]).reshape(1, 1, 1, 1))
 
     def test_finds_best_fit_with_nan_in_flux(self):
         energies = np.geomspace(1, 10, 23)
@@ -46,14 +43,11 @@ class TestSpectralFit(unittest.TestCase):
 
         errors = 0.2 * np.abs(flux_data)
 
-        num_lats = 1
-        num_lons = 1
-        num_epochs = 1
-        flux = np.array(flux_data).reshape(num_epochs, len(energies), num_lons, num_lats)
-        variance = np.array(errors).reshape(num_epochs, len(energies), num_lons, num_lats)
+        flux = np.array(flux_data).reshape(1, len(energies), 1, 1)
+        variance = np.array(errors).reshape(1, len(energies), 1, 1)
 
-        result, result_error = spectral_fit(num_epochs, num_lons, num_lats, flux, variance, energies)
-        np.testing.assert_array_equal(result, np.array(true_gamma).reshape(1, 1, 1))
+        result, result_error = spectral_fit(flux, variance, energies)
+        np.testing.assert_array_equal(result, np.array(true_gamma).reshape(1, 1, 1, 1))
 
     def test_finds_best_fit_with_nan_in_uncertainty(self):
         energies = np.geomspace(1, 10, 23)
@@ -65,14 +59,11 @@ class TestSpectralFit(unittest.TestCase):
         errors[0] = np.nan
         errors[-1] = np.nan
 
-        num_lats = 1
-        num_lons = 1
-        num_epochs = 1
-        flux = np.array(flux_data).reshape(num_epochs, len(energies), num_lons, num_lats)
-        variance = np.array(errors).reshape(num_epochs, len(energies), num_lons, num_lats)
+        flux = np.array(flux_data).reshape(1, len(energies), 1, 1)
+        variance = np.array(errors).reshape(1, len(energies), 1, 1)
 
-        result, result_error = spectral_fit(num_epochs, num_lons, num_lats, flux, variance, energies)
-        np.testing.assert_array_equal(result, np.array(true_gamma).reshape(1, 1, 1))
+        result, result_error = spectral_fit(flux, variance, energies)
+        np.testing.assert_array_equal(result, np.array(true_gamma).reshape(1, 1, 1, 1))
 
     def test_finds_best_fit_with_zero_in_flux_and_uncertainty(self):
         energies = np.geomspace(1, 10, 23)
@@ -80,17 +71,14 @@ class TestSpectralFit(unittest.TestCase):
         flux_data = true_A * np.power(energies, -true_gamma)
         errors = 0.2 * np.abs(flux_data)
 
-        num_lats = 1
-        num_lons = 1
-        num_epochs = 1
         flux_data[0:3] = 0
         errors[0:3] = 0
 
-        flux = np.array(flux_data).reshape(num_epochs, len(energies), num_lons, num_lats)
-        variance = np.array(errors).reshape(num_epochs, len(energies), num_lons, num_lats)
+        flux = np.array(flux_data).reshape(1, len(energies), 1, 1)
+        variance = np.array(errors).reshape(1, len(energies), 1, 1)
 
-        result, result_error = spectral_fit(num_epochs, num_lons, num_lats, flux, variance, energies)
-        np.testing.assert_array_equal(result, np.array(true_gamma).reshape(1, 1, 1))
+        result, result_error = spectral_fit(flux, variance, energies)
+        np.testing.assert_array_equal(result, np.array(true_gamma).reshape(1, 1, 1, 1))
 
     def test_finds_best_fit_with_ibex_data(self):
         energies = np.array([0.71, 1.11, 1.74, 2.73, 4.29])
@@ -115,15 +103,11 @@ class TestSpectralFit(unittest.TestCase):
                             [[3.00438000e-01, 3.76740000e-01],
                              [2.15943000e-01, 3.76271000e-01]]]])
 
-        num_lats = 2
-        num_lons = 2
-        num_epochs = 1
-
-        result, result_error = spectral_fit(num_epochs, num_lons, num_lats, flux_data, errors, energies)
-        np.testing.assert_array_almost_equal(result, np.array([[[1.28922, 1.060341],
-                                                                [1.201249, 0.974847]]]))
-        np.testing.assert_array_almost_equal(result_error, np.array([[[0.121739, 0.168973],
-                                                                      [0.111328, 0.153143]]]))
+        result, result_error = spectral_fit(flux_data, errors, energies)
+        np.testing.assert_array_almost_equal(result, np.array([[[[1.28922, 1.060341],
+                                                                 [1.201249, 0.974847]]]]))
+        np.testing.assert_array_almost_equal(result_error, np.array([[[[0.121739, 0.168973],
+                                                                       [0.111328, 0.153143]]]]))
 
     def test_finds_best_fit_with_zeros_in_flux_and_not_uncertainty(self):
         energies = np.geomspace(1, 1e10, 23)
@@ -134,14 +118,11 @@ class TestSpectralFit(unittest.TestCase):
 
         flux_data[0:3] = 0
 
-        num_lats = 1
-        num_lons = 1
-        num_epochs = 1
-        flux = np.array(flux_data).reshape(num_epochs, len(energies), num_lons, num_lats)
-        variance = np.array(errors).reshape(num_epochs, len(energies), num_lons, num_lats)
+        flux = np.array(flux_data).reshape(1, len(energies), 1, 1)
+        variance = np.array(errors).reshape(1, len(energies), 1, 1)
 
-        result, result_error = spectral_fit(num_epochs, num_lons, num_lats, flux, variance, energies)
-        np.testing.assert_array_almost_equal(result, np.array(1.599474).reshape(1, 1, 1))
+        result, result_error = spectral_fit(flux, variance, energies)
+        np.testing.assert_array_almost_equal(result, np.array(1.599474).reshape(1, 1, 1, 1))
 
     def test_returns_nan_when_only_one_point_is_valid(self):
         energies = np.geomspace(1, 1e10, 5)
@@ -153,12 +134,9 @@ class TestSpectralFit(unittest.TestCase):
         flux_data[1:] = 0
         errors[1:] = 0
 
-        num_lats = 1
-        num_lons = 1
-        num_epochs = 1
-        flux = np.array(flux_data).reshape(num_epochs, len(energies), num_lons, num_lats)
-        variance = np.array(errors).reshape(num_epochs, len(energies), num_lons, num_lats)
+        flux = np.array(flux_data).reshape(1, len(energies), 1, 1)
+        variance = np.array(errors).reshape(1, len(energies), 1, 1)
 
-        result, result_error = spectral_fit(num_epochs, num_lons, num_lats, flux, variance, energies)
-        np.testing.assert_array_almost_equal(result, np.array(np.nan).reshape(1, 1, 1))
-        np.testing.assert_array_almost_equal(result_error, np.array(np.nan).reshape(1, 1, 1))
+        result, result_error = spectral_fit(flux, variance, energies)
+        np.testing.assert_array_almost_equal(result, np.array(np.nan).reshape(1, 1, 1, 1))
+        np.testing.assert_array_almost_equal(result_error, np.array(np.nan).reshape(1, 1, 1, 1))
