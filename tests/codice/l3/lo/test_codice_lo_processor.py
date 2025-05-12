@@ -167,26 +167,69 @@ class TestCodiceLoProcessor(unittest.TestCase):
         np.testing.assert_array_almost_equal(ratios_data_product.o7_to_o6_ratio, np.array([9 / 6, 15 / 14]))
         np.testing.assert_array_almost_equal(ratios_data_product.felo_to_fehi_ratio, np.array([5 / 2, 12 / 11]))
 
+    def test_process_ratios_calculate_abundance_ratios_using_safe_divide(self):
+        now = datetime.now()
+        data = CodiceLoPartialDensityData(
+            epoch=np.array(
+                [now, now + timedelta(minutes=4), now + timedelta(minutes=8)]),
+            epoch_delta=np.array([120_000_000_000, 120_000_000_000, 120_000_000_000]),
+            fe_hiq_partial_density=np.array([0, 0, 0]),
+            fe_loq_partial_density=np.array([0, 0, 0]),
+            oplus5_partial_density=np.array([0, 0, 0]),
+            oplus6_partial_density=np.array([0, 0, 0]),
+            oplus7_partial_density=np.array([0, 0, 0]),
+            oplus8_partial_density=np.array([0, 0, 0]),
+            mg_partial_density=np.array([0, 0, 0]),
+            cplus4_partial_density=np.array([0, 0, 0]),
+            cplus5_partial_density=np.array([0, 0, 0]),
+            cplus6_partial_density=np.array([0, 0, 0]),
+            ne_partial_density=np.arange(3),
+            si_partial_density=np.arange(3),
+            heplusplus_partial_density=np.arange(3),
+            hplus_partial_density=np.arange(3),
+        )
+
+        dependency = CodiceLoL3aRatiosDependencies(data)
+        input_metadata = Mock()
+        processor = CodiceLoProcessor(dependencies=Mock(), input_metadata=input_metadata)
+
+        with warnings.catch_warnings(record=True) as w:
+            ratios_data_product = processor.process_l3a_ratios(dependency)
+        self.assertEqual(0, len(w))
+
+        self.assertEqual(input_metadata, ratios_data_product.input_metadata)
+        np.testing.assert_array_equal(ratios_data_product.epoch,
+                                      [now + timedelta(minutes=4)])
+        np.testing.assert_array_equal(ratios_data_product.epoch_delta, [360_000_000_000])
+        np.testing.assert_array_almost_equal(ratios_data_product.fe_to_o_ratio, np.array([np.nan]))
+        np.testing.assert_array_almost_equal(ratios_data_product.mg_to_o_ratio, np.array([np.nan]))
+        np.testing.assert_array_almost_equal(ratios_data_product.c_to_o_ratio, np.array([np.nan]))
+        np.testing.assert_array_almost_equal(ratios_data_product.c6_to_c4_ratio, np.array([np.nan]))
+        np.testing.assert_array_almost_equal(ratios_data_product.c6_to_c5_ratio, np.array([np.nan]))
+        np.testing.assert_array_almost_equal(ratios_data_product.o7_to_o6_ratio, np.array([np.nan]))
+        np.testing.assert_array_almost_equal(ratios_data_product.felo_to_fehi_ratio, np.array([np.nan]))
+
     def test_process_abundances_calculates_abundance_ratios(self):
         now = datetime.now()
         data = CodiceLoPartialDensityData(
             epoch=np.array(
-                [now, now + timedelta(minutes=4)]),
-            epoch_delta=np.array([120_000_000_000, 120_000_000_000]),
-            fe_hiq_partial_density=np.arange(2),
-            fe_loq_partial_density=np.arange(2),
-            oplus5_partial_density=np.array([1, 2]),
-            oplus6_partial_density=np.array([5, 6]),
-            oplus7_partial_density=np.array([8, 9]),
-            oplus8_partial_density=np.array([11, 12]),
-            mg_partial_density=np.arange(2),
-            cplus4_partial_density=np.array([17, 18]),
-            cplus5_partial_density=np.array([20, 21]),
-            cplus6_partial_density=np.array([23, 24]),
-            ne_partial_density=np.arange(2),
-            si_partial_density=np.arange(2),
-            heplusplus_partial_density=np.arange(2),
-            hplus_partial_density=np.arange(2),
+                [now, now + timedelta(minutes=4), now + timedelta(minutes=8),
+                 now + timedelta(minutes=12), now + timedelta(minutes=16)]),
+            epoch_delta=np.array([120_000_000_000, 120_000_000_000, 120_000_000_000, 120_000_000_000, 120_000_000_000]),
+            fe_hiq_partial_density=np.arange(5),
+            fe_loq_partial_density=np.arange(5),
+            oplus5_partial_density=np.array([0, 1, 2, 2, 2]),
+            oplus6_partial_density=np.array([5, 5, 5, 6, 6]),
+            oplus7_partial_density=np.array([8, 8, 8, 9, 9]),
+            oplus8_partial_density=np.array([11, 11, 11, 12, 12, ]),
+            mg_partial_density=np.arange(5),
+            cplus4_partial_density=np.array([16, 17, 18, 18, 18]),
+            cplus5_partial_density=np.array([20, 20, 20, 21, 21]),
+            cplus6_partial_density=np.array([23, 23, 23, 24, 24]),
+            ne_partial_density=np.arange(5),
+            si_partial_density=np.arange(5),
+            heplusplus_partial_density=np.arange(5),
+            hplus_partial_density=np.arange(5),
         )
 
         dependency = CodiceLoL3aRatiosDependencies(data)
@@ -197,8 +240,8 @@ class TestCodiceLoProcessor(unittest.TestCase):
         self.assertIsInstance(abundances_data_product, CodiceLoL3ChargeStateDistributionsDataProduct)
         self.assertEqual(input_metadata, abundances_data_product.input_metadata)
         np.testing.assert_array_equal(abundances_data_product.epoch,
-                                      [now, now + timedelta(minutes=4)])
-        np.testing.assert_array_equal(abundances_data_product.epoch_delta, [120_000_000_000, 120_000_000_000])
+                                      [now + timedelta(minutes=4), now + timedelta(minutes=14)])
+        np.testing.assert_array_equal(abundances_data_product.epoch_delta, [360_000_000_000, 240_000_000_000])
 
         np.testing.assert_array_almost_equal(abundances_data_product.oxygen_charge_state_distribution,
                                              np.array(
@@ -246,7 +289,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
         with warnings.catch_warnings(record=True) as w:
             abundances_data_product = processor.process_l3a_abundances(dependency)
         self.assertEqual(0, len(w))
-        
+
         self.assertIsInstance(abundances_data_product, CodiceLoL3ChargeStateDistributionsDataProduct)
         self.assertEqual(input_metadata, abundances_data_product.input_metadata)
         np.testing.assert_array_equal(abundances_data_product.epoch,
@@ -438,7 +481,10 @@ class TestCodiceLoProcessor(unittest.TestCase):
          expected_apd_id,
          expected_multi_flag,
          expected_pha_type,
-         expected_tof) = [np.full((len(epochs), 7, len(event_num)), np.nan) for _ in range(8)]
+         expected_tof,
+         expected_spin_angle,
+         expected_elevation,
+         ) = [np.full((len(epochs), 7, len(event_num)), np.nan) for _ in range(10)]
 
         (expected_data_quality,
          expected_num_events) = [np.full((len(epochs), 7), np.nan) for _ in range(2)]
@@ -467,9 +513,10 @@ class TestCodiceLoProcessor(unittest.TestCase):
             expected_apd_id[:, i, :] = np.copy(priority_event.apd_id)
             expected_multi_flag[:, i, :] = np.copy(priority_event.multi_flag)
             expected_tof[:, i, :] = np.copy(priority_event.tof)
+            expected_spin_angle[:, i, :] = np.copy(priority_event.spin_angle)
+            expected_elevation[:, i, :] = np.copy(priority_event.elevation)
             expected_mass[:, i, :] = np.copy(mass)
             expected_mass_per_charge[:, i, :] = np.copy(mass_per_charge)
-
             expected_data_quality[:, i] = np.copy(priority_event.data_quality)
             expected_num_events[:, i] = np.copy(priority_event.num_events)
 
@@ -516,6 +563,8 @@ class TestCodiceLoProcessor(unittest.TestCase):
         np.testing.assert_array_equal(priority_index, l3a_direct_event_data_product.priority_index)
         np.testing.assert_array_equal(expected_mass_per_charge, l3a_direct_event_data_product.mass_per_charge)
         np.testing.assert_array_equal(expected_mass, l3a_direct_event_data_product.mass)
+        np.testing.assert_array_equal(expected_spin_angle, l3a_direct_event_data_product.spin_angle)
+        np.testing.assert_array_equal(expected_elevation, l3a_direct_event_data_product.elevation)
 
         mock_calculate_normalization_ratio.assert_has_calls(expected_calculate_normalization_calls)
         mock_calculate_mass.assert_has_calls(expected_calculate_mass_calls)

@@ -1,0 +1,4 @@
+imap_codice_l3b_hi-pitch-angle:
+  Data_level: "3b"
+  Data_type: L3B_hi-pitch-angle>Level-3b pitch angle
+  Logical_source_description: IMAP Mission CoDICE Hi Instrument Pitch Angle

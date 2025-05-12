@@ -1,6 +1,6 @@
 import unittest
 from datetime import datetime, timedelta
-from unittest.mock import patch, sentinel, Mock
+from unittest.mock import patch, sentinel, Mock, call
 
 import numpy as np
 
@@ -11,7 +11,8 @@ from imap_l3_processing.codice.l3.hi.direct_event.science.tof_lookup import TOFL
 from imap_l3_processing.codice.l3.hi.models import PriorityEventL2, CodiceL2HiData, CodiceHiL2SectoredIntensitiesData, \
     CODICE_HI_NUM_L2_PRIORITIES
 from imap_l3_processing.codice.l3.hi.pitch_angle.codice_pitch_angle_dependencies import CodicePitchAngleDependencies
-from imap_l3_processing.models import InputMetadata, MagL1dData
+from imap_l3_processing.models import InputMetadata
+from tests.test_helpers import NumpyArrayMatcher
 
 
 class TestCodiceHiProcessor(unittest.TestCase):
@@ -114,102 +115,186 @@ class TestCodiceHiProcessor(unittest.TestCase):
 
         np.testing.assert_array_equal(expected_energy_per_nuc, codice_direct_event_product.energy_per_nuc)
 
-    def test_process_l3b(self):
+    @patch("imap_l3_processing.codice.l3.hi.codice_hi_processor.calculate_unit_vector")
+    @patch("imap_l3_processing.codice.l3.hi.codice_hi_processor.get_sector_unit_vectors")
+    @patch("imap_l3_processing.codice.l3.hi.codice_hi_processor.calculate_pitch_angle")
+    @patch("imap_l3_processing.codice.l3.hi.codice_hi_processor.calculate_gyrophase")
+    @patch("imap_l3_processing.codice.l3.hi.codice_hi_processor.rebin_by_pitch_angle_and_gyrophase")
+    def test_process_l3b_with_mocks(self, mock_rebin_by_pitch_angle_and_gyrophase, mock_calculate_gyrophases,
+                                    mock_calculate_pitch_angles, mock_get_sector_unit_vectors,
+                                    mock_calculate_unit_vector):
         rng = np.random.default_rng()
         epoch_1 = datetime(2025, 2, 5)
         epoch_2 = datetime(2025, 2, 6)
-        mag_l1d_data = MagL1dData(
-            epoch=np.array([epoch_1, epoch_1 + timedelta(days=0.49), epoch_2, epoch_2 + timedelta(days=0.49)]),
-            mag_data=np.array(
-                [
-                    [.5, .25, .25], [.5, .25, .25],
-                    [.5, .5, 0], [.5, .5, 0]
-                ]),
-        )
-        spin_sector = np.array([60, 150])
-        ssd_id = np.array([270, 15])
-
         epoch = np.array([epoch_1, epoch_2])
-        epoch_delta = np.array([timedelta(days=.5), timedelta(days=.5)])
-        energy = np.array([1.11, 1.17])
-        energy_delta_minus = np.repeat(.4, len(energy))
-        energy_delta_plus = np.repeat(1.6, len(energy))
+        epoch_delta = np.full(epoch.shape, timedelta(days=.5))
 
-        h_intensity = np.array([
+        rebinned_mag_data = rng.random((len(epoch), 3))
+        mag_l1d_data = Mock()
+        mag_l1d_data.rebin_to.return_value = rebinned_mag_data
 
-            [np.arange(1, 5).reshape(2, 2),
-             np.arange(1, 5).reshape(2, 2) * 2, ],
-            [np.arange(6, 10).reshape(2, 2),
-             np.arange(6, 10).reshape(2, 2) * 2, ]
-        ])
-        he4_intensity = rng.random((len(epoch), len(energy), len(ssd_id), len(spin_sector)))
-        o_intensity = rng.random((len(epoch), len(energy), len(ssd_id), len(spin_sector)))
-        fe_intensity = rng.random((len(epoch), len(energy), len(ssd_id), len(spin_sector)))
-
-        expected_h_rebinned_pitch_angles = np.mean(h_intensity, axis=2)
-        expected_he4_rebinned_pitch_angles = np.mean(he4_intensity, axis=2)
-        expected_o_rebinned_pitch_angles = np.mean(o_intensity, axis=2)
-        expected_fe_rebinned_pitch_angles = np.mean(fe_intensity, axis=2)
+        h_intensity = rng.random((len(epoch), len(np.array([1.11, 1.17]) * 1.4), len(np.array([270, 15])), len(
+            np.array([15, 45, 75, 105, 135, 165]))))
+        he3he4_intensity = rng.random((len(epoch), len(np.array([1.11, 1.17]) * 1.4), len(np.array([270, 15])), len(
+            np.array([15, 45, 75, 105, 135, 165]))))
+        cno_intensity = rng.random((len(epoch), len(np.array([1.11, 1.17, 1.25])), len(np.array([270, 15])), len(
+            np.array([15, 45, 75, 105, 135, 165]))))
+        fe_intensity = rng.random(
+            (len(epoch), len(np.array([1.11, 1.17]) * 1.3), len(np.array([270, 15])),
+             len(np.array([15, 45, 75, 105, 135, 165]))))
 
         codice_l2_data = CodiceHiL2SectoredIntensitiesData(
             epoch=epoch,
-            epoch_delta=epoch_delta,
-            energy=energy,
-            ssd_id=ssd_id,
-            spin_sector=spin_sector,
+            epoch_delta_plus=epoch_delta,
+            data_quality=sentinel.data_quality,
+            ssd_index=(np.array([270, 15])),
+            spin_sector_index=(np.array([15, 45, 75, 105, 135, 165])),
             h_intensities=h_intensity,
-            he4_intensities=he4_intensity,
-            o_intensities=o_intensity,
+            energy_h=(np.array([1.11, 1.17])),
+            energy_h_delta=(np.repeat(1.6, len(np.array([1.11, 1.17])))),
+            cno_intensities=cno_intensity,
+            energy_cno=(np.array([1.11, 1.17, 1.25])),
+            energy_cno_delta=(np.repeat(1.6, len(np.array([1.11, 1.17])))),
             fe_intensities=fe_intensity,
-            energy_delta_minus=energy_delta_minus,
-            energy_delta_plus=energy_delta_plus
+            energy_fe=(np.array([1.11, 1.17]) * 1.3),
+            energy_fe_delta=(np.repeat(1.6, len(np.array([1.11, 1.17])))),
+            he3he4_intensities=he3he4_intensity,
+            energy_he3he4=(np.array([1.11, 1.17]) * 1.4),
+            energy_he3he4_delta=(np.repeat(1.6, len(np.array([1.11, 1.17])))),
         )
 
         dependencies = CodicePitchAngleDependencies(mag_l1d_data=mag_l1d_data,
                                                     codice_sectored_intensities_data=codice_l2_data)
+
+        expected_pitch_angles = np.linspace(15, 165, 6)
+        expected_gyrophase = np.linspace(15, 345, 12)
+
+        expected_pitch_angle_delta = np.repeat(15, 6)
+        expected_gyrophase_delta = np.repeat(15, 12)
+
+        sector_unit_vectors = rng.random((2, 6, 3))
+        mag_unit_vectors = rng.random((2, 3))
+        mock_calculate_unit_vector.side_effect = [mag_unit_vectors, sector_unit_vectors]
+
+        mock_calculate_gyrophases.side_effect = [
+            sentinel.epoch1_gyrophase,
+            sentinel.epoch2_gyrophase,
+        ]
+
+        mock_calculate_pitch_angles.side_effect = [
+            sentinel.epoch1_pitch_angle,
+            sentinel.epoch2_pitch_angle,
+        ]
+
+        expected_h_intensity_binned_by_pa = rng.random((2, 2, 6))
+        expected_he4_intensity_binned_by_pa = rng.random((2, 2, 6))
+        expected_cno_intensity_binned_by_pa = rng.random((2, 3, 6))
+        expected_fe_intensity_binned_by_pa = rng.random((2, 2, 6))
+
+        expected_h_intensity_binned_by_pa_and_gyro = rng.random((2, 2, 6, 12))
+        expected_he4_intensity_binned_by_pa_and_gyro = rng.random((2, 2, 6, 12))
+        expected_cno_intensity_binned_by_pa_and_gyro = rng.random((2, 3, 6, 12))
+        expected_fe_intensity_binned_by_pa_and_gyro = rng.random((2, 2, 6, 12))
+
+        mock_rebin_by_pitch_angle_and_gyrophase.side_effect = [
+            (expected_h_intensity_binned_by_pa_and_gyro[0], 0, 0, expected_h_intensity_binned_by_pa[0], 0, 0),
+            (expected_he4_intensity_binned_by_pa_and_gyro[0], 0, 0, expected_he4_intensity_binned_by_pa[0], 0, 0),
+            (expected_cno_intensity_binned_by_pa_and_gyro[0], 0, 0, expected_cno_intensity_binned_by_pa[0], 0, 0),
+            (expected_fe_intensity_binned_by_pa_and_gyro[0], 0, 0, expected_fe_intensity_binned_by_pa[0], 0, 0),
+            (expected_h_intensity_binned_by_pa_and_gyro[1], 0, 0, expected_h_intensity_binned_by_pa[1], 0, 0),
+            (expected_he4_intensity_binned_by_pa_and_gyro[1], 0, 0, expected_he4_intensity_binned_by_pa[1], 0, 0),
+            (expected_cno_intensity_binned_by_pa_and_gyro[1], 0, 0, expected_cno_intensity_binned_by_pa[1], 0, 0),
+            (expected_fe_intensity_binned_by_pa_and_gyro[1], 0, 0, expected_fe_intensity_binned_by_pa[1], 0, 0),
+        ]
+
         codice_processor = CodiceHiProcessor(dependencies=Mock(), input_metadata=sentinel.input_metadata)
-
-        expected_pitch_angles = np.array([[81.406148, 138.590378], [56.104664, 115.658906]])
-        expected_gyrophase = np.array([[26.890815, 49.106605], [291.063267, 286.102114]])
-
-        expected_pitch_angle_delta = np.array([15, 15])
-        expected_gyrophase_delta = np.array([30, 30])
-
         codice_hi_data_product = codice_processor.process_l3b(dependencies=dependencies)
+
+        mock_get_sector_unit_vectors.assert_called_once_with(codice_l2_data.spin_sector_index,
+                                                             codice_l2_data.ssd_index)
+        mock_calculate_unit_vector.assert_has_calls(
+            [call(NumpyArrayMatcher(rebinned_mag_data)), call(mock_get_sector_unit_vectors.return_value)])
+
+        mock_calculate_pitch_angles.assert_has_calls([
+            call(NumpyArrayMatcher(-1 * sector_unit_vectors), NumpyArrayMatcher(mag_unit_vectors[0])),
+            call(NumpyArrayMatcher(-1 * sector_unit_vectors), NumpyArrayMatcher(mag_unit_vectors[1])),
+        ])
+
+        mock_calculate_gyrophases.assert_has_calls([
+            call(NumpyArrayMatcher(-1 * sector_unit_vectors), NumpyArrayMatcher(mag_unit_vectors[0])),
+            call(NumpyArrayMatcher(-1 * sector_unit_vectors), NumpyArrayMatcher(mag_unit_vectors[1])),
+        ])
+
+        species_intensities = [h_intensity, he3he4_intensity, cno_intensity, fe_intensity]
+
+        species_uncertainties = [
+            np.zeros_like(h_intensity),
+            np.zeros_like(he3he4_intensity),
+            np.zeros_like(cno_intensity),
+            np.zeros_like(fe_intensity),
+        ]
+
+        expected_rebin_calls = []
+        for species_intensity, species_uncertainty in zip(species_intensities, species_uncertainties):
+            expected_rebin_calls.append(
+                call(intensity_data=NumpyArrayMatcher(species_intensity[0]),
+                     intensity_delta_plus=NumpyArrayMatcher(species_uncertainty[0]),
+                     intensity_delta_minus=NumpyArrayMatcher(species_uncertainty[0]),
+                     pitch_angles=sentinel.epoch1_pitch_angle,
+                     gyrophases=sentinel.epoch1_gyrophase,
+                     number_of_pitch_angle_bins=6, number_of_gyrophase_bins=12
+                     )
+
+            )
+
+        for species_intensity, species_uncertainty in zip(species_intensities, species_uncertainties):
+            expected_rebin_calls.append(
+                call(intensity_data=NumpyArrayMatcher(species_intensity[1]),
+                     intensity_delta_plus=NumpyArrayMatcher(species_uncertainty[1]),
+                     intensity_delta_minus=NumpyArrayMatcher(species_uncertainty[1]),
+                     pitch_angles=sentinel.epoch2_pitch_angle,
+                     gyrophases=sentinel.epoch2_gyrophase,
+                     number_of_pitch_angle_bins=6, number_of_gyrophase_bins=12
+                     )
+            )
+
+        mock_rebin_by_pitch_angle_and_gyrophase.assert_has_calls(expected_rebin_calls)
+
         self.assertEqual(sentinel.input_metadata, codice_hi_data_product.input_metadata)
         np.testing.assert_array_equal(epoch, codice_hi_data_product.epoch)
         np.testing.assert_array_equal(epoch_delta, codice_hi_data_product.epoch_delta)
-        np.testing.assert_array_equal(energy, codice_hi_data_product.energy)
-        np.testing.assert_array_equal(energy_delta_plus, codice_hi_data_product.energy_delta_plus)
-        np.testing.assert_array_equal(energy_delta_minus, codice_hi_data_product.energy_delta_minus)
+
+        np.testing.assert_array_equal(codice_hi_data_product.energy_h, codice_l2_data.energy_h)
+        np.testing.assert_array_equal(codice_hi_data_product.energy_h_delta, codice_l2_data.energy_h_delta)
+        np.testing.assert_array_equal(codice_hi_data_product.energy_cno, codice_l2_data.energy_cno)
+        np.testing.assert_array_equal(codice_hi_data_product.energy_cno_delta, codice_l2_data.energy_cno_delta)
+        np.testing.assert_array_equal(codice_hi_data_product.energy_fe, codice_l2_data.energy_fe)
+        np.testing.assert_array_equal(codice_hi_data_product.energy_fe_delta, codice_l2_data.energy_fe_delta)
+        np.testing.assert_array_equal(codice_hi_data_product.energy_he3he4, codice_l2_data.energy_he3he4)
+        np.testing.assert_array_equal(codice_hi_data_product.energy_he3he4_delta, codice_l2_data.energy_he3he4_delta)
+
         np.testing.assert_array_almost_equal(expected_pitch_angles, codice_hi_data_product.pitch_angle)
         np.testing.assert_array_equal(expected_pitch_angle_delta, codice_hi_data_product.pitch_angle_delta)
         np.testing.assert_array_almost_equal(expected_gyrophase, codice_hi_data_product.gyrophase)
         np.testing.assert_array_equal(expected_gyrophase_delta, codice_hi_data_product.gyrophase_delta)
 
-        np.testing.assert_array_equal(expected_h_rebinned_pitch_angles,
-                                      codice_hi_data_product.h_intensity_by_pitch_angle)
-        np.testing.assert_array_equal(expected_he4_rebinned_pitch_angles,
-                                      codice_hi_data_product.he4_intensity_by_pitch_angle)
-        np.testing.assert_array_equal(expected_o_rebinned_pitch_angles,
-                                      codice_hi_data_product.o_intensity_by_pitch_angle)
-        np.testing.assert_array_equal(expected_fe_rebinned_pitch_angles,
-                                      codice_hi_data_product.fe_intensity_by_pitch_angle)
+        np.testing.assert_allclose(codice_hi_data_product.h_intensity_by_pitch_angle, expected_h_intensity_binned_by_pa)
 
-        expected_h_rebinned_pitch_angles_and_gyrophase = np.transpose(h_intensity, (0, 1, 3, 2))
-        expected_he4_rebinned_pitch_angles_and_gyrophase = np.transpose(he4_intensity, (0, 1, 3, 2))
-        expected_o_rebinned_pitch_angles_and_gyrophase = np.transpose(o_intensity, (0, 1, 3, 2))
-        expected_fe_rebinned_pitch_angles_and_gyrophase = np.transpose(fe_intensity, (0, 1, 3, 2))
+        np.testing.assert_array_equal(codice_hi_data_product.he4_intensity_by_pitch_angle,
+                                      expected_he4_intensity_binned_by_pa)
+        np.testing.assert_array_equal(codice_hi_data_product.cno_intensity_by_pitch_angle,
+                                      expected_cno_intensity_binned_by_pa)
+        np.testing.assert_array_equal(codice_hi_data_product.fe_intensity_by_pitch_angle,
+                                      expected_fe_intensity_binned_by_pa)
 
         np.testing.assert_array_equal(codice_hi_data_product.h_intensity_by_pitch_angle_and_gyrophase,
-                                      expected_h_rebinned_pitch_angles_and_gyrophase)
-
+                                      expected_h_intensity_binned_by_pa_and_gyro)
         np.testing.assert_array_equal(codice_hi_data_product.he4_intensity_by_pitch_angle_and_gyrophase,
-                                      expected_he4_rebinned_pitch_angles_and_gyrophase)
-        np.testing.assert_array_equal(codice_hi_data_product.o_intensity_by_pitch_angle_and_gyrophase,
-                                      expected_o_rebinned_pitch_angles_and_gyrophase)
+                                      expected_he4_intensity_binned_by_pa_and_gyro)
+        np.testing.assert_array_equal(codice_hi_data_product.cno_intensity_by_pitch_angle_and_gyrophase,
+                                      expected_cno_intensity_binned_by_pa_and_gyro)
         np.testing.assert_array_equal(codice_hi_data_product.fe_intensity_by_pitch_angle_and_gyrophase,
-                                      expected_fe_rebinned_pitch_angles_and_gyrophase)
+                                      expected_fe_intensity_binned_by_pa_and_gyro)
 
     def _create_priority_events(self):
         num_epochs = 2

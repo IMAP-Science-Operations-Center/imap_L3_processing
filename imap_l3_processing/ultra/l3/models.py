@@ -11,7 +11,8 @@ from spacepy.pycdf import CDF
 
 from imap_l3_processing.cdf.cdf_utils import read_numeric_variable, read_variable_and_mask_fill_values
 from imap_l3_processing.constants import TT2000_EPOCH, ONE_SECOND_IN_NANOSECONDS
-from imap_l3_processing.models import DataProduct, DataProductVariable, IntensityMapData, HealPixCoords
+from imap_l3_processing.map_models import IntensityMapData, HealPixCoords
+from imap_l3_processing.models import DataProduct, DataProductVariable
 
 EPOCH_VAR_NAME = "epoch"
 EPOCH_DELTA_VAR_NAME = "epoch_delta"

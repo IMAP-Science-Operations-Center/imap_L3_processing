@@ -1,6 +1,7 @@
 import unittest
+from datetime import datetime
 from pathlib import Path
-from unittest.mock import patch, mock_open, MagicMock, sentinel
+from unittest.mock import patch, mock_open, MagicMock, sentinel, Mock
 
 import numpy as np
 
@@ -8,6 +9,7 @@ import imap_l3_processing
 from imap_l3_processing.glows.l3d.models import GlowsL3DSolarParamsHistory
 from imap_l3_processing.glows.l3d.utils import create_glows_l3b_json_file_from_cdf, convert_json_to_l3d_data_product, \
     create_glows_l3c_json_file_from_cdf, get_parent_file_names_from_l3d_json
+from imap_l3_processing.models import InputMetadata
 from tests.test_helpers import get_test_data_path
 
 
@@ -157,27 +159,36 @@ class TestL3dUtils(unittest.TestCase):
         self.assertIsInstance(actual["ion_rate_profile"]["ph_rate"], list)
 
     def test_convert_json_l3d_to_data_product(self):
+        input_metadata = Mock(spec=InputMetadata)
+        input_metadata.start_date = datetime.fromisoformat("2025-05-12")
         l3d_data_product: GlowsL3DSolarParamsHistory = convert_json_to_l3d_data_product(
             get_test_data_path('glows/imap_glows_l3d_cr_2095_v00.json'),
-            sentinel.input_metadata,
+            input_metadata,
             sentinel.parent_file_names,
         )
 
-        self.assertEqual(sentinel.input_metadata, l3d_data_product.input_metadata)
+        self.assertEqual(input_metadata, l3d_data_product.input_metadata)
+        self.assertEqual(input_metadata.start_date, datetime.fromisoformat("1947-03-03").date())
 
         self.assertEqual(sentinel.parent_file_names, l3d_data_product.parent_file_names)
 
         np.testing.assert_array_equal(
             [-90, -80, -70, -60, -50, -40, -30, -20, -10, 0, 10, 20, 30, 40, 50, 60, 70, 80, 90],
-            l3d_data_product.lat_grid)
+            l3d_data_product.latitude)
 
-        self.assertEqual(846, len(l3d_data_product.cr_grid))
-        self.assertEqual(1250.5, l3d_data_product.cr_grid[0])
-        self.assertEqual(2095.5, l3d_data_product.cr_grid[-1])
+        self.assertEqual(846, len(l3d_data_product.cr))
+        self.assertEqual(1250.5, l3d_data_product.cr[0])
+        self.assertEqual(2095.5, l3d_data_product.cr[-1])
 
-        self.assertEqual(846, len(l3d_data_product.time_grid))
-        self.assertEqual("1947-03-03 07:35:32.640", l3d_data_product.time_grid[0])
-        self.assertEqual("2010-04-08 22:40:35.040", l3d_data_product.time_grid[-1])
+        self.assertEqual(846, len(l3d_data_product.epoch))
+        self.assertEqual(datetime.fromisoformat("1947-03-03 07:35:32.640"), l3d_data_product.epoch[0])
+        self.assertEqual(datetime.fromisoformat("2010-04-08 22:40:35.040"), l3d_data_product.epoch[-1])
+
+        np.testing.assert_array_equal(np.arange(-90, 100, step=10), l3d_data_product.latitude)
+
+        self.assertEqual(846, len(l3d_data_product.cr))
+        self.assertEqual(1250.5, l3d_data_product.cr[0])
+        self.assertEqual(2095.5, l3d_data_product.cr[-1])
 
         self.assertEqual(846, len(l3d_data_product.speed))
         np.testing.assert_allclose(
@@ -190,36 +201,36 @@ class TestL3dUtils(unittest.TestCase):
              554.518598443535, 594.9787143968655, 599.4175447470614, 599.4175447470614], l3d_data_product.speed[-1],
             rtol=1e-6)
 
-        self.assertEqual(846, len(l3d_data_product.p_dens))
+        self.assertEqual(846, len(l3d_data_product.proton_density))
         np.testing.assert_allclose(
             [-1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0,
-             -1.0, -1.0, -1.0], l3d_data_product.p_dens[0], rtol=1e-6)
+             -1.0, -1.0, -1.0], l3d_data_product.proton_density[0], rtol=1e-6)
         np.testing.assert_allclose(
             [2.7539010174985328, 2.737096030276837, 2.6641209660214256, 2.9648193397292495, 3.6167913862691368,
              4.267522103200842, 4.954865982954802, 5.4089727098360765, 5.753718175867142, 5.912686119174109,
              5.875275512094413, 5.687043093803157, 4.889661092087035, 4.129209143417914, 3.496191265226951,
              2.764380801055958, 2.403839571256985, 2.3686555409547543, 2.3686555409547543
-             ], l3d_data_product.p_dens[-1], rtol=1e-6)
+             ], l3d_data_product.proton_density[-1], rtol=1e-6)
 
-        self.assertEqual(846, len(l3d_data_product.uv_anis))
+        self.assertEqual(846, len(l3d_data_product.ultraviolet_anisotropy))
         np.testing.assert_allclose(
             [-1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0,
-             -1.0, -1.0, -1.0], l3d_data_product.uv_anis[0], rtol=1e-6)
+             -1.0, -1.0, -1.0], l3d_data_product.ultraviolet_anisotropy[0], rtol=1e-6)
         np.testing.assert_allclose(
             [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0
-             ], l3d_data_product.uv_anis[-1], rtol=1e-6)
+             ], l3d_data_product.ultraviolet_anisotropy[-1], rtol=1e-6)
 
         self.assertEqual(846, len(l3d_data_product.phion))
         np.testing.assert_allclose(1.830438692701064e-07, l3d_data_product.phion[0], rtol=1e-6)
         np.testing.assert_allclose(1.0870768678455447e-07, l3d_data_product.phion[-1], rtol=1e-6)
 
-        self.assertEqual(846, len(l3d_data_product.lya))
-        np.testing.assert_allclose(619975763789.9209, l3d_data_product.lya[0], rtol=1e-6)
-        np.testing.assert_allclose(391561526005.0816, l3d_data_product.lya[-1], rtol=1e-6)
+        self.assertEqual(846, len(l3d_data_product.lyman_alpha))
+        np.testing.assert_allclose(619975763789.9209, l3d_data_product.lyman_alpha[0], rtol=1e-6)
+        np.testing.assert_allclose(391561526005.0816, l3d_data_product.lyman_alpha[-1], rtol=1e-6)
 
-        self.assertEqual(846, len(l3d_data_product.e_dens))
-        self.assertEqual(-1.0, l3d_data_product.e_dens[0])
-        np.testing.assert_allclose(5.7140570690060715, l3d_data_product.e_dens[-1], rtol=1e-6)
+        self.assertEqual(846, len(l3d_data_product.electron_density))
+        self.assertEqual(-1.0, l3d_data_product.electron_density[0])
+        np.testing.assert_allclose(5.7140570690060715, l3d_data_product.electron_density[-1], rtol=1e-6)
 
     def test_get_parent_file_names_from_l3d_json(self):
         path_to_l3d_output_folder = get_test_data_path("glows/science/data_l3d")

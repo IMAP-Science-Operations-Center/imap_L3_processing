@@ -300,6 +300,7 @@ priority_index_label:
   DATA_TYPE: CDF_CHAR
   FORMAT: a20
   VAR_TYPE: metadata
+  FILLVAL: ' '
 
 event_index_label:
   NAME: event_index_label
@@ -308,3 +309,4 @@ event_index_label:
   DATA_TYPE: CDF_CHAR
   FORMAT: a20
   VAR_TYPE: metadata
+  FILLVAL: ' '

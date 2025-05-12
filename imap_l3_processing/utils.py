@@ -8,23 +8,32 @@ import imap_data_access
 from imap_data_access import ScienceFilePath
 from spacepy.pycdf import CDF
 
-from imap_l3_processing.cdf.cdf_utils import write_cdf, read_numeric_variable
+from imap_l3_processing.cdf.cdf_utils import write_cdf, read_numeric_variable, read_variable_and_mask_fill_values
 from imap_l3_processing.cdf.imap_attribute_manager import ImapAttributeManager
 from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
 from imap_l3_processing.hi.l3.models import HiL1cData, HiGlowsL3eData
+from imap_l3_processing.map_models import IntensityMapData, RectangularIntensityMapData, RectangularCoords
 from imap_l3_processing.models import UpstreamDataDependency, DataProduct, MagL1dData
 from imap_l3_processing.ultra.l3.models import UltraL1CPSet, UltraGlowsL3eData
 from imap_l3_processing.version import VERSION
 
 
-def save_data(data: DataProduct, delete_if_present: bool = False, folder_path: Path = TEMP_CDF_FOLDER_PATH) -> str:
+def save_data(data: DataProduct, delete_if_present: bool = False, folder_path: Path = TEMP_CDF_FOLDER_PATH,
+              cr_number=None) -> str:
+    assert data.input_metadata.repointing is None or cr_number is None, "You cannot call save_data with both a repointing in the metadata while passing in a CR number"
     formatted_start_date = format_time(data.input_metadata.start_date)
     logical_source = data.input_metadata.logical_source
     if data.input_metadata.repointing is not None:
         repointing = f"-repoint{str(data.input_metadata.repointing).zfill(5)}"
     else:
         repointing = ''
-    logical_file_id = f'{logical_source}_{formatted_start_date}{repointing}_{data.input_metadata.version}'
+
+    if cr_number is not None:
+        cr = f"-cr{str(cr_number).zfill(5)}"
+    else:
+        cr = ''
+
+    logical_file_id = f'{logical_source}_{formatted_start_date}{repointing}{cr}_{data.input_metadata.version}'
     folder_path.mkdir(exist_ok=True)
     file_path = folder_path / f"{logical_file_id}.cdf"
 
@@ -131,3 +140,40 @@ def combine_glows_l3e_with_l1c_pointing(glows_l3e_data: list[GlowsL3eData], l1c_
     glows_by_epoch = {l3e.epoch: l3e for l3e in glows_l3e_data}
 
     return [(l1c_by_epoch[epoch], glows_by_epoch.get(epoch, None)) for epoch in l1c_by_epoch.keys()]
+
+
+def read_rectangular_intensity_map_data_from_cdf(cdf_path: Path | str) -> RectangularIntensityMapData:
+    with CDF(str(cdf_path)) as cdf:
+        return RectangularIntensityMapData(
+            intensity_map_data=_read_intensity_map_data_from_open_cdf(cdf),
+            coords=_read_rectangular_coords_from_open_cdf(cdf),
+        )
+
+
+def _read_intensity_map_data_from_open_cdf(cdf: CDF) -> IntensityMapData:
+    return IntensityMapData(
+        epoch=cdf["epoch"][...],
+        epoch_delta=read_variable_and_mask_fill_values(cdf["epoch_delta"]),
+        energy=read_numeric_variable(cdf["energy"]),
+        energy_delta_plus=read_numeric_variable(cdf["energy_delta_plus"]),
+        energy_delta_minus=read_numeric_variable(cdf["energy_delta_minus"]),
+        energy_label=cdf["energy_label"][...],
+        latitude=read_numeric_variable(cdf["latitude"]),
+        longitude=read_numeric_variable(cdf["longitude"]),
+        exposure_factor=read_numeric_variable(cdf["exposure_factor"]),
+        obs_date=read_variable_and_mask_fill_values(cdf["obs_date"]),
+        obs_date_range=read_variable_and_mask_fill_values(cdf["obs_date_range"]),
+        solid_angle=read_numeric_variable(cdf["solid_angle"]),
+        ena_intensity=read_numeric_variable(cdf["ena_intensity"]),
+        ena_intensity_stat_unc=read_numeric_variable(cdf["ena_intensity_stat_unc"]),
+        ena_intensity_sys_err=read_numeric_variable(cdf["ena_intensity_sys_err"]),
+    )
+
+
+def _read_rectangular_coords_from_open_cdf(cdf: CDF) -> RectangularCoords:
+    return RectangularCoords(
+        latitude_delta=read_numeric_variable(cdf["latitude_delta"]),
+        latitude_label=cdf["latitude_label"][...],
+        longitude_delta=read_numeric_variable(cdf["longitude_delta"]),
+        longitude_label=cdf["longitude_label"][...],
+    )

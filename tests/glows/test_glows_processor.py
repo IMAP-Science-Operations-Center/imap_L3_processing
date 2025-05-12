@@ -19,8 +19,8 @@ from imap_l3_processing.glows.l3bc.cannot_process_carrington_rotation_error impo
 from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDependencies
 from imap_l3_processing.glows.l3d.glows_l3d_dependencies import GlowsL3DDependencies
 from imap_l3_processing.glows.l3d.utils import PATH_TO_L3D_TOOLKIT
-from imap_l3_processing.glows.l3e.glows_l3e_lo_model import GlowsL3ELoData
 from imap_l3_processing.glows.l3e.glows_l3e_hi_model import GlowsL3EHiData
+from imap_l3_processing.glows.l3e.glows_l3e_lo_model import GlowsL3ELoData
 from imap_l3_processing.glows.l3e.glows_l3e_ultra_model import GlowsL3EUltraData
 from imap_l3_processing.models import InputMetadata
 from tests.test_helpers import get_test_instrument_team_data_path, get_test_data_path, get_test_data_folder, \
@@ -561,13 +561,14 @@ class TestGlowsProcessor(unittest.TestCase):
                                         '2096_txt_file_6'
                                         ]
 
-        mock_run.side_effect = [CompletedProcess(args=[], returncode=0, stdout=f'Processed CR= {2096}'),
+        expected_cr = 2096
+        mock_run.side_effect = [CompletedProcess(args=[], returncode=0, stdout=f'Processed CR= {expected_cr}'),
                                 CalledProcessError(cmd="", returncode=1, stderr=self.ran_out_of_l3b_exception)]
 
         processor = GlowsProcessor(processing_input_collection, input_metadata)
         processor.process()
         mock_fetch_dependencies.assert_called_once_with(processing_input_collection)
-        mock_save_data.assert_called_once_with(mock_convert_json_to_l3d.return_value)
+        mock_save_data.assert_called_once_with(mock_convert_json_to_l3d.return_value, cr_number=expected_cr)
         mock_upload.assert_has_calls([
             call(mock_save_data.return_value),
             call(PATH_TO_L3D_TOOLKIT / 'data_l3d_txt' / '2096_txt_file_1'),
@@ -637,7 +638,9 @@ class TestGlowsProcessor(unittest.TestCase):
         mock_convert_json_to_l3d_data_product.return_value = sentinel.l3d_data_product
 
         processor = GlowsProcessor(input_data_collection, input_metadata)
-        actual_l3d_data_product, actual_l3d_txt_files = processor.process_l3d(mock_l3d_dependencies)
+        actual_l3d_data_product, actual_l3d_txt_files, last_processed_cr = processor.process_l3d(mock_l3d_dependencies)
+
+        self.assertEqual(last_processed_cr, cr_number)
 
         mock_os.makedirs.assert_has_calls([
             call(PATH_TO_L3D_TOOLKIT / 'data_ancillary', exist_ok=True),
@@ -748,7 +751,8 @@ class TestGlowsProcessor(unittest.TestCase):
                                                 ancillary_files=ancillary_inputs, external_files=external_inputs)
 
         processor = GlowsProcessor(Mock(), Mock())
-        actual_data_product, actual_l3d_txt_paths = processor.process_l3d(l3d_dependencies)
+        actual_data_product, actual_l3d_txt_paths, last_processed_cr = processor.process_l3d(l3d_dependencies)
+        self.assertEqual(last_processed_cr, cr_number)
 
         expected_parent_file_names = [
             'imap_glows_plasma-speed-Legendre-2010a_v001.dat',
