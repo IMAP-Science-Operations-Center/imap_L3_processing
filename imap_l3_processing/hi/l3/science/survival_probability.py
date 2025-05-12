@@ -62,7 +62,7 @@ class HiSurvivalProbabilityPointingSet(PointingSet):
 
         exposure = l1c_dataset.exposure_times * exposure_mask
 
-        sensor_angle = Sensor.get_sensor_angle(sensor.value)
+        sensor_angle = Sensor.get_sensor_angle(sensor)
         self.elevations = np.repeat(sensor_angle, num_spin_angle_bins)
         self.az_el_points = np.column_stack([self.azimuths, self.elevations])
 

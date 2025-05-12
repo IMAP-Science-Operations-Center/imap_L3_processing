@@ -56,7 +56,7 @@ class HiProcessor(Processor):
                     input_metadata=self.input_metadata
                 )
                 set_of_parent_file_names.update(p.name for p in hi_l3_full_spin_dependencies.dependency_file_paths)
-            case MapDescriptorParts(sensor=Sensor.Combined,
+            case MapDescriptorParts(sensor=Sensor.HiCombined,
                                     spin_phase=SpinPhase.FullSpin,
                                     duration=Duration.OneYear,
                                     ):

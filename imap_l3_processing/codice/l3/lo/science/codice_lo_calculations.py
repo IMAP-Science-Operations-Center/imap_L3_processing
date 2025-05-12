@@ -1,6 +1,7 @@
 import numpy as np
 
 from imap_l3_processing.codice.l3.lo.direct_events.science.angle_lookup import SpinAngleLookup, ElevationLookup
+from imap_l3_processing.codice.l3.lo.direct_events.science.energy_lookup import EnergyLookup
 from imap_l3_processing.codice.l3.lo.direct_events.science.mass_coefficient_lookup import MassCoefficientLookup
 from imap_l3_processing.codice.l3.lo.direct_events.science.mass_species_bin_lookup import MassSpeciesBinLookup, \
     EventDirection
@@ -50,16 +51,38 @@ def calculate_mass_per_charge(priority_event: PriorityEvent) -> np.ndarray:
             priority_event.tof ** 2) * CONVERSION_CONSTANT_K
 
 
-def rebin_to_counts_by_azimuth_spin_sector(mass: np.ndarray, mass_per_charge: np.ndarray, energy_step: np.ndarray,
-                                           spin_angle: np.ndarray, elevation: np.ndarray,
-                                           mass_species_bin_lookup: MassSpeciesBinLookup,
-                                           spin_angle_lut: SpinAngleLookup,
-                                           elevation_lut: ElevationLookup) -> CodiceLo3dData:
+def rebin_counts_by_energy_and_spin_angle(priority_event: PriorityEvent,
+                                          spin_angle_lookup: SpinAngleLookup,
+                                          energy_lookup: EnergyLookup) -> np.ndarray:
+    num_epochs = len(priority_event.num_events)
+    num_energies = energy_lookup.num_bins
+    num_spin_bins = spin_angle_lookup.num_bins
+
+    rebinned_output = np.zeros((num_epochs, num_energies, num_spin_bins))
+
+    for time_index, num_events in enumerate(priority_event.num_events):
+        spin_angle_in_degrees = priority_event.spin_angle[time_index, :num_events]
+        energy_in_keV = priority_event.energy_step[time_index, :num_events]
+
+        spin_angle_indices = spin_angle_lookup.get_spin_angle_index(spin_angle_in_degrees)
+        energy_indices = energy_lookup.get_energy_index(energy_in_keV)
+
+        for energy_index, spin_angle_index in zip(energy_indices, spin_angle_indices):
+            rebinned_output[time_index, energy_index, spin_angle_index] += 1
+
+    return rebinned_output
+
+
+def rebin_to_counts_by_elevation_spin_sector(mass: np.ndarray, mass_per_charge: np.ndarray, energy_step: np.ndarray,
+                                             spin_angle: np.ndarray, elevation: np.ndarray,
+                                             mass_species_bin_lookup: MassSpeciesBinLookup,
+                                             spin_angle_lut: SpinAngleLookup,
+                                             elevation_lut: ElevationLookup) -> CodiceLo3dData:
     num_epochs = mass.shape[0]
     num_priorities = mass.shape[1]
 
     output = np.full((num_epochs, num_priorities, mass_species_bin_lookup.get_num_species(),
-                      len(elevation_lut.bin_centers), len(spin_angle_lut.bin_centers), 128), 0)
+                      elevation_lut.num_bins, spin_angle_lut.num_bins, 128), 0)
 
     def filter_nan(a: np.array) -> np.array:
         return a[~np.isnan(a)]

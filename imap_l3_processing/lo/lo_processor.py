@@ -1,6 +1,7 @@
 from imap_data_access import upload
 
 from imap_l3_processing.lo.l3.lo_l3_spectral_fit_dependencies import LoL3SpectralFitDependencies
+from imap_l3_processing.map_descriptors import parse_map_descriptor, MapDescriptorParts, MapQuantity
 from imap_l3_processing.map_models import RectangularIntensityMapData, RectangularSpectralIndexDataProduct, \
     RectangularSpectralIndexMapData, IntensityMapData, SpectralIndexMapData
 from imap_l3_processing.processor import Processor
@@ -9,9 +10,19 @@ from imap_l3_processing.utils import save_data
 
 class LoProcessor(Processor):
     def process(self):
-        deps = LoL3SpectralFitDependencies.fetch_dependencies(self.dependencies)
-        spectral_fit_data = spectral_fit_rectangular(deps.map_data)
-        data_product = RectangularSpectralIndexDataProduct(self.input_metadata, spectral_fit_data)
+        set_of_parent_file_names = set(self.get_parent_file_names())
+        descriptor = parse_map_descriptor(self.input_metadata.descriptor)
+        match descriptor:
+            case MapDescriptorParts(quantity=MapQuantity.SpectralIndex):
+                deps = LoL3SpectralFitDependencies.fetch_dependencies(self.dependencies)
+                spectral_fit_data = spectral_fit_rectangular(deps.map_data)
+                data_product = RectangularSpectralIndexDataProduct(self.input_metadata, spectral_fit_data)
+            case None:
+                raise ValueError(f"Could not parse descriptor {self.input_metadata.descriptor}")
+            case _:
+                raise NotImplementedError(self.input_metadata.descriptor)
+
+        data_product.parent_file_names = sorted(set_of_parent_file_names)
         cdf_file = save_data(data_product)
         upload(cdf_file)
 

@@ -5,13 +5,14 @@ from typing import Optional
 
 
 class Sensor(enum.Enum):
-    Hi45 = "45"
-    Hi90 = "90"
-    Combined = "Combined"
+    Hi45 = "Hi45"
+    Hi90 = "Hi90"
+    Lo90 = "Lo90"
+    HiCombined = "HiCombined"
 
     @staticmethod
     def get_sensor_angle(sensor_name):
-        sensor_angles = {Sensor.Hi45.value: -45, Sensor.Hi90.value: 0}
+        sensor_angles = {Sensor.Hi45: -45, Sensor.Hi90: 0, Sensor.Lo90: 0}
         return sensor_angles[sensor_name]
 
 
@@ -61,10 +62,10 @@ class MapDescriptorParts:
 
 def parse_map_descriptor(descriptor: str) -> Optional[MapDescriptorParts]:
     descriptor_regex = """
-        (?P<sensor>hic|h45|h90)-
+        (?P<sensor>hic|h45|h90|l090)-
         (?P<quantity>ena|spx)-
         (?P<species>h)-
-        (?P<frame>sf|hf)-
+        (?P<frame>sf|hf|hk)-
         (?P<survival_corrected>sp|nsp)-
         (?P<spin_phase>ram|anti|full)-
         (?P<coord>hae)-
@@ -76,8 +77,9 @@ def parse_map_descriptor(descriptor: str) -> Optional[MapDescriptorParts]:
     if descriptor_part_match is None:
         return None
 
-    sensors = {"hic": Sensor.Combined, "h45": Sensor.Hi45, "h90": Sensor.Hi90}
-    cg_corrections = {"sf": ReferenceFrame.Spacecraft, "hf": ReferenceFrame.Heliospheric}
+    sensors = {"hic": Sensor.HiCombined, "h45": Sensor.Hi45, "h90": Sensor.Hi90, "l090": Sensor.Lo90}
+    cg_corrections = {"sf": ReferenceFrame.Spacecraft, "hf": ReferenceFrame.Heliospheric,
+                      "hk": ReferenceFrame.HeliosphericKinematic}
     survival_corrections = {"sp": SurvivalCorrection.SurvivalCorrected, "nsp": SurvivalCorrection.NotSurvivalCorrected}
     spin_phases = {"ram": SpinPhase.RamOnly, "anti": SpinPhase.AntiRamOnly, "full": SpinPhase.FullSpin}
     durations = {"3mo": Duration.ThreeMonths, "6mo": Duration.SixMonths, "1yr": Duration.OneYear}

@@ -1,9 +1,13 @@
 import dataclasses
 from dataclasses import dataclass
 from datetime import timedelta
+from pathlib import Path
+from typing import Self
 
 import numpy as np
+from spacepy.pycdf import CDF
 
+from imap_l3_processing.cdf.cdf_utils import read_variable_and_mask_fill_values, read_numeric_variable
 from imap_l3_processing.constants import TT2000_EPOCH
 from imap_l3_processing.data_utils import safe_divide
 from imap_l3_processing.models import DataProduct, DataProductVariable
@@ -55,6 +59,10 @@ class HealPixCoords:
     pixel_index: np.ndarray
     pixel_index_label: np.ndarray
 
+    @property
+    def nside(self) -> int:
+        return int(np.sqrt(len(self.pixel_index) / 12))
+
 
 @dataclass
 class RectangularCoords:
@@ -82,11 +90,75 @@ class RectangularIntensityMapData:
     intensity_map_data: IntensityMapData
     coords: RectangularCoords
 
+    @classmethod
+    def read_from_path(cls, cdf_path: Path | str) -> Self:
+        with CDF(str(cdf_path)) as cdf:
+            return RectangularIntensityMapData(
+                intensity_map_data=_read_intensity_map_data_from_open_cdf(cdf),
+                coords=_read_rectangular_coords_from_open_cdf(cdf),
+            )
+
 
 @dataclass
 class RectangularSpectralIndexMapData:
     spectral_index_map_data: SpectralIndexMapData
     coords: RectangularCoords
+
+
+@dataclass
+class HealPixIntensityMapData:
+    intensity_map_data: IntensityMapData
+    coords: HealPixCoords
+
+    @classmethod
+    def read_from_path(cls, cdf_path: Path | str) -> Self:
+        with CDF(str(cdf_path)) as cdf:
+            return HealPixIntensityMapData(
+                intensity_map_data=_read_intensity_map_data_from_open_cdf(cdf),
+                coords=_read_healpix_coords_from_open_cdf(cdf),
+            )
+
+
+def _read_intensity_map_data_from_open_cdf(cdf: CDF) -> IntensityMapData:
+    return IntensityMapData(
+        epoch=cdf["epoch"][...],
+        epoch_delta=read_variable_and_mask_fill_values(cdf["epoch_delta"]),
+        energy=read_numeric_variable(cdf["energy"]),
+        energy_delta_plus=read_numeric_variable(cdf["energy_delta_plus"]),
+        energy_delta_minus=read_numeric_variable(cdf["energy_delta_minus"]),
+        energy_label=cdf["energy_label"][...],
+        latitude=read_numeric_variable(cdf["latitude"]),
+        longitude=read_numeric_variable(cdf["longitude"]),
+        exposure_factor=read_numeric_variable(cdf["exposure_factor"]),
+        obs_date=read_variable_and_mask_fill_values(cdf["obs_date"]),
+        obs_date_range=read_variable_and_mask_fill_values(cdf["obs_date_range"]),
+        solid_angle=read_numeric_variable(cdf["solid_angle"]),
+        ena_intensity=read_numeric_variable(cdf["ena_intensity"]),
+        ena_intensity_stat_unc=read_numeric_variable(cdf["ena_intensity_stat_unc"]),
+        ena_intensity_sys_err=read_numeric_variable(cdf["ena_intensity_sys_err"]),
+    )
+
+
+def _read_healpix_coords_from_open_cdf(cdf: CDF) -> HealPixCoords:
+    return HealPixCoords(
+        pixel_index=cdf["pixel_index"][...],
+        pixel_index_label=cdf["pixel_index_label"][...]
+    )
+
+
+def _read_rectangular_coords_from_open_cdf(cdf: CDF) -> RectangularCoords:
+    return RectangularCoords(
+        latitude_delta=read_numeric_variable(cdf["latitude_delta"]),
+        latitude_label=cdf["latitude_label"][...],
+        longitude_delta=read_numeric_variable(cdf["longitude_delta"]),
+        longitude_label=cdf["longitude_label"][...],
+    )
+
+
+@dataclass
+class HealPixSpectralIndexMapData:
+    spectral_index_map_data: SpectralIndexMapData
+    coords: HealPixCoords
 
 
 @dataclass
