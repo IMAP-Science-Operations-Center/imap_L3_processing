@@ -63,10 +63,11 @@ class GlowsProcessor(Processor):
         elif self.input_metadata.data_level == "l3d":
             l3d_dependencies = GlowsL3DDependencies.fetch_dependencies(self.dependencies)
             data_product, l3d_txt_paths, last_processed_cr = self.process_l3d(l3d_dependencies)
-            cdf = save_data(data_product, cr_number=last_processed_cr)
-            imap_data_access.upload(cdf)
-            for txt_path in l3d_txt_paths:
-                imap_data_access.upload(txt_path)
+            if data_product is not None and l3d_txt_paths is not None and last_processed_cr is not None:
+                cdf = save_data(data_product, cr_number=last_processed_cr)
+                imap_data_access.upload(cdf)
+                for txt_path in l3d_txt_paths:
+                    imap_data_access.upload(txt_path)
         elif self.input_metadata.data_level == "l3e":
             l3e_dependencies, repointing_number = GlowsL3EDependencies.fetch_dependencies(self.dependencies,
                                                                                           self.input_metadata.descriptor)
@@ -174,6 +175,7 @@ class GlowsProcessor(Processor):
 
             return convert_json_to_l3d_data_product(PATH_TO_L3D_TOOLKIT / 'data_l3d' / file_name, self.input_metadata,
                                                     parent_file_names), output_txt_files, last_processed_cr
+        return None, None, None
 
     def process_l3e_lo(self, epoch: datetime, epoch_delta: timedelta):
         call_args = determine_call_args_for_l3e_executable(epoch, epoch + epoch_delta, 90)

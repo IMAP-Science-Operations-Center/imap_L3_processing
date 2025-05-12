@@ -784,10 +784,9 @@ class TestGlowsProcessor(unittest.TestCase):
 
     @patch('imap_l3_processing.glows.glows_processor.os')
     @patch('imap_l3_processing.glows.glows_processor.shutil')
-    @patch('imap_l3_processing.glows.glows_processor.convert_json_to_l3d_data_product')
     @patch('imap_l3_processing.glows.glows_processor.run')
-    def test_process_l3d_handles_unexpected_exception_from_science(self, mock_run,
-                                                                   mock_convert_json_to_l3d_data_product, _, __):
+    def test_process_l3d_returns_correctly_if_nothing_is_processed(self, mock_run, _, __):
+
         ancillary_files = {
             'pipeline_settings': Path('path/to/pipeline_settings'),
             'WawHelioIon': {
@@ -809,6 +808,60 @@ class TestGlowsProcessor(unittest.TestCase):
                                                 l3b_file_paths=l3b_file_paths,
                                                 l3c_file_paths=l3c_file_paths)
 
+        mock_run.side_effect = [CalledProcessError(cmd="", returncode=1, stderr=self.ran_out_of_l3b_exception)]
+        processor = GlowsProcessor(Mock(), Mock())
+
+        actual_data_product, actual_text_files, actual_last_processed_crs = processor.process_l3d(l3d_dependencies)
+
+        self.assertIsNone(actual_data_product)
+        self.assertIsNone(actual_text_files)
+        self.assertIsNone(actual_last_processed_crs)
+
+    @patch('imap_l3_processing.glows.glows_processor.shutil')
+    @patch('imap_l3_processing.glows.glows_processor.get_parent_file_names_from_l3d_json')
+    @patch('imap_l3_processing.glows.glows_processor.os')
+    @patch('imap_l3_processing.glows.glows_processor.run')
+    @patch('imap_l3_processing.glows.glows_processor.convert_json_to_l3d_data_product')
+    @patch('imap_l3_processing.glows.glows_processor.imap_data_access.upload')
+    def test_process_l3d_handles_unexpected_exception_from_science(self, mock_upload,
+                                                                   mock_convert_json_to_l3d,
+                                                                   mock_run, mock_os, _, __):
+        ancillary_files = {
+            'pipeline_settings': Path('path/to/pipeline_settings'),
+            'WawHelioIon': {
+                'speed': Path('path/to/speed'),
+                'p-dens': Path('path/to/p-dens'),
+                'uv-anis': Path('path/to/uv-anis'),
+                'phion': Path('path/to/phion'),
+                'lya': Path('path/to/lya'),
+                'e-dens': Path('path/to/e-dens')
+            }
+        }
+        external_files = {
+            'lya_raw_data': Path('path/to/lya'),
+        }
+        l3b_file_paths = []
+        l3c_file_paths = []
+        l3d_dependencies = GlowsL3DDependencies(ancillary_files=ancillary_files,
+                                                external_files=external_files,
+                                                l3b_file_paths=l3b_file_paths,
+                                                l3c_file_paths=l3c_file_paths)
+
+        processing_input_collection = Mock()
+        input_metadata = InputMetadata('glows', "l3d", datetime(2024, 10, 7, 10, 00, 00),
+                                       datetime(2024, 10, 8, 10, 00, 00),
+                                       'v001', descriptor='solar-params-history')
+
+        mock_os.listdir.return_value = ['2096_txt_file_1',
+                                        '2096_txt_file_2',
+                                        '2096_txt_file_3',
+                                        '2096_txt_file_4',
+                                        '2096_txt_file_5',
+                                        '2096_txt_file_6'
+                                        ]
+
+        expected_cr = 2096
+
         unexpected_exception = r"""Traceback (most recent call last):
           File "...\imap-L3-processing\imap_l3_processing\glows\l3d\science\generate_l3d.py", line 46, in <module>
             solar_param_hist.update_solar_params_hist(EXT_DEPENDENCIES,data_l3b,data_l3c)
@@ -825,15 +878,47 @@ class TestGlowsProcessor(unittest.TestCase):
                  ^^^^^^^^^^^^^
         FileNotFoundError: [Errno 2] No such file or directory: 'imap_glows_l3a_hist_20100511-repoint00131_v011.cdf'"""
 
-        mock_run.side_effect = [CalledProcessError(cmd="", returncode=1, stderr=unexpected_exception)]
+        mock_run.side_effect = [CompletedProcess(args=[], returncode=0, stdout=f'Processed CR= {expected_cr}'),
+                                CalledProcessError(cmd="", returncode=1, stderr=unexpected_exception)]
 
-        processor = GlowsProcessor(Mock(), Mock())
+        processor = GlowsProcessor(processing_input_collection, input_metadata)
 
         with self.assertRaises(Exception) as context:
             processor.process_l3d(l3d_dependencies)
         self.assertEqual(unexpected_exception, str(context.exception))
 
-        mock_convert_json_to_l3d_data_product.assert_not_called()
+        mock_convert_json_to_l3d.assert_not_called()
+        mock_upload.assert_not_called()
+
+    @patch('imap_l3_processing.glows.glows_processor.convert_json_to_l3d_data_product')
+    @patch('imap_l3_processing.glows.glows_processor.GlowsL3DDependencies.fetch_dependencies')
+    @patch('imap_l3_processing.glows.glows_processor.shutil')
+    @patch('imap_l3_processing.glows.glows_processor.get_parent_file_names_from_l3d_json')
+    @patch('imap_l3_processing.glows.glows_processor.os')
+    @patch('imap_l3_processing.glows.glows_processor.run')
+    @patch('imap_l3_processing.glows.glows_processor.imap_data_access.upload')
+    @patch('imap_l3_processing.glows.glows_processor.save_data')
+    def test_process_l3d_does_not_save_if_nothing_processed(self, mock_save_data, mock_upload,
+                                                            mock_run, mock_os, _, __, ___, ____):
+        processing_input_collection = Mock()
+        input_metadata = InputMetadata('glows', "l3d", datetime(2024, 10, 7, 10, 00, 00),
+                                       datetime(2024, 10, 8, 10, 00, 00),
+                                       'v001', descriptor='solar-params-history')
+
+        mock_os.listdir.return_value = ['2096_txt_file_1',
+                                        '2096_txt_file_2',
+                                        '2096_txt_file_3',
+                                        '2096_txt_file_4',
+                                        '2096_txt_file_5',
+                                        '2096_txt_file_6'
+                                        ]
+
+        mock_run.side_effect = [CalledProcessError(cmd="", returncode=1, stderr=self.ran_out_of_l3b_exception)]
+
+        processor = GlowsProcessor(processing_input_collection, input_metadata)
+        processor.process()
+        mock_save_data.assert_not_called()
+        mock_upload.assert_not_called()
 
 
 if __name__ == '__main__':
