@@ -17,7 +17,7 @@ class TestHiL3SurvivalDependencies(unittest.TestCase):
     @patch("imap_l3_processing.hi.l3.hi_l3_survival_dependencies.imap_data_access.download")
     @patch("imap_l3_processing.hi.l3.hi_l3_survival_dependencies.read_glows_l3e_data")
     @patch("imap_l3_processing.hi.l3.hi_l3_survival_dependencies.read_hi_l1c_data")
-    @patch("imap_l3_processing.hi.l3.hi_l3_survival_dependencies.read_hi_l2_data")
+    @patch("imap_l3_processing.hi.l3.hi_l3_survival_dependencies.read_rectangular_intensity_map_data_from_cdf")
     def test_fetch_dependencies(self, mock_read_hi_l2: Mock, mock_read_hi_l1c, mock_read_glows_l3e,
                                 mock_imap_data_access_download, mock_find_glows_l3e_dependencies,
                                 mock_parse_map_descriptor):

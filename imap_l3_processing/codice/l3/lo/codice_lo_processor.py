@@ -193,25 +193,30 @@ class CodiceLoProcessor(Processor):
         normalization = np.full((len(codice_direct_events.epoch), CODICE_LO_L2_NUM_PRIORITIES,
                                  energy_lut.num_bins, spin_angle_lut.num_bins), np.nan)
 
-        for priority_index, (priority_event, priority_counts_total_count) in enumerate(
-                zip(codice_direct_events.priority_events, priority_rates_for_events)):
-            mass_per_charge[:, priority_index, :] = calculate_mass_per_charge(priority_event)
-            mass[:, priority_index, :] = calculate_mass(priority_event, mass_coefficient_lookup)
-            energy[:, priority_index, :] = priority_event.apd_energy
-            gain[:, priority_index, :] = priority_event.apd_gain
-            apd_id[:, priority_index, :] = priority_event.apd_id
-            multi_flag[:, priority_index, :] = priority_event.multi_flag
-            tof[:, priority_index, :] = priority_event.tof
-            spin_angle[:, priority_index, :] = priority_event.spin_angle
-            elevation[:, priority_index, :] = priority_event.elevation
-            data_quality[:, priority_index] = priority_event.data_quality
-            num_events[:, priority_index] = priority_event.num_events
+        try:
 
-            direct_events_binned_by_energy_and_spin = rebin_counts_by_energy_and_spin_angle(priority_event,
-                                                                                            spin_angle_lut,
-                                                                                            energy_lut)
-            normalization[:, priority_index, ...] = \
-                priority_counts_total_count / direct_events_binned_by_energy_and_spin
+            for priority_index, (priority_event, priority_counts_total_count) in enumerate(
+                    zip(codice_direct_events.priority_events, priority_rates_for_events)):
+                mass_per_charge[:, priority_index, :] = calculate_mass_per_charge(priority_event)
+                mass[:, priority_index, :] = calculate_mass(priority_event, mass_coefficient_lookup)
+                energy[:, priority_index, :] = priority_event.apd_energy
+                gain[:, priority_index, :] = priority_event.apd_gain
+                apd_id[:, priority_index, :] = priority_event.apd_id
+                multi_flag[:, priority_index, :] = priority_event.multi_flag
+                tof[:, priority_index, :] = priority_event.tof
+                spin_angle[:, priority_index, :] = priority_event.spin_angle
+                elevation[:, priority_index, :] = priority_event.elevation
+                data_quality[:, priority_index] = priority_event.data_quality
+                num_events[:, priority_index] = priority_event.num_events
+
+                direct_events_binned_by_energy_and_spin = rebin_counts_by_energy_and_spin_angle(priority_event,
+                                                                                                spin_angle_lut,
+                                                                                                energy_lut)
+                normalization[:, priority_index, ...] = \
+                    priority_counts_total_count / direct_events_binned_by_energy_and_spin
+
+        except Exception as e:
+            print(e)
 
         return CodiceLoL3aDirectEventDataProduct(
             input_metadata=self.input_metadata,
