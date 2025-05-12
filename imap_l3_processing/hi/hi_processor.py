@@ -9,7 +9,8 @@ from imap_l3_processing.hi.l3.hi_l3_survival_dependencies import HiL3SurvivalDep
 from imap_l3_processing.hi.l3.science.spectral_fit import spectral_fit
 from imap_l3_processing.hi.l3.science.survival_probability import HiSurvivalProbabilityPointingSet, \
     HiSurvivalProbabilitySkyMap
-from imap_l3_processing.hi.l3.utils import parse_map_descriptor, MapQuantity, MapDescriptorParts, SurvivalCorrection, \
+from imap_l3_processing.map_descriptors import parse_map_descriptor, MapQuantity, MapDescriptorParts, \
+    SurvivalCorrection, \
     SpinPhase, Duration, Sensor
 from imap_l3_processing.map_models import RectangularSpectralIndexDataProduct, RectangularSpectralIndexMapData, \
     SpectralIndexMapData, RectangularIntensityMapData, IntensityMapData, RectangularIntensityDataProduct, \

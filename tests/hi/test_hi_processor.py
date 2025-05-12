@@ -16,7 +16,7 @@ from imap_l3_processing.hi.l3.hi_l3_survival_dependencies import HiL3SurvivalDep
     HiL3SingleSensorFullSpinDependencies
 from imap_l3_processing.hi.l3.models import \
     HiL1cData, HiGlowsL3eData
-from imap_l3_processing.hi.l3.utils import PixelSize, MapDescriptorParts, parse_map_descriptor
+from imap_l3_processing.map_descriptors import PixelSize, MapDescriptorParts, parse_map_descriptor
 from imap_l3_processing.map_models import RectangularSpectralIndexDataProduct, IntensityMapData, \
     RectangularIntensityMapData, RectangularCoords, RectangularIntensityDataProduct
 from imap_l3_processing.models import InputMetadata
