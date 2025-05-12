@@ -123,6 +123,8 @@ class TestModels(unittest.TestCase):
                                               l2_direct_event_data.priority_events[index].num_events)
                 np.testing.assert_array_equal(cdf[f"p{index}_spin_sector"],
                                               l2_direct_event_data.priority_events[index].spin_angle)
+                np.testing.assert_array_equal(cdf[f"p{index}_position"],
+                                              l2_direct_event_data.priority_events[index].elevation)
                 np.testing.assert_array_equal(cdf[f"p{index}_tof"], l2_direct_event_data.priority_events[index].tof)
 
     def test_calculate_total_number_of_events(self):
@@ -141,6 +143,7 @@ class TestModels(unittest.TestCase):
             multi_flag=np.array([]),
             num_events=np.array([]),
             spin_angle=spin_angle,
+            elevation=np.array([]),
             tof=np.array([]))
 
         expected_total_events_by_energy_step_and_spin_angle = [
@@ -302,6 +305,8 @@ class TestModels(unittest.TestCase):
             np.testing.assert_array_equal(actual_event_data.num_events, cdf["num_events"])
             np.testing.assert_array_equal(actual_event_data.data_quality, cdf["data_quality"])
             np.testing.assert_array_equal(actual_event_data.tof, cdf["tof"])
+            np.testing.assert_array_equal(actual_event_data.spin_angle, cdf["spin_angle"])
+            np.testing.assert_array_equal(actual_event_data.elevation, cdf["elevation"])
 
     def test_codice_lo_l3a_direct_event_read_from_cdf_handles_fill_value(self):
         all_fill_l3a_cdf_path = get_test_data_path("codice/imap_codice_l3a_lo-direct-events_20241110_v000-all-fill.cdf")
@@ -313,6 +318,8 @@ class TestModels(unittest.TestCase):
             np.testing.assert_array_equal(actual_event_data.mass_per_charge, np.full_like(cdf["mass_per_charge"][...], np.nan))
             np.testing.assert_array_equal(actual_event_data.mass, np.full_like(cdf["mass"][...], np.nan))
             np.testing.assert_array_equal(actual_event_data.event_energy, np.full_like(cdf["event_energy"][...], np.nan))
+            np.testing.assert_array_equal(actual_event_data.spin_angle, np.full_like(cdf["spin_angle"][...], np.nan))
+            np.testing.assert_array_equal(actual_event_data.elevation, np.full_like(cdf["elevation"][...], np.nan))
 
             self.assertIsInstance(actual_event_data.apd_id, np.ma.masked_array)
             np.testing.assert_array_equal(actual_event_data.apd_id.data, cdf["apd_id"])
@@ -363,6 +370,8 @@ class TestModels(unittest.TestCase):
             num_events=rng.random((len(epoch), len(priority), len(event_num))),
             data_quality=rng.random((len(epoch), len(priority))),
             tof=rng.random((len(epoch), len(priority), len(event_num))),
+            spin_angle=rng.random((len(epoch), len(priority), len(event_num))),
+            elevation=rng.random((len(epoch), len(priority), len(event_num)))
         )
 
         spin_angle_bins = np.array([0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330])

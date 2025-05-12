@@ -66,6 +66,7 @@ class TestCodiceLoCalculations(unittest.TestCase):
             multi_flag=np.array([]),
             num_events=np.array([]),
             spin_angle=np.array([]),
+            elevation=np.array([]),
         )
 
         lookup = MassCoefficientLookup(np.array([10e-1, 10e-2, 10e-3, 10e-4, 10e-5, 10e-6]))
@@ -97,6 +98,7 @@ class TestCodiceLoCalculations(unittest.TestCase):
             multi_flag=np.array([]),
             num_events=np.array([]),
             spin_angle=np.array([]),
+            elevation=np.array([]),
         )
 
         POST_ACCELERATION_VOLTAGE_IN_KV = 15

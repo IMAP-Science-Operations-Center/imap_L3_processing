@@ -1,7 +1,7 @@
 import unittest
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import patch, mock_open, MagicMock, sentinel
+from unittest.mock import patch, mock_open, MagicMock, sentinel, Mock
 
 import numpy as np
 
@@ -9,6 +9,7 @@ import imap_l3_processing
 from imap_l3_processing.glows.l3d.models import GlowsL3DSolarParamsHistory
 from imap_l3_processing.glows.l3d.utils import create_glows_l3b_json_file_from_cdf, convert_json_to_l3d_data_product, \
     create_glows_l3c_json_file_from_cdf, get_parent_file_names_from_l3d_json
+from imap_l3_processing.models import InputMetadata
 from tests.test_helpers import get_test_data_path
 
 
@@ -158,13 +159,16 @@ class TestL3dUtils(unittest.TestCase):
         self.assertIsInstance(actual["ion_rate_profile"]["ph_rate"], list)
 
     def test_convert_json_l3d_to_data_product(self):
+        input_metadata = Mock(spec=InputMetadata)
+        input_metadata.start_date = datetime.fromisoformat("2025-05-12")
         l3d_data_product: GlowsL3DSolarParamsHistory = convert_json_to_l3d_data_product(
             get_test_data_path('glows/imap_glows_l3d_cr_2095_v00.json'),
-            sentinel.input_metadata,
+            input_metadata,
             sentinel.parent_file_names,
         )
 
-        self.assertEqual(sentinel.input_metadata, l3d_data_product.input_metadata)
+        self.assertEqual(input_metadata, l3d_data_product.input_metadata)
+        self.assertEqual(input_metadata.start_date, datetime.fromisoformat("1947-03-03").date())
 
         self.assertEqual(sentinel.parent_file_names, l3d_data_product.parent_file_names)
 
