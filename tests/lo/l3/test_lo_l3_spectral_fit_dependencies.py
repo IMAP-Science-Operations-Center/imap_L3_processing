@@ -21,3 +21,20 @@ class TestLoL3SpectralFitDependencies(unittest.TestCase):
         self.assertEqual(dependencies.map_data, mock_read_intensity_map_data_from_cdf.return_value)
 
         mock_read_intensity_map_data_from_cdf.assert_called_with(mock_download.return_value)
+
+    def test_raises_error_if_unexpected_number_ef_files(self):
+        file_name = "imap_lo_l3_l90-ena-h-hf-sp-full-hae-4deg-6mo_20250422_v001.cdf"
+        cases = [
+            ("0 files", ProcessingInputCollection()),
+            ("2 files", ProcessingInputCollection(
+                ScienceInput(file_name),
+                ScienceInput(file_name),
+            ))
+        ]
+
+        for name, collection in cases:
+            with self.subTest(name):
+                with self.assertRaises(ValueError) as e:
+                    LoL3SpectralFitDependencies.fetch_dependencies(collection)
+
+                self.assertEqual("Incorrect number of dependencies", str(e.exception))
