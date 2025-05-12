@@ -519,12 +519,12 @@ class TestModels(unittest.TestCase):
             np.testing.assert_array_equal(actual_l1a_nsw_priority_rates.spin_period, cdf["spin_period"][...])
 
     def test_codice_lo_3d_data_get_3d_distribution(self):
-        data_in_bins = np.arange(8).reshape((2, 2, 2))
+        data_in_bins = np.arange(16).reshape((2, 2, 2, 2))
         mass_bin_lookup = Mock()
         mass_bin_lookup.get_species_index.return_value = 1
         codice_lo_3d_data = CodiceLo3dData(data_in_bins, mass_bin_lookup)
 
-        expected_species_data = data_in_bins[:, 1, ...]
+        expected_species_data = data_in_bins[:, :, 1, ...]
         actual_species_data = codice_lo_3d_data.get_3d_distribution("H+", EventDirection.Sunward)
 
         mass_bin_lookup.get_species_index.assert_called_with("H+", EventDirection.Sunward)

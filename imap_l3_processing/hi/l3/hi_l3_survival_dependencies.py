@@ -9,15 +9,16 @@ from imap_data_access.file_validation import generate_imap_file_path
 from imap_data_access.processing_input import ProcessingInputCollection
 from spacepy.pycdf import CDF
 
-from imap_l3_processing.hi.l3.models import HiL1cData, HiGlowsL3eData, HiIntensityMapData
-from imap_l3_processing.hi.l3.utils import read_hi_l2_data, read_hi_l1c_data, read_glows_l3e_data, MapDescriptorParts, \
-    parse_map_descriptor, SpinPhase
-from imap_l3_processing.utils import find_glows_l3e_dependencies
+from imap_l3_processing.hi.l3.models import HiL1cData, HiGlowsL3eData
+from imap_l3_processing.hi.l3.utils import read_hi_l1c_data, read_glows_l3e_data
+from imap_l3_processing.map_descriptors import MapDescriptorParts, parse_map_descriptor, SpinPhase
+from imap_l3_processing.map_models import RectangularIntensityMapData
+from imap_l3_processing.utils import find_glows_l3e_dependencies, read_rectangular_intensity_map_data_from_cdf
 
 
 @dataclass
 class HiL3SurvivalDependencies:
-    l2_data: HiIntensityMapData
+    l2_data: RectangularIntensityMapData
     hi_l1c_data: list[HiL1cData]
     glows_l3e_data: list[HiGlowsL3eData]
     l2_map_descriptor_parts: MapDescriptorParts
@@ -48,7 +49,8 @@ class HiL3SurvivalDependencies:
         l1c_data = list(map(read_hi_l1c_data, hi_l1c_paths))
 
         paths = [map_file_path] + hi_l1c_paths + glows_l3e_paths
-        return cls(l2_data=read_hi_l2_data(map_file_path), hi_l1c_data=l1c_data, glows_l3e_data=glows_l3e_data,
+        return cls(l2_data=read_rectangular_intensity_map_data_from_cdf(map_file_path), hi_l1c_data=l1c_data,
+                   glows_l3e_data=glows_l3e_data,
                    l2_map_descriptor_parts=parse_map_descriptor(l2_descriptor),
                    dependency_file_paths=paths)
 

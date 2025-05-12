@@ -6,13 +6,13 @@ from pathlib import Path
 import imap_data_access
 from imap_data_access.processing_input import ProcessingInputCollection
 
-from imap_l3_processing.hi.l3.models import HiIntensityMapData
-from imap_l3_processing.hi.l3.utils import read_hi_l2_data
+from imap_l3_processing.map_models import RectangularIntensityMapData
+from imap_l3_processing.utils import read_rectangular_intensity_map_data_from_cdf
 
 
 @dataclass
 class HiL3SpectralFitDependencies:
-    hi_l3_data: HiIntensityMapData
+    hi_l3_data: RectangularIntensityMapData
 
     @classmethod
     def fetch_dependencies(cls, dependencies: ProcessingInputCollection) -> HiL3SpectralFitDependencies:
@@ -26,4 +26,4 @@ class HiL3SpectralFitDependencies:
 
     @classmethod
     def from_file_paths(cls, hi_l3_path: Path) -> HiL3SpectralFitDependencies:
-        return cls(read_hi_l2_data(hi_l3_path))
+        return cls(read_rectangular_intensity_map_data_from_cdf(hi_l3_path))

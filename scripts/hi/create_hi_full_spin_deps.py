@@ -7,7 +7,7 @@ from spacepy.pycdf import CDF
 
 from imap_l3_processing.hi.hi_processor import HiProcessor
 from imap_l3_processing.hi.l3.hi_l3_survival_dependencies import HiL3SurvivalDependencies
-from imap_l3_processing.hi.l3.models import HiL3IntensityDataProduct
+from imap_l3_processing.map_models import RectangularIntensityDataProduct
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.utils import save_data
 from scripts.hi.create_cdf_from_instrument_team_data import create_l2_map_from_instrument_team
@@ -49,14 +49,15 @@ def create_hi_full_spin_deps(
     processor = HiProcessor(None,
                             input_metadata)
     ram_data = processor.process_survival_probabilities(ramified_map_deps)
-    ram_exposure_is_zero = np.isnan(ram_data.ena_intensity) | (ram_data.ena_intensity == 0)
+    ram_exposure_is_zero = (np.isnan(ram_data.intensity_map_data.ena_intensity)
+                            | (ram_data.intensity_map_data.ena_intensity == 0))
 
     ram_cdf_path = save_data(
-        HiL3IntensityDataProduct(input_metadata, ram_data),
+        RectangularIntensityDataProduct(input_metadata, ram_data),
         delete_if_present=True, folder_path=output_dir)
     ram_logical_source = f"imap_hi_l2_h{sensor}-ena-h-sf-nsp-ram-hae-4deg-6mo_20250415_v001"
     with CDF(ram_cdf_path, readonly=False) as ram:
-        ram["exposure_factor"] = np.where(ram_exposure_is_zero, 0, ram_data.exposure_factor)
+        ram["exposure_factor"] = np.where(ram_exposure_is_zero, 0, ram_data.intensity_map_data.exposure_factor)
         ram["ena_intensity"] = np.where(ram_exposure_is_zero, ram["ena_intensity"].attrs["FILLVAL"],
                                         original_intensity)
         ram.attrs["Parents"] = parents
@@ -66,15 +67,17 @@ def create_hi_full_spin_deps(
     shutil.move(ram_cdf_path, output_dir / f"{ram_logical_source}.cdf")
 
     antiram_data = processor.process_survival_probabilities(antiramified_map_deps)
-    antiram_exposure_is_zero = np.isnan(antiram_data.ena_intensity) | (antiram_data.ena_intensity == 0)
+    antiram_exposure_is_zero = (np.isnan(antiram_data.intensity_map_data.ena_intensity)
+                                | (antiram_data.intensity_map_data.ena_intensity == 0))
 
     antiram_cdf_path = save_data(
-        HiL3IntensityDataProduct(input_metadata, antiram_data),
+        RectangularIntensityDataProduct(input_metadata, antiram_data),
         delete_if_present=True, folder_path=output_dir)
     antiram_logical_source = f"imap_hi_l2_h{sensor}-ena-h-sf-nsp-anti-hae-4deg-6mo_20250415_v001"
 
     with CDF(antiram_cdf_path, readonly=False) as antiram:
-        antiram["exposure_factor"] = np.where(antiram_exposure_is_zero, 0, antiram_data.exposure_factor)
+        antiram["exposure_factor"] = np.where(antiram_exposure_is_zero, 0,
+                                              antiram_data.intensity_map_data.exposure_factor)
         antiram["ena_intensity"] = np.where(antiram_exposure_is_zero, antiram["ena_intensity"].attrs["FILLVAL"],
                                             original_intensity)
         antiram.attrs["Parents"] = parents

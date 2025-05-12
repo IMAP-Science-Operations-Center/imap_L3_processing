@@ -465,4 +465,4 @@ class CodiceLo3dData:
 
     def get_3d_distribution(self, species: str, event_direction: EventDirection) -> np.ndarray:
         species_index = self.mass_bin_lookup.get_species_index(species, event_direction)
-        return self.data_in_3d_bins[:, species_index, ...]
+        return self.data_in_3d_bins[:, :, species_index, ...]
