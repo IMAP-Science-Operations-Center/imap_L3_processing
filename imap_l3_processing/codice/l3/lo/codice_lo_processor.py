@@ -177,11 +177,12 @@ class CodiceLoProcessor(Processor):
          gain,
          apd_id,
          spin_angle,
+         elevation,
          multi_flag,
          pha_type,
          tof) = [
             np.full((len(codice_direct_events.epoch), len(priority_rates_for_events), event_buffer), np.nan)
-            for _ in range(9)]
+            for _ in range(10)]
 
         (data_quality, num_events) = [np.full((len(codice_direct_events.epoch), len(priority_rates_for_events)), np.nan)
                                       for _ in range(2)]
@@ -199,7 +200,8 @@ class CodiceLoProcessor(Processor):
                 apd_id[:, priority_index, :] = priority_event.apd_id
                 multi_flag[:, priority_index, :] = priority_event.multi_flag
                 tof[:, priority_index, :] = priority_event.tof
-
+                spin_angle[:, priority_index, :] = priority_event.spin_angle
+                elevation[:, priority_index, :] = priority_event.elevation
                 data_quality[:, priority_index] = priority_event.data_quality
                 num_events[:, priority_index] = priority_event.num_events
                 priority_event_binned_by_energy_and_spin_angle = priority_event.total_events_binned_by_energy_step_and_spin_angle()
@@ -226,6 +228,8 @@ class CodiceLoProcessor(Processor):
             num_events=num_events,
             tof=tof,
             data_quality=data_quality,
+            spin_angle=spin_angle,
+            elevation=elevation
         )
 
 

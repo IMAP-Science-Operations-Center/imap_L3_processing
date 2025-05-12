@@ -98,6 +98,7 @@ class PriorityEvent:
     multi_flag: ndarray
     num_events: ndarray
     spin_angle: ndarray
+    elevation: ndarray
     tof: ndarray
 
     def total_events_binned_by_energy_step_and_spin_angle(self) -> [dict[EnergyAndSpinAngle, int]]:
@@ -134,6 +135,7 @@ class CodiceLoL2DirectEventData:
                                                      cdf[f"p{index}_multi_flag"][...],
                                                      cdf[f"p{index}_num_events"][...],
                                                      cdf[f"p{index}_spin_sector"][...],
+                                                     cdf[f"p{index}_position"][...],
                                                      cdf[f"p{index}_tof"][...]))
 
             return cls(
@@ -307,6 +309,8 @@ MULTI_FLAG_VAR_NAME = "multi_flag"
 NUM_EVENTS_VAR_NAME = "num_events"
 DATA_QUALITY_VAR_NAME = "data_quality"
 TOF_VAR_NAME = "tof"
+SPIN_ANGLE_VAR_NAME = "spin_angle"
+ELEVATION_VAR_NAME = "elevation"
 PRIORITY_INDEX_LABEL_VAR_NAME = "priority_index_label"
 EVENT_INDEX_LABEL_VAR_NAME = "event_index_label"
 ENERGY_BIN_LABEL_VAR_NAME = "energy_bin_label"
@@ -327,6 +331,8 @@ class CodiceLoDirectEventData:
     num_events: np.ndarray
     data_quality: np.ndarray
     tof: np.ndarray
+    spin_angle: np.ndarray
+    elevation: np.ndarray
 
     @classmethod
     def read_from_cdf(cls, cdf_path: Path | str):
@@ -342,7 +348,9 @@ class CodiceLoDirectEventData:
                        multi_flag=read_variable_and_mask_fill_values(cdf[MULTI_FLAG_VAR_NAME]),
                        num_events=read_variable_and_mask_fill_values(cdf[NUM_EVENTS_VAR_NAME]),
                        data_quality=read_variable_and_mask_fill_values(cdf[DATA_QUALITY_VAR_NAME]),
-                       tof=read_variable_and_mask_fill_values(cdf[TOF_VAR_NAME]))
+                       tof=read_variable_and_mask_fill_values(cdf[TOF_VAR_NAME]),
+                       spin_angle=read_numeric_variable(cdf[SPIN_ANGLE_VAR_NAME]),
+                       elevation=read_numeric_variable(cdf[ELEVATION_VAR_NAME]), )
 
 
 @dataclass
@@ -386,6 +394,9 @@ class CodiceLoL3aDirectEventDataProduct(CodiceLoDirectEventData, DataProduct):
             DataProductVariable(NUM_EVENTS_VAR_NAME, self.num_events),
             DataProductVariable(DATA_QUALITY_VAR_NAME, self.data_quality),
             DataProductVariable(TOF_VAR_NAME, self.tof),
+
+            DataProductVariable(SPIN_ANGLE_VAR_NAME, self.spin_angle),
+            DataProductVariable(ELEVATION_VAR_NAME, self.elevation),
 
             DataProductVariable(PRIORITY_INDEX_LABEL_VAR_NAME, self.priority_index_label),
             DataProductVariable(EVENT_INDEX_LABEL_VAR_NAME, self.event_index_label),
