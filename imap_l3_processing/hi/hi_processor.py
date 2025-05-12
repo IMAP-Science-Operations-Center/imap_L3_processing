@@ -88,14 +88,11 @@ class HiProcessor(Processor):
         input_data = hi_l3_spectral_fit_dependencies.hi_l3_data
         hi_l3_data = input_data
 
-        epochs = hi_l3_data.epoch
         energy = hi_l3_data.energy
         fluxes = hi_l3_data.ena_intensity
-        lons = hi_l3_data.longitude
-        lats = hi_l3_data.latitude
         variances = np.square(hi_l3_data.ena_intensity_stat_unc)
 
-        gammas, errors = spectral_fit(len(epochs), len(lons), len(lats), fluxes, variances, energy)
+        gammas, errors = spectral_fit(fluxes, variances, energy)
 
         min_energy = hi_l3_data.energy[0] - hi_l3_data.energy_delta_minus[0]
         max_energy = hi_l3_data.energy[-1] + hi_l3_data.energy_delta_plus[-1]
@@ -110,8 +107,8 @@ class HiProcessor(Processor):
         total_exposure_factor = np.sum(input_data.exposure_factor, axis=1, keepdims=True)
         return RectangularSpectralIndexMapData(
             spectral_index_map_data=SpectralIndexMapData(
-                ena_spectral_index_stat_unc=errors[:, np.newaxis, :, :],
-                ena_spectral_index=gammas[:, np.newaxis, :, :],
+                ena_spectral_index_stat_unc=errors,
+                ena_spectral_index=gammas,
                 epoch=input_data.epoch,
                 epoch_delta=input_data.epoch_delta,
                 energy=np.array([mean_energy]),

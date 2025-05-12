@@ -3,7 +3,7 @@ import numpy as np
 from imap_l3_processing.hi.l3.science.mpfit import mpfit
 
 
-def spectral_fit(num_epochs, num_lons, num_lats, fluxes, variances, energy, output_energy=None):
+def spectral_fit(fluxes, variances, energy, output_energy=None):
     output_energy = output_energy or np.array([[-np.inf, np.inf]])
     initial_parameters = (10, 2)
 
