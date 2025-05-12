@@ -1,10 +1,10 @@
-import dataclasses
 import unittest
 from datetime import datetime, timedelta
-from unittest.mock import Mock
+from unittest.mock import Mock, call
 
 import numpy as np
 
+from imap_l3_processing.codice.l3.lo.direct_events.science.angle_lookup import SpinAngleLookup, ElevationLookup
 from imap_l3_processing.codice.l3.lo.direct_events.science.mass_coefficient_lookup import MassCoefficientLookup
 from imap_l3_processing.codice.l3.lo.direct_events.science.mass_species_bin_lookup import MassSpeciesBinLookup, \
     EventDirection
@@ -131,62 +131,103 @@ class TestCodiceLoCalculations(unittest.TestCase):
 
     def test_rebin_by_species(self):
         num_epochs = 2
-        num_spin_angles = 13
-        num_azimuth = 24
+        num_priorities = 2
+        num_spin_angles = 24
+        num_elevation = 13
         num_esa_steps = 128
-        num_events_per_epoch = 4
+        num_species = 4
 
-        expected_species_returned = ["He+", "Fe", "He+", "Mg", "Mg", "Mg"]
+        # first 3 are first priority, last is second priority
+        expected_species_returned = [
+            "He+", "Fe", "He+", "O+5",
+            "Mg", "Mg", "Mg", "O+5"
+        ]
         mock_species_mass_range_lookup = Mock(spec=MassSpeciesBinLookup)
         mock_species_mass_range_lookup.get_species.side_effect = expected_species_returned
+        mock_species_mass_range_lookup.get_num_species.return_value = num_species
 
         def mock_get_species_index(species, direction):
             return_values = {
                 ("He+", EventDirection.Sunward): 0,
-                ("Fe", EventDirection.Sunward): 1,
-                ("Mg", EventDirection.Sunward): 2,
+                ("Fe", EventDirection.NonSunward): 1,
+                ("Mg", EventDirection.NonSunward): 2,
+                ("O+5", EventDirection.Sunward): 3,
+
             }
             return return_values[(species, direction)]
 
         mock_species_mass_range_lookup.get_species_index = mock_get_species_index
 
-        apd_id = np.array([[0, 15, 30, np.nan], [15, 15, 15, np.nan]])
-        spin_angle = np.array([[30, 15, 0, np.nan], [30, 30, 30, np.nan]])
-        energy_step = np.array([[0, 100, 127, np.nan], [127, 127, 127, np.nan]])
-        num_events = np.array([[1, 2, 3, np.nan], [2, 2, 2, np.nan]])
-        mass = np.array([[6, 5, 4, np.nan], [3, 3, 3, np.nan]])
-        mass_per_charge = np.array([[1, 2, 3, np.nan], [4, 4, 4, np.nan]])
+        spin_angle = np.array([
+            [[37.5, 22.5, 37.5, np.nan], [7.5, np.nan, np.nan, np.nan]],
+            [[37.5, 37.5, 37.5, np.nan], [7.5, np.nan, np.nan, np.nan]]
+        ])
 
-        priority_event = self.create_empty_priority_event(num_epochs, num_events_per_epoch)
-        priority_event = dataclasses.replace(priority_event,
-                                             apd_id=apd_id,
-                                             energy_step=energy_step,
-                                             num_events=num_events,
-                                             spin_angle=spin_angle
-                                             )
+        elevation = np.array([
+            [[15, 45, 15, np.nan], [0, np.nan, np.nan, np.nan]],
+            [[120, 120, 120, np.nan], [0, np.nan, np.nan, np.nan]]
+        ])
 
-        actual_counts_3d_data = rebin_to_counts_by_azimuth_spin_sector(mass, mass_per_charge, priority_event,
-                                                                       mock_species_mass_range_lookup)
+        energy_step = np.array([
+            [[0, 100, 0, np.nan], [0, np.nan, np.nan, np.nan]],
+            [[127, 127, 127, np.nan], [0, np.nan, np.nan, np.nan]]
+        ])
+
+        mass = np.array([
+            [[6, 5, 4, np.nan], [7, np.nan, np.nan, np.nan]],
+            [[3, 3, 3, np.nan], [7, np.nan, np.nan, np.nan]],
+        ])
+
+        mass_per_charge = np.array([
+            [[1, 2, 3, np.nan], [8, np.nan, np.nan, np.nan]],
+            [[4, 4, 4, np.nan], [9, np.nan, np.nan, np.nan]],
+        ])
+
+        spin_angle_lut = SpinAngleLookup()
+        elevation_lut = ElevationLookup()
+
+        actual_counts_3d_data = rebin_to_counts_by_azimuth_spin_sector(mass, mass_per_charge, energy_step, spin_angle,
+                                                                       elevation, mock_species_mass_range_lookup,
+                                                                       spin_angle_lut, elevation_lut)
+
+        mock_species_mass_range_lookup.get_species.assert_has_calls([
+            call(mass[0, 0, 0], mass_per_charge[0, 0, 0], EventDirection.Sunward),
+            call(mass[0, 0, 1], mass_per_charge[0, 0, 1], EventDirection.NonSunward),
+            call(mass[0, 0, 2], mass_per_charge[0, 0, 2], EventDirection.Sunward),
+
+            call(mass[0, 1, 0], mass_per_charge[0, 1, 0], EventDirection.Sunward),
+
+            call(mass[1, 0, 0], mass_per_charge[1, 0, 0], EventDirection.NonSunward),
+            call(mass[1, 0, 1], mass_per_charge[1, 0, 1], EventDirection.NonSunward),
+            call(mass[1, 0, 2], mass_per_charge[1, 0, 2], EventDirection.NonSunward),
+
+            call(mass[1, 1, 0], mass_per_charge[1, 1, 0], EventDirection.Sunward),
+
+        ])
 
         self.assertIsInstance(actual_counts_3d_data, CodiceLo3dData)
 
-        rebinned_shape = (num_epochs, num_spin_angles, num_azimuth, num_esa_steps)
+        self.assertEqual((num_epochs, num_priorities, num_species, num_elevation, num_spin_angles, num_esa_steps),
+                         actual_counts_3d_data.data_in_3d_bins.shape)
+
+        rebinned_shape = (num_epochs, num_priorities, num_elevation, num_spin_angles, num_esa_steps)
         expected_he_plus_counts = np.zeros(rebinned_shape)
-        expected_he_plus_counts[0][0][2][0] = 1
-        expected_he_plus_counts[0][2][0][127] = 3
+        expected_he_plus_counts[0, 0, 1, 2, 0] = 2
         np.testing.assert_array_equal(actual_counts_3d_data.get_3d_distribution("He+", EventDirection.Sunward),
                                       expected_he_plus_counts)
 
         expected_fe_counts = np.zeros(rebinned_shape)
-        expected_fe_counts[0][1][1][100] = 2
-        np.testing.assert_array_equal(actual_counts_3d_data.get_3d_distribution("Fe", EventDirection.Sunward),
+        expected_fe_counts[0, 0, 3, 1, 100] = 1
+        np.testing.assert_array_equal(actual_counts_3d_data.get_3d_distribution("Fe", EventDirection.NonSunward),
                                       expected_fe_counts)
 
         expected_mg_counts = np.zeros(rebinned_shape)
-        expected_mg_counts[1][1][2][127] = 6
-        np.testing.assert_array_equal(actual_counts_3d_data.get_3d_distribution("Mg", EventDirection.Sunward),
+        expected_mg_counts[1, 0, 8, 2, 127] = 3
+        np.testing.assert_array_equal(actual_counts_3d_data.get_3d_distribution("Mg", EventDirection.NonSunward),
                                       expected_mg_counts)
 
-    def create_empty_priority_event(self, num_epochs: int, num_events_per_epoch: int) -> PriorityEvent:
-        return PriorityEvent(
-            **{field.name: np.zeros((num_epochs, num_events_per_epoch)) for field in dataclasses.fields(PriorityEvent)})
+        expected_o_counts = np.zeros(rebinned_shape)
+        expected_o_counts[0, 1, 0, 0, 0] = 1
+        expected_o_counts[1, 1, 0, 0, 0] = 1
+        np.testing.assert_array_equal(actual_counts_3d_data.get_3d_distribution("O+5", EventDirection.Sunward),
+                                      expected_o_counts)
