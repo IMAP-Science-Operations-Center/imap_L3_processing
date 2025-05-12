@@ -274,3 +274,29 @@ spin_angle_bin_label:
   FORMAT: a20
   VAR_TYPE: metadata
   FILLVAL: ' '
+
+spin_angle:
+  <<: *per_event
+  <<: *float_data
+  NAME: spin_angle
+  CATDESC: Spin angle per event
+  FIELDNAM: Spin angle
+  LABLAXIS: Spin angle
+  UNITS: degrees
+  VALIDMAX: 360
+  SCALETYP: linear
+  SCALEMIN: 0
+  SCALEMAX: 360
+
+elevation:
+  <<: *per_event
+  <<: *float_data
+  NAME: elevation
+  CATDESC: Elevation per event
+  FIELDNAM: Elevation
+  LABLAXIS: Elevation
+  UNITS: degrees
+  VALIDMAX: 360
+  SCALETYP: linear
+  SCALEMIN: 0
+  SCALEMAX: 360

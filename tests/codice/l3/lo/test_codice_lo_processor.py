@@ -481,7 +481,10 @@ class TestCodiceLoProcessor(unittest.TestCase):
          expected_apd_id,
          expected_multi_flag,
          expected_pha_type,
-         expected_tof) = [np.full((len(epochs), 7, len(event_num)), np.nan) for _ in range(8)]
+         expected_tof,
+         expected_spin_angle,
+         expected_elevation,
+         ) = [np.full((len(epochs), 7, len(event_num)), np.nan) for _ in range(10)]
 
         (expected_data_quality,
          expected_num_events) = [np.full((len(epochs), 7), np.nan) for _ in range(2)]
@@ -510,9 +513,10 @@ class TestCodiceLoProcessor(unittest.TestCase):
             expected_apd_id[:, i, :] = np.copy(priority_event.apd_id)
             expected_multi_flag[:, i, :] = np.copy(priority_event.multi_flag)
             expected_tof[:, i, :] = np.copy(priority_event.tof)
+            expected_spin_angle[:, i, :] = np.copy(priority_event.spin_angle)
+            expected_elevation[:, i, :] = np.copy(priority_event.elevation)
             expected_mass[:, i, :] = np.copy(mass)
             expected_mass_per_charge[:, i, :] = np.copy(mass_per_charge)
-
             expected_data_quality[:, i] = np.copy(priority_event.data_quality)
             expected_num_events[:, i] = np.copy(priority_event.num_events)
 
@@ -559,6 +563,8 @@ class TestCodiceLoProcessor(unittest.TestCase):
         np.testing.assert_array_equal(priority_index, l3a_direct_event_data_product.priority_index)
         np.testing.assert_array_equal(expected_mass_per_charge, l3a_direct_event_data_product.mass_per_charge)
         np.testing.assert_array_equal(expected_mass, l3a_direct_event_data_product.mass)
+        np.testing.assert_array_equal(expected_spin_angle, l3a_direct_event_data_product.spin_angle)
+        np.testing.assert_array_equal(expected_elevation, l3a_direct_event_data_product.elevation)
 
         mock_calculate_normalization_ratio.assert_has_calls(expected_calculate_normalization_calls)
         mock_calculate_mass.assert_has_calls(expected_calculate_mass_calls)
