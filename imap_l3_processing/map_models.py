@@ -55,6 +55,10 @@ class HealPixCoords:
     pixel_index: np.ndarray
     pixel_index_label: np.ndarray
 
+    @property
+    def nside(self) -> int:
+        return int(np.sqrt(len(self.pixel_index) / 12))
+
 
 @dataclass
 class RectangularCoords:
@@ -87,6 +91,22 @@ class RectangularIntensityMapData:
 class RectangularSpectralIndexMapData:
     spectral_index_map_data: SpectralIndexMapData
     coords: RectangularCoords
+
+
+@dataclass
+class HealPixIntensityMapData:
+    intensity_map_data: IntensityMapData
+    coords: HealPixCoords
+
+    @classmethod
+    def read_from_path(cls, cdf_path):
+        pass
+
+
+@dataclass
+class HealPixSpectralIndexMapData:
+    spectral_index_map_data: SpectralIndexMapData
+    coords: HealPixCoords
 
 
 @dataclass

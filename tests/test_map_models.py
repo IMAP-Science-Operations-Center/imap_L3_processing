@@ -10,6 +10,8 @@ from imap_l3_processing.map_models import RectangularCoords, SpectralIndexMapDat
     RectangularSpectralIndexDataProduct, RectangularIntensityMapData, IntensityMapData, RectangularIntensityDataProduct, \
     combine_rectangular_intensity_map_data, combine_intensity_map_data
 from imap_l3_processing.models import DataProductVariable
+from imap_l3_processing.utils import read_healpix_intensity_map_data_from_cdf
+from tests.test_helpers import get_test_data_folder
 
 
 class TestMapModels(unittest.TestCase):
@@ -269,6 +271,14 @@ class TestMapModels(unittest.TestCase):
             with self.subTest(name):
                 with self.assertRaises(AssertionError):
                     combine_rectangular_intensity_map_data([base_map, not_matching_map])
+
+    def test_healpix_map_nside_property(self):
+        path_to_cdf = get_test_data_folder() / 'ultra' / 'fake_l2_maps' / 'test_l2_map.cdf'
+        actual = read_healpix_intensity_map_data_from_cdf(path_to_cdf)
+        expected_nside = 2
+
+        self.assertIsInstance(actual.coords.nside, int)
+        self.assertEqual(expected_nside, actual.coords.nside)
 
 
 if __name__ == '__main__':

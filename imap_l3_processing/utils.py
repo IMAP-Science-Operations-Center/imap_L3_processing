@@ -12,7 +12,8 @@ from imap_l3_processing.cdf.cdf_utils import write_cdf, read_numeric_variable, r
 from imap_l3_processing.cdf.imap_attribute_manager import ImapAttributeManager
 from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
 from imap_l3_processing.hi.l3.models import HiL1cData, HiGlowsL3eData
-from imap_l3_processing.map_models import IntensityMapData, RectangularIntensityMapData, RectangularCoords
+from imap_l3_processing.map_models import IntensityMapData, RectangularIntensityMapData, RectangularCoords, \
+    HealPixIntensityMapData, HealPixCoords
 from imap_l3_processing.models import UpstreamDataDependency, DataProduct, MagL1dData
 from imap_l3_processing.ultra.l3.models import UltraL1CPSet, UltraGlowsL3eData
 from imap_l3_processing.version import VERSION
@@ -150,6 +151,14 @@ def read_rectangular_intensity_map_data_from_cdf(cdf_path: Path | str) -> Rectan
         )
 
 
+def read_healpix_intensity_map_data_from_cdf(cdf_path: Path | str) -> HealPixIntensityMapData:
+    with CDF(str(cdf_path)) as cdf:
+        return HealPixIntensityMapData(
+            intensity_map_data=_read_intensity_map_data_from_open_cdf(cdf),
+            coords=_read_healpix_coords_from_open_cdf(cdf),
+        )
+
+
 def _read_intensity_map_data_from_open_cdf(cdf: CDF) -> IntensityMapData:
     return IntensityMapData(
         epoch=cdf["epoch"][...],
@@ -176,4 +185,11 @@ def _read_rectangular_coords_from_open_cdf(cdf: CDF) -> RectangularCoords:
         latitude_label=cdf["latitude_label"][...],
         longitude_delta=read_numeric_variable(cdf["longitude_delta"]),
         longitude_label=cdf["longitude_label"][...],
+    )
+
+
+def _read_healpix_coords_from_open_cdf(cdf: CDF) -> HealPixCoords:
+    return HealPixCoords(
+        pixel_index=cdf["pixel_index"][...],
+        pixel_index_label=cdf["pixel_index_label"][...]
     )

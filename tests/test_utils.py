@@ -10,6 +10,7 @@ import numpy as np
 from imap_processing.ena_maps.utils.spatial_utils import build_solid_angle_map
 from spacepy.pycdf import CDF
 
+from imap_l3_processing.cdf.cdf_utils import read_variable_and_mask_fill_values
 from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH, FIVE_MINUTES_IN_NANOSECONDS, ONE_SECOND_IN_NANOSECONDS, \
     SECONDS_PER_DAY
 from imap_l3_processing.hi.l3.models import HiL1cData, HiGlowsL3eData
@@ -19,7 +20,8 @@ from imap_l3_processing.swapi.l3a.models import SwapiL3AlphaSolarWindData
 from imap_l3_processing.utils import format_time, download_dependency, read_l1d_mag_data, save_data, \
     find_glows_l3e_dependencies, \
     download_external_dependency, download_dependency_from_path, download_dependency_with_repointing, \
-    combine_glows_l3e_with_l1c_pointing, read_rectangular_intensity_map_data_from_cdf
+    combine_glows_l3e_with_l1c_pointing, read_rectangular_intensity_map_data_from_cdf, \
+    read_healpix_intensity_map_data_from_cdf
 from imap_l3_processing.version import VERSION
 from tests.cdf.test_cdf_utils import TestDataProduct
 from tests.test_helpers import get_test_data_folder
@@ -523,3 +525,35 @@ class TestUtils(TestCase):
                                           np.full_like(cdf["ena_intensity_sys_err"], np.nan))
             np.testing.assert_array_equal(map_data.exposure_factor, np.full_like(cdf["exposure_factor"], np.nan))
             np.testing.assert_array_equal(map_data.solid_angle, np.full_like(cdf["solid_angle"], np.nan))
+
+    def test_ultra_l2_map_read_from_file(self):
+        path_to_cdf = get_test_data_folder() / 'ultra' / 'fake_l2_maps' / 'ultra45-6months-copied-from-hi.cdf'
+
+        data = read_healpix_intensity_map_data_from_cdf(path_to_cdf)
+        actual_intensity_data = data.intensity_map_data
+        actual_coords = data.coords
+
+        expected_epoch = datetime(2025, 4, 18, 15, 51, 57, 171732)
+        with CDF(str(path_to_cdf)) as expected:
+            date_range_var = read_variable_and_mask_fill_values(expected["obs_date_range"])
+            obs_date = read_variable_and_mask_fill_values(expected["obs_date"])
+
+            self.assertEqual(expected_epoch, actual_intensity_data.epoch[0])
+            np.testing.assert_array_equal(expected["epoch_delta"][...], actual_intensity_data.epoch_delta)
+            np.testing.assert_array_equal(expected["energy"][...], actual_intensity_data.energy)
+            np.testing.assert_array_equal(expected["energy_delta_plus"][...], actual_intensity_data.energy_delta_plus)
+            np.testing.assert_array_equal(expected["energy_delta_minus"][...], actual_intensity_data.energy_delta_minus)
+            np.testing.assert_array_equal(expected["energy_label"][...], actual_intensity_data.energy_label)
+            np.testing.assert_array_equal(expected["latitude"][...], actual_intensity_data.latitude)
+            np.testing.assert_array_equal(expected["longitude"][...], actual_intensity_data.longitude)
+            np.testing.assert_array_equal(expected["exposure_factor"][...], actual_intensity_data.exposure_factor)
+            np.testing.assert_array_equal(obs_date, actual_intensity_data.obs_date)
+            np.testing.assert_array_equal(date_range_var, actual_intensity_data.obs_date_range)
+            np.testing.assert_array_equal(expected["solid_angle"][...], actual_intensity_data.solid_angle)
+            np.testing.assert_array_equal(expected["ena_intensity"][...], actual_intensity_data.ena_intensity)
+            np.testing.assert_array_equal(expected["ena_intensity_stat_unc"][...],
+                                          actual_intensity_data.ena_intensity_stat_unc)
+            np.testing.assert_array_equal(expected["ena_intensity_sys_err"][...],
+                                          actual_intensity_data.ena_intensity_sys_err)
+            np.testing.assert_array_equal(expected["pixel_index"][...], actual_coords.pixel_index)
+            np.testing.assert_array_equal(expected["pixel_index_label"][...], actual_coords.pixel_index_label)
