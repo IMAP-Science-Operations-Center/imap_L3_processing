@@ -1,0 +1,4 @@
+imap_glows_l3d_solar-hist:
+  Data_level: "3d"
+  Data_type: L3D_solar-hist>Level-3D Solar History
+  Logical_source_description: IMAP Mission GLOWS Carrington period-averaged solar history

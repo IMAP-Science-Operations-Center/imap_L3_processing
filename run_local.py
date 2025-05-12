@@ -632,7 +632,9 @@ def run_glows_l3d(mock_shutil):
         data_level='l3d',
         start_date=datetime(2013, 9, 8),
         end_date=datetime(2013, 9, 8),
-        version='v001')
+        version='v001',
+        descriptor='solar-hist'
+    )
 
     external_files = {
         'lya_raw_data': get_test_data_path('glows/lyman_alpha_composite.nc'),
@@ -667,7 +669,8 @@ def run_glows_l3d(mock_shutil):
                                                                   l3c_file_paths=l3c_file_paths)
 
     processor = GlowsProcessor(ProcessingInputCollection(), input_metadata)
-    processor.process_l3d(l3d_dependencies)
+    data_product, l3d_txt_paths, last_processed_cr = processor.process_l3d(l3d_dependencies)
+    print(save_data(data_product, cr_number=last_processed_cr))
 
 
 def create_empty_hi_l1c_dataset(epoch: datetime, exposures: Optional[np.ndarray] = None,

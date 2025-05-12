@@ -102,3 +102,9 @@ class IntensityMapData(MapData):
 class SpectralIndexMapData(MapData):
     ena_spectral_index: np.ndarray
     ena_spectral_index_stat_unc: np.ndarray
+
+
+@dataclass
+class RectangularIntensityMapData:
+    intensity_map_data: IntensityMapData
+    coords: RectangularCoords

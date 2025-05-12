@@ -2,40 +2,48 @@ from dataclasses import dataclass
 
 import numpy as np
 
+from imap_l3_processing.constants import CARRINGTON_ROTATION_IN_NANOSECONDS
 from imap_l3_processing.models import DataProduct, DataProductVariable
 
-LAT_GRID_CDF_VAR_NAME = "latitude_grid"
-CR_GRID_CDF_VAR_NAME = "cr_grid"
-TIME_GRID_CDF_VAR_NAME = "time_grid"
+EPOCH_CDF_VAR_NAME = 'epoch'
+EPOCH_DELTA_CDF_VAR_NAME = 'epoch_delta'
+LATITUDE_CDF_CDF_VAR_NAME = "latitude"
+LATITUDE_LABEL_CDF_VAR_NAME = "latitude_label"
+CR_CDF_VAR_NAME = "cr"
 SPEED_CDF_VAR_NAME = "speed"
-P_DENS_CDF_VAR_NAME = "proton_density"
-UV_ANIS_CDF_VAR_NAME = "uv_anisotropy"
+PROTON_DENSITY_CDF_VAR_NAME = "proton_density"
+UV_ANISOTROPY_CDF_VAR_NAME = "ultraviolet_anisotropy"
 PHION_CDF_VAR_NAME = "phion"
-LYA_CDF_VAR_NAME = "lyman_alpha"
-E_DENS_CDF_VAR_NAME = "electron_density"
+LYMAN_ALPHA_CDF_VAR_NAME = "lyman_alpha"
+ELECTRON_DENSITY_CDF_VAR_NAME = "electron_density"
 
 
 @dataclass
 class GlowsL3DSolarParamsHistory(DataProduct):
-    lat_grid: np.ndarray
-    cr_grid: np.ndarray
-    time_grid: np.ndarray
+    epoch: np.ndarray
+    latitude: np.ndarray
+    cr: np.ndarray
     speed: np.ndarray
-    p_dens: np.ndarray
-    uv_anis: np.ndarray
+    proton_density: np.ndarray
+    ultraviolet_anisotropy: np.ndarray
     phion: np.ndarray
-    lya: np.ndarray
-    e_dens: np.ndarray
+    lyman_alpha: np.ndarray
+    electron_density: np.ndarray
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
+        epoch_delta = np.full_like(self.epoch, CARRINGTON_ROTATION_IN_NANOSECONDS / 2)
+        latitude_label = [f'{lat:.1f} degrees' for lat in self.latitude]
+
         return [
-            DataProductVariable(LAT_GRID_CDF_VAR_NAME, self.lat_grid),
-            DataProductVariable(CR_GRID_CDF_VAR_NAME, self.cr_grid),
-            DataProductVariable(TIME_GRID_CDF_VAR_NAME, self.time_grid),
+            DataProductVariable(EPOCH_CDF_VAR_NAME, self.epoch),
+            DataProductVariable(EPOCH_DELTA_CDF_VAR_NAME, epoch_delta),
+            DataProductVariable(LATITUDE_CDF_CDF_VAR_NAME, self.latitude),
+            DataProductVariable(LATITUDE_LABEL_CDF_VAR_NAME, latitude_label),
+            DataProductVariable(CR_CDF_VAR_NAME, self.cr),
             DataProductVariable(SPEED_CDF_VAR_NAME, self.speed),
-            DataProductVariable(P_DENS_CDF_VAR_NAME, self.p_dens),
-            DataProductVariable(UV_ANIS_CDF_VAR_NAME, self.uv_anis),
+            DataProductVariable(PROTON_DENSITY_CDF_VAR_NAME, self.proton_density),
+            DataProductVariable(UV_ANISOTROPY_CDF_VAR_NAME, self.ultraviolet_anisotropy),
             DataProductVariable(PHION_CDF_VAR_NAME, self.phion),
-            DataProductVariable(LYA_CDF_VAR_NAME, self.lya),
-            DataProductVariable(E_DENS_CDF_VAR_NAME, self.e_dens),
+            DataProductVariable(LYMAN_ALPHA_CDF_VAR_NAME, self.lyman_alpha),
+            DataProductVariable(ELECTRON_DENSITY_CDF_VAR_NAME, self.electron_density),
         ]

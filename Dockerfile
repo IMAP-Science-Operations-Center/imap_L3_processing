@@ -13,4 +13,7 @@ COPY imap_l3_data_processor.py .
 COPY imap_l3_processing/glows/l3e/l3e_toolkit/survProbHi survProbHi
 COPY imap_l3_processing/glows/l3e/l3e_toolkit/survProbLo survProbLo
 COPY imap_l3_processing/glows/l3e/l3e_toolkit/survProbUltra survProbUltra
+RUN chmod +x survProbHi
+RUN chmod +x survProbLo
+RUN chmod +x survProbUltra
 ENTRYPOINT ["python","imap_l3_data_processor.py"]

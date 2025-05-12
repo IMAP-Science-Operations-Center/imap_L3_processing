@@ -1,6 +1,9 @@
 import json
 import os
+from datetime import datetime
 from pathlib import Path
+
+import numpy as np
 from spacepy.pycdf import CDF
 
 import imap_l3_processing
@@ -67,15 +70,15 @@ def convert_json_to_l3d_data_product(json_file_path: Path, input_metadata: Input
     return GlowsL3DSolarParamsHistory(
         input_metadata=input_metadata,
         parent_file_names=parent_file_names,
-        lat_grid=l3d_json_dict['lat_grid'],
-        cr_grid=l3d_json_dict['cr_grid'],
-        time_grid=l3d_json_dict['time_grid'],
+        latitude=l3d_json_dict['lat_grid'],
+        cr=l3d_json_dict['cr_grid'],
+        epoch=np.array([datetime.fromisoformat(time) for time in l3d_json_dict['time_grid']]),
         speed=l3d_json_dict['solar_params']['speed'],
-        p_dens=l3d_json_dict['solar_params']['p-dens'],
-        uv_anis=l3d_json_dict['solar_params']['uv-anis'],
+        proton_density=l3d_json_dict['solar_params']['p-dens'],
+        ultraviolet_anisotropy=l3d_json_dict['solar_params']['uv-anis'],
         phion=l3d_json_dict['solar_params']['phion'],
-        lya=l3d_json_dict['solar_params']['lya'],
-        e_dens=l3d_json_dict['solar_params']['e-dens'],
+        lyman_alpha=l3d_json_dict['solar_params']['lya'],
+        electron_density=l3d_json_dict['solar_params']['e-dens'],
     )
 
 
