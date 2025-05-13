@@ -1,3 +1,4 @@
+import abc
 import dataclasses
 from dataclasses import dataclass
 from datetime import timedelta
@@ -120,6 +121,12 @@ class HealPixIntensityMapData:
                 intensity_map_data=_read_intensity_map_data_from_open_cdf(cdf),
                 coords=_read_healpix_coords_from_open_cdf(cdf),
             )
+
+
+class SpectralIndexDependencies(metaclass=abc.ABCMeta):
+    @abc.abstractmethod
+    def get_fit_energy_ranges(self) -> np.ndarray:
+        raise NotImplementedError
 
 
 def _read_intensity_map_data_from_open_cdf(cdf: CDF) -> IntensityMapData:
