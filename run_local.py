@@ -38,7 +38,7 @@ from imap_l3_processing.glows.l3d.glows_l3d_dependencies import GlowsL3DDependen
 from imap_l3_processing.glows.l3e.glows_l3e_dependencies import GlowsL3EDependencies
 from imap_l3_processing.hi.hi_processor import HiProcessor
 from imap_l3_processing.hi.l3.hi_l3_combined_sensor_dependencies import HiL3CombinedMapDependencies
-from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3SpectralFitDependencies
+from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3SpectralIndexDependencies
 from imap_l3_processing.hi.l3.hi_l3_survival_dependencies import HiL3SurvivalDependencies, \
     HiL3SingleSensorFullSpinDependencies
 from imap_l3_processing.hit.l3.hit_l3_sectored_dependencies import HITL3SectoredDependencies
@@ -203,7 +203,7 @@ def create_codice_lo_l3a_3d_distributions_cdf():
         l1a_sw_file_path=codice_lo_l1a_sw_path,
         l1a_nsw_file_path=codice_lo_l1a_nsw_path,
         mass_species_bin_lut=csv_path,
-        )
+    )
 
     input_metadata = InputMetadata(
         instrument='codice',
@@ -327,7 +327,7 @@ def create_survival_corrected_full_spin_cdf(dependencies: HiL3SingleSensorFullSp
     return cdf_path
 
 
-def create_spectral_index_cdf(dependencies: HiL3SpectralFitDependencies) -> str:
+def create_spectral_index_cdf(dependencies: HiL3SpectralIndexDependencies) -> str:
     input_metadata = InputMetadata(instrument="hi",
                                    data_level="l3",
                                    start_date=datetime.now(),
@@ -980,7 +980,7 @@ if __name__ == "__main__":
             print(create_hi_l3_survival_corrected_cdf(survival_dependencies, spacing_degree=4))
 
         if do_all or "spectral-index" in sys.argv:
-            dependencies = HiL3SpectralFitDependencies.from_file_paths(
+            dependencies = HiL3SpectralIndexDependencies.from_file_paths(
                 get_test_data_path("hi/fake_l2_maps/hi45-zirnstein-mondel-6months.cdf")
             )
             print(create_spectral_index_cdf(dependencies))

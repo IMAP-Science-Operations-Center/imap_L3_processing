@@ -5,7 +5,7 @@ from unittest.mock import patch, Mock
 import numpy as np
 from imap_data_access.processing_input import ScienceInput, ProcessingInputCollection
 
-from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3SpectralFitDependencies
+from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3SpectralIndexDependencies
 from imap_l3_processing.maps.map_models import RectangularIntensityMapData, IntensityMapData
 
 
@@ -16,12 +16,12 @@ class TestHiL3SpectralFitDependencies(unittest.TestCase):
     def test_from_file_paths(self, mock_read_from_path):
         hi_l3 = Path("test_hi_l3_cdf.cdf")
 
-        result = HiL3SpectralFitDependencies.from_file_paths(hi_l3)
+        result = HiL3SpectralIndexDependencies.from_file_paths(hi_l3)
 
         mock_read_from_path.assert_called_with(hi_l3)
 
         self.assertEqual(mock_read_from_path.call_count, 1)
-        self.assertEqual(mock_read_from_path.return_value, result.hi_l3_data)
+        self.assertEqual(mock_read_from_path.return_value, result.map_data)
 
     @patch("imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies.imap_data_access.download")
     @patch(
@@ -31,11 +31,11 @@ class TestHiL3SpectralFitDependencies(unittest.TestCase):
         processing_input = ProcessingInputCollection(
             ScienceInput(file_name))
 
-        dependency = HiL3SpectralFitDependencies.fetch_dependencies(processing_input)
+        dependency = HiL3SpectralIndexDependencies.fetch_dependencies(processing_input)
 
         mock_download.assert_called_with(file_name)
         mock_read_from_path.assert_called_with(mock_download.return_value)
-        self.assertEqual(mock_read_from_path.return_value, dependency.hi_l3_data)
+        self.assertEqual(mock_read_from_path.return_value, dependency.map_data)
 
     def test_raises_value_error_if_instrument_doesnt_match(self):
         file_name = "imap_lo_l3_h90-spx-h-hf-sp-full-hae-4deg-6mo_20250422_v001.cdf"
@@ -43,7 +43,7 @@ class TestHiL3SpectralFitDependencies(unittest.TestCase):
             ScienceInput(file_name))
 
         with self.assertRaises(ValueError) as error:
-            _ = HiL3SpectralFitDependencies.fetch_dependencies(processing_input)
+            _ = HiL3SpectralIndexDependencies.fetch_dependencies(processing_input)
 
         self.assertEqual(str(error.exception), "Missing Hi dependency.")
 
@@ -55,7 +55,7 @@ class TestHiL3SpectralFitDependencies(unittest.TestCase):
         map_data = _create_intensity_map_data(energy=energy, energy_delta_plus=energy_delta_plus,
                                               energy_delta_minus=energy_delta_minus)
         data = RectangularIntensityMapData(map_data, Mock())
-        deps = HiL3SpectralFitDependencies(data)
+        deps = HiL3SpectralIndexDependencies(data)
 
         np.testing.assert_array_equal(deps.get_fit_energy_ranges(), [[0.9, 3.2]])
 
