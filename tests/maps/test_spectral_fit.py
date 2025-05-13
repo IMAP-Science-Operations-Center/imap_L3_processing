@@ -3,8 +3,8 @@ from unittest.mock import patch
 
 import numpy as np
 
-from imap_l3_processing.hi.l3.science.mpfit import mpfit
-from imap_l3_processing.hi.l3.science.spectral_fit import power_law, spectral_fit
+from imap_l3_processing.maps.mpfit import mpfit
+from imap_l3_processing.maps.spectral_fit import power_law, spectral_fit
 
 
 class TestSpectralFit(unittest.TestCase):
@@ -204,7 +204,7 @@ class TestSpectralFit(unittest.TestCase):
                 np.testing.assert_array_equal(result_range_2,
                                               np.array(true_gamma_range_2).reshape(*spacial_dimension_shape))
 
-    @patch('imap_l3_processing.hi.l3.science.spectral_fit.mpfit', wraps=mpfit)
+    @patch('imap_l3_processing.maps.spectral_fit.mpfit', wraps=mpfit)
     def test_passes_initial_guess_to_mpfit_based_on_line_between_first_and_last_points_in_log_space(self, mock_mpfit):
         energies = np.geomspace(10, 1e4, 6)
         true_A, true_gamma = 2.0, 1.5
