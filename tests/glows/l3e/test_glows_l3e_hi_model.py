@@ -42,8 +42,8 @@ class TestL3eHiModel(unittest.TestCase):
 
     def test_convert_dat_to_glows_l3e_hi_product(self):
         hi_file_path = get_test_instrument_team_data_path("glows/probSur.Imap.Hi_2009.000_90.00.txt")
-        expected_epoch = np.array(datetime(year=2009, month=8, day=16))
-        expected_time_delta = np.array(timedelta(hours=12))
+        expected_epoch = np.array([datetime(year=2009, month=8, day=16)])
+        expected_time_delta = np.array([timedelta(hours=12)])
         expected_energy = [0.3749896542976582, 0.4881381387720609, 0.6354277772546533, 0.8271602401781013,
                            1.076745599456691, 1.401640250140305, 1.824567838312671, 2.375108588863466,
                            3.091768193234094, 4.024670958420553, 5.239065580337116, 6.819888740878518,
@@ -150,6 +150,7 @@ class TestL3eHiModel(unittest.TestCase):
                                                                                             expected_epoch,
                                                                                             expected_time_delta)
 
+        self.assertEqual(expected_epoch[0], l3e_hi_product.input_metadata.start_date)
         self.assertEqual(expected_epoch, l3e_hi_product.epoch)
         np.testing.assert_array_equal(l3e_hi_product.epoch_delta, np.array([12 * 60 * 60 * 1e9]))
         np.testing.assert_array_equal(l3e_hi_product.energy, expected_energy)

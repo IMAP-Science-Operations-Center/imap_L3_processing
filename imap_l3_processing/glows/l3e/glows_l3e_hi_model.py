@@ -36,6 +36,8 @@ class GlowsL3EHiData(DataProduct):
         spin_angles = spin_angle_and_survival_probabilities[:, 0]
         survival_probabilities = np.array([spin_angle_and_survival_probabilities[:, 1:].T])
 
+        input_metadata.start_date = epoch[0]
+
         return cls(input_metadata, epoch, epoch_delta.astype('timedelta64[ns]').astype(float), energies, spin_angles,
                    survival_probabilities)
 

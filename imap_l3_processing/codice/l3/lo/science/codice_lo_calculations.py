@@ -119,3 +119,13 @@ def rebin_to_counts_by_species_elevation_and_spin_sector(mass: np.ndarray, mass_
                 output[i, j, *index] += 1
 
     return CodiceLo3dData(data_in_3d_bins=output, mass_bin_lookup=mass_species_bin_lookup)
+
+
+def normalize_counts(counts, normalization_factor):
+    reshaped_normalization_factor = np.transpose(normalization_factor, (0, 1, 3, 2))
+    reshaped_normalization_factor = reshaped_normalization_factor[:, :, np.newaxis, np.newaxis, :, :]
+    return reshaped_normalization_factor * counts
+
+
+def combine_priorities_and_convert_to_rate(counts):
+    return np.sum(counts, axis=1)

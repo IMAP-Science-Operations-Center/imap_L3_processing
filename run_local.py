@@ -524,15 +524,17 @@ def run_glows_l3e_lo_with_mocks(mock_get_repoint_date_range, _, mock_path, mock_
 
 
 @environment_variables({"REPOINT_DATA_FILEPATH": get_test_data_path("fake_1_day_repointing_file.csv")})
-@patch("imap_l3_processing.glows.glows_processor.imap_data_access.upload")
+@patch("imap_l3_processing.glows.glows_processor.imap_data_access")
 @patch("imap_l3_processing.glows.l3e.glows_l3e_utils.spiceypy")
-def run_glows_l3e_lo_with_less_mocks(mock_spiceypy, _):
+def run_glows_l3e_lo_with_less_mocks(mock_spiceypy, mock_imap_data_access):
     mock_spiceypy.spkezr = spiceypy.spkezr
     mock_spiceypy.reclat = spiceypy.reclat
     mock_spiceypy.pxform = spiceypy.pxform
     mock_spiceypy.datetime2et = lambda date: spiceypy.datetime2et(date + timedelta(days=365 * 16 + 4))
 
-    l3d_file = "imap_glows_l3d_solar-hist_20100101-repoint00002_v002.cdf"
+    mock_imap_data_access.upload = lambda p: print("i would upload", p)
+
+    l3d_file = "imap_glows_l3d_solar-hist_20100101-repoint02092_v002.cdf"
     lo_processing_input_collection = ProcessingInputCollection(
         AncillaryInput("imap_glows_density-3d_19640117_v002.dat"),
         AncillaryInput("imap_glows_energy-grid-lo_20100101_v002.dat"),

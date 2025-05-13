@@ -24,7 +24,7 @@ from imap_l3_processing.glows.l3e.glows_l3e_lo_model import GlowsL3ELoData
 from imap_l3_processing.glows.l3e.glows_l3e_ultra_model import GlowsL3EUltraData
 from imap_l3_processing.models import InputMetadata
 from tests.test_helpers import get_test_instrument_team_data_path, get_test_data_path, get_test_data_folder, \
-    assert_dataclass_fields
+    assert_dataclass_fields, environment_variables
 
 
 class TestGlowsProcessor(unittest.TestCase):
@@ -315,17 +315,19 @@ class TestGlowsProcessor(unittest.TestCase):
             processor.process_l3bc(dependencies)
         self.assertTrue("All days for Carrington Rotation are in a bad season." in str(context.exception))
 
+    @environment_variables({"REPOINT_DATA_FILEPATH": get_test_data_path("fake_2_day_repointing_on_may18_file.csv")})
     @patch('imap_l3_processing.hi.hi_processor.Processor.get_parent_file_names')
+    @patch('imap_l3_processing.glows.glows_processor.determine_repointing_numbers_for_cr')
     @patch('imap_l3_processing.glows.glows_processor.save_data')
     @patch('imap_l3_processing.glows.glows_processor.imap_data_access.upload')
     @patch("imap_l3_processing.glows.glows_processor.GlowsL3EUltraData.convert_dat_to_glows_l3e_ul_product")
     @patch("imap_l3_processing.glows.glows_processor.run")
     @patch("imap_l3_processing.glows.glows_processor.determine_call_args_for_l3e_executable")
-    @patch("imap_l3_processing.glows.glows_processor.get_repoint_date_range")
     @patch("imap_l3_processing.glows.glows_processor.GlowsL3EDependencies")
-    def test_process_l3e_ultra(self, mock_l3e_dependencies, mock_get_repoint_date_range, mock_determine_call_args,
+    @patch("imap_l3_processing.glows.glows_processor.get_repoint_date_range")
+    def test_process_l3e_ultra(self, mock_get_repoint_date_range, mock_l3e_dependencies, mock_determine_call_args,
                                mock_run, mock_convert_dat_to_glows_l3e_ul_product, mock_upload, mock_save_data,
-                               mock_get_parent_file_names):
+                               mock_determine_repointing_numbers_for_cr, mock_get_parent_file_names):
         mock_get_parent_file_names.return_value = ["l3d_file", "ancillary_1", "ancillary_2", "ancillary_3"]
         input_metadata = InputMetadata('glows', "l3e", datetime(2024, 10, 7, 10, 00, 00),
                                        datetime(2024, 10, 8, 10, 00, 00),
@@ -333,27 +335,27 @@ class TestGlowsProcessor(unittest.TestCase):
         dependencies = Mock()
 
         l3e_dependencies = Mock()
-        repointing = 10
+        cr_number = 2092
 
-        mock_l3e_dependencies.fetch_dependencies.return_value = (l3e_dependencies, repointing)
-        epoch = datetime(year=2024, month=10, day=7)
-        end_date = datetime(year=2024, month=10, day=7, hour=23)
+        mock_determine_repointing_numbers_for_cr.return_value = [20, 21]
+        mock_l3e_dependencies.fetch_dependencies.return_value = (l3e_dependencies, cr_number)
+        epoch_1 = np.datetime64(datetime(year=2024, month=10, day=7))
+        epoch_1_end_date = np.datetime64(datetime(year=2024, month=10, day=7, hour=23))
+        epoch_2 = np.datetime64(datetime(year=2024, month=10, day=8))
+        epoch_2_end_date = np.datetime64(datetime(year=2024, month=10, day=8, hour=23))
+        epochs = [(epoch_1, epoch_1_end_date), (epoch_2, epoch_2_end_date)]
+        mock_get_repoint_date_range.side_effect = epochs
 
-        epoch_delta = (end_date - epoch) / 2
+        epoch_deltas = [(end_date - epoch) / 2 for epoch, end_date in epochs]
 
-        start_date = np.datetime64(epoch.isoformat())
+        ultra_args = [["20241007_000000", "date.001", "vx", "vy", "vz", "30.000"],
+                      ["20241008_000000", "date.002", "vx", "vy", "vz", "30.000"]]
 
-        end_date = np.datetime64(end_date.isoformat())
-        mock_get_repoint_date_range.return_value = (start_date, end_date)
+        mock_determine_call_args.side_effect = ultra_args
 
-        ultra_args = ["20241007_000000", "2024.765", "vx", "vy", "vz", "30.000"]
+        mock_convert_dat_to_glows_l3e_ul_product.side_effect = [sentinel.ultra_data_1, sentinel.ultra_data_2]
 
-        mock_determine_call_args.return_value = ultra_args
-
-        ultra_data = Mock()
-        mock_convert_dat_to_glows_l3e_ul_product.return_value = ultra_data
-
-        mock_save_data.return_value = sentinel.ultra_path
+        mock_save_data.side_effect = [sentinel.ultra_path_1, sentinel.ultra_path_2]
 
         processor = GlowsProcessor(dependencies=dependencies, input_metadata=input_metadata)
         processor.process()
@@ -362,27 +364,41 @@ class TestGlowsProcessor(unittest.TestCase):
 
         mock_l3e_dependencies.fetch_dependencies.return_value[0].rename_dependencies.assert_called_once()
 
-        mock_get_repoint_date_range.assert_called_once_with(repointing)
+        mock_determine_repointing_numbers_for_cr.assert_called_once_with(cr_number, get_test_data_path(
+            "fake_2_day_repointing_on_may18_file.csv"))
 
         self.assertIsInstance(mock_determine_call_args.call_args_list[0][0][0], datetime)
         self.assertIsInstance(mock_determine_call_args.call_args_list[0][0][1], datetime)
 
-        mock_determine_call_args.assert_called_once_with(epoch,
-                                                         datetime(year=2024, month=10, day=7, hour=11, minute=30), 30)
+        mock_determine_call_args.assert_has_calls([
+            call(epoch_1, epoch_1 + epoch_deltas[0], 30),
+            call(epoch_2, epoch_2 + epoch_deltas[1], 30),
+        ])
 
-        mock_run.assert_called_once_with(["./survProbUltra", "20241007_000000", "2024.765", "vx", "vy", "vz", "30.000"])
+        mock_run.assert_has_calls([call(["./survProbUltra"] + args) for args in ultra_args])
 
-        mock_convert_dat_to_glows_l3e_ul_product.assert_called_once_with(input_metadata, Path(
-            "probSur.Imap.Ul_20241007_000000_2024.765.dat"), np.array(epoch), np.array(epoch_delta))
+        mock_convert_dat_to_glows_l3e_ul_product.assert_has_calls([
+            call(input_metadata, Path("probSur.Imap.Ul_20241007_000000_date.001.dat"),
+                 np.array([epoch_1]),
+                 np.array([epoch_deltas[0]])),
+            call(input_metadata, Path("probSur.Imap.Ul_20241008_000000_date.002.dat"),
+                 np.array([epoch_2]),
+                 np.array(epoch_deltas[1]))])
 
-        mock_save_data.assert_called_once_with(ultra_data)
+        mock_save_data.assert_has_calls([call(sentinel.ultra_data_1), call(sentinel.ultra_data_2)])
         survival_data_product: GlowsL3EUltraData = mock_save_data.call_args_list[0].args[0]
         self.assertEqual(["l3d_file", "ancillary_1", "ancillary_2", "ancillary_3"],
                          survival_data_product.parent_file_names)
 
-        mock_upload.assert_called_once_with(sentinel.ultra_path)
+        survival_data_product_2: GlowsL3EUltraData = mock_save_data.call_args_list[1].args[0]
+        self.assertEqual(["l3d_file", "ancillary_1", "ancillary_2", "ancillary_3"],
+                         survival_data_product_2.parent_file_names)
 
+        mock_upload.assert_has_calls([call(sentinel.ultra_path_1), call(sentinel.ultra_path_2)])
+
+    @environment_variables({"REPOINT_DATA_FILEPATH": get_test_data_path("fake_2_day_repointing_on_may18_file.csv")})
     @patch('imap_l3_processing.hi.hi_processor.Processor.get_parent_file_names')
+    @patch('imap_l3_processing.glows.glows_processor.determine_repointing_numbers_for_cr')
     @patch('imap_l3_processing.glows.glows_processor.imap_data_access.upload')
     @patch('imap_l3_processing.glows.glows_processor.save_data')
     @patch("imap_l3_processing.glows.glows_processor.GlowsL3EHiData.convert_dat_to_glows_l3e_hi_product")
@@ -390,8 +406,10 @@ class TestGlowsProcessor(unittest.TestCase):
     @patch("imap_l3_processing.glows.glows_processor.determine_call_args_for_l3e_executable")
     @patch("imap_l3_processing.glows.glows_processor.get_repoint_date_range")
     @patch("imap_l3_processing.glows.glows_processor.GlowsL3EDependencies")
-    def test_process_l3e_hi(self, mock_l3e_dependencies, mock_get_repoint_date_range, mock_determine_call_args,
+    def test_process_l3e_hi(self, mock_l3e_dependencies,
+                            mock_get_repoint_date_range, mock_determine_call_args,
                             mock_run, mock_convert_dat_to_glows_l3e_hi_product, mock_save_data, mock_upload,
+                            mock_determine_repointing_numbers_for_cr,
                             mock_get_parent_file_names):
         mock_get_parent_file_names.return_value = ["l3d_file", "ancillary_1", "ancillary_2", "ancillary_3"]
         test_cases = [("hi45", "45", "135.000"), ("hi90", "90", "90.000")]
@@ -405,35 +423,35 @@ class TestGlowsProcessor(unittest.TestCase):
                 mock_convert_dat_to_glows_l3e_hi_product.reset_mock()
                 mock_save_data.reset_mock()
                 mock_upload.reset_mock()
+                mock_determine_repointing_numbers_for_cr.reset_mock()
 
                 input_metadata = InputMetadata('glows', "l3e", datetime(2024, 10, 7, 10, 00, 00),
                                                datetime(2024, 10, 8, 10, 00, 00),
                                                'v001', descriptor=f'survival-probability-hi-{descriptor}')
-
                 dependencies = Mock()
 
                 l3e_dependencies = Mock()
-                repointing = 10
+                cr_number = 2092
 
-                mock_l3e_dependencies.fetch_dependencies.return_value = (l3e_dependencies, repointing)
-                epoch = datetime(year=2024, month=10, day=7)
-                end_date = datetime(year=2024, month=10, day=7, hour=23)
+                mock_determine_repointing_numbers_for_cr.return_value = [20, 21]
+                mock_l3e_dependencies.fetch_dependencies.return_value = (l3e_dependencies, cr_number)
+                epoch_1 = np.datetime64(datetime(year=2024, month=10, day=7))
+                epoch_1_end_date = np.datetime64(datetime(year=2024, month=10, day=7, hour=23))
+                epoch_2 = np.datetime64(datetime(year=2024, month=10, day=8))
+                epoch_2_end_date = np.datetime64(datetime(year=2024, month=10, day=8, hour=23))
+                epochs = [(epoch_1, epoch_1_end_date), (epoch_2, epoch_2_end_date)]
+                mock_get_repoint_date_range.side_effect = epochs
 
-                epoch_delta = (end_date - epoch) / 2
+                epoch_deltas = [(end_date - epoch) / 2 for epoch, end_date in epochs]
 
-                start_date = np.datetime64(epoch.isoformat())
+                hi_args = [["20241007_000000", "date.001", "vx", "vy", "vz", elongation],
+                           ["20241008_000000", "date.002", "vx", "vy", "vz", elongation]]
 
-                end_date = np.datetime64(end_date.isoformat())
-                mock_get_repoint_date_range.return_value = (start_date, end_date)
+                mock_determine_call_args.side_effect = hi_args
 
-                call_args_1 = ["20241007_000000", "2024.765", "vx", "vy", "vz", elongation]
+                mock_convert_dat_to_glows_l3e_hi_product.side_effect = [sentinel.hi_data_1, sentinel.hi_data_2]
 
-                mock_determine_call_args.return_value = call_args_1
-
-                mock_convert_dat_to_glows_l3e_hi_product.return_value = sentinel.hi_data
-
-                hi_data = Mock()
-                mock_save_data.return_value = hi_data
+                mock_save_data.side_effect = [sentinel.hi_path_1, sentinel.hi_path_2]
 
                 processor = GlowsProcessor(dependencies=dependencies, input_metadata=input_metadata)
                 processor.process()
@@ -443,30 +461,38 @@ class TestGlowsProcessor(unittest.TestCase):
 
                 mock_l3e_dependencies.fetch_dependencies.return_value[0].rename_dependencies.assert_called_once()
 
-                mock_get_repoint_date_range.assert_called_once_with(repointing)
+                mock_determine_repointing_numbers_for_cr.assert_called_once_with(cr_number, get_test_data_path(
+                    "fake_2_day_repointing_on_may18_file.csv"))
 
                 self.assertIsInstance(mock_determine_call_args.call_args_list[0][0][0], datetime)
                 self.assertIsInstance(mock_determine_call_args.call_args_list[0][0][1], datetime)
 
-                mock_determine_call_args.assert_called_once_with(epoch,
-                                                                 datetime(year=2024, month=10, day=7, hour=11,
-                                                                          minute=30), int(float(elongation)))
+                mock_determine_call_args.assert_has_calls([
+                    call(epoch_1, epoch_1 + epoch_deltas[0], float(elongation)),
+                    call(epoch_2, epoch_2 + epoch_deltas[1], float(elongation)),
+                ])
 
-                mock_run.assert_called_once_with(["./survProbHi"] + call_args_1)
+                mock_run.assert_has_calls([call(["./survProbHi"] + args) for args in hi_args])
 
-                mock_convert_dat_to_glows_l3e_hi_product.assert_called_once_with(
-                    input_metadata,
-                    Path(f"probSur.Imap.Hi_20241007_000000_2024.765_{elongation[:5]}.dat"),
-                    np.array(epoch), np.array(epoch_delta)
-                )
+                mock_convert_dat_to_glows_l3e_hi_product.assert_has_calls([
+                    call(input_metadata, Path(f"probSur.Imap.Hi_20241007_000000_date.001_{elongation[:5]}.dat"),
+                         np.array([epoch_1]), np.array([epoch_deltas[0]])),
+                    call(input_metadata, Path(f"probSur.Imap.Hi_20241008_000000_date.002_{elongation[:5]}.dat"),
+                         np.array([epoch_2]), np.array([epoch_deltas[1]]))])
 
-                mock_save_data.assert_called_once_with(sentinel.hi_data)
+                mock_save_data.assert_has_calls([call(sentinel.hi_data_1), call(sentinel.hi_data_2)])
                 survival_data_product: GlowsL3EHiData = mock_save_data.call_args_list[0].args[0]
                 self.assertEqual(["l3d_file", "ancillary_1", "ancillary_2", "ancillary_3"],
                                  survival_data_product.parent_file_names)
 
-                mock_upload.assert_called_once_with(hi_data)
+                survival_data_product_2: GlowsL3EHiData = mock_save_data.call_args_list[1].args[0]
+                self.assertEqual(["l3d_file", "ancillary_1", "ancillary_2", "ancillary_3"],
+                                 survival_data_product_2.parent_file_names)
 
+                mock_upload.assert_has_calls([call(sentinel.hi_path_1), call(sentinel.hi_path_2)])
+
+    @environment_variables({"REPOINT_DATA_FILEPATH": get_test_data_path("fake_2_day_repointing_on_may18_file.csv")})
+    @patch('imap_l3_processing.glows.glows_processor.determine_repointing_numbers_for_cr')
     @patch('imap_l3_processing.hi.hi_processor.Processor.get_parent_file_names')
     @patch('imap_l3_processing.glows.glows_processor.imap_data_access.upload')
     @patch('imap_l3_processing.glows.glows_processor.save_data')
@@ -477,7 +503,7 @@ class TestGlowsProcessor(unittest.TestCase):
     @patch("imap_l3_processing.glows.glows_processor.GlowsL3EDependencies")
     def test_process_l3e_lo(self, mock_l3e_dependencies, mock_get_repoint_date_range, mock_determine_call_args,
                             mock_run, mock_convert_dat_to_glows_l3e_lo_product, mock_save_data, mock_upload,
-                            mock_get_parent_file_names):
+                            mock_get_parent_file_names, mock_determine_repointing_numbers_for_cr):
         mock_get_parent_file_names.return_value = ["l3d_file", "ancillary_1", "ancillary_2", "ancillary_3"]
         input_metadata = InputMetadata('glows', "l3e", datetime(2024, 10, 7, 10, 00, 00),
                                        datetime(2024, 10, 8, 10, 00, 00),
@@ -485,27 +511,32 @@ class TestGlowsProcessor(unittest.TestCase):
         dependencies = Mock()
 
         l3e_dependencies = Mock()
-        repointing = 10
+        cr_number = 2092
 
-        mock_l3e_dependencies.fetch_dependencies.return_value = (l3e_dependencies, repointing)
-        epoch = datetime(year=2024, month=10, day=7)
-        end_date = datetime(year=2024, month=10, day=7, hour=23)
+        mock_determine_repointing_numbers_for_cr.return_value = [20, 21]
 
-        epoch_delta = (end_date - epoch) / 2
+        mock_l3e_dependencies.fetch_dependencies.return_value = (l3e_dependencies, cr_number)
+        epoch_1 = np.datetime64(datetime(year=2024, month=10, day=7))
+        epoch_1_end_date = np.datetime64(datetime(year=2024, month=10, day=7, hour=23))
+        epoch_2 = np.datetime64(datetime(year=2024, month=10, day=8))
+        epoch_2_end_date = np.datetime64(datetime(year=2024, month=10, day=8, hour=23))
+        epochs = [(epoch_1, epoch_1_end_date), (epoch_2, epoch_2_end_date)]
 
-        start_date = np.datetime64("2024-10-07T00:00:00.000000000")
+        mock_get_repoint_date_range.side_effect = epochs
 
-        end_date = np.datetime64(end_date.isoformat())
-        mock_get_repoint_date_range.return_value = (start_date, end_date)
+        epoch_deltas = [(end_date - epoch) / 2 for epoch, end_date in epochs]
 
-        call_args_1 = ["20241007_000000", "2024.765", "vx", "vy", "vz", "90.000"]
+        lo_call_args = [
+            ["20241007_000000", "date.100", "vx", "vy", "vz", "90.000"],
+            ["20241008_000000", "date.200", "vx", "vy", "vz", "90.000"]]
 
-        mock_determine_call_args.return_value = call_args_1
+        mock_determine_call_args.side_effect = lo_call_args
 
-        lo_data = Mock()
-        mock_convert_dat_to_glows_l3e_lo_product.return_value = lo_data
+        lo_data_1 = Mock()
+        lo_data_2 = Mock()
+        mock_convert_dat_to_glows_l3e_lo_product.side_effect = [lo_data_1, lo_data_2]
 
-        mock_save_data.return_value = sentinel.lo_path
+        mock_save_data.side_effect = [sentinel.lo_path_1, sentinel.lo_path_2]
 
         processor = GlowsProcessor(dependencies=dependencies, input_metadata=input_metadata)
         processor.process()
@@ -514,29 +545,38 @@ class TestGlowsProcessor(unittest.TestCase):
 
         mock_l3e_dependencies.fetch_dependencies.return_value[0].rename_dependencies.assert_called_once()
 
-        mock_get_repoint_date_range.assert_called_once_with(repointing)
+        mock_get_repoint_date_range.assert_has_calls([call(20), call(21)])
 
         self.assertIsInstance(mock_determine_call_args.call_args_list[0][0][0], datetime)
         self.assertIsInstance(mock_determine_call_args.call_args_list[0][0][1], datetime)
 
-        mock_determine_call_args.assert_called_once_with(epoch,
-                                                         datetime(year=2024, month=10, day=7, hour=11, minute=30),
-                                                         90)
+        mock_determine_call_args.assert_has_calls([
+            call(epoch_1, epoch_1 + epoch_deltas[0], 90),
+            call(epoch_2, epoch_2 + epoch_deltas[1], 90),
+        ])
 
-        mock_run.assert_called_once_with(["./survProbLo"] + call_args_1)
+        mock_run.assert_has_calls([
+            call(["./survProbLo"] + lo_call_args[0]),
+            call(["./survProbLo"] + lo_call_args[1]),
+        ])
 
-        mock_convert_dat_to_glows_l3e_lo_product.assert_called_once_with(
-            input_metadata,
-            Path("probSur.Imap.Lo_20241007_000000_2024.765_90.00.dat"),
-            np.array(epoch), np.array(epoch_delta)
-        )
+        mock_convert_dat_to_glows_l3e_lo_product.assert_has_calls([
+            call(input_metadata, Path("probSur.Imap.Lo_20241007_000000_date.100_90.00.dat"), np.array([epoch_1]),
+                 np.array([epoch_deltas[0]])),
+            call(input_metadata, Path("probSur.Imap.Lo_20241008_000000_date.200_90.00.dat"), np.array([epoch_2]),
+                 np.array([epoch_deltas[1]])),
+        ])
 
-        mock_save_data.assert_called_once_with(lo_data)
+        mock_save_data.assert_has_calls([call(lo_data_1), call(lo_data_2)])
         survival_data_product: GlowsL3ELoData = mock_save_data.call_args_list[0].args[0]
         self.assertEqual(["l3d_file", "ancillary_1", "ancillary_2", "ancillary_3"],
                          survival_data_product.parent_file_names)
 
-        mock_upload.assert_called_once_with(sentinel.lo_path)
+        survival_data_product: GlowsL3ELoData = mock_save_data.call_args_list[1].args[0]
+        self.assertEqual(["l3d_file", "ancillary_1", "ancillary_2", "ancillary_3"],
+                         survival_data_product.parent_file_names)
+
+        mock_upload.assert_has_calls([call(sentinel.lo_path_1), call(sentinel.lo_path_2)])
 
     @patch('imap_l3_processing.glows.glows_processor.shutil')
     @patch('imap_l3_processing.glows.glows_processor.get_parent_file_names_from_l3d_json')
