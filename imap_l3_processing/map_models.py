@@ -26,6 +26,9 @@ LATITUDE_VAR_NAME = "latitude"
 LATITUDE_DELTA_VAR_NAME = "latitude_delta"
 LATITUDE_LABEL_VAR_NAME = "latitude_label"
 
+HEALPIX_INDEX_VAR_NAME = "healpix_index"
+HEALPIX_INDEX_LABEL_VAR_NAME = "healpix_index_label"
+
 EXPOSURE_FACTOR_VAR_NAME = "exposure_factor"
 OBS_DATE_VAR_NAME = "obs_date"
 OBS_DATE_RANGE_VAR_NAME = "obs_date_range"
@@ -159,6 +162,25 @@ def _read_rectangular_coords_from_open_cdf(cdf: CDF) -> RectangularCoords:
 class HealPixSpectralIndexMapData:
     spectral_index_map_data: SpectralIndexMapData
     coords: HealPixCoords
+
+
+@dataclass
+class HealPixSpectralIndexMapDataProduct(DataProduct):
+    data: HealPixSpectralIndexMapData
+
+    def to_data_product_variables(self) -> list[DataProductVariable]:
+        spectral_index_variables = [
+            DataProductVariable(ENA_SPECTRAL_INDEX_VAR_NAME, self.data.spectral_index_map_data.ena_spectral_index),
+            DataProductVariable(ENA_SPECTRAL_INDEX_STAT_UNC_VAR_NAME,
+                                self.data.spectral_index_map_data.ena_spectral_index_stat_unc),
+        ]
+        healpix_variables = [
+            DataProductVariable(HEALPIX_INDEX_VAR_NAME, self.data.coords.pixel_index),
+            DataProductVariable(HEALPIX_INDEX_LABEL_VAR_NAME, self.data.coords.pixel_index_label),
+        ]
+        return _map_data_to_variables(self.data.spectral_index_map_data) \
+            + spectral_index_variables \
+            + healpix_variables
 
 
 @dataclass
