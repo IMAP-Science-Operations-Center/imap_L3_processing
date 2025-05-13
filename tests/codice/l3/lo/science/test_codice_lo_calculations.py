@@ -14,7 +14,7 @@ from imap_l3_processing.codice.l3.lo.models import EnergyAndSpinAngle, PriorityE
 from imap_l3_processing.codice.l3.lo.science.codice_lo_calculations import calculate_partial_densities, \
     calculate_total_number_of_events, calculate_normalization_ratio, calculate_mass, calculate_mass_per_charge, \
     rebin_to_counts_by_species_elevation_and_spin_sector, rebin_counts_by_energy_and_spin_angle, \
-    CODICE_LO_NUM_AZIMUTH_BINS
+    CODICE_LO_NUM_AZIMUTH_BINS, normalize_counts, combine_priorities_and_convert_to_rate
 from tests.test_helpers import create_dataclass_mock, NumpyArrayMatcher
 
 
@@ -297,3 +297,46 @@ class TestCodiceLoCalculations(unittest.TestCase):
         expected_rebinned_counts[2, 4, 7] = 1
 
         np.testing.assert_array_equal(result, expected_rebinned_counts)
+
+    def test_convert_3d_counts_to_intensity(self):
+        num_epochs = 2
+        num_priorities = 3
+        num_species = 4
+        num_azimuth_bins = 5
+        num_spin_angles = 6
+        num_energies = 7
+
+        rng = np.random.default_rng()
+        normalization_factor = rng.random((num_epochs, num_priorities, num_energies, num_spin_angles))
+
+        counts = np.zeros((num_epochs, num_priorities, num_species, num_azimuth_bins, num_spin_angles, num_energies))
+        counts[:, :, 0, 0, :, :] = 1
+        counts[:, :, 1, 0, :, :] = 3
+        counts[:, :, 0, 1, :, :] = 4
+
+        actual_normalized_counts = normalize_counts(counts, normalization_factor)
+
+        transposed_normalization_factor = np.transpose(normalization_factor, axes=(0, 1, 3, 2))
+        np.testing.assert_array_equal(actual_normalized_counts[:, :, 0, 0, :, :], transposed_normalization_factor)
+        np.testing.assert_array_equal(actual_normalized_counts[:, :, 1, 0, :, :], 3 * transposed_normalization_factor)
+        np.testing.assert_array_equal(actual_normalized_counts[:, :, 0, 1, :, :], 4 * transposed_normalization_factor)
+
+    def test_convert_to_count_rates_combine_priority(self):
+        num_epochs = 2
+        num_priorities = 3
+        num_species = 4
+        num_azimuth_bins = 5
+        num_spin_angles = 6
+        num_energies = 7
+
+        rng = np.random.default_rng()
+        priority_1 = rng.random((num_epochs, num_species, num_azimuth_bins, num_spin_angles, num_energies))
+        priority_2 = rng.random((num_epochs, num_species, num_azimuth_bins, num_spin_angles, num_energies))
+        priority_3 = rng.random((num_epochs, num_species, num_azimuth_bins, num_spin_angles, num_energies))
+
+        counts = np.stack((priority_1, priority_2, priority_3), axis=1)
+
+        actual_summed_counts = combine_priorities_and_convert_to_rate(counts)
+        expected_summed_counts = priority_1 + priority_2 + priority_3
+
+        np.testing.assert_array_equal(actual_summed_counts, expected_summed_counts)
