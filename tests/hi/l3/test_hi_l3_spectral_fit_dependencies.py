@@ -1,10 +1,12 @@
 import unittest
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 
+import numpy as np
 from imap_data_access.processing_input import ScienceInput, ProcessingInputCollection
 
 from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3SpectralFitDependencies
+from imap_l3_processing.maps.map_models import RectangularIntensityMapData, IntensityMapData
 
 
 class TestHiL3SpectralFitDependencies(unittest.TestCase):
@@ -44,3 +46,35 @@ class TestHiL3SpectralFitDependencies(unittest.TestCase):
             _ = HiL3SpectralFitDependencies.fetch_dependencies(processing_input)
 
         self.assertEqual(str(error.exception), "Missing Hi dependency.")
+
+    def test_fit_energy_ranges_returns_full_energy_range(self):
+        energy = np.arange(1, 4)
+        energy_delta_minus = np.full((1,), 0.1)
+        energy_delta_plus = np.full((1,), 0.2)
+
+        map_data = _create_intensity_map_data(energy=energy, energy_delta_plus=energy_delta_plus,
+                                              energy_delta_minus=energy_delta_minus)
+        data = RectangularIntensityMapData(map_data, Mock())
+        deps = HiL3SpectralFitDependencies(data)
+
+        np.testing.assert_array_equal(deps.get_fit_energy_ranges(), [[0.9, 3.2]])
+
+
+def _create_intensity_map_data(ena_intensity=None, energy=None, energy_delta_plus=None, energy_delta_minus=None):
+    return IntensityMapData(
+        ena_intensity=ena_intensity if ena_intensity is not None else np.full((1, 1, 8, 15), 1),
+        ena_intensity_stat_unc=None,
+        ena_intensity_sys_err=None,
+        epoch=None,
+        epoch_delta=None,
+        energy=energy if energy is not None else np.full((1,), 1),
+        energy_delta_plus=energy_delta_plus if energy_delta_plus is not None else np.full((1,), 0.1),
+        energy_delta_minus=energy_delta_minus if energy_delta_minus is not None else np.full((1,), 0.1),
+        energy_label=None,
+        latitude=None,
+        longitude=None,
+        exposure_factor=None,
+        obs_date=None,
+        obs_date_range=None,
+        solid_angle=None,
+    )

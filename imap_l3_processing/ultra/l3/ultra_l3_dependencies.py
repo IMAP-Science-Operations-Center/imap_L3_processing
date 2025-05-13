@@ -8,7 +8,7 @@ from imap_data_access.file_validation import generate_imap_file_path, ScienceFil
 from imap_data_access.processing_input import ProcessingInputCollection
 from spacepy.pycdf import CDF
 
-from imap_l3_processing.maps.map_models import HealPixIntensityMapData
+from imap_l3_processing.maps.map_models import HealPixIntensityMapData, SpectralIndexDependencies
 from imap_l3_processing.ultra.l3.models import UltraL1CPSet, UltraGlowsL3eData
 from imap_l3_processing.utils import find_glows_l3e_dependencies
 
@@ -51,15 +51,22 @@ class UltraL3Dependencies:
 
 
 @dataclass
-class UltraL3SpectralFitDependencies:
+class UltraL3SpectralIndexDependencies(SpectralIndexDependencies):
     ultra_l3_data: HealPixIntensityMapData
-    energy_fit_ranges: np.ndarray
+    fit_energy_ranges: np.ndarray
 
     @classmethod
     def fetch_dependencies(cls, deps: ProcessingInputCollection) -> Self:
         energy_fit_ranges_ancillary_file_path = deps.get_file_paths(source="ultra", descriptor="spx-energy-ranges")
         ultra_map_file_paths = [dep for dep in deps.get_file_paths(source="ultra") if
-                                dep != energy_fit_ranges_ancillary_file_path]
+                                dep not in energy_fit_ranges_ancillary_file_path]
+
+        if len(ultra_map_file_paths) != 1:
+            raise ValueError("Missing Ultra L3 file")
+
+        if len(energy_fit_ranges_ancillary_file_path) != 1:
+            raise ValueError("Missing fit energy ranges ancillary file")
+
         map_file_path = download(ultra_map_file_paths[0].name)
         energy_ranges_file_path = download(energy_fit_ranges_ancillary_file_path[0].name)
 
@@ -70,3 +77,6 @@ class UltraL3SpectralFitDependencies:
         map_data = HealPixIntensityMapData.read_from_path(map_file_path)
         energy_fit_ranges = np.loadtxt(energy_fit_ranges_path)
         return cls(map_data, energy_fit_ranges)
+
+    def get_fit_energy_ranges(self) -> np.ndarray:
+        return self.fit_energy_ranges
