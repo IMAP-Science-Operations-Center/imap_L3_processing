@@ -4,7 +4,8 @@ from unittest.mock import Mock, call
 
 import numpy as np
 
-from imap_l3_processing.codice.l3.lo.direct_events.science.angle_lookup import SpinAngleLookup, ElevationLookup
+from imap_l3_processing.codice.l3.lo.direct_events.science.angle_lookup import SpinAngleLookup, \
+    PositionToElevationLookup
 from imap_l3_processing.codice.l3.lo.direct_events.science.energy_lookup import EnergyLookup
 from imap_l3_processing.codice.l3.lo.direct_events.science.mass_coefficient_lookup import MassCoefficientLookup
 from imap_l3_processing.codice.l3.lo.direct_events.science.mass_species_bin_lookup import MassSpeciesBinLookup, \
@@ -12,8 +13,9 @@ from imap_l3_processing.codice.l3.lo.direct_events.science.mass_species_bin_look
 from imap_l3_processing.codice.l3.lo.models import EnergyAndSpinAngle, PriorityEvent, CodiceLo3dData
 from imap_l3_processing.codice.l3.lo.science.codice_lo_calculations import calculate_partial_densities, \
     calculate_total_number_of_events, calculate_normalization_ratio, calculate_mass, calculate_mass_per_charge, \
-    rebin_to_counts_by_elevation_spin_sector, rebin_counts_by_energy_and_spin_angle
-from tests.test_helpers import create_dataclass_mock
+    rebin_to_counts_by_species_elevation_and_spin_sector, rebin_counts_by_energy_and_spin_angle, \
+    CODICE_LO_NUM_AZIMUTH_BINS
+from tests.test_helpers import create_dataclass_mock, NumpyArrayMatcher
 
 
 class TestCodiceLoCalculations(unittest.TestCase):
@@ -135,7 +137,6 @@ class TestCodiceLoCalculations(unittest.TestCase):
         num_epochs = 2
         num_priorities = 2
         num_spin_angles = 24
-        num_elevation = 13
         num_esa_steps = 128
         num_species = 4
 
@@ -160,19 +161,34 @@ class TestCodiceLoCalculations(unittest.TestCase):
 
         mock_species_mass_range_lookup.get_species_index = mock_get_species_index
 
+        mock_energy_lookup = Mock(spec=EnergyLookup)
+        mock_energy_lookup.get_energy_index.side_effect = [[0, 100, 0], [0], [127, 127, 127], [0]]
+        mock_energy_lookup.num_bins = num_esa_steps
+
+        mock_elevation_lut = Mock(spec=PositionToElevationLookup)
+        mock_elevation_lut.event_direction_for_apd.side_effect = [EventDirection.Sunward,
+                                                                  EventDirection.NonSunward,
+                                                                  EventDirection.Sunward,
+                                                                  EventDirection.Sunward,
+                                                                  EventDirection.NonSunward,
+                                                                  EventDirection.NonSunward,
+                                                                  EventDirection.NonSunward,
+                                                                  EventDirection.Sunward,
+                                                                  ]
+
         spin_angle = np.array([
             [[37.5, 22.5, 37.5, np.nan], [7.5, np.nan, np.nan, np.nan]],
             [[37.5, 37.5, 37.5, np.nan], [7.5, np.nan, np.nan, np.nan]]
         ])
 
-        elevation = np.array([
-            [[15, 45, 15, np.nan], [0, np.nan, np.nan, np.nan]],
-            [[120, 120, 120, np.nan], [0, np.nan, np.nan, np.nan]]
+        apd_id = np.array([
+            [[2, 4, 2, np.nan], [1, np.nan, np.nan, np.nan]],
+            [[9, 9, 9, np.nan], [1, np.nan, np.nan, np.nan]]
         ])
 
         energy_step = np.array([
-            [[0, 100, 0, np.nan], [0, np.nan, np.nan, np.nan]],
-            [[127, 127, 127, np.nan], [0, np.nan, np.nan, np.nan]]
+            [[0.0, 1234.2, 0.0, np.nan], [0.0, np.nan, np.nan, np.nan]],
+            [[345.2, 345.2, 345.2, np.nan], [0.0, np.nan, np.nan, np.nan]]
         ])
 
         mass = np.array([
@@ -186,11 +202,14 @@ class TestCodiceLoCalculations(unittest.TestCase):
         ])
 
         spin_angle_lut = SpinAngleLookup()
-        elevation_lut = ElevationLookup()
 
-        actual_counts_3d_data = rebin_to_counts_by_elevation_spin_sector(mass, mass_per_charge, energy_step, spin_angle,
-                                                                         elevation, mock_species_mass_range_lookup,
-                                                                         spin_angle_lut, elevation_lut)
+        actual_counts_3d_data = rebin_to_counts_by_species_elevation_and_spin_sector(mass, mass_per_charge, energy_step,
+                                                                                     spin_angle,
+                                                                                     apd_id,
+                                                                                     mock_species_mass_range_lookup,
+                                                                                     spin_angle_lut,
+                                                                                     mock_elevation_lut,
+                                                                                     mock_energy_lookup)
 
         mock_species_mass_range_lookup.get_species.assert_has_calls([
             call(mass[0, 0, 0], mass_per_charge[0, 0, 0], EventDirection.Sunward),
@@ -207,12 +226,20 @@ class TestCodiceLoCalculations(unittest.TestCase):
 
         ])
 
+        mock_energy_lookup.get_energy_index.assert_has_calls([
+            call(NumpyArrayMatcher([0.0, 1234.2, 0.0])),
+            call(NumpyArrayMatcher([0.0])),
+            call(NumpyArrayMatcher([345.2, 345.2, 345.2])),
+            call(NumpyArrayMatcher([0.0])),
+        ])
+
         self.assertIsInstance(actual_counts_3d_data, CodiceLo3dData)
 
-        self.assertEqual((num_epochs, num_priorities, num_species, num_elevation, num_spin_angles, num_esa_steps),
-                         actual_counts_3d_data.data_in_3d_bins.shape)
+        self.assertEqual(
+            (num_epochs, num_priorities, num_species, CODICE_LO_NUM_AZIMUTH_BINS, num_spin_angles, num_esa_steps),
+            actual_counts_3d_data.data_in_3d_bins.shape)
 
-        rebinned_shape = (num_epochs, num_priorities, num_elevation, num_spin_angles, num_esa_steps)
+        rebinned_shape = (num_epochs, num_priorities, CODICE_LO_NUM_AZIMUTH_BINS, num_spin_angles, num_esa_steps)
         expected_he_plus_counts = np.zeros(rebinned_shape)
         expected_he_plus_counts[0, 0, 1, 2, 0] = 2
         np.testing.assert_array_equal(actual_counts_3d_data.get_3d_distribution("He+", EventDirection.Sunward),

@@ -4,18 +4,21 @@ import numpy as np
 from imap_data_access import upload
 from imap_data_access.processing_input import ProcessingInputCollection
 
+from imap_l3_processing.codice.l3.lo.codice_lo_l3a_3d_distributions_dependencies import \
+    CodiceLoL3a3dDistributionsDependencies
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_direct_events_dependencies import CodiceLoL3aDirectEventsDependencies
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_partial_densities_dependencies import \
     CodiceLoL3aPartialDensitiesDependencies
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_ratios_dependencies import CodiceLoL3aRatiosDependencies
-from imap_l3_processing.codice.l3.lo.direct_events.science.angle_lookup import SpinAngleLookup
+from imap_l3_processing.codice.l3.lo.direct_events.science.angle_lookup import SpinAngleLookup, \
+    PositionToElevationLookup
 from imap_l3_processing.codice.l3.lo.direct_events.science.energy_lookup import EnergyLookup
 from imap_l3_processing.codice.l3.lo.models import CodiceLoL3aPartialDensityDataProduct, CodiceLoL2DirectEventData, \
     CodiceLoL3aDirectEventDataProduct, CodiceLoPartialDensityData, CodiceLoL3aRatiosDataProduct, \
     CodiceLoL3ChargeStateDistributionsDataProduct, CODICE_LO_L2_NUM_PRIORITIES
 from imap_l3_processing.codice.l3.lo.science.codice_lo_calculations import calculate_partial_densities, \
     calculate_mass, calculate_mass_per_charge, \
-    rebin_counts_by_energy_and_spin_angle
+    rebin_counts_by_energy_and_spin_angle, rebin_to_counts_by_species_elevation_and_spin_sector
 from imap_l3_processing.data_utils import safe_divide
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
@@ -234,6 +237,31 @@ class CodiceLoProcessor(Processor):
             data_quality=data_quality,
             spin_angle=spin_angle,
             elevation=elevation
+        )
+
+    def process_l3a_3d_distribution_product(self, dependencies: CodiceLoL3a3dDistributionsDependencies):
+
+        l3a_de_mass = dependencies.l3a_direct_event_data.mass
+        l3a_de_mass_per_charge = dependencies.l3a_direct_event_data.mass_per_charge
+        l3a_de_energy = dependencies.l3a_direct_event_data.event_energy
+        l3a_de_spin_angle = dependencies.l3a_direct_event_data.spin_angle
+        l3a_de_apd_id = dependencies.l3a_direct_event_data.apd_id
+
+        mass_species_bin_lookup = dependencies.mass_species_bin_lookup
+        spin_angle_lut = SpinAngleLookup()
+        elevation_lut = PositionToElevationLookup()
+        energy_lut = EnergyLookup.from_bin_centers(dependencies.l1a_sw_data.energy_table)
+
+        counts_3d_data = rebin_to_counts_by_species_elevation_and_spin_sector(
+            mass=l3a_de_mass,
+            mass_per_charge=l3a_de_mass_per_charge,
+            energy=l3a_de_energy,
+            spin_angle=l3a_de_spin_angle,
+            apd_id=l3a_de_apd_id,
+            mass_species_bin_lookup=mass_species_bin_lookup,
+            spin_angle_lut=spin_angle_lut,
+            position_elevation_lut=elevation_lut,
+            energy_lut=energy_lut,
         )
 
 

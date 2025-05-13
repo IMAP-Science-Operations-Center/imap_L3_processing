@@ -7,7 +7,7 @@ from spacepy.pycdf import CDF
 
 from imap_l3_processing.hi.hi_processor import HiProcessor
 from imap_l3_processing.hi.l3.hi_l3_survival_dependencies import HiL3SurvivalDependencies
-from imap_l3_processing.map_models import RectangularIntensityDataProduct
+from imap_l3_processing.maps.map_models import RectangularIntensityDataProduct
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.utils import save_data
 from scripts.hi.create_cdf_from_instrument_team_data import create_l2_map_from_instrument_team

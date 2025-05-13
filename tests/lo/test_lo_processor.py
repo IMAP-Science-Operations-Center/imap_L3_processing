@@ -5,7 +5,7 @@ from unittest.mock import Mock, patch
 from imap_data_access.processing_input import ProcessingInputCollection
 
 from imap_l3_processing.lo.lo_processor import LoProcessor
-from imap_l3_processing.map_models import RectangularSpectralIndexDataProduct
+from imap_l3_processing.maps.map_models import RectangularSpectralIndexDataProduct
 from imap_l3_processing.models import InputMetadata
 
 

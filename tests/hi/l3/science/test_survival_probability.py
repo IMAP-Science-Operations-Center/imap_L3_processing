@@ -11,7 +11,7 @@ from imap_processing.spice.geometry import SpiceFrame
 from imap_l3_processing.hi.l3.models import HiL1cData, HiGlowsL3eData
 from imap_l3_processing.hi.l3.science.survival_probability import Sensor, \
     HiSurvivalProbabilitySkyMap, HiSurvivalProbabilityPointingSet, interpolate_angular_data_to_nearest_neighbor
-from imap_l3_processing.map_descriptors import SpinPhase
+from imap_l3_processing.maps.map_descriptors import SpinPhase
 
 
 class TestSurvivalProbability(unittest.TestCase):
