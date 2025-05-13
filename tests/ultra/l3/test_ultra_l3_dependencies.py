@@ -12,7 +12,7 @@ class TestUltraL3Dependencies(unittest.TestCase):
     @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.find_glows_l3e_dependencies')
     @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.UltraGlowsL3eData.read_from_path')
     @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.UltraL1CPSet.read_from_path')
-    @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.UltraL2Map.read_from_path')
+    @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.HealPixIntensityMapData.read_from_path')
     @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.download')
     def test_fetch_dependencies(self, mock_download, mock_read_ultra_l2, mock_read_ultra_l1c, mock_read_glows,
                                 mock_find_glows):
@@ -32,7 +32,7 @@ class TestUltraL3Dependencies(unittest.TestCase):
                 l2_map.attrs["Parents"] = parents
 
             input_collection = Mock()
-            input_collection.get_file_paths.return_value = sentinel.imap_l2_map_path
+            input_collection.get_file_paths.return_value = [sentinel.imap_l2_map_path]
 
             returned_download_paths = [l2_map_path, sentinel.l1c_path_1, sentinel.l1c_path_2, sentinel.l1c_path_3,
                                        sentinel.glows_path_1, sentinel.glows_path_2, sentinel.glows_path_3]
@@ -58,7 +58,16 @@ class TestUltraL3Dependencies(unittest.TestCase):
             self.assertEqual(glows_l3e_data, dependencies.glows_l3e_sp)
             self.assertEqual(sentinel.ultra_l2_data, dependencies.ultra_l2_map)
 
-    @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.UltraL2Map.read_from_path')
+    def test_raise_error_for_more_than_one_input_files_paths(self):
+        input_collection = Mock()
+        input_collection.get_file_paths.return_value = [sentinel.imap_l2_map_path_1, sentinel.imap_l2_map_path_2]
+
+        with self.assertRaises(ValueError) as e:
+            UltraL3Dependencies.fetch_dependencies(input_collection)
+
+        self.assertEqual("Incorrect number of dependencies", str(e.exception))
+
+    @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.HealPixIntensityMapData.read_from_path')
     @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.UltraGlowsL3eData.read_from_path')
     @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.UltraL1CPSet.read_from_path')
     def test_from_file_paths(self, mock_read_l1c: Mock, mock_read_glows: Mock, mock_read_l2: Mock):

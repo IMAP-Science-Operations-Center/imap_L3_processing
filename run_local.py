@@ -49,7 +49,7 @@ from imap_l3_processing.hit.l3.pha.science.hit_event_type_lookup import HitEvent
 from imap_l3_processing.hit.l3.pha.science.range_fit_lookup import RangeFitLookup
 from imap_l3_processing.hit.l3.utils import read_l2_hit_data
 from imap_l3_processing.map_models import RectangularSpectralIndexDataProduct, RectangularIntensityDataProduct, \
-    combine_rectangular_intensity_map_data
+    combine_rectangular_intensity_map_data, HealPixIntensityMapData
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.spice_wrapper import spiceypy
 from imap_l3_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density import \
@@ -69,7 +69,7 @@ from imap_l3_processing.swapi.l3b.swapi_l3b_dependencies import SwapiL3BDependen
 from imap_l3_processing.swapi.swapi_processor import SwapiProcessor
 from imap_l3_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies
 from imap_l3_processing.swe.swe_processor import SweProcessor
-from imap_l3_processing.ultra.l3.models import UltraL1CPSet, UltraGlowsL3eData, UltraL2Map
+from imap_l3_processing.ultra.l3.models import UltraL1CPSet, UltraGlowsL3eData
 from imap_l3_processing.ultra.l3.ultra_l3_dependencies import UltraL3Dependencies
 from imap_l3_processing.ultra.l3.ultra_processor import UltraProcessor
 from imap_l3_processing.utils import save_data, read_l1d_mag_data
@@ -1016,7 +1016,7 @@ if __name__ == "__main__":
                     "ultra/fake_l3e_survival_probabilities/imap_glows_l3e_survival-probabilities-ultra_20250901_v001.cdf")
             ]
             l3e_dependencies = [UltraGlowsL3eData.read_from_path(path) for path in l3e_glows_paths]
-            l2_map_dependency = UltraL2Map.read_from_path(l2_map_path)
+            l2_map_dependency = HealPixIntensityMapData.read_from_path(l2_map_path)
 
             processor_input_metadata = InputMetadata(
                 instrument="ultra",
