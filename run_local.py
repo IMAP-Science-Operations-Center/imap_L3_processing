@@ -50,7 +50,7 @@ from imap_l3_processing.hit.l3.pha.science.gain_lookup_table import GainLookupTa
 from imap_l3_processing.hit.l3.pha.science.hit_event_type_lookup import HitEventTypeLookup
 from imap_l3_processing.hit.l3.pha.science.range_fit_lookup import RangeFitLookup
 from imap_l3_processing.hit.l3.utils import read_l2_hit_data
-from imap_l3_processing.map_models import RectangularSpectralIndexDataProduct, RectangularIntensityDataProduct, \
+from imap_l3_processing.maps.map_models import RectangularSpectralIndexDataProduct, RectangularIntensityDataProduct, \
     combine_rectangular_intensity_map_data, HealPixIntensityMapData
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.spice_wrapper import spiceypy

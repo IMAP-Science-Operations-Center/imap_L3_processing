@@ -1,8 +1,8 @@
 from imap_data_access import upload
 
 from imap_l3_processing.lo.l3.lo_l3_spectral_fit_dependencies import LoL3SpectralFitDependencies
-from imap_l3_processing.map_descriptors import parse_map_descriptor, MapDescriptorParts, MapQuantity
-from imap_l3_processing.map_models import RectangularIntensityMapData, RectangularSpectralIndexDataProduct, \
+from imap_l3_processing.maps.map_descriptors import parse_map_descriptor, MapDescriptorParts, MapQuantity
+from imap_l3_processing.maps.map_models import RectangularIntensityMapData, RectangularSpectralIndexDataProduct, \
     RectangularSpectralIndexMapData, IntensityMapData, SpectralIndexMapData
 from imap_l3_processing.processor import Processor
 from imap_l3_processing.utils import save_data

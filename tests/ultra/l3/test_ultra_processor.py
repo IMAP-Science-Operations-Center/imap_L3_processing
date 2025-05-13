@@ -7,9 +7,9 @@ import xarray as xr
 from imap_processing.ena_maps.utils.coordinates import CoordNames
 from imap_processing.spice.geometry import SpiceFrame
 
-from imap_l3_processing.map_models import HealPixIntensityMapData, IntensityMapData, HealPixCoords
+from imap_l3_processing.maps.map_models import HealPixIntensityMapData, IntensityMapData, HealPixCoords, \
+    HealPixIntensityDataProduct
 from imap_l3_processing.models import InputMetadata
-from imap_l3_processing.ultra.l3.models import UltraL3SurvivalCorrectedDataProduct
 from imap_l3_processing.ultra.l3.ultra_l3_dependencies import UltraL3Dependencies
 from imap_l3_processing.ultra.l3.ultra_processor import UltraProcessor
 
@@ -90,30 +90,32 @@ class TestUltraProcessor(unittest.TestCase):
         mock_survival_skymap.return_value.to_dataset.assert_called_once_with()
 
         mock_save_data.assert_called_once()
-        survival_data_product: UltraL3SurvivalCorrectedDataProduct = mock_save_data.call_args_list[0].args[0]
+        survival_data_product: HealPixIntensityDataProduct = mock_save_data.call_args_list[0].args[0]
 
+        self.assertIsInstance(survival_data_product, HealPixIntensityDataProduct)
         self.assertEqual(input_metadata.to_upstream_data_dependency(input_metadata.descriptor),
                          survival_data_product.input_metadata)
 
-        np.testing.assert_array_equal(survival_data_product.ena_intensity,
+        intensity_map_data = survival_data_product.data.intensity_map_data
+        np.testing.assert_array_equal(intensity_map_data.ena_intensity,
                                       intensity_data.ena_intensity / computed_survival_probabilities)
-        np.testing.assert_array_equal(survival_data_product.ena_intensity_stat_unc,
+        np.testing.assert_array_equal(intensity_map_data.ena_intensity_stat_unc,
                                       intensity_data.ena_intensity_stat_unc / computed_survival_probabilities)
-        np.testing.assert_array_equal(survival_data_product.ena_intensity_sys_err,
+        np.testing.assert_array_equal(intensity_map_data.ena_intensity_sys_err,
                                       intensity_data.ena_intensity_sys_err / computed_survival_probabilities)
 
-        np.testing.assert_array_equal(survival_data_product.epoch, intensity_data.epoch)
-        np.testing.assert_array_equal(survival_data_product.epoch_delta, intensity_data.epoch_delta)
-        np.testing.assert_array_equal(survival_data_product.energy, intensity_data.energy)
-        np.testing.assert_array_equal(survival_data_product.energy_delta_plus, intensity_data.energy_delta_plus)
-        np.testing.assert_array_equal(survival_data_product.energy_delta_minus, intensity_data.energy_delta_minus)
-        np.testing.assert_array_equal(survival_data_product.energy_label, intensity_data.energy_label)
-        np.testing.assert_array_equal(survival_data_product.latitude, intensity_data.latitude)
-        np.testing.assert_array_equal(survival_data_product.longitude, intensity_data.longitude)
-        np.testing.assert_array_equal(survival_data_product.exposure_factor, intensity_data.exposure_factor)
-        np.testing.assert_array_equal(survival_data_product.obs_date, intensity_data.obs_date)
-        np.testing.assert_array_equal(survival_data_product.obs_date_range, intensity_data.obs_date_range)
-        np.testing.assert_array_equal(survival_data_product.solid_angle, intensity_data.solid_angle)
+        np.testing.assert_array_equal(intensity_map_data.epoch, intensity_data.epoch)
+        np.testing.assert_array_equal(intensity_map_data.epoch_delta, intensity_data.epoch_delta)
+        np.testing.assert_array_equal(intensity_map_data.energy, intensity_data.energy)
+        np.testing.assert_array_equal(intensity_map_data.energy_delta_plus, intensity_data.energy_delta_plus)
+        np.testing.assert_array_equal(intensity_map_data.energy_delta_minus, intensity_data.energy_delta_minus)
+        np.testing.assert_array_equal(intensity_map_data.energy_label, intensity_data.energy_label)
+        np.testing.assert_array_equal(intensity_map_data.latitude, intensity_data.latitude)
+        np.testing.assert_array_equal(intensity_map_data.longitude, intensity_data.longitude)
+        np.testing.assert_array_equal(intensity_map_data.exposure_factor, intensity_data.exposure_factor)
+        np.testing.assert_array_equal(intensity_map_data.obs_date, intensity_data.obs_date)
+        np.testing.assert_array_equal(intensity_map_data.obs_date_range, intensity_data.obs_date_range)
+        np.testing.assert_array_equal(intensity_map_data.solid_angle, intensity_data.solid_angle)
 
         mock_upload.assert_called_once_with(mock_save_data.return_value)
 
