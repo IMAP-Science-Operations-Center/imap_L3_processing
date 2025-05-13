@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Self
 
+import numpy as np
 from imap_data_access import download
 from imap_data_access.file_validation import generate_imap_file_path, ScienceFilePath
 from imap_data_access.processing_input import ProcessingInputCollection
@@ -47,3 +48,25 @@ class UltraL3Dependencies:
         for file_path in glows_file_paths:
             glows_l3e_data.append(UltraGlowsL3eData.read_from_path(file_path))
         return cls(ultra_l2_map=ultra_l2_map, ultra_l1c_pset=ultra_l1c_data, glows_l3e_sp=glows_l3e_data)
+
+
+@dataclass
+class UltraL3SpectralFitDependencies:
+    ultra_l3_data: HealPixIntensityMapData
+    energy_fit_ranges: np.ndarray
+
+    @classmethod
+    def fetch_dependencies(cls, deps: ProcessingInputCollection) -> Self:
+        energy_fit_ranges_ancillary_file_path = deps.get_file_paths(source="ultra", descriptor="spx-energy-ranges")
+        ultra_map_file_paths = [dep for dep in deps.get_file_paths(source="ultra") if
+                                dep != energy_fit_ranges_ancillary_file_path]
+        map_file_path = download(ultra_map_file_paths[0].name)
+        energy_ranges_file_path = download(energy_fit_ranges_ancillary_file_path[0].name)
+
+        return cls.from_file_paths(map_file_path, energy_ranges_file_path)
+
+    @classmethod
+    def from_file_paths(cls, map_file_path: Path, energy_fit_ranges_path: Path):
+        map_data = HealPixIntensityMapData.read_from_path(map_file_path)
+        energy_fit_ranges = np.loadtxt(energy_fit_ranges_path)
+        return cls(map_data, energy_fit_ranges)
