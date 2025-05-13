@@ -6,7 +6,7 @@ from pathlib import Path
 import imap_data_access
 from imap_data_access.processing_input import ProcessingInputCollection
 
-from imap_l3_processing.map_models import RectangularIntensityMapData
+from imap_l3_processing.maps.map_models import RectangularIntensityMapData
 
 
 @dataclass

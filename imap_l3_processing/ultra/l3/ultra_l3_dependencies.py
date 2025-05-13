@@ -7,7 +7,7 @@ from imap_data_access.file_validation import generate_imap_file_path, ScienceFil
 from imap_data_access.processing_input import ProcessingInputCollection
 from spacepy.pycdf import CDF
 
-from imap_l3_processing.map_models import HealPixIntensityMapData
+from imap_l3_processing.maps.map_models import HealPixIntensityMapData
 from imap_l3_processing.ultra.l3.models import UltraL1CPSet, UltraGlowsL3eData
 from imap_l3_processing.utils import find_glows_l3e_dependencies
 

@@ -7,7 +7,7 @@ import xarray as xr
 from imap_processing.ena_maps.utils.coordinates import CoordNames
 from imap_processing.spice.geometry import SpiceFrame
 
-from imap_l3_processing.map_models import HealPixIntensityMapData, IntensityMapData, HealPixCoords, \
+from imap_l3_processing.maps.map_models import HealPixIntensityMapData, IntensityMapData, HealPixCoords, \
     HealPixIntensityDataProduct
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.ultra.l3.ultra_l3_dependencies import UltraL3Dependencies

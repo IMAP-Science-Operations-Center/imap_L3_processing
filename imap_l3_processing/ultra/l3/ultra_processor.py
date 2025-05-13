@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from imap_data_access import upload
 from imap_processing.spice import geometry
 
-from imap_l3_processing.map_models import HealPixIntensityDataProduct, HealPixIntensityMapData, IntensityMapData, \
+from imap_l3_processing.maps.map_models import HealPixIntensityDataProduct, HealPixIntensityMapData, IntensityMapData, \
     HealPixCoords
 from imap_l3_processing.processor import Processor
 from imap_l3_processing.ultra.l3.science.ultra_survival_probability import UltraSurvivalProbabilitySkyMap, \

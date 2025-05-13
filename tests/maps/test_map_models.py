@@ -10,10 +10,10 @@ import numpy as np
 from imap_processing.ena_maps.utils.spatial_utils import build_solid_angle_map
 from spacepy.pycdf import CDF
 
-from imap_l3_processing import map_models
 from imap_l3_processing.cdf.cdf_utils import read_variable_and_mask_fill_values
 from imap_l3_processing.constants import ONE_SECOND_IN_NANOSECONDS, SECONDS_PER_DAY, FIVE_MINUTES_IN_NANOSECONDS
-from imap_l3_processing.map_models import RectangularCoords, SpectralIndexMapData, RectangularSpectralIndexMapData, \
+from imap_l3_processing.maps import map_models
+from imap_l3_processing.maps.map_models import RectangularCoords, SpectralIndexMapData, RectangularSpectralIndexMapData, \
     RectangularSpectralIndexDataProduct, RectangularIntensityMapData, IntensityMapData, RectangularIntensityDataProduct, \
     combine_rectangular_intensity_map_data, combine_intensity_map_data, HealPixIntensityMapData, \
     HealPixSpectralIndexMapData, HealPixCoords, HealPixSpectralIndexDataProduct, HealPixIntensityDataProduct
@@ -336,7 +336,7 @@ class TestMapModels(unittest.TestCase):
         np.testing.assert_equal(combine_two.obs_date.mask, expected_obs_date.mask)
         np.testing.assert_equal(combine_two.obs_date, expected_obs_date)
 
-    @patch('imap_l3_processing.map_models.combine_intensity_map_data')
+    @patch('imap_l3_processing.maps.map_models.combine_intensity_map_data')
     def test_combine_rectangular_intensity_map_data(self, mock_combine_intensity_map_data):
 
         expected_coords = RectangularCoords(latitude_delta=np.array([1]), longitude_delta=np.array([1]),
