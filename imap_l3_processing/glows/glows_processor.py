@@ -31,7 +31,8 @@ from imap_l3_processing.glows.l3e.glows_l3e_dependencies import GlowsL3EDependen
 from imap_l3_processing.glows.l3e.glows_l3e_hi_model import GlowsL3EHiData
 from imap_l3_processing.glows.l3e.glows_l3e_lo_model import GlowsL3ELoData
 from imap_l3_processing.glows.l3e.glows_l3e_ultra_model import GlowsL3EUltraData
-from imap_l3_processing.glows.l3e.glows_l3e_utils import determine_call_args_for_l3e_executable
+from imap_l3_processing.glows.l3e.glows_l3e_utils import determine_call_args_for_l3e_executable, \
+    determine_repointing_numbers_for_cr
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
 from imap_l3_processing.utils import save_data
@@ -69,23 +70,25 @@ class GlowsProcessor(Processor):
                 for txt_path in l3d_txt_paths:
                     imap_data_access.upload(txt_path)
         elif self.input_metadata.data_level == "l3e":
-            l3e_dependencies, repointing_number = GlowsL3EDependencies.fetch_dependencies(self.dependencies,
-                                                                                          self.input_metadata.descriptor)
-            epoch, epoch_end = get_repoint_date_range(repointing_number)
-            epoch_dt: datetime = epoch.astype('datetime64[us]').astype(datetime)
-            epoch_end_dt: datetime = epoch_end.astype('datetime64[us]').astype(datetime)
-            epoch_delta: timedelta = (epoch_end_dt - epoch_dt) / 2
-
+            l3e_dependencies, cr_number = GlowsL3EDependencies.fetch_dependencies(self.dependencies,
+                                                                                  self.input_metadata.descriptor)
             l3e_dependencies.rename_dependencies()
 
-            if self.input_metadata.descriptor == "survival-probability-lo":
-                self.process_l3e_lo(epoch_dt, epoch_delta)
-            elif self.input_metadata.descriptor == "survival-probability-hi-45":
-                self.process_l3e_hi(epoch_dt, epoch_delta, 135)
-            elif self.input_metadata.descriptor == "survival-probability-hi-90":
-                self.process_l3e_hi(epoch_dt, epoch_delta, 90)
-            elif self.input_metadata.descriptor == "survival-probability-ul":
-                self.process_l3e_ul(epoch_dt, epoch_delta)
+            repointings = determine_repointing_numbers_for_cr(cr_number, Path(os.getenv("REPOINT_DATA_FILEPATH")))
+            for repointing in repointings:
+                epoch, epoch_end = get_repoint_date_range(repointing)
+                epoch_dt: datetime = epoch.astype('datetime64[us]').astype(datetime)
+                epoch_end_dt: datetime = epoch_end.astype('datetime64[us]').astype(datetime)
+                epoch_delta: timedelta = (epoch_end_dt - epoch_dt) / 2
+
+                if self.input_metadata.descriptor == "survival-probability-lo":
+                    self.process_l3e_lo(epoch_dt, epoch_delta)
+                elif self.input_metadata.descriptor == "survival-probability-hi-45":
+                    self.process_l3e_hi(epoch_dt, epoch_delta, 135)
+                elif self.input_metadata.descriptor == "survival-probability-hi-90":
+                    self.process_l3e_hi(epoch_dt, epoch_delta, 90)
+                elif self.input_metadata.descriptor == "survival-probability-ul":
+                    self.process_l3e_ul(epoch_dt, epoch_delta)
 
     def process_l3a(self, dependencies: GlowsL3ADependencies) -> GlowsL3LightCurve:
         data = dependencies.data

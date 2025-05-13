@@ -4,7 +4,6 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 import numpy as np
-from astropy_healpix import HEALPix
 
 from imap_l3_processing.models import DataProduct, DataProductVariable, InputMetadata
 
@@ -50,6 +49,8 @@ class GlowsL3EUltraData(DataProduct):
             probability_of_survival_to_return[:, int(healpix)] = prob_sur
 
         transposed_prob_sur = np.array([probability_of_survival_to_return])
+
+        input_metadata.start_date = epoch[0]
 
         return cls(input_metadata, epoch, epoch_delta.astype('timedelta64[ns]').astype(float), energies,
                    healpix_indexes, transposed_prob_sur)

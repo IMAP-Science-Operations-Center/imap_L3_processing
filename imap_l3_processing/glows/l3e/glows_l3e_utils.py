@@ -1,8 +1,12 @@
 from datetime import datetime
+from pathlib import Path
 
 import numpy as np
+from astropy.time import Time
+from imap_processing.spice.time import met_to_utc
 
-from imap_l3_processing.constants import ONE_AU_IN_KM
+from imap_l3_processing.constants import ONE_AU_IN_KM, TT2000_EPOCH, ONE_SECOND_IN_NANOSECONDS
+from imap_l3_processing.glows.l3bc.l3bc_toolkit.funcs import jd_fm_Carrington
 from imap_l3_processing.spice_wrapper import spiceypy
 
 
@@ -30,3 +34,18 @@ def _decimal_time(t: datetime) -> str:
     year_start = datetime(t.year, 1, 1)
     year_end = datetime(t.year + 1, 1, 1)
     return "{:10.5f}".format(t.year + (t - year_start) / (year_end - year_start))
+
+
+def determine_repointing_numbers_for_cr(cr_number: int, path_to_csv: Path) -> list[int]:
+    carrington_start_date = Time(jd_fm_Carrington(float(cr_number)), format='jd')
+    carrington_end_date = Time(jd_fm_Carrington(float(cr_number + 1)), format='jd')
+
+    repointing_data = np.loadtxt(path_to_csv, skiprows=1, delimiter=",")
+
+    start_ns = (carrington_start_date.to_datetime() - TT2000_EPOCH).total_seconds() * ONE_SECOND_IN_NANOSECONDS
+    end_ns = (carrington_end_date.to_datetime() - TT2000_EPOCH).total_seconds() * ONE_SECOND_IN_NANOSECONDS
+    vectorized_date_conv = np.vectorize(lambda d: (Time(met_to_utc(d), format="isot").to_datetime(
+        leap_second_strict='silent') - TT2000_EPOCH).total_seconds() * ONE_SECOND_IN_NANOSECONDS)
+    repointing_data[:, 1] = vectorized_date_conv(repointing_data[:, 1])
+
+    return repointing_data[(repointing_data[:, 1] > start_ns) & (repointing_data[:, 1] < end_ns)][:, 6]
