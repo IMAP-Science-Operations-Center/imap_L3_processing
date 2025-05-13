@@ -26,9 +26,6 @@ LATITUDE_VAR_NAME = "latitude"
 LATITUDE_DELTA_VAR_NAME = "latitude_delta"
 LATITUDE_LABEL_VAR_NAME = "latitude_label"
 
-HEALPIX_INDEX_VAR_NAME = "healpix_index"
-HEALPIX_INDEX_LABEL_VAR_NAME = "healpix_index_label"
-
 EXPOSURE_FACTOR_VAR_NAME = "exposure_factor"
 OBS_DATE_VAR_NAME = "obs_date"
 OBS_DATE_RANGE_VAR_NAME = "obs_date_range"
@@ -39,6 +36,9 @@ ENA_SPECTRAL_INDEX_STAT_UNC_VAR_NAME = "ena_spectral_index_stat_unc"
 ENA_INTENSITY_VAR_NAME = "ena_intensity"
 ENA_INTENSITY_STAT_UNC_VAR_NAME = "ena_intensity_stat_unc"
 ENA_INTENSITY_SYS_ERR_VAR_NAME = "ena_intensity_sys_err"
+
+PIXEL_INDEX_VAR_NAME = "pixel_index"
+PIXEL_INDEX_LABEL_VAR_NAME = "pixel_index_label"
 
 
 @dataclass
@@ -165,22 +165,21 @@ class HealPixSpectralIndexMapData:
 
 
 @dataclass
-class HealPixSpectralIndexMapDataProduct(DataProduct):
+class HealPixSpectralIndexDataProduct(DataProduct):
     data: HealPixSpectralIndexMapData
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
-        spectral_index_variables = [
-            DataProductVariable(ENA_SPECTRAL_INDEX_VAR_NAME, self.data.spectral_index_map_data.ena_spectral_index),
-            DataProductVariable(ENA_SPECTRAL_INDEX_STAT_UNC_VAR_NAME,
-                                self.data.spectral_index_map_data.ena_spectral_index_stat_unc),
-        ]
-        healpix_variables = [
-            DataProductVariable(HEALPIX_INDEX_VAR_NAME, self.data.coords.pixel_index),
-            DataProductVariable(HEALPIX_INDEX_LABEL_VAR_NAME, self.data.coords.pixel_index_label),
-        ]
-        return _map_data_to_variables(self.data.spectral_index_map_data) \
-            + spectral_index_variables \
-            + healpix_variables
+        return _spectral_index_data_variables(self.data.spectral_index_map_data) \
+            + _healpix_coords_to_variables(self.data.coords)
+
+
+@dataclass
+class HealPixIntensityDataProduct(DataProduct):
+    data: HealPixIntensityMapData
+
+    def to_data_product_variables(self) -> list[DataProductVariable]:
+        return _intensity_data_variables(self.data.intensity_map_data) \
+            + _healpix_coords_to_variables(self.data.coords)
 
 
 @dataclass
@@ -188,13 +187,7 @@ class RectangularSpectralIndexDataProduct(DataProduct):
     data: RectangularSpectralIndexMapData
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
-        spectral_index_variables = [
-            DataProductVariable(ENA_SPECTRAL_INDEX_VAR_NAME, self.data.spectral_index_map_data.ena_spectral_index),
-            DataProductVariable(ENA_SPECTRAL_INDEX_STAT_UNC_VAR_NAME,
-                                self.data.spectral_index_map_data.ena_spectral_index_stat_unc),
-        ]
-        return _map_data_to_variables(self.data.spectral_index_map_data) \
-            + spectral_index_variables \
+        return _spectral_index_data_variables(self.data.spectral_index_map_data) \
             + _rectangular_coords_to_variables(self.data.coords)
 
 
@@ -203,15 +196,7 @@ class RectangularIntensityDataProduct(DataProduct):
     data: RectangularIntensityMapData
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
-        intensity_variables = [
-            DataProductVariable(ENA_INTENSITY_VAR_NAME, self.data.intensity_map_data.ena_intensity),
-            DataProductVariable(ENA_INTENSITY_STAT_UNC_VAR_NAME,
-                                self.data.intensity_map_data.ena_intensity_stat_unc),
-            DataProductVariable(ENA_INTENSITY_SYS_ERR_VAR_NAME, self.data.intensity_map_data.ena_intensity_sys_err),
-
-        ]
-        return _map_data_to_variables(self.data.intensity_map_data) \
-            + intensity_variables \
+        return _intensity_data_variables(self.data.intensity_map_data) \
             + _rectangular_coords_to_variables(self.data.coords)
 
 
@@ -232,12 +217,35 @@ def _map_data_to_variables(data: MapData) -> list[DataProductVariable]:
     ]
 
 
+def _spectral_index_data_variables(data: SpectralIndexMapData) -> list[DataProductVariable]:
+    return _map_data_to_variables(data) + [
+        DataProductVariable(ENA_SPECTRAL_INDEX_VAR_NAME, data.ena_spectral_index),
+        DataProductVariable(ENA_SPECTRAL_INDEX_STAT_UNC_VAR_NAME, data.ena_spectral_index_stat_unc),
+    ]
+
+
+def _intensity_data_variables(data: IntensityMapData) -> list[DataProductVariable]:
+    intensity_variables = [
+        DataProductVariable(ENA_INTENSITY_VAR_NAME, data.ena_intensity),
+        DataProductVariable(ENA_INTENSITY_STAT_UNC_VAR_NAME, data.ena_intensity_stat_unc),
+        DataProductVariable(ENA_INTENSITY_SYS_ERR_VAR_NAME, data.ena_intensity_sys_err),
+    ]
+    return _map_data_to_variables(data) + intensity_variables
+
+
 def _rectangular_coords_to_variables(coords: RectangularCoords) -> list[DataProductVariable]:
     return [
         DataProductVariable(LATITUDE_DELTA_VAR_NAME, coords.latitude_delta),
         DataProductVariable(LATITUDE_LABEL_VAR_NAME, coords.latitude_label),
         DataProductVariable(LONGITUDE_DELTA_VAR_NAME, coords.longitude_delta),
         DataProductVariable(LONGITUDE_LABEL_VAR_NAME, coords.longitude_label)
+    ]
+
+
+def _healpix_coords_to_variables(coords: HealPixCoords) -> list[DataProductVariable]:
+    return [
+        DataProductVariable(PIXEL_INDEX_VAR_NAME, coords.pixel_index),
+        DataProductVariable(PIXEL_INDEX_LABEL_VAR_NAME, coords.pixel_index_label),
     ]
 
 

@@ -3,8 +3,9 @@ from dataclasses import dataclass
 from imap_data_access import upload
 from imap_processing.spice import geometry
 
+from imap_l3_processing.map_models import HealPixIntensityDataProduct, HealPixIntensityMapData, IntensityMapData, \
+    HealPixCoords
 from imap_l3_processing.processor import Processor
-from imap_l3_processing.ultra.l3.models import UltraL3SurvivalCorrectedDataProduct
 from imap_l3_processing.ultra.l3.science.ultra_survival_probability import UltraSurvivalProbabilitySkyMap, \
     UltraSurvivalProbability
 from imap_l3_processing.ultra.l3.ultra_l3_dependencies import UltraL3Dependencies
@@ -21,7 +22,7 @@ class UltraProcessor(Processor):
         else:
             raise NotImplementedError
 
-    def _process_survival_probability(self, deps: UltraL3Dependencies) -> UltraL3SurvivalCorrectedDataProduct:
+    def _process_survival_probability(self, deps: UltraL3Dependencies) -> HealPixIntensityDataProduct:
         combined_psets = combine_glows_l3e_with_l1c_pointing(deps.glows_l3e_sp, deps.ultra_l1c_pset, )
         survival_probability_psets = [UltraSurvivalProbability(_l1c, _l3e) for _l1c, _l3e in
                                       combined_psets]
@@ -36,25 +37,31 @@ class UltraProcessor(Processor):
         corrected_stat_unc = intensity_data.ena_intensity_stat_unc / survival_probability_map
         corrected_sys_unc = intensity_data.ena_intensity_sys_err / survival_probability_map
 
-        return UltraL3SurvivalCorrectedDataProduct(
+        return HealPixIntensityDataProduct(
             input_metadata=self.input_metadata.to_upstream_data_dependency(self.input_metadata.descriptor),
-            ena_intensity_stat_unc=corrected_stat_unc,
-            ena_intensity_sys_err=corrected_sys_unc,
-            ena_intensity=corrected_intensity,
-            epoch=intensity_data.epoch,
-            epoch_delta=intensity_data.epoch_delta,
-            energy=intensity_data.energy,
-            energy_delta_plus=intensity_data.energy_delta_plus,
-            energy_delta_minus=intensity_data.energy_delta_minus,
-            energy_label=intensity_data.energy_label,
-            latitude=intensity_data.latitude,
-            longitude=intensity_data.longitude,
-            exposure_factor=intensity_data.exposure_factor,
-            obs_date=intensity_data.obs_date,
-            obs_date_range=intensity_data.obs_date_range,
-            solid_angle=intensity_data.solid_angle,
-            pixel_index=coords.pixel_index,
-            pixel_index_label=coords.pixel_index_label
+            data=HealPixIntensityMapData(
+                intensity_map_data=IntensityMapData(
+                    ena_intensity_stat_unc=corrected_stat_unc,
+                    ena_intensity_sys_err=corrected_sys_unc,
+                    ena_intensity=corrected_intensity,
+                    epoch=intensity_data.epoch,
+                    epoch_delta=intensity_data.epoch_delta,
+                    energy=intensity_data.energy,
+                    energy_delta_plus=intensity_data.energy_delta_plus,
+                    energy_delta_minus=intensity_data.energy_delta_minus,
+                    energy_label=intensity_data.energy_label,
+                    latitude=intensity_data.latitude,
+                    longitude=intensity_data.longitude,
+                    exposure_factor=intensity_data.exposure_factor,
+                    obs_date=intensity_data.obs_date,
+                    obs_date_range=intensity_data.obs_date_range,
+                    solid_angle=intensity_data.solid_angle,
+                ),
+                coords=HealPixCoords(
+                    pixel_index=coords.pixel_index,
+                    pixel_index_label=coords.pixel_index_label,
+                ),
+            )
         )
 
 
