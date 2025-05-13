@@ -245,7 +245,7 @@ class CodiceLoProcessor(Processor):
         l3a_de_mass_per_charge = dependencies.l3a_direct_event_data.mass_per_charge
         l3a_de_energy = dependencies.l3a_direct_event_data.event_energy
         l3a_de_spin_angle = dependencies.l3a_direct_event_data.spin_angle
-        l3a_de_elevation = dependencies.l3a_direct_event_data.elevation
+        l3a_de_apd_id = dependencies.l3a_direct_event_data.apd_id
 
         mass_species_bin_lookup = dependencies.mass_species_bin_lookup
         spin_angle_lut = SpinAngleLookup()
@@ -257,10 +257,10 @@ class CodiceLoProcessor(Processor):
             mass_per_charge=l3a_de_mass_per_charge,
             energy=l3a_de_energy,
             spin_angle=l3a_de_spin_angle,
-            elevation=l3a_de_elevation,
+            apd_id=l3a_de_apd_id,
             mass_species_bin_lookup=mass_species_bin_lookup,
             spin_angle_lut=spin_angle_lut,
-            elevation_lut=elevation_lut,
+            position_elevation_lut=elevation_lut,
             energy_lut=energy_lut,
         )
 

@@ -32,7 +32,8 @@ class PositionToElevationLookup:
 
         self.bin_edges = self.bin_centers - (self.bin_deltas[0] / 2)
 
-        self.elevation_indices_by_apd = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1]
+        self.elevation_indices_by_apd = np.array(
+            [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1])
 
     @property
     def num_bins(self):
@@ -47,5 +48,5 @@ class PositionToElevationLookup:
     def apd_to_elevation(self, apd: int) -> float:
         return float(self.bin_centers[self.apd_to_elevation_index(apd)])
 
-    def apd_to_elevation_index(self, apd: int) -> int:
+    def apd_to_elevation_index(self, apd: np.ndarray | int) -> int:
         return self.elevation_indices_by_apd[apd - 1]
