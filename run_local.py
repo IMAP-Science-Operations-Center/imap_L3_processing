@@ -49,8 +49,9 @@ from imap_l3_processing.hit.l3.pha.science.hit_event_type_lookup import HitEvent
 from imap_l3_processing.hit.l3.pha.science.range_fit_lookup import RangeFitLookup
 from imap_l3_processing.hit.l3.utils import read_l2_hit_data
 from imap_l3_processing.map_models import RectangularSpectralIndexDataProduct, RectangularIntensityDataProduct, \
-    combine_rectangular_intensity_map_data
+    combine_rectangular_intensity_map_data, HealPixIntensityMapData
 from imap_l3_processing.models import InputMetadata
+from imap_l3_processing.spice_wrapper import spiceypy
 from imap_l3_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density import \
     AlphaTemperatureDensityCalibrationTable
 from imap_l3_processing.swapi.l3a.science.calculate_pickup_ion import DensityOfNeutralHeliumLookupTable
@@ -68,7 +69,7 @@ from imap_l3_processing.swapi.l3b.swapi_l3b_dependencies import SwapiL3BDependen
 from imap_l3_processing.swapi.swapi_processor import SwapiProcessor
 from imap_l3_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies
 from imap_l3_processing.swe.swe_processor import SweProcessor
-from imap_l3_processing.ultra.l3.models import UltraL1CPSet, UltraGlowsL3eData, UltraL2Map
+from imap_l3_processing.ultra.l3.models import UltraL1CPSet, UltraGlowsL3eData
 from imap_l3_processing.ultra.l3.ultra_l3_dependencies import UltraL3Dependencies
 from imap_l3_processing.ultra.l3.ultra_processor import UltraProcessor
 from imap_l3_processing.utils import save_data, read_l1d_mag_data
@@ -492,64 +493,70 @@ def run_glows_l3e_lo_with_mocks(mock_get_repoint_date_range, _, mock_path, mock_
 
 @environment_variables({"REPOINT_DATA_FILEPATH": get_test_data_path("fake_1_day_repointing_file.csv")})
 @patch("imap_l3_processing.glows.glows_processor.imap_data_access.upload")
-def run_glows_l3e_lo_with_less_mocks(_):
-    l3d_file = "imap_glows_l3d_solar-hist_20250501-repoint05599_v002.cdf"
+@patch("imap_l3_processing.glows.l3e.glows_l3e_utils.spiceypy")
+def run_glows_l3e_lo_with_less_mocks(mock_spiceypy, _):
+    mock_spiceypy.spkezr = spiceypy.spkezr
+    mock_spiceypy.reclat = spiceypy.reclat
+    mock_spiceypy.pxform = spiceypy.pxform
+    mock_spiceypy.datetime2et = lambda date: spiceypy.datetime2et(date + timedelta(days=365 * 16 + 4))
+
+    l3d_file = "imap_glows_l3d_solar-hist_20100101-repoint00002_v002.cdf"
     lo_processing_input_collection = ProcessingInputCollection(
-        AncillaryInput("imap_glows_density-3d_20100101_v001.dat"),
-        AncillaryInput("imap_glows_energy-grid-lo_20100101_v001.dat"),
-        AncillaryInput("imap_glows_ionization-files_20100101_v001.dat"),
-        AncillaryInput("imap_glows_lya-series_20100101_v001.dat"),
-        AncillaryInput("imap_glows_phion-hydrogen_20100101_v001.dat"),
-        AncillaryInput("imap_glows_pipeline-settings-l3e_20100101_v002.json"),
-        AncillaryInput("imap_glows_solar-uv-anisotropy_20100101_v001.dat"),
-        AncillaryInput("imap_glows_speed-3d_20100101_v001.dat"),
-        AncillaryInput("imap_glows_sw-eqtr-electrons_20100101_v001.dat"),
-        AncillaryInput("imap_glows_tess-xyz-8_20100101_v001.dat"),
+        AncillaryInput("imap_glows_density-3d_19640117_v002.dat"),
+        AncillaryInput("imap_glows_energy-grid-lo_20100101_v002.dat"),
+        AncillaryInput("imap_glows_ionization-files_20100101_v002.dat"),
+        AncillaryInput("imap_glows_lya-series_19470303_v002.dat"),
+        AncillaryInput("imap_glows_phion-hydrogen_19470303_v002.dat"),
+        AncillaryInput("imap_glows_pipeline-settings-l3e_20100101_v003.json"),
+        AncillaryInput("imap_glows_solar-uv-anisotropy_19960130_v002.dat"),
+        AncillaryInput("imap_glows_speed-3d_19640117_v002.dat"),
+        AncillaryInput("imap_glows_sw-eqtr-electrons_19710416_v002.dat"),
+        AncillaryInput("imap_glows_tess-xyz-8_20100101_v002.dat"),
         ScienceInput(l3d_file)
     )
 
     hi_45_processing_input_collection = ProcessingInputCollection(
-        AncillaryInput("imap_glows_density-3d_20100101_v001.dat"),
-        AncillaryInput("imap_glows_energy-grid-hi_20100101_v001.dat"),
-        AncillaryInput("imap_glows_ionization-files_20100101_v001.dat"),
-        AncillaryInput("imap_glows_lya-series_20100101_v001.dat"),
-        AncillaryInput("imap_glows_phion-hydrogen_20100101_v001.dat"),
-        AncillaryInput("imap_glows_pipeline-settings-l3e_20100101_v002.json"),
-        AncillaryInput("imap_glows_solar-uv-anisotropy_20100101_v001.dat"),
-        AncillaryInput("imap_glows_speed-3d_20100101_v001.dat"),
-        AncillaryInput("imap_glows_sw-eqtr-electrons_20100101_v001.dat"),
+        AncillaryInput("imap_glows_density-3d_19640117_v002.dat"),
+        AncillaryInput("imap_glows_energy-grid-hi_20100101_v002.dat"),
+        AncillaryInput("imap_glows_ionization-files_20100101_v002.dat"),
+        AncillaryInput("imap_glows_lya-series_19470303_v002.dat"),
+        AncillaryInput("imap_glows_phion-hydrogen_19470303_v002.dat"),
+        AncillaryInput("imap_glows_pipeline-settings-l3e_20100101_v003.json"),
+        AncillaryInput("imap_glows_solar-uv-anisotropy_19960130_v002.dat"),
+        AncillaryInput("imap_glows_speed-3d_19640117_v002.dat"),
+        AncillaryInput("imap_glows_sw-eqtr-electrons_19710416_v002.dat"),
         ScienceInput(l3d_file)
     )
     hi_90_processing_input_collection = ProcessingInputCollection(
-        AncillaryInput("imap_glows_density-3d_20100101_v001.dat"),
-        AncillaryInput("imap_glows_energy-grid-hi_20100101_v001.dat"),
-        AncillaryInput("imap_glows_ionization-files_20100101_v001.dat"),
-        AncillaryInput("imap_glows_lya-series_20100101_v001.dat"),
-        AncillaryInput("imap_glows_phion-hydrogen_20100101_v001.dat"),
-        AncillaryInput("imap_glows_pipeline-settings-l3e_20100101_v002.json"),
-        AncillaryInput("imap_glows_solar-uv-anisotropy_20100101_v001.dat"),
-        AncillaryInput("imap_glows_speed-3d_20100101_v001.dat"),
-        AncillaryInput("imap_glows_sw-eqtr-electrons_20100101_v001.dat"),
+        AncillaryInput("imap_glows_density-3d_19640117_v002.dat"),
+        AncillaryInput("imap_glows_energy-grid-hi_20100101_v002.dat"),
+        AncillaryInput("imap_glows_ionization-files_20100101_v002.dat"),
+        AncillaryInput("imap_glows_lya-series_19470303_v002.dat"),
+        AncillaryInput("imap_glows_phion-hydrogen_19470303_v002.dat"),
+        AncillaryInput("imap_glows_pipeline-settings-l3e_20100101_v003.json"),
+        AncillaryInput("imap_glows_solar-uv-anisotropy_19960130_v002.dat"),
+        AncillaryInput("imap_glows_speed-3d_19640117_v002.dat"),
+        AncillaryInput("imap_glows_sw-eqtr-electrons_19710416_v002.dat"),
         ScienceInput(l3d_file)
     )
 
     ul_processing_input_collection = ProcessingInputCollection(
-        AncillaryInput("imap_glows_density-3d_20100101_v001.dat"),
-        AncillaryInput("imap_glows_energy-grid-ultra_20100101_v001.dat"),
-        AncillaryInput("imap_glows_ionization-files_20100101_v001.dat"),
-        AncillaryInput("imap_glows_lya-series_20100101_v001.dat"),
-        AncillaryInput("imap_glows_phion-hydrogen_20100101_v001.dat"),
-        AncillaryInput("imap_glows_pipeline-settings-l3e_20100101_v002.json"),
-        AncillaryInput("imap_glows_solar-uv-anisotropy_20100101_v001.dat"),
-        AncillaryInput("imap_glows_speed-3d_20100101_v001.dat"),
-        AncillaryInput("imap_glows_sw-eqtr-electrons_20100101_v001.dat"),
-        AncillaryInput("imap_glows_tess-ang-16_20100101_v001.dat"),
+        AncillaryInput("imap_glows_density-3d_19640117_v002.dat"),
+        AncillaryInput("imap_glows_energy-grid-ultra_20100101_v002.dat"),
+        AncillaryInput("imap_glows_ionization-files_20100101_v002.dat"),
+        AncillaryInput("imap_glows_lya-series_19470303_v002.dat"),
+        AncillaryInput("imap_glows_phion-hydrogen_19470303_v002.dat"),
+        AncillaryInput("imap_glows_pipeline-settings-l3e_20100101_v003.json"),
+        AncillaryInput("imap_glows_solar-uv-anisotropy_19960130_v002.dat"),
+        AncillaryInput("imap_glows_speed-3d_19640117_v002.dat"),
+        AncillaryInput("imap_glows_sw-eqtr-electrons_19710416_v002.dat"),
+        AncillaryInput("imap_glows_tess-ang-16_20100101_v002.dat"),
         ScienceInput(l3d_file)
     )
 
     version = 'v007'
-    start_date = datetime(2025, 5, 1)
-    end_date = datetime(2025, 5, 2)
+    start_date = datetime(2010, 1, 1)
+    end_date = datetime(2010, 1, 2)
 
     lo_input_metadata = InputMetadata(instrument='glows', data_level='l3e', start_date=start_date,
                                       end_date=end_date, version=version,
@@ -1009,7 +1016,7 @@ if __name__ == "__main__":
                     "ultra/fake_l3e_survival_probabilities/imap_glows_l3e_survival-probabilities-ultra_20250901_v001.cdf")
             ]
             l3e_dependencies = [UltraGlowsL3eData.read_from_path(path) for path in l3e_glows_paths]
-            l2_map_dependency = UltraL2Map.read_from_path(l2_map_path)
+            l2_map_dependency = HealPixIntensityMapData.read_from_path(l2_map_path)
 
             processor_input_metadata = InputMetadata(
                 instrument="ultra",

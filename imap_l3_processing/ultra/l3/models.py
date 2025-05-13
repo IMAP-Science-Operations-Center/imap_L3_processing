@@ -3,13 +3,12 @@ from datetime import datetime
 from pathlib import Path
 from typing import Self
 
-import numpy as np
 import xarray as xr
 from imap_processing.ena_maps.utils.coordinates import CoordNames
 from numpy import ndarray
 from spacepy.pycdf import CDF
 
-from imap_l3_processing.cdf.cdf_utils import read_numeric_variable, read_variable_and_mask_fill_values
+from imap_l3_processing.cdf.cdf_utils import read_numeric_variable
 from imap_l3_processing.constants import TT2000_EPOCH, ONE_SECOND_IN_NANOSECONDS
 from imap_l3_processing.map_models import IntensityMapData, HealPixCoords
 from imap_l3_processing.models import DataProduct, DataProductVariable
@@ -35,36 +34,6 @@ EXPOSURE_FACTOR_VAR_NAME = "exposure_factor"
 OBS_DATE_VAR_NAME = "obs_date"
 OBS_DATE_RANGE_VAR_NAME = "obs_date_range"
 SOLID_ANGLE_VAR_NAME = "solid_angle"
-
-
-@dataclass
-class UltraL2Map(IntensityMapData, HealPixCoords):
-    @classmethod
-    def read_from_path(cls, file_path: Path):
-        with CDF(str(file_path)) as cdf:
-            return UltraL2Map(
-                epoch=read_variable_and_mask_fill_values(cdf["epoch"]),
-                epoch_delta=read_variable_and_mask_fill_values(cdf["epoch_delta"]),
-                energy=read_numeric_variable(cdf["energy"]),
-                energy_delta_plus=read_numeric_variable(cdf["energy_delta_plus"]),
-                energy_delta_minus=read_numeric_variable(cdf["energy_delta_minus"]),
-                energy_label=cdf["energy_label"][...],
-                latitude=read_numeric_variable(cdf["latitude"]),
-                longitude=read_numeric_variable(cdf["longitude"]),
-                exposure_factor=read_numeric_variable(cdf["exposure_factor"]),
-                obs_date=read_variable_and_mask_fill_values(cdf["obs_date"]),
-                obs_date_range=read_variable_and_mask_fill_values(cdf["obs_date_range"]),
-                solid_angle=read_numeric_variable(cdf["solid_angle"]),
-                ena_intensity=read_numeric_variable(cdf["ena_intensity"]),
-                ena_intensity_stat_unc=read_numeric_variable(cdf["ena_intensity_stat_unc"]),
-                ena_intensity_sys_err=read_numeric_variable(cdf["ena_intensity_sys_err"]),
-                pixel_index=read_numeric_variable(cdf["pixel_index"]),
-                pixel_index_label=cdf["pixel_index_label"][...]
-            )
-
-    @property
-    def nside(self) -> int:
-        return int(np.sqrt(len(self.pixel_index) / 12))
 
 
 @dataclass

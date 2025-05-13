@@ -5,10 +5,8 @@ from unittest.mock import sentinel
 import numpy as np
 from spacepy.pycdf import CDF
 
-from imap_l3_processing.cdf.cdf_utils import read_variable_and_mask_fill_values
 from imap_l3_processing.models import InputMetadata, DataProductVariable
-from imap_l3_processing.ultra.l3.models import UltraGlowsL3eData, UltraL1CPSet, UltraL3SurvivalCorrectedDataProduct, \
-    UltraL2Map
+from imap_l3_processing.ultra.l3.models import UltraGlowsL3eData, UltraL1CPSet, UltraL3SurvivalCorrectedDataProduct
 from tests.test_helpers import get_test_data_folder
 
 
@@ -98,39 +96,3 @@ class TestModels(unittest.TestCase):
             np.testing.assert_array_equal(expected["latitude"][...], actual.latitude)
             np.testing.assert_array_equal(expected["longitude"][...], actual.longitude)
             np.testing.assert_array_equal(expected["sensitivity"][...], actual.sensitivity)
-
-    def test_ultra_l2_map_read_from_file(self):
-        path_to_cdf = get_test_data_folder() / 'ultra' / 'fake_l2_maps' / 'ultra45-6months-copied-from-hi.cdf'
-
-        actual = UltraL2Map.read_from_path(path_to_cdf)
-
-        expected_epoch = datetime(2025, 4, 18, 15, 51, 57, 171732)
-        with CDF(str(path_to_cdf)) as expected:
-            date_range_var = read_variable_and_mask_fill_values(expected["obs_date_range"])
-            obs_date = read_variable_and_mask_fill_values(expected["obs_date"])
-
-            self.assertEqual(expected_epoch, actual.epoch[0])
-            np.testing.assert_array_equal(expected["epoch_delta"][...], actual.epoch_delta)
-            np.testing.assert_array_equal(expected["energy"][...], actual.energy)
-            np.testing.assert_array_equal(expected["energy_delta_plus"][...], actual.energy_delta_plus)
-            np.testing.assert_array_equal(expected["energy_delta_minus"][...], actual.energy_delta_minus)
-            np.testing.assert_array_equal(expected["energy_label"][...], actual.energy_label)
-            np.testing.assert_array_equal(expected["latitude"][...], actual.latitude)
-            np.testing.assert_array_equal(expected["longitude"][...], actual.longitude)
-            np.testing.assert_array_equal(expected["exposure_factor"][...], actual.exposure_factor)
-            np.testing.assert_array_equal(obs_date, actual.obs_date)
-            np.testing.assert_array_equal(date_range_var, actual.obs_date_range)
-            np.testing.assert_array_equal(expected["solid_angle"][...], actual.solid_angle)
-            np.testing.assert_array_equal(expected["ena_intensity"][...], actual.ena_intensity)
-            np.testing.assert_array_equal(expected["ena_intensity_stat_unc"][...], actual.ena_intensity_stat_unc)
-            np.testing.assert_array_equal(expected["ena_intensity_sys_err"][...], actual.ena_intensity_sys_err)
-            np.testing.assert_array_equal(expected["pixel_index"][...], actual.pixel_index)
-            np.testing.assert_array_equal(expected["pixel_index_label"][...], actual.pixel_index_label)
-
-    def test_ultra_l2_nside_property(self):
-        path_to_cdf = get_test_data_folder() / 'ultra' / 'fake_l2_maps' / 'test_l2_map.cdf'
-        actual = UltraL2Map.read_from_path(path_to_cdf)
-        expected_nside = 2
-
-        self.assertIsInstance(actual.nside, int)
-        self.assertEqual(expected_nside, actual.nside)
