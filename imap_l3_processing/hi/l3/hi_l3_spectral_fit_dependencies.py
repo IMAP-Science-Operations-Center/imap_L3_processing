@@ -7,7 +7,6 @@ import imap_data_access
 from imap_data_access.processing_input import ProcessingInputCollection
 
 from imap_l3_processing.map_models import RectangularIntensityMapData
-from imap_l3_processing.utils import read_rectangular_intensity_map_data_from_cdf
 
 
 @dataclass
@@ -26,4 +25,4 @@ class HiL3SpectralFitDependencies:
 
     @classmethod
     def from_file_paths(cls, hi_l3_path: Path) -> HiL3SpectralFitDependencies:
-        return cls(read_rectangular_intensity_map_data_from_cdf(hi_l3_path))
+        return cls(RectangularIntensityMapData.read_from_path(hi_l3_path))

@@ -17,8 +17,8 @@ class TestHiL3SurvivalDependencies(unittest.TestCase):
     @patch("imap_l3_processing.hi.l3.hi_l3_survival_dependencies.imap_data_access.download")
     @patch("imap_l3_processing.hi.l3.hi_l3_survival_dependencies.read_glows_l3e_data")
     @patch("imap_l3_processing.hi.l3.hi_l3_survival_dependencies.read_hi_l1c_data")
-    @patch("imap_l3_processing.hi.l3.hi_l3_survival_dependencies.read_rectangular_intensity_map_data_from_cdf")
-    def test_fetch_dependencies(self, mock_read_hi_l2: Mock, mock_read_hi_l1c, mock_read_glows_l3e,
+    @patch("imap_l3_processing.hi.l3.hi_l3_survival_dependencies.RectangularIntensityMapData.read_from_path")
+    def test_fetch_dependencies(self, mock_read_from_path: Mock, mock_read_hi_l1c, mock_read_glows_l3e,
                                 mock_imap_data_access_download, mock_find_glows_l3e_dependencies,
                                 mock_parse_map_descriptor):
         l1c_file_paths = ["imap_hi_l1c_45sensor-pset_20201001_v001.cdf", "imap_hi_l1c_45sensor-pset_20201002_v002.cdf",
@@ -58,7 +58,7 @@ class TestHiL3SurvivalDependencies(unittest.TestCase):
                                                                         l1c_file_paths + glows_file_paths]
             mock_imap_data_access_download.assert_has_calls(expected_imap_data_access_calls)
 
-            mock_read_hi_l2.assert_called_once_with(l2_map_path)
+            mock_read_from_path.assert_called_once_with(l2_map_path)
 
             mock_read_hi_l1c.assert_has_calls([
                 call(sentinel.l1c_file_path_1),
@@ -74,7 +74,7 @@ class TestHiL3SurvivalDependencies(unittest.TestCase):
 
             mock_parse_map_descriptor.assert_called_once_with(l2_map_descriptor)
 
-            self.assertEqual(actual.l2_data, mock_read_hi_l2.return_value)
+            self.assertEqual(actual.l2_data, mock_read_from_path.return_value)
             self.assertEqual(actual.hi_l1c_data, [sentinel.l1c_data_1,
                                                   sentinel.l1c_data_2,
                                                   sentinel.l1c_data_3])

@@ -6,7 +6,6 @@ import imap_data_access
 from imap_data_access.processing_input import ProcessingInputCollection
 
 from imap_l3_processing.map_models import RectangularIntensityMapData
-from imap_l3_processing.utils import read_rectangular_intensity_map_data_from_cdf
 
 
 @dataclass
@@ -22,4 +21,4 @@ class HiL3CombinedMapDependencies:
 
     @classmethod
     def from_file_paths(cls, hi_l3_map_paths: list[Path]) -> Self:
-        return cls([read_rectangular_intensity_map_data_from_cdf(path) for path in hi_l3_map_paths])
+        return cls([RectangularIntensityMapData.read_from_path(path) for path in hi_l3_map_paths])
