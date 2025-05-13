@@ -16,6 +16,10 @@ class SpinAngleLookup:
     def get_spin_angle_index(self, spin_angle: np.ndarray | float):
         return np.digitize(spin_angle, self.bin_edges) - 1
 
+    @property
+    def num_bins(self):
+        return len(self.bin_centers)
+
 
 class ElevationLookup:
 
@@ -28,3 +32,7 @@ class ElevationLookup:
 
     def get_elevation_index(self, elevation: np.ndarray | float):
         return np.digitize(elevation, self.bin_edges) - 1
+
+    @property
+    def num_bins(self):
+        return len(self.bin_centers)

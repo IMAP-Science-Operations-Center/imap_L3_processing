@@ -39,7 +39,6 @@ from imap_l3_processing.hi.l3.hi_l3_combined_sensor_dependencies import HiL3Comb
 from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3SpectralFitDependencies
 from imap_l3_processing.hi.l3.hi_l3_survival_dependencies import HiL3SurvivalDependencies, \
     HiL3SingleSensorFullSpinDependencies
-from imap_l3_processing.hi.l3.models import HiL3IntensityDataProduct, combine_maps
 from imap_l3_processing.hit.l3.hit_l3_sectored_dependencies import HITL3SectoredDependencies
 from imap_l3_processing.hit.l3.hit_processor import HitProcessor
 from imap_l3_processing.hit.l3.models import HitL1Data
@@ -49,7 +48,8 @@ from imap_l3_processing.hit.l3.pha.science.gain_lookup_table import GainLookupTa
 from imap_l3_processing.hit.l3.pha.science.hit_event_type_lookup import HitEventTypeLookup
 from imap_l3_processing.hit.l3.pha.science.range_fit_lookup import RangeFitLookup
 from imap_l3_processing.hit.l3.utils import read_l2_hit_data
-from imap_l3_processing.map_models import RectangularSpectralIndexDataProduct
+from imap_l3_processing.map_models import RectangularSpectralIndexDataProduct, RectangularIntensityDataProduct, \
+    combine_rectangular_intensity_map_data
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.spice_wrapper import spiceypy
 from imap_l3_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density import \
@@ -290,7 +290,7 @@ def create_survival_corrected_full_spin_cdf(dependencies: HiL3SingleSensorFullSp
     processor = HiProcessor(Mock(), input_metadata)
     output_data = processor.process_full_spin_single_sensor(dependencies)
 
-    data_product = HiL3IntensityDataProduct(data=output_data, input_metadata=input_metadata)
+    data_product = RectangularIntensityDataProduct(data=output_data, input_metadata=input_metadata)
     cdf_path = save_data(data_product, delete_if_present=True)
     return cdf_path
 
@@ -752,7 +752,7 @@ def create_hi_l3_survival_corrected_cdf(survival_dependencies: HiL3SurvivalDepen
     processor = HiProcessor(Mock(), input_metadata)
     output_data = processor.process_survival_probabilities(survival_dependencies)
 
-    data_product = HiL3IntensityDataProduct(data=output_data, input_metadata=input_metadata)
+    data_product = RectangularIntensityDataProduct(data=output_data, input_metadata=input_metadata)
     return save_data(data_product, delete_if_present=True)
 
 
@@ -765,9 +765,9 @@ def create_combined_sensor_cdf(combined_dependencies: HiL3CombinedMapDependencie
         version="v001",
         descriptor="hic-ena-h-hf-nsp-full-hae-4deg-1yr"
     )
-    combined_map = combine_maps(combined_dependencies.maps)
+    combined_map = combine_rectangular_intensity_map_data(combined_dependencies.maps)
 
-    data_product = HiL3IntensityDataProduct(data=combined_map, input_metadata=input_metadata)
+    data_product = RectangularIntensityDataProduct(data=combined_map, input_metadata=input_metadata)
     return save_data(data_product, delete_if_present=True)
 
 

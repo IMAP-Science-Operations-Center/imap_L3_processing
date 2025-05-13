@@ -8,11 +8,14 @@ from imap_l3_processing.codice.l3.lo.codice_lo_l3a_direct_events_dependencies im
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_partial_densities_dependencies import \
     CodiceLoL3aPartialDensitiesDependencies
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_ratios_dependencies import CodiceLoL3aRatiosDependencies
+from imap_l3_processing.codice.l3.lo.direct_events.science.angle_lookup import SpinAngleLookup
+from imap_l3_processing.codice.l3.lo.direct_events.science.energy_lookup import EnergyLookup
 from imap_l3_processing.codice.l3.lo.models import CodiceLoL3aPartialDensityDataProduct, CodiceLoL2DirectEventData, \
     CodiceLoL3aDirectEventDataProduct, CodiceLoPartialDensityData, CodiceLoL3aRatiosDataProduct, \
-    CodiceLoL3ChargeStateDistributionsDataProduct
+    CodiceLoL3ChargeStateDistributionsDataProduct, CODICE_LO_L2_NUM_PRIORITIES
 from imap_l3_processing.codice.l3.lo.science.codice_lo_calculations import calculate_partial_densities, \
-    calculate_normalization_ratio, calculate_total_number_of_events, calculate_mass, calculate_mass_per_charge
+    calculate_mass, calculate_mass_per_charge, \
+    rebin_counts_by_energy_and_spin_angle
 from imap_l3_processing.data_utils import safe_divide
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
@@ -169,8 +172,6 @@ class CodiceLoProcessor(Processor):
             codice_nsw_priority_rates_l1a_data.p6_hplus_heplusplus
         ]
 
-        normalization = np.full((len(codice_direct_events.epoch), len(priority_rates_for_events), 128, 12), np.nan)
-
         (mass_per_charge,
          mass,
          energy,
@@ -186,13 +187,16 @@ class CodiceLoProcessor(Processor):
 
         (data_quality, num_events) = [np.full((len(codice_direct_events.epoch), len(priority_rates_for_events)), np.nan)
                                       for _ in range(2)]
+
+        energy_lut = EnergyLookup.from_bin_centers(codice_sw_priority_rates_l1a_data.energy_table)
+        spin_angle_lut = SpinAngleLookup()
+        normalization = np.full((len(codice_direct_events.epoch), CODICE_LO_L2_NUM_PRIORITIES,
+                                 energy_lut.num_bins, spin_angle_lut.num_bins), np.nan)
+
         try:
-            for priority_index, (priority_event, priority_rate) in enumerate(
+
+            for priority_index, (priority_event, priority_counts_total_count) in enumerate(
                     zip(codice_direct_events.priority_events, priority_rates_for_events)):
-
-                total_by_epoch: np.ndarray[int] = calculate_total_number_of_events(priority_rate,
-                                                                                   codice_sw_priority_rates_l1a_data.acquisition_time_per_step)
-
                 mass_per_charge[:, priority_index, :] = calculate_mass_per_charge(priority_event)
                 mass[:, priority_index, :] = calculate_mass(priority_event, mass_coefficient_lookup)
                 energy[:, priority_index, :] = priority_event.apd_energy
@@ -204,13 +208,13 @@ class CodiceLoProcessor(Processor):
                 elevation[:, priority_index, :] = priority_event.elevation
                 data_quality[:, priority_index] = priority_event.data_quality
                 num_events[:, priority_index] = priority_event.num_events
-                priority_event_binned_by_energy_and_spin_angle = priority_event.total_events_binned_by_energy_step_and_spin_angle()
-                for e in range(len(codice_direct_events.epoch)):
-                    norm = calculate_normalization_ratio(
-                        priority_event_binned_by_energy_and_spin_angle[e],
-                        total_by_epoch[e])
 
-                    normalization[e][priority_index] = norm
+                direct_events_binned_by_energy_and_spin = rebin_counts_by_energy_and_spin_angle(priority_event,
+                                                                                                spin_angle_lut,
+                                                                                                energy_lut)
+                normalization[:, priority_index, ...] = \
+                    priority_counts_total_count / direct_events_binned_by_energy_and_spin
+
         except Exception as e:
             print(e)
 

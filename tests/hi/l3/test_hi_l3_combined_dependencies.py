@@ -8,8 +8,8 @@ from imap_l3_processing.hi.l3.hi_l3_combined_sensor_dependencies import HiL3Comb
 
 
 class TestHiL3CombinedDependencies(unittest.TestCase):
-    @patch("imap_l3_processing.hi.l3.hi_l3_combined_sensor_dependencies.read_hi_l2_data")
-    def test_from_file_paths(self, read_hi_l2_data):
+    @patch("imap_l3_processing.hi.l3.hi_l3_combined_sensor_dependencies.RectangularIntensityMapData.read_from_path")
+    def test_from_file_paths(self, read_cdf):
         hi_map_paths = [
             Path("test_hi_l3_cdf1.cdf"),
             Path("test_hi_l3_cdf2.cdf"),
@@ -20,18 +20,18 @@ class TestHiL3CombinedDependencies(unittest.TestCase):
                                 sentinel.read_data2,
                                 sentinel.read_data3]
 
-        read_hi_l2_data.side_effect = expected_return_maps
+        read_cdf.side_effect = expected_return_maps
 
         result = HiL3CombinedMapDependencies.from_file_paths(hi_map_paths)
 
-        read_hi_l2_data.assert_has_calls([call(path) for path in hi_map_paths])
+        read_cdf.assert_has_calls([call(path) for path in hi_map_paths])
 
-        self.assertEqual(read_hi_l2_data.call_count, 3)
+        self.assertEqual(read_cdf.call_count, 3)
         self.assertEqual(expected_return_maps, result.maps)
 
     @patch("imap_l3_processing.hi.l3.hi_l3_combined_sensor_dependencies.imap_data_access.download")
-    @patch("imap_l3_processing.hi.l3.hi_l3_combined_sensor_dependencies.read_hi_l2_data")
-    def test_fetch_dependencies(self, read_hi_l2_data, mock_download):
+    @patch("imap_l3_processing.hi.l3.hi_l3_combined_sensor_dependencies.RectangularIntensityMapData.read_from_path")
+    def test_fetch_dependencies(self, read_cdf, mock_download):
         file_name1 = "imap_hi_l3_h90-spx-h-hf-sp-ram-hae-4deg-6mo_20250422_v001.cdf"
         file_name2 = "imap_hi_l3_h90-spx-h-hf-sp-anti-hae-4deg-6mo_20250422_v001.cdf"
         file_name3 = "imap_hi_l3_h45-spx-h-hf-sp-ram-hae-4deg-6mo_20250422_v001.cdf"
@@ -58,14 +58,14 @@ class TestHiL3CombinedDependencies(unittest.TestCase):
             sentinel.read_data3,
             sentinel.read_data4,
         ]
-        read_hi_l2_data.side_effect = read_maps
+        read_cdf.side_effect = read_maps
 
         result = HiL3CombinedMapDependencies.fetch_dependencies(processing_input)
 
         mock_download.assert_has_calls([call(file_name) for file_name in file_names])
-        read_hi_l2_data.assert_has_calls([call(path) for path in downloaded_paths])
+        read_cdf.assert_has_calls([call(path) for path in downloaded_paths])
 
-        self.assertEqual(read_hi_l2_data.call_count, 4)
+        self.assertEqual(read_cdf.call_count, 4)
         self.assertEqual(mock_download.call_count, 4)
 
         self.assertEqual(read_maps, result.maps)

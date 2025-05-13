@@ -7,7 +7,7 @@ from imap_processing.ena_maps.utils.coordinates import CoordNames
 from imap_processing.spice import geometry
 
 from imap_l3_processing.hi.l3.models import HiL1cData, HiGlowsL3eData
-from imap_l3_processing.hi.l3.utils import Sensor, SpinPhase
+from imap_l3_processing.map_descriptors import Sensor, SpinPhase
 
 
 def interpolate_angular_data_to_nearest_neighbor(input_azimuths: np.array, glows_azimuths: np.array,
@@ -62,7 +62,7 @@ class HiSurvivalProbabilityPointingSet(PointingSet):
 
         exposure = l1c_dataset.exposure_times * exposure_mask
 
-        sensor_angle = Sensor.get_sensor_angle(sensor.value)
+        sensor_angle = Sensor.get_sensor_angle(sensor)
         self.elevations = np.repeat(sensor_angle, num_spin_angle_bins)
         self.az_el_points = np.column_stack([self.azimuths, self.elevations])
 
