@@ -13,7 +13,7 @@ from imap_l3_processing.hi.l3.models import HiL1cData, HiGlowsL3eData
 from imap_l3_processing.hi.l3.utils import read_hi_l1c_data, read_glows_l3e_data
 from imap_l3_processing.map_descriptors import MapDescriptorParts, parse_map_descriptor, SpinPhase
 from imap_l3_processing.map_models import RectangularIntensityMapData
-from imap_l3_processing.utils import find_glows_l3e_dependencies, read_rectangular_intensity_map_data_from_cdf
+from imap_l3_processing.utils import find_glows_l3e_dependencies
 
 
 @dataclass
@@ -49,7 +49,7 @@ class HiL3SurvivalDependencies:
         l1c_data = list(map(read_hi_l1c_data, hi_l1c_paths))
 
         paths = [map_file_path] + hi_l1c_paths + glows_l3e_paths
-        return cls(l2_data=read_rectangular_intensity_map_data_from_cdf(map_file_path), hi_l1c_data=l1c_data,
+        return cls(l2_data=RectangularIntensityMapData.read_from_path(map_file_path), hi_l1c_data=l1c_data,
                    glows_l3e_data=glows_l3e_data,
                    l2_map_descriptor_parts=parse_map_descriptor(l2_descriptor),
                    dependency_file_paths=paths)
