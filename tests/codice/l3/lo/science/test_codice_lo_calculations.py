@@ -4,7 +4,8 @@ from unittest.mock import Mock, call
 
 import numpy as np
 
-from imap_l3_processing.codice.l3.lo.direct_events.science.angle_lookup import SpinAngleLookup, ElevationLookup
+from imap_l3_processing.codice.l3.lo.direct_events.science.angle_lookup import SpinAngleLookup, \
+    PositionToElevationLookup
 from imap_l3_processing.codice.l3.lo.direct_events.science.energy_lookup import EnergyLookup
 from imap_l3_processing.codice.l3.lo.direct_events.science.mass_coefficient_lookup import MassCoefficientLookup
 from imap_l3_processing.codice.l3.lo.direct_events.science.mass_species_bin_lookup import MassSpeciesBinLookup, \
@@ -12,7 +13,7 @@ from imap_l3_processing.codice.l3.lo.direct_events.science.mass_species_bin_look
 from imap_l3_processing.codice.l3.lo.models import EnergyAndSpinAngle, PriorityEvent, CodiceLo3dData
 from imap_l3_processing.codice.l3.lo.science.codice_lo_calculations import calculate_partial_densities, \
     calculate_total_number_of_events, calculate_normalization_ratio, calculate_mass, calculate_mass_per_charge, \
-    rebin_to_counts_by_elevation_spin_sector, rebin_counts_by_energy_and_spin_angle
+    rebin_to_counts_by_species_elevation_and_spin_sector, rebin_counts_by_energy_and_spin_angle
 from tests.test_helpers import create_dataclass_mock
 
 
@@ -160,6 +161,9 @@ class TestCodiceLoCalculations(unittest.TestCase):
 
         mock_species_mass_range_lookup.get_species_index = mock_get_species_index
 
+        mock_energy_lookup = Mock(spec=EnergyLookup)
+        mock_energy_lookup.get_energy_index.side_effect = [0, 100, 0, 0, 127, 127, 127, 0]
+
         spin_angle = np.array([
             [[37.5, 22.5, 37.5, np.nan], [7.5, np.nan, np.nan, np.nan]],
             [[37.5, 37.5, 37.5, np.nan], [7.5, np.nan, np.nan, np.nan]]
@@ -171,8 +175,8 @@ class TestCodiceLoCalculations(unittest.TestCase):
         ])
 
         energy_step = np.array([
-            [[0, 100, 0, np.nan], [0, np.nan, np.nan, np.nan]],
-            [[127, 127, 127, np.nan], [0, np.nan, np.nan, np.nan]]
+            [[0.0, 1234.2, 0.0, np.nan], [0.0, np.nan, np.nan, np.nan]],
+            [[345.2, 345.2, 345.2, np.nan], [0.0, np.nan, np.nan, np.nan]]
         ])
 
         mass = np.array([
@@ -186,11 +190,14 @@ class TestCodiceLoCalculations(unittest.TestCase):
         ])
 
         spin_angle_lut = SpinAngleLookup()
-        elevation_lut = ElevationLookup()
+        elevation_lut = PositionToElevationLookup()
 
-        actual_counts_3d_data = rebin_to_counts_by_elevation_spin_sector(mass, mass_per_charge, energy_step, spin_angle,
-                                                                         elevation, mock_species_mass_range_lookup,
-                                                                         spin_angle_lut, elevation_lut)
+        actual_counts_3d_data = rebin_to_counts_by_species_elevation_and_spin_sector(mass, mass_per_charge, energy_step,
+                                                                                     spin_angle,
+                                                                                     elevation,
+                                                                                     mock_species_mass_range_lookup,
+                                                                                     spin_angle_lut, elevation_lut,
+                                                                                     mock_energy_lookup)
 
         mock_species_mass_range_lookup.get_species.assert_has_calls([
             call(mass[0, 0, 0], mass_per_charge[0, 0, 0], EventDirection.Sunward),
@@ -205,6 +212,17 @@ class TestCodiceLoCalculations(unittest.TestCase):
 
             call(mass[1, 1, 0], mass_per_charge[1, 1, 0], EventDirection.Sunward),
 
+        ])
+
+        mock_energy_lookup.get_energy_index.assert_has_calls([
+            call(0.0),
+            call(1234.2),
+            call(0.0),
+            call(0.0),
+            call(345.2),
+            call(345.2),
+            call(345.2),
+            call(0.0),
         ])
 
         self.assertIsInstance(actual_counts_3d_data, CodiceLo3dData)
