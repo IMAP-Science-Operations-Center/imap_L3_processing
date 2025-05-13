@@ -11,7 +11,6 @@ from imap_l3_processing.utils import \
 
 @dataclass
 class GlowsL3EDependencies:
-    l3d_data: Path
     energy_grid_lo: Path | None
     energy_grid_hi: Path | None
     energy_grid_ultra: Path | None
@@ -39,7 +38,6 @@ class GlowsL3EDependencies:
         ionization_files_dependency = dependencies.get_file_paths(source='glows', descriptor='ionization-files')
         pipeline_settings_dependency = dependencies.get_file_paths(source='glows', descriptor='pipeline-settings-l3e')
 
-        solar_hist_path = download_dependency_from_path(str(solar_hist_dependency[0]))
         lya_series_path = download_dependency_from_path(str(lya_series_dependency[0]))
         solar_uv_anisotropy_path = download_dependency_from_path(str(solar_uv_anisotropy_dependency[0]))
         speed_3d_path = download_dependency_from_path(str(speed_3d_dependency[0]))
@@ -72,10 +70,9 @@ class GlowsL3EDependencies:
         with open(pipeline_settings_path) as f:
             pipeline_settings = json.load(f)
 
-        repointing_number = int(str(solar_hist_path).split('_')[-2][-5:])
+        cr_number = int(str(solar_hist_dependency).split('_')[-2][-5:])
 
         return cls(
-            solar_hist_path,
             energy_grid_lo_path,
             energy_grid_hi_path,
             energy_grid_ultra_path,
@@ -89,7 +86,7 @@ class GlowsL3EDependencies:
             sw_eqtr_electrons_path,
             ionization_files_path,
             pipeline_settings,
-        ), repointing_number
+        ), cr_number
 
     def rename_dependencies(self):
         if self.energy_grid_lo is not None:
