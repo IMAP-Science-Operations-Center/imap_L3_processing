@@ -11,7 +11,7 @@ from spacepy.pycdf import CDF
 from imap_l3_processing.codice.l3.lo.direct_events.science.mass_species_bin_lookup import EventDirection
 from imap_l3_processing.codice.l3.lo.models import CodiceLoL2SWSpeciesData, CodiceLoL3aPartialDensityDataProduct, \
     CodiceLoL2DirectEventData, \
-    PriorityEvent, EnergyAndSpinAngle, CodiceLoL3aDirectEventDataProduct, \
+    CodiceLoL3aDirectEventDataProduct, \
     CodiceLoL1aSWPriorityRates, CodiceLoL1aNSWPriorityRates, CodiceLo3dData, CODICE_LO_L2_NUM_PRIORITIES, \
     CodiceLoL3aRatiosDataProduct, CodiceLoPartialDensityData, CodiceLoL3ChargeStateDistributionsDataProduct, \
     CodiceLoDirectEventData
@@ -126,42 +126,6 @@ class TestModels(unittest.TestCase):
                 np.testing.assert_array_equal(cdf[f"p{index}_position"],
                                               l2_direct_event_data.priority_events[index].elevation)
                 np.testing.assert_array_equal(cdf[f"p{index}_tof"], l2_direct_event_data.priority_events[index].tof)
-
-    def test_calculate_total_number_of_events(self):
-        energy_step = np.array([[1, 4, 4, 2, 0],
-                                [4, 4, 1, 2, np.nan]])
-
-        spin_angle = np.array([[0, 30, 30, 40, 0],
-                               [30, 30, 50, 40, np.nan]])
-
-        priority_event = PriorityEvent(
-            apd_energy=np.array([]),
-            apd_gain=np.array([]),
-            apd_id=np.array([]),
-            data_quality=np.array([]),
-            energy_step=energy_step,
-            multi_flag=np.array([]),
-            num_events=np.array([]),
-            spin_angle=spin_angle,
-            elevation=np.array([]),
-            tof=np.array([]))
-
-        expected_total_events_by_energy_step_and_spin_angle = [
-            {
-                EnergyAndSpinAngle(energy=1, spin_angle=0): 1,
-                EnergyAndSpinAngle(energy=4, spin_angle=30): 2,
-                EnergyAndSpinAngle(energy=2, spin_angle=40): 1,
-                EnergyAndSpinAngle(energy=0, spin_angle=0): 1,
-            },
-            {
-                EnergyAndSpinAngle(energy=4, spin_angle=30): 2,
-                EnergyAndSpinAngle(energy=1, spin_angle=50): 1,
-                EnergyAndSpinAngle(energy=2, spin_angle=40): 1,
-            }
-        ]
-
-        self.assertEqual(expected_total_events_by_energy_step_and_spin_angle,
-                         priority_event.total_events_binned_by_energy_step_and_spin_angle())
 
     def test_codice_lo_l3a_partial_density_to_data_product(self):
         epoch_data = np.array([datetime.now()])
@@ -519,12 +483,12 @@ class TestModels(unittest.TestCase):
             np.testing.assert_array_equal(actual_l1a_nsw_priority_rates.spin_period, cdf["spin_period"][...])
 
     def test_codice_lo_3d_data_get_3d_distribution(self):
-        data_in_bins = np.arange(8).reshape((2, 2, 2))
+        data_in_bins = np.arange(16).reshape((2, 2, 2, 2))
         mass_bin_lookup = Mock()
         mass_bin_lookup.get_species_index.return_value = 1
         codice_lo_3d_data = CodiceLo3dData(data_in_bins, mass_bin_lookup)
 
-        expected_species_data = data_in_bins[:, 1, ...]
+        expected_species_data = data_in_bins[:, :, 1, ...]
         actual_species_data = codice_lo_3d_data.get_3d_distribution("H+", EventDirection.Sunward)
 
         mass_bin_lookup.get_species_index.assert_called_with("H+", EventDirection.Sunward)

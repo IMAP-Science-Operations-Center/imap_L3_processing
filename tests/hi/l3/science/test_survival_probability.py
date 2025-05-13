@@ -11,7 +11,7 @@ from imap_processing.spice.geometry import SpiceFrame
 from imap_l3_processing.hi.l3.models import HiL1cData, HiGlowsL3eData
 from imap_l3_processing.hi.l3.science.survival_probability import Sensor, \
     HiSurvivalProbabilitySkyMap, HiSurvivalProbabilityPointingSet, interpolate_angular_data_to_nearest_neighbor
-from imap_l3_processing.hi.l3.utils import SpinPhase
+from imap_l3_processing.map_descriptors import SpinPhase
 
 
 class TestSurvivalProbability(unittest.TestCase):
@@ -55,6 +55,7 @@ class TestSurvivalProbability(unittest.TestCase):
             (Sensor.Hi90, 0, SpinPhase.AntiRamOnly, self.antiram_mask),
             (Sensor.Hi45, -45, SpinPhase.RamOnly, self.ram_mask),
             (Sensor.Hi45, -45, SpinPhase.AntiRamOnly, self.antiram_mask),
+            (Sensor.Lo90, 0, SpinPhase.AntiRamOnly, self.antiram_mask),
         ]
 
         for sensor, expected_sensor_angle, spin_phase, expected_mask in test_cases:

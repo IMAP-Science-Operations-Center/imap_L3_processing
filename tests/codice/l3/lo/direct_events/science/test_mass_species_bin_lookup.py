@@ -71,6 +71,8 @@ class TestMassSpeciesBinLookup(unittest.TestCase):
         self.assertEqual("CNO", lookup.get_species(8, 600, EventDirection.NonSunward))
         self.assertEqual("Mg", lookup.get_species(8, 1100, EventDirection.NonSunward))
 
+        self.assertEqual(6, lookup.get_num_species())
+
     def test_get_species_index(self):
         csv_path = get_test_data_path('codice/species_mass_bins.csv')
         mass_species_bin_lookup = MassSpeciesBinLookup.read_from_csv(csv_path)

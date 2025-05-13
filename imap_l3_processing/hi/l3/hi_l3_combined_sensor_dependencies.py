@@ -5,13 +5,12 @@ from typing import Self
 import imap_data_access
 from imap_data_access.processing_input import ProcessingInputCollection
 
-from imap_l3_processing.hi.l3.models import HiIntensityMapData
-from imap_l3_processing.hi.l3.utils import read_hi_l2_data
+from imap_l3_processing.map_models import RectangularIntensityMapData
 
 
 @dataclass
 class HiL3CombinedMapDependencies:
-    maps: list[HiIntensityMapData]
+    maps: list[RectangularIntensityMapData]
 
     @classmethod
     def fetch_dependencies(cls, dependencies: ProcessingInputCollection) -> Self:
@@ -22,4 +21,4 @@ class HiL3CombinedMapDependencies:
 
     @classmethod
     def from_file_paths(cls, hi_l3_map_paths: list[Path]) -> Self:
-        return cls([read_hi_l2_data(path) for path in hi_l3_map_paths])
+        return cls([RectangularIntensityMapData.read_from_path(path) for path in hi_l3_map_paths])

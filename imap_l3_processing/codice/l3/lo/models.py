@@ -1,4 +1,4 @@
-from collections import namedtuple, Counter
+from collections import namedtuple
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -100,19 +100,6 @@ class PriorityEvent:
     spin_angle: ndarray
     elevation: ndarray
     tof: ndarray
-
-    def total_events_binned_by_energy_step_and_spin_angle(self) -> [dict[EnergyAndSpinAngle, int]]:
-        all_epoch_to_energy_and_spin_angle = np.stack((self.energy_step, self.spin_angle), axis=-1)
-        total_events_by_energy_and_spin_angle = []
-
-        for epoch_to_energy_and_spin_angle in all_epoch_to_energy_and_spin_angle:
-            energy_step_and_spin_angle = [EnergyAndSpinAngle(*energy_step_and_spin_angle)
-                                          for energy_step_and_spin_angle in epoch_to_energy_and_spin_angle
-                                          if not any(np.isnan(energy_step_and_spin_angle))]
-
-            total_events_by_energy_and_spin_angle.append(dict(Counter(energy_step_and_spin_angle)))
-
-        return total_events_by_energy_and_spin_angle
 
 
 @dataclass
@@ -465,4 +452,4 @@ class CodiceLo3dData:
 
     def get_3d_distribution(self, species: str, event_direction: EventDirection) -> np.ndarray:
         species_index = self.mass_bin_lookup.get_species_index(species, event_direction)
-        return self.data_in_3d_bins[:, species_index, ...]
+        return self.data_in_3d_bins[:, :, species_index, ...]

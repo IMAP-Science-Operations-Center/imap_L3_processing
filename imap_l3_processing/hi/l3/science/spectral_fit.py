@@ -4,8 +4,7 @@ from imap_l3_processing.hi.l3.science.mpfit import mpfit
 
 
 def spectral_fit(fluxes, variances, energy, output_energy=None):
-    output_energy = output_energy or np.array([[-np.inf, np.inf]])
-    initial_parameters = (10, 2)
+    output_energy = output_energy if output_energy is not None else np.array([[-np.inf, np.inf]])
 
     par_info = [
         {'limits': [0.0, 1000.0]},
@@ -26,22 +25,29 @@ def spectral_fit(fluxes, variances, energy, output_energy=None):
             for i in range(intensity.shape[-1]):
                 flux = intensity[:, i]
                 variance = var[:, i]
-                # energy_mask = (energy > output_energy[output_energy_index][0]) & (
-                #         energy < output_energy[output_energy_index][1])
-                energy_mask = True
+                energy_mask = (energy >= output_energy[output_energy_index][0]) & (
+                        energy < output_energy[output_energy_index][1])
                 flux_and_variance_are_zero = np.equal(flux, 0) & np.equal(variance, 0)
                 flux_or_error_is_invalid = np.isnan(flux) | np.isnan(variance) | flux_and_variance_are_zero
                 flux = flux[~flux_or_error_is_invalid & energy_mask]
                 variance = variance[~flux_or_error_is_invalid & energy_mask]
                 filtered_energy = energy[~flux_or_error_is_invalid & energy_mask]
-                keywords = {'xval': filtered_energy, 'yval': flux, 'errval': np.sqrt(variance)}
-                fit = mpfit(power_law, initial_parameters, keywords, par_info, nprint=0)
 
-                a, gamma = fit.params
-                if fit.status > 0:
-                    a_error, gamma_error = fit.perror
-                    gammas[i] = gamma
-                    errors[i] = gamma_error
+                if len(flux) > 1:
+                    keywords = {'xval': filtered_energy, 'yval': flux, 'errval': np.sqrt(variance)}
+                    first_y_in_range, last_y_in_range = np.log10(flux[flux > 0][0]), np.log10(flux[flux > 0][-1])
+                    first_x_in_range, last_x_in_range = np.log10(filtered_energy[0]), np.log10(filtered_energy[-1])
+                    initial_gamma = (last_y_in_range - first_y_in_range) / (last_x_in_range - first_x_in_range)
+                    initial_intercept = first_y_in_range - (initial_gamma * first_x_in_range)
+                    initial_parameters = (initial_intercept, -initial_gamma)
+
+                    fit = mpfit(power_law, initial_parameters, keywords, par_info, nprint=0)
+
+                    a, gamma = fit.params
+                    if fit.status > 0:
+                        a_error, gamma_error = fit.perror
+                        gammas[i] = gamma
+                        errors[i] = gamma_error
             output_gammas[epoch, output_energy_index] = gammas.reshape(fluxes.shape[2:])
             output_gamma_errors[epoch, output_energy_index] = errors.reshape(fluxes.shape[2:])
 
