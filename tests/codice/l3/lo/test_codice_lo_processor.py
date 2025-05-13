@@ -598,11 +598,11 @@ class TestCodiceLoProcessor(unittest.TestCase):
         input_metadata = InputMetadata('codice', "l3a", Mock(spec=datetime), Mock(spec=datetime), 'v02')
 
         l3a_direct_event_data = Mock(
+            apd_id=sentinel.l3a_de_apd_id,
             mass=sentinel.l3a_de_mass,
             mass_per_charge=sentinel.l3a_de_mass_per_charge,
             event_energy=sentinel.l3a_de_energy,
             spin_angle=sentinel.l3a_de_spin_angle,
-            elevation=sentinel.l3a_de_elevation,
         )
 
         dependencies = CodiceLoL3a3dDistributionsDependencies(
@@ -624,10 +624,10 @@ class TestCodiceLoProcessor(unittest.TestCase):
             mass_per_charge=sentinel.l3a_de_mass_per_charge,
             energy=sentinel.l3a_de_energy,
             spin_angle=sentinel.l3a_de_spin_angle,
-            elevation=sentinel.l3a_de_elevation,
+            apd_id=sentinel.l3a_de_apd_id,
             mass_species_bin_lookup=sentinel.mass_species_bin_lookup,
             spin_angle_lut=mock_spin_angle_lookup_class.return_value,
-            elevation_lut=mock_elevation_angle_lookup_class.return_value,
+            position_elevation_lut=mock_elevation_angle_lookup_class.return_value,
             energy_lut=mock_energy_lookup_from_bin_centers.return_value,
         )
 
