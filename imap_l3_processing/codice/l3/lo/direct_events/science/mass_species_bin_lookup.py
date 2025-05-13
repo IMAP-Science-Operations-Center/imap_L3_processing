@@ -2,6 +2,7 @@ import enum
 from collections import namedtuple
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Optional
 
 import numpy as np
 
@@ -43,7 +44,7 @@ class MassSpeciesBinLookup:
 
         return cls(species_dict)
 
-    def get_species(self, mass: int, mass_per_charge: int, event_direction: EventDirection) -> str:
+    def get_species(self, mass: int, mass_per_charge: int, event_direction: EventDirection) -> Optional[str]:
         if event_direction == EventDirection.Sunward:
             species_lookup = self._range_to_species["sw_species"]
             mass_range_lookup = self._range_to_species["sw_mass_ranges"]

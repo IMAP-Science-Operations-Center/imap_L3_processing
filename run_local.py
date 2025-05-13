@@ -18,6 +18,8 @@ from imap_l3_processing.codice.l3.hi.codice_hi_processor import CodiceHiProcesso
 from imap_l3_processing.codice.l3.hi.direct_event.codice_hi_l3a_direct_events_dependencies import \
     CodiceHiL3aDirectEventsDependencies
 from imap_l3_processing.codice.l3.hi.pitch_angle.codice_pitch_angle_dependencies import CodicePitchAngleDependencies
+from imap_l3_processing.codice.l3.lo.codice_lo_l3a_3d_distributions_dependencies import \
+    CodiceLoL3a3dDistributionsDependencies
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_direct_events_dependencies import CodiceLoL3aDirectEventsDependencies
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_partial_densities_dependencies import \
     CodiceLoL3aPartialDensitiesDependencies
@@ -73,6 +75,7 @@ from imap_l3_processing.ultra.l3.models import UltraL1CPSet, UltraGlowsL3eData
 from imap_l3_processing.ultra.l3.ultra_l3_dependencies import UltraL3Dependencies
 from imap_l3_processing.ultra.l3.ultra_processor import UltraProcessor
 from imap_l3_processing.utils import save_data, read_l1d_mag_data
+from scripts.codice.create_more_accurate_l3a_direct_event import create_more_accurate_l3a_direct_events_cdf
 from scripts.hi.create_hi_full_spin_deps import create_hi_full_spin_deps
 from scripts.ultra.create_example_ultra_l1c_pset import _write_ultra_l1c_cdf_with_parents
 from scripts.ultra.create_example_ultra_l2_map import _write_ultra_l2_cdf_with_parents
@@ -184,6 +187,35 @@ def create_codice_lo_l3a_abundances_cdf():
     codice_lo_processor = CodiceLoProcessor(Mock(), input_metadata)
     ratios_data = codice_lo_processor.process_l3a_abundances(deps)
     return save_data(ratios_data, delete_if_present=True)
+
+
+def create_codice_lo_l3a_3d_distributions_cdf():
+    codice_lo_l3a_direct_event_path = Path(create_codice_lo_l3a_direct_events_cdf())
+    accurate_codice_lo_l3a_direct_event_path = create_more_accurate_l3a_direct_events_cdf(
+        codice_lo_l3a_direct_event_path)
+
+    codice_lo_l1a_nsw_path = Path("instrument_team_data/codice/lo/imap_codice_l1a_lo-nsw-priority_20241110_v002.cdf")
+    codice_lo_l1a_sw_path = Path("instrument_team_data/codice/lo/imap_codice_l1a_lo-sw-priority_20241110_v002.cdf")
+    csv_path = get_test_data_path('codice/species_mass_bins.csv')
+
+    deps = CodiceLoL3a3dDistributionsDependencies.from_file_paths(
+        l3a_file_path=accurate_codice_lo_l3a_direct_event_path,
+        l1a_sw_file_path=codice_lo_l1a_sw_path,
+        l1a_nsw_file_path=codice_lo_l1a_nsw_path,
+        mass_species_bin_lut=csv_path,
+        )
+
+    input_metadata = InputMetadata(
+        instrument='codice',
+        data_level='l3a',
+        start_date=datetime(2024, 11, 10),
+        end_date=datetime(2025, 1, 2),
+        version='v000',
+        descriptor='lo-3d-distributions'
+    )
+
+    codice_lo_processor = CodiceLoProcessor(Mock(), input_metadata)
+    l3a_3d_distributions = codice_lo_processor.process_l3a_3d_distribution_product(deps)
 
 
 def create_swapi_l3b_cdf(geometric_calibration_file, efficiency_calibration_file, cdf_file):
@@ -826,7 +858,8 @@ if __name__ == "__main__":
             elif "abundances" in sys.argv:
                 print(create_codice_lo_l3a_abundances_cdf())
             elif "3d-instrument-frame" in sys.argv:
-                pass
+                print(create_codice_lo_l3a_3d_distributions_cdf())
+
     if "codice-hi" in sys.argv:
         if "l3a" in sys.argv:
             print(create_codice_hi_l3a_direct_events_cdf())

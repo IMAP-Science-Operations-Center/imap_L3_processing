@@ -1,6 +1,7 @@
 import numpy as np
 
-from imap_l3_processing.codice.l3.lo.direct_events.science.angle_lookup import SpinAngleLookup, ElevationLookup
+from imap_l3_processing.codice.l3.lo.direct_events.science.angle_lookup import SpinAngleLookup, \
+    PositionToElevationLookup
 from imap_l3_processing.codice.l3.lo.direct_events.science.energy_lookup import EnergyLookup
 from imap_l3_processing.codice.l3.lo.direct_events.science.mass_coefficient_lookup import MassCoefficientLookup
 from imap_l3_processing.codice.l3.lo.direct_events.science.mass_species_bin_lookup import MassSpeciesBinLookup, \
@@ -73,11 +74,13 @@ def rebin_counts_by_energy_and_spin_angle(priority_event: PriorityEvent,
     return rebinned_output
 
 
-def rebin_to_counts_by_elevation_spin_sector(mass: np.ndarray, mass_per_charge: np.ndarray, energy_step: np.ndarray,
-                                             spin_angle: np.ndarray, elevation: np.ndarray,
-                                             mass_species_bin_lookup: MassSpeciesBinLookup,
-                                             spin_angle_lut: SpinAngleLookup,
-                                             elevation_lut: ElevationLookup) -> CodiceLo3dData:
+def rebin_to_counts_by_species_elevation_and_spin_sector(mass: np.ndarray, mass_per_charge: np.ndarray,
+                                                         energy: np.ndarray,
+                                                         spin_angle: np.ndarray, elevation: np.ndarray,
+                                                         mass_species_bin_lookup: MassSpeciesBinLookup,
+                                                         spin_angle_lut: SpinAngleLookup,
+                                                         elevation_lut: PositionToElevationLookup,
+                                                         energy_lut: EnergyLookup) -> CodiceLo3dData:
     num_epochs = mass.shape[0]
     num_priorities = mass.shape[1]
 
@@ -93,9 +96,11 @@ def rebin_to_counts_by_elevation_spin_sector(mass: np.ndarray, mass_per_charge: 
             masked_elevation = filter_nan(elevation[i][j])
             masked_mass = filter_nan(mass[i][j])
             masked_mass_per_charge = filter_nan(mass_per_charge[i][j])
-            masked_energy_step = filter_nan(energy_step[i][j])
+            masked_energy = filter_nan(energy[i][j])
 
             event_directions = np.where(masked_elevation < 37.5, EventDirection.Sunward, EventDirection.NonSunward)
+
+            energy_index = np.array([energy_lut.get_energy_index(e) for e in masked_energy])
 
             species = [mass_species_bin_lookup.get_species(m, mpc, event_direction) for m, mpc, event_direction in
                        zip(masked_mass, masked_mass_per_charge, event_directions)]
@@ -107,7 +112,7 @@ def rebin_to_counts_by_elevation_spin_sector(mass: np.ndarray, mass_per_charge: 
             spin_angle_indices = [spin_angle_lut.get_spin_angle_index(spin_angle) for spin_angle in masked_spin_angle]
 
             indexes = np.column_stack(
-                (species_indices, elevation_indices, spin_angle_indices, masked_energy_step)).astype(int)
+                (species_indices, elevation_indices, spin_angle_indices, energy_index)).astype(int)
 
             for index in indexes:
                 output[i, j, *index] += 1
