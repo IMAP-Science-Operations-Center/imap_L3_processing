@@ -143,7 +143,7 @@ class TestHiProcessor(unittest.TestCase):
                 np.testing.assert_allclose(output_data.spectral_index_map_data.ena_spectral_index_stat_unc[0, 0],
                                            expected_gamma_sigma, atol=1e-3)
 
-    def test_spectral_fit_other_fields(self):
+    def test_spectral_fit_fields_other_than_fit_fields(self):
         input_energies = np.array([1, 10, 99]) + 0.5
         input_deltas = np.array([0.5, 1, 0.5])
         lat = np.arange(-90, 90, 45)
@@ -177,10 +177,6 @@ class TestHiProcessor(unittest.TestCase):
         self.assertEqual("1.0 - 100.0 keV", output.spectral_index_map_data.energy_label[0])
 
         expected_ena_shape = np.array([1, 1, len(lon), len(lat)])
-        np.testing.assert_array_almost_equal(output.spectral_index_map_data.ena_spectral_index,
-                                             np.zeros(expected_ena_shape))
-        np.testing.assert_array_equal(output.spectral_index_map_data.ena_spectral_index_stat_unc,
-                                      np.zeros(expected_ena_shape))
         np.testing.assert_array_equal(output.spectral_index_map_data.obs_date,
                                       np.full(expected_ena_shape, datetime(2026, 1, 1)))
         np.testing.assert_array_equal(output.spectral_index_map_data.obs_date_range, np.full(expected_ena_shape, 2))
