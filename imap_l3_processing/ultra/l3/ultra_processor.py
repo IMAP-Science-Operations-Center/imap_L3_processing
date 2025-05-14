@@ -7,7 +7,7 @@ from imap_l3_processing.maps.map_descriptors import MapDescriptorParts, MapQuant
     parse_map_descriptor
 from imap_l3_processing.maps.map_models import HealPixIntensityDataProduct, HealPixIntensityMapData, IntensityMapData, \
     HealPixCoords, HealPixSpectralIndexDataProduct, HealPixSpectralIndexMapData
-from imap_l3_processing.maps.spectral_fit_data_product import process_spectral_index
+from imap_l3_processing.maps.spectral_fit import calculate_spectral_index_for_multiple_ranges
 from imap_l3_processing.processor import Processor
 from imap_l3_processing.ultra.l3.science.ultra_survival_probability import UltraSurvivalProbabilitySkyMap, \
     UltraSurvivalProbability
@@ -22,7 +22,10 @@ class UltraProcessor(Processor):
             case MapDescriptorParts(quantity=MapQuantity.SpectralIndex):
                 ultra_l3_spectral_fit_dependencies = UltraL3SpectralIndexDependencies.fetch_dependencies(
                     self.dependencies)
-                map_data = process_spectral_index(ultra_l3_spectral_fit_dependencies)
+                map_data = calculate_spectral_index_for_multiple_ranges(
+                    ultra_l3_spectral_fit_dependencies.map_data.intensity_map_data,
+                    ultra_l3_spectral_fit_dependencies.get_fit_energy_ranges()
+                )
                 data_product = HealPixSpectralIndexDataProduct(
                     data=HealPixSpectralIndexMapData(
                         spectral_index_map_data=map_data,

@@ -14,7 +14,9 @@ from imap_l3_processing.codice.l3.lo.models import EnergyAndSpinAngle, PriorityE
 from imap_l3_processing.codice.l3.lo.science.codice_lo_calculations import calculate_partial_densities, \
     calculate_total_number_of_events, calculate_normalization_ratio, calculate_mass, calculate_mass_per_charge, \
     rebin_to_counts_by_species_elevation_and_spin_sector, rebin_counts_by_energy_and_spin_angle, \
-    CODICE_LO_NUM_AZIMUTH_BINS, normalize_counts, combine_priorities_and_convert_to_rate
+    CODICE_LO_NUM_AZIMUTH_BINS, normalize_counts, combine_priorities_and_convert_to_rate, \
+    rebin_3d_distribution_azimuth_to_elevation
+from imap_l3_processing.constants import ONE_SECOND_IN_MICROSECONDS
 from tests.test_helpers import create_dataclass_mock, NumpyArrayMatcher
 
 
@@ -164,6 +166,7 @@ class TestCodiceLoCalculations(unittest.TestCase):
         mock_energy_lookup = Mock(spec=EnergyLookup)
         mock_energy_lookup.get_energy_index.side_effect = [[0, 100, 0], [0], [127, 127, 127], [0]]
         mock_energy_lookup.num_bins = num_esa_steps
+        mock_energy_lookup.bin_centers = Mock()
 
         mock_elevation_lut = Mock(spec=PositionToElevationLookup)
         mock_elevation_lut.event_direction_for_apd.side_effect = [EventDirection.Sunward,
@@ -236,8 +239,13 @@ class TestCodiceLoCalculations(unittest.TestCase):
         self.assertIsInstance(actual_counts_3d_data, CodiceLo3dData)
 
         self.assertEqual(
-            (num_epochs, num_priorities, num_species, CODICE_LO_NUM_AZIMUTH_BINS, num_spin_angles, num_esa_steps),
+            (num_species, num_epochs, num_priorities, CODICE_LO_NUM_AZIMUTH_BINS, num_spin_angles, num_esa_steps),
             actual_counts_3d_data.data_in_3d_bins.shape)
+
+        self.assertEqual(mock_energy_lookup.bin_centers, actual_counts_3d_data.energy_per_charge)
+        np.testing.assert_array_equal(np.arange(1, CODICE_LO_NUM_AZIMUTH_BINS + 1),
+                                      actual_counts_3d_data.azimuth_or_elevation)
+        np.testing.assert_array_equal(spin_angle_lut.bin_centers, actual_counts_3d_data.spin_angle)
 
         rebinned_shape = (num_epochs, num_priorities, CODICE_LO_NUM_AZIMUTH_BINS, num_spin_angles, num_esa_steps)
         expected_he_plus_counts = np.zeros(rebinned_shape)
@@ -298,7 +306,7 @@ class TestCodiceLoCalculations(unittest.TestCase):
 
         np.testing.assert_array_equal(result, expected_rebinned_counts)
 
-    def test_convert_3d_counts_to_intensity(self):
+    def test_normalize_counts(self):
         num_epochs = 2
         num_priorities = 3
         num_species = 4
@@ -307,23 +315,38 @@ class TestCodiceLoCalculations(unittest.TestCase):
         num_energies = 7
 
         rng = np.random.default_rng()
-        normalization_factor = rng.random((num_epochs, num_priorities, num_energies, num_spin_angles))
 
         counts = np.zeros((num_epochs, num_priorities, num_species, num_azimuth_bins, num_spin_angles, num_energies))
         counts[:, :, 0, 0, :, :] = 1
         counts[:, :, 1, 0, :, :] = 3
         counts[:, :, 0, 1, :, :] = 4
+        counts_data = CodiceLo3dData(
+            data_in_3d_bins=counts,
+            mass_bin_lookup=Mock(),
+            energy_per_charge=Mock(),
+            spin_angle=Mock(),
+            azimuth_or_elevation=Mock(),
+        )
 
-        actual_normalized_counts = normalize_counts(counts, normalization_factor)
+        normalization_factor = rng.random((num_epochs, num_priorities, num_energies, num_spin_angles))
+
+        actual_normalized_counts = normalize_counts(counts_data, normalization_factor)
+
+        self.assertEqual(counts_data.mass_bin_lookup, actual_normalized_counts.mass_bin_lookup)
+        self.assertEqual(counts_data.energy_per_charge, actual_normalized_counts.energy_per_charge)
+        self.assertEqual(counts_data.spin_angle, actual_normalized_counts.spin_angle)
+        self.assertEqual(counts_data.azimuth_or_elevation, actual_normalized_counts.azimuth_or_elevation)
 
         transposed_normalization_factor = np.transpose(normalization_factor, axes=(0, 1, 3, 2))
-        np.testing.assert_array_equal(actual_normalized_counts[:, :, 0, 0, :, :], transposed_normalization_factor)
-        np.testing.assert_array_equal(actual_normalized_counts[:, :, 1, 0, :, :], 3 * transposed_normalization_factor)
-        np.testing.assert_array_equal(actual_normalized_counts[:, :, 0, 1, :, :], 4 * transposed_normalization_factor)
+        np.testing.assert_array_equal(actual_normalized_counts.data_in_3d_bins[:, :, 0, 0, :, :],
+                                      transposed_normalization_factor)
+        np.testing.assert_array_equal(actual_normalized_counts.data_in_3d_bins[:, :, 1, 0, :, :],
+                                      3 * transposed_normalization_factor)
+        np.testing.assert_array_equal(actual_normalized_counts.data_in_3d_bins[:, :, 0, 1, :, :],
+                                      4 * transposed_normalization_factor)
 
     def test_convert_to_count_rates_combine_priority(self):
         num_epochs = 2
-        num_priorities = 3
         num_species = 4
         num_azimuth_bins = 5
         num_spin_angles = 6
@@ -336,7 +359,83 @@ class TestCodiceLoCalculations(unittest.TestCase):
 
         counts = np.stack((priority_1, priority_2, priority_3), axis=1)
 
-        actual_summed_counts = combine_priorities_and_convert_to_rate(counts)
+        counts_data = CodiceLo3dData(
+            data_in_3d_bins=counts,
+            mass_bin_lookup=Mock(),
+            energy_per_charge=Mock(),
+            spin_angle=Mock(),
+            azimuth_or_elevation=Mock(),
+        )
+
+        acquisition_durations_in_seconds = rng.random((num_energies,))
+        acquisition_duration_in_microseconds = acquisition_durations_in_seconds * ONE_SECOND_IN_MICROSECONDS
+
+        actual_count_rates = combine_priorities_and_convert_to_rate(counts_data, acquisition_duration_in_microseconds)
         expected_summed_counts = priority_1 + priority_2 + priority_3
 
-        np.testing.assert_array_equal(actual_summed_counts, expected_summed_counts)
+        self.assertEqual(counts_data.mass_bin_lookup, actual_count_rates.mass_bin_lookup)
+        self.assertEqual(counts_data.energy_per_charge, actual_count_rates.energy_per_charge)
+        self.assertEqual(counts_data.spin_angle, actual_count_rates.spin_angle)
+        self.assertEqual(counts_data.azimuth_or_elevation, actual_count_rates.azimuth_or_elevation)
+
+        self.assertEqual((num_epochs, num_species, num_azimuth_bins, num_spin_angles, num_energies),
+                         actual_count_rates.data_in_3d_bins.shape)
+
+        for index, _ in np.ndenumerate(np.ones((num_epochs, num_species, num_azimuth_bins, num_spin_angles))):
+            np.testing.assert_array_almost_equal(actual_count_rates.data_in_3d_bins[*index, :],
+                                                 expected_summed_counts[*index, :] / acquisition_durations_in_seconds)
+
+    def test_rebin_azimuth_to_elevation(self):
+        num_species = 2
+        num_epochs = 3
+        num_azimuth_bins = 4
+        num_spin_angles = 5
+        num_energies = 6
+
+        intensity_data = np.zeros((num_species, num_epochs, num_azimuth_bins, num_spin_angles, num_energies))
+        azimuth_1_intensity = 1
+        azimuth_2_intensity = 2
+        azimuth_3_intensity = 3
+        azimuth_4_intensity = 4
+
+        intensity_data[:, :, 0, ...] = azimuth_1_intensity
+        intensity_data[:, :, 1, ...] = azimuth_2_intensity
+        intensity_data[:, :, 2, ...] = azimuth_3_intensity
+        intensity_data[:, :, 3, ...] = azimuth_4_intensity
+
+        azimuths = np.array([1, 2, 3, 4])
+
+        intensity_data_3d = CodiceLo3dData(
+            data_in_3d_bins=intensity_data,
+            mass_bin_lookup=Mock(),
+            azimuth_or_elevation=azimuths,
+            spin_angle=np.arange(num_spin_angles),
+            energy_per_charge=np.arange(num_energies),
+        )
+
+        num_elevation_bins = 3
+        mock_position_to_elevation_lookup = Mock(spec=PositionToElevationLookup)
+        mock_position_to_elevation_lookup.num_bins = num_elevation_bins
+        mock_position_to_elevation_lookup.bin_centers = np.arange(num_elevation_bins)
+        mock_position_to_elevation_lookup.apd_to_elevation_index.return_value = np.array([1, 0, 2, 2])
+
+        actual_rebinned = rebin_3d_distribution_azimuth_to_elevation(intensity_data_3d,
+                                                                     mock_position_to_elevation_lookup)
+
+        mock_position_to_elevation_lookup.apd_to_elevation_index.assert_called_once_with(azimuths)
+
+        self.assertIsInstance(actual_rebinned, CodiceLo3dData)
+        self.assertEqual(intensity_data_3d.mass_bin_lookup, actual_rebinned.mass_bin_lookup)
+        np.testing.assert_array_equal(intensity_data_3d.energy_per_charge, actual_rebinned.energy_per_charge)
+        np.testing.assert_array_equal(intensity_data_3d.spin_angle, actual_rebinned.spin_angle)
+
+        np.testing.assert_array_equal(mock_position_to_elevation_lookup.bin_centers,
+                                      actual_rebinned.azimuth_or_elevation)
+
+        self.assertEqual((num_species, num_epochs, num_elevation_bins, num_spin_angles, num_energies),
+                         actual_rebinned.data_in_3d_bins.shape)
+
+        self.assertTrue(np.all(actual_rebinned.data_in_3d_bins[:, :, 0, :, :] == azimuth_2_intensity))
+        self.assertTrue(np.all(actual_rebinned.data_in_3d_bins[:, :, 1, :, :] == azimuth_1_intensity))
+        self.assertTrue(
+            np.all(actual_rebinned.data_in_3d_bins[:, :, 2, :, :] == (azimuth_3_intensity + azimuth_4_intensity)))
