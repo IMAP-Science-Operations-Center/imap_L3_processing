@@ -23,6 +23,7 @@ class UltraProcessor(Processor):
                 ultra_l3_spectral_fit_dependencies = UltraL3SpectralIndexDependencies.fetch_dependencies(
                     self.dependencies)
                 spectral_index_data = self._process_spectral_index(ultra_l3_spectral_fit_dependencies)
+                spectral_index_data.parent_file_names = self.get_parent_file_names()
                 data_product_path = save_data(spectral_index_data)
                 upload(data_product_path)
             case MapDescriptorParts(survival_correction=SurvivalCorrection.SurvivalCorrected):

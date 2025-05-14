@@ -4,6 +4,7 @@ from unittest.mock import patch, sentinel, call, Mock
 
 import numpy as np
 import xarray as xr
+from imap_data_access.processing_input import AncillaryInput, ScienceInput, ProcessingInputCollection
 from imap_processing.ena_maps.utils.coordinates import CoordNames
 from imap_processing.spice.geometry import SpiceFrame
 
@@ -120,12 +121,19 @@ class TestUltraProcessor(unittest.TestCase):
 
         mock_upload.assert_called_once_with(mock_save_data.return_value)
 
+    @patch('imap_l3_processing.processor.spiceypy')
     @patch('imap_l3_processing.ultra.l3.ultra_processor.upload')
     @patch('imap_l3_processing.ultra.l3.ultra_processor.save_data')
     @patch('imap_l3_processing.ultra.l3.ultra_processor.calculate_spectral_index_for_multiple_ranges')
     @patch('imap_l3_processing.ultra.l3.ultra_processor.UltraL3SpectralIndexDependencies.fetch_dependencies')
     def test_process_spectral_index(self, mock_fetch_dependencies, mock_calculate_spectral_index, mock_save_data,
-                                    mock_upload):
+                                    mock_upload, mock_spiceypy):
+        mock_spiceypy.ktotal.return_value = 0
+
+        map_file_name = 'imap_ultra_l3_ultra-cool-descriptor_20250601_v000.cdf'
+        energy_range_file_name = 'imap_ultra_energy-range-descriptor_20250601_v000.dat'
+        input_deps = ProcessingInputCollection(ScienceInput(map_file_name), AncillaryInput(energy_range_file_name))
+
         input_metadata = InputMetadata(instrument="ultra",
                                        data_level="l3",
                                        start_date=datetime.now(),
@@ -143,16 +151,20 @@ class TestUltraProcessor(unittest.TestCase):
             spectral_index_map_data=mock_spectral_index_map_data,
             coords=input_map_data.coords)
 
-        expected_spectral_index_data_product = HealPixSpectralIndexDataProduct(
-            data=expected_healpix_spectral_index_map_data, input_metadata=input_metadata)
+        expected_parent_file_names = [map_file_name, energy_range_file_name]
 
-        processor = UltraProcessor(sentinel.processing_input_collection, input_metadata)
+        expected_spectral_index_data_product = HealPixSpectralIndexDataProduct(
+            data=expected_healpix_spectral_index_map_data, input_metadata=input_metadata,
+            parent_file_names=expected_parent_file_names)
+
+        processor = UltraProcessor(input_deps, input_metadata)
         processor.process()
 
-        mock_fetch_dependencies.assert_called_once_with(sentinel.processing_input_collection)
+        mock_fetch_dependencies.assert_called_once_with(input_deps)
         mock_calculate_spectral_index.assert_called_once_with(dependencies.map_data.intensity_map_data,
                                                               sentinel.energy_ranges)
         mock_save_data.assert_called_once_with(expected_spectral_index_data_product)
+
         mock_upload.assert_called_once_with(mock_save_data.return_value)
 
     @patch('imap_l3_processing.ultra.l3.ultra_processor.upload')
@@ -173,7 +185,8 @@ class TestUltraProcessor(unittest.TestCase):
 
         expected_ena_spectral_index = np.array([2] * 48 + [3.5] * 48).reshape(1, 2, 48)
 
-        processor = UltraProcessor(Mock(), input_metadata)
+        processing_input_collection = ProcessingInputCollection()
+        processor = UltraProcessor(processing_input_collection, input_metadata)
         processor.process()
 
         actual_data_product: HealPixSpectralIndexDataProduct = mock_save_data.call_args[0][0]
