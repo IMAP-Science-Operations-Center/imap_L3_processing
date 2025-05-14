@@ -4,6 +4,7 @@ import numpy as np
 
 from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3SpectralIndexDependencies
 from imap_l3_processing.maps.spectral_fit_data_product import process_spectral_index
+from imap_l3_processing.ultra.l3.ultra_l3_dependencies import UltraL3SpectralIndexDependencies
 from tests.test_helpers import get_test_data_path
 
 
@@ -11,7 +12,10 @@ class TestSpectralFitDataProduct(unittest.TestCase):
     def test_spectral_fit_against_validation_data(self):
         test_cases = [
             ("hi45", ["hi/fake_l2_maps/hi45-6months.cdf"], "hi/validation/IMAP-Hi45_6months_4.0x4.0_fit_gam.csv",
-             "hi/validation/IMAP-Hi45_6months_4.0x4.0_fit_gam_sig.csv", HiL3SpectralIndexDependencies)
+             "hi/validation/IMAP-Hi45_6months_4.0x4.0_fit_gam_sig.csv", HiL3SpectralIndexDependencies),
+            ("ultra", ['ultra/fake_ultra_map_data.cdf', 'ultra/imap_ultra_ulc-spx-energy-ranges_20250507_v000.txt'],
+             'ultra/expected_ultra_gammas.csv', 'ultra/expected_ultra_gamma_sigmas.csv',
+             UltraL3SpectralIndexDependencies)
         ]
 
         for name, input_file_paths, expected_gamma_path, expected_sigma_path, dependency_class in test_cases:
@@ -33,7 +37,7 @@ class TestSpectralFitDataProduct(unittest.TestCase):
 
                 output_data = process_spectral_index(dependencies)
 
-                np.testing.assert_allclose(output_data.ena_spectral_index[0, 0],
+                np.testing.assert_allclose(output_data.ena_spectral_index[0],
                                            expected_gamma, atol=1e-3)
                 np.testing.assert_allclose(output_data.ena_spectral_index_stat_unc[0, 0],
                                            expected_gamma_sigma, atol=1e-3)

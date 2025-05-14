@@ -3,24 +3,42 @@ from dataclasses import dataclass
 from imap_data_access import upload
 from imap_processing.spice import geometry
 
+from imap_l3_processing.maps.map_descriptors import MapDescriptorParts, MapQuantity, SurvivalCorrection, \
+    parse_map_descriptor
 from imap_l3_processing.maps.map_models import HealPixIntensityDataProduct, HealPixIntensityMapData, IntensityMapData, \
-    HealPixCoords
+    HealPixCoords, HealPixSpectralIndexDataProduct, HealPixSpectralIndexMapData
+from imap_l3_processing.maps.spectral_fit_data_product import process_spectral_index
 from imap_l3_processing.processor import Processor
 from imap_l3_processing.ultra.l3.science.ultra_survival_probability import UltraSurvivalProbabilitySkyMap, \
     UltraSurvivalProbability
-from imap_l3_processing.ultra.l3.ultra_l3_dependencies import UltraL3Dependencies
+from imap_l3_processing.ultra.l3.ultra_l3_dependencies import UltraL3Dependencies, UltraL3SpectralIndexDependencies
 from imap_l3_processing.utils import save_data, combine_glows_l3e_with_l1c_pointing
 
 
 class UltraProcessor(Processor):
     def process(self):
-        if "survival" in self.input_metadata.descriptor:
-            deps = UltraL3Dependencies.fetch_dependencies(self.dependencies)
-            data_product = self._process_survival_probability(deps)
-            data_product_path = save_data(data_product)
-            upload(data_product_path)
-        else:
-            raise NotImplementedError
+        parsed_descriptor = parse_map_descriptor(self.input_metadata.descriptor)
+        match parsed_descriptor:
+            case MapDescriptorParts(quantity=MapQuantity.SpectralIndex):
+                ultra_l3_spectral_fit_dependencies = UltraL3SpectralIndexDependencies.fetch_dependencies(
+                    self.dependencies)
+                map_data = process_spectral_index(ultra_l3_spectral_fit_dependencies)
+                data_product = HealPixSpectralIndexDataProduct(
+                    data=HealPixSpectralIndexMapData(
+                        spectral_index_map_data=map_data,
+                        coords=ultra_l3_spectral_fit_dependencies.map_data.coords
+                    ),
+                    input_metadata=self.input_metadata,
+                )
+                data_product_path = save_data(data_product)
+                upload(data_product_path)
+            case MapDescriptorParts(survival_correction=SurvivalCorrection.SurvivalCorrected):
+                deps = UltraL3Dependencies.fetch_dependencies(self.dependencies)
+                data_product = self._process_survival_probability(deps)
+                data_product_path = save_data(data_product)
+                upload(data_product_path)
+            case _:
+                raise NotImplementedError
 
     def _process_survival_probability(self, deps: UltraL3Dependencies) -> HealPixIntensityDataProduct:
         combined_psets = combine_glows_l3e_with_l1c_pointing(deps.glows_l3e_sp, deps.ultra_l1c_pset, )
@@ -68,9 +86,3 @@ class UltraProcessor(Processor):
 @dataclass
 class UltraMapDescriptorParts:
     grid_size: int
-
-
-def parse_map_descriptor(descriptor: str) -> UltraMapDescriptorParts:
-    grid_size = int(descriptor.split("-")[4][0])
-
-    return UltraMapDescriptorParts(grid_size)

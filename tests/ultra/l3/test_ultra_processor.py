@@ -1,6 +1,6 @@
 import unittest
 from datetime import datetime, timedelta
-from unittest.mock import patch, sentinel, call
+from unittest.mock import patch, sentinel, call, Mock
 
 import numpy as np
 import xarray as xr
@@ -8,9 +8,9 @@ from imap_processing.ena_maps.utils.coordinates import CoordNames
 from imap_processing.spice.geometry import SpiceFrame
 
 from imap_l3_processing.maps.map_models import HealPixIntensityMapData, IntensityMapData, HealPixCoords, \
-    HealPixIntensityDataProduct
+    HealPixIntensityDataProduct, HealPixSpectralIndexDataProduct, SpectralIndexMapData, HealPixSpectralIndexMapData
 from imap_l3_processing.models import InputMetadata
-from imap_l3_processing.ultra.l3.ultra_l3_dependencies import UltraL3Dependencies
+from imap_l3_processing.ultra.l3.ultra_l3_dependencies import UltraL3Dependencies, UltraL3SpectralIndexDependencies
 from imap_l3_processing.ultra.l3.ultra_processor import UltraProcessor
 
 
@@ -50,7 +50,7 @@ class TestUltraProcessor(unittest.TestCase):
                                        start_date=datetime.now(),
                                        end_date=datetime.now() + timedelta(days=1),
                                        version="",
-                                       descriptor=f"45sensor-spacecraft-survival-full-4deg-map",
+                                       descriptor=f"u90-ena-h-sf-sp-full-hae-nside8-6mo"
                                        )
 
         computed_survival_probabilities = rng.random((1, 9, healpix_indices.shape[0]))
@@ -117,6 +117,40 @@ class TestUltraProcessor(unittest.TestCase):
         np.testing.assert_array_equal(intensity_map_data.obs_date_range, intensity_data.obs_date_range)
         np.testing.assert_array_equal(intensity_map_data.solid_angle, intensity_data.solid_angle)
 
+        mock_upload.assert_called_once_with(mock_save_data.return_value)
+
+    @patch('imap_l3_processing.ultra.l3.ultra_processor.upload')
+    @patch('imap_l3_processing.ultra.l3.ultra_processor.save_data')
+    @patch('imap_l3_processing.ultra.l3.ultra_processor.process_spectral_index')
+    @patch('imap_l3_processing.ultra.l3.ultra_processor.UltraL3SpectralIndexDependencies.fetch_dependencies')
+    def test_process_spectral_index(self, mock_fetch_dependencies, mock_process_spectral_index, mock_save_data,
+                                    mock_upload):
+        input_metadata = InputMetadata(instrument="ultra",
+                                       data_level="l3",
+                                       start_date=datetime.now(),
+                                       end_date=datetime.now() + timedelta(days=1),
+                                       version="v000",
+                                       descriptor=f"u90-spx-h-sf-sp-full-hae-nside8-6mo")
+        input_map_data = HealPixIntensityMapData(Mock(), Mock())
+        dependencies = UltraL3SpectralIndexDependencies(input_map_data, sentinel.energy_ranges)
+        mock_fetch_dependencies.return_value = dependencies
+
+        mock_spectral_index_map_data = Mock(spec=SpectralIndexMapData)
+        mock_process_spectral_index.return_value = mock_spectral_index_map_data
+
+        expected_healpix_spectral_index_map_data = HealPixSpectralIndexMapData(
+            spectral_index_map_data=mock_spectral_index_map_data,
+            coords=input_map_data.coords)
+
+        expected_spectral_index_data_product = HealPixSpectralIndexDataProduct(
+            data=expected_healpix_spectral_index_map_data, input_metadata=input_metadata)
+
+        processor = UltraProcessor(sentinel.processing_input_collection, input_metadata)
+        processor.process()
+
+        mock_fetch_dependencies.assert_called_once_with(sentinel.processing_input_collection)
+        mock_process_spectral_index.assert_called_once_with(dependencies)
+        mock_save_data.assert_called_once_with(expected_spectral_index_data_product)
         mock_upload.assert_called_once_with(mock_save_data.return_value)
 
 
