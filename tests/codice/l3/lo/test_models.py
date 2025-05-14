@@ -488,7 +488,7 @@ class TestModels(unittest.TestCase):
         mass_bin_lookup.get_species_index.return_value = 1
         codice_lo_3d_data = CodiceLo3dData(data_in_bins, mass_bin_lookup)
 
-        expected_species_data = data_in_bins[:, :, 1, ...]
+        expected_species_data = data_in_bins[1, :, :, ...]
         actual_species_data = codice_lo_3d_data.get_3d_distribution("H+", EventDirection.Sunward)
 
         mass_bin_lookup.get_species_index.assert_called_with("H+", EventDirection.Sunward)
