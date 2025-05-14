@@ -150,3 +150,19 @@ def combine_priorities_and_convert_to_rate(counts: CodiceLo3dData,
         -> CodiceLo3dData:
     return dataclasses.replace(counts, data_in_3d_bins=np.sum(counts.data_in_3d_bins, axis=1) / (
             acquisition_times / ONE_SECOND_IN_MICROSECONDS))
+
+
+def rebin_3d_distribution_azimuth_to_elevation(intensity_data: CodiceLo3dData,
+                                               position_to_elevation_lut: PositionToElevationLookup) -> CodiceLo3dData:
+    num_species = intensity_data.data_in_3d_bins.shape[0]
+    num_epochs = intensity_data.data_in_3d_bins.shape[1]
+    num_elevations = len(position_to_elevation_lut.bin_centers)
+    num_spin_angles = len(intensity_data.spin_angle)
+    num_energies = len(intensity_data.energy_per_charge)
+    rebinned = np.zeros((num_species, num_epochs, num_elevations, num_spin_angles, num_energies))
+
+    elevation_indices = position_to_elevation_lut.apd_to_elevation_index(intensity_data.azimuth_or_elevation)
+    for azimuth_index, elevation_index in enumerate(elevation_indices):
+        rebinned[:, :, elevation_index, ...] += intensity_data.data_in_3d_bins[:, :, azimuth_index]
+    return dataclasses.replace(intensity_data, data_in_3d_bins=rebinned,
+                               azimuth_or_elevation=position_to_elevation_lut.bin_centers)
