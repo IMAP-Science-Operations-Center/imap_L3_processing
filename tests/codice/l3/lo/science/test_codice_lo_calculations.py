@@ -15,9 +15,9 @@ from imap_l3_processing.codice.l3.lo.science.codice_lo_calculations import calcu
     calculate_total_number_of_events, calculate_normalization_ratio, calculate_mass, calculate_mass_per_charge, \
     rebin_to_counts_by_species_elevation_and_spin_sector, rebin_counts_by_energy_and_spin_angle, \
     CODICE_LO_NUM_AZIMUTH_BINS, normalize_counts, combine_priorities_and_convert_to_rate, \
-    rebin_3d_distribution_azimuth_to_elevation
+    rebin_3d_distribution_azimuth_to_elevation, convert_count_rate_to_intensity
 from imap_l3_processing.constants import ONE_SECOND_IN_MICROSECONDS
-from tests.test_helpers import create_dataclass_mock, NumpyArrayMatcher
+from tests.test_helpers import create_dataclass_mock
 
 
 class TestCodiceLoCalculations(unittest.TestCase):
@@ -145,7 +145,7 @@ class TestCodiceLoCalculations(unittest.TestCase):
         # first 3 are first priority, last is second priority
         expected_species_returned = [
             "He+", "Fe", "He+", "O+5",
-            "Mg", "Mg", "Mg", "O+5"
+            "Mg", "Mg", "Mg", None
         ]
         mock_species_mass_range_lookup = Mock(spec=MassSpeciesBinLookup)
         mock_species_mass_range_lookup.get_species.side_effect = expected_species_returned
@@ -163,8 +163,10 @@ class TestCodiceLoCalculations(unittest.TestCase):
 
         mock_species_mass_range_lookup.get_species_index = mock_get_species_index
 
+        num_events = np.array([[3, 1], [3, 1]])
+
         mock_energy_lookup = Mock(spec=EnergyLookup)
-        mock_energy_lookup.get_energy_index.side_effect = [[0, 100, 0], [0], [127, 127, 127], [0]]
+        mock_energy_lookup.get_energy_index.side_effect = [0, 100, 0, 0, 127, 127, 127, 0]
         mock_energy_lookup.num_bins = num_esa_steps
         mock_energy_lookup.bin_centers = Mock()
 
@@ -180,7 +182,7 @@ class TestCodiceLoCalculations(unittest.TestCase):
                                                                   ]
 
         spin_angle = np.array([
-            [[37.5, 22.5, 37.5, np.nan], [7.5, np.nan, np.nan, np.nan]],
+            [[37.5, 22.5, 37.5, -9999], [7.5, np.nan, np.nan, np.nan]],
             [[37.5, 37.5, 37.5, np.nan], [7.5, np.nan, np.nan, np.nan]]
         ])
 
@@ -206,7 +208,8 @@ class TestCodiceLoCalculations(unittest.TestCase):
 
         spin_angle_lut = SpinAngleLookup()
 
-        actual_counts_3d_data = rebin_to_counts_by_species_elevation_and_spin_sector(mass, mass_per_charge, energy_step,
+        actual_counts_3d_data = rebin_to_counts_by_species_elevation_and_spin_sector(num_events, mass, mass_per_charge,
+                                                                                     energy_step,
                                                                                      spin_angle,
                                                                                      apd_id,
                                                                                      mock_species_mass_range_lookup,
@@ -226,14 +229,16 @@ class TestCodiceLoCalculations(unittest.TestCase):
             call(mass[1, 0, 2], mass_per_charge[1, 0, 2], EventDirection.NonSunward),
 
             call(mass[1, 1, 0], mass_per_charge[1, 1, 0], EventDirection.Sunward),
-
         ])
 
         mock_energy_lookup.get_energy_index.assert_has_calls([
-            call(NumpyArrayMatcher([0.0, 1234.2, 0.0])),
-            call(NumpyArrayMatcher([0.0])),
-            call(NumpyArrayMatcher([345.2, 345.2, 345.2])),
-            call(NumpyArrayMatcher([0.0])),
+            call(0.0),
+            call(1234.2),
+            call(0.0),
+            call(0.0),
+            call(345.2),
+            call(345.2),
+            call(345.2),
         ])
 
         self.assertIsInstance(actual_counts_3d_data, CodiceLo3dData)
@@ -265,7 +270,6 @@ class TestCodiceLoCalculations(unittest.TestCase):
 
         expected_o_counts = np.zeros(rebinned_shape)
         expected_o_counts[0, 1, 0, 0, 0] = 1
-        expected_o_counts[1, 1, 0, 0, 0] = 1
         np.testing.assert_array_equal(actual_counts_3d_data.get_3d_distribution("O+5", EventDirection.Sunward),
                                       expected_o_counts)
 
@@ -384,6 +388,40 @@ class TestCodiceLoCalculations(unittest.TestCase):
         for index, _ in np.ndenumerate(np.ones((num_epochs, num_species, num_azimuth_bins, num_spin_angles))):
             np.testing.assert_array_almost_equal(actual_count_rates.data_in_3d_bins[*index, :],
                                                  expected_summed_counts[*index, :] / acquisition_durations_in_seconds)
+
+    def test_convert_count_rate_to_intensity(self):
+        num_species = 2
+        num_epochs = 3
+        num_azimuth_bins = 4
+        num_spin_angles = 5
+        num_energies = 6
+
+        rng = np.random.default_rng()
+        count_rates = rng.random((num_species, num_epochs, num_azimuth_bins, num_spin_angles, num_energies))
+        energy_per_charge = rng.random(num_energies)
+        geometric_factor = rng.random((num_epochs, num_energies))
+
+        count_rate_3d_data = CodiceLo3dData(
+            data_in_3d_bins=count_rates,
+            mass_bin_lookup=Mock(),
+            azimuth_or_elevation=Mock(),
+            spin_angle=Mock(),
+            energy_per_charge=energy_per_charge,
+        )
+
+        efficiency = rng.random((num_species, num_azimuth_bins, num_energies))
+
+        mock_efficiency_lookup = Mock()
+        mock_efficiency_lookup.efficiency_data = efficiency
+
+        intensity_data = convert_count_rate_to_intensity(count_rate_3d_data, mock_efficiency_lookup,
+                                                         geometric_factor).data_in_3d_bins
+
+        expected_denominator = (energy_per_charge
+                                * geometric_factor[np.newaxis, :, np.newaxis, np.newaxis, :]
+                                * efficiency[:, np.newaxis, :, np.newaxis, :])
+
+        np.testing.assert_array_almost_equal(intensity_data * expected_denominator, count_rates)
 
     def test_rebin_azimuth_to_elevation(self):
         num_species = 2

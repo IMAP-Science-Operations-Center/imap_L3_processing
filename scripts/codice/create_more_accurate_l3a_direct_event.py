@@ -4,12 +4,16 @@ from spacepy.pycdf import CDF
 from imap_l3_processing.codice.l3.lo.direct_events.science.angle_lookup import SpinAngleLookup
 from imap_l3_processing.codice.l3.lo.direct_events.science.mass_species_bin_lookup import MassSpeciesBinLookup, \
     EventDirection
-from tests.test_helpers import get_test_data_path
+from tests.test_helpers import get_test_data_path, get_test_instrument_team_data_path
 
 
 def create_more_accurate_l3a_direct_events_cdf(template_cdf):
     mass_species_path = get_test_data_path("codice/species_mass_bins.csv")
     mass_species_bin_lookup = MassSpeciesBinLookup.read_from_csv(mass_species_path)
+
+    l1a_sw_cdf = CDF(
+        str(get_test_instrument_team_data_path("codice/lo/imap_codice_l1a_lo-nsw-priority_20241110_v002.cdf")))
+    energies = l1a_sw_cdf["energy_table"][...]
 
     spin_angle_lut = SpinAngleLookup()
 
@@ -52,5 +56,6 @@ def create_more_accurate_l3a_direct_events_cdf(template_cdf):
 
         cdf["mass"] = np.where(event_direction == EventDirection.Sunward, sw_masses, nsw_masses)
         cdf["mass_per_charge"] = np.where(event_direction == EventDirection.Sunward, sw_mpc, nsw_mpc)
+        cdf["event_energy"] = rng.choice(energies, size=event_buffer_shape)
 
         return template_cdf
