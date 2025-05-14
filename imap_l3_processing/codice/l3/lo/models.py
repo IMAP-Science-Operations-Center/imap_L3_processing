@@ -1,6 +1,9 @@
+from __future__ import annotations
+
 from collections import namedtuple
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import TypeVar
 
 import numpy as np
 from numpy import ndarray
@@ -445,11 +448,25 @@ class CodiceLoL3ChargeStateDistributionsDataProduct(DataProduct):
         ]
 
 
+EPOCH = TypeVar("EPOCH")
+PRIORITY = TypeVar("PRIORITY")
+SPECIES = TypeVar("SPECIES")
+AZIMUTH = TypeVar("AZIMUTH")
+SPIN_ANGLE = TypeVar("SPIN_ANGLE")
+ENERGY = TypeVar("ENERGY")
+
+AZIMUTH_OR_ELEVATION = TypeVar("AZIMUTH_OR_ELEVATION")
+
+
 @dataclass
 class CodiceLo3dData:
-    data_in_3d_bins: np.ndarray
+    data_in_3d_bins: np.ndarray[(SPECIES, EPOCH, PRIORITY, AZIMUTH_OR_ELEVATION, SPIN_ANGLE, ENERGY)] | np.ndarray[
+        (SPECIES, EPOCH, AZIMUTH_OR_ELEVATION, SPIN_ANGLE, ENERGY)]
     mass_bin_lookup: MassSpeciesBinLookup
+    energy_per_charge: np.ndarray[(ENERGY,)]
+    spin_angle: np.ndarray[(SPIN_ANGLE,)]
+    azimuth_or_elevation: np.ndarray[(AZIMUTH_OR_ELEVATION,)]
 
     def get_3d_distribution(self, species: str, event_direction: EventDirection) -> np.ndarray:
         species_index = self.mass_bin_lookup.get_species_index(species, event_direction)
-        return self.data_in_3d_bins[:, :, species_index, ...]
+        return self.data_in_3d_bins[species_index, ...]

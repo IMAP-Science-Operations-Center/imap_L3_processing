@@ -1,3 +1,8 @@
+from __future__ import annotations
+
+import dataclasses
+from typing import TypeVar
+
 import numpy as np
 
 from imap_l3_processing.codice.l3.lo.direct_events.science.angle_lookup import SpinAngleLookup, \
@@ -6,6 +11,7 @@ from imap_l3_processing.codice.l3.lo.direct_events.science.energy_lookup import 
 from imap_l3_processing.codice.l3.lo.direct_events.science.mass_coefficient_lookup import MassCoefficientLookup
 from imap_l3_processing.codice.l3.lo.direct_events.science.mass_species_bin_lookup import MassSpeciesBinLookup
 from imap_l3_processing.codice.l3.lo.models import EnergyAndSpinAngle, PriorityEvent, CodiceLo3dData
+from imap_l3_processing.constants import ONE_SECOND_IN_MICROSECONDS
 
 POST_ACCELERATION_VOLTAGE_IN_KV = 15
 ENERGY_LOST_IN_CARBON_FOIL = 0
@@ -85,19 +91,19 @@ def rebin_to_counts_by_species_elevation_and_spin_sector(mass: np.ndarray, mass_
     num_epochs = mass.shape[0]
     num_priorities = mass.shape[1]
 
-    output = np.full((num_epochs, num_priorities, mass_species_bin_lookup.get_num_species(),
+    output = np.full((mass_species_bin_lookup.get_num_species(), num_epochs, num_priorities,
                       CODICE_LO_NUM_AZIMUTH_BINS, spin_angle_lut.num_bins, energy_lut.num_bins), 0)
 
     def filter_nan(a: np.array) -> np.array:
         return a[~np.isnan(a)]
 
-    for i in range(num_epochs):
-        for j in range(num_priorities):
-            masked_spin_angle = filter_nan(spin_angle[i][j])
-            masked_apd_id = filter_nan(apd_id[i][j])
-            masked_mass = filter_nan(mass[i][j])
-            masked_mass_per_charge = filter_nan(mass_per_charge[i][j])
-            masked_energy = filter_nan(energy[i][j])
+    for epoch_i in range(num_epochs):
+        for priority_i in range(num_priorities):
+            masked_spin_angle = filter_nan(spin_angle[epoch_i, priority_i])
+            masked_apd_id = filter_nan(apd_id[epoch_i, priority_i])
+            masked_mass = filter_nan(mass[epoch_i, priority_i])
+            masked_mass_per_charge = filter_nan(mass_per_charge[epoch_i, priority_i])
+            masked_energy = filter_nan(energy[epoch_i, priority_i])
 
             event_directions = [position_elevation_lut.event_direction_for_apd(apd) for apd in masked_apd_id]
 
@@ -115,7 +121,48 @@ def rebin_to_counts_by_species_elevation_and_spin_sector(mass: np.ndarray, mass_
             indexes = np.column_stack(
                 (species_indices, apd_indices, spin_angle_indices, energy_indices)).astype(int)
 
-            for index in indexes:
-                output[i, j, *index] += 1
+            for species_i, position_i, spin_angle_i, energy_i in indexes:
+                output[species_i, epoch_i, priority_i, position_i, spin_angle_i, energy_i] += 1
 
-    return CodiceLo3dData(data_in_3d_bins=output, mass_bin_lookup=mass_species_bin_lookup)
+    return CodiceLo3dData(data_in_3d_bins=output, mass_bin_lookup=mass_species_bin_lookup,
+                          energy_per_charge=energy_lut.bin_centers, spin_angle=spin_angle_lut.bin_centers,
+                          azimuth_or_elevation=np.arange(1, CODICE_LO_NUM_AZIMUTH_BINS + 1))
+
+
+EPOCH = TypeVar("EPOCH")
+PRIORITY = TypeVar("PRIORITY")
+SPECIES = TypeVar("SPECIES")
+AZIMUTH = TypeVar("AZIMUTH")
+SPIN_ANGLE = TypeVar("SPIN_ANGLE")
+ENERGY = TypeVar("ENERGY")
+
+
+def normalize_counts(counts: CodiceLo3dData,
+                     normalization_factor: np.ndarray[(EPOCH, PRIORITY, ENERGY, SPIN_ANGLE)]) \
+        -> CodiceLo3dData:
+    reshaped_normalization_factor = np.transpose(normalization_factor, (0, 1, 3, 2))
+    reshaped_normalization_factor = reshaped_normalization_factor[:, :, np.newaxis, np.newaxis, :, :]
+    return dataclasses.replace(counts, data_in_3d_bins=reshaped_normalization_factor * counts.data_in_3d_bins)
+
+
+def combine_priorities_and_convert_to_rate(counts: CodiceLo3dData,
+                                           acquisition_times: np.ndarray[(ENERGY,)]) \
+        -> CodiceLo3dData:
+    return dataclasses.replace(counts, data_in_3d_bins=np.sum(counts.data_in_3d_bins, axis=1) / (
+            acquisition_times / ONE_SECOND_IN_MICROSECONDS))
+
+
+def rebin_3d_distribution_azimuth_to_elevation(intensity_data: CodiceLo3dData,
+                                               position_to_elevation_lut: PositionToElevationLookup) -> CodiceLo3dData:
+    num_species = intensity_data.data_in_3d_bins.shape[0]
+    num_epochs = intensity_data.data_in_3d_bins.shape[1]
+    num_elevations = len(position_to_elevation_lut.bin_centers)
+    num_spin_angles = len(intensity_data.spin_angle)
+    num_energies = len(intensity_data.energy_per_charge)
+    rebinned = np.zeros((num_species, num_epochs, num_elevations, num_spin_angles, num_energies))
+
+    elevation_indices = position_to_elevation_lut.apd_to_elevation_index(intensity_data.azimuth_or_elevation)
+    for azimuth_index, elevation_index in enumerate(elevation_indices):
+        rebinned[:, :, elevation_index, ...] += intensity_data.data_in_3d_bins[:, :, azimuth_index]
+    return dataclasses.replace(intensity_data, data_in_3d_bins=rebinned,
+                               azimuth_or_elevation=position_to_elevation_lut.bin_centers)

@@ -18,11 +18,11 @@ class TestGenerateL3BC(TestCase):
             'omni_raw_data': get_test_instrument_team_data_path('glows/omni2_all_years.dat')
         }
         ancillary_files = {
-            'uv_anisotropy': get_test_data_path('glows/imap_glows_uv-anisotropy-1CR_20100101_v001.json'),
-            'WawHelioIonMP_parameters': get_test_data_path('glows/imap_glows_WawHelioIonMP_20100101_v002.json'),
+            'uv_anisotropy': get_test_data_path('glows/imap_glows_uv-anisotropy-1CR_v002.json'),
+            'WawHelioIonMP_parameters': get_test_data_path('glows/imap_glows_WawHelioIonMP_v002.json'),
             'bad_days_list': get_test_data_path('glows/imap_glows_bad-days-list_v001.dat'),
             'pipeline_settings': get_test_instrument_team_data_path(
-                'glows/imap_glows_pipeline-settings-L3bc_20250707_v002.json')
+                'glows/imap_glows_pipeline-settings-L3bcd_20250514_v003.json')
         }
         l3a_data_folder_path = get_test_data_path('glows/l3a_products')
         l3a_data = []

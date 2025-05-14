@@ -1,19 +1,27 @@
 {
   "header": {
-    "software_version": "1.1",
+    "software_version": "3.0",
     "filename": "data_l3c/imap_glows_l3c_cr_2091_v00.json",
     "ancillary_data_files": {
       "WawHelioIonMP_parameters": "data_ancillary/imap_glows_WawHelioIonMP_v002.json",
       "bad_day_list": "data_ancillary/imap_glows_bad-days-list_v001.dat",
-      "pipeline_settings": "data_ancillary/imap_glows_pipeline-settings-L3bc_v001.json",
-      "uv_anisotropy": "data_ancillary/imap_glows_uv-anisotropy-1CR_v001.json"
+      "pipeline_settings": "data_ancillary/imap_glows_pipeline-settings-L3bcd_v003.json",
+      "uv_anisotropy": "data_ancillary/imap_glows_uv-anisotropy-1CR_v002.json",
+      "WawHelioIon": {
+        "speed": "data_ancillary/imap_glows_plasma-speed-2010a_v003.dat",
+        "p-dens": "data_ancillary/imap_glows_proton-density-2010a_v003.dat",
+        "uv-anis": "data_ancillary/imap_glows_uv-anisotropy-2010a_v003.dat",
+        "phion": "data_ancillary/imap_glows_photoion-2010a_v003.dat",
+        "lya": "data_ancillary/imap_glows_lya-2010a_v003.dat",
+        "e-dens": "data_ancillary/imap_glows_electron-density-2010a_v003.dat"
+      }
     },
     "external_dependeciens": [
       "external_dependencies/omni2_all_years.dat"
     ],
     "l3b_input_filename": "data_l3b/imap_glows_l3b_cr_2091_v00.json"
   },
-  "date": "2010-01-02 00:00:00.000",
+  "date": "2010-01-02 03:43:28.667",
   "CR": 2091,
   "solar_wind_ecliptic": {
     "plasma_speed": 322.32977099236643,

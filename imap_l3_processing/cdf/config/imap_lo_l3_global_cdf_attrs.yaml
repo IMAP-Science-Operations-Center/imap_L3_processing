@@ -1,0 +1,24 @@
+imap_lo_l3_l090-spx-h-sf-nsp-ram-hae-6deg-1yr:
+  Data_level: "3"
+  Data_type: L3_l090-spx-h-sf-nsp-ram-hae-6deg-1yr>Level-3 Spectral Fit Index
+  Logical_source: imap_lo_l3_l090-spx-h-sf-nsp-ram-hae-6deg-1yr
+  Logical_source_description: IMAP-Lo Instrument Level-3 90 degree pivot direction, Spectral Index, Hydrogen, Spacecraft Frame, Non-Survival-Probability-Corrected, Ram-Only, HAE, 6 Degree Rectangular Pixels, One Year Map
+
+imap_lo_l3_l090-spx-h-sf-sp-ram-hae-6deg-1yr:
+  Data_level: "3"
+  Data_type: L3_l090-spx-h-sf-sp-ram-hae-6deg-1yr>Level-3 Spectral Fit Index
+  Logical_source: imap_lo_l3_l090-spx-h-sf-sp-ram-hae-6deg-1yr
+  Logical_source_description: IMAP-Lo Instrument Level-3 90 degree pivot direction, Spectral Index, Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Ram-Only, HAE, 6 Degree Rectangular Pixels, One Year Map
+
+
+imap_lo_l3_l090-spx-h-hf-nsp-ram-hae-6deg-1yr:
+  Data_level: "3"
+  Data_type: L3_l090-spx-h-hf-nsp-ram-hae-6deg-1yr>Level-3 Spectral Fit Index
+  Logical_source: imap_lo_l3_l090-spx-h-hf-nsp-ram-hae-6deg-1yr
+  Logical_source_description: IMAP-Lo Instrument Level-3 90 degree pivot direction, Spectral Index, Hydrogen, Heliospheric Frame, Non-Survival-Probability-Corrected, Ram-Only, HAE, 6 Degree Rectangular Pixels, One Year Map
+
+imap_lo_l3_l090-spx-h-hf-sp-ram-hae-6deg-1yr:
+  Data_level: "3"
+  Data_type: L3_l090-spx-h-hf-sp-ram-hae-6deg-1yr>Level-3 Spectral Fit Index
+  Logical_source: imap_lo_l3_l090-spx-h-hf-sp-ram-hae-6deg-1yr
+  Logical_source_description: IMAP-Lo Instrument Level-3 90 degree pivot direction, Spectral Index, Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Ram-Only, HAE, 6 Degree Rectangular Pixels, One Year Map

@@ -18,7 +18,8 @@ from imap_l3_processing.codice.l3.lo.models import CodiceLoL3aPartialDensityData
     CodiceLoL3ChargeStateDistributionsDataProduct, CODICE_LO_L2_NUM_PRIORITIES
 from imap_l3_processing.codice.l3.lo.science.codice_lo_calculations import calculate_partial_densities, \
     calculate_mass, calculate_mass_per_charge, \
-    rebin_counts_by_energy_and_spin_angle, rebin_to_counts_by_species_elevation_and_spin_sector
+    rebin_counts_by_energy_and_spin_angle, rebin_to_counts_by_species_elevation_and_spin_sector, normalize_counts, \
+    combine_priorities_and_convert_to_rate, rebin_3d_distribution_azimuth_to_elevation
 from imap_l3_processing.data_utils import safe_divide
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
@@ -249,7 +250,7 @@ class CodiceLoProcessor(Processor):
 
         mass_species_bin_lookup = dependencies.mass_species_bin_lookup
         spin_angle_lut = SpinAngleLookup()
-        elevation_lut = PositionToElevationLookup()
+        position_elevation_lut = PositionToElevationLookup()
         energy_lut = EnergyLookup.from_bin_centers(dependencies.l1a_sw_data.energy_table)
 
         counts_3d_data = rebin_to_counts_by_species_elevation_and_spin_sector(
@@ -260,9 +261,14 @@ class CodiceLoProcessor(Processor):
             apd_id=l3a_de_apd_id,
             mass_species_bin_lookup=mass_species_bin_lookup,
             spin_angle_lut=spin_angle_lut,
-            position_elevation_lut=elevation_lut,
+            position_elevation_lut=position_elevation_lut,
             energy_lut=energy_lut,
         )
+
+        normalized_counts = normalize_counts(counts_3d_data, dependencies.l3a_direct_event_data.normalization)
+        normalized_count_rates = combine_priorities_and_convert_to_rate(normalized_counts,
+                                                                        dependencies.l1a_sw_data.acquisition_time_per_step)
+        rebin_3d_distribution_azimuth_to_elevation(normalized_count_rates, position_elevation_lut)
 
 
 def _average_over_block(data_array: np.ndarray, block_size: int):

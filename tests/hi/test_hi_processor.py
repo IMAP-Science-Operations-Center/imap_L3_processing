@@ -11,7 +11,7 @@ from imap_processing.spice.geometry import SpiceFrame
 
 from imap_l3_processing import spice_wrapper
 from imap_l3_processing.hi.hi_processor import HiProcessor
-from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3SpectralFitDependencies
+from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3SpectralIndexDependencies
 from imap_l3_processing.hi.l3.hi_l3_survival_dependencies import HiL3SurvivalDependencies, \
     HiL3SingleSensorFullSpinDependencies
 from imap_l3_processing.hi.l3.models import \
@@ -26,8 +26,8 @@ from tests.test_helpers import get_test_data_path
 class TestHiProcessor(unittest.TestCase):
     @patch('imap_l3_processing.hi.hi_processor.Processor.get_parent_file_names')
     @patch('imap_l3_processing.hi.hi_processor.upload')
-    @patch('imap_l3_processing.hi.hi_processor.HiL3SpectralFitDependencies.fetch_dependencies')
-    @patch('imap_l3_processing.hi.hi_processor.spectral_fit')
+    @patch('imap_l3_processing.hi.hi_processor.HiL3SpectralIndexDependencies.fetch_dependencies')
+    @patch('imap_l3_processing.maps.spectral_fit.fit_arrays_to_power_law')
     @patch('imap_l3_processing.hi.hi_processor.save_data')
     def test_process_spectral_fit(self, mock_save_data, mock_spectral_fit,
                                   mock_fetch_dependencies, mock_upload,
@@ -46,7 +46,7 @@ class TestHiProcessor(unittest.TestCase):
                                         energy_delta=energy_delta)
         intensity_data = hi_l3_data.intensity_map_data
         intensity_data.exposure_factor = np.full_like(flux, 1)
-        dependencies = HiL3SpectralFitDependencies(hi_l3_data=hi_l3_data)
+        dependencies = HiL3SpectralIndexDependencies(map_data=hi_l3_data)
 
         upstream_dependencies = ProcessingInputCollection()
 
@@ -67,8 +67,7 @@ class TestHiProcessor(unittest.TestCase):
         processor.process()
 
         mock_fetch_dependencies.assert_called_with(upstream_dependencies)
-        mock_spectral_fit.assert_called_once_with(intensity_data.ena_intensity,
-                                                  np.square(intensity_data.ena_intensity_stat_unc),
+        mock_spectral_fit.assert_called_once_with(intensity_data.ena_intensity, intensity_data.ena_intensity_stat_unc,
                                                   intensity_data.energy)
 
         mock_save_data.assert_called_once()
@@ -113,7 +112,7 @@ class TestHiProcessor(unittest.TestCase):
 
         for name, input_file_path, expected_gamma_path, expected_sigma_path in test_cases:
             with self.subTest(name):
-                dependencies = HiL3SpectralFitDependencies.from_file_paths(
+                dependencies = HiL3SpectralIndexDependencies.from_file_paths(
                     get_test_data_path(input_file_path)
                 )
 
@@ -165,7 +164,7 @@ class TestHiProcessor(unittest.TestCase):
 
         processor = HiProcessor(sentinel.input_metadata, sentinel.dependencies)
 
-        dependencies = HiL3SpectralFitDependencies(input_map)
+        dependencies = HiL3SpectralIndexDependencies(input_map)
 
         output = processor.process_spectral_fit_index(dependencies)
 
@@ -174,7 +173,7 @@ class TestHiProcessor(unittest.TestCase):
         np.testing.assert_allclose(output.spectral_index_map_data.energy_delta_minus, np.array([9]))
         np.testing.assert_allclose(output.spectral_index_map_data.energy_delta_plus, np.array([90]))
         self.assertEqual(output.spectral_index_map_data.energy_label.shape[0], 1)
-        self.assertEqual("1.0 - 100.0 keV", output.spectral_index_map_data.energy_label[0])
+        self.assertEqual("1.0 - 100.0", output.spectral_index_map_data.energy_label[0])
 
         expected_ena_shape = np.array([1, 1, len(lon), len(lat)])
         np.testing.assert_array_equal(output.spectral_index_map_data.obs_date,
@@ -208,7 +207,7 @@ class TestHiProcessor(unittest.TestCase):
 
         processor = HiProcessor(sentinel.input_metadata, sentinel.dependencies)
 
-        dependencies = HiL3SpectralFitDependencies(input_map)
+        dependencies = HiL3SpectralIndexDependencies(input_map)
 
         output = processor.process_spectral_fit_index(dependencies)
 
@@ -236,7 +235,7 @@ class TestHiProcessor(unittest.TestCase):
 
         processor = HiProcessor(sentinel.input_metadata, sentinel.dependencies)
 
-        dependencies = HiL3SpectralFitDependencies(input_map)
+        dependencies = HiL3SpectralIndexDependencies(input_map)
 
         output = processor.process_spectral_fit_index(dependencies)
 
