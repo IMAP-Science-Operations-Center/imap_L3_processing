@@ -589,12 +589,16 @@ class TestCodiceLoProcessor(unittest.TestCase):
         np.testing.assert_array_equal(expected_data_quality, l3a_direct_event_data_product.data_quality)
         np.testing.assert_array_equal(expected_tof, l3a_direct_event_data_product.tof)
 
+    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.rebin_3d_distribution_azimuth_to_elevation')
+    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.combine_priorities_and_convert_to_rate')
+    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.normalize_counts')
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.PositionToElevationLookup')
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.SpinAngleLookup')
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.EnergyLookup.from_bin_centers')
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.rebin_to_counts_by_species_elevation_and_spin_sector')
     def test_process_l3a_3d_distributions(self, mock_rebin, mock_energy_lookup_from_bin_centers,
-                                          mock_spin_angle_lookup_class, mock_elevation_angle_lookup_class):
+                                          mock_spin_angle_lookup_class, mock_elevation_angle_lookup_class,
+                                          mock_normalize_counts, mock_convert_to_rate, mock_rebin_to_elevation):
         input_metadata = InputMetadata('codice', "l3a", Mock(spec=datetime), Mock(spec=datetime), 'v02')
 
         l3a_direct_event_data = Mock(
@@ -603,11 +607,17 @@ class TestCodiceLoProcessor(unittest.TestCase):
             mass_per_charge=sentinel.l3a_de_mass_per_charge,
             event_energy=sentinel.l3a_de_energy,
             spin_angle=sentinel.l3a_de_spin_angle,
+            normalization=sentinel.l3a_normalization,
+        )
+
+        l1a_sw_data = Mock(
+            energy_table=sentinel.l1a_energy_table,
+            acquisition_time_per_step=sentinel.l1a_acquisition_time,
         )
 
         dependencies = CodiceLoL3a3dDistributionsDependencies(
             l3a_direct_event_data=l3a_direct_event_data,
-            l1a_sw_data=Mock(energy_table=Mock()),
+            l1a_sw_data=l1a_sw_data,
             l1a_nsw_data=Mock(),
             mass_species_bin_lookup=sentinel.mass_species_bin_lookup,
         )
@@ -630,6 +640,14 @@ class TestCodiceLoProcessor(unittest.TestCase):
             position_elevation_lut=mock_elevation_angle_lookup_class.return_value,
             energy_lut=mock_energy_lookup_from_bin_centers.return_value,
         )
+
+        mock_normalize_counts.assert_called_once_with(mock_rebin.return_value, sentinel.l3a_normalization)
+        mock_convert_to_rate.assert_called_once_with(mock_normalize_counts.return_value, sentinel.l1a_acquisition_time)
+
+        # intensity computation
+
+        mock_rebin_to_elevation.assert_called_once_with(mock_convert_to_rate.return_value,
+                                                        mock_elevation_angle_lookup_class.return_value)
 
 
 if __name__ == '__main__':
