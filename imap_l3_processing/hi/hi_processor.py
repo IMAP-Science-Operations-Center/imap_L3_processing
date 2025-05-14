@@ -13,7 +13,7 @@ from imap_l3_processing.maps.map_descriptors import parse_map_descriptor, MapQua
 from imap_l3_processing.maps.map_models import RectangularSpectralIndexDataProduct, RectangularSpectralIndexMapData, \
     RectangularIntensityMapData, IntensityMapData, RectangularIntensityDataProduct, \
     combine_rectangular_intensity_map_data
-from imap_l3_processing.maps.spectral_fit_data_product import process_spectral_index
+from imap_l3_processing.maps.spectral_fit import fit_spectral_index_map
 from imap_l3_processing.processor import Processor
 from imap_l3_processing.utils import save_data, combine_glows_l3e_with_l1c_pointing
 
@@ -86,7 +86,7 @@ class HiProcessor(Processor):
             -> RectangularSpectralIndexMapData:
 
         return RectangularSpectralIndexMapData(
-            spectral_index_map_data=process_spectral_index(hi_l3_spectral_fit_dependencies),
+            spectral_index_map_data=fit_spectral_index_map(hi_l3_spectral_fit_dependencies.map_data.intensity_map_data),
             coords=hi_l3_spectral_fit_dependencies.map_data.coords
         )
 

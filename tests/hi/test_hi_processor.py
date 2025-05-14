@@ -27,7 +27,7 @@ class TestHiProcessor(unittest.TestCase):
     @patch('imap_l3_processing.hi.hi_processor.Processor.get_parent_file_names')
     @patch('imap_l3_processing.hi.hi_processor.upload')
     @patch('imap_l3_processing.hi.hi_processor.HiL3SpectralIndexDependencies.fetch_dependencies')
-    @patch('imap_l3_processing.maps.spectral_fit_data_product.spectral_fit')
+    @patch('imap_l3_processing.maps.spectral_fit.fit_arrays_to_power_law')
     @patch('imap_l3_processing.hi.hi_processor.save_data')
     def test_process_spectral_fit(self, mock_save_data, mock_spectral_fit,
                                   mock_fetch_dependencies, mock_upload,
@@ -67,8 +67,7 @@ class TestHiProcessor(unittest.TestCase):
         processor.process()
 
         mock_fetch_dependencies.assert_called_with(upstream_dependencies)
-        mock_spectral_fit.assert_called_once_with(intensity_data.ena_intensity,
-                                                  np.square(intensity_data.ena_intensity_stat_unc),
+        mock_spectral_fit.assert_called_once_with(intensity_data.ena_intensity, intensity_data.ena_intensity_stat_unc,
                                                   intensity_data.energy)
 
         mock_save_data.assert_called_once()
@@ -174,7 +173,7 @@ class TestHiProcessor(unittest.TestCase):
         np.testing.assert_allclose(output.spectral_index_map_data.energy_delta_minus, np.array([9]))
         np.testing.assert_allclose(output.spectral_index_map_data.energy_delta_plus, np.array([90]))
         self.assertEqual(output.spectral_index_map_data.energy_label.shape[0], 1)
-        self.assertEqual("1.0 - 100.0 keV", output.spectral_index_map_data.energy_label[0])
+        self.assertEqual("1.0 - 100.0", output.spectral_index_map_data.energy_label[0])
 
         expected_ena_shape = np.array([1, 1, len(lon), len(lat)])
         np.testing.assert_array_equal(output.spectral_index_map_data.obs_date,
