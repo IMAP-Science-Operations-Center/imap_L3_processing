@@ -52,7 +52,6 @@ class UltraL3Dependencies:
 
 @dataclass
 class UltraL3SpectralIndexDependencies(SpectralIndexDependencies):
-    ultra_l3_data: HealPixIntensityMapData
     fit_energy_ranges: np.ndarray
 
     @classmethod

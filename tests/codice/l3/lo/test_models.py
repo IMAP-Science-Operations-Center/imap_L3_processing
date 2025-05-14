@@ -486,7 +486,7 @@ class TestModels(unittest.TestCase):
         data_in_bins = np.arange(16).reshape((2, 2, 2, 2))
         mass_bin_lookup = Mock()
         mass_bin_lookup.get_species_index.return_value = 1
-        codice_lo_3d_data = CodiceLo3dData(data_in_bins, mass_bin_lookup)
+        codice_lo_3d_data = CodiceLo3dData(data_in_bins, mass_bin_lookup, Mock(), Mock(), Mock())
 
         expected_species_data = data_in_bins[1, :, :, ...]
         actual_species_data = codice_lo_3d_data.get_3d_distribution("H+", EventDirection.Sunward)

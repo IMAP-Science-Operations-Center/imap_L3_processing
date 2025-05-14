@@ -31,7 +31,7 @@ class TestUltraL3SpectralFitDependencies(unittest.TestCase):
             call(ancillary_file_name)
         ])
         mock_healpix_read_from_path.assert_called_once_with("map_file")
-        self.assertEqual(ultra_l3_dependencies.ultra_l3_data, mock_healpix_read_from_path.return_value)
+        self.assertEqual(ultra_l3_dependencies.map_data, mock_healpix_read_from_path.return_value)
         np.testing.assert_array_equal(ultra_l3_dependencies.fit_energy_ranges, expected_energy_ranges)
 
     def test_fetch_dependencies_raises_exception_on_missing_science_file(self):
@@ -54,13 +54,13 @@ class TestUltraL3SpectralFitDependencies(unittest.TestCase):
         expected_energy_range_values = np.loadtxt(ancillary_file_path)
 
         actual_dependencies = UltraL3SpectralIndexDependencies.from_file_paths(map_file_path, ancillary_file_path)
-        self.assertEqual(mock_read_from_path.return_value, actual_dependencies.ultra_l3_data)
+        self.assertEqual(mock_read_from_path.return_value, actual_dependencies.map_data)
         np.testing.assert_array_equal(actual_dependencies.fit_energy_ranges, expected_energy_range_values)
 
     def test_get_fit_energy_ranges(self):
         expected_energy_range_values = np.array([[5, 10], [15, 20]])
 
-        dependencies = UltraL3SpectralIndexDependencies(ultra_l3_data=Mock(),
+        dependencies = UltraL3SpectralIndexDependencies(map_data=Mock(),
                                                         fit_energy_ranges=expected_energy_range_values)
         actual_fit_energy_ranges = dependencies.get_fit_energy_ranges()
 

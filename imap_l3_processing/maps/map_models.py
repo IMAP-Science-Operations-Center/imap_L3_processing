@@ -123,7 +123,10 @@ class HealPixIntensityMapData:
             )
 
 
+@dataclass
 class SpectralIndexDependencies(metaclass=abc.ABCMeta):
+    map_data: RectangularIntensityMapData | HealPixIntensityMapData
+
     @abc.abstractmethod
     def get_fit_energy_ranges(self) -> np.ndarray:
         raise NotImplementedError
