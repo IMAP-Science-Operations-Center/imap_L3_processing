@@ -57,5 +57,6 @@ def create_more_accurate_l3a_direct_events_cdf(template_cdf):
         cdf["mass"] = np.where(event_direction == EventDirection.Sunward, sw_masses, nsw_masses)
         cdf["mass_per_charge"] = np.where(event_direction == EventDirection.Sunward, sw_mpc, nsw_mpc)
         cdf["event_energy"] = rng.choice(energies, size=event_buffer_shape)
+        cdf["num_events"] = np.full_like(cdf["num_events"], 10000)
 
         return template_cdf

@@ -128,14 +128,14 @@ def normalize_counts(counts: CodiceLo3dData,
                      normalization_factor: np.ndarray[(EPOCH, PRIORITY, ENERGY, SPIN_ANGLE)]) \
         -> CodiceLo3dData:
     reshaped_normalization_factor = np.transpose(normalization_factor, (0, 1, 3, 2))
-    reshaped_normalization_factor = reshaped_normalization_factor[:, :, np.newaxis, np.newaxis, :, :]
+    reshaped_normalization_factor = reshaped_normalization_factor[np.newaxis, :, :, np.newaxis, :, :]
     return dataclasses.replace(counts, data_in_3d_bins=reshaped_normalization_factor * counts.data_in_3d_bins)
 
 
 def combine_priorities_and_convert_to_rate(counts: CodiceLo3dData,
                                            acquisition_times: np.ndarray[(ENERGY,)]) \
         -> CodiceLo3dData:
-    return dataclasses.replace(counts, data_in_3d_bins=np.sum(counts.data_in_3d_bins, axis=1) / (
+    return dataclasses.replace(counts, data_in_3d_bins=np.sum(counts.data_in_3d_bins, axis=2) / (
             acquisition_times / ONE_SECOND_IN_MICROSECONDS))
 
 
@@ -164,5 +164,5 @@ def convert_count_rate_to_intensity(count_rates: CodiceLo3dData, efficiency_look
     return dataclasses.replace(count_rates, data_in_3d_bins=intensities)
 
 
-def compute_geometric_factors():
-    pass
+def compute_geometric_factors(num_epochs: int, num_energies: int):
+    return np.ones(num_epochs, num_energies)

@@ -181,15 +181,20 @@ class TestCodiceLoCalculations(unittest.TestCase):
                                                                   EventDirection.Sunward,
                                                                   ]
 
+        event_mask = np.array([
+            [[False, False, False, True], [False, True, True, True]],
+            [[False, False, False, True], [False, True, True, True]],
+        ])
+
         spin_angle = np.array([
             [[37.5, 22.5, 37.5, -9999], [7.5, np.nan, np.nan, np.nan]],
             [[37.5, 37.5, 37.5, np.nan], [7.5, np.nan, np.nan, np.nan]]
         ])
 
-        apd_id = np.array([
-            [[2, 4, 2, np.nan], [1, np.nan, np.nan, np.nan]],
-            [[9, 9, 9, np.nan], [1, np.nan, np.nan, np.nan]]
-        ])
+        apd_id = np.ma.masked_array(data=np.array([
+            [[2, 4, 2, 255], [1, 255, 255, 255]],
+            [[9, 9, 9, 255], [1, 255, 255, 255]]
+        ]), mask=event_mask)
 
         energy_step = np.array([
             [[0.0, 1234.2, 0.0, np.nan], [0.0, np.nan, np.nan, np.nan]],
@@ -320,10 +325,10 @@ class TestCodiceLoCalculations(unittest.TestCase):
 
         rng = np.random.default_rng()
 
-        counts = np.zeros((num_epochs, num_priorities, num_species, num_azimuth_bins, num_spin_angles, num_energies))
-        counts[:, :, 0, 0, :, :] = 1
-        counts[:, :, 1, 0, :, :] = 3
-        counts[:, :, 0, 1, :, :] = 4
+        counts = np.zeros((num_species, num_epochs, num_priorities, num_azimuth_bins, num_spin_angles, num_energies))
+        counts[0, :, :, 0, :, :] = 1
+        counts[1, :, :, 0, :, :] = 3
+        counts[0, :, :, 1, :, :] = 4
         counts_data = CodiceLo3dData(
             data_in_3d_bins=counts,
             mass_bin_lookup=Mock(),
@@ -342,11 +347,11 @@ class TestCodiceLoCalculations(unittest.TestCase):
         self.assertEqual(counts_data.azimuth_or_elevation, actual_normalized_counts.azimuth_or_elevation)
 
         transposed_normalization_factor = np.transpose(normalization_factor, axes=(0, 1, 3, 2))
-        np.testing.assert_array_equal(actual_normalized_counts.data_in_3d_bins[:, :, 0, 0, :, :],
+        np.testing.assert_array_equal(actual_normalized_counts.data_in_3d_bins[0, :, :, 0, :, :],
                                       transposed_normalization_factor)
-        np.testing.assert_array_equal(actual_normalized_counts.data_in_3d_bins[:, :, 1, 0, :, :],
+        np.testing.assert_array_equal(actual_normalized_counts.data_in_3d_bins[1, :, :, 0, :, :],
                                       3 * transposed_normalization_factor)
-        np.testing.assert_array_equal(actual_normalized_counts.data_in_3d_bins[:, :, 0, 1, :, :],
+        np.testing.assert_array_equal(actual_normalized_counts.data_in_3d_bins[0, :, :, 1, :, :],
                                       4 * transposed_normalization_factor)
 
     def test_convert_to_count_rates_combine_priority(self):
@@ -357,11 +362,11 @@ class TestCodiceLoCalculations(unittest.TestCase):
         num_energies = 7
 
         rng = np.random.default_rng()
-        priority_1 = rng.random((num_epochs, num_species, num_azimuth_bins, num_spin_angles, num_energies))
-        priority_2 = rng.random((num_epochs, num_species, num_azimuth_bins, num_spin_angles, num_energies))
-        priority_3 = rng.random((num_epochs, num_species, num_azimuth_bins, num_spin_angles, num_energies))
+        priority_1 = rng.random((num_species, num_epochs, num_azimuth_bins, num_spin_angles, num_energies))
+        priority_2 = rng.random((num_species, num_epochs, num_azimuth_bins, num_spin_angles, num_energies))
+        priority_3 = rng.random((num_species, num_epochs, num_azimuth_bins, num_spin_angles, num_energies))
 
-        counts = np.stack((priority_1, priority_2, priority_3), axis=1)
+        counts = np.stack((priority_1, priority_2, priority_3), axis=2)
 
         counts_data = CodiceLo3dData(
             data_in_3d_bins=counts,
@@ -382,10 +387,10 @@ class TestCodiceLoCalculations(unittest.TestCase):
         self.assertEqual(counts_data.spin_angle, actual_count_rates.spin_angle)
         self.assertEqual(counts_data.azimuth_or_elevation, actual_count_rates.azimuth_or_elevation)
 
-        self.assertEqual((num_epochs, num_species, num_azimuth_bins, num_spin_angles, num_energies),
+        self.assertEqual((num_species, num_epochs, num_azimuth_bins, num_spin_angles, num_energies),
                          actual_count_rates.data_in_3d_bins.shape)
 
-        for index, _ in np.ndenumerate(np.ones((num_epochs, num_species, num_azimuth_bins, num_spin_angles))):
+        for index, _ in np.ndenumerate(np.ones((num_species, num_epochs, num_azimuth_bins, num_spin_angles))):
             np.testing.assert_array_almost_equal(actual_count_rates.data_in_3d_bins[*index, :],
                                                  expected_summed_counts[*index, :] / acquisition_durations_in_seconds)
 

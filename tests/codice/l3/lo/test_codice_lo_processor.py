@@ -607,12 +607,14 @@ class TestCodiceLoProcessor(unittest.TestCase):
         input_metadata = InputMetadata('codice', "l3a", Mock(spec=datetime), Mock(spec=datetime), 'v02')
 
         l3a_direct_event_data = Mock(
+            epoch=Mock(shape=(10,)),
             apd_id=sentinel.l3a_de_apd_id,
             mass=sentinel.l3a_de_mass,
             mass_per_charge=sentinel.l3a_de_mass_per_charge,
             event_energy=sentinel.l3a_de_energy,
             spin_angle=sentinel.l3a_de_spin_angle,
             normalization=sentinel.l3a_normalization,
+            num_events=sentinel.l3a_num_events,
         )
 
         l1a_sw_data = Mock(
@@ -644,6 +646,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
             spin_angle_lut=mock_spin_angle_lookup_class.return_value,
             position_elevation_lut=mock_elevation_angle_lookup_class.return_value,
             energy_lut=mock_energy_lookup_from_bin_centers.return_value,
+            num_events=sentinel.l3a_num_events
         )
 
         mock_compute_geometric_factors.assert_called_once()
