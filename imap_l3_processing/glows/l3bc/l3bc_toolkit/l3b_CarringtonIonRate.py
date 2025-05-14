@@ -3,6 +3,7 @@ Author: Izabela Kowalska-Leszczynska (ikowalska@cbk.waw.pl)
 Carrington averaged ionization rate class
 '''
 
+import json
 import logging
 from dataclasses import dataclass
 
@@ -89,7 +90,7 @@ class CarringtonIonizationRate():
         saves L3b structure to file
     '''
 
-    def __init__(self, l3a_fn_list, anc_input_from_instr_team, ext_dependencies):
+    def __init__(self, anc_input_from_instr_team, ext_dependencies):
         """
         Class constructor
         """
@@ -98,7 +99,6 @@ class CarringtonIonizationRate():
             'filename': None,
             'ancillary_data_files': anc_input_from_instr_team,
             'external_dependeciens': ext_dependencies['f107_raw_data'],
-            'l3a_input_files_name': l3a_fn_list
         }
 
         # read pipeline settings to be used for L3b
@@ -125,6 +125,7 @@ class CarringtonIonizationRate():
         self.carr_ion_rate['ph_rate_uncert'] = None
 
         self.uv_anisotropy = None
+        self.uv_anisotropy_flag = None
 
     def _anchor_to_ecliptic(self, carr_ion_rate):
         '''
@@ -165,7 +166,7 @@ class CarringtonIonizationRate():
         if len(self.daily_ion_rate['ion_rate']) > 1:
             self.carr_ion_rate['ion_rate_uncert'] = np.std(self.daily_ion_rate['ion_rate'], axis=0, ddof=1)
         else:
-            self.carr_ion_rate['ion_rate_uncert'] = 1.0E31
+            self.carr_ion_rate['ion_rate_uncert'] = 1.0E31 * np.ones_like(self.carr_ion_rate['ion_rate'])
 
     def calculate_charge_exchange(self):
         '''
@@ -271,17 +272,44 @@ class CarringtonIonizationRate():
         fn:    file name (str)
         '''
 
-        anisotropy_factor = np.array(fun.read_json(fn)['anisotropy_factor'])
+        anisotropy = fun.read_json(fn)
 
-        self.uv_anisotropy = anisotropy_factor
+        self.uv_anisotropy = np.array(anisotropy['anisotropy_factor'])
+        self.uv_anisotropy_flag = anisotropy['flag']
 
-    def generate_l3b_output(self):
+    def get_dict(self):
+
+        # Dictionary with the ionization rate profiles (total, photoionization and charge exchange) that will be saved in json file
+        output = {}
+        output['header'] = self.header
+
+        output['date'] = self.carr_ion_rate['date'].iso
+        output['CR'] = int(self.carr_ion_rate['CR'])
+
+        output['ion_rate_profile'] = {}
+        output['ion_rate_profile']['lat_grid'] = self.carr_ion_rate['ion_grid']
+        output['ion_rate_profile']['sum_rate'] = self.carr_ion_rate['ion_rate'].tolist()
+        output['ion_rate_profile']['ph_rate'] = self.carr_ion_rate['ph_rate'].tolist()
+        output['ion_rate_profile']['cx_rate'] = self.carr_ion_rate['cx_rate'].tolist()
+        output['ion_rate_profile']['sum_uncert'] = self.carr_ion_rate['ion_rate_uncert'].tolist()
+        output['ion_rate_profile']['ph_uncert'] = self.carr_ion_rate['ph_rate_uncert'].tolist()
+        output['ion_rate_profile']['cx_uncert'] = self.carr_ion_rate['cx_rate_uncert'].tolist()
+
+        output['uv_anisotropy_factor'] = self.uv_anisotropy.tolist()
+        output['uv_anisotropy_flag'] = self.uv_anisotropy_flag
+
+        return output
+
+    def save_to_file(self, fn):
         '''
         Carrington ionization rate file is an official GLOWS L3b data product
+        Temporarly it is in json format, but in production code it should be in CDF
 
-        Returns:
+        Parameters:
         ------------
-        output: dict
+        fn: str
+            name of the output file 
+
         '''
 
         # Dictionary with the ionization rate profiles (total, photoionization and charge exchange) that will be saved in json file
@@ -301,5 +329,9 @@ class CarringtonIonizationRate():
         output['ion_rate_profile']['cx_uncert'] = self.carr_ion_rate['cx_rate_uncert'].tolist()
 
         output['uv_anisotropy_factor'] = self.uv_anisotropy.tolist()
+        output['uv_anisotropy_flag'] = self.uv_anisotropy_flag
+        json_content = json.dumps(output, indent=3)
 
-        return output
+        output_fp = open(fn, 'w')
+        print(json_content, file=output_fp)
+        output_fp.close()

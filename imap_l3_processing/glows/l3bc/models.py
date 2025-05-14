@@ -1,6 +1,7 @@
 from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import datetime
+from itertools import chain
 from pathlib import Path
 from typing import Self
 
@@ -140,9 +141,9 @@ class GlowsL3CSolarWind(DataProduct):
 
 def collect_values(source: dict | list | str) -> Iterable[str]:
     if isinstance(source, dict):
-        return source.values()
+        return collect_values(list(source.values()))
     elif isinstance(source, list):
-        return source
+        return chain.from_iterable([collect_values(value) for value in source])
     else:
         return [source]
 

@@ -3,6 +3,7 @@ Author: Izabela Kowalska-Leszczynska (ikowalska@cbk.waw.pl)
 Carrington solar wind class
 '''
 
+import json
 import logging
 from dataclasses import dataclass
 
@@ -154,21 +155,24 @@ class CarringtonSolarWind():
 
         Parameters
         -----------
-        data_l3b : dict
-            L3b data product object
+        filename : str
+            Path to the L3b data product file
         '''
+
         self.sw_profile['date'] = Time(data_l3b['date'])  # do I really need it in astropy.time format?
         self.sw_profile['CR'] = data_l3b['CR']
         self.cx_profile['rate'] = data_l3b['ion_rate_profile']['cx_rate']
         self.cx_profile['uncert'] = data_l3b['ion_rate_profile']['cx_uncert']
 
-    def generate_l3c_output(self):
+    def get_dict(self):
         '''
         Carrington solar wind plasma speed and proton densite profiles file is an official GLOWS L3c data product
+        Temporarly it is in json format, but in production code it should be in CDF
 
-        Returns:
+        Parameters:
         ------------
-        output: dict
+        fn: str
+            name of the output file
         '''
 
         # Dictionary with the solar wind speed and density profiles  that will be saved in json file
@@ -186,3 +190,34 @@ class CarringtonSolarWind():
         output['solar_wind_profile']['proton_density'] = self.sw_profile['proton_density'].tolist()
 
         return output
+
+    def save_to_file(self, fn):
+        '''
+        Carrington solar wind plasma speed and proton densite profiles file is an official GLOWS L3c data product
+        Temporarly it is in json format, but in production code it should be in CDF
+
+        Parameters:
+        ------------
+        fn: str
+            name of the output file 
+        '''
+
+        # Dictionary with the solar wind speed and density profiles  that will be saved in json file
+        output = {}
+        output['header'] = self.header
+        output['date'] = self.sw_profile['date'].iso
+        output['CR'] = self.sw_profile['CR']
+        output['solar_wind_ecliptic'] = {}
+        output['solar_wind_ecliptic']['plasma_speed'] = self.sw_ecliptic['mean_speed']
+        output['solar_wind_ecliptic']['proton_density'] = self.sw_ecliptic['mean_proton_density']
+        output['solar_wind_ecliptic']['alpha_abundance'] = self.sw_ecliptic['mean_alpha_abundance']
+        output['solar_wind_profile'] = {}
+        output['solar_wind_profile']['lat_grid'] = self.sw_profile['grid']
+        output['solar_wind_profile']['plasma_speed'] = self.sw_profile['plasma_speed'].tolist()
+        output['solar_wind_profile']['proton_density'] = self.sw_profile['proton_density'].tolist()
+
+        json_content = json.dumps(output, indent=3)
+
+        output_fp = open(fn, 'w')
+        print(json_content, file=output_fp)
+        output_fp.close()

@@ -92,7 +92,6 @@ class EclipticSolarWind():
         sw_energy_flux = fun.calculate_sw_energy_flux(proton_dens / (u.cm) ** 3, plasma_speed * u.km / u.s, p_alpha)
 
         N_Carr = self.settings['invariant_average_Carr_number']  # number of Carringtons that we want to average over
-
         self.invariant = sw_energy_flux[-N_Carr:].mean()
 
     def _read_OMNI_data(self, ext_dependencies):
