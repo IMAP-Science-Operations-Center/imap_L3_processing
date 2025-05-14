@@ -589,6 +589,9 @@ class TestCodiceLoProcessor(unittest.TestCase):
         np.testing.assert_array_equal(expected_data_quality, l3a_direct_event_data_product.data_quality)
         np.testing.assert_array_equal(expected_tof, l3a_direct_event_data_product.tof)
 
+    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.EfficiencyLookup.create_with_fake_data')
+    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.compute_geometric_factors')
+    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.convert_count_rate_to_intensity')
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.rebin_3d_distribution_azimuth_to_elevation')
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.combine_priorities_and_convert_to_rate')
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.normalize_counts')
@@ -598,7 +601,9 @@ class TestCodiceLoProcessor(unittest.TestCase):
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.rebin_to_counts_by_species_elevation_and_spin_sector')
     def test_process_l3a_3d_distributions(self, mock_rebin, mock_energy_lookup_from_bin_centers,
                                           mock_spin_angle_lookup_class, mock_elevation_angle_lookup_class,
-                                          mock_normalize_counts, mock_convert_to_rate, mock_rebin_to_elevation):
+                                          mock_normalize_counts, mock_convert_to_rate, mock_rebin_to_elevation,
+                                          mock_convert_count_rate_to_intensity, mock_compute_geometric_factors,
+                                          mock_create_efficiency_lookup, ):
         input_metadata = InputMetadata('codice', "l3a", Mock(spec=datetime), Mock(spec=datetime), 'v02')
 
         l3a_direct_event_data = Mock(
@@ -619,7 +624,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
             l3a_direct_event_data=l3a_direct_event_data,
             l1a_sw_data=l1a_sw_data,
             l1a_nsw_data=Mock(),
-            mass_species_bin_lookup=sentinel.mass_species_bin_lookup,
+            mass_species_bin_lookup=Mock(),
         )
 
         processor = CodiceLoProcessor(dependencies=Mock(), input_metadata=input_metadata)
@@ -635,18 +640,24 @@ class TestCodiceLoProcessor(unittest.TestCase):
             energy=sentinel.l3a_de_energy,
             spin_angle=sentinel.l3a_de_spin_angle,
             apd_id=sentinel.l3a_de_apd_id,
-            mass_species_bin_lookup=sentinel.mass_species_bin_lookup,
+            mass_species_bin_lookup=dependencies.mass_species_bin_lookup,
             spin_angle_lut=mock_spin_angle_lookup_class.return_value,
             position_elevation_lut=mock_elevation_angle_lookup_class.return_value,
             energy_lut=mock_energy_lookup_from_bin_centers.return_value,
         )
 
+        mock_compute_geometric_factors.assert_called_once()
+        mock_create_efficiency_lookup.assert_called_once()
+
         mock_normalize_counts.assert_called_once_with(mock_rebin.return_value, sentinel.l3a_normalization)
         mock_convert_to_rate.assert_called_once_with(mock_normalize_counts.return_value, sentinel.l1a_acquisition_time)
 
         # intensity computation
+        mock_convert_count_rate_to_intensity.assert_called_once_with(mock_convert_to_rate.return_value,
+                                                                     mock_create_efficiency_lookup.return_value,
+                                                                     mock_compute_geometric_factors.return_value)
 
-        mock_rebin_to_elevation.assert_called_once_with(mock_convert_to_rate.return_value,
+        mock_rebin_to_elevation.assert_called_once_with(mock_convert_count_rate_to_intensity.return_value,
                                                         mock_elevation_angle_lookup_class.return_value)
 
 

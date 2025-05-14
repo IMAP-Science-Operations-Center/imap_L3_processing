@@ -63,11 +63,11 @@ class MassSpeciesBinLookup:
                 return species_lookup[i]
 
     def get_species_index(self, species: str, event_direction: EventDirection) -> int:
+        num_sw_species = len(self._range_to_species['sw_species'])
         if event_direction == EventDirection.NonSunward:
-            num_sw_species = len(self._range_to_species['sw_species'])
-            return np.where(self._range_to_species['nsw_species'] == species)[0] + num_sw_species
+            return np.argwhere(self._range_to_species['nsw_species'] == species)[0, 0] + num_sw_species
         else:
-            return np.where(self._range_to_species['sw_species'] == species)[0]
+            return np.argwhere(self._range_to_species['sw_species'] == species)[0, 0]
 
     def get_num_species(self):
         return len(self._range_to_species['sw_species']) + len(self._range_to_species['nsw_species'])
