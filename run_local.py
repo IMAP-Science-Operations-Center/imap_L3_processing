@@ -50,8 +50,10 @@ from imap_l3_processing.hit.l3.pha.science.gain_lookup_table import GainLookupTa
 from imap_l3_processing.hit.l3.pha.science.hit_event_type_lookup import HitEventTypeLookup
 from imap_l3_processing.hit.l3.pha.science.range_fit_lookup import RangeFitLookup
 from imap_l3_processing.hit.l3.utils import read_l2_hit_data
+from imap_l3_processing.lo.l3.lo_l3_spectral_fit_dependencies import LoL3SpectralFitDependencies
+from imap_l3_processing.lo.lo_processor import perform_spectral_fit
 from imap_l3_processing.maps.map_models import RectangularSpectralIndexDataProduct, RectangularIntensityDataProduct, \
-    combine_rectangular_intensity_map_data, HealPixIntensityMapData
+    combine_rectangular_intensity_map_data, HealPixIntensityMapData, RectangularIntensityMapData
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.spice_wrapper import spiceypy
 from imap_l3_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density import \
@@ -327,7 +329,7 @@ def create_survival_corrected_full_spin_cdf(dependencies: HiL3SingleSensorFullSp
     return cdf_path
 
 
-def create_spectral_index_cdf(dependencies: HiL3SpectralIndexDependencies) -> str:
+def create_hi_spectral_index_cdf(dependencies: HiL3SpectralIndexDependencies) -> str:
     input_metadata = InputMetadata(instrument="hi",
                                    data_level="l3",
                                    start_date=datetime.now(),
@@ -337,6 +339,21 @@ def create_spectral_index_cdf(dependencies: HiL3SpectralIndexDependencies) -> st
                                    )
     processor = HiProcessor(Mock(), input_metadata)
     output_data = processor.process_spectral_fit_index(dependencies)
+    data_product = RectangularSpectralIndexDataProduct(data=output_data, input_metadata=input_metadata)
+    cdf_path = save_data(data_product, delete_if_present=True)
+    return cdf_path
+
+
+def create_lo_spectral_index_cdf(dependencies: LoL3SpectralFitDependencies) -> str:
+    input_metadata = InputMetadata(instrument="lo",
+                                   data_level="l3",
+                                   start_date=datetime.now(),
+                                   end_date=datetime.now() + timedelta(days=1),
+                                   version="v000",
+                                   descriptor="l090-spx-h-hf-sp-ram-hae-6deg-1yr",
+                                   )
+
+    output_data = perform_spectral_fit(dependencies.map_data)
     data_product = RectangularSpectralIndexDataProduct(data=output_data, input_metadata=input_metadata)
     cdf_path = save_data(data_product, delete_if_present=True)
     return cdf_path
@@ -985,7 +1002,7 @@ if __name__ == "__main__":
             dependencies = HiL3SpectralIndexDependencies.from_file_paths(
                 get_test_data_path("hi/fake_l2_maps/hi45-zirnstein-mondel-6months.cdf")
             )
-            print(create_spectral_index_cdf(dependencies))
+            print(create_hi_spectral_index_cdf(dependencies))
 
         if do_all or "full-spin" in sys.argv:
             ram_survival_dependencies = HiL3SurvivalDependencies.from_file_paths(
@@ -1031,6 +1048,18 @@ if __name__ == "__main__":
                     anti45_path,
                 ])
             print(create_combined_sensor_cdf(combined_dependencies))
+
+    if "lo" in sys.argv:
+        lo_targets = ['spectral-index']
+        do_all = not np.any([t in sys.argv for t in lo_targets])
+
+        if do_all or "spectral-index" in sys.argv:
+            dependencies = LoL3SpectralFitDependencies(
+                RectangularIntensityMapData.read_from_path(
+                    get_test_data_path("hi/fake_l2_maps/hi45-zirnstein-mondel-6months.cdf"))
+            )
+
+            print(create_lo_spectral_index_cdf(dependencies))
 
     if "ultra" in sys.argv:
         if "survival" in sys.argv:
