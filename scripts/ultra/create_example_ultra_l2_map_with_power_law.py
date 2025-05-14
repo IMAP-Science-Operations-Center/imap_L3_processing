@@ -1,4 +1,3 @@
-import random
 from datetime import datetime
 from pathlib import Path
 
@@ -18,16 +17,17 @@ def _create_example_ultra_l2_map_with_power_law(out_path: Path):
     num_pixels = nside ** 2 * 12
     pixels = np.array([i for i in range(num_pixels)])
     number_of_energies = 20
-    energies = np.geomspace(1, 50, number_of_energies)
+    energies = np.linspace(1, 50, number_of_energies)
     ena_intensities = np.full((1, number_of_energies, num_pixels), -1e31)
 
-    power_law_1 = np.vectorize(lambda e: (10 + random.random()) * np.power(e, -2))
-    power_law_2 = np.vectorize(lambda e: (1.5 + random.random()) * np.power(e, -3.5))
+    power_law_1 = np.vectorize(lambda e: 10 * np.power(e, -2))
+    power_law_2 = np.vectorize(lambda e: 1.5 * np.power(e, -3.5))
 
-    energy_breakpoint = number_of_energies // 2
+    energy_breakpoint = 15  # 15 keV
     for i in range(num_pixels):
-        ena_intensities[0, :energy_breakpoint, i] = power_law_1(energies[:energy_breakpoint])
-        ena_intensities[0, energy_breakpoint:, i] = power_law_2(energies[energy_breakpoint:])
+        breakpoint_index = np.searchsorted(energies, energy_breakpoint, side="right")
+        ena_intensities[0, :breakpoint_index, i] = power_law_1(energies[:breakpoint_index])
+        ena_intensities[0, breakpoint_index:, i] = power_law_2(energies[breakpoint_index:])
 
     ena_intensities_delta = np.full_like(ena_intensities, 0.0001)
 

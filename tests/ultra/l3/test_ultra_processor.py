@@ -12,6 +12,7 @@ from imap_l3_processing.maps.map_models import HealPixIntensityMapData, Intensit
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.ultra.l3.ultra_l3_dependencies import UltraL3Dependencies, UltraL3SpectralIndexDependencies
 from imap_l3_processing.ultra.l3.ultra_processor import UltraProcessor
+from tests.test_helpers import get_test_data_path
 
 
 class TestUltraProcessor(unittest.TestCase):
@@ -153,6 +154,32 @@ class TestUltraProcessor(unittest.TestCase):
                                                               sentinel.energy_ranges)
         mock_save_data.assert_called_once_with(expected_spectral_index_data_product)
         mock_upload.assert_called_once_with(mock_save_data.return_value)
+
+    @patch('imap_l3_processing.ultra.l3.ultra_processor.upload')
+    @patch('imap_l3_processing.ultra.l3.ultra_processor.save_data')
+    @patch('imap_l3_processing.ultra.l3.ultra_processor.UltraL3SpectralIndexDependencies.fetch_dependencies')
+    def test_process_spectral_index_validating_output_values(self, mock_fetch_dependencies, mock_save_data,
+                                                             _):
+        input_metadata = InputMetadata(instrument="ultra",
+                                       data_level="l3",
+                                       start_date=datetime.now(),
+                                       end_date=datetime.now() + timedelta(days=1),
+                                       version="v000",
+                                       descriptor=f"u90-spx-h-sf-sp-full-hae-nside8-6mo")
+        input_map_path = get_test_data_path('ultra/fake_ultra_map_data_with_breakpoint_at_15keV.cdf')
+        fit_energy_ranges_path = get_test_data_path('ultra/imap_ultra_ulc-spx-energy-ranges_20250507_v000.txt')
+        dependencies = UltraL3SpectralIndexDependencies.from_file_paths(input_map_path, fit_energy_ranges_path)
+        mock_fetch_dependencies.return_value = dependencies
+
+        expected_ena_spectral_index = np.array([2] * 48 + [3.5] * 48).reshape(1, 2, 48)
+
+        processor = UltraProcessor(Mock(), input_metadata)
+        processor.process()
+
+        actual_data_product: HealPixSpectralIndexDataProduct = mock_save_data.call_args[0][0]
+
+        np.testing.assert_array_equal(actual_data_product.data.spectral_index_map_data.ena_spectral_index,
+                                      expected_ena_spectral_index)
 
 
 def _create_ultra_l2_data(epoch=None, lon=None, lat=None, energy=None, energy_delta=None, flux=None,
