@@ -74,7 +74,7 @@ from imap_l3_processing.swapi.swapi_processor import SwapiProcessor
 from imap_l3_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies
 from imap_l3_processing.swe.swe_processor import SweProcessor
 from imap_l3_processing.ultra.l3.models import UltraL1CPSet, UltraGlowsL3eData
-from imap_l3_processing.ultra.l3.ultra_l3_dependencies import UltraL3Dependencies
+from imap_l3_processing.ultra.l3.ultra_l3_dependencies import UltraL3Dependencies, UltraL3SpectralIndexDependencies
 from imap_l3_processing.ultra.l3.ultra_processor import UltraProcessor
 from imap_l3_processing.utils import save_data, read_l1d_mag_data
 from scripts.codice.create_more_accurate_l3a_direct_event import create_more_accurate_l3a_direct_events_cdf
@@ -1096,5 +1096,24 @@ if __name__ == "__main__":
 
             processor = UltraProcessor(input_metadata=processor_input_metadata, dependencies=None)
             output = processor._process_survival_probability(deps=dependencies)
+
+            print(save_data(output, True))
+
+        if "spectral-index" in sys.argv:
+            ultra_l3_path = get_test_data_path('ultra/fake_ultra_map_data.cdf')
+            fit_energy_ranges_path = get_test_data_path('ultra/imap_ultra_ulc-spx-energy-ranges_20250507_v000.txt')
+            dependencies = UltraL3SpectralIndexDependencies.from_file_paths(ultra_l3_path, fit_energy_ranges_path)
+
+            processor_input_metadata = InputMetadata(
+                instrument="ultra",
+                start_date=datetime(year=2025, month=9, day=1),
+                end_date=datetime(year=2025, month=9, day=1),
+                data_level="l3",
+                version="v001",
+                descriptor="u90-spx-h-sf-sp-full-hae-nside16-6mo"
+            )
+
+            processor = UltraProcessor(input_metadata=processor_input_metadata, dependencies=None)
+            output = processor._process_spectral_index(dependencies)
 
             print(save_data(output, True))

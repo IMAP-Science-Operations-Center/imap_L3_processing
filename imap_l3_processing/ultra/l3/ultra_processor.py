@@ -22,18 +22,8 @@ class UltraProcessor(Processor):
             case MapDescriptorParts(quantity=MapQuantity.SpectralIndex):
                 ultra_l3_spectral_fit_dependencies = UltraL3SpectralIndexDependencies.fetch_dependencies(
                     self.dependencies)
-                map_data = calculate_spectral_index_for_multiple_ranges(
-                    ultra_l3_spectral_fit_dependencies.map_data.intensity_map_data,
-                    ultra_l3_spectral_fit_dependencies.get_fit_energy_ranges()
-                )
-                data_product = HealPixSpectralIndexDataProduct(
-                    data=HealPixSpectralIndexMapData(
-                        spectral_index_map_data=map_data,
-                        coords=ultra_l3_spectral_fit_dependencies.map_data.coords
-                    ),
-                    input_metadata=self.input_metadata,
-                )
-                data_product_path = save_data(data_product)
+                spectral_index_data = self._process_spectral_index(ultra_l3_spectral_fit_dependencies)
+                data_product_path = save_data(spectral_index_data)
                 upload(data_product_path)
             case MapDescriptorParts(survival_correction=SurvivalCorrection.SurvivalCorrected):
                 deps = UltraL3Dependencies.fetch_dependencies(self.dependencies)
@@ -83,6 +73,20 @@ class UltraProcessor(Processor):
                     pixel_index_label=coords.pixel_index_label,
                 ),
             )
+        )
+
+    def _process_spectral_index(self,
+                                dependencies: UltraL3SpectralIndexDependencies) -> HealPixSpectralIndexDataProduct:
+        map_data = calculate_spectral_index_for_multiple_ranges(
+            dependencies.map_data.intensity_map_data,
+            dependencies.get_fit_energy_ranges()
+        )
+        return HealPixSpectralIndexDataProduct(
+            data=HealPixSpectralIndexMapData(
+                spectral_index_map_data=map_data,
+                coords=dependencies.map_data.coords
+            ),
+            input_metadata=self.input_metadata,
         )
 
 
