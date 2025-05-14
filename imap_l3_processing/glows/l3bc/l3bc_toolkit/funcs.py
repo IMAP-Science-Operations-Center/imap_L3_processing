@@ -73,6 +73,15 @@ def calculate_lya_monthly(t, flux):
     return t_mean, flux_mean
 
 
+def calculate_mean_date(fn_list):
+    daily_dates = []
+    for f in fn_list:
+        l3a = read_json(f)
+        daily_dates.append(l3a['start_time'])
+    date_mean = Time(daily_dates).mean()
+    return date_mean
+
+
 def calculate_sw_energy_flux(n, v, p):
     '''
     Solar wind energy flux that is latitudinal invariant
@@ -210,10 +219,12 @@ def f107_daily_data(t, flux):
 
 def find_CR_idx(CR, CR_list):
     '''
-    finds index of the value in the CR_list that is closest to the CR
+    finds index of the value in the CR_list that is closest to the CR and the next idx
+    it corresponds to the two L3bc files: close to current CR and the next one (for interpolation)
     '''
     idx_CR = np.abs(np.array(CR_list) - int(CR)).argmin()
-    idx_read = [idx_CR - 1, idx_CR, idx_CR + 1]
+    # OLD idx_read=[idx_CR-1,idx_CR,idx_CR+1]
+    idx_read = [idx_CR, idx_CR + 1]
     return idx_read
 
 
@@ -232,45 +243,6 @@ def generate_cr_lya(CR, data_lya):
     lya_CR = np.interp(t_CR.jd, t_lya, lya)
 
     return lya_CR
-
-
-def generate_cr_solar_params(CR, data_l3b, data_l3c):
-    '''
-    calculates solar parameters (plasma speed, proton density, photoionization, electron density, and uv anisotropy)
-    interpolated on the center of a given CR
-    '''
-    # find indexes of the previous and the next CR
-
-    t_CR = Time(jd_fm_Carrington(CR), format='jd')
-
-    CR_list = [data['CR'] for data in data_l3b]
-    idx_read = find_CR_idx(CR, CR_list)
-
-    t_b = Time(np.array([data_l3b[i]['date'] for i in idx_read]))
-    t_c = Time(np.array([data_l3c[i]['date'] for i in idx_read]))  # t_c should be the same as t_b
-
-    # UV-anisotropy
-    anisotropy = np.array([data_l3b[i]['uv_anisotropy_factor'] for i in idx_read])
-    anisotropy_CR = np.array([np.interp(t_CR.jd, t_b.jd, anisotropy[:, i]) for i in np.arange(len(anisotropy[0]))])
-
-    # photoion in the ecliptic plane
-    Nmid = int(len(data_l3b[0]['ion_rate_profile']['lat_grid']) / 2)
-    ph_b = np.array([data_l3b[i]['ion_rate_profile']['ph_rate'][Nmid] for i in idx_read])
-    ph_ion_CR = np.interp(t_CR.jd, t_b.jd, ph_b)
-
-    # solar wind parameters (plasma speed, proton density)
-    p_dens = np.array([data_l3c[i]['solar_wind_profile']['proton_density'] for i in idx_read])
-    sw_speed = np.array([data_l3c[i]['solar_wind_profile']['plasma_speed'] for i in idx_read])
-    p_dens_CR = np.array([np.interp(t_CR.jd, t_c.jd, p_dens[:, i]) for i in np.arange(len(p_dens[0]))])
-    sw_speed_CR = np.array([np.interp(t_CR.jd, t_c.jd, sw_speed[:, i]) for i in np.arange(len(sw_speed[0]))])
-
-    # electron density in the ecliptic plane calculated from p-dens and alpha-abundance
-    p_dens_ecl = np.array([data_l3c[i]['solar_wind_ecliptic']['proton_density'] for i in idx_read])
-    a_abundance_ecl = np.array([data_l3c[i]['solar_wind_ecliptic']['alpha_abundance'] for i in idx_read])
-    e_dens_ecl = p_dens_ecl * (1 + 2 * a_abundance_ecl)
-    e_dens_CR = np.interp(t_CR.jd, t_c.jd, e_dens_ecl)
-
-    return anisotropy_CR, ph_ion_CR, sw_speed_CR, p_dens_CR, e_dens_CR, idx_read
 
 
 def get_spher_coord_rad(vec):
@@ -419,7 +391,7 @@ def read_f107_raw_data(fn):
     flux_adjusted: F10.7 flux adjusted to 1au (10^(-22) W/m^2/Hz)    
     '''
 
-    data = np.loadtxt(fn, skiprows=2)
+    data = np.loadtxt(fn)
 
     jd = data[:, 2]  # time of observation in JD
     flux_adjusted = data[:,
@@ -593,7 +565,6 @@ def select_noon(t_pen):
         2. a list of indexes of data taken on the same day (if there is only one measurement then this 
             element is just 1 element list np. [[1],[2,3,4],[6]]
     '''
-    # TODO it should be done in a dynamical way - it should determine how many measurements are in a given day
     index = np.array([0])
     index_duplicate = []
     i = 0
@@ -697,6 +668,12 @@ def time_string_from_l3a_fn(fn):
                                                                                                      10:12] + ':' + fn_string[
                                                                                                                     12:14]
     return time_string
+
+
+def time_from_l3a(fn):
+    data_l3a = read_json(fn)
+    mean_time = Time(data_l3a['start_time']) + 0.5 * (Time(data_l3a['end_time']) - Time(data_l3a['start_time']))
+    return mean_time
 
 
 def time_from_yday(yday_list):
