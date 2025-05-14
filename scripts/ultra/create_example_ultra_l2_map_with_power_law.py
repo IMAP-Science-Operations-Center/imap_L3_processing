@@ -15,16 +15,17 @@ def _create_example_ultra_l2_map_with_power_law(out_path: Path):
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.unlink(missing_ok=True)
     nside = 2
-    pixels = nside ** 2 * 12
+    num_pixels = nside ** 2 * 12
+    pixels = np.array([i for i in range(num_pixels)])
     number_of_energies = 20
     energies = np.geomspace(1, 50, number_of_energies)
-    ena_intensities = np.full((1, number_of_energies, pixels), -1e31)
+    ena_intensities = np.full((1, number_of_energies, num_pixels), -1e31)
 
     power_law_1 = np.vectorize(lambda e: (10 + random.random()) * np.power(e, -2))
     power_law_2 = np.vectorize(lambda e: (1.5 + random.random()) * np.power(e, -3.5))
 
     energy_breakpoint = number_of_energies // 2
-    for i in range(pixels):
+    for i in range(num_pixels):
         ena_intensities[0, :energy_breakpoint, i] = power_law_1(energies[:energy_breakpoint])
         ena_intensities[0, energy_breakpoint:, i] = power_law_2(energies[energy_breakpoint:])
 
@@ -36,11 +37,11 @@ def _create_example_ultra_l2_map_with_power_law(out_path: Path):
         cdf.new("ena_intensity", ena_intensities)
         cdf.new("exposure_factor", np.full_like(ena_intensities, 1))
         cdf.new("sensitivity", np.full_like(ena_intensities, 1))
-        cdf.new("latitude", lat.value, recVary=False)
-        cdf.new("longitude", lon.value, recVary=False)
+        cdf.new("latitude", np.rad2deg(lat.value), recVary=False)
+        cdf.new("longitude", np.rad2deg(lon.value), recVary=False)
         cdf.new("epoch", np.array([datetime.now()]), type=pycdf.const.CDF_TIME_TT2000.value)
         cdf.new("energy", energies, recVary=False)
-        cdf.new("pixel_index", pixels, recVary=False)
+        cdf.new("pixel_index", [i for i in range(num_pixels)], recVary=False)
         cdf.new("epoch_delta", np.array([1]))
         cdf.new("energy_delta_plus", np.full_like(energies, 0.1))
         cdf.new("energy_delta_minus", np.full_like(energies, 0.1))
@@ -52,7 +53,7 @@ def _create_example_ultra_l2_map_with_power_law(out_path: Path):
         cdf.new("solid_angle", np.full_like(pixels, 1), recVary=False)
         cdf.new("ena_intensity_stat_unc", ena_intensities_delta)
         cdf.new("ena_intensity_sys_err", np.full_like(ena_intensities, 1))
-        cdf.new("pixel_index_label", [str(val) for val in range(pixels)])
+        cdf.new("pixel_index_label", [str(val) for val in range(num_pixels)])
 
         for var in cdf:
             if cdf[var].type() == pycdf.const.CDF_TIME_TT2000.value:
