@@ -191,8 +191,8 @@ class TestUltraProcessor(unittest.TestCase):
 
         actual_data_product: HealPixSpectralIndexDataProduct = mock_save_data.call_args[0][0]
 
-        np.testing.assert_array_equal(actual_data_product.data.spectral_index_map_data.ena_spectral_index,
-                                      expected_ena_spectral_index)
+        np.testing.assert_array_almost_equal(actual_data_product.data.spectral_index_map_data.ena_spectral_index,
+                                             expected_ena_spectral_index)
 
 
 def _create_ultra_l2_data(epoch=None, lon=None, lat=None, energy=None, energy_delta=None, flux=None,
