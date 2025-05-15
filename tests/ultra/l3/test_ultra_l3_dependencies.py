@@ -51,12 +51,14 @@ class TestUltraL3Dependencies(unittest.TestCase):
             dependencies = UltraL3Dependencies.fetch_dependencies(input_collection)
 
             mock_find_glows.assert_called_with(l1c_input_paths, "ultra")
+            expected_parent_file_paths = [sentinel.imap_l2_map_path, *l1c_input_paths, *glows_file_paths]
             mock_download.assert_has_calls([call(file_path) for file_path in
-                                            [sentinel.imap_l2_map_path, *l1c_input_paths, *glows_file_paths]])
+                                            expected_parent_file_paths])
 
             self.assertEqual(l1c_data, dependencies.ultra_l1c_pset)
             self.assertEqual(glows_l3e_data, dependencies.glows_l3e_sp)
             self.assertEqual(sentinel.ultra_l2_data, dependencies.ultra_l2_map)
+            self.assertEqual(returned_download_paths, dependencies.dependency_file_paths)
 
     def test_raise_error_for_more_than_one_input_files_paths(self):
         input_collection = Mock()

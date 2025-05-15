@@ -2,6 +2,7 @@ import abc
 import ctypes
 from dataclasses import dataclass, field
 from datetime import datetime
+from pathlib import Path
 from typing import Union, Optional
 
 import numpy as np
@@ -50,6 +51,9 @@ class DataProduct(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def to_data_product_variables(self) -> list[DataProductVariable]:
         raise NotImplemented
+
+    def add_paths_to_parents(self, paths: list[Path]):
+        self.parent_file_names.extend(path.name for path in paths if path.name not in self.parent_file_names)
 
 
 @dataclass

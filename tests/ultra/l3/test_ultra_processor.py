@@ -1,5 +1,6 @@
 import unittest
 from datetime import datetime, timedelta
+from pathlib import Path
 from unittest.mock import patch, sentinel, call, Mock
 
 import numpy as np
@@ -18,6 +19,7 @@ from tests.test_helpers import get_test_data_path
 
 class TestUltraProcessor(unittest.TestCase):
 
+    @patch('imap_l3_processing.processor.spiceypy')
     @patch('imap_l3_processing.ultra.l3.ultra_processor.upload')
     @patch('imap_l3_processing.ultra.l3.ultra_processor.save_data')
     @patch('imap_l3_processing.ultra.l3.ultra_processor.UltraSurvivalProbabilitySkyMap')
@@ -26,20 +28,31 @@ class TestUltraProcessor(unittest.TestCase):
     @patch('imap_l3_processing.ultra.l3.ultra_processor.UltraL3Dependencies.fetch_dependencies')
     def test_process_survival_probability(self, mock_fetch_dependencies, mock_combine_glows_l3e_with_l1c_pointing,
                                           mock_survival_probability_pointing_set, mock_survival_skymap,
-                                          mock_save_data, mock_upload):
+                                          mock_save_data, mock_upload, mock_spiceypy):
         rng = np.random.default_rng()
         healpix_indices = np.arange(12)
         input_map_flux = rng.random((1, 9, 12))
         epoch = datetime.now()
 
+        mock_spiceypy.ktotal.return_value = 1
+        mock_spiceypy.kdata.return_value = [sentinel.spice_data_name]
+
         input_l2_map = _create_ultra_l2_data(epoch=[epoch], flux=input_map_flux, healpix_indices=healpix_indices)
 
         input_l2_map.intensity_map_data.energy = sentinel.ultra_l2_energies
 
+        input_l2_map_name = "imap_ultra_l2_a-map-descriptor_20250601_v000.cdf"
+        input_l1c_pset_name = "imap_ultra_l1c_a-pset-descriptor_20250601_v000.cdf"
+        input_glows_l3e_name = "imap_glows_l3e_a-glows-descriptor_20250601_v000.cdf"
+
+        input_deps = ProcessingInputCollection(ScienceInput(input_l2_map_name))
+
         mock_fetch_dependencies.return_value = UltraL3Dependencies(
             ultra_l2_map=input_l2_map,
             ultra_l1c_pset=sentinel.ultra_l1c_pset,
-            glows_l3e_sp=sentinel.glows_l3e_sp)
+            glows_l3e_sp=sentinel.glows_l3e_sp,
+            dependency_file_paths=[Path(input_l2_map_name), Path(input_l1c_pset_name), Path(input_glows_l3e_name)],
+        )
 
         mock_combine_glows_l3e_with_l1c_pointing.return_value = [(sentinel.ultra_l1c_1, sentinel.glows_l3e_1),
                                                                  (sentinel.ultra_l1c_2, sentinel.glows_l3e_2),
@@ -73,10 +86,10 @@ class TestUltraProcessor(unittest.TestCase):
                 CoordNames.HEALPIX_INDEX.value: healpix_indices,
             })
 
-        processor = UltraProcessor(sentinel.dependencies, input_metadata)
+        processor = UltraProcessor(input_deps, input_metadata)
         processor.process()
 
-        mock_fetch_dependencies.assert_called_once_with(sentinel.dependencies)
+        mock_fetch_dependencies.assert_called_once_with(input_deps)
 
         mock_combine_glows_l3e_with_l1c_pointing.assert_called_once_with(sentinel.glows_l3e_sp, sentinel.ultra_l1c_pset)
 
@@ -97,6 +110,9 @@ class TestUltraProcessor(unittest.TestCase):
         self.assertIsInstance(survival_data_product, HealPixIntensityDataProduct)
         self.assertEqual(input_metadata.to_upstream_data_dependency(input_metadata.descriptor),
                          survival_data_product.input_metadata)
+        self.assertEqual(
+            [input_l2_map_name, sentinel.spice_data_name, input_l1c_pset_name, input_glows_l3e_name],
+            survival_data_product.parent_file_names)
 
         intensity_map_data = survival_data_product.data.intensity_map_data
         np.testing.assert_array_equal(intensity_map_data.ena_intensity,
