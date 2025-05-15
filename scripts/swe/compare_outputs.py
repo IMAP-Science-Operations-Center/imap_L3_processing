@@ -74,7 +74,7 @@ for modern_name, heritage_name in variable_mapping.items():
     l3_swe_e = l3_vs.attach("swepam_e")
     heritage_data = [x[l3_swe_e.field(heritage_name)._index] for x in l3_swe_e[:]]
 
-    l3_output_cdf = CDF('temp_cdf_data/imap_swe_l3_sci_20250630_v000.cdf')
+    l3_output_cdf = CDF('temp_cdf_data/imap_swe_l3_sci_20250629_v000.cdf')
 
     modern_data = l3_output_cdf[modern_name][:]
     nand_data = np.where((modern_data == -1e31), np.nan, modern_data)
@@ -84,3 +84,4 @@ for modern_name, heritage_name in variable_mapping.items():
     plt.legend()
     plt.savefig(Path("comparisons") / f"{modern_name}.png")
     plt.clf()
+
