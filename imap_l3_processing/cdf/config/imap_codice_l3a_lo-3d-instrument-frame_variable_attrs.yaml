@@ -110,7 +110,7 @@ energy:
   CATDESC: Energy bins
   FIELDNAME: Energy
   LABLAXIS: Energy
-  UNITS: MeV/e
+  UNITS: keV/e
   SCALETYP: log
   DELTA_PLUS_VAR: energy_delta_plus
   DELTA_MINUS_VAR: energy_delta_minus
@@ -122,7 +122,7 @@ energy_delta_plus:
   CATDESC: Energy bins delta plus
   FIELDNAME: Energy delta plus
   LABLAXIS: Energy delta plus
-  UNITS: MeV/e
+  UNITS: keV/e
   SCALETYP: log
 
 energy_delta_minus:
@@ -132,5 +132,5 @@ energy_delta_minus:
   CATDESC: Energy bins delta minus
   FIELDNAME: Energy delta minus
   LABLAXIS: Energy delta minus
-  UNITS: MeV/e
+  UNITS: keV/e
   SCALETYP: log
