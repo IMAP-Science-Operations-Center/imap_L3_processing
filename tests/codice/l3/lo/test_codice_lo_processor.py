@@ -19,7 +19,7 @@ from imap_l3_processing.codice.l3.lo.codice_lo_processor import CodiceLoProcesso
 from imap_l3_processing.codice.l3.lo.models import CodiceLoL3aPartialDensityDataProduct, CodiceLoL2DirectEventData, \
     CodiceLoL3aDirectEventDataProduct, PriorityEvent, CodiceLoL2SWSpeciesData, \
     CodiceLoL1aSWPriorityRates, CodiceLoL1aNSWPriorityRates, CodiceLoPartialDensityData, CodiceLoL3aRatiosDataProduct, \
-    CODICE_LO_L2_NUM_PRIORITIES, CodiceLoL3ChargeStateDistributionsDataProduct
+    CODICE_LO_L2_NUM_PRIORITIES, CodiceLoL3ChargeStateDistributionsDataProduct, CodiceLoL3a3dDistributionDataProduct
 from imap_l3_processing.codice.l3.lo.sectored_intensities.science.mass_per_charge_lookup import MassPerChargeLookup
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
@@ -604,6 +604,10 @@ class TestCodiceLoProcessor(unittest.TestCase):
                                           mock_normalize_counts, mock_convert_to_rate, mock_rebin_to_elevation,
                                           mock_convert_count_rate_to_intensity, mock_compute_geometric_factors,
                                           mock_create_efficiency_lookup, ):
+        mock_elevation_lookup = mock_elevation_angle_lookup_class.return_value
+        mock_spin_angle_lookup = mock_spin_angle_lookup_class.return_value
+        mock_energy_lookup = mock_energy_lookup_from_bin_centers.return_value
+
         input_metadata = InputMetadata('codice', "l3a", Mock(spec=datetime), Mock(spec=datetime), 'v02')
 
         l3a_direct_event_data = Mock(
@@ -643,9 +647,9 @@ class TestCodiceLoProcessor(unittest.TestCase):
             spin_angle=sentinel.l3a_de_spin_angle,
             apd_id=sentinel.l3a_de_apd_id,
             mass_species_bin_lookup=dependencies.mass_species_bin_lookup,
-            spin_angle_lut=mock_spin_angle_lookup_class.return_value,
-            position_elevation_lut=mock_elevation_angle_lookup_class.return_value,
-            energy_lut=mock_energy_lookup_from_bin_centers.return_value,
+            spin_angle_lut=mock_spin_angle_lookup,
+            position_elevation_lut=mock_elevation_lookup,
+            energy_lut=mock_energy_lookup,
             num_events=sentinel.l3a_num_events
         )
 
@@ -661,7 +665,52 @@ class TestCodiceLoProcessor(unittest.TestCase):
                                                                      mock_compute_geometric_factors.return_value)
 
         mock_rebin_to_elevation.assert_called_once_with(mock_convert_count_rate_to_intensity.return_value,
-                                                        mock_elevation_angle_lookup_class.return_value)
+                                                        mock_elevation_lookup)
+
+        self.assertIsInstance(l3a_direct_event_data_product, CodiceLoL3a3dDistributionDataProduct)
+        self.assertEqual(processor.input_metadata, l3a_direct_event_data_product.input_metadata)
+
+        self.assertEqual(l3a_direct_event_data.epoch, l3a_direct_event_data_product.epoch)
+        self.assertEqual(l3a_direct_event_data.epoch_delta, l3a_direct_event_data_product.epoch_delta)
+        self.assertEqual(mock_elevation_lookup.bin_centers, l3a_direct_event_data_product.elevation)
+        self.assertEqual(mock_elevation_lookup.bin_deltas, l3a_direct_event_data_product.elevation_delta)
+        self.assertEqual(mock_spin_angle_lookup.bin_centers, l3a_direct_event_data_product.spin_angle)
+        self.assertEqual(mock_spin_angle_lookup.bin_deltas, l3a_direct_event_data_product.spin_angle_delta)
+        self.assertEqual(mock_energy_lookup.bin_centers, l3a_direct_event_data_product.energy)
+        self.assertEqual(mock_energy_lookup.delta_plus, l3a_direct_event_data_product.energy_delta_plus)
+        self.assertEqual(mock_energy_lookup.delta_minus, l3a_direct_event_data_product.energy_delta_minus)
+
+    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.upload')
+    @patch(
+        'imap_l3_processing.codice.l3.lo.codice_lo_processor.CodiceLoL3a3dDistributionsDependencies.fetch_dependencies')
+    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.CodiceLoProcessor.process_l3a_3d_distribution_product')
+    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.save_data')
+    @patch('imap_l3_processing.processor.spiceypy')
+    def test_process_3d_distributions_save_and_upload(self, mock_spiceypy, mock_save_data,
+                                                      mock_process_l3a_3d_distribution_product,
+                                                      mock_fetch_dependencies, mock_upload):
+        input_collection = MagicMock()
+        input_collection.get_file_paths.return_value = [Path('path/to/parent_file_1'), Path('path/to/parent_file_2')]
+        input_metadata = InputMetadata(instrument='codice',
+                                       data_level="l3a",
+                                       start_date=Mock(spec=datetime),
+                                       end_date=Mock(spec=datetime),
+                                       version='v02',
+                                       descriptor='lo-3d-instrument-frame')
+        mock_spiceypy.ktotal.return_value = 0
+
+        mock_save_data.return_value = "file1"
+        processor = CodiceLoProcessor(dependencies=input_collection, input_metadata=input_metadata)
+        processor.process()
+
+        mock_fetch_dependencies.assert_called_once_with(processor.dependencies)
+        mock_process_l3a_3d_distribution_product.assert_called_once_with(mock_fetch_dependencies.return_value)
+
+        mock_save_data.assert_called_once_with(mock_process_l3a_3d_distribution_product.return_value)
+
+        self.assertEqual(['parent_file_1', 'parent_file_2'],
+                         mock_process_l3a_3d_distribution_product.return_value.parent_file_names)
+        mock_upload.assert_called_once_with("file1")
 
 
 if __name__ == '__main__':

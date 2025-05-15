@@ -18,17 +18,21 @@ from imap_l3_processing.utils import save_data, combine_glows_l3e_with_l1c_point
 class UltraProcessor(Processor):
     def process(self):
         parsed_descriptor = parse_map_descriptor(self.input_metadata.descriptor)
+        parent_file_names = self.get_parent_file_names()
+
         match parsed_descriptor:
             case MapDescriptorParts(quantity=MapQuantity.SpectralIndex):
                 ultra_l3_spectral_fit_dependencies = UltraL3SpectralIndexDependencies.fetch_dependencies(
                     self.dependencies)
-                spectral_index_data = self._process_spectral_index(ultra_l3_spectral_fit_dependencies)
-                spectral_index_data.parent_file_names = self.get_parent_file_names()
-                data_product_path = save_data(spectral_index_data)
+                spectral_index_data_product = self._process_spectral_index(ultra_l3_spectral_fit_dependencies)
+                spectral_index_data_product.parent_file_names = parent_file_names
+                data_product_path = save_data(spectral_index_data_product)
                 upload(data_product_path)
             case MapDescriptorParts(survival_correction=SurvivalCorrection.SurvivalCorrected):
                 deps = UltraL3Dependencies.fetch_dependencies(self.dependencies)
                 data_product = self._process_survival_probability(deps)
+                data_product.parent_file_names = parent_file_names
+                data_product.add_paths_to_parents(deps.dependency_file_paths)
                 data_product_path = save_data(data_product)
                 upload(data_product_path)
             case _:

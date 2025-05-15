@@ -1,9 +1,8 @@
 import tempfile
-import unittest
 from dataclasses import fields
 from datetime import datetime, timedelta
 from pathlib import Path
-from unittest.mock import Mock
+from unittest.mock import Mock, sentinel
 
 import numpy as np
 from spacepy.pycdf import CDF
@@ -14,13 +13,16 @@ from imap_l3_processing.codice.l3.lo.models import CodiceLoL2SWSpeciesData, Codi
     CodiceLoL3aDirectEventDataProduct, \
     CodiceLoL1aSWPriorityRates, CodiceLoL1aNSWPriorityRates, CodiceLo3dData, CODICE_LO_L2_NUM_PRIORITIES, \
     CodiceLoL3aRatiosDataProduct, CodiceLoPartialDensityData, CodiceLoL3ChargeStateDistributionsDataProduct, \
-    CodiceLoDirectEventData
+    CodiceLoDirectEventData, EPOCH_VAR_NAME, EPOCH_DELTA_VAR_NAME, ELEVATION_VAR_NAME, SPIN_ANGLE_VAR_NAME, \
+    ENERGY_VAR_NAME, SPIN_ANGLE_DELTA_VAR_NAME, ELEVATION_DELTA_VAR_NAME, \
+    CodiceLoL3a3dDistributionDataProduct, ENERGY_DELTA_PLUS_VAR_NAME, ENERGY_DELTA_MINUS_VAR_NAME
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.utils import save_data
+from tests.swapi.cdf_model_test_case import CdfModelTestCase
 from tests.test_helpers import get_test_instrument_team_data_path, get_test_data_path
 
 
-class TestModels(unittest.TestCase):
+class TestModels(CdfModelTestCase):
     def test_lo_l2_sw_species_read_from_cdf(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             cdf_file_path = Path(tmpdir) / "test_cdf.cdf"
@@ -97,35 +99,6 @@ class TestModels(unittest.TestCase):
             np.testing.assert_array_equal(result.fe_hiq, fe_hiq)
             np.testing.assert_array_equal(result.data_quality, data_quality)
             np.testing.assert_array_equal(result.spin_sector_index, spin_sector_index)
-
-    def test_codice_lo_l2_direct_event_read_from_instrument_team_cdf(self):
-        path_to_cdf = get_test_instrument_team_data_path(
-            'codice/lo/imap_codice_l2_lo-direct-events_20241110_v002.cdf')
-        l2_direct_event_data = CodiceLoL2DirectEventData.read_from_cdf(path_to_cdf)
-        with CDF(str(path_to_cdf)) as cdf:
-            np.testing.assert_array_equal(cdf["epoch"], l2_direct_event_data.epoch)
-            np.testing.assert_array_equal(cdf["epoch_delta_plus"], l2_direct_event_data.epoch_delta_plus)
-            np.testing.assert_array_equal(cdf["epoch_delta_minus"], l2_direct_event_data.epoch_delta_minus)
-            for index in range(CODICE_LO_L2_NUM_PRIORITIES):
-                np.testing.assert_array_equal(cdf[f"p{index}_apd_energy"],
-                                              l2_direct_event_data.priority_events[index].apd_energy)
-                np.testing.assert_array_equal(cdf[f"p{index}_gain"],
-                                              l2_direct_event_data.priority_events[index].apd_gain)
-                np.testing.assert_array_equal(cdf[f"p{index}_apd_id"],
-                                              l2_direct_event_data.priority_events[index].apd_id)
-                np.testing.assert_array_equal(cdf[f"p{index}_data_quality"],
-                                              l2_direct_event_data.priority_events[index].data_quality)
-                np.testing.assert_array_equal(cdf[f"p{index}_energy_step"],
-                                              l2_direct_event_data.priority_events[index].energy_step)
-                np.testing.assert_array_equal(cdf[f"p{index}_multi_flag"],
-                                              l2_direct_event_data.priority_events[index].multi_flag)
-                np.testing.assert_array_equal(cdf[f"p{index}_num_events"],
-                                              l2_direct_event_data.priority_events[index].num_events)
-                np.testing.assert_array_equal(cdf[f"p{index}_spin_sector"],
-                                              l2_direct_event_data.priority_events[index].spin_angle)
-                np.testing.assert_array_equal(cdf[f"p{index}_position"],
-                                              l2_direct_event_data.priority_events[index].elevation)
-                np.testing.assert_array_equal(cdf[f"p{index}_tof"], l2_direct_event_data.priority_events[index].tof)
 
     def test_codice_lo_l3a_partial_density_to_data_product(self):
         epoch_data = np.array([datetime.now()])
@@ -386,75 +359,6 @@ class TestModels(unittest.TestCase):
             np.testing.assert_array_equal(actual_l1a_sw_priority_rates.p3_heavies, cdf["p3_heavies"][...])
             np.testing.assert_array_equal(actual_l1a_sw_priority_rates.p4_dcrs, cdf["p4_dcrs"][...])
 
-    def test_codice_lo_l1a_sw_priority_read_from_cdf(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            epoch = np.array([datetime(2025, 4, 18), datetime(2025, 4, 18)])
-            rng = np.random.default_rng()
-            energy_table = rng.random(128)
-            spin_sector_index = rng.random(12)
-            expected_values = {
-                "epoch": epoch,
-                "epoch_delta_plus": np.repeat(1, len(epoch)),
-                "epoch_delta_minus": np.repeat(1, len(epoch)),
-                "energy_table": energy_table,
-                "acquisition_time_per_step": rng.random((len(epoch), len(energy_table))),
-                "spin_sector_index": spin_sector_index,
-                "rgfo_half_spin": rng.random(len(epoch)),
-                "nso_half_spin": rng.random(len(epoch)),
-                "sw_bias_gain_mode": rng.random(len(epoch)),
-                "st_bias_gain_mode": rng.random(len(epoch)),
-                "data_quality": rng.random(len(epoch)),
-                "spin_period": rng.random(len(epoch)),
-                "p0_tcrs": rng.random((len(epoch), len(energy_table), len(spin_sector_index))),
-                "p1_hplus": rng.random((len(epoch), len(energy_table), len(spin_sector_index))),
-                "p2_heplusplus": rng.random((len(epoch), len(energy_table), len(spin_sector_index))),
-                "p3_heavies": rng.random((len(epoch), len(energy_table), len(spin_sector_index))),
-                "p4_dcrs": rng.random((len(epoch), len(energy_table), len(spin_sector_index))),
-            }
-
-            cdf_file_path = Path(tmpdir) / "test_cdf.cdf"
-            with CDF(str(cdf_file_path), readonly=False, masterpath="") as cdf_file:
-                for k, v in expected_values.items():
-                    cdf_file[k] = v
-
-            result = CodiceLoL1aSWPriorityRates.read_from_cdf(cdf_file_path)
-
-            for k, v in expected_values.items():
-                np.testing.assert_array_equal(getattr(result, k), v)
-
-    def test_codice_lo_l1a_nsw_priority_read_from_cdf(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            epoch = np.array([datetime(2025, 4, 18), datetime(2025, 4, 18)])
-            rng = np.random.default_rng()
-            energy_table = rng.random(128)
-            spin_sector_index = rng.random(12)
-            expected_values = {
-                "energy_table": energy_table,
-                "acquisition_time_per_step": rng.random(len(energy_table)),
-                "epoch": epoch,
-                "epoch_delta_plus": np.repeat(1, len(epoch)),
-                "epoch_delta_minus": np.repeat(1, len(epoch)),
-                "spin_sector_index": spin_sector_index,
-                "rgfo_half_spin": rng.random(len(epoch)),
-                "data_quality": rng.random(len(epoch)),
-                "p5_heavies": rng.random((len(epoch), len(energy_table), len(spin_sector_index))),
-                "p6_hplus_heplusplus": rng.random((len(epoch), len(energy_table), len(spin_sector_index))),
-                "nso_half_spin": rng.random(len(epoch)),
-                "sw_bias_gain_mode": rng.random(len(epoch)),
-                "st_bias_gain_mode": rng.random(len(epoch)),
-                "spin_period": rng.random(len(epoch))
-            }
-
-            cdf_file_path = Path(tmpdir) / "test_cdf.cdf"
-            with CDF(str(cdf_file_path), readonly=False, masterpath="") as cdf_file:
-                for k, v in expected_values.items():
-                    cdf_file[k] = v
-
-            result = CodiceLoL1aNSWPriorityRates.read_from_cdf(cdf_file_path)
-
-            for k, v in expected_values.items():
-                np.testing.assert_array_equal(getattr(result, k), v)
-
     def test_codice_lo_l1a_nsw_priority_read_from_instrument_team_cdf(self):
         instrument_team_cdf_path = get_test_instrument_team_data_path(
             "codice/lo/imap_codice_l1a_lo-nsw-priority_20241110_v002.cdf")
@@ -494,3 +398,170 @@ class TestModels(unittest.TestCase):
         mass_bin_lookup.get_species_index.assert_called_with("H+", EventDirection.Sunward)
 
         np.testing.assert_array_equal(actual_species_data, expected_species_data)
+
+    def test_codice_lo_3d_distributions_data_product(self):
+        data_product = CodiceLoL3a3dDistributionDataProduct(
+            epoch=sentinel.epoch,
+            epoch_delta=sentinel.epoch_delta,
+            elevation=sentinel.elevation,
+            elevation_delta=sentinel.elevation_delta,
+            spin_angle=sentinel.spin_angle,
+            spin_angle_delta=sentinel.spin_angle_delta,
+            energy=sentinel.energy,
+            energy_delta_plus=sentinel.energy_delta_plus,
+            energy_delta_minus=sentinel.energy_delta_minus,
+            input_metadata=Mock()
+        )
+
+        actual_data_product_variables = data_product.to_data_product_variables()
+        self.assertEqual(9, len(actual_data_product_variables))
+        actual_variables = iter(actual_data_product_variables)
+
+        self.assert_variable_attributes(next(actual_variables), sentinel.epoch, EPOCH_VAR_NAME)
+        self.assert_variable_attributes(next(actual_variables), sentinel.epoch_delta, EPOCH_DELTA_VAR_NAME)
+        self.assert_variable_attributes(next(actual_variables), sentinel.elevation, ELEVATION_VAR_NAME)
+        self.assert_variable_attributes(next(actual_variables), sentinel.elevation_delta, ELEVATION_DELTA_VAR_NAME)
+        self.assert_variable_attributes(next(actual_variables), sentinel.spin_angle, SPIN_ANGLE_VAR_NAME)
+        self.assert_variable_attributes(next(actual_variables), sentinel.spin_angle_delta, SPIN_ANGLE_DELTA_VAR_NAME)
+        self.assert_variable_attributes(next(actual_variables), sentinel.energy, ENERGY_VAR_NAME)
+        self.assert_variable_attributes(next(actual_variables), sentinel.energy_delta_plus, ENERGY_DELTA_PLUS_VAR_NAME)
+        self.assert_variable_attributes(next(actual_variables), sentinel.energy_delta_minus,
+                                        ENERGY_DELTA_MINUS_VAR_NAME)
+
+    def test_codice_lo_l2_direct_events_read_from_cdf_handles_fill_value(self):
+        all_fill_l2_cdf_path = get_test_data_path('codice/imap_codice_l2_lo-direct-events_20241110_v002-all-fill.cdf')
+        l2_direct_event = CodiceLoL2DirectEventData.read_from_cdf(all_fill_l2_cdf_path)
+
+        with CDF(str(all_fill_l2_cdf_path)) as cdf:
+            np.testing.assert_array_equal(cdf["epoch"], l2_direct_event.epoch)
+            np.testing.assert_array_equal(cdf["epoch_delta_plus"], l2_direct_event.epoch_delta_plus)
+            np.testing.assert_array_equal(cdf["epoch_delta_minus"], l2_direct_event.epoch_delta_minus)
+
+            for index in range(CODICE_LO_L2_NUM_PRIORITIES):
+                np.testing.assert_array_equal(l2_direct_event.priority_events[index].apd_energy,
+                                              np.full_like(cdf[f"p{index}_apd_energy"], np.nan))
+                np.testing.assert_array_equal(l2_direct_event.priority_events[index].energy_step,
+                                              np.full_like(cdf[f"p{index}_energy_step"], np.nan))
+                np.testing.assert_array_equal(l2_direct_event.priority_events[index].spin_angle,
+                                              np.full_like(cdf[f"p{index}_spin_sector"], np.nan))
+                np.testing.assert_array_equal(l2_direct_event.priority_events[index].elevation,
+                                              np.full_like(cdf[f"p{index}_position"], np.nan))
+
+                actual_apd_gain = l2_direct_event.priority_events[index].apd_gain
+                self.assertIsInstance(actual_apd_gain, np.ma.masked_array)
+                np.testing.assert_array_equal(actual_apd_gain.data, cdf[f"p{index}_gain"])
+                self.assertTrue(np.all(actual_apd_gain.mask))
+
+                actual_apd_id = l2_direct_event.priority_events[index].apd_id
+                self.assertIsInstance(actual_apd_id, np.ma.masked_array)
+                np.testing.assert_array_equal(actual_apd_id.data, cdf[f"p{index}_apd_id"])
+                self.assertTrue(np.all(actual_apd_id.mask))
+
+                actual_data_quality = l2_direct_event.priority_events[index].data_quality
+                self.assertIsInstance(actual_data_quality, np.ma.masked_array)
+                np.testing.assert_array_equal(actual_data_quality.data, cdf[f"p{index}_data_quality"])
+                self.assertTrue(np.all(actual_data_quality.mask))
+
+                actual_multi_flag = l2_direct_event.priority_events[index].multi_flag
+                self.assertIsInstance(actual_multi_flag, np.ma.masked_array)
+                np.testing.assert_array_equal(actual_multi_flag.data, cdf[f"p{index}_multi_flag"])
+                self.assertTrue(np.all(actual_multi_flag.mask))
+
+                actual_num_events = l2_direct_event.priority_events[index].num_events
+                self.assertIsInstance(actual_num_events, np.ma.masked_array)
+                np.testing.assert_array_equal(actual_num_events.data, cdf[f"p{index}_num_events"])
+                self.assertTrue(np.all(actual_num_events.mask))
+
+                actual_tof = l2_direct_event.priority_events[index].tof
+                self.assertIsInstance(actual_tof, np.ma.masked_array)
+                np.testing.assert_array_equal(actual_tof.data, cdf[f"p{index}_tof"])
+                self.assertTrue(np.all(actual_tof.mask))
+
+    def test_codice_lo_l1a_sw_priority_read_from_cdf_handles_fill_value(self):
+        l1a_sw_all_fill_path = get_test_data_path("codice/imap_codice_l1a_lo-sw-priority_20241110_v002-all-fill.cdf")
+        l1a_sw = CodiceLoL1aSWPriorityRates.read_from_cdf(l1a_sw_all_fill_path)
+
+        with CDF(str(l1a_sw_all_fill_path)) as cdf:
+            np.testing.assert_array_equal(l1a_sw.spin_period, np.full_like(cdf['spin_period'], np.nan))
+
+            self.assertIsInstance(l1a_sw.nso_half_spin, np.ma.masked_array)
+            np.testing.assert_array_equal(l1a_sw.nso_half_spin,
+                                          np.full_like(l1a_sw.nso_half_spin.data, cdf['nso_half_spin']))
+            self.assertTrue(np.all(l1a_sw.nso_half_spin.mask))
+
+            self.assertIsInstance(l1a_sw.rgfo_half_spin, np.ma.masked_array)
+            np.testing.assert_array_equal(l1a_sw.rgfo_half_spin,
+                                          np.full_like(l1a_sw.rgfo_half_spin.data, cdf['rgfo_half_spin']))
+            self.assertTrue(np.all(l1a_sw.rgfo_half_spin.mask))
+
+            self.assertIsInstance(l1a_sw.data_quality, np.ma.masked_array)
+            np.testing.assert_array_equal(l1a_sw.data_quality,
+                                          np.full_like(l1a_sw.data_quality.data, cdf['data_quality']))
+            self.assertTrue(np.all(l1a_sw.data_quality.mask))
+
+            self.assertIsInstance(l1a_sw.p0_tcrs, np.ma.masked_array)
+            np.testing.assert_array_equal(l1a_sw.p0_tcrs, np.full_like(l1a_sw.p0_tcrs.data, cdf['p0_tcrs']))
+            self.assertTrue(np.all(l1a_sw.p0_tcrs.mask))
+
+            self.assertIsInstance(l1a_sw.p1_hplus, np.ma.masked_array)
+            np.testing.assert_array_equal(l1a_sw.p1_hplus, np.full_like(l1a_sw.p1_hplus.data, cdf['p1_hplus']))
+            self.assertTrue(np.all(l1a_sw.p1_hplus.mask))
+
+            self.assertIsInstance(l1a_sw.p2_heplusplus, np.ma.masked_array)
+            np.testing.assert_array_equal(l1a_sw.p2_heplusplus,
+                                          np.full_like(l1a_sw.p2_heplusplus.data, cdf['p2_heplusplus']))
+            self.assertTrue(np.all(l1a_sw.p2_heplusplus.mask))
+
+            self.assertIsInstance(l1a_sw.p3_heavies, np.ma.masked_array)
+            np.testing.assert_array_equal(l1a_sw.p3_heavies, np.full_like(l1a_sw.p3_heavies.data, cdf['p3_heavies']))
+            self.assertTrue(np.all(l1a_sw.p3_heavies.mask))
+
+            self.assertIsInstance(l1a_sw.p4_dcrs, np.ma.masked_array)
+            np.testing.assert_array_equal(l1a_sw.p4_dcrs, np.full_like(l1a_sw.p4_dcrs.data, cdf['p4_dcrs']))
+            self.assertTrue(np.all(l1a_sw.p4_dcrs.mask))
+
+            self.assertIsInstance(l1a_sw.st_bias_gain_mode, np.ma.masked_array)
+            np.testing.assert_array_equal(l1a_sw.st_bias_gain_mode,
+                                          np.full_like(l1a_sw.st_bias_gain_mode.data, cdf['st_bias_gain_mode']))
+            self.assertTrue(np.all(l1a_sw.st_bias_gain_mode.mask))
+
+            self.assertIsInstance(l1a_sw.sw_bias_gain_mode, np.ma.masked_array)
+            np.testing.assert_array_equal(l1a_sw.sw_bias_gain_mode,
+                                          np.full_like(l1a_sw.sw_bias_gain_mode.data, cdf['sw_bias_gain_mode']))
+            self.assertTrue(np.all(l1a_sw.sw_bias_gain_mode.mask))
+
+    def test_codice_lo_l1a_nsw_priority_read_from_cdf_handles_fill_value(self):
+        l1a_nsw_all_fill_path = get_test_data_path("codice/imap_codice_l1a_lo-nsw-priority_20241110_v002-all-fill.cdf")
+
+        l1a_nsw_model = CodiceLoL1aNSWPriorityRates.read_from_cdf(l1a_nsw_all_fill_path)
+
+        with CDF(str(l1a_nsw_all_fill_path)) as cdf:
+            np.testing.assert_array_equal(l1a_nsw_model.spin_period, np.full_like(cdf['spin_period'], np.nan))
+
+            self.assertIsInstance(l1a_nsw_model.rgfo_half_spin, np.ma.masked_array)
+            np.testing.assert_array_equal(l1a_nsw_model.rgfo_half_spin.data, cdf["rgfo_half_spin"])
+            self.assertTrue(np.all(l1a_nsw_model.rgfo_half_spin.mask))
+
+            self.assertIsInstance(l1a_nsw_model.data_quality, np.ma.masked_array)
+            np.testing.assert_array_equal(l1a_nsw_model.data_quality.data, cdf["data_quality"])
+            self.assertTrue(np.all(l1a_nsw_model.data_quality.mask))
+
+            self.assertIsInstance(l1a_nsw_model.p5_heavies, np.ma.masked_array)
+            np.testing.assert_array_equal(l1a_nsw_model.p5_heavies.data, cdf["p5_heavies"])
+            self.assertTrue(np.all(l1a_nsw_model.p5_heavies.mask))
+
+            self.assertIsInstance(l1a_nsw_model.p6_hplus_heplusplus, np.ma.masked_array)
+            np.testing.assert_array_equal(l1a_nsw_model.p6_hplus_heplusplus.data, cdf["p6_hplus_heplusplus"])
+            self.assertTrue(np.all(l1a_nsw_model.p6_hplus_heplusplus.mask))
+
+            self.assertIsInstance(l1a_nsw_model.nso_half_spin, np.ma.masked_array)
+            np.testing.assert_array_equal(l1a_nsw_model.nso_half_spin.data, cdf["nso_half_spin"])
+            self.assertTrue(np.all(l1a_nsw_model.nso_half_spin.mask))
+
+            self.assertIsInstance(l1a_nsw_model.sw_bias_gain_mode, np.ma.masked_array)
+            np.testing.assert_array_equal(l1a_nsw_model.sw_bias_gain_mode.data, cdf["sw_bias_gain_mode"])
+            self.assertTrue(np.all(l1a_nsw_model.sw_bias_gain_mode.mask))
+
+            self.assertIsInstance(l1a_nsw_model.st_bias_gain_mode, np.ma.masked_array)
+            np.testing.assert_array_equal(l1a_nsw_model.st_bias_gain_mode.data, cdf["st_bias_gain_mode"])
+            self.assertTrue(np.all(l1a_nsw_model.st_bias_gain_mode.mask))

@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Self
 
@@ -18,6 +18,7 @@ class UltraL3Dependencies:
     ultra_l2_map: HealPixIntensityMapData
     ultra_l1c_pset: list[UltraL1CPSet]
     glows_l3e_sp: list[UltraGlowsL3eData]
+    dependency_file_paths: list[Path] = field(default_factory=list)
 
     @classmethod
     def fetch_dependencies(cls, deps: ProcessingInputCollection) -> Self:
@@ -47,7 +48,9 @@ class UltraL3Dependencies:
             ultra_l1c_data.append(UltraL1CPSet.read_from_path(file_path))
         for file_path in glows_file_paths:
             glows_l3e_data.append(UltraGlowsL3eData.read_from_path(file_path))
-        return cls(ultra_l2_map=ultra_l2_map, ultra_l1c_pset=ultra_l1c_data, glows_l3e_sp=glows_l3e_data)
+        paths = [l2_map_path] + l1c_file_paths + glows_file_paths
+        return cls(ultra_l2_map=ultra_l2_map, ultra_l1c_pset=ultra_l1c_data, glows_l3e_sp=glows_l3e_data,
+                   dependency_file_paths=paths)
 
 
 @dataclass

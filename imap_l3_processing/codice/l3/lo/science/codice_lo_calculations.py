@@ -165,4 +165,4 @@ def convert_count_rate_to_intensity(count_rates: CodiceLo3dData, efficiency_look
 
 
 def compute_geometric_factors(num_epochs: int, num_energies: int):
-    return np.ones(num_epochs, num_energies)
+    return np.ones((num_epochs, num_energies))
