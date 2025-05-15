@@ -6,8 +6,8 @@ from imap_processing.ena_maps.ena_maps import RectangularSkyMap, PointingSet
 from imap_processing.ena_maps.utils.coordinates import CoordNames
 from imap_processing.spice import geometry
 
-from imap_l3_processing.hi.l3.models import HiL1cData, HiGlowsL3eData
 from imap_l3_processing.maps.map_descriptors import Sensor, SpinPhase
+from imap_l3_processing.maps.map_models import HiGlowsL3eData, HiL1cData
 
 
 def interpolate_angular_data_to_nearest_neighbor(input_azimuths: np.array, glows_azimuths: np.array,
@@ -21,7 +21,7 @@ def interpolate_angular_data_to_nearest_neighbor(input_azimuths: np.array, glows
     return sorted_data[np.digitize(input_azimuths, bin_edges, right=True)]
 
 
-class HiSurvivalProbabilityPointingSet(PointingSet):
+class RectangularSurvivalProbabilityPointingSet(PointingSet):
     def __init__(self, l1c_dataset: HiL1cData, sensor: Sensor, spin_phase: SpinPhase,
                  glows_dataset: Optional[HiGlowsL3eData],
                  energies: np.ndarray):
@@ -95,8 +95,8 @@ class HiSurvivalProbabilityPointingSet(PointingSet):
         )
 
 
-class HiSurvivalProbabilitySkyMap(RectangularSkyMap):
-    def __init__(self, survival_probability_pointing_sets: list[HiSurvivalProbabilityPointingSet],
+class RectangularSurvivalProbabilitySkyMap(RectangularSkyMap):
+    def __init__(self, survival_probability_pointing_sets: list[RectangularSurvivalProbabilityPointingSet],
                  spacing_degree: float, spice_frame: geometry.SpiceFrame):
         super().__init__(spacing_degree, spice_frame)
         for sp_pset in survival_probability_pointing_sets:
