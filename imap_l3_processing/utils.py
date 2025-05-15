@@ -11,7 +11,7 @@ from spacepy.pycdf import CDF
 from imap_l3_processing.cdf.cdf_utils import write_cdf, read_numeric_variable
 from imap_l3_processing.cdf.imap_attribute_manager import ImapAttributeManager
 from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
-from imap_l3_processing.hi.l3.models import HiL1cData, HiGlowsL3eData
+from imap_l3_processing.maps.map_models import HiGlowsL3eData, HiL1cData
 from imap_l3_processing.models import UpstreamDataDependency, DataProduct, MagL1dData
 from imap_l3_processing.ultra.l3.models import UltraL1CPSet, UltraGlowsL3eData
 from imap_l3_processing.version import VERSION

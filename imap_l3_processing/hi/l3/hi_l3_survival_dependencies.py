@@ -9,10 +9,9 @@ from imap_data_access.file_validation import generate_imap_file_path
 from imap_data_access.processing_input import ProcessingInputCollection
 from spacepy.pycdf import CDF
 
-from imap_l3_processing.hi.l3.models import HiL1cData, HiGlowsL3eData
 from imap_l3_processing.hi.l3.utils import read_hi_l1c_data, read_glows_l3e_data
 from imap_l3_processing.maps.map_descriptors import MapDescriptorParts, parse_map_descriptor, SpinPhase
-from imap_l3_processing.maps.map_models import RectangularIntensityMapData
+from imap_l3_processing.maps.map_models import RectangularIntensityMapData, HiGlowsL3eData, HiL1cData
 from imap_l3_processing.utils import find_glows_l3e_dependencies
 
 
