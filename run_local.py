@@ -213,11 +213,12 @@ def create_codice_lo_l3a_3d_distributions_cdf():
         start_date=datetime(2024, 11, 10),
         end_date=datetime(2025, 1, 2),
         version='v000',
-        descriptor='lo-3d-distributions'
+        descriptor='lo-3d-instrument-frame'
     )
 
     codice_lo_processor = CodiceLoProcessor(Mock(), input_metadata)
     l3a_3d_distributions = codice_lo_processor.process_l3a_3d_distribution_product(deps)
+    return save_data(l3a_3d_distributions, delete_if_present=True)
 
 
 def create_swapi_l3b_cdf(geometric_calibration_file, efficiency_calibration_file, cdf_file):

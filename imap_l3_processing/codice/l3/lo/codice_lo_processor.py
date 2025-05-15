@@ -47,6 +47,9 @@ class CodiceLoProcessor(Processor):
         elif self.input_metadata.descriptor == "lo-sw-abundances":
             dependencies = CodiceLoL3aRatiosDependencies.fetch_dependencies(self.dependencies)
             data_product = self.process_l3a_abundances(dependencies)
+        elif self.input_metadata.descriptor == "lo-3d-instrument-frame":
+            dependencies = CodiceLoL3a3dDistributionsDependencies.fetch_dependencies(self.dependencies)
+            data_product = self.process_l3a_3d_distribution_product(dependencies)
         else:
             raise NotImplementedError(
                 f"Unknown data level and descriptor for CoDICE: {self.input_metadata.data_level}, {self.input_metadata.descriptor}")

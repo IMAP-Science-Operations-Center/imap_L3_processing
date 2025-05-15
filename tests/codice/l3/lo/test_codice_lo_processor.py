@@ -680,6 +680,38 @@ class TestCodiceLoProcessor(unittest.TestCase):
         self.assertEqual(mock_energy_lookup.delta_plus, l3a_direct_event_data_product.energy_delta_plus)
         self.assertEqual(mock_energy_lookup.delta_minus, l3a_direct_event_data_product.energy_delta_minus)
 
+    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.upload')
+    @patch(
+        'imap_l3_processing.codice.l3.lo.codice_lo_processor.CodiceLoL3a3dDistributionsDependencies.fetch_dependencies')
+    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.CodiceLoProcessor.process_l3a_3d_distribution_product')
+    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.save_data')
+    @patch('imap_l3_processing.processor.spiceypy')
+    def test_process_3d_distributions_save_and_upload(self, mock_spiceypy, mock_save_data,
+                                                      mock_process_l3a_3d_distribution_product,
+                                                      mock_fetch_dependencies, mock_upload):
+        input_collection = MagicMock()
+        input_collection.get_file_paths.return_value = [Path('path/to/parent_file_1'), Path('path/to/parent_file_2')]
+        input_metadata = InputMetadata(instrument='codice',
+                                       data_level="l3a",
+                                       start_date=Mock(spec=datetime),
+                                       end_date=Mock(spec=datetime),
+                                       version='v02',
+                                       descriptor='lo-3d-instrument-frame')
+        mock_spiceypy.ktotal.return_value = 0
+
+        mock_save_data.return_value = "file1"
+        processor = CodiceLoProcessor(dependencies=input_collection, input_metadata=input_metadata)
+        processor.process()
+
+        mock_fetch_dependencies.assert_called_once_with(processor.dependencies)
+        mock_process_l3a_3d_distribution_product.assert_called_once_with(mock_fetch_dependencies.return_value)
+
+        mock_save_data.assert_called_once_with(mock_process_l3a_3d_distribution_product.return_value)
+
+        self.assertEqual(['parent_file_1', 'parent_file_2'],
+                         mock_process_l3a_3d_distribution_product.return_value.parent_file_names)
+        mock_upload.assert_called_once_with("file1")
+
 
 if __name__ == '__main__':
     unittest.main()
