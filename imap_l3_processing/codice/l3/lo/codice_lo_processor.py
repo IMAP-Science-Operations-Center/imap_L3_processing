@@ -249,11 +249,16 @@ class CodiceLoProcessor(Processor):
         l3a_de_energy = dependencies.l3a_direct_event_data.event_energy
         l3a_de_spin_angle = dependencies.l3a_direct_event_data.spin_angle
         l3a_de_apd_id = dependencies.l3a_direct_event_data.apd_id
+        l3a_de_normalization = dependencies.l3a_direct_event_data.normalization
+        l3a_de_num_events = dependencies.l3a_direct_event_data.num_events
+
+        l1a_energy_table = dependencies.l1a_sw_data.energy_table
+        l1a_acquisition_time = dependencies.l1a_sw_data.acquisition_time_per_step
 
         mass_species_bin_lookup = dependencies.mass_species_bin_lookup
         spin_angle_lut = SpinAngleLookup()
         position_elevation_lut = PositionToElevationLookup()
-        energy_lut = EnergyLookup.from_bin_centers(dependencies.l1a_sw_data.energy_table)
+        energy_lut = EnergyLookup.from_bin_centers(l1a_energy_table)
 
         counts_3d_data = rebin_to_counts_by_species_elevation_and_spin_sector(
             mass=l3a_de_mass,
@@ -265,16 +270,20 @@ class CodiceLoProcessor(Processor):
             spin_angle_lut=spin_angle_lut,
             position_elevation_lut=position_elevation_lut,
             energy_lut=energy_lut,
+            num_events=l3a_de_num_events,
         )
 
-        normalized_counts = normalize_counts(counts_3d_data, dependencies.l3a_direct_event_data.normalization)
-        normalized_count_rates = combine_priorities_and_convert_to_rate(normalized_counts,
-                                                                        dependencies.l1a_sw_data.acquisition_time_per_step)
+        normalized_counts = normalize_counts(counts_3d_data, l3a_de_normalization)
+        normalized_count_rates = combine_priorities_and_convert_to_rate(normalized_counts, l1a_acquisition_time)
+
         efficiency_lookup = EfficiencyLookup.create_with_fake_data(mass_species_bin_lookup.get_num_species(),
-                                                                   len(normalized_count_rates.azimuth_or_elevation),
-                                                                   len(energy_lut.bin_centers))
-        intensities = convert_count_rate_to_intensity(normalized_count_rates, efficiency_lookup,
-                                                      compute_geometric_factors())
+                                                                   CODICE_LO_L2_NUM_PRIORITIES,
+                                                                   energy_lut.num_bins)
+
+        num_epochs = dependencies.l3a_direct_event_data.epoch.shape[0]
+        geometric_factors = compute_geometric_factors(num_epochs, energy_lut.num_bins)
+
+        intensities = convert_count_rate_to_intensity(normalized_count_rates, efficiency_lookup, geometric_factors)
         rebin_3d_distribution_azimuth_to_elevation(intensities, position_elevation_lut)
 
 

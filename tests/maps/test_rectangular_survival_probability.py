@@ -8,13 +8,14 @@ from imap_processing.ena_maps.utils.coordinates import CoordNames
 from imap_processing.spice import geometry
 from imap_processing.spice.geometry import SpiceFrame
 
-from imap_l3_processing.hi.l3.models import HiL1cData, HiGlowsL3eData
-from imap_l3_processing.hi.l3.science.survival_probability import Sensor, \
-    HiSurvivalProbabilitySkyMap, HiSurvivalProbabilityPointingSet, interpolate_angular_data_to_nearest_neighbor
 from imap_l3_processing.maps.map_descriptors import SpinPhase
+from imap_l3_processing.maps.map_models import HiGlowsL3eData, HiL1cData
+from imap_l3_processing.maps.rectangular_survival_probability import Sensor, \
+    RectangularSurvivalProbabilitySkyMap, RectangularSurvivalProbabilityPointingSet, \
+    interpolate_angular_data_to_nearest_neighbor
 
 
-class TestSurvivalProbability(unittest.TestCase):
+class TestRectangularSurvivalProbability(unittest.TestCase):
     def setUp(self):
         self.num_energies = 2
         self.epoch = datetime.now()
@@ -39,12 +40,12 @@ class TestSurvivalProbability(unittest.TestCase):
         self.ram_mask = (l1c_spin_angles < 90) | (l1c_spin_angles > 270)
         self.antiram_mask = np.logical_not(self.ram_mask)
 
-    @patch('imap_l3_processing.hi.l3.science.survival_probability.PointingSet.__init__')
+    @patch('imap_l3_processing.maps.rectangular_survival_probability.PointingSet.__init__')
     def test_survival_probability_pointing_set_calls_parent_constructor(self,
                                                                         mock_rectangular_pointing_set_constructor):
-        pointing_set = HiSurvivalProbabilityPointingSet(self.l1c_hi_dataset, Sensor.Hi45, SpinPhase.RamOnly,
-                                                        self.glows_data,
-                                                        self.hi_energies)
+        pointing_set = RectangularSurvivalProbabilityPointingSet(self.l1c_hi_dataset, Sensor.Hi45, SpinPhase.RamOnly,
+                                                                 self.glows_data,
+                                                                 self.hi_energies)
         self.assertIsInstance(pointing_set, PointingSet)
 
         mock_rectangular_pointing_set_constructor.assert_called_once()
@@ -60,9 +61,9 @@ class TestSurvivalProbability(unittest.TestCase):
 
         for sensor, expected_sensor_angle, spin_phase, expected_mask in test_cases:
             with self.subTest(f"{sensor.value}"):
-                pointing_set = HiSurvivalProbabilityPointingSet(self.l1c_hi_dataset, sensor, spin_phase,
-                                                                self.glows_data,
-                                                                self.hi_energies)
+                pointing_set = RectangularSurvivalProbabilityPointingSet(self.l1c_hi_dataset, sensor, spin_phase,
+                                                                         self.glows_data,
+                                                                         self.hi_energies)
                 self.assertIsInstance(pointing_set, PointingSet)
                 self.assertEqual(pointing_set.spice_reference_frame, geometry.SpiceFrame.IMAP_DPS)
 
@@ -105,9 +106,9 @@ class TestSurvivalProbability(unittest.TestCase):
                     np.repeat([3, 6], 3600).reshape(1, 2, 3600) * self.l1c_hi_dataset.exposure_times * expected_mask
 
                 sensor, expected_skygrid_elevation_index = Sensor.Hi90, 901
-                pointing_set = HiSurvivalProbabilityPointingSet(self.l1c_hi_dataset, sensor, spin_phase,
-                                                                self.glows_data,
-                                                                self.hi_energies)
+                pointing_set = RectangularSurvivalProbabilityPointingSet(self.l1c_hi_dataset, sensor, spin_phase,
+                                                                         self.glows_data,
+                                                                         self.hi_energies)
 
                 self.assertIn("survival_probability_times_exposure", pointing_set.data.data_vars)
                 self.assertEqual((1, self.num_energies, 3600),
@@ -118,9 +119,9 @@ class TestSurvivalProbability(unittest.TestCase):
                     pointing_set.data["survival_probability_times_exposure"].values)
 
     def test_exposure_weighted_survivals_are_repeated_to_match_l1c_shape(self):
-        pointing_set = HiSurvivalProbabilityPointingSet(self.l1c_hi_dataset, Sensor.Hi90, SpinPhase.RamOnly,
-                                                        self.glows_data,
-                                                        self.hi_energies)
+        pointing_set = RectangularSurvivalProbabilityPointingSet(self.l1c_hi_dataset, Sensor.Hi90, SpinPhase.RamOnly,
+                                                                 self.glows_data,
+                                                                 self.hi_energies)
 
         survivals = pointing_set.data[
                         "survival_probability_times_exposure"].values / self.l1c_hi_dataset.exposure_times
@@ -128,7 +129,7 @@ class TestSurvivalProbability(unittest.TestCase):
         groups_of_ten = survivals.reshape(1, self.num_energies, 360, 10)
         self.assertTrue(np.all(np.isclose(every_tenth_value, groups_of_ten)))
 
-    @patch("imap_l3_processing.hi.l3.science.survival_probability.interpolate_angular_data_to_nearest_neighbor")
+    @patch("imap_l3_processing.maps.rectangular_survival_probability.interpolate_angular_data_to_nearest_neighbor")
     def test_survivals_matched_with_corresponding_exposures(self, mock_interpolate):
         self.hi_energies = np.array([1, 100])
         self.glows_data.energy = np.array([1, 100, 100_000])
@@ -139,9 +140,9 @@ class TestSurvivalProbability(unittest.TestCase):
         mock_interpolate.side_effect = [first_energy_corresponding_glows_data,
                                         second_energy_corresponding_glows_data]
 
-        pointing_set = HiSurvivalProbabilityPointingSet(self.l1c_hi_dataset, Sensor.Hi90, SpinPhase.RamOnly,
-                                                        self.glows_data,
-                                                        self.hi_energies)
+        pointing_set = RectangularSurvivalProbabilityPointingSet(self.l1c_hi_dataset, Sensor.Hi90, SpinPhase.RamOnly,
+                                                                 self.glows_data,
+                                                                 self.hi_energies)
 
         pset_spin_angles = np.linspace(0, 360, 3600, endpoint=False) + 0.05
         pset_azimuths = np.mod(pset_spin_angles + 90, 360)
@@ -169,12 +170,14 @@ class TestSurvivalProbability(unittest.TestCase):
         self.hi_energies = np.array([1, 100])
         self.glows_data.energy = np.array([1, 100, 100_000])
 
-        pointing_set_no_glows = HiSurvivalProbabilityPointingSet(self.l1c_hi_dataset, Sensor.Hi90, SpinPhase.RamOnly,
-                                                                 None,
-                                                                 self.hi_energies)
-        pointing_set_yes_glows = HiSurvivalProbabilityPointingSet(self.l1c_hi_dataset, Sensor.Hi90, SpinPhase.RamOnly,
-                                                                  self.glows_data,
-                                                                  self.hi_energies)
+        pointing_set_no_glows = RectangularSurvivalProbabilityPointingSet(self.l1c_hi_dataset, Sensor.Hi90,
+                                                                          SpinPhase.RamOnly,
+                                                                          None,
+                                                                          self.hi_energies)
+        pointing_set_yes_glows = RectangularSurvivalProbabilityPointingSet(self.l1c_hi_dataset, Sensor.Hi90,
+                                                                           SpinPhase.RamOnly,
+                                                                           self.glows_data,
+                                                                           self.hi_energies)
 
         np.testing.assert_array_almost_equal(pointing_set_no_glows.data["survival_probability_times_exposure"].values,
                                              np.full_like(self.l1c_hi_dataset.exposure_times,
@@ -214,16 +217,17 @@ class TestSurvivalProbability(unittest.TestCase):
                 result = interpolate_angular_data_to_nearest_neighbor(input_angles, glows_spin_angles, glows_data)
                 np.testing.assert_array_equal(expected_output + 1000, result)
 
-    @patch('imap_l3_processing.hi.l3.science.survival_probability.RectangularSkyMap.project_pset_values_to_map')
-    @patch('imap_l3_processing.hi.l3.science.survival_probability.RectangularSkyMap.__init__')
+    @patch('imap_l3_processing.maps.rectangular_survival_probability.RectangularSkyMap.project_pset_values_to_map')
+    @patch('imap_l3_processing.maps.rectangular_survival_probability.RectangularSkyMap.__init__')
     def test_survival_probability_map_construction(self, mock_skymap_constructor, mock_project_pset):
-        class TestableHiSurvivalProbabilitySkyMap(HiSurvivalProbabilitySkyMap):
+        class TestableRectangularSurvivalProbabilitySkyMap(RectangularSurvivalProbabilitySkyMap):
             def __init__(self, *args):
                 self.data_1d = MagicMock()
                 super().__init__(*args)
 
-        actual_sky_map = TestableHiSurvivalProbabilitySkyMap([sentinel.pset_1, sentinel.pset_2], sentinel.spacing_deg,
-                                                             sentinel.spice_frame)
+        actual_sky_map = TestableRectangularSurvivalProbabilitySkyMap([sentinel.pset_1, sentinel.pset_2],
+                                                                      sentinel.spacing_deg,
+                                                                      sentinel.spice_frame)
         self.assertIsInstance(actual_sky_map, RectangularSkyMap)
 
         mock_skymap_constructor.assert_called_with(sentinel.spacing_deg, sentinel.spice_frame)
@@ -234,10 +238,10 @@ class TestSurvivalProbability(unittest.TestCase):
         ])
 
     def test_survival_probability_sky_map_returns_exposure_weighted_survival_probabilities(self):
-        pset1 = HiSurvivalProbabilityPointingSet(self.l1c_hi_dataset, Sensor.Hi90, SpinPhase.RamOnly,
-                                                 self.glows_data, self.hi_energies)
-        pset2 = HiSurvivalProbabilityPointingSet(self.l1c_hi_dataset, Sensor.Hi90, SpinPhase.RamOnly,
-                                                 self.glows_data, self.hi_energies)
+        pset1 = RectangularSurvivalProbabilityPointingSet(self.l1c_hi_dataset, Sensor.Hi90, SpinPhase.RamOnly,
+                                                          self.glows_data, self.hi_energies)
+        pset2 = RectangularSurvivalProbabilityPointingSet(self.l1c_hi_dataset, Sensor.Hi90, SpinPhase.RamOnly,
+                                                          self.glows_data, self.hi_energies)
 
         pset1.data = pset1.data.assign(
             survival_probability_times_exposure=4 * pset1.data["survival_probability_times_exposure"])
@@ -259,8 +263,8 @@ class TestSurvivalProbability(unittest.TestCase):
         summed_exposure[summed_exposure == 0] = np.nan
 
         spice_frame = SpiceFrame.IMAP_DPS
-        actual_skymap = HiSurvivalProbabilitySkyMap([pset1, pset2],
-                                                    0.1, spice_frame)
+        actual_skymap = RectangularSurvivalProbabilitySkyMap([pset1, pset2],
+                                                             0.1, spice_frame)
 
         expected_exposure_weighted_survival_skygrid = np.divide(survival_prob_in_skygrid_shape, summed_exposure)
 

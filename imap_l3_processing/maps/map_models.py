@@ -1,7 +1,7 @@
 import abc
 import dataclasses
 from dataclasses import dataclass
-from datetime import timedelta
+from datetime import timedelta, datetime
 from pathlib import Path
 from typing import Self
 
@@ -325,3 +325,19 @@ def calculate_datetime_weighted_average(data: np.ndarray, weights: np.ndarray, a
         averaged_dates_as_seconds.data * timedelta(seconds=1) + TT2000_EPOCH,
         mask=averaged_dates_as_seconds.mask,
     )
+
+
+@dataclass
+class HiGlowsL3eData:
+    epoch: datetime
+    energy: np.ndarray
+    spin_angle: np.ndarray
+    probability_of_survival: np.ndarray
+
+
+@dataclass
+class HiL1cData:
+    epoch: datetime
+    epoch_j2000: np.ndarray
+    exposure_times: np.ndarray
+    esa_energy_step: np.ndarray

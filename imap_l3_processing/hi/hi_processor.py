@@ -5,14 +5,14 @@ from imap_l3_processing.hi.l3.hi_l3_combined_sensor_dependencies import HiL3Comb
 from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3SpectralIndexDependencies
 from imap_l3_processing.hi.l3.hi_l3_survival_dependencies import HiL3SurvivalDependencies, \
     HiL3SingleSensorFullSpinDependencies
-from imap_l3_processing.hi.l3.science.survival_probability import HiSurvivalProbabilityPointingSet, \
-    HiSurvivalProbabilitySkyMap
 from imap_l3_processing.maps.map_descriptors import parse_map_descriptor, MapQuantity, MapDescriptorParts, \
     SurvivalCorrection, \
     SpinPhase, Duration, Sensor
 from imap_l3_processing.maps.map_models import RectangularSpectralIndexDataProduct, RectangularSpectralIndexMapData, \
     RectangularIntensityMapData, IntensityMapData, RectangularIntensityDataProduct, \
     combine_rectangular_intensity_map_data
+from imap_l3_processing.maps.rectangular_survival_probability import RectangularSurvivalProbabilityPointingSet, \
+    RectangularSurvivalProbabilitySkyMap
 from imap_l3_processing.maps.spectral_fit import fit_spectral_index_map
 from imap_l3_processing.processor import Processor
 from imap_l3_processing.utils import save_data, combine_glows_l3e_with_l1c_pointing
@@ -100,13 +100,13 @@ class HiProcessor(Processor):
         input_data = hi_survival_probabilities_dependencies.l2_data.intensity_map_data
 
         for hi_l1c, glows_l3e in combined_glows_hi:
-            pointing_sets.append(HiSurvivalProbabilityPointingSet(
+            pointing_sets.append(RectangularSurvivalProbabilityPointingSet(
                 hi_l1c, l2_descriptor_parts.sensor, l2_descriptor_parts.spin_phase, glows_l3e,
                 input_data.energy))
         assert len(pointing_sets) > 0
 
-        hi_survival_sky_map = HiSurvivalProbabilitySkyMap(pointing_sets, int(l2_descriptor_parts.grid),
-                                                          SpiceFrame.ECLIPJ2000)
+        hi_survival_sky_map = RectangularSurvivalProbabilitySkyMap(pointing_sets, int(l2_descriptor_parts.grid),
+                                                                   SpiceFrame.ECLIPJ2000)
 
         survival_dataset = hi_survival_sky_map.to_dataset()
 

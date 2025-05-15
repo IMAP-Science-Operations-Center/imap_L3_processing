@@ -14,11 +14,9 @@ from imap_l3_processing.hi.hi_processor import HiProcessor
 from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3SpectralIndexDependencies
 from imap_l3_processing.hi.l3.hi_l3_survival_dependencies import HiL3SurvivalDependencies, \
     HiL3SingleSensorFullSpinDependencies
-from imap_l3_processing.hi.l3.models import \
-    HiL1cData, HiGlowsL3eData
 from imap_l3_processing.maps.map_descriptors import PixelSize, MapDescriptorParts, parse_map_descriptor
 from imap_l3_processing.maps.map_models import RectangularSpectralIndexDataProduct, IntensityMapData, \
-    RectangularIntensityMapData, RectangularCoords, RectangularIntensityDataProduct
+    RectangularIntensityMapData, RectangularCoords, RectangularIntensityDataProduct, HiGlowsL3eData, HiL1cData
 from imap_l3_processing.models import InputMetadata
 from tests.test_helpers import get_test_data_path
 
@@ -249,8 +247,8 @@ class TestHiProcessor(unittest.TestCase):
     @patch('imap_l3_processing.hi.hi_processor.Processor.get_parent_file_names')
     @patch('imap_l3_processing.hi.hi_processor.upload')
     @patch('imap_l3_processing.hi.hi_processor.save_data')
-    @patch('imap_l3_processing.hi.hi_processor.HiSurvivalProbabilitySkyMap')
-    @patch('imap_l3_processing.hi.hi_processor.HiSurvivalProbabilityPointingSet')
+    @patch('imap_l3_processing.hi.hi_processor.RectangularSurvivalProbabilitySkyMap')
+    @patch('imap_l3_processing.hi.hi_processor.RectangularSurvivalProbabilityPointingSet')
     @patch('imap_l3_processing.hi.hi_processor.combine_glows_l3e_with_l1c_pointing')
     @patch('imap_l3_processing.hi.hi_processor.HiL3SurvivalDependencies.fetch_dependencies')
     def test_process_survival_probability(self, mock_fetch_dependencies, mock_combine_glows_l3e_with_l1c_pointing,

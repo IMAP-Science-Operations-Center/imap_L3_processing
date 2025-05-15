@@ -4,7 +4,7 @@ from typing import Union
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.cdf.cdf_utils import read_numeric_variable
-from imap_l3_processing.hi.l3.models import HiL1cData, HiGlowsL3eData
+from imap_l3_processing.maps.map_models import HiGlowsL3eData, HiL1cData
 
 
 def read_hi_l1c_data(path: Union[Path, str]) -> HiL1cData:
