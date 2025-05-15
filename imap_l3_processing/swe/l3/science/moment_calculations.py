@@ -7,7 +7,7 @@ import numpy as np
 
 from imap_l3_processing.constants import ELECTRON_MASS_KG, \
     BOLTZMANN_CONSTANT_JOULES_PER_KELVIN, METERS_PER_KILOMETER, \
-    CENTIMETERS_PER_METER, PROTON_CHARGE_COULOMBS
+    CENTIMETERS_PER_METER, PROTON_CHARGE_COULOMBS, GRAMS_PER_KILOGRAM
 from imap_l3_processing.pitch_angles import calculate_unit_vector
 from imap_l3_processing.spice_wrapper import spiceypy
 
@@ -551,7 +551,7 @@ def integrate(istart, iend, energy: np.ndarray, sintheta: np.ndarray,
     temperature = (np.array([sumtxx, sumtxy, sumtyy, sumtxz, sumtyz, sumtzz]) *
                    TEMPERATURE_SCALING_FACTOR_TO_UNDO_IN_EIGEN * ELECTRON_MASS_OVER_BOLTZMANN_IN_CGS_UNITS + cdelt) / totden
 
-    heat_flux = np.array([sumqx, sumqy, sumqz]) * 500 * ELECTRON_MASS_KG
+    heat_flux = np.array([sumqx, sumqy, sumqz]) * 500 * ELECTRON_MASS_KG * GRAMS_PER_KILOGRAM
 
     return IntegrateOutputs(totden, output_velocities, temperature, heat_flux, base)
 
