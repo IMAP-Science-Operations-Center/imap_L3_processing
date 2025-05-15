@@ -3,12 +3,11 @@ Author: Marek Strumik, maro at cbk.waw.pl
 """
 import copy
 import json
-import sys
 
 import numpy as np
+from astropy import units as u
+from astropy_healpix import HEALPix
 
-if sys.platform != "win32":
-    import healpy as hp
 from .constants import VERSION, SCAN_CIRCLE_ANGULAR_RADIUS
 from .funcs import calibration_factor, check_if_contains_actual_data
 from .geom_fun_libr_box import spin2lb
@@ -64,8 +63,11 @@ class L3aData():
             fh.close()
 
             # generate Healpix grid internally here for a sanity check performed later
-            ipxls = hp.query_strip(nside, 0.0, np.pi, inclusive=True)
-            lon, lat = hp.pix2ang(nside, ipxls, lonlat=True)
+            ahp = HEALPix(nside=nside, order='ring')
+            lon, lat = ahp.healpix_to_lonlat(range(ahp.npix))
+            lon = np.degrees(lon.value)
+            lat = np.degrees(lat.value)
+
             # sanity check for the Healpix grid read from anc_input_from_instr_team['extra_heliospheric_bckgrd']
             # it should match the Healpix grid generated internally, otherwise raise error
             if np.fabs(lon - lon_lat_bckgrd[:, 0]).max() > 1.0e-6 or \
@@ -74,10 +76,10 @@ class L3aData():
                                 'healpix grid mismatch (NSIDE wrong? NESTED ordering instead of RING?)')
 
             # interpolate the background estimate from the healpix map into the centers of the scanning circle bins
-            self.data['daily_lightcurve']['extra_heliospheric_bckgrd'] = hp.pixelfunc.get_interp_val(
-                lon_lat_bckgrd[:, 2],
-                self.data['daily_lightcurve']['ecliptic_lon'], self.data['daily_lightcurve']['ecliptic_lat'],
-                nest=False, lonlat=True)
+            self.data['daily_lightcurve']['extra_heliospheric_bckgrd'] = \
+                ahp.interpolate_bilinear_lonlat(self.data['daily_lightcurve']['ecliptic_lon'] * u.deg,
+                                                self.data['daily_lightcurve']['ecliptic_lat'] * u.deg,
+                                                lon_lat_bckgrd[:, 2])
 
     def _compute_time_dependent_bckgrd(self, anc_input_from_instr_team):
         """
@@ -348,7 +350,7 @@ class L3aData():
         data = copy.deepcopy(self.data)
 
         # some fields need to be temporarily converted to string arrays, because we want to force
-        # them to be saved as one-liners (i.e., without \n after each element) or we want them to 
+        # them to be saved as one-liners (i.e., without \n after each element) or we want them to
         # be printed with a specific format by json.dumps()
         # so we convert variables to strings as defined in fmt
         for key in fmt['daily_lightcurve'].keys():
