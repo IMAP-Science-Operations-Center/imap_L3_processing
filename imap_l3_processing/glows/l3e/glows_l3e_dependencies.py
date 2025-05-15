@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from shutil import move
 
+import numpy as np
 from imap_data_access.processing_input import ProcessingInputCollection
 
 from imap_l3_processing.utils import \
@@ -24,6 +25,7 @@ class GlowsL3EDependencies:
     sw_eqtr_electrons: Path
     ionization_files: Path
     pipeline_settings: dict
+    elongation: ndarray
 
     @classmethod
     def fetch_dependencies(cls, dependencies: ProcessingInputCollection, descriptor: str):
@@ -52,12 +54,17 @@ class GlowsL3EDependencies:
         energy_grid_ultra_path = None
         tess_xyz_path = None
         tess_ang_path = None
+        elongation_data = None
 
         if descriptor == "survival-probability-lo":
             energy_grid_lo_dependency = dependencies.get_file_paths(source='glows', descriptor='energy-grid-lo')
             tess_xyz_dependency = dependencies.get_file_paths(source='glows', descriptor='tess-xyz-8')
+            elongation_dependency = dependencies.get_file_paths(source='lo', descriptor='elongation-data')
             energy_grid_lo_path = download_dependency_from_path(str(energy_grid_lo_dependency[0]))
             tess_xyz_path = download_dependency_from_path(str(tess_xyz_dependency[0]))
+            elongation_path = download_dependency_from_path(str(elongation_dependency[0]))
+            with open(elongation_path) as f:
+                elongation_data = np.loadtxt(f, delimiter=' ')
         elif descriptor == "survival-probability-hi-45" or descriptor == "survival-probability-hi-90":
             energy_grid_hi_dependency = dependencies.get_file_paths(source='glows', descriptor='energy-grid-hi')
             energy_grid_hi_path = download_dependency_from_path(str(energy_grid_hi_dependency[0]))
@@ -86,6 +93,7 @@ class GlowsL3EDependencies:
             sw_eqtr_electrons_path,
             ionization_files_path,
             pipeline_settings,
+            elongation_data,
         ), cr_number
 
     def rename_dependencies(self):
