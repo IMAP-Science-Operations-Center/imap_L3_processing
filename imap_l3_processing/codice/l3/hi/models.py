@@ -5,6 +5,7 @@ import numpy as np
 from numpy import ndarray
 from spacepy.pycdf import CDF
 
+from imap_l3_processing.cdf.cdf_utils import read_numeric_variable
 from imap_l3_processing.models import DataProduct, DataProductVariable
 
 CODICE_HI_NUM_L2_PRIORITIES = 6
@@ -266,16 +267,16 @@ class CodiceHiL2SectoredIntensitiesData:
                        spin_sector_index=cdf['spin_sector_index'][...],
                        ssd_index=cdf['ssd_index'][...],
                        data_quality=cdf['data_quality'][...],
-                       h_intensities=cdf['h'][...],
+                       h_intensities=read_numeric_variable(cdf['h']),
                        energy_h=cdf['energy_h'][...],
                        energy_h_delta=cdf['energy_h_delta'][...],
-                       cno_intensities=cdf['cno'][...],
+                       cno_intensities=read_numeric_variable(cdf['cno']),
                        energy_cno=cdf['energy_cno'][...],
                        energy_cno_delta=cdf['energy_cno_delta'][...],
-                       fe_intensities=cdf['fe'][...],
+                       fe_intensities=read_numeric_variable(cdf['fe']),
                        energy_fe=cdf['energy_fe'][...],
                        energy_fe_delta=cdf['energy_fe_delta'][...],
-                       he3he4_intensities=cdf['he3he4'][...],
+                       he3he4_intensities=read_numeric_variable(cdf['he3he4']),
                        energy_he3he4=cdf['energy_he3he4'][...],
                        energy_he3he4_delta=cdf['energy_he3he4_delta'][...],
                        )

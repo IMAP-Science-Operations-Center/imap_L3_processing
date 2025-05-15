@@ -9,7 +9,7 @@ from spacepy.pycdf import CDF
 
 from imap_l3_processing.codice.l3.hi.models import CodiceL2HiData, PriorityEventL2, CodiceL3HiDirectEvents, \
     CodiceHiL2SectoredIntensitiesData, CodiceHiL3PitchAngleDataProduct, CODICE_HI_NUM_L2_PRIORITIES
-from tests.test_helpers import get_test_instrument_team_data_path
+from tests.test_helpers import get_test_instrument_team_data_path, get_test_data_path
 
 
 class TestModels(unittest.TestCase):
@@ -207,3 +207,14 @@ class TestModels(unittest.TestCase):
             np.testing.assert_array_equal(l2_sectored_data.he3he4_intensities, cdf['he3he4'])
             np.testing.assert_array_equal(l2_sectored_data.energy_he3he4, cdf['energy_he3he4'])
             np.testing.assert_array_equal(l2_sectored_data.energy_he3he4_delta, cdf['energy_he3he4_delta'])
+
+    def test_l2_sectored_intensities_read_from_instrument_team_cdf_handles_fill_values(self):
+        all_fill_l2_sectored_intensities_path = \
+            get_test_data_path('codice/imap_codice_l2_hi-sectored_20241110_v002-all-fill.cdf')
+        l2_sectored_intensities = CodiceHiL2SectoredIntensitiesData.read_from_cdf(all_fill_l2_sectored_intensities_path)
+        with CDF(str(all_fill_l2_sectored_intensities_path)) as cdf:
+            np.testing.assert_array_equal(l2_sectored_intensities.cno_intensities, np.full_like(cdf['cno'], np.nan))
+            np.testing.assert_array_equal(l2_sectored_intensities.fe_intensities, np.full_like(cdf['fe'], np.nan))
+            np.testing.assert_array_equal(l2_sectored_intensities.h_intensities, np.full_like(cdf['h'], np.nan))
+            np.testing.assert_array_equal(l2_sectored_intensities.he3he4_intensities,
+                                          np.full_like(cdf['he3he4'], np.nan))
