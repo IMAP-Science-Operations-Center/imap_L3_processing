@@ -16,12 +16,12 @@ from imap_l3_processing.codice.l3.lo.direct_events.science.efficiency_lookup imp
 from imap_l3_processing.codice.l3.lo.direct_events.science.energy_lookup import EnergyLookup
 from imap_l3_processing.codice.l3.lo.models import CodiceLoL3aPartialDensityDataProduct, CodiceLoL2DirectEventData, \
     CodiceLoL3aDirectEventDataProduct, CodiceLoPartialDensityData, CodiceLoL3aRatiosDataProduct, \
-    CodiceLoL3ChargeStateDistributionsDataProduct, CODICE_LO_L2_NUM_PRIORITIES
+    CodiceLoL3ChargeStateDistributionsDataProduct, CODICE_LO_L2_NUM_PRIORITIES, CodiceLoL3a3dDistributionDataProduct
 from imap_l3_processing.codice.l3.lo.science.codice_lo_calculations import calculate_partial_densities, \
     calculate_mass, calculate_mass_per_charge, \
     rebin_counts_by_energy_and_spin_angle, rebin_to_counts_by_species_elevation_and_spin_sector, normalize_counts, \
     combine_priorities_and_convert_to_rate, rebin_3d_distribution_azimuth_to_elevation, convert_count_rate_to_intensity, \
-    compute_geometric_factors
+    compute_geometric_factors, CODICE_LO_NUM_AZIMUTH_BINS
 from imap_l3_processing.data_utils import safe_divide
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
@@ -277,7 +277,7 @@ class CodiceLoProcessor(Processor):
         normalized_count_rates = combine_priorities_and_convert_to_rate(normalized_counts, l1a_acquisition_time)
 
         efficiency_lookup = EfficiencyLookup.create_with_fake_data(mass_species_bin_lookup.get_num_species(),
-                                                                   CODICE_LO_L2_NUM_PRIORITIES,
+                                                                   CODICE_LO_NUM_AZIMUTH_BINS,
                                                                    energy_lut.num_bins)
 
         num_epochs = dependencies.l3a_direct_event_data.epoch.shape[0]
@@ -285,6 +285,19 @@ class CodiceLoProcessor(Processor):
 
         intensities = convert_count_rate_to_intensity(normalized_count_rates, efficiency_lookup, geometric_factors)
         rebin_3d_distribution_azimuth_to_elevation(intensities, position_elevation_lut)
+
+        return CodiceLoL3a3dDistributionDataProduct(
+            input_metadata=self.input_metadata,
+            epoch=dependencies.l3a_direct_event_data.epoch,
+            epoch_delta=dependencies.l3a_direct_event_data.epoch_delta,
+            elevation=position_elevation_lut.bin_centers,
+            elevation_delta=position_elevation_lut.bin_deltas,
+            spin_angle=spin_angle_lut.bin_centers,
+            spin_angle_delta=spin_angle_lut.bin_deltas,
+            energy=energy_lut.bin_centers,
+            energy_delta_plus=energy_lut.delta_plus,
+            energy_delta_minus=energy_lut.delta_minus
+        )
 
 
 def _average_over_block(data_array: np.ndarray, block_size: int):

@@ -1,9 +1,8 @@
 import tempfile
-import unittest
 from dataclasses import fields
 from datetime import datetime, timedelta
 from pathlib import Path
-from unittest.mock import Mock
+from unittest.mock import Mock, sentinel
 
 import numpy as np
 from spacepy.pycdf import CDF
@@ -14,13 +13,16 @@ from imap_l3_processing.codice.l3.lo.models import CodiceLoL2SWSpeciesData, Codi
     CodiceLoL3aDirectEventDataProduct, \
     CodiceLoL1aSWPriorityRates, CodiceLoL1aNSWPriorityRates, CodiceLo3dData, CODICE_LO_L2_NUM_PRIORITIES, \
     CodiceLoL3aRatiosDataProduct, CodiceLoPartialDensityData, CodiceLoL3ChargeStateDistributionsDataProduct, \
-    CodiceLoDirectEventData
+    CodiceLoDirectEventData, EPOCH_VAR_NAME, EPOCH_DELTA_VAR_NAME, ELEVATION_VAR_NAME, SPIN_ANGLE_VAR_NAME, \
+    ENERGY_VAR_NAME, SPIN_ANGLE_DELTA_VAR_NAME, ELEVATION_DELTA_VAR_NAME, \
+    CodiceLoL3a3dDistributionDataProduct, ENERGY_DELTA_PLUS_VAR_NAME, ENERGY_DELTA_MINUS_VAR_NAME
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.utils import save_data
+from tests.swapi.cdf_model_test_case import CdfModelTestCase
 from tests.test_helpers import get_test_instrument_team_data_path, get_test_data_path
 
 
-class TestModels(unittest.TestCase):
+class TestModels(CdfModelTestCase):
     def test_lo_l2_sw_species_read_from_cdf(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             cdf_file_path = Path(tmpdir) / "test_cdf.cdf"
@@ -494,3 +496,32 @@ class TestModels(unittest.TestCase):
         mass_bin_lookup.get_species_index.assert_called_with("H+", EventDirection.Sunward)
 
         np.testing.assert_array_equal(actual_species_data, expected_species_data)
+
+    def test_codice_lo_3d_distributions_data_product(self):
+        data_product = CodiceLoL3a3dDistributionDataProduct(
+            epoch=sentinel.epoch,
+            epoch_delta=sentinel.epoch_delta,
+            elevation=sentinel.elevation,
+            elevation_delta=sentinel.elevation_delta,
+            spin_angle=sentinel.spin_angle,
+            spin_angle_delta=sentinel.spin_angle_delta,
+            energy=sentinel.energy,
+            energy_delta_plus=sentinel.energy_delta_plus,
+            energy_delta_minus=sentinel.energy_delta_minus,
+            input_metadata=Mock()
+        )
+
+        actual_data_product_variables = data_product.to_data_product_variables()
+        self.assertEqual(9, len(actual_data_product_variables))
+        actual_variables = iter(actual_data_product_variables)
+
+        self.assert_variable_attributes(next(actual_variables), sentinel.epoch, EPOCH_VAR_NAME)
+        self.assert_variable_attributes(next(actual_variables), sentinel.epoch_delta, EPOCH_DELTA_VAR_NAME)
+        self.assert_variable_attributes(next(actual_variables), sentinel.elevation, ELEVATION_VAR_NAME)
+        self.assert_variable_attributes(next(actual_variables), sentinel.elevation_delta, ELEVATION_DELTA_VAR_NAME)
+        self.assert_variable_attributes(next(actual_variables), sentinel.spin_angle, SPIN_ANGLE_VAR_NAME)
+        self.assert_variable_attributes(next(actual_variables), sentinel.spin_angle_delta, SPIN_ANGLE_DELTA_VAR_NAME)
+        self.assert_variable_attributes(next(actual_variables), sentinel.energy, ENERGY_VAR_NAME)
+        self.assert_variable_attributes(next(actual_variables), sentinel.energy_delta_plus, ENERGY_DELTA_PLUS_VAR_NAME)
+        self.assert_variable_attributes(next(actual_variables), sentinel.energy_delta_minus,
+                                        ENERGY_DELTA_MINUS_VAR_NAME)

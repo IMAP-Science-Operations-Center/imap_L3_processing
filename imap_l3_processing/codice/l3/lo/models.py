@@ -470,3 +470,36 @@ class CodiceLo3dData:
     def get_3d_distribution(self, species: str, event_direction: EventDirection) -> np.ndarray:
         species_index = self.mass_bin_lookup.get_species_index(species, event_direction)
         return self.data_in_3d_bins[species_index, ...]
+
+
+ENERGY_VAR_NAME = "energy"
+ENERGY_DELTA_PLUS_VAR_NAME = "energy_delta_plus"
+ENERGY_DELTA_MINUS_VAR_NAME = "energy_delta_minus"
+SPIN_ANGLE_DELTA_VAR_NAME = "spin_angle_delta"
+ELEVATION_DELTA_VAR_NAME = "elevation_delta"
+
+
+@dataclass()
+class CodiceLoL3a3dDistributionDataProduct(DataProduct):
+    epoch: np.ndarray
+    epoch_delta: np.ndarray
+    elevation: np.ndarray
+    elevation_delta: np.ndarray
+    spin_angle: np.ndarray
+    spin_angle_delta: np.ndarray
+    energy: np.ndarray
+    energy_delta_plus: np.ndarray
+    energy_delta_minus: np.ndarray
+
+    def to_data_product_variables(self) -> list[DataProductVariable]:
+        return [
+            DataProductVariable(EPOCH_VAR_NAME, self.epoch),
+            DataProductVariable(EPOCH_DELTA_VAR_NAME, self.epoch_delta),
+            DataProductVariable(ELEVATION_VAR_NAME, self.elevation),
+            DataProductVariable(ELEVATION_DELTA_VAR_NAME, self.elevation_delta),
+            DataProductVariable(SPIN_ANGLE_VAR_NAME, self.spin_angle),
+            DataProductVariable(SPIN_ANGLE_DELTA_VAR_NAME, self.spin_angle_delta),
+            DataProductVariable(ENERGY_VAR_NAME, self.energy),
+            DataProductVariable(ENERGY_DELTA_PLUS_VAR_NAME, self.energy_delta_plus),
+            DataProductVariable(ENERGY_DELTA_MINUS_VAR_NAME, self.energy_delta_minus),
+        ]
