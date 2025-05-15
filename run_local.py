@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import shutil
 import sys
+import time
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Optional, TypeVar
@@ -78,6 +79,7 @@ from imap_l3_processing.ultra.l3.ultra_l3_dependencies import UltraL3Dependencie
 from imap_l3_processing.ultra.l3.ultra_processor import UltraProcessor
 from imap_l3_processing.utils import save_data, read_l1d_mag_data
 from scripts.codice.create_more_accurate_l3a_direct_event import create_more_accurate_l3a_direct_events_cdf
+from scripts.codice.create_more_accurate_l3a_direct_event_input import modify_l1a_priority_counts
 from scripts.hi.create_hi_full_spin_deps import create_hi_full_spin_deps
 from scripts.ultra.create_example_ultra_l1c_pset import _write_ultra_l1c_cdf_with_parents
 from scripts.ultra.create_example_ultra_l2_map import _write_ultra_l2_cdf_with_parents
@@ -126,10 +128,15 @@ def create_codice_lo_l3a_partial_densities_cdf():
 def create_codice_lo_l3a_direct_events_cdf():
     codice_lo_l2_direct_events = CodiceLoL2DirectEventData.read_from_cdf(
         get_test_instrument_team_data_path('codice/lo/imap_codice_l2_lo-direct-events_20241110_v002.cdf'))
-    codice_lo_l1a_sw_priority = CodiceLoL1aSWPriorityRates.read_from_cdf(
+
+    codice_lo_l1a_nsw_priority_path, codice_lo_l1a_sw_priority_path = modify_l1a_priority_counts(
+        get_test_instrument_team_data_path('codice/lo/imap_codice_l1a_lo-nsw-priority_20241110_v002.cdf'),
         get_test_instrument_team_data_path('codice/lo/imap_codice_l1a_lo-sw-priority_20241110_v002.cdf'))
-    codice_lo_l1a_nsw_priority = CodiceLoL1aNSWPriorityRates.read_from_cdf(
-        get_test_instrument_team_data_path('codice/lo/imap_codice_l1a_lo-nsw-priority_20241110_v002.cdf'))
+
+    time.sleep(3)  # wait for files to close before trying to read them
+
+    codice_lo_l1a_sw_priority = CodiceLoL1aSWPriorityRates.read_from_cdf(codice_lo_l1a_sw_priority_path)
+    codice_lo_l1a_nsw_priority = CodiceLoL1aNSWPriorityRates.read_from_cdf(codice_lo_l1a_nsw_priority_path)
 
     mass_coefficient_lookup = MassCoefficientLookup.read_from_csv(
         get_test_data_path('codice/imap_codice_mass-coefficient-lookup_20241110_v002.csv'))
@@ -213,11 +220,12 @@ def create_codice_lo_l3a_3d_distributions_cdf():
         start_date=datetime(2024, 11, 10),
         end_date=datetime(2025, 1, 2),
         version='v000',
-        descriptor='lo-3d-distributions'
+        descriptor='lo-3d-instrument-frame'
     )
 
     codice_lo_processor = CodiceLoProcessor(Mock(), input_metadata)
     l3a_3d_distributions = codice_lo_processor.process_l3a_3d_distribution_product(deps)
+    return save_data(l3a_3d_distributions, delete_if_present=True)
 
 
 def create_swapi_l3b_cdf(geometric_calibration_file, efficiency_calibration_file, cdf_file):
