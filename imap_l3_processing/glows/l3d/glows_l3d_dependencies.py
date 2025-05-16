@@ -2,10 +2,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from zipfile import ZipFile
 
+from imap_data_access import download, query
 from imap_data_access.processing_input import ProcessingInputCollection
 
 from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
-from imap_data_access import download, query
 
 
 @dataclass
@@ -18,14 +18,14 @@ class GlowsL3DDependencies:
     @classmethod
     def fetch_dependencies(cls, dependencies: ProcessingInputCollection):
         plasma_speed_legendre_path = dependencies.get_file_paths(source='glows',
-                                                                 descriptor='plasma-speed-Legendre-2010a')
+                                                                 descriptor='plasma-speed-2010a')
         proton_density_legendre_path = dependencies.get_file_paths(source='glows',
-                                                                   descriptor='proton-density-Legendre-2010a')
+                                                                   descriptor='proton-density-2010a')
         uv_anisotropy_path = dependencies.get_file_paths(source='glows', descriptor='uv-anisotropy-2010a')
         photoion_path = dependencies.get_file_paths(source='glows', descriptor='photoion-2010a')
         lya_path = dependencies.get_file_paths(source='glows', descriptor='lya-2010a')
         electron_density_path = dependencies.get_file_paths(source='glows', descriptor='electron-density-2010a')
-        pipeline_settings_l3bc_path = dependencies.get_file_paths(source='glows', descriptor='pipeline-settings-l3bc')
+        pipeline_settings_l3bc_path = dependencies.get_file_paths(source='glows', descriptor='pipeline-settings-l3bcd')
         external_archive = dependencies.get_file_paths(source='glows', descriptor='l3b-archive')
 
         plasma_speed_legendre = download(str(plasma_speed_legendre_path[0]))
@@ -35,6 +35,7 @@ class GlowsL3DDependencies:
         lya_2010a = download(str(lya_path[0]))
         electron_density = download(str(electron_density_path[0]))
         pipeline_settings_l3bc = download(str(pipeline_settings_l3bc_path[0]))
+
         archive_dependency = download(str(external_archive[0]))
 
         l3b_file_names = query(instrument='glows', descriptor='ion-rate-profile', version='latest')

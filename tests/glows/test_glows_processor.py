@@ -601,7 +601,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
 
         mock_deps = Mock()
         mock_deps.ancillary_files = {'pipeline_settings': get_test_instrument_team_data_path(
-            "glows/imap_glows_pipeline-settings-L3bcd_20250514_v004.json")}
+            "glows/imap_glows_pipeline-settings-l3bcd_20250514_v004.json")}
         mock_deps.l3b_file_paths = []
         mock_deps.l3c_file_paths = []
         processing_input_collection = mock_deps
@@ -638,6 +638,8 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
             call(PATH_TO_L3D_TOOLKIT / 'data_l3d_txt' / '2096_txt_file_6'),
         ])
 
+    @patch('builtins.open', new_callable=mock_open, create=False)
+    @patch('imap_l3_processing.glows.glows_processor.json.load')
     @patch('imap_l3_processing.glows.glows_processor.get_parent_file_names_from_l3d_json')
     @patch('imap_l3_processing.glows.glows_processor.convert_json_to_l3d_data_product')
     @patch('imap_l3_processing.glows.glows_processor.run')
@@ -648,18 +650,20 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
     @patch("imap_l3_processing.glows.glows_processor.GlowsL3DDependencies")
     def test_process_l3d(self, mock_l3d_dependencies_constructor, mock_create_glows_l3b_json_file_from_cdf,
                          mock_create_glows_l3c_json_file_from_cdf, mock_shutil, mock_os, mock_run,
-                         mock_convert_json_to_l3d_data_product, mock_get_parent_file_names_from_l3d_json):
+                         mock_convert_json_to_l3d_data_product, mock_get_parent_file_names_from_l3d_json, mock_json,
+                         mock_open):
 
         input_metadata = InputMetadata('glows', "l3d", datetime(2024, 10, 7, 10, 00, 00),
                                        datetime(2024, 10, 8, 10, 00, 00),
                                        'v001', descriptor='solar-params-history')
 
         input_data_collection = Mock()
+        mock_json.return_value = {'l3d_start_cr': 2092}
 
         mock_l3d_dependencies = Mock(spec=GlowsL3DDependencies)
         mock_l3d_dependencies.ancillary_files = {
             'pipeline_settings': get_test_instrument_team_data_path(
-                'glows/imap_glows_pipeline-settings-L3bcd_20250514_v004.json'),
+                'glows/imap_glows_pipeline-settings-l3bcd_20250514_v004.json'),
             'WawHelioIon': {
                 'speed': Path('path/to/speed'),
                 'p-dens': Path('path/to/p-dens'),
@@ -715,8 +719,8 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
 
         mock_shutil.move.assert_has_calls([
             call(get_test_instrument_team_data_path(
-                'glows/imap_glows_pipeline-settings-L3bcd_20250514_v004.json'),
-                PATH_TO_L3D_TOOLKIT / 'data_ancillary' / 'imap_glows_pipeline-settings-L3bcd_v003.json'),
+                'glows/imap_glows_pipeline-settings-l3bcd_20250514_v004.json'),
+                PATH_TO_L3D_TOOLKIT / 'data_ancillary' / 'imap_glows_pipeline-settings-l3bcd_v003.json'),
             call(Path('path/to/speed'),
                  PATH_TO_L3D_TOOLKIT / 'data_ancillary' / 'imap_glows_plasma-speed-2010a_v003.dat'),
             call(Path('path/to/p-dens'),
@@ -783,7 +787,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
         l3c_path_2 = get_test_data_path('glows/imap_glows_l3c_sw-profile_20100519_v011.cdf')
 
         pipeline_settings_path = get_test_instrument_team_data_path(
-            'glows/imap_glows_pipeline-settings-L3bcd_20250514_v004.json')
+            'glows/imap_glows_pipeline-settings-l3bcd_20250514_v004.json')
         speed_path = get_test_data_path('glows/imap_glows_plasma-speed-Legendre-2010a_v001.dat')
         p_dens_path = get_test_data_path('glows/imap_glows_proton-density-Legendre-2010a_v001.dat')
         uv_anis_path = get_test_data_path('glows/imap_glows_uv-anisotropy-2010a_v001.dat')
@@ -854,7 +858,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
 
         ancillary_files = {
             'pipeline_settings': get_test_instrument_team_data_path(
-                'glows/imap_glows_pipeline-settings-L3bcd_20250514_v004.json'),
+                'glows/imap_glows_pipeline-settings-l3bcd_20250514_v004.json'),
             'WawHelioIon': {
                 'speed': Path('path/to/speed'),
                 'p-dens': Path('path/to/p-dens'),
@@ -894,7 +898,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
                                                                    mock_run, mock_os, _, __):
         ancillary_files = {
             'pipeline_settings': get_test_instrument_team_data_path(
-                'glows/imap_glows_pipeline-settings-L3bcd_20250514_v004.json'),
+                'glows/imap_glows_pipeline-settings-l3bcd_20250514_v004.json'),
             'WawHelioIon': {
                 'speed': Path('path/to/speed'),
                 'p-dens': Path('path/to/p-dens'),

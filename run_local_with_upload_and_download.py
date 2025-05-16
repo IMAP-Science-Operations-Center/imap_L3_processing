@@ -25,7 +25,7 @@ if __name__ == "__main__":
                             '--start-date', '20250415', '--version', 'v002', '--descriptor',
                             'h90-ena-h-sf-sp-full-hae-4deg-6mo', '--dependency',
                             '[{"type": "science", "files": ["imap_hi_l2_h90-ena-h-sf-nsp-ram-hae-4deg-6mo_20250415_v001.cdf"]},\n{"type": "science", "files": ["imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-6mo_20250415_v001.cdf"]}]'])
-        case "glows", None:
+        case "glows", "l3b":
             subprocess.run([sys.executable, 'imap_l3_data_processor.py', '--instrument', 'glows', '--data-level', 'l3b',
                             '--start-date', '20100104', '--version', 'v004', '--dependency',
                             '[{"type": "science", "files": ["imap_glows_l3a_hist_20100104_v002.cdf"]},'
@@ -33,6 +33,21 @@ if __name__ == "__main__":
                             '{"type": "ancillary", "files":["imap_glows_WawHelioIonMP_20100101_v002.json"]},'
                             '{"type": "ancillary", "files":["imap_glows_uv-anisotropy-1CR_20100101_v001.json"]},'
                             '{"type": "ancillary", "files":["imap_glows_pipeline-settings-L3bc_20250707_v002.json"]}]'])
+        case "glows", "l3d":
+            subprocess.run([sys.executable, 'imap_l3_data_processor.py', '--instrument', 'glows', '--data-level', 'l3d',
+                            '--start-date', '20100101', '--version', 'v010', '--descriptor',
+                            'solar-hist', '--dependency',
+                            '[{"type": "science", "files": ["imap_glows_l3b_ion-rate-profile_20100422_v013.cdf"]},'
+                            '{"type": "science", "files": ["imap_glows_l3c_sw-profile_20100422_v012.cdf"]},'
+                            '{"type": "ancillary", "files": ["imap_glows_plasma-speed-2010a_20100101_v003.dat"]},'
+                            '{"type": "ancillary", "files": ["imap_glows_proton-density-2010a_20100101_v003.dat"]},'
+                            '{"type": "ancillary", "files": ["imap_glows_uv-anisotropy-2010a_20100101_v003.dat"]},'
+                            '{"type": "ancillary", "files": ["imap_glows_photoion-2010a_20100101_v003.dat"]},'
+                            '{"type": "ancillary", "files": ["imap_glows_electron-density-2010a_20100101_v003.dat"]},'
+                            '{"type": "ancillary", "files": ["imap_glows_lya-2010a_20100101_v003.dat"]},'
+                            '{"type": "ancillary", "files": ["imap_glows_l3b-archive_20100422_v011.zip"]},'
+                            '{"type": "ancillary", "files": ["imap_glows_pipeline-settings-l3bcd_20100101_v006.json"]}]'
+                            ])
         case "swapi", None:
             subprocess.run([sys.executable, 'imap_l3_data_processor.py', '--instrument', 'swapi', '--data-level', 'l3a',
                             '--descriptor', 'proton-sw', '--start-date', '20250606', '--version', 'v000',

@@ -473,7 +473,7 @@ def run_glows_l3bc_processor_and_initializer(_, mock_query):
     bad_days_list = AncillaryInput('imap_glows_bad-days-list_20100101_v001.dat')
     waw_helio_ion = AncillaryInput('imap_glows_WawHelioIonMP_20100101_v002.json')
     uv_anisotropy = AncillaryInput('imap_glows_uv-anisotropy-1cr_20250514_v002.json')
-    pipeline_settings = AncillaryInput('imap_glows_pipeline-settings-L3bcd_20250514_v004.json')
+    pipeline_settings = AncillaryInput('imap_glows_pipeline-settings-l3bcd_20250514_v004.json')
     input_collection = ProcessingInputCollection(bad_days_list, waw_helio_ion, uv_anisotropy, pipeline_settings)
 
     processor = GlowsProcessor(dependencies=input_collection, input_metadata=input_metadata)
@@ -718,12 +718,12 @@ def run_glows_l3d(mock_shutil):
             'e-dens': get_test_instrument_team_data_path('glows/imap_glows_electron-density-2010a_v003.dat'),
         },
         'pipeline_settings': get_test_instrument_team_data_path(
-            'glows/imap_glows_pipeline-settings-L3bcd_20250514_v004.json')
+            'glows/imap_glows_pipeline-settings-l3bcd_20250514_v004.json')
     }
 
     l3b_file_paths = [
-        get_test_data_path('glows/imap_glows_l3b_ion-rate-profile_20100422_v011.cdf'),
-        get_test_data_path('glows/imap_glows_l3b_ion-rate-profile_20100519_v011.cdf'),
+        get_test_data_path('glows/imap_glows_l3b_ion-rate-profile_20100422_v013.cdf'),
+        get_test_data_path('glows/imap_glows_l3b_ion-rate-profile_20100519_v013.cdf')
     ]
 
     l3c_file_paths = [

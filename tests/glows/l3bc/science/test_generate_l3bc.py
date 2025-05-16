@@ -22,7 +22,7 @@ class TestGenerateL3BC(TestCase):
             'WawHelioIonMP_parameters': get_test_data_path('glows/imap_glows_WawHelioIonMP_v002.json'),
             'bad_days_list': get_test_data_path('glows/imap_glows_bad-days-list_v001.dat'),
             'pipeline_settings': get_test_instrument_team_data_path(
-                'glows/imap_glows_pipeline-settings-L3bcd_20250514_v004.json')
+                'glows/imap_glows_pipeline-settings-l3bcd_20250514_v004.json')
         }
         l3a_data_folder_path = get_test_data_path('glows/l3a_products')
         l3a_data = []

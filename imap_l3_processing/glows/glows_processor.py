@@ -136,7 +136,7 @@ class GlowsProcessor(Processor):
         os.makedirs(PATH_TO_L3D_TOOLKIT / 'data_l3d', exist_ok=True)
         os.makedirs(PATH_TO_L3D_TOOLKIT / 'data_l3d_txt', exist_ok=True)
 
-        pipeline_settings_path = ancillary_path / 'imap_glows_pipeline-settings-L3bcd_v003.json'
+        pipeline_settings_path = ancillary_path / 'imap_glows_pipeline-settings-l3bcd_v003.json'
         shutil.move(dependencies.ancillary_files['pipeline_settings'], pipeline_settings_path)
 
         shutil.move(dependencies.ancillary_files['WawHelioIon']['speed'],
@@ -159,7 +159,7 @@ class GlowsProcessor(Processor):
 
         shutil.move(dependencies.external_files['lya_raw_data'], external_path / 'lyman_alpha_composite.nc')
 
-        with open(dependencies.ancillary_files['pipeline_settings'], "r") as fp:
+        with open(pipeline_settings_path, "r") as fp:
             pipeline_settings = json.load(fp)
             cr_to_process = int(pipeline_settings['l3d_start_cr'])
 
