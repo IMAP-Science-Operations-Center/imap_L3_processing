@@ -30,7 +30,6 @@ class GlowsL3ELoData(DataProduct):
     def convert_dat_to_glows_l3e_lo_product(cls, input_metadata: InputMetadata, file_path: Path,
                                             epoch: np.ndarray[datetime],
                                             epoch_delta: np.ndarray[timedelta], elongation: np.ndarray[int]):
-        print("About to convert dat file to Lo product!!!!!!!!!!!!!!!1")
         with open(file_path) as input_data:
             energy_line = [line for line in input_data.readlines() if line.startswith("#energy_grid")]
             energies = np.array([float(i) for i in re.findall(r"\d+.\d+", energy_line[0])])
