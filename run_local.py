@@ -571,6 +571,7 @@ def run_glows_l3e_lo_with_less_mocks(mock_spiceypy, mock_imap_data_access):
         AncillaryInput("imap_glows_speed-3d_19640117_v002.dat"),
         AncillaryInput("imap_glows_sw-eqtr-electrons_19710416_v002.dat"),
         AncillaryInput("imap_glows_tess-xyz-8_20100101_v002.dat"),
+        AncillaryInput("imap_lo_elongation-data_20100101_v001.dat"),
         ScienceInput(l3d_file)
     )
 

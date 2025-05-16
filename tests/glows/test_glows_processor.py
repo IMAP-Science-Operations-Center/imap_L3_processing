@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from copy import deepcopy
 from dataclasses import replace
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from subprocess import CalledProcessError, CompletedProcess
 from unittest.mock import patch, Mock, sentinel, call, mock_open, MagicMock
@@ -19,6 +19,7 @@ from imap_l3_processing.glows.l3bc.cannot_process_carrington_rotation_error impo
 from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDependencies
 from imap_l3_processing.glows.l3d.glows_l3d_dependencies import GlowsL3DDependencies
 from imap_l3_processing.glows.l3d.utils import PATH_TO_L3D_TOOLKIT
+from imap_l3_processing.glows.l3e.glows_l3e_dependencies import GlowsL3EDependencies
 from imap_l3_processing.glows.l3e.glows_l3e_hi_model import GlowsL3EHiData
 from imap_l3_processing.glows.l3e.glows_l3e_lo_model import GlowsL3ELoData
 from imap_l3_processing.glows.l3e.glows_l3e_ultra_model import GlowsL3EUltraData
@@ -512,25 +513,28 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
                                        'v001', descriptor='survival-probability-lo')
         dependencies = Mock()
 
-        l3e_dependencies = Mock()
+        l3e_dependencies = Mock(spec=GlowsL3EDependencies)
+        l3e_dependencies.elongation = {'2024020': 75, '2024021': 105}
         cr_number = 2092
 
-        mock_determine_repointing_numbers_for_cr.return_value = [20, 21]
+        mock_determine_repointing_numbers_for_cr.return_value = [20, 21, 22]
 
         mock_l3e_dependencies.fetch_dependencies.return_value = (l3e_dependencies, cr_number)
         epoch_1 = np.datetime64(datetime(year=2024, month=10, day=7))
         epoch_1_end_date = np.datetime64(datetime(year=2024, month=10, day=7, hour=23))
         epoch_2 = np.datetime64(datetime(year=2024, month=10, day=8))
         epoch_2_end_date = np.datetime64(datetime(year=2024, month=10, day=8, hour=23))
-        epochs = [(epoch_1, epoch_1_end_date), (epoch_2, epoch_2_end_date)]
+        epoch_3 = np.datetime64(datetime(year=2024, month=10, day=9))
+        epoch_3_end_date = np.datetime64(datetime(year=2024, month=10, day=9, hour=23))
+        epochs = [(epoch_1, epoch_1_end_date), (epoch_2, epoch_2_end_date), (epoch_3, epoch_3_end_date)]
 
         mock_get_repoint_date_range.side_effect = epochs
 
         epoch_deltas = [(end_date - epoch) / 2 for epoch, end_date in epochs]
 
         lo_call_args = [
-            ["20241007_000000", "date.100", "vx", "vy", "vz", "90.000"],
-            ["20241008_000000", "date.200", "vx", "vy", "vz", "90.000"]]
+            ["20241007_000000", "date.100", "vx", "vy", "vz", "75.000"],
+            ["20241008_000000", "date.200", "vx", "vy", "vz", "105.000"]]
 
         mock_determine_call_args.side_effect = lo_call_args
 
@@ -553,8 +557,8 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
         self.assertIsInstance(mock_determine_call_args.call_args_list[0][0][1], datetime)
 
         mock_determine_call_args.assert_has_calls([
-            call(epoch_1, epoch_1 + epoch_deltas[0], 90),
-            call(epoch_2, epoch_2 + epoch_deltas[1], 90),
+            call(epoch_1, epoch_1 + epoch_deltas[0], 75),
+            call(epoch_2, epoch_2 + epoch_deltas[1], 105)
         ])
 
         mock_run.assert_has_calls([
@@ -563,10 +567,12 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
         ])
 
         mock_convert_dat_to_glows_l3e_lo_product.assert_has_calls([
-            call(input_metadata, Path("probSur.Imap.Lo_20241007_000000_date.100_90.00.dat"), np.array([epoch_1]),
-                 np.array([epoch_deltas[0]])),
-            call(input_metadata, Path("probSur.Imap.Lo_20241008_000000_date.200_90.00.dat"), np.array([epoch_2]),
-                 np.array([epoch_deltas[1]])),
+            call(input_metadata, Path("probSur.Imap.Lo_20241007_000000_date.100_75.00.dat"),
+                 np.array([epoch_1.astype(datetime)]),
+                 np.array([epoch_deltas[0].astype(timedelta)]), 75),
+            call(input_metadata, Path("probSur.Imap.Lo_20241008_000000_date.200_105.0.dat"),
+                 np.array([epoch_2.astype(datetime)]),
+                 np.array([epoch_deltas[1].astype(timedelta)]), 105),
         ])
 
         mock_save_data.assert_has_calls([call(lo_data_1), call(lo_data_2)])
