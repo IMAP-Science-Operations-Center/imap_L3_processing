@@ -4,7 +4,7 @@ import os
 import shutil
 import sys
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Optional, TypeVar
 from unittest.mock import patch, Mock
@@ -305,15 +305,42 @@ def create_swe_product(dependencies: SweL3Dependencies) -> str:
 
 @patch("imap_l3_processing.swe.l3.science.moment_calculations.spiceypy.pxform")
 def create_swe_product_with_fake_spice(dependencies: SweL3Dependencies, mock_spice_pxform) -> str:
-    mock_spice_pxform.return_value = np.array([
-        [1, 0, 0], [0, 1, 0], [0, 0, 1]
-    ])
+    data = np.loadtxt(get_test_data_path("swe/ace_attitude.dat"), skiprows=1)
+
+    def time_to_float(t):
+        return (t - datetime(1999, 1, 1, tzinfo=timezone.utc)).total_seconds()
+
+    times = [datetime(1998, 12, 31, tzinfo=timezone.utc) + timedelta(days=row[1], seconds=row[2]) for row in data]
+    times_as_floats = [time_to_float(t) for t in times]
+
+    def fake_pxform(from_frame, to_frame, et):
+        assert from_frame == "IMAP_DPS"
+        assert to_frame == "IMAP_RTN"
+        time = spiceypy.et2datetime(et)
+        correction_factor = (datetime(2025, 6, 30) - datetime(1999, 6, 8))
+        time_in_1999 = time - correction_factor
+        r = np.interp(time_to_float(time_in_1999), times_as_floats, data[:, 4])
+        t = np.interp(time_to_float(time_in_1999), times_as_floats, data[:, 5])
+        n = np.interp(time_to_float(time_in_1999), times_as_floats, data[:, 6])
+
+        r2 = r * r
+        t2 = t * t
+        n2 = n * n
+
+        c3 = np.sqrt(r2 + t2 + n2)
+        c2 = np.sqrt(t2 + n2)
+        c1 = np.sqrt((t2 + n2) * (t2 + n2) + r2 * t2 + r2 * n2)
+
+        mat = np.array([[(-n2 - t2) / c1, 0, r / c3], [r * t / c1, -n / c2, t / c3], [r * n / c1, t / c2, n / c3]])
+        return mat
+
+    mock_spice_pxform.side_effect = fake_pxform
 
     input_metadata = InputMetadata(
         instrument='swe',
         data_level='l3',
-        start_date=datetime(2010, 1, 1),
-        end_date=datetime(2010, 1, 2),
+        start_date=datetime(2025, 6, 29),
+        end_date=datetime(2025, 7, 1),
         version='v000')
     processor = SweProcessor(Mock(), input_metadata)
     output_data = processor.calculate_products(dependencies)
