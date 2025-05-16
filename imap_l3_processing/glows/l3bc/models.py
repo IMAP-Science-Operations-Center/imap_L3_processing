@@ -37,6 +37,8 @@ class GlowsL3BIonizationRate(DataProduct):
     ph_uncert: np.ndarray[float]
     cx_uncert: np.ndarray[float]
     lat_grid_label: list[str]
+    mean_time: np.ndarray[datetime]
+    uv_anisotropy_flag: np.ndarray[int]
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [DataProductVariable("epoch", self.epoch),
@@ -51,7 +53,10 @@ class GlowsL3BIonizationRate(DataProduct):
                 DataProductVariable("sum_uncert", self.sum_uncert),
                 DataProductVariable("ph_uncert", self.ph_uncert),
                 DataProductVariable("cx_uncert", self.cx_uncert),
-                DataProductVariable("lat_grid_label", self.lat_grid_label)]
+                DataProductVariable("lat_grid_label", self.lat_grid_label),
+                DataProductVariable("mean_time", self.mean_time),
+                DataProductVariable("uv_anisotropy_flag", self.uv_anisotropy_flag),
+                ]
 
     @classmethod
     def from_instrument_team_dictionary(cls, model: dict, input_metadata: InputMetadata) -> Self:
@@ -60,7 +65,6 @@ class GlowsL3BIonizationRate(DataProduct):
         parent_file_names = []
         parent_file_names += collect_file_names(model['header']['ancillary_data_files'])
         parent_file_names += collect_file_names(model['header']['external_dependeciens'])
-        parent_file_names += collect_file_names(model['header']['l3a_input_files_name'])
         return cls(
             input_metadata=input_metadata,
             parent_file_names=parent_file_names,
@@ -77,6 +81,8 @@ class GlowsL3BIonizationRate(DataProduct):
             ph_uncert=np.array([model["ion_rate_profile"]["ph_uncert"]]),
             cx_uncert=np.array([model["ion_rate_profile"]["cx_uncert"]]),
             lat_grid_label=[f"{x}°" for x in latitude_grid],
+            mean_time=np.array([datetime.fromisoformat(model["date"])]),
+            uv_anisotropy_flag=np.array([model['uv_anisotropy_flag']])
         )
 
 

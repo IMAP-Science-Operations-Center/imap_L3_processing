@@ -628,7 +628,10 @@ def time_string_from_l3a_fn(fn):
     time_string=fn_string[0:4]+'-'+fn_string[4:6]+'-'+fn_string[6:8]+' '+fn_string[8:10]+':'+fn_string[10:12]+':'+fn_string[12:14]
     return time_string
 
-
+def time_from_l3a(fn):
+    data_l3a=read_json(fn)
+    mean_time=Time(data_l3a['start_time'])+0.5*(Time(data_l3a['end_time'])-Time(data_l3a['start_time']))
+    return mean_time
 
 def time_from_yday(yday_list):
         string=[str(int(yday_list[i,0]))+':'+str(int(yday_list[i,1]))+':'+str(int(yday_list[i,2]))+':0' for i in range(len(yday_list))]

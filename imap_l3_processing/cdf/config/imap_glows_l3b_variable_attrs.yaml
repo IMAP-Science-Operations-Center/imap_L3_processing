@@ -223,3 +223,17 @@ lat_grid_label:
   FIELDNAM: Latitude Grid Label
   FORMAT: a20
   FILLVAL: ' '
+mean_time:
+  NAME: mean_time
+  DATA_TYPE: CDF_TIME_TT2000
+  CATDESC: Mean time of lightcurve data
+  VAR_TYPE: metadata
+  FIELDNAM: Lightcurve Mean Time
+  FORMAT: ' '
+  LABLAXIS: Lightcurve mean time
+  UNITS: ns
+  VALIDMIN: 2010-01-01T00:00:00.000000000
+  VALIDMAX: 2099-12-31T00:00:00.000000000
+  FILLVAL: 9999-12-31T23:59:59.999999999
+  DISPLAY_TYPE: no_plot
+  RECORD_VARYING: NRV

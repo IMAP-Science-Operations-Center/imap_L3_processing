@@ -15,6 +15,8 @@ PATH_TO_L3D_TOOLKIT = Path(imap_l3_processing.__file__).parent / 'glows' / 'l3d'
 
 def create_glows_l3c_json_file_from_cdf(cdf_file_path: Path):
     with CDF(str(cdf_file_path)) as cdf:
+        cr_number = cdf['cr'][...][0]
+
         json_dict = {
             'header': {
                 'filename': cdf_file_path.name
@@ -26,9 +28,9 @@ def create_glows_l3c_json_file_from_cdf(cdf_file_path: Path):
             'solar_wind_ecliptic': {
                 'proton_density': float(cdf["proton_density_ecliptic"][0]),
                 'alpha_abundance': float(cdf["alpha_abundance_ecliptic"][0]),
-            }
+            },
+            'CR': float(cr_number)
         }
-        cr_number = cdf['cr'][...][0]
         version = cdf_file_path.name.split('_')[-1].split('.')[0]
         json_file_name = f'imap_glows_l3c_cr_{cr_number}_{version}.json'
 
@@ -44,14 +46,15 @@ def create_glows_l3b_json_file_from_cdf(cdf_file_path: Path):
         json_dict = {
             'header': {
                 'filename': cdf_file_path.name,
-                'l3a_input_files_name': [file for file in cdf.attrs['Parents'] if 'l3a' in file]
             },
+            'date': cdf['mean_time'][0].isoformat(),
             'CR': cr_number,
             'uv_anisotropy_factor': cdf['uv_anisotropy_factor'][0].tolist(),
             'ion_rate_profile': {
                 'lat_grid': cdf['lat_grid'][...].tolist(),
                 'ph_rate': cdf['ph_rate'][0].tolist()
-            }
+            },
+            'uv_anisotropy_flag': cdf['uv_anisotropy_flag'][0]
         }
 
         version = cdf_file_path.name.split('_')[-1].split('.')[0]
