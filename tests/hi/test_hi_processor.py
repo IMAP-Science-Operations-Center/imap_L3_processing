@@ -12,12 +12,13 @@ from imap_processing.spice.geometry import SpiceFrame
 from imap_l3_processing import spice_wrapper
 from imap_l3_processing.hi.hi_processor import HiProcessor
 from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3SpectralIndexDependencies
-from imap_l3_processing.hi.l3.hi_l3_survival_dependencies import HiL3SurvivalDependencies, \
+from imap_l3_processing.maps.hilo_l3_survival_dependencies import HiLoL3SurvivalDependencies, \
     HiL3SingleSensorFullSpinDependencies
 from imap_l3_processing.maps.map_descriptors import PixelSize, MapDescriptorParts, parse_map_descriptor
 from imap_l3_processing.maps.map_models import RectangularSpectralIndexDataProduct, IntensityMapData, \
-    RectangularIntensityMapData, RectangularCoords, RectangularIntensityDataProduct, HiGlowsL3eData, HiL1cData
-from imap_l3_processing.models import InputMetadata
+    RectangularIntensityMapData, RectangularCoords, RectangularIntensityDataProduct, GlowsL3eRectangularMapInputData, \
+    InputRectangularPointingSet
+from imap_l3_processing.models import InputMetadata, Instrument
 from tests.test_helpers import get_test_data_path
 
 
@@ -250,7 +251,7 @@ class TestHiProcessor(unittest.TestCase):
     @patch('imap_l3_processing.hi.hi_processor.RectangularSurvivalProbabilitySkyMap')
     @patch('imap_l3_processing.hi.hi_processor.RectangularSurvivalProbabilityPointingSet')
     @patch('imap_l3_processing.hi.hi_processor.combine_glows_l3e_with_l1c_pointing')
-    @patch('imap_l3_processing.hi.hi_processor.HiL3SurvivalDependencies.fetch_dependencies')
+    @patch('imap_l3_processing.hi.hi_processor.HiLoL3SurvivalDependencies.fetch_dependencies')
     def test_process_survival_probability(self, mock_fetch_dependencies, mock_combine_glows_l3e_with_l1c_pointing,
                                           mock_survival_probability_pointing_set, mock_survival_skymap, mock_save_data,
                                           mock_upload, mock_get_parent_file_names):
@@ -272,12 +273,12 @@ class TestHiProcessor(unittest.TestCase):
         l2_descriptor_parts = MapDescriptorParts(sentinel.l2_sensor, sentinel.l2_cg, sentinel.l2_survival,
                                                  sentinel.l2_spin, mock_l2_grid_size, sentinel.l2_duration,
                                                  sentinel.l2_quantity)
-        mock_fetch_dependencies.return_value = HiL3SurvivalDependencies(l2_data=input_map,
-                                                                        hi_l1c_data=sentinel.hi_l1c_data,
-                                                                        glows_l3e_data=sentinel.glows_l3e_data,
-                                                                        l2_map_descriptor_parts=l2_descriptor_parts,
-                                                                        dependency_file_paths=[Path("foo/l2_map"),
-                                                                                               Path("foo/l1c_map")], )
+        mock_fetch_dependencies.return_value = HiLoL3SurvivalDependencies(l2_data=input_map,
+                                                                          l1c_data=sentinel.l1c_data,
+                                                                          glows_l3e_data=sentinel.glows_l3e_data,
+                                                                          l2_map_descriptor_parts=l2_descriptor_parts,
+                                                                          dependency_file_paths=[Path("foo/l2_map"),
+                                                                                                 Path("foo/l1c_map")], )
 
         mock_combine_glows_l3e_with_l1c_pointing.return_value = [(sentinel.hi_l1c_1, sentinel.glows_l3e_1),
                                                                  (sentinel.hi_l1c_2, sentinel.glows_l3e_2),
@@ -315,9 +316,9 @@ class TestHiProcessor(unittest.TestCase):
         processor = HiProcessor(sentinel.dependencies, input_metadata)
         processor.process()
 
-        mock_fetch_dependencies.assert_called_once_with(sentinel.dependencies)
+        mock_fetch_dependencies.assert_called_once_with(sentinel.dependencies, Instrument.IMAP_HI)
 
-        mock_combine_glows_l3e_with_l1c_pointing.assert_called_once_with(sentinel.glows_l3e_data, sentinel.hi_l1c_data)
+        mock_combine_glows_l3e_with_l1c_pointing.assert_called_once_with(sentinel.glows_l3e_data, sentinel.l1c_data)
 
         mock_survival_probability_pointing_set.assert_has_calls([
             call(sentinel.hi_l1c_1, sentinel.l2_sensor, sentinel.l2_spin, sentinel.glows_l3e_1,
@@ -496,7 +497,7 @@ class TestHiProcessor(unittest.TestCase):
         l2_intensity_map = _create_h1_l3_data()
 
         descriptor = parse_map_descriptor("h90-ena-h-sf-nsp-ram-hae-4deg-3mo")
-        survival_dependencies = HiL3SurvivalDependencies(l2_intensity_map, l1c_psets, l3e_psets, descriptor)
+        survival_dependencies = HiLoL3SurvivalDependencies(l2_intensity_map, l1c_psets, l3e_psets, descriptor)
 
         processor = HiProcessor(sentinel.dependencies, sentinel.input_metadata)
         output_map = processor.process_survival_probabilities(survival_dependencies)
@@ -505,18 +506,18 @@ class TestHiProcessor(unittest.TestCase):
         np.testing.assert_equal(output_map.intensity_map_data.ena_intensity[0, 0, 80, :], np.full(45, 2.0))
 
 
-def create_l1c_pset(epoch: datetime) -> HiL1cData:
+def create_l1c_pset(epoch: datetime) -> InputRectangularPointingSet:
     epoch_j2000 = np.array([spice_wrapper.spice.datetime2et(epoch)]) * 1e9
     energy_steps = np.array([1])
     exposures = np.full(shape=(1, energy_steps.shape[0], 3600), fill_value=1.)
-    return HiL1cData(epoch, epoch_j2000, exposures, energy_steps)
+    return InputRectangularPointingSet(epoch, epoch_j2000, exposures, energy_steps)
 
 
-def create_l3e_pset(epoch) -> HiGlowsL3eData:
+def create_l3e_pset(epoch) -> GlowsL3eRectangularMapInputData:
     energy_steps = np.array([0.5, 5.0, 12.0])
     spin_angle = np.arange(0, 360)
     sp = np.full(shape=(1, len(energy_steps), len(spin_angle)), fill_value=0.5)
-    return HiGlowsL3eData(epoch, energy_steps, spin_angle, sp)
+    return GlowsL3eRectangularMapInputData(epoch, energy_steps, spin_angle, sp)
 
 
 def _create_h1_l3_data(epoch=None, lon=None, lat=None, energy=None, energy_delta=None, flux=None,

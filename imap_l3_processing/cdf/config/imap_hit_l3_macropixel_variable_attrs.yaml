@@ -938,7 +938,7 @@ pitch_angle:
   FIELDNAM: Pitch Angle
   FORMAT: F15.3
   LABLAXIS: Pitch angle
-  UNITS: Degrees
+  UNITS: degrees
   VALIDMIN: 0
   VALIDMAX: 180
   FILLVAL: -1.0000E+31
@@ -953,7 +953,7 @@ pitch_angle_delta:
   FIELDNAM: Pitch Angle Delta
   FORMAT: F15.3
   LABLAXIS: Pitch angle delta
-  UNITS: Degrees
+  UNITS: degrees
   VALIDMIN: 0
   VALIDMAX: 180
   FILLVAL: -1.0000E+31
@@ -966,7 +966,7 @@ gyrophase:
   FIELDNAM: Gyrophase
   FORMAT: F15.3
   LABLAXIS: Gyrophase
-  UNITS: Degrees
+  UNITS: degrees
   VALIDMIN: 0
   VALIDMAX: 360
   FILLVAL: -1.0000E+31
@@ -981,7 +981,7 @@ gyrophase_delta:
   FIELDNAM: Gyrophase Delta
   FORMAT: F15.3
   LABLAXIS: Gyrophase delta
-  UNITS: Degrees
+  UNITS: degrees
   VALIDMIN: 0
   VALIDMAX: 360
   FILLVAL: -1.0000E+31
@@ -999,7 +999,7 @@ measurement_pitch_angle:
   VARIABLE_PURPOSE: ' '
   FORMAT: F15.3
   LABLAXIS: Pitch angle
-  UNITS: Degrees
+  UNITS: degrees
   VALIDMIN: 0
   VALIDMAX: 180
   FILLVAL: -1.0000E+31
@@ -1017,7 +1017,7 @@ measurement_gyrophase:
   VARIABLE_PURPOSE: ' '
   FORMAT: F15.3
   LABLAXIS: Gyrophase
-  UNITS: Degrees
+  UNITS: degrees
   VALIDMIN: 0
   VALIDMAX: 360
   FILLVAL: -1.0000E+31

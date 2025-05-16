@@ -6,7 +6,7 @@ files_to_upload = [
     "imap_swapi_alpha-density-temperature-lut_20240920_v000.dat",
     "imap_swapi_clock-angle-and-flow-deflection-lut_20240918_v000.dat",
     "imap_swapi_density-of-neutral-helium-lut_20241023_v000.dat",
-    "imap_swapi_density-temperature-lut_20240905_v000.dat",
+    "imap_swapi_proton-density-temperature-lut_20240905_v000.dat",
     "imap_swapi_efficiency-lut_20241020_v000.dat",
     "imap_swapi_energy-gf-lut_20240923_v000.dat",
     "imap_swapi_instrument-response-lut_20241023_v000.zip",

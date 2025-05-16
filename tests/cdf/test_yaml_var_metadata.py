@@ -85,6 +85,13 @@ class TestCdfUtils(TestCase):
                 self.assertIn("DATA_TYPE", variable.keys(), f'{variable_key} requires "DATA_TYPE"')
                 self.assertIn("FILLVAL", variable.keys(), f'{variable_key} requires "FILLVAL"')
 
+    def test_all_angle_variables_in_degrees(self):
+        for filename, yaml_data, variable_key, variable in self.test_cases_variable:
+            if "angle" in variable_key and "UNITS" in variable and "deg" in variable["UNITS"].lower():
+                with self.subTest(f"{filename}:{variable_key}"):
+                    self.assertIn("UNITS", variable.keys(), f'{variable_key}: Expected units for angle variable ')
+                    self.assertEqual("degrees", variable["UNITS"])
+
     def test_variable_fill_value_matches_data_type(self):
         for filename, yaml_data, variable_key, variable in self.test_cases_variable:
             with self.subTest(f"{filename}:{variable_key}"):

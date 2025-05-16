@@ -7,7 +7,7 @@ import numpy as np
 from spacepy import pycdf
 from spacepy.pycdf import CDF
 
-from imap_l3_processing.hi.l3.utils import read_hi_l1c_data, read_glows_l3e_data
+from imap_l3_processing.hi.l3.utils import read_l1c_rectangular_pointing_set_data, read_glows_l3e_data
 from tests.test_helpers import get_test_data_folder
 
 
@@ -37,7 +37,7 @@ class TestUtils(unittest.TestCase):
 
         for path in [pathname, Path(pathname)]:
             with self.subTest(path=path):
-                result = read_hi_l1c_data(path)
+                result = read_l1c_rectangular_pointing_set_data(path)
                 self.assertEqual(epoch[0], result.epoch)
                 self.assertEqual([43264184000000], result.epoch_j2000)
                 np.testing.assert_array_equal(exposure_times, result.exposure_times)
@@ -45,7 +45,7 @@ class TestUtils(unittest.TestCase):
 
     def test_read_hi_l1c_fill_values_create_nan_data(self):
         path = get_test_data_folder() / 'hi' / 'l1c_pointing_set_with_fill_values.cdf'
-        result = read_hi_l1c_data(path)
+        result = read_l1c_rectangular_pointing_set_data(path)
 
         with CDF(str(path)) as cdf:
             self.assertEqual(result.epoch, cdf['epoch'][0])

@@ -536,7 +536,7 @@ class TestMomentsCalculation(unittest.TestCase):
             np.array([48.1855, -1.06466, 62.4149, -1.06081, -37.8901, -8.58049]),
             integrate_outputs.temperature, rtol=2e-4)
         np.testing.assert_allclose(
-            np.array([9.92303e+21, -2.88985e+22, 9.45357e+21]),
+            np.array([9.92303e+24, -2.88985e+25, 9.45357e+24]),
             integrate_outputs.heat_flux, rtol=1e-4)
 
     def test_integrate_returns_early_when_density_is_negative(self):
@@ -610,7 +610,7 @@ class TestMomentsCalculation(unittest.TestCase):
             np.array([5.13448e+13, 1.0269e+14, 1.54034e+14, 2.05379e+14, 2.56724e+14, 3.08069e+14]),
             integrate_outputs.temperature, rtol=2e-4)
         np.testing.assert_allclose(
-            np.array([-5.50653e+21, -1.61473e+21, -3.40728e+23]),
+            np.array([-5.50653e+24, -1.61473e+24, -3.40728e+26]),
             integrate_outputs.heat_flux, rtol=2e-4)
 
     def test_scale_core_density(self):

@@ -136,44 +136,50 @@ class GlowsProcessor(Processor):
         os.makedirs(PATH_TO_L3D_TOOLKIT / 'data_l3d', exist_ok=True)
         os.makedirs(PATH_TO_L3D_TOOLKIT / 'data_l3d_txt', exist_ok=True)
 
-        shutil.move(dependencies.ancillary_files['pipeline_settings'],
-                    ancillary_path / 'imap_glows_pipeline-settings-L3bc_v001.json')
+        pipeline_settings_path = ancillary_path / 'imap_glows_pipeline-settings-L3bcd_v003.json'
+        shutil.move(dependencies.ancillary_files['pipeline_settings'], pipeline_settings_path)
 
         shutil.move(dependencies.ancillary_files['WawHelioIon']['speed'],
-                    ancillary_path / 'imap_glows_plasma-speed-Legendre-2010a_v001.dat')
+                    ancillary_path / 'imap_glows_plasma-speed-2010a_v003.dat')
 
         shutil.move(dependencies.ancillary_files['WawHelioIon']['p-dens'],
-                    ancillary_path / 'imap_glows_proton-density-Legendre-2010a_v001.dat')
+                    ancillary_path / 'imap_glows_proton-density-2010a_v003.dat')
 
         shutil.move(dependencies.ancillary_files['WawHelioIon']['uv-anis'],
-                    ancillary_path / 'imap_glows_uv-anisotropy-2010a_v001.dat')
+                    ancillary_path / 'imap_glows_uv-anisotropy-2010a_v003.dat')
 
         shutil.move(dependencies.ancillary_files['WawHelioIon']['phion'],
-                    ancillary_path / 'imap_glows_photoion-2010a_v001.dat')
+                    ancillary_path / 'imap_glows_photoion-2010a_v003.dat')
 
         shutil.move(dependencies.ancillary_files['WawHelioIon']['lya'],
-                    ancillary_path / 'imap_glows_lya-2010a_v001.dat')
+                    ancillary_path / 'imap_glows_lya-2010a_v003.dat')
 
         shutil.move(dependencies.ancillary_files['WawHelioIon']['e-dens'],
-                    ancillary_path / 'imap_glows_electron-density-2010a_v001.dat')
+                    ancillary_path / 'imap_glows_electron-density-2010a_v003.dat')
 
         shutil.move(dependencies.external_files['lya_raw_data'], external_path / 'lyman_alpha_composite.nc')
+
+        with open(dependencies.ancillary_files['pipeline_settings'], "r") as fp:
+            pipeline_settings = json.load(fp)
+            cr_to_process = int(pipeline_settings['l3d_start_cr'])
 
         last_processed_cr = None
         try:
             while True:
-                output: subprocess.CompletedProcess = run([sys.executable, './generate_l3d.py'],
+                output: subprocess.CompletedProcess = run([sys.executable, './generate_l3d.py', f'{cr_to_process}'],
                                                           cwd=str(PATH_TO_L3D_TOOLKIT),
                                                           check=True,
                                                           capture_output=True, text=True)
                 if output.stdout:
                     last_processed_cr = int(output.stdout.split('= ')[-1])
+
+                cr_to_process += 1
         except subprocess.CalledProcessError as e:
-            if 'L3d not generated: there is not enough L3bc data to interpolate' not in e.stderr:
+            if 'L3d not generated: there is not enough L3b data to interpolate' not in e.stderr:
                 raise Exception(e.stderr) from e
 
         if last_processed_cr:
-            file_name = f'imap_glows_l3d_cr_{last_processed_cr}_v00.json'
+            file_name = f'imap_glows_l3d_solar-params-history_19470303-cr0{last_processed_cr}_v00.json'
 
             parent_file_names = get_parent_file_names_from_l3d_json(PATH_TO_L3D_TOOLKIT / 'data_l3d')
 

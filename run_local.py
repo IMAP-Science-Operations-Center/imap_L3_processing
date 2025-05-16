@@ -40,8 +40,6 @@ from imap_l3_processing.glows.l3e.glows_l3e_dependencies import GlowsL3EDependen
 from imap_l3_processing.hi.hi_processor import HiProcessor
 from imap_l3_processing.hi.l3.hi_l3_combined_sensor_dependencies import HiL3CombinedMapDependencies
 from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3SpectralIndexDependencies
-from imap_l3_processing.hi.l3.hi_l3_survival_dependencies import HiL3SurvivalDependencies, \
-    HiL3SingleSensorFullSpinDependencies
 from imap_l3_processing.hit.l3.hit_l3_sectored_dependencies import HITL3SectoredDependencies
 from imap_l3_processing.hit.l3.hit_processor import HitProcessor
 from imap_l3_processing.hit.l3.models import HitL1Data
@@ -53,6 +51,8 @@ from imap_l3_processing.hit.l3.pha.science.range_fit_lookup import RangeFitLooku
 from imap_l3_processing.hit.l3.utils import read_l2_hit_data
 from imap_l3_processing.lo.l3.lo_l3_spectral_fit_dependencies import LoL3SpectralFitDependencies
 from imap_l3_processing.lo.lo_processor import perform_spectral_fit
+from imap_l3_processing.maps.hilo_l3_survival_dependencies import HiLoL3SurvivalDependencies, \
+    HiL3SingleSensorFullSpinDependencies
 from imap_l3_processing.maps.map_models import RectangularSpectralIndexDataProduct, RectangularIntensityDataProduct, \
     combine_rectangular_intensity_map_data, HealPixIntensityMapData, RectangularIntensityMapData
 from imap_l3_processing.models import InputMetadata
@@ -472,8 +472,8 @@ def run_glows_l3bc_processor_and_initializer(_, mock_query):
 
     bad_days_list = AncillaryInput('imap_glows_bad-days-list_20100101_v001.dat')
     waw_helio_ion = AncillaryInput('imap_glows_WawHelioIonMP_20100101_v002.json')
-    uv_anisotropy = AncillaryInput('imap_glows_uv-anisotropy-1CR_20100101_v001.json')
-    pipeline_settings = AncillaryInput('imap_glows_pipeline-settings-L3bc_20250707_v002.json')
+    uv_anisotropy = AncillaryInput('imap_glows_uv-anisotropy-1cr_20250514_v002.json')
+    pipeline_settings = AncillaryInput('imap_glows_pipeline-settings-L3bcd_20250514_v004.json')
     input_collection = ProcessingInputCollection(bad_days_list, waw_helio_ion, uv_anisotropy, pipeline_settings)
 
     processor = GlowsProcessor(dependencies=input_collection, input_metadata=input_metadata)
@@ -710,25 +710,25 @@ def run_glows_l3d(mock_shutil):
 
     ancillary_files = {
         'WawHelioIon': {
-            'speed': get_test_data_path('glows/imap_glows_plasma-speed-Legendre-2010a_v001.dat'),
-            'p-dens': get_test_data_path('glows/imap_glows_proton-density-Legendre-2010a_v001.dat'),
-            'uv-anis': get_test_data_path('glows/imap_glows_uv-anisotropy-2010a_v001.dat'),
-            'phion': get_test_data_path('glows/imap_glows_photoion-2010a_v001.dat'),
-            'lya': get_test_data_path('glows/imap_glows_lya-2010a_v001.dat'),
-            'e-dens': get_test_data_path('glows/imap_glows_electron-density-2010a_v001.dat'),
+            'speed': get_test_instrument_team_data_path('glows/imap_glows_plasma-speed-2010a_v003.dat'),
+            'p-dens': get_test_instrument_team_data_path('glows/imap_glows_proton-density-2010a_v003.dat'),
+            'uv-anis': get_test_instrument_team_data_path('glows/imap_glows_uv-anisotropy-2010a_v003.dat'),
+            'phion': get_test_instrument_team_data_path('glows/imap_glows_photoion-2010a_v003.dat'),
+            'lya': get_test_instrument_team_data_path('glows/imap_glows_lya-2010a_v003.dat'),
+            'e-dens': get_test_instrument_team_data_path('glows/imap_glows_electron-density-2010a_v003.dat'),
         },
         'pipeline_settings': get_test_instrument_team_data_path(
-            'glows/imap_glows_pipeline-settings-L3bc_20250707_v002.json')
+            'glows/imap_glows_pipeline-settings-L3bcd_20250514_v004.json')
     }
 
     l3b_file_paths = [
         get_test_data_path('glows/imap_glows_l3b_ion-rate-profile_20100422_v011.cdf'),
-        get_test_data_path('glows/imap_glows_l3b_ion-rate-profile_20100519_v011.cdf')
+        get_test_data_path('glows/imap_glows_l3b_ion-rate-profile_20100519_v011.cdf'),
     ]
 
     l3c_file_paths = [
         get_test_data_path('glows/imap_glows_l3c_sw-profile_20100422_v011.cdf'),
-        get_test_data_path('glows/imap_glows_l3c_sw-profile_20100519_v011.cdf')
+        get_test_data_path('glows/imap_glows_l3c_sw-profile_20100519_v011.cdf'),
     ]
 
     l3d_dependencies: GlowsL3DDependencies = GlowsL3DDependencies(external_files=external_files,
@@ -738,6 +738,8 @@ def run_glows_l3d(mock_shutil):
 
     processor = GlowsProcessor(ProcessingInputCollection(), input_metadata)
     data_product, l3d_txt_paths, last_processed_cr = processor.process_l3d(l3d_dependencies)
+    print("l3d_txts:")
+    [print(txt_path) for txt_path in l3d_txt_paths]
     print(save_data(data_product, cr_number=last_processed_cr))
 
 
@@ -800,7 +802,7 @@ def read_glows_survival_probability_data_from_cdf() -> tuple[np.ndarray, np.ndar
     return l3e["probability_of_survival"][...][:, 0], l3e["probability_of_survival"][...][:, 1]
 
 
-def create_hi_l3_survival_corrected_cdf(survival_dependencies: HiL3SurvivalDependencies, spacing_degree: int) -> str:
+def create_hi_l3_survival_corrected_cdf(survival_dependencies: HiLoL3SurvivalDependencies, spacing_degree: int) -> str:
     input_metadata = InputMetadata(instrument="hi",
                                    data_level="l3",
                                    start_date=datetime(2025, 4, 9),
@@ -897,7 +899,7 @@ if __name__ == "__main__":
     if "swapi" in sys.argv:
         if "l3a" in sys.argv:
             paths = create_swapi_l3a_cdf(
-                "tests/test_data/swapi/imap_swapi_density-temperature-lut_20240905_v000.dat",
+                "tests/test_data/swapi/imap_swapi_proton-density-temperature-lut_20240905_v000.dat",
                 "tests/test_data/swapi/imap_swapi_alpha-density-temperature-lut_20240920_v000.dat",
                 "tests/test_data/swapi/imap_swapi_clock-angle-and-flow-deflection-lut_20240918_v000.dat",
                 "tests/test_data/swapi/imap_swapi_energy-gf-lut_20240923_v000.dat",
@@ -1000,7 +1002,7 @@ if __name__ == "__main__":
         hi_l1c_paths = list(hi_l1c_folder.iterdir())
 
         if do_all or "survival-probability" in sys.argv:
-            survival_dependencies = HiL3SurvivalDependencies.from_file_paths(
+            survival_dependencies = HiLoL3SurvivalDependencies.from_file_paths(
                 map_file_path=l2_ram_90_map_path,
                 hi_l1c_paths=hi_l1c_paths,
                 glows_l3e_paths=glows_l3_paths,
@@ -1014,13 +1016,13 @@ if __name__ == "__main__":
             print(create_hi_spectral_index_cdf(dependencies))
 
         if do_all or "full-spin" in sys.argv:
-            ram_survival_dependencies = HiL3SurvivalDependencies.from_file_paths(
+            ram_survival_dependencies = HiLoL3SurvivalDependencies.from_file_paths(
                 map_file_path=l2_ram_90_map_path,
                 hi_l1c_paths=hi_l1c_paths,
                 glows_l3e_paths=glows_l3_paths,
                 l2_descriptor="h90-ena-h-sf-nsp-ram-hae-4deg-6mo")
 
-            antiram_survival_dependencies = HiL3SurvivalDependencies.from_file_paths(
+            antiram_survival_dependencies = HiLoL3SurvivalDependencies.from_file_paths(
                 map_file_path=l2_antiram_90_map_path,
                 hi_l1c_paths=hi_l1c_paths,
                 glows_l3e_paths=glows_l3_paths,

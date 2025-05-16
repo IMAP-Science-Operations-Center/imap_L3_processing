@@ -3,7 +3,7 @@ from imap_processing.spice.geometry import SpiceFrame
 
 from imap_l3_processing.hi.l3.hi_l3_combined_sensor_dependencies import HiL3CombinedMapDependencies
 from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3SpectralIndexDependencies
-from imap_l3_processing.hi.l3.hi_l3_survival_dependencies import HiL3SurvivalDependencies, \
+from imap_l3_processing.maps.hilo_l3_survival_dependencies import HiLoL3SurvivalDependencies, \
     HiL3SingleSensorFullSpinDependencies
 from imap_l3_processing.maps.map_descriptors import parse_map_descriptor, MapQuantity, MapDescriptorParts, \
     SurvivalCorrection, \
@@ -14,6 +14,7 @@ from imap_l3_processing.maps.map_models import RectangularSpectralIndexDataProdu
 from imap_l3_processing.maps.rectangular_survival_probability import RectangularSurvivalProbabilityPointingSet, \
     RectangularSurvivalProbabilitySkyMap
 from imap_l3_processing.maps.spectral_fit import fit_spectral_index_map
+from imap_l3_processing.models import Instrument
 from imap_l3_processing.processor import Processor
 from imap_l3_processing.utils import save_data, combine_glows_l3e_with_l1c_pointing
 
@@ -35,8 +36,8 @@ class HiProcessor(Processor):
                                     sensor=Sensor.Hi90 | Sensor.Hi45,
                                     spin_phase=SpinPhase.RamOnly | SpinPhase.AntiRamOnly,
                                     duration=Duration.SixMonths):
-                hi_l3_survival_probabilities_dependencies = HiL3SurvivalDependencies.fetch_dependencies(
-                    self.dependencies)
+                hi_l3_survival_probabilities_dependencies = HiLoL3SurvivalDependencies.fetch_dependencies(
+                    self.dependencies, Instrument.IMAP_HI)
                 data_product = RectangularIntensityDataProduct(
                     data=self.process_survival_probabilities(hi_l3_survival_probabilities_dependencies),
                     input_metadata=self.input_metadata,
@@ -90,12 +91,12 @@ class HiProcessor(Processor):
             coords=hi_l3_spectral_fit_dependencies.map_data.coords
         )
 
-    def process_survival_probabilities(self, hi_survival_probabilities_dependencies: HiL3SurvivalDependencies) \
+    def process_survival_probabilities(self, hi_survival_probabilities_dependencies: HiLoL3SurvivalDependencies) \
             -> RectangularIntensityMapData:
         l2_descriptor_parts = hi_survival_probabilities_dependencies.l2_map_descriptor_parts
 
         combined_glows_hi = combine_glows_l3e_with_l1c_pointing(hi_survival_probabilities_dependencies.glows_l3e_data,
-                                                                hi_survival_probabilities_dependencies.hi_l1c_data)
+                                                                hi_survival_probabilities_dependencies.l1c_data)
         pointing_sets = []
         input_data = hi_survival_probabilities_dependencies.l2_data.intensity_map_data
 

@@ -56,7 +56,7 @@ spin_angle:
   FIELDNAM: Spin Angle
   FORMAT: g9.3
   LABLAXIS: spin angle
-  UNITS: degree
+  UNITS: degrees
   VALIDMIN: 0
   VALIDMAX: 360
   FILLVAL: -1.0000E+31

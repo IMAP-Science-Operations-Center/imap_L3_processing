@@ -5,17 +5,22 @@ Created on Tue Mar 11 16:12:45 2025
 
 @author: hafijulislam
 """
+import shutil
+import sys
+from datetime import datetime
+
 import matplotlib.pyplot as plt
+import numpy as np
+import xarray as xr
 from matplotlib.colors import LogNorm
 from pyhdf.HDF import *
 from pyhdf.SD import SD, SDC
-import numpy as np
-import xarray as xr
-from datetime import datetime, timedelta
-from spacepy.pycdf import CDF
 # import pyhdf.SD
 from pyhdf.VS import *
-import shutil
+from spacepy.pycdf import CDF
+
+SD
+VS
 
 
 def decompressed_counts(cem_count: int) -> int:
@@ -207,7 +212,6 @@ def get_epochs_from_output_file(filepath: str) -> np.array:
 
 initial_epoch = datetime.fromisoformat("2025-06-30T12:00:00")
 initial_epoch_in_met_time = 488980803.0
-truncate_to = 10
 # File path to the HDF4 file
 file_path = "instrument_team_data/swe/ACE_LV1_1999-159.swepam.hdf"
 xarray_data = hdf4_to_xarray(file_path)
@@ -244,10 +248,25 @@ for i in range(len(phase)):
 
 time_between_data_points = 128 * 1e6
 
+if len(sys.argv) > 1:
+    truncate_to = int(sys.argv[1])
+else:
+    truncate_to = len(epochs)
 settle_duration_needed_to_fill_time_between_points = time_between_data_points / (20 * 30) - sample_time_microseconds
-
 output_path = "tests/test_data/swe/imap_swe_l1b_sci_20250630_v003.cdf"
-shutil.copy("imap_swe_l1b_sci_20240510_v002.cdf", output_path)
+shutil.copy("tests/test_data/swe/imap_swe_l1b_sci_20240510_v002.cdf", output_path)
+
+energy = np.array([2.55714286, 3.65142857, 5.16, 7.30571429,
+                   10.32857143, 14.34285714, 19.95714286, 27.42857143,
+                   38.37142857, 52.82857143, 73.32857143, 102.0,
+                   142.14285714, 196.57142857, 272., 372.71428571,
+                   519.0, 712.57142857, 987.14285714, 1370.0])
+
+esa_energy = np.full((truncate_to, 20, 30), np.nan)
+
+esa_energy[:] = energy[np.newaxis, :, np.newaxis]
+
+energy = energy[:, np.newaxis, np.newaxis]
 with CDF(output_path, readonly=False) as cdf:
     del cdf['science_data']
     del cdf['acquisition_time']
@@ -255,10 +274,14 @@ with CDF(output_path, readonly=False) as cdf:
     del cdf['settle_duration']
     del cdf['esa_step']
     cdf['epoch'] = epochs[:truncate_to]
+    cdf['epoch'].attrs['VAR_TYPE'] = 'support_data'
+    del cdf['epoch'].attrs['DEPEND_0']
     cdf['science_data'] = rates[:truncate_to, :, :, ::-1]
     cdf['acquisition_time'] = np.array(acquisition_time[:truncate_to])
     cdf['acq_duration'] = np.full((truncate_to, 20, 30), sample_time_microseconds)
     cdf['settle_duration'] = np.full((truncate_to, 4), round(settle_duration_needed_to_fill_time_between_points))
     cdf['esa_table_num'] = np.full((truncate_to, 4), 0)
+    cdf.new('esa_energy', esa_energy)
     cdf.new('esa_step', np.arange(20), recVary=False)
+    cdf['esa_energy'].attrs['VAR_TYPE'] = 'support_data'
     cdf['esa_step'].attrs['VAR_TYPE'] = 'support_data'

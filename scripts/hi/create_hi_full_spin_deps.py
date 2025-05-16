@@ -6,7 +6,7 @@ import numpy as np
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.hi.hi_processor import HiProcessor
-from imap_l3_processing.hi.l3.hi_l3_survival_dependencies import HiL3SurvivalDependencies
+from imap_l3_processing.maps.hilo_l3_survival_dependencies import HiLoL3SurvivalDependencies
 from imap_l3_processing.maps.map_models import RectangularIntensityDataProduct
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.utils import save_data
@@ -36,11 +36,11 @@ def create_hi_full_spin_deps(
     with CDF(str(original_full_spin_map_path)) as cdf:
         original_intensity = cdf["ena_intensity"][...]
 
-    ramified_map_deps = HiL3SurvivalDependencies.from_file_paths(
+    ramified_map_deps = HiLoL3SurvivalDependencies.from_file_paths(
         original_full_spin_map_path, l1c_files, glows_files,
         f"h{sensor}-ena-h-sf-nsp-ram-hae-4deg-6mo")
 
-    antiramified_map_deps = HiL3SurvivalDependencies.from_file_paths(
+    antiramified_map_deps = HiLoL3SurvivalDependencies.from_file_paths(
         original_full_spin_map_path, l1c_files,
         glows_files,
         f"h{sensor}-ena-h-sf-nsp-anti-hae-4deg-6mo")

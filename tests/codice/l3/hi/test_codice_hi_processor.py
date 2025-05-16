@@ -67,28 +67,57 @@ class TestCodiceHiProcessor(unittest.TestCase):
         self.assertEqual("Unknown data level for CoDICE: L2a", str(context.exception))
 
     def test_process_l3a_returns_data_product(self):
+        rng = np.random.default_rng()
+
         epoch = np.array([datetime(2025, 1, 1), datetime(2025, 1, 1)])
         epoch_delta_plus = np.full(epoch.shape, 1_000_000)
 
+        num_epochs = len(epoch)
+        event_buffer_size = 10
+
         l2_priority_events, (reshaped_l2_data_quality,
                              reshaped_l2_multi_flag,
-                             reshaped_l2_num_events,
+                             _,
                              reshaped_l2_ssd_energy,
                              reshaped_l2_ssd_energy_plus,
                              reshaped_l2_ssd_energy_minus,
                              reshaped_l2_ssd_id,
                              reshaped_l2_spin_angle,
                              reshaped_l2_spin_number,
-                             reshaped_l2_time_of_flight,
-                             reshaped_l2_type) = self._create_priority_events()
+                             _,
+                             reshaped_l2_type) = self._create_priority_events(num_epochs, event_buffer_size)
+
+        expected_estimated_mass = np.full((num_epochs, CODICE_HI_NUM_L2_PRIORITIES, event_buffer_size), np.nan)
+        expected_energy_per_nuc = np.full((num_epochs, CODICE_HI_NUM_L2_PRIORITIES, event_buffer_size), np.nan)
+
+        reshaped_l2_num_events = np.empty((num_epochs, CODICE_HI_NUM_L2_PRIORITIES))
+        reshaped_l2_time_of_flight = np.empty((num_epochs, CODICE_HI_NUM_L2_PRIORITIES, event_buffer_size))
+        for priority_index, priority_event in enumerate(l2_priority_events):
+            for epoch_i in range(num_epochs):
+                number_of_events = rng.integers(0, 10)
+                priority_event.number_of_events[epoch_i] = number_of_events
+
+                time_of_flight_for_valid_events = rng.integers(1, 25, size=number_of_events)
+                e_per_nuc_for_valid_events = time_of_flight_for_valid_events * 100
+                ssd_energy_for_valid_events = priority_event.ssd_energy[epoch_i, :number_of_events]
+                estimated_mass_for_valid_events = ssd_energy_for_valid_events / e_per_nuc_for_valid_events
+
+                time_of_flight = np.full(event_buffer_size, 65535)
+                time_of_flight[:number_of_events] = time_of_flight_for_valid_events
+
+                priority_event.time_of_flight[epoch_i] = time_of_flight
+
+                expected_energy_per_nuc[epoch_i, priority_index, :number_of_events] = e_per_nuc_for_valid_events
+                expected_estimated_mass[epoch_i, priority_index, :number_of_events] = estimated_mass_for_valid_events
+
+                reshaped_l2_num_events[epoch_i, priority_index] = number_of_events
+                reshaped_l2_time_of_flight[epoch_i, priority_index, :] = time_of_flight
 
         l2_data = CodiceL2HiData(epoch, epoch_delta_plus, l2_priority_events)
         multiply_by_100_energy_per_nuc_lookup = TOFLookup(
             {i: EnergyPerNuc(i * 10, i * 100, i * 1000) for i in np.arange(1, 25)})
         dependencies = CodiceHiL3aDirectEventsDependencies(tof_lookup=multiply_by_100_energy_per_nuc_lookup,
                                                            codice_l2_hi_data=l2_data)
-
-        expected_energy_per_nuc = reshaped_l2_time_of_flight * 100
 
         processor = CodiceHiProcessor(Mock(), Mock())
         codice_direct_event_product = processor.process_l3a_direct_event(dependencies)
@@ -110,8 +139,7 @@ class TestCodiceHiProcessor(unittest.TestCase):
         np.testing.assert_array_equal(codice_direct_event_product.tof, reshaped_l2_time_of_flight)
         np.testing.assert_array_equal(codice_direct_event_product.type, reshaped_l2_type)
 
-        np.testing.assert_array_equal(codice_direct_event_product.ssd_energy / expected_energy_per_nuc,
-                                      codice_direct_event_product.estimated_mass)
+        np.testing.assert_array_equal(codice_direct_event_product.estimated_mass, expected_estimated_mass)
 
         np.testing.assert_array_equal(expected_energy_per_nuc, codice_direct_event_product.energy_per_nuc)
 
@@ -296,9 +324,7 @@ class TestCodiceHiProcessor(unittest.TestCase):
         np.testing.assert_array_equal(codice_hi_data_product.fe_intensity_by_pitch_angle_and_gyrophase,
                                       expected_fe_intensity_binned_by_pa_and_gyro)
 
-    def _create_priority_events(self):
-        num_epochs = 2
-        event_buffer_size = 102
+    def _create_priority_events(self, num_epochs, event_buffer_size):
 
         number_of_event_data_points = CODICE_HI_NUM_L2_PRIORITIES * num_epochs * event_buffer_size
 

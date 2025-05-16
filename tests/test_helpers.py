@@ -91,7 +91,8 @@ def assert_dict_close(x, y, rtol=1e-7, path=None):
         path = []
     path_str = " > ".join(path)
     if isinstance(x, dict) and isinstance(y, dict):
-        assert set(x.keys()) == set(y.keys()), f"keys differ at {path_str}"
+        assert set(x.keys()) == set(
+            y.keys()), f"keys differ at {path_str}\n expected keys: {x.keys()}\n actual keys: {y.keys()}"
         for k in x:
             assert_dict_close(x[k], y[k], rtol, path.copy() + [k])
     elif isinstance(x, (list, np.ndarray, float)):

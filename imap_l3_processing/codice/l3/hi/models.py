@@ -5,6 +5,7 @@ import numpy as np
 from numpy import ndarray
 from spacepy.pycdf import CDF
 
+from imap_l3_processing.cdf.cdf_utils import read_numeric_variable, read_variable_and_mask_fill_values
 from imap_l3_processing.models import DataProduct, DataProductVariable
 
 CODICE_HI_NUM_L2_PRIORITIES = 6
@@ -40,17 +41,17 @@ class CodiceL2HiData:
             priority_events = []
             for p in range(CODICE_HI_NUM_L2_PRIORITIES):
                 priority_event = PriorityEventL2(
-                    data_quality=cdf[f"p{p}_data_quality"][...],
-                    multi_flag=cdf[f"p{p}_multi_flag"][...],
-                    number_of_events=cdf[f"p{p}_num_events"][...],
-                    ssd_energy=cdf[f"p{p}_ssd_energy"][...],
+                    data_quality=read_variable_and_mask_fill_values(cdf[f"p{p}_data_quality"]),
+                    multi_flag=read_variable_and_mask_fill_values(cdf[f"p{p}_multi_flag"]),
+                    number_of_events=read_variable_and_mask_fill_values(cdf[f"p{p}_num_events"]),
+                    ssd_energy=read_numeric_variable(cdf[f"p{p}_ssd_energy"]),
                     ssd_energy_plus=cdf[f"p{p}_ssd_energy_plus"][...],
                     ssd_energy_minus=cdf[f"p{p}_ssd_energy_minus"][...],
-                    ssd_id=cdf[f"p{p}_ssd_id"][...],
-                    spin_angle=cdf[f"p{p}_spin_sector"][...],
-                    spin_number=cdf[f"p{p}_spin_number"][...],
-                    time_of_flight=cdf[f"p{p}_tof"][...],
-                    type=cdf[f"p{p}_type"][...],
+                    ssd_id=read_numeric_variable(cdf[f"p{p}_ssd_id"]),
+                    spin_angle=read_numeric_variable(cdf[f"p{p}_spin_sector"]),
+                    spin_number=read_variable_and_mask_fill_values(cdf[f"p{p}_spin_number"]),
+                    time_of_flight=read_numeric_variable(cdf[f"p{p}_tof"]),
+                    type=read_variable_and_mask_fill_values(cdf[f"p{p}_type"]),
                 )
                 priority_events.append(priority_event)
 
@@ -266,16 +267,16 @@ class CodiceHiL2SectoredIntensitiesData:
                        spin_sector_index=cdf['spin_sector_index'][...],
                        ssd_index=cdf['ssd_index'][...],
                        data_quality=cdf['data_quality'][...],
-                       h_intensities=cdf['h'][...],
+                       h_intensities=read_numeric_variable(cdf['h']),
                        energy_h=cdf['energy_h'][...],
                        energy_h_delta=cdf['energy_h_delta'][...],
-                       cno_intensities=cdf['cno'][...],
+                       cno_intensities=read_numeric_variable(cdf['cno']),
                        energy_cno=cdf['energy_cno'][...],
                        energy_cno_delta=cdf['energy_cno_delta'][...],
-                       fe_intensities=cdf['fe'][...],
+                       fe_intensities=read_numeric_variable(cdf['fe']),
                        energy_fe=cdf['energy_fe'][...],
                        energy_fe_delta=cdf['energy_fe_delta'][...],
-                       he3he4_intensities=cdf['he3he4'][...],
+                       he3he4_intensities=read_numeric_variable(cdf['he3he4']),
                        energy_he3he4=cdf['energy_he3he4'][...],
                        energy_he3he4_delta=cdf['energy_he3he4_delta'][...],
                        )

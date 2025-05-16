@@ -14,4 +14,7 @@ shutil.copy(args.template_cdf, output_file_name)
 with CDF(output_file_name, readonly=False) as cdf:
     for var in cdf:
         if var not in ["Epoch", "epoch"] and cdf[var].attrs.get("VAR_TYPE") != "metadata":
-            cdf[var] = np.full_like(cdf[var], cdf[var].attrs["FILLVAL"])
+            if "FILLVAL" in cdf[var].attrs:
+                cdf[var] = np.full_like(cdf[var], cdf[var].attrs["FILLVAL"])
+            else:
+                print(f'The var {var} has no FILLVAL attribute.')

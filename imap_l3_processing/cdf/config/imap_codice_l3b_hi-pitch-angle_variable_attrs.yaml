@@ -60,10 +60,10 @@ energy_h:
   <<: *support_data
   <<: *float_data
   NAME: energy_h
-  CATDESC: H energy
+  CATDESC: H energy bins
   FIELDNAM: H energy
   LABLAXIS: H energy
-  UNITS: MeV
+  UNITS: MeV/nuc
   DELTA_PLUS_VAR: energy_h_delta
   DELTA_MINUS_VAR: energy_h_delta
 
@@ -71,19 +71,19 @@ energy_h_delta:
   <<: *support_data
   <<: *float_data
   NAME: energy_h_delta
-  CATDESC: H energy delta
+  CATDESC: H energy bin deltas
   FIELDNAM: H energy delta
   LABLAXIS: H energy delta
-  UNITS: MeV
+  UNITS: MeV/nuc
 
 energy_cno:
   <<: *support_data
   <<: *float_data
   NAME: energy_cno
-  CATDESC: CNO energy
+  CATDESC: CNO energy bins
   FIELDNAM: CNO energy
   LABLAXIS: CNO energy
-  UNITS: MeV
+  UNITS: MeV/nuc
   DELTA_PLUS_VAR: energy_cno_delta
   DELTA_MINUS_VAR: energy_cno_delta
 
@@ -91,19 +91,19 @@ energy_cno_delta:
   <<: *support_data
   <<: *float_data
   NAME: energy_cno_delta
-  CATDESC: CNO energy delta
+  CATDESC: CNO energy bin deltas
   FIELDNAM: CNO energy delta
   LABLAXIS: CNO energy delta
-  UNITS: MeV
+  UNITS: MeV/nuc
 
 energy_fe:
   <<: *support_data
   <<: *float_data
   NAME: energy_fe
-  CATDESC: Fe energy
+  CATDESC: Fe energy bins
   FIELDNAM: Fe energy
   LABLAXIS: Fe energy
-  UNITS: MeV
+  UNITS: MeV/nuc
   DELTA_PLUS_VAR: energy_fe_delta
   DELTA_MINUS_VAR: energy_fe_delta
 
@@ -111,34 +111,34 @@ energy_fe_delta:
   <<: *support_data
   <<: *float_data
   NAME: energy_fe_delta
-  CATDESC: Fe energy delta
+  CATDESC: Fe energy bin deltas
   FIELDNAM: Fe energy delta
   LABLAXIS: Fe energy delta
-  UNITS: MeV
+  UNITS: MeV/nuc
 
 energy_he3he4:
   <<: *support_data
   <<: *float_data
   NAME: energy_he3he4
-  CATDESC: He3He4 energy
+  CATDESC: He3He4 energy bins
   FIELDNAM: He3He4 energy
   LABLAXIS: He3He4 energy
-  UNITS: MeV
+  UNITS: MeV/nuc
 
 energy_he3he4_delta:
   <<: *support_data
   <<: *float_data
   NAME: energy_he3he4_delta
-  CATDESC: He3He4 energy delta
+  CATDESC: He3He4 energy bin deltas
   FIELDNAM: He3He4 energy delta
   LABLAXIS: He3He4 energy delta
-  UNITS: MeV
+  UNITS: MeV/nuc
 
 pitch_angle:
   <<: *support_data
   <<: *float_data
   NAME: pitch_angle
-  CATDESC: Pitch angle
+  CATDESC: Pitch angle bins
   FIELDNAM: Pitch Angle
   LABLAXIS: Pitch Angle
   UNITS: degrees
@@ -149,7 +149,7 @@ pitch_angle_delta:
   <<: *support_data
   <<: *float_data
   NAME: pitch_angle_delta
-  CATDESC: Pitch angle delta
+  CATDESC: Pitch angle bin delta
   FIELDNAM: Pitch angle delta
   LABLAXIS: Pitch angle delta
   UNITS: degrees
@@ -158,7 +158,7 @@ gyrophase:
   <<: *support_data
   <<: *float_data
   NAME: gyrophase
-  CATDESC: Gyrophase
+  CATDESC: Gyrophase bins
   FIELDNAM: Gyrophase
   LABLAXIS: Gyrophase
   UNITS: degrees
@@ -169,7 +169,7 @@ gyrophase_delta:
   <<: *support_data
   <<: *float_data
   NAME: gyrophase_delta
-  CATDESC: Gyrophase delta
+  CATDESC: Gyrophase bin delta
   FIELDNAM: Gyrophase delta
   LABLAXIS: Gyrophase delta
   UNITS: degrees
