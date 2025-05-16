@@ -99,6 +99,8 @@ if __name__ == '__main__':
             logger.error("Unhandled Exception:", exc_info=e)
             print("caught exception")
             traceback.print_exc()
+            logging.shutdown()
+            raise e
 
         if os.path.exists(log_path):
             imap_data_access.upload(log_path)
