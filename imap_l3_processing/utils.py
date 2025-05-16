@@ -11,7 +11,7 @@ from spacepy.pycdf import CDF
 from imap_l3_processing.cdf.cdf_utils import write_cdf, read_numeric_variable
 from imap_l3_processing.cdf.imap_attribute_manager import ImapAttributeManager
 from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
-from imap_l3_processing.maps.map_models import HiGlowsL3eData, HiL1cData
+from imap_l3_processing.maps.map_models import GlowsL3eRectangularMapInputData, InputRectangularPointingSet
 from imap_l3_processing.models import UpstreamDataDependency, DataProduct, MagL1dData
 from imap_l3_processing.ultra.l3.models import UltraL1CPSet, UltraGlowsL3eData
 from imap_l3_processing.version import VERSION
@@ -129,8 +129,8 @@ def find_glows_l3e_dependencies(l1c_filenames: list[str], instrument: str) -> li
     return survival_probabilities
 
 
-L1CPointingSet = TypeVar("L1CPointingSet", bound=Union[HiL1cData, UltraL1CPSet])
-GlowsL3eData = TypeVar("GlowsL3eData", bound=Union[HiGlowsL3eData, UltraGlowsL3eData])
+L1CPointingSet = TypeVar("L1CPointingSet", bound=Union[InputRectangularPointingSet, UltraL1CPSet])
+GlowsL3eData = TypeVar("GlowsL3eData", bound=Union[GlowsL3eRectangularMapInputData, UltraGlowsL3eData])
 
 
 def combine_glows_l3e_with_l1c_pointing(glows_l3e_data: list[GlowsL3eData], l1c_data: list[L1CPointingSet]) -> list[

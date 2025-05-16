@@ -1,5 +1,6 @@
 import abc
 import ctypes
+import enum
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -63,3 +64,15 @@ class MagL1dData:
 
     def rebin_to(self, epoch: np.ndarray[float], epoch_delta: np.ndarray[float]) -> np.ndarray[float]:
         return rebin(self.epoch, self.mag_data, epoch, epoch_delta)
+
+
+class Instrument(enum.Enum):
+    IMAP_HI = "hi"
+    IMAP_LO = "lo"
+    IMAP_ULTRA = "ultra"
+    CODICE = "codice"
+    SWE = "swe"
+    HIT = "hit"
+    SWAPI = "swapi"
+    GLOWS = "glows"
+    MAG = "mag"

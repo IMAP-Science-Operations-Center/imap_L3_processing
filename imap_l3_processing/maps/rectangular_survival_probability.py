@@ -7,7 +7,7 @@ from imap_processing.ena_maps.utils.coordinates import CoordNames
 from imap_processing.spice import geometry
 
 from imap_l3_processing.maps.map_descriptors import Sensor, SpinPhase
-from imap_l3_processing.maps.map_models import HiGlowsL3eData, HiL1cData
+from imap_l3_processing.maps.map_models import GlowsL3eRectangularMapInputData, InputRectangularPointingSet
 
 
 def interpolate_angular_data_to_nearest_neighbor(input_azimuths: np.array, glows_azimuths: np.array,
@@ -22,8 +22,8 @@ def interpolate_angular_data_to_nearest_neighbor(input_azimuths: np.array, glows
 
 
 class RectangularSurvivalProbabilityPointingSet(PointingSet):
-    def __init__(self, l1c_dataset: HiL1cData, sensor: Sensor, spin_phase: SpinPhase,
-                 glows_dataset: Optional[HiGlowsL3eData],
+    def __init__(self, l1c_dataset: InputRectangularPointingSet, sensor: Sensor, spin_phase: SpinPhase,
+                 glows_dataset: Optional[GlowsL3eRectangularMapInputData],
                  energies: np.ndarray):
         super().__init__(xr.Dataset(), geometry.SpiceFrame.IMAP_DPS)
         num_spin_angle_bins = l1c_dataset.exposure_times.shape[-1]
