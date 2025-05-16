@@ -237,3 +237,14 @@ mean_time:
   FILLVAL: 9999-12-31T23:59:59.999999999
   DISPLAY_TYPE: no_plot
   RECORD_VARYING: NRV
+uv_anisotropy_flag:
+  NAME: uv_anisotropy_flag
+  DATA_TYPE: CDF_INT2
+  CATDESC: Source flag for UV anisotropy
+  VAR_TYPE: metadata
+  FIELDNAM: UV Anisotropy Source
+  FORMAT: I16
+  LABLAXIS: UV anisotropy source
+  FILLVAL: -32768
+  DISPLAY_TYPE: no_plot
+  RECORD_VARYING: NRV
