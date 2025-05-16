@@ -47,8 +47,7 @@ class CodiceHiProcessor(Processor):
         event_data_output_shape = (len(l2_data.epoch), len(l2_data.priority_events), event_buffer_size)
 
         (multi_flag, ssd_energy, ssd_energy_plus, ssd_energy_minus, ssd_id, spin_angle, spin_number, tof,
-         type, energy_per_nuc, estimated_mass) = \
-            [np.full(event_data_output_shape, np.nan) for _ in range(11)]
+         type, energy_per_nuc, estimated_mass) = [np.full(event_data_output_shape, np.nan) for _ in range(11)]
 
         for index, priority_event in enumerate(l2_data.priority_events):
             multi_flag[:, index, :] = priority_event.multi_flag
