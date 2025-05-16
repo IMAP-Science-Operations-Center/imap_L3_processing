@@ -41,7 +41,7 @@ class TestGlowsL3EDependencies(unittest.TestCase):
         mock_ionization_files_path = Mock()
         mock_energy_grid_lo_path = Mock()
         mock_tess_xyz_8_path = Mock()
-        mock_lo_elongation_path = get_test_data_path('glows/imap_lo_elongation-data_20250601_v000.dat')
+        mock_lo_elongation_path = get_test_data_path('glows/imap_lo_elongation-data_20100101_v001.dat')
 
         mock_download_dependency_from_path.side_effect = [
             mock_lya_series_path, mock_solar_uv_anisotropy_path, mock_speed_3d_sw_path,
@@ -106,8 +106,8 @@ class TestGlowsL3EDependencies(unittest.TestCase):
         self.assertEqual(mock_tess_xyz_8_path, actual_dependencies.tess_xyz_8)
         self.assertEqual(None, actual_dependencies.tess_ang16)
         self.assertEqual(365, len(actual_dependencies.elongation))
-        first_dict_value = actual_dependencies.elongation['2026001']
-        last_dict_value = actual_dependencies.elongation['2026365']
+        first_dict_value = actual_dependencies.elongation['2010001']
+        last_dict_value = actual_dependencies.elongation['2010365']
         self.assertEqual(105, first_dict_value)
         self.assertEqual(105, last_dict_value)
 
