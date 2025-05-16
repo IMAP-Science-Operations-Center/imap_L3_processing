@@ -804,7 +804,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
             'lya_raw_data': lyman_alpha_composite_path
         }
 
-        cr_number = 2096
+        cr_number = 2095
         mock_run.side_effect = [CompletedProcess(args=[], returncode=0, stdout=f'Processed CR= {cr_number}'),
                                 CalledProcessError(cmd="", returncode=1, stderr=self.ran_out_of_l3b_exception)]
 
@@ -816,28 +816,26 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
         self.assertEqual(last_processed_cr, cr_number)
 
         expected_parent_file_names = [
-            'imap_glows_plasma-speed-Legendre-2010a_v001.dat',
-            'imap_glows_proton-density-Legendre-2010a_v001.dat',
-            'imap_glows_uv-anisotropy-2010a_v001.dat',
-            'imap_glows_photoion-2010a_v001.dat',
-            'imap_glows_lya-2010a_v001.dat',
-            'imap_glows_electron-density-2010a_v001.dat',
-            'lyman_alpha_composite.nc',
-            'imap_glows_l3b_ion-rate-profile_20100326_v011.cdf',
-            'imap_glows_l3b_ion-rate-profile_20100422_v011.cdf',
-            'imap_glows_l3b_ion-rate-profile_20100519_v011.cdf',
-            'imap_glows_l3c_sw-profile_20100326_v011.cdf',
-            'imap_glows_l3c_sw-profile_20100422_v011.cdf',
-            'imap_glows_l3c_sw-profile_20100519_v011.cdf'
+            "imap_glows_plasma-speed-2010a_v003.dat",
+            "imap_glows_proton-density-2010a_v003.dat",
+            "imap_glows_uv-anisotropy-2010a_v003.dat",
+            "imap_glows_photoion-2010a_v003.dat",
+            "imap_glows_lya-2010a_v003.dat",
+            "imap_glows_electron-density-2010a_v003.dat",
+            "lyman_alpha_composite.nc",
+            "imap_glows_l3b_ion-rate-profile_20100422_v011.cdf",
+            "imap_glows_l3b_ion-rate-profile_20100519_v011.cdf",
+            "imap_glows_l3c_sw-profile_20100422_v011.cdf",
+            "imap_glows_l3c_sw-profile_20100519_v011.cdf"
         ]
 
         expected_l3d_txt_file_paths = [
-            get_test_data_path('glows/science') / 'data_l3d_txt' / 'imap_glows_l3d_speed_19470303-cr02096_v00.dat',
-            get_test_data_path('glows/science') / 'data_l3d_txt' / 'imap_glows_l3d_lya_19470303-cr02096_v00.dat',
-            get_test_data_path('glows/science') / 'data_l3d_txt' / 'imap_glows_l3d_p-dens_19470303-cr02096_v00.dat',
-            get_test_data_path('glows/science') / 'data_l3d_txt' / 'imap_glows_l3d_phion_19470303-cr02096_v00.dat',
-            get_test_data_path('glows/science') / 'data_l3d_txt' / 'imap_glows_l3d_uv-anis_19470303-cr02096_v00.dat',
-            get_test_data_path('glows/science') / 'data_l3d_txt' / 'imap_glows_l3d_e-dens_19470303-cr02096_v00.dat',
+            get_test_data_path('glows/science') / 'data_l3d_txt' / 'imap_glows_l3d_speed_19470303-cr02095_v00.dat',
+            get_test_data_path('glows/science') / 'data_l3d_txt' / 'imap_glows_l3d_lya_19470303-cr02095_v00.dat',
+            get_test_data_path('glows/science') / 'data_l3d_txt' / 'imap_glows_l3d_p-dens_19470303-cr02095_v00.dat',
+            get_test_data_path('glows/science') / 'data_l3d_txt' / 'imap_glows_l3d_phion_19470303-cr02095_v00.dat',
+            get_test_data_path('glows/science') / 'data_l3d_txt' / 'imap_glows_l3d_uv-anis_19470303-cr02095_v00.dat',
+            get_test_data_path('glows/science') / 'data_l3d_txt' / 'imap_glows_l3d_e-dens_19470303-cr02095_v00.dat',
         ]
 
         self.assertCountEqual(expected_parent_file_names, actual_data_product.parent_file_names)

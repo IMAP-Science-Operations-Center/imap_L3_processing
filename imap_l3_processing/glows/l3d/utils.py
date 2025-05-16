@@ -79,12 +79,15 @@ def convert_json_to_l3d_data_product(json_file_path: Path, input_metadata: Input
         latitude=l3d_json_dict['lat_grid'],
         cr=l3d_json_dict['cr_grid'],
         epoch=np.array([datetime.fromisoformat(time) for time in l3d_json_dict['time_grid']]),
-        speed=l3d_json_dict['solar_params']['speed'],
+        plasma_speed=l3d_json_dict['solar_params']['speed'],
         proton_density=l3d_json_dict['solar_params']['p-dens'],
         ultraviolet_anisotropy=l3d_json_dict['solar_params']['uv-anis'],
         phion=l3d_json_dict['solar_params']['phion'],
         lyman_alpha=l3d_json_dict['solar_params']['lya'],
         electron_density=l3d_json_dict['solar_params']['e-dens'],
+        plasma_speed_flag=l3d_json_dict['flags']['speed'],
+        uv_anisotropy_flag=l3d_json_dict['flags']['uv-anis'],
+        proton_density_flag=l3d_json_dict['flags']['p-dens'],
     )
 
 
