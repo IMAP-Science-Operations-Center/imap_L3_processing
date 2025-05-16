@@ -27,15 +27,16 @@ class GlowsInitializerAncillaryDependencies:
 
     @classmethod
     def fetch_dependencies(cls, dependencies: ProcessingInputCollection):
-        uv_anisotropy_factor_dependency = dependencies.get_file_paths(source='glows', descriptor='uv-anisotropy-1CR')
+        uv_anisotropy_factor_dependency = dependencies.get_file_paths(source='glows', descriptor='uv-anisotropy-1cr')
         waw_helioion_mp_dependency = dependencies.get_file_paths(source='glows', descriptor='WawHelioIonMP')
         bad_day_dependency = dependencies.get_file_paths(source='glows', descriptor='bad-days-list')
-        pipeline_settings_dependency = dependencies.get_file_paths(source='glows', descriptor='pipeline-settings-L3bc')
+        pipeline_settings_dependency = dependencies.get_file_paths(source='glows', descriptor='pipeline-settings-L3bcd')
 
         pipeline_settings_path = download(pipeline_settings_dependency[0])
 
         f107_index_file_path = download_external_dependency(F107_FLUX_TABLE_URL,
                                                             TEMP_CDF_FOLDER_PATH / 'f107_fluxtable.txt')
+        _comment_headers(f107_index_file_path, num_lines=2)
         lyman_alpha_path = download_external_dependency(LYMAN_ALPHA_COMPOSITE_INDEX_URL,
                                                         TEMP_CDF_FOLDER_PATH / 'lyman_alpha_composite.nc')
         omni2_data_path = download_external_dependency(OMNI2_URL, TEMP_CDF_FOLDER_PATH / 'omni2_all_years.dat')
@@ -52,3 +53,13 @@ class GlowsInitializerAncillaryDependencies:
                    f107_index_file_path,
                    lyman_alpha_path, omni2_data_path,
                    )
+
+
+def _comment_headers(filename: Path, num_lines=2):
+    with open(filename, "r+") as file:
+        lines = file.readlines()
+        for i in range(num_lines):
+            lines[i] = "#" + lines[i]
+        file.truncate(0)
+    with open(filename, "w") as file:
+        file.writelines(lines)

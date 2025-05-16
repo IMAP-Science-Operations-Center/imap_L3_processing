@@ -114,7 +114,7 @@ energy_bin:
   CATDESC: Energy bins
   FIELDNAM: Energy bins
   LABLAXIS: Energy bins
-  UNITS: keV
+  UNITS: keV/e
 
 normalization:
   <<: *per_priority
@@ -155,7 +155,7 @@ event_energy:
   CATDESC: Mass of event
   FIELDNAM: Mass
   LABLAXIS: m
-  UNITS: amu
+  UNITS: keV
 
 event_spin_angle:
   <<: *per_event
@@ -164,7 +164,7 @@ event_spin_angle:
   CATDESC: Spin angle when event was observed
   FIELDNAM: Spin angle
   LABLAXIS: m
-  UNITS: amu
+  UNITS: degrees
 
 gain:
   <<: *per_event

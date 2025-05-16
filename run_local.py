@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import shutil
 import sys
+import time
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Optional, TypeVar
@@ -78,6 +79,7 @@ from imap_l3_processing.ultra.l3.ultra_l3_dependencies import UltraL3Dependencie
 from imap_l3_processing.ultra.l3.ultra_processor import UltraProcessor
 from imap_l3_processing.utils import save_data, read_l1d_mag_data
 from scripts.codice.create_more_accurate_l3a_direct_event import create_more_accurate_l3a_direct_events_cdf
+from scripts.codice.create_more_accurate_l3a_direct_event_input import modify_l1a_priority_counts
 from scripts.hi.create_hi_full_spin_deps import create_hi_full_spin_deps
 from scripts.ultra.create_example_ultra_l1c_pset import _write_ultra_l1c_cdf_with_parents
 from scripts.ultra.create_example_ultra_l2_map import _write_ultra_l2_cdf_with_parents
@@ -126,10 +128,15 @@ def create_codice_lo_l3a_partial_densities_cdf():
 def create_codice_lo_l3a_direct_events_cdf():
     codice_lo_l2_direct_events = CodiceLoL2DirectEventData.read_from_cdf(
         get_test_instrument_team_data_path('codice/lo/imap_codice_l2_lo-direct-events_20241110_v002.cdf'))
-    codice_lo_l1a_sw_priority = CodiceLoL1aSWPriorityRates.read_from_cdf(
+
+    codice_lo_l1a_nsw_priority_path, codice_lo_l1a_sw_priority_path = modify_l1a_priority_counts(
+        get_test_instrument_team_data_path('codice/lo/imap_codice_l1a_lo-nsw-priority_20241110_v002.cdf'),
         get_test_instrument_team_data_path('codice/lo/imap_codice_l1a_lo-sw-priority_20241110_v002.cdf'))
-    codice_lo_l1a_nsw_priority = CodiceLoL1aNSWPriorityRates.read_from_cdf(
-        get_test_instrument_team_data_path('codice/lo/imap_codice_l1a_lo-nsw-priority_20241110_v002.cdf'))
+
+    time.sleep(3)  # wait for files to close before trying to read them
+
+    codice_lo_l1a_sw_priority = CodiceLoL1aSWPriorityRates.read_from_cdf(codice_lo_l1a_sw_priority_path)
+    codice_lo_l1a_nsw_priority = CodiceLoL1aNSWPriorityRates.read_from_cdf(codice_lo_l1a_nsw_priority_path)
 
     mass_coefficient_lookup = MassCoefficientLookup.read_from_csv(
         get_test_data_path('codice/imap_codice_mass-coefficient-lookup_20241110_v002.csv'))
@@ -213,11 +220,12 @@ def create_codice_lo_l3a_3d_distributions_cdf():
         start_date=datetime(2024, 11, 10),
         end_date=datetime(2025, 1, 2),
         version='v000',
-        descriptor='lo-3d-distributions'
+        descriptor='lo-3d-instrument-frame'
     )
 
     codice_lo_processor = CodiceLoProcessor(Mock(), input_metadata)
     l3a_3d_distributions = codice_lo_processor.process_l3a_3d_distribution_product(deps)
+    return save_data(l3a_3d_distributions, delete_if_present=True)
 
 
 def create_swapi_l3b_cdf(geometric_calibration_file, efficiency_calibration_file, cdf_file):
@@ -464,8 +472,8 @@ def run_glows_l3bc_processor_and_initializer(_, mock_query):
 
     bad_days_list = AncillaryInput('imap_glows_bad-days-list_20100101_v001.dat')
     waw_helio_ion = AncillaryInput('imap_glows_WawHelioIonMP_20100101_v002.json')
-    uv_anisotropy = AncillaryInput('imap_glows_uv-anisotropy-1CR_20100101_v001.json')
-    pipeline_settings = AncillaryInput('imap_glows_pipeline-settings-L3bc_20250707_v002.json')
+    uv_anisotropy = AncillaryInput('imap_glows_uv-anisotropy-1cr_20250514_v002.json')
+    pipeline_settings = AncillaryInput('imap_glows_pipeline-settings-L3bcd_20250514_v004.json')
     input_collection = ProcessingInputCollection(bad_days_list, waw_helio_ion, uv_anisotropy, pipeline_settings)
 
     processor = GlowsProcessor(dependencies=input_collection, input_metadata=input_metadata)
@@ -701,25 +709,25 @@ def run_glows_l3d(mock_shutil):
 
     ancillary_files = {
         'WawHelioIon': {
-            'speed': get_test_data_path('glows/imap_glows_plasma-speed-Legendre-2010a_v001.dat'),
-            'p-dens': get_test_data_path('glows/imap_glows_proton-density-Legendre-2010a_v001.dat'),
-            'uv-anis': get_test_data_path('glows/imap_glows_uv-anisotropy-2010a_v001.dat'),
-            'phion': get_test_data_path('glows/imap_glows_photoion-2010a_v001.dat'),
-            'lya': get_test_data_path('glows/imap_glows_lya-2010a_v001.dat'),
-            'e-dens': get_test_data_path('glows/imap_glows_electron-density-2010a_v001.dat'),
+            'speed': get_test_instrument_team_data_path('glows/imap_glows_plasma-speed-2010a_v003.dat'),
+            'p-dens': get_test_instrument_team_data_path('glows/imap_glows_proton-density-2010a_v003.dat'),
+            'uv-anis': get_test_instrument_team_data_path('glows/imap_glows_uv-anisotropy-2010a_v003.dat'),
+            'phion': get_test_instrument_team_data_path('glows/imap_glows_photoion-2010a_v003.dat'),
+            'lya': get_test_instrument_team_data_path('glows/imap_glows_lya-2010a_v003.dat'),
+            'e-dens': get_test_instrument_team_data_path('glows/imap_glows_electron-density-2010a_v003.dat'),
         },
         'pipeline_settings': get_test_instrument_team_data_path(
-            'glows/imap_glows_pipeline-settings-L3bc_20250707_v002.json')
+            'glows/imap_glows_pipeline-settings-L3bcd_20250514_v004.json')
     }
 
     l3b_file_paths = [
         get_test_data_path('glows/imap_glows_l3b_ion-rate-profile_20100422_v011.cdf'),
-        get_test_data_path('glows/imap_glows_l3b_ion-rate-profile_20100519_v011.cdf')
+        get_test_data_path('glows/imap_glows_l3b_ion-rate-profile_20100519_v011.cdf'),
     ]
 
     l3c_file_paths = [
         get_test_data_path('glows/imap_glows_l3c_sw-profile_20100422_v011.cdf'),
-        get_test_data_path('glows/imap_glows_l3c_sw-profile_20100519_v011.cdf')
+        get_test_data_path('glows/imap_glows_l3c_sw-profile_20100519_v011.cdf'),
     ]
 
     l3d_dependencies: GlowsL3DDependencies = GlowsL3DDependencies(external_files=external_files,
@@ -729,6 +737,8 @@ def run_glows_l3d(mock_shutil):
 
     processor = GlowsProcessor(ProcessingInputCollection(), input_metadata)
     data_product, l3d_txt_paths, last_processed_cr = processor.process_l3d(l3d_dependencies)
+    print("l3d_txts:")
+    [print(txt_path) for txt_path in l3d_txt_paths]
     print(save_data(data_product, cr_number=last_processed_cr))
 
 

@@ -265,7 +265,7 @@ proton_sw_clock_angle:
   FIELDNAM: Clock Angle Of Proton Solar Wind
   FORMAT: F19.3
   LABLAXIS: Clock angle of H+ SW
-  UNITS: Degrees
+  UNITS: degrees
   VALIDMIN: 0
   VALIDMAX: 9223372036854775807
   FILLVAL: -1.000000e+31
@@ -283,7 +283,7 @@ proton_sw_clock_angle_delta:
   RECORD_VARYING: RV
   FIELDNAM: Proton Solar Wind Clock Angle Delta
   FORMAT: F19.3
-  UNITS: Degrees
+  UNITS: degrees
   VALIDMIN: 0
   VALIDMAX: 9223372036854775807
   FILLVAL: -1.000000e+31
@@ -300,7 +300,7 @@ proton_sw_deflection_angle:
   FIELDNAM: Deflection Angle Of Proton Solar Wind
   FORMAT: F19.3
   LABLAXIS: H+ SW deflection angle
-  UNITS: Degrees
+  UNITS: degrees
   VALIDMIN: 0
   VALIDMAX: 9223372036854775807
   FILLVAL: -1.000000e+31
@@ -318,7 +318,7 @@ proton_sw_deflection_angle_delta:
   RECORD_VARYING: RV
   FIELDNAM: Proton Solar Wind Deflection Angle Delta
   FORMAT: F19.3
-  UNITS: Degrees
+  UNITS: degrees
   VALIDMIN: 0
   VALIDMAX: 9223372036854775807
   FILLVAL: -1.000000e+31

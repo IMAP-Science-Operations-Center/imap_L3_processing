@@ -33,7 +33,8 @@ class TestL3dUtils(unittest.TestCase):
             'solar_wind_ecliptic': {
                 'proton_density': 6.015008449554443,
                 'alpha_abundance': 0.02850634977221489,
-            }
+            },
+            'CR': 2103
         }
 
         json_file = MagicMock()
@@ -68,58 +69,32 @@ class TestL3dUtils(unittest.TestCase):
         self.assertEqual(expected['solar_wind_ecliptic']['alpha_abundance'],
                          actual['solar_wind_ecliptic']['alpha_abundance'])
 
+        self.assertIsInstance(actual['CR'], float)
+        self.assertEqual(expected['CR'], actual['CR'])
+
     @patch('imap_l3_processing.glows.l3d.utils.os')
     @patch('imap_l3_processing.glows.l3d.utils.json')
     @patch('builtins.open', new_callable=mock_open, create=False)
     def test_create_glows_l3b_json_file_from_cdf(self, mock_open_file, mock_json, mock_os):
-        l3b_path = get_test_data_path("glows/imap_glows_l3b_ion-rate-profile_20100519_v012.cdf")
+        l3b_path = get_test_data_path("glows/imap_glows_l3b_ion-rate-profile_20100422_v011.cdf")
 
         expected: dict = {
             'header': {
-                'filename': 'imap_glows_l3b_ion-rate-profile_20100519_v012.cdf',
-                'l3a_input_files_name': [
-                    'imap_glows_l3a_hist_20100518-repoint00138_v012.cdf',
-                    'imap_glows_l3a_hist_20100520-repoint00139_v012.cdf',
-                    'imap_glows_l3a_hist_20100521-repoint00140_v012.cdf',
-                    'imap_glows_l3a_hist_20100522-repoint00141_v012.cdf',
-                    'imap_glows_l3a_hist_20100523-repoint00142_v012.cdf',
-                    'imap_glows_l3a_hist_20100524-repoint00143_v012.cdf',
-                    'imap_glows_l3a_hist_20100525-repoint00144_v012.cdf',
-                    'imap_glows_l3a_hist_20100526-repoint00145_v012.cdf',
-                    'imap_glows_l3a_hist_20100527-repoint00146_v012.cdf',
-                    'imap_glows_l3a_hist_20100528-repoint00147_v012.cdf',
-                    'imap_glows_l3a_hist_20100529-repoint00148_v012.cdf',
-                    'imap_glows_l3a_hist_20100530-repoint00149_v012.cdf',
-                    'imap_glows_l3a_hist_20100531-repoint00150_v012.cdf',
-                    'imap_glows_l3a_hist_20100601-repoint00151_v012.cdf',
-                    'imap_glows_l3a_hist_20100602-repoint00152_v012.cdf',
-                    'imap_glows_l3a_hist_20100603-repoint00153_v012.cdf',
-                    'imap_glows_l3a_hist_20100604-repoint00154_v012.cdf',
-                    'imap_glows_l3a_hist_20100605-repoint00155_v012.cdf',
-                    'imap_glows_l3a_hist_20100606-repoint00156_v012.cdf',
-                    'imap_glows_l3a_hist_20100607-repoint00157_v012.cdf',
-                    'imap_glows_l3a_hist_20100608-repoint00158_v012.cdf',
-                    'imap_glows_l3a_hist_20100609-repoint00159_v012.cdf',
-                    'imap_glows_l3a_hist_20100610-repoint00160_v012.cdf',
-                    'imap_glows_l3a_hist_20100611-repoint00161_v012.cdf',
-                    'imap_glows_l3a_hist_20100612-repoint00162_v012.cdf',
-                    'imap_glows_l3a_hist_20100613-repoint00163_v012.cdf',
-                    'imap_glows_l3a_hist_20100614-repoint00164_v012.cdf',
-                    'imap_glows_l3a_hist_20100615-repoint00165_v012.cdf',
-                    'imap_glows_l3a_hist_20100616-repoint00165_v012.cdf',
-                ]
+                'filename': 'imap_glows_l3b_ion-rate-profile_20100422_v011.cdf',
             },
-            'CR': 2097,
+            'CR': 2096,
+            'date': '2010-05-14 15:43:35.562',
             'uv_anisotropy_factor': [1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.],
             'ion_rate_profile': {
                 'lat_grid': [-90., -80., -70., -60., -50., -40., -30., -20., -10., 0., 10., 20., 30., 40., 50., 60.,
                              70., 80., 90.],
-                'ph_rate': [1.0643349e-07, 1.0643349e-07, 1.0643349e-07, 1.0643349e-07,
-                            1.0643349e-07, 1.0643349e-07, 1.0643349e-07, 1.0643349e-07,
-                            1.0643349e-07, 1.0643349e-07, 1.0643349e-07, 1.0643349e-07,
-                            1.0643349e-07, 1.0643349e-07, 1.0643349e-07, 1.0643349e-07,
-                            1.0643349e-07, 1.0643349e-07, 1.0643349e-07]
-            }
+                'ph_rate': [1.0475524e-07, 1.0475524e-07, 1.0475524e-07, 1.0475524e-07,
+                            1.0475524e-07, 1.0475524e-07, 1.0475524e-07, 1.0475524e-07,
+                            1.0475524e-07, 1.0475524e-07, 1.0475524e-07, 1.0475524e-07,
+                            1.0475524e-07, 1.0475524e-07, 1.0475524e-07, 1.0475524e-07,
+                            1.0475524e-07, 1.0475524e-07, 1.0475524e-07]
+            },
+            "uv_anisotropy_flag": 1000
         }
 
         json_file = MagicMock()
@@ -135,16 +110,13 @@ class TestL3dUtils(unittest.TestCase):
         actual = mock_json.dump.call_args.args[0]
         self.assertEqual(json_file, mock_json.dump.call_args.args[1])
 
-        mock_open_file.assert_called_once_with(data_path / 'imap_glows_l3b_cr_2097_v012.json', 'w')
+        mock_open_file.assert_called_once_with(data_path / 'imap_glows_l3b_cr_2096_v011.json', 'w')
 
         self.assertIsInstance(actual['CR'], int)
         self.assertEqual(expected['CR'], actual['CR'])
 
         np.testing.assert_array_equal(expected["header"]['filename'],
                                       actual["header"]['filename'])
-
-        np.testing.assert_array_equal(expected["header"]['l3a_input_files_name'],
-                                      actual["header"]['l3a_input_files_name'])
 
         self.assertIsInstance(actual['uv_anisotropy_factor'], list)
         np.testing.assert_array_equal(expected["uv_anisotropy_factor"],
@@ -157,6 +129,9 @@ class TestL3dUtils(unittest.TestCase):
         np.testing.assert_array_almost_equal(expected["ion_rate_profile"]['ph_rate'],
                                              actual["ion_rate_profile"]['ph_rate'])
         self.assertIsInstance(actual["ion_rate_profile"]["ph_rate"], list)
+
+        self.assertIsInstance(actual["uv_anisotropy_flag"], int)
+        self.assertEqual(expected["uv_anisotropy_flag"], actual["uv_anisotropy_flag"])
 
     def test_convert_json_l3d_to_data_product(self):
         input_metadata = Mock(spec=InputMetadata)

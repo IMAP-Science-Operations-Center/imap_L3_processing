@@ -28,10 +28,12 @@ class TestModels(CdfModelTestCase):
                                       ph_uncert=sentinel.ph_uncert,
                                       cx_uncert=sentinel.cx_uncert,
                                       lat_grid_label=sentinel.lat_grid_label,
+                                      mean_time=sentinel.mean_time,
+                                      uv_anisotropy_flag=sentinel.uv_anisotropy_flag
                                       )
 
         variables = data.to_data_product_variables()
-        self.assertEqual(13, len(variables))
+        self.assertEqual(15, len(variables))
 
         variables = iter(variables)
         self.assert_variable_attributes(next(variables), sentinel.epoch, "epoch")
@@ -47,6 +49,8 @@ class TestModels(CdfModelTestCase):
         self.assert_variable_attributes(next(variables), sentinel.ph_uncert, "ph_uncert")
         self.assert_variable_attributes(next(variables), sentinel.cx_uncert, "cx_uncert")
         self.assert_variable_attributes(next(variables), sentinel.lat_grid_label, "lat_grid_label")
+        self.assert_variable_attributes(next(variables), sentinel.mean_time, "mean_time")
+        self.assert_variable_attributes(next(variables), sentinel.uv_anisotropy_flag, "uv_anisotropy_flag")
 
     def test_l3b_from_instrument_team_dictionary(self):
         glows_instrument_team_data_path = get_test_instrument_team_data_path('glows')
@@ -54,7 +58,7 @@ class TestModels(CdfModelTestCase):
             instrument_team_l3b_dict = json.load(f)
 
         instrument_team_l3b_dict['header']['ancillary_data_files'][
-            'pipeline_settings'] = glows_instrument_team_data_path / 'imap_glows_pipeline-settings-L3bcd_20250514_v003.json'
+            'pipeline_settings'] = glows_instrument_team_data_path / 'imap_glows_pipeline-settings-L3bcd_20250514_v004.json'
 
         result = GlowsL3BIonizationRate.from_instrument_team_dictionary(instrument_team_l3b_dict,
                                                                         sentinel.input_metadata)
@@ -66,7 +70,8 @@ class TestModels(CdfModelTestCase):
 
         self.assertEqual([datetime(2009, 12, 20, 20, 14, 51, 359974)], result.epoch)
         np.testing.assert_equal([CARRINGTON_ROTATION_IN_NANOSECONDS / 2], result.epoch_delta)
-
+        self.assertEqual([datetime.fromisoformat("2010-01-02 03:43:28.667")], result.mean_time)
+        self.assertEqual([10000], result.uv_anisotropy_flag)
         self.assertEqual([2091], result.cr)
         np.testing.assert_equal([instrument_team_l3b_dict["uv_anisotropy_factor"]], result.uv_anisotropy_factor)
         np.testing.assert_equal(latitude_grid, result.lat_grid)
@@ -82,7 +87,7 @@ class TestModels(CdfModelTestCase):
         self.assertEqual(latitude_grid.shape, result.lat_grid_delta.shape)
         self.assertEqual(['imap_glows_WawHelioIonMP_v002.json',
                           'imap_glows_bad-days-list_v001.dat',
-                          'imap_glows_pipeline-settings-L3bcd_20250514_v003.json',
+                          'imap_glows_pipeline-settings-L3bcd_20250514_v004.json',
                           'imap_glows_uv-anisotropy-1CR_v002.json',
                           'imap_glows_plasma-speed-2010a_v003.dat',
                           'imap_glows_proton-density-2010a_v003.dat',
@@ -90,10 +95,7 @@ class TestModels(CdfModelTestCase):
                           'imap_glows_photoion-2010a_v003.dat',
                           'imap_glows_lya-2010a_v003.dat',
                           'imap_glows_electron-density-2010a_v003.dat',
-                          'f107_fluxtable.txt',
-                          'imap_glows_l3a_20100101000000_orbX_modX_p_v00.json',
-                          'imap_glows_l3a_20100102000000_orbX_modX_p_v00.json',
-                          'imap_glows_l3a_20100103000000_orbX_modX_p_v00.json'], result.parent_file_names)
+                          'f107_fluxtable.txt'], result.parent_file_names)
 
     def test_l3c_to_data_product_variables(self):
         data = GlowsL3CSolarWind(input_metadata=sentinel.input_metadata,

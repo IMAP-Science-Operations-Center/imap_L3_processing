@@ -120,6 +120,33 @@ class TestCodiceLoCalculations(unittest.TestCase):
         actual_mass_per_charge = calculate_mass_per_charge(priority_event)
         np.testing.assert_array_equal(actual_mass_per_charge, np.array([[mass_per_charge_1], [mass_per_charge_2]]))
 
+    def test_calculate_mass_per_charge_handles_fill_value(self):
+        priority_event = Mock()
+        priority_event.tof = np.ma.masked_array([[432, 234], [434, 347]], mask=[[False, True], [True, False]])
+        priority_event.energy_step = np.array([[np.nan, 2342.2], [4324.8, np.nan]])
+
+        actual_mass_per_charge = calculate_mass_per_charge(priority_event)
+
+        self.assertIsInstance(actual_mass_per_charge, np.ma.masked_array)
+        actual_filled_with_nan = np.ma.filled(actual_mass_per_charge, np.nan)
+
+        self.assertTrue(np.all(np.isnan(actual_filled_with_nan)))
+
+    def test_calculate_mass_handles_fill_value(self):
+        rng = np.random.default_rng()
+        priority_event = Mock()
+        mass_coefficients = MassCoefficientLookup(coefficients=rng.random(size=6))
+
+        priority_event.tof = np.ma.masked_array([[432, 234], [434, 347]], mask=[[False, True], [True, False]])
+        priority_event.apd_energy = np.array([[np.nan, 2342.2], [4324.8, np.nan]])
+
+        actual_mass = calculate_mass(priority_event, mass_coefficients)
+
+        self.assertIsInstance(actual_mass, np.ma.masked_array)
+        actual_filled_with_nan = np.ma.filled(actual_mass, np.nan)
+
+        self.assertTrue(np.all(np.isnan(actual_filled_with_nan)))
+
     def test_calculate_partial_densities(self):
         rng = np.random.default_rng()
         epochs = np.array([datetime.now(), datetime.now() + timedelta(days=1)])

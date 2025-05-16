@@ -151,9 +151,9 @@ ssd_energy_minus:
 ssd_id:
   <<: *per_event_data
   NAME: ssd_id
-  CATDESC: SSD ID or azimuth angle
-  FIELDNAM: SSD ID or Azimuth Angle
-  LABLAXIS: Azimuth Angle
+  CATDESC: Elevation angle of event in despun pointing set frame
+  FIELDNAM: Elevation angle
+  LABLAXIS: Elevation angle
   UNITS: " "
   DATA_TYPE: CDF_UINT1
   FILLVAL: 255
@@ -165,7 +165,7 @@ spin_angle:
   <<: *per_event_data
   <<: *float_data
   NAME: spin_angle
-  CATDESC: Spin angle when event was observed
+  CATDESC: Spin angle when event was observed in despun pointing set frame
   FIELDNAM: Spin angle
   LABLAXIS: Spin angle
   UNITS: degrees
@@ -217,7 +217,7 @@ energy_per_nuc_lower:
   CATDESC: Energy per nuc lower bound
   FIELDNAM: Energy per Nuc Lower Bound
   LABLAXIS: E per nuc low
-  UNITS: MeV/n
+  UNITS: MeV/nuc
 
 
 energy_per_nuc:
@@ -227,7 +227,7 @@ energy_per_nuc:
   CATDESC: Energy per nuc
   FIELDNAM: Energy per nuc
   LABLAXIS: Energy per nuc
-  UNITS: MeV/n
+  UNITS: MeV/nuc
 
 energy_per_nuc_upper:
   <<: *per_event_data
@@ -236,7 +236,7 @@ energy_per_nuc_upper:
   CATDESC: Energy per nuc upper bound
   FIELDNAM: Energy per nuc upper
   LABLAXIS: E per nuc high
-  UNITS: MeV/n
+  UNITS: MeV/nuc
 
 estimated_mass_lower:
   <<: *per_event_data
@@ -268,7 +268,7 @@ estimated_mass_upper:
 event_index:
   <<: *support_data
   NAME: event_index
-  CATDESC: Index of event
+  CATDESC: Event bin index
   FIELDNAM: Event Index
   LABLAXIS: Event
   DATA_TYPE: CDF_UINT2
@@ -282,7 +282,7 @@ event_index:
 priority_index:
   <<: *support_data
   NAME: priority_index
-  CATDESC: Priority number where particle is observed
+  CATDESC: Priority bin index
   FIELDNAM: Priority index
   LABLAXIS: Priority num.
   DATA_TYPE: CDF_UINT1

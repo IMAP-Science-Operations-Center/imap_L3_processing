@@ -9,7 +9,7 @@ from spacepy.pycdf import CDF
 
 from imap_l3_processing.codice.l3.hi.models import CodiceL2HiData, PriorityEventL2, CodiceL3HiDirectEvents, \
     CodiceHiL2SectoredIntensitiesData, CodiceHiL3PitchAngleDataProduct, CODICE_HI_NUM_L2_PRIORITIES
-from tests.test_helpers import get_test_instrument_team_data_path
+from tests.test_helpers import get_test_instrument_team_data_path, get_test_data_path
 
 
 class TestModels(unittest.TestCase):
@@ -46,6 +46,43 @@ class TestModels(unittest.TestCase):
 
                 np.testing.assert_array_equal(actual_priority_event.ssd_energy_plus, cdf[f"p{priority_index}_ssd_energy_plus"])
                 np.testing.assert_array_equal(actual_priority_event.ssd_energy_minus, cdf[f"p{priority_index}_ssd_energy_minus"])
+                # @formatter:on
+
+    def test_codice_hi_l2_data_read_from_instrument_team_cdf_handles_fill_values(self):
+        l2_path = get_test_data_path(
+            "codice/imap_codice_l2_hi-direct-events_20241110_v002-all-fill.cdf")
+        l2_direct_event_data = CodiceL2HiData.read_from_cdf(l2_path)
+
+        with CDF(str(l2_path)) as cdf:
+            for priority_index in range(CODICE_HI_NUM_L2_PRIORITIES):
+                actual_priority_event: PriorityEventL2 = l2_direct_event_data.priority_events[priority_index]
+
+                # @formatter:off
+                np.testing.assert_array_equal(actual_priority_event.ssd_energy, np.full_like(cdf[f"p{priority_index}_ssd_energy"], np.nan))
+                np.testing.assert_array_equal(actual_priority_event.ssd_id, np.full_like(cdf[f"p{priority_index}_ssd_id"], np.nan))
+                np.testing.assert_array_equal(actual_priority_event.spin_angle, np.full_like(cdf[f"p{priority_index}_spin_sector"], np.nan))
+                np.testing.assert_array_equal(actual_priority_event.time_of_flight, np.full_like(cdf[f"p{priority_index}_tof"], np.nan))
+
+                self.assertIsInstance(actual_priority_event.number_of_events, np.ma.masked_array)
+                np.testing.assert_array_equal(actual_priority_event.number_of_events.data, cdf[f"p{priority_index}_num_events"])
+                self.assertTrue(np.all(actual_priority_event.number_of_events.mask))
+
+                self.assertIsInstance(actual_priority_event.spin_number, np.ma.masked_array)
+                np.testing.assert_array_equal(actual_priority_event.spin_number.data, cdf[f"p{priority_index}_spin_number"])
+                self.assertTrue(np.all(actual_priority_event.spin_number.mask))
+
+                self.assertIsInstance(actual_priority_event.type, np.ma.masked_array)
+                np.testing.assert_array_equal(actual_priority_event.type.data, cdf[f"p{priority_index}_type"])
+                self.assertTrue(np.all(actual_priority_event.type.mask))
+
+                self.assertIsInstance(actual_priority_event.data_quality, np.ma.masked_array)
+                np.testing.assert_array_equal(actual_priority_event.data_quality.data, cdf[f"p{priority_index}_data_quality"])
+                self.assertTrue(np.all(actual_priority_event.data_quality.mask))
+
+                self.assertIsInstance(actual_priority_event.multi_flag, np.ma.masked_array)
+                np.testing.assert_array_equal(actual_priority_event.multi_flag.data, cdf[f"p{priority_index}_multi_flag"])
+                self.assertTrue(np.all(actual_priority_event.multi_flag.mask))
+
                 # @formatter:on
 
     def test_codice_l3_hi_direct_event_data_products(self):
@@ -207,3 +244,14 @@ class TestModels(unittest.TestCase):
             np.testing.assert_array_equal(l2_sectored_data.he3he4_intensities, cdf['he3he4'])
             np.testing.assert_array_equal(l2_sectored_data.energy_he3he4, cdf['energy_he3he4'])
             np.testing.assert_array_equal(l2_sectored_data.energy_he3he4_delta, cdf['energy_he3he4_delta'])
+
+    def test_l2_sectored_intensities_read_from_instrument_team_cdf_handles_fill_values(self):
+        all_fill_l2_sectored_intensities_path = \
+            get_test_data_path('codice/imap_codice_l2_hi-sectored_20241110_v002-all-fill.cdf')
+        l2_sectored_intensities = CodiceHiL2SectoredIntensitiesData.read_from_cdf(all_fill_l2_sectored_intensities_path)
+        with CDF(str(all_fill_l2_sectored_intensities_path)) as cdf:
+            np.testing.assert_array_equal(l2_sectored_intensities.cno_intensities, np.full_like(cdf['cno'], np.nan))
+            np.testing.assert_array_equal(l2_sectored_intensities.fe_intensities, np.full_like(cdf['fe'], np.nan))
+            np.testing.assert_array_equal(l2_sectored_intensities.h_intensities, np.full_like(cdf['h'], np.nan))
+            np.testing.assert_array_equal(l2_sectored_intensities.he3he4_intensities,
+                                          np.full_like(cdf['he3he4'], np.nan))

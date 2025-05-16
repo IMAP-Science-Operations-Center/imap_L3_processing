@@ -1,20 +1,16 @@
-import glob
-import os
 import math
+import os
 import shutil
 
+import imap_processing.swe.l1b.swe_l1b
+import imap_processing.tests.conftest
 import pandas as pd
-import xarray as xr
-
 from imap_processing import imap_module_directory
-from imap_processing.cdf.utils import write_cdf
 from imap_processing.cdf.utils import load_cdf
+from imap_processing.cdf.utils import write_cdf
 from imap_processing.swe.l1a.swe_l1a import swe_l1a
 from imap_processing.swe.l1b.swe_l1b import swe_l1b
 from imap_processing.swe.l2.swe_l2 import swe_l2
-
-import imap_processing.tests.conftest
-import imap_processing.swe.l1b.swe_l1b_science
 
 
 # Don't have a cal file format for SWE yet, monkey-patch the lookup function
@@ -34,7 +30,7 @@ def fake_cal():
     )
 
 
-imap_processing.swe.l1b.swe_l1b_science.read_in_flight_cal_data = fake_cal
+imap_processing.swe.l1b.swe_l1b.read_in_flight_cal_data = fake_cal
 
 use_l0_data = False
 # Fake the spin data
@@ -58,7 +54,11 @@ if use_l0_data:
 else:
     loaded_l1b_dataset = load_cdf(
         "tests/test_data/swe/imap_swe_l1b_sci_20250630_v003.cdf")  # .isel(epoch=slice(None, 20))
-l2_dataset = swe_l2(loaded_l1b_dataset, "002")
+l2_dataset = swe_l2(loaded_l1b_dataset)
+phase_space_density = l2_dataset["phase_space_density_spin_sector"].values
+
+phase_space_density[:, :, 0:30:2, 0::6] = 0.5 * phase_space_density[:, :, 1:30:2, 0::6]
+phase_space_density[:, :, 1:30:2, 0::6] = 0.5 * phase_space_density[:, :, 1:30:2, 0::6]
 path = write_cdf(l2_dataset, compression=7, terminate_on_warning=False)
 shutil.move(path, "tests/test_data/swe/imap_swe_l2_sci_20250630_v002.cdf")
 
