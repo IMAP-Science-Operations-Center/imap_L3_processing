@@ -14,6 +14,7 @@ SPIN_ANGLE_VAR_NAME = "spin_angle"
 PROBABILITY_OF_SURVIVAL_VAR_NAME = "probability_of_survival"
 ENERGY_LABEL_VAR_NAME = "energy_label"
 SPIN_ANGLE_LABEL_VAR_NAME = "spin_angle_label"
+ELONGATION_VAR_NAME = "elongation"
 
 
 @dataclass
@@ -23,11 +24,13 @@ class GlowsL3ELoData(DataProduct):
     energy: np.ndarray
     spin_angle: np.ndarray
     probability_of_survival: np.ndarray
+    elongation: np.ndarray
 
     @classmethod
     def convert_dat_to_glows_l3e_lo_product(cls, input_metadata: InputMetadata, file_path: Path,
                                             epoch: np.ndarray[datetime],
-                                            epoch_delta: np.ndarray[timedelta]):
+                                            epoch_delta: np.ndarray[timedelta], elongation: np.ndarray[int]):
+        print("About to convert dat file to Lo product!!!!!!!!!!!!!!!1")
         with open(file_path) as input_data:
             energy_line = [line for line in input_data.readlines() if line.startswith("#energy_grid")]
             energies = np.array([float(i) for i in re.findall(r"\d+.\d+", energy_line[0])])
@@ -38,8 +41,12 @@ class GlowsL3ELoData(DataProduct):
 
         input_metadata.start_date = epoch[0]
 
-        return cls(input_metadata, epoch, epoch_delta.astype('timedelta64[ns]').astype(float), energies, spin_angles,
-                   survival_probabilities)
+        return cls(input_metadata=input_metadata, epoch=epoch,
+                   epoch_delta=epoch_delta.astype('timedelta64[ns]').astype(float),
+                   energy=energies,
+                   spin_angle=spin_angles,
+                   probability_of_survival=survival_probabilities,
+                   elongation=np.array([elongation]))
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         spin_angle_labels = [f"Spin Angle Label {i}" for i in range(1, 361)]
@@ -53,4 +60,5 @@ class GlowsL3ELoData(DataProduct):
             DataProductVariable(PROBABILITY_OF_SURVIVAL_VAR_NAME, self.probability_of_survival),
             DataProductVariable(ENERGY_LABEL_VAR_NAME, energy_labels),
             DataProductVariable(SPIN_ANGLE_LABEL_VAR_NAME, spin_angle_labels),
+            DataProductVariable(ELONGATION_VAR_NAME, self.elongation)
         ]

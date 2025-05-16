@@ -82,7 +82,13 @@ class GlowsProcessor(Processor):
                 epoch_delta: timedelta = (epoch_end_dt - epoch_dt) / 2
 
                 if self.input_metadata.descriptor == "survival-probability-lo":
-                    self.process_l3e_lo(epoch_dt, epoch_delta)
+                    try:
+                        year_with_repointing = str(epoch_dt.year) + str(int(repointing)).zfill(3)
+                        elongation = l3e_dependencies.elongation[year_with_repointing]
+                    except KeyError:
+                        print(f"KeyError for year: {year_with_repointing}")
+                        continue
+                    self.process_l3e_lo(epoch_dt, epoch_delta, elongation)
                 elif self.input_metadata.descriptor == "survival-probability-hi-45":
                     self.process_l3e_hi(epoch_dt, epoch_delta, 135)
                 elif self.input_metadata.descriptor == "survival-probability-hi-90":
@@ -180,18 +186,29 @@ class GlowsProcessor(Processor):
                                                     parent_file_names), output_txt_files, last_processed_cr
         return None, None, None
 
-    def process_l3e_lo(self, epoch: datetime, epoch_delta: timedelta):
-        call_args = determine_call_args_for_l3e_executable(epoch, epoch + epoch_delta, 90)
+    def process_l3e_lo(self, epoch: datetime, epoch_delta: timedelta, elongation_value: int):
+        print(
+            f"We did not throw a KeyError!! elongation is {elongation_value} and epoch is {epoch.year}/{epoch.month}/{epoch.day}")
+        call_args = determine_call_args_for_l3e_executable(epoch, epoch + epoch_delta, elongation_value)
 
-        run(["./survProbLo"] + call_args)
+        try:
+            run(["./survProbLo"] + call_args)
+            print(os.listdir())
+        except subprocess.CalledProcessError as e:
+            print(e)
 
+        print("About to create output path....")
         output_path = Path(f'probSur.Imap.Lo_{call_args[0]}_{call_args[1][:8]}_{call_args[-1][:5]}.dat')
+        print(f"Created output path! it is: {output_path}")
+        print(call_args)
         lo_data = GlowsL3ELoData.convert_dat_to_glows_l3e_lo_product(self.input_metadata, output_path,
-                                                                     np.array([epoch]), np.array([epoch_delta]))
+                                                                     np.array([epoch]), np.array([epoch_delta]),
+                                                                     elongation_value)
 
         lo_data.parent_file_names = self.get_parent_file_names()
-
+        print("-----------About to save data!-----------")
         lo_cdf = save_data(lo_data)
+        print("-----------About to upload!!!!-----------")
         imap_data_access.upload(lo_cdf)
 
     def process_l3e_hi(self, epoch: datetime, epoch_delta: timedelta, elongation: int):

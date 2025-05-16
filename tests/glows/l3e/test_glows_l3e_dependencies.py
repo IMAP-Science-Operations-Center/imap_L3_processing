@@ -8,11 +8,8 @@ from tests.test_helpers import get_test_data_path
 
 class TestGlowsL3EDependencies(unittest.TestCase):
 
-    @patch('imap_l3_processing.glows.l3e.glows_l3e_dependencies.ElongationLookup.read_from_file')
     @patch('imap_l3_processing.glows.l3e.glows_l3e_dependencies.download_dependency_from_path')
-    def test_fetch_dependencies_handles_lo(self, mock_read_from_file, mock_download_dependency_from_path):
-        mock_elongation_lookup_file = Mock()
-        mock_read_from_file.return_value = mock_elongation_lookup_file
+    def test_fetch_dependencies_handles_lo(self, mock_download_dependency_from_path):
         mock_processing_input_collection = Mock()
 
         mock_l3d = Path('imap_glows_l3d_solar-hist_20250501-cr02091_v001.cdf')
@@ -44,7 +41,7 @@ class TestGlowsL3EDependencies(unittest.TestCase):
         mock_ionization_files_path = Mock()
         mock_energy_grid_lo_path = Mock()
         mock_tess_xyz_8_path = Mock()
-        mock_lo_elongation_path = Mock()
+        mock_lo_elongation_path = get_test_data_path('glows/imap_lo_elongation-data_20250601_v000.dat')
 
         mock_download_dependency_from_path.side_effect = [
             mock_lya_series_path, mock_solar_uv_anisotropy_path, mock_speed_3d_sw_path,
@@ -108,8 +105,12 @@ class TestGlowsL3EDependencies(unittest.TestCase):
         self.assertEqual(None, actual_dependencies.energy_grid_ultra)
         self.assertEqual(mock_tess_xyz_8_path, actual_dependencies.tess_xyz_8)
         self.assertEqual(None, actual_dependencies.tess_ang16)
-        self.assertIsInstance(actual_dependencies.elongation, ElongationLookup)
-        self.assertIs(mock_elongation_lookup_file, actual_dependencies.elongation)
+        self.assertEqual(365, len(actual_dependencies.elongation))
+        first_dict_value = actual_dependencies.elongation['2026001']
+        last_dict_value = actual_dependencies.elongation['2026365']
+        self.assertEqual(105, first_dict_value)
+        self.assertEqual(105, last_dict_value)
+
         self.assertEqual(cr_number, 2091)
 
     @patch('imap_l3_processing.glows.l3e.glows_l3e_dependencies.download_dependency_from_path')
@@ -339,7 +340,9 @@ class TestGlowsL3EDependencies(unittest.TestCase):
                     "ionization-files": "ionization.files.dat",
                     "sw-eqtr-electrons": "swEqtrElectrons5_2021b.dat",
                 }
-            })
+            },
+            {}
+        )
 
         expected_energy_grid_lo = 'EnGridLo.dat'
         expected_tess_xyz_8 = 'tessXYZ8.dat'

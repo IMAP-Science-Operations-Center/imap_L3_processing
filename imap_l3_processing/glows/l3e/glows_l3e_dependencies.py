@@ -3,7 +3,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from shutil import move
 
-import numpy as np
 from imap_data_access.processing_input import ProcessingInputCollection
 
 from imap_l3_processing.utils import \
@@ -25,7 +24,7 @@ class GlowsL3EDependencies:
     sw_eqtr_electrons: Path
     ionization_files: Path
     pipeline_settings: dict
-    elongation: ndarray
+    elongation: dict
 
     @classmethod
     def fetch_dependencies(cls, dependencies: ProcessingInputCollection, descriptor: str):
@@ -64,7 +63,11 @@ class GlowsL3EDependencies:
             tess_xyz_path = download_dependency_from_path(str(tess_xyz_dependency[0]))
             elongation_path = download_dependency_from_path(str(elongation_dependency[0]))
             with open(elongation_path) as f:
-                elongation_data = np.loadtxt(f, delimiter=' ')
+                elongation_data = {}
+                lines = [line.rstrip('\n') for line in f.readlines()]
+                for line in lines:
+                    repointing, elongation = line.split('\t')
+                    elongation_data[repointing] = int(elongation)
         elif descriptor == "survival-probability-hi-45" or descriptor == "survival-probability-hi-90":
             energy_grid_hi_dependency = dependencies.get_file_paths(source='glows', descriptor='energy-grid-hi')
             energy_grid_hi_path = download_dependency_from_path(str(energy_grid_hi_dependency[0]))
