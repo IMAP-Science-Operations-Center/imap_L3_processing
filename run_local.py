@@ -898,7 +898,7 @@ if __name__ == "__main__":
     if "swapi" in sys.argv:
         if "l3a" in sys.argv:
             paths = create_swapi_l3a_cdf(
-                "tests/test_data/swapi/imap_swapi_density-temperature-lut_20240905_v000.dat",
+                "tests/test_data/swapi/imap_swapi_proton-density-temperature-lut_20240905_v000.dat",
                 "tests/test_data/swapi/imap_swapi_alpha-density-temperature-lut_20240920_v000.dat",
                 "tests/test_data/swapi/imap_swapi_clock-angle-and-flow-deflection-lut_20240918_v000.dat",
                 "tests/test_data/swapi/imap_swapi_energy-gf-lut_20240923_v000.dat",
