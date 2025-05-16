@@ -1098,7 +1098,7 @@ if __name__ == "__main__":
                 end_date=datetime(year=2025, month=9, day=1),
                 data_level="l3",
                 version="v001",
-                descriptor="u90-ena-h-sf-sp-full-hae-128nside-6mo"
+                descriptor="u90-ena-h-sf-sp-full-hae-nside16-6mo"
             )
 
             dependencies = UltraL3Dependencies(ultra_l1c_pset=[l1c_dependency], glows_l3e_sp=l3e_dependencies,

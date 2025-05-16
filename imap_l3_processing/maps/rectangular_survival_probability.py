@@ -25,7 +25,6 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
     def __init__(self, l1c_dataset: InputRectangularPointingSet, sensor: Sensor, spin_phase: SpinPhase,
                  glows_dataset: Optional[GlowsL3eRectangularMapInputData],
                  energies: np.ndarray):
-        super().__init__(xr.Dataset(), geometry.SpiceFrame.IMAP_DPS)
         num_spin_angle_bins = l1c_dataset.exposure_times.shape[-1]
         deg_spacing = 360 / num_spin_angle_bins
         half_bin_width = deg_spacing / 2
@@ -66,14 +65,13 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
         self.elevations = np.repeat(sensor_angle, num_spin_angle_bins)
         self.az_el_points = np.column_stack([self.azimuths, self.elevations])
 
-        self.num_points = num_spin_angle_bins
-        self.spatial_coords = [CoordNames.AZIMUTH_L1C.value]
+        self.spatial_coords = (CoordNames.AZIMUTH_L1C.value,)
 
-        self.data = xr.Dataset({
+        dataset = xr.Dataset({
             "survival_probability_times_exposure": (
                 [
                     CoordNames.TIME.value,
-                    CoordNames.ENERGY.value,
+                    CoordNames.ENERGY_ULTRA.value,
                     CoordNames.AZIMUTH_L1C.value,
                 ],
                 sp_interpolated_to_pset_angles * exposure,
@@ -81,7 +79,7 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
             "exposure": (
                 [
                     CoordNames.TIME.value,
-                    CoordNames.ENERGY.value,
+                    CoordNames.ENERGY_ULTRA.value,
                     CoordNames.AZIMUTH_L1C.value,
                 ],
                 exposure,
@@ -89,10 +87,11 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
         },
             coords={
                 CoordNames.TIME.value: l1c_dataset.epoch_j2000,
-                CoordNames.ENERGY.value: l1c_dataset.esa_energy_step,
+                CoordNames.ENERGY_ULTRA.value: l1c_dataset.esa_energy_step,
                 CoordNames.AZIMUTH_L1C.value: self.azimuths,
             },
         )
+        super().__init__(dataset, geometry.SpiceFrame.IMAP_DPS)
 
 
 class RectangularSurvivalProbabilitySkyMap(RectangularSkyMap):

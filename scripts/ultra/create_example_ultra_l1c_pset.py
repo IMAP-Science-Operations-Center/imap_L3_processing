@@ -126,7 +126,7 @@ def create_example_ultra_l1c_pset(
             "counts": (
                 [
                     CoordNames.TIME.value,
-                    CoordNames.ENERGY.value,
+                    CoordNames.ENERGY_ULTRA.value,
                     CoordNames.HEALPIX_INDEX.value,
                 ],
                 counts,
@@ -134,7 +134,7 @@ def create_example_ultra_l1c_pset(
             "exposure_time": (
                 [
                     CoordNames.TIME.value,
-                    CoordNames.ENERGY.value,
+                    CoordNames.ENERGY_ULTRA.value,
                     CoordNames.HEALPIX_INDEX.value
                 ],
                 exposure_time,
@@ -142,7 +142,7 @@ def create_example_ultra_l1c_pset(
             "sensitivity": (
                 [
                     CoordNames.TIME.value,
-                    CoordNames.ENERGY.value,
+                    CoordNames.ENERGY_ULTRA.value,
                     CoordNames.HEALPIX_INDEX.value,
                 ],
                 sensitivity,
@@ -160,7 +160,7 @@ def create_example_ultra_l1c_pset(
             CoordNames.TIME.value: [
                 tt_j2000ns
             ],
-            CoordNames.ENERGY.value: energy_bin_midpoints,
+            CoordNames.ENERGY_ULTRA.value: energy_bin_midpoints,
             CoordNames.HEALPIX_INDEX.value: pix_indices,
         },
         attrs={
@@ -180,7 +180,7 @@ def create_example_ultra_l1c_pset(
     pset_product[CoordNames.ELEVATION_L1C.value].attrs["VAR_TYPE"] = "data"
 
     pset_product.coords[CoordNames.TIME.value].attrs["VAR_TYPE"] = "support_data"
-    pset_product.coords[CoordNames.ENERGY.value].attrs["VAR_TYPE"] = "support_data"
+    pset_product.coords[CoordNames.ENERGY_ULTRA.value].attrs["VAR_TYPE"] = "support_data"
     pset_product.coords[CoordNames.HEALPIX_INDEX.value].attrs["VAR_TYPE"] = "support_data"
 
     return pset_product
@@ -200,7 +200,7 @@ def _write_ultra_l1c_cdf_with_parents(
         cdf.new("longitude", out_xarray[CoordNames.AZIMUTH_L1C.value].values, recVary=False)
         cdf.new("epoch", out_xarray[CoordNames.TIME.value].values, recVary=False,
                 type=pycdf.const.CDF_TIME_TT2000.value)
-        cdf.new("energy", out_xarray[CoordNames.ENERGY.value].values, recVary=False)
+        cdf.new("energy", out_xarray[CoordNames.ENERGY_ULTRA.value].values, recVary=False)
         cdf.new("healpix_index", out_xarray[CoordNames.HEALPIX_INDEX.value].values, recVary=False)
 
         for var in cdf:

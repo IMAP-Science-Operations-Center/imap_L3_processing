@@ -299,7 +299,7 @@ class TestHiProcessor(unittest.TestCase):
             "exposure_weighted_survival_probabilities": (
                 [
                     CoordNames.TIME.value,
-                    CoordNames.ENERGY.value,
+                    CoordNames.ENERGY_ULTRA.value,
                     CoordNames.AZIMUTH_L2.value,
                     CoordNames.ELEVATION_L2.value,
                 ],
@@ -308,7 +308,7 @@ class TestHiProcessor(unittest.TestCase):
         },
             coords={
                 CoordNames.TIME.value: [epoch],
-                CoordNames.ENERGY.value: rng.random((9,)),
+                CoordNames.ENERGY_ULTRA.value: rng.random((9,)),
                 CoordNames.AZIMUTH_L2.value: rng.random((90,)),
                 CoordNames.ELEVATION_L2.value: rng.random((45,)),
             })
