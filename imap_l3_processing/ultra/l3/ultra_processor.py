@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 from imap_data_access import upload
+from imap_processing.ena_maps.utils.coordinates import CoordNames
 from imap_processing.spice import geometry
 
 from imap_l3_processing.maps.map_descriptors import MapDescriptorParts, MapQuantity, SurvivalCorrection, \
@@ -48,6 +49,21 @@ class UltraProcessor(Processor):
         corrected_skymap = UltraSurvivalProbabilitySkyMap(survival_probability_psets, geometry.SpiceFrame.ECLIPJ2000,
                                                           coords.nside)
         survival_probability_map = corrected_skymap.to_dataset()["exposure_weighted_survival_probabilities"].values
+
+        corrected_skymap.data_1d = corrected_skymap.data_1d.assign({
+            "corrected_ena_intensity": ([CoordNames.TIME, CoordNames.ENERGY_ULTRA, CoordNames.GENERIC_PIXEL],
+                                        intensity_data.ena_intensity / survival_probability_map),
+            "corrected_ena_intensity_stat_unc": ([CoordNames.TIME, CoordNames.ENERGY_ULTRA, CoordNames.GENERIC_PIXEL],
+                                                 intensity_data.ena_intensity_stat_unc / survival_probability_map),
+            "corrected_ena_intensity_sys_err": ([CoordNames.TIME, CoordNames.ENERGY_ULTRA, CoordNames.GENERIC_PIXEL],
+                                                intensity_data.ena_intensity_sys_err / survival_probability_map),
+        })
+
+        rectangular_corrected_skymap = corrected_skymap.to_rectangular_skymap(4, [
+            "corrected_ena_intensity",
+            "corrected_ena_intensity_stat_unc",
+            "corrected_ena_intensity_sys_err",
+        ])
 
         corrected_intensity = intensity_data.ena_intensity / survival_probability_map
         corrected_stat_unc = intensity_data.ena_intensity_stat_unc / survival_probability_map
