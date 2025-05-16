@@ -3,7 +3,7 @@ from datetime import datetime
 from unittest.mock import patch, sentinel, call, MagicMock
 
 import numpy as np
-from imap_processing.ena_maps.ena_maps import RectangularSkyMap, PointingSet
+from imap_processing.ena_maps.ena_maps import RectangularSkyMap, PointingSet, RectangularPointingSet
 from imap_processing.ena_maps.utils.coordinates import CoordNames
 from imap_processing.spice import geometry
 from imap_processing.spice.geometry import SpiceFrame
@@ -46,7 +46,7 @@ class TestRectangularSurvivalProbability(unittest.TestCase):
         pointing_set = RectangularSurvivalProbabilityPointingSet(self.l1c_hi_dataset, Sensor.Hi45, SpinPhase.RamOnly,
                                                                  self.glows_data,
                                                                  self.hi_energies)
-        self.assertIsInstance(pointing_set, PointingSet)
+        self.assertIsInstance(pointing_set, RectangularPointingSet)
 
         mock_rectangular_pointing_set_constructor.assert_called_once()
 
@@ -69,7 +69,7 @@ class TestRectangularSurvivalProbability(unittest.TestCase):
 
                 self.assertIn("exposure", pointing_set.data.data_vars)
                 np.testing.assert_array_equal(
-                    pointing_set.data["exposure"].values,
+                    pointing_set.data["exposure"].values[:, :, :, 900],
                     self.l1c_hi_dataset.exposure_times * expected_mask)
 
                 self.assertIn(CoordNames.AZIMUTH_L1C.value, pointing_set.data.coords)
@@ -124,7 +124,7 @@ class TestRectangularSurvivalProbability(unittest.TestCase):
                                                                  self.hi_energies)
 
         survivals = pointing_set.data[
-                        "survival_probability_times_exposure"].values / self.l1c_hi_dataset.exposure_times
+                        "survival_probability_times_exposure"].values[:, :, :, 900] / self.l1c_hi_dataset.exposure_times
         every_tenth_value = survivals[:, :, ::10, np.newaxis]
         groups_of_ten = survivals.reshape(1, self.num_energies, 360, 10)
         self.assertTrue(np.all(np.isclose(every_tenth_value, groups_of_ten)))

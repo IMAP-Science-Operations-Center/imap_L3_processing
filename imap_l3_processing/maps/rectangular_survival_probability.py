@@ -2,7 +2,7 @@ from typing import Optional
 
 import numpy as np
 import xarray as xr
-from imap_processing.ena_maps.ena_maps import RectangularSkyMap, PointingSet
+from imap_processing.ena_maps.ena_maps import RectangularSkyMap, RectangularPointingSet
 from imap_processing.ena_maps.utils.coordinates import CoordNames
 from imap_processing.spice import geometry
 
@@ -21,17 +21,17 @@ def interpolate_angular_data_to_nearest_neighbor(input_azimuths: np.array, glows
     return sorted_data[np.digitize(input_azimuths, bin_edges, right=True)]
 
 
-class RectangularSurvivalProbabilityPointingSet(PointingSet):
+class RectangularSurvivalProbabilityPointingSet(RectangularPointingSet):
     def __init__(self, l1c_dataset: InputRectangularPointingSet, sensor: Sensor, spin_phase: SpinPhase,
                  glows_dataset: Optional[GlowsL3eRectangularMapInputData],
                  energies: np.ndarray):
-        super().__init__(xr.Dataset(), geometry.SpiceFrame.IMAP_DPS)
         num_spin_angle_bins = l1c_dataset.exposure_times.shape[-1]
         deg_spacing = 360 / num_spin_angle_bins
         half_bin_width = deg_spacing / 2
         spin_angles = np.linspace(0, 360, num_spin_angle_bins,
                                   endpoint=False) + half_bin_width
-        self.azimuths = np.mod(spin_angles + 90, 360)
+        # azimuths = np.mod(spin_angles + 90, 360)
+        azimuths = spin_angles
 
         if glows_dataset is not None:
             glows_spin_bin_count = len(glows_dataset.spin_angle)
@@ -45,7 +45,8 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
             sp_interpolated_to_pset_angles = np.zeros((1, len(energies), 3600))
             for e_index in range(len(energies)):
                 sp_interpolated_to_pset_angles[0, e_index] = interpolate_angular_data_to_nearest_neighbor(
-                    self.azimuths, glows_dataset.spin_angle, sp_interpolated_to_hi_energies[e_index])
+                    azimuths, np.roll(glows_dataset.spin_angle, -90, axis=-1),
+                    np.roll(sp_interpolated_to_hi_energies[e_index], -90, axis=-1))
         else:
             sp_interpolated_to_pset_angles = np.full((1, len(energies), 3600), np.nan)
 
@@ -53,46 +54,62 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
 
         assert num_spin_angle_bins == 3600, "unexpected number of spin angles"
         if spin_phase == SpinPhase.RamOnly:
-            exposure_mask[0:900] = True
-            exposure_mask[2700:3600] = True
+            exposure_mask[0:1800] = True
         elif spin_phase == SpinPhase.AntiRamOnly:
-            exposure_mask[900:2700] = True
+            exposure_mask[1800:3600] = True
         else:
             raise ValueError("Should not survival correct a full spin map!")
 
         exposure = l1c_dataset.exposure_times * exposure_mask
 
-        sensor_angle = Sensor.get_sensor_angle(sensor)
-        self.elevations = np.repeat(sensor_angle, num_spin_angle_bins)
-        self.az_el_points = np.column_stack([self.azimuths, self.elevations])
+        # sensor_angle = Sensor.get_sensor_angle(sensor)
+        # self.elevations = np.repeat(sensor_angle, num_spin_angle_bins)
+        # self.az_el_points = np.column_stack([self.azimuths, self.elevations])
+        #
+        # self.num_points = num_spin_angle_bins
+        # self.spatial_coords = [CoordNames.AZIMUTH_L1C.value]
 
-        self.num_points = num_spin_angle_bins
-        self.spatial_coords = [CoordNames.AZIMUTH_L1C.value]
+        num_elevation_angle_bins = np.int64(l1c_dataset.exposure_times.shape[-1] / 2)
+        elevation_deg_spacing = 180 / num_elevation_angle_bins
+        elevation_half_bin_width = elevation_deg_spacing / 2
+        elevations = np.linspace(-90, 90, num_elevation_angle_bins,
+                                 endpoint=False) + elevation_half_bin_width
 
-        self.data = xr.Dataset({
+        survival_probability_times_exposure = np.full((1, len(energies), azimuths.shape[0], elevations.shape[0]),
+                                                      np.nan)
+        survival_probability_times_exposure[:, :, :, 900] = sp_interpolated_to_pset_angles * exposure
+
+        exposure_by_az_el = np.full_like(survival_probability_times_exposure, np.nan)
+        exposure_by_az_el[:, :, :, 900] = exposure
+
+        data = xr.Dataset({
             "survival_probability_times_exposure": (
                 [
                     CoordNames.TIME.value,
                     CoordNames.ENERGY.value,
                     CoordNames.AZIMUTH_L1C.value,
+                    CoordNames.ELEVATION_L1C.value
                 ],
-                sp_interpolated_to_pset_angles * exposure,
+                survival_probability_times_exposure,
             ),
             "exposure": (
                 [
                     CoordNames.TIME.value,
                     CoordNames.ENERGY.value,
                     CoordNames.AZIMUTH_L1C.value,
+                    CoordNames.ELEVATION_L1C.value
                 ],
-                exposure,
+                exposure_by_az_el,
             )
         },
             coords={
                 CoordNames.TIME.value: l1c_dataset.epoch_j2000,
                 CoordNames.ENERGY.value: l1c_dataset.esa_energy_step,
-                CoordNames.AZIMUTH_L1C.value: self.azimuths,
+                CoordNames.AZIMUTH_L1C.value: azimuths,
+                CoordNames.ELEVATION_L1C.value: elevations,
             },
         )
+        super().__init__(data, geometry.SpiceFrame.IMAP_DPS)
 
 
 class RectangularSurvivalProbabilitySkyMap(RectangularSkyMap):
