@@ -9,7 +9,7 @@ from imap_processing.spice import geometry
 from imap_processing.spice.geometry import SpiceFrame
 
 from imap_l3_processing.maps.map_descriptors import SpinPhase
-from imap_l3_processing.maps.map_models import HiGlowsL3eData, HiL1cData
+from imap_l3_processing.maps.map_models import GlowsL3eRectangularMapInputData, InputRectangularPointingSet
 from imap_l3_processing.maps.rectangular_survival_probability import Sensor, \
     RectangularSurvivalProbabilitySkyMap, RectangularSurvivalProbabilityPointingSet, \
     interpolate_angular_data_to_nearest_neighbor
@@ -22,14 +22,14 @@ class TestRectangularSurvivalProbability(unittest.TestCase):
 
         self.hi_energies = np.geomspace(1, 10000, self.num_energies)
 
-        self.l1c_hi_dataset = HiL1cData(
+        self.l1c_hi_dataset = InputRectangularPointingSet(
             epoch=self.epoch,
             epoch_j2000=np.array([43264184000000]),
             exposure_times=np.arange(self.num_energies * 3600).reshape((1, self.num_energies, 3600)) + 1.1,
             esa_energy_step=np.arange(self.num_energies),
         )
 
-        self.glows_data = HiGlowsL3eData(
+        self.glows_data = GlowsL3eRectangularMapInputData(
             epoch=self.epoch,
             energy=np.geomspace(1, 10000, self.num_energies + 1),
             spin_angle=np.arange(0, 360, 1) + 0.5,

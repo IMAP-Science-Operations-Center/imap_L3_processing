@@ -39,8 +39,6 @@ from imap_l3_processing.glows.l3e.glows_l3e_dependencies import GlowsL3EDependen
 from imap_l3_processing.hi.hi_processor import HiProcessor
 from imap_l3_processing.hi.l3.hi_l3_combined_sensor_dependencies import HiL3CombinedMapDependencies
 from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3SpectralIndexDependencies
-from imap_l3_processing.hi.l3.hi_l3_survival_dependencies import HiL3SurvivalDependencies, \
-    HiL3SingleSensorFullSpinDependencies
 from imap_l3_processing.hit.l3.hit_l3_sectored_dependencies import HITL3SectoredDependencies
 from imap_l3_processing.hit.l3.hit_processor import HitProcessor
 from imap_l3_processing.hit.l3.models import HitL1Data
@@ -52,6 +50,8 @@ from imap_l3_processing.hit.l3.pha.science.range_fit_lookup import RangeFitLooku
 from imap_l3_processing.hit.l3.utils import read_l2_hit_data
 from imap_l3_processing.lo.l3.lo_l3_spectral_fit_dependencies import LoL3SpectralFitDependencies
 from imap_l3_processing.lo.lo_processor import perform_spectral_fit
+from imap_l3_processing.maps.hilo_l3_survival_dependencies import HiLoL3SurvivalDependencies, \
+    HiL3SingleSensorFullSpinDependencies
 from imap_l3_processing.maps.map_models import RectangularSpectralIndexDataProduct, RectangularIntensityDataProduct, \
     combine_rectangular_intensity_map_data, HealPixIntensityMapData, RectangularIntensityMapData
 from imap_l3_processing.models import InputMetadata
@@ -791,7 +791,7 @@ def read_glows_survival_probability_data_from_cdf() -> tuple[np.ndarray, np.ndar
     return l3e["probability_of_survival"][...][:, 0], l3e["probability_of_survival"][...][:, 1]
 
 
-def create_hi_l3_survival_corrected_cdf(survival_dependencies: HiL3SurvivalDependencies, spacing_degree: int) -> str:
+def create_hi_l3_survival_corrected_cdf(survival_dependencies: HiLoL3SurvivalDependencies, spacing_degree: int) -> str:
     input_metadata = InputMetadata(instrument="hi",
                                    data_level="l3",
                                    start_date=datetime(2025, 4, 9),
@@ -991,7 +991,7 @@ if __name__ == "__main__":
         hi_l1c_paths = list(hi_l1c_folder.iterdir())
 
         if do_all or "survival-probability" in sys.argv:
-            survival_dependencies = HiL3SurvivalDependencies.from_file_paths(
+            survival_dependencies = HiLoL3SurvivalDependencies.from_file_paths(
                 map_file_path=l2_ram_90_map_path,
                 hi_l1c_paths=hi_l1c_paths,
                 glows_l3e_paths=glows_l3_paths,
@@ -1005,13 +1005,13 @@ if __name__ == "__main__":
             print(create_hi_spectral_index_cdf(dependencies))
 
         if do_all or "full-spin" in sys.argv:
-            ram_survival_dependencies = HiL3SurvivalDependencies.from_file_paths(
+            ram_survival_dependencies = HiLoL3SurvivalDependencies.from_file_paths(
                 map_file_path=l2_ram_90_map_path,
                 hi_l1c_paths=hi_l1c_paths,
                 glows_l3e_paths=glows_l3_paths,
                 l2_descriptor="h90-ena-h-sf-nsp-ram-hae-4deg-6mo")
 
-            antiram_survival_dependencies = HiL3SurvivalDependencies.from_file_paths(
+            antiram_survival_dependencies = HiLoL3SurvivalDependencies.from_file_paths(
                 map_file_path=l2_antiram_90_map_path,
                 hi_l1c_paths=hi_l1c_paths,
                 glows_l3e_paths=glows_l3_paths,
