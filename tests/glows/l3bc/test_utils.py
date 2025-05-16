@@ -11,11 +11,10 @@ from spacepy.pycdf import CDF
 
 from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
 from imap_l3_processing.glows.l3bc.glows_initializer_ancillary_dependencies import GlowsInitializerAncillaryDependencies
-from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDependencies
 from imap_l3_processing.glows.l3bc.models import CRToProcess
 from imap_l3_processing.glows.l3bc.utils import read_glows_l3a_data, find_unprocessed_carrington_rotations, \
     archive_dependencies, get_repoint_date_range
-from tests.test_helpers import get_test_data_path, get_test_instrument_team_data_path, environment_variables
+from tests.test_helpers import get_test_data_path, environment_variables
 
 
 class TestUtils(unittest.TestCase):

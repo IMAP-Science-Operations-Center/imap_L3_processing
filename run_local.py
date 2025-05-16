@@ -472,8 +472,8 @@ def run_glows_l3bc_processor_and_initializer(_, mock_query):
 
     bad_days_list = AncillaryInput('imap_glows_bad-days-list_20100101_v001.dat')
     waw_helio_ion = AncillaryInput('imap_glows_WawHelioIonMP_20100101_v002.json')
-    uv_anisotropy = AncillaryInput('imap_glows_uv-anisotropy-1CR_20100101_v001.json')
-    pipeline_settings = AncillaryInput('imap_glows_pipeline-settings-L3bc_20250707_v002.json')
+    uv_anisotropy = AncillaryInput('imap_glows_uv-anisotropy-1cr_20250514_v002.json')
+    pipeline_settings = AncillaryInput('imap_glows_pipeline-settings-L3bcd_20250514_v004.json')
     input_collection = ProcessingInputCollection(bad_days_list, waw_helio_ion, uv_anisotropy, pipeline_settings)
 
     processor = GlowsProcessor(dependencies=input_collection, input_metadata=input_metadata)
@@ -709,25 +709,25 @@ def run_glows_l3d(mock_shutil):
 
     ancillary_files = {
         'WawHelioIon': {
-            'speed': get_test_data_path('glows/imap_glows_plasma-speed-Legendre-2010a_v001.dat'),
-            'p-dens': get_test_data_path('glows/imap_glows_proton-density-Legendre-2010a_v001.dat'),
-            'uv-anis': get_test_data_path('glows/imap_glows_uv-anisotropy-2010a_v001.dat'),
-            'phion': get_test_data_path('glows/imap_glows_photoion-2010a_v001.dat'),
-            'lya': get_test_data_path('glows/imap_glows_lya-2010a_v001.dat'),
-            'e-dens': get_test_data_path('glows/imap_glows_electron-density-2010a_v001.dat'),
+            'speed': get_test_instrument_team_data_path('glows/imap_glows_plasma-speed-2010a_v003.dat'),
+            'p-dens': get_test_instrument_team_data_path('glows/imap_glows_proton-density-2010a_v003.dat'),
+            'uv-anis': get_test_instrument_team_data_path('glows/imap_glows_uv-anisotropy-2010a_v003.dat'),
+            'phion': get_test_instrument_team_data_path('glows/imap_glows_photoion-2010a_v003.dat'),
+            'lya': get_test_instrument_team_data_path('glows/imap_glows_lya-2010a_v003.dat'),
+            'e-dens': get_test_instrument_team_data_path('glows/imap_glows_electron-density-2010a_v003.dat'),
         },
         'pipeline_settings': get_test_instrument_team_data_path(
-            'glows/imap_glows_pipeline-settings-L3bc_20250707_v002.json')
+            'glows/imap_glows_pipeline-settings-L3bcd_20250514_v004.json')
     }
 
     l3b_file_paths = [
         get_test_data_path('glows/imap_glows_l3b_ion-rate-profile_20100422_v011.cdf'),
-        get_test_data_path('glows/imap_glows_l3b_ion-rate-profile_20100519_v011.cdf')
+        get_test_data_path('glows/imap_glows_l3b_ion-rate-profile_20100519_v011.cdf'),
     ]
 
     l3c_file_paths = [
         get_test_data_path('glows/imap_glows_l3c_sw-profile_20100422_v011.cdf'),
-        get_test_data_path('glows/imap_glows_l3c_sw-profile_20100519_v011.cdf')
+        get_test_data_path('glows/imap_glows_l3c_sw-profile_20100519_v011.cdf'),
     ]
 
     l3d_dependencies: GlowsL3DDependencies = GlowsL3DDependencies(external_files=external_files,
@@ -737,6 +737,8 @@ def run_glows_l3d(mock_shutil):
 
     processor = GlowsProcessor(ProcessingInputCollection(), input_metadata)
     data_product, l3d_txt_paths, last_processed_cr = processor.process_l3d(l3d_dependencies)
+    print("l3d_txts:")
+    [print(txt_path) for txt_path in l3d_txt_paths]
     print(save_data(data_product, cr_number=last_processed_cr))
 
 
