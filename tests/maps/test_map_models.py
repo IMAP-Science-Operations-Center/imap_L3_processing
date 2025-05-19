@@ -593,7 +593,7 @@ class TestMapModels(unittest.TestCase):
         np.testing.assert_array_equal(actual_dataset.data_vars["solid_angle"].values, intensity_map_data.solid_angle)
 
         np.testing.assert_array_equal(actual_dataset.data_vars["obs_date_range"].values, intensity_map_data.obs_date_range)
-        np.testing.assert_array_equal(actual_dataset.data_vars["obs_date"].values, intensity_map_data.obs_date)
+        np.testing.assert_array_equal(actual_dataset.data_vars["obs_date"].values, intensity_map_data.obs_date.astype(np.float64))
 
         np.testing.assert_array_equal(actual_dataset.data_vars["exposure_factor"].values, intensity_map_data.exposure_factor)
         np.testing.assert_array_equal(actual_dataset.data_vars["ena_intensity"].values, intensity_map_data.ena_intensity)

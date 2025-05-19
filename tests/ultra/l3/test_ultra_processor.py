@@ -8,6 +8,7 @@ import xarray as xr
 from imap_data_access.processing_input import AncillaryInput, ScienceInput, ProcessingInputCollection
 from imap_processing.ena_maps.ena_maps import RectangularSkyMap
 from imap_processing.ena_maps.utils.coordinates import CoordNames
+from imap_processing.ena_maps.utils.spatial_utils import AzElSkyGrid
 from imap_processing.spice.geometry import SpiceFrame
 
 from imap_l3_processing.maps.map_models import HealPixIntensityMapData, IntensityMapData, HealPixCoords, \
@@ -195,11 +196,15 @@ class TestUltraProcessor(unittest.TestCase):
         for degree_spacing in [4, 6]:
             with (self.subTest(degree_spacing=degree_spacing)):
                 mock_input_skymap = Mock()
+
                 healpix_input_data = _create_ultra_l2_data()
                 healpix_input_data.to_healpix_skymap = Mock(return_value=mock_input_skymap)
                 mock_fetch_dependencies.return_value.healpix_map_data = healpix_input_data
 
-                mock_rectangular_map = {
+                mock_rectangular_map_dataset = {
+                    "obs_date": Mock(values=sentinel.rectangular_obs_date),
+                    "obs_date_range": Mock(values=sentinel.rectangular_obs_date_range),
+                    "solid_angle": Mock(values=sentinel.rectangular_solid_angle),
                     "exposure_factor": Mock(values=sentinel.rectangular_exposure_factor),
                     "ena_intensity": Mock(values=sentinel.rectangular_ena_intensity),
                     "ena_intensity_stat_unc": Mock(values=sentinel.rectangular_ena_intensity_stat_unc),
@@ -207,7 +212,8 @@ class TestUltraProcessor(unittest.TestCase):
                 }
 
                 mock_rectangular_sky_map = Mock(spec=RectangularSkyMap)
-                mock_rectangular_sky_map.to_dataset.return_value = mock_rectangular_map
+                mock_rectangular_sky_map.sky_grid = AzElSkyGrid(degree_spacing)
+                mock_rectangular_sky_map.to_dataset.return_value = mock_rectangular_map_dataset
                 mock_input_skymap.to_rectangular_skymap.return_value = mock_rectangular_sky_map, 0
 
                 map_file_name = 'imap_ultra_l3_ultra-cool-descriptor_20250601_v000.cdf'
@@ -231,6 +237,9 @@ class TestUltraProcessor(unittest.TestCase):
                     "ena_intensity",
                     "ena_intensity_stat_unc",
                     "ena_intensity_sys_err",
+                    "obs_date",
+                    "obs_date_range",
+                    "solid_angle",
                 ]
 
                 healpix_input_data.to_healpix_skymap.assert_called_once()
@@ -260,13 +269,21 @@ class TestUltraProcessor(unittest.TestCase):
                 self.assertEqual(actual_rectangular_data.intensity_map_data.ena_intensity, sentinel.rectangular_ena_intensity)
                 self.assertEqual(actual_rectangular_data.intensity_map_data.ena_intensity_stat_unc, sentinel.rectangular_ena_intensity_stat_unc)
                 self.assertEqual(actual_rectangular_data.intensity_map_data.ena_intensity_sys_err, sentinel.rectangular_ena_intensity_sys_err)
+                self.assertEqual(actual_rectangular_data.intensity_map_data.obs_date, sentinel.rectangular_obs_date)
+                self.assertEqual(actual_rectangular_data.intensity_map_data.obs_date_range, sentinel.rectangular_obs_date_range)
+                self.assertEqual(actual_rectangular_data.intensity_map_data.solid_angle, sentinel.rectangular_solid_angle)
+
+                np.testing.assert_array_equal(actual_rectangular_data.intensity_map_data.latitude, mock_rectangular_sky_map.sky_grid.el_bin_midpoints)
+                np.testing.assert_array_equal(actual_rectangular_data.intensity_map_data.longitude, mock_rectangular_sky_map.sky_grid.az_bin_midpoints)
+                np.testing.assert_array_equal(actual_rectangular_data.coords.latitude_label, mock_rectangular_sky_map.sky_grid.el_bin_midpoints.astype(str))
+                np.testing.assert_array_equal(actual_rectangular_data.coords.longitude_label, mock_rectangular_sky_map.sky_grid.az_bin_midpoints.astype(str))
                 # @formatter:on
 
-                self.assertIsNone(actual_rectangular_data.intensity_map_data.latitude)
-                self.assertIsNone(actual_rectangular_data.intensity_map_data.longitude)
-                self.assertIsNone(actual_rectangular_data.intensity_map_data.obs_date)
-                self.assertIsNone(actual_rectangular_data.intensity_map_data.obs_date_range)
-                self.assertIsNone(actual_rectangular_data.intensity_map_data.solid_angle)
+                self.assertEqual((int(360 / degree_spacing),), actual_rectangular_data.coords.longitude_delta.shape)
+                self.assertTrue(np.all(degree_spacing / 2 == actual_rectangular_data.coords.longitude_delta))
+
+                self.assertEqual((int(180 / degree_spacing),), actual_rectangular_data.coords.latitude_delta.shape)
+                self.assertTrue(np.all(degree_spacing / 2 == actual_rectangular_data.coords.latitude_delta))
 
                 mock_upload.assert_called_once_with(mock_save_data.return_value)
 

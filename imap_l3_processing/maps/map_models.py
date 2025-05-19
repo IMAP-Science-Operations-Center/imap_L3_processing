@@ -146,7 +146,12 @@ class HealPixIntensityMapData:
                 CoordNames.TIME.value: self.intensity_map_data.epoch,
                 CoordNames.ENERGY_ULTRA.value: self.intensity_map_data.energy,
                 CoordNames.HEALPIX_INDEX.value: self.coords.pixel_index,
-            }).rename({CoordNames.HEALPIX_INDEX.value: CoordNames.GENERIC_PIXEL.value})
+            })
+
+        healpix_map.data_1d = healpix_map.data_1d \
+            .assign({"obs_date": (full_shape, healpix_map.data_1d["obs_date"].values.astype(np.float64))}) \
+            .rename({CoordNames.HEALPIX_INDEX.value: CoordNames.GENERIC_PIXEL.value})
+
         return healpix_map
 
 

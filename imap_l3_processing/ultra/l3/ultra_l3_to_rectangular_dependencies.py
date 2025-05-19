@@ -15,8 +15,8 @@ class UltraL3ToRectangularDependencies:
     def fetch_dependencies(cls, deps: ProcessingInputCollection) -> Self:
         [l3_ultra_map] = deps.get_file_paths("ultra", None, "l3")
         l3_map_path = download(l3_ultra_map.name)
-        return cls.from_file_maps(l3_map_path)
+        return cls.from_file_paths(l3_map_path)
 
     @classmethod
-    def from_file_maps(cls, healpix_map_path: Path):
+    def from_file_paths(cls, healpix_map_path: Path):
         return cls(HealPixIntensityMapData.read_from_path(healpix_map_path))

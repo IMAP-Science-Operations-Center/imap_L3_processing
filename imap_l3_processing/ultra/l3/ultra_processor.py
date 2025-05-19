@@ -1,14 +1,13 @@
 from dataclasses import dataclass
 
 from imap_data_access import upload
-from imap_processing.ena_maps.utils.coordinates import CoordNames
 from imap_processing.spice import geometry
 
 from imap_l3_processing.maps.map_descriptors import MapDescriptorParts, MapQuantity, SurvivalCorrection, \
     parse_map_descriptor, PixelSize
 from imap_l3_processing.maps.map_models import HealPixIntensityDataProduct, HealPixIntensityMapData, IntensityMapData, \
     HealPixCoords, HealPixSpectralIndexDataProduct, HealPixSpectralIndexMapData, RectangularIntensityDataProduct, \
-    RectangularIntensityMapData
+    RectangularIntensityMapData, RectangularCoords
 from imap_l3_processing.maps.spectral_fit import calculate_spectral_index_for_multiple_ranges
 from imap_l3_processing.processor import Processor
 from imap_l3_processing.ultra.l3.science.ultra_survival_probability import UltraSurvivalProbabilitySkyMap, \
@@ -59,21 +58,6 @@ class UltraProcessor(Processor):
         corrected_skymap = UltraSurvivalProbabilitySkyMap(survival_probability_psets, geometry.SpiceFrame.ECLIPJ2000,
                                                           coords.nside)
         survival_probability_map = corrected_skymap.to_dataset()["exposure_weighted_survival_probabilities"].values
-
-        corrected_skymap.data_1d = corrected_skymap.data_1d.assign({
-            "corrected_ena_intensity": ([CoordNames.TIME, CoordNames.ENERGY_ULTRA, CoordNames.GENERIC_PIXEL],
-                                        intensity_data.ena_intensity / survival_probability_map),
-            "corrected_ena_intensity_stat_unc": ([CoordNames.TIME, CoordNames.ENERGY_ULTRA, CoordNames.GENERIC_PIXEL],
-                                                 intensity_data.ena_intensity_stat_unc / survival_probability_map),
-            "corrected_ena_intensity_sys_err": ([CoordNames.TIME, CoordNames.ENERGY_ULTRA, CoordNames.GENERIC_PIXEL],
-                                                intensity_data.ena_intensity_sys_err / survival_probability_map),
-        })
-
-        rectangular_corrected_skymap = corrected_skymap.to_rectangular_skymap(4, [
-            "corrected_ena_intensity",
-            "corrected_ena_intensity_stat_unc",
-            "corrected_ena_intensity_sys_err",
-        ])
 
         corrected_intensity = intensity_data.ena_intensity / survival_probability_map
         corrected_stat_unc = intensity_data.ena_intensity_stat_unc / survival_probability_map
@@ -127,6 +111,9 @@ class UltraProcessor(Processor):
             "ena_intensity",
             "ena_intensity_stat_unc",
             "ena_intensity_sys_err",
+            "obs_date",
+            "obs_date_range",
+            "solid_angle",
         ]
 
         healpix_map = dependencies.healpix_map_data.to_healpix_skymap()
@@ -142,17 +129,23 @@ class UltraProcessor(Processor):
             energy_delta_plus=input_map_intensity_data.energy_delta_plus,
             energy_delta_minus=input_map_intensity_data.energy_delta_minus,
             energy_label=input_map_intensity_data.energy_label,
-            latitude=None,
-            longitude=None,
-            obs_date=None,
-            obs_date_range=None,
-            solid_angle=None,
+            latitude=rectangular_map.sky_grid.el_bin_midpoints,
+            longitude=rectangular_map.sky_grid.az_bin_midpoints,
+            obs_date=rectangular_map_xarray_dataset["obs_date"].values,
+            obs_date_range=rectangular_map_xarray_dataset["obs_date_range"].values,
+            solid_angle=rectangular_map_xarray_dataset["solid_angle"].values,
             exposure_factor=rectangular_map_xarray_dataset["exposure_factor"].values,
             ena_intensity=rectangular_map_xarray_dataset["ena_intensity"].values,
             ena_intensity_stat_unc=rectangular_map_xarray_dataset["ena_intensity_stat_unc"].values,
             ena_intensity_sys_err=rectangular_map_xarray_dataset["ena_intensity_sys_err"].values,
         )
-        rect_intensity_map_data = RectangularIntensityMapData(intensity_map_data, None)
+        rect_intensity_map_data = RectangularIntensityMapData(intensity_map_data, coords=RectangularCoords(
+            latitude_delta=(rectangular_map.sky_grid.el_bin_midpoints - rectangular_map.sky_grid.el_bin_edges[:-1]),
+            latitude_label=intensity_map_data.latitude.astype(str),
+            longitude_delta=(rectangular_map.sky_grid.az_bin_midpoints - rectangular_map.sky_grid.az_bin_edges[
+                                                                         :-1]),
+            longitude_label=intensity_map_data.longitude.astype(str),
+        ))
 
         return RectangularIntensityDataProduct(data=rect_intensity_map_data, input_metadata=self.input_metadata)
 
