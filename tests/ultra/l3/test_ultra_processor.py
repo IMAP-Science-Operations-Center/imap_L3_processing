@@ -6,11 +6,13 @@ from unittest.mock import patch, sentinel, call, Mock
 import numpy as np
 import xarray as xr
 from imap_data_access.processing_input import AncillaryInput, ScienceInput, ProcessingInputCollection
+from imap_processing.ena_maps.ena_maps import RectangularSkyMap
 from imap_processing.ena_maps.utils.coordinates import CoordNames
 from imap_processing.spice.geometry import SpiceFrame
 
 from imap_l3_processing.maps.map_models import HealPixIntensityMapData, IntensityMapData, HealPixCoords, \
-    HealPixIntensityDataProduct, HealPixSpectralIndexDataProduct, SpectralIndexMapData, HealPixSpectralIndexMapData
+    HealPixIntensityDataProduct, HealPixSpectralIndexDataProduct, SpectralIndexMapData, HealPixSpectralIndexMapData, \
+    RectangularIntensityDataProduct
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.ultra.l3.ultra_l3_dependencies import UltraL3Dependencies, UltraL3SpectralIndexDependencies
 from imap_l3_processing.ultra.l3.ultra_processor import UltraProcessor
@@ -35,6 +37,7 @@ class TestUltraProcessor(unittest.TestCase):
         epoch = datetime.now()
 
         mock_spiceypy.ktotal.return_value = 1
+
         mock_spiceypy.kdata.return_value = [sentinel.spice_data_name]
 
         input_l2_map = _create_ultra_l2_data(epoch=[epoch], flux=input_map_flux, healpix_indices=healpix_indices)
@@ -183,6 +186,94 @@ class TestUltraProcessor(unittest.TestCase):
 
         mock_upload.assert_called_once_with(mock_save_data.return_value)
 
+    @patch('imap_l3_processing.processor.spiceypy')
+    @patch('imap_l3_processing.ultra.l3.ultra_processor.upload')
+    @patch('imap_l3_processing.ultra.l3.ultra_processor.save_data')
+    @patch('imap_l3_processing.ultra.l3.ultra_processor.UltraL3ToRectangularDependencies.fetch_dependencies')
+    def test_process_healpix_to_rectangular(self, mock_fetch_dependencies, mock_save_data,
+                                            mock_upload, mock_spiceypy):
+        for degree_spacing in [4, 6]:
+            with (self.subTest(degree_spacing=degree_spacing)):
+                mock_input_skymap = Mock()
+                healpix_input_data = _create_ultra_l2_data()
+                healpix_input_data.to_healpix_skymap = Mock(return_value=mock_input_skymap)
+                mock_fetch_dependencies.return_value.healpix_map_data = healpix_input_data
+
+                mock_rectangular_map = {
+                    "exposure_factor": Mock(values=sentinel.rectangular_exposure_factor),
+                    "ena_intensity": Mock(values=sentinel.rectangular_ena_intensity),
+                    "ena_intensity_stat_unc": Mock(values=sentinel.rectangular_ena_intensity_stat_unc),
+                    "ena_intensity_sys_err": Mock(values=sentinel.rectangular_ena_intensity_sys_err),
+                }
+
+                mock_rectangular_sky_map = Mock(spec=RectangularSkyMap)
+                mock_rectangular_sky_map.to_dataset.return_value = mock_rectangular_map
+                mock_input_skymap.to_rectangular_skymap.return_value = mock_rectangular_sky_map, 0
+
+                map_file_name = 'imap_ultra_l3_ultra-cool-descriptor_20250601_v000.cdf'
+                input_deps = ProcessingInputCollection(ScienceInput(map_file_name))
+
+                mock_spiceypy.ktotal.return_value = 0
+
+                input_metadata = InputMetadata(instrument="ultra",
+                                               data_level="l3",
+                                               start_date=datetime.now(),
+                                               end_date=datetime.now() + timedelta(days=1),
+                                               version="v000",
+                                               descriptor=f"u90-ena-h-sf-sp-full-hae-{degree_spacing}deg-6mo")
+                processor = UltraProcessor(input_deps, input_metadata)
+                processor.process()
+
+                mock_fetch_dependencies.assert_called_once_with(input_deps)
+
+                expected_value_keys = [
+                    "exposure_factor",
+                    "ena_intensity",
+                    "ena_intensity_stat_unc",
+                    "ena_intensity_sys_err",
+                ]
+
+                healpix_input_data.to_healpix_skymap.assert_called_once()
+
+                mock_input_skymap.to_rectangular_skymap.assert_called_once_with(degree_spacing,
+                                                                                expected_value_keys)
+
+                mock_save_data.assert_called_once()
+                actual_rectangular_data_product = mock_save_data.call_args_list[0].args[0]
+
+                self.assertIsInstance(actual_rectangular_data_product, RectangularIntensityDataProduct)
+                self.assertEqual([map_file_name], actual_rectangular_data_product.parent_file_names)
+
+                actual_rectangular_data = actual_rectangular_data_product.data
+
+                self.assertIsInstance(actual_rectangular_data.intensity_map_data, IntensityMapData)
+
+                # @formatter:off
+                np.testing.assert_array_equal(actual_rectangular_data.intensity_map_data.epoch, healpix_input_data.intensity_map_data.epoch)
+                np.testing.assert_array_equal(actual_rectangular_data.intensity_map_data.epoch_delta, healpix_input_data.intensity_map_data.epoch_delta)
+                np.testing.assert_array_equal(actual_rectangular_data.intensity_map_data.energy, healpix_input_data.intensity_map_data.energy)
+                np.testing.assert_array_equal(actual_rectangular_data.intensity_map_data.energy_delta_plus, healpix_input_data.intensity_map_data.energy_delta_plus)
+                np.testing.assert_array_equal(actual_rectangular_data.intensity_map_data.energy_delta_minus, healpix_input_data.intensity_map_data.energy_delta_minus)
+                np.testing.assert_array_equal(actual_rectangular_data.intensity_map_data.energy_label, healpix_input_data.intensity_map_data.energy_label)
+
+                self.assertEqual(actual_rectangular_data.intensity_map_data.exposure_factor, sentinel.rectangular_exposure_factor)
+                self.assertEqual(actual_rectangular_data.intensity_map_data.ena_intensity, sentinel.rectangular_ena_intensity)
+                self.assertEqual(actual_rectangular_data.intensity_map_data.ena_intensity_stat_unc, sentinel.rectangular_ena_intensity_stat_unc)
+                self.assertEqual(actual_rectangular_data.intensity_map_data.ena_intensity_sys_err, sentinel.rectangular_ena_intensity_sys_err)
+                # @formatter:on
+
+                self.assertIsNone(actual_rectangular_data.intensity_map_data.latitude)
+                self.assertIsNone(actual_rectangular_data.intensity_map_data.longitude)
+                self.assertIsNone(actual_rectangular_data.intensity_map_data.obs_date)
+                self.assertIsNone(actual_rectangular_data.intensity_map_data.obs_date_range)
+                self.assertIsNone(actual_rectangular_data.intensity_map_data.solid_angle)
+
+                mock_upload.assert_called_once_with(mock_save_data.return_value)
+
+            mock_fetch_dependencies.reset_mock()
+            mock_save_data.reset_mock()
+            mock_upload.reset_mock()
+
     @patch('imap_l3_processing.ultra.l3.ultra_processor.upload')
     @patch('imap_l3_processing.ultra.l3.ultra_processor.save_data')
     @patch('imap_l3_processing.ultra.l3.ultra_processor.UltraL3SpectralIndexDependencies.fetch_dependencies')
@@ -212,7 +303,8 @@ class TestUltraProcessor(unittest.TestCase):
 
 
 def _create_ultra_l2_data(epoch=None, lon=None, lat=None, energy=None, energy_delta=None, flux=None,
-                          intensity_stat_unc=None, healpix_indices=None):
+                          intensity_stat_unc=None, healpix_indices=None) -> HealPixIntensityMapData:
+    epoch = epoch if epoch is not None else np.array([datetime.now()])
     lon = lon if lon is not None else np.array([1.0])
     lat = lat if lat is not None else np.array([1.0])
     healpix_indices = healpix_indices if healpix_indices is not None else np.arange(12)
@@ -222,7 +314,6 @@ def _create_ultra_l2_data(epoch=None, lon=None, lat=None, energy=None, energy_de
     intensity_stat_unc = intensity_stat_unc if intensity_stat_unc is not None else np.full(
         flux.shape,
         fill_value=1)
-    epoch = epoch if epoch is not None else np.array([datetime.now()])
 
     if isinstance(flux, np.ndarray):
         more_real_flux = flux

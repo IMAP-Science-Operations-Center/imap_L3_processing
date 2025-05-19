@@ -5,14 +5,16 @@ from imap_processing.ena_maps.utils.coordinates import CoordNames
 from imap_processing.spice import geometry
 
 from imap_l3_processing.maps.map_descriptors import MapDescriptorParts, MapQuantity, SurvivalCorrection, \
-    parse_map_descriptor
+    parse_map_descriptor, PixelSize
 from imap_l3_processing.maps.map_models import HealPixIntensityDataProduct, HealPixIntensityMapData, IntensityMapData, \
-    HealPixCoords, HealPixSpectralIndexDataProduct, HealPixSpectralIndexMapData
+    HealPixCoords, HealPixSpectralIndexDataProduct, HealPixSpectralIndexMapData, RectangularIntensityDataProduct, \
+    RectangularIntensityMapData
 from imap_l3_processing.maps.spectral_fit import calculate_spectral_index_for_multiple_ranges
 from imap_l3_processing.processor import Processor
 from imap_l3_processing.ultra.l3.science.ultra_survival_probability import UltraSurvivalProbabilitySkyMap, \
     UltraSurvivalProbability
 from imap_l3_processing.ultra.l3.ultra_l3_dependencies import UltraL3Dependencies, UltraL3SpectralIndexDependencies
+from imap_l3_processing.ultra.l3.ultra_l3_to_rectangular_dependencies import UltraL3ToRectangularDependencies
 from imap_l3_processing.utils import save_data, combine_glows_l3e_with_l1c_pointing
 
 
@@ -29,6 +31,14 @@ class UltraProcessor(Processor):
                 spectral_index_data_product.parent_file_names = parent_file_names
                 data_product_path = save_data(spectral_index_data_product)
                 upload(data_product_path)
+            case MapDescriptorParts(grid=PixelSize.FourDegrees | PixelSize.SixDegrees):
+                deps = UltraL3ToRectangularDependencies.fetch_dependencies(self.dependencies)
+                data_product = self._process_healpix_to_rectangular(deps, parsed_descriptor.grid)
+                data_product.parent_file_names = parent_file_names
+                data_product.add_paths_to_parents(deps.dependency_file_paths)
+                data_product_path = save_data(data_product)
+                upload(data_product_path)
+                pass
             case MapDescriptorParts(survival_correction=SurvivalCorrection.SurvivalCorrected):
                 deps = UltraL3Dependencies.fetch_dependencies(self.dependencies)
                 data_product = self._process_survival_probability(deps)
@@ -109,6 +119,42 @@ class UltraProcessor(Processor):
             ),
             input_metadata=self.input_metadata,
         )
+
+    def _process_healpix_to_rectangular(self, dependencies: UltraL3ToRectangularDependencies,
+                                        spacing_deg: int) -> RectangularIntensityDataProduct:
+        variables_to_convert_to_rectangular = [
+            "exposure_factor",
+            "ena_intensity",
+            "ena_intensity_stat_unc",
+            "ena_intensity_sys_err",
+        ]
+
+        healpix_map = dependencies.healpix_map_data.to_healpix_skymap()
+
+        rectangular_map, _ = healpix_map.to_rectangular_skymap(spacing_deg, variables_to_convert_to_rectangular)
+        rectangular_map_xarray_dataset = rectangular_map.to_dataset()
+
+        input_map_intensity_data = dependencies.healpix_map_data.intensity_map_data
+        intensity_map_data = IntensityMapData(
+            epoch=input_map_intensity_data.epoch,
+            epoch_delta=input_map_intensity_data.epoch_delta,
+            energy=input_map_intensity_data.energy,
+            energy_delta_plus=input_map_intensity_data.energy_delta_plus,
+            energy_delta_minus=input_map_intensity_data.energy_delta_minus,
+            energy_label=input_map_intensity_data.energy_label,
+            latitude=None,
+            longitude=None,
+            obs_date=None,
+            obs_date_range=None,
+            solid_angle=None,
+            exposure_factor=rectangular_map_xarray_dataset["exposure_factor"].values,
+            ena_intensity=rectangular_map_xarray_dataset["ena_intensity"].values,
+            ena_intensity_stat_unc=rectangular_map_xarray_dataset["ena_intensity_stat_unc"].values,
+            ena_intensity_sys_err=rectangular_map_xarray_dataset["ena_intensity_sys_err"].values,
+        )
+        rect_intensity_map_data = RectangularIntensityMapData(intensity_map_data, None)
+
+        return RectangularIntensityDataProduct(data=rect_intensity_map_data, input_metadata=self.input_metadata)
 
 
 @dataclass

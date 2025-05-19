@@ -6,6 +6,10 @@ from pathlib import Path
 from typing import Self
 
 import numpy as np
+import xarray
+from imap_processing.ena_maps.ena_maps import HealpixSkyMap
+from imap_processing.ena_maps.utils.coordinates import CoordNames
+from imap_processing.spice.geometry import SpiceFrame
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.cdf.cdf_utils import read_variable_and_mask_fill_values, read_numeric_variable
@@ -121,6 +125,29 @@ class HealPixIntensityMapData:
                 intensity_map_data=_read_intensity_map_data_from_open_cdf(cdf),
                 coords=_read_healpix_coords_from_open_cdf(cdf),
             )
+
+    def to_healpix_skymap(self) -> HealpixSkyMap:
+        healpix_map = HealpixSkyMap(self.coords.nside, SpiceFrame.ECLIPJ2000)
+
+        full_shape = [CoordNames.TIME.value, CoordNames.ENERGY_ULTRA.value, CoordNames.HEALPIX_INDEX.value]
+        healpix_map.data_1d = xarray.Dataset(
+            data_vars={
+                "latitude": ([CoordNames.HEALPIX_INDEX.value], self.intensity_map_data.latitude),
+                "longitude": ([CoordNames.HEALPIX_INDEX.value], self.intensity_map_data.longitude),
+                "solid_angle": ([CoordNames.HEALPIX_INDEX.value], self.intensity_map_data.solid_angle),
+                "obs_date_range": (full_shape, self.intensity_map_data.obs_date_range),
+                "obs_date": (full_shape, self.intensity_map_data.obs_date),
+                "exposure_factor": (full_shape, self.intensity_map_data.exposure_factor),
+                "ena_intensity": (full_shape, self.intensity_map_data.ena_intensity),
+                "ena_intensity_stat_unc": (full_shape, self.intensity_map_data.ena_intensity_stat_unc),
+                "ena_intensity_sys_err": (full_shape, self.intensity_map_data.ena_intensity_sys_err),
+            },
+            coords={
+                CoordNames.TIME.value: self.intensity_map_data.epoch,
+                CoordNames.ENERGY_ULTRA.value: self.intensity_map_data.energy,
+                CoordNames.HEALPIX_INDEX.value: self.coords.pixel_index,
+            }).rename({CoordNames.HEALPIX_INDEX.value: CoordNames.GENERIC_PIXEL.value})
+        return healpix_map
 
 
 @dataclass
