@@ -51,7 +51,7 @@ class SwapiL3ProtonSolarWindData(DataProduct):
             DataProductVariable(EPOCH_CDF_VAR_NAME, self.epoch),
             DataProductVariable(PROTON_SOLAR_WIND_SPEED_CDF_VAR_NAME, nominal_values(self.proton_sw_speed)),
             DataProductVariable(PROTON_SOLAR_WIND_SPEED_UNCERTAINTY_CDF_VAR_NAME, std_devs(self.proton_sw_speed)),
-            DataProductVariable(EPOCH_DELTA_CDF_VAR_NAME, THIRTY_SECONDS_IN_NANOSECONDS),
+            DataProductVariable(EPOCH_DELTA_CDF_VAR_NAME, np.full_like(self.epoch, THIRTY_SECONDS_IN_NANOSECONDS)),
             DataProductVariable(PROTON_SOLAR_WIND_TEMPERATURE_CDF_VAR_NAME, nominal_values(self.proton_sw_temperature)),
             DataProductVariable(PROTON_SOLAR_WIND_TEMPERATURE_UNCERTAINTY_CDF_VAR_NAME,
                                 std_devs(self.proton_sw_temperature)),
@@ -78,7 +78,7 @@ class SwapiL3AlphaSolarWindData(DataProduct):
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
             DataProductVariable(EPOCH_CDF_VAR_NAME, self.epoch),
-            DataProductVariable(EPOCH_DELTA_CDF_VAR_NAME, THIRTY_SECONDS_IN_NANOSECONDS),
+            DataProductVariable(EPOCH_DELTA_CDF_VAR_NAME, np.full_like(self.epoch, THIRTY_SECONDS_IN_NANOSECONDS)),
             DataProductVariable(ALPHA_SOLAR_WIND_SPEED_CDF_VAR_NAME, nominal_values(self.alpha_sw_speed)),
             DataProductVariable(ALPHA_SOLAR_WIND_SPEED_UNCERTAINTY_CDF_VAR_NAME, std_devs(self.alpha_sw_speed)),
             DataProductVariable(ALPHA_SOLAR_WIND_TEMPERATURE_CDF_VAR_NAME, nominal_values(self.alpha_sw_temperature)),

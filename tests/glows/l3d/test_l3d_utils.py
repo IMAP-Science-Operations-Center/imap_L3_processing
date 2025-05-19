@@ -1,14 +1,14 @@
 import unittest
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import patch, mock_open, MagicMock, sentinel, Mock
+from unittest.mock import patch, mock_open, MagicMock, sentinel, Mock, call
 
 import numpy as np
 
 import imap_l3_processing
 from imap_l3_processing.glows.l3d.models import GlowsL3DSolarParamsHistory
 from imap_l3_processing.glows.l3d.utils import create_glows_l3b_json_file_from_cdf, convert_json_to_l3d_data_product, \
-    create_glows_l3c_json_file_from_cdf, get_parent_file_names_from_l3d_json
+    create_glows_l3c_json_file_from_cdf, get_parent_file_names_from_l3d_json, set_version_on_txt_files
 from imap_l3_processing.models import InputMetadata
 from tests.test_helpers import get_test_data_path
 
@@ -137,7 +137,7 @@ class TestL3dUtils(unittest.TestCase):
         input_metadata = Mock(spec=InputMetadata)
         input_metadata.start_date = datetime.fromisoformat("2025-05-12")
         l3d_data_product: GlowsL3DSolarParamsHistory = convert_json_to_l3d_data_product(
-            get_test_data_path('glows/imap_glows_l3d_cr_2095_v00.json'),
+            get_test_data_path('glows/imap_glows_l3d_solar-params-history_19470303-cr02095_v00.json'),
             input_metadata,
             sentinel.parent_file_names,
         )
@@ -161,19 +161,33 @@ class TestL3dUtils(unittest.TestCase):
 
         np.testing.assert_array_equal(np.arange(-90, 100, step=10), l3d_data_product.latitude)
 
-        self.assertEqual(846, len(l3d_data_product.cr))
-        self.assertEqual(1250.5, l3d_data_product.cr[0])
-        self.assertEqual(2095.5, l3d_data_product.cr[-1])
-
-        self.assertEqual(846, len(l3d_data_product.speed))
+        self.assertEqual(846, len(l3d_data_product.plasma_speed))
         np.testing.assert_allclose(
             [-1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0,
-             -1.0, -1.0, -1.0], l3d_data_product.speed[0], rtol=1e-6)
+             -1.0, -1.0, -1.0], l3d_data_product.plasma_speed[0], rtol=1e-6)
         np.testing.assert_allclose(
-            [557.4973128404005, 559.2167280154983, 566.8138038909882, 536.7419914396169, 482.3895941633434,
-             436.7778976653025, 395.8709957198084, 373.2087723735307, 358.453450972747, 352.50397782098383,
-             353.5757902723552, 361.29520544745316, 399.6768439688289, 446.0225762645189, 490.864330739225,
-             554.518598443535, 594.9787143968655, 599.4175447470614, 599.4175447470614], l3d_data_product.speed[-1],
+            [
+                468.1725019310069,
+                470.41196695859816,
+                476.08272082078383,
+                449.52578318361645,
+                401.38306014556065,
+                363.7120316891783,
+                330.5607405468131,
+                305.29544288745444,
+                273.7598466912451,
+                246.7446552487376,
+                266.49159920773036,
+                289.2521463358576,
+                324.9993546613053,
+                359.23215479267344,
+                398.4985502246217,
+                460.79164287941717,
+                503.2472821431676,
+                508.93503849297326,
+                509.10575708733097
+            ],
+            l3d_data_product.plasma_speed[-1],
             rtol=1e-6)
 
         self.assertEqual(846, len(l3d_data_product.proton_density))
@@ -181,11 +195,27 @@ class TestL3dUtils(unittest.TestCase):
             [-1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0,
              -1.0, -1.0, -1.0], l3d_data_product.proton_density[0], rtol=1e-6)
         np.testing.assert_allclose(
-            [2.7539010174985328, 2.737096030276837, 2.6641209660214256, 2.9648193397292495, 3.6167913862691368,
-             4.267522103200842, 4.954865982954802, 5.4089727098360765, 5.753718175867142, 5.912686119174109,
-             5.875275512094413, 5.687043093803157, 4.889661092087035, 4.129209143417914, 3.496191265226951,
-             2.764380801055958, 2.403839571256985, 2.3686555409547543, 2.3686555409547543
-             ], l3d_data_product.proton_density[-1], rtol=1e-6)
+            [
+                3.134819994443553,
+                3.1041926011053467,
+                3.0267698024403056,
+                3.3898787480759545,
+                4.215698147420914,
+                4.9924188349188245,
+                5.72062210604848,
+                6.206572506330694,
+                7.007246183637803,
+                7.666900424298345,
+                7.238530407122755,
+                6.691594046599381,
+                5.7658475286137065,
+                4.954055736090567,
+                4.139454391383636,
+                3.1651607050304924,
+                2.68129704271522,
+                2.6272758631787716,
+                2.625943370301117
+            ], l3d_data_product.proton_density[-1], rtol=1e-6)
 
         self.assertEqual(846, len(l3d_data_product.ultraviolet_anisotropy))
         np.testing.assert_allclose(
@@ -197,15 +227,27 @@ class TestL3dUtils(unittest.TestCase):
 
         self.assertEqual(846, len(l3d_data_product.phion))
         np.testing.assert_allclose(1.830438692701064e-07, l3d_data_product.phion[0], rtol=1e-6)
-        np.testing.assert_allclose(1.0870768678455447e-07, l3d_data_product.phion[-1], rtol=1e-6)
+        np.testing.assert_allclose(1.0538921234648196e-07, l3d_data_product.phion[-1], rtol=1e-6)
 
         self.assertEqual(846, len(l3d_data_product.lyman_alpha))
         np.testing.assert_allclose(619975763789.9209, l3d_data_product.lyman_alpha[0], rtol=1e-6)
-        np.testing.assert_allclose(391561526005.0816, l3d_data_product.lyman_alpha[-1], rtol=1e-6)
+        np.testing.assert_allclose(396312787467.8571, l3d_data_product.lyman_alpha[-1], rtol=1e-6)
 
         self.assertEqual(846, len(l3d_data_product.electron_density))
         self.assertEqual(-1.0, l3d_data_product.electron_density[0])
-        np.testing.assert_allclose(5.7140570690060715, l3d_data_product.electron_density[-1], rtol=1e-6)
+        np.testing.assert_allclose(5.978193763000784, l3d_data_product.electron_density[-1], rtol=1e-6)
+
+        self.assertEqual(846, len(l3d_data_product.plasma_speed_flag))
+        self.assertEqual(-1.0, l3d_data_product.plasma_speed_flag[0])
+        np.testing.assert_allclose(20001.0, l3d_data_product.plasma_speed_flag[-1], rtol=1e-6)
+
+        self.assertEqual(846, len(l3d_data_product.uv_anisotropy_flag))
+        self.assertEqual(-1.0, l3d_data_product.uv_anisotropy_flag[0])
+        np.testing.assert_allclose(30001.0, l3d_data_product.uv_anisotropy_flag[-1], rtol=1e-6)
+
+        self.assertEqual(846, len(l3d_data_product.proton_density_flag))
+        self.assertEqual(-1.0, l3d_data_product.proton_density_flag[0])
+        np.testing.assert_allclose(10001.0, l3d_data_product.proton_density_flag[-1], rtol=1e-6)
 
     def test_get_parent_file_names_from_l3d_json(self):
         path_to_l3d_output_folder = get_test_data_path("glows/science/data_l3d")
@@ -213,19 +255,32 @@ class TestL3dUtils(unittest.TestCase):
         l3bc_filenames = get_parent_file_names_from_l3d_json(path_to_l3d_output_folder)
 
         expected = [
-            "imap_glows_plasma-speed-Legendre-2010a_v001.dat",
-            "imap_glows_proton-density-Legendre-2010a_v001.dat",
-            "imap_glows_uv-anisotropy-2010a_v001.dat",
-            "imap_glows_photoion-2010a_v001.dat",
-            "imap_glows_lya-2010a_v001.dat",
-            "imap_glows_electron-density-2010a_v001.dat",
-            "imap_glows_l3b_ion-rate-profile_20100326_v011.cdf",
+            "imap_glows_plasma-speed-2010a_v003.dat",
+            "imap_glows_proton-density-2010a_v003.dat",
+            "imap_glows_uv-anisotropy-2010a_v003.dat",
+            "imap_glows_photoion-2010a_v003.dat",
+            "imap_glows_lya-2010a_v003.dat",
+            "imap_glows_electron-density-2010a_v003.dat",
+            "lyman_alpha_composite.nc",
             "imap_glows_l3b_ion-rate-profile_20100422_v011.cdf",
             "imap_glows_l3b_ion-rate-profile_20100519_v011.cdf",
-            "imap_glows_l3c_sw-profile_20100326_v011.cdf",
             "imap_glows_l3c_sw-profile_20100422_v011.cdf",
-            "imap_glows_l3c_sw-profile_20100519_v011.cdf",
-            'lyman_alpha_composite.nc'
+            "imap_glows_l3c_sw-profile_20100519_v011.cdf"
         ]
 
         self.assertCountEqual(expected, l3bc_filenames)
+
+    @patch('imap_l3_processing.glows.l3d.utils.os')
+    def test_set_version_on_txt_files(self, mock_os):
+        version = "v004"
+        txt_files = [Path("imap_glows_l3d_lya_v00.dat"), Path("imap_glows_l3d_uv-anis_v00.dat")]
+        expected_txt_files = [Path("imap_glows_l3d_lya_v004.dat"), Path("imap_glows_l3d_uv-anis_v004.dat")]
+
+        new_paths = set_version_on_txt_files(txt_files, version)
+
+        mock_os.rename.assert_has_calls([
+            call(txt_files[0], expected_txt_files[0]),
+            call(txt_files[1], expected_txt_files[1]),
+        ])
+        
+        self.assertEqual(new_paths, expected_txt_files)

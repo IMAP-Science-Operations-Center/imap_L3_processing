@@ -1,13 +1,15 @@
 import unittest
-from datetime import datetime
-from unittest.mock import Mock, patch
+from datetime import datetime, timedelta
+from pathlib import Path
+from unittest.mock import Mock, patch, sentinel
 
 import numpy as np
 from imap_data_access.processing_input import ProcessingInputCollection
 
 from imap_l3_processing.lo.lo_processor import LoProcessor
-from imap_l3_processing.maps.map_models import RectangularSpectralIndexDataProduct
-from imap_l3_processing.models import InputMetadata
+from imap_l3_processing.maps.hilo_l3_survival_dependencies import HiLoL3SurvivalDependencies
+from imap_l3_processing.maps.map_models import RectangularSpectralIndexDataProduct, RectangularIntensityDataProduct
+from imap_l3_processing.models import InputMetadata, Instrument
 
 
 class TestLoProcessor(unittest.TestCase):
@@ -53,6 +55,48 @@ class TestLoProcessor(unittest.TestCase):
         self.assertEqual(data_product.input_metadata, processor.input_metadata)
         self.assertEqual(data_product.parent_file_names, ["some_input_file_name"])
         mock_upload.assert_called_with(mock_save_data.return_value)
+
+    @patch('imap_l3_processing.lo.lo_processor.Processor.get_parent_file_names')
+    @patch("imap_l3_processing.lo.lo_processor.HiLoL3SurvivalDependencies.fetch_dependencies")
+    @patch("imap_l3_processing.lo.lo_processor.process_survival_probabilities")
+    @patch('imap_l3_processing.lo.lo_processor.save_data')
+    @patch('imap_l3_processing.lo.lo_processor.upload')
+    def test_process_survival_probabilities(self, mock_upload, mock_save_data,
+                                            mock_process_survival_prob,
+                                            mock_fetch_survival_dependencies, mock_get_parent_file_names):
+        mock_get_parent_file_names.return_value = ["somewhere"]
+
+        mock_upload.reset_mock()
+        mock_save_data.reset_mock()
+        mock_fetch_survival_dependencies.reset_mock()
+        mock_process_survival_prob.reset_mock()
+
+        input_metadata = InputMetadata(instrument="lo",
+                                       data_level="l3",
+                                       start_date=datetime.now(),
+                                       end_date=datetime.now() + timedelta(days=1),
+                                       version="",
+                                       descriptor="l090-ena-h-sf-sp-ram-hae-4deg-6mo",
+                                       )
+
+        dependencies: HiLoL3SurvivalDependencies = mock_fetch_survival_dependencies.return_value
+        dependencies.dependency_file_paths = [Path("folder/map"), Path("folder/l1c")]
+
+        mock_process_survival_prob.return_value = sentinel.survival_probabilities
+
+        processor = LoProcessor(sentinel.input_dependencies, input_metadata)
+        processor.process()
+
+        mock_fetch_survival_dependencies.assert_called_once_with(sentinel.input_dependencies,
+                                                                 Instrument.IMAP_LO)
+
+        mock_process_survival_prob.assert_called_once_with(dependencies)
+
+        mock_save_data.assert_called_once_with(RectangularIntensityDataProduct(
+            input_metadata=input_metadata,
+            parent_file_names=["l1c", "map", "somewhere"],
+            data=sentinel.survival_probabilities))
+        mock_upload.assert_called_once_with(mock_save_data.return_value)
 
     def test_rejects_unimplemented_descriptors(self):
         input_collection = ProcessingInputCollection()

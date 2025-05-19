@@ -20,4 +20,4 @@ RUN chmod +x survProbHi
 RUN chmod +x survProbLo
 RUN chmod +x survProbUltra
 COPY run_local.py .
-#ENTRYPOINT ["python","run_local.py", "glows", "l3e"]
+ENTRYPOINT ["python","run_local.py", "glows", "l3e"]
