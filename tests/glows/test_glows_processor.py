@@ -883,12 +883,15 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
         self.assertCountEqual(expected_l3d_txt_file_paths, mock_set_version.call_args[0][0])
         self.assertEqual('v001', mock_set_version.call_args[0][1])
 
+    @patch('builtins.open', new_callable=mock_open, create=False)
     @patch('imap_l3_processing.glows.glows_processor.set_version_on_txt_files')
     @patch('imap_l3_processing.glows.glows_processor.os')
     @patch('imap_l3_processing.glows.glows_processor.shutil')
     @patch('imap_l3_processing.glows.glows_processor.run')
-    def test_process_l3d_returns_correctly_if_nothing_is_processed(self, mock_run, _, __, ___):
+    @patch('imap_l3_processing.glows.glows_processor.json')
+    def test_process_l3d_returns_correctly_if_nothing_is_processed(self, mock_json, mock_run, _, __, ___, ____):
 
+        mock_json.load.return_value = {'l3d_start_cr': 2092}
         ancillary_files = {
             'pipeline_settings': get_test_instrument_team_data_path(
                 'glows/imap_glows_pipeline-settings-l3bcd_20250514_v004.json'),
@@ -920,6 +923,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
         self.assertIsNone(actual_text_files)
         self.assertIsNone(actual_last_processed_crs)
 
+    @patch('builtins.open', new_callable=mock_open, create=False)
     @patch('imap_l3_processing.glows.glows_processor.set_version_on_txt_files')
     @patch('imap_l3_processing.glows.glows_processor.shutil')
     @patch('imap_l3_processing.glows.glows_processor.get_parent_file_names_from_l3d_json')
@@ -927,9 +931,10 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
     @patch('imap_l3_processing.glows.glows_processor.run')
     @patch('imap_l3_processing.glows.glows_processor.convert_json_to_l3d_data_product')
     @patch('imap_l3_processing.glows.glows_processor.imap_data_access.upload')
-    def test_process_l3d_handles_unexpected_exception_from_science(self, mock_upload,
+    @patch('imap_l3_processing.glows.glows_processor.json')
+    def test_process_l3d_handles_unexpected_exception_from_science(self, mock_json, mock_upload,
                                                                    mock_convert_json_to_l3d,
-                                                                   mock_run, mock_os, _, __, ___):
+                                                                   mock_run, mock_os, _, __, ___, ____):
         ancillary_files = {
             'pipeline_settings': get_test_instrument_team_data_path(
                 'glows/imap_glows_pipeline-settings-l3bcd_20250514_v004.json'),
@@ -945,6 +950,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
         external_files = {
             'lya_raw_data': Path('path/to/lya'),
         }
+        mock_json.load.return_value = {'l3d_start_cr': 2091}
         l3b_file_paths = []
         l3c_file_paths = []
         l3d_dependencies = GlowsL3DDependencies(ancillary_files=ancillary_files,
