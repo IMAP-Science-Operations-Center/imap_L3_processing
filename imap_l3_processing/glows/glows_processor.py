@@ -26,7 +26,7 @@ from imap_l3_processing.glows.l3bc.science.generate_l3bc import generate_l3bc
 from imap_l3_processing.glows.l3bc.utils import get_repoint_date_range
 from imap_l3_processing.glows.l3d.glows_l3d_dependencies import GlowsL3DDependencies
 from imap_l3_processing.glows.l3d.utils import create_glows_l3b_json_file_from_cdf, create_glows_l3c_json_file_from_cdf, \
-    PATH_TO_L3D_TOOLKIT, convert_json_to_l3d_data_product, get_parent_file_names_from_l3d_json
+    PATH_TO_L3D_TOOLKIT, convert_json_to_l3d_data_product, get_parent_file_names_from_l3d_json, set_version_on_txt_files
 from imap_l3_processing.glows.l3e.glows_l3e_dependencies import GlowsL3EDependencies
 from imap_l3_processing.glows.l3e.glows_l3e_hi_model import GlowsL3EHiData
 from imap_l3_processing.glows.l3e.glows_l3e_lo_model import GlowsL3ELoData
@@ -187,8 +187,10 @@ class GlowsProcessor(Processor):
                                 os.listdir(PATH_TO_L3D_TOOLKIT / 'data_l3d_txt') if
                                 str(last_processed_cr) in last_cr_txt_file]
 
+            txt_files_with_correct_version = set_version_on_txt_files(output_txt_files, self.input_metadata.version)
+
             return convert_json_to_l3d_data_product(PATH_TO_L3D_TOOLKIT / 'data_l3d' / file_name, self.input_metadata,
-                                                    parent_file_names), output_txt_files, last_processed_cr
+                                                    parent_file_names), txt_files_with_correct_version, last_processed_cr
         return None, None, None
 
     def process_l3e_lo(self, epoch: datetime, epoch_delta: timedelta, elongation_value: int):

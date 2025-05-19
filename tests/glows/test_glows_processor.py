@@ -586,6 +586,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
 
         mock_upload.assert_has_calls([call(sentinel.lo_path_1), call(sentinel.lo_path_2)])
 
+    @patch('imap_l3_processing.glows.glows_processor.set_version_on_txt_files')
     @patch('builtins.open', new_callable=mock_open, create=False)
     @patch('imap_l3_processing.glows.glows_processor.json')
     @patch('imap_l3_processing.glows.glows_processor.shutil')
@@ -597,7 +598,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
     @patch('imap_l3_processing.glows.glows_processor.imap_data_access.upload')
     @patch('imap_l3_processing.glows.glows_processor.save_data')
     def test_processor_handles_l3d(self, mock_save_data, mock_upload, mock_fetch_dependencies, mock_convert_json_to_l3d,
-                                   mock_run, mock_os, _, __, mock_json, ___):
+                                   mock_run, mock_os, _, __, mock_json, ___, mock_set_version_on_txt_files):
 
         mock_deps = Mock()
         mock_deps.ancillary_files = {'pipeline_settings': get_test_instrument_team_data_path(
@@ -620,6 +621,14 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
                                         '2096_txt_file_6'
                                         ]
 
+        mock_set_version_on_txt_files.return_value = [
+            PATH_TO_L3D_TOOLKIT / 'data_l3d_txt' / '2096_txt_file_1_v001',
+            PATH_TO_L3D_TOOLKIT / 'data_l3d_txt' / '2096_txt_file_2_v001',
+            PATH_TO_L3D_TOOLKIT / 'data_l3d_txt' / '2096_txt_file_3_v001',
+            PATH_TO_L3D_TOOLKIT / 'data_l3d_txt' / '2096_txt_file_4_v001',
+            PATH_TO_L3D_TOOLKIT / 'data_l3d_txt' / '2096_txt_file_5_v001',
+            PATH_TO_L3D_TOOLKIT / 'data_l3d_txt' / '2096_txt_file_6_v001'
+        ]
         expected_cr = 2096
         mock_run.side_effect = [CompletedProcess(args=[], returncode=0, stdout=f'Processed CR= {expected_cr}'),
                                 CalledProcessError(cmd="", returncode=1, stderr=self.ran_out_of_l3b_exception)]
@@ -628,16 +637,27 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
         processor.process()
         mock_fetch_dependencies.assert_called_once_with(processing_input_collection)
         mock_save_data.assert_called_once_with(mock_convert_json_to_l3d.return_value, cr_number=expected_cr)
+
+        mock_set_version_on_txt_files.assert_called_once_with([PATH_TO_L3D_TOOLKIT / 'data_l3d_txt' / '2096_txt_file_1',
+                                                               PATH_TO_L3D_TOOLKIT / 'data_l3d_txt' / '2096_txt_file_2',
+                                                               PATH_TO_L3D_TOOLKIT / 'data_l3d_txt' / '2096_txt_file_3',
+                                                               PATH_TO_L3D_TOOLKIT / 'data_l3d_txt' / '2096_txt_file_4',
+                                                               PATH_TO_L3D_TOOLKIT / 'data_l3d_txt' / '2096_txt_file_5',
+                                                               PATH_TO_L3D_TOOLKIT / 'data_l3d_txt' / '2096_txt_file_6'],
+                                                              'v001'
+                                                              )
+
         mock_upload.assert_has_calls([
             call(mock_save_data.return_value),
-            call(PATH_TO_L3D_TOOLKIT / 'data_l3d_txt' / '2096_txt_file_1'),
-            call(PATH_TO_L3D_TOOLKIT / 'data_l3d_txt' / '2096_txt_file_2'),
-            call(PATH_TO_L3D_TOOLKIT / 'data_l3d_txt' / '2096_txt_file_3'),
-            call(PATH_TO_L3D_TOOLKIT / 'data_l3d_txt' / '2096_txt_file_4'),
-            call(PATH_TO_L3D_TOOLKIT / 'data_l3d_txt' / '2096_txt_file_5'),
-            call(PATH_TO_L3D_TOOLKIT / 'data_l3d_txt' / '2096_txt_file_6'),
+            call(PATH_TO_L3D_TOOLKIT / 'data_l3d_txt' / '2096_txt_file_1_v001'),
+            call(PATH_TO_L3D_TOOLKIT / 'data_l3d_txt' / '2096_txt_file_2_v001'),
+            call(PATH_TO_L3D_TOOLKIT / 'data_l3d_txt' / '2096_txt_file_3_v001'),
+            call(PATH_TO_L3D_TOOLKIT / 'data_l3d_txt' / '2096_txt_file_4_v001'),
+            call(PATH_TO_L3D_TOOLKIT / 'data_l3d_txt' / '2096_txt_file_5_v001'),
+            call(PATH_TO_L3D_TOOLKIT / 'data_l3d_txt' / '2096_txt_file_6_v001')
         ])
 
+    @patch('imap_l3_processing.glows.glows_processor.set_version_on_txt_files')
     @patch('builtins.open', new_callable=mock_open, create=False)
     @patch('imap_l3_processing.glows.glows_processor.json.load')
     @patch('imap_l3_processing.glows.glows_processor.get_parent_file_names_from_l3d_json')
@@ -651,7 +671,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
     def test_process_l3d(self, mock_l3d_dependencies_constructor, mock_create_glows_l3b_json_file_from_cdf,
                          mock_create_glows_l3c_json_file_from_cdf, mock_shutil, mock_os, mock_run,
                          mock_convert_json_to_l3d_data_product, mock_get_parent_file_names_from_l3d_json, mock_json,
-                         mock_open):
+                         mock_open, mock_set_version):
 
         input_metadata = InputMetadata('glows', "l3d", datetime(2024, 10, 7, 10, 00, 00),
                                        datetime(2024, 10, 8, 10, 00, 00),
@@ -703,9 +723,12 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
 
         mock_convert_json_to_l3d_data_product.return_value = sentinel.l3d_data_product
 
+        mock_set_version.return_value = sentinel.out_paths
+
         processor = GlowsProcessor(input_data_collection, input_metadata)
         actual_l3d_data_product, actual_l3d_txt_files, last_processed_cr = processor.process_l3d(mock_l3d_dependencies)
 
+        self.assertEqual(actual_l3d_txt_files, sentinel.out_paths)
         self.assertEqual(last_processed_cr, cr_number + 1)
 
         mock_os.makedirs.assert_has_calls([
@@ -773,13 +796,15 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
         ]
 
         self.assertEqual(sentinel.l3d_data_product, actual_l3d_data_product)
-        self.assertCountEqual(expected_l3d_txt_paths, actual_l3d_txt_files)
 
+        mock_set_version.assert_has_calls([call(expected_l3d_txt_paths, 'v001')])
+
+    @patch('imap_l3_processing.glows.glows_processor.set_version_on_txt_files')
     @patch('imap_l3_processing.glows.glows_processor.PATH_TO_L3D_TOOLKIT', get_test_data_path('glows/science'))
     @patch('imap_l3_processing.glows.glows_processor.shutil')
     @patch('imap_l3_processing.glows.glows_processor.run')
     @patch('imap_l3_processing.processor.spiceypy')
-    def test_process_l3d_adds_parent_file_names_to_output(self, mock_spicepy, mock_run, _):
+    def test_process_l3d_adds_parent_file_names_to_output(self, mock_spicepy, mock_run, _, mock_set_version):
         mock_spicepy.ktotal.return_value = 0
         l3b_path_1 = get_test_data_path('glows/imap_glows_l3b_ion-rate-profile_20100422_v011.cdf')
         l3b_path_2 = get_test_data_path('glows/imap_glows_l3b_ion-rate-profile_20100519_v011.cdf')
@@ -821,9 +846,15 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
         l3d_dependencies = GlowsL3DDependencies(l3b_file_paths=l3b_file_paths, l3c_file_paths=l3c_file_paths,
                                                 ancillary_files=ancillary_inputs, external_files=external_inputs)
 
-        processor = GlowsProcessor(Mock(), Mock())
+        mock_set_version.return_value = sentinel.out_paths
+
+        input_metadata = Mock()
+        input_metadata.version = 'v001'
+
+        processor = GlowsProcessor(Mock(), input_metadata)
         actual_data_product, actual_l3d_txt_paths, last_processed_cr = processor.process_l3d(l3d_dependencies)
         self.assertEqual(last_processed_cr, cr_number)
+        self.assertEqual(actual_l3d_txt_paths, sentinel.out_paths)
 
         expected_parent_file_names = [
             "imap_glows_plasma-speed-2010a_v003.dat",
@@ -840,21 +871,23 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
         ]
 
         expected_l3d_txt_file_paths = [
-            get_test_data_path('glows/science') / 'data_l3d_txt' / 'imap_glows_l3d_speed_19470303-cr02095_v00.dat',
-            get_test_data_path('glows/science') / 'data_l3d_txt' / 'imap_glows_l3d_lya_19470303-cr02095_v00.dat',
-            get_test_data_path('glows/science') / 'data_l3d_txt' / 'imap_glows_l3d_p-dens_19470303-cr02095_v00.dat',
-            get_test_data_path('glows/science') / 'data_l3d_txt' / 'imap_glows_l3d_phion_19470303-cr02095_v00.dat',
-            get_test_data_path('glows/science') / 'data_l3d_txt' / 'imap_glows_l3d_uv-anis_19470303-cr02095_v00.dat',
             get_test_data_path('glows/science') / 'data_l3d_txt' / 'imap_glows_l3d_e-dens_19470303-cr02095_v00.dat',
+            get_test_data_path('glows/science') / 'data_l3d_txt' / 'imap_glows_l3d_uv-anis_19470303-cr02095_v00.dat',
+            get_test_data_path('glows/science') / 'data_l3d_txt' / 'imap_glows_l3d_phion_19470303-cr02095_v00.dat',
+            get_test_data_path('glows/science') / 'data_l3d_txt' / 'imap_glows_l3d_p-dens_19470303-cr02095_v00.dat',
+            get_test_data_path('glows/science') / 'data_l3d_txt' / 'imap_glows_l3d_lya_19470303-cr02095_v00.dat',
+            get_test_data_path('glows/science') / 'data_l3d_txt' / 'imap_glows_l3d_speed_19470303-cr02095_v00.dat',
         ]
 
         self.assertCountEqual(expected_parent_file_names, actual_data_product.parent_file_names)
-        self.assertCountEqual(expected_l3d_txt_file_paths, actual_l3d_txt_paths)
+        self.assertCountEqual(expected_l3d_txt_file_paths, mock_set_version.call_args[0][0])
+        self.assertEqual('v001', mock_set_version.call_args[0][1])
 
+    @patch('imap_l3_processing.glows.glows_processor.set_version_on_txt_files')
     @patch('imap_l3_processing.glows.glows_processor.os')
     @patch('imap_l3_processing.glows.glows_processor.shutil')
     @patch('imap_l3_processing.glows.glows_processor.run')
-    def test_process_l3d_returns_correctly_if_nothing_is_processed(self, mock_run, _, __):
+    def test_process_l3d_returns_correctly_if_nothing_is_processed(self, mock_run, _, __, ___):
 
         ancillary_files = {
             'pipeline_settings': get_test_instrument_team_data_path(
@@ -887,6 +920,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
         self.assertIsNone(actual_text_files)
         self.assertIsNone(actual_last_processed_crs)
 
+    @patch('imap_l3_processing.glows.glows_processor.set_version_on_txt_files')
     @patch('imap_l3_processing.glows.glows_processor.shutil')
     @patch('imap_l3_processing.glows.glows_processor.get_parent_file_names_from_l3d_json')
     @patch('imap_l3_processing.glows.glows_processor.os')
@@ -895,7 +929,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
     @patch('imap_l3_processing.glows.glows_processor.imap_data_access.upload')
     def test_process_l3d_handles_unexpected_exception_from_science(self, mock_upload,
                                                                    mock_convert_json_to_l3d,
-                                                                   mock_run, mock_os, _, __):
+                                                                   mock_run, mock_os, _, __, ___):
         ancillary_files = {
             'pipeline_settings': get_test_instrument_team_data_path(
                 'glows/imap_glows_pipeline-settings-l3bcd_20250514_v004.json'),

@@ -1,14 +1,14 @@
 import unittest
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import patch, mock_open, MagicMock, sentinel, Mock
+from unittest.mock import patch, mock_open, MagicMock, sentinel, Mock, call
 
 import numpy as np
 
 import imap_l3_processing
 from imap_l3_processing.glows.l3d.models import GlowsL3DSolarParamsHistory
 from imap_l3_processing.glows.l3d.utils import create_glows_l3b_json_file_from_cdf, convert_json_to_l3d_data_product, \
-    create_glows_l3c_json_file_from_cdf, get_parent_file_names_from_l3d_json
+    create_glows_l3c_json_file_from_cdf, get_parent_file_names_from_l3d_json, set_version_on_txt_files
 from imap_l3_processing.models import InputMetadata
 from tests.test_helpers import get_test_data_path
 
@@ -269,3 +269,18 @@ class TestL3dUtils(unittest.TestCase):
         ]
 
         self.assertCountEqual(expected, l3bc_filenames)
+
+    @patch('imap_l3_processing.glows.l3d.utils.os')
+    def test_set_version_on_txt_files(self, mock_os):
+        version = "v004"
+        txt_files = [Path("imap_glows_l3d_lya_v00.dat"), Path("imap_glows_l3d_uv-anis_v00.dat")]
+        expected_txt_files = [Path("imap_glows_l3d_lya_v004.dat"), Path("imap_glows_l3d_uv-anis_v004.dat")]
+
+        new_paths = set_version_on_txt_files(txt_files, version)
+
+        mock_os.rename.assert_has_calls([
+            call(txt_files[0], expected_txt_files[0]),
+            call(txt_files[1], expected_txt_files[1]),
+        ])
+        
+        self.assertEqual(new_paths, expected_txt_files)

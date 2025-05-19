@@ -114,3 +114,12 @@ def get_parent_file_names_from_l3d_json(l3d_folder: Path) -> list[str]:
             parent_file_names.update(l3c_parents)
 
     return list(parent_file_names)
+
+
+def set_version_on_txt_files(paths: list[Path], version: str):
+    out_paths = []
+    for path in paths:
+        new_path = path.parent / f"{'_'.join(path.name.split('_')[:-1])}_{version}.{path.name.split('.')[-1]}"
+        os.rename(path, new_path)
+        out_paths.append(new_path)
+    return out_paths
