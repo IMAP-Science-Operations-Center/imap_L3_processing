@@ -1,6 +1,5 @@
 import json
 import os
-import shutil
 import subprocess
 import sys
 from dataclasses import replace
@@ -128,48 +127,30 @@ class GlowsProcessor(Processor):
     def process_l3d(self, dependencies: GlowsL3DDependencies):
         [create_glows_l3b_json_file_from_cdf(l3b) for l3b in dependencies.l3b_file_paths]
         [create_glows_l3c_json_file_from_cdf(l3c) for l3c in dependencies.l3c_file_paths]
-        ancillary_path = PATH_TO_L3D_TOOLKIT / 'data_ancillary'
-        external_path = PATH_TO_L3D_TOOLKIT / 'external_dependencies'
 
-        os.makedirs(ancillary_path, exist_ok=True)
-        os.makedirs(external_path, exist_ok=True)
         os.makedirs(PATH_TO_L3D_TOOLKIT / 'data_l3d', exist_ok=True)
         os.makedirs(PATH_TO_L3D_TOOLKIT / 'data_l3d_txt', exist_ok=True)
 
-        pipeline_settings_path = ancillary_path / 'imap_glows_pipeline-settings-l3bcd_v003.json'
-        shutil.move(dependencies.ancillary_files['pipeline_settings'], pipeline_settings_path)
-
-        shutil.move(dependencies.ancillary_files['WawHelioIon']['speed'],
-                    ancillary_path / 'imap_glows_plasma-speed-2010a_v003.dat')
-
-        shutil.move(dependencies.ancillary_files['WawHelioIon']['p-dens'],
-                    ancillary_path / 'imap_glows_proton-density-2010a_v003.dat')
-
-        shutil.move(dependencies.ancillary_files['WawHelioIon']['uv-anis'],
-                    ancillary_path / 'imap_glows_uv-anisotropy-2010a_v003.dat')
-
-        shutil.move(dependencies.ancillary_files['WawHelioIon']['phion'],
-                    ancillary_path / 'imap_glows_photoion-2010a_v003.dat')
-
-        shutil.move(dependencies.ancillary_files['WawHelioIon']['lya'],
-                    ancillary_path / 'imap_glows_lya-2010a_v003.dat')
-
-        shutil.move(dependencies.ancillary_files['WawHelioIon']['e-dens'],
-                    ancillary_path / 'imap_glows_electron-density-2010a_v003.dat')
-
-        shutil.move(dependencies.external_files['lya_raw_data'], external_path / 'lyman_alpha_composite.nc')
-
-        with open(pipeline_settings_path, "r") as fp:
+        with open(dependencies.ancillary_files['pipeline_settings'], "r") as fp:
             pipeline_settings = json.load(fp)
             cr_to_process = int(pipeline_settings['l3d_start_cr'])
+
+        file_manifest = {
+            'ancillary_files': {
+                'pipeline_settings': str(dependencies.ancillary_files['pipeline_settings']),
+                'WawHelioIon': {key: str(val) for key, val in dependencies.ancillary_files['WawHelioIon'].items()}
+            },
+            'external_files': {key: str(val) for key, val in dependencies.external_files.items()}
+        }
 
         last_processed_cr = None
         try:
             while True:
-                output: subprocess.CompletedProcess = run([sys.executable, './generate_l3d.py', f'{cr_to_process}'],
-                                                          cwd=str(PATH_TO_L3D_TOOLKIT),
-                                                          check=True,
-                                                          capture_output=True, text=True)
+                output: subprocess.CompletedProcess = run(
+                    [sys.executable, './generate_l3d.py', f'{cr_to_process}', json.dumps(file_manifest)],
+                    cwd=str(PATH_TO_L3D_TOOLKIT),
+                    check=True,
+                    capture_output=True, text=True)
                 if output.stdout:
                     last_processed_cr = int(output.stdout.split('= ')[-1])
 
