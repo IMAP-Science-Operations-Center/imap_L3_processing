@@ -50,7 +50,7 @@ from imap_l3_processing.hit.l3.pha.science.hit_event_type_lookup import HitEvent
 from imap_l3_processing.hit.l3.pha.science.range_fit_lookup import RangeFitLookup
 from imap_l3_processing.hit.l3.utils import read_l2_hit_data
 from imap_l3_processing.lo.l3.lo_l3_spectral_fit_dependencies import LoL3SpectralFitDependencies
-from imap_l3_processing.lo.lo_processor import perform_spectral_fit
+from imap_l3_processing.lo.lo_processor import perform_spectral_fit, LoProcessor
 from imap_l3_processing.maps.hilo_l3_survival_dependencies import HiLoL3SurvivalDependencies, \
     HiL3SingleSensorFullSpinDependencies
 from imap_l3_processing.maps.map_models import RectangularSpectralIndexDataProduct, RectangularIntensityDataProduct, \
@@ -802,7 +802,10 @@ def read_glows_survival_probability_data_from_cdf() -> tuple[np.ndarray, np.ndar
     return l3e["probability_of_survival"][...][:, 0], l3e["probability_of_survival"][...][:, 1]
 
 
-def create_hi_l3_survival_corrected_cdf(survival_dependencies: HiLoL3SurvivalDependencies, spacing_degree: int) -> str:
+@patch('imap_l3_processing.hi.hi_processor.upload')
+@patch('imap_l3_processing.hi.hi_processor.HiLoL3SurvivalDependencies.fetch_dependencies')
+def create_hi_l3_survival_corrected_cdf(survival_dependencies: HiLoL3SurvivalDependencies, spacing_degree: int,
+                                        mock_fetch_dependencies, mock_upload) -> str:
     input_metadata = InputMetadata(instrument="hi",
                                    data_level="l3",
                                    start_date=datetime(2025, 4, 9),
@@ -811,11 +814,37 @@ def create_hi_l3_survival_corrected_cdf(survival_dependencies: HiLoL3SurvivalDep
                                    descriptor="h90-ena-h-sf-sp-ram-hae-4deg-6mo",
                                    )
 
-    processor = HiProcessor(Mock(), input_metadata)
-    output_data = processor.process_survival_probabilities(survival_dependencies)
+    mock_fetch_dependencies.return_value = survival_dependencies
 
-    data_product = RectangularIntensityDataProduct(data=output_data, input_metadata=input_metadata)
-    return save_data(data_product, delete_if_present=True)
+    processing_input_collection = Mock()
+    processing_input_collection.get_file_paths.return_value = []
+    processor = HiProcessor(processing_input_collection, input_metadata)
+    processor.process()
+
+    print(mock_upload.call_args_list[0].args[0])
+
+
+@patch('imap_l3_processing.lo.lo_processor.upload')
+@patch('imap_l3_processing.lo.lo_processor.HiLoL3SurvivalDependencies.fetch_dependencies')
+def create_lo_l3_survival_corrected_cdf(survival_dependencies: HiLoL3SurvivalDependencies, spacing_degree: int,
+                                        mock_fetch_dependencies,
+                                        mock_upload):
+    input_metadata = InputMetadata(instrument="lo",
+                                   data_level="l3",
+                                   start_date=datetime(2025, 4, 9),
+                                   end_date=datetime(2025, 4, 10),
+                                   version="v001",
+                                   descriptor=f"l090-ena-h-sf-sp-ram-hae-{spacing_degree}deg-6mo",
+                                   )
+
+    mock_fetch_dependencies.return_value = survival_dependencies
+
+    processing_input_collection = Mock()
+    processing_input_collection.get_file_paths.return_value = []
+    processor = LoProcessor(processing_input_collection, input_metadata)
+    processor.process()
+
+    print(mock_upload.call_args_list[0].args[0])
 
 
 def create_combined_sensor_cdf(combined_dependencies: HiL3CombinedMapDependencies) -> str:
@@ -999,15 +1028,15 @@ if __name__ == "__main__":
         [hi_l1c_folder, *map_paths] = run_local_paths
         [l2_ram_90_map_path, l2_antiram_90_map_path,
          l2_ram_45_map_path, l2_antiram_45_map_path] = map_paths
-        hi_l1c_paths = list(hi_l1c_folder.iterdir())
+        l1c_paths = list(hi_l1c_folder.iterdir())
 
         if do_all or "survival-probability" in sys.argv:
             survival_dependencies = HiLoL3SurvivalDependencies.from_file_paths(
                 map_file_path=l2_ram_90_map_path,
-                hi_l1c_paths=hi_l1c_paths,
+                l1c_paths=l1c_paths,
                 glows_l3e_paths=glows_l3_paths,
                 l2_descriptor="h90-ena-h-sf-nsp-ram-hae-4deg-6mo")
-            print(create_hi_l3_survival_corrected_cdf(survival_dependencies, spacing_degree=4))
+            create_hi_l3_survival_corrected_cdf(survival_dependencies, spacing_degree=4)
 
         if do_all or "spectral-index" in sys.argv:
             dependencies = HiL3SpectralIndexDependencies.from_file_paths(
@@ -1018,13 +1047,13 @@ if __name__ == "__main__":
         if do_all or "full-spin" in sys.argv:
             ram_survival_dependencies = HiLoL3SurvivalDependencies.from_file_paths(
                 map_file_path=l2_ram_90_map_path,
-                hi_l1c_paths=hi_l1c_paths,
+                l1c_paths=l1c_paths,
                 glows_l3e_paths=glows_l3_paths,
                 l2_descriptor="h90-ena-h-sf-nsp-ram-hae-4deg-6mo")
 
             antiram_survival_dependencies = HiLoL3SurvivalDependencies.from_file_paths(
                 map_file_path=l2_antiram_90_map_path,
-                hi_l1c_paths=hi_l1c_paths,
+                l1c_paths=l1c_paths,
                 glows_l3e_paths=glows_l3_paths,
                 l2_descriptor="h90-ena-h-sf-nsp-anti-hae-4deg-6mo")
 
@@ -1061,7 +1090,7 @@ if __name__ == "__main__":
             print(create_combined_sensor_cdf(combined_dependencies))
 
     if "lo" in sys.argv:
-        lo_targets = ['spectral-index']
+        lo_targets = ['spectral-index', 'survival_probabilities']
         do_all = not np.any([t in sys.argv for t in lo_targets])
 
         if do_all or "spectral-index" in sys.argv:
@@ -1071,6 +1100,30 @@ if __name__ == "__main__":
             )
 
             print(create_lo_spectral_index_cdf(dependencies))
+
+        if do_all or "survival_probabilities" in sys.argv:
+
+            glows_l3e_folder = get_test_data_path("hi/fake_l3e_survival_probabilities/90")
+            glows_l3_paths = list(glows_l3e_folder.iterdir())
+
+            missing_paths, run_local_paths = try_get_many_run_local_paths([
+                "hi/full_spin_deps/l1c",
+                "hi/full_spin_deps/imap_hi_l2_h90-ena-h-sf-nsp-ram-hae-4deg-6mo_20250415_v001.cdf",
+            ])
+
+            if missing_paths:
+                create_hi_full_spin_deps(sensor="90")
+
+            [hi_l1c_folder, l2_ram_90_map_path] = run_local_paths
+            l1c_paths = list(hi_l1c_folder.iterdir())
+
+            if do_all or "survival-probability" in sys.argv:
+                survival_dependencies = HiLoL3SurvivalDependencies.from_file_paths(
+                    map_file_path=l2_ram_90_map_path,
+                    l1c_paths=l1c_paths,
+                    glows_l3e_paths=glows_l3_paths,
+                    l2_descriptor="l090-ena-h-sf-nsp-ram-hae-4deg-6mo")
+                create_lo_l3_survival_corrected_cdf(survival_dependencies, 4)
 
     if "ultra" in sys.argv:
         if "survival" in sys.argv:
