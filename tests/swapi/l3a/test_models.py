@@ -18,8 +18,10 @@ from tests.swapi.cdf_model_test_case import CdfModelTestCase
 
 
 class TestModels(CdfModelTestCase):
+
     def test_getting_proton_sw_data_product_variables(self):
         epoch_data = np.arange(20, step=2)
+        epoch_delta = np.full_like(epoch_data, THIRTY_SECONDS_IN_NANOSECONDS)
         expected_nominal_values = np.arange(10, step=1)
         expected_std = np.arange(5, step=.5)
         proton_speed = uarray(expected_nominal_values, expected_std)
@@ -43,7 +45,7 @@ class TestModels(CdfModelTestCase):
         self.assert_variable_attributes(variables[0], epoch_data, EPOCH_CDF_VAR_NAME)
         self.assert_variable_attributes(variables[1], expected_nominal_values, PROTON_SOLAR_WIND_SPEED_CDF_VAR_NAME)
         self.assert_variable_attributes(variables[2], expected_std, PROTON_SOLAR_WIND_SPEED_UNCERTAINTY_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[3], THIRTY_SECONDS_IN_NANOSECONDS, EPOCH_DELTA_CDF_VAR_NAME)
+        self.assert_variable_attributes(variables[3], epoch_delta, EPOCH_DELTA_CDF_VAR_NAME)
         self.assert_variable_attributes(variables[4], expected_temperature_nominal_values,
                                         PROTON_SOLAR_WIND_TEMPERATURE_CDF_VAR_NAME)
         self.assert_variable_attributes(variables[5], expected_temperature_std,
@@ -62,6 +64,7 @@ class TestModels(CdfModelTestCase):
 
     def test_getting_alpha_sw_data_product_variables(self):
         epoch_data = np.arange(20, step=2)
+        epoch_delta = np.full_like(epoch_data, THIRTY_SECONDS_IN_NANOSECONDS)
         expected_speed_nominal_values = np.arange(10, step=1)
         expected_speed_std = np.arange(5, step=.5)
         alpha_speed = uarray(expected_speed_nominal_values, expected_speed_std)
@@ -75,7 +78,7 @@ class TestModels(CdfModelTestCase):
         variables = data.to_data_product_variables()
 
         self.assert_variable_attributes(variables[0], epoch_data, EPOCH_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[1], THIRTY_SECONDS_IN_NANOSECONDS, EPOCH_DELTA_CDF_VAR_NAME)
+        self.assert_variable_attributes(variables[1], epoch_delta, EPOCH_DELTA_CDF_VAR_NAME)
         self.assert_variable_attributes(variables[2], expected_speed_nominal_values,
                                         ALPHA_SOLAR_WIND_SPEED_CDF_VAR_NAME)
         self.assert_variable_attributes(variables[3], expected_speed_std,
