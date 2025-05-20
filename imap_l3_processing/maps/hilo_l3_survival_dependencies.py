@@ -32,25 +32,25 @@ class HiLoL3SurvivalDependencies:
         l2_map_paths = dependencies.get_file_paths(source=instrument.value)
         assert len(l2_map_paths) == 1
         map_file_path = imap_data_access.download(l2_map_paths[0].name)
-        hi_l1c_paths = []
+        l1c_paths = []
         with CDF(str(map_file_path)) as l2_map:
             map_input_paths = [generate_imap_file_path(file) for file in l2_map.attrs["Parents"]]
             l1c_file_names = [map_input_file.filename.name for map_input_file in map_input_paths if
                               isinstance(map_input_file, ScienceFilePath) and map_input_file.data_level == "l1c"]
             for parent in l1c_file_names:
-                hi_l1c_paths.append(imap_data_access.download(parent))
+                l1c_paths.append(imap_data_access.download(parent))
         glows_l3e_file_names = find_glows_l3e_dependencies(l1c_file_names, instrument.value)
         glows_file_paths = [imap_data_access.download(path) for path in glows_l3e_file_names]
         l2_descriptor = generate_imap_file_path(l2_map_paths[0].name).descriptor
-        return cls.from_file_paths(map_file_path, hi_l1c_paths, glows_file_paths, l2_descriptor)
+        return cls.from_file_paths(map_file_path, l1c_paths, glows_file_paths, l2_descriptor)
 
     @classmethod
-    def from_file_paths(cls, map_file_path: Path, hi_l1c_paths: list[Path],
+    def from_file_paths(cls, map_file_path: Path, l1c_paths: list[Path],
                         glows_l3e_paths: list[Path], l2_descriptor: str) -> HiLoL3SurvivalDependencies:
         glows_l3e_data = list(map(read_glows_l3e_data, glows_l3e_paths))
-        l1c_data = list(map(read_l1c_rectangular_pointing_set_data, hi_l1c_paths))
+        l1c_data = list(map(read_l1c_rectangular_pointing_set_data, l1c_paths))
 
-        paths = [map_file_path] + hi_l1c_paths + glows_l3e_paths
+        paths = [map_file_path] + l1c_paths + glows_l3e_paths
         return cls(l2_data=RectangularIntensityMapData.read_from_path(map_file_path), l1c_data=l1c_data,
                    glows_l3e_data=glows_l3e_data,
                    l2_map_descriptor_parts=parse_map_descriptor(l2_descriptor),
@@ -73,9 +73,9 @@ class HiL3SingleSensorFullSpinDependencies:
 
         return cls(
             ram_dependencies=HiLoL3SurvivalDependencies.fetch_dependencies(
-                ProcessingInputCollection(*ram_dependencies)),
+                ProcessingInputCollection(*ram_dependencies), Instrument.IMAP_HI),
             antiram_dependencies=HiLoL3SurvivalDependencies.fetch_dependencies(
-                ProcessingInputCollection(*antiram_dependencies)))
+                ProcessingInputCollection(*antiram_dependencies), Instrument.IMAP_HI))
 
     @property
     def dependency_file_paths(self) -> list[Path]:
