@@ -54,8 +54,7 @@ from imap_l3_processing.lo.lo_processor import perform_spectral_fit
 from imap_l3_processing.maps.hilo_l3_survival_dependencies import HiLoL3SurvivalDependencies, \
     HiL3SingleSensorFullSpinDependencies
 from imap_l3_processing.maps.map_models import RectangularSpectralIndexDataProduct, RectangularIntensityDataProduct, \
-    combine_rectangular_intensity_map_data, HealPixIntensityMapData, RectangularIntensityMapData, \
-    HealPixIntensityDataProduct
+    combine_rectangular_intensity_map_data, HealPixIntensityMapData, RectangularIntensityMapData
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.spice_wrapper import spiceypy
 from imap_l3_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density import \
@@ -77,7 +76,6 @@ from imap_l3_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies
 from imap_l3_processing.swe.swe_processor import SweProcessor
 from imap_l3_processing.ultra.l3.models import UltraL1CPSet, UltraGlowsL3eData
 from imap_l3_processing.ultra.l3.ultra_l3_dependencies import UltraL3Dependencies, UltraL3SpectralIndexDependencies
-from imap_l3_processing.ultra.l3.ultra_l3_to_rectangular_dependencies import UltraL3ToRectangularDependencies
 from imap_l3_processing.ultra.l3.ultra_processor import UltraProcessor
 from imap_l3_processing.utils import save_data, read_l1d_mag_data
 from scripts.codice.create_more_accurate_l3a_direct_event import create_more_accurate_l3a_direct_events_cdf
@@ -878,43 +876,6 @@ def create_codice_hi_l3b_pitch_angles_cdf():
     return cdf_path
 
 
-def create_ultra_survival_corrected_healpix_map() -> HealPixIntensityDataProduct:
-    missing_paths, [l1c_dependency_path, l2_map_path] = try_get_many_run_local_paths([
-        "ultra/fake_l1c_psets/test_pset.cdf",
-        "ultra/fake_l2_maps/test_l2_map.cdf"
-    ])
-
-    if missing_paths:
-        _write_ultra_l1c_cdf_with_parents()
-        _write_ultra_l2_cdf_with_parents()
-
-    l1c_dependency = UltraL1CPSet.read_from_path(l1c_dependency_path)
-
-    l3e_glows_paths = [
-        get_test_data_path(
-            "ultra/fake_l3e_survival_probabilities/imap_glows_l3e_survival-probabilities-ultra_20250901_v001.cdf")
-    ]
-    l3e_dependencies = [UltraGlowsL3eData.read_from_path(path) for path in l3e_glows_paths]
-    l2_map_dependency = HealPixIntensityMapData.read_from_path(l2_map_path)
-
-    processor_input_metadata = InputMetadata(
-        instrument="ultra",
-        start_date=datetime(year=2025, month=9, day=1),
-        end_date=datetime(year=2025, month=9, day=1),
-        data_level="l3",
-        version="v001",
-        descriptor="u90-ena-h-sf-sp-full-hae-nside16-6mo"
-    )
-
-    dependencies = UltraL3Dependencies(ultra_l1c_pset=[l1c_dependency], glows_l3e_sp=l3e_dependencies,
-                                       ultra_l2_map=l2_map_dependency)
-
-    processor = UltraProcessor(input_metadata=processor_input_metadata, dependencies=None)
-    output = processor._process_survival_probability(deps=dependencies)
-
-    return output
-
-
 if __name__ == "__main__":
     if "codice-lo" in sys.argv:
         if "l3a" in sys.argv:
@@ -1113,8 +1074,6 @@ if __name__ == "__main__":
 
     if "ultra" in sys.argv:
         if "survival" in sys.argv:
-            healpix_sp_corrected_data = create_ultra_survival_corrected_healpix_map()
-
             processor_input_metadata = InputMetadata(
                 instrument="ultra",
                 start_date=datetime(year=2025, month=9, day=1),
@@ -1123,13 +1082,33 @@ if __name__ == "__main__":
                 version="v001",
                 descriptor="u90-ena-h-sf-sp-full-hae-4deg-6mo"
             )
+            processor = UltraProcessor(input_metadata=processor_input_metadata, dependencies=Mock())
 
-            dependencies = UltraL3ToRectangularDependencies(
-                healpix_map_data=healpix_sp_corrected_data.data
-            )
+            missing_paths, [l1c_dependency_path, l2_map_path] = try_get_many_run_local_paths([
+                "ultra/fake_l1c_psets/test_pset.cdf",
+                "ultra/fake_l2_maps/test_l2_map.cdf"
+            ])
 
-            processor = UltraProcessor(Mock(), processor_input_metadata)
-            rectangular_sp_data_product = processor._process_healpix_to_rectangular(dependencies, 4)
+            if missing_paths:
+                _write_ultra_l1c_cdf_with_parents()
+                _write_ultra_l2_cdf_with_parents()
+
+            l1c_dependency = UltraL1CPSet.read_from_path(l1c_dependency_path)
+
+            l3e_glows_paths = [
+                get_test_data_path(
+                    "ultra/fake_l3e_survival_probabilities/imap_glows_l3e_survival-probabilities-ultra_20250901_v001.cdf")
+            ]
+            l3e_dependencies = [UltraGlowsL3eData.read_from_path(path) for path in l3e_glows_paths]
+            l2_map_dependency = HealPixIntensityMapData.read_from_path(l2_map_path)
+
+            dependencies = UltraL3Dependencies(ultra_l1c_pset=[l1c_dependency], glows_l3e_sp=l3e_dependencies,
+                                               ultra_l2_map=l2_map_dependency)
+
+            healpix_sp_corrected_data = processor._process_survival_probability(deps=dependencies)
+            rectangular_sp_data_product = processor._process_healpix_intensity_to_rectangular(healpix_sp_corrected_data,
+                                                                                              4)
+
             rectangular_sp_corrected_path = save_data(rectangular_sp_data_product, delete_if_present=True)
             print(rectangular_sp_corrected_path)
 

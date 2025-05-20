@@ -205,6 +205,34 @@ class HealPixSpectralIndexMapData:
     spectral_index_map_data: SpectralIndexMapData
     coords: HealPixCoords
 
+    def to_healpix_skymap(self) -> HealpixSkyMap:
+        healpix_map = HealpixSkyMap(self.coords.nside, SpiceFrame.ECLIPJ2000)
+
+        full_shape = [CoordNames.TIME.value, CoordNames.ENERGY_ULTRA.value, CoordNames.HEALPIX_INDEX.value]
+        healpix_map.data_1d = xarray.Dataset(
+            data_vars={
+                "latitude": ([CoordNames.HEALPIX_INDEX.value], self.spectral_index_map_data.latitude),
+                "longitude": ([CoordNames.HEALPIX_INDEX.value], self.spectral_index_map_data.longitude),
+                "solid_angle": ([CoordNames.HEALPIX_INDEX.value], self.spectral_index_map_data.solid_angle),
+                "obs_date_range": (full_shape, self.spectral_index_map_data.obs_date_range),
+                "obs_date": (full_shape, self.spectral_index_map_data.obs_date),
+                "exposure_factor": (full_shape, self.spectral_index_map_data.exposure_factor),
+
+                "ena_spectral_index": (full_shape, self.spectral_index_map_data.ena_spectral_index),
+                "ena_spectral_index_stat_unc": (full_shape, self.spectral_index_map_data.ena_spectral_index_stat_unc),
+            },
+            coords={
+                CoordNames.TIME.value: self.spectral_index_map_data.epoch,
+                CoordNames.ENERGY_ULTRA.value: self.spectral_index_map_data.energy,
+                CoordNames.HEALPIX_INDEX.value: self.coords.pixel_index,
+            })
+
+        healpix_map.data_1d = healpix_map.data_1d \
+            .assign({"obs_date": (full_shape, healpix_map.data_1d["obs_date"].values.astype(np.float64))}) \
+            .rename({CoordNames.HEALPIX_INDEX.value: CoordNames.GENERIC_PIXEL.value})
+
+        return healpix_map
+
 
 @dataclass
 class HealPixSpectralIndexDataProduct(DataProduct):
