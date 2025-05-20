@@ -7,27 +7,27 @@ from imap_l3_processing.maps.rectangular_survival_probability import Rectangular
 from imap_l3_processing.utils import combine_glows_l3e_with_l1c_pointing
 
 
-def process_survival_probabilities(hi_survival_probabilities_dependencies: HiLoL3SurvivalDependencies) \
+def process_survival_probabilities(survival_probabilities_dependencies: HiLoL3SurvivalDependencies) \
         -> RectangularIntensityMapData:
-    l2_descriptor_parts = hi_survival_probabilities_dependencies.l2_map_descriptor_parts
+    l2_descriptor_parts = survival_probabilities_dependencies.l2_map_descriptor_parts
 
-    combined_glows_hi = combine_glows_l3e_with_l1c_pointing(hi_survival_probabilities_dependencies.glows_l3e_data,
-                                                            hi_survival_probabilities_dependencies.l1c_data)
+    combined_glows = combine_glows_l3e_with_l1c_pointing(survival_probabilities_dependencies.glows_l3e_data,
+                                                         survival_probabilities_dependencies.l1c_data)
     pointing_sets = []
-    input_data = hi_survival_probabilities_dependencies.l2_data.intensity_map_data
+    input_data = survival_probabilities_dependencies.l2_data.intensity_map_data
 
-    for hi_l1c, glows_l3e in combined_glows_hi:
+    for l1c, glows_l3e in combined_glows:
         pointing_sets.append(RectangularSurvivalProbabilityPointingSet(
-            hi_l1c, l2_descriptor_parts.sensor, l2_descriptor_parts.spin_phase, glows_l3e,
+            l1c, l2_descriptor_parts.sensor, l2_descriptor_parts.spin_phase, glows_l3e,
             input_data.energy))
     assert len(pointing_sets) > 0
 
-    hi_survival_sky_map = RectangularSurvivalProbabilitySkyMap(pointing_sets, int(l2_descriptor_parts.grid),
-                                                               SpiceFrame.ECLIPJ2000)
+    survival_sky_map = RectangularSurvivalProbabilitySkyMap(pointing_sets, int(l2_descriptor_parts.grid),
+                                                            SpiceFrame.ECLIPJ2000)
 
-    survival_dataset = hi_survival_sky_map.to_dataset()
+    survival_dataset = survival_sky_map.to_dataset()
 
-    input_data = hi_survival_probabilities_dependencies.l2_data.intensity_map_data
+    input_data = survival_probabilities_dependencies.l2_data.intensity_map_data
     survival_probabilities = survival_dataset["exposure_weighted_survival_probabilities"].values
 
     survival_corrected_intensity = input_data.ena_intensity / survival_probabilities
@@ -52,5 +52,5 @@ def process_survival_probabilities(hi_survival_probabilities_dependencies: HiLoL
             obs_date_range=input_data.obs_date_range,
             solid_angle=input_data.solid_angle,
         ),
-        coords=hi_survival_probabilities_dependencies.l2_data.coords
+        coords=survival_probabilities_dependencies.l2_data.coords
     )

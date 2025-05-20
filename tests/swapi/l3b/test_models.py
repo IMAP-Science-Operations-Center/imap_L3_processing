@@ -21,6 +21,7 @@ class TestModels(CdfModelTestCase):
                                                 datetime(2024, 9, 9),
                                                 "v001", "")
         epoch = np.array([1, 2, 3])
+        epoch_delta = np.full_like(epoch, FIVE_MINUTES_IN_NANOSECONDS)
         proton_velocities = np.array([4, 5, 6])
         proton_velocities_delta_plus = np.array([0.4, 0.5, 0.6])
         proton_velocities_delta_minus = 1 + np.array([0.4, 0.5, 0.6])
@@ -67,8 +68,7 @@ class TestModels(CdfModelTestCase):
 
         self.assertEqual(7, len(variables))
         self.assert_variable_attributes(variables[0], epoch, EPOCH_CDF_VAR_NAME, pycdf.const.CDF_TIME_TT2000)
-        self.assert_variable_attributes(variables[1], FIVE_MINUTES_IN_NANOSECONDS, EPOCH_DELTA_CDF_VAR_NAME,
-                                        expected_record_varying=False)
+        self.assert_variable_attributes(variables[1], epoch_delta, EPOCH_DELTA_CDF_VAR_NAME)
 
         self.assert_variable_attributes(variables[2], combined_energies, SOLAR_WIND_ENERGY_CDF_VAR_NAME)
         self.assert_variable_attributes(variables[3], combined_energies_delta_minus,

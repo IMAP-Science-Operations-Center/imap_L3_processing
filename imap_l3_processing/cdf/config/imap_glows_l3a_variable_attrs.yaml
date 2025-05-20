@@ -179,7 +179,7 @@ spin_angle:
   CATDESC: Spin angle (measured from north) for bin centers
   VAR_TYPE: support_data
   DISPLAY_TYPE: no_plot
-  RECORD_VARYING: NRV
+  RECORD_VARYING: RV
   FIELDNAM: Spin Angle For Bin Centers
   DATA_TYPE: CDF_FLOAT
   FORMAT: F7.3
@@ -197,7 +197,7 @@ spin_angle_delta:
   CATDESC: Half width of spin angle bin (spin-angle bin delta)
   VAR_TYPE: support_data
   DISPLAY_TYPE: no_plot
-  RECORD_VARYING: NRV
+  RECORD_VARYING: RV
   FIELDNAM: Half Width Of Spin Angle Bin
   DATA_TYPE: CDF_FLOAT
   FORMAT: F5.3
