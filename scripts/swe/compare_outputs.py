@@ -5,11 +5,25 @@ import numpy as np
 import pyhdf
 from pyhdf.HDF import *
 from pyhdf.VS import *
+from spacepy import pycdf
 from spacepy.pycdf import CDF
 
 _ = pyhdf
 _ = pyhdf.VS
 _ = VS
+
+
+def canonicalize(thetas, phis):
+    mask_to_reverse = (thetas < 0) | ((thetas == 0) & (phis < 0))
+    canonical_thetas = np.where(mask_to_reverse, -thetas, thetas)
+    canonical_phis = np.where(mask_to_reverse, phis + np.pi, phis)
+    return canonical_thetas, np.mod(canonical_phis, 2 * np.pi)
+
+
+def read_numeric_variable(var: pycdf.Var) -> np.ndarray:
+    assert np.issubdtype(var.dtype, np.number)
+    return np.where(var[...] == var.attrs['FILLVAL'], np.nan, var[...])
+
 
 variable_mapping = {
     "spacecraft_potential": "potential",
@@ -90,20 +104,63 @@ for modern_name, heritage_info in variable_mapping.items():
 
     l3_output_cdf = CDF('temp_cdf_data/imap_swe_l3_sci_20250629_v000.cdf')
 
-    modern_data = l3_output_cdf[modern_name][:]
-    nand_data = np.where((modern_data == -1e31), np.nan, modern_data)
+    modern_data = read_numeric_variable(l3_output_cdf[modern_name])
     if "tensor" in modern_name:
         for i in range(6):
             plt.plot(heritage_data[:, i], label=f'Heritage: {heritage_name} {i}')
-            plt.plot(nand_data[:, i], label=f'Modern: {modern_name} {i}')
+            plt.plot(modern_data[:, i], label=f'Modern: {modern_name} {i}')
 
             plt.legend()
             plt.savefig(Path("comparisons") / f"{modern_name}_{i}.png")
             plt.clf()
     else:
+        smooth_level = 0
+        if smooth_level > 0:
+            window_size = np.ones(smooth_level) / smooth_level
+            if heritage_data.ndim > 1:
+                continue
+            heritage_data = np.convolve(heritage_data, window_size, mode="same")
+            modern_data = np.convolve(modern_data, window_size, mode="same")
         plt.plot(heritage_data, label=f'Heritage: {heritage_name}')
-        plt.plot(nand_data, label=f'Modern: {modern_name}')
+        plt.plot(modern_data, label=f'Modern: {modern_name}')
 
         plt.legend()
         plt.savefig(Path("comparisons") / f"{modern_name}.png")
         plt.clf()
+    l3_output_cdf.close()
+
+
+def compare_eigenvector_directions_with_canonicalization():
+    l3_hdf = HDF(r'instrument_team_data/swe/swepam-nswe-1999-159.v1-02.hdf')
+    l3_vs = l3_hdf.vstart()
+    l3_swe_e = l3_vs.attach("swepam_e")
+
+    l3_output_cdf = CDF('temp_cdf_data/imap_swe_l3_sci_20250629_v000.cdf')
+    theta_rtn_integrated = "core_temperature_theta_rtn_integrated"
+    heritage_theta_rtn_integrated = "t_theta_ic"
+    phi_rtn_integrated = "core_temperature_phi_rtn_integrated"
+    heritage_phi_rtn_integrated = "t_phi_ic"
+
+    core_temp_theta = read_numeric_variable(l3_output_cdf[theta_rtn_integrated])
+    core_temp_phi = read_numeric_variable(l3_output_cdf[phi_rtn_integrated])
+    canonical_theta, canonical_phis = canonicalize(core_temp_theta, core_temp_phi)
+
+    heritage_theta_rtn_integrated_data = np.array(
+        [x[l3_swe_e.field(heritage_theta_rtn_integrated)._index] for x in l3_swe_e[:]])
+    heritage_phi_rtn_integrated_data = np.array(
+        [x[l3_swe_e.field(heritage_phi_rtn_integrated)._index] for x in l3_swe_e[:]])
+
+    heritage_theta_rtn_integrated_data, heritage_phi_rtn_integrated_data = canonicalize(
+        heritage_theta_rtn_integrated_data, heritage_phi_rtn_integrated_data)
+
+    plt.plot(canonical_theta, '.', label=f'Modern: {theta_rtn_integrated}')
+    plt.plot(heritage_theta_rtn_integrated_data, '.', label=f'Heritage: {heritage_theta_rtn_integrated}')
+    plt.savefig(Path("comparisons") / f"core_temperature_rtn_theta.png")
+    plt.clf()
+
+    plt.plot(canonical_phis, '.', label=f'Modern: {phi_rtn_integrated}')
+    plt.plot(heritage_phi_rtn_integrated_data, '.', label=f'Heritage: {heritage_theta_rtn_integrated}')
+    plt.savefig(Path("comparisons") / f"core_temperature_rtn_phi.png")
+    plt.clf()
+
+compare_eigenvector_directions_with_canonicalization()
