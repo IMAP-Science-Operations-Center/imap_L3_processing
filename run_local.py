@@ -1074,13 +1074,14 @@ if __name__ == "__main__":
 
     if "ultra" in sys.argv:
         if "survival" in sys.argv:
+            spacing_degree = 4
             processor_input_metadata = InputMetadata(
                 instrument="ultra",
                 start_date=datetime(year=2025, month=9, day=1),
                 end_date=datetime(year=2025, month=9, day=1),
                 data_level="l3",
                 version="v001",
-                descriptor="u90-ena-h-sf-sp-full-hae-4deg-6mo"
+                descriptor=f"u90-ena-h-sf-sp-full-hae-{spacing_degree}deg-6mo"
             )
             processor = UltraProcessor(input_metadata=processor_input_metadata, dependencies=Mock())
 
@@ -1107,12 +1108,14 @@ if __name__ == "__main__":
 
             healpix_sp_corrected_data = processor._process_survival_probability(deps=dependencies)
             rectangular_sp_data_product = processor._process_healpix_intensity_to_rectangular(healpix_sp_corrected_data,
-                                                                                              4)
+                                                                                              spacing_degree)
 
             rectangular_sp_corrected_path = save_data(rectangular_sp_data_product, delete_if_present=True)
             print(rectangular_sp_corrected_path)
 
         if "spectral-index" in sys.argv:
+            spacing_degree = 2
+
             ultra_l3_path = get_test_data_path('ultra/fake_ultra_map_data.cdf')
             fit_energy_ranges_path = get_test_data_path('ultra/imap_ultra_ulc-spx-energy-ranges_20250507_v000.txt')
             dependencies = UltraL3SpectralIndexDependencies.from_file_paths(ultra_l3_path, fit_energy_ranges_path)
@@ -1123,10 +1126,12 @@ if __name__ == "__main__":
                 end_date=datetime(year=2025, month=9, day=1),
                 data_level="l3",
                 version="v001",
-                descriptor="u90-spx-h-sf-sp-full-hae-nside16-6mo"
+                descriptor=f"u90-spx-h-sf-sp-full-hae-{spacing_degree}deg-6mo"
             )
 
             processor = UltraProcessor(input_metadata=processor_input_metadata, dependencies=None)
-            output = processor._process_spectral_index(dependencies)
+
+            spectral_index_map_data = processor._process_spectral_index(dependencies)
+            output = processor._process_healpix_spectral_index_to_rectangular(spectral_index_map_data, spacing_degree)
 
             print(save_data(output, True))
