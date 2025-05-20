@@ -39,7 +39,7 @@ class SwapiL3BCombinedVDF(DataProduct):
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
             DataProductVariable(EPOCH_CDF_VAR_NAME, self.epoch, cdf_data_type=pycdf.const.CDF_TIME_TT2000),
-            DataProductVariable(EPOCH_DELTA_CDF_VAR_NAME, FIVE_MINUTES_IN_NANOSECONDS, record_varying=False),
+            DataProductVariable(EPOCH_DELTA_CDF_VAR_NAME, np.full_like(self.epoch, FIVE_MINUTES_IN_NANOSECONDS)),
 
             DataProductVariable(SOLAR_WIND_ENERGY_CDF_VAR_NAME, self.combined_energy),
             DataProductVariable(SOLAR_WIND_COMBINED_ENERGY_DELTA_MINUS_CDF_VAR_NAME, self.combined_energy_delta_minus),
