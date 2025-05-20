@@ -4,6 +4,7 @@ Main procedure to generate GLOWS L3d data product
 '''
 
 import glob
+import json
 import sys
 import warnings
 
@@ -11,12 +12,16 @@ import numpy as np
 
 import toolkit.funcs as fun
 import toolkit.l3d_SolarParamHistory as sph
-from toolkit.constants import ANC_INPUT_FROM_INSTRUMENT_TEAM, EXT_DEPENDENCIES
 
 warnings.filterwarnings("ignore")
 
 # current CR to process (should it be determine by the available L3bc? Or other way?)
 CR_current = int(sys.argv[1])
+
+dependencies = json.loads(sys.argv[2])
+
+ANC_INPUT_FROM_INSTRUMENT_TEAM = dependencies['ancillary_files']
+EXT_DEPENDENCIES = dependencies['external_files']
 
 # Create list of L3b/c files and read them
 l3b_fn_list = np.array(sorted(glob.glob('data_l3b/imap_glows_l3b*.json')))
@@ -50,4 +55,3 @@ solar_param_hist.save_to_file(l3d_fn)
 solar_param_hist.save_to_txt(l3d_txt_fn, hdr)
 
 print('Processing CR=', CR_current)
-

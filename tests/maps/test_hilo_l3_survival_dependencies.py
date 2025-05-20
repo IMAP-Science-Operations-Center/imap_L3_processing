@@ -26,7 +26,7 @@ class TestHiLoL3SurvivalDependencies(unittest.TestCase):
             with self.subTest(instrument.value):
                 mock_read_from_path.reset_mock()
                 mock_parse_map_descriptor.reset_mock()
-                
+
                 l1c_file_paths = [f"imap_{instrument.value}_l1c_45sensor-pset_20201001_v001.cdf",
                                   f"imap_{instrument.value}_l1c_45sensor-pset_20201002_v002.cdf",
                                   f"imap_{instrument.value}_l1c_45sensor-pset_20201003_v001.cdf"]
@@ -121,13 +121,15 @@ class TestHiLoL3SurvivalDependencies(unittest.TestCase):
         self.assertEqual(result.ram_dependencies, mock_ram_survival_dependencies)
         self.assertEqual(result.antiram_dependencies, mock_antiram_survival_dependencies)
 
-        [ram_dependencies] = mock_fetch_dependencies.call_args_list[0].args
+        [ram_dependencies, instrument] = mock_fetch_dependencies.call_args_list[0].args
         self.assertIsInstance(ram_dependencies, ProcessingInputCollection)
         self.assertEqual([ram_input, glows_input], ram_dependencies.processing_input)
+        self.assertEqual(Instrument.IMAP_HI, instrument)
 
-        [antiram_dependencies] = mock_fetch_dependencies.call_args_list[1].args
+        [antiram_dependencies, instrument] = mock_fetch_dependencies.call_args_list[1].args
         self.assertIsInstance(antiram_dependencies, ProcessingInputCollection)
         self.assertEqual([anti_input, glows_input], antiram_dependencies.processing_input)
+        self.assertEqual(Instrument.IMAP_HI, instrument)
 
         self.assertEqual([Path("ram_input1"), Path("ram_input2"), Path("antiram_input1"), Path("antiram_input2")],
                          result.dependency_file_paths)

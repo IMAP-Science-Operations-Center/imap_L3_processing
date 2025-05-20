@@ -17,7 +17,8 @@ class TestL3eLoModel(unittest.TestCase):
             sentinel.epoch_deltas,
             sentinel.energy,
             sentinel.spin_angle,
-            sentinel.probability_of_survival
+            sentinel.probability_of_survival,
+            sentinel.elongation
         )
 
         expected_energy_labels = ['Energy Label 1', 'Energy Label 2', 'Energy Label 3', 'Energy Label 4',
@@ -36,6 +37,7 @@ class TestL3eLoModel(unittest.TestCase):
             DataProductVariable("probability_of_survival", sentinel.probability_of_survival),
             DataProductVariable("energy_label", expected_energy_labels),
             DataProductVariable("spin_angle_label", expected_spin_angle_labels),
+            DataProductVariable("elongation", sentinel.elongation)
         ]
 
         self.assertEqual(expected_data_products, data_products)
@@ -111,14 +113,15 @@ class TestL3eLoModel(unittest.TestCase):
         ]
 
         expected_spin_angle = np.arange(1, 361, 1, dtype=np.float64)
-
+        elongation_value = 75
         expected_survival_probability_shape = (1, 13, 360)
 
         mock_metadata = Mock()
 
         l3e_lo_product: GlowsL3ELoData = GlowsL3ELoData.convert_dat_to_glows_l3e_lo_product(mock_metadata, lo_file_path,
                                                                                             epoch,
-                                                                                            expected_time_delta)
+                                                                                            expected_time_delta,
+                                                                                            elongation_value)
 
         self.assertEqual(epoch, l3e_lo_product.epoch)
         self.assertEqual(l3e_lo_product.input_metadata.start_date, epoch[0])
@@ -128,3 +131,4 @@ class TestL3eLoModel(unittest.TestCase):
         np.testing.assert_array_equal(l3e_lo_product.probability_of_survival.shape, expected_survival_probability_shape)
         np.testing.assert_array_equal(l3e_lo_product.probability_of_survival[0][0],
                                       expected_prob_of_survival_first_col_1)
+        self.assertEqual(elongation_value, l3e_lo_product.elongation)
