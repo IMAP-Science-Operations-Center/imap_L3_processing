@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 
 from imap_data_access import upload
 from imap_processing.spice import geometry
@@ -121,6 +122,9 @@ class UltraProcessor(Processor):
         rectangular_map, _ = healpix_map.to_rectangular_skymap(spacing_deg, variables_to_convert_to_rectangular)
         rectangular_map_xarray_dataset = rectangular_map.to_dataset()
 
+        obs_date = datetime(year=1970, month=1, day=1) + timedelta(seconds=1) * (
+                rectangular_map_xarray_dataset["obs_date"].values / 1e9)
+
         input_map_intensity_data = dependencies.healpix_map_data.intensity_map_data
         intensity_map_data = IntensityMapData(
             epoch=input_map_intensity_data.epoch,
@@ -131,7 +135,7 @@ class UltraProcessor(Processor):
             energy_label=input_map_intensity_data.energy_label,
             latitude=rectangular_map.sky_grid.el_bin_midpoints,
             longitude=rectangular_map.sky_grid.az_bin_midpoints,
-            obs_date=rectangular_map_xarray_dataset["obs_date"].values,
+            obs_date=obs_date,
             obs_date_range=rectangular_map_xarray_dataset["obs_date_range"].values,
             solid_angle=rectangular_map_xarray_dataset["solid_angle"].values,
             exposure_factor=rectangular_map_xarray_dataset["exposure_factor"].values,

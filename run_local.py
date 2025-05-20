@@ -54,7 +54,8 @@ from imap_l3_processing.lo.lo_processor import perform_spectral_fit
 from imap_l3_processing.maps.hilo_l3_survival_dependencies import HiLoL3SurvivalDependencies, \
     HiL3SingleSensorFullSpinDependencies
 from imap_l3_processing.maps.map_models import RectangularSpectralIndexDataProduct, RectangularIntensityDataProduct, \
-    combine_rectangular_intensity_map_data, HealPixIntensityMapData, RectangularIntensityMapData
+    combine_rectangular_intensity_map_data, HealPixIntensityMapData, RectangularIntensityMapData, \
+    HealPixIntensityDataProduct
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.spice_wrapper import spiceypy
 from imap_l3_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density import \
@@ -877,7 +878,7 @@ def create_codice_hi_l3b_pitch_angles_cdf():
     return cdf_path
 
 
-def create_ultra_survival_corrected_healpix_map():
+def create_ultra_survival_corrected_healpix_map() -> HealPixIntensityDataProduct:
     missing_paths, [l1c_dependency_path, l2_map_path] = try_get_many_run_local_paths([
         "ultra/fake_l1c_psets/test_pset.cdf",
         "ultra/fake_l2_maps/test_l2_map.cdf"
@@ -911,7 +912,7 @@ def create_ultra_survival_corrected_healpix_map():
     processor = UltraProcessor(input_metadata=processor_input_metadata, dependencies=None)
     output = processor._process_survival_probability(deps=dependencies)
 
-    return save_data(output, delete_if_present=True)
+    return output
 
 
 if __name__ == "__main__":
@@ -1112,35 +1113,25 @@ if __name__ == "__main__":
 
     if "ultra" in sys.argv:
         if "survival" in sys.argv:
-            healpix_sp_corrected_path = Path(create_ultra_survival_corrected_healpix_map())
+            healpix_sp_corrected_data = create_ultra_survival_corrected_healpix_map()
 
-            if "rectangular" in sys.argv:
-                processor_input_metadata = InputMetadata(
-                    instrument="ultra",
-                    start_date=datetime(year=2025, month=9, day=1),
-                    end_date=datetime(year=2025, month=9, day=1),
-                    data_level="l3",
-                    version="v001",
-                    descriptor="u90-ena-h-sf-sp-full-hae-4deg-6mo"
-                )
+            processor_input_metadata = InputMetadata(
+                instrument="ultra",
+                start_date=datetime(year=2025, month=9, day=1),
+                end_date=datetime(year=2025, month=9, day=1),
+                data_level="l3",
+                version="v001",
+                descriptor="u90-ena-h-sf-sp-full-hae-4deg-6mo"
+            )
 
-                dependencies = UltraL3ToRectangularDependencies.from_file_paths(healpix_sp_corrected_path)
+            dependencies = UltraL3ToRectangularDependencies(
+                healpix_map_data=healpix_sp_corrected_data.data
+            )
 
-                processor = UltraProcessor(Mock(), processor_input_metadata)
-                rectangular_sp_data_product = processor._process_healpix_to_rectangular(dependencies, 4)
-                rectangular_sp_corrected_path = save_data(rectangular_sp_data_product)
-                print(rectangular_sp_corrected_path)
-            else:
-                print(healpix_sp_corrected_path)
-
-        if "rectangular" in sys.argv and "survival" in sys.argv:
-            missing_paths, [l1c_dependency_path, l2_map_path] = try_get_many_run_local_paths([
-                "ultra/fake_l1c_psets/test_pset.cdf",
-                "ultra/fake_l2_maps/test_l2_map.cdf"
-            ])
-
-        if "survival" in sys.argv:
-            print(save_data(output, True))
+            processor = UltraProcessor(Mock(), processor_input_metadata)
+            rectangular_sp_data_product = processor._process_healpix_to_rectangular(dependencies, 4)
+            rectangular_sp_corrected_path = save_data(rectangular_sp_data_product, delete_if_present=True)
+            print(rectangular_sp_corrected_path)
 
         if "spectral-index" in sys.argv:
             ultra_l3_path = get_test_data_path('ultra/fake_ultra_map_data.cdf')
