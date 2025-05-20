@@ -1,8 +1,9 @@
 import unittest
 from datetime import datetime
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 
 import numpy as np
+from scipy.stats import linregress
 
 from imap_l3_processing.maps.map_models import IntensityMapData, RectangularIntensityMapData
 from imap_l3_processing.maps.mpfit import mpfit
@@ -335,22 +336,51 @@ class TestSpectralFit(unittest.TestCase):
                                       np.full((1, 2, 1, 1), datetime(year=2010, month=1, day=1)))
         np.testing.assert_array_equal(spectral_index_map_data.obs_date_range, np.full((1, 2, 1, 1), 100000))
 
-    @patch('imap_l3_processing.maps.spectral_fit.mpfit', wraps=mpfit)
-    def test_passes_initial_guess_to_mpfit_based_on_line_between_first_and_last_points_in_log_space(self, mock_mpfit):
-        energies = np.geomspace(10, 1e4, 6)
+    @patch('imap_l3_processing.maps.spectral_fit.mpfit')
+    def test_spectral_fit_returns_nan_if_fit_status_is_not_positive_or_equal_to_five(self, mock_mpfit):
+        energies = np.geomspace(1, 10, 23)
         true_A, true_gamma = 2.0, 1.5
-
         flux_data = true_A * np.power(energies, -true_gamma)
-        flux_data[0] = 1e6
-        flux_data[-1] = 1
+
+        errors = 0.2 * np.abs(flux_data)
+
+        cases = [
+            ("rectangular", (1, 1)),
+            ("healpix", (1,))
+        ]
+
+        invalid_status_cases = [-1, 0, 5]
+
+        for name, spacial_dimension_shape in cases:
+            for status_code in invalid_status_cases:
+                with self.subTest(f"Pixelization: {name}, status_code: {status_code}"):
+                    mock_mpfit.return_value = Mock(status=status_code, params=(0, 0))
+                    flux = np.array(flux_data).reshape(1, len(energies), *spacial_dimension_shape)
+                    uncertainty = np.array(errors).reshape(1, len(energies), *spacial_dimension_shape)
+
+                    result, result_error = fit_arrays_to_power_law(flux, uncertainty, energies)
+                    expected_nan_result = np.full((1, 1, *spacial_dimension_shape), np.nan)
+                    np.testing.assert_array_equal(result, expected_nan_result)
+                    np.testing.assert_array_equal(result_error, expected_nan_result)
+
+    @patch('imap_l3_processing.maps.spectral_fit.mpfit', wraps=mpfit)
+    @patch('imap_l3_processing.maps.spectral_fit.scipy.stats.linregress', wraps=linregress)
+    def test_passes_initial_guess_to_mpfit_based_on_linear_fit_in_log_space(self, mock_linregress, mock_mpfit):
+        energies = np.geomspace(1e1, 1e4, 6)
+        flux_data = np.array([1e7, 1e5, 1e6, 1e4, 1e5, 1e3])
 
         errors = 0.2 * np.abs(flux_data)
 
         flux = np.array(flux_data).reshape(1, len(energies), 1)
         uncertainty = np.array(errors).reshape(1, len(energies), 1)
 
-        result, result_error = fit_arrays_to_power_law(flux, uncertainty, energies)
-        self.assertEqual((8, 2), mock_mpfit.call_args.args[1])
+        mock_linregress.return_value = Mock(slope=3, intercept=5)
+
+        _ = fit_arrays_to_power_law(flux, uncertainty, energies)
+        input_energies, input_flux = mock_linregress.call_args[0]
+        np.testing.assert_array_equal(input_energies, np.log10(energies))
+        np.testing.assert_array_equal(input_flux, np.log10(flux_data))
+        self.assertEqual((5, -3), mock_mpfit.call_args.args[1])
 
     def test_spectral_fit_against_validation_data(self):
         test_cases = [
