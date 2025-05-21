@@ -17,17 +17,21 @@ imap_ultra_l3_u90-ena-h-sf-sp-full-hae-6deg-6mo:
   Logical_source: imap_ultra_l3_u90-ena-h-sf-sp-full-hae-6deg-6mo
   Logical_source_description: IMAP-Ultra Instrument Level-3 ENA Intensity, Ultra-90 sensor, Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin, HAE, Rectangular 6 degree, 6 Month Map
 
-
-# OLD HEALPIX
-imap_ultra_l3_u90-ena-h-sf-sp-full-hae-nside16-6mo:
+imap_ultra_l3_u90-spx-h-sf-sp-full-hae-2deg-6mo:
   Data_level: "3"
-  Data_type: l3_u90-ena-h-sf-sp-full-hae-nside16-6mo>Level-3 Survival Corrected Full Nside 16
-  Logical_source: imap_ultra_l3_u90-ena-h-sf-sp-full-hae-nside16-6mo
-  Logical_source_description: IMAP-Ultra Instrument Level-3 ENA Intensity, Ultra-90 sensor, Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin, HAE, HEALPix nside 16, 6 Month Map
+  Data_type: l3_u90-spx-h-sf-sp-full-hae-2deg-6mo>Level-3 Survival Corrected Full 2 degree
+  Logical_source: imap_ultra_l3_u90-spx-h-sf-sp-full-hae-2deg-6mo
+  Logical_source_description: IMAP-Ultra Instrument Level-3 Spectral Index, Ultra-90 sensor, Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin, HAE, Rectangular 2 degree, 6 Month Map
 
-imap_ultra_l3_u90-spx-h-sf-sp-full-hae-nside16-6mo:
+imap_ultra_l3_u90-spx-h-sf-sp-full-hae-4deg-6mo:
   Data_level: "3"
-  Data_type: l3_u90-spx-h-sf-sp-full-hae-nside16-6mo>Level-3 Survival Corrected Full 4 degree
-  Logical_source: imap_ultra_l3_u90-spx-h-sf-sp-full-hae-nside16-6mo
-  Logical_source_description: IMAP-Ultra Instrument Level-3 Spectral Index, Ultra-90 sensor, Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin, HAE, HEALPix nside 16, 6 Month Map
+  Data_type: l3_u90-spx-h-sf-sp-full-hae-4deg-6mo>Level-3 Survival Corrected Full 4 degree
+  Logical_source: imap_ultra_l3_u90-spx-h-sf-sp-full-hae-4deg-6mo
+  Logical_source_description: IMAP-Ultra Instrument Level-3 Spectral Index, Ultra-90 sensor, Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin, HAE, Rectangular 4 degree, 6 Month Map
+
+imap_ultra_l3_u90-spx-h-sf-sp-full-hae-6deg-6mo:
+  Data_level: "3"
+  Data_type: l3_u90-spx-h-sf-sp-full-hae-6deg-6mo>Level-3 Survival Corrected Full 6 degree
+  Logical_source: imap_ultra_l3_u90-spx-h-sf-sp-full-hae-6deg-6mo
+  Logical_source_description: IMAP-Ultra Instrument Level-3 Spectral Index, Ultra-90 sensor, Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin, HAE, Rectangular 6 degree, 6 Month Map
 

@@ -56,7 +56,7 @@ cr:
   VAR_TYPE: support_data
   RECORD_VARYING: RV
   FIELDNAM: Carrington Rotation
-  FORMAT: I14
+  FORMAT: F9.3
   LABLAXIS: Carrington rotation
   UNITS: ' '
   VALIDMIN: 1000
@@ -145,7 +145,7 @@ lyman_alpha:
   RECORD_VARYING: RV
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
   FIELDNAM: Lyman Alpha
-  FORMAT: F9.3
+  FORMAT: F14.3
   LABLAXIS: Lyman alpha
   DISPLAY_TYPE: time_series
   UNITS: '#/cm^2/s'

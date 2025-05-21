@@ -47,6 +47,7 @@ class Duration(enum.Enum):
 
 
 class PixelSize(enum.IntEnum):
+    TwoDegrees = 2
     FourDegrees = 4
     SixDegrees = 6
     Nside8 = 8
@@ -78,7 +79,7 @@ def parse_map_descriptor(descriptor: str) -> Optional[MapDescriptorParts]:
         (?P<survival_corrected>sp|nsp)-
         (?P<spin_phase>ram|anti|full)-
         (?P<coord>hae)-
-        (?P<grid>4deg|6deg|nside8|nside16)-
+        (?P<grid>2deg|4deg|6deg|nside8|nside16)-
         (?P<duration>3mo|6mo|1yr)
         """
 
@@ -93,7 +94,7 @@ def parse_map_descriptor(descriptor: str) -> Optional[MapDescriptorParts]:
     survival_corrections = {"sp": SurvivalCorrection.SurvivalCorrected, "nsp": SurvivalCorrection.NotSurvivalCorrected}
     spin_phases = {"ram": SpinPhase.RamOnly, "anti": SpinPhase.AntiRamOnly, "full": SpinPhase.FullSpin}
     durations = {"3mo": Duration.ThreeMonths, "6mo": Duration.SixMonths, "1yr": Duration.OneYear}
-    grid_sizes = {"4deg": PixelSize.FourDegrees, "6deg": PixelSize.SixDegrees,
+    grid_sizes = {"2deg": PixelSize.TwoDegrees, "4deg": PixelSize.FourDegrees, "6deg": PixelSize.SixDegrees,
                   "nside8": PixelSize.Nside8, "nside16": PixelSize.Nside16}
     quantities = {"spx": MapQuantity.SpectralIndex, "ena": MapQuantity.Intensity}
 

@@ -1,5 +1,9 @@
+import os
+import shutil
 import subprocess
 import sys
+
+from imap_l3_processing.glows.l3d.utils import PATH_TO_L3D_TOOLKIT
 
 if __name__ == "__main__":
     target = sys.argv[1]
@@ -34,6 +38,11 @@ if __name__ == "__main__":
                             '{"type": "ancillary", "files":["imap_glows_uv-anisotropy-1CR_20100101_v001.json"]},'
                             '{"type": "ancillary", "files":["imap_glows_pipeline-settings-L3bc_20250707_v002.json"]}]'])
         case "glows", "l3d":
+            if os.path.exists(PATH_TO_L3D_TOOLKIT / 'data_l3b'): shutil.rmtree(PATH_TO_L3D_TOOLKIT / 'data_l3b')
+            if os.path.exists(PATH_TO_L3D_TOOLKIT / 'data_l3c'): shutil.rmtree(PATH_TO_L3D_TOOLKIT / 'data_l3c')
+            if os.path.exists(PATH_TO_L3D_TOOLKIT / 'data_l3d'): shutil.rmtree(PATH_TO_L3D_TOOLKIT / 'data_l3d')
+            if os.path.exists(PATH_TO_L3D_TOOLKIT / 'data_l3d_txt'): shutil.rmtree(PATH_TO_L3D_TOOLKIT / 'data_l3d_txt')
+            
             subprocess.run([sys.executable, 'imap_l3_data_processor.py', '--instrument', 'glows', '--data-level', 'l3d',
                             '--start-date', '20100101', '--version', 'v010', '--descriptor',
                             'solar-hist', '--dependency',

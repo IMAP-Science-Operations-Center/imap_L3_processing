@@ -4,7 +4,7 @@ import os
 import shutil
 import sys
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Optional, TypeVar
 from unittest.mock import patch, Mock
@@ -50,12 +50,11 @@ from imap_l3_processing.hit.l3.pha.science.hit_event_type_lookup import HitEvent
 from imap_l3_processing.hit.l3.pha.science.range_fit_lookup import RangeFitLookup
 from imap_l3_processing.hit.l3.utils import read_l2_hit_data
 from imap_l3_processing.lo.l3.lo_l3_spectral_fit_dependencies import LoL3SpectralFitDependencies
-from imap_l3_processing.lo.lo_processor import perform_spectral_fit
+from imap_l3_processing.lo.lo_processor import perform_spectral_fit, LoProcessor
 from imap_l3_processing.maps.hilo_l3_survival_dependencies import HiLoL3SurvivalDependencies, \
     HiL3SingleSensorFullSpinDependencies
 from imap_l3_processing.maps.map_models import RectangularSpectralIndexDataProduct, RectangularIntensityDataProduct, \
-    combine_rectangular_intensity_map_data, HealPixIntensityMapData, RectangularIntensityMapData, \
-    HealPixIntensityDataProduct
+    combine_rectangular_intensity_map_data, HealPixIntensityMapData, RectangularIntensityMapData
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.spice_wrapper import spiceypy
 from imap_l3_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density import \
@@ -77,7 +76,6 @@ from imap_l3_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies
 from imap_l3_processing.swe.swe_processor import SweProcessor
 from imap_l3_processing.ultra.l3.models import UltraL1CPSet, UltraGlowsL3eData
 from imap_l3_processing.ultra.l3.ultra_l3_dependencies import UltraL3Dependencies, UltraL3SpectralIndexDependencies
-from imap_l3_processing.ultra.l3.ultra_l3_to_rectangular_dependencies import UltraL3ToRectangularDependencies
 from imap_l3_processing.ultra.l3.ultra_processor import UltraProcessor
 from imap_l3_processing.utils import save_data, read_l1d_mag_data
 from scripts.codice.create_more_accurate_l3a_direct_event import create_more_accurate_l3a_direct_events_cdf
@@ -307,15 +305,42 @@ def create_swe_product(dependencies: SweL3Dependencies) -> str:
 
 @patch("imap_l3_processing.swe.l3.science.moment_calculations.spiceypy.pxform")
 def create_swe_product_with_fake_spice(dependencies: SweL3Dependencies, mock_spice_pxform) -> str:
-    mock_spice_pxform.return_value = np.array([
-        [1, 0, 0], [0, 1, 0], [0, 0, 1]
-    ])
+    data = np.loadtxt(get_test_data_path("swe/ace_attitude.dat"), skiprows=1)
+
+    def time_to_float(t):
+        return (t - datetime(1999, 1, 1, tzinfo=timezone.utc)).total_seconds()
+
+    times = [datetime(1998, 12, 31, tzinfo=timezone.utc) + timedelta(days=row[1], seconds=row[2]) for row in data]
+    times_as_floats = [time_to_float(t) for t in times]
+
+    def fake_pxform(from_frame, to_frame, et):
+        assert from_frame == "IMAP_DPS"
+        assert to_frame == "IMAP_RTN"
+        time = spiceypy.et2datetime(et)
+        correction_factor = (datetime(2025, 6, 30) - datetime(1999, 6, 8))
+        time_in_1999 = time - correction_factor
+        r = np.interp(time_to_float(time_in_1999), times_as_floats, data[:, 4])
+        t = np.interp(time_to_float(time_in_1999), times_as_floats, data[:, 5])
+        n = np.interp(time_to_float(time_in_1999), times_as_floats, data[:, 6])
+
+        r2 = r * r
+        t2 = t * t
+        n2 = n * n
+
+        c3 = np.sqrt(r2 + t2 + n2)
+        c2 = np.sqrt(t2 + n2)
+        c1 = np.sqrt((t2 + n2) * (t2 + n2) + r2 * t2 + r2 * n2)
+
+        mat = np.array([[(-n2 - t2) / c1, 0, r / c3], [r * t / c1, -n / c2, t / c3], [r * n / c1, t / c2, n / c3]])
+        return mat
+
+    mock_spice_pxform.side_effect = fake_pxform
 
     input_metadata = InputMetadata(
         instrument='swe',
         data_level='l3',
-        start_date=datetime(2010, 1, 1),
-        end_date=datetime(2010, 1, 2),
+        start_date=datetime(2025, 6, 29),
+        end_date=datetime(2025, 7, 1),
         version='v000')
     processor = SweProcessor(Mock(), input_metadata)
     output_data = processor.calculate_products(dependencies)
@@ -804,7 +829,10 @@ def read_glows_survival_probability_data_from_cdf() -> tuple[np.ndarray, np.ndar
     return l3e["probability_of_survival"][...][:, 0], l3e["probability_of_survival"][...][:, 1]
 
 
-def create_hi_l3_survival_corrected_cdf(survival_dependencies: HiLoL3SurvivalDependencies, spacing_degree: int) -> str:
+@patch('imap_l3_processing.hi.hi_processor.upload')
+@patch('imap_l3_processing.hi.hi_processor.HiLoL3SurvivalDependencies.fetch_dependencies')
+def create_hi_l3_survival_corrected_cdf(survival_dependencies: HiLoL3SurvivalDependencies, spacing_degree: int,
+                                        mock_fetch_dependencies, mock_upload) -> str:
     input_metadata = InputMetadata(instrument="hi",
                                    data_level="l3",
                                    start_date=datetime(2025, 4, 9),
@@ -813,11 +841,37 @@ def create_hi_l3_survival_corrected_cdf(survival_dependencies: HiLoL3SurvivalDep
                                    descriptor="h90-ena-h-sf-sp-ram-hae-4deg-6mo",
                                    )
 
-    processor = HiProcessor(Mock(), input_metadata)
-    output_data = processor.process_survival_probabilities(survival_dependencies)
+    mock_fetch_dependencies.return_value = survival_dependencies
 
-    data_product = RectangularIntensityDataProduct(data=output_data, input_metadata=input_metadata)
-    return save_data(data_product, delete_if_present=True)
+    processing_input_collection = Mock()
+    processing_input_collection.get_file_paths.return_value = []
+    processor = HiProcessor(processing_input_collection, input_metadata)
+    processor.process()
+
+    print(mock_upload.call_args_list[0].args[0])
+
+
+@patch('imap_l3_processing.lo.lo_processor.upload')
+@patch('imap_l3_processing.lo.lo_processor.HiLoL3SurvivalDependencies.fetch_dependencies')
+def create_lo_l3_survival_corrected_cdf(survival_dependencies: HiLoL3SurvivalDependencies, spacing_degree: int,
+                                        mock_fetch_dependencies,
+                                        mock_upload):
+    input_metadata = InputMetadata(instrument="lo",
+                                   data_level="l3",
+                                   start_date=datetime(2025, 4, 9),
+                                   end_date=datetime(2025, 4, 10),
+                                   version="v001",
+                                   descriptor=f"l090-ena-h-sf-sp-ram-hae-{spacing_degree}deg-6mo",
+                                   )
+
+    mock_fetch_dependencies.return_value = survival_dependencies
+
+    processing_input_collection = Mock()
+    processing_input_collection.get_file_paths.return_value = []
+    processor = LoProcessor(processing_input_collection, input_metadata)
+    processor.process()
+
+    print(mock_upload.call_args_list[0].args[0])
 
 
 def create_combined_sensor_cdf(combined_dependencies: HiL3CombinedMapDependencies) -> str:
@@ -876,43 +930,6 @@ def create_codice_hi_l3b_pitch_angles_cdf():
     pitch_angle_data = codice_lo_processor.process_l3b(codice_hi_pitch_angle_dependencies)
     cdf_path = save_data(pitch_angle_data, delete_if_present=True)
     return cdf_path
-
-
-def create_ultra_survival_corrected_healpix_map() -> HealPixIntensityDataProduct:
-    missing_paths, [l1c_dependency_path, l2_map_path] = try_get_many_run_local_paths([
-        "ultra/fake_l1c_psets/test_pset.cdf",
-        "ultra/fake_l2_maps/test_l2_map.cdf"
-    ])
-
-    if missing_paths:
-        _write_ultra_l1c_cdf_with_parents()
-        _write_ultra_l2_cdf_with_parents()
-
-    l1c_dependency = UltraL1CPSet.read_from_path(l1c_dependency_path)
-
-    l3e_glows_paths = [
-        get_test_data_path(
-            "ultra/fake_l3e_survival_probabilities/imap_glows_l3e_survival-probabilities-ultra_20250901_v001.cdf")
-    ]
-    l3e_dependencies = [UltraGlowsL3eData.read_from_path(path) for path in l3e_glows_paths]
-    l2_map_dependency = HealPixIntensityMapData.read_from_path(l2_map_path)
-
-    processor_input_metadata = InputMetadata(
-        instrument="ultra",
-        start_date=datetime(year=2025, month=9, day=1),
-        end_date=datetime(year=2025, month=9, day=1),
-        data_level="l3",
-        version="v001",
-        descriptor="u90-ena-h-sf-sp-full-hae-nside16-6mo"
-    )
-
-    dependencies = UltraL3Dependencies(ultra_l1c_pset=[l1c_dependency], glows_l3e_sp=l3e_dependencies,
-                                       ultra_l2_map=l2_map_dependency)
-
-    processor = UltraProcessor(input_metadata=processor_input_metadata, dependencies=None)
-    output = processor._process_survival_probability(deps=dependencies)
-
-    return output
 
 
 if __name__ == "__main__":
@@ -1038,15 +1055,15 @@ if __name__ == "__main__":
         [hi_l1c_folder, *map_paths] = run_local_paths
         [l2_ram_90_map_path, l2_antiram_90_map_path,
          l2_ram_45_map_path, l2_antiram_45_map_path] = map_paths
-        hi_l1c_paths = list(hi_l1c_folder.iterdir())
+        l1c_paths = list(hi_l1c_folder.iterdir())
 
         if do_all or "survival-probability" in sys.argv:
             survival_dependencies = HiLoL3SurvivalDependencies.from_file_paths(
                 map_file_path=l2_ram_90_map_path,
-                hi_l1c_paths=hi_l1c_paths,
+                l1c_paths=l1c_paths,
                 glows_l3e_paths=glows_l3_paths,
                 l2_descriptor="h90-ena-h-sf-nsp-ram-hae-4deg-6mo")
-            print(create_hi_l3_survival_corrected_cdf(survival_dependencies, spacing_degree=4))
+            create_hi_l3_survival_corrected_cdf(survival_dependencies, spacing_degree=4)
 
         if do_all or "spectral-index" in sys.argv:
             dependencies = HiL3SpectralIndexDependencies.from_file_paths(
@@ -1057,13 +1074,13 @@ if __name__ == "__main__":
         if do_all or "full-spin" in sys.argv:
             ram_survival_dependencies = HiLoL3SurvivalDependencies.from_file_paths(
                 map_file_path=l2_ram_90_map_path,
-                hi_l1c_paths=hi_l1c_paths,
+                l1c_paths=l1c_paths,
                 glows_l3e_paths=glows_l3_paths,
                 l2_descriptor="h90-ena-h-sf-nsp-ram-hae-4deg-6mo")
 
             antiram_survival_dependencies = HiLoL3SurvivalDependencies.from_file_paths(
                 map_file_path=l2_antiram_90_map_path,
-                hi_l1c_paths=hi_l1c_paths,
+                l1c_paths=l1c_paths,
                 glows_l3e_paths=glows_l3_paths,
                 l2_descriptor="h90-ena-h-sf-nsp-anti-hae-4deg-6mo")
 
@@ -1100,7 +1117,7 @@ if __name__ == "__main__":
             print(create_combined_sensor_cdf(combined_dependencies))
 
     if "lo" in sys.argv:
-        lo_targets = ['spectral-index']
+        lo_targets = ['spectral-index', 'survival_probabilities']
         do_all = not np.any([t in sys.argv for t in lo_targets])
 
         if do_all or "spectral-index" in sys.argv:
@@ -1111,29 +1128,74 @@ if __name__ == "__main__":
 
             print(create_lo_spectral_index_cdf(dependencies))
 
+        if do_all or "survival_probabilities" in sys.argv:
+
+            glows_l3e_folder = get_test_data_path("hi/fake_l3e_survival_probabilities/90")
+            glows_l3_paths = list(glows_l3e_folder.iterdir())
+
+            missing_paths, run_local_paths = try_get_many_run_local_paths([
+                "hi/full_spin_deps/l1c",
+                "hi/full_spin_deps/imap_hi_l2_h90-ena-h-sf-nsp-ram-hae-4deg-6mo_20250415_v001.cdf",
+            ])
+
+            if missing_paths:
+                create_hi_full_spin_deps(sensor="90")
+
+            [hi_l1c_folder, l2_ram_90_map_path] = run_local_paths
+            l1c_paths = list(hi_l1c_folder.iterdir())
+
+            if do_all or "survival-probability" in sys.argv:
+                survival_dependencies = HiLoL3SurvivalDependencies.from_file_paths(
+                    map_file_path=l2_ram_90_map_path,
+                    l1c_paths=l1c_paths,
+                    glows_l3e_paths=glows_l3_paths,
+                    l2_descriptor="l090-ena-h-sf-nsp-ram-hae-4deg-6mo")
+                create_lo_l3_survival_corrected_cdf(survival_dependencies, 4)
+
     if "ultra" in sys.argv:
         if "survival" in sys.argv:
-            healpix_sp_corrected_data = create_ultra_survival_corrected_healpix_map()
-
+            spacing_degree = 4
             processor_input_metadata = InputMetadata(
                 instrument="ultra",
                 start_date=datetime(year=2025, month=9, day=1),
                 end_date=datetime(year=2025, month=9, day=1),
                 data_level="l3",
                 version="v001",
-                descriptor="u90-ena-h-sf-sp-full-hae-4deg-6mo"
+                descriptor=f"u90-ena-h-sf-sp-full-hae-{spacing_degree}deg-6mo"
             )
+            processor = UltraProcessor(input_metadata=processor_input_metadata, dependencies=Mock())
 
-            dependencies = UltraL3ToRectangularDependencies(
-                healpix_map_data=healpix_sp_corrected_data.data
-            )
+            missing_paths, [l1c_dependency_path, l2_map_path] = try_get_many_run_local_paths([
+                "ultra/fake_l1c_psets/test_pset.cdf",
+                "ultra/fake_l2_maps/test_l2_map.cdf"
+            ])
 
-            processor = UltraProcessor(Mock(), processor_input_metadata)
-            rectangular_sp_data_product = processor._process_healpix_to_rectangular(dependencies, 4)
+            if missing_paths:
+                _write_ultra_l1c_cdf_with_parents()
+                _write_ultra_l2_cdf_with_parents()
+
+            l1c_dependency = UltraL1CPSet.read_from_path(l1c_dependency_path)
+
+            l3e_glows_paths = [
+                get_test_data_path(
+                    "ultra/fake_l3e_survival_probabilities/imap_glows_l3e_survival-probabilities-ultra_20250901_v001.cdf")
+            ]
+            l3e_dependencies = [UltraGlowsL3eData.read_from_path(path) for path in l3e_glows_paths]
+            l2_map_dependency = HealPixIntensityMapData.read_from_path(l2_map_path)
+
+            dependencies = UltraL3Dependencies(ultra_l1c_pset=[l1c_dependency], glows_l3e_sp=l3e_dependencies,
+                                               ultra_l2_map=l2_map_dependency)
+
+            healpix_sp_corrected_data = processor._process_survival_probability(deps=dependencies)
+            rectangular_sp_data_product = processor._process_healpix_intensity_to_rectangular(healpix_sp_corrected_data,
+                                                                                              spacing_degree)
+
             rectangular_sp_corrected_path = save_data(rectangular_sp_data_product, delete_if_present=True)
             print(rectangular_sp_corrected_path)
 
         if "spectral-index" in sys.argv:
+            spacing_degree = 2
+
             ultra_l3_path = get_test_data_path('ultra/fake_ultra_map_data.cdf')
             fit_energy_ranges_path = get_test_data_path('ultra/imap_ultra_ulc-spx-energy-ranges_20250507_v000.txt')
             dependencies = UltraL3SpectralIndexDependencies.from_file_paths(ultra_l3_path, fit_energy_ranges_path)
@@ -1144,10 +1206,12 @@ if __name__ == "__main__":
                 end_date=datetime(year=2025, month=9, day=1),
                 data_level="l3",
                 version="v001",
-                descriptor="u90-spx-h-sf-sp-full-hae-nside16-6mo"
+                descriptor=f"u90-spx-h-sf-sp-full-hae-{spacing_degree}deg-6mo"
             )
 
             processor = UltraProcessor(input_metadata=processor_input_metadata, dependencies=None)
-            output = processor._process_spectral_index(dependencies)
+
+            spectral_index_map_data = processor._process_spectral_index(dependencies)
+            output = processor._process_healpix_spectral_index_to_rectangular(spectral_index_map_data, spacing_degree)
 
             print(save_data(output, True))
