@@ -153,14 +153,17 @@ def compare_eigenvector_directions_with_canonicalization():
     heritage_theta_rtn_integrated_data, heritage_phi_rtn_integrated_data = canonicalize(
         heritage_theta_rtn_integrated_data, heritage_phi_rtn_integrated_data)
 
-    plt.plot(canonical_theta, '.', label=f'Modern: {theta_rtn_integrated}')
     plt.plot(heritage_theta_rtn_integrated_data, '.', label=f'Heritage: {heritage_theta_rtn_integrated}')
+    plt.plot(canonical_theta, '.', label=f'Modern: {theta_rtn_integrated}')
+    plt.legend()
     plt.savefig(Path("comparisons") / f"core_temperature_rtn_theta.png")
     plt.clf()
 
-    plt.plot(canonical_phis, '.', label=f'Modern: {phi_rtn_integrated}')
     plt.plot(heritage_phi_rtn_integrated_data, '.', label=f'Heritage: {heritage_theta_rtn_integrated}')
+    plt.plot(canonical_phis, '.', label=f'Modern: {phi_rtn_integrated}')
+    plt.legend()
     plt.savefig(Path("comparisons") / f"core_temperature_rtn_phi.png")
     plt.clf()
+
 
 compare_eigenvector_directions_with_canonicalization()
