@@ -3,6 +3,7 @@ from pathlib import Path
 
 import numpy as np
 from astropy.time import Time
+from imap_data_access import query
 
 from imap_l3_processing.constants import ONE_AU_IN_KM, TT2000_EPOCH, ONE_SECOND_IN_NANOSECONDS
 from imap_l3_processing.glows.l3bc.l3bc_toolkit.funcs import jd_fm_Carrington
@@ -56,5 +57,35 @@ def determine_repointing_numbers_for_cr(cr_number: int, path_to_csv: Path) -> li
             pointing_numbers.append(repointing_data[i, 7])
         elif i + 1 < len(repointing_data) and start_ns < repointing_data[i + 1, 3] < end_ns:
             pointing_numbers.append(repointing_data[i, 7])
+
+    return pointing_numbers
+
+
+def determine_l3e_files_to_produce(descriptor: str, first_cr_processed: int, last_processed_cr: int, version: str,
+                                   repointing_path: Path):
+    l3e_files = query(instrument='glows', descriptor=descriptor, data_level='l3e', version=version)
+
+    existing_pointings = [l3e['repointing'] for l3e in l3e_files]
+
+    repointing_data = np.loadtxt(repointing_path, skiprows=1, delimiter=",", dtype=str)
+
+    first_carrington_start_date = Time(jd_fm_Carrington(float(first_cr_processed)), format='jd')
+    last_cr_end_date = Time(jd_fm_Carrington(float(last_processed_cr + 1)), format='jd')
+
+    start_ns = (first_carrington_start_date.to_datetime() - TT2000_EPOCH).total_seconds() * ONE_SECOND_IN_NANOSECONDS
+    end_ns = (last_cr_end_date.to_datetime() - TT2000_EPOCH).total_seconds() * ONE_SECOND_IN_NANOSECONDS
+
+    vectorized_date_conv = np.vectorize(lambda d: (Time(d, format="isot").to_datetime(
+        leap_second_strict='silent') - TT2000_EPOCH).total_seconds() * ONE_SECOND_IN_NANOSECONDS)
+    repointing_data[:, 3] = vectorized_date_conv(repointing_data[:, 3])
+    repointing_data[:, 6] = vectorized_date_conv(repointing_data[:, 6])
+    repointing_data = repointing_data.astype(float)
+
+    pointing_numbers = []
+    for i in range(len(repointing_data)):
+        if i + 1 < len(repointing_data) and start_ns < repointing_data[i + 1, 3] < end_ns:
+            pointing_numbers.append(int(repointing_data[i, 7]))
+
+    pointing_numbers = [pointing for pointing in pointing_numbers if pointing not in existing_pointings]
 
     return pointing_numbers
