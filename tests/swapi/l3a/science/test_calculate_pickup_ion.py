@@ -472,7 +472,7 @@ class TestCalculatePickupIon(SpiceTestCase):
                                                   fitting_params)
         self.assertAlmostEqual(24456817.05142866, result)
 
-    LAST_SUCCESSFUL_RUN = datetime(2025, 5, 14, 16, 00)
+    LAST_SUCCESSFUL_RUN = datetime(2025, 5, 21, 16, 00)
     ALLOWED_GAP_TIME = timedelta(days=7)
 
     @skipIf(datetime.now() < LAST_SUCCESSFUL_RUN + ALLOWED_GAP_TIME, "expensive test already run in last week")
