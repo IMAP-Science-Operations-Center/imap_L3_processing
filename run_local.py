@@ -486,7 +486,7 @@ def run_glows_l3bc_processor_and_initializer(_, mock_query):
 @patch("imap_l3_processing.glows.glows_processor.imap_data_access.upload")
 @patch("imap_l3_processing.glows.glows_processor.Path")
 @patch("imap_l3_processing.glows.glows_processor.run")
-@patch("imap_l3_processing.glows.glows_processor.get_repoint_date_range")
+@patch("imap_l3_processing.glows.glows_processor.get_pointing_date_range")
 def run_glows_l3e_lo_with_mocks(mock_get_repoint_date_range, _, mock_path, mock_upload,
                                 mock_l3e_dependencies_class):
     mock_processing_input_collection = Mock()
