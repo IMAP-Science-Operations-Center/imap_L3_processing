@@ -349,12 +349,16 @@ class TestUtils(TestCase):
         l1c_45sensor_file_paths = ["imap_hi_l1c_45sensor-pset_20210509_v001.cdf",
                                    "imap_hi_l1c_45sensor-pset_20210508_v002.cdf",
                                    "imap_hi_l1c_45sensor-pset_20210507_v001.cdf"]
+        l1c_lo_file_paths = ["imap_lo_l1c_pset_20210509_v001.cdf",
+                             "imap_lo_l1c_pset_20210508_v002.cdf",
+                             "imap_lo_l1c_pset_20210507_v001.cdf"]
 
         test_cases = [
-            (l1c_90sensor_file_paths, "90", "20201001", "20201003", "hi"),
-            (l1c_45sensor_file_paths, "45", "20210507", "20210509", "hi"),
-            (l1c_90sensor_file_paths, "90", "20201001", "20201003", "ultra"),
-            (l1c_45sensor_file_paths, "45", "20210507", "20210509", "ultra"),
+            (l1c_90sensor_file_paths, "-90", "20201001", "20201003", "hi"),
+            (l1c_45sensor_file_paths, "-45", "20210507", "20210509", "hi"),
+            (l1c_90sensor_file_paths, "-90", "20201001", "20201003", "ultra"),
+            (l1c_45sensor_file_paths, "-45", "20210507", "20210509", "ultra"),
+            (l1c_lo_file_paths, "", "20210507", "20210509", "lo"),
         ]
 
         mock_data_access_query.return_value = [{"file_path": "glows_1"},
@@ -362,12 +366,12 @@ class TestUtils(TestCase):
                                                {"file_path": "glows_3"}]
 
         for l1c_file_paths, sensor, expected_start_date, expected_end_date, instrument in test_cases:
-            with self.subTest(f"sensor: {sensor}"):
+            with self.subTest(f"sensor: {instrument}{sensor}"):
                 glows_file_paths = find_glows_l3e_dependencies(l1c_file_paths, instrument)
 
                 mock_data_access_query.assert_called_with(instrument="glows",
                                                           data_level="l3e",
-                                                          descriptor=f"survival-probabilities-{instrument}-{sensor}",
+                                                          descriptor=f"survival-probability-{instrument}{sensor}",
                                                           start_date=expected_start_date,
                                                           end_date=expected_end_date,
                                                           version="latest")
