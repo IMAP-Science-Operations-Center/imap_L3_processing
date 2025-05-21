@@ -338,7 +338,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
     @patch("imap_l3_processing.glows.glows_processor.run")
     @patch("imap_l3_processing.glows.glows_processor.determine_call_args_for_l3e_executable")
     @patch("imap_l3_processing.glows.glows_processor.GlowsL3EDependencies")
-    @patch("imap_l3_processing.glows.glows_processor.get_repoint_date_range")
+    @patch("imap_l3_processing.glows.glows_processor.get_pointing_date_range")
     def test_process_l3e_ultra(self, mock_get_repoint_date_range, mock_l3e_dependencies, mock_determine_call_args,
                                mock_run, mock_convert_dat_to_glows_l3e_ul_product, mock_upload, mock_save_data,
                                mock_determine_repointing_numbers_for_cr, mock_get_parent_file_names):
@@ -418,7 +418,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
     @patch("imap_l3_processing.glows.glows_processor.GlowsL3EHiData.convert_dat_to_glows_l3e_hi_product")
     @patch("imap_l3_processing.glows.glows_processor.run")
     @patch("imap_l3_processing.glows.glows_processor.determine_call_args_for_l3e_executable")
-    @patch("imap_l3_processing.glows.glows_processor.get_repoint_date_range")
+    @patch("imap_l3_processing.glows.glows_processor.get_pointing_date_range")
     @patch("imap_l3_processing.glows.glows_processor.GlowsL3EDependencies")
     def test_process_l3e_hi(self, mock_l3e_dependencies,
                             mock_get_repoint_date_range, mock_determine_call_args,
@@ -513,7 +513,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
     @patch("imap_l3_processing.glows.glows_processor.GlowsL3ELoData.convert_dat_to_glows_l3e_lo_product")
     @patch("imap_l3_processing.glows.glows_processor.run")
     @patch("imap_l3_processing.glows.glows_processor.determine_call_args_for_l3e_executable")
-    @patch("imap_l3_processing.glows.glows_processor.get_repoint_date_range")
+    @patch("imap_l3_processing.glows.glows_processor.get_pointing_date_range")
     @patch("imap_l3_processing.glows.glows_processor.GlowsL3EDependencies")
     def test_process_l3e_lo(self, mock_l3e_dependencies, mock_get_repoint_date_range, mock_determine_call_args,
                             mock_run, mock_convert_dat_to_glows_l3e_lo_product, mock_save_data, mock_upload,

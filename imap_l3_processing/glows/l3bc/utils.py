@@ -8,7 +8,6 @@ import numpy as np
 import pandas as pd
 from astropy.time import Time, TimeDelta
 from imap_processing.spice.repoint import get_repoint_data
-from imap_processing.spice.time import met_to_datetime64
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
@@ -26,7 +25,6 @@ from imap_l3_processing.glows.l3a.models import GlowsL3LightCurve, PHOTON_FLUX_U
     SPACECRAFT_VELOCITY_AVERAGE_CDF_VAR_NAME, NUM_OF_BINS_CDF_VAR_NAME
 from imap_l3_processing.glows.l3bc.dependency_validator import validate_dependencies
 from imap_l3_processing.glows.l3bc.glows_initializer_ancillary_dependencies import GlowsInitializerAncillaryDependencies
-from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDependencies
 from imap_l3_processing.glows.l3bc.l3bc_toolkit.funcs import carrington, jd_fm_Carrington
 from imap_l3_processing.glows.l3bc.models import CRToProcess
 
@@ -84,7 +82,7 @@ def find_unprocessed_carrington_rotations(l3a_inputs: list[dict], l3b_inputs: li
     latest_l3a_file = get_astropy_time_from_yyyymmdd(sorted_l3a_inputs[-1]["start_date"])
 
     for index, l3a in enumerate(sorted_l3a_inputs):
-        repointing_start, repointing_end = get_repoint_date_range(l3a["repointing"])
+        repointing_start, repointing_end = get_pointing_date_range(l3a["repointing"])
         start_cr = int(carrington(Time(repointing_start, format="datetime64").jd))
         end_cr = int(carrington(Time(repointing_end, format="datetime64").jd))
 
@@ -150,13 +148,15 @@ def archive_dependencies(cr_to_process: CRToProcess, version: str,
     return zip_path
 
 
-def get_repoint_date_range(repointing: int) -> (np.datetime64, np.datetime64):
+def get_pointing_date_range(repointing: int) -> (np.datetime64, np.datetime64):
     repointing_df: pd.DataFrame = get_repoint_data()
-    matching_rows = repointing_df[repointing_df['repoint_id'] == repointing]
-    if len(matching_rows) == 0:
+    matching_rows_start = repointing_df[repointing_df['repoint_id'] == repointing]
+    matching_rows_end = repointing_df[repointing_df['repoint_id'] == repointing + 1]
+    if len(matching_rows_start) == 0 or len(matching_rows_end) == 0:
         raise ValueError(f"No pointing found for pointing: {repointing}")
-    repointing_data = matching_rows.iloc[0]
-    start_time = repointing_data['repoint_start_met']
-    end_time = repointing_data['repoint_end_met']
+    repointing_data_start = matching_rows_start.iloc[0]
+    repointing_data_end = matching_rows_end.iloc[0]
+    start_time = repointing_data_start['repoint_end_utc']
+    end_time = repointing_data_end['repoint_start_utc']
 
-    return met_to_datetime64(start_time), met_to_datetime64(end_time)
+    return np.datetime64(start_time), np.datetime64(end_time)

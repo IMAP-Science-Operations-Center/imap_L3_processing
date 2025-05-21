@@ -511,7 +511,7 @@ def run_glows_l3bc_processor_and_initializer(_, mock_query):
 @patch("imap_l3_processing.glows.glows_processor.imap_data_access.upload")
 @patch("imap_l3_processing.glows.glows_processor.Path")
 @patch("imap_l3_processing.glows.glows_processor.run")
-@patch("imap_l3_processing.glows.glows_processor.get_repoint_date_range")
+@patch("imap_l3_processing.glows.glows_processor.get_pointing_date_range")
 def run_glows_l3e_lo_with_mocks(mock_get_repoint_date_range, _, mock_path, mock_upload,
                                 mock_l3e_dependencies_class):
     mock_processing_input_collection = Mock()
@@ -1154,6 +1154,16 @@ if __name__ == "__main__":
 
     if "ultra" in sys.argv:
         if "survival" in sys.argv:
+            spacing_degree = 4
+            processor_input_metadata = InputMetadata(
+                instrument="ultra",
+                start_date=datetime(year=2025, month=9, day=1),
+                end_date=datetime(year=2025, month=9, day=1),
+                data_level="l3",
+                version="v001",
+                descriptor=f"u90-ena-h-sf-sp-full-hae-{spacing_degree}deg-6mo"
+            )
+            processor = UltraProcessor(input_metadata=processor_input_metadata, dependencies=Mock())
 
             missing_paths, [l1c_dependency_path, l2_map_path] = try_get_many_run_local_paths([
                 "ultra/fake_l1c_psets/test_pset.cdf",
@@ -1173,24 +1183,19 @@ if __name__ == "__main__":
             l3e_dependencies = [UltraGlowsL3eData.read_from_path(path) for path in l3e_glows_paths]
             l2_map_dependency = HealPixIntensityMapData.read_from_path(l2_map_path)
 
-            processor_input_metadata = InputMetadata(
-                instrument="ultra",
-                start_date=datetime(year=2025, month=9, day=1),
-                end_date=datetime(year=2025, month=9, day=1),
-                data_level="l3",
-                version="v001",
-                descriptor="u90-ena-h-sf-sp-full-hae-128nside-6mo"
-            )
-
             dependencies = UltraL3Dependencies(ultra_l1c_pset=[l1c_dependency], glows_l3e_sp=l3e_dependencies,
                                                ultra_l2_map=l2_map_dependency)
 
-            processor = UltraProcessor(input_metadata=processor_input_metadata, dependencies=None)
-            output = processor._process_survival_probability(deps=dependencies)
+            healpix_sp_corrected_data = processor._process_survival_probability(deps=dependencies)
+            rectangular_sp_data_product = processor._process_healpix_intensity_to_rectangular(healpix_sp_corrected_data,
+                                                                                              spacing_degree)
 
-            print(save_data(output, True))
+            rectangular_sp_corrected_path = save_data(rectangular_sp_data_product, delete_if_present=True)
+            print(rectangular_sp_corrected_path)
 
         if "spectral-index" in sys.argv:
+            spacing_degree = 2
+
             ultra_l3_path = get_test_data_path('ultra/fake_ultra_map_data.cdf')
             fit_energy_ranges_path = get_test_data_path('ultra/imap_ultra_ulc-spx-energy-ranges_20250507_v000.txt')
             dependencies = UltraL3SpectralIndexDependencies.from_file_paths(ultra_l3_path, fit_energy_ranges_path)
@@ -1201,10 +1206,12 @@ if __name__ == "__main__":
                 end_date=datetime(year=2025, month=9, day=1),
                 data_level="l3",
                 version="v001",
-                descriptor="u90-spx-h-sf-sp-full-hae-nside16-6mo"
+                descriptor=f"u90-spx-h-sf-sp-full-hae-{spacing_degree}deg-6mo"
             )
 
             processor = UltraProcessor(input_metadata=processor_input_metadata, dependencies=None)
-            output = processor._process_spectral_index(dependencies)
+
+            spectral_index_map_data = processor._process_spectral_index(dependencies)
+            output = processor._process_healpix_spectral_index_to_rectangular(spectral_index_map_data, spacing_degree)
 
             print(save_data(output, True))

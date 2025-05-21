@@ -65,21 +65,21 @@ class UltraL1CPSet:
                 "counts": (
                     [
                         CoordNames.TIME.value,
-                        CoordNames.ENERGY.value,
+                        CoordNames.ENERGY_ULTRA.value,
                         CoordNames.HEALPIX_INDEX.value,
                     ],
                     self.counts,
                 ),
                 "exposure_time": (
                     [CoordNames.TIME.value,
-                     CoordNames.ENERGY.value,
+                     CoordNames.ENERGY_ULTRA.value,
                      CoordNames.HEALPIX_INDEX.value],
                     self.exposure,
                 ),
                 "sensitivity": (
                     [
                         CoordNames.TIME.value,
-                        CoordNames.ENERGY.value,
+                        CoordNames.ENERGY_ULTRA.value,
                         CoordNames.HEALPIX_INDEX.value,
                     ],
                     self.sensitivity,
@@ -97,7 +97,7 @@ class UltraL1CPSet:
                 CoordNames.TIME.value: [
                     (self.epoch - TT2000_EPOCH).total_seconds() * ONE_SECOND_IN_NANOSECONDS,
                 ],
-                CoordNames.ENERGY.value: self.energy,
+                CoordNames.ENERGY_ULTRA.value: self.energy,
                 CoordNames.HEALPIX_INDEX.value: self.healpix_index,
             }
         )

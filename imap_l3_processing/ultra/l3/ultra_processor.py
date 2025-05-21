@@ -1,12 +1,15 @@
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 
 from imap_data_access import upload
 from imap_processing.spice import geometry
 
 from imap_l3_processing.maps.map_descriptors import MapDescriptorParts, MapQuantity, SurvivalCorrection, \
-    parse_map_descriptor
-from imap_l3_processing.maps.map_models import HealPixIntensityDataProduct, HealPixIntensityMapData, IntensityMapData, \
-    HealPixCoords, HealPixSpectralIndexDataProduct, HealPixSpectralIndexMapData
+    parse_map_descriptor, PixelSize
+from imap_l3_processing.maps.map_models import HealPixIntensityMapData, IntensityMapData, \
+    HealPixCoords, HealPixSpectralIndexMapData, RectangularIntensityDataProduct, \
+    RectangularIntensityMapData, RectangularCoords, RectangularSpectralIndexDataProduct, \
+    RectangularSpectralIndexMapData, SpectralIndexMapData
 from imap_l3_processing.maps.spectral_fit import calculate_spectral_index_for_multiple_ranges
 from imap_l3_processing.processor import Processor
 from imap_l3_processing.ultra.l3.science.ultra_survival_probability import UltraSurvivalProbabilitySkyMap, \
@@ -21,24 +24,28 @@ class UltraProcessor(Processor):
         parent_file_names = self.get_parent_file_names()
 
         match parsed_descriptor:
-            case MapDescriptorParts(quantity=MapQuantity.SpectralIndex):
+            case MapDescriptorParts(quantity=MapQuantity.SpectralIndex,
+                                    grid=PixelSize.TwoDegrees | PixelSize.FourDegrees | PixelSize.SixDegrees):
                 ultra_l3_spectral_fit_dependencies = UltraL3SpectralIndexDependencies.fetch_dependencies(
                     self.dependencies)
-                spectral_index_data_product = self._process_spectral_index(ultra_l3_spectral_fit_dependencies)
-                spectral_index_data_product.parent_file_names = parent_file_names
-                data_product_path = save_data(spectral_index_data_product)
-                upload(data_product_path)
-            case MapDescriptorParts(survival_correction=SurvivalCorrection.SurvivalCorrected):
+                healpix_spectral_index_map_data = self._process_spectral_index(ultra_l3_spectral_fit_dependencies)
+                data_product = self._process_healpix_spectral_index_to_rectangular(healpix_spectral_index_map_data,
+                                                                                   parsed_descriptor.grid)
+            case MapDescriptorParts(survival_correction=SurvivalCorrection.SurvivalCorrected,
+                                    grid=PixelSize.TwoDegrees | PixelSize.FourDegrees | PixelSize.SixDegrees):
                 deps = UltraL3Dependencies.fetch_dependencies(self.dependencies)
-                data_product = self._process_survival_probability(deps)
-                data_product.parent_file_names = parent_file_names
+                healpix_intensity_map_data = self._process_survival_probability(deps)
+                data_product = self._process_healpix_intensity_to_rectangular(healpix_intensity_map_data,
+                                                                              parsed_descriptor.grid)
                 data_product.add_paths_to_parents(deps.dependency_file_paths)
-                data_product_path = save_data(data_product)
-                upload(data_product_path)
             case _:
                 raise NotImplementedError
 
-    def _process_survival_probability(self, deps: UltraL3Dependencies) -> HealPixIntensityDataProduct:
+        data_product.add_filenames_to_parents(parent_file_names)
+        data_product_path = save_data(data_product)
+        upload(data_product_path)
+
+    def _process_survival_probability(self, deps: UltraL3Dependencies) -> HealPixIntensityMapData:
         combined_psets = combine_glows_l3e_with_l1c_pointing(deps.glows_l3e_sp, deps.ultra_l1c_pset, )
         survival_probability_psets = [UltraSurvivalProbability(_l1c, _l3e) for _l1c, _l3e in
                                       combined_psets]
@@ -53,45 +60,139 @@ class UltraProcessor(Processor):
         corrected_stat_unc = intensity_data.ena_intensity_stat_unc / survival_probability_map
         corrected_sys_unc = intensity_data.ena_intensity_sys_err / survival_probability_map
 
-        return HealPixIntensityDataProduct(
-            input_metadata=self.input_metadata.to_upstream_data_dependency(self.input_metadata.descriptor),
-            data=HealPixIntensityMapData(
-                intensity_map_data=IntensityMapData(
-                    ena_intensity_stat_unc=corrected_stat_unc,
-                    ena_intensity_sys_err=corrected_sys_unc,
-                    ena_intensity=corrected_intensity,
-                    epoch=intensity_data.epoch,
-                    epoch_delta=intensity_data.epoch_delta,
-                    energy=intensity_data.energy,
-                    energy_delta_plus=intensity_data.energy_delta_plus,
-                    energy_delta_minus=intensity_data.energy_delta_minus,
-                    energy_label=intensity_data.energy_label,
-                    latitude=intensity_data.latitude,
-                    longitude=intensity_data.longitude,
-                    exposure_factor=intensity_data.exposure_factor,
-                    obs_date=intensity_data.obs_date,
-                    obs_date_range=intensity_data.obs_date_range,
-                    solid_angle=intensity_data.solid_angle,
-                ),
-                coords=HealPixCoords(
-                    pixel_index=coords.pixel_index,
-                    pixel_index_label=coords.pixel_index_label,
-                ),
+        healpix_map_data = HealPixIntensityMapData(
+            intensity_map_data=IntensityMapData(
+                ena_intensity_stat_unc=corrected_stat_unc,
+                ena_intensity_sys_err=corrected_sys_unc,
+                ena_intensity=corrected_intensity,
+                epoch=intensity_data.epoch,
+                epoch_delta=intensity_data.epoch_delta,
+                energy=intensity_data.energy,
+                energy_delta_plus=intensity_data.energy_delta_plus,
+                energy_delta_minus=intensity_data.energy_delta_minus,
+                energy_label=intensity_data.energy_label,
+                latitude=intensity_data.latitude,
+                longitude=intensity_data.longitude,
+                exposure_factor=intensity_data.exposure_factor,
+                obs_date=intensity_data.obs_date,
+                obs_date_range=intensity_data.obs_date_range,
+                solid_angle=intensity_data.solid_angle,
+            ),
+            coords=HealPixCoords(
+                pixel_index=coords.pixel_index,
+                pixel_index_label=coords.pixel_index_label,
             )
         )
+        return healpix_map_data
 
-    def _process_spectral_index(self,
-                                dependencies: UltraL3SpectralIndexDependencies) -> HealPixSpectralIndexDataProduct:
+    def _process_spectral_index(self, dependencies: UltraL3SpectralIndexDependencies) -> HealPixSpectralIndexMapData:
         map_data = calculate_spectral_index_for_multiple_ranges(
             dependencies.map_data.intensity_map_data,
             dependencies.get_fit_energy_ranges()
         )
-        return HealPixSpectralIndexDataProduct(
-            data=HealPixSpectralIndexMapData(
-                spectral_index_map_data=map_data,
-                coords=dependencies.map_data.coords
-            ),
+        return HealPixSpectralIndexMapData(
+            spectral_index_map_data=map_data,
+            coords=dependencies.map_data.coords
+        )
+
+    def _process_healpix_intensity_to_rectangular(self, healpix_map_data: HealPixIntensityMapData,
+                                                  spacing_deg: int) -> RectangularIntensityDataProduct:
+        variables_to_convert_to_rectangular = [
+            "exposure_factor",
+            "ena_intensity",
+            "ena_intensity_stat_unc",
+            "ena_intensity_sys_err",
+            "obs_date",
+            "obs_date_range",
+        ]
+
+        healpix_map = healpix_map_data.to_healpix_skymap()
+
+        rectangular_map, _ = healpix_map.to_rectangular_skymap(spacing_deg, variables_to_convert_to_rectangular)
+        rectangular_map_xarray_dataset = rectangular_map.to_dataset()
+
+        obs_date = datetime(year=1970, month=1, day=1) + timedelta(seconds=1) * (
+                rectangular_map_xarray_dataset["obs_date"].values / 1e9)
+
+        input_map_intensity_data = healpix_map_data.intensity_map_data
+        intensity_map_data = IntensityMapData(
+            epoch=input_map_intensity_data.epoch,
+            epoch_delta=input_map_intensity_data.epoch_delta,
+            energy=input_map_intensity_data.energy,
+            energy_delta_plus=input_map_intensity_data.energy_delta_plus,
+            energy_delta_minus=input_map_intensity_data.energy_delta_minus,
+            energy_label=input_map_intensity_data.energy_label,
+            latitude=rectangular_map.sky_grid.el_bin_midpoints,
+            longitude=rectangular_map.sky_grid.az_bin_midpoints,
+            obs_date=obs_date,
+            obs_date_range=rectangular_map_xarray_dataset["obs_date_range"].values,
+            solid_angle=rectangular_map.solid_angle_grid.T,
+            exposure_factor=rectangular_map_xarray_dataset["exposure_factor"].values,
+            ena_intensity=rectangular_map_xarray_dataset["ena_intensity"].values,
+            ena_intensity_stat_unc=rectangular_map_xarray_dataset["ena_intensity_stat_unc"].values,
+            ena_intensity_sys_err=rectangular_map_xarray_dataset["ena_intensity_sys_err"].values,
+        )
+        rect_intensity_map_data = RectangularIntensityMapData(intensity_map_data, coords=RectangularCoords(
+            latitude_delta=(rectangular_map.sky_grid.el_bin_midpoints - rectangular_map.sky_grid.el_bin_edges[:-1]),
+            latitude_label=intensity_map_data.latitude.astype(str),
+            longitude_delta=(rectangular_map.sky_grid.az_bin_midpoints - rectangular_map.sky_grid.az_bin_edges[
+                                                                         :-1]),
+            longitude_label=intensity_map_data.longitude.astype(str),
+        ))
+
+        return RectangularIntensityDataProduct(data=rect_intensity_map_data, input_metadata=self.input_metadata)
+
+    def _process_healpix_spectral_index_to_rectangular(self, healpix_map_data: HealPixSpectralIndexMapData,
+                                                       spacing_deg: int) -> RectangularSpectralIndexDataProduct:
+        spectral_index_skymap = healpix_map_data.to_healpix_skymap()
+
+        variables_to_project = [
+            'exposure_factor',
+            'ena_spectral_index',
+            'ena_spectral_index_stat_unc',
+            'obs_date',
+            'obs_date_range',
+        ]
+
+        rectangular_skymap, _ = spectral_index_skymap.to_rectangular_skymap(spacing_deg, variables_to_project)
+
+        rectangular_dataset = rectangular_skymap.to_dataset()
+
+        obs_date = datetime(year=1970, month=1, day=1) + timedelta(seconds=1) * (
+                rectangular_dataset["obs_date"].values / 1e9)
+
+        latitude = rectangular_skymap.sky_grid.el_bin_midpoints
+        longitude = rectangular_skymap.sky_grid.az_bin_midpoints
+        latitude_deltas = latitude - rectangular_skymap.sky_grid.el_bin_edges[:-1]
+        longitude_deltas = longitude - rectangular_skymap.sky_grid.az_bin_edges[:-1]
+
+        healpix_spectral_index_map_data = healpix_map_data.spectral_index_map_data
+        return RectangularSpectralIndexDataProduct(
             input_metadata=self.input_metadata,
+            data=RectangularSpectralIndexMapData(
+                spectral_index_map_data=SpectralIndexMapData(
+                    ena_spectral_index=rectangular_dataset["ena_spectral_index"].values,
+                    ena_spectral_index_stat_unc=rectangular_dataset["ena_spectral_index_stat_unc"].values,
+                    epoch=healpix_spectral_index_map_data.epoch,
+                    epoch_delta=healpix_spectral_index_map_data.epoch_delta,
+                    energy=healpix_spectral_index_map_data.energy,
+                    energy_delta_plus=healpix_spectral_index_map_data.energy_delta_plus,
+                    energy_delta_minus=healpix_spectral_index_map_data.energy_delta_minus,
+                    energy_label=healpix_spectral_index_map_data.energy_label,
+                    latitude=latitude,
+                    longitude=longitude,
+                    exposure_factor=rectangular_dataset["exposure_factor"].values,
+                    obs_date=obs_date,
+                    obs_date_range=rectangular_dataset["obs_date_range"].values,
+                    solid_angle=rectangular_skymap.solid_angle_grid.T,
+                ),
+                coords=RectangularCoords(
+                    latitude_delta=latitude_deltas,
+                    latitude_label=latitude.astype(str),
+                    longitude_delta=longitude_deltas,
+                    longitude_label=longitude.astype(str),
+                ),
+            )
         )
 
 

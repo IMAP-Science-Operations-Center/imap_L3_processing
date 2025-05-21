@@ -22,7 +22,7 @@ from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDepen
 from imap_l3_processing.glows.l3bc.models import GlowsL3BIonizationRate, GlowsL3CSolarWind
 from imap_l3_processing.glows.l3bc.science.filter_out_bad_days import filter_out_bad_days
 from imap_l3_processing.glows.l3bc.science.generate_l3bc import generate_l3bc
-from imap_l3_processing.glows.l3bc.utils import get_repoint_date_range
+from imap_l3_processing.glows.l3bc.utils import get_pointing_date_range
 from imap_l3_processing.glows.l3d.glows_l3d_dependencies import GlowsL3DDependencies
 from imap_l3_processing.glows.l3d.utils import create_glows_l3b_json_file_from_cdf, create_glows_l3c_json_file_from_cdf, \
     PATH_TO_L3D_TOOLKIT, convert_json_to_l3d_data_product, get_parent_file_names_from_l3d_json, set_version_on_txt_files
@@ -75,7 +75,7 @@ class GlowsProcessor(Processor):
 
             repointings = determine_repointing_numbers_for_cr(cr_number, Path(os.getenv("REPOINT_DATA_FILEPATH")))
             for repointing in repointings:
-                epoch, epoch_end = get_repoint_date_range(repointing)
+                epoch, epoch_end = get_pointing_date_range(repointing)
                 epoch_dt: datetime = epoch.astype('datetime64[us]').astype(datetime)
                 epoch_end_dt: datetime = epoch_end.astype('datetime64[us]').astype(datetime)
                 epoch_delta: timedelta = (epoch_end_dt - epoch_dt) / 2
