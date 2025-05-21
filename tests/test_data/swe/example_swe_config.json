@@ -1,12 +1,12 @@
 {
   "geometric_fractions": [
-    0.0697327,
-    0.138312,
-    0.175125,
-    0.181759,
-    0.204686,
+    0.0781351,
     0.151448,
-    0.0781351
+    0.204686,
+    0.181759,
+    0.175125,
+    0.138312,
+    0.0697327
   ],
   "pitch_angle_bins": [
     4.5,
@@ -192,8 +192,8 @@
   "slope_ratio_cutoff_for_potential_calc": 0.55,
   "spacecraft_potential_initial_guess": 10,
   "core_halo_breakpoint_initial_guess": 80,
-  "core_energy_for_slope_guess": 20,
-  "halo_energy_for_slope_guess": 100,
+  "core_energy_for_slope_guess": 17,
+  "halo_energy_for_slope_guess": 80,
   "refit_core_halo_breakpoint_index": 13,
   "minimum_phase_space_density_value": 1e-32,
   "aperture_field_of_view_radians": [
