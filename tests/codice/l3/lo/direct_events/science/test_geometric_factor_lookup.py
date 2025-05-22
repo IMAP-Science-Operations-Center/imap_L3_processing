@@ -18,17 +18,17 @@ class TestGeometricFactorLookup(TestCase):
 
     def test_read_from_csv(self):
         path = get_test_data_folder() / 'codice' / 'imap_codice_lo-geometric-factors_20241110_v001.csv'
-        lookup = GeometricFactorLookup.from_csv(path)
+        lookup = GeometricFactorLookup.read_from_csv(path)
 
         self.assertIsInstance(lookup, GeometricFactorLookup)
         self.assertEqual(lookup._full_factor, 2)
         self.assertEqual(lookup._reduced_factor, 0.5)
 
     def test_get_geometric_factors(self):
-        num_epochs = 3
+        num_epochs = 4
         num_energies = 128
 
-        rgfo_half_spin = np.array([3, 8, 12])
+        rgfo_half_spin = np.array([3, 8, 12, 0])
 
         full_geometric_factor = 2.0
         reduced_geometric_factor = 1.0
@@ -49,3 +49,5 @@ class TestGeometricFactorLookup(TestCase):
 
         self.assertTrue(np.all(actual_geometric_factors[2, :24] == full_geometric_factor))
         self.assertTrue(np.all(actual_geometric_factors[2, 24:] == reduced_geometric_factor))
+
+        self.assertTrue(np.all(actual_geometric_factors[3] == reduced_geometric_factor))

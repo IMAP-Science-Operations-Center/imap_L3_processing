@@ -16,6 +16,7 @@ from imap_l3_processing.codice.l3.lo.codice_lo_l3a_partial_densities_dependencie
     CodiceLoL3aPartialDensitiesDependencies
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_ratios_dependencies import CodiceLoL3aRatiosDependencies
 from imap_l3_processing.codice.l3.lo.codice_lo_processor import CodiceLoProcessor
+from imap_l3_processing.codice.l3.lo.direct_events.science.geometric_factor_lookup import GeometricFactorLookup
 from imap_l3_processing.codice.l3.lo.models import CodiceLoL3aPartialDensityDataProduct, CodiceLoL2DirectEventData, \
     CodiceLoL3aDirectEventDataProduct, PriorityEvent, CodiceLoL2SWSpeciesData, \
     CodiceLoL1aSWPriorityRates, CodiceLoL1aNSWPriorityRates, CodiceLoPartialDensityData, CodiceLoL3aRatiosDataProduct, \
@@ -590,7 +591,6 @@ class TestCodiceLoProcessor(unittest.TestCase):
         np.testing.assert_array_equal(expected_tof, l3a_direct_event_data_product.tof)
 
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.EfficiencyLookup.create_with_fake_data')
-    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.compute_geometric_factors')
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.convert_count_rate_to_intensity')
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.rebin_3d_distribution_azimuth_to_elevation')
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.combine_priorities_and_convert_to_rate')
@@ -602,7 +602,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
     def test_process_l3a_3d_distributions(self, mock_rebin, mock_energy_lookup_from_bin_centers,
                                           mock_spin_angle_lookup_class, mock_elevation_angle_lookup_class,
                                           mock_normalize_counts, mock_convert_to_rate, mock_rebin_to_elevation,
-                                          mock_convert_count_rate_to_intensity, mock_compute_geometric_factors,
+                                          mock_convert_count_rate_to_intensity,
                                           mock_create_efficiency_lookup, ):
         mock_elevation_lookup = mock_elevation_angle_lookup_class.return_value
         mock_spin_angle_lookup = mock_spin_angle_lookup_class.return_value
@@ -624,13 +624,16 @@ class TestCodiceLoProcessor(unittest.TestCase):
         l1a_sw_data = Mock(
             energy_table=sentinel.l1a_energy_table,
             acquisition_time_per_step=sentinel.l1a_acquisition_time,
+            rgfo_half_spin=sentinel.rgfo_half_spin,
         )
 
+        mock_geometric_factor_lut = Mock(spec=GeometricFactorLookup)
         dependencies = CodiceLoL3a3dDistributionsDependencies(
             l3a_direct_event_data=l3a_direct_event_data,
             l1a_sw_data=l1a_sw_data,
             l1a_nsw_data=Mock(),
             mass_species_bin_lookup=Mock(),
+            geometric_factors_lookup=mock_geometric_factor_lut,
         )
 
         processor = CodiceLoProcessor(dependencies=Mock(), input_metadata=input_metadata)
@@ -653,7 +656,8 @@ class TestCodiceLoProcessor(unittest.TestCase):
             num_events=sentinel.l3a_num_events
         )
 
-        mock_compute_geometric_factors.assert_called_once()
+        mock_compute_geometric_factors = mock_geometric_factor_lut.get_geometric_factors
+        mock_compute_geometric_factors.assert_called_once_with(sentinel.rgfo_half_spin)
         mock_create_efficiency_lookup.assert_called_once()
 
         mock_normalize_counts.assert_called_once_with(mock_rebin.return_value, sentinel.l3a_normalization)
