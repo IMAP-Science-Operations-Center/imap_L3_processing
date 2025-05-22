@@ -7,6 +7,8 @@ from tests.test_helpers import get_run_local_data_path
 
 
 def extend_priority_counts_to_24_spin_angles(template_cdf_path, priority_count_variables: list[str], output_dir):
+    rng = np.random.default_rng()
+
     output_path = output_dir / template_cdf_path.name
     output_path.unlink(missing_ok=True)
 
@@ -22,6 +24,8 @@ def extend_priority_counts_to_24_spin_angles(template_cdf_path, priority_count_v
             else:
                 cdf[var] = template_cdf[var]
             cdf[var].attrs = template_cdf[var].attrs
+
+        cdf["rgfo_half_spin"] = rng.integers(0, 32, size=template_cdf["rgfo_half_spin"].shape)
 
     return output_path
 

@@ -21,7 +21,7 @@ from imap_l3_processing.codice.l3.lo.science.codice_lo_calculations import calcu
     calculate_mass, calculate_mass_per_charge, \
     rebin_counts_by_energy_and_spin_angle, rebin_to_counts_by_species_elevation_and_spin_sector, normalize_counts, \
     combine_priorities_and_convert_to_rate, rebin_3d_distribution_azimuth_to_elevation, convert_count_rate_to_intensity, \
-    compute_geometric_factors, CODICE_LO_NUM_AZIMUTH_BINS
+    CODICE_LO_NUM_AZIMUTH_BINS
 from imap_l3_processing.data_utils import safe_divide
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
@@ -262,6 +262,7 @@ class CodiceLoProcessor(Processor):
         spin_angle_lut = SpinAngleLookup()
         position_elevation_lut = PositionToElevationLookup()
         energy_lut = EnergyLookup.from_bin_centers(l1a_energy_table)
+        geometric_factor_lut = dependencies.geometric_factors_lookup
 
         counts_3d_data = rebin_to_counts_by_species_elevation_and_spin_sector(
             mass=l3a_de_mass,
@@ -283,8 +284,8 @@ class CodiceLoProcessor(Processor):
                                                                    CODICE_LO_NUM_AZIMUTH_BINS,
                                                                    energy_lut.num_bins)
 
-        num_epochs = dependencies.l3a_direct_event_data.epoch.shape[0]
-        geometric_factors = compute_geometric_factors(num_epochs, energy_lut.num_bins)
+        l1_sw_rgfo_half_spins = dependencies.l1a_sw_data.rgfo_half_spin
+        geometric_factors = geometric_factor_lut.get_geometric_factors(l1_sw_rgfo_half_spins)
 
         intensities = convert_count_rate_to_intensity(normalized_count_rates, efficiency_lookup, geometric_factors)
         rebin_3d_distribution_azimuth_to_elevation(intensities, position_elevation_lut)

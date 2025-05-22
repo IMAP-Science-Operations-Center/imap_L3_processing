@@ -203,15 +203,19 @@ def create_codice_lo_l3a_3d_distributions_cdf():
     accurate_codice_lo_l3a_direct_event_path = create_more_accurate_l3a_direct_events_cdf(
         codice_lo_l3a_direct_event_path)
 
-    codice_lo_l1a_nsw_path = Path("instrument_team_data/codice/lo/imap_codice_l1a_lo-nsw-priority_20241110_v002.cdf")
-    codice_lo_l1a_sw_path = Path("instrument_team_data/codice/lo/imap_codice_l1a_lo-sw-priority_20241110_v002.cdf")
-    csv_path = get_test_data_path('codice/species_mass_bins.csv')
+    codice_lo_l1a_nsw_priority_path, codice_lo_l1a_sw_priority_path = modify_l1a_priority_counts(
+        get_test_instrument_team_data_path('codice/lo/imap_codice_l1a_lo-nsw-priority_20241110_v002.cdf'),
+        get_test_instrument_team_data_path('codice/lo/imap_codice_l1a_lo-sw-priority_20241110_v002.cdf'))
+
+    mass_species_bin_path = get_test_data_path('codice/species_mass_bins.csv')
+    geometric_factors_path = get_test_data_path('codice/imap_codice_lo-geometric-factors_20241110_v001.csv')
 
     deps = CodiceLoL3a3dDistributionsDependencies.from_file_paths(
         l3a_file_path=accurate_codice_lo_l3a_direct_event_path,
-        l1a_sw_file_path=codice_lo_l1a_sw_path,
-        l1a_nsw_file_path=codice_lo_l1a_nsw_path,
-        mass_species_bin_lut=csv_path,
+        l1a_sw_file_path=codice_lo_l1a_sw_priority_path,
+        l1a_nsw_file_path=codice_lo_l1a_nsw_priority_path,
+        mass_species_bin_lut=mass_species_bin_path,
+        geometric_factors_lut=geometric_factors_path,
     )
 
     input_metadata = InputMetadata(
