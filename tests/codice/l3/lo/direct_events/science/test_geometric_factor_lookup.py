@@ -9,7 +9,7 @@ from tests.test_helpers import get_test_data_folder
 class TestGeometricFactorLookup(TestCase):
 
     def test_geometric_factor_lookup(self):
-        geometric_factor_lookup = GeometricFactorLookup()
+        geometric_factor_lookup = GeometricFactorLookup(2, 0.5)
         expected_esa_step_end_index = \
             np.array(
                 [0, 1, 2, 3, 5, 7, 9, 11, 14, 17, 20, 23, 27, 31, 35, 39, 44, 49, 54, 59, 64, 69, 74, 79, 85, 91, 97,
