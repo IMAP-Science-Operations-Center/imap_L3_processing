@@ -11,6 +11,7 @@ from imap_processing.ena_maps.ena_maps import HealpixSkyMap
 from imap_processing.ena_maps.utils.coordinates import CoordNames
 from imap_processing.ena_maps.utils.spatial_utils import build_solid_angle_map
 from spacepy.pycdf import CDF
+from xarray import Dataset
 
 from imap_l3_processing.cdf.cdf_utils import read_variable_and_mask_fill_values
 from imap_l3_processing.constants import ONE_SECOND_IN_NANOSECONDS, SECONDS_PER_DAY, FIVE_MINUTES_IN_NANOSECONDS
@@ -426,6 +427,55 @@ class TestMapModels(unittest.TestCase):
                                           actual_intensity_data.ena_intensity_sys_err)
             np.testing.assert_array_equal(expected["pixel_index"][...], actual_coords.pixel_index)
             np.testing.assert_array_equal(expected["pixel_index_label"][...], actual_coords.pixel_index_label)
+
+    def test_ultra_healpix_intensity_read_from_xarray(self):
+        full_shape = [CoordNames.TIME.value, CoordNames.ENERGY_ULTRA.value, CoordNames.HEALPIX_INDEX.value]
+        input_xarray: Dataset = Dataset(
+            data_vars={
+                "latitude": ([CoordNames.HEALPIX_INDEX.value], np.full((12,), 4)),
+                "longitude": ([CoordNames.HEALPIX_INDEX.value], np.full((12,), 5)),
+                "solid_angle": ([CoordNames.HEALPIX_INDEX.value], np.full((12,), 6)),
+                "obs_date_range": (full_shape, np.full((2, 15, 12), 7)),
+                "obs_date": (full_shape, np.full((2, 15, 12), 8)),
+                "exposure_factor": (full_shape, np.full((2, 15, 12), 9)),
+                "ena_intensity": (full_shape, np.full((2, 15, 12), 10)),
+                "ena_intensity_stat_unc": (full_shape, np.full((2, 15, 12), 11)),
+                "ena_intensity_sys_err": (full_shape, np.full((2, 15, 12), 12)),
+                "epoch_delta": ([CoordNames.TIME.value], np.full((2,), 13)),
+                "energy_delta_minus": ([CoordNames.ENERGY_ULTRA.value], np.full((15,), 14)),
+                "energy_delta_plus": ([CoordNames.ENERGY_ULTRA.value], np.full((15,), 15)),
+                "energy_label": ([CoordNames.ENERGY_ULTRA.value], np.full((15,), "123")),
+                "pixel_index_label": ([CoordNames.HEALPIX_INDEX.value], np.full((12,), "Pixel")),
+            },
+            coords={
+                CoordNames.TIME.value: np.full((2,), 1),
+                CoordNames.ENERGY_ULTRA.value: np.full((15,), 2),
+                CoordNames.HEALPIX_INDEX.value: np.full((12,), 3),
+            }
+        )
+
+        output: HealPixIntensityMapData = HealPixIntensityMapData.read_from_xarray(input_xarray)
+
+        np.testing.assert_array_equal(input_xarray["latitude"], output.intensity_map_data.latitude)
+        np.testing.assert_array_equal(input_xarray["longitude"], output.intensity_map_data.longitude)
+        np.testing.assert_array_equal(input_xarray["solid_angle"], output.intensity_map_data.solid_angle)
+        np.testing.assert_array_equal(input_xarray["obs_date_range"], output.intensity_map_data.obs_date_range)
+        np.testing.assert_array_equal(input_xarray["obs_date"], output.intensity_map_data.obs_date)
+        np.testing.assert_array_equal(input_xarray["exposure_factor"], output.intensity_map_data.exposure_factor)
+        np.testing.assert_array_equal(input_xarray["ena_intensity"], output.intensity_map_data.ena_intensity)
+        np.testing.assert_array_equal(input_xarray["ena_intensity_stat_unc"],
+                                      output.intensity_map_data.ena_intensity_stat_unc)
+        np.testing.assert_array_equal(input_xarray["ena_intensity_sys_err"],
+                                      output.intensity_map_data.ena_intensity_sys_err)
+
+        np.testing.assert_array_equal(input_xarray[CoordNames.TIME.value], output.intensity_map_data.epoch)
+        np.testing.assert_array_equal(input_xarray["epoch_delta"], output.intensity_map_data.epoch_delta)
+        np.testing.assert_array_equal(input_xarray[CoordNames.HEALPIX_INDEX.value], output.coords.pixel_index)
+        np.testing.assert_array_equal(input_xarray["pixel_index_label"], output.coords.pixel_index_label)
+        np.testing.assert_array_equal(input_xarray[CoordNames.ENERGY_ULTRA.value], output.intensity_map_data.energy)
+        np.testing.assert_array_equal(input_xarray["energy_delta_minus"], output.intensity_map_data.energy_delta_minus)
+        np.testing.assert_array_equal(input_xarray["energy_delta_plus"], output.intensity_map_data.energy_delta_plus)
+        np.testing.assert_array_equal(input_xarray["energy_label"], output.intensity_map_data.energy_label)
 
     def test_read_intensity_map_with_rectangular_cords_data_from_cdf(self):
 
