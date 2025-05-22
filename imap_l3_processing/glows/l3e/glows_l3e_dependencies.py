@@ -37,7 +37,8 @@ class GlowsL3EDependencies:
         phion_hydrogen_dependency = dependencies.get_file_paths(source='glows', descriptor='phion-hydrogen')
         sw_eqtr_electrons_dependency = dependencies.get_file_paths(source='glows', descriptor='sw-eqtr-electrons')
         ionization_files_dependency = dependencies.get_file_paths(source='glows', descriptor='ionization-files')
-        pipeline_settings_dependency = dependencies.get_file_paths(source='glows', descriptor='pipeline-settings-l3e')
+        pipeline_settings_dependency = dependencies.get_file_paths(source='glows',
+                                                                   descriptor='pipeline-settings-l3bcde')
 
         lya_series_path = download_dependency_from_path(str(lya_series_dependency[0]))
         solar_uv_anisotropy_path = download_dependency_from_path(str(solar_uv_anisotropy_dependency[0]))
