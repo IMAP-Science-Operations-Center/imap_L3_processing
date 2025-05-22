@@ -1,12 +1,11 @@
 from datetime import datetime, timedelta
 from pathlib import Path
-from unittest import skipIf
 from unittest.mock import patch, Mock
 
 import numpy as np
 import spacepy.pycdf
+from lmfit import Parameters
 from spacepy.pycdf import CDF
-from uncertainties.unumpy import uarray
 
 import imap_l3_processing
 from imap_l3_processing.constants import HYDROGEN_INFLOW_SPEED_IN_KM_PER_SECOND, \
@@ -20,7 +19,7 @@ from imap_l3_processing.swapi.l3a.science.calculate_pickup_ion import calculate_
     ForwardModel, convert_velocity_to_reference_frame, model_count_rate_integral, \
     calculate_pickup_ion_values, ModelCountRateCalculator, calculate_ten_minute_velocities, \
     calculate_pui_velocity_vector, calculate_solar_wind_velocity_vector, calculate_helium_pui_density, \
-    calculate_helium_pui_temperature
+    calculate_helium_pui_temperature, calc_chi_squared_lm_fit
 from imap_l3_processing.swapi.l3a.science.density_of_neutral_helium_lookup_table import \
     DensityOfNeutralHeliumLookupTable
 from imap_l3_processing.swapi.l3b.science.geometric_factor_calibration_table import GeometricFactorCalibrationTable
@@ -317,7 +316,7 @@ class TestCalculatePickupIon(SpiceTestCase):
 
     @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.extract_pui_energy_bins")
     @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.calculate_pui_energy_cutoff")
-    @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.scipy.optimize.minimize")
+    @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.lmfit.minimize")
     @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.spiceypy")
     @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.calculate_combined_sweeps")
     def test_calculate_pickup_ions_with_minimize_mocked(self, mock_calculate_combined_sweeps, mock_spice, mock_minimize,
@@ -338,7 +337,6 @@ class TestCalculatePickupIon(SpiceTestCase):
             count_rate = cdf["swp_coin_rate"][...]
             count_rate_delta = cdf["swp_coin_unc"][...]
 
-            count_rates_with_uncertainty = uarray(count_rate, count_rate_delta)
             combined_counts, combined_energies = calculate_combined_sweeps(count_rate, energy)
             mock_calculate_combined_sweeps.return_value = combined_counts, combined_energies
             extracted_counts = [1.9, 1.2, 0.4]
@@ -360,7 +358,8 @@ class TestCalculatePickupIon(SpiceTestCase):
             background_count_rate_cutoff = 0.1
             input_epochs = 123456789000000000
             sw_velocity = np.array([300, 400, 0])
-            mock_minimize.return_value.x = [1, 2, 3, 4]
+            mock_minimize.return_value.uvars = {"cooling_index": 1, "ionization_rate": 2, "cutoff_speed": 3,
+                                                "background_count_rate": 4}
             energy_cutoff = 6000.0
             mock_calculate_pui_energy_cutoff.return_value = energy_cutoff
 
@@ -380,17 +379,29 @@ class TestCalculatePickupIon(SpiceTestCase):
                                                             background_count_rate_cutoff)
             actual_count_rates, indices, model_count_rates_calculator, ephemeris_time = \
                 mock_minimize.call_args.kwargs['args']
-            actual_bounds = mock_minimize.call_args.kwargs['bounds']
-            _, actual_initial_guess = mock_minimize.call_args.args
+            self.assertEqual(calc_chi_squared_lm_fit, mock_minimize.call_args.args[0])
+            actual_params: Parameters = mock_minimize.call_args.args[1]
 
-            expected_initial_guess = np.array([1.5, 1e-7, 500, 0.1])
-            np.testing.assert_array_equal(expected_initial_guess, actual_initial_guess)
-            expected_bounds = ((1.0, 5.0), (0.6e-7, 2.1e-7), (500 * .8, 500 * 1.2), (0, 0.2))
-            self.assertEqual(expected_bounds, actual_bounds)
+            self.assertEqual(1.5, actual_params["cooling_index"].value)
+            self.assertEqual(1.0, actual_params["cooling_index"].min)
+            self.assertEqual(5.0, actual_params["cooling_index"].max)
+
+            self.assertEqual(1e-7, actual_params["ionization_rate"].value)
+            self.assertEqual(0.6e-7, actual_params["ionization_rate"].min)
+            self.assertEqual(2.1e-7, actual_params["ionization_rate"].max)
+
+            self.assertEqual(500, actual_params["cutoff_speed"].value)
+            self.assertEqual(400, actual_params["cutoff_speed"].min)
+            self.assertEqual(600, actual_params["cutoff_speed"].max)
+
+            self.assertEqual(0.1, actual_params["background_count_rate"].value)
+            self.assertEqual(0, actual_params["background_count_rate"].min)
+            self.assertEqual(0.2, actual_params["background_count_rate"].max)
             self.assertEqual(expected_indices, indices)
+
             np.testing.assert_array_equal(extracted_counts, actual_count_rates)
             np.testing.assert_array_equal(model_count_rates_calculator.solar_wind_vector, sw_velocity)
-            self.assertEqual('Nelder-Mead', mock_minimize.call_args.kwargs['method'])
+            self.assertEqual('nelder', mock_minimize.call_args.kwargs['method'])
             self.assertEqual(ephemeris_time_for_epoch, ephemeris_time)
 
             expected_fitting_params = FittingParameters(1, 2, 3, 4)
@@ -475,7 +486,7 @@ class TestCalculatePickupIon(SpiceTestCase):
     LAST_SUCCESSFUL_RUN = datetime(2025, 5, 14, 16, 00)
     ALLOWED_GAP_TIME = timedelta(days=7)
 
-    @skipIf(datetime.now() < LAST_SUCCESSFUL_RUN + ALLOWED_GAP_TIME, "expensive test already run in last week")
+    # @skipIf(datetime.now() < LAST_SUCCESSFUL_RUN + ALLOWED_GAP_TIME, "expensive test already run in last week")
     @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.spiceypy")
     def test_calculate_pickup_ions_with_minimize(self, mock_spice):
         ephemeris_time_for_epoch = 100000
@@ -503,6 +514,8 @@ class TestCalculatePickupIon(SpiceTestCase):
         with CDF(str(data_file_path)) as cdf:
             energy = cdf["energy"][...]
             count_rate = cdf["swp_coin_rate"][...]
+            rng = np.random.default_rng()
+            count_rate = count_rate * rng.uniform(0.9, 1.1, count_rate.shape)
 
             response_lut_path = get_test_data_path(
                 "swapi/imap_swapi_instrument-response-lut_20241023_v000.zip")

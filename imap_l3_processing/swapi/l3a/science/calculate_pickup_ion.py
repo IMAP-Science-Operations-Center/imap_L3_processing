@@ -2,10 +2,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+import lmfit
 import numpy as np
 import scipy.optimize
+from lmfit import Parameters
+from matplotlib import pyplot as plt
 from numpy import ndarray
-from scipy.optimize import OptimizeResult
 from uncertainties.unumpy import uarray
 
 from imap_l3_processing.constants import HYDROGEN_INFLOW_SPEED_IN_KM_PER_SECOND, PROTON_MASS_KG, PROTON_CHARGE_COULOMBS, \
@@ -45,15 +47,74 @@ def calculate_pickup_ion_values(instrument_response_lookup_table, geometric_fact
                                                            density_of_neutral_helium_lookup_table)
     indices = list(zip(extracted_energy_labels, extracted_energies))
 
-    result: OptimizeResult = scipy.optimize.minimize(
-        calc_chi_squared, initial_guess,
-        bounds=((1.0, 5.0), (0.6e-7, 2.1e-7),
-                (sw_velocity * .8, sw_velocity * 1.2), (0, 0.2)),
-        args=(extracted_count_rates, indices, model_count_rate_calculator,
-              ephemeris_time),
-        method='Nelder-Mead',
-        options=dict(disp=True))
-    return FittingParameters(*result.x)
+    def make_parameters(cooling_index, ionization_rate, cutoff_speed, background_count_rate) -> Parameters:
+        params = Parameters()
+        params.add('cooling_index', value=cooling_index, min=1.0, max=5.0)
+        params.add('ionization_rate', value=ionization_rate, min=0.6e-7, max=2.1e-7)
+        params.add('cutoff_speed', value=cutoff_speed, min=sw_velocity * .8, max=sw_velocity * 1.2)
+        params.add('background_count_rate', value=background_count_rate, min=0, max=0.2)
+        return params
+
+    params = make_parameters(1.50, 1e-7, sw_velocity, 0.1)
+
+    def map_to_internal(value, param):
+        return np.arcsin(2 * (value - param.min) / (param.max - param.min) - 1)
+
+    def map_param_values_to_internal_values(ci, ir, cs, bcr):
+        return [
+            map_to_internal(ci, params['cooling_index']),
+            map_to_internal(ir, params['ionization_rate']),
+            map_to_internal(cs, params['cutoff_speed']),
+            map_to_internal(bcr, params['background_count_rate']),
+        ]
+
+    # to try matching another set of params
+    # fit_params_1 = FittingParameters(3.0, 1e-7, 480, 0.1)
+    # extracted_count_rates = model_count_rate_calculator.model_count_rate(indices, fit_params_1, ephemeris_time)
+
+    result = lmfit.minimize(calc_chi_squared_lm_fit, params, method="nelder",
+                            args=(extracted_count_rates, indices, model_count_rate_calculator, ephemeris_time),
+                            options=dict(initial_simplex=np.array([
+                                map_param_values_to_internal_values(1.5, 1e-7, sw_velocity, 0.1),
+                                map_param_values_to_internal_values(5.0, 1e-7, sw_velocity, 0.1),
+                                map_param_values_to_internal_values(1.5, 2.1e-7, sw_velocity, 0.1),
+                                map_param_values_to_internal_values(1.5, 1e-7, sw_velocity * 1.2, 0.1),
+                                map_param_values_to_internal_values(1.5, 1e-7, sw_velocity, 0.2),
+                            ])))
+
+    print(result.params.pretty_print())
+
+    param_vals = result.uvars
+    print(param_vals)
+    diagnostic = False
+    if diagnostic:
+        print("initial chi squared",
+              np.sum(np.square(
+                  calc_chi_squared_lm_fit(make_parameters(1.5, 1e-7, sw_velocity, 0.1),
+                                          extracted_count_rates, indices,
+                                          model_count_rate_calculator,
+                                          ephemeris_time))
+              ))
+        print("ideal chi squared",
+              np.sum(np.square(
+                  calc_chi_squared_lm_fit(make_parameters(1.5, 1e-7, 520, 0.1),
+                                          extracted_count_rates, indices, model_count_rate_calculator,
+                                          ephemeris_time))
+              ))
+        print("result chi squared", result.chisqr)
+
+        fit_params_2 = FittingParameters(param_vals["cooling_index"].n,
+                                         param_vals["ionization_rate"].n,
+                                         param_vals["cutoff_speed"].n,
+                                         param_vals["background_count_rate"].n)
+
+        modeled_rates_2 = model_count_rate_calculator.model_count_rate(indices, fit_params_2, ephemeris_time)
+        plt.plot(extracted_energies, extracted_count_rates, label="original data")
+        plt.plot(extracted_energies, modeled_rates_2, label="fitted")
+        plt.legend()
+        plt.show()
+    return FittingParameters(param_vals["cooling_index"], param_vals["ionization_rate"], param_vals["cutoff_speed"],
+                             param_vals["background_count_rate"])
 
 
 def calculate_helium_pui_density(epoch: int,
@@ -182,15 +243,21 @@ class ModelCountRateCalculator:
         return (geometric_factor / 2) * integral / denominator + forward_model.fitting_params.background_count_rate
 
 
-def calc_chi_squared(fit_params_array: np.ndarray, observed_count_rates: np.ndarray,
-                     indices_and_energy_centers: list[tuple[int, float]], calculator: ModelCountRateCalculator,
-                     ephemeris_time: float):
-    cooling_index, ionization_rate, cutoff_speed, background_count_rate = fit_params_array
+def calc_chi_squared_lm_fit(params: Parameters, observed_count_rates: np.ndarray,
+                            indices_and_energy_centers: list[tuple[int, float]], calculator: ModelCountRateCalculator,
+                            ephemeris_time: float):
+    parvals = params.valuesdict()
+
+    cooling_index = parvals["cooling_index"]
+    ionization_rate = parvals["ionization_rate"]
+    cutoff_speed = parvals["cutoff_speed"]
+    background_count_rate = parvals["background_count_rate"]
+
     fit_params = FittingParameters(cooling_index, ionization_rate, cutoff_speed, background_count_rate)
     modeled_rates = calculator.model_count_rate(indices_and_energy_centers, fit_params, ephemeris_time)
-
-    result = 2 * sum(
-        modeled_rates - observed_count_rates + observed_count_rates * np.log(observed_count_rates / modeled_rates))
+    result = np.sqrt(2 * (modeled_rates - observed_count_rates + observed_count_rates * np.log(
+        observed_count_rates / modeled_rates)))
+    print(fit_params, np.sum(np.square(result)))
     return result
 
 
