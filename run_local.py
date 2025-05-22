@@ -78,6 +78,7 @@ from imap_l3_processing.ultra.l3.models import UltraL1CPSet, UltraGlowsL3eData
 from imap_l3_processing.ultra.l3.ultra_l3_dependencies import UltraL3Dependencies, UltraL3SpectralIndexDependencies
 from imap_l3_processing.ultra.l3.ultra_processor import UltraProcessor
 from imap_l3_processing.utils import save_data, read_l1d_mag_data
+from scripts.codice.create_fake_efficiency_ancillary import create_efficiency_lookup
 from scripts.codice.create_more_accurate_l3a_direct_event import create_more_accurate_l3a_direct_events_cdf
 from scripts.codice.create_more_accurate_l3a_direct_event_input import modify_l1a_priority_counts
 from scripts.hi.create_hi_full_spin_deps import create_hi_full_spin_deps
@@ -210,12 +211,15 @@ def create_codice_lo_l3a_3d_distributions_cdf():
     mass_species_bin_path = get_test_data_path('codice/species_mass_bins.csv')
     geometric_factors_path = get_test_data_path('codice/imap_codice_lo-geometric-factors_20241110_v001.csv')
 
+    efficiency_factors_lut_path = create_efficiency_lookup(mass_species_bin_path)
+
     deps = CodiceLoL3a3dDistributionsDependencies.from_file_paths(
         l3a_file_path=accurate_codice_lo_l3a_direct_event_path,
         l1a_sw_file_path=codice_lo_l1a_sw_priority_path,
         l1a_nsw_file_path=codice_lo_l1a_nsw_priority_path,
         mass_species_bin_lut=mass_species_bin_path,
         geometric_factors_lut=geometric_factors_path,
+        efficiency_factors_lut=efficiency_factors_lut_path,
     )
 
     input_metadata = InputMetadata(
