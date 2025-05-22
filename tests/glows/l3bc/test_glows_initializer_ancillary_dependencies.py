@@ -26,7 +26,7 @@ class TestGlowsInitializerAncillaryDependencies(unittest.TestCase):
         version = 'v001'
         start_date = '20250423'
 
-        uv_anisotropy_factor_path = f'{mission}_{instrument}_uv-anisotropy-1cr_{start_date}_{version}.dat'
+        uv_anisotropy_factor_path = f'{mission}_{instrument}_uv-anisotropy-1CR_{start_date}_{version}.dat'
         waw_helioion_mp_path = f'{mission}_{instrument}_WawHelioIonMP_{start_date}_{version}.dat'
         bad_days_list_path = f'{mission}_{instrument}_bad-days-list_{start_date}_{version}.dat'
         pipeline_settings_path = f'{mission}_{instrument}_pipeline-settings-l3bcde_{start_date}_{version}.json'
