@@ -5,7 +5,7 @@ from unittest.mock import patch, Mock
 import numpy as np
 
 from imap_l3_processing.glows.l3e.glows_l3e_utils import determine_call_args_for_l3e_executable, \
-    determine_repointing_numbers_for_cr, determine_l3e_files_to_produce
+    determine_l3e_files_to_produce
 from tests.glows.l3bc.test_utils import create_imap_data_access_json
 from tests.test_helpers import get_test_data_path
 
@@ -49,26 +49,6 @@ class TestGlowsL3EUtils(unittest.TestCase):
             ["20250501_000000", "2025.33014", "0.4679210985587912", "261.6337638953414", "51.56620156177409", str(vx),
              str(vy), str(vz), "351.3801892514359", "20.0000", "90.000"], call_args)
 
-    def test_determine_repointing_numbers_for_cr_when_cr_begins_in_repointing(self):
-        repointing_file = get_test_data_path('fake_1_day_repointing_file.csv')
-        cr_number = 1983
-
-        expected_repointings = np.arange(682, 710)
-
-        repointings = determine_repointing_numbers_for_cr(cr_number, repointing_file)
-
-        np.testing.assert_array_equal(repointings, expected_repointings)
-
-    def test_determine_repointing_numbers_for_cr_when_cr_begins_in_pointing(self):
-        repointing_file = get_test_data_path('fake_1_day_repointing_file.csv')
-        cr_number = 1984
-
-        expected_repointings = np.arange(709, 737)
-
-        repointings = determine_repointing_numbers_for_cr(cr_number, repointing_file)
-
-        np.testing.assert_array_equal(repointings, expected_repointings)
-
     @patch("imap_l3_processing.glows.l3e.glows_l3e_utils.query")
     def test_determine_l3e_files_to_produce(self, mock_query: Mock):
         last_processed_cr = 2094
@@ -97,13 +77,3 @@ class TestGlowsL3EUtils(unittest.TestCase):
 
         # self.assertEqual(len(expected_repointings), len(actual_repointings))
         np.testing.assert_array_equal(actual_repointings, expected_repointings)
-
-    def test_determine_repointing_numbers_for_cr_handles_repointings_longer_than_24hrs(self):
-        repointing_file = get_test_data_path('fake_repointing_file.csv')
-        cr_number = 1958
-
-        expected_repointings = np.arange(0, 23)
-
-        repointings = determine_repointing_numbers_for_cr(cr_number, repointing_file)
-
-        np.testing.assert_array_equal(repointings, expected_repointings)
