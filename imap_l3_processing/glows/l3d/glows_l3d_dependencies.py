@@ -25,7 +25,7 @@ class GlowsL3DDependencies:
         photoion_path = dependencies.get_file_paths(source='glows', descriptor='photoion-2010a')
         lya_path = dependencies.get_file_paths(source='glows', descriptor='lya-2010a')
         electron_density_path = dependencies.get_file_paths(source='glows', descriptor='electron-density-2010a')
-        pipeline_settings_l3bc_path = dependencies.get_file_paths(source='glows', descriptor='pipeline-settings-l3bcd')
+        pipeline_settings_l3bc_path = dependencies.get_file_paths(source='glows', descriptor='pipeline-settings-l3bcde')
         external_archive = dependencies.get_file_paths(source='glows', descriptor='l3b-archive')
 
         plasma_speed_legendre = download(str(plasma_speed_legendre_path[0]))

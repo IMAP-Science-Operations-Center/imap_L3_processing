@@ -136,7 +136,7 @@ class GlowsProcessor(Processor):
 
         with open(dependencies.ancillary_files['pipeline_settings'], "r") as fp:
             pipeline_settings = json.load(fp)
-            cr_to_process = int(pipeline_settings['l3d_start_cr'])
+            cr_to_process = int(pipeline_settings['start_cr'])
 
         file_manifest = {
             'ancillary_files': {

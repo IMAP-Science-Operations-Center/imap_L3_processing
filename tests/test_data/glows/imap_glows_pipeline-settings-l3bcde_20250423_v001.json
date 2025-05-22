@@ -957,7 +957,7 @@
   "no_vg_point_flag": -99,
   "hdr_txt_lines_number": 30,
   "WawHelioIonGlows_fill_value": -1,
-  "l3d_start_cr": 2092,
+  "start_cr": 2092,
   "l3d_source_flags": {
     "uv_anis_interpolated": 30001,
     "speed_GLOWS": 20000,
@@ -965,5 +965,19 @@
     "dens_from_speed": 10000,
     "dens_from_speed_interpolated": 10001
   },
-  "initializer_time_delta_days": 56
+  "initializer_time_delta_days": 56,
+  "executable_dependency_paths": {
+    "energy-grid-lo": "EnGridLo.dat",
+    "energy-grid-hi": "EnGridHi.dat",
+    "energy-grid-ultra": "EnGridUltra.dat",
+    "tess-xyz-8": "tessXYZ8.dat",
+    "tess-ang-16": "tessAng16.dat",
+    "lya-series": "lyaSeriesV4_2021b.dat",
+    "solar-uv-anisotropy": "solar_uv_anisotropy_NP.1.0_SP.1.0.dat",
+    "speed-3d": "speed3D.v01.Legendre.2021b.dat",
+    "density-3d": "density3D.v01.Legendre.2021b.dat",
+    "phion-hydrogen": "phion_Hydrogen_T12F107_2021b.dat",
+    "ionization-files": "ionization.files.dat",
+    "sw-eqtr-electrons": "swEqtrElectrons5_2021b.dat"
+  }
 }

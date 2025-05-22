@@ -79,7 +79,7 @@ class TestGlowsL3DDependencies(unittest.TestCase):
             call(source='glows', descriptor='photoion-2010a'),
             call(source='glows', descriptor='lya-2010a'),
             call(source='glows', descriptor='electron-density-2010a'),
-            call(source='glows', descriptor='pipeline-settings-l3bcd'),
+            call(source='glows', descriptor='pipeline-settings-l3bcde'),
             call(source='glows', descriptor='l3b-archive'),
         ])
 
