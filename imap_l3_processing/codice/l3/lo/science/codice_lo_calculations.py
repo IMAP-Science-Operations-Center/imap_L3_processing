@@ -5,6 +5,8 @@ from typing import TypeVar
 
 import numpy as np
 
+from imap_l3_processing.codice.l3.lo.constants import AZIMUTH_STEP_SIZE, ELEVATION_STEP_SIZE, ENERGY_STEP_SIZE, \
+    ENERGY_LOST_IN_CARBON_FOIL, POST_ACCELERATION_VOLTAGE_IN_KV, CONVERSION_CONSTANT_K, CODICE_LO_NUM_AZIMUTH_BINS
 from imap_l3_processing.codice.l3.lo.direct_events.science.angle_lookup import SpinAngleLookup, \
     PositionToElevationLookup
 from imap_l3_processing.codice.l3.lo.direct_events.science.efficiency_lookup import EfficiencyLookup
@@ -13,16 +15,6 @@ from imap_l3_processing.codice.l3.lo.direct_events.science.mass_coefficient_look
 from imap_l3_processing.codice.l3.lo.direct_events.science.mass_species_bin_lookup import MassSpeciesBinLookup
 from imap_l3_processing.codice.l3.lo.models import EnergyAndSpinAngle, PriorityEvent, CodiceLo3dData
 from imap_l3_processing.constants import ONE_SECOND_IN_MICROSECONDS
-
-POST_ACCELERATION_VOLTAGE_IN_KV = 15
-ENERGY_LOST_IN_CARBON_FOIL = 0
-CONVERSION_CONSTANT_K = 1.692e-5
-
-AZIMUTH_STEP_SIZE = np.deg2rad(30)
-ELEVATION_STEP_SIZE = np.deg2rad(30)
-ENERGY_STEP_SIZE = 100
-
-CODICE_LO_NUM_AZIMUTH_BINS = 24
 
 
 def calculate_partial_densities(intensities: np.ndarray, esa_steps: np.ndarray, mass_per_charge: float):

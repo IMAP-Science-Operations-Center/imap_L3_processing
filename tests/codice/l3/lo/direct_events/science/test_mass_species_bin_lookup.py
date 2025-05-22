@@ -22,12 +22,34 @@ class TestMassSpeciesBinLookup(unittest.TestCase):
         ]
 
         expected_sw_species = [
-            "H+", "He++", "C+4", "C+5", "C+6", "O+5", "O+6", "O+7", "O+8", "Ne", "Mg", "Si", "Fe lowQ", "Fe highQ",
-            "He+ (PUI)", "CNO+ (PUI)"
+            'sw_hplus',
+            'sw_heplus2',
+            'sw_cplus4',
+            'sw_cplus5',
+            'sw_cplus6',
+            'sw_oplus5',
+            'sw_oplus6',
+            'sw_oplus7',
+            'sw_oplus8',
+            'sw_ne',
+            'sw_mg',
+            'sw_si',
+            'sw_felowq',
+            'sw_fehighq',
+            'sw_heplus',
+            'sw_cnoplus',
         ]
 
         expected_nsw_species = [
-            "H+", "He++", "C", "O", "Ne", "Si and Mg", "Fe", "He+", "CNO+"
+            'nsw_hplus',
+            'nsw_heplus2',
+            'nsw_c',
+            'nsw_o',
+            'nsw_ne',
+            'nsw_simg',
+            'nsw_fe',
+            'nsw_heplus',
+            'nsw_cnoplus',
         ]
 
         expected_nsw_mass_per_charge = [
@@ -77,31 +99,31 @@ class TestMassSpeciesBinLookup(unittest.TestCase):
         csv_path = get_test_data_path('codice/species_mass_bins.csv')
         mass_species_bin_lookup = MassSpeciesBinLookup.read_from_csv(csv_path)
 
-        test_cases = [('H+', 0, EventDirection.Sunward),
-                      ('He++', 1, EventDirection.Sunward),
-                      ('C+4', 2, EventDirection.Sunward),
-                      ('C+5', 3, EventDirection.Sunward),
-                      ('C+6', 4, EventDirection.Sunward),
-                      ('O+5', 5, EventDirection.Sunward),
-                      ('O+6', 6, EventDirection.Sunward),
-                      ('O+7', 7, EventDirection.Sunward),
-                      ('O+8', 8, EventDirection.Sunward),
-                      ('Ne', 9, EventDirection.Sunward),
-                      ('Mg', 10, EventDirection.Sunward),
-                      ('Si', 11, EventDirection.Sunward),
-                      ('Fe lowQ', 12, EventDirection.Sunward),
-                      ('Fe highQ', 13, EventDirection.Sunward),
-                      ('He+ (PUI)', 14, EventDirection.Sunward),
-                      ('CNO+ (PUI)', 15, EventDirection.Sunward),
-                      ('H+', 16, EventDirection.NonSunward),
-                      ('He++', 17, EventDirection.NonSunward),
-                      ('C', 18, EventDirection.NonSunward),
-                      ('O', 19, EventDirection.NonSunward),
-                      ('Ne', 20, EventDirection.NonSunward),
-                      ('Si and Mg', 21, EventDirection.NonSunward),
-                      ('Fe', 22, EventDirection.NonSunward),
-                      ('He+', 23, EventDirection.NonSunward),
-                      ('CNO+', 24, EventDirection.NonSunward)]
+        test_cases = [('sw_hplus', 0, EventDirection.Sunward),
+                      ('sw_heplus2', 1, EventDirection.Sunward),
+                      ('sw_cplus4', 2, EventDirection.Sunward),
+                      ('sw_cplus5', 3, EventDirection.Sunward),
+                      ('sw_cplus6', 4, EventDirection.Sunward),
+                      ('sw_oplus5', 5, EventDirection.Sunward),
+                      ('sw_oplus6', 6, EventDirection.Sunward),
+                      ('sw_oplus7', 7, EventDirection.Sunward),
+                      ('sw_oplus8', 8, EventDirection.Sunward),
+                      ('sw_ne', 9, EventDirection.Sunward),
+                      ('sw_mg', 10, EventDirection.Sunward),
+                      ('sw_si', 11, EventDirection.Sunward),
+                      ('sw_felowq', 12, EventDirection.Sunward),
+                      ('sw_fehighq', 13, EventDirection.Sunward),
+                      ('sw_heplus', 14, EventDirection.Sunward),
+                      ('sw_cnoplus', 15, EventDirection.Sunward),
+                      ('nsw_hplus', 16, EventDirection.NonSunward),
+                      ('nsw_heplus2', 17, EventDirection.NonSunward),
+                      ('nsw_c', 18, EventDirection.NonSunward),
+                      ('nsw_o', 19, EventDirection.NonSunward),
+                      ('nsw_ne', 20, EventDirection.NonSunward),
+                      ('nsw_simg', 21, EventDirection.NonSunward),
+                      ('nsw_fe', 22, EventDirection.NonSunward),
+                      ('nsw_heplus', 23, EventDirection.NonSunward),
+                      ('nsw_cnoplus', 24, EventDirection.NonSunward)]
         for species, index, is_sw in test_cases:
             with self.subTest(species):
                 self.assertEqual(index, mass_species_bin_lookup.get_species_index(species, is_sw))
