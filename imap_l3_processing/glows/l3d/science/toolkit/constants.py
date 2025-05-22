@@ -11,7 +11,7 @@ VERSION = "3.0"  # version of ground processing software
 # ANC_INPUT_FROM_INSTRUMENT_TEAM = {
 #     'WawHelioIonMP_parameters': 'data_ancillary/imap_glows_WawHelioIonMP_v002.json',
 #     'bad_day_list': 'data_ancillary/imap_glows_bad-days-list_v001.dat',
-#     'pipeline_settings': 'data_ancillary/imap_glows_pipeline-settings-l3bcd_v003.json',
+#     'pipeline_settings': 'data_ancillary/imap_glows_pipeline-settings-l3bcde_v003.json',
 #     'uv_anisotropy': 'data_ancillary/imap_glows_uv-anisotropy-1CR_v002.json',
 #     'WawHelioIon': {
 #         'speed': 'data_ancillary/imap_glows_plasma-speed-2010a_v003.dat',
