@@ -1,6 +1,5 @@
 import unittest
 from datetime import datetime
-from unittest import skip
 from unittest.mock import patch
 
 import numpy as np
@@ -126,7 +125,6 @@ class TestUltraSurvivalProbability(unittest.TestCase):
 
 
 class TestUltraSurvivalProbabilitySkyMap(unittest.TestCase):
-    @skip
     def test_ultra_survival_probability_skymap(self):
         pointing_set_nside = 2
         pointing_set_pixels = 12 * pointing_set_nside ** 2
@@ -211,7 +209,7 @@ def _create_ultra_l1c_pset(energy: np.ndarray,
                            latitude: np.ndarray = None,
                            longitude: np.ndarray = None,
                            epoch: datetime = None):
-    epoch = datetime(2025, 9, 1) if epoch is None else epoch
+    epoch = datetime(2025, 10, 1, 12) if epoch is None else epoch
     counts = counts or np.full_like(exposure_time, 1)
     sensitivity = sensitivity or np.full_like(exposure_time, 1)
     healpix_index = np.arange(exposure_time.shape[-1])
