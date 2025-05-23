@@ -9,6 +9,7 @@ import uncertainties
 from lmfit import Parameters
 from matplotlib import pyplot as plt
 from numpy import ndarray
+from uncertainties import ufloat
 from uncertainties.unumpy import uarray
 
 from imap_l3_processing.constants import HYDROGEN_INFLOW_SPEED_IN_KM_PER_SECOND, PROTON_MASS_KG, PROTON_CHARGE_COULOMBS, \
@@ -69,11 +70,7 @@ def calculate_pickup_ion_values(instrument_response_lookup_table, geometric_fact
             map_to_internal(bcr, params['background_count_rate']),
         ]
 
-    # to try matching another set of params
-    # fit_params_1 = FittingParameters(3.0, 1e-7, 480, 0.1)
-    # extracted_count_rates = model_count_rate_calculator.model_count_rate(indices, fit_params_1, ephemeris_time)
-
-    result = lmfit.minimize(calc_chi_squared_lm_fit, params, method="nelder",
+    result = lmfit.minimize(calc_chi_squared_lm_fit, params, method="nelder", scale_covar=False,
                             args=(extracted_count_rates, indices, model_count_rate_calculator, ephemeris_time),
                             options=dict(initial_simplex=np.array([
                                 map_param_values_to_internal_values(1.5, 1e-7, sw_velocity, 0.1),
@@ -83,9 +80,10 @@ def calculate_pickup_ion_values(instrument_response_lookup_table, geometric_fact
                                 map_param_values_to_internal_values(1.5, 1e-7, sw_velocity, 0.2),
                             ])))
 
-    print(result.params.pretty_print())
-
     param_vals = result.uvars
+    if result.uvars is None:
+        param_vals = {k: ufloat(v, np.inf) for k, v in result.params.valuesdict().items()}
+
     print(param_vals)
     diagnostic = False
     if diagnostic:
@@ -282,8 +280,13 @@ def calc_chi_squared_lm_fit(params: Parameters, observed_count_rates: np.ndarray
 
     fit_params = FittingParameters(cooling_index, ionization_rate, cutoff_speed, background_count_rate)
     modeled_rates = calculator.model_count_rate(indices_and_energy_centers, fit_params, ephemeris_time)
-    result = np.sqrt(2 * (modeled_rates - observed_count_rates + observed_count_rates * np.log(
-        observed_count_rates / modeled_rates)))
+
+    # 50/6 factor not yet tested
+    # q: what if we had less than 50 for this chunk?
+    modeled_counts = modeled_rates * 50 / 6
+    observed_counts = observed_count_rates * 50 / 6
+    result = np.sqrt(2 * (modeled_counts - observed_counts + observed_counts * np.log(
+        observed_counts / modeled_counts)))
     return result
 
 

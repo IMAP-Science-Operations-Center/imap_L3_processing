@@ -6,6 +6,7 @@ from unittest.mock import patch, Mock
 import numpy as np
 import spacepy.pycdf
 from lmfit import Parameters
+from matplotlib import pyplot as plt
 from spacepy.pycdf import CDF
 from uncertainties import ufloat
 
@@ -404,7 +405,10 @@ class TestCalculatePickupIon(SpiceTestCase):
             np.testing.assert_array_equal(extracted_counts, actual_count_rates)
             np.testing.assert_array_equal(model_count_rates_calculator.solar_wind_vector, sw_velocity)
             self.assertEqual('nelder', mock_minimize.call_args.kwargs['method'])
+            self.assertFalse(mock_minimize.call_args.kwargs['scale_covar'])
             self.assertEqual(ephemeris_time_for_epoch, ephemeris_time)
+
+            # not yet testing initial simplex
 
             expected_fitting_params = FittingParameters(1, 2, 3, 4)
             self.assertEqual(expected_fitting_params, actual_fitting_parameters)
@@ -566,6 +570,76 @@ class TestCalculatePickupIon(SpiceTestCase):
             mock_spice.unitim.assert_called_with(epoch / ONE_SECOND_IN_NANOSECONDS,
                                                  "TT", "ET")
 
+            self.assertAlmostEqual(1.5, actual_fitting_parameters.cooling_index, delta=0.1)
+            self.assertAlmostEqual(1e-7, actual_fitting_parameters.ionization_rate, delta=5e-9)
+            self.assertAlmostEqual(520, actual_fitting_parameters.cutoff_speed, delta=5)
+            self.assertAlmostEqual(0.1, actual_fitting_parameters.background_count_rate, delta=0.05)
+
+    @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.spiceypy")
+    def test_calculate_pickup_ions_with_minimize_on_random_synth_data(self, mock_spice):
+        ephemeris_time_for_epoch = 100000
+        mock_spice.unitim.return_value = ephemeris_time_for_epoch
+        mock_light_time = 122.0
+        mock_spice.spkezr.return_value = (np.array([0, 0, 0, 0, 0, 0]), mock_light_time)
+        mock_spice.latrec.return_value = np.array([0, 2, 0])
+        mock_spice.reclat.return_value = np.array([0.99 * ONE_AU_IN_KM, np.deg2rad(255.7), 0.6])
+
+        def mock_sxform(from_frame, to_frame, et):
+            if from_frame == "IMAP_SWAPI":
+                return np.eye(6)
+            return np.array([
+                [0, 1, 0, 0, 0, 0],
+                [0, 0, 1, 0, 0, 0],
+                [1, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 1, 0],
+                [0, 0, 0, 0, 0, 1],
+                [0, 0, 0, 1, 0, 0],
+            ])
+
+        mock_spice.sxform.side_effect = mock_sxform
+
+        data_file_path = get_test_data_path("swapi/imap_swapi_l2_50-sweeps_20100101_v002.cdf")
+        with CDF(str(data_file_path)) as cdf:
+            energy = cdf["energy"][...]
+            count_rate = cdf["swp_coin_rate"][...]
+
+            response_lut_path = get_test_data_path(
+                "swapi/imap_swapi_instrument-response-lut_20241023_v000.zip")
+
+            instrument_response_collection = InstrumentResponseLookupTableCollection.from_file(response_lut_path)
+
+            geometric_factor_lut_path = get_test_data_path(
+                "swapi/imap_swapi_energy-gf-lut_20240923_v000.dat")
+
+            geometric_factor_lut = GeometricFactorCalibrationTable.from_file(geometric_factor_lut_path)
+            background_count_rate_cutoff = 0.1
+            epoch = 123_456_789_000_000_000
+            sw_velocity_vector = np.array([0, 0, -500])
+            # adjust data to have a fake modeled curve
+            energy_labels = range(62, 46, -1)
+            indices = list(zip(energy_labels, energy[1:17], strict=True))
+            model_count_rate_calculator = ModelCountRateCalculator(instrument_response_collection, geometric_factor_lut,
+                                                                   sw_velocity_vector,
+                                                                   self.density_of_neutral_helium_lookup_table)
+            fit_params_1 = FittingParameters(1.5, 1e-7, 520, 0.1)
+            fit_params_2 = FittingParameters(1.5, 1.0e-7, 500, 0.1)
+            print("Modeled params:", fit_params_1)
+            modeled_1 = model_count_rate_calculator.model_count_rate(indices, fit_params_1, 36789)
+            modeled_2 = model_count_rate_calculator.model_count_rate(indices, fit_params_2, 36789)
+            count_rate[:, 1:17] = model_count_rate_calculator.model_count_rate(indices, fit_params_1, 36789)
+            # plt.plot(energy[1:17], modeled_1)
+            plt.errorbar(energy[1:17], modeled_1, yerr=modeled_1 / np.sqrt(modeled_1 * 50 / 6))
+            plt.plot(energy[1:17], modeled_2)
+            plt.show()
+
+            actual_fitting_parameters = calculate_pickup_ion_values(
+                instrument_response_collection, geometric_factor_lut, energy,
+                count_rate, epoch, background_count_rate_cutoff, sw_velocity_vector,
+                self.density_of_neutral_helium_lookup_table)
+
+            mock_spice.unitim.assert_called_with(epoch / ONE_SECOND_IN_NANOSECONDS,
+                                                 "TT", "ET")
+            print("Fitted params:", actual_fitting_parameters)
             self.assertAlmostEqual(1.5, actual_fitting_parameters.cooling_index, delta=0.1)
             self.assertAlmostEqual(1e-7, actual_fitting_parameters.ionization_rate, delta=5e-9)
             self.assertAlmostEqual(520, actual_fitting_parameters.cutoff_speed, delta=5)
