@@ -186,11 +186,12 @@ class CodiceLoProcessor(Processor):
          apd_id,
          spin_angle,
          elevation,
+         position,
          multi_flag,
          pha_type,
          tof) = [
             np.full((len(codice_direct_events.epoch), len(priority_counts_for_events), event_buffer), np.nan)
-            for _ in range(10)]
+            for _ in range(11)]
 
         (data_quality, num_events) = [
             np.full((len(codice_direct_events.epoch), len(priority_counts_for_events)), np.nan)
@@ -214,6 +215,7 @@ class CodiceLoProcessor(Processor):
                 tof[:, priority_index, :] = priority_event.tof
                 spin_angle[:, priority_index, :] = priority_event.spin_angle
                 elevation[:, priority_index, :] = priority_event.elevation
+                position[:, priority_index, :] = priority_event.position
                 data_quality[:, priority_index] = priority_event.data_quality
                 num_events[:, priority_index] = priority_event.num_events
 
@@ -241,7 +243,8 @@ class CodiceLoProcessor(Processor):
             tof=tof,
             data_quality=data_quality,
             spin_angle=spin_angle,
-            elevation=elevation
+            elevation=elevation,
+            position=position
         )
 
     def process_l3a_3d_distribution_product(self, dependencies: CodiceLoL3a3dDistributionsDependencies):
@@ -250,7 +253,7 @@ class CodiceLoProcessor(Processor):
         l3a_de_mass_per_charge = dependencies.l3a_direct_event_data.mass_per_charge
         l3a_de_energy = dependencies.l3a_direct_event_data.event_energy
         l3a_de_spin_angle = dependencies.l3a_direct_event_data.spin_angle
-        l3a_de_apd_id = dependencies.l3a_direct_event_data.apd_id
+        l3a_de_position = dependencies.l3a_direct_event_data.position
         l3a_de_normalization = dependencies.l3a_direct_event_data.normalization
         l3a_de_num_events = dependencies.l3a_direct_event_data.num_events
 
@@ -269,7 +272,7 @@ class CodiceLoProcessor(Processor):
             mass_per_charge=l3a_de_mass_per_charge,
             energy=l3a_de_energy,
             spin_angle=l3a_de_spin_angle,
-            apd_id=l3a_de_apd_id,
+            position=l3a_de_position,
             mass_species_bin_lookup=mass_species_bin_lookup,
             spin_angle_lut=spin_angle_lut,
             position_elevation_lut=position_elevation_lut,
