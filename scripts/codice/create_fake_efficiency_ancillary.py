@@ -12,7 +12,7 @@ HEADER_TEXT = """# Efficiency Factors for the CoDICE-Lo Instrument for each ener
 
 
 def create_efficiency_lookup(mass_species_csv_path: Path, output_dir: Path = get_run_local_data_path("codice")) -> Path:
-    output_ancillary_path = output_dir / "lo-efficiency-factors.zip"
+    output_ancillary_path = output_dir / "imap_codice_lo-efficiency-factors_20241110_v001.zip"
     mass_species_lookup = MassSpeciesBinLookup.read_from_csv(mass_species_csv_path)
 
     species_to_generate = mass_species_lookup._range_to_species["sw_species"] + \
@@ -38,4 +38,4 @@ def create_efficiency_lookup(mass_species_csv_path: Path, output_dir: Path = get
 
 
 if __name__ == "__main__":
-    create_efficiency_lookup(get_test_data_path("codice/species_mass_bins.csv"))
+    create_efficiency_lookup(get_test_data_path("codice/imap_codice_lo-mass-species-bin-lookup_20241110_v001.csv"))
