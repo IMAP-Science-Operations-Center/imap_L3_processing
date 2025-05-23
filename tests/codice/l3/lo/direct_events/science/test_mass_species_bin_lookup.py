@@ -9,7 +9,7 @@ from tests.test_helpers import get_test_data_path
 
 class TestMassSpeciesBinLookup(unittest.TestCase):
     def test_reads_in_csv(self):
-        csv_path = get_test_data_path('codice/species_mass_bins.csv')
+        csv_path = get_test_data_path('codice/imap_codice_lo-mass-species-bin-lookup_20241110_v001.csv')
         mass_species_bin_lookup = MassSpeciesBinLookup.read_from_csv(csv_path)
         expected_sw_mass_range = [
             (0.0, 1.5), (2.5, 5.0), (10.0, 14.0), (10.0, 14.0), (10.0, 14.0), (14.0, 18.0), (14.0, 18.0), (14.0, 18.0),
@@ -96,7 +96,7 @@ class TestMassSpeciesBinLookup(unittest.TestCase):
         self.assertEqual(6, lookup.get_num_species())
 
     def test_get_species_index(self):
-        csv_path = get_test_data_path('codice/species_mass_bins.csv')
+        csv_path = get_test_data_path('codice/imap_codice_lo-mass-species-bin-lookup_20241110_v001.csv')
         mass_species_bin_lookup = MassSpeciesBinLookup.read_from_csv(csv_path)
 
         test_cases = [('sw_hplus', 0, EventDirection.Sunward),

@@ -154,6 +154,13 @@ class HealPixIntensityMapData:
 
         return healpix_map
 
+    @classmethod
+    def read_from_xarray(cls, input_dataset):
+        return HealPixIntensityMapData(
+            intensity_map_data=_read_intensity_map_data_from_xarray(input_dataset),
+            coords=_read_healpix_coords_from_xarray(input_dataset),
+        )
+
 
 @dataclass
 class SpectralIndexDependencies(metaclass=abc.ABCMeta):
@@ -188,6 +195,33 @@ def _read_healpix_coords_from_open_cdf(cdf: CDF) -> HealPixCoords:
     return HealPixCoords(
         pixel_index=cdf["pixel_index"][...],
         pixel_index_label=cdf["pixel_index_label"][...]
+    )
+
+
+def _read_intensity_map_data_from_xarray(dataset: xarray.Dataset) -> IntensityMapData:
+    return IntensityMapData(
+        epoch=dataset[CoordNames.TIME.value].values,
+        epoch_delta=dataset["epoch_delta"].values,
+        energy=dataset.coords[CoordNames.ENERGY_ULTRA.value].values,
+        energy_delta_plus=dataset["energy_delta_plus"].values,
+        energy_delta_minus=dataset["energy_delta_minus"].values,
+        energy_label=dataset["energy_label"].values,
+        latitude=dataset["latitude"].values,
+        longitude=dataset["longitude"].values,
+        exposure_factor=dataset["exposure_factor"].values,
+        obs_date=dataset["obs_date"].values,
+        obs_date_range=dataset["obs_date_range"].values,
+        solid_angle=dataset["solid_angle"].values,
+        ena_intensity=dataset["ena_intensity"].values,
+        ena_intensity_stat_unc=dataset["ena_intensity_stat_unc"].values,
+        ena_intensity_sys_err=dataset["ena_intensity_sys_err"].values,
+    )
+
+
+def _read_healpix_coords_from_xarray(dataset: xarray.Dataset) -> HealPixCoords:
+    return HealPixCoords(
+        pixel_index=dataset[CoordNames.HEALPIX_INDEX.value].values,
+        pixel_index_label=dataset["pixel_index_label"].values
     )
 
 

@@ -12,7 +12,7 @@ from imap_l3_processing.codice.l3.lo.direct_events.science.mass_species_bin_look
 from imap_l3_processing.codice.l3.lo.models import CodiceLoDirectEventData, CodiceLoL1aSWPriorityRates, \
     CodiceLoL1aNSWPriorityRates
 
-MASS_SPECIES_BIN_LOOKUP_DESCRIPTOR = "mass-species-bin-lookup"
+MASS_SPECIES_BIN_LOOKUP_DESCRIPTOR = "lo-mass-species-bin-lookup"
 GEOMETRIC_FACTOR_LOOKUP_DESCRIPTOR = "lo-geometric-factors"
 EFFICIENCY_FACTOR_LOOKUP_DESCRIPTOR = "lo-efficiency-factors"
 

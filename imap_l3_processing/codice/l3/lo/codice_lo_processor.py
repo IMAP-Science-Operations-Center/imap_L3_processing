@@ -164,19 +164,19 @@ class CodiceLoProcessor(Processor):
 
     def process_l3a_direct_event_data_product(self,
                                               dependencies: CodiceLoL3aDirectEventsDependencies) -> CodiceLoL3aDirectEventDataProduct:
-        codice_sw_priority_rates_l1a_data = dependencies.codice_lo_l1a_sw_priority_rates
-        codice_nsw_priority_rates_l1a_data = dependencies.codice_lo_l1a_nsw_priority_rates
+        codice_sw_priority_counts_l1a_data = dependencies.codice_lo_l1a_sw_priority_rates
+        codice_nsw_priority_counts_l1a_data = dependencies.codice_lo_l1a_nsw_priority_rates
         codice_direct_events: CodiceLoL2DirectEventData = dependencies.codice_l2_direct_events
         event_buffer = codice_direct_events.priority_events[0].tof.shape[-1]
         mass_coefficient_lookup = dependencies.mass_coefficient_lookup
-        priority_rates_for_events = [
-            codice_sw_priority_rates_l1a_data.p0_tcrs,
-            codice_sw_priority_rates_l1a_data.p1_hplus,
-            codice_sw_priority_rates_l1a_data.p2_heplusplus,
-            codice_sw_priority_rates_l1a_data.p3_heavies,
-            codice_sw_priority_rates_l1a_data.p4_dcrs,
-            codice_nsw_priority_rates_l1a_data.p5_heavies,
-            codice_nsw_priority_rates_l1a_data.p6_hplus_heplusplus
+        priority_counts_for_events = [
+            codice_sw_priority_counts_l1a_data.p0_tcrs,
+            codice_sw_priority_counts_l1a_data.p1_hplus,
+            codice_sw_priority_counts_l1a_data.p2_heplusplus,
+            codice_sw_priority_counts_l1a_data.p3_heavies,
+            codice_sw_priority_counts_l1a_data.p4_dcrs,
+            codice_nsw_priority_counts_l1a_data.p5_heavies,
+            codice_nsw_priority_counts_l1a_data.p6_hplus_heplusplus
         ]
 
         (mass_per_charge,
@@ -189,13 +189,14 @@ class CodiceLoProcessor(Processor):
          multi_flag,
          pha_type,
          tof) = [
-            np.full((len(codice_direct_events.epoch), len(priority_rates_for_events), event_buffer), np.nan)
+            np.full((len(codice_direct_events.epoch), len(priority_counts_for_events), event_buffer), np.nan)
             for _ in range(10)]
 
-        (data_quality, num_events) = [np.full((len(codice_direct_events.epoch), len(priority_rates_for_events)), np.nan)
-                                      for _ in range(2)]
+        (data_quality, num_events) = [
+            np.full((len(codice_direct_events.epoch), len(priority_counts_for_events)), np.nan)
+            for _ in range(2)]
 
-        energy_lut = EnergyLookup.from_bin_centers(codice_sw_priority_rates_l1a_data.energy_table)
+        energy_lut = EnergyLookup.from_bin_centers(codice_sw_priority_counts_l1a_data.energy_table)
         spin_angle_lut = SpinAngleLookup()
         normalization = np.full((len(codice_direct_events.epoch), CODICE_LO_L2_NUM_PRIORITIES,
                                  energy_lut.num_bins, spin_angle_lut.num_bins), np.nan)
@@ -203,7 +204,7 @@ class CodiceLoProcessor(Processor):
         try:
 
             for priority_index, (priority_event, priority_counts_total_count) in enumerate(
-                    zip(codice_direct_events.priority_events, priority_rates_for_events)):
+                    zip(codice_direct_events.priority_events, priority_counts_for_events)):
                 mass_per_charge[:, priority_index, :] = calculate_mass_per_charge(priority_event)
                 mass[:, priority_index, :] = calculate_mass(priority_event, mass_coefficient_lookup)
                 energy[:, priority_index, :] = priority_event.apd_energy

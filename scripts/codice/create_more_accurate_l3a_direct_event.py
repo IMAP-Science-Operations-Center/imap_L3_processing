@@ -8,7 +8,7 @@ from tests.test_helpers import get_test_data_path, get_test_instrument_team_data
 
 
 def create_more_accurate_l3a_direct_events_cdf(template_cdf):
-    mass_species_path = get_test_data_path("codice/species_mass_bins.csv")
+    mass_species_path = get_test_data_path("codice/imap_codice_lo-mass-species-bin-lookup_20241110_v001.csv")
     mass_species_bin_lookup = MassSpeciesBinLookup.read_from_csv(mass_species_path)
 
     l1a_sw_cdf = CDF(
