@@ -22,12 +22,15 @@ class GeometricFactorLookup:
         values = np.loadtxt(filepath, dtype=np.float64, skiprows=1, delimiter=',')
         return cls(values[0], values[1])
 
-    def get_geometric_factors(self, rgfo_half_spin: np.ndarray) -> np.ndarray:
+    def get_geometric_factors(self, rgfo_half_spin: np.ma.masked_array) -> np.ndarray:
         geometric_factors = np.full((rgfo_half_spin.shape[0], 128), self._reduced_factor)
         for epoch_i in range(rgfo_half_spin.shape[0]):
-            half_spin = int(rgfo_half_spin[epoch_i]) - 1
-            if half_spin < 0:
-                continue
-            last_esa_step = self._esa_step_end_index[half_spin]
-            geometric_factors[epoch_i, :last_esa_step + 1] = self._full_factor
+            if not rgfo_half_spin.mask[epoch_i]:
+                half_spin = int(rgfo_half_spin.data[epoch_i]) - 1
+                if half_spin < 0:
+                    continue
+                last_esa_step = self._esa_step_end_index[half_spin]
+                geometric_factors[epoch_i, :last_esa_step + 1] = self._full_factor
+            else:
+                geometric_factors[epoch_i, :] = np.nan
         return geometric_factors

@@ -13,9 +13,9 @@ def create_more_accurate_l3a_direct_events_cdf(template_cdf: Path):
     mass_species_path = get_test_data_path("codice/imap_codice_lo-mass-species-bin-lookup_20241110_v001.csv")
     mass_species_bin_lookup = MassSpeciesBinLookup.read_from_csv(mass_species_path)
 
-    l1a_sw_cdf = CDF(
-        str(get_test_instrument_team_data_path("codice/lo/imap_codice_l1a_lo-nsw-priority_20241110_v002.cdf")))
-    energies = l1a_sw_cdf["energy_table"][...]
+    l1a_nsw_path = get_test_instrument_team_data_path("codice/lo/imap_codice_l1a_lo-nsw-priority_20241110_v002.cdf")
+    with CDF(str(l1a_nsw_path)) as l1a_nsw_cdf:
+        energies = l1a_nsw_cdf["energy_table"][...]
 
     spin_angle_lut = SpinAngleLookup()
 

@@ -14,21 +14,23 @@ def extend_priority_counts_to_24_spin_angles(template_cdf_path, priority_count_v
     output_path = output_dir / template_cdf_path.name
     output_path.unlink(missing_ok=True)
 
-    template_cdf = CDF(str(template_cdf_path))
+    with CDF(str(template_cdf_path)) as template_cdf:
+        with CDF(str(output_path), masterpath="") as cdf:
+            cdf["spin_sector_index"] = np.arange(24)
+            for var in template_cdf:
+                if var in priority_count_variables:
+                    cdf[var] = np.repeat(template_cdf[var][...], 2, axis=2)
+                elif var == "spin_sector_index":
+                    pass
+                else:
+                    cdf[var] = template_cdf[var]
+                cdf[var].attrs = template_cdf[var].attrs
 
-    with CDF(str(output_path), masterpath="") as cdf:
-        cdf["spin_sector_index"] = np.arange(24)
-        for var in template_cdf:
-            if var in priority_count_variables:
-                cdf[var] = np.repeat(template_cdf[var][...], 2, axis=2)
-            elif var == "spin_sector_index":
-                pass
-            else:
-                cdf[var] = template_cdf[var]
-            cdf[var].attrs = template_cdf[var].attrs
+            rgfo_half_spin = rng.integers(0, 33, size=template_cdf["rgfo_half_spin"].shape)
+            randomly_fill_value = rng.choice([False, True], size=template_cdf["rgfo_half_spin"].shape)
 
-        cdf["rgfo_half_spin"] = rng.integers(0, 32, size=template_cdf["rgfo_half_spin"].shape)
-
+            cdf["rgfo_half_spin"] = np.where(randomly_fill_value, cdf["rgfo_half_spin"].attrs["FILLVAL"],
+                                             rgfo_half_spin)
     return output_path
 
 
@@ -65,44 +67,42 @@ def modify_l2_direct_events(instrument_team_l2_path: Path) -> Path:
     output_dir = get_run_local_data_path("codice/lo")
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    template_cdf = CDF(str(instrument_team_l2_path))
-
     rng = np.random.default_rng()
-
     elevation_lookup = PositionToElevationLookup()
-
     float_fillval = 1e-31
     int_fillval = 255
 
     output_path = output_dir / instrument_team_l2_path.name
     output_path.unlink(missing_ok=True)
-    with CDF(str(output_path), masterpath="") as cdf:
 
-        for priority_i in range(CODICE_LO_L2_NUM_PRIORITIES):
-            elevation_var = f"p{priority_i}_elevation"
-            position_var = f"p{priority_i}_position"
+    with CDF(str(instrument_team_l2_path)) as template_cdf:
+        with CDF(str(output_path), masterpath="") as cdf:
 
-            cdf[position_var] = rng.integers(1, 25, size=template_cdf[position_var].shape)
-            cdf[position_var].attrs["FILLVAL"] = int_fillval
+            for priority_i in range(CODICE_LO_L2_NUM_PRIORITIES):
+                elevation_var = f"p{priority_i}_elevation"
+                position_var = f"p{priority_i}_position"
 
-            cdf[elevation_var] = rng.choice(elevation_lookup.bin_centers, size=cdf[position_var].shape)
-            cdf[elevation_var].attrs["FILLVAL"] = float_fillval
+                cdf[position_var] = rng.integers(1, 25, size=template_cdf[position_var].shape)
+                cdf[position_var].attrs["FILLVAL"] = int_fillval
 
-            for epoch_i in range(cdf[elevation_var].shape[0]):
-                number_of_events = template_cdf[f"p{priority_i}_num_events"][epoch_i]
+                cdf[elevation_var] = rng.choice(elevation_lookup.bin_centers, size=template_cdf[position_var].shape)
+                cdf[elevation_var].attrs["FILLVAL"] = float_fillval
 
-                filled_position = cdf[position_var][...]
-                filled_position[epoch_i, number_of_events:] = int_fillval
-                cdf[position_var] = filled_position
+                for epoch_i in range(cdf[elevation_var].shape[0]):
+                    number_of_events = template_cdf[f"p{priority_i}_num_events"][epoch_i]
 
-                filled_elevation = cdf[elevation_var][...]
-                filled_elevation[epoch_i, number_of_events:] = float_fillval
-                cdf[elevation_var] = filled_elevation
+                    filled_position = cdf[position_var][...]
+                    filled_position[epoch_i, number_of_events:] = int_fillval
+                    cdf[position_var] = filled_position
 
-        for var in template_cdf:
-            if var not in cdf:
-                cdf[var] = template_cdf[var]
-                cdf[var].attrs = template_cdf[var].attrs
+                    filled_elevation = cdf[elevation_var][...]
+                    filled_elevation[epoch_i, number_of_events:] = float_fillval
+                    cdf[elevation_var] = filled_elevation
+
+            for var in template_cdf:
+                if var not in cdf:
+                    cdf[var] = template_cdf[var]
+                    cdf[var].attrs = template_cdf[var].attrs
 
     return output_path
 

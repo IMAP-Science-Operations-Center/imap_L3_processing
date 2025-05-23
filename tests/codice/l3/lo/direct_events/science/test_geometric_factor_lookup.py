@@ -25,10 +25,11 @@ class TestGeometricFactorLookup(TestCase):
         self.assertEqual(lookup._reduced_factor, 0.5)
 
     def test_get_geometric_factors(self):
-        num_epochs = 4
+        num_epochs = 5
         num_energies = 128
 
-        rgfo_half_spin = np.array([3, 8, 12, 0])
+        rgfo_half_spin = np.array([3, 8, 12, 0, 255])
+        rgfo_half_spin = np.ma.masked_array(rgfo_half_spin, mask=np.array([False, False, False, False, True]))
 
         full_geometric_factor = 2.0
         reduced_geometric_factor = 1.0
@@ -51,3 +52,5 @@ class TestGeometricFactorLookup(TestCase):
         self.assertTrue(np.all(actual_geometric_factors[2, 24:] == reduced_geometric_factor))
 
         self.assertTrue(np.all(actual_geometric_factors[3] == reduced_geometric_factor))
+
+        self.assertTrue(np.all(np.isnan(actual_geometric_factors[4])))
