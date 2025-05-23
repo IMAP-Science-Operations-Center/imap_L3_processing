@@ -5,6 +5,7 @@ from dataclasses import dataclass
 import lmfit
 import numpy as np
 import scipy.optimize
+import uncertainties
 from lmfit import Parameters
 from matplotlib import pyplot as plt
 from numpy import ndarray
@@ -121,38 +122,64 @@ def calculate_helium_pui_density(epoch: int,
                                  sw_velocity_vector: ndarray,
                                  density_of_neutral_helium_lookup_table: DensityOfNeutralHeliumLookupTable,
                                  fitting_params: FittingParameters) -> float:
-    ephemeris_time = spiceypy.unitim(epoch / ONE_SECOND_IN_NANOSECONDS, "TT", "ET")
-    model = build_forward_model(fitting_params, ephemeris_time, sw_velocity_vector,
-                                density_of_neutral_helium_lookup_table)
-    lower_discontinuity = (density_of_neutral_helium_lookup_table.get_minimum_distance() / (
-            model.distance_km / ONE_AU_IN_KM)) ** (
-                                  1 / fitting_params.cooling_index) * fitting_params.cutoff_speed
-    points = (0, lower_discontinuity, fitting_params.cutoff_speed)
+    @uncertainties.wrap
+    def calculate(cooling_index: float,
+                  ionization_rate: float,
+                  cutoff_speed: float,
+                  background_count_rate: float):
+        fitting_params = FittingParameters(
+            cooling_index, ionization_rate, cutoff_speed, background_count_rate
+        )
+        ephemeris_time = spiceypy.unitim(epoch / ONE_SECOND_IN_NANOSECONDS, "TT", "ET")
+        model = build_forward_model(fitting_params, ephemeris_time, sw_velocity_vector,
+                                    density_of_neutral_helium_lookup_table)
+        lower_discontinuity = (density_of_neutral_helium_lookup_table.get_minimum_distance() / (
+                model.distance_km / ONE_AU_IN_KM)) ** (
+                                      1 / fitting_params.cooling_index) * fitting_params.cutoff_speed
+        points = (0, lower_discontinuity, fitting_params.cutoff_speed)
 
-    results = scipy.integrate.quad(lambda v: model.f(v) * v * v, 0, fitting_params.cutoff_speed, limit=100,
-                                   points=points)
-    return 4 * np.pi * results[0] / (CENTIMETERS_PER_METER * METERS_PER_KILOMETER) ** 3
+        results = scipy.integrate.quad(lambda v: model.f(v) * v * v, 0, fitting_params.cutoff_speed, limit=100,
+                                       points=points)
+        return 4 * np.pi * results[0] / (CENTIMETERS_PER_METER * METERS_PER_KILOMETER) ** 3
+
+    return calculate(fitting_params.cooling_index,
+                     fitting_params.ionization_rate,
+                     fitting_params.cutoff_speed,
+                     fitting_params.background_count_rate)
 
 
 def calculate_helium_pui_temperature(epoch: int,
                                      sw_velocity_vector: ndarray,
                                      density_of_neutral_helium_lookup_table: DensityOfNeutralHeliumLookupTable,
                                      fitting_params: FittingParameters) -> float:
-    ephemeris_time = spiceypy.unitim(epoch / ONE_SECOND_IN_NANOSECONDS, "TT", "ET")
-    model = build_forward_model(fitting_params, ephemeris_time, sw_velocity_vector,
-                                density_of_neutral_helium_lookup_table)
-    lower_discontinuity = (density_of_neutral_helium_lookup_table.get_minimum_distance() / (
-            model.distance_km / ONE_AU_IN_KM)) ** (
-                                  1 / fitting_params.cooling_index) * fitting_params.cutoff_speed
-    points = (0, lower_discontinuity, fitting_params.cutoff_speed)
+    @uncertainties.wrap
+    def calculate(cooling_index: float,
+                  ionization_rate: float,
+                  cutoff_speed: float,
+                  background_count_rate: float):
+        fitting_params = FittingParameters(
+            cooling_index, ionization_rate, cutoff_speed, background_count_rate
+        )
+        ephemeris_time = spiceypy.unitim(epoch / ONE_SECOND_IN_NANOSECONDS, "TT", "ET")
+        model = build_forward_model(fitting_params, ephemeris_time, sw_velocity_vector,
+                                    density_of_neutral_helium_lookup_table)
+        lower_discontinuity = (density_of_neutral_helium_lookup_table.get_minimum_distance() / (
+                model.distance_km / ONE_AU_IN_KM)) ** (
+                                      1 / fitting_params.cooling_index) * fitting_params.cutoff_speed
+        points = (0, lower_discontinuity, fitting_params.cutoff_speed)
 
-    numerator = scipy.integrate.quad(lambda v: model.f(v) * v ** 4, 0, fitting_params.cutoff_speed, points=points,
-                                     limit=100)
-    denominator = scipy.integrate.quad(lambda v: model.f(v) * v ** 2, 0, fitting_params.cutoff_speed, points=points,
-                                       limit=100)
-    return HE_PUI_PARTICLE_MASS_KG / (3 * BOLTZMANN_CONSTANT_JOULES_PER_KELVIN) * \
-        numerator[0] / denominator[0] * \
-        METERS_PER_KILOMETER ** 2
+        numerator = scipy.integrate.quad(lambda v: model.f(v) * v ** 4, 0, fitting_params.cutoff_speed, points=points,
+                                         limit=100)
+        denominator = scipy.integrate.quad(lambda v: model.f(v) * v ** 2, 0, fitting_params.cutoff_speed, points=points,
+                                           limit=100)
+        return HE_PUI_PARTICLE_MASS_KG / (3 * BOLTZMANN_CONSTANT_JOULES_PER_KELVIN) * \
+            numerator[0] / denominator[0] * \
+            METERS_PER_KILOMETER ** 2
+
+    return calculate(fitting_params.cooling_index,
+                     fitting_params.ionization_rate,
+                     fitting_params.cutoff_speed,
+                     fitting_params.background_count_rate)
 
 
 @dataclass
@@ -257,7 +284,6 @@ def calc_chi_squared_lm_fit(params: Parameters, observed_count_rates: np.ndarray
     modeled_rates = calculator.model_count_rate(indices_and_energy_centers, fit_params, ephemeris_time)
     result = np.sqrt(2 * (modeled_rates - observed_count_rates + observed_count_rates * np.log(
         observed_count_rates / modeled_rates)))
-    print(fit_params, np.sum(np.square(result)))
     return result
 
 

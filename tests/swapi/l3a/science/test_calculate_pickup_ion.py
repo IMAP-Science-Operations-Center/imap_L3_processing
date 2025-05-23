@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from datetime import datetime, timedelta
 from pathlib import Path
 from unittest.mock import patch, Mock
 
@@ -6,6 +7,7 @@ import numpy as np
 import spacepy.pycdf
 from lmfit import Parameters
 from spacepy.pycdf import CDF
+from uncertainties import ufloat
 
 import imap_l3_processing
 from imap_l3_processing.constants import HYDROGEN_INFLOW_SPEED_IN_KM_PER_SECOND, \
@@ -411,10 +413,23 @@ class TestCalculatePickupIon(SpiceTestCase):
         epoch = spacepy.pycdf.lib.datetime_to_tt2000(datetime(2025, 6, 6, 12))
         sw_velocity_vector = np.array([0, 0, -500])
         fitting_params = FittingParameters(1.5, 1e-7, 520, 0.1)
-
-        result = calculate_helium_pui_density(epoch, sw_velocity_vector, self.density_of_neutral_helium_lookup_table,
+        result = calculate_helium_pui_density(epoch, sw_velocity_vector,
+                                              self.density_of_neutral_helium_lookup_table,
                                               fitting_params)
         self.assertAlmostEqual(0.00014681078095942195, result)
+
+    def test_calculate_pui_density_with_uncertainty(self):
+        epoch = spacepy.pycdf.lib.datetime_to_tt2000(datetime(2025, 6, 6, 12))
+        sw_velocity_vector = np.array([0, 0, -500])
+        fitting_params = FittingParameters(ufloat(1.5, 0.1),
+                                           ufloat(1e-7, 1e-8),
+                                           ufloat(520, 5),
+                                           ufloat(0.1, 0.01))
+        result = calculate_helium_pui_density(epoch, sw_velocity_vector,
+                                              self.density_of_neutral_helium_lookup_table,
+                                              fitting_params)
+        self.assertAlmostEqual(0.00014681078095942195, result.n)
+        self.assertAlmostEqual(1.4679499690964861e-05, result.s)
 
     @patch('imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.spiceypy.reclat')
     @patch('imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.scipy.integrate.quad')
@@ -483,6 +498,21 @@ class TestCalculatePickupIon(SpiceTestCase):
                                                   fitting_params)
         self.assertAlmostEqual(24456817.05142866, result)
 
+    def test_calculate_pui_temperature_with_uncertainty(self):
+        epoch = spacepy.pycdf.lib.datetime_to_tt2000(datetime(2025, 6, 6, 12))
+        sw_velocity_vector = np.array([0, 0, -500])
+        fitting_params = FittingParameters(
+            ufloat(1.5, .1),
+            ufloat(1e-7, 1e-8),
+            ufloat(500, 5),
+            ufloat(0.1, 0.01))
+
+        result = calculate_helium_pui_temperature(epoch, sw_velocity_vector,
+                                                  self.density_of_neutral_helium_lookup_table,
+                                                  fitting_params)
+        self.assertAlmostEqual(24456817.05142866, result.n)
+        self.assertAlmostEqual(824377.0631439432, result.s)
+
     LAST_SUCCESSFUL_RUN = datetime(2025, 5, 14, 16, 00)
     ALLOWED_GAP_TIME = timedelta(days=7)
 
@@ -514,8 +544,6 @@ class TestCalculatePickupIon(SpiceTestCase):
         with CDF(str(data_file_path)) as cdf:
             energy = cdf["energy"][...]
             count_rate = cdf["swp_coin_rate"][...]
-            rng = np.random.default_rng()
-            count_rate = count_rate * rng.uniform(0.9, 1.1, count_rate.shape)
 
             response_lut_path = get_test_data_path(
                 "swapi/imap_swapi_instrument-response-lut_20241023_v000.zip")
@@ -534,7 +562,6 @@ class TestCalculatePickupIon(SpiceTestCase):
                 instrument_response_collection, geometric_factor_lut, energy,
                 count_rate, epoch, background_count_rate_cutoff, sw_velocity_vector,
                 self.density_of_neutral_helium_lookup_table)
-            print(actual_fitting_parameters)
 
             mock_spice.unitim.assert_called_with(epoch / ONE_SECOND_IN_NANOSECONDS,
                                                  "TT", "ET")
