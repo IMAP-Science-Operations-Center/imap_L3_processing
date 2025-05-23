@@ -6,6 +6,7 @@ import numpy as np
 from imap_data_access import download
 from imap_data_access.file_validation import generate_imap_file_path, ScienceFilePath
 from imap_data_access.processing_input import ProcessingInputCollection
+from imap_processing.ultra.l2.ultra_l2 import ultra_l2
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.maps.map_models import HealPixIntensityMapData, SpectralIndexDependencies
@@ -22,7 +23,8 @@ class UltraL3Dependencies:
 
     @classmethod
     def fetch_dependencies(cls, deps: ProcessingInputCollection) -> Self:
-        ultra_l2_file_paths = deps.get_file_paths("ultra", "45sensor-pset")
+        ultra_l2_file_paths = deps.get_file_paths("ultra")
+
         if len(ultra_l2_file_paths) != 1:
             raise ValueError("Incorrect number of dependencies")
         l2_map_path = download(ultra_l2_file_paths[0])
@@ -43,13 +45,16 @@ class UltraL3Dependencies:
     def from_file_paths(cls, l2_map_path: Path, l1c_file_paths: list[Path], glows_file_paths: list[Path]) -> Self:
         ultra_l1c_data = []
         glows_l3e_data = []
-        ultra_l2_map = HealPixIntensityMapData.read_from_path(l2_map_path)
         for file_path in l1c_file_paths:
             ultra_l1c_data.append(UltraL1CPSet.read_from_path(file_path))
         for file_path in glows_file_paths:
             glows_l3e_data.append(UltraGlowsL3eData.read_from_path(file_path))
         paths = [l2_map_path] + l1c_file_paths + glows_file_paths
-        return cls(ultra_l2_map=ultra_l2_map, ultra_l1c_pset=ultra_l1c_data, glows_l3e_sp=glows_l3e_data,
+        l1c_paths_dict = {f"l1c_path_{index + 1}": path for index, path in enumerate(l1c_file_paths)}
+        l2_healpix_dataset = ultra_l2(l1c_paths_dict, "")
+        l2_healpix_map_data = HealPixIntensityMapData.read_from_xarray(l2_healpix_dataset[0])
+
+        return cls(ultra_l2_map=l2_healpix_map_data, ultra_l1c_pset=ultra_l1c_data, glows_l3e_sp=glows_l3e_data,
                    dependency_file_paths=paths)
 
 
