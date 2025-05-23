@@ -50,12 +50,12 @@ class UltraL1CPSet:
         with CDF(str(path)) as cdf:
             return UltraL1CPSet(
                 counts=read_numeric_variable(cdf["counts"]),
-                epoch=cdf["epoch"][0],
-                energy=read_numeric_variable(cdf["energy"]),
+                epoch=cdf[CoordNames.TIME.value][0],
+                energy=read_numeric_variable(cdf[CoordNames.ENERGY_ULTRA.value]),
                 exposure=read_numeric_variable(cdf["exposure_time"]),
-                latitude=read_numeric_variable(cdf["latitude"]),
-                longitude=read_numeric_variable(cdf["longitude"]),
-                healpix_index=cdf["healpix_index"][...],
+                latitude=read_numeric_variable(cdf[CoordNames.ELEVATION_L1C.value]),
+                longitude=read_numeric_variable(cdf[CoordNames.AZIMUTH_L1C.value]),
+                healpix_index=cdf[CoordNames.HEALPIX_INDEX.value][...],
                 sensitivity=read_numeric_variable(cdf["sensitivity"]),
             )
 

@@ -11,6 +11,7 @@ from imap_data_access.processing_input import ProcessingInputCollection
 
 from imap_l3_processing.codice.l3.hi.codice_hi_processor import CodiceHiProcessor
 from imap_l3_processing.codice.l3.lo.codice_lo_processor import CodiceLoProcessor
+from imap_l3_processing.glows.glows_processor import GlowsProcessor
 from imap_l3_processing.hi.hi_processor import HiProcessor
 from imap_l3_processing.hit.l3.hit_processor import HitProcessor
 from imap_l3_processing.models import InputMetadata
@@ -60,8 +61,7 @@ def imap_l3_processor():
     if args.instrument == 'swapi' and (args.data_level == 'l3a' or args.data_level == 'l3b'):
         processor = SwapiProcessor(processing_input_collection, input_dependency)
     elif args.instrument == 'glows':
-        return
-        # processor = GlowsProcessor(processing_input_collection, input_dependency)
+        processor = GlowsProcessor(processing_input_collection, input_dependency)
     elif args.instrument == 'swe' and args.data_level == 'l3':
         processor = SweProcessor(processing_input_collection, input_dependency)
     elif args.instrument == 'hit':
