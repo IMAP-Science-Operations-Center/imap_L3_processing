@@ -208,7 +208,7 @@ def create_codice_lo_l3a_3d_distributions_cdf():
         get_test_instrument_team_data_path('codice/lo/imap_codice_l1a_lo-nsw-priority_20241110_v002.cdf'),
         get_test_instrument_team_data_path('codice/lo/imap_codice_l1a_lo-sw-priority_20241110_v002.cdf'))
 
-    mass_species_bin_path = get_test_data_path('codice/species_mass_bins.csv')
+    mass_species_bin_path = get_test_data_path('codice/imap_codice_lo-mass-species-bin-lookup_20241110_v001.csv')
     geometric_factors_path = get_test_data_path('codice/imap_codice_lo-geometric-factors_20241110_v001.csv')
 
     efficiency_factors_lut_path = create_efficiency_lookup(mass_species_bin_path)
