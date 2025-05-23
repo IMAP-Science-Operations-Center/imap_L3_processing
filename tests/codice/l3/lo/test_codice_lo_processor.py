@@ -493,7 +493,8 @@ class TestCodiceLoProcessor(unittest.TestCase):
          expected_tof,
          expected_spin_angle,
          expected_elevation,
-         ) = [np.full((len(epochs), 7, event_buffer_size), np.nan) for _ in range(10)]
+         expected_position
+         ) = [np.full((len(epochs), 7, event_buffer_size), np.nan) for _ in range(11)]
 
         (expected_data_quality,
          expected_num_events) = [np.full((len(epochs), 7), np.nan) for _ in range(2)]
@@ -523,6 +524,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
             expected_tof[:, i, :] = np.copy(priority_event.tof)
             expected_spin_angle[:, i, :] = np.copy(priority_event.spin_angle)
             expected_elevation[:, i, :] = np.copy(priority_event.elevation)
+            expected_position[:, i, :] = np.copy(priority_event.position)
             expected_mass[:, i, :] = np.copy(mass)
             expected_mass_per_charge[:, i, :] = np.copy(mass_per_charge)
             expected_data_quality[:, i] = np.copy(priority_event.data_quality)
@@ -583,6 +585,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
 
         np.testing.assert_array_equal(expected_spin_angle, l3a_direct_event_data_product.spin_angle)
         np.testing.assert_array_equal(expected_elevation, l3a_direct_event_data_product.elevation)
+        np.testing.assert_array_equal(expected_position, l3a_direct_event_data_product.position)
         np.testing.assert_array_equal(expected_apd_energy, l3a_direct_event_data_product.event_energy)
         np.testing.assert_array_equal(expected_apd_gain, l3a_direct_event_data_product.gain)
         np.testing.assert_array_equal(expected_apd_id, l3a_direct_event_data_product.apd_id)
@@ -619,6 +622,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
             spin_angle=sentinel.l3a_de_spin_angle,
             normalization=sentinel.l3a_normalization,
             num_events=sentinel.l3a_num_events,
+            position=sentinel.l3a_de_position,
         )
 
         l1a_sw_data = Mock(
@@ -650,7 +654,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
             mass_per_charge=sentinel.l3a_de_mass_per_charge,
             energy=sentinel.l3a_de_energy,
             spin_angle=sentinel.l3a_de_spin_angle,
-            apd_id=sentinel.l3a_de_apd_id,
+            position=sentinel.l3a_de_position,
             mass_species_bin_lookup=dependencies.mass_species_bin_lookup,
             spin_angle_lut=mock_spin_angle_lookup,
             position_elevation_lut=mock_elevation_lookup,

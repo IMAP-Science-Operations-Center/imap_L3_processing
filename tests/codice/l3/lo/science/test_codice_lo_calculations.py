@@ -73,6 +73,7 @@ class TestCodiceLoCalculations(unittest.TestCase):
             num_events=np.array([]),
             spin_angle=np.array([]),
             elevation=np.array([]),
+            position=np.array([]),
         )
 
         lookup = MassCoefficientLookup(np.array([10e-1, 10e-2, 10e-3, 10e-4, 10e-5, 10e-6]))
@@ -105,6 +106,7 @@ class TestCodiceLoCalculations(unittest.TestCase):
             num_events=np.array([]),
             spin_angle=np.array([]),
             elevation=np.array([]),
+            position=np.array([]),
         )
 
         POST_ACCELERATION_VOLTAGE_IN_KV = 15
@@ -172,7 +174,7 @@ class TestCodiceLoCalculations(unittest.TestCase):
         # first 3 are first priority, last is second priority
         expected_species_returned = [
             "He+", "Fe", "He+", "O+5",
-            "Mg", "Mg", "Mg", None
+            "Mg", "Mg", None
         ]
         mock_species_mass_range_lookup = Mock(spec=MassSpeciesBinLookup)
         mock_species_mass_range_lookup.get_species.side_effect = expected_species_returned
@@ -193,7 +195,7 @@ class TestCodiceLoCalculations(unittest.TestCase):
         num_events = np.array([[3, 1], [3, 1]])
 
         mock_energy_lookup = Mock(spec=EnergyLookup)
-        mock_energy_lookup.get_energy_index.side_effect = [0, 100, 0, 0, 127, 127, 127, 0]
+        mock_energy_lookup.get_energy_index.side_effect = [0, 100, 0, 0, 127, 127, 0]
         mock_energy_lookup.num_bins = num_esa_steps
         mock_energy_lookup.bin_centers = Mock()
 
@@ -204,24 +206,21 @@ class TestCodiceLoCalculations(unittest.TestCase):
                                                                   EventDirection.Sunward,
                                                                   EventDirection.NonSunward,
                                                                   EventDirection.NonSunward,
-                                                                  EventDirection.NonSunward,
                                                                   EventDirection.Sunward,
                                                                   ]
-
-        event_mask = np.array([
-            [[False, False, False, True], [False, True, True, True]],
-            [[False, False, False, True], [False, True, True, True]],
-        ])
 
         spin_angle = np.array([
             [[37.5, 22.5, 37.5, -9999], [7.5, np.nan, np.nan, np.nan]],
             [[37.5, 37.5, 37.5, np.nan], [7.5, np.nan, np.nan, np.nan]]
         ])
 
-        apd_id = np.ma.masked_array(data=np.array([
+        position = np.ma.masked_array(data=np.array([
             [[2, 4, 2, 255], [1, 255, 255, 255]],
             [[9, 9, 9, 255], [1, 255, 255, 255]]
-        ]), mask=event_mask)
+        ]), mask=np.array([
+            [[False, False, False, True], [False, True, True, True]],
+            [[False, True, False, True], [False, True, True, True]],
+        ]))
 
         energy_step = np.array([
             [[0.0, 1234.2, 0.0, np.nan], [0.0, np.nan, np.nan, np.nan]],
@@ -243,7 +242,7 @@ class TestCodiceLoCalculations(unittest.TestCase):
         actual_counts_3d_data = rebin_to_counts_by_species_elevation_and_spin_sector(num_events, mass, mass_per_charge,
                                                                                      energy_step,
                                                                                      spin_angle,
-                                                                                     apd_id,
+                                                                                     position,
                                                                                      mock_species_mass_range_lookup,
                                                                                      spin_angle_lut,
                                                                                      mock_elevation_lut,
@@ -257,7 +256,6 @@ class TestCodiceLoCalculations(unittest.TestCase):
             call(mass[0, 1, 0], mass_per_charge[0, 1, 0], EventDirection.Sunward),
 
             call(mass[1, 0, 0], mass_per_charge[1, 0, 0], EventDirection.NonSunward),
-            call(mass[1, 0, 1], mass_per_charge[1, 0, 1], EventDirection.NonSunward),
             call(mass[1, 0, 2], mass_per_charge[1, 0, 2], EventDirection.NonSunward),
 
             call(mass[1, 1, 0], mass_per_charge[1, 1, 0], EventDirection.Sunward),
@@ -268,7 +266,6 @@ class TestCodiceLoCalculations(unittest.TestCase):
             call(1234.2),
             call(0.0),
             call(0.0),
-            call(345.2),
             call(345.2),
             call(345.2),
         ])
@@ -296,7 +293,7 @@ class TestCodiceLoCalculations(unittest.TestCase):
                                       expected_fe_counts)
 
         expected_mg_counts = np.zeros(rebinned_shape)
-        expected_mg_counts[1, 0, 8, 2, 127] = 3
+        expected_mg_counts[1, 0, 8, 2, 127] = 2
         np.testing.assert_array_equal(actual_counts_3d_data.get_3d_distribution("Mg", EventDirection.NonSunward),
                                       expected_mg_counts)
 

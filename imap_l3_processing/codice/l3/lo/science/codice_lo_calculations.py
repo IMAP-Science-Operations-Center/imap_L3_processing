@@ -77,7 +77,8 @@ def rebin_counts_by_energy_and_spin_angle(priority_event: PriorityEvent,
 def rebin_to_counts_by_species_elevation_and_spin_sector(num_events: np.ndarray, mass: np.ndarray,
                                                          mass_per_charge: np.ndarray,
                                                          energy: np.ndarray,
-                                                         spin_angle: np.ndarray, apd_id: np.ndarray,
+                                                         spin_angle: np.ndarray,
+                                                         position: np.ma.masked_array,
                                                          mass_species_bin_lookup: MassSpeciesBinLookup,
                                                          spin_angle_lut: SpinAngleLookup,
                                                          position_elevation_lut: PositionToElevationLookup,
@@ -92,15 +93,19 @@ def rebin_to_counts_by_species_elevation_and_spin_sector(num_events: np.ndarray,
         for priority_i in range(num_priorities):
             for event_i in range(num_events[epoch_i, priority_i]):
                 indices_of_event = epoch_i, priority_i, event_i
-                apd_id_of_event = int(apd_id[*indices_of_event])
-                event_direction = position_elevation_lut.event_direction_for_apd(apd_id_of_event)
+                if np.isnan(energy[*indices_of_event]) or np.isnan(spin_angle[*indices_of_event]) or position.mask[
+                    *indices_of_event]:
+                    continue
+
+                position_of_event = int(position[*indices_of_event])
+                event_direction = position_elevation_lut.event_direction_for_apd(position_of_event)
                 species = mass_species_bin_lookup.get_species(mass[*indices_of_event],
                                                               mass_per_charge[*indices_of_event], event_direction)
                 if species is not None:
                     energy_i = energy_lut.get_energy_index(energy[*indices_of_event])
                     species_i = mass_species_bin_lookup.get_species_index(species, event_direction)
                     spin_angle_i = spin_angle_lut.get_spin_angle_index(spin_angle[*indices_of_event])
-                    position_i = apd_id_of_event - 1
+                    position_i = position_of_event - 1
                     output[species_i, epoch_i, priority_i, position_i, spin_angle_i, energy_i] += 1
 
     return CodiceLo3dData(data_in_3d_bins=output, mass_bin_lookup=mass_species_bin_lookup,
