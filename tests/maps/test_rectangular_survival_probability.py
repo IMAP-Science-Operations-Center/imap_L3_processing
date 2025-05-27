@@ -77,9 +77,9 @@ class TestRectangularSurvivalProbability(unittest.TestCase):
                     np.concatenate([np.arange(90, 360, 0.1), np.arange(0, 90, 0.1)]) + 0.05,
                     pointing_set.data[CoordNames.AZIMUTH_L1C.value].values)
 
-                self.assertIn(CoordNames.ENERGY_ULTRA.value, pointing_set.data.coords)
+                self.assertIn(CoordNames.ENERGY_ULTRA_L1C.value, pointing_set.data.coords)
                 np.testing.assert_array_equal(self.l1c_hi_dataset.esa_energy_step,
-                                              pointing_set.data[CoordNames.ENERGY_ULTRA.value].values)
+                                              pointing_set.data[CoordNames.ENERGY_ULTRA_L1C.value].values)
 
                 self.assertIn(CoordNames.TIME.value, pointing_set.data.coords)
                 np.testing.assert_array_equal(self.l1c_hi_dataset.epoch_j2000,

@@ -8,7 +8,7 @@ from imap_processing.ena_maps.utils.coordinates import CoordNames
 from imap_processing.spice.time import str_to_et
 from imap_processing.ultra.l1c.ultra_l1c_pset_bins import build_energy_bins
 from spacepy import pycdf
-from spacepy.pycdf import CDF
+from spacepy.pycdf import CDF, Var
 
 from imap_l3_processing.spice_wrapper import spiceypy
 from tests.test_helpers import get_run_local_data_path
@@ -126,7 +126,7 @@ def create_example_ultra_l1c_pset(
             "counts": (
                 [
                     CoordNames.TIME.value,
-                    CoordNames.ENERGY_ULTRA.value,
+                    CoordNames.ENERGY_ULTRA_L1C.value,
                     CoordNames.HEALPIX_INDEX.value,
                 ],
                 counts,
@@ -134,7 +134,7 @@ def create_example_ultra_l1c_pset(
             "exposure_time": (
                 [
                     CoordNames.TIME.value,
-                    CoordNames.ENERGY_ULTRA.value,
+                    CoordNames.ENERGY_ULTRA_L1C.value,
                     CoordNames.HEALPIX_INDEX.value
                 ],
                 exposure_time,
@@ -142,7 +142,7 @@ def create_example_ultra_l1c_pset(
             "sensitivity": (
                 [
                     CoordNames.TIME.value,
-                    CoordNames.ENERGY_ULTRA.value,
+                    CoordNames.ENERGY_ULTRA_L1C.value,
                     CoordNames.HEALPIX_INDEX.value,
                 ],
                 sensitivity,
@@ -160,7 +160,7 @@ def create_example_ultra_l1c_pset(
             CoordNames.TIME.value: [
                 tt_j2000ns
             ],
-            CoordNames.ENERGY_ULTRA.value: energy_bin_midpoints,
+            CoordNames.ENERGY_ULTRA_L1C.value: energy_bin_midpoints,
             CoordNames.HEALPIX_INDEX.value: pix_indices,
         },
         attrs={
@@ -180,7 +180,7 @@ def create_example_ultra_l1c_pset(
     pset_product[CoordNames.ELEVATION_L1C.value].attrs["VAR_TYPE"] = "data"
 
     pset_product.coords[CoordNames.TIME.value].attrs["VAR_TYPE"] = "support_data"
-    pset_product.coords[CoordNames.ENERGY_ULTRA.value].attrs["VAR_TYPE"] = "support_data"
+    pset_product.coords[CoordNames.ENERGY_ULTRA_L1C.value].attrs["VAR_TYPE"] = "support_data"
     pset_product.coords[CoordNames.HEALPIX_INDEX.value].attrs["VAR_TYPE"] = "support_data"
 
     return pset_product
@@ -196,13 +196,27 @@ def _write_ultra_l1c_cdf_with_parents(
     with CDF(str(out_path), readonly=False, masterpath="") as cdf:
         cdf.new("counts", out_xarray["counts"].values)
         cdf.new("exposure_factor", out_xarray["exposure_time"].values)
+        cdf.new("background_rates", np.full_like(out_xarray["counts"], 0.001))
+        cdf.new("observation_time", np.full_like(out_xarray["counts"], 1))
         cdf.new("sensitivity", out_xarray["sensitivity"].values)
-        cdf.new("latitude", out_xarray[CoordNames.ELEVATION_L1C.value].values, recVary=False)
-        cdf.new("longitude", out_xarray[CoordNames.AZIMUTH_L1C.value].values, recVary=False)
-        cdf.new("epoch", out_xarray[CoordNames.TIME.value].values, recVary=False,
-                type=pycdf.const.CDF_TIME_TT2000.value)
-        cdf.new(CoordNames.ENERGY_ULTRA.value, out_xarray[CoordNames.ENERGY_ULTRA.value].values, recVary=False)
-        cdf.new("healpix_index", out_xarray[CoordNames.HEALPIX_INDEX.value].values, recVary=False)
+        cdf.new(CoordNames.ELEVATION_L1C.value, out_xarray[CoordNames.ELEVATION_L1C.value].values, recVary=False)
+        cdf.new(CoordNames.AZIMUTH_L1C.value, out_xarray[CoordNames.AZIMUTH_L1C.value].values, recVary=False)
+        cdf.new("epoch", out_xarray[CoordNames.TIME.value].values, type=pycdf.const.CDF_TIME_TT2000.value)
+        cdf.new(CoordNames.ENERGY_ULTRA_L1C.value, out_xarray[CoordNames.ENERGY_ULTRA_L1C.value].values, recVary=False)
+        cdf.new("energy_bin_delta", np.full_like(out_xarray[CoordNames.ENERGY_ULTRA_L1C.value].values, 1),
+                recVary=False)
+        cdf.new(CoordNames.HEALPIX_INDEX.value, out_xarray[CoordNames.HEALPIX_INDEX.value].values, recVary=False)
+
+        cdf[CoordNames.ENERGY_ULTRA_L1C.value].attrs["VAR_TYPE"] = "support_data"
+        cdf[CoordNames.HEALPIX_INDEX.value].attrs["VAR_TYPE"] = "support_data"
+        _add_depends(cdf["counts"], [CoordNames.ENERGY_ULTRA_L1C.value, CoordNames.HEALPIX_INDEX.value], "epoch")
+        _add_depends(cdf["exposure_factor"], [CoordNames.ENERGY_ULTRA_L1C.value, CoordNames.HEALPIX_INDEX.value],
+                     "epoch")
+        _add_depends(cdf["sensitivity"], [CoordNames.ENERGY_ULTRA_L1C.value, CoordNames.HEALPIX_INDEX.value], "epoch")
+        _add_depends(cdf["background_rates"], [CoordNames.ENERGY_ULTRA_L1C.value, CoordNames.HEALPIX_INDEX.value],
+                     "epoch")
+        _add_depends(cdf["observation_time"], [CoordNames.ENERGY_ULTRA_L1C.value, CoordNames.HEALPIX_INDEX.value],
+                     "epoch")
 
         for var in cdf:
             if cdf[var].type() == pycdf.const.CDF_TIME_TT2000.value:
@@ -211,6 +225,13 @@ def _write_ultra_l1c_cdf_with_parents(
                 cdf[var].attrs['FILLVAL'] = -9223372036854775808
             elif cdf[var].type() == pycdf.const.CDF_FLOAT.value or pycdf.const.CDF_DOUBLE.value:
                 cdf[var].attrs['FILLVAL'] = -1e31
+
+
+def _add_depends(var: Var, depends: list[str], depend_0: str = None):
+    if depend_0 is not None:
+        var.attrs[f"DEPEND_0"] = depend_0
+    for i, dep in enumerate(depends):
+        var.attrs[f"DEPEND_{i + 1}"] = dep
 
 
 if __name__ == "__main__":

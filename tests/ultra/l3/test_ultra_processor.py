@@ -93,7 +93,7 @@ class TestUltraProcessor(unittest.TestCase):
             "exposure_weighted_survival_probabilities": (
                 [
                     CoordNames.TIME.value,
-                    CoordNames.ENERGY_ULTRA.value,
+                    CoordNames.ENERGY_ULTRA_L1C.value,
                     CoordNames.HEALPIX_INDEX.value,
                 ],
                 computed_survival_probabilities
@@ -101,7 +101,7 @@ class TestUltraProcessor(unittest.TestCase):
         },
             coords={
                 CoordNames.TIME.value: [epoch],
-                CoordNames.ENERGY_ULTRA.value: rng.random((9,)),
+                CoordNames.ENERGY_ULTRA_L1C.value: rng.random((9,)),
                 CoordNames.HEALPIX_INDEX.value: healpix_indices,
             })
 

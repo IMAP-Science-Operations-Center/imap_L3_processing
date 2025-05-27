@@ -52,7 +52,7 @@ class TestModels(unittest.TestCase):
         with CDF(str(run_local_path)) as expected:
             self.assertEqual(expected_epoch, actual_epoch)
             np.testing.assert_array_equal(expected["counts"][...], actual.counts)
-            np.testing.assert_array_equal(expected[CoordNames.ENERGY_ULTRA.value][...], actual.energy)
+            np.testing.assert_array_equal(expected[CoordNames.ENERGY_ULTRA_L1C.value][...], actual.energy)
             np.testing.assert_array_equal(expected["exposure_factor"][...], actual.exposure)
             np.testing.assert_array_equal(expected[CoordNames.HEALPIX_INDEX.value][...], actual.healpix_index)
             np.testing.assert_array_equal(expected[CoordNames.ELEVATION_L1C.value][...], actual.latitude)

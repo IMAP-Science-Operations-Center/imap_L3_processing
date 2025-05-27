@@ -31,9 +31,9 @@ if __name__ == "__main__":
                             '[{"type": "science", "files": ["imap_hi_l2_h90-ena-h-sf-nsp-ram-hae-4deg-6mo_20250415_v001.cdf"]},\n{"type": "science", "files": ["imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-6mo_20250415_v001.cdf"]}]'])
         case "ultra", "survival":
             subprocess.run([sys.executable, 'imap_l3_data_processor.py', '--instrument', 'ultra', '--data-level', 'l3',
-                            '--start-date', '20250415', '--version', 'v002', '--descriptor',
+                            '--start-date', '20250415', '--version', 'v007', '--descriptor',
                             'u45-ena-h-hf-sp-full-hae-4deg-6mo', '--dependency',
-                            '[{"type": "science", "files": ["imap_ultra_l2_u90-ena-h-sf-nsp-full-hae-4deg-6mo_20250415_v001.cdf"]}]'])
+                            '[{"type": "science", "files": ["imap_ultra_l2_u90-ena-h-sf-nsp-full-hae-4deg-6mo_20250415_v007.cdf"]}]'])
         case "glows", "l3b":
             subprocess.run([sys.executable, 'imap_l3_data_processor.py', '--instrument', 'glows', '--data-level', 'l3b',
                             '--start-date', '20100104', '--version', 'v004', '--dependency',

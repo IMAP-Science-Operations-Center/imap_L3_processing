@@ -429,7 +429,7 @@ class TestMapModels(unittest.TestCase):
             np.testing.assert_array_equal(expected["pixel_index_label"][...], actual_coords.pixel_index_label)
 
     def test_ultra_healpix_intensity_read_from_xarray(self):
-        full_shape = [CoordNames.TIME.value, CoordNames.ENERGY_ULTRA.value, CoordNames.HEALPIX_INDEX.value]
+        full_shape = [CoordNames.TIME.value, CoordNames.ENERGY_ULTRA_L1C.value, CoordNames.HEALPIX_INDEX.value]
         input_xarray: Dataset = Dataset(
             data_vars={
                 "latitude": ([CoordNames.HEALPIX_INDEX.value], np.full((12,), 4)),
@@ -442,14 +442,14 @@ class TestMapModels(unittest.TestCase):
                 "ena_intensity_stat_unc": (full_shape, np.full((2, 15, 12), 11)),
                 "ena_intensity_sys_err": (full_shape, np.full((2, 15, 12), 12)),
                 "epoch_delta": ([CoordNames.TIME.value], np.full((2,), 13)),
-                "energy_delta_minus": ([CoordNames.ENERGY_ULTRA.value], np.full((15,), 14)),
-                "energy_delta_plus": ([CoordNames.ENERGY_ULTRA.value], np.full((15,), 15)),
-                "energy_label": ([CoordNames.ENERGY_ULTRA.value], np.full((15,), "123")),
+                "energy_delta_minus": ([CoordNames.ENERGY_ULTRA_L1C.value], np.full((15,), 14)),
+                "energy_delta_plus": ([CoordNames.ENERGY_ULTRA_L1C.value], np.full((15,), 15)),
+                "energy_label": ([CoordNames.ENERGY_ULTRA_L1C.value], np.full((15,), "123")),
                 "pixel_index_label": ([CoordNames.HEALPIX_INDEX.value], np.full((12,), "Pixel")),
             },
             coords={
                 CoordNames.TIME.value: np.full((2,), 1),
-                CoordNames.ENERGY_ULTRA.value: np.full((15,), 2),
+                CoordNames.ENERGY_ULTRA_L1C.value: np.full((15,), 2),
                 CoordNames.HEALPIX_INDEX.value: np.full((12,), 3),
             }
         )
@@ -472,7 +472,7 @@ class TestMapModels(unittest.TestCase):
         np.testing.assert_array_equal(input_xarray["epoch_delta"], output.intensity_map_data.epoch_delta)
         np.testing.assert_array_equal(input_xarray[CoordNames.HEALPIX_INDEX.value], output.coords.pixel_index)
         np.testing.assert_array_equal(input_xarray["pixel_index_label"], output.coords.pixel_index_label)
-        np.testing.assert_array_equal(input_xarray[CoordNames.ENERGY_ULTRA.value], output.intensity_map_data.energy)
+        np.testing.assert_array_equal(input_xarray[CoordNames.ENERGY_ULTRA_L1C.value], output.intensity_map_data.energy)
         np.testing.assert_array_equal(input_xarray["energy_delta_minus"], output.intensity_map_data.energy_delta_minus)
         np.testing.assert_array_equal(input_xarray["energy_delta_plus"], output.intensity_map_data.energy_delta_plus)
         np.testing.assert_array_equal(input_xarray["energy_label"], output.intensity_map_data.energy_label)
@@ -635,7 +635,7 @@ class TestMapModels(unittest.TestCase):
 
         # @formatter:off
         np.testing.assert_array_equal(actual_dataset.coords[CoordNames.TIME.value].values, intensity_map_data.epoch)
-        np.testing.assert_array_equal(actual_dataset.coords[CoordNames.ENERGY_ULTRA.value].values, intensity_map_data.energy)
+        np.testing.assert_array_equal(actual_dataset.coords[CoordNames.ENERGY_ULTRA_L1C.value].values, intensity_map_data.energy)
         np.testing.assert_array_equal(actual_dataset.coords[CoordNames.GENERIC_PIXEL.value].values, healpix_intensity_map_data.coords.pixel_index)
 
         np.testing.assert_array_equal(actual_dataset.data_vars["latitude"].values, intensity_map_data.latitude)
@@ -651,7 +651,7 @@ class TestMapModels(unittest.TestCase):
         np.testing.assert_array_equal(actual_dataset.data_vars["ena_intensity_sys_err"].values, intensity_map_data.ena_intensity_sys_err)
 
         for key in [ "obs_date", "obs_date_range", "exposure_factor", "ena_intensity", "ena_intensity_stat_unc", "ena_intensity_sys_err" ]:
-            self.assertEqual((CoordNames.TIME.value, CoordNames.ENERGY_ULTRA.value, CoordNames.GENERIC_PIXEL.value), actual_dataset.data_vars[key].dims)
+            self.assertEqual((CoordNames.TIME.value, CoordNames.ENERGY_ULTRA_L1C.value, CoordNames.GENERIC_PIXEL.value), actual_dataset.data_vars[key].dims)
         for key in [ "latitude", "longitude", "solid_angle" ]:
             self.assertEqual((CoordNames.GENERIC_PIXEL.value,), actual_dataset.data_vars[key].dims)
         # @formatter:on
@@ -703,7 +703,7 @@ class TestMapModels(unittest.TestCase):
 
         # @formatter:off
         np.testing.assert_array_equal(actual_dataset.coords[CoordNames.TIME.value].values, spectral_index_map_data.epoch)
-        np.testing.assert_array_equal(actual_dataset.coords[CoordNames.ENERGY_ULTRA.value].values, spectral_index_map_data.energy)
+        np.testing.assert_array_equal(actual_dataset.coords[CoordNames.ENERGY_ULTRA_L1C.value].values, spectral_index_map_data.energy)
         np.testing.assert_array_equal(actual_dataset.coords[CoordNames.GENERIC_PIXEL.value].values, healpix_spectral_index_map_data.coords.pixel_index)
 
         np.testing.assert_array_equal(actual_dataset.data_vars["latitude"].values, spectral_index_map_data.latitude)
@@ -718,7 +718,7 @@ class TestMapModels(unittest.TestCase):
         np.testing.assert_array_equal(actual_dataset.data_vars["ena_spectral_index_stat_unc"].values, spectral_index_map_data.ena_spectral_index_stat_unc)
 
         for key in [ "obs_date", "obs_date_range", "exposure_factor", "ena_spectral_index", "ena_spectral_index_stat_unc" ]:
-            self.assertEqual((CoordNames.TIME.value, CoordNames.ENERGY_ULTRA.value, CoordNames.GENERIC_PIXEL.value), actual_dataset.data_vars[key].dims)
+            self.assertEqual((CoordNames.TIME.value, CoordNames.ENERGY_ULTRA_L1C.value, CoordNames.GENERIC_PIXEL.value), actual_dataset.data_vars[key].dims)
         for key in [ "latitude", "longitude", "solid_angle" ]:
             self.assertEqual((CoordNames.GENERIC_PIXEL.value,), actual_dataset.data_vars[key].dims)
         # @formatter:on

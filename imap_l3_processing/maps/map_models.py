@@ -129,7 +129,7 @@ class HealPixIntensityMapData:
     def to_healpix_skymap(self) -> HealpixSkyMap:
         healpix_map = HealpixSkyMap(self.coords.nside, SpiceFrame.ECLIPJ2000)
 
-        full_shape = [CoordNames.TIME.value, CoordNames.ENERGY_ULTRA.value, CoordNames.HEALPIX_INDEX.value]
+        full_shape = [CoordNames.TIME.value, CoordNames.ENERGY_ULTRA_L1C.value, CoordNames.HEALPIX_INDEX.value]
         healpix_map.data_1d = xarray.Dataset(
             data_vars={
                 "latitude": ([CoordNames.HEALPIX_INDEX.value], self.intensity_map_data.latitude),
@@ -144,7 +144,7 @@ class HealPixIntensityMapData:
             },
             coords={
                 CoordNames.TIME.value: self.intensity_map_data.epoch,
-                CoordNames.ENERGY_ULTRA.value: self.intensity_map_data.energy,
+                CoordNames.ENERGY_ULTRA_L1C.value: self.intensity_map_data.energy,
                 CoordNames.HEALPIX_INDEX.value: self.coords.pixel_index,
             })
 
@@ -202,7 +202,7 @@ def _read_intensity_map_data_from_xarray(dataset: xarray.Dataset) -> IntensityMa
     return IntensityMapData(
         epoch=dataset[CoordNames.TIME.value].values,
         epoch_delta=dataset["epoch_delta"].values,
-        energy=dataset.coords[CoordNames.ENERGY_ULTRA.value].values,
+        energy=dataset.coords[CoordNames.ENERGY_ULTRA_L1C.value].values,
         energy_delta_plus=dataset["energy_delta_plus"].values,
         energy_delta_minus=dataset["energy_delta_minus"].values,
         energy_label=dataset["energy_label"].values,
@@ -242,7 +242,7 @@ class HealPixSpectralIndexMapData:
     def to_healpix_skymap(self) -> HealpixSkyMap:
         healpix_map = HealpixSkyMap(self.coords.nside, SpiceFrame.ECLIPJ2000)
 
-        full_shape = [CoordNames.TIME.value, CoordNames.ENERGY_ULTRA.value, CoordNames.HEALPIX_INDEX.value]
+        full_shape = [CoordNames.TIME.value, CoordNames.ENERGY_ULTRA_L1C.value, CoordNames.HEALPIX_INDEX.value]
         healpix_map.data_1d = xarray.Dataset(
             data_vars={
                 "latitude": ([CoordNames.HEALPIX_INDEX.value], self.spectral_index_map_data.latitude),
@@ -257,7 +257,7 @@ class HealPixSpectralIndexMapData:
             },
             coords={
                 CoordNames.TIME.value: self.spectral_index_map_data.epoch,
-                CoordNames.ENERGY_ULTRA.value: self.spectral_index_map_data.energy,
+                CoordNames.ENERGY_ULTRA_L1C.value: self.spectral_index_map_data.energy,
                 CoordNames.HEALPIX_INDEX.value: self.coords.pixel_index,
             })
 
