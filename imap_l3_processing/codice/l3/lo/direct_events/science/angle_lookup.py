@@ -56,5 +56,5 @@ class PositionToElevationLookup:
     def apd_to_elevation(self, apd: int) -> float:
         return float(self.bin_centers[self.apd_to_elevation_index(apd)])
 
-    def apd_to_elevation_index(self, apd: np.ndarray | int) -> int:
+    def apd_to_elevation_index(self, apd: np.ndarray | int) -> np.ndarray | int:
         return self.elevation_indices_by_apd[apd - 1]
