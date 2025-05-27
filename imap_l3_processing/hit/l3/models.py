@@ -107,7 +107,7 @@ class HitDirectEventDataProduct(DataProduct):
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
             DataProductVariable(EPOCH_VAR_NAME, self.epoch),
-            DataProductVariable(EPOCH_DELTA_VAR_NAME, 1),
+            DataProductVariable(EPOCH_DELTA_VAR_NAME, np.full(len(self.epoch), 1)),
             DataProductVariable(CHARGE_VAR_NAME, self.charge),
             DataProductVariable(ENERGY_VAR_NAME, self.energy),
             DataProductVariable(E_DELTA_VAR_NAME, self.e_delta),

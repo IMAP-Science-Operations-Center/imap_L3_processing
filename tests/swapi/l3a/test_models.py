@@ -22,7 +22,7 @@ class TestModels(CdfModelTestCase):
     def test_getting_proton_sw_data_product_variables(self):
         epoch_data = np.arange(20, step=2)
         epoch_delta = np.full_like(epoch_data, THIRTY_SECONDS_IN_NANOSECONDS)
-        expected_nominal_values = np.arange(10, step=1)
+        expected_nominal_values = np.arange(10, step=1.0)
         expected_std = np.arange(5, step=.5)
         proton_speed = uarray(expected_nominal_values, expected_std)
         expected_temperature_nominal_values = np.arange(1000, 2000, step=100)
