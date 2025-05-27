@@ -1,12 +1,12 @@
 import numpy as np
 import scipy
+import spiceypy
 import uncertainties
 from uncertainties import correlated_values, unumpy, umath, wrap
 from uncertainties.unumpy import uarray, nominal_values, std_devs
 
 from imap_l3_processing.constants import PROTON_CHARGE_COULOMBS, PROTON_MASS_KG, METERS_PER_KILOMETER, \
     ONE_SECOND_IN_NANOSECONDS
-from imap_l3_processing.spice_wrapper import spiceypy
 from imap_l3_processing.swapi.l3a.science.speed_calculation import get_peak_indices, find_peak_center_of_mass_index, \
     interpolate_energy, extract_coarse_sweep
 

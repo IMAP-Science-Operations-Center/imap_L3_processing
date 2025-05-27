@@ -1,4 +1,3 @@
-import unittest
 from datetime import datetime
 
 import numpy as np
@@ -6,10 +5,11 @@ from imap_processing.ena_maps.utils.coordinates import CoordNames
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.ultra.l3.models import UltraGlowsL3eData, UltraL1CPSet
+from tests.spice_test_case import SpiceTestCase
 from tests.test_helpers import get_test_data_folder
 
 
-class TestModels(unittest.TestCase):
+class TestModels(SpiceTestCase):
 
     def test_glows_l3e_read_from_file(self):
         path_to_cdf = get_test_data_folder() / 'ultra' / 'fake_l3e_survival_probabilities' / 'imap_glows_l3e_survival-probabilities-ultra_20250416_v001.cdf'

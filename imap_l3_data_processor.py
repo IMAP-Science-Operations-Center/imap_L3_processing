@@ -7,6 +7,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 import imap_data_access
+import spiceypy
 from imap_data_access.processing_input import ProcessingInputCollection
 
 from imap_l3_processing.codice.l3.hi.codice_hi_processor import CodiceHiProcessor
@@ -15,7 +16,6 @@ from imap_l3_processing.glows.glows_processor import GlowsProcessor
 from imap_l3_processing.hi.hi_processor import HiProcessor
 from imap_l3_processing.hit.l3.hit_processor import HitProcessor
 from imap_l3_processing.models import InputMetadata
-from imap_l3_processing.spicepy_factory import SpiceypyFactory
 from imap_l3_processing.swapi.swapi_processor import SwapiProcessor
 from imap_l3_processing.swe.swe_processor import SweProcessor
 from imap_l3_processing.ultra.l3.ultra_processor import UltraProcessor
@@ -86,10 +86,9 @@ def imap_l3_processor():
 
 def _furnish_spice_kernels(processing_input_collection):
     spice_kernel_paths = processing_input_collection.get_file_paths(data_type='spice')
-    downloaded_spice_kernels = []
     for kernel in spice_kernel_paths:
-        downloaded_spice_kernels.append(imap_data_access.download(kernel))
-    SpiceypyFactory.furnish(downloaded_spice_kernels)
+        kernel_path = imap_data_access.download(kernel)
+        spiceypy.furnsh(str(kernel_path))
 
 
 if __name__ == '__main__':
