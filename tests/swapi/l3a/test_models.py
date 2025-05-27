@@ -28,16 +28,16 @@ class TestModels(CdfModelTestCase):
         expected_nominal_values = np.arange(10, step=1.0)
         expected_std = np.arange(5, step=.5)
         proton_speed = uarray(expected_nominal_values, expected_std)
-        expected_temperature_nominal_values = np.arange(1000, 2000, step=100)
-        expected_temperature_std = np.arange(50, step=5)
+        expected_temperature_nominal_values = np.arange(1000, 2000, step=100.)
+        expected_temperature_std = np.arange(50, step=5.)
         temperature_data = uarray(expected_temperature_nominal_values, expected_temperature_std)
-        expected_density_nominal_values = np.arange(3, 13, step=1)
+        expected_density_nominal_values = np.arange(3, 13, step=1.)
         expected_density_std = np.arange(1, step=.1)
         density_data = uarray(expected_density_nominal_values, expected_density_std)
-        expected_clock_angle = np.arange(10, step=1)
+        expected_clock_angle = np.arange(10, step=1.)
         expected_clock_angle_std = np.arange(2, step=.2)
         clock_angle_data = uarray(expected_clock_angle, expected_clock_angle_std)
-        expected_flow_deflection = np.arange(100, step=10)
+        expected_flow_deflection = np.arange(100, step=10.)
         expected_flow_deflection_std = np.arange(1, step=.1)
         flow_deflection_data = uarray(expected_flow_deflection, expected_flow_deflection_std)
         data = SwapiL3ProtonSolarWindData(Mock(), epoch_data, proton_speed, temperature_data, density_data,
@@ -68,11 +68,11 @@ class TestModels(CdfModelTestCase):
     def test_getting_alpha_sw_data_product_variables(self):
         epoch_data = np.arange(20, step=2)
         epoch_delta = np.full_like(epoch_data, THIRTY_SECONDS_IN_NANOSECONDS)
-        expected_speed_nominal_values = np.arange(10, step=1)
+        expected_speed_nominal_values = np.arange(10, step=1.)
         expected_speed_std = np.arange(5, step=.5)
         alpha_speed = uarray(expected_speed_nominal_values, expected_speed_std)
-        expected_temperature_nominal_values = np.arange(300000, step=30000)
-        expected_temperature_std_devs = np.arange(50000, step=5000)
+        expected_temperature_nominal_values = np.arange(300000, step=30000.)
+        expected_temperature_std_devs = np.arange(50000, step=5000.)
         alpha_temperature = uarray(expected_temperature_nominal_values, expected_temperature_std_devs)
         expected_alpha_density_nominal_values = np.arange(2, step=.2)
         expected_alpha_density_std_devs = np.arange(1, step=0.1)
@@ -98,15 +98,15 @@ class TestModels(CdfModelTestCase):
     def test_getting_pui_data_product_variables(self):
         epoch_data = np.arange(20, step=2)
         expected_epoch_delta = np.full(10, FIVE_MINUTES_IN_NANOSECONDS)
-        expected_cooling_index_nominal = np.arange(10, step=1)
+        expected_cooling_index_nominal = np.arange(10, step=1.)
         expected_cooling_index_std_dev = np.arange(.1, step=.01)
         expected_cooling_index = uarray(expected_cooling_index_nominal, expected_cooling_index_std_dev)
 
-        expected_ionization_rate_nominal = np.arange(300000, step=30000)
-        expected_ionization_rate_std_dev = np.arange(10, step=1)
+        expected_ionization_rate_nominal = np.arange(300000, step=30000.)
+        expected_ionization_rate_std_dev = np.arange(10, step=1.)
         expected_ionization_rate = uarray(expected_ionization_rate_nominal, expected_ionization_rate_std_dev)
 
-        expected_cutoff_speed_nominal = np.arange(50000, step=5000)
+        expected_cutoff_speed_nominal = np.arange(50000, step=5000.)
         expected_cutoff_speed_std_dev = np.arange(5, step=.5)
         expected_cutoff_speed = uarray(expected_cutoff_speed_nominal, expected_cutoff_speed_std_dev)
 
@@ -118,8 +118,8 @@ class TestModels(CdfModelTestCase):
         expected_density_std_dev = np.arange(0.0001, step=0.00001)
         expected_density = uarray(expected_density_nominal, expected_density_std_dev)
 
-        expected_temperature_nominal = np.arange(1e5, step=10000)
-        expected_temperature_std_dev = np.arange(100, step=10)
+        expected_temperature_nominal = np.arange(1e5, step=10000.)
+        expected_temperature_std_dev = np.arange(100, step=10.)
         expected_temperature = uarray(expected_temperature_nominal, expected_temperature_std_dev)
 
         data = SwapiL3PickupIonData(Mock(), epoch_data, expected_cooling_index, expected_ionization_rate,
