@@ -34,8 +34,8 @@ class MassSpeciesBinLookup:
             mass_per_charge_ranges = np.array(list(zip(range_data[3], range_data[4])))
 
             species_dict: dict = {
-                "sw_species": range_data[0][sw_species_mask],
-                "nsw_species": range_data[0][nsw_species_mask],
+                "sw_species": list(range_data[0][sw_species_mask]),
+                "nsw_species": list(range_data[0][nsw_species_mask]),
                 "sw_mass_ranges": mass_range[sw_species_mask],
                 "nsw_mass_ranges": mass_range[nsw_species_mask],
                 "sw_mass_per_charge_ranges": mass_per_charge_ranges[sw_species_mask],
@@ -65,9 +65,11 @@ class MassSpeciesBinLookup:
     def get_species_index(self, species: str, event_direction: EventDirection) -> int:
         num_sw_species = len(self._range_to_species['sw_species'])
         if event_direction == EventDirection.NonSunward:
-            return np.argwhere(self._range_to_species['nsw_species'] == species)[0, 0] + num_sw_species
+            assert species in self._range_to_species['nsw_species']
+            return self._range_to_species['nsw_species'].index(species) + num_sw_species
         else:
-            return np.argwhere(self._range_to_species['sw_species'] == species)[0, 0]
+            assert species in self._range_to_species['sw_species']
+            return self._range_to_species['sw_species'].index(species)
 
     def get_num_species(self):
         return len(self._range_to_species['sw_species']) + len(self._range_to_species['nsw_species'])

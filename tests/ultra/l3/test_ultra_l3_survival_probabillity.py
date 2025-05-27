@@ -1,6 +1,5 @@
 import unittest
 from datetime import datetime
-from unittest import skip
 from unittest.mock import patch
 
 import numpy as np
@@ -9,7 +8,9 @@ from imap_processing.ena_maps.ena_maps import UltraPointingSet, HealpixSkyMap
 from imap_processing.ena_maps.utils.coordinates import CoordNames
 from imap_processing.spice import geometry
 
+from imap_l3_processing import spice_wrapper
 from imap_l3_processing.constants import TT2000_EPOCH
+from imap_l3_processing.spice_wrapper import furnish
 from imap_l3_processing.ultra.l3.models import UltraL1CPSet, UltraGlowsL3eData
 from imap_l3_processing.ultra.l3.science.ultra_survival_probability import UltraSurvivalProbability, \
     UltraSurvivalProbabilitySkyMap
@@ -126,8 +127,9 @@ class TestUltraSurvivalProbability(unittest.TestCase):
 
 
 class TestUltraSurvivalProbabilitySkyMap(unittest.TestCase):
-    @skip
     def test_ultra_survival_probability_skymap(self):
+        spice_wrapper.furnished = False
+        furnish()
         pointing_set_nside = 2
         pointing_set_pixels = 12 * pointing_set_nside ** 2
         l1c_exposure_1 = np.full((1, 1, pointing_set_pixels), 0.5)
@@ -211,7 +213,7 @@ def _create_ultra_l1c_pset(energy: np.ndarray,
                            latitude: np.ndarray = None,
                            longitude: np.ndarray = None,
                            epoch: datetime = None):
-    epoch = datetime(2025, 9, 1) if epoch is None else epoch
+    epoch = datetime(2025, 10, 1, 12) if epoch is None else epoch
     counts = counts or np.full_like(exposure_time, 1)
     sensitivity = sensitivity or np.full_like(exposure_time, 1)
     healpix_index = np.arange(exposure_time.shape[-1])

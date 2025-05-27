@@ -58,7 +58,7 @@ class TestModels(CdfModelTestCase):
             instrument_team_l3b_dict = json.load(f)
 
         instrument_team_l3b_dict['header']['ancillary_data_files'][
-            'pipeline_settings'] = glows_instrument_team_data_path / 'imap_glows_pipeline-settings-l3bcd_20250514_v004.json'
+            'pipeline_settings'] = glows_instrument_team_data_path / 'imap_glows_pipeline-settings-l3bcde_20250514_v004.json'
 
         result = GlowsL3BIonizationRate.from_instrument_team_dictionary(instrument_team_l3b_dict,
                                                                         sentinel.input_metadata)
@@ -87,7 +87,7 @@ class TestModels(CdfModelTestCase):
         self.assertEqual(latitude_grid.shape, result.lat_grid_delta.shape)
         self.assertEqual(['imap_glows_WawHelioIonMP_v002.json',
                           'imap_glows_bad-days-list_v001.dat',
-                          'imap_glows_pipeline-settings-l3bcd_20250514_v004.json',
+                          'imap_glows_pipeline-settings-l3bcde_20250514_v004.json',
                           'imap_glows_uv-anisotropy-1CR_v002.json',
                           'imap_glows_plasma-speed-2010a_v003.dat',
                           'imap_glows_proton-density-2010a_v003.dat',

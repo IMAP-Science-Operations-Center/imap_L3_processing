@@ -31,7 +31,7 @@ from imap_l3_processing.glows.l3e.glows_l3e_hi_model import GlowsL3EHiData
 from imap_l3_processing.glows.l3e.glows_l3e_lo_model import GlowsL3ELoData
 from imap_l3_processing.glows.l3e.glows_l3e_ultra_model import GlowsL3EUltraData
 from imap_l3_processing.glows.l3e.glows_l3e_utils import determine_call_args_for_l3e_executable, \
-    determine_repointing_numbers_for_cr
+    determine_l3e_files_to_produce
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
 from imap_l3_processing.utils import save_data
@@ -73,7 +73,10 @@ class GlowsProcessor(Processor):
                                                                                   self.input_metadata.descriptor)
             l3e_dependencies.rename_dependencies()
 
-            repointings = determine_repointing_numbers_for_cr(cr_number, Path(os.getenv("REPOINT_DATA_FILEPATH")))
+            repointings = determine_l3e_files_to_produce(self.input_metadata.descriptor,
+                                                         l3e_dependencies.pipeline_settings['start_cr'], cr_number,
+                                                         self.input_metadata.version,
+                                                         Path(os.getenv("REPOINT_DATA_FILEPATH")))
             for repointing in repointings:
                 epoch, epoch_end = get_pointing_date_range(repointing)
                 epoch_dt: datetime = epoch.astype('datetime64[us]').astype(datetime)
@@ -133,7 +136,7 @@ class GlowsProcessor(Processor):
 
         with open(dependencies.ancillary_files['pipeline_settings'], "r") as fp:
             pipeline_settings = json.load(fp)
-            cr_to_process = int(pipeline_settings['l3d_start_cr'])
+            cr_to_process = int(pipeline_settings['start_cr'])
 
         file_manifest = {
             'ancillary_files': {

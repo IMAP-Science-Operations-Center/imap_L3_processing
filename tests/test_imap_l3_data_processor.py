@@ -1,9 +1,9 @@
 from datetime import datetime
 from unittest import TestCase
-from unittest.mock import patch, call, Mock
+from unittest.mock import patch, call, Mock, sentinel
 
 from imap_data_access.processing_input import ScienceInput, ProcessingInputCollection, \
-    AncillaryInput
+    AncillaryInput, SPICEInput
 
 from imap_l3_data_processor import imap_l3_processor
 from imap_l3_processing.models import InputMetadata
@@ -179,6 +179,41 @@ class TestImapL3DataProcessor(TestCase):
                 mock_processor_class.assert_called_with(imap_data_access_dependency, expected_input_metadata)
 
                 mock_processor.process.assert_called()
+
+    @patch('imap_l3_data_processor.SpiceypyFactory')
+    @patch('imap_l3_data_processor.argparse')
+    @patch('imap_l3_data_processor.imap_data_access.download')
+    @patch('imap_l3_data_processor.ProcessingInputCollection')
+    @patch('imap_l3_data_processor.SwapiProcessor')
+    def test_get_spice_kernels_based_on_input_collection(self, _, mock_processing_input_collection, mock_download,
+                                                         mock_arg_parser_class, mock_spicepy_factory_class):
+
+        ancillary_input = AncillaryInput("imap_swe_ancillary_20250101_v112.cdf")
+        spice_input_1 = SPICEInput("naif0012.tls")
+        spice_input_2 = SPICEInput("imap_sclk_0012.tls")
+        imap_data_access_dependency = ProcessingInputCollection(spice_input_1, ancillary_input, spice_input_2)
+        imap_data_access_dependency.deserialize = Mock()
+        mock_processing_input_collection.return_value = imap_data_access_dependency
+
+        mock_argument_parser = mock_arg_parser_class.ArgumentParser.return_value
+
+        mock_argument_parser.parse_args.return_value.instrument = "swapi"
+        mock_argument_parser.parse_args.return_value.data_level = "l3a"
+        mock_argument_parser.parse_args.return_value.start_date = "20160630"
+        mock_argument_parser.parse_args.return_value.end_date = "20160630"
+        mock_argument_parser.parse_args.return_value.version = "v101"
+        mock_argument_parser.parse_args.return_value.descriptor = "dont care"
+
+        mock_download.side_effect = [sentinel.naif_kernel, sentinel.sclk_kernel]
+
+        imap_l3_processor()
+        expected_spice_paths = imap_data_access_dependency.get_file_paths(data_type='spice')
+        self.assertEqual(2, mock_download.call_count)
+        mock_download.assert_has_calls([
+            call(expected_spice_paths[0]),
+            call(expected_spice_paths[1])
+        ])
+        mock_spicepy_factory_class.furnish.assert_called_once_with([sentinel.naif_kernel, sentinel.sclk_kernel])
 
     @patch('imap_l3_data_processor.ProcessingInputCollection')
     @patch('imap_l3_data_processor.SweProcessor')

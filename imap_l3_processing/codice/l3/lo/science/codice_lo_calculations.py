@@ -5,6 +5,8 @@ from typing import TypeVar
 
 import numpy as np
 
+from imap_l3_processing.codice.l3.lo.constants import AZIMUTH_STEP_SIZE, ELEVATION_STEP_SIZE, ENERGY_STEP_SIZE, \
+    ENERGY_LOST_IN_CARBON_FOIL, POST_ACCELERATION_VOLTAGE_IN_KV, CONVERSION_CONSTANT_K, CODICE_LO_NUM_AZIMUTH_BINS
 from imap_l3_processing.codice.l3.lo.direct_events.science.angle_lookup import SpinAngleLookup, \
     PositionToElevationLookup
 from imap_l3_processing.codice.l3.lo.direct_events.science.efficiency_lookup import EfficiencyLookup
@@ -13,16 +15,6 @@ from imap_l3_processing.codice.l3.lo.direct_events.science.mass_coefficient_look
 from imap_l3_processing.codice.l3.lo.direct_events.science.mass_species_bin_lookup import MassSpeciesBinLookup
 from imap_l3_processing.codice.l3.lo.models import EnergyAndSpinAngle, PriorityEvent, CodiceLo3dData
 from imap_l3_processing.constants import ONE_SECOND_IN_MICROSECONDS
-
-POST_ACCELERATION_VOLTAGE_IN_KV = 15
-ENERGY_LOST_IN_CARBON_FOIL = 0
-CONVERSION_CONSTANT_K = 1.692e-5
-
-AZIMUTH_STEP_SIZE = np.deg2rad(30)
-ELEVATION_STEP_SIZE = np.deg2rad(30)
-ENERGY_STEP_SIZE = 100
-
-CODICE_LO_NUM_AZIMUTH_BINS = 24
 
 
 def calculate_partial_densities(intensities: np.ndarray, esa_steps: np.ndarray, mass_per_charge: float):
@@ -85,7 +77,8 @@ def rebin_counts_by_energy_and_spin_angle(priority_event: PriorityEvent,
 def rebin_to_counts_by_species_elevation_and_spin_sector(num_events: np.ndarray, mass: np.ndarray,
                                                          mass_per_charge: np.ndarray,
                                                          energy: np.ndarray,
-                                                         spin_angle: np.ndarray, apd_id: np.ndarray,
+                                                         spin_angle: np.ndarray,
+                                                         position: np.ma.masked_array,
                                                          mass_species_bin_lookup: MassSpeciesBinLookup,
                                                          spin_angle_lut: SpinAngleLookup,
                                                          position_elevation_lut: PositionToElevationLookup,
@@ -100,15 +93,19 @@ def rebin_to_counts_by_species_elevation_and_spin_sector(num_events: np.ndarray,
         for priority_i in range(num_priorities):
             for event_i in range(num_events[epoch_i, priority_i]):
                 indices_of_event = epoch_i, priority_i, event_i
-                apd_id_of_event = int(apd_id[*indices_of_event])
-                event_direction = position_elevation_lut.event_direction_for_apd(apd_id_of_event)
+                if np.isnan(energy[*indices_of_event]) or np.isnan(spin_angle[*indices_of_event]) or position.mask[
+                    *indices_of_event]:
+                    continue
+
+                position_of_event = int(position[*indices_of_event])
+                event_direction = position_elevation_lut.event_direction_for_apd(position_of_event)
                 species = mass_species_bin_lookup.get_species(mass[*indices_of_event],
                                                               mass_per_charge[*indices_of_event], event_direction)
                 if species is not None:
                     energy_i = energy_lut.get_energy_index(energy[*indices_of_event])
                     species_i = mass_species_bin_lookup.get_species_index(species, event_direction)
                     spin_angle_i = spin_angle_lut.get_spin_angle_index(spin_angle[*indices_of_event])
-                    position_i = apd_id_of_event - 1
+                    position_i = position_of_event - 1
                     output[species_i, epoch_i, priority_i, position_i, spin_angle_i, energy_i] += 1
 
     return CodiceLo3dData(data_in_3d_bins=output, mass_bin_lookup=mass_species_bin_lookup,

@@ -12,7 +12,6 @@ from imap_l3_processing.codice.l3.lo.codice_lo_l3a_partial_densities_dependencie
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_ratios_dependencies import CodiceLoL3aRatiosDependencies
 from imap_l3_processing.codice.l3.lo.direct_events.science.angle_lookup import SpinAngleLookup, \
     PositionToElevationLookup
-from imap_l3_processing.codice.l3.lo.direct_events.science.efficiency_lookup import EfficiencyLookup
 from imap_l3_processing.codice.l3.lo.direct_events.science.energy_lookup import EnergyLookup
 from imap_l3_processing.codice.l3.lo.models import CodiceLoL3aPartialDensityDataProduct, CodiceLoL2DirectEventData, \
     CodiceLoL3aDirectEventDataProduct, CodiceLoPartialDensityData, CodiceLoL3aRatiosDataProduct, \
@@ -20,8 +19,7 @@ from imap_l3_processing.codice.l3.lo.models import CodiceLoL3aPartialDensityData
 from imap_l3_processing.codice.l3.lo.science.codice_lo_calculations import calculate_partial_densities, \
     calculate_mass, calculate_mass_per_charge, \
     rebin_counts_by_energy_and_spin_angle, rebin_to_counts_by_species_elevation_and_spin_sector, normalize_counts, \
-    combine_priorities_and_convert_to_rate, rebin_3d_distribution_azimuth_to_elevation, convert_count_rate_to_intensity, \
-    compute_geometric_factors, CODICE_LO_NUM_AZIMUTH_BINS
+    combine_priorities_and_convert_to_rate, rebin_3d_distribution_azimuth_to_elevation, convert_count_rate_to_intensity
 from imap_l3_processing.data_utils import safe_divide
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
@@ -166,19 +164,19 @@ class CodiceLoProcessor(Processor):
 
     def process_l3a_direct_event_data_product(self,
                                               dependencies: CodiceLoL3aDirectEventsDependencies) -> CodiceLoL3aDirectEventDataProduct:
-        codice_sw_priority_rates_l1a_data = dependencies.codice_lo_l1a_sw_priority_rates
-        codice_nsw_priority_rates_l1a_data = dependencies.codice_lo_l1a_nsw_priority_rates
+        codice_sw_priority_counts_l1a_data = dependencies.codice_lo_l1a_sw_priority_rates
+        codice_nsw_priority_counts_l1a_data = dependencies.codice_lo_l1a_nsw_priority_rates
         codice_direct_events: CodiceLoL2DirectEventData = dependencies.codice_l2_direct_events
         event_buffer = codice_direct_events.priority_events[0].tof.shape[-1]
         mass_coefficient_lookup = dependencies.mass_coefficient_lookup
-        priority_rates_for_events = [
-            codice_sw_priority_rates_l1a_data.p0_tcrs,
-            codice_sw_priority_rates_l1a_data.p1_hplus,
-            codice_sw_priority_rates_l1a_data.p2_heplusplus,
-            codice_sw_priority_rates_l1a_data.p3_heavies,
-            codice_sw_priority_rates_l1a_data.p4_dcrs,
-            codice_nsw_priority_rates_l1a_data.p5_heavies,
-            codice_nsw_priority_rates_l1a_data.p6_hplus_heplusplus
+        priority_counts_for_events = [
+            codice_sw_priority_counts_l1a_data.p0_tcrs,
+            codice_sw_priority_counts_l1a_data.p1_hplus,
+            codice_sw_priority_counts_l1a_data.p2_heplusplus,
+            codice_sw_priority_counts_l1a_data.p3_heavies,
+            codice_sw_priority_counts_l1a_data.p4_dcrs,
+            codice_nsw_priority_counts_l1a_data.p5_heavies,
+            codice_nsw_priority_counts_l1a_data.p6_hplus_heplusplus
         ]
 
         (mass_per_charge,
@@ -188,16 +186,18 @@ class CodiceLoProcessor(Processor):
          apd_id,
          spin_angle,
          elevation,
+         position,
          multi_flag,
          pha_type,
          tof) = [
-            np.full((len(codice_direct_events.epoch), len(priority_rates_for_events), event_buffer), np.nan)
-            for _ in range(10)]
+            np.full((len(codice_direct_events.epoch), len(priority_counts_for_events), event_buffer), np.nan)
+            for _ in range(11)]
 
-        (data_quality, num_events) = [np.full((len(codice_direct_events.epoch), len(priority_rates_for_events)), np.nan)
-                                      for _ in range(2)]
+        (data_quality, num_events) = [
+            np.full((len(codice_direct_events.epoch), len(priority_counts_for_events)), np.nan)
+            for _ in range(2)]
 
-        energy_lut = EnergyLookup.from_bin_centers(codice_sw_priority_rates_l1a_data.energy_table)
+        energy_lut = EnergyLookup.from_bin_centers(codice_sw_priority_counts_l1a_data.energy_table)
         spin_angle_lut = SpinAngleLookup()
         normalization = np.full((len(codice_direct_events.epoch), CODICE_LO_L2_NUM_PRIORITIES,
                                  energy_lut.num_bins, spin_angle_lut.num_bins), np.nan)
@@ -205,7 +205,7 @@ class CodiceLoProcessor(Processor):
         try:
 
             for priority_index, (priority_event, priority_counts_total_count) in enumerate(
-                    zip(codice_direct_events.priority_events, priority_rates_for_events)):
+                    zip(codice_direct_events.priority_events, priority_counts_for_events)):
                 mass_per_charge[:, priority_index, :] = calculate_mass_per_charge(priority_event)
                 mass[:, priority_index, :] = calculate_mass(priority_event, mass_coefficient_lookup)
                 energy[:, priority_index, :] = priority_event.apd_energy
@@ -215,6 +215,7 @@ class CodiceLoProcessor(Processor):
                 tof[:, priority_index, :] = priority_event.tof
                 spin_angle[:, priority_index, :] = priority_event.spin_angle
                 elevation[:, priority_index, :] = priority_event.elevation
+                position[:, priority_index, :] = priority_event.position
                 data_quality[:, priority_index] = priority_event.data_quality
                 num_events[:, priority_index] = priority_event.num_events
 
@@ -242,7 +243,8 @@ class CodiceLoProcessor(Processor):
             tof=tof,
             data_quality=data_quality,
             spin_angle=spin_angle,
-            elevation=elevation
+            elevation=elevation,
+            position=position
         )
 
     def process_l3a_3d_distribution_product(self, dependencies: CodiceLoL3a3dDistributionsDependencies):
@@ -251,24 +253,26 @@ class CodiceLoProcessor(Processor):
         l3a_de_mass_per_charge = dependencies.l3a_direct_event_data.mass_per_charge
         l3a_de_energy = dependencies.l3a_direct_event_data.event_energy
         l3a_de_spin_angle = dependencies.l3a_direct_event_data.spin_angle
-        l3a_de_apd_id = dependencies.l3a_direct_event_data.apd_id
+        l3a_de_position = dependencies.l3a_direct_event_data.position
         l3a_de_normalization = dependencies.l3a_direct_event_data.normalization
         l3a_de_num_events = dependencies.l3a_direct_event_data.num_events
 
         l1a_energy_table = dependencies.l1a_sw_data.energy_table
         l1a_acquisition_time = dependencies.l1a_sw_data.acquisition_time_per_step
+        l1_sw_rgfo_half_spins = dependencies.l1a_sw_data.rgfo_half_spin
 
         mass_species_bin_lookup = dependencies.mass_species_bin_lookup
         spin_angle_lut = SpinAngleLookup()
         position_elevation_lut = PositionToElevationLookup()
         energy_lut = EnergyLookup.from_bin_centers(l1a_energy_table)
+        geometric_factor_lut = dependencies.geometric_factors_lookup
 
         counts_3d_data = rebin_to_counts_by_species_elevation_and_spin_sector(
             mass=l3a_de_mass,
             mass_per_charge=l3a_de_mass_per_charge,
             energy=l3a_de_energy,
             spin_angle=l3a_de_spin_angle,
-            apd_id=l3a_de_apd_id,
+            position=l3a_de_position,
             mass_species_bin_lookup=mass_species_bin_lookup,
             spin_angle_lut=spin_angle_lut,
             position_elevation_lut=position_elevation_lut,
@@ -279,14 +283,10 @@ class CodiceLoProcessor(Processor):
         normalized_counts = normalize_counts(counts_3d_data, l3a_de_normalization)
         normalized_count_rates = combine_priorities_and_convert_to_rate(normalized_counts, l1a_acquisition_time)
 
-        efficiency_lookup = EfficiencyLookup.create_with_fake_data(mass_species_bin_lookup.get_num_species(),
-                                                                   CODICE_LO_NUM_AZIMUTH_BINS,
-                                                                   energy_lut.num_bins)
+        geometric_factors = geometric_factor_lut.get_geometric_factors(l1_sw_rgfo_half_spins)
 
-        num_epochs = dependencies.l3a_direct_event_data.epoch.shape[0]
-        geometric_factors = compute_geometric_factors(num_epochs, energy_lut.num_bins)
-
-        intensities = convert_count_rate_to_intensity(normalized_count_rates, efficiency_lookup, geometric_factors)
+        intensities = convert_count_rate_to_intensity(normalized_count_rates, dependencies.efficiency_factors_lut,
+                                                      geometric_factors)
         rebin_3d_distribution_azimuth_to_elevation(intensities, position_elevation_lut)
 
         return CodiceLoL3a3dDistributionDataProduct(

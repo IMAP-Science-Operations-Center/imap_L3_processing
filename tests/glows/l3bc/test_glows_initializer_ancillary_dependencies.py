@@ -26,10 +26,10 @@ class TestGlowsInitializerAncillaryDependencies(unittest.TestCase):
         version = 'v001'
         start_date = '20250423'
 
-        uv_anisotropy_factor_path = f'{mission}_{instrument}_uv-anisotropy-1cr_{start_date}_{version}.dat'
+        uv_anisotropy_factor_path = f'{mission}_{instrument}_uv-anisotropy-1CR_{start_date}_{version}.dat'
         waw_helioion_mp_path = f'{mission}_{instrument}_WawHelioIonMP_{start_date}_{version}.dat'
         bad_days_list_path = f'{mission}_{instrument}_bad-days-list_{start_date}_{version}.dat'
-        pipeline_settings_path = f'{mission}_{instrument}_pipeline-settings-l3bcd_{start_date}_{version}.json'
+        pipeline_settings_path = f'{mission}_{instrument}_pipeline-settings-l3bcde_{start_date}_{version}.json'
 
         uv_anisotropy_factor_input = AncillaryInput(uv_anisotropy_factor_path)
         waw_helioion_mp_input = AncillaryInput(waw_helioion_mp_path)
@@ -43,7 +43,7 @@ class TestGlowsInitializerAncillaryDependencies(unittest.TestCase):
             pipeline_settings_input
         )
 
-        mock_download.return_value = get_test_data_path("glows/imap_glows_pipeline-settings-l3bcd_20250423_v001.json")
+        mock_download.return_value = get_test_data_path("glows/imap_glows_pipeline-settings-l3bcde_20250423_v001.json")
 
         f107_index_path = TEMP_CDF_FOLDER_PATH / "f107_fluxtable.txt"
         lyman_alpha_path = TEMP_CDF_FOLDER_PATH / "lyman_alpha_composite.nc"

@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
-from datetime import datetime, timedelta
 from pathlib import Path
+from unittest import skipIf
 from unittest.mock import patch, Mock, MagicMock
 
 import numpy as np
@@ -534,10 +534,10 @@ class TestCalculatePickupIon(SpiceTestCase):
         self.assertAlmostEqual(24456817.05142866, result.n)
         self.assertAlmostEqual(824377.0631439432, result.s)
 
-    LAST_SUCCESSFUL_RUN = datetime(2025, 5, 14, 16, 00)
+    LAST_SUCCESSFUL_RUN = datetime(2025, 5, 21, 16, 00)
     ALLOWED_GAP_TIME = timedelta(days=7)
 
-    # @skipIf(datetime.now() < LAST_SUCCESSFUL_RUN + ALLOWED_GAP_TIME, "expensive test already run in last week")
+    @skipIf(datetime.now() < LAST_SUCCESSFUL_RUN + ALLOWED_GAP_TIME, "expensive test already run in last week")
     @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.spiceypy")
     def test_calculate_pickup_ions_with_minimize(self, mock_spice):
         ephemeris_time_for_epoch = 100000

@@ -2,6 +2,7 @@ import unittest
 from datetime import datetime
 
 import numpy as np
+from imap_processing.ena_maps.utils.coordinates import CoordNames
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.ultra.l3.models import UltraGlowsL3eData, UltraL1CPSet
@@ -33,9 +34,9 @@ class TestModels(unittest.TestCase):
         with CDF(str(path_to_cdf)) as expected:
             self.assertEqual(expected_epoch, actual.epoch)
             np.testing.assert_array_equal(expected["counts"][...], actual.counts)
-            np.testing.assert_array_equal(expected["energy"][...], actual.energy)
+            np.testing.assert_array_equal(expected[CoordNames.ENERGY_ULTRA.value][...], actual.energy)
             np.testing.assert_array_equal(expected["exposure_time"][...], actual.exposure)
-            np.testing.assert_array_equal(expected["healpix_index"][...], actual.healpix_index)
+            np.testing.assert_array_equal(expected[CoordNames.HEALPIX_INDEX.value][...], actual.healpix_index)
             np.testing.assert_array_equal(expected["latitude"][...], actual.latitude)
             np.testing.assert_array_equal(expected["longitude"][...], actual.longitude)
             np.testing.assert_array_equal(expected["sensitivity"][...], actual.sensitivity)

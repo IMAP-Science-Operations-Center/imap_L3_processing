@@ -78,8 +78,10 @@ from imap_l3_processing.ultra.l3.models import UltraL1CPSet, UltraGlowsL3eData
 from imap_l3_processing.ultra.l3.ultra_l3_dependencies import UltraL3Dependencies, UltraL3SpectralIndexDependencies
 from imap_l3_processing.ultra.l3.ultra_processor import UltraProcessor
 from imap_l3_processing.utils import save_data, read_l1d_mag_data
+from scripts.codice.create_fake_efficiency_ancillary import create_efficiency_lookup
 from scripts.codice.create_more_accurate_l3a_direct_event import create_more_accurate_l3a_direct_events_cdf
-from scripts.codice.create_more_accurate_l3a_direct_event_input import modify_l1a_priority_counts
+from scripts.codice.create_more_accurate_l3a_direct_event_input import modify_l1a_priority_counts, \
+    modify_l2_direct_events
 from scripts.hi.create_hi_full_spin_deps import create_hi_full_spin_deps
 from scripts.ultra.create_example_ultra_l1c_pset import _write_ultra_l1c_cdf_with_parents
 from scripts.ultra.create_example_ultra_l2_map import _write_ultra_l2_cdf_with_parents
@@ -125,13 +127,18 @@ def create_codice_lo_l3a_partial_densities_cdf():
     return cdf_path
 
 
-def create_codice_lo_l3a_direct_events_cdf():
-    codice_lo_l2_direct_events = CodiceLoL2DirectEventData.read_from_cdf(
+def create_codice_lo_l3a_direct_events_cdf(l1a_paths: Optional[tuple[Path, Path]] = None) -> Path:
+    codice_lo_l2_direct_event_cdf_path = modify_l2_direct_events(
         get_test_instrument_team_data_path('codice/lo/imap_codice_l2_lo-direct-events_20241110_v002.cdf'))
 
-    codice_lo_l1a_nsw_priority_path, codice_lo_l1a_sw_priority_path = modify_l1a_priority_counts(
-        get_test_instrument_team_data_path('codice/lo/imap_codice_l1a_lo-nsw-priority_20241110_v002.cdf'),
-        get_test_instrument_team_data_path('codice/lo/imap_codice_l1a_lo-sw-priority_20241110_v002.cdf'))
+    codice_lo_l2_direct_events = CodiceLoL2DirectEventData.read_from_cdf(codice_lo_l2_direct_event_cdf_path)
+
+    if l1a_paths is None:
+        codice_lo_l1a_nsw_priority_path, codice_lo_l1a_sw_priority_path = modify_l1a_priority_counts(
+            get_test_instrument_team_data_path('codice/lo/imap_codice_l1a_lo-nsw-priority_20241110_v002.cdf'),
+            get_test_instrument_team_data_path('codice/lo/imap_codice_l1a_lo-sw-priority_20241110_v002.cdf'))
+    else:
+        codice_lo_l1a_nsw_priority_path, codice_lo_l1a_sw_priority_path = l1a_paths
 
     time.sleep(3)  # wait for files to close before trying to read them
 
@@ -199,19 +206,28 @@ def create_codice_lo_l3a_abundances_cdf():
 
 
 def create_codice_lo_l3a_3d_distributions_cdf():
-    codice_lo_l3a_direct_event_path = Path(create_codice_lo_l3a_direct_events_cdf())
+    l1a_paths = modify_l1a_priority_counts(
+        get_test_instrument_team_data_path('codice/lo/imap_codice_l1a_lo-nsw-priority_20241110_v002.cdf'),
+        get_test_instrument_team_data_path('codice/lo/imap_codice_l1a_lo-sw-priority_20241110_v002.cdf'))
+
+    codice_lo_l3a_direct_event_path = Path(create_codice_lo_l3a_direct_events_cdf(l1a_paths))
     accurate_codice_lo_l3a_direct_event_path = create_more_accurate_l3a_direct_events_cdf(
         codice_lo_l3a_direct_event_path)
 
-    codice_lo_l1a_nsw_path = Path("instrument_team_data/codice/lo/imap_codice_l1a_lo-nsw-priority_20241110_v002.cdf")
-    codice_lo_l1a_sw_path = Path("instrument_team_data/codice/lo/imap_codice_l1a_lo-sw-priority_20241110_v002.cdf")
-    csv_path = get_test_data_path('codice/species_mass_bins.csv')
+    codice_lo_l1a_nsw_priority_path, codice_lo_l1a_sw_priority_path = l1a_paths
+
+    mass_species_bin_path = get_test_data_path('codice/imap_codice_lo-mass-species-bin-lookup_20241110_v001.csv')
+    geometric_factors_path = get_test_data_path('codice/imap_codice_lo-geometric-factors_20241110_v001.csv')
+
+    efficiency_factors_lut_path = create_efficiency_lookup(mass_species_bin_path)
 
     deps = CodiceLoL3a3dDistributionsDependencies.from_file_paths(
         l3a_file_path=accurate_codice_lo_l3a_direct_event_path,
-        l1a_sw_file_path=codice_lo_l1a_sw_path,
-        l1a_nsw_file_path=codice_lo_l1a_nsw_path,
-        mass_species_bin_lut=csv_path,
+        l1a_sw_file_path=codice_lo_l1a_sw_priority_path,
+        l1a_nsw_file_path=codice_lo_l1a_nsw_priority_path,
+        mass_species_bin_lut=mass_species_bin_path,
+        geometric_factors_lut=geometric_factors_path,
+        efficiency_factors_lut=efficiency_factors_lut_path,
     )
 
     input_metadata = InputMetadata(
@@ -500,7 +516,7 @@ def run_glows_l3bc_processor_and_initializer(_, mock_query):
     bad_days_list = AncillaryInput('imap_glows_bad-days-list_20100101_v001.dat')
     waw_helio_ion = AncillaryInput('imap_glows_WawHelioIonMP_20100101_v002.json')
     uv_anisotropy = AncillaryInput('imap_glows_uv-anisotropy-1cr_20250514_v002.json')
-    pipeline_settings = AncillaryInput('imap_glows_pipeline-settings-l3bcd_20250514_v004.json')
+    pipeline_settings = AncillaryInput('imap_glows_pipeline-settings-l3bcde_20250514_v004.json')
     input_collection = ProcessingInputCollection(bad_days_list, waw_helio_ion, uv_anisotropy, pipeline_settings)
 
     processor = GlowsProcessor(dependencies=input_collection, input_metadata=input_metadata)
@@ -745,7 +761,7 @@ def run_glows_l3d(mock_shutil):
             'e-dens': get_test_instrument_team_data_path('glows/imap_glows_electron-density-2010a_v003.dat'),
         },
         'pipeline_settings': get_test_instrument_team_data_path(
-            'glows/imap_glows_pipeline-settings-l3bcd_20250514_v004.json')
+            'glows/imap_glows_pipeline-settings-l3bcde_20250514_v004.json')
     }
 
     l3b_file_paths = [

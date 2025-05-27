@@ -29,6 +29,11 @@ if __name__ == "__main__":
                             '--start-date', '20250415', '--version', 'v002', '--descriptor',
                             'h90-ena-h-sf-sp-full-hae-4deg-6mo', '--dependency',
                             '[{"type": "science", "files": ["imap_hi_l2_h90-ena-h-sf-nsp-ram-hae-4deg-6mo_20250415_v001.cdf"]},\n{"type": "science", "files": ["imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-6mo_20250415_v001.cdf"]}]'])
+        case "ultra", "survival":
+            subprocess.run([sys.executable, 'imap_l3_data_processor.py', '--instrument', 'ultra', '--data-level', 'l3',
+                            '--start-date', '20250415', '--version', 'v002', '--descriptor',
+                            'u45-ena-h-hf-sp-full-hae-4deg-6mo', '--dependency',
+                            '[{"type": "science", "files": ["imap_ultra_l2_u90-ena-h-sf-nsp-full-hae-4deg-6mo_20250415_v001.cdf"]}]'])
         case "glows", "l3b":
             subprocess.run([sys.executable, 'imap_l3_data_processor.py', '--instrument', 'glows', '--data-level', 'l3b',
                             '--start-date', '20100104', '--version', 'v004', '--dependency',
@@ -42,7 +47,7 @@ if __name__ == "__main__":
             if os.path.exists(PATH_TO_L3D_TOOLKIT / 'data_l3c'): shutil.rmtree(PATH_TO_L3D_TOOLKIT / 'data_l3c')
             if os.path.exists(PATH_TO_L3D_TOOLKIT / 'data_l3d'): shutil.rmtree(PATH_TO_L3D_TOOLKIT / 'data_l3d')
             if os.path.exists(PATH_TO_L3D_TOOLKIT / 'data_l3d_txt'): shutil.rmtree(PATH_TO_L3D_TOOLKIT / 'data_l3d_txt')
-            
+
             subprocess.run([sys.executable, 'imap_l3_data_processor.py', '--instrument', 'glows', '--data-level', 'l3d',
                             '--start-date', '20100101', '--version', 'v010', '--descriptor',
                             'solar-hist', '--dependency',
@@ -55,7 +60,7 @@ if __name__ == "__main__":
                             '{"type": "ancillary", "files": ["imap_glows_electron-density-2010a_20100101_v003.dat"]},'
                             '{"type": "ancillary", "files": ["imap_glows_lya-2010a_20100101_v003.dat"]},'
                             '{"type": "ancillary", "files": ["imap_glows_l3b-archive_20100422_v011.zip"]},'
-                            '{"type": "ancillary", "files": ["imap_glows_pipeline-settings-l3bcd_20100101_v006.json"]}]'
+                            '{"type": "ancillary", "files": ["imap_glows_pipeline-settings-l3bcde_20100101_v006.json"]}]'
                             ])
         case "swapi", None:
             subprocess.run([sys.executable, 'imap_l3_data_processor.py', '--instrument', 'swapi', '--data-level', 'l3a',

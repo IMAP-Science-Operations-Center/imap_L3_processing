@@ -5,7 +5,8 @@ from unittest.mock import patch, Mock
 import numpy as np
 
 from imap_l3_processing.glows.l3e.glows_l3e_utils import determine_call_args_for_l3e_executable, \
-    determine_repointing_numbers_for_cr
+    determine_l3e_files_to_produce
+from tests.glows.l3bc.test_utils import create_imap_data_access_json
 from tests.test_helpers import get_test_data_path
 
 
@@ -48,32 +49,31 @@ class TestGlowsL3EUtils(unittest.TestCase):
             ["20250501_000000", "2025.33014", "0.4679210985587912", "261.6337638953414", "51.56620156177409", str(vx),
              str(vy), str(vz), "351.3801892514359", "20.0000", "90.000"], call_args)
 
-    def test_determine_repointing_numbers_for_cr_when_cr_begins_in_repointing(self):
-        repointing_file = get_test_data_path('fake_1_day_repointing_file.csv')
-        cr_number = 1983
+    @patch("imap_l3_processing.glows.l3e.glows_l3e_utils.query")
+    def test_determine_l3e_files_to_produce(self, mock_query: Mock):
+        last_processed_cr = 2094
+        first_cr_processed = 2093
+        descriptor = "survival-probability-hi-45"
+        version = "v007"
+        repoint_pathing = get_test_data_path("fake_1_day_repointing_file.csv")
+        l3e_files = [
+            create_imap_data_access_json(
+                file_path="imap/glows/l3e/2010/02/imap_glows_l3e_survival-probability-hi-45_20100205-repointing03688_v007.cdf",
+                data_level="l3e",
+                descriptor="survival-probability-hi-45", start_date="20100205", version="v007", repointing=3688),
+            create_imap_data_access_json(
+                file_path="imap/glows/l3e/2010/03/imap_glows_l3e_survival-probability-hi-45_20100305-repointing03716_v007.cdf",
+                data_level="l3e",
+                descriptor="survival-probability-hi-45", start_date="20100305", version="v007", repointing=3716),
+        ]
 
-        expected_repointings = np.arange(682, 710)
+        mock_query.return_value = l3e_files
+        expected_repointings = np.concatenate((np.arange(3682, 3688), np.arange(3689, 3716), np.arange(3717, 3736)))
 
-        repointings = determine_repointing_numbers_for_cr(cr_number, repointing_file)
+        actual_repointings = determine_l3e_files_to_produce(descriptor, first_cr_processed, last_processed_cr, version,
+                                                            repoint_pathing)
 
-        np.testing.assert_array_equal(repointings, expected_repointings)
+        mock_query.assert_called_once_with(instrument="glows", descriptor=descriptor, data_level="l3e", version=version)
 
-    def test_determine_repointing_numbers_for_cr_when_cr_begins_in_pointing(self):
-        repointing_file = get_test_data_path('fake_1_day_repointing_file.csv')
-        cr_number = 1984
-
-        expected_repointings = np.arange(709, 737)
-
-        repointings = determine_repointing_numbers_for_cr(cr_number, repointing_file)
-
-        np.testing.assert_array_equal(repointings, expected_repointings)
-
-    def test_determine_repointing_numbers_for_cr_handles_repointings_longer_than_24hrs(self):
-        repointing_file = get_test_data_path('fake_repointing_file.csv')
-        cr_number = 1958
-
-        expected_repointings = np.arange(0, 23)
-
-        repointings = determine_repointing_numbers_for_cr(cr_number, repointing_file)
-
-        np.testing.assert_array_equal(repointings, expected_repointings)
+        # self.assertEqual(len(expected_repointings), len(actual_repointings))
+        np.testing.assert_array_equal(actual_repointings, expected_repointings)
