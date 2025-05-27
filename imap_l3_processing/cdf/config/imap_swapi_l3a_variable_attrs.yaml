@@ -48,11 +48,27 @@ pui_cooling_index:
   LABLAXIS: PUI cooling idx
   UNITS: ' '
   VALIDMIN: 0
-  VALIDMAX: 9223372036854775807
+  VALIDMAX: 5
   FILLVAL: -1.000000e+31
   SCALETYP: linear
   SCALEMIN: 0
   SCALEMAX: 5
+  DELTA_PLUS_VAR: pui_cooling_index_delta
+  DELTA_MINUS_VAR: pui_cooling_index_delta
+pui_cooling_index_delta:
+  NAME: pui_cooling_index_delta
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Pickup ion cooling index uncertainty
+  DEPEND_0: epoch
+  VAR_TYPE: support_data
+  RECORD_VARYING: RV
+  FIELDNAM: PUI Cooling Index
+  LABLAXIS: PUI cooling idx delta
+  FORMAT: F19.3
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 5
+  FILLVAL: -1.000000e+31
 pui_ionization_rate:
   NAME: pui_ionization_rate
   DATA_TYPE: CDF_REAL4
@@ -67,11 +83,27 @@ pui_ionization_rate:
   LABLAXIS: PUI IR
   UNITS: s!E-1!N
   VALIDMIN: 0
-  VALIDMAX: 9223372036854775807
+  VALIDMAX: 1.0
   FILLVAL: -1.000000e+31
   SCALE_TYP: linear
   SCALEMIN: 0
   SCALEMAX: 3.0e-7
+  DELTA_PLUS_VAR: pui_ionization_rate_delta
+  DELTA_MINUS_VAR: pui_ionization_rate_delta
+pui_ionization_rate_delta:
+  NAME: pui_ionization_rate_delta
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Pickup ion ionization rate uncertainty
+  DEPEND_0: epoch
+  VAR_TYPE: support_data
+  RECORD_VARYING: RV
+  FIELDNAM: PUI Ionization Rate Delta
+  LABLAXIS: PUI IR delta
+  FORMAT: F19.3
+  UNITS: s!E-1!N
+  VALIDMIN: 0
+  VALIDMAX: 1.0
+  FILLVAL: -1.000000e+31
 pui_cutoff_speed:
   NAME: pui_cutoff_speed
   DATA_TYPE: CDF_REAL4
@@ -86,11 +118,27 @@ pui_cutoff_speed:
   LABLAXIS: PUI cutoff speed
   UNITS: km/s
   VALIDMIN: 0
-  VALIDMAX: 9223372036854775807
+  VALIDMAX: 2000
   FILLVAL: -1.000000e+31
   SCALETYP: linear
   SCALEMIN: 0
   SCALEMAX: 1000
+  DELTA_PLUS_VAR: pui_cutoff_speed_delta
+  DELTA_MINUS_VAR: pui_cutoff_speed_delta
+pui_cutoff_speed_delta:
+  NAME: pui_cutoff_speed_delta
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Pickup ion cutoff speed delta
+  DEPEND_0: epoch
+  VAR_TYPE: support_data
+  RECORD_VARYING: RV
+  FIELDNAM: PUI Cutoff Speed Delta
+  LABLAXIS: PUI cutoff speed delta
+  FORMAT: F19.3
+  UNITS: km/s
+  VALIDMIN: 0
+  VALIDMAX: 2000
+  FILLVAL: -1.000000e+31
 pui_background_count_rate:
   NAME: pui_background_count_rate
   DATA_TYPE: CDF_REAL4
@@ -110,6 +158,22 @@ pui_background_count_rate:
   SCALETYP: linear
   SCALEMIN: 0
   SCALEMAX: 0.2
+  DELTA_PLUS_VAR: pui_background_count_rate_delta
+  DELTA_MINUS_VAR: pui_background_count_rate_delta
+pui_background_count_rate_delta:
+  NAME: pui_background_count_rate_delta
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Pickup ion background count rate delta
+  DEPEND_0: epoch
+  VAR_TYPE: support_data
+  RECORD_VARYING: RV
+  FIELDNAM: PUI background count rate Delta
+  LABLAXIS: PUI background count rate delta
+  FORMAT: F19.3
+  UNITS: s!E-1!N
+  VALIDMIN: 0
+  VALIDMAX: 1.0
+  FILLVAL: -1.000000e+31
 pui_density:
   NAME: pui_density
   DATA_TYPE: CDF_REAL4
@@ -129,6 +193,22 @@ pui_density:
   SCALETYP: linear
   SCALEMIN: 0
   SCALEMAX: 0.001
+  DELTA_PLUS_VAR: pui_density_delta
+  DELTA_MINUS_VAR: pui_density_delta
+pui_density_delta:
+  NAME: pui_density_delta
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Pickup ion density delta
+  DEPEND_0: epoch
+  VAR_TYPE: support_data
+  RECORD_VARYING: RV
+  FIELDNAM: PUI Density Delta
+  LABLAXIS: PUI density delta
+  FORMAT: F19.3
+  UNITS: cm!E-3!N
+  VALIDMIN: 0
+  VALIDMAX: 1.0
+  FILLVAL: -1.000000e+31
 pui_temperature:
   NAME: pui_temperature
   DATA_TYPE: CDF_REAL4
@@ -148,6 +228,22 @@ pui_temperature:
   SCALETYP: linear
   SCALEMIN: 0
   SCALEMAX: 50000000
+  DELTA_PLUS_VAR: pui_temperature_delta
+  DELTA_MINUS_VAR: pui_temperature_delta
+pui_temperature_delta:
+  NAME: pui_temperature_delta
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Pickup ion temperature delta
+  DEPEND_0: epoch
+  VAR_TYPE: support_data
+  RECORD_VARYING: RV
+  FIELDNAM: PUI Temperature Delta
+  LABLAXIS: PUI temperature delta
+  FORMAT: F19.3
+  UNITS: K
+  VALIDMIN: 0
+  VALIDMAX: 5.0e+7
+  FILLVAL: -1.000000e+31
 proton_sw_speed:
   NAME: proton_sw_speed
   DATA_TYPE: CDF_REAL4

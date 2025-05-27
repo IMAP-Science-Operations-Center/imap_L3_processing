@@ -30,6 +30,7 @@ from imap_l3_processing.codice.l3.lo.direct_events.science.mass_coefficient_look
 from imap_l3_processing.codice.l3.lo.models import CodiceLoL2SWSpeciesData, CodiceLoL2DirectEventData, \
     CodiceLoL1aSWPriorityRates, CodiceLoL1aNSWPriorityRates
 from imap_l3_processing.codice.l3.lo.sectored_intensities.science.mass_per_charge_lookup import MassPerChargeLookup
+from imap_l3_processing.constants import ONE_AU_IN_KM
 from imap_l3_processing.glows.glows_initializer import GlowsInitializer
 from imap_l3_processing.glows.glows_processor import GlowsProcessor
 from imap_l3_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
@@ -83,8 +84,6 @@ from scripts.codice.create_more_accurate_l3a_direct_event import create_more_acc
 from scripts.codice.create_more_accurate_l3a_direct_event_input import modify_l1a_priority_counts, \
     modify_l2_direct_events
 from scripts.hi.create_hi_full_spin_deps import create_hi_full_spin_deps
-from scripts.ultra.create_example_ultra_l1c_pset import _write_ultra_l1c_cdf_with_parents
-from scripts.ultra.create_example_ultra_l2_map import _write_ultra_l2_cdf_with_parents
 from tests.test_helpers import get_test_data_path, get_test_instrument_team_data_path, environment_variables, \
     try_get_many_run_local_paths
 
@@ -265,10 +264,32 @@ def create_swapi_l3b_cdf(geometric_calibration_file, efficiency_calibration_file
     return cdf_path
 
 
+@patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.spiceypy")
 def create_swapi_l3a_cdf(proton_temperature_density_calibration_file, alpha_temperature_density_calibration_file,
                          clock_angle_and_flow_deflection_calibration_file, geometric_factor_calibration_file,
                          instrument_response_calibration_file, density_of_neutral_helium_calibration_file,
-                         cdf_file):
+                         cdf_file, mock_spice):
+    ephemeris_time_for_epoch = 100000
+    mock_spice.unitim.return_value = ephemeris_time_for_epoch
+    mock_light_time = 122.0
+    mock_spice.spkezr.return_value = (np.array([0, 0, 0, 0, 0, 0]), mock_light_time)
+    mock_spice.latrec.return_value = np.array([0, 2, 0])
+    mock_spice.reclat.return_value = np.array([0.99 * ONE_AU_IN_KM, np.deg2rad(255.7), 0.6])
+
+    def mock_sxform(from_frame, to_frame, et):
+        if from_frame == "IMAP_SWAPI":
+            return np.eye(6)
+        return np.array([
+            [0, 1, 0, 0, 0, 0],
+            [0, 0, 1, 0, 0, 0],
+            [1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 0],
+            [0, 0, 0, 0, 0, 1],
+            [0, 0, 0, 1, 0, 0],
+        ])
+
+    mock_spice.sxform.side_effect = mock_sxform
+
     proton_temperature_density_calibration_table = ProtonTemperatureAndDensityCalibrationTable.from_file(
         proton_temperature_density_calibration_file)
     alpha_temperature_density_calibration_table = AlphaTemperatureDensityCalibrationTable.from_file(
@@ -1181,25 +1202,33 @@ if __name__ == "__main__":
             )
             processor = UltraProcessor(input_metadata=processor_input_metadata, dependencies=Mock())
 
-            missing_paths, [l1c_dependency_path, l2_map_path] = try_get_many_run_local_paths([
-                "ultra/fake_l1c_psets/test_pset.cdf",
-                "ultra/fake_l2_maps/test_l2_map.cdf"
+            #@formatter:off
+            missing_paths, [l2_map_path, *l1c_dependency_paths] = try_get_many_run_local_paths([
+                "ultra/20250415-20250419/imap_ultra_l2_u90-ena-h-sf-nsp-full-hae-4deg-6mo_20250415_v001.cdf",
+                "ultra/20250415-20250419/ultra_l1c/imap_ultra_l1c_45sensor-spacecraftpset_20250415-repoint00001_v001.cdf",
+                "ultra/20250415-20250419/ultra_l1c/imap_ultra_l1c_45sensor-spacecraftpset_20250416-repoint00002_v001.cdf",
+                "ultra/20250415-20250419/ultra_l1c/imap_ultra_l1c_45sensor-spacecraftpset_20250417-repoint00003_v001.cdf",
+                "ultra/20250415-20250419/ultra_l1c/imap_ultra_l1c_45sensor-spacecraftpset_20250418-repoint00004_v001.cdf",
             ])
+            # @formatter:on
 
-            if missing_paths:
-                _write_ultra_l1c_cdf_with_parents()
-                _write_ultra_l2_cdf_with_parents()
-
-            l1c_dependency = UltraL1CPSet.read_from_path(l1c_dependency_path)
+            l1c_dependency = [UltraL1CPSet.read_from_path(l1c_dependency_path) for l1c_dependency_path in
+                              l1c_dependency_paths]
 
             l3e_glows_paths = [
-                get_test_data_path(
-                    "ultra/fake_l3e_survival_probabilities/imap_glows_l3e_survival-probabilities-ultra_20250901_v001.cdf")
+                Path(
+                    "run_local_input_data/ultra/20250415-20250419/glows_l3e/imap_glows_l3e_survival-probabilities-ultra_20250415_v001.cdf"),
+                Path(
+                    "run_local_input_data/ultra/20250415-20250419/glows_l3e/imap_glows_l3e_survival-probabilities-ultra_20250416_v001.cdf"),
+                Path(
+                    "run_local_input_data/ultra/20250415-20250419/glows_l3e/imap_glows_l3e_survival-probabilities-ultra_20250417_v001.cdf"),
+                Path(
+                    "run_local_input_data/ultra/20250415-20250419/glows_l3e/imap_glows_l3e_survival-probabilities-ultra_20250418_v001.cdf"),
             ]
             l3e_dependencies = [UltraGlowsL3eData.read_from_path(path) for path in l3e_glows_paths]
             l2_map_dependency = HealPixIntensityMapData.read_from_path(l2_map_path)
 
-            dependencies = UltraL3Dependencies(ultra_l1c_pset=[l1c_dependency], glows_l3e_sp=l3e_dependencies,
+            dependencies = UltraL3Dependencies(ultra_l1c_pset=l1c_dependency, glows_l3e_sp=l3e_dependencies,
                                                ultra_l2_map=l2_map_dependency)
 
             healpix_sp_corrected_data = processor._process_survival_probability(deps=dependencies)

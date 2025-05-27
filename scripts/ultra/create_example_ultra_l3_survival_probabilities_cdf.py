@@ -10,11 +10,7 @@ from spacepy.pycdf import CDF
 from tests.test_helpers import get_test_data_path
 
 
-def create_survival_probabilities_file(glows_file_path: Path, date_for_file: datetime):
-    filename = f"imap_glows_l3e_survival-probabilities-ultra_{date_for_file.strftime('%Y%m%d')}_v001.cdf"
-    cdf_file_path = get_test_data_path(f"ultra/fake_l3e_survival_probabilities/{filename}")
-
-    cdf_file_path.unlink(missing_ok=True)
+def create_survival_probabilities_file(glows_file_path: Path, date_for_file: datetime, cdf_file_path: Path):
     with open(glows_file_path) as input_data:
         energy_line = [line for line in input_data.readlines() if line.startswith("#energy_grid")]
         assert len(energy_line) == 1
@@ -72,4 +68,8 @@ if __name__ == "__main__":
 
     for i in range(num_psets_to_generate):
         date_to_set = start_date + timedelta(days=i)
-        create_survival_probabilities_file(input_file_path, date_to_set)
+        filename = f"imap_glows_l3e_survival-probabilities-ultra_{date_to_set.strftime('%Y%m%d')}_v001.cdf"
+        cdf_file_path = get_test_data_path(f"ultra/fake_l3e_survival_probabilities/{filename}")
+
+        cdf_file_path.unlink(missing_ok=True)
+        create_survival_probabilities_file(input_file_path, date_to_set, cdf_file_path)

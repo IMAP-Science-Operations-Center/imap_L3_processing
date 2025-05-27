@@ -11,9 +11,11 @@ import tests
 from imap_l3_processing.swe.l3.models import SweConfiguration
 from imap_l3_processing.swe.l3.science.moment_calculations import Moments, MomentFitResults
 
+run_local_data_path = Path(tests.__file__).parent.parent / "run_local_input_data"
+
 
 def get_run_local_data_path(extension: str) -> Path:
-    return Path(tests.__file__).parent.parent / "run_local_input_data" / extension
+    return run_local_data_path / extension
 
 
 def try_get_many_run_local_paths(extensions: list[str]) -> tuple[bool, list[Path]]:

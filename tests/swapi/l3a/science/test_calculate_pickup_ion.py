@@ -1,12 +1,14 @@
 from datetime import datetime, timedelta
 from pathlib import Path
 from unittest import skipIf
-from unittest.mock import patch, Mock
+from unittest.mock import patch, Mock, MagicMock
 
 import numpy as np
 import spacepy.pycdf
+from imap_processing.swapi.l2 import swapi_l2
+from lmfit import Parameters
 from spacepy.pycdf import CDF
-from uncertainties.unumpy import uarray
+from uncertainties import ufloat
 
 import imap_l3_processing
 from imap_l3_processing.constants import HYDROGEN_INFLOW_SPEED_IN_KM_PER_SECOND, \
@@ -20,7 +22,7 @@ from imap_l3_processing.swapi.l3a.science.calculate_pickup_ion import calculate_
     ForwardModel, convert_velocity_to_reference_frame, model_count_rate_integral, \
     calculate_pickup_ion_values, ModelCountRateCalculator, calculate_ten_minute_velocities, \
     calculate_pui_velocity_vector, calculate_solar_wind_velocity_vector, calculate_helium_pui_density, \
-    calculate_helium_pui_temperature
+    calculate_helium_pui_temperature, calc_chi_squared_lm_fit
 from imap_l3_processing.swapi.l3a.science.density_of_neutral_helium_lookup_table import \
     DensityOfNeutralHeliumLookupTable
 from imap_l3_processing.swapi.l3b.science.geometric_factor_calibration_table import GeometricFactorCalibrationTable
@@ -45,6 +47,14 @@ class TestCalculatePickupIon(SpiceTestCase):
 
         self.density_of_neutral_helium_lookup_table = DensityOfNeutralHeliumLookupTable.from_file(
             density_of_neutral_helium_lut_path)
+
+        self.instrument_response_collection = None
+
+    def get_response_lookup_table_collection(self) -> InstrumentResponseLookupTableCollection:
+        if self.instrument_response_collection is None:
+            response_lut_path = get_test_data_path("swapi/imap_swapi_instrument-response-lut_20241023_v000.zip")
+            self.instrument_response_collection = InstrumentResponseLookupTableCollection.from_file(response_lut_path)
+        return self.instrument_response_collection
 
     @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.convert_velocity_relative_to_imap")
     @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.spiceypy")
@@ -317,7 +327,7 @@ class TestCalculatePickupIon(SpiceTestCase):
 
     @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.extract_pui_energy_bins")
     @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.calculate_pui_energy_cutoff")
-    @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.scipy.optimize.minimize")
+    @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.lmfit.minimize")
     @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.spiceypy")
     @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.calculate_combined_sweeps")
     def test_calculate_pickup_ions_with_minimize_mocked(self, mock_calculate_combined_sweeps, mock_spice, mock_minimize,
@@ -338,7 +348,6 @@ class TestCalculatePickupIon(SpiceTestCase):
             count_rate = cdf["swp_coin_rate"][...]
             count_rate_delta = cdf["swp_coin_unc"][...]
 
-            count_rates_with_uncertainty = uarray(count_rate, count_rate_delta)
             combined_counts, combined_energies = calculate_combined_sweeps(count_rate, energy)
             mock_calculate_combined_sweeps.return_value = combined_counts, combined_energies
             extracted_counts = [1.9, 1.2, 0.4]
@@ -348,11 +357,6 @@ class TestCalculatePickupIon(SpiceTestCase):
             mock_extract_pui_energy_bins.return_value = (
                 extracted_indices, extracted_energies, extracted_counts
             )
-            response_lut_path = Path(
-                imap_l3_processing.__file__).parent.parent / 'tests' / 'test_data' / 'swapi' / "truncated_swapi_response_simion_v1.zip"
-
-            instrument_response_collection = InstrumentResponseLookupTableCollection.from_file(response_lut_path)
-
             geometric_factor_lut_path = Path(
                 imap_l3_processing.__file__).parent.parent / 'tests' / 'test_data' / 'swapi' / "imap_swapi_energy-gf-lut_20240923_v000.dat"
 
@@ -360,12 +364,13 @@ class TestCalculatePickupIon(SpiceTestCase):
             background_count_rate_cutoff = 0.1
             input_epochs = 123456789000000000
             sw_velocity = np.array([300, 400, 0])
-            mock_minimize.return_value.x = [1, 2, 3, 4]
+            mock_minimize.return_value.uvars = {"cooling_index": 1, "ionization_rate": 2, "cutoff_speed": 3,
+                                                "background_count_rate": 4}
             energy_cutoff = 6000.0
             mock_calculate_pui_energy_cutoff.return_value = energy_cutoff
 
             actual_fitting_parameters = calculate_pickup_ion_values(
-                instrument_response_collection, geometric_factor_lut, energy,
+                self.get_response_lookup_table_collection(), geometric_factor_lut, energy,
                 count_rate, input_epochs, background_count_rate_cutoff, sw_velocity,
                 self.density_of_neutral_helium_lookup_table)
 
@@ -378,20 +383,49 @@ class TestCalculatePickupIon(SpiceTestCase):
                                                             combined_counts,
                                                             energy_cutoff,
                                                             background_count_rate_cutoff)
-            actual_count_rates, indices, model_count_rates_calculator, ephemeris_time = \
+            actual_count_rates, indices, model_count_rates_calculator, ephemeris_time, sweep_count = \
                 mock_minimize.call_args.kwargs['args']
-            actual_bounds = mock_minimize.call_args.kwargs['bounds']
-            _, actual_initial_guess = mock_minimize.call_args.args
+            self.assertEqual(calc_chi_squared_lm_fit, mock_minimize.call_args.args[0])
+            actual_params: Parameters = mock_minimize.call_args.args[1]
 
-            expected_initial_guess = np.array([1.5, 1e-7, 500, 0.1])
-            np.testing.assert_array_equal(expected_initial_guess, actual_initial_guess)
-            expected_bounds = ((1.0, 5.0), (0.6e-7, 2.1e-7), (500 * .8, 500 * 1.2), (0, 0.2))
-            self.assertEqual(expected_bounds, actual_bounds)
-            self.assertEqual(expected_indices, indices)
+            minimize_simplex = mock_minimize.call_args.kwargs["options"]["initial_simplex"]
+
+            def _transform_simplex_vertex(vertex):
+                return [actual_params["cooling_index"].from_internal(vertex[0]),
+                        actual_params["ionization_rate"].from_internal(vertex[1]),
+                        actual_params["cutoff_speed"].from_internal(vertex[2]),
+                        actual_params["background_count_rate"].from_internal(vertex[3])]
+
+            self.assertEqual([1.5, 1e-7, 500, 0.1], _transform_simplex_vertex(minimize_simplex[0]))
+            self.assertEqual([5.0, 1e-7, 500, 0.1], _transform_simplex_vertex(minimize_simplex[1]))
+            self.assertEqual([1.5, 2.1e-7, 500, 0.1], _transform_simplex_vertex(minimize_simplex[2]))
+            self.assertEqual([1.5, 1e-7, 600, 0.1], _transform_simplex_vertex(minimize_simplex[3]))
+            self.assertEqual([1.5, 1e-7, 500, 0.2], _transform_simplex_vertex(minimize_simplex[4]))
+
+            self.assertEqual(1.5, actual_params["cooling_index"].value)
+            self.assertEqual(1.0, actual_params["cooling_index"].min)
+            self.assertEqual(5.0, actual_params["cooling_index"].max)
+
+            self.assertEqual(1e-7, actual_params["ionization_rate"].value)
+            self.assertEqual(0.6e-7, actual_params["ionization_rate"].min)
+            self.assertEqual(2.1e-7, actual_params["ionization_rate"].max)
+
+            self.assertEqual(500, actual_params["cutoff_speed"].value)
+            self.assertEqual(400, actual_params["cutoff_speed"].min)
+            self.assertEqual(600, actual_params["cutoff_speed"].max)
+
+            self.assertEqual(0.1, actual_params["background_count_rate"].value)
+            self.assertEqual(0, actual_params["background_count_rate"].min)
+            self.assertEqual(0.2, actual_params["background_count_rate"].max)
+
             np.testing.assert_array_equal(extracted_counts, actual_count_rates)
+            self.assertEqual(expected_indices, indices)
             np.testing.assert_array_equal(model_count_rates_calculator.solar_wind_vector, sw_velocity)
-            self.assertEqual('Nelder-Mead', mock_minimize.call_args.kwargs['method'])
             self.assertEqual(ephemeris_time_for_epoch, ephemeris_time)
+            self.assertEqual(50, sweep_count)
+
+            self.assertEqual('nelder', mock_minimize.call_args.kwargs['method'])
+            self.assertFalse(mock_minimize.call_args.kwargs['scale_covar'])
 
             expected_fitting_params = FittingParameters(1, 2, 3, 4)
             self.assertEqual(expected_fitting_params, actual_fitting_parameters)
@@ -400,10 +434,23 @@ class TestCalculatePickupIon(SpiceTestCase):
         epoch = spacepy.pycdf.lib.datetime_to_tt2000(datetime(2025, 6, 6, 12))
         sw_velocity_vector = np.array([0, 0, -500])
         fitting_params = FittingParameters(1.5, 1e-7, 520, 0.1)
-
-        result = calculate_helium_pui_density(epoch, sw_velocity_vector, self.density_of_neutral_helium_lookup_table,
+        result = calculate_helium_pui_density(epoch, sw_velocity_vector,
+                                              self.density_of_neutral_helium_lookup_table,
                                               fitting_params)
         self.assertAlmostEqual(0.00014681078095942195, result)
+
+    def test_calculate_pui_density_with_uncertainty(self):
+        epoch = spacepy.pycdf.lib.datetime_to_tt2000(datetime(2025, 6, 6, 12))
+        sw_velocity_vector = np.array([0, 0, -500])
+        fitting_params = FittingParameters(ufloat(1.5, 0.1),
+                                           ufloat(1e-7, 1e-8),
+                                           ufloat(520, 5),
+                                           ufloat(0.1, 0.01))
+        result = calculate_helium_pui_density(epoch, sw_velocity_vector,
+                                              self.density_of_neutral_helium_lookup_table,
+                                              fitting_params)
+        self.assertAlmostEqual(0.00014681078095942195, result.n)
+        self.assertAlmostEqual(1.4679499690964861e-05, result.s)
 
     @patch('imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.spiceypy.reclat')
     @patch('imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.scipy.integrate.quad')
@@ -472,6 +519,21 @@ class TestCalculatePickupIon(SpiceTestCase):
                                                   fitting_params)
         self.assertAlmostEqual(24456817.05142866, result)
 
+    def test_calculate_pui_temperature_with_uncertainty(self):
+        epoch = spacepy.pycdf.lib.datetime_to_tt2000(datetime(2025, 6, 6, 12))
+        sw_velocity_vector = np.array([0, 0, -500])
+        fitting_params = FittingParameters(
+            ufloat(1.5, .1),
+            ufloat(1e-7, 1e-8),
+            ufloat(500, 5),
+            ufloat(0.1, 0.01))
+
+        result = calculate_helium_pui_temperature(epoch, sw_velocity_vector,
+                                                  self.density_of_neutral_helium_lookup_table,
+                                                  fitting_params)
+        self.assertAlmostEqual(24456817.05142866, result.n)
+        self.assertAlmostEqual(824377.0631439432, result.s)
+
     LAST_SUCCESSFUL_RUN = datetime(2025, 5, 21, 16, 00)
     ALLOWED_GAP_TIME = timedelta(days=7)
 
@@ -504,11 +566,6 @@ class TestCalculatePickupIon(SpiceTestCase):
             energy = cdf["energy"][...]
             count_rate = cdf["swp_coin_rate"][...]
 
-            response_lut_path = get_test_data_path(
-                "swapi/imap_swapi_instrument-response-lut_20241023_v000.zip")
-
-            instrument_response_collection = InstrumentResponseLookupTableCollection.from_file(response_lut_path)
-
             geometric_factor_lut_path = get_test_data_path(
                 "swapi/imap_swapi_energy-gf-lut_20240923_v000.dat")
 
@@ -518,10 +575,9 @@ class TestCalculatePickupIon(SpiceTestCase):
             sw_velocity_vector = np.array([0, 0, -500])
 
             actual_fitting_parameters = calculate_pickup_ion_values(
-                instrument_response_collection, geometric_factor_lut, energy,
+                self.get_response_lookup_table_collection(), geometric_factor_lut, energy,
                 count_rate, epoch, background_count_rate_cutoff, sw_velocity_vector,
                 self.density_of_neutral_helium_lookup_table)
-            print(actual_fitting_parameters)
 
             mock_spice.unitim.assert_called_with(epoch / ONE_SECOND_IN_NANOSECONDS,
                                                  "TT", "ET")
@@ -574,3 +630,17 @@ class TestCalculatePickupIon(SpiceTestCase):
         expected_values = [(0, -400, 0), (0, 0, -390), (0, 0, 400), (0, 0, -410), (-400, 0, 0), (400, 0, 0)]
 
         np.testing.assert_array_almost_equal(actual, expected_values, 1)
+
+    def test_calc_chi_squared_lm_fit(self):
+        params = MagicMock()
+        observed_count_rates = np.array([2, 20, 200, 2000])
+        modeled_count_rates = np.array([1, 10, 100, 1000])
+        sweep_count = 50
+        calculator = Mock()
+        calculator.model_count_rate.return_value = modeled_count_rates
+        residual_array = calc_chi_squared_lm_fit(params, observed_count_rates, Mock(), calculator, 1e10, sweep_count)
+        chi_squared_formula = 2 * (modeled_count_rates - observed_count_rates
+                                   + observed_count_rates * np.log(observed_count_rates / modeled_count_rates))
+        np.testing.assert_almost_equal(
+            np.square(residual_array),
+            sweep_count * swapi_l2.TIME_PER_BIN * chi_squared_formula)
