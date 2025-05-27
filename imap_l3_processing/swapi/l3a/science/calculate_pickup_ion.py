@@ -6,8 +6,8 @@ import lmfit
 import numpy as np
 import scipy.optimize
 import uncertainties
+from imap_processing.swapi.l2 import swapi_l2
 from lmfit import Parameters
-from matplotlib import pyplot as plt
 from numpy import ndarray
 from uncertainties import ufloat
 from uncertainties.unumpy import uarray
@@ -34,9 +34,9 @@ def calculate_pickup_ion_values(instrument_response_lookup_table, geometric_fact
     ephemeris_time = spiceypy.unitim(center_of_epoch / ONE_SECOND_IN_NANOSECONDS, "TT", "ET")
     sw_velocity = np.linalg.norm(sw_velocity_vector)
 
-    initial_guess = np.array([1.5, 1e-7, sw_velocity, 0.1])
     energy_labels = range(62, 0, -1)
     energy_cutoff = calculate_pui_energy_cutoff(ephemeris_time, sw_velocity_vector)
+    sweep_count = len(count_rates)
     average_count_rates, energies = calculate_combined_sweeps(count_rates, energy)
 
     extracted_energy_labels, extracted_energies, extracted_count_rates = extract_pui_energy_bins(energy_labels,
@@ -71,7 +71,9 @@ def calculate_pickup_ion_values(instrument_response_lookup_table, geometric_fact
         ]
 
     result = lmfit.minimize(calc_chi_squared_lm_fit, params, method="nelder", scale_covar=False,
-                            args=(extracted_count_rates, indices, model_count_rate_calculator, ephemeris_time),
+                            args=(
+                                extracted_count_rates, indices, model_count_rate_calculator, ephemeris_time,
+                                sweep_count),
                             options=dict(initial_simplex=np.array([
                                 map_param_values_to_internal_values(1.5, 1e-7, sw_velocity, 0.1),
                                 map_param_values_to_internal_values(5.0, 1e-7, sw_velocity, 0.1),
@@ -84,34 +86,6 @@ def calculate_pickup_ion_values(instrument_response_lookup_table, geometric_fact
     if result.uvars is None:
         param_vals = {k: ufloat(v, np.inf) for k, v in result.params.valuesdict().items()}
 
-    print(param_vals)
-    diagnostic = False
-    if diagnostic:
-        print("initial chi squared",
-              np.sum(np.square(
-                  calc_chi_squared_lm_fit(make_parameters(1.5, 1e-7, sw_velocity, 0.1),
-                                          extracted_count_rates, indices,
-                                          model_count_rate_calculator,
-                                          ephemeris_time))
-              ))
-        print("ideal chi squared",
-              np.sum(np.square(
-                  calc_chi_squared_lm_fit(make_parameters(1.5, 1e-7, 520, 0.1),
-                                          extracted_count_rates, indices, model_count_rate_calculator,
-                                          ephemeris_time))
-              ))
-        print("result chi squared", result.chisqr)
-
-        fit_params_2 = FittingParameters(param_vals["cooling_index"].n,
-                                         param_vals["ionization_rate"].n,
-                                         param_vals["cutoff_speed"].n,
-                                         param_vals["background_count_rate"].n)
-
-        modeled_rates_2 = model_count_rate_calculator.model_count_rate(indices, fit_params_2, ephemeris_time)
-        plt.plot(extracted_energies, extracted_count_rates, label="original data")
-        plt.plot(extracted_energies, modeled_rates_2, label="fitted")
-        plt.legend()
-        plt.show()
     return FittingParameters(param_vals["cooling_index"], param_vals["ionization_rate"], param_vals["cutoff_speed"],
                              param_vals["background_count_rate"])
 
@@ -270,7 +244,7 @@ class ModelCountRateCalculator:
 
 def calc_chi_squared_lm_fit(params: Parameters, observed_count_rates: np.ndarray,
                             indices_and_energy_centers: list[tuple[int, float]], calculator: ModelCountRateCalculator,
-                            ephemeris_time: float):
+                            ephemeris_time: float, sweep_count: int):
     parvals = params.valuesdict()
 
     cooling_index = parvals["cooling_index"]
@@ -281,10 +255,8 @@ def calc_chi_squared_lm_fit(params: Parameters, observed_count_rates: np.ndarray
     fit_params = FittingParameters(cooling_index, ionization_rate, cutoff_speed, background_count_rate)
     modeled_rates = calculator.model_count_rate(indices_and_energy_centers, fit_params, ephemeris_time)
 
-    # 50/6 factor not yet tested
-    # q: what if we had less than 50 for this chunk?
-    modeled_counts = modeled_rates * 50 / 6
-    observed_counts = observed_count_rates * 50 / 6
+    modeled_counts = modeled_rates * sweep_count * swapi_l2.TIME_PER_BIN
+    observed_counts = observed_count_rates * sweep_count * swapi_l2.TIME_PER_BIN
     result = np.sqrt(2 * (modeled_counts - observed_counts + observed_counts * np.log(
         observed_counts / modeled_counts)))
     return result
