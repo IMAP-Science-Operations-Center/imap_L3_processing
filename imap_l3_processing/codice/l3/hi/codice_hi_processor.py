@@ -3,6 +3,7 @@ from collections import namedtuple
 import numpy as np
 from imap_data_access import upload
 from imap_data_access.processing_input import ProcessingInputCollection
+from numpy import ma
 
 from imap_l3_processing.codice.l3.hi.direct_event.codice_hi_l3a_direct_events_dependencies import \
     CodiceHiL3aDirectEventsDependencies
@@ -66,6 +67,8 @@ class CodiceHiProcessor(Processor):
             for epoch_index in range(priority_event.ssd_energy.shape[0]):
 
                 number_of_events = priority_event.number_of_events[epoch_index]
+                if number_of_events is ma.masked:
+                    continue
 
                 event_energy_per_nuc = np.empty((number_of_events,))
                 for event_index in range(number_of_events):

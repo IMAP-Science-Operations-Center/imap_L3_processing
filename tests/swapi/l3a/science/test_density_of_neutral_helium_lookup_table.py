@@ -2,7 +2,8 @@ from unittest import TestCase
 
 import numpy as np
 
-from imap_l3_processing.swapi.l3a.science.density_of_neutral_helium_lookup_table import DensityOfNeutralHeliumLookupTable
+from imap_l3_processing.swapi.l3a.science.density_of_neutral_helium_lookup_table import \
+    DensityOfNeutralHeliumLookupTable
 
 
 class TestDensityOfNeutralHeliumLookupTable(TestCase):
@@ -20,7 +21,7 @@ class TestDensityOfNeutralHeliumLookupTable(TestCase):
 
         density = lookup_table.density(180.0, .2)
 
-        self.assertEqual(0.0225, density)
+        np.testing.assert_equal(0.0225, density, strict=True)
 
     def test_get_minimum_distance(self):
         lookup_table = DensityOfNeutralHeliumLookupTable(
