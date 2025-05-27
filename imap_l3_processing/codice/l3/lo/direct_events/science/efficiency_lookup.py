@@ -18,12 +18,11 @@ ENERGIES = TypeVar("ENERGIES")
 
 @dataclass
 class EfficiencyLookup:
-    efficiency_data: np.ndarray[(SPECIES, AZIMUTH, ENERGIES)]
+    efficiency_data: np.ndarray[(AZIMUTH, ENERGIES)]
 
     @classmethod
-    def create_with_fake_data(cls, num_species, num_azimuths, num_energies):
-        rng = np.random.default_rng()
-        return cls(efficiency_data=rng.random((num_species, num_azimuths, num_energies)))
+    def read_from_csv(cls, path: Path) -> EfficiencyLookup:
+        return cls(efficiency_data=np.loadtxt(path, delimiter=",", skiprows=1).T)
 
     @classmethod
     def read_from_zip(cls, zip_path: Path, mass_species_bin_lut: MassSpeciesBinLookup) -> EfficiencyLookup:

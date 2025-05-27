@@ -470,8 +470,8 @@ AZIMUTH_OR_ELEVATION = TypeVar("AZIMUTH_OR_ELEVATION")
 
 @dataclass
 class CodiceLo3dData:
-    data_in_3d_bins: np.ndarray[(SPECIES, EPOCH, PRIORITY, AZIMUTH_OR_ELEVATION, SPIN_ANGLE, ENERGY)] | np.ndarray[
-        (SPECIES, EPOCH, AZIMUTH_OR_ELEVATION, SPIN_ANGLE, ENERGY)]
+    data_in_3d_bins: np.ndarray[(SPECIES, EPOCH, PRIORITY, AZIMUTH_OR_ELEVATION, SPIN_ANGLE, ENERGY)] | \
+                     np.ndarray[(SPECIES, EPOCH, AZIMUTH_OR_ELEVATION, SPIN_ANGLE, ENERGY)]
     mass_bin_lookup: MassSpeciesBinLookup
     energy_per_charge: np.ndarray[(ENERGY,)]
     spin_angle: np.ndarray[(SPIN_ANGLE,)]
