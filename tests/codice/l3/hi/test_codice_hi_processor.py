@@ -12,7 +12,7 @@ from imap_l3_processing.codice.l3.hi.models import PriorityEventL2, CodiceL2HiDa
     CODICE_HI_NUM_L2_PRIORITIES
 from imap_l3_processing.codice.l3.hi.pitch_angle.codice_pitch_angle_dependencies import CodicePitchAngleDependencies
 from imap_l3_processing.models import InputMetadata
-from tests.test_helpers import NumpyArrayMatcher
+from tests.test_helpers import NumpyArrayMatcher, get_test_instrument_team_data_path, get_test_data_path
 
 
 class TestCodiceHiProcessor(unittest.TestCase):
@@ -323,6 +323,27 @@ class TestCodiceHiProcessor(unittest.TestCase):
                                       expected_cno_intensity_binned_by_pa_and_gyro)
         np.testing.assert_array_equal(codice_hi_data_product.fe_intensity_by_pitch_angle_and_gyrophase,
                                       expected_fe_intensity_binned_by_pa_and_gyro)
+
+    def test_integration_test(self):
+        tof_lookup_path = get_test_instrument_team_data_path("codice/hi/imap_codice_tof-lookup_20241110_v002.csv")
+        l2_direct_event_sci_path = get_test_data_path(
+            "codice/imap_codice_l2_hi-direct-events_20241110_v002-all-fill.cdf")
+
+        codice_hi_dependencies = CodiceHiL3aDirectEventsDependencies.from_file_paths(l2_direct_event_sci_path,
+                                                                                     tof_lookup_path)
+
+        input_metadata = InputMetadata(instrument='codice',
+                                       data_level="l3a",
+                                       start_date=Mock(spec=datetime),
+                                       end_date=Mock(spec=datetime),
+                                       version='v02',
+                                       descriptor='hi-direct-events')
+        processor = CodiceHiProcessor(dependencies=Mock(), input_metadata=input_metadata)
+
+        try:
+            processor.process_l3a_direct_event(codice_hi_dependencies)
+        except Exception as e:
+            self.fail(e)
 
     def _create_priority_events(self, num_epochs, event_buffer_size):
 
