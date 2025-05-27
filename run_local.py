@@ -30,6 +30,7 @@ from imap_l3_processing.codice.l3.lo.direct_events.science.mass_coefficient_look
 from imap_l3_processing.codice.l3.lo.models import CodiceLoL2SWSpeciesData, CodiceLoL2DirectEventData, \
     CodiceLoL1aSWPriorityRates, CodiceLoL1aNSWPriorityRates
 from imap_l3_processing.codice.l3.lo.sectored_intensities.science.mass_per_charge_lookup import MassPerChargeLookup
+from imap_l3_processing.constants import ONE_AU_IN_KM
 from imap_l3_processing.glows.glows_initializer import GlowsInitializer
 from imap_l3_processing.glows.glows_processor import GlowsProcessor
 from imap_l3_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
@@ -265,10 +266,32 @@ def create_swapi_l3b_cdf(geometric_calibration_file, efficiency_calibration_file
     return cdf_path
 
 
+@patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.spiceypy")
 def create_swapi_l3a_cdf(proton_temperature_density_calibration_file, alpha_temperature_density_calibration_file,
                          clock_angle_and_flow_deflection_calibration_file, geometric_factor_calibration_file,
                          instrument_response_calibration_file, density_of_neutral_helium_calibration_file,
-                         cdf_file):
+                         cdf_file, mock_spice):
+    ephemeris_time_for_epoch = 100000
+    mock_spice.unitim.return_value = ephemeris_time_for_epoch
+    mock_light_time = 122.0
+    mock_spice.spkezr.return_value = (np.array([0, 0, 0, 0, 0, 0]), mock_light_time)
+    mock_spice.latrec.return_value = np.array([0, 2, 0])
+    mock_spice.reclat.return_value = np.array([0.99 * ONE_AU_IN_KM, np.deg2rad(255.7), 0.6])
+
+    def mock_sxform(from_frame, to_frame, et):
+        if from_frame == "IMAP_SWAPI":
+            return np.eye(6)
+        return np.array([
+            [0, 1, 0, 0, 0, 0],
+            [0, 0, 1, 0, 0, 0],
+            [1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 0],
+            [0, 0, 0, 0, 0, 1],
+            [0, 0, 0, 1, 0, 0],
+        ])
+
+    mock_spice.sxform.side_effect = mock_sxform
+
     proton_temperature_density_calibration_table = ProtonTemperatureAndDensityCalibrationTable.from_file(
         proton_temperature_density_calibration_file)
     alpha_temperature_density_calibration_table = AlphaTemperatureDensityCalibrationTable.from_file(

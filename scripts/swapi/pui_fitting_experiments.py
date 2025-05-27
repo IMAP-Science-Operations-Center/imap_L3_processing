@@ -15,7 +15,7 @@ from imap_l3_processing.swapi.l3b.science.instrument_response_lookup_table impor
 from tests.test_helpers import get_test_data_path
 
 density_of_neutral_helium_lut_path = get_test_data_path(
-    "swapi/map_swapi_l2_density-of-neutral-helium-lut-text-not-cdf_20241023_v002.cdf")
+    "swapi/imap_swapi_l2_density-of-neutral-helium-lut-text-not-cdf_20241023_v002.cdf")
 density_of_neutral_helium_lookup_table = DensityOfNeutralHeliumLookupTable.from_file(
     density_of_neutral_helium_lut_path)
 
@@ -95,20 +95,25 @@ def calculate_pickup_ions_with_minimize_on_random_synth_data(mock_spice):
                                                                density_of_neutral_helium_lookup_table)
         rng = np.random.default_rng()
 
-        generated_data_params = FittingParameters(
-            rng.uniform(1, 5),
-            rng.uniform(0.6e-7, 2.1e-7),
-            rng.uniform(400, 500),
-            rng.uniform(0, 0.2),
-        )
+        # generated_data_params = FittingParameters(
+        #     rng.uniform(1, 5),
+        #     rng.uniform(0.6e-7, 2.1e-7),
+        #     rng.uniform(400, 500),
+        #     rng.uniform(0, 0.2),
+        # )
+        generated_data_params = FittingParameters(cooling_index=4.076926044739297,
+                                                  ionization_rate=1.7448617996003114e-07,
+                                                  cutoff_speed=474.25503847884136,
+                                                  background_count_rate=0.0333619285902611)
         modeled_count_rates = model_count_rate_calculator.model_count_rate(indices, generated_data_params, 36789)
-        count_rate[:, 1:17] = model_count_rate_calculator.model_count_rate(indices, generated_data_params, 36789)
+        count_rate[:, 1:17] = modeled_count_rates
         plt.errorbar(energy[1:17], modeled_count_rates,
                      yerr=modeled_count_rates / np.sqrt(modeled_count_rates * 50 / 6))
         actual_fitting_parameters = calculate_pickup_ion_values(
             instrument_response_collection, geometric_factor_lut, energy,
             count_rate, epoch, background_count_rate_cutoff, sw_velocity_vector,
             density_of_neutral_helium_lookup_table)
+
         actual_fit_without_uncert = FittingParameters(
             actual_fitting_parameters.cooling_index.n,
             actual_fitting_parameters.ionization_rate.n,
@@ -121,3 +126,7 @@ def calculate_pickup_ions_with_minimize_on_random_synth_data(mock_spice):
 
         print("Generated params:", generated_data_params)
         print("Fitted params:", actual_fitting_parameters)
+
+
+calculate_pickup_ions_with_minimize_on_random_synth_data()
+# compare_fitting_parameters()
