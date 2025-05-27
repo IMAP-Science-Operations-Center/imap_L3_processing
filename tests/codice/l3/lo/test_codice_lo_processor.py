@@ -25,7 +25,7 @@ from imap_l3_processing.codice.l3.lo.models import CodiceLoL3aPartialDensityData
 from imap_l3_processing.codice.l3.lo.sectored_intensities.science.mass_per_charge_lookup import MassPerChargeLookup
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
-from tests.test_helpers import create_dataclass_mock
+from tests.test_helpers import create_dataclass_mock, get_test_data_path
 
 
 class TestCodiceLoProcessor(unittest.TestCase):
@@ -720,6 +720,34 @@ class TestCodiceLoProcessor(unittest.TestCase):
         self.assertEqual(['parent_file_1', 'parent_file_2'],
                          mock_process_l3a_3d_distribution_product.return_value.parent_file_names)
         mock_upload.assert_called_once_with("file1")
+
+    def test_process_l3a_direct_events_all_fill_integration(self):
+        input_collection = MagicMock()
+        input_collection.get_file_paths.return_value = [Path('path/to/parent_file_1'), Path('path/to/parent_file_2')]
+        input_metadata = InputMetadata(instrument='codice',
+                                       data_level="l3a",
+                                       start_date=Mock(spec=datetime),
+                                       end_date=Mock(spec=datetime),
+                                       version='v02',
+                                       descriptor='lo-3d-instrument-frame')
+
+        dependencies = CodiceLoL3aDirectEventsDependencies.from_file_paths(
+            sw_priority_rates_cdf=get_test_data_path(
+                "codice/imap_codice_l1a_lo-sw-priority_20241110_v002-all-fill.cdf"),
+            nsw_priority_rates_cdf=get_test_data_path(
+                "codice/imap_codice_l1a_lo-nsw-priority_20241110_v002-all-fill.cdf"),
+            direct_event_path=get_test_data_path("codice/imap_codice_l2_lo-direct-events_20241110_v002-all-fill.cdf"),
+            mass_coefficients_file_path=get_test_data_path(
+                "codice/imap_codice_mass-coefficient-lookup_20241110_v002.csv")
+
+        )
+
+        processor = CodiceLoProcessor(dependencies=input_collection, input_metadata=input_metadata)
+
+        try:
+            processor.process_l3a_direct_event_data_product(dependencies)
+        except Exception as e:
+            self.fail(e)
 
 
 if __name__ == '__main__':

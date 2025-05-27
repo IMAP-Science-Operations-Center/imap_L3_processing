@@ -10,13 +10,13 @@ from imap_l3_processing.constants import TT2000_EPOCH
 from tests.test_helpers import get_test_data_path
 
 
-def _create_example_ultra_l2_map_with_power_law(out_path: Path):
+def _create_example_ultra_l2_map_with_power_law(out_path: Path, parents: list[str] = None):
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.unlink(missing_ok=True)
     nside = 2
     num_pixels = nside ** 2 * 12
     pixels = np.array([i for i in range(num_pixels)])
-    number_of_energies = 20
+    number_of_energies = 24
     energies = np.linspace(1, 50, number_of_energies)
     ena_intensities = np.full((1, number_of_energies, num_pixels), -1e31)
 
@@ -54,6 +54,9 @@ def _create_example_ultra_l2_map_with_power_law(out_path: Path):
         cdf.new("ena_intensity_stat_unc", ena_intensities_delta)
         cdf.new("ena_intensity_sys_err", np.full_like(ena_intensities, 1))
         cdf.new("pixel_index_label", [str(val) for val in range(num_pixels)])
+
+        if parents is not None:
+            cdf.attrs['Parents'] = parents
 
         for var in cdf:
             if cdf[var].type() == pycdf.const.CDF_TIME_TT2000.value:
