@@ -18,7 +18,7 @@ def create_l1c_and_glows_with_matching_date_range(start_date: datetime, end_date
     base_path = f'ultra/{start_date:%Y%m%d}-{end_date:%Y%m%d}'
     shutil.rmtree(get_run_local_data_path(base_path), ignore_errors=True)
 
-    version_number = 7
+    version_number = 10
 
     while process_date < end_date:
         repoint_counter += 1
@@ -32,7 +32,7 @@ def create_l1c_and_glows_with_matching_date_range(start_date: datetime, end_date
         all_paths.append(str(l1c_file_path))
 
         glows_l3e_file_path = get_run_local_data_path(
-            f'{base_path}/glows_l3e/imap_glows_l3e_survival-probabilities-ultra_{process_date:%Y%m%d}_v{version_number:03}.cdf'
+            f'{base_path}/glows_l3e/imap_glows_l3e_survival-probability-ultra_{process_date:%Y%m%d}_v{version_number:03}.cdf'
         )
         glows_l3e_file_path.parent.mkdir(parents=True, exist_ok=True)
 

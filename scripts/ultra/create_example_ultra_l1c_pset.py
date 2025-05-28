@@ -217,6 +217,7 @@ def _write_ultra_l1c_cdf_with_parents(
                      "epoch")
         _add_depends(cdf["observation_time"], [CoordNames.ENERGY_ULTRA_L1C.value, CoordNames.HEALPIX_INDEX.value],
                      "epoch")
+        _add_depends(cdf["energy_bin_delta"], [CoordNames.ENERGY_ULTRA_L1C.value])
 
         for var in cdf:
             if cdf[var].type() == pycdf.const.CDF_TIME_TT2000.value:
