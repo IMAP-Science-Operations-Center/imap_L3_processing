@@ -1,5 +1,3 @@
-import shutil
-import zipfile
 from pathlib import Path
 
 import numpy as np
@@ -11,31 +9,20 @@ from tests.test_helpers import get_run_local_data_path, get_test_data_path
 HEADER_TEXT = """# Efficiency Factors for the CoDICE-Lo Instrument for each energy (128 ESA steps) and position (24 values), energy is  assumed to be in ESA step order"""
 
 
-def create_efficiency_lookup(mass_species_csv_path: Path, output_dir: Path = get_run_local_data_path("codice")) -> Path:
-    output_ancillary_path = output_dir / "imap_codice_lo-efficiency-factors_20241110_v001.zip"
-    mass_species_lookup = MassSpeciesBinLookup.read_from_csv(mass_species_csv_path)
+def create_efficiency_lookup(species: str, output_dir: Path = get_run_local_data_path("codice")) -> Path:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    output_path = output_dir / f"imap_codice_lo-{species}-efficiency_20241110_v001.csv"
+    open(output_path, "a").close()
 
-    species_to_generate = mass_species_lookup._range_to_species["sw_species"] + \
-                          mass_species_lookup._range_to_species["nsw_species"]
+    efficiency_data = np.ones((CODICE_LO_NUM_ESA_STEPS, CODICE_LO_NUM_AZIMUTH_BINS), dtype=np.float64)
+    np.savetxt(output_path, efficiency_data, delimiter=",", header=HEADER_TEXT)
 
-    temporary_output_dir = output_dir / "lo-efficiency-factors"
-    temporary_output_dir.mkdir(parents=True, exist_ok=True)
-
-    for species in species_to_generate:
-        output_path = temporary_output_dir / f"{species}-efficiency.csv"
-        open(output_path, "a").close()
-
-        efficiency_data = np.ones((CODICE_LO_NUM_ESA_STEPS, CODICE_LO_NUM_AZIMUTH_BINS), dtype=np.float64)
-        np.savetxt(output_path, efficiency_data, delimiter=",", header=HEADER_TEXT)
-
-    with zipfile.ZipFile(output_ancillary_path, 'w') as zipf:
-        for file in temporary_output_dir.iterdir():
-            zipf.write(file, file.name)
-
-    shutil.rmtree(temporary_output_dir)
-
-    return output_ancillary_path
+    return output_path
 
 
 if __name__ == "__main__":
-    create_efficiency_lookup(get_test_data_path("codice/imap_codice_lo-mass-species-bin-lookup_20241110_v001.csv"))
+
+    mass_species_bin_path = get_test_data_path(
+        'codice/imap_codice_lo-mass-species-bin-lookup_20241110_v001.csv')
+    for species in MassSpeciesBinLookup.read_from_csv(mass_species_bin_path).species:
+        print(create_efficiency_lookup(species))

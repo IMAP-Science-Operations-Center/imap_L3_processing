@@ -349,7 +349,7 @@ class TestCodiceLoCalculations(unittest.TestCase):
         priority_2 = rng.random((num_epochs, num_azimuth_bins, num_spin_angles, num_energies))
         priority_3 = rng.random((num_epochs, num_azimuth_bins, num_spin_angles, num_energies))
 
-        counts = np.stack((priority_1, priority_2, priority_3), axis=2)
+        counts = np.stack((priority_1, priority_2, priority_3), axis=1)
 
         acquisition_durations_in_seconds = rng.random((num_energies,))
         acquisition_duration_in_microseconds = acquisition_durations_in_seconds * ONE_SECOND_IN_MICROSECONDS

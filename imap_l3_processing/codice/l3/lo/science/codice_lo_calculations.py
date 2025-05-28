@@ -91,8 +91,8 @@ def rebin_to_counts_by_species_elevation_and_spin_sector(num_events: np.ndarray,
         for priority_i in range(num_priorities):
             for event_i in range(num_events[epoch_i, priority_i]):
                 indices_of_event = epoch_i, priority_i, event_i
-                if np.isnan(energy[*indices_of_event]) or np.isnan(spin_angle[*indices_of_event]) or position.mask[
-                    *indices_of_event]:
+                if (np.isnan(energy[*indices_of_event]) or np.isnan(spin_angle[*indices_of_event]) or
+                        position[*indices_of_event] is np.ma.masked):
                     continue
 
                 position_of_event = int(position[*indices_of_event])
@@ -127,7 +127,7 @@ def normalize_counts(counts: np.ndarray,
 
 def combine_priorities_and_convert_to_rate(counts: np.ndarray,
                                            acquisition_times: np.ndarray[(ENERGY,)]) -> np.ndarray:
-    return np.sum(counts, axis=2) / (acquisition_times / ONE_SECOND_IN_MICROSECONDS)
+    return np.sum(counts, axis=1) / (acquisition_times / ONE_SECOND_IN_MICROSECONDS)
 
 
 def rebin_3d_distribution_azimuth_to_elevation(intensity_data: np.ndarray,

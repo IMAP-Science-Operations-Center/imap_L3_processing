@@ -18,7 +18,7 @@ class EnergyLookup:
         indices, energy_lowers, energy_centers, energy_uppers = np.loadtxt(path_to_csv, delimiter=',', skiprows=1).T
 
         return cls(bin_centers=energy_centers,
-                   bin_edges=energy_uppers,
+                   bin_edges=energy_uppers[:-1],
                    delta_minus=energy_centers - energy_lowers,
                    delta_plus=energy_uppers - energy_centers)
 
