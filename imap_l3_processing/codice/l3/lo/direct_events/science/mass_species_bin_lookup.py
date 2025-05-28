@@ -1,14 +1,8 @@
-import enum
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
 import numpy as np
-
-
-class EventDirection(enum.Enum):
-    Sunward = "sunward"
-    NonSunward = "anti-sunward"
 
 
 @dataclass

@@ -69,7 +69,9 @@ class CodiceLoL3aDirectEventsDependencies:
         )
 
     @classmethod
-    def from_file_paths(cls, sw_priority_rates_cdf: Path, nsw_priority_rates_cdf: Path,
+    def from_file_paths(cls,
+                        sw_priority_rates_cdf: Path,
+                        nsw_priority_rates_cdf: Path,
                         direct_event_path: Path,
                         mass_coefficients_file_path: Path,
                         esa_to_energy_per_charge_file_path: Path):
