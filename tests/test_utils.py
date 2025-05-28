@@ -15,9 +15,10 @@ from imap_l3_processing.swapi.l3a.models import SwapiL3AlphaSolarWindData
 from imap_l3_processing.utils import format_time, download_dependency, read_l1d_mag_data, save_data, \
     find_glows_l3e_dependencies, \
     download_external_dependency, download_dependency_from_path, download_dependency_with_repointing, \
-    combine_glows_l3e_with_l1c_pointing
+    combine_glows_l3e_with_l1c_pointing, furnish_local_spice
 from imap_l3_processing.version import VERSION
 from tests.cdf.test_cdf_utils import TestDataProduct
+from tests.test_helpers import get_spice_data_path
 
 
 class TestUtils(TestCase):
@@ -416,3 +417,29 @@ class TestUtils(TestCase):
         actual = combine_glows_l3e_with_l1c_pointing(glows_l3e_data, hi_l1c_data)
 
         self.assertEqual(expected, actual)
+
+    @patch("imap_l3_processing.utils.spiceypy")
+    def test_furnish_local_spice(self, mock_spiceypy):
+        mock_spiceypy.kdata.side_effect = [
+            ("/Users/harrison/Development/imap_L3_processing/spice_kernels/naif0012.tls", "TEXT", '', 0)
+        ]
+        mock_spiceypy.ktotal.return_value = 1
+
+        furnish_local_spice()
+
+        mock_spiceypy.ktotal.assert_called_once_with('ALL')
+        mock_spiceypy.kdata.assert_called_once_with(0, 'ALL')
+
+        self.assertEqual(10, mock_spiceypy.furnsh.call_count)
+        mock_spiceypy.furnsh.assert_has_calls([
+            call(str(get_spice_data_path("de440s.bsp"))),
+            call(str(get_spice_data_path("imap_science_0001.tf"))),
+            call(str(get_spice_data_path("imap_science_draft.tf"))),
+            call(str(get_spice_data_path("imap_sclk_0000.tsc"))),
+            call(str(get_spice_data_path("imap_sim_ck_2hr_2secsampling_with_nutation.bc"))),
+            call(str(get_spice_data_path("imap_spk_demo.bsp"))),
+            call(str(get_spice_data_path("imap_wkcp.tf"))),
+            call(str(get_spice_data_path("pck00011.tpc"))),
+            call(str(get_spice_data_path("sim_1yr_imap_attitude.bc"))),
+            call(str(get_spice_data_path("sim_1yr_imap_pointing_frame.bc"))),
+        ], any_order=True)

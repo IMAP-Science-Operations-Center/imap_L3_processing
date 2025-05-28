@@ -78,14 +78,14 @@ from imap_l3_processing.swe.swe_processor import SweProcessor
 from imap_l3_processing.ultra.l3.models import UltraL1CPSet, UltraGlowsL3eData
 from imap_l3_processing.ultra.l3.ultra_l3_dependencies import UltraL3Dependencies, UltraL3SpectralIndexDependencies
 from imap_l3_processing.ultra.l3.ultra_processor import UltraProcessor
-from imap_l3_processing.utils import save_data, read_l1d_mag_data
+from imap_l3_processing.utils import save_data, read_l1d_mag_data, furnish_local_spice
 from scripts.codice.create_fake_efficiency_ancillary import create_efficiency_lookup
 from scripts.codice.create_more_accurate_l3a_direct_event import create_more_accurate_l3a_direct_events_cdf
 from scripts.codice.create_more_accurate_l3a_direct_event_input import modify_l1a_priority_counts, \
     modify_l2_direct_events
 from scripts.hi.create_hi_full_spin_deps import create_hi_full_spin_deps
 from tests.test_helpers import get_test_data_path, get_test_instrument_team_data_path, environment_variables, \
-    try_get_many_run_local_paths, furnish_local_spice
+    try_get_many_run_local_paths
 
 
 def create_glows_l3a_cdf(dependencies: GlowsL3ADependencies):

@@ -1,5 +1,4 @@
 import json
-import logging
 import os
 from dataclasses import fields
 from pathlib import Path
@@ -7,9 +6,7 @@ from typing import Type, T
 from unittest.mock import Mock
 
 import numpy as np
-import spiceypy
 
-import imap_l3_processing
 import tests
 from imap_l3_processing.swe.l3.models import SweConfiguration
 from imap_l3_processing.swe.l3.science.moment_calculations import Moments, MomentFitResults
@@ -33,6 +30,10 @@ def try_get_many_run_local_paths(extensions: list[str]) -> tuple[bool, list[Path
 
 def get_test_data_path(filename: str) -> Path:
     return Path(tests.__file__).parent / "test_data" / filename
+
+
+def get_spice_data_path(filename: str) -> Path:
+    return Path(tests.__file__).parent.parent / "spice_kernels" / filename
 
 
 def get_test_data_folder() -> Path:
@@ -140,12 +141,3 @@ def environment_variables(env_vars: dict):
         return wrapper
 
     return decorator
-
-
-def furnish_local_spice():
-    logger = logging.getLogger(__name__)
-
-    kernels = Path(imap_l3_processing.__file__).parent.parent.joinpath("spice_kernels")
-    for file in kernels.iterdir():
-        logger.log(logging.INFO, f"loading packaged kernel: {file}")
-        spiceypy.furnsh(str(file))
