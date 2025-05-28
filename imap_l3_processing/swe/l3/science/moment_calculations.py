@@ -1,15 +1,15 @@
-import math
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional, Union
 
+import math
 import numpy as np
+import spiceypy
 
 from imap_l3_processing.constants import ELECTRON_MASS_KG, \
     BOLTZMANN_CONSTANT_JOULES_PER_KELVIN, METERS_PER_KILOMETER, \
     CENTIMETERS_PER_METER, PROTON_CHARGE_COULOMBS, GRAMS_PER_KILOGRAM
 from imap_l3_processing.pitch_angles import calculate_unit_vector
-from imap_l3_processing.spice_wrapper import spiceypy
 
 ELECTRON_MASS_OVER_BOLTZMANN_IN_CGS_UNITS = ELECTRON_MASS_KG / BOLTZMANN_CONSTANT_JOULES_PER_KELVIN * 1e-4
 NUMBER_OF_DETECTORS = 7

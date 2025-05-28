@@ -1,12 +1,12 @@
 import dataclasses
-import math
 import unittest
 from datetime import datetime
 from unittest.mock import patch, call, sentinel
 
+import math
 import numpy as np
+import spiceypy
 
-from imap_l3_processing.spice_wrapper import spiceypy
 from imap_l3_processing.swe.l3.science import moment_calculations
 from imap_l3_processing.swe.l3.science.moment_calculations import compute_maxwellian_weight_factors, \
     filter_and_flatten_regress_parameters, regress, calculate_fit_temperature_density_velocity, rotate_temperature, \

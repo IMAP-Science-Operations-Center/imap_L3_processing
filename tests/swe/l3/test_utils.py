@@ -5,9 +5,9 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 import numpy as np
+import spiceypy
 from spacepy.pycdf import CDF
 
-from imap_l3_processing.spice_wrapper import spiceypy
 from imap_l3_processing.swe.l3.models import SweL2Data, SwapiL3aProtonData, SweL1bData
 from imap_l3_processing.swe.l3.utils import read_swe_config, read_l2_swe_data, read_l3a_swapi_proton_data, \
     read_l1b_swe_data, compute_epoch_delta_in_ns

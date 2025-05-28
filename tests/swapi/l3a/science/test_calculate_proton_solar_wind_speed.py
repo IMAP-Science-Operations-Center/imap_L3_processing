@@ -1,16 +1,16 @@
-import math
 from datetime import datetime
 from pathlib import Path
 from unittest.mock import patch
 
+import math
 import numpy as np
+import spiceypy
 from spacepy.pycdf import CDF
 from uncertainties import ufloat
 from uncertainties.unumpy import uarray, std_devs, nominal_values
 
 import imap_l3_processing
 from imap_l3_processing.constants import METERS_PER_KILOMETER, ONE_SECOND_IN_NANOSECONDS
-from imap_l3_processing.spice_wrapper import spiceypy
 from imap_l3_processing.swapi.l3a.science.calculate_proton_solar_wind_speed import calculate_proton_solar_wind_speed, \
     get_peak_indices, find_peak_center_of_mass_index, interpolate_energy, fit_energy_per_charge_peak_variations, \
     calculate_sw_speed_h_plus, get_proton_peak_indices, interpolate_angle, get_angle, \

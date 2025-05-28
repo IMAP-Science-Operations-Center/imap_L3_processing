@@ -1,8 +1,8 @@
 from datetime import datetime
 
 import numpy as np
+import spiceypy
 
-from imap_l3_processing import spice_wrapper
 from imap_l3_processing.maps.map_models import RectangularIntensityMapData, IntensityMapData, RectangularCoords, \
     InputRectangularPointingSet, GlowsL3eRectangularMapInputData
 
@@ -51,7 +51,7 @@ def create_h1_l3_data(epoch=None, lon=None, lat=None, energy=None, energy_delta=
 
 
 def create_l1c_pset(epoch: datetime) -> InputRectangularPointingSet:
-    epoch_j2000 = np.array([spice_wrapper.spice.datetime2et(epoch)]) * 1e9
+    epoch_j2000 = np.array([spiceypy.datetime2et(epoch)]) * 1e9
     energy_steps = np.array([1])
     exposures = np.full(shape=(1, energy_steps.shape[0], 3600), fill_value=1.)
     return InputRectangularPointingSet(epoch, epoch_j2000, exposures, energy_steps)

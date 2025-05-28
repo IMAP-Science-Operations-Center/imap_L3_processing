@@ -11,6 +11,7 @@ from unittest.mock import patch, Mock
 
 import imap_data_access
 import numpy as np
+import spiceypy
 import xarray as xr
 from imap_data_access.processing_input import AncillaryInput, ProcessingInputCollection, ScienceInput
 from spacepy.pycdf import CDF
@@ -57,7 +58,6 @@ from imap_l3_processing.maps.hilo_l3_survival_dependencies import HiLoL3Survival
 from imap_l3_processing.maps.map_models import RectangularSpectralIndexDataProduct, RectangularIntensityDataProduct, \
     combine_rectangular_intensity_map_data, HealPixIntensityMapData, RectangularIntensityMapData
 from imap_l3_processing.models import InputMetadata
-from imap_l3_processing.spice_wrapper import spiceypy
 from imap_l3_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density import \
     AlphaTemperatureDensityCalibrationTable
 from imap_l3_processing.swapi.l3a.science.calculate_pickup_ion import DensityOfNeutralHeliumLookupTable
@@ -85,7 +85,7 @@ from scripts.codice.create_more_accurate_l3a_direct_event_input import modify_l1
     modify_l2_direct_events
 from scripts.hi.create_hi_full_spin_deps import create_hi_full_spin_deps
 from tests.test_helpers import get_test_data_path, get_test_instrument_team_data_path, environment_variables, \
-    try_get_many_run_local_paths
+    try_get_many_run_local_paths, furnish_local_spice
 
 
 def create_glows_l3a_cdf(dependencies: GlowsL3ADependencies):
@@ -970,6 +970,7 @@ def create_codice_hi_l3b_pitch_angles_cdf():
 
 
 if __name__ == "__main__":
+    furnish_local_spice()
     if "codice-lo" in sys.argv:
         if "l3a" in sys.argv:
             if "partial-densities" in sys.argv:
