@@ -1,5 +1,6 @@
 import json
 import os
+import shutil
 import subprocess
 import sys
 from dataclasses import replace
@@ -78,6 +79,7 @@ class GlowsProcessor(Processor):
                                                          self.input_metadata.version,
                                                          Path(os.getenv("REPOINT_DATA_FILEPATH")))
             for repointing in repointings:
+                self.input_metadata.repointing = repointing
                 try:
                     epoch, epoch_end = get_pointing_date_range(repointing)
                     epoch_dt: datetime = epoch.astype('datetime64[us]').astype(datetime)
@@ -192,7 +194,14 @@ class GlowsProcessor(Processor):
 
         lo_data.parent_file_names = self.get_parent_file_names()
         lo_cdf = save_data(lo_data)
+        new_dat_path = Path(lo_cdf)
+        new_dat_path = new_dat_path.parent / Path('_'.join(new_dat_path.name.split('_')[0:4]) + '-raw_' + '_'.join(
+            new_dat_path.name.split('_')[4:])[:-4] + '.dat')
+
+        shutil.move(output_path, new_dat_path)
+
         imap_data_access.upload(lo_cdf)
+        imap_data_access.upload(new_dat_path)
 
     def process_l3e_hi(self, epoch: datetime, epoch_delta: timedelta, elongation: int):
         call_args = determine_call_args_for_l3e_executable(epoch, epoch + epoch_delta, elongation)
@@ -205,7 +214,15 @@ class GlowsProcessor(Processor):
         hi_data.parent_file_names = self.get_parent_file_names()
 
         hi_cdf = save_data(hi_data)
+
+        new_dat_path = Path(hi_cdf)
+        new_dat_path = new_dat_path.parent / Path('_'.join(new_dat_path.name.split('_')[0:4]) + '-raw_' + '_'.join(
+            new_dat_path.name.split('_')[4:])[:-4] + '.dat')
+
+        shutil.move(output_path, new_dat_path)
+
         imap_data_access.upload(hi_cdf)
+        imap_data_access.upload(new_dat_path)
 
     def process_l3e_ul(self, epoch: datetime, epoch_delta: timedelta):
         call_args = determine_call_args_for_l3e_executable(epoch, epoch + epoch_delta, 30)
@@ -219,7 +236,14 @@ class GlowsProcessor(Processor):
         ul_data.parent_file_names = self.get_parent_file_names()
 
         ul_cdf = save_data(ul_data)
+
+        new_dat_path = Path(ul_cdf)
+        new_dat_path = new_dat_path.parent / Path('_'.join(new_dat_path.name.split('_')[0:4]) + '-raw_' + '_'.join(
+            new_dat_path.name.split('_')[4:])[:-4] + '.dat')
+
+        shutil.move(output_path, new_dat_path)
         imap_data_access.upload(ul_cdf)
+        imap_data_access.upload(new_dat_path)
 
     @staticmethod
     def add_spin_angle_delta(data: dict, ancillary_files: dict) -> dict:
