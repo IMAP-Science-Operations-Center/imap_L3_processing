@@ -1,9 +1,9 @@
 from pathlib import Path
 
+import spiceypy
 from imap_data_access.processing_input import ProcessingInputCollection
 
 from imap_l3_processing.models import InputMetadata
-from imap_l3_processing.spice_wrapper import spiceypy
 
 
 class Processor:
