@@ -10,12 +10,21 @@ float_data: &float_data
   VALIDMAX: 10000000000
   FILLVAL: -1.000000E+31
 
-species_3d_distribution:
+species_3d_distribution: &species_3d_distribution
   <<: *float_data
+  UNITS: cm -2 s -1 sr -1 keV -1
+  VAR_TYPE: data
+  DISPLAY_TYPE: spectrogram
+  RECORD_VARYING: RV
+  SCALETYP: linear
   DEPEND_0: epoch
   DEPEND_1: elevation
   DEPEND_2: spin_angle
   DEPEND_3: energy
+  LABL_PTR_1: elevation_label
+  LABL_PTR_2: spin_angle_label
+  LABL_PTR_3: energy_label
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
 
 epoch:
   NAME: epoch
@@ -41,6 +50,7 @@ epoch:
 
 epoch_delta:
   <<: *support_data
+  DEPEND_0: epoch
   NAME: epoch_delta
   CATDESC: Epoch delta
   FIELDNAM: Epoch Delta
@@ -55,12 +65,14 @@ epoch_delta:
   SCALEMAX: 86000000000000
   SI_CONVERSION: 1e-9>seconds
 
+  RECORD_VARYING: RV
+
 elevation:
   <<: *support_data
   <<: *float_data
   NAME: elevation
   CATDESC: Elevation angle bins
-  FIELDNAME: Elevation angle
+  FIELDNAM: Elevation angle
   LABLAXIS: Elevation Angle
   UNITS: degrees
   SCALETYP: linear
@@ -74,7 +86,7 @@ elevation_delta:
   <<: *float_data
   NAME: elevation_delta
   CATDESC: Elevation angle bin deltas
-  FIELDNAME: Elevation angle delta
+  FIELDNAM: Elevation angle delta
   LABLAXIS: Elevation Angle delta
   UNITS: degrees
   SCALETYP: linear
@@ -84,7 +96,7 @@ spin_angle:
   <<: *float_data
   NAME: spin_angle
   CATDESC: Spin angle bins
-  FIELDNAME: Spin angle
+  FIELDNAM: Spin angle
   LABLAXIS: Spin Angle
   UNITS: degrees
   VALIDMIN: 0
@@ -98,7 +110,7 @@ spin_angle_delta:
   <<: *float_data
   NAME: spin_angle_delta
   CATDESC: Spin angle bin deltas
-  FIELDNAME: Spin angle delta
+  FIELDNAM: Spin angle delta
   LABLAXIS: Spin Angle delta
   UNITS: degrees
   SCALETYP: linear
@@ -108,7 +120,7 @@ energy:
   <<: *float_data
   NAME: energy
   CATDESC: Energy bins
-  FIELDNAME: Energy
+  FIELDNAM: Energy
   LABLAXIS: Energy
   UNITS: keV/e
   SCALETYP: log
@@ -120,7 +132,7 @@ energy_delta_plus:
   <<: *float_data
   NAME: energy_delta_plus
   CATDESC: Energy bins delta plus
-  FIELDNAME: Energy delta plus
+  FIELDNAM: Energy delta plus
   LABLAXIS: Energy delta plus
   UNITS: keV/e
   SCALETYP: log
@@ -130,7 +142,65 @@ energy_delta_minus:
   <<: *float_data
   NAME: energy_delta_minus
   CATDESC: Energy bins delta minus
-  FIELDNAME: Energy delta minus
+  FIELDNAM: Energy delta minus
   LABLAXIS: Energy delta minus
   UNITS: keV/e
   SCALETYP: log
+
+hplus:
+  <<: *species_3d_distribution
+  NAME: hplus
+  CATDESC: H+ Intensity 3d distribution
+  FIELDNAM: H+ Intensity
+  LABLAXIS: H+ Intensity
+
+heplus:
+  <<: *species_3d_distribution
+  NAME: heplus
+  CATDESC: He+ Intensity 3d distribution
+  FIELDNAM: He+ Intensity
+  LABLAXIS: He+ Intensity
+
+heplus2:
+  <<: *species_3d_distribution
+  NAME: heplus2
+  CATDESC: He++ Intensity 3d distribution
+  FIELDNAM: He++ Intensity
+  LABLAXIS: He++ Intensity
+
+oplus6:
+  <<: *species_3d_distribution
+  NAME: oplus6
+  CATDESC: 0+6 Intensity 3d distribution
+  FIELDNAM: 0+6 Intensity
+  LABLAXIS: 0+6 Intensity
+
+elevation_label:
+  NAME: elevation_label
+  CATDESC: Label for elevation
+  FIELDNAM: Elevation label
+  DATA_TYPE: CDF_CHAR
+  FORMAT: a20
+  VAR_TYPE: metadata
+  FILLVAL: ' '
+
+spin_angle_label:
+  NAME: spin_angle_label
+  CATDESC: Label for spin angle
+  FIELDNAM: Spin angle label
+  DATA_TYPE: CDF_CHAR
+  FORMAT: a20
+  VAR_TYPE: metadata
+  FILLVAL: ' '
+
+energy_label:
+  NAME: energy_label
+  CATDESC: Label for energy
+  FIELDNAM: Energy label
+  DATA_TYPE: CDF_CHAR
+  FORMAT: a20
+  VAR_TYPE: metadata
+  FILLVAL: ' '
+
+
+

@@ -1,3 +1,4 @@
+from datetime import timedelta
 from pathlib import Path
 
 import numpy as np
@@ -5,6 +6,7 @@ from spacepy.pycdf import CDF
 
 from imap_l3_processing.codice.l3.lo.direct_events.science.angle_lookup import PositionToElevationLookup
 from imap_l3_processing.codice.l3.lo.models import CODICE_LO_L2_NUM_PRIORITIES
+from imap_l3_processing.constants import ONE_SECOND_IN_NANOSECONDS
 from tests.test_helpers import get_run_local_data_path, get_test_instrument_team_data_path
 
 
@@ -29,8 +31,9 @@ def extend_priority_counts_to_24_spin_angles(template_cdf_path, priority_count_v
             rgfo_half_spin = rng.integers(0, 33, size=template_cdf["rgfo_half_spin"].shape)
             randomly_fill_value = rng.choice([False, True], size=template_cdf["rgfo_half_spin"].shape)
 
-            cdf["rgfo_half_spin"] = np.where(randomly_fill_value, cdf["rgfo_half_spin"].attrs["FILLVAL"],
-                                             rgfo_half_spin)
+            cdf["rgfo_half_spin"] = rgfo_half_spin
+            # cdf["rgfo_half_spin"] = np.where(randomly_fill_value, cdf["rgfo_half_spin"].attrs["FILLVAL"],
+            #                                  rgfo_half_spin)
     return output_path
 
 
@@ -77,6 +80,9 @@ def modify_l2_direct_events(instrument_team_l2_path: Path) -> Path:
 
     with CDF(str(instrument_team_l2_path)) as template_cdf:
         with CDF(str(output_path), masterpath="") as cdf:
+            epoch_delta = timedelta(minutes=2).total_seconds() * ONE_SECOND_IN_NANOSECONDS
+            cdf["epoch_delta_plus"] = np.full(template_cdf["epoch"].shape, epoch_delta)
+            cdf["epoch_delta_minus"] = np.full(template_cdf["epoch"].shape, epoch_delta)
 
             for priority_i in range(CODICE_LO_L2_NUM_PRIORITIES):
                 elevation_var = f"p{priority_i}_elevation"

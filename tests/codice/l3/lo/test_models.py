@@ -14,7 +14,8 @@ from imap_l3_processing.codice.l3.lo.models import CodiceLoL2SWSpeciesData, Codi
     CodiceLoL3aRatiosDataProduct, CodiceLoPartialDensityData, CodiceLoL3ChargeStateDistributionsDataProduct, \
     CodiceLoDirectEventData, EPOCH_VAR_NAME, EPOCH_DELTA_VAR_NAME, ELEVATION_VAR_NAME, SPIN_ANGLE_VAR_NAME, \
     ENERGY_VAR_NAME, SPIN_ANGLE_DELTA_VAR_NAME, ELEVATION_DELTA_VAR_NAME, \
-    CodiceLoL3a3dDistributionDataProduct, ENERGY_DELTA_PLUS_VAR_NAME, ENERGY_DELTA_MINUS_VAR_NAME
+    CodiceLoL3a3dDistributionDataProduct, ENERGY_DELTA_PLUS_VAR_NAME, ENERGY_DELTA_MINUS_VAR_NAME, \
+    ELEVATION_ANGLE_LABEL_VAR_NAME, SPIN_ANGLE_LABEL_VAR_NAME, ENERGY_LABEL_VAR_NAME
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.utils import save_data
 from tests.swapi.cdf_model_test_case import CdfModelTestCase
@@ -410,33 +411,46 @@ class TestModels(CdfModelTestCase):
         np.testing.assert_array_equal(actual_species_data, expected_species_data)
 
     def test_codice_lo_3d_distributions_data_product(self):
+        species = "hplus"
+
+        elevation = np.array([10, 20, 30])
+        spin_angle = np.array([40, 50, 60])
+        energy = np.array([70, 80, 90])
+
         data_product = CodiceLoL3a3dDistributionDataProduct(
+            input_metadata=Mock(),
             epoch=sentinel.epoch,
             epoch_delta=sentinel.epoch_delta,
-            elevation=sentinel.elevation,
+            elevation=elevation,
             elevation_delta=sentinel.elevation_delta,
-            spin_angle=sentinel.spin_angle,
+            spin_angle=spin_angle,
             spin_angle_delta=sentinel.spin_angle_delta,
-            energy=sentinel.energy,
+            energy=energy,
             energy_delta_plus=sentinel.energy_delta_plus,
             energy_delta_minus=sentinel.energy_delta_minus,
-            input_metadata=Mock()
+            species=species,
+            species_data=sentinel.species_data,
         )
 
         actual_data_product_variables = data_product.to_data_product_variables()
-        self.assertEqual(9, len(actual_data_product_variables))
+        self.assertEqual(13, len(actual_data_product_variables))
         actual_variables = iter(actual_data_product_variables)
 
         self.assert_variable_attributes(next(actual_variables), sentinel.epoch, EPOCH_VAR_NAME)
         self.assert_variable_attributes(next(actual_variables), sentinel.epoch_delta, EPOCH_DELTA_VAR_NAME)
-        self.assert_variable_attributes(next(actual_variables), sentinel.elevation, ELEVATION_VAR_NAME)
+        self.assert_variable_attributes(next(actual_variables), elevation, ELEVATION_VAR_NAME)
         self.assert_variable_attributes(next(actual_variables), sentinel.elevation_delta, ELEVATION_DELTA_VAR_NAME)
-        self.assert_variable_attributes(next(actual_variables), sentinel.spin_angle, SPIN_ANGLE_VAR_NAME)
+        self.assert_variable_attributes(next(actual_variables), spin_angle, SPIN_ANGLE_VAR_NAME)
         self.assert_variable_attributes(next(actual_variables), sentinel.spin_angle_delta, SPIN_ANGLE_DELTA_VAR_NAME)
-        self.assert_variable_attributes(next(actual_variables), sentinel.energy, ENERGY_VAR_NAME)
+        self.assert_variable_attributes(next(actual_variables), energy, ENERGY_VAR_NAME)
         self.assert_variable_attributes(next(actual_variables), sentinel.energy_delta_plus, ENERGY_DELTA_PLUS_VAR_NAME)
         self.assert_variable_attributes(next(actual_variables), sentinel.energy_delta_minus,
                                         ENERGY_DELTA_MINUS_VAR_NAME)
+        self.assert_variable_attributes(next(actual_variables), sentinel.species_data,
+                                        species)
+        self.assert_variable_attributes(next(actual_variables), energy.astype(str), ENERGY_LABEL_VAR_NAME)
+        self.assert_variable_attributes(next(actual_variables), spin_angle.astype(str), SPIN_ANGLE_LABEL_VAR_NAME)
+        self.assert_variable_attributes(next(actual_variables), elevation.astype(str), ELEVATION_ANGLE_LABEL_VAR_NAME)
 
     def test_codice_lo_l2_direct_events_reads_from_correct_float_data(self):
         all_fill_l2_cdf_path = get_test_data_path('codice/imap_codice_l2_lo-direct-events_20241110_v002-all-fill.cdf')
