@@ -1,7 +1,7 @@
 import json
+import shutil
 from dataclasses import dataclass
 from pathlib import Path
-from shutil import move
 
 from imap_data_access.processing_input import ProcessingInputCollection
 
@@ -102,20 +102,22 @@ class GlowsL3EDependencies:
 
     def rename_dependencies(self):
         if self.energy_grid_lo is not None:
-            move(self.energy_grid_lo, self.pipeline_settings['executable_dependency_paths']['energy-grid-lo'])
+            shutil.move(self.energy_grid_lo, self.pipeline_settings['executable_dependency_paths']['energy-grid-lo'])
         if self.energy_grid_hi is not None:
-            move(self.energy_grid_hi, self.pipeline_settings['executable_dependency_paths']['energy-grid-hi'])
+            shutil.move(self.energy_grid_hi, self.pipeline_settings['executable_dependency_paths']['energy-grid-hi'])
         if self.energy_grid_ultra is not None:
-            move(self.energy_grid_ultra, self.pipeline_settings['executable_dependency_paths']['energy-grid-ultra'])
+            shutil.move(self.energy_grid_ultra,
+                        self.pipeline_settings['executable_dependency_paths']['energy-grid-ultra'])
         if self.tess_xyz_8 is not None:
-            move(self.tess_xyz_8, self.pipeline_settings['executable_dependency_paths']['tess-xyz-8'])
+            shutil.move(self.tess_xyz_8, self.pipeline_settings['executable_dependency_paths']['tess-xyz-8'])
         if self.tess_ang16 is not None:
-            move(self.tess_ang16, self.pipeline_settings['executable_dependency_paths']['tess-ang-16'])
+            shutil.move(self.tess_ang16, self.pipeline_settings['executable_dependency_paths']['tess-ang-16'])
 
-        move(self.lya_series, self.pipeline_settings['executable_dependency_paths']['lya-series'])
-        move(self.solar_uv_anisotropy, self.pipeline_settings['executable_dependency_paths']['solar-uv-anisotropy'])
-        move(self.speed_3d_sw, self.pipeline_settings['executable_dependency_paths']['speed-3d'])
-        move(self.density_3d_sw, self.pipeline_settings['executable_dependency_paths']['density-3d'])
-        move(self.phion_hydrogen, self.pipeline_settings['executable_dependency_paths']['phion-hydrogen'])
-        move(self.sw_eqtr_electrons, self.pipeline_settings['executable_dependency_paths']['sw-eqtr-electrons'])
-        move(self.ionization_files, self.pipeline_settings['executable_dependency_paths']['ionization-files'])
+        shutil.move(self.lya_series, self.pipeline_settings['executable_dependency_paths']['lya-series'])
+        shutil.move(self.solar_uv_anisotropy,
+                    self.pipeline_settings['executable_dependency_paths']['solar-uv-anisotropy'])
+        shutil.move(self.speed_3d_sw, self.pipeline_settings['executable_dependency_paths']['speed-3d'])
+        shutil.move(self.density_3d_sw, self.pipeline_settings['executable_dependency_paths']['density-3d'])
+        shutil.move(self.phion_hydrogen, self.pipeline_settings['executable_dependency_paths']['phion-hydrogen'])
+        shutil.move(self.sw_eqtr_electrons, self.pipeline_settings['executable_dependency_paths']['sw-eqtr-electrons'])
+        shutil.move(self.ionization_files, self.pipeline_settings['executable_dependency_paths']['ionization-files'])

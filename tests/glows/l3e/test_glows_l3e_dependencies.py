@@ -316,8 +316,8 @@ class TestGlowsL3EDependencies(unittest.TestCase):
         self.assertEqual(actual_dependencies.tess_ang16, mock_tess_ang_16_path)
         self.assertEqual(repointing, 4)
 
-    @patch('imap_l3_processing.glows.l3e.glows_l3e_dependencies.move')
-    def test_rename_dependencies(self, mock_move):
+    @patch('imap_l3_processing.glows.l3e.glows_l3e_dependencies.shutil')
+    def test_rename_dependencies(self, mock_shutil):
         glows_l3e_dependencies = GlowsL3EDependencies(
             Path('2025/05/03/imap_glows_energy_grid_lo'),
             None,
@@ -362,7 +362,7 @@ class TestGlowsL3EDependencies(unittest.TestCase):
 
         glows_l3e_dependencies.rename_dependencies()
 
-        mock_move.assert_has_calls([
+        mock_shutil.move.assert_has_calls([
             call(glows_l3e_dependencies.energy_grid_lo, expected_energy_grid_lo),
             call(glows_l3e_dependencies.tess_xyz_8, expected_tess_xyz_8),
             call(glows_l3e_dependencies.lya_series, expected_lya_series),
@@ -374,7 +374,7 @@ class TestGlowsL3EDependencies(unittest.TestCase):
             call(glows_l3e_dependencies.ionization_files, expected_ionization_files),
         ])
 
-        mock_move.reset_mock()
+        mock_shutil.move.reset_mock()
 
         expected_energy_grid_hi = 'EnGridHi.dat'
 
@@ -384,7 +384,7 @@ class TestGlowsL3EDependencies(unittest.TestCase):
 
         glows_l3e_dependencies.rename_dependencies()
 
-        mock_move.assert_has_calls([
+        mock_shutil.move.assert_has_calls([
             call(glows_l3e_dependencies.energy_grid_hi, expected_energy_grid_hi),
             call(glows_l3e_dependencies.lya_series, expected_lya_series),
             call(glows_l3e_dependencies.solar_uv_anisotropy, expected_solar_uv_anisotropy),
@@ -395,7 +395,7 @@ class TestGlowsL3EDependencies(unittest.TestCase):
             call(glows_l3e_dependencies.ionization_files, expected_ionization_files),
         ])
 
-        mock_move.reset_mock()
+        mock_shutil.move.reset_mock()
 
         glows_l3e_dependencies.energy_grid_hi = None
         glows_l3e_dependencies.energy_grid_ultra = Path('2025/05/03/imap_glows_energy_grid_ultra')
@@ -406,7 +406,7 @@ class TestGlowsL3EDependencies(unittest.TestCase):
 
         glows_l3e_dependencies.rename_dependencies()
 
-        mock_move.assert_has_calls([
+        mock_shutil.move.assert_has_calls([
             call(glows_l3e_dependencies.energy_grid_ultra, expected_energy_grid_ultra),
             call(glows_l3e_dependencies.tess_ang16, expected_tess_ang16),
             call(glows_l3e_dependencies.lya_series, expected_lya_series),

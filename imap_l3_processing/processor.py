@@ -20,7 +20,7 @@ class Processor:
 
         count = spiceypy.ktotal('ALL')
         for i in range(0, count):
-            file = spiceypy.kdata(i, 'ALL')[0]
+            file = Path(spiceypy.kdata(i, 'ALL')[0]).name
             parent_file_names.append(file)
 
         return parent_file_names
