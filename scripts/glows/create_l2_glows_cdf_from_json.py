@@ -62,8 +62,8 @@ def create_l2_glows_cdf_from_json(json_file_path: str, output_filename: str):
 
 
 if __name__ == "__main__":
-    json_directory = Path(r'C:\Users\Harrison\Downloads\data_l2_histograms')
-    output_directory = Path(r'C:\Users\Harrison\Downloads\p3')
+    json_directory = Path(r'/Users/harrison/Desktop/glows_L3bcd_pipeline_20250514/data_l3a/')
+    output_directory = Path(r'/Users/harrison/Desktop/glows_L3bcd_pipeline_20250514/output_l3a')
     for file_path in json_directory.iterdir():
         output = re.search(r"imap_glows_l2_(\d{8}).*_orbX_modX_p_v00.json", file_path.name)
         output_file_path_date = output.group(1)

@@ -519,25 +519,28 @@ def run_l3b_initializer(mock_query):
 @environment_variables({"REPOINT_DATA_FILEPATH": get_test_data_path("fake_2_day_repointing_on_may18_file.csv")})
 @patch('imap_l3_processing.glows.glows_initializer.query')
 @patch('imap_l3_processing.glows.glows_processor.imap_data_access.upload')
-def run_glows_l3bc_processor_and_initializer(_, mock_query):
+@patch('imap_l3_processing.glows.l3bc.glows_initializer_ancillary_dependencies.download_external_dependency')
+def run_glows_l3bc_processor_and_initializer(mock_download_external, _, mock_query):
     input_metadata = InputMetadata(
         instrument='glows',
         data_level='l3b',
-        start_date=datetime(2013, 9, 8),
-        end_date=datetime(2013, 9, 8),
-        version='v011')
+        start_date=datetime(2025, 4, 24),
+        end_date=datetime(2024, 8, 22),
+        version='v003')
 
     l3a_files = imap_data_access.query(instrument='glows', version=input_metadata.version, data_level='l3a',
-                                       start_date='20100422', end_date='20100625')
+                                       start_date='20250424', end_date='20250823')
 
-    l3a_files_2 = imap_data_access.query(instrument='glows', version=input_metadata.version, data_level='l3a',
-                                         start_date='20100922', end_date='20101123')
-    mock_query.side_effect = [l3a_files + l3a_files_2, []]
+    mock_download_external.side_effect = [get_test_data_path('glows/f107_fluxtable_2025.txt'),
+                                          get_test_data_path('glows/lyman_alpha_composite_2025.nc'),
+                                          get_test_data_path('glows/omni2_2025.dat'),
+                                          ]
+    mock_query.side_effect = [l3a_files, []]
 
     bad_days_list = AncillaryInput('imap_glows_bad-days-list_20100101_v001.dat')
     waw_helio_ion = AncillaryInput('imap_glows_WawHelioIonMP_20100101_v002.json')
-    uv_anisotropy = AncillaryInput('imap_glows_uv-anisotropy-1cr_20250514_v002.json')
-    pipeline_settings = AncillaryInput('imap_glows_pipeline-settings-l3bcde_20250514_v004.json')
+    uv_anisotropy = AncillaryInput('imap_glows_uv-anisotropy-1CR_20100101_v003.json')
+    pipeline_settings = AncillaryInput('imap_glows_pipeline-settings-l3bcde_20100101_v007.json')
     input_collection = ProcessingInputCollection(bad_days_list, waw_helio_ion, uv_anisotropy, pipeline_settings)
 
     processor = GlowsProcessor(dependencies=input_collection, input_metadata=input_metadata)
@@ -555,20 +558,19 @@ def run_glows_l3e_lo_with_mocks(mock_get_repoint_date_range, _, mock_path, mock_
     mock_processing_input_collection.get_file_paths.return_value = [Path("one path")]
 
     mock_l3e_dependencies: GlowsL3EDependencies = GlowsL3EDependencies(
-        Path("imap_glows_l3d_solar-hist_20250501-repoint00005_v001.cdf"),
-        Path("instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/EnGridLo.dat"),
-        Path("instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/EnGridHi.dat"),
-        Path("instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/EnGridUltra.dat"),
-        Path("instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/tessXYZ8.dat"),
-        Path("instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/tessAng16.dat"),
-        Path("instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/lyaSeriesV4_2021b.dat"),
-        Path(
-            "instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/solar_uv_anisotropy_NP.1.0_SP.1.0.dat"),
-        Path("instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/speed3D.v01.Legendre.2021b.dat"),
-        Path("instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/density3D.v01.Legendre.2021b.dat"),
-        Path("instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/phion_Hydrogen_T12F107_2021b.dat"),
-        Path("instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/swEqtrElectrons5_2021b.dat"),
-        Path("instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/ionization.files.dat"),
+        # get_test_data_path("glows/l3e_2025/imap_glows_l3d_solar-hist_19470303-cr02296_v001.cdf"),
+        get_test_data_path("glows/l3e_2025/imap_glows_energy-grid-lo_20100101_v002.dat"),
+        None,
+        get_test_data_path("glows/l3e_2025/imap_glows_l3d_p-dens_19470303-cr02296_v001.dat"),
+        get_test_data_path("glows/l3e_2025/imap_glows_ionization-files_20100101_v002.dat"),
+        get_test_data_path("glows/l3e_2025/imap_glows_lya-series_19470303_v002.dat"),
+        get_test_data_path("glows/l3e_2025/imap_glows_l3d_phion_19470303-cr02296_v001.dat"),
+        get_test_data_path("glows/l3e_2025/imap_glows_pipeline-settings-l3bcde_20100101_v007.json"),
+        get_test_data_path("glows/l3e_2025/imap_glows_l3d_uv-anis_19470303-cr02296_v001.dat"),
+        get_test_data_path("glows/l3e_2025/imap_glows_l3d_speed_19470303-cr02296_v001.dat"),
+        get_test_data_path("glows/l3e_2025/imap_glows_l3d_e-dens_19470303-cr02296_v001.dat"),
+        get_test_data_path("glows/l3e_2025/imap_glows_tess-xyz-8_20100101_v002.dat"),
+        get_test_data_path("glows/l3e_2025/imap_lo_elongation-data_20100101_v001.dat"),
         {"executable_dependency_paths": {
             "energy-grid-lo": "EnGridLo.dat",
             "energy-grid-hi": "EnGridHi.dat",
@@ -576,12 +578,12 @@ def run_glows_l3e_lo_with_mocks(mock_get_repoint_date_range, _, mock_path, mock_
             "tess-xyz-8": "tessXYZ8.dat",
             "tess-ang-16": "tessAng16.dat",
             "lya-series": "lyaSeriesV4_2021b.dat",
-            "solar-uv-anistropy": "solar_uv_anisotropy_NP.1.0_SP.1.0.dat",
+            "solar-uv-anisotropy": "solar_uv_anisotropy_NP.1.0_SP.1.0.dat",
             "speed-3d": "speed3D.v01.Legendre.2021b.dat",
             "density-3d": "density3D.v01.Legendre.2021b.dat",
             "phion-hydrogen": "phion_Hydrogen_T12F107_2021b.dat",
-            "sw-eqtr-electrons": "swEqtrElectrons5_2021b.dat",
             "ionization-files": "ionization.files.dat",
+            "sw-eqtr-electrons": "swEqtrElectrons5_2021b.dat"
         }}
     )
 
@@ -612,25 +614,47 @@ def run_glows_l3e_lo_with_mocks(mock_get_repoint_date_range, _, mock_path, mock_
     glows_processor.process()
 
 
-@environment_variables({"REPOINT_DATA_FILEPATH": get_test_data_path("fake_1_day_repointing_file.csv")})
+@environment_variables({"REPOINT_DATA_FILEPATH": get_test_data_path("glows/l3e_2025/2025_fake_repointing.csv")})
 @patch("imap_l3_processing.glows.glows_processor.imap_data_access")
-@patch("imap_l3_processing.glows.l3e.glows_l3e_utils.spiceypy")
-def run_glows_l3e_lo_with_less_mocks(mock_spiceypy, mock_imap_data_access):
-    mock_spiceypy.spkezr = spiceypy.spkezr
-    mock_spiceypy.reclat = spiceypy.reclat
-    mock_spiceypy.pxform = spiceypy.pxform
-    mock_spiceypy.datetime2et = lambda date: spiceypy.datetime2et(date + timedelta(days=365 * 16 + 4))
-
+@patch("imap_l3_processing.glows.l3e.glows_l3e_dependencies.download_dependency_from_path")
+@patch("imap_l3_processing.glows.l3e.glows_l3e_dependencies.shutil")
+def run_glows_l3e_lo_with_less_mocks(mock_shutil, mock_download, mock_imap_data_access):
     mock_imap_data_access.upload = lambda p: print("i would upload", p)
+    mock_shutil.move = shutil.copy
 
-    l3d_file = "imap_glows_l3d_solar-hist_20100101-repoint02092_v002.cdf"
+    shared_deps = [
+        get_test_data_path('glows/l3e_2025/imap_glows_l3d_lya_19470303-cr02297_v001.dat'),
+        get_test_data_path('glows/l3e_2025/imap_glows_l3d_uv-anis_19470303-cr02297_v001.dat'),
+        get_test_data_path('glows/l3e_2025/imap_glows_l3d_speed_19470303-cr02297_v001.dat'),
+        get_test_data_path('glows/l3e_2025/imap_glows_l3d_p-dens_19470303-cr02297_v001.dat'),
+        get_test_data_path('glows/l3e_2025/imap_glows_l3d_phion_19470303-cr02297_v001.dat'),
+        get_test_data_path('glows/l3e_2025/imap_glows_l3d_e-dens_19470303-cr02297_v001.dat'),
+        get_test_data_path('glows/l3e_2025/imap_glows_ionization-files_20100101_v002.dat'),
+        get_test_data_path('glows/l3e_2025/imap_glows_pipeline-settings-l3bcde_20100101_v007.json'),
+
+    ]
+
+    mock_download.side_effect = shared_deps + [
+        get_test_data_path('glows/l3e_2025/imap_glows_energy-grid-lo_20100101_v002.dat'),
+        get_test_data_path('glows/l3e_2025/imap_glows_tess-xyz-8_20100101_v002.dat'),
+        get_test_data_path('glows/l3e_2025/imap_lo_elongation-data_20100101_v001.dat'),
+    ] + shared_deps + [
+                                    get_test_data_path('glows/l3e_2025/imap_glows_energy-grid-hi_20100101_v002.dat'),
+                                ] + shared_deps + [
+                                    get_test_data_path('glows/l3e_2025/imap_glows_energy-grid-hi_20100101_v002.dat'),
+                                ] + shared_deps + [
+                                    get_test_data_path('glows/l3e_2025/imap_glows_energy-grid-ultra_20100101_v002.dat'),
+                                    get_test_data_path('glows/l3e_2025/imap_glows_tess-ang-16_20100101_v002.dat'),
+                                ]
+
+    l3d_file = "imap_glows_l3d_solar-hist_20100101-repoint02297_v002.cdf"
     lo_processing_input_collection = ProcessingInputCollection(
         AncillaryInput("imap_glows_density-3d_19640117_v002.dat"),
         AncillaryInput("imap_glows_energy-grid-lo_20100101_v002.dat"),
         AncillaryInput("imap_glows_ionization-files_20100101_v002.dat"),
         AncillaryInput("imap_glows_lya-series_19470303_v002.dat"),
         AncillaryInput("imap_glows_phion-hydrogen_19470303_v002.dat"),
-        AncillaryInput("imap_glows_pipeline-settings-l3e_20100101_v003.json"),
+        AncillaryInput("imap_glows_pipeline-settings-l3bcde_20100101_v003.json"),
         AncillaryInput("imap_glows_solar-uv-anisotropy_19960130_v002.dat"),
         AncillaryInput("imap_glows_speed-3d_19640117_v002.dat"),
         AncillaryInput("imap_glows_sw-eqtr-electrons_19710416_v002.dat"),
@@ -645,7 +669,7 @@ def run_glows_l3e_lo_with_less_mocks(mock_spiceypy, mock_imap_data_access):
         AncillaryInput("imap_glows_ionization-files_20100101_v002.dat"),
         AncillaryInput("imap_glows_lya-series_19470303_v002.dat"),
         AncillaryInput("imap_glows_phion-hydrogen_19470303_v002.dat"),
-        AncillaryInput("imap_glows_pipeline-settings-l3e_20100101_v003.json"),
+        AncillaryInput("imap_glows_pipeline-settings-l3bcde_20100101_v003.json"),
         AncillaryInput("imap_glows_solar-uv-anisotropy_19960130_v002.dat"),
         AncillaryInput("imap_glows_speed-3d_19640117_v002.dat"),
         AncillaryInput("imap_glows_sw-eqtr-electrons_19710416_v002.dat"),
@@ -657,7 +681,7 @@ def run_glows_l3e_lo_with_less_mocks(mock_spiceypy, mock_imap_data_access):
         AncillaryInput("imap_glows_ionization-files_20100101_v002.dat"),
         AncillaryInput("imap_glows_lya-series_19470303_v002.dat"),
         AncillaryInput("imap_glows_phion-hydrogen_19470303_v002.dat"),
-        AncillaryInput("imap_glows_pipeline-settings-l3e_20100101_v003.json"),
+        AncillaryInput("imap_glows_pipeline-settings-l3bcde_20100101_v003.json"),
         AncillaryInput("imap_glows_solar-uv-anisotropy_19960130_v002.dat"),
         AncillaryInput("imap_glows_speed-3d_19640117_v002.dat"),
         AncillaryInput("imap_glows_sw-eqtr-electrons_19710416_v002.dat"),
@@ -670,7 +694,7 @@ def run_glows_l3e_lo_with_less_mocks(mock_spiceypy, mock_imap_data_access):
         AncillaryInput("imap_glows_ionization-files_20100101_v002.dat"),
         AncillaryInput("imap_glows_lya-series_19470303_v002.dat"),
         AncillaryInput("imap_glows_phion-hydrogen_19470303_v002.dat"),
-        AncillaryInput("imap_glows_pipeline-settings-l3e_20100101_v003.json"),
+        AncillaryInput("imap_glows_pipeline-settings-l3bcde_20100101_v003.json"),
         AncillaryInput("imap_glows_solar-uv-anisotropy_19960130_v002.dat"),
         AncillaryInput("imap_glows_speed-3d_19640117_v002.dat"),
         AncillaryInput("imap_glows_sw-eqtr-electrons_19710416_v002.dat"),
@@ -679,8 +703,8 @@ def run_glows_l3e_lo_with_less_mocks(mock_spiceypy, mock_imap_data_access):
     )
 
     version = 'v007'
-    start_date = datetime(2010, 1, 1)
-    end_date = datetime(2010, 1, 2)
+    start_date = datetime(2025, 4, 26)
+    end_date = datetime(2025, 4, 27)
 
     lo_input_metadata = InputMetadata(instrument='glows', data_level='l3e', start_date=start_date,
                                       end_date=end_date, version=version,
@@ -755,21 +779,18 @@ def run_glows_l3bc():
     print(save_data(l3c_data_product, delete_if_present=True))
 
 
-@patch('imap_l3_processing.glows.glows_processor.shutil')
-def run_glows_l3d(mock_shutil):
-    mock_shutil.move = shutil.copy
-
+def run_glows_l3d():
     input_metadata = InputMetadata(
         instrument='glows',
         data_level='l3d',
-        start_date=datetime(2013, 9, 8),
-        end_date=datetime(2013, 9, 8),
+        start_date=datetime(2025, 3, 29),
+        end_date=datetime(2025, 3, 29),
         version='v001',
         descriptor='solar-hist'
     )
 
     external_files = {
-        'lya_raw_data': get_test_data_path('glows/lyman_alpha_composite.nc'),
+        'lya_raw_data': get_test_data_path('glows/lyman_alpha_composite_2025.nc'),
     }
 
     ancillary_files = {
@@ -781,18 +802,18 @@ def run_glows_l3d(mock_shutil):
             'lya': get_test_instrument_team_data_path('glows/imap_glows_lya-2010a_v003.dat'),
             'e-dens': get_test_instrument_team_data_path('glows/imap_glows_electron-density-2010a_v003.dat'),
         },
-        'pipeline_settings': get_test_instrument_team_data_path(
-            'glows/imap_glows_pipeline-settings-l3bcde_20250514_v004.json')
+        'pipeline_settings': get_test_data_path(
+            'glows/l3d_drift_test/imap_glows_pipeline-settings-l3bcde_20100101_v007.json')
     }
 
     l3b_file_paths = [
-        get_test_data_path('glows/imap_glows_l3b_ion-rate-profile_20100422_v013.cdf'),
-        get_test_data_path('glows/imap_glows_l3b_ion-rate-profile_20100519_v013.cdf')
+        get_test_data_path('glows/imap_glows_l3b_ion-rate-profile_20250329_v003.cdf'),
+        get_test_data_path('glows/imap_glows_l3b_ion-rate-profile_20250425_v003.cdf')
     ]
 
     l3c_file_paths = [
-        get_test_data_path('glows/imap_glows_l3c_sw-profile_20100422_v011.cdf'),
-        get_test_data_path('glows/imap_glows_l3c_sw-profile_20100519_v011.cdf'),
+        get_test_data_path('glows/imap_glows_l3c_sw-profile_20250329_v003.cdf'),
+        get_test_data_path('glows/imap_glows_l3c_sw-profile_20250425_v003.cdf'),
     ]
 
     l3d_dependencies: GlowsL3DDependencies = GlowsL3DDependencies(external_files=external_files,
@@ -1203,7 +1224,7 @@ if __name__ == "__main__":
             )
             processor = UltraProcessor(input_metadata=processor_input_metadata, dependencies=Mock())
 
-            #@formatter:off
+            # @formatter:off
             missing_paths, [l2_map_path, *l1c_dependency_paths] = try_get_many_run_local_paths([
                 "ultra/20250415-20250419/imap_ultra_l2_u90-ena-h-sf-nsp-full-hae-4deg-6mo_20250415_v001.cdf",
                 "ultra/20250415-20250419/ultra_l1c/imap_ultra_l1c_45sensor-spacecraftpset_20250415-repoint00001_v001.cdf",
