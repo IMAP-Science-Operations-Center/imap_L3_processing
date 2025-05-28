@@ -26,7 +26,7 @@ from imap_l3_processing.codice.l3.lo.models import CodiceLoL3aPartialDensityData
 from imap_l3_processing.codice.l3.lo.sectored_intensities.science.mass_per_charge_lookup import MassPerChargeLookup
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
-from tests.test_helpers import create_dataclass_mock, get_test_data_path
+from tests.test_helpers import create_dataclass_mock, get_test_data_path, NumpyArrayMatcher
 
 
 class TestCodiceLoProcessor(unittest.TestCase):
@@ -663,7 +663,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
         )
 
         mock_rebin.return_value.get_3d_distribution.assert_called_once_with(sentinel.species)
-        counts_3d_distribution_for_species = mock_rebin.return_value.get_3d_distribution
+        counts_3d_distribution_for_species = mock_rebin.return_value.get_3d_distribution.return_value
 
         mock_compute_geometric_factors = mock_geometric_factor_lut.get_geometric_factors
         mock_compute_geometric_factors.assert_called_once_with(sentinel.rgfo_half_spin)
@@ -678,6 +678,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
                                                                      mock_compute_geometric_factors.return_value)
 
         mock_rebin_to_elevation.assert_called_once_with(mock_convert_count_rate_to_intensity.return_value,
+                                                        NumpyArrayMatcher(np.arange(1, 25)),
                                                         mock_elevation_lookup)
 
         self.assertIsInstance(l3a_direct_event_data_product, CodiceLoL3a3dDistributionDataProduct)

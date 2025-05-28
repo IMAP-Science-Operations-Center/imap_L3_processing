@@ -279,10 +279,9 @@ class CodiceLoProcessor(Processor):
             num_events=l3a_de_num_events,
         )
 
-        normalized_counts = normalize_counts(counts_3d_data, l3a_de_normalization)
+        normalized_counts = normalize_counts(counts_3d_data.get_3d_distribution(dependencies.species),
+                                             l3a_de_normalization)
         normalized_count_rates = combine_priorities_and_convert_to_rate(normalized_counts, l1a_acquisition_time)
-
-        normalized_counts_rates = normalized_counts.get_3d_distribution(dependencies.species)
 
         geometric_factors = geometric_factor_lut.get_geometric_factors(l1_sw_rgfo_half_spins)
         intensities = convert_count_rate_to_intensity(normalized_count_rates,
@@ -290,7 +289,7 @@ class CodiceLoProcessor(Processor):
                                                       dependencies.efficiency_factors_lut,
                                                       geometric_factors)
 
-        rebin_3d_distribution_azimuth_to_elevation(intensities, position_elevation_lut)
+        rebin_3d_distribution_azimuth_to_elevation(intensities, np.arange(1, 25), position_elevation_lut)
 
         return CodiceLoL3a3dDistributionDataProduct(
             input_metadata=self.input_metadata,
