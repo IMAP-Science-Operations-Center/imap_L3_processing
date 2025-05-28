@@ -487,8 +487,12 @@ ENERGY_DELTA_MINUS_VAR_NAME = "energy_delta_minus"
 SPIN_ANGLE_DELTA_VAR_NAME = "spin_angle_delta"
 ELEVATION_DELTA_VAR_NAME = "elevation_delta"
 
+ENERGY_LABEL_VAR_NAME = "energy_label"
+SPIN_ANGLE_LABEL_VAR_NAME = "spin_angle_label"
+ELEVATION_ANGLE_LABEL_VAR_NAME = "elevation_label"
 
-@dataclass()
+
+@dataclass
 class CodiceLoL3a3dDistributionDataProduct(DataProduct):
     epoch: np.ndarray
     epoch_delta: np.ndarray
@@ -499,6 +503,8 @@ class CodiceLoL3a3dDistributionDataProduct(DataProduct):
     energy: np.ndarray
     energy_delta_plus: np.ndarray
     energy_delta_minus: np.ndarray
+    species: str
+    species_data: np.ndarray
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
@@ -511,4 +517,8 @@ class CodiceLoL3a3dDistributionDataProduct(DataProduct):
             DataProductVariable(ENERGY_VAR_NAME, self.energy),
             DataProductVariable(ENERGY_DELTA_PLUS_VAR_NAME, self.energy_delta_plus),
             DataProductVariable(ENERGY_DELTA_MINUS_VAR_NAME, self.energy_delta_minus),
+            DataProductVariable(self.species, self.species_data),
+            DataProductVariable(ENERGY_LABEL_VAR_NAME, self.energy.astype(str)),
+            DataProductVariable(SPIN_ANGLE_LABEL_VAR_NAME, self.spin_angle.astype(str)),
+            DataProductVariable(ELEVATION_ANGLE_LABEL_VAR_NAME, self.elevation.astype(str)),
         ]

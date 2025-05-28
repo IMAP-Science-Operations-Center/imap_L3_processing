@@ -695,6 +695,9 @@ class TestCodiceLoProcessor(unittest.TestCase):
         self.assertEqual(mock_energy_lookup.delta_plus, l3a_direct_event_data_product.energy_delta_plus)
         self.assertEqual(mock_energy_lookup.delta_minus, l3a_direct_event_data_product.energy_delta_minus)
 
+        self.assertEqual(mock_rebin_to_elevation.return_value, l3a_direct_event_data_product.species_data)
+        self.assertEqual(sentinel.species, l3a_direct_event_data_product.species)
+
     def test_process_3d_distributions_save_and_upload_for_each_species(self):
 
         for species in ["hplus", "heplus", "heplus2", "oplus6"]:

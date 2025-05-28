@@ -288,7 +288,7 @@ class CodiceLoProcessor(Processor):
                                                       dependencies.efficiency_factors_lut,
                                                       geometric_factors)
 
-        rebin_3d_distribution_azimuth_to_elevation(intensities, np.arange(1, 25), position_elevation_lut)
+        intensity = rebin_3d_distribution_azimuth_to_elevation(intensities, np.arange(1, 25), position_elevation_lut)
 
         return CodiceLoL3a3dDistributionDataProduct(
             input_metadata=self.input_metadata,
@@ -300,7 +300,9 @@ class CodiceLoProcessor(Processor):
             spin_angle_delta=spin_angle_lut.bin_deltas,
             energy=energy_lut.bin_centers,
             energy_delta_plus=energy_lut.delta_plus,
-            energy_delta_minus=energy_lut.delta_minus
+            energy_delta_minus=energy_lut.delta_minus,
+            species=dependencies.species,
+            species_data=intensity,
         )
 
 
