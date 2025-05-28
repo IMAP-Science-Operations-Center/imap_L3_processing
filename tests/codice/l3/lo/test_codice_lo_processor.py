@@ -755,7 +755,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
             mass_coefficients_file_path=get_test_data_path(
                 "codice/imap_codice_mass-coefficient-lookup_20241110_v002.csv"),
             esa_to_energy_per_charge_file_path=get_test_data_path(
-                "codice/imap_codice_lo-esa-to-energy-per_charge_20241110_v001.csv"
+                "codice/imap_codice_lo-energy-per-charge_20241110_v001.csv"
             )
         )
 
