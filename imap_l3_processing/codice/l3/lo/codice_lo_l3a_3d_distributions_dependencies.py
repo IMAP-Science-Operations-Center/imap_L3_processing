@@ -7,7 +7,8 @@ from imap_data_access.processing_input import ProcessingInputCollection, Science
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_direct_events_dependencies import DIRECT_EVENTS_DESCRIPTOR, \
     SW_PRIORITY_DESCRIPTOR, NSW_PRIORITY_DESCRIPTOR
 from imap_l3_processing.codice.l3.lo.direct_events.science.efficiency_lookup import EfficiencyLookup
-from imap_l3_processing.codice.l3.lo.direct_events.science.energy_lookup import EnergyLookup
+from imap_l3_processing.codice.l3.lo.direct_events.science.energy_lookup import EnergyLookup, \
+    ESA_TO_ENERGY_PER_CHARGE_LOOKUP_DESCRIPTOR
 from imap_l3_processing.codice.l3.lo.direct_events.science.geometric_factor_lookup import GeometricFactorLookup
 from imap_l3_processing.codice.l3.lo.direct_events.science.mass_species_bin_lookup import MassSpeciesBinLookup
 from imap_l3_processing.codice.l3.lo.models import CodiceLoDirectEventData, CodiceLoL1aSWPriorityRates, \
@@ -16,7 +17,6 @@ from imap_l3_processing.codice.l3.lo.models import CodiceLoDirectEventData, Codi
 MASS_SPECIES_BIN_LOOKUP_DESCRIPTOR = "lo-mass-species-bin-lookup"
 GEOMETRIC_FACTOR_LOOKUP_DESCRIPTOR = "lo-geometric-factors"
 EFFICIENCY_FACTOR_LOOKUP_DESCRIPTOR = "lo-efficiency-factors"
-ESA_TO_ENERGY_PER_CHARGE_LOOKUP_DESCRIPTOR = "esa-to-energy-per-charge-lookup"
 
 
 @dataclass

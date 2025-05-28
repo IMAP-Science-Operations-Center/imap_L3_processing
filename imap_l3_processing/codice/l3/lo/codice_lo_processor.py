@@ -12,7 +12,6 @@ from imap_l3_processing.codice.l3.lo.codice_lo_l3a_partial_densities_dependencie
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_ratios_dependencies import CodiceLoL3aRatiosDependencies
 from imap_l3_processing.codice.l3.lo.direct_events.science.angle_lookup import SpinAngleLookup, \
     PositionToElevationLookup
-from imap_l3_processing.codice.l3.lo.direct_events.science.energy_lookup import EnergyLookup
 from imap_l3_processing.codice.l3.lo.models import CodiceLoL3aPartialDensityDataProduct, CodiceLoL2DirectEventData, \
     CodiceLoL3aDirectEventDataProduct, CodiceLoPartialDensityData, CodiceLoL3aRatiosDataProduct, \
     CodiceLoL3ChargeStateDistributionsDataProduct, CODICE_LO_L2_NUM_PRIORITIES, CodiceLoL3a3dDistributionDataProduct
@@ -198,10 +197,10 @@ class CodiceLoProcessor(Processor):
             np.full((len(codice_direct_events.epoch), len(priority_counts_for_events)), np.nan)
             for _ in range(2)]
 
-        energy_lut = EnergyLookup.from_bin_centers(codice_sw_priority_counts_l1a_data.energy_table)
         spin_angle_lut = SpinAngleLookup()
+        esa_energy_per_charge_lookup = dependencies.energy_lookup
         normalization = np.full((len(codice_direct_events.epoch), CODICE_LO_L2_NUM_PRIORITIES,
-                                 energy_lut.num_bins, spin_angle_lut.num_bins), np.nan)
+                                 esa_energy_per_charge_lookup.num_bins, spin_angle_lut.num_bins), np.nan)
 
         try:
 
@@ -222,7 +221,7 @@ class CodiceLoProcessor(Processor):
 
                 direct_events_binned_by_energy_and_spin = rebin_counts_by_energy_and_spin_angle(priority_event,
                                                                                                 spin_angle_lut,
-                                                                                                energy_lut)
+                                                                                                esa_energy_per_charge_lookup)
                 normalization[:, priority_index, ...] = \
                     priority_counts_total_count / direct_events_binned_by_energy_and_spin
 

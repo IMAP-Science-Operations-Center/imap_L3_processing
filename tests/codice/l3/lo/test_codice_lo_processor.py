@@ -443,12 +443,11 @@ class TestCodiceLoProcessor(unittest.TestCase):
         self.assertEqual(fe_hiq_partial_density, result_data.fe_hiq_partial_density),
 
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.SpinAngleLookup')
-    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.EnergyLookup')
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.rebin_counts_by_energy_and_spin_angle')
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.calculate_mass_per_charge')
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.calculate_mass')
     def test_process_l3a_direct_events(self, mock_calculate_mass, mock_calculate_mass_per_charge,
-                                       mock_rebin_counts_by_energy_and_spin, mock_energy_lookup_class,
+                                       mock_rebin_counts_by_energy_and_spin,
                                        mock_spin_angle_lookup_class):
         rng = np.random.default_rng()
 
@@ -456,7 +455,6 @@ class TestCodiceLoProcessor(unittest.TestCase):
         num_energy_bins = 128
         event_buffer_size = 10
 
-        mock_energy_lookup_class.from_bin_centers.return_value.num_bins = num_energy_bins
         mock_spin_angle_lookup_class.return_value.num_bins = num_spin_angle_bins
 
         epochs = np.array([datetime.now(), datetime.now() + timedelta(hours=1)])
@@ -536,7 +534,11 @@ class TestCodiceLoProcessor(unittest.TestCase):
         priority_events.append(empty_priority_7)
         direct_events = CodiceLoL2DirectEventData(epochs, np.array([]), np.array([]), priority_events)
 
-        dependencies = CodiceLoL3aDirectEventsDependencies(sw_priority_rates, nsw_priority_rates, direct_events, Mock())
+        mock_energy_lookup = Mock(spec=EnergyLookup)
+        mock_energy_lookup.num_bins = num_energy_bins
+
+        dependencies = CodiceLoL3aDirectEventsDependencies(sw_priority_rates, nsw_priority_rates, direct_events, Mock(),
+                                                           mock_energy_lookup)
 
         input_collection = ProcessingInputCollection()
         input_metadata = InputMetadata('codice', "l3a", Mock(spec=datetime), Mock(spec=datetime), 'v02')
@@ -544,7 +546,6 @@ class TestCodiceLoProcessor(unittest.TestCase):
         l3a_direct_event_data_product = processor.process_l3a_direct_event_data_product(dependencies)
 
         mock_spin_angle_lookup_class.assert_called_once()
-        mock_energy_lookup_class.from_bin_centers.assert_called_once_with(sentinel.l1a_energy_table)
 
         self.assertEqual(CODICE_LO_L2_NUM_PRIORITIES, mock_rebin_counts_by_energy_and_spin.call_count)
 
@@ -558,7 +559,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
             self.assertEqual(id(priority_event), id(mock_rebin_counts_by_energy_and_spin.call_args_list[index].args[0]))
             self.assertEqual(mock_spin_angle_lookup_class.return_value,
                              mock_rebin_counts_by_energy_and_spin.call_args_list[index].args[1])
-            self.assertEqual(mock_energy_lookup_class.from_bin_centers.return_value,
+            self.assertEqual(mock_energy_lookup,
                              mock_rebin_counts_by_energy_and_spin.call_args_list[index].args[2])
 
         self.assertIsInstance(l3a_direct_event_data_product, CodiceLoL3aDirectEventDataProduct)
@@ -749,8 +750,10 @@ class TestCodiceLoProcessor(unittest.TestCase):
                 "codice/imap_codice_l1a_lo-nsw-priority_20241110_v002-all-fill.cdf"),
             direct_event_path=get_test_data_path("codice/imap_codice_l2_lo-direct-events_20241110_v002-all-fill.cdf"),
             mass_coefficients_file_path=get_test_data_path(
-                "codice/imap_codice_mass-coefficient-lookup_20241110_v002.csv")
-
+                "codice/imap_codice_mass-coefficient-lookup_20241110_v002.csv"),
+            esa_to_energy_per_charge_file_path=get_test_data_path(
+                "codice/imap_codice_lo-esa-to-energy-per_charge_20241110_v001.csv"
+            )
         )
 
         processor = CodiceLoProcessor(dependencies=input_collection, input_metadata=input_metadata)

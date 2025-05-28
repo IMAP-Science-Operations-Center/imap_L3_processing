@@ -3,6 +3,8 @@ from pathlib import Path
 
 import numpy as np
 
+ESA_TO_ENERGY_PER_CHARGE_LOOKUP_DESCRIPTOR = "esa-to-energy-per-charge-lookup"
+
 
 @dataclass
 class EnergyLookup:
