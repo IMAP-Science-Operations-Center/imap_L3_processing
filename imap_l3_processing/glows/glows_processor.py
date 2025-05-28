@@ -54,9 +54,9 @@ class GlowsProcessor(Processor):
             for zip_file in zip_files:
                 dependencies = GlowsL3BCDependencies.fetch_dependencies(zip_file)
                 l3b_data_product, l3c_data_product = self.process_l3bc(dependencies)
-                l3b_cdf = save_data(l3b_data_product)
+                l3b_cdf = save_data(l3b_data_product, cr_number=dependencies.carrington_rotation_number)
                 l3c_data_product.parent_file_names.append(Path(l3b_cdf).name)
-                l3c_cdf = save_data(l3c_data_product)
+                l3c_cdf = save_data(l3c_data_product, cr_number=dependencies.carrington_rotation_number)
                 imap_data_access.upload(l3b_cdf)
                 imap_data_access.upload(l3c_cdf)
                 imap_data_access.upload(zip_file)

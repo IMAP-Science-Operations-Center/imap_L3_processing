@@ -282,8 +282,12 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
             [call(sentinel.l3c_data_1, expected_l3c_metadata_1),
              call(sentinel.l3c_data_2, expected_l3c_metadata_2)])
 
-        mock_save_data.assert_has_calls(
-            [call(l3b_model_1), call(l3c_model_1), call(l3b_model_2), call(l3c_model_2)])
+        mock_save_data.assert_has_calls([
+            call(l3b_model_1, cr_number=first_dependency.carrington_rotation_number),
+            call(l3c_model_1, cr_number=first_dependency.carrington_rotation_number),
+            call(l3b_model_2, cr_number=second_dependency.carrington_rotation_number),
+            call(l3c_model_2, cr_number=second_dependency.carrington_rotation_number)
+        ])
 
         self.assertEqual(["file1", "path1.zip", "kernel_1"], l3b_model_1.parent_file_names)
         self.assertEqual(["file2", "path2.zip", "kernel_1"], l3b_model_2.parent_file_names)
