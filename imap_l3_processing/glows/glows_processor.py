@@ -78,24 +78,27 @@ class GlowsProcessor(Processor):
                                                          self.input_metadata.version,
                                                          Path(os.getenv("REPOINT_DATA_FILEPATH")))
             for repointing in repointings:
-                epoch, epoch_end = get_pointing_date_range(repointing)
-                epoch_dt: datetime = epoch.astype('datetime64[us]').astype(datetime)
-                epoch_end_dt: datetime = epoch_end.astype('datetime64[us]').astype(datetime)
-                epoch_delta: timedelta = (epoch_end_dt - epoch_dt) / 2
+                try:
+                    epoch, epoch_end = get_pointing_date_range(repointing)
+                    epoch_dt: datetime = epoch.astype('datetime64[us]').astype(datetime)
+                    epoch_end_dt: datetime = epoch_end.astype('datetime64[us]').astype(datetime)
+                    epoch_delta: timedelta = (epoch_end_dt - epoch_dt) / 2
 
-                if self.input_metadata.descriptor == "survival-probability-lo":
-                    try:
-                        year_with_repointing = str(epoch_dt.year) + str(int(repointing)).zfill(3)
-                        elongation = l3e_dependencies.elongation[year_with_repointing]
-                    except KeyError:
-                        continue
-                    self.process_l3e_lo(epoch_dt, epoch_delta, elongation)
-                elif self.input_metadata.descriptor == "survival-probability-hi-45":
-                    self.process_l3e_hi(epoch_dt, epoch_delta, 135)
-                elif self.input_metadata.descriptor == "survival-probability-hi-90":
-                    self.process_l3e_hi(epoch_dt, epoch_delta, 90)
-                elif self.input_metadata.descriptor == "survival-probability-ul":
-                    self.process_l3e_ul(epoch_dt, epoch_delta)
+                    if self.input_metadata.descriptor == "survival-probability-lo":
+                        try:
+                            year_with_repointing = str(epoch_dt.year) + str(int(repointing)).zfill(3)
+                            elongation = l3e_dependencies.elongation[year_with_repointing]
+                        except KeyError:
+                            continue
+                        self.process_l3e_lo(epoch_dt, epoch_delta, elongation)
+                    elif self.input_metadata.descriptor == "survival-probability-hi-45":
+                        self.process_l3e_hi(epoch_dt, epoch_delta, 135)
+                    elif self.input_metadata.descriptor == "survival-probability-hi-90":
+                        self.process_l3e_hi(epoch_dt, epoch_delta, 90)
+                    elif self.input_metadata.descriptor == "survival-probability-ul":
+                        self.process_l3e_ul(epoch_dt, epoch_delta)
+                except Exception as e:
+                    print("Exception encountered for repointing ", repointing, e)
 
     def process_l3a(self, dependencies: GlowsL3ADependencies) -> GlowsL3LightCurve:
         data = dependencies.data
