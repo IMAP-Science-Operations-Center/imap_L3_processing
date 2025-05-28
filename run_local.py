@@ -3,7 +3,6 @@ from __future__ import annotations
 import os
 import shutil
 import sys
-import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Optional, TypeVar
@@ -27,9 +26,7 @@ from imap_l3_processing.codice.l3.lo.codice_lo_l3a_partial_densities_dependencie
     CodiceLoL3aPartialDensitiesDependencies
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_ratios_dependencies import CodiceLoL3aRatiosDependencies
 from imap_l3_processing.codice.l3.lo.codice_lo_processor import CodiceLoProcessor
-from imap_l3_processing.codice.l3.lo.direct_events.science.mass_coefficient_lookup import MassCoefficientLookup
-from imap_l3_processing.codice.l3.lo.models import CodiceLoL2SWSpeciesData, CodiceLoL2DirectEventData, \
-    CodiceLoL1aSWPriorityRates, CodiceLoL1aNSWPriorityRates
+from imap_l3_processing.codice.l3.lo.models import CodiceLoL2SWSpeciesData
 from imap_l3_processing.codice.l3.lo.sectored_intensities.science.mass_per_charge_lookup import MassPerChargeLookup
 from imap_l3_processing.constants import ONE_AU_IN_KM
 from imap_l3_processing.glows.glows_initializer import GlowsInitializer
@@ -78,14 +75,14 @@ from imap_l3_processing.swe.swe_processor import SweProcessor
 from imap_l3_processing.ultra.l3.models import UltraL1CPSet, UltraGlowsL3eData
 from imap_l3_processing.ultra.l3.ultra_l3_dependencies import UltraL3Dependencies, UltraL3SpectralIndexDependencies
 from imap_l3_processing.ultra.l3.ultra_processor import UltraProcessor
-from imap_l3_processing.utils import save_data, read_l1d_mag_data
+from imap_l3_processing.utils import save_data, read_l1d_mag_data, furnish_local_spice
 from scripts.codice.create_fake_efficiency_ancillary import create_efficiency_lookup
 from scripts.codice.create_more_accurate_l3a_direct_event import create_more_accurate_l3a_direct_events_cdf
 from scripts.codice.create_more_accurate_l3a_direct_event_input import modify_l1a_priority_counts, \
     modify_l2_direct_events
 from scripts.hi.create_hi_full_spin_deps import create_hi_full_spin_deps
 from tests.test_helpers import get_test_data_path, get_test_instrument_team_data_path, environment_variables, \
-    try_get_many_run_local_paths, furnish_local_spice
+    try_get_many_run_local_paths
 
 
 def create_glows_l3a_cdf(dependencies: GlowsL3ADependencies):
@@ -130,8 +127,6 @@ def create_codice_lo_l3a_direct_events_cdf(l1a_paths: Optional[tuple[Path, Path]
     codice_lo_l2_direct_event_cdf_path = modify_l2_direct_events(
         get_test_instrument_team_data_path('codice/lo/imap_codice_l2_lo-direct-events_20241110_v002.cdf'))
 
-    codice_lo_l2_direct_events = CodiceLoL2DirectEventData.read_from_cdf(codice_lo_l2_direct_event_cdf_path)
-
     if l1a_paths is None:
         codice_lo_l1a_nsw_priority_path, codice_lo_l1a_sw_priority_path = modify_l1a_priority_counts(
             get_test_instrument_team_data_path('codice/lo/imap_codice_l1a_lo-nsw-priority_20241110_v002.cdf'),
@@ -139,18 +134,15 @@ def create_codice_lo_l3a_direct_events_cdf(l1a_paths: Optional[tuple[Path, Path]
     else:
         codice_lo_l1a_nsw_priority_path, codice_lo_l1a_sw_priority_path = l1a_paths
 
-    time.sleep(3)  # wait for files to close before trying to read them
+    energy_lookup_path = get_test_data_path('codice/imap_codice_lo-esa-to-energy-per_charge_20241110_v001.csv')
+    mass_coefficient_path = get_test_data_path('codice/imap_codice_mass-coefficient-lookup_20241110_v002.csv')
 
-    codice_lo_l1a_sw_priority = CodiceLoL1aSWPriorityRates.read_from_cdf(codice_lo_l1a_sw_priority_path)
-    codice_lo_l1a_nsw_priority = CodiceLoL1aNSWPriorityRates.read_from_cdf(codice_lo_l1a_nsw_priority_path)
-
-    mass_coefficient_lookup = MassCoefficientLookup.read_from_csv(
-        get_test_data_path('codice/imap_codice_mass-coefficient-lookup_20241110_v002.csv'))
-
-    deps = CodiceLoL3aDirectEventsDependencies(codice_l2_direct_events=codice_lo_l2_direct_events,
-                                               codice_lo_l1a_sw_priority_rates=codice_lo_l1a_sw_priority,
-                                               codice_lo_l1a_nsw_priority_rates=codice_lo_l1a_nsw_priority,
-                                               mass_coefficient_lookup=mass_coefficient_lookup)
+    deps = CodiceLoL3aDirectEventsDependencies.from_file_paths(
+        sw_priority_rates_cdf=codice_lo_l1a_sw_priority_path,
+        nsw_priority_rates_cdf=codice_lo_l1a_nsw_priority_path,
+        direct_event_path=codice_lo_l2_direct_event_cdf_path,
+        mass_coefficients_file_path=mass_coefficient_path,
+        esa_to_energy_per_charge_file_path=energy_lookup_path, )
 
     input_metadata = InputMetadata(
         instrument='codice',
@@ -204,7 +196,7 @@ def create_codice_lo_l3a_abundances_cdf():
     return save_data(ratios_data, delete_if_present=True)
 
 
-def create_codice_lo_l3a_3d_distributions_cdf():
+def create_codice_lo_l3a_3d_distributions_cdf(species: str):
     l1a_paths = modify_l1a_priority_counts(
         get_test_instrument_team_data_path('codice/lo/imap_codice_l1a_lo-nsw-priority_20241110_v002.cdf'),
         get_test_instrument_team_data_path('codice/lo/imap_codice_l1a_lo-sw-priority_20241110_v002.cdf'))
@@ -215,18 +207,15 @@ def create_codice_lo_l3a_3d_distributions_cdf():
 
     codice_lo_l1a_nsw_priority_path, codice_lo_l1a_sw_priority_path = l1a_paths
 
-    mass_species_bin_path = get_test_data_path('codice/imap_codice_lo-mass-species-bin-lookup_20241110_v001.csv')
-    geometric_factors_path = get_test_data_path('codice/imap_codice_lo-geometric-factors_20241110_v001.csv')
-
-    efficiency_factors_lut_path = create_efficiency_lookup(mass_species_bin_path)
-
     deps = CodiceLoL3a3dDistributionsDependencies.from_file_paths(
         l3a_file_path=accurate_codice_lo_l3a_direct_event_path,
         l1a_sw_file_path=codice_lo_l1a_sw_priority_path,
         l1a_nsw_file_path=codice_lo_l1a_nsw_priority_path,
-        mass_species_bin_lut=mass_species_bin_path,
-        geometric_factors_lut=geometric_factors_path,
-        efficiency_factors_lut=efficiency_factors_lut_path,
+        mass_species_bin_lut=(get_test_data_path('codice/imap_codice_lo-mass-species-bin-lookup_20241110_v001.csv')),
+        geometric_factors_lut=(get_test_data_path('codice/imap_codice_lo-geometric-factors_20241110_v001.csv')),
+        efficiency_factors_lut=(create_efficiency_lookup(species)),
+        energy_per_charge_lut=get_test_data_path("codice/imap_codice_lo-esa-to-energy-per_charge_20241110_v001.csv"),
+        species=species
     )
 
     input_metadata = InputMetadata(
@@ -235,7 +224,7 @@ def create_codice_lo_l3a_3d_distributions_cdf():
         start_date=datetime(2024, 11, 10),
         end_date=datetime(2025, 1, 2),
         version='v000',
-        descriptor='lo-3d-instrument-frame'
+        descriptor=f'lo-{species}-3d-instrument-frame'
     )
 
     codice_lo_processor = CodiceLoProcessor(Mock(), input_metadata)
@@ -982,7 +971,7 @@ if __name__ == "__main__":
             elif "abundances" in sys.argv:
                 print(create_codice_lo_l3a_abundances_cdf())
             elif "3d-instrument-frame" in sys.argv:
-                print(create_codice_lo_l3a_3d_distributions_cdf())
+                print(create_codice_lo_l3a_3d_distributions_cdf(sys.argv[-1]))
 
     if "codice-hi" in sys.argv:
         if "l3a" in sys.argv:

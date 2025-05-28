@@ -7,7 +7,6 @@ from unittest.mock import Mock, sentinel
 import numpy as np
 from spacepy.pycdf import CDF
 
-from imap_l3_processing.codice.l3.lo.direct_events.science.mass_species_bin_lookup import EventDirection
 from imap_l3_processing.codice.l3.lo.models import CodiceLoL2SWSpeciesData, CodiceLoL3aPartialDensityDataProduct, \
     CodiceLoL2DirectEventData, \
     CodiceLoL3aDirectEventDataProduct, \
@@ -404,9 +403,9 @@ class TestModels(CdfModelTestCase):
         codice_lo_3d_data = CodiceLo3dData(data_in_bins, mass_bin_lookup, Mock(), Mock(), Mock())
 
         expected_species_data = data_in_bins[1, :, :, ...]
-        actual_species_data = codice_lo_3d_data.get_3d_distribution("H+", EventDirection.Sunward)
+        actual_species_data = codice_lo_3d_data.get_3d_distribution("H+")
 
-        mass_bin_lookup.get_species_index.assert_called_with("H+", EventDirection.Sunward)
+        mass_bin_lookup.get_species_index.assert_called_with("H+")
 
         np.testing.assert_array_equal(actual_species_data, expected_species_data)
 

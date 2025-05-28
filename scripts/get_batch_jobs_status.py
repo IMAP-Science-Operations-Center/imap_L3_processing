@@ -2,7 +2,7 @@ import json
 
 import requests
 
-INSTRUMENT = "hi"
+INSTRUMENT = "swe"
 DATA_LEVEL = "l3"
 
 url = 'https://api.dev.imap-mission.com/batch-job'
