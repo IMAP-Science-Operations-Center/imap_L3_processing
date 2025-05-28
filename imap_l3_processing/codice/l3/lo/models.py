@@ -10,8 +10,7 @@ from numpy import ndarray
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.cdf.cdf_utils import read_numeric_variable, read_variable_and_mask_fill_values
-from imap_l3_processing.codice.l3.lo.direct_events.science.mass_species_bin_lookup import MassSpeciesBinLookup, \
-    EventDirection
+from imap_l3_processing.codice.l3.lo.direct_events.science.mass_species_bin_lookup import MassSpeciesBinLookup
 from imap_l3_processing.models import DataProductVariable, DataProduct
 
 CODICE_LO_L2_NUM_PRIORITIES = 7
@@ -470,15 +469,15 @@ AZIMUTH_OR_ELEVATION = TypeVar("AZIMUTH_OR_ELEVATION")
 
 @dataclass
 class CodiceLo3dData:
-    data_in_3d_bins: np.ndarray[(SPECIES, EPOCH, PRIORITY, AZIMUTH_OR_ELEVATION, SPIN_ANGLE, ENERGY)] | np.ndarray[
-        (SPECIES, EPOCH, AZIMUTH_OR_ELEVATION, SPIN_ANGLE, ENERGY)]
+    data_in_3d_bins: np.ndarray[(SPECIES, EPOCH, PRIORITY, AZIMUTH_OR_ELEVATION, SPIN_ANGLE, ENERGY)] | \
+                     np.ndarray[(SPECIES, EPOCH, AZIMUTH_OR_ELEVATION, SPIN_ANGLE, ENERGY)]
     mass_bin_lookup: MassSpeciesBinLookup
     energy_per_charge: np.ndarray[(ENERGY,)]
     spin_angle: np.ndarray[(SPIN_ANGLE,)]
     azimuth_or_elevation: np.ndarray[(AZIMUTH_OR_ELEVATION,)]
 
-    def get_3d_distribution(self, species: str, event_direction: EventDirection) -> np.ndarray:
-        species_index = self.mass_bin_lookup.get_species_index(species, event_direction)
+    def get_3d_distribution(self, species: str) -> np.ndarray:
+        species_index = self.mass_bin_lookup.get_species_index(species)
         return self.data_in_3d_bins[species_index, ...]
 
 
