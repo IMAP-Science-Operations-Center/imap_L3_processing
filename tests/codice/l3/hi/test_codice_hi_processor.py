@@ -240,8 +240,9 @@ class TestCodiceHiProcessor(unittest.TestCase):
         codice_processor = CodiceHiProcessor(dependencies=Mock(), input_metadata=sentinel.input_metadata)
         codice_hi_data_product = codice_processor.process_l3b(dependencies=dependencies)
 
-        mock_get_sector_unit_vectors.assert_called_once_with(codice_l2_data.spin_sector_index,
-                                                             codice_l2_data.ssd_index)
+        mock_get_sector_unit_vectors.assert_called_once_with(
+            NumpyArrayMatcher((codice_l2_data.spin_sector_index + CODICE_SPIN_ANGLE_OFFSET_FROM_MAG_BOOM) % 360),
+            codice_l2_data.ssd_index)
         mock_calculate_unit_vector.assert_has_calls(
             [call(NumpyArrayMatcher(rebinned_mag_data)), call(mock_get_sector_unit_vectors.return_value)])
 
