@@ -1,6 +1,9 @@
+from dataclasses import dataclass
+
 import numpy as np
 
 
+@dataclass
 class SpinAngleLookup:
     bin_centers: np.ndarray
     lower_bin_edges: np.ndarray
