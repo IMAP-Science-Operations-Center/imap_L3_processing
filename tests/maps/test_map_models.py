@@ -458,14 +458,16 @@ class TestMapModels(unittest.TestCase):
 
         np.testing.assert_array_equal(input_xarray["latitude"], output.intensity_map_data.latitude)
         np.testing.assert_array_equal(input_xarray["longitude"], output.intensity_map_data.longitude)
-        np.testing.assert_array_equal(input_xarray["solid_angle"], output.intensity_map_data.solid_angle)
-        np.testing.assert_array_equal(input_xarray["obs_date_range"], output.intensity_map_data.obs_date_range)
+        np.testing.assert_array_equal(np.full_like(input_xarray[CoordNames.HEALPIX_INDEX.value], np.nan),
+                                      output.intensity_map_data.solid_angle)
         np.testing.assert_array_equal(input_xarray["obs_date"], output.intensity_map_data.obs_date)
+        np.testing.assert_array_equal(np.full_like(input_xarray["obs_date"], np.nan),
+                                      output.intensity_map_data.obs_date_range)
         np.testing.assert_array_equal(input_xarray["exposure_factor"], output.intensity_map_data.exposure_factor)
         np.testing.assert_array_equal(input_xarray["ena_intensity"], output.intensity_map_data.ena_intensity)
         np.testing.assert_array_equal(input_xarray["ena_intensity_stat_unc"],
                                       output.intensity_map_data.ena_intensity_stat_unc)
-        np.testing.assert_array_equal(input_xarray["ena_intensity_sys_err"],
+        np.testing.assert_array_equal(np.full_like(input_xarray["ena_intensity"], np.nan),
                                       output.intensity_map_data.ena_intensity_sys_err)
 
         np.testing.assert_array_equal(input_xarray[CoordNames.TIME.value], output.intensity_map_data.epoch)
