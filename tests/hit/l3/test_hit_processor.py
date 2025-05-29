@@ -323,90 +323,90 @@ class TestHitProcessor(TestCase):
         np.testing.assert_array_equal(saved_data_product.gyrophases, sentinel.gyrophases)
         np.testing.assert_array_equal(saved_data_product.gyrophase_deltas, sentinel.gyrophase_deltas)
 
-        np.testing.assert_array_equal(saved_data_product.h_intensity,
+        np.testing.assert_array_equal(saved_data_product.h_macropixel_intensity,
                                       [rebinned_pa_gyro_hydrogen_time1,
                                        rebinned_pa_gyro_hydrogen_time2])
-        np.testing.assert_array_equal(saved_data_product.h_intensity_delta_plus,
+        np.testing.assert_array_equal(saved_data_product.h_macropixel_intensity_delta_plus,
                                       [rebinned_pa_gyro_hydrogen_delta_plus_time1,
                                        rebinned_pa_gyro_hydrogen_delta_plus_time2])
-        np.testing.assert_array_equal(saved_data_product.h_intensity_delta_minus,
+        np.testing.assert_array_equal(saved_data_product.h_macropixel_intensity_delta_minus,
                                       [rebinned_pa_gyro_hydrogen_delta_minus_time1,
                                        rebinned_pa_gyro_hydrogen_delta_minus_time2])
 
-        np.testing.assert_array_equal(saved_data_product.he4_intensity,
+        np.testing.assert_array_equal(saved_data_product.he4_macropixel_intensity,
                                       [rebinned_pa_gyro_helium4_time1,
                                        rebinned_pa_gyro_helium4_time2])
-        np.testing.assert_array_equal(saved_data_product.he4_intensity_delta_plus,
+        np.testing.assert_array_equal(saved_data_product.he4_macropixel_intensity_delta_plus,
                                       [rebinned_pa_gyro_helium4_delta_plus_time1,
                                        rebinned_pa_gyro_helium4_delta_plus_time2])
-        np.testing.assert_array_equal(saved_data_product.he4_intensity_delta_minus,
+        np.testing.assert_array_equal(saved_data_product.he4_macropixel_intensity_delta_minus,
                                       [rebinned_pa_gyro_helium4_delta_minus_time1,
                                        rebinned_pa_gyro_helium4_delta_minus_time2])
-        np.testing.assert_array_equal(saved_data_product.cno_intensity,
+        np.testing.assert_array_equal(saved_data_product.cno_macropixel_intensity,
                                       [rebinned_pa_gyro_CNO_time1,
                                        rebinned_pa_gyro_CNO_time2])
-        np.testing.assert_array_equal(saved_data_product.cno_intensity_delta_plus,
+        np.testing.assert_array_equal(saved_data_product.cno_macropixel_intensity_delta_plus,
                                       [rebinned_pa_gyro_CNO_delta_plus_time1,
                                        rebinned_pa_gyro_CNO_delta_plus_time2])
-        np.testing.assert_array_equal(saved_data_product.cno_intensity_delta_minus,
+        np.testing.assert_array_equal(saved_data_product.cno_macropixel_intensity_delta_minus,
                                       [rebinned_pa_gyro_CNO_delta_minus_time1,
                                        rebinned_pa_gyro_CNO_delta_minus_time2])
 
-        np.testing.assert_array_equal(saved_data_product.ne_mg_si_intensity,
+        np.testing.assert_array_equal(saved_data_product.ne_mg_si_macropixel_intensity,
                                       [rebinned_pa_gyro_NeMgSi_time1,
                                        rebinned_pa_gyro_NeMgSi_time2])
-        np.testing.assert_array_equal(saved_data_product.ne_mg_si_intensity_delta_plus,
+        np.testing.assert_array_equal(saved_data_product.ne_mg_si_macropixel_intensity_delta_plus,
                                       [rebinned_pa_gyro_NeMgSi_delta_plus_time1,
                                        rebinned_pa_gyro_NeMgSi_delta_plus_time2])
-        np.testing.assert_array_equal(saved_data_product.ne_mg_si_intensity_delta_minus,
+        np.testing.assert_array_equal(saved_data_product.ne_mg_si_macropixel_intensity_delta_minus,
                                       [rebinned_pa_gyro_NeMgSi_delta_minus_time1,
                                        rebinned_pa_gyro_NeMgSi_delta_minus_time2])
 
-        np.testing.assert_array_equal(saved_data_product.iron_intensity,
+        np.testing.assert_array_equal(saved_data_product.iron_macropixel_intensity,
                                       [rebinned_pa_gyro_iron_time1,
                                        rebinned_pa_gyro_iron_time2])
-        np.testing.assert_array_equal(saved_data_product.iron_intensity_delta_plus,
+        np.testing.assert_array_equal(saved_data_product.iron_macropixel_intensity_delta_plus,
                                       [rebinned_pa_gyro_iron_delta_plus_time1,
                                        rebinned_pa_gyro_iron_delta_plus_time2])
-        np.testing.assert_array_equal(saved_data_product.iron_intensity_delta_minus,
+        np.testing.assert_array_equal(saved_data_product.iron_macropixel_intensity_delta_minus,
                                       [rebinned_pa_gyro_iron_delta_minus_time1,
                                        rebinned_pa_gyro_iron_delta_minus_time2])
 
-        np.testing.assert_array_equal(saved_data_product.h_intensity_pa,
+        np.testing.assert_array_equal(saved_data_product.h_macropixel_intensity_pa,
                                       [rebinned_pa_hydrogen_time1, rebinned_pa_hydrogen_time2])
-        np.testing.assert_array_equal(saved_data_product.h_intensity_pa_delta_plus,
+        np.testing.assert_array_equal(saved_data_product.h_macropixel_intensity_pa_delta_plus,
                                       [rebinned_pa_hydrogen_delta_plus_time1,
                                        rebinned_pa_hydrogen_delta_plus_time2])
-        np.testing.assert_array_equal(saved_data_product.h_intensity_pa_delta_minus,
+        np.testing.assert_array_equal(saved_data_product.h_macropixel_intensity_pa_delta_minus,
                                       [rebinned_pa_hydrogen_delta_minus_time1,
                                        rebinned_pa_hydrogen_delta_minus_time2])
 
-        np.testing.assert_array_equal(saved_data_product.he4_intensity_pa,
+        np.testing.assert_array_equal(saved_data_product.he4_macropixel_intensity_pa,
                                       [rebinned_pa_helium4_time1, rebinned_pa_helium4_time2])
-        np.testing.assert_array_equal(saved_data_product.he4_intensity_pa_delta_plus,
+        np.testing.assert_array_equal(saved_data_product.he4_macropixel_intensity_pa_delta_plus,
                                       [rebinned_pa_helium4_delta_plus_time1, rebinned_pa_helium4_delta_plus_time2])
-        np.testing.assert_array_equal(saved_data_product.he4_intensity_pa_delta_minus,
+        np.testing.assert_array_equal(saved_data_product.he4_macropixel_intensity_pa_delta_minus,
                                       [rebinned_pa_helium4_delta_minus_time1,
                                        rebinned_pa_helium4_delta_minus_time2])
-        np.testing.assert_array_equal(saved_data_product.cno_intensity_pa,
+        np.testing.assert_array_equal(saved_data_product.cno_macropixel_intensity_pa,
                                       [rebinned_pa_CNO_time1, rebinned_pa_CNO_time2])
-        np.testing.assert_array_equal(saved_data_product.cno_intensity_pa_delta_plus,
+        np.testing.assert_array_equal(saved_data_product.cno_macropixel_intensity_pa_delta_plus,
                                       [rebinned_pa_CNO_delta_plus_time1, rebinned_pa_CNO_delta_plus_time2])
-        np.testing.assert_array_equal(saved_data_product.cno_intensity_pa_delta_minus,
+        np.testing.assert_array_equal(saved_data_product.cno_macropixel_intensity_pa_delta_minus,
                                       [rebinned_pa_CNO_delta_minus_time1, rebinned_pa_CNO_delta_minus_time2])
 
-        np.testing.assert_array_equal(saved_data_product.ne_mg_si_intensity_pa,
+        np.testing.assert_array_equal(saved_data_product.ne_mg_si_macropixel_intensity_pa,
                                       [rebinned_pa_NeMgSi_time1, rebinned_pa_NeMgSi_time2])
-        np.testing.assert_array_equal(saved_data_product.ne_mg_si_intensity_pa_delta_plus,
+        np.testing.assert_array_equal(saved_data_product.ne_mg_si_macropixel_intensity_pa_delta_plus,
                                       [rebinned_pa_NeMgSi_delta_plus_time1, rebinned_pa_NeMgSi_delta_plus_time2])
-        np.testing.assert_array_equal(saved_data_product.ne_mg_si_intensity_pa_delta_minus,
+        np.testing.assert_array_equal(saved_data_product.ne_mg_si_macropixel_intensity_pa_delta_minus,
                                       [rebinned_pa_NeMgSi_delta_minus_time1, rebinned_pa_NeMgSi_delta_minus_time2])
 
-        np.testing.assert_array_equal(saved_data_product.iron_intensity_pa,
+        np.testing.assert_array_equal(saved_data_product.iron_macropixel_intensity_pa,
                                       [rebinned_pa_iron_time1, rebinned_pa_iron_time2])
-        np.testing.assert_array_equal(saved_data_product.iron_intensity_pa_delta_plus,
+        np.testing.assert_array_equal(saved_data_product.iron_macropixel_intensity_pa_delta_plus,
                                       [rebinned_pa_iron_delta_plus_time1, rebinned_pa_iron_delta_plus_time2])
-        np.testing.assert_array_equal(saved_data_product.iron_intensity_pa_delta_minus,
+        np.testing.assert_array_equal(saved_data_product.iron_macropixel_intensity_pa_delta_minus,
                                       [rebinned_pa_iron_delta_minus_time1, rebinned_pa_iron_delta_minus_time2])
 
         self.assertIs(mock_hit_data.h_energy, saved_data_product.h_energies)
