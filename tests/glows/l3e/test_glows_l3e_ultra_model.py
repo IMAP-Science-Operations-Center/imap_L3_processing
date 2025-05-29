@@ -1,5 +1,5 @@
 import unittest
-from datetime import datetime, timedelta
+from datetime import datetime
 from unittest.mock import sentinel, Mock
 
 import numpy as np
@@ -14,7 +14,6 @@ class TestL3eUltraModel(unittest.TestCase):
         l3e_ultra: GlowsL3EUltraData = GlowsL3EUltraData(
             Mock(),
             sentinel.epoch,
-            sentinel.epoch_deltas,
             sentinel.energy,
             sentinel.healpix_index,
             sentinel.probability_of_survival
@@ -32,10 +31,9 @@ class TestL3eUltraModel(unittest.TestCase):
         data_products = l3e_ultra.to_data_product_variables()
         expected_data_products = [
             DataProductVariable("epoch", sentinel.epoch),
-            DataProductVariable("epoch_delta", sentinel.epoch_deltas),
-            DataProductVariable("energy", sentinel.energy),
+            DataProductVariable("energy_grid", sentinel.energy),
             DataProductVariable("healpix_index", sentinel.healpix_index),
-            DataProductVariable("probability_of_survival", sentinel.probability_of_survival),
+            DataProductVariable("surv_prob", sentinel.probability_of_survival),
             DataProductVariable("energy_label", expected_energy_labels),
             DataProductVariable("healpix_index_label", expected_healpix_labels),
         ]
@@ -45,7 +43,6 @@ class TestL3eUltraModel(unittest.TestCase):
     def test_convert_dat_to_glows_l3e_ul_product(self):
         ul_file_path = get_test_instrument_team_data_path("glows/probSur.Imap.Ul_20250420_000000_2025.300.txt")
         expected_epoch = np.array([datetime(year=2009, month=1, day=1)])
-        expected_time_delta = np.array([timedelta(hours=12)])
 
         expected_energy = np.array(
             [2.3751086, 3.0917682, 4.0246710, 5.2390656, 6.8198887, 8.8777057, 11.5564435, 15.0434572, 19.5826341,
@@ -76,11 +73,9 @@ class TestL3eUltraModel(unittest.TestCase):
 
         l3e_ul_product: GlowsL3EUltraData = GlowsL3EUltraData.convert_dat_to_glows_l3e_ul_product(mock_metadata,
                                                                                                   ul_file_path,
-                                                                                                  expected_epoch,
-                                                                                                  expected_time_delta)
+                                                                                                  expected_epoch)
         self.assertEqual(l3e_ul_product.input_metadata.start_date, expected_epoch[0])
         self.assertEqual(expected_epoch, l3e_ul_product.epoch)
-        np.testing.assert_array_equal(l3e_ul_product.epoch_delta, np.array([12 * 60 * 60 * 1e9]))
 
         np.testing.assert_array_equal(l3e_ul_product.energy, expected_energy)
 

@@ -34,8 +34,8 @@ epoch_delta:
   VALIDMAX: 86000000000000
   FILLVAL: -9223372036854775808
   SCALETYP: linear
-energy:
-  NAME: energy
+energy_grid:
+  NAME: energy_grid
   DATA_TYPE: CDF_FLOAT
   CATDESC: Energies associated with the survival probabilities for IMAP-Hi
   VAR_TYPE: support_data
@@ -62,8 +62,8 @@ spin_angle:
   VALIDMAX: 360
   FILLVAL: -1.0000E+31
   SCALETYP: linear
-probability_of_survival:
-  NAME: probability_of_survival
+surv_prob:
+  NAME: surv_prob
   DATA_TYPE: CDF_FLOAT
   CATDESC: Survival probabilities for IMAP-Hi
   VAR_TYPE: data

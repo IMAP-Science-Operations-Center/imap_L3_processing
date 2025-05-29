@@ -13,31 +13,14 @@ epoch:
   FILLVAL: 9999-12-31T23:59:59.999999999
   TIME_BASE: J2000
   TIME_SCALE: TT
-  DELTA_PLUS_VAR: epoch_delta
-  DELTA_MINUS_VAR: epoch_delta
   MONOTON: INCREASE
   REFERENCE_POSITION: Rotating Earth Geoid
   SCALETYP: linear
   SI_CONVERSION: 1e-9>seconds
-epoch_delta:
-  NAME: epoch_delta
-  DATA_TYPE: CDF_INT8
-  CATDESC: Epoch delta
-  VAR_TYPE: support_data
-  RECORD_VARYING: RV
-  DEPEND_0: epoch
-  FIELDNAM: Epoch Delta
-  FORMAT: I19
-  LABLAXIS: Epoch delta
-  UNITS: ns
-  VALIDMIN: 0
-  VALIDMAX: 86000000000000
-  FILLVAL: -9223372036854775808
-  SCALETYP: linear
-energy:
-  NAME: energy
+energy_grid:
+  NAME: energy_grid
   DATA_TYPE: CDF_FLOAT
-  CATDESC: Energies associated with the survival probabilites for IMAP-Hi
+  CATDESC: Energies associated with the survival probabilities for IMAP-Hi
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
   FIELDNAM: Energy
@@ -60,8 +43,8 @@ spin_angle:
   VALIDMIN: 0
   VALIDMAX: 360
   FILLVAL: -1.0000E+31
-probability_of_survival:
-  NAME: probability_of_survival
+surv_prob:
+  NAME: surv_prob
   DATA_TYPE: CDF_FLOAT
   CATDESC: Survival probabilities for IMAP-Hi
   VAR_TYPE: data

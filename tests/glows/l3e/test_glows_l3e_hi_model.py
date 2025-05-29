@@ -1,5 +1,5 @@
 import unittest
-from datetime import datetime, timedelta
+from datetime import datetime
 from unittest.mock import sentinel, Mock
 
 import numpy as np
@@ -14,7 +14,6 @@ class TestL3eHiModel(unittest.TestCase):
         l3e_hi: GlowsL3EHiData = GlowsL3EHiData(
             Mock(),
             sentinel.epoch,
-            sentinel.epoch_deltas,
             sentinel.energy,
             sentinel.spin_angle,
             sentinel.probability_of_survival
@@ -30,10 +29,9 @@ class TestL3eHiModel(unittest.TestCase):
         data_products = l3e_hi.to_data_product_variables()
         expected_data_products = [
             DataProductVariable("epoch", sentinel.epoch),
-            DataProductVariable("epoch_delta", sentinel.epoch_deltas),
-            DataProductVariable("energy", sentinel.energy),
+            DataProductVariable("energy_grid", sentinel.energy),
             DataProductVariable("spin_angle", sentinel.spin_angle),
-            DataProductVariable("probability_of_survival", sentinel.probability_of_survival),
+            DataProductVariable("surv_prob", sentinel.probability_of_survival),
             DataProductVariable("energy_label", expected_energy_labels),
             DataProductVariable("spin_angle_label", expected_spin_angle_labels),
         ]
@@ -43,7 +41,6 @@ class TestL3eHiModel(unittest.TestCase):
     def test_convert_dat_to_glows_l3e_hi_product(self):
         hi_file_path = get_test_instrument_team_data_path("glows/probSur.Imap.Hi_2009.000_90.00.txt")
         expected_epoch = np.array([datetime(year=2009, month=8, day=16)])
-        expected_time_delta = np.array([timedelta(hours=12)])
         expected_energy = [0.3749896542976582, 0.4881381387720609, 0.6354277772546533, 0.8271602401781013,
                            1.076745599456691, 1.401640250140305, 1.824567838312671, 2.375108588863466,
                            3.091768193234094, 4.024670958420553, 5.239065580337116, 6.819888740878518,
@@ -147,12 +144,10 @@ class TestL3eHiModel(unittest.TestCase):
         mock_metadata = Mock()
 
         l3e_hi_product: GlowsL3EHiData = GlowsL3EHiData.convert_dat_to_glows_l3e_hi_product(mock_metadata, hi_file_path,
-                                                                                            expected_epoch,
-                                                                                            expected_time_delta)
+                                                                                            expected_epoch)
 
         self.assertEqual(expected_epoch[0], l3e_hi_product.input_metadata.start_date)
         self.assertEqual(expected_epoch, l3e_hi_product.epoch)
-        np.testing.assert_array_equal(l3e_hi_product.epoch_delta, np.array([12 * 60 * 60 * 1e9]))
         np.testing.assert_array_equal(l3e_hi_product.energy, expected_energy)
         np.testing.assert_array_equal(l3e_hi_product.spin_angle, expected_spin_angle)
         np.testing.assert_array_equal(l3e_hi_product.probability_of_survival.shape, expected_survival_probability_shape)
