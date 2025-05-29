@@ -19,7 +19,8 @@ class TestL3eHiModel(unittest.TestCase):
             sentinel.spin_angle,
             sentinel.probability_of_survival,
             sentinel.spin_axis_latitude,
-            sentinel.spin_axis_longitude
+            sentinel.spin_axis_longitude,
+            sentinel.program_version
         )
 
         expected_energy_labels = ['Energy Label 1', 'Energy Label 2', 'Energy Label 3', 'Energy Label 4',
@@ -39,6 +40,7 @@ class TestL3eHiModel(unittest.TestCase):
             DataProductVariable("spin_angle_label", expected_spin_angle_labels),
             DataProductVariable("spin_axis_latitude", np.array([sentinel.spin_axis_latitude])),
             DataProductVariable("spin_axis_longitude", np.array([sentinel.spin_axis_longitude])),
+            DataProductVariable("program_version", np.array([sentinel.program_version]))
         ]
 
         self.assertEqual(expected_data_products, data_products)
@@ -155,6 +157,8 @@ class TestL3eHiModel(unittest.TestCase):
         args.spin_axis_latitude = spin_axis_lat
         args.spin_axis_longitude = spin_axis_lon
 
+        expected_program_version = 'Hi.v00.01'
+
         l3e_hi_product: GlowsL3EHiData = GlowsL3EHiData.convert_dat_to_glows_l3e_hi_product(mock_metadata, hi_file_path,
                                                                                             expected_epoch,
                                                                                             args)
@@ -169,3 +173,4 @@ class TestL3eHiModel(unittest.TestCase):
 
         self.assertEqual(np.array([spin_axis_lat]), l3e_hi_product.spin_axis_lat)
         self.assertEqual(np.array([spin_axis_lon]), l3e_hi_product.spin_axis_lon)
+        self.assertEqual(np.array([expected_program_version]), l3e_hi_product.program_version)

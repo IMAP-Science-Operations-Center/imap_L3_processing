@@ -6,7 +6,7 @@
 # Axis to the Sun: alpha_ecl= 280.5761942845298 delta_ecl=  0.0000000000000
 # routs_end=  90.00
 # Numerical parameters: colim tessel: 08, cLo = 9.66 and trLo = 0.6944, imap/imapLo/PSF/IMAP-Lo_FM_OptComp_AsRun_20240407.xlsx
-# code version Lo.v0.0000     , Date of calculation: 04/21/2025
+# code version Lo.v00.01     , Date of calculation: 04/21/2025
 #
 # time: time of calculations, [decimal year]
 # reference frame:  ECLIPJ2000

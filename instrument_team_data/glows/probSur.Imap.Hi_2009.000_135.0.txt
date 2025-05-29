@@ -7,7 +7,7 @@
 #                                                                  
 # routs_end=  90.00                               
 # Numerical parameters: no collimator                                                            
-# code version survProbEnGrid.out      , Date of calculation: 30/01/2024                            
+# code version Hi.v00.01      , Date of calculation: 30/01/2024
 #                                                                  
 # time: time of calculations, [decimal year]
 # location_of_spaceCraft: r: radius from the Sun [au], theta: longitude of the spacecraft, spheric, ecl [deg], phi: latitude of the spacecraft, spheric, ecl [deg]  

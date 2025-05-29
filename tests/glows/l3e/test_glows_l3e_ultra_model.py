@@ -19,7 +19,8 @@ class TestL3eUltraModel(unittest.TestCase):
             sentinel.healpix_index,
             sentinel.probability_of_survival,
             sentinel.spin_axis_latitude,
-            sentinel.spin_axis_longitude
+            sentinel.spin_axis_longitude,
+            sentinel.program_version
         )
 
         expected_energy_labels = ['Energy Label 1', 'Energy Label 2', 'Energy Label 3', 'Energy Label 4',
@@ -40,7 +41,8 @@ class TestL3eUltraModel(unittest.TestCase):
             DataProductVariable("energy_label", expected_energy_labels),
             DataProductVariable("healpix_index_label", expected_healpix_labels),
             DataProductVariable("spin_axis_latitude", np.array([sentinel.spin_axis_latitude])),
-            DataProductVariable("spin_axis_longitude", np.array([sentinel.spin_axis_longitude]))
+            DataProductVariable("spin_axis_longitude", np.array([sentinel.spin_axis_longitude])),
+            DataProductVariable("program_version", np.array([sentinel.program_version]))
         ]
 
         self.assertEqual(expected_data_products, data_products)
@@ -83,6 +85,8 @@ class TestL3eUltraModel(unittest.TestCase):
         args.spin_axis_latitude = spin_axis_lat
         args.spin_axis_longitude = spin_axis_lon
 
+        expected_program_version = 'Ultra.v00.01'
+
         l3e_ul_product: GlowsL3EUltraData = GlowsL3EUltraData.convert_dat_to_glows_l3e_ul_product(mock_metadata,
                                                                                                   ul_file_path,
                                                                                                   expected_epoch,
@@ -107,3 +111,5 @@ class TestL3eUltraModel(unittest.TestCase):
 
         self.assertEqual(np.array([spin_axis_lat]), l3e_ul_product.spin_axis_lat)
         self.assertEqual(np.array([spin_axis_lon]), l3e_ul_product.spin_axis_lon)
+
+        self.assertEqual(np.array([expected_program_version]), l3e_ul_product.program_version)

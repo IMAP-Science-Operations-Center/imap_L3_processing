@@ -111,3 +111,11 @@ elongation:
   VALIDMAX: 105
   VALIDMIN: 75
   RECORD_VARYING: RV
+program_version:
+  NAME: program_version
+  DATA_TYPE: CDF_CHAR
+  CATDESC: Program version
+  VAR_TYPE: metadata
+  FIELDNAM: Program Version
+  FORMAT: a20
+  FILLVAL: ' '

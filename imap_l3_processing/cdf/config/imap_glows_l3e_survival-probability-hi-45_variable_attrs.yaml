@@ -117,3 +117,11 @@ spin_angle_label:
   FIELDNAM: Spin Angle Label
   FORMAT: a20
   FILLVAL: ' '
+program_version:
+  NAME: program_version
+  DATA_TYPE: CDF_CHAR
+  CATDESC: Program version
+  VAR_TYPE: metadata
+  FIELDNAM: Program Version
+  FORMAT: a20
+  FILLVAL: ' '

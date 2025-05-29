@@ -99,3 +99,11 @@ healpix_index_label:
   FORMAT: a20
   LABLAXIS: HEALPix index
   FILLVAL: ' '
+program_version:
+  NAME: program_version
+  DATA_TYPE: CDF_CHAR
+  CATDESC: Program version
+  VAR_TYPE: metadata
+  FIELDNAM: Program Version
+  FORMAT: a20
+  FILLVAL: ' '

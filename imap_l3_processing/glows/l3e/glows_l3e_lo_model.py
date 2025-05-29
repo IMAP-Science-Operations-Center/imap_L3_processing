@@ -17,6 +17,7 @@ SPIN_ANGLE_LABEL_VAR_NAME = "spin_angle_label"
 ELONGATION_VAR_NAME = "elongation"
 SPIN_AXIS_LATITUDE_VAR_NAME = "spin_axis_latitude"
 SPIN_AXIS_LONGITUDE_VAR_NAME = "spin_axis_longitude"
+PROGRAM_VERSION_VAR_NAME = "program_version"
 
 
 @dataclass
@@ -28,14 +29,20 @@ class GlowsL3ELoData(DataProduct):
     elongation: np.ndarray
     spin_axis_lat: np.ndarray
     spin_axis_lon: np.ndarray
+    program_version: np.ndarray
 
     @classmethod
     def convert_dat_to_glows_l3e_lo_product(cls, input_metadata: InputMetadata, file_path: Path,
                                             epoch: np.ndarray[datetime], elongation: np.ndarray[int],
                                             args: GlowsL3eCallArguments):
         with open(file_path) as input_data:
-            energy_line = [line for line in input_data.readlines() if line.startswith("#energy_grid")]
+            lines = input_data.readlines()
+
+            energy_line = [line for line in lines if line.startswith("#energy_grid")]
             energies = np.array([float(i) for i in re.findall(r"\d+.\d+", energy_line[0])])
+
+            code_version_line = [line for line in lines if line.startswith("# code version")]
+            code_version = np.array([code_version_line[0].split(',')[0][14:].strip()])
 
         spin_angle_and_survival_probabilities = np.loadtxt(file_path, skiprows=200)
         spin_angles = spin_angle_and_survival_probabilities[:, 0]
@@ -49,7 +56,8 @@ class GlowsL3ELoData(DataProduct):
                    probability_of_survival=survival_probabilities,
                    elongation=np.array([elongation]),
                    spin_axis_lat=np.array([args.spin_axis_latitude]),
-                   spin_axis_lon=np.array([args.spin_axis_longitude]))
+                   spin_axis_lon=np.array([args.spin_axis_longitude]),
+                   program_version=code_version)
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         spin_angle_labels = [f"Spin Angle Label {i}" for i in range(1, 361)]
@@ -65,4 +73,6 @@ class GlowsL3ELoData(DataProduct):
             DataProductVariable(ELONGATION_VAR_NAME, self.elongation),
             DataProductVariable(SPIN_AXIS_LATITUDE_VAR_NAME, self.spin_axis_lat),
             DataProductVariable(SPIN_AXIS_LONGITUDE_VAR_NAME, self.spin_axis_lon),
+            DataProductVariable(PROGRAM_VERSION_VAR_NAME, self.program_version)
+
         ]
