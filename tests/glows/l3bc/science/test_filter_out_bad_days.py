@@ -15,7 +15,8 @@ class TestFilterL3aFiles(unittest.TestCase):
             create_l3a_dict("2010-01-16 00:00:00", "2010-01-16 07:28:00"),
             create_l3a_dict("2010-01-19 00:00:00", "2010-01-20 00:00:00"),
             create_l3a_dict("2010-01-30 00:00:00", "2010-01-30 07:28:00"),
-            create_l3a_dict("2010-01-30 23:00:00", "2010-01-30 23:59:00")
+            create_l3a_dict("2010-01-30 12:00:00", "2010-01-30 21:00:00"),
+            create_l3a_dict("2010-01-30 19:00:00", "2010-01-30 23:59:00")
         ]
 
         expected_filtered_list = [
@@ -24,6 +25,7 @@ class TestFilterL3aFiles(unittest.TestCase):
             create_l3a_dict("2010-01-16 00:00:00", "2010-01-16 07:28:00"),
             create_l3a_dict("2010-01-19 00:00:00", "2010-01-20 00:00:00"),
             create_l3a_dict("2010-01-30 00:00:00", "2010-01-30 07:28:00"),
+            create_l3a_dict("2010-01-30 12:00:00", "2010-01-30 21:00:00"),
         ]
 
         filtered_list = filter_l3a_files(l3a_data=l3a_data, bad_day_list_path=get_test_data_path(
