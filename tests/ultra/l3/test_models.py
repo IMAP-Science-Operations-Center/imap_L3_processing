@@ -1,14 +1,12 @@
 from datetime import datetime
-from pathlib import Path
-from unittest.mock import patch
 
 import numpy as np
 from imap_processing.ena_maps.utils.coordinates import CoordNames
-from imap_processing.tests.ultra.data.mock_data import mock_l1c_pset_product_healpix
 from spacepy.pycdf import CDF
 
+from imap_l3_processing.glows.l3e.glows_l3e_ultra_model import ENERGY_VAR_NAME, PROBABILITY_OF_SURVIVAL_VAR_NAME, \
+    LATITUDE_VAR_NAME, LONGITUDE_VAR_NAME, HEALPIX_INDEX_VAR_NAME
 from imap_l3_processing.ultra.l3.models import UltraGlowsL3eData, UltraL1CPSet
-from tests.test_helpers import get_test_data_folder, run_local_data_path
 from tests.spice_test_case import SpiceTestCase
 from tests.test_helpers import get_test_data_folder
 
@@ -23,35 +21,21 @@ class TestModels(SpiceTestCase):
         with CDF(str(path_to_cdf)) as expected:
             expected_epoch = datetime(2025, 4, 16, 12, 0)
             self.assertEqual(expected_epoch, actual.epoch)
-            np.testing.assert_array_equal(expected['energy'][...], actual.energy)
-            np.testing.assert_array_equal(expected['latitude'][...], actual.latitude)
-            np.testing.assert_array_equal(expected['longitude'][...], actual.longitude)
-            np.testing.assert_array_equal(expected['healpix_index'][...], actual.healpix_index)
-            np.testing.assert_array_equal(expected['probability_of_survival'][...], actual.survival_probability)
+            np.testing.assert_array_equal(expected[ENERGY_VAR_NAME][...], actual.energy)
+            np.testing.assert_array_equal(expected[LATITUDE_VAR_NAME][...], actual.latitude)
+            np.testing.assert_array_equal(expected[LONGITUDE_VAR_NAME][...], actual.longitude)
+            np.testing.assert_array_equal(expected[HEALPIX_INDEX_VAR_NAME][...], actual.healpix_index)
+            np.testing.assert_array_equal(expected[PROBABILITY_OF_SURVIVAL_VAR_NAME][...], actual.survival_probability)
 
-    @patch('imap_processing.tests.ultra.data.mock_data.ensure_spice')
-    def test_ultra_l1c_read_from_file(self, mock_ensure_spice):
-        expected_epoch = datetime(2025, 9, 1, 0, 0)
+    def test_ultra_l1c_read_from_file(self):
+        expected_epoch = datetime(2025, 4, 15, 12)
 
-        def fake_spice(tdb, et, tt):
-            return expected_epoch.replace().timestamp()
-
-        mock_ensure_spice.return_value = fake_spice
-        pset_dataset = mock_l1c_pset_product_healpix(timestr=expected_epoch.isoformat())
-
-        run_local_path = Path(run_local_data_path / 'ultra' / 'l1c_test_pset.cdf')
-        run_local_path.unlink(missing_ok=True)
-
-        with CDF(str(run_local_path), '') as cdf:
-            for var in pset_dataset.variables:
-                cdf[var] = pset_dataset.variables[var].values
-                cdf[var].attrs['FILLVAL'] = -1e31
+        run_local_path = get_test_data_folder() / 'ultra' / 'fake_l1c_psets' / 'imap_ultra_l1c_45sensor-spacecraftpset_20250415-repoint00001_v010.cdf'
 
         actual = UltraL1CPSet.read_from_path(run_local_path)
-        actual_epoch = datetime.fromtimestamp(actual.epoch / 1e9)
 
         with CDF(str(run_local_path)) as expected:
-            self.assertEqual(expected_epoch, actual_epoch)
+            self.assertEqual(expected_epoch, actual.epoch)
             np.testing.assert_array_equal(expected["counts"][...], actual.counts)
             np.testing.assert_array_equal(expected[CoordNames.ENERGY_ULTRA.value][...], actual.energy)
             np.testing.assert_array_equal(expected["exposure_factor"][...], actual.exposure)

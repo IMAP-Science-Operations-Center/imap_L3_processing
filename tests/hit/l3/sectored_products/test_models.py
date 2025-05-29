@@ -6,6 +6,7 @@ import numpy as np
 
 from imap_l3_processing.hit.l3.sectored_products.models import HitPitchAngleDataProduct
 from imap_l3_processing.models import DataProductVariable
+from tests.test_helpers import NumpyArrayMatcher
 
 
 class TestHitPitchAngleDataProduct(TestCase):
@@ -76,7 +77,9 @@ class TestHitPitchAngleDataProduct(TestCase):
                                         sentinel.iron_energy_delta_plus,
                                         sentinel.iron_energy_delta_minus,
                                         mock_measurement_pitch_angle,
-                                        sentinel.measurement_gyrophase
+                                        sentinel.measurement_gyrophase,
+                                        np.array([10, 180, 350]),
+                                        np.array([10.25, 90.75, 170.5]),
                                         )
 
         data_product_variables = data.to_data_product_variables()
@@ -151,19 +154,12 @@ class TestHitPitchAngleDataProduct(TestCase):
                                  "NeMgSi Energy Label 4"]),
             DataProductVariable("fe_energy_label",
                                 ["Fe Energy Label 1", "Fe Energy Label 2", "Fe Energy Label 3", "Fe Energy Label 4"]),
-            DataProductVariable("declination_idx", [0, 1, 2, 3, 4, 5, 6, 7]),
-            DataProductVariable("azimuth_idx", [0, 1, 2, 3, 4, 5, 6, 7,
-                                                8, 9, 10, 11, 12, 13, 14]),
-            DataProductVariable("declination_idx_label",
-                                ["Declination Index Label 0", "Declination Index Label 1", "Declination Index Label 2",
-                                 "Declination Index Label 3", "Declination Index Label 4", "Declination Index Label 5",
-                                 "Declination Index Label 6", "Declination Index Label 7"]),
-            DataProductVariable("azimuth_idx_label",
-                                ['Azimuth Index Label 0', 'Azimuth Index Label 1', 'Azimuth Index Label 2',
-                                 'Azimuth Index Label 3', 'Azimuth Index Label 4', 'Azimuth Index Label 5',
-                                 'Azimuth Index Label 6', 'Azimuth Index Label 7', 'Azimuth Index Label 8',
-                                 'Azimuth Index Label 9', 'Azimuth Index Label 10', 'Azimuth Index Label 11',
-                                 'Azimuth Index Label 12', 'Azimuth Index Label 13', 'Azimuth Index Label 14'])
+            DataProductVariable("azimuth", NumpyArrayMatcher(np.array([10, 180, 350]))),
+            DataProductVariable("zenith", NumpyArrayMatcher(np.array([10.25, 90.75, 170.5]))),
+            DataProductVariable("azimuth_label",
+                                ["10.0", "180.0", "350.0"]),
+            DataProductVariable("zenith_label",
+                                ["10.25", "90.75", "170.5"])
         ]
 
         self.assertEqual(expected_data_product_variables, data_product_variables)

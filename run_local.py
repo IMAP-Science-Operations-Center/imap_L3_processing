@@ -81,6 +81,7 @@ from scripts.codice.create_more_accurate_l3a_direct_event import create_more_acc
 from scripts.codice.create_more_accurate_l3a_direct_event_input import modify_l1a_priority_counts, \
     modify_l2_direct_events
 from scripts.hi.create_hi_full_spin_deps import create_hi_full_spin_deps
+from scripts.ultra.create_l1c_l2_and_glows_with_matching_date_range import create_l1c_and_glows_with_matching_date_range
 from tests.test_helpers import get_test_data_path, get_test_instrument_team_data_path, environment_variables, \
     try_get_many_run_local_paths
 
@@ -1036,7 +1037,7 @@ if __name__ == "__main__":
         else:
             mag_data = read_l1d_mag_data(get_test_data_path("mag/imap_mag_l1d_norm-mago_20250101_v001.cdf"))
             hit_data = read_l2_hit_data(
-                get_test_data_path("hit/imap_hit_l2_macropixel-intensity_20250101_v002.cdf"))
+                get_test_data_path("hit/imap_hit_l2_macropixel-intensity_20250101_v003.cdf"))
             dependencies = HITL3SectoredDependencies(mag_l1d_data=mag_data, data=hit_data)
             print(f"hit macropixel data product: {create_hit_sectored_cdf(dependencies)}")
 
@@ -1193,7 +1194,7 @@ if __name__ == "__main__":
             processor = UltraProcessor(input_metadata=processor_input_metadata, dependencies=Mock())
 
             # @formatter:off
-            missing_paths, [l2_map_path, *l1c_dependency_paths] = try_get_many_run_local_paths([
+            missing_map_and_pset_paths, [l2_map_path, *l1c_dependency_paths] = try_get_many_run_local_paths([
                 "ultra/20250415-20250419/imap_ultra_l2_u90-ena-h-sf-nsp-full-hae-4deg-6mo_20250415_v001.cdf",
                 "ultra/20250415-20250419/ultra_l1c/imap_ultra_l1c_45sensor-spacecraftpset_20250415-repoint00001_v001.cdf",
                 "ultra/20250415-20250419/ultra_l1c/imap_ultra_l1c_45sensor-spacecraftpset_20250416-repoint00002_v001.cdf",
@@ -1202,19 +1203,17 @@ if __name__ == "__main__":
             ])
             # @formatter:on
 
+            missing_glows_paths, [*l3e_glows_paths] = try_get_many_run_local_paths([
+                "run_local_input_data/ultra/20250415-20250419/glows_l3e/imap_glows_l3e_survival-probabilities-ultra_20250415_v001.cdf",
+                "run_local_input_data/ultra/20250415-20250419/glows_l3e/imap_glows_l3e_survival-probabilities-ultra_20250416_v001.cdf",
+                "run_local_input_data/ultra/20250415-20250419/glows_l3e/imap_glows_l3e_survival-probabilities-ultra_20250417_v001.cdf",
+                "run_local_input_data/ultra/20250415-20250419/glows_l3e/imap_glows_l3e_survival-probabilities-ultra_20250418_v001.cdf",
+            ])
+            if missing_glows_paths or missing_map_and_pset_paths:
+                create_l1c_and_glows_with_matching_date_range(datetime(2025, 4, 15, 12), datetime(2025, 4, 19, 12))
+
             l1c_dependency = [UltraL1CPSet.read_from_path(l1c_dependency_path) for l1c_dependency_path in
                               l1c_dependency_paths]
-
-            l3e_glows_paths = [
-                Path(
-                    "run_local_input_data/ultra/20250415-20250419/glows_l3e/imap_glows_l3e_survival-probabilities-ultra_20250415_v001.cdf"),
-                Path(
-                    "run_local_input_data/ultra/20250415-20250419/glows_l3e/imap_glows_l3e_survival-probabilities-ultra_20250416_v001.cdf"),
-                Path(
-                    "run_local_input_data/ultra/20250415-20250419/glows_l3e/imap_glows_l3e_survival-probabilities-ultra_20250417_v001.cdf"),
-                Path(
-                    "run_local_input_data/ultra/20250415-20250419/glows_l3e/imap_glows_l3e_survival-probabilities-ultra_20250418_v001.cdf"),
-            ]
             l3e_dependencies = [UltraGlowsL3eData.read_from_path(path) for path in l3e_glows_paths]
             l2_map_dependency = HealPixIntensityMapData.read_from_path(l2_map_path)
 
