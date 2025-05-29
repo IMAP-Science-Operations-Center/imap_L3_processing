@@ -280,7 +280,9 @@ class HitProcessor(Processor):
                                         hit_data.fe_energy_delta_plus,
                                         hit_data.fe_energy_delta_minus,
                                         np.array(measurement_pitch_angle),
-                                        np.array(measurement_gyrophase))
+                                        np.array(measurement_gyrophase),
+                                        azimuth=hit_data.azimuth,
+                                        zenith=hit_data.zenith)
 
     @staticmethod
     def _create_nan_array(shape) -> tuple[np.array, np.array, np.array]:

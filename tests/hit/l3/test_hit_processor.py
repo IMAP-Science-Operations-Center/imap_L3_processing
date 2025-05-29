@@ -424,6 +424,8 @@ class TestHitProcessor(TestCase):
         self.assertIs(mock_hit_data.fe_energy, saved_data_product.iron_energies)
         self.assertIs(mock_hit_data.fe_energy_delta_plus, saved_data_product.iron_energy_delta_plus)
         self.assertIs(mock_hit_data.fe_energy_delta_minus, saved_data_product.iron_energy_delta_minus)
+        self.assertIs(mock_hit_data.azimuth, saved_data_product.azimuth)
+        self.assertIs(mock_hit_data.zenith, saved_data_product.zenith)
 
         np.testing.assert_array_equal(saved_data_product.measurement_pitch_angle,
                                       np.array([sentinel.pitch_angle1, sentinel.pitch_angle2]))

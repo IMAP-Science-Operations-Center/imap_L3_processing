@@ -992,8 +992,8 @@ measurement_pitch_angle:
   VAR_TYPE: data
   RECORD_VARYING: RV
   DEPEND_0: epoch
-  DEPEND_1: declination_idx
-  DEPEND_2: azimuth_idx
+  DEPEND_1: azimuth
+  DEPEND_2: zenith
   DISPLAY_TYPE: no_plot
   FIELDNAM: Measurement Pitch Angle
   VARIABLE_PURPOSE: ' '
@@ -1003,6 +1003,8 @@ measurement_pitch_angle:
   VALIDMIN: 0
   VALIDMAX: 180
   FILLVAL: -1.0000E+31
+  LABL_PTR_1: azimuth_label
+  LABL_PTR_2: zenith_label
 measurement_gyrophase:
   NAME: measurement_gyrophase
   DATA_TYPE: CDF_REAL4
@@ -1010,8 +1012,8 @@ measurement_gyrophase:
   VAR_TYPE: data
   RECORD_VARYING: RV
   DEPEND_0: epoch
-  DEPEND_1: declination_idx
-  DEPEND_2: azimuth_idx
+  DEPEND_1: azimuth
+  DEPEND_2: zenith
   DISPLAY_TYPE: no_plot
   FIELDNAM: Measurement Gyrophase
   VARIABLE_PURPOSE: ' '
@@ -1021,6 +1023,8 @@ measurement_gyrophase:
   VALIDMIN: 0
   VALIDMAX: 360
   FILLVAL: -1.0000E+31
+  LABL_PTR_1: azimuth_label
+  LABL_PTR_2: zenith_label
 h_energy_label:
   NAME: h_energy_label
   DATA_TYPE: CDF_CHAR
@@ -1077,47 +1081,45 @@ gyrophase_label:
   FIELDNAM: Gyrophase Label
   FORMAT: a20
   FILLVAL: ' '
-declination_idx:
-  NAME: declination_idx
+azimuth:
+  NAME: azimuth
   DATA_TYPE: CDF_REAL4
-  CATDESC: Declination index
+  CATDESC: Azimuth
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
-  FIELDNAM: Declination Idx
+  FIELDNAM: Azimuth
   FORMAT: F15.3
   UNITS: ' '
   VALIDMIN: 0
-  VALIDMAX: 8
+  VALIDMAX: 360
   FILLVAL: -1.0000E+31
-  LABL_PTR_1: declination_idx_label
-  LABLAXIS: Decl. idx
-azimuth_idx:
-  NAME: azimuth_idx
+  LABLAXIS: Azim.
+zenith:
+  NAME: zenith
   DATA_TYPE: CDF_REAL4
-  CATDESC: Azimuth index
+  CATDESC: Zenith
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
-  FIELDNAM: Azimuth Idx
+  FIELDNAM: Zenith
   FORMAT: F15.3
   UNITS: ' '
   VALIDMIN: 0
-  VALIDMAX: 15
+  VALIDMAX: 180
   FILLVAL: -1.0000E+31
-  LABL_PTR_1: azimuth_idx_label
-  LABLAXIS: Azim. idx
-declination_idx_label:
-  NAME: declination_idx_label
+  LABLAXIS: Zenith
+azimuth_label:
+  NAME: azimuth_label
   DATA_TYPE: CDF_CHAR
-  CATDESC: Label for declination index
+  CATDESC: Label for azimuth
   VAR_TYPE: metadata
-  FIELDNAM: Declination Idx Label
+  FIELDNAM: Azimuth label
   FILLVAL: ' '
   FORMAT: a20
-azimuth_idx_label:
-  NAME: azimuth_idx_label
+zenith_label:
+  NAME: zenith_label
   DATA_TYPE: CDF_CHAR
-  CATDESC: Label for azimuth index
+  CATDESC: Label for zenith
   VAR_TYPE: metadata
-  FIELDNAM: Azimuth Idx Label
+  FIELDNAM: Zenith label
   FORMAT: a20
   FILLVAL: ' '
