@@ -194,13 +194,12 @@ class HitProcessor(Processor):
             "iron": self._create_nan_array((epoch_count, fe_energy_count, number_of_pitch_angle_bins)),
             "NeMgSi": self._create_nan_array((epoch_count, nemgsi_energy_count, number_of_pitch_angle_bins))}
 
-        dec, inc, dec_delta, inc_delta = get_hit_bin_polar_coordinates()
-        sector_unit_vectors = np.transpose(get_sector_unit_vectors(dec, inc), (1, 0, 2))
+        sector_unit_vectors = np.transpose(get_sector_unit_vectors(hit_data.zenith, hit_data.azimuth), (1, 0, 2))
 
         particle_unit_vectors = -sector_unit_vectors
         rotated_particle_unit_vectors = rotate_particle_vectors_from_hit_despun_to_imap_despun(particle_unit_vectors)
 
-        pitch_angles, gyrophases, pitch_angle_deltas, gyrophase_delta = get_hit_bin_polar_coordinates(
+        pitch_angles, gyrophases, pitch_angle_deltas, gyrophase_deltas = get_hit_bin_polar_coordinates(
             number_of_pitch_angle_bins, number_of_gyrophase_bins)
 
         averaged_mag_data = mag_data.rebin_to(hit_data.epoch, hit_data.epoch_delta)
@@ -234,7 +233,7 @@ class HitProcessor(Processor):
         return HitPitchAngleDataProduct(self.input_metadata, hit_data.epoch,
                                         hit_data.epoch_delta, pitch_angles, pitch_angle_deltas,
                                         gyrophases,
-                                        gyrophase_delta,
+                                        gyrophase_deltas,
                                         rebinned_pa_gyro_intensity_by_species["hydrogen"][0],
                                         rebinned_pa_gyro_intensity_by_species["hydrogen"][1],
                                         rebinned_pa_gyro_intensity_by_species["hydrogen"][2],

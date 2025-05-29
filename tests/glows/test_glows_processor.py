@@ -191,7 +191,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
     @patch("imap_l3_processing.glows.glows_processor.GlowsInitializer")
     @patch('imap_l3_processing.glows.glows_processor.GlowsL3BIonizationRate')
     @patch('imap_l3_processing.glows.glows_processor.GlowsL3CSolarWind')
-    @patch('imap_l3_processing.glows.glows_processor.filter_out_bad_days')
+    @patch('imap_l3_processing.glows.glows_processor.filter_l3a_files')
     @patch('imap_l3_processing.glows.glows_processor.generate_l3bc')
     def test_process_l3bc(self, mock_generate_l3bc, mock_filter_bad_days, mock_l3c_model_class, mock_l3b_model_class,
                           mock_glows_initializer_class, mock_save_data, mock_imap_data_access, mock_l3bc_dependencies,
@@ -260,8 +260,8 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
         dependencies_with_filtered_list_2 = replace(second_dependency, l3a_data=sentinel.filtered_days_2)
 
         mock_filter_bad_days.assert_has_calls(
-            [call(sentinel.l3a_data_1, sentinel.bad_days_list_1),
-             call(sentinel.l3a_data_2, sentinel.bad_days_list_2)])
+            [call(sentinel.l3a_data_1, sentinel.bad_days_list_1, sentinel.cr_1),
+             call(sentinel.l3a_data_2, sentinel.bad_days_list_2, sentinel.cr_2)])
 
         mock_generate_l3bc.assert_has_calls(
             [call(dependencies_with_filtered_list_1), call(dependencies_with_filtered_list_2)])
