@@ -1,6 +1,7 @@
 import dataclasses
 
 import numpy as np
+import scipy
 
 from imap_l3_processing.maps.map_models import SpectralIndexMapData, IntensityMapData, \
     calculate_datetime_weighted_average
@@ -114,16 +115,15 @@ def fit_arrays_to_power_law(fluxes: np.ndarray, uncertainties: np.ndarray, energ
 
             if len(flux) > 1:
                 keywords = {'xval': filtered_energy, 'yval': flux, 'errval': uncertainty}
-                first_y_in_range, last_y_in_range = np.log10(flux[flux > 0][0]), np.log10(flux[flux > 0][-1])
-                first_x_in_range, last_x_in_range = np.log10(filtered_energy[0]), np.log10(filtered_energy[-1])
-                initial_gamma = (last_y_in_range - first_y_in_range) / (last_x_in_range - first_x_in_range)
-                initial_intercept = first_y_in_range - (initial_gamma * first_x_in_range)
-                initial_parameters = (initial_intercept, -initial_gamma)
+                positive_flux = flux > 0
+                result = scipy.stats.linregress(np.log10(filtered_energy[positive_flux]), np.log10(flux[positive_flux]))
+
+                initial_parameters = (result.intercept, -result.slope)
 
                 fit = mpfit(power_law, initial_parameters, keywords, par_info, nprint=0)
 
                 a, gamma = fit.params
-                if fit.status > 0:
+                if fit.status > 0 and fit.status != 5:
                     a_error, gamma_error = fit.perror
                     gammas[i] = gamma
                     errors[i] = gamma_error

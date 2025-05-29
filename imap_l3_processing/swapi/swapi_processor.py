@@ -59,8 +59,6 @@ class SwapiProcessor(Processor):
             imap_data_access.upload(cdf_path)
 
     def process_l3a_pui(self, data, dependencies) -> SwapiL3PickupIonData:
-        epochs = []
-
         proton_solar_wind_speeds = []
         proton_solar_wind_clock_angles = []
         proton_solar_wind_deflection_angles = []
@@ -81,8 +79,6 @@ class SwapiProcessor(Processor):
 
             proton_solar_wind_clock_angles.append(clock_angle)
             proton_solar_wind_deflection_angles.append(deflection_angle)
-
-            epochs.append(data_chunk.epoch[0] + THIRTY_SECONDS_IN_NANOSECONDS)
 
         ten_minute_solar_wind_velocities = calculate_ten_minute_velocities(
             nominal_values(proton_solar_wind_speeds),

@@ -35,6 +35,12 @@ PUI_CUTOFF_SPEED_CDF_VAR_NAME = "pui_cutoff_speed"
 PUI_BACKGROUND_COUNT_RATE_CDF_VAR_NAME = "pui_background_count_rate"
 PUI_DENSITY_CDF_VAR_NAME = "pui_density"
 PUI_TEMPERATURE_CDF_VAR_NAME = "pui_temperature"
+PUI_COOLING_INDEX_UNCERTAINTY_CDF_VAR_NAME = "pui_cooling_index_delta"
+PUI_IONIZATION_RATE_UNCERTAINTY_CDF_VAR_NAME = "pui_ionization_rate_delta"
+PUI_CUTOFF_SPEED_UNCERTAINTY_CDF_VAR_NAME = "pui_cutoff_speed_delta"
+PUI_BACKGROUND_COUNT_RATE_UNCERTAINTY_CDF_VAR_NAME = "pui_background_count_rate_delta"
+PUI_DENSITY_UNCERTAINTY_CDF_VAR_NAME = "pui_density_delta"
+PUI_TEMPERATURE_UNCERTAINTY_CDF_VAR_NAME = "pui_temperature_delta"
 
 
 @dataclass
@@ -51,7 +57,7 @@ class SwapiL3ProtonSolarWindData(DataProduct):
             DataProductVariable(EPOCH_CDF_VAR_NAME, self.epoch),
             DataProductVariable(PROTON_SOLAR_WIND_SPEED_CDF_VAR_NAME, nominal_values(self.proton_sw_speed)),
             DataProductVariable(PROTON_SOLAR_WIND_SPEED_UNCERTAINTY_CDF_VAR_NAME, std_devs(self.proton_sw_speed)),
-            DataProductVariable(EPOCH_DELTA_CDF_VAR_NAME, THIRTY_SECONDS_IN_NANOSECONDS),
+            DataProductVariable(EPOCH_DELTA_CDF_VAR_NAME, np.full_like(self.epoch, THIRTY_SECONDS_IN_NANOSECONDS)),
             DataProductVariable(PROTON_SOLAR_WIND_TEMPERATURE_CDF_VAR_NAME, nominal_values(self.proton_sw_temperature)),
             DataProductVariable(PROTON_SOLAR_WIND_TEMPERATURE_UNCERTAINTY_CDF_VAR_NAME,
                                 std_devs(self.proton_sw_temperature)),
@@ -78,7 +84,7 @@ class SwapiL3AlphaSolarWindData(DataProduct):
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
             DataProductVariable(EPOCH_CDF_VAR_NAME, self.epoch),
-            DataProductVariable(EPOCH_DELTA_CDF_VAR_NAME, THIRTY_SECONDS_IN_NANOSECONDS),
+            DataProductVariable(EPOCH_DELTA_CDF_VAR_NAME, np.full_like(self.epoch, THIRTY_SECONDS_IN_NANOSECONDS)),
             DataProductVariable(ALPHA_SOLAR_WIND_SPEED_CDF_VAR_NAME, nominal_values(self.alpha_sw_speed)),
             DataProductVariable(ALPHA_SOLAR_WIND_SPEED_UNCERTAINTY_CDF_VAR_NAME, std_devs(self.alpha_sw_speed)),
             DataProductVariable(ALPHA_SOLAR_WIND_TEMPERATURE_CDF_VAR_NAME, nominal_values(self.alpha_sw_temperature)),
@@ -103,12 +109,18 @@ class SwapiL3PickupIonData(DataProduct):
         return [
             DataProductVariable(EPOCH_CDF_VAR_NAME, self.epoch),
             DataProductVariable(EPOCH_DELTA_CDF_VAR_NAME, np.full_like(self.epoch, FIVE_MINUTES_IN_NANOSECONDS)),
-            DataProductVariable(PUI_COOLING_INDEX_CDF_VAR_NAME, self.cooling_index),
-            DataProductVariable(PUI_IONIZATION_RATE_CDF_VAR_NAME, self.ionization_rate),
-            DataProductVariable(PUI_CUTOFF_SPEED_CDF_VAR_NAME, self.cutoff_speed),
-            DataProductVariable(PUI_BACKGROUND_COUNT_RATE_CDF_VAR_NAME, self.background_rate),
-            DataProductVariable(PUI_DENSITY_CDF_VAR_NAME, self.density),
-            DataProductVariable(PUI_TEMPERATURE_CDF_VAR_NAME, self.temperature),
+            DataProductVariable(PUI_COOLING_INDEX_CDF_VAR_NAME, nominal_values(self.cooling_index)),
+            DataProductVariable(PUI_COOLING_INDEX_UNCERTAINTY_CDF_VAR_NAME, std_devs(self.cooling_index)),
+            DataProductVariable(PUI_IONIZATION_RATE_CDF_VAR_NAME, nominal_values(self.ionization_rate)),
+            DataProductVariable(PUI_IONIZATION_RATE_UNCERTAINTY_CDF_VAR_NAME, std_devs(self.ionization_rate)),
+            DataProductVariable(PUI_CUTOFF_SPEED_CDF_VAR_NAME, nominal_values(self.cutoff_speed)),
+            DataProductVariable(PUI_CUTOFF_SPEED_UNCERTAINTY_CDF_VAR_NAME, std_devs(self.cutoff_speed)),
+            DataProductVariable(PUI_BACKGROUND_COUNT_RATE_CDF_VAR_NAME, nominal_values(self.background_rate)),
+            DataProductVariable(PUI_BACKGROUND_COUNT_RATE_UNCERTAINTY_CDF_VAR_NAME, std_devs(self.background_rate)),
+            DataProductVariable(PUI_DENSITY_CDF_VAR_NAME, nominal_values(self.density)),
+            DataProductVariable(PUI_DENSITY_UNCERTAINTY_CDF_VAR_NAME, std_devs(self.density)),
+            DataProductVariable(PUI_TEMPERATURE_CDF_VAR_NAME, nominal_values(self.temperature)),
+            DataProductVariable(PUI_TEMPERATURE_UNCERTAINTY_CDF_VAR_NAME, std_devs(self.temperature)),
         ]
 
 

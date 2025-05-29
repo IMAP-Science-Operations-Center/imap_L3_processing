@@ -96,3 +96,17 @@ spin_angle_label:
   FIELDNAM: Spin Angle Label
   FORMAT: a20
   FILLVAL: ' '
+elongation:
+  NAME: elongation
+  DATA_TYPE: CDF_UINT2
+  CATDESC: Position of Lo instrument
+  VAR_TYPE: support_data
+  FIELDNAM: Elongation
+  LABLAXIS: Elongation
+  DEPEND_0: epoch
+  FORMAT: I3
+  UNITS: degree
+  FILLVAL: 65535
+  VALIDMAX: 105
+  VALIDMIN: 75
+  RECORD_VARYING: RV

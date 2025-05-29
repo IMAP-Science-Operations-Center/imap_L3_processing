@@ -7,6 +7,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 import imap_data_access
+import spiceypy
 from imap_data_access.processing_input import ProcessingInputCollection
 
 from imap_l3_processing.codice.l3.hi.codice_hi_processor import CodiceHiProcessor
@@ -18,6 +19,7 @@ from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.swapi.swapi_processor import SwapiProcessor
 from imap_l3_processing.swe.swe_processor import SweProcessor
 from imap_l3_processing.ultra.l3.ultra_processor import UltraProcessor
+from imap_l3_processing.utils import furnish_local_spice
 
 
 def _parse_cli_arguments():
@@ -51,6 +53,7 @@ def imap_l3_processor():
     processing_input_collection = ProcessingInputCollection()
     processing_input_collection.deserialize(args.dependency)
 
+    _furnish_spice_kernels(processing_input_collection)
     input_dependency = InputMetadata(args.instrument,
                                      args.data_level,
                                      _convert_to_datetime(args.start_date),
@@ -82,6 +85,14 @@ def imap_l3_processor():
     processor.process()
 
 
+def _furnish_spice_kernels(processing_input_collection):
+    spice_kernel_paths = processing_input_collection.get_file_paths(data_type='spice')
+    for kernel in spice_kernel_paths:
+        kernel_path = imap_data_access.download(kernel)
+        spiceypy.furnsh(str(kernel_path))
+    furnish_local_spice()
+
+
 if __name__ == '__main__':
     with TemporaryDirectory() as dir:
         logger = logging.getLogger(__name__)
@@ -99,6 +110,8 @@ if __name__ == '__main__':
             logger.error("Unhandled Exception:", exc_info=e)
             print("caught exception")
             traceback.print_exc()
+            logging.shutdown()
+            raise e
 
         if os.path.exists(log_path):
             imap_data_access.upload(log_path)

@@ -300,3 +300,17 @@ elevation:
   SCALETYP: linear
   SCALEMIN: 0
   SCALEMAX: 360
+
+position:
+  <<: *per_event
+  NAME: position
+  CATDESC: Position index per event
+  FIELDNAM: Position index
+  LABLAXIS: Position index
+  DATA_TYPE: CDF_UINT1
+  UNITS: " "
+  VALIDMIN: 1
+  VALIDMAX: 24
+  FILLVAL: 255
+  SCALETYP: linear
+  FORMAT: I3

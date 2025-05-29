@@ -9,15 +9,16 @@ import numpy as np
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
-from imap_l3_processing.maps.map_models import HiGlowsL3eData, HiL1cData
+from imap_l3_processing.maps.map_models import GlowsL3eRectangularMapInputData, InputRectangularPointingSet
 from imap_l3_processing.models import UpstreamDataDependency
 from imap_l3_processing.swapi.l3a.models import SwapiL3AlphaSolarWindData
 from imap_l3_processing.utils import format_time, download_dependency, read_l1d_mag_data, save_data, \
     find_glows_l3e_dependencies, \
     download_external_dependency, download_dependency_from_path, download_dependency_with_repointing, \
-    combine_glows_l3e_with_l1c_pointing
+    combine_glows_l3e_with_l1c_pointing, furnish_local_spice
 from imap_l3_processing.version import VERSION
 from tests.cdf.test_cdf_utils import TestDataProduct
+from tests.test_helpers import get_spice_data_path
 
 
 class TestUtils(TestCase):
@@ -349,12 +350,16 @@ class TestUtils(TestCase):
         l1c_45sensor_file_paths = ["imap_hi_l1c_45sensor-pset_20210509_v001.cdf",
                                    "imap_hi_l1c_45sensor-pset_20210508_v002.cdf",
                                    "imap_hi_l1c_45sensor-pset_20210507_v001.cdf"]
+        l1c_lo_file_paths = ["imap_lo_l1c_pset_20210509_v001.cdf",
+                             "imap_lo_l1c_pset_20210508_v002.cdf",
+                             "imap_lo_l1c_pset_20210507_v001.cdf"]
 
         test_cases = [
-            (l1c_90sensor_file_paths, "90", "20201001", "20201003", "hi"),
-            (l1c_45sensor_file_paths, "45", "20210507", "20210509", "hi"),
-            (l1c_90sensor_file_paths, "90", "20201001", "20201003", "ultra"),
-            (l1c_45sensor_file_paths, "45", "20210507", "20210509", "ultra"),
+            (l1c_90sensor_file_paths, "-90", "20201001", "20201003", "hi"),
+            (l1c_45sensor_file_paths, "-45", "20210507", "20210509", "hi"),
+            (l1c_90sensor_file_paths, "-90", "20201001", "20201003", "ultra"),
+            (l1c_45sensor_file_paths, "-45", "20210507", "20210509", "ultra"),
+            (l1c_lo_file_paths, "", "20210507", "20210509", "lo"),
         ]
 
         mock_data_access_query.return_value = [{"file_path": "glows_1"},
@@ -362,12 +367,12 @@ class TestUtils(TestCase):
                                                {"file_path": "glows_3"}]
 
         for l1c_file_paths, sensor, expected_start_date, expected_end_date, instrument in test_cases:
-            with self.subTest(f"sensor: {sensor}"):
+            with self.subTest(f"sensor: {instrument}{sensor}"):
                 glows_file_paths = find_glows_l3e_dependencies(l1c_file_paths, instrument)
 
                 mock_data_access_query.assert_called_with(instrument="glows",
                                                           data_level="l3e",
-                                                          descriptor=f"survival-probabilities-{instrument}-{sensor}",
+                                                          descriptor=f"survival-probability-{instrument}{sensor}",
                                                           start_date=expected_start_date,
                                                           end_date=expected_end_date,
                                                           version="latest")
@@ -377,25 +382,29 @@ class TestUtils(TestCase):
 
     def test_combine_glows_l3e_with_l1c_pointing(self):
         glows_l3e_data = [
-            HiGlowsL3eData(epoch=datetime.fromisoformat("2023-01-01T00:00:00Z"), spin_angle=None,
-                           energy=None, probability_of_survival=None),
-            HiGlowsL3eData(epoch=datetime.fromisoformat("2023-01-02T00:00:00Z"), spin_angle=None,
-                           energy=None, probability_of_survival=None),
-            HiGlowsL3eData(epoch=datetime.fromisoformat("2023-01-03T00:00:00Z"), spin_angle=None,
-                           energy=None, probability_of_survival=None),
-            HiGlowsL3eData(epoch=datetime.fromisoformat("2023-01-05T00:00:00Z"), spin_angle=None,
-                           energy=None, probability_of_survival=None),
+            GlowsL3eRectangularMapInputData(epoch=datetime.fromisoformat("2023-01-01T00:00:00Z"), spin_angle=None,
+                                            energy=None, probability_of_survival=None),
+            GlowsL3eRectangularMapInputData(epoch=datetime.fromisoformat("2023-01-02T00:00:00Z"), spin_angle=None,
+                                            energy=None, probability_of_survival=None),
+            GlowsL3eRectangularMapInputData(epoch=datetime.fromisoformat("2023-01-03T00:00:00Z"), spin_angle=None,
+                                            energy=None, probability_of_survival=None),
+            GlowsL3eRectangularMapInputData(epoch=datetime.fromisoformat("2023-01-05T00:00:00Z"), spin_angle=None,
+                                            energy=None, probability_of_survival=None),
         ]
 
         hi_l1c_data = [
-            HiL1cData(epoch=datetime.fromisoformat("2023-01-02T00:00:00Z"), epoch_j2000=None, exposure_times=None,
-                      esa_energy_step=None),
-            HiL1cData(epoch=datetime.fromisoformat("2023-01-04T00:00:00Z"), epoch_j2000=None, exposure_times=None,
-                      esa_energy_step=None),
-            HiL1cData(epoch=datetime.fromisoformat("2023-01-05T00:00:00Z"), epoch_j2000=None, exposure_times=None,
-                      esa_energy_step=None),
-            HiL1cData(epoch=datetime.fromisoformat("2023-01-06T00:00:00Z"), epoch_j2000=None, exposure_times=None,
-                      esa_energy_step=None),
+            InputRectangularPointingSet(epoch=datetime.fromisoformat("2023-01-02T00:00:00Z"), epoch_j2000=None,
+                                        exposure_times=None,
+                                        esa_energy_step=None),
+            InputRectangularPointingSet(epoch=datetime.fromisoformat("2023-01-04T00:00:00Z"), epoch_j2000=None,
+                                        exposure_times=None,
+                                        esa_energy_step=None),
+            InputRectangularPointingSet(epoch=datetime.fromisoformat("2023-01-05T00:00:00Z"), epoch_j2000=None,
+                                        exposure_times=None,
+                                        esa_energy_step=None),
+            InputRectangularPointingSet(epoch=datetime.fromisoformat("2023-01-06T00:00:00Z"), epoch_j2000=None,
+                                        exposure_times=None,
+                                        esa_energy_step=None),
         ]
 
         expected = [
@@ -408,3 +417,29 @@ class TestUtils(TestCase):
         actual = combine_glows_l3e_with_l1c_pointing(glows_l3e_data, hi_l1c_data)
 
         self.assertEqual(expected, actual)
+
+    @patch("imap_l3_processing.utils.spiceypy")
+    def test_furnish_local_spice(self, mock_spiceypy):
+        mock_spiceypy.kdata.side_effect = [
+            ("/Users/harrison/Development/imap_L3_processing/spice_kernels/naif0012.tls", "TEXT", '', 0)
+        ]
+        mock_spiceypy.ktotal.return_value = 1
+
+        furnish_local_spice()
+
+        mock_spiceypy.ktotal.assert_called_once_with('ALL')
+        mock_spiceypy.kdata.assert_called_once_with(0, 'ALL')
+
+        self.assertEqual(10, mock_spiceypy.furnsh.call_count)
+        mock_spiceypy.furnsh.assert_has_calls([
+            call(str(get_spice_data_path("de440s.bsp"))),
+            call(str(get_spice_data_path("imap_science_0001.tf"))),
+            call(str(get_spice_data_path("imap_science_draft.tf"))),
+            call(str(get_spice_data_path("imap_sclk_0000.tsc"))),
+            call(str(get_spice_data_path("imap_sim_ck_2hr_2secsampling_with_nutation.bc"))),
+            call(str(get_spice_data_path("imap_spk_demo.bsp"))),
+            call(str(get_spice_data_path("imap_wkcp.tf"))),
+            call(str(get_spice_data_path("pck00011.tpc"))),
+            call(str(get_spice_data_path("sim_1yr_imap_attitude.bc"))),
+            call(str(get_spice_data_path("sim_1yr_imap_pointing_frame.bc"))),
+        ], any_order=True)

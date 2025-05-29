@@ -1,3 +1,4 @@
+import re
 from datetime import datetime, date
 from pathlib import Path
 from typing import Optional, Union, TypeVar
@@ -5,13 +6,15 @@ from urllib.error import URLError
 from urllib.request import urlretrieve
 
 import imap_data_access
+import spiceypy
 from imap_data_access import ScienceFilePath
 from spacepy.pycdf import CDF
 
+import imap_l3_processing
 from imap_l3_processing.cdf.cdf_utils import write_cdf, read_numeric_variable
 from imap_l3_processing.cdf.imap_attribute_manager import ImapAttributeManager
 from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
-from imap_l3_processing.maps.map_models import HiGlowsL3eData, HiL1cData
+from imap_l3_processing.maps.map_models import GlowsL3eRectangularMapInputData, InputRectangularPointingSet
 from imap_l3_processing.models import UpstreamDataDependency, DataProduct, MagL1dData
 from imap_l3_processing.ultra.l3.models import UltraL1CPSet, UltraGlowsL3eData
 from imap_l3_processing.version import VERSION
@@ -116,8 +119,9 @@ def find_glows_l3e_dependencies(l1c_filenames: list[str], instrument: str) -> li
     start_date = min(dates).strftime("%Y%m%d")
     end_date = max(dates).strftime("%Y%m%d")
 
-    sensor = l1c_filenames[0].split("_")[3][:2]
-    descriptor = f"survival-probabilities-{instrument}-{sensor}"
+    initial_descriptor = l1c_filenames[0].split("_")[3]
+    sensor = re.search(r"^(\d+)", initial_descriptor)
+    descriptor = f"survival-probability-{instrument}-{sensor.group(0)}" if sensor else f"survival-probability-{instrument}"
 
     survival_probabilities = [result["file_path"] for result in imap_data_access.query(instrument="glows",
                                                                                        data_level="l3e",
@@ -129,8 +133,8 @@ def find_glows_l3e_dependencies(l1c_filenames: list[str], instrument: str) -> li
     return survival_probabilities
 
 
-L1CPointingSet = TypeVar("L1CPointingSet", bound=Union[HiL1cData, UltraL1CPSet])
-GlowsL3eData = TypeVar("GlowsL3eData", bound=Union[HiGlowsL3eData, UltraGlowsL3eData])
+L1CPointingSet = TypeVar("L1CPointingSet", bound=Union[InputRectangularPointingSet, UltraL1CPSet])
+GlowsL3eData = TypeVar("GlowsL3eData", bound=Union[GlowsL3eRectangularMapInputData, UltraGlowsL3eData])
 
 
 def combine_glows_l3e_with_l1c_pointing(glows_l3e_data: list[GlowsL3eData], l1c_data: list[L1CPointingSet]) -> list[
@@ -139,3 +143,16 @@ def combine_glows_l3e_with_l1c_pointing(glows_l3e_data: list[GlowsL3eData], l1c_
     glows_by_epoch = {l3e.epoch: l3e for l3e in glows_l3e_data}
 
     return [(l1c_by_epoch[epoch], glows_by_epoch.get(epoch, None)) for epoch in l1c_by_epoch.keys()]
+
+
+def furnish_local_spice():
+    kernels = Path(imap_l3_processing.__file__).parent.parent.joinpath("spice_kernels")
+
+    total_kernels = spiceypy.ktotal('ALL')
+    current_kernels = []
+    for i in range(0, total_kernels):
+        current_kernels.append(Path(spiceypy.kdata(i, 'ALL')[0]).name)
+
+    for file in kernels.iterdir():
+        if file.name not in current_kernels:
+            spiceypy.furnsh(str(file))

@@ -18,12 +18,15 @@ class DensityOfNeutralHeliumLookupTable:
     def density(self, angle: Union[ndarray, float], distance: Union[ndarray, float]):
         if isinstance(distance, float):
             coords = np.array((angle % 360, distance))
+            result = scipy.interpolate.interpn(self.grid, self.densities,
+                                               coords, bounds_error=False, fill_value=0)
+            return result[0]
         else:
             coords = np.empty((len(distance), 2))
             coords[:, 0] = angle % 360
             coords[:, 1] = distance
-        return scipy.interpolate.interpn(self.grid, self.densities,
-                                         coords, bounds_error=False, fill_value=0)
+            return scipy.interpolate.interpn(self.grid, self.densities,
+                                             coords, bounds_error=False, fill_value=0)
 
     @classmethod
     def from_file(cls, file):

@@ -20,7 +20,7 @@ class TestGlowsL3DDependencies(unittest.TestCase):
         waw_helio_ion_mp_phion = get_test_data_path("glows/imap_glows_photoion-2010a_v001.dat")
         waw_helio_ion_mp_lya = get_test_data_path("glows/imap_glows_lya-2010a_v001.dat")
         waw_helio_ion_mp_e_dens = get_test_data_path("glows/imap_glows_electron-density-2010a_v001.dat")
-        pipeline_settings = get_test_data_path('glows/imap_glows_pipeline-settings-L3bc_v001.json')
+        pipeline_settings = get_test_data_path('glows/imap_glows_pipeline-settings-l3bc_v001.json')
         external_dependency_zip_path = Mock()
 
         mock_processing_input_collection = Mock(spec=ProcessingInputCollection)
@@ -73,13 +73,13 @@ class TestGlowsL3DDependencies(unittest.TestCase):
         ])
 
         mock_processing_input_collection.get_file_paths.assert_has_calls([
-            call(source='glows', descriptor='plasma-speed-Legendre-2010a'),
-            call(source='glows', descriptor='proton-density-Legendre-2010a'),
+            call(source='glows', descriptor='plasma-speed-2010a'),
+            call(source='glows', descriptor='proton-density-2010a'),
             call(source='glows', descriptor='uv-anisotropy-2010a'),
             call(source='glows', descriptor='photoion-2010a'),
             call(source='glows', descriptor='lya-2010a'),
             call(source='glows', descriptor='electron-density-2010a'),
-            call(source='glows', descriptor='pipeline-settings-l3bc'),
+            call(source='glows', descriptor='pipeline-settings-l3bcde'),
             call(source='glows', descriptor='l3b-archive'),
         ])
 

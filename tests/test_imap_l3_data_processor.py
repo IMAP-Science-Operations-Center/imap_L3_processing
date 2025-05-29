@@ -1,9 +1,10 @@
 from datetime import datetime
+from pathlib import Path
 from unittest import TestCase
 from unittest.mock import patch, call, Mock
 
 from imap_data_access.processing_input import ScienceInput, ProcessingInputCollection, \
-    AncillaryInput
+    AncillaryInput, SPICEInput
 
 from imap_l3_data_processor import imap_l3_processor
 from imap_l3_processing.models import InputMetadata
@@ -180,11 +181,55 @@ class TestImapL3DataProcessor(TestCase):
 
                 mock_processor.process.assert_called()
 
+    @patch('imap_l3_data_processor.spiceypy')
+    @patch('imap_l3_data_processor.furnish_local_spice')
+    @patch('imap_l3_data_processor.argparse')
+    @patch('imap_l3_data_processor.imap_data_access.download')
+    @patch('imap_l3_data_processor.ProcessingInputCollection')
+    @patch('imap_l3_data_processor.SwapiProcessor')
+    def test_get_spice_kernels_based_on_input_collection(self, _, mock_processing_input_collection, mock_download,
+                                                         mock_arg_parser_class, mock_furnish_local_spice, mock_spicepy):
+
+        ancillary_input = AncillaryInput("imap_swe_ancillary_20250101_v112.cdf")
+        spice_input_1 = SPICEInput("naif0012.tls")
+        spice_input_2 = SPICEInput("imap_sclk_0012.tls")
+        imap_data_access_dependency = ProcessingInputCollection(spice_input_1, ancillary_input, spice_input_2)
+        imap_data_access_dependency.deserialize = Mock()
+        mock_processing_input_collection.return_value = imap_data_access_dependency
+
+        mock_argument_parser = mock_arg_parser_class.ArgumentParser.return_value
+
+        mock_argument_parser.parse_args.return_value.instrument = "swapi"
+        mock_argument_parser.parse_args.return_value.data_level = "l3a"
+        mock_argument_parser.parse_args.return_value.start_date = "20160630"
+        mock_argument_parser.parse_args.return_value.end_date = "20160630"
+        mock_argument_parser.parse_args.return_value.version = "v101"
+        mock_argument_parser.parse_args.return_value.descriptor = "dont care"
+
+        mock_download.side_effect = [
+            Path("naif0012.tls"),
+            Path("imap_sclk_0012.tls")
+        ]
+
+        imap_l3_processor()
+        expected_spice_paths = imap_data_access_dependency.get_file_paths(data_type='spice')
+        self.assertEqual(2, mock_download.call_count)
+        mock_download.assert_has_calls([
+            call(expected_spice_paths[0]),
+            call(expected_spice_paths[1])
+        ])
+        mock_spicepy.furnsh.assert_has_calls(
+            [
+                call("naif0012.tls"),
+                call("imap_sclk_0012.tls")
+            ])
+        mock_furnish_local_spice.assert_called_once()
+
     @patch('imap_l3_data_processor.ProcessingInputCollection')
     @patch('imap_l3_data_processor.SweProcessor')
     @patch('imap_l3_data_processor.argparse')
-    def test_only_uses_science_files_as_input(self, mock_argparse, mock_processor_class,
-                                              mock_processing_input_collection):
+    def test_uses_input_from_processing_input_collection(self, mock_argparse, mock_processor_class,
+                                                         mock_processing_input_collection):
         cases = [("20170630", datetime(2017, 6, 30)), (None, datetime(2016, 6, 30))]
 
         instrument_argument = "swe"
@@ -192,8 +237,8 @@ class TestImapL3DataProcessor(TestCase):
         start_date_argument = "20160630"
         version_argument = "v092"
         descriptor_argument = "pitch-angle"
-        science_input_1 = ScienceInput("imap_swe_l1_science_20250101_v112.cdf", "imap_swe_l1_science_20250102_v112.cdf")
-        science_input_2 = ScienceInput("imap_mag_l1_science_20250101_v112.cdf")
+        science_input_1 = ScienceInput("imap_swe_l1_sci_20250101_v112.cdf", "imap_swe_l1_sci_20250102_v112.cdf")
+        science_input_2 = ScienceInput("imap_mag_l1d_norm-mago_20250101_v112.cdf")
         ancillary_input = AncillaryInput("imap_swe_ancillary_20250101_v112.cdf")
         imap_data_access_dependency = ProcessingInputCollection(science_input_1, science_input_2, ancillary_input)
 

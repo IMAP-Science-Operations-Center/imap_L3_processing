@@ -12,6 +12,7 @@ from imap_l3_processing.constants import TT2000_EPOCH
 from imap_l3_processing.ultra.l3.models import UltraL1CPSet, UltraGlowsL3eData
 from imap_l3_processing.ultra.l3.science.ultra_survival_probability import UltraSurvivalProbability, \
     UltraSurvivalProbabilitySkyMap
+from tests.spice_test_case import SpiceTestCase
 
 
 class TestUltraSurvivalProbability(unittest.TestCase):
@@ -124,7 +125,7 @@ class TestUltraSurvivalProbability(unittest.TestCase):
                                              expected_survival_probabilities_values)
 
 
-class TestUltraSurvivalProbabilitySkyMap(unittest.TestCase):
+class TestUltraSurvivalProbabilitySkyMap(SpiceTestCase):
     def test_ultra_survival_probability_skymap(self):
         pointing_set_nside = 2
         pointing_set_pixels = 12 * pointing_set_nside ** 2
@@ -176,14 +177,14 @@ def _build_glows_l3e_ultra(survival_probabilities: np.ndarray = None, energies: 
 
 
 def _create_ultra_l1c_pset_from_xarray(l1cdataset):
-    l1c_energies = l1cdataset.coords[CoordNames.ENERGY.value].values
+    l1c_energies = l1cdataset.coords[CoordNames.ENERGY_ULTRA.value].values
     l1c_exposure = np.repeat(l1cdataset["exposure_time"].values[np.newaxis, :], len(l1c_energies), 1)
     l1c_exposure = np.reshape(l1c_exposure, (1, len(l1c_energies), -1))
 
     l1cdataset["exposure_time"] = (
         [
             CoordNames.TIME.value,
-            CoordNames.ENERGY.value,
+            CoordNames.ENERGY_ULTRA.value,
             CoordNames.HEALPIX_INDEX.value
         ],
         l1c_exposure
@@ -191,7 +192,7 @@ def _create_ultra_l1c_pset_from_xarray(l1cdataset):
 
     input_l1c_pset = UltraL1CPSet(
         epoch=l1cdataset.coords[CoordNames.TIME.value].values[0],
-        energy=l1cdataset.coords[CoordNames.ENERGY.value].values,
+        energy=l1cdataset.coords[CoordNames.ENERGY_ULTRA.value].values,
         counts=l1cdataset["counts"].values,
         exposure=l1cdataset["exposure_time"].values,
         healpix_index=l1cdataset.coords[CoordNames.HEALPIX_INDEX.value].values,
@@ -209,7 +210,7 @@ def _create_ultra_l1c_pset(energy: np.ndarray,
                            latitude: np.ndarray = None,
                            longitude: np.ndarray = None,
                            epoch: datetime = None):
-    epoch = datetime(2025, 9, 1) if epoch is None else epoch
+    epoch = datetime(2025, 10, 1, 12) if epoch is None else epoch
     counts = counts or np.full_like(exposure_time, 1)
     sensitivity = sensitivity or np.full_like(exposure_time, 1)
     healpix_index = np.arange(exposure_time.shape[-1])

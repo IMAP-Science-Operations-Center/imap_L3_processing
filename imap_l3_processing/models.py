@@ -1,5 +1,6 @@
 import abc
 import ctypes
+import enum
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -53,7 +54,10 @@ class DataProduct(metaclass=abc.ABCMeta):
         raise NotImplemented
 
     def add_paths_to_parents(self, paths: list[Path]):
-        self.parent_file_names.extend(path.name for path in paths if path.name not in self.parent_file_names)
+        self.add_filenames_to_parents([path.name for path in paths])
+
+    def add_filenames_to_parents(self, filenames):
+        self.parent_file_names.extend(filename for filename in filenames if filename not in self.parent_file_names)
 
 
 @dataclass
@@ -63,3 +67,15 @@ class MagL1dData:
 
     def rebin_to(self, epoch: np.ndarray[float], epoch_delta: np.ndarray[float]) -> np.ndarray[float]:
         return rebin(self.epoch, self.mag_data, epoch, epoch_delta)
+
+
+class Instrument(enum.Enum):
+    IMAP_HI = "hi"
+    IMAP_LO = "lo"
+    IMAP_ULTRA = "ultra"
+    CODICE = "codice"
+    SWE = "swe"
+    HIT = "hit"
+    SWAPI = "swapi"
+    GLOWS = "glows"
+    MAG = "mag"

@@ -10,8 +10,7 @@ from numpy import ndarray
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.cdf.cdf_utils import read_numeric_variable, read_variable_and_mask_fill_values
-from imap_l3_processing.codice.l3.lo.direct_events.science.mass_species_bin_lookup import MassSpeciesBinLookup, \
-    EventDirection
+from imap_l3_processing.codice.l3.lo.direct_events.science.mass_species_bin_lookup import MassSpeciesBinLookup
 from imap_l3_processing.models import DataProductVariable, DataProduct
 
 CODICE_LO_L2_NUM_PRIORITIES = 7
@@ -102,6 +101,7 @@ class PriorityEvent:
     num_events: ndarray
     spin_angle: ndarray
     elevation: ndarray
+    position: ndarray
     tof: ndarray
 
 
@@ -126,8 +126,11 @@ class CodiceLoL2DirectEventData:
                     multi_flag=read_variable_and_mask_fill_values(cdf[f"p{index}_multi_flag"]),
                     num_events=read_variable_and_mask_fill_values(cdf[f"p{index}_num_events"]),
                     spin_angle=read_numeric_variable(cdf[f"p{index}_spin_sector"]),
-                    elevation=read_numeric_variable(cdf[f"p{index}_position"]),
-                    tof=read_variable_and_mask_fill_values(cdf[f"p{index}_tof"]))
+                    elevation=read_numeric_variable(cdf[f"p{index}_elevation"]),
+                    tof=read_variable_and_mask_fill_values(cdf[f"p{index}_tof"]),
+                    position=read_variable_and_mask_fill_values(cdf[f"p{index}_position"]),
+                )
+
                 )
 
             return cls(
@@ -303,6 +306,7 @@ DATA_QUALITY_VAR_NAME = "data_quality"
 TOF_VAR_NAME = "tof"
 SPIN_ANGLE_VAR_NAME = "spin_angle"
 ELEVATION_VAR_NAME = "elevation"
+POSITION_VAR_NAME = "position"
 PRIORITY_INDEX_LABEL_VAR_NAME = "priority_index_label"
 EVENT_INDEX_LABEL_VAR_NAME = "event_index_label"
 ENERGY_BIN_LABEL_VAR_NAME = "energy_bin_label"
@@ -325,6 +329,7 @@ class CodiceLoDirectEventData:
     tof: np.ndarray
     spin_angle: np.ndarray
     elevation: np.ndarray
+    position: np.ndarray
 
     @classmethod
     def read_from_cdf(cls, cdf_path: Path | str):
@@ -342,7 +347,8 @@ class CodiceLoDirectEventData:
                        data_quality=read_variable_and_mask_fill_values(cdf[DATA_QUALITY_VAR_NAME]),
                        tof=read_variable_and_mask_fill_values(cdf[TOF_VAR_NAME]),
                        spin_angle=read_numeric_variable(cdf[SPIN_ANGLE_VAR_NAME]),
-                       elevation=read_numeric_variable(cdf[ELEVATION_VAR_NAME]), )
+                       elevation=read_numeric_variable(cdf[ELEVATION_VAR_NAME]),
+                       position=read_variable_and_mask_fill_values(cdf[POSITION_VAR_NAME]), )
 
 
 @dataclass
@@ -389,6 +395,7 @@ class CodiceLoL3aDirectEventDataProduct(CodiceLoDirectEventData, DataProduct):
 
             DataProductVariable(SPIN_ANGLE_VAR_NAME, self.spin_angle),
             DataProductVariable(ELEVATION_VAR_NAME, self.elevation),
+            DataProductVariable(POSITION_VAR_NAME, self.position),
 
             DataProductVariable(PRIORITY_INDEX_LABEL_VAR_NAME, self.priority_index_label),
             DataProductVariable(EVENT_INDEX_LABEL_VAR_NAME, self.event_index_label),
@@ -462,15 +469,15 @@ AZIMUTH_OR_ELEVATION = TypeVar("AZIMUTH_OR_ELEVATION")
 
 @dataclass
 class CodiceLo3dData:
-    data_in_3d_bins: np.ndarray[(SPECIES, EPOCH, PRIORITY, AZIMUTH_OR_ELEVATION, SPIN_ANGLE, ENERGY)] | np.ndarray[
-        (SPECIES, EPOCH, AZIMUTH_OR_ELEVATION, SPIN_ANGLE, ENERGY)]
+    data_in_3d_bins: np.ndarray[(SPECIES, EPOCH, PRIORITY, AZIMUTH_OR_ELEVATION, SPIN_ANGLE, ENERGY)] | \
+                     np.ndarray[(SPECIES, EPOCH, AZIMUTH_OR_ELEVATION, SPIN_ANGLE, ENERGY)]
     mass_bin_lookup: MassSpeciesBinLookup
     energy_per_charge: np.ndarray[(ENERGY,)]
     spin_angle: np.ndarray[(SPIN_ANGLE,)]
     azimuth_or_elevation: np.ndarray[(AZIMUTH_OR_ELEVATION,)]
 
-    def get_3d_distribution(self, species: str, event_direction: EventDirection) -> np.ndarray:
-        species_index = self.mass_bin_lookup.get_species_index(species, event_direction)
+    def get_3d_distribution(self, species: str) -> np.ndarray:
+        species_index = self.mass_bin_lookup.get_species_index(species)
         return self.data_in_3d_bins[species_index, ...]
 
 
@@ -480,8 +487,12 @@ ENERGY_DELTA_MINUS_VAR_NAME = "energy_delta_minus"
 SPIN_ANGLE_DELTA_VAR_NAME = "spin_angle_delta"
 ELEVATION_DELTA_VAR_NAME = "elevation_delta"
 
+ENERGY_LABEL_VAR_NAME = "energy_label"
+SPIN_ANGLE_LABEL_VAR_NAME = "spin_angle_label"
+ELEVATION_ANGLE_LABEL_VAR_NAME = "elevation_label"
 
-@dataclass()
+
+@dataclass
 class CodiceLoL3a3dDistributionDataProduct(DataProduct):
     epoch: np.ndarray
     epoch_delta: np.ndarray
@@ -492,6 +503,8 @@ class CodiceLoL3a3dDistributionDataProduct(DataProduct):
     energy: np.ndarray
     energy_delta_plus: np.ndarray
     energy_delta_minus: np.ndarray
+    species: str
+    species_data: np.ndarray
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
@@ -504,4 +517,8 @@ class CodiceLoL3a3dDistributionDataProduct(DataProduct):
             DataProductVariable(ENERGY_VAR_NAME, self.energy),
             DataProductVariable(ENERGY_DELTA_PLUS_VAR_NAME, self.energy_delta_plus),
             DataProductVariable(ENERGY_DELTA_MINUS_VAR_NAME, self.energy_delta_minus),
+            DataProductVariable(self.species, self.species_data),
+            DataProductVariable(ENERGY_LABEL_VAR_NAME, self.energy.astype(str)),
+            DataProductVariable(SPIN_ANGLE_LABEL_VAR_NAME, self.spin_angle.astype(str)),
+            DataProductVariable(ELEVATION_ANGLE_LABEL_VAR_NAME, self.elevation.astype(str)),
         ]

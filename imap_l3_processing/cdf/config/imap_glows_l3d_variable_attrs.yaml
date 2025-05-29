@@ -56,25 +56,25 @@ cr:
   VAR_TYPE: support_data
   RECORD_VARYING: RV
   FIELDNAM: Carrington Rotation
-  FORMAT: I14
+  FORMAT: F9.3
   LABLAXIS: Carrington rotation
   UNITS: ' '
   VALIDMIN: 1000
   VALIDMAX: 3000
   FILLVAL: -1.00E+31
   SCALETYP: linear
-speed:
-  NAME: speed
+plasma_speed:
+  NAME: plasma_speed
   DATA_TYPE: CDF_FLOAT
-  CATDESC: Speed of ???
+  CATDESC: Solar wind plasma speed
   VAR_TYPE: data
   RECORD_VARYING: RV
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Speed Of ???
+  FIELDNAM: Plasma Speed
   FORMAT: F9.3
-  LABLAXIS: Speed of ???
+  LABLAXIS: Plasma speed
   DISPLAY_TYPE: spectrogram
-  UNITS: ???
+  UNITS: km/s
   VALIDMIN: 0
   VALIDMAX: 100
   FILLVAL: -1.00E+31
@@ -85,7 +85,7 @@ speed:
 proton_density:
   NAME: proton_density
   DATA_TYPE: CDF_FLOAT
-  CATDESC: Proton density
+  CATDESC: Solar wind proton density
   VAR_TYPE: data
   RECORD_VARYING: RV
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
@@ -93,7 +93,7 @@ proton_density:
   FORMAT: F9.3
   LABLAXIS: Proton density
   DISPLAY_TYPE: spectrogram
-  UNITS: ???
+  UNITS: '#/cm^3'
   VALIDMIN: 0
   VALIDMAX: 100
   FILLVAL: -1.00E+31
@@ -112,9 +112,9 @@ ultraviolet_anisotropy:
   FORMAT: F9.3
   LABLAXIS: Ultraviolet Anisotropy
   DISPLAY_TYPE: spectrogram
-  UNITS: ???
+  UNITS: ' '
   VALIDMIN: 0
-  VALIDMAX: 100
+  VALIDMAX: 1.00E+01
   FILLVAL: -1.00E+31
   SCALETYP: linear
   DEPEND_0: epoch
@@ -123,17 +123,17 @@ ultraviolet_anisotropy:
 phion:
   NAME: phion
   DATA_TYPE: CDF_FLOAT
-  CATDESC: Phion
+  CATDESC: Photoionization rate in the ecliptic plane
   VAR_TYPE: data
   RECORD_VARYING: RV
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Phion
+  FIELDNAM: Photoionization Rate
   FORMAT: F9.3
   LABLAXIS: Phion
   DISPLAY_TYPE: time_series
-  UNITS: ???
+  UNITS: '#/s'
   VALIDMIN: 0
-  VALIDMAX: 100
+  VALIDMAX: 1.00E-05
   FILLVAL: -1.00E+31
   SCALETYP: linear
   DEPEND_0: epoch
@@ -145,12 +145,12 @@ lyman_alpha:
   RECORD_VARYING: RV
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
   FIELDNAM: Lyman Alpha
-  FORMAT: F9.3
+  FORMAT: F14.3
   LABLAXIS: Lyman alpha
   DISPLAY_TYPE: time_series
-  UNITS: ???
+  UNITS: '#/cm^2/s'
   VALIDMIN: 0
-  VALIDMAX: 100
+  VALIDMAX: 10000000000000
   FILLVAL: -1.00E+31
   SCALETYP: linear
   DEPEND_0: epoch
@@ -165,7 +165,7 @@ electron_density:
   FORMAT: F9.3
   LABLAXIS: Electron density
   DISPLAY_TYPE: time_series
-  UNITS: ???
+  UNITS: '#/cm^3'
   VALIDMIN: 0
   VALIDMAX: 100
   FILLVAL: -1.00E+31
@@ -180,3 +180,36 @@ latitude_label:
   FIELDNAM: Latitude Label
   FORMAT: A16
   FILLVAL: ' '
+plasma_speed_flag:
+  DATA_TYPE: CDF_FLOAT
+  CATDESC: Solar wind plasma speed source
+  DEPEND_0: epoch
+  VAR_TYPE: metadata
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: no_plot
+  FIELDNAM: Plasma Speed Source
+  FORMAT: F9.3
+  LABLAXIS: Plasma speed source
+  FILVAL: -1.00E+31
+uv_anisotropy_flag:
+  DATA_TYPE: CDF_FLOAT
+  CATDESC: Ultraviolet anisotropy source
+  DEPEND_0: epoch
+  VAR_TYPE: metadata
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: no_plot
+  FIELDNAM: UV Anisotropy Source
+  FORMAT: F9.3
+  LABLAXIS: UV anisotropy source
+  FILVAL: -1.00E+31
+proton_density_flag:
+  DATA_TYPE: CDF_FLOAT
+  CATDESC: Solar wind proton density source
+  DEPEND_0: epoch
+  VAR_TYPE: metadata
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: no_plot
+  FIELDNAM: Proton Density Source
+  FORMAT: F9.3
+  LABLAXIS: Proton density source
+  FILVAL: -1.00E+31

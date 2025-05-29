@@ -1,9 +1,9 @@
 from pathlib import Path
 
+import spiceypy
 from imap_data_access.processing_input import ProcessingInputCollection
 
 from imap_l3_processing.models import InputMetadata
-from imap_l3_processing.spice_wrapper import spiceypy
 
 
 class Processor:
@@ -20,7 +20,7 @@ class Processor:
 
         count = spiceypy.ktotal('ALL')
         for i in range(0, count):
-            file = spiceypy.kdata(i, 'ALL')[0]
+            file = Path(spiceypy.kdata(i, 'ALL')[0]).name
             parent_file_names.append(file)
 
         return parent_file_names

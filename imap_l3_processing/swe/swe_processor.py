@@ -164,6 +164,7 @@ class SweProcessor(Processor):
         total_temperature_tensor_integrated = np.full((number_of_points, 6), np.nan)
         sin_theta = np.sin(np.deg2rad(90 - swe_l2_data.inst_el))
         cos_theta = np.cos(np.deg2rad(90 - swe_l2_data.inst_el))
+        instrument_phi = swe_l2_data.inst_az_spin_sector + 90
 
         for i in range(len(swe_l2_data.epoch)):
             velocity_vectors_cm_per_s: np.ndarray = 1000 * 100 * calculate_velocity_in_dsp_frame_km_s(
@@ -217,7 +218,7 @@ class SweProcessor(Processor):
                     core_integrate_result = integrate(ifit + 1, jbreak - 1, corrected_energy_bins[i],
                                                       sin_theta, cos_theta, config['aperture_field_of_view_radians'],
                                                       swe_l2_data.phase_space_density[i],
-                                                      swe_l2_data.inst_az_spin_sector[i],
+                                                      instrument_phi[i],
                                                       spacecraft_potential[i],
                                                       [0, 0, 0, 0], [0, 0, 0, 0, 0, 0])
                     if core_integrate_result is not None:
@@ -229,7 +230,7 @@ class SweProcessor(Processor):
                             corrected_energy_bins[i],
                             spacecraft_potential[i], cos_theta,
                             config['aperture_field_of_view_radians'],
-                            swe_l2_data.inst_az_spin_sector[i],
+                            instrument_phi[i],
                             core_moment_fit_result.regress_result,
                             core_integrate_result.base_energy)
 
@@ -269,7 +270,7 @@ class SweProcessor(Processor):
                                                              sin_theta,
                                                              cos_theta, config['aperture_field_of_view_radians'],
                                                              swe_l2_data.phase_space_density[i],
-                                                             swe_l2_data.inst_az_spin_sector[i],
+                                                             instrument_phi[i],
                                                              spacecraft_potential[i], scale_core_density_output.cdelnv,
                                                              scale_core_density_output.cdelt)
                         assert total_integration_output is not None, "not yet checking if this is None"
@@ -338,7 +339,7 @@ class SweProcessor(Processor):
                                                       corrected_energy_bins[i],
                                                       sin_theta, cos_theta, config['aperture_field_of_view_radians'],
                                                       swe_l2_data.phase_space_density[i],
-                                                      swe_l2_data.inst_az_spin_sector[i],
+                                                      instrument_phi[i],
                                                       spacecraft_potential[i],
                                                       [0, 0, 0, 0], [0, 0, 0, 0, 0, 0])
                     if halo_integrate_result is not None:
@@ -348,7 +349,7 @@ class SweProcessor(Processor):
                             halo_integrate_result.temperature, halo_moment,
                             spacecraft_potential[i], halo_core[i], cos_theta,
                             config['aperture_field_of_view_radians'],
-                            swe_l2_data.inst_az_spin_sector[i],
+                            instrument_phi[i],
                             halo_moment_fit_result.regress_result,
                             halo_integrate_result.base_energy)
 

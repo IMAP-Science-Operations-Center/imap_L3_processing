@@ -27,10 +27,11 @@ class GlowsInitializerAncillaryDependencies:
 
     @classmethod
     def fetch_dependencies(cls, dependencies: ProcessingInputCollection):
-        uv_anisotropy_factor_dependency = dependencies.get_file_paths(source='glows', descriptor='uv-anisotropy-1cr')
+        uv_anisotropy_factor_dependency = dependencies.get_file_paths(source='glows', descriptor='uv-anisotropy-1CR')
         waw_helioion_mp_dependency = dependencies.get_file_paths(source='glows', descriptor='WawHelioIonMP')
         bad_day_dependency = dependencies.get_file_paths(source='glows', descriptor='bad-days-list')
-        pipeline_settings_dependency = dependencies.get_file_paths(source='glows', descriptor='pipeline-settings-L3bcd')
+        pipeline_settings_dependency = dependencies.get_file_paths(source='glows',
+                                                                   descriptor='pipeline-settings-l3bcde')
 
         pipeline_settings_path = download(pipeline_settings_dependency[0])
 

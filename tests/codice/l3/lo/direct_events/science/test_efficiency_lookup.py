@@ -1,14 +1,34 @@
+import csv
+import tempfile
 import unittest
+from pathlib import Path
+
+import numpy as np
 
 from imap_l3_processing.codice.l3.lo.direct_events.science.efficiency_lookup import EfficiencyLookup
 
 
 class TestEfficiencyLookup(unittest.TestCase):
-    def test_efficiency_lookup(self):
-        num_species = 2
-        num_azimuths = 3
-        num_energies = 4
+    def test_read_from_csv(self):
+        num_azimuths = 2
+        num_energies = 3
 
-        efficiency_lookup = EfficiencyLookup.create_with_fake_data(num_species, num_azimuths, num_energies)
+        rng = np.random.default_rng()
+        expected_efficiency_data = rng.random((num_azimuths, num_energies))
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmpdir = Path(tmpdir)
 
-        self.assertEqual((num_species, num_azimuths, num_energies), efficiency_lookup.efficiency_data.shape)
+            output_csv = tmpdir / "efficiency_lookup.csv"
+            with open(output_csv, "w") as csvfile:
+                csv_writer = csv.writer(csvfile)
+
+                csv_writer.writerow("# some header info goes here")
+                csv_writer.writerows([
+                    expected_efficiency_data[:, 0],
+                    expected_efficiency_data[:, 1],
+                    expected_efficiency_data[:, 2]
+                ])
+
+            efficiency_lookup = EfficiencyLookup.read_from_csv(output_csv)
+
+            np.testing.assert_array_equal(efficiency_lookup.efficiency_data, expected_efficiency_data)

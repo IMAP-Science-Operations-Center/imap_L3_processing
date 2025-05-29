@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-import dataclasses
 from typing import TypeVar
 
 import numpy as np
 
+from imap_l3_processing.codice.l3.lo.constants import AZIMUTH_STEP_SIZE, ELEVATION_STEP_SIZE, ENERGY_STEP_SIZE, \
+    ENERGY_LOST_IN_CARBON_FOIL, POST_ACCELERATION_VOLTAGE_IN_KV, CONVERSION_CONSTANT_K, CODICE_LO_NUM_AZIMUTH_BINS
 from imap_l3_processing.codice.l3.lo.direct_events.science.angle_lookup import SpinAngleLookup, \
     PositionToElevationLookup
 from imap_l3_processing.codice.l3.lo.direct_events.science.efficiency_lookup import EfficiencyLookup
@@ -13,16 +14,6 @@ from imap_l3_processing.codice.l3.lo.direct_events.science.mass_coefficient_look
 from imap_l3_processing.codice.l3.lo.direct_events.science.mass_species_bin_lookup import MassSpeciesBinLookup
 from imap_l3_processing.codice.l3.lo.models import EnergyAndSpinAngle, PriorityEvent, CodiceLo3dData
 from imap_l3_processing.constants import ONE_SECOND_IN_MICROSECONDS
-
-POST_ACCELERATION_VOLTAGE_IN_KV = 15
-ENERGY_LOST_IN_CARBON_FOIL = 0
-CONVERSION_CONSTANT_K = 1.692e-5
-
-AZIMUTH_STEP_SIZE = np.deg2rad(30)
-ELEVATION_STEP_SIZE = np.deg2rad(30)
-ENERGY_STEP_SIZE = 100
-
-CODICE_LO_NUM_AZIMUTH_BINS = 24
 
 
 def calculate_partial_densities(intensities: np.ndarray, esa_steps: np.ndarray, mass_per_charge: float):
@@ -85,10 +76,10 @@ def rebin_counts_by_energy_and_spin_angle(priority_event: PriorityEvent,
 def rebin_to_counts_by_species_elevation_and_spin_sector(num_events: np.ndarray, mass: np.ndarray,
                                                          mass_per_charge: np.ndarray,
                                                          energy: np.ndarray,
-                                                         spin_angle: np.ndarray, apd_id: np.ndarray,
+                                                         spin_angle: np.ndarray,
+                                                         position: np.ma.masked_array,
                                                          mass_species_bin_lookup: MassSpeciesBinLookup,
                                                          spin_angle_lut: SpinAngleLookup,
-                                                         position_elevation_lut: PositionToElevationLookup,
                                                          energy_lut: EnergyLookup) -> CodiceLo3dData:
     num_epochs = mass.shape[0]
     num_priorities = mass.shape[1]
@@ -98,17 +89,23 @@ def rebin_to_counts_by_species_elevation_and_spin_sector(num_events: np.ndarray,
 
     for epoch_i in range(num_epochs):
         for priority_i in range(num_priorities):
+            if num_events[epoch_i, priority_i] is np.ma.masked:
+                continue
+                
             for event_i in range(num_events[epoch_i, priority_i]):
                 indices_of_event = epoch_i, priority_i, event_i
-                apd_id_of_event = int(apd_id[*indices_of_event])
-                event_direction = position_elevation_lut.event_direction_for_apd(apd_id_of_event)
+                if (np.isnan(energy[*indices_of_event]) or np.isnan(spin_angle[*indices_of_event]) or
+                        position[*indices_of_event] is np.ma.masked):
+                    continue
+
+                position_of_event = int(position[*indices_of_event])
                 species = mass_species_bin_lookup.get_species(mass[*indices_of_event],
-                                                              mass_per_charge[*indices_of_event], event_direction)
+                                                              mass_per_charge[*indices_of_event])
                 if species is not None:
                     energy_i = energy_lut.get_energy_index(energy[*indices_of_event])
-                    species_i = mass_species_bin_lookup.get_species_index(species, event_direction)
+                    species_i = mass_species_bin_lookup.get_species_index(species)
                     spin_angle_i = spin_angle_lut.get_spin_angle_index(spin_angle[*indices_of_event])
-                    position_i = apd_id_of_event - 1
+                    position_i = position_of_event - 1
                     output[species_i, epoch_i, priority_i, position_i, spin_angle_i, energy_i] += 1
 
     return CodiceLo3dData(data_in_3d_bins=output, mass_bin_lookup=mass_species_bin_lookup,
@@ -124,44 +121,42 @@ SPIN_ANGLE = TypeVar("SPIN_ANGLE")
 ENERGY = TypeVar("ENERGY")
 
 
-def normalize_counts(counts: CodiceLo3dData,
-                     normalization_factor: np.ndarray[(EPOCH, PRIORITY, ENERGY, SPIN_ANGLE)]) \
-        -> CodiceLo3dData:
+def normalize_counts(counts: np.ndarray,
+                     normalization_factor: np.ndarray[(EPOCH, PRIORITY, ENERGY, SPIN_ANGLE)]) -> np.ndarray:
     reshaped_normalization_factor = np.transpose(normalization_factor, (0, 1, 3, 2))
-    reshaped_normalization_factor = reshaped_normalization_factor[np.newaxis, :, :, np.newaxis, :, :]
-    return dataclasses.replace(counts, data_in_3d_bins=reshaped_normalization_factor * counts.data_in_3d_bins)
+    reshaped_normalization_factor = reshaped_normalization_factor[:, :, np.newaxis, :, :]
+    return reshaped_normalization_factor * counts
 
 
-def combine_priorities_and_convert_to_rate(counts: CodiceLo3dData,
-                                           acquisition_times: np.ndarray[(ENERGY,)]) \
-        -> CodiceLo3dData:
-    return dataclasses.replace(counts, data_in_3d_bins=np.sum(counts.data_in_3d_bins, axis=2) / (
-            acquisition_times / ONE_SECOND_IN_MICROSECONDS))
+def combine_priorities_and_convert_to_rate(counts: np.ndarray,
+                                           acquisition_times: np.ndarray[(ENERGY,)]) -> np.ndarray:
+    return np.sum(counts, axis=1) / (acquisition_times / ONE_SECOND_IN_MICROSECONDS)
 
 
-def rebin_3d_distribution_azimuth_to_elevation(intensity_data: CodiceLo3dData,
-                                               position_to_elevation_lut: PositionToElevationLookup) -> CodiceLo3dData:
-    num_species = intensity_data.data_in_3d_bins.shape[0]
-    num_epochs = intensity_data.data_in_3d_bins.shape[1]
+def rebin_3d_distribution_azimuth_to_elevation(intensity_data: np.ndarray,
+                                               azimuths: np.ndarray,
+                                               position_to_elevation_lut: PositionToElevationLookup) -> np.ndarray:
+    num_epochs = intensity_data.shape[0]
     num_elevations = len(position_to_elevation_lut.bin_centers)
-    num_spin_angles = len(intensity_data.spin_angle)
-    num_energies = len(intensity_data.energy_per_charge)
-    rebinned = np.zeros((num_species, num_epochs, num_elevations, num_spin_angles, num_energies))
+    num_spin_angles = intensity_data.shape[2]
+    num_energies = intensity_data.shape[3]
+    rebinned = np.zeros((num_epochs, num_elevations, num_spin_angles, num_energies))
 
-    elevation_indices = position_to_elevation_lut.apd_to_elevation_index(intensity_data.azimuth_or_elevation)
+    elevation_indices = position_to_elevation_lut.apd_to_elevation_index(azimuths)
     for azimuth_index, elevation_index in enumerate(elevation_indices):
-        rebinned[:, :, elevation_index, ...] += intensity_data.data_in_3d_bins[:, :, azimuth_index]
-    return dataclasses.replace(intensity_data, data_in_3d_bins=rebinned,
-                               azimuth_or_elevation=position_to_elevation_lut.bin_centers)
+        rebinned[:, elevation_index] += intensity_data[:, azimuth_index]
+    return rebinned
 
 
-def convert_count_rate_to_intensity(count_rates: CodiceLo3dData, efficiency_lookup: EfficiencyLookup,
-                                    geometric_factor: np.ndarray[(EPOCH, ENERGY)]) -> CodiceLo3dData:
-    reshaped_efficiency_data = efficiency_lookup.efficiency_data[:, np.newaxis, :, np.newaxis, :]
-    reshaped_geometric_factor = geometric_factor[np.newaxis, :, np.newaxis, np.newaxis, :]
-    denominator = reshaped_geometric_factor * count_rates.energy_per_charge * reshaped_efficiency_data
-    intensities = count_rates.data_in_3d_bins / denominator
-    return dataclasses.replace(count_rates, data_in_3d_bins=intensities)
+def convert_count_rate_to_intensity(count_rates: np.ndarray,
+                                    energy_per_charge: EnergyLookup,
+                                    efficiency_lookup: EfficiencyLookup,
+                                    geometric_factor: np.ndarray[(EPOCH, ENERGY)]) -> np.ndarray:
+    reshaped_efficiency_data = efficiency_lookup.efficiency_data[np.newaxis, :, np.newaxis, :]
+    reshaped_geometric_factor = geometric_factor[:, np.newaxis, np.newaxis, :]
+    denominator = reshaped_geometric_factor * energy_per_charge.bin_centers * reshaped_efficiency_data
+    intensities = count_rates / denominator
+    return intensities
 
 
 def compute_geometric_factors(num_epochs: int, num_energies: int):

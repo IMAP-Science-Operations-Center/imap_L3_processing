@@ -6,6 +6,10 @@ from pathlib import Path
 from typing import Self
 
 import numpy as np
+import xarray
+from imap_processing.ena_maps.ena_maps import HealpixSkyMap
+from imap_processing.ena_maps.utils.coordinates import CoordNames
+from imap_processing.spice.geometry import SpiceFrame
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.cdf.cdf_utils import read_variable_and_mask_fill_values, read_numeric_variable
@@ -122,6 +126,41 @@ class HealPixIntensityMapData:
                 coords=_read_healpix_coords_from_open_cdf(cdf),
             )
 
+    def to_healpix_skymap(self) -> HealpixSkyMap:
+        healpix_map = HealpixSkyMap(self.coords.nside, SpiceFrame.ECLIPJ2000)
+
+        full_shape = [CoordNames.TIME.value, CoordNames.ENERGY_ULTRA.value, CoordNames.HEALPIX_INDEX.value]
+        healpix_map.data_1d = xarray.Dataset(
+            data_vars={
+                "latitude": ([CoordNames.HEALPIX_INDEX.value], self.intensity_map_data.latitude),
+                "longitude": ([CoordNames.HEALPIX_INDEX.value], self.intensity_map_data.longitude),
+                "solid_angle": ([CoordNames.HEALPIX_INDEX.value], self.intensity_map_data.solid_angle),
+                "obs_date_range": (full_shape, self.intensity_map_data.obs_date_range),
+                "obs_date": (full_shape, self.intensity_map_data.obs_date),
+                "exposure_factor": (full_shape, self.intensity_map_data.exposure_factor),
+                "ena_intensity": (full_shape, self.intensity_map_data.ena_intensity),
+                "ena_intensity_stat_unc": (full_shape, self.intensity_map_data.ena_intensity_stat_unc),
+                "ena_intensity_sys_err": (full_shape, self.intensity_map_data.ena_intensity_sys_err),
+            },
+            coords={
+                CoordNames.TIME.value: self.intensity_map_data.epoch,
+                CoordNames.ENERGY_ULTRA.value: self.intensity_map_data.energy,
+                CoordNames.HEALPIX_INDEX.value: self.coords.pixel_index,
+            })
+
+        healpix_map.data_1d = healpix_map.data_1d \
+            .assign({"obs_date": (full_shape, healpix_map.data_1d["obs_date"].values.astype(np.float64))}) \
+            .rename({CoordNames.HEALPIX_INDEX.value: CoordNames.GENERIC_PIXEL.value})
+
+        return healpix_map
+
+    @classmethod
+    def read_from_xarray(cls, input_dataset):
+        return HealPixIntensityMapData(
+            intensity_map_data=_read_intensity_map_data_from_xarray(input_dataset),
+            coords=_read_healpix_coords_from_xarray(input_dataset),
+        )
+
 
 @dataclass
 class SpectralIndexDependencies(metaclass=abc.ABCMeta):
@@ -159,6 +198,33 @@ def _read_healpix_coords_from_open_cdf(cdf: CDF) -> HealPixCoords:
     )
 
 
+def _read_intensity_map_data_from_xarray(dataset: xarray.Dataset) -> IntensityMapData:
+    return IntensityMapData(
+        epoch=dataset[CoordNames.TIME.value].values,
+        epoch_delta=dataset["epoch_delta"].values,
+        energy=dataset.coords[CoordNames.ENERGY_ULTRA.value].values,
+        energy_delta_plus=dataset["energy_delta_plus"].values,
+        energy_delta_minus=dataset["energy_delta_minus"].values,
+        energy_label=dataset["energy_label"].values,
+        latitude=dataset["latitude"].values,
+        longitude=dataset["longitude"].values,
+        exposure_factor=dataset["exposure_factor"].values,
+        obs_date=dataset["obs_date"].values,
+        obs_date_range=dataset["obs_date_range"].values,
+        solid_angle=dataset["solid_angle"].values,
+        ena_intensity=dataset["ena_intensity"].values,
+        ena_intensity_stat_unc=dataset["ena_intensity_stat_unc"].values,
+        ena_intensity_sys_err=dataset["ena_intensity_sys_err"].values,
+    )
+
+
+def _read_healpix_coords_from_xarray(dataset: xarray.Dataset) -> HealPixCoords:
+    return HealPixCoords(
+        pixel_index=dataset[CoordNames.HEALPIX_INDEX.value].values,
+        pixel_index_label=dataset["pixel_index_label"].values
+    )
+
+
 def _read_rectangular_coords_from_open_cdf(cdf: CDF) -> RectangularCoords:
     return RectangularCoords(
         latitude_delta=read_numeric_variable(cdf["latitude_delta"]),
@@ -172,6 +238,34 @@ def _read_rectangular_coords_from_open_cdf(cdf: CDF) -> RectangularCoords:
 class HealPixSpectralIndexMapData:
     spectral_index_map_data: SpectralIndexMapData
     coords: HealPixCoords
+
+    def to_healpix_skymap(self) -> HealpixSkyMap:
+        healpix_map = HealpixSkyMap(self.coords.nside, SpiceFrame.ECLIPJ2000)
+
+        full_shape = [CoordNames.TIME.value, CoordNames.ENERGY_ULTRA.value, CoordNames.HEALPIX_INDEX.value]
+        healpix_map.data_1d = xarray.Dataset(
+            data_vars={
+                "latitude": ([CoordNames.HEALPIX_INDEX.value], self.spectral_index_map_data.latitude),
+                "longitude": ([CoordNames.HEALPIX_INDEX.value], self.spectral_index_map_data.longitude),
+                "solid_angle": ([CoordNames.HEALPIX_INDEX.value], self.spectral_index_map_data.solid_angle),
+                "obs_date_range": (full_shape, self.spectral_index_map_data.obs_date_range),
+                "obs_date": (full_shape, self.spectral_index_map_data.obs_date),
+                "exposure_factor": (full_shape, self.spectral_index_map_data.exposure_factor),
+
+                "ena_spectral_index": (full_shape, self.spectral_index_map_data.ena_spectral_index),
+                "ena_spectral_index_stat_unc": (full_shape, self.spectral_index_map_data.ena_spectral_index_stat_unc),
+            },
+            coords={
+                CoordNames.TIME.value: self.spectral_index_map_data.epoch,
+                CoordNames.ENERGY_ULTRA.value: self.spectral_index_map_data.energy,
+                CoordNames.HEALPIX_INDEX.value: self.coords.pixel_index,
+            })
+
+        healpix_map.data_1d = healpix_map.data_1d \
+            .assign({"obs_date": (full_shape, healpix_map.data_1d["obs_date"].values.astype(np.float64))}) \
+            .rename({CoordNames.HEALPIX_INDEX.value: CoordNames.GENERIC_PIXEL.value})
+
+        return healpix_map
 
 
 @dataclass
@@ -328,7 +422,7 @@ def calculate_datetime_weighted_average(data: np.ndarray, weights: np.ndarray, a
 
 
 @dataclass
-class HiGlowsL3eData:
+class GlowsL3eRectangularMapInputData:
     epoch: datetime
     energy: np.ndarray
     spin_angle: np.ndarray
@@ -336,7 +430,7 @@ class HiGlowsL3eData:
 
 
 @dataclass
-class HiL1cData:
+class InputRectangularPointingSet:
     epoch: datetime
     epoch_j2000: np.ndarray
     exposure_times: np.ndarray

@@ -30,7 +30,7 @@ class TestModels(CdfModelTestCase):
             descriptor="direct-events"
         )
 
-        epoch = np.array([datetime.now(), datetime.now() + timedelta(hours=1)])
+        epoch = [datetime.now(), datetime.now() + timedelta(hours=1)]
         charge = np.array([10.0, 12.0])
         energy = np.array([100, 200])
         e_delta = np.array([30, 50])
@@ -85,7 +85,7 @@ class TestModels(CdfModelTestCase):
 
         expected_variables = [
             DataProductVariable(models.EPOCH_VAR_NAME, epoch),
-            DataProductVariable(models.EPOCH_DELTA_VAR_NAME, 1),
+            DataProductVariable(models.EPOCH_DELTA_VAR_NAME, np.array([1, 1])),
             DataProductVariable(models.CHARGE_VAR_NAME, charge),
             DataProductVariable(models.ENERGY_VAR_NAME, energy),
             DataProductVariable(models.E_DELTA_VAR_NAME, e_delta),

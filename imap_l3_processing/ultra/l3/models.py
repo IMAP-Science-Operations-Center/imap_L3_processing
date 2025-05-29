@@ -50,12 +50,12 @@ class UltraL1CPSet:
         with CDF(str(path)) as cdf:
             return UltraL1CPSet(
                 counts=read_numeric_variable(cdf["counts"]),
-                epoch=cdf["epoch"][0],
-                energy=read_numeric_variable(cdf["energy"]),
-                exposure=read_numeric_variable(cdf["exposure_time"]),
-                latitude=read_numeric_variable(cdf["latitude"]),
-                longitude=read_numeric_variable(cdf["longitude"]),
-                healpix_index=cdf["healpix_index"][...],
+                epoch=cdf[CoordNames.TIME.value][0],
+                energy=read_numeric_variable(cdf[CoordNames.ENERGY_ULTRA.value]),
+                exposure=read_numeric_variable(cdf["exposure_factor"]),
+                latitude=read_numeric_variable(cdf[CoordNames.ELEVATION_L1C.value]),
+                longitude=read_numeric_variable(cdf[CoordNames.AZIMUTH_L1C.value]),
+                healpix_index=cdf[CoordNames.HEALPIX_INDEX.value][...],
                 sensitivity=read_numeric_variable(cdf["sensitivity"]),
             )
 
@@ -65,21 +65,21 @@ class UltraL1CPSet:
                 "counts": (
                     [
                         CoordNames.TIME.value,
-                        CoordNames.ENERGY.value,
+                        CoordNames.ENERGY_ULTRA.value,
                         CoordNames.HEALPIX_INDEX.value,
                     ],
                     self.counts,
                 ),
                 "exposure_time": (
                     [CoordNames.TIME.value,
-                     CoordNames.ENERGY.value,
+                     CoordNames.ENERGY_ULTRA.value,
                      CoordNames.HEALPIX_INDEX.value],
                     self.exposure,
                 ),
                 "sensitivity": (
                     [
                         CoordNames.TIME.value,
-                        CoordNames.ENERGY.value,
+                        CoordNames.ENERGY_ULTRA.value,
                         CoordNames.HEALPIX_INDEX.value,
                     ],
                     self.sensitivity,
@@ -97,7 +97,7 @@ class UltraL1CPSet:
                 CoordNames.TIME.value: [
                     (self.epoch - TT2000_EPOCH).total_seconds() * ONE_SECOND_IN_NANOSECONDS,
                 ],
-                CoordNames.ENERGY.value: self.energy,
+                CoordNames.ENERGY_ULTRA.value: self.energy,
                 CoordNames.HEALPIX_INDEX.value: self.healpix_index,
             }
         )

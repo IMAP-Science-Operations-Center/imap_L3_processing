@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import TypeVar
 
 import numpy as np
-from scipy.optimize import curve_fit
 
 from imap_l3_processing.constants import ELECTRON_MASS_KG, PROTON_CHARGE_COULOMBS, METERS_PER_KILOMETER
 from imap_l3_processing.pitch_angles import calculate_pitch_angle, calculate_unit_vector, calculate_gyrophase
@@ -58,15 +57,34 @@ def find_breakpoints(energies: np.ndarray, averaged_psd: np.ndarray, latest_spac
     else:
         delta_b2 = -1.0
         delta_b4 = 10
-
     return try_curve_fit_until_valid(energies, log_psd, initial_guesses, latest_spacecraft_potentials[-1],
                                      latest_core_halo_break_points[-1], delta_b2, delta_b4)
+
+
+def ls_fit(x, y, initial_b):
+    b = np.copy(initial_b)
+    flamda = 0.01
+    deltaa = 0.05 * np.abs(b)
+    nloops = 14
+    prev_chisqr = 0.0
+    sigmay = None
+    nterms = len(b)
+    yfit = np.zeros(len(x))
+    sigmaa = np.zeros(nterms)
+
+    for k in range(nloops):
+        chisqr = curve_fit(6, len(x), x, y, sigmay, b, deltaa, flamda, sigmaa, yfit)
+        delta_chisqr = np.abs(prev_chisqr - chisqr)
+        if delta_chisqr < 0.001:
+            break
+        prev_chisqr = chisqr
+    return b
 
 
 def try_curve_fit_until_valid(energies: np.ndarray, log_psd: np.ndarray, initial_guesses: tuple[float, ...],
                               latest_spacecraft_potential: float, latest_core_halo_breakpoint: float,
                               delta_b2: float, delta_b4: float) -> tuple[float, float]:
-    b, _ = curve_fit(piece_wise_model, energies, log_psd, initial_guesses)
+    b = ls_fit(energies, log_psd, initial_guesses)
 
     def bad_fit(b):
         return (b[1] <= 0 or
@@ -75,7 +93,6 @@ def try_curve_fit_until_valid(energies: np.ndarray, log_psd: np.ndarray, initial
                 b[2] >= b[4] or
                 b[4] <= 15 or
                 b[2] <= energies[0] or
-                b[4] > 500 or
                 b[2] >= 20 or
                 b[2] >= 2 * latest_spacecraft_potential)
 
@@ -86,10 +103,11 @@ def try_curve_fit_until_valid(energies: np.ndarray, log_psd: np.ndarray, initial
         if attempt_count < 3:
             modified_guesses[2] += delta_b2
             modified_guesses[4] += delta_b4
-            b, _ = curve_fit(piece_wise_model, energies, log_psd, tuple(modified_guesses))
+            b = ls_fit(energies, log_psd, modified_guesses)
             attempt_count += 1
         else:
             return latest_spacecraft_potential, latest_core_halo_breakpoint
+
     return b[2], b[4]
 
 
@@ -363,3 +381,101 @@ def swe_rebin_intensity_by_pitch_angle_and_gyrophase(intensity_data: np.ndarray[
         averaged_rebinned_intensity_by_pa_and_gyro, averaged_rebinned_intensity_by_pa_only,
         uncertainties_by_pa_and_gyro,
         uncertainties_by_pa_only)
+
+
+def curve_fit(nterms: int, npts: int, x, y, sigmay, b, deltaa, flamda, sigmaa, yfit):
+    nfree = npts - nterms
+    ngoes = 1
+    alpha = np.zeros((nterms, nterms))
+    weights = np.ones(npts)
+    beta = np.zeros(nterms)
+    b2 = np.zeros(nterms)
+    array = np.full_like(alpha, np.nan)
+    invarray = np.full_like(array, np.nan)
+
+    if nfree <= 0:
+        chisqr = 0.0
+        return chisqr
+
+    for i in range(npts):
+
+        deriv = fderiv(nterms, x[i], b, deltaa)
+
+        for j in range(nterms):
+            beta[j] += weights[i] * (y[i] - functn(nterms, x[i], b)) * deriv[j]
+
+            for k in range(nterms):
+                alpha[j][k] += weights[i] * deriv[j] * deriv[k]
+
+    for i in range(npts):
+        yfit[i] = functn(nterms, x[i], b)
+
+    chisq1 = fchisqr(npts, y, weights, nfree, yfit)
+    chisqr = np.inf
+
+    while ((chisq1 - chisqr < 0.0) and (ngoes <= 5)):
+        for j in range(nterms):
+            for k in range(nterms):
+                array[j][k] = alpha[j][k] / np.sqrt(alpha[j][j] * alpha[k][k])
+            array[j][j] = 1 + flamda
+
+        invarray = np.linalg.inv(array)
+
+        for j in range(nterms):
+            b2[j] = b[j]
+
+            for k in range(nterms):
+                b2[j] += beta[k] * invarray[j][k] / np.sqrt(alpha[j][j] * alpha[k][k])
+
+        for i in range(npts):
+            yfit[i] = functn(nterms, x[i], b2)
+
+        chisqr = fchisqr(npts, y, weights, nfree, yfit)
+        ngoes += 1
+        flamda *= 10.0
+
+    for j in range(nterms):
+        b[j] = b2[j]
+        sigmaa[j] = np.sqrt(invarray[j][j] / alpha[j][j])
+
+    flamda /= 10.0
+    return chisqr
+
+
+def fderiv(nterms, x, b, deltaa):
+    b2 = np.copy(b)
+    deriv = np.full(nterms, np.nan)
+
+    for j in range(nterms):
+        b2[j] = b[j]
+
+    for j in range(nterms):
+        bj = b2[j]
+        delta = deltaa[j]
+
+        b2[j] = bj + delta
+        yfit1 = functn(nterms, x, b2)
+
+        b2[j] = bj - delta
+        yfit2 = functn(nterms, x, b2)
+
+        deriv[j] = (yfit1 - yfit2) / (2 * delta)
+
+        b2[j] = bj
+
+    return deriv
+
+
+def functn(nterms, x, b):
+    assert nterms == len(b)
+    return piece_wise_model(x, *b)
+
+
+def fchisqr(npts, y, weights, free, yfit):
+    chisq = 0
+    if free <= 0:
+        return 0.0
+    for i in range(npts):
+        chisq += weights[i] * (y[i] - yfit[i]) * (y[i] - yfit[i])
+
+    return chisq / free

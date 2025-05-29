@@ -3,6 +3,7 @@ from pathlib import Path
 
 import astropy_healpix.healpy as hp
 import numpy as np
+import spiceypy
 import xarray as xr
 from imap_processing.ena_maps.utils.coordinates import CoordNames
 from imap_processing.spice.time import str_to_et
@@ -10,7 +11,6 @@ from imap_processing.ultra.l1c.ultra_l1c_pset_bins import build_energy_bins
 from spacepy import pycdf
 from spacepy.pycdf import CDF
 
-from imap_l3_processing.spice_wrapper import spiceypy
 from tests.test_helpers import get_run_local_data_path
 
 DEFAULT_RECT_SPACING_DEG_L1C = 0.5
@@ -126,7 +126,7 @@ def create_example_ultra_l1c_pset(
             "counts": (
                 [
                     CoordNames.TIME.value,
-                    CoordNames.ENERGY.value,
+                    CoordNames.ENERGY_ULTRA.value,
                     CoordNames.HEALPIX_INDEX.value,
                 ],
                 counts,
@@ -134,7 +134,7 @@ def create_example_ultra_l1c_pset(
             "exposure_time": (
                 [
                     CoordNames.TIME.value,
-                    CoordNames.ENERGY.value,
+                    CoordNames.ENERGY_ULTRA.value,
                     CoordNames.HEALPIX_INDEX.value
                 ],
                 exposure_time,
@@ -142,7 +142,7 @@ def create_example_ultra_l1c_pset(
             "sensitivity": (
                 [
                     CoordNames.TIME.value,
-                    CoordNames.ENERGY.value,
+                    CoordNames.ENERGY_ULTRA.value,
                     CoordNames.HEALPIX_INDEX.value,
                 ],
                 sensitivity,
@@ -160,7 +160,7 @@ def create_example_ultra_l1c_pset(
             CoordNames.TIME.value: [
                 tt_j2000ns
             ],
-            CoordNames.ENERGY.value: energy_bin_midpoints,
+            CoordNames.ENERGY_ULTRA.value: energy_bin_midpoints,
             CoordNames.HEALPIX_INDEX.value: pix_indices,
         },
         attrs={
@@ -180,27 +180,28 @@ def create_example_ultra_l1c_pset(
     pset_product[CoordNames.ELEVATION_L1C.value].attrs["VAR_TYPE"] = "data"
 
     pset_product.coords[CoordNames.TIME.value].attrs["VAR_TYPE"] = "support_data"
-    pset_product.coords[CoordNames.ENERGY.value].attrs["VAR_TYPE"] = "support_data"
+    pset_product.coords[CoordNames.ENERGY_ULTRA.value].attrs["VAR_TYPE"] = "support_data"
     pset_product.coords[CoordNames.HEALPIX_INDEX.value].attrs["VAR_TYPE"] = "support_data"
 
     return pset_product
 
 
 def _write_ultra_l1c_cdf_with_parents(
-        out_path: Path = get_run_local_data_path("ultra/fake_l1c_psets/test_pset.cdf")):
-    out_xarray = create_example_ultra_l1c_pset(nside=1)
+        out_path: Path = get_run_local_data_path("ultra/fake_l1c_psets/test_pset.cdf"),
+        date: str = "2025-09-01T00:00:00"):
+    out_xarray = create_example_ultra_l1c_pset(nside=1, timestr=date)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.unlink(missing_ok=True)
 
     with CDF(str(out_path), readonly=False, masterpath="") as cdf:
         cdf.new("counts", out_xarray["counts"].values)
-        cdf.new("exposure_time", out_xarray["exposure_time"].values)
+        cdf.new("exposure_factor", out_xarray["exposure_time"].values)
         cdf.new("sensitivity", out_xarray["sensitivity"].values)
         cdf.new("latitude", out_xarray[CoordNames.ELEVATION_L1C.value].values, recVary=False)
         cdf.new("longitude", out_xarray[CoordNames.AZIMUTH_L1C.value].values, recVary=False)
         cdf.new("epoch", out_xarray[CoordNames.TIME.value].values, recVary=False,
                 type=pycdf.const.CDF_TIME_TT2000.value)
-        cdf.new("energy", out_xarray[CoordNames.ENERGY.value].values, recVary=False)
+        cdf.new(CoordNames.ENERGY_ULTRA.value, out_xarray[CoordNames.ENERGY_ULTRA.value].values, recVary=False)
         cdf.new("healpix_index", out_xarray[CoordNames.HEALPIX_INDEX.value].values, recVary=False)
 
         for var in cdf:

@@ -1,4 +1,5 @@
 import numpy as np
+import spiceypy
 from astropy.units import Quantity
 from astropy_healpix import HEALPix, npix_to_nside
 from imap_processing.ena_maps.ena_maps import UltraPointingSet, HealpixSkyMap
@@ -7,7 +8,6 @@ from imap_processing.spice import geometry
 from xarray import Dataset
 
 from imap_l3_processing.constants import ONE_SECOND_IN_NANOSECONDS
-from imap_l3_processing.spice_wrapper import spiceypy
 from imap_l3_processing.ultra.l3.models import UltraL1CPSet, UltraGlowsL3eData
 
 
@@ -44,7 +44,7 @@ class UltraSurvivalProbability(UltraPointingSet):
         self.data["survival_probability_times_exposure"] = (
             [
                 CoordNames.TIME.value,
-                CoordNames.ENERGY.value,
+                CoordNames.ENERGY_ULTRA.value,
                 CoordNames.HEALPIX_INDEX.value
             ],
             np.array([energy_interpolated_sp] * l1c_pset.exposure)
