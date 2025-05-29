@@ -34,8 +34,8 @@ epoch_delta:
   VALIDMAX: 86000000000000
   FILLVAL: -9223372036854775808
   SCALETYP: linear
-h_intensity:
-  NAME: h_intensity
+h_macropixel_intensity:
+  NAME: h_macropixel_intensity
   DATA_TYPE: CDF_REAL4
   CATDESC: H intensity by energy, pitch angle, and gyrophase
   VAR_TYPE: data
@@ -56,12 +56,12 @@ h_intensity:
   LABL_PTR_1: h_energy_label
   LABL_PTR_2: pitch_angle_label
   LABL_PTR_3: gyrophase_label
-  DELTA_PLUS_VAR: h_intensity_delta_plus
-  DELTA_MINUS_VAR: h_intensity_delta_minus
+  DELTA_PLUS_VAR: h_macropixel_intensity_delta_plus
+  DELTA_MINUS_VAR: h_macropixel_intensity_delta_minus
   SCALEMIN: 0.0001
   SCALEMAX: 1000
-he4_intensity:
-  NAME: he4_intensity
+he4_macropixel_intensity:
+  NAME: he4_macropixel_intensity
   DATA_TYPE: CDF_REAL4
   CATDESC: He4 intensity by energy, pitch angle, and gyrophase
   VAR_TYPE: data
@@ -82,12 +82,12 @@ he4_intensity:
   LABL_PTR_1: he4_energy_label
   LABL_PTR_2: pitch_angle_label
   LABL_PTR_3: gyrophase_label
-  DELTA_PLUS_VAR: he4_intensity_delta_plus
-  DELTA_MINUS_VAR: he4_intensity_delta_minus
+  DELTA_PLUS_VAR: he4_macropixel_intensity_delta_plus
+  DELTA_MINUS_VAR: he4_macropixel_intensity_delta_minus
   SCALEMIN: 0.0001
   SCALEMAX: 1000
-cno_intensity:
-  NAME: cno_intensity
+cno_macropixel_intensity:
+  NAME: cno_macropixel_intensity
   DATA_TYPE: CDF_REAL4
   CATDESC: CNO intensity by energy, pitch angle, and gyrophase
   VAR_TYPE: data
@@ -108,12 +108,12 @@ cno_intensity:
   LABL_PTR_1: cno_energy_label
   LABL_PTR_2: pitch_angle_label
   LABL_PTR_3: gyrophase_label
-  DELTA_PLUS_VAR: cno_intensity_delta_plus
-  DELTA_MINUS_VAR: cno_intensity_delta_minus
+  DELTA_PLUS_VAR: cno_macropixel_intensity_delta_plus
+  DELTA_MINUS_VAR: cno_macropixel_intensity_delta_minus
   SCALEMIN: 0.0001
   SCALEMAX: 1000
-nemgsi_intensity:
-  NAME: nemgsi_intensity
+nemgsi_macropixel_intensity:
+  NAME: nemgsi_macropixel_intensity
   DATA_TYPE: CDF_REAL4
   CATDESC: NeMgSi intensity by energy, pitch angle, and gyrophase
   VAR_TYPE: data
@@ -134,12 +134,12 @@ nemgsi_intensity:
   LABL_PTR_1: nemgsi_energy_label
   LABL_PTR_2: pitch_angle_label
   LABL_PTR_3: gyrophase_label
-  DELTA_PLUS_VAR: nemgsi_intensity_delta_plus
-  DELTA_MINUS_VAR: nemgsi_intensity_delta_minus
+  DELTA_PLUS_VAR: nemgsi_macropixel_intensity_delta_plus
+  DELTA_MINUS_VAR: nemgsi_macropixel_intensity_delta_minus
   SCALEMIN: 0.0001
   SCALEMAX: 1000
-fe_intensity:
-  NAME: fe_intensity
+fe_macropixel_intensity:
+  NAME: fe_macropixel_intensity
   DATA_TYPE: CDF_REAL4
   CATDESC: Fe intensity by energy, pitch angle, and gyrophase
   VAR_TYPE: data
@@ -160,12 +160,12 @@ fe_intensity:
   LABL_PTR_1: fe_energy_label
   LABL_PTR_2: pitch_angle_label
   LABL_PTR_3: gyrophase_label
-  DELTA_PLUS_VAR: fe_intensity_delta_plus
-  DELTA_MINUS_VAR: fe_intensity_delta_minus
+  DELTA_PLUS_VAR: fe_macropixel_intensity_delta_plus
+  DELTA_MINUS_VAR: fe_macropixel_intensity_delta_minus
   SCALEMIN: 0.0001
   SCALEMAX: 1000
-h_intensity_pa:
-  NAME: h_intensity_pa
+h_macropixel_intensity_pa:
+  NAME: h_macropixel_intensity_pa
   DATA_TYPE: CDF_REAL4
   CATDESC: H intensity by energy and pitch angle
   VAR_TYPE: data
@@ -184,12 +184,12 @@ h_intensity_pa:
   FILLVAL: -1.0000E+31
   LABL_PTR_1: h_energy_label
   LABL_PTR_2: pitch_angle_label
-  DELTA_PLUS_VAR: h_intensity_pa_delta_plus
-  DELTA_MINUS_VAR: h_intensity_pa_delta_minus
+  DELTA_PLUS_VAR: h_macropixel_intensity_pa_delta_plus
+  DELTA_MINUS_VAR: h_macropixel_intensity_pa_delta_minus
   SCALEMIN: 0.0001
   SCALEMAX: 1000
-he4_intensity_pa:
-  NAME: he4_intensity_pa
+he4_macropixel_intensity_pa:
+  NAME: he4_macropixel_intensity_pa
   DATA_TYPE: CDF_REAL4
   CATDESC: He4 intensity by energy and pitch angle
   VAR_TYPE: data
@@ -208,12 +208,12 @@ he4_intensity_pa:
   FILLVAL: -1.0000E+31
   LABL_PTR_1: he4_energy_label
   LABL_PTR_2: pitch_angle_label
-  DELTA_PLUS_VAR: he4_intensity_pa_delta_plus
-  DELTA_MINUS_VAR: he4_intensity_pa_delta_minus
+  DELTA_PLUS_VAR: he4_macropixel_intensity_pa_delta_plus
+  DELTA_MINUS_VAR: he4_macropixel_intensity_pa_delta_minus
   SCALEMIN: 0.0001
   SCALEMAX: 1000
-cno_intensity_pa:
-  NAME: cno_intensity_pa
+cno_macropixel_intensity_pa:
+  NAME: cno_macropixel_intensity_pa
   DATA_TYPE: CDF_REAL4
   CATDESC: CNO intensity by energy and pitch angle
   VAR_TYPE: data
@@ -232,12 +232,12 @@ cno_intensity_pa:
   FILLVAL: -1.0000E+31
   LABL_PTR_1: cno_energy_label
   LABL_PTR_2: pitch_angle_label
-  DELTA_PLUS_VAR: cno_intensity_pa_delta_plus
-  DELTA_MINUS_VAR: cno_intensity_pa_delta_minus
+  DELTA_PLUS_VAR: cno_macropixel_intensity_pa_delta_plus
+  DELTA_MINUS_VAR: cno_macropixel_intensity_pa_delta_minus
   SCALEMIN: 0.0001
   SCALEMAX: 1000
-nemgsi_intensity_pa:
-  NAME: nemgsi_intensity_pa
+nemgsi_macropixel_intensity_pa:
+  NAME: nemgsi_macropixel_intensity_pa
   DATA_TYPE: CDF_REAL4
   CATDESC: NeMgSi intensity by energy and pitch angle
   VAR_TYPE: data
@@ -256,12 +256,12 @@ nemgsi_intensity_pa:
   FILLVAL: -1.0000E+31
   LABL_PTR_1: nemgsi_energy_label
   LABL_PTR_2: pitch_angle_label
-  DELTA_PLUS_VAR: nemgsi_intensity_pa_delta_plus
-  DELTA_MINUS_VAR: nemgsi_intensity_pa_delta_minus
+  DELTA_PLUS_VAR: nemgsi_macropixel_intensity_pa_delta_plus
+  DELTA_MINUS_VAR: nemgsi_macropixel_intensity_pa_delta_minus
   SCALEMIN: 0.0001
   SCALEMAX: 1000
-fe_intensity_pa:
-  NAME: fe_intensity_pa
+fe_macropixel_intensity_pa:
+  NAME: fe_macropixel_intensity_pa
   DATA_TYPE: CDF_REAL4
   CATDESC: Fe intensity by energy and pitch angle
   VAR_TYPE: data
@@ -280,12 +280,12 @@ fe_intensity_pa:
   FILLVAL: -1.0000E+31
   LABL_PTR_1: fe_energy_label
   LABL_PTR_2: pitch_angle_label
-  DELTA_PLUS_VAR: fe_intensity_pa_delta_plus
-  DELTA_MINUS_VAR: fe_intensity_pa_delta_minus
+  DELTA_PLUS_VAR: fe_macropixel_intensity_pa_delta_plus
+  DELTA_MINUS_VAR: fe_macropixel_intensity_pa_delta_minus
   SCALEMIN: 0.0001
   SCALEMAX: 1000
-h_intensity_delta_plus:
-  NAME: h_intensity_delta_plus
+h_macropixel_intensity_delta_plus:
+  NAME: h_macropixel_intensity_delta_plus
   DATA_TYPE: CDF_REAL4
   CATDESC: Plus uncertainty for H by energy, pitch angle, and gyrophase
   VAR_TYPE: support_data
@@ -306,8 +306,8 @@ h_intensity_delta_plus:
   LABL_PTR_3: gyrophase_label
   SCALEMIN: 0.0001
   SCALEMAX: 1000
-h_intensity_delta_minus:
-  NAME: h_intensity_delta_minus
+h_macropixel_intensity_delta_minus:
+  NAME: h_macropixel_intensity_delta_minus
   DATA_TYPE: CDF_REAL4
   CATDESC: Minus uncertainty for H by energy, pitch angle, and gyrophase
   VAR_TYPE: support_data
@@ -328,8 +328,8 @@ h_intensity_delta_minus:
   LABL_PTR_3: gyrophase_label
   SCALEMIN: 0.0001
   SCALEMAX: 1000
-he4_intensity_delta_plus:
-  NAME: he4_intensity_delta_plus
+he4_macropixel_intensity_delta_plus:
+  NAME: he4_macropixel_intensity_delta_plus
   DATA_TYPE: CDF_REAL4
   CATDESC: Plus uncertainty for He4 by energy, pitch angle, and gyrophase
   VAR_TYPE: support_data
@@ -350,8 +350,8 @@ he4_intensity_delta_plus:
   LABL_PTR_3: gyrophase_label
   SCALEMIN: 0.0001
   SCALEMAX: 1000
-he4_intensity_delta_minus:
-  NAME: he4_intensity_delta_minus
+he4_macropixel_intensity_delta_minus:
+  NAME: he4_macropixel_intensity_delta_minus
   DATA_TYPE: CDF_REAL4
   CATDESC: Minus uncertainty for He4 by energy, pitch angle, and gyrophase
   VAR_TYPE: support_data
@@ -372,8 +372,8 @@ he4_intensity_delta_minus:
   LABL_PTR_3: gyrophase_label
   SCALEMIN: 0.0001
   SCALEMAX: 1000
-cno_intensity_delta_plus:
-  NAME: cno_intensity_delta_plus
+cno_macropixel_intensity_delta_plus:
+  NAME: cno_macropixel_intensity_delta_plus
   DATA_TYPE: CDF_REAL4
   CATDESC: Plus uncertainty for CNO by energy, pitch angle, and gyrophase
   VAR_TYPE: support_data
@@ -394,8 +394,8 @@ cno_intensity_delta_plus:
   LABL_PTR_3: gyrophase_label
   SCALEMIN: 0.0001
   SCALEMAX: 1000
-cno_intensity_delta_minus:
-  NAME: cno_intensity_delta_minus
+cno_macropixel_intensity_delta_minus:
+  NAME: cno_macropixel_intensity_delta_minus
   DATA_TYPE: CDF_REAL4
   CATDESC: Minus uncertainty for CNO by energy, pitch angle, and gyrophase
   VAR_TYPE: support_data
@@ -416,8 +416,8 @@ cno_intensity_delta_minus:
   LABL_PTR_3: gyrophase_label
   SCALEMIN: 0.0001
   SCALEMAX: 1000
-nemgsi_intensity_delta_plus:
-  NAME: nemgsi_intensity_delta_plus
+nemgsi_macropixel_intensity_delta_plus:
+  NAME: nemgsi_macropixel_intensity_delta_plus
   DATA_TYPE: CDF_REAL4
   CATDESC: Plus uncertainty for NeMgSi by energy, pitch angle, and gyrophase
   VAR_TYPE: support_data
@@ -438,8 +438,8 @@ nemgsi_intensity_delta_plus:
   LABL_PTR_3: gyrophase_label
   SCALEMIN: 0.0001
   SCALEMAX: 1000
-nemgsi_intensity_delta_minus:
-  NAME: nemgsi_intensity_delta_minus
+nemgsi_macropixel_intensity_delta_minus:
+  NAME: nemgsi_macropixel_intensity_delta_minus
   DATA_TYPE: CDF_REAL4
   CATDESC: Minus uncertainty for NeMgSi by energy, pitch angle, and gyrophase
   VAR_TYPE: support_data
@@ -460,8 +460,8 @@ nemgsi_intensity_delta_minus:
   LABL_PTR_3: gyrophase_label
   SCALEMIN: 0.0001
   SCALEMAX: 1000
-fe_intensity_delta_plus:
-  NAME: fe_intensity_delta_plus
+fe_macropixel_intensity_delta_plus:
+  NAME: fe_macropixel_intensity_delta_plus
   DATA_TYPE: CDF_REAL4
   CATDESC: Plus uncertainty for Fe by energy, pitch angle, and gyrophase
   VAR_TYPE: support_data
@@ -482,8 +482,8 @@ fe_intensity_delta_plus:
   LABL_PTR_3: gyrophase_label
   SCALEMIN: 0.0001
   SCALEMAX: 1000
-fe_intensity_delta_minus:
-  NAME: fe_intensity_delta_minus
+fe_macropixel_intensity_delta_minus:
+  NAME: fe_macropixel_intensity_delta_minus
   DATA_TYPE: CDF_REAL4
   CATDESC: Minus uncertainty for Fe by energy, pitch angle, and gyrophase
   VAR_TYPE: support_data
@@ -504,8 +504,8 @@ fe_intensity_delta_minus:
   LABL_PTR_3: gyrophase_label
   SCALEMIN: 0.0001
   SCALEMAX: 1000
-h_intensity_pa_delta_plus:
-  NAME: h_intensity_pa_delta_plus
+h_macropixel_intensity_pa_delta_plus:
+  NAME: h_macropixel_intensity_pa_delta_plus
   DATA_TYPE: CDF_REAL4
   CATDESC: Plus uncertainty for H by energy and pitch angle
   VAR_TYPE: support_data
@@ -524,8 +524,8 @@ h_intensity_pa_delta_plus:
   LABL_PTR_2: pitch_angle_label
   SCALEMIN: 0.0001
   SCALEMAX: 1000
-h_intensity_pa_delta_minus:
-  NAME: h_intensity_pa_delta_minus
+h_macropixel_intensity_pa_delta_minus:
+  NAME: h_macropixel_intensity_pa_delta_minus
   DATA_TYPE: CDF_REAL4
   CATDESC: Minus uncertainty for H by energy and pitch angle
   VAR_TYPE: support_data
@@ -544,8 +544,8 @@ h_intensity_pa_delta_minus:
   LABL_PTR_2: pitch_angle_label
   SCALEMIN: 0.0001
   SCALEMAX: 1000
-he4_intensity_pa_delta_plus:
-  NAME: he4_intensity_pa_delta_plus
+he4_macropixel_intensity_pa_delta_plus:
+  NAME: he4_macropixel_intensity_pa_delta_plus
   DATA_TYPE: CDF_REAL4
   CATDESC: Plus uncertainty for He4 by energy and pitch angle
   VAR_TYPE: support_data
@@ -564,8 +564,8 @@ he4_intensity_pa_delta_plus:
   LABL_PTR_2: pitch_angle_label
   SCALEMIN: 0.0001
   SCALEMAX: 1000
-he4_intensity_pa_delta_minus:
-  NAME: he4_intensity_pa_delta_minus
+he4_macropixel_intensity_pa_delta_minus:
+  NAME: he4_macropixel_intensity_pa_delta_minus
   DATA_TYPE: CDF_REAL4
   CATDESC: Minus uncertainty for He4 by energy and pitch angle
   VAR_TYPE: support_data
@@ -584,8 +584,8 @@ he4_intensity_pa_delta_minus:
   LABL_PTR_2: pitch_angle_label
   SCALEMIN: 0.0001
   SCALEMAX: 1000
-cno_intensity_pa_delta_plus:
-  NAME: cno_intensity_pa_delta_plus
+cno_macropixel_intensity_pa_delta_plus:
+  NAME: cno_macropixel_intensity_pa_delta_plus
   DATA_TYPE: CDF_REAL4
   CATDESC: Plus uncertainty for CNO by energy and pitch angle
   VAR_TYPE: support_data
@@ -604,8 +604,8 @@ cno_intensity_pa_delta_plus:
   LABL_PTR_2: pitch_angle_label
   SCALEMIN: 0.0001
   SCALEMAX: 1000
-cno_intensity_pa_delta_minus:
-  NAME: cno_intensity_pa_delta_minus
+cno_macropixel_intensity_pa_delta_minus:
+  NAME: cno_macropixel_intensity_pa_delta_minus
   DATA_TYPE: CDF_REAL4
   CATDESC: Minus uncertainty for CNO by energy and pitch angle
   VAR_TYPE: support_data
@@ -624,8 +624,8 @@ cno_intensity_pa_delta_minus:
   LABL_PTR_2: pitch_angle_label
   SCALEMIN: 0.0001
   SCALEMAX: 1000
-nemgsi_intensity_pa_delta_plus:
-  NAME: nemgsi_intensity_pa_delta_plus
+nemgsi_macropixel_intensity_pa_delta_plus:
+  NAME: nemgsi_macropixel_intensity_pa_delta_plus
   DATA_TYPE: CDF_REAL4
   CATDESC: Plus uncertainty for NeMgSi energy and by pitch angle
   VAR_TYPE: support_data
@@ -644,8 +644,8 @@ nemgsi_intensity_pa_delta_plus:
   LABL_PTR_2: pitch_angle_label
   SCALEMIN: 0.0001
   SCALEMAX: 1000
-nemgsi_intensity_pa_delta_minus:
-  NAME: nemgsi_intensity_pa_delta_minus
+nemgsi_macropixel_intensity_pa_delta_minus:
+  NAME: nemgsi_macropixel_intensity_pa_delta_minus
   DATA_TYPE: CDF_REAL4
   CATDESC: Minus uncertainty for NeMgSi by energy and pitch angle
   VAR_TYPE: support_data
@@ -664,8 +664,8 @@ nemgsi_intensity_pa_delta_minus:
   LABL_PTR_2: pitch_angle_label
   SCALEMIN: 0.0001
   SCALEMAX: 1000
-fe_intensity_pa_delta_plus:
-  NAME: fe_intensity_pa_delta_plus
+fe_macropixel_intensity_pa_delta_plus:
+  NAME: fe_macropixel_intensity_pa_delta_plus
   DATA_TYPE: CDF_REAL4
   CATDESC: Plus uncertainty for Fe by energy and pitch angle
   VAR_TYPE: support_data
@@ -684,8 +684,8 @@ fe_intensity_pa_delta_plus:
   LABL_PTR_2: pitch_angle_label
   SCALEMIN: 0.0001
   SCALEMAX: 1000
-fe_intensity_pa_delta_minus:
-  NAME: fe_intensity_pa_delta_minus
+fe_macropixel_intensity_pa_delta_minus:
+  NAME: fe_macropixel_intensity_pa_delta_minus
   DATA_TYPE: CDF_REAL4
   CATDESC: Minus uncertainty for Fe by energy and pitch angle
   VAR_TYPE: support_data

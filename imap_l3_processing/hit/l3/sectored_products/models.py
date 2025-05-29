@@ -10,48 +10,48 @@ GYROPHASE_CDF_VAR_NAME = "gyrophase"
 GYROPHASE_DELTA_CDF_VAR_NAME = "gyrophase_delta"
 PITCH_ANGLE_CDF_VAR_NAME = "pitch_angle"
 PITCH_ANGLE_DELTA_CDF_VAR_NAME = "pitch_angle_delta"
-H_INTENSITY_CDF_VAR_NAME = "h_intensity"
-H_INTENSITY_DELTA_PLUS_CDF_VAR_NAME = "h_intensity_delta_plus"
-H_INTENSITY_DELTA_MINUS_CDF_VAR_NAME = "h_intensity_delta_minus"
-H_INTENSITY_PA_CDF_VAR_NAME = "h_intensity_pa"
-H_INTENSITY_PA_DELTA_PLUS_CDF_VAR_NAME = "h_intensity_pa_delta_plus"
-H_INTENSITY_PA_DELTA_MINUS_CDF_VAR_NAME = "h_intensity_pa_delta_minus"
+H_MACROPIXEL_INTENSITY_CDF_VAR_NAME = "h_macropixel_intensity"
+H_MACROPIXEL_INTENSITY_DELTA_PLUS_CDF_VAR_NAME = "h_macropixel_intensity_delta_plus"
+H_MACROPIXEL_INTENSITY_DELTA_MINUS_CDF_VAR_NAME = "h_macropixel_intensity_delta_minus"
+H_MACROPIXEL_INTENSITY_PA_CDF_VAR_NAME = "h_macropixel_intensity_pa"
+H_MACROPIXEL_INTENSITY_PA_DELTA_PLUS_CDF_VAR_NAME = "h_macropixel_intensity_pa_delta_plus"
+H_MACROPIXEL_INTENSITY_PA_DELTA_MINUS_CDF_VAR_NAME = "h_macropixel_intensity_pa_delta_minus"
 H_ENERGY_CDF_VAR_NAME = "h_energy"
 H_ENERGY_DELTA_PLUS_CDF_VAR_NAME = "h_energy_delta_plus"
 H_ENERGY_DELTA_MINUS_CDF_VAR_NAME = "h_energy_delta_minus"
-HE4_INTENSITY_CDF_VAR_NAME = "he4_intensity"
-HE4_INTENSITY_DELTA_PLUS_CDF_VAR_NAME = "he4_intensity_delta_plus"
-HE4_INTENSITY_DELTA_MINUS_CDF_VAR_NAME = "he4_intensity_delta_minus"
-HE4_INTENSITY_PA_CDF_VAR_NAME = "he4_intensity_pa"
-HE4_INTENSITY_PA_DELTA_PLUS_CDF_VAR_NAME = "he4_intensity_pa_delta_plus"
-HE4_INTENSITY_PA_DELTA_MINUS_CDF_VAR_NAME = "he4_intensity_pa_delta_minus"
+HE4_INTENSITY_CDF_VAR_NAME = "he4_macropixel_intensity"
+HE4_INTENSITY_DELTA_PLUS_CDF_VAR_NAME = "he4_macropixel_intensity_delta_plus"
+HE4_INTENSITY_DELTA_MINUS_CDF_VAR_NAME = "he4_macropixel_intensity_delta_minus"
+HE4_INTENSITY_PA_CDF_VAR_NAME = "he4_macropixel_intensity_pa"
+HE4_INTENSITY_PA_DELTA_PLUS_CDF_VAR_NAME = "he4_macropixel_intensity_pa_delta_plus"
+HE4_INTENSITY_PA_DELTA_MINUS_CDF_VAR_NAME = "he4_macropixel_intensity_pa_delta_minus"
 HE4_ENERGY_CDF_VAR_NAME = "he4_energy"
 HE4_ENERGY_DELTA_PLUS_CDF_VAR_NAME = "he4_energy_delta_plus"
 HE4_ENERGY_DELTA_MINUS_CDF_VAR_NAME = "he4_energy_delta_minus"
-CNO_INTENSITY_CDF_VAR_NAME = "cno_intensity"
-CNO_INTENSITY_DELTA_PLUS_CDF_VAR_NAME = "cno_intensity_delta_plus"
-CNO_INTENSITY_DELTA_MINUS_CDF_VAR_NAME = "cno_intensity_delta_minus"
-CNO_INTENSITY_PA_CDF_VAR_NAME = "cno_intensity_pa"
-CNO_INTENSITY_PA_DELTA_PLUS_CDF_VAR_NAME = "cno_intensity_pa_delta_plus"
-CNO_INTENSITY_PA_DELTA_MINUS_CDF_VAR_NAME = "cno_intensity_pa_delta_minus"
+CNO_INTENSITY_CDF_VAR_NAME = "cno_macropixel_intensity"
+CNO_INTENSITY_DELTA_PLUS_CDF_VAR_NAME = "cno_macropixel_intensity_delta_plus"
+CNO_INTENSITY_DELTA_MINUS_CDF_VAR_NAME = "cno_macropixel_intensity_delta_minus"
+CNO_INTENSITY_PA_CDF_VAR_NAME = "cno_macropixel_intensity_pa"
+CNO_INTENSITY_PA_DELTA_PLUS_CDF_VAR_NAME = "cno_macropixel_intensity_pa_delta_plus"
+CNO_INTENSITY_PA_DELTA_MINUS_CDF_VAR_NAME = "cno_macropixel_intensity_pa_delta_minus"
 CNO_ENERGY_CDF_VAR_NAME = "cno_energy"
 CNO_ENERGY_DELTA_PLUS_CDF_VAR_NAME = "cno_energy_delta_plus"
 CNO_ENERGY_DELTA_MINUS_CDF_VAR_NAME = "cno_energy_delta_minus"
-NE_MG_SI_INTENSITY_CDF_VAR_NAME = "nemgsi_intensity"
-NE_MG_SI_INTENSITY_DELTA_PLUS_CDF_VAR_NAME = "nemgsi_intensity_delta_plus"
-NE_MG_SI_INTENSITY_DELTA_MINUS_CDF_VAR_NAME = "nemgsi_intensity_delta_minus"
-NE_MG_SI_INTENSITY_PA_CDF_VAR_NAME = "nemgsi_intensity_pa"
-NE_MG_SI_INTENSITY_PA_DELTA_PLUS_CDF_VAR_NAME = "nemgsi_intensity_pa_delta_plus"
-NE_MG_SI_INTENSITY_PA_DELTA_MINUS_CDF_VAR_NAME = "nemgsi_intensity_pa_delta_minus"
+NE_MG_SI_INTENSITY_CDF_VAR_NAME = "nemgsi_macropixel_intensity"
+NE_MG_SI_INTENSITY_DELTA_PLUS_CDF_VAR_NAME = "nemgsi_macropixel_intensity_delta_plus"
+NE_MG_SI_INTENSITY_DELTA_MINUS_CDF_VAR_NAME = "nemgsi_macropixel_intensity_delta_minus"
+NE_MG_SI_INTENSITY_PA_CDF_VAR_NAME = "nemgsi_macropixel_intensity_pa"
+NE_MG_SI_INTENSITY_PA_DELTA_PLUS_CDF_VAR_NAME = "nemgsi_macropixel_intensity_pa_delta_plus"
+NE_MG_SI_INTENSITY_PA_DELTA_MINUS_CDF_VAR_NAME = "nemgsi_macropixel_intensity_pa_delta_minus"
 NE_MG_SI_ENERGY_CDF_VAR_NAME = "nemgsi_energy"
 NE_MG_SI_ENERGY_DELTA_PLUS_CDF_VAR_NAME = "nemgsi_energy_delta_plus"
 NE_MG_SI_ENERGY_DELTA_MINUS_CDF_VAR_NAME = "nemgsi_energy_delta_minus"
-IRON_INTENSITY_CDF_VAR_NAME = "fe_intensity"
-IRON_INTENSITY_DELTA_PLUS_CDF_VAR_NAME = "fe_intensity_delta_plus"
-IRON_INTENSITY_DELTA_MINUS_CDF_VAR_NAME = "fe_intensity_delta_minus"
-IRON_INTENSITY_PA_CDF_VAR_NAME = "fe_intensity_pa"
-IRON_INTENSITY_PA_DELTA_PLUS_CDF_VAR_NAME = "fe_intensity_pa_delta_plus"
-IRON_INTENSITY_PA_DELTA_MINUS_CDF_VAR_NAME = "fe_intensity_pa_delta_minus"
+IRON_INTENSITY_CDF_VAR_NAME = "fe_macropixel_intensity"
+IRON_INTENSITY_DELTA_PLUS_CDF_VAR_NAME = "fe_macropixel_intensity_delta_plus"
+IRON_INTENSITY_DELTA_MINUS_CDF_VAR_NAME = "fe_macropixel_intensity_delta_minus"
+IRON_INTENSITY_PA_CDF_VAR_NAME = "fe_macropixel_intensity_pa"
+IRON_INTENSITY_PA_DELTA_PLUS_CDF_VAR_NAME = "fe_macropixel_intensity_pa_delta_plus"
+IRON_INTENSITY_PA_DELTA_MINUS_CDF_VAR_NAME = "fe_macropixel_intensity_pa_delta_minus"
 IRON_ENERGY_CDF_VAR_NAME = "fe_energy"
 IRON_ENERGY_DELTA_PLUS_CDF_VAR_NAME = "fe_energy_delta_plus"
 IRON_ENERGY_DELTA_MINUS_CDF_VAR_NAME = "fe_energy_delta_minus"
@@ -78,48 +78,48 @@ class HitPitchAngleDataProduct(DataProduct):
     pitch_angle_deltas: np.ndarray
     gyrophases: np.ndarray
     gyrophase_deltas: np.ndarray
-    h_intensity: np.ndarray
-    h_intensity_delta_plus: np.ndarray
-    h_intensity_delta_minus: np.ndarray
-    h_intensity_pa: np.ndarray
-    h_intensity_pa_delta_plus: np.ndarray
-    h_intensity_pa_delta_minus: np.ndarray
+    h_macropixel_intensity: np.ndarray
+    h_macropixel_intensity_delta_plus: np.ndarray
+    h_macropixel_intensity_delta_minus: np.ndarray
+    h_macropixel_intensity_pa: np.ndarray
+    h_macropixel_intensity_pa_delta_plus: np.ndarray
+    h_macropixel_intensity_pa_delta_minus: np.ndarray
     h_energies: np.ndarray
     h_energy_delta_plus: np.ndarray
     h_energy_delta_minus: np.ndarray
-    he4_intensity: np.ndarray
-    he4_intensity_delta_plus: np.ndarray
-    he4_intensity_delta_minus: np.ndarray
-    he4_intensity_pa: np.ndarray
-    he4_intensity_pa_delta_plus: np.ndarray
-    he4_intensity_pa_delta_minus: np.ndarray
+    he4_macropixel_intensity: np.ndarray
+    he4_macropixel_intensity_delta_plus: np.ndarray
+    he4_macropixel_intensity_delta_minus: np.ndarray
+    he4_macropixel_intensity_pa: np.ndarray
+    he4_macropixel_intensity_pa_delta_plus: np.ndarray
+    he4_macropixel_intensity_pa_delta_minus: np.ndarray
     he4_energies: np.ndarray
     he4_energy_delta_plus: np.ndarray
     he4_energy_delta_minus: np.ndarray
-    cno_intensity: np.ndarray
-    cno_intensity_delta_plus: np.ndarray
-    cno_intensity_delta_minus: np.ndarray
-    cno_intensity_pa: np.ndarray
-    cno_intensity_pa_delta_plus: np.ndarray
-    cno_intensity_pa_delta_minus: np.ndarray
+    cno_macropixel_intensity: np.ndarray
+    cno_macropixel_intensity_delta_plus: np.ndarray
+    cno_macropixel_intensity_delta_minus: np.ndarray
+    cno_macropixel_intensity_pa: np.ndarray
+    cno_macropixel_intensity_pa_delta_plus: np.ndarray
+    cno_macropixel_intensity_pa_delta_minus: np.ndarray
     cno_energies: np.ndarray
     cno_energy_delta_plus: np.ndarray
     cno_energy_delta_minus: np.ndarray
-    ne_mg_si_intensity: np.ndarray
-    ne_mg_si_intensity_delta_plus: np.ndarray
-    ne_mg_si_intensity_delta_minus: np.ndarray
-    ne_mg_si_intensity_pa: np.ndarray
-    ne_mg_si_intensity_pa_delta_plus: np.ndarray
-    ne_mg_si_intensity_pa_delta_minus: np.ndarray
+    ne_mg_si_macropixel_intensity: np.ndarray
+    ne_mg_si_macropixel_intensity_delta_plus: np.ndarray
+    ne_mg_si_macropixel_intensity_delta_minus: np.ndarray
+    ne_mg_si_macropixel_intensity_pa: np.ndarray
+    ne_mg_si_macropixel_intensity_pa_delta_plus: np.ndarray
+    ne_mg_si_macropixel_intensity_pa_delta_minus: np.ndarray
     ne_mg_si_energies: np.ndarray
     ne_mg_si_energy_delta_plus: np.ndarray
     ne_mg_si_energy_delta_minus: np.ndarray
-    iron_intensity: np.ndarray
-    iron_intensity_delta_plus: np.ndarray
-    iron_intensity_delta_minus: np.ndarray
-    iron_intensity_pa: np.ndarray
-    iron_intensity_pa_delta_plus: np.ndarray
-    iron_intensity_pa_delta_minus: np.ndarray
+    iron_macropixel_intensity: np.ndarray
+    iron_macropixel_intensity_delta_plus: np.ndarray
+    iron_macropixel_intensity_delta_minus: np.ndarray
+    iron_macropixel_intensity_pa: np.ndarray
+    iron_macropixel_intensity_pa_delta_plus: np.ndarray
+    iron_macropixel_intensity_pa_delta_minus: np.ndarray
     iron_energies: np.ndarray
     iron_energy_delta_plus: np.ndarray
     iron_energy_delta_minus: np.ndarray
@@ -137,48 +137,59 @@ class HitPitchAngleDataProduct(DataProduct):
             DataProductVariable(PITCH_ANGLE_DELTA_CDF_VAR_NAME, self.pitch_angle_deltas),
             DataProductVariable(GYROPHASE_CDF_VAR_NAME, self.gyrophases),
             DataProductVariable(GYROPHASE_DELTA_CDF_VAR_NAME, self.gyrophase_deltas),
-            DataProductVariable(H_INTENSITY_CDF_VAR_NAME, self.h_intensity),
-            DataProductVariable(H_INTENSITY_DELTA_PLUS_CDF_VAR_NAME, self.h_intensity_delta_plus),
-            DataProductVariable(H_INTENSITY_DELTA_MINUS_CDF_VAR_NAME, self.h_intensity_delta_minus),
-            DataProductVariable(H_INTENSITY_PA_CDF_VAR_NAME, self.h_intensity_pa),
-            DataProductVariable(H_INTENSITY_PA_DELTA_PLUS_CDF_VAR_NAME, self.h_intensity_pa_delta_plus),
-            DataProductVariable(H_INTENSITY_PA_DELTA_MINUS_CDF_VAR_NAME, self.h_intensity_pa_delta_minus),
+            DataProductVariable(H_MACROPIXEL_INTENSITY_CDF_VAR_NAME, self.h_macropixel_intensity),
+            DataProductVariable(H_MACROPIXEL_INTENSITY_DELTA_PLUS_CDF_VAR_NAME, self.h_macropixel_intensity_delta_plus),
+            DataProductVariable(H_MACROPIXEL_INTENSITY_DELTA_MINUS_CDF_VAR_NAME,
+                                self.h_macropixel_intensity_delta_minus),
+            DataProductVariable(H_MACROPIXEL_INTENSITY_PA_CDF_VAR_NAME, self.h_macropixel_intensity_pa),
+            DataProductVariable(H_MACROPIXEL_INTENSITY_PA_DELTA_PLUS_CDF_VAR_NAME,
+                                self.h_macropixel_intensity_pa_delta_plus),
+            DataProductVariable(H_MACROPIXEL_INTENSITY_PA_DELTA_MINUS_CDF_VAR_NAME,
+                                self.h_macropixel_intensity_pa_delta_minus),
             DataProductVariable(H_ENERGY_CDF_VAR_NAME, self.h_energies),
             DataProductVariable(H_ENERGY_DELTA_PLUS_CDF_VAR_NAME, self.h_energy_delta_plus),
             DataProductVariable(H_ENERGY_DELTA_MINUS_CDF_VAR_NAME, self.h_energy_delta_minus),
-            DataProductVariable(HE4_INTENSITY_CDF_VAR_NAME, self.he4_intensity),
-            DataProductVariable(HE4_INTENSITY_DELTA_PLUS_CDF_VAR_NAME, self.he4_intensity_delta_plus),
-            DataProductVariable(HE4_INTENSITY_DELTA_MINUS_CDF_VAR_NAME, self.he4_intensity_delta_minus),
-            DataProductVariable(HE4_INTENSITY_PA_CDF_VAR_NAME, self.he4_intensity_pa),
-            DataProductVariable(HE4_INTENSITY_PA_DELTA_PLUS_CDF_VAR_NAME, self.he4_intensity_pa_delta_plus),
-            DataProductVariable(HE4_INTENSITY_PA_DELTA_MINUS_CDF_VAR_NAME, self.he4_intensity_pa_delta_minus),
+            DataProductVariable(HE4_INTENSITY_CDF_VAR_NAME, self.he4_macropixel_intensity),
+            DataProductVariable(HE4_INTENSITY_DELTA_PLUS_CDF_VAR_NAME, self.he4_macropixel_intensity_delta_plus),
+            DataProductVariable(HE4_INTENSITY_DELTA_MINUS_CDF_VAR_NAME, self.he4_macropixel_intensity_delta_minus),
+            DataProductVariable(HE4_INTENSITY_PA_CDF_VAR_NAME, self.he4_macropixel_intensity_pa),
+            DataProductVariable(HE4_INTENSITY_PA_DELTA_PLUS_CDF_VAR_NAME, self.he4_macropixel_intensity_pa_delta_plus),
+            DataProductVariable(HE4_INTENSITY_PA_DELTA_MINUS_CDF_VAR_NAME,
+                                self.he4_macropixel_intensity_pa_delta_minus),
             DataProductVariable(HE4_ENERGY_CDF_VAR_NAME, self.he4_energies),
             DataProductVariable(HE4_ENERGY_DELTA_PLUS_CDF_VAR_NAME, self.he4_energy_delta_plus),
             DataProductVariable(HE4_ENERGY_DELTA_MINUS_CDF_VAR_NAME, self.he4_energy_delta_minus),
-            DataProductVariable(CNO_INTENSITY_CDF_VAR_NAME, self.cno_intensity),
-            DataProductVariable(CNO_INTENSITY_DELTA_PLUS_CDF_VAR_NAME, self.cno_intensity_delta_plus),
-            DataProductVariable(CNO_INTENSITY_DELTA_MINUS_CDF_VAR_NAME, self.cno_intensity_delta_minus),
-            DataProductVariable(CNO_INTENSITY_PA_CDF_VAR_NAME, self.cno_intensity_pa),
-            DataProductVariable(CNO_INTENSITY_PA_DELTA_PLUS_CDF_VAR_NAME, self.cno_intensity_pa_delta_plus),
-            DataProductVariable(CNO_INTENSITY_PA_DELTA_MINUS_CDF_VAR_NAME, self.cno_intensity_pa_delta_minus),
+            DataProductVariable(CNO_INTENSITY_CDF_VAR_NAME, self.cno_macropixel_intensity),
+            DataProductVariable(CNO_INTENSITY_DELTA_PLUS_CDF_VAR_NAME, self.cno_macropixel_intensity_delta_plus),
+            DataProductVariable(CNO_INTENSITY_DELTA_MINUS_CDF_VAR_NAME, self.cno_macropixel_intensity_delta_minus),
+            DataProductVariable(CNO_INTENSITY_PA_CDF_VAR_NAME, self.cno_macropixel_intensity_pa),
+            DataProductVariable(CNO_INTENSITY_PA_DELTA_PLUS_CDF_VAR_NAME, self.cno_macropixel_intensity_pa_delta_plus),
+            DataProductVariable(CNO_INTENSITY_PA_DELTA_MINUS_CDF_VAR_NAME,
+                                self.cno_macropixel_intensity_pa_delta_minus),
             DataProductVariable(CNO_ENERGY_CDF_VAR_NAME, self.cno_energies),
             DataProductVariable(CNO_ENERGY_DELTA_PLUS_CDF_VAR_NAME, self.cno_energy_delta_plus),
             DataProductVariable(CNO_ENERGY_DELTA_MINUS_CDF_VAR_NAME, self.cno_energy_delta_minus),
-            DataProductVariable(NE_MG_SI_INTENSITY_CDF_VAR_NAME, self.ne_mg_si_intensity),
-            DataProductVariable(NE_MG_SI_INTENSITY_DELTA_PLUS_CDF_VAR_NAME, self.ne_mg_si_intensity_delta_plus),
-            DataProductVariable(NE_MG_SI_INTENSITY_DELTA_MINUS_CDF_VAR_NAME, self.ne_mg_si_intensity_delta_minus),
-            DataProductVariable(NE_MG_SI_INTENSITY_PA_CDF_VAR_NAME, self.ne_mg_si_intensity_pa),
-            DataProductVariable(NE_MG_SI_INTENSITY_PA_DELTA_PLUS_CDF_VAR_NAME, self.ne_mg_si_intensity_pa_delta_plus),
-            DataProductVariable(NE_MG_SI_INTENSITY_PA_DELTA_MINUS_CDF_VAR_NAME, self.ne_mg_si_intensity_pa_delta_minus),
+            DataProductVariable(NE_MG_SI_INTENSITY_CDF_VAR_NAME, self.ne_mg_si_macropixel_intensity),
+            DataProductVariable(NE_MG_SI_INTENSITY_DELTA_PLUS_CDF_VAR_NAME,
+                                self.ne_mg_si_macropixel_intensity_delta_plus),
+            DataProductVariable(NE_MG_SI_INTENSITY_DELTA_MINUS_CDF_VAR_NAME,
+                                self.ne_mg_si_macropixel_intensity_delta_minus),
+            DataProductVariable(NE_MG_SI_INTENSITY_PA_CDF_VAR_NAME, self.ne_mg_si_macropixel_intensity_pa),
+            DataProductVariable(NE_MG_SI_INTENSITY_PA_DELTA_PLUS_CDF_VAR_NAME,
+                                self.ne_mg_si_macropixel_intensity_pa_delta_plus),
+            DataProductVariable(NE_MG_SI_INTENSITY_PA_DELTA_MINUS_CDF_VAR_NAME,
+                                self.ne_mg_si_macropixel_intensity_pa_delta_minus),
             DataProductVariable(NE_MG_SI_ENERGY_CDF_VAR_NAME, self.ne_mg_si_energies),
             DataProductVariable(NE_MG_SI_ENERGY_DELTA_PLUS_CDF_VAR_NAME, self.ne_mg_si_energy_delta_plus),
             DataProductVariable(NE_MG_SI_ENERGY_DELTA_MINUS_CDF_VAR_NAME, self.ne_mg_si_energy_delta_minus),
-            DataProductVariable(IRON_INTENSITY_CDF_VAR_NAME, self.iron_intensity),
-            DataProductVariable(IRON_INTENSITY_DELTA_PLUS_CDF_VAR_NAME, self.iron_intensity_delta_plus),
-            DataProductVariable(IRON_INTENSITY_DELTA_MINUS_CDF_VAR_NAME, self.iron_intensity_delta_minus),
-            DataProductVariable(IRON_INTENSITY_PA_CDF_VAR_NAME, self.iron_intensity_pa),
-            DataProductVariable(IRON_INTENSITY_PA_DELTA_PLUS_CDF_VAR_NAME, self.iron_intensity_pa_delta_plus),
-            DataProductVariable(IRON_INTENSITY_PA_DELTA_MINUS_CDF_VAR_NAME, self.iron_intensity_pa_delta_minus),
+            DataProductVariable(IRON_INTENSITY_CDF_VAR_NAME, self.iron_macropixel_intensity),
+            DataProductVariable(IRON_INTENSITY_DELTA_PLUS_CDF_VAR_NAME, self.iron_macropixel_intensity_delta_plus),
+            DataProductVariable(IRON_INTENSITY_DELTA_MINUS_CDF_VAR_NAME, self.iron_macropixel_intensity_delta_minus),
+            DataProductVariable(IRON_INTENSITY_PA_CDF_VAR_NAME, self.iron_macropixel_intensity_pa),
+            DataProductVariable(IRON_INTENSITY_PA_DELTA_PLUS_CDF_VAR_NAME,
+                                self.iron_macropixel_intensity_pa_delta_plus),
+            DataProductVariable(IRON_INTENSITY_PA_DELTA_MINUS_CDF_VAR_NAME,
+                                self.iron_macropixel_intensity_pa_delta_minus),
             DataProductVariable(IRON_ENERGY_CDF_VAR_NAME, self.iron_energies),
             DataProductVariable(IRON_ENERGY_DELTA_PLUS_CDF_VAR_NAME, self.iron_energy_delta_plus),
             DataProductVariable(IRON_ENERGY_DELTA_MINUS_CDF_VAR_NAME, self.iron_energy_delta_minus),
