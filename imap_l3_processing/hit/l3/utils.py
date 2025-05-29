@@ -1,4 +1,3 @@
-from datetime import timedelta
 from pathlib import Path
 from typing import Union
 
@@ -11,24 +10,32 @@ from imap_l3_processing.hit.l3.models import HitL2Data
 
 def read_l2_hit_data(cdf_file_path: Union[str, Path]) -> HitL2Data:
     with CDF(str(cdf_file_path)) as cdf:
+        epoch = cdf["epoch"][...]
+
+        half_epoch_diff = np.diff(epoch) / 2
+        assert np.all(half_epoch_diff == half_epoch_diff[0])
+        fabricated_epoch_deltas = np.repeat(half_epoch_diff[0], len(epoch))
+
         return HitL2Data(
             epoch=cdf["epoch"][...],
-            epoch_delta=np.array([timedelta(seconds=ns / 1e9) for ns in cdf["epoch_delta"][...]]),
-            h=read_numeric_variable(cdf["h"]),
-            he4=read_numeric_variable(cdf["he4"]),
-            cno=read_numeric_variable(cdf["cno"]),
-            nemgsi=read_numeric_variable(cdf["nemgsi"]),
-            fe=read_numeric_variable(cdf["fe"]),
-            delta_minus_cno=read_numeric_variable(cdf["delta_minus_cno"]),
-            delta_minus_he4=read_numeric_variable(cdf["delta_minus_he4"]),
-            delta_minus_h=read_numeric_variable(cdf["delta_minus_h"]),
-            delta_minus_fe=read_numeric_variable(cdf["delta_minus_fe"]),
-            delta_minus_nemgsi=read_numeric_variable(cdf["delta_minus_nemgsi"]),
-            delta_plus_cno=read_numeric_variable(cdf["delta_plus_cno"]),
-            delta_plus_he4=read_numeric_variable(cdf["delta_plus_he4"]),
-            delta_plus_h=read_numeric_variable(cdf["delta_plus_h"]),
-            delta_plus_fe=read_numeric_variable(cdf["delta_plus_fe"]),
-            delta_plus_nemgsi=read_numeric_variable(cdf["delta_plus_nemgsi"]),
+            epoch_delta=fabricated_epoch_deltas,
+            azimuth=read_numeric_variable(cdf["azimuth"]),
+            zenith=read_numeric_variable(cdf["zenith"]),
+            h=read_numeric_variable(cdf["h_macropixel_intensity"]),
+            he4=read_numeric_variable(cdf["he4_macropixel_intensity"]),
+            cno=read_numeric_variable(cdf["cno_macropixel_intensity"]),
+            nemgsi=read_numeric_variable(cdf["nemgsi_macropixel_intensity"]),
+            fe=read_numeric_variable(cdf["fe_macropixel_intensity"]),
+            delta_minus_cno=read_numeric_variable(cdf["cno_stat_uncert_minus"]),
+            delta_minus_he4=read_numeric_variable(cdf["he4_stat_uncert_minus"]),
+            delta_minus_h=read_numeric_variable(cdf["h_stat_uncert_minus"]),
+            delta_minus_fe=read_numeric_variable(cdf["fe_stat_uncert_minus"]),
+            delta_minus_nemgsi=read_numeric_variable(cdf["nemgsi_stat_uncert_minus"]),
+            delta_plus_cno=read_numeric_variable(cdf["cno_stat_uncert_plus"]),
+            delta_plus_he4=read_numeric_variable(cdf["he4_stat_uncert_plus"]),
+            delta_plus_h=read_numeric_variable(cdf["h_stat_uncert_plus"]),
+            delta_plus_fe=read_numeric_variable(cdf["fe_stat_uncert_plus"]),
+            delta_plus_nemgsi=read_numeric_variable(cdf["nemgsi_stat_uncert_plus"]),
             cno_energy=cdf["cno_energy_mean"][...],
             cno_energy_delta_plus=cdf["cno_energy_delta_plus"][...],
             cno_energy_delta_minus=cdf["cno_energy_delta_minus"][...],

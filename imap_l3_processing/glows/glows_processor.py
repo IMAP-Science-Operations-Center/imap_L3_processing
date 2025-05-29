@@ -21,7 +21,7 @@ from imap_l3_processing.glows.l3a.utils import create_glows_l3a_from_dictionary
 from imap_l3_processing.glows.l3bc.cannot_process_carrington_rotation_error import CannotProcessCarringtonRotationError
 from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDependencies
 from imap_l3_processing.glows.l3bc.models import GlowsL3BIonizationRate, GlowsL3CSolarWind
-from imap_l3_processing.glows.l3bc.science.filter_out_bad_days import filter_out_bad_days
+from imap_l3_processing.glows.l3bc.science.filter_out_bad_days import filter_l3a_files
 from imap_l3_processing.glows.l3bc.science.generate_l3bc import generate_l3bc
 from imap_l3_processing.glows.l3bc.utils import get_pointing_date_range
 from imap_l3_processing.glows.l3d.glows_l3d_dependencies import GlowsL3DDependencies
@@ -54,7 +54,10 @@ class GlowsProcessor(Processor):
             zip_files = GlowsInitializer.validate_and_initialize(self.input_metadata.version, self.dependencies)
             for zip_file in zip_files:
                 dependencies = GlowsL3BCDependencies.fetch_dependencies(zip_file)
-                l3b_data_product, l3c_data_product = self.process_l3bc(dependencies)
+                try:
+                    l3b_data_product, l3c_data_product = self.process_l3bc(dependencies)
+                except CannotProcessCarringtonRotationError:
+                    continue
                 l3b_cdf = save_data(l3b_data_product)
                 l3c_data_product.parent_file_names.append(Path(l3b_cdf).name)
                 l3c_cdf = save_data(l3c_data_product)
@@ -113,7 +116,8 @@ class GlowsProcessor(Processor):
                                                 replace(self.input_metadata, descriptor=GLOWS_L3A_DESCRIPTOR))
 
     def process_l3bc(self, dependencies: GlowsL3BCDependencies) -> tuple[GlowsL3BIonizationRate, GlowsL3CSolarWind]:
-        filtered_days = filter_out_bad_days(dependencies.l3a_data, dependencies.ancillary_files['bad_days_list'])
+        filtered_days = filter_l3a_files(dependencies.l3a_data, dependencies.ancillary_files['bad_days_list'],
+                                         dependencies.carrington_rotation_number)
         l3b_metadata = InputMetadata("glows", "l3b", dependencies.start_date, dependencies.end_date,
                                      self.input_metadata.version, "ion-rate-profile")
         l3c_metadata = InputMetadata("glows", "l3c", dependencies.start_date, dependencies.end_date,

@@ -191,7 +191,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
     @patch("imap_l3_processing.glows.glows_processor.GlowsInitializer")
     @patch('imap_l3_processing.glows.glows_processor.GlowsL3BIonizationRate')
     @patch('imap_l3_processing.glows.glows_processor.GlowsL3CSolarWind')
-    @patch('imap_l3_processing.glows.glows_processor.filter_out_bad_days')
+    @patch('imap_l3_processing.glows.glows_processor.filter_l3a_files')
     @patch('imap_l3_processing.glows.glows_processor.generate_l3bc')
     def test_process_l3bc(self, mock_generate_l3bc, mock_filter_bad_days, mock_l3c_model_class, mock_l3b_model_class,
                           mock_glows_initializer_class, mock_save_data, mock_imap_data_access, mock_l3bc_dependencies,
@@ -260,8 +260,8 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
         dependencies_with_filtered_list_2 = replace(second_dependency, l3a_data=sentinel.filtered_days_2)
 
         mock_filter_bad_days.assert_has_calls(
-            [call(sentinel.l3a_data_1, sentinel.bad_days_list_1),
-             call(sentinel.l3a_data_2, sentinel.bad_days_list_2)])
+            [call(sentinel.l3a_data_1, sentinel.bad_days_list_1, sentinel.cr_1),
+             call(sentinel.l3a_data_2, sentinel.bad_days_list_2, sentinel.cr_2)])
 
         mock_generate_l3bc.assert_has_calls(
             [call(dependencies_with_filtered_list_1), call(dependencies_with_filtered_list_2)])
@@ -296,6 +296,57 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
             call("path/to/l3b_file_2.cdf"),
             call(sentinel.l3c_cdf_path_2),
             call(sentinel.zip_file_path_2),
+        ])
+
+    @patch('imap_l3_processing.glows.glows_processor.save_data')
+    @patch("imap_l3_processing.glows.glows_processor.imap_data_access")
+    @patch("imap_l3_processing.glows.glows_processor.GlowsInitializer")
+    @patch("imap_l3_processing.glows.glows_processor.GlowsL3BCDependencies")
+    def test_processor_catches_no_data_error_and_continues(self, mock_glows_l3bc_dependencies_class,
+                                                           mock_glows_initializer_class, mock_imap_data_access,
+                                                           mock_save_data):
+        mock_glows_initializer_class.validate_and_initialize.return_value = [sentinel.zip_file_1, sentinel.zip_file_2]
+        bc_dependencies_1 = MagicMock(l3a_data=[])
+        bc_dependencies_2 = MagicMock(l3a_data=[])
+        mock_glows_l3bc_dependencies_class.fetch_dependencies.side_effect = [bc_dependencies_1, bc_dependencies_2]
+
+        l3b_path = "path_to/l3b"
+        l3c_path = "path_to/l3c"
+        mock_save_data.side_effect = [l3b_path, l3c_path]
+
+        input_metadata = InputMetadata('glows', "l3b", datetime(2024, 10, 7, 10, 00, 00),
+                                       datetime(2024, 10, 8, 10, 00, 00),
+                                       'v001')
+
+        processor = GlowsProcessor(Mock(), input_metadata)
+
+        mock_l3b = MagicMock()
+        mock_l3c = MagicMock()
+
+        processor.process_l3bc = Mock()
+        processor.process_l3bc.side_effect = [
+            CannotProcessCarringtonRotationError("All days for Carrington Rotation are in a bad season."),
+            (mock_l3b, mock_l3c)
+        ]
+        processor.process()
+
+        self.assertEqual(2, mock_glows_l3bc_dependencies_class.fetch_dependencies.call_count)
+        mock_glows_l3bc_dependencies_class.fetch_dependencies.assert_has_calls([
+            call(sentinel.zip_file_1),
+            call(sentinel.zip_file_2)
+        ])
+
+        self.assertEqual(2, mock_save_data.call_count)
+        mock_save_data.assert_has_calls([
+            call(mock_l3b),
+            call(mock_l3c),
+        ])
+
+        self.assertEqual(3, mock_imap_data_access.upload.call_count)
+        mock_imap_data_access.upload.assert_has_calls([
+            call(l3b_path),
+            call(l3c_path),
+            call(sentinel.zip_file_2)
         ])
 
     def test_process_l3bc_all_data_in_bad_season_throws_exception(self):

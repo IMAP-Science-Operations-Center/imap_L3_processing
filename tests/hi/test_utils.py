@@ -7,6 +7,8 @@ import numpy as np
 from spacepy import pycdf
 from spacepy.pycdf import CDF
 
+from imap_l3_processing.glows.l3e.glows_l3e_hi_model import PROBABILITY_OF_SURVIVAL_VAR_NAME, SPIN_ANGLE_VAR_NAME, \
+    ENERGY_VAR_NAME, EPOCH_CDF_VAR_NAME
 from imap_l3_processing.hi.l3.utils import read_l1c_rectangular_pointing_set_data, read_glows_l3e_data
 from tests.test_helpers import get_test_data_folder
 
@@ -62,10 +64,10 @@ class TestUtils(unittest.TestCase):
             spin_angle = rng.random(360)
             probability_of_survival = rng.random((1, 16, 360,))
 
-            cdf["epoch"] = epoch
-            cdf["energy"] = energy
-            cdf["spin_angle"] = spin_angle
-            cdf["probability_of_survival"] = probability_of_survival
+            cdf[EPOCH_CDF_VAR_NAME] = epoch
+            cdf[ENERGY_VAR_NAME] = energy
+            cdf[SPIN_ANGLE_VAR_NAME] = spin_angle
+            cdf[PROBABILITY_OF_SURVIVAL_VAR_NAME] = probability_of_survival
             for var in cdf:
                 cdf[var].attrs['FILLVAL'] = 1000000
 
@@ -83,8 +85,8 @@ class TestUtils(unittest.TestCase):
         result = read_glows_l3e_data(path)
 
         with CDF(str(path)) as cdf:
-            self.assertEqual(result.epoch, cdf['epoch'][0])
-            np.testing.assert_array_equal(result.energy, np.full_like(cdf['energy'], np.nan))
-            np.testing.assert_array_equal(result.spin_angle, np.full_like(cdf['spin_angle'], np.nan))
+            self.assertEqual(result.epoch, cdf[EPOCH_CDF_VAR_NAME][0])
+            np.testing.assert_array_equal(result.energy, np.full_like(cdf[ENERGY_VAR_NAME], np.nan))
+            np.testing.assert_array_equal(result.spin_angle, np.full_like(cdf[SPIN_ANGLE_VAR_NAME], np.nan))
             np.testing.assert_array_equal(result.probability_of_survival,
-                                          np.full_like(cdf['probability_of_survival'], np.nan))
+                                          np.full_like(cdf[PROBABILITY_OF_SURVIVAL_VAR_NAME], np.nan))
