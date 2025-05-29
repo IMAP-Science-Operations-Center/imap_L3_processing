@@ -7,6 +7,7 @@ from zipfile import ZIP_DEFLATED
 
 import numpy as np
 from astropy.time import Time, TimeDelta
+from imap_processing.spice.repoint import set_global_repoint_table_paths
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
@@ -18,6 +19,11 @@ from tests.test_helpers import get_test_data_path, environment_variables
 
 
 class TestUtils(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        repoint_file_path = get_test_data_path("fake_1_day_repointing_file.csv")
+        set_global_repoint_table_paths([repoint_file_path])
+
     def test_read_glows_l3a_data(self):
         cdf = CDF(str(get_test_data_path("glows/imap_glows_l3a_hist_20100101_v001.cdf")))
 

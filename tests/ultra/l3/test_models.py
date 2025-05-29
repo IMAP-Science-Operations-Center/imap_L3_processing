@@ -10,7 +10,6 @@ from imap_l3_processing.ultra.l3.models import UltraGlowsL3eData, UltraL1CPSet
 from tests.spice_test_case import SpiceTestCase
 from tests.test_helpers import get_test_data_folder
 
-
 class TestModels(SpiceTestCase):
 
     def test_glows_l3e_read_from_file(self):
@@ -37,7 +36,7 @@ class TestModels(SpiceTestCase):
         with CDF(str(run_local_path)) as expected:
             self.assertEqual(expected_epoch, actual.epoch)
             np.testing.assert_array_equal(expected["counts"][...], actual.counts)
-            np.testing.assert_array_equal(expected[CoordNames.ENERGY_ULTRA.value][...], actual.energy)
+            np.testing.assert_array_equal(expected[CoordNames.ENERGY_ULTRA_L1C.value][...], actual.energy)
             np.testing.assert_array_equal(expected["exposure_factor"][...], actual.exposure)
             np.testing.assert_array_equal(expected[CoordNames.HEALPIX_INDEX.value][...], actual.healpix_index)
             np.testing.assert_array_equal(expected[CoordNames.ELEVATION_L1C.value][...], actual.latitude)
