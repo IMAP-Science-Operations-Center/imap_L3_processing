@@ -525,7 +525,7 @@ def run_glows_l3bc_processor_and_initializer(_, mock_query):
 
     bad_days_list = AncillaryInput('imap_glows_bad-days-list_20100101_v001.dat')
     waw_helio_ion = AncillaryInput('imap_glows_WawHelioIonMP_20100101_v002.json')
-    uv_anisotropy = AncillaryInput('imap_glows_uv-anisotropy-1CR_20250514_v002.json')
+    uv_anisotropy = AncillaryInput('imap_glows_uv-anisotropy-1CR_20300101_v003.json')
     pipeline_settings = AncillaryInput('imap_glows_pipeline-settings-l3bcde_20100101_v006.json')
     input_collection = ProcessingInputCollection(bad_days_list, waw_helio_ion, uv_anisotropy, pipeline_settings)
 
@@ -960,7 +960,6 @@ def create_codice_hi_l3b_pitch_angles_cdf():
 
 if __name__ == "__main__":
     furnish_local_spice()
-    print("k total", spiceypy.ktotal("all"))
     if "codice-lo" in sys.argv:
         if "l3a" in sys.argv:
             if "partial-densities" in sys.argv:
