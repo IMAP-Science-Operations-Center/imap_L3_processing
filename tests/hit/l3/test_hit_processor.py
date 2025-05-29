@@ -126,7 +126,7 @@ class TestHitProcessor(TestCase):
 
         mock_calculate_unit_vector.side_effect = [sentinel.mag_unit_vector1, sentinel.mag_unit_vector2]
         mock_get_hit_bin_polar_coordinates.return_value = (
-            sentinel.dec, sentinel.inc, sentinel.dec_delta, sentinel.inc_delta)
+            sentinel.pitch_angles, sentinel.gyrophases, sentinel.pitch_angle_deltas, sentinel.gyrophase_deltas)
 
         sector_unit_vectors_zenith_first = np.full((8, 15, 3), np.sqrt(1 / 3))
         mock_get_sector_unit_vectors.return_value = sector_unit_vectors_zenith_first
@@ -240,7 +240,7 @@ class TestHitProcessor(TestCase):
             call(sentinel.mag_vector1),
             call(sentinel.mag_vector2)
         ])
-        mock_get_sector_unit_vectors.assert_called_once_with(sentinel.dec, sentinel.inc)
+        mock_get_sector_unit_vectors.assert_called_once_with(mock_hit_data.zenith, mock_hit_data.azimuth)
 
         self.assertEqual(1, mock_rotate_particle_vectors_from_hit_despun_to_imap_despun.call_count)
         np.testing.assert_array_equal(
@@ -318,10 +318,10 @@ class TestHitProcessor(TestCase):
         np.testing.assert_array_equal(saved_data_product.epochs, epochs)
         np.testing.assert_array_equal(saved_data_product.epoch_deltas, epoch_deltas)
 
-        np.testing.assert_array_equal(saved_data_product.pitch_angles, sentinel.dec)
-        np.testing.assert_array_equal(saved_data_product.pitch_angle_deltas, sentinel.dec_delta)
-        np.testing.assert_array_equal(saved_data_product.gyrophases, sentinel.inc)
-        np.testing.assert_array_equal(saved_data_product.gyrophase_deltas, sentinel.inc_delta)
+        np.testing.assert_array_equal(saved_data_product.pitch_angles, sentinel.pitch_angles)
+        np.testing.assert_array_equal(saved_data_product.pitch_angle_deltas, sentinel.pitch_angle_deltas)
+        np.testing.assert_array_equal(saved_data_product.gyrophases, sentinel.gyrophases)
+        np.testing.assert_array_equal(saved_data_product.gyrophase_deltas, sentinel.gyrophase_deltas)
 
         np.testing.assert_array_equal(saved_data_product.h_intensity,
                                       [rebinned_pa_gyro_hydrogen_time1,
