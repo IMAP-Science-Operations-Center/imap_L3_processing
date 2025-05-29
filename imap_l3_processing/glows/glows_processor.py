@@ -54,7 +54,10 @@ class GlowsProcessor(Processor):
             zip_files = GlowsInitializer.validate_and_initialize(self.input_metadata.version, self.dependencies)
             for zip_file in zip_files:
                 dependencies = GlowsL3BCDependencies.fetch_dependencies(zip_file)
-                l3b_data_product, l3c_data_product = self.process_l3bc(dependencies)
+                try:
+                    l3b_data_product, l3c_data_product = self.process_l3bc(dependencies)
+                except CannotProcessCarringtonRotationError:
+                    continue
                 l3b_cdf = save_data(l3b_data_product)
                 l3c_data_product.parent_file_names.append(Path(l3b_cdf).name)
                 l3c_cdf = save_data(l3c_data_product)
