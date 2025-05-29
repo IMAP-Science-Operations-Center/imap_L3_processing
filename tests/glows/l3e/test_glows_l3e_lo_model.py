@@ -1,9 +1,10 @@
 import unittest
 from datetime import datetime
-from unittest.mock import sentinel, Mock
+from unittest.mock import sentinel, Mock, MagicMock
 
 import numpy as np
 
+from imap_l3_processing.glows.l3e.glows_l3e_call_arguments import GlowsL3eCallArguments
 from imap_l3_processing.glows.l3e.glows_l3e_lo_model import GlowsL3ELoData
 from imap_l3_processing.models import DataProductVariable
 from tests.test_helpers import get_test_instrument_team_data_path
@@ -17,7 +18,9 @@ class TestL3eLoModel(unittest.TestCase):
             sentinel.energy,
             sentinel.spin_angle,
             sentinel.probability_of_survival,
-            sentinel.elongation
+            sentinel.elongation,
+            sentinel.spin_axis_latitude,
+            sentinel.spin_axis_longitude,
         )
 
         expected_energy_labels = ['Energy Label 1', 'Energy Label 2', 'Energy Label 3', 'Energy Label 4',
@@ -35,7 +38,9 @@ class TestL3eLoModel(unittest.TestCase):
             DataProductVariable("surv_prob", sentinel.probability_of_survival),
             DataProductVariable("energy_label", expected_energy_labels),
             DataProductVariable("spin_angle_label", expected_spin_angle_labels),
-            DataProductVariable("elongation", sentinel.elongation)
+            DataProductVariable("elongation", sentinel.elongation),
+            DataProductVariable("spin_axis_latitude", np.array([sentinel.spin_axis_latitude])),
+            DataProductVariable("spin_axis_longitude", np.array([sentinel.spin_axis_longitude]))
         ]
 
         self.assertEqual(expected_data_products, data_products)
@@ -115,10 +120,18 @@ class TestL3eLoModel(unittest.TestCase):
 
         mock_metadata = Mock()
 
+        spin_axis_lat = 45.0
+        spin_axis_lon = 90.0
+
+        args = MagicMock(spec=GlowsL3eCallArguments)
+        args.spin_axis_latitude = spin_axis_lat
+        args.spin_axis_longitude = spin_axis_lon
+
         l3e_lo_product: GlowsL3ELoData = GlowsL3ELoData.convert_dat_to_glows_l3e_lo_product(mock_metadata, lo_file_path,
                                                                                             epoch,
                                                                                             np.array(
-                                                                                                [elongation_value]))
+                                                                                                [elongation_value]),
+                                                                                            args)
 
         self.assertEqual(epoch, l3e_lo_product.epoch)
         self.assertEqual(l3e_lo_product.input_metadata.start_date, epoch[0])
@@ -128,3 +141,6 @@ class TestL3eLoModel(unittest.TestCase):
         np.testing.assert_array_equal(l3e_lo_product.probability_of_survival[0][0],
                                       expected_prob_of_survival_first_col_1)
         self.assertEqual(elongation_value, l3e_lo_product.elongation)
+
+        self.assertEqual(np.array([spin_axis_lat]), l3e_lo_product.spin_axis_lat)
+        self.assertEqual(np.array([spin_axis_lon]), l3e_lo_product.spin_axis_lon)

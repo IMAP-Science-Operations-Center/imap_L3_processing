@@ -5,6 +5,7 @@ from pathlib import Path
 
 import numpy as np
 
+from imap_l3_processing.glows.l3e.glows_l3e_call_arguments import GlowsL3eCallArguments
 from imap_l3_processing.models import DataProduct, DataProductVariable, InputMetadata
 
 EPOCH_CDF_VAR_NAME = "epoch"
@@ -13,6 +14,8 @@ SPIN_ANGLE_VAR_NAME = "spin_angle"
 PROBABILITY_OF_SURVIVAL_VAR_NAME = "surv_prob"
 ENERGY_LABEL_VAR_NAME = "energy_label"
 SPIN_ANGLE_LABEL_VAR_NAME = "spin_angle_label"
+SPIN_AXIS_LATITUDE_VAR_NAME = "spin_axis_latitude"
+SPIN_AXIS_LONGITUDE_VAR_NAME = "spin_axis_longitude"
 
 
 @dataclass
@@ -21,10 +24,12 @@ class GlowsL3EHiData(DataProduct):
     energy: np.ndarray
     spin_angle: np.ndarray
     probability_of_survival: np.ndarray
+    spin_axis_lat: np.ndarray
+    spin_axis_lon: np.ndarray
 
     @classmethod
     def convert_dat_to_glows_l3e_hi_product(cls, input_metadata: InputMetadata, file_path: Path,
-                                            epoch: np.ndarray[datetime]):
+                                            epoch: np.ndarray[datetime], args: GlowsL3eCallArguments):
         with open(file_path) as input_data:
             energy_line = [line for line in input_data.readlines() if line.startswith("#energy_grid")]
             energies = np.array([float(i) for i in re.findall(r"\d+.\d+", energy_line[0])])
@@ -36,7 +41,7 @@ class GlowsL3EHiData(DataProduct):
         input_metadata.start_date = epoch[0]
 
         return cls(input_metadata, epoch, energies, spin_angles,
-                   survival_probabilities)
+                   survival_probabilities, np.array([args.spin_axis_latitude]), np.array([args.spin_axis_longitude]))
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         spin_angle_labels = [f"Spin Angle Label {i}" for i in range(1, 361)]
@@ -48,4 +53,6 @@ class GlowsL3EHiData(DataProduct):
             DataProductVariable(PROBABILITY_OF_SURVIVAL_VAR_NAME, self.probability_of_survival),
             DataProductVariable(ENERGY_LABEL_VAR_NAME, energy_labels),
             DataProductVariable(SPIN_ANGLE_LABEL_VAR_NAME, spin_angle_labels),
+            DataProductVariable(SPIN_AXIS_LATITUDE_VAR_NAME, self.spin_axis_lat),
+            DataProductVariable(SPIN_AXIS_LONGITUDE_VAR_NAME, self.spin_axis_lon),
         ]

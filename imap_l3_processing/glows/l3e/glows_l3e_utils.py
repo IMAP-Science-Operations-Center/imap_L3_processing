@@ -8,10 +8,11 @@ from imap_data_access import query
 
 from imap_l3_processing.constants import ONE_AU_IN_KM, TT2000_EPOCH, ONE_SECOND_IN_NANOSECONDS
 from imap_l3_processing.glows.l3bc.l3bc_toolkit.funcs import jd_fm_Carrington
+from imap_l3_processing.glows.l3e.glows_l3e_call_arguments import GlowsL3eCallArguments
 
 
 def determine_call_args_for_l3e_executable(start_date: datetime, repointing_midpoint: datetime,
-                                           elongation: float) -> list[str]:
+                                           elongation: float) -> GlowsL3eCallArguments:
     ephemeris_time = spiceypy.datetime2et(repointing_midpoint)
 
     [x, y, z, vx, vy, vz], _ = spiceypy.spkezr("IMAP", ephemeris_time, "ECLIPJ2000", "NONE", "SUN")
@@ -26,8 +27,22 @@ def determine_call_args_for_l3e_executable(start_date: datetime, repointing_midp
     formatted_date = start_date.strftime("%Y%m%d_%H%M%S")
     decimal_date = _decimal_time(repointing_midpoint)
 
-    return f"{formatted_date} {decimal_date} {radius / ONE_AU_IN_KM} {np.rad2deg(longitude) % 360} {np.rad2deg(latitude)} {vx} {vy} {vz} {np.rad2deg(spin_axis_long) % 360} {spin_axis_lat:.4f} {elongation:.3f}".split(
-        " ")
+    return GlowsL3eCallArguments(
+        formatted_date=formatted_date,
+        decimal_date=decimal_date,
+        spacecraft_radius=radius / ONE_AU_IN_KM,
+        spacecraft_longitude=np.rad2deg(longitude) % 360,
+        spacecraft_latitude=np.rad2deg(latitude) % 360,
+        spacecraft_velocity_x=vx,
+        spacecraft_velocity_y=vy,
+        spacecraft_velocity_z=vz,
+        spin_axis_longitude=np.rad2deg(spin_axis_long) % 360,
+        spin_axis_latitude=spin_axis_lat,
+        elongation=elongation
+    )
+
+    # return f"{formatted_date} {decimal_date} {radius / ONE_AU_IN_KM} {np.rad2deg(longitude) % 360} {np.rad2deg(latitude)} {vx} {vy} {vz} {np.rad2deg(spin_axis_long) % 360} {spin_axis_lat:.4f} {elongation:.3f}".split(
+    #     " ")
 
 
 def _decimal_time(t: datetime) -> str:

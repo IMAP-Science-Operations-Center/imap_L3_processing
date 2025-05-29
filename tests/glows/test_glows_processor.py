@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from copy import deepcopy
 from dataclasses import replace
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 from subprocess import CalledProcessError, CompletedProcess
 from unittest.mock import patch, Mock, sentinel, call, mock_open, MagicMock
@@ -24,6 +24,7 @@ from imap_l3_processing.glows.l3bc.cannot_process_carrington_rotation_error impo
 from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDependencies
 from imap_l3_processing.glows.l3d.glows_l3d_dependencies import GlowsL3DDependencies
 from imap_l3_processing.glows.l3d.utils import PATH_TO_L3D_TOOLKIT
+from imap_l3_processing.glows.l3e.glows_l3e_call_arguments import GlowsL3eCallArguments
 from imap_l3_processing.glows.l3e.glows_l3e_dependencies import GlowsL3EDependencies
 from imap_l3_processing.glows.l3e.glows_l3e_hi_model import GlowsL3EHiData
 from imap_l3_processing.glows.l3e.glows_l3e_lo_model import GlowsL3ELoData
@@ -419,7 +420,9 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
         ultra_args = [["20241007_000000", "date.001", "vx", "vy", "vz", "30.000"],
                       ["20241008_000000", "date.002", "vx", "vy", "vz", "30.000"]]
 
-        mock_determine_call_args.side_effect = ultra_args
+        call_args_object = MagicMock(spec=GlowsL3eCallArguments)
+        call_args_object.to_argument_list.side_effect = ultra_args
+        mock_determine_call_args.side_effect = [call_args_object, call_args_object]
 
         mock_convert_dat_to_glows_l3e_ul_product.side_effect = [sentinel.ultra_data_1, sentinel.ultra_data_2]
 
@@ -452,11 +455,9 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
 
         mock_convert_dat_to_glows_l3e_ul_product.assert_has_calls([
             call(input_metadata, first_output_data_path,
-                 np.array([epoch_1]),
-                 np.array([epoch_deltas[0]])),
+                 np.array([epoch_1]), call_args_object),
             call(input_metadata, second_output_data_path,
-                 np.array([epoch_2]),
-                 np.array(epoch_deltas[1]))])
+                 np.array([epoch_2]), call_args_object)])
 
         expected_first_data_path = "imap_glows_l3e_survival-probability-ul-raw_20241007-repoint00020_v001.dat"
         expected_second_data_path = "imap_glows_l3e_survival-probability-ul-raw_20241008-repoint00021_v001.dat"
@@ -538,7 +539,9 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
                 hi_args = [["20241007_000000", "date.001", "vx", "vy", "vz", elongation],
                            ["20241008_000000", "date.002", "vx", "vy", "vz", elongation]]
 
-                mock_determine_call_args.side_effect = hi_args
+                call_args_object = MagicMock(spec=GlowsL3eCallArguments)
+                call_args_object.to_argument_list.side_effect = hi_args
+                mock_determine_call_args.side_effect = [call_args_object, call_args_object]
 
                 mock_convert_dat_to_glows_l3e_hi_product.side_effect = [sentinel.hi_data_1, sentinel.hi_data_2]
 
@@ -574,9 +577,9 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
 
                 mock_convert_dat_to_glows_l3e_hi_product.assert_has_calls([
                     call(input_metadata, Path(first_output_data_path),
-                         np.array([epoch_1]), np.array([epoch_deltas[0]])),
+                         np.array([epoch_1]), call_args_object),
                     call(input_metadata, Path(second_output_data_path),
-                         np.array([epoch_2]), np.array([epoch_deltas[1]]))])
+                         np.array([epoch_2]), call_args_object)])
 
                 mock_save_data.assert_has_calls([call(sentinel.hi_data_1), call(sentinel.hi_data_2)])
                 survival_data_product: GlowsL3EHiData = mock_save_data.call_args_list[0].args[0]
@@ -649,7 +652,9 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
             ["20241007_000000", "date.100", "vx", "vy", "vz", "75.000"],
             ["20241008_000000", "date.200", "vx", "vy", "vz", "105.000"]]
 
-        mock_determine_call_args.side_effect = lo_call_args
+        call_args_object = MagicMock(spec=GlowsL3eCallArguments)
+        call_args_object.to_argument_list.side_effect = lo_call_args
+        mock_determine_call_args.side_effect = [call_args_object, call_args_object]
 
         lo_data_1 = Mock()
         lo_data_2 = Mock()
@@ -689,11 +694,9 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
 
         mock_convert_dat_to_glows_l3e_lo_product.assert_has_calls([
             call(input_metadata, Path(first_output_file_path),
-                 np.array([epoch_1.astype(datetime)]),
-                 np.array([epoch_deltas[0].astype(timedelta)]), 75),
+                 np.array([epoch_1.astype(datetime)]), 75, call_args_object),
             call(input_metadata, Path(second_output_file_path),
-                 np.array([epoch_2.astype(datetime)]),
-                 np.array([epoch_deltas[1].astype(timedelta)]), 105),
+                 np.array([epoch_2.astype(datetime)]), 105, call_args_object),
         ])
 
         expected_first_output_file_path = "imap_glows_l3e_survival-probability-lo-raw_20241007-repoint00020_v001.dat"
@@ -768,7 +771,9 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
             ["20241007_000000", "date.100", "vx", "vy", "vz", "75.000"],
             ["20241008_000000", "date.200", "vx", "vy", "vz", "105.000"]]
 
-        mock_determine_call_args.side_effect = lo_call_args
+        call_args_object = MagicMock(spec=GlowsL3eCallArguments)
+        call_args_object.to_argument_list.side_effect = lo_call_args
+        mock_determine_call_args.side_effect = [call_args_object, call_args_object]
 
         expected_cdf_output = "imap_glows_l3e_survival-probability-lo_20241008-repoint00021_v001.cdf"
 
@@ -808,11 +813,9 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
 
         mock_convert_dat_to_glows_l3e_lo_product.assert_has_calls([
             call(input_metadata, Path("probSur.Imap.Lo_20241007_000000_date.100_75.00.dat"),
-                 np.array([epoch_1.astype(datetime)]),
-                 np.array([epoch_deltas[0].astype(timedelta)]), 75),
+                 np.array([epoch_1.astype(datetime)]), 75, call_args_object),
             call(input_metadata, second_output_dat_file,
-                 np.array([epoch_2.astype(datetime)]),
-                 np.array([epoch_deltas[1].astype(timedelta)]), 105),
+                 np.array([epoch_2.astype(datetime)]), 105, call_args_object),
         ])
 
         expected_second_output_dat_file = Path(

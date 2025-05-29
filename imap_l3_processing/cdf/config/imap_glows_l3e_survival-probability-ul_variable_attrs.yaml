@@ -63,6 +63,24 @@ surv_prob:
   FILLVAL: -1.0000E+31
   LABL_PTR_1: energy_label
   LABL_PTR_2: HEALPix_index_label
+spin_axis_latitude:
+  NAME: spin_axis_latitude
+  DATA_TYPE: CDF_FLOAT
+  CATDESC: Latitude of spin axis
+  VAR_TYPE: metadata
+  RECORD_VARYING: RV
+  FIELDNAM: Spin Axis Latitude
+  FORMAT: F9.3
+  FILLVAL: -1.0000E+31
+spin_axis_longitude:
+  NAME: spin_axis_longitude
+  DATA_TYPE: CDF_FLOAT
+  CATDESC: Longitude of spin axis
+  VAR_TYPE: metadata
+  RECORD_VARYING: RV
+  FIELDNAM: Spin Axis Longitude
+  FORMAT: F9.3
+  FILLVAL: -1.0000E+31
 energy_label:
   NAME: energy_label
   DATA_TYPE: CDF_CHAR

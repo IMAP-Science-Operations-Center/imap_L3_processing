@@ -1,9 +1,10 @@
 import unittest
 from datetime import datetime
-from unittest.mock import sentinel, Mock
+from unittest.mock import sentinel, Mock, MagicMock
 
 import numpy as np
 
+from imap_l3_processing.glows.l3e.glows_l3e_call_arguments import GlowsL3eCallArguments
 from imap_l3_processing.glows.l3e.glows_l3e_ultra_model import GlowsL3EUltraData
 from imap_l3_processing.models import DataProductVariable
 from tests.test_helpers import get_test_instrument_team_data_path
@@ -16,7 +17,9 @@ class TestL3eUltraModel(unittest.TestCase):
             sentinel.epoch,
             sentinel.energy,
             sentinel.healpix_index,
-            sentinel.probability_of_survival
+            sentinel.probability_of_survival,
+            sentinel.spin_axis_latitude,
+            sentinel.spin_axis_longitude
         )
 
         expected_energy_labels = ['Energy Label 1', 'Energy Label 2', 'Energy Label 3', 'Energy Label 4',
@@ -36,6 +39,8 @@ class TestL3eUltraModel(unittest.TestCase):
             DataProductVariable("surv_prob", sentinel.probability_of_survival),
             DataProductVariable("energy_label", expected_energy_labels),
             DataProductVariable("healpix_index_label", expected_healpix_labels),
+            DataProductVariable("spin_axis_latitude", np.array([sentinel.spin_axis_latitude])),
+            DataProductVariable("spin_axis_longitude", np.array([sentinel.spin_axis_longitude]))
         ]
 
         self.assertEqual(expected_data_products, data_products)
@@ -71,9 +76,18 @@ class TestL3eUltraModel(unittest.TestCase):
         expected_heal_pix = np.arange(0, 3072)
         mock_metadata = Mock()
 
+        spin_axis_lat = 45.0
+        spin_axis_lon = 90.0
+
+        args = MagicMock(spec=GlowsL3eCallArguments)
+        args.spin_axis_latitude = spin_axis_lat
+        args.spin_axis_longitude = spin_axis_lon
+
         l3e_ul_product: GlowsL3EUltraData = GlowsL3EUltraData.convert_dat_to_glows_l3e_ul_product(mock_metadata,
                                                                                                   ul_file_path,
-                                                                                                  expected_epoch)
+                                                                                                  expected_epoch,
+                                                                                                  args)
+
         self.assertEqual(l3e_ul_product.input_metadata.start_date, expected_epoch[0])
         self.assertEqual(expected_epoch, l3e_ul_product.epoch)
 
@@ -90,3 +104,6 @@ class TestL3eUltraModel(unittest.TestCase):
 
         np.testing.assert_array_equal(l3e_ul_product.probability_of_survival[0].T[3071, :],
                                       row_3071_expected_probability_of_survival)
+
+        self.assertEqual(np.array([spin_axis_lat]), l3e_ul_product.spin_axis_lat)
+        self.assertEqual(np.array([spin_axis_lon]), l3e_ul_product.spin_axis_lon)
