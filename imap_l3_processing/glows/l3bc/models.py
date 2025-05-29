@@ -65,6 +65,7 @@ class GlowsL3BIonizationRate(DataProduct):
         parent_file_names = []
         parent_file_names += collect_file_names(model['header']['ancillary_data_files'])
         parent_file_names += collect_file_names(model['header']['external_dependeciens'])
+        parent_file_names += collect_file_names(model['header']['l3a_input_files_name'])
         return cls(
             input_metadata=input_metadata,
             parent_file_names=parent_file_names,

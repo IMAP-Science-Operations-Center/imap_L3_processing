@@ -128,14 +128,14 @@ if __name__ == "__main__":
                  '{"type": "science", "files": ["imap_mag_l1d_norm-mago_20250630_v001.cdf"]}'
                  ']'
                  ])
-        case "codice", descriptor if "3d-instrument-frame" in descriptor:
+        case "codice", descriptor if "3d-distribution" in descriptor:
             species = descriptor.split("-")[1]
             assert species in ["hplus", "heplus", "heplus2", "oplus6"], NotImplementedError(
                 "Target instrument or product not implemented")
 
             subprocess.run(
                 [sys.executable, 'imap_l3_data_processor.py', '--instrument', 'codice', '--data-level', 'l3a',
-                 '--descriptor', f'lo-{species}-3d-instrument-frame', '--start-date', '20241110', '--version', 'v000',
+                 '--descriptor', f'lo-{species}-3d-distribution', '--start-date', '20241110', '--version', 'v000',
                  '--dependency',
                  '['
                  '{"type": "science", "files": ["imap_codice_l1a_lo-sw-priority_20241110_v002.cdf"]},'

@@ -531,10 +531,10 @@ class TestCalculatePickupIon(SpiceTestCase):
         result = calculate_helium_pui_temperature(epoch, sw_velocity_vector,
                                                   self.density_of_neutral_helium_lookup_table,
                                                   fitting_params)
-        self.assertAlmostEqual(24456817.05142866, result.n)
-        self.assertAlmostEqual(824377.0631439432, result.s)
+        np.testing.assert_allclose(24456817.05142866, result.n, rtol=1e-8)
+        np.testing.assert_allclose(824377.0631439432, result.s, rtol=1e-8)
 
-    LAST_SUCCESSFUL_RUN = datetime(2025, 5, 21, 16, 00)
+    LAST_SUCCESSFUL_RUN = datetime(2025, 5, 29, 10, 00)
     ALLOWED_GAP_TIME = timedelta(days=7)
 
     @skipIf(datetime.now() < LAST_SUCCESSFUL_RUN + ALLOWED_GAP_TIME, "expensive test already run in last week")

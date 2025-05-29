@@ -720,7 +720,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
                                        start_date=Mock(spec=datetime),
                                        end_date=Mock(spec=datetime),
                                        version='v02',
-                                       descriptor=f'lo-{species}-3d-instrument-frame')
+                                       descriptor=f'lo-{species}-3d-distribution')
         mock_spiceypy.ktotal.return_value = 0
 
         mock_save_data.return_value = "file1"
