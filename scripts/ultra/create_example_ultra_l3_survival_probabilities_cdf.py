@@ -7,6 +7,7 @@ from astropy_healpix import HEALPix
 from spacepy import pycdf
 from spacepy.pycdf import CDF
 
+from imap_l3_processing.glows.l3e.glows_l3e_ultra_model import HEALPIX_INDEX_VAR_NAME, PROBABILITY_OF_SURVIVAL_VAR_NAME
 from tests.test_helpers import get_test_data_path
 
 
@@ -46,15 +47,15 @@ def create_survival_probabilities_file(glows_file_path: Path, date_for_file: dat
         c['energy'].attrs["UNITS"] = energy_units
         c.new("latitude", latitude, pycdf.const.CDF_FLOAT, recVary=False)
         c.new("longitude", longitude, pycdf.const.CDF_FLOAT, recVary=False)
-        c.new("healpix_index", output_healpix_index, pycdf.const.CDF_INT2, recVary=False)
-        c.new("probability_of_survival", np.array(output_survival_probabilities)[np.newaxis, ...],
+        c.new(HEALPIX_INDEX_VAR_NAME, output_healpix_index, pycdf.const.CDF_INT2, recVary=False)
+        c.new(PROBABILITY_OF_SURVIVAL_VAR_NAME, np.array(output_survival_probabilities)[np.newaxis, ...],
               pycdf.const.CDF_FLOAT)
 
         c["energy"].attrs["FILLVAL"] = -1e31
         c["latitude"].attrs["FILLVAL"] = -1e31
         c["longitude"].attrs["FILLVAL"] = -1e31
-        c["healpix_index"].attrs["FILLVAL"] = -32768
-        c["probability_of_survival"].attrs["FILLVAL"] = -1e31
+        c[HEALPIX_INDEX_VAR_NAME].attrs["FILLVAL"] = -32768
+        c[PROBABILITY_OF_SURVIVAL_VAR_NAME].attrs["FILLVAL"] = -1e31
 
     return survival_probabilities
 
