@@ -1,11 +1,11 @@
 import unittest
 
-from imap_l3_processing.glows.l3bc.science.filter_out_bad_days import filter_out_bad_days
+from imap_l3_processing.glows.l3bc.science.filter_out_bad_days import filter_l3a_files
 from tests.test_helpers import get_test_data_path
 
 
-class TestUtils(unittest.TestCase):
-    def test_filter_out_bad_days(self):
+class TestFilterL3aFiles(unittest.TestCase):
+    def test_filter_l3a_files(self):
         l3a_data = [
             create_l3a_dict("2010-01-05 00:00:00", "2010-01-05 07:28:00"),
             create_l3a_dict("2010-01-06 00:00:00", "2010-01-06 07:28:00"),
@@ -14,7 +14,8 @@ class TestUtils(unittest.TestCase):
             create_l3a_dict("2010-01-15 00:00:00", "2010-01-15 07:28:00"),
             create_l3a_dict("2010-01-16 00:00:00", "2010-01-16 07:28:00"),
             create_l3a_dict("2010-01-19 00:00:00", "2010-01-20 00:00:00"),
-            create_l3a_dict("2010-01-30 00:00:00", "2010-01-30 07:28:00")
+            create_l3a_dict("2010-01-30 00:00:00", "2010-01-30 07:28:00"),
+            create_l3a_dict("2010-01-30 23:00:00", "2010-01-30 23:59:00")
         ]
 
         expected_filtered_list = [
@@ -25,8 +26,8 @@ class TestUtils(unittest.TestCase):
             create_l3a_dict("2010-01-30 00:00:00", "2010-01-30 07:28:00"),
         ]
 
-        filtered_list = filter_out_bad_days(l3a_data=l3a_data, bad_day_list_path=get_test_data_path(
-            "glows") / "imap_glows_bad-days-list_v001.dat")
+        filtered_list = filter_l3a_files(l3a_data=l3a_data, bad_day_list_path=get_test_data_path(
+            "glows") / "imap_glows_bad-days-list_v001.dat", cr=2092)
         self.assertEqual(expected_filtered_list, filtered_list)
 
 
