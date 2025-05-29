@@ -8,6 +8,7 @@ import numpy as np
 from spacepy import pycdf
 from spacepy.pycdf import CDF
 
+from imap_l3_processing.glows.l3e.glows_l3e_hi_model import PROBABILITY_OF_SURVIVAL_VAR_NAME
 from tests.test_helpers import get_test_data_path
 
 
@@ -32,12 +33,13 @@ def create_survival_probabilities_file(glows_file_path: Path, date_for_file: dat
         c.new("energy", energies, pycdf.const.CDF_FLOAT, recVary=False)
         c['energy'].attrs["UNITS"] = energy_units
         c.new("spin_angle", spin_angles, pycdf.const.CDF_FLOAT, recVary=False)
-        c.new("probability_of_survival", np.array(survival_probabilities)[np.newaxis, ...], pycdf.const.CDF_FLOAT,
+        c.new(PROBABILITY_OF_SURVIVAL_VAR_NAME, np.array(survival_probabilities)[np.newaxis, ...],
+              pycdf.const.CDF_FLOAT,
               compress=pycdf.const.GZIP_COMPRESSION)
 
         c["energy"].attrs["FILLVAL"] = -1e31
         c["spin_angle"].attrs["FILLVAL"] = -1e31
-        c["probability_of_survival"].attrs["FILLVAL"] = -1e31
+        c[PROBABILITY_OF_SURVIVAL_VAR_NAME].attrs["FILLVAL"] = -1e31
 
     return survival_probabilities
 
