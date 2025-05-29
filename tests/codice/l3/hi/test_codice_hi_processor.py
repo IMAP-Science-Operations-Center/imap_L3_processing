@@ -11,6 +11,7 @@ from imap_l3_processing.codice.l3.hi.direct_event.science.tof_lookup import TOFL
 from imap_l3_processing.codice.l3.hi.models import PriorityEventL2, CodiceL2HiData, CodiceHiL2SectoredIntensitiesData, \
     CODICE_HI_NUM_L2_PRIORITIES
 from imap_l3_processing.codice.l3.hi.pitch_angle.codice_pitch_angle_dependencies import CodicePitchAngleDependencies
+from imap_l3_processing.codice.l3.lo.constants import CODICE_SPIN_ANGLE_OFFSET_FROM_MAG_BOOM
 from imap_l3_processing.models import InputMetadata
 from tests.test_helpers import NumpyArrayMatcher, get_test_instrument_team_data_path, get_test_data_path
 
@@ -134,7 +135,8 @@ class TestCodiceHiProcessor(unittest.TestCase):
         np.testing.assert_array_equal(codice_direct_event_product.ssd_energy_minus, reshaped_l2_ssd_energy_minus)
 
         np.testing.assert_array_equal(codice_direct_event_product.ssd_id, reshaped_l2_ssd_id)
-        np.testing.assert_array_equal(codice_direct_event_product.spin_angle, reshaped_l2_spin_angle)
+        np.testing.assert_array_equal(codice_direct_event_product.spin_angle,
+                                      (reshaped_l2_spin_angle + CODICE_SPIN_ANGLE_OFFSET_FROM_MAG_BOOM) % 360)
         np.testing.assert_array_equal(codice_direct_event_product.spin_number, reshaped_l2_spin_number)
         np.testing.assert_array_equal(codice_direct_event_product.tof, reshaped_l2_time_of_flight)
         np.testing.assert_array_equal(codice_direct_event_product.type, reshaped_l2_type)

@@ -16,6 +16,7 @@ from imap_l3_processing.codice.l3.lo.codice_lo_l3a_partial_densities_dependencie
     CodiceLoL3aPartialDensitiesDependencies
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_ratios_dependencies import CodiceLoL3aRatiosDependencies
 from imap_l3_processing.codice.l3.lo.codice_lo_processor import CodiceLoProcessor
+from imap_l3_processing.codice.l3.lo.constants import CODICE_SPIN_ANGLE_OFFSET_FROM_MAG_BOOM
 from imap_l3_processing.codice.l3.lo.direct_events.science.angle_lookup import SpinAngleLookup
 from imap_l3_processing.codice.l3.lo.direct_events.science.efficiency_lookup import EfficiencyLookup
 from imap_l3_processing.codice.l3.lo.direct_events.science.energy_lookup import EnergyLookup
@@ -493,7 +494,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
          expected_multi_flag,
          expected_pha_type,
          expected_tof,
-         expected_spin_angle,
+         reshaped_l2_spin_angle,
          expected_elevation,
          expected_position,
          expected_energy_step,
@@ -510,6 +511,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
                 zip(mass_per_charge_side_effect, mass_side_effect)):
             priority_event_kwargs = {f.name: rng.random((len(epochs), event_buffer_size)) for f in
                                      fields(PriorityEvent)}
+            priority_event_kwargs["spin_angle"] *= 360
             priority_event = PriorityEvent(**priority_event_kwargs)
             priority_event.data_quality = rng.random((len(epochs)))
             priority_event.num_events = rng.random((len(epochs)))
@@ -525,7 +527,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
             expected_apd_id[:, i, :] = np.copy(priority_event.apd_id)
             expected_multi_flag[:, i, :] = np.copy(priority_event.multi_flag)
             expected_tof[:, i, :] = np.copy(priority_event.tof)
-            expected_spin_angle[:, i, :] = np.copy(priority_event.spin_angle)
+            reshaped_l2_spin_angle[:, i, :] = np.copy(priority_event.spin_angle)
             expected_elevation[:, i, :] = np.copy(priority_event.elevation)
             expected_position[:, i, :] = np.copy(priority_event.position)
             expected_mass[:, i, :] = np.copy(mass)
@@ -590,7 +592,8 @@ class TestCodiceLoProcessor(unittest.TestCase):
 
         np.testing.assert_array_equal(l3a_direct_event_data_product.normalization, expected_normalization)
 
-        np.testing.assert_array_equal(expected_spin_angle, l3a_direct_event_data_product.spin_angle)
+        np.testing.assert_array_equal((reshaped_l2_spin_angle + CODICE_SPIN_ANGLE_OFFSET_FROM_MAG_BOOM) % 360,
+                                      l3a_direct_event_data_product.spin_angle)
         np.testing.assert_array_equal(expected_elevation, l3a_direct_event_data_product.elevation)
         np.testing.assert_array_equal(expected_position, l3a_direct_event_data_product.position)
         np.testing.assert_array_equal(expected_apd_energy, l3a_direct_event_data_product.apd_energy)
@@ -630,7 +633,8 @@ class TestCodiceLoProcessor(unittest.TestCase):
             apd_id=sentinel.l3a_de_apd_id,
             mass=sentinel.l3a_de_mass,
             mass_per_charge=sentinel.l3a_de_mass_per_charge,
-            event_energy=sentinel.l3a_de_energy,
+            apd_energy=sentinel.l3a_de_apd_energy,
+            energy_step=sentinel.l3a_de_energy_step,
             spin_angle=sentinel.l3a_de_spin_angle,
             normalization=sentinel.l3a_normalization,
             num_events=sentinel.l3a_num_events,
@@ -666,7 +670,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
         mock_rebin.assert_called_once_with(
             mass=sentinel.l3a_de_mass,
             mass_per_charge=sentinel.l3a_de_mass_per_charge,
-            energy=sentinel.l3a_de_energy,
+            energy=sentinel.l3a_de_energy_step,
             spin_angle=sentinel.l3a_de_spin_angle,
             position=sentinel.l3a_de_position,
             mass_species_bin_lookup=dependencies.mass_species_bin_lookup,
