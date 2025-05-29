@@ -356,8 +356,8 @@ class TestUtils(TestCase):
         test_cases = [
             (l1c_90sensor_file_paths, "-90", "20201001", "20201003", "hi"),
             (l1c_45sensor_file_paths, "-45", "20210507", "20210509", "hi"),
-            (l1c_90sensor_file_paths, "-90", "20201001", "20201003", "ultra"),
-            (l1c_45sensor_file_paths, "-45", "20210507", "20210509", "ultra"),
+            (l1c_90sensor_file_paths, "", "20201001", "20201003", "ultra"),
+            (l1c_45sensor_file_paths, "", "20210507", "20210509", "ultra"),
             (l1c_lo_file_paths, "", "20210507", "20210509", "lo"),
         ]
 

@@ -57,8 +57,7 @@ class TestUltraL3Dependencies(unittest.TestCase):
             expected_data_dictionary = {"l1c_path_1": sentinel.l1c_path_1,
                                         "l1c_path_2": sentinel.l1c_path_2,
                                         "l1c_path_3": sentinel.l1c_path_3, }
-            data_version_to_produce = ""
-            mock_ultra_l2.assert_has_calls([call(expected_data_dictionary, data_version_to_produce)])
+            mock_ultra_l2.assert_has_calls([call(expected_data_dictionary)])
 
             mock_find_glows.assert_called_with(l1c_input_paths, "ultra")
             expected_parent_file_paths = [sentinel.imap_l2_map_path, *l1c_input_paths, *glows_file_paths]
