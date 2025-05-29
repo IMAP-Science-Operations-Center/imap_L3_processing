@@ -44,7 +44,7 @@ class CodiceLoProcessor(Processor):
         elif self.input_metadata.descriptor == "lo-sw-abundances":
             dependencies = CodiceLoL3aRatiosDependencies.fetch_dependencies(self.dependencies)
             data_product = self.process_l3a_abundances(dependencies)
-        elif "3d-instrument-frame" in self.input_metadata.descriptor:
+        elif "3d-distribution" in self.input_metadata.descriptor:
             species = self.input_metadata.descriptor.split('-')[1]
             dependencies = CodiceLoL3a3dDistributionsDependencies.fetch_dependencies(self.dependencies, species)
             data_product = self.process_l3a_3d_distribution_product(dependencies)
