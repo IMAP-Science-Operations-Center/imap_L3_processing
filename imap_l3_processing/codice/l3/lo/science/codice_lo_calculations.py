@@ -89,6 +89,9 @@ def rebin_to_counts_by_species_elevation_and_spin_sector(num_events: np.ndarray,
 
     for epoch_i in range(num_epochs):
         for priority_i in range(num_priorities):
+            if num_events[epoch_i, priority_i] is np.ma.masked:
+                continue
+                
             for event_i in range(num_events[epoch_i, priority_i]):
                 indices_of_event = epoch_i, priority_i, event_i
                 if (np.isnan(energy[*indices_of_event]) or np.isnan(spin_angle[*indices_of_event]) or

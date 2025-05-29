@@ -173,7 +173,7 @@ class TestCodiceLoCalculations(unittest.TestCase):
         # first 3 are first priority, last is second priority
         expected_species_returned = [
             "He+", "Fe", "He+", "O+5",
-            "Mg", "Mg", None
+            "Mg", None
         ]
         mock_species_mass_range_lookup = Mock(spec=MassSpeciesBinLookup)
         mock_species_mass_range_lookup.get_species.side_effect = expected_species_returned
@@ -186,6 +186,7 @@ class TestCodiceLoCalculations(unittest.TestCase):
         mock_species_mass_range_lookup.get_species_index = mock_get_species_index
 
         num_events = np.array([[3, 1], [3, 1]])
+        num_events = np.ma.masked_array(num_events, mask=[[False, False], [False, True]])
 
         mock_energy_lookup = Mock(spec=EnergyLookup)
         mock_energy_lookup.get_energy_index.side_effect = [0, 100, 0, 0, 127, 127, 0]
@@ -239,8 +240,6 @@ class TestCodiceLoCalculations(unittest.TestCase):
 
             call(mass[1, 0, 0], mass_per_charge[1, 0, 0]),
             call(mass[1, 0, 2], mass_per_charge[1, 0, 2]),
-
-            call(mass[1, 1, 0], mass_per_charge[1, 1, 0]),
         ])
 
         mock_energy_lookup.get_energy_index.assert_has_calls([
@@ -248,7 +247,6 @@ class TestCodiceLoCalculations(unittest.TestCase):
             call(1234.2),
             call(0.0),
             call(0.0),
-            call(345.2),
             call(345.2),
         ])
 
@@ -273,7 +271,7 @@ class TestCodiceLoCalculations(unittest.TestCase):
         np.testing.assert_array_equal(actual_counts_3d_data.get_3d_distribution("Fe"), expected_fe_counts)
 
         expected_mg_counts = np.zeros(rebinned_shape)
-        expected_mg_counts[1, 0, 8, 2, 127] = 2
+        expected_mg_counts[1, 0, 8, 2, 127] = 1
         np.testing.assert_array_equal(actual_counts_3d_data.get_3d_distribution("Mg"), expected_mg_counts)
 
         expected_o_counts = np.zeros(rebinned_shape)

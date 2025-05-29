@@ -134,7 +134,7 @@ def create_codice_lo_l3a_direct_events_cdf(l1a_paths: Optional[tuple[Path, Path]
     else:
         codice_lo_l1a_nsw_priority_path, codice_lo_l1a_sw_priority_path = l1a_paths
 
-    energy_lookup_path = get_test_data_path('codice/imap_codice_lo-esa-to-energy-per_charge_20241110_v001.csv')
+    energy_lookup_path = get_test_data_path('codice/imap_codice_lo-energy-per-charge_20241110_v001.csv')
     mass_coefficient_path = get_test_data_path('codice/imap_codice_mass-coefficient-lookup_20241110_v002.csv')
 
     deps = CodiceLoL3aDirectEventsDependencies.from_file_paths(
@@ -214,7 +214,7 @@ def create_codice_lo_l3a_3d_distributions_cdf(species: str):
         mass_species_bin_lut=(get_test_data_path('codice/imap_codice_lo-mass-species-bin-lookup_20241110_v001.csv')),
         geometric_factors_lut=(get_test_data_path('codice/imap_codice_lo-geometric-factors_20241110_v001.csv')),
         efficiency_factors_lut=(create_efficiency_lookup(species)),
-        energy_per_charge_lut=get_test_data_path("codice/imap_codice_lo-esa-to-energy-per_charge_20241110_v001.csv"),
+        energy_per_charge_lut=get_test_data_path("codice/imap_codice_lo-energy-per-charge_20241110_v001.csv"),
         species=species
     )
 
