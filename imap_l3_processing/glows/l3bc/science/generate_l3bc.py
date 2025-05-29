@@ -25,6 +25,7 @@ def generate_l3bc(dependencies: GlowsL3BCDependencies):
     # Daily ionization rate from the daily light curves
     daily_ion_rate = []
     l3a_used_date = []
+    l3a_used = []
     for l3a in dependencies.l3a_data:
         ion_rate_daily = dir.DailyIonizationRate(
             dependencies.ancillary_files)  # daily ionization rate object initialization
@@ -33,6 +34,7 @@ def generate_l3bc(dependencies: GlowsL3BCDependencies):
             dependencies.ancillary_files)  # reading WawHelioIon-MP parameters for lightcurve to ionization rate conversion
         if flag == ion_rate_daily.settings['no_vg_point_flag']: continue
         l3a_used_date.append(ion_rate_daily.lcrv['date'])  # mean observation time
+        l3a_used.append(l3a['filename'])
         ion_rate_daily.calculate_daily_ionization_rate()  # conversion to the daily ionization rate profile
         daily_ion_rate.append(ion_rate_daily.ion['ion_rate'])
 
@@ -78,5 +80,5 @@ def generate_l3bc(dependencies: GlowsL3BCDependencies):
     solar_wind_Carr.read_l3b(l3b_dat)
     solar_wind_Carr.calculate_sw_profile()
     l3c_dat = solar_wind_Carr.get_dict()
-
+    l3b_dat['header']['l3a_input_files_name'] = l3a_used
     return l3b_dat, l3c_dat

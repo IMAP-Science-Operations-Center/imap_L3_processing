@@ -2,8 +2,8 @@ import json
 
 import requests
 
-INSTRUMENT = "glows"
-DATA_LEVEL = "l3b"
+INSTRUMENT = "swe"
+DATA_LEVEL = "l3"
 
 url = 'https://api.dev.imap-mission.com/batch-job'
 response = requests.get(url=url, params={'instrument': INSTRUMENT, 'data_level': DATA_LEVEL})

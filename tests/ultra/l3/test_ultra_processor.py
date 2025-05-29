@@ -54,7 +54,8 @@ class TestUltraProcessor(unittest.TestCase):
 
         mock_spiceypy.ktotal.return_value = 1
 
-        mock_spiceypy.kdata.return_value = [sentinel.spice_data_name]
+        fake_spice = Path("path/to/fake/spice.tls")
+        mock_spiceypy.kdata.return_value = [fake_spice]
 
         input_l2_map = _create_ultra_l2_data(epoch=[epoch], flux=input_map_flux, healpix_indices=healpix_indices)
 
@@ -194,7 +195,7 @@ class TestUltraProcessor(unittest.TestCase):
         self.assertIsInstance(actual_rectangular_data_product, RectangularIntensityDataProduct)
 
         self.assertEqual(4, len(actual_rectangular_data_product.parent_file_names))
-        self.assertEqual({input_l2_map_name, sentinel.spice_data_name, input_l1c_pset_name, input_glows_l3e_name},
+        self.assertEqual({input_l2_map_name, fake_spice.name, input_l1c_pset_name, input_glows_l3e_name},
                          set(actual_rectangular_data_product.parent_file_names))
 
         actual_rectangular_data = actual_rectangular_data_product.data

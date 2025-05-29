@@ -2,12 +2,12 @@ from datetime import datetime
 from pathlib import Path
 
 import numpy as np
+import spiceypy
 from astropy.time import Time
 from imap_data_access import query
 
 from imap_l3_processing.constants import ONE_AU_IN_KM, TT2000_EPOCH, ONE_SECOND_IN_NANOSECONDS
 from imap_l3_processing.glows.l3bc.l3bc_toolkit.funcs import jd_fm_Carrington
-from imap_l3_processing.spice_wrapper import spiceypy
 
 
 def determine_call_args_for_l3e_executable(start_date: datetime, repointing_midpoint: datetime,

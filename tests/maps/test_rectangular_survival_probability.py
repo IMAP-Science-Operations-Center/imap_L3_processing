@@ -1,4 +1,3 @@
-import unittest
 from datetime import datetime
 from unittest.mock import patch, sentinel, call, MagicMock
 
@@ -13,9 +12,10 @@ from imap_l3_processing.maps.map_models import GlowsL3eRectangularMapInputData, 
 from imap_l3_processing.maps.rectangular_survival_probability import Sensor, \
     RectangularSurvivalProbabilitySkyMap, RectangularSurvivalProbabilityPointingSet, \
     interpolate_angular_data_to_nearest_neighbor
+from tests.spice_test_case import SpiceTestCase
 
 
-class TestRectangularSurvivalProbability(unittest.TestCase):
+class TestRectangularSurvivalProbability(SpiceTestCase):
     def setUp(self):
         self.num_energies = 2
         self.epoch = datetime.now()

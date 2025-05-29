@@ -1,4 +1,3 @@
-import unittest
 from datetime import datetime
 from unittest.mock import sentinel, patch, call, Mock
 
@@ -12,9 +11,10 @@ from imap_l3_processing.maps.map_descriptors import PixelSize, parse_map_descrip
 from imap_l3_processing.maps.map_models import RectangularIntensityMapData
 from imap_l3_processing.maps.survival_probability_processing import process_survival_probabilities
 from tests.maps.test_builders import create_h1_l3_data, create_l1c_pset, create_l3e_pset
+from tests.spice_test_case import SpiceTestCase
 
 
-class TestSurvivalProbabilityProcessing(unittest.TestCase):
+class TestSurvivalProbabilityProcessing(SpiceTestCase):
     @patch('imap_l3_processing.maps.survival_probability_processing.RectangularSurvivalProbabilitySkyMap')
     @patch('imap_l3_processing.maps.survival_probability_processing.RectangularSurvivalProbabilityPointingSet')
     @patch('imap_l3_processing.maps.survival_probability_processing.combine_glows_l3e_with_l1c_pointing')

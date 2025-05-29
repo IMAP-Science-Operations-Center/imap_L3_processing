@@ -3,6 +3,7 @@ from pathlib import Path
 
 import astropy_healpix.healpy as hp
 import numpy as np
+import spiceypy
 import xarray as xr
 from imap_processing.ena_maps.utils.coordinates import CoordNames
 from imap_processing.spice.time import str_to_et
@@ -10,7 +11,6 @@ from imap_processing.ultra.l1c.ultra_l1c_pset_bins import build_energy_bins
 from spacepy import pycdf
 from spacepy.pycdf import CDF, Var
 
-from imap_l3_processing.spice_wrapper import spiceypy
 from tests.test_helpers import get_run_local_data_path
 
 DEFAULT_RECT_SPACING_DEG_L1C = 0.5

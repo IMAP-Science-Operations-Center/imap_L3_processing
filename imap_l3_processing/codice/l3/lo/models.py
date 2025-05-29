@@ -10,8 +10,7 @@ from numpy import ndarray
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.cdf.cdf_utils import read_numeric_variable, read_variable_and_mask_fill_values
-from imap_l3_processing.codice.l3.lo.direct_events.science.mass_species_bin_lookup import MassSpeciesBinLookup, \
-    EventDirection
+from imap_l3_processing.codice.l3.lo.direct_events.science.mass_species_bin_lookup import MassSpeciesBinLookup
 from imap_l3_processing.models import DataProductVariable, DataProduct
 
 CODICE_LO_L2_NUM_PRIORITIES = 7
@@ -470,15 +469,15 @@ AZIMUTH_OR_ELEVATION = TypeVar("AZIMUTH_OR_ELEVATION")
 
 @dataclass
 class CodiceLo3dData:
-    data_in_3d_bins: np.ndarray[(SPECIES, EPOCH, PRIORITY, AZIMUTH_OR_ELEVATION, SPIN_ANGLE, ENERGY)] | np.ndarray[
-        (SPECIES, EPOCH, AZIMUTH_OR_ELEVATION, SPIN_ANGLE, ENERGY)]
+    data_in_3d_bins: np.ndarray[(SPECIES, EPOCH, PRIORITY, AZIMUTH_OR_ELEVATION, SPIN_ANGLE, ENERGY)] | \
+                     np.ndarray[(SPECIES, EPOCH, AZIMUTH_OR_ELEVATION, SPIN_ANGLE, ENERGY)]
     mass_bin_lookup: MassSpeciesBinLookup
     energy_per_charge: np.ndarray[(ENERGY,)]
     spin_angle: np.ndarray[(SPIN_ANGLE,)]
     azimuth_or_elevation: np.ndarray[(AZIMUTH_OR_ELEVATION,)]
 
-    def get_3d_distribution(self, species: str, event_direction: EventDirection) -> np.ndarray:
-        species_index = self.mass_bin_lookup.get_species_index(species, event_direction)
+    def get_3d_distribution(self, species: str) -> np.ndarray:
+        species_index = self.mass_bin_lookup.get_species_index(species)
         return self.data_in_3d_bins[species_index, ...]
 
 
@@ -488,8 +487,12 @@ ENERGY_DELTA_MINUS_VAR_NAME = "energy_delta_minus"
 SPIN_ANGLE_DELTA_VAR_NAME = "spin_angle_delta"
 ELEVATION_DELTA_VAR_NAME = "elevation_delta"
 
+ENERGY_LABEL_VAR_NAME = "energy_label"
+SPIN_ANGLE_LABEL_VAR_NAME = "spin_angle_label"
+ELEVATION_ANGLE_LABEL_VAR_NAME = "elevation_label"
 
-@dataclass()
+
+@dataclass
 class CodiceLoL3a3dDistributionDataProduct(DataProduct):
     epoch: np.ndarray
     epoch_delta: np.ndarray
@@ -500,6 +503,8 @@ class CodiceLoL3a3dDistributionDataProduct(DataProduct):
     energy: np.ndarray
     energy_delta_plus: np.ndarray
     energy_delta_minus: np.ndarray
+    species: str
+    species_data: np.ndarray
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
@@ -512,4 +517,8 @@ class CodiceLoL3a3dDistributionDataProduct(DataProduct):
             DataProductVariable(ENERGY_VAR_NAME, self.energy),
             DataProductVariable(ENERGY_DELTA_PLUS_VAR_NAME, self.energy_delta_plus),
             DataProductVariable(ENERGY_DELTA_MINUS_VAR_NAME, self.energy_delta_minus),
+            DataProductVariable(self.species, self.species_data),
+            DataProductVariable(ENERGY_LABEL_VAR_NAME, self.energy.astype(str)),
+            DataProductVariable(SPIN_ANGLE_LABEL_VAR_NAME, self.spin_angle.astype(str)),
+            DataProductVariable(ELEVATION_ANGLE_LABEL_VAR_NAME, self.elevation.astype(str)),
         ]

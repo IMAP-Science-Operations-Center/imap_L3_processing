@@ -5,16 +5,17 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 import numpy as np
+import spiceypy
 from spacepy.pycdf import CDF
 
-from imap_l3_processing.spice_wrapper import spiceypy
 from imap_l3_processing.swe.l3.models import SweL2Data, SwapiL3aProtonData, SweL1bData
 from imap_l3_processing.swe.l3.utils import read_swe_config, read_l2_swe_data, read_l3a_swapi_proton_data, \
     read_l1b_swe_data, compute_epoch_delta_in_ns
+from tests.spice_test_case import SpiceTestCase
 from tests.test_helpers import get_test_data_path
 
 
-class TestUtils(unittest.TestCase):
+class TestUtils(SpiceTestCase):
     def test_read_swe_config(self):
         result = read_swe_config(get_test_data_path('swe/example_swe_config.json'))
         self.assertEqual([0.0781351, 0.151448, 0.204686, 0.181759, 0.175125, 0.138312, 0.0697327],

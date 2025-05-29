@@ -8,12 +8,11 @@ from imap_processing.ena_maps.ena_maps import UltraPointingSet, HealpixSkyMap
 from imap_processing.ena_maps.utils.coordinates import CoordNames
 from imap_processing.spice import geometry
 
-from imap_l3_processing import spice_wrapper
 from imap_l3_processing.constants import TT2000_EPOCH
-from imap_l3_processing.spice_wrapper import furnish
 from imap_l3_processing.ultra.l3.models import UltraL1CPSet, UltraGlowsL3eData
 from imap_l3_processing.ultra.l3.science.ultra_survival_probability import UltraSurvivalProbability, \
     UltraSurvivalProbabilitySkyMap
+from tests.spice_test_case import SpiceTestCase
 
 
 class TestUltraSurvivalProbability(unittest.TestCase):
@@ -126,10 +125,8 @@ class TestUltraSurvivalProbability(unittest.TestCase):
                                              expected_survival_probabilities_values)
 
 
-class TestUltraSurvivalProbabilitySkyMap(unittest.TestCase):
+class TestUltraSurvivalProbabilitySkyMap(SpiceTestCase):
     def test_ultra_survival_probability_skymap(self):
-        spice_wrapper.furnished = False
-        furnish()
         pointing_set_nside = 2
         pointing_set_pixels = 12 * pointing_set_nside ** 2
         l1c_exposure_1 = np.full((1, 1, pointing_set_pixels), 0.5)

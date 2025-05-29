@@ -3,7 +3,6 @@ from __future__ import annotations
 import os
 import shutil
 import sys
-import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Optional, TypeVar
@@ -11,6 +10,7 @@ from unittest.mock import patch, Mock
 
 import imap_data_access
 import numpy as np
+import spiceypy
 import xarray as xr
 from imap_data_access.processing_input import AncillaryInput, ProcessingInputCollection, ScienceInput
 from spacepy.pycdf import CDF
@@ -26,10 +26,9 @@ from imap_l3_processing.codice.l3.lo.codice_lo_l3a_partial_densities_dependencie
     CodiceLoL3aPartialDensitiesDependencies
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_ratios_dependencies import CodiceLoL3aRatiosDependencies
 from imap_l3_processing.codice.l3.lo.codice_lo_processor import CodiceLoProcessor
-from imap_l3_processing.codice.l3.lo.direct_events.science.mass_coefficient_lookup import MassCoefficientLookup
-from imap_l3_processing.codice.l3.lo.models import CodiceLoL2SWSpeciesData, CodiceLoL2DirectEventData, \
-    CodiceLoL1aSWPriorityRates, CodiceLoL1aNSWPriorityRates
+from imap_l3_processing.codice.l3.lo.models import CodiceLoL2SWSpeciesData
 from imap_l3_processing.codice.l3.lo.sectored_intensities.science.mass_per_charge_lookup import MassPerChargeLookup
+from imap_l3_processing.constants import ONE_AU_IN_KM
 from imap_l3_processing.glows.glows_initializer import GlowsInitializer
 from imap_l3_processing.glows.glows_processor import GlowsProcessor
 from imap_l3_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
@@ -56,7 +55,6 @@ from imap_l3_processing.maps.hilo_l3_survival_dependencies import HiLoL3Survival
 from imap_l3_processing.maps.map_models import RectangularSpectralIndexDataProduct, RectangularIntensityDataProduct, \
     combine_rectangular_intensity_map_data, HealPixIntensityMapData, RectangularIntensityMapData
 from imap_l3_processing.models import InputMetadata
-from imap_l3_processing.spice_wrapper import spiceypy
 from imap_l3_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density import \
     AlphaTemperatureDensityCalibrationTable
 from imap_l3_processing.swapi.l3a.science.calculate_pickup_ion import DensityOfNeutralHeliumLookupTable
@@ -77,7 +75,7 @@ from imap_l3_processing.swe.swe_processor import SweProcessor
 from imap_l3_processing.ultra.l3.models import UltraL1CPSet, UltraGlowsL3eData
 from imap_l3_processing.ultra.l3.ultra_l3_dependencies import UltraL3Dependencies, UltraL3SpectralIndexDependencies
 from imap_l3_processing.ultra.l3.ultra_processor import UltraProcessor
-from imap_l3_processing.utils import save_data, read_l1d_mag_data
+from imap_l3_processing.utils import save_data, read_l1d_mag_data, furnish_local_spice
 from scripts.codice.create_fake_efficiency_ancillary import create_efficiency_lookup
 from scripts.codice.create_more_accurate_l3a_direct_event import create_more_accurate_l3a_direct_events_cdf
 from scripts.codice.create_more_accurate_l3a_direct_event_input import modify_l1a_priority_counts, \
@@ -129,8 +127,6 @@ def create_codice_lo_l3a_direct_events_cdf(l1a_paths: Optional[tuple[Path, Path]
     codice_lo_l2_direct_event_cdf_path = modify_l2_direct_events(
         get_test_instrument_team_data_path('codice/lo/imap_codice_l2_lo-direct-events_20241110_v002.cdf'))
 
-    codice_lo_l2_direct_events = CodiceLoL2DirectEventData.read_from_cdf(codice_lo_l2_direct_event_cdf_path)
-
     if l1a_paths is None:
         codice_lo_l1a_nsw_priority_path, codice_lo_l1a_sw_priority_path = modify_l1a_priority_counts(
             get_test_instrument_team_data_path('codice/lo/imap_codice_l1a_lo-nsw-priority_20241110_v002.cdf'),
@@ -138,18 +134,15 @@ def create_codice_lo_l3a_direct_events_cdf(l1a_paths: Optional[tuple[Path, Path]
     else:
         codice_lo_l1a_nsw_priority_path, codice_lo_l1a_sw_priority_path = l1a_paths
 
-    time.sleep(3)  # wait for files to close before trying to read them
+    energy_lookup_path = get_test_data_path('codice/imap_codice_lo-energy-per-charge_20241110_v001.csv')
+    mass_coefficient_path = get_test_data_path('codice/imap_codice_mass-coefficient-lookup_20241110_v002.csv')
 
-    codice_lo_l1a_sw_priority = CodiceLoL1aSWPriorityRates.read_from_cdf(codice_lo_l1a_sw_priority_path)
-    codice_lo_l1a_nsw_priority = CodiceLoL1aNSWPriorityRates.read_from_cdf(codice_lo_l1a_nsw_priority_path)
-
-    mass_coefficient_lookup = MassCoefficientLookup.read_from_csv(
-        get_test_data_path('codice/imap_codice_mass-coefficient-lookup_20241110_v002.csv'))
-
-    deps = CodiceLoL3aDirectEventsDependencies(codice_l2_direct_events=codice_lo_l2_direct_events,
-                                               codice_lo_l1a_sw_priority_rates=codice_lo_l1a_sw_priority,
-                                               codice_lo_l1a_nsw_priority_rates=codice_lo_l1a_nsw_priority,
-                                               mass_coefficient_lookup=mass_coefficient_lookup)
+    deps = CodiceLoL3aDirectEventsDependencies.from_file_paths(
+        sw_priority_rates_cdf=codice_lo_l1a_sw_priority_path,
+        nsw_priority_rates_cdf=codice_lo_l1a_nsw_priority_path,
+        direct_event_path=codice_lo_l2_direct_event_cdf_path,
+        mass_coefficients_file_path=mass_coefficient_path,
+        esa_to_energy_per_charge_file_path=energy_lookup_path, )
 
     input_metadata = InputMetadata(
         instrument='codice',
@@ -203,7 +196,7 @@ def create_codice_lo_l3a_abundances_cdf():
     return save_data(ratios_data, delete_if_present=True)
 
 
-def create_codice_lo_l3a_3d_distributions_cdf():
+def create_codice_lo_l3a_3d_distributions_cdf(species: str):
     l1a_paths = modify_l1a_priority_counts(
         get_test_instrument_team_data_path('codice/lo/imap_codice_l1a_lo-nsw-priority_20241110_v002.cdf'),
         get_test_instrument_team_data_path('codice/lo/imap_codice_l1a_lo-sw-priority_20241110_v002.cdf'))
@@ -214,18 +207,15 @@ def create_codice_lo_l3a_3d_distributions_cdf():
 
     codice_lo_l1a_nsw_priority_path, codice_lo_l1a_sw_priority_path = l1a_paths
 
-    mass_species_bin_path = get_test_data_path('codice/imap_codice_lo-mass-species-bin-lookup_20241110_v001.csv')
-    geometric_factors_path = get_test_data_path('codice/imap_codice_lo-geometric-factors_20241110_v001.csv')
-
-    efficiency_factors_lut_path = create_efficiency_lookup(mass_species_bin_path)
-
     deps = CodiceLoL3a3dDistributionsDependencies.from_file_paths(
         l3a_file_path=accurate_codice_lo_l3a_direct_event_path,
         l1a_sw_file_path=codice_lo_l1a_sw_priority_path,
         l1a_nsw_file_path=codice_lo_l1a_nsw_priority_path,
-        mass_species_bin_lut=mass_species_bin_path,
-        geometric_factors_lut=geometric_factors_path,
-        efficiency_factors_lut=efficiency_factors_lut_path,
+        mass_species_bin_lut=(get_test_data_path('codice/imap_codice_lo-mass-species-bin-lookup_20241110_v001.csv')),
+        geometric_factors_lut=(get_test_data_path('codice/imap_codice_lo-geometric-factors_20241110_v001.csv')),
+        efficiency_factors_lut=(create_efficiency_lookup(species)),
+        energy_per_charge_lut=get_test_data_path("codice/imap_codice_lo-energy-per-charge_20241110_v001.csv"),
+        species=species
     )
 
     input_metadata = InputMetadata(
@@ -234,7 +224,7 @@ def create_codice_lo_l3a_3d_distributions_cdf():
         start_date=datetime(2024, 11, 10),
         end_date=datetime(2025, 1, 2),
         version='v000',
-        descriptor='lo-3d-instrument-frame'
+        descriptor=f'lo-{species}-3d-instrument-frame'
     )
 
     codice_lo_processor = CodiceLoProcessor(Mock(), input_metadata)
@@ -263,10 +253,32 @@ def create_swapi_l3b_cdf(geometric_calibration_file, efficiency_calibration_file
     return cdf_path
 
 
+@patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.spiceypy")
 def create_swapi_l3a_cdf(proton_temperature_density_calibration_file, alpha_temperature_density_calibration_file,
                          clock_angle_and_flow_deflection_calibration_file, geometric_factor_calibration_file,
                          instrument_response_calibration_file, density_of_neutral_helium_calibration_file,
-                         cdf_file):
+                         cdf_file, mock_spice):
+    ephemeris_time_for_epoch = 100000
+    mock_spice.unitim.return_value = ephemeris_time_for_epoch
+    mock_light_time = 122.0
+    mock_spice.spkezr.return_value = (np.array([0, 0, 0, 0, 0, 0]), mock_light_time)
+    mock_spice.latrec.return_value = np.array([0, 2, 0])
+    mock_spice.reclat.return_value = np.array([0.99 * ONE_AU_IN_KM, np.deg2rad(255.7), 0.6])
+
+    def mock_sxform(from_frame, to_frame, et):
+        if from_frame == "IMAP_SWAPI":
+            return np.eye(6)
+        return np.array([
+            [0, 1, 0, 0, 0, 0],
+            [0, 0, 1, 0, 0, 0],
+            [1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 0],
+            [0, 0, 0, 0, 0, 1],
+            [0, 0, 0, 1, 0, 0],
+        ])
+
+    mock_spice.sxform.side_effect = mock_sxform
+
     proton_temperature_density_calibration_table = ProtonTemperatureAndDensityCalibrationTable.from_file(
         proton_temperature_density_calibration_file)
     alpha_temperature_density_calibration_table = AlphaTemperatureDensityCalibrationTable.from_file(
@@ -513,8 +525,8 @@ def run_glows_l3bc_processor_and_initializer(_, mock_query):
 
     bad_days_list = AncillaryInput('imap_glows_bad-days-list_20100101_v001.dat')
     waw_helio_ion = AncillaryInput('imap_glows_WawHelioIonMP_20100101_v002.json')
-    uv_anisotropy = AncillaryInput('imap_glows_uv-anisotropy-1cr_20250514_v002.json')
-    pipeline_settings = AncillaryInput('imap_glows_pipeline-settings-l3bcde_20250514_v004.json')
+    uv_anisotropy = AncillaryInput('imap_glows_uv-anisotropy-1CR_20250514_v002.json')
+    pipeline_settings = AncillaryInput('imap_glows_pipeline-settings-l3bcde_20100101_v006.json')
     input_collection = ProcessingInputCollection(bad_days_list, waw_helio_ion, uv_anisotropy, pipeline_settings)
 
     processor = GlowsProcessor(dependencies=input_collection, input_metadata=input_metadata)
@@ -596,7 +608,7 @@ def run_glows_l3e_lo_with_less_mocks(mock_spiceypy, mock_imap_data_access):
     mock_spiceypy.spkezr = spiceypy.spkezr
     mock_spiceypy.reclat = spiceypy.reclat
     mock_spiceypy.pxform = spiceypy.pxform
-    mock_spiceypy.datetime2et = lambda date: spiceypy.datetime2et(date + timedelta(days=365 * 16 + 4))
+    mock_spiceypy.datetime2et = lambda date: spiceypy.datetime2et(date + timedelta(days=365 * 16 + 4, hours=2))
 
     mock_imap_data_access.upload = lambda p: print("i would upload", p)
 
@@ -607,7 +619,7 @@ def run_glows_l3e_lo_with_less_mocks(mock_spiceypy, mock_imap_data_access):
         AncillaryInput("imap_glows_ionization-files_20100101_v002.dat"),
         AncillaryInput("imap_glows_lya-series_19470303_v002.dat"),
         AncillaryInput("imap_glows_phion-hydrogen_19470303_v002.dat"),
-        AncillaryInput("imap_glows_pipeline-settings-l3e_20100101_v003.json"),
+        AncillaryInput("imap_glows_pipeline-settings-l3bcde_20100101_v006.json"),
         AncillaryInput("imap_glows_solar-uv-anisotropy_19960130_v002.dat"),
         AncillaryInput("imap_glows_speed-3d_19640117_v002.dat"),
         AncillaryInput("imap_glows_sw-eqtr-electrons_19710416_v002.dat"),
@@ -622,7 +634,7 @@ def run_glows_l3e_lo_with_less_mocks(mock_spiceypy, mock_imap_data_access):
         AncillaryInput("imap_glows_ionization-files_20100101_v002.dat"),
         AncillaryInput("imap_glows_lya-series_19470303_v002.dat"),
         AncillaryInput("imap_glows_phion-hydrogen_19470303_v002.dat"),
-        AncillaryInput("imap_glows_pipeline-settings-l3e_20100101_v003.json"),
+        AncillaryInput("imap_glows_pipeline-settings-l3bcde_20100101_v006.json"),
         AncillaryInput("imap_glows_solar-uv-anisotropy_19960130_v002.dat"),
         AncillaryInput("imap_glows_speed-3d_19640117_v002.dat"),
         AncillaryInput("imap_glows_sw-eqtr-electrons_19710416_v002.dat"),
@@ -634,7 +646,7 @@ def run_glows_l3e_lo_with_less_mocks(mock_spiceypy, mock_imap_data_access):
         AncillaryInput("imap_glows_ionization-files_20100101_v002.dat"),
         AncillaryInput("imap_glows_lya-series_19470303_v002.dat"),
         AncillaryInput("imap_glows_phion-hydrogen_19470303_v002.dat"),
-        AncillaryInput("imap_glows_pipeline-settings-l3e_20100101_v003.json"),
+        AncillaryInput("imap_glows_pipeline-settings-l3bcde_20100101_v006.json"),
         AncillaryInput("imap_glows_solar-uv-anisotropy_19960130_v002.dat"),
         AncillaryInput("imap_glows_speed-3d_19640117_v002.dat"),
         AncillaryInput("imap_glows_sw-eqtr-electrons_19710416_v002.dat"),
@@ -647,7 +659,7 @@ def run_glows_l3e_lo_with_less_mocks(mock_spiceypy, mock_imap_data_access):
         AncillaryInput("imap_glows_ionization-files_20100101_v002.dat"),
         AncillaryInput("imap_glows_lya-series_19470303_v002.dat"),
         AncillaryInput("imap_glows_phion-hydrogen_19470303_v002.dat"),
-        AncillaryInput("imap_glows_pipeline-settings-l3e_20100101_v003.json"),
+        AncillaryInput("imap_glows_pipeline-settings-l3bcde_20100101_v006.json"),
         AncillaryInput("imap_glows_solar-uv-anisotropy_19960130_v002.dat"),
         AncillaryInput("imap_glows_speed-3d_19640117_v002.dat"),
         AncillaryInput("imap_glows_sw-eqtr-electrons_19710416_v002.dat"),
@@ -947,6 +959,8 @@ def create_codice_hi_l3b_pitch_angles_cdf():
 
 
 if __name__ == "__main__":
+    furnish_local_spice()
+    print("k total", spiceypy.ktotal("all"))
     if "codice-lo" in sys.argv:
         if "l3a" in sys.argv:
             if "partial-densities" in sys.argv:
@@ -958,7 +972,7 @@ if __name__ == "__main__":
             elif "abundances" in sys.argv:
                 print(create_codice_lo_l3a_abundances_cdf())
             elif "3d-instrument-frame" in sys.argv:
-                print(create_codice_lo_l3a_3d_distributions_cdf())
+                print(create_codice_lo_l3a_3d_distributions_cdf(sys.argv[-1]))
 
     if "codice-hi" in sys.argv:
         if "l3a" in sys.argv:
@@ -1179,7 +1193,7 @@ if __name__ == "__main__":
             )
             processor = UltraProcessor(input_metadata=processor_input_metadata, dependencies=Mock())
 
-            #@formatter:off
+            # @formatter:off
             missing_paths, [l2_map_path, *l1c_dependency_paths] = try_get_many_run_local_paths([
                 "ultra/20250415-20250419/imap_ultra_l2_u90-ena-h-sf-nsp-full-hae-4deg-6mo_20250415_v001.cdf",
                 "ultra/20250415-20250419/ultra_l1c/imap_ultra_l1c_45sensor-spacecraftpset_20250415-repoint00001_v001.cdf",

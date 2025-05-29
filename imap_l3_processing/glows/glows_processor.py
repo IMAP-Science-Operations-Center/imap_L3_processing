@@ -1,5 +1,6 @@
 import json
 import os
+import shutil
 import subprocess
 import sys
 from dataclasses import replace
@@ -78,24 +79,28 @@ class GlowsProcessor(Processor):
                                                          self.input_metadata.version,
                                                          Path(os.getenv("REPOINT_DATA_FILEPATH")))
             for repointing in repointings:
-                epoch, epoch_end = get_pointing_date_range(repointing)
-                epoch_dt: datetime = epoch.astype('datetime64[us]').astype(datetime)
-                epoch_end_dt: datetime = epoch_end.astype('datetime64[us]').astype(datetime)
-                epoch_delta: timedelta = (epoch_end_dt - epoch_dt) / 2
+                self.input_metadata.repointing = repointing
+                try:
+                    epoch, epoch_end = get_pointing_date_range(repointing)
+                    epoch_dt: datetime = epoch.astype('datetime64[us]').astype(datetime)
+                    epoch_end_dt: datetime = epoch_end.astype('datetime64[us]').astype(datetime)
+                    epoch_delta: timedelta = (epoch_end_dt - epoch_dt) / 2
 
-                if self.input_metadata.descriptor == "survival-probability-lo":
-                    try:
-                        year_with_repointing = str(epoch_dt.year) + str(int(repointing)).zfill(3)
-                        elongation = l3e_dependencies.elongation[year_with_repointing]
-                    except KeyError:
-                        continue
-                    self.process_l3e_lo(epoch_dt, epoch_delta, elongation)
-                elif self.input_metadata.descriptor == "survival-probability-hi-45":
-                    self.process_l3e_hi(epoch_dt, epoch_delta, 135)
-                elif self.input_metadata.descriptor == "survival-probability-hi-90":
-                    self.process_l3e_hi(epoch_dt, epoch_delta, 90)
-                elif self.input_metadata.descriptor == "survival-probability-ul":
-                    self.process_l3e_ul(epoch_dt, epoch_delta)
+                    if self.input_metadata.descriptor == "survival-probability-lo":
+                        try:
+                            year_with_repointing = str(epoch_dt.year) + str(int(repointing)).zfill(3)
+                            elongation = l3e_dependencies.elongation[year_with_repointing]
+                        except KeyError:
+                            continue
+                        self.process_l3e_lo(epoch_dt, epoch_delta, elongation)
+                    elif self.input_metadata.descriptor == "survival-probability-hi-45":
+                        self.process_l3e_hi(epoch_dt, epoch_delta, 135)
+                    elif self.input_metadata.descriptor == "survival-probability-hi-90":
+                        self.process_l3e_hi(epoch_dt, epoch_delta, 90)
+                    elif self.input_metadata.descriptor == "survival-probability-ul":
+                        self.process_l3e_ul(epoch_dt, epoch_delta)
+                except Exception as e:
+                    print("Exception encountered for repointing ", repointing, e)
 
     def process_l3a(self, dependencies: GlowsL3ADependencies) -> GlowsL3LightCurve:
         data = dependencies.data
@@ -189,7 +194,14 @@ class GlowsProcessor(Processor):
 
         lo_data.parent_file_names = self.get_parent_file_names()
         lo_cdf = save_data(lo_data)
+        new_dat_path = Path(lo_cdf)
+        new_dat_path = new_dat_path.parent / Path('_'.join(new_dat_path.name.split('_')[0:4]) + '-raw_' + '_'.join(
+            new_dat_path.name.split('_')[4:])[:-4] + '.dat')
+
+        shutil.move(output_path, new_dat_path)
+
         imap_data_access.upload(lo_cdf)
+        imap_data_access.upload(new_dat_path)
 
     def process_l3e_hi(self, epoch: datetime, epoch_delta: timedelta, elongation: int):
         call_args = determine_call_args_for_l3e_executable(epoch, epoch + epoch_delta, elongation)
@@ -202,7 +214,15 @@ class GlowsProcessor(Processor):
         hi_data.parent_file_names = self.get_parent_file_names()
 
         hi_cdf = save_data(hi_data)
+
+        new_dat_path = Path(hi_cdf)
+        new_dat_path = new_dat_path.parent / Path('_'.join(new_dat_path.name.split('_')[0:4]) + '-raw_' + '_'.join(
+            new_dat_path.name.split('_')[4:])[:-4] + '.dat')
+
+        shutil.move(output_path, new_dat_path)
+
         imap_data_access.upload(hi_cdf)
+        imap_data_access.upload(new_dat_path)
 
     def process_l3e_ul(self, epoch: datetime, epoch_delta: timedelta):
         call_args = determine_call_args_for_l3e_executable(epoch, epoch + epoch_delta, 30)
@@ -216,7 +236,14 @@ class GlowsProcessor(Processor):
         ul_data.parent_file_names = self.get_parent_file_names()
 
         ul_cdf = save_data(ul_data)
+
+        new_dat_path = Path(ul_cdf)
+        new_dat_path = new_dat_path.parent / Path('_'.join(new_dat_path.name.split('_')[0:4]) + '-raw_' + '_'.join(
+            new_dat_path.name.split('_')[4:])[:-4] + '.dat')
+
+        shutil.move(output_path, new_dat_path)
         imap_data_access.upload(ul_cdf)
+        imap_data_access.upload(new_dat_path)
 
     @staticmethod
     def add_spin_angle_delta(data: dict, ancillary_files: dict) -> dict:

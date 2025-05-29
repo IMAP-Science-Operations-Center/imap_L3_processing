@@ -77,9 +77,10 @@ if __name__ == "__main__":
                  '--dependency',
                  '['
                  '{"type": "science", "files": ["imap_codice_l1a_lo-sw-priority_20241110_v002.cdf"]},'
-                 '{"type": "science", "files": ["imap_codice_l1a_lo-nsw-priority_20241110_v002.cdf"]},'
-                 '{"type": "science", "files": ["imap_codice_l2_lo-direct-events_20241110_v002.cdf"]},'
-                 '{"type": "ancillary", "files": ["imap_codice_mass-coefficient-lookup_20241110_v002.csv"]}]'
+                 '{"type": "science", "files": ["imap_codice_l1a_lo-nsw-priority_20241110_v003.cdf"]},'
+                 '{"type": "science", "files": ["imap_codice_l2_lo-direct-events_20241110_v006.cdf"]},'
+                 '{"type": "ancillary", "files": ["imap_codice_mass-coefficient-lookup_20241110_v002.csv"]},'
+                 '{"type": "ancillary", "files": ["imap_codice_lo-energy-per-charge_20241110_v001.csv"]}]'
                  ])
         case "codice", ("lo-partial-densities" | "partial-densities"):
             subprocess.run(
@@ -125,6 +126,25 @@ if __name__ == "__main__":
                  '['
                  '{"type": "science", "files": ["imap_codice_l2_hi-sectored_20241110_v002.cdf"]},'
                  '{"type": "science", "files": ["imap_mag_l1d_norm-mago_20250630_v001.cdf"]}'
+                 ']'
+                 ])
+        case "codice", descriptor if "3d-distribution" in descriptor:
+            species = descriptor.split("-")[1]
+            assert species in ["hplus", "heplus", "heplus2", "oplus6"], NotImplementedError(
+                "Target instrument or product not implemented")
+
+            subprocess.run(
+                [sys.executable, 'imap_l3_data_processor.py', '--instrument', 'codice', '--data-level', 'l3a',
+                 '--descriptor', f'lo-{species}-3d-distribution', '--start-date', '20241110', '--version', 'v000',
+                 '--dependency',
+                 '['
+                 '{"type": "science", "files": ["imap_codice_l1a_lo-sw-priority_20241110_v002.cdf"]},'
+                 '{"type": "science", "files": ["imap_codice_l1a_lo-nsw-priority_20241110_v003.cdf"]},'
+                 '{"type": "science", "files": ["imap_codice_l3a_lo-direct-events_20241110_v005.cdf"]},'
+                 '{"type": "ancillary", "files": ["imap_codice_lo-mass-species-bin-lookup_20241110_v001.csv"]},'
+                 '{"type": "ancillary", "files": ["imap_codice_lo-geometric-factors_20241110_v001.csv"]},'
+                 '{"type": "ancillary", "files": ["imap_codice_lo-energy-per-charge_20241110_v001.csv"]},'
+                 f'{{"type": "ancillary", "files": ["imap_codice_lo-{species}-efficiency_20241110_v001.csv"]}}'
                  ']'
                  ])
         case _:
