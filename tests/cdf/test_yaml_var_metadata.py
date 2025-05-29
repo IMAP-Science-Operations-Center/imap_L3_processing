@@ -97,6 +97,8 @@ class TestCdfUtils(TestCase):
             with self.subTest(f"{filename}:{variable_key}"):
                 fill_val = variable.get('FILLVAL')
                 match variable['DATA_TYPE']:
+                    case "CDF_DOUBLE":
+                        self.assertEqual(fill_val, -1e31)
                     case "CDF_FLOAT":
                         self.assertEqual(fill_val, -1e31)
                     case "CDF_REAL4":

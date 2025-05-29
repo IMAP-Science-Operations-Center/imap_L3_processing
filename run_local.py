@@ -771,8 +771,8 @@ def run_glows_l3d(mock_shutil):
             'lya': get_test_instrument_team_data_path('glows/imap_glows_lya-2010a_v003.dat'),
             'e-dens': get_test_instrument_team_data_path('glows/imap_glows_electron-density-2010a_v003.dat'),
         },
-        'pipeline_settings': get_test_instrument_team_data_path(
-            'glows/imap_glows_pipeline-settings-l3bcde_20250514_v004.json')
+        'pipeline_settings': get_test_data_path(
+            'glows/l3d_drift_test/imap_glows_pipeline-settings-l3bcde_20100101_v006.json')
     }
 
     l3b_file_paths = [
