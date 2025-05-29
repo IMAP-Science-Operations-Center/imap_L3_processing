@@ -284,7 +284,6 @@ class TestCodiceLoCalculations(unittest.TestCase):
         mock_energy_lookup.num_bins = num_energy_bins
         mock_energy_lookup.get_energy_index.side_effect = [
             np.array([7]),
-            np.array([1, 1]),
             np.array([1, 3, 1, 4])
         ]
 
@@ -293,14 +292,13 @@ class TestCodiceLoCalculations(unittest.TestCase):
         mock_spin_angle_lookup.num_bins = num_spin_angle_bins
         mock_spin_angle_lookup.get_spin_angle_index.side_effect = [
             np.array([3]),
-            np.array([2, 2]),
             np.array([5, 6, 5, 7])
         ]
 
         priority_event = create_dataclass_mock(PriorityEvent)
         rng = np.random.default_rng()
 
-        priority_event.num_events = np.array([1, 2, 4])
+        priority_event.num_events = np.ma.masked_array(np.array([1, 2, 4]), mask=[False, True, False])
         num_epochs = len(priority_event.num_events)
         priority_event.spin_angle = rng.random((num_epochs, 15))
         priority_event.energy_step = rng.random((num_epochs, 15))
@@ -308,7 +306,6 @@ class TestCodiceLoCalculations(unittest.TestCase):
 
         expected_rebinned_counts = np.zeros((num_epochs, num_energy_bins, num_spin_angle_bins))
         expected_rebinned_counts[0, 7, 3] = 1
-        expected_rebinned_counts[1, 1, 2] = 2
         expected_rebinned_counts[2, 1, 5] = 2
         expected_rebinned_counts[2, 3, 6] = 1
         expected_rebinned_counts[2, 4, 7] = 1

@@ -189,9 +189,10 @@ class CodiceLoProcessor(Processor):
          position,
          multi_flag,
          pha_type,
+         energy_step,
          tof) = [
             np.full((len(codice_direct_events.epoch), len(priority_counts_for_events), event_buffer), np.nan)
-            for _ in range(11)]
+            for _ in range(12)]
 
         (data_quality, num_events) = [
             np.full((len(codice_direct_events.epoch), len(priority_counts_for_events)), np.nan)
@@ -218,6 +219,7 @@ class CodiceLoProcessor(Processor):
                 position[:, priority_index, :] = priority_event.position
                 data_quality[:, priority_index] = priority_event.data_quality
                 num_events[:, priority_index] = priority_event.num_events
+                energy_step[:, priority_index] = priority_event.energy_step
 
                 direct_events_binned_by_energy_and_spin = rebin_counts_by_energy_and_spin_angle(priority_event,
                                                                                                 spin_angle_lut,
@@ -235,7 +237,8 @@ class CodiceLoProcessor(Processor):
             normalization=normalization,
             mass_per_charge=mass_per_charge,
             mass=mass,
-            event_energy=energy,
+            apd_energy=energy,
+            energy_step=energy_step,
             gain=gain,
             apd_id=apd_id,
             multi_flag=multi_flag,
@@ -244,7 +247,13 @@ class CodiceLoProcessor(Processor):
             data_quality=data_quality,
             spin_angle=spin_angle,
             elevation=elevation,
-            position=position
+            position=position,
+            energy_bin=esa_energy_per_charge_lookup.bin_centers,
+            energy_bin_delta_plus=esa_energy_per_charge_lookup.delta_plus,
+            energy_bin_delta_minus=esa_energy_per_charge_lookup.delta_minus,
+            spin_angle_bin=spin_angle_lut.bin_centers,
+            spin_angle_bin_delta=spin_angle_lut.bin_deltas,
+
         )
 
     def process_l3a_3d_distribution_product(self, dependencies: CodiceLoL3a3dDistributionsDependencies):

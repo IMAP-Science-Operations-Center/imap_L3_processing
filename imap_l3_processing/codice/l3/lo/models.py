@@ -291,13 +291,17 @@ class CodiceLoL3aPartialDensityDataProduct(DataProduct):
 
 
 EVENT_INDEX_VAR_NAME = "event_index"
+SPIN_ANGLE_DELTA_BIN_VAR_NAME = "spin_angle_bin_delta"
 SPIN_ANGLE_BIN_VAR_NAME = "spin_angle_bin"
 ENERGY_BIN_VAR_NAME = "energy_bin"
+ENERGY_BIN_DELTA_PLUS_VAR_NAME = "energy_bin_delta_plus"
+ENERGY_BIN_DELTA_MINUS_VAR_NAME = "energy_bin_delta_minus"
 PRIORITY_INDEX_VAR_NAME = "priority_index"
 NORMALIZATION_VAR_NAME = "normalization"
 MASS_PER_CHARGE_VAR_NAME = "mass_per_charge"
 MASS_VAR_NAME = "mass"
-EVENT_ENERGY_VAR_NAME = "event_energy"
+APD_ENERGY_VAR_NAME = "apd_energy"
+ENERGY_STEP_VAR_NAME = "energy_step"
 GAIN_VAR_NAME = "gain"
 APD_ID_VAR_NAME = "apd_id"
 MULTI_FLAG_VAR_NAME = "multi_flag"
@@ -320,7 +324,8 @@ class CodiceLoDirectEventData:
     normalization: ndarray
     mass_per_charge: np.ndarray
     mass: np.ndarray
-    event_energy: np.ndarray
+    apd_energy: np.ndarray
+    energy_step: np.ndarray
     gain: np.ndarray
     apd_id: np.ndarray
     multi_flag: np.ndarray
@@ -339,7 +344,8 @@ class CodiceLoDirectEventData:
                        normalization=read_numeric_variable(cdf[NORMALIZATION_VAR_NAME]),
                        mass_per_charge=read_numeric_variable(cdf[MASS_PER_CHARGE_VAR_NAME]),
                        mass=read_numeric_variable(cdf[MASS_VAR_NAME]),
-                       event_energy=read_numeric_variable(cdf[EVENT_ENERGY_VAR_NAME]),
+                       apd_energy=read_numeric_variable(cdf[APD_ENERGY_VAR_NAME]),
+                       energy_step=read_numeric_variable(cdf[ENERGY_STEP_VAR_NAME]),
                        gain=read_variable_and_mask_fill_values(cdf[GAIN_VAR_NAME]),
                        apd_id=read_variable_and_mask_fill_values(cdf[APD_ID_VAR_NAME]),
                        multi_flag=read_variable_and_mask_fill_values(cdf[MULTI_FLAG_VAR_NAME]),
@@ -353,8 +359,11 @@ class CodiceLoDirectEventData:
 
 @dataclass
 class CodiceLoL3aDirectEventDataProduct(CodiceLoDirectEventData, DataProduct):
-    spin_angle_bin: np.ndarray = field(init=False)
-    energy_bin: np.ndarray = field(init=False)
+    energy_bin: np.ndarray
+    energy_bin_delta_plus: np.ndarray
+    energy_bin_delta_minus: np.ndarray
+    spin_angle_bin_delta: np.ndarray
+    spin_angle_bin: np.ndarray
     priority_index: np.ndarray = field(init=False)
     event_index: np.ndarray = field(init=False)
     priority_index_label: np.ndarray = field(init=False)
@@ -363,8 +372,6 @@ class CodiceLoL3aDirectEventDataProduct(CodiceLoDirectEventData, DataProduct):
     spin_angle_bin_label: np.ndarray = field(init=False)
 
     def __post_init__(self):
-        self.spin_angle_bin = np.array([0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330])
-        self.energy_bin = np.arange(128)
         self.priority_index = np.arange(CODICE_LO_L2_NUM_PRIORITIES)
         self.event_index = np.arange(self.mass_per_charge.shape[-1])
         self.priority_index_label = self.priority_index.astype(str)
@@ -376,31 +383,36 @@ class CodiceLoL3aDirectEventDataProduct(CodiceLoDirectEventData, DataProduct):
         return [
             DataProductVariable(EPOCH_VAR_NAME, self.epoch),
             DataProductVariable(EPOCH_DELTA_VAR_NAME, self.epoch_delta),
-            DataProductVariable(PRIORITY_INDEX_VAR_NAME, self.priority_index),
-            DataProductVariable(EVENT_INDEX_VAR_NAME, self.event_index),
-            DataProductVariable(MASS_VAR_NAME, self.mass),
-
-            DataProductVariable(SPIN_ANGLE_BIN_VAR_NAME, self.spin_angle_bin),
-            DataProductVariable(ENERGY_BIN_VAR_NAME, self.energy_bin),
 
             DataProductVariable(NORMALIZATION_VAR_NAME, self.normalization),
+
+            DataProductVariable(ENERGY_BIN_VAR_NAME, self.energy_bin),
+            DataProductVariable(ENERGY_BIN_DELTA_MINUS_VAR_NAME, self.energy_bin_delta_minus),
+            DataProductVariable(ENERGY_BIN_DELTA_PLUS_VAR_NAME, self.energy_bin_delta_plus),
+            DataProductVariable(ENERGY_BIN_LABEL_VAR_NAME, self.energy_bin_label),
+
+            DataProductVariable(SPIN_ANGLE_BIN_VAR_NAME, self.spin_angle_bin),
+            DataProductVariable(SPIN_ANGLE_DELTA_BIN_VAR_NAME, self.spin_angle_bin_delta),
+            DataProductVariable(SPIN_ANGLE_BIN_LABEL_VAR_NAME, self.spin_angle_bin_label),
+
             DataProductVariable(MASS_PER_CHARGE_VAR_NAME, self.mass_per_charge),
-            DataProductVariable(EVENT_ENERGY_VAR_NAME, self.event_energy),
+            DataProductVariable(APD_ENERGY_VAR_NAME, self.apd_energy),
+            DataProductVariable(MASS_VAR_NAME, self.mass),
             DataProductVariable(GAIN_VAR_NAME, self.gain),
             DataProductVariable(APD_ID_VAR_NAME, self.apd_id),
             DataProductVariable(MULTI_FLAG_VAR_NAME, self.multi_flag),
             DataProductVariable(NUM_EVENTS_VAR_NAME, self.num_events),
             DataProductVariable(DATA_QUALITY_VAR_NAME, self.data_quality),
             DataProductVariable(TOF_VAR_NAME, self.tof),
-
-            DataProductVariable(SPIN_ANGLE_VAR_NAME, self.spin_angle),
             DataProductVariable(ELEVATION_VAR_NAME, self.elevation),
             DataProductVariable(POSITION_VAR_NAME, self.position),
+            DataProductVariable(SPIN_ANGLE_VAR_NAME, self.spin_angle),
+            DataProductVariable(ENERGY_STEP_VAR_NAME, self.energy_step),
 
+            DataProductVariable(PRIORITY_INDEX_VAR_NAME, self.priority_index),
             DataProductVariable(PRIORITY_INDEX_LABEL_VAR_NAME, self.priority_index_label),
+            DataProductVariable(EVENT_INDEX_VAR_NAME, self.event_index),
             DataProductVariable(EVENT_INDEX_LABEL_VAR_NAME, self.event_index_label),
-            DataProductVariable(ENERGY_BIN_LABEL_VAR_NAME, self.energy_bin_label),
-            DataProductVariable(SPIN_ANGLE_BIN_LABEL_VAR_NAME, self.spin_angle_bin_label),
         ]
 
 
