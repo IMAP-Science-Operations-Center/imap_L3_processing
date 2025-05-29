@@ -128,74 +128,75 @@ class TestHitProcessor(TestCase):
         mock_get_hit_bin_polar_coordinates.return_value = (
             sentinel.dec, sentinel.inc, sentinel.dec_delta, sentinel.inc_delta)
 
-        sector_unit_vectors = np.array([[1, 0, 0], [0, 1, 0]])
-        mock_get_sector_unit_vectors.return_value = sector_unit_vectors
+        sector_unit_vectors_zenith_first = np.full((8, 15, 3), np.sqrt(1 / 3))
+        mock_get_sector_unit_vectors.return_value = sector_unit_vectors_zenith_first
+        expected_sector_unit_vectors = np.full((15, 8, 3), np.sqrt(1 / 3))
 
         mock_rotate_particle_vectors_from_hit_despun_to_imap_despun.return_value = sentinel.rotated_particle_vector
         mock_calculate_pitch_angle.side_effect = [sentinel.pitch_angle1, sentinel.pitch_angle2]
         mock_calculate_gyrophase.side_effect = [sentinel.gyrophase1, sentinel.gyrophase2]
 
-        rebinned_pa_gyro_CNO_time1 = np.array([1])
-        rebinned_pa_gyro_CNO_delta_plus_time1 = np.array([100])
-        rebinned_pa_gyro_CNO_delta_minus_time1 = np.array([101])
-        rebinned_pa_gyro_helium4_time1 = np.array([3])
-        rebinned_pa_gyro_helium4_delta_plus_time1 = np.array([300])
-        rebinned_pa_gyro_helium4_delta_minus_time1 = np.array([301])
-        rebinned_pa_gyro_hydrogen_time1 = np.array([5])
-        rebinned_pa_gyro_hydrogen_delta_plus_time1 = np.array([500])
-        rebinned_pa_gyro_hydrogen_delta_minus_time1 = np.array([501])
-        rebinned_pa_gyro_iron_time1 = np.array([7])
-        rebinned_pa_gyro_iron_delta_plus_time1 = np.array([700])
-        rebinned_pa_gyro_iron_delta_minus_time1 = np.array([701])
-        rebinned_pa_gyro_NeMgSi_time1 = np.array([9])
-        rebinned_pa_gyro_NeMgSi_delta_plus_time1 = np.array([900])
-        rebinned_pa_gyro_NeMgSi_delta_minus_time1 = np.array([901])
-        rebinned_pa_gyro_CNO_time2 = np.array([2])
-        rebinned_pa_gyro_CNO_delta_plus_time2 = np.array([200])
-        rebinned_pa_gyro_CNO_delta_minus_time2 = np.array([201])
-        rebinned_pa_gyro_helium4_time2 = np.array([4])
-        rebinned_pa_gyro_helium4_delta_plus_time2 = np.array([400])
-        rebinned_pa_gyro_helium4_delta_minus_time2 = np.array([401])
-        rebinned_pa_gyro_hydrogen_time2 = np.array([6])
-        rebinned_pa_gyro_hydrogen_delta_plus_time2 = np.array([600])
-        rebinned_pa_gyro_hydrogen_delta_minus_time2 = np.array([601])
-        rebinned_pa_gyro_iron_time2 = np.array([8])
-        rebinned_pa_gyro_iron_delta_plus_time2 = np.array([800])
-        rebinned_pa_gyro_iron_delta_minus_time2 = np.array([801])
-        rebinned_pa_gyro_NeMgSi_time2 = np.array([10])
-        rebinned_pa_gyro_NeMgSi_delta_plus_time2 = np.array([1000])
-        rebinned_pa_gyro_NeMgSi_delta_minus_time2 = np.array([1001])
+        rebinned_pa_gyro_CNO_time1 = np.full((2, 8, 15), 1)
+        rebinned_pa_gyro_CNO_delta_plus_time1 = np.full((2, 8, 15), 100)
+        rebinned_pa_gyro_CNO_delta_minus_time1 = np.full((2, 8, 15), 101)
+        rebinned_pa_gyro_helium4_time1 = np.full((2, 8, 15), 3)
+        rebinned_pa_gyro_helium4_delta_plus_time1 = np.full((2, 8, 15), 300)
+        rebinned_pa_gyro_helium4_delta_minus_time1 = np.full((2, 8, 15), 301)
+        rebinned_pa_gyro_hydrogen_time1 = np.full((2, 8, 15), 5)
+        rebinned_pa_gyro_hydrogen_delta_plus_time1 = np.full((2, 8, 15), 500)
+        rebinned_pa_gyro_hydrogen_delta_minus_time1 = np.full((2, 8, 15), 501)
+        rebinned_pa_gyro_iron_time1 = np.full((2, 8, 15), 7)
+        rebinned_pa_gyro_iron_delta_plus_time1 = np.full((2, 8, 15), 700)
+        rebinned_pa_gyro_iron_delta_minus_time1 = np.full((2, 8, 15), 701)
+        rebinned_pa_gyro_NeMgSi_time1 = np.full((2, 8, 15), 9)
+        rebinned_pa_gyro_NeMgSi_delta_plus_time1 = np.full((2, 8, 15), 900)
+        rebinned_pa_gyro_NeMgSi_delta_minus_time1 = np.full((2, 8, 15), 901)
+        rebinned_pa_gyro_CNO_time2 = np.full((2, 8, 15), 2)
+        rebinned_pa_gyro_CNO_delta_plus_time2 = np.full((2, 8, 15), 200)
+        rebinned_pa_gyro_CNO_delta_minus_time2 = np.full((2, 8, 15), 201)
+        rebinned_pa_gyro_helium4_time2 = np.full((2, 8, 15), 4)
+        rebinned_pa_gyro_helium4_delta_plus_time2 = np.full((2, 8, 15), 400)
+        rebinned_pa_gyro_helium4_delta_minus_time2 = np.full((2, 8, 15), 401)
+        rebinned_pa_gyro_hydrogen_time2 = np.full((2, 8, 15), 6)
+        rebinned_pa_gyro_hydrogen_delta_plus_time2 = np.full((2, 8, 15), 600)
+        rebinned_pa_gyro_hydrogen_delta_minus_time2 = np.full((2, 8, 15), 601)
+        rebinned_pa_gyro_iron_time2 = np.full((2, 8, 15), 8)
+        rebinned_pa_gyro_iron_delta_plus_time2 = np.full((2, 8, 15), 800)
+        rebinned_pa_gyro_iron_delta_minus_time2 = np.full((2, 8, 15), 801)
+        rebinned_pa_gyro_NeMgSi_time2 = np.full((2, 8, 15), 10)
+        rebinned_pa_gyro_NeMgSi_delta_plus_time2 = np.full((2, 8, 15), 1000)
+        rebinned_pa_gyro_NeMgSi_delta_minus_time2 = np.full((2, 8, 15), 1001)
 
-        rebinned_pa_CNO_time1 = np.array([11])
-        rebinned_pa_CNO_delta_plus_time1 = np.array([1100])
-        rebinned_pa_CNO_delta_minus_time1 = np.array([1101])
-        rebinned_pa_helium4_time1 = np.array([13])
-        rebinned_pa_helium4_delta_plus_time1 = np.array([1300])
-        rebinned_pa_helium4_delta_minus_time1 = np.array([1301])
-        rebinned_pa_hydrogen_time1 = np.array([15])
-        rebinned_pa_hydrogen_delta_plus_time1 = np.array([1500])
-        rebinned_pa_hydrogen_delta_minus_time1 = np.array([1501])
-        rebinned_pa_iron_time1 = np.array([17])
-        rebinned_pa_iron_delta_plus_time1 = np.array([1700])
-        rebinned_pa_iron_delta_minus_time1 = np.array([1701])
-        rebinned_pa_NeMgSi_time1 = np.array([19])
-        rebinned_pa_NeMgSi_delta_plus_time1 = np.array([1900])
-        rebinned_pa_NeMgSi_delta_minus_time1 = np.array([1901])
-        rebinned_pa_CNO_time2 = np.array([12])
-        rebinned_pa_CNO_delta_plus_time2 = np.array([1200])
-        rebinned_pa_CNO_delta_minus_time2 = np.array([1201])
-        rebinned_pa_helium4_time2 = np.array([14])
-        rebinned_pa_helium4_delta_plus_time2 = np.array([1400])
-        rebinned_pa_helium4_delta_minus_time2 = np.array([1401])
-        rebinned_pa_hydrogen_time2 = np.array([16])
-        rebinned_pa_hydrogen_delta_plus_time2 = np.array([1600])
-        rebinned_pa_hydrogen_delta_minus_time2 = np.array([1601])
-        rebinned_pa_iron_time2 = np.array([18])
-        rebinned_pa_iron_delta_plus_time2 = np.array([1800])
-        rebinned_pa_iron_delta_minus_time2 = np.array([1801])
-        rebinned_pa_NeMgSi_time2 = np.array([20])
-        rebinned_pa_NeMgSi_delta_plus_time2 = np.array([2000])
-        rebinned_pa_NeMgSi_delta_minus_time2 = np.array([2001])
+        rebinned_pa_CNO_time1 = np.full((2, 8), 11)
+        rebinned_pa_CNO_delta_plus_time1 = np.full((2, 8), 1100)
+        rebinned_pa_CNO_delta_minus_time1 = np.full((2, 8), 1101)
+        rebinned_pa_helium4_time1 = np.full((2, 8), 13)
+        rebinned_pa_helium4_delta_plus_time1 = np.full((2, 8), 1300)
+        rebinned_pa_helium4_delta_minus_time1 = np.full((2, 8), 1301)
+        rebinned_pa_hydrogen_time1 = np.full((2, 8), 15)
+        rebinned_pa_hydrogen_delta_plus_time1 = np.full((2, 8), 1500)
+        rebinned_pa_hydrogen_delta_minus_time1 = np.full((2, 8), 1501)
+        rebinned_pa_iron_time1 = np.full((2, 8), 17)
+        rebinned_pa_iron_delta_plus_time1 = np.full((2, 8), 1700)
+        rebinned_pa_iron_delta_minus_time1 = np.full((2, 8), 1701)
+        rebinned_pa_NeMgSi_time1 = np.full((2, 8), 19)
+        rebinned_pa_NeMgSi_delta_plus_time1 = np.full((2, 8), 1900)
+        rebinned_pa_NeMgSi_delta_minus_time1 = np.full((2, 8), 1901)
+        rebinned_pa_CNO_time2 = np.full((2, 8), 12)
+        rebinned_pa_CNO_delta_plus_time2 = np.full((2, 8), 1200)
+        rebinned_pa_CNO_delta_minus_time2 = np.full((2, 8), 1201)
+        rebinned_pa_helium4_time2 = np.full((2, 8), 14)
+        rebinned_pa_helium4_delta_plus_time2 = np.full((2, 8), 1400)
+        rebinned_pa_helium4_delta_minus_time2 = np.full((2, 8), 1401)
+        rebinned_pa_hydrogen_time2 = np.full((2, 8), 16)
+        rebinned_pa_hydrogen_delta_plus_time2 = np.full((2, 8), 1600)
+        rebinned_pa_hydrogen_delta_minus_time2 = np.full((2, 8), 1601)
+        rebinned_pa_iron_time2 = np.full((2, 8), 18)
+        rebinned_pa_iron_delta_plus_time2 = np.full((2, 8), 1800)
+        rebinned_pa_iron_delta_minus_time2 = np.full((2, 8), 1801)
+        rebinned_pa_NeMgSi_time2 = np.full((2, 8), 20)
+        rebinned_pa_NeMgSi_delta_plus_time2 = np.full((2, 8), 2000)
+        rebinned_pa_NeMgSi_delta_minus_time2 = np.full((2, 8), 2001)
 
         mock_hit_rebin.side_effect = [
             (rebinned_pa_gyro_hydrogen_time1, rebinned_pa_gyro_hydrogen_delta_plus_time1,
@@ -244,7 +245,7 @@ class TestHitProcessor(TestCase):
         self.assertEqual(1, mock_rotate_particle_vectors_from_hit_despun_to_imap_despun.call_count)
         np.testing.assert_array_equal(
             mock_rotate_particle_vectors_from_hit_despun_to_imap_despun.call_args_list[0].args[0],
-            -sector_unit_vectors)
+            -expected_sector_unit_vectors)
 
         self.assertEqual(2, mock_calculate_pitch_angle.call_count)
         np.testing.assert_array_equal(mock_calculate_pitch_angle.call_args_list[0].args[0],
@@ -323,97 +324,90 @@ class TestHitProcessor(TestCase):
         np.testing.assert_array_equal(saved_data_product.gyrophase_deltas, sentinel.inc_delta)
 
         np.testing.assert_array_equal(saved_data_product.h_intensity,
-                                      np.array([np.full(2, rebinned_pa_gyro_hydrogen_time1),
-                                                np.full(2, rebinned_pa_gyro_hydrogen_time2)]))
+                                      [rebinned_pa_gyro_hydrogen_time1,
+                                       rebinned_pa_gyro_hydrogen_time2])
         np.testing.assert_array_equal(saved_data_product.h_intensity_delta_plus,
-                                      np.array([np.full(2, rebinned_pa_gyro_hydrogen_delta_plus_time1),
-                                                np.full(2, rebinned_pa_gyro_hydrogen_delta_plus_time2)]))
+                                      [rebinned_pa_gyro_hydrogen_delta_plus_time1,
+                                       rebinned_pa_gyro_hydrogen_delta_plus_time2])
         np.testing.assert_array_equal(saved_data_product.h_intensity_delta_minus,
-                                      np.array([np.full(2, rebinned_pa_gyro_hydrogen_delta_minus_time1),
-                                                np.full(2, rebinned_pa_gyro_hydrogen_delta_minus_time2)]))
+                                      [rebinned_pa_gyro_hydrogen_delta_minus_time1,
+                                       rebinned_pa_gyro_hydrogen_delta_minus_time2])
 
         np.testing.assert_array_equal(saved_data_product.he4_intensity,
-                                      np.array([np.full(2, rebinned_pa_gyro_helium4_time1),
-                                                np.full(2, rebinned_pa_gyro_helium4_time2)]))
+                                      [rebinned_pa_gyro_helium4_time1,
+                                       rebinned_pa_gyro_helium4_time2])
         np.testing.assert_array_equal(saved_data_product.he4_intensity_delta_plus,
-                                      np.array([np.full(2, rebinned_pa_gyro_helium4_delta_plus_time1),
-                                                np.full(2, rebinned_pa_gyro_helium4_delta_plus_time2)]))
+                                      [rebinned_pa_gyro_helium4_delta_plus_time1,
+                                       rebinned_pa_gyro_helium4_delta_plus_time2])
         np.testing.assert_array_equal(saved_data_product.he4_intensity_delta_minus,
-                                      np.array([np.full(2, rebinned_pa_gyro_helium4_delta_minus_time1),
-                                                np.full(2, rebinned_pa_gyro_helium4_delta_minus_time2)]))
+                                      [rebinned_pa_gyro_helium4_delta_minus_time1,
+                                       rebinned_pa_gyro_helium4_delta_minus_time2])
         np.testing.assert_array_equal(saved_data_product.cno_intensity,
-                                      np.array([np.full(2, rebinned_pa_gyro_CNO_time1),
-                                                np.full(2, rebinned_pa_gyro_CNO_time2)]))
+                                      [rebinned_pa_gyro_CNO_time1,
+                                       rebinned_pa_gyro_CNO_time2])
         np.testing.assert_array_equal(saved_data_product.cno_intensity_delta_plus,
-                                      np.array([np.full(2, rebinned_pa_gyro_CNO_delta_plus_time1),
-                                                np.full(2, rebinned_pa_gyro_CNO_delta_plus_time2)]))
+                                      [rebinned_pa_gyro_CNO_delta_plus_time1,
+                                       rebinned_pa_gyro_CNO_delta_plus_time2])
         np.testing.assert_array_equal(saved_data_product.cno_intensity_delta_minus,
-                                      np.array([np.full(2, rebinned_pa_gyro_CNO_delta_minus_time1),
-                                                np.full(2, rebinned_pa_gyro_CNO_delta_minus_time2)]))
+                                      [rebinned_pa_gyro_CNO_delta_minus_time1,
+                                       rebinned_pa_gyro_CNO_delta_minus_time2])
 
         np.testing.assert_array_equal(saved_data_product.ne_mg_si_intensity,
-                                      np.array([np.full(2, rebinned_pa_gyro_NeMgSi_time1),
-                                                np.full(2, rebinned_pa_gyro_NeMgSi_time2)]))
+                                      [rebinned_pa_gyro_NeMgSi_time1,
+                                       rebinned_pa_gyro_NeMgSi_time2])
         np.testing.assert_array_equal(saved_data_product.ne_mg_si_intensity_delta_plus,
-                                      np.array([np.full(2, rebinned_pa_gyro_NeMgSi_delta_plus_time1),
-                                                np.full(2, rebinned_pa_gyro_NeMgSi_delta_plus_time2)]))
+                                      [rebinned_pa_gyro_NeMgSi_delta_plus_time1,
+                                       rebinned_pa_gyro_NeMgSi_delta_plus_time2])
         np.testing.assert_array_equal(saved_data_product.ne_mg_si_intensity_delta_minus,
-                                      np.array([np.full(2, rebinned_pa_gyro_NeMgSi_delta_minus_time1),
-                                                np.full(2, rebinned_pa_gyro_NeMgSi_delta_minus_time2)]))
+                                      [rebinned_pa_gyro_NeMgSi_delta_minus_time1,
+                                       rebinned_pa_gyro_NeMgSi_delta_minus_time2])
 
         np.testing.assert_array_equal(saved_data_product.iron_intensity,
-                                      np.array([np.full(2, rebinned_pa_gyro_iron_time1),
-                                                np.full(2, rebinned_pa_gyro_iron_time2)]))
+                                      [rebinned_pa_gyro_iron_time1,
+                                       rebinned_pa_gyro_iron_time2])
         np.testing.assert_array_equal(saved_data_product.iron_intensity_delta_plus,
-                                      np.array([np.full(2, rebinned_pa_gyro_iron_delta_plus_time1),
-                                                np.full(2, rebinned_pa_gyro_iron_delta_plus_time2)]))
+                                      [rebinned_pa_gyro_iron_delta_plus_time1,
+                                       rebinned_pa_gyro_iron_delta_plus_time2])
         np.testing.assert_array_equal(saved_data_product.iron_intensity_delta_minus,
-                                      np.array([np.full(2, rebinned_pa_gyro_iron_delta_minus_time1),
-                                                np.full(2, rebinned_pa_gyro_iron_delta_minus_time2)]))
+                                      [rebinned_pa_gyro_iron_delta_minus_time1,
+                                       rebinned_pa_gyro_iron_delta_minus_time2])
 
         np.testing.assert_array_equal(saved_data_product.h_intensity_pa,
-                                      np.concatenate((rebinned_pa_hydrogen_time1, rebinned_pa_hydrogen_time2)))
+                                      [rebinned_pa_hydrogen_time1, rebinned_pa_hydrogen_time2])
         np.testing.assert_array_equal(saved_data_product.h_intensity_pa_delta_plus,
-                                      np.concatenate((rebinned_pa_hydrogen_delta_plus_time1,
-                                                      rebinned_pa_hydrogen_delta_plus_time2)))
+                                      [rebinned_pa_hydrogen_delta_plus_time1,
+                                       rebinned_pa_hydrogen_delta_plus_time2])
         np.testing.assert_array_equal(saved_data_product.h_intensity_pa_delta_minus,
-                                      np.concatenate((rebinned_pa_hydrogen_delta_minus_time1,
-                                                      rebinned_pa_hydrogen_delta_minus_time2)))
+                                      [rebinned_pa_hydrogen_delta_minus_time1,
+                                       rebinned_pa_hydrogen_delta_minus_time2])
 
         np.testing.assert_array_equal(saved_data_product.he4_intensity_pa,
-                                      np.concatenate((rebinned_pa_helium4_time1, rebinned_pa_helium4_time2)))
+                                      [rebinned_pa_helium4_time1, rebinned_pa_helium4_time2])
         np.testing.assert_array_equal(saved_data_product.he4_intensity_pa_delta_plus,
-                                      np.concatenate(
-                                          (rebinned_pa_helium4_delta_plus_time1, rebinned_pa_helium4_delta_plus_time2)))
+                                      [rebinned_pa_helium4_delta_plus_time1, rebinned_pa_helium4_delta_plus_time2])
         np.testing.assert_array_equal(saved_data_product.he4_intensity_pa_delta_minus,
-                                      np.concatenate((rebinned_pa_helium4_delta_minus_time1,
-                                                      rebinned_pa_helium4_delta_minus_time2)))
+                                      [rebinned_pa_helium4_delta_minus_time1,
+                                       rebinned_pa_helium4_delta_minus_time2])
         np.testing.assert_array_equal(saved_data_product.cno_intensity_pa,
-                                      np.concatenate((rebinned_pa_CNO_time1, rebinned_pa_CNO_time2)))
+                                      [rebinned_pa_CNO_time1, rebinned_pa_CNO_time2])
         np.testing.assert_array_equal(saved_data_product.cno_intensity_pa_delta_plus,
-                                      np.concatenate(
-                                          (rebinned_pa_CNO_delta_plus_time1, rebinned_pa_CNO_delta_plus_time2)))
+                                      [rebinned_pa_CNO_delta_plus_time1, rebinned_pa_CNO_delta_plus_time2])
         np.testing.assert_array_equal(saved_data_product.cno_intensity_pa_delta_minus,
-                                      np.concatenate(
-                                          (rebinned_pa_CNO_delta_minus_time1, rebinned_pa_CNO_delta_minus_time2)))
+                                      [rebinned_pa_CNO_delta_minus_time1, rebinned_pa_CNO_delta_minus_time2])
 
         np.testing.assert_array_equal(saved_data_product.ne_mg_si_intensity_pa,
-                                      np.concatenate((rebinned_pa_NeMgSi_time1, rebinned_pa_NeMgSi_time2)))
+                                      [rebinned_pa_NeMgSi_time1, rebinned_pa_NeMgSi_time2])
         np.testing.assert_array_equal(saved_data_product.ne_mg_si_intensity_pa_delta_plus,
-                                      np.concatenate(
-                                          (rebinned_pa_NeMgSi_delta_plus_time1, rebinned_pa_NeMgSi_delta_plus_time2)))
+                                      [rebinned_pa_NeMgSi_delta_plus_time1, rebinned_pa_NeMgSi_delta_plus_time2])
         np.testing.assert_array_equal(saved_data_product.ne_mg_si_intensity_pa_delta_minus,
-                                      np.concatenate(
-                                          (rebinned_pa_NeMgSi_delta_minus_time1, rebinned_pa_NeMgSi_delta_minus_time2)))
+                                      [rebinned_pa_NeMgSi_delta_minus_time1, rebinned_pa_NeMgSi_delta_minus_time2])
 
         np.testing.assert_array_equal(saved_data_product.iron_intensity_pa,
-                                      np.concatenate((rebinned_pa_iron_time1, rebinned_pa_iron_time2)))
+                                      [rebinned_pa_iron_time1, rebinned_pa_iron_time2])
         np.testing.assert_array_equal(saved_data_product.iron_intensity_pa_delta_plus,
-                                      np.concatenate(
-                                          (rebinned_pa_iron_delta_plus_time1, rebinned_pa_iron_delta_plus_time2)))
+                                      [rebinned_pa_iron_delta_plus_time1, rebinned_pa_iron_delta_plus_time2])
         np.testing.assert_array_equal(saved_data_product.iron_intensity_pa_delta_minus,
-                                      np.concatenate(
-                                          (rebinned_pa_iron_delta_minus_time1, rebinned_pa_iron_delta_minus_time2)))
+                                      [rebinned_pa_iron_delta_minus_time1, rebinned_pa_iron_delta_minus_time2])
 
         self.assertIs(mock_hit_data.h_energy, saved_data_product.h_energies)
         self.assertIs(mock_hit_data.h_energy_delta_plus, saved_data_product.h_energy_delta_plus)

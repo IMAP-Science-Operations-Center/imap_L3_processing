@@ -1036,7 +1036,7 @@ if __name__ == "__main__":
         else:
             mag_data = read_l1d_mag_data(get_test_data_path("mag/imap_mag_l1d_norm-mago_20250101_v001.cdf"))
             hit_data = read_l2_hit_data(
-                get_test_data_path("hit/imap_hit_l2_macropixel-intensity_20250101_v002.cdf"))
+                get_test_data_path("hit/imap_hit_l2_macropixel-intensity_20250101_v003.cdf"))
             dependencies = HITL3SectoredDependencies(mag_l1d_data=mag_data, data=hit_data)
             print(f"hit macropixel data product: {create_hit_sectored_cdf(dependencies)}")
 
