@@ -134,7 +134,7 @@ def create_codice_lo_l3a_direct_events_cdf(l1a_paths: Optional[tuple[Path, Path]
     else:
         codice_lo_l1a_nsw_priority_path, codice_lo_l1a_sw_priority_path = l1a_paths
 
-    energy_lookup_path = get_test_data_path('codice/imap_codice_lo-esa-to-energy-per_charge_20241110_v001.csv')
+    energy_lookup_path = get_test_data_path('codice/imap_codice_lo-energy-per-charge_20241110_v001.csv')
     mass_coefficient_path = get_test_data_path('codice/imap_codice_mass-coefficient-lookup_20241110_v002.csv')
 
     deps = CodiceLoL3aDirectEventsDependencies.from_file_paths(
@@ -214,7 +214,7 @@ def create_codice_lo_l3a_3d_distributions_cdf(species: str):
         mass_species_bin_lut=(get_test_data_path('codice/imap_codice_lo-mass-species-bin-lookup_20241110_v001.csv')),
         geometric_factors_lut=(get_test_data_path('codice/imap_codice_lo-geometric-factors_20241110_v001.csv')),
         efficiency_factors_lut=(create_efficiency_lookup(species)),
-        energy_per_charge_lut=get_test_data_path("codice/imap_codice_lo-esa-to-energy-per_charge_20241110_v001.csv"),
+        energy_per_charge_lut=get_test_data_path("codice/imap_codice_lo-energy-per-charge_20241110_v001.csv"),
         species=species
     )
 
@@ -608,7 +608,7 @@ def run_glows_l3e_lo_with_less_mocks(mock_spiceypy, mock_imap_data_access):
     mock_spiceypy.spkezr = spiceypy.spkezr
     mock_spiceypy.reclat = spiceypy.reclat
     mock_spiceypy.pxform = spiceypy.pxform
-    mock_spiceypy.datetime2et = lambda date: spiceypy.datetime2et(date + timedelta(days=365 * 16 + 4))
+    mock_spiceypy.datetime2et = lambda date: spiceypy.datetime2et(date + timedelta(days=365 * 16 + 4, hours=2))
 
     mock_imap_data_access.upload = lambda p: print("i would upload", p)
 
@@ -619,7 +619,7 @@ def run_glows_l3e_lo_with_less_mocks(mock_spiceypy, mock_imap_data_access):
         AncillaryInput("imap_glows_ionization-files_20100101_v002.dat"),
         AncillaryInput("imap_glows_lya-series_19470303_v002.dat"),
         AncillaryInput("imap_glows_phion-hydrogen_19470303_v002.dat"),
-        AncillaryInput("imap_glows_pipeline-settings-l3e_20100101_v003.json"),
+        AncillaryInput("imap_glows_pipeline-settings-l3bcde_20100101_v006.json"),
         AncillaryInput("imap_glows_solar-uv-anisotropy_19960130_v002.dat"),
         AncillaryInput("imap_glows_speed-3d_19640117_v002.dat"),
         AncillaryInput("imap_glows_sw-eqtr-electrons_19710416_v002.dat"),
@@ -634,7 +634,7 @@ def run_glows_l3e_lo_with_less_mocks(mock_spiceypy, mock_imap_data_access):
         AncillaryInput("imap_glows_ionization-files_20100101_v002.dat"),
         AncillaryInput("imap_glows_lya-series_19470303_v002.dat"),
         AncillaryInput("imap_glows_phion-hydrogen_19470303_v002.dat"),
-        AncillaryInput("imap_glows_pipeline-settings-l3e_20100101_v003.json"),
+        AncillaryInput("imap_glows_pipeline-settings-l3bcde_20100101_v006.json"),
         AncillaryInput("imap_glows_solar-uv-anisotropy_19960130_v002.dat"),
         AncillaryInput("imap_glows_speed-3d_19640117_v002.dat"),
         AncillaryInput("imap_glows_sw-eqtr-electrons_19710416_v002.dat"),
@@ -646,7 +646,7 @@ def run_glows_l3e_lo_with_less_mocks(mock_spiceypy, mock_imap_data_access):
         AncillaryInput("imap_glows_ionization-files_20100101_v002.dat"),
         AncillaryInput("imap_glows_lya-series_19470303_v002.dat"),
         AncillaryInput("imap_glows_phion-hydrogen_19470303_v002.dat"),
-        AncillaryInput("imap_glows_pipeline-settings-l3e_20100101_v003.json"),
+        AncillaryInput("imap_glows_pipeline-settings-l3bcde_20100101_v006.json"),
         AncillaryInput("imap_glows_solar-uv-anisotropy_19960130_v002.dat"),
         AncillaryInput("imap_glows_speed-3d_19640117_v002.dat"),
         AncillaryInput("imap_glows_sw-eqtr-electrons_19710416_v002.dat"),
@@ -659,7 +659,7 @@ def run_glows_l3e_lo_with_less_mocks(mock_spiceypy, mock_imap_data_access):
         AncillaryInput("imap_glows_ionization-files_20100101_v002.dat"),
         AncillaryInput("imap_glows_lya-series_19470303_v002.dat"),
         AncillaryInput("imap_glows_phion-hydrogen_19470303_v002.dat"),
-        AncillaryInput("imap_glows_pipeline-settings-l3e_20100101_v003.json"),
+        AncillaryInput("imap_glows_pipeline-settings-l3bcde_20100101_v006.json"),
         AncillaryInput("imap_glows_solar-uv-anisotropy_19960130_v002.dat"),
         AncillaryInput("imap_glows_speed-3d_19640117_v002.dat"),
         AncillaryInput("imap_glows_sw-eqtr-electrons_19710416_v002.dat"),
@@ -960,6 +960,7 @@ def create_codice_hi_l3b_pitch_angles_cdf():
 
 if __name__ == "__main__":
     furnish_local_spice()
+    print("k total", spiceypy.ktotal("all"))
     if "codice-lo" in sys.argv:
         if "l3a" in sys.argv:
             if "partial-densities" in sys.argv:
@@ -1192,7 +1193,7 @@ if __name__ == "__main__":
             )
             processor = UltraProcessor(input_metadata=processor_input_metadata, dependencies=Mock())
 
-            #@formatter:off
+            # @formatter:off
             missing_paths, [l2_map_path, *l1c_dependency_paths] = try_get_many_run_local_paths([
                 "ultra/20250415-20250419/imap_ultra_l2_u90-ena-h-sf-nsp-full-hae-4deg-6mo_20250415_v001.cdf",
                 "ultra/20250415-20250419/ultra_l1c/imap_ultra_l1c_45sensor-spacecraftpset_20250415-repoint00001_v001.cdf",
