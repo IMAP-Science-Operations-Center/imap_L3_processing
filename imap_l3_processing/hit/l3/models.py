@@ -48,6 +48,8 @@ class HitL2Data:
     cno: np.ndarray[float]
     nemgsi: np.ndarray[float]
     fe: np.ndarray[float]
+    azimuth: np.ndarray[float]
+    zenith: np.ndarray[float]
 
     delta_minus_cno: np.ndarray[float]
     delta_minus_he4: np.ndarray[float]

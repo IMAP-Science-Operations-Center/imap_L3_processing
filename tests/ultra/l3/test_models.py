@@ -28,7 +28,7 @@ class TestModels(SpiceTestCase):
             np.testing.assert_array_equal(expected[PROBABILITY_OF_SURVIVAL_VAR_NAME][...], actual.survival_probability)
 
     def test_ultra_l1c_read_from_file(self):
-        expected_epoch = datetime(2025, 4, 15, 0)
+        expected_epoch = datetime(2025, 4, 15, 12)
 
         run_local_path = get_test_data_folder() / 'ultra' / 'fake_l1c_psets' / 'imap_ultra_l1c_45sensor-spacecraftpset_20250415-repoint00001_v010.cdf'
 
