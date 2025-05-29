@@ -110,8 +110,10 @@ class CodiceHiProcessor(Processor):
         fe_energy_bins = dependencies.codice_sectored_intensities_data.energy_fe.shape[0]
         rebinned_mag_data = mag_data.rebin_to(sectored_intensities.epoch, sectored_intensities.epoch_delta_plus)
 
+        spin_angles_in_dps = (sectored_intensities.spin_sector_index + CODICE_SPIN_ANGLE_OFFSET_FROM_MAG_BOOM) % 360
+
         mag_unit_vectors = calculate_unit_vector(rebinned_mag_data)
-        sector_unit = get_sector_unit_vectors(sectored_intensities.spin_sector_index, sectored_intensities.ssd_index)
+        sector_unit = get_sector_unit_vectors(spin_angles_in_dps, sectored_intensities.ssd_index)
         sector_unit_vectors = calculate_unit_vector(sector_unit)
         particle_unit_vectors = -1 * sector_unit_vectors
 
