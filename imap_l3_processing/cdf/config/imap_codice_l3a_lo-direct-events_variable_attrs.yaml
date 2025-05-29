@@ -98,23 +98,57 @@ spin_angle_bin:
   <<: *support_data
   <<: *float_data
   NAME: spin_angle_bin
-  CATDESC: Spin angle bin
+  CATDESC: Spin angle bins
   FIELDNAM: Spin angle
-  LABLAXIS: Spin angle
+  LABLAXIS: Spin Angle
   UNITS: degrees
+  VALIDMIN: 0
   VALIDMAX: 360
   SCALETYP: linear
-  SCALEMIN: 0
-  SCALEMAX: 360
+  DELTA_PLUS_VAR: spin_angle_bin_delta
+  DELTA_MINUS_VAR: spin_angle_bin_delta
+
+spin_angle_bin_delta:
+  <<: *support_data
+  <<: *float_data
+  NAME: spin_angle_bin_delta
+  CATDESC: Spin angle bin deltas
+  FIELDNAM: Spin angle delta
+  LABLAXIS: Spin Angle delta
+  UNITS: degrees
+  SCALETYP: linear
 
 energy_bin:
   <<: *support_data
   <<: *float_data
   NAME: energy_bin
   CATDESC: Energy bins
-  FIELDNAM: Energy bins
-  LABLAXIS: Energy bins
+  FIELDNAM: Energy
+  LABLAXIS: Energy
   UNITS: keV/e
+  SCALETYP: log
+  DELTA_PLUS_VAR: energy_bin_delta_plus
+  DELTA_MINUS_VAR: energy_bin_delta_minus
+
+energy_bin_delta_plus:
+  <<: *support_data
+  <<: *float_data
+  NAME: energy_bin_delta_plus
+  CATDESC: Energy bins delta plus
+  FIELDNAM: Energy delta plus
+  LABLAXIS: Energy delta plus
+  UNITS: keV/e
+  SCALETYP: log
+
+energy_bin_delta_minus:
+  <<: *support_data
+  <<: *float_data
+  NAME: energy_bin_delta_minus
+  CATDESC: Energy bins delta minus
+  FIELDNAM: Energy delta minus
+  LABLAXIS: Energy delta minus
+  UNITS: keV/e
+  SCALETYP: log
 
 normalization:
   <<: *per_priority
@@ -148,14 +182,23 @@ mass:
   LABLAXIS: m
   UNITS: amu
 
-event_energy:
+apd_energy:
   <<: *per_event
   <<: *float_data
-  NAME: event_energy
-  CATDESC: Mass of event
-  FIELDNAM: Mass
-  LABLAXIS: m
+  NAME: apd_energy
+  CATDESC: Deposited energy at APD
+  FIELDNAM: APD Energy
+  LABLAXIS: APD Energy
   UNITS: keV
+
+energy_step:
+  <<: *per_event
+  <<: *float_data
+  NAME: energy_step
+  CATDESC: Energy per charge selected by ESA
+  FIELDNAM: Energy Step
+  LABLAXIS: Energy Step
+  UNITS: keV/e
 
 event_spin_angle:
   <<: *per_event

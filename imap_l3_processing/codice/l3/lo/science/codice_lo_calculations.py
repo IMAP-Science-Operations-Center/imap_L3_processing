@@ -61,6 +61,8 @@ def rebin_counts_by_energy_and_spin_angle(priority_event: PriorityEvent,
     rebinned_output = np.zeros((num_epochs, num_energies, num_spin_bins))
 
     for time_index, num_events in enumerate(priority_event.num_events):
+        if num_events is np.ma.masked: continue
+
         spin_angle_in_degrees = priority_event.spin_angle[time_index, :num_events]
         energy_in_keV = priority_event.energy_step[time_index, :num_events]
 
@@ -91,7 +93,7 @@ def rebin_to_counts_by_species_elevation_and_spin_sector(num_events: np.ndarray,
         for priority_i in range(num_priorities):
             if num_events[epoch_i, priority_i] is np.ma.masked:
                 continue
-                
+
             for event_i in range(num_events[epoch_i, priority_i]):
                 indices_of_event = epoch_i, priority_i, event_i
                 if (np.isnan(energy[*indices_of_event]) or np.isnan(spin_angle[*indices_of_event]) or

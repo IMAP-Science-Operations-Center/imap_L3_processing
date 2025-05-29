@@ -48,7 +48,7 @@ class TestSurvivalProbabilityProcessing(SpiceTestCase):
             "exposure_weighted_survival_probabilities": (
                 [
                     CoordNames.TIME.value,
-                    CoordNames.ENERGY_ULTRA.value,
+                    CoordNames.ENERGY_ULTRA_L1C.value,
                     CoordNames.AZIMUTH_L2.value,
                     CoordNames.ELEVATION_L2.value,
                 ],
@@ -57,7 +57,7 @@ class TestSurvivalProbabilityProcessing(SpiceTestCase):
         },
             coords={
                 CoordNames.TIME.value: [epoch],
-                CoordNames.ENERGY_ULTRA.value: rng.random((9,)),
+                CoordNames.ENERGY_ULTRA_L1C.value: rng.random((9,)),
                 CoordNames.AZIMUTH_L2.value: rng.random((90,)),
                 CoordNames.ELEVATION_L2.value: rng.random((45,)),
             })

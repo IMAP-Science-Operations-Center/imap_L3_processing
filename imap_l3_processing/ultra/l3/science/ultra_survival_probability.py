@@ -44,7 +44,7 @@ class UltraSurvivalProbability(UltraPointingSet):
         self.data["survival_probability_times_exposure"] = (
             [
                 CoordNames.TIME.value,
-                CoordNames.ENERGY_ULTRA.value,
+                CoordNames.ENERGY_ULTRA_L1C.value,
                 CoordNames.HEALPIX_INDEX.value
             ],
             np.array([energy_interpolated_sp] * l1c_pset.exposure)
