@@ -15,6 +15,7 @@ from imap_l3_processing.codice.l3.lo.codice_lo_processor import CodiceLoProcesso
 from imap_l3_processing.glows.glows_processor import GlowsProcessor
 from imap_l3_processing.hi.hi_processor import HiProcessor
 from imap_l3_processing.hit.l3.hit_processor import HitProcessor
+from imap_l3_processing.lo.lo_processor import LoProcessor
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.swapi.swapi_processor import SwapiProcessor
 from imap_l3_processing.swe.swe_processor import SweProcessor
@@ -71,6 +72,8 @@ def imap_l3_processor():
         processor = HiProcessor(processing_input_collection, input_dependency)
     elif args.instrument == 'ultra':
         processor = UltraProcessor(processing_input_collection, input_dependency)
+    elif args.instrument == 'lo':
+        processor = LoProcessor(processing_input_collection, input_dependency)
     elif args.instrument == 'codice':
         if args.descriptor.startswith("hi"):
             processor = CodiceHiProcessor(processing_input_collection, input_dependency)
