@@ -3,7 +3,7 @@ import shutil
 from dataclasses import dataclass
 from pathlib import Path
 
-from imap_data_access.processing_input import ProcessingInputCollection
+from imap_data_access.processing_input import ProcessingInputCollection, RepointInput
 
 from imap_l3_processing.utils import \
     download_dependency_from_path
@@ -25,6 +25,7 @@ class GlowsL3EDependencies:
     ionization_files: Path
     pipeline_settings: dict
     elongation: dict
+    repointing_file: Path
 
     @classmethod
     def fetch_dependencies(cls, dependencies: ProcessingInputCollection, descriptor: str):
@@ -83,6 +84,9 @@ class GlowsL3EDependencies:
 
         cr_number = int(str(solar_hist_dependency).split('_')[-2][-5:])
 
+        repoint_file_dependency = dependencies.get_file_paths(data_type=RepointInput.data_type)
+        repoint_file_path = download_dependency_from_path(str(repoint_file_dependency[0]))
+
         return cls(
             energy_grid_lo_path,
             energy_grid_hi_path,
@@ -98,6 +102,7 @@ class GlowsL3EDependencies:
             ionization_files_path,
             pipeline_settings,
             elongation_data,
+            repoint_file_path
         ), cr_number
 
     def rename_dependencies(self):

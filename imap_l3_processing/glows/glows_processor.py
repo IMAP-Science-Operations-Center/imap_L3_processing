@@ -80,7 +80,7 @@ class GlowsProcessor(Processor):
             repointings = determine_l3e_files_to_produce(self.input_metadata.descriptor,
                                                          l3e_dependencies.pipeline_settings['start_cr'], cr_number,
                                                          self.input_metadata.version,
-                                                         Path(os.getenv("REPOINT_DATA_FILEPATH")))
+                                                         l3e_dependencies.repointing_file)
             for repointing in repointings:
                 self.input_metadata.repointing = repointing
                 try:

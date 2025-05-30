@@ -85,5 +85,4 @@ class TestGlowsL3EUtils(unittest.TestCase):
 
         mock_query.assert_called_once_with(instrument="glows", descriptor=descriptor, data_level="l3e", version=version)
 
-        # self.assertEqual(len(expected_repointings), len(actual_repointings))
         np.testing.assert_array_equal(actual_repointings, expected_repointings)

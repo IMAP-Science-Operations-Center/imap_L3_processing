@@ -5,6 +5,7 @@ import numpy as np
 import spiceypy
 from astropy.time import Time
 from imap_data_access import query
+from imap_processing.spice.repoint import set_global_repoint_table_paths, get_repoint_data
 
 from imap_l3_processing.constants import ONE_AU_IN_KM, TT2000_EPOCH, ONE_SECOND_IN_NANOSECONDS
 from imap_l3_processing.glows.l3bc.l3bc_toolkit.funcs import jd_fm_Carrington
@@ -54,7 +55,8 @@ def determine_l3e_files_to_produce(descriptor: str, first_cr_processed: int, las
 
     existing_pointings = [l3e['repointing'] for l3e in l3e_files]
 
-    repointing_data = np.loadtxt(repointing_path, skiprows=1, delimiter=",", dtype=str)
+    set_global_repoint_table_paths([repointing_path])
+    repointing_data = get_repoint_data()
 
     first_carrington_start_date = Time(jd_fm_Carrington(float(first_cr_processed)), format='jd')
     last_cr_end_date = Time(jd_fm_Carrington(float(last_processed_cr + 1)), format='jd')
@@ -64,14 +66,13 @@ def determine_l3e_files_to_produce(descriptor: str, first_cr_processed: int, las
 
     vectorized_date_conv = np.vectorize(lambda d: (Time(d, format="isot").to_datetime(
         leap_second_strict='silent') - TT2000_EPOCH).total_seconds() * ONE_SECOND_IN_NANOSECONDS)
-    repointing_data[:, 3] = vectorized_date_conv(repointing_data[:, 3])
-    repointing_data[:, 6] = vectorized_date_conv(repointing_data[:, 6])
-    repointing_data = repointing_data.astype(float)
+    repoint_starts = vectorized_date_conv(repointing_data["repoint_start_utc"])
+    repoint_ids = repointing_data["repoint_id"]
 
     pointing_numbers = []
-    for i in range(len(repointing_data)):
-        if i + 1 < len(repointing_data) and start_ns < repointing_data[i + 1, 3] < end_ns:
-            pointing_numbers.append(int(repointing_data[i, 7]))
+    for i in range(len(repoint_ids)):
+        if i + 1 < len(repoint_ids) and start_ns < repoint_starts[i + 1] < end_ns:
+            pointing_numbers.append(int(repoint_ids[i]))
 
     pointing_numbers = [pointing for pointing in pointing_numbers if pointing not in existing_pointings]
 

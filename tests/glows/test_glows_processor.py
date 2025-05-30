@@ -31,7 +31,7 @@ from imap_l3_processing.glows.l3e.glows_l3e_lo_model import GlowsL3ELoData
 from imap_l3_processing.glows.l3e.glows_l3e_ultra_model import GlowsL3EUltraData
 from imap_l3_processing.models import InputMetadata
 from tests.test_helpers import get_test_instrument_team_data_path, get_test_data_path, get_test_data_folder, \
-    assert_dataclass_fields, environment_variables
+    assert_dataclass_fields
 
 
 class TestGlowsProcessor(unittest.TestCase):
@@ -381,7 +381,6 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
             processor.process_l3bc(dependencies)
         self.assertTrue("All days for Carrington Rotation are in a bad season." in str(context.exception))
 
-    @environment_variables({"REPOINT_DATA_FILEPATH": get_test_data_path("fake_2_day_repointing_on_may18_file.csv")})
     @patch('imap_l3_processing.hi.hi_processor.Processor.get_parent_file_names')
     @patch('imap_l3_processing.glows.glows_processor.determine_l3e_files_to_produce')
     @patch('imap_l3_processing.glows.glows_processor.save_data')
@@ -404,6 +403,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
 
         l3e_dependencies = MagicMock(spec=GlowsL3EDependencies)
         l3e_dependencies.pipeline_settings = {'start_cr': 2090}
+        l3e_dependencies.repointing_file = get_test_data_path("fake_2_day_repointing_on_may18_file.csv")
         cr_number = 2092
 
         mock_determine_l3e_files_to_produce.return_value = [20, 21]
@@ -484,7 +484,6 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
 
         mock_get_repoint_date_range.assert_has_calls([call(20), call(21)])
 
-    @environment_variables({"REPOINT_DATA_FILEPATH": get_test_data_path("fake_2_day_repointing_on_may18_file.csv")})
     @patch('imap_l3_processing.hi.hi_processor.Processor.get_parent_file_names')
     @patch('imap_l3_processing.glows.glows_processor.determine_l3e_files_to_produce')
     @patch('imap_l3_processing.glows.glows_processor.imap_data_access.upload')
@@ -522,6 +521,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
 
                 l3e_dependencies = MagicMock(spec=GlowsL3EDependencies)
                 l3e_dependencies.pipeline_settings = {'start_cr': 2090}
+                l3e_dependencies.repointing_file = get_test_data_path("fake_2_day_repointing_on_may18_file.csv")
 
                 cr_number = 2092
                 mock_determine_l3e_files_to_produce.return_value = [20, 21]
@@ -606,7 +606,6 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
 
                 mock_get_repoint_date_range.assert_has_calls([call(20), call(21)])
 
-    @environment_variables({"REPOINT_DATA_FILEPATH": get_test_data_path("fake_2_day_repointing_on_may18_file.csv")})
     @patch('imap_l3_processing.glows.glows_processor.determine_l3e_files_to_produce')
     @patch('imap_l3_processing.hi.hi_processor.Processor.get_parent_file_names')
     @patch('imap_l3_processing.glows.glows_processor.imap_data_access.upload')
@@ -631,6 +630,8 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
         l3e_dependencies.elongation = {'2024020': 75, '2024021': 105}
 
         l3e_dependencies.pipeline_settings = {'start_cr': 2090}
+        l3e_dependencies.repointing_file = get_test_data_path("fake_2_day_repointing_on_may18_file.csv")
+
         cr_number = 2092
 
         mock_determine_l3e_files_to_produce.return_value = [20, 21, 22]
@@ -722,7 +723,6 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
              call("imap_glows_l3e_survival-probability-lo_20241008-repoint00021_v001.cdf"),
              call(Path(expected_second_output_file_path))])
 
-    @environment_variables({"REPOINT_DATA_FILEPATH": get_test_data_path("fake_2_day_repointing_on_may18_file.csv")})
     @patch('imap_l3_processing.glows.glows_processor.determine_l3e_files_to_produce')
     @patch('imap_l3_processing.hi.hi_processor.Processor.get_parent_file_names')
     @patch('imap_l3_processing.glows.glows_processor.imap_data_access.upload')
@@ -750,6 +750,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
         l3e_dependencies.elongation = {'2024020': 75, '2024021': 105}
 
         l3e_dependencies.pipeline_settings = {'start_cr': 2090}
+        l3e_dependencies.repointing_file = get_test_data_path("fake_2_day_repointing_on_may18_file.csv")
         cr_number = 2092
 
         mock_determine_l3e_files_to_produce.return_value = [20, 21, 22]
