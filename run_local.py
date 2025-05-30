@@ -12,7 +12,8 @@ import imap_data_access
 import numpy as np
 import spiceypy
 import xarray as xr
-from imap_data_access.processing_input import AncillaryInput, ProcessingInputCollection, ScienceInput
+from imap_data_access.processing_input import AncillaryInput, ProcessingInputCollection, ScienceInput, \
+    RepointInput
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.codice.l3.hi.codice_hi_processor import CodiceHiProcessor
@@ -545,7 +546,6 @@ def run_glows_l3e_lo_with_mocks(mock_get_repoint_date_range, _, mock_path, mock_
     mock_processing_input_collection.get_file_paths.return_value = [Path("one path")]
 
     mock_l3e_dependencies: GlowsL3EDependencies = GlowsL3EDependencies(
-        Path("imap_glows_l3d_solar-hist_20250501-repoint00005_v001.cdf"),
         Path("instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/EnGridLo.dat"),
         Path("instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/EnGridHi.dat"),
         Path("instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/EnGridUltra.dat"),
@@ -559,7 +559,7 @@ def run_glows_l3e_lo_with_mocks(mock_get_repoint_date_range, _, mock_path, mock_
         Path("instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/phion_Hydrogen_T12F107_2021b.dat"),
         Path("instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/swEqtrElectrons5_2021b.dat"),
         Path("instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/ionization.files.dat"),
-        {"executable_dependency_paths": {
+        pipeline_settings={"executable_dependency_paths": {
             "energy-grid-lo": "EnGridLo.dat",
             "energy-grid-hi": "EnGridHi.dat",
             "energy-grid-ultra": "EnGridUltra.dat",
@@ -572,11 +572,14 @@ def run_glows_l3e_lo_with_mocks(mock_get_repoint_date_range, _, mock_path, mock_
             "phion-hydrogen": "phion_Hydrogen_T12F107_2021b.dat",
             "sw-eqtr-electrons": "swEqtrElectrons5_2021b.dat",
             "ionization-files": "ionization.files.dat",
-        }}
+        },
+            "start_cr": 2092},
+        elongation={1234: 90},
+        repointing_file=get_test_data_path("fake_1_day_repointing_file.csv"),
     )
 
     mock_l3e_dependencies.rename_dependencies = Mock()
-    mock_l3e_dependencies_class.fetch_dependencies.return_value = (mock_l3e_dependencies, 5)
+    mock_l3e_dependencies_class.fetch_dependencies.return_value = (mock_l3e_dependencies, 2094)
 
     mock_path.side_effect = [
         Path(get_test_instrument_team_data_path("glows/probSur.Imap.Lo_20090101_010101_2009.000_60.00.txt")),
@@ -602,10 +605,9 @@ def run_glows_l3e_lo_with_mocks(mock_get_repoint_date_range, _, mock_path, mock_
     glows_processor.process()
 
 
-@environment_variables({"REPOINT_DATA_FILEPATH": get_test_data_path("fake_1_day_repointing_file.csv")})
 @patch("imap_l3_processing.glows.glows_processor.imap_data_access")
 @patch("imap_l3_processing.glows.l3e.glows_l3e_utils.spiceypy")
-def run_glows_l3e_lo_with_less_mocks(mock_spiceypy, mock_imap_data_access):
+def run_glows_l3e_with_less_mocks(mock_spiceypy, mock_imap_data_access):
     mock_spiceypy.spkezr = spiceypy.spkezr
     mock_spiceypy.reclat = spiceypy.reclat
     mock_spiceypy.pxform = spiceypy.pxform
@@ -626,7 +628,8 @@ def run_glows_l3e_lo_with_less_mocks(mock_spiceypy, mock_imap_data_access):
         AncillaryInput("imap_glows_sw-eqtr-electrons_19710416_v002.dat"),
         AncillaryInput("imap_glows_tess-xyz-8_20100101_v002.dat"),
         AncillaryInput("imap_lo_elongation-data_20100101_v001.dat"),
-        ScienceInput(l3d_file)
+        ScienceInput(l3d_file),
+        RepointInput("imap_2001_052_001.repoint.csv"),
     )
 
     hi_45_processing_input_collection = ProcessingInputCollection(
@@ -639,7 +642,8 @@ def run_glows_l3e_lo_with_less_mocks(mock_spiceypy, mock_imap_data_access):
         AncillaryInput("imap_glows_solar-uv-anisotropy_19960130_v002.dat"),
         AncillaryInput("imap_glows_speed-3d_19640117_v002.dat"),
         AncillaryInput("imap_glows_sw-eqtr-electrons_19710416_v002.dat"),
-        ScienceInput(l3d_file)
+        ScienceInput(l3d_file),
+        RepointInput("imap_2001_052_001.repoint.csv"),
     )
     hi_90_processing_input_collection = ProcessingInputCollection(
         AncillaryInput("imap_glows_density-3d_19640117_v002.dat"),
@@ -651,7 +655,8 @@ def run_glows_l3e_lo_with_less_mocks(mock_spiceypy, mock_imap_data_access):
         AncillaryInput("imap_glows_solar-uv-anisotropy_19960130_v002.dat"),
         AncillaryInput("imap_glows_speed-3d_19640117_v002.dat"),
         AncillaryInput("imap_glows_sw-eqtr-electrons_19710416_v002.dat"),
-        ScienceInput(l3d_file)
+        ScienceInput(l3d_file),
+        RepointInput("imap_2001_052_001.repoint.csv"),
     )
 
     ul_processing_input_collection = ProcessingInputCollection(
@@ -665,7 +670,8 @@ def run_glows_l3e_lo_with_less_mocks(mock_spiceypy, mock_imap_data_access):
         AncillaryInput("imap_glows_speed-3d_19640117_v002.dat"),
         AncillaryInput("imap_glows_sw-eqtr-electrons_19710416_v002.dat"),
         AncillaryInput("imap_glows_tess-ang-16_20100101_v002.dat"),
-        ScienceInput(l3d_file)
+        ScienceInput(l3d_file),
+        RepointInput("imap_2001_052_001.repoint.csv"),
     )
 
     version = 'v007'
@@ -1011,7 +1017,7 @@ if __name__ == "__main__":
             if "mock" in sys.argv:
                 run_glows_l3e_lo_with_mocks()
             else:
-                run_glows_l3e_lo_with_less_mocks()
+                run_glows_l3e_with_less_mocks()
         else:
             cdf_data = CDF("tests/test_data/glows/imap_glows_l2_hist_20130908-repoint00001_v004.cdf")
             l2_glows_data = read_l2_glows_data(cdf_data)

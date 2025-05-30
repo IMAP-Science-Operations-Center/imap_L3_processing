@@ -15,7 +15,7 @@ from imap_l3_processing.glows.l3bc.glows_initializer_ancillary_dependencies impo
 from imap_l3_processing.glows.l3bc.models import CRToProcess
 from imap_l3_processing.glows.l3bc.utils import read_glows_l3a_data, find_unprocessed_carrington_rotations, \
     archive_dependencies, get_pointing_date_range
-from tests.test_helpers import get_test_data_path, environment_variables
+from tests.test_helpers import get_test_data_path
 
 
 class TestUtils(unittest.TestCase):
@@ -61,7 +61,6 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(0.0, actual_glows_lightcurve.spin_period_std_dev[0])
         self.assertEqual(0.0, actual_glows_lightcurve.time_dependent_background[0][0])
 
-    @environment_variables({"REPOINT_DATA_FILEPATH": get_test_data_path("fake_1_day_repointing_file.csv")})
     def test_get_pointing_date_range(self):
         repointing_number = 13
         actual_start, actual_end = get_pointing_date_range(repointing_number)
@@ -73,16 +72,16 @@ class TestUtils(unittest.TestCase):
         np.testing.assert_array_equal(actual_start, expected_start)
         np.testing.assert_array_equal(actual_end, expected_end)
 
-    @environment_variables({"REPOINT_DATA_FILEPATH": get_test_data_path("fake_1_day_repointing_file.csv")})
     def test_get_repoint_date_range_handles_no_pointing(self):
         repointing_number = 5998
         with self.assertRaises(ValueError) as err:
             _, _ = get_pointing_date_range(repointing_number)
         self.assertEqual(str(err.exception), f"No pointing found for pointing: 5998")
 
-    @environment_variables({"REPOINT_DATA_FILEPATH": get_test_data_path("fake_1_day_repointing_file.csv")})
     @patch("imap_l3_processing.glows.l3bc.utils.validate_dependencies")
-    def test_find_unprocessed_carrington_rotations(self, mock_validate_dependencies: Mock):
+    def test_find_unprocessed_carrington_rotations(self,
+                                                   mock_validate_dependencies: Mock):
+        set_global_repoint_table_paths([Path("not_set_yet")])
         l3a_files_january = [
             create_imap_data_access_json(
                 file_path=f'imap/glows/l3a/2000/01/imap_glows_l3a_hist_200001{str(i + 1).zfill(2)}-repoint{str(i).zfill(5)}_v001.pkts',
@@ -141,7 +140,9 @@ class TestUtils(unittest.TestCase):
                                                                          omni2_data_path=Path("omni"),
                                                                          initializer_time_buffer=TimeDelta(52,
                                                                                                            format="jd"),
-                                                                         f107_index_file_path=Path("f107"))
+                                                                         f107_index_file_path=Path("f107"),
+                                                                         repointing_file=get_test_data_path(
+                                                                             "fake_1_day_repointing_file.csv"))
 
         actual_crs_to_process: [CRToProcess] = find_unprocessed_carrington_rotations(l3a_files, l3b_files,
                                                                                      initializer_dependencies)
@@ -198,7 +199,6 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(initializer_dependencies.lyman_alpha_path,
                          mock_validate_dependencies.call_args_list[2][0][4])
 
-    @environment_variables({"REPOINT_DATA_FILEPATH": get_test_data_path("fake_2_day_repointing_on_jan29.csv")})
     @patch("imap_l3_processing.glows.l3bc.utils.validate_dependencies")
     def test_find_unprocessed_carrington_rotations_handles_multi_day_repointing(self, mock_validate_dependencies: Mock):
         l3a_in_1958 = create_imap_data_access_json(
@@ -224,7 +224,8 @@ class TestUtils(unittest.TestCase):
         expected_l3a_1958 = [l3a_in_1958.get('file_path'), l3a_in_1958_and_1959.get('file_path')]
         expected_l3a_1959 = [l3a_in_1958_and_1959.get('file_path'), l3a_in_1959.get('file_path')]
 
-        mock_dependencies = Mock(initializer_time_buffer=56)
+        mock_dependencies = Mock(initializer_time_buffer=56,
+                                 repointing_file=get_test_data_path("fake_1_day_repointing_file.csv"))
         actual_crs_to_process: [CRToProcess] = find_unprocessed_carrington_rotations(l3a_files, [], mock_dependencies)
 
         self.assertEqual(2, len(actual_crs_to_process))
@@ -254,6 +255,7 @@ class TestUtils(unittest.TestCase):
                                                              omni2_data_path=Path("omni"),
                                                              f107_index_file_path=Path("f107"),
                                                              initializer_time_buffer=TimeDelta(42, format="jd"),
+                                                             repointing_file=Path("/path/to/repointing.csv")
                                                              )
 
         cr_to_process: CRToProcess = CRToProcess(cr_rotation_number=2095, l3a_paths=["file1", "file2"],
@@ -267,7 +269,8 @@ class TestUtils(unittest.TestCase):
                                       "bad_days_list": dependencies.bad_days_list,
                                       "pipeline_settings": dependencies.pipeline_settings,
                                       "waw_helioion_mp": dependencies.waw_helioion_mp_path,
-                                      "uv_anisotropy": dependencies.uv_anisotropy_path
+                                      "uv_anisotropy": dependencies.uv_anisotropy_path,
+                                      "repointing_file": "repointing.csv",
                                       }
 
         mock_zip_file = MagicMock()

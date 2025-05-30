@@ -80,7 +80,7 @@ class GlowsProcessor(Processor):
             repointings = determine_l3e_files_to_produce(self.input_metadata.descriptor,
                                                          l3e_dependencies.pipeline_settings['start_cr'], cr_number,
                                                          self.input_metadata.version,
-                                                         Path(os.getenv("REPOINT_DATA_FILEPATH")))
+                                                         l3e_dependencies.repointing_file)
             for repointing in repointings:
                 self.input_metadata.repointing = repointing
                 try:
@@ -187,14 +187,15 @@ class GlowsProcessor(Processor):
         return None, None, None
 
     def process_l3e_lo(self, epoch: datetime, epoch_delta: timedelta, elongation_value: int):
-        call_args = determine_call_args_for_l3e_executable(epoch, epoch + epoch_delta, elongation_value)
+        call_args_object = determine_call_args_for_l3e_executable(epoch, epoch + epoch_delta, elongation_value)
+        call_args = call_args_object.to_argument_list()
 
         run(["./survProbLo"] + call_args)
 
         output_path = Path(f'probSur.Imap.Lo_{call_args[0]}_{call_args[1][:8]}_{call_args[-1][:5]}.dat')
         lo_data = GlowsL3ELoData.convert_dat_to_glows_l3e_lo_product(self.input_metadata, output_path,
-                                                                     np.array([epoch]), np.array([epoch_delta]),
-                                                                     elongation_value)
+                                                                     np.array([epoch]),
+                                                                     np.array([elongation_value]), call_args_object)
 
         lo_data.parent_file_names = self.get_parent_file_names()
         lo_cdf = save_data(lo_data)
@@ -208,12 +209,13 @@ class GlowsProcessor(Processor):
         imap_data_access.upload(new_dat_path)
 
     def process_l3e_hi(self, epoch: datetime, epoch_delta: timedelta, elongation: int):
-        call_args = determine_call_args_for_l3e_executable(epoch, epoch + epoch_delta, elongation)
+        call_args_object = determine_call_args_for_l3e_executable(epoch, epoch + epoch_delta, elongation)
+        call_args = call_args_object.to_argument_list()
         run(["./survProbHi"] + call_args)
 
         output_path = Path(f'probSur.Imap.Hi_{call_args[0]}_{call_args[1][:8]}_{call_args[-1][:5]}.dat')
         hi_data = GlowsL3EHiData.convert_dat_to_glows_l3e_hi_product(self.input_metadata, output_path,
-                                                                     np.array([epoch]), np.array([epoch_delta]))
+                                                                     np.array([epoch]), call_args_object)
 
         hi_data.parent_file_names = self.get_parent_file_names()
 
@@ -229,13 +231,14 @@ class GlowsProcessor(Processor):
         imap_data_access.upload(new_dat_path)
 
     def process_l3e_ul(self, epoch: datetime, epoch_delta: timedelta):
-        call_args = determine_call_args_for_l3e_executable(epoch, epoch + epoch_delta, 30)
+        call_args_object = determine_call_args_for_l3e_executable(epoch, epoch + epoch_delta, 30)
+        call_args = call_args_object.to_argument_list()
 
         run(["./survProbUltra"] + call_args)
 
         output_path = Path(f'probSur.Imap.Ul_{call_args[0]}_{call_args[1][:8]}.dat')
         ul_data = GlowsL3EUltraData.convert_dat_to_glows_l3e_ul_product(self.input_metadata, output_path,
-                                                                        np.array([epoch]), np.array([epoch_delta]))
+                                                                        np.array([epoch]), call_args_object)
 
         ul_data.parent_file_names = self.get_parent_file_names()
 

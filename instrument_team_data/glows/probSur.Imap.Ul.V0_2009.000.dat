@@ -6,7 +6,7 @@
 # Spin axis: alpha_ecl= 280.5761942845298 delta_ecl=  0.0000000000000                               
 # routs_end=  90.00                               
 # Numerical parameters: healpix tessel: 16, nr of point:  3072                                      
-# code version survProbEnGrid.out      , Date of calculation: 09/12/2024                            
+# code version Ultra.v00.01   , Date of calculation: 09/12/2024
 #                                                                  
 # time: time of calculations, [decimal year]
 # location_of_spaceCraft: r: radius from the Sun [au], theta: longitude of the spacecraft, spheric, ecl [deg], phi: latitude of the spacecraft, spheric, ecl [deg]  

@@ -44,7 +44,8 @@ class TestCdfUtils(TestCase):
                 self.assertIn('epoch', yaml_data.keys(), "no entry in file for 'epoch'")
                 self.assertEqual('epoch', yaml_data['epoch']['NAME'], "epoch must be lowercase")
                 self._epoch_meets_schema(yaml_data)
-                self._epoch_delta_meets_schema(yaml_data)
+                if "epoch_delta" in yaml_data.keys():
+                    self._epoch_delta_meets_schema(yaml_data)
 
     def test_delta_vars_have_same_units(self):
         for filename, yaml_data, variable_key, variable in self.test_cases_variable:
@@ -125,7 +126,10 @@ class TestCdfUtils(TestCase):
                         self.assertFalse(True, f"Found unknown DATA_TYPE: {variable['DATA_TYPE']}")
 
     def _epoch_meets_schema(self, yaml_data: dict):
-        self.assertEqual(20, len(yaml_data['epoch'].keys()))
+        if "epoch_delta" in yaml_data.keys():
+            self.assertEqual(20, len(yaml_data['epoch'].keys()))
+        else:
+            self.assertEqual(18, len(yaml_data['epoch'].keys()))
         self.assertEqual('CDF_TIME_TT2000', yaml_data['epoch']['DATA_TYPE'],
                          "epoch type must be CDF_TIME_TT2000")
         self.assertEqual('support_data', yaml_data['epoch']['VAR_TYPE'],
@@ -152,10 +156,6 @@ class TestCdfUtils(TestCase):
                          "epoch TIME_BASE should be J2000")
         self.assertEqual("TT", yaml_data['epoch']['TIME_SCALE'],
                          "epoch TIME_SCALE should be TT")
-        self.assertEqual("epoch_delta", yaml_data['epoch']['DELTA_PLUS_VAR'],
-                         "epoch DELTA_PLUS_VAR should be epoch_delta")
-        self.assertEqual("epoch_delta", yaml_data['epoch']['DELTA_MINUS_VAR'],
-                         "epoch DELTA_MINUS_VAR should be epoch_delta")
         self.assertEqual("INCREASE", yaml_data['epoch']['MONOTON'],
                          "epoch MONOTON should be INCREASE")
         self.assertEqual("Rotating Earth Geoid", yaml_data['epoch']['REFERENCE_POSITION'],

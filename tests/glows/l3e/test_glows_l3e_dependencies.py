@@ -2,6 +2,8 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch, Mock, call
 
+from imap_data_access import RepointInput
+
 from imap_l3_processing.glows.l3e.glows_l3e_dependencies import GlowsL3EDependencies
 from tests.test_helpers import get_test_data_path
 
@@ -24,11 +26,12 @@ class TestGlowsL3EDependencies(unittest.TestCase):
         ionization_files = Path('ionization_files_path')
         mock_pipeline_settings = Path('l3bcde_pipeline_settings.json')
         mock_lo_elongation_file = Path('lo_elongation_data.dat')
+        mock_repoint_file = Path('repoint.csv')
 
         mock_processing_input_collection.get_file_paths.side_effect = [
             [mock_l3d], [mock_lya_series], [mock_solar_uv_anisotropy], [mock_speed_3d_sw], [mock_density_3d_sw],
             [mock_phion_hydrogen], [mock_sw_eqtr_electrons], [ionization_files], [mock_pipeline_settings],
-            [mock_tess_xyz_8], [mock_energy_grid_lo], [mock_lo_elongation_file]
+            [mock_tess_xyz_8], [mock_energy_grid_lo], [mock_lo_elongation_file], [mock_repoint_file]
         ]
 
         mock_lya_series_path = Mock()
@@ -43,11 +46,13 @@ class TestGlowsL3EDependencies(unittest.TestCase):
         mock_energy_grid_lo_path = Mock()
         mock_tess_xyz_8_path = Mock()
         mock_lo_elongation_path = get_test_data_path('glows/imap_lo_elongation-data_20100101_v001.dat')
+        mock_downloaded_repoint_file = Mock()
 
         mock_download_dependency_from_path.side_effect = [
             mock_lya_series_path, mock_solar_uv_anisotropy_path, mock_speed_3d_sw_path,
             mock_density_3d_sw_path, mock_phion_hydrogen_path, mock_sw_eqtr_electrons_path, mock_ionization_files_path,
-            fake_pipeline_settings_path, mock_energy_grid_lo_path, mock_tess_xyz_8_path, mock_lo_elongation_path
+            fake_pipeline_settings_path, mock_energy_grid_lo_path, mock_tess_xyz_8_path, mock_lo_elongation_path,
+            mock_downloaded_repoint_file,
         ]
 
         actual_dependencies, cr_number = GlowsL3EDependencies.fetch_dependencies(
@@ -65,7 +70,8 @@ class TestGlowsL3EDependencies(unittest.TestCase):
             call(source="glows", descriptor="pipeline-settings-l3bcde"),
             call(source="glows", descriptor="energy-grid-lo"),
             call(source="glows", descriptor="tess-xyz-8"),
-            call(source="lo", descriptor="elongation-data")
+            call(source="lo", descriptor="elongation-data"),
+            call(data_type=RepointInput.data_type),
         ])
 
         mock_download_dependency_from_path.assert_has_calls([
@@ -75,7 +81,8 @@ class TestGlowsL3EDependencies(unittest.TestCase):
             call(mock_pipeline_settings.name),
             call('tess_xyz_8_sdc_path'),
             call('energy_grid_lo_path'),
-            call('lo_elongation_data.dat')
+            call('lo_elongation_data.dat'),
+            call('repoint.csv'),
         ])
 
         expected_pipeline_settings = {"executable_dependency_paths": {
@@ -114,6 +121,7 @@ class TestGlowsL3EDependencies(unittest.TestCase):
         self.assertEqual(105, last_dict_value)
 
         self.assertEqual(cr_number, 2091)
+        self.assertEqual(mock_downloaded_repoint_file, actual_dependencies.repointing_file)
 
     @patch('imap_l3_processing.glows.l3e.glows_l3e_dependencies.download_dependency_from_path')
     def test_fetch_dependencies_handles_hi(self, mock_download_dependency_from_path):
@@ -133,11 +141,12 @@ class TestGlowsL3EDependencies(unittest.TestCase):
                 mock_sw_eqtr_electrons = Path('sw_eqtr_electrons_sdc_path')
                 ionization_files = Path('ionization_files_path')
                 mock_pipeline_settings = Path('l3bcde_pipeline_settings.json')
+                mock_repoint_file = Path('repoint.csv')
 
                 mock_processing_input_collection.get_file_paths.side_effect = [
                     [mock_l3d], [mock_lya_series], [mock_solar_uv_anisotropy], [mock_speed_3d_sw], [mock_density_3d_sw],
                     [mock_phion_hydrogen], [mock_sw_eqtr_electrons], [ionization_files], [mock_pipeline_settings],
-                    [mock_energy_grid_hi]
+                    [mock_energy_grid_hi], [mock_repoint_file]
                 ]
 
                 mock_lya_series_path = Mock()
@@ -150,13 +159,15 @@ class TestGlowsL3EDependencies(unittest.TestCase):
                     "glows/l3d_drift_test/imap_glows_pipeline-settings-l3bcde_20100101_v006.json")
                 mock_ionization_files_path = Mock()
                 mock_energy_grid_hi_path = Mock()
+                mock_downloaded_repoint_file = Mock()
 
                 mock_download_dependency_from_path.side_effect = [mock_lya_series_path, mock_solar_uv_anisotropy_path,
                                                                   mock_speed_3d_sw_path,
                                                                   mock_density_3d_sw_path, mock_phion_hydrogen_path,
                                                                   mock_sw_eqtr_electrons_path,
                                                                   mock_ionization_files_path,
-                                                                  fake_pipeline_settings_path, mock_energy_grid_hi_path
+                                                                  fake_pipeline_settings_path, mock_energy_grid_hi_path,
+                                                                  mock_downloaded_repoint_file
                                                                   ]
 
                 actual_dependencies, repointing = GlowsL3EDependencies.fetch_dependencies(
@@ -172,6 +183,7 @@ class TestGlowsL3EDependencies(unittest.TestCase):
                     call(source="glows", descriptor="ionization-files"),
                     call(source="glows", descriptor="pipeline-settings-l3bcde"),
                     call(source="glows", descriptor="energy-grid-hi"),
+                    call(data_type=RepointInput.data_type),
                 ])
 
                 mock_download_dependency_from_path.assert_has_calls([call('lya_series_sdc_path'),
@@ -183,6 +195,7 @@ class TestGlowsL3EDependencies(unittest.TestCase):
                                                                      call('ionization_files_path'),
                                                                      call(mock_pipeline_settings.name),
                                                                      call('energy_grid_hi_sdc_path'),
+                                                                     call('repoint.csv'),
                                                                      ])
 
                 expected_pipeline_settings = {"executable_dependency_paths": {
@@ -215,6 +228,7 @@ class TestGlowsL3EDependencies(unittest.TestCase):
                 self.assertEqual(actual_dependencies.tess_xyz_8, None)
                 self.assertEqual(actual_dependencies.tess_ang16, None)
                 self.assertEqual(repointing, 4)
+                self.assertEqual(mock_downloaded_repoint_file, actual_dependencies.repointing_file)
 
     @patch('imap_l3_processing.glows.l3e.glows_l3e_dependencies.download_dependency_from_path')
     def test_fetch_dependencies_handles_ultra(self, mock_download_dependency_from_path):
@@ -231,13 +245,14 @@ class TestGlowsL3EDependencies(unittest.TestCase):
         mock_sw_eqtr_electrons = Path('sw_eqtr_electrons_sdc_path')
         ionization_files = Path('ionization_files_path')
         mock_pipeline_settings = Path('l3e_pipeline_settings.json')
+        mock_repoint_file = Path('repoint.csv')
 
         mock_processing_input_collection.get_file_paths.side_effect = [
             [mock_l3d], [mock_lya_series], [mock_solar_uv_anisotropy], [mock_speed_3d_sw],
             [mock_density_3d_sw],
             [mock_phion_hydrogen], [mock_sw_eqtr_electrons], [ionization_files], [mock_pipeline_settings],
             [mock_energy_grid_ul],
-            [mock_tess_ang_16]
+            [mock_tess_ang_16], [mock_repoint_file]
         ]
 
         mock_lya_series_path = Mock()
@@ -251,13 +266,15 @@ class TestGlowsL3EDependencies(unittest.TestCase):
         mock_ionization_files_path = Mock()
         mock_energy_grid_ul_path = Mock()
         mock_tess_ang_16_path = Mock()
+        mock_downloaded_repoint_path = Mock()
 
         mock_download_dependency_from_path.side_effect = [mock_lya_series_path, mock_solar_uv_anisotropy_path,
                                                           mock_speed_3d_sw_path,
                                                           mock_density_3d_sw_path, mock_phion_hydrogen_path,
                                                           mock_sw_eqtr_electrons_path,
                                                           mock_ionization_files_path, fake_pipeline_settings_path,
-                                                          mock_energy_grid_ul_path, mock_tess_ang_16_path
+                                                          mock_energy_grid_ul_path, mock_tess_ang_16_path,
+                                                          mock_downloaded_repoint_path
                                                           ]
 
         actual_dependencies, repointing = GlowsL3EDependencies.fetch_dependencies(
@@ -273,7 +290,8 @@ class TestGlowsL3EDependencies(unittest.TestCase):
             call(source="glows", descriptor="ionization-files"),
             call(source="glows", descriptor="pipeline-settings-l3bcde"),
             call(source="glows", descriptor="energy-grid-ultra"),
-            call(source="glows", descriptor="tess-ang-16")
+            call(source="glows", descriptor="tess-ang-16"),
+            call(data_type=RepointInput.data_type),
         ])
 
         mock_download_dependency_from_path.assert_has_calls(
@@ -283,6 +301,7 @@ class TestGlowsL3EDependencies(unittest.TestCase):
              call(mock_pipeline_settings.name),
              call('energy_grid_ul_path'),
              call('tess_ang_16_path'),
+             call('repoint.csv'),
              ])
 
         expected_pipeline_settings = {"executable_dependency_paths": {
@@ -315,6 +334,7 @@ class TestGlowsL3EDependencies(unittest.TestCase):
         self.assertEqual(actual_dependencies.tess_xyz_8, None)
         self.assertEqual(actual_dependencies.tess_ang16, mock_tess_ang_16_path)
         self.assertEqual(repointing, 4)
+        self.assertEqual(mock_downloaded_repoint_path, actual_dependencies.repointing_file)
 
     @patch('imap_l3_processing.glows.l3e.glows_l3e_dependencies.shutil')
     def test_rename_dependencies(self, mock_shutil):
@@ -347,7 +367,8 @@ class TestGlowsL3EDependencies(unittest.TestCase):
                     "sw-eqtr-electrons": "swEqtrElectrons5_2021b.dat",
                 }
             },
-            {}
+            {},
+            Path("repoint.csv")
         )
 
         expected_energy_grid_lo = 'EnGridLo.dat'
