@@ -27,3 +27,9 @@ imap_lo_l3_l090-ena-h-sf-sp-ram-hae-4deg-6mo:
   Data_type: L3_imap_lo_l3_l090-ena-h-sf-sp-ram-hae-4deg-6mo>Level-3 Level-3 Survival Corrected 4 Degree
   Logical_source: imap_lo_l3_l090-ena-h-sf-sp-ram-hae-4deg-6mo
   Logical_source_description: IMAP-Lo Instrument Level-3 ENA Intensity, 90 degree pivot direction, Hydrogen, Spacecraft Frame, Survival Probability-Corrected, HAE, 6 Degree Rectangular Pixels, 6 Month Map
+
+imap_lo_l3_l090-spx-h-sf-sp-ram-hae-4deg-6mo:
+  Data_level: "3"
+  Data_type: L3_imap_lo_l3_l090-spx-h-sf-sp-ram-hae-4deg-6mo>Level-3 Level-3 Spectral Fit Index
+  Logical_source: imap_lo_l3_l090-spx-h-sf-sp-ram-hae-4deg-6mo
+  Logical_source_description: IMAP-Lo Instrument Level-3 90 degree pivot direction, Spectral Index, Hydrogen, Spacecraft Frame, Survival Probability-Corrected, HAE, 6 Degree Rectangular Pixels, 6 Month Map
