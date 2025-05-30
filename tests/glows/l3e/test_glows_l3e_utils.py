@@ -26,12 +26,12 @@ class TestGlowsL3EUtils(unittest.TestCase):
         position_data = [x, y, z, vx, vy, vz]
         mock_spkezr.return_value = (position_data, Mock())
 
-        radius, longitude, latitude = 70000000, -8.0, .9
+        radius, longitude, latitude = 70000000, -8.0, -.9
 
         rotation_matrix = np.array([[10.0, 11.0, 12.0], [13.0, 14.0, 15.0], [16.0, 17.0, 18.0]])
         mock_pxform.return_value = rotation_matrix
 
-        spin_axis_long, spin_axis_lat = -19.0, 20.000001
+        spin_axis_long, spin_axis_lat = -1.4, 0.2
         mock_reclat.side_effect = [(radius, longitude, latitude), (Mock(), spin_axis_long, spin_axis_lat)]
 
         elongation = 90
@@ -51,12 +51,12 @@ class TestGlowsL3EUtils(unittest.TestCase):
         self.assertEqual("2025.33014", call_args.decimal_date)
         self.assertEqual(0.4679210985587912, call_args.spacecraft_radius)
         self.assertEqual(261.6337638953414, call_args.spacecraft_longitude)
-        self.assertEqual(51.56620156177409, call_args.spacecraft_latitude)
+        self.assertEqual(-51.56620156177409, call_args.spacecraft_latitude)
         self.assertEqual(vx, call_args.spacecraft_velocity_x)
         self.assertEqual(vy, call_args.spacecraft_velocity_y)
         self.assertEqual(vz, call_args.spacecraft_velocity_z)
         self.assertEqual(np.rad2deg(spin_axis_long) % 360, call_args.spin_axis_longitude)
-        self.assertEqual(spin_axis_lat, call_args.spin_axis_latitude)
+        self.assertEqual(np.rad2deg(spin_axis_lat), call_args.spin_axis_latitude)
         self.assertEqual(elongation, call_args.elongation)
 
     @patch("imap_l3_processing.glows.l3e.glows_l3e_utils.query")

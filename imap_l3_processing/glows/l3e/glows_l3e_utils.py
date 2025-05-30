@@ -32,17 +32,14 @@ def determine_call_args_for_l3e_executable(start_date: datetime, repointing_midp
         decimal_date=decimal_date,
         spacecraft_radius=radius / ONE_AU_IN_KM,
         spacecraft_longitude=np.rad2deg(longitude) % 360,
-        spacecraft_latitude=np.rad2deg(latitude) % 360,
+        spacecraft_latitude=np.rad2deg(latitude),
         spacecraft_velocity_x=vx,
         spacecraft_velocity_y=vy,
         spacecraft_velocity_z=vz,
         spin_axis_longitude=np.rad2deg(spin_axis_long) % 360,
-        spin_axis_latitude=spin_axis_lat,
+        spin_axis_latitude=np.rad2deg(spin_axis_lat),
         elongation=elongation
     )
-
-    # return f"{formatted_date} {decimal_date} {radius / ONE_AU_IN_KM} {np.rad2deg(longitude) % 360} {np.rad2deg(latitude)} {vx} {vy} {vz} {np.rad2deg(spin_axis_long) % 360} {spin_axis_lat:.4f} {elongation:.3f}".split(
-    #     " ")
 
 
 def _decimal_time(t: datetime) -> str:

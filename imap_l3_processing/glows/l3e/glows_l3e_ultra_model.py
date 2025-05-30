@@ -19,6 +19,12 @@ SPIN_ANGLE_LABEL_VAR_NAME = "healpix_index_label"
 SPIN_AXIS_LATITUDE_VAR_NAME = "spin_axis_latitude"
 SPIN_AXIS_LONGITUDE_VAR_NAME = "spin_axis_longitude"
 PROGRAM_VERSION_VAR_NAME = "program_version"
+SPACECRAFT_RADIUS_VAR_NAME = "spacecraft_radius"
+SPACECRAFT_LONGITUDE_VAR_NAME = "spacecraft_longitude"
+SPACECRAFT_LATITUDE_VAR_NAME = "spacecraft_latitude"
+SPACECRAFT_VELOCITY_X_VAR_NAME = "spacecraft_velocity_x"
+SPACECRAFT_VELOCITY_Y_VAR_NAME = "spacecraft_velocity_y"
+SPACECRAFT_VELOCITY_Z_VAR_NAME = "spacecraft_velocity_z"
 
 
 @dataclass
@@ -30,6 +36,12 @@ class GlowsL3EUltraData(DataProduct):
     spin_axis_lat: np.ndarray
     spin_axis_lon: np.ndarray
     program_version: np.ndarray
+    spacecraft_radius: np.ndarray
+    spacecraft_latitude: np.ndarray
+    spacecraft_longitude: np.ndarray
+    spacecraft_velocity_x: np.ndarray
+    spacecraft_velocity_y: np.ndarray
+    spacecraft_velocity_z: np.ndarray
 
     @classmethod
     def convert_dat_to_glows_l3e_ul_product(cls, input_metadata: InputMetadata, file_path: Path,
@@ -62,7 +74,14 @@ class GlowsL3EUltraData(DataProduct):
 
         return cls(input_metadata, epoch, energies,
                    healpix_indexes, transposed_prob_sur, np.array([args.spin_axis_latitude]),
-                   np.array([args.spin_axis_longitude]), code_version)
+                   np.array([args.spin_axis_longitude]), code_version,
+                   spacecraft_radius=args.spacecraft_radius,
+                   spacecraft_longitude=args.spacecraft_longitude,
+                   spacecraft_latitude=args.spacecraft_latitude,
+                   spacecraft_velocity_x=args.spacecraft_velocity_x,
+                   spacecraft_velocity_y=args.spacecraft_velocity_y,
+                   spacecraft_velocity_z=args.spacecraft_velocity_z,
+                   )
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         energy_labels = [f"Energy Label {i}" for i in range(1, 21)]
@@ -76,5 +95,11 @@ class GlowsL3EUltraData(DataProduct):
             DataProductVariable(SPIN_ANGLE_LABEL_VAR_NAME, spin_angle_labels),
             DataProductVariable(SPIN_AXIS_LATITUDE_VAR_NAME, self.spin_axis_lat),
             DataProductVariable(SPIN_AXIS_LONGITUDE_VAR_NAME, self.spin_axis_lon),
-            DataProductVariable(PROGRAM_VERSION_VAR_NAME, self.program_version)
+            DataProductVariable(PROGRAM_VERSION_VAR_NAME, self.program_version),
+            DataProductVariable(SPACECRAFT_RADIUS_VAR_NAME, self.spacecraft_radius),
+            DataProductVariable(SPACECRAFT_LATITUDE_VAR_NAME, self.spacecraft_latitude),
+            DataProductVariable(SPACECRAFT_LONGITUDE_VAR_NAME, self.spacecraft_longitude),
+            DataProductVariable(SPACECRAFT_VELOCITY_X_VAR_NAME, self.spacecraft_velocity_x),
+            DataProductVariable(SPACECRAFT_VELOCITY_Y_VAR_NAME, self.spacecraft_velocity_y),
+            DataProductVariable(SPACECRAFT_VELOCITY_Z_VAR_NAME, self.spacecraft_velocity_z),
         ]

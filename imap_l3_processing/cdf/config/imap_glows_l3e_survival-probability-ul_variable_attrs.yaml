@@ -107,3 +107,73 @@ program_version:
   FIELDNAM: Program Version
   FORMAT: a20
   FILLVAL: ' '
+spacecraft_radius:
+  NAME: spacecraft_radius
+  DATA_TYPE: CDF_FLOAT
+  CATDESC: Distance from IMAP to sun
+  VAR_TYPE: metadata
+  FIELDNAM: Spacecraft Radius
+  RECORD_VARYING: RV
+  FORMAT: F9.3
+  FILLVAL: -1.0000E+31
+  UNITS: AU
+spacecraft_latitude:
+  NAME: spacecraft_latitude
+  DATA_TYPE: CDF_FLOAT
+  CATDESC: IMAP spacecraft latitude
+  VAR_TYPE: metadata
+  FIELDNAM: Spacecraft Latitude
+  RECORD_VARYING: RV
+  FORMAT: F9.3
+  FILLVAL: -1.0000E+31
+  UNITS: degrees
+  VALIDMIN: -90
+  VALIDMAX: 90
+spacecraft_longitude:
+  NAME: spacecraft_longitude
+  DATA_TYPE: CDF_FLOAT
+  CATDESC: IMAP spacecraft longitude
+  VAR_TYPE: metadata
+  FIELDNAM: Spacecraft Longitude
+  RECORD_VARYING: RV
+  FORMAT: F9.3
+  FILLVAL: -1.0000E+31
+  UNITS: degrees
+  VALIDMIN: 0
+  VALIDMAX: 360
+spacecraft_velocity_x:
+  NAME: spacecraft_velocity_x
+  DATA_TYPE: CDF_FLOAT
+  CATDESC: IMAP spacecraft x velocity
+  VAR_TYPE: metadata
+  FIELDNAM: Spacecraft Velocity X
+  RECORD_VARYING: RV
+  FORMAT: F9.3
+  FILLVAL: -1.0000E+31
+  UNITS: km/s
+  VALIDMIN: -50
+  VALIDMAX: 50
+spacecraft_velocity_y:
+  NAME: spacecraft_velocity_y
+  DATA_TYPE: CDF_FLOAT
+  CATDESC: IMAP spacecraft y velocity
+  VAR_TYPE: metadata
+  FIELDNAM: Spacecraft Velocity Y
+  RECORD_VARYING: RV
+  FORMAT: F9.3
+  FILLVAL: -1.0000E+31
+  UNITS: km/s
+  VALIDMIN: -50
+  VALIDMAX: 50
+spacecraft_velocity_z:
+  NAME: spacecraft_velocity_z
+  DATA_TYPE: CDF_FLOAT
+  CATDESC: IMAP spacecraft z velocity
+  VAR_TYPE: metadata
+  FIELDNAM: Spacecraft Velocity Z
+  RECORD_VARYING: RV
+  FORMAT: F9.3
+  FILLVAL: -1.0000E+31
+  UNITS: km/s
+  VALIDMIN: -50
+  VALIDMAX: 50
