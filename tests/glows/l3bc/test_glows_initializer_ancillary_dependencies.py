@@ -1,11 +1,11 @@
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import patch, call
+from unittest.mock import patch, call, Mock
 
 import imap_data_access
 from astropy.time import TimeDelta
-from imap_data_access.processing_input import AncillaryInput, ProcessingInputCollection
+from imap_data_access.processing_input import AncillaryInput, ProcessingInputCollection, RepointInput
 
 from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
 from imap_l3_processing.glows.l3bc.glows_initializer_ancillary_dependencies import \
@@ -20,7 +20,7 @@ class TestGlowsInitializerAncillaryDependencies(unittest.TestCase):
     @patch("imap_l3_processing.glows.l3bc.glows_initializer_ancillary_dependencies._comment_headers")
     @patch("imap_l3_processing.glows.l3bc.glows_initializer_ancillary_dependencies.download")
     @patch("imap_l3_processing.glows.l3bc.glows_initializer_ancillary_dependencies.download_external_dependency")
-    def test_fetch_dependencies(self, mock_download_external_dependency, mock_download, mock_comment_headers):
+    def test_fetch_dependencies(self, mock_download_external_dependency, mock_download: Mock, mock_comment_headers):
         mission = 'imap'
         instrument = 'glows'
         version = 'v001'
@@ -30,20 +30,28 @@ class TestGlowsInitializerAncillaryDependencies(unittest.TestCase):
         waw_helioion_mp_path = f'{mission}_{instrument}_WawHelioIonMP_{start_date}_{version}.dat'
         bad_days_list_path = f'{mission}_{instrument}_bad-days-list_{start_date}_{version}.dat'
         pipeline_settings_path = f'{mission}_{instrument}_pipeline-settings-l3bcde_{start_date}_{version}.json'
+        repoint_path = f'{mission}_2001_123_001.repoint.csv'
 
         uv_anisotropy_factor_input = AncillaryInput(uv_anisotropy_factor_path)
         waw_helioion_mp_input = AncillaryInput(waw_helioion_mp_path)
         bad_days_list_input = AncillaryInput(bad_days_list_path)
         pipeline_settings_input = AncillaryInput(pipeline_settings_path)
+        repointing_input = RepointInput(repoint_path)
 
         processing_input_collection = ProcessingInputCollection(
             uv_anisotropy_factor_input,
             waw_helioion_mp_input,
             bad_days_list_input,
-            pipeline_settings_input
+            pipeline_settings_input,
+            repointing_input
         )
 
-        mock_download.return_value = get_test_data_path("glows/imap_glows_pipeline-settings-l3bcde_20250423_v001.json")
+        downloaded_repointing_path = imap_data_access.config["DATA_DIR"] / "imap" / "spice" / "repoint" / repoint_path
+
+        mock_download.side_effect = [
+            get_test_data_path("glows/imap_glows_pipeline-settings-l3bcde_20250423_v001.json"),
+            downloaded_repointing_path
+        ]
 
         f107_index_path = TEMP_CDF_FOLDER_PATH / "f107_fluxtable.txt"
         lyman_alpha_path = TEMP_CDF_FOLDER_PATH / "lyman_alpha_composite.nc"
@@ -61,7 +69,8 @@ class TestGlowsInitializerAncillaryDependencies(unittest.TestCase):
 
         data_dir = imap_data_access.config["DATA_DIR"] / "imap" / "ancillary" / "glows"
 
-        mock_download.assert_called_once_with(data_dir / pipeline_settings_path)
+        self.assertEqual(2, mock_download.call_count)
+        mock_download.assert_has_calls([call(pipeline_settings_path), call(repoint_path)])
 
         self.assertEqual([
             call(F107_FLUX_TABLE_URL, f107_index_path),
@@ -73,6 +82,7 @@ class TestGlowsInitializerAncillaryDependencies(unittest.TestCase):
         self.assertEqual(str(data_dir / waw_helioion_mp_path), actual_dependencies.waw_helioion_mp_path)
         self.assertEqual(str(data_dir / bad_days_list_path), actual_dependencies.bad_days_list)
         self.assertEqual(str(data_dir / pipeline_settings_path), actual_dependencies.pipeline_settings)
+        self.assertEqual(downloaded_repointing_path, actual_dependencies.repointing_file)
         self.assertEqual(f107_index_path, actual_dependencies.f107_index_file_path)
         self.assertEqual(lyman_alpha_path, actual_dependencies.lyman_alpha_path)
         self.assertEqual(omni_2_path, actual_dependencies.omni2_data_path)

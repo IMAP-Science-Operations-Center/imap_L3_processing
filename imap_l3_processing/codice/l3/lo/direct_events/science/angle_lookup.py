@@ -1,8 +1,9 @@
+from dataclasses import dataclass
+
 import numpy as np
 
-from imap_l3_processing.codice.l3.lo.direct_events.science.mass_species_bin_lookup import EventDirection
 
-
+@dataclass
 class SpinAngleLookup:
     bin_centers: np.ndarray
     lower_bin_edges: np.ndarray
@@ -50,11 +51,8 @@ class PositionToElevationLookup:
     def get_elevation_index(self, elevation: np.ndarray | float):
         return np.digitize(elevation, self.lower_bin_edges) - 1
 
-    def event_direction_for_apd(self, apd: int) -> EventDirection:
-        return EventDirection.Sunward if self.apd_to_elevation(apd) < 37.5 else EventDirection.NonSunward
-
     def apd_to_elevation(self, apd: int) -> float:
         return float(self.bin_centers[self.apd_to_elevation_index(apd)])
 
-    def apd_to_elevation_index(self, apd: np.ndarray | int) -> int:
+    def apd_to_elevation_index(self, apd: np.ndarray | int) -> np.ndarray | int:
         return self.elevation_indices_by_apd[apd - 1]

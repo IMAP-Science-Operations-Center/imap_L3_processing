@@ -10,9 +10,9 @@ from imap_l3_processing.codice.l3.lo.codice_lo_l3a_direct_events_dependencies im
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_partial_densities_dependencies import \
     CodiceLoL3aPartialDensitiesDependencies
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_ratios_dependencies import CodiceLoL3aRatiosDependencies
+from imap_l3_processing.codice.l3.lo.constants import CODICE_SPIN_ANGLE_OFFSET_FROM_MAG_BOOM
 from imap_l3_processing.codice.l3.lo.direct_events.science.angle_lookup import SpinAngleLookup, \
     PositionToElevationLookup
-from imap_l3_processing.codice.l3.lo.direct_events.science.energy_lookup import EnergyLookup
 from imap_l3_processing.codice.l3.lo.models import CodiceLoL3aPartialDensityDataProduct, CodiceLoL2DirectEventData, \
     CodiceLoL3aDirectEventDataProduct, CodiceLoPartialDensityData, CodiceLoL3aRatiosDataProduct, \
     CodiceLoL3ChargeStateDistributionsDataProduct, CODICE_LO_L2_NUM_PRIORITIES, CodiceLoL3a3dDistributionDataProduct
@@ -45,8 +45,9 @@ class CodiceLoProcessor(Processor):
         elif self.input_metadata.descriptor == "lo-sw-abundances":
             dependencies = CodiceLoL3aRatiosDependencies.fetch_dependencies(self.dependencies)
             data_product = self.process_l3a_abundances(dependencies)
-        elif self.input_metadata.descriptor == "lo-3d-instrument-frame":
-            dependencies = CodiceLoL3a3dDistributionsDependencies.fetch_dependencies(self.dependencies)
+        elif "3d-distribution" in self.input_metadata.descriptor:
+            species = self.input_metadata.descriptor.split('-')[1]
+            dependencies = CodiceLoL3a3dDistributionsDependencies.fetch_dependencies(self.dependencies, species)
             data_product = self.process_l3a_3d_distribution_product(dependencies)
         else:
             raise NotImplementedError(
@@ -189,18 +190,19 @@ class CodiceLoProcessor(Processor):
          position,
          multi_flag,
          pha_type,
+         energy_step,
          tof) = [
             np.full((len(codice_direct_events.epoch), len(priority_counts_for_events), event_buffer), np.nan)
-            for _ in range(11)]
+            for _ in range(12)]
 
         (data_quality, num_events) = [
             np.full((len(codice_direct_events.epoch), len(priority_counts_for_events)), np.nan)
             for _ in range(2)]
 
-        energy_lut = EnergyLookup.from_bin_centers(codice_sw_priority_counts_l1a_data.energy_table)
         spin_angle_lut = SpinAngleLookup()
+        esa_energy_per_charge_lookup = dependencies.energy_lookup
         normalization = np.full((len(codice_direct_events.epoch), CODICE_LO_L2_NUM_PRIORITIES,
-                                 energy_lut.num_bins, spin_angle_lut.num_bins), np.nan)
+                                 esa_energy_per_charge_lookup.num_bins, spin_angle_lut.num_bins), np.nan)
 
         try:
 
@@ -208,20 +210,24 @@ class CodiceLoProcessor(Processor):
                     zip(codice_direct_events.priority_events, priority_counts_for_events)):
                 mass_per_charge[:, priority_index, :] = calculate_mass_per_charge(priority_event)
                 mass[:, priority_index, :] = calculate_mass(priority_event, mass_coefficient_lookup)
+
+                spin_angle_for_priority = (priority_event.spin_angle + CODICE_SPIN_ANGLE_OFFSET_FROM_MAG_BOOM) % 360
+                spin_angle[:, priority_index, :] = spin_angle_for_priority
+
                 energy[:, priority_index, :] = priority_event.apd_energy
                 gain[:, priority_index, :] = priority_event.apd_gain
                 apd_id[:, priority_index, :] = priority_event.apd_id
                 multi_flag[:, priority_index, :] = priority_event.multi_flag
                 tof[:, priority_index, :] = priority_event.tof
-                spin_angle[:, priority_index, :] = priority_event.spin_angle
                 elevation[:, priority_index, :] = priority_event.elevation
                 position[:, priority_index, :] = priority_event.position
                 data_quality[:, priority_index] = priority_event.data_quality
                 num_events[:, priority_index] = priority_event.num_events
+                energy_step[:, priority_index] = priority_event.energy_step
 
                 direct_events_binned_by_energy_and_spin = rebin_counts_by_energy_and_spin_angle(priority_event,
                                                                                                 spin_angle_lut,
-                                                                                                energy_lut)
+                                                                                                esa_energy_per_charge_lookup)
                 normalization[:, priority_index, ...] = \
                     priority_counts_total_count / direct_events_binned_by_energy_and_spin
 
@@ -235,7 +241,8 @@ class CodiceLoProcessor(Processor):
             normalization=normalization,
             mass_per_charge=mass_per_charge,
             mass=mass,
-            event_energy=energy,
+            apd_energy=energy,
+            energy_step=energy_step,
             gain=gain,
             apd_id=apd_id,
             multi_flag=multi_flag,
@@ -244,27 +251,32 @@ class CodiceLoProcessor(Processor):
             data_quality=data_quality,
             spin_angle=spin_angle,
             elevation=elevation,
-            position=position
+            position=position,
+            energy_bin=esa_energy_per_charge_lookup.bin_centers,
+            energy_bin_delta_plus=esa_energy_per_charge_lookup.delta_plus,
+            energy_bin_delta_minus=esa_energy_per_charge_lookup.delta_minus,
+            spin_angle_bin=spin_angle_lut.bin_centers,
+            spin_angle_bin_delta=spin_angle_lut.bin_deltas,
+
         )
 
     def process_l3a_3d_distribution_product(self, dependencies: CodiceLoL3a3dDistributionsDependencies):
 
         l3a_de_mass = dependencies.l3a_direct_event_data.mass
         l3a_de_mass_per_charge = dependencies.l3a_direct_event_data.mass_per_charge
-        l3a_de_energy = dependencies.l3a_direct_event_data.event_energy
+        l3a_de_energy = dependencies.l3a_direct_event_data.energy_step
         l3a_de_spin_angle = dependencies.l3a_direct_event_data.spin_angle
         l3a_de_position = dependencies.l3a_direct_event_data.position
         l3a_de_normalization = dependencies.l3a_direct_event_data.normalization
         l3a_de_num_events = dependencies.l3a_direct_event_data.num_events
 
-        l1a_energy_table = dependencies.l1a_sw_data.energy_table
         l1a_acquisition_time = dependencies.l1a_sw_data.acquisition_time_per_step
         l1_sw_rgfo_half_spins = dependencies.l1a_sw_data.rgfo_half_spin
 
         mass_species_bin_lookup = dependencies.mass_species_bin_lookup
         spin_angle_lut = SpinAngleLookup()
         position_elevation_lut = PositionToElevationLookup()
-        energy_lut = EnergyLookup.from_bin_centers(l1a_energy_table)
+        energy_lut = dependencies.energy_per_charge_lut
         geometric_factor_lut = dependencies.geometric_factors_lookup
 
         counts_3d_data = rebin_to_counts_by_species_elevation_and_spin_sector(
@@ -275,19 +287,21 @@ class CodiceLoProcessor(Processor):
             position=l3a_de_position,
             mass_species_bin_lookup=mass_species_bin_lookup,
             spin_angle_lut=spin_angle_lut,
-            position_elevation_lut=position_elevation_lut,
             energy_lut=energy_lut,
             num_events=l3a_de_num_events,
         )
 
-        normalized_counts = normalize_counts(counts_3d_data, l3a_de_normalization)
+        normalized_counts = normalize_counts(counts_3d_data.get_3d_distribution(dependencies.species),
+                                             l3a_de_normalization)
         normalized_count_rates = combine_priorities_and_convert_to_rate(normalized_counts, l1a_acquisition_time)
 
         geometric_factors = geometric_factor_lut.get_geometric_factors(l1_sw_rgfo_half_spins)
-
-        intensities = convert_count_rate_to_intensity(normalized_count_rates, dependencies.efficiency_factors_lut,
+        intensities = convert_count_rate_to_intensity(normalized_count_rates,
+                                                      dependencies.energy_per_charge_lut,
+                                                      dependencies.efficiency_factors_lut,
                                                       geometric_factors)
-        rebin_3d_distribution_azimuth_to_elevation(intensities, position_elevation_lut)
+
+        intensity = rebin_3d_distribution_azimuth_to_elevation(intensities, np.arange(1, 25), position_elevation_lut)
 
         return CodiceLoL3a3dDistributionDataProduct(
             input_metadata=self.input_metadata,
@@ -299,7 +313,9 @@ class CodiceLoProcessor(Processor):
             spin_angle_delta=spin_angle_lut.bin_deltas,
             energy=energy_lut.bin_centers,
             energy_delta_plus=energy_lut.delta_plus,
-            energy_delta_minus=energy_lut.delta_minus
+            energy_delta_minus=energy_lut.delta_minus,
+            species=dependencies.species,
+            species_data=intensity,
         )
 
 

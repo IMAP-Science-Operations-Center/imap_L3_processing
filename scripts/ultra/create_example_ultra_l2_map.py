@@ -125,7 +125,7 @@ def create_example_ultra_l2_map(  # noqa: PLR0913
             "counts": (
                 [
                     CoordNames.TIME.value,
-                    CoordNames.ENERGY_ULTRA.value,
+                    CoordNames.ENERGY_ULTRA_L1C.value,
                     CoordNames.HEALPIX_INDEX.value,
                 ],
                 counts,
@@ -133,7 +133,7 @@ def create_example_ultra_l2_map(  # noqa: PLR0913
             "exposure_time": (
                 [
                     CoordNames.TIME.value,
-                    CoordNames.ENERGY_ULTRA.value,
+                    CoordNames.ENERGY_ULTRA_L1C.value,
                     CoordNames.HEALPIX_INDEX.value
                 ],
                 exposure_time,
@@ -141,7 +141,7 @@ def create_example_ultra_l2_map(  # noqa: PLR0913
             "sensitivity": (
                 [
                     CoordNames.TIME.value,
-                    CoordNames.ENERGY_ULTRA.value,
+                    CoordNames.ENERGY_ULTRA_L1C.value,
                     CoordNames.HEALPIX_INDEX.value,
                 ],
                 sensitivity,
@@ -159,7 +159,7 @@ def create_example_ultra_l2_map(  # noqa: PLR0913
             CoordNames.TIME.value: [
                 tt_j2000ns
             ],
-            CoordNames.ENERGY_ULTRA.value: energy_bin_midpoints,
+            CoordNames.ENERGY_ULTRA_L1C.value: energy_bin_midpoints,
             CoordNames.HEALPIX_INDEX.value: pix_indices,
         },
         attrs={
@@ -179,7 +179,7 @@ def create_example_ultra_l2_map(  # noqa: PLR0913
     pset_product[CoordNames.ELEVATION_L1C.value].attrs["VAR_TYPE"] = "data"
 
     pset_product.coords[CoordNames.TIME.value].attrs["VAR_TYPE"] = "support_data"
-    pset_product.coords[CoordNames.ENERGY_ULTRA.value].attrs["VAR_TYPE"] = "support_data"
+    pset_product.coords[CoordNames.ENERGY_ULTRA_L1C.value].attrs["VAR_TYPE"] = "support_data"
     pset_product.coords[CoordNames.HEALPIX_INDEX.value].attrs["VAR_TYPE"] = "support_data"
 
     return pset_product
@@ -198,12 +198,12 @@ def _write_ultra_l2_cdf_with_parents(out_path=get_run_local_data_path("ultra/fak
         cdf.new("longitude", out_xarray[CoordNames.AZIMUTH_L1C.value].values, recVary=False)
         cdf.new("epoch", out_xarray[CoordNames.TIME.value].values, recVary=False,
                 type=pycdf.const.CDF_TIME_TT2000.value)
-        cdf.new("energy", out_xarray[CoordNames.ENERGY_ULTRA.value].values, recVary=False)
+        cdf.new("energy", out_xarray[CoordNames.ENERGY_ULTRA_L1C.value].values, recVary=False)
         cdf.new("pixel_index", out_xarray[CoordNames.HEALPIX_INDEX.value].values, recVary=False)
         cdf.new("epoch_delta", np.array([0]))
-        cdf.new("energy_delta_plus", np.full_like(out_xarray[CoordNames.ENERGY_ULTRA.value].values, 1))
-        cdf.new("energy_delta_minus", np.full_like(out_xarray[CoordNames.ENERGY_ULTRA.value].values, 1))
-        cdf.new("energy_label", [str(val) for val in out_xarray[CoordNames.ENERGY_ULTRA.value].values])
+        cdf.new("energy_delta_plus", np.full_like(out_xarray[CoordNames.ENERGY_ULTRA_L1C.value].values, 1))
+        cdf.new("energy_delta_minus", np.full_like(out_xarray[CoordNames.ENERGY_ULTRA_L1C.value].values, 1))
+        cdf.new("energy_label", [str(val) for val in out_xarray[CoordNames.ENERGY_ULTRA_L1C.value].values])
         cdf.new("obs_date", np.full(out_xarray["counts"].shape,
                                     spiceypy.unitim(datetime.datetime.now().timestamp(), "ET", "TT") * 1e9),
                 type=pycdf.const.CDF_TIME_TT2000.value)

@@ -19,3 +19,4 @@ if __name__ == "__main__":
         writer.writeheader()
         for variable in valid_variables:
             writer.writerow({**all_headers, **variable})
+        print("wrote file to ", outpath)

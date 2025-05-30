@@ -71,7 +71,7 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
             "survival_probability_times_exposure": (
                 [
                     CoordNames.TIME.value,
-                    CoordNames.ENERGY_ULTRA.value,
+                    CoordNames.ENERGY_ULTRA_L1C.value,
                     CoordNames.AZIMUTH_L1C.value,
                 ],
                 sp_interpolated_to_pset_angles * exposure,
@@ -79,7 +79,7 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
             "exposure": (
                 [
                     CoordNames.TIME.value,
-                    CoordNames.ENERGY_ULTRA.value,
+                    CoordNames.ENERGY_ULTRA_L1C.value,
                     CoordNames.AZIMUTH_L1C.value,
                 ],
                 exposure,
@@ -87,7 +87,7 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
         },
             coords={
                 CoordNames.TIME.value: l1c_dataset.epoch_j2000,
-                CoordNames.ENERGY_ULTRA.value: l1c_dataset.esa_energy_step,
+                CoordNames.ENERGY_ULTRA_L1C.value: l1c_dataset.esa_energy_step,
                 CoordNames.AZIMUTH_L1C.value: self.azimuths,
             },
         )

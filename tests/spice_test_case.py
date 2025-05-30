@@ -2,7 +2,7 @@ import unittest
 
 import spiceypy
 
-from tests.test_helpers import furnish_local_spice
+from imap_l3_processing.utils import furnish_local_spice
 
 
 class SpiceTestCase(unittest.TestCase):

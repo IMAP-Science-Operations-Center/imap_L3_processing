@@ -16,7 +16,10 @@ from imap_l3_processing.codice.l3.lo.codice_lo_l3a_partial_densities_dependencie
     CodiceLoL3aPartialDensitiesDependencies
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_ratios_dependencies import CodiceLoL3aRatiosDependencies
 from imap_l3_processing.codice.l3.lo.codice_lo_processor import CodiceLoProcessor
+from imap_l3_processing.codice.l3.lo.constants import CODICE_SPIN_ANGLE_OFFSET_FROM_MAG_BOOM
+from imap_l3_processing.codice.l3.lo.direct_events.science.angle_lookup import SpinAngleLookup
 from imap_l3_processing.codice.l3.lo.direct_events.science.efficiency_lookup import EfficiencyLookup
+from imap_l3_processing.codice.l3.lo.direct_events.science.energy_lookup import EnergyLookup
 from imap_l3_processing.codice.l3.lo.direct_events.science.geometric_factor_lookup import GeometricFactorLookup
 from imap_l3_processing.codice.l3.lo.models import CodiceLoL3aPartialDensityDataProduct, CodiceLoL2DirectEventData, \
     CodiceLoL3aDirectEventDataProduct, PriorityEvent, CodiceLoL2SWSpeciesData, \
@@ -25,7 +28,7 @@ from imap_l3_processing.codice.l3.lo.models import CodiceLoL3aPartialDensityData
 from imap_l3_processing.codice.l3.lo.sectored_intensities.science.mass_per_charge_lookup import MassPerChargeLookup
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
-from tests.test_helpers import create_dataclass_mock, get_test_data_path
+from tests.test_helpers import create_dataclass_mock, get_test_data_path, NumpyArrayMatcher
 
 
 class TestCodiceLoProcessor(unittest.TestCase):
@@ -442,12 +445,11 @@ class TestCodiceLoProcessor(unittest.TestCase):
         self.assertEqual(fe_hiq_partial_density, result_data.fe_hiq_partial_density),
 
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.SpinAngleLookup')
-    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.EnergyLookup')
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.rebin_counts_by_energy_and_spin_angle')
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.calculate_mass_per_charge')
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.calculate_mass')
     def test_process_l3a_direct_events(self, mock_calculate_mass, mock_calculate_mass_per_charge,
-                                       mock_rebin_counts_by_energy_and_spin, mock_energy_lookup_class,
+                                       mock_rebin_counts_by_energy_and_spin,
                                        mock_spin_angle_lookup_class):
         rng = np.random.default_rng()
 
@@ -455,8 +457,9 @@ class TestCodiceLoProcessor(unittest.TestCase):
         num_energy_bins = 128
         event_buffer_size = 10
 
-        mock_energy_lookup_class.from_bin_centers.return_value.num_bins = num_energy_bins
-        mock_spin_angle_lookup_class.return_value.num_bins = num_spin_angle_bins
+        mock_spin_angle_lookup = create_dataclass_mock(SpinAngleLookup)
+        mock_spin_angle_lookup.num_bins = num_spin_angle_bins
+        mock_spin_angle_lookup_class.return_value = mock_spin_angle_lookup
 
         epochs = np.array([datetime.now(), datetime.now() + timedelta(hours=1)])
 
@@ -491,10 +494,11 @@ class TestCodiceLoProcessor(unittest.TestCase):
          expected_multi_flag,
          expected_pha_type,
          expected_tof,
-         expected_spin_angle,
+         reshaped_l2_spin_angle,
          expected_elevation,
-         expected_position
-         ) = [np.full((len(epochs), 7, event_buffer_size), np.nan) for _ in range(11)]
+         expected_position,
+         expected_energy_step,
+         ) = [np.full((len(epochs), 7, event_buffer_size), np.nan) for _ in range(12)]
 
         (expected_data_quality,
          expected_num_events) = [np.full((len(epochs), 7), np.nan) for _ in range(2)]
@@ -507,6 +511,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
                 zip(mass_per_charge_side_effect, mass_side_effect)):
             priority_event_kwargs = {f.name: rng.random((len(epochs), event_buffer_size)) for f in
                                      fields(PriorityEvent)}
+            priority_event_kwargs["spin_angle"] *= 360
             priority_event = PriorityEvent(**priority_event_kwargs)
             priority_event.data_quality = rng.random((len(epochs)))
             priority_event.num_events = rng.random((len(epochs)))
@@ -522,20 +527,25 @@ class TestCodiceLoProcessor(unittest.TestCase):
             expected_apd_id[:, i, :] = np.copy(priority_event.apd_id)
             expected_multi_flag[:, i, :] = np.copy(priority_event.multi_flag)
             expected_tof[:, i, :] = np.copy(priority_event.tof)
-            expected_spin_angle[:, i, :] = np.copy(priority_event.spin_angle)
+            reshaped_l2_spin_angle[:, i, :] = np.copy(priority_event.spin_angle)
             expected_elevation[:, i, :] = np.copy(priority_event.elevation)
             expected_position[:, i, :] = np.copy(priority_event.position)
             expected_mass[:, i, :] = np.copy(mass)
             expected_mass_per_charge[:, i, :] = np.copy(mass_per_charge)
             expected_data_quality[:, i] = np.copy(priority_event.data_quality)
             expected_num_events[:, i] = np.copy(priority_event.num_events)
+            expected_energy_step[:, i] = np.copy(priority_event.energy_step)
 
         empty_priority_7 = PriorityEvent(
             **{f.name: rng.random((len(epochs), event_buffer_size)) for f in fields(PriorityEvent)})
         priority_events.append(empty_priority_7)
         direct_events = CodiceLoL2DirectEventData(epochs, np.array([]), np.array([]), priority_events)
 
-        dependencies = CodiceLoL3aDirectEventsDependencies(sw_priority_rates, nsw_priority_rates, direct_events, Mock())
+        mock_energy_lookup = create_dataclass_mock(EnergyLookup)
+        mock_energy_lookup.num_bins = num_energy_bins
+
+        dependencies = CodiceLoL3aDirectEventsDependencies(sw_priority_rates, nsw_priority_rates, direct_events, Mock(),
+                                                           mock_energy_lookup)
 
         input_collection = ProcessingInputCollection()
         input_metadata = InputMetadata('codice', "l3a", Mock(spec=datetime), Mock(spec=datetime), 'v02')
@@ -543,7 +553,6 @@ class TestCodiceLoProcessor(unittest.TestCase):
         l3a_direct_event_data_product = processor.process_l3a_direct_event_data_product(dependencies)
 
         mock_spin_angle_lookup_class.assert_called_once()
-        mock_energy_lookup_class.from_bin_centers.assert_called_once_with(sentinel.l1a_energy_table)
 
         self.assertEqual(CODICE_LO_L2_NUM_PRIORITIES, mock_rebin_counts_by_energy_and_spin.call_count)
 
@@ -555,9 +564,9 @@ class TestCodiceLoProcessor(unittest.TestCase):
             expected_calculate_mass_per_charge_calls.append(call(priority_event))
 
             self.assertEqual(id(priority_event), id(mock_rebin_counts_by_energy_and_spin.call_args_list[index].args[0]))
-            self.assertEqual(mock_spin_angle_lookup_class.return_value,
+            self.assertEqual(mock_spin_angle_lookup,
                              mock_rebin_counts_by_energy_and_spin.call_args_list[index].args[1])
-            self.assertEqual(mock_energy_lookup_class.from_bin_centers.return_value,
+            self.assertEqual(mock_energy_lookup,
                              mock_rebin_counts_by_energy_and_spin.call_args_list[index].args[2])
 
         self.assertIsInstance(l3a_direct_event_data_product, CodiceLoL3aDirectEventDataProduct)
@@ -583,10 +592,12 @@ class TestCodiceLoProcessor(unittest.TestCase):
 
         np.testing.assert_array_equal(l3a_direct_event_data_product.normalization, expected_normalization)
 
-        np.testing.assert_array_equal(expected_spin_angle, l3a_direct_event_data_product.spin_angle)
+        np.testing.assert_array_equal((reshaped_l2_spin_angle + CODICE_SPIN_ANGLE_OFFSET_FROM_MAG_BOOM) % 360,
+                                      l3a_direct_event_data_product.spin_angle)
         np.testing.assert_array_equal(expected_elevation, l3a_direct_event_data_product.elevation)
         np.testing.assert_array_equal(expected_position, l3a_direct_event_data_product.position)
-        np.testing.assert_array_equal(expected_apd_energy, l3a_direct_event_data_product.event_energy)
+        np.testing.assert_array_equal(expected_apd_energy, l3a_direct_event_data_product.apd_energy)
+        np.testing.assert_array_equal(expected_energy_step, l3a_direct_event_data_product.energy_step)
         np.testing.assert_array_equal(expected_apd_gain, l3a_direct_event_data_product.gain)
         np.testing.assert_array_equal(expected_apd_id, l3a_direct_event_data_product.apd_id)
         np.testing.assert_array_equal(expected_multi_flag, l3a_direct_event_data_product.multi_flag)
@@ -594,22 +605,26 @@ class TestCodiceLoProcessor(unittest.TestCase):
         np.testing.assert_array_equal(expected_data_quality, l3a_direct_event_data_product.data_quality)
         np.testing.assert_array_equal(expected_tof, l3a_direct_event_data_product.tof)
 
+        self.assertEqual(mock_energy_lookup.bin_centers, l3a_direct_event_data_product.energy_bin)
+        self.assertEqual(mock_energy_lookup.delta_plus, l3a_direct_event_data_product.energy_bin_delta_plus)
+        self.assertEqual(mock_energy_lookup.delta_minus, l3a_direct_event_data_product.energy_bin_delta_minus)
+        self.assertEqual(mock_spin_angle_lookup.bin_centers, l3a_direct_event_data_product.spin_angle_bin)
+        self.assertEqual(mock_spin_angle_lookup.bin_deltas, l3a_direct_event_data_product.spin_angle_bin_delta)
+
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.convert_count_rate_to_intensity')
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.rebin_3d_distribution_azimuth_to_elevation')
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.combine_priorities_and_convert_to_rate')
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.normalize_counts')
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.PositionToElevationLookup')
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.SpinAngleLookup')
-    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.EnergyLookup.from_bin_centers')
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.rebin_to_counts_by_species_elevation_and_spin_sector')
-    def test_process_l3a_3d_distributions(self, mock_rebin, mock_energy_lookup_from_bin_centers,
+    def test_process_l3a_3d_distributions(self, mock_rebin,
                                           mock_spin_angle_lookup_class, mock_elevation_angle_lookup_class,
                                           mock_normalize_counts, mock_convert_to_rate, mock_rebin_to_elevation,
                                           mock_convert_count_rate_to_intensity,
                                           ):
         mock_elevation_lookup = mock_elevation_angle_lookup_class.return_value
         mock_spin_angle_lookup = mock_spin_angle_lookup_class.return_value
-        mock_energy_lookup = mock_energy_lookup_from_bin_centers.return_value
 
         input_metadata = InputMetadata('codice', "l3a", Mock(spec=datetime), Mock(spec=datetime), 'v02')
 
@@ -618,7 +633,8 @@ class TestCodiceLoProcessor(unittest.TestCase):
             apd_id=sentinel.l3a_de_apd_id,
             mass=sentinel.l3a_de_mass,
             mass_per_charge=sentinel.l3a_de_mass_per_charge,
-            event_energy=sentinel.l3a_de_energy,
+            apd_energy=sentinel.l3a_de_apd_energy,
+            energy_step=sentinel.l3a_de_energy_step,
             spin_angle=sentinel.l3a_de_spin_angle,
             normalization=sentinel.l3a_normalization,
             num_events=sentinel.l3a_num_events,
@@ -633,47 +649,53 @@ class TestCodiceLoProcessor(unittest.TestCase):
 
         mock_geometric_factor_lut = Mock(spec=GeometricFactorLookup)
         mock_efficiency_lut = Mock(spec=EfficiencyLookup)
+        mock_energy_lookup = create_dataclass_mock(EnergyLookup)
         dependencies = CodiceLoL3a3dDistributionsDependencies(
             l3a_direct_event_data=l3a_direct_event_data,
             l1a_sw_data=l1a_sw_data,
             l1a_nsw_data=Mock(),
             mass_species_bin_lookup=Mock(),
             geometric_factors_lookup=mock_geometric_factor_lut,
-            efficiency_factors_lut=mock_efficiency_lut
+            efficiency_factors_lut=mock_efficiency_lut,
+            energy_per_charge_lut=mock_energy_lookup,
+            species=sentinel.species
         )
 
         processor = CodiceLoProcessor(dependencies=Mock(), input_metadata=input_metadata)
         l3a_direct_event_data_product = processor.process_l3a_3d_distribution_product(dependencies)
 
-        mock_energy_lookup_from_bin_centers.assert_called_once_with(dependencies.l1a_sw_data.energy_table)
         mock_spin_angle_lookup_class.assert_called_once()
         mock_elevation_angle_lookup_class.assert_called_once()
 
         mock_rebin.assert_called_once_with(
             mass=sentinel.l3a_de_mass,
             mass_per_charge=sentinel.l3a_de_mass_per_charge,
-            energy=sentinel.l3a_de_energy,
+            energy=sentinel.l3a_de_energy_step,
             spin_angle=sentinel.l3a_de_spin_angle,
             position=sentinel.l3a_de_position,
             mass_species_bin_lookup=dependencies.mass_species_bin_lookup,
             spin_angle_lut=mock_spin_angle_lookup,
-            position_elevation_lut=mock_elevation_lookup,
             energy_lut=mock_energy_lookup,
             num_events=sentinel.l3a_num_events
         )
 
+        mock_rebin.return_value.get_3d_distribution.assert_called_once_with(sentinel.species)
+        counts_3d_distribution_for_species = mock_rebin.return_value.get_3d_distribution.return_value
+
         mock_compute_geometric_factors = mock_geometric_factor_lut.get_geometric_factors
         mock_compute_geometric_factors.assert_called_once_with(sentinel.rgfo_half_spin)
 
-        mock_normalize_counts.assert_called_once_with(mock_rebin.return_value, sentinel.l3a_normalization)
+        mock_normalize_counts.assert_called_once_with(counts_3d_distribution_for_species, sentinel.l3a_normalization)
         mock_convert_to_rate.assert_called_once_with(mock_normalize_counts.return_value, sentinel.l1a_acquisition_time)
 
         # intensity computation
         mock_convert_count_rate_to_intensity.assert_called_once_with(mock_convert_to_rate.return_value,
+                                                                     mock_energy_lookup,
                                                                      mock_efficiency_lut,
                                                                      mock_compute_geometric_factors.return_value)
 
         mock_rebin_to_elevation.assert_called_once_with(mock_convert_count_rate_to_intensity.return_value,
+                                                        NumpyArrayMatcher(np.arange(1, 25)),
                                                         mock_elevation_lookup)
 
         self.assertIsInstance(l3a_direct_event_data_product, CodiceLoL3a3dDistributionDataProduct)
@@ -689,15 +711,24 @@ class TestCodiceLoProcessor(unittest.TestCase):
         self.assertEqual(mock_energy_lookup.delta_plus, l3a_direct_event_data_product.energy_delta_plus)
         self.assertEqual(mock_energy_lookup.delta_minus, l3a_direct_event_data_product.energy_delta_minus)
 
+        self.assertEqual(mock_rebin_to_elevation.return_value, l3a_direct_event_data_product.species_data)
+        self.assertEqual(sentinel.species, l3a_direct_event_data_product.species)
+
+    def test_process_3d_distributions_save_and_upload_for_each_species(self):
+
+        for species in ["hplus", "heplus", "heplus2", "oplus6"]:
+            with self.subTest(species=species):
+                self._test_process_3d_distributions_save_and_upload(species)
+
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.upload')
     @patch(
         'imap_l3_processing.codice.l3.lo.codice_lo_processor.CodiceLoL3a3dDistributionsDependencies.fetch_dependencies')
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.CodiceLoProcessor.process_l3a_3d_distribution_product')
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.save_data')
     @patch('imap_l3_processing.processor.spiceypy')
-    def test_process_3d_distributions_save_and_upload(self, mock_spiceypy, mock_save_data,
-                                                      mock_process_l3a_3d_distribution_product,
-                                                      mock_fetch_dependencies, mock_upload):
+    def _test_process_3d_distributions_save_and_upload(self, species, mock_spiceypy, mock_save_data,
+                                                       mock_process_l3a_3d_distribution_product,
+                                                       mock_fetch_dependencies, mock_upload):
         input_collection = MagicMock()
         input_collection.get_file_paths.return_value = [Path('path/to/parent_file_1'), Path('path/to/parent_file_2')]
         input_metadata = InputMetadata(instrument='codice',
@@ -705,14 +736,14 @@ class TestCodiceLoProcessor(unittest.TestCase):
                                        start_date=Mock(spec=datetime),
                                        end_date=Mock(spec=datetime),
                                        version='v02',
-                                       descriptor='lo-3d-instrument-frame')
+                                       descriptor=f'lo-{species}-3d-distribution')
         mock_spiceypy.ktotal.return_value = 0
 
         mock_save_data.return_value = "file1"
         processor = CodiceLoProcessor(dependencies=input_collection, input_metadata=input_metadata)
         processor.process()
 
-        mock_fetch_dependencies.assert_called_once_with(processor.dependencies)
+        mock_fetch_dependencies.assert_called_once_with(processor.dependencies, species)
         mock_process_l3a_3d_distribution_product.assert_called_once_with(mock_fetch_dependencies.return_value)
 
         mock_save_data.assert_called_once_with(mock_process_l3a_3d_distribution_product.return_value)
@@ -738,8 +769,10 @@ class TestCodiceLoProcessor(unittest.TestCase):
                 "codice/imap_codice_l1a_lo-nsw-priority_20241110_v002-all-fill.cdf"),
             direct_event_path=get_test_data_path("codice/imap_codice_l2_lo-direct-events_20241110_v002-all-fill.cdf"),
             mass_coefficients_file_path=get_test_data_path(
-                "codice/imap_codice_mass-coefficient-lookup_20241110_v002.csv")
-
+                "codice/imap_codice_mass-coefficient-lookup_20241110_v002.csv"),
+            esa_to_energy_per_charge_file_path=get_test_data_path(
+                "codice/imap_codice_lo-energy-per-charge_20241110_v001.csv"
+            )
         )
 
         processor = CodiceLoProcessor(dependencies=input_collection, input_metadata=input_metadata)

@@ -1,0 +1,185 @@
+support_data: &support_data
+  VAR_TYPE: support_data
+  DISPLAY_TYPE: no_plot
+  RECORD_VARYING: NRV
+
+float_data: &float_data
+  DATA_TYPE: CDF_FLOAT
+  FORMAT: F15.3
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.000000E+31
+
+species_3d_distribution: &species_3d_distribution
+  <<: *float_data
+  UNITS: cm -2 s -1 sr -1 keV -1
+  VAR_TYPE: data
+  DISPLAY_TYPE: spectrogram
+  RECORD_VARYING: RV
+  SCALETYP: linear
+  DEPEND_0: epoch
+  DEPEND_1: elevation
+  DEPEND_2: spin_angle
+  DEPEND_3: energy
+  LABL_PTR_1: elevation_label
+  LABL_PTR_2: spin_angle_label
+  LABL_PTR_3: energy_label
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+
+epoch:
+  NAME: epoch
+  CATDESC: Time, number of nanoseconds since J2000 with leap seconds included
+  VAR_TYPE: support_data
+  DISPLAY_TYPE: no_plot
+  DATA_TYPE: CDF_TIME_TT2000
+  FIELDNAM: Epoch
+  RECORD_VARYING: RV
+  LABLAXIS: epoch
+  UNITS: ns
+  VALIDMIN: 2010-01-01T00:00:00.000000000
+  VALIDMAX: 2099-12-31T00:00:00.000000000
+  FILLVAL: 9999-12-31T23:59:59.999999999
+  SCALETYP: linear
+  TIME_BASE: J2000
+  TIME_SCALE: TT
+  DELTA_PLUS_VAR: epoch_delta
+  DELTA_MINUS_VAR: epoch_delta
+  MONOTON: INCREASE
+  REFERENCE_POSITION: Rotating Earth Geoid
+  SI_CONVERSION: 1e-9>seconds
+
+epoch_delta:
+  <<: *support_data
+  DEPEND_0: epoch
+  NAME: epoch_delta
+  CATDESC: Epoch delta
+  FIELDNAM: Epoch Delta
+  DATA_TYPE: CDF_INT8
+  FORMAT: I19
+  UNITS: ns
+  VALIDMIN: 0
+  VALIDMAX: 86000000000000
+  FILLVAL: -9223372036854775808
+  SCALETYP: linear
+  SCALEMIN: 0
+  SCALEMAX: 86000000000000
+  SI_CONVERSION: 1e-9>seconds
+
+  RECORD_VARYING: RV
+
+elevation:
+  <<: *support_data
+  <<: *float_data
+  NAME: elevation
+  CATDESC: Elevation angle bins
+  FIELDNAM: Elevation angle
+  LABLAXIS: Elevation Angle
+  UNITS: degrees
+  SCALETYP: linear
+  VALIDMIN: 0
+  VALIDMAX: 180
+  DELTA_PLUS_VAR: elevation_delta
+  DELTA_MINUS_VAR: elevation_delta
+
+elevation_delta:
+  <<: *support_data
+  <<: *float_data
+  NAME: elevation_delta
+  CATDESC: Elevation angle bin deltas
+  FIELDNAM: Elevation angle delta
+  LABLAXIS: Elevation Angle delta
+  UNITS: degrees
+  SCALETYP: linear
+
+spin_angle:
+  <<: *support_data
+  <<: *float_data
+  NAME: spin_angle
+  CATDESC: Spin angle bins
+  FIELDNAM: Spin angle
+  LABLAXIS: Spin Angle
+  UNITS: degrees
+  VALIDMIN: 0
+  VALIDMAX: 360
+  SCALETYP: linear
+  DELTA_PLUS_VAR: spin_angle_delta
+  DELTA_MINUS_VAR: spin_angle_delta
+
+spin_angle_delta:
+  <<: *support_data
+  <<: *float_data
+  NAME: spin_angle_delta
+  CATDESC: Spin angle bin deltas
+  FIELDNAM: Spin angle delta
+  LABLAXIS: Spin Angle delta
+  UNITS: degrees
+  SCALETYP: linear
+
+energy:
+  <<: *support_data
+  <<: *float_data
+  NAME: energy
+  CATDESC: Energy bins
+  FIELDNAM: Energy
+  LABLAXIS: Energy
+  UNITS: keV/e
+  SCALETYP: log
+  DELTA_PLUS_VAR: energy_delta_plus
+  DELTA_MINUS_VAR: energy_delta_minus
+
+energy_delta_plus:
+  <<: *support_data
+  <<: *float_data
+  NAME: energy_delta_plus
+  CATDESC: Energy bins delta plus
+  FIELDNAM: Energy delta plus
+  LABLAXIS: Energy delta plus
+  UNITS: keV/e
+  SCALETYP: log
+
+energy_delta_minus:
+  <<: *support_data
+  <<: *float_data
+  NAME: energy_delta_minus
+  CATDESC: Energy bins delta minus
+  FIELDNAM: Energy delta minus
+  LABLAXIS: Energy delta minus
+  UNITS: keV/e
+  SCALETYP: log
+
+oplus6:
+  <<: *species_3d_distribution
+  NAME: oplus6
+  CATDESC: 0+6 Intensity 3d distribution
+  FIELDNAM: 0+6 Intensity
+  LABLAXIS: 0+6 Intensity
+
+elevation_label:
+  NAME: elevation_label
+  CATDESC: Label for elevation
+  FIELDNAM: Elevation label
+  DATA_TYPE: CDF_CHAR
+  FORMAT: a20
+  VAR_TYPE: metadata
+  FILLVAL: ' '
+
+spin_angle_label:
+  NAME: spin_angle_label
+  CATDESC: Label for spin angle
+  FIELDNAM: Spin angle label
+  DATA_TYPE: CDF_CHAR
+  FORMAT: a20
+  VAR_TYPE: metadata
+  FILLVAL: ' '
+
+energy_label:
+  NAME: energy_label
+  CATDESC: Label for energy
+  FIELDNAM: Energy label
+  DATA_TYPE: CDF_CHAR
+  FORMAT: a20
+  VAR_TYPE: metadata
+  FILLVAL: ' '
+
+
+

@@ -10,6 +10,7 @@ from imap_l3_processing.codice.l3.hi.direct_event.codice_hi_l3a_direct_events_de
 from imap_l3_processing.codice.l3.hi.models import CodiceHiL3PitchAngleDataProduct
 from imap_l3_processing.codice.l3.hi.models import CodiceL3HiDirectEvents
 from imap_l3_processing.codice.l3.hi.pitch_angle.codice_pitch_angle_dependencies import CodicePitchAngleDependencies
+from imap_l3_processing.codice.l3.lo.constants import CODICE_SPIN_ANGLE_OFFSET_FROM_MAG_BOOM
 from imap_l3_processing.hit.l3.sectored_products.science.sectored_products_algorithms import \
     get_sector_unit_vectors
 from imap_l3_processing.models import InputMetadata
@@ -57,7 +58,7 @@ class CodiceHiProcessor(Processor):
             ssd_energy_minus[:, index, :] = priority_event.ssd_energy_minus
 
             ssd_id[:, index, :] = priority_event.ssd_id
-            spin_angle[:, index, :] = priority_event.spin_angle
+            spin_angle[:, index, :] = (priority_event.spin_angle + CODICE_SPIN_ANGLE_OFFSET_FROM_MAG_BOOM) % 360
             spin_number[:, index, :] = priority_event.spin_number
             tof[:, index, :] = priority_event.time_of_flight
             type[:, index, :] = priority_event.type
@@ -109,8 +110,10 @@ class CodiceHiProcessor(Processor):
         fe_energy_bins = dependencies.codice_sectored_intensities_data.energy_fe.shape[0]
         rebinned_mag_data = mag_data.rebin_to(sectored_intensities.epoch, sectored_intensities.epoch_delta_plus)
 
+        spin_angles_in_dps = (sectored_intensities.spin_sector_index + CODICE_SPIN_ANGLE_OFFSET_FROM_MAG_BOOM) % 360
+
         mag_unit_vectors = calculate_unit_vector(rebinned_mag_data)
-        sector_unit = get_sector_unit_vectors(sectored_intensities.spin_sector_index, sectored_intensities.ssd_index)
+        sector_unit = get_sector_unit_vectors(spin_angles_in_dps, sectored_intensities.ssd_index)
         sector_unit_vectors = calculate_unit_vector(sector_unit)
         particle_unit_vectors = -1 * sector_unit_vectors
 

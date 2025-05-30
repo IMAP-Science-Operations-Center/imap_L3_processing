@@ -14,8 +14,8 @@ class TestProcessor(unittest.TestCase):
                                                      ScienceInput("imap_swapi_l2_science_20250418_v001.cdf"),
                                                      AncillaryInput("imap_swapi_lookup_20250417_v001.cdf"))
         mock_spiceypy.ktotal.return_value = 2
-        mock_spiceypy.kdata.side_effect = [['kernel_1', 'type', 'source', 'handle'],
-                                           ['kernel_2', 'type', 'source', 'handle']]
+        mock_spiceypy.kdata.side_effect = [['april/kernel_1', 'type', 'source', 'handle'],
+                                           ['may/kernel_2', 'type', 'source', 'handle']]
 
         processor = Processor(input_collection, Mock())
 

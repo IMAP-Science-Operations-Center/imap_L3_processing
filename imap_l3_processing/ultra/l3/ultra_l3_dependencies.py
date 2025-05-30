@@ -39,6 +39,7 @@ class UltraL3Dependencies:
 
         glows_l3e_file_names = find_glows_l3e_dependencies(l1c_file_names, "ultra")
         glows_file_paths = [download(path) for path in glows_l3e_file_names]
+
         return cls.from_file_paths(l2_map_path, hi_l1c_paths, glows_file_paths)
 
     @classmethod
@@ -51,8 +52,8 @@ class UltraL3Dependencies:
             glows_l3e_data.append(UltraGlowsL3eData.read_from_path(file_path))
         paths = [l2_map_path] + l1c_file_paths + glows_file_paths
         l1c_paths_dict = {f"l1c_path_{index + 1}": path for index, path in enumerate(l1c_file_paths)}
-        l2_healpix_dataset = ultra_l2(l1c_paths_dict, "")
-        l2_healpix_map_data = HealPixIntensityMapData.read_from_xarray(l2_healpix_dataset[0])
+        l2_healpix_datasets = ultra_l2(l1c_paths_dict)
+        l2_healpix_map_data = HealPixIntensityMapData.read_from_xarray(l2_healpix_datasets[0])
 
         return cls(ultra_l2_map=l2_healpix_map_data, ultra_l1c_pset=ultra_l1c_data, glows_l3e_sp=glows_l3e_data,
                    dependency_file_paths=paths)

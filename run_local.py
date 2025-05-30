@@ -3,7 +3,6 @@ from __future__ import annotations
 import os
 import shutil
 import sys
-import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Optional, TypeVar
@@ -13,7 +12,8 @@ import imap_data_access
 import numpy as np
 import spiceypy
 import xarray as xr
-from imap_data_access.processing_input import AncillaryInput, ProcessingInputCollection, ScienceInput
+from imap_data_access.processing_input import AncillaryInput, ProcessingInputCollection, ScienceInput, \
+    RepointInput
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.codice.l3.hi.codice_hi_processor import CodiceHiProcessor
@@ -27,9 +27,7 @@ from imap_l3_processing.codice.l3.lo.codice_lo_l3a_partial_densities_dependencie
     CodiceLoL3aPartialDensitiesDependencies
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_ratios_dependencies import CodiceLoL3aRatiosDependencies
 from imap_l3_processing.codice.l3.lo.codice_lo_processor import CodiceLoProcessor
-from imap_l3_processing.codice.l3.lo.direct_events.science.mass_coefficient_lookup import MassCoefficientLookup
-from imap_l3_processing.codice.l3.lo.models import CodiceLoL2SWSpeciesData, CodiceLoL2DirectEventData, \
-    CodiceLoL1aSWPriorityRates, CodiceLoL1aNSWPriorityRates
+from imap_l3_processing.codice.l3.lo.models import CodiceLoL2SWSpeciesData
 from imap_l3_processing.codice.l3.lo.sectored_intensities.science.mass_per_charge_lookup import MassPerChargeLookup
 from imap_l3_processing.constants import ONE_AU_IN_KM
 from imap_l3_processing.glows.glows_initializer import GlowsInitializer
@@ -78,14 +76,15 @@ from imap_l3_processing.swe.swe_processor import SweProcessor
 from imap_l3_processing.ultra.l3.models import UltraL1CPSet, UltraGlowsL3eData
 from imap_l3_processing.ultra.l3.ultra_l3_dependencies import UltraL3Dependencies, UltraL3SpectralIndexDependencies
 from imap_l3_processing.ultra.l3.ultra_processor import UltraProcessor
-from imap_l3_processing.utils import save_data, read_l1d_mag_data
+from imap_l3_processing.utils import save_data, read_l1d_mag_data, furnish_local_spice
 from scripts.codice.create_fake_efficiency_ancillary import create_efficiency_lookup
 from scripts.codice.create_more_accurate_l3a_direct_event import create_more_accurate_l3a_direct_events_cdf
 from scripts.codice.create_more_accurate_l3a_direct_event_input import modify_l1a_priority_counts, \
     modify_l2_direct_events
 from scripts.hi.create_hi_full_spin_deps import create_hi_full_spin_deps
+from scripts.ultra.create_l1c_l2_and_glows_with_matching_date_range import create_l1c_and_glows_with_matching_date_range
 from tests.test_helpers import get_test_data_path, get_test_instrument_team_data_path, environment_variables, \
-    try_get_many_run_local_paths, furnish_local_spice
+    try_get_many_run_local_paths
 
 
 def create_glows_l3a_cdf(dependencies: GlowsL3ADependencies):
@@ -130,8 +129,6 @@ def create_codice_lo_l3a_direct_events_cdf(l1a_paths: Optional[tuple[Path, Path]
     codice_lo_l2_direct_event_cdf_path = modify_l2_direct_events(
         get_test_instrument_team_data_path('codice/lo/imap_codice_l2_lo-direct-events_20241110_v002.cdf'))
 
-    codice_lo_l2_direct_events = CodiceLoL2DirectEventData.read_from_cdf(codice_lo_l2_direct_event_cdf_path)
-
     if l1a_paths is None:
         codice_lo_l1a_nsw_priority_path, codice_lo_l1a_sw_priority_path = modify_l1a_priority_counts(
             get_test_instrument_team_data_path('codice/lo/imap_codice_l1a_lo-nsw-priority_20241110_v002.cdf'),
@@ -139,18 +136,15 @@ def create_codice_lo_l3a_direct_events_cdf(l1a_paths: Optional[tuple[Path, Path]
     else:
         codice_lo_l1a_nsw_priority_path, codice_lo_l1a_sw_priority_path = l1a_paths
 
-    time.sleep(3)  # wait for files to close before trying to read them
+    energy_lookup_path = get_test_data_path('codice/imap_codice_lo-energy-per-charge_20241110_v001.csv')
+    mass_coefficient_path = get_test_data_path('codice/imap_codice_mass-coefficient-lookup_20241110_v002.csv')
 
-    codice_lo_l1a_sw_priority = CodiceLoL1aSWPriorityRates.read_from_cdf(codice_lo_l1a_sw_priority_path)
-    codice_lo_l1a_nsw_priority = CodiceLoL1aNSWPriorityRates.read_from_cdf(codice_lo_l1a_nsw_priority_path)
-
-    mass_coefficient_lookup = MassCoefficientLookup.read_from_csv(
-        get_test_data_path('codice/imap_codice_mass-coefficient-lookup_20241110_v002.csv'))
-
-    deps = CodiceLoL3aDirectEventsDependencies(codice_l2_direct_events=codice_lo_l2_direct_events,
-                                               codice_lo_l1a_sw_priority_rates=codice_lo_l1a_sw_priority,
-                                               codice_lo_l1a_nsw_priority_rates=codice_lo_l1a_nsw_priority,
-                                               mass_coefficient_lookup=mass_coefficient_lookup)
+    deps = CodiceLoL3aDirectEventsDependencies.from_file_paths(
+        sw_priority_rates_cdf=codice_lo_l1a_sw_priority_path,
+        nsw_priority_rates_cdf=codice_lo_l1a_nsw_priority_path,
+        direct_event_path=codice_lo_l2_direct_event_cdf_path,
+        mass_coefficients_file_path=mass_coefficient_path,
+        esa_to_energy_per_charge_file_path=energy_lookup_path, )
 
     input_metadata = InputMetadata(
         instrument='codice',
@@ -204,7 +198,7 @@ def create_codice_lo_l3a_abundances_cdf():
     return save_data(ratios_data, delete_if_present=True)
 
 
-def create_codice_lo_l3a_3d_distributions_cdf():
+def create_codice_lo_l3a_3d_distributions_cdf(species: str):
     l1a_paths = modify_l1a_priority_counts(
         get_test_instrument_team_data_path('codice/lo/imap_codice_l1a_lo-nsw-priority_20241110_v002.cdf'),
         get_test_instrument_team_data_path('codice/lo/imap_codice_l1a_lo-sw-priority_20241110_v002.cdf'))
@@ -215,18 +209,15 @@ def create_codice_lo_l3a_3d_distributions_cdf():
 
     codice_lo_l1a_nsw_priority_path, codice_lo_l1a_sw_priority_path = l1a_paths
 
-    mass_species_bin_path = get_test_data_path('codice/imap_codice_lo-mass-species-bin-lookup_20241110_v001.csv')
-    geometric_factors_path = get_test_data_path('codice/imap_codice_lo-geometric-factors_20241110_v001.csv')
-
-    efficiency_factors_lut_path = create_efficiency_lookup(mass_species_bin_path)
-
     deps = CodiceLoL3a3dDistributionsDependencies.from_file_paths(
         l3a_file_path=accurate_codice_lo_l3a_direct_event_path,
         l1a_sw_file_path=codice_lo_l1a_sw_priority_path,
         l1a_nsw_file_path=codice_lo_l1a_nsw_priority_path,
-        mass_species_bin_lut=mass_species_bin_path,
-        geometric_factors_lut=geometric_factors_path,
-        efficiency_factors_lut=efficiency_factors_lut_path,
+        mass_species_bin_lut=(get_test_data_path('codice/imap_codice_lo-mass-species-bin-lookup_20241110_v001.csv')),
+        geometric_factors_lut=(get_test_data_path('codice/imap_codice_lo-geometric-factors_20241110_v001.csv')),
+        efficiency_factors_lut=(create_efficiency_lookup(species)),
+        energy_per_charge_lut=get_test_data_path("codice/imap_codice_lo-energy-per-charge_20241110_v001.csv"),
+        species=species
     )
 
     input_metadata = InputMetadata(
@@ -235,7 +226,7 @@ def create_codice_lo_l3a_3d_distributions_cdf():
         start_date=datetime(2024, 11, 10),
         end_date=datetime(2025, 1, 2),
         version='v000',
-        descriptor='lo-3d-instrument-frame'
+        descriptor=f'lo-{species}-3d-instrument-frame'
     )
 
     codice_lo_processor = CodiceLoProcessor(Mock(), input_metadata)
@@ -539,8 +530,8 @@ def run_glows_l3bc_processor_and_initializer(mock_download_external, _, mock_que
 
     bad_days_list = AncillaryInput('imap_glows_bad-days-list_20100101_v001.dat')
     waw_helio_ion = AncillaryInput('imap_glows_WawHelioIonMP_20100101_v002.json')
-    uv_anisotropy = AncillaryInput('imap_glows_uv-anisotropy-1CR_20100101_v003.json')
-    pipeline_settings = AncillaryInput('imap_glows_pipeline-settings-l3bcde_20100101_v007.json')
+    uv_anisotropy = AncillaryInput('imap_glows_uv-anisotropy-1CR_20300101_v003.json')
+    pipeline_settings = AncillaryInput('imap_glows_pipeline-settings-l3bcde_20100101_v006.json')
     input_collection = ProcessingInputCollection(bad_days_list, waw_helio_ion, uv_anisotropy, pipeline_settings)
 
     processor = GlowsProcessor(dependencies=input_collection, input_metadata=input_metadata)
@@ -584,11 +575,14 @@ def run_glows_l3e_lo_with_mocks(mock_get_repoint_date_range, _, mock_path, mock_
             "phion-hydrogen": "phion_Hydrogen_T12F107_2021b.dat",
             "ionization-files": "ionization.files.dat",
             "sw-eqtr-electrons": "swEqtrElectrons5_2021b.dat"
-        }}
+        },
+            "start_cr": 2092},
+        elongation={1234: 90},
+        repointing_file=get_test_data_path("fake_1_day_repointing_file.csv"),
     )
 
     mock_l3e_dependencies.rename_dependencies = Mock()
-    mock_l3e_dependencies_class.fetch_dependencies.return_value = (mock_l3e_dependencies, 5)
+    mock_l3e_dependencies_class.fetch_dependencies.return_value = (mock_l3e_dependencies, 2094)
 
     mock_path.side_effect = [
         Path(get_test_instrument_team_data_path("glows/probSur.Imap.Lo_20090101_010101_2009.000_60.00.txt")),
@@ -614,7 +608,6 @@ def run_glows_l3e_lo_with_mocks(mock_get_repoint_date_range, _, mock_path, mock_
     glows_processor.process()
 
 
-@environment_variables({"REPOINT_DATA_FILEPATH": get_test_data_path("glows/l3e_2025/2025_fake_repointing.csv")})
 @patch("imap_l3_processing.glows.glows_processor.imap_data_access")
 @patch("imap_l3_processing.glows.l3e.glows_l3e_dependencies.download_dependency_from_path")
 @patch("imap_l3_processing.glows.l3e.glows_l3e_dependencies.shutil")
@@ -660,7 +653,8 @@ def run_glows_l3e_lo_with_less_mocks(mock_shutil, mock_download, mock_imap_data_
         AncillaryInput("imap_glows_sw-eqtr-electrons_19710416_v002.dat"),
         AncillaryInput("imap_glows_tess-xyz-8_20100101_v002.dat"),
         AncillaryInput("imap_lo_elongation-data_20100101_v001.dat"),
-        ScienceInput(l3d_file)
+        ScienceInput(l3d_file),
+        RepointInput("imap_2001_052_001.repoint.csv"),
     )
 
     hi_45_processing_input_collection = ProcessingInputCollection(
@@ -673,7 +667,8 @@ def run_glows_l3e_lo_with_less_mocks(mock_shutil, mock_download, mock_imap_data_
         AncillaryInput("imap_glows_solar-uv-anisotropy_19960130_v002.dat"),
         AncillaryInput("imap_glows_speed-3d_19640117_v002.dat"),
         AncillaryInput("imap_glows_sw-eqtr-electrons_19710416_v002.dat"),
-        ScienceInput(l3d_file)
+        ScienceInput(l3d_file),
+        RepointInput("imap_2001_052_001.repoint.csv"),
     )
     hi_90_processing_input_collection = ProcessingInputCollection(
         AncillaryInput("imap_glows_density-3d_19640117_v002.dat"),
@@ -685,7 +680,8 @@ def run_glows_l3e_lo_with_less_mocks(mock_shutil, mock_download, mock_imap_data_
         AncillaryInput("imap_glows_solar-uv-anisotropy_19960130_v002.dat"),
         AncillaryInput("imap_glows_speed-3d_19640117_v002.dat"),
         AncillaryInput("imap_glows_sw-eqtr-electrons_19710416_v002.dat"),
-        ScienceInput(l3d_file)
+        ScienceInput(l3d_file),
+        RepointInput("imap_2001_052_001.repoint.csv"),
     )
 
     ul_processing_input_collection = ProcessingInputCollection(
@@ -699,7 +695,8 @@ def run_glows_l3e_lo_with_less_mocks(mock_shutil, mock_download, mock_imap_data_
         AncillaryInput("imap_glows_speed-3d_19640117_v002.dat"),
         AncillaryInput("imap_glows_sw-eqtr-electrons_19710416_v002.dat"),
         AncillaryInput("imap_glows_tess-ang-16_20100101_v002.dat"),
-        ScienceInput(l3d_file)
+        ScienceInput(l3d_file),
+        RepointInput("imap_2001_052_001.repoint.csv"),
     )
 
     version = 'v007'
@@ -1003,7 +1000,7 @@ if __name__ == "__main__":
             elif "abundances" in sys.argv:
                 print(create_codice_lo_l3a_abundances_cdf())
             elif "3d-instrument-frame" in sys.argv:
-                print(create_codice_lo_l3a_3d_distributions_cdf())
+                print(create_codice_lo_l3a_3d_distributions_cdf(sys.argv[-1]))
 
     if "codice-hi" in sys.argv:
         if "l3a" in sys.argv:
@@ -1042,7 +1039,7 @@ if __name__ == "__main__":
             if "mock" in sys.argv:
                 run_glows_l3e_lo_with_mocks()
             else:
-                run_glows_l3e_lo_with_less_mocks()
+                run_glows_l3e_with_less_mocks()
         else:
             cdf_data = CDF("tests/test_data/glows/imap_glows_l2_hist_20130908-repoint00001_v004.cdf")
             l2_glows_data = read_l2_glows_data(cdf_data)
@@ -1068,7 +1065,7 @@ if __name__ == "__main__":
         else:
             mag_data = read_l1d_mag_data(get_test_data_path("mag/imap_mag_l1d_norm-mago_20250101_v001.cdf"))
             hit_data = read_l2_hit_data(
-                get_test_data_path("hit/imap_hit_l2_macropixel-intensity_20250101_v002.cdf"))
+                get_test_data_path("hit/imap_hit_l2_macropixel-intensity_20250101_v003.cdf"))
             dependencies = HITL3SectoredDependencies(mag_l1d_data=mag_data, data=hit_data)
             print(f"hit macropixel data product: {create_hit_sectored_cdf(dependencies)}")
 
@@ -1225,7 +1222,7 @@ if __name__ == "__main__":
             processor = UltraProcessor(input_metadata=processor_input_metadata, dependencies=Mock())
 
             # @formatter:off
-            missing_paths, [l2_map_path, *l1c_dependency_paths] = try_get_many_run_local_paths([
+            missing_map_and_pset_paths, [l2_map_path, *l1c_dependency_paths] = try_get_many_run_local_paths([
                 "ultra/20250415-20250419/imap_ultra_l2_u90-ena-h-sf-nsp-full-hae-4deg-6mo_20250415_v001.cdf",
                 "ultra/20250415-20250419/ultra_l1c/imap_ultra_l1c_45sensor-spacecraftpset_20250415-repoint00001_v001.cdf",
                 "ultra/20250415-20250419/ultra_l1c/imap_ultra_l1c_45sensor-spacecraftpset_20250416-repoint00002_v001.cdf",
@@ -1234,19 +1231,17 @@ if __name__ == "__main__":
             ])
             # @formatter:on
 
+            missing_glows_paths, [*l3e_glows_paths] = try_get_many_run_local_paths([
+                "run_local_input_data/ultra/20250415-20250419/glows_l3e/imap_glows_l3e_survival-probabilities-ultra_20250415_v001.cdf",
+                "run_local_input_data/ultra/20250415-20250419/glows_l3e/imap_glows_l3e_survival-probabilities-ultra_20250416_v001.cdf",
+                "run_local_input_data/ultra/20250415-20250419/glows_l3e/imap_glows_l3e_survival-probabilities-ultra_20250417_v001.cdf",
+                "run_local_input_data/ultra/20250415-20250419/glows_l3e/imap_glows_l3e_survival-probabilities-ultra_20250418_v001.cdf",
+            ])
+            if missing_glows_paths or missing_map_and_pset_paths:
+                create_l1c_and_glows_with_matching_date_range(datetime(2025, 4, 15, 12), datetime(2025, 4, 19, 12))
+
             l1c_dependency = [UltraL1CPSet.read_from_path(l1c_dependency_path) for l1c_dependency_path in
                               l1c_dependency_paths]
-
-            l3e_glows_paths = [
-                Path(
-                    "run_local_input_data/ultra/20250415-20250419/glows_l3e/imap_glows_l3e_survival-probabilities-ultra_20250415_v001.cdf"),
-                Path(
-                    "run_local_input_data/ultra/20250415-20250419/glows_l3e/imap_glows_l3e_survival-probabilities-ultra_20250416_v001.cdf"),
-                Path(
-                    "run_local_input_data/ultra/20250415-20250419/glows_l3e/imap_glows_l3e_survival-probabilities-ultra_20250417_v001.cdf"),
-                Path(
-                    "run_local_input_data/ultra/20250415-20250419/glows_l3e/imap_glows_l3e_survival-probabilities-ultra_20250418_v001.cdf"),
-            ]
             l3e_dependencies = [UltraGlowsL3eData.read_from_path(path) for path in l3e_glows_paths]
             l2_map_dependency = HealPixIntensityMapData.read_from_path(l2_map_path)
 

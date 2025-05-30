@@ -25,7 +25,7 @@ class GeometricFactorLookup:
     def get_geometric_factors(self, rgfo_half_spin: np.ma.masked_array) -> np.ndarray:
         geometric_factors = np.full((rgfo_half_spin.shape[0], 128), self._reduced_factor)
         for epoch_i in range(rgfo_half_spin.shape[0]):
-            if not rgfo_half_spin.mask[epoch_i]:
+            if rgfo_half_spin[epoch_i] is not np.ma.masked:
                 half_spin = int(rgfo_half_spin.data[epoch_i]) - 1
                 if half_spin < 0:
                     continue

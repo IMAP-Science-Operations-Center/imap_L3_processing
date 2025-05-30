@@ -18,7 +18,7 @@ class TestGenerateL3BC(TestCase):
             'omni_raw_data': get_test_instrument_team_data_path('glows/omni2_all_years.dat')
         }
         ancillary_files = {
-            'uv_anisotropy': get_test_data_path('glows/imap_glows_uv-anisotropy-1cr_20250514_v002.json'),
+            'uv_anisotropy': get_test_data_path('glows/imap_glows_uv-anisotropy-1CR_20250514_v002.json'),
             'WawHelioIonMP_parameters': get_test_data_path('glows/imap_glows_WawHelioIonMP_v002.json'),
             'bad_days_list': get_test_data_path('glows/imap_glows_bad-days-list_v001.dat'),
             'pipeline_settings': get_test_data_path(
@@ -77,3 +77,68 @@ class TestGenerateL3BC(TestCase):
         with self.assertRaises(CannotProcessCarringtonRotationError) as context:
             generate_l3bc(dependencies)
         self.assertTrue("All days for Carrington Rotation are in a bad season." in str(context.exception))
+
+    def test_generate_l3bc_appends_used_l3a_files_to_parent_attributes(self):
+        cr = 2096
+        external_files = {
+            'f107_raw_data': get_test_instrument_team_data_path('glows/f107_fluxtable.txt'),
+            'omni_raw_data': get_test_instrument_team_data_path('glows/omni2_all_years.dat')
+        }
+        ancillary_files = {
+            'uv_anisotropy': get_test_data_path('glows/imap_glows_uv-anisotropy-1CR_20100101_v001.json'),
+            'WawHelioIonMP_parameters': get_test_data_path('glows/imap_glows_WawHelioIonMP_20100101_v002.json'),
+            'bad_days_list': get_test_data_path('glows/imap_glows_bad-days-list_v001.dat'),
+            'pipeline_settings': get_test_data_path('glows/imap_glows_pipeline-settings-l3bcde_20250423_v001.json')
+        }
+        l3a_files = [
+            "imap_glows_l3a_hist_20100422-repoint00112_v012.cdf",
+            "imap_glows_l3a_hist_20100423-repoint00113_v012.cdf",
+            "imap_glows_l3a_hist_20100424-repoint00114_v012.cdf",
+            "imap_glows_l3a_hist_20100425-repoint00115_v012.cdf",
+            "imap_glows_l3a_hist_20100426-repoint00116_v012.cdf",
+            "imap_glows_l3a_hist_20100427-repoint00117_v012.cdf",
+            "imap_glows_l3a_hist_20100428-repoint00118_v012.cdf",
+            "imap_glows_l3a_hist_20100429-repoint00119_v012.cdf",
+            "imap_glows_l3a_hist_20100430-repoint00120_v012.cdf",
+            "imap_glows_l3a_hist_20100501-repoint00121_v012.cdf",
+            "imap_glows_l3a_hist_20100502-repoint00122_v012.cdf",
+            "imap_glows_l3a_hist_20100503-repoint00123_v012.cdf",
+            "imap_glows_l3a_hist_20100504-repoint00124_v012.cdf",
+            "imap_glows_l3a_hist_20100505-repoint00125_v012.cdf",
+            "imap_glows_l3a_hist_20100506-repoint00126_v012.cdf",
+            "imap_glows_l3a_hist_20100507-repoint00127_v012.cdf",
+            "imap_glows_l3a_hist_20100508-repoint00128_v012.cdf",
+            "imap_glows_l3a_hist_20100509-repoint00129_v012.cdf",
+            "imap_glows_l3a_hist_20100510-repoint00130_v012.cdf",
+            "imap_glows_l3a_hist_20100511-repoint00131_v012.cdf",
+            "imap_glows_l3a_hist_20100512-repoint00132_v012.cdf",
+            "imap_glows_l3a_hist_20100513-repoint00133_v012.cdf",
+            "imap_glows_l3a_hist_20100514-repoint00134_v012.cdf",
+            "imap_glows_l3a_hist_20100515-repoint00135_v012.cdf",
+            "imap_glows_l3a_hist_20100516-repoint00136_v012.cdf",
+            "imap_glows_l3a_hist_20100517-repoint00137_v012.cdf",
+            "imap_glows_l3a_hist_20100518-repoint00138_v012.cdf",
+        ]
+
+        l3a_folder_path = get_test_data_path('glows/l3a_products')
+        l3a_data = [create_glows_l3a_dictionary_from_cdf(l3a_folder_path / file) for file in l3a_files]
+
+        dependencies = GlowsL3BCDependencies(l3a_data=l3a_data, external_files=external_files,
+                                             ancillary_files=ancillary_files, carrington_rotation_number=cr,
+                                             start_date=datetime(2025, 4, 19),
+                                             end_date=datetime(2025, 5, 23),
+                                             zip_file_path=Path('some/path.zip'))
+        l3b, l3c = generate_l3bc(dependencies)
+
+        expected_l3a_parent_files = [
+            "imap_glows_l3a_hist_20100511-repoint00131_v012.cdf",
+            "imap_glows_l3a_hist_20100512-repoint00132_v012.cdf",
+            "imap_glows_l3a_hist_20100513-repoint00133_v012.cdf",
+            "imap_glows_l3a_hist_20100514-repoint00134_v012.cdf",
+            "imap_glows_l3a_hist_20100515-repoint00135_v012.cdf",
+            "imap_glows_l3a_hist_20100516-repoint00136_v012.cdf",
+            "imap_glows_l3a_hist_20100517-repoint00137_v012.cdf",
+            "imap_glows_l3a_hist_20100518-repoint00138_v012.cdf",
+        ]
+
+        self.assertEqual(expected_l3a_parent_files, l3b['header']['l3a_input_files_name'])
