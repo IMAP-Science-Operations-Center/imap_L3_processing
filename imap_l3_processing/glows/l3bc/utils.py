@@ -7,7 +7,7 @@ from zipfile import ZipFile, ZIP_DEFLATED
 import numpy as np
 import pandas as pd
 from astropy.time import Time, TimeDelta
-from imap_processing.spice.repoint import get_repoint_data
+from imap_processing.spice.repoint import get_repoint_data, set_global_repoint_table_paths
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
@@ -80,7 +80,7 @@ def find_unprocessed_carrington_rotations(l3a_inputs: list[dict], l3b_inputs: li
     l3as_by_carrington: dict = defaultdict(list)
 
     latest_l3a_file = get_astropy_time_from_yyyymmdd(sorted_l3a_inputs[-1]["start_date"])
-
+    set_global_repoint_table_paths([dependencies.repointing_file])
     for index, l3a in enumerate(sorted_l3a_inputs):
         repointing_start, repointing_end = get_pointing_date_range(l3a["repointing"])
         start_cr = int(carrington(Time(repointing_start, format="datetime64").jd))
@@ -141,7 +141,8 @@ def archive_dependencies(cr_to_process: CRToProcess, version: str,
               "bad_days_list": ancillary_dependencies.bad_days_list,
               "pipeline_settings": ancillary_dependencies.pipeline_settings,
               "waw_helioion_mp": ancillary_dependencies.waw_helioion_mp_path,
-              "uv_anisotropy": ancillary_dependencies.uv_anisotropy_path
+              "uv_anisotropy": ancillary_dependencies.uv_anisotropy_path,
+              "repointing_file": ancillary_dependencies.repointing_file.name
               }
         json_string = json.dumps(cr)
         file.writestr(json_filename, json_string)

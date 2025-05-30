@@ -4,7 +4,7 @@ from pathlib import Path
 
 from astropy.time import TimeDelta
 from imap_data_access import download
-from imap_data_access.processing_input import ProcessingInputCollection
+from imap_data_access.processing_input import ProcessingInputCollection, RepointInput
 
 from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
 from imap_l3_processing.utils import download_external_dependency
@@ -24,6 +24,7 @@ class GlowsInitializerAncillaryDependencies:
     f107_index_file_path: Path
     lyman_alpha_path: Path
     omni2_data_path: Path
+    repointing_file: Path
 
     @classmethod
     def fetch_dependencies(cls, dependencies: ProcessingInputCollection):
@@ -32,8 +33,10 @@ class GlowsInitializerAncillaryDependencies:
         bad_day_dependency = dependencies.get_file_paths(source='glows', descriptor='bad-days-list')
         pipeline_settings_dependency = dependencies.get_file_paths(source='glows',
                                                                    descriptor='pipeline-settings-l3bcde')
+        repointing_dependency = dependencies.get_file_paths(data_type=RepointInput.data_type)
 
-        pipeline_settings_path = download(pipeline_settings_dependency[0])
+        pipeline_settings_path = download(pipeline_settings_dependency[0].name)
+        repointing_path = download(repointing_dependency[0].name)
 
         f107_index_file_path = download_external_dependency(F107_FLUX_TABLE_URL,
                                                             TEMP_CDF_FOLDER_PATH / 'f107_fluxtable.txt')
@@ -53,6 +56,7 @@ class GlowsInitializerAncillaryDependencies:
                    initializer_time_buffer,
                    f107_index_file_path,
                    lyman_alpha_path, omni2_data_path,
+                   repointing_file=repointing_path,
                    )
 
 
