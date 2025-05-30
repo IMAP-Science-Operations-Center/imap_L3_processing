@@ -611,7 +611,7 @@ def run_glows_l3e_lo_with_mocks(mock_get_repoint_date_range, _, mock_path, mock_
 @patch("imap_l3_processing.glows.glows_processor.imap_data_access")
 @patch("imap_l3_processing.glows.l3e.glows_l3e_dependencies.download_dependency_from_path")
 @patch("imap_l3_processing.glows.l3e.glows_l3e_dependencies.shutil")
-def run_glows_l3e_lo_with_less_mocks(mock_shutil, mock_download, mock_imap_data_access):
+def run_glows_l3e_with_less_mocks(mock_shutil, mock_download, mock_imap_data_access):
     mock_imap_data_access.upload = lambda p: print("i would upload", p)
     mock_shutil.move = shutil.copy
 
@@ -631,13 +631,20 @@ def run_glows_l3e_lo_with_less_mocks(mock_shutil, mock_download, mock_imap_data_
         get_test_data_path('glows/l3e_2025/imap_glows_energy-grid-lo_20100101_v002.dat'),
         get_test_data_path('glows/l3e_2025/imap_glows_tess-xyz-8_20100101_v002.dat'),
         get_test_data_path('glows/l3e_2025/imap_lo_elongation-data_20100101_v001.dat'),
+        get_test_data_path('glows/l3e_2025/2025_fake_repointing.csv')
     ] + shared_deps + [
                                     get_test_data_path('glows/l3e_2025/imap_glows_energy-grid-hi_20100101_v002.dat'),
+                                    get_test_data_path('glows/l3e_2025/2025_fake_repointing.csv')
+
                                 ] + shared_deps + [
                                     get_test_data_path('glows/l3e_2025/imap_glows_energy-grid-hi_20100101_v002.dat'),
+                                    get_test_data_path('glows/l3e_2025/2025_fake_repointing.csv')
+
                                 ] + shared_deps + [
                                     get_test_data_path('glows/l3e_2025/imap_glows_energy-grid-ultra_20100101_v002.dat'),
                                     get_test_data_path('glows/l3e_2025/imap_glows_tess-ang-16_20100101_v002.dat'),
+                                    get_test_data_path('glows/l3e_2025/2025_fake_repointing.csv')
+
                                 ]
 
     l3d_file = "imap_glows_l3d_solar-hist_20100101-repoint02297_v002.cdf"
