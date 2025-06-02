@@ -5,11 +5,11 @@ from pathlib import Path
 import numpy as np
 from spacepy.pycdf import CDF
 
-from imap_l3_processing.hi.hi_processor import HiProcessor
+from imap_l3_processing.maps import survival_probability_processing
 from imap_l3_processing.maps.hilo_l3_survival_dependencies import HiLoL3SurvivalDependencies
 from imap_l3_processing.maps.map_models import RectangularIntensityDataProduct
 from imap_l3_processing.models import InputMetadata
-from imap_l3_processing.utils import save_data
+from imap_l3_processing.utils import save_data, furnish_local_spice
 from scripts.hi.create_cdf_from_instrument_team_data import create_l2_map_from_instrument_team
 from scripts.hi.generate_fake_l1c_cdfs import generate_fake_l1c
 from tests.test_helpers import get_test_instrument_team_data_path, get_test_data_path, get_run_local_data_path
@@ -18,7 +18,7 @@ from tests.test_helpers import get_test_instrument_team_data_path, get_test_data
 def create_hi_full_spin_deps(
         sensor="90",
         output_dir: Path = get_run_local_data_path("hi/full_spin_deps"),
-        start_date: datetime = datetime(year=2025, month=4, day=15, hour=12),
+        start_date: datetime = datetime(year=2025, month=4, day=16, hour=12),
         l2_map_dir: Path = None,
         glows_dir: Path = None):
     if l2_map_dir is None:
@@ -28,7 +28,7 @@ def create_hi_full_spin_deps(
     l1c_folder = output_dir / "l1c"
     l1c_folder.mkdir(parents=True, exist_ok=True)
 
-    l1c_files = [Path(s) for s in generate_fake_l1c(start_date, 185, output_dir=l1c_folder)]
+    l1c_files = [Path(s) for s in generate_fake_l1c(start_date, 2, output_dir=l1c_folder)]
     original_full_spin_map_path = create_l2_map_from_instrument_team(l2_map_dir, output_dir=output_dir)
     parents = [f.name for f in l1c_files]
     glows_files = list(glows_dir.iterdir())
@@ -46,9 +46,8 @@ def create_hi_full_spin_deps(
         f"h{sensor}-ena-h-sf-nsp-anti-hae-4deg-6mo")
 
     input_metadata = InputMetadata("hi", "l3", None, None, "v001", f"h90-ena-h-sf-sp-full-hae-4deg-6mo")
-    processor = HiProcessor(None,
-                            input_metadata)
-    ram_data = processor.process_survival_probabilities(ramified_map_deps)
+
+    ram_data = survival_probability_processing.process_survival_probabilities(ramified_map_deps)
     ram_exposure_is_zero = (np.isnan(ram_data.intensity_map_data.ena_intensity)
                             | (ram_data.intensity_map_data.ena_intensity == 0))
 
@@ -66,7 +65,7 @@ def create_hi_full_spin_deps(
 
     shutil.move(ram_cdf_path, output_dir / f"{ram_logical_source}.cdf")
 
-    antiram_data = processor.process_survival_probabilities(antiramified_map_deps)
+    antiram_data = survival_probability_processing.process_survival_probabilities(antiramified_map_deps)
     antiram_exposure_is_zero = (np.isnan(antiram_data.intensity_map_data.ena_intensity)
                                 | (antiram_data.intensity_map_data.ena_intensity == 0))
 
@@ -87,4 +86,5 @@ def create_hi_full_spin_deps(
 
 
 if __name__ == '__main__':
+    furnish_local_spice()
     create_hi_full_spin_deps()

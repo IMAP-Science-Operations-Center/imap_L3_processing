@@ -30,14 +30,14 @@ def create_survival_probabilities_file(glows_file_path: Path, date_for_file: dat
     with CDF(str(cdf_file_path), '') as c:
         c.new("epoch", [date_for_file], pycdf.const.CDF_TIME_TT2000)
         c.new("epoch_delta", [12 * 60 * 60 * 1e9], pycdf.const.CDF_INT8)
-        c.new("energy", energies, pycdf.const.CDF_FLOAT, recVary=False)
-        c['energy'].attrs["UNITS"] = energy_units
+        c.new("energy_grid", energies, pycdf.const.CDF_FLOAT, recVary=False)
+        c['energy_grid'].attrs["UNITS"] = energy_units
         c.new("spin_angle", spin_angles, pycdf.const.CDF_FLOAT, recVary=False)
         c.new(PROBABILITY_OF_SURVIVAL_VAR_NAME, np.array(survival_probabilities)[np.newaxis, ...],
               pycdf.const.CDF_FLOAT,
               compress=pycdf.const.GZIP_COMPRESSION)
 
-        c["energy"].attrs["FILLVAL"] = -1e31
+        c["energy_grid"].attrs["FILLVAL"] = -1e31
         c["spin_angle"].attrs["FILLVAL"] = -1e31
         c[PROBABILITY_OF_SURVIVAL_VAR_NAME].attrs["FILLVAL"] = -1e31
 
