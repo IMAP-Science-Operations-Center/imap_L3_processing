@@ -43,15 +43,15 @@ def create_survival_probabilities_file(glows_file_path: Path, date_for_file: dat
     with CDF(str(cdf_file_path), '') as c:
         c.new("epoch", [date_for_file], pycdf.const.CDF_TIME_TT2000)
         c.new("epoch_delta", [12 * 60 * 60 * 1e9], pycdf.const.CDF_INT8)
-        c.new("energy", energies, pycdf.const.CDF_FLOAT, recVary=False)
-        c['energy'].attrs["UNITS"] = energy_units
+        c.new("energy_grid", energies, pycdf.const.CDF_FLOAT, recVary=False)
+        c['energy_grid'].attrs["UNITS"] = energy_units
         c.new("latitude", latitude, pycdf.const.CDF_FLOAT, recVary=False)
         c.new("longitude", longitude, pycdf.const.CDF_FLOAT, recVary=False)
         c.new(HEALPIX_INDEX_VAR_NAME, output_healpix_index, pycdf.const.CDF_INT2, recVary=False)
         c.new(PROBABILITY_OF_SURVIVAL_VAR_NAME, np.array(output_survival_probabilities)[np.newaxis, ...],
               pycdf.const.CDF_FLOAT)
 
-        c["energy"].attrs["FILLVAL"] = -1e31
+        c["energy_grid"].attrs["FILLVAL"] = -1e31
         c["latitude"].attrs["FILLVAL"] = -1e31
         c["longitude"].attrs["FILLVAL"] = -1e31
         c[HEALPIX_INDEX_VAR_NAME].attrs["FILLVAL"] = -32768
@@ -64,12 +64,12 @@ if __name__ == "__main__":
     path = Path(__file__)
     input_file_path = path.parent.parent.parent / "instrument_team_data" / "glows" / "probSur.Imap.Ul.V0_2009.000.dat"
 
-    start_date = datetime(year=2025, month=9, day=1)
-    num_psets_to_generate = 1
+    start_date = datetime(year=2025, month=4, day=15, hour=12)
+    num_psets_to_generate = 4
 
     for i in range(num_psets_to_generate):
         date_to_set = start_date + timedelta(days=i)
-        filename = f"imap_glows_l3e_survival-probabilities-ultra_{date_to_set.strftime('%Y%m%d')}_v001.cdf"
+        filename = f"imap_glows_l3e_survival-probability-ul_{date_to_set.strftime('%Y%m%d')}_v015.cdf"
         cdf_file_path = get_test_data_path(f"ultra/fake_l3e_survival_probabilities/{filename}")
 
         cdf_file_path.unlink(missing_ok=True)
