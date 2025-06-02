@@ -344,35 +344,37 @@ class TestUtils(TestCase):
 
     @patch('imap_l3_processing.utils.imap_data_access.query')
     def test_find_glows_l3e_dependencies(self, mock_data_access_query):
-        l1c_90sensor_file_paths = ["imap_hi_l1c_90sensor-pset_20201001_v001.cdf",
-                                   "imap_hi_l1c_90sensor-pset_20201002_v002.cdf",
-                                   "imap_hi_l1c_90sensor-pset_20201003_v001.cdf"]
-        l1c_45sensor_file_paths = ["imap_hi_l1c_45sensor-pset_20210509_v001.cdf",
-                                   "imap_hi_l1c_45sensor-pset_20210508_v002.cdf",
-                                   "imap_hi_l1c_45sensor-pset_20210507_v001.cdf"]
+        l1c_hi_90sensor_file_paths = ["imap_hi_l1c_90sensor-pset_20201001_v001.cdf",
+                                      "imap_hi_l1c_90sensor-pset_20201002_v002.cdf",
+                                      "imap_hi_l1c_90sensor-pset_20201003_v001.cdf"]
+        l1c_hi_45sensor_file_paths = ["imap_hi_l1c_45sensor-pset_20210509_v001.cdf",
+                                      "imap_hi_l1c_45sensor-pset_20210508_v002.cdf",
+                                      "imap_hi_l1c_45sensor-pset_20210507_v001.cdf"]
         l1c_lo_file_paths = ["imap_lo_l1c_pset_20210509_v001.cdf",
                              "imap_lo_l1c_pset_20210508_v002.cdf",
                              "imap_lo_l1c_pset_20210507_v001.cdf"]
+        l1c_ultra_file_paths = ["imap_ultra_l1c_pset_20201001_v001.cdf",
+                                "imap_ultra_l1c_pset_20201002_v002.cdf",
+                                "imap_ultra_l1c_pset_20201003_v001.cdf"]
 
         test_cases = [
-            (l1c_90sensor_file_paths, "-90", "20201001", "20201003", "hi"),
-            (l1c_45sensor_file_paths, "-45", "20210507", "20210509", "hi"),
-            (l1c_90sensor_file_paths, "", "20201001", "20201003", "ultra"),
-            (l1c_45sensor_file_paths, "", "20210507", "20210509", "ultra"),
-            (l1c_lo_file_paths, "", "20210507", "20210509", "lo"),
+            (l1c_hi_90sensor_file_paths, "survival-probability-hi-90", "20201001", "20201003", "hi"),
+            (l1c_hi_45sensor_file_paths, "survival-probability-hi-45", "20210507", "20210509", "hi"),
+            (l1c_ultra_file_paths, "survival-probability-ul", "20201001", "20201003", "ultra"),
+            (l1c_lo_file_paths, "survival-probability-lo", "20210507", "20210509", "lo"),
         ]
 
         mock_data_access_query.return_value = [{"file_path": "glows_1"},
                                                {"file_path": "glows_2"},
                                                {"file_path": "glows_3"}]
 
-        for l1c_file_paths, sensor, expected_start_date, expected_end_date, instrument in test_cases:
-            with self.subTest(f"sensor: {instrument}{sensor}"):
+        for l1c_file_paths, expected_descriptor, expected_start_date, expected_end_date, instrument in test_cases:
+            with self.subTest(instrument=instrument, descriptor=expected_descriptor):
                 glows_file_paths = find_glows_l3e_dependencies(l1c_file_paths, instrument)
 
                 mock_data_access_query.assert_called_with(instrument="glows",
                                                           data_level="l3e",
-                                                          descriptor=f"survival-probability-{instrument}{sensor}",
+                                                          descriptor=expected_descriptor,
                                                           start_date=expected_start_date,
                                                           end_date=expected_end_date,
                                                           version="latest")

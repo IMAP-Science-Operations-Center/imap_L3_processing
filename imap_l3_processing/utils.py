@@ -119,10 +119,15 @@ def find_glows_l3e_dependencies(l1c_filenames: list[str], instrument: str) -> li
     start_date = min(dates).strftime("%Y%m%d")
     end_date = max(dates).strftime("%Y%m%d")
 
-    initial_descriptor = l1c_filenames[0].split("_")[3]
-    sensor = re.search(r"^(\d+)", initial_descriptor)
-    descriptor = f"survival-probability-{instrument}-{sensor.group(0)}" if sensor and instrument != 'ultra' \
-        else f"survival-probability-{instrument}"
+    match instrument:
+        case 'ultra':
+            descriptor = "survival-probability-ul"
+        case 'hi':
+            initial_descriptor = l1c_filenames[0].split("_")[3]
+            sensor = re.search(r"^(\d+)", initial_descriptor)
+            descriptor = f"survival-probability-{instrument}-{sensor.group(0)}"
+        case _:
+            descriptor = f"survival-probability-{instrument}"
 
     survival_probabilities = [result["file_path"] for result in imap_data_access.query(instrument="glows",
                                                                                        data_level="l3e",
