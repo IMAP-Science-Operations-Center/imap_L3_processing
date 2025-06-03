@@ -32,8 +32,22 @@ if __name__ == "__main__":
         case "ultra", "survival":
             subprocess.run([sys.executable, 'imap_l3_data_processor.py', '--instrument', 'ultra', '--data-level', 'l3',
                             '--start-date', '20250415', '--version', 'v010', '--descriptor',
-                            'u90-ena-h-sf-sp-full-hae-4deg-6mo', '--dependency',
-                            '[{"type": "science", "files": ["imap_ultra_l2_u90-ena-h-sf-nsp-full-hae-4deg-6mo_20250415_v010.cdf"]}]'])
+                            'u90-ena-h-sf-sp-full-hae-4deg-3mo', '--dependency',
+                            '[{"type": "science", "files": ["imap_ultra_l2_u90-ena-h-sf-nsp-full-hae-4deg-3mo_20250415_v010.cdf"]},' +
+                            '{"type": "spice", "files": ["imap_sclk_0000.tsc"]},' +
+                            '{"type": "spice", "files": ["naif0012.tls"]},' +
+                            '{"type": "spice", "files": ["imap_science_0001.tf"]},' +
+                            '{"type": "spice", "files": ["imap_dps_2025_105_2026_105_01.ah.bc"]}]'
+                            ])
+        case "ultra", "spx":
+            subprocess.run([sys.executable, 'imap_l3_data_processor.py', '--instrument', 'ultra', '--data-level', 'l3',
+                            '--start-date', '20250415', '--version', 'v010', '--descriptor',
+                            'u90-spx-h-sf-sp-full-hae-4deg-3mo', '--dependency',
+                            '['
+                            '{"type": "science", "files": ["imap_ultra_l3_u90-ena-h-sf-sp-full-hae-4deg-3mo_20250415_v010.cdf"]},'
+                            '{"type": "ancillary", "files": ["imap_ultra_ulc-spx-energy-ranges_20250407_v000.dat"]}'
+                            ']'
+                            ])
         case "glows", "l3b":
             subprocess.run([sys.executable, 'imap_l3_data_processor.py', '--instrument', 'glows', '--data-level', 'l3b',
                             '--start-date', '20100104', '--version', 'v004', '--dependency',
