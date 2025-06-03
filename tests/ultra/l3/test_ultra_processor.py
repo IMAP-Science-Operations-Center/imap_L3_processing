@@ -383,7 +383,7 @@ class TestUltraProcessor(unittest.TestCase):
                                        version="v000",
                                        descriptor=f"u90-spx-h-sf-sp-full-hae-6deg-6mo")
         input_map_path = get_test_data_path('ultra/fake_ultra_map_data_with_breakpoint_at_15keV.cdf')
-        fit_energy_ranges_path = get_test_data_path('ultra/imap_ultra_ulc-spx-energy-ranges_20250507_v000.txt')
+        fit_energy_ranges_path = get_test_data_path('ultra/imap_ultra_ulc-spx-energy-ranges_20250407_v000.dat')
         dependencies = UltraL3SpectralIndexDependencies.from_file_paths(input_map_path, fit_energy_ranges_path)
         mock_fetch_dependencies.return_value = dependencies
 

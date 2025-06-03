@@ -21,7 +21,7 @@ class TestUltraL3SpectralFitDependencies(unittest.TestCase):
 
         mock_download.side_effect = [
             "map_file",
-            get_test_data_path('ultra/imap_ultra_ulc-spx-energy-ranges_20250507_v000.txt')
+            get_test_data_path('ultra/imap_ultra_ulc-spx-energy-ranges_20250407_v000.dat')
         ]
 
         ultra_l3_dependencies = UltraL3SpectralIndexDependencies.fetch_dependencies(processing_input_collection)
@@ -50,7 +50,7 @@ class TestUltraL3SpectralFitDependencies(unittest.TestCase):
     @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.HealPixIntensityMapData.read_from_path')
     def test_from_file_paths(self, mock_read_from_path):
         map_file_path = Mock()
-        ancillary_file_path = get_test_data_path('ultra') / 'imap_ultra_ulc-spx-energy-ranges_20250507_v000.txt'
+        ancillary_file_path = get_test_data_path('ultra') / 'imap_ultra_ulc-spx-energy-ranges_20250407_v000.dat'
         expected_energy_range_values = np.loadtxt(ancillary_file_path)
 
         actual_dependencies = UltraL3SpectralIndexDependencies.from_file_paths(map_file_path, ancillary_file_path)

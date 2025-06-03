@@ -1237,7 +1237,7 @@ if __name__ == "__main__":
             spacing_degree = 2
 
             ultra_l3_path = get_test_data_path('ultra/fake_ultra_map_data.cdf')
-            fit_energy_ranges_path = get_test_data_path('ultra/imap_ultra_ulc-spx-energy-ranges_20250507_v000.txt')
+            fit_energy_ranges_path = get_test_data_path('ultra/imap_ultra_ulc-spx-energy-ranges_20250407_v000.dat')
             dependencies = UltraL3SpectralIndexDependencies.from_file_paths(ultra_l3_path, fit_energy_ranges_path)
 
             processor_input_metadata = InputMetadata(
