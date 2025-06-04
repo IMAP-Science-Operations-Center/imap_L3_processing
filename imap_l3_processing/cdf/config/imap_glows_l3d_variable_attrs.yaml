@@ -181,6 +181,7 @@ latitude_label:
   FORMAT: A16
   FILLVAL: ' '
 plasma_speed_flag:
+  NAME: plasma_speed_flag
   DATA_TYPE: CDF_INT4
   CATDESC: Solar wind plasma speed source
   DEPEND_0: epoch
@@ -192,6 +193,7 @@ plasma_speed_flag:
   LABLAXIS: Plasma speed source
   FILLVAL: -2147483648
 uv_anisotropy_flag:
+  NAME: uv_anisotropy_flag
   DATA_TYPE: CDF_INT4
   CATDESC: Ultraviolet anisotropy source
   DEPEND_0: epoch
@@ -203,6 +205,7 @@ uv_anisotropy_flag:
   LABLAXIS: UV anisotropy source
   FILLVAL: -2147483648
 proton_density_flag:
+  NAME: proton_density_flag
   DATA_TYPE: CDF_INT4
   CATDESC: Solar wind proton density source
   DEPEND_0: epoch
