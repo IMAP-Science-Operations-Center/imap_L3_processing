@@ -9,7 +9,8 @@ from imap_data_access.processing_input import ProcessingInputCollection
 from imap_processing.ultra.l2.ultra_l2 import ultra_l2
 from spacepy.pycdf import CDF
 
-from imap_l3_processing.maps.map_models import HealPixIntensityMapData, SpectralIndexDependencies
+from imap_l3_processing.maps.map_models import HealPixIntensityMapData, RectangularIntensityMapData, \
+    SpectralIndexDependencies
 from imap_l3_processing.ultra.l3.models import UltraL1CPSet, UltraGlowsL3eData
 from imap_l3_processing.utils import find_glows_l3e_dependencies
 
@@ -82,7 +83,7 @@ class UltraL3SpectralIndexDependencies(SpectralIndexDependencies):
 
     @classmethod
     def from_file_paths(cls, map_file_path: Path, energy_fit_ranges_path: Path):
-        map_data = HealPixIntensityMapData.read_from_path(map_file_path)
+        map_data = RectangularIntensityMapData.read_from_path(map_file_path)
         energy_fit_ranges = np.loadtxt(energy_fit_ranges_path)
         return cls(map_data, energy_fit_ranges)
 

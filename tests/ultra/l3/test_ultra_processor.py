@@ -13,7 +13,7 @@ from imap_processing.spice.geometry import SpiceFrame
 
 from imap_l3_processing.maps.map_models import HealPixIntensityMapData, IntensityMapData, HealPixCoords, \
     HealPixSpectralIndexDataProduct, SpectralIndexMapData, RectangularIntensityDataProduct, \
-    RectangularSpectralIndexDataProduct, RectangularSpectralIndexMapData
+    RectangularSpectralIndexDataProduct, RectangularSpectralIndexMapData, RectangularIntensityMapData
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.ultra.l3.ultra_l3_dependencies import UltraL3Dependencies, UltraL3SpectralIndexDependencies
 from imap_l3_processing.ultra.l3.ultra_processor import UltraProcessor
@@ -238,8 +238,7 @@ class TestUltraProcessor(unittest.TestCase):
     @patch('imap_l3_processing.ultra.l3.ultra_processor.save_data')
     @patch('imap_l3_processing.ultra.l3.ultra_processor.calculate_spectral_index_for_multiple_ranges')
     @patch('imap_l3_processing.ultra.l3.ultra_processor.UltraL3SpectralIndexDependencies.fetch_dependencies')
-    @patch('imap_l3_processing.ultra.l3.ultra_processor.HealPixSpectralIndexMapData')
-    def _test_process_spectral_index(self, degree_spacing, mock_healpix_spectral_index_map_data,
+    def _test_process_spectral_index(self, degree_spacing,
                                      mock_fetch_dependencies,
                                      mock_calculate_spectral_index, mock_save_data,
                                      mock_upload, mock_spiceypy):
@@ -256,7 +255,7 @@ class TestUltraProcessor(unittest.TestCase):
                                        end_date=datetime.now() + timedelta(days=1),
                                        version="v000",
                                        descriptor=f"u90-spx-h-sf-sp-full-hae-{degree_spacing}deg-6mo")
-        input_map_data = HealPixIntensityMapData(Mock(), Mock())
+        input_map_data = RectangularIntensityMapData(Mock(), Mock())
         dependencies = UltraL3SpectralIndexDependencies(input_map_data, sentinel.energy_ranges)
         mock_fetch_dependencies.return_value = dependencies
 
@@ -265,98 +264,27 @@ class TestUltraProcessor(unittest.TestCase):
 
         expected_parent_file_names = [map_file_name, energy_range_file_name]
 
-        expected_value_keys = [
-            "exposure_factor",
-            "ena_spectral_index",
-            "ena_spectral_index_stat_unc",
-            "obs_date",
-            "obs_date_range",
-        ]
-
-        mock_healpix_spectral_index_to_healpix_skymap = mock_healpix_spectral_index_map_data.return_value.to_healpix_skymap
-        mock_healpix_spectral_index_skymap = mock_healpix_spectral_index_to_healpix_skymap.return_value
-        mock_healpix_spectral_index_skymap.sky_grid = AzElSkyGrid(degree_spacing)
-
-        observation_date_as_float = np.arange(90 * 45).reshape(90, 45) * 3600 * 1e9
-
-        expected_converted_datetimes = datetime(year=1970, month=1, day=1) + timedelta(hours=1) * np.arange(
-            90 * 45).reshape(90, 45)
-
-        mock_rectangular_map_dataset = {
-            "obs_date": Mock(values=observation_date_as_float),
-            "obs_date_range": Mock(values=sentinel.rectangular_obs_date_range),
-            "exposure_factor": Mock(values=sentinel.rectangular_exposure_factor),
-            "ena_spectral_index": Mock(values=sentinel.rectangular_ena_spectral_index),
-            "ena_spectral_index_stat_unc": Mock(values=sentinel.rectangular_ena_spectral_index_stat_unc),
-        }
-
-        solid_angle_computed_by_rectangular_skymap = np.array([[1, 2], [3, 4], [5, 6]])
-        expected_output_solid_angle = np.array([[1, 3, 5], [2, 4, 6]])
-
-        mock_rectangular_sky_map = Mock(spec=RectangularSkyMap)
-        mock_rectangular_sky_map.sky_grid = AzElSkyGrid(degree_spacing)
-        mock_rectangular_sky_map.solid_angle_grid = solid_angle_computed_by_rectangular_skymap
-        mock_rectangular_sky_map.to_dataset.return_value = mock_rectangular_map_dataset
-        mock_healpix_spectral_index_skymap.to_rectangular_skymap.return_value = mock_rectangular_sky_map, 0
-
         processor = UltraProcessor(input_deps, input_metadata)
         processor.process()
 
-        mock_healpix_spectral_index_map_data.assert_called_once_with(
-            spectral_index_map_data=mock_spectral_index_map_data,
-            coords=input_map_data.coords)
-
-        mock_healpix_spectral_index_to_healpix_skymap.assert_called_once()
-        mock_healpix_spectral_index_skymap.to_rectangular_skymap.assert_called_once_with(degree_spacing,
-                                                                                         expected_value_keys)
-
         mock_save_data.assert_called_once()
         actual_rectangular_data_product = mock_save_data.call_args_list[0].args[0]
+        self.assertIsInstance(actual_rectangular_data_product, RectangularSpectralIndexDataProduct)
         self.assertEqual(expected_parent_file_names, actual_rectangular_data_product.parent_file_names)
         self.assertEqual(processor.input_metadata, actual_rectangular_data_product.input_metadata)
 
         self.assertIsInstance(actual_rectangular_data_product, RectangularSpectralIndexDataProduct)
-        self.assertIsInstance(actual_rectangular_data_product.data, RectangularSpectralIndexMapData)
 
         actual_rectangular_data: RectangularSpectralIndexMapData = actual_rectangular_data_product.data
-        self.assertIsInstance(actual_rectangular_data.spectral_index_map_data, SpectralIndexMapData)
-
-        # @formatter:off
-        expected_spectral_index_map_data = mock_healpix_spectral_index_map_data.return_value.spectral_index_map_data
-        self.assertEqual(expected_spectral_index_map_data.epoch, actual_rectangular_data.spectral_index_map_data.epoch)
-        self.assertEqual(expected_spectral_index_map_data.epoch_delta, actual_rectangular_data.spectral_index_map_data.epoch_delta)
-        self.assertEqual(expected_spectral_index_map_data.energy, actual_rectangular_data.spectral_index_map_data.energy)
-        self.assertEqual(expected_spectral_index_map_data.energy_delta_plus, actual_rectangular_data.spectral_index_map_data.energy_delta_plus)
-        self.assertEqual(expected_spectral_index_map_data.energy_delta_minus, actual_rectangular_data.spectral_index_map_data.energy_delta_minus)
-        self.assertEqual(expected_spectral_index_map_data.energy_label, actual_rectangular_data.spectral_index_map_data.energy_label)
-        self.assertEqual(sentinel.rectangular_exposure_factor, actual_rectangular_data.spectral_index_map_data.exposure_factor)
-        np.testing.assert_array_equal(actual_rectangular_data.spectral_index_map_data.obs_date, expected_converted_datetimes)
-        self.assertEqual(actual_rectangular_data.spectral_index_map_data.obs_date_range, sentinel.rectangular_obs_date_range)
-        np.testing.assert_array_equal(actual_rectangular_data.spectral_index_map_data.solid_angle, expected_output_solid_angle)
-
-        self.assertEqual(actual_rectangular_data.spectral_index_map_data.ena_spectral_index, sentinel.rectangular_ena_spectral_index)
-        self.assertEqual(actual_rectangular_data.spectral_index_map_data.ena_spectral_index_stat_unc, sentinel.rectangular_ena_spectral_index_stat_unc)
-
-
-        np.testing.assert_array_equal(actual_rectangular_data.spectral_index_map_data.latitude, mock_healpix_spectral_index_skymap.sky_grid.el_bin_midpoints)
-        np.testing.assert_array_equal(actual_rectangular_data.spectral_index_map_data.longitude, mock_healpix_spectral_index_skymap.sky_grid.az_bin_midpoints)
-        np.testing.assert_array_equal(actual_rectangular_data.coords.latitude_label, mock_healpix_spectral_index_skymap.sky_grid.el_bin_midpoints.astype(str))
-        np.testing.assert_array_equal(actual_rectangular_data.coords.longitude_label, mock_healpix_spectral_index_skymap.sky_grid.az_bin_midpoints.astype(str))
-        # @formatter:on
-
-        self.assertEqual((int(360 / degree_spacing),), actual_rectangular_data.coords.longitude_delta.shape)
-        self.assertTrue(np.all(degree_spacing / 2 == actual_rectangular_data.coords.longitude_delta))
-
-        self.assertEqual((int(180 / degree_spacing),), actual_rectangular_data.coords.latitude_delta.shape)
-        self.assertTrue(np.all(degree_spacing / 2 == actual_rectangular_data.coords.latitude_delta))
+        self.assertIsInstance(actual_rectangular_data_product.data, RectangularSpectralIndexMapData)
+        self.assertIs(mock_spectral_index_map_data, actual_rectangular_data.spectral_index_map_data)
+        self.assertIs(input_map_data.coords, actual_rectangular_data.coords)
 
         mock_upload.assert_called_once_with(mock_save_data.return_value)
 
         mock_fetch_dependencies.assert_called_once_with(input_deps)
         mock_calculate_spectral_index.assert_called_once_with(dependencies.map_data.intensity_map_data,
                                                               sentinel.energy_ranges)
-
-        mock_upload.assert_called_once_with(mock_save_data.return_value)
 
     def test_process_raises_exception_when_generating_a_healpix_map(self):
         input_metadata = InputMetadata(instrument="ultra",

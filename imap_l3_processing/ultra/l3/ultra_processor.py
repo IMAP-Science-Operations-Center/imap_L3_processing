@@ -29,8 +29,8 @@ class UltraProcessor(Processor):
                 ultra_l3_spectral_fit_dependencies = UltraL3SpectralIndexDependencies.fetch_dependencies(
                     self.dependencies)
                 healpix_spectral_index_map_data = self._process_spectral_index(ultra_l3_spectral_fit_dependencies)
-                data_product = self._process_healpix_spectral_index_to_rectangular(healpix_spectral_index_map_data,
-                                                                                   parsed_descriptor.grid)
+                data_product = RectangularSpectralIndexDataProduct(input_metadata=self.input_metadata,
+                                                                   data=healpix_spectral_index_map_data)
             case MapDescriptorParts(survival_correction=SurvivalCorrection.SurvivalCorrected,
                                     grid=PixelSize.TwoDegrees | PixelSize.FourDegrees | PixelSize.SixDegrees):
                 deps = UltraL3Dependencies.fetch_dependencies(self.dependencies)
@@ -85,12 +85,13 @@ class UltraProcessor(Processor):
         )
         return healpix_map_data
 
-    def _process_spectral_index(self, dependencies: UltraL3SpectralIndexDependencies) -> HealPixSpectralIndexMapData:
+    def _process_spectral_index(self,
+                                dependencies: UltraL3SpectralIndexDependencies) -> RectangularSpectralIndexMapData:
         map_data = calculate_spectral_index_for_multiple_ranges(
             dependencies.map_data.intensity_map_data,
             dependencies.get_fit_energy_ranges()
         )
-        return HealPixSpectralIndexMapData(
+        return RectangularSpectralIndexMapData(
             spectral_index_map_data=map_data,
             coords=dependencies.map_data.coords
         )
