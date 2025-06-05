@@ -24,9 +24,6 @@ def validate_omni2_dependency(end_date_exclusive: Time,
     times = Time([f"{int(row[YEAR_COLUMN])}:{int(row[DOY_COLUMN])}:{int(row[HOUR_COLUMN])}:0" for row in omni_data],
                  format="yday")
 
-    if times[-1] < end_date_exclusive:
-        return False
-
     date_mask = (times >= end_date_exclusive + buffer)
     omni_data = omni_data[date_mask]
 
