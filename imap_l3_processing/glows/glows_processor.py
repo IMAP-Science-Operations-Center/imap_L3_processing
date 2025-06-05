@@ -56,7 +56,8 @@ class GlowsProcessor(Processor):
                 dependencies = GlowsL3BCDependencies.fetch_dependencies(zip_file)
                 try:
                     l3b_data_product, l3c_data_product = self.process_l3bc(dependencies)
-                except CannotProcessCarringtonRotationError:
+                except CannotProcessCarringtonRotationError as e:
+                    print(f"skipping CR {dependencies.carrington_rotation_number}:", e)
                     continue
                 l3b_cdf = save_data(l3b_data_product)
                 l3c_data_product.parent_file_names.append(Path(l3b_cdf).name)
