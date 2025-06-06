@@ -1,7 +1,7 @@
 import json
 import re
 import traceback
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import numpy as np
@@ -62,12 +62,14 @@ def create_l2_glows_cdf_from_json(json_file_path: str, output_filename: str):
 
 
 if __name__ == "__main__":
-    json_directory = Path(r'C:\Users\Harrison\Downloads\data_l2_histograms')
+    json_directory = Path(r'C:\Users\Harrison\Downloads\l2_data_2')
     output_directory = Path(r'C:\Users\Harrison\Downloads\p3')
     for file_path in json_directory.iterdir():
         output = re.search(r"imap_glows_l2_(\d{8}).*_orbX_modX_p_v00.json", file_path.name)
         output_file_path_date = output.group(1)
-        cdf_file_path = f"{output_directory}/imap_glows_l2_hist_{output_file_path_date}_v003.cdf"
+        d = datetime.strptime(output_file_path_date, "%Y%m%d")
+        repoint_id = 150 + round((d - datetime(2010, 1, 2)) / timedelta(days=1))
+        cdf_file_path = f"{output_directory}/imap_glows_l2_hist_{output_file_path_date}-repoint{repoint_id:05}_v001.cdf"
         try:
             create_l2_glows_cdf_from_json(file_path, cdf_file_path)
         except Exception as e:

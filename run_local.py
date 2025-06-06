@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 import shutil
 import sys
 from datetime import datetime, timedelta, timezone
@@ -29,8 +30,7 @@ from imap_l3_processing.codice.l3.lo.codice_lo_l3a_ratios_dependencies import Co
 from imap_l3_processing.codice.l3.lo.codice_lo_processor import CodiceLoProcessor
 from imap_l3_processing.codice.l3.lo.models import CodiceLoL2SWSpeciesData
 from imap_l3_processing.codice.l3.lo.sectored_intensities.science.mass_per_charge_lookup import MassPerChargeLookup
-from imap_l3_processing.constants import ONE_AU_IN_KM
-from imap_l3_processing.glows.glows_initializer import GlowsInitializer
+from imap_l3_processing.constants import ONE_AU_IN_KM, TEMP_CDF_FOLDER_PATH
 from imap_l3_processing.glows.glows_processor import GlowsProcessor
 from imap_l3_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
 from imap_l3_processing.glows.l3a.utils import read_l2_glows_data, create_glows_l3a_dictionary_from_cdf
@@ -85,21 +85,6 @@ from scripts.hi.create_hi_full_spin_deps import create_hi_full_spin_deps
 from scripts.ultra.create_l1c_l2_and_glows_with_matching_date_range import create_l1c_and_glows_with_matching_date_range
 from tests.test_helpers import get_test_data_path, get_test_instrument_team_data_path, environment_variables, \
     try_get_many_run_local_paths
-
-
-def create_glows_l3a_cdf(dependencies: GlowsL3ADependencies):
-    input_metadata = InputMetadata(
-        instrument='glows',
-        data_level='l3a',
-        start_date=datetime(2013, 9, 8),
-        end_date=datetime(2013, 9, 8),
-        version='v001')
-
-    processor = GlowsProcessor(Mock(), input_metadata)
-
-    l3a_data = processor.process_l3a(dependencies)
-    cdf_path = save_data(l3a_data, delete_if_present=True)
-    return cdf_path
 
 
 def create_codice_lo_l3a_partial_densities_cdf():
@@ -485,11 +470,15 @@ def create_hit_direct_event_cdf():
 
 @environment_variables({"REPOINT_DATA_FILEPATH": get_test_data_path("fake_1_day_repointing_file.csv")})
 @patch('imap_l3_processing.glows.glows_initializer.query')
-def run_l3b_initializer(mock_query):
-    local_cdfs: list[str] = os.listdir(get_test_data_path("glows/l3a_products"))
-    local_cdfs.remove('.DS_Store')
+@patch('imap_l3_processing.glows.l3bc.glows_l3bc_dependencies.download_dependency_from_path')
+@patch('imap_l3_processing.glows.glows_processor.imap_data_access')
+@patch('imap_l3_processing.glows.l3bc.glows_initializer_ancillary_dependencies.download')
+@patch('imap_l3_processing.glows.l3bc.glows_initializer_ancillary_dependencies.download_external_dependency')
+def run_l3b_initializer(mock_download_external, mock_download, mock_imap_data_access,
+                        mock_download_dependency_from_path, mock_query):
+    local_cdfs: list[str] = os.listdir(get_test_data_path("glows/pipeline/l3a"))
 
-    l3a_dicts = [{'file_path': "glows/l3a_products/" + file_path,
+    l3a_dicts = [{'file_path': f"imap/glows/l3a/{file_path}",
                   'start_date': file_path.split('_')[4].split('-')[0],
                   'repointing': int(file_path.split('_')[4].split('-repoint')[1])
                   } for file_path in local_cdfs]
@@ -498,13 +487,51 @@ def run_l3b_initializer(mock_query):
         l3a_dicts, []
     ]
 
-    bad_days_list = AncillaryInput('imap_glows_bad-days-list_20100101_v001.dat')
+    mock_download.side_effect = [
+        get_test_data_path('glows/imap_glows_pipeline-settings-l3bcde_20250423_v001.json'),
+        get_test_data_path('glows/imap_2026_105_01.repoint.csv'),
+    ]
+
+    mock_download_external.side_effect = [
+        TEMP_CDF_FOLDER_PATH / 'f107_fluxtable.txt',
+        TEMP_CDF_FOLDER_PATH / 'lyman_alpha_composite.nc',
+        TEMP_CDF_FOLDER_PATH / 'omni2_2010.dat',
+    ]
+
+    mock_download_dependency_from_path.side_effect = [
+        get_test_data_path('glows/imap_glows_uv-anisotropy-1CR_20100101_v001.json'),
+        get_test_data_path('glows/imap_glows_WawHelioIonMP_20100101_v002.json'),
+        get_test_data_path('glows/imap_glows_bad-days-list_20100101_v004.dat'),
+        get_test_data_path('glows/imap_glows_pipeline-settings-l3bcde_20250423_v001.json'),
+        get_test_data_path('glows/pipeline/l3a/imap_glows_l3a_hist_20100105-repoint00153_v001.cdf'),
+        get_test_data_path('glows/pipeline/l3a/imap_glows_l3a_hist_20100106-repoint00154_v001.cdf'),
+        get_test_data_path('glows/imap_glows_uv-anisotropy-1CR_20100101_v001.json'),
+        get_test_data_path('glows/imap_glows_WawHelioIonMP_20100101_v002.json'),
+        get_test_data_path('glows/imap_glows_bad-days-list_20100101_v004.dat'),
+        get_test_data_path('glows/imap_glows_pipeline-settings-l3bcde_20250423_v001.json'),
+        get_test_data_path('glows/pipeline/l3a/imap_glows_l3a_hist_20100521-repoint00289_v001.cdf'),
+        get_test_data_path('glows/pipeline/l3a/imap_glows_l3a_hist_20100522-repoint00290_v001.cdf'),
+    ]
+
+    mock_imap_data_access.upload = lambda filename: print(filename)
+
+    bad_days_list = AncillaryInput('imap_glows_bad-days-list_20100101_v004.dat')
     waw_helio_ion = AncillaryInput('imap_glows_WawHelioIonMP_20100101_v002.json')
     uv_anisotropy = AncillaryInput('imap_glows_uv-anisotropy-1CR_20100101_v001.json')
-    pipeline_settings = AncillaryInput('imap_glows_pipeline-settings-L3bc_20250707_v002.json')
-    input_collection = ProcessingInputCollection(bad_days_list, waw_helio_ion, uv_anisotropy, pipeline_settings)
+    pipeline_settings = AncillaryInput('imap_glows_pipeline-settings-l3bcde_20250423_v001.json')
 
-    GlowsInitializer.validate_and_initialize('v001', input_collection)
+    repointings = RepointInput('imap_2026_105_01.repoint.csv')
+
+    input_collection = ProcessingInputCollection(bad_days_list, waw_helio_ion, uv_anisotropy, pipeline_settings,
+                                                 repointings)
+    input_metadata = InputMetadata(instrument='glows', data_level='l3b',
+                                   start_date=datetime.fromisoformat('2010-01-05T00:00:00'),
+                                   end_date=datetime.fromisoformat('2025-01-06T00:00:00'),
+                                   version='v001')
+
+    processor = GlowsProcessor(input_collection, input_metadata)
+
+    processor.process()
 
 
 @environment_variables({"REPOINT_DATA_FILEPATH": get_test_data_path("fake_2_day_repointing_on_may18_file.csv")})
@@ -707,6 +734,49 @@ def run_glows_l3e_with_less_mocks(mock_spiceypy, mock_imap_data_access):
     glows_processor.process()
 
 
+def make_glows_l3a_files():
+    directory = Path("tests/test_data/glows/pipeline/l2")
+    for file_path in directory.iterdir():
+        run_glows_l3a(file_path)
+
+
+def run_glows_l3a(file_path):
+    date_in_path = re.search(r"imap_glows_l2_hist_(\d{8}).*.cdf", file_path.name).group(1)
+    start_date = datetime.strptime(date_in_path, "%Y%m%d")
+    end_date = start_date + timedelta(days=1)
+    input_metadata = InputMetadata(
+        instrument='glows',
+        data_level='l3a',
+        start_date=start_date,
+        end_date=end_date,
+        version='v001'
+    )
+
+    with CDF(str(file_path)) as cdf_data:
+        l2_glows_data = read_l2_glows_data(cdf_data)
+
+        repoint_number = int(file_path.name.split('_')[4][-5:])
+        input_metadata.repointing = repoint_number
+
+        dependencies = GlowsL3ADependencies(l2_glows_data, repoint_number, {
+            "calibration_data": Path(
+                "instrument_team_data/glows/imap_glows_calibration-data_20250707_v000.dat"),
+            "settings": Path(
+                "instrument_team_data/glows/imap_glows_pipeline-settings_20250707_v002.json"),
+            "time_dependent_bckgrd": Path(
+                "instrument_team_data/glows/imap_glows_time-dep-bckgrd_20250707_v000.dat"),
+            "extra_heliospheric_bckgrd": Path(
+                "instrument_team_data/glows/imap_glows_map-of-extra-helio-bckgrd_20250707_v000.dat"),
+        })
+
+        processor = GlowsProcessor(ProcessingInputCollection(), input_metadata)
+
+        l3a_data = processor.process_l3a(dependencies)
+
+        glows_l3a_temp_path = TEMP_CDF_FOLDER_PATH / "glows" / "l3a"
+        print(save_data(l3a_data, folder_path=glows_l3a_temp_path, delete_if_present=True))
+
+
 def run_glows_l3bc():
     input_metadata = InputMetadata(
         instrument='glows',
@@ -782,13 +852,13 @@ def run_glows_l3d(mock_shutil):
     }
 
     l3b_file_paths = [
-        get_test_data_path('glows/imap_glows_l3b_ion-rate-profile_20100422_v013.cdf'),
-        get_test_data_path('glows/imap_glows_l3b_ion-rate-profile_20100519_v013.cdf')
+        get_test_data_path('glows/pipeline/l3b/imap_glows_l3b_ion-rate-profile_20100103_v001.cdf'),
+        get_test_data_path('glows/pipeline/l3b/imap_glows_l3b_ion-rate-profile_20100519_v001.cdf')
     ]
 
     l3c_file_paths = [
-        get_test_data_path('glows/imap_glows_l3c_sw-profile_20100422_v011.cdf'),
-        get_test_data_path('glows/imap_glows_l3c_sw-profile_20100519_v011.cdf'),
+        get_test_data_path('glows/pipeline/l3c/imap_glows_l3c_sw-profile_20100103_v001.cdf'),
+        get_test_data_path('glows/pipeline/l3c/imap_glows_l3c_sw-profile_20100519_v001.cdf'),
     ]
 
     l3d_dependencies: GlowsL3DDependencies = GlowsL3DDependencies(external_files=external_files,
@@ -1018,23 +1088,10 @@ if __name__ == "__main__":
                 run_glows_l3e_lo_with_mocks()
             else:
                 run_glows_l3e_with_less_mocks()
+        elif "l3a" in sys.argv:
+            make_glows_l3a_files()
         else:
-            cdf_data = CDF("tests/test_data/glows/imap_glows_l2_hist_20130908-repoint00001_v004.cdf")
-            l2_glows_data = read_l2_glows_data(cdf_data)
-
-            dependencies = GlowsL3ADependencies(l2_glows_data, 5, {
-                "calibration_data": Path(
-                    "instrument_team_data/glows/imap_glows_calibration-data_20250707_v000.dat"),
-                "settings": Path(
-                    "instrument_team_data/glows/imap_glows_pipeline-settings_20250707_v002.json"),
-                "time_dependent_bckgrd": Path(
-                    "instrument_team_data/glows/imap_glows_time-dep-bckgrd_20250707_v000.dat"),
-                "extra_heliospheric_bckgrd": Path(
-                    "instrument_team_data/glows/imap_glows_map-of-extra-helio-bckgrd_20250707_v000.dat"),
-            })
-
-            path = create_glows_l3a_cdf(dependencies)
-            print(path)
+            raise Exception("level not specified")
 
     if "hit" in sys.argv:
         if "direct_event" in sys.argv:
