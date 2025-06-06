@@ -1,11 +1,14 @@
+import cProfile
 import json
 import os
+import pstats
 from dataclasses import fields
 from pathlib import Path
 from typing import Type, T
 from unittest.mock import Mock
 
 import numpy as np
+import pyinstrument
 
 import tests
 from imap_l3_processing.swe.l3.models import SweConfiguration
@@ -141,3 +144,23 @@ def environment_variables(env_vars: dict):
         return wrapper
 
     return decorator
+
+
+def profile(function_to_be_decorated):
+    def wrapper_cprofile(*args, **kwargs):
+        with cProfile.Profile() as p:
+            result = function_to_be_decorated(*args, **kwargs)
+            print(f"========\n{function_to_be_decorated}")
+            stats = pstats.Stats(p).sort_stats('cumulative')
+            stats.print_stats(120)
+        return result
+
+    def wrapper_pyinstrument(*args, **kwargs):
+        try:
+            with pyinstrument.Profiler() as p:
+                result = function_to_be_decorated(*args, **kwargs)
+        finally:
+            p.open_in_browser()
+        return result
+
+    return wrapper_pyinstrument

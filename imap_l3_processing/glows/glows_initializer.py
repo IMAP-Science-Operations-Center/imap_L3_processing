@@ -11,8 +11,10 @@ from imap_l3_processing.glows.l3bc.utils import find_unprocessed_carrington_rota
 class GlowsInitializer:
     @staticmethod
     def validate_and_initialize(version: str, processing_input_collection: ProcessingInputCollection) -> list[Path]:
+        print("fetching dependencies")
         glows_ancillary_dependencies = GlowsInitializerAncillaryDependencies.fetch_dependencies(
             processing_input_collection)
+        print("finished fetching dependencies")
         if not _should_process(glows_ancillary_dependencies):
             return []
         l3a_files = query(instrument="glows", version=version, data_level="l3a")
@@ -21,11 +23,11 @@ class GlowsInitializer:
         crs_to_process = find_unprocessed_carrington_rotations(l3a_files, l3b_files, glows_ancillary_dependencies)
 
         zip_file_paths = []
-
+        print("archiving CRs", [cr.cr_rotation_number for cr in crs_to_process])
         for cr_to_process in crs_to_process:
             path = archive_dependencies(cr_to_process, version, glows_ancillary_dependencies)
             zip_file_paths.append(path)
-
+        print("finished archiving")
         return zip_file_paths
 
 

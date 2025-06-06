@@ -36,12 +36,14 @@ from imap_l3_processing.glows.l3e.glows_l3e_utils import determine_call_args_for
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
 from imap_l3_processing.utils import save_data
+from tests.test_helpers import profile
 
 
 class GlowsProcessor(Processor):
     def __init__(self, dependencies: ProcessingInputCollection, input_metadata: InputMetadata):
         super().__init__(dependencies, input_metadata)
 
+    @profile
     def process(self):
         if self.input_metadata.data_level == "l3a":
             l3a_dependencies = GlowsL3ADependencies.fetch_dependencies(self.dependencies)
@@ -55,16 +57,20 @@ class GlowsProcessor(Processor):
             for zip_file in zip_files:
                 dependencies = GlowsL3BCDependencies.fetch_dependencies(zip_file)
                 try:
+                    print("processing CR", dependencies.carrington_rotation_number)
                     l3b_data_product, l3c_data_product = self.process_l3bc(dependencies)
                 except CannotProcessCarringtonRotationError as e:
                     print(f"skipping CR {dependencies.carrington_rotation_number}:", e)
                     continue
+                print("saving and uploading")
                 l3b_cdf = save_data(l3b_data_product)
                 l3c_data_product.parent_file_names.append(Path(l3b_cdf).name)
                 l3c_cdf = save_data(l3c_data_product)
+                imap_data_access.upload = print
                 imap_data_access.upload(l3b_cdf)
                 imap_data_access.upload(l3c_cdf)
                 imap_data_access.upload(zip_file)
+                print("done with CR")
         elif self.input_metadata.data_level == "l3d":
             l3d_dependencies = GlowsL3DDependencies.fetch_dependencies(self.dependencies)
             data_product, l3d_txt_paths, last_processed_cr = self.process_l3d(l3d_dependencies)

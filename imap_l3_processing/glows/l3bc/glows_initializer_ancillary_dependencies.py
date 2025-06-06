@@ -1,4 +1,5 @@
 import json
+import time
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -43,7 +44,14 @@ class GlowsInitializerAncillaryDependencies:
         _comment_headers(f107_index_file_path, num_lines=2)
         lyman_alpha_path = download_external_dependency(LYMAN_ALPHA_COMPOSITE_INDEX_URL,
                                                         TEMP_CDF_FOLDER_PATH / 'lyman_alpha_composite.nc')
-        omni2_data_path = download_external_dependency(OMNI2_URL, TEMP_CDF_FOLDER_PATH / 'omni2_all_years.dat')
+        download_omni = True
+        if download_omni:
+            print("starting to download omni")
+            t0 = time.time()
+            omni2_data_path = download_external_dependency(OMNI2_URL, TEMP_CDF_FOLDER_PATH / 'omni2_all_years.dat')
+            print("finished downloading omni in", time.time() - t0, "seconds")
+        else:
+            omni2_data_path = TEMP_CDF_FOLDER_PATH / 'omni2_2010.dat'
 
         with open(pipeline_settings_path) as f:
             settings = json.load(f)

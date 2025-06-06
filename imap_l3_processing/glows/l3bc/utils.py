@@ -74,7 +74,7 @@ def find_unprocessed_carrington_rotations(l3a_inputs: list[dict], l3b_inputs: li
         current_date = get_astropy_time_from_yyyymmdd(l3b["start_date"]) + TimeDelta(1, format='jd')
         current_rounded_cr = int(carrington(current_date.jd))
         l3bs_carringtons.add(current_rounded_cr)
-
+    print("this version l3b already exists for CRs", l3bs_carringtons)
     sorted_l3a_inputs = sorted(l3a_inputs, key=lambda entry: entry['start_date'])
 
     l3as_by_carrington: dict = defaultdict(list)
@@ -82,6 +82,9 @@ def find_unprocessed_carrington_rotations(l3a_inputs: list[dict], l3b_inputs: li
     latest_l3a_file = get_astropy_time_from_yyyymmdd(sorted_l3a_inputs[-1]["start_date"])
     set_global_repoint_table_paths([dependencies.repointing_file])
     for index, l3a in enumerate(sorted_l3a_inputs):
+        if l3a["repointing"] is None:
+            print("skipping l3a", l3a)
+            continue
         repointing_start, repointing_end = get_pointing_date_range(l3a["repointing"])
         start_cr = int(carrington(Time(repointing_start, format="datetime64").jd))
         end_cr = int(carrington(Time(repointing_end, format="datetime64").jd))
@@ -92,6 +95,7 @@ def find_unprocessed_carrington_rotations(l3a_inputs: list[dict], l3b_inputs: li
         l3as_by_carrington[start_cr].append(l3a['file_path'])
 
     crs_to_process = []
+    print("l3as by carrington", l3as_by_carrington)
     for carrington_number, l3a_files in l3as_by_carrington.items():
         if carrington_number not in l3bs_carringtons:
             carrington_start_date = jd_fm_Carrington(float(carrington_number))
