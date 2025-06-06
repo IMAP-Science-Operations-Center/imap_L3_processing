@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import timedelta, datetime
 from pathlib import Path
 
 import numpy as np
@@ -7,6 +7,7 @@ from spacepy.pycdf import CDF
 from imap_l3_processing.codice.l3.lo.direct_events.science.angle_lookup import PositionToElevationLookup
 from imap_l3_processing.codice.l3.lo.models import CODICE_LO_L2_NUM_PRIORITIES
 from imap_l3_processing.constants import ONE_SECOND_IN_NANOSECONDS
+from scripts.time_shift_cdf import convert_epoch_time
 from tests.test_helpers import get_run_local_data_path, get_test_instrument_team_data_path
 
 
@@ -114,5 +115,23 @@ def modify_l2_direct_events(instrument_team_l2_path: Path) -> Path:
 
 
 if __name__ == "__main__":
-    print(modify_l2_direct_events(
-        get_test_instrument_team_data_path("codice/lo/imap_codice_l2_lo-direct-events_20241110_v002.cdf")))
+    target_datetime = datetime(year=2024, month=11, day=11)
+
+    template_l2_de_path = get_test_instrument_team_data_path(
+        "codice/lo/imap_codice_l2_lo-direct-events_20241110_v002.cdf")
+    template_l1a_nsw_path = get_test_instrument_team_data_path(
+        'codice/lo/imap_codice_l1a_lo-nsw-priority_20241110_v002.cdf')
+    template_l1a_sw_path = get_test_instrument_team_data_path(
+        'codice/lo/imap_codice_l1a_lo-sw-priority_20241110_v002.cdf')
+
+    modified_l2_path = modify_l2_direct_events(template_l2_de_path)
+    l1a_nsw_path, l1a_sw_path = modify_l1a_priority_counts(template_l1a_nsw_path, template_l1a_sw_path)
+
+    convert_epoch_time(modified_l2_path, target_datetime)
+    modified_l2_path.rename(modified_l2_path.parent / "imap_codice_l2_lo-direct-events_20241111_v000.cdf")
+
+    convert_epoch_time(l1a_nsw_path, target_datetime)
+    l1a_nsw_path.rename(l1a_nsw_path.parent / "imap_codice_l1a_lo-nsw-priority_20241111_v000.cdf")
+
+    convert_epoch_time(l1a_sw_path, target_datetime)
+    l1a_sw_path.rename(l1a_sw_path.parent / "imap_codice_l1a_lo-sw-priority_20241111_v000.cdf")
