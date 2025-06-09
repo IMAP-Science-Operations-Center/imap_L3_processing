@@ -51,10 +51,13 @@ epoch:
   SI_CONVERSION: 1e-9>seconds
 
 epoch_delta:
-  <<: *support_data
   NAME: epoch_delta
   CATDESC: Epoch delta
   FIELDNAM: Epoch Delta
+  VAR_TYPE: support_data
+  DISPLAY_TYPE: no_plot
+  RECORD_VARYING: RV
+  DEPEND_0: epoch
   DATA_TYPE: CDF_INT8
   FORMAT: I19
   UNITS: ns

@@ -60,8 +60,11 @@ epoch:
   SI_CONVERSION: 1e-9>seconds
 
 epoch_delta:
-  <<: *support_data
   NAME: epoch_delta
+  VAR_TYPE: support_data
+  DISPLAY_TYPE: no_plot
+  RECORD_VARYING: RV
+  DEPEND_0: epoch
   CATDESC: epoch_DELTA
   FIELDNAM: epoch_delta
   DATA_TYPE: CDF_INT8
