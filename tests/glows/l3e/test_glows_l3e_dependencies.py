@@ -58,14 +58,16 @@ class TestGlowsL3EDependencies(unittest.TestCase):
         actual_dependencies, cr_number = GlowsL3EDependencies.fetch_dependencies(
             mock_processing_input_collection, "survival-probability-lo")
 
+        self.assertEqual(13, mock_processing_input_collection.get_file_paths.call_count)
+
         mock_processing_input_collection.get_file_paths.assert_has_calls([
             call(source="glows", descriptor="solar-hist"),
-            call(source="glows", descriptor="lya-series"),
-            call(source="glows", descriptor="solar-uv-anisotropy"),
-            call(source="glows", descriptor="speed-3d"),
-            call(source="glows", descriptor="density-3d"),
-            call(source="glows", descriptor="phion-hydrogen"),
-            call(source="glows", descriptor="sw-eqtr-electrons"),
+            call(source="glows", descriptor="lya"),
+            call(source="glows", descriptor="uv-anis"),
+            call(source="glows", descriptor="speed"),
+            call(source="glows", descriptor="p-dens"),
+            call(source="glows", descriptor="phion"),
+            call(source="glows", descriptor="e-dens"),
             call(source="glows", descriptor="ionization-files"),
             call(source="glows", descriptor="pipeline-settings-l3bcde"),
             call(source="glows", descriptor="energy-grid-lo"),
@@ -174,17 +176,19 @@ class TestGlowsL3EDependencies(unittest.TestCase):
                     mock_processing_input_collection, descriptor)
 
                 mock_processing_input_collection.get_file_paths.assert_has_calls([
-                    call(source="glows", descriptor="lya-series"),
-                    call(source="glows", descriptor="solar-uv-anisotropy"),
-                    call(source="glows", descriptor="speed-3d"),
-                    call(source="glows", descriptor="density-3d"),
-                    call(source="glows", descriptor="phion-hydrogen"),
-                    call(source="glows", descriptor="sw-eqtr-electrons"),
+                    call(source="glows", descriptor="solar-hist"),
+                    call(source="glows", descriptor="lya"),
+                    call(source="glows", descriptor="uv-anis"),
+                    call(source="glows", descriptor="speed"),
+                    call(source="glows", descriptor="p-dens"),
+                    call(source="glows", descriptor="phion"),
+                    call(source="glows", descriptor="e-dens"),
                     call(source="glows", descriptor="ionization-files"),
                     call(source="glows", descriptor="pipeline-settings-l3bcde"),
                     call(source="glows", descriptor="energy-grid-hi"),
                     call(data_type=RepointInput.data_type),
                 ])
+                self.assertEqual(11, mock_processing_input_collection.get_file_paths.call_count)
 
                 mock_download_dependency_from_path.assert_has_calls([call('lya_series_sdc_path'),
                                                                      call('solar_uv_anisotropy_sdc_path'),
@@ -281,18 +285,20 @@ class TestGlowsL3EDependencies(unittest.TestCase):
             mock_processing_input_collection, "survival-probability-ul")
 
         mock_processing_input_collection.get_file_paths.assert_has_calls([
-            call(source="glows", descriptor="lya-series"),
-            call(source="glows", descriptor="solar-uv-anisotropy"),
-            call(source="glows", descriptor="speed-3d"),
-            call(source="glows", descriptor="density-3d"),
-            call(source="glows", descriptor="phion-hydrogen"),
-            call(source="glows", descriptor="sw-eqtr-electrons"),
+            call(source="glows", descriptor="solar-hist"),
+            call(source="glows", descriptor="lya"),
+            call(source="glows", descriptor="uv-anis"),
+            call(source="glows", descriptor="speed"),
+            call(source="glows", descriptor="p-dens"),
+            call(source="glows", descriptor="phion"),
+            call(source="glows", descriptor="e-dens"),
             call(source="glows", descriptor="ionization-files"),
             call(source="glows", descriptor="pipeline-settings-l3bcde"),
             call(source="glows", descriptor="energy-grid-ultra"),
             call(source="glows", descriptor="tess-ang-16"),
             call(data_type=RepointInput.data_type),
         ])
+        self.assertEqual(12, mock_processing_input_collection.get_file_paths.call_count)
 
         mock_download_dependency_from_path.assert_has_calls(
             [call('lya_series_sdc_path'), call('solar_uv_anisotropy_sdc_path'),

@@ -31,12 +31,12 @@ class GlowsL3EDependencies:
     def fetch_dependencies(cls, dependencies: ProcessingInputCollection, descriptor: str):
         solar_hist_dependency = dependencies.get_file_paths(source='glows', descriptor='solar-hist')
 
-        lya_series_dependency = dependencies.get_file_paths(source='glows', descriptor='lya-series')
-        solar_uv_anisotropy_dependency = dependencies.get_file_paths(source='glows', descriptor='solar-uv-anisotropy')
-        speed_3d_dependency = dependencies.get_file_paths(source='glows', descriptor='speed-3d')
-        density_3d_dependency = dependencies.get_file_paths(source='glows', descriptor='density-3d')
-        phion_hydrogen_dependency = dependencies.get_file_paths(source='glows', descriptor='phion-hydrogen')
-        sw_eqtr_electrons_dependency = dependencies.get_file_paths(source='glows', descriptor='sw-eqtr-electrons')
+        lya_series_dependency = dependencies.get_file_paths(source='glows', descriptor='lya')
+        solar_uv_anisotropy_dependency = dependencies.get_file_paths(source='glows', descriptor='uv-anis')
+        speed_3d_dependency = dependencies.get_file_paths(source='glows', descriptor='speed')
+        density_3d_dependency = dependencies.get_file_paths(source='glows', descriptor='p-dens')
+        phion_hydrogen_dependency = dependencies.get_file_paths(source='glows', descriptor='phion')
+        sw_eqtr_electrons_dependency = dependencies.get_file_paths(source='glows', descriptor='e-dens')
         ionization_files_dependency = dependencies.get_file_paths(source='glows', descriptor='ionization-files')
         pipeline_settings_dependency = dependencies.get_file_paths(source='glows',
                                                                    descriptor='pipeline-settings-l3bcde')
