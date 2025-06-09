@@ -55,7 +55,7 @@ class TestUtils(TestCase):
         temp_cdf["epoch"] = np.array([datetime(2010, 1, 1, 0, 0, 46)])
         temp_cdf["swp_esa_energy"] = np.array([1, 2, 3, 4])
         temp_cdf["swp_coin_rate"] = np.array([5, 6, 7, 8])
-        temp_cdf["swp_coin_unc"] = np.array([2, 2, 2, 2, 2, 2, 2, 2])
+        temp_cdf["swp_coin_rate_stat_uncert_plus"] = np.array([2, 2, 2, 2, 2, 2, 2, 2])
 
         temp_cdf.close()
 

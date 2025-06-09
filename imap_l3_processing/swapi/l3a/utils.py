@@ -13,7 +13,7 @@ def read_l2_swapi_data(cdf: CDF) -> SwapiL2Data:
     return SwapiL2Data(cdf.raw_var("epoch")[...],
                        cdf["swp_esa_energy"][...],
                        cdf["swp_coin_rate"][...],
-                       cdf["swp_coin_unc"][...])
+                       cdf["swp_coin_rate_stat_uncert_plus"][...])
 
 
 def read_l3a_alpha_sw_swapi_data(cdf: CDF) -> SwapiL3AlphaSolarWindData:
