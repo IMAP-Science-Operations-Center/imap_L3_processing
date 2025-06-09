@@ -20,7 +20,6 @@ from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.swapi.swapi_processor import SwapiProcessor
 from imap_l3_processing.swe.swe_processor import SweProcessor
 from imap_l3_processing.ultra.l3.ultra_processor import UltraProcessor
-from imap_l3_processing.utils import furnish_local_spice
 
 
 def _parse_cli_arguments():
@@ -93,7 +92,6 @@ def _furnish_spice_kernels(processing_input_collection):
     for kernel in spice_kernel_paths:
         kernel_path = imap_data_access.download(kernel)
         spiceypy.furnsh(str(kernel_path))
-    furnish_local_spice()
 
 
 if __name__ == '__main__':

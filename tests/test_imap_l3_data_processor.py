@@ -182,13 +182,12 @@ class TestImapL3DataProcessor(TestCase):
                 mock_processor.process.assert_called()
 
     @patch('imap_l3_data_processor.spiceypy')
-    @patch('imap_l3_data_processor.furnish_local_spice')
     @patch('imap_l3_data_processor.argparse')
     @patch('imap_l3_data_processor.imap_data_access.download')
     @patch('imap_l3_data_processor.ProcessingInputCollection')
     @patch('imap_l3_data_processor.SwapiProcessor')
     def test_get_spice_kernels_based_on_input_collection(self, _, mock_processing_input_collection, mock_download,
-                                                         mock_arg_parser_class, mock_furnish_local_spice, mock_spicepy):
+                                                         mock_arg_parser_class, mock_spicepy):
 
         ancillary_input = AncillaryInput("imap_swe_ancillary_20250101_v112.cdf")
         spice_input_1 = SPICEInput("naif0012.tls")
@@ -223,7 +222,6 @@ class TestImapL3DataProcessor(TestCase):
                 call("naif0012.tls"),
                 call("imap_sclk_0012.tls")
             ])
-        mock_furnish_local_spice.assert_called_once()
 
     @patch('imap_l3_data_processor.ProcessingInputCollection')
     @patch('imap_l3_data_processor.SweProcessor')

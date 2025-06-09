@@ -83,8 +83,7 @@ from scripts.codice.create_more_accurate_l3a_direct_event_input import modify_l1
     modify_l2_direct_events
 from scripts.hi.create_hi_full_spin_deps import create_hi_full_spin_deps
 from scripts.ultra.create_l1c_l2_and_glows_with_matching_date_range import create_l1c_and_glows_with_matching_date_range
-from tests.test_helpers import get_test_data_path, get_test_instrument_team_data_path, environment_variables, \
-    try_get_many_run_local_paths
+from tests.test_helpers import get_test_data_path, get_test_instrument_team_data_path, try_get_many_run_local_paths
 
 
 def create_codice_lo_l3a_partial_densities_cdf():
@@ -468,7 +467,6 @@ def create_hit_direct_event_cdf():
     return file_path
 
 
-@environment_variables({"REPOINT_DATA_FILEPATH": get_test_data_path("fake_1_day_repointing_file.csv")})
 @patch('imap_l3_processing.glows.glows_initializer.query')
 @patch('imap_l3_processing.glows.l3bc.glows_l3bc_dependencies.download_dependency_from_path')
 @patch('imap_l3_processing.glows.glows_processor.imap_data_access')
@@ -534,7 +532,6 @@ def run_l3b_initializer(mock_download_external, mock_download, mock_imap_data_ac
     processor.process()
 
 
-@environment_variables({"REPOINT_DATA_FILEPATH": get_test_data_path("fake_2_day_repointing_on_may18_file.csv")})
 @patch('imap_l3_processing.glows.glows_initializer.query')
 @patch('imap_l3_processing.glows.glows_processor.imap_data_access.upload')
 def run_glows_l3bc_processor_and_initializer(_, mock_query):
@@ -1065,7 +1062,7 @@ if __name__ == "__main__":
                 "tests/test_data/swapi/imap_swapi_energy-gf-lut_20240923_v000.dat",
                 "tests/test_data/swapi/imap_swapi_instrument-response-lut_20241023_v000.zip",
                 "tests/test_data/swapi/imap_swapi_l2_density-of-neutral-helium-lut-text-not-cdf_20241023_v002.cdf",
-                "tests/test_data/swapi/imap_swapi_l2_50-sweeps_20250606_v001.cdf"
+                "data/imap/swapi/l2/2026/09/imap_swapi_l2_sci_20260924_v001.cdf"
             )
             print(paths)
         if "l3b" in sys.argv:
