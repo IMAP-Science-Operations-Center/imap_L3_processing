@@ -1,5 +1,6 @@
 import os
 from datetime import datetime
+from pathlib import Path
 from unittest import TestCase
 
 import numpy as np
@@ -46,9 +47,13 @@ class TestUtils(TestCase):
                                       second_chunk.coincidence_count_rate_uncertainty)
 
     def test_reading_l2_data_into_model(self):
+        path = Path('temp_cdf.cdf')
+        if path.exists():
+            os.remove(path)
+
         temp_cdf = CDF('temp_cdf', '')
         temp_cdf["epoch"] = np.array([datetime(2010, 1, 1, 0, 0, 46)])
-        temp_cdf["energy"] = np.array([1, 2, 3, 4])
+        temp_cdf["swp_esa_energy"] = np.array([1, 2, 3, 4])
         temp_cdf["swp_coin_rate"] = np.array([5, 6, 7, 8])
         temp_cdf["swp_coin_unc"] = np.array([2, 2, 2, 2, 2, 2, 2, 2])
 
@@ -62,7 +67,6 @@ class TestUtils(TestCase):
         np.testing.assert_array_equal(np.array([5, 6, 7, 8]), actual_swapi_l2_data.coincidence_count_rate)
         np.testing.assert_array_equal(np.array([2, 2, 2, 2, 2, 2, 2, 2]),
                                       actual_swapi_l2_data.coincidence_count_rate_uncertainty)
-        os.remove('temp_cdf.cdf')
 
     def test_read_l3a_alpha_sw_swapi_data(self):
         cdf = CDF(str(get_test_data_path("swapi/imap_swapi_l3a_alpha-sw_20251023_v999.cdf")))

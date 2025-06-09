@@ -11,7 +11,7 @@ from imap_l3_processing.swapi.l3a.models import SwapiL2Data, SwapiL3AlphaSolarWi
 
 def read_l2_swapi_data(cdf: CDF) -> SwapiL2Data:
     return SwapiL2Data(cdf.raw_var("epoch")[...],
-                       cdf["energy"][...],
+                       cdf["swp_esa_energy"][...],
                        cdf["swp_coin_rate"][...],
                        cdf["swp_coin_unc"][...])
 
