@@ -96,25 +96,30 @@ def _furnish_spice_kernels(processing_input_collection):
 
 if __name__ == '__main__':
     with TemporaryDirectory() as dir:
-        logger = logging.getLogger(__name__)
         args = _parse_cli_arguments()
+        logger = logging.getLogger('application')
+        logger.setLevel(logging.INFO)
 
         log_path = Path(
-            dir) / f"imap_{args.instrument}_{args.data_level}_log-{datetime.now().strftime('%Y-%m-%d-%H%M%S-%f')}_{args.start_date}_{args.version}.cdf"
+            dir) / f"imap_{args.instrument}_{args.data_level}_log-{datetime.now().strftime('%Y-%m-%d-%H%M%S-%f')}_{args.start_date}_v001.cdf"
+        fh = logging.FileHandler(str(log_path))
 
-        logging.basicConfig(filename=str(log_path), level=logging.INFO)
+        fh.setLevel(logging.INFO)
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        fh.setFormatter(formatter)
+        logger.addHandler(fh)
         logger.info('Started')
 
         try:
             imap_l3_processor()
         except Exception as e:
-            logger.error("Unhandled Exception:", exc_info=e)
+            logger.info("Unhandled Exception:", exc_info=e)
             print("caught exception")
             traceback.print_exc()
             logging.shutdown()
             raise e
+        finally:
+            if os.path.exists(log_path):
+                imap_data_access.upload(log_path)
 
-        if os.path.exists(log_path):
-            imap_data_access.upload(log_path)
-
-        logging.shutdown()
+            logging.shutdown()

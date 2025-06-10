@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 from pathlib import Path
 
@@ -53,9 +54,10 @@ def validate_omni2_dependency(end_date_exclusive: Time,
 def validate_dependencies(end_date: Time, buffer: TimeDelta, omni2_file_path: Path,
                           f107_index_path: Path, lyman_alpha_path: Path) -> bool:
     start_time = datetime.now()
-
+    logger = logging.getLogger('application')
     omni_condition = validate_omni2_dependency(end_date, buffer, omni2_file_path)
-    print(f"Validating omni data took: {datetime.now() - start_time}", )
+
+    logger.info(f"Validating omni data took: {datetime.now() - start_time}")
     f107_condition = validate_f107_fluxtable_dependency(end_date, buffer,
                                                         f107_index_path)
     lyman_alpha_condition = validate_lyman_alpha_dependency(end_date, buffer, lyman_alpha_path)

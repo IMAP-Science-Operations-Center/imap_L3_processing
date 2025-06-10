@@ -1,4 +1,5 @@
 import json
+import logging
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -47,7 +48,9 @@ class GlowsInitializerAncillaryDependencies:
         start_time = datetime.now()
 
         omni2_data_path = download_external_dependency(OMNI2_URL, TEMP_CDF_FOLDER_PATH / 'omni2_all_years.dat')
-        print(f"Downloading omni data took: {datetime.now() - start_time}", )
+        logger = logging.getLogger('application')
+
+        logger.info(f"Downloading omni data took: {datetime.now() - start_time}")
 
         with open(pipeline_settings_path) as f:
             settings = json.load(f)
