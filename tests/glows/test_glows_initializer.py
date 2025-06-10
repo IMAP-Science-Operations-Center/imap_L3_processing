@@ -63,7 +63,7 @@ class TestGlowsInitializer(unittest.TestCase):
         actual_zip_paths = GlowsInitializer.validate_and_initialize(version, mock_dependencies)
 
         self.assertEqual(2, mock_query.call_count)
-        mock_query.assert_has_calls([call(instrument="glows", version=version, data_level="l3a"),
+        mock_query.assert_has_calls([call(instrument="glows", descriptor="hist", version="latest", data_level="l3a"),
                                      call(instrument="glows", version=version, data_level="l3b")])
 
         mock_find_unprocessed_carrington_rotations.assert_called_once_with(mock_l3a, mock_l3b, ancillary_dependencies)

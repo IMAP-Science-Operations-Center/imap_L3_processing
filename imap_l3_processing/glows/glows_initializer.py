@@ -15,7 +15,7 @@ class GlowsInitializer:
             processing_input_collection)
         if not _should_process(glows_ancillary_dependencies):
             return []
-        l3a_files = query(instrument="glows", version=version, data_level="l3a")
+        l3a_files = query(instrument="glows", descriptor="hist", version="latest", data_level="l3a")
         l3b_files = query(instrument="glows", version=version, data_level="l3b")
 
         crs_to_process = find_unprocessed_carrington_rotations(l3a_files, l3b_files, glows_ancillary_dependencies)
