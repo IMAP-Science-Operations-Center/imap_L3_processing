@@ -15,8 +15,10 @@ class GlowsInitializer:
             processing_input_collection)
         if not _should_process(glows_ancillary_dependencies):
             return []
-        l3a_files = query(instrument="glows", descriptor="hist", version="latest", data_level="l3a")
-        l3b_files = query(instrument="glows", version=version, data_level="l3b")
+        input_l3a_version = processing_input_collection.get_science_inputs('glows')[0].imap_file_paths[0].version
+
+        l3a_files = query(instrument="glows", descriptor="hist", version=input_l3a_version, data_level="l3a")
+        l3b_files = query(instrument="glows", descriptor='ion-rate-profile', version=version, data_level="l3b")
 
         crs_to_process = find_unprocessed_carrington_rotations(l3a_files, l3b_files, glows_ancillary_dependencies)
 

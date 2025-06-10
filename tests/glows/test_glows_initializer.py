@@ -1,6 +1,8 @@
 import unittest
 from unittest.mock import Mock, patch, call, sentinel
 
+from imap_data_access import ScienceInput
+
 from imap_l3_processing.glows.glows_initializer import GlowsInitializer
 from imap_l3_processing.glows.l3bc.glows_initializer_ancillary_dependencies import GlowsInitializerAncillaryDependencies
 
@@ -59,12 +61,17 @@ class TestGlowsInitializer(unittest.TestCase):
         mock_find_unprocessed_carrington_rotations.return_value = [sentinel.cr_to_process1, sentinel.cr_to_process2]
 
         mock_dependencies = Mock()
+        expected_l3a_version = "v123"
+        expected_science_inputs = ScienceInput(f"imap_glows_l3a_hist_20100606_{expected_l3a_version}.cdf")
+        mock_dependencies.get_science_inputs.return_value = [expected_science_inputs]
 
         actual_zip_paths = GlowsInitializer.validate_and_initialize(version, mock_dependencies)
 
+        mock_dependencies.get_science_inputs.assert_called_once_with("glows")
         self.assertEqual(2, mock_query.call_count)
-        mock_query.assert_has_calls([call(instrument="glows", descriptor="hist", version="latest", data_level="l3a"),
-                                     call(instrument="glows", version=version, data_level="l3b")])
+        mock_query.assert_has_calls(
+            [call(instrument="glows", descriptor='hist', version=expected_l3a_version, data_level="l3a"),
+             call(instrument="glows", descriptor='ion-rate-profile', version=version, data_level="l3b")])
 
         mock_find_unprocessed_carrington_rotations.assert_called_once_with(mock_l3a, mock_l3b, ancillary_dependencies)
 
