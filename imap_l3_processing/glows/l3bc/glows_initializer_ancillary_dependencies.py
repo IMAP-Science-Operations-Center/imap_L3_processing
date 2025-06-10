@@ -1,7 +1,5 @@
 import json
-import logging
 from dataclasses import dataclass
-from datetime import datetime
 from pathlib import Path
 
 from astropy.time import TimeDelta
@@ -45,12 +43,7 @@ class GlowsInitializerAncillaryDependencies:
         _comment_headers(f107_index_file_path, num_lines=2)
         lyman_alpha_path = download_external_dependency(LYMAN_ALPHA_COMPOSITE_INDEX_URL,
                                                         TEMP_CDF_FOLDER_PATH / 'lyman_alpha_composite.nc')
-        start_time = datetime.now()
-
         omni2_data_path = download_external_dependency(OMNI2_URL, TEMP_CDF_FOLDER_PATH / 'omni2_all_years.dat')
-        logger = logging.getLogger('application')
-
-        logger.info(f"Downloading omni data took: {datetime.now() - start_time}")
 
         with open(pipeline_settings_path) as f:
             settings = json.load(f)

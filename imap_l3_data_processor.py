@@ -108,7 +108,6 @@ if __name__ == '__main__':
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         fh.setFormatter(formatter)
         logger.addHandler(fh)
-        logger.info('Started')
 
         try:
             imap_l3_processor()
@@ -119,7 +118,8 @@ if __name__ == '__main__':
             logging.shutdown()
             raise e
         finally:
-            if os.path.exists(log_path):
+            should_upload_log = False
+            if should_upload_log and os.path.exists(log_path) and os.path.getsize(log_path) > 0:
                 imap_data_access.upload(log_path)
 
             logging.shutdown()
