@@ -20,12 +20,28 @@ ALPHA_COL_2 = 9
 def validate_omni2_dependency(end_date_exclusive: Time,
                               buffer: TimeDelta, file_path: Path) -> bool:
     omni_data: ndarray = np.loadtxt(file_path, usecols=(0, 1, 2, 5, 23, 24, 27, 30, 31, 34))
+    start_year_index = np.searchsorted(omni_data[:, YEAR_COLUMN], (end_date_exclusive + buffer).to_datetime().year)
+    omni_data = omni_data[start_year_index:]
 
-    times = Time([f"{int(row[YEAR_COLUMN])}:{int(row[DOY_COLUMN])}:{int(row[HOUR_COLUMN])}:0" for row in omni_data],
-                 format="yday")
+    end_year_index = np.searchsorted(omni_data[:, YEAR_COLUMN], (end_date_exclusive + buffer).to_datetime().year,
+                                     side='right')
+    omni_data = omni_data[:end_year_index]
 
-    date_mask = (times >= end_date_exclusive + buffer)
-    omni_data = omni_data[date_mask]
+    start_day_index = np.searchsorted(omni_data[:, DOY_COLUMN],
+                                      (end_date_exclusive + buffer).to_datetime().timetuple().tm_yday)
+    omni_data = omni_data[start_day_index:]
+
+    end_day_index = np.searchsorted(omni_data[:, DOY_COLUMN],
+                                    (end_date_exclusive + buffer).to_datetime().timetuple().tm_yday, side='right')
+    omni_data = omni_data[:end_day_index]
+    hour_index = np.searchsorted(omni_data[:, HOUR_COLUMN], (end_date_exclusive + buffer).to_datetime().hour)
+    omni_data = omni_data[hour_index:]
+
+    # times = Time([f"{int(row[YEAR_COLUMN])}:{int(row[DOY_COLUMN])}:{int(row[HOUR_COLUMN])}:0" for row in omni_data],
+    #              format="yday")
+
+    # date_mask = (times >= end_date_exclusive + buffer)
+    # omni_data = omni_data[date_mask]
 
     mask_fill_density_rows = (omni_data[:, DENSITY_COLUMN_1] < 999.9) & (omni_data[:, DENSITY_COLUMN_2] < 999.9)
     mask_fill_speed_rows = (omni_data[:, SPEED_COLUMN_1] < 9999) & (omni_data[:, SPEED_COLUMN_2] < 9999)
@@ -36,7 +52,10 @@ def validate_omni2_dependency(end_date_exclusive: Time,
 
 def validate_dependencies(end_date: Time, buffer: TimeDelta, omni2_file_path: Path,
                           f107_index_path: Path, lyman_alpha_path: Path) -> bool:
+    start_time = datetime.now()
+
     omni_condition = validate_omni2_dependency(end_date, buffer, omni2_file_path)
+    print(f"Validating omni data took: {datetime.now() - start_time}", )
     f107_condition = validate_f107_fluxtable_dependency(end_date, buffer,
                                                         f107_index_path)
     lyman_alpha_condition = validate_lyman_alpha_dependency(end_date, buffer, lyman_alpha_path)

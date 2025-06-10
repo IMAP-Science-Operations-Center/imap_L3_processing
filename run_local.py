@@ -493,7 +493,8 @@ def run_l3b_initializer(mock_download_external, mock_download, mock_imap_data_ac
     mock_download_external.side_effect = [
         TEMP_CDF_FOLDER_PATH / 'f107_fluxtable.txt',
         TEMP_CDF_FOLDER_PATH / 'lyman_alpha_composite.nc',
-        TEMP_CDF_FOLDER_PATH / 'omni2_2010.dat',
+        Path(
+            r'C:\Users\Harrison\Downloads\glows_L3bc_pipeline_2025_04_11\glows_L3bc_pipeline_2025_04_11\external_dependencies\omni2_all_years.dat')
     ]
 
     mock_download_dependency_from_path.side_effect = [
