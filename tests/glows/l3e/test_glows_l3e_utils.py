@@ -19,8 +19,8 @@ class TestGlowsL3EUtils(unittest.TestCase):
     @patch("imap_l3_processing.glows.l3e.glows_l3e_utils.spiceypy.pxform")
     def test_determine_call_args_for_l3e_executable(self, mock_pxform: Mock, mock_reclat: Mock, mock_spkezr: Mock,
                                                     mock_date_time_2et: Mock):
-        start_time = datetime.fromisoformat("2025-05-01T00:00:00")
-        repointing_midpoint = datetime.fromisoformat("2025-05-01T12:00:00")
+        start_time = datetime.fromisoformat("2025-05-01 00:00:00")
+        repointing_midpoint = datetime.fromisoformat("2025-05-01 12:00:00")
 
         x, y, z, vx, vy, vz = 1.0, 2.0, 3.0, 4.0, 5.0, 6.0
         position_data = [x, y, z, vx, vy, vz]
