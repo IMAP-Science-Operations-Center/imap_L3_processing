@@ -30,8 +30,7 @@ from imap_l3_processing.glows.l3e.glows_l3e_dependencies import GlowsL3EDependen
 from imap_l3_processing.glows.l3e.glows_l3e_hi_model import GlowsL3EHiData
 from imap_l3_processing.glows.l3e.glows_l3e_lo_model import GlowsL3ELoData
 from imap_l3_processing.glows.l3e.glows_l3e_ultra_model import GlowsL3EUltraData
-from imap_l3_processing.glows.l3e.glows_l3e_utils import determine_call_args_for_l3e_executable, \
-    determine_l3e_files_to_produce
+from imap_l3_processing.glows.l3e.glows_l3e_utils import determine_call_args_for_l3e_executable
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
 from imap_l3_processing.utils import save_data
@@ -76,11 +75,11 @@ class GlowsProcessor(Processor):
         l3e_dependencies, cr_number = GlowsL3EDependencies.fetch_dependencies(self.dependencies,
                                                                               self.input_metadata.descriptor)
         l3e_dependencies.rename_dependencies()
-
-        repointings = determine_l3e_files_to_produce(self.input_metadata.descriptor,
-                                                     l3e_dependencies.pipeline_settings['start_cr'], cr_number,
-                                                     self.input_metadata.version,
-                                                     l3e_dependencies.repointing_file)
+        repointings = [1001, 1002]
+        # repointings = determine_l3e_files_to_produce(self.input_metadata.descriptor,
+        #                                              l3e_dependencies.pipeline_settings['start_cr'], cr_number,
+        #                                              self.input_metadata.version,
+        #                                              l3e_dependencies.repointing_file)
         for repointing in repointings[:1]:
             self.input_metadata.repointing = repointing
             try:
@@ -88,14 +87,15 @@ class GlowsProcessor(Processor):
                 epoch_dt: datetime = epoch.astype('datetime64[us]').astype(datetime)
                 epoch_end_dt: datetime = epoch_end.astype('datetime64[us]').astype(datetime)
                 epoch_delta: timedelta = (epoch_end_dt - epoch_dt) / 2
+                elongation = 90
 
+                self.process_l3e_lo(epoch_dt, epoch_delta, elongation)
                 if self.input_metadata.descriptor == "survival-probability-lo":
                     # try:
                     #     year_with_repointing = str(epoch_dt.year) + str(int(repointing)).zfill(3)
                     #     elongation = l3e_dependencies.elongation[year_with_repointing]
                     # except KeyError:
                     #     continue
-                    elongation = 90
                     self.process_l3e_lo(epoch_dt, epoch_delta, elongation)
                 elif self.input_metadata.descriptor == "survival-probability-hi-45":
                     self.process_l3e_hi(epoch_dt, epoch_delta, 135)
