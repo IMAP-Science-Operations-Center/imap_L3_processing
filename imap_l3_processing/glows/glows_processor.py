@@ -11,6 +11,7 @@ from subprocess import run
 import imap_data_access
 import numpy as np
 from imap_data_access.processing_input import ProcessingInputCollection
+from imap_processing.spice.repoint import set_global_repoint_table_paths
 
 from imap_l3_processing.glows.descriptors import GLOWS_L3A_DESCRIPTOR
 from imap_l3_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
@@ -76,6 +77,8 @@ class GlowsProcessor(Processor):
                                                                               self.input_metadata.descriptor)
         l3e_dependencies.rename_dependencies()
         repointings = [1001, 1002]
+        set_global_repoint_table_paths([l3e_dependencies.repointing_file])
+
         # repointings = determine_l3e_files_to_produce(self.input_metadata.descriptor,
         #                                              l3e_dependencies.pipeline_settings['start_cr'], cr_number,
         #                                              self.input_metadata.version,
