@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import numpy as np
@@ -14,7 +14,7 @@ from imap_l3_processing.glows.l3e.glows_l3e_call_arguments import GlowsL3eCallAr
 
 def determine_call_args_for_l3e_executable(start_date: datetime, repointing_midpoint: datetime,
                                            elongation: float) -> GlowsL3eCallArguments:
-    ephemeris_time = spiceypy.datetime2et(repointing_midpoint)
+    ephemeris_time = spiceypy.datetime2et(repointing_midpoint + timedelta(days=365 * 16))
 
     [x, y, z, vx, vy, vz], _ = spiceypy.spkezr("IMAP", ephemeris_time, "ECLIPJ2000", "NONE", "SUN")
 
@@ -64,7 +64,7 @@ def determine_l3e_files_to_produce(descriptor: str, first_cr_processed: int, las
     start_ns = (first_carrington_start_date.to_datetime() - TT2000_EPOCH).total_seconds() * ONE_SECOND_IN_NANOSECONDS
     end_ns = (last_cr_end_date.to_datetime() - TT2000_EPOCH).total_seconds() * ONE_SECOND_IN_NANOSECONDS
 
-    vectorized_date_conv = np.vectorize(lambda d: (Time(d, format="isot").to_datetime(
+    vectorized_date_conv = np.vectorize(lambda d: (Time(d, format="iso").to_datetime(
         leap_second_strict='silent') - TT2000_EPOCH).total_seconds() * ONE_SECOND_IN_NANOSECONDS)
     repoint_starts = vectorized_date_conv(repointing_data["repoint_start_utc"])
     repoint_ids = repointing_data["repoint_id"]

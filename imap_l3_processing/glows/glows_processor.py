@@ -13,7 +13,6 @@ import numpy as np
 from imap_data_access.processing_input import ProcessingInputCollection
 
 from imap_l3_processing.glows.descriptors import GLOWS_L3A_DESCRIPTOR
-from imap_l3_processing.glows.glows_initializer import GlowsInitializer
 from imap_l3_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
 from imap_l3_processing.glows.l3a.glows_toolkit.l3a_data import L3aData
 from imap_l3_processing.glows.l3a.models import GlowsL3LightCurve
@@ -43,68 +42,69 @@ class GlowsProcessor(Processor):
         super().__init__(dependencies, input_metadata)
 
     def process(self):
-        if self.input_metadata.data_level == "l3a":
-            l3a_dependencies = GlowsL3ADependencies.fetch_dependencies(self.dependencies)
-            self.input_metadata.repointing = l3a_dependencies.repointing
-            l3a_output = self.process_l3a(l3a_dependencies)
-            l3a_output.parent_file_names = self.get_parent_file_names()
-            proton_cdf = save_data(l3a_output)
-            imap_data_access.upload(proton_cdf)
-        elif self.input_metadata.data_level == "l3b":
-            zip_files = GlowsInitializer.validate_and_initialize(self.input_metadata.version, self.dependencies)
-            for zip_file in zip_files:
-                dependencies = GlowsL3BCDependencies.fetch_dependencies(zip_file)
-                try:
-                    l3b_data_product, l3c_data_product = self.process_l3bc(dependencies)
-                except CannotProcessCarringtonRotationError as e:
-                    print(f"skipping CR {dependencies.carrington_rotation_number}:", e)
-                    continue
-                l3b_cdf = save_data(l3b_data_product)
-                l3c_data_product.parent_file_names.append(Path(l3b_cdf).name)
-                l3c_cdf = save_data(l3c_data_product)
-                imap_data_access.upload(l3b_cdf)
-                imap_data_access.upload(l3c_cdf)
-                imap_data_access.upload(zip_file)
-        elif self.input_metadata.data_level == "l3d":
-            l3d_dependencies = GlowsL3DDependencies.fetch_dependencies(self.dependencies)
-            data_product, l3d_txt_paths, last_processed_cr = self.process_l3d(l3d_dependencies)
-            if data_product is not None and l3d_txt_paths is not None and last_processed_cr is not None:
-                cdf = save_data(data_product, cr_number=last_processed_cr)
-                imap_data_access.upload(cdf)
-                for txt_path in l3d_txt_paths:
-                    imap_data_access.upload(txt_path)
-        elif self.input_metadata.data_level == "l3e":
-            l3e_dependencies, cr_number = GlowsL3EDependencies.fetch_dependencies(self.dependencies,
-                                                                                  self.input_metadata.descriptor)
-            l3e_dependencies.rename_dependencies()
+        # if self.input_metadata.data_level == "l3a":
+        #     l3a_dependencies = GlowsL3ADependencies.fetch_dependencies(self.dependencies)
+        #     self.input_metadata.repointing = l3a_dependencies.repointing
+        #     l3a_output = self.process_l3a(l3a_dependencies)
+        #     l3a_output.parent_file_names = self.get_parent_file_names()
+        #     proton_cdf = save_data(l3a_output)
+        #     imap_data_access.upload(proton_cdf)
+        # elif self.input_metadata.data_level == "l3b":
+        #     zip_files = GlowsInitializer.validate_and_initialize(self.input_metadata.version, self.dependencies)
+        #     for zip_file in zip_files:
+        #         dependencies = GlowsL3BCDependencies.fetch_dependencies(zip_file)
+        #         try:
+        #             l3b_data_product, l3c_data_product = self.process_l3bc(dependencies)
+        #         except CannotProcessCarringtonRotationError as e:
+        #             print(f"skipping CR {dependencies.carrington_rotation_number}:", e)
+        #             continue
+        #         l3b_cdf = save_data(l3b_data_product)
+        #         l3c_data_product.parent_file_names.append(Path(l3b_cdf).name)
+        #         l3c_cdf = save_data(l3c_data_product)
+        #         imap_data_access.upload(l3b_cdf)
+        #         imap_data_access.upload(l3c_cdf)
+        #         imap_data_access.upload(zip_file)
+        # elif self.input_metadata.data_level == "l3d":
+        #     l3d_dependencies = GlowsL3DDependencies.fetch_dependencies(self.dependencies)
+        #     data_product, l3d_txt_paths, last_processed_cr = self.process_l3d(l3d_dependencies)
+        #     if data_product is not None and l3d_txt_paths is not None and last_processed_cr is not None:
+        #         cdf = save_data(data_product, cr_number=last_processed_cr)
+        #         imap_data_access.upload(cdf)
+        #         for txt_path in l3d_txt_paths:
+        #             imap_data_access.upload(txt_path)
+        # elif self.input_metadata.data_level == "l3e":
+        l3e_dependencies, cr_number = GlowsL3EDependencies.fetch_dependencies(self.dependencies,
+                                                                              self.input_metadata.descriptor)
+        l3e_dependencies.rename_dependencies()
 
-            repointings = determine_l3e_files_to_produce(self.input_metadata.descriptor,
-                                                         l3e_dependencies.pipeline_settings['start_cr'], cr_number,
-                                                         self.input_metadata.version,
-                                                         l3e_dependencies.repointing_file)
-            for repointing in repointings:
-                self.input_metadata.repointing = repointing
-                try:
-                    epoch, epoch_end = get_pointing_date_range(repointing)
-                    epoch_dt: datetime = epoch.astype('datetime64[us]').astype(datetime)
-                    epoch_end_dt: datetime = epoch_end.astype('datetime64[us]').astype(datetime)
-                    epoch_delta: timedelta = (epoch_end_dt - epoch_dt) / 2
+        repointings = determine_l3e_files_to_produce(self.input_metadata.descriptor,
+                                                     l3e_dependencies.pipeline_settings['start_cr'], cr_number,
+                                                     self.input_metadata.version,
+                                                     l3e_dependencies.repointing_file)
+        for repointing in repointings[:1]:
+            self.input_metadata.repointing = repointing
+            try:
+                epoch, epoch_end = get_pointing_date_range(repointing)
+                epoch_dt: datetime = epoch.astype('datetime64[us]').astype(datetime)
+                epoch_end_dt: datetime = epoch_end.astype('datetime64[us]').astype(datetime)
+                epoch_delta: timedelta = (epoch_end_dt - epoch_dt) / 2
 
-                    if self.input_metadata.descriptor == "survival-probability-lo":
-                        try:
-                            year_with_repointing = str(epoch_dt.year) + str(int(repointing)).zfill(3)
-                            elongation = l3e_dependencies.elongation[year_with_repointing]
-                        except KeyError:
-                            continue
-                        self.process_l3e_lo(epoch_dt, epoch_delta, elongation)
-                    elif self.input_metadata.descriptor == "survival-probability-hi-45":
-                        self.process_l3e_hi(epoch_dt, epoch_delta, 135)
-                    elif self.input_metadata.descriptor == "survival-probability-hi-90":
-                        self.process_l3e_hi(epoch_dt, epoch_delta, 90)
-                    elif self.input_metadata.descriptor == "survival-probability-ul":
-                        self.process_l3e_ul(epoch_dt, epoch_delta)
-                except Exception as e:
-                    print("Exception encountered for repointing ", repointing, e)
+                if self.input_metadata.descriptor == "survival-probability-lo":
+                    # try:
+                    #     year_with_repointing = str(epoch_dt.year) + str(int(repointing)).zfill(3)
+                    #     elongation = l3e_dependencies.elongation[year_with_repointing]
+                    # except KeyError:
+                    #     continue
+                    elongation = 90
+                    self.process_l3e_lo(epoch_dt, epoch_delta, elongation)
+                elif self.input_metadata.descriptor == "survival-probability-hi-45":
+                    self.process_l3e_hi(epoch_dt, epoch_delta, 135)
+                elif self.input_metadata.descriptor == "survival-probability-hi-90":
+                    self.process_l3e_hi(epoch_dt, epoch_delta, 90)
+                elif self.input_metadata.descriptor == "survival-probability-ul":
+                    self.process_l3e_ul(epoch_dt, epoch_delta)
+            except Exception as e:
+                print("Exception encountered for repointing ", repointing, e)
 
     def process_l3a(self, dependencies: GlowsL3ADependencies) -> GlowsL3LightCurve:
         data = dependencies.data

@@ -8,6 +8,7 @@ from tempfile import TemporaryDirectory
 
 import imap_data_access
 import spiceypy
+from imap_data_access import ScienceInput, AncillaryInput, SPICEInput, RepointInput
 from imap_data_access.processing_input import ProcessingInputCollection
 
 from imap_l3_processing.codice.l3.hi.codice_hi_processor import CodiceHiProcessor
@@ -50,9 +51,39 @@ def _convert_to_datetime(date):
 
 def imap_l3_processor():
     args = _parse_cli_arguments()
-    processing_input_collection = ProcessingInputCollection()
-    processing_input_collection.deserialize(args.dependency)
+    # processing_input_collection = ProcessingInputCollection()
+    # processing_input_collection.deserialize(args.dependency)
 
+    solar_hist = ScienceInput("imap_glows_l3d_solar-hist_19470303-cr02094_v004.cdf")
+    p_dens = ScienceInput("imap_glows_l3d_p-dens_19470303-cr02094_v001.cdf")
+    energy_grid_lo = AncillaryInput("imap_glows_energy-grid-lo_20100101_v002.dat")
+    energy_grid_hi = AncillaryInput("imap_glows_energy-grid-hi_20100101_v002.dat")
+    energy_grid_ultra = AncillaryInput("imap_glows_energy-grid-ultra_20100101_v002.dat")
+    ionization_files = AncillaryInput("imap_glows_ionization-files_20100101_v002.dat")
+    tess_xyz_8 = AncillaryInput("imap_glows_tess-xyz-8_20100101_v002.dat")
+    tess_ang_16 = AncillaryInput("imap_glows_tess-ang-16_20100101_v002.dat")
+    lya = ScienceInput("imap_glows_l3d_lya_19470303-cr02094_v001.cdf")
+    phion = ScienceInput("imap_glows_l3d_phion_19470303-cr02094_v002.cdf")
+    speed = ScienceInput("imap_glows_l3d_speed_19470303-cr02094_v001.cdf")
+    uv_anis = ScienceInput("imap_glows_l3d_uv-anis_19470303-cr02094_v001.cdf")
+    e_dens = ScienceInput("imap_glows_l3d_e-dens_19470303-cr02094_v001.cdf")
+    pipeline_settings = AncillaryInput("imap_glows_pipeline-settings-l3bcde_19470303_v010.json")
+    science_frames = SPICEInput("imap_science_0001.tf")
+    ephemeris_reconstructed = SPICEInput("imap_recon_20250415_20260415_v01.bsp")
+    de440 = SPICEInput("de440.bsp")
+    attitude_history = SPICEInput("imap_2025_105_2026_105_02.ah.bc")
+    pointing_attitude = SPICEInput("imap_dps_2025_105_2026_105_01.ah.bc")
+    leapseconds = SPICEInput("naif0012.tls")
+    spacecraft_clock = SPICEInput("imap_sclk_0000.tsc")
+    repoint = RepointInput("imap_2026_269_05.repoint.csv")
+    processing_input_collection = ProcessingInputCollection(solar_hist, p_dens, energy_grid_lo, energy_grid_hi,
+                                                            energy_grid_ultra, ionization_files,
+                                                            tess_xyz_8, tess_ang_16,
+                                                            lya, phion, speed, uv_anis,
+                                                            e_dens, pipeline_settings,
+                                                            science_frames, ephemeris_reconstructed, de440,
+                                                            attitude_history, leapseconds, spacecraft_clock,
+                                                            repoint, pointing_attitude)
     _furnish_spice_kernels(processing_input_collection)
     input_dependency = InputMetadata(args.instrument,
                                      args.data_level,

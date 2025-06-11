@@ -60,16 +60,16 @@ class GlowsL3EDependencies:
         if descriptor == "survival-probability-lo":
             energy_grid_lo_dependency = dependencies.get_file_paths(source='glows', descriptor='energy-grid-lo')
             tess_xyz_dependency = dependencies.get_file_paths(source='glows', descriptor='tess-xyz-8')
-            elongation_dependency = dependencies.get_file_paths(source='lo', descriptor='elongation-data')
+            # elongation_dependency = dependencies.get_file_paths(source='lo', descriptor='elongation-data')
             energy_grid_lo_path = download_dependency_from_path(str(energy_grid_lo_dependency[0]))
             tess_xyz_path = download_dependency_from_path(str(tess_xyz_dependency[0]))
-            elongation_path = download_dependency_from_path(str(elongation_dependency[0]))
-            with open(elongation_path) as f:
-                elongation_data = {}
-                lines = [line.rstrip('\n') for line in f.readlines()]
-                for line in lines:
-                    repointing, elongation = line.split('\t')
-                    elongation_data[repointing] = int(elongation)
+            # elongation_path = download_dependency_from_path(str(elongation_dependency[0]))
+            # with open(elongation_path) as f:
+            #     elongation_data = {}
+            #     lines = [line.rstrip('\n') for line in f.readlines()]
+            #     for line in lines:
+            #         repointing, elongation = line.split('\t')
+            # elongation_data[repointing] = 90
         elif descriptor == "survival-probability-hi-45" or descriptor == "survival-probability-hi-90":
             energy_grid_hi_dependency = dependencies.get_file_paths(source='glows', descriptor='energy-grid-hi')
             energy_grid_hi_path = download_dependency_from_path(str(energy_grid_hi_dependency[0]))
@@ -101,7 +101,7 @@ class GlowsL3EDependencies:
             sw_eqtr_electrons_path,
             ionization_files_path,
             pipeline_settings,
-            elongation_data,
+            None,
             repoint_file_path
         ), cr_number
 

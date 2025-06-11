@@ -55,7 +55,7 @@ if __name__ == "__main__":
                             '{"type": "ancillary", "files":["imap_glows_bad-days-list_20100101_v001.dat"]},'
                             '{"type": "ancillary", "files":["imap_glows_WawHelioIonMP_20100101_v002.json"]},'
                             '{"type": "ancillary", "files":["imap_glows_uv-anisotropy-1CR_20100101_v001.json"]},'
-                            '{"type": "ancillary", "files":["imap_glows_pipeline-settings-l3bcde_19470303_v008.json"]},'
+                            '{"type": "ancillary", "files":["imap_glows_pipeline-settings-l3bcde_19470303_v010.json"]},'
                             '{"type": "repoint", "files":["imap_2026_105_01.repoint.csv"]}]'])
         case "glows", "l3d":
             if os.path.exists(PATH_TO_L3D_TOOLKIT / 'data_l3b'): shutil.rmtree(PATH_TO_L3D_TOOLKIT / 'data_l3b')
