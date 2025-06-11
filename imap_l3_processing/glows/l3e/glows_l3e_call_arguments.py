@@ -19,6 +19,6 @@ class GlowsL3eCallArguments:
 
     def to_argument_list(self):
         return (
-                    f"{self.formatted_date} {self.decimal_date} {self.spacecraft_radius} {self.spacecraft_longitude} {self.spacecraft_latitude} {self.spacecraft_velocity_x}" +
-                    f"{self.spacecraft_velocity_y} {self.spacecraft_velocity_z} {self.spin_axis_longitude} {self.spin_axis_latitude:.4f} {self.elongation:.3f}").split(
+                f"{self.formatted_date} {self.decimal_date} {self.spacecraft_radius} {self.spacecraft_longitude:.4f} {self.spacecraft_latitude:.4f} {self.spacecraft_velocity_x:.4f} " +
+                f"{self.spacecraft_velocity_y:.4f} {self.spacecraft_velocity_z} {self.spin_axis_longitude:.4f} {self.spin_axis_latitude:.4f} {self.elongation:.3f}").split(
             " ")
