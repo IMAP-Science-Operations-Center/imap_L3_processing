@@ -165,17 +165,17 @@ class TestL3eLoModel(unittest.TestCase):
         np.testing.assert_array_equal(l3e_lo_product.probability_of_survival.shape, expected_survival_probability_shape)
         np.testing.assert_array_equal(l3e_lo_product.probability_of_survival[0][0],
                                       expected_prob_of_survival_first_col_1)
-        self.assertEqual(elongation_value, l3e_lo_product.elongation)
+        np.testing.assert_array_equal(l3e_lo_product.elongation, np.array([elongation_value]), strict=True)
 
-        self.assertEqual(np.array([spin_axis_lat]), l3e_lo_product.spin_axis_lat)
-        self.assertEqual(np.array([spin_axis_lon]), l3e_lo_product.spin_axis_lon)
+        np.testing.assert_array_equal(np.array([spin_axis_lat]), l3e_lo_product.spin_axis_lat, strict=True)
+        np.testing.assert_array_equal(np.array([spin_axis_lon]), l3e_lo_product.spin_axis_lon, strict=True)
 
-        self.assertEqual(np.array([expected_program_version]), l3e_lo_product.program_version)
+        self.assertEqual(expected_program_version, l3e_lo_product.program_version)
 
-        self.assertEqual(np.array([.5]), l3e_lo_product.spacecraft_radius)
-        self.assertEqual(np.array([85.4]), l3e_lo_product.spacecraft_longitude)
-        self.assertEqual(np.array([45.1]), l3e_lo_product.spacecraft_latitude)
+        np.testing.assert_array_equal(l3e_lo_product.spacecraft_radius, np.array([.5]), strict=True)
+        np.testing.assert_array_equal(l3e_lo_product.spacecraft_longitude, np.array([85.4]), strict=True)
+        np.testing.assert_array_equal(l3e_lo_product.spacecraft_latitude, np.array([45.1]), strict=True)
 
-        self.assertEqual(np.array([2.1]), l3e_lo_product.spacecraft_velocity_x)
-        self.assertEqual(np.array([2.2]), l3e_lo_product.spacecraft_velocity_y)
-        self.assertEqual(np.array([2.3]), l3e_lo_product.spacecraft_velocity_z)
+        np.testing.assert_array_equal(l3e_lo_product.spacecraft_velocity_x, np.array([2.1]), strict=True)
+        np.testing.assert_array_equal(l3e_lo_product.spacecraft_velocity_y, np.array([2.2]), strict=True)
+        np.testing.assert_array_equal(l3e_lo_product.spacecraft_velocity_z, np.array([2.3]), strict=True)
