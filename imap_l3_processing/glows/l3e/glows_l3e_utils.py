@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 
 import numpy as np
@@ -14,7 +14,7 @@ from imap_l3_processing.glows.l3e.glows_l3e_call_arguments import GlowsL3eCallAr
 
 def determine_call_args_for_l3e_executable(start_date: datetime, repointing_midpoint: datetime,
                                            elongation: float) -> GlowsL3eCallArguments:
-    ephemeris_time = spiceypy.datetime2et(repointing_midpoint + timedelta(days=365 * 16))
+    ephemeris_time = spiceypy.datetime2et(repointing_midpoint)
 
     [x, y, z, vx, vy, vz], _ = spiceypy.spkezr("IMAP", ephemeris_time, "ECLIPJ2000", "NONE", "SUN")
 
