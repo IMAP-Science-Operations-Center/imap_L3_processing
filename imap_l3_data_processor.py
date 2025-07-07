@@ -50,6 +50,16 @@ def _convert_to_datetime(date):
 
 def imap_l3_processor():
     args = _parse_cli_arguments()
+
+    # If the dependency argument was passed in as a json file, read it into a string
+    if args.dependency.endswith(".json"):
+        logger.info(
+            f"Interpreting dependency argument as a JSON file: {args.dependency}"
+        )
+        dependency_filepath = imap_data_access.download(args.dependency)
+        with open(dependency_filepath) as f:
+            args.dependency = f.read()
+
     processing_input_collection = ProcessingInputCollection()
     processing_input_collection.deserialize(args.dependency)
 
