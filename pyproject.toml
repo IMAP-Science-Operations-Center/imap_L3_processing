@@ -25,7 +25,7 @@ dependencies = [
     "naif-leapseconds==2023.5.31",
     "netCDF4==1.7.2",
     "numdifftools==0.9.41",
-    "numpy==2.0.1",
+    "numpy>=2.0.1",
     "packaging==24.1",
     "pandas==2.2.3",
     "pillow==10.4.0",
