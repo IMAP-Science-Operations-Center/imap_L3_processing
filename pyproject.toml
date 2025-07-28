@@ -37,7 +37,7 @@ dependencies = [
     "requests==2.32.3",
     "sammi-cdf==1.0.0",
     "scikit-learn==1.6.1",
-    "scipy==1.13.1",
+    "scipy>=1.13.1",
     "six==1.16.0",
     "space_packet_parser==5.0.1",
     "spacepy==0.7.0",
