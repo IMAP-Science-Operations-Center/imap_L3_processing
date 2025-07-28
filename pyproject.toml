@@ -2,7 +2,6 @@
 name = "imap_l3_processing"
 version = "2025.7.28"
 requires-python = ">= 3.12"
-py-modules = ["imap_l3_processing"]
 dependencies = [
     "astropy==7.0.1",
     "astropy-iers-data==0.2025.3.24.0.35.32",
@@ -52,3 +51,7 @@ dependencies = [
     "zipp==3.19.2",
     "imap_processing==0.14.0",
 ]
+
+[tool.setuptools]
+py-modules = ["imap_l3_processing"]
+
