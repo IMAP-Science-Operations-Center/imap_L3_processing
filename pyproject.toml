@@ -50,7 +50,13 @@ dependencies = [
     "zipp==3.19.2",
     "imap_processing>=0.14.0",
 ]
+description = "This is a package for creating IMAP Level 3 data"
 
 [tool.setuptools]
 py-modules = ["imap_l3_processing"]
 
+[tool.hatch]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
