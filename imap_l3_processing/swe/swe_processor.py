@@ -3,7 +3,6 @@ from dataclasses import replace
 from datetime import timedelta
 
 import numpy as np
-from imap_data_access import upload
 from imap_data_access.processing_input import ProcessingInputCollection
 
 from imap_l3_processing.data_utils import find_closest_neighbor
@@ -34,8 +33,8 @@ class SweProcessor(Processor):
         dependencies = SweL3Dependencies.fetch_dependencies(self.dependencies)
         output_data = self.calculate_products(dependencies)
         output_data.parent_file_names = self.get_parent_file_names()
-        output_cdf = save_data(output_data)
-        upload(output_cdf)
+        product = save_data(output_data)
+        return [product]
 
     def calculate_products(self, dependencies: SweL3Dependencies) -> SweL3Data:
         swe_l2_data = dependencies.swe_l2_data

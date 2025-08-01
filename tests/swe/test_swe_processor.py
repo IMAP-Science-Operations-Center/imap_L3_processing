@@ -19,12 +19,10 @@ from tests.test_helpers import NumpyArrayMatcher, build_swe_configuration, creat
 
 class TestSweProcessor(unittest.TestCase):
     @patch('imap_l3_processing.processor.spiceypy')
-    @patch('imap_l3_processing.swe.swe_processor.upload')
     @patch('imap_l3_processing.swe.swe_processor.save_data')
     @patch('imap_l3_processing.swe.swe_processor.SweL3Dependencies.fetch_dependencies')
     @patch('imap_l3_processing.swe.swe_processor.SweProcessor.calculate_products')
-    def test_process(self, mock_calculate_products, mock_fetch_dependencies, mock_save_data, mock_upload,
-                     mock_spiceypy):
+    def test_process(self, mock_calculate_products, mock_fetch_dependencies, mock_save_data, mock_spiceypy):
         input_file_names = [
             "imap_swe_l2_sci_20200101_v000.cdf",
             "imap_swe_l1b_sci_20200101_v000.cdf",
@@ -43,14 +41,14 @@ class TestSweProcessor(unittest.TestCase):
         calculate_products_return = Mock()
         mock_calculate_products.return_value = calculate_products_return
         swe_processor = SweProcessor(mock_dependencies, mock_input_metadata)
-        swe_processor.process()
+        product = swe_processor.process()
 
         self.assertEqual(calculate_products_return.parent_file_names, input_file_names)
 
         mock_fetch_dependencies.assert_called_once_with(mock_dependencies)
         mock_calculate_products.assert_called_once_with(mock_fetch_dependencies.return_value)
         mock_save_data.assert_called_once_with(mock_calculate_products.return_value)
-        mock_upload.assert_called_once_with(mock_save_data.return_value)
+        self.assertEqual([mock_save_data.return_value], product)
 
     @patch("imap_l3_processing.swe.swe_processor.compute_epoch_delta_in_ns")
     @patch('imap_l3_processing.swe.swe_processor.average_over_look_directions')

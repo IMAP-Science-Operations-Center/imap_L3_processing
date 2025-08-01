@@ -18,8 +18,7 @@ class TestLoProcessor(unittest.TestCase):
     @patch('imap_l3_processing.lo.lo_processor.LoL3SpectralFitDependencies.fetch_dependencies')
     @patch('imap_l3_processing.lo.lo_processor.calculate_spectral_index_for_multiple_ranges')
     @patch('imap_l3_processing.lo.lo_processor.save_data')
-    @patch('imap_l3_processing.lo.lo_processor.upload')
-    def test_process_spectral_index(self, mock_upload, mock_save_data,
+    def test_process_spectral_index(self, mock_save_data,
                                     mock_calculate_spectral_index_for_multiple_ranges, mock_fetch_dependencies,
                                     mock_get_parent_file_names):
         mock_get_parent_file_names.return_value = ["some_input_file_name"]
@@ -38,7 +37,7 @@ class TestLoProcessor(unittest.TestCase):
                                  descriptor="l090-spx-h-hf-sp-ram-hae-6deg-1yr")
 
         processor = LoProcessor(input_collection, input_metadata=metadata)
-        processor.process()
+        product = processor.process()
 
         mock_fetch_dependencies.assert_called_with(input_collection)
         energy_range = (10000, np.inf)
@@ -54,19 +53,17 @@ class TestLoProcessor(unittest.TestCase):
         self.assertEqual(data_product.data.coords, lo_l3_spectral_fit_dependency.map_data.coords)
         self.assertEqual(data_product.input_metadata, processor.input_metadata)
         self.assertEqual(data_product.parent_file_names, ["some_input_file_name"])
-        mock_upload.assert_called_with(mock_save_data.return_value)
+        self.assertEqual([mock_save_data.return_value], product)
 
     @patch('imap_l3_processing.lo.lo_processor.Processor.get_parent_file_names')
     @patch("imap_l3_processing.lo.lo_processor.HiLoL3SurvivalDependencies.fetch_dependencies")
     @patch("imap_l3_processing.lo.lo_processor.process_survival_probabilities")
     @patch('imap_l3_processing.lo.lo_processor.save_data')
-    @patch('imap_l3_processing.lo.lo_processor.upload')
-    def test_process_survival_probabilities(self, mock_upload, mock_save_data,
+    def test_process_survival_probabilities(self, mock_save_data,
                                             mock_process_survival_prob,
                                             mock_fetch_survival_dependencies, mock_get_parent_file_names):
         mock_get_parent_file_names.return_value = ["somewhere"]
 
-        mock_upload.reset_mock()
         mock_save_data.reset_mock()
         mock_fetch_survival_dependencies.reset_mock()
         mock_process_survival_prob.reset_mock()
@@ -85,7 +82,7 @@ class TestLoProcessor(unittest.TestCase):
         mock_process_survival_prob.return_value = sentinel.survival_probabilities
 
         processor = LoProcessor(sentinel.input_dependencies, input_metadata)
-        processor.process()
+        product = processor.process()
 
         mock_fetch_survival_dependencies.assert_called_once_with(sentinel.input_dependencies,
                                                                  Instrument.IMAP_LO)
@@ -96,7 +93,7 @@ class TestLoProcessor(unittest.TestCase):
             input_metadata=input_metadata,
             parent_file_names=["l1c", "map", "somewhere"],
             data=sentinel.survival_probabilities))
-        mock_upload.assert_called_once_with(mock_save_data.return_value)
+        self.assertEqual([mock_save_data.return_value], product)
 
     def test_rejects_unimplemented_descriptors(self):
         input_collection = ProcessingInputCollection()

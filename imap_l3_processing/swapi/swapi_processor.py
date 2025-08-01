@@ -1,6 +1,5 @@
 from dataclasses import replace
 
-import imap_data_access
 import numpy as np
 from imap_data_access.processing_input import ProcessingInputCollection
 from uncertainties.unumpy import uarray, nominal_values
@@ -50,13 +49,13 @@ class SwapiProcessor(Processor):
                 raise NotImplementedError("unknown descriptor", self.input_metadata.descriptor)
             data.parent_file_names = self.get_parent_file_names()
             cdf_path = save_data(data)
-            imap_data_access.upload(cdf_path)
+            return [cdf_path]
         elif self.input_metadata.data_level == "l3b":
             l3b_dependencies = SwapiL3BDependencies.fetch_dependencies(self.dependencies)
             l3b_combined_vdf = self.process_l3b(l3b_dependencies.data, l3b_dependencies)
             l3b_combined_vdf.parent_file_names = self.get_parent_file_names()
             cdf_path = save_data(l3b_combined_vdf)
-            imap_data_access.upload(cdf_path)
+            return [cdf_path]
 
     def process_l3a_pui(self, data, dependencies) -> SwapiL3PickupIonData:
         proton_solar_wind_speeds = []

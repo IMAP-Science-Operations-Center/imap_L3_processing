@@ -302,7 +302,7 @@ def create_swapi_l3a_cdf(proton_temperature_density_calibration_file, alpha_temp
     return proton_cdf_path, alpha_cdf_path, pui_he_cdf_path
 
 
-def create_swe_product(dependencies: SweL3Dependencies) -> str:
+def create_swe_product(dependencies: SweL3Dependencies) -> Path:
     input_metadata = InputMetadata(
         instrument='swe',
         data_level='l3',
@@ -316,7 +316,7 @@ def create_swe_product(dependencies: SweL3Dependencies) -> str:
 
 
 @patch("imap_l3_processing.swe.l3.science.moment_calculations.spiceypy.pxform")
-def create_swe_product_with_fake_spice(dependencies: SweL3Dependencies, mock_spice_pxform) -> str:
+def create_swe_product_with_fake_spice(dependencies: SweL3Dependencies, mock_spice_pxform) -> Path:
     data = np.loadtxt(get_test_data_path("swe/ace_attitude.dat"), skiprows=1)
 
     def time_to_float(t):
@@ -360,7 +360,7 @@ def create_swe_product_with_fake_spice(dependencies: SweL3Dependencies, mock_spi
     return cdf_path
 
 
-def create_survival_corrected_full_spin_cdf(dependencies: HiL3SingleSensorFullSpinDependencies) -> str:
+def create_survival_corrected_full_spin_cdf(dependencies: HiL3SingleSensorFullSpinDependencies) -> Path:
     input_metadata = InputMetadata(instrument="hi",
                                    data_level="l3",
                                    start_date=datetime.now(),
@@ -376,7 +376,7 @@ def create_survival_corrected_full_spin_cdf(dependencies: HiL3SingleSensorFullSp
     return cdf_path
 
 
-def create_hi_spectral_index_cdf(dependencies: HiL3SpectralIndexDependencies) -> str:
+def create_hi_spectral_index_cdf(dependencies: HiL3SpectralIndexDependencies) -> Path:
     input_metadata = InputMetadata(instrument="hi",
                                    data_level="l3",
                                    start_date=datetime.now(),
@@ -391,7 +391,7 @@ def create_hi_spectral_index_cdf(dependencies: HiL3SpectralIndexDependencies) ->
     return cdf_path
 
 
-def create_lo_spectral_index_cdf(dependencies: LoL3SpectralFitDependencies) -> str:
+def create_lo_spectral_index_cdf(dependencies: LoL3SpectralFitDependencies) -> Path:
     input_metadata = InputMetadata(instrument="lo",
                                    data_level="l3",
                                    start_date=datetime.now(),
@@ -406,7 +406,7 @@ def create_lo_spectral_index_cdf(dependencies: LoL3SpectralFitDependencies) -> s
     return cdf_path
 
 
-def create_hit_sectored_cdf(dependencies: HITL3SectoredDependencies) -> str:
+def create_hit_sectored_cdf(dependencies: HITL3SectoredDependencies) -> Path:
     input_metadata = InputMetadata(
         instrument='hit',
         data_level='l3',
@@ -512,8 +512,6 @@ def run_l3b_initializer(mock_download_external, mock_download, mock_imap_data_ac
         get_test_data_path('glows/pipeline/l3a/imap_glows_l3a_hist_20100522-repoint00290_v001.cdf'),
     ]
 
-    mock_imap_data_access.upload = lambda filename: print(filename)
-
     bad_days_list = AncillaryInput('imap_glows_bad-days-list_20100101_v004.dat')
     waw_helio_ion = AncillaryInput('imap_glows_WawHelioIonMP_20100101_v002.json')
     uv_anisotropy = AncillaryInput('imap_glows_uv-anisotropy-1CR_20100101_v001.json')
@@ -530,12 +528,11 @@ def run_l3b_initializer(mock_download_external, mock_download, mock_imap_data_ac
 
     processor = GlowsProcessor(input_collection, input_metadata)
 
-    processor.process()
+    print(processor.process())
 
 
 @patch('imap_l3_processing.glows.glows_initializer.query')
-@patch('imap_l3_processing.glows.glows_processor.imap_data_access.upload')
-def run_glows_l3bc_processor_and_initializer(_, mock_query):
+def run_glows_l3bc_processor_and_initializer(mock_query):
     input_metadata = InputMetadata(
         instrument='glows',
         data_level='l3b',
@@ -557,16 +554,14 @@ def run_glows_l3bc_processor_and_initializer(_, mock_query):
     input_collection = ProcessingInputCollection(bad_days_list, waw_helio_ion, uv_anisotropy, pipeline_settings)
 
     processor = GlowsProcessor(dependencies=input_collection, input_metadata=input_metadata)
-    processor.process()
+    print(processor.process())
 
 
 @patch("imap_l3_processing.glows.glows_processor.GlowsL3EDependencies")
-@patch("imap_l3_processing.glows.glows_processor.imap_data_access.upload")
 @patch("imap_l3_processing.glows.glows_processor.Path")
 @patch("imap_l3_processing.glows.glows_processor.run")
 @patch("imap_l3_processing.glows.glows_processor.get_pointing_date_range")
-def run_glows_l3e_lo_with_mocks(mock_get_repoint_date_range, _, mock_path, mock_upload,
-                                mock_l3e_dependencies_class):
+def run_glows_l3e_lo_with_mocks(mock_get_repoint_date_range, _, mock_path, mock_l3e_dependencies_class):
     mock_processing_input_collection = Mock()
     mock_processing_input_collection.get_file_paths.return_value = [Path("one path")]
 
@@ -630,15 +625,12 @@ def run_glows_l3e_lo_with_mocks(mock_get_repoint_date_range, _, mock_path, mock_
     glows_processor.process()
 
 
-@patch("imap_l3_processing.glows.glows_processor.imap_data_access")
 @patch("imap_l3_processing.glows.l3e.glows_l3e_utils.spiceypy")
-def run_glows_l3e_with_less_mocks(mock_spiceypy, mock_imap_data_access):
+def run_glows_l3e_with_less_mocks(mock_spiceypy):
     mock_spiceypy.spkezr = spiceypy.spkezr
     mock_spiceypy.reclat = spiceypy.reclat
     mock_spiceypy.pxform = spiceypy.pxform
     mock_spiceypy.datetime2et = lambda date: spiceypy.datetime2et(date + timedelta(days=365 * 16 + 4, hours=2))
-
-    mock_imap_data_access.upload = lambda p: print("i would upload", p)
 
     l3d_file = "imap_glows_l3d_solar-hist_20100101-repoint02092_v002.cdf"
     lo_processing_input_collection = ProcessingInputCollection(
@@ -930,10 +922,9 @@ def read_glows_survival_probability_data_from_cdf() -> tuple[np.ndarray, np.ndar
     return l3e["probability_of_survival"][...][:, 0], l3e["probability_of_survival"][...][:, 1]
 
 
-@patch('imap_l3_processing.hi.hi_processor.upload')
 @patch('imap_l3_processing.hi.hi_processor.HiLoL3SurvivalDependencies.fetch_dependencies')
 def create_hi_l3_survival_corrected_cdf(survival_dependencies: HiLoL3SurvivalDependencies, spacing_degree: int,
-                                        mock_fetch_dependencies, mock_upload) -> str:
+                                        mock_fetch_dependencies) -> Path:
     input_metadata = InputMetadata(instrument="hi",
                                    data_level="l3",
                                    start_date=datetime(2025, 4, 9),
@@ -947,16 +938,12 @@ def create_hi_l3_survival_corrected_cdf(survival_dependencies: HiLoL3SurvivalDep
     processing_input_collection = Mock()
     processing_input_collection.get_file_paths.return_value = []
     processor = HiProcessor(processing_input_collection, input_metadata)
-    processor.process()
-
-    print(mock_upload.call_args_list[0].args[0])
+    print(processor.process())
 
 
-@patch('imap_l3_processing.lo.lo_processor.upload')
 @patch('imap_l3_processing.lo.lo_processor.HiLoL3SurvivalDependencies.fetch_dependencies')
 def create_lo_l3_survival_corrected_cdf(survival_dependencies: HiLoL3SurvivalDependencies, spacing_degree: int,
-                                        mock_fetch_dependencies,
-                                        mock_upload):
+                                        mock_fetch_dependencies):
     input_metadata = InputMetadata(instrument="lo",
                                    data_level="l3",
                                    start_date=datetime(2025, 4, 9),
@@ -970,12 +957,10 @@ def create_lo_l3_survival_corrected_cdf(survival_dependencies: HiLoL3SurvivalDep
     processing_input_collection = Mock()
     processing_input_collection.get_file_paths.return_value = []
     processor = LoProcessor(processing_input_collection, input_metadata)
-    processor.process()
-
-    print(mock_upload.call_args_list[0].args[0])
+    print(processor.process())
 
 
-def create_combined_sensor_cdf(combined_dependencies: HiL3CombinedMapDependencies) -> str:
+def create_combined_sensor_cdf(combined_dependencies: HiL3CombinedMapDependencies) -> Path:
     input_metadata = InputMetadata(
         instrument="hi",
         data_level="l3",
@@ -1211,8 +1196,8 @@ if __name__ == "__main__":
 
         if do_all or "spectral-index" in sys.argv:
             dependencies = LoL3SpectralFitDependencies(
-                RectangularIntensityMapData.read_from_path(
-                    get_test_data_path("hi/fake_l2_maps/hi45-zirnstein-mondel-6months.cdf"))
+                RectangularIntensityMapData.read_from_path(Path(
+                    '/data/imap/lo/l3/2025/04/imap_lo_l3_l090-ena-h-sf-sp-ram-hae-4deg-6mo_20250415_v002.cdf'))
             )
 
             print(create_lo_spectral_index_cdf(dependencies))
@@ -1256,19 +1241,19 @@ if __name__ == "__main__":
 
             # @formatter:off
             missing_map_and_pset_paths, [l2_map_path, *l1c_dependency_paths] = try_get_many_run_local_paths([
-                "ultra/20250415-20250419/imap_ultra_l2_u90-ena-h-sf-nsp-full-hae-4deg-6mo_20250415_v001.cdf",
-                "ultra/20250415-20250419/ultra_l1c/imap_ultra_l1c_45sensor-spacecraftpset_20250415-repoint00001_v001.cdf",
-                "ultra/20250415-20250419/ultra_l1c/imap_ultra_l1c_45sensor-spacecraftpset_20250416-repoint00002_v001.cdf",
-                "ultra/20250415-20250419/ultra_l1c/imap_ultra_l1c_45sensor-spacecraftpset_20250417-repoint00003_v001.cdf",
-                "ultra/20250415-20250419/ultra_l1c/imap_ultra_l1c_45sensor-spacecraftpset_20250418-repoint00004_v001.cdf",
+                "ultra/20250515-20250720/imap_ultra_l2_u90-ena-h-sf-nsp-full-hae-4deg-6mo_20250515_v011.cdf",
+                "ultra/l1c_from_nat/imap_ultra_l1c_90sensor-spacecraftpset_20250515-repoint00001_v001.cdf",
+                "ultra/l1c_from_nat/imap_ultra_l1c_90sensor-spacecraftpset_20250615-repoint00032_v001.cdf",
+                "ultra/l1c_from_nat/imap_ultra_l1c_90sensor-spacecraftpset_20250715-repoint00062_v001.cdf",
+                "ultra/l1c_from_nat/imap_ultra_l1c_90sensor-spacecraftpset_20250720-repoint00067_v001.cdf",
             ])
             # @formatter:on
 
             missing_glows_paths, [*l3e_glows_paths] = try_get_many_run_local_paths([
-                "run_local_input_data/ultra/20250415-20250419/glows_l3e/imap_glows_l3e_survival-probabilities-ultra_20250415_v001.cdf",
-                "run_local_input_data/ultra/20250415-20250419/glows_l3e/imap_glows_l3e_survival-probabilities-ultra_20250416_v001.cdf",
-                "run_local_input_data/ultra/20250415-20250419/glows_l3e/imap_glows_l3e_survival-probabilities-ultra_20250417_v001.cdf",
-                "run_local_input_data/ultra/20250415-20250419/glows_l3e/imap_glows_l3e_survival-probabilities-ultra_20250418_v001.cdf",
+                "ultra/20250515-20250720/glows_l3e/imap_glows_l3e_survival-probability-ultra_20250515_v011.cdf",
+                "ultra/20250515-20250720/glows_l3e/imap_glows_l3e_survival-probability-ultra_20250615_v011.cdf",
+                "ultra/20250515-20250720/glows_l3e/imap_glows_l3e_survival-probability-ultra_20250715_v011.cdf",
+                "ultra/20250515-20250720/glows_l3e/imap_glows_l3e_survival-probability-ultra_20250720_v011.cdf",
             ])
             if missing_glows_paths or missing_map_and_pset_paths:
                 create_l1c_and_glows_with_matching_date_range(datetime(2025, 4, 15, 12), datetime(2025, 4, 19, 12))

@@ -30,7 +30,6 @@ class TestHitProcessor(TestCase):
         )
 
     @patch("imap_l3_processing.processor.spiceypy")
-    @patch('imap_l3_processing.hit.l3.hit_processor.imap_data_access.upload')
     @patch('imap_l3_processing.hit.l3.hit_processor.save_data')
     @patch('imap_l3_processing.hit.l3.hit_processor.HITL3SectoredDependencies.fetch_dependencies')
     @patch('imap_l3_processing.hit.l3.hit_processor.calculate_unit_vector')
@@ -46,7 +45,7 @@ class TestHitProcessor(TestCase):
                                          mock_get_sector_unit_vectors, mock_get_hit_bin_polar_coordinates,
                                          mock_calculate_unit_vector,
                                          mock_fetch_dependencies, mock_save_data,
-                                         mock_imap_data_access_upload, mock_spiceypy):
+                                         mock_spiceypy):
         mock_spiceypy.ktotal.return_value = 0
 
         input_metadata = InputMetadata(
@@ -231,7 +230,7 @@ class TestHitProcessor(TestCase):
         ]
 
         processor = HitProcessor(mock_processing_input_collection, input_metadata)
-        processor.process()
+        product = processor.process()
         mock_fetch_dependencies.assert_called_once_with(mock_processing_input_collection)
 
         mock_mag_data.rebin_to.assert_called_once_with(mock_hit_data.epoch, mock_hit_data.epoch_delta)
@@ -432,16 +431,15 @@ class TestHitProcessor(TestCase):
         np.testing.assert_array_equal(saved_data_product.measurement_gyrophase,
                                       np.array([sentinel.gyrophase1, sentinel.gyrophase2]))
 
-        mock_imap_data_access_upload.assert_called_once_with(mock_save_data.return_value)
+        self.assertEqual([mock_save_data.return_value], product)
 
     @patch("imap_l3_processing.processor.spiceypy")
-    @patch("imap_l3_processing.hit.l3.hit_processor.imap_data_access.upload")
     @patch("imap_l3_processing.hit.l3.hit_processor.save_data")
     @patch("imap_l3_processing.hit.l3.hit_processor.process_pha_event", autospec=True)
     @patch("imap_l3_processing.hit.l3.hit_processor.HitL3PhaDependencies.fetch_dependencies")
     @patch("imap_l3_processing.hit.l3.hit_processor.PHAEventReader.read_all_pha_events")
     def test_process_direct_event_product(self, mock_read_all_events, mock_fetch_dependencies, mock_process_pha_event,
-                                          mock_save_data, mock_imap_data_access_upload, mock_spiceypy):
+                                          mock_save_data, mock_spiceypy):
         mock_spiceypy.ktotal.return_value = 0
         pha_word_1 = PHAWord(adc_overflow=False, adc_value=11,
                              detector=Detector(layer=1, side="A", segment="1A", address=2, group="L1A4"),
@@ -507,7 +505,7 @@ class TestHitProcessor(TestCase):
         mock_read_all_events.side_effect = [[raw_pha_event_1, raw_pha_event_2], [raw_pha_event_3]]
 
         processor = HitProcessor(mock_processing_input_collection, input_metadata)
-        processor.process()
+        product = processor.process()
 
         mock_fetch_dependencies.assert_called_once_with(mock_processing_input_collection)
         mock_read_all_events.assert_has_calls([call(sentinel.binary_stream_1), call(sentinel.binary_stream_2)])
@@ -526,7 +524,7 @@ class TestHitProcessor(TestCase):
 
         mock_save_data.assert_called_once()
 
-        mock_imap_data_access_upload.assert_called_once_with(mock_save_data.return_value)
+        self.assertEqual([mock_save_data.return_value], product)
 
         direct_event_product = mock_save_data.call_args_list[0].args[0]
         self.assertEqual(input_metadata, direct_event_product.input_metadata)

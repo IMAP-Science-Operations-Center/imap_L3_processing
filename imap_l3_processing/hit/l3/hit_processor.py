@@ -1,4 +1,3 @@
-import imap_data_access
 import numpy as np
 from imap_data_access.processing_input import ProcessingInputCollection
 
@@ -28,13 +27,13 @@ class HitProcessor(Processor):
             pitch_angle_data_product = self.process_pitch_angle_product(dependencies)
             pitch_angle_data_product.parent_file_names = self.get_parent_file_names()
             cdf_file_path = save_data(pitch_angle_data_product)
-            imap_data_access.upload(cdf_file_path)
+            return [cdf_file_path]
         elif self.input_metadata.descriptor == "direct-events":
             direct_event_dependencies = HitL3PhaDependencies.fetch_dependencies(self.dependencies)
             direct_event_data_product = self.process_direct_event_product(direct_event_dependencies)
             direct_event_data_product.parent_file_names = self.get_parent_file_names()
             cdf_file_path = save_data(direct_event_data_product)
-            imap_data_access.upload(cdf_file_path)
+            return [cdf_file_path]
         else:
             raise ValueError(
                 f"Don't know how to generate '{self.input_metadata.descriptor}' /n Known HIT l3 data products: 'macropixel', 'direct-events'.")

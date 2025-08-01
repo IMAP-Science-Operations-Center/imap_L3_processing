@@ -1,4 +1,4 @@
-from imap_data_access import upload
+from pathlib import Path
 
 from imap_l3_processing.hi.l3.hi_l3_combined_sensor_dependencies import HiL3CombinedMapDependencies
 from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3SpectralIndexDependencies
@@ -18,7 +18,7 @@ from imap_l3_processing.utils import save_data
 
 
 class HiProcessor(Processor):
-    def process(self):
+    def process(self) -> list[Path]:
         set_of_parent_file_names = set(self.get_parent_file_names())
 
         parsed_descriptor = parse_map_descriptor(self.input_metadata.descriptor)
@@ -71,8 +71,7 @@ class HiProcessor(Processor):
 
         data_product.parent_file_names = sorted(set_of_parent_file_names)
 
-        cdf_path = save_data(data_product)
-        upload(cdf_path)
+        return [save_data(data_product)]
 
     def process_full_spin_single_sensor(self, hi_l3_full_spin_dependencies: HiL3SingleSensorFullSpinDependencies) \
             -> RectangularIntensityMapData:

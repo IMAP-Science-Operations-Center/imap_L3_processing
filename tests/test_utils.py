@@ -10,7 +10,7 @@ from spacepy.pycdf import CDF
 
 from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
 from imap_l3_processing.maps.map_models import GlowsL3eRectangularMapInputData, InputRectangularPointingSet
-from imap_l3_processing.models import UpstreamDataDependency
+from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.swapi.l3a.models import SwapiL3AlphaSolarWindData
 from imap_l3_processing.utils import format_time, download_dependency, read_l1d_mag_data, save_data, \
     find_glows_l3e_dependencies, \
@@ -33,11 +33,11 @@ class TestUtils(TestCase):
     @patch("imap_l3_processing.utils.ImapAttributeManager")
     @patch("imap_l3_processing.utils.date")
     @patch("imap_l3_processing.utils.write_cdf")
-    def test_save_data(self, mock_write_cdf, mock_today, _):
+    def test_save_data(self, mock_write_cdf, mock_today, mock_attribute_manager):
         mock_today.today.return_value = date(2024, 9, 16)
 
-        input_metadata = UpstreamDataDependency("swapi", "l2", datetime(2024, 9, 17), datetime(2024, 9, 18), "v2",
-                                                "descriptor")
+        input_metadata = InputMetadata("swapi", "l2", datetime(2024, 9, 17), datetime(2024, 9, 18), "v2",
+                                       "descriptor")
         epoch = np.array([1, 2, 3])
         alpha_sw_speed = np.array([4, 5, 6])
         alpha_sw_density = np.array([5, 5, 5])
@@ -50,16 +50,12 @@ class TestUtils(TestCase):
                                                  parent_file_names=sentinel.parent_files)
         returned_file_path = save_data(data_product)
 
-        mock_write_cdf.assert_called_once()
-        actual_file_path = mock_write_cdf.call_args.args[0]
-        actual_data = mock_write_cdf.call_args.args[1]
-        actual_attribute_manager = mock_write_cdf.call_args.args[2]
+        mock_write_cdf.assert_called_once_with(str(returned_file_path), data_product,
+                                               mock_attribute_manager.return_value)
 
-        expected_file_path = str(TEMP_CDF_FOLDER_PATH / "imap_swapi_l2_descriptor_20240917_v2.cdf")
-        self.assertEqual(expected_file_path, actual_file_path)
-        self.assertIs(data_product, actual_data)
+        expected_file_path = TEMP_CDF_FOLDER_PATH / "imap_swapi_l2_descriptor_20240917_v2.cdf"
 
-        actual_attribute_manager.add_global_attribute.assert_has_calls([
+        mock_attribute_manager.return_value.add_global_attribute.assert_has_calls([
             call("Data_version", "2"),
             call("Generation_date", "20240916"),
             call("Logical_source", "imap_swapi_l2_descriptor"),
@@ -68,7 +64,7 @@ class TestUtils(TestCase):
             call("Parents", sentinel.parent_files),
         ])
 
-        actual_attribute_manager.add_instrument_attrs.assert_called_with(
+        mock_attribute_manager.return_value.add_instrument_attrs.assert_called_with(
             "swapi", "l2", input_metadata.descriptor
         )
 
@@ -77,7 +73,7 @@ class TestUtils(TestCase):
     @patch("imap_l3_processing.utils.ImapAttributeManager")
     @patch("imap_l3_processing.utils.date")
     @patch("imap_l3_processing.utils.write_cdf")
-    def test_save_data_adds_repointing_if_present(self, mock_write_cdf, mock_today, _):
+    def test_save_data_adds_repointing_if_present(self, mock_write_cdf, mock_today, mock_attribute_manager):
         mock_today.today.return_value = date(2024, 9, 16)
 
         expected_repointing = 2
@@ -85,15 +81,13 @@ class TestUtils(TestCase):
         data_product.input_metadata.repointing = expected_repointing
         returned_file_path = save_data(data_product)
 
-        actual_file_path = mock_write_cdf.call_args.args[0]
+        mock_write_cdf.assert_called_once_with(str(returned_file_path), data_product,
+                                               mock_attribute_manager.return_value)
 
-        actual_attribute_manager = mock_write_cdf.call_args.args[2]
+        expected_file_path = TEMP_CDF_FOLDER_PATH / f"imap_instrument_data-level_descriptor_20250510-repoint0000{expected_repointing}_v003.cdf"
+        self.assertEqual(expected_file_path, returned_file_path)
 
-        expected_file_path = str(
-            TEMP_CDF_FOLDER_PATH / f"imap_instrument_data-level_descriptor_20250510-repoint0000{expected_repointing}_v003.cdf")
-        self.assertEqual(expected_file_path, actual_file_path)
-
-        actual_attribute_manager.add_global_attribute.assert_has_calls([
+        mock_attribute_manager.return_value.add_global_attribute.assert_has_calls([
             call("Data_version", "003"),
             call("Generation_date", "20240916"),
             call("Logical_source", "imap_instrument_data-level_descriptor"),
@@ -101,12 +95,10 @@ class TestUtils(TestCase):
                  f"imap_instrument_data-level_descriptor_20250510-repoint0000{expected_repointing}_v003")
         ])
 
-        self.assertEqual(expected_file_path, returned_file_path)
-
     @patch("imap_l3_processing.utils.ImapAttributeManager")
     @patch("imap_l3_processing.utils.date")
     @patch("imap_l3_processing.utils.write_cdf")
-    def test_save_data_adds_CR_if_present(self, mock_write_cdf, mock_today, _):
+    def test_save_data_adds_CR_if_present(self, mock_write_cdf, mock_today, mock_attribute_manager):
         mock_today.today.return_value = date(2024, 9, 16)
 
         expected_cr = 2
@@ -114,23 +106,16 @@ class TestUtils(TestCase):
         data_product.input_metadata.repointing = None
         returned_file_path = save_data(data_product, cr_number=expected_cr)
 
-        actual_file_path = mock_write_cdf.call_args.args[0]
+        expected_file_path = TEMP_CDF_FOLDER_PATH / f"imap_instrument_data-level_descriptor_20250510-cr0000{expected_cr}_v003.cdf"
+        self.assertEqual(expected_file_path, returned_file_path)
 
-        actual_attribute_manager = mock_write_cdf.call_args.args[2]
-
-        expected_file_path = str(
-            TEMP_CDF_FOLDER_PATH / f"imap_instrument_data-level_descriptor_20250510-cr0000{expected_cr}_v003.cdf")
-        self.assertEqual(expected_file_path, actual_file_path)
-
-        actual_attribute_manager.add_global_attribute.assert_has_calls([
+        mock_attribute_manager.return_value.add_global_attribute.assert_has_calls([
             call("Data_version", "003"),
             call("Generation_date", "20240916"),
             call("Logical_source", "imap_instrument_data-level_descriptor"),
             call("Logical_file_id",
                  f"imap_instrument_data-level_descriptor_20250510-cr0000{expected_cr}_v003")
         ])
-
-        self.assertEqual(expected_file_path, returned_file_path)
 
     @patch("imap_l3_processing.utils.ImapAttributeManager")
     @patch("imap_l3_processing.utils.date")
@@ -153,8 +138,8 @@ class TestUtils(TestCase):
     def test_save_data_does_not_add_parent_attribute_if_empty(self, mock_write_cdf, mock_today, _):
         mock_today.today.return_value = date(2024, 9, 16)
 
-        input_metadata = UpstreamDataDependency("swapi", "l2", datetime(2024, 9, 17), datetime(2024, 9, 18), "v2",
-                                                "descriptor")
+        input_metadata = InputMetadata("swapi", "l2", datetime(2024, 9, 17), datetime(2024, 9, 18), "v2",
+                                       "descriptor")
         epoch = np.array([1, 2, 3])
         alpha_sw_speed = np.array([4, 5, 6])
         alpha_sw_density = np.array([5, 5, 5])
@@ -164,7 +149,7 @@ class TestUtils(TestCase):
                                                  alpha_sw_speed=alpha_sw_speed,
                                                  alpha_sw_temperature=alpha_sw_temperature,
                                                  alpha_sw_density=alpha_sw_density)
-        returned_file_path = save_data(data_product)
+        save_data(data_product)
 
         mock_write_cdf.assert_called_once()
         actual_attribute_manager = mock_write_cdf.call_args.args[2]
@@ -183,8 +168,8 @@ class TestUtils(TestCase):
     def test_save_data_custom_path(self, mock_write_cdf, mock_today, _):
         mock_today.today.return_value = date(2024, 9, 16)
 
-        input_metadata = UpstreamDataDependency("swapi", "l2", datetime(2024, 9, 17), datetime(2024, 9, 18), "v2",
-                                                "descriptor")
+        input_metadata = InputMetadata("swapi", "l2", datetime(2024, 9, 17), datetime(2024, 9, 18), "v2",
+                                       "descriptor")
         epoch = np.array([1, 2, 3])
         alpha_sw_speed = np.array([4, 5, 6])
         alpha_sw_density = np.array([5, 5, 5])
@@ -201,8 +186,8 @@ class TestUtils(TestCase):
         mock_write_cdf.assert_called_once()
         actual_file_path = mock_write_cdf.call_args.args[0]
 
-        expected_file_path = str(custom_path / "imap_swapi_l2_descriptor_20240917_v2.cdf")
-        self.assertEqual(expected_file_path, actual_file_path)
+        expected_file_path = custom_path / "imap_swapi_l2_descriptor_20240917_v2.cdf"
+        self.assertEqual(str(expected_file_path), actual_file_path)
 
         self.assertEqual(expected_file_path, returned_file_path)
 
@@ -216,8 +201,8 @@ class TestUtils(TestCase):
 
     @patch('imap_l3_processing.utils.imap_data_access')
     def test_download_dependency(self, mock_data_access):
-        dependency = UpstreamDataDependency("swapi", "l2", datetime(2024, 9, 17), datetime(2024, 9, 18), "v2",
-                                            "descriptor")
+        dependency = InputMetadata("swapi", "l2", datetime(2024, 9, 17), datetime(2024, 9, 18), "v2",
+                                   "descriptor")
         query_dictionary = [{'file_path': "imap_swapi_l2_descriptor-fake-menlo-444_20240917_v2.cdf",
                              'second_entry': '12345'}]
         mock_data_access.query.return_value = query_dictionary
@@ -236,8 +221,8 @@ class TestUtils(TestCase):
 
     @patch('imap_l3_processing.utils.imap_data_access')
     def test_download_dependency_with_repointing(self, mock_data_access):
-        dependency = UpstreamDataDependency("glows", "l2", datetime(2024, 9, 17), datetime(2024, 9, 18), "v002",
-                                            "hist")
+        dependency = InputMetadata("glows", "l2", datetime(2024, 9, 17), datetime(2024, 9, 18), "v002",
+                                   "hist")
         query_dictionary = [{'file_path': "imap_glows_l2_hist_20240917-repoint00001_v002.cdf",
                              'repointing': 1,
                              'third_entry': '12345'}]
@@ -257,8 +242,8 @@ class TestUtils(TestCase):
 
     @patch('imap_l3_processing.utils.imap_data_access')
     def test_download_dependency_with_repointing_throws_if_no_files_or_more_than_one_found(self, mock_data_access):
-        dependency = UpstreamDataDependency("glows", "l2", datetime(2024, 9, 17), datetime(2024, 9, 18), "v002",
-                                            "hist")
+        dependency = InputMetadata("glows", "l2", datetime(2024, 9, 17), datetime(2024, 9, 18), "v002",
+                                   "hist")
 
         for return_values in ([], [{'file_path': "a", 'repointing': ''}, {'file_path': "b", 'repointing': ''}]):
             with self.subTest(return_values):
@@ -292,8 +277,8 @@ class TestUtils(TestCase):
 
     @patch('imap_l3_processing.utils.imap_data_access')
     def test_download_dependency_throws_value_error_if_not_one_file_returned(self, mock_data_access):
-        dependency = UpstreamDataDependency("swapi", "l2", datetime(2024, 9, 17), datetime(2024, 9, 18), "v2",
-                                            "descriptor")
+        dependency = InputMetadata("swapi", "l2", datetime(2024, 9, 17), datetime(2024, 9, 18), "v2",
+                                   "descriptor")
         query_dictionary_more_than_one_file = [{'file_path': "imap_swapi_l2_descriptor-fake-menlo-444_20240917_v2.cdf",
                                                 'second_entry': '12345'}, {"file_path": "extra_value"}]
         query_dictionary_less_than_one_file = []

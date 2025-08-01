@@ -1,5 +1,6 @@
+from pathlib import Path
+
 import numpy as np
-from imap_data_access import upload
 
 from imap_l3_processing.lo.l3.lo_l3_spectral_fit_dependencies import LoL3SpectralFitDependencies
 from imap_l3_processing.maps.hilo_l3_survival_dependencies import HiLoL3SurvivalDependencies
@@ -15,7 +16,7 @@ from imap_l3_processing.utils import save_data
 
 
 class LoProcessor(Processor):
-    def process(self):
+    def process(self) -> list[Path]:
         set_of_parent_file_names = set(self.get_parent_file_names())
         descriptor = parse_map_descriptor(self.input_metadata.descriptor)
         match descriptor:
@@ -35,8 +36,7 @@ class LoProcessor(Processor):
                 raise NotImplementedError(self.input_metadata.descriptor)
 
         data_product.parent_file_names = sorted(set_of_parent_file_names)
-        cdf_file = save_data(data_product)
-        upload(cdf_file)
+        return [save_data(data_product)]
 
 
 def perform_spectral_fit(data: RectangularIntensityMapData) -> RectangularSpectralIndexMapData:

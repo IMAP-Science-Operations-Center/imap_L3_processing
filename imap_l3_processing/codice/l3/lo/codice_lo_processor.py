@@ -1,7 +1,6 @@
 from collections import namedtuple
 
 import numpy as np
-from imap_data_access import upload
 from imap_data_access.processing_input import ProcessingInputCollection
 
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_3d_distributions_dependencies import \
@@ -54,8 +53,7 @@ class CodiceLoProcessor(Processor):
                 f"Unknown data level and descriptor for CoDICE: {self.input_metadata.data_level}, {self.input_metadata.descriptor}")
 
         data_product.parent_file_names = self.get_parent_file_names()
-        saved_l3a_cdf = save_data(data_product)
-        upload(saved_l3a_cdf)
+        return [save_data(data_product)]
 
     def process_l3a_ratios(self, dependencies: CodiceLoL3aRatiosDependencies) -> CodiceLoL3aRatiosDataProduct:
         input_data = dependencies.partial_density_data

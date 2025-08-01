@@ -4,7 +4,7 @@ from unittest.mock import Mock, patch
 
 from imap_data_access.processing_input import ProcessingInputCollection, ScienceInput, AncillaryInput
 
-from imap_l3_processing.processor import Processor
+from imap_l3_processing.swapi.swapi_processor import SwapiProcessor
 
 
 class TestProcessor(unittest.TestCase):
@@ -17,7 +17,7 @@ class TestProcessor(unittest.TestCase):
         mock_spiceypy.kdata.side_effect = [['april/kernel_1', 'type', 'source', 'handle'],
                                            ['may/kernel_2', 'type', 'source', 'handle']]
 
-        processor = Processor(input_collection, Mock())
+        processor = SwapiProcessor(input_collection, Mock())
 
         expected_parent_file_names = [
             "imap_swapi_l2_science_20250417_v001.cdf",
@@ -36,7 +36,7 @@ class TestProcessor(unittest.TestCase):
         file_paths = [Path('path')]
         mock_spiceypy.ktotal.return_value = 0
 
-        processor = Processor(Mock(), Mock())
+        processor = SwapiProcessor(Mock(), Mock())
         actual_parent_file_names = processor.get_parent_file_names(file_paths)
 
         self.assertEqual(['path'], actual_parent_file_names)

@@ -59,9 +59,8 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
     @patch('imap_l3_processing.glows.glows_processor.GlowsL3ADependencies')
     @patch('imap_l3_processing.glows.glows_processor.L3aData')
     @patch('imap_l3_processing.glows.glows_processor.save_data')
-    @patch('imap_l3_processing.glows.glows_processor.imap_data_access.upload')
     @patch('imap_l3_processing.processor.spiceypy')
-    def test_processor_handles_l3a(self, mock_spiceypy, mock_upload, mock_save_data, mock_L3aData,
+    def test_processor_handles_l3a(self, mock_spiceypy, mock_save_data, mock_L3aData,
                                    mock_glows_dependencies_class, mock_glows_initializer):
         mock_spiceypy.ktotal.return_value = 0
         instrument = 'glows'
@@ -88,7 +87,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
         mock_processing_input_collection.get_file_paths.return_value = [parent_file_path]
 
         processor = GlowsProcessor(dependencies=mock_processing_input_collection, input_metadata=input_metadata)
-        processor.process()
+        products = processor.process()
 
         mock_glows_initializer.assert_not_called()
         mock_glows_dependencies_class.fetch_dependencies.assert_called_with(mock_processing_input_collection)
@@ -99,7 +98,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
         actual_data = mock_save_data.call_args.args[0]
         self.assertEqual(expected_parent_file_names, actual_data.parent_file_names)
         assert_dataclass_fields(expected_data_to_save, actual_data)
-        mock_upload.assert_called_with(mock_cdf_path)
+        self.assertEqual([mock_cdf_path], products)
 
     @patch('imap_l3_processing.glows.glows_processor.create_glows_l3a_from_dictionary')
     @patch('imap_l3_processing.glows.glows_processor.L3aData')
@@ -125,12 +124,11 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
                                                                  replace(input_metadata,
                                                                          descriptor=GLOWS_L3A_DESCRIPTOR))
 
-    @patch("imap_l3_processing.glows.glows_processor.imap_data_access")
     @patch("imap_l3_processing.glows.glows_processor.save_data")
     @patch("imap_l3_processing.glows.glows_processor.GlowsInitializer")
     def test_does_not_process_l3b_if_no_zip_files(self, mock_glows_initializer_class,
-                                                  mock_save_data,
-                                                  mock_imap_data_access):
+                                                  mock_save_data
+                                                  ):
 
         mock_glows_initializer_class.validate_and_initialize.return_value = []
 
@@ -141,12 +139,12 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
         mock_processing_input_collection = Mock()
 
         processor = GlowsProcessor(dependencies=mock_processing_input_collection, input_metadata=input_metadata)
-        processor.process()
+        products = processor.process()
 
         mock_glows_initializer_class.validate_and_initialize.assert_called_with(input_metadata.version,
                                                                                 mock_processing_input_collection)
         mock_save_data.assert_not_called()
-        mock_imap_data_access.upload.assert_not_called()
+        self.assertEqual([], products)
 
     def test_add_spin_angle_delta(self):
         cases = [
@@ -187,7 +185,6 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
 
     @patch("imap_l3_processing.processor.spiceypy")
     @patch("imap_l3_processing.glows.glows_processor.GlowsL3BCDependencies")
-    @patch("imap_l3_processing.glows.glows_processor.imap_data_access")
     @patch("imap_l3_processing.glows.glows_processor.save_data")
     @patch("imap_l3_processing.glows.glows_processor.GlowsInitializer")
     @patch('imap_l3_processing.glows.glows_processor.GlowsL3BIonizationRate')
@@ -195,7 +192,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
     @patch('imap_l3_processing.glows.glows_processor.filter_l3a_files')
     @patch('imap_l3_processing.glows.glows_processor.generate_l3bc')
     def test_process_l3bc(self, mock_generate_l3bc, mock_filter_bad_days, mock_l3c_model_class, mock_l3b_model_class,
-                          mock_glows_initializer_class, mock_save_data, mock_imap_data_access, mock_l3bc_dependencies,
+                          mock_glows_initializer_class, mock_save_data, mock_l3bc_dependencies,
                           mock_spiceypy):
         mock_spiceypy.ktotal.return_value = 1
         mock_spiceypy.kdata.return_value = ['kernel_1', 'type', 'source', 'handle']
@@ -252,7 +249,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
                                        'v02')
 
         processor = GlowsProcessor(dependencies=Mock(), input_metadata=input_metadata)
-        processor.process()
+        products = processor.process()
 
         mock_l3bc_dependencies.fetch_dependencies.assert_has_calls(
             [call(sentinel.zip_file_path_1), call(sentinel.zip_file_path_2)])
@@ -290,21 +287,20 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
         self.assertEqual(["file2", "path2.zip", "kernel_1"], l3b_model_2.parent_file_names)
         self.assertEqual(["file3", "path1.zip", "kernel_1", "l3b_file_1.cdf"], l3c_model_1.parent_file_names)
         self.assertEqual(["file4", "path2.zip", "kernel_1", "l3b_file_2.cdf"], l3c_model_2.parent_file_names)
-        mock_imap_data_access.upload.assert_has_calls([
-            call("path/to/l3b_file_1.cdf"),
-            call(sentinel.l3c_cdf_path_1),
-            call(sentinel.zip_file_path_1),
-            call("path/to/l3b_file_2.cdf"),
-            call(sentinel.l3c_cdf_path_2),
-            call(sentinel.zip_file_path_2),
-        ])
+        self.assertEqual([
+            "path/to/l3b_file_1.cdf",
+            sentinel.l3c_cdf_path_1,
+            sentinel.zip_file_path_1,
+            "path/to/l3b_file_2.cdf",
+            sentinel.l3c_cdf_path_2,
+            sentinel.zip_file_path_2,
+        ], products)
 
     @patch('imap_l3_processing.glows.glows_processor.save_data')
-    @patch("imap_l3_processing.glows.glows_processor.imap_data_access")
     @patch("imap_l3_processing.glows.glows_processor.GlowsInitializer")
     @patch("imap_l3_processing.glows.glows_processor.GlowsL3BCDependencies")
     def test_processor_catches_no_data_error_and_continues(self, mock_glows_l3bc_dependencies_class,
-                                                           mock_glows_initializer_class, mock_imap_data_access,
+                                                           mock_glows_initializer_class,
                                                            mock_save_data):
         mock_glows_initializer_class.validate_and_initialize.return_value = [sentinel.zip_file_1, sentinel.zip_file_2]
         bc_dependencies_1 = MagicMock(l3a_data=[])
@@ -329,7 +325,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
             CannotProcessCarringtonRotationError("All days for Carrington Rotation are in a bad season."),
             (mock_l3b, mock_l3c)
         ]
-        processor.process()
+        products = processor.process()
 
         self.assertEqual(2, mock_glows_l3bc_dependencies_class.fetch_dependencies.call_count)
         mock_glows_l3bc_dependencies_class.fetch_dependencies.assert_has_calls([
@@ -343,12 +339,12 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
             call(mock_l3c),
         ])
 
-        self.assertEqual(3, mock_imap_data_access.upload.call_count)
-        mock_imap_data_access.upload.assert_has_calls([
-            call(l3b_path),
-            call(l3c_path),
-            call(sentinel.zip_file_2)
-        ])
+        self.assertEqual(3, len(products))
+        self.assertEqual([
+            l3b_path,
+            l3c_path,
+            sentinel.zip_file_2
+        ], products)
 
     def test_process_l3bc_all_data_in_bad_season_throws_exception(self):
         cr = 2093
@@ -384,7 +380,6 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
     @patch('imap_l3_processing.hi.hi_processor.Processor.get_parent_file_names')
     @patch('imap_l3_processing.glows.glows_processor.determine_l3e_files_to_produce')
     @patch('imap_l3_processing.glows.glows_processor.save_data')
-    @patch('imap_l3_processing.glows.glows_processor.imap_data_access.upload')
     @patch("imap_l3_processing.glows.glows_processor.GlowsL3EUltraData.convert_dat_to_glows_l3e_ul_product")
     @patch("imap_l3_processing.glows.glows_processor.run")
     @patch("imap_l3_processing.glows.glows_processor.determine_call_args_for_l3e_executable")
@@ -393,7 +388,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
     @patch("imap_l3_processing.glows.glows_processor.shutil")
     def test_process_l3e_ultra(self, mock_shutil, mock_get_repoint_date_range, mock_l3e_dependencies,
                                mock_determine_call_args,
-                               mock_run, mock_convert_dat_to_glows_l3e_ul_product, mock_upload, mock_save_data,
+                               mock_run, mock_convert_dat_to_glows_l3e_ul_product, mock_save_data,
                                mock_determine_l3e_files_to_produce, mock_get_parent_file_names):
         mock_get_parent_file_names.return_value = ["l3d_file", "ancillary_1", "ancillary_2", "ancillary_3"]
         input_metadata = InputMetadata('glows', "l3e", datetime(2024, 10, 7, 10, 00, 00),
@@ -430,7 +425,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
                                       "imap_glows_l3e_survival-probability-ul_20241008-repoint00021_v001.cdf"]
 
         processor = GlowsProcessor(dependencies=dependencies, input_metadata=input_metadata)
-        processor.process()
+        products = processor.process()
 
         mock_l3e_dependencies.fetch_dependencies.assert_called_once_with(dependencies, input_metadata.descriptor)
 
@@ -476,17 +471,15 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
         self.assertEqual(["l3d_file", "ancillary_1", "ancillary_2", "ancillary_3"],
                          survival_data_product_2.parent_file_names)
 
-        mock_upload.assert_has_calls(
-            [call("imap_glows_l3e_survival-probability-ul_20241007-repoint00020_v001.cdf"),
-             call(Path(expected_first_data_path)),
-             call("imap_glows_l3e_survival-probability-ul_20241008-repoint00021_v001.cdf"),
-             call(Path(expected_second_data_path))])
+        self.assertEqual(products, ["imap_glows_l3e_survival-probability-ul_20241007-repoint00020_v001.cdf",
+                                    Path(expected_first_data_path),
+                                    "imap_glows_l3e_survival-probability-ul_20241008-repoint00021_v001.cdf",
+                                    Path(expected_second_data_path)])
 
         mock_get_repoint_date_range.assert_has_calls([call(20), call(21)])
 
     @patch('imap_l3_processing.hi.hi_processor.Processor.get_parent_file_names')
     @patch('imap_l3_processing.glows.glows_processor.determine_l3e_files_to_produce')
-    @patch('imap_l3_processing.glows.glows_processor.imap_data_access.upload')
     @patch('imap_l3_processing.glows.glows_processor.save_data')
     @patch("imap_l3_processing.glows.glows_processor.GlowsL3EHiData.convert_dat_to_glows_l3e_hi_product")
     @patch("imap_l3_processing.glows.glows_processor.run")
@@ -496,7 +489,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
     @patch("imap_l3_processing.glows.glows_processor.shutil")
     def test_process_l3e_hi(self, mock_shutil, mock_l3e_dependencies,
                             mock_get_repoint_date_range, mock_determine_call_args,
-                            mock_run, mock_convert_dat_to_glows_l3e_hi_product, mock_save_data, mock_upload,
+                            mock_run, mock_convert_dat_to_glows_l3e_hi_product, mock_save_data,
                             mock_determine_l3e_files_to_produce,
                             mock_get_parent_file_names):
         mock_get_parent_file_names.return_value = ["l3d_file", "ancillary_1", "ancillary_2", "ancillary_3"]
@@ -510,7 +503,6 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
                 mock_run.reset_mock()
                 mock_convert_dat_to_glows_l3e_hi_product.reset_mock()
                 mock_save_data.reset_mock()
-                mock_upload.reset_mock()
                 mock_determine_l3e_files_to_produce.reset_mock()
                 mock_shutil.reset_mock()
 
@@ -550,7 +542,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
                     f"imap_glows_l3e_survival-probability-hi{descriptor}_20241008-repoint00021_v001.cdf"]
 
                 processor = GlowsProcessor(dependencies=dependencies, input_metadata=input_metadata)
-                processor.process()
+                products = processor.process()
 
                 mock_l3e_dependencies.fetch_dependencies.assert_called_once_with(dependencies,
                                                                                  input_metadata.descriptor)
@@ -598,17 +590,16 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
                     call(Path(second_output_data_path), Path(expected_second_output_data_path)),
                 ])
 
-                mock_upload.assert_has_calls(
-                    [call(f"imap_glows_l3e_survival-probability-hi{descriptor}_20241007-repoint00020_v001.cdf"),
-                     call(Path(expected_first_output_data_path)),
-                     call(f"imap_glows_l3e_survival-probability-hi{descriptor}_20241008-repoint00021_v001.cdf"),
-                     call(Path(expected_second_output_data_path))])
+                self.assertEqual(
+                    [f"imap_glows_l3e_survival-probability-hi{descriptor}_20241007-repoint00020_v001.cdf",
+                     Path(expected_first_output_data_path),
+                     f"imap_glows_l3e_survival-probability-hi{descriptor}_20241008-repoint00021_v001.cdf",
+                     Path(expected_second_output_data_path)], products)
 
                 mock_get_repoint_date_range.assert_has_calls([call(20), call(21)])
 
     @patch('imap_l3_processing.glows.glows_processor.determine_l3e_files_to_produce')
     @patch('imap_l3_processing.hi.hi_processor.Processor.get_parent_file_names')
-    @patch('imap_l3_processing.glows.glows_processor.imap_data_access.upload')
     @patch('imap_l3_processing.glows.glows_processor.save_data')
     @patch("imap_l3_processing.glows.glows_processor.GlowsL3ELoData.convert_dat_to_glows_l3e_lo_product")
     @patch("imap_l3_processing.glows.glows_processor.run")
@@ -618,7 +609,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
     @patch("imap_l3_processing.glows.glows_processor.shutil")
     def test_process_l3e_lo(self, mock_shutil, mock_l3e_dependencies, mock_get_repoint_date_range,
                             mock_determine_call_args,
-                            mock_run, mock_convert_dat_to_glows_l3e_lo_product, mock_save_data, mock_upload,
+                            mock_run, mock_convert_dat_to_glows_l3e_lo_product, mock_save_data,
                             mock_get_parent_file_names, mock_determine_l3e_files_to_produce):
         mock_get_parent_file_names.return_value = ["l3d_file", "ancillary_1", "ancillary_2", "ancillary_3"]
         input_metadata = InputMetadata('glows', "l3e", datetime(2024, 10, 7, 10, 00, 00),
@@ -665,7 +656,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
                                       "imap_glows_l3e_survival-probability-lo_20241008-repoint00021_v001.cdf"]
 
         processor = GlowsProcessor(dependencies=dependencies, input_metadata=input_metadata)
-        processor.process()
+        products = processor.process()
 
         mock_l3e_dependencies.fetch_dependencies.assert_called_once_with(dependencies, input_metadata.descriptor)
 
@@ -717,15 +708,13 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
         self.assertEqual(["l3d_file", "ancillary_1", "ancillary_2", "ancillary_3"],
                          survival_data_product.parent_file_names)
 
-        mock_upload.assert_has_calls(
-            [call("imap_glows_l3e_survival-probability-lo_20241007-repoint00020_v001.cdf"),
-             call(Path(expected_first_output_file_path)),
-             call("imap_glows_l3e_survival-probability-lo_20241008-repoint00021_v001.cdf"),
-             call(Path(expected_second_output_file_path))])
+        self.assertEqual(["imap_glows_l3e_survival-probability-lo_20241007-repoint00020_v001.cdf",
+                          Path(expected_first_output_file_path),
+                          "imap_glows_l3e_survival-probability-lo_20241008-repoint00021_v001.cdf",
+                          Path(expected_second_output_file_path)], products)
 
     @patch('imap_l3_processing.glows.glows_processor.determine_l3e_files_to_produce')
     @patch('imap_l3_processing.hi.hi_processor.Processor.get_parent_file_names')
-    @patch('imap_l3_processing.glows.glows_processor.imap_data_access.upload')
     @patch('imap_l3_processing.glows.glows_processor.save_data')
     @patch("imap_l3_processing.glows.glows_processor.GlowsL3ELoData.convert_dat_to_glows_l3e_lo_product")
     @patch("imap_l3_processing.glows.glows_processor.run")
@@ -737,8 +726,8 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
                                                        mock_get_repoint_date_range,
                                                        mock_determine_call_args,
                                                        mock_run, mock_convert_dat_to_glows_l3e_lo_product,
-                                                       mock_save_data, mock_upload,
-                                                       mock_get_parent_file_names, mock_determine_l3e_files_to_produce):
+                                                       mock_save_data, mock_get_parent_file_names,
+                                                       mock_determine_l3e_files_to_produce):
         mock_get_parent_file_names.return_value = ["l3d_file", "ancillary_1", "ancillary_2", "ancillary_3"]
         input_metadata = InputMetadata('glows', "l3e", datetime(2024, 10, 7, 10, 00, 00),
                                        datetime(2024, 10, 8, 10, 00, 00),
@@ -785,7 +774,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
                                       expected_cdf_output]
 
         processor = GlowsProcessor(dependencies=dependencies, input_metadata=input_metadata)
-        processor.process()
+        products = processor.process()
 
         mock_l3e_dependencies.fetch_dependencies.assert_called_once_with(dependencies, input_metadata.descriptor)
 
@@ -833,7 +822,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
         self.assertEqual(["l3d_file", "ancillary_1", "ancillary_2", "ancillary_3"],
                          survival_data_product.parent_file_names)
 
-        mock_upload.assert_has_calls([call(expected_cdf_output), call(expected_second_output_dat_file)])
+        self.assertEqual(products, [expected_cdf_output, expected_second_output_dat_file])
 
     @patch('builtins.open', new_callable=mock_open, create=False)
     @patch('imap_l3_processing.glows.glows_processor.get_parent_file_names_from_l3d_json')
@@ -841,11 +830,10 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
     @patch('imap_l3_processing.glows.glows_processor.run')
     @patch('imap_l3_processing.glows.glows_processor.convert_json_to_l3d_data_product')
     @patch('imap_l3_processing.glows.glows_processor.GlowsL3DDependencies.fetch_dependencies')
-    @patch('imap_l3_processing.glows.glows_processor.imap_data_access.upload')
     @patch('imap_l3_processing.glows.glows_processor.save_data')
     @patch('imap_l3_processing.glows.glows_processor.set_version_on_txt_files')
     @patch('imap_l3_processing.glows.glows_processor.json')
-    def test_processor_handles_l3d(self, mock_json, mock_set_version_on_txt_files, mock_save_data, mock_upload,
+    def test_processor_handles_l3d(self, mock_json, mock_set_version_on_txt_files, mock_save_data,
                                    mock_fetch_dependencies, mock_convert_json_to_l3d,
                                    mock_run, mock_os, _, __):
 
@@ -883,7 +871,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
                                 CalledProcessError(cmd="", returncode=1, stderr=self.ran_out_of_l3b_exception)]
 
         processor = GlowsProcessor(processing_input_collection, input_metadata)
-        processor.process()
+        products = processor.process()
         mock_fetch_dependencies.assert_called_once_with(processing_input_collection)
         mock_save_data.assert_called_once_with(mock_convert_json_to_l3d.return_value, cr_number=expected_cr)
 
@@ -896,15 +884,15 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
                                                               'v001'
                                                               )
 
-        mock_upload.assert_has_calls([
-            call(mock_save_data.return_value),
-            call(PATH_TO_L3D_TOOLKIT / 'data_l3d_txt' / '2096_txt_file_1_v001'),
-            call(PATH_TO_L3D_TOOLKIT / 'data_l3d_txt' / '2096_txt_file_2_v001'),
-            call(PATH_TO_L3D_TOOLKIT / 'data_l3d_txt' / '2096_txt_file_3_v001'),
-            call(PATH_TO_L3D_TOOLKIT / 'data_l3d_txt' / '2096_txt_file_4_v001'),
-            call(PATH_TO_L3D_TOOLKIT / 'data_l3d_txt' / '2096_txt_file_5_v001'),
-            call(PATH_TO_L3D_TOOLKIT / 'data_l3d_txt' / '2096_txt_file_6_v001')
-        ])
+        self.assertEqual([
+            mock_save_data.return_value,
+            PATH_TO_L3D_TOOLKIT / 'data_l3d_txt' / '2096_txt_file_1_v001',
+            PATH_TO_L3D_TOOLKIT / 'data_l3d_txt' / '2096_txt_file_2_v001',
+            PATH_TO_L3D_TOOLKIT / 'data_l3d_txt' / '2096_txt_file_3_v001',
+            PATH_TO_L3D_TOOLKIT / 'data_l3d_txt' / '2096_txt_file_4_v001',
+            PATH_TO_L3D_TOOLKIT / 'data_l3d_txt' / '2096_txt_file_5_v001',
+            PATH_TO_L3D_TOOLKIT / 'data_l3d_txt' / '2096_txt_file_6_v001'
+        ], products)
 
     @patch('imap_l3_processing.glows.glows_processor.set_version_on_txt_files')
     @patch('builtins.open', new_callable=mock_open, create=False)
@@ -1164,9 +1152,8 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
     @patch('imap_l3_processing.glows.glows_processor.os')
     @patch('imap_l3_processing.glows.glows_processor.run')
     @patch('imap_l3_processing.glows.glows_processor.convert_json_to_l3d_data_product')
-    @patch('imap_l3_processing.glows.glows_processor.imap_data_access.upload')
     @patch('imap_l3_processing.glows.glows_processor.json')
-    def test_process_l3d_handles_unexpected_exception_from_science(self, mock_json, mock_upload,
+    def test_process_l3d_handles_unexpected_exception_from_science(self, mock_json,
                                                                    mock_convert_json_to_l3d,
                                                                    mock_run, mock_os, _, __, ___):
         ancillary_files = {
@@ -1233,19 +1220,16 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
         self.assertEqual(unexpected_exception, str(context.exception))
 
         mock_convert_json_to_l3d.assert_not_called()
-        mock_upload.assert_not_called()
 
     @patch('builtins.open', new_callable=mock_open, create=False)
     @patch('imap_l3_processing.glows.glows_processor.convert_json_to_l3d_data_product')
     @patch('imap_l3_processing.glows.glows_processor.get_parent_file_names_from_l3d_json')
     @patch('imap_l3_processing.glows.glows_processor.os')
     @patch('imap_l3_processing.glows.glows_processor.run')
-    @patch('imap_l3_processing.glows.glows_processor.imap_data_access.upload')
     @patch('imap_l3_processing.glows.glows_processor.save_data')
     @patch('imap_l3_processing.glows.glows_processor.json')
     @patch('imap_l3_processing.glows.glows_processor.GlowsL3DDependencies.fetch_dependencies')
     def test_process_l3d_does_not_save_if_nothing_processed(self, mock_fetch_dependencies, mock_json, mock_save_data,
-                                                            mock_upload,
                                                             mock_run, mock_os, _, __,
                                                             ___):
         processing_input_collection = Mock()
@@ -1268,14 +1252,13 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
         mock_fetch_dependencies.return_value = mock_deps
 
         processor = GlowsProcessor(processing_input_collection, input_metadata)
-        processor.process()
+        products = processor.process()
         mock_save_data.assert_not_called()
-        mock_upload.assert_not_called()
+        self.assertEqual([], products)
 
-    @patch("imap_l3_processing.glows.glows_processor.imap_data_access")
     @patch("imap_l3_processing.glows.l3d.glows_l3d_dependencies.download")
     @patch("imap_l3_processing.glows.l3d.glows_l3d_dependencies.query")
-    def test_process_glows_l3d_drift(self, mock_query, mock_download, mock_imap_data_access: Mock):
+    def test_process_glows_l3d_drift(self, mock_query, mock_download):
         expected_txt_filenames = ["imap_glows_l3d_e-dens_19470303-cr02096_v004.dat",
                                   "imap_glows_l3d_lya_19470303-cr02096_v004.dat",
                                   "imap_glows_l3d_p-dens_19470303-cr02096_v004.dat",
@@ -1320,14 +1303,13 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
         mock_query.side_effect = [[MagicMock(), MagicMock()], [MagicMock(), MagicMock()]]
 
         processor = GlowsProcessor(processing_input_collection, input_metadata)
-        processor.process()
+        products = processor.process()
 
-        self.assertEqual(7, mock_imap_data_access.upload.call_count)
+        self.assertEqual(7, len(products))
 
-        filenames = [call[0][0] for call in mock_imap_data_access.upload.call_args_list]
-        self.assertIn(str(TEMP_CDF_FOLDER_PATH / expected_cdf_filename), filenames)
+        self.assertIn(TEMP_CDF_FOLDER_PATH / expected_cdf_filename, products)
         for file in expected_txt_filenames:
-            self.assertIn(PATH_TO_L3D_TOOLKIT / "data_l3d_txt" / file, filenames)
+            self.assertIn(PATH_TO_L3D_TOOLKIT / "data_l3d_txt" / file, products)
 
         test_cases = [
             (expected_txt_filenames[0], "electron_density", 847, [1947.167990000000, -1, 1250.5],

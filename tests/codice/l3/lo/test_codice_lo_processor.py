@@ -36,14 +36,13 @@ class TestCodiceLoProcessor(unittest.TestCase):
         processor = CodiceLoProcessor(Mock(), Mock())
         self.assertIsInstance(processor, Processor)
 
-    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.upload')
     @patch(
         'imap_l3_processing.codice.l3.lo.codice_lo_processor.CodiceLoL3aPartialDensitiesDependencies.fetch_dependencies')
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.CodiceLoProcessor.process_l3a_partial_densities')
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.save_data')
     @patch('imap_l3_processing.processor.spiceypy')
     def test_process_partial_densities(self, mock_spiceypy, mock_save_data, mock_process_l3a_partial_densities,
-                                       mock_fetch_dependencies, mock_upload):
+                                       mock_fetch_dependencies):
         input_collection = MagicMock()
         input_collection.get_file_paths.return_value = [Path('path/to/parent_file_1'), Path('path/to/parent_file_2')]
         input_metadata = InputMetadata(instrument='codice',
@@ -54,9 +53,8 @@ class TestCodiceLoProcessor(unittest.TestCase):
                                        descriptor='lo-partial-densities')
         mock_spiceypy.ktotal.return_value = 0
 
-        mock_save_data.return_value = "file1"
         processor = CodiceLoProcessor(dependencies=input_collection, input_metadata=input_metadata)
-        processor.process()
+        product = processor.process()
 
         mock_fetch_dependencies.assert_called_once_with(processor.dependencies)
         mock_process_l3a_partial_densities.assert_called_once_with(mock_fetch_dependencies.return_value)
@@ -65,16 +63,15 @@ class TestCodiceLoProcessor(unittest.TestCase):
 
         self.assertEqual(['parent_file_1', 'parent_file_2'],
                          mock_process_l3a_partial_densities.return_value.parent_file_names)
-        mock_upload.assert_called_once_with("file1")
+        self.assertEqual([mock_save_data.return_value], product)
 
-    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.upload')
     @patch(
         'imap_l3_processing.codice.l3.lo.codice_lo_processor.CodiceLoL3aRatiosDependencies.fetch_dependencies')
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.CodiceLoProcessor.process_l3a_ratios')
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.save_data')
     @patch('imap_l3_processing.processor.spiceypy')
     def test_process_ratios(self, mock_spiceypy, mock_save_data, mock_process_l3a_ratios,
-                            mock_fetch_dependencies, mock_upload):
+                            mock_fetch_dependencies):
         input_collection = MagicMock()
         input_collection.get_file_paths.return_value = [Path('path/to/parent_file_1')]
         input_metadata = InputMetadata(instrument='codice',
@@ -85,9 +82,8 @@ class TestCodiceLoProcessor(unittest.TestCase):
                                        descriptor='lo-sw-ratios')
         mock_spiceypy.ktotal.return_value = 0
 
-        mock_save_data.return_value = "file1"
         processor = CodiceLoProcessor(dependencies=input_collection, input_metadata=input_metadata)
-        processor.process()
+        product = processor.process()
 
         mock_fetch_dependencies.assert_called_once_with(processor.dependencies)
         mock_process_l3a_ratios.assert_called_once_with(mock_fetch_dependencies.return_value)
@@ -96,16 +92,15 @@ class TestCodiceLoProcessor(unittest.TestCase):
 
         self.assertEqual(['parent_file_1'],
                          mock_process_l3a_ratios.return_value.parent_file_names)
-        mock_upload.assert_called_once_with("file1")
+        self.assertEqual([mock_save_data.return_value], product)
 
-    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.upload')
     @patch(
         'imap_l3_processing.codice.l3.lo.codice_lo_processor.CodiceLoL3aRatiosDependencies.fetch_dependencies')
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.CodiceLoProcessor.process_l3a_abundances')
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.save_data')
     @patch('imap_l3_processing.processor.spiceypy')
     def test_process_abundances(self, mock_spiceypy, mock_save_data, mock_process_l3a_abundances,
-                                mock_fetch_dependencies, mock_upload):
+                                mock_fetch_dependencies):
         input_collection = MagicMock()
         input_collection.get_file_paths.return_value = [Path('path/to/parent_file_1')]
         input_metadata = InputMetadata(instrument='codice',
@@ -116,9 +111,8 @@ class TestCodiceLoProcessor(unittest.TestCase):
                                        descriptor='lo-sw-abundances')
         mock_spiceypy.ktotal.return_value = 0
 
-        mock_save_data.return_value = "file1"
         processor = CodiceLoProcessor(dependencies=input_collection, input_metadata=input_metadata)
-        processor.process()
+        product = processor.process()
 
         mock_fetch_dependencies.assert_called_once_with(processor.dependencies)
         mock_process_l3a_abundances.assert_called_once_with(mock_fetch_dependencies.return_value)
@@ -127,7 +121,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
 
         self.assertEqual(['parent_file_1'],
                          mock_process_l3a_abundances.return_value.parent_file_names)
-        mock_upload.assert_called_once_with("file1")
+        self.assertEqual([mock_save_data.return_value], product)
 
     def test_process_ratios_calculate_abundance_ratios(self):
         now = datetime.now()
@@ -318,14 +312,13 @@ class TestCodiceLoProcessor(unittest.TestCase):
                                                  ]
                                              ))
 
-    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.upload')
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.CodiceLoL3aDirectEventsDependencies.fetch_dependencies')
     @patch(
         'imap_l3_processing.codice.l3.lo.codice_lo_processor.CodiceLoProcessor.process_l3a_direct_event_data_product')
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.save_data')
     @patch('imap_l3_processing.processor.spiceypy')
     def test_process_direct_events(self, mock_spiceypy, mock_save_data, mock_process_direct_event,
-                                   mock_fetch_dependencies, mock_upload):
+                                   mock_fetch_dependencies):
         input_collection = MagicMock()
         input_collection.get_file_paths.return_value = [Path('path/to/parent_file_1'), Path('path/to/parent_file_2')]
         input_metadata = InputMetadata(instrument='codice',
@@ -336,16 +329,15 @@ class TestCodiceLoProcessor(unittest.TestCase):
                                        descriptor='lo-direct-events')
         mock_spiceypy.ktotal.return_value = 0
 
-        mock_save_data.return_value = "file1"
         processor = CodiceLoProcessor(dependencies=input_collection, input_metadata=input_metadata)
-        processor.process()
+        product = processor.process()
 
         mock_fetch_dependencies.assert_called_once_with(processor.dependencies)
         mock_process_direct_event.assert_called_once_with(mock_fetch_dependencies.return_value)
 
         mock_save_data.assert_called_once_with(mock_process_direct_event.return_value)
 
-        mock_upload.assert_called_once_with("file1")
+        self.assertEqual([mock_save_data.return_value], product)
 
     def test_raises_exception_on_non_l3_input_metadata(self):
         input_metadata = InputMetadata('codice', "L2a", Mock(), Mock(), 'v02', "bad-descriptor")
@@ -714,21 +706,20 @@ class TestCodiceLoProcessor(unittest.TestCase):
         self.assertEqual(mock_rebin_to_elevation.return_value, l3a_direct_event_data_product.species_data)
         self.assertEqual(sentinel.species, l3a_direct_event_data_product.species)
 
-    def test_process_3d_distributions_save_and_upload_for_each_species(self):
+    def test_process_3d_distributions_save_for_each_species(self):
 
         for species in ["hplus", "heplus", "heplus2", "oplus6"]:
             with self.subTest(species=species):
-                self._test_process_3d_distributions_save_and_upload(species)
+                self._test_process_3d_distributions_save(species)
 
-    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.upload')
     @patch(
         'imap_l3_processing.codice.l3.lo.codice_lo_processor.CodiceLoL3a3dDistributionsDependencies.fetch_dependencies')
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.CodiceLoProcessor.process_l3a_3d_distribution_product')
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.save_data')
     @patch('imap_l3_processing.processor.spiceypy')
-    def _test_process_3d_distributions_save_and_upload(self, species, mock_spiceypy, mock_save_data,
-                                                       mock_process_l3a_3d_distribution_product,
-                                                       mock_fetch_dependencies, mock_upload):
+    def _test_process_3d_distributions_save(self, species, mock_spiceypy, mock_save_data,
+                                            mock_process_l3a_3d_distribution_product,
+                                            mock_fetch_dependencies):
         input_collection = MagicMock()
         input_collection.get_file_paths.return_value = [Path('path/to/parent_file_1'), Path('path/to/parent_file_2')]
         input_metadata = InputMetadata(instrument='codice',
@@ -739,9 +730,8 @@ class TestCodiceLoProcessor(unittest.TestCase):
                                        descriptor=f'lo-{species}-3d-distribution')
         mock_spiceypy.ktotal.return_value = 0
 
-        mock_save_data.return_value = "file1"
         processor = CodiceLoProcessor(dependencies=input_collection, input_metadata=input_metadata)
-        processor.process()
+        product = processor.process()
 
         mock_fetch_dependencies.assert_called_once_with(processor.dependencies, species)
         mock_process_l3a_3d_distribution_product.assert_called_once_with(mock_fetch_dependencies.return_value)
@@ -750,7 +740,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
 
         self.assertEqual(['parent_file_1', 'parent_file_2'],
                          mock_process_l3a_3d_distribution_product.return_value.parent_file_names)
-        mock_upload.assert_called_once_with("file1")
+        self.assertEqual([mock_save_data.return_value], product)
 
     def test_process_l3a_direct_events_all_fill_integration(self):
         input_collection = MagicMock()

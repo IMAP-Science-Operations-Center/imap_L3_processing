@@ -578,9 +578,7 @@ class TestMapModels(unittest.TestCase):
             np.testing.assert_array_equal(map_data.energy_delta_plus, np.full_like(cdf["energy_delta_plus"], np.nan))
             np.testing.assert_array_equal(map_data.energy_delta_minus, np.full_like(cdf["energy_delta_minus"], np.nan))
             np.testing.assert_array_equal(map_data.latitude, np.full_like(cdf["latitude"], np.nan))
-            np.testing.assert_array_equal(coords.latitude_delta, np.full_like(cdf["latitude_delta"], np.nan))
             np.testing.assert_array_equal(map_data.longitude, np.full_like(cdf["longitude"], np.nan))
-            np.testing.assert_array_equal(coords.longitude_delta, np.full_like(cdf["longitude_delta"], np.nan))
             np.testing.assert_array_equal(map_data.ena_intensity, np.full_like(cdf["ena_intensity"], np.nan))
             np.testing.assert_array_equal(map_data.ena_intensity_stat_unc,
                                           np.full_like(cdf["ena_intensity_stat_unc"], np.nan))

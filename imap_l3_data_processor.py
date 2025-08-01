@@ -53,9 +53,6 @@ def imap_l3_processor():
 
     # If the dependency argument was passed in as a json file, read it into a string
     if args.dependency.endswith(".json"):
-        logger.info(
-            f"Interpreting dependency argument as a JSON file: {args.dependency}"
-        )
         dependency_filepath = imap_data_access.download(args.dependency)
         with open(dependency_filepath) as f:
             args.dependency = f.read()
@@ -94,7 +91,10 @@ def imap_l3_processor():
         raise NotImplementedError(
             f'Level {args.data_level} data processing has not yet been implemented for {args.instrument}')
 
-    processor.process()
+    paths = processor.process()
+    if args.upload_to_sdc:
+        for path in paths:
+            imap_data_access.upload(path)
 
 
 def _furnish_spice_kernels(processing_input_collection):

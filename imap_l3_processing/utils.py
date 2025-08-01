@@ -21,7 +21,7 @@ from imap_l3_processing.version import VERSION
 
 
 def save_data(data: DataProduct, delete_if_present: bool = False, folder_path: Path = TEMP_CDF_FOLDER_PATH,
-              cr_number=None) -> str:
+              cr_number=None) -> Path:
     assert data.input_metadata.repointing is None or cr_number is None, "You cannot call save_data with both a repointing in the metadata while passing in a CR number"
     formatted_start_date = format_time(data.input_metadata.start_date)
     logical_source = data.input_metadata.logical_source
@@ -54,7 +54,7 @@ def save_data(data: DataProduct, delete_if_present: bool = False, folder_path: P
         attribute_manager.add_global_attribute("Parents", data.parent_file_names)
     file_path_str = str(file_path)
     write_cdf(file_path_str, data, attribute_manager)
-    return file_path_str
+    return file_path
 
 
 def format_time(t: Optional[datetime]) -> Optional[str]:

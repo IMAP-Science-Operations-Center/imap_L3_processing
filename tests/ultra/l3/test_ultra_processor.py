@@ -34,7 +34,6 @@ class TestUltraProcessor(unittest.TestCase):
 
     @patch('imap_l3_processing.ultra.l3.ultra_processor.HealPixIntensityMapData')
     @patch('imap_l3_processing.processor.spiceypy')
-    @patch('imap_l3_processing.ultra.l3.ultra_processor.upload')
     @patch('imap_l3_processing.ultra.l3.ultra_processor.save_data')
     @patch('imap_l3_processing.ultra.l3.ultra_processor.UltraSurvivalProbabilitySkyMap')
     @patch('imap_l3_processing.ultra.l3.ultra_processor.UltraSurvivalProbability')
@@ -43,7 +42,7 @@ class TestUltraProcessor(unittest.TestCase):
     def _test_process_survival_probability(self, degree_spacing, mock_fetch_dependencies,
                                            mock_combine_glows_l3e_with_l1c_pointing,
                                            mock_survival_probability_pointing_set, mock_survival_skymap,
-                                           mock_save_data, mock_upload, mock_spiceypy,
+                                           mock_save_data, mock_spiceypy,
                                            mock_healpix_intensity_map_data_class):
         healpix_intensity_map_data = mock_healpix_intensity_map_data_class.return_value
 
@@ -133,7 +132,7 @@ class TestUltraProcessor(unittest.TestCase):
         mock_healpix_skymap.to_rectangular_skymap.return_value = mock_rectangular_sky_map, 0
 
         processor = UltraProcessor(input_deps, input_metadata)
-        processor.process()
+        product = processor.process()
 
         mock_fetch_dependencies.assert_called_once_with(input_deps)
 
@@ -231,17 +230,16 @@ class TestUltraProcessor(unittest.TestCase):
         self.assertEqual((int(180 / degree_spacing),), actual_rectangular_data.coords.latitude_delta.shape)
         self.assertTrue(np.all(degree_spacing / 2 == actual_rectangular_data.coords.latitude_delta))
 
-        mock_upload.assert_called_once_with(mock_save_data.return_value)
+        self.assertEqual([mock_save_data.return_value], product)
 
     @patch('imap_l3_processing.processor.spiceypy')
-    @patch('imap_l3_processing.ultra.l3.ultra_processor.upload')
     @patch('imap_l3_processing.ultra.l3.ultra_processor.save_data')
     @patch('imap_l3_processing.ultra.l3.ultra_processor.calculate_spectral_index_for_multiple_ranges')
     @patch('imap_l3_processing.ultra.l3.ultra_processor.UltraL3SpectralIndexDependencies.fetch_dependencies')
     def _test_process_spectral_index(self, degree_spacing,
                                      mock_fetch_dependencies,
                                      mock_calculate_spectral_index, mock_save_data,
-                                     mock_upload, mock_spiceypy):
+                                     mock_spiceypy):
 
         mock_spiceypy.ktotal.return_value = 0
 
@@ -265,7 +263,7 @@ class TestUltraProcessor(unittest.TestCase):
         expected_parent_file_names = [map_file_name, energy_range_file_name]
 
         processor = UltraProcessor(input_deps, input_metadata)
-        processor.process()
+        product = processor.process()
 
         mock_save_data.assert_called_once()
         actual_rectangular_data_product = mock_save_data.call_args_list[0].args[0]
@@ -280,11 +278,10 @@ class TestUltraProcessor(unittest.TestCase):
         self.assertIs(mock_spectral_index_map_data, actual_rectangular_data.spectral_index_map_data)
         self.assertIs(input_map_data.coords, actual_rectangular_data.coords)
 
-        mock_upload.assert_called_once_with(mock_save_data.return_value)
-
         mock_fetch_dependencies.assert_called_once_with(input_deps)
         mock_calculate_spectral_index.assert_called_once_with(dependencies.map_data.intensity_map_data,
                                                               sentinel.energy_ranges)
+        self.assertEqual([mock_save_data.return_value], product)
 
     def test_process_raises_exception_when_generating_a_healpix_map(self):
         input_metadata = InputMetadata(instrument="ultra",
@@ -296,14 +293,12 @@ class TestUltraProcessor(unittest.TestCase):
 
         processor = UltraProcessor(ProcessingInputCollection(), input_metadata)
 
-        with self.assertRaises(NotImplementedError) as exc:
+        with self.assertRaises(NotImplementedError):
             processor.process()
 
-    @patch('imap_l3_processing.ultra.l3.ultra_processor.upload')
     @patch('imap_l3_processing.ultra.l3.ultra_processor.save_data')
     @patch('imap_l3_processing.ultra.l3.ultra_processor.UltraL3SpectralIndexDependencies.fetch_dependencies')
-    def test_process_spectral_index_validating_output_values(self, mock_fetch_dependencies, mock_save_data,
-                                                             _):
+    def test_process_spectral_index_validating_output_values(self, mock_fetch_dependencies, mock_save_data):
         input_metadata = InputMetadata(instrument="ultra",
                                        data_level="l3",
                                        start_date=datetime.now(),
@@ -319,12 +314,13 @@ class TestUltraProcessor(unittest.TestCase):
 
         processing_input_collection = ProcessingInputCollection()
         processor = UltraProcessor(processing_input_collection, input_metadata)
-        processor.process()
+        product = processor.process()
 
         actual_data_product: HealPixSpectralIndexDataProduct = mock_save_data.call_args[0][0]
 
         np.testing.assert_array_almost_equal(actual_data_product.data.spectral_index_map_data.ena_spectral_index,
                                              expected_ena_spectral_index)
+        self.assertEqual([mock_save_data.return_value], product)
 
 
 def _create_ultra_l2_data(epoch=None, lon=None, lat=None, energy=None, energy_delta=None, flux=None,

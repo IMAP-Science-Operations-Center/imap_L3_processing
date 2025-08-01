@@ -227,9 +227,9 @@ def _read_healpix_coords_from_xarray(dataset: xarray.Dataset) -> HealPixCoords:
 
 def _read_rectangular_coords_from_open_cdf(cdf: CDF) -> RectangularCoords:
     return RectangularCoords(
-        latitude_delta=read_numeric_variable(cdf["latitude_delta"]),
+        latitude_delta=cdf["latitude_delta"][...],
         latitude_label=cdf["latitude_label"][...],
-        longitude_delta=read_numeric_variable(cdf["longitude_delta"]),
+        longitude_delta=cdf["longitude_delta"][...],
         longitude_label=cdf["longitude_label"][...],
     )
 

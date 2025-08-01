@@ -1,7 +1,7 @@
 from collections import namedtuple
+from pathlib import Path
 
 import numpy as np
-from imap_data_access import upload
 from imap_data_access.processing_input import ProcessingInputCollection
 from numpy import ma
 
@@ -24,7 +24,7 @@ class CodiceHiProcessor(Processor):
     def __init__(self, dependencies: ProcessingInputCollection, input_metadata: InputMetadata):
         super().__init__(dependencies, input_metadata)
 
-    def process(self):
+    def process(self) -> list[Path]:
         if self.input_metadata.data_level == "l3a":
             dependencies = CodiceHiL3aDirectEventsDependencies.fetch_dependencies(self.dependencies)
             data_product = self.process_l3a_direct_event(dependencies)
@@ -34,8 +34,7 @@ class CodiceHiProcessor(Processor):
         else:
             raise NotImplementedError(f"Unknown data level for CoDICE: {self.input_metadata.data_level}")
 
-        saved_cdf = save_data(data_product)
-        upload(saved_cdf)
+        return [save_data(data_product)]
 
     def process_l3a_direct_event(self, dependencies: CodiceHiL3aDirectEventsDependencies) -> CodiceL3HiDirectEvents:
         tof_lookup = dependencies.tof_lookup

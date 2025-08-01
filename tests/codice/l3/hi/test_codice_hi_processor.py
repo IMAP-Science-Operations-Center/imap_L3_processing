@@ -20,44 +20,38 @@ class TestCodiceHiProcessor(unittest.TestCase):
     @patch("imap_l3_processing.codice.l3.hi.codice_hi_processor.CodiceHiL3aDirectEventsDependencies.fetch_dependencies")
     @patch("imap_l3_processing.codice.l3.hi.codice_hi_processor.CodiceHiProcessor.process_l3a_direct_event")
     @patch("imap_l3_processing.codice.l3.hi.codice_hi_processor.save_data")
-    @patch("imap_l3_processing.codice.l3.hi.codice_hi_processor.upload")
-    def test_process_l3a(self, mock_upload, mock_save_data, mock_process_l3a, mock_fetch_dependencies):
+    def test_process_l3a(self, mock_save_data, mock_process_l3a, mock_fetch_dependencies):
         start_date = datetime(2024, 10, 7, 10, 00, 00)
         end_date = datetime(2024, 10, 8, 10, 00, 00)
         input_metadata = InputMetadata('codice', "l3a", start_date, end_date, 'v02')
         mock_processed_direct_events = Mock()
         mock_process_l3a.return_value = mock_processed_direct_events
-        mock_expected_cdf = Mock()
-        mock_save_data.return_value = mock_expected_cdf
 
         processor = CodiceHiProcessor(sentinel.processing_input_collection, input_metadata)
-        processor.process()
+        product = processor.process()
 
         mock_fetch_dependencies.assert_called_with(sentinel.processing_input_collection)
         mock_process_l3a.assert_called_with(mock_fetch_dependencies.return_value)
         mock_save_data.assert_called_with(mock_processed_direct_events)
-        mock_upload.assert_called_with(mock_expected_cdf)
+        self.assertEqual([mock_save_data.return_value], product)
 
     @patch("imap_l3_processing.codice.l3.hi.codice_hi_processor.CodicePitchAngleDependencies.fetch_dependencies")
     @patch("imap_l3_processing.codice.l3.hi.codice_hi_processor.CodiceHiProcessor.process_l3b")
     @patch("imap_l3_processing.codice.l3.hi.codice_hi_processor.save_data")
-    @patch("imap_l3_processing.codice.l3.hi.codice_hi_processor.upload")
-    def test_process_l3b_saves_and_uploads(self, mock_upload, mock_save_data, mock_process_l3b,
-                                           mock_fetch_dependencies):
+    def test_process_l3b_saves(self, mock_save_data, mock_process_l3b,
+                               mock_fetch_dependencies):
         start_date = datetime(2024, 10, 7, 10, 00, 00)
         end_date = datetime(2024, 10, 8, 10, 00, 00)
         input_metadata = InputMetadata('codice', "l3b", start_date, end_date, 'v02')
         mock_process_l3b.return_value = sentinel.mock_processed_pitch_angles
-        mock_expected_cdf = Mock()
-        mock_save_data.return_value = mock_expected_cdf
 
         processor = CodiceHiProcessor(sentinel.processing_input_collection, input_metadata)
-        processor.process()
+        product = processor.process()
 
         mock_fetch_dependencies.assert_called_with(sentinel.processing_input_collection)
         mock_process_l3b.assert_called_with(mock_fetch_dependencies.return_value)
         mock_save_data.assert_called_with(sentinel.mock_processed_pitch_angles)
-        mock_upload.assert_called_with(mock_expected_cdf)
+        self.assertEqual([mock_save_data.return_value], product)
 
     def test_raises_exception_on_non_l3_input_metadata(self):
         input_metadata = InputMetadata('codice', "L2a", Mock(), Mock(), 'v02')

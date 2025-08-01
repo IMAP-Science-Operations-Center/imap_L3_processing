@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
-from imap_data_access import upload
 from imap_processing.spice import geometry
 
 from imap_l3_processing.maps.map_descriptors import MapDescriptorParts, MapQuantity, SurvivalCorrection, \
@@ -42,8 +41,7 @@ class UltraProcessor(Processor):
                 raise NotImplementedError
 
         data_product.add_filenames_to_parents(parent_file_names)
-        data_product_path = save_data(data_product)
-        upload(data_product_path)
+        return [save_data(data_product)]
 
     def _process_survival_probability(self, deps: UltraL3Dependencies) -> HealPixIntensityMapData:
         combined_psets = combine_glows_l3e_with_l1c_pointing(deps.glows_l3e_sp, deps.ultra_l1c_pset, )

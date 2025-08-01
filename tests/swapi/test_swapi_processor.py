@@ -23,13 +23,6 @@ from imap_l3_processing.swapi.swapi_processor import SwapiProcessor
 
 
 class TestSwapiProcessor(TestCase):
-    def setUp(self) -> None:
-        self.mock_imap_patcher = patch('imap_l3_processing.swapi.swapi_processor.imap_data_access')
-        self.mock_imap_api = self.mock_imap_patcher.start()
-
-    def tearDown(self) -> None:
-        self.mock_imap_patcher.stop()
-
     @patch('imap_l3_processing.utils.ImapAttributeManager')
     @patch('imap_l3_processing.swapi.swapi_processor.SwapiL3PickupIonData')
     @patch('imap_l3_processing.utils.write_cdf')
@@ -122,8 +115,7 @@ class TestSwapiProcessor(TestCase):
 
         input_metadata.descriptor = "pui-he"
 
-        expected_cdf_path = str(
-            TEMP_CDF_FOLDER_PATH / f"imap_swapi_l3a_pui-he_{start_date_as_str}_{input_version}.cdf")
+        expected_cdf_path = TEMP_CDF_FOLDER_PATH / f"imap_swapi_l3a_pui-he_{start_date_as_str}_{input_version}.cdf"
 
         mock_chunk_l2_data.side_effect = [
             [chunk_of_five],
@@ -136,7 +128,7 @@ class TestSwapiProcessor(TestCase):
 
         swapi_processor = SwapiProcessor(
             dependencies, input_metadata)
-        swapi_processor.process()
+        product = swapi_processor.process()
 
         actual_science_input = swapi_processor.dependencies.get_science_inputs()[0]
         self.assertEqual(actual_science_input.get_time_range()[0].strftime("%Y%m%d"), dependency_start_date)
@@ -205,8 +197,8 @@ class TestSwapiProcessor(TestCase):
         mock_manager.add_instrument_attrs.assert_called_once_with("swapi", "l3a", "pui-he")
 
         self.assertEqual(input_file_names, pickup_ion_data.parent_file_names)
-        mock_write_cdf.assert_called_once_with(expected_cdf_path, pickup_ion_data, mock_manager)
-        self.mock_imap_api.upload.assert_called_once_with(expected_cdf_path)
+        mock_write_cdf.assert_called_once_with(str(expected_cdf_path), pickup_ion_data, mock_manager)
+        self.assertEqual([expected_cdf_path], product)
 
     @patch('imap_l3_processing.utils.ImapAttributeManager')
     @patch('imap_l3_processing.swapi.swapi_processor.SwapiL3ProtonSolarWindData')
@@ -292,8 +284,7 @@ class TestSwapiProcessor(TestCase):
 
         input_metadata.descriptor = "proton-sw"
 
-        expected_cdf_path = str(
-            TEMP_CDF_FOLDER_PATH / f"imap_swapi_l3a_proton-sw_{start_date_as_str}_{input_version}.cdf")
+        expected_cdf_path = TEMP_CDF_FOLDER_PATH / f"imap_swapi_l3a_proton-sw_{start_date_as_str}_{input_version}.cdf"
 
         mock_chunk_l2_data.side_effect = [
             [chunk_of_five],
@@ -305,7 +296,7 @@ class TestSwapiProcessor(TestCase):
 
         swapi_processor = SwapiProcessor(
             dependencies, input_metadata)
-        swapi_processor.process()
+        product = swapi_processor.process()
 
         actual_science_input = swapi_processor.dependencies.get_science_inputs()[0]
         self.assertEqual(actual_science_input.get_time_range()[0].strftime("%Y%m%d"), dependency_start_date)
@@ -389,8 +380,8 @@ class TestSwapiProcessor(TestCase):
         mock_manager.add_instrument_attrs.assert_called_once_with("swapi", "l3a", "proton-sw")
 
         self.assertEqual(input_file_names, proton_solar_wind_data.parent_file_names)
-        mock_write_cdf.assert_called_once_with(expected_cdf_path, proton_solar_wind_data, mock_manager)
-        self.mock_imap_api.upload.assert_called_once_with(expected_cdf_path)
+        mock_write_cdf.assert_called_once_with(str(expected_cdf_path), proton_solar_wind_data, mock_manager)
+        self.assertEqual([expected_cdf_path], product)
 
     @patch('imap_l3_processing.utils.ImapAttributeManager')
     @patch('imap_l3_processing.swapi.swapi_processor.SwapiL3AlphaSolarWindData')
@@ -468,8 +459,7 @@ class TestSwapiProcessor(TestCase):
 
         input_metadata.descriptor = descriptor_to_generate
 
-        expected_cdf_path = str(
-            TEMP_CDF_FOLDER_PATH / f"imap_swapi_l3a_{descriptor_to_generate}_{start_date_as_str}_{input_version}.cdf")
+        expected_cdf_path = TEMP_CDF_FOLDER_PATH / f"imap_swapi_l3a_{descriptor_to_generate}_{start_date_as_str}_{input_version}.cdf"
 
         mock_chunk_l2_data.side_effect = [
             [chunk_of_five],
@@ -481,7 +471,7 @@ class TestSwapiProcessor(TestCase):
 
         swapi_processor = SwapiProcessor(
             dependencies, input_metadata)
-        swapi_processor.process()
+        product = swapi_processor.process()
 
         actual_science_input = swapi_processor.dependencies.get_science_inputs()[0]
         self.assertEqual(actual_science_input.get_time_range()[0].strftime("%Y%m%d"), dependency_start_date)
@@ -541,10 +531,9 @@ class TestSwapiProcessor(TestCase):
         mock_manager.add_instrument_attrs.assert_called_once_with("swapi", "l3a", descriptor_to_generate)
 
         self.assertEqual(input_file_names, expected_data_product.parent_file_names)
-        mock_write_cdf.assert_called_once_with(expected_cdf_path, expected_data_product, mock_manager)
-        self.mock_imap_api.upload.assert_called_once_with(expected_cdf_path)
+        mock_write_cdf.assert_called_once_with(str(expected_cdf_path), expected_data_product, mock_manager)
+        self.assertEqual([expected_cdf_path], product)
 
-    @patch('imap_l3_processing.swapi.swapi_processor.imap_data_access')
     @patch('imap_l3_processing.swapi.swapi_processor.calculate_delta_minus_plus')
     @patch('imap_l3_processing.swapi.swapi_processor.save_data')
     @patch('imap_l3_processing.swapi.swapi_processor.SwapiL3BCombinedVDF')
@@ -564,8 +553,7 @@ class TestSwapiProcessor(TestCase):
                          mock_chunk_l2_data,
                          mock_calculate_combined_sweeps, mock_combined_vdf_data,
                          mock_save_data,
-                         mock_calculate_delta_minus_plus,
-                         mock_imap_data_access):
+                         mock_calculate_delta_minus_plus):
         instrument = 'swapi'
         incoming_data_level = 'l2'
         end_date = datetime.now()
@@ -647,7 +635,7 @@ class TestSwapiProcessor(TestCase):
 
         swapi_processor = SwapiProcessor(
             dependencies, input_metadata)
-        swapi_processor.process()
+        product = swapi_processor.process()
 
         mock_swapi_l3b_dependencies_class.fetch_dependencies.assert_called_once_with(dependencies)
 
@@ -783,7 +771,7 @@ class TestSwapiProcessor(TestCase):
 
         self.assertEqual(input_file_names, mock_combined_vdf_data.return_value.parent_file_names)
         mock_save_data.assert_called_once_with(mock_combined_vdf_data.return_value)
-        mock_imap_data_access.upload.assert_called_with(mock_save_data.return_value)
+        self.assertEqual([mock_save_data.return_value], product)
 
     def assert_ufloat_equal(self, expected_ufloat, actual_ufloat):
         self.assertEqual(expected_ufloat.n, actual_ufloat.n)

@@ -8,7 +8,6 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from subprocess import run
 
-import imap_data_access
 import numpy as np
 from imap_data_access.processing_input import ProcessingInputCollection
 
@@ -48,10 +47,11 @@ class GlowsProcessor(Processor):
             self.input_metadata.repointing = l3a_dependencies.repointing
             l3a_output = self.process_l3a(l3a_dependencies)
             l3a_output.parent_file_names = self.get_parent_file_names()
-            proton_cdf = save_data(l3a_output)
-            imap_data_access.upload(proton_cdf)
+            cdf = save_data(l3a_output)
+            return [cdf]
         elif self.input_metadata.data_level == "l3b":
             zip_files = GlowsInitializer.validate_and_initialize(self.input_metadata.version, self.dependencies)
+            products = []
             for zip_file in zip_files:
                 dependencies = GlowsL3BCDependencies.fetch_dependencies(zip_file)
                 try:
@@ -62,17 +62,15 @@ class GlowsProcessor(Processor):
                 l3b_cdf = save_data(l3b_data_product)
                 l3c_data_product.parent_file_names.append(Path(l3b_cdf).name)
                 l3c_cdf = save_data(l3c_data_product)
-                imap_data_access.upload(l3b_cdf)
-                imap_data_access.upload(l3c_cdf)
-                imap_data_access.upload(zip_file)
+                products.extend([l3b_cdf, l3c_cdf, zip_file])
+            return products
         elif self.input_metadata.data_level == "l3d":
             l3d_dependencies = GlowsL3DDependencies.fetch_dependencies(self.dependencies)
             data_product, l3d_txt_paths, last_processed_cr = self.process_l3d(l3d_dependencies)
             if data_product is not None and l3d_txt_paths is not None and last_processed_cr is not None:
                 cdf = save_data(data_product, cr_number=last_processed_cr)
-                imap_data_access.upload(cdf)
-                for txt_path in l3d_txt_paths:
-                    imap_data_access.upload(txt_path)
+                return [cdf, *l3d_txt_paths]
+            return []
         elif self.input_metadata.data_level == "l3e":
             l3e_dependencies, cr_number = GlowsL3EDependencies.fetch_dependencies(self.dependencies,
                                                                                   self.input_metadata.descriptor)
@@ -82,6 +80,7 @@ class GlowsProcessor(Processor):
                                                          l3e_dependencies.pipeline_settings['start_cr'], cr_number,
                                                          self.input_metadata.version,
                                                          l3e_dependencies.repointing_file)
+            products = []
             for repointing in repointings:
                 self.input_metadata.repointing = repointing
                 try:
@@ -96,15 +95,16 @@ class GlowsProcessor(Processor):
                             elongation = l3e_dependencies.elongation[year_with_repointing]
                         except KeyError:
                             continue
-                        self.process_l3e_lo(epoch_dt, epoch_delta, elongation)
+                        products.extend(self.process_l3e_lo(epoch_dt, epoch_delta, elongation))
                     elif self.input_metadata.descriptor == "survival-probability-hi-45":
-                        self.process_l3e_hi(epoch_dt, epoch_delta, 135)
+                        products.extend(self.process_l3e_hi(epoch_dt, epoch_delta, 135))
                     elif self.input_metadata.descriptor == "survival-probability-hi-90":
-                        self.process_l3e_hi(epoch_dt, epoch_delta, 90)
+                        products.extend(self.process_l3e_hi(epoch_dt, epoch_delta, 90))
                     elif self.input_metadata.descriptor == "survival-probability-ul":
-                        self.process_l3e_ul(epoch_dt, epoch_delta)
+                        products.extend(self.process_l3e_ul(epoch_dt, epoch_delta))
                 except Exception as e:
                     print("Exception encountered for repointing ", repointing, e)
+            return products
 
     def process_l3a(self, dependencies: GlowsL3ADependencies) -> GlowsL3LightCurve:
         data = dependencies.data
@@ -187,7 +187,7 @@ class GlowsProcessor(Processor):
                                                     parent_file_names), txt_files_with_correct_version, last_processed_cr
         return None, None, None
 
-    def process_l3e_lo(self, epoch: datetime, epoch_delta: timedelta, elongation_value: int):
+    def process_l3e_lo(self, epoch: datetime, epoch_delta: timedelta, elongation_value: int) -> list[Path]:
         call_args_object = determine_call_args_for_l3e_executable(epoch, epoch + epoch_delta, elongation_value)
         call_args = call_args_object.to_argument_list()
 
@@ -206,10 +206,9 @@ class GlowsProcessor(Processor):
 
         shutil.move(output_path, new_dat_path)
 
-        imap_data_access.upload(lo_cdf)
-        imap_data_access.upload(new_dat_path)
+        return [lo_cdf, new_dat_path]
 
-    def process_l3e_hi(self, epoch: datetime, epoch_delta: timedelta, elongation: int):
+    def process_l3e_hi(self, epoch: datetime, epoch_delta: timedelta, elongation: int) -> list[Path]:
         call_args_object = determine_call_args_for_l3e_executable(epoch, epoch + epoch_delta, elongation)
         call_args = call_args_object.to_argument_list()
         run(["./survProbHi"] + call_args)
@@ -228,10 +227,9 @@ class GlowsProcessor(Processor):
 
         shutil.move(output_path, new_dat_path)
 
-        imap_data_access.upload(hi_cdf)
-        imap_data_access.upload(new_dat_path)
+        return [hi_cdf, new_dat_path]
 
-    def process_l3e_ul(self, epoch: datetime, epoch_delta: timedelta):
+    def process_l3e_ul(self, epoch: datetime, epoch_delta: timedelta) -> list[Path]:
         call_args_object = determine_call_args_for_l3e_executable(epoch, epoch + epoch_delta, 30)
         call_args = call_args_object.to_argument_list()
 
@@ -250,8 +248,8 @@ class GlowsProcessor(Processor):
             new_dat_path.name.split('_')[4:])[:-4] + '.dat')
 
         shutil.move(output_path, new_dat_path)
-        imap_data_access.upload(ul_cdf)
-        imap_data_access.upload(new_dat_path)
+
+        return [ul_cdf, new_dat_path]
 
     @staticmethod
     def add_spin_angle_delta(data: dict, ancillary_files: dict) -> dict:
