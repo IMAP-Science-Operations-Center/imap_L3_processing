@@ -4,11 +4,12 @@ from unittest import TestCase
 from unittest.mock import patch, sentinel, call
 
 import numpy as np
+from imap_data_access import config
 from imap_data_access.processing_input import ProcessingInputCollection, ScienceInput, AncillaryInput
 from uncertainties import ufloat
 from uncertainties.unumpy import uarray, nominal_values, std_devs
 
-from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH, THIRTY_SECONDS_IN_NANOSECONDS, \
+from imap_l3_processing.constants import THIRTY_SECONDS_IN_NANOSECONDS, \
     FIVE_MINUTES_IN_NANOSECONDS
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.swapi.descriptors import PROTON_TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR, \
@@ -50,8 +51,8 @@ class TestSwapiProcessor(TestCase):
         end_date = datetime.now()
         outgoing_data_level = "l3a"
         start_date = datetime.now() - timedelta(days=1)
-        input_version = "v12345"
-        outgoing_version = "12345"
+        input_version = "v123"
+        outgoing_version = "123"
         start_date_as_str = datetime.strftime(start_date, "%Y%m%d")
 
         mock_spicepy.ktotal.return_value = 0
@@ -115,7 +116,8 @@ class TestSwapiProcessor(TestCase):
 
         input_metadata.descriptor = "pui-he"
 
-        expected_cdf_path = TEMP_CDF_FOLDER_PATH / f"imap_swapi_l3a_pui-he_{start_date_as_str}_{input_version}.cdf"
+        expected_cdf_path = (config["DATA_DIR"] / "imap" / "swapi" / "l3a" / "2025" / "08" /
+                             f"imap_swapi_l3a_pui-he_{start_date_as_str}_{input_version}.cdf")
 
         mock_chunk_l2_data.side_effect = [
             [chunk_of_five],
@@ -225,8 +227,8 @@ class TestSwapiProcessor(TestCase):
         end_date = datetime.now()
         outgoing_data_level = "l3a"
         start_date = datetime.now() - timedelta(days=1)
-        input_version = "v12345"
-        outgoing_version = "12345"
+        input_version = "v123"
+        outgoing_version = "123"
         start_date_as_str = datetime.strftime(start_date, "%Y%m%d")
 
         mock_spicepy.ktotal.return_value = 0
@@ -284,7 +286,8 @@ class TestSwapiProcessor(TestCase):
 
         input_metadata.descriptor = "proton-sw"
 
-        expected_cdf_path = TEMP_CDF_FOLDER_PATH / f"imap_swapi_l3a_proton-sw_{start_date_as_str}_{input_version}.cdf"
+        expected_cdf_path = (config["DATA_DIR"] / "imap" / "swapi" / "l3a" / "2025" / "08" /
+                             f"imap_swapi_l3a_proton-sw_{start_date_as_str}_{input_version}.cdf")
 
         mock_chunk_l2_data.side_effect = [
             [chunk_of_five],
@@ -406,8 +409,8 @@ class TestSwapiProcessor(TestCase):
         end_date = datetime.now()
         outgoing_data_level = "l3a"
         start_date = datetime.now() - timedelta(days=1)
-        input_version = "v12345"
-        outgoing_version = "12345"
+        input_version = "v123"
+        outgoing_version = "123"
         start_date_as_str = datetime.strftime(start_date, "%Y%m%d")
 
         mock_spicepy.ktotal.return_value = 0
@@ -459,7 +462,8 @@ class TestSwapiProcessor(TestCase):
 
         input_metadata.descriptor = descriptor_to_generate
 
-        expected_cdf_path = TEMP_CDF_FOLDER_PATH / f"imap_swapi_l3a_{descriptor_to_generate}_{start_date_as_str}_{input_version}.cdf"
+        expected_cdf_path = (config["DATA_DIR"] / "imap" / "swapi" / "l3a" / "2025" / "08" /
+                             f"imap_swapi_l3a_{descriptor_to_generate}_{start_date_as_str}_{input_version}.cdf")
 
         mock_chunk_l2_data.side_effect = [
             [chunk_of_five],

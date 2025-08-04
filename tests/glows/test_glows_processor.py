@@ -12,10 +12,10 @@ from subprocess import CalledProcessError, CompletedProcess
 from unittest.mock import patch, Mock, sentinel, call, mock_open, MagicMock
 
 import numpy as np
+from imap_data_access import config
 from imap_data_access.processing_input import ProcessingInputCollection, ScienceInput, AncillaryInput
 from spacepy.pycdf import CDF
 
-from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
 from imap_l3_processing.glows import l3d
 from imap_l3_processing.glows.descriptors import GLOWS_L3A_DESCRIPTOR
 from imap_l3_processing.glows.glows_processor import GlowsProcessor
@@ -1267,8 +1267,9 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
                                   "imap_glows_l3d_uv-anis_19470303-cr02096_v004.dat"]
         expected_cdf_filename = "imap_glows_l3d_solar-hist_19470303-cr02096_v004.cdf"
 
-        if os.path.exists(TEMP_CDF_FOLDER_PATH / expected_cdf_filename): os.remove(
-            TEMP_CDF_FOLDER_PATH / expected_cdf_filename)
+        glows_output_file_path = config["DATA_DIR"] / "imap" / "glows" / "l3d" / "1947" / "03"
+        if os.path.exists(glows_output_file_path / expected_cdf_filename): os.remove(
+            glows_output_file_path / expected_cdf_filename)
 
         input_metadata = InputMetadata("glows", "l3d", datetime(2010, 1, 1), datetime(2010, 1, 2), version="v004",
                                        descriptor="solar-hist")
@@ -1307,7 +1308,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
 
         self.assertEqual(7, len(products))
 
-        self.assertIn(TEMP_CDF_FOLDER_PATH / expected_cdf_filename, products)
+        self.assertIn(glows_output_file_path / expected_cdf_filename, products)
         for file in expected_txt_filenames:
             self.assertIn(PATH_TO_L3D_TOOLKIT / "data_l3d_txt" / file, products)
 
@@ -1337,7 +1338,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
              [2.01034307e+03, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2.09650000e+03, 1.00000000e+03]),
         ]
 
-        with CDF(str(TEMP_CDF_FOLDER_PATH / expected_cdf_filename)) as actual_cdf:
+        with CDF(str(glows_output_file_path / expected_cdf_filename)) as actual_cdf:
             for filename, cdf_var_name, length_of_data, first_line, last_line in test_cases:
                 with self.subTest(msg=filename):
                     actual = np.loadtxt(PATH_TO_L3D_TOOLKIT / "data_l3d_txt" / filename)

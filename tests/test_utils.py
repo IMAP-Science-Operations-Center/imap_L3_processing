@@ -6,6 +6,7 @@ from unittest.mock import patch, call, Mock, sentinel
 from urllib.error import URLError
 
 import numpy as np
+from imap_data_access import config
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
@@ -33,11 +34,12 @@ class TestUtils(TestCase):
     @patch("imap_l3_processing.utils.ImapAttributeManager")
     @patch("imap_l3_processing.utils.date")
     @patch("imap_l3_processing.utils.write_cdf")
-    def test_save_data(self, mock_write_cdf, mock_today, mock_attribute_manager):
+    @patch("imap_l3_processing.utils.ScienceFilePath")
+    def test_save_data(self, mock_science_file_path_class, mock_write_cdf, mock_today, mock_attribute_manager):
         mock_today.today.return_value = date(2024, 9, 16)
 
-        input_metadata = InputMetadata("swapi", "l2", datetime(2024, 9, 17), datetime(2024, 9, 18), "v2",
-                                       "descriptor")
+        input_metadata = InputMetadata("swapi", "l2", datetime(2024, 9, 17), datetime(2024, 9, 18), "v002",
+                                       "descriptor", repointing=None)
         epoch = np.array([1, 2, 3])
         alpha_sw_speed = np.array([4, 5, 6])
         alpha_sw_density = np.array([5, 5, 5])
@@ -48,18 +50,34 @@ class TestUtils(TestCase):
                                                  alpha_sw_temperature=alpha_sw_temperature,
                                                  alpha_sw_density=alpha_sw_density,
                                                  parent_file_names=sentinel.parent_files)
-        returned_file_path = save_data(data_product)
 
-        mock_write_cdf.assert_called_once_with(str(returned_file_path), data_product,
+        mock_science_file_path = Mock()
+        mock_science_file_path_class.generate_from_inputs.return_value = mock_science_file_path
+
+        expected_file_path = mock_science_file_path.construct_path.return_value
+
+        returned_file_path = save_data(data_product, cr_number=sentinel.cr)
+
+        mock_science_file_path_class.generate_from_inputs.assert_called_once_with(
+            instrument="swapi",
+            data_level="l2",
+            descriptor="descriptor",
+            start_time="20240917",
+            version="v002",
+            repointing=None,
+            cr=sentinel.cr
+        )
+
+        mock_science_file_path.construct_path.assert_called_once()
+
+        mock_write_cdf.assert_called_once_with(str(expected_file_path), data_product,
                                                mock_attribute_manager.return_value)
 
-        expected_file_path = TEMP_CDF_FOLDER_PATH / "imap_swapi_l2_descriptor_20240917_v2.cdf"
-
         mock_attribute_manager.return_value.add_global_attribute.assert_has_calls([
-            call("Data_version", "2"),
+            call("Data_version", "002"),
             call("Generation_date", "20240916"),
             call("Logical_source", "imap_swapi_l2_descriptor"),
-            call("Logical_file_id", "imap_swapi_l2_descriptor_20240917_v2"),
+            call("Logical_file_id", expected_file_path.stem),
             call("ground_software_version", VERSION),
             call("Parents", sentinel.parent_files),
         ])
@@ -84,15 +102,16 @@ class TestUtils(TestCase):
         mock_write_cdf.assert_called_once_with(str(returned_file_path), data_product,
                                                mock_attribute_manager.return_value)
 
-        expected_file_path = TEMP_CDF_FOLDER_PATH / f"imap_instrument_data-level_descriptor_20250510-repoint0000{expected_repointing}_v003.cdf"
+        expected_file_path = (config["DATA_DIR"] / "imap" / "glows" / "l3" / "2025" / "05" /
+                              f"imap_glows_l3_descriptor_20250510-repoint0000{expected_repointing}_v003.cdf")
         self.assertEqual(expected_file_path, returned_file_path)
 
         mock_attribute_manager.return_value.add_global_attribute.assert_has_calls([
             call("Data_version", "003"),
             call("Generation_date", "20240916"),
-            call("Logical_source", "imap_instrument_data-level_descriptor"),
+            call("Logical_source", "imap_glows_l3_descriptor"),
             call("Logical_file_id",
-                 f"imap_instrument_data-level_descriptor_20250510-repoint0000{expected_repointing}_v003")
+                 f"imap_glows_l3_descriptor_20250510-repoint0000{expected_repointing}_v003")
         ])
 
     @patch("imap_l3_processing.utils.ImapAttributeManager")
@@ -106,15 +125,16 @@ class TestUtils(TestCase):
         data_product.input_metadata.repointing = None
         returned_file_path = save_data(data_product, cr_number=expected_cr)
 
-        expected_file_path = TEMP_CDF_FOLDER_PATH / f"imap_instrument_data-level_descriptor_20250510-cr0000{expected_cr}_v003.cdf"
+        expected_file_path = (config["DATA_DIR"] / "imap" / "glows" / "l3" / "2025" / "05" /
+                              f"imap_glows_l3_descriptor_20250510-cr0000{expected_cr}_v003.cdf")
         self.assertEqual(expected_file_path, returned_file_path)
 
         mock_attribute_manager.return_value.add_global_attribute.assert_has_calls([
             call("Data_version", "003"),
             call("Generation_date", "20240916"),
-            call("Logical_source", "imap_instrument_data-level_descriptor"),
+            call("Logical_source", "imap_glows_l3_descriptor"),
             call("Logical_file_id",
-                 f"imap_instrument_data-level_descriptor_20250510-cr0000{expected_cr}_v003")
+                 f"imap_glows_l3_descriptor_20250510-cr0000{expected_cr}_v003")
         ])
 
     @patch("imap_l3_processing.utils.ImapAttributeManager")
@@ -138,7 +158,7 @@ class TestUtils(TestCase):
     def test_save_data_does_not_add_parent_attribute_if_empty(self, mock_write_cdf, mock_today, _):
         mock_today.today.return_value = date(2024, 9, 16)
 
-        input_metadata = InputMetadata("swapi", "l2", datetime(2024, 9, 17), datetime(2024, 9, 18), "v2",
+        input_metadata = InputMetadata("swapi", "l2", datetime(2024, 9, 17), datetime(2024, 9, 18), "v002",
                                        "descriptor")
         epoch = np.array([1, 2, 3])
         alpha_sw_speed = np.array([4, 5, 6])
@@ -155,10 +175,10 @@ class TestUtils(TestCase):
         actual_attribute_manager = mock_write_cdf.call_args.args[2]
 
         self.assertEqual([
-            call("Data_version", "2"),
+            call("Data_version", "002"),
             call("Generation_date", "20240916"),
             call("Logical_source", "imap_swapi_l2_descriptor"),
-            call("Logical_file_id", "imap_swapi_l2_descriptor_20240917_v2"),
+            call("Logical_file_id", "imap_swapi_l2_descriptor_20240917_v002"),
             call("ground_software_version", VERSION)
         ], actual_attribute_manager.add_global_attribute.call_args_list)
 
@@ -168,7 +188,7 @@ class TestUtils(TestCase):
     def test_save_data_custom_path(self, mock_write_cdf, mock_today, _):
         mock_today.today.return_value = date(2024, 9, 16)
 
-        input_metadata = InputMetadata("swapi", "l2", datetime(2024, 9, 17), datetime(2024, 9, 18), "v2",
+        input_metadata = InputMetadata("swapi", "l2", datetime(2024, 9, 17), datetime(2024, 9, 18), "v002",
                                        "descriptor")
         epoch = np.array([1, 2, 3])
         alpha_sw_speed = np.array([4, 5, 6])
@@ -186,7 +206,7 @@ class TestUtils(TestCase):
         mock_write_cdf.assert_called_once()
         actual_file_path = mock_write_cdf.call_args.args[0]
 
-        expected_file_path = custom_path / "imap_swapi_l2_descriptor_20240917_v2.cdf"
+        expected_file_path = custom_path / "imap_swapi_l2_descriptor_20240917_v002.cdf"
         self.assertEqual(str(expected_file_path), actual_file_path)
 
         self.assertEqual(expected_file_path, returned_file_path)

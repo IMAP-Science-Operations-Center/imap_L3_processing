@@ -13,32 +13,34 @@ from spacepy.pycdf import CDF
 import imap_l3_processing
 from imap_l3_processing.cdf.cdf_utils import write_cdf, read_numeric_variable
 from imap_l3_processing.cdf.imap_attribute_manager import ImapAttributeManager
-from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
 from imap_l3_processing.maps.map_models import GlowsL3eRectangularMapInputData, InputRectangularPointingSet
 from imap_l3_processing.models import UpstreamDataDependency, DataProduct, MagL1dData
 from imap_l3_processing.ultra.l3.models import UltraL1CPSet, UltraGlowsL3eData
 from imap_l3_processing.version import VERSION
 
 
-def save_data(data: DataProduct, delete_if_present: bool = False, folder_path: Path = TEMP_CDF_FOLDER_PATH,
+def save_data(data: DataProduct, delete_if_present: bool = False, folder_path: Path = None,
               cr_number=None) -> Path:
     assert data.input_metadata.repointing is None or cr_number is None, "You cannot call save_data with both a repointing in the metadata while passing in a CR number"
-    formatted_start_date = format_time(data.input_metadata.start_date)
-    logical_source = data.input_metadata.logical_source
-    if data.input_metadata.repointing is not None:
-        repointing = f"-repoint{str(data.input_metadata.repointing).zfill(5)}"
-    else:
-        repointing = ''
+    formatted_start_date = data.input_metadata.start_date.strftime("%Y%m%d")
+    science_file_path = ScienceFilePath.generate_from_inputs(
+        instrument=data.input_metadata.instrument,
+        data_level=data.input_metadata.data_level,
+        descriptor=data.input_metadata.descriptor,
+        start_time=formatted_start_date,
+        repointing=data.input_metadata.repointing,
+        cr=cr_number,
+        version=data.input_metadata.version,
+    )
 
-    if cr_number is not None:
-        cr = f"-cr{str(cr_number).zfill(5)}"
-    else:
-        cr = ''
+    file_path = science_file_path.construct_path()
+    if folder_path is not None:
+        file_path = folder_path / file_path.name
 
-    logical_file_id = f'{logical_source}_{formatted_start_date}{repointing}{cr}_{data.input_metadata.version}'
-    folder_path.mkdir(exist_ok=True)
-    file_path = folder_path / f"{logical_file_id}.cdf"
+    logical_source = f"imap_{data.input_metadata.instrument}_{data.input_metadata.data_level}_{data.input_metadata.descriptor}"
+    logical_file_id = file_path.stem
 
+    file_path.parent.mkdir(parents=True, exist_ok=True)
     if delete_if_present:
         file_path.unlink(missing_ok=True)
 

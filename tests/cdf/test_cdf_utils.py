@@ -31,7 +31,7 @@ class TestCdfUtils(TempFileTestCase):
 
         write_cdf(path, data, attribute_manager)
 
-        expected_data_product_logical_source = "imap_instrument_data-level_descriptor"
+        expected_data_product_logical_source = "imap_glows_l3_descriptor"
         attribute_manager.get_global_attributes.assert_called_once_with(expected_data_product_logical_source)
         attribute_manager.get_variable_attributes.assert_has_calls(
             [call(var.name) for var in data.to_data_product_variables()]
@@ -86,13 +86,13 @@ class TestCdfUtils(TempFileTestCase):
         attribute_manager.get_global_attributes.side_effect = [KeyError("Logical Source Not Found"),
                                                                {"global1": "global_val1", "global2": "global_val2"}]
         attribute_manager.get_variable_attributes.return_value = {"DATA_TYPE": "CDF_REAL4", "RECORD_VARYING": "NRV"}
-        expected_data_product_logical_source = "imap_instrument_data-level_descriptor-10100"
+        expected_data_product_logical_source = "imap_glows_l3_descriptor-10100"
         data.input_metadata.descriptor = "descriptor-10100"
 
         write_cdf(path, data, attribute_manager)
 
         attribute_manager.get_global_attributes.assert_has_calls(
-            [call(expected_data_product_logical_source), call("imap_instrument_data-level_descriptor-")])
+            [call(expected_data_product_logical_source), call("imap_glows_l3_descriptor-")])
 
         with pycdf.CDF(path) as actual_cdf:
             self.assertTrue(actual_cdf.col_major())
@@ -199,7 +199,7 @@ class TestCdfUtils(TempFileTestCase):
 
 class TestDataProduct(DataProduct):
     def __init__(self):
-        self.input_metadata = InputMetadata("instrument", "data-level", datetime(year=2025, month=5, day=10),
+        self.input_metadata = InputMetadata("glows", "l3", datetime(year=2025, month=5, day=10),
                                             datetime(year=2025, month=5, day=12), "v003", "descriptor")
         self.parent_file_names = []
 
