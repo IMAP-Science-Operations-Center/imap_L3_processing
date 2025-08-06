@@ -94,7 +94,10 @@ def imap_l3_processor():
     paths = processor.process()
     if args.upload_to_sdc:
         for path in paths:
-            imap_data_access.upload(path)
+            try:
+                imap_data_access.upload(path)
+            except:
+                print(f"Failed to upload {path}, continuing")
 
 
 def _furnish_spice_kernels(processing_input_collection):

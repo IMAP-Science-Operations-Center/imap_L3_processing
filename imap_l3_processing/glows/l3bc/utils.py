@@ -68,7 +68,7 @@ def read_glows_l3a_data(cdf: CDF) -> GlowsL3LightCurve:
 
 
 def find_unprocessed_carrington_rotations(l3a_inputs: list[dict], l3b_inputs: list[dict],
-                                          dependencies: GlowsInitializerAncillaryDependencies) -> [CRToProcess]:
+                                          dependencies: GlowsInitializerAncillaryDependencies) -> list[CRToProcess]:
     l3bs_carringtons: set = set()
     for l3b in l3b_inputs:
         current_date = get_astropy_time_from_yyyymmdd(l3b["start_date"]) + TimeDelta(1, format='jd')

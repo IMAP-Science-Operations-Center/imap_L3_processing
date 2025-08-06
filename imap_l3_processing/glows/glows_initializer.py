@@ -17,17 +17,20 @@ class GlowsInitializer:
             return []
         input_l3a_version = processing_input_collection.get_science_inputs('glows')[0].imap_file_paths[0].version
 
-        l3a_files = query(instrument="glows", descriptor="hist", version=input_l3a_version, data_level="l3a")
-        l3b_files = query(instrument="glows", descriptor='ion-rate-profile', version=version, data_level="l3b")
-
+        l3a_files = query(instrument="glows", descriptor="hist", version="latest", data_level="l3a")
+        l3b_files = []#query(instrument="glows", descriptor='ion-rate-profile', version=version, data_level="l3b")
+        print("l3 files", [f["file_path"] for f in l3a_files])
         crs_to_process = find_unprocessed_carrington_rotations(l3a_files, l3b_files, glows_ancillary_dependencies)
 
         zip_file_paths = []
+        print("making zips for crs: ", [ cr.cr_rotation_number for cr in crs_to_process ])
 
         for cr_to_process in crs_to_process:
+            print("making zip cr", cr_to_process.cr_rotation_number)
+            version = get_next_l3b_version(cr_to_process.cr_start_date)
             path = archive_dependencies(cr_to_process, version, glows_ancillary_dependencies)
             zip_file_paths.append(path)
-
+        print("done making zips")
         return zip_file_paths
 
 
@@ -36,3 +39,13 @@ def _should_process(glows_l3b_dependencies: GlowsInitializerAncillaryDependencie
         if getattr(glows_l3b_dependencies, field.name) is None:
             return False
     return True
+
+
+def get_next_l3b_version(start_date: str) -> str:
+    date_str = start_date.strftime("%Y%m%d")
+    earlier_l3b = query(instrument="glows", version="latest", data_level="l3b", start_date=date_str, end_date=date_str)
+    if len(earlier_l3b) > 0:
+        last_version = int(earlier_l3b[0]["version"][1:])
+    else:
+        last_version = 0
+    return f"v{last_version+1:03}"

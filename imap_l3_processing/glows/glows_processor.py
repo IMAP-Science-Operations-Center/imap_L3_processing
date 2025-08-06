@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -8,6 +9,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from subprocess import run
 
+import imap_data_access
 import numpy as np
 from imap_data_access.processing_input import ProcessingInputCollection
 
@@ -53,16 +55,22 @@ class GlowsProcessor(Processor):
             zip_files = GlowsInitializer.validate_and_initialize(self.input_metadata.version, self.dependencies)
             products = []
             for zip_file in zip_files:
+                print("processing zip", zip_file.name)
                 dependencies = GlowsL3BCDependencies.fetch_dependencies(zip_file)
                 try:
                     l3b_data_product, l3c_data_product = self.process_l3bc(dependencies)
                 except CannotProcessCarringtonRotationError as e:
                     print(f"skipping CR {dependencies.carrington_rotation_number}:", e)
                     continue
+                version = re.search(r'(v\d\d\d).zip$', zip_file.name).group(1)
+                l3b_data_product.input_metadata.version = version
+                l3c_data_product.input_metadata.version = version
                 l3b_cdf = save_data(l3b_data_product)
                 l3c_data_product.parent_file_names.append(Path(l3b_cdf).name)
                 l3c_cdf = save_data(l3c_data_product)
+                print("version:  ", version)
                 products.extend([l3b_cdf, l3c_cdf, zip_file])
+                print("products: ", [l3b_cdf, l3c_cdf, zip_file])
             return products
         elif self.input_metadata.data_level == "l3d":
             l3d_dependencies = GlowsL3DDependencies.fetch_dependencies(self.dependencies)

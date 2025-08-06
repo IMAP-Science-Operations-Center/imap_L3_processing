@@ -54,9 +54,9 @@ if __name__ == "__main__":
                             '[{"type": "science", "files": ["imap_glows_l3a_hist_20250415-repoint01000_v026.cdf"]},'
                             '{"type": "ancillary", "files":["imap_glows_bad-days-list_20100101_v001.dat"]},'
                             '{"type": "ancillary", "files":["imap_glows_WawHelioIonMP_20100101_v002.json"]},'
-                            '{"type": "ancillary", "files":["imap_glows_uv-anisotropy-1CR_20100101_v001.json"]},'
+                            '{"type": "ancillary", "files":["imap_glows_uv-anisotropy-1CR_20100101_v004.json"]},'
                             '{"type": "ancillary", "files":["imap_glows_pipeline-settings-l3bcde_19470303_v008.json"]},'
-                            '{"type": "repoint", "files":["imap_2026_105_01.repoint.csv"]}]'])
+                            '{"type": "repoint", "files":["imap_2026_269_05.repoint.csv"]}]'])
         case "glows", "l3d":
             if os.path.exists(PATH_TO_L3D_TOOLKIT / 'data_l3b'): shutil.rmtree(PATH_TO_L3D_TOOLKIT / 'data_l3b')
             if os.path.exists(PATH_TO_L3D_TOOLKIT / 'data_l3c'): shutil.rmtree(PATH_TO_L3D_TOOLKIT / 'data_l3c')
