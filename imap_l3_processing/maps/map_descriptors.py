@@ -73,12 +73,12 @@ class MapDescriptorParts:
 def parse_map_descriptor(descriptor: str) -> Optional[MapDescriptorParts]:
     descriptor_regex = """
         (?P<sensor>hic|h45|h90|l090|ulc|u45|u90)-
-        (?P<quantity>ena|spx)-
+        (?P<quantity>ena|spx)[a-zA-Z]*-
         (?P<species>h)-
         (?P<frame>sf|hf|hk)-
         (?P<survival_corrected>sp|nsp)-
         (?P<spin_phase>ram|anti|full)-
-        (?P<coord>hae)-
+        (?P<coord>hae|custom)-
         (?P<grid>2deg|4deg|6deg|nside8|nside16)-
         (?P<duration>3mo|6mo|1yr)
         """

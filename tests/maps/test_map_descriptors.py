@@ -55,6 +55,18 @@ class TestMapDescriptors(unittest.TestCase):
             ("not-valid-at-all", None),
             ("invalid_prefix-hic-ena-h-hf-nsp-full-hae-6deg-6mo", None),
             ("hic-ena-h-hf-nsp-full-hae-6deg-6mo-invalid-suffix", None),
+            ("hic-spxwItHcUsToMsUfFiX-h-sf-sp-full-hae-6deg-6mo", MapDescriptorParts(Sensor.HiCombined,
+                                                                                     ReferenceFrame.Spacecraft, sp,
+                                                                                     SpinPhase.FullSpin,
+                                                                                     PixelSize.SixDegrees,
+                                                                                     Duration.SixMonths,
+                                                                                     MapQuantity.SpectralIndex)),
+            ("hic-enaCUSTOM-h-sf-sp-full-custom-6deg-6mo", MapDescriptorParts(Sensor.HiCombined,
+                                                                              ReferenceFrame.Spacecraft, sp,
+                                                                              SpinPhase.FullSpin,
+                                                                              PixelSize.SixDegrees,
+                                                                              Duration.SixMonths,
+                                                                              MapQuantity.Intensity)),
         ]
 
         for descriptor, expected in test_cases:
