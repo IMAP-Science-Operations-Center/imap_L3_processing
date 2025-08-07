@@ -172,6 +172,11 @@ class SpectralIndexDependencies(metaclass=abc.ABCMeta):
 
 
 def _read_intensity_map_data_from_open_cdf(cdf: CDF) -> IntensityMapData:
+    if np.issubdtype(cdf["obs_date"].dtype, np.number):
+        obs_date = read_variable_and_mask_fill_values(cdf["obs_date"]) / 1e9 * timedelta(seconds=1) + TT2000_EPOCH
+    else:
+        obs_date = read_variable_and_mask_fill_values(cdf["obs_date"])
+
     return IntensityMapData(
         epoch=cdf["epoch"][...],
         epoch_delta=read_variable_and_mask_fill_values(cdf["epoch_delta"]),
@@ -182,7 +187,7 @@ def _read_intensity_map_data_from_open_cdf(cdf: CDF) -> IntensityMapData:
         latitude=read_numeric_variable(cdf["latitude"]),
         longitude=read_numeric_variable(cdf["longitude"]),
         exposure_factor=read_numeric_variable(cdf["exposure_factor"]),
-        obs_date=read_variable_and_mask_fill_values(cdf["obs_date"]),
+        obs_date=obs_date,
         obs_date_range=read_variable_and_mask_fill_values(cdf["obs_date_range"]),
         solid_angle=read_numeric_variable(cdf["solid_angle"]),
         ena_intensity=read_numeric_variable(cdf["ena_intensity"]),
@@ -377,8 +382,10 @@ def combine_intensity_map_data(maps: list[IntensityMapData]) -> IntensityMapData
     for field in dataclasses.fields(first_map):
         if field.name not in fields_which_may_differ:
             differing_fields.append(field.name)
+            supports_nan = np.issubdtype(first_map_dict[field.name].dtype, np.floating)
             assert np.all(
-                [dataclasses.asdict(m)[field.name] == first_map_dict[field.name] for m in maps]), f"{field.name}"
+                [np.array_equal(dataclasses.asdict(m)[field.name], first_map_dict[field.name], equal_nan=supports_nan)
+                 for m in maps]), f"{field.name}"
 
     intensities = np.array([m.ena_intensity for m in maps])
     intensity_sys_err = np.array([m.ena_intensity_sys_err for m in maps])
