@@ -14,6 +14,7 @@ LYMAN_ALPHA_COMPOSITE_INDEX_URL = "http://lasp.colorado.edu/data/timed_see/compo
 OMNI2_URL = "https://spdf.gsfc.nasa.gov/pub/data/omni/low_res_omni/omni2_all_years.dat"
 
 
+
 @dataclass
 class GlowsInitializerAncillaryDependencies:
     uv_anisotropy_path: str

@@ -1,11 +1,14 @@
+import logging
 import re
 from datetime import datetime, date
+import time
 from pathlib import Path
 from typing import Optional, Union, TypeVar
 from urllib.error import URLError
 from urllib.request import urlretrieve
 
 import imap_data_access
+import requests
 import spiceypy
 from imap_data_access import ScienceFilePath
 from spacepy.pycdf import CDF
@@ -18,6 +21,7 @@ from imap_l3_processing.models import UpstreamDataDependency, DataProduct, MagL1
 from imap_l3_processing.ultra.l3.models import UltraL1CPSet, UltraGlowsL3eData
 from imap_l3_processing.version import VERSION
 
+logger = logging.getLogger(__name__)
 
 def save_data(data: DataProduct, delete_if_present: bool = False, folder_path: Path = None,
               cr_number=None) -> Path:
@@ -101,9 +105,14 @@ def download_dependency_from_path(path_str: str) -> Path:
 
 
 def download_external_dependency(dependency_url: str, filename: str) -> Path | None:
+    logger.info(f"Downloading {dependency_url}")
+    t = time.time()
     try:
-        saved_path, _ = urlretrieve(dependency_url, filename)
-        return Path(saved_path)
+        response = requests.get(dependency_url).content
+        with open(Path(filename), 'wb') as f:
+            f.write(response)
+        logger.info(f"finished in {time.time() - t} seconds")
+        return Path(filename)
     except URLError:
         return None
 

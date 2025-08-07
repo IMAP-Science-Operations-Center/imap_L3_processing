@@ -1,9 +1,11 @@
 import json
+import logging
 import os
 import re
 import shutil
 import subprocess
 import sys
+import time
 from dataclasses import replace
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -38,6 +40,7 @@ from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
 from imap_l3_processing.utils import save_data
 
+logger = logging.getLogger(__name__)
 
 class GlowsProcessor(Processor):
     def __init__(self, dependencies: ProcessingInputCollection, input_metadata: InputMetadata):
@@ -55,12 +58,12 @@ class GlowsProcessor(Processor):
             zip_files = GlowsInitializer.validate_and_initialize(self.input_metadata.version, self.dependencies)
             products = []
             for zip_file in zip_files:
-                print("processing zip", zip_file.name)
+                logger.info("processing zip {filename}", zip_file.name)
                 dependencies = GlowsL3BCDependencies.fetch_dependencies(zip_file)
                 try:
                     l3b_data_product, l3c_data_product = self.process_l3bc(dependencies)
                 except CannotProcessCarringtonRotationError as e:
-                    print(f"skipping CR {dependencies.carrington_rotation_number}:", e)
+                    logger.info(f"skipping CR {dependencies.carrington_rotation_number}: {e}", e)
                     continue
                 version = re.search(r'(v\d\d\d).zip$', zip_file.name).group(1)
                 l3b_data_product.input_metadata.version = version
@@ -68,9 +71,9 @@ class GlowsProcessor(Processor):
                 l3b_cdf = save_data(l3b_data_product)
                 l3c_data_product.parent_file_names.append(Path(l3b_cdf).name)
                 l3c_cdf = save_data(l3c_data_product)
-                print("version:  ", version)
+                logger.info("version: {version}", version)
                 products.extend([l3b_cdf, l3c_cdf, zip_file])
-                print("products: ", [l3b_cdf, l3c_cdf, zip_file])
+                logger.info("products: {products}", [l3b_cdf, l3c_cdf, zip_file])
             return products
         elif self.input_metadata.data_level == "l3d":
             l3d_dependencies = GlowsL3DDependencies.fetch_dependencies(self.dependencies)
@@ -111,7 +114,7 @@ class GlowsProcessor(Processor):
                     elif self.input_metadata.descriptor == "survival-probability-ul":
                         products.extend(self.process_l3e_ul(epoch_dt, epoch_delta))
                 except Exception as e:
-                    print("Exception encountered for repointing ", repointing, e)
+                    logger.info("Exception encountered for repointing {repointing}: {e}", repointing, e)
             return products
 
     def process_l3a(self, dependencies: GlowsL3ADependencies) -> GlowsL3LightCurve:
@@ -146,7 +149,7 @@ class GlowsProcessor(Processor):
         return l3b_data_product, l3c_data_product
 
     def process_l3d(self, dependencies: GlowsL3DDependencies):
-        print("making json files from cdfs")
+        logger.info("making json files from cdfs")
         [create_glows_l3b_json_file_from_cdf(l3b) for l3b in dependencies.l3b_file_paths]
         [create_glows_l3c_json_file_from_cdf(l3c) for l3c in dependencies.l3c_file_paths]
 
@@ -168,7 +171,7 @@ class GlowsProcessor(Processor):
         last_processed_cr = None
         try:
             while True:
-                print("processing CR", cr_to_process)
+                logger.info("processing CR {CR}", cr_to_process)
                 output: subprocess.CompletedProcess = run(
                     [sys.executable, './generate_l3d.py', f'{cr_to_process}', json.dumps(file_manifest)],
                     cwd=str(PATH_TO_L3D_TOOLKIT),
@@ -176,7 +179,7 @@ class GlowsProcessor(Processor):
                     capture_output=True, text=True)
                 if output.stdout:
                     last_processed_cr = int(output.stdout.split('= ')[-1])
-                    print("saw last processed cr", last_processed_cr)
+                    logger.info("saw last processed cr {number}", last_processed_cr)
 
                 cr_to_process += 1
         except subprocess.CalledProcessError as e:
