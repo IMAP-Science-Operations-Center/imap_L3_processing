@@ -82,7 +82,8 @@ def find_unprocessed_carrington_rotations(l3a_inputs: list[dict], l3b_inputs: li
     latest_l3a_file = get_astropy_time_from_yyyymmdd(sorted_l3a_inputs[-1]["start_date"])
     set_global_repoint_table_paths([dependencies.repointing_file])
     for index, l3a in enumerate(sorted_l3a_inputs):
-        repointing_start, repointing_end = get_pointing_date_range(l3a["repointing"])
+        hacked_repointing_number = round((get_astropy_time_from_yyyymmdd(l3a["start_date"]) - get_astropy_time_from_yyyymmdd("20100101")).value) + 149
+        repointing_start, repointing_end = get_pointing_date_range(hacked_repointing_number)
         start_cr = int(carrington(Time(repointing_start, format="datetime64").jd))
         end_cr = int(carrington(Time(repointing_end, format="datetime64").jd))
 
