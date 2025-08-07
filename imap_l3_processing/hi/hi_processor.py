@@ -6,7 +6,7 @@ from imap_l3_processing.maps.hilo_l3_survival_dependencies import HiLoL3Survival
     HiL3SingleSensorFullSpinDependencies
 from imap_l3_processing.maps.map_descriptors import parse_map_descriptor, MapQuantity, MapDescriptorParts, \
     SurvivalCorrection, \
-    SpinPhase, Duration, Sensor
+    SpinPhase, Sensor, Duration
 from imap_l3_processing.maps.map_models import RectangularSpectralIndexDataProduct, RectangularSpectralIndexMapData, \
     RectangularIntensityMapData, RectangularIntensityDataProduct, \
     combine_rectangular_intensity_map_data
@@ -32,8 +32,7 @@ class HiProcessor(Processor):
                 )
             case MapDescriptorParts(survival_correction=SurvivalCorrection.SurvivalCorrected,
                                     sensor=Sensor.Hi90 | Sensor.Hi45,
-                                    spin_phase=SpinPhase.RamOnly | SpinPhase.AntiRamOnly,
-                                    duration=Duration.SixMonths):
+                                    spin_phase=SpinPhase.RamOnly | SpinPhase.AntiRamOnly):
                 hi_l3_survival_probabilities_dependencies = HiLoL3SurvivalDependencies.fetch_dependencies(
                     self.dependencies, Instrument.IMAP_HI)
                 data_product = RectangularIntensityDataProduct(
@@ -44,8 +43,7 @@ class HiProcessor(Processor):
                     p.name for p in hi_l3_survival_probabilities_dependencies.dependency_file_paths)
             case MapDescriptorParts(survival_correction=SurvivalCorrection.SurvivalCorrected,
                                     sensor=Sensor.Hi90 | Sensor.Hi45,
-                                    spin_phase=SpinPhase.FullSpin,
-                                    duration=Duration.SixMonths):
+                                    spin_phase=SpinPhase.FullSpin):
                 hi_l3_full_spin_dependencies = HiL3SingleSensorFullSpinDependencies.fetch_dependencies(
                     self.dependencies)
                 combined_map = self.process_full_spin_single_sensor(hi_l3_full_spin_dependencies)

@@ -250,7 +250,9 @@ class TestHiProcessor(unittest.TestCase):
 
         cases = [
             ("ram", "h90-ena-h-sf-sp-ram-hae-4deg-6mo"),
-            ("anti", "h90-ena-h-sf-sp-anti-hae-4deg-6mo")
+            ("anti", "h90-ena-h-sf-sp-anti-hae-4deg-6mo"),
+            ("ram", "h90-ena-h-sf-sp-ram-hae-4deg-3mo"),
+            ("anti", "h90-ena-h-sf-sp-anti-hae-4deg-3mo"),
         ]
 
         for case, descriptor in cases:
