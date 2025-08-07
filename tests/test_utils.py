@@ -211,6 +211,56 @@ class TestUtils(TestCase):
 
         self.assertEqual(expected_file_path, returned_file_path)
 
+    @patch("imap_l3_processing.utils.ImapAttributeManager.add_instrument_attrs", autospec=True)
+    @patch("imap_l3_processing.utils.write_cdf")
+    def test_save_data_procedurally_generates_map_global_metadata_if_absent(self, mock_write_cdf,
+                                                                            mock_add_instrument_attrs):
+        non_map_input_metadata = InputMetadata("swapi", "l3", datetime(2024, 9, 17), datetime(2024, 9, 18), "v002",
+                                               "descriptor")
+
+        def add_swapi_attrs_from_file(attr_manager, instrument, level, descriptor):
+            for logical_source in ["imap_swapi_l3_descriptor", "imap_ultra_l3_ena-map-descriptor"]:
+                attr_manager.add_global_attribute(logical_source, {
+                    "Data_level": "Data_level from file",
+                    "Data_type": "Data_type from file",
+                    "Logical_source_description": "Logical_source_description from file"
+                })
+
+        mock_add_instrument_attrs.side_effect = add_swapi_attrs_from_file
+
+        map_input_metadata = InputMetadata("hi", "l3b", datetime(2024, 9, 17), datetime(2024, 9, 18), "v002",
+                                           "spx-map-descriptor")
+
+        map_input_metadata_with_existing_global_attrs = InputMetadata("ultra", "l3", datetime(2024, 9, 17),
+                                                                      datetime(2024, 9, 18), "v002",
+                                                                      "ena-map-descriptor")
+
+        cases = [
+            (non_map_input_metadata, [("Data_level", "Data_level from file"), ("Data_type", "Data_type from file"),
+                                      ("Logical_source_description", "Logical_source_description from file")]),
+            (map_input_metadata,
+             [("Data_level", "3b"), ("Data_type", "L3b_spx-map-descriptor>Level-3b Spectral Fit Index Map"),
+              ("Logical_source_description", "IMAP-hi Level-3b Spectral Fit Index Map")]),
+            (map_input_metadata_with_existing_global_attrs,
+             [("Data_level", "Data_level from file"), ("Data_type", "Data_type from file"),
+              ("Logical_source_description", "Logical_source_description from file")]
+             )
+        ]
+        for input_metadata, expected_global_metadata in cases:
+            with self.subTest(name=input_metadata.logical_source):
+                mock_write_cdf.reset_mock()
+
+                save_data(Mock(input_metadata=input_metadata), )
+
+                mock_write_cdf.assert_called_once()
+
+                [_file_path, _data, attribute_manager] = mock_write_cdf.call_args_list[0].args
+
+                global_metadata = attribute_manager.try_load_global_metadata(input_metadata.logical_source)
+                self.assertIsNotNone(global_metadata)
+                for metadata_field, metadata_value in expected_global_metadata:
+                    self.assertEqual(metadata_value, global_metadata[metadata_field])
+
     def test_format_time(self):
         time = datetime(2024, 7, 9)
         actual_time = format_time(time)
