@@ -40,6 +40,8 @@ class GlowsL3DDependencies:
 
         l3b_file_names = query(instrument='glows', descriptor='ion-rate-profile', version='latest')
         l3c_file_names = query(instrument='glows', descriptor='sw-profile', version='latest')
+        print("l3b files:", [l3b['file_path'] for l3b in l3b_file_names])
+        print("l3c files:", [l3c['file_path'] for l3c in l3c_file_names])
 
         l3b_file_paths = [download(l3b['file_path']) for l3b in l3b_file_names]
         l3c_file_paths = [download(l3c['file_path']) for l3c in l3c_file_names]

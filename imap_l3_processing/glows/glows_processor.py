@@ -146,6 +146,7 @@ class GlowsProcessor(Processor):
         return l3b_data_product, l3c_data_product
 
     def process_l3d(self, dependencies: GlowsL3DDependencies):
+        print("making json files from cdfs")
         [create_glows_l3b_json_file_from_cdf(l3b) for l3b in dependencies.l3b_file_paths]
         [create_glows_l3c_json_file_from_cdf(l3c) for l3c in dependencies.l3c_file_paths]
 
@@ -167,6 +168,7 @@ class GlowsProcessor(Processor):
         last_processed_cr = None
         try:
             while True:
+                print("processing CR", cr_to_process)
                 output: subprocess.CompletedProcess = run(
                     [sys.executable, './generate_l3d.py', f'{cr_to_process}', json.dumps(file_manifest)],
                     cwd=str(PATH_TO_L3D_TOOLKIT),
@@ -174,6 +176,7 @@ class GlowsProcessor(Processor):
                     capture_output=True, text=True)
                 if output.stdout:
                     last_processed_cr = int(output.stdout.split('= ')[-1])
+                    print("saw last processed cr", last_processed_cr)
 
                 cr_to_process += 1
         except subprocess.CalledProcessError as e:

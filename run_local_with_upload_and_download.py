@@ -74,7 +74,7 @@ if __name__ == "__main__":
                             '{"type": "ancillary", "files": ["imap_glows_photoion-2010a_20100101_v003.dat"]},'
                             '{"type": "ancillary", "files": ["imap_glows_electron-density-2010a_20100101_v003.dat"]},'
                             '{"type": "ancillary", "files": ["imap_glows_lya-2010a_20100101_v003.dat"]},'
-                            '{"type": "ancillary", "files": ["imap_glows_l3b-archive_20100422_v011.zip"]},'
+                            '{"type": "ancillary", "files": ["imap_glows_l3b-archive_20100519_v030.zip"]},'
                             '{"type": "ancillary", "files": ["imap_glows_pipeline-settings-l3bcde_20100101_v006.json"]}]'
                             ])
         case "swapi", None:
