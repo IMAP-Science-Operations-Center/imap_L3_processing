@@ -21,6 +21,7 @@ from imap_l3_processing.swapi.swapi_processor import SwapiProcessor
 from imap_l3_processing.swe.swe_processor import SweProcessor
 from imap_l3_processing.ultra.l3.ultra_processor import UltraProcessor
 
+logger = logging.getLogger(__name__)
 
 def _parse_cli_arguments():
     parser = argparse.ArgumentParser()
@@ -111,30 +112,11 @@ def _furnish_spice_kernels(processing_input_collection):
 
 if __name__ == '__main__':
     with TemporaryDirectory() as dir:
-        args = _parse_cli_arguments()
-        logger = logging.getLogger('application')
-        logger.setLevel(logging.INFO)
-
-        log_path = Path(
-            dir) / f"imap_{args.instrument}_{args.data_level}_log-{datetime.now().strftime('%Y-%m-%d-%H%M%S-%f')}_{args.start_date}_v001.cdf"
-        fh = logging.FileHandler(str(log_path))
-
-        fh.setLevel(logging.INFO)
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        fh.setFormatter(formatter)
-        logger.addHandler(fh)
+        logging.basicConfig(force=True, level=logging.INFO,
+                            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
         try:
             imap_l3_processor()
         except Exception as e:
-            logger.info("Unhandled Exception:", exc_info=e)
-            print("caught exception")
-            traceback.print_exc()
-            logging.shutdown()
+            logger.error("Unhandled Exception:")
             raise e
-        finally:
-            should_upload_log = False
-            if should_upload_log and os.path.exists(log_path) and os.path.getsize(log_path) > 0:
-                imap_data_access.upload(log_path)
-
-            logging.shutdown()
