@@ -630,6 +630,50 @@ class TestImapL3DataProcessor(TestCase):
         mock_glows_processor.return_value.process.assert_called()
         mock_upload.assert_not_called()
 
+    @patch('imap_l3_data_processor.GlowsProcessor')
+    @patch('imap_l3_data_processor.argparse')
+    @patch('imap_l3_data_processor.ProcessingInputCollection')
+    @patch('imap_l3_data_processor.imap_data_access.upload')
+    def test_upload_fails_tries_all_uploads_and_raises_exception(self, mock_upload,
+                                                                         mock_processing_input_collection,
+                                                                         mock_argparse,
+                                                                         mock_glows_processor):
+        processing_input_collection = ProcessingInputCollection(ScienceInput("imap_glows_l3_science_20250101_v001.cdf"))
+        mock_argument_parser = mock_argparse.ArgumentParser.return_value
+        mock_argument_parser.parse_args.return_value.instrument = "glows"
+        mock_argument_parser.parse_args.return_value.dependency = processing_input_collection.serialize()
+        mock_argument_parser.parse_args.return_value.start_date = "20250101"
+        mock_argument_parser.parse_args.return_value.version = "v001"
+        mock_argument_parser.parse_args.return_value.descriptor = "desc"
+        mock_argument_parser.parse_args.return_value.upload_to_sdc = True
+        mock_argument_parser.parse_args.return_value.data_level = "l3"
+        mock_argument_parser.parse_args.return_value.end_date = None
+
+        mock_processing_input_collection.return_value = processing_input_collection
+        mock_processing_input_collection.deserialize = Mock()
+        mock_processing_input_collection.get_science_inputs = Mock(return_value=[])
+
+        mock_glows_processor.return_value.process.return_value = ["data_file_1.cdf", "data_file_2.cdf", "data_file_3.cdf", "data_file_4.cdf"]
+
+        error1 = ValueError("Failure uploading!")
+        error2 = ValueError("Failure uploading 2")
+        mock_upload.side_effect = [None, error1, error2, None]
+
+        with self.assertRaises(ExceptionGroup) as exception_ctx:
+            imap_l3_processor()
+
+        self.assertEqual((error1, error2), exception_ctx.exception.exceptions)
+        self.assertEqual("Failed to upload some files", exception_ctx.exception.message)
+
+        mock_glows_processor.return_value.process.assert_called()
+
+        mock_upload.assert_has_calls([
+            call("data_file_1.cdf"),
+            call("data_file_2.cdf"),
+            call("data_file_3.cdf"),
+            call("data_file_4.cdf"),
+        ])
+
     @patch('imap_l3_data_processor.argparse')
     @patch('imap_l3_data_processor.imap_data_access.upload')
     def test_throws_exception_for_unimplemented_instrument(self, mock_upload, mock_argparse):
