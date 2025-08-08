@@ -1,3 +1,4 @@
+import logging
 from dataclasses import fields
 from pathlib import Path
 
@@ -6,7 +7,7 @@ from imap_data_access.processing_input import ProcessingInputCollection
 
 from imap_l3_processing.glows.l3bc.glows_initializer_ancillary_dependencies import GlowsInitializerAncillaryDependencies
 from imap_l3_processing.glows.l3bc.utils import find_unprocessed_carrington_rotations, archive_dependencies
-
+logger = logging.getLogger(__name__)
 
 class GlowsInitializer:
     @staticmethod
@@ -19,10 +20,13 @@ class GlowsInitializer:
 
         l3a_files = query(instrument="glows", descriptor="hist", version=input_l3a_version, data_level="l3a")
         l3b_files = query(instrument="glows", descriptor='ion-rate-profile', version=version, data_level="l3b")
+        logger.info(f"l3a files {[f["file_path"] for f in l3a_files]}")
+        logger.info(f"l3b files {[f["file_path"] for f in l3b_files]}")
 
         crs_to_process = find_unprocessed_carrington_rotations(l3a_files, l3b_files, glows_ancillary_dependencies)
 
         zip_file_paths = []
+        logger.info(f"making zips for crs: {[ cr.cr_rotation_number for cr in crs_to_process ]}")
 
         for cr_to_process in crs_to_process:
             path = archive_dependencies(cr_to_process, version, glows_ancillary_dependencies)

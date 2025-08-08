@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import shutil
 import subprocess
@@ -35,6 +36,7 @@ from imap_l3_processing.glows.l3e.glows_l3e_utils import determine_call_args_for
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
 from imap_l3_processing.utils import save_data
+logger = logging.getLogger(__name__)
 
 
 class GlowsProcessor(Processor):
