@@ -11,6 +11,7 @@ import imap_data_access
 import requests
 import spiceypy
 from imap_data_access import ScienceFilePath
+from requests import RequestException
 from spacepy.pycdf import CDF
 
 import imap_l3_processing
@@ -115,6 +116,22 @@ def download_external_dependency(dependency_url: str, filename: str) -> Path | N
         return Path(filename)
     except URLError:
         return None
+
+
+def download_external_dependency_from_multiple_urls(dependency_urls: list[str], filename: str) -> Path | None:
+    with open(Path(filename), 'wb') as f:
+        for url in dependency_urls:
+            t = time.time()
+            logger.info(f"Downloading {url}")
+            try:
+                response = requests.get(url)
+                response.raise_for_status()
+                f.write(response.content)
+                logger.info(f"finished in {time.time() - t} seconds")
+            except RequestException as e:
+                logger.info("failed to download %s", e)
+    return Path(filename)
+
 
 
 def read_l1d_mag_data(cdf_path: Union[str, Path]) -> MagL1dData:

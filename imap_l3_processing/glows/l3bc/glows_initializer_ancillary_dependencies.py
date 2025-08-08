@@ -7,11 +7,11 @@ from imap_data_access import download
 from imap_data_access.processing_input import ProcessingInputCollection, RepointInput
 
 from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
-from imap_l3_processing.utils import download_external_dependency
+from imap_l3_processing.utils import download_external_dependency, download_external_dependency_from_multiple_urls
 
 F107_FLUX_TABLE_URL = "https://www.spaceweather.gc.ca/solar_flux_data/daily_flux_values/fluxtable.txt"
 LYMAN_ALPHA_COMPOSITE_INDEX_URL = "http://lasp.colorado.edu/data/timed_see/composite_lya/lyman_alpha_composite.nc"
-OMNI2_URL = "https://spdf.gsfc.nasa.gov/pub/data/omni/low_res_omni/omni2_2010.dat"
+OMNI2_URL = "https://spdf.gsfc.nasa.gov/pub/data/omni/low_res_omni/omni2_{year}.dat"
 
 
 
@@ -44,7 +44,8 @@ class GlowsInitializerAncillaryDependencies:
         _comment_headers(f107_index_file_path, num_lines=2)
         lyman_alpha_path = download_external_dependency(LYMAN_ALPHA_COMPOSITE_INDEX_URL,
                                                         TEMP_CDF_FOLDER_PATH / 'lyman_alpha_composite.nc')
-        omni2_data_path = download_external_dependency(OMNI2_URL, TEMP_CDF_FOLDER_PATH / 'omni2_all_years.dat')
+        urls = [OMNI2_URL.format(year=year) for year in (range(2009, 2027))]
+        omni2_data_path = download_external_dependency_from_multiple_urls(urls, TEMP_CDF_FOLDER_PATH / 'omni2_all_years.dat')
 
         with open(pipeline_settings_path) as f:
             settings = json.load(f)
