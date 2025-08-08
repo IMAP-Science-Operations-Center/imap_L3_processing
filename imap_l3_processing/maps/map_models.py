@@ -172,10 +172,10 @@ class SpectralIndexDependencies(metaclass=abc.ABCMeta):
 
 
 def _read_intensity_map_data_from_open_cdf(cdf: CDF) -> IntensityMapData:
+    masked_obs_date = read_variable_and_mask_fill_values(cdf["obs_date"])
     if np.issubdtype(cdf["obs_date"].dtype, np.number):
-        obs_date = read_variable_and_mask_fill_values(cdf["obs_date"]) / 1e9 * timedelta(seconds=1) + TT2000_EPOCH
-    else:
-        obs_date = read_variable_and_mask_fill_values(cdf["obs_date"])
+        obs_date = masked_obs_date.filled(0) / 1e9 * timedelta(seconds=1) + TT2000_EPOCH
+        masked_obs_date = np.ma.masked_array(data=obs_date, mask=masked_obs_date.mask)
 
     return IntensityMapData(
         epoch=cdf["epoch"][...],
@@ -187,7 +187,7 @@ def _read_intensity_map_data_from_open_cdf(cdf: CDF) -> IntensityMapData:
         latitude=read_numeric_variable(cdf["latitude"]),
         longitude=read_numeric_variable(cdf["longitude"]),
         exposure_factor=read_numeric_variable(cdf["exposure_factor"]),
-        obs_date=obs_date,
+        obs_date=masked_obs_date,
         obs_date_range=read_variable_and_mask_fill_values(cdf["obs_date_range"]),
         solid_angle=read_numeric_variable(cdf["solid_angle"]),
         ena_intensity=read_numeric_variable(cdf["ena_intensity"]),

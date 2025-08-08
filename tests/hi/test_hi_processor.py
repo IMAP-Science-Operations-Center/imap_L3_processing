@@ -317,13 +317,13 @@ class TestHiProcessor(unittest.TestCase):
         ]
 
         processor = HiProcessor(sentinel.dependencies, input_metadata)
-        product = processor.process()
+        product = processor.process(spice_frame_name=sentinel.spice_frame)
 
         mock_fetch_full_spin_single_sensor_dependencies.assert_called_once_with(sentinel.dependencies)
 
         mock_process_survival_prob.assert_has_calls([
-            call(full_spin_dependencies.ram_dependencies),
-            call(full_spin_dependencies.antiram_dependencies)
+            call(full_spin_dependencies.ram_dependencies, sentinel.spice_frame),
+            call(full_spin_dependencies.antiram_dependencies, sentinel.spice_frame)
         ])
 
         mock_combine_maps.assert_called_once_with([

@@ -48,7 +48,7 @@ class HiProcessor(MapProcessor):
                                     spin_phase=SpinPhase.FullSpin):
                 hi_l3_full_spin_dependencies = HiL3SingleSensorFullSpinDependencies.fetch_dependencies(
                     self.dependencies)
-                combined_map = self.process_full_spin_single_sensor(hi_l3_full_spin_dependencies)
+                combined_map = self.process_full_spin_single_sensor(hi_l3_full_spin_dependencies, spice_frame_name)
                 data_product = RectangularIntensityDataProduct(
                     data=combined_map,
                     input_metadata=self.input_metadata
@@ -73,10 +73,10 @@ class HiProcessor(MapProcessor):
 
         return [save_data(data_product)]
 
-    def process_full_spin_single_sensor(self, hi_l3_full_spin_dependencies: HiL3SingleSensorFullSpinDependencies) \
+    def process_full_spin_single_sensor(self, hi_l3_full_spin_dependencies: HiL3SingleSensorFullSpinDependencies, spice_frame_name: SpiceFrame) \
             -> RectangularIntensityMapData:
-        ram_data_product = process_survival_probabilities(hi_l3_full_spin_dependencies.ram_dependencies)
-        antiram_data_product = process_survival_probabilities(hi_l3_full_spin_dependencies.antiram_dependencies)
+        ram_data_product = process_survival_probabilities(hi_l3_full_spin_dependencies.ram_dependencies, spice_frame_name)
+        antiram_data_product = process_survival_probabilities(hi_l3_full_spin_dependencies.antiram_dependencies, spice_frame_name)
 
         return combine_rectangular_intensity_map_data([ram_data_product, antiram_data_product])
 

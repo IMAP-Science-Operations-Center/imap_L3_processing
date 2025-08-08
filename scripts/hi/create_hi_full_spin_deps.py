@@ -3,6 +3,7 @@ from datetime import datetime
 from pathlib import Path
 
 import numpy as np
+from imap_processing.spice.geometry import SpiceFrame
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.maps import survival_probability_processing
@@ -47,7 +48,7 @@ def create_hi_full_spin_deps(
 
     input_metadata = InputMetadata("hi", "l3", None, None, "v001", f"h90-ena-h-sf-sp-full-hae-4deg-6mo")
 
-    ram_data = survival_probability_processing.process_survival_probabilities(ramified_map_deps)
+    ram_data = survival_probability_processing.process_survival_probabilities(ramified_map_deps, SpiceFrame.ECLIPJ2000)
     ram_exposure_is_zero = (np.isnan(ram_data.intensity_map_data.ena_intensity)
                             | (ram_data.intensity_map_data.ena_intensity == 0))
 
@@ -65,7 +66,7 @@ def create_hi_full_spin_deps(
 
     shutil.move(ram_cdf_path, output_dir / f"{ram_logical_source}.cdf")
 
-    antiram_data = survival_probability_processing.process_survival_probabilities(antiramified_map_deps)
+    antiram_data = survival_probability_processing.process_survival_probabilities(antiramified_map_deps, SpiceFrame.ECLIPJ2000)
     antiram_exposure_is_zero = (np.isnan(antiram_data.intensity_map_data.ena_intensity)
                                 | (antiram_data.intensity_map_data.ena_intensity == 0))
 

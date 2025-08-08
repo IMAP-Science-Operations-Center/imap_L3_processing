@@ -1,5 +1,6 @@
 import dataclasses
 import os
+import sys
 import tempfile
 import unittest
 from datetime import datetime, timedelta
@@ -497,13 +498,16 @@ class TestMapModels(unittest.TestCase):
 
         map_data_shape = (1, 9, 90, 45)
         obs_date_datetime = np.full(map_data_shape, datetime.now())
+        obs_date_fillval = -sys.maxsize - 1
         test_cases = [
-            ("obs date is datetime", obs_date_datetime, obs_date_datetime),
-            ("obs date is int", np.full(map_data_shape, 1e9),
-             np.full(map_data_shape, TT2000_EPOCH) + timedelta(seconds=1)),
+            ("obs date is datetime", obs_date_datetime, obs_date_datetime, np.full(map_data_shape, False)),
+            ("obs date is int", np.full(map_data_shape, 1e9, dtype=int),
+             np.full(map_data_shape, TT2000_EPOCH) + timedelta(seconds=1), np.full(map_data_shape, False)),
+            ("obs date is all fill", np.full(map_data_shape, obs_date_fillval, dtype=int),
+             np.full(map_data_shape, TT2000_EPOCH), np.full(map_data_shape, True)),
         ]
 
-        for test_name, obs_date_in_cdf, expected_obs_date in test_cases:
+        for test_name, obs_date_in_cdf, expected_obs_date, expected_obs_date_mask in test_cases:
             with tempfile.TemporaryDirectory() as temp_dir:
                 pathname = os.path.join(temp_dir, "test_cdf")
                 with CDF(pathname, '') as cdf:
@@ -555,6 +559,9 @@ class TestMapModels(unittest.TestCase):
                     for var in cdf:
                         cdf[var].attrs['FILLVAL'] = 1000000
 
+                    cdf["obs_date"].attrs["FILLVAL"] = obs_date_fillval
+
+
                 for path in [pathname, Path(pathname)]:
                     with self.subTest(name=test_name, path=path):
                         result = RectangularIntensityMapData.read_from_path(path)
@@ -579,7 +586,8 @@ class TestMapModels(unittest.TestCase):
                         np.testing.assert_array_equal(ena_intensity_stat_unc, map_data.ena_intensity_stat_unc)
                         np.testing.assert_array_equal(ena_intensity_sys_err, map_data.ena_intensity_sys_err)
                         np.testing.assert_array_equal(exposure, map_data.exposure_factor)
-                        np.testing.assert_array_equal(expected_obs_date, map_data.obs_date)
+                        np.testing.assert_array_equal(expected_obs_date, map_data.obs_date.data)
+                        np.testing.assert_array_equal(expected_obs_date_mask, map_data.obs_date.mask)
                         np.testing.assert_array_equal(obs_date_range, map_data.obs_date_range)
                         np.testing.assert_array_equal(solid_angle, map_data.solid_angle)
 
