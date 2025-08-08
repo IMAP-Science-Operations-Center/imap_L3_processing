@@ -130,6 +130,7 @@ def download_external_dependency_from_multiple_urls(dependency_urls: list[str], 
                 logger.info(f"finished in {time.time() - t} seconds")
             except RequestException as e:
                 logger.info("failed to download %s", e)
+                break
     return Path(filename)
 
 
