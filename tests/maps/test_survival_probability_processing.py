@@ -62,7 +62,7 @@ class TestSurvivalProbabilityProcessing(SpiceTestCase):
                 CoordNames.ELEVATION_L2.value: rng.random((45,)),
             })
 
-        survival_data = process_survival_probabilities(dependencies)
+        survival_data = process_survival_probabilities(dependencies, SpiceFrame.IMAP_DPS)
 
         mock_combine_glows_l3e_with_l1c_pointing.assert_called_once_with(sentinel.glows_l3e_data, sentinel.l1c_data)
 
@@ -76,7 +76,7 @@ class TestSurvivalProbabilityProcessing(SpiceTestCase):
 
         mock_survival_skymap.assert_called_once_with([sentinel.pset_1, sentinel.pset_2, sentinel.pset_3],
                                                      l2_grid,
-                                                     SpiceFrame.ECLIPJ2000)
+                                                     SpiceFrame.IMAP_DPS)
 
         mock_survival_skymap.return_value.to_dataset.assert_called_once()
 
@@ -108,6 +108,7 @@ class TestSurvivalProbabilityProcessing(SpiceTestCase):
                                       intensity_map_data.obs_date_range)
         np.testing.assert_array_equal(survival_data.intensity_map_data.solid_angle, intensity_map_data.solid_angle)
 
+
     def test_integration_uses_fill_values_for_missing_l3e_data(self):
         t1 = datetime(2025, 4, 29, 12)
         t2 = datetime(2025, 5, 7, 12)
@@ -120,7 +121,7 @@ class TestSurvivalProbabilityProcessing(SpiceTestCase):
         descriptor = parse_map_descriptor("h90-ena-h-sf-nsp-ram-hae-4deg-3mo")
         survival_dependencies = HiLoL3SurvivalDependencies(l2_intensity_map, l1c_psets, l3e_psets, descriptor)
 
-        output_map = process_survival_probabilities(survival_dependencies)
+        output_map = process_survival_probabilities(survival_dependencies, SpiceFrame.ECLIPJ2000)
         np.testing.assert_equal(output_map.intensity_map_data.ena_intensity[0, 0, 76, :], np.full(45, 2.0))
         np.testing.assert_equal(output_map.intensity_map_data.ena_intensity[0, 0, 78, :], np.full(45, np.nan))
         np.testing.assert_equal(output_map.intensity_map_data.ena_intensity[0, 0, 80, :], np.full(45, 2.0))

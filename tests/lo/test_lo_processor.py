@@ -5,6 +5,7 @@ from unittest.mock import Mock, patch, sentinel
 
 import numpy as np
 from imap_data_access.processing_input import ProcessingInputCollection
+from imap_processing.spice.geometry import SpiceFrame
 
 from imap_l3_processing.lo.lo_processor import LoProcessor
 from imap_l3_processing.maps.hilo_l3_survival_dependencies import HiLoL3SurvivalDependencies
@@ -14,7 +15,7 @@ from imap_l3_processing.models import InputMetadata, Instrument
 
 class TestLoProcessor(unittest.TestCase):
 
-    @patch('imap_l3_processing.hi.hi_processor.Processor.get_parent_file_names')
+    @patch('imap_l3_processing.hi.hi_processor.MapProcessor.get_parent_file_names')
     @patch('imap_l3_processing.lo.lo_processor.LoL3SpectralFitDependencies.fetch_dependencies')
     @patch('imap_l3_processing.lo.lo_processor.calculate_spectral_index_for_multiple_ranges')
     @patch('imap_l3_processing.lo.lo_processor.save_data')
@@ -55,7 +56,7 @@ class TestLoProcessor(unittest.TestCase):
         self.assertEqual(data_product.parent_file_names, ["some_input_file_name"])
         self.assertEqual([mock_save_data.return_value], product)
 
-    @patch('imap_l3_processing.lo.lo_processor.Processor.get_parent_file_names')
+    @patch('imap_l3_processing.lo.lo_processor.MapProcessor.get_parent_file_names')
     @patch("imap_l3_processing.lo.lo_processor.HiLoL3SurvivalDependencies.fetch_dependencies")
     @patch("imap_l3_processing.lo.lo_processor.process_survival_probabilities")
     @patch('imap_l3_processing.lo.lo_processor.save_data')
@@ -82,12 +83,12 @@ class TestLoProcessor(unittest.TestCase):
         mock_process_survival_prob.return_value = sentinel.survival_probabilities
 
         processor = LoProcessor(sentinel.input_dependencies, input_metadata)
-        product = processor.process()
+        product = processor.process(spice_frame_name=SpiceFrame.IMAP_DPS)
 
         mock_fetch_survival_dependencies.assert_called_once_with(sentinel.input_dependencies,
                                                                  Instrument.IMAP_LO)
 
-        mock_process_survival_prob.assert_called_once_with(dependencies)
+        mock_process_survival_prob.assert_called_once_with(dependencies, SpiceFrame.IMAP_DPS)
 
         mock_save_data.assert_called_once_with(RectangularIntensityDataProduct(
             input_metadata=input_metadata,

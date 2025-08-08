@@ -377,7 +377,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
             processor.process_l3bc(dependencies)
         self.assertTrue("All days for Carrington Rotation are in a bad season." in str(context.exception))
 
-    @patch('imap_l3_processing.hi.hi_processor.Processor.get_parent_file_names')
+    @patch('imap_l3_processing.glows.glows_processor.Processor.get_parent_file_names')
     @patch('imap_l3_processing.glows.glows_processor.determine_l3e_files_to_produce')
     @patch('imap_l3_processing.glows.glows_processor.save_data')
     @patch("imap_l3_processing.glows.glows_processor.GlowsL3EUltraData.convert_dat_to_glows_l3e_ul_product")
@@ -478,7 +478,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
 
         mock_get_repoint_date_range.assert_has_calls([call(20), call(21)])
 
-    @patch('imap_l3_processing.hi.hi_processor.Processor.get_parent_file_names')
+    @patch('imap_l3_processing.glows.glows_processor.Processor.get_parent_file_names')
     @patch('imap_l3_processing.glows.glows_processor.determine_l3e_files_to_produce')
     @patch('imap_l3_processing.glows.glows_processor.save_data')
     @patch("imap_l3_processing.glows.glows_processor.GlowsL3EHiData.convert_dat_to_glows_l3e_hi_product")
@@ -599,7 +599,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
                 mock_get_repoint_date_range.assert_has_calls([call(20), call(21)])
 
     @patch('imap_l3_processing.glows.glows_processor.determine_l3e_files_to_produce')
-    @patch('imap_l3_processing.hi.hi_processor.Processor.get_parent_file_names')
+    @patch('imap_l3_processing.glows.glows_processor.Processor.get_parent_file_names')
     @patch('imap_l3_processing.glows.glows_processor.save_data')
     @patch("imap_l3_processing.glows.glows_processor.GlowsL3ELoData.convert_dat_to_glows_l3e_lo_product")
     @patch("imap_l3_processing.glows.glows_processor.run")
@@ -714,7 +714,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
                           Path(expected_second_output_file_path)], products)
 
     @patch('imap_l3_processing.glows.glows_processor.determine_l3e_files_to_produce')
-    @patch('imap_l3_processing.hi.hi_processor.Processor.get_parent_file_names')
+    @patch('imap_l3_processing.glows.glows_processor.Processor.get_parent_file_names')
     @patch('imap_l3_processing.glows.glows_processor.save_data')
     @patch("imap_l3_processing.glows.glows_processor.GlowsL3ELoData.convert_dat_to_glows_l3e_lo_product")
     @patch("imap_l3_processing.glows.glows_processor.run")

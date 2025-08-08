@@ -1,5 +1,7 @@
 from pathlib import Path
 
+from imap_processing.spice.geometry import SpiceFrame
+
 from imap_l3_processing.hi.l3.hi_l3_combined_sensor_dependencies import HiL3CombinedMapDependencies
 from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3SpectralIndexDependencies
 from imap_l3_processing.maps.hilo_l3_survival_dependencies import HiLoL3SurvivalDependencies, \
@@ -10,15 +12,15 @@ from imap_l3_processing.maps.map_descriptors import parse_map_descriptor, MapQua
 from imap_l3_processing.maps.map_models import RectangularSpectralIndexDataProduct, RectangularSpectralIndexMapData, \
     RectangularIntensityMapData, RectangularIntensityDataProduct, \
     combine_rectangular_intensity_map_data
+from imap_l3_processing.maps.map_processor import MapProcessor
 from imap_l3_processing.maps.spectral_fit import fit_spectral_index_map
 from imap_l3_processing.maps.survival_probability_processing import process_survival_probabilities
 from imap_l3_processing.models import Instrument
-from imap_l3_processing.processor import Processor
 from imap_l3_processing.utils import save_data
 
 
-class HiProcessor(Processor):
-    def process(self) -> list[Path]:
+class HiProcessor(MapProcessor):
+    def process(self, spice_frame_name: SpiceFrame = SpiceFrame.ECLIPJ2000) -> list[Path]:
         set_of_parent_file_names = set(self.get_parent_file_names())
 
         parsed_descriptor = parse_map_descriptor(self.input_metadata.descriptor)
@@ -36,7 +38,7 @@ class HiProcessor(Processor):
                 hi_l3_survival_probabilities_dependencies = HiLoL3SurvivalDependencies.fetch_dependencies(
                     self.dependencies, Instrument.IMAP_HI)
                 data_product = RectangularIntensityDataProduct(
-                    data=process_survival_probabilities(hi_l3_survival_probabilities_dependencies),
+                    data=process_survival_probabilities(hi_l3_survival_probabilities_dependencies, spice_frame_name),
                     input_metadata=self.input_metadata,
                 )
                 set_of_parent_file_names.update(

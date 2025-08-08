@@ -5,6 +5,7 @@ from unittest.mock import patch, call, sentinel
 
 import numpy as np
 from imap_data_access.processing_input import ProcessingInputCollection
+from imap_processing.spice.geometry import SpiceFrame
 
 from imap_l3_processing.hi.hi_processor import HiProcessor
 from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3SpectralIndexDependencies
@@ -17,7 +18,7 @@ from tests.test_helpers import get_test_data_path
 
 
 class TestHiProcessor(unittest.TestCase):
-    @patch('imap_l3_processing.hi.hi_processor.Processor.get_parent_file_names')
+    @patch('imap_l3_processing.hi.hi_processor.MapProcessor.get_parent_file_names')
     @patch('imap_l3_processing.hi.hi_processor.HiL3SpectralIndexDependencies.fetch_dependencies')
     @patch('imap_l3_processing.maps.spectral_fit.fit_arrays_to_power_law')
     @patch('imap_l3_processing.hi.hi_processor.save_data')
@@ -238,7 +239,7 @@ class TestHiProcessor(unittest.TestCase):
         np.testing.assert_array_equal(output.spectral_index_map_data.obs_date_range.mask,
                                       np.full(expected_ena_shape, True), strict=True)
 
-    @patch('imap_l3_processing.hi.hi_processor.Processor.get_parent_file_names')
+    @patch('imap_l3_processing.hi.hi_processor.MapProcessor.get_parent_file_names')
     @patch("imap_l3_processing.hi.hi_processor.HiLoL3SurvivalDependencies.fetch_dependencies")
     @patch("imap_l3_processing.hi.hi_processor.process_survival_probabilities")
     @patch('imap_l3_processing.hi.hi_processor.save_data')
@@ -249,13 +250,12 @@ class TestHiProcessor(unittest.TestCase):
         mock_get_parent_file_names.return_value = ["somewhere"]
 
         cases = [
-            ("ram", "h90-ena-h-sf-sp-ram-hae-4deg-6mo"),
-            ("anti", "h90-ena-h-sf-sp-anti-hae-4deg-6mo"),
-            ("ram", "h90-ena-h-sf-sp-ram-hae-4deg-3mo"),
-            ("anti", "h90-ena-h-sf-sp-anti-hae-4deg-3mo"),
+            ("ram", "h90-ena-h-sf-sp-ram-hae-4deg-6mo", SpiceFrame.ECLIPJ2000),
+            ("anti", "h90-ena-h-sf-sp-anti-hae-4deg-6mo", SpiceFrame.IMAP_GCS),
+            ("anti", "h90-ena-h-sf-sp-anti-hae-4deg-6mo", SpiceFrame.IMAP_HNU)
         ]
 
-        for case, descriptor in cases:
+        for case, descriptor, spice_frame_name in cases:
             with self.subTest(case):
                 mock_save_data.reset_mock()
                 mock_fetch_survival_dependencies.reset_mock()
@@ -276,12 +276,12 @@ class TestHiProcessor(unittest.TestCase):
                 mock_process_survival_prob.return_value = sentinel.survival_probabilities
 
                 processor = HiProcessor(sentinel.input_dependencies, input_metadata)
-                product = processor.process()
+                product = processor.process(spice_frame_name=spice_frame_name)
 
                 mock_fetch_survival_dependencies.assert_called_once_with(sentinel.input_dependencies,
                                                                          Instrument.IMAP_HI)
 
-                mock_process_survival_prob.assert_called_once_with(dependencies)
+                mock_process_survival_prob.assert_called_once_with(dependencies, spice_frame_name)
 
                 mock_save_data.assert_called_once_with(RectangularIntensityDataProduct(
                     input_metadata=input_metadata,
@@ -289,7 +289,7 @@ class TestHiProcessor(unittest.TestCase):
                     data=sentinel.survival_probabilities))
                 self.assertEqual([mock_save_data.return_value], product)
 
-    @patch('imap_l3_processing.hi.hi_processor.Processor.get_parent_file_names')
+    @patch('imap_l3_processing.hi.hi_processor.MapProcessor.get_parent_file_names')
     @patch("imap_l3_processing.hi.hi_processor.HiL3SingleSensorFullSpinDependencies.fetch_dependencies")
     @patch("imap_l3_processing.hi.hi_processor.process_survival_probabilities")
     @patch("imap_l3_processing.hi.hi_processor.combine_rectangular_intensity_map_data")
@@ -339,7 +339,7 @@ class TestHiProcessor(unittest.TestCase):
 
     @patch('imap_l3_processing.hi.hi_processor.combine_rectangular_intensity_map_data')
     @patch('imap_l3_processing.hi.hi_processor.save_data')
-    @patch('imap_l3_processing.hi.hi_processor.Processor.get_parent_file_names')
+    @patch('imap_l3_processing.hi.hi_processor.MapProcessor.get_parent_file_names')
     @patch("imap_l3_processing.hi.hi_processor.HiL3CombinedMapDependencies.fetch_dependencies")
     def test_process_combined_sensor_calls_with_correct_descriptor(self, mock_fetch_dependencies,
                                                                    mock_get_parent_file_names,

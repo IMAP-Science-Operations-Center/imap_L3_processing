@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
-from imap_processing.spice import geometry
+from imap_processing.spice.geometry import SpiceFrame
 
 from imap_l3_processing.maps.map_descriptors import MapDescriptorParts, MapQuantity, SurvivalCorrection, \
     parse_map_descriptor, PixelSize
@@ -9,16 +9,16 @@ from imap_l3_processing.maps.map_models import HealPixIntensityMapData, Intensit
     HealPixCoords, HealPixSpectralIndexMapData, RectangularIntensityDataProduct, \
     RectangularIntensityMapData, RectangularCoords, RectangularSpectralIndexDataProduct, \
     RectangularSpectralIndexMapData, SpectralIndexMapData
+from imap_l3_processing.maps.map_processor import MapProcessor
 from imap_l3_processing.maps.spectral_fit import calculate_spectral_index_for_multiple_ranges
-from imap_l3_processing.processor import Processor
 from imap_l3_processing.ultra.l3.science.ultra_survival_probability import UltraSurvivalProbabilitySkyMap, \
     UltraSurvivalProbability
 from imap_l3_processing.ultra.l3.ultra_l3_dependencies import UltraL3Dependencies, UltraL3SpectralIndexDependencies
 from imap_l3_processing.utils import save_data, combine_glows_l3e_with_l1c_pointing
 
 
-class UltraProcessor(Processor):
-    def process(self):
+class UltraProcessor(MapProcessor):
+    def process(self, spice_frame_name: SpiceFrame = SpiceFrame.ECLIPJ2000):
         parsed_descriptor = parse_map_descriptor(self.input_metadata.descriptor)
         parent_file_names = self.get_parent_file_names()
 
@@ -33,7 +33,7 @@ class UltraProcessor(Processor):
             case MapDescriptorParts(survival_correction=SurvivalCorrection.SurvivalCorrected,
                                     grid=PixelSize.TwoDegrees | PixelSize.FourDegrees | PixelSize.SixDegrees):
                 deps = UltraL3Dependencies.fetch_dependencies(self.dependencies)
-                healpix_intensity_map_data = self._process_survival_probability(deps)
+                healpix_intensity_map_data = self._process_survival_probability(deps, spice_frame_name)
                 data_product = self._process_healpix_intensity_to_rectangular(healpix_intensity_map_data,
                                                                               parsed_descriptor.grid)
                 data_product.add_paths_to_parents(deps.dependency_file_paths)
@@ -43,15 +43,14 @@ class UltraProcessor(Processor):
         data_product.add_filenames_to_parents(parent_file_names)
         return [save_data(data_product)]
 
-    def _process_survival_probability(self, deps: UltraL3Dependencies) -> HealPixIntensityMapData:
+    def _process_survival_probability(self, deps: UltraL3Dependencies, spice_frame_name: SpiceFrame) -> HealPixIntensityMapData:
         combined_psets = combine_glows_l3e_with_l1c_pointing(deps.glows_l3e_sp, deps.ultra_l1c_pset, )
         survival_probability_psets = [UltraSurvivalProbability(_l1c, _l3e) for _l1c, _l3e in
                                       combined_psets]
 
         intensity_data = deps.ultra_l2_map.intensity_map_data
         coords = deps.ultra_l2_map.coords
-        corrected_skymap = UltraSurvivalProbabilitySkyMap(survival_probability_psets, geometry.SpiceFrame.ECLIPJ2000,
-                                                          coords.nside)
+        corrected_skymap = UltraSurvivalProbabilitySkyMap(survival_probability_psets, spice_frame_name, coords.nside)
         survival_probability_map = corrected_skymap.to_dataset()["exposure_weighted_survival_probabilities"].values
 
         corrected_intensity = intensity_data.ena_intensity / survival_probability_map

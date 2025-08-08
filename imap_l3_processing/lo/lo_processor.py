@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import numpy as np
+from imap_processing.spice.geometry import SpiceFrame
 
 from imap_l3_processing.lo.l3.lo_l3_spectral_fit_dependencies import LoL3SpectralFitDependencies
 from imap_l3_processing.maps.hilo_l3_survival_dependencies import HiLoL3SurvivalDependencies
@@ -8,15 +9,15 @@ from imap_l3_processing.maps.map_descriptors import parse_map_descriptor, MapDes
     SurvivalCorrection, ReferenceFrame
 from imap_l3_processing.maps.map_models import RectangularIntensityMapData, RectangularSpectralIndexDataProduct, \
     RectangularSpectralIndexMapData, RectangularIntensityDataProduct
+from imap_l3_processing.maps.map_processor import MapProcessor
 from imap_l3_processing.maps.spectral_fit import calculate_spectral_index_for_multiple_ranges
 from imap_l3_processing.maps.survival_probability_processing import process_survival_probabilities
 from imap_l3_processing.models import Instrument
-from imap_l3_processing.processor import Processor
 from imap_l3_processing.utils import save_data
 
 
-class LoProcessor(Processor):
-    def process(self) -> list[Path]:
+class LoProcessor(MapProcessor):
+    def process(self, spice_frame_name: SpiceFrame = SpiceFrame.ECLIPJ2000) -> list[Path]:
         set_of_parent_file_names = set(self.get_parent_file_names())
         descriptor = parse_map_descriptor(self.input_metadata.descriptor)
         match descriptor:
@@ -27,7 +28,7 @@ class LoProcessor(Processor):
             case MapDescriptorParts(survival_correction=SurvivalCorrection.SurvivalCorrected,
                                     reference_frame=ReferenceFrame.Spacecraft):
                 deps = HiLoL3SurvivalDependencies.fetch_dependencies(self.dependencies, Instrument.IMAP_LO)
-                data = process_survival_probabilities(deps)
+                data = process_survival_probabilities(deps, spice_frame_name)
                 data_product = RectangularIntensityDataProduct(self.input_metadata, data)
                 set_of_parent_file_names.update(path.name for path in deps.dependency_file_paths)
             case None:

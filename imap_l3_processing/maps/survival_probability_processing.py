@@ -7,7 +7,7 @@ from imap_l3_processing.maps.rectangular_survival_probability import Rectangular
 from imap_l3_processing.utils import combine_glows_l3e_with_l1c_pointing
 
 
-def process_survival_probabilities(survival_probabilities_dependencies: HiLoL3SurvivalDependencies) \
+def process_survival_probabilities(survival_probabilities_dependencies: HiLoL3SurvivalDependencies, spice_frame_name: SpiceFrame) \
         -> RectangularIntensityMapData:
     l2_descriptor_parts = survival_probabilities_dependencies.l2_map_descriptor_parts
 
@@ -23,7 +23,7 @@ def process_survival_probabilities(survival_probabilities_dependencies: HiLoL3Su
     assert len(pointing_sets) > 0
 
     survival_sky_map = RectangularSurvivalProbabilitySkyMap(pointing_sets, int(l2_descriptor_parts.grid),
-                                                            SpiceFrame.ECLIPJ2000)
+                                                            spice_frame_name)
 
     survival_dataset = survival_sky_map.to_dataset()
 
