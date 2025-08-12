@@ -770,7 +770,7 @@ def run_glows_l3a(file_path):
 def run_glows_l3bc():
     input_metadata = InputMetadata(
         instrument='glows',
-        data_level='l3b',
+        data_level='l3bv2',
         start_date=datetime(2013, 9, 8),
         end_date=datetime(2013, 9, 8),
         version='v001')
@@ -802,13 +802,92 @@ def run_glows_l3bc():
 
     processor = GlowsProcessor(Mock(), input_metadata)
 
-    l3b_data_product, l3c_data_product = processor.process_l3bc(dependencies)
+    l3b_data_product, l3c_data_product = processor.process(dependencies)
 
     l3b_cdf = save_data(l3b_data_product, delete_if_present=True)
     print(l3b_cdf)
 
     l3c_data_product.parent_file_names.append(Path(l3b_cdf).name)
     print(save_data(l3c_data_product, delete_if_present=True))
+
+@patch('imap_l3_processing.glows.glows_processor.query')
+@patch('imap_l3_processing.glows.glows_processor.download')
+@patch('imap_l3_processing.glows.l3bc.glows_l3bcde_dependencies.download_dependency_from_path')
+@patch('imap_l3_processing.glows.l3bc.glows_l3bcde_dependencies.download')
+@patch('imap_l3_processing.glows.l3bc.glows_l3bcde_dependencies.download_external_dependency')
+def run_glows_l3bcde(mock_download_external, mock_download,
+                        mock_download_dependency_from_path, mock_download_in_processor, mock_query):
+    local_cdfs: list[str] = os.listdir(get_test_data_path("glows/pipeline/l3a"))
+
+    l3a_dicts = [{'file_path': f"imap/glows/l3a/{file_path}",
+                  'start_date': file_path.split('_')[4].split('-')[0],
+                  'repointing': int(file_path.split('_')[4].split('-repoint')[1])
+                  } for file_path in local_cdfs]
+
+    mock_query.side_effect = [
+        l3a_dicts, [],
+    ]
+
+    mock_download.side_effect = [
+        get_test_data_path('glows/imap_glows_pipeline-settings-l3bcde_20250423_v001.json'),
+        get_test_data_path('glows/imap_2026_105_01.repoint.csv'),
+        get_test_instrument_team_data_path('glows/imap_glows_plasma-speed-2010a_v003.dat'),
+        get_test_instrument_team_data_path('glows/imap_glows_proton-density-2010a_v003.dat'),
+        get_test_instrument_team_data_path('glows/imap_glows_uv-anisotropy-2010a_v003.dat'),
+        get_test_instrument_team_data_path('glows/imap_glows_photoion-2010a_v003.dat'),
+        get_test_instrument_team_data_path('glows/imap_glows_lya-2010a_v003.dat'),
+        get_test_instrument_team_data_path('glows/imap_glows_electron-density-2010a_v003.dat'),
+    ]
+
+    mock_download_in_processor.side_effect = [*local_cdfs]
+
+    mock_download_external.side_effect = [
+        TEMP_CDF_FOLDER_PATH / 'f107_fluxtable.txt',
+        TEMP_CDF_FOLDER_PATH / 'lyman_alpha_composite.nc',
+        Path(
+            r'C:\Users\Harrison\Downloads\glows_L3bc_pipeline_2025_04_11\glows_L3bc_pipeline_2025_04_11\external_dependencies\omni2_all_years.dat')
+    ]
+
+    mock_download_dependency_from_path.side_effect = [
+        get_test_data_path('glows/imap_glows_uv-anisotropy-1CR_20100101_v001.json'),
+        get_test_data_path('glows/imap_glows_WawHelioIonMP_20100101_v002.json'),
+        get_test_data_path('glows/imap_glows_bad-days-list_20100101_v004.dat'),
+        get_test_data_path('glows/imap_glows_pipeline-settings-l3bcde_20250423_v001.json'),
+        get_test_data_path('glows/pipeline/l3a/imap_glows_l3a_hist_20100105-repoint00153_v001.cdf'),
+        get_test_data_path('glows/pipeline/l3a/imap_glows_l3a_hist_20100106-repoint00154_v001.cdf'),
+        get_test_data_path('glows/imap_glows_uv-anisotropy-1CR_20100101_v001.json'),
+        get_test_data_path('glows/imap_glows_WawHelioIonMP_20100101_v002.json'),
+        get_test_data_path('glows/imap_glows_bad-days-list_20100101_v004.dat'),
+        get_test_data_path('glows/imap_glows_pipeline-settings-l3bcde_20250423_v001.json'),
+        get_test_data_path('glows/pipeline/l3a/imap_glows_l3a_hist_20100521-repoint00289_v001.cdf'),
+        get_test_data_path('glows/pipeline/l3a/imap_glows_l3a_hist_20100522-repoint00290_v001.cdf'),
+    ]
+
+    bad_days_list = AncillaryInput('imap_glows_bad-days-list_20100101_v004.dat')
+    waw_helio_ion = AncillaryInput('imap_glows_WawHelioIonMP_20100101_v002.json')
+    uv_anisotropy = AncillaryInput('imap_glows_uv-anisotropy-1CR_20100101_v001.json')
+    pipeline_settings = AncillaryInput('imap_glows_pipeline-settings-l3bcde_20250423_v001.json')
+
+    plasma_speed = AncillaryInput('imap_glows_plasma-speed-2010a_v003.dat')
+    proton_density =  AncillaryInput('imap_glows_proton-density-2010a_v003.dat')
+    anistrophy = AncillaryInput('imap_glows_uv-anisotropy-2010a_v003.dat')
+    photo_ion = AncillaryInput('imap_glows_photoion-2010a_v003.dat')
+    lya = AncillaryInput('imap_glows_lya-2010a_v003.dat')
+    electron_density = AncillaryInput('imap_glows_electron-density-2010a_v003.dat')
+
+    repointings = RepointInput('imap_2026_105_01.repoint.csv')
+
+    input_collection = ProcessingInputCollection(bad_days_list, waw_helio_ion, uv_anisotropy, pipeline_settings,
+                                                 repointings, plasma_speed, anistrophy, photo_ion, lya, electron_density, proton_density)
+
+    input_metadata = InputMetadata(instrument='glows', data_level='l3bv2',
+                                   start_date=datetime.fromisoformat('2010-01-05T00:00:00'),
+                                   end_date=datetime.fromisoformat('2025-01-06T00:00:00'),
+                                   version='v001')
+
+    processor = GlowsProcessor(input_collection, input_metadata)
+
+    print(processor.process())
 
 
 @patch('imap_l3_processing.glows.glows_processor.shutil')
@@ -1073,6 +1152,8 @@ if __name__ == "__main__":
                 run_glows_l3e_with_less_mocks()
         elif "l3a" in sys.argv:
             make_glows_l3a_files()
+        elif "l3bv2" in sys.argv:
+            run_glows_l3bcde()
         else:
             raise Exception("level not specified")
 

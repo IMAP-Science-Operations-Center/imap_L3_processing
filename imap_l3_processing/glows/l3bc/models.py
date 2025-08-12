@@ -17,8 +17,8 @@ from imap_l3_processing.models import DataProduct, DataProductVariable, InputMet
 @dataclass
 class CRToProcess:
     l3a_paths: list[str]
-    cr_start_date: Time
-    cr_end_date: Time
+    cr_start_date: datetime
+    cr_end_date: datetime
     cr_rotation_number: int
 
 

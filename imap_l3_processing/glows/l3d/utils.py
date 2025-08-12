@@ -1,5 +1,6 @@
 import json
 import os
+import shutil
 from datetime import datetime
 from pathlib import Path
 
@@ -72,9 +73,13 @@ def convert_json_to_l3d_data_product(json_file_path: Path, input_metadata: Input
 
     new_start = datetime.fromisoformat(l3d_json_dict['time_grid'][0])
     input_metadata.start_date = new_start.date()
+    input_metadata.data_level = "l3d"
+    version = 1
+    l3d_metadata = InputMetadata("glows", "l3d", new_start, new_start,
+                                 f"v{version:03d}", "solar-hist")
 
     return GlowsL3DSolarParamsHistory(
-        input_metadata=input_metadata,
+        input_metadata=l3d_metadata,
         parent_file_names=parent_file_names,
         latitude=l3d_json_dict['lat_grid'],
         cr=l3d_json_dict['cr_grid'],

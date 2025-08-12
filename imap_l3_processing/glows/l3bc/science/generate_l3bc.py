@@ -9,24 +9,25 @@ from astropy.time import Time
 
 from imap_l3_processing.glows.l3bc.cannot_process_carrington_rotation_error import CannotProcessCarringtonRotationError
 from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDependencies
+from imap_l3_processing.glows.l3bc.glows_l3bcde_dependencies import GlowsL3BCAncillary
 from imap_l3_processing.glows.l3bc.l3bc_toolkit import l3b_CarringtonIonRate as cir
 from imap_l3_processing.glows.l3bc.l3bc_toolkit import l3b_DailyIonRate as dir
 from imap_l3_processing.glows.l3bc.l3bc_toolkit import l3c_CarringtonSolarWind as csw
 from imap_l3_processing.glows.l3bc.l3bc_toolkit import l3c_EclipticSolarWind as esw
 
 
-def generate_l3bc(dependencies: GlowsL3BCDependencies):
-    CR = dependencies.carrington_rotation_number
+def generate_l3bc(dependencies: GlowsL3BCAncillary, l3a_data: list[dict], cr_number: int):
+    CR = cr_number
 
     # if all days in CR are bad, then there will be no L3bc data products
-    if len(dependencies.l3a_data) == 0:
+    if len(l3a_data) == 0:
         raise CannotProcessCarringtonRotationError("All days for Carrington Rotation are in a bad season.")
 
     # Daily ionization rate from the daily light curves
     daily_ion_rate = []
     l3a_used_date = []
     l3a_used = []
-    for l3a in dependencies.l3a_data:
+    for l3a in l3a_data:
         ion_rate_daily = dir.DailyIonizationRate(
             dependencies.ancillary_files)  # daily ionization rate object initialization
         ion_rate_daily.read_l3a(l3a)  # reading L3a data (masked lightcurve)

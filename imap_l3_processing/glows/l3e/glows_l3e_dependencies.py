@@ -28,61 +28,51 @@ class GlowsL3EDependencies:
     repointing_file: Path
 
     @classmethod
-    def fetch_dependencies(cls, dependencies: ProcessingInputCollection, descriptor: str):
-        solar_hist_dependency = dependencies.get_file_paths(source='glows', descriptor='solar-hist')
+    def fetch_dependencies(cls, dependencies: ProcessingInputCollection, txt_files: list[Path]):
+        # solar_hist_dependency = dependencies.get_file_paths(source='glows', descriptor='solar-hist')
 
-        lya_series_dependency = dependencies.get_file_paths(source='glows', descriptor='lya')
-        solar_uv_anisotropy_dependency = dependencies.get_file_paths(source='glows', descriptor='uv-anis')
-        speed_3d_dependency = dependencies.get_file_paths(source='glows', descriptor='speed')
-        density_3d_dependency = dependencies.get_file_paths(source='glows', descriptor='p-dens')
-        phion_hydrogen_dependency = dependencies.get_file_paths(source='glows', descriptor='phion')
-        sw_eqtr_electrons_dependency = dependencies.get_file_paths(source='glows', descriptor='e-dens')
+        # lya_series_dependency = dependencies.get_file_paths(source='glows', descriptor='lya')
+        # solar_uv_anisotropy_dependency = dependencies.get_file_paths(source='glows', descriptor='uv-anis')
+        # speed_3d_dependency = dependencies.get_file_paths(source='glows', descriptor='speed')
+        # density_3d_dependency = dependencies.get_file_paths(source='glows', descriptor='p-dens')
+        # phion_hydrogen_dependency = dependencies.get_file_paths(source='glows', descriptor='phion')
+        # sw_eqtr_electrons_dependency = dependencies.get_file_paths(source='glows', descriptor='e-dens')
         ionization_files_dependency = dependencies.get_file_paths(source='glows', descriptor='ionization-files')
         pipeline_settings_dependency = dependencies.get_file_paths(source='glows',
                                                                    descriptor='pipeline-settings-l3bcde')
-
-        lya_series_path = download_dependency_from_path(str(lya_series_dependency[0]))
-        solar_uv_anisotropy_path = download_dependency_from_path(str(solar_uv_anisotropy_dependency[0]))
-        speed_3d_path = download_dependency_from_path(str(speed_3d_dependency[0]))
-        density_3d_path = download_dependency_from_path(str(density_3d_dependency[0]))
-        phion_hydrogen_path = download_dependency_from_path(str(phion_hydrogen_dependency[0]))
-        sw_eqtr_electrons_path = download_dependency_from_path(str(sw_eqtr_electrons_dependency[0]))
+        #
+        # lya_series_path = download_dependency_from_path(str(lya_series_dependency[0]))
+        # solar_uv_anisotropy_path = download_dependency_from_path(str(solar_uv_anisotropy_dependency[0]))
+        # speed_3d_path = download_dependency_from_path(str(speed_3d_dependency[0]))
+        # density_3d_path = download_dependency_from_path(str(density_3d_dependency[0]))
+        # phion_hydrogen_path = download_dependency_from_path(str(phion_hydrogen_dependency[0]))
+        # sw_eqtr_electrons_path = download_dependency_from_path(str(sw_eqtr_electrons_dependency[0]))
         ionization_files_path = download_dependency_from_path(str(ionization_files_dependency[0]))
         pipeline_settings_path = download_dependency_from_path(str(pipeline_settings_dependency[0]))
 
-        energy_grid_lo_path = None
-        energy_grid_hi_path = None
-        energy_grid_ultra_path = None
-        tess_xyz_path = None
-        tess_ang_path = None
-        elongation_data = None
-
-        if descriptor == "survival-probability-lo":
-            energy_grid_lo_dependency = dependencies.get_file_paths(source='glows', descriptor='energy-grid-lo')
-            tess_xyz_dependency = dependencies.get_file_paths(source='glows', descriptor='tess-xyz-8')
-            elongation_dependency = dependencies.get_file_paths(source='lo', descriptor='elongation-data')
-            energy_grid_lo_path = download_dependency_from_path(str(energy_grid_lo_dependency[0]))
-            tess_xyz_path = download_dependency_from_path(str(tess_xyz_dependency[0]))
-            elongation_path = download_dependency_from_path(str(elongation_dependency[0]))
-            with open(elongation_path) as f:
-                elongation_data = {}
-                lines = [line.rstrip('\n') for line in f.readlines()]
-                for line in lines:
-                    repointing, elongation = line.split('\t')
-                    elongation_data[repointing] = int(elongation)
-        elif descriptor == "survival-probability-hi-45" or descriptor == "survival-probability-hi-90":
-            energy_grid_hi_dependency = dependencies.get_file_paths(source='glows', descriptor='energy-grid-hi')
-            energy_grid_hi_path = download_dependency_from_path(str(energy_grid_hi_dependency[0]))
-        elif descriptor == "survival-probability-ul":
-            energy_grid_ultra_dependency = dependencies.get_file_paths(source='glows', descriptor='energy-grid-ultra')
-            tess_ang_dependency = dependencies.get_file_paths(source='glows', descriptor='tess-ang-16')
-            energy_grid_ultra_path = download_dependency_from_path(str(energy_grid_ultra_dependency[0]))
-            tess_ang_path = download_dependency_from_path(str(tess_ang_dependency[0]))
+        energy_grid_lo_dependency = dependencies.get_file_paths(source='glows', descriptor='energy-grid-lo')
+        tess_xyz_dependency = dependencies.get_file_paths(source='glows', descriptor='tess-xyz-8')
+        elongation_dependency = dependencies.get_file_paths(source='lo', descriptor='elongation-data')
+        energy_grid_lo_path = download_dependency_from_path(str(energy_grid_lo_dependency[0]))
+        tess_xyz_path = download_dependency_from_path(str(tess_xyz_dependency[0]))
+        elongation_path = download_dependency_from_path(str(elongation_dependency[0]))
+        with open(elongation_path) as f:
+            elongation_data = {}
+            lines = [line.rstrip('\n') for line in f.readlines()]
+            for line in lines:
+                repointing, elongation = line.split('\t')
+                elongation_data[repointing] = int(elongation)
+        energy_grid_hi_dependency = dependencies.get_file_paths(source='glows', descriptor='energy-grid-hi')
+        energy_grid_hi_path = download_dependency_from_path(str(energy_grid_hi_dependency[0]))
+        energy_grid_ultra_dependency = dependencies.get_file_paths(source='glows', descriptor='energy-grid-ultra')
+        tess_ang_dependency = dependencies.get_file_paths(source='glows', descriptor='tess-ang-16')
+        energy_grid_ultra_path = download_dependency_from_path(str(energy_grid_ultra_dependency[0]))
+        tess_ang_path = download_dependency_from_path(str(tess_ang_dependency[0]))
 
         with open(pipeline_settings_path) as f:
             pipeline_settings = json.load(f)
 
-        cr_number = int(str(solar_hist_dependency).split('_')[-2][-5:])
+        # cr_number = int(str(solar_hist_dependency).split('_')[-2][-5:])
 
         repoint_file_dependency = dependencies.get_file_paths(data_type=RepointInput.data_type)
         repoint_file_path = download_dependency_from_path(str(repoint_file_dependency[0]))
@@ -93,17 +83,17 @@ class GlowsL3EDependencies:
             energy_grid_ultra_path,
             tess_xyz_path,
             tess_ang_path,
-            lya_series_path,
-            solar_uv_anisotropy_path,
-            speed_3d_path,
-            density_3d_path,
-            phion_hydrogen_path,
-            sw_eqtr_electrons_path,
+            next(iter(path for path in txt_files if "lya" in path.name)),
+            next(iter(path for path in txt_files if "uv-anis" in path.name)),
+            next(iter(path for path in txt_files if "speed" in path.name)),
+            next(iter(path for path in txt_files if "p-dens" in path.name)),
+            next(iter(path for path in txt_files if "phion" in path.name)),
+            next(iter(path for path in txt_files if "e-dens" in path.name)),
             ionization_files_path,
             pipeline_settings,
             elongation_data,
             repoint_file_path
-        ), cr_number
+        )
 
     def rename_dependencies(self):
         if self.energy_grid_lo is not None:

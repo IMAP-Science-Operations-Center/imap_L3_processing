@@ -54,7 +54,7 @@ def determine_l3e_files_to_produce(descriptor: str, first_cr_processed: int, las
     l3e_files = query(instrument='glows', descriptor=descriptor, data_level='l3e', version=version)
 
     existing_pointings = [l3e['repointing'] for l3e in l3e_files]
-
+    print(f"l3e {version} exists for repointings {set(existing_pointings)}")
     set_global_repoint_table_paths([repointing_path])
     repointing_data = get_repoint_data()
 
@@ -73,7 +73,8 @@ def determine_l3e_files_to_produce(descriptor: str, first_cr_processed: int, las
     for i in range(len(repoint_ids)):
         if i + 1 < len(repoint_ids) and start_ns < repoint_starts[i + 1] < end_ns:
             pointing_numbers.append(int(repoint_ids[i]))
+    print(f"We can make repointings {pointing_numbers}")
 
     pointing_numbers = [pointing for pointing in pointing_numbers if pointing not in existing_pointings]
-
+    print("l3e files to make", pointing_numbers)
     return pointing_numbers

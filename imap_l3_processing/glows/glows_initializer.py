@@ -1,10 +1,14 @@
 from dataclasses import fields
+from datetime import datetime, timedelta
 from pathlib import Path
 
-from imap_data_access import query
+import numpy as np
+from imap_data_access import query, download
 from imap_data_access.processing_input import ProcessingInputCollection
+from spacepy.pycdf import CDF
 
 from imap_l3_processing.glows.l3bc.glows_initializer_ancillary_dependencies import GlowsInitializerAncillaryDependencies
+from imap_l3_processing.glows.l3bc.l3bc_toolkit.constants import PHISICAL_CONSTANTS
 from imap_l3_processing.glows.l3bc.utils import find_unprocessed_carrington_rotations, archive_dependencies
 
 
@@ -29,6 +33,40 @@ class GlowsInitializer:
             zip_file_paths.append(path)
 
         return zip_file_paths
+
+
+    # def validata_and_initialize_spike(self, processing_input_collection: ProcessingInputCollection) -> list[Path]:
+    #     jd_carrington_first = datetime(2009, 12, 7, 4)
+    #     carrington_length = timedelta(days=27.2753)
+    #     cr_start_dates = [(i * carrington_length) + jd_carrington_first for i in range(0, 500)]
+    #
+    #     for cr_start_date in cr_start_dates:
+    #         l3b_files = query(instrument="glows", descriptor='ion-rate-profile', version="latest", data_level="l3b", start_date=cr_start_date.strftime("%Y%m%d"))
+    #         l3b_file_path = l3b_files[0]["file_path"]
+    #         l3b_file = download(l3b_file_path)
+    #
+    #         with CDF(str(l3b_file)) as l3b_cdf:
+    #             carrington_start_date = cr_start_date.strftime("%Y%m%d")
+    #             carrington_end_date = (cr_start_date + carrington_length).strftime("%Y%m%d")
+    #             l3a_files = query(instrument="glows", version="latest", data_level="l3a", start_date=carrington_start_date, end_date=carrington_end_date)
+    #
+    #             l3a_file_paths =  {f["file_path"] for f in l3a_files}
+    #             parent_files = set(l3b_cdf.attrs["Parents"])
+    #
+    #             if not l3a_file_paths.issubset(parent_files):
+    #                 new_version = int(l3b_files[0]["version"][1:]) + 1
+    #
+    #
+    #
+    #
+    #
+    #
+    #     l3_b_files =
+    #
+    #     # Find current CR for input l3A
+    #
+    #     latest_l3a_file = None
+
 
 
 def _should_process(glows_l3b_dependencies: GlowsInitializerAncillaryDependencies) -> bool:

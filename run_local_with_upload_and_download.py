@@ -57,6 +57,28 @@ if __name__ == "__main__":
                             '{"type": "ancillary", "files":["imap_glows_uv-anisotropy-1CR_20100101_v001.json"]},'
                             '{"type": "ancillary", "files":["imap_glows_pipeline-settings-l3bcde_19470303_v008.json"]},'
                             '{"type": "repoint", "files":["imap_2026_105_01.repoint.csv"]}]'])
+        case "glows", "b2e":
+            subprocess.run([sys.executable, 'imap_l3_data_processor.py', '--instrument', 'glows', '--data-level', 'l3bv2',
+                            '--start-date', '20250415', '--version', 'v025', '--dependency',
+                            '[{"type": "science", "files": ["imap_glows_l3a_hist_20250415-repoint01000_v026.cdf"]},'
+                            '{"type": "ancillary", "files":["imap_glows_bad-days-list_20100101_v001.dat"]},'
+                            '{"type": "ancillary", "files":["imap_glows_WawHelioIonMP_20100101_v002.json"]},'
+                            '{"type": "ancillary", "files":["imap_glows_uv-anisotropy-1CR_20100101_v004.json"]},'
+                            '{"type": "ancillary", "files":["imap_glows_pipeline-settings-l3bcde_19470303_v008.json"]},'
+                            '{"type": "ancillary", "files": ["imap_glows_plasma-speed-2010a_20100101_v003.dat"]},'
+                            '{"type": "ancillary", "files": ["imap_glows_proton-density-2010a_20100101_v003.dat"]},'
+                            '{"type": "ancillary", "files": ["imap_glows_uv-anisotropy-2010a_20100101_v003.dat"]},'
+                            '{"type": "ancillary", "files": ["imap_glows_photoion-2010a_20100101_v003.dat"]},'
+                            '{"type": "ancillary", "files": ["imap_glows_electron-density-2010a_20100101_v003.dat"]},'
+                            '{"type": "ancillary", "files": ["imap_glows_lya-2010a_20100101_v003.dat"]},'
+                            '{"type": "ancillary", "files": ["imap_glows_ionization-files_19470303_v003.dat"]},'
+                            '{"type": "ancillary", "files": ["imap_glows_energy-grid-lo_20100101_v002.dat"]},'
+                            '{"type": "ancillary", "files": ["imap_glows_tess-xyz-8_19470303_v003.dat"]},'
+                            '{"type": "ancillary", "files": ["imap_lo_elongation-data_20100101_v001.dat"]},'
+                            '{"type": "ancillary", "files": ["imap_glows_energy-grid-hi_19470303_v003.dat"]},'
+                            '{"type": "ancillary", "files": ["imap_glows_energy-grid-ultra_19470303_v003.dat"]},'
+                            '{"type": "ancillary", "files": ["imap_glows_tess-ang-16_19470303_v003.dat"]},'
+                            '{"type": "repoint", "files":["imap_2026_105_01.repoint.csv"]}]'])
         case "glows", "l3d":
             if os.path.exists(PATH_TO_L3D_TOOLKIT / 'data_l3b'): shutil.rmtree(PATH_TO_L3D_TOOLKIT / 'data_l3b')
             if os.path.exists(PATH_TO_L3D_TOOLKIT / 'data_l3c'): shutil.rmtree(PATH_TO_L3D_TOOLKIT / 'data_l3c')

@@ -25,6 +25,7 @@ from imap_l3_processing.glows.l3a.models import GlowsL3LightCurve, PHOTON_FLUX_U
     SPACECRAFT_VELOCITY_AVERAGE_CDF_VAR_NAME, NUM_OF_BINS_CDF_VAR_NAME
 from imap_l3_processing.glows.l3bc.dependency_validator import validate_dependencies
 from imap_l3_processing.glows.l3bc.glows_initializer_ancillary_dependencies import GlowsInitializerAncillaryDependencies
+from imap_l3_processing.glows.l3bc.glows_l3bcde_dependencies import GlowsL3BCDEDependencies
 from imap_l3_processing.glows.l3bc.l3bc_toolkit.funcs import carrington, jd_fm_Carrington
 from imap_l3_processing.glows.l3bc.models import CRToProcess
 
@@ -126,24 +127,24 @@ def get_astropy_time_from_yyyymmdd(date_string: str) -> Time:
 
 
 def archive_dependencies(cr_to_process: CRToProcess, version: str,
-                         ancillary_dependencies: GlowsInitializerAncillaryDependencies) -> Path:
+                         ancillary_dependencies: GlowsL3BCDEDependencies) -> Path:
     start_date = cr_to_process.cr_start_date.strftime("%Y%m%d")
     zip_path = TEMP_CDF_FOLDER_PATH / f"imap_glows_l3b-archive_{start_date}_{version}.zip"
     json_filename = "cr_to_process.json"
     with ZipFile(zip_path, "w", ZIP_DEFLATED) as file:
-        file.write(ancillary_dependencies.lyman_alpha_path, "lyman_alpha_composite.nc")
-        file.write(ancillary_dependencies.omni2_data_path, "omni2_all_years.dat")
-        file.write(ancillary_dependencies.f107_index_file_path, "f107_fluxtable.txt")
+        file.write(ancillary_dependencies.glows_l3b_ancillary.lyman_alpha_path, "lyman_alpha_composite.nc")
+        file.write(ancillary_dependencies.glows_l3b_ancillary.external_files["omni_raw_data"], "omni2_all_years.dat")
+        file.write(ancillary_dependencies.glows_l3b_ancillary.external_files["f107_raw_data"], "f107_fluxtable.txt")
         cr = {"cr_rotation_number": cr_to_process.cr_rotation_number,
               "l3a_paths": cr_to_process.l3a_paths,
-              "cr_start_date": cr_to_process.cr_start_date.value,
-              "cr_end_date": cr_to_process.cr_end_date.value,
-              "bad_days_list": ancillary_dependencies.bad_days_list,
-              "pipeline_settings": ancillary_dependencies.pipeline_settings,
-              "waw_helioion_mp": ancillary_dependencies.waw_helioion_mp_path,
-              "uv_anisotropy": ancillary_dependencies.uv_anisotropy_path,
-              "repointing_file": ancillary_dependencies.repointing_file.name
-              }
+              "cr_start_date": str(cr_to_process.cr_start_date),
+              "cr_end_date": str(cr_to_process.cr_end_date),
+              "bad_days_list": ancillary_dependencies.glows_l3b_ancillary.ancillary_files["bad_days_list"].name,
+              "pipeline_settings": ancillary_dependencies.glows_l3b_ancillary.ancillary_files["pipeline_settings"].name,
+              "waw_helioion_mp": ancillary_dependencies.glows_l3b_ancillary.ancillary_files["WawHelioIonMP_parameters"].name,
+              "uv_anisotropy": ancillary_dependencies.glows_l3b_ancillary.ancillary_files["uv_anisotropy"].name,
+              "repointing_file": ancillary_dependencies.glows_l3b_ancillary.repointing_file.name
+        }
         json_string = json.dumps(cr)
         file.writestr(json_filename, json_string)
     return zip_path

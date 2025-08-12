@@ -6,6 +6,7 @@ from urllib.error import URLError
 from urllib.request import urlretrieve
 
 import imap_data_access
+import requests
 import spiceypy
 from imap_data_access import ScienceFilePath
 from spacepy.pycdf import CDF
@@ -19,7 +20,7 @@ from imap_l3_processing.ultra.l3.models import UltraL1CPSet, UltraGlowsL3eData
 from imap_l3_processing.version import VERSION
 
 
-def save_data(data: DataProduct, delete_if_present: bool = False, folder_path: Path = None,
+def save_data(data: DataProduct, delete_if_present: bool = True, folder_path: Path = None,
               cr_number=None) -> Path:
     assert data.input_metadata.repointing is None or cr_number is None, "You cannot call save_data with both a repointing in the metadata while passing in a CR number"
     formatted_start_date = data.input_metadata.start_date.strftime("%Y%m%d")
@@ -122,8 +123,10 @@ def download_dependency_from_path(path_str: str) -> Path:
 
 def download_external_dependency(dependency_url: str, filename: str) -> Path | None:
     try:
-        saved_path, _ = urlretrieve(dependency_url, filename)
-        return Path(saved_path)
+        response = requests.get(dependency_url).content
+        with open(Path(filename), 'wb') as f:
+            f.write(response)
+        return Path(filename)
     except URLError:
         return None
 
