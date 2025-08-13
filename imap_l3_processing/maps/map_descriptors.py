@@ -8,6 +8,7 @@ class Sensor(enum.Enum):
     Hi45 = "Hi45"
     Hi90 = "Hi90"
     Lo90 = "Lo90"
+    Lo = "Lo"
     HiCombined = "HiCombined"
     Ultra45 = "Ultra45"
     Ultra90 = "Ultra90"
@@ -18,6 +19,7 @@ class Sensor(enum.Enum):
         sensor_angles = {Sensor.Hi45: -45,
                          Sensor.Hi90: 0,
                          Sensor.Lo90: 0,
+                         Sensor.Lo: 0,
                          Sensor.Ultra45: -45,
                          Sensor.Ultra90: 0}
         return sensor_angles[sensor_name]
@@ -72,7 +74,7 @@ class MapDescriptorParts:
 
 def parse_map_descriptor(descriptor: str) -> Optional[MapDescriptorParts]:
     descriptor_regex = """
-        (?P<sensor>hic|h45|h90|l090|ulc|u45|u90)-
+        (?P<sensor>hic|h45|h90|l090|ulc|u45|u90|ilo)-
         (?P<quantity>ena|spx)[a-zA-Z]*-
         (?P<species>h)-
         (?P<frame>sf|hf|hk)-
@@ -87,7 +89,7 @@ def parse_map_descriptor(descriptor: str) -> Optional[MapDescriptorParts]:
     if descriptor_part_match is None:
         return None
 
-    sensors = {"hic": Sensor.HiCombined, "h45": Sensor.Hi45, "h90": Sensor.Hi90, "l090": Sensor.Lo90,
+    sensors = {"hic": Sensor.HiCombined, "h45": Sensor.Hi45, "h90": Sensor.Hi90, "l090": Sensor.Lo90, "ilo": Sensor.Lo,
                "ulc": Sensor.UltraCombined, "u45": Sensor.Ultra45, "u90": Sensor.Ultra90}
     cg_corrections = {"sf": ReferenceFrame.Spacecraft, "hf": ReferenceFrame.Heliospheric,
                       "hk": ReferenceFrame.HeliosphericKinematic}
