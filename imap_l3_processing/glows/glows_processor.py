@@ -277,7 +277,9 @@ class GlowsProcessor(Processor):
                                                      dependencies.pipeline_settings['start_cr'], cr_number,
                                                      version,
                                                      dependencies.repointing_file)
-        products = []
+        lo_products = []
+        hi_products = []
+        ultra_products = []
         print("repointings:",repointings)
         for repointing in repointings:
             self.input_metadata.repointing = repointing
@@ -287,22 +289,18 @@ class GlowsProcessor(Processor):
                 epoch_end_dt: datetime = epoch_end.astype('datetime64[us]').astype(datetime)
                 epoch_delta: timedelta = (epoch_end_dt - epoch_dt) / 2
 
-                if self.input_metadata.descriptor == "survival-probability-lo":
-                    try:
-                        year_with_repointing = str(epoch_dt.year) + str(int(repointing)).zfill(3)
-                        elongation = dependencies.elongation[year_with_repointing]
-                    except KeyError:
-                        continue
-                    products.extend(self.process_l3e_lo(epoch_dt, epoch_delta, elongation))
-                elif self.input_metadata.descriptor == "survival-probability-hi-45":
-                    products.extend(self.process_l3e_hi(epoch_dt, epoch_delta, 135))
-                elif self.input_metadata.descriptor == "survival-probability-hi-90":
-                    products.extend(self.process_l3e_hi(epoch_dt, epoch_delta, 90))
-                elif self.input_metadata.descriptor == "survival-probability-ul":
-                    products.extend(self.process_l3e_ul(epoch_dt, epoch_delta))
+                try:
+                    year_with_repointing = str(epoch_dt.year) + str(int(repointing)).zfill(3)
+                    elongation = dependencies.elongation[year_with_repointing]
+                    lo_products.extend(self.process_l3e_lo(epoch_dt, epoch_delta, elongation))
+                except KeyError:
+                    print("could not find lo elongation", year_with_repointing)
+                hi_products.extend(self.process_l3e_hi(epoch_dt, epoch_delta, 135))
+                hi_products.extend(self.process_l3e_hi(epoch_dt, epoch_delta, 90))
+                ultra_products.extend(self.process_l3e_ul(epoch_dt, epoch_delta))
             except Exception as e:
                 print("Exception encountered for repointing ", repointing, e)
-        return products
+        return lo_products + hi_products + ultra_products
 
     def process_l3e_lo(self, epoch: datetime, epoch_delta: timedelta, elongation_value: int) -> list[Path]:
         call_args_object = determine_call_args_for_l3e_executable(epoch, epoch + epoch_delta, elongation_value)

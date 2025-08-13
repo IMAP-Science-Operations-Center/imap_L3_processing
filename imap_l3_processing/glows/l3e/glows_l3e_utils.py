@@ -68,6 +68,7 @@ def determine_l3e_files_to_produce(descriptor: str, first_cr_processed: int, las
         leap_second_strict='silent') - TT2000_EPOCH).total_seconds() * ONE_SECOND_IN_NANOSECONDS)
     repoint_starts = vectorized_date_conv(repointing_data["repoint_start_utc"])
     repoint_ids = repointing_data["repoint_id"]
+    print("repoint file has repoint ids", list(repoint_ids))
 
     pointing_numbers = []
     for i in range(len(repoint_ids)):

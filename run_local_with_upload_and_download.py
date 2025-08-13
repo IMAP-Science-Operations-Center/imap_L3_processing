@@ -78,7 +78,15 @@ if __name__ == "__main__":
                             '{"type": "ancillary", "files": ["imap_glows_energy-grid-hi_19470303_v003.dat"]},'
                             '{"type": "ancillary", "files": ["imap_glows_energy-grid-ultra_19470303_v003.dat"]},'
                             '{"type": "ancillary", "files": ["imap_glows_tess-ang-16_19470303_v003.dat"]},'
-                            '{"type": "repoint", "files":["imap_2026_105_01.repoint.csv"]}]'])
+                            '{"type": "spice", "files": ["naif0012.tls"]},'
+                            '{"type": "spice", "files": ["imap_recon_20250415_20260415_v01.bsp"]},'
+                            '{"type": "spice", "files": ["imap_sclk_0000.tsc"]},'
+                            '{"type": "spice", "files": ["imap_science_0001.tf"]},'
+                            '{"type": "spice", "files": ["imap_001.tf"]},'
+                            '{"type": "spice", "files": ["imap_dps_2025_105_2026_105_01.ah.bc"]},'
+                            '{"type": "spice", "files": ["imap_2025_152_2025_154_002.ah.bc"]},'
+                            '{"type": "spice", "files": ["de440.bsp"]},'
+                            '{"type": "repoint", "files":["imap_2026_269_05.repoint.csv"]}]'])
         case "glows", "l3d":
             if os.path.exists(PATH_TO_L3D_TOOLKIT / 'data_l3b'): shutil.rmtree(PATH_TO_L3D_TOOLKIT / 'data_l3b')
             if os.path.exists(PATH_TO_L3D_TOOLKIT / 'data_l3c'): shutil.rmtree(PATH_TO_L3D_TOOLKIT / 'data_l3c')
