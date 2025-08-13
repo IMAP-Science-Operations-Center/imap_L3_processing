@@ -78,7 +78,7 @@ def parse_map_descriptor(descriptor: str) -> Optional[MapDescriptorParts]:
         (?P<frame>sf|hf|hk)-
         (?P<survival_corrected>sp|nsp)-
         (?P<spin_phase>ram|anti|full)-
-        (?P<coord>hae|custom)-
+        (?P<coord>[a-zA-Z0-9]*)-
         (?P<grid>2deg|4deg|6deg|nside8|nside16)-
         (?P<duration>3mo|6mo|1yr)
         """

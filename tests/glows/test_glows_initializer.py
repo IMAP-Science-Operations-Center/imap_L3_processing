@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import Mock, patch, call, sentinel
+from unittest.mock import Mock, patch, call, sentinel, MagicMock, mock_open
 
 from imap_data_access import ScienceInput
 
@@ -42,12 +42,12 @@ class TestGlowsInitializer(unittest.TestCase):
                                          mock_glows_initializer_ancillary_dependencies: Mock,
                                          mock_archive_dependencies: Mock):
         version = "v003"
-        mock_l3a = Mock()
-        mock_l3b = Mock()
+        mock_l3a = MagicMock()
+        mock_l3b = MagicMock()
 
         mock_query.side_effect = [
-            mock_l3a,
-            mock_l3b
+            [mock_l3a],
+            [mock_l3b]
         ]
         mock_archive_dependencies.side_effect = [
             sentinel.zip_path_1,
@@ -58,7 +58,9 @@ class TestGlowsInitializer(unittest.TestCase):
                                                                        Mock(), Mock(), Mock())
 
         mock_glows_initializer_ancillary_dependencies.fetch_dependencies.return_value = ancillary_dependencies
-        mock_find_unprocessed_carrington_rotations.return_value = [sentinel.cr_to_process1, sentinel.cr_to_process2]
+        mock_cr_to_process_1 = Mock(cr_rotation_number=1)
+        mock_cr_to_process_2 = Mock(cr_rotation_number=2)
+        mock_find_unprocessed_carrington_rotations.return_value = [mock_cr_to_process_1, mock_cr_to_process_2]
 
         mock_dependencies = Mock()
         expected_l3a_version = "v123"
@@ -73,13 +75,13 @@ class TestGlowsInitializer(unittest.TestCase):
             [call(instrument="glows", descriptor='hist', version=expected_l3a_version, data_level="l3a"),
              call(instrument="glows", descriptor='ion-rate-profile', version=version, data_level="l3b")])
 
-        mock_find_unprocessed_carrington_rotations.assert_called_once_with(mock_l3a, mock_l3b, ancillary_dependencies)
+        mock_find_unprocessed_carrington_rotations.assert_called_once_with([mock_l3a], [mock_l3b], ancillary_dependencies)
 
         mock_glows_initializer_ancillary_dependencies.fetch_dependencies.assert_called_once_with(mock_dependencies)
 
         mock_archive_dependencies.assert_has_calls([
-            call(sentinel.cr_to_process1, version, ancillary_dependencies),
-            call(sentinel.cr_to_process2, version, ancillary_dependencies),
+            call(mock_cr_to_process_1, version, ancillary_dependencies),
+            call(mock_cr_to_process_2, version, ancillary_dependencies),
         ])
 
         self.assertEqual(2, len(actual_zip_paths))
