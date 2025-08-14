@@ -8,7 +8,7 @@ from imap_l3_processing.maps.hilo_l3_survival_dependencies import HiLoL3Survival
     HiL3SingleSensorFullSpinDependencies
 from imap_l3_processing.maps.map_descriptors import parse_map_descriptor, MapQuantity, MapDescriptorParts, \
     SurvivalCorrection, \
-    SpinPhase, Sensor, Duration
+    SpinPhase, Sensor
 from imap_l3_processing.maps.map_models import RectangularSpectralIndexDataProduct, RectangularSpectralIndexMapData, \
     RectangularIntensityMapData, RectangularIntensityDataProduct, \
     combine_rectangular_intensity_map_data
@@ -55,8 +55,7 @@ class HiProcessor(MapProcessor):
                 )
                 set_of_parent_file_names.update(p.name for p in hi_l3_full_spin_dependencies.dependency_file_paths)
             case MapDescriptorParts(sensor=Sensor.HiCombined,
-                                    spin_phase=SpinPhase.FullSpin,
-                                    duration=Duration.OneYear,
+                                    spin_phase=SpinPhase.FullSpin
                                     ):
                 downloaded_deps = HiL3CombinedMapDependencies.fetch_dependencies(self.dependencies)
                 combined_map = combine_rectangular_intensity_map_data(downloaded_deps.maps)

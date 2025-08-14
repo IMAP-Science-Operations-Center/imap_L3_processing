@@ -381,8 +381,6 @@ class TestHiProcessor(unittest.TestCase):
 
     def test_raises_error_for_currently_unimplemented_maps(self):
         cases = [
-            "hic-ena-h-sf-nsp-full-hae-6deg-6mo",
-            "hic-ena-h-sf-sp-full-hae-6deg-6mo",
             "hic-ena-h-sf-sp-ram-hae-6deg-6mo",
             "h45-ena-h-hf-nsp-full-hae-6deg-6mo",
         ]
