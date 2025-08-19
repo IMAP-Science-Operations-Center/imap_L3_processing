@@ -76,7 +76,7 @@ plasma_speed:
   DISPLAY_TYPE: spectrogram
   UNITS: km/s
   VALIDMIN: 0
-  VALIDMAX: 1000
+  VALIDMAX: 10000
   FILLVAL: -1.00E+31
   SCALETYP: linear
   DEPEND_0: epoch
