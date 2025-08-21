@@ -1,6 +1,6 @@
+from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Self
 
 from imap_data_access import ProcessingInputCollection, download
 
@@ -12,7 +12,7 @@ class UltraL3ToRectangularDependencies:
     healpix_map_data: HealPixIntensityMapData
 
     @classmethod
-    def fetch_dependencies(cls, deps: ProcessingInputCollection) -> Self:
+    def fetch_dependencies(cls, deps: ProcessingInputCollection) -> UltraL3ToRectangularDependencies:
         [l3_ultra_map] = deps.get_file_paths("ultra", None, "l3")
         l3_map_path = download(l3_ultra_map.name)
         return cls.from_file_paths(l3_map_path)

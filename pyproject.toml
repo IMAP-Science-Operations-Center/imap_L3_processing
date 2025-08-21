@@ -1,9 +1,9 @@
 [project]
 name = "imap_l3_processing"
-version = "2025.8.19"
-requires-python = ">= 3.12"
+version = "2025.8.21"
+requires-python = ">= 3.10"
 dependencies = [
-    "astropy==7.0.1",
+    "astropy>=6.0.0",
     "astropy-iers-data==0.2025.3.24.0.35.32",
     "astropy_healpix==1.1.2",
     "bitarray==3.0.0",

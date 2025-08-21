@@ -1,9 +1,9 @@
+from __future__ import annotations
 import abc
 import dataclasses
 from dataclasses import dataclass
 from datetime import timedelta, datetime
 from pathlib import Path
-from typing import Self
 
 import numpy as np
 import xarray
@@ -99,7 +99,7 @@ class RectangularIntensityMapData:
     coords: RectangularCoords
 
     @classmethod
-    def read_from_path(cls, cdf_path: Path | str) -> Self:
+    def read_from_path(cls, cdf_path: Path | str) -> RectangularIntensityMapData:
         with CDF(str(cdf_path)) as cdf:
             return RectangularIntensityMapData(
                 intensity_map_data=_read_intensity_map_data_from_open_cdf(cdf),
@@ -119,7 +119,7 @@ class HealPixIntensityMapData:
     coords: HealPixCoords
 
     @classmethod
-    def read_from_path(cls, cdf_path: Path | str) -> Self:
+    def read_from_path(cls, cdf_path: Path | str) -> HealPixIntensityMapData:
         with CDF(str(cdf_path)) as cdf:
             return HealPixIntensityMapData(
                 intensity_map_data=_read_intensity_map_data_from_open_cdf(cdf),

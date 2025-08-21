@@ -96,17 +96,17 @@ def rebin_to_counts_by_species_elevation_and_spin_sector(num_events: np.ndarray,
 
             for event_i in range(num_events[epoch_i, priority_i]):
                 indices_of_event = epoch_i, priority_i, event_i
-                if (np.isnan(energy[*indices_of_event]) or np.isnan(spin_angle[*indices_of_event]) or
-                        position[*indices_of_event] is np.ma.masked):
+                if (np.isnan(energy[indices_of_event]) or np.isnan(spin_angle[indices_of_event]) or
+                        position[indices_of_event] is np.ma.masked):
                     continue
 
-                position_of_event = int(position[*indices_of_event])
-                species = mass_species_bin_lookup.get_species(mass[*indices_of_event],
-                                                              mass_per_charge[*indices_of_event])
+                position_of_event = int(position[indices_of_event])
+                species = mass_species_bin_lookup.get_species(mass[indices_of_event],
+                                                              mass_per_charge[indices_of_event])
                 if species is not None:
-                    energy_i = energy_lut.get_energy_index(energy[*indices_of_event])
+                    energy_i = energy_lut.get_energy_index(energy[indices_of_event])
                     species_i = mass_species_bin_lookup.get_species_index(species)
-                    spin_angle_i = spin_angle_lut.get_spin_angle_index(spin_angle[*indices_of_event])
+                    spin_angle_i = spin_angle_lut.get_spin_angle_index(spin_angle[indices_of_event])
                     position_i = position_of_event - 1
                     output[species_i, epoch_i, priority_i, position_i, spin_angle_i, energy_i] += 1
 

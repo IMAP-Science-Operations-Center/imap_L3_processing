@@ -659,11 +659,10 @@ class TestImapL3DataProcessor(TestCase):
         error2 = ValueError("Failure uploading 2")
         mock_upload.side_effect = [None, error1, error2, None]
 
-        with self.assertRaises(ExceptionGroup) as exception_ctx:
+        with self.assertRaises(IOError) as exception_ctx:
             imap_l3_processor()
 
-        self.assertEqual((error1, error2), exception_ctx.exception.exceptions)
-        self.assertEqual("Failed to upload some files", exception_ctx.exception.message)
+        self.assertEqual((f"Failed to upload some files: {[error1, error2]}",), exception_ctx.exception.args)
 
         mock_glows_processor.return_value.process.assert_called()
 

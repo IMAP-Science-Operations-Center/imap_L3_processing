@@ -101,7 +101,7 @@ def imap_l3_processor():
             except Exception as e:
                 exceptions.append(e)
         if exceptions:
-            raise ExceptionGroup("Failed to upload some files", exceptions)
+            raise IOError(f"Failed to upload some files: {exceptions}")
 
 def _furnish_spice_kernels(processing_input_collection):
     spice_kernel_paths = processing_input_collection.get_file_paths(data_type='spice')

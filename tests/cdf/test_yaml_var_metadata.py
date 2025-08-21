@@ -121,7 +121,7 @@ class TestCdfUtils(TestCase):
                     case "CDF_CHAR":
                         self.assertEqual(fill_val, ' ')
                     case "CDF_TIME_TT2000":
-                        self.assertEqual(fill_val, datetime.fromisoformat('9999-12-31T23:59:59.999999999'))
+                        self.assertEqual(fill_val, datetime.fromisoformat('9999-12-31T23:59:59.999999'))
                     case _:
                         self.assertFalse(True, f"Found unknown DATA_TYPE: {variable['DATA_TYPE']}")
 
@@ -144,12 +144,12 @@ class TestCdfUtils(TestCase):
                          "epoch LABLAXIS should be Epoch")
         self.assertEqual('ns', yaml_data['epoch']['UNITS'],
                          "epoch UNITS should be ns")
-        self.assertEqual(datetime.fromisoformat('2099-12-31T00:00:00.000000000'),
+        self.assertEqual(datetime.fromisoformat('2099-12-31T00:00:00.000000'),
                          yaml_data['epoch']['VALIDMAX'],
-                         "epoch VALIDMAX should be '2099-12-31T00:00:00.000000000'")
-        self.assertEqual(datetime.fromisoformat('9999-12-31T23:59:59.999999999'),
+                         "epoch VALIDMAX should be '2099-12-31T00:00:00.000000'")
+        self.assertEqual(datetime.fromisoformat('9999-12-31T23:59:59.999999'),
                          yaml_data['epoch']['FILLVAL'],
-                         "epoch FILLVAL should be '9999-12-31T23:59:59.999999999'")
+                         "epoch FILLVAL should be '9999-12-31T23:59:59.999999'")
         self.assertEqual("linear", yaml_data['epoch']['SCALETYP'],
                          "epoch SCALETYP should be linear")
         self.assertEqual("J2000", yaml_data['epoch']['TIME_BASE'],

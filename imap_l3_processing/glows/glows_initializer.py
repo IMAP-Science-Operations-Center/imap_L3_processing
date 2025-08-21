@@ -20,8 +20,8 @@ class GlowsInitializer:
 
         l3a_files = query(instrument="glows", descriptor="hist", version=input_l3a_version, data_level="l3a")
         l3b_files = query(instrument="glows", descriptor='ion-rate-profile', version=version, data_level="l3b")
-        logger.info(f"l3a files {[f["file_path"] for f in l3a_files]}")
-        logger.info(f"l3b files {[f["file_path"] for f in l3b_files]}")
+        logger.info(f'l3a files {[f["file_path"] for f in l3a_files]}')
+        logger.info(f'l3b files {[f["file_path"] for f in l3b_files]}')
 
         crs_to_process = find_unprocessed_carrington_rotations(l3a_files, l3b_files, glows_ancillary_dependencies)
 
