@@ -20,6 +20,7 @@ class CRToProcess:
     cr_start_date: Time
     cr_end_date: Time
     cr_rotation_number: int
+    version:int
 
 
 @dataclass
