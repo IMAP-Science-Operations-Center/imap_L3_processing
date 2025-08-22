@@ -1,3 +1,4 @@
+import dataclasses
 import unittest
 from datetime import datetime
 from pathlib import Path
@@ -19,133 +20,271 @@ from tests.test_helpers import get_test_data_path
 
 class TestGlowsInitializer(unittest.TestCase):
 
-    @patch("imap_l3_processing.glows.glows_initializer.GlowsInitializer.determine_crs_to_process")
-    @patch("imap_l3_processing.glows.glows_initializer.GlowsInitializer.group_l3a_by_cr")
+    @patch("imap_l3_processing.glows.glows_initializer.get_date_range_of_cr")
+    @patch("imap_l3_processing.glows.glows_initializer.get_best_ancillary")
     @patch("imap_l3_processing.glows.glows_initializer.imap_data_access.query")
-    def test_get_crs_to_process(self, mock_query, mock_group_l3a, mock_determine_crs_to_process):
+    @patch("imap_l3_processing.glows.glows_initializer.GlowsInitializer.group_l3a_by_cr")
+    @patch("imap_l3_processing.glows.glows_initializer.GlowsInitializer.should_process_cr_candidate")
+    def test_gr_crs_to_process(self, mock_should_process_cr_candidate, mock_group_l3a_by_cr, mock_query, mock_get_best_ancillary, mock_get_date_range_of_cr):
 
-        l3a_file_names = ["imap_glows_l3a_hist_20100101-repoint000001_v001.cdf", "imap_glows_l3a_hist_20100102-repoint000002_v001.cdf"]
-        l3a_query_result = [{"file_path": "some/server/path/" + file_name} for file_name in l3a_file_names]
-
-        l3b_file_names = [
-            "imap_glows_l3b_ion-rate-profile_20100101-cr02091_v001.cdf",
-            "imap_glows_l3b_ion-rate-profile_20100501-cr02096_v001.cdf"
+        mock_query.side_effect = [
+            [
+                {"file_path": "some/server/path/glows_l3a_hist_20100101_v001.cdf"},
+                {"file_path": "some/server/path/glows_l3a_hist_20100201_v001.cdf"},
+            ],
+            sentinel.uv_anisotropy_query_result,
+            sentinel.waw_helio_ion_query_result,
+            sentinel.bad_days_list_query_result,
+            sentinel.pipeline_settings_query_result
         ]
-        l3b_query_result = [{"file_path": "some/l3b/server/path/" + file_name} for file_name in l3b_file_names]
 
-        mock_query.side_effect = [l3a_query_result, l3b_query_result]
+        mock_group_l3a_by_cr.return_value = {
+            2091: {"glows_l3a_hist_20100101_v001.cdf"},
+            2092: {"glows_l3a_hist_20100201_v001.cdf"}
+        }
+
+        mock_get_date_range_of_cr.side_effect = [
+            (datetime(2010, 1, 1), datetime(2010, 1, 31)),
+            (datetime(2010, 2, 1), datetime(2010, 2, 28)),
+        ]
+
+        mock_get_best_ancillary.side_effect = [
+            "uv_anisotropy_best_ancillary_1",
+            "waw_helio_ion_best_ancillary_1",
+            "bad_days_list_best_ancillary_1",
+            "pipeline_settings_best_ancillary_1",
+            "uv_anisotropy_best_ancillary_2",
+            "waw_helio_ion_best_ancillary_2",
+            "bad_days_list_best_ancillary_2",
+            "pipeline_settings_best_ancillary_2",
+        ]
+
+        mock_should_process_cr_candidate.side_effect = [2, None]
 
         actual_crs_to_process = GlowsInitializer.get_crs_to_process()
 
         mock_query.assert_has_calls([
             call(instrument="glows", data_level="l3a", version="latest"),
-            call(instrument="glows", data_level="l3b", descriptor="ion-rate-profile", version="latest")
+            call(table="ancillary", instrument="glows", descriptor="uv-anisotropy-1CR"),
+            call(table="ancillary", instrument="glows", descriptor="WawHelioIonMP"),
+            call(table="ancillary", instrument="glows", descriptor="bad-days-list"),
+            call(table="ancillary", instrument="glows", descriptor="pipeline-settings-l3bcde")
         ])
 
-        mock_group_l3a.assert_called_once_with(l3a_file_names)
+        mock_group_l3a_by_cr.assert_called_once_with([
+            "glows_l3a_hist_20100101_v001.cdf",
+            "glows_l3a_hist_20100201_v001.cdf",
+        ])
 
-        expected_l3bs_by_cr = {2091: "imap_glows_l3b_ion-rate-profile_20100101-cr02091_v001.cdf",
-                               2096: "imap_glows_l3b_ion-rate-profile_20100501-cr02096_v001.cdf"}
+        mock_get_best_ancillary.assert_has_calls([
+            call(datetime(2010, 1, 1), datetime(2010, 1, 31), sentinel.uv_anisotropy_query_result),
+            call(datetime(2010, 1, 1), datetime(2010, 1, 31), sentinel.waw_helio_ion_query_result),
+            call(datetime(2010, 1, 1), datetime(2010, 1, 31), sentinel.bad_days_list_query_result),
+            call(datetime(2010, 1, 1), datetime(2010, 1, 31), sentinel.pipeline_settings_query_result),
+            call(datetime(2010, 2, 1), datetime(2010, 2, 28), sentinel.uv_anisotropy_query_result),
+            call(datetime(2010, 2, 1), datetime(2010, 2, 28), sentinel.waw_helio_ion_query_result),
+            call(datetime(2010, 2, 1), datetime(2010, 2, 28), sentinel.bad_days_list_query_result),
+            call(datetime(2010, 2, 1), datetime(2010, 2, 28), sentinel.pipeline_settings_query_result),
+        ])
 
-        mock_determine_crs_to_process.assert_called_once_with(mock_group_l3a.return_value, expected_l3bs_by_cr)
+        expected_cr_candidate_1 = CRToProcess(l3a_file_names={"glows_l3a_hist_20100101_v001.cdf"},
+                              uv_anisotropy_file_name="uv_anisotropy_best_ancillary_1",
+                              waw_helio_ion_mp_file_name="waw_helio_ion_best_ancillary_1",
+                              bad_days_list_file_name="bad_days_list_best_ancillary_1",
+                              pipeline_settings_file_name="pipeline_settings_best_ancillary_1",
+                              cr_start_date=datetime(2010, 1, 1), cr_end_date=datetime(2010, 1, 31),
+                              cr_rotation_number=2091)
 
-        self.assertEqual(mock_determine_crs_to_process.return_value, actual_crs_to_process)
+        expected_cr_candidate_2 = CRToProcess(l3a_file_names={"glows_l3a_hist_20100201_v001.cdf"},
+                              uv_anisotropy_file_name="uv_anisotropy_best_ancillary_2",
+                              waw_helio_ion_mp_file_name="waw_helio_ion_best_ancillary_2",
+                              bad_days_list_file_name="bad_days_list_best_ancillary_2",
+                              pipeline_settings_file_name="pipeline_settings_best_ancillary_2",
+                              cr_start_date=datetime(2010, 2, 1), cr_end_date=datetime(2010, 2, 28),
+                              cr_rotation_number=2092)
 
-    @patch("imap_l3_processing.glows.glows_initializer.GlowsInitializer.read_cdf_parents")
-    def test_determine_crs_to_process(self, mock_read_cdf_parents):
-        l3as_on_server = {
-            2091: {
+        mock_should_process_cr_candidate.assert_has_calls([
+            call(expected_cr_candidate_1),
+            call(expected_cr_candidate_2)
+        ], any_order=False)
+
+        self.assertEqual([(2, expected_cr_candidate_1)], actual_crs_to_process)
+
+    @patch("imap_l3_processing.glows.glows_initializer.imap_data_access.query")
+    def test_should_process_cr_no_existing_l3b(self, mock_query):
+
+        cr_candidate = CRToProcess(
+            l3a_file_names=set(),
+            uv_anisotropy_file_name="uv_anisotropy.dat",
+            waw_helio_ion_mp_file_name="waw_helio_ion.dat",
+            bad_days_list_file_name="bad_days_list.dat",
+            pipeline_settings_file_name="pipeline_settings.json",
+            cr_start_date=datetime(2010, 1, 1),
+            cr_end_date=datetime(2010, 2, 1),
+            cr_rotation_number=2091
+        )
+
+        mock_query.return_value = []
+
+        actual_version = GlowsInitializer.should_process_cr_candidate(cr_candidate)
+
+        mock_query.assert_called_once_with(
+            instrument="glows",
+            data_level="l3b",
+            descriptor="ion-rate-profile",
+            start_date="20100101",
+            end_date="20100201",
+            version="latest"
+        )
+
+        self.assertEqual(1, actual_version)
+
+    @patch("imap_l3_processing.glows.glows_initializer.read_cdf_parents")
+    @patch("imap_l3_processing.glows.glows_initializer.imap_data_access.query")
+    def test_should_process_cr_existing_cr_should_process(self, mock_query, mock_read_cdf_parents):
+
+        new_l3a_version = {
+            "l3a_file_names": {
                 "imap_glows_l3a_hist_20100101-repoint000001_v001.cdf",
-                "imap_glows_l3a_hist_20100102-repoint000002_v001.cdf",
-            },
-            2096: {
-                "imap_glows_l3a_hist_20100501-repoint000050_v001.cdf",
-                "imap_glows_l3a_hist_20100502-repoint000051_v002.cdf",
-            },
-            2099: {
-                "imap_glows_l3a_hist_20100801-repoint000100_v001.cdf",
+                "imap_glows_l3a_hist_20100102-repoint000002_v002.cdf"
             }
         }
 
-        l3b_files_and_parents = {
-            2091: "imap_glows_l3b_ion-rate-profile_20100101-cr02091_v001.cdf",
-            2096: "imap_glows_l3b_ion-rate-profile_20100501-cr02096_v001.cdf"
+        new_l3a_file = {
+            "l3a_file_names": {
+                "imap_glows_l3a_hist_20100101-repoint000001_v001.cdf",
+                "imap_glows_l3a_hist_20100102-repoint000002_v001.cdf"
+                "imap_glows_l3a_hist_20100103-repoint000002_v001.cdf"
+            }
         }
 
-        mock_read_cdf_parents.side_effect = [
-            {
+        new_ancillary = {
+            "uv_anisotropy_file_name": "new_uv_anisotropy.dat"
+        }
+
+        test_cases = [
+            ("new l3a file version", new_l3a_version),
+            ("new l3a files arrived", new_l3a_file),
+            ("new ancillary file arrived", new_ancillary)
+        ]
+
+        for name, new_server_data in test_cases:
+            with self.subTest(name):
+                mock_query.reset_mock()
+                mock_read_cdf_parents.reset_mock()
+
+                existing_file_version = 2
+
+                already_processed_cr = CRToProcess(
+                    l3a_file_names={
+                        "imap_glows_l3a_hist_20100101-repoint000001_v001.cdf",
+                        "imap_glows_l3a_hist_20100102-repoint000002_v001.cdf"
+                    },
+                    uv_anisotropy_file_name="uv_anisotropy.dat",
+                    waw_helio_ion_mp_file_name="waw_helio_ion.dat",
+                    bad_days_list_file_name="bad_days_list.dat",
+                    pipeline_settings_file_name="pipeline_settings.json",
+                    cr_start_date=datetime(2010, 1, 1),
+                    cr_end_date=datetime(2010, 2, 1),
+                    cr_rotation_number=2091
+                )
+
+                cr_candidate = dataclasses.replace(already_processed_cr, **new_server_data)
+
+                mock_query.return_value = [
+                    {"file_path": f"some/server_path/imap_glows_l3b_ion-rate-profile_20100101-cr02091_v00{existing_file_version}.cdf"}]
+
+                mock_read_cdf_parents.return_value = {
+                    "imap_glows_l3a_hist_20100101-repoint000001_v001.cdf",
+                    "imap_glows_l3a_hist_20100102-repoint000002_v001.cdf",
+                    "uv_anisotropy.dat",
+                    "waw_helio_ion.dat",
+                    "bad_days_list.dat",
+                    "pipeline_settings.json",
+                    "some_zip_file.zip"
+                }
+
+                actual_version = GlowsInitializer.should_process_cr_candidate(cr_candidate)
+
+                mock_query.assert_called_once_with(
+                    instrument="glows",
+                    data_level="l3b",
+                    descriptor="ion-rate-profile",
+                    start_date="20100101",
+                    end_date="20100201",
+                    version="latest"
+                )
+
+                mock_read_cdf_parents.assert_called_once_with(f"imap_glows_l3b_ion-rate-profile_20100101-cr02091_v00{existing_file_version}.cdf")
+
+                self.assertEqual(existing_file_version + 1, actual_version)
+
+    @patch("imap_l3_processing.glows.glows_initializer.read_cdf_parents")
+    @patch("imap_l3_processing.glows.glows_initializer.imap_data_access.query")
+    def test_should_process_cr_existing_cr_should_not_reprocess(self, mock_query, mock_read_cdf_parents):
+        cr_candidate = CRToProcess(
+            l3a_file_names={
                 "imap_glows_l3a_hist_20100101-repoint000001_v001.cdf",
                 "imap_glows_l3a_hist_20100102-repoint000002_v001.cdf"
             },
-            {
-                "imap_glows_l3a_hist_20100501-repoint000050_v001.cdf",
-                "imap_glows_l3a_hist_20100502-repoint000051_v001.cdf"
-            }
+            uv_anisotropy_file_name="uv_anisotropy.dat",
+            waw_helio_ion_mp_file_name="waw_helio_ion.dat",
+            bad_days_list_file_name="bad_days_list.dat",
+            pipeline_settings_file_name="pipeline_settings.json",
+            cr_start_date=datetime(2010, 1, 1),
+            cr_end_date=datetime(2010, 2, 1),
+            cr_rotation_number=2091
+        )
+        mock_query.return_value = [{"file_path": "some/server_path/imap_glows_l3b_ion-rate-profile_20100101-cr02091_v001.cdf"}]
+
+        mock_read_cdf_parents.return_value = {
+            "imap_glows_l3a_hist_20100101-repoint000001_v001.cdf",
+            "imap_glows_l3a_hist_20100102-repoint000002_v001.cdf",
+            "uv_anisotropy.dat",
+            "waw_helio_ion.dat",
+            "bad_days_list.dat",
+            "pipeline_settings.json",
+            "some_zip_file.zip"
+        }
+
+        self.assertIsNone(GlowsInitializer.should_process_cr_candidate(cr_candidate))
+
+        mock_query.assert_called_once_with(
+            instrument="glows",
+            data_level="l3b",
+            descriptor="ion-rate-profile",
+            start_date="20100101",
+            end_date="20100201",
+            version="latest"
+        )
+
+        mock_read_cdf_parents.assert_called_once_with("imap_glows_l3b_ion-rate-profile_20100101-cr02091_v001.cdf")
+
+    @patch("imap_l3_processing.glows.glows_initializer.GlowsInitializer.determine_crs_to_process")
+    @patch("imap_l3_processing.glows.glows_initializer.imap_data_access.query")
+    def test_get_crs_to_process_return_no_crs_when_missing_ancillaries(self, mock_query, mock_determine_crs_to_process):
+
+        test_cases = [
+            "uv-anisotropy-1CR",
+            "WawHelioIonMP",
+            "bad-days-list",
+            "pipeline-settings-l3bcde"
         ]
 
-        crs_to_process = GlowsInitializer.determine_crs_to_process(l3as_on_server, l3b_files_and_parents)
+        for missing_ancillary in test_cases:
+            with self.subTest(missing_ancillary):
+                def query_that_returns_empty_list_for_missing_ancillary(**kwargs):
+                    if kwargs.get("table") == "ancillary" and kwargs["descriptor"] != missing_ancillary:
+                        return [sentinel.ancillary_1, sentinel.ancillary_2]
+                    else:
+                        return []
 
-        mock_read_cdf_parents.assert_has_calls([
-            call("imap_glows_l3b_ion-rate-profile_20100101-cr02091_v001.cdf"),
-            call("imap_glows_l3b_ion-rate-profile_20100501-cr02096_v001.cdf")
-        ])
+                mock_query.side_effect = query_that_returns_empty_list_for_missing_ancillary
 
-        expected_cr_to_reprocess = CRToProcess(
-            l3a_paths=[
-                "imap_glows_l3a_hist_20100501-repoint000050_v001.cdf",
-                "imap_glows_l3a_hist_20100502-repoint000051_v002.cdf"
-            ],
-            cr_start_date=datetime(2010, 4, 22, 13, 2, 9, 600000),
-            cr_end_date=datetime(2010, 5, 19, 19, 38, 35, 520000),
-            cr_rotation_number=2096,
-            version=2,
-        )
+                actual_crs_to_process = GlowsInitializer.get_crs_to_process()
 
-        expected_cr_to_process = CRToProcess(
-            l3a_paths=[
-                "imap_glows_l3a_hist_20100801-repoint000100_v001.cdf",
-            ],
-            cr_start_date=datetime(2010, 7, 13, 8, 51, 27, 360000),
-            cr_end_date=datetime(2010, 8, 9, 15, 27, 53, 280000),
-            cr_rotation_number=2099,
-            version=1
-        )
-
-        self.assertEqual([expected_cr_to_reprocess, expected_cr_to_process], crs_to_process)
-
-    @patch("imap_l3_processing.glows.glows_initializer.imap_data_access.query")
-    def test_available_ancillary_files_from_descriptor(self, mock_query):
-
-        expected = AvailableAncillaryFiles(
-            data=[
-                AncillaryFileInfo(
-                    ingestion_date=datetime(2010, 1, 3),
-                    start_date=datetime(2010, 1, 2),
-                    end_date=None,
-                    file_name="imap_glows_uv-anisotropy-1CR_20100102_v001.dat"
-                ),
-                AncillaryFileInfo(
-                    ingestion_date=datetime(2010, 1, 1),
-                    start_date=datetime(2010, 1, 1),
-                    end_date=None,
-                    file_name="imap_glows_uv-anisotropy-1CR_20100101_v001.dat"
-                ),
-            ]
-        )
-
-        available_ancillary_files = AvailableAncillaryFiles.from_query_by_descriptor("uv-anisotropy-1CR")
-
-        mock_query.assert_called_once_with(instrument="glows", table="ancillary")
-
-
-        self.assertEqual(expected, available_ancillary_files)
-
-    def test_available_ancillary_files_filter_by_cr(self):
-
-        (AvailableAncillaryFileInfo()
-            .filter_by_cr(2096)
-            .sort()
-            .first())
+                mock_determine_crs_to_process.assert_not_called()
+                self.assertEqual([], actual_crs_to_process)
 
     @patch("imap_l3_processing.glows.glows_initializer.get_pointing_date_range")
     def test_group_l3a_by_cr(self, mock_get_pointing_date_range):
@@ -188,24 +327,6 @@ class TestGlowsInitializer(unittest.TestCase):
         grouped_l3a_files = GlowsInitializer.group_l3a_by_cr(l3a_files_and_parents)
 
         self.assertEqual(expected, grouped_l3a_files)
-
-    @patch("imap_l3_processing.glows.glows_initializer.imap_data_access.download")
-    def test_read_cdf_parents(self, mock_download):
-
-        with (TemporaryDirectory() as temp_dir):
-            cdf_downloaded_path = Path(temp_dir) / "l3b.cdf"
-
-            with CDF(str(cdf_downloaded_path), masterpath='') as cdf:
-                cdf.attrs["Parents"] = ["l3a_1.cdf", "l3a_2.cdf"]
-
-            mock_download.return_value = cdf_downloaded_path
-
-            cdf_path = "l3b.cdf"
-            parents = GlowsInitializer.read_cdf_parents(cdf_path)
-
-            mock_download.assert_called_once_with(cdf_path)
-
-            self.assertEqual({"l3a_1.cdf", "l3a_2.cdf"}, parents)
 
     @patch("imap_l3_processing.glows.glows_initializer.GlowsInitializerAncillaryDependencies")
     def test_validate_and_initialize_returns_empty_list_when_missing_ancillary_dependencies(self,

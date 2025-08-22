@@ -3,6 +3,7 @@ from collections import defaultdict
 from dataclasses import fields
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import Optional
 
 import imap_data_access
 from astropy.time import TimeDelta, Time
@@ -14,11 +15,13 @@ from spacepy.pycdf import CDF
 from imap_l3_processing.glows.l3bc.dependency_validator import validate_dependencies
 from imap_l3_processing.glows.l3bc.glows_initializer_ancillary_dependencies import GlowsInitializerAncillaryDependencies
 from imap_l3_processing.glows.l3bc.l3bc_toolkit.funcs import carrington, jd_fm_Carrington
-from imap_l3_processing.glows.l3bc.models import CRToProcess
+from imap_l3_processing.glows.l3bc.models import CRToProcess, L3BCAncillaryQueryResults
 from imap_l3_processing.glows.l3bc.utils import archive_dependencies, \
-    get_astropy_time_from_yyyymmdd, get_pointing_date_range
+    get_astropy_time_from_yyyymmdd, get_pointing_date_range, get_date_range_of_cr, get_best_ancillary, read_cdf_parents, \
+    get_cr_for_date_time
 
 logger = logging.getLogger(__name__)
+
 
 class GlowsInitializer:
     @staticmethod
@@ -100,45 +103,65 @@ class GlowsInitializer:
         return crs_to_process
 
     @staticmethod
-    def determine_crs_to_process(cr_to_l3a_paths: dict[int, set[str]], cr_to_l3b_info: dict[int, str]) -> list[CRToProcess]:
-        crs_to_process = []
-        for cr_number, l3a_files in cr_to_l3a_paths.items():
+    def get_crs_to_process():
+        l3a_query_results = imap_data_access.query(instrument="glows", data_level="l3a", version="latest")
+        l3a_files_names = [Path(l3a_query_result["file_path"]).name for l3a_query_result in l3a_query_results]
+        cr_to_l3a_file_names = GlowsInitializer.group_l3a_by_cr(l3a_files_names)
+
+        ancillary_query_result = L3BCAncillaryQueryResults.fetch()
+
+        cr_candidates = []
+        for cr_number, l3a_files in cr_to_l3a_file_names.items():
             cr_start_date, cr_end_date = get_date_range_of_cr(cr_number)
 
-            if cr_number in cr_to_l3b_info:
-                l3b_file_path = cr_to_l3b_info[cr_number]
-                l3b_parents = GlowsInitializer.read_cdf_parents(l3b_file_path)
+            uv_anisotropy_file_name = get_best_ancillary(cr_start_date, cr_end_date, ancillary_query_result.uv_anisotropy)
+            waw_helio_ion_mp_file_name = get_best_ancillary(cr_start_date, cr_end_date, ancillary_query_result.waw_helio_ion_mp)
+            bad_days_list_file_name = get_best_ancillary(cr_start_date, cr_end_date, ancillary_query_result.bad_days_list)
+            pipeline_settings_file_name = get_best_ancillary(cr_start_date, cr_end_date, ancillary_query_result.pipeline_settings)
 
-                new_l3a_files_since_last_processing = not l3a_files.issubset(l3b_parents)
-                if new_l3a_files_since_last_processing:
-                    version = int(ScienceFilePath(l3b_file_path).version[1:]) + 1
-                else:
-                    continue
-            else:
-                version = 1
+            if all([uv_anisotropy_file_name, waw_helio_ion_mp_file_name, bad_days_list_file_name, pipeline_settings_file_name]):
+                cr_candidates.append(CRToProcess(
+                    l3a_files,
+                    uv_anisotropy_file_name,
+                    waw_helio_ion_mp_file_name,
+                    bad_days_list_file_name,
+                    pipeline_settings_file_name,
+                    cr_start_date,
+                    cr_end_date,
+                    cr_number
+                ))
 
-            crs_to_process.append(CRToProcess(
-                cr_rotation_number=cr_number,
-                cr_start_date=cr_start_date,
-                cr_end_date=cr_end_date,
-                l3a_paths=l3a_files,
-                version=version
-            ))
+        crs_to_process = []
+        for cr_candidate in cr_candidates:
+            if version := GlowsInitializer.should_process_cr_candidate(cr_candidate):
+                crs_to_process.append((version, cr_candidate))
 
         return crs_to_process
 
     @staticmethod
-    def get_crs_to_process():
-        l3a_query_results = imap_data_access.query(instrument="glows", data_level="l3a", version="latest")
-        l3b_query_results = imap_data_access.query(instrument="glows", data_level="l3b", descriptor="ion-rate-profile", version="latest")
+    def should_process_cr_candidate(cr_candidate: CRToProcess) -> Optional[int]:
+        start_date_for_query = cr_candidate.cr_start_date.strftime("%Y%m%d")
+        end_date_for_query = cr_candidate.cr_end_date.strftime("%Y%m%d")
 
-        l3a_files_names = [Path(l3a_query_result["file_path"]).name for l3a_query_result in l3a_query_results]
-        l3b_files_names = [Path(l3b_query_result["file_path"]).name for l3b_query_result in l3b_query_results]
-        l3b_science_file_inputs = {ScienceFilePath(file_name).cr: file_name for file_name in l3b_files_names}
+        l3b_query_result = imap_data_access.query(
+            instrument="glows",
+            data_level="l3b",
+            descriptor="ion-rate-profile",
+            start_date=start_date_for_query,
+            end_date=end_date_for_query,
+            version="latest"
+        )
 
-        cr_to_l3a_file_names = GlowsInitializer.group_l3a_by_cr(l3a_files_names)
-
-        return GlowsInitializer.determine_crs_to_process(cr_to_l3a_file_names, l3b_science_file_inputs)
+        match l3b_query_result:
+            case []:
+                return 1
+            case [existing_l3b]:
+                l3b_file_name = Path(existing_l3b["file_path"]).name
+                l3b_parents = read_cdf_parents(l3b_file_name)
+                if not cr_candidate.pipeline_dependency_file_names().issubset(l3b_parents):
+                    return int(ScienceFilePath(l3b_file_name).version[1:]) + 1
+            case _:
+                raise ValueError(f"Expected to find up to one latest L3b file on the server for the date range: {start_date_for_query} to {end_date_for_query}!")
 
     @staticmethod
     def group_l3a_by_cr(l3a_file_paths: list[str]) -> dict[int, set[str]]:
@@ -152,27 +175,6 @@ class GlowsInitializer:
             grouped_l3a_by_cr[end_cr].add(l3a_file_path)
 
         return grouped_l3a_by_cr
-
-    @staticmethod
-    def read_cdf_parents(cdf_file_name: str) -> set[str]:
-        downloaded_path = imap_data_access.download(cdf_file_name)
-
-        with CDF(str(downloaded_path)) as cdf:
-            parents = set(cdf.attrs["Parents"])
-        return parents
-
-jd_carrington_first = 2091
-jd_carrington_start_date = datetime(2009, 12, 7, 4)
-carrington_length = timedelta(days=27.2753)
-
-def get_date_range_of_cr(cr_number: int) -> tuple[datetime, datetime]:
-    start_date = jd_carrington_start_date + (cr_number - jd_carrington_first) * carrington_length
-    return start_date, start_date + carrington_length
-
-
-def get_cr_for_date_time(datetime_to_check: datetime) ->int:
-    return int(jd_carrington_first + (datetime_to_check - jd_carrington_start_date) / carrington_length)
-
 
 def _should_process(glows_l3b_dependencies: GlowsInitializerAncillaryDependencies) -> bool:
     for field in fields(glows_l3b_dependencies):

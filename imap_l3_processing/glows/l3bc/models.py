@@ -1,26 +1,67 @@
+import dataclasses
 from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import datetime
 from itertools import chain
 from pathlib import Path
-from typing import Self
+from typing import Self, Optional
 
+import imap_data_access
 import numpy as np
 from astropy.time import Time
 from spacepy import pycdf
 
 from imap_l3_processing.constants import CARRINGTON_ROTATION_IN_NANOSECONDS
 from imap_l3_processing.glows.l3bc.l3bc_toolkit.funcs import jd_fm_Carrington
+from imap_l3_processing.glows.l3bc.utils import get_date_range_of_cr, get_best_ancillary
 from imap_l3_processing.models import DataProduct, DataProductVariable, InputMetadata
 
 
 @dataclass
+class L3BCAncillaryQueryResults:
+    uv_anisotropy: list[dict]
+    waw_helio_ion_mp: list[dict]
+    bad_days_list: list[dict]
+    pipeline_settings: list[dict]
+
+    @classmethod
+    def fetch(cls):
+        return cls(
+            uv_anisotropy=imap_data_access.query(table="ancillary", instrument="glows", descriptor="uv-anisotropy-1CR"),
+            waw_helio_ion_mp=imap_data_access.query(table="ancillary", instrument="glows", descriptor="WawHelioIonMP"),
+            bad_days_list=imap_data_access.query(table="ancillary", instrument="glows", descriptor="bad-days-list"),
+            pipeline_settings=imap_data_access.query(table="ancillary", instrument="glows", descriptor="pipeline-settings-l3bcde"),
+        )
+
+    def missing_ancillaries(self) -> bool:
+        for ancillary_files in dataclasses.asdict(self).values():
+            if len(ancillary_files) == 0:
+                return True
+        return False
+
+
+@dataclass
 class CRToProcess:
-    l3a_paths: list[str]
-    cr_start_date: Time
-    cr_end_date: Time
+    l3a_file_names: set[str]
+    uv_anisotropy_file_name: str
+    waw_helio_ion_mp_file_name: str
+    bad_days_list_file_name: str
+    pipeline_settings_file_name: str
+
+    cr_start_date: datetime
+    cr_end_date: datetime
     cr_rotation_number: int
-    version:int
+
+    def pipeline_dependency_file_names(self) -> set[str]:
+        ancillary_files = {
+            self.uv_anisotropy_file_name,
+            self.waw_helio_ion_mp_file_name,
+            self.bad_days_list_file_name,
+            self.pipeline_settings_file_name
+        }
+
+        return self.l3a_file_names | ancillary_files
+
 
 
 @dataclass

@@ -1,6 +1,7 @@
 import unittest
 from datetime import datetime
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Optional
 from unittest.mock import patch, Mock, MagicMock, call
 from zipfile import ZIP_DEFLATED
@@ -14,7 +15,7 @@ from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
 from imap_l3_processing.glows.l3bc.glows_initializer_ancillary_dependencies import GlowsInitializerAncillaryDependencies
 from imap_l3_processing.glows.l3bc.models import CRToProcess
 from imap_l3_processing.glows.l3bc.utils import read_glows_l3a_data, \
-    archive_dependencies, get_pointing_date_range
+    archive_dependencies, get_pointing_date_range, get_best_ancillary, read_cdf_parents
 from tests.test_helpers import get_test_data_path
 
 
@@ -23,6 +24,61 @@ class TestUtils(unittest.TestCase):
     def setUpClass(cls) -> None:
         repoint_file_path = get_test_data_path("fake_1_day_repointing_file.csv")
         set_global_repoint_table_paths([repoint_file_path])
+
+    def test_determine_crs_to_process_based_on_ancillary_files(self):
+
+        start_date = datetime(2009, 12, 31)
+        end_date = datetime(2010, 1, 2)
+
+        case_1 = [
+            {"file_path": "some/server/path/" + "older_ancillary.dat", "start_date": "20100101", "end_date": None,
+             "ingestion_date": "20100101 00:00:00"},
+            {"file_path": "some/server/path/" + "newer_ancillary.dat", "start_date": "20100101", "end_date": None,
+             "ingestion_date": "20100102 00:00:00"}
+        ]
+
+        case_2 = [
+            {"file_path": "some/server/path/" + "older_ancillary.dat", "start_date": "20100101", "end_date": None,
+             "ingestion_date": "20100101 00:00:00"},
+            {"file_path": "some/server/path/" + "newer_ancillary.dat", "start_date": "20100104", "end_date": None,
+             "ingestion_date": "20100102 00:00:00"}
+        ]
+
+        case_3 = [
+            {"file_path": "some/server/path/" + "older_ancillary.dat", "start_date": "20100101", "end_date": None,
+             "ingestion_date": "20100101 00:00:00"},
+            {"file_path": "some/server/path/" + "newer_ancillary.dat", "start_date": "20091205", "end_date": "20091206",
+             "ingestion_date": "20100102 00:00:00"}
+        ]
+
+        test_cases = [
+            ("picks latest ingestion date", case_1, "newer_ancillary.dat"),
+            ("ignores ancillary with start date after cr", case_2, "older_ancillary.dat"),
+            ("ignores ancillary with end date before cr", case_3, "older_ancillary.dat")
+        ]
+
+        for name, available_ancillaries, expected_best_ancillary_file_name in test_cases:
+            with self.subTest(name):
+                actual_ancillary_name = get_best_ancillary(start_date, end_date, available_ancillaries)
+
+                self.assertEqual(expected_best_ancillary_file_name, actual_ancillary_name)
+
+    @patch("imap_l3_processing.glows.glows_initializer.imap_data_access.download")
+    def test_read_cdf_parents(self, mock_download):
+        with (TemporaryDirectory() as temp_dir):
+            cdf_downloaded_path = Path(temp_dir) / "l3b.cdf"
+
+            with CDF(str(cdf_downloaded_path), masterpath='') as cdf:
+                cdf.attrs["Parents"] = ["l3a_1.cdf", "l3a_2.cdf"]
+
+            mock_download.return_value = cdf_downloaded_path
+
+            cdf_path = "l3b.cdf"
+            parents = read_cdf_parents(cdf_path)
+
+            mock_download.assert_called_once_with(cdf_path)
+
+            self.assertEqual({"l3a_1.cdf", "l3a_2.cdf"}, parents)
 
     def test_read_glows_l3a_data(self):
         cdf = CDF(str(get_test_data_path("glows/imap_glows_l3a_hist_20100101_v001.cdf")))

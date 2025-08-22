@@ -1,9 +1,11 @@
 import json
 from collections import defaultdict
-from datetime import timedelta
+from datetime import timedelta, datetime
 from pathlib import Path
+from typing import Optional
 from zipfile import ZipFile, ZIP_DEFLATED
 
+import imap_data_access
 import numpy as np
 import pandas as pd
 from astropy.time import Time, TimeDelta
@@ -24,7 +26,43 @@ from imap_l3_processing.glows.l3a.models import GlowsL3LightCurve, PHOTON_FLUX_U
     SPACECRAFT_LOCATION_AVERAGE_CDF_VAR_NAME, SPACECRAFT_LOCATION_STD_DEV_CDF_VAR_NAME, \
     SPACECRAFT_VELOCITY_AVERAGE_CDF_VAR_NAME, NUM_OF_BINS_CDF_VAR_NAME
 from imap_l3_processing.glows.l3bc.glows_initializer_ancillary_dependencies import GlowsInitializerAncillaryDependencies
-from imap_l3_processing.glows.l3bc.models import CRToProcess
+
+
+def read_cdf_parents(server_file_name: str) -> set[str]:
+    downloaded_path = imap_data_access.download(server_file_name)
+
+    with CDF(str(downloaded_path)) as cdf:
+        parents = set(cdf.attrs["Parents"])
+    return parents
+
+
+def get_best_ancillary(start_date: datetime, end_date: datetime, ancillary_query_results: list[dict]) -> Optional[str]:
+    valid_ancillaries = []
+    for ancillary_file in ancillary_query_results:
+        ancillary_start_date = datetime.strptime(ancillary_file["start_date"], "%Y%m%d")
+        ancillary_end_date = datetime.strptime(ancillary_file["end_date"], "%Y%m%d") if ancillary_file["end_date"] else None
+
+        if ancillary_start_date <= end_date and (ancillary_end_date is None or ancillary_end_date >= start_date):
+            valid_ancillaries.append(ancillary_file)
+
+    if len(valid_ancillaries) == 0:
+        return None
+    else:
+        latest_ancillary = max(valid_ancillaries, key=lambda x: x["ingestion_date"])
+        return Path(latest_ancillary["file_path"]).name
+
+jd_carrington_first = 2091
+jd_carrington_start_date = datetime(2009, 12, 7, 4)
+carrington_length = timedelta(days=27.2753)
+
+
+def get_date_range_of_cr(cr_number: int) -> tuple[datetime, datetime]:
+    start_date = jd_carrington_start_date + (cr_number - jd_carrington_first) * carrington_length
+    return start_date, start_date + carrington_length
+
+
+def get_cr_for_date_time(datetime_to_check: datetime) ->int:
+    return int(jd_carrington_first + (datetime_to_check - jd_carrington_start_date) / carrington_length)
 
 
 def read_glows_l3a_data(cdf: CDF) -> GlowsL3LightCurve:
@@ -72,7 +110,7 @@ def get_astropy_time_from_yyyymmdd(date_string: str) -> Time:
     return Time(f'{date_string[0:4]}-{date_string[4:6]}-{date_string[6:8]}')
 
 
-def archive_dependencies(cr_to_process: CRToProcess, version: str,
+def archive_dependencies(cr_to_process: 'CRToProcess', version: str,
                          ancillary_dependencies: GlowsInitializerAncillaryDependencies) -> Path:
     start_date = cr_to_process.cr_start_date.strftime("%Y%m%d")
     zip_path = TEMP_CDF_FOLDER_PATH / f"imap_glows_l3b-archive_{start_date}_{version}.zip"

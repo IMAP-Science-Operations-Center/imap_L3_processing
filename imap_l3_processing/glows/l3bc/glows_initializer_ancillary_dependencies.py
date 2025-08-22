@@ -20,11 +20,13 @@ class GlowsInitializerAncillaryDependencies:
     waw_helioion_mp_path: str
     pipeline_settings: str
     bad_days_list: str
+
+    repointing_file: Path
+
     initializer_time_buffer: TimeDelta
     f107_index_file_path: Path
     lyman_alpha_path: Path
     omni2_data_path: Path
-    repointing_file: Path
 
     @classmethod
     def fetch_dependencies(cls, dependencies: ProcessingInputCollection):
