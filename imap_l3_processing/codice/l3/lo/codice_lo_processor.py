@@ -236,7 +236,7 @@ class CodiceLoProcessor(Processor):
             input_metadata=self.input_metadata,
             epoch=codice_direct_events.epoch,
             epoch_delta=codice_direct_events.epoch_delta_plus,
-            normalization=normalization,
+            normalization=np.flip(normalization, axis=2),
             mass_per_charge=mass_per_charge,
             mass=mass,
             apd_energy=energy,
@@ -250,9 +250,9 @@ class CodiceLoProcessor(Processor):
             spin_angle=spin_angle,
             elevation=elevation,
             position=position,
-            energy_bin=esa_energy_per_charge_lookup.bin_centers,
-            energy_bin_delta_plus=esa_energy_per_charge_lookup.delta_plus,
-            energy_bin_delta_minus=esa_energy_per_charge_lookup.delta_minus,
+            energy_bin=np.flip(esa_energy_per_charge_lookup.bin_centers),
+            energy_bin_delta_plus=np.flip(esa_energy_per_charge_lookup.delta_plus),
+            energy_bin_delta_minus=np.flip(esa_energy_per_charge_lookup.delta_minus),
             spin_angle_bin=spin_angle_lut.bin_centers,
             spin_angle_bin_delta=spin_angle_lut.bin_deltas,
 
@@ -265,7 +265,7 @@ class CodiceLoProcessor(Processor):
         l3a_de_energy = dependencies.l3a_direct_event_data.energy_step
         l3a_de_spin_angle = dependencies.l3a_direct_event_data.spin_angle
         l3a_de_position = dependencies.l3a_direct_event_data.position
-        l3a_de_normalization = dependencies.l3a_direct_event_data.normalization
+        l3a_de_normalization = np.flip(dependencies.l3a_direct_event_data.normalization, axis=2)
         l3a_de_num_events = dependencies.l3a_direct_event_data.num_events
 
         l1a_acquisition_time = dependencies.l1a_sw_data.acquisition_time_per_step
@@ -309,11 +309,11 @@ class CodiceLoProcessor(Processor):
             elevation_delta=position_elevation_lut.bin_deltas,
             spin_angle=spin_angle_lut.bin_centers,
             spin_angle_delta=spin_angle_lut.bin_deltas,
-            energy=energy_lut.bin_centers,
-            energy_delta_plus=energy_lut.delta_plus,
-            energy_delta_minus=energy_lut.delta_minus,
+            energy=np.flip(energy_lut.bin_centers),
+            energy_delta_plus=np.flip(energy_lut.delta_plus),
+            energy_delta_minus=np.flip(energy_lut.delta_minus),
             species=dependencies.species,
-            species_data=intensity,
+            species_data=np.flip(intensity, axis=3),
         )
 
 

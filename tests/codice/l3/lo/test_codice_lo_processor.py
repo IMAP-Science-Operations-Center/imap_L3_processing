@@ -534,6 +534,9 @@ class TestCodiceLoProcessor(unittest.TestCase):
         direct_events = CodiceLoL2DirectEventData(epochs, np.array([]), np.array([]), priority_events)
 
         mock_energy_lookup = create_dataclass_mock(EnergyLookup)
+        mock_energy_lookup.delta_minus = np.geomspace(280, 2, 128)
+        mock_energy_lookup.delta_plus = np.geomspace(288, 1, 128)
+        mock_energy_lookup.bin_centers = np.geomspace(14100, 88.082825, 128)
         mock_energy_lookup.num_bins = num_energy_bins
 
         dependencies = CodiceLoL3aDirectEventsDependencies(sw_priority_rates, nsw_priority_rates, direct_events, Mock(),
@@ -582,7 +585,8 @@ class TestCodiceLoProcessor(unittest.TestCase):
             nsw_priority_rates.p6_hplus_heplusplus / counts_rebinned_by_energy_and_spin[6],
         ], (1, 0, 2, 3))
 
-        np.testing.assert_array_equal(l3a_direct_event_data_product.normalization, expected_normalization)
+        np.testing.assert_array_equal(l3a_direct_event_data_product.normalization,
+                                      np.flip(expected_normalization, axis=2))
 
         np.testing.assert_array_equal((reshaped_l2_spin_angle + CODICE_SPIN_ANGLE_OFFSET_FROM_MAG_BOOM) % 360,
                                       l3a_direct_event_data_product.spin_angle)
@@ -597,9 +601,11 @@ class TestCodiceLoProcessor(unittest.TestCase):
         np.testing.assert_array_equal(expected_data_quality, l3a_direct_event_data_product.data_quality)
         np.testing.assert_array_equal(expected_tof, l3a_direct_event_data_product.tof)
 
-        self.assertEqual(mock_energy_lookup.bin_centers, l3a_direct_event_data_product.energy_bin)
-        self.assertEqual(mock_energy_lookup.delta_plus, l3a_direct_event_data_product.energy_bin_delta_plus)
-        self.assertEqual(mock_energy_lookup.delta_minus, l3a_direct_event_data_product.energy_bin_delta_minus)
+        np.testing.assert_array_equal(np.flip(mock_energy_lookup.bin_centers), l3a_direct_event_data_product.energy_bin)
+        np.testing.assert_array_equal(np.flip(mock_energy_lookup.delta_plus),
+                                      l3a_direct_event_data_product.energy_bin_delta_plus)
+        np.testing.assert_array_equal(np.flip(mock_energy_lookup.delta_minus),
+                                      l3a_direct_event_data_product.energy_bin_delta_minus)
         self.assertEqual(mock_spin_angle_lookup.bin_centers, l3a_direct_event_data_product.spin_angle_bin)
         self.assertEqual(mock_spin_angle_lookup.bin_deltas, l3a_direct_event_data_product.spin_angle_bin_delta)
 
@@ -620,6 +626,8 @@ class TestCodiceLoProcessor(unittest.TestCase):
 
         input_metadata = InputMetadata('codice', "l3a", Mock(spec=datetime), Mock(spec=datetime), 'v02')
 
+        normalization = np.random.random(size=(77, 7, 128, 24))
+
         l3a_direct_event_data = Mock(
             epoch=Mock(shape=(10,)),
             apd_id=sentinel.l3a_de_apd_id,
@@ -628,7 +636,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
             apd_energy=sentinel.l3a_de_apd_energy,
             energy_step=sentinel.l3a_de_energy_step,
             spin_angle=sentinel.l3a_de_spin_angle,
-            normalization=sentinel.l3a_normalization,
+            normalization=normalization,
             num_events=sentinel.l3a_num_events,
             position=sentinel.l3a_de_position,
         )
@@ -642,6 +650,9 @@ class TestCodiceLoProcessor(unittest.TestCase):
         mock_geometric_factor_lut = Mock(spec=GeometricFactorLookup)
         mock_efficiency_lut = Mock(spec=EfficiencyLookup)
         mock_energy_lookup = create_dataclass_mock(EnergyLookup)
+        mock_energy_lookup.delta_minus = np.geomspace(280, 2, 128)
+        mock_energy_lookup.delta_plus = np.geomspace(288, 1, 128)
+        mock_energy_lookup.bin_centers = np.geomspace(14100, 88.082825, 128)
         dependencies = CodiceLoL3a3dDistributionsDependencies(
             l3a_direct_event_data=l3a_direct_event_data,
             l1a_sw_data=l1a_sw_data,
@@ -654,6 +665,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
         )
 
         processor = CodiceLoProcessor(dependencies=Mock(), input_metadata=input_metadata)
+        mock_rebin_to_elevation.return_value = np.random.random(size=(77, 13, 24, 128))
         l3a_direct_event_data_product = processor.process_l3a_3d_distribution_product(dependencies)
 
         mock_spin_angle_lookup_class.assert_called_once()
@@ -677,7 +689,11 @@ class TestCodiceLoProcessor(unittest.TestCase):
         mock_compute_geometric_factors = mock_geometric_factor_lut.get_geometric_factors
         mock_compute_geometric_factors.assert_called_once_with(sentinel.rgfo_half_spin)
 
-        mock_normalize_counts.assert_called_once_with(counts_3d_distribution_for_species, sentinel.l3a_normalization)
+        self.assertEqual(mock_normalize_counts.call_args_list[0][0][0], counts_3d_distribution_for_species)
+
+        np.testing.assert_array_equal(mock_normalize_counts.call_args_list[0][0][1],
+                                      np.flip(l3a_direct_event_data.normalization, axis=2))
+
         mock_convert_to_rate.assert_called_once_with(mock_normalize_counts.return_value, sentinel.l1a_acquisition_time)
 
         # intensity computation
@@ -699,11 +715,14 @@ class TestCodiceLoProcessor(unittest.TestCase):
         self.assertEqual(mock_elevation_lookup.bin_deltas, l3a_direct_event_data_product.elevation_delta)
         self.assertEqual(mock_spin_angle_lookup.bin_centers, l3a_direct_event_data_product.spin_angle)
         self.assertEqual(mock_spin_angle_lookup.bin_deltas, l3a_direct_event_data_product.spin_angle_delta)
-        self.assertEqual(mock_energy_lookup.bin_centers, l3a_direct_event_data_product.energy)
-        self.assertEqual(mock_energy_lookup.delta_plus, l3a_direct_event_data_product.energy_delta_plus)
-        self.assertEqual(mock_energy_lookup.delta_minus, l3a_direct_event_data_product.energy_delta_minus)
+        np.testing.assert_array_equal(np.flip(mock_energy_lookup.bin_centers), l3a_direct_event_data_product.energy)
+        np.testing.assert_array_equal(np.flip(mock_energy_lookup.delta_plus),
+                                      l3a_direct_event_data_product.energy_delta_plus)
+        np.testing.assert_array_equal(np.flip(mock_energy_lookup.delta_minus),
+                                      l3a_direct_event_data_product.energy_delta_minus)
 
-        self.assertEqual(mock_rebin_to_elevation.return_value, l3a_direct_event_data_product.species_data)
+        np.testing.assert_array_equal(np.flip(mock_rebin_to_elevation.return_value, axis=3),
+                                      l3a_direct_event_data_product.species_data)
         self.assertEqual(sentinel.species, l3a_direct_event_data_product.species)
 
     def test_process_3d_distributions_save_for_each_species(self):
