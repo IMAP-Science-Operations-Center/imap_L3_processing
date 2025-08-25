@@ -4,16 +4,14 @@ import unittest
 from datetime import datetime
 from pathlib import Path
 
-from unittest.mock import Mock, patch, call, sentinel, MagicMock
+from unittest.mock import Mock, patch, call, sentinel
 
 import numpy as np
-
-from imap_data_access import ScienceInput
 
 from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
 from imap_l3_processing.glows.glows_initializer import GlowsInitializer, _comment_headers
 from imap_l3_processing.glows.l3bc.glows_initializer_ancillary_dependencies import \
-    GlowsInitializerAncillaryDependencies, F107_FLUX_TABLE_URL, LYMAN_ALPHA_COMPOSITE_INDEX_URL, OMNI2_URL
+    F107_FLUX_TABLE_URL, LYMAN_ALPHA_COMPOSITE_INDEX_URL, OMNI2_URL
 from imap_l3_processing.glows.l3bc.models import CRToProcess
 
 
@@ -180,6 +178,38 @@ class TestGlowsInitializer(unittest.TestCase):
                 ])
 
                 self.assertEqual([], actual_crs_to_process)
+
+    @patch("imap_l3_processing.glows.glows_initializer.GlowsInitializer.should_process_cr_candidate", return_value=True)
+    @patch("imap_l3_processing.glows.glows_initializer.get_best_ancillary")
+    @patch("imap_l3_processing.glows.glows_initializer.imap_data_access.query")
+    @patch("imap_l3_processing.glows.glows_initializer.download_external_dependency")
+    @patch("imap_l3_processing.glows.glows_initializer.GlowsInitializer.group_l3a_by_cr")
+    def test_get_crs_to_process_returns_no_crs_when_missing_external_deps(self, mock_group_l3a_by_cr, mock_download_external_dep, __, ___, ____):
+        test_cases = [
+            F107_FLUX_TABLE_URL,
+            LYMAN_ALPHA_COMPOSITE_INDEX_URL,
+            OMNI2_URL,
+        ]
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_dir = Path(temp_dir)
+            fake_external_dep_path = temp_dir / 'fake_external_dep'
+            fake_external_dep_path.write_text("some content\nsome other content")
+
+            for missing_external_dependency in test_cases:
+                with self.subTest(missing_external_dependency):
+                    def download_that_returns_none_for_missing_dependency(url, *args):
+                        return None if url == missing_external_dependency else fake_external_dep_path
+
+                    mock_group_l3a_by_cr.return_value = {2091: {"glows_l3a_hist_20100101_v001.cdf"}}
+
+                    mock_download_external_dep.side_effect = download_that_returns_none_for_missing_dependency
+
+                    actual_crs_to_process = GlowsInitializer.get_crs_to_process()
+
+                    self.assertEqual([], actual_crs_to_process)
+
+
 
     def test_should_process_cr_excludes_crs_within_buffer_period(self):
         cr_candidate = CRToProcess(

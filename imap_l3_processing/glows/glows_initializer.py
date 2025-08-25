@@ -41,10 +41,13 @@ class GlowsInitializer:
         pipeline_settings_query_result = imap_data_access.query(table="ancillary", instrument="glows", descriptor="pipeline-settings-l3bcde")
 
         f107_index_file_path = download_external_dependency(F107_FLUX_TABLE_URL, TEMP_CDF_FOLDER_PATH / 'f107_fluxtable.txt')
-        _comment_headers(f107_index_file_path)
-
         lyman_alpha_path = download_external_dependency(LYMAN_ALPHA_COMPOSITE_INDEX_URL, TEMP_CDF_FOLDER_PATH / 'f107_fluxtable.txt')
         omni2_data_path = download_external_dependency(OMNI2_URL, TEMP_CDF_FOLDER_PATH / 'f107_fluxtable.txt')
+
+        if not all([f107_index_file_path, lyman_alpha_path, omni2_data_path]):
+            return []
+
+        _comment_headers(f107_index_file_path)
 
         l3b_query_result = imap_data_access.query(instrument="glows", data_level="l3b", descriptor="ion-rate-profile", version="latest")
         l3b_file_names = [Path(result["file_path"]).name for result in l3b_query_result]
