@@ -60,6 +60,7 @@ h_macropixel_intensity:
   DELTA_MINUS_VAR: h_macropixel_intensity_delta_minus
   SCALEMIN: 0.0001
   SCALEMAX: 1000
+  SPECIES: H
 he4_macropixel_intensity:
   NAME: he4_macropixel_intensity
   DATA_TYPE: CDF_REAL4
@@ -86,6 +87,7 @@ he4_macropixel_intensity:
   DELTA_MINUS_VAR: he4_macropixel_intensity_delta_minus
   SCALEMIN: 0.0001
   SCALEMAX: 1000
+  SPECIES: He4
 cno_macropixel_intensity:
   NAME: cno_macropixel_intensity
   DATA_TYPE: CDF_REAL4
@@ -112,6 +114,7 @@ cno_macropixel_intensity:
   DELTA_MINUS_VAR: cno_macropixel_intensity_delta_minus
   SCALEMIN: 0.0001
   SCALEMAX: 1000
+  SPECIES: CNO
 nemgsi_macropixel_intensity:
   NAME: nemgsi_macropixel_intensity
   DATA_TYPE: CDF_REAL4
@@ -138,6 +141,7 @@ nemgsi_macropixel_intensity:
   DELTA_MINUS_VAR: nemgsi_macropixel_intensity_delta_minus
   SCALEMIN: 0.0001
   SCALEMAX: 1000
+  SPECIES: NeMgSi
 fe_macropixel_intensity:
   NAME: fe_macropixel_intensity
   DATA_TYPE: CDF_REAL4
@@ -164,6 +168,7 @@ fe_macropixel_intensity:
   DELTA_MINUS_VAR: fe_macropixel_intensity_delta_minus
   SCALEMIN: 0.0001
   SCALEMAX: 1000
+  SPECIES: Fe
 h_macropixel_intensity_pa:
   NAME: h_macropixel_intensity_pa
   DATA_TYPE: CDF_REAL4
@@ -188,6 +193,7 @@ h_macropixel_intensity_pa:
   DELTA_MINUS_VAR: h_macropixel_intensity_pa_delta_minus
   SCALEMIN: 0.0001
   SCALEMAX: 1000
+  SPECIES: H
 he4_macropixel_intensity_pa:
   NAME: he4_macropixel_intensity_pa
   DATA_TYPE: CDF_REAL4
@@ -212,6 +218,7 @@ he4_macropixel_intensity_pa:
   DELTA_MINUS_VAR: he4_macropixel_intensity_pa_delta_minus
   SCALEMIN: 0.0001
   SCALEMAX: 1000
+  SPECIES: He4
 cno_macropixel_intensity_pa:
   NAME: cno_macropixel_intensity_pa
   DATA_TYPE: CDF_REAL4
@@ -236,6 +243,7 @@ cno_macropixel_intensity_pa:
   DELTA_MINUS_VAR: cno_macropixel_intensity_pa_delta_minus
   SCALEMIN: 0.0001
   SCALEMAX: 1000
+  SPECIES: CNO
 nemgsi_macropixel_intensity_pa:
   NAME: nemgsi_macropixel_intensity_pa
   DATA_TYPE: CDF_REAL4
@@ -260,6 +268,7 @@ nemgsi_macropixel_intensity_pa:
   DELTA_MINUS_VAR: nemgsi_macropixel_intensity_pa_delta_minus
   SCALEMIN: 0.0001
   SCALEMAX: 1000
+  SPECIES: NeMgSi
 fe_macropixel_intensity_pa:
   NAME: fe_macropixel_intensity_pa
   DATA_TYPE: CDF_REAL4
@@ -284,6 +293,7 @@ fe_macropixel_intensity_pa:
   DELTA_MINUS_VAR: fe_macropixel_intensity_pa_delta_minus
   SCALEMIN: 0.0001
   SCALEMAX: 1000
+  SPECIES: Fe
 h_macropixel_intensity_delta_plus:
   NAME: h_macropixel_intensity_delta_plus
   DATA_TYPE: CDF_REAL4
@@ -306,6 +316,7 @@ h_macropixel_intensity_delta_plus:
   LABL_PTR_3: gyrophase_label
   SCALEMIN: 0.0001
   SCALEMAX: 1000
+  SPECIES: H
 h_macropixel_intensity_delta_minus:
   NAME: h_macropixel_intensity_delta_minus
   DATA_TYPE: CDF_REAL4
@@ -328,6 +339,7 @@ h_macropixel_intensity_delta_minus:
   LABL_PTR_3: gyrophase_label
   SCALEMIN: 0.0001
   SCALEMAX: 1000
+  SPECIES: H
 he4_macropixel_intensity_delta_plus:
   NAME: he4_macropixel_intensity_delta_plus
   DATA_TYPE: CDF_REAL4
@@ -350,6 +362,7 @@ he4_macropixel_intensity_delta_plus:
   LABL_PTR_3: gyrophase_label
   SCALEMIN: 0.0001
   SCALEMAX: 1000
+  SPECIES: He4
 he4_macropixel_intensity_delta_minus:
   NAME: he4_macropixel_intensity_delta_minus
   DATA_TYPE: CDF_REAL4
@@ -372,6 +385,7 @@ he4_macropixel_intensity_delta_minus:
   LABL_PTR_3: gyrophase_label
   SCALEMIN: 0.0001
   SCALEMAX: 1000
+  SPECIES: He4
 cno_macropixel_intensity_delta_plus:
   NAME: cno_macropixel_intensity_delta_plus
   DATA_TYPE: CDF_REAL4
@@ -394,6 +408,7 @@ cno_macropixel_intensity_delta_plus:
   LABL_PTR_3: gyrophase_label
   SCALEMIN: 0.0001
   SCALEMAX: 1000
+  SPECIES: CNO
 cno_macropixel_intensity_delta_minus:
   NAME: cno_macropixel_intensity_delta_minus
   DATA_TYPE: CDF_REAL4
@@ -416,6 +431,7 @@ cno_macropixel_intensity_delta_minus:
   LABL_PTR_3: gyrophase_label
   SCALEMIN: 0.0001
   SCALEMAX: 1000
+  SPECIES: CNO
 nemgsi_macropixel_intensity_delta_plus:
   NAME: nemgsi_macropixel_intensity_delta_plus
   DATA_TYPE: CDF_REAL4
@@ -438,6 +454,7 @@ nemgsi_macropixel_intensity_delta_plus:
   LABL_PTR_3: gyrophase_label
   SCALEMIN: 0.0001
   SCALEMAX: 1000
+  SPECIES: NeMgSi
 nemgsi_macropixel_intensity_delta_minus:
   NAME: nemgsi_macropixel_intensity_delta_minus
   DATA_TYPE: CDF_REAL4
@@ -460,6 +477,7 @@ nemgsi_macropixel_intensity_delta_minus:
   LABL_PTR_3: gyrophase_label
   SCALEMIN: 0.0001
   SCALEMAX: 1000
+  SPECIES: NeMgSi
 fe_macropixel_intensity_delta_plus:
   NAME: fe_macropixel_intensity_delta_plus
   DATA_TYPE: CDF_REAL4
@@ -482,6 +500,7 @@ fe_macropixel_intensity_delta_plus:
   LABL_PTR_3: gyrophase_label
   SCALEMIN: 0.0001
   SCALEMAX: 1000
+  SPECIES: Fe
 fe_macropixel_intensity_delta_minus:
   NAME: fe_macropixel_intensity_delta_minus
   DATA_TYPE: CDF_REAL4
@@ -504,6 +523,7 @@ fe_macropixel_intensity_delta_minus:
   LABL_PTR_3: gyrophase_label
   SCALEMIN: 0.0001
   SCALEMAX: 1000
+  SPECIES: Fe
 h_macropixel_intensity_pa_delta_plus:
   NAME: h_macropixel_intensity_pa_delta_plus
   DATA_TYPE: CDF_REAL4
@@ -524,6 +544,7 @@ h_macropixel_intensity_pa_delta_plus:
   LABL_PTR_2: pitch_angle_label
   SCALEMIN: 0.0001
   SCALEMAX: 1000
+  SPECIES: H
 h_macropixel_intensity_pa_delta_minus:
   NAME: h_macropixel_intensity_pa_delta_minus
   DATA_TYPE: CDF_REAL4
@@ -544,6 +565,7 @@ h_macropixel_intensity_pa_delta_minus:
   LABL_PTR_2: pitch_angle_label
   SCALEMIN: 0.0001
   SCALEMAX: 1000
+  SPECIES: H
 he4_macropixel_intensity_pa_delta_plus:
   NAME: he4_macropixel_intensity_pa_delta_plus
   DATA_TYPE: CDF_REAL4
@@ -564,6 +586,7 @@ he4_macropixel_intensity_pa_delta_plus:
   LABL_PTR_2: pitch_angle_label
   SCALEMIN: 0.0001
   SCALEMAX: 1000
+  SPECIES: He4
 he4_macropixel_intensity_pa_delta_minus:
   NAME: he4_macropixel_intensity_pa_delta_minus
   DATA_TYPE: CDF_REAL4
@@ -584,6 +607,7 @@ he4_macropixel_intensity_pa_delta_minus:
   LABL_PTR_2: pitch_angle_label
   SCALEMIN: 0.0001
   SCALEMAX: 1000
+  SPECIES: He4
 cno_macropixel_intensity_pa_delta_plus:
   NAME: cno_macropixel_intensity_pa_delta_plus
   DATA_TYPE: CDF_REAL4
@@ -604,6 +628,7 @@ cno_macropixel_intensity_pa_delta_plus:
   LABL_PTR_2: pitch_angle_label
   SCALEMIN: 0.0001
   SCALEMAX: 1000
+  SPECIES: CNO
 cno_macropixel_intensity_pa_delta_minus:
   NAME: cno_macropixel_intensity_pa_delta_minus
   DATA_TYPE: CDF_REAL4
@@ -624,6 +649,7 @@ cno_macropixel_intensity_pa_delta_minus:
   LABL_PTR_2: pitch_angle_label
   SCALEMIN: 0.0001
   SCALEMAX: 1000
+  SPECIES: CNO
 nemgsi_macropixel_intensity_pa_delta_plus:
   NAME: nemgsi_macropixel_intensity_pa_delta_plus
   DATA_TYPE: CDF_REAL4
@@ -644,6 +670,7 @@ nemgsi_macropixel_intensity_pa_delta_plus:
   LABL_PTR_2: pitch_angle_label
   SCALEMIN: 0.0001
   SCALEMAX: 1000
+  SPECIES: NeMgSi
 nemgsi_macropixel_intensity_pa_delta_minus:
   NAME: nemgsi_macropixel_intensity_pa_delta_minus
   DATA_TYPE: CDF_REAL4
@@ -664,6 +691,7 @@ nemgsi_macropixel_intensity_pa_delta_minus:
   LABL_PTR_2: pitch_angle_label
   SCALEMIN: 0.0001
   SCALEMAX: 1000
+  SPECIES: NeMgSi
 fe_macropixel_intensity_pa_delta_plus:
   NAME: fe_macropixel_intensity_pa_delta_plus
   DATA_TYPE: CDF_REAL4
@@ -684,6 +712,7 @@ fe_macropixel_intensity_pa_delta_plus:
   LABL_PTR_2: pitch_angle_label
   SCALEMIN: 0.0001
   SCALEMAX: 1000
+  SPECIES: Fe
 fe_macropixel_intensity_pa_delta_minus:
   NAME: fe_macropixel_intensity_pa_delta_minus
   DATA_TYPE: CDF_REAL4
@@ -704,6 +733,7 @@ fe_macropixel_intensity_pa_delta_minus:
   LABL_PTR_2: pitch_angle_label
   SCALEMIN: 0.0001
   SCALEMAX: 1000
+  SPECIES: Fe
 h_energy:
   NAME: h_energy
   DATA_TYPE: CDF_REAL4
@@ -719,6 +749,7 @@ h_energy:
   FILLVAL: -1.0000E+31
   DELTA_PLUS_VAR: h_energy_delta_plus
   DELTA_MINUS_VAR: h_energy_delta_minus
+  SPECIES: H
 he4_energy:
   NAME: he4_energy
   DATA_TYPE: CDF_REAL4
@@ -734,6 +765,7 @@ he4_energy:
   FILLVAL: -1.0000E+31
   DELTA_PLUS_VAR: he4_energy_delta_plus
   DELTA_MINUS_VAR: he4_energy_delta_minus
+  SPECIES: He4
 cno_energy:
   NAME: cno_energy
   DATA_TYPE: CDF_REAL4
@@ -749,6 +781,7 @@ cno_energy:
   FILLVAL: -1.0000E+31
   DELTA_PLUS_VAR: cno_energy_delta_plus
   DELTA_MINUS_VAR: cno_energy_delta_minus
+  SPECIES: CNO
 nemgsi_energy:
   NAME: nemgsi_energy
   DATA_TYPE: CDF_REAL4
@@ -764,6 +797,7 @@ nemgsi_energy:
   FILLVAL: -1.0000E+31
   DELTA_PLUS_VAR: nemgsi_energy_delta_plus
   DELTA_MINUS_VAR: nemgsi_energy_delta_minus
+  SPECIES: NeMgSi
 fe_energy:
   NAME: fe_energy
   DATA_TYPE: CDF_REAL4
@@ -779,6 +813,7 @@ fe_energy:
   FILLVAL: -1.0000E+31
   DELTA_PLUS_VAR: fe_energy_delta_plus
   DELTA_MINUS_VAR: fe_energy_delta_minus
+  SPECIES: Fe
 h_energy_delta_plus:
   NAME: h_energy_delta_plus
   DATA_TYPE: CDF_REAL4
@@ -794,6 +829,7 @@ h_energy_delta_plus:
   FILLVAL: -1.0000E+31
   SCALEMIN: 0.0001
   SCALEMAX: 1000
+  SPECIES: H
 he4_energy_delta_plus:
   NAME: he4_energy_delta_plus
   DATA_TYPE: CDF_REAL4
@@ -809,6 +845,7 @@ he4_energy_delta_plus:
   FILLVAL: -1.0000E+31
   SCALEMIN: 0.0001
   SCALEMAX: 1000
+  SPECIES: He4
 cno_energy_delta_plus:
   NAME: cno_energy_delta_plus
   DATA_TYPE: CDF_REAL4
@@ -824,6 +861,7 @@ cno_energy_delta_plus:
   FILLVAL: -1.0000E+31
   SCALEMIN: 0.0001
   SCALEMAX: 1000
+  SPECIES: CNO
 nemgsi_energy_delta_plus:
   NAME: nemgsi_energy_delta_plus
   DATA_TYPE: CDF_REAL4
@@ -839,6 +877,7 @@ nemgsi_energy_delta_plus:
   FILLVAL: -1.0000E+31
   SCALEMIN: 0.0001
   SCALEMAX: 1000
+  SPECIES: NeMgSi
 fe_energy_delta_plus:
   NAME: fe_energy_delta_plus
   DATA_TYPE: CDF_REAL4
@@ -854,6 +893,7 @@ fe_energy_delta_plus:
   FILLVAL: -1.0000E+31
   SCALEMIN: 0.0001
   SCALEMAX: 1000
+  SPECIES: Fe
 h_energy_delta_minus:
   NAME: h_energy_delta_minus
   DATA_TYPE: CDF_REAL4
@@ -869,6 +909,7 @@ h_energy_delta_minus:
   FILLVAL: -1.0000E+31
   SCALEMIN: 0.0001
   SCALEMAX: 1000
+  SPECIES: H
 he4_energy_delta_minus:
   NAME: he4_energy_delta_minus
   DATA_TYPE: CDF_REAL4
@@ -884,6 +925,7 @@ he4_energy_delta_minus:
   FILLVAL: -1.0000E+31
   SCALEMIN: 0.0001
   SCALEMAX: 1000
+  SPECIES: He4
 cno_energy_delta_minus:
   NAME: cno_energy_delta_minus
   DATA_TYPE: CDF_REAL4
@@ -899,6 +941,7 @@ cno_energy_delta_minus:
   FILLVAL: -1.0000E+31
   SCALEMIN: 0.0001
   SCALEMAX: 1000
+  SPECIES: CNO
 nemgsi_energy_delta_minus:
   NAME: nemgsi_energy_delta_minus
   DATA_TYPE: CDF_REAL4
@@ -914,6 +957,7 @@ nemgsi_energy_delta_minus:
   FILLVAL: -1.0000E+31
   SCALEMIN: 0.0001
   SCALEMAX: 1000
+  SPECIES: NeMgSi
 fe_energy_delta_minus:
   NAME: fe_energy_delta_minus
   DATA_TYPE: CDF_REAL4
@@ -929,6 +973,7 @@ fe_energy_delta_minus:
   FILLVAL: -1.0000E+31
   SCALEMIN: 0.0001
   SCALEMAX: 1000
+  SPECIES: Fe
 pitch_angle:
   NAME: pitch_angle
   DATA_TYPE: CDF_REAL4
@@ -1033,6 +1078,7 @@ h_energy_label:
   FIELDNAM: H Energy Label
   FORMAT: a20
   FILLVAL: ' '
+  SPECIES: H
 he4_energy_label:
   NAME: he4_energy_label
   DATA_TYPE: CDF_CHAR
@@ -1041,6 +1087,7 @@ he4_energy_label:
   FIELDNAM: He4 Energy Label
   FORMAT: a20
   FILLVAL: ' '
+  SPECIES: He4
 cno_energy_label:
   NAME: cno_energy_label
   DATA_TYPE: CDF_CHAR
@@ -1049,6 +1096,7 @@ cno_energy_label:
   FIELDNAM: CNO Energy Label
   FORMAT: a20
   FILLVAL: ' '
+  SPECIES: CNO
 nemgsi_energy_label:
   NAME: nemgsi_energy_label
   DATA_TYPE: CDF_CHAR
@@ -1057,6 +1105,7 @@ nemgsi_energy_label:
   FIELDNAM: NeMgSi Energy Label
   FORMAT: a20
   FILLVAL: ' '
+  SPECIES: NeMgSi
 fe_energy_label:
   NAME: fe_energy_label
   DATA_TYPE: CDF_CHAR
@@ -1065,6 +1114,7 @@ fe_energy_label:
   FIELDNAM: Fe Energy Label
   FORMAT: a20
   FILLVAL: ' '
+  SPECIES: Fe
 pitch_angle_label:
   NAME: pitch_angle_label
   DATA_TYPE: CDF_CHAR

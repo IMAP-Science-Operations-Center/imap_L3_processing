@@ -210,7 +210,7 @@ def create_codice_lo_l3a_3d_distributions_cdf(species: str):
         start_date=datetime(2024, 11, 10),
         end_date=datetime(2025, 1, 2),
         version='v000',
-        descriptor=f'lo-{species}-3d-instrument-frame'
+        descriptor=f'lo-{species}-3d-distribution'
     )
 
     codice_lo_processor = CodiceLoProcessor(Mock(), input_metadata)

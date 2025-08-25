@@ -283,6 +283,13 @@ attribute_key:
     overwrite: false
     valid_values: null
     alternate: null
+  SPECIES:
+    description: >
+      Used to identify particles.
+    required: false
+    overwrite: false
+    valid_values: null
+    alternate: null
   VAR_TYPE:
     description: >
       Used in CDAWeb to indicate if the data should be used directly by users.
