@@ -130,7 +130,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
                                                   mock_save_data
                                                   ):
 
-        mock_glows_initializer_class.validate_and_initialize.return_value = []
+        mock_glows_initializer_class.get_crs_to_process.return_value = []
 
         input_metadata = InputMetadata('glows', "l3b", datetime(2024, 10, 7, 10, 00, 00),
                                        datetime(2024, 10, 8, 10, 00, 00),
@@ -141,8 +141,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
         processor = GlowsProcessor(dependencies=mock_processing_input_collection, input_metadata=input_metadata)
         products = processor.process()
 
-        mock_glows_initializer_class.validate_and_initialize.assert_called_with(input_metadata.version,
-                                                                                mock_processing_input_collection)
+        mock_glows_initializer_class.get_crs_to_process.assert_called_with()
         mock_save_data.assert_not_called()
         self.assertEqual([], products)
 
@@ -191,37 +190,37 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
     @patch('imap_l3_processing.glows.glows_processor.GlowsL3CSolarWind')
     @patch('imap_l3_processing.glows.glows_processor.filter_l3a_files')
     @patch('imap_l3_processing.glows.glows_processor.generate_l3bc')
-    def test_process_l3bc(self, mock_generate_l3bc, mock_filter_bad_days, mock_l3c_model_class, mock_l3b_model_class,
-                          mock_glows_initializer_class, mock_save_data, mock_l3bc_dependencies,
+    @patch('imap_l3_processing.glows.glows_processor.archive_dependencies')
+    def test_process_l3bc(self, mock_archive_dependencies, mock_generate_l3bc, mock_filter_bad_days, mock_l3c_model_class, mock_l3b_model_class,
+                          mock_glows_initializer_class, mock_save_data, mock_l3bc_dependencies_class,
                           mock_spiceypy):
         mock_spiceypy.ktotal.return_value = 1
         mock_spiceypy.kdata.return_value = ['kernel_1', 'type', 'source', 'handle']
-
-        mock_glows_initializer_class.validate_and_initialize.return_value = [
-            sentinel.zip_file_path_1,
-            sentinel.zip_file_path_2,
-        ]
+        cr_to_process_1 = Mock(cr_rotation_number=sentinel.cr_number_1)
+        cr_to_process_2 = Mock(cr_rotation_number=sentinel.cr_number_2)
+        mock_glows_initializer_class.get_crs_to_process.return_value = [(1, cr_to_process_1), (2, cr_to_process_2)]
+        mock_archive_dependencies.side_effect = [Path("path1.zip"), Path("path2.zip")]
 
         first_dependency = GlowsL3BCDependencies(l3a_data=sentinel.l3a_data_1,
                                                  external_files=sentinel.external_files_1,
                                                  ancillary_files={
                                                      'bad_days_list': sentinel.bad_days_list_1,
                                                  },
-                                                 carrington_rotation_number=sentinel.cr_1,
+                                                 carrington_rotation_number=sentinel.cr_number_1,
                                                  start_date=datetime(2024, 1, 1),
                                                  end_date=datetime(2024, 1, 30),
-                                                 zip_file_path=Path('some/path1.zip'))
+                                                 zip_file_path=None)
         second_dependency = GlowsL3BCDependencies(l3a_data=sentinel.l3a_data_2,
                                                   external_files=sentinel.external_files_2,
                                                   ancillary_files={
                                                       'bad_days_list': sentinel.bad_days_list_2,
                                                   },
-                                                  carrington_rotation_number=sentinel.cr_2,
+                                                  carrington_rotation_number=sentinel.cr_number_2,
                                                   start_date=datetime(2024, 2, 1),
                                                   end_date=datetime(2024, 2, 28),
-                                                  zip_file_path=Path('some/path2.zip'))
+                                                  zip_file_path=None)
 
-        mock_l3bc_dependencies.fetch_dependencies.side_effect = [first_dependency, second_dependency]
+        mock_l3bc_dependencies_class.from_cr_to_process.side_effect = [first_dependency, second_dependency]
 
         mock_generate_l3bc.side_effect = [(sentinel.l3b_data_1, sentinel.l3c_data_1),
                                           (sentinel.l3b_data_2, sentinel.l3c_data_2)]
@@ -251,27 +250,26 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
         processor = GlowsProcessor(dependencies=Mock(), input_metadata=input_metadata)
         products = processor.process()
 
-        mock_l3bc_dependencies.fetch_dependencies.assert_has_calls(
-            [call(sentinel.zip_file_path_1), call(sentinel.zip_file_path_2)])
+        mock_l3bc_dependencies_class.from_cr_to_process.assert_has_calls([call(cr_to_process_1), call(cr_to_process_2)])
 
         dependencies_with_filtered_list_1 = replace(first_dependency, l3a_data=sentinel.filtered_days_1)
         dependencies_with_filtered_list_2 = replace(second_dependency, l3a_data=sentinel.filtered_days_2)
 
         mock_filter_bad_days.assert_has_calls(
-            [call(sentinel.l3a_data_1, sentinel.bad_days_list_1, sentinel.cr_1),
-             call(sentinel.l3a_data_2, sentinel.bad_days_list_2, sentinel.cr_2)])
+            [call(sentinel.l3a_data_1, sentinel.bad_days_list_1, sentinel.cr_number_1),
+             call(sentinel.l3a_data_2, sentinel.bad_days_list_2, sentinel.cr_number_2)])
 
         mock_generate_l3bc.assert_has_calls(
             [call(dependencies_with_filtered_list_1), call(dependencies_with_filtered_list_2)])
 
         expected_l3b_metadata_1 = InputMetadata("glows", "l3b", first_dependency.start_date,
-                                                first_dependency.end_date, 'v02', "ion-rate-profile")
+                                                first_dependency.end_date, 'v001', "ion-rate-profile")
         expected_l3b_metadata_2 = InputMetadata("glows", "l3b", second_dependency.start_date,
-                                                second_dependency.end_date, 'v02', "ion-rate-profile")
+                                                second_dependency.end_date, 'v002', "ion-rate-profile")
         expected_l3c_metadata_1 = InputMetadata("glows", "l3c", first_dependency.start_date,
-                                                first_dependency.end_date, 'v02', "sw-profile")
+                                                first_dependency.end_date, 'v001', "sw-profile")
         expected_l3c_metadata_2 = InputMetadata("glows", "l3c", second_dependency.start_date,
-                                                second_dependency.end_date, 'v02', "sw-profile")
+                                                second_dependency.end_date, 'v002', "sw-profile")
         mock_l3b_model_class.from_instrument_team_dictionary.assert_has_calls(
             [call(sentinel.l3b_data_1, expected_l3b_metadata_1),
              call(sentinel.l3b_data_2, expected_l3b_metadata_2)])
@@ -280,32 +278,50 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
             [call(sentinel.l3c_data_1, expected_l3c_metadata_1),
              call(sentinel.l3c_data_2, expected_l3c_metadata_2)])
 
-        mock_save_data.assert_has_calls(
-            [call(l3b_model_1), call(l3c_model_1), call(l3b_model_2), call(l3c_model_2)])
+        mock_save_data.assert_has_calls([
+            call(l3b_model_1, cr_number=sentinel.cr_number_1),
+            call(l3c_model_1, cr_number=sentinel.cr_number_1),
+            call(l3b_model_2, cr_number=sentinel.cr_number_2),
+            call(l3c_model_2, cr_number=sentinel.cr_number_2)
+        ])
+
+        mock_archive_dependencies.assert_has_calls(
+            [
+                call(cr_to_process_1, 1),
+                call(cr_to_process_2, 2),
+            ]
+        )
 
         self.assertEqual(["file1", "path1.zip", "kernel_1"], l3b_model_1.parent_file_names)
         self.assertEqual(["file2", "path2.zip", "kernel_1"], l3b_model_2.parent_file_names)
-        self.assertEqual(["file3", "path1.zip", "kernel_1", "l3b_file_1.cdf"], l3c_model_1.parent_file_names)
-        self.assertEqual(["file4", "path2.zip", "kernel_1", "l3b_file_2.cdf"], l3c_model_2.parent_file_names)
+        self.assertEqual(["file3", "path1.zip", "l3b_file_1.cdf", "kernel_1",], l3c_model_1.parent_file_names)
+        self.assertEqual(["file4", "path2.zip", "l3b_file_2.cdf", "kernel_1",], l3c_model_2.parent_file_names)
         self.assertEqual([
             "path/to/l3b_file_1.cdf",
             sentinel.l3c_cdf_path_1,
-            sentinel.zip_file_path_1,
+            Path("path1.zip"),
             "path/to/l3b_file_2.cdf",
             sentinel.l3c_cdf_path_2,
-            sentinel.zip_file_path_2,
+            Path("path2.zip"),
         ], products)
 
+    @patch('imap_l3_processing.glows.glows_processor.archive_dependencies')
     @patch('imap_l3_processing.glows.glows_processor.save_data')
     @patch("imap_l3_processing.glows.glows_processor.GlowsInitializer")
     @patch("imap_l3_processing.glows.glows_processor.GlowsL3BCDependencies")
     def test_processor_catches_no_data_error_and_continues(self, mock_glows_l3bc_dependencies_class,
                                                            mock_glows_initializer_class,
-                                                           mock_save_data):
-        mock_glows_initializer_class.validate_and_initialize.return_value = [sentinel.zip_file_1, sentinel.zip_file_2]
+                                                           mock_save_data,
+                                                           mock_archive_dependencies):
+        cr_to_process_1 = Mock(cr_rotation_number=1)
+        cr_to_process_2 = Mock(cr_rotation_number=2)
+
+        mock_glows_initializer_class.get_crs_to_process.return_value = [(1, cr_to_process_1), (2, cr_to_process_2)]
         bc_dependencies_1 = MagicMock(l3a_data=[])
         bc_dependencies_2 = MagicMock(l3a_data=[])
-        mock_glows_l3bc_dependencies_class.fetch_dependencies.side_effect = [bc_dependencies_1, bc_dependencies_2]
+        mock_glows_l3bc_dependencies_class.from_cr_to_process.side_effect = [bc_dependencies_1, bc_dependencies_2]
+
+        mock_archive_dependencies.side_effect = [sentinel.zip_file_1, sentinel.zip_file_2]
 
         l3b_path = "path_to/l3b"
         l3c_path = "path_to/l3c"
@@ -327,16 +343,18 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
         ]
         products = processor.process()
 
-        self.assertEqual(2, mock_glows_l3bc_dependencies_class.fetch_dependencies.call_count)
-        mock_glows_l3bc_dependencies_class.fetch_dependencies.assert_has_calls([
-            call(sentinel.zip_file_1),
-            call(sentinel.zip_file_2)
+        mock_archive_dependencies.assert_has_calls([call(cr_to_process_1, 1), call(cr_to_process_2, 2)])
+
+        self.assertEqual(2, mock_glows_l3bc_dependencies_class.from_cr_to_process.call_count)
+        mock_glows_l3bc_dependencies_class.from_cr_to_process.assert_has_calls([
+            call(cr_to_process_1),
+            call(cr_to_process_2)
         ])
 
         self.assertEqual(2, mock_save_data.call_count)
         mock_save_data.assert_has_calls([
-            call(mock_l3b),
-            call(mock_l3c),
+            call(mock_l3b, cr_number=2),
+            call(mock_l3c, cr_number=2),
         ])
 
         self.assertEqual(3, len(products))
@@ -374,7 +392,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
 
         processor = GlowsProcessor(dependencies=Mock(), input_metadata=input_metadata)
         with self.assertRaises(CannotProcessCarringtonRotationError) as context:
-            processor.process_l3bc(dependencies)
+            processor.process_l3bc(dependencies, 2)
         self.assertTrue("All days for Carrington Rotation are in a bad season." in str(context.exception))
 
     @patch('imap_l3_processing.glows.glows_processor.Processor.get_parent_file_names')

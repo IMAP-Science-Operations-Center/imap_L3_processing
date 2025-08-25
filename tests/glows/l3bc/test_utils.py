@@ -142,37 +142,39 @@ class TestUtils(unittest.TestCase):
         expected_filepath = TEMP_CDF_FOLDER_PATH / "imap_glows_l3b-archive_20250314_v001.zip"
         expected_json_filename = "cr_to_process.json"
 
-        dependencies = GlowsInitializerAncillaryDependencies(uv_anisotropy_path="uv_anisotropy",
-                                                             waw_helioion_mp_path="waw_helioion",
-                                                             bad_days_list="bad_days",
-                                                             pipeline_settings="pipeline_settings",
-                                                             lyman_alpha_path=Path("lyman_alpha"),
-                                                             omni2_data_path=Path("omni"),
-                                                             f107_index_file_path=Path("f107"),
-                                                             initializer_time_buffer=TimeDelta(42, format="jd"),
-                                                             repointing_file=Path("/path/to/repointing.csv")
-                                                             )
-
-        cr_to_process: CRToProcess = CRToProcess(cr_rotation_number=2095, l3a_paths=["file1", "file2"],
-                                                 cr_start_date=Time("2025-03-14 12:34:56.789"),
-                                                 cr_end_date=Time("2025-03-24 12:34:56.789"))
+        cr_to_process = CRToProcess(
+            l3a_file_names={
+                "imap_glows_l3a_hist_20100101-repoint000001_v001.cdf",
+                "imap_glows_l3a_hist_20100102-repoint000002_v001.cdf"
+            },
+            uv_anisotropy_file_name="uv_anisotropy.dat",
+            waw_helio_ion_mp_file_name="waw_helio_ion.dat",
+            bad_days_list_file_name="bad_days_list.dat",
+            pipeline_settings_file_name="pipeline_settings.json",
+            f107_index_file_path=Path("f107_index_file_path"),
+            lyman_alpha_path=Path("lyman_alpha_path"),
+            omni2_data_path=Path("omni2_data_path"),
+            cr_start_date=datetime.fromisoformat("2025-03-14 12:34:56.789"),
+            cr_end_date=datetime.fromisoformat("2025-03-24 12:34:56.789"),
+            cr_rotation_number=2095,
+        )
 
         expected_json_to_serialize = {"cr_rotation_number": 2095,
-                                      "l3a_paths": ["file1", "file2"],
-                                      "cr_start_date": "2025-03-14 12:34:56.789",
-                                      "cr_end_date": "2025-03-24 12:34:56.789",
-                                      "bad_days_list": dependencies.bad_days_list,
-                                      "pipeline_settings": dependencies.pipeline_settings,
-                                      "waw_helioion_mp": dependencies.waw_helioion_mp_path,
-                                      "uv_anisotropy": dependencies.uv_anisotropy_path,
+                                      "l3a_paths": ["imap_glows_l3a_hist_20250314-repoint000001_v001.cdf", "imap_glows_l3a_hist_20100102-repoint000002_v001.cdf"],
+                                      "cr_start_date": "2025-03-14 12:34:56.789000",
+                                      "cr_end_date": "2025-03-24 12:34:56.789000",
+                                      "bad_days_list": "bad_days_list.dat",
+                                      "pipeline_settings": "pipeline_settings.json",
+                                      "waw_helioion_mp": "waw_helio_ion.dat",
+                                      "uv_anisotropy": "uv_anisotropy.dat",
                                       "repointing_file": "repointing.csv",
                                       }
 
         mock_zip_file = MagicMock()
         mock_zip.return_value.__enter__.return_value = mock_zip_file
 
-        version_number = "v001"
-        actual_zip_file_name = archive_dependencies(cr_to_process, version_number, dependencies)
+        version_number = 1
+        actual_zip_file_name = archive_dependencies(cr_to_process, version_number)
 
         self.assertEqual(expected_filepath, actual_zip_file_name)
 
@@ -181,9 +183,9 @@ class TestUtils(unittest.TestCase):
         mock_json.dumps.assert_called_once_with(expected_json_to_serialize)
 
         mock_zip_file.write.assert_has_calls([
-            call(dependencies.lyman_alpha_path, "lyman_alpha_composite.nc"),
-            call(dependencies.omni2_data_path, "omni2_all_years.dat"),
-            call(dependencies.f107_index_file_path, "f107_fluxtable.txt"),
+            call(Path("lyman_alpha_path"), "lyman_alpha_composite.nc"),
+            call(Path("omni2_data_path"), "omni2_all_years.dat"),
+            call(Path("f107_index_file_path"), "f107_fluxtable.txt"),
         ])
         mock_zip_file.writestr.assert_called_once_with(expected_json_filename, mock_json.dumps.return_value)
 

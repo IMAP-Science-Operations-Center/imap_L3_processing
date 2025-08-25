@@ -23,7 +23,7 @@ from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDepen
 from imap_l3_processing.glows.l3bc.models import GlowsL3BIonizationRate, GlowsL3CSolarWind
 from imap_l3_processing.glows.l3bc.science.filter_out_bad_days import filter_l3a_files
 from imap_l3_processing.glows.l3bc.science.generate_l3bc import generate_l3bc
-from imap_l3_processing.glows.l3bc.utils import get_pointing_date_range
+from imap_l3_processing.glows.l3bc.utils import get_pointing_date_range, archive_dependencies
 from imap_l3_processing.glows.l3d.glows_l3d_dependencies import GlowsL3DDependencies
 from imap_l3_processing.glows.l3d.utils import create_glows_l3b_json_file_from_cdf, create_glows_l3c_json_file_from_cdf, \
     PATH_TO_L3D_TOOLKIT, convert_json_to_l3d_data_product, get_parent_file_names_from_l3d_json, set_version_on_txt_files
@@ -52,20 +52,30 @@ class GlowsProcessor(Processor):
             cdf = save_data(l3a_output)
             return [cdf]
         elif self.input_metadata.data_level == "l3b":
-            zip_files = GlowsInitializer.validate_and_initialize(self.input_metadata.version, self.dependencies)
+            version_and_cr_deps = GlowsInitializer.get_crs_to_process()
+
             products = []
-            for zip_file in zip_files:
-                dependencies = GlowsL3BCDependencies.fetch_dependencies(zip_file)
+            for version, cr_to_process in version_and_cr_deps:
+                zip_path = archive_dependencies(cr_to_process, version)
                 try:
-                    l3b_data_product, l3c_data_product = self.process_l3bc(dependencies)
+                    dependencies = GlowsL3BCDependencies.from_cr_to_process(cr_to_process)
+                    l3b_data_product, l3c_data_product = self.process_l3bc(dependencies, version)
                 except CannotProcessCarringtonRotationError as e:
-                    print(f"skipping CR {dependencies.carrington_rotation_number}:", e)
+                    print(
+                        f"skipping CR {cr_to_process.cr_rotation_number}:",
+                        e)
                     continue
-                l3b_cdf = save_data(l3b_data_product)
-                l3c_data_product.parent_file_names.append(Path(l3b_cdf).name)
-                l3c_cdf = save_data(l3c_data_product)
-                products.extend([l3b_cdf, l3c_cdf, zip_file])
+
+                l3b_data_product.parent_file_names += self.get_parent_file_names([zip_path])
+                l3b_cdf = save_data(l3b_data_product, cr_number=cr_to_process.cr_rotation_number)
+
+                l3c_data_product.parent_file_names += self.get_parent_file_names([zip_path, Path(l3b_cdf)])
+                l3c_cdf = save_data(l3c_data_product, cr_number=cr_to_process.cr_rotation_number)
+
+                products.extend([l3b_cdf, l3c_cdf, zip_path])
             return products
+
+
         elif self.input_metadata.data_level == "l3d":
             l3d_dependencies = GlowsL3DDependencies.fetch_dependencies(self.dependencies)
             data_product, l3d_txt_paths, last_processed_cr = self.process_l3d(l3d_dependencies)
@@ -118,25 +128,22 @@ class GlowsProcessor(Processor):
         return create_glows_l3a_from_dictionary(data_with_spin_angle,
                                                 replace(self.input_metadata, descriptor=GLOWS_L3A_DESCRIPTOR))
 
-    def process_l3bc(self, dependencies: GlowsL3BCDependencies) -> tuple[GlowsL3BIonizationRate, GlowsL3CSolarWind]:
+    def process_l3bc(self, dependencies: GlowsL3BCDependencies, version: int) -> tuple[GlowsL3BIonizationRate, GlowsL3CSolarWind]:
         filtered_days = filter_l3a_files(dependencies.l3a_data, dependencies.ancillary_files['bad_days_list'],
                                          dependencies.carrington_rotation_number)
         l3b_metadata = InputMetadata("glows", "l3b", dependencies.start_date, dependencies.end_date,
-                                     self.input_metadata.version, "ion-rate-profile")
+                                     f"v{version:03}", "ion-rate-profile")
         l3c_metadata = InputMetadata("glows", "l3c", dependencies.start_date, dependencies.end_date,
-                                     self.input_metadata.version, "sw-profile")
+                                     f"v{version:03}", "sw-profile")
 
         try:
             l3b_data, l3c_data = generate_l3bc(replace(dependencies, l3a_data=filtered_days))
         except CannotProcessCarringtonRotationError as e:
             raise e
 
-        l3b_data_product = GlowsL3BIonizationRate.from_instrument_team_dictionary(l3b_data,
-                                                                                  l3b_metadata)
+        l3b_data_product = GlowsL3BIonizationRate.from_instrument_team_dictionary(l3b_data, l3b_metadata)
         l3c_data_product = GlowsL3CSolarWind.from_instrument_team_dictionary(l3c_data, l3c_metadata)
 
-        l3b_data_product.parent_file_names += self.get_parent_file_names([dependencies.zip_file_path])
-        l3c_data_product.parent_file_names += self.get_parent_file_names([dependencies.zip_file_path])
         return l3b_data_product, l3c_data_product
 
     def process_l3d(self, dependencies: GlowsL3DDependencies):

@@ -1,26 +1,19 @@
-import json
 import logging
 from collections import defaultdict
 from dataclasses import fields
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
 import imap_data_access
-from astropy.time import TimeDelta, Time
-from imap_data_access import query, ScienceFilePath
-from imap_data_access.processing_input import ProcessingInputCollection, ScienceInput
-from imap_processing.spice.repoint import set_global_repoint_table_paths
-from spacepy.pycdf import CDF
+from imap_data_access import ScienceFilePath
 
 from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
-from imap_l3_processing.glows.l3bc.dependency_validator import validate_dependencies
 from imap_l3_processing.glows.l3bc.glows_initializer_ancillary_dependencies import \
     GlowsInitializerAncillaryDependencies, F107_FLUX_TABLE_URL, LYMAN_ALPHA_COMPOSITE_INDEX_URL, OMNI2_URL
-from imap_l3_processing.glows.l3bc.l3bc_toolkit.funcs import carrington, jd_fm_Carrington
-from imap_l3_processing.glows.l3bc.models import CRToProcess, L3BCAncillaryQueryResults, read_pipeline_settings
-from imap_l3_processing.glows.l3bc.utils import archive_dependencies, \
-    get_astropy_time_from_yyyymmdd, get_pointing_date_range, get_date_range_of_cr, get_best_ancillary, read_cdf_parents, \
+from imap_l3_processing.glows.l3bc.models import CRToProcess
+from imap_l3_processing.glows.l3bc.utils import get_pointing_date_range, get_date_range_of_cr, get_best_ancillary, \
+    read_cdf_parents, \
     get_cr_for_date_time
 from imap_l3_processing.utils import download_external_dependency
 
@@ -111,11 +104,6 @@ class GlowsInitializer:
 
         return grouped_l3a_by_cr
 
-def _should_process(glows_l3b_dependencies: GlowsInitializerAncillaryDependencies) -> bool:
-    for field in fields(glows_l3b_dependencies):
-        if getattr(glows_l3b_dependencies, field.name) is None:
-            return False
-    return True
 
 def _comment_headers(filename: Path, num_lines=2):
     with open(filename, "r+") as file:
