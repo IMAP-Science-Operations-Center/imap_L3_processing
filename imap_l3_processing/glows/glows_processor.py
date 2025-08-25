@@ -36,6 +36,7 @@ from imap_l3_processing.glows.l3e.glows_l3e_utils import determine_call_args_for
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
 from imap_l3_processing.utils import save_data
+
 logger = logging.getLogger(__name__)
 
 
@@ -193,6 +194,7 @@ class GlowsProcessor(Processor):
         call_args_object = determine_call_args_for_l3e_executable(epoch, epoch + epoch_delta, elongation_value)
         call_args = call_args_object.to_argument_list()
 
+        print("running survProbLo " + call_args)
         run(["./survProbLo"] + call_args)
 
         output_path = Path(f'probSur.Imap.Lo_{call_args[0]}_{call_args[1][:8]}_{call_args[-1][:5]}.dat')
@@ -213,6 +215,9 @@ class GlowsProcessor(Processor):
     def process_l3e_hi(self, epoch: datetime, epoch_delta: timedelta, elongation: int) -> list[Path]:
         call_args_object = determine_call_args_for_l3e_executable(epoch, epoch + epoch_delta, elongation)
         call_args = call_args_object.to_argument_list()
+
+        print("running survProbHi " + call_args)
+
         run(["./survProbHi"] + call_args)
 
         output_path = Path(f'probSur.Imap.Hi_{call_args[0]}_{call_args[1][:8]}_{call_args[-1][:5]}.dat')
@@ -234,6 +239,8 @@ class GlowsProcessor(Processor):
     def process_l3e_ul(self, epoch: datetime, epoch_delta: timedelta) -> list[Path]:
         call_args_object = determine_call_args_for_l3e_executable(epoch, epoch + epoch_delta, 30)
         call_args = call_args_object.to_argument_list()
+
+        print("running survProbUltra " + call_args)
 
         run(["./survProbUltra"] + call_args)
 
