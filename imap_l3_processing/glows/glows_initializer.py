@@ -1,3 +1,4 @@
+import json
 import logging
 from collections import defaultdict
 from dataclasses import fields
@@ -15,7 +16,7 @@ from spacepy.pycdf import CDF
 from imap_l3_processing.glows.l3bc.dependency_validator import validate_dependencies
 from imap_l3_processing.glows.l3bc.glows_initializer_ancillary_dependencies import GlowsInitializerAncillaryDependencies
 from imap_l3_processing.glows.l3bc.l3bc_toolkit.funcs import carrington, jd_fm_Carrington
-from imap_l3_processing.glows.l3bc.models import CRToProcess, L3BCAncillaryQueryResults
+from imap_l3_processing.glows.l3bc.models import CRToProcess, L3BCAncillaryQueryResults, read_pipeline_settings
 from imap_l3_processing.glows.l3bc.utils import archive_dependencies, \
     get_astropy_time_from_yyyymmdd, get_pointing_date_range, get_date_range_of_cr, get_best_ancillary, read_cdf_parents, \
     get_cr_for_date_time
@@ -40,7 +41,7 @@ class GlowsInitializer:
         crs_to_process = GlowsInitializer.find_unprocessed_carrington_rotations(l3a_files, l3b_files, glows_ancillary_dependencies)
 
         zip_file_paths = []
-        logger.info(f"making zips for crs: {[ cr.cr_rotation_number for cr in crs_to_process ]}")
+        logger.info(f"making zips for crs: {[cr.cr_rotation_number for cr in crs_to_process]}")
 
         for cr_to_process in crs_to_process:
             path = archive_dependencies(cr_to_process, version, glows_ancillary_dependencies)
@@ -108,16 +109,19 @@ class GlowsInitializer:
         l3a_files_names = [Path(l3a_query_result["file_path"]).name for l3a_query_result in l3a_query_results]
         cr_to_l3a_file_names = GlowsInitializer.group_l3a_by_cr(l3a_files_names)
 
-        ancillary_query_result = L3BCAncillaryQueryResults.fetch()
+        uv_anisotropy_query_result = imap_data_access.query(table="ancillary", instrument="glows", descriptor="uv-anisotropy-1CR")
+        waw_helio_ion_mp_query_result = imap_data_access.query(table="ancillary", instrument="glows", descriptor="WawHelioIonMP")
+        bad_days_list_query_result = imap_data_access.query(table="ancillary", instrument="glows", descriptor="bad-days-list")
+        pipeline_settings_query_result = imap_data_access.query(table="ancillary", instrument="glows", descriptor="pipeline-settings-l3bcde")
 
         cr_candidates = []
         for cr_number, l3a_files in cr_to_l3a_file_names.items():
             cr_start_date, cr_end_date = get_date_range_of_cr(cr_number)
 
-            uv_anisotropy_file_name = get_best_ancillary(cr_start_date, cr_end_date, ancillary_query_result.uv_anisotropy)
-            waw_helio_ion_mp_file_name = get_best_ancillary(cr_start_date, cr_end_date, ancillary_query_result.waw_helio_ion_mp)
-            bad_days_list_file_name = get_best_ancillary(cr_start_date, cr_end_date, ancillary_query_result.bad_days_list)
-            pipeline_settings_file_name = get_best_ancillary(cr_start_date, cr_end_date, ancillary_query_result.pipeline_settings)
+            uv_anisotropy_file_name = get_best_ancillary(cr_start_date, cr_end_date, uv_anisotropy_query_result)
+            waw_helio_ion_mp_file_name = get_best_ancillary(cr_start_date, cr_end_date, waw_helio_ion_mp_query_result)
+            bad_days_list_file_name = get_best_ancillary(cr_start_date, cr_end_date, bad_days_list_query_result)
+            pipeline_settings_file_name = get_best_ancillary(cr_start_date, cr_end_date, pipeline_settings_query_result)
 
             if all([uv_anisotropy_file_name, waw_helio_ion_mp_file_name, bad_days_list_file_name, pipeline_settings_file_name]):
                 cr_candidates.append(CRToProcess(
@@ -140,6 +144,9 @@ class GlowsInitializer:
 
     @staticmethod
     def should_process_cr_candidate(cr_candidate: CRToProcess) -> Optional[int]:
+        if not cr_candidate.buffer_time_has_elapsed_since_cr():
+            return None
+
         start_date_for_query = cr_candidate.cr_start_date.strftime("%Y%m%d")
         end_date_for_query = cr_candidate.cr_end_date.strftime("%Y%m%d")
 

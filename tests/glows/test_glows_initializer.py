@@ -110,6 +110,62 @@ class TestGlowsInitializer(unittest.TestCase):
 
         self.assertEqual([(2, expected_cr_candidate_1)], actual_crs_to_process)
 
+    @patch("imap_l3_processing.glows.glows_initializer.GlowsInitializer.group_l3a_by_cr")
+    @patch("imap_l3_processing.glows.glows_initializer.imap_data_access.query")
+    def test_get_crs_to_process_return_no_crs_when_missing_ancillaries(self, mock_query, mock_group_l3a_by_cr):
+
+        test_cases = [
+            "uv-anisotropy-1CR",
+            "WawHelioIonMP",
+            "bad-days-list",
+            "pipeline-settings-l3bcde"
+        ]
+
+        for missing_ancillary in test_cases:
+            with self.subTest(missing_ancillary):
+                def query_that_returns_empty_list_for_missing_ancillary(**kwargs):
+                    if kwargs.get("table") == "ancillary" and kwargs["descriptor"] != missing_ancillary:
+                        return [{"start_date": "20100101", "end_date": None, "ingestion_date": "20100101 00:00:00", "file_path": f"some/ancillary/{missing_ancillary}"}]
+                    else:
+                        return []
+
+                mock_group_l3a_by_cr.return_value = {
+                    2091: {"glows_l3a_hist_20100101_v001.cdf"}
+                }
+
+                mock_query.side_effect = query_that_returns_empty_list_for_missing_ancillary
+
+                actual_crs_to_process = GlowsInitializer.get_crs_to_process()
+
+                mock_query.assert_has_calls([
+                    call(instrument="glows", data_level="l3a", version="latest"),
+                    call(table="ancillary", instrument="glows", descriptor="uv-anisotropy-1CR"),
+                    call(table="ancillary", instrument="glows", descriptor="WawHelioIonMP"),
+                    call(table="ancillary", instrument="glows", descriptor="bad-days-list"),
+                    call(table="ancillary", instrument="glows", descriptor="pipeline-settings-l3bcde")
+                ])
+
+                self.assertEqual([], actual_crs_to_process)
+
+    @patch("imap_l3_processing.glows.glows_initializer.imap_data_access.query")
+    def test_should_process_cr_excludes_crs_within_buffer_period(self, mock_query):
+        cr_candidate = CRToProcess(
+            l3a_file_names=set(),
+            uv_anisotropy_file_name="uv_anisotropy.dat",
+            waw_helio_ion_mp_file_name="waw_helio_ion.dat",
+            bad_days_list_file_name="bad_days_list.dat",
+            pipeline_settings_file_name="pipeline_settings.json",
+            cr_start_date=datetime(2012, 2, 6, 3, 36, 31, 680000),
+            cr_end_date=datetime(2012, 3, 4, 10, 12, 57, 600000),
+            cr_rotation_number=2120
+        )
+        cr_candidate.buffer_time_has_elapsed_since_cr = Mock(return_value=False)
+
+        mock_query.assert_not_called()
+
+        self.assertIsNone(GlowsInitializer.should_process_cr_candidate(cr_candidate))
+
+
     @patch("imap_l3_processing.glows.glows_initializer.imap_data_access.query")
     def test_should_process_cr_no_existing_l3b(self, mock_query):
 
@@ -123,6 +179,7 @@ class TestGlowsInitializer(unittest.TestCase):
             cr_end_date=datetime(2010, 2, 1),
             cr_rotation_number=2091
         )
+        cr_candidate.buffer_time_has_elapsed_since_cr = Mock(return_value=True)
 
         mock_query.return_value = []
 
@@ -190,6 +247,7 @@ class TestGlowsInitializer(unittest.TestCase):
                 )
 
                 cr_candidate = dataclasses.replace(already_processed_cr, **new_server_data)
+                cr_candidate.buffer_time_has_elapsed_since_cr = Mock(return_value=True)
 
                 mock_query.return_value = [
                     {"file_path": f"some/server_path/imap_glows_l3b_ion-rate-profile_20100101-cr02091_v00{existing_file_version}.cdf"}]
@@ -235,6 +293,8 @@ class TestGlowsInitializer(unittest.TestCase):
             cr_end_date=datetime(2010, 2, 1),
             cr_rotation_number=2091
         )
+        cr_candidate.buffer_time_has_elapsed_since_cr = Mock(return_value=True)
+
         mock_query.return_value = [{"file_path": "some/server_path/imap_glows_l3b_ion-rate-profile_20100101-cr02091_v001.cdf"}]
 
         mock_read_cdf_parents.return_value = {
@@ -260,31 +320,7 @@ class TestGlowsInitializer(unittest.TestCase):
 
         mock_read_cdf_parents.assert_called_once_with("imap_glows_l3b_ion-rate-profile_20100101-cr02091_v001.cdf")
 
-    @patch("imap_l3_processing.glows.glows_initializer.GlowsInitializer.determine_crs_to_process")
-    @patch("imap_l3_processing.glows.glows_initializer.imap_data_access.query")
-    def test_get_crs_to_process_return_no_crs_when_missing_ancillaries(self, mock_query, mock_determine_crs_to_process):
 
-        test_cases = [
-            "uv-anisotropy-1CR",
-            "WawHelioIonMP",
-            "bad-days-list",
-            "pipeline-settings-l3bcde"
-        ]
-
-        for missing_ancillary in test_cases:
-            with self.subTest(missing_ancillary):
-                def query_that_returns_empty_list_for_missing_ancillary(**kwargs):
-                    if kwargs.get("table") == "ancillary" and kwargs["descriptor"] != missing_ancillary:
-                        return [sentinel.ancillary_1, sentinel.ancillary_2]
-                    else:
-                        return []
-
-                mock_query.side_effect = query_that_returns_empty_list_for_missing_ancillary
-
-                actual_crs_to_process = GlowsInitializer.get_crs_to_process()
-
-                mock_determine_crs_to_process.assert_not_called()
-                self.assertEqual([], actual_crs_to_process)
 
     @patch("imap_l3_processing.glows.glows_initializer.get_pointing_date_range")
     def test_group_l3a_by_cr(self, mock_get_pointing_date_range):

@@ -1,18 +1,60 @@
 import json
 import unittest
 from datetime import datetime
-from unittest.mock import sentinel
+from pathlib import Path
+from tempfile import TemporaryDirectory
+from unittest.mock import sentinel, patch
 
 import numpy as np
 from spacepy import pycdf
 
 from imap_l3_processing.constants import CARRINGTON_ROTATION_IN_NANOSECONDS
-from imap_l3_processing.glows.l3bc.models import GlowsL3BIonizationRate, GlowsL3CSolarWind
+from imap_l3_processing.glows.l3bc.models import GlowsL3BIonizationRate, GlowsL3CSolarWind, CRToProcess
 from tests.swapi.cdf_model_test_case import CdfModelTestCase
 from tests.test_helpers import get_test_instrument_team_data_path
 
 
 class TestModels(CdfModelTestCase):
+    @patch("imap_l3_processing.glows.l3bc.models.datetime")
+    @patch("imap_l3_processing.glows.l3bc.models.imap_data_access.download")
+    def test_cr_to_process_buffer_time_has_elapsed_since_cr(self, mock_download, mock_datetime):
+        with TemporaryDirectory() as temp_dir:
+            temp_dir = Path(temp_dir)
+            fake_pipeline_settings = temp_dir / "fake_pipeline_settings.json"
+
+            pipeline_settings = {"initializer_time_delta_days": 28.2}
+            fake_pipeline_settings.write_text(json.dumps(pipeline_settings))
+
+            mock_download.return_value = fake_pipeline_settings
+
+            cr_to_process = CRToProcess(
+                l3a_file_names=set(),
+                uv_anisotropy_file_name="uv_anistropy.dat",
+                waw_helio_ion_mp_file_name="waw_helion.dat",
+                bad_days_list_file_name="bad_days.dat",
+                pipeline_settings_file_name="pipeline_settings.json",
+                cr_start_date=datetime(2010, 1, 1),
+                cr_end_date=datetime(2010, 2, 1),
+                cr_rotation_number=2091,
+            )
+
+            test_cases = [
+                (datetime(2010, 2, 28), False),
+                (datetime(2010, 3, 10), True)
+            ]
+
+            for current_time, expected_buffer_time_has_elapsed_since_cr in test_cases:
+                with self.subTest(current_time):
+                    mock_datetime.now.reset_mock()
+                    mock_datetime.now.return_value = current_time
+
+                    actual = cr_to_process.buffer_time_has_elapsed_since_cr()
+                    self.assertEqual(expected_buffer_time_has_elapsed_since_cr, actual)
+
+                    mock_download.assert_called_with("pipeline_settings.json")
+
+                    mock_datetime.now.assert_called_once()
+
     def test_l3b_to_data_product_variables(self):
         data = GlowsL3BIonizationRate(input_metadata=sentinel.input_metadata,
                                       epoch=sentinel.epoch,

@@ -1,7 +1,8 @@
 import dataclasses
+import json
 from collections.abc import Iterable
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 from itertools import chain
 from pathlib import Path
 from typing import Self, Optional
@@ -62,7 +63,17 @@ class CRToProcess:
 
         return self.l3a_file_names | ancillary_files
 
+    def buffer_time_has_elapsed_since_cr(self):
+        pipeline_settings_local_path = imap_data_access.download(self.pipeline_settings_file_name)
+        pipeline_settings = read_pipeline_settings(pipeline_settings_local_path)
+        buffer_time = timedelta(days=pipeline_settings["initializer_time_delta_days"])
+        return datetime.now() > buffer_time + self.cr_end_date
 
+
+def read_pipeline_settings(pipeline_settings_file_path: Path) -> dict:
+    with open(pipeline_settings_file_path) as pipeline_settings:
+        pipeline_settings = json.load(pipeline_settings)
+    return pipeline_settings
 
 @dataclass
 class GlowsL3BIonizationRate(DataProduct):
