@@ -1,6 +1,6 @@
 import json
 import unittest
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import sentinel, patch
@@ -36,6 +36,9 @@ class TestModels(CdfModelTestCase):
                 cr_start_date=datetime(2010, 1, 1),
                 cr_end_date=datetime(2010, 2, 1),
                 cr_rotation_number=2091,
+                f107_index_file_path=Path("f107_index_file_path"),
+                lyman_alpha_path=Path("lyman_alpha_path"),
+                omni2_data_path=Path("omni2_data_path"),
             )
 
             test_cases = [
@@ -54,6 +57,43 @@ class TestModels(CdfModelTestCase):
                     mock_download.assert_called_with("pipeline_settings.json")
 
                     mock_datetime.now.assert_called_once()
+
+    @patch("imap_l3_processing.glows.l3bc.models.validate_dependencies")
+    @patch("imap_l3_processing.glows.l3bc.models.imap_data_access.download")
+    def test_cr_to_process_has_valid_external_dependencies(self, mock_download, mock_validate_dependencies):
+        with TemporaryDirectory() as temp_dir:
+            temp_dir = Path(temp_dir)
+            fake_pipeline_settings = temp_dir / "fake_pipeline_settings.json"
+
+            pipeline_settings = {"initializer_time_delta_days": 30.1}
+            fake_pipeline_settings.write_text(json.dumps(pipeline_settings))
+
+            mock_download.return_value = fake_pipeline_settings
+
+            cr_to_process = CRToProcess(
+                l3a_file_names=set(),
+                uv_anisotropy_file_name="uv_anistropy.dat",
+                waw_helio_ion_mp_file_name="waw_helion.dat",
+                bad_days_list_file_name="bad_days.dat",
+                pipeline_settings_file_name="pipeline_settings.json",
+                cr_start_date=datetime(2010, 1, 1),
+                cr_end_date=datetime(2010, 2, 1),
+                cr_rotation_number=2091,
+                f107_index_file_path=Path("f107_index_file_path"),
+                lyman_alpha_path=Path("lyman_alpha_path"),
+                omni2_data_path=Path("omni2_data_path"),
+            )
+
+            actual_has_valid_ext_deps = cr_to_process.has_valid_external_dependencies()
+
+            mock_validate_dependencies.assert_called_once_with(
+                datetime(2010, 2, 1),
+                timedelta(days=30.1),
+                Path("omni2_data_path"),
+                Path("f107_index_file_path"),
+                Path("lyman_alpha_path"),
+            )
+            self.assertEqual(mock_validate_dependencies.return_value, actual_has_valid_ext_deps)
 
     def test_l3b_to_data_product_variables(self):
         data = GlowsL3BIonizationRate(input_metadata=sentinel.input_metadata,

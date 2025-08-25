@@ -13,8 +13,8 @@ from astropy.time import Time
 from spacepy import pycdf
 
 from imap_l3_processing.constants import CARRINGTON_ROTATION_IN_NANOSECONDS
+from imap_l3_processing.glows.l3bc.dependency_validator import validate_dependencies
 from imap_l3_processing.glows.l3bc.l3bc_toolkit.funcs import jd_fm_Carrington
-from imap_l3_processing.glows.l3bc.utils import get_date_range_of_cr, get_best_ancillary
 from imap_l3_processing.models import DataProduct, DataProductVariable, InputMetadata
 
 
@@ -49,9 +49,15 @@ class CRToProcess:
     bad_days_list_file_name: str
     pipeline_settings_file_name: str
 
+    f107_index_file_path: Path
+    lyman_alpha_path: Path
+    omni2_data_path: Path
+
     cr_start_date: datetime
     cr_end_date: datetime
     cr_rotation_number: int
+
+    _buffer_time: Optional[timedelta] = None
 
     def pipeline_dependency_file_names(self) -> set[str]:
         ancillary_files = {
@@ -63,11 +69,26 @@ class CRToProcess:
 
         return self.l3a_file_names | ancillary_files
 
+    def get_buffer_time(self) -> timedelta:
+        if self._buffer_time is None:
+            pipeline_settings_local_path = imap_data_access.download(self.pipeline_settings_file_name)
+            pipeline_settings = read_pipeline_settings(pipeline_settings_local_path)
+            self._buffer_time = timedelta(days=pipeline_settings["initializer_time_delta_days"])
+        return self._buffer_time
+
+    def has_valid_external_dependencies(self):
+        return validate_dependencies(
+            self.cr_end_date,
+            self.get_buffer_time(),
+            self.omni2_data_path,
+            self.f107_index_file_path,
+            self.lyman_alpha_path
+        )
+
     def buffer_time_has_elapsed_since_cr(self):
-        pipeline_settings_local_path = imap_data_access.download(self.pipeline_settings_file_name)
-        pipeline_settings = read_pipeline_settings(pipeline_settings_local_path)
-        buffer_time = timedelta(days=pipeline_settings["initializer_time_delta_days"])
-        return datetime.now() > buffer_time + self.cr_end_date
+        return datetime.now() > self.get_buffer_time() + self.cr_end_date
+
+
 
 
 def read_pipeline_settings(pipeline_settings_file_path: Path) -> dict:

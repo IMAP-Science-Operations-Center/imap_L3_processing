@@ -120,7 +120,7 @@ def download_dependency_from_path(path_str: str) -> Path:
     return imap_data_access.download(path_str)
 
 
-def download_external_dependency(dependency_url: str, filename: str) -> Path | None:
+def download_external_dependency(dependency_url: str, filename: str) -> Optional[Path]:
     try:
         saved_path, _ = urlretrieve(dependency_url, filename)
         return Path(saved_path)
