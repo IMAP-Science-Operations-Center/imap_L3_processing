@@ -1,6 +1,4 @@
 import json
-from datetime import datetime
-from pathlib import Path
 from unittest import TestCase
 
 from imap_l3_processing.glows.l3a.utils import create_glows_l3a_dictionary_from_cdf
@@ -31,10 +29,7 @@ class TestGenerateL3BC(TestCase):
             l3a_data.append(create_glows_l3a_dictionary_from_cdf(l3a_data_folder_path / name))
 
         dependencies = GlowsL3BCDependencies(l3a_data=l3a_data, external_files=external_files,
-                                             ancillary_files=ancillary_files, carrington_rotation_number=cr,
-                                             start_date=datetime(2025, 4, 3),
-                                             end_date=datetime(2025, 4, 4),
-                                             zip_file_path=Path('some/path.zip'))
+                                             ancillary_files=ancillary_files, carrington_rotation_number=cr)
 
         actual_l3b, actual_l3c = generate_l3bc(dependencies)
 
@@ -70,9 +65,7 @@ class TestGenerateL3BC(TestCase):
 
         dependencies = GlowsL3BCDependencies(l3a_data=l3a_data, external_files=external_files,
                                              ancillary_files=ancillary_files, carrington_rotation_number=cr,
-                                             start_date=datetime(2025, 4, 3),
-                                             end_date=datetime(2025, 4, 4),
-                                             zip_file_path=Path('some/path.zip'))
+                                             )
 
         with self.assertRaises(CannotProcessCarringtonRotationError) as context:
             generate_l3bc(dependencies)
@@ -124,10 +117,7 @@ class TestGenerateL3BC(TestCase):
         l3a_data = [create_glows_l3a_dictionary_from_cdf(l3a_folder_path / file) for file in l3a_files]
 
         dependencies = GlowsL3BCDependencies(l3a_data=l3a_data, external_files=external_files,
-                                             ancillary_files=ancillary_files, carrington_rotation_number=cr,
-                                             start_date=datetime(2025, 4, 19),
-                                             end_date=datetime(2025, 5, 23),
-                                             zip_file_path=Path('some/path.zip'))
+                                             ancillary_files=ancillary_files, carrington_rotation_number=cr)
         l3b, l3c = generate_l3bc(dependencies)
 
         expected_l3a_parent_files = [

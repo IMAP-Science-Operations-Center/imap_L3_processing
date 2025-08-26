@@ -71,6 +71,8 @@ class GlowsProcessor(Processor):
 
             return products
 
+            # Ancillary, L3b, L3c, lymann alpha,
+
             # GlowsL3dInitializer.get_l3d_to_process(l3bs_by_cr, l3cs_by_cr, external_dependencies)
             #
             # l3d_query_result = imap_data_access.query(instrument="glows", data_level="l3d", descriptor="solar-hist",
