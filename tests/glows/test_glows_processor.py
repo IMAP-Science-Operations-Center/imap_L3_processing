@@ -124,13 +124,13 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
                                                                  replace(input_metadata,
                                                                          descriptor=GLOWS_L3A_DESCRIPTOR))
 
+    @patch('imap_l3_processing.glows.glows_processor.imap_data_access.query')
     @patch("imap_l3_processing.glows.glows_processor.save_data")
     @patch("imap_l3_processing.glows.glows_processor.GlowsInitializer")
     def test_does_not_process_l3b_if_no_zip_files(self, mock_glows_initializer_class,
-                                                  mock_save_data
-                                                  ):
+                                                  mock_save_data, mock_query):
 
-        mock_glows_initializer_class.get_crs_to_process.return_value = []
+        mock_glows_initializer_class.get_crs_to_process.return_value = (Mock(), [])
 
         input_metadata = InputMetadata('glows', "l3b", datetime(2024, 10, 7, 10, 00, 00),
                                        datetime(2024, 10, 8, 10, 00, 00),
@@ -138,10 +138,12 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
 
         mock_processing_input_collection = Mock()
 
+        mock_query.return_value = []
+
         processor = GlowsProcessor(dependencies=mock_processing_input_collection, input_metadata=input_metadata)
         products = processor.process()
 
-        mock_glows_initializer_class.get_crs_to_process.assert_called_with()
+        mock_glows_initializer_class.get_crs_to_process.assert_called_once_with({})
         mock_save_data.assert_not_called()
         self.assertEqual([], products)
 
@@ -191,7 +193,8 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
     @patch('imap_l3_processing.glows.glows_processor.filter_l3a_files')
     @patch('imap_l3_processing.glows.glows_processor.generate_l3bc')
     @patch('imap_l3_processing.glows.glows_processor.archive_dependencies')
-    def test_process_l3bc(self, mock_archive_dependencies, mock_generate_l3bc, mock_filter_bad_days, mock_l3c_model_class, mock_l3b_model_class,
+    def test_process_l3bc(self, mock_archive_dependencies, mock_generate_l3bc, mock_filter_bad_days,
+                          mock_l3c_model_class, mock_l3b_model_class,
                           mock_glows_initializer_class, mock_save_data, mock_l3bc_dependencies_class,
                           mock_spiceypy):
         mock_spiceypy.ktotal.return_value = 1
@@ -294,8 +297,8 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
 
         self.assertEqual(["file1", "path1.zip", "kernel_1"], l3b_model_1.parent_file_names)
         self.assertEqual(["file2", "path2.zip", "kernel_1"], l3b_model_2.parent_file_names)
-        self.assertEqual(["file3", "path1.zip", "l3b_file_1.cdf", "kernel_1",], l3c_model_1.parent_file_names)
-        self.assertEqual(["file4", "path2.zip", "l3b_file_2.cdf", "kernel_1",], l3c_model_2.parent_file_names)
+        self.assertEqual(["file3", "path1.zip", "l3b_file_1.cdf", "kernel_1", ], l3c_model_1.parent_file_names)
+        self.assertEqual(["file4", "path2.zip", "l3b_file_2.cdf", "kernel_1", ], l3c_model_2.parent_file_names)
         self.assertEqual([
             "path/to/l3b_file_1.cdf",
             sentinel.l3c_cdf_path_1,

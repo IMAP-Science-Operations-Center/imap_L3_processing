@@ -1,20 +1,81 @@
 import json
+import tempfile
 import unittest
 from datetime import datetime, timedelta
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from unittest.mock import sentinel, patch
+from unittest.mock import sentinel, patch, call
 
 import numpy as np
 from spacepy import pycdf
 
-from imap_l3_processing.constants import CARRINGTON_ROTATION_IN_NANOSECONDS
-from imap_l3_processing.glows.l3bc.models import GlowsL3BIonizationRate, GlowsL3CSolarWind, CRToProcess
+from imap_l3_processing.constants import CARRINGTON_ROTATION_IN_NANOSECONDS, TEMP_CDF_FOLDER_PATH
+from imap_l3_processing.glows.l3bc.models import GlowsL3BIonizationRate, GlowsL3CSolarWind, CRToProcess, \
+    ExternalDependencies, F107_FLUX_TABLE_URL, LYMAN_ALPHA_COMPOSITE_INDEX_URL, OMNI2_URL
 from tests.swapi.cdf_model_test_case import CdfModelTestCase
 from tests.test_helpers import get_test_instrument_team_data_path
 
 
 class TestModels(CdfModelTestCase):
+
+    @patch("imap_l3_processing.glows.l3bc.models.ExternalDependencies._comment_headers")
+    @patch("imap_l3_processing.glows.l3bc.models.download_external_dependency")
+    def test_external_dependencies_fetch_dependencies(self, mock_download_external_dependencies, mock_comment_header):
+        mock_download_external_dependencies.side_effect = [
+            Path("external/file/f107_path"),
+            Path("external/file/lya_path"),
+            Path("external/file/omni_path"),
+        ]
+
+        external_dependencies = ExternalDependencies.fetch_dependencies()
+
+        mock_download_external_dependencies.assert_has_calls([
+            call(F107_FLUX_TABLE_URL, TEMP_CDF_FOLDER_PATH / 'f107_fluxtable.txt'),
+            call(LYMAN_ALPHA_COMPOSITE_INDEX_URL, TEMP_CDF_FOLDER_PATH / 'lyman_alpha.txt'),
+            call(OMNI2_URL, TEMP_CDF_FOLDER_PATH / 'omni2.txt')
+        ])
+
+        mock_comment_header.assert_called_once_with(Path("external/file/f107_path"))
+
+        expected_external_deps = ExternalDependencies(
+            f107_index_file_path=Path("external/file/f107_path"),
+            lyman_alpha_path=Path("external/file/lya_path"),
+            omni2_data_path=Path("external/file/omni_path"),
+        )
+        self.assertEqual(expected_external_deps, external_dependencies)
+
+    @patch("imap_l3_processing.glows.l3bc.models.download_external_dependency")
+    def test_external_dependencies_files_not_found(self, mock_download_external_dependencies):
+        mock_download_external_dependencies.return_value = None
+
+        external_dependencies = ExternalDependencies.fetch_dependencies()
+
+        self.assertEqual(ExternalDependencies(None, None, None), external_dependencies)
+
+    @patch("imap_l3_processing.glows.l3bc.models.download_external_dependency")
+    def test_external_dependencies_comment_headers(self, mock_download_external_dependencies):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            file_name = Path(tmpdir) / "flux_table.txt"
+            with open(file_name, "w") as fp:
+                fp.writelines([
+                    "fluxdate    fluxtime    fluxjulian    fluxcarrington  fluxobsflux  fluxadjflux  fluxursi\n",
+                    "----------  ----------  ------------  --------------  -----------  -----------  ----------\n",
+                    "20041028    170000      02453307.229  002022.605      000132.7     000130.9     000117.8\n",
+                    "20041028    200000      02453307.354  002022.610      000135.8     000134.0     000120.6\n"])
+
+            mock_download_external_dependencies.side_effect = [
+                file_name,
+                None,
+                None
+            ]
+
+            ExternalDependencies.fetch_dependencies()
+
+            with open(file_name, "r") as fp:
+                lines = fp.readlines()
+                self.assertEqual("#", lines[0][0])
+                self.assertEqual("#", lines[1][0])
+
     @patch("imap_l3_processing.glows.l3bc.models.datetime")
     @patch("imap_l3_processing.glows.l3bc.models.imap_data_access.download")
     def test_cr_to_process_buffer_time_has_elapsed_since_cr(self, mock_download, mock_datetime):
@@ -78,13 +139,16 @@ class TestModels(CdfModelTestCase):
                 pipeline_settings_file_name="pipeline_settings.json",
                 cr_start_date=datetime(2010, 1, 1),
                 cr_end_date=datetime(2010, 2, 1),
-                cr_rotation_number=2091,
-                f107_index_file_path=Path("f107_index_file_path"),
-                lyman_alpha_path=Path("lyman_alpha_path"),
-                omni2_data_path=Path("omni2_data_path"),
+                cr_rotation_number=2091
             )
 
-            actual_has_valid_ext_deps = cr_to_process.has_valid_external_dependencies()
+            external_dependencies = ExternalDependencies(
+                f107_index_file_path=Path("f107_index_file_path"),
+                lyman_alpha_path=Path("lyman_alpha_path"),
+                omni2_data_path=Path("omni2_data_path")
+            )
+
+            actual_has_valid_ext_deps = cr_to_process.has_valid_external_dependencies(external_dependencies)
 
             mock_validate_dependencies.assert_called_once_with(
                 datetime(2010, 2, 1),

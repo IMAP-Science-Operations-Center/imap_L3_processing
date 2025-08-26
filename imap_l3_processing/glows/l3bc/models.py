@@ -12,10 +12,15 @@ import numpy as np
 from astropy.time import Time
 from spacepy import pycdf
 
-from imap_l3_processing.constants import CARRINGTON_ROTATION_IN_NANOSECONDS
+from imap_l3_processing.constants import CARRINGTON_ROTATION_IN_NANOSECONDS, TEMP_CDF_FOLDER_PATH
 from imap_l3_processing.glows.l3bc.dependency_validator import validate_dependencies
 from imap_l3_processing.glows.l3bc.l3bc_toolkit.funcs import jd_fm_Carrington
 from imap_l3_processing.models import DataProduct, DataProductVariable, InputMetadata
+from imap_l3_processing.utils import download_external_dependency
+
+F107_FLUX_TABLE_URL = "https://www.spaceweather.gc.ca/solar_flux_data/daily_flux_values/fluxtable.txt"
+LYMAN_ALPHA_COMPOSITE_INDEX_URL = "http://lasp.colorado.edu/data/timed_see/composite_lya/lyman_alpha_composite.nc"
+OMNI2_URL = "https://spdf.gsfc.nasa.gov/pub/data/omni/low_res_omni/omni2_all_years.dat"
 
 
 @dataclass
@@ -31,7 +36,8 @@ class L3BCAncillaryQueryResults:
             uv_anisotropy=imap_data_access.query(table="ancillary", instrument="glows", descriptor="uv-anisotropy-1CR"),
             waw_helio_ion_mp=imap_data_access.query(table="ancillary", instrument="glows", descriptor="WawHelioIonMP"),
             bad_days_list=imap_data_access.query(table="ancillary", instrument="glows", descriptor="bad-days-list"),
-            pipeline_settings=imap_data_access.query(table="ancillary", instrument="glows", descriptor="pipeline-settings-l3bcde"),
+            pipeline_settings=imap_data_access.query(table="ancillary", instrument="glows",
+                                                     descriptor="pipeline-settings-l3bcde"),
         )
 
     def missing_ancillaries(self) -> bool:
@@ -42,16 +48,42 @@ class L3BCAncillaryQueryResults:
 
 
 @dataclass
+class ExternalDependencies:
+    f107_index_file_path: Path | None
+    lyman_alpha_path: Path | None
+    omni2_data_path: Path | None
+
+    @classmethod
+    def fetch_dependencies(cls) -> Self:
+        f107_index_file_path = download_external_dependency(F107_FLUX_TABLE_URL,
+                                                            TEMP_CDF_FOLDER_PATH / 'f107_fluxtable.txt')
+        lyman_alpha_path = download_external_dependency(LYMAN_ALPHA_COMPOSITE_INDEX_URL,
+                                                        TEMP_CDF_FOLDER_PATH / 'lyman_alpha.txt')
+        omni2_data_path = download_external_dependency(OMNI2_URL, TEMP_CDF_FOLDER_PATH / 'omni2.txt')
+
+        if f107_index_file_path is not None:
+            ExternalDependencies._comment_headers(f107_index_file_path)
+
+        return cls(f107_index_file_path, lyman_alpha_path, omni2_data_path)
+
+    @staticmethod
+    def _comment_headers(filename: Path, num_lines=2):
+        with open(filename, "r+") as file:
+            lines = file.readlines()
+            for i in range(num_lines):
+                lines[i] = "#" + lines[i]
+            file.truncate(0)
+        with open(filename, "w") as file:
+            file.writelines(lines)
+
+
+@dataclass
 class CRToProcess:
     l3a_file_names: set[str]
     uv_anisotropy_file_name: str
     waw_helio_ion_mp_file_name: str
     bad_days_list_file_name: str
     pipeline_settings_file_name: str
-
-    f107_index_file_path: Path
-    lyman_alpha_path: Path
-    omni2_data_path: Path
 
     cr_start_date: datetime
     cr_end_date: datetime
@@ -76,25 +108,24 @@ class CRToProcess:
             self._buffer_time = timedelta(days=pipeline_settings["initializer_time_delta_days"])
         return self._buffer_time
 
-    def has_valid_external_dependencies(self):
+    def has_valid_external_dependencies(self, external_deps: ExternalDependencies) -> bool:
         return validate_dependencies(
             self.cr_end_date,
             self.get_buffer_time(),
-            self.omni2_data_path,
-            self.f107_index_file_path,
-            self.lyman_alpha_path
+            external_deps.omni2_data_path,
+            external_deps.f107_index_file_path,
+            external_deps.lyman_alpha_path
         )
 
     def buffer_time_has_elapsed_since_cr(self):
         return datetime.now() > self.get_buffer_time() + self.cr_end_date
 
 
-
-
 def read_pipeline_settings(pipeline_settings_file_path: Path) -> dict:
     with open(pipeline_settings_file_path) as pipeline_settings:
         pipeline_settings = json.load(pipeline_settings)
     return pipeline_settings
+
 
 @dataclass
 class GlowsL3BIonizationRate(DataProduct):

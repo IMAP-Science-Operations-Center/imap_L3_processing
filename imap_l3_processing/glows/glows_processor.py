@@ -11,7 +11,6 @@ from subprocess import run
 
 import imap_data_access
 import numpy as np
-from imap_data_access import ScienceFilePath, download
 from imap_data_access.processing_input import ProcessingInputCollection
 
 from imap_l3_processing.glows.descriptors import GLOWS_L3A_DESCRIPTOR
@@ -38,6 +37,7 @@ from imap_l3_processing.glows.l3e.glows_l3e_utils import determine_call_args_for
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
 from imap_l3_processing.utils import save_data
+
 logger = logging.getLogger(__name__)
 
 
@@ -60,7 +60,7 @@ class GlowsProcessor(Processor):
                 descriptor="ion-rate-profile",
                 version="latest"
             )
-            l3bs_by_cr = {int(ScienceFilePath(result["file_path"]).cr): Path(result["file_path"]).name for result in l3b_query_result}
+            l3bs_by_cr = {int(result['cr']): Path(result["file_path"]).name for result in l3b_query_result}
 
             l3c_query_result = imap_data_access.query(
                 instrument="glows",
@@ -68,9 +68,9 @@ class GlowsProcessor(Processor):
                 descriptor="solar-hist",
                 version="latest"
             )
-            l3cs_by_cr = {int(ScienceFilePath(result["file_path"]).cr): Path(result["file_path"]).name for result in l3c_query_result}
+            l3cs_by_cr = {int(result.cr): Path(result["file_path"]).name for result in l3c_query_result}
 
-            version_and_cr_deps = GlowsInitializer.get_crs_to_process(l3bs_by_cr)
+            external_dependencies, version_and_cr_deps = GlowsInitializer.get_crs_to_process(l3bs_by_cr)
 
             products = []
             for version, cr_to_process in version_and_cr_deps:
@@ -95,7 +95,10 @@ class GlowsProcessor(Processor):
                 l3bs_by_cr[cr_to_process.cr_rotation_number] = l3b_cdf
                 l3cs_by_cr[cr_to_process.cr_rotation_number] = l3c_cdf
 
-            l3d_query_result = imap_data_access.query(instrument="glows", data_level="l3d", descriptor="solar-hist", version="latest")
+            GlowsL3dInitializer.get_l3d_to_process(l3bs_by_cr, l3cs_by_cr, external_dependencies)
+
+            l3d_query_result = imap_data_access.query(instrument="glows", data_level="l3d", descriptor="solar-hist",
+                                                      version="latest")
             most_recent_l3d = max(l3d_query_result, key=lambda result: result["cr"])
             l3d_cdf_parents = read_cdf_parents(most_recent_l3d["file_path"])
 
@@ -152,7 +155,8 @@ class GlowsProcessor(Processor):
         return create_glows_l3a_from_dictionary(data_with_spin_angle,
                                                 replace(self.input_metadata, descriptor=GLOWS_L3A_DESCRIPTOR))
 
-    def process_l3bc(self, dependencies: GlowsL3BCDependencies, version: int) -> tuple[GlowsL3BIonizationRate, GlowsL3CSolarWind]:
+    def process_l3bc(self, dependencies: GlowsL3BCDependencies, version: int) -> tuple[
+        GlowsL3BIonizationRate, GlowsL3CSolarWind]:
         filtered_days = filter_l3a_files(dependencies.l3a_data, dependencies.ancillary_files['bad_days_list'],
                                          dependencies.carrington_rotation_number)
         l3b_metadata = InputMetadata("glows", "l3b", dependencies.start_date, dependencies.end_date,
