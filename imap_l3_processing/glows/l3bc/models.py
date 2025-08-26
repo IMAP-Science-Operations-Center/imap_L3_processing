@@ -193,6 +193,13 @@ class GlowsL3BIonizationRate(DataProduct):
 
 
 @dataclass
+class GlowsL3BCProcessorOutput:
+    l3bs_by_cr: dict[int, str]
+    l3cs_by_cr: dict[int, str]
+    data_products: list[Path]
+
+
+@dataclass
 class GlowsL3CSolarWind(DataProduct):
     epoch: np.ndarray[datetime]
     epoch_delta: np.ndarray[float]

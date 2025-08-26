@@ -23,7 +23,7 @@ from imap_l3_processing.glows.l3a.models import GlowsL3LightCurve, PHOTON_FLUX_U
     SPIN_AXIS_ORIENTATION_AVERAGE_CDF_VAR_NAME, SPIN_AXIS_ORIENTATION_STD_DEV_CDF_VAR_NAME, \
     SPACECRAFT_LOCATION_AVERAGE_CDF_VAR_NAME, SPACECRAFT_LOCATION_STD_DEV_CDF_VAR_NAME, \
     SPACECRAFT_VELOCITY_AVERAGE_CDF_VAR_NAME, NUM_OF_BINS_CDF_VAR_NAME
-from imap_l3_processing.glows.l3bc.models import CRToProcess
+from imap_l3_processing.glows.l3bc.models import CRToProcess, ExternalDependencies
 
 
 def read_cdf_parents(server_file_name: str) -> set[str]:
@@ -38,7 +38,8 @@ def get_best_ancillary(start_date: datetime, end_date: datetime, ancillary_query
     valid_ancillaries = []
     for ancillary_file in ancillary_query_results:
         ancillary_start_date = datetime.strptime(ancillary_file["start_date"], "%Y%m%d")
-        ancillary_end_date = datetime.strptime(ancillary_file["end_date"], "%Y%m%d") if ancillary_file["end_date"] else None
+        ancillary_end_date = datetime.strptime(ancillary_file["end_date"], "%Y%m%d") if ancillary_file[
+            "end_date"] else None
 
         if ancillary_start_date <= end_date and (ancillary_end_date is None or ancillary_end_date >= start_date):
             valid_ancillaries.append(ancillary_file)
@@ -48,6 +49,7 @@ def get_best_ancillary(start_date: datetime, end_date: datetime, ancillary_query
     else:
         latest_ancillary = max(valid_ancillaries, key=lambda x: x["ingestion_date"])
         return Path(latest_ancillary["file_path"]).name
+
 
 jd_carrington_first = 2091
 jd_carrington_start_date = datetime(2009, 12, 7, 4)
@@ -59,7 +61,7 @@ def get_date_range_of_cr(cr_number: int) -> tuple[datetime, datetime]:
     return start_date, start_date + carrington_length
 
 
-def get_cr_for_date_time(datetime_to_check: datetime) ->int:
+def get_cr_for_date_time(datetime_to_check: datetime) -> int:
     return int(jd_carrington_first + (datetime_to_check - jd_carrington_start_date) / carrington_length)
 
 
@@ -101,14 +103,14 @@ def read_glows_l3a_data(cdf: CDF) -> GlowsL3LightCurve:
                              )
 
 
-def archive_dependencies(cr_to_process: CRToProcess, version: int) -> Path:
+def archive_dependencies(cr_to_process: CRToProcess, external_dependencies: ExternalDependencies, version: int) -> Path:
     start_date = cr_to_process.cr_start_date.strftime("%Y%m%d")
     zip_path = TEMP_CDF_FOLDER_PATH / f"imap_glows_l3b-archive_{start_date}_v{version:03}.zip"
     json_filename = "cr_to_process.json"
     with ZipFile(zip_path, "w", ZIP_DEFLATED) as file:
-        file.write(cr_to_process.lyman_alpha_path, "lyman_alpha_composite.nc")
-        file.write(cr_to_process.omni2_data_path, "omni2_all_years.dat")
-        file.write(cr_to_process.f107_index_file_path, "f107_fluxtable.txt")
+        file.write(external_dependencies.lyman_alpha_path, "lyman_alpha_composite.nc")
+        file.write(external_dependencies.omni2_data_path, "omni2_all_years.dat")
+        file.write(external_dependencies.f107_index_file_path, "f107_fluxtable.txt")
         cr = {"cr_rotation_number": cr_to_process.cr_rotation_number,
               "l3a_paths": cr_to_process.l3a_file_names,
               "cr_start_date": str(cr_to_process.cr_start_date),

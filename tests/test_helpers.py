@@ -6,6 +6,7 @@ from typing import Type, T
 from unittest.mock import Mock
 
 import numpy as np
+from imap_data_access import ImapFilePath, ScienceFilePath, AncillaryFilePath
 
 import tests
 from imap_l3_processing.swe.l3.models import SweConfiguration
@@ -141,3 +142,28 @@ def environment_variables(env_vars: dict):
         return wrapper
 
     return decorator
+
+
+def create_glows_mock_query_results(file_path: ImapFilePath):
+    match file_path:
+        case ScienceFilePath():
+            return {
+                "instrument": "glows",
+                "data_level": file_path.data_level,
+                "descriptor": file_path.descriptor,
+                "start_date": file_path.start_date,
+                "ingestion_date": "20000101",
+                "version": file_path.version,
+                "cr": file_path.cr,
+                "file_path": file_path.filename,
+            }
+        case AncillaryFilePath():
+            return {
+                "instrument": "glows",
+                "descriptor": file_path.descriptor,
+                "start_date": file_path.start_date,
+                "end_date": file_path.end_date,
+                "ingestion_date": "20000101",
+                "version": file_path.version,
+                "file_path": file_path.filename,
+            }

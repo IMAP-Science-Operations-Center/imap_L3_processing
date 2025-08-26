@@ -3,17 +3,15 @@ from datetime import datetime
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Optional
-from unittest.mock import patch, Mock, MagicMock, call
+from unittest.mock import patch, MagicMock, call
 from zipfile import ZIP_DEFLATED
 
 import numpy as np
-from astropy.time import Time, TimeDelta
 from imap_processing.spice.repoint import set_global_repoint_table_paths
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
-from imap_l3_processing.glows.l3bc.glows_initializer_ancillary_dependencies import GlowsInitializerAncillaryDependencies
-from imap_l3_processing.glows.l3bc.models import CRToProcess
+from imap_l3_processing.glows.l3bc.models import CRToProcess, ExternalDependencies
 from imap_l3_processing.glows.l3bc.utils import read_glows_l3a_data, \
     archive_dependencies, get_pointing_date_range, get_best_ancillary, read_cdf_parents
 from tests.test_helpers import get_test_data_path
@@ -26,7 +24,6 @@ class TestUtils(unittest.TestCase):
         set_global_repoint_table_paths([repoint_file_path])
 
     def test_determine_crs_to_process_based_on_ancillary_files(self):
-
         start_date = datetime(2009, 12, 31)
         end_date = datetime(2010, 1, 2)
 
@@ -79,8 +76,6 @@ class TestUtils(unittest.TestCase):
             mock_download.assert_called_once_with(cdf_path)
 
             self.assertEqual({"l3a_1.cdf", "l3a_2.cdf"}, parents)
-
-
 
     def test_read_glows_l3a_data(self):
         cdf = CDF(str(get_test_data_path("glows/imap_glows_l3a_hist_20100101_v001.cdf")))
@@ -144,23 +139,27 @@ class TestUtils(unittest.TestCase):
 
         cr_to_process = CRToProcess(
             l3a_file_names={
-                "imap_glows_l3a_hist_20100101-repoint000001_v001.cdf",
+                "imap_glows_l3a_hist_20250314-repoint000001_v001.cdf",
                 "imap_glows_l3a_hist_20100102-repoint000002_v001.cdf"
             },
             uv_anisotropy_file_name="uv_anisotropy.dat",
             waw_helio_ion_mp_file_name="waw_helio_ion.dat",
             bad_days_list_file_name="bad_days_list.dat",
             pipeline_settings_file_name="pipeline_settings.json",
-            f107_index_file_path=Path("f107_index_file_path"),
-            lyman_alpha_path=Path("lyman_alpha_path"),
-            omni2_data_path=Path("omni2_data_path"),
             cr_start_date=datetime.fromisoformat("2025-03-14 12:34:56.789"),
             cr_end_date=datetime.fromisoformat("2025-03-24 12:34:56.789"),
             cr_rotation_number=2095,
         )
 
+        external_dependencies = ExternalDependencies(
+            f107_index_file_path=Path("f107_index_file_path"),
+            lyman_alpha_path=Path("lyman_alpha_path"),
+            omni2_data_path=Path("omni2_data_path"),
+        )
+
         expected_json_to_serialize = {"cr_rotation_number": 2095,
-                                      "l3a_paths": ["imap_glows_l3a_hist_20250314-repoint000001_v001.cdf", "imap_glows_l3a_hist_20100102-repoint000002_v001.cdf"],
+                                      "l3a_paths": {"imap_glows_l3a_hist_20250314-repoint000001_v001.cdf",
+                                                    "imap_glows_l3a_hist_20100102-repoint000002_v001.cdf"},
                                       "cr_start_date": "2025-03-14 12:34:56.789000",
                                       "cr_end_date": "2025-03-24 12:34:56.789000",
                                       "bad_days_list": "bad_days_list.dat",
@@ -174,7 +173,7 @@ class TestUtils(unittest.TestCase):
         mock_zip.return_value.__enter__.return_value = mock_zip_file
 
         version_number = 1
-        actual_zip_file_name = archive_dependencies(cr_to_process, version_number)
+        actual_zip_file_name = archive_dependencies(cr_to_process, external_dependencies, version_number)
 
         self.assertEqual(expected_filepath, actual_zip_file_name)
 
