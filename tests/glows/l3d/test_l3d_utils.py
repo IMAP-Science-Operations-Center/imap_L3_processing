@@ -4,12 +4,14 @@ from pathlib import Path
 from unittest.mock import patch, mock_open, MagicMock, sentinel, Mock, call
 
 import numpy as np
+from spacepy.pycdf import CDF
 
 import imap_l3_processing
 from imap_l3_processing.glows.l3d.models import GlowsL3DSolarParamsHistory
 from imap_l3_processing.glows.l3d.utils import create_glows_l3b_json_file_from_cdf, convert_json_to_l3d_data_product, \
     create_glows_l3c_json_file_from_cdf, get_parent_file_names_from_l3d_json, set_version_on_txt_files
 from imap_l3_processing.models import InputMetadata
+from imap_l3_processing.utils import save_data
 from tests.test_helpers import get_test_data_path
 
 
@@ -162,10 +164,10 @@ class TestL3dUtils(unittest.TestCase):
         np.testing.assert_array_equal(np.arange(-90, 100, step=10), l3d_data_product.latitude)
 
         self.assertEqual(846, len(l3d_data_product.plasma_speed))
-        np.testing.assert_allclose(
+        np.testing.assert_equal(
             [-1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0,
-             -1.0, -1.0, -1.0], l3d_data_product.plasma_speed[0], rtol=1e-6)
-        np.testing.assert_allclose(
+             -1.0, -1.0, -1.0], l3d_data_product.plasma_speed[0])
+        np.testing.assert_equal(
             [
                 468.1725019310069,
                 470.41196695859816,
@@ -187,14 +189,13 @@ class TestL3dUtils(unittest.TestCase):
                 508.93503849297326,
                 509.10575708733097
             ],
-            l3d_data_product.plasma_speed[-1],
-            rtol=1e-6)
+            l3d_data_product.plasma_speed[-1])
 
         self.assertEqual(846, len(l3d_data_product.proton_density))
-        np.testing.assert_allclose(
+        np.testing.assert_equal(
             [-1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0,
-             -1.0, -1.0, -1.0], l3d_data_product.proton_density[0], rtol=1e-6)
-        np.testing.assert_allclose(
+             -1.0, -1.0, -1.0], l3d_data_product.proton_density[0])
+        np.testing.assert_equal(
             [
                 3.134819994443553,
                 3.1041926011053467,
@@ -215,39 +216,164 @@ class TestL3dUtils(unittest.TestCase):
                 2.68129704271522,
                 2.6272758631787716,
                 2.625943370301117
-            ], l3d_data_product.proton_density[-1], rtol=1e-6)
+            ], l3d_data_product.proton_density[-1])
 
         self.assertEqual(846, len(l3d_data_product.ultraviolet_anisotropy))
-        np.testing.assert_allclose(
+        np.testing.assert_equal(
             [-1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0,
-             -1.0, -1.0, -1.0], l3d_data_product.ultraviolet_anisotropy[0], rtol=1e-6)
-        np.testing.assert_allclose(
+             -1.0, -1.0, -1.0], l3d_data_product.ultraviolet_anisotropy[0])
+        np.testing.assert_equal(
             [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0
-             ], l3d_data_product.ultraviolet_anisotropy[-1], rtol=1e-6)
+             ], l3d_data_product.ultraviolet_anisotropy[-1])
 
         self.assertEqual(846, len(l3d_data_product.phion))
-        np.testing.assert_allclose(1.830438692701064e-07, l3d_data_product.phion[0], rtol=1e-6)
-        np.testing.assert_allclose(1.0538921234648196e-07, l3d_data_product.phion[-1], rtol=1e-6)
+        np.testing.assert_equal(1.830438692701064e-07, l3d_data_product.phion[0])
+        np.testing.assert_equal(1.0538921234648196e-07, l3d_data_product.phion[-1])
 
         self.assertEqual(846, len(l3d_data_product.lyman_alpha))
-        np.testing.assert_allclose(619975763789.9209, l3d_data_product.lyman_alpha[0], rtol=1e-6)
-        np.testing.assert_allclose(396312787467.8571, l3d_data_product.lyman_alpha[-1], rtol=1e-6)
+        np.testing.assert_equal(619975763789.9209, l3d_data_product.lyman_alpha[0])
+        np.testing.assert_equal(396312787467.8571, l3d_data_product.lyman_alpha[-1])
 
         self.assertEqual(846, len(l3d_data_product.electron_density))
         self.assertEqual(-1.0, l3d_data_product.electron_density[0])
-        np.testing.assert_allclose(5.978193763000784, l3d_data_product.electron_density[-1], rtol=1e-6)
+        np.testing.assert_equal(5.978193763000784, l3d_data_product.electron_density[-1])
 
         self.assertEqual(846, len(l3d_data_product.plasma_speed_flag))
         self.assertEqual(-1.0, l3d_data_product.plasma_speed_flag[0])
-        np.testing.assert_allclose(20001.0, l3d_data_product.plasma_speed_flag[-1], rtol=1e-6)
+        np.testing.assert_equal(20001.0, l3d_data_product.plasma_speed_flag[-1])
 
         self.assertEqual(846, len(l3d_data_product.uv_anisotropy_flag))
         self.assertEqual(-1.0, l3d_data_product.uv_anisotropy_flag[0])
-        np.testing.assert_allclose(30001.0, l3d_data_product.uv_anisotropy_flag[-1], rtol=1e-6)
+        np.testing.assert_equal(30001.0, l3d_data_product.uv_anisotropy_flag[-1])
 
         self.assertEqual(846, len(l3d_data_product.proton_density_flag))
         self.assertEqual(-1.0, l3d_data_product.proton_density_flag[0])
-        np.testing.assert_allclose(10001.0, l3d_data_product.proton_density_flag[-1], rtol=1e-6)
+        np.testing.assert_equal(10001.0, l3d_data_product.proton_density_flag[-1])
+
+
+    def test_convert_json_l3d_to_data_product_with_save(self):
+        input_metadata = Mock(spec=InputMetadata)
+        input_metadata.start_date = datetime.fromisoformat("2025-05-12")
+        l3d_data_product: GlowsL3DSolarParamsHistory = convert_json_to_l3d_data_product(
+            get_test_data_path('glows/imap_glows_l3d_solar-params-history_19470303-cr02095_v00.json'),
+            input_metadata,
+            sentinel.parent_file_names,
+        )
+        saved = save_data(l3d_data_product, delete_if_present=True)
+        with CDF(str(saved)) as cdf:
+            latitude =cdf["latitude"][...]
+            cr = cdf["cr_grid"][...]
+            epoch = cdf["epoch"][...]
+            plasma_speed = cdf["plasma_speed"][...]
+            proton_density = cdf["proton_density"][...]
+            ultraviolet_anisotropy = cdf["uv_anisotropy"][...]
+            phion = cdf["phion"][...]
+            lyman_alpha = cdf["lyman_alpha"][...]
+            electron_density = cdf["electron_density"][...]
+            plasma_speed_flag = cdf["plasma_speed_flag"][...]
+            uv_anisotropy_flag = cdf["uv_anisotropy_flag"][...]
+            proton_density_flag = cdf["proton_density_flag"][...]
+
+        np.testing.assert_array_equal(
+            [-90, -80, -70, -60, -50, -40, -30, -20, -10, 0, 10, 20, 30, 40, 50, 60, 70, 80, 90],
+            latitude)
+
+        self.assertEqual(846, len(cr))
+        self.assertEqual(1250.5, cr[0])
+        self.assertEqual(2095.5, cr[-1])
+
+        self.assertEqual(846, len(epoch))
+        self.assertEqual(datetime.fromisoformat("1947-03-03 07:35:32.640"), epoch[0])
+        self.assertEqual(datetime.fromisoformat("2010-04-08 22:40:35.040"), epoch[-1])
+
+        np.testing.assert_array_equal(np.arange(-90, 100, step=10), latitude)
+
+        self.assertEqual(846, len(plasma_speed))
+        np.testing.assert_equal(
+            [-1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0,
+             -1.0, -1.0, -1.0], plasma_speed[0])
+        np.testing.assert_equal(
+            [
+                468.1725019310069,
+                470.41196695859816,
+                476.08272082078383,
+                449.52578318361645,
+                401.38306014556065,
+                363.7120316891783,
+                330.5607405468131,
+                305.29544288745444,
+                273.7598466912451,
+                246.7446552487376,
+                266.49159920773036,
+                289.2521463358576,
+                324.9993546613053,
+                359.23215479267344,
+                398.4985502246217,
+                460.79164287941717,
+                503.2472821431676,
+                508.93503849297326,
+                509.10575708733097
+            ],
+            plasma_speed[-1])
+
+        self.assertEqual(846, len(proton_density))
+        np.testing.assert_equal(
+            [-1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0,
+             -1.0, -1.0, -1.0], proton_density[0])
+        np.testing.assert_equal(
+            [
+                3.134819994443553,
+                3.1041926011053467,
+                3.0267698024403056,
+                3.3898787480759545,
+                4.215698147420914,
+                4.9924188349188245,
+                5.72062210604848,
+                6.206572506330694,
+                7.007246183637803,
+                7.666900424298345,
+                7.238530407122755,
+                6.691594046599381,
+                5.7658475286137065,
+                4.954055736090567,
+                4.139454391383636,
+                3.1651607050304924,
+                2.68129704271522,
+                2.6272758631787716,
+                2.625943370301117
+            ], proton_density[-1])
+
+        self.assertEqual(846, len(ultraviolet_anisotropy))
+        np.testing.assert_equal(
+            [-1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0,
+             -1.0, -1.0, -1.0], ultraviolet_anisotropy[0])
+        np.testing.assert_equal(
+            [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0
+             ], ultraviolet_anisotropy[-1])
+
+        self.assertEqual(846, len(phion))
+        np.testing.assert_equal(1.830438692701064e-07, phion[0])
+        np.testing.assert_equal(1.0538921234648196e-07, phion[-1])
+
+        self.assertEqual(846, len(lyman_alpha))
+        np.testing.assert_equal(619975763789.9209, lyman_alpha[0])
+        np.testing.assert_equal(396312787467.8571, lyman_alpha[-1])
+
+        self.assertEqual(846, len(electron_density))
+        self.assertEqual(-1.0, electron_density[0])
+        np.testing.assert_equal(5.978193763000784, electron_density[-1])
+
+        self.assertEqual(846, len(plasma_speed_flag))
+        self.assertEqual(-1.0, plasma_speed_flag[0])
+        np.testing.assert_equal(20001.0, plasma_speed_flag[-1])
+
+        self.assertEqual(846, len(uv_anisotropy_flag))
+        self.assertEqual(-1.0, uv_anisotropy_flag[0])
+        np.testing.assert_equal(30001.0, uv_anisotropy_flag[-1])
+
+        self.assertEqual(846, len(proton_density_flag))
+        self.assertEqual(-1.0, proton_density_flag[0])
+        np.testing.assert_equal(10001.0, proton_density_flag[-1])
 
     def test_get_parent_file_names_from_l3d_json(self):
         path_to_l3d_output_folder = get_test_data_path("glows/science/data_l3d")

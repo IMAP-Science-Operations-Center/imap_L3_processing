@@ -630,13 +630,13 @@ def run_glows_l3e_with_less_mocks(mock_spiceypy):
     mock_spiceypy.spkezr = spiceypy.spkezr
     mock_spiceypy.reclat = spiceypy.reclat
     mock_spiceypy.pxform = spiceypy.pxform
-    mock_spiceypy.datetime2et = lambda date: spiceypy.datetime2et(date + timedelta(days=365 * 16 + 4, hours=2))
+    mock_spiceypy.datetime2et = lambda date: spiceypy.datetime2et(date + timedelta(days=365 * 17 + 4, hours=2))
 
     l3d_file = "imap_glows_l3d_solar-hist_19470303-cr02094_v016.cdf"
     lo_processing_input_collection = ProcessingInputCollection(
         AncillaryInput("imap_glows_density-3d_19640117_v003.dat"),
         AncillaryInput("imap_glows_energy-grid-lo_20100101_v003.dat"),
-        AncillaryInput("imap_glows_ionization-files_20100101_v003.dat"),
+        AncillaryInput("imap_glows_ionization-files_19470303_v004.dat"),
         AncillaryInput("imap_glows_lya-series_19470303_v003.dat"),
         AncillaryInput("imap_glows_phion-hydrogen_19470303_v003.dat"),
         AncillaryInput("imap_glows_pipeline-settings-l3bcde_20100101_v006.json"),
@@ -644,7 +644,7 @@ def run_glows_l3e_with_less_mocks(mock_spiceypy):
         AncillaryInput("imap_glows_speed-3d_19640117_v003.dat"),
         AncillaryInput("imap_glows_sw-eqtr-electrons_19710416_v003.dat"),
         AncillaryInput("imap_glows_tess-xyz-8_20100101_v003.dat"),
-        AncillaryInput("imap_lo_elongation-data_20100101_v001.dat"),
+        AncillaryInput("imap_lo_elongation-data_20100101_v002.dat"),
         ScienceInput(l3d_file),
         RepointInput("imap_2001_052_001.repoint.csv"),
     )
@@ -652,7 +652,7 @@ def run_glows_l3e_with_less_mocks(mock_spiceypy):
     hi_45_processing_input_collection = ProcessingInputCollection(
         AncillaryInput("imap_glows_density-3d_19640117_v003.dat"),
         AncillaryInput("imap_glows_energy-grid-hi_20100101_v003.dat"),
-        AncillaryInput("imap_glows_ionization-files_20100101_v003.dat"),
+        AncillaryInput("imap_glows_ionization-files_19470303_v004.dat"),
         AncillaryInput("imap_glows_lya-series_19470303_v003.dat"),
         AncillaryInput("imap_glows_phion-hydrogen_19470303_v003.dat"),
         AncillaryInput("imap_glows_pipeline-settings-l3bcde_20100101_v006.json"),
@@ -665,7 +665,7 @@ def run_glows_l3e_with_less_mocks(mock_spiceypy):
     hi_90_processing_input_collection = ProcessingInputCollection(
         AncillaryInput("imap_glows_density-3d_19640117_v003.dat"),
         AncillaryInput("imap_glows_energy-grid-hi_20100101_v003.dat"),
-        AncillaryInput("imap_glows_ionization-files_20100101_v003.dat"),
+        AncillaryInput("imap_glows_ionization-files_19470303_v004.dat"),
         AncillaryInput("imap_glows_lya-series_19470303_v003.dat"),
         AncillaryInput("imap_glows_phion-hydrogen_19470303_v003.dat"),
         AncillaryInput("imap_glows_pipeline-settings-l3bcde_20100101_v006.json"),
@@ -679,7 +679,7 @@ def run_glows_l3e_with_less_mocks(mock_spiceypy):
     ul_processing_input_collection = ProcessingInputCollection(
         AncillaryInput("imap_glows_density-3d_19640117_v003.dat"),
         AncillaryInput("imap_glows_energy-grid-ultra_20100101_v003.dat"),
-        AncillaryInput("imap_glows_ionization-files_20100101_v003.dat"),
+        AncillaryInput("imap_glows_ionization-files_19470303_v004.dat"),
         AncillaryInput("imap_glows_lya-series_19470303_v003.dat"),
         AncillaryInput("imap_glows_phion-hydrogen_19470303_v003.dat"),
         AncillaryInput("imap_glows_pipeline-settings-l3bcde_20100101_v006.json"),
@@ -860,7 +860,7 @@ def run_glows_l3d(mock_shutil):
     data_product, l3d_txt_paths, last_processed_cr = processor.process_l3d(l3d_dependencies)
     print("l3d_txts:")
     [print(txt_path) for txt_path in l3d_txt_paths]
-    print(save_data(data_product, cr_number=last_processed_cr))
+    print(save_data(data_product, delete_if_present=True, cr_number=last_processed_cr))
 
 
 def create_empty_hi_l1c_dataset(epoch: datetime, exposures: Optional[np.ndarray] = None,

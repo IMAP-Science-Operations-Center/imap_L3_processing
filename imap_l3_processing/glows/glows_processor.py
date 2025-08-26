@@ -83,14 +83,20 @@ class GlowsProcessor(Processor):
                                                          l3e_dependencies.pipeline_settings['start_cr'], cr_number,
                                                          self.input_metadata.version,
                                                          l3e_dependencies.repointing_file)
+            print(f"repointings: {repointings}")
             products = []
+            repointings = [1234]
             for repointing in repointings:
+                print(f"repointing: {repointing}")
                 self.input_metadata.repointing = repointing
                 try:
-                    epoch, epoch_end = get_pointing_date_range(repointing)
-                    epoch_dt: datetime = epoch.astype('datetime64[us]').astype(datetime)
-                    epoch_end_dt: datetime = epoch_end.astype('datetime64[us]').astype(datetime)
-                    epoch_delta: timedelta = (epoch_end_dt - epoch_dt) / 2
+                    # epoch, epoch_end = get_pointing_date_range(repointing)
+                    # epoch_dt: datetime = epoch.astype('datetime64[us]').astype(datetime)
+                    # epoch_end_dt: datetime = epoch_end.astype('datetime64[us]').astype(datetime)
+                    # epoch_delta: timedelta = (epoch_end_dt - epoch_dt) / 2
+                    #
+                    epoch_dt = datetime(2009,1,1,1,1,1)
+                    epoch_delta = timedelta(seconds=1)
 
                     if self.input_metadata.descriptor == "survival-probability-lo":
                         try:
@@ -98,12 +104,16 @@ class GlowsProcessor(Processor):
                             elongation = l3e_dependencies.elongation[year_with_repointing]
                         except KeyError:
                             continue
+                        print("making lo")
                         products.extend(self.process_l3e_lo(epoch_dt, epoch_delta, elongation))
                     elif self.input_metadata.descriptor == "survival-probability-hi-45":
+                        print("making hi45")
                         products.extend(self.process_l3e_hi(epoch_dt, epoch_delta, 135))
                     elif self.input_metadata.descriptor == "survival-probability-hi-90":
+                        print("making hi90")
                         products.extend(self.process_l3e_hi(epoch_dt, epoch_delta, 90))
                     elif self.input_metadata.descriptor == "survival-probability-ul":
+                        print("making ultra")
                         products.extend(self.process_l3e_ul(epoch_dt, epoch_delta))
                 except Exception as e:
                     print("Exception encountered for repointing ", repointing, e)
@@ -194,10 +204,11 @@ class GlowsProcessor(Processor):
         call_args_object = determine_call_args_for_l3e_executable(epoch, epoch + epoch_delta, elongation_value)
         call_args = call_args_object.to_argument_list()
 
-        print("running survProbLo " + call_args)
+        print(f"running survProbLo {call_args}")
         run(["./survProbLo"] + call_args)
 
         output_path = Path(f'probSur.Imap.Lo_{call_args[0]}_{call_args[1][:8]}_{call_args[-1][:5]}.dat')
+
         lo_data = GlowsL3ELoData.convert_dat_to_glows_l3e_lo_product(self.input_metadata, output_path,
                                                                      np.array([epoch]),
                                                                      np.array([elongation_value]), call_args_object)
@@ -207,6 +218,7 @@ class GlowsProcessor(Processor):
         new_dat_path = Path(lo_cdf)
         new_dat_path = new_dat_path.parent / Path('_'.join(new_dat_path.name.split('_')[0:4]) + '-raw_' + '_'.join(
             new_dat_path.name.split('_')[4:])[:-4] + '.dat')
+        print(new_dat_path)
 
         shutil.move(output_path, new_dat_path)
 
@@ -216,7 +228,7 @@ class GlowsProcessor(Processor):
         call_args_object = determine_call_args_for_l3e_executable(epoch, epoch + epoch_delta, elongation)
         call_args = call_args_object.to_argument_list()
 
-        print("running survProbHi " + call_args)
+        print(f"running survProbHi {call_args}")
 
         run(["./survProbHi"] + call_args)
 
@@ -240,7 +252,7 @@ class GlowsProcessor(Processor):
         call_args_object = determine_call_args_for_l3e_executable(epoch, epoch + epoch_delta, 30)
         call_args = call_args_object.to_argument_list()
 
-        print("running survProbUltra " + call_args)
+        print(f"running survProbUltra {call_args}")
 
         run(["./survProbUltra"] + call_args)
 

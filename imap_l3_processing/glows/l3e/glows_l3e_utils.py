@@ -64,9 +64,8 @@ def determine_l3e_files_to_produce(descriptor: str, first_cr_processed: int, las
     start_ns = (first_carrington_start_date.to_datetime() - TT2000_EPOCH).total_seconds() * ONE_SECOND_IN_NANOSECONDS
     end_ns = (last_cr_end_date.to_datetime() - TT2000_EPOCH).total_seconds() * ONE_SECOND_IN_NANOSECONDS
 
-    vectorized_date_conv = np.vectorize(lambda d: (Time(f'{d}Z', format="iso").to_datetime(
-        leap_second_strict='silent') - TT2000_EPOCH).total_seconds() * ONE_SECOND_IN_NANOSECONDS)
-    repoint_starts = vectorized_date_conv(repointing_data["repoint_start_utc"] + "Z")
+    vectorized_date_conv = np.vectorize(lambda d: (datetime.fromisoformat(d) - TT2000_EPOCH).total_seconds() * ONE_SECOND_IN_NANOSECONDS)
+    repoint_starts = vectorized_date_conv(repointing_data["repoint_start_utc"].values)
     repoint_ids = repointing_data["repoint_id"]
 
     pointing_numbers = []
