@@ -9,7 +9,9 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from subprocess import run
 
+import imap_data_access
 import numpy as np
+from imap_data_access import ScienceFilePath, download
 from imap_data_access.processing_input import ProcessingInputCollection
 
 from imap_l3_processing.glows.descriptors import GLOWS_L3A_DESCRIPTOR
@@ -23,7 +25,7 @@ from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDepen
 from imap_l3_processing.glows.l3bc.models import GlowsL3BIonizationRate, GlowsL3CSolarWind
 from imap_l3_processing.glows.l3bc.science.filter_out_bad_days import filter_l3a_files
 from imap_l3_processing.glows.l3bc.science.generate_l3bc import generate_l3bc
-from imap_l3_processing.glows.l3bc.utils import get_pointing_date_range, archive_dependencies
+from imap_l3_processing.glows.l3bc.utils import get_pointing_date_range, archive_dependencies, read_cdf_parents
 from imap_l3_processing.glows.l3d.glows_l3d_dependencies import GlowsL3DDependencies
 from imap_l3_processing.glows.l3d.utils import create_glows_l3b_json_file_from_cdf, create_glows_l3c_json_file_from_cdf, \
     PATH_TO_L3D_TOOLKIT, convert_json_to_l3d_data_product, get_parent_file_names_from_l3d_json, set_version_on_txt_files
@@ -52,7 +54,23 @@ class GlowsProcessor(Processor):
             cdf = save_data(l3a_output)
             return [cdf]
         elif self.input_metadata.data_level == "l3b":
-            version_and_cr_deps = GlowsInitializer.get_crs_to_process()
+            l3b_query_result = imap_data_access.query(
+                instrument="glows",
+                data_level="l3b",
+                descriptor="ion-rate-profile",
+                version="latest"
+            )
+            l3bs_by_cr = {int(ScienceFilePath(result["file_path"]).cr): Path(result["file_path"]).name for result in l3b_query_result}
+
+            l3c_query_result = imap_data_access.query(
+                instrument="glows",
+                data_level="l3c",
+                descriptor="solar-hist",
+                version="latest"
+            )
+            l3cs_by_cr = {int(ScienceFilePath(result["file_path"]).cr): Path(result["file_path"]).name for result in l3c_query_result}
+
+            version_and_cr_deps = GlowsInitializer.get_crs_to_process(l3bs_by_cr)
 
             products = []
             for version, cr_to_process in version_and_cr_deps:
@@ -73,16 +91,22 @@ class GlowsProcessor(Processor):
                 l3c_cdf = save_data(l3c_data_product, cr_number=cr_to_process.cr_rotation_number)
 
                 products.extend([l3b_cdf, l3c_cdf, zip_path])
-            return products
 
+                l3bs_by_cr[cr_to_process.cr_rotation_number] = l3b_cdf
+                l3cs_by_cr[cr_to_process.cr_rotation_number] = l3c_cdf
 
-        elif self.input_metadata.data_level == "l3d":
-            l3d_dependencies = GlowsL3DDependencies.fetch_dependencies(self.dependencies)
-            data_product, l3d_txt_paths, last_processed_cr = self.process_l3d(l3d_dependencies)
-            if data_product is not None and l3d_txt_paths is not None and last_processed_cr is not None:
-                cdf = save_data(data_product, cr_number=last_processed_cr)
-                return [cdf, *l3d_txt_paths]
-            return []
+            l3d_query_result = imap_data_access.query(instrument="glows", data_level="l3d", descriptor="solar-hist", version="latest")
+            most_recent_l3d = max(l3d_query_result, key=lambda result: result["cr"])
+            l3d_cdf_parents = read_cdf_parents(most_recent_l3d["file_path"])
+
+            if not set(list(l3bs_by_cr.values()) + list(l3cs_by_cr.values())).issubset(l3d_cdf_parents):
+                l3d_dependencies = GlowsL3DDependencies.fetch_dependencies(self.dependencies)
+                data_product, l3d_txt_paths, last_processed_cr = self.process_l3d(l3d_dependencies)
+                if data_product is not None and l3d_txt_paths is not None and last_processed_cr is not None:
+                    cdf = save_data(data_product, cr_number=last_processed_cr)
+                    return [cdf, *l3d_txt_paths]
+                return []
+
         elif self.input_metadata.data_level == "l3e":
             l3e_dependencies, cr_number = GlowsL3EDependencies.fetch_dependencies(self.dependencies,
                                                                                   self.input_metadata.descriptor)

@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 class GlowsInitializer:
 
     @staticmethod
-    def get_crs_to_process():
+    def get_crs_to_process(l3bs_by_cr: dict[int, str]):
         l3a_query_results = imap_data_access.query(instrument="glows", data_level="l3a", version="latest")
         l3a_files_names = [Path(l3a_query_result["file_path"]).name for l3a_query_result in l3a_query_results]
         cr_to_l3a_file_names = GlowsInitializer.group_l3a_by_cr(l3a_files_names)
@@ -41,10 +41,6 @@ class GlowsInitializer:
             return []
 
         _comment_headers(f107_index_file_path)
-
-        l3b_query_result = imap_data_access.query(instrument="glows", data_level="l3b", descriptor="ion-rate-profile", version="latest")
-        l3b_file_names = [Path(result["file_path"]).name for result in l3b_query_result]
-        l3bs_by_cr = {int(ScienceFilePath(file_name).cr): file_name for file_name in l3b_file_names}
 
         crs_to_process = []
         for cr_number, l3a_files in cr_to_l3a_file_names.items():
