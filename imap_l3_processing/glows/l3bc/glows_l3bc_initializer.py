@@ -7,6 +7,7 @@ from typing import Optional
 import imap_data_access
 from imap_data_access import ScienceFilePath
 
+from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDependencies
 from imap_l3_processing.glows.l3bc.models import CRToProcess, ExternalDependencies
 from imap_l3_processing.glows.l3bc.utils import get_pointing_date_range, get_date_range_of_cr, get_best_ancillary, \
     read_cdf_parents, \
@@ -21,12 +22,12 @@ class AvailableServerData:
     l3c_files: dict[int, dict]
 
 
-class GlowsInitializer:
+class GlowsL3BCInitializer:
     @staticmethod
-    def get_crs_to_process(l3bs_by_cr: dict[int, str]) -> tuple[ExternalDependencies, list[tuple[int, CRToProcess]]]:
+    def get_crs_to_process(l3bs_by_cr: dict[int, str]) -> tuple[ExternalDependencies, list[GlowsL3BCDependencies]]:
         l3a_query_results = imap_data_access.query(instrument="glows", data_level="l3a", version="latest")
         l3a_files_names = [Path(l3a_query_result["file_path"]).name for l3a_query_result in l3a_query_results]
-        cr_to_l3a_file_names = GlowsInitializer.group_l3a_by_cr(l3a_files_names)
+        cr_to_l3a_file_names = GlowsL3BCInitializer.group_l3a_by_cr(l3a_files_names)
 
         uv_anisotropy_query_result = imap_data_access.query(table="ancillary", instrument="glows",
                                                             descriptor="uv-anisotropy-1CR")
@@ -43,7 +44,7 @@ class GlowsInitializer:
                     external_dependencies.lyman_alpha_path]):
             return external_dependencies, []
 
-        crs_to_process = []
+        all_l3bc_dependencies = []
         for cr_number, l3a_files in cr_to_l3a_file_names.items():
             cr_start_date, cr_end_date = get_date_range_of_cr(cr_number)
 
@@ -65,11 +66,13 @@ class GlowsInitializer:
                     cr_number
                 )
 
-                if version := GlowsInitializer.should_process_cr_candidate(cr_candidate, l3bs_by_cr,
-                                                                           external_dependencies):
-                    crs_to_process.append((version, cr_candidate))
+                if version := GlowsL3BCInitializer.should_process_cr_candidate(cr_candidate, l3bs_by_cr,
+                                                                               external_dependencies):
+                    l3bc_dependencies = GlowsL3BCDependencies.download_from_cr_to_process(cr_candidate, version,
+                                                                                          external_dependencies)
+                    all_l3bc_dependencies.append(l3bc_dependencies)
 
-        return external_dependencies, crs_to_process
+        return external_dependencies, all_l3bc_dependencies
 
     @staticmethod
     def should_process_cr_candidate(cr_candidate: CRToProcess, l3bs_by_cr: dict[int, str],

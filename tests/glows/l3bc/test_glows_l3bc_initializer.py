@@ -6,28 +6,29 @@ from unittest.mock import Mock, patch, call, sentinel
 
 import numpy as np
 
-from imap_l3_processing.glows.glows_initializer import GlowsInitializer
+from imap_l3_processing.glows.l3bc.glows_l3bc_initializer import GlowsL3BCInitializer
 from imap_l3_processing.glows.l3bc.models import CRToProcess, ExternalDependencies
 
 
-class TestGlowsInitializer(unittest.TestCase):
+class TestGlowsL3BCInitializer(unittest.TestCase):
     def setUp(self):
         self.external_dependencies_fetch_patcher = patch(
-            "imap_l3_processing.glows.glows_initializer.ExternalDependencies.fetch_dependencies")
+            "imap_l3_processing.glows.l3bc.glows_l3bc_initializer.ExternalDependencies.fetch_dependencies")
         self.mock_external_dependencies_fetch = self.external_dependencies_fetch_patcher.start()
 
     def tearDown(self):
         self.external_dependencies_fetch_patcher.stop()
 
-    @patch("imap_l3_processing.glows.glows_initializer.ExternalDependencies.fetch_dependencies")
-    @patch("imap_l3_processing.glows.glows_initializer.get_date_range_of_cr")
-    @patch("imap_l3_processing.glows.glows_initializer.get_best_ancillary")
-    @patch("imap_l3_processing.glows.glows_initializer.imap_data_access.query")
-    @patch("imap_l3_processing.glows.glows_initializer.GlowsInitializer.group_l3a_by_cr")
-    @patch("imap_l3_processing.glows.glows_initializer.GlowsInitializer.should_process_cr_candidate")
-    def test_get_crs_to_process(self,
-                                mock_should_process_cr_candidate, mock_group_l3a_by_cr, mock_query,
-                                mock_get_best_ancillary, mock_get_date_range_of_cr, mock_fetch_external_deps):
+    @patch('imap_l3_processing.glows.l3bc.glows_l3bc_initializer.GlowsL3BCDependencies.download_from_cr_to_process')
+    @patch("imap_l3_processing.glows.l3bc.glows_l3bc_initializer.ExternalDependencies.fetch_dependencies")
+    @patch("imap_l3_processing.glows.l3bc.glows_l3bc_initializer.get_date_range_of_cr")
+    @patch("imap_l3_processing.glows.l3bc.glows_l3bc_initializer.get_best_ancillary")
+    @patch("imap_l3_processing.glows.l3bc.glows_l3bc_initializer.imap_data_access.query")
+    @patch("imap_l3_processing.glows.l3bc.glows_l3bc_initializer.GlowsL3BCInitializer.group_l3a_by_cr")
+    @patch("imap_l3_processing.glows.l3bc.glows_l3bc_initializer.GlowsL3BCInitializer.should_process_cr_candidate")
+    def test_get_crs_to_process(self, mock_should_process_cr_candidate, mock_group_l3a_by_cr, mock_query,
+                                mock_get_best_ancillary, mock_get_date_range_of_cr, mock_fetch_external_deps,
+                                mock_l3bc_deps_from_cr):
 
         mock_query.side_effect = [
             [
@@ -68,7 +69,7 @@ class TestGlowsInitializer(unittest.TestCase):
             2092: "imap_glows_l3b_ion-rate-profile_20100201-cr02092_v001.cdf"
         }
 
-        actual_crs_to_process = GlowsInitializer.get_crs_to_process(l3bs_by_cr)
+        actual_external_deps, actual_l3bc_deps = GlowsL3BCInitializer.get_crs_to_process(l3bs_by_cr)
 
         mock_query.assert_has_calls([
             call(instrument="glows", data_level="l3a", version="latest"),
@@ -121,10 +122,14 @@ class TestGlowsInitializer(unittest.TestCase):
             call(expected_cr_candidate_2, l3bs_by_cr, mock_fetch_external_deps.return_value)
         ], any_order=False)
 
-        self.assertEqual((mock_fetch_external_deps.return_value, [(2, expected_cr_candidate_1)]), actual_crs_to_process)
+        mock_l3bc_deps_from_cr.assert_called_once_with(expected_cr_candidate_1, 2,
+                                                       mock_fetch_external_deps.return_value)
 
-    @patch("imap_l3_processing.glows.glows_initializer.GlowsInitializer.group_l3a_by_cr")
-    @patch("imap_l3_processing.glows.glows_initializer.imap_data_access.query")
+        self.assertEqual([mock_l3bc_deps_from_cr.return_value], actual_l3bc_deps)
+        self.assertEqual(mock_fetch_external_deps.return_value, actual_external_deps)
+
+    @patch("imap_l3_processing.glows.l3bc.glows_l3bc_initializer.GlowsL3BCInitializer.group_l3a_by_cr")
+    @patch("imap_l3_processing.glows.l3bc.glows_l3bc_initializer.imap_data_access.query")
     def test_get_crs_to_process_return_no_crs_when_missing_ancillaries(self, mock_query, mock_group_l3a_by_cr):
 
         test_cases = [
@@ -150,7 +155,7 @@ class TestGlowsInitializer(unittest.TestCase):
                 mock_query.side_effect = query_that_returns_empty_list_for_missing_ancillary
 
                 l3bs_by_cr = {}
-                actual_crs_to_process = GlowsInitializer.get_crs_to_process(l3bs_by_cr)
+                actual_crs_to_process = GlowsL3BCInitializer.get_crs_to_process(l3bs_by_cr)
 
                 mock_query.assert_has_calls([
                     call(instrument="glows", data_level="l3a", version="latest"),
@@ -162,11 +167,12 @@ class TestGlowsInitializer(unittest.TestCase):
 
                 self.assertEqual((self.mock_external_dependencies_fetch.return_value, []), actual_crs_to_process)
 
-    @patch("imap_l3_processing.glows.glows_initializer.GlowsInitializer.should_process_cr_candidate", return_value=True)
-    @patch("imap_l3_processing.glows.glows_initializer.get_best_ancillary")
-    @patch("imap_l3_processing.glows.glows_initializer.imap_data_access.query")
-    @patch("imap_l3_processing.glows.glows_initializer.ExternalDependencies.fetch_dependencies")
-    @patch("imap_l3_processing.glows.glows_initializer.GlowsInitializer.group_l3a_by_cr")
+    @patch("imap_l3_processing.glows.l3bc.glows_l3bc_initializer.GlowsL3BCInitializer.should_process_cr_candidate",
+           return_value=True)
+    @patch("imap_l3_processing.glows.l3bc.glows_l3bc_initializer.get_best_ancillary")
+    @patch("imap_l3_processing.glows.l3bc.glows_l3bc_initializer.imap_data_access.query")
+    @patch("imap_l3_processing.glows.l3bc.glows_l3bc_initializer.ExternalDependencies.fetch_dependencies")
+    @patch("imap_l3_processing.glows.l3bc.glows_l3bc_initializer.GlowsL3BCInitializer.group_l3a_by_cr")
     def test_get_crs_to_process_returns_no_crs_when_missing_external_deps(self, mock_group_l3a_by_cr,
                                                                           mock_fetch_ext_dependencies, __, ___, ____):
         test_cases = [
@@ -180,7 +186,7 @@ class TestGlowsInitializer(unittest.TestCase):
                 mock_fetch_ext_dependencies.return_value = external_deps
                 mock_group_l3a_by_cr.return_value = {2091: {"glows_l3a_hist_20100101_v001.cdf"}}
 
-                actual_crs_to_process = GlowsInitializer.get_crs_to_process({})
+                actual_crs_to_process = GlowsL3BCInitializer.get_crs_to_process({})
 
                 self.assertEqual((external_deps, []), actual_crs_to_process)
 
@@ -205,7 +211,7 @@ class TestGlowsInitializer(unittest.TestCase):
             omni2_data_path=Path("omni2_data_path"),
         )
 
-        self.assertIsNone(GlowsInitializer.should_process_cr_candidate(cr_candidate, {}, external_dependencies))
+        self.assertIsNone(GlowsL3BCInitializer.should_process_cr_candidate(cr_candidate, {}, external_dependencies))
 
     def test_should_process_cr_no_existing_l3b(self):
 
@@ -228,11 +234,11 @@ class TestGlowsInitializer(unittest.TestCase):
             omni2_data_path=Path("omni2_data_path"),
         )
 
-        actual_version = GlowsInitializer.should_process_cr_candidate(cr_candidate, {}, external_dependencies)
+        actual_version = GlowsL3BCInitializer.should_process_cr_candidate(cr_candidate, {}, external_dependencies)
 
         self.assertEqual(1, actual_version)
 
-    @patch("imap_l3_processing.glows.glows_initializer.read_cdf_parents")
+    @patch("imap_l3_processing.glows.l3bc.glows_l3bc_initializer.read_cdf_parents")
     def test_should_process_cr_existing_cr_should_process(self, mock_read_cdf_parents):
 
         new_l3a_version = {
@@ -301,14 +307,15 @@ class TestGlowsInitializer(unittest.TestCase):
                 }
 
                 l3bs = {2091: f"imap_glows_l3b_ion-rate-profile_20100101-cr02091_v00{existing_file_version}.cdf"}
-                actual_version = GlowsInitializer.should_process_cr_candidate(cr_candidate, l3bs, external_dependencies)
+                actual_version = GlowsL3BCInitializer.should_process_cr_candidate(cr_candidate, l3bs,
+                                                                                  external_dependencies)
 
                 mock_read_cdf_parents.assert_called_once_with(
                     f"imap_glows_l3b_ion-rate-profile_20100101-cr02091_v00{existing_file_version}.cdf")
 
                 self.assertEqual(existing_file_version + 1, actual_version)
 
-    @patch("imap_l3_processing.glows.glows_initializer.read_cdf_parents")
+    @patch("imap_l3_processing.glows.l3bc.glows_l3bc_initializer.read_cdf_parents")
     def test_should_process_cr_existing_cr_should_not_reprocess(self, mock_read_cdf_parents):
         cr_candidate = CRToProcess(
             l3a_file_names={
@@ -344,7 +351,7 @@ class TestGlowsInitializer(unittest.TestCase):
             "some_zip_file.zip"
         }
 
-        self.assertIsNone(GlowsInitializer.should_process_cr_candidate(cr_candidate, l3bs, external_dependencies))
+        self.assertIsNone(GlowsL3BCInitializer.should_process_cr_candidate(cr_candidate, l3bs, external_dependencies))
 
         mock_read_cdf_parents.assert_called_once_with("imap_glows_l3b_ion-rate-profile_20100101-cr02091_v001.cdf")
 
@@ -369,11 +376,11 @@ class TestGlowsInitializer(unittest.TestCase):
             omni2_data_path=Path("omni2_data_path"),
         )
 
-        self.assertIsNone(GlowsInitializer.should_process_cr_candidate(cr_candidate, {}, external_dependencies))
+        self.assertIsNone(GlowsL3BCInitializer.should_process_cr_candidate(cr_candidate, {}, external_dependencies))
 
         cr_candidate.has_valid_external_dependencies.assert_called_once_with(external_dependencies)
 
-    @patch("imap_l3_processing.glows.glows_initializer.get_pointing_date_range")
+    @patch("imap_l3_processing.glows.l3bc.glows_l3bc_initializer.get_pointing_date_range")
     def test_group_l3a_by_cr(self, mock_get_pointing_date_range):
         mock_get_pointing_date_range.side_effect = [
             (np.datetime64("2010-01-01T00:00:00"), np.datetime64("2010-01-02T00:00:00")),
@@ -411,6 +418,6 @@ class TestGlowsInitializer(unittest.TestCase):
             }
         }
 
-        grouped_l3a_files = GlowsInitializer.group_l3a_by_cr(l3a_files_and_parents)
+        grouped_l3a_files = GlowsL3BCInitializer.group_l3a_by_cr(l3a_files_and_parents)
 
         self.assertEqual(expected, grouped_l3a_files)

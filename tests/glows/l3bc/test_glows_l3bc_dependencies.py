@@ -12,7 +12,7 @@ class TestGlowsL3BCDependencies(unittest.TestCase):
 
     @patch('imap_l3_processing.glows.l3bc.glows_l3bc_dependencies.create_glows_l3a_dictionary_from_cdf')
     @patch('imap_l3_processing.glows.l3bc.glows_l3bc_dependencies.imap_data_access.download')
-    def test_from_cr_to_process(self, mock_download, mock_create_dictionary_from_cdf):
+    def test_download_from_cr_to_process(self, mock_download, mock_create_dictionary_from_cdf):
         mock_download.side_effect = [
             sentinel.uv_anisotropy_downloaded_path,
             sentinel.waw_downloaded_path,
@@ -44,8 +44,9 @@ class TestGlowsL3BCDependencies(unittest.TestCase):
             lyman_alpha_path=Path("not used"),
         )
 
-        dependency: GlowsL3BCDependencies = GlowsL3BCDependencies.from_cr_to_process(cr_to_process,
-                                                                                     external_dependencies)
+        dependency: GlowsL3BCDependencies = GlowsL3BCDependencies.download_from_cr_to_process(cr_to_process,
+                                                                                              sentinel.version,
+                                                                                              external_dependencies)
 
         self.assertEqual([call(sentinel.l3a_downloaded_path_1), call(sentinel.l3a_downloaded_path_2)],
                          mock_create_dictionary_from_cdf.call_args_list)
@@ -70,3 +71,8 @@ class TestGlowsL3BCDependencies(unittest.TestCase):
         self.assertEqual(sentinel.l3a_dictionary_1, dependency.l3a_data[0])
         self.assertEqual(sentinel.l3a_dictionary_2, dependency.l3a_data[1])
         self.assertEqual(2296, dependency.carrington_rotation_number)
+
+        self.assertEqual(sentinel.version, dependency.version)
+
+        self.assertEqual(cr_to_process.cr_start_date, dependency.start_date)
+        self.assertEqual(cr_to_process.cr_end_date, dependency.end_date)

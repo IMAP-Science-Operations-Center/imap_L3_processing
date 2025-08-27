@@ -11,7 +11,8 @@ from imap_processing.spice.repoint import set_global_repoint_table_paths
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
-from imap_l3_processing.glows.l3bc.models import CRToProcess, ExternalDependencies
+from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDependencies
+from imap_l3_processing.glows.l3bc.models import ExternalDependencies
 from imap_l3_processing.glows.l3bc.utils import read_glows_l3a_data, \
     archive_dependencies, get_pointing_date_range, get_best_ancillary, read_cdf_parents
 from tests.test_helpers import get_test_data_path
@@ -60,7 +61,7 @@ class TestUtils(unittest.TestCase):
 
                 self.assertEqual(expected_best_ancillary_file_name, actual_ancillary_name)
 
-    @patch("imap_l3_processing.glows.glows_initializer.imap_data_access.download")
+    @patch("imap_l3_processing.glows.l3bc.utils.imap_data_access.download")
     def test_read_cdf_parents(self, mock_download):
         with (TemporaryDirectory() as temp_dir):
             cdf_downloaded_path = Path(temp_dir) / "l3b.cdf"
@@ -137,18 +138,21 @@ class TestUtils(unittest.TestCase):
         expected_filepath = TEMP_CDF_FOLDER_PATH / "imap_glows_l3b-archive_20250314_v001.zip"
         expected_json_filename = "cr_to_process.json"
 
-        cr_to_process = CRToProcess(
-            l3a_file_names={
-                "imap_glows_l3a_hist_20250314-repoint000001_v001.cdf",
-                "imap_glows_l3a_hist_20100102-repoint000002_v001.cdf"
-            },
-            uv_anisotropy_file_name="uv_anisotropy.dat",
-            waw_helio_ion_mp_file_name="waw_helio_ion.dat",
-            bad_days_list_file_name="bad_days_list.dat",
-            pipeline_settings_file_name="pipeline_settings.json",
-            cr_start_date=datetime.fromisoformat("2025-03-14 12:34:56.789"),
-            cr_end_date=datetime.fromisoformat("2025-03-24 12:34:56.789"),
-            cr_rotation_number=2095,
+        version_number = 1
+        l3bc_dependencies = GlowsL3BCDependencies(
+            version=version_number,
+            carrington_rotation_number=2095,
+            start_date=datetime.fromisoformat("2025-03-14 12:34:56.789"),
+            end_date=datetime.fromisoformat("2025-03-24 12:34:56.789"),
+            l3a_data=[{"filename": "imap_glows_l3a_hist_20250314-repoint000001_v001.cdf"},
+                      {"filename": "imap_glows_l3a_hist_20100102-repoint000002_v001.cdf"}],
+            external_files={},
+            ancillary_files={
+                'uv_anisotropy': Path("uv_anisotropy.dat"),
+                'WawHelioIonMP_parameters': Path("waw_helio_ion.dat"),
+                'bad_days_list': Path("bad_days_list.dat"),
+                'pipeline_settings': Path("pipeline_settings.json"),
+            }
         )
 
         external_dependencies = ExternalDependencies(
@@ -158,8 +162,8 @@ class TestUtils(unittest.TestCase):
         )
 
         expected_json_to_serialize = {"cr_rotation_number": 2095,
-                                      "l3a_paths": {"imap_glows_l3a_hist_20250314-repoint000001_v001.cdf",
-                                                    "imap_glows_l3a_hist_20100102-repoint000002_v001.cdf"},
+                                      "l3a_paths": ["imap_glows_l3a_hist_20250314-repoint000001_v001.cdf",
+                                                    "imap_glows_l3a_hist_20100102-repoint000002_v001.cdf"],
                                       "cr_start_date": "2025-03-14 12:34:56.789000",
                                       "cr_end_date": "2025-03-24 12:34:56.789000",
                                       "bad_days_list": "bad_days_list.dat",
@@ -172,8 +176,7 @@ class TestUtils(unittest.TestCase):
         mock_zip_file = MagicMock()
         mock_zip.return_value.__enter__.return_value = mock_zip_file
 
-        version_number = 1
-        actual_zip_file_name = archive_dependencies(cr_to_process, external_dependencies, version_number)
+        actual_zip_file_name = archive_dependencies(l3bc_dependencies, external_dependencies)
 
         self.assertEqual(expected_filepath, actual_zip_file_name)
 

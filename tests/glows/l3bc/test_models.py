@@ -97,9 +97,6 @@ class TestModels(CdfModelTestCase):
                 cr_start_date=datetime(2010, 1, 1),
                 cr_end_date=datetime(2010, 2, 1),
                 cr_rotation_number=2091,
-                f107_index_file_path=Path("f107_index_file_path"),
-                lyman_alpha_path=Path("lyman_alpha_path"),
-                omni2_data_path=Path("omni2_data_path"),
             )
 
             test_cases = [
