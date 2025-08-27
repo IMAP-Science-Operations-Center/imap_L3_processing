@@ -1,8 +1,10 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+import functools
+from dataclasses import dataclass, field
 
 import lmfit
+import numexpr
 import numpy as np
 import scipy.optimize
 import uncertainties
@@ -172,15 +174,17 @@ class ForwardModel:
     distance_km: float
     psi: float
 
-    def compute_from_instrument_frame(self, speed, theta, phi):
-        pui_vector_instrument_frame = calculate_pui_velocity_vector(speed, theta, phi)
-        pui_vector_eclipj2000_frame = convert_velocity_relative_to_imap(pui_vector_instrument_frame,
-                                                                        self.ephemeris_time,
-                                                                        "IMAP_SWAPI", "ECLIPJ2000")
-        pui_vector_solar_wind_frame = pui_vector_eclipj2000_frame - self.solar_wind_vector_eclipj2000_frame
-        pickup_ion_speed = np.linalg.norm(pui_vector_solar_wind_frame, axis=-1)
+    def compute_from_instrument_frame(self, speed_grid):
+        # pui_vector_instrument_frame = calculate_pui_velocity_vector(speed, theta, phi)
+        # pui_vector_eclipj2000_frame = convert_velocity_relative_to_imap(pui_vector_instrument_frame,
+        #                                                                 self.ephemeris_time,
+        #                                                                 "IMAP_SWAPI", "ECLIPJ2000")
+        # pui_vector_solar_wind_frame = pui_vector_eclipj2000_frame - self.solar_wind_vector_eclipj2000_frame
+        # pickup_ion_speed = np.linalg.norm(pui_vector_solar_wind_frame, axis=-1)
 
-        result = self.f(pickup_ion_speed)
+
+        # result = self.f(pickup_ion_speed)
+        result = self.f(speed_grid)
         return result
 
     def f(self, pickup_ion_speed):
@@ -198,6 +202,28 @@ class ForwardModel:
         term5 = np.heaviside(1 - w, 0.5)
         return term1 * term2 * term3 * term4 * term5
 
+
+    def f_numexpr(self, pickup_ion_speed):
+        cooling_index = self.fitting_params.cooling_index
+        ionization_rate = self.fitting_params.ionization_rate
+        distance_km = self.distance_km
+        solar_wind_speed_inertial_frame = self.solar_wind_speed_inertial_frame
+        cutoff_speed = self.fitting_params.cutoff_speed
+        pi = np.pi
+        w = pickup_ion_speed / self.fitting_params.cutoff_speed
+
+        distance = numexpr.evaluate("distance_km / ONE_AU_IN_KM * w ** cooling_index")
+        neutral_helium_density_per_cm3 = self.density_of_neutral_helium_lookup_table.density(
+            self.psi, distance)
+
+
+        return numexpr.evaluate("cooling_index / (4 * pi) * "
+        "(ionization_rate * ONE_AU_IN_KM ** 2) / ("
+                "distance_km * solar_wind_speed_inertial_frame * cutoff_speed ** 3) *"
+       " w ** (cooling_index - 3) *"
+        "neutral_helium_density_per_cm3 * (CENTIMETERS_PER_METER * METERS_PER_KILOMETER) ** 3 *"
+        "where(1-w<0, 0, 1)",
+        )
 
 def build_forward_model(fitting_params: FittingParameters, ephemeris_time: float, solar_wind_vector: ndarray,
                         density_of_neutral_helium_lookup_table: DensityOfNeutralHeliumLookupTable) -> ForwardModel:
@@ -221,6 +247,38 @@ class ModelCountRateCalculator:
     geometric_table: GeometricFactorCalibrationTable
     solar_wind_vector: np.ndarray
     density_of_neutral_helium_lookup_table: DensityOfNeutralHeliumLookupTable
+    _speed_grid_cache: dict = field(default_factory=dict)
+
+    # @functools.lru_cache(maxsize=63)
+    def get_speed_grid(self, response_lookup_table: InstrumentResponseLookupTable, ephemeris_time: float):
+
+        key = (id(response_lookup_table), ephemeris_time)
+        cached = self._speed_grid_cache.get(key)
+        if cached is not None:
+            return cached
+
+        speed_inst = calculate_sw_speed(HE_PUI_PARTICLE_MASS_KG, PUI_PARTICLE_CHARGE_COULOMBS,
+                           response_lookup_table.energy)
+
+        pui_vector_instrument_frame = calculate_pui_velocity_vector(speed_inst, response_lookup_table.elevation, response_lookup_table.azimuth)
+        pui_vector_eclipj2000_frame = convert_velocity_relative_to_imap(pui_vector_instrument_frame,
+                                                                        ephemeris_time,
+                                                                        "IMAP_SWAPI", "ECLIPJ2000")
+
+        solar_wind_vector_eclipj2000_frame = convert_velocity_relative_to_imap(self.solar_wind_vector,
+                                          ephemeris_time,
+                                          "IMAP_DPS",
+                                          "ECLIPJ2000")
+
+
+        pui_vector_solar_wind_frame = pui_vector_eclipj2000_frame - solar_wind_vector_eclipj2000_frame
+        speed = np.linalg.norm(pui_vector_solar_wind_frame, axis=-1)
+        self._speed_grid_cache[key] = speed
+        return speed
+
+
+
+
 
     def model_count_rate(self, indices_and_energy_centers: list[tuple[int, float]],
                          fitting_params: FittingParameters, ephemeris_time: float) -> np.ndarray:
@@ -235,11 +293,11 @@ class ModelCountRateCalculator:
 
     def model_one_count_rate(self, energy_bin_index, energy_bin_center, forward_model) -> float:
         response_lookup_table = self.response_lookup_table_collection.get_table_for_energy_bin(energy_bin_index)
-        integral = model_count_rate_integral(response_lookup_table, forward_model)
+        speed_grid = self.get_speed_grid(response_lookup_table, forward_model.ephemeris_time)
+        integral = model_count_rate_integral(response_lookup_table, forward_model, speed_grid)
 
         geometric_factor = self.geometric_table.lookup_geometric_factor(energy_bin_center)
-        denominator = _model_count_rate_denominator(response_lookup_table)
-        return (geometric_factor / 2) * integral / denominator + forward_model.fitting_params.background_count_rate
+        return (geometric_factor / 2) * integral+ forward_model.fitting_params.background_count_rate
 
 
 def calc_chi_squared_lm_fit(params: Parameters, observed_count_rates: np.ndarray,
@@ -262,16 +320,19 @@ def calc_chi_squared_lm_fit(params: Parameters, observed_count_rates: np.ndarray
     return result
 
 
-def model_count_rate_integral(response_lookup_table: InstrumentResponseLookupTable, forward_model: ForwardModel):
-    speed = calculate_sw_speed(HE_PUI_PARTICLE_MASS_KG, PUI_PARTICLE_CHARGE_COULOMBS,
-                               response_lookup_table.energy)
-    count_rates = forward_model.compute_from_instrument_frame(speed, response_lookup_table.elevation,
-                                                              response_lookup_table.azimuth)
+def model_count_rate_integral(response_lookup_table: InstrumentResponseLookupTable, forward_model: ForwardModel, speed_grid):
+    # count_rates = forward_model.compute_from_instrument_frame(speed, response_lookup_table.elevation,
+    #                                                           response_lookup_table.azimuth)
+    count_rates = forward_model.compute_from_instrument_frame(speed_grid)
 
-    integrals = response_lookup_table.response * count_rates \
-                * speed ** 4 * \
-                response_lookup_table.d_energy * np.cos(np.deg2rad(response_lookup_table.elevation)) * \
-                response_lookup_table.d_azimuth * response_lookup_table.d_elevation
+    # integrals = response_lookup_table.response * count_rates \
+    #             * speed ** 4 * \
+    #             response_lookup_table.d_energy * np.cos(np.deg2rad(response_lookup_table.elevation)) * \
+    #             response_lookup_table.d_azimuth * response_lookup_table.d_elevation
+
+    integrals = response_lookup_table.integral_factor * count_rates
+
+    # integrals = count_rates * response_lookup_table.get_integral_term()
 
     return np.sum(integrals)
 

@@ -1,13 +1,18 @@
+import cProfile
+import pstats
 from datetime import datetime, timedelta
 from pathlib import Path
 from unittest import skipIf
 from unittest.mock import patch, Mock, MagicMock
 
+import numexpr
 import numpy as np
+import pyinstrument
 import spacepy.pycdf
 from imap_processing.swapi.l2 import swapi_l2
 from lmfit import Parameters
 from spacepy.pycdf import CDF
+from spiceypy import spiceypy
 from uncertainties import ufloat
 
 import imap_l3_processing
@@ -39,8 +44,28 @@ FAKE_ROTATION_MATRIX_FROM_PSP = np.array(
      [-1.56457525e-06, -1.16063465e-06, -1.21809529e-07, 5.94803234e-01, -8.03675802e-01, 1.77289947e-02],
      [1.26218156e-07, 5.29395592e-23, 3.76211978e-09, -2.97932551e-02, 0.00000000e+00, 9.99556082e-01]])
 
+def cprofile_wrapper(function_to_be_decorated):
+    def wrapper_cprofile(*args, **kwargs):
+        with cProfile.Profile() as p:
+            result = function_to_be_decorated(*args, **kwargs)
+            print(f"========\n{function_to_be_decorated}")
+            p.dump_stats(f"profile_{datetime.now().strftime("%Y%m%dT%H%M%S")}.prof")
+        return result
+    return wrapper_cprofile
+
+def pyinstrument_wrapper(function_to_be_decorated):
+
+    def wrapper_pyinstrument(*args, **kwargs):
+        with pyinstrument.Profiler() as p:
+            result = function_to_be_decorated(*args, **kwargs)
+        p.open_in_browser()
+        return result
+
+    return wrapper_pyinstrument
 
 class TestCalculatePickupIon(SpiceTestCase):
+    instrument_response_collection = None
+
     def setUp(self) -> None:
         density_of_neutral_helium_lut_path = Path(
             imap_l3_processing.__file__).parent.parent / 'tests' / 'test_data' / 'swapi' / "imap_swapi_l2_density-of-neutral-helium-lut-text-not-cdf_20241023_v002.cdf"
@@ -48,13 +73,11 @@ class TestCalculatePickupIon(SpiceTestCase):
         self.density_of_neutral_helium_lookup_table = DensityOfNeutralHeliumLookupTable.from_file(
             density_of_neutral_helium_lut_path)
 
-        self.instrument_response_collection = None
-
     def get_response_lookup_table_collection(self) -> InstrumentResponseLookupTableCollection:
-        if self.instrument_response_collection is None:
+        if TestCalculatePickupIon.instrument_response_collection is None:
             response_lut_path = get_test_data_path("swapi/imap_swapi_instrument-response-lut_20241023_v000.zip")
-            self.instrument_response_collection = InstrumentResponseLookupTableCollection.from_file(response_lut_path)
-        return self.instrument_response_collection
+            TestCalculatePickupIon.instrument_response_collection = InstrumentResponseLookupTableCollection.from_file(response_lut_path)
+        return TestCalculatePickupIon.instrument_response_collection
 
     @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.convert_velocity_relative_to_imap")
     @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.spiceypy")
@@ -537,7 +560,10 @@ class TestCalculatePickupIon(SpiceTestCase):
     LAST_SUCCESSFUL_RUN = datetime(2025, 8, 14, 12, 00)
     ALLOWED_GAP_TIME = timedelta(days=7)
 
-    @skipIf(datetime.now() < LAST_SUCCESSFUL_RUN + ALLOWED_GAP_TIME, "expensive test already run in last week")
+
+
+    #@skipIf(datetime.now() < LAST_SUCCESSFUL_RUN + ALLOWED_GAP_TIME, "expensive test already run in last week")
+    #@cprofile_wrapper
     @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.spiceypy")
     def test_calculate_pickup_ions_with_minimize(self, mock_spice):
         ephemeris_time_for_epoch = 100000
@@ -586,6 +612,36 @@ class TestCalculatePickupIon(SpiceTestCase):
             self.assertAlmostEqual(1e-7, actual_fitting_parameters.ionization_rate, delta=5e-9)
             self.assertAlmostEqual(520, actual_fitting_parameters.cutoff_speed, delta=5)
             self.assertAlmostEqual(0.1, actual_fitting_parameters.background_count_rate, delta=0.05)
+
+
+
+    @pyinstrument_wrapper
+    def test_snapshot_model_count_rate_result(self):
+        geometric_factor_lut_path = get_test_data_path(
+            "swapi/imap_swapi_energy-gf-lut_20240923_v000.dat")
+
+        geometric_factor_lut = GeometricFactorCalibrationTable.from_file(geometric_factor_lut_path)
+        sw_velocity_vector = np.array([0, 0, -500])
+
+        calculator = ModelCountRateCalculator(
+            response_lookup_table_collection=self.get_response_lookup_table_collection(),
+            geometric_table=geometric_factor_lut,
+            solar_wind_vector=sw_velocity_vector,
+            density_of_neutral_helium_lookup_table=self.density_of_neutral_helium_lookup_table
+        )
+        ephemeris_time = 800000000
+
+        fit_params = FittingParameters(
+            cooling_index=1.5,
+            ionization_rate=1e-7,
+            cutoff_speed=400,
+            background_count_rate=0.1
+        )
+        indices_and_energy_centers = [(np.int64(62), np.float64(19098.358)), (np.int64(61), np.float64(17541.177)), (np.int64(60), np.float64(16113.177)), (np.int64(59), np.float64(14798.38)), (np.int64(58), np.float64(13591.366)), (np.int64(57), np.float64(12485.777)), (np.int64(56), np.float64(11467.618)), (np.int64(55), np.float64(10532.608)), (np.int64(54), np.float64(9675.514)), (np.int64(53), np.float64(8885.046)), (np.int64(52), np.float64(8165.394)), (np.int64(51), np.float64(7501.76)), (np.int64(50), np.float64(6888.477)), (np.int64(49), np.float64(6327.927)), (np.int64(48), np.float64(5811.486)), (np.int64(47), np.float64(5338.868))]
+
+        rates = calculator.model_count_rate(indices_and_energy_centers, fit_params, ephemeris_time)
+        np.testing.assert_allclose(rates, [0.1, 0.10003711238804557, 0.10051147333797386, 0.11539080038179494, 0.24695484811167787, 0.4658367488032966, 0.6315184089540633, 0.7221186883032067, 0.7631495109243865, 0.769051763324389, 0.7489970758555614, 0.7107171626571513, 0.669071369362676, 0.6198514811899901, 0.5685065780319507, 0.5197560948020243],
+                                   rtol=1e-12)
 
     @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.calculate_solar_wind_velocity_vector")
     def test_calculate_ten_minute_velocities(self, mock_calculate_solar_wind_velocity_vector):
@@ -644,3 +700,5 @@ class TestCalculatePickupIon(SpiceTestCase):
         np.testing.assert_almost_equal(
             np.square(residual_array),
             sweep_count * swapi_l2.TIME_PER_BIN * chi_squared_formula)
+
+
