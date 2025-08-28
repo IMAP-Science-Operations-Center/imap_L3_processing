@@ -213,12 +213,10 @@ class TestCalculatePickupIon(SpiceTestCase):
         mock_calculate_pui_velocity_vector.return_value = pui_velocity_instrument_frame
 
         pui_velocity_eclipj2000 = np.array([5, 7, 9])
-        sw_velocity_eclipj2000 = np.array([8, 10, 12])
         mock_convert_velocity.return_value = pui_velocity_eclipj2000
 
         ephemeris_time_for_epoch = 1234567.1
 
-        speed = 240.54412560893869
         theta = 75
         phi = -135
         solar_wind_vector = np.array([0, 0, 500])
@@ -257,12 +255,12 @@ class TestCalculatePickupIon(SpiceTestCase):
             d_azimuth=1,
             response=0.5
         )
-        changed_table_result = calculator.get_speed_grid(second_response_table, ephemeris_time_for_epoch)
+        calculator.get_speed_grid(second_response_table, ephemeris_time_for_epoch)
         self.assertEqual(2, mock_calculate_pui_velocity_vector.call_count)
         self.assertEqual(4, mock_convert_velocity.call_count)
 
         new_time = ephemeris_time_for_epoch + 1
-        changed_time_result = calculator.get_speed_grid(response_table, new_time)
+        calculator.get_speed_grid(response_table, new_time)
         self.assertEqual(3, mock_calculate_pui_velocity_vector.call_count)
         self.assertEqual(6, mock_convert_velocity.call_count)
 
@@ -364,7 +362,6 @@ class TestCalculatePickupIon(SpiceTestCase):
         with CDF(str(data_file_path)) as cdf:
             energy = cdf["energy"][...]
             count_rate = cdf["swp_coin_rate"][...]
-            count_rate_delta = cdf["swp_coin_unc"][...]
 
             combined_counts, combined_energies = calculate_combined_sweeps(count_rate, energy)
             mock_calculate_combined_sweeps.return_value = combined_counts, combined_energies
