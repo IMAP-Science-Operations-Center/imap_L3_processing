@@ -8,11 +8,13 @@ from dataclasses import replace
 from datetime import datetime, timedelta
 from pathlib import Path
 from subprocess import run
+from typing import Optional
+from zipfile import ZipFile, ZIP_DEFLATED
 
-import imap_data_access
 import numpy as np
 from imap_data_access.processing_input import ProcessingInputCollection
 
+from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
 from imap_l3_processing.glows.descriptors import GLOWS_L3A_DESCRIPTOR
 from imap_l3_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
 from imap_l3_processing.glows.l3a.glows_toolkit.l3a_data import L3aData
@@ -22,13 +24,12 @@ from imap_l3_processing.glows.l3bc.cannot_process_carrington_rotation_error impo
 from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDependencies
 from imap_l3_processing.glows.l3bc.glows_l3bc_initializer import GlowsL3BCInitializer
 from imap_l3_processing.glows.l3bc.models import GlowsL3BIonizationRate, GlowsL3CSolarWind, GlowsL3BCProcessorOutput, \
-    ExternalDependencies
+    ExternalDependencies, read_pipeline_settings
 from imap_l3_processing.glows.l3bc.science.filter_out_bad_days import filter_l3a_files
 from imap_l3_processing.glows.l3bc.science.generate_l3bc import generate_l3bc
-from imap_l3_processing.glows.l3bc.utils import get_pointing_date_range, archive_dependencies
+from imap_l3_processing.glows.l3bc.utils import get_pointing_date_range
 from imap_l3_processing.glows.l3d.glows_l3d_dependencies import GlowsL3DDependencies
 from imap_l3_processing.glows.l3d.glows_l3d_initializer import GlowsL3DInitializer
-from imap_l3_processing.glows.l3d.models import GlowsL3DSolarParamsHistory
 from imap_l3_processing.glows.l3d.utils import create_glows_l3b_json_file_from_cdf, create_glows_l3c_json_file_from_cdf, \
     PATH_TO_L3D_TOOLKIT, convert_json_to_l3d_data_product, get_parent_file_names_from_l3d_json, set_version_on_txt_files
 from imap_l3_processing.glows.l3e.glows_l3e_dependencies import GlowsL3EDependencies
@@ -57,43 +58,27 @@ class GlowsProcessor(Processor):
             cdf = save_data(l3a_output)
             return [cdf]
         elif self.input_metadata.data_level == "l3b":
-            l3b_query_result = imap_data_access.query(instrument="glows", data_level="l3b",
-                                                      descriptor="ion-rate-profile", version="latest")
-            l3c_query_result = imap_data_access.query(instrument="glows", data_level="l3c", descriptor="solar-hist",
-                                                      version="latest")
+            products_list = []
 
-            l3bs_by_cr = {int(result['cr']): Path(result["file_path"]).name for result in l3b_query_result}
-            l3cs_by_cr = {int(result['cr']): Path(result["file_path"]).name for result in l3c_query_result}
+            l3bc_initializer_data = GlowsL3BCInitializer.get_crs_to_process()
 
-            external_dependencies, all_l3bc_dependencies = GlowsL3BCInitializer.get_crs_to_process(l3bs_by_cr)
+            glows_l3bc_output_data = self.process_l3bc(l3bc_initializer_data.external_dependencies,
+                                                       l3bc_initializer_data.l3bc_dependencies)
+            products_list.extend(glows_l3bc_output_data.data_products)
 
-            updated_l3bs, updated_l3cs, products = self.process_l3bc(external_dependencies, all_l3bc_dependencies)
+            l3bs = list({**l3bc_initializer_data.l3bs_by_cr, **glows_l3bc_output_data.l3bs_by_cr}.values())
+            l3cs = list({**l3bc_initializer_data.l3cs_by_cr, **glows_l3bc_output_data.l3cs_by_cr}.values())
+            l3d_initializer_result = GlowsL3DInitializer.should_process_l3d(l3bc_initializer_data.external_dependencies,
+                                                                            l3bs, l3cs)
+            if l3d_initializer_result is not None:
+                version_number, glows_l3d_dependency = l3d_initializer_result
+                process_l3d_result = self.process_l3d(glows_l3d_dependency, version_number)
 
-            l3bs = list({**l3bs_by_cr, **updated_l3bs}.values())
-            l3cs = list({**l3cs_by_cr, **updated_l3cs}.values())
+                if process_l3d_result is not None:
+                    glows_l3d_output_data_path, l3d_output_text_files = process_l3d_result
+                    products_list.extend([glows_l3d_output_data_path, *l3d_output_text_files])
 
-            l3d_version, l3d_deps = GlowsL3DInitializer.should_process_l3d(external_dependencies, l3bs, l3cs)
-            ###
-
-            return products
-
-            # Ancillary, L3b, L3c, lymann alpha,
-
-            # GlowsL3dInitializer.get_l3d_to_process(l3bs_by_cr, l3cs_by_cr, external_dependencies)
-            #
-            # l3d_query_result = imap_data_access.query(instrument="glows", data_level="l3d", descriptor="solar-hist",
-            #                                           version="latest")
-            # most_recent_l3d = max(l3d_query_result, key=lambda result: result["cr"])
-            # l3d_cdf_parents = read_cdf_parents(most_recent_l3d["file_path"])
-            #
-            # if not set(list(l3bs_by_cr.values()) + list(l3cs_by_cr.values())).issubset(l3d_cdf_parents):
-            #     l3d_dependencies = GlowsL3DDependencies.fetch_dependencies(self.dependencies)
-            #     data_product, l3d_txt_paths, last_processed_cr = self.process_l3d(l3d_dependencies)
-            #     if data_product is not None and l3d_txt_paths is not None and last_processed_cr is not None:
-            #         cdf = save_data(data_product, cr_number=last_processed_cr)
-            #         return [cdf, *l3d_txt_paths]
-            #     return []
-
+            return products_list
         elif self.input_metadata.data_level == "l3e":
             l3e_dependencies, cr_number = GlowsL3EDependencies.fetch_dependencies(self.dependencies,
                                                                                   self.input_metadata.descriptor)
@@ -145,21 +130,21 @@ class GlowsProcessor(Processor):
         l3cs_by_cr = {}
         data_products = []
         for dependency in dependencies:
-            zip_path = archive_dependencies(l3bc_deps=dependency, external_dependencies=external_dependencies)
+            zip_path = GlowsProcessor.archive_dependencies(l3bc_deps=dependency,
+                                                           external_dependencies=external_dependencies)
 
             filtered_days = filter_l3a_files(dependency.l3a_data, dependency.ancillary_files['bad_days_list'],
                                              dependency.carrington_rotation_number)
-
-            l3b_metadata = InputMetadata("glows", "l3b", dependency.start_date, dependency.end_date,
-                                         f"v{dependency.version:03}", "ion-rate-profile")
-            l3c_metadata = InputMetadata("glows", "l3c", dependency.start_date, dependency.end_date,
-                                         f"v{dependency.version:03}", "sw-profile")
-
             try:
                 l3b_data, l3c_data = generate_l3bc(replace(dependency, l3a_data=filtered_days))
             except CannotProcessCarringtonRotationError as e:
                 print(f"skipping CR {dependency.carrington_rotation_number}:", e)
                 continue
+
+            l3b_metadata = InputMetadata("glows", "l3b", dependency.start_date, dependency.end_date,
+                                         f"v{dependency.version:03}", "ion-rate-profile")
+            l3c_metadata = InputMetadata("glows", "l3c", dependency.start_date, dependency.end_date,
+                                         f"v{dependency.version:03}", "sw-profile")
 
             l3b_data_product = GlowsL3BIonizationRate.from_instrument_team_dictionary(l3b_data, l3b_metadata)
             l3c_data_product = GlowsL3CSolarWind.from_instrument_team_dictionary(l3c_data, l3c_metadata)
@@ -180,24 +165,22 @@ class GlowsProcessor(Processor):
             data_products=data_products
         )
 
-    def process_l3d(self, dependencies: GlowsL3DDependencies, version: int) -> tuple[
-        GlowsL3DSolarParamsHistory, list[Path], int]:
+    def process_l3d(self, dependencies: GlowsL3DDependencies, version: int) -> Optional[tuple[Path, list[Path]]]:
+
         [create_glows_l3b_json_file_from_cdf(l3b) for l3b in dependencies.l3b_file_paths]
         [create_glows_l3c_json_file_from_cdf(l3c) for l3c in dependencies.l3c_file_paths]
 
         os.makedirs(PATH_TO_L3D_TOOLKIT / 'data_l3d', exist_ok=True)
         os.makedirs(PATH_TO_L3D_TOOLKIT / 'data_l3d_txt', exist_ok=True)
 
-        with open(dependencies.ancillary_files['pipeline_settings'], "r") as fp:
-            pipeline_settings = json.load(fp)
-            cr_to_process = int(pipeline_settings['start_cr'])
+        cr_to_process = read_pipeline_settings(dependencies.ancillary_files['pipeline_settings'])["start_cr"]
 
         file_manifest = {
+            'external_files': {key: str(val) for key, val in dependencies.external_files.items()},
             'ancillary_files': {
                 'pipeline_settings': str(dependencies.ancillary_files['pipeline_settings']),
                 'WawHelioIon': {key: str(val) for key, val in dependencies.ancillary_files['WawHelioIon'].items()}
             },
-            'external_files': {key: str(val) for key, val in dependencies.external_files.items()}
         }
 
         last_processed_cr = None
@@ -217,23 +200,28 @@ class GlowsProcessor(Processor):
                 raise Exception(e.stderr) from e
 
         if last_processed_cr:
-            file_name = f'imap_glows_l3d_solar-params-history_19470303-cr0{last_processed_cr}_v00.json'
-
-            output_txt_files = [PATH_TO_L3D_TOOLKIT / 'data_l3d_txt' / last_cr_txt_file for last_cr_txt_file in
-                                os.listdir(PATH_TO_L3D_TOOLKIT / 'data_l3d_txt') if
-                                str(last_processed_cr) in last_cr_txt_file]
-
             formatted_version = f"v{version:03}"
-            txt_files_with_correct_version = set_version_on_txt_files(output_txt_files, formatted_version)
+
+            output_text_files = []
+            for text_file in os.listdir(PATH_TO_L3D_TOOLKIT / 'data_l3d_txt'):
+                if str(last_processed_cr) in text_file:
+                    output_text_files.append(PATH_TO_L3D_TOOLKIT / 'data_l3d_txt' / text_file)
+
+            txt_files_with_correct_version = set_version_on_txt_files(output_text_files, formatted_version)
+
+            file_name = f'imap_glows_l3d_solar-params-history_19470303-cr0{last_processed_cr}_v00.json'
 
             start_date = datetime(1947, 3, 3)
             data_product_metadata = InputMetadata(instrument="glows", data_level="l3d", descriptor="solar-hist",
                                                   start_date=start_date, end_date=start_date, version=formatted_version)
             parent_file_names = get_parent_file_names_from_l3d_json(PATH_TO_L3D_TOOLKIT / 'data_l3d')
 
-            return convert_json_to_l3d_data_product(PATH_TO_L3D_TOOLKIT / 'data_l3d' / file_name, data_product_metadata,
-                                                    parent_file_names), txt_files_with_correct_version, last_processed_cr
-        return None, None, None
+            l3d_data_product = convert_json_to_l3d_data_product(PATH_TO_L3D_TOOLKIT / 'data_l3d' / file_name,
+                                                                data_product_metadata, parent_file_names)
+            l3d_data_product_path = save_data(l3d_data_product, cr_number=last_processed_cr)
+
+            return l3d_data_product_path, txt_files_with_correct_version
+        return None
 
     def process_l3e_lo(self, epoch: datetime, epoch_delta: timedelta, elongation_value: int) -> list[Path]:
         call_args_object = determine_call_args_for_l3e_executable(epoch, epoch + epoch_delta, elongation_value)
@@ -309,3 +297,26 @@ class GlowsProcessor(Processor):
         data['daily_lightcurve']['spin_angle_delta'] = np.full_like(data['daily_lightcurve']['spin_angle'], delta)
 
         return data
+
+    @staticmethod
+    def archive_dependencies(l3bc_deps: GlowsL3BCDependencies, external_dependencies: ExternalDependencies) -> Path:
+        start_date = l3bc_deps.start_date.strftime("%Y%m%d")
+        zip_path = TEMP_CDF_FOLDER_PATH / f"imap_glows_l3b-archive_{start_date}_v{l3bc_deps.version:03}.zip"
+        json_filename = "cr_to_process.json"
+        with ZipFile(zip_path, "w", ZIP_DEFLATED) as file:
+            file.write(external_dependencies.lyman_alpha_path, "lyman_alpha_composite.nc")
+            file.write(external_dependencies.omni2_data_path, "omni2_all_years.dat")
+            file.write(external_dependencies.f107_index_file_path, "f107_fluxtable.txt")
+            cr = {"cr_rotation_number": l3bc_deps.carrington_rotation_number,
+                  "l3a_paths": [l3a['filename'] for l3a in l3bc_deps.l3a_data],
+                  "cr_start_date": str(l3bc_deps.start_date),
+                  "cr_end_date": str(l3bc_deps.end_date),
+                  "bad_days_list": l3bc_deps.ancillary_files['bad_days_list'].name,
+                  "pipeline_settings": l3bc_deps.ancillary_files['pipeline_settings'].name,
+                  "waw_helioion_mp": l3bc_deps.ancillary_files['WawHelioIonMP_parameters'].name,
+                  "uv_anisotropy": l3bc_deps.ancillary_files['uv_anisotropy'].name,
+                  "repointing_file": None
+                  }
+            json_string = json.dumps(cr)
+            file.writestr(json_filename, json_string)
+        return zip_path

@@ -6,8 +6,9 @@ from unittest.mock import Mock, patch, call, sentinel
 
 import numpy as np
 
-from imap_l3_processing.glows.l3bc.glows_l3bc_initializer import GlowsL3BCInitializer
+from imap_l3_processing.glows.l3bc.glows_l3bc_initializer import GlowsL3BCInitializer, GlowsL3BCInitializerData
 from imap_l3_processing.glows.l3bc.models import CRToProcess, ExternalDependencies
+from tests.test_helpers import create_glows_mock_query_results
 
 
 class TestGlowsL3BCInitializer(unittest.TestCase):
@@ -31,10 +32,18 @@ class TestGlowsL3BCInitializer(unittest.TestCase):
                                 mock_l3bc_deps_from_cr):
 
         mock_query.side_effect = [
-            [
-                {"file_path": "some/server/path/glows_l3a_hist_20100101_v001.cdf"},
-                {"file_path": "some/server/path/glows_l3a_hist_20100201_v001.cdf"},
-            ],
+            create_glows_mock_query_results([
+                "imap_glows_l3a_hist_20100101_v001.cdf",
+                "imap_glows_l3a_hist_20100201_v001.cdf"
+            ]),
+            create_glows_mock_query_results([
+                "imap_glows_l3b_ion-rate-profile_20100101-cr02091_v001.cdf",
+                "imap_glows_l3b_ion-rate-profile_20100201-cr02092_v001.cdf"
+            ]),
+            create_glows_mock_query_results([
+                "imap_glows_l3c_sw-profile_20100101-cr02091_v001.cdf",
+                "imap_glows_l3c_sw-profile_20100201-cr02092_v001.cdf"
+            ]),
             sentinel.uv_anisotropy_query_result,
             sentinel.waw_helio_ion_query_result,
             sentinel.bad_days_list_query_result,
@@ -42,8 +51,8 @@ class TestGlowsL3BCInitializer(unittest.TestCase):
         ]
 
         mock_group_l3a_by_cr.return_value = {
-            2091: {"glows_l3a_hist_20100101_v001.cdf"},
-            2092: {"glows_l3a_hist_20100201_v001.cdf"}
+            2091: {"imap_glows_l3a_hist_20100101_v001.cdf"},
+            2092: {"imap_glows_l3a_hist_20100201_v001.cdf"}
         }
 
         mock_get_date_range_of_cr.side_effect = [
@@ -64,15 +73,22 @@ class TestGlowsL3BCInitializer(unittest.TestCase):
 
         mock_should_process_cr_candidate.side_effect = [2, None]
 
-        l3bs_by_cr = {
+        expected_l3bs_by_cr = {
             2091: "imap_glows_l3b_ion-rate-profile_20100101-cr02091_v001.cdf",
             2092: "imap_glows_l3b_ion-rate-profile_20100201-cr02092_v001.cdf"
         }
 
-        actual_external_deps, actual_l3bc_deps = GlowsL3BCInitializer.get_crs_to_process(l3bs_by_cr)
+        expected_l3cs_by_cr = {
+            2091: "imap_glows_l3c_sw-profile_20100101-cr02091_v001.cdf",
+            2092: "imap_glows_l3c_sw-profile_20100201-cr02092_v001.cdf"
+        }
+
+        l3bc_initializer_data = GlowsL3BCInitializer.get_crs_to_process()
 
         mock_query.assert_has_calls([
             call(instrument="glows", data_level="l3a", version="latest"),
+            call(instrument="glows", data_level="l3b", descriptor='ion-rate-profile', version="latest"),
+            call(instrument="glows", data_level="l3c", descriptor='sw-profile', version="latest"),
             call(table="ancillary", instrument="glows", descriptor="uv-anisotropy-1CR"),
             call(table="ancillary", instrument="glows", descriptor="WawHelioIonMP"),
             call(table="ancillary", instrument="glows", descriptor="bad-days-list"),
@@ -80,8 +96,8 @@ class TestGlowsL3BCInitializer(unittest.TestCase):
         ])
 
         mock_group_l3a_by_cr.assert_called_once_with([
-            "glows_l3a_hist_20100101_v001.cdf",
-            "glows_l3a_hist_20100201_v001.cdf",
+            "imap_glows_l3a_hist_20100101_v001.cdf",
+            "imap_glows_l3a_hist_20100201_v001.cdf",
         ])
 
         mock_fetch_external_deps.assert_called_once()
@@ -98,7 +114,7 @@ class TestGlowsL3BCInitializer(unittest.TestCase):
         ])
 
         expected_cr_candidate_1 = CRToProcess(
-            l3a_file_names={"glows_l3a_hist_20100101_v001.cdf"},
+            l3a_file_names={"imap_glows_l3a_hist_20100101_v001.cdf"},
             uv_anisotropy_file_name="uv_anisotropy_best_ancillary_1",
             waw_helio_ion_mp_file_name="waw_helio_ion_best_ancillary_1",
             bad_days_list_file_name="bad_days_list_best_ancillary_1",
@@ -108,7 +124,7 @@ class TestGlowsL3BCInitializer(unittest.TestCase):
         )
 
         expected_cr_candidate_2 = CRToProcess(
-            l3a_file_names={"glows_l3a_hist_20100201_v001.cdf"},
+            l3a_file_names={"imap_glows_l3a_hist_20100201_v001.cdf"},
             uv_anisotropy_file_name="uv_anisotropy_best_ancillary_2",
             waw_helio_ion_mp_file_name="waw_helio_ion_best_ancillary_2",
             bad_days_list_file_name="bad_days_list_best_ancillary_2",
@@ -118,15 +134,21 @@ class TestGlowsL3BCInitializer(unittest.TestCase):
         )
 
         mock_should_process_cr_candidate.assert_has_calls([
-            call(expected_cr_candidate_1, l3bs_by_cr, mock_fetch_external_deps.return_value),
-            call(expected_cr_candidate_2, l3bs_by_cr, mock_fetch_external_deps.return_value)
+            call(expected_cr_candidate_1, expected_l3bs_by_cr, mock_fetch_external_deps.return_value),
+            call(expected_cr_candidate_2, expected_l3bs_by_cr, mock_fetch_external_deps.return_value)
         ], any_order=False)
 
         mock_l3bc_deps_from_cr.assert_called_once_with(expected_cr_candidate_1, 2,
                                                        mock_fetch_external_deps.return_value)
 
-        self.assertEqual([mock_l3bc_deps_from_cr.return_value], actual_l3bc_deps)
-        self.assertEqual(mock_fetch_external_deps.return_value, actual_external_deps)
+        expected_initializer_data = GlowsL3BCInitializerData(
+            external_dependencies=mock_fetch_external_deps.return_value,
+            l3bc_dependencies=[mock_l3bc_deps_from_cr.return_value],
+            l3bs_by_cr=expected_l3bs_by_cr,
+            l3cs_by_cr=expected_l3cs_by_cr,
+        )
+
+        self.assertEqual(expected_initializer_data, l3bc_initializer_data)
 
     @patch("imap_l3_processing.glows.l3bc.glows_l3bc_initializer.GlowsL3BCInitializer.group_l3a_by_cr")
     @patch("imap_l3_processing.glows.l3bc.glows_l3bc_initializer.imap_data_access.query")
@@ -154,18 +176,26 @@ class TestGlowsL3BCInitializer(unittest.TestCase):
 
                 mock_query.side_effect = query_that_returns_empty_list_for_missing_ancillary
 
-                l3bs_by_cr = {}
-                actual_crs_to_process = GlowsL3BCInitializer.get_crs_to_process(l3bs_by_cr)
+                actual_crs_to_process = GlowsL3BCInitializer.get_crs_to_process()
 
                 mock_query.assert_has_calls([
                     call(instrument="glows", data_level="l3a", version="latest"),
+                    call(instrument="glows", data_level="l3b", descriptor="ion-rate-profile", version="latest"),
+                    call(instrument="glows", data_level="l3c", descriptor="sw-profile", version="latest"),
                     call(table="ancillary", instrument="glows", descriptor="uv-anisotropy-1CR"),
                     call(table="ancillary", instrument="glows", descriptor="WawHelioIonMP"),
                     call(table="ancillary", instrument="glows", descriptor="bad-days-list"),
                     call(table="ancillary", instrument="glows", descriptor="pipeline-settings-l3bcde")
                 ])
 
-                self.assertEqual((self.mock_external_dependencies_fetch.return_value, []), actual_crs_to_process)
+                expected_initializer_result = GlowsL3BCInitializerData(
+                    external_dependencies=self.mock_external_dependencies_fetch.return_value,
+                    l3bc_dependencies=[],
+                    l3bs_by_cr={},
+                    l3cs_by_cr={}
+                )
+
+                self.assertEqual(expected_initializer_result, actual_crs_to_process)
 
     @patch("imap_l3_processing.glows.l3bc.glows_l3bc_initializer.GlowsL3BCInitializer.should_process_cr_candidate",
            return_value=True)
@@ -174,7 +204,8 @@ class TestGlowsL3BCInitializer(unittest.TestCase):
     @patch("imap_l3_processing.glows.l3bc.glows_l3bc_initializer.ExternalDependencies.fetch_dependencies")
     @patch("imap_l3_processing.glows.l3bc.glows_l3bc_initializer.GlowsL3BCInitializer.group_l3a_by_cr")
     def test_get_crs_to_process_returns_no_crs_when_missing_external_deps(self, mock_group_l3a_by_cr,
-                                                                          mock_fetch_ext_dependencies, __, ___, ____):
+                                                                          mock_fetch_ext_dependencies, mock_query, ___,
+                                                                          ____):
         test_cases = [
             ExternalDependencies(None, Path("some_lyman"), Path("some_omni")),
             ExternalDependencies(Path("some_f107"), None, Path("some_omni")),
@@ -183,12 +214,41 @@ class TestGlowsL3BCInitializer(unittest.TestCase):
 
         for external_deps in test_cases:
             with self.subTest(external_deps):
+                mock_query.reset_mock()
+
                 mock_fetch_ext_dependencies.return_value = external_deps
                 mock_group_l3a_by_cr.return_value = {2091: {"glows_l3a_hist_20100101_v001.cdf"}}
 
-                actual_crs_to_process = GlowsL3BCInitializer.get_crs_to_process({})
+                mock_query.side_effect = [
+                    create_glows_mock_query_results(["imap_glows_l3a_hist_20100101_v001.cdf"]),
+                    create_glows_mock_query_results(["imap_glows_l3b_ion-rate-profile_20100101-cr00001_v001.cdf"]),
+                    create_glows_mock_query_results(["imap_glows_l3c_sw-profile_20100101-cr00001_v001.cdf"]),
+                    create_glows_mock_query_results(["imap_glows_uv-anisotropy-1CR_20100101_v001.dat"]),
+                    create_glows_mock_query_results(["imap_glows_WawHelioIonMP_20100101_v001.dat"]),
+                    create_glows_mock_query_results(["imap_glows_bad-days-list_20100101_v001.dat"]),
+                    create_glows_mock_query_results(["imap_glows_pipeline-settings-l3bcde_20100101_v001.json"])
+                ]
 
-                self.assertEqual((external_deps, []), actual_crs_to_process)
+                actual_crs_to_process = GlowsL3BCInitializer.get_crs_to_process()
+
+                mock_query.assert_has_calls([
+                    call(instrument="glows", data_level="l3a", version="latest"),
+                    call(instrument="glows", data_level="l3b", descriptor="ion-rate-profile", version="latest"),
+                    call(instrument="glows", data_level="l3c", descriptor="sw-profile", version="latest"),
+                    call(table="ancillary", instrument="glows", descriptor="uv-anisotropy-1CR"),
+                    call(table="ancillary", instrument="glows", descriptor="WawHelioIonMP"),
+                    call(table="ancillary", instrument="glows", descriptor="bad-days-list"),
+                    call(table="ancillary", instrument="glows", descriptor="pipeline-settings-l3bcde"),
+                ])
+
+                expected_initializer_result = GlowsL3BCInitializerData(
+                    external_dependencies=external_deps,
+                    l3bc_dependencies=[],
+                    l3bs_by_cr={1: "imap_glows_l3b_ion-rate-profile_20100101-cr00001_v001.cdf"},
+                    l3cs_by_cr={1: "imap_glows_l3c_sw-profile_20100101-cr00001_v001.cdf"},
+                )
+
+                self.assertEqual(expected_initializer_result, actual_crs_to_process)
 
     def test_should_process_cr_excludes_crs_within_buffer_period(self):
         cr_candidate = CRToProcess(

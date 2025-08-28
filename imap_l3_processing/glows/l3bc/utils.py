@@ -1,8 +1,7 @@
-import json
+from datetime import timedelta, datetime
 from datetime import timedelta, datetime
 from pathlib import Path
 from typing import Optional
-from zipfile import ZipFile, ZIP_DEFLATED
 
 import imap_data_access
 import numpy as np
@@ -10,7 +9,6 @@ import pandas as pd
 from imap_processing.spice.repoint import get_repoint_data
 from spacepy.pycdf import CDF
 
-from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
 from imap_l3_processing.glows.l3a.models import GlowsL3LightCurve, PHOTON_FLUX_UNCERTAINTY_CDF_VAR_NAME, \
     PHOTON_FLUX_CDF_VAR_NAME, RAW_HISTOGRAM_CDF_VAR_NAME, EXPOSURE_TIMES_CDF_VAR_NAME, EPOCH_CDF_VAR_NAME, \
     EPOCH_DELTA_CDF_VAR_NAME, SPIN_ANGLE_CDF_VAR_NAME, SPIN_ANGLE_DELTA_CDF_VAR_NAME, LATITUDE_CDF_VAR_NAME, \
@@ -23,8 +21,6 @@ from imap_l3_processing.glows.l3a.models import GlowsL3LightCurve, PHOTON_FLUX_U
     SPIN_AXIS_ORIENTATION_AVERAGE_CDF_VAR_NAME, SPIN_AXIS_ORIENTATION_STD_DEV_CDF_VAR_NAME, \
     SPACECRAFT_LOCATION_AVERAGE_CDF_VAR_NAME, SPACECRAFT_LOCATION_STD_DEV_CDF_VAR_NAME, \
     SPACECRAFT_VELOCITY_AVERAGE_CDF_VAR_NAME, NUM_OF_BINS_CDF_VAR_NAME
-from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDependencies
-from imap_l3_processing.glows.l3bc.models import ExternalDependencies
 
 
 def read_cdf_parents(server_file_name: str) -> set[str]:
@@ -102,29 +98,6 @@ def read_glows_l3a_data(cdf: CDF) -> GlowsL3LightCurve:
                              spacecraft_velocity_average=cdf[SPACECRAFT_VELOCITY_AVERAGE_CDF_VAR_NAME][...],
                              spacecraft_velocity_std_dev=cdf[SPACECRAFT_VELOCITY_STD_DEV_CDF_VAR_NAME][...],
                              )
-
-
-def archive_dependencies(l3bc_deps: GlowsL3BCDependencies, external_dependencies: ExternalDependencies) -> Path:
-    start_date = l3bc_deps.start_date.strftime("%Y%m%d")
-    zip_path = TEMP_CDF_FOLDER_PATH / f"imap_glows_l3b-archive_{start_date}_v{l3bc_deps.version:03}.zip"
-    json_filename = "cr_to_process.json"
-    with ZipFile(zip_path, "w", ZIP_DEFLATED) as file:
-        file.write(external_dependencies.lyman_alpha_path, "lyman_alpha_composite.nc")
-        file.write(external_dependencies.omni2_data_path, "omni2_all_years.dat")
-        file.write(external_dependencies.f107_index_file_path, "f107_fluxtable.txt")
-        cr = {"cr_rotation_number": l3bc_deps.carrington_rotation_number,
-              "l3a_paths": [l3a['filename'] for l3a in l3bc_deps.l3a_data],
-              "cr_start_date": str(l3bc_deps.start_date),
-              "cr_end_date": str(l3bc_deps.end_date),
-              "bad_days_list": l3bc_deps.ancillary_files['bad_days_list'].name,
-              "pipeline_settings": l3bc_deps.ancillary_files['pipeline_settings'].name,
-              "waw_helioion_mp": l3bc_deps.ancillary_files['WawHelioIonMP_parameters'].name,
-              "uv_anisotropy": l3bc_deps.ancillary_files['uv_anisotropy'].name,
-              "repointing_file": None
-              }
-        json_string = json.dumps(cr)
-        file.writestr(json_filename, json_string)
-    return zip_path
 
 
 def get_pointing_date_range(repointing: int) -> (np.datetime64, np.datetime64):

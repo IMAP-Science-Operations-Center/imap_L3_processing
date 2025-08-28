@@ -1,5 +1,6 @@
 import logging
 from collections import defaultdict
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
@@ -22,12 +23,28 @@ class AvailableServerData:
     l3c_files: dict[int, dict]
 
 
+@dataclass
+class GlowsL3BCInitializerData:
+    external_dependencies: ExternalDependencies
+    l3bc_dependencies: list[GlowsL3BCDependencies]
+    l3bs_by_cr: dict[int, str]
+    l3cs_by_cr: dict[int, str]
+
+
 class GlowsL3BCInitializer:
     @staticmethod
-    def get_crs_to_process(l3bs_by_cr: dict[int, str]) -> tuple[ExternalDependencies, list[GlowsL3BCDependencies]]:
+    def get_crs_to_process() -> GlowsL3BCInitializerData:
         l3a_query_results = imap_data_access.query(instrument="glows", data_level="l3a", version="latest")
         l3a_files_names = [Path(l3a_query_result["file_path"]).name for l3a_query_result in l3a_query_results]
         cr_to_l3a_file_names = GlowsL3BCInitializer.group_l3a_by_cr(l3a_files_names)
+
+        l3b_query_result = imap_data_access.query(instrument="glows", data_level="l3b",
+                                                  descriptor="ion-rate-profile", version="latest")
+        l3c_query_result = imap_data_access.query(instrument="glows", data_level="l3c", descriptor="sw-profile",
+                                                  version="latest")
+
+        l3bs_by_cr = {int(result['cr']): Path(result["file_path"]).name for result in l3b_query_result}
+        l3cs_by_cr = {int(result['cr']): Path(result["file_path"]).name for result in l3c_query_result}
 
         uv_anisotropy_query_result = imap_data_access.query(table="ancillary", instrument="glows",
                                                             descriptor="uv-anisotropy-1CR")
@@ -42,7 +59,12 @@ class GlowsL3BCInitializer:
 
         if not all([external_dependencies.f107_index_file_path, external_dependencies.omni2_data_path,
                     external_dependencies.lyman_alpha_path]):
-            return external_dependencies, []
+            return GlowsL3BCInitializerData(
+                external_dependencies=external_dependencies,
+                l3bc_dependencies=[],
+                l3bs_by_cr=l3bs_by_cr,
+                l3cs_by_cr=l3cs_by_cr
+            )
 
         all_l3bc_dependencies = []
         for cr_number, l3a_files in cr_to_l3a_file_names.items():
@@ -72,7 +94,12 @@ class GlowsL3BCInitializer:
                                                                                           external_dependencies)
                     all_l3bc_dependencies.append(l3bc_dependencies)
 
-        return external_dependencies, all_l3bc_dependencies
+        return GlowsL3BCInitializerData(
+            external_dependencies=external_dependencies,
+            l3bc_dependencies=all_l3bc_dependencies,
+            l3bs_by_cr=l3bs_by_cr,
+            l3cs_by_cr=l3cs_by_cr
+        )
 
     @staticmethod
     def should_process_cr_candidate(cr_candidate: CRToProcess, l3bs_by_cr: dict[int, str],

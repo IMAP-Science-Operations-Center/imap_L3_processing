@@ -3,18 +3,14 @@ from datetime import datetime
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Optional
-from unittest.mock import patch, MagicMock, call
-from zipfile import ZIP_DEFLATED
+from unittest.mock import patch
 
 import numpy as np
 from imap_processing.spice.repoint import set_global_repoint_table_paths
 from spacepy.pycdf import CDF
 
-from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
-from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDependencies
-from imap_l3_processing.glows.l3bc.models import ExternalDependencies
 from imap_l3_processing.glows.l3bc.utils import read_glows_l3a_data, \
-    archive_dependencies, get_pointing_date_range, get_best_ancillary, read_cdf_parents
+    get_pointing_date_range, get_best_ancillary, read_cdf_parents
 from tests.test_helpers import get_test_data_path
 
 
@@ -131,65 +127,6 @@ class TestUtils(unittest.TestCase):
         with self.assertRaises(ValueError) as err:
             _, _ = get_pointing_date_range(repointing_number)
         self.assertEqual(str(err.exception), f"No pointing found for pointing: 5998")
-
-    @patch("imap_l3_processing.glows.l3bc.utils.json")
-    @patch("imap_l3_processing.glows.l3bc.utils.ZipFile")
-    def test_archive_dependencies(self, mock_zip, mock_json):
-        expected_filepath = TEMP_CDF_FOLDER_PATH / "imap_glows_l3b-archive_20250314_v001.zip"
-        expected_json_filename = "cr_to_process.json"
-
-        version_number = 1
-        l3bc_dependencies = GlowsL3BCDependencies(
-            version=version_number,
-            carrington_rotation_number=2095,
-            start_date=datetime.fromisoformat("2025-03-14 12:34:56.789"),
-            end_date=datetime.fromisoformat("2025-03-24 12:34:56.789"),
-            l3a_data=[{"filename": "imap_glows_l3a_hist_20250314-repoint000001_v001.cdf"},
-                      {"filename": "imap_glows_l3a_hist_20100102-repoint000002_v001.cdf"}],
-            external_files={},
-            ancillary_files={
-                'uv_anisotropy': Path("uv_anisotropy.dat"),
-                'WawHelioIonMP_parameters': Path("waw_helio_ion.dat"),
-                'bad_days_list': Path("bad_days_list.dat"),
-                'pipeline_settings': Path("pipeline_settings.json"),
-            }
-        )
-
-        external_dependencies = ExternalDependencies(
-            f107_index_file_path=Path("f107_index_file_path"),
-            lyman_alpha_path=Path("lyman_alpha_path"),
-            omni2_data_path=Path("omni2_data_path"),
-        )
-
-        expected_json_to_serialize = {"cr_rotation_number": 2095,
-                                      "l3a_paths": ["imap_glows_l3a_hist_20250314-repoint000001_v001.cdf",
-                                                    "imap_glows_l3a_hist_20100102-repoint000002_v001.cdf"],
-                                      "cr_start_date": "2025-03-14 12:34:56.789000",
-                                      "cr_end_date": "2025-03-24 12:34:56.789000",
-                                      "bad_days_list": "bad_days_list.dat",
-                                      "pipeline_settings": "pipeline_settings.json",
-                                      "waw_helioion_mp": "waw_helio_ion.dat",
-                                      "uv_anisotropy": "uv_anisotropy.dat",
-                                      "repointing_file": "repointing.csv",
-                                      }
-
-        mock_zip_file = MagicMock()
-        mock_zip.return_value.__enter__.return_value = mock_zip_file
-
-        actual_zip_file_name = archive_dependencies(l3bc_dependencies, external_dependencies)
-
-        self.assertEqual(expected_filepath, actual_zip_file_name)
-
-        mock_zip.assert_called_with(expected_filepath, "w", ZIP_DEFLATED)
-
-        mock_json.dumps.assert_called_once_with(expected_json_to_serialize)
-
-        mock_zip_file.write.assert_has_calls([
-            call(Path("lyman_alpha_path"), "lyman_alpha_composite.nc"),
-            call(Path("omni2_data_path"), "omni2_all_years.dat"),
-            call(Path("f107_index_file_path"), "f107_fluxtable.txt"),
-        ])
-        mock_zip_file.writestr.assert_called_once_with(expected_json_filename, mock_json.dumps.return_value)
 
 
 def create_imap_data_access_json(file_path: str, data_level: str, start_date: str,
