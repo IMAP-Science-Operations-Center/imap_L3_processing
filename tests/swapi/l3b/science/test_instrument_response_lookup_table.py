@@ -1,6 +1,9 @@
 import unittest
 
-from imap_l3_processing.swapi.l3b.science.instrument_response_lookup_table import InstrumentResponseLookupTableCollection
+import numpy as np
+
+from imap_l3_processing.swapi.l3b.science.instrument_response_lookup_table import \
+    InstrumentResponseLookupTableCollection, InstrumentResponseLookupTable
 from tests.test_helpers import get_test_data_path
 
 
@@ -27,6 +30,18 @@ class TestInstrumentResponseLookupTable(unittest.TestCase):
 
         expected_row_count = 16
         self.assertEqual(expected_row_count, len(result.energy))
+
+    def test_integral_factor(self):
+        table = InstrumentResponseLookupTable(
+            energy=np.array([1, 2]),
+            elevation=np.array([10, 20]),
+            azimuth=np.array([30, 40]),
+            d_energy=np.array([3, 4]),
+            d_elevation=np.array([11, 21]),
+            d_azimuth=np.array([31, 41]),
+            response=np.array([100, 200]),
+        )
+        np.testing.assert_allclose(table.integral_factor, [55194.122853, 1418419.487803])
 
 
 if __name__ == '__main__':

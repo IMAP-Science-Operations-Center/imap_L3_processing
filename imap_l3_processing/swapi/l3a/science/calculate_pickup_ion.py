@@ -1,16 +1,14 @@
 from __future__ import annotations
 
-import functools
 from dataclasses import dataclass, field
 
 import lmfit
-import numexpr
 import numpy as np
 import scipy.optimize
+import spiceypy
 import uncertainties
 from imap_processing.swapi.l2 import swapi_l2
 from lmfit import Parameters
-import spiceypy
 from numpy import ndarray
 from uncertainties import ufloat
 from uncertainties.unumpy import uarray
@@ -168,24 +166,10 @@ class FittingParameters:
 class ForwardModel:
     fitting_params: FittingParameters
     ephemeris_time: float
-    solar_wind_vector_eclipj2000_frame: ndarray
     solar_wind_speed_inertial_frame: float
     density_of_neutral_helium_lookup_table: DensityOfNeutralHeliumLookupTable
     distance_km: float
     psi: float
-
-    def compute_from_instrument_frame(self, speed_grid):
-        # pui_vector_instrument_frame = calculate_pui_velocity_vector(speed, theta, phi)
-        # pui_vector_eclipj2000_frame = convert_velocity_relative_to_imap(pui_vector_instrument_frame,
-        #                                                                 self.ephemeris_time,
-        #                                                                 "IMAP_SWAPI", "ECLIPJ2000")
-        # pui_vector_solar_wind_frame = pui_vector_eclipj2000_frame - self.solar_wind_vector_eclipj2000_frame
-        # pickup_ion_speed = np.linalg.norm(pui_vector_solar_wind_frame, axis=-1)
-
-
-        # result = self.f(pickup_ion_speed)
-        result = self.f(speed_grid)
-        return result
 
     def f(self, pickup_ion_speed):
         w = pickup_ion_speed / self.fitting_params.cutoff_speed
@@ -203,28 +187,6 @@ class ForwardModel:
         return term1 * term2 * term3 * term4 * term5
 
 
-    def f_numexpr(self, pickup_ion_speed):
-        cooling_index = self.fitting_params.cooling_index
-        ionization_rate = self.fitting_params.ionization_rate
-        distance_km = self.distance_km
-        solar_wind_speed_inertial_frame = self.solar_wind_speed_inertial_frame
-        cutoff_speed = self.fitting_params.cutoff_speed
-        pi = np.pi
-        w = pickup_ion_speed / self.fitting_params.cutoff_speed
-
-        distance = numexpr.evaluate("distance_km / ONE_AU_IN_KM * w ** cooling_index")
-        neutral_helium_density_per_cm3 = self.density_of_neutral_helium_lookup_table.density(
-            self.psi, distance)
-
-
-        return numexpr.evaluate("cooling_index / (4 * pi) * "
-        "(ionization_rate * ONE_AU_IN_KM ** 2) / ("
-                "distance_km * solar_wind_speed_inertial_frame * cutoff_speed ** 3) *"
-       " w ** (cooling_index - 3) *"
-        "neutral_helium_density_per_cm3 * (CENTIMETERS_PER_METER * METERS_PER_KILOMETER) ** 3 *"
-        "where(1-w<0, 0, 1)",
-        )
-
 def build_forward_model(fitting_params: FittingParameters, ephemeris_time: float, solar_wind_vector: ndarray,
                         density_of_neutral_helium_lookup_table: DensityOfNeutralHeliumLookupTable) -> ForwardModel:
     solar_wind_vector_eclipj2000_frame = convert_velocity_relative_to_imap(solar_wind_vector,
@@ -236,7 +198,7 @@ def build_forward_model(fitting_params: FittingParameters, ephemeris_time: float
     distance_km, longitude, latitude = spiceypy.reclat(imap_position_eclip2000_frame_state)
     psi = np.rad2deg(longitude) - HELIUM_INFLOW_LONGITUDE_DEGREES_IN_ECLIPJ2000
 
-    return ForwardModel(fitting_params, ephemeris_time, solar_wind_vector_eclipj2000_frame,
+    return ForwardModel(fitting_params, ephemeris_time,
                         np.linalg.norm(solar_wind_vector_eclipj2000_frame),
                         density_of_neutral_helium_lookup_table, distance_km, psi)
 
@@ -249,7 +211,6 @@ class ModelCountRateCalculator:
     density_of_neutral_helium_lookup_table: DensityOfNeutralHeliumLookupTable
     _speed_grid_cache: dict = field(default_factory=dict)
 
-    # @functools.lru_cache(maxsize=63)
     def get_speed_grid(self, response_lookup_table: InstrumentResponseLookupTable, ephemeris_time: float):
 
         key = (id(response_lookup_table), ephemeris_time)
@@ -258,27 +219,23 @@ class ModelCountRateCalculator:
             return cached
 
         speed_inst = calculate_sw_speed(HE_PUI_PARTICLE_MASS_KG, PUI_PARTICLE_CHARGE_COULOMBS,
-                           response_lookup_table.energy)
+                                        response_lookup_table.energy)
 
-        pui_vector_instrument_frame = calculate_pui_velocity_vector(speed_inst, response_lookup_table.elevation, response_lookup_table.azimuth)
+        pui_vector_instrument_frame = calculate_pui_velocity_vector(speed_inst, response_lookup_table.elevation,
+                                                                    response_lookup_table.azimuth)
         pui_vector_eclipj2000_frame = convert_velocity_relative_to_imap(pui_vector_instrument_frame,
                                                                         ephemeris_time,
                                                                         "IMAP_SWAPI", "ECLIPJ2000")
 
         solar_wind_vector_eclipj2000_frame = convert_velocity_relative_to_imap(self.solar_wind_vector,
-                                          ephemeris_time,
-                                          "IMAP_DPS",
-                                          "ECLIPJ2000")
-
+                                                                               ephemeris_time,
+                                                                               "IMAP_DPS",
+                                                                               "ECLIPJ2000")
 
         pui_vector_solar_wind_frame = pui_vector_eclipj2000_frame - solar_wind_vector_eclipj2000_frame
         speed = np.linalg.norm(pui_vector_solar_wind_frame, axis=-1)
         self._speed_grid_cache[key] = speed
         return speed
-
-
-
-
 
     def model_count_rate(self, indices_and_energy_centers: list[tuple[int, float]],
                          fitting_params: FittingParameters, ephemeris_time: float) -> np.ndarray:
@@ -297,7 +254,7 @@ class ModelCountRateCalculator:
         integral = model_count_rate_integral(response_lookup_table, forward_model, speed_grid)
 
         geometric_factor = self.geometric_table.lookup_geometric_factor(energy_bin_center)
-        return (geometric_factor / 2) * integral+ forward_model.fitting_params.background_count_rate
+        return (geometric_factor / 2) * integral + forward_model.fitting_params.background_count_rate
 
 
 def calc_chi_squared_lm_fit(params: Parameters, observed_count_rates: np.ndarray,
@@ -320,30 +277,13 @@ def calc_chi_squared_lm_fit(params: Parameters, observed_count_rates: np.ndarray
     return result
 
 
-def model_count_rate_integral(response_lookup_table: InstrumentResponseLookupTable, forward_model: ForwardModel, speed_grid):
-    # count_rates = forward_model.compute_from_instrument_frame(speed, response_lookup_table.elevation,
-    #                                                           response_lookup_table.azimuth)
-    count_rates = forward_model.compute_from_instrument_frame(speed_grid)
-
-    # integrals = response_lookup_table.response * count_rates \
-    #             * speed ** 4 * \
-    #             response_lookup_table.d_energy * np.cos(np.deg2rad(response_lookup_table.elevation)) * \
-    #             response_lookup_table.d_azimuth * response_lookup_table.d_elevation
+def model_count_rate_integral(response_lookup_table: InstrumentResponseLookupTable, forward_model: ForwardModel,
+                              speed_grid):
+    count_rates = forward_model.f(speed_grid)
 
     integrals = response_lookup_table.integral_factor * count_rates
 
-    # integrals = count_rates * response_lookup_table.get_integral_term()
-
     return np.sum(integrals)
-
-
-def _model_count_rate_denominator(response_lookup_table: InstrumentResponseLookupTable) -> float:
-    elevation_radians = np.deg2rad(response_lookup_table.elevation)
-
-    rows = response_lookup_table.d_energy * np.cos(
-        elevation_radians) * response_lookup_table.d_elevation * response_lookup_table.d_azimuth
-
-    return rows.sum()
 
 
 def convert_velocity_to_reference_frame(velocity: ndarray, ephemeris_time: float, from_frame: str,

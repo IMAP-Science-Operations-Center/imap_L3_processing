@@ -29,9 +29,9 @@ class InstrumentResponseLookupTable:
         speed = calculate_sw_speed(HE_PUI_PARTICLE_MASS_KG, PUI_PARTICLE_CHARGE_COULOMBS,
                                    self.energy)
         self.integral_factor = self.response * \
-                speed ** 4 * \
-                self.d_energy * np.cos(np.deg2rad(self.elevation)) * \
-                self.d_azimuth * self.d_elevation / denominator
+                               speed ** 4 * \
+                               self.d_energy * np.cos(np.deg2rad(self.elevation)) * \
+                               self.d_azimuth * self.d_elevation / denominator
 
 
 class InstrumentResponseLookupTableCollection:
