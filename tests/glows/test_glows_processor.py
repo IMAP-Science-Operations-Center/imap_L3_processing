@@ -950,18 +950,18 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
 
         expected_dependencies = json.dumps({
             'external_files': {
-                'lya_raw_data': 'path/to/lya',
+                'lya_raw_data': str(Path('path/to/lya')),
             },
             'ancillary_files': {
                 'pipeline_settings':
-                    'glows/imap_glows_pipeline-settings-l3bcde_20250514_v004.json',
+                    str(Path('glows/imap_glows_pipeline-settings-l3bcde_20250514_v004.json')),
                 'WawHelioIon': {
-                    'speed': 'path/to/speed',
-                    'p-dens': 'path/to/p-dens',
-                    'uv-anis': 'path/to/uv-anis',
-                    'phion': 'path/to/phion',
-                    'lya': 'path/to/lya',
-                    'e-dens': 'path/to/e-dens'
+                    'speed': str(Path('path/to/speed')),
+                    'p-dens': str(Path('path/to/p-dens')),
+                    'uv-anis': str(Path('path/to/uv-anis')),
+                    'phion': str(Path('path/to/phion')),
+                    'lya': str(Path('path/to/lya')),
+                    'e-dens': str(Path('path/to/e-dens'))
                 }
             }
         })

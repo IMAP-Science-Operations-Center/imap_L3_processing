@@ -67,6 +67,8 @@ def validate_f107_fluxtable_dependency(end_date: datetime,
 def validate_lyman_alpha_dependency(end_date: datetime, buffer: timedelta, file_path: Path) -> bool:
     cdf = netCDF4.Dataset(file_path)
 
-    datetime_from_iso = datetime.fromisoformat(cdf.time_coverage_end).replace(tzinfo=None)
+    isoformat_time = cdf.time_coverage_end.replace('Z', '+00:00')
+
+    datetime_from_iso = datetime.fromisoformat(isoformat_time).replace(tzinfo=None)
 
     return datetime_from_iso >= end_date + buffer
