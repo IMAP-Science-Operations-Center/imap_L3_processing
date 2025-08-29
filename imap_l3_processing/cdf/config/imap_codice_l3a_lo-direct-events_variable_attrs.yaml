@@ -159,6 +159,7 @@ normalization:
   NAME: normalization
   DEPEND_2: energy_bin
   DEPEND_3: spin_angle_bin
+  VAR_TYPE: data
   CATDESC: Normalization factor
   FIELDNAM: Normalization factor
   LABLAXIS: Normalization
@@ -171,6 +172,7 @@ mass_per_charge:
   <<: *per_event
   <<: *float_data
   NAME: mass_per_charge
+  VAR_TYPE: data
   CATDESC: Mass per charge of event
   FIELDNAM: Mass per charge
   LABLAXIS: m/q
@@ -180,6 +182,7 @@ mass:
   <<: *per_event
   <<: *float_data
   NAME: mass
+  VAR_TYPE: data
   CATDESC: Mass of event
   FIELDNAM: Mass
   LABLAXIS: m
@@ -189,6 +192,7 @@ apd_energy:
   <<: *per_event
   <<: *float_data
   NAME: apd_energy
+  VAR_TYPE: data
   CATDESC: Deposited energy at APD
   FIELDNAM: APD Energy
   LABLAXIS: APD Energy
@@ -198,6 +202,7 @@ energy_step:
   <<: *per_event
   <<: *float_data
   NAME: energy_step
+  VAR_TYPE: data
   CATDESC: Energy per charge selected by ESA
   FIELDNAM: Energy Step
   LABLAXIS: Energy Step
@@ -207,6 +212,7 @@ event_spin_angle:
   <<: *per_event
   <<: *float_data
   NAME: event_spin_angle
+  VAR_TYPE: data
   CATDESC: Spin angle when event was observed
   FIELDNAM: Spin angle
   LABLAXIS: m
@@ -215,6 +221,7 @@ event_spin_angle:
 gain:
   <<: *per_event
   NAME: gain
+  VAR_TYPE: data
   CATDESC: Gain
   FIELDNAM: Gain
   LABLAXIS: Gain
@@ -227,6 +234,7 @@ gain:
 apd_id:
   <<: *per_event
   NAME: apd_id
+  VAR_TYPE: data
   CATDESC: APD ID
   FIELDNAM: APD ID
   LABLAXIS: APD ID
@@ -240,6 +248,7 @@ apd_id:
 multi_flag:
   <<: *per_event
   NAME: multi_flag
+  VAR_TYPE: data
   CATDESC: Multi flag
   FIELDNAM: Multi flag
   LABLAXIS: Multi flag
@@ -253,6 +262,7 @@ multi_flag:
 num_events:
   <<: *per_priority
   NAME: num_events
+  VAR_TYPE: data
   CATDESC: Number of events
   FIELDNAM: Number of events
   LABLAXIS: Num. events
@@ -266,6 +276,7 @@ num_events:
 data_quality:
   <<: *per_priority
   NAME: data_quality
+  VAR_TYPE: metadata
   CATDESC: Data quality
   FIELDNAM: Data quality
   LABLAXIS: Data quality
@@ -280,6 +291,7 @@ tof:
   <<: *per_event
   <<: *float_data
   NAME: tof
+  VAR_TYPE: data
   CATDESC: Time of flight
   FIELDNAM: Time of flight
   LABLAXIS: TOF
@@ -325,6 +337,7 @@ spin_angle:
   <<: *per_event
   <<: *float_data
   NAME: spin_angle
+  VAR_TYPE: support_data
   CATDESC: Spin angle per event
   FIELDNAM: Spin angle
   LABLAXIS: Spin angle
@@ -338,6 +351,7 @@ elevation:
   <<: *per_event
   <<: *float_data
   NAME: elevation
+  VAR_TYPE: support_data
   CATDESC: Elevation per event
   FIELDNAM: Elevation
   LABLAXIS: Elevation
@@ -350,6 +364,7 @@ elevation:
 position:
   <<: *per_event
   NAME: position
+  VAR_TYPE: support_data
   CATDESC: Position index per event
   FIELDNAM: Position index
   LABLAXIS: Position index

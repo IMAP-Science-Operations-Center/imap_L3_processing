@@ -1,6 +1,6 @@
+from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Self
 
 import imap_data_access
 from imap_data_access.processing_input import ProcessingInputCollection
@@ -13,12 +13,12 @@ class HiL3CombinedMapDependencies:
     maps: list[RectangularIntensityMapData]
 
     @classmethod
-    def fetch_dependencies(cls, dependencies: ProcessingInputCollection) -> Self:
+    def fetch_dependencies(cls, dependencies: ProcessingInputCollection) -> HiL3CombinedMapDependencies:
         input_map_filenames = dependencies.get_file_paths(source="hi")
 
         map_files = [imap_data_access.download(input_map.name) for input_map in input_map_filenames]
         return cls.from_file_paths(map_files)
 
     @classmethod
-    def from_file_paths(cls, hi_l3_map_paths: list[Path]) -> Self:
+    def from_file_paths(cls, hi_l3_map_paths: list[Path]) -> HiL3CombinedMapDependencies:
         return cls([RectangularIntensityMapData.read_from_path(path) for path in hi_l3_map_paths])

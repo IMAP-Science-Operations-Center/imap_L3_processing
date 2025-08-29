@@ -1,8 +1,8 @@
 from typing import Union
 
 import numpy as np
-import scipy
 from numpy import ndarray
+from scipy.interpolate import RegularGridInterpolator
 
 
 class DensityOfNeutralHeliumLookupTable:
@@ -13,20 +13,21 @@ class DensityOfNeutralHeliumLookupTable:
         self.grid = (angle, distance)
         values_shape = tuple(len(x) for x in self.grid)
 
-        self.densities = calibration_table[:, 2].reshape(values_shape)
+        self.densities = np.ascontiguousarray(
+            calibration_table[:, 2].reshape(values_shape)
+        )
+        self._interp = RegularGridInterpolator(self.grid, self.densities, bounds_error=False, fill_value=0,
+                                               method='linear')
 
     def density(self, angle: Union[ndarray, float], distance: Union[ndarray, float]):
         if isinstance(distance, float):
             coords = np.array((angle % 360, distance))
-            result = scipy.interpolate.interpn(self.grid, self.densities,
-                                               coords, bounds_error=False, fill_value=0)
-            return result[0]
+            return self._interp(coords)[0]
         else:
             coords = np.empty((len(distance), 2))
             coords[:, 0] = angle % 360
             coords[:, 1] = distance
-            return scipy.interpolate.interpn(self.grid, self.densities,
-                                             coords, bounds_error=False, fill_value=0)
+            return self._interp(coords)
 
     @classmethod
     def from_file(cls, file):

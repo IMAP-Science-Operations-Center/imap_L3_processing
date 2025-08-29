@@ -5,6 +5,9 @@ from pathlib import Path
 
 import numpy as np
 
+from imap_l3_processing.constants import HE_PUI_PARTICLE_MASS_KG, PUI_PARTICLE_CHARGE_COULOMBS
+from imap_l3_processing.swapi.l3a.science.calculate_proton_solar_wind_speed import calculate_sw_speed
+
 
 @dataclass
 class InstrumentResponseLookupTable:
@@ -15,6 +18,20 @@ class InstrumentResponseLookupTable:
     d_elevation: np.ndarray
     d_azimuth: np.ndarray
     response: np.ndarray
+    integral_factor: np.ndarray = None
+
+    def __post_init__(self):
+        elevation_radians = np.deg2rad(self.elevation)
+
+        denominator = (self.d_energy * np.cos(
+            elevation_radians) * self.d_elevation * self.d_azimuth).sum()
+
+        speed = calculate_sw_speed(HE_PUI_PARTICLE_MASS_KG, PUI_PARTICLE_CHARGE_COULOMBS,
+                                   self.energy)
+        self.integral_factor = self.response * \
+                               speed ** 4 * \
+                               self.d_energy * np.cos(np.deg2rad(self.elevation)) * \
+                               self.d_azimuth * self.d_elevation / denominator
 
 
 class InstrumentResponseLookupTableCollection:

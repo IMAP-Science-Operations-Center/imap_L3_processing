@@ -356,8 +356,8 @@ class TestCodiceLoCalculations(unittest.TestCase):
                          actual_count_rates.shape)
 
         for index, _ in np.ndenumerate(np.ones((num_epochs, num_azimuth_bins, num_spin_angles))):
-            np.testing.assert_array_almost_equal(actual_count_rates[*index, :],
-                                                 expected_summed_counts[*index, :] / acquisition_durations_in_seconds)
+            np.testing.assert_array_almost_equal(actual_count_rates[index],
+                                                 expected_summed_counts[index] / acquisition_durations_in_seconds)
 
     def test_convert_count_rate_to_intensity(self):
         num_epochs = 3

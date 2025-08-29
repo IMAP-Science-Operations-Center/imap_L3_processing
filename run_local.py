@@ -211,7 +211,7 @@ def create_codice_lo_l3a_3d_distributions_cdf(species: str):
         start_date=datetime(2024, 11, 10),
         end_date=datetime(2025, 1, 2),
         version='v000',
-        descriptor=f'lo-{species}-3d-instrument-frame'
+        descriptor=f'lo-{species}-3d-distribution'
     )
 
     codice_lo_processor = CodiceLoProcessor(Mock(), input_metadata)
@@ -1049,7 +1049,7 @@ if __name__ == "__main__":
                 "tests/test_data/swapi/imap_swapi_energy-gf-lut_20240923_v000.dat",
                 "tests/test_data/swapi/imap_swapi_instrument-response-lut_20241023_v000.zip",
                 "tests/test_data/swapi/imap_swapi_l2_density-of-neutral-helium-lut-text-not-cdf_20241023_v002.cdf",
-                "data/imap/swapi/l2/2026/09/imap_swapi_l2_sci_20260924_v001.cdf"
+                str(get_test_data_path("swapi/imap_swapi_l2_50-sweeps_20250606_v002.cdf"))
             )
             print(paths)
         if "l3b" in sys.argv:

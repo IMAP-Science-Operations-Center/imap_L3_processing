@@ -1,6 +1,6 @@
+from __future__ import annotations
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Self
 
 import numpy as np
 from imap_data_access import download
@@ -23,7 +23,7 @@ class UltraL3Dependencies:
     dependency_file_paths: list[Path] = field(default_factory=list)
 
     @classmethod
-    def fetch_dependencies(cls, deps: ProcessingInputCollection) -> Self:
+    def fetch_dependencies(cls, deps: ProcessingInputCollection) -> UltraL3Dependencies:
         ultra_l2_file_paths = deps.get_file_paths("ultra")
 
         if len(ultra_l2_file_paths) != 1:
@@ -44,7 +44,7 @@ class UltraL3Dependencies:
         return cls.from_file_paths(l2_map_path, hi_l1c_paths, glows_file_paths)
 
     @classmethod
-    def from_file_paths(cls, l2_map_path: Path, l1c_file_paths: list[Path], glows_file_paths: list[Path]) -> Self:
+    def from_file_paths(cls, l2_map_path: Path, l1c_file_paths: list[Path], glows_file_paths: list[Path]) -> UltraL3Dependencies:
         ultra_l1c_data = []
         glows_l3e_data = []
         for file_path in l1c_file_paths:
@@ -65,7 +65,7 @@ class UltraL3SpectralIndexDependencies(SpectralIndexDependencies):
     fit_energy_ranges: np.ndarray
 
     @classmethod
-    def fetch_dependencies(cls, deps: ProcessingInputCollection) -> Self:
+    def fetch_dependencies(cls, deps: ProcessingInputCollection) -> UltraL3SpectralIndexDependencies:
         energy_fit_ranges_ancillary_file_path = deps.get_file_paths(source="ultra", descriptor="spx-energy-ranges")
         ultra_map_file_paths = [dep for dep in deps.get_file_paths(source="ultra") if
                                 dep not in energy_fit_ranges_ancillary_file_path]

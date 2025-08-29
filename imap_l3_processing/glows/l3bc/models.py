@@ -1,3 +1,4 @@
+from __future__ import annotations
 import dataclasses
 import json
 from collections.abc import Iterable
@@ -5,7 +6,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from itertools import chain
 from pathlib import Path
-from typing import Self, Optional
+from typing import Optional
 
 import imap_data_access
 import numpy as np
@@ -164,7 +165,7 @@ class GlowsL3BIonizationRate(DataProduct):
                 ]
 
     @classmethod
-    def from_instrument_team_dictionary(cls, model: dict, input_metadata: InputMetadata) -> Self:
+    def from_instrument_team_dictionary(cls, model: dict, input_metadata: InputMetadata) -> GlowsL3BIonizationRate:
         latitude_grid = model["ion_rate_profile"]["lat_grid"]
         carrington_center_point = Time(jd_fm_Carrington(model["CR"] + 0.5), format="jd").datetime
         parent_file_names = []
@@ -235,7 +236,7 @@ class GlowsL3CSolarWind(DataProduct):
         ]
 
     @classmethod
-    def from_instrument_team_dictionary(cls, model: dict, input_metadata: InputMetadata) -> Self:
+    def from_instrument_team_dictionary(cls, model: dict, input_metadata: InputMetadata) -> GlowsL3CSolarWind:
         latitude_grid = model["solar_wind_profile"]["lat_grid"]
         carrington_center_point = Time(jd_fm_Carrington(model["CR"] + 0.5), format="jd").datetime
         parent_file_names = []

@@ -1,5 +1,5 @@
+from __future__ import annotations
 from dataclasses import dataclass
-from typing import Self
 
 from imap_data_access import download
 from imap_data_access.processing_input import ProcessingInputCollection
@@ -12,7 +12,7 @@ class LoL3SpectralFitDependencies:
     map_data: RectangularIntensityMapData
 
     @classmethod
-    def fetch_dependencies(cls, dependencies: ProcessingInputCollection) -> Self:
+    def fetch_dependencies(cls, dependencies: ProcessingInputCollection) -> LoL3SpectralFitDependencies:
         file_names = dependencies.get_file_paths(source="lo")
 
         if len(file_names) != 1:

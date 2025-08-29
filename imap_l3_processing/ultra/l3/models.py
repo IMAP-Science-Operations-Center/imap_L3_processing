@@ -1,7 +1,7 @@
+from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Self
 
 import xarray as xr
 from imap_processing.ena_maps.utils.coordinates import CoordNames
@@ -25,7 +25,7 @@ class UltraGlowsL3eData:
     survival_probability: ndarray
 
     @classmethod
-    def read_from_path(cls, path_to_cdf: Path) -> Self:
+    def read_from_path(cls, path_to_cdf: Path) -> UltraGlowsL3eData:
         with CDF(str(path_to_cdf)) as cdf:
             return UltraGlowsL3eData(
                 epoch=cdf[EPOCH_CDF_VAR_NAME][0],
@@ -49,7 +49,7 @@ class UltraL1CPSet:
     sensitivity: ndarray
 
     @classmethod
-    def read_from_path(cls, path: Path) -> Self:
+    def read_from_path(cls, path: Path) -> UltraL1CPSet:
         with CDF(str(path)) as cdf:
             return UltraL1CPSet(
                 counts=read_numeric_variable(cdf["counts"]),
