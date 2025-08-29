@@ -147,9 +147,13 @@ def environment_variables(env_vars: dict):
     return decorator
 
 
-def create_glows_mock_query_results(file_names: list[str]) -> list[dict]:
+def create_glows_mock_query_results(file_names: list[str], ingestion_dates: Optional[list[datetime]] = None) -> list[dict]:
     file_paths = []
-    for fn in file_names:
+
+    if ingestion_dates is None:
+        ingestion_dates = [datetime(2000, 1, 1)] * len(file_names)
+
+    for fn, ingestion_date in zip(file_names, ingestion_dates):
         imap_file_path = generate_imap_file_path(fn)
         match imap_file_path:
             case ScienceFilePath():
@@ -158,7 +162,7 @@ def create_glows_mock_query_results(file_names: list[str]) -> list[dict]:
                     "data_level": imap_file_path.data_level,
                     "descriptor": imap_file_path.descriptor,
                     "start_date": imap_file_path.start_date,
-                    "ingestion_date": "20000101",
+                    "ingestion_date": ingestion_date.strftime("%Y%m%d %H:%M:%S"),
                     "version": imap_file_path.version,
                     "cr": imap_file_path.cr,
                     "file_path": str(imap_file_path.filename),
@@ -169,7 +173,7 @@ def create_glows_mock_query_results(file_names: list[str]) -> list[dict]:
                     "descriptor": imap_file_path.descriptor,
                     "start_date": imap_file_path.start_date,
                     "end_date": imap_file_path.end_date,
-                    "ingestion_date": "20000101",
+                    "ingestion_date": ingestion_date.strftime("%Y%m%d %H:%M:%S"),
                     "version": imap_file_path.version,
                     "file_path": str(imap_file_path.filename),
                 })

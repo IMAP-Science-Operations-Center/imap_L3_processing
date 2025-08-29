@@ -117,6 +117,9 @@ def get_parent_file_names_from_l3d_json(l3d_folder: Path) -> list[str]:
 
     return list(parent_file_names)
 
+def get_most_recently_uploaded_ancillary(query_result: list[dict]):
+    query_result = max(query_result, key=lambda x: x['ingestion_date'], default=None)
+    return query_result
 
 def set_version_on_txt_files(paths: list[Path], version: str) -> list[Path]:
     out_paths = []
