@@ -1389,6 +1389,15 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
         ])
         mock_zip_file.writestr.assert_called_once_with(expected_json_filename, mock_json.dumps.return_value)
 
+    @patch("imap_data_access.query")
+    def test_l3bcde_integration(self, mock_query):
+
+        input_metadata = InputMetadata(instrument="glows", data_level="l3b", descriptor="ion-rate-profile",
+                                       version="v001", start_date=datetime(2000, 1, 1), end_date=datetime(2000, 1, 1))
+
+        processor = GlowsProcessor(input_metadata, )
+        processor.process()
+
 
 if __name__ == '__main__':
     unittest.main()
