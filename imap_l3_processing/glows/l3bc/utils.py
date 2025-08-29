@@ -111,4 +111,4 @@ def get_pointing_date_range(repointing: int) -> (np.datetime64, np.datetime64):
     start_time = repointing_data_start['repoint_end_utc']
     end_time = repointing_data_end['repoint_start_utc']
 
-    return np.datetime64(start_time), np.datetime64(end_time)
+    return np.datetime64(start_time).astype(datetime), np.datetime64(end_time).astype(datetime)

@@ -30,6 +30,7 @@ from imap_l3_processing.glows.l3bc.science.generate_l3bc import generate_l3bc
 from imap_l3_processing.glows.l3bc.utils import get_pointing_date_range
 from imap_l3_processing.glows.l3d.glows_l3d_dependencies import GlowsL3DDependencies
 from imap_l3_processing.glows.l3d.glows_l3d_initializer import GlowsL3DInitializer
+from imap_l3_processing.glows.l3d.models import GlowsL3DProcessorOutput
 from imap_l3_processing.glows.l3d.utils import create_glows_l3b_json_file_from_cdf, create_glows_l3c_json_file_from_cdf, \
     PATH_TO_L3D_TOOLKIT, convert_json_to_l3d_data_product, get_parent_file_names_from_l3d_json, set_version_on_txt_files
 from imap_l3_processing.glows.l3e.glows_l3e_dependencies import GlowsL3EDependencies
@@ -75,8 +76,8 @@ class GlowsProcessor(Processor):
                 process_l3d_result = self.process_l3d(glows_l3d_dependency, version_number)
 
                 if process_l3d_result is not None:
-                    glows_l3d_output_data_path, l3d_output_text_files = process_l3d_result
-                    products_list.extend([glows_l3d_output_data_path, *l3d_output_text_files])
+                    products_list.extend(
+                        [*process_l3d_result.l3d_text_file_paths, process_l3d_result.l3d_cdf_file_path])
 
             return products_list
         elif self.input_metadata.data_level == "l3e":
@@ -165,7 +166,7 @@ class GlowsProcessor(Processor):
             data_products=data_products
         )
 
-    def process_l3d(self, dependencies: GlowsL3DDependencies, version: int) -> Optional[tuple[Path, list[Path]]]:
+    def process_l3d(self, dependencies: GlowsL3DDependencies, version: int) -> Optional[GlowsL3DProcessorOutput]:
 
         [create_glows_l3b_json_file_from_cdf(l3b) for l3b in dependencies.l3b_file_paths]
         [create_glows_l3c_json_file_from_cdf(l3c) for l3c in dependencies.l3c_file_paths]
@@ -220,7 +221,7 @@ class GlowsProcessor(Processor):
                                                                 data_product_metadata, parent_file_names)
             l3d_data_product_path = save_data(l3d_data_product, cr_number=last_processed_cr)
 
-            return l3d_data_product_path, txt_files_with_correct_version
+            return GlowsL3DProcessorOutput(l3d_data_product_path, txt_files_with_correct_version, last_processed_cr)
         return None
 
     def process_l3e_lo(self, epoch: datetime, epoch_delta: timedelta, elongation_value: int) -> list[Path]:

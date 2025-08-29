@@ -354,7 +354,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
                                        'v001')
 
         processor = GlowsProcessor(Mock(), input_metadata)
-        
+
         mock_generate_l3bc.side_effect = [
             CannotProcessCarringtonRotationError("All days for Carrington Rotation are in a bad season."),
             ({}, {})
@@ -1055,7 +1055,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
                                                 ancillary_files=ancillary_inputs, external_files=external_inputs)
 
         processor = GlowsProcessor(Mock(), Mock())
-        data_product_path, actual_l3d_txt_paths = processor.process_l3d(l3d_dependencies, 1)
+        glows_l3d_output = processor.process_l3d(l3d_dependencies, 1)
 
         [save_data_call_args] = mock_save_data.call_args_list
         actual_data_product = save_data_call_args.args[0]
@@ -1274,7 +1274,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
 
         version = 4
         processor = GlowsProcessor(Mock(), Mock())
-        l3d_data_path, output_text_file_paths = processor.process_l3d(l3d_dependencies, version)
+        glows_l3d_output = processor.process_l3d(l3d_dependencies, version)
 
         expected_txt_filenames = ["imap_glows_l3d_e-dens_19470303-cr02096_v004.dat",
                                   "imap_glows_l3d_lya_19470303-cr02096_v004.dat",
@@ -1283,7 +1283,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
                                   "imap_glows_l3d_speed_19470303-cr02096_v004.dat",
                                   "imap_glows_l3d_uv-anis_19470303-cr02096_v004.dat"]
         for file in expected_txt_filenames:
-            self.assertIn(PATH_TO_L3D_TOOLKIT / "data_l3d_txt" / file, output_text_file_paths)
+            self.assertIn(PATH_TO_L3D_TOOLKIT / "data_l3d_txt" / file, glows_l3d_output.l3d_text_file_paths)
 
         test_cases = [
             (expected_txt_filenames[0], "electron_density", 847, [1947.167990000000, -1, 1250.5],

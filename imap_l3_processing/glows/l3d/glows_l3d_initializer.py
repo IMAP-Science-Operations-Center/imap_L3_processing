@@ -7,6 +7,7 @@ from imap_data_access import ProcessingInputCollection, ScienceInput, AncillaryI
 from imap_l3_processing.glows.l3bc.models import ExternalDependencies
 from imap_l3_processing.glows.l3bc.utils import read_cdf_parents
 from imap_l3_processing.glows.l3d.glows_l3d_dependencies import GlowsL3DDependencies
+from imap_l3_processing.glows.l3d.utils import query_for_most_recent_l3d
 
 
 class GlowsL3DInitializer:
@@ -17,8 +18,7 @@ class GlowsL3DInitializer:
             l3bs: list[str],
             l3cs: list[str]
     ) -> Optional[tuple[int, GlowsL3DDependencies]]:
-        l3ds = imap_data_access.query(instrument='glows', data_level="l3d", descriptor="solar-hist")
-        most_recent_l3d = max(l3ds, key=lambda l3d: int(l3d['cr']) * 1000 + int(l3d['version'][1:]))
+        most_recent_l3d = query_for_most_recent_l3d("solar-hist")
 
         # @formatter:off
         [plasma_speed_2010a] = imap_data_access.query(table='ancillary', instrument='glows', descriptor='plasma-speed-2010a', version='latest')
@@ -27,7 +27,7 @@ class GlowsL3DInitializer:
         [photoion_2010a] = imap_data_access.query(table='ancillary', instrument='glows', descriptor='photoion-2010a', version='latest')
         [lya_2010a] = imap_data_access.query(table='ancillary', instrument='glows', descriptor='lya-2010a', version='latest')
         [electron_density_2010a] = imap_data_access.query(table='ancillary', instrument='glows', descriptor='electron-density-2010a', version='latest')
-        [pipeline_settings_l3bcde] = imap_data_access.query(table='ancillary', instrument='glows', descriptor='pipeline-settings-l3bcde')
+        [pipeline_settings_l3bcde] = imap_data_access.query(table='ancillary', instrument='glows', descriptor='pipeline-settings-l3bcde', version='latest')
         # @formatter:on
 
         l3d_parents = read_cdf_parents(most_recent_l3d["file_path"])

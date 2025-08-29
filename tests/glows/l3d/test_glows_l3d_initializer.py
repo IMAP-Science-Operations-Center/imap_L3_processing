@@ -76,7 +76,7 @@ class TestGlowsL3DInitializer(unittest.TestCase):
             call(table='ancillary', instrument='glows', descriptor='photoion-2010a', version='latest'),
             call(table='ancillary', instrument='glows', descriptor='lya-2010a', version='latest'),
             call(table='ancillary', instrument='glows', descriptor='electron-density-2010a', version='latest'),
-            call(table='ancillary', instrument='glows', descriptor='pipeline-settings-l3bcde'),
+            call(table='ancillary', instrument='glows', descriptor='pipeline-settings-l3bcde', version='latest'),
         ])
 
         [fetch_dependencies_call] = mock_fetch_l3d_dependencies.call_args_list
