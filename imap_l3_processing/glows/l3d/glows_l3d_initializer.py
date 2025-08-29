@@ -30,7 +30,6 @@ class GlowsL3DInitializer:
         [pipeline_settings_l3bcde] = imap_data_access.query(table='ancillary', instrument='glows', descriptor='pipeline-settings-l3bcde', version='latest')
         # @formatter:on
 
-        l3d_parents = read_cdf_parents(most_recent_l3d["file_path"])
 
         processing_input_collection = ProcessingInputCollection(
             *[ScienceInput(science_file) for science_file in l3bs + l3cs],
@@ -55,8 +54,12 @@ class GlowsL3DInitializer:
             Path(pipeline_settings_l3bcde['file_path']).name,
         }
 
-        if updated_input_files.issubset(l3d_parents):
-            return None
+        if most_recent_l3d is not None:
+            l3d_parents = read_cdf_parents(most_recent_l3d["file_path"])
+            if updated_input_files.issubset(l3d_parents):
+                return None
+            version_to_generate = int(most_recent_l3d['version'][1:]) + 1
+        else:
+            version_to_generate = 1
 
-        version_to_generate = int(most_recent_l3d['version'][1:]) + 1
         return version_to_generate, GlowsL3DDependencies.fetch_dependencies(processing_input_collection, external_deps)

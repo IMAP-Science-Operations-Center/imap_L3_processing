@@ -17,10 +17,11 @@ class GlowsL3BCDependencies:
     l3a_data: list[dict]
     external_files: dict[str, Path]
     ancillary_files: dict[str, Path]
+    repointing_file_path: Path
 
     @classmethod
     def download_from_cr_to_process(cls, cr_to_process: CRToProcess, version: int,
-                                    external_dependencies: ExternalDependencies):
+                                    external_dependencies: ExternalDependencies, repointing_file_path: Path):
         external_files = {
             'f107_raw_data': external_dependencies.f107_index_file_path,
             'omni_raw_data': external_dependencies.omni2_data_path
@@ -46,4 +47,5 @@ class GlowsL3BCDependencies:
             l3a_data=l3a_data,
             external_files=external_files,
             ancillary_files=ancillary_files,
+            repointing_file_path=repointing_file_path
         )

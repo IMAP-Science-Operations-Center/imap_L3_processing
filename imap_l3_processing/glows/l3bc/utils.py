@@ -100,7 +100,7 @@ def read_glows_l3a_data(cdf: CDF) -> GlowsL3LightCurve:
                              )
 
 
-def get_pointing_date_range(repointing: int) -> (np.datetime64, np.datetime64):
+def get_pointing_date_range(repointing: int) -> (datetime, datetime):
     repointing_df: pd.DataFrame = get_repoint_data()
     matching_rows_start = repointing_df[repointing_df['repoint_id'] == repointing]
     matching_rows_end = repointing_df[repointing_df['repoint_id'] == repointing + 1]

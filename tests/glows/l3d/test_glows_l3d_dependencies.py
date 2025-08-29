@@ -11,7 +11,7 @@ from tests.test_helpers import get_test_data_path
 
 class TestGlowsL3DDependencies(unittest.TestCase):
 
-    @patch('imap_l3_processing.glows.l3d.glows_l3d_dependencies.download')
+    @patch('imap_l3_processing.glows.l3d.glows_l3d_dependencies.imap_data_access.download')
     def test_fetch_dependencies(self, mock_download):
         waw_helio_ion_mp_speed = get_test_data_path("glows/imap_glows_plasma-speed-Legendre-2010a_v001.dat")
         waw_helio_ion_mp_p_dens = get_test_data_path("glows/imap_glows_proton-density-Legendre-2010a_v001.dat")

@@ -130,5 +130,4 @@ def set_version_on_txt_files(paths: list[Path], version: str) -> list[Path]:
 def query_for_most_recent_l3d(descriptor: str) -> Optional[dict]:
     query_result = imap_data_access.query(instrument="glows", data_level="l3d", descriptor=descriptor)
     sorted_query_result = sorted(query_result, key=lambda qr: (qr["cr"], qr["version"]), reverse=True)
-
     return next(iter(sorted_query_result), None)

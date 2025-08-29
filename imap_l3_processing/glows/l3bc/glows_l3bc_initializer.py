@@ -6,7 +6,8 @@ from pathlib import Path
 from typing import Optional
 
 import imap_data_access
-from imap_data_access import ScienceFilePath
+from imap_data_access import ScienceFilePath, ProcessingInputCollection, RepointInput
+from imap_processing.spice.repoint import set_global_repoint_table_paths
 
 from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDependencies
 from imap_l3_processing.glows.l3bc.models import CRToProcess, ExternalDependencies
@@ -33,8 +34,12 @@ class GlowsL3BCInitializerData:
 
 class GlowsL3BCInitializer:
     @staticmethod
-    def get_crs_to_process() -> GlowsL3BCInitializerData:
-        l3a_query_results = imap_data_access.query(instrument="glows", data_level="l3a", version="latest")
+    def get_crs_to_process(dependencies: ProcessingInputCollection) -> GlowsL3BCInitializerData:
+        [repoint_file] = dependencies.get_file_paths(data_type=RepointInput.data_type)
+        repoint_downloaded_path = imap_data_access.download(repoint_file)
+        set_global_repoint_table_paths([repoint_downloaded_path])
+
+        l3a_query_results = imap_data_access.query(instrument="glows", data_level="l3a", descriptor="hist", version="latest")
         l3a_files_names = [Path(l3a_query_result["file_path"]).name for l3a_query_result in l3a_query_results]
         cr_to_l3a_file_names = GlowsL3BCInitializer.group_l3a_by_cr(l3a_files_names)
 
@@ -91,7 +96,8 @@ class GlowsL3BCInitializer:
                 if version := GlowsL3BCInitializer.should_process_cr_candidate(cr_candidate, l3bs_by_cr,
                                                                                external_dependencies):
                     l3bc_dependencies = GlowsL3BCDependencies.download_from_cr_to_process(cr_candidate, version,
-                                                                                          external_dependencies)
+                                                                                          external_dependencies,
+                                                                                          repoint_downloaded_path)
                     all_l3bc_dependencies.append(l3bc_dependencies)
 
         return GlowsL3BCInitializerData(
@@ -124,8 +130,8 @@ class GlowsL3BCInitializer:
         grouped_l3a_by_cr = defaultdict(set)
         for l3a_file_path in l3a_file_paths:
             start, end = get_pointing_date_range(ScienceFilePath(l3a_file_path).repointing)
-            start_cr = get_cr_for_date_time(start.astype(datetime))
-            end_cr = get_cr_for_date_time(end.astype(datetime))
+            start_cr = get_cr_for_date_time(start)
+            end_cr = get_cr_for_date_time(end)
 
             grouped_l3a_by_cr[start_cr].add(l3a_file_path)
             grouped_l3a_by_cr[end_cr].add(l3a_file_path)

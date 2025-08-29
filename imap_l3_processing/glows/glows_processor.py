@@ -61,7 +61,13 @@ class GlowsProcessor(Processor):
         elif self.input_metadata.data_level == "l3b":
             products_list = []
 
-            l3bc_initializer_data = GlowsL3BCInitializer.get_crs_to_process()
+            l3bc_initializer_data = GlowsL3BCInitializer.get_crs_to_process(self.dependencies)
+
+            crs_to_process_infos = [f"{dep.carrington_rotation_number} with version {dep.version}" for dep in l3bc_initializer_data.l3bc_dependencies]
+
+            if len(crs_to_process_infos) > 0:
+                crs_to_process_info = "\n\t".join(crs_to_process_infos)
+                logger.info(f"Found CRs to process:\n\t" + crs_to_process_info)
 
             glows_l3bc_output_data = self.process_l3bc(l3bc_initializer_data.external_dependencies,
                                                        l3bc_initializer_data.l3bc_dependencies)
@@ -131,6 +137,7 @@ class GlowsProcessor(Processor):
         l3cs_by_cr = {}
         data_products = []
         for dependency in dependencies:
+            logger.info(f"Processing L3BC for CR: {dependency.carrington_rotation_number}")
             zip_path = GlowsProcessor.archive_dependencies(l3bc_deps=dependency,
                                                            external_dependencies=external_dependencies)
 
@@ -155,6 +162,10 @@ class GlowsProcessor(Processor):
 
             l3c_data_product.parent_file_names += self.get_parent_file_names([zip_path, Path(l3b_cdf)])
             l3c_cdf = save_data(l3c_data_product, cr_number=dependency.carrington_rotation_number)
+
+            logger.info(f"Finished processing CR: {dependency.carrington_rotation_number}")
+            for path in [l3b_cdf, l3c_cdf]:
+                logger.info(f"Saved {path}")
 
             l3bs_by_cr[dependency.carrington_rotation_number] = l3b_cdf.name
             l3cs_by_cr[dependency.carrington_rotation_number] = l3c_cdf.name
@@ -316,7 +327,7 @@ class GlowsProcessor(Processor):
                   "pipeline_settings": l3bc_deps.ancillary_files['pipeline_settings'].name,
                   "waw_helioion_mp": l3bc_deps.ancillary_files['WawHelioIonMP_parameters'].name,
                   "uv_anisotropy": l3bc_deps.ancillary_files['uv_anisotropy'].name,
-                  "repointing_file": None
+                  "repointing_file": l3bc_deps.repointing_file_path.name,
                   }
             json_string = json.dumps(cr)
             file.writestr(json_filename, json_string)

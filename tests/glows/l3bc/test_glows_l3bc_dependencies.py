@@ -27,6 +27,7 @@ class TestGlowsL3BCDependencies(unittest.TestCase):
             sentinel.l3a_dictionary_2,
         ]
 
+        repointing_file_path = Path("some_repointing_file.repoint.csv")
         cr_to_process = CRToProcess(
             l3a_file_names={"l3a_path_1", "l3a_path_2"},
             uv_anisotropy_file_name="uv_anisotropy_path",
@@ -46,7 +47,8 @@ class TestGlowsL3BCDependencies(unittest.TestCase):
 
         dependency: GlowsL3BCDependencies = GlowsL3BCDependencies.download_from_cr_to_process(cr_to_process,
                                                                                               sentinel.version,
-                                                                                              external_dependencies)
+                                                                                              external_dependencies,
+                                                                                              repointing_file_path)
 
         self.assertEqual([call(sentinel.l3a_downloaded_path_1), call(sentinel.l3a_downloaded_path_2)],
                          mock_create_dictionary_from_cdf.call_args_list)
@@ -76,3 +78,5 @@ class TestGlowsL3BCDependencies(unittest.TestCase):
 
         self.assertEqual(cr_to_process.cr_start_date, dependency.start_date)
         self.assertEqual(cr_to_process.cr_end_date, dependency.end_date)
+
+        self.assertEqual(repointing_file_path, dependency.repointing_file_path)

@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import shutil
 import sys
@@ -7,13 +8,16 @@ import unittest
 from collections import defaultdict
 from copy import deepcopy
 from dataclasses import replace
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from subprocess import CalledProcessError, CompletedProcess
 from unittest.mock import patch, Mock, sentinel, call, MagicMock
 from zipfile import ZIP_DEFLATED
 
+import imap_data_access
 import numpy as np
+from imap_data_access import ProcessingInputCollection, RepointInput, ScienceFilePath
+from imap_data_access.file_validation import generate_imap_file_path
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
@@ -35,7 +39,7 @@ from imap_l3_processing.glows.l3e.glows_l3e_ultra_model import GlowsL3EUltraData
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.utils import save_data
 from tests.test_helpers import get_test_instrument_team_data_path, get_test_data_path, get_test_data_folder, \
-    assert_dataclass_fields
+    assert_dataclass_fields, create_glows_mock_query_results, get_run_local_data_path, run_periodically
 
 
 class TestGlowsProcessor(unittest.TestCase):
@@ -218,7 +222,8 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
                                                  carrington_rotation_number=first_cr_number_to_process,
                                                  version=1,
                                                  start_date=Mock(),
-                                                 end_date=Mock())
+                                                 end_date=Mock(),
+                                                 repointing_file_path=sentinel.repointing_file_path,)
         second_dependency = GlowsL3BCDependencies(l3a_data=sentinel.l3a_data_2,
                                                   external_files=sentinel.external_files_2,
                                                   ancillary_files={
@@ -227,7 +232,8 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
                                                   carrington_rotation_number=second_cr_number_to_process,
                                                   version=2,
                                                   start_date=Mock(),
-                                                  end_date=Mock())
+                                                  end_date=Mock(),
+                                                  repointing_file_path=sentinel.repointing_file_path)
 
         mock_generate_l3bc.side_effect = [(sentinel.l3b_data_1, sentinel.l3c_data_1),
                                           (sentinel.l3b_data_2, sentinel.l3c_data_2)]
@@ -327,6 +333,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
                                                   l3a_data=[],
                                                   external_files=defaultdict(Mock),
                                                   ancillary_files=defaultdict(Mock),
+                                                  repointing_file_path=sentinel.repointing_file_path
                                                   )
         bc_dependencies_2 = GlowsL3BCDependencies(version=1,
                                                   carrington_rotation_number=2096,
@@ -335,6 +342,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
                                                   l3a_data=[],
                                                   external_files=defaultdict(Mock),
                                                   ancillary_files=defaultdict(Mock),
+                                                  repointing_file_path=sentinel.repointing_file_path
                                                   )
         external_dependencies = ExternalDependencies(None, None, None)
         mock_glows_initializer_class.get_crs_to_process.return_value = GlowsL3BCInitializerData(
@@ -410,7 +418,8 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
                 'omni_raw_data': get_test_instrument_team_data_path('glows/omni_2010.dat'),
             },
             carrington_rotation_number=1,
-            start_date=Mock(), end_date=Mock(), version=1
+            start_date=Mock(), end_date=Mock(), version=1,
+            repointing_file_path=sentinel.repointing_file_path
         )
 
         processor = GlowsProcessor(dependencies=Mock(), input_metadata=Mock())
@@ -1350,7 +1359,8 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
                 'WawHelioIonMP_parameters': Path("waw_helio_ion.dat"),
                 'bad_days_list': Path("bad_days_list.dat"),
                 'pipeline_settings': Path("pipeline_settings.json"),
-            }
+            },
+            repointing_file_path=Path("repointing.csv")
         )
 
         external_dependencies = ExternalDependencies(
@@ -1389,15 +1399,106 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
         ])
         mock_zip_file.writestr.assert_called_once_with(expected_json_filename, mock_json.dumps.return_value)
 
+
+class TestGlowsProcessorIntegration(unittest.TestCase):
+    @run_periodically(timedelta(days=7))
     @patch("imap_data_access.query")
-    def test_l3bcde_integration(self, mock_query):
+    @patch("imap_data_access.download")
+    def test_l3bcde_integration(self, mock_download, mock_query):
+        logging.basicConfig(force=True, level=logging.INFO,
+                            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+
+        for folder in ["data_l3b", "data_l3c", "data_l3d", "data_l3d_txt"]:
+            path = PATH_TO_L3D_TOOLKIT / folder
+            if path.exists():
+                shutil.rmtree(path)
 
         input_metadata = InputMetadata(instrument="glows", data_level="l3b", descriptor="ion-rate-profile",
                                        version="v001", start_date=datetime(2000, 1, 1), end_date=datetime(2000, 1, 1))
 
-        processor = GlowsProcessor(input_metadata, )
-        processor.process()
+        queried_descriptors = {
+            "hist": create_glows_mock_query_results([
+                "imap_glows_l3a_hist_20100105-repoint00153_v001.cdf",
+                "imap_glows_l3a_hist_20100106-repoint00154_v001.cdf",
+                "imap_glows_l3a_hist_20100521-repoint00289_v001.cdf",
+                "imap_glows_l3a_hist_20100522-repoint00290_v001.cdf",
+                "imap_glows_l3a_hist_20100824-repoint00384_v001.cdf"
+            ]),
+            "ion-rate-profile": create_glows_mock_query_results([]),
+            "sw-profile": create_glows_mock_query_results([]),
+            "uv-anisotropy-1CR": create_glows_mock_query_results(["imap_glows_uv-anisotropy-1CR_20100101_v004.json"]),
+            "WawHelioIonMP": create_glows_mock_query_results(["imap_glows_WawHelioIonMP_20100101_v002.json"]),
+            "bad-days-list": create_glows_mock_query_results(["imap_glows_bad-days-list_20100101_v001.dat"]),
+            "pipeline-settings-l3bcde": create_glows_mock_query_results(["imap_glows_pipeline-settings-l3bcde_20100101_v006.json"]),
+            'solar-hist': create_glows_mock_query_results([]),
+            'plasma-speed-2010a':create_glows_mock_query_results(['imap_glows_plasma-speed-2010a_20100101_v003.dat']),
+            'proton-density-2010a':create_glows_mock_query_results(['imap_glows_proton-density-2010a_20100101_v003.dat']),
+            'uv-anisotropy-2010a':create_glows_mock_query_results(['imap_glows_uv-anisotropy-2010a_20100101_v003.dat']),
+            'photoion-2010a':create_glows_mock_query_results(['imap_glows_photoion-2010a_20100101_v003.dat']),
+            'lya-2010a':create_glows_mock_query_results(['imap_glows_lya-2010a_20100101_v003.dat']),
+            'electron-density-2010a':create_glows_mock_query_results(['imap_glows_electron-density-2010a_20100101_v003.dat']),
+        }
 
+        input_files = [
+            "imap_glows_l3a_hist_20100105-repoint00153_v001.cdf",
+            "imap_glows_l3a_hist_20100106-repoint00154_v001.cdf",
+            "imap_glows_l3a_hist_20100521-repoint00289_v001.cdf",
+            "imap_glows_l3a_hist_20100522-repoint00290_v001.cdf",
+            "imap_glows_l3a_hist_20100824-repoint00384_v001.cdf",
+            "imap_glows_uv-anisotropy-1CR_20100101_v004.json",
+            "imap_glows_WawHelioIonMP_20100101_v002.json",
+            "imap_glows_bad-days-list_20100101_v001.dat",
+            "imap_glows_pipeline-settings-l3bcde_20100101_v006.json",
+            'imap_glows_plasma-speed-2010a_20100101_v003.dat',
+            'imap_glows_proton-density-2010a_20100101_v003.dat',
+            'imap_glows_uv-anisotropy-2010a_20100101_v003.dat',
+            'imap_glows_photoion-2010a_20100101_v003.dat',
+            'imap_glows_lya-2010a_20100101_v003.dat',
+            'imap_glows_electron-density-2010a_20100101_v003.dat',
+            "imap_2026_269_05.repoint.csv"
+        ]
+
+        def redirect_download_to_test_data(filename: Path | str):
+            filename = Path(filename).name
+            return generate_imap_file_path(filename).construct_path()
+
+        mock_download.side_effect = redirect_download_to_test_data
+
+        def return_query_result(**kwargs):
+            return queried_descriptors[kwargs["descriptor"]]
+
+        mock_query.side_effect = return_query_result
+
+        fake_data_dir = get_run_local_data_path("glows_l3bcde_integration_data_dir")
+        with patch.object(imap_data_access, "config", new={"DATA_DIR": fake_data_dir}) as _:
+            if fake_data_dir.exists():
+                shutil.rmtree(fake_data_dir)
+
+            fake_data_dir.mkdir(exist_ok=True, parents=True)
+            for filename in input_files:
+                paths_to_generate = generate_imap_file_path(filename).construct_path()
+                paths_to_generate.parent.mkdir(exist_ok=True, parents=True)
+                shutil.copy(src= get_test_data_path("glows/l3bcde_integration_test_data") / filename,
+                            dst= paths_to_generate)
+
+            processing_input = ProcessingInputCollection([RepointInput("imap_2026_269_05.repoint.csv")])
+
+            processor = GlowsProcessor(processing_input, input_metadata)
+            products = processor.process()
+
+            print(products)
+
+            expected_files = [
+                ScienceFilePath("imap_glows_l3b_ion-rate-profile_20100103-cr02092_v001.cdf").construct_path(),
+                ScienceFilePath("imap_glows_l3b_ion-rate-profile_20100519-cr02097_v001.cdf").construct_path(),
+                ScienceFilePath("imap_glows_l3c_sw-profile_20100103-cr02092_v001.cdf").construct_path(),
+                ScienceFilePath("imap_glows_l3c_sw-profile_20100519-cr02097_v001.cdf").construct_path(),
+                ScienceFilePath("imap_glows_l3d_solar-hist_19470303-cr02094_v001.cdf").construct_path()
+            ]
+
+            for file_path in expected_files:
+                self.assertTrue(file_path.exists(), msg=str(file_path))
 
 if __name__ == '__main__':
     unittest.main()
