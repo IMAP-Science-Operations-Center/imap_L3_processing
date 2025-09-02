@@ -33,12 +33,11 @@ from imap_l3_processing.glows.l3d.glows_l3d_initializer import GlowsL3DInitializ
 from imap_l3_processing.glows.l3d.models import GlowsL3DProcessorOutput
 from imap_l3_processing.glows.l3d.utils import create_glows_l3b_json_file_from_cdf, create_glows_l3c_json_file_from_cdf, \
     PATH_TO_L3D_TOOLKIT, convert_json_to_l3d_data_product, get_parent_file_names_from_l3d_json, set_version_on_txt_files
-from imap_l3_processing.glows.l3e.glows_l3e_dependencies import GlowsL3EDependencies
 from imap_l3_processing.glows.l3e.glows_l3e_hi_model import GlowsL3EHiData
+from imap_l3_processing.glows.l3e.glows_l3e_initializer import GlowsL3EInitializer
 from imap_l3_processing.glows.l3e.glows_l3e_lo_model import GlowsL3ELoData
 from imap_l3_processing.glows.l3e.glows_l3e_ultra_model import GlowsL3EUltraData
-from imap_l3_processing.glows.l3e.glows_l3e_utils import determine_call_args_for_l3e_executable, \
-    determine_l3e_files_to_produce
+from imap_l3_processing.glows.l3e.glows_l3e_utils import determine_call_args_for_l3e_executable
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
 from imap_l3_processing.utils import save_data
@@ -77,25 +76,18 @@ class GlowsProcessor(Processor):
             l3cs = list({**l3bc_initializer_data.l3cs_by_cr, **glows_l3bc_output_data.l3cs_by_cr}.values())
             l3d_initializer_result = GlowsL3DInitializer.should_process_l3d(l3bc_initializer_data.external_dependencies,
                                                                             l3bs, l3cs)
-            if l3d_initializer_result is not None:
-                version_number, glows_l3d_dependency = l3d_initializer_result
-                process_l3d_result = self.process_l3d(glows_l3d_dependency, version_number)
+            if l3d_initializer_result is None:
+                return products_list
 
-                if process_l3d_result is not None:
-                    products_list.extend(
-                        [*process_l3d_result.l3d_text_file_paths, process_l3d_result.l3d_cdf_file_path])
+            version_number, glows_l3d_dependency, old_l3d = l3d_initializer_result
+            process_l3d_result = self.process_l3d(glows_l3d_dependency, version_number)
 
-            return products_list
-        elif self.input_metadata.data_level == "l3e":
-            l3e_dependencies, cr_number = GlowsL3EDependencies.fetch_dependencies(self.dependencies,
-                                                                                  self.input_metadata.descriptor)
-            l3e_dependencies.rename_dependencies()
+            if process_l3d_result is not None:
+                products_list.extend(
+                    [*process_l3d_result.l3d_text_file_paths, process_l3d_result.l3d_cdf_file_path])
 
-            repointings = determine_l3e_files_to_produce(self.input_metadata.descriptor,
-                                                         l3e_dependencies.pipeline_settings['start_cr'], cr_number,
-                                                         self.input_metadata.version,
-                                                         l3e_dependencies.repointing_file)
-            products = []
+            repointings, l3e_dependencies = GlowsL3EInitializer.get_repointings_to_process(
+                process_l3d_result.l3d_cdf_file_path, old_l3d)
             for repointing in repointings:
                 self.input_metadata.repointing = repointing
                 try:
@@ -110,16 +102,16 @@ class GlowsProcessor(Processor):
                             elongation = l3e_dependencies.elongation[year_with_repointing]
                         except KeyError:
                             continue
-                        products.extend(self.process_l3e_lo(epoch_dt, epoch_delta, elongation))
+                        products_list.extend(self.process_l3e_lo(epoch_dt, epoch_delta, elongation))
                     elif self.input_metadata.descriptor == "survival-probability-hi-45":
-                        products.extend(self.process_l3e_hi(epoch_dt, epoch_delta, 135))
+                        products_list.extend(self.process_l3e_hi(epoch_dt, epoch_delta, 135))
                     elif self.input_metadata.descriptor == "survival-probability-hi-90":
-                        products.extend(self.process_l3e_hi(epoch_dt, epoch_delta, 90))
+                        products_list.extend(self.process_l3e_hi(epoch_dt, epoch_delta, 90))
                     elif self.input_metadata.descriptor == "survival-probability-ul":
-                        products.extend(self.process_l3e_ul(epoch_dt, epoch_delta))
+                        products_list.extend(self.process_l3e_ul(epoch_dt, epoch_delta))
                 except Exception as e:
                     print("Exception encountered for repointing ", repointing, e)
-            return products
+            return products_list
 
     def process_l3a(self, dependencies: GlowsL3ADependencies) -> GlowsL3LightCurve:
         data = dependencies.data

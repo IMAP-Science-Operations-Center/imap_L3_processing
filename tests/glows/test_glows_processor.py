@@ -874,6 +874,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
 
         self.assertEqual(products, [expected_cdf_output, expected_second_output_dat_file])
 
+    @patch('imap_l3_processing.glows.glows_processor.GlowsL3EInitializer')
     @patch('imap_l3_processing.glows.glows_processor.save_data')
     @patch('imap_l3_processing.glows.glows_processor.set_version_on_txt_files')
     @patch('imap_l3_processing.glows.glows_processor.get_parent_file_names_from_l3d_json')
@@ -888,7 +889,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
                          mock_create_glows_l3b_json_file_from_cdf,
                          mock_create_glows_l3c_json_file_from_cdf, mock_os, mock_run,
                          mock_convert_json_to_l3d_data_product, mock_get_parent_file_names_from_l3d_json,
-                         mock_set_version, mock_save_data):
+                         mock_set_version, mock_save_data, _):
 
         cr_number = 2092
         mock_read_pipeline_settings.return_value = {'start_cr': cr_number}
@@ -913,8 +914,9 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
             l3c_file_paths=[sentinel.l3c_file_1, sentinel.l3c_file_2]
         )
 
+        old_l3d = Path('imap_glows_l3d_solar-hist_19470303-cr02090_v001.cdf')
         l3d_output_version = 5
-        mock_glows_l3d_initializer.should_process_l3d.return_value = (l3d_output_version, glows_l3d_dependencies)
+        mock_glows_l3d_initializer.should_process_l3d.return_value = (l3d_output_version, glows_l3d_dependencies, old_l3d)
 
         mock_run.side_effect = [
             CompletedProcess(args=[], returncode=0, stdout=f'Processed CR= {cr_number}'),

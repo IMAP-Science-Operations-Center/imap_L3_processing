@@ -1,32 +1,53 @@
 import unittest
-from unittest.mock import patch, sentinel, call
-
+from pathlib import Path
+from unittest.mock import patch, call
 from imap_l3_processing.glows.l3e.glows_l3e_initializer import GlowsL3EInitializer
+from tests.test_helpers import create_glows_mock_query_results
 
 
 class TestGlowsL3EInitializer(unittest.TestCase):
-
-    def setUp(self):
-        return
-
-    def tearDown(self):
-        return
-
+    @patch('imap_l3_processing.glows.l3e.glows_l3e_initializer.GlowsL3EDependencies.fetch_dependencies')
+    @patch('imap_l3_processing.glows.l3e.glows_l3e_initializer.determine_l3e_files_to_produce')
+    @patch('imap_l3_processing.glows.l3e.glows_l3e_initializer.find_first_updated_cr')
     @patch('imap_l3_processing.glows.l3e.glows_l3e_initializer.get_most_recently_uploaded_ancillary')
     @patch('imap_l3_processing.glows.l3e.glows_l3e_initializer.imap_data_access.query')
-    def test_determine_l3e_files_to_produce(self, mock_query, mock_get_most_recently_uploaded_ancillary):
-        mock_query.side_effect = [
-            sentinel.ionization_files,
-            sentinel.pipeline_settings_l3bcde,
-            sentinel.energy_grid_lo,
-            sentinel.tess_xyz_8,
-            sentinel.elongation_data,
-            sentinel.energy_grid_hi,
-            sentinel.energy_grid_ultra,
-            sentinel.tess_ang_16
+    def test_get_repointings_to_process(self, mock_query, mock_get_most_recently_uploaded_ancillary,
+                                            mock_find_first_updated_cr, mock_determine_l3e_files_to_produce,
+                                            mock_fetch_dependencies):
+        mock_query.side_effect = create_glows_mock_query_results([
+            'imap_glows_ionization-files_20200101_v000.cdf',
+            'imap_glows_pipeline-settings-l3bcde_20200101_v000.cdf',
+            'imap_glows_energy-grid-lo_20200101_v000.cdf',
+            'imap_glows_tess-xyz-8_20200101_v000.cdf',
+            'imap_glows_elongation-data_20200101_v000.cdf',
+            'imap_glows_energy-grid-hi_20200101_v000.cdf',
+            'imap_glows_energy-grid-ultra_20200101_v000.cdf',
+            'imap_glows_tess-ang-16_20200101_v000.cdf',
+        ])
+
+        mock_get_most_recently_uploaded_ancillary.side_effect = [
+            Path('imap_glows_ionization-files_20200101_v000.cdf'),
+            Path('imap_glows_pipeline-settings-l3bcde_20200101_v000.cdf'),
+            Path('imap_glows_energy-grid-lo_20200101_v000.cdf'),
+            Path('imap_glows_tess-xyz-8_20200101_v000.cdf'),
+            Path('imap_glows_elongation-data_20200101_v000.cdf'),
+            Path('imap_glows_energy-grid-hi_20200101_v000.cdf'),
+            Path('imap_glows_energy-grid-ultra_20200101_v000.cdf'),
+            Path('imap_glows_tess-ang-16_20200101_v000.cdf'),
         ]
 
-        GlowsL3EInitializer.determine_l3e_files_to_produce()
+        updated_l3d = Path('path/to/imap_glows_l3d_solar-hist_19470303-cr02091_v000.cdf')
+        previous_l3d = Path('path/to/previous_l3d')
+
+        mock_find_first_updated_cr.return_value = 2090
+
+        mock_fetch_dependencies.return_value.repointing_file = Path('path/to/repointing_file')
+
+        repointings, l3e_deps = GlowsL3EInitializer.get_repointings_to_process(updated_l3d, previous_l3d)
+
+        mock_find_first_updated_cr.assert_called_once_with(updated_l3d, previous_l3d)
+
+        mock_determine_l3e_files_to_produce.assert_called_once_with(2090, 2091, l3e_deps.repointing_file)
 
         mock_query.assert_has_calls([
             call(instrument='glows', descriptor='ionization-files'),
@@ -39,15 +60,64 @@ class TestGlowsL3EInitializer(unittest.TestCase):
             call(instrument='glows', descriptor='tess-ang-16'),
         ])
 
-        mock_get_most_recently_uploaded_ancillary.assert_has_calls([
-            call(sentinel.ionization_files),
-            call(sentinel.pipeline_settings_l3bcde),
-            call(sentinel.energy_grid_lo),
-            call(sentinel.tess_xyz_8),
-            call(sentinel.elongation_data),
-            call(sentinel.energy_grid_hi),
-            call(sentinel.energy_grid_ultra),
-            call(sentinel.tess_ang_16)
-        ])
+        mock_get_most_recently_uploaded_ancillary.assert_has_calls([call(query_result) for query_result in mock_query.side_effect])
+
+        mock_fetch_dependencies.return_value.rename_dependencies.assert_called_once()
+
+        [fetch_dependencies_call] = mock_fetch_dependencies.call_args_list
+
+        [actual_l3e_inputs] = fetch_dependencies_call.args
+
+        pipeline_l3e_input_paths = actual_l3e_inputs.get_file_paths(source="glows")
+        pipeline_l3e_input_filenames = [p.name for p in pipeline_l3e_input_paths]
+
+        self.assertEqual([
+            updated_l3d.name,
+            'imap_glows_ionization-files_20200101_v000.cdf',
+            'imap_glows_pipeline-settings-l3bcde_20200101_v000.cdf',
+            'imap_glows_energy-grid-lo_20200101_v000.cdf',
+            'imap_glows_tess-xyz-8_20200101_v000.cdf',
+            'imap_glows_elongation-data_20200101_v000.cdf',
+            'imap_glows_energy-grid-hi_20200101_v000.cdf',
+            'imap_glows_energy-grid-ultra_20200101_v000.cdf',
+            'imap_glows_tess-ang-16_20200101_v000.cdf',
+        ], pipeline_l3e_input_filenames)
+
+        self.assertEqual(mock_fetch_dependencies.return_value, l3e_deps)
+        self.assertEqual(mock_determine_l3e_files_to_produce.return_value, repointings)
 
 
+    @patch('imap_l3_processing.glows.l3e.glows_l3e_initializer.imap_data_access.query')
+    @patch('imap_l3_processing.glows.l3e.glows_l3e_initializer.get_most_recently_uploaded_ancillary')
+    @patch('imap_l3_processing.glows.l3e.glows_l3e_initializer.GlowsL3EDependencies.fetch_dependencies')
+    @patch('imap_l3_processing.glows.l3e.glows_l3e_initializer.determine_l3e_files_to_produce')
+    @patch('imap_l3_processing.glows.l3e.glows_l3e_initializer.find_first_updated_cr')
+    def test_get_repointings_to_process_handles_no_previous_l3d(self, mock_find_first_updated_cr,
+                                                                mock_determine_l3e_files_to_produce,
+                                                                mock_fetch_dependencies,
+                                                                mock_get_most_recently_uploaded_ancillary,
+                                                                _,):
+        mock_get_most_recently_uploaded_ancillary.side_effect = [
+            Path('imap_glows_ionization-files_20200101_v000.cdf'),
+            Path('imap_glows_pipeline-settings-l3bcde_20200101_v000.cdf'),
+            Path('imap_glows_energy-grid-lo_20200101_v000.cdf'),
+            Path('imap_glows_tess-xyz-8_20200101_v000.cdf'),
+            Path('imap_glows_elongation-data_20200101_v000.cdf'),
+            Path('imap_glows_energy-grid-hi_20200101_v000.cdf'),
+            Path('imap_glows_energy-grid-ultra_20200101_v000.cdf'),
+            Path('imap_glows_tess-ang-16_20200101_v000.cdf'),
+        ]
+
+        updated_l3d = Path('path/to/imap_glows_l3d_solar-hist_19470303-cr02091_v000.cdf')
+        previous_l3d = None
+
+        mock_fetch_dependencies.return_value.repointing_file = Path('path/to/repointing_file')
+        mock_fetch_dependencies.return_value.pipeline_settings = {"start_cr": 2089}
+
+        repointings, l3e_deps = GlowsL3EInitializer.get_repointings_to_process(updated_l3d, previous_l3d)
+
+        mock_find_first_updated_cr.assert_not_called()
+        mock_determine_l3e_files_to_produce.assert_called_once_with(2089, 2091, l3e_deps.repointing_file)
+
+        self.assertEqual(mock_fetch_dependencies.return_value, l3e_deps)
+        self.assertEqual(mock_determine_l3e_files_to_produce.return_value, repointings)

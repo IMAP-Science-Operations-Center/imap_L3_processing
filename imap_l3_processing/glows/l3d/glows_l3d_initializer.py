@@ -13,11 +13,8 @@ from imap_l3_processing.glows.l3d.utils import query_for_most_recent_l3d
 class GlowsL3DInitializer:
 
     @staticmethod
-    def should_process_l3d(
-            external_deps: ExternalDependencies,
-            l3bs: list[str],
-            l3cs: list[str]
-    ) -> Optional[tuple[int, GlowsL3DDependencies]]:
+    def should_process_l3d(external_deps: ExternalDependencies, l3bs: list[str], l3cs: list[str]) -> Optional[
+        tuple[int, GlowsL3DDependencies, Optional[Path]]]:
         most_recent_l3d = query_for_most_recent_l3d("solar-hist")
 
         # @formatter:off
@@ -29,7 +26,6 @@ class GlowsL3DInitializer:
         [electron_density_2010a] = imap_data_access.query(table='ancillary', instrument='glows', descriptor='electron-density-2010a', version='latest')
         [pipeline_settings_l3bcde] = imap_data_access.query(table='ancillary', instrument='glows', descriptor='pipeline-settings-l3bcde', version='latest')
         # @formatter:on
-
 
         processing_input_collection = ProcessingInputCollection(
             *[ScienceInput(science_file) for science_file in l3bs + l3cs],
@@ -56,10 +52,13 @@ class GlowsL3DInitializer:
 
         if most_recent_l3d is not None:
             l3d_parents = read_cdf_parents(most_recent_l3d["file_path"])
+            old_l3d = most_recent_l3d["file_path"]
             if updated_input_files.issubset(l3d_parents):
                 return None
             version_to_generate = int(most_recent_l3d['version'][1:]) + 1
         else:
+            old_l3d = None
             version_to_generate = 1
 
-        return version_to_generate, GlowsL3DDependencies.fetch_dependencies(processing_input_collection, external_deps)
+        return (version_to_generate, GlowsL3DDependencies.fetch_dependencies(processing_input_collection, external_deps),
+                old_l3d)

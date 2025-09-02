@@ -14,8 +14,7 @@ from imap_l3_processing.maps.map_models import GlowsL3eRectangularMapInputData, 
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.swapi.l3a.models import SwapiL3AlphaSolarWindData
 from imap_l3_processing.utils import format_time, download_dependency, read_l1d_mag_data, save_data, \
-    find_glows_l3e_dependencies, \
-    download_external_dependency, download_dependency_from_path, download_dependency_with_repointing, \
+    find_glows_l3e_dependencies, download_external_dependency, download_dependency_with_repointing, \
     combine_glows_l3e_with_l1c_pointing, furnish_local_spice
 from imap_l3_processing.version import VERSION
 from tests.cdf.test_cdf_utils import TestDataProduct
@@ -389,13 +388,6 @@ class TestUtils(TestCase):
 
                 np.testing.assert_array_equal(epoch, results.epoch)
                 np.testing.assert_array_equal(trimmed_vectors, results.mag_data)
-
-    @patch('imap_l3_processing.utils.imap_data_access')
-    def test_download_dependency_from_path(self, mock_data_access):
-        local_path = download_dependency_from_path(sentinel.sdc_path)
-
-        self.assertEqual(mock_data_access.download.return_value, local_path)
-        mock_data_access.download.assert_called_once_with(sentinel.sdc_path)
 
     @patch('imap_l3_processing.utils.imap_data_access.query')
     def test_find_glows_l3e_dependencies(self, mock_data_access_query):

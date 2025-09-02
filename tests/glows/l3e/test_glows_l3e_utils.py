@@ -6,8 +6,7 @@ import numpy as np
 
 from imap_l3_processing.glows.l3e.glows_l3e_call_arguments import GlowsL3eCallArguments
 from imap_l3_processing.glows.l3e.glows_l3e_utils import determine_call_args_for_l3e_executable, \
-    determine_l3e_files_to_produce
-from tests.glows.l3bc.test_utils import create_imap_data_access_json
+    determine_l3e_files_to_produce, find_first_updated_cr
 from tests.test_helpers import get_test_data_path
 
 
@@ -59,30 +58,66 @@ class TestGlowsL3EUtils(unittest.TestCase):
         self.assertEqual(np.rad2deg(spin_axis_lat), call_args.spin_axis_latitude)
         self.assertEqual(elongation, call_args.elongation)
 
-    @patch("imap_l3_processing.glows.l3e.glows_l3e_utils.query")
-    def test_determine_l3e_files_to_produce(self, mock_query: Mock):
+    def test_determine_l3e_files_to_produce(self):
         last_processed_cr = 2094
         first_cr_processed = 2093
-        descriptor = "survival-probability-hi-45"
-        version = "v007"
         repoint_pathing = get_test_data_path("fake_1_day_repointing_file.csv")
-        l3e_files = [
-            create_imap_data_access_json(
-                file_path="imap/glows/l3e/2010/02/imap_glows_l3e_survival-probability-hi-45_20100205-repointing03688_v007.cdf",
-                data_level="l3e",
-                descriptor="survival-probability-hi-45", start_date="20100205", version="v007", repointing=3688),
-            create_imap_data_access_json(
-                file_path="imap/glows/l3e/2010/03/imap_glows_l3e_survival-probability-hi-45_20100305-repointing03716_v007.cdf",
-                data_level="l3e",
-                descriptor="survival-probability-hi-45", start_date="20100305", version="v007", repointing=3716),
-        ]
 
-        mock_query.return_value = l3e_files
-        expected_repointings = np.concatenate((np.arange(3682, 3688), np.arange(3689, 3716), np.arange(3717, 3736)))
+        expected_repointings = np.arange(3682, 3736)
 
-        actual_repointings = determine_l3e_files_to_produce(descriptor, first_cr_processed, last_processed_cr, version,
-                                                            repoint_pathing)
-
-        mock_query.assert_called_once_with(instrument="glows", descriptor=descriptor, data_level="l3e", version=version)
+        actual_repointings = determine_l3e_files_to_produce(first_cr_processed, last_processed_cr, repoint_pathing)
 
         np.testing.assert_array_equal(actual_repointings, expected_repointings)
+
+    @patch('imap_l3_processing.glows.l3e.glows_l3e_utils.CDF')
+    def test_find_first_updated_cr(self, mock_CDF):
+        num_crs = 10
+        old_l3d = {
+            'cr_grid': np.arange(num_crs) + 0.5,
+            'lyman_alpha': np.arange(num_crs),
+            'phion': np.arange(num_crs),
+            'plasma_speed': np.arange(0,20).reshape((num_crs, 2)),
+            'plasma_speed_flag': np.arange(num_crs),
+            'proton_density': np.arange(0,20).reshape((num_crs, 2)),
+            'proton_density_flag': np.arange(num_crs),
+            'uv_anisotropy': np.arange(0,20).reshape((num_crs, 2)),
+            'uv_anisotropy_flag': np.arange(num_crs),
+        }
+
+        cases =['cr_grid',
+                'lyman_alpha',
+                'phion',
+                'plasma_speed',
+                'plasma_speed_flag',
+                'proton_density',
+                'proton_density_flag',
+                'uv_anisotropy',
+                'uv_anisotropy_flag',
+                'no_change']
+
+        for i, case in enumerate(cases):
+            with self.subTest(case=case):
+                new_l3d = {
+                    'cr_grid': np.arange(num_crs),
+                    'lyman_alpha': np.arange(num_crs),
+                    'phion': np.arange(num_crs),
+                    'plasma_speed': np.arange(0, 20).reshape((num_crs, 2)),
+                    'plasma_speed_flag': np.arange(num_crs),
+                    'proton_density': np.arange(0, 20).reshape((num_crs, 2)),
+                    'proton_density_flag': np.arange(num_crs),
+                    'uv_anisotropy': np.arange(0, 20).reshape((num_crs, 2)),
+                    'uv_anisotropy_flag': np.arange(num_crs),
+                }
+                mock_CDF.side_effect = [old_l3d, new_l3d]
+
+                if case == "cr_grid":
+                    new_l3d['cr_grid'] = np.append(new_l3d['cr_grid'], 10)
+                    self.assertEqual(find_first_updated_cr(new_l3d, old_l3d), 10)
+                elif case == "no_change":
+                    self.assertIsNone(find_first_updated_cr(new_l3d, old_l3d))
+                elif case in ['plasma_speed', 'proton_density', 'uv_anisotropy']:
+                    new_l3d[case][i] = np.full_like(new_l3d[case][i], -1)
+                    self.assertEqual(i, find_first_updated_cr(new_l3d, old_l3d))
+                else:
+                    new_l3d[case][i] = i + 1
+                    self.assertEqual(i, find_first_updated_cr(new_l3d, old_l3d))

@@ -4,8 +4,10 @@ from pathlib import Path
 import numpy as np
 import spiceypy
 from astropy.time import Time
-from imap_data_access import query
 from imap_processing.spice.repoint import set_global_repoint_table_paths, get_repoint_data
+from spacepy.pycdf import CDF
+
+from typing import Optional
 
 from imap_l3_processing.constants import ONE_AU_IN_KM, TT2000_EPOCH, ONE_SECOND_IN_NANOSECONDS
 from imap_l3_processing.glows.l3bc.l3bc_toolkit.funcs import jd_fm_Carrington
@@ -49,12 +51,8 @@ def _decimal_time(t: datetime) -> str:
     return "{:10.5f}".format(t.year + (t - year_start) / (year_end - year_start))
 
 
-def determine_l3e_files_to_produce(descriptor: str, first_cr_processed: int, last_processed_cr: int, version: str,
+def determine_l3e_files_to_produce(first_cr_processed: int, last_processed_cr: int,
                                    repointing_path: Path):
-    l3e_files = query(instrument='glows', descriptor=descriptor, data_level='l3e', version=version)
-
-    existing_pointings = [l3e['repointing'] for l3e in l3e_files]
-
     set_global_repoint_table_paths([repointing_path])
     repointing_data = get_repoint_data()
 
@@ -74,6 +72,27 @@ def determine_l3e_files_to_produce(descriptor: str, first_cr_processed: int, las
         if i + 1 < len(repoint_ids) and start_ns < repoint_starts[i + 1] < end_ns:
             pointing_numbers.append(int(repoint_ids[i]))
 
-    pointing_numbers = [pointing for pointing in pointing_numbers if pointing not in existing_pointings]
-
     return pointing_numbers
+
+
+def find_first_updated_cr(new_l3d, old_l3d) -> Optional[int]:
+    old_l3d_cdf = CDF(old_l3d)
+    new_l3d_cdf = CDF(new_l3d)
+
+    for i, cr in enumerate(old_l3d_cdf['cr_grid'][...]):
+        lya_compare = old_l3d_cdf['lyman_alpha'][i] != new_l3d_cdf['lyman_alpha'][i]
+        phion_compare = old_l3d_cdf['phion'][i] != new_l3d_cdf['phion'][i]
+        plasma_speed_compare = np.any(old_l3d_cdf['plasma_speed'][i] != new_l3d_cdf['plasma_speed'][i])
+        plasma_speed_flag_compare = old_l3d_cdf['plasma_speed_flag'][i] != new_l3d_cdf['plasma_speed_flag'][i]
+        proton_density_compare = np.any(old_l3d_cdf['proton_density'][i] != new_l3d_cdf['proton_density'][i])
+        proton_density_flag_compare = old_l3d_cdf['proton_density_flag'][i] != new_l3d_cdf['proton_density_flag'][i]
+        uv_anisotropy_compare = np.any(old_l3d_cdf['uv_anisotropy'][i] != new_l3d_cdf['uv_anisotropy'][i])
+        uv_anisotropy_flag_compare = old_l3d_cdf['uv_anisotropy_flag'][i] != new_l3d_cdf['uv_anisotropy_flag'][i]
+
+        if lya_compare or phion_compare or plasma_speed_compare or plasma_speed_flag_compare or proton_density_compare or proton_density_flag_compare or uv_anisotropy_compare or uv_anisotropy_flag_compare:
+            return int(cr)
+
+    if old_l3d_cdf['cr_grid'].shape != new_l3d_cdf['cr_grid'].shape:
+        return int(old_l3d_cdf['cr_grid'][-1]) + 1
+
+    return None
