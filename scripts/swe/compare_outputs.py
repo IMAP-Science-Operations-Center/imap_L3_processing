@@ -102,7 +102,7 @@ for modern_name, heritage_info in variable_mapping.items():
         case heritage_name:
             heritage_data = np.array([x[l3_swe_e.field(heritage_info)._index] for x in l3_swe_e[:]])
 
-    l3_output_cdf = CDF('temp_cdf_data/imap_swe_l3_sci_20250629_v000.cdf')
+    l3_output_cdf = CDF('data/imap/swe/l3/2025/06/imap_swe_l3_sci_20250629_v000.cdf')
 
     modern_data = read_numeric_variable(l3_output_cdf[modern_name])
     if "tensor" in modern_name:
@@ -127,6 +127,12 @@ for modern_name, heritage_info in variable_mapping.items():
         plt.legend()
         plt.savefig(Path("comparisons") / f"{modern_name}.png")
         plt.clf()
+        if modern_name == "core_density_fit":
+            ratio = heritage_data / modern_data
+            smooth_ratio = np.convolve(ratio, np.ones(5) / 5, mode="same")
+            plt.plot(smooth_ratio)
+            plt.savefig(Path("comparisons") / f"density_ratio.png")
+            plt.clf()
     l3_output_cdf.close()
 
 
@@ -135,7 +141,7 @@ def compare_eigenvector_directions_with_canonicalization():
     l3_vs = l3_hdf.vstart()
     l3_swe_e = l3_vs.attach("swepam_e")
 
-    l3_output_cdf = CDF('temp_cdf_data/imap_swe_l3_sci_20250629_v000.cdf')
+    l3_output_cdf = CDF('data/imap/swe/l3/2025/06/imap_swe_l3_sci_20250629_v000.cdf')
     theta_rtn_integrated = "core_temperature_theta_rtn_integrated"
     heritage_theta_rtn_integrated = "t_theta_ic"
     phi_rtn_integrated = "core_temperature_phi_rtn_integrated"

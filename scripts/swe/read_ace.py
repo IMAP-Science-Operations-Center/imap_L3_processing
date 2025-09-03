@@ -285,3 +285,4 @@ with CDF(output_path, readonly=False) as cdf:
     cdf.new('esa_step', np.arange(20), recVary=False)
     cdf['esa_energy'].attrs['VAR_TYPE'] = 'support_data'
     cdf['esa_step'].attrs['VAR_TYPE'] = 'support_data'
+    cdf['counts_stat_uncert'] = np.full(rates.shape, 1)
