@@ -7,7 +7,7 @@ import numpy as np
 from imap_l3_processing.glows.l3e.glows_l3e_call_arguments import GlowsL3eCallArguments
 from imap_l3_processing.glows.l3e.glows_l3e_utils import determine_call_args_for_l3e_executable, \
     determine_l3e_files_to_produce, find_first_updated_cr
-from tests.test_helpers import get_test_data_path
+from tests.test_helpers import get_test_data_path, create_glows_mock_query_results
 
 
 class TestGlowsL3EUtils(unittest.TestCase):
@@ -58,16 +58,31 @@ class TestGlowsL3EUtils(unittest.TestCase):
         self.assertEqual(np.rad2deg(spin_axis_lat), call_args.spin_axis_latitude)
         self.assertEqual(elongation, call_args.elongation)
 
-    def test_determine_l3e_files_to_produce(self):
+    @patch("imap_l3_processing.glows.l3e.glows_l3e_utils.imap_data_access.query")
+    def test_determine_l3e_files_to_produce(self, mock_query):
         last_processed_cr = 2094
         first_cr_processed = 2093
+        descriptor = 'survival-probability-lo'
         repoint_pathing = get_test_data_path("fake_1_day_repointing_file.csv")
 
-        expected_repointings = np.arange(3682, 3736)
+        mock_query.return_value = create_glows_mock_query_results([
+            'imap_glows_l3e_survival-probability-lo_20250101-repoint03682_v001.cdf',
+            'imap_glows_l3e_survival-probability-lo_20250101-repoint03683_v002.cdf',
+            'imap_glows_l3e_survival-probability-lo_20250101-repoint03684_v003.cdf',
+            'imap_glows_l3e_survival-probability-lo_20250101-repoint03685_v004.cdf',
+            'imap_glows_l3e_survival-probability-lo_20250101-repoint03686_v005.cdf',
+        ])
 
-        actual_repointings = determine_l3e_files_to_produce(first_cr_processed, last_processed_cr, repoint_pathing)
+        expected_repointing_to_version = {
+            3682: 2, 3683: 3, 3684: 4, 3685: 5, 3686: 6
+        }
 
-        np.testing.assert_array_equal(actual_repointings, expected_repointings)
+        [expected_repointing_to_version.update({i: 1}) for i in range(3687, 3736)]
+
+        actual_repointing_to_version = determine_l3e_files_to_produce(first_cr_processed, last_processed_cr, repoint_pathing, descriptor)
+        mock_query.assert_called_once_with(instrument="glows", data_level="l3e", version='latest', descriptor=descriptor)
+
+        self.assertEqual(expected_repointing_to_version, actual_repointing_to_version)
 
     @patch('imap_l3_processing.glows.l3e.glows_l3e_utils.CDF')
     def test_find_first_updated_cr(self, mock_CDF):

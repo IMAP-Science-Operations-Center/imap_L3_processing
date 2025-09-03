@@ -1,6 +1,7 @@
 from datetime import datetime
 from pathlib import Path
 
+import imap_data_access
 import numpy as np
 import spiceypy
 from astropy.time import Time
@@ -52,7 +53,12 @@ def _decimal_time(t: datetime) -> str:
 
 
 def determine_l3e_files_to_produce(first_cr_processed: int, last_processed_cr: int,
-                                   repointing_path: Path):
+                                   repointing_path: Path, descriptor: str) -> dict[int, int]:
+    l3e_files = imap_data_access.query(instrument='glows', descriptor=descriptor, data_level='l3e', version="latest")
+
+
+    updated_pointing = {int(l3e['repointing']): int(l3e['version'][1:]) for l3e in l3e_files}
+
     set_global_repoint_table_paths([repointing_path])
     repointing_data = get_repoint_data()
 
@@ -72,7 +78,13 @@ def determine_l3e_files_to_produce(first_cr_processed: int, last_processed_cr: i
         if i + 1 < len(repoint_ids) and start_ns < repoint_starts[i + 1] < end_ns:
             pointing_numbers.append(int(repoint_ids[i]))
 
-    return pointing_numbers
+    for pointing_number in pointing_numbers:
+        if pointing_number in updated_pointing:
+            updated_pointing[pointing_number] = updated_pointing[pointing_number] + 1
+        else:
+            updated_pointing[pointing_number] = 1
+
+    return updated_pointing
 
 
 def find_first_updated_cr(new_l3d, old_l3d) -> Optional[int]:

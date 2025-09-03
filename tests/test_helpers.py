@@ -166,6 +166,7 @@ def create_glows_mock_query_results(file_names: list[str], ingestion_dates: Opti
                     "version": imap_file_path.version,
                     "cr": imap_file_path.cr,
                     "file_path": str(imap_file_path.filename),
+                    "repointing": imap_file_path.repointing
                 })
             case AncillaryFilePath():
                 file_paths.append({

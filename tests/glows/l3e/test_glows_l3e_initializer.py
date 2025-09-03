@@ -1,7 +1,7 @@
 import unittest
 from pathlib import Path
 from unittest.mock import patch, call
-from imap_l3_processing.glows.l3e.glows_l3e_initializer import GlowsL3EInitializer
+from imap_l3_processing.glows.l3e.glows_l3e_initializer import GlowsL3EInitializer, GlowsL3EInitializerOutput
 from tests.test_helpers import create_glows_mock_query_results
 
 
@@ -43,11 +43,29 @@ class TestGlowsL3EInitializer(unittest.TestCase):
 
         mock_fetch_dependencies.return_value.repointing_file = Path('path/to/repointing_file')
 
-        repointings, l3e_deps = GlowsL3EInitializer.get_repointings_to_process(updated_l3d, previous_l3d)
+        expected_hi_45 = {1234: 1}
+        expected_hi_90 = {4567: 1}
+        expected_lo = {8912: 1}
+        expected_ultra = {3456: 1}
+        expected_repointings = GlowsL3EInitializerOutput(
+            dependencies=mock_fetch_dependencies.return_value,
+            hi_90_repointings=expected_hi_90,
+            hi_45_repointings=expected_hi_45,
+            lo_repointings=expected_lo,
+            ultra_repointings=expected_ultra
+        )
+
+        mock_determine_l3e_files_to_produce.side_effect = [expected_hi_45, expected_hi_90, expected_lo, expected_ultra]
+
+        actual_initializer_output = GlowsL3EInitializer.get_repointings_to_process(updated_l3d, previous_l3d)
 
         mock_find_first_updated_cr.assert_called_once_with(updated_l3d, previous_l3d)
 
-        mock_determine_l3e_files_to_produce.assert_called_once_with(2090, 2091, l3e_deps.repointing_file)
+        mock_determine_l3e_files_to_produce.assert_has_calls([
+            call(2090, 2091, actual_initializer_output.dependencies.repointing_file, "survival-probability-hi-45"),
+            call(2090, 2091, actual_initializer_output.dependencies.repointing_file, "survival-probability-hi-90"),
+            call(2090, 2091, actual_initializer_output.dependencies.repointing_file, "survival-probability-lo"),
+            call(2090, 2091, actual_initializer_output.dependencies.repointing_file, "survival-probability-ultra")])
 
         mock_query.assert_has_calls([
             call(instrument='glows', descriptor='ionization-files'),
@@ -83,8 +101,7 @@ class TestGlowsL3EInitializer(unittest.TestCase):
             'imap_glows_tess-ang-16_20200101_v000.cdf',
         ], pipeline_l3e_input_filenames)
 
-        self.assertEqual(mock_fetch_dependencies.return_value, l3e_deps)
-        self.assertEqual(mock_determine_l3e_files_to_produce.return_value, repointings)
+        self.assertEqual(actual_initializer_output, expected_repointings)
 
 
     @patch('imap_l3_processing.glows.l3e.glows_l3e_initializer.imap_data_access.query')
@@ -114,10 +131,12 @@ class TestGlowsL3EInitializer(unittest.TestCase):
         mock_fetch_dependencies.return_value.repointing_file = Path('path/to/repointing_file')
         mock_fetch_dependencies.return_value.pipeline_settings = {"start_cr": 2089}
 
-        repointings, l3e_deps = GlowsL3EInitializer.get_repointings_to_process(updated_l3d, previous_l3d)
+        actual_initializer_output = GlowsL3EInitializer.get_repointings_to_process(updated_l3d, previous_l3d)
 
         mock_find_first_updated_cr.assert_not_called()
-        mock_determine_l3e_files_to_produce.assert_called_once_with(2089, 2091, l3e_deps.repointing_file)
-
-        self.assertEqual(mock_fetch_dependencies.return_value, l3e_deps)
-        self.assertEqual(mock_determine_l3e_files_to_produce.return_value, repointings)
+        mock_determine_l3e_files_to_produce.assert_has_calls([
+            call(2089, 2091, actual_initializer_output.dependencies.repointing_file, "survival-probability-hi-45"),
+            call(2089, 2091, actual_initializer_output.dependencies.repointing_file, "survival-probability-hi-90"),
+            call(2089, 2091, actual_initializer_output.dependencies.repointing_file, "survival-probability-lo"),
+            call(2089, 2091, actual_initializer_output.dependencies.repointing_file, "survival-probability-ultra"),
+        ])

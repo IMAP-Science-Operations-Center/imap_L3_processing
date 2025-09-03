@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
@@ -8,11 +9,13 @@ from imap_l3_processing.glows.l3d.utils import get_most_recently_uploaded_ancill
 from imap_l3_processing.glows.l3e.glows_l3e_dependencies import GlowsL3EDependencies
 from imap_l3_processing.glows.l3e.glows_l3e_utils import find_first_updated_cr, determine_l3e_files_to_produce
 
-
+@dataclass
 class GlowsL3EInitializerOutput:
     dependencies: GlowsL3EDependencies
-
-    # repointing_and_version_to_process: list[tuple[int, int]]
+    hi_90_repointings: dict[int, int]
+    hi_45_repointings: dict[int, int]
+    lo_repointings: dict[int, int]
+    ultra_repointings: dict[int, int]
 
 
 class GlowsL3EInitializer:
@@ -48,6 +51,15 @@ class GlowsL3EInitializer:
             first_cr = deps.pipeline_settings['start_cr']
         last_cr = ScienceFilePath(updated_l3d).cr
 
-        repointings = determine_l3e_files_to_produce(first_cr, last_cr, deps.repointing_file)
+        hi_45_repointings = determine_l3e_files_to_produce(first_cr, last_cr, deps.repointing_file, "survival-probability-hi-45")
+        hi_90_repointings = determine_l3e_files_to_produce(first_cr, last_cr, deps.repointing_file, "survival-probability-hi-90")
+        lo_repointings = determine_l3e_files_to_produce(first_cr, last_cr, deps.repointing_file, "survival-probability-lo")
+        ultra_repointings = determine_l3e_files_to_produce(first_cr, last_cr, deps.repointing_file, "survival-probability-ultra")
 
-        return repointings, deps
+        return GlowsL3EInitializerOutput(
+            dependencies=deps,
+            hi_90_repointings=hi_90_repointings,
+            hi_45_repointings=hi_45_repointings,
+            lo_repointings=lo_repointings,
+            ultra_repointings=ultra_repointings,
+        )
