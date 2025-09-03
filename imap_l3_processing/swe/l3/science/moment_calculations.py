@@ -1,8 +1,8 @@
+import math
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional, Union
 
-import math
 import numpy as np
 import spiceypy
 

@@ -61,24 +61,24 @@ class TestPitchCalculations(unittest.TestCase):
             [
                 [
                     [0, 0, -1],
-                    [0, 1, 0],
+                    [1, 0, 0],
                     [0, 0, 1]
                 ],
                 [
                     [0, 0, -1],
-                    [-1, 0, 0],
+                    [0, 1, 0],
                     [0, 0, 1]
                 ]
             ],
             [
                 [
                     [0, 0, -1],
-                    [0, -1, 0],
+                    [-1, 0, 0],
                     [0, 0, 1]
                 ],
                 [
                     [0, 0, -1],
-                    [1, 0, 0],
+                    [0, -1, 0],
                     [0, 0, 1]
                 ]
             ]
@@ -88,22 +88,22 @@ class TestPitchCalculations(unittest.TestCase):
         np.testing.assert_array_almost_equal(actual_look_direction, expected_look_direction)
 
     def test_compute_velocity(self):
-        energy = np.array([1, 2])
+        energy = np.array([1, 2])  # 2 -- energy
         inst_el = np.array([0, 90])
-        inst_az = np.array([[0], [90]])
+        inst_az = np.array([[0], [90]])  # 2, 1  --  energy, spin sector
 
         scalar_speeds = np.sqrt(energy * 1.602176634e-19 * 2 /
                                 9.109_383_7139e-31) / 1000
         expected_velocity = np.array([
-            [
-                [
-                    [0, -scalar_speeds[0], 0],
+            [  # energy 1
+                [  # spin sector 1
+                    [-scalar_speeds[0], 0, 0],  # CEM 1
                     [0, 0, -scalar_speeds[0]],
                 ],
             ],
-            [
+            [  # energy 2
                 [
-                    [scalar_speeds[1], 0, 0],
+                    [0, -scalar_speeds[1], 0],
                     [0, 0, -scalar_speeds[1]],
                 ],
             ],

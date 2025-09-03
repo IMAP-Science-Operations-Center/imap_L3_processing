@@ -585,26 +585,26 @@ class TestSweProcessor(unittest.TestCase):
         self.assertEqual(swe_l3_data.gyrophase_bins, swel3_dependency.configuration["gyrophase_bins"])
         self.assertEqual(swe_l3_data.gyrophase_delta, swel3_dependency.configuration["gyrophase_deltas"])
         np.testing.assert_allclose(swe_l3_data.phase_space_density_by_pitch_angle,
-                                   np.array([[[np.nan, 194.772034, 270.312835],
-                                              [211.672665, 273.136802, 363.195552],
-                                              [313.860051, 400.23009, np.nan]]]))
+                                   np.array([[[np.nan, 169.033169, 234.47466],
+                                              [np.nan, 223.038085, 292.34828],
+                                              [np.nan, 314.063309, 372.710046]]]))
         np.testing.assert_allclose(swe_l3_data.epoch_delta, np.array([1807492500]))
         np.testing.assert_array_equal(swe_l3_data.epoch, swe_l2_data.epoch)
-        np.testing.assert_allclose(swe_l3_data.intensity, np.array([[104.427758, 195.333344, 180.401159]]))
-        np.testing.assert_allclose(swe_l3_data.intensity_inward, np.array([[0, 104.147588, 154.42602]]))
+        np.testing.assert_allclose(swe_l3_data.intensity, np.array([[90.604366, 116.134578, 155.719439]]))
+        np.testing.assert_allclose(swe_l3_data.intensity_inward, np.array([[0., 0., 0.]]))
         np.testing.assert_allclose(swe_l3_data.intensity_outward,
-                                   np.array([[208.855516, 286.519101, 206.376298]]))
+                                   np.array([[181.208732, 232.269156, 311.438877]]))
         self.assertEqual((1, 9, 3, 3), swe_l3_data.intensity_by_pitch_angle_and_gyrophase.shape)
         self.assertEqual((1, 9, 3), swe_l3_data.intensity_by_pitch_angle.shape)
         np.testing.assert_allclose(swe_l3_data.intensity_by_pitch_angle[0, 1, 1:3],
-                                   np.array([50, 53.5]))
-        np.testing.assert_allclose(swe_l3_data.intensity_by_pitch_angle_and_gyrophase[0, 0, 1, 1],
-                                   np.array([15.909091]))
+                                   np.array([49.5, 53. ]))
+        np.testing.assert_allclose(swe_l3_data.intensity_by_pitch_angle_and_gyrophase[0, 0, 1, 2],
+                                   np.array([15.]))
 
         np.testing.assert_allclose(swe_l3_data.intensity_uncertainty_by_pitch_angle[0, 0, 1:3],
-                                   np.array([0.000887, 0.000659]), atol=1e-6)
-        np.testing.assert_allclose(swe_l3_data.intensity_uncertainty_by_pitch_angle_and_gyrophase[0, 0, 1:3, 1],
-                                   np.array([0.000887, 0.000659]), atol=1e-6)
+                                   np.array([0.000717, 0.000762]), atol=1e-6)
+        np.testing.assert_allclose(swe_l3_data.intensity_uncertainty_by_pitch_angle_and_gyrophase[0, 0, 1:3, 2],
+                                   np.array([0.000717, 0.000762]), atol=1e-6)
 
     @patch('imap_l3_processing.swe.swe_processor.rotate_temperature_tensor_to_mag')
     @patch('imap_l3_processing.swe.swe_processor.calculate_primary_eigenvector')
@@ -947,31 +947,31 @@ class TestSweProcessor(unittest.TestCase):
                                       corrected_energy_bins[0], expected_sin_theta, expected_cos_theta,
                                       config["aperture_field_of_view_radians"],
                                       swe_l2_data.phase_space_density[0],
-                                      swe_l2_data.inst_az_spin_sector[0] + 90,
+                                      swe_l2_data.inst_az_spin_sector[0],
                                       12, np.array([0, 0, 0, 0]), np.array([0, 0, 0, 0, 0, 0])),
              call_with_array_matchers(4, 10,
                                       corrected_energy_bins[0], expected_sin_theta, expected_cos_theta,
                                       config["aperture_field_of_view_radians"],
                                       swe_l2_data.phase_space_density[0],
-                                      swe_l2_data.inst_az_spin_sector[0] + 90,
+                                      swe_l2_data.inst_az_spin_sector[0],
                                       12, core_cdelnv, core_cdelt),
              call_with_array_matchers(6, 10,
                                       corrected_energy_bins[0], expected_sin_theta, expected_cos_theta,
                                       config["aperture_field_of_view_radians"],
                                       swe_l2_data.phase_space_density[0],
-                                      swe_l2_data.inst_az_spin_sector[0] + 90,
+                                      swe_l2_data.inst_az_spin_sector[0],
                                       12, np.array([0, 0, 0, 0]), np.array([0, 0, 0, 0, 0, 0])),
              call_with_array_matchers(5, 4,
                                       corrected_energy_bins[1], expected_sin_theta, expected_cos_theta,
                                       config["aperture_field_of_view_radians"],
                                       swe_l2_data.phase_space_density[1],
-                                      swe_l2_data.inst_az_spin_sector[1] + 90,
+                                      swe_l2_data.inst_az_spin_sector[1],
                                       14, np.array([0, 0, 0, 0]), np.array([0, 0, 0, 0, 0, 0])),
              call_with_array_matchers(5, 10,
                                       corrected_energy_bins[1], expected_sin_theta, expected_cos_theta,
                                       config["aperture_field_of_view_radians"],
                                       swe_l2_data.phase_space_density[1],
-                                      swe_l2_data.inst_az_spin_sector[1] + 90,
+                                      swe_l2_data.inst_az_spin_sector[1],
                                       14, np.array([0, 0, 0, 0]), np.array([0, 0, 0, 0, 0, 0])),
 
              ]
@@ -983,7 +983,7 @@ class TestSweProcessor(unittest.TestCase):
                                      core_integrate_output.temperature, core_moments1, 3, corrected_energy_bins[0],
                                      spacecraft_potential[0], expected_cos_theta,
                                      config["aperture_field_of_view_radians"],
-                                     swe_l2_data.inst_az_spin_sector[0] + 90,
+                                     swe_l2_data.inst_az_spin_sector[0],
                                      sentinel.core_regress_result_1,
                                      core_integrate_output.base_energy)
         ])
@@ -995,7 +995,7 @@ class TestSweProcessor(unittest.TestCase):
                                      halo_integrate_output.temperature, halo_moments1, spacecraft_potential[0],
                                      core_halo_breakpoint[0], expected_cos_theta,
                                      config["aperture_field_of_view_radians"],
-                                     swe_l2_data.inst_az_spin_sector[0] +90, sentinel.halo_regress_result_1,
+                                     swe_l2_data.inst_az_spin_sector[0], sentinel.halo_regress_result_1,
                                      halo_integrate_output.base_energy)
         ])
 

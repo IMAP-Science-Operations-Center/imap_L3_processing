@@ -163,14 +163,13 @@ class SweProcessor(Processor):
         total_temperature_tensor_integrated = np.full((number_of_points, 6), np.nan)
         sin_theta = np.sin(np.deg2rad(90 - swe_l2_data.inst_el))
         cos_theta = np.cos(np.deg2rad(90 - swe_l2_data.inst_el))
-        instrument_phi = swe_l2_data.inst_az_spin_sector + 90
+        instrument_phi = swe_l2_data.inst_az_spin_sector
 
         for i in range(len(swe_l2_data.epoch)):
             velocity_vectors_cm_per_s: np.ndarray = 1000 * 100 * calculate_velocity_in_dsp_frame_km_s(
                 corrected_energy_bins[i],
                 swe_l2_data.inst_el,
-                swe_l2_data.inst_az_spin_sector[
-                    i])
+                swe_l2_data.inst_az_spin_sector[i])
 
             weights: np.ndarray[float] = compute_maxwellian_weight_factors(swe_l1b_data.count_rates[i],
                                                                            swe_l2_data.acquisition_duration[i] / 1e6)

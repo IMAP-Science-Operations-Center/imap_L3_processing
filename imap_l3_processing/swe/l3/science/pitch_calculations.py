@@ -123,8 +123,8 @@ def calculate_look_directions(inst_el: np.ndarray, inst_az: np.ndarray) -> np.nd
     inst_el_rad = np.deg2rad(inst_el)
     z = np.sin(inst_el_rad)
     cos_el = np.cos(inst_el_rad)
-    x = - cos_el * np.sin(inst_az_rad)
-    y = cos_el * np.cos(inst_az_rad)
+    x = cos_el * np.cos(inst_az_rad)
+    y = cos_el * np.sin(inst_az_rad)
     return np.stack(np.broadcast_arrays(x, y, z), axis=-1)
 
 
