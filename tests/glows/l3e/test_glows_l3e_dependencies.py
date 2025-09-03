@@ -9,6 +9,141 @@ from tests.test_helpers import get_test_data_path
 
 
 class TestGlowsL3EDependencies(unittest.TestCase):
+    @patch('imap_l3_processing.glows.l3e.glows_l3e_dependencies.imap_data_access.download')
+    def test_fetch_dependencies(self, mock_download):
+        mock_processing_input_collection = Mock()
+
+        mock_l3d = Path('imap_glows_l3d_solar-hist_20250501-cr02091_v001.cdf')
+        mock_energy_grid_lo = Path('energy_grid_lo_path')
+        mock_energy_grid_hi = Path('energy_grid_hi_sdc_path')
+        mock_energy_grid_ultra = Path('energy_grid_ultra_sdc_path')
+        mock_tess_xyz_8 = Path('tess_xyz_8_sdc_path')
+        mock_lya_series = Path('lya_series_sdc_path')
+        mock_solar_uv_anisotropy = Path('solar_uv_anisotropy_sdc_path')
+        mock_speed_3d_sw = Path('speed_3d_sw_sdc_path')
+        mock_density_3d_sw = Path('density_3d_sw_sdc_path')
+        mock_phion_hydrogen = Path('phion_hydrogen_sdc_path')
+        mock_sw_eqtr_electrons = Path('sw_eqtr_electrons_sdc_path')
+        ionization_files = Path('ionization_files_path')
+        mock_pipeline_settings = Path('l3bcde_pipeline_settings.json')
+        mock_lo_elongation_file = Path('lo_elongation_data.dat')
+        mock_tess_ang_16 = Path('tess_ang_16_path')
+        mock_repoint_file = Path('repoint.csv')
+
+        mock_processing_input_collection.get_file_paths.side_effect = [
+            [mock_l3d],
+            [mock_lya_series], [mock_solar_uv_anisotropy], [mock_speed_3d_sw], [mock_density_3d_sw],
+            [mock_phion_hydrogen], [mock_sw_eqtr_electrons], [ionization_files], [mock_pipeline_settings],
+            [mock_tess_xyz_8], [mock_energy_grid_lo], [mock_lo_elongation_file],
+            [mock_energy_grid_hi],
+            [mock_energy_grid_ultra], [mock_tess_ang_16],
+            [mock_repoint_file]
+        ]
+
+        mock_lya_series_path = Mock()
+        mock_solar_uv_anisotropy_path = Mock()
+        mock_speed_3d_sw_path = Mock()
+        mock_density_3d_sw_path = Mock()
+        mock_phion_hydrogen_path = Mock()
+        mock_sw_eqtr_electrons_path = Mock()
+        fake_pipeline_settings_path = get_test_data_path(
+            "glows/l3d_drift_test/imap_glows_pipeline-settings-l3bcde_20100101_v006.json")
+        mock_ionization_files_path = Mock()
+        mock_energy_grid_lo_path = Mock()
+        mock_tess_xyz_8_path = Mock()
+        mock_lo_elongation_path = get_test_data_path('glows/imap_lo_elongation-data_20100101_v001.dat')
+        mock_energy_grid_hi_path = Mock()
+        mock_energy_grid_ultra_path = Mock()
+        mock_tess_ang_16_path = Mock()
+        mock_downloaded_repoint_file = Mock()
+
+        mock_download.side_effect = [
+            mock_lya_series_path, mock_solar_uv_anisotropy_path, mock_speed_3d_sw_path,
+            mock_density_3d_sw_path, mock_phion_hydrogen_path, mock_sw_eqtr_electrons_path, mock_ionization_files_path,
+            fake_pipeline_settings_path, mock_energy_grid_lo_path, mock_tess_xyz_8_path, mock_lo_elongation_path,
+            mock_energy_grid_hi_path,
+            mock_energy_grid_ultra_path, mock_tess_ang_16_path,
+            mock_downloaded_repoint_file,
+        ]
+
+        actual_dependencies, cr_number = GlowsL3EDependencies.fetch_dependencies(mock_processing_input_collection)
+
+        self.assertEqual(16, mock_processing_input_collection.get_file_paths.call_count)
+
+        mock_processing_input_collection.get_file_paths.assert_has_calls([
+            call(source="glows", descriptor="solar-hist"),
+            call(source="glows", descriptor="lya"),
+            call(source="glows", descriptor="uv-anis"),
+            call(source="glows", descriptor="speed"),
+            call(source="glows", descriptor="p-dens"),
+            call(source="glows", descriptor="phion"),
+            call(source="glows", descriptor="e-dens"),
+            call(source="glows", descriptor="ionization-files"),
+            call(source="glows", descriptor="pipeline-settings-l3bcde"),
+            call(source="glows", descriptor="energy-grid-lo"),
+            call(source="glows", descriptor="tess-xyz-8"),
+            call(source="lo", descriptor="elongation-data"),
+            call(source="glows", descriptor="energy-grid-hi"),
+            call(source="glows", descriptor="energy-grid-ultra"),
+            call(source="glows", descriptor="tess-ang-16"),
+            call(data_type=RepointInput.data_type),
+        ])
+
+        mock_download.assert_has_calls([
+            call(mock_lya_series),
+            call(mock_solar_uv_anisotropy),
+            call(mock_speed_3d_sw),
+            call(mock_density_3d_sw),
+            call(mock_phion_hydrogen),
+            call(mock_sw_eqtr_electrons),
+            call(ionization_files),
+            call(mock_pipeline_settings),
+            call(mock_tess_xyz_8),
+            call(mock_energy_grid_lo),
+            call(mock_lo_elongation_file),
+            call(mock_energy_grid_hi),
+            call(mock_energy_grid_ultra),
+            call(mock_tess_ang_16),
+            call(mock_repoint_file),
+        ], any_order=False)
+
+        expected_pipeline_settings = {"executable_dependency_paths": {
+            "energy-grid-lo": "EnGridLo.dat",
+            "energy-grid-hi": "EnGridHi.dat",
+            "energy-grid-ultra": "EnGridUltra.dat",
+            "tess-xyz-8": "tessXYZ8.dat",
+            "tess-ang-16": "tessAng16.dat",
+            "lya-series": "lyaSeriesV4_2021b.dat",
+            "solar-uv-anisotropy": "solar_uv_anisotropy_NP.1.0_SP.1.0.dat",
+            "speed-3d": "speed3D.v01.Legendre.2021b.dat",
+            "density-3d": "density3D.v01.Legendre.2021b.dat",
+            "phion-hydrogen": "phion_Hydrogen_T12F107_2021b.dat",
+            "sw-eqtr-electrons": "swEqtrElectrons5_2021b.dat",
+            "ionization-files": "ionization.files.dat",
+        }}
+
+        self.assertEqual(mock_lya_series_path, actual_dependencies.lya_series)
+        self.assertEqual(mock_solar_uv_anisotropy_path, actual_dependencies.solar_uv_anisotropy)
+        self.assertEqual(mock_speed_3d_sw_path, actual_dependencies.speed_3d_sw)
+        self.assertEqual(mock_density_3d_sw_path, actual_dependencies.density_3d_sw)
+        self.assertEqual(mock_phion_hydrogen_path, actual_dependencies.phion_hydrogen)
+        self.assertEqual(mock_sw_eqtr_electrons_path, actual_dependencies.sw_eqtr_electrons)
+        self.assertEqual(expected_pipeline_settings['executable_dependency_paths'],
+                         actual_dependencies.pipeline_settings['executable_dependency_paths'])
+        self.assertEqual(mock_ionization_files_path, actual_dependencies.ionization_files)
+        self.assertEqual(mock_energy_grid_lo_path, actual_dependencies.energy_grid_lo)
+        self.assertEqual(mock_energy_grid_hi_path, actual_dependencies.energy_grid_hi)
+        self.assertEqual(mock_energy_grid_ultra_path, actual_dependencies.energy_grid_ultra)
+        self.assertEqual(mock_tess_xyz_8_path, actual_dependencies.tess_xyz_8)
+        self.assertEqual(mock_tess_ang_16_path, actual_dependencies.tess_ang16)
+        self.assertEqual(365, len(actual_dependencies.elongation))
+        first_dict_value = actual_dependencies.elongation['2010001']
+        last_dict_value = actual_dependencies.elongation['2010365']
+        self.assertEqual(105, first_dict_value)
+        self.assertEqual(105, last_dict_value)
+
+        self.assertEqual(cr_number, 2091)
+        self.assertEqual(mock_downloaded_repoint_file, actual_dependencies.repointing_file)
 
     @patch('imap_l3_processing.glows.l3e.glows_l3e_dependencies.download_dependency_from_path')
     def test_fetch_dependencies_handles_lo(self, mock_download_dependency_from_path):

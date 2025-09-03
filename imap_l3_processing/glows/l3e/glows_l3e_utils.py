@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 
@@ -52,12 +53,18 @@ def _decimal_time(t: datetime) -> str:
     return "{:10.5f}".format(t.year + (t - year_start) / (year_end - year_start))
 
 
+@dataclass
+class GlowsL3eRepointings:
+    repointing_numbers: list[int]
+    hi_90_repointings: dict[int, int]
+    hi_45_repointings: dict[int, int]
+    lo_repointings: dict[int, int]
+    ultra_repointings: dict[int, int]
+
+
 def determine_l3e_files_to_produce(first_cr_processed: int, last_processed_cr: int,
-                                   repointing_path: Path, descriptor: str) -> dict[int, int]:
-    l3e_files = imap_data_access.query(instrument='glows', descriptor=descriptor, data_level='l3e', version="latest")
-
-
-    updated_pointing = {int(l3e['repointing']): int(l3e['version'][1:]) for l3e in l3e_files}
+                                   repointing_path: Path) -> GlowsL3eRepointings:
+    descriptors = ['survival-probability-hi-90','survival-probability-hi-45','survival-probability-lo','survival-probability-ultra']
 
     set_global_repoint_table_paths([repointing_path])
     repointing_data = get_repoint_data()
@@ -78,13 +85,19 @@ def determine_l3e_files_to_produce(first_cr_processed: int, last_processed_cr: i
         if i + 1 < len(repoint_ids) and start_ns < repoint_starts[i + 1] < end_ns:
             pointing_numbers.append(int(repoint_ids[i]))
 
-    for pointing_number in pointing_numbers:
-        if pointing_number in updated_pointing:
-            updated_pointing[pointing_number] = updated_pointing[pointing_number] + 1
-        else:
-            updated_pointing[pointing_number] = 1
+    updated_pointings_per_instruments = []
+    for descriptor in descriptors:
+        l3e_files = imap_data_access.query(instrument='glows', data_level='l3e', version="latest", descriptor=descriptor)
+        updated_pointing = {int(l3e['repointing']): int(l3e['version'][1:]) for l3e in l3e_files}
 
-    return updated_pointing
+        for pointing_number in pointing_numbers:
+            if pointing_number in updated_pointing:
+                updated_pointing[pointing_number] = updated_pointing[pointing_number] + 1
+            else:
+                updated_pointing[pointing_number] = 1
+        updated_pointings_per_instruments.append(updated_pointing)
+
+    return GlowsL3eRepointings(pointing_numbers, *updated_pointings_per_instruments)
 
 
 def find_first_updated_cr(new_l3d, old_l3d) -> Optional[int]:

@@ -47,34 +47,26 @@ class GlowsL3EDependencies:
         ionization_files_path = imap_data_access.download(ionization_files_dependency[0])
         pipeline_settings_path = imap_data_access.download(pipeline_settings_dependency[0])
 
-        energy_grid_lo_path = None
-        energy_grid_hi_path = None
-        energy_grid_ultra_path = None
-        tess_xyz_path = None
-        tess_ang_path = None
-        elongation_data = None
+        energy_grid_lo_dependency = dependencies.get_file_paths(source='glows', descriptor='energy-grid-lo')
+        tess_xyz_dependency = dependencies.get_file_paths(source='glows', descriptor='tess-xyz-8')
+        elongation_dependency = dependencies.get_file_paths(source='lo', descriptor='elongation-data')
+        energy_grid_lo_path = imap_data_access.download(energy_grid_lo_dependency[0])
+        tess_xyz_path = imap_data_access.download(tess_xyz_dependency[0])
+        elongation_path = imap_data_access.download(elongation_dependency[0])
+        with open(elongation_path) as f:
+            elongation_data = {}
+            lines = [line.rstrip('\n') for line in f.readlines()]
+            for line in lines:
+                repointing, elongation = line.split('\t')
+                elongation_data[repointing] = int(elongation)
 
-        if descriptor == "survival-probability-lo":
-            energy_grid_lo_dependency = dependencies.get_file_paths(source='glows', descriptor='energy-grid-lo')
-            tess_xyz_dependency = dependencies.get_file_paths(source='glows', descriptor='tess-xyz-8')
-            elongation_dependency = dependencies.get_file_paths(source='lo', descriptor='elongation-data')
-            energy_grid_lo_path = imap_data_access.download(str(energy_grid_lo_dependency[0]))
-            tess_xyz_path = imap_data_access.download(str(tess_xyz_dependency[0]))
-            elongation_path = imap_data_access.download(str(elongation_dependency[0]))
-            with open(elongation_path) as f:
-                elongation_data = {}
-                lines = [line.rstrip('\n') for line in f.readlines()]
-                for line in lines:
-                    repointing, elongation = line.split('\t')
-                    elongation_data[repointing] = int(elongation)
-        elif descriptor == "survival-probability-hi-45" or descriptor == "survival-probability-hi-90":
-            energy_grid_hi_dependency = dependencies.get_file_paths(source='glows', descriptor='energy-grid-hi')
-            energy_grid_hi_path = imap_data_access.download(str(energy_grid_hi_dependency[0]))
-        elif descriptor == "survival-probability-ul":
-            energy_grid_ultra_dependency = dependencies.get_file_paths(source='glows', descriptor='energy-grid-ultra')
-            tess_ang_dependency = dependencies.get_file_paths(source='glows', descriptor='tess-ang-16')
-            energy_grid_ultra_path = imap_data_access.download(str(energy_grid_ultra_dependency[0]))
-            tess_ang_path = imap_data_access.download(str(tess_ang_dependency[0]))
+        energy_grid_hi_dependency = dependencies.get_file_paths(source='glows', descriptor='energy-grid-hi')
+        energy_grid_hi_path = imap_data_access.download(energy_grid_hi_dependency[0])
+
+        energy_grid_ultra_dependency = dependencies.get_file_paths(source='glows', descriptor='energy-grid-ultra')
+        tess_ang_dependency = dependencies.get_file_paths(source='glows', descriptor='tess-ang-16')
+        energy_grid_ultra_path = imap_data_access.download(energy_grid_ultra_dependency[0])
+        tess_ang_path = imap_data_access.download(tess_ang_dependency[0])
 
         with open(pipeline_settings_path) as f:
             pipeline_settings = json.load(f)
@@ -82,7 +74,7 @@ class GlowsL3EDependencies:
         cr_number = int(str(solar_hist_dependency).split('_')[-2][-5:])
 
         repoint_file_dependency = dependencies.get_file_paths(data_type=RepointInput.data_type)
-        repoint_file_path = imap_data_access.download(str(repoint_file_dependency[0]))
+        repoint_file_path = imap_data_access.download(repoint_file_dependency[0])
 
         return cls(
             energy_grid_lo_path,

@@ -1,6 +1,6 @@
 import unittest
 from datetime import datetime
-from unittest.mock import patch, Mock
+from unittest.mock import patch, Mock, call
 
 import numpy as np
 
@@ -62,27 +62,72 @@ class TestGlowsL3EUtils(unittest.TestCase):
     def test_determine_l3e_files_to_produce(self, mock_query):
         last_processed_cr = 2094
         first_cr_processed = 2093
-        descriptor = 'survival-probability-lo'
         repoint_pathing = get_test_data_path("fake_1_day_repointing_file.csv")
 
-        mock_query.return_value = create_glows_mock_query_results([
-            'imap_glows_l3e_survival-probability-lo_20250101-repoint03682_v001.cdf',
-            'imap_glows_l3e_survival-probability-lo_20250101-repoint03683_v002.cdf',
-            'imap_glows_l3e_survival-probability-lo_20250101-repoint03684_v003.cdf',
-            'imap_glows_l3e_survival-probability-lo_20250101-repoint03685_v004.cdf',
-            'imap_glows_l3e_survival-probability-lo_20250101-repoint03686_v005.cdf',
+        expected_repointings = [i for i in range(3682, 3736)]
+
+        expected_hi_90_repointing_to_version = {i: 1 for i in expected_repointings}
+        expected_hi_45_repointing_to_version = {i: 1 for i in expected_repointings}
+        expected_lo_repointing_to_version = {i: 1 for i in expected_repointings}
+        expected_ultra_repointing_to_version = {i: 1 for i in expected_repointings}
+
+        expected_hi_90_repointing_to_version.update({
+            3682: 2, 3683: 3, 3684: 4, 3685: 5, 3686: 6
+        })
+        expected_hi_45_repointing_to_version.update({
+            3683: 3, 3684: 4, 3685: 5, 3686: 6, 3687: 7
+        })
+        expected_lo_repointing_to_version.update({
+            3684: 4, 3685: 5, 3686: 6, 3687: 7, 3688: 8
+        })
+        expected_ultra_repointing_to_version.update({
+            3685: 5, 3686: 6, 3687: 7, 3688: 8, 3689: 9
+        })
+
+        mock_query.side_effect = [
+            create_glows_mock_query_results([
+                'imap_glows_l3e_survival-probability-hi-90_20250101-repoint03682_v001.cdf',
+                'imap_glows_l3e_survival-probability-hi-90_20250101-repoint03683_v002.cdf',
+                'imap_glows_l3e_survival-probability-hi-90_20250101-repoint03684_v003.cdf',
+                'imap_glows_l3e_survival-probability-hi-90_20250101-repoint03685_v004.cdf',
+                'imap_glows_l3e_survival-probability-hi-90_20250101-repoint03686_v005.cdf',
+            ]),
+            create_glows_mock_query_results([
+                'imap_glows_l3e_survival-probability-hi-45_20250101-repoint03683_v002.cdf',
+                'imap_glows_l3e_survival-probability-hi-45_20250101-repoint03684_v003.cdf',
+                'imap_glows_l3e_survival-probability-hi-45_20250101-repoint03685_v004.cdf',
+                'imap_glows_l3e_survival-probability-hi-45_20250101-repoint03686_v005.cdf',
+                'imap_glows_l3e_survival-probability-hi-45_20250101-repoint03687_v006.cdf',
+            ]),
+            create_glows_mock_query_results([
+                'imap_glows_l3e_survival-probability-lo_20250101-repoint03684_v003.cdf',
+                'imap_glows_l3e_survival-probability-lo_20250101-repoint03685_v004.cdf',
+                'imap_glows_l3e_survival-probability-lo_20250101-repoint03686_v005.cdf',
+                'imap_glows_l3e_survival-probability-lo_20250101-repoint03687_v006.cdf',
+                'imap_glows_l3e_survival-probability-lo_20250101-repoint03688_v007.cdf',
+            ]),
+            create_glows_mock_query_results([
+                'imap_glows_l3e_survival-probability-ultra_20250101-repoint03685_v004.cdf',
+                'imap_glows_l3e_survival-probability-ultra_20250101-repoint03686_v005.cdf',
+                'imap_glows_l3e_survival-probability-ultra_20250101-repoint03687_v006.cdf',
+                'imap_glows_l3e_survival-probability-ultra_20250101-repoint03688_v007.cdf',
+                'imap_glows_l3e_survival-probability-ultra_20250101-repoint03689_v008.cdf',
+            ]),
+        ]
+
+        repointings = determine_l3e_files_to_produce(first_cr_processed, last_processed_cr, repoint_pathing)
+        mock_query.assert_has_calls([
+            call(instrument="glows", data_level="l3e", version='latest', descriptor='survival-probability-hi-90'),
+            call(instrument="glows", data_level="l3e", version='latest', descriptor='survival-probability-hi-45'),
+            call(instrument="glows", data_level="l3e", version='latest', descriptor='survival-probability-lo'),
+            call(instrument="glows", data_level="l3e", version='latest', descriptor='survival-probability-ultra'),
         ])
 
-        expected_repointing_to_version = {
-            3682: 2, 3683: 3, 3684: 4, 3685: 5, 3686: 6
-        }
-
-        [expected_repointing_to_version.update({i: 1}) for i in range(3687, 3736)]
-
-        actual_repointing_to_version = determine_l3e_files_to_produce(first_cr_processed, last_processed_cr, repoint_pathing, descriptor)
-        mock_query.assert_called_once_with(instrument="glows", data_level="l3e", version='latest', descriptor=descriptor)
-
-        self.assertEqual(expected_repointing_to_version, actual_repointing_to_version)
+        self.assertEqual(expected_hi_90_repointing_to_version, repointings.hi_90_repointings)
+        self.assertEqual(expected_hi_45_repointing_to_version, repointings.hi_45_repointings)
+        self.assertEqual(expected_lo_repointing_to_version, repointings.lo_repointings)
+        self.assertEqual(expected_ultra_repointing_to_version, repointings.ultra_repointings)
+        self.assertEqual(expected_repointings, repointings.repointing_numbers)
 
     @patch('imap_l3_processing.glows.l3e.glows_l3e_utils.CDF')
     def test_find_first_updated_cr(self, mock_CDF):

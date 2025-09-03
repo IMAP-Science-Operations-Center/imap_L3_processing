@@ -7,20 +7,19 @@ from imap_data_access import ProcessingInputCollection, AncillaryInput, ScienceI
 
 from imap_l3_processing.glows.l3d.utils import get_most_recently_uploaded_ancillary
 from imap_l3_processing.glows.l3e.glows_l3e_dependencies import GlowsL3EDependencies
-from imap_l3_processing.glows.l3e.glows_l3e_utils import find_first_updated_cr, determine_l3e_files_to_produce
+from imap_l3_processing.glows.l3e.glows_l3e_utils import find_first_updated_cr, determine_l3e_files_to_produce, \
+    GlowsL3eRepointings
+
 
 @dataclass
 class GlowsL3EInitializerOutput:
     dependencies: GlowsL3EDependencies
-    hi_90_repointings: dict[int, int]
-    hi_45_repointings: dict[int, int]
-    lo_repointings: dict[int, int]
-    ultra_repointings: dict[int, int]
+    repointings: GlowsL3eRepointings
 
 
 class GlowsL3EInitializer:
     @staticmethod
-    def get_repointings_to_process(updated_l3d: Path, previous_l3d: Optional[Path]):
+    def get_repointings_to_process(updated_l3d: Path, previous_l3d: Optional[Path]) -> GlowsL3EInitializerOutput:
         ionization_files = get_most_recently_uploaded_ancillary(imap_data_access.query(instrument='glows', descriptor='ionization-files'))
         pipeline_settings_l3bcde = get_most_recently_uploaded_ancillary(imap_data_access.query(instrument='glows', descriptor='pipeline-settings-l3bcde'))
         energy_grid_lo = get_most_recently_uploaded_ancillary(imap_data_access.query(instrument='glows', descriptor='energy-grid-lo'))
@@ -51,15 +50,9 @@ class GlowsL3EInitializer:
             first_cr = deps.pipeline_settings['start_cr']
         last_cr = ScienceFilePath(updated_l3d).cr
 
-        hi_45_repointings = determine_l3e_files_to_produce(first_cr, last_cr, deps.repointing_file, "survival-probability-hi-45")
-        hi_90_repointings = determine_l3e_files_to_produce(first_cr, last_cr, deps.repointing_file, "survival-probability-hi-90")
-        lo_repointings = determine_l3e_files_to_produce(first_cr, last_cr, deps.repointing_file, "survival-probability-lo")
-        ultra_repointings = determine_l3e_files_to_produce(first_cr, last_cr, deps.repointing_file, "survival-probability-ultra")
+        glows_repointings = determine_l3e_files_to_produce(first_cr, last_cr, deps.repointing_file)
 
         return GlowsL3EInitializerOutput(
             dependencies=deps,
-            hi_90_repointings=hi_90_repointings,
-            hi_45_repointings=hi_45_repointings,
-            lo_repointings=lo_repointings,
-            ultra_repointings=ultra_repointings,
+            repointings=glows_repointings
         )
