@@ -48,9 +48,9 @@ class TestSwapiProcessor(TestCase):
         incoming_data_level = 'l2'
         dependency_start_date = datetime.strftime(datetime(2025, 1, 1), "%Y%m%d")
         version = 'v001'
-        end_date = datetime.now()
+        end_date = datetime(2025, 9, 26)
         outgoing_data_level = "l3a"
-        start_date = datetime.now() - timedelta(days=1)
+        start_date = datetime(2025, 9, 25)
         input_version = "v123"
         outgoing_version = "123"
         start_date_as_str = datetime.strftime(start_date, "%Y%m%d")
@@ -116,7 +116,7 @@ class TestSwapiProcessor(TestCase):
 
         input_metadata.descriptor = "pui-he"
 
-        expected_cdf_path = (config["DATA_DIR"] / "imap" / "swapi" / "l3a" / "2025" / "08" /
+        expected_cdf_path = (config["DATA_DIR"] / "imap" / "swapi" / "l3a" / "2025" / "09" /
                              f"imap_swapi_l3a_pui-he_{start_date_as_str}_{input_version}.cdf")
 
         mock_chunk_l2_data.side_effect = [
@@ -224,9 +224,9 @@ class TestSwapiProcessor(TestCase):
         incoming_data_level = 'l2'
         dependency_start_date = datetime.strftime(datetime(2025, 1, 1), "%Y%m%d")
         version = 'v001'
-        end_date = datetime.now()
+        end_date = datetime(2025, 6, 13)
         outgoing_data_level = "l3a"
-        start_date = datetime.now() - timedelta(days=1)
+        start_date = datetime(2025, 6, 12)
         input_version = "v123"
         outgoing_version = "123"
         start_date_as_str = datetime.strftime(start_date, "%Y%m%d")
@@ -286,7 +286,7 @@ class TestSwapiProcessor(TestCase):
 
         input_metadata.descriptor = "proton-sw"
 
-        expected_cdf_path = (config["DATA_DIR"] / "imap" / "swapi" / "l3a" / "2025" / "08" /
+        expected_cdf_path = (config["DATA_DIR"] / "imap" / "swapi" / "l3a" / "2025" / "06" /
                              f"imap_swapi_l3a_proton-sw_{start_date_as_str}_{input_version}.cdf")
 
         mock_chunk_l2_data.side_effect = [
@@ -406,9 +406,9 @@ class TestSwapiProcessor(TestCase):
         incoming_data_level = 'l2'
         dependency_start_date = datetime.strftime(datetime(2025, 1, 1), "%Y%m%d")
         version = 'v001'
-        end_date = datetime.now()
+        end_date = datetime(2025, 8, 29)
         outgoing_data_level = "l3a"
-        start_date = datetime.now() - timedelta(days=1)
+        start_date = datetime(2025, 8, 28)
         input_version = "v123"
         outgoing_version = "123"
         start_date_as_str = datetime.strftime(start_date, "%Y%m%d")
