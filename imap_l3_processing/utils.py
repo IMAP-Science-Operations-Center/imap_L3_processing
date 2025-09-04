@@ -180,3 +180,7 @@ def furnish_local_spice():
     for file in kernels.iterdir():
         if file.name not in current_kernels:
             spiceypy.furnsh(str(file))
+
+def get_spice_parent_file_names() -> list[str]:
+    count = spiceypy.ktotal('ALL')
+    return [Path(spiceypy.kdata(i, 'ALL')[0]).name for i in range(0, count)]

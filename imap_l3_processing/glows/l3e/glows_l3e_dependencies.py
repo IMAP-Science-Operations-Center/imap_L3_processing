@@ -9,11 +9,11 @@ from imap_data_access.processing_input import ProcessingInputCollection, Repoint
 
 @dataclass
 class GlowsL3EDependencies:
-    energy_grid_lo: Path | None
-    energy_grid_hi: Path | None
-    energy_grid_ultra: Path | None
-    tess_xyz_8: Path | None
-    tess_ang16: Path | None
+    energy_grid_lo: Path
+    energy_grid_hi: Path
+    energy_grid_ultra: Path
+    tess_xyz_8: Path
+    tess_ang16: Path
     lya_series: Path
     solar_uv_anisotropy: Path
     speed_3d_sw: Path
@@ -22,7 +22,9 @@ class GlowsL3EDependencies:
     sw_eqtr_electrons: Path
     ionization_files: Path
     pipeline_settings: dict
+    pipeline_settings_file: Path
     elongation: dict
+    elongation_file: Path
     repointing_file: Path
 
     @classmethod
@@ -90,7 +92,9 @@ class GlowsL3EDependencies:
             sw_eqtr_electrons_path,
             ionization_files_path,
             pipeline_settings,
+            pipeline_settings_path,
             elongation_data,
+            elongation_path,
             repoint_file_path
         ), cr_number
 
@@ -115,3 +119,48 @@ class GlowsL3EDependencies:
         shutil.move(self.phion_hydrogen, self.pipeline_settings['executable_dependency_paths']['phion-hydrogen'])
         shutil.move(self.sw_eqtr_electrons, self.pipeline_settings['executable_dependency_paths']['sw-eqtr-electrons'])
         shutil.move(self.ionization_files, self.pipeline_settings['executable_dependency_paths']['ionization-files'])
+
+    def get_hi_parents(self):
+        return [
+            self.energy_grid_hi.name,
+            self.lya_series.name,
+            self.solar_uv_anisotropy.name,
+            self.speed_3d_sw.name,
+            self.density_3d_sw.name,
+            self.phion_hydrogen.name,
+            self.sw_eqtr_electrons.name,
+            self.ionization_files.name,
+            self.pipeline_settings_file.name,
+            self.repointing_file.name,
+        ]
+
+    def get_lo_parents(self):
+        return [
+            self.energy_grid_lo.name,
+            self.tess_xyz_8.name,
+            self.lya_series.name,
+            self.solar_uv_anisotropy.name,
+            self.speed_3d_sw.name,
+            self.density_3d_sw.name,
+            self.phion_hydrogen.name,
+            self.sw_eqtr_electrons.name,
+            self.ionization_files.name,
+            self.pipeline_settings_file.name,
+            self.repointing_file.name,
+            self.elongation_file.name,
+        ]
+
+    def get_ul_parents(self):
+        return [
+            self.energy_grid_ultra.name,
+            self.tess_ang16.name,
+            self.lya_series.name,
+            self.solar_uv_anisotropy.name,
+            self.speed_3d_sw.name,
+            self.density_3d_sw.name,
+            self.phion_hydrogen.name,
+            self.sw_eqtr_electrons.name,
+            self.ionization_files.name,
+            self.pipeline_settings_file.name,
+            self.repointing_file.name,
+        ]

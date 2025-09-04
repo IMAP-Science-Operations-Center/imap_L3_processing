@@ -137,9 +137,4 @@ class TestGlowsL3EInitializer(unittest.TestCase):
         actual_initializer_output = GlowsL3EInitializer.get_repointings_to_process(updated_l3d, previous_l3d)
 
         mock_find_first_updated_cr.assert_not_called()
-        mock_determine_l3e_files_to_produce.assert_has_calls([
-            call(2089, 2091, actual_initializer_output.dependencies.repointing_file, "survival-probability-hi-45"),
-            call(2089, 2091, actual_initializer_output.dependencies.repointing_file, "survival-probability-hi-90"),
-            call(2089, 2091, actual_initializer_output.dependencies.repointing_file, "survival-probability-lo"),
-            call(2089, 2091, actual_initializer_output.dependencies.repointing_file, "survival-probability-ultra"),
-        ])
+        mock_determine_l3e_files_to_produce.assert_called_once_with(2089, 2091, actual_initializer_output.dependencies.repointing_file)

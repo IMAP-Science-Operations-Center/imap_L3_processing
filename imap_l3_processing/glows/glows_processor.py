@@ -4,6 +4,7 @@ import os
 import shutil
 import subprocess
 import sys
+import traceback
 from dataclasses import replace
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -33,7 +34,6 @@ from imap_l3_processing.glows.l3d.glows_l3d_initializer import GlowsL3DInitializ
 from imap_l3_processing.glows.l3d.models import GlowsL3DProcessorOutput
 from imap_l3_processing.glows.l3d.utils import create_glows_l3b_json_file_from_cdf, create_glows_l3c_json_file_from_cdf, \
     PATH_TO_L3D_TOOLKIT, convert_json_to_l3d_data_product, get_parent_file_names_from_l3d_json, set_version_on_txt_files
-from imap_l3_processing.glows.l3e.glows_l3e_dependencies import GlowsL3EDependencies
 from imap_l3_processing.glows.l3e.glows_l3e_hi_model import GlowsL3EHiData
 from imap_l3_processing.glows.l3e.glows_l3e_initializer import GlowsL3EInitializer, GlowsL3EInitializerOutput
 from imap_l3_processing.glows.l3e.glows_l3e_lo_model import GlowsL3ELoData
@@ -41,7 +41,7 @@ from imap_l3_processing.glows.l3e.glows_l3e_ultra_model import GlowsL3EUltraData
 from imap_l3_processing.glows.l3e.glows_l3e_utils import determine_call_args_for_l3e_executable
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
-from imap_l3_processing.utils import save_data
+from imap_l3_processing.utils import save_data, get_spice_parent_file_names
 
 logger = logging.getLogger(__name__)
 
@@ -262,20 +262,38 @@ def process_l3d(dependencies: GlowsL3DDependencies, version: int) -> Optional[Gl
         return GlowsL3DProcessorOutput(l3d_data_product_path, txt_files_with_correct_version, last_processed_cr)
     return None
 
-def process_l3e_lo(processor: GlowsProcessor, epoch: datetime, epoch_delta: timedelta, elongation_value: int) -> list[Path]:
-    call_args_object = determine_call_args_for_l3e_executable(epoch, epoch + epoch_delta, elongation_value)
-    call_args = call_args_object.to_argument_list()
+def process_l3e_lo(
+        parent_file_names: list[str],
+        repointing: int,
+        epoch: datetime,
+        epoch_delta: timedelta,
+        elongation_value: int,
+        version: int
+) -> list[Path]:
+    l3e_args = determine_call_args_for_l3e_executable(epoch, epoch + epoch_delta, float(elongation_value))
+    call_args = l3e_args.to_argument_list()
 
     run(["./survProbLo"] + call_args)
 
-    output_path = Path(f'probSur.Imap.Lo_{call_args[0]}_{call_args[1][:8]}_{call_args[-1][:5]}.dat')
-    lo_data = GlowsL3ELoData.convert_dat_to_glows_l3e_lo_product(processor.input_metadata, output_path,
-                                                                 np.array([epoch]),
-                                                                 np.array([elongation_value]), call_args_object)
+    input_metadata = InputMetadata(
+        instrument="glows",
+        data_level="l3e",
+        descriptor="survival-probability-lo",
+        start_date=epoch,
+        end_date=epoch + epoch_delta * 2,
+        version=f"v{version:03}",
+        repointing=repointing,
+    )
 
-    lo_data.parent_file_names = processor.get_parent_file_names()
+    output_path = Path(f'probSur.Imap.Lo_{l3e_args.formatted_date}_{l3e_args.decimal_date[:8]}_{elongation_value:.2f}.dat')
+    lo_data = GlowsL3ELoData.convert_dat_to_glows_l3e_lo_product(input_metadata, output_path,
+                                                                 np.array([epoch]),
+                                                                 np.array([elongation_value]), l3e_args)
+
+    lo_data.parent_file_names = parent_file_names
+
     lo_cdf = save_data(lo_data)
-    new_dat_path = Path(lo_cdf)
+    new_dat_path = lo_cdf
     new_dat_path = new_dat_path.parent / Path('_'.join(new_dat_path.name.split('_')[0:4]) + '-raw_' + '_'.join(
         new_dat_path.name.split('_')[4:])[:-4] + '.dat')
 
@@ -283,17 +301,27 @@ def process_l3e_lo(processor: GlowsProcessor, epoch: datetime, epoch_delta: time
 
     return [lo_cdf, new_dat_path]
 
-def process_l3e_ul(processor: GlowsProcessor, epoch: datetime, epoch_delta: timedelta) -> list[Path]:
+def process_l3e_ul(parent_file_names: list[str], repointing: int, epoch: datetime, epoch_delta: timedelta, version: int) -> list[Path]:
     call_args_object = determine_call_args_for_l3e_executable(epoch, epoch + epoch_delta, 30)
     call_args = call_args_object.to_argument_list()
 
     run(["./survProbUltra"] + call_args)
 
+    input_metadata = InputMetadata(
+        instrument="glows",
+        data_level="l3e",
+        descriptor="survival-probability-ul",
+        start_date=epoch,
+        end_date=epoch + epoch_delta * 2,
+        version=f"v{version:03}",
+        repointing=repointing,
+    )
+
     output_path = Path(f'probSur.Imap.Ul_{call_args[0]}_{call_args[1][:8]}.dat')
-    ul_data = GlowsL3EUltraData.convert_dat_to_glows_l3e_ul_product(processor.input_metadata, output_path,
+    ul_data = GlowsL3EUltraData.convert_dat_to_glows_l3e_ul_product(input_metadata, output_path,
                                                                     np.array([epoch]), call_args_object)
 
-    ul_data.parent_file_names = processor.get_parent_file_names()
+    ul_data.parent_file_names = parent_file_names
 
     ul_cdf = save_data(ul_data)
 
@@ -305,16 +333,21 @@ def process_l3e_ul(processor: GlowsProcessor, epoch: datetime, epoch_delta: time
 
     return [ul_cdf, new_dat_path]
 
-def process_l3e_hi(processor: GlowsProcessor, epoch: datetime, epoch_delta: timedelta, elongation: int) -> list[Path]:
+def process_l3e_hi(parent_file_names: list[str], repointing: int, epoch: datetime, epoch_delta: timedelta, elongation: int, version: int) -> list[Path]:
     call_args_object = determine_call_args_for_l3e_executable(epoch, epoch + epoch_delta, elongation)
     call_args = call_args_object.to_argument_list()
     run(["./survProbHi"] + call_args)
 
+
+    input_metadata = InputMetadata(instrument='glows', descriptor=f'survival-probability-hi-{180-elongation}',
+                                   version=f'v{version:03}', start_date=epoch,end_date=epoch+epoch_delta * 2,
+                                   repointing=repointing, data_level='l3e')
+
     output_path = Path(f'probSur.Imap.Hi_{call_args[0]}_{call_args[1][:8]}_{call_args[-1][:5]}.dat')
-    hi_data = GlowsL3EHiData.convert_dat_to_glows_l3e_hi_product(processor.input_metadata, output_path,
+    hi_data = GlowsL3EHiData.convert_dat_to_glows_l3e_hi_product(input_metadata, output_path,
                                                                  np.array([epoch]), call_args_object)
 
-    hi_data.parent_file_names = processor.get_parent_file_names()
+    hi_data.parent_file_names = parent_file_names
 
     hi_cdf = save_data(hi_data)
 
@@ -326,24 +359,47 @@ def process_l3e_hi(processor: GlowsProcessor, epoch: datetime, epoch_delta: time
 
     return [hi_cdf, new_dat_path]
 
-def process_l3e(processor: GlowsProcessor, initializer_data: GlowsL3EInitializerOutput):
+def process_l3e(initializer_data: GlowsL3EInitializerOutput):
     products_list = []
     for repointing in initializer_data.repointings.repointing_numbers:
-        processor.input_metadata.repointing = repointing
-        try:
+        with SwallowExceptionAndLog(f"Exception encountered when processing L3e for repointing {repointing}"):
             epoch, epoch_end = get_pointing_date_range(repointing)
             epoch_delta: timedelta = (epoch_end - epoch) / 2
-            try:
-                year_with_repointing = str(epoch.year) + str(int(repointing)).zfill(3)
-                elongation = initializer_data.dependencies.elongation[year_with_repointing]
-            except KeyError:
-                continue
-            products_list.extend(process_l3e_lo(processor, epoch, epoch_delta, elongation))
-            products_list.extend(process_l3e_hi(processor, epoch, epoch_delta, 90))
-            products_list.extend(process_l3e_hi(processor, epoch, epoch_delta, 135))
-            products_list.extend(process_l3e_ul(processor, epoch, epoch_delta))
+            spice_kernel_parent_files = get_spice_parent_file_names()
 
-        except Exception as e:
-            print("Exception encountered for repointing ", repointing, e)
+            with SwallowExceptionAndLog(f"Exception encountered when processing L3e lo for repointing {repointing}"):
+                lo_parent_file_names = spice_kernel_parent_files + initializer_data.dependencies.get_lo_parents()
+                lo_elongation = initializer_data.dependencies.elongation.get(f"{epoch.year}{repointing:03}")
+                if lo_elongation is not None:
+                    lo_version = initializer_data.repointings.lo_repointings[repointing]
+                    products_list.extend(process_l3e_lo(lo_parent_file_names, repointing, epoch, epoch_delta, lo_elongation, lo_version))
+
+            with SwallowExceptionAndLog(f"Exception encountered when processing L3e hi-90 for repointing {repointing}"):
+                hi_parent_file_names = spice_kernel_parent_files + initializer_data.dependencies.get_hi_parents()
+                hi_90_version = initializer_data.repointings.hi_90_repointings[repointing]
+                products_list.extend(process_l3e_hi(hi_parent_file_names, repointing, epoch, epoch_delta, 90, hi_90_version))
+
+            with SwallowExceptionAndLog(f"Exception encountered when processing L3e hi-45 for repointing {repointing}"):
+                hi_parent_file_names = spice_kernel_parent_files + initializer_data.dependencies.get_hi_parents()
+                hi_45_version = initializer_data.repointings.hi_45_repointings[repointing]
+                products_list.extend(process_l3e_hi(hi_parent_file_names, repointing, epoch, epoch_delta, 135, hi_45_version))
+
+            with SwallowExceptionAndLog(f"Exception encountered when processing L3e ultra for repointing {repointing}"):
+                ul_parent_file_names = spice_kernel_parent_files + initializer_data.dependencies.get_ul_parents()
+                ul_version = initializer_data.repointings.ultra_repointings[repointing]
+                products_list.extend(process_l3e_ul(ul_parent_file_names, repointing, epoch, epoch_delta, ul_version))
 
     return products_list
+
+class SwallowExceptionAndLog:
+    def __init__(self, message: str):
+        self.message = message
+
+    def __enter__(self):
+        pass
+
+    def __exit__(self, exc_type, exc_val, exc_tb) -> bool:
+        if exc_type is not None:
+            print(self.message)
+            traceback.print_exception(exc_type, exc_val, exc_tb)
+        return True
