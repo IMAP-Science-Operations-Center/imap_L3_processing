@@ -25,6 +25,9 @@ def read_numeric_variable(var: pycdf.Var) -> np.ndarray:
     return np.where(var[...] == var.attrs['FILLVAL'], np.nan, var[...])
 
 
+OUTPUT_PATH = Path(__file__).parent.parent.parent / 'comparisons' / 'fov_fake_calibration'
+HERITAGE_PATH = r'instrument_team_data/swe/swepam-nswe-1999-159.v1-02.hdf'
+
 variable_mapping = {
     "spacecraft_potential": "potential",
     "core_halo_breakpoint": "break_core_halo",
@@ -90,7 +93,48 @@ variable_mapping = {
     "halo_temperature_tensor_integrated": "t_mat_ih",
     "total_temperature_tensor_integrated": "t_mat_i",
 }
-Path("comparisons").mkdir(exist_ok=True)
+OUTPUT_PATH.mkdir(exist_ok=True, parents=True)
+
+
+def get_heritage_variable(path, variable_spec):
+    l3_hdf = HDF(path)
+    l3_vs = l3_hdf.vstart()
+    l3_swe_e = l3_vs.attach("swepam_e")
+    match variable_spec:
+        case (heritage_name, index):
+            heritage_data = np.array([x[l3_swe_e.field(heritage_name)._index][index] for x in l3_swe_e[:]])
+        case heritage_name:
+            heritage_data = np.array([x[l3_swe_e.field(heritage_name)._index] for x in l3_swe_e[:]])
+    return heritage_data
+
+
+def plot_heritage_variable(name):
+    heritage_data = get_heritage_variable(HERITAGE_PATH, variable_mapping[name])
+    plt.plot(heritage_data, label=f'Heritage: {name}')
+
+
+def plot_modern_variable(name):
+    l3_output_cdf = CDF('data/imap/swe/l3/2025/06/imap_swe_l3_sci_20250629_v000.cdf')
+    modern_data = read_numeric_variable(l3_output_cdf[name])
+    plt.plot(modern_data, label=f'Modern: {name}')
+
+
+def compare_parallel_perp():
+    plot_heritage_variable("core_t_parallel_integrated")
+    plot_heritage_variable("core_t_perpendicular_integrated")
+    plt.legend()
+    plt.savefig(OUTPUT_PATH / "core_t_par_vs_perp_heritage.png")
+    plt.clf()
+
+    plot_modern_variable("core_t_parallel_integrated")
+    plot_modern_variable("core_t_perpendicular_integrated")
+    plt.legend()
+    plt.savefig(OUTPUT_PATH / "core_t_par_vs_perp_modern.png")
+    plt.clf()
+
+
+compare_parallel_perp()
+
 for modern_name, heritage_info in variable_mapping.items():
 
     l3_hdf = HDF(r'instrument_team_data/swe/swepam-nswe-1999-159.v1-02.hdf')
@@ -101,7 +145,6 @@ for modern_name, heritage_info in variable_mapping.items():
             heritage_data = np.array([x[l3_swe_e.field(heritage_name)._index][index] for x in l3_swe_e[:]])
         case heritage_name:
             heritage_data = np.array([x[l3_swe_e.field(heritage_info)._index] for x in l3_swe_e[:]])
-
     l3_output_cdf = CDF('data/imap/swe/l3/2025/06/imap_swe_l3_sci_20250629_v000.cdf')
 
     modern_data = read_numeric_variable(l3_output_cdf[modern_name])
@@ -111,7 +154,7 @@ for modern_name, heritage_info in variable_mapping.items():
             plt.plot(modern_data[:, i], label=f'Modern: {modern_name} {i}')
 
             plt.legend()
-            plt.savefig(Path("comparisons") / f"{modern_name}_{i}.png")
+            plt.savefig(OUTPUT_PATH / f"{modern_name}_{i}.png")
             plt.clf()
     else:
         smooth_level = 0
@@ -125,13 +168,13 @@ for modern_name, heritage_info in variable_mapping.items():
         plt.plot(modern_data, label=f'Modern: {modern_name}')
 
         plt.legend()
-        plt.savefig(Path("comparisons") / f"{modern_name}.png")
+        plt.savefig(OUTPUT_PATH / f"{modern_name}.png")
         plt.clf()
         if modern_name == "core_density_fit":
             ratio = heritage_data / modern_data
             smooth_ratio = np.convolve(ratio, np.ones(5) / 5, mode="same")
             plt.plot(smooth_ratio)
-            plt.savefig(Path("comparisons") / f"density_ratio.png")
+            plt.savefig(OUTPUT_PATH / f"density_ratio.png")
             plt.clf()
     l3_output_cdf.close()
 
@@ -162,13 +205,13 @@ def compare_eigenvector_directions_with_canonicalization():
     plt.plot(heritage_theta_rtn_integrated_data, '.', label=f'Heritage: {heritage_theta_rtn_integrated}')
     plt.plot(canonical_theta, '.', label=f'Modern: {theta_rtn_integrated}')
     plt.legend()
-    plt.savefig(Path("comparisons") / f"core_temperature_rtn_theta.png")
+    plt.savefig(OUTPUT_PATH / f"core_temperature_rtn_theta.png")
     plt.clf()
 
     plt.plot(heritage_phi_rtn_integrated_data, '.', label=f'Heritage: {heritage_theta_rtn_integrated}')
     plt.plot(canonical_phis, '.', label=f'Modern: {phi_rtn_integrated}')
     plt.legend()
-    plt.savefig(Path("comparisons") / f"core_temperature_rtn_phi.png")
+    plt.savefig(OUTPUT_PATH / f"core_temperature_rtn_phi.png")
     plt.clf()
 
 
