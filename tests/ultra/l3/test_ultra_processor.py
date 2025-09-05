@@ -33,7 +33,7 @@ class TestUltraProcessor(unittest.TestCase):
                 self._test_process_spectral_index(degree_spacing)
 
     @patch('imap_l3_processing.ultra.l3.ultra_processor.HealPixIntensityMapData')
-    @patch('imap_l3_processing.processor.spiceypy')
+    @patch('imap_l3_processing.utils.spiceypy')
     @patch('imap_l3_processing.ultra.l3.ultra_processor.save_data')
     @patch('imap_l3_processing.ultra.l3.ultra_processor.UltraSurvivalProbabilitySkyMap')
     @patch('imap_l3_processing.ultra.l3.ultra_processor.UltraSurvivalProbability')

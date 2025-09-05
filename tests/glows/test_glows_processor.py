@@ -208,7 +208,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
                 self.assertEqual(len(example_data["daily_lightcurve"]["spin_angle"]), len(spin_angle_delta))
                 self.assertTrue(np.all(spin_angle_delta == expected_delta))
 
-    @patch("imap_l3_processing.processor.spiceypy")
+    @patch("imap_l3_processing.utils.spiceypy")
     @patch("imap_l3_processing.glows.glows_processor.save_data")
     @patch('imap_l3_processing.glows.glows_processor.GlowsL3BIonizationRate')
     @patch('imap_l3_processing.glows.glows_processor.GlowsL3CSolarWind')
@@ -369,7 +369,10 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
             l3bs_by_cr={},
             l3cs_by_cr={})
 
-        mock_archive_dependencies.side_effect = [sentinel.zip_file_1, sentinel.zip_file_2]
+        zip_file_1 = "imap_glows_archive_20210101_v001.zip"
+        zip_file_2 = "imap_glows_archive_20210102_v001.zip"
+
+        mock_archive_dependencies.side_effect = [zip_file_1, zip_file_2]
 
         l3b_path = Path("path_to/l3b")
         l3c_path = Path("path_to/l3c")
@@ -406,7 +409,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
         self.assertEqual([
             l3b_path,
             l3c_path,
-            sentinel.zip_file_2
+            zip_file_2
         ], products)
 
     @patch('imap_l3_processing.glows.glows_processor.GlowsProcessor.archive_dependencies')
@@ -805,8 +808,9 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
         mock_save_data.assert_not_called()
         self.assertEqual(None, products)
 
+    @patch('imap_l3_processing.glows.glows_processor.shutil')
     @patch('imap_l3_processing.glows.glows_processor.save_data')
-    def test_process_glows_l3d_drift(self, mock_save_data):
+    def test_process_glows_l3d_drift(self, mock_save_data, _ ):
         lyman_alpha_composite = get_test_data_path("glows/l3d_drift_test/lyman_alpha_composite.nc")
 
         l3b_1 = get_test_data_path("glows/l3d_drift_test/imap_glows_l3b_ion-rate-profile_20100422_v013.cdf")
@@ -1172,12 +1176,13 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
                 mock_convert_dat_to_glows_l3e_lo_product.reset_mock()
                 mock_save_data.reset_mock()
 
+    @patch('imap_l3_processing.glows.glows_processor.get_spice_parent_file_names', return_value=[])
     @patch('imap_l3_processing.glows.glows_processor.get_pointing_date_range')
     @patch('imap_l3_processing.glows.glows_processor.process_l3e_hi')
     @patch('imap_l3_processing.glows.glows_processor.process_l3e_lo')
     @patch('imap_l3_processing.glows.glows_processor.process_l3e_ul')
     def test_process_l3e_skips_repointing_on_exception(self, mock_process_ultra, mock_process_lo,
-                                                       mock_process_hi, mock_get_pointing_date_range):
+                                                       mock_process_hi, mock_get_pointing_date_range, _):
 
 
         mock_process_hi.side_effect = [
@@ -1231,9 +1236,13 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
 
         mock_dependencies = Mock(elongation={"2020024": sentinel.elongation_1, "2020025": sentinel.elongation_2,
                                              "2020026": sentinel.elongation_3})
-        mock_dependencies.get_hi_parents.return_value = sentinel.hi_parents
-        mock_dependencies.get_lo_parents.return_value = sentinel.lo_parents
-        mock_dependencies.get_ul_parents.return_value = sentinel.ul_parents
+
+        hi_parents = ["imap_glows_hi-ancillary_20100101_v001.dat"]
+        mock_dependencies.get_hi_parents.return_value = hi_parents
+        lo_parents = ["imap_glows_lo-ancillary_20100101_v001.dat"]
+        mock_dependencies.get_lo_parents.return_value = lo_parents
+        ultra_parents = ["imap_glows_ul-ancillary_20100101_v001.dat"]
+        mock_dependencies.get_ul_parents.return_value = ultra_parents
 
         initializer_data = GlowsL3EInitializerOutput(
             dependencies=mock_dependencies,
@@ -1246,30 +1255,28 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
             )
         )
 
-        processor = GlowsProcessor(Mock(), Mock())
-
-        actual_l3e_products = process_l3e(processor, initializer_data)
+        actual_l3e_products = process_l3e(initializer_data)
 
         mock_get_pointing_date_range.assert_has_calls([call(24), call(25), call(26)])
 
         mock_process_hi.assert_has_calls([
-            call(sentinel.hi_parents, 24, start_epoch_1, epoch_delta_1, 90, 1),
-            call(sentinel.hi_parents, 24, start_epoch_1, epoch_delta_1, 135, 2),
-            call(sentinel.hi_parents, 25, start_epoch_2, epoch_delta_2, 90, 1),
-            call(sentinel.hi_parents, 25, start_epoch_2, epoch_delta_2, 135, 2),
-            call(sentinel.hi_parents, 26, start_epoch_3, epoch_delta_3, 90, 1),
-            call(sentinel.hi_parents, 26, start_epoch_3, epoch_delta_3, 135, 2)
+            call(hi_parents, 24, start_epoch_1, epoch_delta_1, 90, 1),
+            call(hi_parents, 24, start_epoch_1, epoch_delta_1, 135, 2),
+            call(hi_parents, 25, start_epoch_2, epoch_delta_2, 90, 1),
+            call(hi_parents, 25, start_epoch_2, epoch_delta_2, 135, 2),
+            call(hi_parents, 26, start_epoch_3, epoch_delta_3, 90, 1),
+            call(hi_parents, 26, start_epoch_3, epoch_delta_3, 135, 2)
         ])
         mock_process_lo.assert_has_calls([
-            call(sentinel.lo_parents, 24, start_epoch_1, epoch_delta_1, sentinel.elongation_1, 3),
-            call(sentinel.lo_parents, 25, start_epoch_2, epoch_delta_2, sentinel.elongation_2, 3),
-            call(sentinel.lo_parents, 26, start_epoch_3, epoch_delta_3, sentinel.elongation_3, 3),
+            call(lo_parents, 24, start_epoch_1, epoch_delta_1, sentinel.elongation_1, 3),
+            call(lo_parents, 25, start_epoch_2, epoch_delta_2, sentinel.elongation_2, 3),
+            call(lo_parents, 26, start_epoch_3, epoch_delta_3, sentinel.elongation_3, 3),
         ])
 
         mock_process_ultra.assert_has_calls([
-            call(sentinel.ul_parents, 24, start_epoch_1, epoch_delta_1, 4),
-            call(sentinel.ul_parents, 25, start_epoch_2, epoch_delta_2, 4),
-            call(sentinel.ul_parents, 26, start_epoch_3, epoch_delta_3, 4),
+            call(ultra_parents, 24, start_epoch_1, epoch_delta_1, 4),
+            call(ultra_parents, 25, start_epoch_2, epoch_delta_2, 4),
+            call(ultra_parents, 26, start_epoch_3, epoch_delta_3, 4),
         ])
 
         self.assertEqual(expected_l3e_products, actual_l3e_products)
@@ -1394,7 +1401,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
 
 
 class TestGlowsProcessorIntegration(unittest.TestCase):
-    @run_periodically(timedelta(days=7))
+    @run_periodically(timedelta(seconds=7))
     @patch("imap_data_access.query")
     @patch("imap_data_access.download")
     def test_l3bcde_integration(self, mock_download, mock_query):
@@ -1406,10 +1413,7 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
             if path.exists():
                 shutil.rmtree(path)
 
-        input_metadata = InputMetadata(instrument="glows", data_level="l3b", descriptor="ion-rate-profile",
-                                       version="v001", start_date=datetime(2000, 1, 1), end_date=datetime(2000, 1, 1))
-
-        queried_descriptors = {
+        expected_queries = {
             "hist": create_glows_mock_query_results([
                 "imap_glows_l3a_hist_20100105-repoint00153_v001.cdf",
                 "imap_glows_l3a_hist_20100106-repoint00154_v001.cdf",
@@ -1434,6 +1438,13 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
             'lya-2010a': create_glows_mock_query_results(['imap_glows_lya-2010a_20100101_v003.dat']),
             'electron-density-2010a': create_glows_mock_query_results(
                 ['imap_glows_electron-density-2010a_20100101_v003.dat']),
+            'ionization-files': create_glows_mock_query_results(['imap_glows_ionization-files_20100101_v001.dat']),
+            'energy-grid-lo': create_glows_mock_query_results(['imap_glows_energy-grid-lo_20100101_v001.dat']),
+            'tess-xyz-8': create_glows_mock_query_results(['imap_glows_tess-xyz-8_20100101_v001.dat']),
+            'elongation-data': create_glows_mock_query_results(['imap_lo_elongation-data_20100101_v001.dat']),
+            'energy-grid-hi': create_glows_mock_query_results(['imap_glows_energy-grid-hi_20100101_v001.dat']),
+            'energy-grid-ultra': create_glows_mock_query_results(['imap_glows_energy-grid-ultra_20100101_v001.dat']),
+            'tess-ang-16': create_glows_mock_query_results(['imap_glows_tess-ang-16_20100101_v001.dat']),
         }
 
         input_files = [
@@ -1452,19 +1463,19 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
             'imap_glows_photoion-2010a_20100101_v003.dat',
             'imap_glows_lya-2010a_20100101_v003.dat',
             'imap_glows_electron-density-2010a_20100101_v003.dat',
-            "imap_2026_269_05.repoint.csv"
+            "imap_2026_269_05.repoint.csv",
+            'imap_glows_ionization-files_20100101_v001.dat',
+            'imap_glows_energy-grid-lo_20100101_v001.dat',
+            'imap_glows_tess-xyz-8_20100101_v001.dat',
+            'imap_lo_elongation-data_20100101_v001.dat',
+            'imap_glows_energy-grid-hi_20100101_v001.dat',
+            'imap_glows_energy-grid-ultra_20100101_v001.dat',
+            'imap_glows_tess-ang-16_20100101_v001.dat',
+
         ]
 
-        def redirect_download_to_test_data(filename: Path | str):
-            filename = Path(filename).name
-            return generate_imap_file_path(filename).construct_path()
-
-        mock_download.side_effect = redirect_download_to_test_data
-
-        def return_query_result(**kwargs):
-            return queried_descriptors[kwargs["descriptor"]]
-
-        mock_query.side_effect = return_query_result
+        mock_download.side_effect = lambda file: generate_imap_file_path(Path(file).name).construct_path()
+        mock_query.side_effect = lambda **kwargs: expected_queries[kwargs["descriptor"]]
 
         fake_data_dir = get_run_local_data_path("glows_l3bcde_integration_data_dir")
         with patch.object(imap_data_access, "config", new={"DATA_DIR": fake_data_dir}) as _:
@@ -1479,6 +1490,10 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
                             dst=paths_to_generate)
 
             processing_input = ProcessingInputCollection([RepointInput("imap_2026_269_05.repoint.csv")])
+
+            input_metadata = InputMetadata(instrument="glows", data_level="l3b", descriptor="ion-rate-profile",
+                                           version="v001", start_date=datetime(2000, 1, 1),
+                                           end_date=datetime(2000, 1, 1))
 
             processor = GlowsProcessor(processing_input, input_metadata)
             products = processor.process()

@@ -13,6 +13,7 @@ from typing import Optional
 from zipfile import ZipFile, ZIP_DEFLATED
 
 import numpy as np
+from imap_data_access.file_validation import generate_imap_file_path
 from imap_data_access.processing_input import ProcessingInputCollection
 
 from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
@@ -44,7 +45,6 @@ from imap_l3_processing.processor import Processor
 from imap_l3_processing.utils import save_data, get_spice_parent_file_names
 
 logger = logging.getLogger(__name__)
-
 
 
 class GlowsProcessor(Processor):
@@ -88,8 +88,8 @@ class GlowsProcessor(Processor):
             else:
                 return products_list
 
-            repointings, l3e_dependencies = GlowsL3EInitializer.get_repointings_to_process(
-                process_l3d_result.l3d_cdf_file_path, old_l3d)
+            l3e_initializer_output = GlowsL3EInitializer.get_repointings_to_process(
+                process_l3d_result, old_l3d)
             # for repointing in repointings:
             #     self.input_metadata.repointing = repointing
             #     try:
@@ -247,6 +247,10 @@ def process_l3d(dependencies: GlowsL3DDependencies, version: int) -> Optional[Gl
                 output_text_files.append(PATH_TO_L3D_TOOLKIT / 'data_l3d_txt' / text_file)
 
         txt_files_with_correct_version = set_version_on_txt_files(output_text_files, formatted_version)
+
+        with SwallowExceptionAndLog("The L3d text files have an unsupported filename format!"):
+            for txt_file in txt_files_with_correct_version:
+                shutil.copy(txt_file, generate_imap_file_path(txt_file.name).construct_path())
 
         file_name = f'imap_glows_l3d_solar-params-history_19470303-cr0{last_processed_cr}_v00.json'
 

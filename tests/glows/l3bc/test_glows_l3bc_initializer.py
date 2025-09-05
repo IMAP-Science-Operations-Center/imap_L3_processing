@@ -460,12 +460,12 @@ class TestGlowsL3BCInitializer(unittest.TestCase):
     @patch("imap_l3_processing.glows.l3bc.glows_l3bc_initializer.get_pointing_date_range")
     def test_group_l3a_by_cr(self, mock_get_pointing_date_range):
         mock_get_pointing_date_range.side_effect = [
-            (np.datetime64("2010-01-01T00:00:00"), np.datetime64("2010-01-02T00:00:00")),
-            (np.datetime64("2010-01-02T00:00:00"), np.datetime64("2010-01-03T00:00:00")),
-            (np.datetime64("2010-05-01T00:00:00"), np.datetime64("2010-05-02T00:00:00")),
-            (np.datetime64("2010-05-02T00:00:00"), np.datetime64("2010-05-03T00:00:00")),
-            (np.datetime64("2010-08-01T00:00:00"), np.datetime64("2010-08-02T00:00:00")),
-            (np.datetime64("2010-08-09T00:00:00"), np.datetime64("2010-08-10T00:00:00")),
+            (datetime(2010, 1, 1), datetime(2010, 1, 2)),
+            (datetime(2010, 1, 2), datetime(2010, 1, 3)),
+            (datetime(2010, 5, 1), datetime(2010, 5, 2)),
+            (datetime(2010, 5, 2), datetime(2010, 5, 3)),
+            (datetime(2010, 8, 1), datetime(2010, 8, 2)),
+            (datetime(2010, 8, 9), datetime(2010, 8, 10)),
         ]
 
         l3a_files_and_parents = [
