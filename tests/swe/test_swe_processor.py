@@ -12,7 +12,7 @@ from imap_l3_processing.swe.l3.models import SweL3MomentData
 from imap_l3_processing.swe.l3.science.moment_calculations import MomentFitResults, ScaleDensityOutput
 from imap_l3_processing.swe.l3.science.moment_calculations import Moments
 from imap_l3_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies
-from imap_l3_processing.swe.swe_processor import SweProcessor
+from imap_l3_processing.swe.swe_processor import SweProcessor, logger
 from tests.test_helpers import NumpyArrayMatcher, build_swe_configuration, create_dataclass_mock, build_moments, \
     build_moment_fit_results
 
@@ -1226,3 +1226,136 @@ class TestSweProcessor(unittest.TestCase):
 
         np.testing.assert_array_equal([np.nan, 1, 1, np.nan], swe_moment_data.halo_density_integrated)
         self.assertEqual(4, len(swe_moment_data.halo_velocity_vector_rtn_integrated))
+
+    def test_calculate_moment_products_handles_bad_fit_indices_and_continues(self):
+        epochs = np.array([datetime.now()])
+
+        instrument_elevation = np.array([-63, -42, -21, 0, 21, 42, 63])
+        swe_l2_data = SweL2Data(
+            epoch=epochs,
+            phase_space_density=np.arange(9).reshape(3, 3) + 100,
+            flux=np.arange(9).reshape(3, 3),
+            energy=np.array([9, 10, 12, 14, 36, 54, 96, 102, 112, 156, 172]),
+            inst_el=instrument_elevation,
+            inst_az_spin_sector=np.arange(10, 19).reshape(3, 3),
+            acquisition_time=np.array([]),
+            acquisition_duration=np.full((1, 11, 3), 1e7),
+        )
+        swe_l1_data = SweL1bData(epoch=epochs,
+                                 count_rates=np.full((1, 11, 3, 7), 10.5),
+                                 settle_duration=Mock())
+        spacecraft_potential = np.array([12, 14])
+        core_halo_breakpoint = np.array([12, 54])
+        corrected_energy_bins = swe_l2_data.energy.reshape(1, -1) - spacecraft_potential.reshape(-1, 1)
+
+        input_metadata = InputMetadata("swe", "l3", datetime(2025, 2, 21),
+                                       datetime(2025, 2, 22), "v001")
+
+        swe_processor = SweProcessor(ProcessingInputCollection(), input_metadata=input_metadata)
+        config = build_swe_configuration()
+
+        rebinned_mag_data = [sentinel.mag_data_1]
+
+        with self.assertLogs(logger, level='INFO') as log_context:
+            swe_moment_data = swe_processor.calculate_moment_products(swe_l2_data, swe_l1_data, rebinned_mag_data,
+                                                                      spacecraft_potential,
+                                                                      core_halo_breakpoint,
+                                                                      corrected_energy_bins,
+                                                                      config)
+
+            self.assertIsInstance(swe_moment_data, SweL3MomentData)
+            self.assertEqual(log_context.output,
+                             [
+                                 "INFO:imap_l3_processing.swe.swe_processor:Bad core-halo breakpoint value at index 0. Continuing."])
+
+    @patch('imap_l3_processing.swe.swe_processor.rotate_temperature_tensor_to_mag')
+    @patch('imap_l3_processing.swe.swe_processor.calculate_primary_eigenvector')
+    @patch('imap_l3_processing.swe.swe_processor.rotate_vector_to_rtn_spherical_coordinates')
+    @patch('imap_l3_processing.swe.swe_processor.scale_halo_density')
+    @patch('imap_l3_processing.swe.swe_processor.scale_core_density')
+    @patch('imap_l3_processing.swe.swe_processor.integrate')
+    @patch('imap_l3_processing.swe.swe_processor.halo_fit_moments_retrying_on_failure')
+    @patch('imap_l3_processing.swe.swe_processor.core_fit_moments_retrying_on_failure')
+    @patch('imap_l3_processing.swe.swe_processor.compute_maxwellian_weight_factors')
+    @patch('imap_l3_processing.swe.swe_processor.calculate_velocity_in_dsp_frame_km_s')
+    @patch('imap_l3_processing.swe.swe_processor.rotate_dps_vector_to_rtn')
+    @patch('imap_l3_processing.swe.swe_processor.rotate_temperature')
+    def test_calculate_moment_products_handles_errors_with_fill(self, mock_rotate_temperature,
+                                                                mock_rotate_dps_vector_to_rtn,
+                                                                mock_calculate_velocity_in_dsp_frame_km_s,
+                                                                mock_compute_maxwellian_weight_factors,
+                                                                mock_core_fit_moments_retrying_on_failure: Mock,
+                                                                mock_halo_fit_moments_retrying_on_failure: Mock,
+                                                                mock_integrate: Mock,
+                                                                mock_scale_core_density: Mock,
+                                                                mock_scale_halo_density: Mock,
+                                                                mock_rotate_vector_to_rtn_spherical_coordinates,
+                                                                mock_calculate_primary_eigenvector,
+                                                                mock_rotate_temperature_tensor_to_mag):
+        mock_rotate_dps_vector_to_rtn.return_value = np.full(3, np.nan)
+        mock_rotate_temperature.return_value = 1, 2
+        mock_core_fit_moments_retrying_on_failure.return_value = MomentFitResults(
+            moments=Moments(1, 2, 3, 4, 5, 6, 7, 8, 9, 10),
+            chisq=2.5,
+            number_of_points=100,
+            regress_result=np.array([1, 2, 3, 4])
+        )
+        cases = [
+            mock_rotate_temperature,
+            mock_rotate_dps_vector_to_rtn,
+            mock_calculate_velocity_in_dsp_frame_km_s,
+            mock_compute_maxwellian_weight_factors,
+            mock_core_fit_moments_retrying_on_failure,
+            mock_halo_fit_moments_retrying_on_failure,
+            mock_integrate,
+            mock_scale_core_density,
+            mock_scale_halo_density,
+            mock_rotate_vector_to_rtn_spherical_coordinates,
+            mock_calculate_primary_eigenvector,
+            mock_rotate_temperature_tensor_to_mag
+        ]
+
+        for failing_function in cases:
+            with self.subTest(failing_function):
+                failing_function.side_effect = Exception
+
+                epochs = datetime.now() + np.arange(3) * timedelta(minutes=1)
+
+                instrument_elevation = np.array([-63, -42, -21, 0, 21, 42, 63])
+                swe_l2_data = SweL2Data(
+                    epoch=epochs,
+                    phase_space_density=np.arange(9).reshape(3, 3) + 100,
+                    flux=np.arange(9).reshape(3, 3),
+                    energy=np.array([9, 10, 12, 14, 36, 54, 96, 102, 112, 156, 172]),
+                    inst_el=instrument_elevation,
+                    inst_az_spin_sector=np.arange(10, 19).reshape(3, 3),
+                    acquisition_time=np.array([]),
+                    acquisition_duration=[1e7, 2e7, 3e7],
+                )
+                swe_l1_data = SweL1bData(epoch=epochs,
+                                         count_rates=[sentinel.l1b_count_rates_1, sentinel.l1b_count_rates_2,
+                                                      sentinel.l1b_count_rates_3],
+                                         settle_duration=Mock())
+
+                spacecraft_potential = np.array([12, 14, 16])
+                core_halo_breakpoint = np.array([96, 54, 103])
+
+                corrected_energy_bins = swe_l2_data.energy.reshape(1, -1) - spacecraft_potential.reshape(-1, 1)
+
+                input_metadata = InputMetadata("swe", "l3", datetime(2025, 2, 21),
+                                               datetime(2025, 2, 22), "v001")
+
+                swe_processor = SweProcessor(ProcessingInputCollection(), input_metadata=input_metadata)
+                config = build_swe_configuration()
+
+                rebinned_mag_data = [sentinel.mag_data_1, sentinel.mag_data_2, sentinel.mag_data_3]
+
+                swe_moment_data = swe_processor.calculate_moment_products(swe_l2_data, swe_l1_data, rebinned_mag_data,
+                                                                          spacecraft_potential,
+                                                                          core_halo_breakpoint,
+                                                                          corrected_energy_bins,
+                                                                          config)
+
+                self.assertIsInstance(swe_moment_data, SweL3MomentData)
+
+                failing_function.side_effect = None

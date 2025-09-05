@@ -1,4 +1,5 @@
 import datetime
+import logging
 from dataclasses import replace
 from datetime import timedelta
 
@@ -23,6 +24,8 @@ from imap_l3_processing.swe.l3.science.pitch_calculations import average_over_lo
 from imap_l3_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies
 from imap_l3_processing.swe.l3.utils import compute_epoch_delta_in_ns
 from imap_l3_processing.utils import save_data
+
+logger = logging.getLogger(__name__)
 
 
 class SweProcessor(Processor):
@@ -166,220 +169,233 @@ class SweProcessor(Processor):
         instrument_phi = swe_l2_data.inst_az_spin_sector
 
         for i in range(len(swe_l2_data.epoch)):
-            velocity_vectors_cm_per_s: np.ndarray = 1000 * 100 * calculate_velocity_in_dsp_frame_km_s(
-                corrected_energy_bins[i],
-                swe_l2_data.inst_el,
-                swe_l2_data.inst_az_spin_sector[i])
+            try:
+                velocity_vectors_cm_per_s: np.ndarray = 1000 * 100 * calculate_velocity_in_dsp_frame_km_s(
+                    corrected_energy_bins[i],
+                    swe_l2_data.inst_el,
+                    swe_l2_data.inst_az_spin_sector[i])
 
-            weights: np.ndarray[float] = compute_maxwellian_weight_factors(swe_l1b_data.count_rates[i],
-                                                                           swe_l2_data.acquisition_duration[i] / 1e6)
+                weights: np.ndarray[float] = compute_maxwellian_weight_factors(swe_l1b_data.count_rates[i],
+                                                                               swe_l2_data.acquisition_duration[
+                                                                                   i] / 1e6)
+                ifit = next(
+                    index for index, energy in enumerate(swe_l2_data.energy) if energy >= spacecraft_potential[i])
+                jbreak = next(index for index, energy in enumerate(swe_l2_data.energy) if energy >= halo_core[i])
+                core_nfit = jbreak - ifit
+                ifit += 1
+                if core_nfit == 0:
+                    logger.info(f"Bad core-halo breakpoint value at index {i}. Continuing.")
+                    continue
 
-            ifit = next(
-                index for index, energy in enumerate(swe_l2_data.energy) if energy >= spacecraft_potential[i])
-            jbreak = next(index for index, energy in enumerate(swe_l2_data.energy) if energy >= halo_core[i])
-            core_nfit = jbreak - ifit
-            ifit += 1
+                halo_nfit = 5 if len(swe_l2_data.energy) - jbreak > 5 else len(swe_l2_data.energy) - jbreak
 
-            halo_nfit = 5 if len(swe_l2_data.energy) - jbreak > 5 else len(swe_l2_data.energy) - jbreak
+                core_moment_fit_result = core_fit_moments_retrying_on_failure(
+                    corrected_energy_bins[i],
+                    velocity_vectors_cm_per_s,
+                    swe_l2_data.phase_space_density[i],
+                    weights,
+                    ifit,
+                    ifit + core_nfit,
+                    core_density_history
+                )
 
-            core_moment_fit_result = core_fit_moments_retrying_on_failure(
-                corrected_energy_bins[i],
-                velocity_vectors_cm_per_s,
-                swe_l2_data.phase_space_density[i],
-                weights,
-                ifit,
-                ifit + core_nfit,
-                core_density_history
-            )
+                current_epoch = swe_l2_data.epoch[i]
+                if core_moment_fit_result is not None:
+                    core_moment = core_moment_fit_result.moments
+                    core_moments[i] = core_moment
+                    core_fit_chi_squareds[i] = core_moment_fit_result.chisq
+                    core_fit_num_points[i] = core_moment_fit_result.number_of_points
 
-            current_epoch = swe_l2_data.epoch[i]
-            if core_moment_fit_result is not None:
-                core_moment = core_moment_fit_result.moments
-                core_moments[i] = core_moment
-                core_fit_chi_squareds[i] = core_moment_fit_result.chisq
-                core_fit_num_points[i] = core_moment_fit_result.number_of_points
+                    core_density_history = [*core_density_history[1:], core_moment.density]
 
-                core_density_history = [*core_density_history[1:], core_moment.density]
+                    core_rtn_velocity[i] = rotate_dps_vector_to_rtn(current_epoch,
+                                                                    np.array(
+                                                                        [core_moment.velocity_x, core_moment.velocity_y,
+                                                                         core_moment.velocity_z]))
 
-                core_rtn_velocity[i] = rotate_dps_vector_to_rtn(current_epoch,
-                                                                np.array(
-                                                                    [core_moment.velocity_x, core_moment.velocity_y,
-                                                                     core_moment.velocity_z]))
+                    core_temp_theta_rtn, core_temp_phi_rtn = rotate_temperature(current_epoch, core_moment.alpha,
+                                                                                core_moment.beta)
+                    core_temp_theta_rtns[i] = core_temp_theta_rtn
+                    core_temp_phi_rtns[i] = core_temp_phi_rtn
+                    core_temp_avg = (2 * core_moment.t_perpendicular + core_moment.t_parallel) / 3
 
-                core_temp_theta_rtn, core_temp_phi_rtn = rotate_temperature(current_epoch, core_moment.alpha,
-                                                                            core_moment.beta)
-                core_temp_theta_rtns[i] = core_temp_theta_rtn
-                core_temp_phi_rtns[i] = core_temp_phi_rtn
-                core_temp_avg = (2 * core_moment.t_perpendicular + core_moment.t_parallel) / 3
+                    if 1e3 < core_temp_avg < 1e7:
+                        core_integrate_result = integrate(ifit + 1, jbreak - 1, corrected_energy_bins[i],
+                                                          sin_theta, cos_theta,
+                                                          config['aperture_field_of_view_radians'],
+                                                          swe_l2_data.phase_space_density[i],
+                                                          instrument_phi[i],
+                                                          spacecraft_potential[i],
+                                                          [0, 0, 0, 0], [0, 0, 0, 0, 0, 0])
+                        if core_integrate_result is not None:
+                            scale_core_density_output: ScaleDensityOutput = scale_core_density(
+                                core_integrate_result.density,
+                                core_integrate_result.velocity,
+                                core_integrate_result.temperature, core_moment,
+                                ifit,
+                                corrected_energy_bins[i],
+                                spacecraft_potential[i], cos_theta,
+                                config['aperture_field_of_view_radians'],
+                                instrument_phi[i],
+                                core_moment_fit_result.regress_result,
+                                core_integrate_result.base_energy)
 
-                if 1e3 < core_temp_avg < 1e7:
-                    core_integrate_result = integrate(ifit + 1, jbreak - 1, corrected_energy_bins[i],
-                                                      sin_theta, cos_theta, config['aperture_field_of_view_radians'],
-                                                      swe_l2_data.phase_space_density[i],
-                                                      instrument_phi[i],
-                                                      spacecraft_potential[i],
-                                                      [0, 0, 0, 0], [0, 0, 0, 0, 0, 0])
-                    if core_integrate_result is not None:
-                        scale_core_density_output: ScaleDensityOutput = scale_core_density(
-                            core_integrate_result.density,
-                            core_integrate_result.velocity,
-                            core_integrate_result.temperature, core_moment,
-                            ifit,
-                            corrected_energy_bins[i],
-                            spacecraft_potential[i], cos_theta,
-                            config['aperture_field_of_view_radians'],
-                            instrument_phi[i],
-                            core_moment_fit_result.regress_result,
-                            core_integrate_result.base_energy)
+                            core_density_integrated[i] = scale_core_density_output.density
+                            core_velocity_integrated[i] = rotate_dps_vector_to_rtn(current_epoch,
+                                                                                   scale_core_density_output.velocity)
+                            core_temperature_tensor_integrated[i] = scale_core_density_output.temperature
 
-                        core_density_integrated[i] = scale_core_density_output.density
-                        core_velocity_integrated[i] = rotate_dps_vector_to_rtn(current_epoch,
-                                                                               scale_core_density_output.velocity)
-                        core_temperature_tensor_integrated[i] = scale_core_density_output.temperature
+                            magnitude, theta, phi = rotate_vector_to_rtn_spherical_coordinates(current_epoch,
+                                                                                               core_integrate_result.heat_flux)
 
-                        magnitude, theta, phi = rotate_vector_to_rtn_spherical_coordinates(current_epoch,
-                                                                                           core_integrate_result.heat_flux)
+                            core_heat_flux_magnitude[i] = magnitude
+                            core_heat_flux_theta[i] = theta
+                            core_heat_flux_phi[i] = phi
 
-                        core_heat_flux_magnitude[i] = magnitude
-                        core_heat_flux_theta[i] = theta
-                        core_heat_flux_phi[i] = phi
+                            core_primary_eigen_vector, core_temps = calculate_primary_eigenvector(
+                                scale_core_density_output.temperature)
 
-                        core_primary_eigen_vector, core_temps = calculate_primary_eigenvector(
-                            scale_core_density_output.temperature)
+                            core_t_parallel_integrated[i] = core_temps[0]
+                            core_t_perpendicular_integrated[i] = [core_temps[1], core_temps[2]]
 
-                        core_t_parallel_integrated[i] = core_temps[0]
-                        core_t_perpendicular_integrated[i] = [core_temps[1], core_temps[2]]
+                            magnitude, theta, phi = rotate_vector_to_rtn_spherical_coordinates(current_epoch,
+                                                                                               core_primary_eigen_vector)
+                            core_temperature_theta_rtn_integrated[i] = theta
+                            core_temperature_phi_rtn_integrated[i] = phi
 
-                        magnitude, theta, phi = rotate_vector_to_rtn_spherical_coordinates(current_epoch,
-                                                                                           core_primary_eigen_vector)
-                        core_temperature_theta_rtn_integrated[i] = theta
-                        core_temperature_phi_rtn_integrated[i] = phi
+                            core_t_parallel_to_mag, core_t_perpendicular_to_mag_average, core_t_perpendicular_to_mag_ratio = rotate_temperature_tensor_to_mag(
+                                scale_core_density_output.temperature, rebinned_mag_data[i])
 
-                        core_t_parallel_to_mag, core_t_perpendicular_to_mag_average, core_t_perpendicular_to_mag_ratio = rotate_temperature_tensor_to_mag(
-                            scale_core_density_output.temperature, rebinned_mag_data[i])
+                            core_temperature_parallel_to_mag[i] = core_t_parallel_to_mag
+                            core_temperature_perpendicular_to_mag[i] = [core_t_perpendicular_to_mag_average,
+                                                                        core_t_perpendicular_to_mag_ratio]
 
-                        core_temperature_parallel_to_mag[i] = core_t_parallel_to_mag
-                        core_temperature_perpendicular_to_mag[i] = [core_t_perpendicular_to_mag_average,
-                                                                    core_t_perpendicular_to_mag_ratio]
+                            total_integration_output = integrate(ifit + 1,
+                                                                 len(corrected_energy_bins[i]) - 1,
+                                                                 corrected_energy_bins[i],
+                                                                 sin_theta,
+                                                                 cos_theta, config['aperture_field_of_view_radians'],
+                                                                 swe_l2_data.phase_space_density[i],
+                                                                 instrument_phi[i],
+                                                                 spacecraft_potential[i],
+                                                                 scale_core_density_output.cdelnv,
+                                                                 scale_core_density_output.cdelt)
+                            assert total_integration_output is not None, "not yet checking if this is None"
+                            total_density_integrated[i] = total_integration_output.density
+                            total_velocity_integrated[i] = rotate_dps_vector_to_rtn(current_epoch,
+                                                                                    total_integration_output.velocity)
+                            total_temperature_tensor_integrated[i] = total_integration_output.temperature
 
-                        total_integration_output = integrate(ifit + 1,
-                                                             len(corrected_energy_bins[i]) - 1,
-                                                             corrected_energy_bins[i],
-                                                             sin_theta,
-                                                             cos_theta, config['aperture_field_of_view_radians'],
-                                                             swe_l2_data.phase_space_density[i],
-                                                             instrument_phi[i],
-                                                             spacecraft_potential[i], scale_core_density_output.cdelnv,
-                                                             scale_core_density_output.cdelt)
-                        assert total_integration_output is not None, "not yet checking if this is None"
-                        total_density_integrated[i] = total_integration_output.density
-                        total_velocity_integrated[i] = rotate_dps_vector_to_rtn(current_epoch,
-                                                                                total_integration_output.velocity)
-                        total_temperature_tensor_integrated[i] = total_integration_output.temperature
+                            magnitude, theta, phi = rotate_vector_to_rtn_spherical_coordinates(
+                                current_epoch,
+                                total_integration_output.heat_flux)
 
-                        magnitude, theta, phi = rotate_vector_to_rtn_spherical_coordinates(
-                            current_epoch,
-                            total_integration_output.heat_flux)
+                            total_heat_flux_magnitude[i] = magnitude
+                            total_heat_flux_theta[i] = theta
+                            total_heat_flux_phi[i] = phi
 
-                        total_heat_flux_magnitude[i] = magnitude
-                        total_heat_flux_theta[i] = theta
-                        total_heat_flux_phi[i] = phi
+                            total_primary_eigen_vector, total_temps = calculate_primary_eigenvector(
+                                total_integration_output.temperature)
 
-                        total_primary_eigen_vector, total_temps = calculate_primary_eigenvector(
-                            total_integration_output.temperature)
+                            total_t_parallel_integrated[i] = total_temps[0]
+                            total_t_perpendicular_integrated[i] = [total_temps[1], total_temps[2]]
 
-                        total_t_parallel_integrated[i] = total_temps[0]
-                        total_t_perpendicular_integrated[i] = [total_temps[1], total_temps[2]]
+                            magnitude, theta, phi = rotate_vector_to_rtn_spherical_coordinates(current_epoch,
+                                                                                               total_primary_eigen_vector)
+                            total_temperature_theta_rtn_integrated[i] = theta
+                            total_temperature_phi_rtn_integrated[i] = phi
 
-                        magnitude, theta, phi = rotate_vector_to_rtn_spherical_coordinates(current_epoch,
-                                                                                           total_primary_eigen_vector)
-                        total_temperature_theta_rtn_integrated[i] = theta
-                        total_temperature_phi_rtn_integrated[i] = phi
+                            total_t_parallel_to_mag, total_t_perpendicular_to_mag_average, total_t_perpendicular_to_mag_ratio = rotate_temperature_tensor_to_mag(
+                                total_integration_output.temperature, rebinned_mag_data[i])
 
-                        total_t_parallel_to_mag, total_t_perpendicular_to_mag_average, total_t_perpendicular_to_mag_ratio = rotate_temperature_tensor_to_mag(
-                            total_integration_output.temperature, rebinned_mag_data[i])
+                            total_temperature_parallel_to_mag[i] = total_t_parallel_to_mag
+                            total_temperature_perpendicular_to_mag[i] = [total_t_perpendicular_to_mag_average,
+                                                                         total_t_perpendicular_to_mag_ratio]
 
-                        total_temperature_parallel_to_mag[i] = total_t_parallel_to_mag
-                        total_temperature_perpendicular_to_mag[i] = [total_t_perpendicular_to_mag_average,
-                                                                     total_t_perpendicular_to_mag_ratio]
+                halo_moment_fit_result = halo_fit_moments_retrying_on_failure(
+                    corrected_energy_bins[i],
+                    velocity_vectors_cm_per_s,
+                    swe_l2_data.phase_space_density[i],
+                    weights,
+                    jbreak,
+                    jbreak + halo_nfit,
+                    halo_density_history,
+                    spacecraft_potential[i],
+                    halo_core[i],
+                )
 
-            halo_moment_fit_result = halo_fit_moments_retrying_on_failure(
-                corrected_energy_bins[i],
-                velocity_vectors_cm_per_s,
-                swe_l2_data.phase_space_density[i],
-                weights,
-                jbreak,
-                jbreak + halo_nfit,
-                halo_density_history,
-                spacecraft_potential[i],
-                halo_core[i],
-            )
+                if halo_moment_fit_result is not None:
+                    halo_moment = halo_moment_fit_result.moments
+                    halo_moments[i] = halo_moment
+                    halo_fit_chi_squareds[i] = halo_moment_fit_result.chisq
 
-            if halo_moment_fit_result is not None:
-                halo_moment = halo_moment_fit_result.moments
-                halo_moments[i] = halo_moment
-                halo_fit_chi_squareds[i] = halo_moment_fit_result.chisq
+                    halo_density_history = [*halo_density_history[1:], halo_moment.density]
 
-                halo_density_history = [*halo_density_history[1:], halo_moment.density]
+                    halo_rtn_velocity[i] = rotate_dps_vector_to_rtn(current_epoch,
+                                                                    np.array(
+                                                                        [halo_moment.velocity_x, halo_moment.velocity_y,
+                                                                         halo_moment.velocity_z]))
 
-                halo_rtn_velocity[i] = rotate_dps_vector_to_rtn(current_epoch,
-                                                                np.array(
-                                                                    [halo_moment.velocity_x, halo_moment.velocity_y,
-                                                                     halo_moment.velocity_z]))
+                    halo_temp_theta_rtn, halo_temp_phi_rtn = rotate_temperature(current_epoch, halo_moment.alpha,
+                                                                                halo_moment.beta)
+                    halo_temp_theta_rtns[i] = halo_temp_theta_rtn
+                    halo_temp_phi_rtns[i] = halo_temp_phi_rtn
+                    halo_temp_avg = (2 * halo_moment.t_perpendicular + halo_moment.t_parallel) / 3
+                    if 1e4 < halo_temp_avg < 1e8:
+                        halo_integrate_result = integrate(jbreak, len(corrected_energy_bins[i]) - 1,
+                                                          corrected_energy_bins[i],
+                                                          sin_theta, cos_theta,
+                                                          config['aperture_field_of_view_radians'],
+                                                          swe_l2_data.phase_space_density[i],
+                                                          instrument_phi[i],
+                                                          spacecraft_potential[i],
+                                                          [0, 0, 0, 0], [0, 0, 0, 0, 0, 0])
+                        if halo_integrate_result is not None:
+                            scale_halo_density_output: ScaleDensityOutput = scale_halo_density(
+                                halo_integrate_result.density,
+                                halo_integrate_result.velocity,
+                                halo_integrate_result.temperature, halo_moment,
+                                spacecraft_potential[i], halo_core[i], cos_theta,
+                                config['aperture_field_of_view_radians'],
+                                instrument_phi[i],
+                                halo_moment_fit_result.regress_result,
+                                halo_integrate_result.base_energy)
 
-                halo_temp_theta_rtn, halo_temp_phi_rtn = rotate_temperature(current_epoch, halo_moment.alpha,
-                                                                            halo_moment.beta)
-                halo_temp_theta_rtns[i] = halo_temp_theta_rtn
-                halo_temp_phi_rtns[i] = halo_temp_phi_rtn
-                halo_temp_avg = (2 * halo_moment.t_perpendicular + halo_moment.t_parallel) / 3
-                if 1e4 < halo_temp_avg < 1e8:
-                    halo_integrate_result = integrate(jbreak, len(corrected_energy_bins[i]) - 1,
-                                                      corrected_energy_bins[i],
-                                                      sin_theta, cos_theta, config['aperture_field_of_view_radians'],
-                                                      swe_l2_data.phase_space_density[i],
-                                                      instrument_phi[i],
-                                                      spacecraft_potential[i],
-                                                      [0, 0, 0, 0], [0, 0, 0, 0, 0, 0])
-                    if halo_integrate_result is not None:
-                        scale_halo_density_output: ScaleDensityOutput = scale_halo_density(
-                            halo_integrate_result.density,
-                            halo_integrate_result.velocity,
-                            halo_integrate_result.temperature, halo_moment,
-                            spacecraft_potential[i], halo_core[i], cos_theta,
-                            config['aperture_field_of_view_radians'],
-                            instrument_phi[i],
-                            halo_moment_fit_result.regress_result,
-                            halo_integrate_result.base_energy)
+                            halo_density_integrated[i] = scale_halo_density_output.density
+                            halo_velocity_integrated[i] = rotate_dps_vector_to_rtn(current_epoch,
+                                                                                   scale_halo_density_output.velocity)
+                            halo_temperature_tensor_integrated[i] = scale_halo_density_output.temperature
 
-                        halo_density_integrated[i] = scale_halo_density_output.density
-                        halo_velocity_integrated[i] = rotate_dps_vector_to_rtn(current_epoch,
-                                                                               scale_halo_density_output.velocity)
-                        halo_temperature_tensor_integrated[i] = scale_halo_density_output.temperature
+                            magnitude, theta, phi = rotate_vector_to_rtn_spherical_coordinates(current_epoch,
+                                                                                               halo_integrate_result.heat_flux)
 
-                        magnitude, theta, phi = rotate_vector_to_rtn_spherical_coordinates(current_epoch,
-                                                                                           halo_integrate_result.heat_flux)
+                            halo_heat_flux_magnitude[i] = magnitude
+                            halo_heat_flux_theta[i] = theta
+                            halo_heat_flux_phi[i] = phi
 
-                        halo_heat_flux_magnitude[i] = magnitude
-                        halo_heat_flux_theta[i] = theta
-                        halo_heat_flux_phi[i] = phi
+                            halo_primary_eigen_vector, halo_temps = calculate_primary_eigenvector(
+                                scale_halo_density_output.temperature)
 
-                        halo_primary_eigen_vector, halo_temps = calculate_primary_eigenvector(
-                            scale_halo_density_output.temperature)
+                            halo_t_parallel_integrated[i] = halo_temps[0]
+                            halo_t_perpendicular_integrated[i] = [halo_temps[1], halo_temps[2]]
 
-                        halo_t_parallel_integrated[i] = halo_temps[0]
-                        halo_t_perpendicular_integrated[i] = [halo_temps[1], halo_temps[2]]
+                            magnitude, theta, phi = rotate_vector_to_rtn_spherical_coordinates(current_epoch,
+                                                                                               halo_primary_eigen_vector)
+                            halo_temperature_theta_rtn_integrated[i] = theta
+                            halo_temperature_phi_rtn_integrated[i] = phi
 
-                        magnitude, theta, phi = rotate_vector_to_rtn_spherical_coordinates(current_epoch,
-                                                                                           halo_primary_eigen_vector)
-                        halo_temperature_theta_rtn_integrated[i] = theta
-                        halo_temperature_phi_rtn_integrated[i] = phi
+                            halo_t_parallel_to_mag, halo_t_perpendicular_to_mag_average, halo_t_perpendicular_to_mag_ratio = rotate_temperature_tensor_to_mag(
+                                scale_halo_density_output.temperature, rebinned_mag_data[i])
 
-                        halo_t_parallel_to_mag, halo_t_perpendicular_to_mag_average, halo_t_perpendicular_to_mag_ratio = rotate_temperature_tensor_to_mag(
-                            scale_halo_density_output.temperature, rebinned_mag_data[i])
+                            halo_temperature_parallel_to_mag[i] = halo_t_parallel_to_mag
+                            halo_temperature_perpendicular_to_mag[i] = [halo_t_perpendicular_to_mag_average,
+                                                                        halo_t_perpendicular_to_mag_ratio]
 
-                        halo_temperature_parallel_to_mag[i] = halo_t_parallel_to_mag
-                        halo_temperature_perpendicular_to_mag[i] = [halo_t_perpendicular_to_mag_average,
-                                                                    halo_t_perpendicular_to_mag_ratio]
+            except Exception:
+                logger.info(
+                    f"Failed to process moments at Epoch index: {i}. Outputting fill values and continuing to process. Traceback:",
+                    exc_info=True)
+                continue
 
         return SweL3MomentData(
             core_fit_num_points=core_fit_num_points,
