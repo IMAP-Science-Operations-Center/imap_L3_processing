@@ -25,7 +25,7 @@ def read_numeric_variable(var: pycdf.Var) -> np.ndarray:
     return np.where(var[...] == var.attrs['FILLVAL'], np.nan, var[...])
 
 
-OUTPUT_PATH = Path(__file__).parent.parent.parent / 'comparisons' / 'fov_fake_calibration'
+OUTPUT_PATH = Path(__file__).parent.parent.parent / 'comparisons' / 'interpolated_calibration'
 HERITAGE_PATH = r'instrument_team_data/swe/swepam-nswe-1999-159.v1-02.hdf'
 
 variable_mapping = {
@@ -179,40 +179,59 @@ for modern_name, heritage_info in variable_mapping.items():
     l3_output_cdf.close()
 
 
-def compare_eigenvector_directions_with_canonicalization():
+def compute_canonicalized_data(population: str):
     l3_hdf = HDF(r'instrument_team_data/swe/swepam-nswe-1999-159.v1-02.hdf')
     l3_vs = l3_hdf.vstart()
     l3_swe_e = l3_vs.attach("swepam_e")
 
     l3_output_cdf = CDF('data/imap/swe/l3/2025/06/imap_swe_l3_sci_20250629_v000.cdf')
-    theta_rtn_integrated = "core_temperature_theta_rtn_integrated"
-    heritage_theta_rtn_integrated = "t_theta_ic"
-    phi_rtn_integrated = "core_temperature_phi_rtn_integrated"
-    heritage_phi_rtn_integrated = "t_phi_ic"
 
-    core_temp_theta = read_numeric_variable(l3_output_cdf[theta_rtn_integrated])
-    core_temp_phi = read_numeric_variable(l3_output_cdf[phi_rtn_integrated])
-    canonical_theta, canonical_phis = canonicalize(core_temp_theta, core_temp_phi)
+    if population == "core":
+        theta_rtn_integrated = "core_temperature_theta_rtn_integrated"
+        heritage_theta_rtn_integrated = "t_theta_ic"
+        phi_rtn_integrated = "core_temperature_phi_rtn_integrated"
+        heritage_phi_rtn_integrated = "t_phi_ic"
+    elif population == "halo":
+        theta_rtn_integrated = "halo_temperature_theta_rtn_integrated"
+        heritage_theta_rtn_integrated = "t_theta_ih"
+        phi_rtn_integrated = "halo_temperature_phi_rtn_integrated"
+        heritage_phi_rtn_integrated = "t_phi_ih"
+    else:
+        theta_rtn_integrated = "total_temperature_theta_rtn_integrated"
+        heritage_theta_rtn_integrated = "t_theta_i"
+        phi_rtn_integrated = "total_temperature_phi_rtn_integrated"
+        heritage_phi_rtn_integrated = "t_phi_i"
+
+    temp_theta = read_numeric_variable(l3_output_cdf[theta_rtn_integrated])
+    temp_phi = read_numeric_variable(l3_output_cdf[phi_rtn_integrated])
 
     heritage_theta_rtn_integrated_data = np.array(
         [x[l3_swe_e.field(heritage_theta_rtn_integrated)._index] for x in l3_swe_e[:]])
     heritage_phi_rtn_integrated_data = np.array(
         [x[l3_swe_e.field(heritage_phi_rtn_integrated)._index] for x in l3_swe_e[:]])
 
-    heritage_theta_rtn_integrated_data, heritage_phi_rtn_integrated_data = canonicalize(
-        heritage_theta_rtn_integrated_data, heritage_phi_rtn_integrated_data)
+    canonical_theta, canonical_phi = canonicalize(temp_theta, temp_phi)
+    heritage_canonical_theta, heritage_canonical_phi = canonicalize(heritage_theta_rtn_integrated_data,
+                                                                    heritage_phi_rtn_integrated_data)
 
-    plt.plot(heritage_theta_rtn_integrated_data, '.', label=f'Heritage: {heritage_theta_rtn_integrated}')
-    plt.plot(canonical_theta, '.', label=f'Modern: {theta_rtn_integrated}')
+    plt.plot(heritage_canonical_theta, '.', label=f'Heritage: {heritage_theta_rtn_integrated}')
+    plt.plot(canonical_theta, '.', label=f'Modern {theta_rtn_integrated}')
     plt.legend()
-    plt.savefig(OUTPUT_PATH / f"core_temperature_rtn_theta.png")
+    plt.savefig(OUTPUT_PATH / f"{population}_temperature_rtn_theta.png")
     plt.clf()
 
-    plt.plot(heritage_phi_rtn_integrated_data, '.', label=f'Heritage: {heritage_theta_rtn_integrated}')
-    plt.plot(canonical_phis, '.', label=f'Modern: {phi_rtn_integrated}')
+    plt.plot(heritage_canonical_phi, '.', label=f'Heritage: {heritage_phi_rtn_integrated}')
+    plt.plot(canonical_phi, '.', label=f'Modern {phi_rtn_integrated}')
     plt.legend()
-    plt.savefig(OUTPUT_PATH / f"core_temperature_rtn_phi.png")
+    plt.savefig(OUTPUT_PATH / f"{population}_temperature_rtn_phi.png")
     plt.clf()
+    return canonical_theta, canonical_phi, heritage_theta_rtn_integrated_data, heritage_phi_rtn_integrated_data
+
+
+def compare_eigenvector_directions_with_canonicalization():
+    compute_canonicalized_data("core")
+    compute_canonicalized_data("halo")
+    compute_canonicalized_data("total")
 
 
 compare_eigenvector_directions_with_canonicalization()
