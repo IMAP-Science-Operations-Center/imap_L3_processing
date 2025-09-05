@@ -355,11 +355,11 @@ def filter_and_flatten_regress_parameters(corrected_energy_bins: np.ndarray,
                                           velocity_vectors: np.ndarray,
                                           phase_space_density: np.ndarray,
                                           weights: np.ndarray,
-                                          core_breakpoint_index: int,
-                                          core_halo_breakpoint_index: int) -> tuple[
+                                          start_index: int,
+                                          end_index: int) -> tuple[
     np.ndarray, np.ndarray, np.ndarray]:
     valid_mask = np.full_like(phase_space_density, fill_value=False, dtype=bool)
-    valid_mask[core_breakpoint_index:core_halo_breakpoint_index] = True
+    valid_mask[start_index:end_index] = True
     valid_mask[corrected_energy_bins <= 0] = False
     valid_mask[phase_space_density <= 0] = False
 
