@@ -219,6 +219,24 @@ class TestPitchCalculations(unittest.TestCase):
                 np.testing.assert_almost_equal(mock_ls_fit.call_args.args[0], xs[:data_length])
                 np.testing.assert_almost_equal(mock_ls_fit.call_args.args[1], log_flux[:data_length])
 
+    def test_find_breakpoints_handles_losing_all_points_to_slope_ratio_cutoff(self):
+        config = build_swe_configuration(slope_ratio_cutoff_for_potential_calc=0.5)
+
+        xs = np.arange(10)
+
+        slope_ratios = np.array([0.51, 0.4, 0.3, 0.2, 0.1, 0.1, 0.1, 0.1])
+        slopes = np.cumprod(np.append(0.1, slope_ratios))
+        energy_deltas = np.diff(xs)
+        initial = 10000
+        diff_log_flux = -slopes * energy_deltas
+        log_flux = np.cumsum(np.append(np.log(initial), diff_log_flux))
+        avg_flux = np.exp(log_flux)
+        spacecraft_potential, core_halo_breakpoint = find_breakpoints(
+            xs, avg_flux, [10, 10, 11], [80, 80, 82], config)
+
+        self.assertEqual(11, spacecraft_potential)
+        self.assertEqual(82, core_halo_breakpoint)
+
     @patch('imap_l3_processing.swe.l3.science.pitch_calculations.ls_fit')
     def test_try_curve_fit_until_valid(self, mock_ls_fit):
         cases = [

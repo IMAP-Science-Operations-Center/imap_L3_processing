@@ -28,6 +28,9 @@ def find_breakpoints(energies: np.ndarray, averaged_psd: np.ndarray, latest_spac
     slope_ratios = slopes[1:] / slopes[:-1]
     numb = np.max(np.nonzero(slope_ratios > config['slope_ratio_cutoff_for_potential_calc']), initial=0)
 
+    if not numb:
+        return latest_spacecraft_potentials[-1], latest_core_halo_break_points[-1]
+
     energies = energies[:numb]
     log_psd = log_psd[:numb]
     b1: float = slopes[0]
