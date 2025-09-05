@@ -183,6 +183,8 @@ intensity_by_pitch_angle:
   UNITS: cm^-2 sr^-1 s^-1 eV^-1
   VALIDMIN: 0
   VALIDMAX: 10000000000
+  SCALEMIN: 0
+  SCALEMAX: 1.0e+7
   FILLVAL: -1.00E+31
   LABL_PTR_1: energy_label
   LABL_PTR_2: pitch_angle_label
@@ -207,6 +209,8 @@ intensity_by_pitch_angle_and_gyrophase:
   UNITS: cm^-2 sr^-1 s^-1 eV^-1
   VALIDMIN: 0
   VALIDMAX: 10000000000
+  SCALEMIN: 0
+  SCALEMAX: 1.0e+7
   FILLVAL: -1.00E+31
   LABL_PTR_1: energy_label
   LABL_PTR_2: pitch_angle_label
@@ -281,6 +285,8 @@ phase_space_density_by_pitch_angle_and_gyrophase:
   LABL_PTR_2: pitch_angle_label
   LABL_PTR_3: gyrophase_label
   SCALETYP: log
+  SCALEMIN: 1e-33
+  SCALEMAX: 1e-24
   SI_CONVERSION: 1e12>s^3 m^-6
 phase_space_density_by_pitch_angle:
   NAME: phase_space_density_by_pitch_angle
@@ -303,6 +309,8 @@ phase_space_density_by_pitch_angle:
   LABL_PTR_1: energy_label
   LABL_PTR_2: pitch_angle_label
   SCALETYP: log
+  SCALEMIN: 1e-33
+  SCALEMAX: 1e-24
   SI_CONVERSION: 1e12>s^3 m^-6
 intensity:
   NAME: intensity
@@ -320,6 +328,8 @@ intensity:
   UNITS: cm^-2 sr^-1 s^-1 eV^-1
   VALIDMIN: 0
   VALIDMAX: 10000000000
+  SCALEMIN: 1e-33
+  SCALEMAX: 1e-24
   FILLVAL: -1.00E+31
   LABL_PTR_1: energy_label
   SCALETYP: log
@@ -340,6 +350,8 @@ intensity_inward:
   UNITS: cm^-2 sr^-1 s^-1 eV^-1
   VALIDMIN: 0
   VALIDMAX: 10000000000
+  SCALEMIN: 1e-33
+  SCALEMAX: 1e-24
   FILLVAL: -1.00E+31
   LABL_PTR_1: energy_label
   SCALETYP: log
@@ -360,6 +372,8 @@ intensity_outward:
   UNITS: cm^-2 sr^-1 s^-1 eV^-1
   VALIDMIN: 0
   VALIDMAX: 10000000000
+  SCALEMIN: 1e-33
+  SCALEMAX: 1e-24
   FILLVAL: -1.00E+31
   LABL_PTR_1: energy_label
   SCALETYP: log
@@ -489,9 +503,11 @@ core_density_fit:
   FIELDNAM: Core Density Fit
   FORMAT: F15.3
   LABLAXIS: Core density fit
-  UNITS: ' '
+  UNITS: '#/cm^3'
   VALIDMIN: 0
   VALIDMAX: 10000000000
+  SCALEMIN: 0
+  SCALEMAX: 20
   FILLVAL: -1.00E+31
   VAR_NOTES: Analytically calculated from Bi-Maxellian fit
 halo_density_fit:
@@ -506,9 +522,11 @@ halo_density_fit:
   FIELDNAM: Halo Density Fit
   FORMAT: F15.3
   LABLAXIS: Halo density fit
-  UNITS: ' '
+  UNITS: '#/cm^3'
   VALIDMIN: 0
   VALIDMAX: 10000000000
+  SCALEMIN: 0
+  SCALEMAX: 1
   FILLVAL: -1.00E+31
   VAR_NOTES: Analytically calculated from Bi-Maxellian fit
 core_t_parallel_fit:
@@ -659,9 +677,11 @@ core_speed_fit:
   FIELDNAM: Core Speed Fit
   FORMAT: F15.3
   LABLAXIS: Core speed fit
-  UNITS: ' '
+  UNITS: km/s
   VALIDMIN: 0
   VALIDMAX: 10000000000
+  SCALEMIN: 0
+  SCALEMAX: 1000
   FILLVAL: -1.00E+31
   VAR_NOTES: Analytically calculated from Bi-Maxellian fit
 halo_speed_fit:
@@ -729,9 +749,11 @@ core_density_integrated:
   FIELDNAM: Core Density Integrated
   FORMAT: F15.3
   LABLAXIS: Core density integrated
-  UNITS: ' '
+  UNITS: '#/cm^3'
   VALIDMIN: 0
   VALIDMAX: 10000000000
+  SCALEMIN: 0
+  SCALEMAX: 20
   FILLVAL: -1.00E+31
   VAR_NOTES: Numerically integrated
 halo_density_integrated:
@@ -746,9 +768,11 @@ halo_density_integrated:
   FIELDNAM: Halo Density Integrated
   FORMAT: F15.3
   LABLAXIS: Halo density integrated
-  UNITS: ' '
+  UNITS: '#/cm^3'
   VALIDMIN: 0
   VALIDMAX: 10000000000
+  SCALEMIN: 0
+  SCALEMAX: 1
   FILLVAL: -1.00E+31
   VAR_NOTES: Calculated by integration over the measured phase space distribution
 total_density_integrated:
@@ -763,9 +787,11 @@ total_density_integrated:
   FIELDNAM: Total Density Integrated
   FORMAT: F15.3
   LABLAXIS: Total density integrated
-  UNITS: ' '
+  UNITS: '#/cm^3'
   VALIDMIN: 0
   VALIDMAX: 10000000000
+  SCALEMIN: 0
+  SCALEMAX: 20
   FILLVAL: -1.00E+31
   VAR_NOTES: Calculated by integration over the measured phase space distribution
 core_velocity_vector_rtn_integrated:
@@ -834,9 +860,11 @@ core_speed_integrated:
   FIELDNAM: Core Speed Integrated
   FORMAT: F15.3
   LABLAXIS: Core speed integrated
-  UNITS: ' '
+  UNITS: km/s
   VALIDMIN: 0
   VALIDMAX: 10000000000
+  SCALEMIN: 0
+  SCALEMAX: 1000
   FILLVAL: -1.00E+31
   VAR_NOTES: Calculated by integration over the measured phase space distribution
 halo_speed_integrated:
