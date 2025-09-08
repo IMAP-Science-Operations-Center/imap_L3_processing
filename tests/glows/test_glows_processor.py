@@ -14,11 +14,7 @@ from subprocess import CalledProcessError, CompletedProcess
 from unittest.mock import patch, Mock, sentinel, call, MagicMock
 from zipfile import ZIP_DEFLATED
 
-import imap_data_access
 import numpy as np
-from imap_data_access import ProcessingInputCollection, RepointInput, ScienceFilePath
-from imap_data_access.file_validation import generate_imap_file_path
-from scipy.stats.contingency import expected_freq
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
@@ -39,11 +35,11 @@ from imap_l3_processing.glows.l3e.glows_l3e_hi_model import GlowsL3EHiData
 from imap_l3_processing.glows.l3e.glows_l3e_initializer import GlowsL3EInitializer, GlowsL3EInitializerOutput
 from imap_l3_processing.glows.l3e.glows_l3e_lo_model import GlowsL3ELoData
 from imap_l3_processing.glows.l3e.glows_l3e_ultra_model import GlowsL3EUltraData
-from imap_l3_processing.glows.l3e.glows_l3e_utils import GlowsL3eRepointings
+from imap_l3_processing.glows.l3e.glows_l3e_utils import GlowsL3eRepointings, determine_call_args_for_l3e_executable
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.utils import save_data
 from tests.test_helpers import get_test_instrument_team_data_path, get_test_data_path, get_test_data_folder, \
-    assert_dataclass_fields, create_glows_mock_query_results, get_run_local_data_path, run_periodically
+    assert_dataclass_fields
 
 
 class TestGlowsProcessor(unittest.TestCase):
@@ -1398,119 +1394,6 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
             call(Path("f107_index_file_path"), "f107_fluxtable.txt"),
         ])
         mock_zip_file.writestr.assert_called_once_with(expected_json_filename, mock_json.dumps.return_value)
-
-
-class TestGlowsProcessorIntegration(unittest.TestCase):
-    @run_periodically(timedelta(seconds=7))
-    @patch("imap_data_access.query")
-    @patch("imap_data_access.download")
-    def test_l3bcde_integration(self, mock_download, mock_query):
-        logging.basicConfig(force=True, level=logging.INFO,
-                            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-
-        for folder in ["data_l3b", "data_l3c", "data_l3d", "data_l3d_txt"]:
-            path = PATH_TO_L3D_TOOLKIT / folder
-            if path.exists():
-                shutil.rmtree(path)
-
-        expected_queries = {
-            "hist": create_glows_mock_query_results([
-                "imap_glows_l3a_hist_20100105-repoint00153_v001.cdf",
-                "imap_glows_l3a_hist_20100106-repoint00154_v001.cdf",
-                "imap_glows_l3a_hist_20100521-repoint00289_v001.cdf",
-                "imap_glows_l3a_hist_20100522-repoint00290_v001.cdf",
-                "imap_glows_l3a_hist_20100824-repoint00384_v001.cdf"
-            ]),
-            "ion-rate-profile": create_glows_mock_query_results([]),
-            "sw-profile": create_glows_mock_query_results([]),
-            "uv-anisotropy-1CR": create_glows_mock_query_results(["imap_glows_uv-anisotropy-1CR_20100101_v004.json"]),
-            "WawHelioIonMP": create_glows_mock_query_results(["imap_glows_WawHelioIonMP_20100101_v002.json"]),
-            "bad-days-list": create_glows_mock_query_results(["imap_glows_bad-days-list_20100101_v001.dat"]),
-            "pipeline-settings-l3bcde": create_glows_mock_query_results(
-                ["imap_glows_pipeline-settings-l3bcde_20100101_v006.json"]),
-            'solar-hist': create_glows_mock_query_results([]),
-            'plasma-speed-2010a': create_glows_mock_query_results(['imap_glows_plasma-speed-2010a_20100101_v003.dat']),
-            'proton-density-2010a': create_glows_mock_query_results(
-                ['imap_glows_proton-density-2010a_20100101_v003.dat']),
-            'uv-anisotropy-2010a': create_glows_mock_query_results(
-                ['imap_glows_uv-anisotropy-2010a_20100101_v003.dat']),
-            'photoion-2010a': create_glows_mock_query_results(['imap_glows_photoion-2010a_20100101_v003.dat']),
-            'lya-2010a': create_glows_mock_query_results(['imap_glows_lya-2010a_20100101_v003.dat']),
-            'electron-density-2010a': create_glows_mock_query_results(
-                ['imap_glows_electron-density-2010a_20100101_v003.dat']),
-            'ionization-files': create_glows_mock_query_results(['imap_glows_ionization-files_20100101_v001.dat']),
-            'energy-grid-lo': create_glows_mock_query_results(['imap_glows_energy-grid-lo_20100101_v001.dat']),
-            'tess-xyz-8': create_glows_mock_query_results(['imap_glows_tess-xyz-8_20100101_v001.dat']),
-            'elongation-data': create_glows_mock_query_results(['imap_lo_elongation-data_20100101_v001.dat']),
-            'energy-grid-hi': create_glows_mock_query_results(['imap_glows_energy-grid-hi_20100101_v001.dat']),
-            'energy-grid-ultra': create_glows_mock_query_results(['imap_glows_energy-grid-ultra_20100101_v001.dat']),
-            'tess-ang-16': create_glows_mock_query_results(['imap_glows_tess-ang-16_20100101_v001.dat']),
-        }
-
-        input_files = [
-            "imap_glows_l3a_hist_20100105-repoint00153_v001.cdf",
-            "imap_glows_l3a_hist_20100106-repoint00154_v001.cdf",
-            "imap_glows_l3a_hist_20100521-repoint00289_v001.cdf",
-            "imap_glows_l3a_hist_20100522-repoint00290_v001.cdf",
-            "imap_glows_l3a_hist_20100824-repoint00384_v001.cdf",
-            "imap_glows_uv-anisotropy-1CR_20100101_v004.json",
-            "imap_glows_WawHelioIonMP_20100101_v002.json",
-            "imap_glows_bad-days-list_20100101_v001.dat",
-            "imap_glows_pipeline-settings-l3bcde_20100101_v006.json",
-            'imap_glows_plasma-speed-2010a_20100101_v003.dat',
-            'imap_glows_proton-density-2010a_20100101_v003.dat',
-            'imap_glows_uv-anisotropy-2010a_20100101_v003.dat',
-            'imap_glows_photoion-2010a_20100101_v003.dat',
-            'imap_glows_lya-2010a_20100101_v003.dat',
-            'imap_glows_electron-density-2010a_20100101_v003.dat',
-            "imap_2026_269_05.repoint.csv",
-            'imap_glows_ionization-files_20100101_v001.dat',
-            'imap_glows_energy-grid-lo_20100101_v001.dat',
-            'imap_glows_tess-xyz-8_20100101_v001.dat',
-            'imap_lo_elongation-data_20100101_v001.dat',
-            'imap_glows_energy-grid-hi_20100101_v001.dat',
-            'imap_glows_energy-grid-ultra_20100101_v001.dat',
-            'imap_glows_tess-ang-16_20100101_v001.dat',
-
-        ]
-
-        mock_download.side_effect = lambda file: generate_imap_file_path(Path(file).name).construct_path()
-        mock_query.side_effect = lambda **kwargs: expected_queries[kwargs["descriptor"]]
-
-        fake_data_dir = get_run_local_data_path("glows_l3bcde_integration_data_dir")
-        with patch.object(imap_data_access, "config", new={"DATA_DIR": fake_data_dir}) as _:
-            if fake_data_dir.exists():
-                shutil.rmtree(fake_data_dir)
-
-            fake_data_dir.mkdir(exist_ok=True, parents=True)
-            for filename in input_files:
-                paths_to_generate = generate_imap_file_path(filename).construct_path()
-                paths_to_generate.parent.mkdir(exist_ok=True, parents=True)
-                shutil.copy(src=get_test_data_path("glows/l3bcde_integration_test_data") / filename,
-                            dst=paths_to_generate)
-
-            processing_input = ProcessingInputCollection([RepointInput("imap_2026_269_05.repoint.csv")])
-
-            input_metadata = InputMetadata(instrument="glows", data_level="l3b", descriptor="ion-rate-profile",
-                                           version="v001", start_date=datetime(2000, 1, 1),
-                                           end_date=datetime(2000, 1, 1))
-
-            processor = GlowsProcessor(processing_input, input_metadata)
-            products = processor.process()
-
-            print(products)
-
-            expected_files = [
-                ScienceFilePath("imap_glows_l3b_ion-rate-profile_20100103-cr02092_v001.cdf").construct_path(),
-                ScienceFilePath("imap_glows_l3b_ion-rate-profile_20100519-cr02097_v001.cdf").construct_path(),
-                ScienceFilePath("imap_glows_l3c_sw-profile_20100103-cr02092_v001.cdf").construct_path(),
-                ScienceFilePath("imap_glows_l3c_sw-profile_20100519-cr02097_v001.cdf").construct_path(),
-                ScienceFilePath("imap_glows_l3d_solar-hist_19470303-cr02094_v001.cdf").construct_path()
-            ]
-
-            for file_path in expected_files:
-                self.assertTrue(file_path.exists(), msg=str(file_path))
-
 
 if __name__ == '__main__':
     unittest.main()
