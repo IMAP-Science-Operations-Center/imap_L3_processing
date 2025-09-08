@@ -3,7 +3,8 @@ from pathlib import Path
 from typing import Optional
 
 import imap_data_access
-from imap_data_access import ProcessingInputCollection, AncillaryInput, ScienceInput, ScienceFilePath
+from imap_data_access import ProcessingInputCollection, AncillaryInput, ScienceInput, ScienceFilePath, SPICEInput, \
+    RepointInput
 
 from imap_l3_processing.glows.l3d.models import GlowsL3DProcessorOutput
 from imap_l3_processing.glows.l3d.utils import get_most_recently_uploaded_ancillary
@@ -20,7 +21,7 @@ class GlowsL3EInitializerOutput:
 
 class GlowsL3EInitializer:
     @staticmethod
-    def get_repointings_to_process(l3d_output: GlowsL3DProcessorOutput, previous_l3d: Optional[Path]) -> GlowsL3EInitializerOutput:
+    def get_repointings_to_process(l3d_output: GlowsL3DProcessorOutput, previous_l3d: Optional[Path], repointing_file_path: Path) -> GlowsL3EInitializerOutput:
         ionization_files = get_most_recently_uploaded_ancillary(imap_data_access.query(instrument='glows', descriptor='ionization-files'))
         pipeline_settings_l3bcde = get_most_recently_uploaded_ancillary(imap_data_access.query(instrument='glows', descriptor='pipeline-settings-l3bcde'))
         energy_grid_lo = get_most_recently_uploaded_ancillary(imap_data_access.query(instrument='glows', descriptor='energy-grid-lo'))
@@ -32,7 +33,7 @@ class GlowsL3EInitializer:
 
         processing_input_collection = ProcessingInputCollection(
             ScienceInput(l3d_output.l3d_cdf_file_path.name),
-            *[ScienceInput(file.name) for file in l3d_output.l3d_text_file_paths],
+            *[AncillaryInput(file.name) for file in l3d_output.l3d_text_file_paths],
             AncillaryInput(str(ionization_files["file_path"])),
             AncillaryInput(str(pipeline_settings_l3bcde["file_path"])),
             AncillaryInput(str(energy_grid_lo["file_path"])),
@@ -41,6 +42,7 @@ class GlowsL3EInitializer:
             AncillaryInput(str(energy_grid_hi["file_path"])),
             AncillaryInput(str(energy_grid_ultra["file_path"])),
             AncillaryInput(str(tess_ang_16["file_path"])),
+            RepointInput(str(repointing_file_path))
         )
 
         deps = GlowsL3EDependencies.fetch_dependencies(processing_input_collection)
@@ -52,9 +54,10 @@ class GlowsL3EInitializer:
             first_cr = deps.pipeline_settings['start_cr']
         last_cr = ScienceFilePath(l3d_output.l3d_cdf_file_path).cr
 
-        glows_repointings = determine_l3e_files_to_produce(first_cr, last_cr, deps.repointing_file)
+        glows_repointings = determine_l3e_files_to_produce(first_cr, last_cr, repointing_file_path)
 
         return GlowsL3EInitializerOutput(
             dependencies=deps,
             repointings=glows_repointings
         )
+

@@ -30,6 +30,7 @@ class GlowsL3BCInitializerData:
     l3bc_dependencies: list[GlowsL3BCDependencies]
     l3bs_by_cr: dict[int, str]
     l3cs_by_cr: dict[int, str]
+    repoint_file_path: Path
 
 
 class GlowsL3BCInitializer:
@@ -68,7 +69,8 @@ class GlowsL3BCInitializer:
                 external_dependencies=external_dependencies,
                 l3bc_dependencies=[],
                 l3bs_by_cr=l3bs_by_cr,
-                l3cs_by_cr=l3cs_by_cr
+                l3cs_by_cr=l3cs_by_cr,
+                repoint_file_path=repoint_downloaded_path
             )
 
         all_l3bc_dependencies = []
@@ -104,7 +106,8 @@ class GlowsL3BCInitializer:
             external_dependencies=external_dependencies,
             l3bc_dependencies=all_l3bc_dependencies,
             l3bs_by_cr=l3bs_by_cr,
-            l3cs_by_cr=l3cs_by_cr
+            l3cs_by_cr=l3cs_by_cr,
+            repoint_file_path=repoint_downloaded_path
         )
 
     @staticmethod

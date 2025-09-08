@@ -2,6 +2,8 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch, call
 
+from imap_data_access import RepointInput
+
 from imap_l3_processing.glows.l3d.models import GlowsL3DProcessorOutput
 from imap_l3_processing.glows.l3e.glows_l3e_initializer import GlowsL3EInitializer, GlowsL3EInitializerOutput
 from imap_l3_processing.glows.l3e.glows_l3e_utils import GlowsL3eRepointings
@@ -40,7 +42,7 @@ class TestGlowsL3EInitializer(unittest.TestCase):
         ]
 
         updated_l3d = Path('path/to/imap_glows_l3d_solar-hist_19470303-cr02091_v000.cdf')
-        updated_l3d_text_file_path = Path("imap_glows_l3d_e-dens_19470303-cr02091_v000.dat")
+        updated_l3d_text_file_path = Path("imap_glows_e-dens_19470303_20100101_v000.dat")
         glows_l3d_processor_output = GlowsL3DProcessorOutput(updated_l3d, [updated_l3d_text_file_path], 2091)
         previous_l3d = Path('path/to/previous_l3d')
 
@@ -68,11 +70,13 @@ class TestGlowsL3EInitializer(unittest.TestCase):
 
         mock_determine_l3e_files_to_produce.return_value = expected_repointings
 
-        actual_initializer_output = GlowsL3EInitializer.get_repointings_to_process(glows_l3d_processor_output, previous_l3d)
+        repointing_file_path = Path("imap_2026_105_01.repoint.csv")
+        actual_initializer_output = GlowsL3EInitializer.get_repointings_to_process(glows_l3d_processor_output, previous_l3d,
+                                                                                   repointing_file_path)
 
         mock_find_first_updated_cr.assert_called_once_with(updated_l3d, previous_l3d)
 
-        mock_determine_l3e_files_to_produce.assert_called_once_with(2090, 2091, actual_initializer_output.dependencies.repointing_file)
+        mock_determine_l3e_files_to_produce.assert_called_once_with(2090, 2091, repointing_file_path)
 
         mock_query.assert_has_calls([
             call(instrument='glows', descriptor='ionization-files'),
@@ -98,8 +102,8 @@ class TestGlowsL3EInitializer(unittest.TestCase):
 
         self.assertEqual([
             updated_l3d.name,
+            "imap_glows_e-dens_19470303_20100101_v000.dat",
             'imap_glows_ionization-files_20200101_v000.cdf',
-            "imap_glows_l3d_e-dens_19470303-cr02091_v000.dat",
             'imap_glows_pipeline-settings-l3bcde_20200101_v000.cdf',
             'imap_glows_energy-grid-lo_20200101_v000.cdf',
             'imap_glows_tess-xyz-8_20200101_v000.cdf',
@@ -108,6 +112,9 @@ class TestGlowsL3EInitializer(unittest.TestCase):
             'imap_glows_energy-grid-ultra_20200101_v000.cdf',
             'imap_glows_tess-ang-16_20200101_v000.cdf',
         ], pipeline_l3e_input_filenames)
+
+        [repoint_input] = actual_l3e_inputs.get_file_paths(data_type=RepointInput.data_type)
+        self.assertEqual("imap_2026_105_01.repoint.csv", repoint_input.name)
 
         self.assertEqual(actual_initializer_output, expected_initializer_data)
 
@@ -137,10 +144,11 @@ class TestGlowsL3EInitializer(unittest.TestCase):
         glows_l3d_processor_output = GlowsL3DProcessorOutput(updated_l3d, [], 2091)
         previous_l3d = None
 
-        mock_fetch_dependencies.return_value.repointing_file = Path('path/to/repointing_file')
         mock_fetch_dependencies.return_value.pipeline_settings = {"start_cr": 2089}
 
-        actual_initializer_output = GlowsL3EInitializer.get_repointings_to_process(glows_l3d_processor_output, previous_l3d)
+        repointing_file_path = Path("imap_2026_105_01.repoint.csv")
+        actual_initializer_output = GlowsL3EInitializer.get_repointings_to_process(glows_l3d_processor_output, previous_l3d,
+                                                                                   repointing_file_path)
 
         mock_find_first_updated_cr.assert_not_called()
-        mock_determine_l3e_files_to_produce.assert_called_once_with(2089, 2091, actual_initializer_output.dependencies.repointing_file)
+        mock_determine_l3e_files_to_produce.assert_called_once_with(2089, 2091, repointing_file_path)

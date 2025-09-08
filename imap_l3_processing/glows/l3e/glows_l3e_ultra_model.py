@@ -72,16 +72,21 @@ class GlowsL3EUltraData(DataProduct):
 
         input_metadata.start_date = epoch[0]
 
-        return cls(input_metadata, epoch, energies,
-                   healpix_indexes, transposed_prob_sur, np.array([args.spin_axis_latitude]),
-                   np.array([args.spin_axis_longitude]), code_version,
-                   spacecraft_radius=args.spacecraft_radius,
-                   spacecraft_longitude=args.spacecraft_longitude,
-                   spacecraft_latitude=args.spacecraft_latitude,
-                   spacecraft_velocity_x=args.spacecraft_velocity_x,
-                   spacecraft_velocity_y=args.spacecraft_velocity_y,
-                   spacecraft_velocity_z=args.spacecraft_velocity_z,
-                   )
+        return cls(input_metadata,
+            epoch=epoch,
+            energy=energies,
+            healpix_index=healpix_indexes,
+            probability_of_survival=transposed_prob_sur,
+            spin_axis_lat=np.array([args.spin_axis_latitude]),
+            spin_axis_lon=np.array([args.spin_axis_longitude]),
+            program_version=np.array([code_version]),
+            spacecraft_radius=np.array([args.spacecraft_radius]),
+            spacecraft_longitude=np.array([args.spacecraft_longitude]),
+            spacecraft_latitude=np.array([args.spacecraft_latitude]),
+            spacecraft_velocity_x=np.array([args.spacecraft_velocity_x]),
+            spacecraft_velocity_y=np.array([args.spacecraft_velocity_y]),
+            spacecraft_velocity_z=np.array([args.spacecraft_velocity_z]),
+        )
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         energy_labels = [f"Energy Label {i}" for i in range(1, 21)]

@@ -9,6 +9,7 @@ import numpy as np
 from spacepy.pycdf import CDF
 
 import imap_l3_processing
+from imap_l3_processing.glows.l3bc.utils import get_date_range_of_cr
 from imap_l3_processing.glows.l3d.models import GlowsL3DSolarParamsHistory
 from imap_l3_processing.models import InputMetadata
 
@@ -121,10 +122,16 @@ def get_most_recently_uploaded_ancillary(query_result: list[dict]) -> dict:
     query_result = max(query_result, key=lambda x: x['ingestion_date'], default=None)
     return query_result
 
-def set_version_on_txt_files(paths: list[Path], version: str) -> list[Path]:
+def rename_l3d_text_outputs(paths: list[Path], version: str) -> list[Path]:
     out_paths = []
     for path in paths:
-        new_path = path.parent / f"{'_'.join(path.name.split('_')[:-1])}_{version}.{path.name.split('.')[-1]}"
+        filename_without_extension, extension = path.name.split('.')
+        original_name_components = filename_without_extension.split('_')
+        descriptor = original_name_components[3]
+        start_date_with_cr = original_name_components[4]
+        start_date, cr = start_date_with_cr.split('-cr')
+        _, end_date_of_cr = get_date_range_of_cr(int(cr))
+        new_path = path.parent / f"imap_glows_{descriptor}_{start_date}_{end_date_of_cr.strftime('%Y%m%d')}_{version}.{extension}"
         os.rename(path, new_path)
         out_paths.append(new_path)
     return out_paths

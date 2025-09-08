@@ -12,9 +12,11 @@ from subprocess import run
 from typing import Optional
 from zipfile import ZipFile, ZIP_DEFLATED
 
+import imap_data_access
 import numpy as np
 from imap_data_access.file_validation import generate_imap_file_path
 from imap_data_access.processing_input import ProcessingInputCollection
+from spiceypy import spiceypy
 
 from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
 from imap_l3_processing.glows.descriptors import GLOWS_L3A_DESCRIPTOR
@@ -34,12 +36,13 @@ from imap_l3_processing.glows.l3d.glows_l3d_dependencies import GlowsL3DDependen
 from imap_l3_processing.glows.l3d.glows_l3d_initializer import GlowsL3DInitializer
 from imap_l3_processing.glows.l3d.models import GlowsL3DProcessorOutput
 from imap_l3_processing.glows.l3d.utils import create_glows_l3b_json_file_from_cdf, create_glows_l3c_json_file_from_cdf, \
-    PATH_TO_L3D_TOOLKIT, convert_json_to_l3d_data_product, get_parent_file_names_from_l3d_json, set_version_on_txt_files
+    PATH_TO_L3D_TOOLKIT, convert_json_to_l3d_data_product, get_parent_file_names_from_l3d_json, rename_l3d_text_outputs
 from imap_l3_processing.glows.l3e.glows_l3e_hi_model import GlowsL3EHiData
 from imap_l3_processing.glows.l3e.glows_l3e_initializer import GlowsL3EInitializer, GlowsL3EInitializerOutput
 from imap_l3_processing.glows.l3e.glows_l3e_lo_model import GlowsL3ELoData
 from imap_l3_processing.glows.l3e.glows_l3e_ultra_model import GlowsL3EUltraData
-from imap_l3_processing.glows.l3e.glows_l3e_utils import determine_call_args_for_l3e_executable
+from imap_l3_processing.glows.l3e.glows_l3e_utils import determine_call_args_for_l3e_executable, \
+    find_l3e_spice_kernels_for_time_range
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
 from imap_l3_processing.utils import save_data, get_spice_parent_file_names
@@ -81,38 +84,27 @@ class GlowsProcessor(Processor):
                 return products_list
 
             version_number, glows_l3d_dependency, old_l3d = l3d_initializer_result
+
+            logger.info(f"Processing L3d with version: {version_number}")
+
             process_l3d_result = process_l3d(glows_l3d_dependency, version_number)
 
             if process_l3d_result is not None:
+                logger.info(f"Finished processing L3d up to CR: {process_l3d_result.last_processed_cr}")
                 products_list.extend([*process_l3d_result.l3d_text_file_paths, process_l3d_result.l3d_cdf_file_path])
+
+                logger.info(f"Saved L3d CDF output to: {process_l3d_result.l3d_cdf_file_path}")
+                for txt_file in process_l3d_result.l3d_text_file_paths:
+                    logger.info(f"Saved L3d text file output to: {txt_file}")
             else:
                 return products_list
 
-            l3e_initializer_output = GlowsL3EInitializer.get_repointings_to_process(
-                process_l3d_result, old_l3d)
-            # for repointing in repointings:
-            #     self.input_metadata.repointing = repointing
-            #     try:
-            #         epoch, epoch_end = get_pointing_date_range(repointing)
-            #         epoch_dt: datetime = epoch.astype('datetime64[us]').astype(datetime)
-            #         epoch_end_dt: datetime = epoch_end.astype('datetime64[us]').astype(datetime)
-            #         epoch_delta: timedelta = (epoch_end_dt - epoch_dt) / 2
-            #
-            #         if self.input_metadata.descriptor == "survival-probability-lo":
-            #             try:
-            #                 year_with_repointing = str(epoch_dt.year) + str(int(repointing)).zfill(3)
-            #                 elongation = l3e_dependencies.elongation[year_with_repointing]
-            #             except KeyError:
-            #                 continue
-            #             products_list.extend(self.process_l3e_lo(epoch_dt, epoch_delta, elongation))
-            #         elif self.input_metadata.descriptor == "survival-probability-hi-45":
-            #             products_list.extend(self.process_l3e_hi(epoch_dt, epoch_delta, 135))
-            #         elif self.input_metadata.descriptor == "survival-probability-hi-90":
-            #             products_list.extend(self.process_l3e_hi(epoch_dt, epoch_delta, 90))
-            #         elif self.input_metadata.descriptor == "survival-probability-ul":
-            #             products_list.extend(self.process_l3e_ul(epoch_dt, epoch_delta))
-            #     except Exception as e:
-            #         print("Exception encountered for repointing ", repointing, e)
+            l3e_initializer_output = GlowsL3EInitializer.get_repointings_to_process(process_l3d_result, old_l3d, l3bc_initializer_data.repoint_file_path)
+
+            logger.info(f"Processing L3e for repointings: {l3e_initializer_output.repointings.repointing_numbers}")
+
+            products_list.extend(process_l3e(l3e_initializer_output))
+
             return products_list
 
     def process_l3a(self, dependencies: GlowsL3ADependencies) -> GlowsL3LightCurve:
@@ -246,11 +238,13 @@ def process_l3d(dependencies: GlowsL3DDependencies, version: int) -> Optional[Gl
             if str(last_processed_cr) in text_file:
                 output_text_files.append(PATH_TO_L3D_TOOLKIT / 'data_l3d_txt' / text_file)
 
-        txt_files_with_correct_version = set_version_on_txt_files(output_text_files, formatted_version)
+        txt_files_with_correct_version = rename_l3d_text_outputs(output_text_files, formatted_version)
 
-        with SwallowExceptionAndLog("The L3d text files have an unsupported filename format!"):
-            for txt_file in txt_files_with_correct_version:
-                shutil.copy(txt_file, generate_imap_file_path(txt_file.name).construct_path())
+        for txt_file in txt_files_with_correct_version:
+            data_dir_path = generate_imap_file_path(txt_file.name).construct_path()
+            print(f"copied to {data_dir_path=}")
+            shutil.copy(txt_file, generate_imap_file_path(txt_file.name).construct_path())
+            print(f"copied path exists: {data_dir_path.exists()}")
 
         file_name = f'imap_glows_l3d_solar-params-history_19470303-cr0{last_processed_cr}_v00.json'
 
@@ -369,27 +363,34 @@ def process_l3e(initializer_data: GlowsL3EInitializerOutput):
         with SwallowExceptionAndLog(f"Exception encountered when processing L3e for repointing {repointing}"):
             epoch, epoch_end = get_pointing_date_range(repointing)
             epoch_delta: timedelta = (epoch_end - epoch) / 2
-            spice_kernel_parent_files = get_spice_parent_file_names()
+
+            spice_kernel_file_names = find_l3e_spice_kernels_for_time_range(epoch, epoch_end)
+            # if len(spice_kernel_file_names) == 0:
+            #     continue
+
+            for spice_kernel in spice_kernel_file_names:
+                spice_kernel_downloaded_path = imap_data_access.download(spice_kernel)
+                spiceypy.furnsh(str(spice_kernel_downloaded_path))
 
             with SwallowExceptionAndLog(f"Exception encountered when processing L3e lo for repointing {repointing}"):
-                lo_parent_file_names = spice_kernel_parent_files + initializer_data.dependencies.get_lo_parents()
+                lo_parent_file_names = spice_kernel_file_names + initializer_data.dependencies.get_lo_parents()
                 lo_elongation = initializer_data.dependencies.elongation.get(f"{epoch.year}{repointing:03}")
                 if lo_elongation is not None:
                     lo_version = initializer_data.repointings.lo_repointings[repointing]
                     products_list.extend(process_l3e_lo(lo_parent_file_names, repointing, epoch, epoch_delta, lo_elongation, lo_version))
 
             with SwallowExceptionAndLog(f"Exception encountered when processing L3e hi-90 for repointing {repointing}"):
-                hi_parent_file_names = spice_kernel_parent_files + initializer_data.dependencies.get_hi_parents()
+                hi_parent_file_names = spice_kernel_file_names + initializer_data.dependencies.get_hi_parents()
                 hi_90_version = initializer_data.repointings.hi_90_repointings[repointing]
                 products_list.extend(process_l3e_hi(hi_parent_file_names, repointing, epoch, epoch_delta, 90, hi_90_version))
 
             with SwallowExceptionAndLog(f"Exception encountered when processing L3e hi-45 for repointing {repointing}"):
-                hi_parent_file_names = spice_kernel_parent_files + initializer_data.dependencies.get_hi_parents()
+                hi_parent_file_names = spice_kernel_file_names + initializer_data.dependencies.get_hi_parents()
                 hi_45_version = initializer_data.repointings.hi_45_repointings[repointing]
                 products_list.extend(process_l3e_hi(hi_parent_file_names, repointing, epoch, epoch_delta, 135, hi_45_version))
 
             with SwallowExceptionAndLog(f"Exception encountered when processing L3e ultra for repointing {repointing}"):
-                ul_parent_file_names = spice_kernel_parent_files + initializer_data.dependencies.get_ul_parents()
+                ul_parent_file_names = spice_kernel_file_names + initializer_data.dependencies.get_ul_parents()
                 ul_version = initializer_data.repointings.ultra_repointings[repointing]
                 products_list.extend(process_l3e_ul(ul_parent_file_names, repointing, epoch, epoch_delta, ul_version))
 

@@ -51,7 +51,7 @@ class GlowsL3EHiData(DataProduct):
             energies = np.array([float(i) for i in re.findall(r"\d+.\d+", energy_line[0])])
 
             code_version_line = [line for line in lines if line.startswith("# code version")]
-            code_version = np.array([code_version_line[0].split(',')[0][14:].strip()])
+            code_version = code_version_line[0].split(',')[0][14:].strip()
 
         spin_angle_and_survival_probabilities = np.loadtxt(file_path, skiprows=200)
         spin_angles = spin_angle_and_survival_probabilities[:, 0]
@@ -59,15 +59,20 @@ class GlowsL3EHiData(DataProduct):
 
         input_metadata.start_date = epoch[0]
 
-        return cls(input_metadata, epoch, energies, spin_angles,
-                   survival_probabilities, np.array([args.spin_axis_latitude]), np.array([args.spin_axis_longitude]),
-                   code_version,
-                   spacecraft_radius=args.spacecraft_radius,
-                   spacecraft_longitude=args.spacecraft_longitude,
-                   spacecraft_latitude=args.spacecraft_latitude,
-                   spacecraft_velocity_x=args.spacecraft_velocity_x,
-                   spacecraft_velocity_y=args.spacecraft_velocity_y,
-                   spacecraft_velocity_z=args.spacecraft_velocity_z,
+        return cls(input_metadata,
+                   epoch=epoch,
+                   energy=energies,
+                   spin_angle=spin_angles,
+                   probability_of_survival=survival_probabilities,
+                   spin_axis_lat=np.array([args.spin_axis_latitude]),
+                   spin_axis_lon=np.array([args.spin_axis_longitude]),
+                   program_version=np.array([code_version]),
+                   spacecraft_radius=np.array([args.spacecraft_radius]),
+                   spacecraft_longitude=np.array([args.spacecraft_longitude]),
+                   spacecraft_latitude=np.array([args.spacecraft_latitude]),
+                   spacecraft_velocity_x=np.array([args.spacecraft_velocity_x]),
+                   spacecraft_velocity_y=np.array([args.spacecraft_velocity_y]),
+                   spacecraft_velocity_z=np.array([args.spacecraft_velocity_z]),
                    )
 
     def to_data_product_variables(self) -> list[DataProductVariable]:

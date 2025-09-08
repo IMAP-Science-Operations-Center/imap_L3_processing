@@ -13,7 +13,6 @@ class TestGlowsL3EDependencies(unittest.TestCase):
     def test_fetch_dependencies(self, mock_download):
         mock_processing_input_collection = Mock()
 
-        mock_l3d = Path('imap_glows_l3d_solar-hist_20250501-cr02091_v001.cdf')
         mock_energy_grid_lo = Path('energy_grid_lo_path')
         mock_energy_grid_hi = Path('energy_grid_hi_sdc_path')
         mock_energy_grid_ultra = Path('energy_grid_ultra_sdc_path')
@@ -31,7 +30,6 @@ class TestGlowsL3EDependencies(unittest.TestCase):
         mock_repoint_file = Path('repoint.csv')
 
         mock_processing_input_collection.get_file_paths.side_effect = [
-            [mock_l3d],
             [mock_lya_series], [mock_solar_uv_anisotropy], [mock_speed_3d_sw], [mock_density_3d_sw],
             [mock_phion_hydrogen], [mock_sw_eqtr_electrons], [ionization_files], [mock_pipeline_settings],
             [mock_tess_xyz_8], [mock_energy_grid_lo], [mock_lo_elongation_file],
@@ -66,12 +64,11 @@ class TestGlowsL3EDependencies(unittest.TestCase):
             mock_downloaded_repoint_file,
         ]
 
-        actual_dependencies, cr_number = GlowsL3EDependencies.fetch_dependencies(mock_processing_input_collection)
+        actual_dependencies = GlowsL3EDependencies.fetch_dependencies(mock_processing_input_collection)
 
-        self.assertEqual(16, mock_processing_input_collection.get_file_paths.call_count)
+        self.assertEqual(15, mock_processing_input_collection.get_file_paths.call_count)
 
         mock_processing_input_collection.get_file_paths.assert_has_calls([
-            call(source="glows", descriptor="solar-hist"),
             call(source="glows", descriptor="lya"),
             call(source="glows", descriptor="uv-anis"),
             call(source="glows", descriptor="speed"),
@@ -144,7 +141,6 @@ class TestGlowsL3EDependencies(unittest.TestCase):
         self.assertEqual(105, first_dict_value)
         self.assertEqual(105, last_dict_value)
 
-        self.assertEqual(cr_number, 2091)
         self.assertEqual(mock_downloaded_repoint_file, actual_dependencies.repointing_file)
 
     def test_get_hi_parents(self):

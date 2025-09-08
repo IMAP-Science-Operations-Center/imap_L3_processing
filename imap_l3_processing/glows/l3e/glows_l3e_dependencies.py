@@ -29,7 +29,6 @@ class GlowsL3EDependencies:
 
     @classmethod
     def fetch_dependencies(cls, dependencies: ProcessingInputCollection):
-        solar_hist_dependency = dependencies.get_file_paths(source='glows', descriptor='solar-hist')
         lya_series_dependency = dependencies.get_file_paths(source='glows', descriptor='lya')
         solar_uv_anisotropy_dependency = dependencies.get_file_paths(source='glows', descriptor='uv-anis')
         speed_3d_dependency = dependencies.get_file_paths(source='glows', descriptor='speed')
@@ -73,8 +72,6 @@ class GlowsL3EDependencies:
         with open(pipeline_settings_path) as f:
             pipeline_settings = json.load(f)
 
-        cr_number = int(str(solar_hist_dependency).split('_')[-2][-5:])
-
         repoint_file_dependency = dependencies.get_file_paths(data_type=RepointInput.data_type)
         repoint_file_path = imap_data_access.download(repoint_file_dependency[0])
 
@@ -96,7 +93,7 @@ class GlowsL3EDependencies:
             elongation_data,
             elongation_path,
             repoint_file_path
-        ), cr_number
+        )
 
     def rename_dependencies(self):
         if self.energy_grid_lo is not None:

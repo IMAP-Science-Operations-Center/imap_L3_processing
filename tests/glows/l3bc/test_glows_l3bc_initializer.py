@@ -96,7 +96,7 @@ class TestGlowsL3BCInitializer(unittest.TestCase):
             2092: "imap_glows_l3c_sw-profile_20100201-cr02092_v001.cdf"
         }
 
-        l3bc_initializer_data = GlowsL3BCInitializer.get_crs_to_process(ProcessingInputCollection([RepointInput("imap_2026_269_05.repoint.csv")]))
+        l3bc_initializer_data = GlowsL3BCInitializer.get_crs_to_process(ProcessingInputCollection(RepointInput("imap_2026_269_05.repoint.csv")))
 
         mock_download.assert_called_once()
         mock_set_global_repoint_table_paths.assert_called_with([mock_download.return_value])
@@ -163,13 +163,15 @@ class TestGlowsL3BCInitializer(unittest.TestCase):
             l3bc_dependencies=[mock_l3bc_deps_from_cr.return_value],
             l3bs_by_cr=expected_l3bs_by_cr,
             l3cs_by_cr=expected_l3cs_by_cr,
+            repoint_file_path=mock_download.return_value,
         )
 
         self.assertEqual(expected_initializer_data, l3bc_initializer_data)
 
+    @patch('imap_l3_processing.glows.l3bc.glows_l3bc_initializer.imap_data_access.download')
     @patch("imap_l3_processing.glows.l3bc.glows_l3bc_initializer.GlowsL3BCInitializer.group_l3a_by_cr")
     @patch("imap_l3_processing.glows.l3bc.glows_l3bc_initializer.imap_data_access.query")
-    def test_get_crs_to_process_return_no_crs_when_missing_ancillaries(self, mock_query, mock_group_l3a_by_cr):
+    def test_get_crs_to_process_return_no_crs_when_missing_ancillaries(self, mock_query, mock_group_l3a_by_cr, mock_download):
 
         test_cases = [
             "uv-anisotropy-1CR",
@@ -193,7 +195,7 @@ class TestGlowsL3BCInitializer(unittest.TestCase):
 
                 mock_query.side_effect = query_that_returns_empty_list_for_missing_ancillary
 
-                actual_crs_to_process = GlowsL3BCInitializer.get_crs_to_process(ProcessingInputCollection([RepointInput("imap_2026_269_05.repoint.csv")]))
+                actual_crs_to_process = GlowsL3BCInitializer.get_crs_to_process(ProcessingInputCollection(RepointInput("imap_2026_269_05.repoint.csv")))
 
                 mock_query.assert_has_calls([
                     call(instrument="glows", data_level="l3a", descriptor="hist", version="latest"),
@@ -209,7 +211,8 @@ class TestGlowsL3BCInitializer(unittest.TestCase):
                     external_dependencies=self.mock_external_dependencies_fetch.return_value,
                     l3bc_dependencies=[],
                     l3bs_by_cr={},
-                    l3cs_by_cr={}
+                    l3cs_by_cr={},
+                    repoint_file_path=mock_download.return_value
                 )
 
                 self.assertEqual(expected_initializer_result, actual_crs_to_process)
@@ -217,11 +220,12 @@ class TestGlowsL3BCInitializer(unittest.TestCase):
     @patch("imap_l3_processing.glows.l3bc.glows_l3bc_initializer.GlowsL3BCInitializer.should_process_cr_candidate",
            return_value=True)
     @patch("imap_l3_processing.glows.l3bc.glows_l3bc_initializer.get_best_ancillary")
+    @patch('imap_l3_processing.glows.l3bc.glows_l3bc_initializer.imap_data_access.download')
     @patch("imap_l3_processing.glows.l3bc.glows_l3bc_initializer.imap_data_access.query")
     @patch("imap_l3_processing.glows.l3bc.glows_l3bc_initializer.ExternalDependencies.fetch_dependencies")
     @patch("imap_l3_processing.glows.l3bc.glows_l3bc_initializer.GlowsL3BCInitializer.group_l3a_by_cr")
     def test_get_crs_to_process_returns_no_crs_when_missing_external_deps(self, mock_group_l3a_by_cr,
-                                                                          mock_fetch_ext_dependencies, mock_query, ___,
+                                                                          mock_fetch_ext_dependencies, mock_query, mock_download, ___,
                                                                           ____):
         test_cases = [
             ExternalDependencies(None, Path("some_lyman"), Path("some_omni")),
@@ -246,7 +250,7 @@ class TestGlowsL3BCInitializer(unittest.TestCase):
                     create_glows_mock_query_results(["imap_glows_pipeline-settings-l3bcde_20100101_v001.json"])
                 ]
 
-                actual_crs_to_process = GlowsL3BCInitializer.get_crs_to_process(ProcessingInputCollection([RepointInput("imap_2026_269_05.repoint.csv")]))
+                actual_crs_to_process = GlowsL3BCInitializer.get_crs_to_process(ProcessingInputCollection(RepointInput("imap_2026_269_05.repoint.csv")))
 
                 mock_query.assert_has_calls([
                     call(instrument="glows", data_level="l3a", descriptor="hist", version="latest"),
@@ -263,6 +267,7 @@ class TestGlowsL3BCInitializer(unittest.TestCase):
                     l3bc_dependencies=[],
                     l3bs_by_cr={1: "imap_glows_l3b_ion-rate-profile_20100101-cr00001_v001.cdf"},
                     l3cs_by_cr={1: "imap_glows_l3c_sw-profile_20100101-cr00001_v001.cdf"},
+                    repoint_file_path=mock_download.return_value
                 )
 
                 self.assertEqual(expected_initializer_result, actual_crs_to_process)

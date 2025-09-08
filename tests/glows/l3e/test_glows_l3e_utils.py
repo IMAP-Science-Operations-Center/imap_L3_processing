@@ -6,7 +6,7 @@ import numpy as np
 
 from imap_l3_processing.glows.l3e.glows_l3e_call_arguments import GlowsL3eCallArguments
 from imap_l3_processing.glows.l3e.glows_l3e_utils import determine_call_args_for_l3e_executable, \
-    determine_l3e_files_to_produce, find_first_updated_cr
+    determine_l3e_files_to_produce, find_first_updated_cr, find_l3e_spice_kernels_for_time_range
 from tests.test_helpers import get_test_data_path, create_glows_mock_query_results
 
 
@@ -181,3 +181,96 @@ class TestGlowsL3EUtils(unittest.TestCase):
                 else:
                     new_l3d[case][i] = i + 1
                     self.assertEqual(i, find_first_updated_cr(new_l3d, old_l3d))
+
+    @patch('imap_l3_processing.glows.l3e.glows_l3e_utils.requests')
+    def test_find_l3e_spice_kernels_for_time_range(self, mock_requests):
+        desired_spice_start = datetime(2025, 1, 1)
+        desired_spice_end = datetime(2025, 3, 1)
+
+        mock_naif_json = [
+            {
+                "file_name": "lsk/naif0012.tls",
+                "min_date_datetime": "2024-12-01, 00:00:00",
+                "max_date_datetime": "2025-05-01, 00:00:00"
+            },
+        ]
+
+        mock_sclk_json = [
+            {
+                "file_name": "lsk/imap_sclk_0000.tsc",
+                "min_date_datetime": "2024-12-01, 00:00:00",
+                "max_date_datetime": "2025-05-01, 00:00:00"
+            },
+        ]
+
+        mock_dps_json = [
+            {
+                "file_name": "ck/imap_dps_2024_270_2026_335_01.ah.bc",
+                "min_date_datetime": "2024-09-01, 00:00:00",
+                "max_date_datetime": "2024-12-01, 00:00:00",
+            },
+            {
+                "file_name": "ck/imap_dps_2024_335_2025_031_01.ah.bc",
+                "min_date_datetime": "2024-12-01, 00:00:00",
+                "max_date_datetime": "2025-02-01, 00:00:00",
+            },
+            {
+                "file_name": "ck/imap_dps_2025_031_2025_120_01.ah.bc",
+                "min_date_datetime": "2025-02-01, 00:00:00",
+                "max_date_datetime": "2025-05-01, 00:00:00",
+            },
+        ]
+
+        mock_imap_frame_json = [
+            {
+                "file_name": "fk/imap_001.tf",
+                "min_date_datetime": "2024-12-01, 00:00:00",
+                "max_date_datetime": "2025-05-01, 00:00:00"
+            },
+        ]
+
+        mock_science_frame_json = [
+            {
+                "file_name": "fk/imap_science_0001.tf",
+                "min_date_datetime": "2024-12-01, 00:00:00",
+                "max_date_datetime": "2025-05-01, 00:00:00"
+            }
+        ]
+
+        mock_naif_response = Mock(json=Mock(return_value=mock_naif_json))
+        mock_sclk_response = Mock(json=Mock(return_value=mock_sclk_json))
+        mock_dps_response = Mock(json=Mock(return_value=mock_dps_json))
+        mock_imap_frame_response = Mock(json=Mock(return_value=mock_imap_frame_json))
+        mock_science_frame_response = Mock(json=Mock(return_value=mock_science_frame_json))
+
+        mock_requests.get.side_effect = [
+            mock_naif_response,
+            mock_sclk_response,
+            mock_dps_response,
+            mock_imap_frame_response,
+            mock_science_frame_response
+        ]
+
+        desired_kernels = [
+            "leapseconds",
+            "spacecraft_clock",
+            "pointing_attitude",
+            "imap_frames",
+            "science_frames",
+        ]
+
+        spice_kernels = find_l3e_spice_kernels_for_time_range(desired_spice_start, desired_spice_end, required_kernel_types=desired_kernels)
+
+        mock_requests.get.assert_has_calls([
+            call("https://api.dev.imap-mission.com/spice-query?type=leapseconds&start_time=0"),
+            call("https://api.dev.imap-mission.com/spice-query?type=spacecraft_clock&start_time=0"),
+            call("https://api.dev.imap-mission.com/spice-query?type=pointing_attitude&start_time=0"),
+            call("https://api.dev.imap-mission.com/spice-query?type=imap_frames&start_time=0"),
+            call("https://api.dev.imap-mission.com/spice-query?type=science_frames&start_time=0")
+        ])
+        self.assertEqual(["naif0012.tls",
+                          "imap_sclk_0000.tsc",
+                          "imap_dps_2024_335_2025_031_01.ah.bc",
+                          "imap_dps_2025_031_2025_120_01.ah.bc",
+                          "imap_001.tf",
+                          "imap_science_0001.tf"], spice_kernels)
