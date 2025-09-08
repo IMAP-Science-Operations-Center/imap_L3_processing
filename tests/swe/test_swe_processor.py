@@ -699,10 +699,10 @@ class TestSweProcessor(unittest.TestCase):
         core_rtn_theta_2, core_rtn_phi_2 = (63, 191)
         halo_rtn_theta_2, halo_rtn_phi_2 = (55, 223)
         mock_rotate_temperature.side_effect = [
-            (core_rtn_theta_1, core_rtn_phi_1),
-            (halo_rtn_theta_1, halo_rtn_phi_1),
-            (core_rtn_theta_2, core_rtn_phi_2),
-            (halo_rtn_theta_2, halo_rtn_phi_2),
+            np.deg2rad([62, 190]),
+            np.deg2rad([54, 222]),
+            np.deg2rad([63, 191]),
+            np.deg2rad([55, 223]),
         ]
 
         core_fit_velocity_1 = [0, 0, 1]
@@ -752,12 +752,12 @@ class TestSweProcessor(unittest.TestCase):
         mock_scale_halo_density.side_effect = [scale_halo_density_output]
 
         mock_rotate_vector_to_rtn_spherical_coordinates.side_effect = [
-            (10, 11, 12),
-            (16, 17, 18),
-            (101, 102, 103),
-            (104, 105, 106),
-            (13, 14, 15),
-            (19, 20, 21)]
+            (10, np.deg2rad(11), np.deg2rad(12)),
+            (16, np.deg2rad(17), np.deg2rad(18)),
+            (101, np.deg2rad(102), np.deg2rad(103)),
+            (104, np.deg2rad(105), np.deg2rad(106)),
+            (13, np.deg2rad(14), np.deg2rad(15)),
+            (19, np.deg2rad(20), np.deg2rad(21))]
 
         core_primary_evec = Mock()
         total_primary_evec = Mock()
@@ -1086,15 +1086,15 @@ class TestSweProcessor(unittest.TestCase):
                                       [total_integrated_velocity_rtn, [np.nan, np.nan, np.nan],
                                        [np.nan, np.nan, np.nan]])
 
-        np.testing.assert_array_equal(swe_moment_data.core_heat_flux_magnitude_integrated, [10, np.nan, np.nan])
-        np.testing.assert_array_equal(swe_moment_data.core_heat_flux_theta_integrated, [11, np.nan, np.nan])
-        np.testing.assert_array_equal(swe_moment_data.core_heat_flux_phi_integrated, [12, np.nan, np.nan])
-        np.testing.assert_array_equal(swe_moment_data.halo_heat_flux_magnitude_integrated, [13, np.nan, np.nan])
-        np.testing.assert_array_equal(swe_moment_data.halo_heat_flux_theta_integrated, [14, np.nan, np.nan])
-        np.testing.assert_array_equal(swe_moment_data.halo_heat_flux_phi_integrated, [15, np.nan, np.nan])
-        np.testing.assert_array_equal(swe_moment_data.total_heat_flux_magnitude_integrated, [101, np.nan, np.nan])
-        np.testing.assert_array_equal(swe_moment_data.total_heat_flux_theta_integrated, [102, np.nan, np.nan])
-        np.testing.assert_array_equal(swe_moment_data.total_heat_flux_phi_integrated, [103, np.nan, np.nan])
+        np.testing.assert_allclose(swe_moment_data.core_heat_flux_magnitude_integrated, [10, np.nan, np.nan])
+        np.testing.assert_allclose(swe_moment_data.core_heat_flux_theta_integrated, [11, np.nan, np.nan])
+        np.testing.assert_allclose(swe_moment_data.core_heat_flux_phi_integrated, [12, np.nan, np.nan])
+        np.testing.assert_allclose(swe_moment_data.halo_heat_flux_magnitude_integrated, [13, np.nan, np.nan])
+        np.testing.assert_allclose(swe_moment_data.halo_heat_flux_theta_integrated, [14, np.nan, np.nan])
+        np.testing.assert_allclose(swe_moment_data.halo_heat_flux_phi_integrated, [15, np.nan, np.nan])
+        np.testing.assert_allclose(swe_moment_data.total_heat_flux_magnitude_integrated, [101, np.nan, np.nan])
+        np.testing.assert_allclose(swe_moment_data.total_heat_flux_theta_integrated, [102, np.nan, np.nan])
+        np.testing.assert_allclose(swe_moment_data.total_heat_flux_phi_integrated, [103, np.nan, np.nan])
 
         np.testing.assert_array_equal(swe_moment_data.core_t_parallel_integrated, [t_par_1, np.nan, np.nan])
         np.testing.assert_array_equal(swe_moment_data.core_t_perpendicular_integrated,
@@ -1107,14 +1107,14 @@ class TestSweProcessor(unittest.TestCase):
         np.testing.assert_array_equal(swe_moment_data.total_t_parallel_integrated, [t_par_3, np.nan, np.nan])
         np.testing.assert_array_equal(swe_moment_data.total_t_perpendicular_integrated,
                                       [[t_perp_3, gyro_3], [np.nan, np.nan], [np.nan, np.nan]])
-        np.testing.assert_array_equal(swe_moment_data.core_temperature_theta_rtn_integrated, [17, np.nan, np.nan])
-        np.testing.assert_array_equal(swe_moment_data.core_temperature_phi_rtn_integrated, [18, np.nan, np.nan])
+        np.testing.assert_allclose(swe_moment_data.core_temperature_theta_rtn_integrated, [17, np.nan, np.nan])
+        np.testing.assert_allclose(swe_moment_data.core_temperature_phi_rtn_integrated, [18, np.nan, np.nan])
 
-        np.testing.assert_array_equal(swe_moment_data.halo_temperature_theta_rtn_integrated, [20, np.nan, np.nan])
-        np.testing.assert_array_equal(swe_moment_data.halo_temperature_phi_rtn_integrated, [21, np.nan, np.nan])
+        np.testing.assert_allclose(swe_moment_data.halo_temperature_theta_rtn_integrated, [20, np.nan, np.nan])
+        np.testing.assert_allclose(swe_moment_data.halo_temperature_phi_rtn_integrated, [21, np.nan, np.nan])
 
-        np.testing.assert_array_equal(swe_moment_data.total_temperature_theta_rtn_integrated, [105, np.nan, np.nan])
-        np.testing.assert_array_equal(swe_moment_data.total_temperature_phi_rtn_integrated, [106, np.nan, np.nan])
+        np.testing.assert_allclose(swe_moment_data.total_temperature_theta_rtn_integrated, [105, np.nan, np.nan])
+        np.testing.assert_allclose(swe_moment_data.total_temperature_phi_rtn_integrated, [106, np.nan, np.nan])
 
         np.testing.assert_array_equal(swe_moment_data.core_temperature_parallel_to_mag, [11.4, np.nan, np.nan])
         np.testing.assert_array_equal(swe_moment_data.core_temperature_perpendicular_to_mag,

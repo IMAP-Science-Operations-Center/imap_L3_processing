@@ -279,14 +279,14 @@ phase_space_density_by_pitch_angle_and_gyrophase:
   LABLAXIS: e- PSD
   UNITS: s^3 cm^-6
   VALIDMIN: 0
-  VALIDMAX: 10000000000
+  VALIDMAX: 1.00e-20
   FILLVAL: -1.00E+31
   LABL_PTR_1: energy_label
   LABL_PTR_2: pitch_angle_label
   LABL_PTR_3: gyrophase_label
   SCALETYP: log
-  SCALEMIN: 1e-33
-  SCALEMAX: 1e-24
+  SCALEMIN: 1.00e-33
+  SCALEMAX: 1.00e-24
   SI_CONVERSION: 1e12>s^3 m^-6
 phase_space_density_by_pitch_angle:
   NAME: phase_space_density_by_pitch_angle
@@ -304,13 +304,13 @@ phase_space_density_by_pitch_angle:
   LABLAXIS: e- PSD
   UNITS: s^3 cm^-6
   VALIDMIN: 0
-  VALIDMAX: 10000000000
+  VALIDMAX: 1.00e-20
   FILLVAL: -1.00E+31
   LABL_PTR_1: energy_label
   LABL_PTR_2: pitch_angle_label
   SCALETYP: log
-  SCALEMIN: 1e-33
-  SCALEMAX: 1e-24
+  SCALEMIN: 1.00e-33
+  SCALEMAX: 1.00e-24
   SI_CONVERSION: 1e12>s^3 m^-6
 intensity:
   NAME: intensity
@@ -328,8 +328,8 @@ intensity:
   UNITS: cm^-2 sr^-1 s^-1 eV^-1
   VALIDMIN: 0
   VALIDMAX: 10000000000
-  SCALEMIN: 1e-33
-  SCALEMAX: 1e-24
+  SCALEMIN: 1.00e-33
+  SCALEMAX: 1.00e-24
   FILLVAL: -1.00E+31
   LABL_PTR_1: energy_label
   SCALETYP: log
@@ -350,8 +350,8 @@ intensity_inward:
   UNITS: cm^-2 sr^-1 s^-1 eV^-1
   VALIDMIN: 0
   VALIDMAX: 10000000000
-  SCALEMIN: 1e-33
-  SCALEMAX: 1e-24
+  SCALEMIN: 1.00e-33
+  SCALEMAX: 1.00e-24
   FILLVAL: -1.00E+31
   LABL_PTR_1: energy_label
   SCALETYP: log
@@ -372,8 +372,8 @@ intensity_outward:
   UNITS: cm^-2 sr^-1 s^-1 eV^-1
   VALIDMIN: 0
   VALIDMAX: 10000000000
-  SCALEMIN: 1e-33
-  SCALEMAX: 1e-24
+  SCALEMIN: 1.00e-33
+  SCALEMAX: 1.00e-24
   FILLVAL: -1.00E+31
   LABL_PTR_1: energy_label
   SCALETYP: log
@@ -505,7 +505,7 @@ core_density_fit:
   LABLAXIS: Core density fit
   UNITS: '#/cm^3'
   VALIDMIN: 0
-  VALIDMAX: 10000000000
+  VALIDMAX: 500
   SCALEMIN: 0
   SCALEMAX: 20
   FILLVAL: -1.00E+31
@@ -524,7 +524,7 @@ halo_density_fit:
   LABLAXIS: Halo density fit
   UNITS: '#/cm^3'
   VALIDMIN: 0
-  VALIDMAX: 10000000000
+  VALIDMAX: 100
   SCALEMIN: 0
   SCALEMAX: 1
   FILLVAL: -1.00E+31
@@ -541,9 +541,9 @@ core_t_parallel_fit:
   FIELDNAM: Core T Parallel Fit
   FORMAT: F15.3
   LABLAXIS: Core t parallel fit
-  UNITS: ' '
+  UNITS: K
   VALIDMIN: 0
-  VALIDMAX: 10000000000
+  VALIDMAX: 1.0e+7
   FILLVAL: -1.00E+31
   VAR_NOTES: Analytically calculated from Bi-Maxellian fit
 halo_t_parallel_fit:
@@ -558,9 +558,9 @@ halo_t_parallel_fit:
   FIELDNAM: Halo T Parallel Fit
   FORMAT: F15.3
   LABLAXIS: Halo t parallel fit
-  UNITS: ' '
+  UNITS: K
   VALIDMIN: 0
-  VALIDMAX: 10000000000
+  VALIDMAX: 1.0e+7
   FILLVAL: -1.00E+31
   VAR_NOTES: Analytically calculated from Bi-Maxellian fit
 core_t_perpendicular_fit:
@@ -575,9 +575,9 @@ core_t_perpendicular_fit:
   FIELDNAM: Core T Perpendicular Fit
   FORMAT: F15.3
   LABLAXIS: Core t perpendicular fit
-  UNITS: ' '
+  UNITS: K
   VALIDMIN: 0
-  VALIDMAX: 10000000000
+  VALIDMAX: 1.0e+7
   FILLVAL: -1.00E+31
   VAR_NOTES: Analytically calculated from Bi-Maxellian fit
 halo_t_perpendicular_fit:
@@ -592,9 +592,9 @@ halo_t_perpendicular_fit:
   FIELDNAM: Halo T Perpendicular Fit
   FORMAT: F15.3
   LABLAXIS: Halo t perpendicular fit
-  UNITS: ' '
+  UNITS: K
   VALIDMIN: 0
-  VALIDMAX: 10000000000
+  VALIDMAX: 1.0e+7
   FILLVAL: -1.00E+31
   VAR_NOTES: Analytically calculated from Bi-Maxellian fit
 core_temperature_phi_rtn_fit:
@@ -609,9 +609,9 @@ core_temperature_phi_rtn_fit:
   FIELDNAM: Core Temperature Phi RTN Fit
   FORMAT: F15.3
   LABLAXIS: Core T phi
-  UNITS: K
-  VALIDMIN: 0
-  VALIDMAX: 10000000000
+  UNITS: degrees
+  VALIDMIN: -180
+  VALIDMAX: 180
   FILLVAL: -1.00E+31
   VAR_NOTES: Analytically calculated from Bi-Maxellian fit
 halo_temperature_phi_rtn_fit:
@@ -626,9 +626,9 @@ halo_temperature_phi_rtn_fit:
   FIELDNAM: Halo Temperature Phi RTN Fit
   FORMAT: F15.3
   LABLAXIS: Halo T phi
-  UNITS: K
-  VALIDMIN: 0
-  VALIDMAX: 10000000000
+  UNITS: degrees
+  VALIDMIN: -180
+  VALIDMAX: 180
   FILLVAL: -1.00E+31
   VAR_NOTES: Analytically calculated from Bi-Maxellian fit
 core_temperature_theta_rtn_fit:
@@ -643,9 +643,9 @@ core_temperature_theta_rtn_fit:
   FIELDNAM: Core Temperature Theta RTN Fit
   FORMAT: F15.3
   LABLAXIS: Core T theta
-  UNITS: K
-  VALIDMIN: 0
-  VALIDMAX: 10000000000
+  UNITS: degrees
+  VALIDMIN: -90
+  VALIDMAX: 90
   FILLVAL: -1.00E+31
   VAR_NOTES: Analytically calculated from Bi-Maxellian fit
 halo_temperature_theta_rtn_fit:
@@ -660,9 +660,9 @@ halo_temperature_theta_rtn_fit:
   FIELDNAM: Halo Temperature Theta RTN Fit
   FORMAT: F15.3
   LABLAXIS: Halo T theta
-  UNITS: K
-  VALIDMIN: 0
-  VALIDMAX: 10000000000
+  UNITS: degrees
+  VALIDMIN: -90
+  VALIDMAX: 90
   FILLVAL: -1.00E+31
   VAR_NOTES: Analytically calculated from Bi-Maxellian fit
 core_speed_fit:
@@ -679,7 +679,7 @@ core_speed_fit:
   LABLAXIS: Core speed fit
   UNITS: km/s
   VALIDMIN: 0
-  VALIDMAX: 10000000000
+  VALIDMAX: 5000
   SCALEMIN: 0
   SCALEMAX: 1000
   FILLVAL: -1.00E+31
@@ -696,9 +696,9 @@ halo_speed_fit:
   FIELDNAM: Halo Speed Fit
   FORMAT: F15.3
   LABLAXIS: Halo speed fit
-  UNITS: ' '
+  UNITS: km/s
   VALIDMIN: 0
-  VALIDMAX: 10000000000
+  VALIDMAX: 50000
   FILLVAL: -1.00E+31
   VAR_NOTES: Analytically calculated from Bi-Maxellian fit
 core_velocity_vector_rtn_fit:
@@ -712,9 +712,9 @@ core_velocity_vector_rtn_fit:
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
   FIELDNAM: Core Velocity Vector RTN Fit
   FORMAT: F15.3
-  UNITS: ' '
-  VALIDMIN: 0
-  VALIDMAX: 10000000000
+  UNITS: km/s
+  VALIDMIN: -5000
+  VALIDMAX: 5000
   FILLVAL: -1.00E+31
   LABL_PTR_1: rtn_label
   VAR_NOTES: Analytically calculated from Bi-Maxellian fit
@@ -730,9 +730,9 @@ halo_velocity_vector_rtn_fit:
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
   FIELDNAM: Halo Velocity Vector RTN Fit
   FORMAT: F15.3
-  UNITS: ' '
-  VALIDMIN: 0
-  VALIDMAX: 10000000000
+  UNITS: km/s
+  VALIDMIN: -50000
+  VALIDMAX: 50000
   FILLVAL: -1.00E+31
   LABL_PTR_1: rtn_label
   VAR_NOTES: Analytically calculated from Bi-Maxellian fit
@@ -751,7 +751,7 @@ core_density_integrated:
   LABLAXIS: Core density integrated
   UNITS: '#/cm^3'
   VALIDMIN: 0
-  VALIDMAX: 10000000000
+  VALIDMAX: 500
   SCALEMIN: 0
   SCALEMAX: 20
   FILLVAL: -1.00E+31
@@ -770,7 +770,7 @@ halo_density_integrated:
   LABLAXIS: Halo density integrated
   UNITS: '#/cm^3'
   VALIDMIN: 0
-  VALIDMAX: 10000000000
+  VALIDMAX: 100
   SCALEMIN: 0
   SCALEMAX: 1
   FILLVAL: -1.00E+31
@@ -805,9 +805,9 @@ core_velocity_vector_rtn_integrated:
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
   FIELDNAM: Core Velocity Vector RTN Integrated
   FORMAT: F15.3
-  UNITS: ' '
-  VALIDMIN: 0
-  VALIDMAX: 10000000000
+  UNITS: km/s
+  VALIDMIN: -5000
+  VALIDMAX: 5000
   FILLVAL: -1.00E+31
   LABL_PTR_1: rtn_label
   VAR_NOTES: Calculated by integration over the measured phase space distribution
@@ -823,9 +823,9 @@ halo_velocity_vector_rtn_integrated:
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
   FIELDNAM: Halo Velocity Vector RTN Integrated
   FORMAT: F15.3
-  UNITS: ' '
-  VALIDMIN: 0
-  VALIDMAX: 10000000000
+  UNITS: km/s
+  VALIDMIN: -50000
+  VALIDMAX: 50000
   FILLVAL: -1.00E+31
   LABL_PTR_1: rtn_label
   VAR_NOTES: Calculated by integration over the measured phase space distribution
@@ -841,9 +841,9 @@ total_velocity_vector_rtn_integrated:
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
   FIELDNAM: Total Velocity Vector RTN Integrated
   FORMAT: F15.3
-  UNITS: ' '
-  VALIDMIN: 0
-  VALIDMAX: 10000000000
+  UNITS: km/s
+  VALIDMIN: -5000
+  VALIDMAX: 5000
   FILLVAL: -1.00E+31
   LABL_PTR_1: rtn_label
   VAR_NOTES: Calculated by integration over the measured phase space distribution
@@ -862,9 +862,9 @@ core_speed_integrated:
   LABLAXIS: Core speed integrated
   UNITS: km/s
   VALIDMIN: 0
-  VALIDMAX: 10000000000
+  VALIDMAX: 5000
   SCALEMIN: 0
-  SCALEMAX: 1000
+  SCALEMAX: 5000
   FILLVAL: -1.00E+31
   VAR_NOTES: Calculated by integration over the measured phase space distribution
 halo_speed_integrated:
@@ -879,9 +879,9 @@ halo_speed_integrated:
   FIELDNAM: Halo Speed Integrated
   FORMAT: F15.3
   LABLAXIS: Halo speed integrated
-  UNITS: ' '
+  UNITS: km/s
   VALIDMIN: 0
-  VALIDMAX: 10000000000
+  VALIDMAX: 50000
   FILLVAL: -1.00E+31
   VAR_NOTES: Calculated by integration over the measured phase space distribution
 total_speed_integrated:
@@ -898,7 +898,7 @@ total_speed_integrated:
   LABLAXIS: Total speed integrated
   UNITS: ' '
   VALIDMIN: 0
-  VALIDMAX: 10000000000
+  VALIDMAX: 5000
   FILLVAL: -1.00E+31
   VAR_NOTES: Calculated by integration over the measured phase space distribution
 core_t_parallel_integrated:
@@ -966,7 +966,7 @@ core_t_perpendicular_integrated:
   LABLAXIS: Core t perpendicular integrated
   UNITS: K
   VALIDMIN: 0
-  VALIDMAX: 10000000000
+  VALIDMAX: 1.0e+7
   FILLVAL: -1.00E+31
   VAR_NOTES: Calculated by integration over the measured phase space distribution
 halo_t_perpendicular_integrated:
@@ -983,7 +983,7 @@ halo_t_perpendicular_integrated:
   LABLAXIS: Halo t perpendicular integrated
   UNITS: K
   VALIDMIN: 0
-  VALIDMAX: 10000000000
+  VALIDMAX: 1.0e+7
   FILLVAL: -1.00E+31
   VAR_NOTES: Calculated by integration over the measured phase space distribution
 total_t_perpendicular_integrated:
@@ -1000,7 +1000,7 @@ total_t_perpendicular_integrated:
   LABLAXIS: Total t perpendicular integrated
   UNITS: K
   VALIDMIN: 0
-  VALIDMAX: 10000000000
+  VALIDMAX: 1.0e+7
   FILLVAL: -1.00E+31
   VAR_NOTES: Calculated by integration over the measured phase space distribution
 core_t_ratio_perpendicular_integrated:
@@ -1017,7 +1017,7 @@ core_t_ratio_perpendicular_integrated:
   LABLAXIS: Core t ratio
   UNITS: ' '
   VALIDMIN: 0
-  VALIDMAX: 10000000000
+  VALIDMAX: 10
   FILLVAL: -1.00E+31
   VAR_NOTES: Calculated by integration over the measured phase space distribution
 halo_t_ratio_perpendicular_integrated:
@@ -1034,7 +1034,7 @@ halo_t_ratio_perpendicular_integrated:
   LABLAXIS: Halo t ratio
   UNITS: ' '
   VALIDMIN: 0
-  VALIDMAX: 10000000000
+  VALIDMAX: 10
   FILLVAL: -1.00E+31
   VAR_NOTES: Calculated by integration over the measured phase space distribution
 total_t_ratio_perpendicular_integrated:
@@ -1051,7 +1051,7 @@ total_t_ratio_perpendicular_integrated:
   LABLAXIS: Total t ratio
   UNITS: ' '
   VALIDMIN: 0
-  VALIDMAX: 10000000000
+  VALIDMAX: 10
   FILLVAL: -1.00E+31
   VAR_NOTES: Calculated by integration over the measured phase space distribution
 core_temperature_phi_rtn_integrated:
@@ -1068,7 +1068,7 @@ core_temperature_phi_rtn_integrated:
   LABLAXIS: Core_t phi RTN integrated
   UNITS: K
   VALIDMIN: 0
-  VALIDMAX: 10000000000
+  VALIDMAX: 1.0e+7
   FILLVAL: -1.00E+31
   VAR_NOTES: Calculated by integration over the measured phase space distribution
 halo_temperature_phi_rtn_integrated:
@@ -1083,9 +1083,9 @@ halo_temperature_phi_rtn_integrated:
   FIELDNAM: Halo Temperature Phi Rtn Integrated
   FORMAT: F15.3
   LABLAXIS: Halo t phi rtn integrated
-  UNITS: K
-  VALIDMIN: 0
-  VALIDMAX: 10000000000
+  UNITS: degrees
+  VALIDMIN: -180
+  VALIDMAX: 180
   FILLVAL: -1.00E+31
   VAR_NOTES: Calculated by integration over the measured phase space distribution
 total_temperature_phi_rtn_integrated:
@@ -1100,9 +1100,9 @@ total_temperature_phi_rtn_integrated:
   FIELDNAM: Total Temperature Phi RTN Integrated
   FORMAT: F15.3
   LABLAXIS: Total t phi rtn integrated
-  UNITS: K
-  VALIDMIN: 0
-  VALIDMAX: 10000000000
+  UNITS: degrees
+  VALIDMIN: -180
+  VALIDMAX: 180
   FILLVAL: -1.00E+31
   VAR_NOTES: Calculated by integration over the measured phase space distribution
 core_temperature_theta_rtn_integrated:
@@ -1114,12 +1114,12 @@ core_temperature_theta_rtn_integrated:
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Core Temperature Theta RT]N Integrated
+  FIELDNAM: Core Temperature Theta RTN Integrated
   FORMAT: F15.3
   LABLAXIS: Core t theta rtn integrated
-  UNITS: K
-  VALIDMIN: 0
-  VALIDMAX: 10000000000
+  UNITS: degrees
+  VALIDMIN: -90
+  VALIDMAX: 90
   FILLVAL: -1.00E+31
   VAR_NOTES: Calculated by integration over the measured phase space distribution
 halo_temperature_theta_rtn_integrated:
@@ -1134,9 +1134,9 @@ halo_temperature_theta_rtn_integrated:
   FIELDNAM: Halo Temperature Theta RTN Integrated
   FORMAT: F15.3
   LABLAXIS: Halo t theta rtn integrated
-  UNITS: K
-  VALIDMIN: 0
-  VALIDMAX: 10000000000
+  UNITS: degrees
+  VALIDMIN: -90
+  VALIDMAX: 90
   FILLVAL: -1.00E+31
   VAR_NOTES: Calculated by integration over the measured phase space distribution
 total_temperature_theta_rtn_integrated:
@@ -1151,9 +1151,9 @@ total_temperature_theta_rtn_integrated:
   FIELDNAM: Total Temperature Theta RTN Integrated
   FORMAT: F15.3
   LABLAXIS: Total t theta rtn integrated
-  UNITS: K
-  VALIDMIN: 0
-  VALIDMAX: 10000000000
+  UNITS: degrees
+  VALIDMIN: -90
+  VALIDMAX: 90
   FILLVAL: -1.00E+31
   VAR_NOTES: Calculated by integration over the measured phase space distribution
 core_temperature_tensor_integrated:
@@ -1225,9 +1225,9 @@ core_heat_flux_magnitude_integrated:
   FIELDNAM: Core Heat Flux Magnitude Integrated
   FORMAT: F15.3
   LABLAXIS: Core heat flux magnitude integrated
-  UNITS: ' '
+  UNITS: µW / m^2
   VALIDMIN: 0
-  VALIDMAX: 10000000000
+  VALIDMAX: 100
   FILLVAL: -1.00E+31
   VAR_NOTES: Calculated by integration over the measured phase space distribution
 core_heat_flux_theta_integrated:
@@ -1242,9 +1242,9 @@ core_heat_flux_theta_integrated:
   FIELDNAM: Core Heat Flux Theta Integrated
   FORMAT: F15.3
   LABLAXIS: Core heat flux theta integrated
-  UNITS: ' '
-  VALIDMIN: 0
-  VALIDMAX: 10000000000
+  UNITS: degrees
+  VALIDMIN: -90
+  VALIDMAX: 90
   FILLVAL: -1.00E+31
   VAR_NOTES: Calculated by integration over the measured phase space distribution
 core_heat_flux_phi_integrated:
@@ -1259,9 +1259,9 @@ core_heat_flux_phi_integrated:
   FIELDNAM: Core Heat Flux Phi Integrated
   FORMAT: F15.3
   LABLAXIS: Core heat flux phi integrated
-  UNITS: ' '
-  VALIDMIN: 0
-  VALIDMAX: 10000000000
+  UNITS: degrees
+  VALIDMIN: -180
+  VALIDMAX: 180
   FILLVAL: -1.00E+31
   VAR_NOTES: Calculated by integration over the measured phase space distribution
 halo_heat_flux_magnitude_integrated:
@@ -1276,9 +1276,9 @@ halo_heat_flux_magnitude_integrated:
   FIELDNAM: Halo Heat Flux Magnitude Integrated
   FORMAT: F15.3
   LABLAXIS: Halo heat flux magnitude integrated
-  UNITS: ' '
+  UNITS: µW / m^2
   VALIDMIN: 0
-  VALIDMAX: 10000000000
+  VALIDMAX: 100
   FILLVAL: -1.00E+31
   VAR_NOTES: Calculated by integration over the measured phase space distribution
 halo_heat_flux_theta_integrated:
@@ -1293,9 +1293,9 @@ halo_heat_flux_theta_integrated:
   FIELDNAM: Halo Heat Flux Theta Integrated
   FORMAT: F15.3
   LABLAXIS: Halo heat flux theta integrated
-  UNITS: ' '
-  VALIDMIN: 0
-  VALIDMAX: 10000000000
+  UNITS: degrees
+  VALIDMIN: -90
+  VALIDMAX: 90
   FILLVAL: -1.00E+31
   VAR_NOTES: Calculated by integration over the measured phase space distribution
 halo_heat_flux_phi_integrated:
@@ -1310,9 +1310,9 @@ halo_heat_flux_phi_integrated:
   FIELDNAM: Halo Heat Flux Phi Integrated
   FORMAT: F15.3
   LABLAXIS: Halo heat flux phi integrated
-  UNITS: ' '
-  VALIDMIN: 0
-  VALIDMAX: 10000000000
+  UNITS: degrees
+  VALIDMIN: -180
+  VALIDMAX: 180
   FILLVAL: -1.00E+31
   VAR_NOTES: Calculated by integration over the measured phase space distribution
 total_heat_flux_magnitude_integrated:
@@ -1327,9 +1327,9 @@ total_heat_flux_magnitude_integrated:
   FIELDNAM: Total Heat Flux Magnitude Integrated
   FORMAT: F15.3
   LABLAXIS: Total heat flux magnitude integrated
-  UNITS: ' '
+  UNITS: µW / m^2
   VALIDMIN: 0
-  VALIDMAX: 10000000000
+  VALIDMAX: 100
   FILLVAL: -1.00E+31
   VAR_NOTES: Calculated by integration over the measured phase space distribution
 total_heat_flux_theta_integrated:
@@ -1344,9 +1344,9 @@ total_heat_flux_theta_integrated:
   FIELDNAM: Total Heat Flux Theta Integrated
   FORMAT: F15.3
   LABLAXIS: Total heat flux theta integrated
-  UNITS: ' '
-  VALIDMIN: 0
-  VALIDMAX: 10000000000
+  UNITS: degrees
+  VALIDMIN: -90
+  VALIDMAX: 90
   FILLVAL: -1.00E+31
   VAR_NOTES: Calculated by integration over the measured phase space distribution
 total_heat_flux_phi_integrated:
@@ -1361,9 +1361,9 @@ total_heat_flux_phi_integrated:
   FIELDNAM: Total Heat Flux Phi Integrated
   FORMAT: F15.3
   LABLAXIS: Total heat flux phi integrated
-  UNITS: ' '
-  VALIDMIN: 0
-  VALIDMAX: 10000000000
+  UNITS: degrees
+  VALIDMIN: -180
+  VALIDMAX: 180
   FILLVAL: -1.00E+31
   VAR_NOTES: Calculated by integration over the measured phase space distribution
 core_temperature_parallel_to_mag:
@@ -1380,7 +1380,7 @@ core_temperature_parallel_to_mag:
   LABLAXIS: Core temperature parallel to mag
   UNITS: K
   VALIDMIN: 0
-  VALIDMAX: 10000000000
+  VALIDMAX: 1.0e+7
   FILLVAL: -1.00E+31
   VAR_NOTES: Calculated by integration over the measured phase space distribution
 halo_temperature_parallel_to_mag:
@@ -1397,7 +1397,7 @@ halo_temperature_parallel_to_mag:
   LABLAXIS: Halo t parallel to mag
   UNITS: K
   VALIDMIN: 0
-  VALIDMAX: 10000000000
+  VALIDMAX: 1.0e+7
   FILLVAL: -1.00E+31
   VAR_NOTES: Calculated by integration over the measured phase space distribution
 total_temperature_parallel_to_mag:
@@ -1414,7 +1414,7 @@ total_temperature_parallel_to_mag:
   LABLAXIS: Total t parallel to mag
   UNITS: K
   VALIDMIN: 0
-  VALIDMAX: 10000000000
+  VALIDMAX: 1.0e+7
   FILLVAL: -1.00E+31
   VAR_NOTES: Calculated by integration over the measured phase space distribution
 core_temperature_perpendicular_to_mag:
@@ -1431,7 +1431,7 @@ core_temperature_perpendicular_to_mag:
   LABLAXIS: Core t perpendicular to mag
   UNITS: K
   VALIDMIN: 0
-  VALIDMAX: 10000000000
+  VALIDMAX: 1.0e+7
   FILLVAL: -1.00E+31
   VAR_NOTES: Calculated by integration over the measured phase space distribution
 halo_temperature_perpendicular_to_mag:
@@ -1448,7 +1448,7 @@ halo_temperature_perpendicular_to_mag:
   LABLAXIS: Halo t perpendicular to mag
   UNITS: K
   VALIDMIN: 0
-  VALIDMAX: 10000000000
+  VALIDMAX: 1.0e+7
   FILLVAL: -1.00E+31
   VAR_NOTES: Calculated by integration over the measured phase space distribution
 total_temperature_perpendicular_to_mag:
@@ -1465,7 +1465,7 @@ total_temperature_perpendicular_to_mag:
   LABLAXIS: Total t perpendicular to mag
   UNITS: K
   VALIDMIN: 0
-  VALIDMAX: 10000000000
+  VALIDMAX: 1.0e+7
   FILLVAL: -1.00E+31
   VAR_NOTES: Calculated by integration over the measured phase space distribution
 core_temperature_ratio_perpendicular_to_mag:
@@ -1482,7 +1482,7 @@ core_temperature_ratio_perpendicular_to_mag:
   LABLAXIS: Core t ratio
   UNITS: ' '
   VALIDMIN: 0
-  VALIDMAX: 10000000000
+  VALIDMAX: 10
   FILLVAL: -1.00E+31
   VAR_NOTES: Calculated by integration over the measured phase space distribution
 halo_temperature_ratio_perpendicular_to_mag:
@@ -1499,7 +1499,7 @@ halo_temperature_ratio_perpendicular_to_mag:
   LABLAXIS: Halo t ratio
   UNITS: ' '
   VALIDMIN: 0
-  VALIDMAX: 10000000000
+  VALIDMAX: 10
   FILLVAL: -1.00E+31
   VAR_NOTES: Calculated by integration over the measured phase space distribution
 total_temperature_ratio_perpendicular_to_mag:
@@ -1516,7 +1516,7 @@ total_temperature_ratio_perpendicular_to_mag:
   LABLAXIS: Total t ratio
   UNITS: ' '
   VALIDMIN: 0
-  VALIDMAX: 10000000000
+  VALIDMAX: 10
   FILLVAL: -1.00E+31
   VAR_NOTES: Calculated by integration over the measured phase space distribution
 energy_label:
