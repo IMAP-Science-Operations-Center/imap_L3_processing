@@ -9,7 +9,7 @@ import pandas as pd
 from imap_processing import imap_module_directory
 from imap_processing.cdf.utils import load_cdf
 from imap_processing.cdf.utils import write_cdf
-from imap_processing.spice.spin import set_global_spin_table_paths
+# from imap_processing.spice.spin import set_global_spin_table_paths
 from imap_processing.swe.l1a.swe_l1a import swe_l1a
 from imap_processing.swe.l1b.swe_l1b import swe_l1b
 from imap_processing.swe.l2.swe_l2 import swe_l2
@@ -46,11 +46,11 @@ for spice_file in Path("spice_kernels").iterdir():
     spiceypy.furnsh(str(spice_file))
 data_end_time = data_start_time + 60 * 1500
 spin_df = imap_processing.tests.conftest.generate_spin_data.__wrapped__()(data_start_time, end_met=data_end_time,
-                                                                          spin_period=15.0)
+                                                                          )  # spin_period=15.0)
 spin_csv_file_path = "spin_data.spin.csv"
 spin_df.to_csv(spin_csv_file_path, index=False)
 os.environ["SPIN_DATA_FILEPATH"] = str(spin_csv_file_path)
-set_global_spin_table_paths([Path(spin_csv_file_path)])
+# set_global_spin_table_paths([Path(spin_csv_file_path)])
 
 # Making from l0
 if use_l0_data:
@@ -62,7 +62,7 @@ if use_l0_data:
 else:
     loaded_l1b_dataset = load_cdf(
         "tests/test_data/swe/imap_swe_l1b_sci_20250630_v003.cdf")  # .isel(epoch=slice(None, 20))
-l2_dataset = swe_l2(loaded_l1b_dataset)
+l2_dataset = swe_l2(loaded_l1b_dataset, "v001")
 phase_space_density = l2_dataset["phase_space_density_spin_sector"].values
 
 phase_space_density[:, :, 0:30:2, 0::6] = 0.5 * phase_space_density[:, :, 1:30:2, 0::6]

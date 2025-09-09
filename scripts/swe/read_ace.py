@@ -192,7 +192,7 @@ def get_met_from_epoch(epoch: datetime) -> float:
     return initial_epoch_in_met_time + delta.total_seconds()
 
 
-def get_epochs_from_output_file(filepath: str) -> np.array:
+def get_epochs_from_output_file(filepath: str) -> tuple[np.array, np.array]:
     hdf_file = HDF(filepath)
     vs = hdf_file.vstart()
     dataset = vs.attach("swepam_e")
@@ -203,11 +203,15 @@ def get_epochs_from_output_file(filepath: str) -> np.array:
     hour_index = dataset.field("hour")._index
     min_index = dataset.field("min")._index
     sec_index = dataset.field("sec")._index
+    sct_index = dataset.field("sct")._index
+
+    sc_data = np.array([x[sct_index] for x in dataset[:]])
 
     correction_factor = (datetime(2025, 6, 30) - datetime(1999, 6, 8))
 
     return np.array([datetime(year=x[years_index], month=x[month_index], day=x[day_index], hour=x[hour_index],
-                              minute=x[min_index], second=x[sec_index]) + correction_factor for x in dataset[:]])
+                              minute=x[min_index], second=x[sec_index]) + correction_factor for x in
+                     dataset[:]]), sc_data
 
 
 initial_epoch = datetime.fromisoformat("2025-06-30T12:00:00")
@@ -220,7 +224,7 @@ new_ds = new_ds.stack(merged_dim=("fakeDim33", "fakeDim35"))
 new_ds = new_ds.assign_coords({"merged_dim": range(20)})
 new_ds = new_ds.transpose('fakeDim32', 'merged_dim', 'fakeDim34', 'fakeDim36')
 
-epochs = get_epochs_from_output_file("instrument_team_data/swe/swepam-nswe-1999-159.v1-02.hdf")
+epochs, sc_times = get_epochs_from_output_file("instrument_team_data/swe/swepam-nswe-1999-159.v1-02.hdf")
 
 ds_expanded = xr.DataArray(
     new_ds.values,
@@ -238,6 +242,33 @@ sample_time = 0.10031
 sample_time_microseconds = int(sample_time * 1e6)
 deadtime_corrected = deadtime_correction(counts, sample_time)
 rates = deadtime_corrected / sample_time
+
+t0 = 55990787
+t1 = 56586115
+cal_t0, cal_t1 = np.array([
+    [
+        1.359617,
+        1.856468,
+        1.981586,
+        2.068891,
+        1.965609,
+        1.889478,
+        1.105694
+    ],
+    [
+        1.290341,
+        1.800907,
+        1.931721,
+        2.060242,
+        1.992930,
+        1.981554,
+        1.117602
+    ]
+])
+
+calibration = cal_t0 + ((sc_times - t0) / (t1 - t0))[:, np.newaxis, np.newaxis, np.newaxis] * (cal_t1 - cal_t0)
+
+rates *= calibration
 
 phase, spin = get_phase_and_spin('instrument_team_data/swe/swepam-nswe-1999-159.v1-02.hdf')
 
@@ -285,3 +316,4 @@ with CDF(output_path, readonly=False) as cdf:
     cdf.new('esa_step', np.arange(20), recVary=False)
     cdf['esa_energy'].attrs['VAR_TYPE'] = 'support_data'
     cdf['esa_step'].attrs['VAR_TYPE'] = 'support_data'
+    cdf['counts_stat_uncert'] = np.full(rates.shape, 1)

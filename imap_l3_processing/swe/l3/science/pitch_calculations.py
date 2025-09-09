@@ -28,6 +28,9 @@ def find_breakpoints(energies: np.ndarray, averaged_psd: np.ndarray, latest_spac
     slope_ratios = slopes[1:] / slopes[:-1]
     numb = np.max(np.nonzero(slope_ratios > config['slope_ratio_cutoff_for_potential_calc']), initial=0)
 
+    if not numb:
+        return latest_spacecraft_potentials[-1], latest_core_halo_break_points[-1]
+
     energies = energies[:numb]
     log_psd = log_psd[:numb]
     b1: float = slopes[0]
@@ -123,8 +126,8 @@ def calculate_look_directions(inst_el: np.ndarray, inst_az: np.ndarray) -> np.nd
     inst_el_rad = np.deg2rad(inst_el)
     z = np.sin(inst_el_rad)
     cos_el = np.cos(inst_el_rad)
-    x = - cos_el * np.sin(inst_az_rad)
-    y = cos_el * np.cos(inst_az_rad)
+    x = cos_el * np.cos(inst_az_rad)
+    y = cos_el * np.sin(inst_az_rad)
     return np.stack(np.broadcast_arrays(x, y, z), axis=-1)
 
 
