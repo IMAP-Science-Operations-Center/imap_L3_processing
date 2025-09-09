@@ -20,7 +20,7 @@ from tests.test_helpers import create_glows_mock_query_results, run_periodically
 
 
 class TestGlowsProcessorIntegration(unittest.TestCase):
-    @skipIf(not platform == "linux", "Only runs in a docker container!")
+    # @skipIf(not platform == "linux", "Only runs in a docker container!")
     @run_periodically(timedelta(seconds=7))
     @patch("imap_data_access.query")
     def test_l3bcde_integration(self, mock_query):
@@ -38,11 +38,15 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
                 "imap_glows_l3a_hist_20100106-repoint00154_v001.cdf",
                 "imap_glows_l3a_hist_20100107-repoint00155_v008.cdf",
                 "imap_glows_l3a_hist_20100120-repoint00168_v008.cdf",
-                "imap_glows_l3a_hist_20100521-repoint00289_v001.cdf",
-                "imap_glows_l3a_hist_20100522-repoint00290_v001.cdf",
-                "imap_glows_l3a_hist_20100610-repoint00310_v012.cdf",
-                "imap_glows_l3a_hist_20100611-repoint00311_v012.cdf",
-                "imap_glows_l3a_hist_20100824-repoint00384_v001.cdf"
+                "imap_glows_l3a_hist_20100131-repoint00180_v001.cdf",
+                "imap_glows_l3a_hist_20100201-repoint00181_v001.cdf",
+                "imap_glows_l3a_hist_20100220-repoint00200_v012.cdf",
+                "imap_glows_l3a_hist_20100221-repoint00201_v012.cdf",
+                # "imap_glows_l3a_hist_20100521-repoint00289_v001.cdf",
+                # "imap_glows_l3a_hist_20100522-repoint00290_v001.cdf",
+                # "imap_glows_l3a_hist_20100610-repoint00310_v012.cdf",
+                # "imap_glows_l3a_hist_20100611-repoint00311_v012.cdf",
+                # "imap_glows_l3a_hist_20100824-repoint00384_v001.cdf"
             ]),
             "ion-rate-profile": create_glows_mock_query_results([]),
             "sw-profile": create_glows_mock_query_results([]),
@@ -79,6 +83,11 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
             "imap_glows_l3a_hist_20100106-repoint00154_v001.cdf",
             "imap_glows_l3a_hist_20100107-repoint00155_v008.cdf",
             "imap_glows_l3a_hist_20100120-repoint00168_v008.cdf",
+            "imap_glows_l3a_hist_20100120-repoint00168_v008.cdf",
+            "imap_glows_l3a_hist_20100131-repoint00180_v001.cdf",
+            "imap_glows_l3a_hist_20100201-repoint00181_v001.cdf",
+            "imap_glows_l3a_hist_20100220-repoint00200_v012.cdf",
+            "imap_glows_l3a_hist_20100221-repoint00201_v012.cdf",
             "imap_glows_l3a_hist_20100521-repoint00289_v001.cdf",
             "imap_glows_l3a_hist_20100522-repoint00290_v001.cdf",
             "imap_glows_l3a_hist_20100610-repoint00310_v012.cdf",

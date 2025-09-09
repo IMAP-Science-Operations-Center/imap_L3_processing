@@ -147,6 +147,4 @@ def find_l3e_spice_kernels_for_time_range(start_date: datetime, end_date: dateti
             spice_end_date = datetime.strptime(spice_file["max_date_datetime"], "%Y-%m-%d, %H:%M:%S")
             if spice_start_date <= end_date and start_date < spice_end_date:
                 file_names.append(Path(spice_file["file_name"]).name)
-            else:
-                print("rejecting file", spice_file["file_name"])
     return file_names

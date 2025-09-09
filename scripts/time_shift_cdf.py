@@ -4,7 +4,7 @@ from datetime import datetime
 from spacepy.pycdf import CDF
 
 
-def convert_epoch_time(filename, target=datetime(2025, 1, 1)):
+def convert_epoch_time(filename, target=datetime(2010, 2, 21, 12)):
     with CDF(str(filename), readonly=False) as cdf:
         delta = target - cdf['epoch'][0]
         cdf['epoch'][...] += delta

@@ -61,7 +61,11 @@ class GlowsL3BCInitializer:
         pipeline_settings_query_result = imap_data_access.query(table="ancillary", instrument="glows",
                                                                 descriptor="pipeline-settings-l3bcde")
 
+        logger.info("Downloading external dependencies...")
+
         external_dependencies = ExternalDependencies.fetch_dependencies()
+
+        logger.info("Finished downloading external dependencies")
 
         if not all([external_dependencies.f107_index_file_path, external_dependencies.omni2_data_path,
                     external_dependencies.lyman_alpha_path]):

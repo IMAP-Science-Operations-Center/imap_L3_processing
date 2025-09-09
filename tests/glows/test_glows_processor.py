@@ -230,7 +230,8 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
 
         mock_archive_dependencies.side_effect = [Path("path1.zip"), Path("path2.zip")]
 
-        first_dependency = GlowsL3BCDependencies(l3a_data=sentinel.l3a_data_1,
+        l3a_data_1 = {"filename": "some_file"}
+        first_dependency = GlowsL3BCDependencies(l3a_data=[l3a_data_1],
                                                  external_files=sentinel.external_files_1,
                                                  ancillary_files={
                                                      'bad_days_list': sentinel.bad_days_list_1,
@@ -240,7 +241,9 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
                                                  start_date=Mock(),
                                                  end_date=Mock(),
                                                  repointing_file_path=sentinel.repointing_file_path, )
-        second_dependency = GlowsL3BCDependencies(l3a_data=sentinel.l3a_data_2,
+
+        l3a_data_2 = {"filename": "some_file"}
+        second_dependency = GlowsL3BCDependencies(l3a_data=[l3a_data_2],
                                                   external_files=sentinel.external_files_2,
                                                   ancillary_files={
                                                       'bad_days_list': sentinel.bad_days_list_2,
@@ -293,8 +296,8 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
         dependencies_with_filtered_list_2 = replace(second_dependency, l3a_data=sentinel.filtered_days_2)
 
         mock_filter_bad_days.assert_has_calls(
-            [call(sentinel.l3a_data_1, sentinel.bad_days_list_1, first_cr_number_to_process),
-             call(sentinel.l3a_data_2, sentinel.bad_days_list_2, second_cr_number_to_process)])
+            [call([l3a_data_1], sentinel.bad_days_list_1, first_cr_number_to_process),
+             call([l3a_data_2], sentinel.bad_days_list_2, second_cr_number_to_process)])
 
         mock_generate_l3bc.assert_has_calls(
             [call(dependencies_with_filtered_list_1), call(dependencies_with_filtered_list_2)])
