@@ -272,8 +272,8 @@ class TestL3dUtils(unittest.TestCase):
 
         self.assertCountEqual(expected, l3bc_filenames)
 
-    @patch("imap_l3_processing.glows.l3d.utils.get_date_range_of_cr")
-    def test_rename_l3d_text_outputs(self, mock_get_date_range_of_cr):
+    @patch("imap_l3_processing.glows.l3d.utils.get_midpoint_of_cr")
+    def test_rename_l3d_text_outputs(self, mock_get_midpoint_of_cr):
         with tempfile.TemporaryDirectory() as tmpdir:
             tmpdir = Path(tmpdir)
             original_lya_path = tmpdir / "imap_glows_l3d_lya_19470303-cr02092_v00.dat"
@@ -282,12 +282,12 @@ class TestL3dUtils(unittest.TestCase):
             original_lya_path.write_text("lya")
             original_p_dens_path.write_text("p_dens")
 
-            mock_get_date_range_of_cr.return_value = (datetime(2010, 1, 1), datetime(2010, 2, 1))
+            mock_get_midpoint_of_cr.return_value = datetime(2010, 2, 1)
 
             version = "v012"
             actual_new_paths = rename_l3d_text_outputs([original_lya_path, original_p_dens_path], version)
 
-            mock_get_date_range_of_cr.assert_has_calls([call(2092), call(2092)])
+            mock_get_midpoint_of_cr.assert_has_calls([call(2092), call(2092)])
 
             expected_lya_output = tmpdir / "imap_glows_lya_19470303_20100201_v012.dat"
             expected_p_dens_output = tmpdir / "imap_glows_p-dens_19470303_20100201_v012.dat"
