@@ -16,6 +16,7 @@ from zipfile import ZIP_DEFLATED
 
 import imap_data_access
 import numpy as np
+from imap_data_access import AncillaryFilePath
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
@@ -1027,9 +1028,9 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
         mock_convert_dat_to_glows_l3e_ul_product.assert_called_once_with(
             input_metadata, output_data_path, np.array([epoch_start_date]), call_args_object)
 
-        expected_first_data_path = "imap_glows_l3e_survival-probability-ul-raw_20241007-repoint00020_v012.dat"
+        expected_first_data_path = AncillaryFilePath("imap_glows_survival-probability-ul-raw_20241007_v012.dat").construct_path()
 
-        mock_shutil.move.assert_called_once_with(output_data_path, Path(expected_first_data_path))
+        mock_shutil.move.assert_called_once_with(output_data_path, expected_first_data_path)
 
         mock_save_data.assert_called_once_with(sentinel.ultra_data_1)
         survival_data_product: GlowsL3EUltraData = mock_save_data.call_args_list[0].args[0]
@@ -1037,7 +1038,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
                          survival_data_product.parent_file_names)
 
         self.assertEqual(products, ["imap_glows_l3e_survival-probability-ul_20241007-repoint00020_v012.cdf",
-                                    Path(expected_first_data_path)])
+                                    expected_first_data_path])
 
     @patch('imap_l3_processing.glows.glows_processor.save_data')
     @patch("imap_l3_processing.glows.glows_processor.GlowsL3EHiData.convert_dat_to_glows_l3e_hi_product")
@@ -1053,7 +1054,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
         ]
 
         for descriptor_elongation, elongation in test_cases:
-            with self.subTest(elongation=elongation):
+            with (self.subTest(elongation=elongation)):
                 mock_determine_call_args.reset_mock()
                 mock_run.reset_mock()
                 mock_convert_dat_to_glows_l3e_hi_product.reset_mock()
@@ -1107,8 +1108,8 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
                 survival_data_product: GlowsL3EHiData = mock_save_data.call_args_list[0].args[0]
                 self.assertEqual(parent_file_names, survival_data_product.parent_file_names)
 
-                expected_output_data_path = \
-                Path(f"imap_glows_l3e_survival-probability-hi-{descriptor_elongation}-raw_20241007-repoint00020_v001.dat")
+                expected_output_data_path = AncillaryFilePath(f"imap_glows_survival-probability-hi-{descriptor_elongation}-raw_20241007_v001.dat"
+                                                              ).construct_path()
 
                 mock_shutil.move.assert_called_once_with(first_output_data_path, expected_output_data_path)
 
@@ -1128,9 +1129,9 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
                             mock_determine_call_args,
                             mock_run, mock_convert_dat_to_glows_l3e_lo_product, mock_save_data):
 
-        test_cases = [75,105]
-        for elongation in test_cases:
-            with self.subTest(elongation):
+        test_cases = [(75, "75.00"),(105, "105.0")]
+        for elongation, elongation_filename in test_cases:
+            with (self.subTest(elongation)):
                 epoch_start_date = datetime(year=2024, month=10, day=7)
                 epoch_end_date = datetime(year=2024, month=10, day=7, hour=23)
                 epoch_delta = (epoch_end_date - epoch_start_date) / 2
@@ -1173,12 +1174,13 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
 
                 mock_run.assert_called_once_with(["./survProbLo"] + lo_call_args)
 
-                first_output_file_path = Path(f"probSur.Imap.Lo_20241007_000000_date.100_{elongation:.2f}.dat")
+                first_output_file_path = Path(f"probSur.Imap.Lo_20241007_000000_date.100_{elongation_filename}.dat")
 
                 mock_convert_dat_to_glows_l3e_lo_product.assert_called_once_with(expected_input_metadata, first_output_file_path,
                          np.array([epoch_start_date]), elongation, l3e_args)
 
-                expected_first_output_file_path = Path("imap_glows_l3e_survival-probability-lo-raw_20241007-repoint00020_v012.dat")
+                expected_first_output_file_path = AncillaryFilePath("imap_glows_survival-probability-lo-raw_20241007_v012.dat"
+                                                                    ).construct_path()
 
                 mock_shutil.move.assert_called_once_with(first_output_file_path, expected_first_output_file_path)
 

@@ -71,7 +71,8 @@ spin_axis_latitude:
   RECORD_VARYING: RV
   FIELDNAM: Spin Axis Latitude
   FORMAT: F9.3
-  FILLVAL: -1.0000E+31
+  FILLVAL: -1.0000E+313
+  UNITS: degrees
 spin_axis_longitude:
   NAME: spin_axis_longitude
   DATA_TYPE: CDF_FLOAT
@@ -81,6 +82,7 @@ spin_axis_longitude:
   FIELDNAM: Spin Axis Longitude
   FORMAT: F9.3
   FILLVAL: -1.0000E+31
+  UNITS: degrees
 energy_label:
   NAME: energy_label
   DATA_TYPE: CDF_CHAR
@@ -90,6 +92,8 @@ energy_label:
   FORMAT: a20
   LABLAXIS: Energy label
   FILLVAL: ' '
+  UNITS: ' '
+  RECORD_VARYING: NRV
 healpix_index_label:
   NAME: healpix_index_label
   DATA_TYPE: CDF_CHAR
@@ -99,6 +103,8 @@ healpix_index_label:
   FORMAT: a20
   LABLAXIS: HEALPix index
   FILLVAL: ' '
+  UNITS: ' '
+  RECORD_VARYING: NRV
 program_version:
   NAME: program_version
   DATA_TYPE: CDF_CHAR
@@ -107,6 +113,8 @@ program_version:
   FIELDNAM: Program Version
   FORMAT: a20
   FILLVAL: ' '
+  UNITS: ' '
+  RECORD_VARYING: NRV
 spacecraft_radius:
   NAME: spacecraft_radius
   DATA_TYPE: CDF_FLOAT

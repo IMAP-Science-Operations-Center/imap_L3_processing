@@ -14,7 +14,7 @@ from zipfile import ZipFile, ZIP_DEFLATED
 
 import imap_data_access
 import numpy as np
-from imap_data_access.file_validation import generate_imap_file_path
+from imap_data_access.file_validation import generate_imap_file_path, ScienceFilePath, AncillaryFilePath
 from imap_data_access.processing_input import ProcessingInputCollection
 from spiceypy import spiceypy
 
@@ -287,7 +287,10 @@ def process_l3e_lo(
         repointing=repointing,
     )
 
-    output_path = Path(f'probSur.Imap.Lo_{l3e_args.formatted_date}_{l3e_args.decimal_date[:8]}_{elongation_value:.2f}.dat')
+    elongation_in_filename = f"{elongation_value}."
+    elongation_in_filename += "0" * (5-len(elongation_in_filename))
+
+    output_path = Path(f'probSur.Imap.Lo_{l3e_args.formatted_date}_{l3e_args.decimal_date[:8]}_{elongation_in_filename}.dat')
     lo_data = GlowsL3ELoData.convert_dat_to_glows_l3e_lo_product(input_metadata, output_path,
                                                                  np.array([epoch]),
                                                                  np.array([elongation_value]), l3e_args)
@@ -295,9 +298,15 @@ def process_l3e_lo(
     lo_data.parent_file_names = parent_file_names
 
     lo_cdf = save_data(lo_data)
-    new_dat_path = lo_cdf
-    new_dat_path = new_dat_path.parent / Path('_'.join(new_dat_path.name.split('_')[0:4]) + '-raw_' + '_'.join(
-        new_dat_path.name.split('_')[4:])[:-4] + '.dat')
+
+    cdf_science_file_path = ScienceFilePath(lo_cdf)
+    new_dat_path = AncillaryFilePath.generate_from_inputs(
+        instrument="glows",
+        descriptor=f"{cdf_science_file_path.descriptor}-raw",
+        start_time=cdf_science_file_path.start_date,
+        version=cdf_science_file_path.version,
+        extension="dat"
+    ).construct_path()
 
     shutil.move(output_path, new_dat_path)
 
@@ -329,9 +338,15 @@ def process_l3e_ul(parent_file_names: list[str], repointing: int, epoch: datetim
 
     ul_cdf = save_data(ul_data)
 
-    new_dat_path = Path(ul_cdf)
-    new_dat_path = new_dat_path.parent / Path('_'.join(new_dat_path.name.split('_')[0:4]) + '-raw_' + '_'.join(
-        new_dat_path.name.split('_')[4:])[:-4] + '.dat')
+    cdf_science_file_path = ScienceFilePath(ul_cdf)
+
+    new_dat_path = AncillaryFilePath.generate_from_inputs(
+        instrument="glows",
+        descriptor=f"{cdf_science_file_path.descriptor}-raw",
+        start_time=cdf_science_file_path.start_date,
+        version=cdf_science_file_path.version,
+        extension="dat"
+    ).construct_path()
 
     shutil.move(output_path, new_dat_path)
 
@@ -358,9 +373,14 @@ def process_l3e_hi(parent_file_names: list[str], repointing: int, epoch: datetim
 
     hi_cdf = save_data(hi_data)
 
-    new_dat_path = Path(hi_cdf)
-    new_dat_path = new_dat_path.parent / Path('_'.join(new_dat_path.name.split('_')[0:4]) + '-raw_' + '_'.join(
-        new_dat_path.name.split('_')[4:])[:-4] + '.dat')
+    cdf_science_file_path = ScienceFilePath(hi_cdf)
+    new_dat_path = AncillaryFilePath.generate_from_inputs(
+        instrument="glows",
+        descriptor=f"{cdf_science_file_path.descriptor}-raw",
+        start_time=cdf_science_file_path.start_date,
+        version=cdf_science_file_path.version,
+        extension="dat"
+    ).construct_path()
 
     shutil.move(output_path, new_dat_path)
 

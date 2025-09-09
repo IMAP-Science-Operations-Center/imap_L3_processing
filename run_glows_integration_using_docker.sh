@@ -1,6 +1,6 @@
 source scripts/update_version.sh
 
-docker build -q -f Dockerfile_glows_integration .
+docker build -f Dockerfile_glows_integration .
 
 #docker run --rm \
 #--mount type=bind,src="$(pwd)/spice_kernels",dst="/spice_kernels" \

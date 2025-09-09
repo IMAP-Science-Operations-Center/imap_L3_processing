@@ -10,7 +10,7 @@ from unittest.mock import patch
 import imap_data_access
 import spiceypy
 from imap_data_access import ProcessingInputCollection, RepointInput
-from imap_data_access.file_validation import generate_imap_file_path, SPICEFilePath, ScienceFilePath
+from imap_data_access.file_validation import generate_imap_file_path, SPICEFilePath, ScienceFilePath, AncillaryFilePath
 
 from imap_l3_processing.glows.glows_processor import GlowsProcessor
 from imap_l3_processing.glows.l3d.utils import PATH_TO_L3D_TOOLKIT
@@ -20,7 +20,7 @@ from tests.test_helpers import create_glows_mock_query_results, run_periodically
 
 
 class TestGlowsProcessorIntegration(unittest.TestCase):
-    # @skipIf(not platform == "linux", "Only runs in a docker container!")
+    @skipIf(not platform == "linux", "Only runs in a docker container!")
     @run_periodically(timedelta(seconds=7))
     @patch("imap_data_access.query")
     def test_l3bcde_integration(self, mock_query):
@@ -42,11 +42,6 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
                 "imap_glows_l3a_hist_20100201-repoint00181_v001.cdf",
                 "imap_glows_l3a_hist_20100220-repoint00200_v012.cdf",
                 "imap_glows_l3a_hist_20100221-repoint00201_v012.cdf",
-                # "imap_glows_l3a_hist_20100521-repoint00289_v001.cdf",
-                # "imap_glows_l3a_hist_20100522-repoint00290_v001.cdf",
-                # "imap_glows_l3a_hist_20100610-repoint00310_v012.cdf",
-                # "imap_glows_l3a_hist_20100611-repoint00311_v012.cdf",
-                # "imap_glows_l3a_hist_20100824-repoint00384_v001.cdf"
             ]),
             "ion-rate-profile": create_glows_mock_query_results([]),
             "sw-profile": create_glows_mock_query_results([]),
@@ -88,11 +83,6 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
             "imap_glows_l3a_hist_20100201-repoint00181_v001.cdf",
             "imap_glows_l3a_hist_20100220-repoint00200_v012.cdf",
             "imap_glows_l3a_hist_20100221-repoint00201_v012.cdf",
-            "imap_glows_l3a_hist_20100521-repoint00289_v001.cdf",
-            "imap_glows_l3a_hist_20100522-repoint00290_v001.cdf",
-            "imap_glows_l3a_hist_20100610-repoint00310_v012.cdf",
-            "imap_glows_l3a_hist_20100611-repoint00311_v012.cdf",
-            "imap_glows_l3a_hist_20100824-repoint00384_v001.cdf",
             "imap_glows_uv-anisotropy-1CR_20100101_v004.json",
             "imap_glows_WawHelioIonMP_20100101_v002.json",
             "imap_glows_bad-days-list_20100101_v001.dat",
@@ -160,14 +150,43 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
 
             print(products)
 
+            # @formatter:off
             expected_files = [
-                ScienceFilePath("imap_glows_l3b_ion-rate-profile_20100103-cr02092_v001.cdf").construct_path(),
-                ScienceFilePath("imap_glows_l3b_ion-rate-profile_20100519-cr02097_v001.cdf").construct_path(),
-                ScienceFilePath("imap_glows_l3c_sw-profile_20100103-cr02092_v001.cdf").construct_path(),
-                ScienceFilePath("imap_glows_l3c_sw-profile_20100519-cr02097_v001.cdf").construct_path(),
-                ScienceFilePath("imap_glows_l3d_solar-hist_19470303-cr02094_v001.cdf").construct_path(),
-                # ScienceFilePath("imap_glows_l3e_survival-probability-hi__v001.cdf").construct_path(),
+                ScienceFilePath('imap_glows_l3b_ion-rate-profile_20100103-cr02092_v001.cdf').construct_path(),
+                ScienceFilePath('imap_glows_l3b_ion-rate-profile_20100130-cr02093_v001.cdf').construct_path(),
+
+                ScienceFilePath('imap_glows_l3c_sw-profile_20100103-cr02092_v001.cdf').construct_path(),
+                ScienceFilePath('imap_glows_l3c_sw-profile_20100130-cr02093_v001.cdf').construct_path(),
+
+                ScienceFilePath('imap_glows_l3d_solar-hist_19470303-cr02092_v001.cdf').construct_path(),
+                AncillaryFilePath('imap_glows_uv-anis_19470303_20100117_v001.dat').construct_path(),
+                AncillaryFilePath('imap_glows_lya_19470303_20100117_v001.dat').construct_path(),
+                AncillaryFilePath('imap_glows_e-dens_19470303_20100117_v001.dat').construct_path(),
+                AncillaryFilePath('imap_glows_p-dens_19470303_20100117_v001.dat').construct_path(),
+                AncillaryFilePath('imap_glows_speed_19470303_20100117_v001.dat').construct_path(),
+                AncillaryFilePath('imap_glows_phion_19470303_20100117_v001.dat').construct_path(),
+
+                ScienceFilePath('imap_glows_l3e_survival-probability-ul_20100103-repoint00151_v001.cdf').construct_path(),
+                ScienceFilePath('imap_glows_l3e_survival-probability-ul_20100104-repoint00152_v001.cdf').construct_path(),
+                AncillaryFilePath('imap_glows_survival-probability-ul-raw_20100103_v001.dat').construct_path(),
+                AncillaryFilePath('imap_glows_survival-probability-ul-raw_20100104_v001.dat').construct_path(),
+
+                ScienceFilePath('imap_glows_l3e_survival-probability-hi-45_20100103-repoint00151_v001.cdf').construct_path(),
+                ScienceFilePath('imap_glows_l3e_survival-probability-hi-45_20100104-repoint00152_v001.cdf').construct_path(),
+                AncillaryFilePath('imap_glows_survival-probability-hi-45-raw_20100103_v001.dat').construct_path(),
+                AncillaryFilePath('imap_glows_survival-probability-hi-45-raw_20100104_v001.dat').construct_path(),
+
+                ScienceFilePath('imap_glows_l3e_survival-probability-hi-90_20100103-repoint00151_v001.cdf').construct_path(),
+                ScienceFilePath('imap_glows_l3e_survival-probability-hi-90_20100104-repoint00152_v001.cdf').construct_path(),
+                AncillaryFilePath('imap_glows_survival-probability-hi-90-raw_20100103_v001.dat').construct_path(),
+                AncillaryFilePath('imap_glows_survival-probability-hi-90-raw_20100104_v001.dat').construct_path(),
+
+                ScienceFilePath('imap_glows_l3e_survival-probability-lo_20100103-repoint00151_v001.cdf').construct_path(),
+                ScienceFilePath('imap_glows_l3e_survival-probability-lo_20100104-repoint00152_v001.cdf').construct_path(),
+                AncillaryFilePath('imap_glows_survival-probability-lo-raw_20100103_v001.dat').construct_path(),
+                AncillaryFilePath('imap_glows_survival-probability-lo-raw_20100104_v001.dat').construct_path(),
             ]
+            # @formatter:on
 
             for file_path in expected_files:
                 self.assertTrue(file_path.exists(), msg=str(file_path))

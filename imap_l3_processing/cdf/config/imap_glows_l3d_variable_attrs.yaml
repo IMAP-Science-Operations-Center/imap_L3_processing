@@ -180,6 +180,8 @@ latitude_label:
   FIELDNAM: Latitude Label
   FORMAT: A16
   FILLVAL: ' '
+  RECORD_VARYING: NRV
+  UNITS: ' '
 plasma_speed_flag:
   NAME: plasma_speed_flag
   DATA_TYPE: CDF_INT4
@@ -192,6 +194,7 @@ plasma_speed_flag:
   FORMAT: I5
   LABLAXIS: Plasma speed source
   FILLVAL: -2147483648
+  UNITS: ' '
 uv_anisotropy_flag:
   NAME: uv_anisotropy_flag
   DATA_TYPE: CDF_INT4
@@ -204,6 +207,7 @@ uv_anisotropy_flag:
   FORMAT: I5
   LABLAXIS: UV anisotropy source
   FILLVAL: -2147483648
+  UNITS: ' '
 proton_density_flag:
   NAME: proton_density_flag
   DATA_TYPE: CDF_INT4
@@ -216,3 +220,4 @@ proton_density_flag:
   FORMAT: I5
   LABLAXIS: Proton density source
   FILLVAL: -2147483648
+  UNITS: ' '
