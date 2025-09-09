@@ -677,8 +677,7 @@ def time_from_l3a(fn):
 
 
 def time_from_yday(yday_list):
-    string = [str(int(yday_list[i, 0])) + ':' + str(int(yday_list[i, 1])) + ':' + str(int(yday_list[i, 2])) + ':0' for i
-              in range(len(yday_list))]
+    string = [f'{int(yday_list[i,0])}:{int(yday_list[i, 1]):03d}:{int(yday_list[i, 2]):02d}:00' for i in range(len(yday_list))]
     date = Time(string, format='yday')
     return date
 

@@ -3,18 +3,18 @@ Author: Izabela Kowalska-Leszczynska (ikowalska@cbk.waw.pl)
 Functions used in L3a->L3b processing that are not class methods
 '''
 
-import numpy as np
-import astropy.units as u
-import astropy.constants as const
 import json
-import netCDF4
-from astropy.time import Time
-from astropy.coordinates import get_sun
-from .constants import  PHISICAL_CONSTANTS
-
-
-
 import logging
+
+import astropy.constants as const
+import astropy.units as u
+import netCDF4
+import numpy as np
+from astropy.coordinates import get_sun
+from astropy.time import Time
+
+from .constants import PHISICAL_CONSTANTS
+
 logging.basicConfig(level=logging.ERROR)
 
 ##########################
@@ -633,10 +633,12 @@ def time_from_l3a(fn):
     mean_time=Time(data_l3a['start_time'])+0.5*(Time(data_l3a['end_time'])-Time(data_l3a['start_time']))
     return mean_time
 
+
 def time_from_yday(yday_list):
-        string=[str(int(yday_list[i,0]))+':'+str(int(yday_list[i,1]))+':'+str(int(yday_list[i,2]))+':0' for i in range(len(yday_list))]
-        date=Time(string,format='yday')
-        return date
+    string = [f'{int(yday_list[i,0])}:{int(yday_list[i, 1]):03d}:{int(yday_list[i, 2]):02d}:00' for i in range(len(yday_list))]
+    date = Time(string, format='yday')
+    return date
+
 
 def v2E(v):
     '''
