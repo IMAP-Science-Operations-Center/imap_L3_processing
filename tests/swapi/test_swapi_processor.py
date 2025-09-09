@@ -1,7 +1,7 @@
 from dataclasses import replace
 from datetime import datetime, timedelta, date
 from unittest import TestCase
-from unittest.mock import patch, sentinel, call
+from unittest.mock import patch, sentinel, call, Mock
 
 import numpy as np
 from imap_data_access import config
@@ -16,11 +16,12 @@ from imap_l3_processing.swapi.descriptors import PROTON_TEMPERATURE_DENSITY_LOOK
     DENSITY_OF_NEUTRAL_HELIUM_DESCRIPTOR, INSTRUMENT_RESPONSE_LOOKUP_TABLE_DESCRIPTOR, \
     EFFICIENCY_LOOKUP_TABLE_DESCRIPTOR, GEOMETRIC_FACTOR_LOOKUP_TABLE_DESCRIPTOR, \
     CLOCK_ANGLE_AND_FLOW_DEFLECTION_LOOKUP_TABLE_DESCRIPTOR, ALPHA_TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR
-from imap_l3_processing.swapi.l3a.models import SwapiL2Data
+from imap_l3_processing.swapi.l3a.models import SwapiL2Data, SwapiL3ProtonSolarWindData, SwapiL3PickupIonData, \
+    SwapiL3AlphaSolarWindData
 from imap_l3_processing.swapi.l3a.science.calculate_pickup_ion import FittingParameters
 from imap_l3_processing.swapi.l3a.swapi_l3a_dependencies import SWAPI_L2_DESCRIPTOR
 from imap_l3_processing.swapi.l3b.science.calculate_solar_wind_vdf import DeltaMinusPlus
-from imap_l3_processing.swapi.swapi_processor import SwapiProcessor
+from imap_l3_processing.swapi.swapi_processor import SwapiProcessor, logger
 
 
 class TestSwapiProcessor(TestCase):
@@ -385,6 +386,135 @@ class TestSwapiProcessor(TestCase):
         self.assertEqual(input_file_names, proton_solar_wind_data.parent_file_names)
         mock_write_cdf.assert_called_once_with(str(expected_cdf_path), proton_solar_wind_data, mock_manager)
         self.assertEqual([expected_cdf_path], product)
+
+    def test_process_l3a_proton_outputs_fill_for_chunks_with_fill(self):
+        instrument = 'swapi'
+        end_date = datetime(2025, 6, 13)
+        outgoing_data_level = "l3a"
+        start_date = datetime(2025, 6, 12)
+        input_version = "v123"
+        initial_epoch = 10
+
+        epoch = np.array([initial_epoch, 11, 12, 13])
+        energy = np.array([15000, 16000, 17000, 18000, 19000])
+        coincidence_count_rate = np.array(
+            [[4, 5, 6, 7, 8], [9, 10, 11, np.nan, 13], [14, 15, 16, 17, 18], [19, 20, 21, 22, 23]])
+        coincidence_count_rate_uncertainty = np.array(
+            [[0.1, 0.2, 0.3, 0.4, 0.5], [0.1, 0.2, 0.3, 0.4, 0.5], [0.1, 0.2, 0.3, 0.4, 0.5],
+             [0.1, 0.2, 0.3, 0.4, 0.5]])
+
+        chunk_of_five = SwapiL2Data(epoch, energy, coincidence_count_rate,
+                                    coincidence_count_rate_uncertainty)
+
+        input_metadata = InputMetadata(instrument, outgoing_data_level, start_date, end_date, input_version)
+
+
+        swapi_processor = SwapiProcessor(
+            Mock(), input_metadata)
+        with self.assertLogs(logger) as log_context:
+            product = swapi_processor.process_l3a_proton(data=chunk_of_five, dependencies=Mock())
+
+        self.assertIsInstance(product, SwapiL3ProtonSolarWindData)
+        np.testing.assert_array_equal(nominal_values(product.proton_sw_speed), [np.nan])
+        np.testing.assert_array_equal(std_devs(product.proton_sw_speed), [np.nan])
+
+        np.testing.assert_array_equal(nominal_values(product.proton_sw_temperature), [np.nan])
+        np.testing.assert_array_equal(std_devs(product.proton_sw_temperature), [np.nan])
+
+        np.testing.assert_array_equal(nominal_values(product.proton_sw_density), [np.nan])
+        np.testing.assert_array_equal(std_devs(product.proton_sw_density), [np.nan])
+
+        np.testing.assert_array_equal(nominal_values(product.proton_sw_clock_angle), [np.nan])
+        np.testing.assert_array_equal(std_devs(product.proton_sw_clock_angle), [np.nan])
+
+        np.testing.assert_array_equal(nominal_values(product.proton_sw_deflection_angle), [np.nan])
+        np.testing.assert_array_equal(std_devs(product.proton_sw_deflection_angle), [np.nan])
+
+    def test_process_l3a_alpha_outputs_fill_for_chunks_with_fill(self):
+        instrument = 'swapi'
+        end_date = datetime(2025, 6, 13)
+        outgoing_data_level = "l3a"
+        start_date = datetime(2025, 6, 12)
+        input_version = "v123"
+        initial_epoch = 10
+
+        epoch = np.array([initial_epoch, 11, 12, 13])
+        energy = np.array([19000, 18000, 17000, 16000, 15000])
+        coincidence_count_rate = np.array(
+            [[4, 5, 6, 7, 8], [9, 10, 11, np.nan, 13], [14, 15, 16, 17, 18], [19, 20, 21, 22, 23]])
+        coincidence_count_rate_uncertainty = np.array(
+            [[0.1, 0.2, 0.3, 0.4, 0.5], [0.1, 0.2, 0.3, 0.4, 0.5], [0.1, 0.2, 0.3, 0.4, 0.5],
+             [0.1, 0.2, 0.3, 0.4, 0.5]])
+
+        chunk_of_five = SwapiL2Data(epoch, energy, coincidence_count_rate,
+                                    coincidence_count_rate_uncertainty)
+
+        input_metadata = InputMetadata(instrument, outgoing_data_level, start_date, end_date, input_version)
+
+
+        swapi_processor = SwapiProcessor(
+            Mock(), input_metadata)
+        with self.assertLogs(logger) as log_context:
+            product = swapi_processor.process_l3a_alpha_solar_wind(data=chunk_of_five, dependencies=Mock())
+
+        self.assertIsInstance(product, SwapiL3AlphaSolarWindData)
+        np.testing.assert_array_equal(nominal_values(product.alpha_sw_speed), [np.nan])
+        np.testing.assert_array_equal(std_devs(product.alpha_sw_speed), [np.nan])
+
+        np.testing.assert_array_equal(nominal_values(product.alpha_sw_temperature), [np.nan])
+        np.testing.assert_array_equal(std_devs(product.alpha_sw_temperature), [np.nan])
+
+        np.testing.assert_array_equal(nominal_values(product.alpha_sw_density), [np.nan])
+        np.testing.assert_array_equal(std_devs(product.alpha_sw_density), [np.nan])
+
+    def test_process_l3a_pui_outputs_fill_for_chunks_with_fill(self):
+        instrument = 'swapi'
+        end_date = datetime(2025, 6, 13)
+        outgoing_data_level = "l3a"
+        start_date = datetime(2025, 6, 12)
+        input_version = "v123"
+        initial_epoch = 10
+
+        epoch = np.array([initial_epoch, 11, 12, 13])
+        energy = np.array([15000, 16000, 17000, 18000, 19000])
+        coincidence_count_rate = np.array(
+            [[4, 5, 6, 7, 8], [9, 10, 11, np.nan, 13], [14, 15, 16, 17, 18], [19, 20, 21, 22, 23]])
+        coincidence_count_rate_uncertainty = np.array(
+            [[0.1, 0.2, 0.3, 0.4, 0.5], [0.1, 0.2, 0.3, 0.4, 0.5], [0.1, 0.2, 0.3, 0.4, 0.5],
+             [0.1, 0.2, 0.3, 0.4, 0.5]])
+
+        chunk_of_five = SwapiL2Data(epoch, energy, coincidence_count_rate,
+                                    coincidence_count_rate_uncertainty)
+
+        input_metadata = InputMetadata(instrument, outgoing_data_level, start_date, end_date, input_version)
+
+
+        swapi_processor = SwapiProcessor(
+            Mock(), input_metadata)
+        with self.assertLogs(logger) as log_context:
+            product = swapi_processor.process_l3a_pui(data=chunk_of_five, dependencies=Mock())
+
+        self.assertIsInstance(product, SwapiL3PickupIonData)
+        np.testing.assert_array_equal(product.epoch, initial_epoch+FIVE_MINUTES_IN_NANOSECONDS)
+
+        np.testing.assert_array_equal(nominal_values(product.cooling_index), [np.nan])
+        np.testing.assert_array_equal(std_devs(product.cooling_index), [np.nan])
+
+        np.testing.assert_array_equal(nominal_values(product.ionization_rate), [np.nan])
+        np.testing.assert_array_equal(std_devs(product.ionization_rate), [np.nan])
+
+        np.testing.assert_array_equal(nominal_values(product.cutoff_speed), [np.nan])
+        np.testing.assert_array_equal(std_devs(product.cutoff_speed), [np.nan])
+
+        np.testing.assert_array_equal(nominal_values(product.background_rate), [np.nan])
+        np.testing.assert_array_equal(std_devs(product.background_rate), [np.nan])
+
+        np.testing.assert_array_equal(nominal_values(product.density), [np.nan])
+        np.testing.assert_array_equal(std_devs(product.density), [np.nan])
+
+        np.testing.assert_array_equal(nominal_values(product.temperature), [np.nan])
+        np.testing.assert_array_equal(std_devs(product.temperature), [np.nan])
+
 
     @patch('imap_l3_processing.utils.ImapAttributeManager')
     @patch('imap_l3_processing.swapi.swapi_processor.SwapiL3AlphaSolarWindData')

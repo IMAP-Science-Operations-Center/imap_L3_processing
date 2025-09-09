@@ -3,6 +3,7 @@ from typing import Iterable
 from spacepy.pycdf import CDF
 from uncertainties.unumpy import uarray
 
+from imap_l3_processing.cdf.cdf_utils import read_numeric_variable
 from imap_l3_processing.swapi.l3a.models import SwapiL2Data, SwapiL3AlphaSolarWindData, EPOCH_CDF_VAR_NAME, \
     ALPHA_SOLAR_WIND_SPEED_CDF_VAR_NAME, ALPHA_SOLAR_WIND_SPEED_UNCERTAINTY_CDF_VAR_NAME, \
     ALPHA_SOLAR_WIND_TEMPERATURE_CDF_VAR_NAME, ALPHA_SOLAR_WIND_TEMPERATURE_UNCERTAINTY_CDF_VAR_NAME, \
@@ -11,9 +12,9 @@ from imap_l3_processing.swapi.l3a.models import SwapiL2Data, SwapiL3AlphaSolarWi
 
 def read_l2_swapi_data(cdf: CDF) -> SwapiL2Data:
     return SwapiL2Data(cdf.raw_var("epoch")[...],
-                       cdf["swp_esa_energy"][...],
-                       cdf["swp_coin_rate"][...],
-                       cdf["swp_coin_rate_stat_uncert_plus"][...])
+                       read_numeric_variable(cdf["swp_esa_energy"]),
+                       read_numeric_variable(cdf["swp_coin_rate"]),
+                       read_numeric_variable(cdf["swp_coin_rate_stat_uncert_plus"]))
 
 
 def read_l3a_alpha_sw_swapi_data(cdf: CDF) -> SwapiL3AlphaSolarWindData:

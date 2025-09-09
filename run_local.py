@@ -1049,14 +1049,14 @@ if __name__ == "__main__":
                 "tests/test_data/swapi/imap_swapi_energy-gf-lut_20240923_v000.dat",
                 "tests/test_data/swapi/imap_swapi_instrument-response-lut_20241023_v000.zip",
                 "tests/test_data/swapi/imap_swapi_l2_density-of-neutral-helium-lut-text-not-cdf_20241023_v002.cdf",
-                str(get_test_data_path("swapi/imap_swapi_l2_50-sweeps_20250606_v002.cdf"))
+                str(get_test_data_path("swapi/imap_swapi_l2_50-sweeps_20250606_v003.cdf"))
             )
             print(paths)
         if "l3b" in sys.argv:
             path = create_swapi_l3b_cdf(
                 "tests/test_data/swapi/imap_swapi_energy-gf-lut_20240923_v000.dat",
                 "tests/test_data/swapi/imap_swapi_efficiency-lut_20241020_v000.dat",
-                "tests/test_data/swapi/imap_swapi_l2_sci_20100101_v001.cdf")
+                str(get_test_data_path("swapi/imap_swapi_l2_50-sweeps_20250606_v003.cdf")))
             print(path)
     if "glows" in sys.argv:
         if "pre-b" in sys.argv:
@@ -1100,8 +1100,8 @@ if __name__ == "__main__":
 
     if "swe-fake-spice" in sys.argv:
         dependencies = SweL3Dependencies.from_file_paths(
-            get_test_data_path("swe/imap_swe_l2_sci_20250630_v002.cdf"),
-            get_test_data_path("swe/imap_swe_l1b_sci_20250630_v003.cdf"),
+            get_test_data_path("swe/imap_swe_l2_sci_20260924_v001.cdf"),
+            get_test_data_path("swe/imap_swe_l1b_sci_20260924_v001.cdf"),
             get_test_data_path("swe/imap_mag_l1d_norm-mago_20250630_v001.cdf"),
             get_test_data_path("swe/imap_swapi_l3a_proton-sw_20250630_v001.cdf"),
             get_test_data_path("swe/example_swe_config.json"),
