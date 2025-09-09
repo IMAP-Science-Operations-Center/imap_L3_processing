@@ -665,7 +665,7 @@ requires-dist = [
     { name = "cycler", specifier = "==0.12.1" },
     { name = "fonttools", specifier = "==4.53.1" },
     { name = "idna", specifier = "==3.10" },
-    { name = "imap-data-access", specifier = "==0.32.0" },
+    { name = "imap-data-access", specifier = ">=0.32.0" },
     { name = "imap-processing", specifier = ">=0.19.0" },
     { name = "importlib-resources", specifier = "==6.4.0" },
     { name = "joblib", specifier = "==1.4.2" },
