@@ -47,7 +47,7 @@ dependencies = [
     "urllib3==2.4.0",
     "xarray==2025.3.1",
     "zipp==3.19.2",
-    "imap_processing>=0.14.0",
+    "imap_processing>=0.19.0",
 ]
 description = "This is a package for creating IMAP Level 3 data"
 

@@ -270,8 +270,8 @@ def calc_chi_squared_lm_fit(params: Parameters, observed_count_rates: np.ndarray
     fit_params = FittingParameters(cooling_index, ionization_rate, cutoff_speed, background_count_rate)
     modeled_rates = calculator.model_count_rate(indices_and_energy_centers, fit_params, ephemeris_time)
 
-    modeled_counts = modeled_rates * sweep_count * swapi_l2.TIME_PER_BIN
-    observed_counts = observed_count_rates * sweep_count * swapi_l2.TIME_PER_BIN
+    modeled_counts = modeled_rates * sweep_count * swapi_l2.SWAPI_LIVETIME
+    observed_counts = observed_count_rates * sweep_count * swapi_l2.SWAPI_LIVETIME
     result = np.sqrt(2 * (modeled_counts - observed_counts + observed_counts * np.log(
         observed_counts / modeled_counts)))
     return result

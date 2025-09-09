@@ -696,4 +696,4 @@ class TestCalculatePickupIon(SpiceTestCase):
                                    + observed_count_rates * np.log(observed_count_rates / modeled_count_rates))
         np.testing.assert_almost_equal(
             np.square(residual_array),
-            sweep_count * swapi_l2.TIME_PER_BIN * chi_squared_formula)
+            sweep_count * swapi_l2.SWAPI_LIVETIME * chi_squared_formula)
