@@ -5,6 +5,7 @@ import spiceypy
 from imap_data_access.processing_input import ProcessingInputCollection
 
 from imap_l3_processing.models import InputMetadata
+from imap_l3_processing.utils import get_spice_parent_file_names
 
 
 class Processor(abc.ABC):
@@ -17,15 +18,12 @@ class Processor(abc.ABC):
     def process(self) -> list[Path]:
         raise NotImplementedError()
 
-    def get_parent_file_names(self, file_paths: list[Path] = None) -> list[str]:
+    def get_parent_file_names(self, file_paths: list[Path | str] = None) -> list[str]:
         if file_paths:
-            parent_file_names = [parent_file_name.name for parent_file_name in file_paths]
+            parent_file_names = [Path(parent_file_name).name for parent_file_name in file_paths]
         else:
             parent_file_names = [parent_file_name.name for parent_file_name in self.dependencies.get_file_paths()]
 
-        count = spiceypy.ktotal('ALL')
-        for i in range(0, count):
-            file = Path(spiceypy.kdata(i, 'ALL')[0]).name
-            parent_file_names.append(file)
+        return parent_file_names + get_spice_parent_file_names()
 
-        return parent_file_names
+

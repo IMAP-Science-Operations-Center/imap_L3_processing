@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from pathlib import Path
 
 import numpy as np
 
@@ -19,6 +20,13 @@ ELECTRON_DENSITY_CDF_VAR_NAME = "electron_density"
 PLASMA_SPEED_FLAG_CDF_VAR_NAME = "plasma_speed_flag"
 UV_ANISOTROPY_FLAG_CDF_VAR_NAME = "uv_anisotropy_flag"
 PROTON_DENSITY_FLAG_CDF_VAR_NAME = "proton_density_flag"
+
+
+@dataclass
+class GlowsL3DProcessorOutput:
+    l3d_cdf_file_path: Path
+    l3d_text_file_paths: list[Path]
+    last_processed_cr: int
 
 
 @dataclass

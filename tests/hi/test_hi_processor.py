@@ -14,7 +14,7 @@ from imap_l3_processing.maps.hilo_l3_survival_dependencies import HiL3SingleSens
 from imap_l3_processing.maps.map_models import RectangularSpectralIndexDataProduct, RectangularIntensityDataProduct
 from imap_l3_processing.models import InputMetadata, Instrument
 from tests.maps.test_builders import create_h1_l3_data
-from tests.test_helpers import get_test_data_path
+from tests.test_helpers import get_test_data_path, run_periodically
 
 
 class TestHiProcessor(unittest.TestCase):
@@ -89,6 +89,7 @@ class TestHiProcessor(unittest.TestCase):
 
         self.assertEqual([mock_save_data.return_value], product)
 
+    @run_periodically(timedelta(days=7))
     def test_spectral_fit_against_validation_data(self):
         test_cases = [
             ("hi45", "hi/fake_l2_maps/hi45-6months.cdf", "hi/validation/IMAP-Hi45_6months_4.0x4.0_fit_gam.csv",

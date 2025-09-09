@@ -1,11 +1,16 @@
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 
+import imap_data_access
 import numpy as np
+import requests
 import spiceypy
 from astropy.time import Time
-from imap_data_access import query
 from imap_processing.spice.repoint import set_global_repoint_table_paths, get_repoint_data
+from spacepy.pycdf import CDF
+
+from typing import Optional
 
 from imap_l3_processing.constants import ONE_AU_IN_KM, TT2000_EPOCH, ONE_SECOND_IN_NANOSECONDS
 from imap_l3_processing.glows.l3bc.l3bc_toolkit.funcs import jd_fm_Carrington
@@ -49,17 +54,25 @@ def _decimal_time(t: datetime) -> str:
     return "{:10.5f}".format(t.year + (t - year_start) / (year_end - year_start))
 
 
-def determine_l3e_files_to_produce(descriptor: str, first_cr_processed: int, last_processed_cr: int, version: str,
-                                   repointing_path: Path):
-    l3e_files = query(instrument='glows', descriptor=descriptor, data_level='l3e', version=version)
+@dataclass
+class GlowsL3eRepointings:
+    repointing_numbers: list[int]
+    hi_90_repointings: dict[int, int]
+    hi_45_repointings: dict[int, int]
+    lo_repointings: dict[int, int]
+    ultra_repointings: dict[int, int]
 
-    existing_pointings = [l3e['repointing'] for l3e in l3e_files]
+
+def determine_l3e_files_to_produce(first_cr_processed: int, last_processed_cr: int,
+                                   repointing_path: Path) -> GlowsL3eRepointings:
+    descriptors = ['survival-probability-hi-90','survival-probability-hi-45','survival-probability-lo','survival-probability-ultra']
 
     set_global_repoint_table_paths([repointing_path])
     repointing_data = get_repoint_data()
 
     first_carrington_start_date = Time(jd_fm_Carrington(float(first_cr_processed)), format='jd')
     last_cr_end_date = Time(jd_fm_Carrington(float(last_processed_cr + 1)), format='jd')
+
 
     start_ns = (first_carrington_start_date.to_datetime() - TT2000_EPOCH).total_seconds() * ONE_SECOND_IN_NANOSECONDS
     end_ns = (last_cr_end_date.to_datetime() - TT2000_EPOCH).total_seconds() * ONE_SECOND_IN_NANOSECONDS
@@ -74,6 +87,66 @@ def determine_l3e_files_to_produce(descriptor: str, first_cr_processed: int, las
         if i + 1 < len(repoint_ids) and start_ns < repoint_starts[i + 1] < end_ns:
             pointing_numbers.append(int(repoint_ids[i]))
 
-    pointing_numbers = [pointing for pointing in pointing_numbers if pointing not in existing_pointings]
+    updated_pointings_per_instruments = []
+    for descriptor in descriptors:
+        l3e_files = imap_data_access.query(instrument='glows', data_level='l3e', version="latest", descriptor=descriptor)
+        updated_pointing = {int(l3e['repointing']): int(l3e['version'][1:]) for l3e in l3e_files}
 
-    return pointing_numbers
+        for pointing_number in pointing_numbers:
+            if pointing_number in updated_pointing:
+                updated_pointing[pointing_number] = updated_pointing[pointing_number] + 1
+            else:
+                updated_pointing[pointing_number] = 1
+        updated_pointings_per_instruments.append(updated_pointing)
+
+    return GlowsL3eRepointings(pointing_numbers, *updated_pointings_per_instruments)
+
+
+def find_first_updated_cr(new_l3d, old_l3d) -> Optional[int]:
+    old_l3d_cdf = CDF(old_l3d)
+    new_l3d_cdf = CDF(new_l3d)
+
+    for i, cr in enumerate(old_l3d_cdf['cr_grid'][...]):
+        lya_compare = old_l3d_cdf['lyman_alpha'][i] != new_l3d_cdf['lyman_alpha'][i]
+        phion_compare = old_l3d_cdf['phion'][i] != new_l3d_cdf['phion'][i]
+        plasma_speed_compare = np.any(old_l3d_cdf['plasma_speed'][i] != new_l3d_cdf['plasma_speed'][i])
+        plasma_speed_flag_compare = old_l3d_cdf['plasma_speed_flag'][i] != new_l3d_cdf['plasma_speed_flag'][i]
+        proton_density_compare = np.any(old_l3d_cdf['proton_density'][i] != new_l3d_cdf['proton_density'][i])
+        proton_density_flag_compare = old_l3d_cdf['proton_density_flag'][i] != new_l3d_cdf['proton_density_flag'][i]
+        uv_anisotropy_compare = np.any(old_l3d_cdf['uv_anisotropy'][i] != new_l3d_cdf['uv_anisotropy'][i])
+        uv_anisotropy_flag_compare = old_l3d_cdf['uv_anisotropy_flag'][i] != new_l3d_cdf['uv_anisotropy_flag'][i]
+
+        if lya_compare or phion_compare or plasma_speed_compare or plasma_speed_flag_compare or proton_density_compare or proton_density_flag_compare or uv_anisotropy_compare or uv_anisotropy_flag_compare:
+            return int(cr)
+
+    if old_l3d_cdf['cr_grid'].shape != new_l3d_cdf['cr_grid'].shape:
+        return int(old_l3d_cdf['cr_grid'][-1]) + 1
+
+    return None
+
+l3e_kernels = [
+    "science_frames",
+    "ephemeris_reconstructed",
+    "attitude_history",
+    "pointing_attitude",
+    "planetary_ephemeris",
+    "leapseconds",
+    "spacecraft_clock",
+]
+
+def find_l3e_spice_kernels_for_time_range(start_date: datetime, end_date: datetime, required_kernel_types: Optional[list[str]] =None):
+    required_kernel_types = required_kernel_types or l3e_kernels
+
+    data_access_url = imap_data_access.config["DATA_ACCESS_URL"]
+
+    file_names = []
+    for kernel_type in required_kernel_types:
+        file_json = requests.get(f"{data_access_url}/spice-query?type={kernel_type}&start_time=0").json()
+        for spice_file in file_json:
+            spice_start_date = datetime.strptime(spice_file["min_date_datetime"], "%Y-%m-%d, %H:%M:%S")
+            spice_end_date = datetime.strptime(spice_file["max_date_datetime"], "%Y-%m-%d, %H:%M:%S")
+            if spice_start_date <= end_date and start_date < spice_end_date:
+                file_names.append(Path(spice_file["file_name"]).name)
+            else:
+                print("rejecting file", spice_file["file_name"])
+    return file_names

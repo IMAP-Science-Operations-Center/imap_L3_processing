@@ -116,11 +116,7 @@ def download_dependency_with_repointing(dependency: UpstreamDataDependency) -> (
     return imap_data_access.download(files_with_repointing_to_download[0][0]), repointing_number
 
 
-def download_dependency_from_path(path_str: str) -> Path:
-    return imap_data_access.download(path_str)
-
-
-def download_external_dependency(dependency_url: str, filename: str) -> Path | None:
+def download_external_dependency(dependency_url: str, filename: str) -> Optional[Path]:
     try:
         saved_path, _ = urlretrieve(dependency_url, filename)
         return Path(saved_path)
@@ -184,3 +180,7 @@ def furnish_local_spice():
     for file in kernels.iterdir():
         if file.name not in current_kernels:
             spiceypy.furnsh(str(file))
+
+def get_spice_parent_file_names() -> list[str]:
+    count = spiceypy.ktotal('ALL')
+    return [Path(spiceypy.kdata(i, 'ALL')[0]).name for i in range(0, count)]

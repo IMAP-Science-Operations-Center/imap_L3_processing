@@ -4,6 +4,7 @@ import os
 import re
 import shutil
 import sys
+from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Optional, TypeVar
@@ -594,7 +595,7 @@ def run_glows_l3e_lo_with_mocks(mock_get_repoint_date_range, _, mock_path, mock_
             "ionization-files": "ionization.files.dat",
         },
             "start_cr": 2092},
-        elongation={1234: 90},
+        elongation=defaultdict(lambda: 90),
         repointing_file=get_test_data_path("fake_1_day_repointing_file.csv"),
     )
 
@@ -602,7 +603,7 @@ def run_glows_l3e_lo_with_mocks(mock_get_repoint_date_range, _, mock_path, mock_
     mock_l3e_dependencies_class.fetch_dependencies.return_value = (mock_l3e_dependencies, 2094)
 
     mock_path.side_effect = [
-        Path(get_test_instrument_team_data_path("glows/probSur.Imap.Lo_20090101_010101_2009.000_60.00.txt")),
+        # Path(get_test_instrument_team_data_path("glows/probSur.Imap.Lo_20090101_010101_2009.000_60.00.txt")),
         Path(get_test_instrument_team_data_path("glows/probSur.Imap.Hi_2009.000_135.0.txt")),
         Path(get_test_instrument_team_data_path("glows/probSur.Imap.Hi_2009.000_90.00.txt")),
         Path(get_test_instrument_team_data_path("glows/probSur.Imap.Ul_20090101_010101_2009.000.txt")),

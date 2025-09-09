@@ -29,7 +29,7 @@ class TestHitProcessor(TestCase):
             Processor
         )
 
-    @patch("imap_l3_processing.processor.spiceypy")
+    @patch("imap_l3_processing.utils.spiceypy")
     @patch('imap_l3_processing.hit.l3.hit_processor.save_data')
     @patch('imap_l3_processing.hit.l3.hit_processor.HITL3SectoredDependencies.fetch_dependencies')
     @patch('imap_l3_processing.hit.l3.hit_processor.calculate_unit_vector')
@@ -433,7 +433,7 @@ class TestHitProcessor(TestCase):
 
         self.assertEqual([mock_save_data.return_value], product)
 
-    @patch("imap_l3_processing.processor.spiceypy")
+    @patch("imap_l3_processing.utils.spiceypy")
     @patch("imap_l3_processing.hit.l3.hit_processor.save_data")
     @patch("imap_l3_processing.hit.l3.hit_processor.process_pha_event", autospec=True)
     @patch("imap_l3_processing.hit.l3.hit_processor.HitL3PhaDependencies.fetch_dependencies")

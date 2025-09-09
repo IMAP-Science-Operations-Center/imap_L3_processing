@@ -1,4 +1,5 @@
 import unittest
+from datetime import datetime, timedelta
 from pathlib import Path
 from unittest.mock import patch, Mock
 
@@ -14,14 +15,14 @@ class TestDependencyValidator(unittest.TestCase):
         file_path = get_test_data_path("glows/glows_omni2.dat")
 
         test_cases = [
-            ("Missing All Values Past Buffer", Time("1994:193:00:00:00", format="yday"), TimeDelta(7, format="jd"),
+            ("Missing All Values Past Buffer", datetime(1994, 7, 12), timedelta(days=7),
              False),
-            ("Density 1 Exists", Time("1994:193:00:00:00", format="yday"), TimeDelta(6, format="jd"), False),
-            ("Speed 1 Exists", Time("1994:193:00:00:00", format="yday"), TimeDelta(5, format="jd"), False),
-            ("Alpha 1 Exists", Time("1994:193:00:00:00", format="yday"), TimeDelta(4, format="jd"), False),
-            ("Density 2 Exists", Time("1994:193:00:00:00", format="yday"), TimeDelta(3, format="jd"), False),
-            ("Speed 2 Exists", Time("1994:193:00:00:00", format="yday"), TimeDelta(2, format="jd"), False),
-            ("Missing no values", Time("1994:193:00:00:00", format="yday"), TimeDelta(1, format="jd"), True),
+            ("Density 1 Exists", datetime(1994, 7, 12), timedelta(days=6), False),
+            ("Speed 1 Exists", datetime(1994, 7, 12), timedelta(days=5), False),
+            ("Alpha 1 Exists", datetime(1994, 7, 12), timedelta(days=4), False),
+            ("Density 2 Exists", datetime(1994, 7, 12), timedelta(days=3), False),
+            ("Speed 2 Exists", datetime(1994, 7, 12), timedelta(days=2), False),
+            ("Missing no values", datetime(1994, 7, 12), timedelta(days=1), True),
         ]
 
         for name, end_date, buffer, expected in test_cases:
@@ -41,8 +42,8 @@ class TestDependencyValidator(unittest.TestCase):
             ("flux validation fails", True, False, True, False),
             ("lyman validation fails", True, True, False, False)
         ]
-        end_date_inclusive = Time("1994:198:00:00:00", format="yday")
-        buffer = TimeDelta(2, format="jd")
+        end_date_inclusive = datetime(1994,7, 17)
+        buffer = timedelta(2)
         omni_file_path = Path("omni path")
         fluxtable_file_path = Path("fluxtable path")
         lyman_alpha_file_path = Path("fluxtable path")
@@ -72,8 +73,8 @@ class TestDependencyValidator(unittest.TestCase):
     def test_validate_f107_dependency(self):
         file_path = get_test_data_path("glows/glows_f107_fluxtable.txt")
         test_cases = [
-            ("happy case", Time("2025-02-23 00:00:00"), TimeDelta(3, format='jd'), True),
-            ("not enough data end", Time("2025-02-23 00:00:00"), TimeDelta(5, format='jd'), False),
+            ("happy case", datetime(2025, 2, 23), timedelta(days=3), True),
+            ("not enough data end", datetime(2025, 2, 23), timedelta(days=5), False),
         ]
         for name, end_date, buffer, expected in test_cases:
             with self.subTest(name):
@@ -86,8 +87,8 @@ class TestDependencyValidator(unittest.TestCase):
     def test_validate_lyman_alpha_dependency(self):
         file_path = get_test_data_path("glows/lyman_alpha_composite.nc")
         test_cases = [
-            ("happy case", Time("2025-03-16 00:00:00"), TimeDelta(4, format="jd"), True),
-            ("not enough data end", Time("2025-03-18 00:00:00"), TimeDelta(4, format="jd"), False)
+            ("happy case", datetime(2025,3,16), timedelta(4), True),
+            ("not enough data end", datetime(2025,3,18), timedelta(4), False)
         ]
         for name, end_date, buffer, expected in test_cases:
             with self.subTest(name):

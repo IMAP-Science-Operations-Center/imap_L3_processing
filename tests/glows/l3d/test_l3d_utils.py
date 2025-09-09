@@ -1,3 +1,4 @@
+import tempfile
 import unittest
 from datetime import datetime
 from pathlib import Path
@@ -8,9 +9,10 @@ import numpy as np
 import imap_l3_processing
 from imap_l3_processing.glows.l3d.models import GlowsL3DSolarParamsHistory
 from imap_l3_processing.glows.l3d.utils import create_glows_l3b_json_file_from_cdf, convert_json_to_l3d_data_product, \
-    create_glows_l3c_json_file_from_cdf, get_parent_file_names_from_l3d_json, set_version_on_txt_files
+    create_glows_l3c_json_file_from_cdf, get_parent_file_names_from_l3d_json, rename_l3d_text_outputs, \
+    get_most_recently_uploaded_ancillary
 from imap_l3_processing.models import InputMetadata
-from tests.test_helpers import get_test_data_path
+from tests.test_helpers import get_test_data_path, create_glows_mock_query_results
 
 
 class TestL3dUtils(unittest.TestCase):
@@ -270,17 +272,47 @@ class TestL3dUtils(unittest.TestCase):
 
         self.assertCountEqual(expected, l3bc_filenames)
 
-    @patch('imap_l3_processing.glows.l3d.utils.os')
-    def test_set_version_on_txt_files(self, mock_os):
-        version = "v004"
-        txt_files = [Path("imap_glows_l3d_lya_v00.dat"), Path("imap_glows_l3d_uv-anis_v00.dat")]
-        expected_txt_files = [Path("imap_glows_l3d_lya_v004.dat"), Path("imap_glows_l3d_uv-anis_v004.dat")]
+    @patch("imap_l3_processing.glows.l3d.utils.get_date_range_of_cr")
+    def test_rename_l3d_text_outputs(self, mock_get_date_range_of_cr):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmpdir = Path(tmpdir)
+            original_lya_path = tmpdir / "imap_glows_l3d_lya_19470303-cr02092_v00.dat"
+            original_p_dens_path = tmpdir / "imap_glows_l3d_p-dens_19470303-cr02092_v00.dat"
 
-        new_paths = set_version_on_txt_files(txt_files, version)
+            original_lya_path.write_text("lya")
+            original_p_dens_path.write_text("p_dens")
 
-        mock_os.rename.assert_has_calls([
-            call(txt_files[0], expected_txt_files[0]),
-            call(txt_files[1], expected_txt_files[1]),
-        ])
-        
-        self.assertEqual(new_paths, expected_txt_files)
+            mock_get_date_range_of_cr.return_value = (datetime(2010, 1, 1), datetime(2010, 2, 1))
+
+            version = "v012"
+            actual_new_paths = rename_l3d_text_outputs([original_lya_path, original_p_dens_path], version)
+
+            mock_get_date_range_of_cr.assert_has_calls([call(2092), call(2092)])
+
+            expected_lya_output = tmpdir / "imap_glows_lya_19470303_20100201_v012.dat"
+            expected_p_dens_output = tmpdir / "imap_glows_p-dens_19470303_20100201_v012.dat"
+
+            self.assertEqual([expected_lya_output, expected_p_dens_output], actual_new_paths)
+
+            self.assertEqual("lya", expected_lya_output.read_text())
+            self.assertEqual("p_dens", expected_p_dens_output.read_text())
+
+            self.assertFalse(original_lya_path.exists())
+            self.assertFalse(original_p_dens_path.exists())
+
+    def test_get_most_recently_uploaded_ancillary(self):
+        query_result = create_glows_mock_query_results([
+            "imap_glows_l3d_solar-hist_20100101-cr02091_v001.cdf",
+            "imap_glows_l3d_solar-hist_20100201-cr02092_v002.cdf",
+            "imap_glows_l3d_solar-hist_20100301-cr02093_v001.cdf"
+
+        ], ingestion_dates=[datetime(2010, 1, 2), datetime(2010, 5, 2), datetime(2010, 3, 2)])
+
+        [expected] = create_glows_mock_query_results(
+            ["imap_glows_l3d_solar-hist_20100201-cr02092_v002.cdf"],
+            ingestion_dates=[datetime(2010, 5, 2)])
+
+        self.assertEqual(expected, get_most_recently_uploaded_ancillary(query_result))
+
+    def test_get_most_recently_uploaded_ancillary_with_empty_query(self):
+        self.assertIsNone(get_most_recently_uploaded_ancillary([]))

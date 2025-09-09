@@ -14,9 +14,8 @@ from imap_l3_processing.maps.map_models import GlowsL3eRectangularMapInputData, 
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.swapi.l3a.models import SwapiL3AlphaSolarWindData
 from imap_l3_processing.utils import format_time, download_dependency, read_l1d_mag_data, save_data, \
-    find_glows_l3e_dependencies, \
-    download_external_dependency, download_dependency_from_path, download_dependency_with_repointing, \
-    combine_glows_l3e_with_l1c_pointing, furnish_local_spice
+    find_glows_l3e_dependencies, download_external_dependency, download_dependency_with_repointing, \
+    combine_glows_l3e_with_l1c_pointing, furnish_local_spice, get_spice_parent_file_names
 from imap_l3_processing.version import VERSION
 from tests.cdf.test_cdf_utils import TestDataProduct
 from tests.test_helpers import get_spice_data_path
@@ -390,13 +389,6 @@ class TestUtils(TestCase):
                 np.testing.assert_array_equal(epoch, results.epoch)
                 np.testing.assert_array_equal(trimmed_vectors, results.mag_data)
 
-    @patch('imap_l3_processing.utils.imap_data_access')
-    def test_download_dependency_from_path(self, mock_data_access):
-        local_path = download_dependency_from_path(sentinel.sdc_path)
-
-        self.assertEqual(mock_data_access.download.return_value, local_path)
-        mock_data_access.download.assert_called_once_with(sentinel.sdc_path)
-
     @patch('imap_l3_processing.utils.imap_data_access.query')
     def test_find_glows_l3e_dependencies(self, mock_data_access_query):
         l1c_hi_90sensor_file_paths = ["imap_hi_l1c_90sensor-pset_20201001_v001.cdf",
@@ -500,3 +492,24 @@ class TestUtils(TestCase):
             call(str(get_spice_data_path("sim_1yr_imap_attitude.bc"))),
             call(str(get_spice_data_path("sim_1yr_imap_pointing_frame.bc"))),
         ], any_order=True)
+
+    @patch("imap_l3_processing.utils.spiceypy")
+    def test_get_spice_parent_file_names(self, mock_spicepy):
+        mock_spicepy.ktotal.return_value = 2
+        mock_spicepy.kdata.side_effect = [
+            [Path("some_spice_1.tf"), 'type', 'source', 'handle'],
+            [Path("some_spice_2.kf"), 'type', 'source', 'handle'],
+        ]
+
+        actual_spice_parents = get_spice_parent_file_names()
+
+        mock_spicepy.ktotal.assert_called_once_with('ALL')
+        mock_spicepy.kdata.assert_has_calls([
+            call(0, 'ALL'),
+            call(1, 'ALL')
+        ])
+
+        self.assertEqual(["some_spice_1.tf", "some_spice_2.kf"], actual_spice_parents)
+
+
+

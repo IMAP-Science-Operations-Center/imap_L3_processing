@@ -1,18 +1,161 @@
 import json
+import tempfile
 import unittest
-from datetime import datetime
-from unittest.mock import sentinel
+from datetime import datetime, timedelta
+from pathlib import Path
+from tempfile import TemporaryDirectory
+from unittest.mock import sentinel, patch, call
 
 import numpy as np
 from spacepy import pycdf
 
-from imap_l3_processing.constants import CARRINGTON_ROTATION_IN_NANOSECONDS
-from imap_l3_processing.glows.l3bc.models import GlowsL3BIonizationRate, GlowsL3CSolarWind
+from imap_l3_processing.constants import CARRINGTON_ROTATION_IN_NANOSECONDS, TEMP_CDF_FOLDER_PATH
+from imap_l3_processing.glows.l3bc.models import GlowsL3BIonizationRate, GlowsL3CSolarWind, CRToProcess, \
+    ExternalDependencies, F107_FLUX_TABLE_URL, LYMAN_ALPHA_COMPOSITE_INDEX_URL, OMNI2_URL
 from tests.swapi.cdf_model_test_case import CdfModelTestCase
 from tests.test_helpers import get_test_instrument_team_data_path
 
 
 class TestModels(CdfModelTestCase):
+
+    @patch("imap_l3_processing.glows.l3bc.models.ExternalDependencies._comment_headers")
+    @patch("imap_l3_processing.glows.l3bc.models.download_external_dependency")
+    def test_external_dependencies_fetch_dependencies(self, mock_download_external_dependencies, mock_comment_header):
+        mock_download_external_dependencies.side_effect = [
+            Path("external/file/f107_path"),
+            Path("external/file/lya_path"),
+            Path("external/file/omni_path"),
+        ]
+
+        external_dependencies = ExternalDependencies.fetch_dependencies()
+
+        mock_download_external_dependencies.assert_has_calls([
+            call(F107_FLUX_TABLE_URL, TEMP_CDF_FOLDER_PATH / 'f107_fluxtable.txt'),
+            call(LYMAN_ALPHA_COMPOSITE_INDEX_URL, TEMP_CDF_FOLDER_PATH / 'lyman_alpha.txt'),
+            call(OMNI2_URL, TEMP_CDF_FOLDER_PATH / 'omni2.txt')
+        ])
+
+        mock_comment_header.assert_called_once_with(Path("external/file/f107_path"))
+
+        expected_external_deps = ExternalDependencies(
+            f107_index_file_path=Path("external/file/f107_path"),
+            lyman_alpha_path=Path("external/file/lya_path"),
+            omni2_data_path=Path("external/file/omni_path"),
+        )
+        self.assertEqual(expected_external_deps, external_dependencies)
+
+    @patch("imap_l3_processing.glows.l3bc.models.download_external_dependency")
+    def test_external_dependencies_files_not_found(self, mock_download_external_dependencies):
+        mock_download_external_dependencies.return_value = None
+
+        external_dependencies = ExternalDependencies.fetch_dependencies()
+
+        self.assertEqual(ExternalDependencies(None, None, None), external_dependencies)
+
+    @patch("imap_l3_processing.glows.l3bc.models.download_external_dependency")
+    def test_external_dependencies_comment_headers(self, mock_download_external_dependencies):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            file_name = Path(tmpdir) / "flux_table.txt"
+            with open(file_name, "w") as fp:
+                fp.writelines([
+                    "fluxdate    fluxtime    fluxjulian    fluxcarrington  fluxobsflux  fluxadjflux  fluxursi\n",
+                    "----------  ----------  ------------  --------------  -----------  -----------  ----------\n",
+                    "20041028    170000      02453307.229  002022.605      000132.7     000130.9     000117.8\n",
+                    "20041028    200000      02453307.354  002022.610      000135.8     000134.0     000120.6\n"])
+
+            mock_download_external_dependencies.side_effect = [
+                file_name,
+                None,
+                None
+            ]
+
+            ExternalDependencies.fetch_dependencies()
+
+            with open(file_name, "r") as fp:
+                lines = fp.readlines()
+                self.assertEqual("#", lines[0][0])
+                self.assertEqual("#", lines[1][0])
+
+    @patch("imap_l3_processing.glows.l3bc.models.datetime")
+    @patch("imap_l3_processing.glows.l3bc.models.imap_data_access.download")
+    def test_cr_to_process_buffer_time_has_elapsed_since_cr(self, mock_download, mock_datetime):
+        with TemporaryDirectory() as temp_dir:
+            temp_dir = Path(temp_dir)
+            fake_pipeline_settings = temp_dir / "fake_pipeline_settings.json"
+
+            pipeline_settings = {"initializer_time_delta_days": 28.2}
+            fake_pipeline_settings.write_text(json.dumps(pipeline_settings))
+
+            mock_download.return_value = fake_pipeline_settings
+
+            cr_to_process = CRToProcess(
+                l3a_file_names=set(),
+                uv_anisotropy_file_name="uv_anistropy.dat",
+                waw_helio_ion_mp_file_name="waw_helion.dat",
+                bad_days_list_file_name="bad_days.dat",
+                pipeline_settings_file_name="pipeline_settings.json",
+                cr_start_date=datetime(2010, 1, 1),
+                cr_end_date=datetime(2010, 2, 1),
+                cr_rotation_number=2091,
+            )
+
+            test_cases = [
+                (datetime(2010, 2, 28), False),
+                (datetime(2010, 3, 10), True)
+            ]
+
+            for current_time, expected_buffer_time_has_elapsed_since_cr in test_cases:
+                with self.subTest(current_time):
+                    mock_datetime.now.reset_mock()
+                    mock_datetime.now.return_value = current_time
+
+                    actual = cr_to_process.buffer_time_has_elapsed_since_cr()
+                    self.assertEqual(expected_buffer_time_has_elapsed_since_cr, actual)
+
+                    mock_download.assert_called_with("pipeline_settings.json")
+
+                    mock_datetime.now.assert_called_once()
+
+    @patch("imap_l3_processing.glows.l3bc.models.validate_dependencies")
+    @patch("imap_l3_processing.glows.l3bc.models.imap_data_access.download")
+    def test_cr_to_process_has_valid_external_dependencies(self, mock_download, mock_validate_dependencies):
+        with TemporaryDirectory() as temp_dir:
+            temp_dir = Path(temp_dir)
+            fake_pipeline_settings = temp_dir / "fake_pipeline_settings.json"
+
+            pipeline_settings = {"initializer_time_delta_days": 30.1}
+            fake_pipeline_settings.write_text(json.dumps(pipeline_settings))
+
+            mock_download.return_value = fake_pipeline_settings
+
+            cr_to_process = CRToProcess(
+                l3a_file_names=set(),
+                uv_anisotropy_file_name="uv_anistropy.dat",
+                waw_helio_ion_mp_file_name="waw_helion.dat",
+                bad_days_list_file_name="bad_days.dat",
+                pipeline_settings_file_name="pipeline_settings.json",
+                cr_start_date=datetime(2010, 1, 1),
+                cr_end_date=datetime(2010, 2, 1),
+                cr_rotation_number=2091
+            )
+
+            external_dependencies = ExternalDependencies(
+                f107_index_file_path=Path("f107_index_file_path"),
+                lyman_alpha_path=Path("lyman_alpha_path"),
+                omni2_data_path=Path("omni2_data_path")
+            )
+
+            actual_has_valid_ext_deps = cr_to_process.has_valid_external_dependencies(external_dependencies)
+
+            mock_validate_dependencies.assert_called_once_with(
+                datetime(2010, 2, 1),
+                timedelta(days=30.1),
+                Path("omni2_data_path"),
+                Path("f107_index_file_path"),
+                Path("lyman_alpha_path"),
+            )
+            self.assertEqual(mock_validate_dependencies.return_value, actual_has_valid_ext_deps)
+
     def test_l3b_to_data_product_variables(self):
         data = GlowsL3BIonizationRate(input_metadata=sentinel.input_metadata,
                                       epoch=sentinel.epoch,

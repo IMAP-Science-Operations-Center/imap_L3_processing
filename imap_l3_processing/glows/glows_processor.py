@@ -4,38 +4,49 @@ import os
 import shutil
 import subprocess
 import sys
+import traceback
 from dataclasses import replace
 from datetime import datetime, timedelta
 from pathlib import Path
 from subprocess import run
+from typing import Optional
+from zipfile import ZipFile, ZIP_DEFLATED
 
+import imap_data_access
 import numpy as np
+from imap_data_access.file_validation import generate_imap_file_path
 from imap_data_access.processing_input import ProcessingInputCollection
+from spiceypy import spiceypy
 
+from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
 from imap_l3_processing.glows.descriptors import GLOWS_L3A_DESCRIPTOR
-from imap_l3_processing.glows.glows_initializer import GlowsInitializer
 from imap_l3_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
 from imap_l3_processing.glows.l3a.glows_toolkit.l3a_data import L3aData
 from imap_l3_processing.glows.l3a.models import GlowsL3LightCurve
 from imap_l3_processing.glows.l3a.utils import create_glows_l3a_from_dictionary
 from imap_l3_processing.glows.l3bc.cannot_process_carrington_rotation_error import CannotProcessCarringtonRotationError
 from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDependencies
-from imap_l3_processing.glows.l3bc.models import GlowsL3BIonizationRate, GlowsL3CSolarWind
+from imap_l3_processing.glows.l3bc.glows_l3bc_initializer import GlowsL3BCInitializer, GlowsL3BCInitializerData
+from imap_l3_processing.glows.l3bc.models import GlowsL3BIonizationRate, GlowsL3CSolarWind, GlowsL3BCProcessorOutput, \
+    ExternalDependencies, read_pipeline_settings
 from imap_l3_processing.glows.l3bc.science.filter_out_bad_days import filter_l3a_files
 from imap_l3_processing.glows.l3bc.science.generate_l3bc import generate_l3bc
 from imap_l3_processing.glows.l3bc.utils import get_pointing_date_range
 from imap_l3_processing.glows.l3d.glows_l3d_dependencies import GlowsL3DDependencies
+from imap_l3_processing.glows.l3d.glows_l3d_initializer import GlowsL3DInitializer
+from imap_l3_processing.glows.l3d.models import GlowsL3DProcessorOutput
 from imap_l3_processing.glows.l3d.utils import create_glows_l3b_json_file_from_cdf, create_glows_l3c_json_file_from_cdf, \
-    PATH_TO_L3D_TOOLKIT, convert_json_to_l3d_data_product, get_parent_file_names_from_l3d_json, set_version_on_txt_files
-from imap_l3_processing.glows.l3e.glows_l3e_dependencies import GlowsL3EDependencies
+    PATH_TO_L3D_TOOLKIT, convert_json_to_l3d_data_product, get_parent_file_names_from_l3d_json, rename_l3d_text_outputs
 from imap_l3_processing.glows.l3e.glows_l3e_hi_model import GlowsL3EHiData
+from imap_l3_processing.glows.l3e.glows_l3e_initializer import GlowsL3EInitializer, GlowsL3EInitializerOutput
 from imap_l3_processing.glows.l3e.glows_l3e_lo_model import GlowsL3ELoData
 from imap_l3_processing.glows.l3e.glows_l3e_ultra_model import GlowsL3EUltraData
 from imap_l3_processing.glows.l3e.glows_l3e_utils import determine_call_args_for_l3e_executable, \
-    determine_l3e_files_to_produce
+    find_l3e_spice_kernels_for_time_range
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
-from imap_l3_processing.utils import save_data
+from imap_l3_processing.utils import save_data, get_spice_parent_file_names
+
 logger = logging.getLogger(__name__)
 
 
@@ -52,61 +63,49 @@ class GlowsProcessor(Processor):
             cdf = save_data(l3a_output)
             return [cdf]
         elif self.input_metadata.data_level == "l3b":
-            zip_files = GlowsInitializer.validate_and_initialize(self.input_metadata.version, self.dependencies)
-            products = []
-            for zip_file in zip_files:
-                dependencies = GlowsL3BCDependencies.fetch_dependencies(zip_file)
-                try:
-                    l3b_data_product, l3c_data_product = self.process_l3bc(dependencies)
-                except CannotProcessCarringtonRotationError as e:
-                    print(f"skipping CR {dependencies.carrington_rotation_number}:", e)
-                    continue
-                l3b_cdf = save_data(l3b_data_product)
-                l3c_data_product.parent_file_names.append(Path(l3b_cdf).name)
-                l3c_cdf = save_data(l3c_data_product)
-                products.extend([l3b_cdf, l3c_cdf, zip_file])
-            return products
-        elif self.input_metadata.data_level == "l3d":
-            l3d_dependencies = GlowsL3DDependencies.fetch_dependencies(self.dependencies)
-            data_product, l3d_txt_paths, last_processed_cr = self.process_l3d(l3d_dependencies)
-            if data_product is not None and l3d_txt_paths is not None and last_processed_cr is not None:
-                cdf = save_data(data_product, cr_number=last_processed_cr)
-                return [cdf, *l3d_txt_paths]
-            return []
-        elif self.input_metadata.data_level == "l3e":
-            l3e_dependencies, cr_number = GlowsL3EDependencies.fetch_dependencies(self.dependencies,
-                                                                                  self.input_metadata.descriptor)
-            l3e_dependencies.rename_dependencies()
+            products_list = []
 
-            repointings = determine_l3e_files_to_produce(self.input_metadata.descriptor,
-                                                         l3e_dependencies.pipeline_settings['start_cr'], cr_number,
-                                                         self.input_metadata.version,
-                                                         l3e_dependencies.repointing_file)
-            products = []
-            for repointing in repointings:
-                self.input_metadata.repointing = repointing
-                try:
-                    epoch, epoch_end = get_pointing_date_range(repointing)
-                    epoch_dt: datetime = epoch.astype('datetime64[us]').astype(datetime)
-                    epoch_end_dt: datetime = epoch_end.astype('datetime64[us]').astype(datetime)
-                    epoch_delta: timedelta = (epoch_end_dt - epoch_dt) / 2
+            l3bc_initializer_data: GlowsL3BCInitializerData = GlowsL3BCInitializer.get_crs_to_process(self.dependencies)
 
-                    if self.input_metadata.descriptor == "survival-probability-lo":
-                        try:
-                            year_with_repointing = str(epoch_dt.year) + str(int(repointing)).zfill(3)
-                            elongation = l3e_dependencies.elongation[year_with_repointing]
-                        except KeyError:
-                            continue
-                        products.extend(self.process_l3e_lo(epoch_dt, epoch_delta, elongation))
-                    elif self.input_metadata.descriptor == "survival-probability-hi-45":
-                        products.extend(self.process_l3e_hi(epoch_dt, epoch_delta, 135))
-                    elif self.input_metadata.descriptor == "survival-probability-hi-90":
-                        products.extend(self.process_l3e_hi(epoch_dt, epoch_delta, 90))
-                    elif self.input_metadata.descriptor == "survival-probability-ul":
-                        products.extend(self.process_l3e_ul(epoch_dt, epoch_delta))
-                except Exception as e:
-                    print("Exception encountered for repointing ", repointing, e)
-            return products
+            crs_to_process_infos = [f"{dep.carrington_rotation_number} with version {dep.version}" for dep in l3bc_initializer_data.l3bc_dependencies]
+
+            if len(crs_to_process_infos) > 0:
+                crs_to_process_info = "\n\t".join(crs_to_process_infos)
+                logger.info(f"Found CRs to process:\n\t" + crs_to_process_info)
+
+            glows_l3bc_output_data = process_l3bc(self, l3bc_initializer_data)
+            products_list.extend(glows_l3bc_output_data.data_products)
+
+            l3bs = list({**l3bc_initializer_data.l3bs_by_cr, **glows_l3bc_output_data.l3bs_by_cr}.values())
+            l3cs = list({**l3bc_initializer_data.l3cs_by_cr, **glows_l3bc_output_data.l3cs_by_cr}.values())
+            l3d_initializer_result = GlowsL3DInitializer.should_process_l3d(l3bc_initializer_data.external_dependencies,
+                                                                            l3bs, l3cs)
+            if l3d_initializer_result is None:
+                return products_list
+
+            version_number, glows_l3d_dependency, old_l3d = l3d_initializer_result
+
+            logger.info(f"Processing L3d with version: {version_number}")
+
+            process_l3d_result = process_l3d(glows_l3d_dependency, version_number)
+
+            if process_l3d_result is not None:
+                logger.info(f"Finished processing L3d up to CR: {process_l3d_result.last_processed_cr}")
+                products_list.extend([*process_l3d_result.l3d_text_file_paths, process_l3d_result.l3d_cdf_file_path])
+
+                logger.info(f"Saved L3d CDF output to: {process_l3d_result.l3d_cdf_file_path}")
+                for txt_file in process_l3d_result.l3d_text_file_paths:
+                    logger.info(f"Saved L3d text file output to: {txt_file}")
+            else:
+                return products_list
+
+            l3e_initializer_output = GlowsL3EInitializer.get_repointings_to_process(process_l3d_result, old_l3d, l3bc_initializer_data.repoint_file_path)
+
+            logger.info(f"Processing L3e for repointings: {l3e_initializer_output.repointings.repointing_numbers}")
+
+            products_list.extend(process_l3e(l3e_initializer_output))
+
+            return products_list
 
     def process_l3a(self, dependencies: GlowsL3ADependencies) -> GlowsL3LightCurve:
         data = dependencies.data
@@ -118,141 +117,6 @@ class GlowsProcessor(Processor):
         return create_glows_l3a_from_dictionary(data_with_spin_angle,
                                                 replace(self.input_metadata, descriptor=GLOWS_L3A_DESCRIPTOR))
 
-    def process_l3bc(self, dependencies: GlowsL3BCDependencies) -> tuple[GlowsL3BIonizationRate, GlowsL3CSolarWind]:
-        filtered_days = filter_l3a_files(dependencies.l3a_data, dependencies.ancillary_files['bad_days_list'],
-                                         dependencies.carrington_rotation_number)
-        l3b_metadata = InputMetadata("glows", "l3b", dependencies.start_date, dependencies.end_date,
-                                     self.input_metadata.version, "ion-rate-profile")
-        l3c_metadata = InputMetadata("glows", "l3c", dependencies.start_date, dependencies.end_date,
-                                     self.input_metadata.version, "sw-profile")
-
-        try:
-            l3b_data, l3c_data = generate_l3bc(replace(dependencies, l3a_data=filtered_days))
-        except CannotProcessCarringtonRotationError as e:
-            raise e
-
-        l3b_data_product = GlowsL3BIonizationRate.from_instrument_team_dictionary(l3b_data,
-                                                                                  l3b_metadata)
-        l3c_data_product = GlowsL3CSolarWind.from_instrument_team_dictionary(l3c_data, l3c_metadata)
-
-        l3b_data_product.parent_file_names += self.get_parent_file_names([dependencies.zip_file_path])
-        l3c_data_product.parent_file_names += self.get_parent_file_names([dependencies.zip_file_path])
-        return l3b_data_product, l3c_data_product
-
-    def process_l3d(self, dependencies: GlowsL3DDependencies):
-        [create_glows_l3b_json_file_from_cdf(l3b) for l3b in dependencies.l3b_file_paths]
-        [create_glows_l3c_json_file_from_cdf(l3c) for l3c in dependencies.l3c_file_paths]
-
-        os.makedirs(PATH_TO_L3D_TOOLKIT / 'data_l3d', exist_ok=True)
-        os.makedirs(PATH_TO_L3D_TOOLKIT / 'data_l3d_txt', exist_ok=True)
-
-        with open(dependencies.ancillary_files['pipeline_settings'], "r") as fp:
-            pipeline_settings = json.load(fp)
-            cr_to_process = int(pipeline_settings['start_cr'])
-
-        file_manifest = {
-            'ancillary_files': {
-                'pipeline_settings': str(dependencies.ancillary_files['pipeline_settings']),
-                'WawHelioIon': {key: str(val) for key, val in dependencies.ancillary_files['WawHelioIon'].items()}
-            },
-            'external_files': {key: str(val) for key, val in dependencies.external_files.items()}
-        }
-
-        last_processed_cr = None
-        try:
-            while True:
-                output: subprocess.CompletedProcess = run(
-                    [sys.executable, './generate_l3d.py', f'{cr_to_process}', json.dumps(file_manifest)],
-                    cwd=str(PATH_TO_L3D_TOOLKIT),
-                    check=True,
-                    capture_output=True, text=True)
-                if output.stdout:
-                    last_processed_cr = int(output.stdout.split('= ')[-1])
-
-                cr_to_process += 1
-        except subprocess.CalledProcessError as e:
-            if 'L3d not generated: there is not enough L3b data to interpolate' not in e.stderr:
-                raise Exception(e.stderr) from e
-
-        if last_processed_cr:
-            file_name = f'imap_glows_l3d_solar-params-history_19470303-cr0{last_processed_cr}_v00.json'
-
-            parent_file_names = get_parent_file_names_from_l3d_json(PATH_TO_L3D_TOOLKIT / 'data_l3d')
-
-            output_txt_files = [PATH_TO_L3D_TOOLKIT / 'data_l3d_txt' / last_cr_txt_file for last_cr_txt_file in
-                                os.listdir(PATH_TO_L3D_TOOLKIT / 'data_l3d_txt') if
-                                str(last_processed_cr) in last_cr_txt_file]
-
-            txt_files_with_correct_version = set_version_on_txt_files(output_txt_files, self.input_metadata.version)
-
-            return convert_json_to_l3d_data_product(PATH_TO_L3D_TOOLKIT / 'data_l3d' / file_name, self.input_metadata,
-                                                    parent_file_names), txt_files_with_correct_version, last_processed_cr
-        return None, None, None
-
-    def process_l3e_lo(self, epoch: datetime, epoch_delta: timedelta, elongation_value: int) -> list[Path]:
-        call_args_object = determine_call_args_for_l3e_executable(epoch, epoch + epoch_delta, elongation_value)
-        call_args = call_args_object.to_argument_list()
-
-        run(["./survProbLo"] + call_args)
-
-        output_path = Path(f'probSur.Imap.Lo_{call_args[0]}_{call_args[1][:8]}_{call_args[-1][:5]}.dat')
-        lo_data = GlowsL3ELoData.convert_dat_to_glows_l3e_lo_product(self.input_metadata, output_path,
-                                                                     np.array([epoch]),
-                                                                     np.array([elongation_value]), call_args_object)
-
-        lo_data.parent_file_names = self.get_parent_file_names()
-        lo_cdf = save_data(lo_data)
-        new_dat_path = Path(lo_cdf)
-        new_dat_path = new_dat_path.parent / Path('_'.join(new_dat_path.name.split('_')[0:4]) + '-raw_' + '_'.join(
-            new_dat_path.name.split('_')[4:])[:-4] + '.dat')
-
-        shutil.move(output_path, new_dat_path)
-
-        return [lo_cdf, new_dat_path]
-
-    def process_l3e_hi(self, epoch: datetime, epoch_delta: timedelta, elongation: int) -> list[Path]:
-        call_args_object = determine_call_args_for_l3e_executable(epoch, epoch + epoch_delta, elongation)
-        call_args = call_args_object.to_argument_list()
-        run(["./survProbHi"] + call_args)
-
-        output_path = Path(f'probSur.Imap.Hi_{call_args[0]}_{call_args[1][:8]}_{call_args[-1][:5]}.dat')
-        hi_data = GlowsL3EHiData.convert_dat_to_glows_l3e_hi_product(self.input_metadata, output_path,
-                                                                     np.array([epoch]), call_args_object)
-
-        hi_data.parent_file_names = self.get_parent_file_names()
-
-        hi_cdf = save_data(hi_data)
-
-        new_dat_path = Path(hi_cdf)
-        new_dat_path = new_dat_path.parent / Path('_'.join(new_dat_path.name.split('_')[0:4]) + '-raw_' + '_'.join(
-            new_dat_path.name.split('_')[4:])[:-4] + '.dat')
-
-        shutil.move(output_path, new_dat_path)
-
-        return [hi_cdf, new_dat_path]
-
-    def process_l3e_ul(self, epoch: datetime, epoch_delta: timedelta) -> list[Path]:
-        call_args_object = determine_call_args_for_l3e_executable(epoch, epoch + epoch_delta, 30)
-        call_args = call_args_object.to_argument_list()
-
-        run(["./survProbUltra"] + call_args)
-
-        output_path = Path(f'probSur.Imap.Ul_{call_args[0]}_{call_args[1][:8]}.dat')
-        ul_data = GlowsL3EUltraData.convert_dat_to_glows_l3e_ul_product(self.input_metadata, output_path,
-                                                                        np.array([epoch]), call_args_object)
-
-        ul_data.parent_file_names = self.get_parent_file_names()
-
-        ul_cdf = save_data(ul_data)
-
-        new_dat_path = Path(ul_cdf)
-        new_dat_path = new_dat_path.parent / Path('_'.join(new_dat_path.name.split('_')[0:4]) + '-raw_' + '_'.join(
-            new_dat_path.name.split('_')[4:])[:-4] + '.dat')
-
-        shutil.move(output_path, new_dat_path)
-
-        return [ul_cdf, new_dat_path]
-
     @staticmethod
     def add_spin_angle_delta(data: dict, ancillary_files: dict) -> dict:
         with open(ancillary_files['settings']) as f:
@@ -263,3 +127,286 @@ class GlowsProcessor(Processor):
         data['daily_lightcurve']['spin_angle_delta'] = np.full_like(data['daily_lightcurve']['spin_angle'], delta)
 
         return data
+
+    @staticmethod
+    def archive_dependencies(l3bc_deps: GlowsL3BCDependencies, external_dependencies: ExternalDependencies) -> Path:
+        start_date = l3bc_deps.start_date.strftime("%Y%m%d")
+        zip_path = TEMP_CDF_FOLDER_PATH / f"imap_glows_l3b-archive_{start_date}_v{l3bc_deps.version:03}.zip"
+        json_filename = "cr_to_process.json"
+        with ZipFile(zip_path, "w", ZIP_DEFLATED) as file:
+            file.write(external_dependencies.lyman_alpha_path, "lyman_alpha_composite.nc")
+            file.write(external_dependencies.omni2_data_path, "omni2_all_years.dat")
+            file.write(external_dependencies.f107_index_file_path, "f107_fluxtable.txt")
+            cr = {"cr_rotation_number": l3bc_deps.carrington_rotation_number,
+                  "l3a_paths": [l3a['filename'] for l3a in l3bc_deps.l3a_data],
+                  "cr_start_date": str(l3bc_deps.start_date),
+                  "cr_end_date": str(l3bc_deps.end_date),
+                  "bad_days_list": l3bc_deps.ancillary_files['bad_days_list'].name,
+                  "pipeline_settings": l3bc_deps.ancillary_files['pipeline_settings'].name,
+                  "waw_helioion_mp": l3bc_deps.ancillary_files['WawHelioIonMP_parameters'].name,
+                  "uv_anisotropy": l3bc_deps.ancillary_files['uv_anisotropy'].name,
+                  "repointing_file": l3bc_deps.repointing_file_path.name,
+                  }
+            json_string = json.dumps(cr)
+            file.writestr(json_filename, json_string)
+        return zip_path
+
+def process_l3bc(processor, initializer_data: GlowsL3BCInitializerData):
+    l3bs_by_cr = {}
+    l3cs_by_cr = {}
+    data_products = []
+    for dependency in initializer_data.l3bc_dependencies:
+        logger.info(f"Processing L3BC for CR: {dependency.carrington_rotation_number}")
+        zip_path = GlowsProcessor.archive_dependencies(l3bc_deps=dependency,
+                                                       external_dependencies=initializer_data.external_dependencies)
+
+        filtered_days = filter_l3a_files(dependency.l3a_data, dependency.ancillary_files['bad_days_list'],
+                                         dependency.carrington_rotation_number)
+        try:
+            l3b_data, l3c_data = generate_l3bc(replace(dependency, l3a_data=filtered_days))
+        except CannotProcessCarringtonRotationError as e:
+            print(f"skipping CR {dependency.carrington_rotation_number}:", e)
+            continue
+
+        l3b_metadata = InputMetadata("glows", "l3b", dependency.start_date, dependency.end_date,
+                                     f"v{dependency.version:03}", "ion-rate-profile")
+        l3c_metadata = InputMetadata("glows", "l3c", dependency.start_date, dependency.end_date,
+                                     f"v{dependency.version:03}", "sw-profile")
+
+        l3b_data_product = GlowsL3BIonizationRate.from_instrument_team_dictionary(l3b_data, l3b_metadata)
+        l3c_data_product = GlowsL3CSolarWind.from_instrument_team_dictionary(l3c_data, l3c_metadata)
+
+        l3b_data_product.parent_file_names += processor.get_parent_file_names([zip_path])
+        l3b_cdf = save_data(l3b_data_product, cr_number=dependency.carrington_rotation_number)
+
+        l3c_data_product.parent_file_names += processor.get_parent_file_names([zip_path, Path(l3b_cdf)])
+        l3c_cdf = save_data(l3c_data_product, cr_number=dependency.carrington_rotation_number)
+
+        logger.info(f"Finished processing CR: {dependency.carrington_rotation_number}")
+        for path in [l3b_cdf, l3c_cdf]:
+            logger.info(f"Saved {path}")
+
+        l3bs_by_cr[dependency.carrington_rotation_number] = l3b_cdf.name
+        l3cs_by_cr[dependency.carrington_rotation_number] = l3c_cdf.name
+        data_products.extend([l3b_cdf, l3c_cdf, zip_path])
+
+    return GlowsL3BCProcessorOutput(
+        l3bs_by_cr=l3bs_by_cr,
+        l3cs_by_cr=l3cs_by_cr,
+        data_products=data_products
+    )
+
+def process_l3d(dependencies: GlowsL3DDependencies, version: int) -> Optional[GlowsL3DProcessorOutput]:
+
+    [create_glows_l3b_json_file_from_cdf(l3b) for l3b in dependencies.l3b_file_paths]
+    [create_glows_l3c_json_file_from_cdf(l3c) for l3c in dependencies.l3c_file_paths]
+
+    os.makedirs(PATH_TO_L3D_TOOLKIT / 'data_l3d', exist_ok=True)
+    os.makedirs(PATH_TO_L3D_TOOLKIT / 'data_l3d_txt', exist_ok=True)
+
+    cr_to_process = read_pipeline_settings(dependencies.ancillary_files['pipeline_settings'])["start_cr"]
+
+    file_manifest = {
+        'external_files': {key: str(val) for key, val in dependencies.external_files.items()},
+        'ancillary_files': {
+            'pipeline_settings': str(dependencies.ancillary_files['pipeline_settings']),
+            'WawHelioIon': {key: str(val) for key, val in dependencies.ancillary_files['WawHelioIon'].items()}
+        },
+    }
+
+    last_processed_cr = None
+    try:
+        while True:
+            output: subprocess.CompletedProcess = run(
+                [sys.executable, './generate_l3d.py', f'{cr_to_process}', json.dumps(file_manifest)],
+                cwd=str(PATH_TO_L3D_TOOLKIT),
+                check=True,
+                capture_output=True, text=True)
+            if output.stdout:
+                last_processed_cr = int(output.stdout.split('= ')[-1])
+
+            cr_to_process += 1
+    except subprocess.CalledProcessError as e:
+        if 'L3d not generated: there is not enough L3b data to interpolate' not in e.stderr:
+            raise Exception(e.stderr) from e
+
+    if last_processed_cr:
+        formatted_version = f"v{version:03}"
+
+        output_text_files = []
+        for text_file in os.listdir(PATH_TO_L3D_TOOLKIT / 'data_l3d_txt'):
+            if str(last_processed_cr) in text_file:
+                output_text_files.append(PATH_TO_L3D_TOOLKIT / 'data_l3d_txt' / text_file)
+
+        txt_files_with_correct_version = rename_l3d_text_outputs(output_text_files, formatted_version)
+
+        for txt_file in txt_files_with_correct_version:
+            data_dir_path = generate_imap_file_path(txt_file.name).construct_path()
+            print(f"copied to {data_dir_path=}")
+            shutil.copy(txt_file, generate_imap_file_path(txt_file.name).construct_path())
+            print(f"copied path exists: {data_dir_path.exists()}")
+
+        file_name = f'imap_glows_l3d_solar-params-history_19470303-cr0{last_processed_cr}_v00.json'
+
+        start_date = datetime(1947, 3, 3)
+        data_product_metadata = InputMetadata(instrument="glows", data_level="l3d", descriptor="solar-hist",
+                                              start_date=start_date, end_date=start_date, version=formatted_version)
+        parent_file_names = get_parent_file_names_from_l3d_json(PATH_TO_L3D_TOOLKIT / 'data_l3d')
+
+        l3d_data_product = convert_json_to_l3d_data_product(PATH_TO_L3D_TOOLKIT / 'data_l3d' / file_name,
+                                                            data_product_metadata, parent_file_names)
+        l3d_data_product_path = save_data(l3d_data_product, cr_number=last_processed_cr)
+
+        return GlowsL3DProcessorOutput(l3d_data_product_path, txt_files_with_correct_version, last_processed_cr)
+    return None
+
+def process_l3e_lo(
+        parent_file_names: list[str],
+        repointing: int,
+        epoch: datetime,
+        epoch_delta: timedelta,
+        elongation_value: int,
+        version: int
+) -> list[Path]:
+    l3e_args = determine_call_args_for_l3e_executable(epoch, epoch + epoch_delta, float(elongation_value))
+    call_args = l3e_args.to_argument_list()
+
+    run(["./survProbLo"] + call_args)
+
+    input_metadata = InputMetadata(
+        instrument="glows",
+        data_level="l3e",
+        descriptor="survival-probability-lo",
+        start_date=epoch,
+        end_date=epoch + epoch_delta * 2,
+        version=f"v{version:03}",
+        repointing=repointing,
+    )
+
+    output_path = Path(f'probSur.Imap.Lo_{l3e_args.formatted_date}_{l3e_args.decimal_date[:8]}_{elongation_value:.2f}.dat')
+    lo_data = GlowsL3ELoData.convert_dat_to_glows_l3e_lo_product(input_metadata, output_path,
+                                                                 np.array([epoch]),
+                                                                 np.array([elongation_value]), l3e_args)
+
+    lo_data.parent_file_names = parent_file_names
+
+    lo_cdf = save_data(lo_data)
+    new_dat_path = lo_cdf
+    new_dat_path = new_dat_path.parent / Path('_'.join(new_dat_path.name.split('_')[0:4]) + '-raw_' + '_'.join(
+        new_dat_path.name.split('_')[4:])[:-4] + '.dat')
+
+    shutil.move(output_path, new_dat_path)
+
+    return [lo_cdf, new_dat_path]
+
+def process_l3e_ul(parent_file_names: list[str], repointing: int, epoch: datetime, epoch_delta: timedelta, version: int) -> list[Path]:
+    call_args_object = determine_call_args_for_l3e_executable(epoch, epoch + epoch_delta, 30)
+    call_args = call_args_object.to_argument_list()
+
+    run(["./survProbUltra"] + call_args)
+
+    input_metadata = InputMetadata(
+        instrument="glows",
+        data_level="l3e",
+        descriptor="survival-probability-ul",
+        start_date=epoch,
+        end_date=epoch + epoch_delta * 2,
+        version=f"v{version:03}",
+        repointing=repointing,
+    )
+
+    output_path = Path(f'probSur.Imap.Ul_{call_args[0]}_{call_args[1][:8]}.dat')
+    ul_data = GlowsL3EUltraData.convert_dat_to_glows_l3e_ul_product(input_metadata, output_path,
+                                                                    np.array([epoch]), call_args_object)
+
+    ul_data.parent_file_names = parent_file_names
+
+    ul_cdf = save_data(ul_data)
+
+    new_dat_path = Path(ul_cdf)
+    new_dat_path = new_dat_path.parent / Path('_'.join(new_dat_path.name.split('_')[0:4]) + '-raw_' + '_'.join(
+        new_dat_path.name.split('_')[4:])[:-4] + '.dat')
+
+    shutil.move(output_path, new_dat_path)
+
+    return [ul_cdf, new_dat_path]
+
+def process_l3e_hi(parent_file_names: list[str], repointing: int, epoch: datetime, epoch_delta: timedelta, elongation: int, version: int) -> list[Path]:
+    call_args_object = determine_call_args_for_l3e_executable(epoch, epoch + epoch_delta, elongation)
+    call_args = call_args_object.to_argument_list()
+    run(["./survProbHi"] + call_args)
+
+
+    input_metadata = InputMetadata(instrument='glows', descriptor=f'survival-probability-hi-{180-elongation}',
+                                   version=f'v{version:03}', start_date=epoch,end_date=epoch+epoch_delta * 2,
+                                   repointing=repointing, data_level='l3e')
+
+    output_path = Path(f'probSur.Imap.Hi_{call_args[0]}_{call_args[1][:8]}_{call_args[-1][:5]}.dat')
+    hi_data = GlowsL3EHiData.convert_dat_to_glows_l3e_hi_product(input_metadata, output_path,
+                                                                 np.array([epoch]), call_args_object)
+
+    hi_data.parent_file_names = parent_file_names
+
+    hi_cdf = save_data(hi_data)
+
+    new_dat_path = Path(hi_cdf)
+    new_dat_path = new_dat_path.parent / Path('_'.join(new_dat_path.name.split('_')[0:4]) + '-raw_' + '_'.join(
+        new_dat_path.name.split('_')[4:])[:-4] + '.dat')
+
+    shutil.move(output_path, new_dat_path)
+
+    return [hi_cdf, new_dat_path]
+
+def process_l3e(initializer_data: GlowsL3EInitializerOutput):
+    products_list = []
+    for repointing in initializer_data.repointings.repointing_numbers:
+        with SwallowExceptionAndLog(f"Exception encountered when processing L3e for repointing {repointing}"):
+            epoch, epoch_end = get_pointing_date_range(repointing)
+            epoch_delta: timedelta = (epoch_end - epoch) / 2
+
+            spice_kernel_file_names = find_l3e_spice_kernels_for_time_range(epoch, epoch_end)
+            # if len(spice_kernel_file_names) == 0:
+            #     continue
+
+            for spice_kernel in spice_kernel_file_names:
+                spice_kernel_downloaded_path = imap_data_access.download(spice_kernel)
+                spiceypy.furnsh(str(spice_kernel_downloaded_path))
+
+            with SwallowExceptionAndLog(f"Exception encountered when processing L3e lo for repointing {repointing}"):
+                lo_parent_file_names = spice_kernel_file_names + initializer_data.dependencies.get_lo_parents()
+                lo_elongation = initializer_data.dependencies.elongation.get(f"{epoch.year}{repointing:03}")
+                if lo_elongation is not None:
+                    lo_version = initializer_data.repointings.lo_repointings[repointing]
+                    products_list.extend(process_l3e_lo(lo_parent_file_names, repointing, epoch, epoch_delta, lo_elongation, lo_version))
+
+            with SwallowExceptionAndLog(f"Exception encountered when processing L3e hi-90 for repointing {repointing}"):
+                hi_parent_file_names = spice_kernel_file_names + initializer_data.dependencies.get_hi_parents()
+                hi_90_version = initializer_data.repointings.hi_90_repointings[repointing]
+                products_list.extend(process_l3e_hi(hi_parent_file_names, repointing, epoch, epoch_delta, 90, hi_90_version))
+
+            with SwallowExceptionAndLog(f"Exception encountered when processing L3e hi-45 for repointing {repointing}"):
+                hi_parent_file_names = spice_kernel_file_names + initializer_data.dependencies.get_hi_parents()
+                hi_45_version = initializer_data.repointings.hi_45_repointings[repointing]
+                products_list.extend(process_l3e_hi(hi_parent_file_names, repointing, epoch, epoch_delta, 135, hi_45_version))
+
+            with SwallowExceptionAndLog(f"Exception encountered when processing L3e ultra for repointing {repointing}"):
+                ul_parent_file_names = spice_kernel_file_names + initializer_data.dependencies.get_ul_parents()
+                ul_version = initializer_data.repointings.ultra_repointings[repointing]
+                products_list.extend(process_l3e_ul(ul_parent_file_names, repointing, epoch, epoch_delta, ul_version))
+
+    return products_list
+
+class SwallowExceptionAndLog:
+    def __init__(self, message: str):
+        self.message = message
+
+    def __enter__(self):
+        pass
+
+    def __exit__(self, exc_type, exc_val, exc_tb) -> bool:
+        if exc_type is KeyboardInterrupt:
+            return False
+        elif exc_type is not None:
+            print(self.message)
+            traceback.print_exception(exc_type, exc_val, exc_tb)
+        return True

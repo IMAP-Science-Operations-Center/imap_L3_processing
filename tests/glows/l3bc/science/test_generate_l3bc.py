@@ -1,7 +1,7 @@
 import json
-from datetime import datetime
-from pathlib import Path
+from datetime import datetime, timedelta
 from unittest import TestCase
+from unittest.mock import sentinel
 
 from imap_l3_processing.glows.l3a.utils import create_glows_l3a_dictionary_from_cdf
 from imap_l3_processing.glows.l3bc.cannot_process_carrington_rotation_error import CannotProcessCarringtonRotationError
@@ -30,11 +30,16 @@ class TestGenerateL3BC(TestCase):
         for name in l3a_file_names:
             l3a_data.append(create_glows_l3a_dictionary_from_cdf(l3a_data_folder_path / name))
 
-        dependencies = GlowsL3BCDependencies(l3a_data=l3a_data, external_files=external_files,
-                                             ancillary_files=ancillary_files, carrington_rotation_number=cr,
-                                             start_date=datetime(2025, 4, 3),
-                                             end_date=datetime(2025, 4, 4),
-                                             zip_file_path=Path('some/path.zip'))
+        dependencies = GlowsL3BCDependencies(
+            l3a_data=l3a_data,
+            external_files=external_files,
+            ancillary_files=ancillary_files,
+            carrington_rotation_number=cr,
+            start_date=datetime.now(),
+            end_date=datetime.now() + timedelta(days=1),
+            version=1,
+            repointing_file_path=sentinel.repointing_file_path
+        )
 
         actual_l3b, actual_l3c = generate_l3bc(dependencies)
 
@@ -68,11 +73,16 @@ class TestGenerateL3BC(TestCase):
             create_glows_l3a_dictionary_from_cdf(
                 l3a_data_folder_path / 'imap_glows_l3a_hist_20100201-repoint00032_v001.cdf')]
 
-        dependencies = GlowsL3BCDependencies(l3a_data=l3a_data, external_files=external_files,
-                                             ancillary_files=ancillary_files, carrington_rotation_number=cr,
-                                             start_date=datetime(2025, 4, 3),
-                                             end_date=datetime(2025, 4, 4),
-                                             zip_file_path=Path('some/path.zip'))
+        dependencies = GlowsL3BCDependencies(
+            l3a_data=l3a_data,
+            external_files=external_files,
+            ancillary_files=ancillary_files,
+            carrington_rotation_number=cr,
+            start_date=datetime.now(),
+            end_date=datetime.now() + timedelta(days=1),
+            version=1,
+            repointing_file_path=sentinel.repointing_file_path
+        )
 
         with self.assertRaises(CannotProcessCarringtonRotationError) as context:
             generate_l3bc(dependencies)
@@ -123,11 +133,16 @@ class TestGenerateL3BC(TestCase):
         l3a_folder_path = get_test_data_path('glows/l3a_products')
         l3a_data = [create_glows_l3a_dictionary_from_cdf(l3a_folder_path / file) for file in l3a_files]
 
-        dependencies = GlowsL3BCDependencies(l3a_data=l3a_data, external_files=external_files,
-                                             ancillary_files=ancillary_files, carrington_rotation_number=cr,
-                                             start_date=datetime(2025, 4, 19),
-                                             end_date=datetime(2025, 5, 23),
-                                             zip_file_path=Path('some/path.zip'))
+        dependencies = GlowsL3BCDependencies(
+            l3a_data=l3a_data,
+            external_files=external_files,
+            ancillary_files=ancillary_files,
+            carrington_rotation_number=cr,
+            start_date=datetime.now(),
+            end_date=datetime.now() + timedelta(days=1),
+            version=1,
+            repointing_file_path=sentinel.repointing_file_path
+        )
         l3b, l3c = generate_l3bc(dependencies)
 
         expected_l3a_parent_files = [

@@ -6,7 +6,7 @@ from astropy.time import Time
 from imap_l3_processing.glows.l3bc.l3bc_toolkit.funcs import jd_fm_Carrington
 
 
-def filter_l3a_files(l3a_data: [dict], bad_day_list_path: Path, cr: int) -> [dict]:
+def filter_l3a_files(l3a_data: list[dict], bad_day_list_path: Path, cr: int) -> list[dict]:
     carrington_start_date = jd_fm_Carrington(float(cr))
     cr_start_time = Time(carrington_start_date, format='jd')
     cr_start_time.format = 'iso'

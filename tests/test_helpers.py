@@ -1,11 +1,15 @@
 import json
 import os
-from dataclasses import fields
+from dataclasses import fields, dataclass
+from datetime import timedelta, datetime
 from pathlib import Path
-from typing import Type, T
+from typing import Type, T, Optional
+from unittest import SkipTest
 from unittest.mock import Mock
 
 import numpy as np
+from imap_data_access import ScienceFilePath, AncillaryFilePath
+from imap_data_access.file_validation import generate_imap_file_path
 
 import tests
 from imap_l3_processing.swe.l3.models import SweConfiguration
@@ -141,3 +145,70 @@ def environment_variables(env_vars: dict):
         return wrapper
 
     return decorator
+
+
+def create_glows_mock_query_results(file_names: list[str], ingestion_dates: Optional[list[datetime]] = None) -> list[dict]:
+    file_paths = []
+
+    if ingestion_dates is None:
+        ingestion_dates = [datetime(2000, 1, 1)] * len(file_names)
+
+    for fn, ingestion_date in zip(file_names, ingestion_dates):
+        imap_file_path = generate_imap_file_path(fn)
+        match imap_file_path:
+            case ScienceFilePath():
+                file_paths.append({
+                    "instrument": "glows",
+                    "data_level": imap_file_path.data_level,
+                    "descriptor": imap_file_path.descriptor,
+                    "start_date": imap_file_path.start_date,
+                    "ingestion_date": ingestion_date.strftime("%Y%m%d %H:%M:%S"),
+                    "version": imap_file_path.version,
+                    "cr": imap_file_path.cr,
+                    "file_path": str(imap_file_path.filename),
+                    "repointing": imap_file_path.repointing
+                })
+            case AncillaryFilePath():
+                file_paths.append({
+                    "instrument": "glows",
+                    "descriptor": imap_file_path.descriptor,
+                    "start_date": imap_file_path.start_date,
+                    "end_date": imap_file_path.end_date,
+                    "ingestion_date": ingestion_date.strftime("%Y%m%d %H:%M:%S"),
+                    "version": imap_file_path.version,
+                    "file_path": str(imap_file_path.filename),
+                })
+    return file_paths
+
+@dataclass
+class PeriodicallyRunTest:
+    test_name: str
+    frequency: str
+    last_run: Optional[str]
+
+
+def run_periodically(frequency: timedelta):
+    def run_periodically_decorator(test_item):
+        periodically_run_tests_path = Path(__file__).parent / "periodically_run_tests.json"
+        periodically_run_tests = json.loads(periodically_run_tests_path.read_text())
+
+        last_run = periodically_run_tests.get(test_item.__name__)
+
+        def test_thing(*args):
+            if last_run is not None:
+                last_run_time = datetime.fromisoformat(last_run) + frequency
+                if datetime.now() < last_run_time:
+                    raise SkipTest(f'Skipping expensive test, {test_item.__name__}, because it passed recently')
+
+            try:
+                test_item(*args)
+                periodically_run_tests[test_item.__name__] = datetime.now().isoformat()
+                periodically_run_tests_path.write_text(json.dumps(periodically_run_tests))
+            except Exception as e:
+                periodically_run_tests[test_item.__name__] = None
+                periodically_run_tests_path.write_text(json.dumps(periodically_run_tests))
+                raise e
+
+        return test_thing
+
+    return run_periodically_decorator
