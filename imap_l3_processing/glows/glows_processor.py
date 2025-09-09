@@ -14,7 +14,7 @@ from zipfile import ZipFile, ZIP_DEFLATED
 
 import imap_data_access
 import numpy as np
-from imap_data_access.file_validation import generate_imap_file_path
+from imap_data_access.file_validation import generate_imap_file_path, ScienceFilePath, AncillaryFilePath
 from imap_data_access.processing_input import ProcessingInputCollection
 from spiceypy import spiceypy
 
@@ -70,8 +70,10 @@ class GlowsProcessor(Processor):
             crs_to_process_infos = [f"{dep.carrington_rotation_number} with version {dep.version}" for dep in l3bc_initializer_data.l3bc_dependencies]
 
             if len(crs_to_process_infos) > 0:
-                crs_to_process_info = "\n\t".join(crs_to_process_infos)
-                logger.info(f"Found CRs to process:\n\t" + crs_to_process_info)
+                logger.info("Found CRs to Process L3BC:")
+                for dep in l3bc_initializer_data.l3bc_dependencies:
+                    l3a_file_names = [l3a_d["filename"] for l3a_d in dep.l3a_data]
+                    logger.info(f"\t{dep.carrington_rotation_number}, v{dep.version:03}: {l3a_file_names}")
 
             glows_l3bc_output_data = process_l3bc(self, l3bc_initializer_data)
             products_list.extend(glows_l3bc_output_data.data_products)
@@ -271,6 +273,8 @@ def process_l3e_lo(
     l3e_args = determine_call_args_for_l3e_executable(epoch, epoch + epoch_delta, float(elongation_value))
     call_args = l3e_args.to_argument_list()
 
+    logger.info(f"Processing L3e Lo, calling survProbLo with {call_args}")
+
     run(["./survProbLo"] + call_args)
 
     input_metadata = InputMetadata(
@@ -283,7 +287,10 @@ def process_l3e_lo(
         repointing=repointing,
     )
 
-    output_path = Path(f'probSur.Imap.Lo_{l3e_args.formatted_date}_{l3e_args.decimal_date[:8]}_{elongation_value:.2f}.dat')
+    elongation_in_filename = f"{elongation_value}."
+    elongation_in_filename += "0" * (5-len(elongation_in_filename))
+
+    output_path = Path(f'probSur.Imap.Lo_{l3e_args.formatted_date}_{l3e_args.decimal_date[:8]}_{elongation_in_filename}.dat')
     lo_data = GlowsL3ELoData.convert_dat_to_glows_l3e_lo_product(input_metadata, output_path,
                                                                  np.array([epoch]),
                                                                  np.array([elongation_value]), l3e_args)
@@ -291,9 +298,15 @@ def process_l3e_lo(
     lo_data.parent_file_names = parent_file_names
 
     lo_cdf = save_data(lo_data)
-    new_dat_path = lo_cdf
-    new_dat_path = new_dat_path.parent / Path('_'.join(new_dat_path.name.split('_')[0:4]) + '-raw_' + '_'.join(
-        new_dat_path.name.split('_')[4:])[:-4] + '.dat')
+
+    cdf_science_file_path = ScienceFilePath(lo_cdf)
+    new_dat_path = AncillaryFilePath.generate_from_inputs(
+        instrument="glows",
+        descriptor=f"{cdf_science_file_path.descriptor}-raw",
+        start_time=cdf_science_file_path.start_date,
+        version=cdf_science_file_path.version,
+        extension="dat"
+    ).construct_path()
 
     shutil.move(output_path, new_dat_path)
 
@@ -302,6 +315,8 @@ def process_l3e_lo(
 def process_l3e_ul(parent_file_names: list[str], repointing: int, epoch: datetime, epoch_delta: timedelta, version: int) -> list[Path]:
     call_args_object = determine_call_args_for_l3e_executable(epoch, epoch + epoch_delta, 30)
     call_args = call_args_object.to_argument_list()
+
+    logger.info(f"Processing L3e Ultra, calling survProbUltra with {call_args}")
 
     run(["./survProbUltra"] + call_args)
 
@@ -323,9 +338,15 @@ def process_l3e_ul(parent_file_names: list[str], repointing: int, epoch: datetim
 
     ul_cdf = save_data(ul_data)
 
-    new_dat_path = Path(ul_cdf)
-    new_dat_path = new_dat_path.parent / Path('_'.join(new_dat_path.name.split('_')[0:4]) + '-raw_' + '_'.join(
-        new_dat_path.name.split('_')[4:])[:-4] + '.dat')
+    cdf_science_file_path = ScienceFilePath(ul_cdf)
+
+    new_dat_path = AncillaryFilePath.generate_from_inputs(
+        instrument="glows",
+        descriptor=f"{cdf_science_file_path.descriptor}-raw",
+        start_time=cdf_science_file_path.start_date,
+        version=cdf_science_file_path.version,
+        extension="dat"
+    ).construct_path()
 
     shutil.move(output_path, new_dat_path)
 
@@ -334,6 +355,9 @@ def process_l3e_ul(parent_file_names: list[str], repointing: int, epoch: datetim
 def process_l3e_hi(parent_file_names: list[str], repointing: int, epoch: datetime, epoch_delta: timedelta, elongation: int, version: int) -> list[Path]:
     call_args_object = determine_call_args_for_l3e_executable(epoch, epoch + epoch_delta, elongation)
     call_args = call_args_object.to_argument_list()
+
+    logger.info(f"Processing L3e Hi, calling survProbHi with {call_args}")
+
     run(["./survProbHi"] + call_args)
 
 
@@ -349,9 +373,14 @@ def process_l3e_hi(parent_file_names: list[str], repointing: int, epoch: datetim
 
     hi_cdf = save_data(hi_data)
 
-    new_dat_path = Path(hi_cdf)
-    new_dat_path = new_dat_path.parent / Path('_'.join(new_dat_path.name.split('_')[0:4]) + '-raw_' + '_'.join(
-        new_dat_path.name.split('_')[4:])[:-4] + '.dat')
+    cdf_science_file_path = ScienceFilePath(hi_cdf)
+    new_dat_path = AncillaryFilePath.generate_from_inputs(
+        instrument="glows",
+        descriptor=f"{cdf_science_file_path.descriptor}-raw",
+        start_time=cdf_science_file_path.start_date,
+        version=cdf_science_file_path.version,
+        extension="dat"
+    ).construct_path()
 
     shutil.move(output_path, new_dat_path)
 
@@ -367,6 +396,8 @@ def process_l3e(initializer_data: GlowsL3EInitializerOutput):
             spice_kernel_file_names = find_l3e_spice_kernels_for_time_range(epoch, epoch_end)
             # if len(spice_kernel_file_names) == 0:
             #     continue
+
+            logger.info(f"Processing L3e for repointing {repointing} with kernels: {spice_kernel_file_names}")
 
             for spice_kernel in spice_kernel_file_names:
                 spice_kernel_downloaded_path = imap_data_access.download(spice_kernel)
