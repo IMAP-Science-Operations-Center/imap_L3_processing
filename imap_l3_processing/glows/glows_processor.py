@@ -404,7 +404,9 @@ class SwallowExceptionAndLog:
         pass
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> bool:
-        if exc_type is not None:
+        if exc_type is KeyboardInterrupt:
+            return False
+        elif exc_type is not None:
             print(self.message)
             traceback.print_exception(exc_type, exc_val, exc_tb)
         return True

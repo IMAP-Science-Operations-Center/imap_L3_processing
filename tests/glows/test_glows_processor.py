@@ -867,12 +867,12 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
         version = 4
         glows_l3d_output = process_l3d(l3d_dependencies, version)
 
-        expected_txt_filenames = ["imap_glows_e-dens_19470303-cr02096_v004.dat",
-                                  "imap_glows_lya_19470303-cr02096_v004.dat",
-                                  "imap_glows_p-dens_19470303-cr02096_v004.dat",
-                                  "imap_glows_phion_19470303-cr02096_v004.dat",
-                                  "imap_glows_speed_19470303-cr02096_v004.dat",
-                                  "imap_glows_uv-anis_19470303-cr02096_v004.dat"]
+        expected_txt_filenames = ["imap_glows_e-dens_19470303_20100506_v004.dat",
+                                  "imap_glows_lya_19470303_20100506_v004.dat",
+                                  "imap_glows_p-dens_19470303_20100506_v004.dat",
+                                  "imap_glows_phion_19470303_20100506_v004.dat",
+                                  "imap_glows_speed_19470303_20100506_v004.dat",
+                                  "imap_glows_uv-anis_19470303_20100506_v004.dat"]
         for file in expected_txt_filenames:
             self.assertIn(PATH_TO_L3D_TOOLKIT / "data_l3d_txt" / file, glows_l3d_output.l3d_text_file_paths)
 

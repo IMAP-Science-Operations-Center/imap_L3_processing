@@ -48,18 +48,21 @@ def get_best_ancillary(start_date: datetime, end_date: datetime, ancillary_query
         return Path(latest_ancillary["file_path"]).name
 
 
-jd_carrington_first = 2091
-jd_carrington_start_date = datetime(2009, 12, 7, 4)
+carrington_first = 1
+first_carrington_start_date = datetime(1853, 11, 9, 19, 53, 45, 600000)
 carrington_length = timedelta(days=27.2753)
 
 
 def get_date_range_of_cr(cr_number: int) -> tuple[datetime, datetime]:
-    start_date = jd_carrington_start_date + (cr_number - jd_carrington_first) * carrington_length
+    start_date = first_carrington_start_date + (cr_number - carrington_first) * carrington_length
     return start_date, start_date + carrington_length
 
+def get_midpoint_of_cr(cr_number: int) -> datetime:
+    start, _ = get_date_range_of_cr(cr_number)
+    return start + carrington_length / 2
 
 def get_cr_for_date_time(datetime_to_check: datetime) -> int:
-    return int(jd_carrington_first + (datetime_to_check - jd_carrington_start_date) / carrington_length)
+    return int(carrington_first + (datetime_to_check - first_carrington_start_date) / carrington_length)
 
 
 def read_glows_l3a_data(cdf: CDF) -> GlowsL3LightCurve:
