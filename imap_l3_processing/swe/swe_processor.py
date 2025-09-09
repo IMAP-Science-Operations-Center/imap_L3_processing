@@ -105,9 +105,9 @@ class SweProcessor(Processor):
             core_halo_breakpoint=halo_core,
             phase_space_density_by_pitch_angle=phase_space_density_by_pitch_angle,
             phase_space_density_by_pitch_angle_and_gyrophase=phase_space_density_by_pitch_angle_and_gyrophase,
-            intensity=energy_spectrum,
-            intensity_inward=energy_spectrum_inbound,
-            intensity_outward=energy_spectrum_outbound,
+            phase_space_density_1d=energy_spectrum,
+            phase_space_density_inward=energy_spectrum_inbound,
+            phase_space_density_outward=energy_spectrum_outbound,
             moment_data=swe_l3_moments_data
         )
 
@@ -483,9 +483,9 @@ class SweProcessor(Processor):
 
         phase_space_density_by_pitch_angle = []
         phase_space_density_by_pitch_angle_and_gyrophase = []
-        intensity = []
-        intensity_inward = []
-        intensity_outward = []
+        phase_space_density_1d = []
+        phase_space_density_inward = []
+        phase_space_density_outward = []
         rebinned_intensity_by_pa_and_gyro = []
         rebinned_intensity_by_pa = []
         uncertainties_by_pa_and_gyro = []
@@ -500,9 +500,9 @@ class SweProcessor(Processor):
                 phase_space_density_by_pitch_angle.append(np.full((num_energy_bins, num_pitch_angle_bins), np.nan))
                 phase_space_density_by_pitch_angle_and_gyrophase.append(
                     np.full((num_energy_bins, num_pitch_angle_bins, num_gyrophase_bins), np.nan))
-                intensity.append(np.full(num_energy_bins, np.nan))
-                intensity_inward.append(np.full(num_energy_bins, np.nan))
-                intensity_outward.append(np.full(num_energy_bins, np.nan))
+                phase_space_density_1d.append(np.full(num_energy_bins, np.nan))
+                phase_space_density_inward.append(np.full(num_energy_bins, np.nan))
+                phase_space_density_outward.append(np.full(num_energy_bins, np.nan))
 
                 rebinned_intensity_by_pa_and_gyro.append(
                     np.full((swe_l2_data.flux.shape[1], num_pitch_angle_bins, num_gyrophase_bins), np.nan))
@@ -520,11 +520,11 @@ class SweProcessor(Processor):
                                                                               config)
                 phase_space_density_by_pitch_angle.append(rebinned_psd)
                 phase_space_density_by_pitch_angle_and_gyrophase.append(rebinned_psd_by_pa_and_gyro)
-                intensity.append(integrate_distribution_to_get_1d_spectrum(rebinned_psd, config))
+                phase_space_density_1d.append(integrate_distribution_to_get_1d_spectrum(rebinned_psd, config))
                 inbound, outbound = integrate_distribution_to_get_inbound_and_outbound_1d_spectrum(rebinned_psd,
                                                                                                    config)
-                intensity_inward.append(inbound)
-                intensity_outward.append(outbound)
+                phase_space_density_inward.append(inbound)
+                phase_space_density_outward.append(outbound)
 
                 intensity_by_pa_and_gyro, intensity_by_pa, uncertainty_by_pa_and_gyro, uncertainty_by_pa = swe_rebin_intensity_by_pitch_angle_and_gyrophase(
                     swe_l2_data.flux[i],
@@ -539,9 +539,9 @@ class SweProcessor(Processor):
 
         return phase_space_density_by_pitch_angle, \
             phase_space_density_by_pitch_angle_and_gyrophase, \
-            intensity, \
-            intensity_inward, \
-            intensity_outward, \
+            phase_space_density_1d, \
+            phase_space_density_inward, \
+            phase_space_density_outward, \
             np.array(rebinned_intensity_by_pa_and_gyro), \
             np.array(rebinned_intensity_by_pa), \
             np.array(uncertainties_by_pa_and_gyro), \

@@ -312,72 +312,72 @@ phase_space_density_by_pitch_angle:
   SCALEMIN: 1.00e-33
   SCALEMAX: 1.00e-24
   SI_CONVERSION: 1e12>s^3 m^-6
-intensity:
-  NAME: intensity
+phase_space_density_1d:
+  NAME: phase_space_density_1d
   DATA_TYPE: CDF_REAL4
-  CATDESC: Electron intensity
+  CATDESC: Electron phase space density (1d)
   DEPEND_0: epoch
   DEPEND_1: energy
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: spectrogram
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Electron Intensity
+  FIELDNAM: Electron Phase Space Density
   FORMAT: F15.3
-  LABLAXIS: e- intensity
-  UNITS: cm^-2 sr^-1 s^-1 eV^-1
+  LABLAXIS: e- PSD
+  UNITS: s^3 cm^-6
   VALIDMIN: 0
-  VALIDMAX: 10000000000
+  VALIDMAX: 1.00e-20
   SCALEMIN: 1.00e-33
   SCALEMAX: 1.00e-24
   FILLVAL: -1.00E+31
   LABL_PTR_1: energy_label
   SCALETYP: log
-  SI_CONVERSION: 6.241509e22>m^-2 radian^-2 s^-1 J^-1
-intensity_inward:
-  NAME: intensity_inward
+  SI_CONVERSION: 1e12>s^3 m^-6
+phase_space_density_inward:
+  NAME: phase_space_density_inward
   DATA_TYPE: CDF_REAL4
-  CATDESC: Electron intensity (inward)
+  CATDESC: Electron phase space density (inward)
   DEPEND_0: epoch
   DEPEND_1: energy
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: spectrogram
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Electron Intensity
+  FIELDNAM: Electron Phase Space Density
   FORMAT: F15.3
-  LABLAXIS: e- intensity
-  UNITS: cm^-2 sr^-1 s^-1 eV^-1
+  LABLAXIS: e- PSD
+  UNITS: s^3 cm^-6
   VALIDMIN: 0
-  VALIDMAX: 10000000000
+  VALIDMAX: 1.00e-20
   SCALEMIN: 1.00e-33
   SCALEMAX: 1.00e-24
   FILLVAL: -1.00E+31
   LABL_PTR_1: energy_label
   SCALETYP: log
-  SI_CONVERSION: 6.241509e22>m^-2 radian^-2 s^-1 J^-1
-intensity_outward:
-  NAME: intensity_outward
+  SI_CONVERSION: 1e12>s^3 m^-6
+phase_space_density_outward:
+  NAME: phase_space_density_outward
   DATA_TYPE: CDF_REAL4
-  CATDESC: Electron intensity (outward)
+  CATDESC: Electron phase space density (outward)
   DEPEND_0: epoch
   DEPEND_1: energy
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: spectrogram
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Electon Intensity
+  FIELDNAM: Electron Phase Space Density
   FORMAT: F15.3
-  LABLAXIS: e- intensity
-  UNITS: cm^-2 sr^-1 s^-1 eV^-1
+  LABLAXIS: e- PSD
+  UNITS: s^3 cm^-6
   VALIDMIN: 0
-  VALIDMAX: 10000000000
+  VALIDMAX: 1.00e-20
   SCALEMIN: 1.00e-33
   SCALEMAX: 1.00e-24
   FILLVAL: -1.00E+31
   LABL_PTR_1: energy_label
   SCALETYP: log
-  SI_CONVERSION: 6.241509e22>m^-2 radian^-2 s^-1 J^-1
+  SI_CONVERSION: 1e12>s^3 m^-6
 spacecraft_potential:
   NAME: spacecraft_potential
   DATA_TYPE: CDF_REAL4
@@ -1169,9 +1169,9 @@ core_temperature_tensor_integrated:
   FIELDNAM: Core Temperature Tensor Integrated
   FORMAT: F15.3
   LABLAXIS: Core t tensor integrated
-  UNITS: ' '
-  VALIDMIN: -10000000000
-  VALIDMAX: 10000000000
+  UNITS: 10^4 K
+  VALIDMIN: -1000
+  VALIDMAX: 1000
   FILLVAL: -1.00E+31
   LABL_PTR_1: temperature_tensor_label
   VAR_NOTES: Calculated by integration over the measured phase space distribution
@@ -1188,9 +1188,9 @@ halo_temperature_tensor_integrated:
   FIELDNAM: Halo Temperature Tensor Integrated
   FORMAT: F15.3
   LABLAXIS: Halo t tensor integrated
-  UNITS: ' '
-  VALIDMIN: -10000000000
-  VALIDMAX: 10000000000
+  UNITS: 10^4 K
+  VALIDMIN: -1000
+  VALIDMAX: 1000
   FILLVAL: -1.00E+31
   LABL_PTR_1: temperature_tensor_label
   VAR_NOTES: Calculated by integration over the measured phase space distribution
@@ -1207,9 +1207,9 @@ total_temperature_tensor_integrated:
   FIELDNAM: Total Temperature Tensor Integrated
   FORMAT: F15.3
   LABLAXIS: Total t tensor integrated
-  UNITS: ' '
-  VALIDMIN: -10000000000
-  VALIDMAX: 10000000000
+  UNITS: 10^4 K
+  VALIDMIN: -1000
+  VALIDMAX: 1000
   FILLVAL: -1.00E+31
   LABL_PTR_1: temperature_tensor_label
   VAR_NOTES: Calculated by integration over the measured phase space distribution

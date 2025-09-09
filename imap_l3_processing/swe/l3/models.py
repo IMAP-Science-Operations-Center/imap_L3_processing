@@ -18,9 +18,9 @@ GYROPHASE_BINS_CDF_VAR_NAME = "gyrophase"
 GYROPHASE_DELTA_CDF_VAR_NAME = "gyrophase_delta"
 PHASE_SPACE_DENSITY_BY_PITCH_ANGLE_CDF_VAR_NAME = "phase_space_density_by_pitch_angle"
 PHASE_SPACE_DENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_CDF_VAR_NAME = "phase_space_density_by_pitch_angle_and_gyrophase"
-INTENSITY_CDF_VAR_NAME = "intensity"
-INTENSITY_INWARD_CDF_VAR_NAME = "intensity_inward"
-INTENSITY_OUTWARD_CDF_VAR_NAME = "intensity_outward"
+PHASE_SPACE_DENSITY_1D_CDF_VAR_NAME = "phase_space_density_1d"
+PHASE_SPACE_DENSITY_INWARD_CDF_VAR_NAME = "phase_space_density_inward"
+PHASE_SPACE_DENSITY_OUTWARD_CDF_VAR_NAME = "phase_space_density_outward"
 INTENSITY_BY_PITCH_ANGLE_CDF_VAR_NAME = "intensity_by_pitch_angle"
 INTENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_CDF_VAR_NAME = "intensity_by_pitch_angle_and_gyrophase"
 INTENSITY_UNCERTAINTY_BY_PITCH_ANGLE_CDF_VAR_NAME = "intensity_uncertainty_by_pitch_angle"
@@ -207,9 +207,9 @@ class SweL3Data(DataProduct):
     # pitch angle specific
     phase_space_density_by_pitch_angle: np.ndarray
     phase_space_density_by_pitch_angle_and_gyrophase: np.ndarray
-    intensity: np.ndarray
-    intensity_inward: np.ndarray
-    intensity_outward: np.ndarray
+    phase_space_density_1d: np.ndarray
+    phase_space_density_inward: np.ndarray
+    phase_space_density_outward: np.ndarray
     # fit moments
     moment_data: SweL3MomentData
 
@@ -229,12 +229,12 @@ class SweL3Data(DataProduct):
                                 value=self.phase_space_density_by_pitch_angle),
             DataProductVariable(PHASE_SPACE_DENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_CDF_VAR_NAME,
                                 value=self.phase_space_density_by_pitch_angle_and_gyrophase),
-            DataProductVariable(INTENSITY_CDF_VAR_NAME,
-                                value=self.intensity),
-            DataProductVariable(INTENSITY_INWARD_CDF_VAR_NAME,
-                                value=self.intensity_inward),
-            DataProductVariable(INTENSITY_OUTWARD_CDF_VAR_NAME,
-                                value=self.intensity_outward),
+            DataProductVariable(PHASE_SPACE_DENSITY_1D_CDF_VAR_NAME,
+                                value=self.phase_space_density_1d),
+            DataProductVariable(PHASE_SPACE_DENSITY_INWARD_CDF_VAR_NAME,
+                                value=self.phase_space_density_inward),
+            DataProductVariable(PHASE_SPACE_DENSITY_OUTWARD_CDF_VAR_NAME,
+                                value=self.phase_space_density_outward),
             DataProductVariable(INTENSITY_BY_PITCH_ANGLE_CDF_VAR_NAME,
                                 value=self.intensity_by_pitch_angle),
             DataProductVariable(INTENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_CDF_VAR_NAME,
