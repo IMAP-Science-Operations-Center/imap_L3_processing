@@ -146,8 +146,6 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
             processor = GlowsProcessor(processing_input, input_metadata)
             products = processor.process()
 
-            print(products)
-
             # @formatter:off
             expected_files = [
                 ScienceFilePath('imap_glows_l3b_ion-rate-profile_20100103-cr02092_v001.cdf').construct_path(),

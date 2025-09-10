@@ -1,10 +1,12 @@
 import os
+import tempfile
 from datetime import datetime, date
 from pathlib import Path
 from unittest import TestCase
 from unittest.mock import patch, call, Mock, sentinel
 from urllib.error import URLError
 
+import imap_data_access
 import numpy as np
 from imap_data_access import config
 from requests import RequestException
@@ -16,7 +18,8 @@ from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.swapi.l3a.models import SwapiL3AlphaSolarWindData
 from imap_l3_processing.utils import format_time, download_dependency, read_l1d_mag_data, save_data, \
     find_glows_l3e_dependencies, download_external_dependency, download_dependency_with_repointing, \
-    combine_glows_l3e_with_l1c_pointing, furnish_local_spice, get_spice_parent_file_names
+    combine_glows_l3e_with_l1c_pointing, furnish_local_spice, get_spice_parent_file_names, furnish_spice_metakernel, \
+    SpiceKernelTypes, FurnishMetakernelOutput
 from imap_l3_processing.version import VERSION
 from tests.cdf.test_cdf_utils import TestDataProduct
 from tests.test_helpers import get_spice_data_path
@@ -524,5 +527,63 @@ class TestUtils(TestCase):
 
         self.assertEqual(["some_spice_1.tf", "some_spice_2.kf"], actual_spice_parents)
 
+    @patch("imap_l3_processing.utils.imap_data_access.download")
+    @patch("imap_l3_processing.utils.spiceypy")
+    @patch("imap_l3_processing.utils.requests")
+    def test_furnish_spice_metakernel(self, mock_requests, mock_spiceypy, mock_download):
 
+        metakernel_bytes = b"\n\\begintext\n\nThis is the most up to date Metakernel as of ..."
+
+        mock_requests.get.side_effect = [
+            Mock(content=metakernel_bytes),
+            Mock(text='["naif0012.tls", "imap_001.tf"]')
+        ]
+
+        mock_download.side_effect = [sentinel.naif_downloaded_path, sentinel.imap_downloaded_path]
+
+        start_date = datetime(2010, 1, 1)
+        end_date = datetime(2010, 3, 1)
+
+        kernel_types = [
+            SpiceKernelTypes.Leapseconds,
+            SpiceKernelTypes.IMAPFrames,
+        ]
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_dir = Path(tmp_dir)
+
+            mock_data_dir = tmp_dir / "some_data_directory"
+            mock_data_access_url = "https://imap-mission.com"
+            with patch.dict(imap_data_access.config, { "DATA_DIR": mock_data_dir, "DATA_ACCESS_URL": mock_data_access_url}):
+
+                actual_output = furnish_spice_metakernel(start_date, end_date, kernel_types)
+
+                expected_request_params = {
+                    "file_types": ["leapseconds", "imap_frames"],
+                    "start_time": "1262322000",
+                    "end_time": "1267419600",
+                    "spice_path": mock_data_dir / "spice",
+                }
+
+                mock_requests.get.assert_has_calls([
+                    call("https://imap-mission.com/metakernel", params=expected_request_params),
+                    call("https://imap-mission.com/metakernel", params={**expected_request_params, "list_files": "true"})
+                ])
+
+                mock_download.assert_has_calls([
+                    call('naif0012.tls'),
+                    call('imap_001.tf')
+                ])
+
+                expected_metakernel_path = mock_data_dir / "metakernel" / "metakernel.txt"
+                self.assertEqual(metakernel_bytes, expected_metakernel_path.read_bytes())
+
+                mock_spiceypy.furnsh.assert_called_once_with(str(expected_metakernel_path))
+
+                expected_output = FurnishMetakernelOutput(
+                    metakernel_path=expected_metakernel_path,
+                    spice_kernel_paths=[sentinel.naif_downloaded_path, sentinel.imap_downloaded_path]
+                )
+
+                self.assertEqual(expected_output, actual_output)
 

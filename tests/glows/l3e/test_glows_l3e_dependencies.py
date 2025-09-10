@@ -1,10 +1,11 @@
 import unittest
 from pathlib import Path
-from unittest.mock import patch, Mock, call
+from unittest.mock import patch, Mock, call, sentinel
 
 from imap_data_access import RepointInput
 
 from imap_l3_processing.glows.l3e.glows_l3e_dependencies import GlowsL3EDependencies
+from imap_l3_processing.utils import SpiceKernelTypes, FurnishMetakernelOutput
 from tests.test_helpers import get_test_data_path
 
 
@@ -143,27 +144,44 @@ class TestGlowsL3EDependencies(unittest.TestCase):
 
         self.assertEqual(mock_downloaded_repoint_file, actual_dependencies.repointing_file)
 
-    def test_get_hi_parents(self):
+    @patch('imap_l3_processing.glows.l3e.glows_l3e_dependencies.furnish_spice_metakernel')
+    def test_furnish_spice_dependencies(self, mock_furnish_spice_metakernel):
+        expected_kernel_types = [
+            SpiceKernelTypes.ScienceFrames, SpiceKernelTypes.EphemerisReconstructed, SpiceKernelTypes.AttitudeHistory,
+            SpiceKernelTypes.PointingAttitude, SpiceKernelTypes.PlanetaryEphemeris, SpiceKernelTypes.Leapseconds,
+            SpiceKernelTypes.SpacecraftClock
+        ]
 
-        dependencies = GlowsL3EDependencies(
-            energy_grid_lo=Path("some/folder/energy_grid_lo.dat"),
-            energy_grid_hi=Path("some/folder/energy_grid_hi.dat"),
-            energy_grid_ultra=Path("some/folder/energy_grid_ultra.dat"),
-            tess_xyz_8=Path("some/folder/tess_xyz_8.dat"),
-            tess_ang16=Path("some/folder/tess_ang16.dat"),
-            lya_series=Path("some/folder/lya_series.dat"),
-            solar_uv_anisotropy=Path("some/folder/solar_uv_anisotropy.dat"),
-            speed_3d_sw=Path("some/folder/speed_3d_sw.dat"),
-            density_3d_sw=Path("some/folder/density_3d_sw.dat"),
-            phion_hydrogen=Path("some/folder/phion_hydrogen.dat"),
-            sw_eqtr_electrons=Path("some/folder/sw_eqtr_electrons.dat"),
-            ionization_files=Path("some/folder/ionization_files.dat"),
-            pipeline_settings_file=Path("some/folder/pipeline_settings.json"),
-            pipeline_settings={},
-            elongation_file=Path("some/folder/elongation.csv"),
-            elongation={},
-            repointing_file=Path("some/folder/repointing_file.csv"),
+        dependencies = self._create_l3e_dependencies()
+
+        mock_furnish_spice_metakernel.return_value = FurnishMetakernelOutput(
+            metakernel_path=Path("irrelevant.txt"),
+            spice_kernel_paths=[Path("some_kernel_with_imap_data"), Path("some_kernel_with_planet_data")]
         )
+
+        dependencies.furnish_spice_dependencies(sentinel.start_date, sentinel.end_date)
+
+        mock_furnish_spice_metakernel.assert_called_once_with(
+            start_date=sentinel.start_date,
+            end_date=sentinel.end_date,
+            kernel_types=expected_kernel_types
+        )
+
+        hi_parents = dependencies.get_hi_parents()
+        self.assertIn("some_kernel_with_imap_data", hi_parents)
+        self.assertIn("some_kernel_with_planet_data", hi_parents)
+
+        lo_parents = dependencies.get_lo_parents()
+        self.assertIn("some_kernel_with_imap_data", lo_parents)
+        self.assertIn("some_kernel_with_planet_data", lo_parents)
+
+        ul_parents = dependencies.get_ul_parents()
+        self.assertIn("some_kernel_with_imap_data", ul_parents)
+        self.assertIn("some_kernel_with_planet_data", ul_parents)
+
+
+    def test_get_hi_parents(self):
+        dependencies = self._create_l3e_dependencies()
 
         expected_parent_file_names = [
             "energy_grid_hi.dat",
@@ -181,26 +199,7 @@ class TestGlowsL3EDependencies(unittest.TestCase):
         self.assertEqual(expected_parent_file_names, dependencies.get_hi_parents())
 
     def test_get_lo_parents(self):
-
-        dependencies = GlowsL3EDependencies(
-            energy_grid_lo=Path("some/folder/energy_grid_lo.dat"),
-            energy_grid_hi=Path("some/folder/energy_grid_hi.dat"),
-            energy_grid_ultra=Path("some/folder/energy_grid_ultra.dat"),
-            tess_xyz_8=Path("some/folder/tess_xyz_8.dat"),
-            tess_ang16=Path("some/folder/tess_ang16.dat"),
-            lya_series=Path("some/folder/lya_series.dat"),
-            solar_uv_anisotropy=Path("some/folder/solar_uv_anisotropy.dat"),
-            speed_3d_sw=Path("some/folder/speed_3d_sw.dat"),
-            density_3d_sw=Path("some/folder/density_3d_sw.dat"),
-            phion_hydrogen=Path("some/folder/phion_hydrogen.dat"),
-            sw_eqtr_electrons=Path("some/folder/sw_eqtr_electrons.dat"),
-            ionization_files=Path("some/folder/ionization_files.dat"),
-            pipeline_settings_file=Path("some/folder/pipeline_settings.json"),
-            pipeline_settings={},
-            elongation_file=Path("some/folder/elongation.csv"),
-            elongation={},
-            repointing_file=Path("some/folder/repointing_file.csv"),
-        )
+        dependencies = self._create_l3e_dependencies()
 
         expected_parent_file_names = [
             "energy_grid_lo.dat",
@@ -220,25 +219,7 @@ class TestGlowsL3EDependencies(unittest.TestCase):
         self.assertEqual(expected_parent_file_names, dependencies.get_lo_parents())
 
     def test_get_ul_parents(self):
-        dependencies = GlowsL3EDependencies(
-            energy_grid_lo=Path("some/folder/energy_grid_lo.dat"),
-            energy_grid_hi=Path("some/folder/energy_grid_hi.dat"),
-            energy_grid_ultra=Path("some/folder/energy_grid_ultra.dat"),
-            tess_xyz_8=Path("some/folder/tess_xyz_8.dat"),
-            tess_ang16=Path("some/folder/tess_ang16.dat"),
-            lya_series=Path("some/folder/lya_series.dat"),
-            solar_uv_anisotropy=Path("some/folder/solar_uv_anisotropy.dat"),
-            speed_3d_sw=Path("some/folder/speed_3d_sw.dat"),
-            density_3d_sw=Path("some/folder/density_3d_sw.dat"),
-            phion_hydrogen=Path("some/folder/phion_hydrogen.dat"),
-            sw_eqtr_electrons=Path("some/folder/sw_eqtr_electrons.dat"),
-            ionization_files=Path("some/folder/ionization_files.dat"),
-            pipeline_settings_file=Path("some/folder/pipeline_settings.json"),
-            pipeline_settings={},
-            elongation_file=Path("some/folder/elongation.csv"),
-            elongation={},
-            repointing_file=Path("some/folder/repointing_file.csv"),
-        )
+        dependencies = self._create_l3e_dependencies()
 
         expected_parent_file_names = [
             "energy_grid_ultra.dat",
@@ -360,3 +341,24 @@ class TestGlowsL3EDependencies(unittest.TestCase):
             call(glows_l3e_dependencies.sw_eqtr_electrons, expected_sw_eqtr_electrons),
             call(glows_l3e_dependencies.ionization_files, expected_ionization_files),
         ])
+
+    def _create_l3e_dependencies(self) -> GlowsL3EDependencies:
+        return GlowsL3EDependencies(
+            energy_grid_lo=Path("some/folder/energy_grid_lo.dat"),
+            energy_grid_hi=Path("some/folder/energy_grid_hi.dat"),
+            energy_grid_ultra=Path("some/folder/energy_grid_ultra.dat"),
+            tess_xyz_8=Path("some/folder/tess_xyz_8.dat"),
+            tess_ang16=Path("some/folder/tess_ang16.dat"),
+            lya_series=Path("some/folder/lya_series.dat"),
+            solar_uv_anisotropy=Path("some/folder/solar_uv_anisotropy.dat"),
+            speed_3d_sw=Path("some/folder/speed_3d_sw.dat"),
+            density_3d_sw=Path("some/folder/density_3d_sw.dat"),
+            phion_hydrogen=Path("some/folder/phion_hydrogen.dat"),
+            sw_eqtr_electrons=Path("some/folder/sw_eqtr_electrons.dat"),
+            ionization_files=Path("some/folder/ionization_files.dat"),
+            pipeline_settings_file=Path("some/folder/pipeline_settings.json"),
+            pipeline_settings={},
+            elongation_file=Path("some/folder/elongation.csv"),
+            elongation={},
+            repointing_file=Path("some/folder/repointing_file.csv"),
+        )

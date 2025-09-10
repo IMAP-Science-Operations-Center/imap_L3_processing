@@ -6,6 +6,7 @@ import imap_data_access
 from imap_data_access import ProcessingInputCollection, AncillaryInput, ScienceInput, ScienceFilePath, SPICEInput, \
     RepointInput
 
+from imap_l3_processing.glows.l3bc.utils import get_pointing_date_range
 from imap_l3_processing.glows.l3d.models import GlowsL3DProcessorOutput
 from imap_l3_processing.glows.l3d.utils import get_most_recently_uploaded_ancillary
 from imap_l3_processing.glows.l3e.glows_l3e_dependencies import GlowsL3EDependencies
@@ -45,19 +46,25 @@ class GlowsL3EInitializer:
             RepointInput(str(repointing_file_path))
         )
 
-        deps = GlowsL3EDependencies.fetch_dependencies(processing_input_collection)
-        deps.rename_dependencies()
+        l3e_deps = GlowsL3EDependencies.fetch_dependencies(processing_input_collection)
+        l3e_deps.rename_dependencies()
 
         if previous_l3d is not None:
             first_cr = find_first_updated_cr(l3d_output.l3d_cdf_file_path, previous_l3d)
         else:
-            first_cr = deps.pipeline_settings['start_cr']
+            first_cr = l3e_deps.pipeline_settings['start_cr']
         last_cr = ScienceFilePath(l3d_output.l3d_cdf_file_path).cr
 
         glows_repointings = determine_l3e_files_to_produce(first_cr, last_cr, repointing_file_path)
 
+        if len(glows_repointings.repointing_numbers) > 0:
+            earliest_repointing_start, _ = get_pointing_date_range(min(glows_repointings.repointing_numbers))
+            _, latest_repointing_end = get_pointing_date_range(max(glows_repointings.repointing_numbers))
+
+            l3e_deps.furnish_spice_dependencies(start_date=earliest_repointing_start, end_date=latest_repointing_end)
+
         return GlowsL3EInitializerOutput(
-            dependencies=deps,
+            dependencies=l3e_deps,
             repointings=glows_repointings
         )
 

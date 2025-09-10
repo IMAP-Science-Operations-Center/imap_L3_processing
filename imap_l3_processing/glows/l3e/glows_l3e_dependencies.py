@@ -1,11 +1,19 @@
 import json
 import shutil
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from datetime import datetime
 from pathlib import Path
 
 import imap_data_access
 from imap_data_access.processing_input import ProcessingInputCollection, RepointInput
 
+from imap_l3_processing.utils import furnish_spice_metakernel, SpiceKernelTypes
+
+GLOWS_L3E_REQUIRED_SPICE_KERNELS: list[SpiceKernelTypes] = [
+    SpiceKernelTypes.ScienceFrames, SpiceKernelTypes.EphemerisReconstructed, SpiceKernelTypes.AttitudeHistory,
+    SpiceKernelTypes.PointingAttitude, SpiceKernelTypes.PlanetaryEphemeris, SpiceKernelTypes.Leapseconds,
+    SpiceKernelTypes.SpacecraftClock
+]
 
 @dataclass
 class GlowsL3EDependencies:
@@ -26,6 +34,7 @@ class GlowsL3EDependencies:
     elongation: dict
     elongation_file: Path
     repointing_file: Path
+    kernels: list[str] = field(default_factory=list)
 
     @classmethod
     def fetch_dependencies(cls, dependencies: ProcessingInputCollection):
@@ -95,6 +104,11 @@ class GlowsL3EDependencies:
             repoint_file_path
         )
 
+    def furnish_spice_dependencies(self, start_date: datetime, end_date: datetime):
+        kernels = furnish_spice_metakernel(start_date=start_date, end_date=end_date, kernel_types=GLOWS_L3E_REQUIRED_SPICE_KERNELS)
+
+        self.kernels.extend([kernel_path.name for kernel_path in kernels.spice_kernel_paths])
+
     def rename_dependencies(self):
         if self.energy_grid_lo is not None:
             shutil.move(self.energy_grid_lo, self.pipeline_settings['executable_dependency_paths']['energy-grid-lo'])
@@ -129,6 +143,7 @@ class GlowsL3EDependencies:
             self.ionization_files.name,
             self.pipeline_settings_file.name,
             self.repointing_file.name,
+            *self.kernels
         ]
 
     def get_lo_parents(self):
@@ -145,6 +160,7 @@ class GlowsL3EDependencies:
             self.pipeline_settings_file.name,
             self.repointing_file.name,
             self.elongation_file.name,
+            *self.kernels
         ]
 
     def get_ul_parents(self):
@@ -160,4 +176,5 @@ class GlowsL3EDependencies:
             self.ionization_files.name,
             self.pipeline_settings_file.name,
             self.repointing_file.name,
+            *self.kernels
         ]
