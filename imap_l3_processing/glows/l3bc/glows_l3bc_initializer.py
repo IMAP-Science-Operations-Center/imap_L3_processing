@@ -69,9 +69,8 @@ class GlowsL3BCInitializer:
 
         if not all([external_dependencies.f107_index_file_path, external_dependencies.omni2_data_path,
                     external_dependencies.lyman_alpha_path]):
-            logger.info("Found issues with external dependencies, returning")
-            logger.info([external_dependencies.f107_index_file_path, external_dependencies.omni2_data_path,
-                    external_dependencies.lyman_alpha_path])
+            logger.info(f"Found issues with external dependencies, returning {external_dependencies}")
+
             return GlowsL3BCInitializerData(
                 external_dependencies=external_dependencies,
                 l3bc_dependencies=[],

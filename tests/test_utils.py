@@ -7,6 +7,7 @@ from urllib.error import URLError
 
 import numpy as np
 from imap_data_access import config
+from requests import RequestException
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
@@ -326,21 +327,33 @@ class TestUtils(TestCase):
                     f"{expected_files_to_download}. Expected one file to download, found {len(return_values)}.",
                     str(cm.exception))
 
-    @patch("imap_l3_processing.utils.urlretrieve")
-    def test_download_external_dependency(self, mock_urlretrieve):
+    @patch("imap_l3_processing.utils.requests")
+    @patch('builtins.open')
+    def test_download_external_dependency(self, mock_open_file, mock_requests):
         expected_url = "https://www.spaceweather.gc.ca/solar_flux_data/daily_flux_values/fluxtable.txt"
         expected_filename = "f107_fluxtable.txt"
-        mock_urlretrieve.return_value = (expected_filename, Mock())
+
+        mock_response = Mock(status_code=200)
+        mock_requests.get.return_value = mock_response
+
+        mock_opened_file = Mock()
+        mock_open_file.return_value.__enter__.return_value = mock_opened_file
+
         saved_path = download_external_dependency(expected_url, expected_filename)
 
-        mock_urlretrieve.assert_called_once_with(expected_url, expected_filename)
+        mock_open_file.assert_called_once_with(expected_filename, "wb")
+        mock_requests.get.assert_called_once_with(expected_url)
+
+        mock_opened_file.write.assert_called_once_with(mock_response.content)
         self.assertEqual(Path(expected_filename), saved_path)
 
-    @patch("imap_l3_processing.utils.urlretrieve")
-    def test_download_external_dependency_error_case(self, mock_urlretrieve):
+    @patch("imap_l3_processing.utils.requests")
+    def test_download_external_dependency_error_case(self, mock_requests):
         expected_url = "https://www.spaceweather.gc.ca/solar_flux_data/daily_flux_values/no_such_file.txt"
+
         expected_filename = "f107_fluxtable.txt"
-        mock_urlretrieve.side_effect = URLError("server is down")
+        mock_requests.side_effect = RequestException
+
         returned = download_external_dependency(expected_url, expected_filename)
         self.assertIsNone(returned)
 

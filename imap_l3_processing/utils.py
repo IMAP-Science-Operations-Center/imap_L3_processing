@@ -7,6 +7,7 @@ from urllib.error import URLError
 from urllib.request import urlretrieve
 
 import imap_data_access
+import requests
 import spiceypy
 from imap_data_access import ScienceFilePath
 from spacepy.pycdf import CDF
@@ -118,14 +119,18 @@ def download_dependency_with_repointing(dependency: UpstreamDataDependency) -> (
     return imap_data_access.download(files_with_repointing_to_download[0][0]), repointing_number
 
 
-def download_external_dependency(dependency_url: str, filename: str) -> Optional[Path]:
+def download_external_dependency(dependency_url: str, file_path: Path) -> Optional[Path]:
     try:
-        saved_path, _ = urlretrieve(dependency_url, filename)
-        return Path(saved_path)
+        response = requests.get(dependency_url)
+        if response.status_code == 200:
+            with open(file_path, "wb") as file:
+                file.write(response.content)
+            return Path(file_path)
+        else:
+            logger.error(f"Failed to download {dependency_url} with status code {response.status_code}")
     except URLError:
-        logger.exception("bad download")
-        return None
-
+        logger.exception(f"Failed to download {dependency_url}")
+    return None
 
 def read_l1d_mag_data(cdf_path: Union[str, Path]) -> MagL1dData:
     with CDF(str(cdf_path)) as cdf:
