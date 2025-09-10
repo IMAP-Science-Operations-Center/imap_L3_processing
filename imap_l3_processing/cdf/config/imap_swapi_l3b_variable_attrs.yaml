@@ -29,7 +29,7 @@ epoch_delta:
   FORMAT: I19
   UNITS: ns
   VALIDMIN: 0
-  VALIDMAX: 86000000000000
+  VALIDMAX: 600000000000                  # Changed from 1 day (in ns) to 10 minutes since expected value is 5 minutes
   FILLVAL: -9223372036854775808
   SCALETYP: linear
   LABLAXIS: Epoch delta
@@ -41,45 +41,45 @@ combined_energy:
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: Combined Solar Wind  Energy
+  FIELDNAM: Combined Solar Wind Energy
   FORMAT: F19.3
   LABLAXIS: Combined SW energy
   UNITS: eV/q
   VALIDMIN: 0
-  VALIDMAX: 9223372036854775807
+  VALIDMAX: 20000               # selected based on instrument ev/q range. Is this right?
   FILLVAL: -1.000000e+31
   SCALETYP: log
-  DELTA_PLUS_VAR: combined_energy_delta_minus
-  DELTA_MINUS_VAR: combined_energy_delta_plus
-  SCALEMIN: 0
-  SCALEMAX: 1000
-combined_energy_delta_minus:
-  NAME: combined_energy_delta_minus
+  DELTA_PLUS_VAR: combined_energy_stat_uncert_plus
+  DELTA_MINUS_VAR: combined_energy_stat_uncert_minus
+  SCALEMIN: 100
+  SCALEMAX: 20000  # selected based on instrument ev/q range
+combined_energy_stat_uncert_minus:
+  NAME: combined_energy_stat_uncert_minus
   DATA_TYPE: CDF_REAL4
-  CATDESC: Combined solar wind energy delta minus
+  CATDESC: Combined solar wind energy uncertainty minus
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: Combined Solar Wind Energy Delta Minus
+  FIELDNAM: Combined Solar Wind Energy Uncertainty Minus
   FORMAT: F19.3
-  LABLAXIS: Combined SW energy delta minus
+  LABLAXIS: Combined SW energy uncertainty minus
   UNITS: eV/q
   VALIDMIN: 0
-  VALIDMAX: 9223372036854775807
+  VALIDMAX: 2000 # is this reasonable?
   FILLVAL: -1.000000e+31
-combined_energy_delta_plus:
-  NAME: combined_energy_delta_plus
+combined_energy_stat_uncert_plus:
+  NAME: combined_energy_stat_uncert_plus
   DATA_TYPE: CDF_REAL4
-  CATDESC: Combined solar wind energy delta plus
+  CATDESC: Combined solar wind energy uncertainty plus
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: Combined Solar Wind Energy Delta Plus
+  FIELDNAM: Combined Solar Wind Energy Uncertainty Plus
   FORMAT: F19.3
-  LABLAXIS: Combined energy SW delta plus
+  LABLAXIS: Combined energy SW uncertainty plus
   UNITS: eV/q
   VALIDMIN: 0
-  VALIDMAX: 9223372036854775807
+  VALIDMAX: 2000 # is this reasonable
   FILLVAL: -1.000000e+31
 combined_differential_flux:
   NAME: combined_differential_flux
@@ -94,30 +94,30 @@ combined_differential_flux:
   FIELDNAM: Combined Differential Flux
   FORMAT: F19.3
   LABLAXIS: Combined differential flux
-  UNITS: cm!E-2!N sr!E-1!N s!E-1!N (eV/q)!E-1!N'
+  UNITS: cm!E-2!N s!E-1!N sr!E-1!N (eV/q)!E-1!N
   VALIDMIN: 0
-  VALIDMAX: 9223372036854775807
+  VALIDMAX: 9223372036854775807  # what is a reasonable value?
   FILLVAL: -1.000000e+31
   LABL_PTR_1: combined_energy_label
   SCALETYP: log
-  DELTA_PLUS_VAR: combined_differential_flux_delta
-  DELTA_MINUS_VAR: combined_differential_flux_delta
+  DELTA_PLUS_VAR: combined_differential_flux_stat_uncert
+  DELTA_MINUS_VAR: combined_differential_flux_stat_uncert
   SCALEMIN: .000001
-  SCALEMAX: 1000000
-combined_differential_flux_delta:
-  NAME: combined_differential_flux_delta
+  SCALEMAX: 1000000  # are these a reasonable range?
+combined_differential_flux_stat_uncert:
+  NAME: combined_differential_flux_stat_uncert
   DATA_TYPE: CDF_REAL4
-  CATDESC: Combined differential flux delta
+  CATDESC: Combined differential flux uncertainty
   DEPEND_0: epoch
   DEPEND_1: combined_energy
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: Combined Differential Flux Delta
+  FIELDNAM: Combined Differential Flux Uncertainty
   FORMAT: F19.3
-  LABLAXIS: Combined differential flux delta
-  UNITS: cm!E-2!N sr!E-1!N s!E-1!N (eV/q)!E-1!N'
+  LABLAXIS: Combined differential flux uncertainty
+  UNITS: cm!E-2!N s!E-1!N sr!E-1!N (eV/q)!E-1!N
   VALIDMIN: 0
-  VALIDMAX: 9223372036854775807
+  VALIDMAX: 9223372036854775807 # what is a reasonable value?
   FILLVAL: -1.000000e+31
   LABL_PTR_1: combined_energy_label
 combined_energy_label:

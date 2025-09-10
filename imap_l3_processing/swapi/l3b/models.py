@@ -9,11 +9,11 @@ from imap_l3_processing.models import DataProduct, DataProductVariable
 from imap_l3_processing.swapi.l3a.models import EPOCH_CDF_VAR_NAME, EPOCH_DELTA_CDF_VAR_NAME
 
 SOLAR_WIND_ENERGY_CDF_VAR_NAME = "combined_energy"
-SOLAR_WIND_COMBINED_ENERGY_DELTA_MINUS_CDF_VAR_NAME = "combined_energy_delta_minus"
-SOLAR_WIND_COMBINED_ENERGY_DELTA_PLUS_CDF_VAR_NAME = "combined_energy_delta_plus"
+SOLAR_WIND_COMBINED_ENERGY_DELTA_MINUS_CDF_VAR_NAME = "combined_energy_stat_uncert_minus"
+SOLAR_WIND_COMBINED_ENERGY_DELTA_PLUS_CDF_VAR_NAME = "combined_energy_stat_uncert_plus"
 
 COMBINED_SOLAR_WIND_DIFFERENTIAL_FLUX_CDF_VAR_NAME = "combined_differential_flux"
-COMBINED_SOLAR_WIND_DIFFERENTIAL_FLUX_DELTA_CDF_VAR_NAME = "combined_differential_flux_delta"
+COMBINED_SOLAR_WIND_DIFFERENTIAL_FLUX_DELTA_CDF_VAR_NAME = "combined_differential_flux_stat_uncert"
 
 
 @dataclass
