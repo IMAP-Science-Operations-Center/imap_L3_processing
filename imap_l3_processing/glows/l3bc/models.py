@@ -10,12 +10,11 @@ from typing import Optional
 
 import imap_data_access
 import numpy as np
-from astropy.time import Time
 from spacepy import pycdf
 
-from imap_l3_processing.constants import CARRINGTON_ROTATION_IN_NANOSECONDS, TEMP_CDF_FOLDER_PATH
+from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
 from imap_l3_processing.glows.l3bc.dependency_validator import validate_dependencies
-from imap_l3_processing.glows.l3bc.l3bc_toolkit.funcs import jd_fm_Carrington
+from imap_l3_processing.glows.l3bc.utils import get_date_range_of_cr
 from imap_l3_processing.models import DataProduct, DataProductVariable, InputMetadata
 from imap_l3_processing.utils import download_external_dependency
 
@@ -55,7 +54,7 @@ class ExternalDependencies:
     omni2_data_path: Path | None
 
     @classmethod
-    def fetch_dependencies(cls) -> Self:
+    def fetch_dependencies(cls):
         f107_index_file_path = download_external_dependency(F107_FLUX_TABLE_URL,
                                                             TEMP_CDF_FOLDER_PATH / 'f107_fluxtable.txt')
         lyman_alpha_path = download_external_dependency(LYMAN_ALPHA_COMPOSITE_INDEX_URL,
@@ -131,7 +130,8 @@ def read_pipeline_settings(pipeline_settings_file_path: Path) -> dict:
 @dataclass
 class GlowsL3BIonizationRate(DataProduct):
     epoch: np.ndarray[datetime]
-    epoch_delta: np.ndarray[float]
+    epoch_delta_plus: np.ndarray[int]
+    epoch_delta_minus: np.ndarray[int]
     cr: np.ndarray[float]
     uv_anisotropy_factor: np.ndarray[float]
     lat_grid: np.ndarray[float]
@@ -143,12 +143,12 @@ class GlowsL3BIonizationRate(DataProduct):
     ph_uncert: np.ndarray[float]
     cx_uncert: np.ndarray[float]
     lat_grid_label: list[str]
-    mean_time: np.ndarray[datetime]
     uv_anisotropy_flag: np.ndarray[int]
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [DataProductVariable("epoch", self.epoch),
-                DataProductVariable("epoch_delta", self.epoch_delta),
+                DataProductVariable("epoch_delta_plus", self.epoch_delta_plus),
+                DataProductVariable("epoch_delta_minus", self.epoch_delta_minus),
                 DataProductVariable("cr", self.cr),
                 DataProductVariable("uv_anisotropy_factor", self.uv_anisotropy_factor),
                 DataProductVariable("lat_grid", self.lat_grid),
@@ -160,14 +160,19 @@ class GlowsL3BIonizationRate(DataProduct):
                 DataProductVariable("ph_uncert", self.ph_uncert),
                 DataProductVariable("cx_uncert", self.cx_uncert),
                 DataProductVariable("lat_grid_label", self.lat_grid_label),
-                DataProductVariable("mean_time", self.mean_time),
                 DataProductVariable("uv_anisotropy_flag", self.uv_anisotropy_flag),
                 ]
 
     @classmethod
     def from_instrument_team_dictionary(cls, model: dict, input_metadata: InputMetadata) -> GlowsL3BIonizationRate:
         latitude_grid = model["ion_rate_profile"]["lat_grid"]
-        carrington_center_point = Time(jd_fm_Carrington(model["CR"] + 0.5), format="jd").datetime
+        mean_time = datetime.fromisoformat(model["date"])
+        start_of_cr, end_of_cr = get_date_range_of_cr(model["CR"])
+
+        epoch = mean_time
+        epoch_delta_plus = (end_of_cr - mean_time).total_seconds() * 1e9
+        epoch_delta_minus = (mean_time - start_of_cr).total_seconds() * 1e9
+
         parent_file_names = []
         parent_file_names += collect_file_names(model['header']['ancillary_data_files'])
         parent_file_names += collect_file_names(model['header']['external_dependeciens'])
@@ -175,8 +180,9 @@ class GlowsL3BIonizationRate(DataProduct):
         return cls(
             input_metadata=input_metadata,
             parent_file_names=parent_file_names,
-            epoch=np.array([carrington_center_point]),
-            epoch_delta=np.array([CARRINGTON_ROTATION_IN_NANOSECONDS / 2]),
+            epoch=np.array([epoch]),
+            epoch_delta_plus=np.array([epoch_delta_plus]),
+            epoch_delta_minus=np.array([epoch_delta_minus]),
             cr=np.array([model["CR"]]),
             uv_anisotropy_factor=np.array([model["uv_anisotropy_factor"]]),
             lat_grid=np.array(latitude_grid),
@@ -188,7 +194,6 @@ class GlowsL3BIonizationRate(DataProduct):
             ph_uncert=np.array([model["ion_rate_profile"]["ph_uncert"]]),
             cx_uncert=np.array([model["ion_rate_profile"]["cx_uncert"]]),
             lat_grid_label=[f"{x}°" for x in latitude_grid],
-            mean_time=np.array([datetime.fromisoformat(model["date"])]),
             uv_anisotropy_flag=np.array([model['uv_anisotropy_flag']])
         )
 
@@ -203,7 +208,8 @@ class GlowsL3BCProcessorOutput:
 @dataclass
 class GlowsL3CSolarWind(DataProduct):
     epoch: np.ndarray[datetime]
-    epoch_delta: np.ndarray[float]
+    epoch_delta_plus: np.ndarray[int]
+    epoch_delta_minus: np.ndarray[int]
     cr: np.ndarray[float]
     lat_grid: np.ndarray[float]
     lat_grid_delta: np.ndarray[float]
@@ -217,7 +223,8 @@ class GlowsL3CSolarWind(DataProduct):
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
             DataProductVariable("epoch", self.epoch, cdf_data_type=pycdf.const.CDF_TIME_TT2000),
-            DataProductVariable("epoch_delta", self.epoch_delta, cdf_data_type=pycdf.const.CDF_INT8),
+            DataProductVariable("epoch_delta_plus", self.epoch_delta_plus, cdf_data_type=pycdf.const.CDF_INT8),
+            DataProductVariable("epoch_delta_minus", self.epoch_delta_minus, cdf_data_type=pycdf.const.CDF_INT8),
             DataProductVariable("cr", self.cr, cdf_data_type=pycdf.const.CDF_INT2),
             DataProductVariable("lat_grid", self.lat_grid, cdf_data_type=pycdf.const.CDF_FLOAT, record_varying=False),
             DataProductVariable("lat_grid_delta", self.lat_grid_delta, cdf_data_type=pycdf.const.CDF_FLOAT,
@@ -238,14 +245,21 @@ class GlowsL3CSolarWind(DataProduct):
     @classmethod
     def from_instrument_team_dictionary(cls, model: dict, input_metadata: InputMetadata) -> GlowsL3CSolarWind:
         latitude_grid = model["solar_wind_profile"]["lat_grid"]
-        carrington_center_point = Time(jd_fm_Carrington(model["CR"] + 0.5), format="jd").datetime
+        mean_time = datetime.fromisoformat(model["date"])
+        start_of_cr, end_of_cr = get_date_range_of_cr(model["CR"])
+
+        epoch = mean_time
+        epoch_delta_plus = (end_of_cr - mean_time).total_seconds() * 1e9
+        epoch_delta_minus = (mean_time - start_of_cr).total_seconds() * 1e9
+
         parent_file_names = []
         parent_file_names += collect_file_names(model['header']['ancillary_data_files'])
         parent_file_names += collect_file_names(model['header']['external_dependeciens'])
         return cls(
             input_metadata=input_metadata,
-            epoch=np.array([carrington_center_point]),
-            epoch_delta=np.array([CARRINGTON_ROTATION_IN_NANOSECONDS / 2]),
+            epoch=np.array([epoch]),
+            epoch_delta_plus=np.array([epoch_delta_plus]),
+            epoch_delta_minus=np.array([epoch_delta_minus]),
             cr=np.array([model['CR']]),
             lat_grid=np.array(latitude_grid),
             lat_grid_delta=np.zeros(len(latitude_grid)),

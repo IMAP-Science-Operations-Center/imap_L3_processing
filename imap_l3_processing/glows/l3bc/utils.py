@@ -52,7 +52,6 @@ carrington_first = 1
 first_carrington_start_date = datetime(1853, 11, 9, 19, 53, 45, 600000)
 carrington_length = timedelta(days=27.2753)
 
-
 def get_date_range_of_cr(cr_number: int) -> tuple[datetime, datetime]:
     start_date = first_carrington_start_date + (cr_number - carrington_first) * carrington_length
     return start_date, start_date + carrington_length

@@ -45,7 +45,7 @@ class GlowsL3ELoData(DataProduct):
 
     @classmethod
     def convert_dat_to_glows_l3e_lo_product(cls, input_metadata: InputMetadata, file_path: Path,
-                                            epoch: np.ndarray[datetime], elongation: np.ndarray[int],
+                                            epoch: datetime, elongation: int,
                                             args: GlowsL3eCallArguments):
         with open(file_path) as input_data:
             lines = input_data.readlines()
@@ -60,15 +60,13 @@ class GlowsL3ELoData(DataProduct):
         spin_angles = spin_angle_and_survival_probabilities[:, 0]
         survival_probabilities = np.array([spin_angle_and_survival_probabilities[:, 1:].T])
 
-        input_metadata.start_date = epoch[0]
-
         return cls(
             input_metadata=input_metadata,
-            epoch=epoch,
+            epoch=np.array([epoch]),
             energy=energies,
             spin_angle=spin_angles,
             probability_of_survival=survival_probabilities,
-            elongation=elongation,
+            elongation=np.array([elongation]),
             spin_axis_lat=np.array([args.spin_axis_latitude]),
             spin_axis_lon=np.array([args.spin_axis_longitude]),
             program_version=np.array([code_version]),

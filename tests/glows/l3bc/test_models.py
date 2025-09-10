@@ -159,7 +159,8 @@ class TestModels(CdfModelTestCase):
     def test_l3b_to_data_product_variables(self):
         data = GlowsL3BIonizationRate(input_metadata=sentinel.input_metadata,
                                       epoch=sentinel.epoch,
-                                      epoch_delta=sentinel.epoch_delta,
+                                      epoch_delta_plus=sentinel.epoch_delta_plus,
+                                      epoch_delta_minus=sentinel.epoch_delta_minus,
                                       cr=sentinel.cr,
                                       uv_anisotropy_factor=sentinel.uv_anisotropy_factor,
                                       lat_grid=sentinel.lat_grid,
@@ -171,7 +172,6 @@ class TestModels(CdfModelTestCase):
                                       ph_uncert=sentinel.ph_uncert,
                                       cx_uncert=sentinel.cx_uncert,
                                       lat_grid_label=sentinel.lat_grid_label,
-                                      mean_time=sentinel.mean_time,
                                       uv_anisotropy_flag=sentinel.uv_anisotropy_flag
                                       )
 
@@ -180,7 +180,8 @@ class TestModels(CdfModelTestCase):
 
         variables = iter(variables)
         self.assert_variable_attributes(next(variables), sentinel.epoch, "epoch")
-        self.assert_variable_attributes(next(variables), sentinel.epoch_delta, "epoch_delta")
+        self.assert_variable_attributes(next(variables), sentinel.epoch_delta_plus, "epoch_delta_plus")
+        self.assert_variable_attributes(next(variables), sentinel.epoch_delta_minus, "epoch_delta_minus")
         self.assert_variable_attributes(next(variables), sentinel.cr, "cr")
         self.assert_variable_attributes(next(variables), sentinel.uv_anisotropy_factor, "uv_anisotropy_factor")
         self.assert_variable_attributes(next(variables), sentinel.lat_grid, "lat_grid")
@@ -192,7 +193,6 @@ class TestModels(CdfModelTestCase):
         self.assert_variable_attributes(next(variables), sentinel.ph_uncert, "ph_uncert")
         self.assert_variable_attributes(next(variables), sentinel.cx_uncert, "cx_uncert")
         self.assert_variable_attributes(next(variables), sentinel.lat_grid_label, "lat_grid_label")
-        self.assert_variable_attributes(next(variables), sentinel.mean_time, "mean_time")
         self.assert_variable_attributes(next(variables), sentinel.uv_anisotropy_flag, "uv_anisotropy_flag")
 
     def test_l3b_from_instrument_team_dictionary(self):
@@ -211,9 +211,9 @@ class TestModels(CdfModelTestCase):
 
         self.assertEqual(sentinel.input_metadata, result.input_metadata)
 
-        self.assertEqual([datetime(2009, 12, 20, 20, 14, 51, 359974)], result.epoch)
-        np.testing.assert_equal([CARRINGTON_ROTATION_IN_NANOSECONDS / 2], result.epoch_delta)
-        self.assertEqual([datetime.fromisoformat("2010-01-02 03:43:28.667")], result.mean_time)
+        np.testing.assert_array_equal([datetime.fromisoformat("2010-01-02 03:43:28.667")], result.epoch)
+        np.testing.assert_equal([114575653000000], result.epoch_delta_plus)
+        np.testing.assert_equal( [2242010267000000], result.epoch_delta_minus)
         self.assertEqual([10000], result.uv_anisotropy_flag)
         self.assertEqual([2091], result.cr)
         np.testing.assert_equal([instrument_team_l3b_dict["uv_anisotropy_factor"]], result.uv_anisotropy_factor)
@@ -248,7 +248,8 @@ class TestModels(CdfModelTestCase):
     def test_l3c_to_data_product_variables(self):
         data = GlowsL3CSolarWind(input_metadata=sentinel.input_metadata,
                                  epoch=sentinel.epoch,
-                                 epoch_delta=sentinel.epoch_delta,
+                                 epoch_delta_plus=sentinel.epoch_delta_plus,
+                                 epoch_delta_minus=sentinel.epoch_delta_minus,
                                  cr=sentinel.cr,
                                  lat_grid=sentinel.lat_grid,
                                  lat_grid_delta=sentinel.lat_grid_delta,
@@ -261,12 +262,14 @@ class TestModels(CdfModelTestCase):
                                  )
 
         variables = data.to_data_product_variables()
-        self.assertEqual(11, len(variables))
+        self.assertEqual(12, len(variables))
 
         variables = iter(variables)
         self.assert_variable_attributes(next(variables), sentinel.epoch, "epoch",
                                         expected_data_type=pycdf.const.CDF_TIME_TT2000)
-        self.assert_variable_attributes(next(variables), sentinel.epoch_delta, "epoch_delta",
+        self.assert_variable_attributes(next(variables), sentinel.epoch_delta_plus, "epoch_delta_plus",
+                                        expected_data_type=pycdf.const.CDF_INT8)
+        self.assert_variable_attributes(next(variables), sentinel.epoch_delta_minus, "epoch_delta_minus",
                                         expected_data_type=pycdf.const.CDF_INT8)
         self.assert_variable_attributes(next(variables), sentinel.cr, "cr", expected_data_type=pycdf.const.CDF_INT2)
         self.assert_variable_attributes(next(variables), sentinel.lat_grid, "lat_grid",
@@ -299,8 +302,9 @@ class TestModels(CdfModelTestCase):
         self.assertIsInstance(result, GlowsL3CSolarWind)
 
         self.assertEqual(sentinel.input_metadata, result.input_metadata)
-        self.assertEqual([datetime(2009, 12, 20, 20, 14, 51, 359974)], result.epoch)
-        np.testing.assert_equal([CARRINGTON_ROTATION_IN_NANOSECONDS / 2], result.epoch_delta)
+        np.testing.assert_array_equal([datetime.fromisoformat("2010-01-02 03:43:28.667")], result.epoch)
+        np.testing.assert_equal([114575653000000], result.epoch_delta_plus)
+        np.testing.assert_equal( [2242010267000000], result.epoch_delta_minus)
 
         self.assertEqual([2091], result.cr)
         np.testing.assert_equal(latitude_grid, result.lat_grid)

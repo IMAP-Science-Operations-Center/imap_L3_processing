@@ -71,7 +71,7 @@ spin_axis_latitude:
   RECORD_VARYING: RV
   FIELDNAM: Spin Axis Latitude
   FORMAT: F9.3
-  FILLVAL: -1.0000E+313
+  FILLVAL: -1.0000E+31
   UNITS: degrees
 spin_axis_longitude:
   NAME: spin_axis_longitude

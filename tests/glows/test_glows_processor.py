@@ -1019,14 +1019,15 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
         parent_file_names = ["l3d_file", "ancillary_1", "ancillary_2", "ancillary_3"]
         products = process_l3e_ul(parent_file_names, repointing, epoch_start_date, epoch_delta, version)
 
-        mock_determine_call_args.assert_called_once_with(epoch_start_date, epoch_start_date + epoch_delta, 30)
+        expected_repointing_midpoint = epoch_start_date + epoch_delta
+        mock_determine_call_args.assert_called_once_with(epoch_start_date, expected_repointing_midpoint, 30)
 
         mock_run.assert_called_once_with(["./survProbUltra"] + ultra_args)
 
         output_data_path = Path("probSur.Imap.Ul_20241007_000000_date.001.dat")
 
         mock_convert_dat_to_glows_l3e_ul_product.assert_called_once_with(
-            input_metadata, output_data_path, np.array([epoch_start_date]), call_args_object)
+            input_metadata, output_data_path, expected_repointing_midpoint, call_args_object)
 
         expected_first_data_path = AncillaryFilePath("imap_glows_survival-probability-ul-raw_20241007_v012.dat").construct_path()
 
@@ -1090,7 +1091,8 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
                 parent_file_names = ["some_l3e_hi_parent.dat", "some_repointing_file.repoint.csv"]
                 products = process_l3e_hi(parent_file_names, repointing, epoch_start_date, epoch_delta, elongation, version)
 
-                mock_determine_call_args.assert_called_once_with(epoch_start_date, epoch_start_date + epoch_delta, float(elongation))
+                expected_repointing_midpoint = epoch_start_date + epoch_delta
+                mock_determine_call_args.assert_called_once_with(epoch_start_date, expected_repointing_midpoint, float(elongation))
 
                 mock_run.assert_called_once_with(["./survProbHi"] + hi_args)
 
@@ -1099,7 +1101,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
                 mock_convert_dat_to_glows_l3e_hi_product.assert_called_once_with(
                     expected_input_metadata,
                     first_output_data_path,
-                    np.array([epoch_start_date]),
+                    expected_repointing_midpoint,
                     mock_call_args_object
                 )
 
@@ -1170,14 +1172,15 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
 
                 products = process_l3e_lo(parent_file_names, repointing, epoch_start_date, epoch_delta, elongation, version)
 
-                mock_determine_call_args.assert_called_once_with(epoch_start_date, epoch_start_date + epoch_delta, elongation)
+                expected_repointing_midpoint = epoch_start_date + epoch_delta
+                mock_determine_call_args.assert_called_once_with(epoch_start_date, expected_repointing_midpoint, elongation)
 
                 mock_run.assert_called_once_with(["./survProbLo"] + lo_call_args)
 
                 first_output_file_path = Path(f"probSur.Imap.Lo_20241007_000000_date.100_{elongation_filename}.dat")
 
                 mock_convert_dat_to_glows_l3e_lo_product.assert_called_once_with(expected_input_metadata, first_output_file_path,
-                         np.array([epoch_start_date]), elongation, l3e_args)
+                         expected_repointing_midpoint, elongation, l3e_args)
 
                 expected_first_output_file_path = AncillaryFilePath("imap_glows_survival-probability-lo-raw_20241007_v012.dat"
                                                                     ).construct_path()

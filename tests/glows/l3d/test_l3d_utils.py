@@ -85,7 +85,7 @@ class TestL3dUtils(unittest.TestCase):
                 'filename': 'imap_glows_l3b_ion-rate-profile_20100422_v011.cdf',
             },
             'CR': 2096,
-            'date': '2010-05-14 15:43:35.562',
+            'date': '2010-05-06T05:17:00.959996',
             'uv_anisotropy_factor': [1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.],
             'ion_rate_profile': {
                 'lat_grid': [-90., -80., -70., -60., -50., -40., -30., -20., -10., 0., 10., 20., 30., 40., 50., 60.,
@@ -116,6 +116,9 @@ class TestL3dUtils(unittest.TestCase):
 
         self.assertIsInstance(actual['CR'], int)
         self.assertEqual(expected['CR'], actual['CR'])
+
+        self.assertIsInstance(actual['date'], str)
+        self.assertEqual(actual['date'], expected['date'])
 
         np.testing.assert_array_equal(expected["header"]['filename'],
                                       actual["header"]['filename'])

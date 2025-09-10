@@ -126,7 +126,8 @@ class TestCdfUtils(TestCase):
                         self.assertFalse(True, f"Found unknown DATA_TYPE: {variable['DATA_TYPE']}")
 
     def _epoch_meets_schema(self, yaml_data: dict):
-        if "epoch_delta" in yaml_data.keys():
+        epoch_delta_types = ["epoch_delta", "epoch_delta_plus", "epoch_delta_minus"]
+        if any([epoch_delta_type in yaml_data.keys() for epoch_delta_type in epoch_delta_types]):
             self.assertEqual(20, len(yaml_data['epoch'].keys()))
         else:
             self.assertEqual(18, len(yaml_data['epoch'].keys()))

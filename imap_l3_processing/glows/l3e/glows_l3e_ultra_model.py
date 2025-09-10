@@ -45,7 +45,7 @@ class GlowsL3EUltraData(DataProduct):
 
     @classmethod
     def convert_dat_to_glows_l3e_ul_product(cls, input_metadata: InputMetadata, file_path: Path,
-                                            epoch: np.ndarray[datetime],
+                                            epoch: datetime,
                                             args: GlowsL3eCallArguments):
         with open(file_path) as input_data:
             lines = input_data.readlines()
@@ -70,10 +70,8 @@ class GlowsL3EUltraData(DataProduct):
 
         transposed_prob_sur = np.array([probability_of_survival_to_return])
 
-        input_metadata.start_date = epoch[0]
-
         return cls(input_metadata,
-            epoch=epoch,
+            epoch=np.array([epoch]),
             energy=energies,
             healpix_index=healpix_indexes,
             probability_of_survival=transposed_prob_sur,

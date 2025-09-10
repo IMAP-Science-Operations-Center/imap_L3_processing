@@ -61,7 +61,7 @@ class TestL3eUltraModel(unittest.TestCase):
 
     def test_convert_dat_to_glows_l3e_ul_product(self):
         ul_file_path = get_test_instrument_team_data_path("glows/probSur.Imap.Ul_20250420_000000_2025.300.txt")
-        expected_epoch = np.array([datetime(year=2009, month=1, day=1)])
+        expected_epoch = datetime(year=2009, month=1, day=1)
 
         expected_energy = np.array(
             [2.3751086, 3.0917682, 4.0246710, 5.2390656, 6.8198887, 8.8777057, 11.5564435, 15.0434572, 19.5826341,
@@ -112,8 +112,7 @@ class TestL3eUltraModel(unittest.TestCase):
                                                                                                   expected_epoch,
                                                                                                   args)
 
-        self.assertEqual(l3e_ul_product.input_metadata.start_date, expected_epoch[0])
-        self.assertEqual(expected_epoch, l3e_ul_product.epoch)
+        self.assertEqual([expected_epoch], l3e_ul_product.epoch)
 
         np.testing.assert_array_equal(l3e_ul_product.energy, expected_energy)
 
