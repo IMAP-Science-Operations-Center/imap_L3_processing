@@ -45,7 +45,7 @@ from imap_l3_processing.glows.l3e.glows_l3e_utils import determine_call_args_for
     find_l3e_spice_kernels_for_time_range
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
-from imap_l3_processing.utils import save_data, get_spice_parent_file_names
+from imap_l3_processing.utils import save_data
 
 logger = logging.getLogger(__name__)
 
@@ -74,6 +74,8 @@ class GlowsProcessor(Processor):
                 for dep in l3bc_initializer_data.l3bc_dependencies:
                     l3a_file_names = [l3a_d["filename"] for l3a_d in dep.l3a_data]
                     logger.info(f"\t{dep.carrington_rotation_number}, v{dep.version:03}: {l3a_file_names}")
+            else:
+                logger.info("No CRs to process for B/C")
 
             glows_l3bc_output_data = process_l3bc(self, l3bc_initializer_data)
             products_list.extend(glows_l3bc_output_data.data_products)

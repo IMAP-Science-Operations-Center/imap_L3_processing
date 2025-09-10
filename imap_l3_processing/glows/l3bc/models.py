@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 import dataclasses
 import json
 from collections.abc import Iterable
@@ -19,7 +20,7 @@ from imap_l3_processing.models import DataProduct, DataProductVariable, InputMet
 from imap_l3_processing.utils import download_external_dependency
 
 F107_FLUX_TABLE_URL = "https://www.spaceweather.gc.ca/solar_flux_data/daily_flux_values/fluxtable.txt"
-LYMAN_ALPHA_COMPOSITE_INDEX_URL = "http://lasp.colorado.edu/data/timed_see/composite_lya/lyman_alpha_composite.nc"
+LYMAN_ALPHA_COMPOSITE_INDEX_URL = "https://lasp.colorado.edu/data/timed_see/composite_lya/lyman_alpha_composite.nc"
 OMNI2_URL = "https://spdf.gsfc.nasa.gov/pub/data/omni/low_res_omni/omni2_all_years.dat"
 
 

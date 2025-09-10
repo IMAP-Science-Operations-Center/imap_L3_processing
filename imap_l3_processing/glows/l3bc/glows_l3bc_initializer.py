@@ -1,7 +1,6 @@
 import logging
 from collections import defaultdict
 from dataclasses import dataclass
-from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
@@ -43,6 +42,7 @@ class GlowsL3BCInitializer:
         l3a_query_results = imap_data_access.query(instrument="glows", data_level="l3a", descriptor="hist", version="latest")
         l3a_files_names = [Path(l3a_query_result["file_path"]).name for l3a_query_result in l3a_query_results]
         cr_to_l3a_file_names = GlowsL3BCInitializer.group_l3a_by_cr(l3a_files_names)
+        print(cr_to_l3a_file_names)
 
         l3b_query_result = imap_data_access.query(instrument="glows", data_level="l3b",
                                                   descriptor="ion-rate-profile", version="latest")
@@ -69,6 +69,9 @@ class GlowsL3BCInitializer:
 
         if not all([external_dependencies.f107_index_file_path, external_dependencies.omni2_data_path,
                     external_dependencies.lyman_alpha_path]):
+            logger.info("Found issues with external dependencies, returning")
+            logger.info([external_dependencies.f107_index_file_path, external_dependencies.omni2_data_path,
+                    external_dependencies.lyman_alpha_path])
             return GlowsL3BCInitializerData(
                 external_dependencies=external_dependencies,
                 l3bc_dependencies=[],
@@ -79,6 +82,7 @@ class GlowsL3BCInitializer:
 
         all_l3bc_dependencies = []
         for cr_number, l3a_files in cr_to_l3a_file_names.items():
+            logger.info(f"considering CR {cr_number}")
             cr_start_date, cr_end_date = get_date_range_of_cr(cr_number)
 
             uv_anisotropy_file_name = get_best_ancillary(cr_start_date, cr_end_date, uv_anisotropy_query_result)
@@ -99,12 +103,19 @@ class GlowsL3BCInitializer:
                     cr_number
                 )
 
+                print(f"{cr_candidate=}")
+
                 if version := GlowsL3BCInitializer.should_process_cr_candidate(cr_candidate, l3bs_by_cr,
                                                                                external_dependencies):
+                    print(f"{version=}")
                     l3bc_dependencies = GlowsL3BCDependencies.download_from_cr_to_process(cr_candidate, version,
                                                                                           external_dependencies,
                                                                                           repoint_downloaded_path)
                     all_l3bc_dependencies.append(l3bc_dependencies)
+                else:
+                    logger.info(f"decided not to process {cr_candidate}")
+            else:
+                logger.info("missing some ancillaries")
 
         return GlowsL3BCInitializerData(
             external_dependencies=external_dependencies,

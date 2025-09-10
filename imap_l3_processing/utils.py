@@ -1,3 +1,4 @@
+import logging
 import re
 from datetime import datetime, date
 from pathlib import Path
@@ -18,6 +19,7 @@ from imap_l3_processing.models import UpstreamDataDependency, DataProduct, MagL1
 from imap_l3_processing.ultra.l3.models import UltraL1CPSet, UltraGlowsL3eData
 from imap_l3_processing.version import VERSION
 
+logger = logging.getLogger(__name__)
 
 def save_data(data: DataProduct, delete_if_present: bool = False, folder_path: Path = None,
               cr_number=None) -> Path:
@@ -121,6 +123,7 @@ def download_external_dependency(dependency_url: str, filename: str) -> Optional
         saved_path, _ = urlretrieve(dependency_url, filename)
         return Path(saved_path)
     except URLError:
+        logger.exception("bad download")
         return None
 
 

@@ -3,8 +3,6 @@ import shutil
 import unittest
 from datetime import timedelta, datetime
 from pathlib import Path
-from sys import platform
-from unittest import skipIf
 from unittest.mock import patch
 
 import imap_data_access
@@ -20,7 +18,7 @@ from tests.test_helpers import create_glows_mock_query_results, run_periodically
 
 
 class TestGlowsProcessorIntegration(unittest.TestCase):
-    @skipIf(not platform == "linux", "Only runs in a docker container!")
+    # @skipIf(not platform == "linux", "Only runs in a docker container!")
     @run_periodically(timedelta(seconds=7))
     @patch("imap_data_access.query")
     def test_l3bcde_integration(self, mock_query):
