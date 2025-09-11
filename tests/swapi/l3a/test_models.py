@@ -89,11 +89,11 @@ class TestModels(CdfModelTestCase):
         self.assert_variable_attributes(variables[4], expected_temperature_nominal_values,
                                         "alpha_sw_temperature")
         self.assert_variable_attributes(variables[5], expected_temperature_std_devs,
-                                        "alpha_sw_temperature_delta")
+                                        "alpha_sw_temperature_uncert")
         self.assert_variable_attributes(variables[6], expected_alpha_density_nominal_values,
                                         "alpha_sw_density")
         self.assert_variable_attributes(variables[7], expected_alpha_density_std_devs,
-                                        "alpha_sw_density_delta")
+                                        "alpha_sw_density_uncert")
 
     def test_getting_pui_data_product_variables(self):
         epoch_data = np.arange(20, step=2)

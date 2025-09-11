@@ -53,17 +53,17 @@ pui_cooling_index:
   SCALETYP: linear
   SCALEMIN: 0
   SCALEMAX: 5
-  DELTA_PLUS_VAR: pui_cooling_index_delta
-  DELTA_MINUS_VAR: pui_cooling_index_delta
-pui_cooling_index_delta:
-  NAME: pui_cooling_index_delta
+  DELTA_PLUS_VAR: pui_cooling_index_uncert
+  DELTA_MINUS_VAR: pui_cooling_index_uncert
+pui_cooling_index_uncert:
+  NAME: pui_cooling_index_uncert
   DATA_TYPE: CDF_REAL4
   CATDESC: Pickup ion cooling index uncertainty
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: PUI Cooling Index
-  LABLAXIS: PUI cooling idx delta
+  FIELDNAM: PUI Cooling Index Uncertainty
+  LABLAXIS: PUI cooling idx uncertainty
   FORMAT: F19.3
   UNITS: ' '
   VALIDMIN: 0
@@ -88,17 +88,17 @@ pui_ionization_rate:
   SCALE_TYP: linear
   SCALEMIN: 0
   SCALEMAX: 3.0e-7
-  DELTA_PLUS_VAR: pui_ionization_rate_delta
-  DELTA_MINUS_VAR: pui_ionization_rate_delta
-pui_ionization_rate_delta:
-  NAME: pui_ionization_rate_delta
+  DELTA_PLUS_VAR: pui_ionization_rate_uncert
+  DELTA_MINUS_VAR: pui_ionization_rate_uncert
+pui_ionization_rate_uncert:
+  NAME: pui_ionization_rate_uncert
   DATA_TYPE: CDF_REAL4
   CATDESC: Pickup ion ionization rate uncertainty
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: PUI Ionization Rate Delta
-  LABLAXIS: PUI IR delta
+  FIELDNAM: PUI Ionization Rate Uncertainty
+  LABLAXIS: PUI IR uncertainty
   FORMAT: F19.3
   UNITS: s!E-1!N
   VALIDMIN: 0
@@ -118,26 +118,26 @@ pui_cutoff_speed:
   LABLAXIS: PUI cutoff speed
   UNITS: km/s
   VALIDMIN: 0
-  VALIDMAX: 2000
+  VALIDMAX: 10000
   FILLVAL: -1.000000e+31
   SCALETYP: linear
   SCALEMIN: 0
   SCALEMAX: 1000
-  DELTA_PLUS_VAR: pui_cutoff_speed_delta
-  DELTA_MINUS_VAR: pui_cutoff_speed_delta
-pui_cutoff_speed_delta:
-  NAME: pui_cutoff_speed_delta
+  DELTA_PLUS_VAR: pui_cutoff_speed_uncert
+  DELTA_MINUS_VAR: pui_cutoff_speed_uncert
+pui_cutoff_speed_uncert:
+  NAME: pui_cutoff_speed_uncert
   DATA_TYPE: CDF_REAL4
-  CATDESC: Pickup ion cutoff speed delta
+  CATDESC: Pickup ion cutoff speed uncertainty
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: PUI Cutoff Speed Delta
-  LABLAXIS: PUI cutoff speed delta
+  FIELDNAM: PUI Cutoff Speed Uncertainty
+  LABLAXIS: PUI cutoff speed uncertainty
   FORMAT: F19.3
   UNITS: km/s
   VALIDMIN: 0
-  VALIDMAX: 2000
+  VALIDMAX: 10000
   FILLVAL: -1.000000e+31
 pui_background_count_rate:
   NAME: pui_background_count_rate
@@ -158,17 +158,17 @@ pui_background_count_rate:
   SCALETYP: linear
   SCALEMIN: 0
   SCALEMAX: 0.2
-  DELTA_PLUS_VAR: pui_background_count_rate_delta
-  DELTA_MINUS_VAR: pui_background_count_rate_delta
-pui_background_count_rate_delta:
-  NAME: pui_background_count_rate_delta
+  DELTA_PLUS_VAR: pui_background_count_rate_uncert
+  DELTA_MINUS_VAR: pui_background_count_rate_uncert
+pui_background_count_rate_uncert:
+  NAME: pui_background_count_rate_uncert
   DATA_TYPE: CDF_REAL4
-  CATDESC: Pickup ion background count rate delta
+  CATDESC: Pickup ion background count rate uncertainty
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: PUI background count rate Delta
-  LABLAXIS: PUI background count rate delta
+  FIELDNAM: PUI background count rate Uncertainty
+  LABLAXIS: PUI background count rate uncertainty
   FORMAT: F19.3
   UNITS: s!E-1!N
   VALIDMIN: 0
@@ -193,17 +193,17 @@ pui_density:
   SCALETYP: linear
   SCALEMIN: 0
   SCALEMAX: 0.001
-  DELTA_PLUS_VAR: pui_density_delta
-  DELTA_MINUS_VAR: pui_density_delta
-pui_density_delta:
-  NAME: pui_density_delta
+  DELTA_PLUS_VAR: pui_density_uncert
+  DELTA_MINUS_VAR: pui_density_uncert
+pui_density_uncert:
+  NAME: pui_density_uncert
   DATA_TYPE: CDF_REAL4
-  CATDESC: Pickup ion density delta
+  CATDESC: Pickup ion density uncertainty
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: PUI Density Delta
-  LABLAXIS: PUI density delta
+  FIELDNAM: PUI Density Uncertainty
+  LABLAXIS: PUI density uncertainty
   FORMAT: F19.3
   UNITS: cm!E-3!N
   VALIDMIN: 0
@@ -223,22 +223,22 @@ pui_temperature:
   LABLAXIS: PUI temperature
   UNITS: K
   VALIDMIN: 0
-  VALIDMAX: 9223372036854775807
+  VALIDMAX: 5.0e+7                   # what is a reasonable value for this?
   FILLVAL: -1.000000e+31
   SCALETYP: linear
   SCALEMIN: 0
   SCALEMAX: 50000000
-  DELTA_PLUS_VAR: pui_temperature_delta
-  DELTA_MINUS_VAR: pui_temperature_delta
-pui_temperature_delta:
-  NAME: pui_temperature_delta
+  DELTA_PLUS_VAR: pui_temperature_uncert
+  DELTA_MINUS_VAR: pui_temperature_uncert
+pui_temperature_uncert:
+  NAME: pui_temperature_uncert
   DATA_TYPE: CDF_REAL4
-  CATDESC: Pickup ion temperature delta
+  CATDESC: Pickup ion temperature uncertainty
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: PUI Temperature Delta
-  LABLAXIS: PUI temperature delta
+  FIELDNAM: PUI Temperature Uncertainty
+  LABLAXIS: PUI temperature uncertainty
   FORMAT: F19.3
   UNITS: K
   VALIDMIN: 0
@@ -258,27 +258,27 @@ proton_sw_speed:
   LABLAXIS: Proton solar wind speed
   UNITS: km/s
   VALIDMIN: 0
-  VALIDMAX: 9223372036854775807
+  VALIDMAX: 10000
   FILLVAL: -1.000000e+31
   SCALETYP: linear
-  DELTA_PLUS_VAR: proton_sw_speed_delta
-  DELTA_MINUS_VAR: proton_sw_speed_delta
+  DELTA_PLUS_VAR: proton_sw_speed_uncert
+  DELTA_MINUS_VAR: proton_sw_speed_uncert
   SCALEMIN: 0
   SCALEMAX: 1000
-proton_sw_speed_delta:
-  NAME: proton_sw_speed_delta
+proton_sw_speed_uncert:
+  NAME: proton_sw_speed_uncert
   DATA_TYPE: CDF_REAL4
-  CATDESC: Proton solar wind speed delta
+  CATDESC: Proton solar wind speed uncertainty
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: Proton Solar Wind Speed Delta
+  FIELDNAM: Proton Solar Wind Speed Uncertainty
   FORMAT: F19.3
   UNITS: km/s
   VALIDMIN: 0
-  VALIDMAX: 9223372036854775807
+  VALIDMAX: 10000
   FILLVAL: -1.000000e+31
-  LABLAXIS: H+ SW speed delta
+  LABLAXIS: H+ SW speed uncertainty
 proton_sw_temperature:
   NAME: proton_sw_temperature
   DATA_TYPE: CDF_REAL4
@@ -293,27 +293,27 @@ proton_sw_temperature:
   LABLAXIS: Proton solar wind T
   UNITS: K
   VALIDMIN: 0
-  VALIDMAX: 9223372036854775807
+  VALIDMAX: 7000000
   FILLVAL: -1.000000e+31
-  SCALETYP: linear
-  DELTA_PLUS_VAR: proton_sw_temperature_delta
-  DELTA_MINUS_VAR: proton_sw_temperature_delta
-  SCALEMIN: 0
+  SCALETYP: log                                     # switched to log, note SCALEMIN comment below
+  DELTA_PLUS_VAR: proton_sw_temperature_uncert
+  DELTA_MINUS_VAR: proton_sw_temperature_uncert
+  SCALEMIN: 0                                       # need a different SCALEMIN given the log SCALETYP
   SCALEMAX: 240000
-proton_sw_temperature_delta:
-  NAME: proton_sw_temperature_delta
+proton_sw_temperature_uncert:
+  NAME: proton_sw_temperature_uncert
   DATA_TYPE: CDF_REAL4
-  CATDESC: Proton solar wind temperature delta
+  CATDESC: Proton solar wind temperature uncertainty
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: Proton SW Temperature Delta
+  FIELDNAM: Proton SW Temperature Uncertainty
   FORMAT: F19.3
   UNITS: K
   VALIDMIN: 0
-  VALIDMAX: 9223372036854775807
+  VALIDMAX: 7000000
   FILLVAL: -1.000000e+31
-  LABLAXIS: H+ SW T delta
+  LABLAXIS: H+ SW T uncertainty
 proton_sw_density:
   NAME: proton_sw_density
   DATA_TYPE: CDF_REAL4
@@ -328,27 +328,27 @@ proton_sw_density:
   LABLAXIS: H+ SW density
   UNITS: cm!E-3!N
   VALIDMIN: 0
-  VALIDMAX: 9223372036854775807
+  VALIDMAX: 150
   FILLVAL: -1.000000e+31
-  SCALETYP: linear
-  DELTA_PLUS_VAR: proton_sw_density_delta
-  DELTA_MINUS_VAR: proton_sw_density_delta
-  SCALEMIN: 0
+  SCALETYP: log                                 # switched to log, note SCALEMIN comment below
+  DELTA_PLUS_VAR: proton_sw_density_uncert
+  DELTA_MINUS_VAR: proton_sw_density_uncert
+  SCALEMIN: 0                                   # similarly, will need a new SCALEMIN if we use log SCALETYP
   SCALEMAX: 16
-proton_sw_density_delta:
-  NAME: proton_sw_density_delta
+proton_sw_density_uncert:
+  NAME: proton_sw_density_uncert
   DATA_TYPE: CDF_REAL4
-  CATDESC: Proton solar wind density delta
+  CATDESC: Proton solar wind density uncertainty
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: Proton Solar Wind Density Delta
+  FIELDNAM: Proton Solar Wind Density Uncertainty
   FORMAT: F19.3
   UNITS: cm!E-3!N
   VALIDMIN: 0
-  VALIDMAX: 9223372036854775807
+  VALIDMAX: 150
   FILLVAL: -1.000000e+31
-  LABLAXIS: H+ SW density delta
+  LABLAXIS: H+ SW density uncertainty
 proton_sw_clock_angle:
   NAME: proton_sw_clock_angle
   DATA_TYPE: CDF_REAL4
@@ -363,27 +363,27 @@ proton_sw_clock_angle:
   LABLAXIS: Clock angle of H+ SW
   UNITS: degrees
   VALIDMIN: 0
-  VALIDMAX: 9223372036854775807
+  VALIDMAX: 360
   FILLVAL: -1.000000e+31
   SCALETYP: linear
-  DELTA_PLUS_VAR: proton_sw_clock_angle_delta
-  DELTA_MINUS_VAR: proton_sw_clock_angle_delta
+  DELTA_PLUS_VAR: proton_sw_clock_angle_uncert
+  DELTA_MINUS_VAR: proton_sw_clock_angle_uncert
   SCALEMIN: 0
   SCALEMAX: 360
-proton_sw_clock_angle_delta:
-  NAME: proton_sw_clock_angle_delta
+proton_sw_clock_angle_uncert:
+  NAME: proton_sw_clock_angle_uncert
   DATA_TYPE: CDF_REAL4
-  CATDESC: Proton solar wind clock angle delta
+  CATDESC: Proton solar wind clock angle uncertainty
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: Proton Solar Wind Clock Angle Delta
+  FIELDNAM: Proton Solar Wind Clock Angle Uncertainty
   FORMAT: F19.3
   UNITS: degrees
   VALIDMIN: 0
-  VALIDMAX: 9223372036854775807
+  VALIDMAX: 360
   FILLVAL: -1.000000e+31
-  LABLAXIS: H+ SW clock angle delta
+  LABLAXIS: H+ SW clock angle uncertainty
 proton_sw_deflection_angle:
   NAME: proton_sw_deflection_angle
   DATA_TYPE: CDF_REAL4
@@ -398,27 +398,27 @@ proton_sw_deflection_angle:
   LABLAXIS: H+ SW deflection angle
   UNITS: degrees
   VALIDMIN: 0
-  VALIDMAX: 9223372036854775807
+  VALIDMAX: 360                                     # should this be limited at 180?
   FILLVAL: -1.000000e+31
   SCALETYP: linear
-  DELTA_PLUS_VAR: proton_sw_deflection_angle_delta
-  DELTA_MINUS_VAR: proton_sw_deflection_angle_delta
+  DELTA_PLUS_VAR: proton_sw_deflection_angle_uncert
+  DELTA_MINUS_VAR: proton_sw_deflection_angle_uncert
   SCALEMIN: 0
-  SCALEMAX: 360
-proton_sw_deflection_angle_delta:
-  NAME: proton_sw_deflection_angle_delta
+  SCALEMAX: 360                                     # should this be lower to account for typical range?
+proton_sw_deflection_angle_uncert:
+  NAME: proton_sw_deflection_angle_uncert
   DATA_TYPE: CDF_REAL4
-  CATDESC: Proton solar wind deflection angle delta
+  CATDESC: Proton solar wind deflection angle uncertainty
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: Proton Solar Wind Deflection Angle Delta
+  FIELDNAM: Proton Solar Wind Deflection Angle Uncertainty
   FORMAT: F19.3
   UNITS: degrees
   VALIDMIN: 0
-  VALIDMAX: 9223372036854775807
+  VALIDMAX: 360
   FILLVAL: -1.000000e+31
-  LABLAXIS: H+ SW deflection angle delta
+  LABLAXIS: H+ SW deflection angle uncertainty
 alpha_sw_speed:
   NAME: alpha_sw_speed
   DATA_TYPE: CDF_REAL4
@@ -433,27 +433,27 @@ alpha_sw_speed:
   LABLAXIS: Alpha solar wind speed
   UNITS: km/s
   VALIDMIN: 0
-  VALIDMAX: 9223372036854775807
+  VALIDMAX: 10000
   FILLVAL: -1.000000e+31
   SCALETYP: linear
-  DELTA_PLUS_VAR: alpha_sw_speed_delta
-  DELTA_MINUS_VAR: alpha_sw_speed_delta
+  DELTA_PLUS_VAR: alpha_sw_speed_uncert
+  DELTA_MINUS_VAR: alpha_sw_speed_uncert
   SCALEMIN: 0
   SCALEMAX: 1000
-alpha_sw_speed_delta:
-  NAME: alpha_sw_speed_delta
+alpha_sw_speed_uncert:
+  NAME: alpha_sw_speed_uncert
   DATA_TYPE: CDF_REAL4
-  CATDESC: Alpha solar wind speed delta
+  CATDESC: Alpha solar wind speed uncertainty
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: Alpha Solar Wind Speed Delta
+  FIELDNAM: Alpha Solar Wind Speed Uncertainty
   FORMAT: F19.3
   UNITS: km/s
   VALIDMIN: 0
-  VALIDMAX: 9223372036854775807
+  VALIDMAX: 10000
   FILLVAL: -1.000000e+31
-  LABLAXIS: Alpha SW speed delta
+  LABLAXIS: Alpha SW speed uncertainty
 alpha_sw_temperature:
   NAME: alpha_sw_temperature
   DATA_TYPE: CDF_REAL4
@@ -468,27 +468,27 @@ alpha_sw_temperature:
   LABLAXIS: Alpha SW temperature
   UNITS: K
   VALIDMIN: 0
-  VALIDMAX: 9223372036854775807
+  VALIDMAX: 28000000
   FILLVAL: -1.000000e+31
   SCALETYP: linear
-  DELTA_PLUS_VAR: alpha_sw_temperature_delta
-  DELTA_MINUS_VAR: alpha_sw_temperature_delta
+  DELTA_PLUS_VAR: alpha_sw_temperature_uncert
+  DELTA_MINUS_VAR: alpha_sw_temperature_uncert
   SCALEMIN: 0
-  SCALEMAX: 450000
-alpha_sw_temperature_delta:
-  NAME: alpha_sw_temperature_delta
+  SCALEMAX: 960000
+alpha_sw_temperature_uncert:
+  NAME: alpha_sw_temperature_uncert
   DATA_TYPE: CDF_REAL4
-  CATDESC: Alpha solar wind temperature delta
+  CATDESC: Alpha solar wind temperature uncertainty
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: Alpha Solar Wind Temperature Delta
+  FIELDNAM: Alpha Solar Wind Temperature Uncertainty
   FORMAT: F19.3
   UNITS: K
   VALIDMIN: 0
-  VALIDMAX: 9223372036854775807
+  VALIDMAX: 28000000
   FILLVAL: -1.000000e+31
-  LABLAXIS: Aplha SW temperature delta
+  LABLAXIS: Alpha SW temperature uncertainty
 alpha_sw_density:
   NAME: alpha_sw_density
   DATA_TYPE: CDF_REAL4
@@ -503,24 +503,24 @@ alpha_sw_density:
   LABLAXIS: Alpha SW density
   UNITS: cm!E-3!N
   VALIDMIN: 0
-  VALIDMAX: 9223372036854775807
+  VALIDMAX: 100
   FILLVAL: -1.000000e+31
   SCALETYP: linear
-  DELTA_PLUS_VAR: alpha_sw_density_delta
-  DELTA_MINUS_VAR: alpha_sw_density_delta
+  DELTA_PLUS_VAR: alpha_sw_density_uncert
+  DELTA_MINUS_VAR: alpha_sw_density_uncert
   SCALEMIN: 0
   SCALEMAX: 5
-alpha_sw_density_delta:
-  NAME: alpha_sw_density_delta
+alpha_sw_density_uncert:
+  NAME: alpha_sw_density_uncert
   DATA_TYPE: CDF_REAL4
-  CATDESC: Alpha solar wind density delta
+  CATDESC: Alpha solar wind density uncertainty
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: Alpha Solar Wind Density Delta
+  FIELDNAM: Alpha Solar Wind Density Uncertainty
   FORMAT: F19.3
   UNITS: cm!E-3!N
   VALIDMIN: 0
-  VALIDMAX: 9223372036854775807
+  VALIDMAX: 100
   FILLVAL: -1.000000e+31
-  LABLAXIS: Alpha SW density delta
+  LABLAXIS: Alpha SW density uncertainty
