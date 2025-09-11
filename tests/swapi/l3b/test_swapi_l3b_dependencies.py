@@ -16,6 +16,9 @@ class TestSwapiL3BDependencies(unittest.TestCase):
         self.mock_imap_patcher = patch('imap_l3_processing.utils.imap_data_access')
         self.mock_imap_api = self.mock_imap_patcher.start()
 
+    def tearDown(self) -> None:
+        self.mock_imap_patcher.stop()
+
     @patch(
         "imap_l3_processing.swapi.l3b.swapi_l3b_dependencies.SwapiL3BDependencies.from_file_paths")
     @patch(

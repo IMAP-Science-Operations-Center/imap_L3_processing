@@ -6,12 +6,12 @@ from dataclasses import dataclass
 from datetime import datetime, date
 from pathlib import Path
 from typing import Optional, Union, TypeVar
-from urllib.error import URLError
 
 import imap_data_access
 import requests
 import spiceypy
 from imap_data_access import ScienceFilePath, download
+from requests import RequestException
 from spacepy.pycdf import CDF
 
 import imap_l3_processing
@@ -142,7 +142,7 @@ def download_external_dependency(dependency_url: str, file_path: Path) -> Option
             return Path(file_path)
         else:
             logger.error(f"Failed to download {dependency_url} with status code {response.status_code}")
-    except URLError:
+    except RequestException:
         logger.exception(f"Failed to download {dependency_url}")
     return None
 
@@ -213,8 +213,10 @@ class FurnishMetakernelOutput:
     spice_kernel_paths: list[Path]
 
 def furnish_spice_metakernel(start_date: datetime, end_date: datetime, kernel_types: list[SpiceKernelTypes]):
+    print(imap_data_access.config.get)
+
     metakernel_path = imap_data_access.config.get("DATA_DIR") / "metakernel" / "metakernel.txt"
-    kernel_path = imap_data_access.config.get("DATA_DIR") / "spice"
+    kernel_path = imap_data_access.config.get("DATA_DIR") / "imap" / "spice"
 
     parameters: dict = {
         'spice_path': kernel_path,

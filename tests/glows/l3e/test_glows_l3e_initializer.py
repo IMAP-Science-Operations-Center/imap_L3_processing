@@ -8,7 +8,6 @@ from imap_data_access import RepointInput
 from imap_l3_processing.glows.l3d.models import GlowsL3DProcessorOutput
 from imap_l3_processing.glows.l3e.glows_l3e_initializer import GlowsL3EInitializer, GlowsL3EInitializerOutput
 from imap_l3_processing.glows.l3e.glows_l3e_utils import GlowsL3eRepointings
-from imap_l3_processing.utils import SpiceKernelTypes
 from tests.test_helpers import create_glows_mock_query_results
 
 
@@ -136,8 +135,6 @@ class TestGlowsL3EInitializer(unittest.TestCase):
             start_date=datetime(2010, 1, 1),
             end_date=datetime(2011, 2, 2),
         )
-
-
 
 
     @patch('imap_l3_processing.glows.l3e.glows_l3e_initializer.imap_data_access.query')

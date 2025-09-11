@@ -34,7 +34,7 @@ class GlowsL3EDependencies:
     elongation: dict
     elongation_file: Path
     repointing_file: Path
-    kernels: list[str] = field(default_factory=list)
+    spice_kernels: list[str] = field(default_factory=list)
 
     @classmethod
     def fetch_dependencies(cls, dependencies: ProcessingInputCollection):
@@ -105,9 +105,9 @@ class GlowsL3EDependencies:
         )
 
     def furnish_spice_dependencies(self, start_date: datetime, end_date: datetime):
-        kernels = furnish_spice_metakernel(start_date=start_date, end_date=end_date, kernel_types=GLOWS_L3E_REQUIRED_SPICE_KERNELS)
+        spice_kernels = furnish_spice_metakernel(start_date=start_date, end_date=end_date, kernel_types=GLOWS_L3E_REQUIRED_SPICE_KERNELS)
 
-        self.kernels.extend([kernel_path.name for kernel_path in kernels.spice_kernel_paths])
+        self.spice_kernels.extend([kernel_path.name for kernel_path in spice_kernels.spice_kernel_paths])
 
     def rename_dependencies(self):
         if self.energy_grid_lo is not None:
@@ -143,7 +143,7 @@ class GlowsL3EDependencies:
             self.ionization_files.name,
             self.pipeline_settings_file.name,
             self.repointing_file.name,
-            *self.kernels
+            *self.spice_kernels
         ]
 
     def get_lo_parents(self):
@@ -160,7 +160,7 @@ class GlowsL3EDependencies:
             self.pipeline_settings_file.name,
             self.repointing_file.name,
             self.elongation_file.name,
-            *self.kernels
+            *self.spice_kernels
         ]
 
     def get_ul_parents(self):
@@ -176,5 +176,5 @@ class GlowsL3EDependencies:
             self.ionization_files.name,
             self.pipeline_settings_file.name,
             self.repointing_file.name,
-            *self.kernels
+            *self.spice_kernels
         ]

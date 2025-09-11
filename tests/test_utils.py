@@ -3,7 +3,7 @@ import tempfile
 from datetime import datetime, date
 from pathlib import Path
 from unittest import TestCase
-from unittest.mock import patch, call, Mock, sentinel
+from unittest.mock import patch, call, Mock, sentinel, MagicMock
 from urllib.error import URLError
 
 import imap_data_access
@@ -355,7 +355,7 @@ class TestUtils(TestCase):
         expected_url = "https://www.spaceweather.gc.ca/solar_flux_data/daily_flux_values/no_such_file.txt"
 
         expected_filename = "f107_fluxtable.txt"
-        mock_requests.side_effect = RequestException
+        mock_requests.get.side_effect = RequestException
 
         returned = download_external_dependency(expected_url, expected_filename)
         self.assertIsNone(returned)
@@ -554,7 +554,9 @@ class TestUtils(TestCase):
 
             mock_data_dir = tmp_dir / "some_data_directory"
             mock_data_access_url = "https://imap-mission.com"
-            with patch.dict(imap_data_access.config, { "DATA_DIR": mock_data_dir, "DATA_ACCESS_URL": mock_data_access_url}):
+
+            fake_imap_data_access_config = {"DATA_DIR": mock_data_dir, "DATA_ACCESS_URL": mock_data_access_url}
+            with patch.object(imap_data_access, "config", new=fake_imap_data_access_config):
 
                 actual_output = furnish_spice_metakernel(start_date, end_date, kernel_types)
 
@@ -562,7 +564,7 @@ class TestUtils(TestCase):
                     "file_types": ["leapseconds", "imap_frames"],
                     "start_time": "1262322000",
                     "end_time": "1267419600",
-                    "spice_path": mock_data_dir / "spice",
+                    "spice_path": mock_data_dir / "imap" / "spice",
                 }
 
                 mock_requests.get.assert_has_calls([
