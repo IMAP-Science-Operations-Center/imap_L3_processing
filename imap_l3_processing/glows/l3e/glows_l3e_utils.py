@@ -123,28 +123,3 @@ def find_first_updated_cr(new_l3d, old_l3d) -> Optional[int]:
         return int(old_l3d_cdf['cr_grid'][-1]) + 1
 
     return None
-
-l3e_kernels = [
-    "science_frames",
-    "ephemeris_reconstructed",
-    "attitude_history",
-    "pointing_attitude",
-    "planetary_ephemeris",
-    "leapseconds",
-    "spacecraft_clock",
-]
-
-def find_l3e_spice_kernels_for_time_range(start_date: datetime, end_date: datetime, required_kernel_types: Optional[list[str]] =None):
-    required_kernel_types = required_kernel_types or l3e_kernels
-
-    data_access_url = imap_data_access.config["DATA_ACCESS_URL"]
-
-    file_names = []
-    for kernel_type in required_kernel_types:
-        file_json = requests.get(f"{data_access_url}/spice-query?type={kernel_type}&start_time=0").json()
-        for spice_file in file_json:
-            spice_start_date = datetime.strptime(spice_file["min_date_datetime"], "%Y-%m-%d, %H:%M:%S")
-            spice_end_date = datetime.strptime(spice_file["max_date_datetime"], "%Y-%m-%d, %H:%M:%S")
-            if spice_start_date <= end_date and start_date < spice_end_date:
-                file_names.append(Path(spice_file["file_name"]).name)
-    return file_names

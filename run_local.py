@@ -503,8 +503,8 @@ def run_l3b_initializer(mock_download_external, mock_download, mock_imap_data_ac
         get_test_data_path('glows/imap_glows_WawHelioIonMP_20100101_v002.json'),
         get_test_data_path('glows/imap_glows_bad-days-list_20100101_v004.dat'),
         get_test_data_path('glows/imap_glows_pipeline-settings-l3bcde_20250423_v001.json'),
-        get_test_data_path('glows/pipeline/l3a/imap_glows_l3a_hist_20100105-repoint00153_v001.cdf'),
-        get_test_data_path('glows/pipeline/l3a/imap_glows_l3a_hist_20100106-repoint00154_v001.cdf'),
+        get_test_data_path('glows/pipeline/l3a/imap_glows_l3a_hist_20250625-repoint01071_v001.cdf'),
+        get_test_data_path('glows/pipeline/l3a/imap_glows_l3a_hist_20250626-repoint01072_v001.cdf'),
         get_test_data_path('glows/imap_glows_uv-anisotropy-1CR_20100101_v001.json'),
         get_test_data_path('glows/imap_glows_WawHelioIonMP_20100101_v002.json'),
         get_test_data_path('glows/imap_glows_bad-days-list_20100101_v004.dat'),
@@ -599,7 +599,7 @@ def run_glows_l3e_lo_with_mocks(mock_get_repoint_date_range, _, mock_path, mock_
         repointing_file=get_test_data_path("fake_1_day_repointing_file.csv"),
     )
 
-    mock_l3e_dependencies.rename_dependencies = Mock()
+    mock_l3e_dependencies.copy_dependencies = Mock()
     mock_l3e_dependencies_class.fetch_dependencies.return_value = (mock_l3e_dependencies, 2094)
 
     mock_path.side_effect = [

@@ -112,6 +112,7 @@ program_version:
   FORMAT: a20
   FILLVAL: ' '
   UNITS: ' '
+  RECORD_VARYING: NRV
 spacecraft_radius:
   NAME: spacecraft_radius
   DATA_TYPE: CDF_FLOAT

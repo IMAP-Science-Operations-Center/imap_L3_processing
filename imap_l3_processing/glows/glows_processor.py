@@ -12,11 +12,9 @@ from subprocess import run
 from typing import Optional
 from zipfile import ZipFile, ZIP_DEFLATED
 
-import imap_data_access
 import numpy as np
 from imap_data_access.file_validation import generate_imap_file_path, ScienceFilePath, AncillaryFilePath
 from imap_data_access.processing_input import ProcessingInputCollection
-from spiceypy import spiceypy
 
 from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
 from imap_l3_processing.glows.descriptors import GLOWS_L3A_DESCRIPTOR
@@ -41,8 +39,7 @@ from imap_l3_processing.glows.l3e.glows_l3e_hi_model import GlowsL3EHiData
 from imap_l3_processing.glows.l3e.glows_l3e_initializer import GlowsL3EInitializer, GlowsL3EInitializerOutput
 from imap_l3_processing.glows.l3e.glows_l3e_lo_model import GlowsL3ELoData
 from imap_l3_processing.glows.l3e.glows_l3e_ultra_model import GlowsL3EUltraData
-from imap_l3_processing.glows.l3e.glows_l3e_utils import determine_call_args_for_l3e_executable, \
-    find_l3e_spice_kernels_for_time_range
+from imap_l3_processing.glows.l3e.glows_l3e_utils import determine_call_args_for_l3e_executable
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
 from imap_l3_processing.utils import save_data
@@ -246,10 +243,7 @@ def process_l3d(dependencies: GlowsL3DDependencies, version: int) -> Optional[Gl
         txt_files_with_correct_version = rename_l3d_text_outputs(output_text_files, formatted_version)
 
         for txt_file in txt_files_with_correct_version:
-            data_dir_path = generate_imap_file_path(txt_file.name).construct_path()
-            print(f"copied to {data_dir_path=}")
             shutil.copy(txt_file, generate_imap_file_path(txt_file.name).construct_path())
-            print(f"copied path exists: {data_dir_path.exists()}")
 
         file_name = f'imap_glows_l3d_solar-params-history_19470303-cr0{last_processed_cr}_v00.json'
 
@@ -365,7 +359,6 @@ def process_l3e_hi(parent_file_names: list[str], repointing: int, repointing_sta
 
     run(["./survProbHi"] + call_args)
 
-
     input_metadata = InputMetadata(instrument='glows', descriptor=f'survival-probability-hi-{180-elongation}',
                                    version=f'v{version:03}', start_date=repointing_start, end_date=repointing_start + epoch_delta * 2,
                                    repointing=repointing, data_level='l3e')
@@ -397,40 +390,34 @@ def process_l3e_hi(parent_file_names: list[str], repointing: int, repointing_sta
 
 def process_l3e(initializer_data: GlowsL3EInitializerOutput):
     products_list = []
+
     for repointing in initializer_data.repointings.repointing_numbers:
         with SwallowExceptionAndLog(f"Exception encountered when processing L3e for repointing {repointing}"):
             start_repointing, end_repointing = get_pointing_date_range(repointing)
             epoch_delta: timedelta = (end_repointing - start_repointing) / 2
 
-            spice_kernel_file_names = find_l3e_spice_kernels_for_time_range(start_repointing, end_repointing)
-            # if len(spice_kernel_file_names) == 0:
-            #     continue
-
-            logger.info(f"Processing L3e for repointing {repointing} with kernels: {spice_kernel_file_names}")
-
-            for spice_kernel in spice_kernel_file_names:
-                spice_kernel_downloaded_path = imap_data_access.download(spice_kernel)
-                spiceypy.furnsh(str(spice_kernel_downloaded_path))
-
             with SwallowExceptionAndLog(f"Exception encountered when processing L3e lo for repointing {repointing}"):
-                lo_parent_file_names = spice_kernel_file_names + initializer_data.dependencies.get_lo_parents()
-                lo_elongation = initializer_data.dependencies.elongation.get(f"{start_repointing.year}{repointing:03}")
+                lo_parent_file_names = initializer_data.dependencies.get_lo_parents()
+                repointing_doy = start_repointing.timetuple().tm_yday
+                lo_elongation = initializer_data.dependencies.elongation.get(f"{start_repointing.year}{repointing_doy:03}")
                 if lo_elongation is not None:
                     lo_version = initializer_data.repointings.lo_repointings[repointing]
                     products_list.extend(process_l3e_lo(lo_parent_file_names, repointing, start_repointing, epoch_delta, lo_elongation, lo_version))
+                else:
+                    logger.warning(f"Skipping L3e Lo processing for {repointing=} because there is no elongation data")
 
             with SwallowExceptionAndLog(f"Exception encountered when processing L3e hi-90 for repointing {repointing}"):
-                hi_parent_file_names = spice_kernel_file_names + initializer_data.dependencies.get_hi_parents()
+                hi_parent_file_names = initializer_data.dependencies.get_hi_parents()
                 hi_90_version = initializer_data.repointings.hi_90_repointings[repointing]
                 products_list.extend(process_l3e_hi(hi_parent_file_names, repointing, start_repointing, epoch_delta, 90, hi_90_version))
 
             with SwallowExceptionAndLog(f"Exception encountered when processing L3e hi-45 for repointing {repointing}"):
-                hi_parent_file_names = spice_kernel_file_names + initializer_data.dependencies.get_hi_parents()
+                hi_parent_file_names = initializer_data.dependencies.get_hi_parents()
                 hi_45_version = initializer_data.repointings.hi_45_repointings[repointing]
                 products_list.extend(process_l3e_hi(hi_parent_file_names, repointing, start_repointing, epoch_delta, 135, hi_45_version))
 
             with SwallowExceptionAndLog(f"Exception encountered when processing L3e ultra for repointing {repointing}"):
-                ul_parent_file_names = spice_kernel_file_names + initializer_data.dependencies.get_ul_parents()
+                ul_parent_file_names = initializer_data.dependencies.get_ul_parents()
                 ul_version = initializer_data.repointings.ultra_repointings[repointing]
                 products_list.extend(process_l3e_ul(ul_parent_file_names, repointing, start_repointing, epoch_delta, ul_version))
 

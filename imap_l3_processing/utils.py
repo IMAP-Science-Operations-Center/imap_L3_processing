@@ -1,15 +1,17 @@
+import enum
+import json
 import logging
 import re
+from dataclasses import dataclass
 from datetime import datetime, date
 from pathlib import Path
 from typing import Optional, Union, TypeVar
-from urllib.error import URLError
-from urllib.request import urlretrieve
 
 import imap_data_access
 import requests
 import spiceypy
-from imap_data_access import ScienceFilePath
+from imap_data_access import ScienceFilePath, download
+from requests import RequestException
 from spacepy.pycdf import CDF
 
 import imap_l3_processing
@@ -21,6 +23,18 @@ from imap_l3_processing.ultra.l3.models import UltraL1CPSet, UltraGlowsL3eData
 from imap_l3_processing.version import VERSION
 
 logger = logging.getLogger(__name__)
+
+
+class SpiceKernelTypes(enum.Enum):
+    Leapseconds = "leapseconds",
+    IMAPFrames = "imap_frames",
+    ScienceFrames = "science_frames",
+    EphemerisReconstructed  = "ephemeris_reconstructed",
+    AttitudeHistory = "attitude_history",
+    PointingAttitude = "pointing_attitude",
+    PlanetaryEphemeris= "planetary_ephemeris",
+    SpacecraftClock = "spacecraft_clock",
+
 
 def save_data(data: DataProduct, delete_if_present: bool = False, folder_path: Path = None,
               cr_number=None) -> Path:
@@ -128,7 +142,7 @@ def download_external_dependency(dependency_url: str, file_path: Path) -> Option
             return Path(file_path)
         else:
             logger.error(f"Failed to download {dependency_url} with status code {response.status_code}")
-    except URLError:
+    except RequestException:
         logger.exception(f"Failed to download {dependency_url}")
     return None
 
@@ -192,3 +206,38 @@ def furnish_local_spice():
 def get_spice_parent_file_names() -> list[str]:
     count = spiceypy.ktotal('ALL')
     return [Path(spiceypy.kdata(i, 'ALL')[0]).name for i in range(0, count)]
+
+@dataclass
+class FurnishMetakernelOutput:
+    metakernel_path: Path
+    spice_kernel_paths: list[Path]
+
+def furnish_spice_metakernel(start_date: datetime, end_date: datetime, kernel_types: list[SpiceKernelTypes]):
+    print(imap_data_access.config.get)
+
+    metakernel_path = imap_data_access.config.get("DATA_DIR") / "metakernel" / "metakernel.txt"
+    kernel_path = imap_data_access.config.get("DATA_DIR") / "imap" / "spice"
+
+    parameters: dict = {
+        'spice_path': kernel_path,
+        'file_types': [kernel_type.value[0] for kernel_type in kernel_types],
+        'start_time': f"{int((start_date - datetime(2000, 1, 1)).total_seconds())}",
+        'end_time': f"{int((end_date - datetime(2000, 1, 1)).total_seconds())}",
+    }
+
+    data_access_url = f"{imap_data_access.config.get('DATA_ACCESS_URL')}/metakernel"
+
+    metakernel_res = requests.get(data_access_url, params=parameters)
+
+    metakernel_path.parent.mkdir(parents=True, exist_ok=True)
+    metakernel_path.write_bytes(metakernel_res.content)
+
+    kernels_res = requests.get(data_access_url, params={**parameters, 'list_files': 'true'})
+
+    kernels = json.loads(kernels_res.text)
+
+    downloaded_paths = [imap_data_access.download(kernel) for kernel in kernels]
+
+    spiceypy.furnsh(str(metakernel_path))
+
+    return FurnishMetakernelOutput(metakernel_path=metakernel_path, spice_kernel_paths=downloaded_paths)
