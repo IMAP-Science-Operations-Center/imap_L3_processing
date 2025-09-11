@@ -19,7 +19,7 @@ from imap_l3_processing.swapi.descriptors import PROTON_TEMPERATURE_DENSITY_LOOK
 from imap_l3_processing.swapi.l3a.models import SwapiL2Data, SwapiL3ProtonSolarWindData, SwapiL3PickupIonData, \
     SwapiL3AlphaSolarWindData
 from imap_l3_processing.swapi.l3a.science.calculate_pickup_ion import FittingParameters
-from imap_l3_processing.swapi.l3a.swapi_l3a_dependencies import SWAPI_L2_DESCRIPTOR
+from imap_l3_processing.swapi.l3a.swapi_l3a_dependencies import SWAPI_L2_DESCRIPTOR, SwapiL3ADependencies
 from imap_l3_processing.swapi.l3b.science.calculate_solar_wind_vdf import DeltaMinusPlus
 from imap_l3_processing.swapi.swapi_processor import SwapiProcessor, logger
 
@@ -294,7 +294,9 @@ class TestSwapiProcessor(TestCase):
             [chunk_of_five],
         ]
 
-        mock_swapi_l3_dependencies_class.fetch_dependencies.return_value.data = sentinel.swapi_l2_data
+
+        swapi_l3a_dependencies = create_swapi_l3a_dependencies_with_mocks()
+        mock_swapi_l3_dependencies_class.fetch_dependencies.return_value = swapi_l3a_dependencies
 
         mock_manager = mock_imap_attribute_manager.return_value
 
@@ -310,9 +312,7 @@ class TestSwapiProcessor(TestCase):
         mock_proton_temperature_density_calibration_table = mock_swapi_l3_dependencies_class.fetch_dependencies.return_value.proton_temperature_density_calibration_table
         mock_clock_angle_and_flow_deflection_calibration_table = mock_swapi_l3_dependencies_class.fetch_dependencies.return_value.clock_angle_and_flow_deflection_calibration_table
 
-        mock_chunk_l2_data.side_effect = []
-
-        mock_chunk_l2_data.assert_has_calls([call(sentinel.swapi_l2_data, 5)])
+        mock_chunk_l2_data.assert_has_calls([call(swapi_l3a_dependencies.data, 5)])
 
         expected_count_rate_with_uncertainties = uarray(coincidence_count_rate,
                                                         coincidence_count_rate_uncertainty)
@@ -351,6 +351,10 @@ class TestSwapiProcessor(TestCase):
                                               4]))
         np.testing.assert_array_equal(energy,
                                       mock_proton_calculate_temperature_and_density.call_args_list[0].args[5])
+        self.assertEqual(swapi_l3a_dependencies.efficiency_calibration_table.get_proton_efficiency_for.return_value,
+                         mock_proton_calculate_temperature_and_density.call_args_list[0].args[6])
+
+        swapi_l3a_dependencies.efficiency_calibration_table.get_proton_efficiency_for.assert_called_once_with(initial_epoch + THIRTY_SECONDS_IN_NANOSECONDS)
 
         (actual_proton_metadata, actual_proton_epoch, actual_proton_sw_speed, actual_proton_sw_temperature,
          actual_proton_sw_density, actual_proton_sw_clock_angle,
@@ -785,7 +789,7 @@ class TestSwapiProcessor(TestCase):
                                       std_devs(mock_calculate_combined_sweeps.call_args_list[0].args[0]))
         self.assertEqual(sentinel.energies,
                          mock_calculate_combined_sweeps.call_args_list[0].args[1])
-        mock_efficiency_table.get_efficiency_for.assert_has_calls(
+        mock_efficiency_table.get_proton_efficiency_for.assert_has_calls(
             [call(first_chunk_initial_epoch + FIVE_MINUTES_IN_NANOSECONDS),
              call(second_chunk_initial_epoch + FIVE_MINUTES_IN_NANOSECONDS)])
 
@@ -800,7 +804,7 @@ class TestSwapiProcessor(TestCase):
                                       nominal_values(mock_calculate_proton_solar_wind_vdf.call_args_list[0].args[1]))
         np.testing.assert_array_equal(std_devs_count_rates,
                                       std_devs(mock_calculate_proton_solar_wind_vdf.call_args_list[0].args[1]))
-        self.assertEqual(mock_efficiency_table.get_efficiency_for.return_value,
+        self.assertEqual(mock_efficiency_table.get_proton_efficiency_for.return_value,
                          mock_calculate_proton_solar_wind_vdf.call_args_list[0].args[2])
         self.assertEqual(mock_geometric_factor_calibration_table,
                          mock_calculate_proton_solar_wind_vdf.call_args_list[0].args[3])
@@ -811,7 +815,7 @@ class TestSwapiProcessor(TestCase):
         np.testing.assert_array_equal(std_devs_count_rates,
                                       std_devs(mock_calculate_alpha_solar_wind_vdf.call_args_list[0].args[1]))
 
-        self.assertEqual(mock_efficiency_table.get_efficiency_for.return_value,
+        self.assertEqual(mock_efficiency_table.get_proton_efficiency_for.return_value,
                          mock_calculate_alpha_solar_wind_vdf.call_args_list[0].args[2])
         self.assertEqual(mock_geometric_factor_calibration_table,
                          mock_calculate_alpha_solar_wind_vdf.call_args_list[0].args[3])
@@ -821,7 +825,7 @@ class TestSwapiProcessor(TestCase):
                                       nominal_values(mock_calculate_pui_solar_wind_vdf.call_args_list[0].args[1]))
         np.testing.assert_array_equal(std_devs_count_rates,
                                       std_devs(mock_calculate_pui_solar_wind_vdf.call_args_list[0].args[1]))
-        self.assertEqual(mock_efficiency_table.get_efficiency_for.return_value,
+        self.assertEqual(mock_efficiency_table.get_proton_efficiency_for.return_value,
                          mock_calculate_pui_solar_wind_vdf.call_args_list[0].args[2])
         self.assertEqual(mock_geometric_factor_calibration_table,
                          mock_calculate_pui_solar_wind_vdf.call_args_list[0].args[3])
@@ -832,7 +836,7 @@ class TestSwapiProcessor(TestCase):
             mock_calculate_combined_solar_wind_differential_flux.call_args_list[0].args[1]))
         np.testing.assert_array_equal(std_devs_count_rates, std_devs(
             mock_calculate_combined_solar_wind_differential_flux.call_args_list[0].args[1]))
-        self.assertEqual(mock_efficiency_table.get_efficiency_for.return_value,
+        self.assertEqual(mock_efficiency_table.get_proton_efficiency_for.return_value,
                          mock_calculate_combined_solar_wind_differential_flux.call_args_list[0].args[2])
         self.assertEqual(mock_geometric_factor_calibration_table,
                          mock_calculate_combined_solar_wind_differential_flux.call_args_list[0].args[3])
@@ -910,3 +914,24 @@ class TestSwapiProcessor(TestCase):
     def assert_ufloat_equal(self, expected_ufloat, actual_ufloat):
         self.assertEqual(expected_ufloat.n, actual_ufloat.n)
         self.assertEqual(expected_ufloat.s, actual_ufloat.s)
+
+
+def create_swapi_l3a_dependencies_with_mocks():
+    data = Mock()
+    proton_temperature_density_calibration_table = Mock()
+    alpha_temperature_density_calibration_table = Mock()
+    clock_angle_and_flow_deflection_calibration_table = Mock()
+    efficiency_calibration_table = Mock()
+    geometric_factor_calibration_table = Mock()
+    instrument_response_calibration_table = Mock()
+    density_of_neutral_helium_calibration_table = Mock()
+    return SwapiL3ADependencies(
+        data=data,
+        proton_temperature_density_calibration_table=proton_temperature_density_calibration_table,
+        alpha_temperature_density_calibration_table=alpha_temperature_density_calibration_table,
+        clock_angle_and_flow_deflection_calibration_table=clock_angle_and_flow_deflection_calibration_table,
+        efficiency_calibration_table=efficiency_calibration_table,
+        geometric_factor_calibration_table=geometric_factor_calibration_table,
+        instrument_response_calibration_table=instrument_response_calibration_table,
+        density_of_neutral_helium_calibration_table=density_of_neutral_helium_calibration_table
+    )

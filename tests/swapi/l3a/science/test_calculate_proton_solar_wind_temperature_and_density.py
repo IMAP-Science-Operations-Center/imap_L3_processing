@@ -25,13 +25,15 @@ class TestCalculateProtonSolarWindTemperatureAndDensity(TestCase):
             count_rate = cdf["swp_coin_rate"][...]
             count_rate_delta = cdf["swp_coin_unc"][...]
 
+        efficiency = 0.1
+
         temperature, density = calculate_proton_solar_wind_temperature_and_density_for_one_sweep(
-            uarray(count_rate, count_rate_delta)[4], energy)
+            uarray(count_rate, count_rate_delta)[4], energy, efficiency)
 
         self.assertAlmostEqual(102267, temperature.nominal_value, 0)
         self.assertAlmostEqual(6376, temperature.std_dev, 0)
-        self.assertAlmostEqual(3.76, density.nominal_value, 2)
-        self.assertAlmostEqual(0.1555, density.std_dev, 4)
+        self.assertAlmostEqual(3.76 / efficiency, density.nominal_value, 2)
+        self.assertAlmostEqual(0.1555 / efficiency, density.std_dev, 3)
 
     def test_uncalibrated_calculate_using_five_sweeps_from_example_file(self):
         file_path = Path(
@@ -41,13 +43,14 @@ class TestCalculateProtonSolarWindTemperatureAndDensity(TestCase):
             count_rate = cdf["swp_coin_rate"][...]
             count_rate_delta = cdf["swp_coin_unc"][...]
 
+        efficiency = 0.8
         temperature, density = calculate_uncalibrated_proton_solar_wind_temperature_and_density(
-            uarray(count_rate, count_rate_delta), energy)
+            uarray(count_rate, count_rate_delta), energy, efficiency)
 
         self.assertAlmostEqual(100109, temperature.nominal_value, 0)
         self.assertAlmostEqual(2379, temperature.std_dev, 0)
-        self.assertAlmostEqual(4.953, density.nominal_value, 3)
-        self.assertAlmostEqual(8.028e-2, density.std_dev, 5)
+        self.assertAlmostEqual(4.953 / efficiency, density.nominal_value, 3)
+        self.assertAlmostEqual(8.028e-2 / efficiency, density.std_dev, 4)
 
     def test_calibrate_density_and_temperature_using_lookup_table(self):
         speed_values = [250, 1000]
@@ -100,6 +103,7 @@ class TestCalculateProtonSolarWindTemperatureAndDensity(TestCase):
         clock_angle_values = [0, 360]
         density_values = [1, 10]
         temperature_values = [1000, 200000]
+        efficiency = 0.7
 
         lookup_table = self.generate_lookup_table(speed_values, deflection_angle_values, clock_angle_values,
                                                   density_values, temperature_values)
@@ -114,13 +118,25 @@ class TestCalculateProtonSolarWindTemperatureAndDensity(TestCase):
         temperature, density = calculate_proton_solar_wind_temperature_and_density(lookup_table, ufloat(450, 2),
                                                                                    ufloat(3, 0.1), ufloat(1, 1),
                                                                                    uarray(count_rate, count_rate_delta),
-                                                                                   energy)
+                                                                                   energy, efficiency)
 
         self.assertAlmostEqual(100109 * 0.97561, temperature.nominal_value, 0)
         self.assertAlmostEqual(2379 * 0.97561, temperature.std_dev, 0)
 
-        self.assertAlmostEqual(4.953 * 1.021, density.nominal_value, 3)
-        self.assertAlmostEqual(8.028e-2 * 1.021, density.std_dev, 5)
+        self.assertAlmostEqual(4.953 * 1.021 / efficiency, density.nominal_value, 3)
+        self.assertAlmostEqual(8.028e-2 * 1.021 / efficiency, density.std_dev, 4)
+
+    def test_proton_count_rate_model_accounts_for_efficiency(self):
+        efficiency_factor = 0.5
+
+        cases = [
+            (np.array([800, 900, 1000]), 1, 2, 1e6, 700, np.array([0.220894, 0.60724, 1.471544])),
+            (np.array([800, 900, 1000]), 0.5, 2, 1e6, 700, np.array([0.220894, 0.60724, 1.471544]) * efficiency_factor),
+        ]
+
+        for ev_per_q, efficiency, density_per_cm3, temperature, bulk_flow_speed_km_per_s, expected in cases:
+            result = proton_count_rate_model(efficiency, ev_per_q, density_per_cm3, temperature, bulk_flow_speed_km_per_s)
+            np.testing.assert_array_almost_equal(result, expected)
 
     def test_can_recover_density_and_temperature_from_model_data(self):
         test_cases = [
@@ -134,13 +150,14 @@ class TestCalculateProtonSolarWindTemperatureAndDensity(TestCase):
         ]
 
         energy = np.geomspace(100, 19000, 62)
+        efficiency = 1
         for density, temperature, speed in test_cases:
             with self.subTest(f"{density}cm^-3, {temperature}K, {speed}km/s"):
-                count_rates = proton_count_rate_model(energy, density, temperature, speed)
+                count_rates = proton_count_rate_model(efficiency, energy, density, temperature, speed)
                 fake_uncertainties = synthesize_uncertainties(count_rates)
                 count_rates_with_uncertainties = uarray(count_rates, fake_uncertainties)
                 fit_temperature, fit_density = calculate_proton_solar_wind_temperature_and_density_for_one_sweep(
-                    count_rates_with_uncertainties, energy)
+                    count_rates_with_uncertainties, energy, efficiency)
                 self.assertAlmostEqual(density, fit_density.nominal_value, 6)
                 self.assertAlmostEqual(temperature, fit_temperature.nominal_value, 0)
 
@@ -155,7 +172,7 @@ class TestCalculateProtonSolarWindTemperatureAndDensity(TestCase):
         for name, coincident_count_rates, energy, error_flag, expected_chi_squared in test_cases:
             with self.subTest(name):
                 try:
-                    calculate_proton_solar_wind_temperature_and_density_for_one_sweep(coincident_count_rates, energy)
+                    calculate_proton_solar_wind_temperature_and_density_for_one_sweep(coincident_count_rates, energy, 1)
                     did_error = False
                 except ValueError as e:
                     did_error = True

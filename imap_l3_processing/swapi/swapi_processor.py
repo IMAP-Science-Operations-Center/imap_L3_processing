@@ -202,6 +202,7 @@ class SwapiProcessor(Processor):
             proton_density = ufloat(np.nan, np.nan)
             proton_temperature = ufloat(np.nan, np.nan)
 
+            epoch_center_of_chunk = data_chunk.epoch[0] + THIRTY_SECONDS_IN_NANOSECONDS
             try:
                 if np.any(np.isnan(extract_coarse_sweep(data_chunk.coincidence_count_rate))):
                     raise ValueError("Fill values in input data")
@@ -223,9 +224,11 @@ class SwapiProcessor(Processor):
                     deflection_angle,
                     clock_angle,
                     coincidence_count_rates_with_uncertainty,
-                    data_chunk.energy)
+                    data_chunk.energy,
+                    dependencies.efficiency_calibration_table.get_proton_efficiency_for(epoch_center_of_chunk)
+                )
             except Exception as e:
-                epoch = data_chunk.epoch[0] + THIRTY_SECONDS_IN_NANOSECONDS
+                epoch = epoch_center_of_chunk
                 logger.info(f"Exception occurred at epoch {epoch}, continuing with fill value", exc_info=True)
 
             proton_solar_wind_speeds.append(proton_solar_wind_speed)
@@ -233,7 +236,7 @@ class SwapiProcessor(Processor):
             proton_solar_wind_deflection_angles.append(deflection_angle)
             proton_solar_wind_density.append(proton_density)
             proton_solar_wind_temperatures.append(proton_temperature)
-            epochs.append(data_chunk.epoch[0] + THIRTY_SECONDS_IN_NANOSECONDS)
+            epochs.append(epoch_center_of_chunk)
 
         proton_solar_wind_speed_metadata = replace(self.input_metadata, descriptor="proton-sw")
         proton_solar_wind_l3_data = SwapiL3ProtonSolarWindData(proton_solar_wind_speed_metadata, np.array(epochs),
@@ -261,7 +264,7 @@ class SwapiProcessor(Processor):
         combined_energy_deltas = []
         for data_chunk in chunk_l2_data(data, 50):
             center_of_epoch = data_chunk.epoch[0] + FIVE_MINUTES_IN_NANOSECONDS
-            instrument_efficiency = dependencies.efficiency_calibration_table.get_efficiency_for(center_of_epoch)
+            instrument_efficiency = dependencies.efficiency_calibration_table.get_proton_efficiency_for(center_of_epoch)
             coincidence_count_rates_with_uncertainty = uarray(data_chunk.coincidence_count_rate,
                                                               data_chunk.coincidence_count_rate_uncertainty)
 
