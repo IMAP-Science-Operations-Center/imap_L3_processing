@@ -128,9 +128,11 @@ class GlowsL3BCInitializer:
     def should_process_cr_candidate(cr_candidate: CRToProcess, l3bs_by_cr: dict[int, str],
                                     external_dependencies: ExternalDependencies) -> Optional[int]:
         if not cr_candidate.buffer_time_has_elapsed_since_cr():
+            logger.warning(f"Not enough time has elapsed for cr {cr_candidate.cr_rotation_number}")
             return None
 
         if not cr_candidate.has_valid_external_dependencies(external_dependencies):
+            logger.warning(f"Invalid external dependencies for {cr_candidate.cr_rotation_number}")
             return None
 
         match l3bs_by_cr.get(cr_candidate.cr_rotation_number):

@@ -284,9 +284,9 @@ class TestGlowsL3EDependencies(unittest.TestCase):
         expected_sw_eqtr_electrons = 'swEqtrElectrons5_2021b.dat'
         expected_ionization_files = 'ionization.files.dat'
 
-        glows_l3e_dependencies.rename_dependencies()
+        glows_l3e_dependencies.copy_dependencies()
 
-        mock_shutil.move.assert_has_calls([
+        mock_shutil.copy.assert_has_calls([
             call(glows_l3e_dependencies.energy_grid_lo, expected_energy_grid_lo),
             call(glows_l3e_dependencies.tess_xyz_8, expected_tess_xyz_8),
             call(glows_l3e_dependencies.lya_series, expected_lya_series),
@@ -298,7 +298,7 @@ class TestGlowsL3EDependencies(unittest.TestCase):
             call(glows_l3e_dependencies.ionization_files, expected_ionization_files),
         ])
 
-        mock_shutil.move.reset_mock()
+        mock_shutil.copy.reset_mock()
 
         expected_energy_grid_hi = 'EnGridHi.dat'
 
@@ -306,9 +306,9 @@ class TestGlowsL3EDependencies(unittest.TestCase):
         glows_l3e_dependencies.energy_grid_hi = Path('2025/05/03/imap_glows_energy_grid_hi')
         glows_l3e_dependencies.tess_xyz_8 = None
 
-        glows_l3e_dependencies.rename_dependencies()
+        glows_l3e_dependencies.copy_dependencies()
 
-        mock_shutil.move.assert_has_calls([
+        mock_shutil.copy.assert_has_calls([
             call(glows_l3e_dependencies.energy_grid_hi, expected_energy_grid_hi),
             call(glows_l3e_dependencies.lya_series, expected_lya_series),
             call(glows_l3e_dependencies.solar_uv_anisotropy, expected_solar_uv_anisotropy),
@@ -319,7 +319,7 @@ class TestGlowsL3EDependencies(unittest.TestCase):
             call(glows_l3e_dependencies.ionization_files, expected_ionization_files),
         ])
 
-        mock_shutil.move.reset_mock()
+        mock_shutil.copy.reset_mock()
 
         glows_l3e_dependencies.energy_grid_hi = None
         glows_l3e_dependencies.energy_grid_ultra = Path('2025/05/03/imap_glows_energy_grid_ultra')
@@ -328,9 +328,9 @@ class TestGlowsL3EDependencies(unittest.TestCase):
         expected_energy_grid_ultra = 'EnGridUltra.dat'
         expected_tess_ang16 = 'tessAng16.dat'
 
-        glows_l3e_dependencies.rename_dependencies()
+        glows_l3e_dependencies.copy_dependencies()
 
-        mock_shutil.move.assert_has_calls([
+        mock_shutil.copy.assert_has_calls([
             call(glows_l3e_dependencies.energy_grid_ultra, expected_energy_grid_ultra),
             call(glows_l3e_dependencies.tess_ang16, expected_tess_ang16),
             call(glows_l3e_dependencies.lya_series, expected_lya_series),

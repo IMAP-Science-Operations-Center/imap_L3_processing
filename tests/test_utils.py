@@ -562,8 +562,8 @@ class TestUtils(TestCase):
 
                 expected_request_params = {
                     "file_types": ["leapseconds", "imap_frames"],
-                    "start_time": "1262322000",
-                    "end_time": "1267419600",
+                    "start_time": "315619200",
+                    "end_time": "320716800",
                     "spice_path": mock_data_dir / "imap" / "spice",
                 }
 

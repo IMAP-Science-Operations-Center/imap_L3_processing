@@ -4,6 +4,7 @@ RUN pip install --upgrade pip
 RUN mkdir temp_cdf_data
 RUN mkdir -p /mnt/spice
 RUN mkdir -p /spice_kernels
+RUN mkdir -p /run_local_input_data
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 COPY spice_kernels spice_kernels
@@ -19,5 +20,6 @@ RUN chmod +x survProbHi
 RUN chmod +x survProbLo
 RUN chmod +x survProbUltra
 COPY run_local.py .
+ENV IN_GLOWS_INTEGRATION_DOCKER = "set"
 ENV PYTHONPATH=$PYTHONPATH:/imap_l3_processing
 ENTRYPOINT ["python","tests/glows/test_glows_processor_integration.py"]

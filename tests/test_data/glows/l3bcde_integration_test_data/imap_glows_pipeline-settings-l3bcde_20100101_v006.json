@@ -957,7 +957,7 @@
   "no_vg_point_flag": -99,
   "hdr_txt_lines_number": 30,
   "WawHelioIonGlows_fill_value": -1,
-  "start_cr": 2092,
+  "start_cr": 2297,
   "l3d_source_flags": {
     "uv_anis_interpolated": 30001,
     "speed_GLOWS": 20000,
@@ -965,7 +965,7 @@
     "dens_from_speed": 10000,
     "dens_from_speed_interpolated": 10001
   },
-  "initializer_time_delta_days": 56,
+  "initializer_time_delta_days": 0,
   "executable_dependency_paths": {
     "energy-grid-lo": "EnGridLo.dat",
     "energy-grid-hi": "EnGridHi.dat",

@@ -391,8 +391,6 @@ def process_l3e_hi(parent_file_names: list[str], repointing: int, repointing_sta
 def process_l3e(initializer_data: GlowsL3EInitializerOutput):
     products_list = []
 
-    logger.info(f"Processing L3e with dependencies: {initializer_data.dependencies}")
-
     for repointing in initializer_data.repointings.repointing_numbers:
         with SwallowExceptionAndLog(f"Exception encountered when processing L3e for repointing {repointing}"):
             start_repointing, end_repointing = get_pointing_date_range(repointing)
@@ -400,10 +398,13 @@ def process_l3e(initializer_data: GlowsL3EInitializerOutput):
 
             with SwallowExceptionAndLog(f"Exception encountered when processing L3e lo for repointing {repointing}"):
                 lo_parent_file_names = initializer_data.dependencies.get_lo_parents()
-                lo_elongation = initializer_data.dependencies.elongation.get(f"{start_repointing.year}{repointing:03}")
+                repointing_doy = start_repointing.timetuple().tm_yday
+                lo_elongation = initializer_data.dependencies.elongation.get(f"{start_repointing.year}{repointing_doy:03}")
                 if lo_elongation is not None:
                     lo_version = initializer_data.repointings.lo_repointings[repointing]
                     products_list.extend(process_l3e_lo(lo_parent_file_names, repointing, start_repointing, epoch_delta, lo_elongation, lo_version))
+                else:
+                    logger.warning(f"Skipping L3e Lo processing for {repointing=} because there is no elongation data")
 
             with SwallowExceptionAndLog(f"Exception encountered when processing L3e hi-90 for repointing {repointing}"):
                 hi_parent_file_names = initializer_data.dependencies.get_hi_parents()

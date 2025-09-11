@@ -221,8 +221,8 @@ def furnish_spice_metakernel(start_date: datetime, end_date: datetime, kernel_ty
     parameters: dict = {
         'spice_path': kernel_path,
         'file_types': [kernel_type.value[0] for kernel_type in kernel_types],
-        'start_time': f"{int(start_date.timestamp())}",
-        'end_time': f"{int(end_date.timestamp())}",
+        'start_time': f"{int((start_date - datetime(2000, 1, 1)).total_seconds())}",
+        'end_time': f"{int((end_date - datetime(2000, 1, 1)).total_seconds())}",
     }
 
     data_access_url = f"{imap_data_access.config.get('DATA_ACCESS_URL')}/metakernel"

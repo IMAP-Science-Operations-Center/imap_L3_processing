@@ -99,7 +99,7 @@ class TestGlowsL3EInitializer(unittest.TestCase):
 
         mock_get_most_recently_uploaded_ancillary.assert_has_calls([call(query_result) for query_result in mock_query.side_effect])
 
-        mock_l3e_dependencies.rename_dependencies.assert_called_once()
+        mock_l3e_dependencies.copy_dependencies.assert_called_once()
 
         [fetch_dependencies_call] = mock_fetch_dependencies.call_args_list
 

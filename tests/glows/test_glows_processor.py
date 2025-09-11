@@ -948,7 +948,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
         epoch_delta = timedelta(hours=12)
         mock_get_pointing_date_range.return_value = (start_epoch, end_epoch)
 
-        mock_dependencies = Mock(elongation={"2020025": sentinel.elongation})
+        mock_dependencies = Mock(elongation={"2020001": sentinel.elongation})
 
         mock_dependencies.get_hi_parents.return_value = ["hi_ancillary.dat"]
         mock_dependencies.get_lo_parents.return_value = ["lo_ancillary.dat"]
@@ -1249,8 +1249,8 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
             (start_epoch_3, end_epoch_3),
         ]
 
-        mock_dependencies = Mock(elongation={"2020024": sentinel.elongation_1, "2020025": sentinel.elongation_2,
-                                             "2020026": sentinel.elongation_3})
+        mock_dependencies = Mock(elongation={"2020001": sentinel.elongation_1, "2020002": sentinel.elongation_2,
+                                             "2020004": sentinel.elongation_3})
 
         hi_parents = ["imap_glows_hi-ancillary_20100101_v001.dat"]
         mock_dependencies.get_hi_parents.return_value = hi_parents

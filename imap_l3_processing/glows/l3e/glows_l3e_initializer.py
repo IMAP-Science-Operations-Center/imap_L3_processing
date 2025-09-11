@@ -47,7 +47,7 @@ class GlowsL3EInitializer:
         )
 
         l3e_deps = GlowsL3EDependencies.fetch_dependencies(processing_input_collection)
-        l3e_deps.rename_dependencies()
+        l3e_deps.copy_dependencies()
 
         if previous_l3d is not None:
             first_cr = find_first_updated_cr(l3d_output.l3d_cdf_file_path, previous_l3d)

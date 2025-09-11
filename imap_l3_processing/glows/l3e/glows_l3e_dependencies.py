@@ -1,4 +1,5 @@
 import json
+import logging
 import shutil
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -8,6 +9,8 @@ import imap_data_access
 from imap_data_access.processing_input import ProcessingInputCollection, RepointInput
 
 from imap_l3_processing.utils import furnish_spice_metakernel, SpiceKernelTypes
+
+logger = logging.getLogger(__name__)
 
 GLOWS_L3E_REQUIRED_SPICE_KERNELS: list[SpiceKernelTypes] = [
     SpiceKernelTypes.ScienceFrames, SpiceKernelTypes.EphemerisReconstructed, SpiceKernelTypes.AttitudeHistory,
@@ -105,31 +108,32 @@ class GlowsL3EDependencies:
         )
 
     def furnish_spice_dependencies(self, start_date: datetime, end_date: datetime):
-        spice_kernels = furnish_spice_metakernel(start_date=start_date, end_date=end_date, kernel_types=GLOWS_L3E_REQUIRED_SPICE_KERNELS)
+        logger.info(f"Querying for SPICE data over the range: {start_date} to {end_date}")
 
+        spice_kernels = furnish_spice_metakernel(start_date=start_date, end_date=end_date, kernel_types=GLOWS_L3E_REQUIRED_SPICE_KERNELS)
         self.spice_kernels.extend([kernel_path.name for kernel_path in spice_kernels.spice_kernel_paths])
 
-    def rename_dependencies(self):
+    def copy_dependencies(self):
         if self.energy_grid_lo is not None:
-            shutil.move(self.energy_grid_lo, self.pipeline_settings['executable_dependency_paths']['energy-grid-lo'])
+            shutil.copy(self.energy_grid_lo, self.pipeline_settings['executable_dependency_paths']['energy-grid-lo'])
         if self.energy_grid_hi is not None:
-            shutil.move(self.energy_grid_hi, self.pipeline_settings['executable_dependency_paths']['energy-grid-hi'])
+            shutil.copy(self.energy_grid_hi, self.pipeline_settings['executable_dependency_paths']['energy-grid-hi'])
         if self.energy_grid_ultra is not None:
-            shutil.move(self.energy_grid_ultra,
+            shutil.copy(self.energy_grid_ultra,
                         self.pipeline_settings['executable_dependency_paths']['energy-grid-ultra'])
         if self.tess_xyz_8 is not None:
-            shutil.move(self.tess_xyz_8, self.pipeline_settings['executable_dependency_paths']['tess-xyz-8'])
+            shutil.copy(self.tess_xyz_8, self.pipeline_settings['executable_dependency_paths']['tess-xyz-8'])
         if self.tess_ang16 is not None:
-            shutil.move(self.tess_ang16, self.pipeline_settings['executable_dependency_paths']['tess-ang-16'])
+            shutil.copy(self.tess_ang16, self.pipeline_settings['executable_dependency_paths']['tess-ang-16'])
 
-        shutil.move(self.lya_series, self.pipeline_settings['executable_dependency_paths']['lya-series'])
-        shutil.move(self.solar_uv_anisotropy,
+        shutil.copy(self.lya_series, self.pipeline_settings['executable_dependency_paths']['lya-series'])
+        shutil.copy(self.solar_uv_anisotropy,
                     self.pipeline_settings['executable_dependency_paths']['solar-uv-anisotropy'])
-        shutil.move(self.speed_3d_sw, self.pipeline_settings['executable_dependency_paths']['speed-3d'])
-        shutil.move(self.density_3d_sw, self.pipeline_settings['executable_dependency_paths']['density-3d'])
-        shutil.move(self.phion_hydrogen, self.pipeline_settings['executable_dependency_paths']['phion-hydrogen'])
-        shutil.move(self.sw_eqtr_electrons, self.pipeline_settings['executable_dependency_paths']['sw-eqtr-electrons'])
-        shutil.move(self.ionization_files, self.pipeline_settings['executable_dependency_paths']['ionization-files'])
+        shutil.copy(self.speed_3d_sw, self.pipeline_settings['executable_dependency_paths']['speed-3d'])
+        shutil.copy(self.density_3d_sw, self.pipeline_settings['executable_dependency_paths']['density-3d'])
+        shutil.copy(self.phion_hydrogen, self.pipeline_settings['executable_dependency_paths']['phion-hydrogen'])
+        shutil.copy(self.sw_eqtr_electrons, self.pipeline_settings['executable_dependency_paths']['sw-eqtr-electrons'])
+        shutil.copy(self.ionization_files, self.pipeline_settings['executable_dependency_paths']['ionization-files'])
 
     def get_hi_parents(self):
         return [
