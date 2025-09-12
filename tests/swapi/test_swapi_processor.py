@@ -615,8 +615,12 @@ class TestSwapiProcessor(TestCase):
         self.assertEqual(actual_science_input.get_time_range()[0].strftime("%Y%m%d"), dependency_start_date)
 
         mock_swapi_l3_dependencies_class.fetch_dependencies.assert_called_once_with(dependencies)
+        swapi_l3a_dependencies = mock_swapi_l3_dependencies_class.fetch_dependencies.return_value
+        mock_alpha_temperature_density_calibration_table = swapi_l3a_dependencies.alpha_temperature_density_calibration_table
+        self.assertEqual(swapi_l3a_dependencies.efficiency_calibration_table.get_alpha_efficiency_for.return_value,
+                         mock_alpha_calculate_temperature_and_density.call_args_list[0].args[4])
 
-        mock_alpha_temperature_density_calibration_table = mock_swapi_l3_dependencies_class.fetch_dependencies.return_value.alpha_temperature_density_calibration_table
+        swapi_l3a_dependencies.efficiency_calibration_table.get_alpha_efficiency_for.assert_called_once_with(initial_epoch + THIRTY_SECONDS_IN_NANOSECONDS)
 
         mock_chunk_l2_data.assert_has_calls([call(sentinel.swapi_l2_data, 5)])
 

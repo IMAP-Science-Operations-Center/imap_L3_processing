@@ -168,7 +168,7 @@ class SwapiProcessor(Processor):
                 alpha_temperature, alpha_density = calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps(
                     dependencies.alpha_temperature_density_calibration_table, alpha_solar_wind_speed,
                     coincidence_count_rates_with_uncertainty,
-                    data_chunk.energy)
+                    data_chunk.energy, dependencies.efficiency_calibration_table.get_alpha_efficiency_for(epoch))
 
             except Exception as e:
                 logger.info(f"Exception occurred at epoch {epoch}, continuing with fill value", exc_info=True)

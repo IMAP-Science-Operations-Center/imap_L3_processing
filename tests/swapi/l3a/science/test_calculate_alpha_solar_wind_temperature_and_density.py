@@ -47,14 +47,16 @@ class TestCalculateAlphaSolarWindTemperatureAndDensity(TestCase):
     def test_calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps(self):
         speed = ufloat(496.490, 2.811)
 
+        efficiency = 0.8
+
         actual_temperature, actual_density = calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps(
             self.calibration_table, speed,
-            uarray(self.count_rate, self.count_rate_delta), self.energy)
+            uarray(self.count_rate, self.count_rate_delta), self.energy, efficiency)
 
         self.assertAlmostEqual(493686.26052628754, actual_temperature.nominal_value, 2)
         self.assertAlmostEqual(156296.1278672896, actual_temperature.std_dev, 2)
-        self.assertAlmostEqual(0.164806556, actual_density.nominal_value)
-        self.assertAlmostEqual(0.02097422, actual_density.std_dev)
+        self.assertAlmostEqual(0.164806556 / efficiency, actual_density.nominal_value)
+        self.assertAlmostEqual(0.02097422 / efficiency, actual_density.std_dev)
 
     @patch(
         'imap_l3_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density.get_alpha_peak_indices')
@@ -70,6 +72,7 @@ class TestCalculateAlphaSolarWindTemperatureAndDensity(TestCase):
             ufloat(10.4, 4.298837052040936),
             ufloat(5.8, 2.638181191654584),
         ])
+        efficiency = 0.7
 
         mock_calculate_combine_sweeps.return_value = peak_coincidence_rates, peak_energies
         mock_get_alpha_peak_indices.return_value = slice(0, 5)
@@ -77,6 +80,6 @@ class TestCalculateAlphaSolarWindTemperatureAndDensity(TestCase):
             calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps(self.calibration_table, speed,
                                                                                    uarray(self.count_rate,
                                                                                           self.count_rate_delta),
-                                                                                   self.energy)
+                                                                                   self.energy, efficiency)
         self.assertEqual(str(e.exception.args[0]), "Failed to fit - chi-squared too large")
         self.assertAlmostEqual(e.exception.args[1], 13.6018326)
