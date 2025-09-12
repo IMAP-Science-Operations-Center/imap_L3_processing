@@ -23,14 +23,14 @@ class GlowsL3EInitializerOutput:
 class GlowsL3EInitializer:
     @staticmethod
     def get_repointings_to_process(l3d_output: GlowsL3DProcessorOutput, previous_l3d: Optional[Path], repointing_file_path: Path) -> GlowsL3EInitializerOutput:
-        ionization_files = get_most_recently_uploaded_ancillary(imap_data_access.query(instrument='glows', descriptor='ionization-files'))
-        pipeline_settings_l3bcde = get_most_recently_uploaded_ancillary(imap_data_access.query(instrument='glows', descriptor='pipeline-settings-l3bcde'))
-        energy_grid_lo = get_most_recently_uploaded_ancillary(imap_data_access.query(instrument='glows', descriptor='energy-grid-lo'))
-        tess_xyz_8 = get_most_recently_uploaded_ancillary(imap_data_access.query(instrument='glows', descriptor='tess-xyz-8'))
-        elongation_data = get_most_recently_uploaded_ancillary(imap_data_access.query(instrument='lo', descriptor='elongation-data'))
-        energy_grid_hi = get_most_recently_uploaded_ancillary(imap_data_access.query(instrument='glows', descriptor='energy-grid-hi'))
-        energy_grid_ultra = get_most_recently_uploaded_ancillary(imap_data_access.query(instrument='glows', descriptor='energy-grid-ultra'))
-        tess_ang_16 = get_most_recently_uploaded_ancillary(imap_data_access.query(instrument='glows', descriptor='tess-ang-16'))
+        ionization_files = get_most_recently_uploaded_ancillary(imap_data_access.query(table='ancillary', instrument='glows', descriptor='ionization-files'))
+        pipeline_settings_l3bcde = get_most_recently_uploaded_ancillary(imap_data_access.query(table='ancillary', instrument='glows', descriptor='pipeline-settings-l3bcde'))
+        energy_grid_lo = get_most_recently_uploaded_ancillary(imap_data_access.query(table='ancillary', instrument='glows', descriptor='energy-grid-lo'))
+        tess_xyz_8 = get_most_recently_uploaded_ancillary(imap_data_access.query(table='ancillary', instrument='glows', descriptor='tess-xyz-8'))
+        elongation_data = get_most_recently_uploaded_ancillary(imap_data_access.query(table='ancillary', instrument='lo', descriptor='elongation-data'))
+        energy_grid_hi = get_most_recently_uploaded_ancillary(imap_data_access.query(table='ancillary', instrument='glows', descriptor='energy-grid-hi'))
+        energy_grid_ultra = get_most_recently_uploaded_ancillary(imap_data_access.query(table='ancillary', instrument='glows', descriptor='energy-grid-ultra'))
+        tess_ang_16 = get_most_recently_uploaded_ancillary(imap_data_access.query(table='ancillary', instrument='glows', descriptor='tess-ang-16'))
 
         processing_input_collection = ProcessingInputCollection(
             ScienceInput(l3d_output.l3d_cdf_file_path.name),

@@ -87,14 +87,14 @@ class TestGlowsL3EInitializer(unittest.TestCase):
         mock_determine_l3e_files_to_produce.assert_called_once_with(2090, 2091, repointing_file_path)
 
         mock_query.assert_has_calls([
-            call(instrument='glows', descriptor='ionization-files'),
-            call(instrument='glows', descriptor='pipeline-settings-l3bcde'),
-            call(instrument='glows', descriptor='energy-grid-lo'),
-            call(instrument='glows', descriptor='tess-xyz-8'),
-            call(instrument='lo', descriptor='elongation-data'),
-            call(instrument='glows', descriptor='energy-grid-hi'),
-            call(instrument='glows', descriptor='energy-grid-ultra'),
-            call(instrument='glows', descriptor='tess-ang-16'),
+            call(table="ancillary", instrument='glows', descriptor='ionization-files'),
+            call(table="ancillary", instrument='glows', descriptor='pipeline-settings-l3bcde'),
+            call(table="ancillary", instrument='glows', descriptor='energy-grid-lo'),
+            call(table="ancillary", instrument='glows', descriptor='tess-xyz-8'),
+            call(table="ancillary", instrument='lo', descriptor='elongation-data'),
+            call(table="ancillary", instrument='glows', descriptor='energy-grid-hi'),
+            call(table="ancillary", instrument='glows', descriptor='energy-grid-ultra'),
+            call(table="ancillary", instrument='glows', descriptor='tess-ang-16'),
         ])
 
         mock_get_most_recently_uploaded_ancillary.assert_has_calls([call(query_result) for query_result in mock_query.side_effect])
