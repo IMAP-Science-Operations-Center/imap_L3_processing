@@ -10,19 +10,18 @@ from uncertainties.unumpy import uarray
 import imap_l3_processing
 from imap_l3_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density import \
     AlphaTemperatureDensityCalibrationTable, calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps
+from tests.test_helpers import get_test_data_path
 
 
 class TestCalculateAlphaSolarWindTemperatureAndDensity(TestCase):
     def setUp(self) -> None:
-        data_file_path = Path(
-            imap_l3_processing.__file__).parent.parent / 'tests' / 'test_data' / 'swapi' / "imap_swapi_l2_fake-menlo-5-sweeps_20100101_v002.cdf"
+        data_file_path = get_test_data_path("swapi/imap_swapi_l2_fake-menlo-5-sweeps_20100101_v002.cdf")
         with CDF(str(data_file_path)) as cdf:
             self.energy = cdf["energy"][...]
             self.count_rate = cdf["swp_coin_rate"][...]
             self.count_rate_delta = cdf["swp_coin_unc"][...]
 
-        lookup_table_file_path = Path(
-            imap_l3_processing.__file__).parent.parent / 'tests' / 'test_data' / 'swapi' / "imap_swapi_alpha-density-temperature-lut_20240920_v000.dat"
+        lookup_table_file_path = get_test_data_path("swapi/imap_swapi_alpha-density-temperature-lut_20240920_v000.dat")
         self.calibration_table = AlphaTemperatureDensityCalibrationTable.from_file(lookup_table_file_path)
 
     def test_temperature_and_density_calibration_table_from_file(self):
@@ -47,16 +46,16 @@ class TestCalculateAlphaSolarWindTemperatureAndDensity(TestCase):
     def test_calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps(self):
         speed = ufloat(496.490, 2.811)
 
-        efficiency = 0.8
+        efficiency = 0.08
 
         actual_temperature, actual_density = calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps(
             self.calibration_table, speed,
             uarray(self.count_rate, self.count_rate_delta), self.energy, efficiency)
 
-        self.assertAlmostEqual(493686.26052628754, actual_temperature.nominal_value, 2)
-        self.assertAlmostEqual(156296.1278672896, actual_temperature.std_dev, 2)
-        self.assertAlmostEqual(0.164806556 / efficiency, actual_density.nominal_value)
-        self.assertAlmostEqual(0.02097422 / efficiency, actual_density.std_dev)
+        np.testing.assert_allclose(493686.26052628754, actual_temperature.nominal_value)
+        np.testing.assert_allclose(156296.1278672896, actual_temperature.std_dev)
+        np.testing.assert_allclose(3.87e-3 / efficiency, actual_density.nominal_value, rtol=1e-4)
+        np.testing.assert_allclose(4.9253e-4 / efficiency, actual_density.std_dev, rtol=1e-4)
 
     @patch(
         'imap_l3_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density.get_alpha_peak_indices')

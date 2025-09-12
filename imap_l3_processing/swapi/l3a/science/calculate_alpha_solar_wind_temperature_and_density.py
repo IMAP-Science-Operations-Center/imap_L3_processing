@@ -9,7 +9,7 @@ from uncertainties import correlated_values, ufloat
 from uncertainties.unumpy import uarray, nominal_values, std_devs
 
 from imap_l3_processing.constants import BOLTZMANN_CONSTANT_JOULES_PER_KELVIN, METERS_PER_KILOMETER, \
-    CENTIMETERS_PER_METER, ALPHA_PARTICLE_CHARGE_COULOMBS, ALPHA_PARTICLE_MASS_KG
+    CENTIMETERS_PER_METER, ALPHA_PARTICLE_CHARGE_COULOMBS, ALPHA_PARTICLE_MASS_KG, SWAPI_EFFECTIVE_AREA_CM2
 from imap_l3_processing.swapi.l3a.science.calculate_alpha_solar_wind_speed import calculate_combined_sweeps, \
     get_alpha_peak_indices
 
@@ -44,7 +44,7 @@ def alpha_count_rate_model(efficiency, ev_per_q, density_per_cm3, temperature, b
     bulk_flow_speed_meters_per_s = bulk_flow_speed_km_per_s * METERS_PER_KILOMETER
     energy = ev_per_q * ALPHA_PARTICLE_CHARGE_COULOMBS
     k = BOLTZMANN_CONSTANT_JOULES_PER_KELVIN
-    a_eff_cm2 = efficiency * 3.3e-2 / 1000
+    a_eff_cm2 = efficiency * SWAPI_EFFECTIVE_AREA_CM2
     a_eff_m2 = a_eff_cm2 / CENTIMETERS_PER_METER ** 2
 
     delta_e_over_e = 0.085
