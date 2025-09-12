@@ -56,7 +56,7 @@ class GlowsL3ELoData(DataProduct):
             code_version_line = [line for line in lines if line.startswith("# code version")]
             code_version = code_version_line[0].split(',')[0][14:].strip()
 
-        spin_angle_and_survival_probabilities = np.loadtxt(file_path, skiprows=200)
+        spin_angle_and_survival_probabilities = np.loadtxt(file_path, skiprows=200, dtype=np.float64)
         spin_angles = spin_angle_and_survival_probabilities[:, 0]
         survival_probabilities = np.array([spin_angle_and_survival_probabilities[:, 1:].T])
 

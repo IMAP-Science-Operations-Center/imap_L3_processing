@@ -56,7 +56,7 @@ class GlowsL3EUltraData(DataProduct):
             code_version_line = [line for line in lines if line.startswith("# code version")]
             code_version = np.array([code_version_line[0].split(',')[0][14:].strip()])
 
-        data_table = np.loadtxt(file_path, skiprows=200)
+        data_table = np.loadtxt(file_path, skiprows=200, dtype=np.float64)
 
         healpix_indexes = np.arange(0, 3072)
 
