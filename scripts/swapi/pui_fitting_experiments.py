@@ -30,8 +30,7 @@ def compare_fitting_parameters():
                        7.5017600e+03, 6.8884770e+03, 6.3279270e+03, 5.8114860e+03,
                        5.3388680e+03, 4.9013030e+03, 4.5042990e+03, 4.1383830e+03,
                        ])
-    geometric_factor_lut_path = get_test_data_path(
-        "swapi/imap_swapi_energy-gf-lut_20240923_v000.dat")
+    geometric_factor_lut_path = get_test_data_path("swapi/imap_swapi_energy-gf-pui-lut_20100101_v001.csv")
 
     geometric_factor_lut = GeometricFactorCalibrationTable.from_file(geometric_factor_lut_path)
 
@@ -80,8 +79,7 @@ def calculate_pickup_ions_with_minimize_on_random_synth_data(mock_spice):
         energy = cdf["energy"][...]
         count_rate = cdf["swp_coin_rate"][...]
 
-        geometric_factor_lut_path = get_test_data_path(
-            "swapi/imap_swapi_energy-gf-lut_20240923_v000.dat")
+        geometric_factor_lut_path = get_test_data_path("swapi/imap_swapi_energy-gf-pui-lut_20100101_v001.csv")
 
         geometric_factor_lut = GeometricFactorCalibrationTable.from_file(geometric_factor_lut_path)
         background_count_rate_cutoff = 0.1

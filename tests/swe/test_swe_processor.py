@@ -1350,11 +1350,12 @@ class TestSweProcessor(unittest.TestCase):
 
                 rebinned_mag_data = [sentinel.mag_data_1, sentinel.mag_data_2, sentinel.mag_data_3]
 
-                swe_moment_data = swe_processor.calculate_moment_products(swe_l2_data, swe_l1_data, rebinned_mag_data,
-                                                                          spacecraft_potential,
-                                                                          core_halo_breakpoint,
-                                                                          corrected_energy_bins,
-                                                                          config)
+                with self.assertLogs():
+                    swe_moment_data = swe_processor.calculate_moment_products(swe_l2_data, swe_l1_data, rebinned_mag_data,
+                                                                              spacecraft_potential,
+                                                                              core_halo_breakpoint,
+                                                                              corrected_energy_bins,
+                                                                              config)
 
                 self.assertIsInstance(swe_moment_data, SweL3MomentData)
 

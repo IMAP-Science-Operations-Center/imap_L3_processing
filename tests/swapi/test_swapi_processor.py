@@ -14,8 +14,9 @@ from imap_l3_processing.constants import THIRTY_SECONDS_IN_NANOSECONDS, \
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.swapi.descriptors import PROTON_TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR, \
     DENSITY_OF_NEUTRAL_HELIUM_DESCRIPTOR, INSTRUMENT_RESPONSE_LOOKUP_TABLE_DESCRIPTOR, \
-    EFFICIENCY_LOOKUP_TABLE_DESCRIPTOR, GEOMETRIC_FACTOR_LOOKUP_TABLE_DESCRIPTOR, \
-    CLOCK_ANGLE_AND_FLOW_DEFLECTION_LOOKUP_TABLE_DESCRIPTOR, ALPHA_TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR
+    EFFICIENCY_LOOKUP_TABLE_DESCRIPTOR, \
+    CLOCK_ANGLE_AND_FLOW_DEFLECTION_LOOKUP_TABLE_DESCRIPTOR, ALPHA_TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR, \
+    GEOMETRIC_FACTOR_SW_LOOKUP_TABLE_DESCRIPTOR, GEOMETRIC_FACTOR_PUI_LOOKUP_TABLE_DESCRIPTOR
 from imap_l3_processing.swapi.l3a.models import SwapiL2Data, SwapiL3ProtonSolarWindData, SwapiL3PickupIonData, \
     SwapiL3AlphaSolarWindData
 from imap_l3_processing.swapi.l3a.science.calculate_pickup_ion import FittingParameters
@@ -100,7 +101,7 @@ class TestSwapiProcessor(TestCase):
             f'imap_{instrument}_{PROTON_TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
             f'imap_{instrument}_{ALPHA_TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
             f'imap_{instrument}_{CLOCK_ANGLE_AND_FLOW_DEFLECTION_LOOKUP_TABLE_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
-            f'imap_{instrument}_{GEOMETRIC_FACTOR_LOOKUP_TABLE_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
+            f'imap_{instrument}_{GEOMETRIC_FACTOR_PUI_LOOKUP_TABLE_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
             f'imap_{instrument}_{INSTRUMENT_RESPONSE_LOOKUP_TABLE_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
             f'imap_{instrument}_{DENSITY_OF_NEUTRAL_HELIUM_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
         ]
@@ -270,7 +271,7 @@ class TestSwapiProcessor(TestCase):
             f'imap_{instrument}_{PROTON_TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
             f'imap_{instrument}_{ALPHA_TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
             f'imap_{instrument}_{CLOCK_ANGLE_AND_FLOW_DEFLECTION_LOOKUP_TABLE_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
-            f'imap_{instrument}_{GEOMETRIC_FACTOR_LOOKUP_TABLE_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
+            f'imap_{instrument}_{GEOMETRIC_FACTOR_SW_LOOKUP_TABLE_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
             f'imap_{instrument}_{INSTRUMENT_RESPONSE_LOOKUP_TABLE_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
             f'imap_{instrument}_{DENSITY_OF_NEUTRAL_HELIUM_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
         ]
@@ -577,7 +578,7 @@ class TestSwapiProcessor(TestCase):
             f'imap_{instrument}_{PROTON_TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
             f'imap_{instrument}_{ALPHA_TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
             f'imap_{instrument}_{CLOCK_ANGLE_AND_FLOW_DEFLECTION_LOOKUP_TABLE_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
-            f'imap_{instrument}_{GEOMETRIC_FACTOR_LOOKUP_TABLE_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
+            f'imap_{instrument}_{GEOMETRIC_FACTOR_SW_LOOKUP_TABLE_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
             f'imap_{instrument}_{INSTRUMENT_RESPONSE_LOOKUP_TABLE_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
             f'imap_{instrument}_{DENSITY_OF_NEUTRAL_HELIUM_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
         ]
@@ -615,8 +616,12 @@ class TestSwapiProcessor(TestCase):
         self.assertEqual(actual_science_input.get_time_range()[0].strftime("%Y%m%d"), dependency_start_date)
 
         mock_swapi_l3_dependencies_class.fetch_dependencies.assert_called_once_with(dependencies)
+        swapi_l3a_dependencies = mock_swapi_l3_dependencies_class.fetch_dependencies.return_value
+        mock_alpha_temperature_density_calibration_table = swapi_l3a_dependencies.alpha_temperature_density_calibration_table
+        self.assertEqual(swapi_l3a_dependencies.efficiency_calibration_table.get_alpha_efficiency_for.return_value,
+                         mock_alpha_calculate_temperature_and_density.call_args_list[0].args[4])
 
-        mock_alpha_temperature_density_calibration_table = mock_swapi_l3_dependencies_class.fetch_dependencies.return_value.alpha_temperature_density_calibration_table
+        swapi_l3a_dependencies.efficiency_calibration_table.get_alpha_efficiency_for.assert_called_once_with(initial_epoch + THIRTY_SECONDS_IN_NANOSECONDS)
 
         mock_chunk_l2_data.assert_has_calls([call(sentinel.swapi_l2_data, 5)])
 
@@ -763,7 +768,7 @@ class TestSwapiProcessor(TestCase):
 
         input_file_names = [
             f'imap_{instrument}_{incoming_data_level}_{SWAPI_L2_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
-            f'imap_{instrument}_{incoming_data_level}_{GEOMETRIC_FACTOR_LOOKUP_TABLE_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
+            f'imap_{instrument}_{incoming_data_level}_{GEOMETRIC_FACTOR_SW_LOOKUP_TABLE_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
             f'imap_{instrument}_{incoming_data_level}_{EFFICIENCY_LOOKUP_TABLE_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
         ]
 

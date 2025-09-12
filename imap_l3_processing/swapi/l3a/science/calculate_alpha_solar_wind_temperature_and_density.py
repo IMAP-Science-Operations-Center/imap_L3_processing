@@ -3,14 +3,13 @@ from pathlib import Path
 import numpy as np
 import scipy
 import uncertainties
-from matplotlib import pyplot as plt
 from numpy import ndarray
 from scipy.special import erf
 from uncertainties import correlated_values, ufloat
 from uncertainties.unumpy import uarray, nominal_values, std_devs
 
 from imap_l3_processing.constants import BOLTZMANN_CONSTANT_JOULES_PER_KELVIN, METERS_PER_KILOMETER, \
-    CENTIMETERS_PER_METER, ALPHA_PARTICLE_CHARGE_COULOMBS, ALPHA_PARTICLE_MASS_KG
+    CENTIMETERS_PER_METER, ALPHA_PARTICLE_CHARGE_COULOMBS, ALPHA_PARTICLE_MASS_KG, SWAPI_EFFECTIVE_AREA_CM2
 from imap_l3_processing.swapi.l3a.science.calculate_alpha_solar_wind_speed import calculate_combined_sweeps, \
     get_alpha_peak_indices
 
@@ -40,12 +39,12 @@ class AlphaTemperatureDensityCalibrationTable:
         return scipy.interpolate.interpn(self.grid, self.density_grid, [sw_speed, density, temperature])[0]
 
 
-def alpha_count_rate_model(ev_per_q, density_per_cm3, temperature, bulk_flow_speed_km_per_s):
+def alpha_count_rate_model(efficiency, ev_per_q, density_per_cm3, temperature, bulk_flow_speed_km_per_s):
     density_per_m3 = density_per_cm3 * CENTIMETERS_PER_METER ** 3
     bulk_flow_speed_meters_per_s = bulk_flow_speed_km_per_s * METERS_PER_KILOMETER
     energy = ev_per_q * ALPHA_PARTICLE_CHARGE_COULOMBS
     k = BOLTZMANN_CONSTANT_JOULES_PER_KELVIN
-    a_eff_cm2 = 3.3e-2 / 1000
+    a_eff_cm2 = efficiency * SWAPI_EFFECTIVE_AREA_CM2
     a_eff_m2 = a_eff_cm2 / CENTIMETERS_PER_METER ** 2
 
     delta_e_over_e = 0.085
@@ -70,6 +69,7 @@ def calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps(
         alpha_sw_speed: ufloat,
         count_rates: uarray,
         energies: ndarray,
+        efficiency: float,
 ):
     average_count_rates, energies = calculate_combined_sweeps(count_rates, energies)
 
@@ -79,14 +79,14 @@ def calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps(
     peak_average_alpha_count_rates = average_count_rates[alpha_particle_peak_slice]
 
     initial_parameter_guess = [0.15, 3.6e5, nominal_values(alpha_sw_speed)]
-    values, covariance = scipy.optimize.curve_fit(alpha_count_rate_model,
+    values, covariance = scipy.optimize.curve_fit(lambda *args: alpha_count_rate_model(efficiency, *args),
                                                   peak_energies,
                                                   nominal_values(peak_average_alpha_count_rates),
                                                   sigma=std_devs(peak_average_alpha_count_rates),
                                                   absolute_sigma=True,
                                                   bounds=[[0, 0, 0], [np.inf, np.inf, np.inf]],
                                                   p0=initial_parameter_guess)
-    residual = abs(alpha_count_rate_model(peak_energies, *values) - nominal_values(peak_average_alpha_count_rates))
+    residual = abs(alpha_count_rate_model(efficiency, peak_energies, *values) - nominal_values(peak_average_alpha_count_rates))
     reduced_chisq = np.sum(np.square(residual / std_devs(peak_average_alpha_count_rates))) / (len(peak_energies) - 3)
     if reduced_chisq > 10:
         raise ValueError("Failed to fit - chi-squared too large", reduced_chisq)

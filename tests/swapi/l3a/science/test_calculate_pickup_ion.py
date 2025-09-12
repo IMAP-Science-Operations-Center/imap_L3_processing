@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-from datetime import datetime, timedelta
 from pathlib import Path
 from unittest import skipIf
 from unittest.mock import patch, Mock, MagicMock, call
@@ -372,8 +371,7 @@ class TestCalculatePickupIon(SpiceTestCase):
             mock_extract_pui_energy_bins.return_value = (
                 extracted_indices, extracted_energies, extracted_counts
             )
-            geometric_factor_lut_path = Path(
-                imap_l3_processing.__file__).parent.parent / 'tests' / 'test_data' / 'swapi' / "imap_swapi_energy-gf-lut_20240923_v000.dat"
+            geometric_factor_lut_path = get_test_data_path('swapi/imap_swapi_energy-gf-pui-lut_20100101_v001.csv')
 
             geometric_factor_lut = GeometricFactorCalibrationTable.from_file(geometric_factor_lut_path)
             background_count_rate_cutoff = 0.1
@@ -582,7 +580,7 @@ class TestCalculatePickupIon(SpiceTestCase):
             count_rate = cdf["swp_coin_rate"][...]
 
             geometric_factor_lut_path = get_test_data_path(
-                "swapi/imap_swapi_energy-gf-lut_20240923_v000.dat")
+                "swapi/imap_swapi_energy-gf-sw-lut_20100101_v001.csv")
 
             geometric_factor_lut = GeometricFactorCalibrationTable.from_file(geometric_factor_lut_path)
             background_count_rate_cutoff = 0.1
@@ -603,8 +601,7 @@ class TestCalculatePickupIon(SpiceTestCase):
             self.assertAlmostEqual(0.1, actual_fitting_parameters.background_count_rate, delta=0.05)
 
     def test_snapshot_model_count_rate_result(self):
-        geometric_factor_lut_path = get_test_data_path(
-            "swapi/imap_swapi_energy-gf-lut_20240923_v000.dat")
+        geometric_factor_lut_path = get_test_data_path("swapi/imap_swapi_energy-gf-sw-lut_20100101_v001.csv")
 
         geometric_factor_lut = GeometricFactorCalibrationTable.from_file(geometric_factor_lut_path)
         sw_velocity_vector = np.array([0, 0, -500])

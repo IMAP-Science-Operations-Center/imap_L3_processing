@@ -14,6 +14,7 @@ from imap_l3_processing.swapi.l3a.science.calculate_proton_solar_wind_temperatur
     calculate_uncalibrated_proton_solar_wind_temperature_and_density, \
     calculate_proton_solar_wind_temperature_and_density
 from tests.swapi.l3a.science.test_calculate_alpha_solar_wind_speed import synthesize_uncertainties
+from tests.test_helpers import get_test_data_path
 
 
 class TestCalculateProtonSolarWindTemperatureAndDensity(TestCase):
@@ -32,8 +33,8 @@ class TestCalculateProtonSolarWindTemperatureAndDensity(TestCase):
 
         self.assertAlmostEqual(102267, temperature.nominal_value, 0)
         self.assertAlmostEqual(6376, temperature.std_dev, 0)
-        self.assertAlmostEqual(3.76 / efficiency, density.nominal_value, 2)
-        self.assertAlmostEqual(0.1555 / efficiency, density.std_dev, 3)
+        self.assertAlmostEqual(8.829e-2 / efficiency, density.nominal_value, 2)
+        self.assertAlmostEqual(3.6515e-3 / efficiency, density.std_dev, 3)
 
     def test_uncalibrated_calculate_using_five_sweeps_from_example_file(self):
         file_path = Path(
@@ -47,10 +48,10 @@ class TestCalculateProtonSolarWindTemperatureAndDensity(TestCase):
         temperature, density = calculate_uncalibrated_proton_solar_wind_temperature_and_density(
             uarray(count_rate, count_rate_delta), energy, efficiency)
 
-        self.assertAlmostEqual(100109, temperature.nominal_value, 0)
-        self.assertAlmostEqual(2379, temperature.std_dev, 0)
-        self.assertAlmostEqual(4.953 / efficiency, density.nominal_value, 3)
-        self.assertAlmostEqual(8.028e-2 / efficiency, density.std_dev, 4)
+        np.testing.assert_allclose(100109, temperature.nominal_value, rtol=1e-5)
+        np.testing.assert_allclose(2379, temperature.std_dev, rtol=1e-3)
+        np.testing.assert_allclose(0.1163 / efficiency, density.nominal_value, rtol=1e-4)
+        np.testing.assert_allclose(1.8852e-3 / efficiency, density.std_dev, rtol=1e-4)
 
     def test_calibrate_density_and_temperature_using_lookup_table(self):
         speed_values = [250, 1000]
@@ -103,13 +104,12 @@ class TestCalculateProtonSolarWindTemperatureAndDensity(TestCase):
         clock_angle_values = [0, 360]
         density_values = [1, 10]
         temperature_values = [1000, 200000]
-        efficiency = 0.7
+        efficiency = 0.1
 
         lookup_table = self.generate_lookup_table(speed_values, deflection_angle_values, clock_angle_values,
                                                   density_values, temperature_values)
 
-        file_path = Path(
-            imap_l3_processing.__file__).parent.parent / 'tests' / 'test_data' / 'swapi' / 'imap_swapi_l2_fake-menlo-5-sweeps_20100101_v002.cdf'
+        file_path = get_test_data_path('swapi/imap_swapi_l2_fake-menlo-5-sweeps_20100101_v002.cdf')
         with CDF(str(file_path)) as cdf:
             energy = cdf["energy"][...]
             count_rate = cdf["swp_coin_rate"][...]
@@ -120,18 +120,18 @@ class TestCalculateProtonSolarWindTemperatureAndDensity(TestCase):
                                                                                    uarray(count_rate, count_rate_delta),
                                                                                    energy, efficiency)
 
-        self.assertAlmostEqual(100109 * 0.97561, temperature.nominal_value, 0)
-        self.assertAlmostEqual(2379 * 0.97561, temperature.std_dev, 0)
+        np.testing.assert_allclose(100109 * 0.97561, temperature.nominal_value, rtol=1e-4)
+        np.testing.assert_allclose(2379 * 0.97561, temperature.std_dev, rtol=2e-4)
 
-        self.assertAlmostEqual(4.953 * 1.021 / efficiency, density.nominal_value, 3)
-        self.assertAlmostEqual(8.028e-2 * 1.021 / efficiency, density.std_dev, 4)
+        np.testing.assert_allclose(0.1163 * 1.021 / efficiency, density.nominal_value, rtol=1e-4)
+        np.testing.assert_allclose(1.8852e-3 * 1.021 / efficiency, density.std_dev, rtol=1e-4)
 
     def test_proton_count_rate_model_accounts_for_efficiency(self):
         efficiency_factor = 0.5
 
         cases = [
-            (np.array([800, 900, 1000]), 1, 2, 1e6, 700, np.array([0.220894, 0.60724, 1.471544])),
-            (np.array([800, 900, 1000]), 0.5, 2, 1e6, 700, np.array([0.220894, 0.60724, 1.471544]) * efficiency_factor),
+            (np.array([800, 900, 1000]), 1, 2, 1e6, 700, np.array([9.406743, 25.85924, 62.665463])),
+            (np.array([800, 900, 1000]), efficiency_factor, 2, 1e6, 700, np.array([9.406743, 25.85924, 62.665463]) * efficiency_factor),
         ]
 
         for ev_per_q, efficiency, density_per_cm3, temperature, bulk_flow_speed_km_per_s, expected in cases:
