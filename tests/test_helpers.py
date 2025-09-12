@@ -1,9 +1,10 @@
 import json
 import os
+import tempfile
 from dataclasses import fields, dataclass
 from datetime import timedelta, datetime
 from pathlib import Path
-from typing import Type, T, Optional
+from typing import Type, Optional, Callable, TypeVar
 from unittest import SkipTest
 from unittest.mock import Mock
 
@@ -72,6 +73,7 @@ def build_moment_fit_results(moments: Moments = None, chisq: float = 1, number_o
     return MomentFitResults(moments=moments, chisq=chisq, number_of_points=number_of_points,
                             regress_result=regress_result)
 
+T = TypeVar('T')
 
 def create_dataclass_mock(obj: Type[T], **kwargs) -> T:
     return Mock(spec=[field.name for field in fields(obj)], **kwargs)
@@ -212,3 +214,9 @@ def run_periodically(frequency: timedelta):
         return test_thing
 
     return run_periodically_decorator
+
+def with_tempdir(fn: Callable) -> Callable:
+    def wrapped_fn(self, *args, **kwargs):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            fn(self, Path(tmpdir), *args, **kwargs)
+    return wrapped_fn
