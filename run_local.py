@@ -1046,7 +1046,7 @@ if __name__ == "__main__":
                 "tests/test_data/swapi/imap_swapi_proton-density-temperature-lut_20240905_v000.dat",
                 "tests/test_data/swapi/imap_swapi_alpha-density-temperature-lut_20240920_v000.dat",
                 "tests/test_data/swapi/imap_swapi_clock-angle-and-flow-deflection-lut_20240918_v000.dat",
-                "tests/test_data/swapi/imap_swapi_energy-gf-lut_20240923_v000.dat",
+                "tests/test_data/swapi/imap_swapi_energy-gf-pui-lut_20100101_v001.csv",
                 "tests/test_data/swapi/imap_swapi_instrument-response-lut_20241023_v000.zip",
                 "tests/test_data/swapi/imap_swapi_l2_density-of-neutral-helium-lut-text-not-cdf_20241023_v002.cdf",
                 str(get_test_data_path("swapi/imap_swapi_l2_50-sweeps_20250606_v003.cdf"))
@@ -1054,7 +1054,7 @@ if __name__ == "__main__":
             print(paths)
         if "l3b" in sys.argv:
             path = create_swapi_l3b_cdf(
-                "tests/test_data/swapi/imap_swapi_energy-gf-lut_20240923_v000.dat",
+                "tests/test_data/swapi/imap_swapi_energy-gf-sw-lut_20100101_v001.csv",
                 "tests/test_data/swapi/imap_swapi_efficiency-lut_20241020_v000.dat",
                 str(get_test_data_path("swapi/imap_swapi_l2_50-sweeps_20250606_v003.cdf")))
             print(path)

@@ -77,14 +77,24 @@ if __name__ == "__main__":
                             '{"type": "ancillary", "files": ["imap_glows_l3b-archive_20100422_v011.zip"]},'
                             '{"type": "ancillary", "files": ["imap_glows_pipeline-settings-l3bcde_20100101_v006.json"]}]'
                             ])
-        case "swapi", None:
+        case "swapi", "proton":
             subprocess.run([sys.executable, 'imap_l3_data_processor.py', '--instrument', 'swapi', '--data-level', 'l3a',
                             '--descriptor', 'proton-sw', '--start-date', '20250606', '--version', 'v000',
                             '--dependency',
-                            '[{"type":"science","files":["imap_swapi_l2_sci_20250606_v007.cdf"]},{"type":"ancillary","files":["imap_swapi_proton-density-temperature-lut_20240905_v000.dat"]},{"type":"ancillary","files":["imap_swapi_alpha-density-temperature-lut_20240920_v000.dat"]},{"type":"ancillary","files":["imap_swapi_clock-angle-and-flow-deflection-lut_20240918_v000.dat"]},{"type":"ancillary","files":["imap_swapi_energy-gf-lut_20240923_v000.dat"]},{"type":"ancillary","files":["imap_swapi_instrument-response-lut_20241023_v000.zip"]},{"type":"ancillary","files":["imap_swapi_density-of-neutral-helium-lut_20241023_v000.dat"]}]'])
+                            '[{"type":"science","files":["imap_swapi_l2_sci_20250606_v001.cdf"]},'
+                            '{"type":"ancillary","files":["imap_swapi_proton-density-temperature-lut_20240905_v000.dat"]},'
+                            '{"type":"ancillary","files":["imap_swapi_alpha-density-temperature-lut_20240920_v000.dat"]},'
+                            '{"type":"ancillary","files":["imap_swapi_clock-angle-and-flow-deflection-lut_20240918_v000.dat"]},'
+                            '{"type":"ancillary","files":["imap_swapi_efficiency-lut_20240918_v000.dat"]},'
+                            '{"type":"ancillary","files":["imap_swapi_energy-gf-pui-lut_20100101_v001.csv"]},'
+                            '{"type":"ancillary","files":["imap_swapi_instrument-response-lut_20241023_v000.zip"]},'
+                            '{"type":"ancillary","files":["imap_swapi_density-of-neutral-helium-lut_20241023_v000.dat"]}]'])
+        case "swapi", "l3b":
             subprocess.run([sys.executable, 'imap_l3_data_processor.py', '--instrument', 'swapi', '--data-level', 'l3b',
                             '--start-date', '20250606', '--version', 'v003', '--dependency',
-                            '[{"type": "science", "files": ["imap_swapi_l2_sci_20250606_v002.cdf"]}]'])
+                            '[{"type": "science", "files": ["imap_swapi_l2_sci_20250606_v002.cdf"]},'
+                            '{"type":"ancillary","files":["imap_swapi_energy-gf-sw-lut_20100101_v001.csv"]},'
+                            '{"type":"ancillary","files":["imap_swapi_efficiency-lut_20240918_v000.dat"]}]'])
         case "codice", "lo-direct-events":
             subprocess.run(
                 [sys.executable, 'imap_l3_data_processor.py', '--instrument', 'codice', '--data-level', 'l3a',
