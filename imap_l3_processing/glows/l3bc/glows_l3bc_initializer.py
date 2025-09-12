@@ -84,19 +84,20 @@ class GlowsL3BCInitializer:
             logger.info(f"considering CR {cr_number}")
             cr_start_date, cr_end_date = get_date_range_of_cr(cr_number)
 
-            uv_anisotropy_file_name = get_best_ancillary(cr_start_date, cr_end_date, uv_anisotropy_query_result)
-            waw_helio_ion_mp_file_name = get_best_ancillary(cr_start_date, cr_end_date, waw_helio_ion_mp_query_result)
-            bad_days_list_file_name = get_best_ancillary(cr_start_date, cr_end_date, bad_days_list_query_result)
-            pipeline_settings_file_name = get_best_ancillary(cr_start_date, cr_end_date, pipeline_settings_query_result)
+            ancillaries = {
+                "uv-anisotropy-1CR": get_best_ancillary(cr_start_date, cr_end_date, uv_anisotropy_query_result),
+                "WawHelioIonMP": get_best_ancillary(cr_start_date, cr_end_date, waw_helio_ion_mp_query_result),
+                "bad-days-list": get_best_ancillary(cr_start_date, cr_end_date, bad_days_list_query_result),
+                "pipeline-settings-l3bcde": get_best_ancillary(cr_start_date, cr_end_date, pipeline_settings_query_result),
+            }
 
-            if all([uv_anisotropy_file_name, waw_helio_ion_mp_file_name, bad_days_list_file_name,
-                    pipeline_settings_file_name]):
+            if all(ancillaries.values()):
                 cr_candidate = CRToProcess(
                     l3a_files,
-                    uv_anisotropy_file_name,
-                    waw_helio_ion_mp_file_name,
-                    bad_days_list_file_name,
-                    pipeline_settings_file_name,
+                    ancillaries["uv-anisotropy-1CR"],
+                    ancillaries["WawHelioIonMP"],
+                    ancillaries["bad-days-list"],
+                    ancillaries["pipeline-settings-l3bcde"],
                     cr_start_date,
                     cr_end_date,
                     cr_number
@@ -114,7 +115,7 @@ class GlowsL3BCInitializer:
                 else:
                     logger.info(f"decided not to process {cr_candidate}")
             else:
-                logger.info("missing some ancillaries")
+                logger.info(f"Missing ancillary dependencies: {ancillaries}")
 
         return GlowsL3BCInitializerData(
             external_dependencies=external_dependencies,

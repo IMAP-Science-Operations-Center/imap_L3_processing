@@ -167,7 +167,7 @@ def process_l3bc(processor, initializer_data: GlowsL3BCInitializerData):
         try:
             l3b_data, l3c_data = generate_l3bc(replace(dependency, l3a_data=filtered_days))
         except CannotProcessCarringtonRotationError as e:
-            print(f"skipping CR {dependency.carrington_rotation_number}:", e)
+            logger.info(f"skipping CR {dependency.carrington_rotation_number}:", e)
             continue
 
         l3b_metadata = InputMetadata("glows", "l3b", dependency.start_date, dependency.end_date,
@@ -434,6 +434,5 @@ class SwallowExceptionAndLog:
         if exc_type is KeyboardInterrupt:
             return False
         elif exc_type is not None:
-            print(self.message)
-            traceback.print_exception(exc_type, exc_val, exc_tb)
+            logger.exception(self.message, exc_info=exc_val)
         return True
