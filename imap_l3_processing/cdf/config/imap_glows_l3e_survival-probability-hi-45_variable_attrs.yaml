@@ -47,7 +47,7 @@ spin_angle:
   SCALETYP: linear
 surv_prob:
   NAME: surv_prob
-  DATA_TYPE: CDF_FLOAT
+  DATA_TYPE: CDF_DOUBLE
   CATDESC: Survival probabilities for IMAP-Hi
   VAR_TYPE: data
   RECORD_VARYING: RV

@@ -19,7 +19,7 @@ epoch:
   SI_CONVERSION: 1e-9>seconds
 energy_grid:
   NAME: energy_grid
-  DATA_TYPE: CDF_FLOAT
+  DATA_TYPE: CDF_DOUBLE
   CATDESC: Energies associated with the survival probabilities for IMAP-Lo
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
