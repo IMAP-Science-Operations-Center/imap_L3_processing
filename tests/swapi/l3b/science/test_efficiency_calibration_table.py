@@ -1,17 +1,15 @@
 import unittest
 from datetime import datetime
-from pathlib import Path
 
 from spacepy import pycdf
 
-import imap_l3_data_processor
 from imap_l3_processing.swapi.l3b.science.efficiency_calibration_table import EfficiencyCalibrationTable
 from tests.test_helpers import get_test_data_path
 
 
 class TestEfficiencyCalibrationTable(unittest.TestCase):
     def test_loads_calibration_table_and_returns_proton_efficiency_for_a_time(self):
-        calibration_table_path = get_test_data_path("swapi/imap_swapi_l2_efficiency-lut-text-not-cdf_20241020_v001.cdf")
+        calibration_table_path = get_test_data_path("swapi/imap_swapi_efficiency-lut-test_20241020_v001.dat")
         efficiency_table = EfficiencyCalibrationTable(calibration_table_path)
 
         self.assertEqual(
@@ -30,7 +28,7 @@ class TestEfficiencyCalibrationTable(unittest.TestCase):
             0.0882)
 
     def test_loads_calibration_table_and_returns_alpha_efficiency_for_a_time(self):
-        calibration_table_path = get_test_data_path("swapi/imap_swapi_l2_efficiency-lut-text-not-cdf_20241020_v001.cdf")
+        calibration_table_path = get_test_data_path("swapi/imap_swapi_efficiency-lut-test_20241020_v001.dat")
         efficiency_table = EfficiencyCalibrationTable(calibration_table_path)
 
         self.assertEqual(
@@ -49,8 +47,7 @@ class TestEfficiencyCalibrationTable(unittest.TestCase):
             0.99)
 
     def test_loads_calibration_table_raises_exception_if_ask_for_time_before_the_table_starts(self):
-        calibration_table_path = Path(
-            imap_l3_data_processor.__file__).parent / 'tests' / 'test_data' / 'swapi' / "imap_swapi_l2_efficiency-lut-text-not-cdf_20241020_v001.cdf"
+        calibration_table_path = get_test_data_path("swapi/imap_swapi_efficiency-lut-test_20241020_v001.dat")
         efficiency_table = EfficiencyCalibrationTable(calibration_table_path)
 
         with self.assertRaises(ValueError) as content_manager:
