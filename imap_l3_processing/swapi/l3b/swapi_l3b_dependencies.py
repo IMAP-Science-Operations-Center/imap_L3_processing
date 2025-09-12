@@ -6,7 +6,7 @@ from imap_data_access.processing_input import ProcessingInputCollection
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.swapi.descriptors import EFFICIENCY_LOOKUP_TABLE_DESCRIPTOR, \
-    GEOMETRIC_FACTOR_LOOKUP_TABLE_DESCRIPTOR, SWAPI_L2_DESCRIPTOR
+    GEOMETRIC_FACTOR_SW_LOOKUP_TABLE_DESCRIPTOR, SWAPI_L2_DESCRIPTOR
 from imap_l3_processing.swapi.l3a.models import SwapiL2Data
 from imap_l3_processing.swapi.l3a.utils import read_l2_swapi_data
 from imap_l3_processing.swapi.l3b.science.calculate_solar_wind_vdf import GeometricFactorCalibrationTable
@@ -23,7 +23,7 @@ class SwapiL3BDependencies:
     def fetch_dependencies(cls, dependencies: ProcessingInputCollection):
         science_dependency_file = dependencies.get_file_paths(source='swapi', descriptor=SWAPI_L2_DESCRIPTOR)
         geometric_factor_lookup_table_file = dependencies.get_file_paths(source='swapi',
-                                                                         descriptor=GEOMETRIC_FACTOR_LOOKUP_TABLE_DESCRIPTOR)
+                                                                         descriptor=GEOMETRIC_FACTOR_SW_LOOKUP_TABLE_DESCRIPTOR)
         efficiency_table_lookup_file = dependencies.get_file_paths(source='swapi',
                                                                    descriptor=EFFICIENCY_LOOKUP_TABLE_DESCRIPTOR)
 

@@ -6,9 +6,10 @@ import imap_data_access
 from imap_data_access.processing_input import ScienceInput, ProcessingInputCollection, AncillaryInput
 
 from imap_l3_processing.swapi.descriptors import SWAPI_L2_DESCRIPTOR, ALPHA_TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR, \
-    PROTON_TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR, GEOMETRIC_FACTOR_LOOKUP_TABLE_DESCRIPTOR, \
+    PROTON_TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR, \
     INSTRUMENT_RESPONSE_LOOKUP_TABLE_DESCRIPTOR, DENSITY_OF_NEUTRAL_HELIUM_DESCRIPTOR, \
-    CLOCK_ANGLE_AND_FLOW_DEFLECTION_LOOKUP_TABLE_DESCRIPTOR, EFFICIENCY_LOOKUP_TABLE_DESCRIPTOR
+    CLOCK_ANGLE_AND_FLOW_DEFLECTION_LOOKUP_TABLE_DESCRIPTOR, EFFICIENCY_LOOKUP_TABLE_DESCRIPTOR, \
+    GEOMETRIC_FACTOR_PUI_LOOKUP_TABLE_DESCRIPTOR
 from imap_l3_processing.swapi.l3a.swapi_l3a_dependencies import SwapiL3ADependencies
 
 
@@ -43,14 +44,15 @@ class TestSwapiL3ADependencies(unittest.TestCase):
         swapi_alpha_temp_density_calibration_file_name = f"{mission}_{instrument}_{ALPHA_TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR}_{start_date}_{version}.cdf"
         swapi_proton_temp_and_density_calibration_file_name = f"{mission}_{instrument}_{PROTON_TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR}_{start_date}_{version}.cdf"
         swapi_efficiency_file_name = f"{mission}_{instrument}_{EFFICIENCY_LOOKUP_TABLE_DESCRIPTOR}_{start_date}_{version}.cdf"
-        swapi_geometric_factor_calibration_file_name = f"{mission}_{instrument}_{GEOMETRIC_FACTOR_LOOKUP_TABLE_DESCRIPTOR}_{start_date}_{version}.cdf"
+        swapi_geometric_factor_calibration_file_name = f"{mission}_{instrument}_{GEOMETRIC_FACTOR_PUI_LOOKUP_TABLE_DESCRIPTOR}_{start_date}_{version}.cdf"
         swapi_instrument_response_lookup_table_collection = f"{mission}_{instrument}_{INSTRUMENT_RESPONSE_LOOKUP_TABLE_DESCRIPTOR}_{start_date}_{version}.cdf"
         swapi_density_of_neutral_helium_lookup = f"{mission}_{instrument}_{DENSITY_OF_NEUTRAL_HELIUM_DESCRIPTOR}_{start_date}_{version}.cdf"
 
         science_input = ScienceInput(swapi_science_file_download_path)
         clock_angle_calibration_ancillary = AncillaryInput(swapi_clock_angle_calibration_table_file_name)
         alpha_temp_density_calibration_ancillary = AncillaryInput(swapi_alpha_temp_density_calibration_file_name)
-        proton_temp_and_density_calibration_ancillary = AncillaryInput(swapi_proton_temp_and_density_calibration_file_name)
+        proton_temp_and_density_calibration_ancillary = AncillaryInput(
+            swapi_proton_temp_and_density_calibration_file_name)
         efficiency_ancillary = AncillaryInput(swapi_efficiency_file_name)
         geometric_factor_calibration_ancillary = AncillaryInput(swapi_geometric_factor_calibration_file_name)
         instrument_response_lookup_ancillary = AncillaryInput(swapi_instrument_response_lookup_table_collection)
@@ -58,7 +60,8 @@ class TestSwapiL3ADependencies(unittest.TestCase):
 
         input_collection.add(
             [science_input, clock_angle_calibration_ancillary, alpha_temp_density_calibration_ancillary,
-             proton_temp_and_density_calibration_ancillary, efficiency_ancillary, geometric_factor_calibration_ancillary,
+             proton_temp_and_density_calibration_ancillary, efficiency_ancillary,
+             geometric_factor_calibration_ancillary,
              instrument_response_lookup_ancillary, density_of_neutral_helium_ancillary])
 
         actual_swapi_l3_dependencies = SwapiL3ADependencies.fetch_dependencies(input_collection)
@@ -118,14 +121,22 @@ class TestSwapiL3ADependencies(unittest.TestCase):
         data_level = 'l2'
         version = 'v010'
 
-        swapi_science_file_download_path = Path(f"{mission}_{instrument}_{data_level}_{SWAPI_L2_DESCRIPTOR}_{start_date}_{version}.cdf")
-        swapi_clock_angle_calibration_table_file_name = Path(f"{mission}_{instrument}_{CLOCK_ANGLE_AND_FLOW_DEFLECTION_LOOKUP_TABLE_DESCRIPTOR}_{start_date}_{version}.cdf")
-        swapi_alpha_temp_density_calibration_file_name = Path(f"{mission}_{instrument}_{ALPHA_TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR}_{start_date}_{version}.cdf")
-        swapi_proton_temp_and_density_calibration_file_name = Path(f"{mission}_{instrument}_{PROTON_TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR}_{start_date}_{version}.cdf")
-        swapi_efficiency_calibration_file_name = Path(f"{mission}_{instrument}_{EFFICIENCY_LOOKUP_TABLE_DESCRIPTOR}_{start_date}_{version}.cdf")
-        swapi_geometric_factor_calibration_file_name = Path(f"{mission}_{instrument}_{GEOMETRIC_FACTOR_LOOKUP_TABLE_DESCRIPTOR}_{start_date}_{version}.cdf")
-        swapi_instrument_response_lookup_table_collection = Path(f"{mission}_{instrument}_{INSTRUMENT_RESPONSE_LOOKUP_TABLE_DESCRIPTOR}_{start_date}_{version}.cdf")
-        swapi_density_of_neutral_helium_lookup = Path(f"{mission}_{instrument}_{DENSITY_OF_NEUTRAL_HELIUM_DESCRIPTOR}_{start_date}_{version}.cdf")
+        swapi_science_file_download_path = Path(
+            f"{mission}_{instrument}_{data_level}_{SWAPI_L2_DESCRIPTOR}_{start_date}_{version}.cdf")
+        swapi_clock_angle_calibration_table_file_name = Path(
+            f"{mission}_{instrument}_{CLOCK_ANGLE_AND_FLOW_DEFLECTION_LOOKUP_TABLE_DESCRIPTOR}_{start_date}_{version}.cdf")
+        swapi_alpha_temp_density_calibration_file_name = Path(
+            f"{mission}_{instrument}_{ALPHA_TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR}_{start_date}_{version}.cdf")
+        swapi_proton_temp_and_density_calibration_file_name = Path(
+            f"{mission}_{instrument}_{PROTON_TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR}_{start_date}_{version}.cdf")
+        swapi_efficiency_calibration_file_name = Path(
+            f"{mission}_{instrument}_{EFFICIENCY_LOOKUP_TABLE_DESCRIPTOR}_{start_date}_{version}.cdf")
+        swapi_geometric_factor_calibration_file_name = Path(
+            f"{mission}_{instrument}_{GEOMETRIC_FACTOR_PUI_LOOKUP_TABLE_DESCRIPTOR}_{start_date}_{version}.cdf")
+        swapi_instrument_response_lookup_table_collection = Path(
+            f"{mission}_{instrument}_{INSTRUMENT_RESPONSE_LOOKUP_TABLE_DESCRIPTOR}_{start_date}_{version}.cdf")
+        swapi_density_of_neutral_helium_lookup = Path(
+            f"{mission}_{instrument}_{DENSITY_OF_NEUTRAL_HELIUM_DESCRIPTOR}_{start_date}_{version}.cdf")
 
         mock_read_l2_swapi.return_value = sentinel.swapi_l2_data
         mock_proton_temp_from_file.return_value = sentinel.proton_temp_data
