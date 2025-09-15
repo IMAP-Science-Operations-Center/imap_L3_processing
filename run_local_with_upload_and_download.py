@@ -29,6 +29,34 @@ if __name__ == "__main__":
                             '--start-date', '20250415', '--version', 'v002', '--descriptor',
                             'h90-ena-h-sf-sp-full-hae-4deg-6mo', '--dependency',
                             '[{"type": "science", "files": ["imap_hi_l2_h90-ena-h-sf-nsp-ram-hae-4deg-6mo_20250415_v001.cdf"]},\n{"type": "science", "files": ["imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-6mo_20250415_v001.cdf"]}]'])
+        case "hit", "direct":
+            subprocess.run([sys.executable, 'imap_l3_data_processor.py', '--instrument', 'hit', '--data-level', 'l3',
+                            '--start-date', '20100106', '--version', 'v001', '--descriptor',
+                            'direct-events', '--dependency',
+                            '[{"type": "science", "files": ["imap_hit_l1a_direct-events_20100106_v001.cdf"]},' +
+                            '{"type": "ancillary", "files": ["imap_hit_range-2A-cosine-lookup_20250203_v000.csv"]},' +
+                            '{"type": "ancillary", "files": ["imap_hit_range-2B-cosine-lookup_20250203_v000.csv"]},' +
+                            '{"type": "ancillary", "files": ["imap_hit_range-3A-cosine-lookup_20250203_v000.csv"]},' +
+                            '{"type": "ancillary", "files": ["imap_hit_range-3B-cosine-lookup_20250203_v000.csv"]},' +
+                            '{"type": "ancillary", "files": ["imap_hit_range-4A-cosine-lookup_20250203_v000.csv"]},' +
+                            '{"type": "ancillary", "files": ["imap_hit_range-4B-cosine-lookup_20250203_v000.csv"]},' +
+                            '{"type": "ancillary", "files": ["imap_hit_hi-gain-lookup_20250203_v000.csv"]},' +
+                            '{"type": "ancillary", "files": ["imap_hit_lo-gain-lookup_20250203_v000.csv"]},' +
+                            '{"type": "ancillary", "files": ["imap_hit_hit-event-type-lookup_20250228_v000.csv"]},' +
+                            '{"type": "ancillary", "files": ["imap_hit_range-2A-charge-fit-lookup_20250319_v000.csv"]},' +
+                            '{"type": "ancillary", "files": ["imap_hit_range-3A-charge-fit-lookup_20250319_v000.csv"]},' +
+                            '{"type": "ancillary", "files": ["imap_hit_range-4A-charge-fit-lookup_20250319_v000.csv"]},' +
+                            '{"type": "ancillary", "files": ["imap_hit_range-2B-charge-fit-lookup_20250319_v000.csv"]},' +
+                            '{"type": "ancillary", "files": ["imap_hit_range-3B-charge-fit-lookup_20250319_v000.csv"]},' +
+                            '{"type": "ancillary", "files": ["imap_hit_range-4B-charge-fit-lookup_20250319_v000.csv"]}]'
+                            ])
+        case "hit", "macropixel":
+            subprocess.run([sys.executable, 'imap_l3_data_processor.py', '--instrument', 'hit', '--data-level', 'l3',
+                            '--start-date', '20100106', '--version', 'v001', '--descriptor',
+                            'macropixel', '--dependency',
+                            '[{"type": "science", "files": ["imap_hit_l2_macropixel-intensity_20100106_v001.cdf"]},' +
+                            '{"type": "science", "files": ["imap_mag_l1d_norm-mago_20100106_v001.cdf"]}]'
+                            ])
         case "ultra", "survival":
             subprocess.run([sys.executable, 'imap_l3_data_processor.py', '--instrument', 'ultra', '--data-level', 'l3',
                             '--start-date', '20250415', '--version', 'v010', '--descriptor',
