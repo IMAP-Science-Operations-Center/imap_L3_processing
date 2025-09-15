@@ -623,7 +623,8 @@ class TestHitProcessor(TestCase):
         )
 
         processor = HitProcessor(Mock(), input_metadata)
-        actual_product = processor.process_direct_event_product(mock_direct_event_dependencies)
+        with self.assertLogs():
+            actual_product = processor.process_direct_event_product(mock_direct_event_dependencies)
 
         self.assertEqual(1, len(actual_product.epoch))
         self.assertEqual(datetime(year=2020, month=2, day=1, hour=1), actual_product.epoch[0])
