@@ -553,7 +553,7 @@ class TestUtils(TestCase):
             tmp_dir = Path(tmp_dir)
 
             mock_data_dir = tmp_dir / "some_data_directory"
-            mock_data_access_url = "https://imap-mission.com"
+            mock_data_access_url = "https://imap-mission.com/api-key"
 
             fake_imap_data_access_config = {"DATA_DIR": mock_data_dir, "DATA_ACCESS_URL": mock_data_access_url}
             with patch.object(imap_data_access, "config", new=fake_imap_data_access_config):
