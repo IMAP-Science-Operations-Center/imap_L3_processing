@@ -145,6 +145,5 @@ class HitL1Data:
 
     @classmethod
     def read_from_cdf(cls, cdf_file_path: Union[Path, str]):
-        cdf = CDF(str(cdf_file_path))
-
-        return cls(cdf["epoch"], cdf["pha_raw"][...])
+        with CDF(str(cdf_file_path)) as cdf:
+            return cls(cdf["epoch"][...], cdf["pha_raw"][...])
