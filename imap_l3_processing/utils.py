@@ -227,15 +227,18 @@ def furnish_spice_metakernel(start_date: datetime, end_date: datetime, kernel_ty
 
     data_access_url = f"{imap_data_access.config.get('DATA_ACCESS_URL')}/metakernel"
 
+    logger.info(f"Getting SPICE Metakernel from: {data_access_url}, with params: {parameters}")
+
     metakernel_res = requests.get(data_access_url, params=parameters)
+    print(metakernel_res)
 
     metakernel_path.parent.mkdir(parents=True, exist_ok=True)
     metakernel_path.write_bytes(metakernel_res.content)
 
     kernels_res = requests.get(data_access_url, params={**parameters, 'list_files': 'true'})
+    logger.info(f"Metakernel API returned the following kernels: {kernels_res.text}")
 
     kernels = json.loads(kernels_res.text)
-
     downloaded_paths = [imap_data_access.download(kernel) for kernel in kernels]
 
     spiceypy.furnsh(str(metakernel_path))
