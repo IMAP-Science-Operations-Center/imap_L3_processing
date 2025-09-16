@@ -15,6 +15,9 @@ class GlowsL3DInitializer:
     @staticmethod
     def should_process_l3d(external_deps: ExternalDependencies, l3bs: list[str], l3cs: list[str]) -> Optional[
         tuple[int, GlowsL3DDependencies, Optional[Path]]]:
+        if len(l3bs) == 0 and len(l3cs) == 0:
+            return None
+
         most_recent_l3d = query_for_most_recent_l3d("solar-hist")
 
         # @formatter:off
