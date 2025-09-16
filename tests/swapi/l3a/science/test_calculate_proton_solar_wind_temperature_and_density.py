@@ -31,8 +31,8 @@ class TestCalculateProtonSolarWindTemperatureAndDensity(TestCase):
         temperature, density = calculate_proton_solar_wind_temperature_and_density_for_one_sweep(
             uarray(count_rate, count_rate_delta)[4], energy, efficiency)
 
-        self.assertAlmostEqual(102267, temperature.nominal_value, 0)
-        self.assertAlmostEqual(6376, temperature.std_dev, 0)
+        self.assertAlmostEqual(101898, temperature.nominal_value, 0)
+        self.assertAlmostEqual(6470, temperature.std_dev, 0)
         self.assertAlmostEqual(8.829e-2 / efficiency, density.nominal_value, 2)
         self.assertAlmostEqual(3.6515e-3 / efficiency, density.std_dev, 3)
 
@@ -48,10 +48,10 @@ class TestCalculateProtonSolarWindTemperatureAndDensity(TestCase):
         temperature, density = calculate_uncalibrated_proton_solar_wind_temperature_and_density(
             uarray(count_rate, count_rate_delta), energy, efficiency)
 
-        np.testing.assert_allclose(100109, temperature.nominal_value, rtol=1e-5)
-        np.testing.assert_allclose(2379, temperature.std_dev, rtol=1e-3)
+        np.testing.assert_allclose(100137, temperature.nominal_value, rtol=1e-5)
+        np.testing.assert_allclose(2421, temperature.std_dev, rtol=1e-3)
         np.testing.assert_allclose(0.1163 / efficiency, density.nominal_value, rtol=1e-4)
-        np.testing.assert_allclose(1.8852e-3 / efficiency, density.std_dev, rtol=1e-4)
+        np.testing.assert_allclose(1.8863e-3 / efficiency, density.std_dev, rtol=1e-4)
 
     def test_calibrate_density_and_temperature_using_lookup_table(self):
         speed_values = [250, 1000]
@@ -120,11 +120,12 @@ class TestCalculateProtonSolarWindTemperatureAndDensity(TestCase):
                                                                                    uarray(count_rate, count_rate_delta),
                                                                                    energy, efficiency)
 
-        np.testing.assert_allclose(100109 * 0.97561, temperature.nominal_value, rtol=1e-4)
-        np.testing.assert_allclose(2379 * 0.97561, temperature.std_dev, rtol=2e-4)
+        np.testing.assert_allclose(100137 * 0.97561, temperature.nominal_value, rtol=1e-4)
+        np.testing.assert_allclose(2421 * 0.97561, temperature.std_dev, rtol=2e-4)
 
         np.testing.assert_allclose(0.1163 * 1.021 / efficiency, density.nominal_value, rtol=1e-4)
-        np.testing.assert_allclose(1.8852e-3 * 1.021 / efficiency, density.std_dev, rtol=1e-4)
+        np.testing.assert_allclose(1.8863e-3 * 1.021 / efficiency, density.std_dev, rtol=1e-4)
+
 
     def test_proton_count_rate_model_accounts_for_efficiency(self):
         efficiency_factor = 0.5
@@ -181,6 +182,21 @@ class TestCalculateProtonSolarWindTemperatureAndDensity(TestCase):
                     self.assertEqual("Failed to fit - chi-squared too large", exception.args[0])
                     self.assertAlmostEqual(expected_chi_squared, exception.args[1])
                 self.assertEqual(error_flag, did_error)
+
+    def test_filters_out_count_rates_below_13(self):
+        count_rates = uarray([100, 200, 300, 12, 50, 20], 30)
+        energy = np.array([1000, 900, 800, 700, 600, 500])
+
+        temperature_1, density_1 = calculate_proton_solar_wind_temperature_and_density_for_one_sweep(count_rates, energy, 1)
+
+        count_rates = uarray([100, 200, 300, 0, 50, 20], 30)
+        energy = np.array([1000, 900, 800, 700, 600, 500])
+
+        temperature_2, density_2 = calculate_proton_solar_wind_temperature_and_density_for_one_sweep(count_rates, energy, 1)
+
+        self.assertEqual(temperature_1.nominal_value, temperature_2.nominal_value)
+        self.assertEqual(density_1.nominal_value, density_2.nominal_value)
+
 
     def generate_lookup_table(self, speed_values, deflection_angle_values, clock_angle_values, density_values,
                               temperature_values):

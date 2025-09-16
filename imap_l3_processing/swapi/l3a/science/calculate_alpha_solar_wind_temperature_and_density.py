@@ -77,21 +77,26 @@ def calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps(
 
     peak_energies = energies[alpha_particle_peak_slice]
     peak_average_alpha_count_rates = average_count_rates[alpha_particle_peak_slice]
+    at_least_minimum = peak_average_alpha_count_rates >= 0
+    filtered_peak_count_rates = peak_average_alpha_count_rates[at_least_minimum]
+    filtered_peak_energies = peak_energies[at_least_minimum]
 
-    initial_parameter_guess = [0.15, 3.6e5, nominal_values(alpha_sw_speed)]
-    values, covariance = scipy.optimize.curve_fit(lambda *args: alpha_count_rate_model(efficiency, *args),
-                                                  peak_energies,
-                                                  nominal_values(peak_average_alpha_count_rates),
-                                                  sigma=std_devs(peak_average_alpha_count_rates),
+    initial_parameter_guess = [0.15, 3.6e5]
+    def model(ev_per_q, density, temperature):
+        return alpha_count_rate_model(efficiency, ev_per_q, density, temperature,  nominal_values(alpha_sw_speed))
+    values, covariance = scipy.optimize.curve_fit(model,
+                                                  filtered_peak_energies,
+                                                  nominal_values(filtered_peak_count_rates),
+                                                  sigma=std_devs(filtered_peak_count_rates),
                                                   absolute_sigma=True,
-                                                  bounds=[[0, 0, 0], [np.inf, np.inf, np.inf]],
+                                                  bounds=[[0, 0], [np.inf, np.inf]],
                                                   p0=initial_parameter_guess)
-    residual = abs(alpha_count_rate_model(efficiency, peak_energies, *values) - nominal_values(peak_average_alpha_count_rates))
-    reduced_chisq = np.sum(np.square(residual / std_devs(peak_average_alpha_count_rates))) / (len(peak_energies) - 3)
+    residual = abs(model(filtered_peak_energies, *values) - nominal_values(filtered_peak_count_rates))
+    reduced_chisq = np.sum(np.square(residual / std_devs(filtered_peak_count_rates))) / (len(filtered_peak_energies) - 2)
     if reduced_chisq > 10:
         raise ValueError("Failed to fit - chi-squared too large", reduced_chisq)
-    density, temperature, speed = correlated_values(values, covariance)
-    density = table.lookup_density(speed, density, temperature)
-    temperature = table.lookup_temperature(speed, density, temperature)
+    density, temperature = correlated_values(values, covariance)
+    density = table.lookup_density(alpha_sw_speed, density, temperature)
+    temperature = table.lookup_temperature(alpha_sw_speed, density, temperature)
 
     return temperature, density
