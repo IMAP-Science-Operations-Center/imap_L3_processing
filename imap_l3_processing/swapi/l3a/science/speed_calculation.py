@@ -1,5 +1,6 @@
 import numpy as np
 from uncertainties import wrap
+from uncertainties.unumpy import nominal_values
 
 
 def get_peak_indices(count_rates, width, mask=True) -> slice:
@@ -13,10 +14,20 @@ def get_peak_indices(count_rates, width, mask=True) -> slice:
 
     return slice(max(0, left_min_index - width), right_min_index + width+1)
 
-def find_peak_center_of_mass_index(peak_slice, count_rates):
+def find_peak_center_of_mass_index(peak_slice, count_rates, minimum_count_rate=0, minimum_bin_count=0):
+    count_rates = np.asarray(count_rates)
     indices = np.arange(len(count_rates))
+    peak_indices = indices[peak_slice]
     peak_counts = count_rates[peak_slice]
-    center_of_mass_index = np.sum(indices[peak_slice] * peak_counts) / np.sum(peak_counts)
+    at_least_minimum = nominal_values(peak_counts) >= minimum_count_rate
+
+    filtered_peak_indices = peak_indices[at_least_minimum]
+
+    if len(filtered_peak_indices) < minimum_bin_count:
+        raise Exception("Too few bins after removing low count rates")
+
+    filtered_peak_counts = peak_counts[at_least_minimum]
+    center_of_mass_index = np.sum(filtered_peak_indices * filtered_peak_counts) / np.sum(filtered_peak_counts)
     return center_of_mass_index
 
 def interpolate_energy(center_of_mass_index, energies):
