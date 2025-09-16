@@ -59,7 +59,7 @@ def calculate_proton_centers_of_mass(coincidence_count_rates, energies, epoch):
     for i in range(len(epoch)):
         rates = coincidence_count_rates[i]
         peak_slice = get_proton_peak_indices(rates)
-        center_of_mass_index = find_peak_center_of_mass_index(peak_slice, rates)
+        center_of_mass_index = find_peak_center_of_mass_index(peak_slice, rates, 13, 4)
         energy_at_center_of_mass = interpolate_energy(center_of_mass_index, energies)
 
         time_at_center_of_mass = epoch[i] + 1 / 6 * ONE_SECOND_IN_NANOSECONDS * (center_of_mass_index + 1)

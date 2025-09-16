@@ -20,8 +20,12 @@ from tests.spice_test_case import SpiceTestCase
 
 class TestCalculateProtonSolarWindSpeed(SpiceTestCase):
     def test_calculate_solar_wind_speed(self):
-        energies = np.array([0, 1000, 750, 500])
-        count_rates = np.array([[0, 0, 10, 0], [0, 0, 10, 0], [0, 0, 10, 0], [0, 0, 10, 0], [0, 0, 10, 0]])
+        energies = np.array([0, 1000, 750, 500, 400, 300, 200, 100, 50])
+        count_rates = np.array([[0, 14, 15, 16, 17, 16, 15, 14, 0],
+                                [0, 14, 15, 16, 17, 16, 15, 14, 0],
+                                [0, 14, 15, 16, 17, 16, 15, 14, 0],
+                                [0, 14, 15, 16, 17, 16, 15, 14, 0],
+                               [0, 14, 15, 16, 17, 16, 15, 14, 0]])
         count_rates_with_uncertainties = uarray(count_rates, np.full_like(count_rates, 1.0))
 
         times = [datetime(2025, 6, 6, 12, i) for i in range(5)]
@@ -31,8 +35,24 @@ class TestCalculateProtonSolarWindSpeed(SpiceTestCase):
 
         proton_charge = 1.602176634e-19
         proton_mass = 1.67262192595e-27
-        expected_speed = math.sqrt(2 * 750 * proton_charge / proton_mass) / METERS_PER_KILOMETER
-        self.assertAlmostEqual(speed.n, expected_speed, 0)
+        expected_speed = math.sqrt(2 * 400 * proton_charge / proton_mass) / METERS_PER_KILOMETER
+        self.assertAlmostEqual(expected_speed, speed.n, 0)
+
+    def test_calculate_solar_wind_speed_throws_exception_with_too_few_count_rates(self):
+        energies = np.array([0, 1000, 750, 500, 400, 300, 200, 100, 50])
+        count_rates = np.array([[0, 14, 15, 16, 17, 16, 15, 14, 0],
+                                [0, 14, 15, 16, 17, 16, 15, 14, 0],
+                                [0, 14, 15, 16, 17, 16, 15, 14, 0],
+                                [0, 14, 14, 14, 0, 0, 0, 0, 0],
+                               [0, 14, 14, 14, 0, 0, 0, 0, 0]])
+        count_rates_with_uncertainties = uarray(count_rates, np.full_like(count_rates, 1.0))
+
+        times = [datetime(2025, 6, 6, 12, i) for i in range(5)]
+        epochs_in_terrestrial_time = spiceypy.datetime2et(times) * ONE_SECOND_IN_NANOSECONDS
+        with self.assertRaises(Exception):
+            calculate_proton_solar_wind_speed(count_rates_with_uncertainties, energies,
+                                                             epochs_in_terrestrial_time)
+
 
     def test_calculate_solar_wind_speed_from_model_data(self):
         file_path = Path(
@@ -45,12 +65,12 @@ class TestCalculateProtonSolarWindSpeed(SpiceTestCase):
         speed, a, phi, b = calculate_proton_solar_wind_speed(uarray(count_rate, count_rate_delta), energy,
                                                              epoch)
 
-        self.assertAlmostEqual(speed.n, 497.9135, 3)
-        self.assertAlmostEqual(speed.s, 0.4634, 3)
-        self.assertAlmostEqual(a.n, 32.2194, 3)
-        self.assertAlmostEqual(a.s, 3.4794, 2)
-        self.assertAlmostEqual(phi.n, 277.6, 1)
-        self.assertAlmostEqual(phi.s, 5.8556, 2)
+        self.assertAlmostEqual(speed.n, 497.930, 3)
+        self.assertAlmostEqual(speed.s, 0.4615, 3)
+        self.assertAlmostEqual(a.n, 32.033, 3)
+        self.assertAlmostEqual(a.s, 3.4696, 2)
+        self.assertAlmostEqual(phi.n, 278.63, 1)
+        self.assertAlmostEqual(phi.s, 5.862, 2)
         self.assertAlmostEqual(b.n, 1294, 0)
         self.assertAlmostEqual(b.s, 2.4, 1)
 
