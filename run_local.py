@@ -726,7 +726,7 @@ def run_glows_l3e_with_less_mocks(mock_spiceypy):
 
 
 def make_glows_l3a_files():
-    directory = Path("tests/test_data/glows/pipeline/l2")
+    directory = get_test_data_path("glows/pipeline/l2")
     for file_path in directory.iterdir():
         run_glows_l3a(file_path)
 
@@ -750,14 +750,10 @@ def run_glows_l3a(file_path):
         input_metadata.repointing = repoint_number
 
         dependencies = GlowsL3ADependencies(l2_glows_data, repoint_number, {
-            "calibration_data": Path(
-                "instrument_team_data/glows/imap_glows_calibration-data_20250707_v000.dat"),
-            "settings": Path(
-                "instrument_team_data/glows/imap_glows_pipeline-settings_20250707_v002.json"),
-            "time_dependent_bckgrd": Path(
-                "instrument_team_data/glows/imap_glows_time-dep-bckgrd_20250707_v000.dat"),
-            "extra_heliospheric_bckgrd": Path(
-                "instrument_team_data/glows/imap_glows_map-of-extra-helio-bckgrd_20250707_v000.dat"),
+            "calibration_data": get_test_instrument_team_data_path("glows/imap_glows_calibration-data_20250707_v000.dat"),
+            "settings": get_test_instrument_team_data_path("glows/imap_glows_pipeline-settings_20250707_v002.json"),
+            "time_dependent_bckgrd": get_test_instrument_team_data_path("glows/imap_glows_time-dep-bckgrd_20250707_v000.dat"),
+            "extra_heliospheric_bckgrd": get_test_instrument_team_data_path("glows/imap_glows_map-of-extra-helio-bckgrd_20250707_v000.dat"),
         })
 
         processor = GlowsProcessor(ProcessingInputCollection(), input_metadata)
