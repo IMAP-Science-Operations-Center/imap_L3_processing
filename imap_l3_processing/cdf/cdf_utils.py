@@ -26,17 +26,26 @@ def write_cdf(file_path: str, data: DataProduct, attribute_manager: ImapAttribut
             data_type = getattr(pycdf.const, variable_attributes["DATA_TYPE"])
             data_array = np.asanyarray(data_product.value)
 
-            if 'FILLVAL' in variable_attributes:
-                if np.issubdtype(data_array.dtype, np.floating):
-                    data_array = np.ma.masked_invalid(data_array)
-                data_array = np.ma.filled(data_array, variable_attributes['FILLVAL'])
-            else:
-                assert not np.ma.isMaskedArray(data_array)
-
             record_varying = variable_attributes["RECORD_VARYING"].lower() == "rv"
+            if record_varying:
+                dims = data_array.shape[1:]
+            else:
+                dims = data_array.shape
+
+            if data_array.size == 0:
+                data_array = None
+            else:
+                if 'FILLVAL' in variable_attributes:
+                    if np.issubdtype(data_array.dtype, np.floating):
+                        data_array = np.ma.masked_invalid(data_array)
+                    data_array = np.ma.filled(data_array, variable_attributes['FILLVAL'])
+                else:
+                    assert not np.ma.isMaskedArray(data_array)
+
             cdf.new(var_name, data_array,
                     recVary=record_varying,
-                    type=data_type)
+                    type=data_type,
+                    dims=dims)
             for k, v in variable_attributes.items():
                 if k == 'DEPEND_0' and v == '':
                     continue

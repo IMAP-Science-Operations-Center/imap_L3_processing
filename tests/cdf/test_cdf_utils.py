@@ -133,6 +133,69 @@ class TestCdfUtils(TempFileTestCase):
                                           actual_cdf["float_var"][...], strict=True)
             np.testing.assert_array_equal(actual_cdf["epoch"][...], expected_cdf_epoch_data, strict=True)
 
+
+    def test_can_write_empty_epoch_variable(self):
+        epoch_data = []
+        epoch_fillval = datetime.fromisoformat("9999-12-31T23:59:59.999999")
+
+        class DataProductWithEmptyEpoch(DataProduct):
+            def __init__(self):
+                self.input_metadata = Mock()
+
+            def to_data_product_variables(self) -> list[DataProductVariable]:
+                return [
+                    DataProductVariable("epoch", epoch_data, pycdf.const.CDF_TIME_TT2000),
+                ]
+
+        path = str(self.temp_directory / "write_cdf.cdf")
+        data = DataProductWithEmptyEpoch()
+        attribute_manager = Mock(spec=ImapAttributeManager)
+        attribute_manager.get_global_attributes.return_value = {}
+        attribute_manager.get_variable_attributes.side_effect = [
+            {"VAR_NAME": "epoch", "FILLVAL": epoch_fillval,
+             "DATA_TYPE": "CDF_TIME_TT2000", "RECORD_VARYING": "RV"},
+            {"VAR_NAME": "float_var", "FILLVAL": -1e31, "DATA_TYPE": "CDF_REAL4", "RECORD_VARYING": "NRV"},
+        ]
+
+        write_cdf(path, data, attribute_manager)
+        with pycdf.CDF(path) as actual_cdf:
+            np.testing.assert_array_equal(actual_cdf["epoch"][...], np.array([], dtype=object), strict=True)
+
+
+
+    def test_can_write_empty_variables_of_various_shapes(self):
+        cases=[
+            (np.zeros((0,5), dtype=object), "CDF_TIME_TT2000", "RV", datetime.fromisoformat("9999-12-31T23:59:59.999999")),
+            (np.zeros((0), dtype=object), "CDF_TIME_TT2000", "RV", datetime.fromisoformat("9999-12-31T23:59:59.999999")),
+            (np.zeros((0,5), dtype=float), "CDF_REAL8", "RV", -1e31),
+            (np.zeros((0), dtype=float), "CDF_REAL8", "RV", -1e31),
+        ]
+        for input_data, data_type, record_varying, fill_val in cases:
+            with self.subTest(input_data=input_data, data_type=data_type, rv=record_varying):
+                class DataProductWithEmptyEpoch(DataProduct):
+                    def __init__(self):
+                        self.input_metadata = Mock()
+
+                    def to_data_product_variables(self) -> list[DataProductVariable]:
+                        return [
+                            DataProductVariable("var", input_data, pycdf.const.CDF_REAL8),
+                        ]
+
+                path = self.temp_directory / "write_cdf.cdf"
+                data = DataProductWithEmptyEpoch()
+                attribute_manager = Mock(spec=ImapAttributeManager)
+                attribute_manager.get_global_attributes.return_value = {}
+                attribute_manager.get_variable_attributes.side_effect = [
+                    {"VAR_NAME": "var", "FILLVAL": fill_val, "DATA_TYPE": data_type, "RECORD_VARYING": record_varying},
+                ]
+
+                write_cdf(str(path), data, attribute_manager)
+                with pycdf.CDF(str(path)) as actual_cdf:
+                    np.testing.assert_array_equal(actual_cdf["var"][...], input_data, strict=True)
+
+                path.unlink()
+
+
     def test_does_not_write_depend_0_variable_attribute_if_it_is_empty(self):
         path = str(self.temp_directory / "write_cdf.cdf")
         data = TestDataProduct()

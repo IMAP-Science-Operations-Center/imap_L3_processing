@@ -1,3 +1,5 @@
+import logging
+
 import numpy as np
 from imap_data_access.processing_input import ProcessingInputCollection
 
@@ -16,6 +18,7 @@ from imap_l3_processing.pitch_angles import calculate_unit_vector, calculate_pit
 from imap_l3_processing.processor import Processor
 from imap_l3_processing.utils import save_data
 
+logger = logging.getLogger(__name__)
 
 class HitProcessor(Processor):
     def __init__(self, dependencies: ProcessingInputCollection, input_metadata: InputMetadata):
@@ -47,7 +50,8 @@ class HitProcessor(Processor):
                                        direct_event_dependencies.hit_l1_data.event_binary):
             try:
                 event_raw_pha_events = PHAEventReader.read_all_pha_events(event_binary)
-            except Exception:
+            except Exception as e:
+                logger.warning(f"Could not read all pha events for epoch {epoch}", exc_info=True)
                 continue
 
             epochs += [epoch] * len(event_raw_pha_events)

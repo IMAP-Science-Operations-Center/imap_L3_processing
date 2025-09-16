@@ -29,7 +29,7 @@ epoch_delta:
   FORMAT: I19
   UNITS: ns
   VALIDMIN: 0
-  VALIDMAX: 600000000000                  # Changed from 1 day (in ns) to 10 minutes since expected value is 5 minutes
+  VALIDMAX: 600000000000
   FILLVAL: -9223372036854775808
   SCALETYP: linear
   LABLAXIS: Epoch delta
@@ -46,13 +46,13 @@ combined_energy:
   LABLAXIS: Combined SW energy
   UNITS: eV/q
   VALIDMIN: 0
-  VALIDMAX: 20000               # selected based on instrument ev/q range. Is this right?
+  VALIDMAX: 21500
   FILLVAL: -1.000000e+31
   SCALETYP: log
   DELTA_PLUS_VAR: combined_energy_stat_uncert_plus
   DELTA_MINUS_VAR: combined_energy_stat_uncert_minus
   SCALEMIN: 100
-  SCALEMAX: 20000  # selected based on instrument ev/q range
+  SCALEMAX: 20000
 combined_energy_stat_uncert_minus:
   NAME: combined_energy_stat_uncert_minus
   DATA_TYPE: CDF_REAL4
@@ -65,7 +65,7 @@ combined_energy_stat_uncert_minus:
   LABLAXIS: Combined SW energy uncertainty minus
   UNITS: eV/q
   VALIDMIN: 0
-  VALIDMAX: 2000 # is this reasonable?
+  VALIDMAX: 2000
   FILLVAL: -1.000000e+31
 combined_energy_stat_uncert_plus:
   NAME: combined_energy_stat_uncert_plus
@@ -79,7 +79,7 @@ combined_energy_stat_uncert_plus:
   LABLAXIS: Combined energy SW uncertainty plus
   UNITS: eV/q
   VALIDMIN: 0
-  VALIDMAX: 2000 # is this reasonable
+  VALIDMAX: 2000
   FILLVAL: -1.000000e+31
 combined_differential_flux:
   NAME: combined_differential_flux
@@ -96,14 +96,14 @@ combined_differential_flux:
   LABLAXIS: Combined differential flux
   UNITS: cm!E-2!N s!E-1!N sr!E-1!N (eV/q)!E-1!N
   VALIDMIN: 0
-  VALIDMAX: 9223372036854775807  # what is a reasonable value?
+  VALIDMAX: 1.00e+11
   FILLVAL: -1.000000e+31
   LABL_PTR_1: combined_energy_label
   SCALETYP: log
   DELTA_PLUS_VAR: combined_differential_flux_stat_uncert
   DELTA_MINUS_VAR: combined_differential_flux_stat_uncert
-  SCALEMIN: .000001
-  SCALEMAX: 1000000  # are these a reasonable range?
+  SCALEMIN: 10
+  SCALEMAX: 1.50e+8
 combined_differential_flux_stat_uncert:
   NAME: combined_differential_flux_stat_uncert
   DATA_TYPE: CDF_REAL4
@@ -117,7 +117,7 @@ combined_differential_flux_stat_uncert:
   LABLAXIS: Combined differential flux uncertainty
   UNITS: cm!E-2!N s!E-1!N sr!E-1!N (eV/q)!E-1!N
   VALIDMIN: 0
-  VALIDMAX: 9223372036854775807 # what is a reasonable value?
+  VALIDMAX: 1.00e+8
   FILLVAL: -1.000000e+31
   LABL_PTR_1: combined_energy_label
 combined_energy_label:

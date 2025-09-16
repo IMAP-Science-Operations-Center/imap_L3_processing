@@ -190,9 +190,9 @@ pui_density:
   VALIDMIN: 0
   VALIDMAX: 9223372036854775807
   FILLVAL: -1.000000e+31
-  SCALETYP: linear
-  SCALEMIN: 0
-  SCALEMAX: 0.001
+  SCALETYP: log
+  SCALEMIN: 0.0001
+  SCALEMAX: 0.0025
   DELTA_PLUS_VAR: pui_density_uncert
   DELTA_MINUS_VAR: pui_density_uncert
 pui_density_uncert:
@@ -223,10 +223,10 @@ pui_temperature:
   LABLAXIS: PUI temperature
   UNITS: K
   VALIDMIN: 0
-  VALIDMAX: 5.0e+7                   # what is a reasonable value for this?
+  VALIDMAX: 5.0e+7
   FILLVAL: -1.000000e+31
-  SCALETYP: linear
-  SCALEMIN: 0
+  SCALETYP: log
+  SCALEMIN: 50000
   SCALEMAX: 50000000
   DELTA_PLUS_VAR: pui_temperature_uncert
   DELTA_MINUS_VAR: pui_temperature_uncert
@@ -295,10 +295,10 @@ proton_sw_temperature:
   VALIDMIN: 0
   VALIDMAX: 7000000
   FILLVAL: -1.000000e+31
-  SCALETYP: log                                     # switched to log, note SCALEMIN comment below
+  SCALETYP: log
   DELTA_PLUS_VAR: proton_sw_temperature_uncert
   DELTA_MINUS_VAR: proton_sw_temperature_uncert
-  SCALEMIN: 0                                       # need a different SCALEMIN given the log SCALETYP
+  SCALEMIN: 1000
   SCALEMAX: 240000
 proton_sw_temperature_uncert:
   NAME: proton_sw_temperature_uncert
@@ -330,10 +330,10 @@ proton_sw_density:
   VALIDMIN: 0
   VALIDMAX: 150
   FILLVAL: -1.000000e+31
-  SCALETYP: log                                 # switched to log, note SCALEMIN comment below
+  SCALETYP: log
   DELTA_PLUS_VAR: proton_sw_density_uncert
   DELTA_MINUS_VAR: proton_sw_density_uncert
-  SCALEMIN: 0                                   # similarly, will need a new SCALEMIN if we use log SCALETYP
+  SCALEMIN: 0.1
   SCALEMAX: 16
 proton_sw_density_uncert:
   NAME: proton_sw_density_uncert
@@ -398,13 +398,13 @@ proton_sw_deflection_angle:
   LABLAXIS: H+ SW deflection angle
   UNITS: degrees
   VALIDMIN: 0
-  VALIDMAX: 360                                     # should this be limited at 180?
+  VALIDMAX: 180
   FILLVAL: -1.000000e+31
   SCALETYP: linear
   DELTA_PLUS_VAR: proton_sw_deflection_angle_uncert
   DELTA_MINUS_VAR: proton_sw_deflection_angle_uncert
   SCALEMIN: 0
-  SCALEMAX: 360                                     # should this be lower to account for typical range?
+  SCALEMAX: 10
 proton_sw_deflection_angle_uncert:
   NAME: proton_sw_deflection_angle_uncert
   DATA_TYPE: CDF_REAL4
@@ -470,10 +470,10 @@ alpha_sw_temperature:
   VALIDMIN: 0
   VALIDMAX: 28000000
   FILLVAL: -1.000000e+31
-  SCALETYP: linear
+  SCALETYP: log
   DELTA_PLUS_VAR: alpha_sw_temperature_uncert
   DELTA_MINUS_VAR: alpha_sw_temperature_uncert
-  SCALEMIN: 0
+  SCALEMIN: 4000
   SCALEMAX: 960000
 alpha_sw_temperature_uncert:
   NAME: alpha_sw_temperature_uncert
@@ -505,10 +505,10 @@ alpha_sw_density:
   VALIDMIN: 0
   VALIDMAX: 100
   FILLVAL: -1.000000e+31
-  SCALETYP: linear
+  SCALETYP: log
   DELTA_PLUS_VAR: alpha_sw_density_uncert
   DELTA_MINUS_VAR: alpha_sw_density_uncert
-  SCALEMIN: 0
+  SCALEMIN: 0.001
   SCALEMAX: 5
 alpha_sw_density_uncert:
   NAME: alpha_sw_density_uncert
