@@ -51,7 +51,7 @@ def calculate_proton_solar_wind_temperature_and_density_for_one_sweep(coincident
 
     peak_energies = energy[proton_peak_indices]
     peak_count_rates = coincident_count_rates[proton_peak_indices]
-    at_least_minimum = peak_count_rates >= 13
+    at_least_minimum = nominal_values(peak_count_rates) >= 13
     filtered_peak_count_rates = peak_count_rates[at_least_minimum]
     peak_energies_filtered = peak_energies[at_least_minimum]
 

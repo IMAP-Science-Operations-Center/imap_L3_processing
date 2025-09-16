@@ -77,7 +77,7 @@ def calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps(
 
     peak_energies = energies[alpha_particle_peak_slice]
     peak_average_alpha_count_rates = average_count_rates[alpha_particle_peak_slice]
-    at_least_minimum = peak_average_alpha_count_rates >= 0
+    at_least_minimum = nominal_values(peak_average_alpha_count_rates) > 0
     filtered_peak_count_rates = peak_average_alpha_count_rates[at_least_minimum]
     filtered_peak_energies = peak_energies[at_least_minimum]
 
