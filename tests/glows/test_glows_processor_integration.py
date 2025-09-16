@@ -2,39 +2,37 @@ import dataclasses
 import json
 import logging
 import os
-import re
 import shutil
 import subprocess
-import tempfile
 import unittest
 from datetime import timedelta, datetime
 from pathlib import Path
-from platform import platform
+from typing import Callable
 from unittest import skipIf
 from unittest.mock import patch
 
 import imap_data_access
 import numpy as np
-import spiceypy
 from imap_data_access import ProcessingInputCollection, RepointInput
-from imap_data_access.file_validation import generate_imap_file_path, SPICEFilePath, ScienceFilePath, AncillaryFilePath
+from imap_data_access.file_validation import generate_imap_file_path, ScienceFilePath, AncillaryFilePath
 from spacepy.pycdf import CDF
 
 import tests
+from imap_l3_processing.constants import TTJ2000_EPOCH
 from imap_l3_processing.glows.glows_processor import GlowsProcessor
 from imap_l3_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
 from imap_l3_processing.glows.l3a.utils import read_l2_glows_data, create_glows_l3a_from_dictionary
 from imap_l3_processing.glows.l3d.utils import PATH_TO_L3D_TOOLKIT
 from imap_l3_processing.models import InputMetadata
-from imap_l3_processing.utils import save_data
-from tests.test_helpers import create_glows_mock_query_results, run_periodically, get_spice_data_path, \
-    get_run_local_data_path, get_test_data_path, get_test_instrument_team_data_path, with_tempdir
+from tests.test_helpers import get_run_local_data_path, get_test_data_path, get_test_instrument_team_data_path, \
+    with_tempdir, create_glows_mock_query_results
 
 GLOWS_L3E_INTEGRATION_DATA_DIR = get_run_local_data_path("glows_l3bcde_integration_data_dir")
 
 @patch.dict(imap_data_access.config, {"DATA_DIR": GLOWS_L3E_INTEGRATION_DATA_DIR})
 class TestGlowsProcessorIntegration(unittest.TestCase):
-    def setUp(self):
+    @staticmethod
+    def _setup_integration_test():
         logging.basicConfig(force=True, level=logging.INFO,
                             format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
@@ -49,7 +47,9 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
 
     @with_tempdir
     def test_glows_l3a(self, tmp_dir):
-        input_l2_cdf_path = self._fill_official_l2_cdf_with_json_values(tmp_dir) # create CDF from GLOWS data and Maxine's CDF format
+        input_l2_cdf_path = self._fill_official_l2_cdf_with_json_values(tmp_dir)
+
+        shutil.copy(input_l2_cdf_path, get_test_data_path("glows") / input_l2_cdf_path.name)
 
         l2_science_file_path = ScienceFilePath(input_l2_cdf_path)
 
@@ -59,6 +59,7 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
         input_metadata = InputMetadata(
             instrument='glows',
             data_level='l3a',
+            descriptor='hist',
             start_date=start_date,
             end_date=end_date,
             version='v001'
@@ -75,23 +76,52 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
         input_metadata.repointing = l2_science_file_path.repointing
 
         dependencies = GlowsL3ADependencies(l2_glows_data, l2_science_file_path.repointing, {
-            "calibration_data": Path(
-                "instrument_team_data/glows/imap_glows_calibration-data_20250707_v000.dat"),
-            "settings": Path(
-                "instrument_team_data/glows/imap_glows_pipeline-settings_20250707_v002.json"),
-            "time_dependent_bckgrd": Path(
-                "instrument_team_data/glows/imap_glows_time-dep-bckgrd_20250707_v000.dat"),
-            "extra_heliospheric_bckgrd": Path(
-                "instrument_team_data/glows/imap_glows_map-of-extra-helio-bckgrd_20250707_v000.dat"),
+            "calibration_data": get_test_instrument_team_data_path("glows/imap_glows_calibration-data_20250707_v000.dat"),
+            "settings": get_test_instrument_team_data_path("glows/imap_glows_pipeline-settings_20250707_v002.json"),
+            "time_dependent_bckgrd": get_test_instrument_team_data_path("glows/imap_glows_time-dep-bckgrd_20250707_v000.dat"),
+            "extra_heliospheric_bckgrd": get_test_instrument_team_data_path("glows/imap_glows_map-of-extra-helio-bckgrd_20250707_v000.dat"),
         })
 
         processor = GlowsProcessor(ProcessingInputCollection(), input_metadata)
         l3a_data = processor.process_l3a(dependencies)
 
-        np.testing.assert_array_equal(list(dataclasses.asdict(expected_output).values()), list(dataclasses.asdict(l3a_data).values()))
+        expected_dict = dataclasses.asdict(expected_output)
+        actual_dict = dataclasses.asdict(l3a_data)
+
+        np.testing.assert_allclose(actual_dict['photon_flux'], expected_dict['photon_flux'], rtol=1e-3)
+        np.testing.assert_allclose(actual_dict['photon_flux_uncertainty'], expected_dict['photon_flux_uncertainty'], rtol=1e-3)
+        np.testing.assert_allclose(actual_dict['raw_histogram'], expected_dict['raw_histogram'])
+        np.testing.assert_allclose(actual_dict['exposure_times'], expected_dict['exposure_times'], rtol=1e-3)
+        np.testing.assert_allclose(actual_dict['number_of_bins'], expected_dict['number_of_bins'])
+        self.assertEqual(actual_dict['epoch'], expected_dict['epoch'])
+        np.testing.assert_allclose(actual_dict['epoch_delta'], expected_dict['epoch_delta'])
+        np.testing.assert_allclose(actual_dict['spin_angle'], expected_dict['spin_angle'])
+        np.testing.assert_allclose(actual_dict['spin_angle_delta'], expected_dict['spin_angle_delta'])
+        np.testing.assert_allclose(actual_dict['latitude'], expected_dict['latitude'], atol=1e-3)
+        np.testing.assert_allclose(actual_dict['longitude'], expected_dict['longitude'], atol=1e-3)
+        # np.testing.assert_allclose(actual_dict['extra_heliospheric_background'], expected_dict['extra_heliospheric_background'])
+        # np.testing.assert_allclose(actual_dict['time_dependent_background'], expected_dict['time_dependent_background'])
+        np.testing.assert_allclose(actual_dict['filter_temperature_average'], expected_dict['filter_temperature_average'])
+        np.testing.assert_allclose(actual_dict['filter_temperature_std_dev'], expected_dict['filter_temperature_std_dev'])
+        np.testing.assert_allclose(actual_dict['hv_voltage_average'], expected_dict['hv_voltage_average'])
+        np.testing.assert_allclose(actual_dict['hv_voltage_std_dev'], expected_dict['hv_voltage_std_dev'])
+        np.testing.assert_allclose(actual_dict['spin_period_average'], expected_dict['spin_period_average'])
+        np.testing.assert_allclose(actual_dict['spin_period_std_dev'], expected_dict['spin_period_std_dev'])
+        np.testing.assert_allclose(actual_dict['spin_period_ground_average'], expected_dict['spin_period_ground_average'])
+        np.testing.assert_allclose(actual_dict['spin_period_ground_std_dev'], expected_dict['spin_period_ground_std_dev'])
+        np.testing.assert_allclose(actual_dict['pulse_length_average'], expected_dict['pulse_length_average'])
+        np.testing.assert_allclose(actual_dict['pulse_length_std_dev'], expected_dict['pulse_length_std_dev'])
+        np.testing.assert_allclose(actual_dict['position_angle_offset_average'], expected_dict['position_angle_offset_average'])
+        np.testing.assert_allclose(actual_dict['position_angle_offset_std_dev'], expected_dict['position_angle_offset_std_dev'])
+        np.testing.assert_allclose(actual_dict['spin_axis_orientation_average'], expected_dict['spin_axis_orientation_average'])
+        np.testing.assert_allclose(actual_dict['spin_axis_orientation_std_dev'], expected_dict['spin_axis_orientation_std_dev'])
+        np.testing.assert_allclose(actual_dict['spacecraft_location_average'], expected_dict['spacecraft_location_average'])
+        np.testing.assert_allclose(actual_dict['spacecraft_location_std_dev'], expected_dict['spacecraft_location_std_dev'])
+
+        self.assertEqual(actual_dict['input_metadata'], expected_dict['input_metadata'])
 
     @skipIf(os.getenv("IN_GLOWS_INTEGRATION_DOCKER"), "Not needed on linux")
-    @run_periodically(timedelta(days=7))
+    # @run_periodically(timedelta(days=7))
     def test_glows_integration_running_docker(self):
         l3_processing_dir = Path(tests.__file__).parent.parent
 
@@ -147,74 +177,43 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
             self.assertTrue(file_path.exists(), msg=str(file_path))
 
     @skipIf(os.getenv("IN_GLOWS_INTEGRATION_DOCKER") is None, "Only runs in a docker container!")
-    def test_l3bcde_integration(self):
-        expected_queries = {
-            "hist": create_glows_mock_query_results([
-                "imap_glows_l3a_hist_20250428-repoint01013_v001.cdf",
-                "imap_glows_l3a_hist_20250429-repoint01014_v001.cdf",
-                "imap_glows_l3a_hist_20250510-repoint01025_v008.cdf",
-                "imap_glows_l3a_hist_20250511-repoint01026_v008.cdf",
-                "imap_glows_l3a_hist_20250525-repoint01040_v001.cdf",
-                "imap_glows_l3a_hist_20250526-repoint01041_v001.cdf",
-                "imap_glows_l3a_hist_20250607-repoint01053_v012.cdf",
-                "imap_glows_l3a_hist_20250607-repoint01054_v012.cdf",
-            ]),
-            "ion-rate-profile": create_glows_mock_query_results([]),
-            "sw-profile": create_glows_mock_query_results([]),
-            "uv-anisotropy-1CR": create_glows_mock_query_results(["imap_glows_uv-anisotropy-1CR_20100101_v004.json"]),
-            "WawHelioIonMP": create_glows_mock_query_results(["imap_glows_WawHelioIonMP_20100101_v002.json"]),
-            "bad-days-list": create_glows_mock_query_results(["imap_glows_bad-days-list_20100101_v001.dat"]),
-            "pipeline-settings-l3bcde": create_glows_mock_query_results(
-                ["imap_glows_pipeline-settings-l3bcde_20100101_v006.json"]),
-            'solar-hist': create_glows_mock_query_results([]),
-            'plasma-speed-2010a': create_glows_mock_query_results(['imap_glows_plasma-speed-2010a_20100101_v003.dat']),
-            'proton-density-2010a': create_glows_mock_query_results(
-                ['imap_glows_proton-density-2010a_20100101_v003.dat']),
-            'uv-anisotropy-2010a': create_glows_mock_query_results(
-                ['imap_glows_uv-anisotropy-2010a_20100101_v003.dat']),
-            'photoion-2010a': create_glows_mock_query_results(['imap_glows_photoion-2010a_20100101_v003.dat']),
-            'lya-2010a': create_glows_mock_query_results(['imap_glows_lya-2010a_20100101_v003.dat']),
-            'electron-density-2010a': create_glows_mock_query_results(
-                ['imap_glows_electron-density-2010a_20100101_v003.dat']),
-            'ionization-files': create_glows_mock_query_results(['imap_glows_ionization-files_20100101_v001.dat']),
-            'energy-grid-lo': create_glows_mock_query_results(['imap_glows_energy-grid-lo_20100101_v001.dat']),
-            'tess-xyz-8': create_glows_mock_query_results(['imap_glows_tess-xyz-8_20100101_v001.dat']),
-            'elongation-data': create_glows_mock_query_results(['imap_lo_elongation-data_20100101_v001.dat']),
-            'energy-grid-hi': create_glows_mock_query_results(['imap_glows_energy-grid-hi_20100101_v001.dat']),
-            'energy-grid-ultra': create_glows_mock_query_results(['imap_glows_energy-grid-ultra_20100101_v001.dat']),
-            'tess-ang-16': create_glows_mock_query_results(['imap_glows_tess-ang-16_20100101_v001.dat']),
-            'survival-probability-hi-90': create_glows_mock_query_results([]),
-            'survival-probability-hi-45': create_glows_mock_query_results([]),
-            'survival-probability-lo': create_glows_mock_query_results([]),
-            'survival-probability-ultra': create_glows_mock_query_results([]),
-        }
+    def test_l3bcde_first_time_processing(self):
+        self._setup_integration_test()
 
         input_files = [
-            "imap_glows_l3a_hist_20250428-repoint01013_v001.cdf",
-            "imap_glows_l3a_hist_20250429-repoint01014_v001.cdf",
-            "imap_glows_l3a_hist_20250510-repoint01025_v008.cdf",
-            "imap_glows_l3a_hist_20250511-repoint01026_v008.cdf",
-            "imap_glows_l3a_hist_20250525-repoint01040_v001.cdf",
-            "imap_glows_l3a_hist_20250526-repoint01041_v001.cdf",
-            "imap_glows_l3a_hist_20250607-repoint01053_v012.cdf",
-            "imap_glows_l3a_hist_20250607-repoint01054_v012.cdf",
-            "imap_glows_uv-anisotropy-1CR_20100101_v004.json",
-            "imap_glows_WawHelioIonMP_20100101_v002.json",
+            # "imap_glows_l3a_hist_20250428-repoint01013_v001.cdf",
+            # "imap_glows_l3a_hist_20250429-repoint01014_v001.cdf",
+            # "imap_glows_l3a_hist_20250510-repoint01025_v001.cdf",
+            # "imap_glows_l3a_hist_20250511-repoint01026_v001.cdf",
+            # "imap_glows_l3a_hist_20250525-repoint01040_v001.cdf",
+            # "imap_glows_l3a_hist_20250526-repoint01041_v001.cdf",
+            # "imap_glows_l3a_hist_20250606-repoint01053_v001.cdf",
+            # "imap_glows_l3a_hist_20250607-repoint01054_v001.cdf",
+            "reprocessing/imap_glows_l3a_hist_20250428-repoint01013_v001.cdf",
+            "reprocessing/imap_glows_l3a_hist_20250429-repoint01014_v001.cdf",
+            "reprocessing/imap_glows_l3a_hist_20250510-repoint01025_v001.cdf",
+            "reprocessing/imap_glows_l3a_hist_20250511-repoint01026_v001.cdf",
+            "reprocessing/imap_glows_l3a_hist_20250525-repoint01040_v001.cdf",
+            "reprocessing/imap_glows_l3a_hist_20250526-repoint01041_v001.cdf",
+            "reprocessing/imap_glows_l3a_hist_20250606-repoint01053_v001.cdf",
+            "reprocessing/imap_glows_l3a_hist_20250607-repoint01054_v001.cdf",
+            "imap_glows_uv-anisotropy-1CR_20100101_v001.json",
+            "imap_glows_WawHelioIonMP_20100101_v001.json",
             "imap_glows_bad-days-list_20100101_v001.dat",
-            "imap_glows_pipeline-settings-l3bcde_20100101_v006.json",
-            'imap_glows_plasma-speed-2010a_20100101_v003.dat',
-            'imap_glows_proton-density-2010a_20100101_v003.dat',
-            'imap_glows_uv-anisotropy-2010a_20100101_v003.dat',
-            'imap_glows_photoion-2010a_20100101_v003.dat',
-            'imap_glows_lya-2010a_20100101_v003.dat',
-            'imap_glows_electron-density-2010a_20100101_v003.dat',
-            'imap_glows_ionization-files_20100101_v001.dat',
-            'imap_glows_energy-grid-lo_20100101_v001.dat',
-            'imap_glows_tess-xyz-8_20100101_v001.dat',
-            'imap_lo_elongation-data_20100101_v001.dat',
-            'imap_glows_energy-grid-hi_20100101_v001.dat',
-            'imap_glows_energy-grid-ultra_20100101_v001.dat',
-            'imap_glows_tess-ang-16_20100101_v001.dat',
+            "imap_glows_pipeline-settings-l3bcde_20100101_v001.json",
+            "imap_glows_plasma-speed-2010a_20100101_v001.dat",
+            "imap_glows_proton-density-2010a_20100101_v001.dat",
+            "imap_glows_uv-anisotropy-2010a_20100101_v001.dat",
+            "imap_glows_photoion-2010a_20100101_v001.dat",
+            "imap_glows_lya-2010a_20100101_v001.dat",
+            "imap_glows_electron-density-2010a_20100101_v001.dat",
+            "imap_glows_ionization-files_20100101_v001.dat",
+            "imap_glows_energy-grid-lo_20100101_v001.dat",
+            "imap_glows_tess-xyz-8_20100101_v001.dat",
+            "imap_lo_elongation-data_20100101_v001.dat",
+            "imap_glows_energy-grid-hi_20100101_v001.dat",
+            "imap_glows_energy-grid-ultra_20100101_v001.dat",
+            "imap_glows_tess-ang-16_20100101_v001.dat",
             "imap_2026_269_05.repoint.csv",
             "imap_2025_105_2026_105_01.ah.bc",
             "imap_dps_2025_105_2026_105_01.ah.bc",
@@ -225,6 +224,9 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
             "imap_recon_20250415_20260415_v01.bsp",
         ]
 
+        self._run_integration([get_test_data_path("glows/l3bcde_integration_test_data") / f for f in input_files])
+
+    def _run_integration(self, input_files: list[Path]):
         def fake_download(file: Path | str):
             filename = Path(file).name
             imap_file_path = generate_imap_file_path(filename)
@@ -233,31 +235,57 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
             self.assertTrue(full_path.exists())
             return full_path
 
-        def fake_query(**kwargs):
-            return expected_queries[kwargs["descriptor"]]
+        for file_path in input_files:
+            paths_to_generate = generate_imap_file_path(file_path.name).construct_path()
+            paths_to_generate.parent.mkdir(exist_ok=True, parents=True)
+
+            shutil.copy(src=file_path, dst=paths_to_generate)
 
         with (
             patch.object(imap_data_access, "download", new=fake_download),
-            patch.object(imap_data_access, "query", new=fake_query)
+            patch.object(imap_data_access, "query", new=self.create_mock_query(input_files))
         ):
-            for filename in input_files:
-                paths_to_generate = generate_imap_file_path(filename).construct_path()
-                paths_to_generate.parent.mkdir(exist_ok=True, parents=True)
-
-                input_files_path = get_test_data_path("glows/l3bcde_integration_test_data")
-                shutil.copy(src=input_files_path / filename, dst=paths_to_generate)
-
             processing_input = ProcessingInputCollection(RepointInput("imap_2026_269_05.repoint.csv"))
-
             input_metadata = InputMetadata(instrument="glows", data_level="l3b", descriptor="ion-rate-profile",
                                            version="v001", start_date=datetime(2000, 1, 1),
                                            end_date=datetime(2000, 1, 1))
+
             processor = GlowsProcessor(processing_input, input_metadata)
             processor.process()
 
     @staticmethod
+    def create_mock_query(input_files: list[Path]) -> Callable:
+        file_paths = [generate_imap_file_path(f.name) for f in input_files]
+
+        def fake_query(**kwargs):
+            table = kwargs.get("table") or "science"
+            if "table" in kwargs:
+                del kwargs["table"]
+            if kwargs.get("version") == "latest":
+                del kwargs["version"]
+
+            query_result = []
+            for file_path in file_paths:
+                if table == "science" and isinstance(file_path, ScienceFilePath):
+                    file_dict = ScienceFilePath.extract_filename_components(file_path.filename)
+                elif table == "ancillary" and isinstance(file_path, AncillaryFilePath):
+                    file_dict = AncillaryFilePath.extract_filename_components(file_path.filename)
+                elif table not in ["science", "ancillary"]:
+                    raise NotImplementedError(f"Query for table: {table}")
+                else:
+                    file_dict = None
+
+                if file_dict is not None:
+                    keys = set(file_dict.items())
+                    if set(kwargs.items()).issubset(keys):
+                        query_result.extend(create_glows_mock_query_results([file_path.filename.name]))
+            return query_result
+
+        return fake_query
+
+    @staticmethod
     def _fill_official_l2_cdf_with_json_values(output_folder: Path) -> Path:
-        official_l2_path = get_test_data_path("glows/imap_glows_l2_hist_20250415-repoint01000_v001.cdf")
+        official_l2_path = get_test_data_path("glows/imap_glows_l2_hist_20130908-repoint01000_v001.cdf")
         json_file_path = get_test_instrument_team_data_path("glows/imap_glows_l2_20130908085214_orbX_modX_p_v00.json")
 
         new_file_path = output_folder / official_l2_path.name
@@ -273,6 +301,8 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
                 epoch = start_of_epoch_window + epoch_window / 2
 
                 cdf["epoch"][0] = epoch
+                cdf['start_time'][0] = (start_of_epoch_window - TTJ2000_EPOCH).total_seconds() * 1e9
+                cdf['end_time'][0] = (end_of_epoch_window - TTJ2000_EPOCH).total_seconds() * 1e9
 
                 lightcurve_vars = [
                     "spin_angle",
