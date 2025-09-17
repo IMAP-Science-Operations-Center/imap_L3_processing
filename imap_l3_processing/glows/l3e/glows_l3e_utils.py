@@ -64,7 +64,7 @@ class GlowsL3eRepointings:
 
 def determine_l3e_files_to_produce(first_cr_processed: int, last_processed_cr: int,
                                    repointing_path: Path) -> GlowsL3eRepointings:
-    descriptors = ['survival-probability-hi-90','survival-probability-hi-45','survival-probability-lo','survival-probability-ultra']
+    descriptors = ['survival-probability-hi-90','survival-probability-hi-45','survival-probability-lo','survival-probability-ul']
 
     set_global_repoint_table_paths([repointing_path])
     repointing_data = get_repoint_data()

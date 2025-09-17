@@ -120,7 +120,7 @@ class TestGlowsL3EUtils(unittest.TestCase):
             call(instrument="glows", data_level="l3e", version='latest', descriptor='survival-probability-hi-90'),
             call(instrument="glows", data_level="l3e", version='latest', descriptor='survival-probability-hi-45'),
             call(instrument="glows", data_level="l3e", version='latest', descriptor='survival-probability-lo'),
-            call(instrument="glows", data_level="l3e", version='latest', descriptor='survival-probability-ultra'),
+            call(instrument="glows", data_level="l3e", version='latest', descriptor='survival-probability-ul'),
         ])
 
         self.assertEqual(expected_hi_90_repointing_to_version, repointings.hi_90_repointings)
