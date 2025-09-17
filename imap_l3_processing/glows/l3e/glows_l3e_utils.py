@@ -108,16 +108,17 @@ def find_first_updated_cr(new_l3d: Path, old_l3d: str) -> Optional[int]:
     new_l3d_cdf = CDF(str(new_l3d))
 
     for i, cr in enumerate(old_l3d_cdf['cr_grid'][...]):
-        lya_compare = old_l3d_cdf['lyman_alpha'][i] != new_l3d_cdf['lyman_alpha'][i]
-        phion_compare = old_l3d_cdf['phion'][i] != new_l3d_cdf['phion'][i]
-        plasma_speed_compare = np.any(old_l3d_cdf['plasma_speed'][i] != new_l3d_cdf['plasma_speed'][i])
-        plasma_speed_flag_compare = old_l3d_cdf['plasma_speed_flag'][i] != new_l3d_cdf['plasma_speed_flag'][i]
-        proton_density_compare = np.any(old_l3d_cdf['proton_density'][i] != new_l3d_cdf['proton_density'][i])
-        proton_density_flag_compare = old_l3d_cdf['proton_density_flag'][i] != new_l3d_cdf['proton_density_flag'][i]
-        uv_anisotropy_compare = np.any(old_l3d_cdf['uv_anisotropy'][i] != new_l3d_cdf['uv_anisotropy'][i])
-        uv_anisotropy_flag_compare = old_l3d_cdf['uv_anisotropy_flag'][i] != new_l3d_cdf['uv_anisotropy_flag'][i]
+        lya_matches = np.isclose(old_l3d_cdf['lyman_alpha'][i], new_l3d_cdf['lyman_alpha'][i])
+        phion_matches = np.isclose(old_l3d_cdf['phion'][i], new_l3d_cdf['phion'][i])
+        plasma_speed_flag_matches = np.isclose(old_l3d_cdf['plasma_speed_flag'][i], new_l3d_cdf['plasma_speed_flag'][i])
+        proton_density_flag_matches = np.isclose(old_l3d_cdf['proton_density_flag'][i], new_l3d_cdf['proton_density_flag'][i])
+        uv_anisotropy_flag_matches = np.isclose(old_l3d_cdf['uv_anisotropy_flag'][i], new_l3d_cdf['uv_anisotropy_flag'][i])
 
-        if lya_compare or phion_compare or plasma_speed_compare or plasma_speed_flag_compare or proton_density_compare or proton_density_flag_compare or uv_anisotropy_compare or uv_anisotropy_flag_compare:
+        plasma_speed_matches = np.all(np.isclose(old_l3d_cdf['plasma_speed'][i], new_l3d_cdf['plasma_speed'][i]))
+        proton_density_matches = np.all(np.isclose(old_l3d_cdf['proton_density'][i], new_l3d_cdf['proton_density'][i]))
+        uv_anisotropy_matches = np.all(np.isclose(old_l3d_cdf['uv_anisotropy'][i], new_l3d_cdf['uv_anisotropy'][i]))
+
+        if np.any(np.logical_not([lya_matches, phion_matches, plasma_speed_matches, plasma_speed_flag_matches, proton_density_matches, proton_density_flag_matches, uv_anisotropy_matches, uv_anisotropy_flag_matches])):
             return int(cr)
 
     if old_l3d_cdf['cr_grid'].shape != new_l3d_cdf['cr_grid'].shape:

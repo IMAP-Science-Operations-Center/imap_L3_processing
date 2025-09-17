@@ -1,3 +1,4 @@
+import logging
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
@@ -13,6 +14,7 @@ from imap_l3_processing.glows.l3e.glows_l3e_dependencies import GlowsL3EDependen
 from imap_l3_processing.glows.l3e.glows_l3e_utils import find_first_updated_cr, determine_l3e_files_to_produce, \
     GlowsL3eRepointings
 
+logger = logging.getLogger(__name__)
 
 @dataclass
 class GlowsL3EInitializerOutput:

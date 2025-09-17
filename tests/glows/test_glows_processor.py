@@ -230,7 +230,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
 
         mock_archive_dependencies.side_effect = [Path("path1.zip"), Path("path2.zip")]
 
-        l3a_data_1 = {"filename": "some_file"}
+        l3a_data_1 = {"filename": "l3a_file_1"}
         first_dependency = GlowsL3BCDependencies(l3a_data=[l3a_data_1],
                                                  external_files=sentinel.external_files_1,
                                                  ancillary_files={
@@ -242,7 +242,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
                                                  end_date=Mock(),
                                                  repointing_file_path=sentinel.repointing_file_path)
 
-        l3a_data_2 = {"filename": "some_file"}
+        l3a_data_2 = {"filename": "l3a_file_2"}
         second_dependency = GlowsL3BCDependencies(l3a_data=[l3a_data_2],
                                                   external_files=sentinel.external_files_2,
                                                   ancillary_files={
@@ -330,8 +330,8 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
             call(l3bc_deps=second_dependency, external_dependencies=external_deps),
         ])
 
-        self.assertEqual(["file1", "path1.zip", "kernel_1"], l3b_model_1.parent_file_names)
-        self.assertEqual(["file2", "path2.zip", "kernel_1"], l3b_model_2.parent_file_names)
+        self.assertEqual(["file1", "l3a_file_1", "path1.zip", "kernel_1"], l3b_model_1.parent_file_names)
+        self.assertEqual(["file2", "l3a_file_2", "path2.zip", "kernel_1"], l3b_model_2.parent_file_names)
         self.assertEqual(["file3", "path1.zip", "l3b_file_1.cdf", "kernel_1", ], l3c_model_1.parent_file_names)
         self.assertEqual(["file4", "path2.zip", "l3b_file_2.cdf", "kernel_1", ], l3c_model_2.parent_file_names)
 

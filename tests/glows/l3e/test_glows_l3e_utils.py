@@ -186,6 +186,9 @@ class TestGlowsL3EUtils(unittest.TestCase):
         ]
 
         for case, change, expected in cases:
+            mock_download.reset_mock()
+            mock_CDF.reset_mock()
+
             with self.subTest(case=case):
                 new_l3d = {**old_l3d}
                 if case != "no_change":
@@ -202,6 +205,3 @@ class TestGlowsL3EUtils(unittest.TestCase):
                 ])
 
                 self.assertEqual(actual_cr, expected)
-
-                mock_download.reset_mock()
-                mock_CDF.reset_mock()

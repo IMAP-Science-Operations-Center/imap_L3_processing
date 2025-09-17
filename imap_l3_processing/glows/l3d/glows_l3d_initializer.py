@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 from typing import Optional
 
@@ -9,6 +10,7 @@ from imap_l3_processing.glows.l3bc.utils import read_cdf_parents
 from imap_l3_processing.glows.l3d.glows_l3d_dependencies import GlowsL3DDependencies
 from imap_l3_processing.glows.l3d.utils import query_for_most_recent_l3d
 
+logger = logging.getLogger(__name__)
 
 class GlowsL3DInitializer:
 
@@ -50,12 +52,13 @@ class GlowsL3DInitializer:
             Path(photoion_2010a['file_path']).name,
             Path(lya_2010a['file_path']).name,
             Path(electron_density_2010a['file_path']).name,
-            Path(pipeline_settings_l3bcde['file_path']).name,
         }
 
         if most_recent_l3d is not None:
             l3d_parents = read_cdf_parents(most_recent_l3d["file_path"])
             old_l3d = most_recent_l3d["file_path"]
+
+            logger.info(f"Old L3d parents: {l3d_parents}, new L3d deps: {updated_input_files}")
             if updated_input_files.issubset(l3d_parents):
                 return None
             version_to_generate = int(most_recent_l3d['version'][1:]) + 1

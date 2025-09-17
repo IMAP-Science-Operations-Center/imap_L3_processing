@@ -80,6 +80,7 @@ class GlowsProcessor(Processor):
             l3d_initializer_result = GlowsL3DInitializer.should_process_l3d(l3bc_initializer_data.external_dependencies,
                                                                             l3bs, l3cs)
             if l3d_initializer_result is None:
+                logger.info("No inputs to L3d have changed. Skipping processing of L3d and L3e!")
                 return products_list
 
             version_number, glows_l3d_dependency, old_l3d = l3d_initializer_result
@@ -87,6 +88,7 @@ class GlowsProcessor(Processor):
             logger.info(f"Processing L3d with version: {version_number}")
             process_l3d_result = process_l3d(glows_l3d_dependency, version_number)
             if process_l3d_result is None:
+                logger.info("Not enough L3B/C data to produce L3d.")
                 return products_list
 
             logger.info(f"Finished processing L3d up to CR: {process_l3d_result.last_processed_cr}")
@@ -99,6 +101,8 @@ class GlowsProcessor(Processor):
                 logger.info(f"Processing L3e for repointings: {l3e_initializer_output.repointings.repointing_numbers}")
                 products_list.extend([*process_l3d_result.l3d_text_file_paths, process_l3d_result.l3d_cdf_file_path])
                 products_list.extend(process_l3e(l3e_initializer_output))
+            else:
+                logger.info(f"There are no changes between: {old_l3d} and the newly produced L3d. Not uploading L3d or processing L3e!")
 
             return products_list
 

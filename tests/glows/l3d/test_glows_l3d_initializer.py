@@ -54,7 +54,6 @@ class TestGlowsL3DInitializer(unittest.TestCase):
             'imap_glows_photoion-2010a_19470301_v000.dat',
             'imap_glows_lya-2010a_19470301_v000.dat',
             'imap_glows_electron-density-2010a_19470301_v000.dat',
-            'imap_glows_pipeline-settings-l3bcde_19470301_v000.json',
             'lyman-alpha-composite.nc'
         }
 
@@ -156,7 +155,6 @@ class TestGlowsL3DInitializer(unittest.TestCase):
             'imap_glows_photoion-2010a_19470301_v000.dat',
             'imap_glows_lya-2010a_19470301_v000.dat',
             'imap_glows_electron-density-2010a_19470301_v000.dat',
-            'imap_glows_pipeline-settings-l3bcde_19470301_v000.json',
             'lyman-alpha-composite.nc'
         }
 
