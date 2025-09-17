@@ -1,9 +1,7 @@
 import argparse
 import logging
-import os
-import traceback
+import re
 from datetime import datetime
-from pathlib import Path
 from tempfile import TemporaryDirectory
 
 import imap_data_access
@@ -62,12 +60,19 @@ def imap_l3_processor():
     processing_input_collection = ProcessingInputCollection()
     processing_input_collection.deserialize(args.dependency)
 
+    repointing_number = None
+    if args.repointing is not None:
+        repointing_number_match = re.match(r"repoint(?P<repoint>\d{5})", args.repointing)
+        if repointing_number_match is None:
+            raise ValueError("Unexpected repointing number command line format!")
+        repointing_number = int(repointing_number_match["repoint"])
+
     _furnish_spice_kernels(processing_input_collection)
     input_dependency = InputMetadata(args.instrument,
                                      args.data_level,
                                      _convert_to_datetime(args.start_date),
                                      _convert_to_datetime(args.end_date or args.start_date),
-                                     args.version, descriptor=args.descriptor, repointing=args.repointing)
+                                     args.version, descriptor=args.descriptor, repointing=repointing_number)
     if args.instrument == 'swapi' and (args.data_level == 'l3a' or args.data_level == 'l3b'):
         processor = SwapiProcessor(processing_input_collection, input_dependency)
     elif args.instrument == 'glows' and args.data_level in ['l3a', 'l3b']:

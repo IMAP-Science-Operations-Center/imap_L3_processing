@@ -53,14 +53,14 @@ class TestImapL3DataProcessor(TestCase):
                 mock_argument_parser.parse_args.return_value.dependency = "dependency_string"
                 mock_argument_parser.parse_args.return_value.start_date = "20250101"
                 mock_argument_parser.parse_args.return_value.end_date = None
-                mock_argument_parser.parse_args.return_value.repointing = sentinel.repointing
+                mock_argument_parser.parse_args.return_value.repointing = "repoint00022"
                 mock_argument_parser.parse_args.return_value.version = sentinel.version
                 mock_argument_parser.parse_args.return_value.descriptor = descriptor
 
                 expected_input_metadata = InputMetadata(instrument, data_level, datetime(2025, 1, 1),
                                                         datetime(2025, 1, 1),
                                                         sentinel.version, descriptor=descriptor,
-                                                        repointing=sentinel.repointing)
+                                                        repointing=22)
 
                 expected_processor.return_value.process.return_value = [sentinel.cdf]
 
@@ -108,6 +108,7 @@ class TestImapL3DataProcessor(TestCase):
         mock_argument_parser.parse_args.return_value.version = "v101"
         mock_argument_parser.parse_args.return_value.descriptor = "dont care"
         mock_argument_parser.parse_args.return_value.dependency = "also dont care"
+        mock_argument_parser.parse_args.return_value.repointing = None
 
         mock_download.side_effect = [
             Path("naif0012.tls"),
@@ -216,6 +217,7 @@ class TestImapL3DataProcessor(TestCase):
         mock_argument_parser.parse_args.return_value.start_date = start_date_arg
         mock_argument_parser.parse_args.return_value.version = version_arg
         mock_argument_parser.parse_args.return_value.descriptor = descriptor_arg
+        mock_argument_parser.parse_args.return_value.repointing = None
 
         mock_argument_parser.parse_args.return_value.data_level = "l3b"
         mock_argument_parser.parse_args.return_value.end_date = None
@@ -248,6 +250,7 @@ class TestImapL3DataProcessor(TestCase):
         mock_argument_parser.parse_args.return_value.upload_to_sdc = False
         mock_argument_parser.parse_args.return_value.data_level = "l3a"
         mock_argument_parser.parse_args.return_value.end_date = None
+        mock_argument_parser.parse_args.return_value.repointing = None
 
         mock_processing_input_collection.return_value = processing_input_collection
         mock_processing_input_collection.deserialize = Mock()
@@ -278,6 +281,7 @@ class TestImapL3DataProcessor(TestCase):
         mock_argument_parser.parse_args.return_value.upload_to_sdc = True
         mock_argument_parser.parse_args.return_value.data_level = "l3a"
         mock_argument_parser.parse_args.return_value.end_date = None
+        mock_argument_parser.parse_args.return_value.repointing = None
 
         mock_processing_input_collection.return_value = processing_input_collection
         mock_processing_input_collection.deserialize = Mock()
@@ -323,6 +327,7 @@ class TestImapL3DataProcessor(TestCase):
         mock_argument_parser.parse_args.return_value.start_date = start_date_argument
         mock_argument_parser.parse_args.return_value.end_date = end_date_argument
         mock_argument_parser.parse_args.return_value.version = version_argument
+        mock_argument_parser.parse_args.return_value.repointing = None
 
         with self.assertRaises(NotImplementedError) as exception_manager:
             imap_l3_processor()
@@ -351,6 +356,7 @@ class TestImapL3DataProcessor(TestCase):
         mock_argument_parser.parse_args.return_value.end_date = end_date_argument
         mock_argument_parser.parse_args.return_value.version = version_argument
         mock_argument_parser.parse_args.return_value.descriptor = descriptor_argument
+        mock_argument_parser.parse_args.return_value.repointing = None
 
         with self.assertRaises(NotImplementedError) as exception_manager:
             imap_l3_processor()
@@ -377,6 +383,7 @@ class TestImapL3DataProcessor(TestCase):
         mock_argument_parser.parse_args.return_value.start_date = start_date_argument
         mock_argument_parser.parse_args.return_value.end_date = end_date_argument
         mock_argument_parser.parse_args.return_value.version = version_argument
+        mock_argument_parser.parse_args.return_value.repointing = None
 
         with self.assertRaises(NotImplementedError) as exception_manager:
             imap_l3_processor()

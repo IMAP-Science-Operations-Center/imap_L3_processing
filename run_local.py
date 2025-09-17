@@ -749,8 +749,8 @@ def run_glows_l3a(file_path):
         repoint_number = int(file_path.name.split('_')[4][-5:])
         input_metadata.repointing = repoint_number
 
-        dependencies = GlowsL3ADependencies(l2_glows_data, repoint_number, {
-            "calibration_data": get_test_instrument_team_data_path("glows/imap_glows_calibration-data_20250101_v001.dat"),
+        dependencies = GlowsL3ADependencies(l2_glows_data, {
+            "calibration_data": get_test_instrument_team_data_path("glows/imap_glows_calibration-data_20250101_v002.dat"),
             "settings": get_test_instrument_team_data_path("glows/imap_glows_pipeline-settings_20250101_v001.json"),
             "time_dependent_bckgrd": get_test_instrument_team_data_path("glows/imap_glows_time-dep-bckgrd_20250101_v001.dat"),
             "extra_heliospheric_bckgrd": get_test_instrument_team_data_path("glows/imap_glows_map-of-extra-helio-bckgrd_20250101_v001.dat"),
