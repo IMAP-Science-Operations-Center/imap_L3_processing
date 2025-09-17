@@ -20,7 +20,6 @@ ALPHA_COL_2 = 9
 def validate_omni2_dependency(end_date_exclusive: datetime,
                               buffer: timedelta, file_path: Path) -> bool:
     data_must_exist_after = end_date_exclusive + buffer
-    data_must_exist_before = data_must_exist_after + timedelta(days=30)
 
     omni_data: ndarray = np.loadtxt(file_path, usecols=(0, 1, 2, 5, 23, 24, 27, 30, 31, 34))
     start_year_index = np.searchsorted(omni_data[:, YEAR_COLUMN], data_must_exist_after.year)
@@ -32,15 +31,15 @@ def validate_omni2_dependency(end_date_exclusive: datetime,
     start_day_index = np.searchsorted(omni_data[:, DOY_COLUMN], data_must_exist_after.timetuple().tm_yday)
     omni_data = omni_data[start_day_index:]
 
-    end_day_index = np.searchsorted(omni_data[:, DOY_COLUMN], data_must_exist_before.timetuple().tm_yday, side='right')
-    omni_data = omni_data[:end_day_index]
+    for data_point in omni_data:
+        mask_fill_density_rows = np.all(data_point[[DENSITY_COLUMN_1, DENSITY_COLUMN_2]] < 999.9)
+        mask_fill_speed_rows = np.all(data_point[[SPEED_COLUMN_1, SPEED_COLUMN_2]] < 9999)
+        mask_fill_alpha_rows = np.all(data_point[[ALPHA_COL_1, ALPHA_COL_2]] < 9.999)
 
-    mask_fill_density_rows = (omni_data[:, DENSITY_COLUMN_1] < 999.9) & (omni_data[:, DENSITY_COLUMN_2] < 999.9)
-    mask_fill_speed_rows = (omni_data[:, SPEED_COLUMN_1] < 9999) & (omni_data[:, SPEED_COLUMN_2] < 9999)
-    mask_fill_alpha_rows = (omni_data[:, ALPHA_COL_1] < 9.999) & (omni_data[:, ALPHA_COL_2] < 9.999)
+        if np.all([mask_fill_density_rows, mask_fill_speed_rows, mask_fill_alpha_rows]):
+            return True
 
-    return bool(np.any(mask_fill_density_rows & mask_fill_speed_rows & mask_fill_alpha_rows))
-
+    return False
 
 def validate_dependencies(end_date: datetime, buffer: timedelta, omni2_file_path: Path,
                           f107_index_path: Path, lyman_alpha_path: Path) -> bool:
