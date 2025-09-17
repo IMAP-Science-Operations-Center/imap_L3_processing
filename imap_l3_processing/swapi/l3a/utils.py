@@ -11,7 +11,7 @@ from imap_l3_processing.swapi.l3a.models import SwapiL2Data, SwapiL3AlphaSolarWi
 
 
 def read_l2_swapi_data(cdf: CDF) -> SwapiL2Data:
-    return SwapiL2Data(cdf.raw_var("epoch")[...],
+    return SwapiL2Data(cdf.raw_var("sci_start_time")[...],
                        read_numeric_variable(cdf["swp_esa_energy"]),
                        read_numeric_variable(cdf["swp_coin_rate"]),
                        read_numeric_variable(cdf["swp_coin_rate_stat_uncert_plus"]))
@@ -33,9 +33,9 @@ def read_l3a_alpha_sw_swapi_data(cdf: CDF) -> SwapiL3AlphaSolarWindData:
 
 def chunk_l2_data(data: SwapiL2Data, chunk_size: int) -> Iterable[SwapiL2Data]:
     i = 0
-    while i < len(data.epoch):
+    while i < len(data.sci_start_time):
         yield SwapiL2Data(
-            data.epoch[i:i + chunk_size],
+            data.sci_start_time[i:i + chunk_size],
             data.energy,
             data.coincidence_count_rate[i:i + chunk_size],
             data.coincidence_count_rate_uncertainty[i:i + chunk_size]

@@ -126,7 +126,7 @@ class SwapiL3PickupIonData(DataProduct):
 
 @dataclass
 class SwapiL2Data:
-    epoch: np.ndarray[float]
+    sci_start_time: np.ndarray[float]
     energy: np.ndarray[float]
     coincidence_count_rate: np.ndarray[float]
     coincidence_count_rate_uncertainty: np.ndarray[float]

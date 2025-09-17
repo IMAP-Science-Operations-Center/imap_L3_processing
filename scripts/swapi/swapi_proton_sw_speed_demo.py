@@ -47,8 +47,8 @@ fig = plt.figure()
 
 
 def plot_sweeps(data):
-    for i in range(len(data.epoch)):
-        axes = fig.add_subplot(len(data.epoch) + 1, 1, i + 1)
+    for i in range(len(data.sci_start_time)):
+        axes = fig.add_subplot(len(data.sci_start_time) + 1, 1, i + 1)
         axes.loglog(data.energy, data.coincidence_count_rate[i, :], marker='.', linestyle="None")
         axes.set(xlabel="Energy", ylabel="Count Rate")
 
@@ -68,7 +68,7 @@ def run_example_dat_files():
     data = read_l2_data_from_dat("../../instrument_team_data/swapi/swapi_test_data_v4.dat")
     coincident_count_rate = uarray(data.coincidence_count_rate, data.coincidence_count_rate_uncertainty)
     proton_sw_speed, a, phi, b = calculate_proton_solar_wind_speed(coincident_count_rate, data.spin_angles, data.energy,
-                                                                   data.epoch)
+                                                                   data.sci_start_time)
 
     clock_angle_lut = ClockAngleCalibrationTable.from_file('../../tests/test_data/swapi/example_LUT_flow_angle_v2.dat')
 
@@ -96,9 +96,9 @@ def main(file_path):
         extract_coarse_sweep(coincident_count_rate),
         extract_coarse_sweep(data.spin_angles),
         extract_coarse_sweep(data.energy),
-        data.epoch)
+        data.sci_start_time)
     proton_sw_speed, a, phi, b = calculate_proton_solar_wind_speed(coincident_count_rate, data.spin_angles, data.energy,
-                                                                   data.epoch)
+                                                                   data.sci_start_time)
 
     plot_variation_in_center_of_mass(a, phi, b, spin_angles, centers_of_mass)
 

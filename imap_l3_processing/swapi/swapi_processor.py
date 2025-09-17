@@ -67,7 +67,7 @@ class SwapiProcessor(Processor):
         proton_solar_wind_deflection_angles = []
 
         for data_chunk in chunk_l2_data(data, 5):
-            epoch = data_chunk.epoch[0] + THIRTY_SECONDS_IN_NANOSECONDS
+            epoch = data_chunk.sci_start_time[0] + THIRTY_SECONDS_IN_NANOSECONDS
             proton_solar_wind_speed = ufloat(np.nan, np.nan)
             clock_angle = ufloat(np.nan, np.nan)
             deflection_angle = ufloat(np.nan, np.nan)
@@ -75,7 +75,7 @@ class SwapiProcessor(Processor):
                 coincidence_count_rates_with_uncertainty = uarray(data_chunk.coincidence_count_rate,
                                                                   data_chunk.coincidence_count_rate_uncertainty)
                 proton_solar_wind_speed, a, phi, b = calculate_proton_solar_wind_speed(
-                    coincidence_count_rates_with_uncertainty, data_chunk.energy, data_chunk.epoch)
+                    coincidence_count_rates_with_uncertainty, data_chunk.energy, data_chunk.sci_start_time)
                 clock_angle = calculate_clock_angle(dependencies.clock_angle_and_flow_deflection_calibration_table,
                                                     proton_solar_wind_speed, a, phi, b)
                 deflection_angle = calculate_deflection_angle(
@@ -99,7 +99,7 @@ class SwapiProcessor(Processor):
         pui_density = []
         pui_temperature = []
         for data_chunk, sw_velocity in zip(chunk_l2_data(data, 50), ten_minute_solar_wind_velocities):
-            epoch = data_chunk.epoch[0] + FIVE_MINUTES_IN_NANOSECONDS
+            epoch = data_chunk.sci_start_time[0] + FIVE_MINUTES_IN_NANOSECONDS
             cooling_index = ufloat(np.nan, np.nan)
             ionization_rate = ufloat(np.nan, np.nan)
             cutoff_speed = ufloat(np.nan, np.nan)
@@ -154,7 +154,7 @@ class SwapiProcessor(Processor):
             alpha_solar_wind_speed= ufloat(np.nan, np.nan)
             alpha_density= ufloat(np.nan, np.nan)
             alpha_temperature= ufloat(np.nan, np.nan)
-            epoch = data_chunk.epoch[0] + THIRTY_SECONDS_IN_NANOSECONDS
+            epoch = data_chunk.sci_start_time[0] + THIRTY_SECONDS_IN_NANOSECONDS
             try:
                 if np.any(np.isnan(extract_coarse_sweep(data_chunk.coincidence_count_rate))):
                     raise ValueError("Fill values in input data")
@@ -202,14 +202,14 @@ class SwapiProcessor(Processor):
             proton_density = ufloat(np.nan, np.nan)
             proton_temperature = ufloat(np.nan, np.nan)
 
-            epoch_center_of_chunk = data_chunk.epoch[0] + THIRTY_SECONDS_IN_NANOSECONDS
+            epoch_center_of_chunk = data_chunk.sci_start_time[0] + THIRTY_SECONDS_IN_NANOSECONDS
             try:
                 if np.any(np.isnan(extract_coarse_sweep(data_chunk.coincidence_count_rate))):
                     raise ValueError("Fill values in input data")
                 coincidence_count_rates_with_uncertainty = uarray(data_chunk.coincidence_count_rate,
                                                                   data_chunk.coincidence_count_rate_uncertainty)
                 proton_solar_wind_speed, a, phi, b = calculate_proton_solar_wind_speed(
-                    coincidence_count_rates_with_uncertainty, data_chunk.energy, data_chunk.epoch)
+                    coincidence_count_rates_with_uncertainty, data_chunk.energy, data_chunk.sci_start_time)
 
                 clock_angle = calculate_clock_angle(dependencies.clock_angle_and_flow_deflection_calibration_table,
                                                     proton_solar_wind_speed, a, phi, b)
@@ -263,7 +263,7 @@ class SwapiProcessor(Processor):
         cdf_pui_deltas = []
         combined_energy_deltas = []
         for data_chunk in chunk_l2_data(data, 50):
-            center_of_epoch = data_chunk.epoch[0] + FIVE_MINUTES_IN_NANOSECONDS
+            center_of_epoch = data_chunk.sci_start_time[0] + FIVE_MINUTES_IN_NANOSECONDS
             instrument_efficiency = dependencies.efficiency_calibration_table.get_proton_efficiency_for(center_of_epoch)
             coincidence_count_rates_with_uncertainty = uarray(data_chunk.coincidence_count_rate,
                                                               data_chunk.coincidence_count_rate_uncertainty)

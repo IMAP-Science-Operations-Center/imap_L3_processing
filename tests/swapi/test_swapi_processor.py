@@ -156,20 +156,20 @@ class TestSwapiProcessor(TestCase):
         self.assertEqual(mock_density_of_neutral_helium_calibration_table, density_of_neutral_helium_lut)
         np.testing.assert_array_equal(chunk_of_fifty.energy, energies)
         np.testing.assert_array_equal(chunk_of_fifty.coincidence_count_rate, count_rates)
-        self.assertEqual(chunk_of_fifty.epoch[0] + FIVE_MINUTES_IN_NANOSECONDS, pui_epoch)
+        self.assertEqual(chunk_of_fifty.sci_start_time[0] + FIVE_MINUTES_IN_NANOSECONDS, pui_epoch)
         self.assertEqual(0.1, background_rate_cutoff)
         np.testing.assert_array_equal([17, 18, 19], sw_velocity_vector)
 
         actual_he_epoch, sw_velocity_vector, density_of_neutral_helium_lut, passed_in_fitting_params = mock_calculate_helium_pui_density.call_args.args
 
-        self.assertEqual(chunk_of_fifty.epoch[0] + FIVE_MINUTES_IN_NANOSECONDS, actual_he_epoch)
+        self.assertEqual(chunk_of_fifty.sci_start_time[0] + FIVE_MINUTES_IN_NANOSECONDS, actual_he_epoch)
         np.testing.assert_array_equal([17, 18, 19], sw_velocity_vector)
         self.assertEqual(mock_density_of_neutral_helium_calibration_table, density_of_neutral_helium_lut)
         self.assertEqual(expected_fitting_params, passed_in_fitting_params)
 
         actual_he_epoch, sw_velocity_vector, density_of_neutral_helium_lut, passed_in_fitting_params = mock_calculate_helium_pui_temperature.call_args.args
 
-        self.assertEqual(chunk_of_fifty.epoch[0] + FIVE_MINUTES_IN_NANOSECONDS, actual_he_epoch)
+        self.assertEqual(chunk_of_fifty.sci_start_time[0] + FIVE_MINUTES_IN_NANOSECONDS, actual_he_epoch)
         np.testing.assert_array_equal([17, 18, 19], sw_velocity_vector)
         self.assertEqual(mock_density_of_neutral_helium_calibration_table, density_of_neutral_helium_lut)
         self.assertEqual(expected_fitting_params, passed_in_fitting_params)

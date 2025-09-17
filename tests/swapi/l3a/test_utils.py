@@ -31,7 +31,7 @@ class TestUtils(TestCase):
         expected_count_rate_chunk_1 = np.array([[4, 5, 6, 7, 8], [9, 10, 11, 12, 13]])
         expected_count_rate_uncertainty_chunk_1 = np.array([[0.1, 0.2, 0.3, 0.4, 0.5], [0.1, 0.2, 0.3, 0.4, 0.5]])
         first_chunk = chunks[0]
-        np.testing.assert_array_equal(first_chunk.epoch, np.array([0, 1]))
+        np.testing.assert_array_equal(first_chunk.sci_start_time, np.array([0, 1]))
         np.testing.assert_array_equal(energy, first_chunk.energy)
         np.testing.assert_array_equal(expected_count_rate_chunk_1, first_chunk.coincidence_count_rate)
         np.testing.assert_array_equal(expected_count_rate_uncertainty_chunk_1,
@@ -40,7 +40,7 @@ class TestUtils(TestCase):
         expected_count_rate_chunk_2 = np.array([[14, 15, 16, 17, 18], [19, 20, 21, 22, 23]])
         expected_count_rate_uncertainty_chunk_2 = np.array([[0.1, 0.2, 0.3, 0.4, 0.5], [0.1, 0.2, 0.3, 0.4, 0.5]])
         second_chunk = chunks[1]
-        np.testing.assert_array_equal(np.array([2, 3]), second_chunk.epoch)
+        np.testing.assert_array_equal(np.array([2, 3]), second_chunk.sci_start_time)
         np.testing.assert_array_equal(energy, second_chunk.energy)
         np.testing.assert_array_equal(expected_count_rate_chunk_2, second_chunk.coincidence_count_rate)
         np.testing.assert_array_equal(expected_count_rate_uncertainty_chunk_2,
@@ -52,12 +52,12 @@ class TestUtils(TestCase):
             os.remove(path)
 
         temp_cdf = CDF('temp_cdf', '')
-        temp_cdf["epoch"] = np.array([datetime(2010, 1, 1, 0, 0, 46)])
+        temp_cdf["sci_start_time"] = np.array([datetime(2010, 1, 1, 0, 0, 46)])
         temp_cdf["swp_esa_energy"] = np.array([1, -1e31, 3, 4], dtype=float)
         temp_cdf["swp_coin_rate"] = np.array([5, 6, 7, -1e31], dtype=float)
         temp_cdf["swp_coin_rate_stat_uncert_plus"] = np.array([2, 2, -1e31, 2, 2, 2, 2, 2], dtype=float)
 
-        temp_cdf["epoch"].attrs["FILLVAL"] = datetime(9999,12,31,23,59,59,999999)
+        temp_cdf["sci_start_time"].attrs["FILLVAL"] = datetime(9999,12,31,23,59,59,999999)
         temp_cdf["swp_esa_energy"].attrs["FILLVAL"] = -1e31
         temp_cdf["swp_coin_rate"].attrs["FILLVAL"] = -1e31
         temp_cdf["swp_coin_rate_stat_uncert_plus"].attrs["FILLVAL"] = -1e31
@@ -67,7 +67,7 @@ class TestUtils(TestCase):
         actual_swapi_l2_data = read_l2_swapi_data(CDF("temp_cdf.cdf"))
 
         epoch_as_tt2000 = 315576112184000000
-        np.testing.assert_array_equal(np.array(epoch_as_tt2000), actual_swapi_l2_data.epoch)
+        np.testing.assert_array_equal(np.array(epoch_as_tt2000), actual_swapi_l2_data.sci_start_time)
         np.testing.assert_array_equal(np.array([1, np.nan, 3, 4]), actual_swapi_l2_data.energy)
         np.testing.assert_array_equal(np.array([5, 6, 7, np.nan]), actual_swapi_l2_data.coincidence_count_rate)
         np.testing.assert_array_equal(np.array([2, 2, np.nan, 2, 2, 2, 2, 2]),

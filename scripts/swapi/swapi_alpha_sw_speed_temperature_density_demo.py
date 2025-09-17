@@ -52,8 +52,8 @@ fig = plt.figure()
 
 
 def plot_sweeps(data):
-    for i in range(len(data.epoch)):
-        axes = fig.add_subplot(len(data.epoch) + 1, 1, i + 1)
+    for i in range(len(data.sci_start_time)):
+        axes = fig.add_subplot(len(data.sci_start_time) + 1, 1, i + 1)
         axes.loglog(data.energy, data.coincidence_count_rate[i, :], marker='.', linestyle="None")
         axes.set(xlabel="Energy", ylabel="Count Rate")
 

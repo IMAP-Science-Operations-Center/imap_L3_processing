@@ -69,7 +69,7 @@ class TestCalculateProtonSolarWindSpeed(SpiceTestCase):
         self.assertAlmostEqual(speed.s, 0.4615, 3)
         self.assertAlmostEqual(a.n, 32.033, 3)
         self.assertAlmostEqual(a.s, 3.4696, 2)
-        self.assertAlmostEqual(phi.n, 278.63, 1)
+        self.assertAlmostEqual(phi.n, 280.63, 1)
         self.assertAlmostEqual(phi.s, 5.862, 2)
         self.assertAlmostEqual(b.n, 1294, 0)
         self.assertAlmostEqual(b.s, 2.4, 1)

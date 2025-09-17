@@ -62,7 +62,9 @@ def calculate_proton_centers_of_mass(coincidence_count_rates, energies, epoch):
         center_of_mass_index = find_peak_center_of_mass_index(peak_slice, rates, 13, 4)
         energy_at_center_of_mass = interpolate_energy(center_of_mass_index, energies)
 
-        time_at_center_of_mass = epoch[i] + 1 / 6 * ONE_SECOND_IN_NANOSECONDS * (center_of_mass_index + 1)
+        measurement_interval = 1 / 6 * ONE_SECOND_IN_NANOSECONDS
+        index_into_full_sweep = (center_of_mass_index + 1)
+        time_at_center_of_mass = epoch[i] + measurement_interval * index_into_full_sweep + measurement_interval/2
         spin_angle = get_angle(time_at_center_of_mass)
         energies_at_center_of_mass.append(energy_at_center_of_mass.nominal_value)
         energies_at_center_of_mass_uncertainties.append(energy_at_center_of_mass.std_dev)
