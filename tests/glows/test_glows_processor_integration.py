@@ -75,11 +75,11 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
 
         input_metadata.repointing = l2_science_file_path.repointing
 
-        dependencies = GlowsL3ADependencies(l2_glows_data, l2_science_file_path.repointing, {
-            "calibration_data": get_test_instrument_team_data_path("glows/imap_glows_calibration-data_20250707_v000.dat"),
-            "settings": get_test_instrument_team_data_path("glows/imap_glows_pipeline-settings_20250707_v002.json"),
-            "time_dependent_bckgrd": get_test_instrument_team_data_path("glows/imap_glows_time-dep-bckgrd_20250707_v000.dat"),
-            "extra_heliospheric_bckgrd": get_test_instrument_team_data_path("glows/imap_glows_map-of-extra-helio-bckgrd_20250707_v000.dat"),
+        dependencies = GlowsL3ADependencies(l2_glows_data, {
+            "calibration_data": get_test_instrument_team_data_path("glows/imap_glows_calibration-data_20250101_v001.dat"),
+            "settings": get_test_instrument_team_data_path("glows/imap_glows_pipeline-settings_20250101_v001.json"),
+            "time_dependent_bckgrd": get_test_instrument_team_data_path("glows/imap_glows_time-dep-bckgrd_20250101_v001.dat"),
+            "extra_heliospheric_bckgrd": get_test_instrument_team_data_path("glows/imap_glows_map-of-extra-helio-bckgrd_20250101_v001.dat"),
         })
 
         processor = GlowsProcessor(ProcessingInputCollection(), input_metadata)
@@ -121,7 +121,7 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
         self.assertEqual(actual_dict['input_metadata'], expected_dict['input_metadata'])
 
     @skipIf(os.getenv("IN_GLOWS_INTEGRATION_DOCKER"), "Not needed on linux")
-    # @run_periodically(timedelta(days=7))
+    @run_periodically(timedelta(days=7))
     def test_glows_integration_running_docker(self):
         l3_processing_dir = Path(tests.__file__).parent.parent
 

@@ -70,7 +70,6 @@ class TestGlowsL3aDependencies(unittest.TestCase):
                          result.ancillary_files["time_dependent_bckgrd"])
         self.assertEqual(extra_heliospheric_background,
                          result.ancillary_files["extra_heliospheric_bckgrd"])
-        self.assertEqual(2, result.repointing)
 
         self.assertEqual([
             call(science_data_dir / cdf_dependency_filename),

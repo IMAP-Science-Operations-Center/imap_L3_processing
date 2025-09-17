@@ -30,6 +30,7 @@ def _parse_cli_arguments():
     parser.add_argument("--descriptor")
     parser.add_argument("--start-date")
     parser.add_argument("--end-date", required=False)
+    parser.add_argument("--repointing", required=False)
     parser.add_argument("--version")
     parser.add_argument("--dependency")
     parser.add_argument(
@@ -66,25 +67,25 @@ def imap_l3_processor():
                                      args.data_level,
                                      _convert_to_datetime(args.start_date),
                                      _convert_to_datetime(args.end_date or args.start_date),
-                                     args.version, descriptor=args.descriptor)
+                                     args.version, descriptor=args.descriptor, repointing=args.repointing)
     if args.instrument == 'swapi' and (args.data_level == 'l3a' or args.data_level == 'l3b'):
         processor = SwapiProcessor(processing_input_collection, input_dependency)
-    elif args.instrument == 'glows':
+    elif args.instrument == 'glows' and args.data_level in ['l3a', 'l3b']:
         processor = GlowsProcessor(processing_input_collection, input_dependency)
     elif args.instrument == 'swe' and args.data_level == 'l3':
         processor = SweProcessor(processing_input_collection, input_dependency)
-    elif args.instrument == 'hit':
+    elif args.instrument == 'hit' and args.data_level == 'l3':
         processor = HitProcessor(processing_input_collection, input_dependency)
-    elif args.instrument == 'hi':
+    elif args.instrument == 'hi' and  args.data_level == 'l3':
         processor = HiProcessor(processing_input_collection, input_dependency)
-    elif args.instrument == 'ultra':
+    elif args.instrument == 'ultra' and args.data_level == 'l3':
         processor = UltraProcessor(processing_input_collection, input_dependency)
-    elif args.instrument == 'lo':
+    elif args.instrument == 'lo' and args.data_level == 'l3':
         processor = LoProcessor(processing_input_collection, input_dependency)
     elif args.instrument == 'codice':
-        if args.descriptor.startswith("hi"):
+        if args.descriptor.startswith("hi") and args.data_level in ['l3a', 'l3b']:
             processor = CodiceHiProcessor(processing_input_collection, input_dependency)
-        elif args.descriptor.startswith("lo"):
+        elif args.descriptor.startswith("lo") and args.data_level == 'l3a':
             processor = CodiceLoProcessor(processing_input_collection, input_dependency)
         else:
             raise NotImplementedError(f"Unknown descriptor '{args.descriptor}' for codice instrument")

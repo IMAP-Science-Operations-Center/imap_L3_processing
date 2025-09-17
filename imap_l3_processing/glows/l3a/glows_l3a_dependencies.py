@@ -15,7 +15,6 @@ from imap_l3_processing.glows.l3a.utils import read_l2_glows_data
 @dataclass
 class GlowsL3ADependencies:
     data: GlowsL2Data
-    repointing: int
     ancillary_files: dict[str, Path]
 
     @classmethod
@@ -25,8 +24,6 @@ class GlowsL3ADependencies:
                              if science_input.descriptor == GLOWS_L2_DESCRIPTOR and science_input.source == 'glows')
 
         l2_cdf_file_path: Path = desired_input.imap_file_paths[0].construct_path()
-
-        repointing_value = desired_input.imap_file_paths[0].repointing
 
         l2_cdf = download(l2_cdf_file_path)
 
@@ -51,4 +48,4 @@ class GlowsL3ADependencies:
             "time_dependent_bckgrd": time_dependent_background_path,
             "extra_heliospheric_bckgrd": extra_heliospheric_background,
         }
-        return cls(l2_glows_data, repointing_value, ancillary_files)
+        return cls(l2_glows_data, ancillary_files)

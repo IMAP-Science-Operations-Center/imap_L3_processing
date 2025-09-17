@@ -33,7 +33,7 @@ for file in files_to_convert:
     files = {
         "settings":
             Path(scripts.__file__).parent.parent /
-            "instrument_team_data/glows/imap_glows_pipeline-settings_20250707_v002.json"
+            "instrument_team_data/glows/imap_glows_pipeline-settings_20250101_v001.json"
     }
     data_with_spin_angle = GlowsProcessor.add_spin_angle_delta(data, files)
 

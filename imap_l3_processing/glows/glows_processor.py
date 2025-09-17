@@ -54,7 +54,6 @@ class GlowsProcessor(Processor):
     def process(self):
         if self.input_metadata.data_level == "l3a":
             l3a_dependencies = GlowsL3ADependencies.fetch_dependencies(self.dependencies)
-            self.input_metadata.repointing = l3a_dependencies.repointing
             l3a_output = self.process_l3a(l3a_dependencies)
             l3a_output.parent_file_names = self.get_parent_file_names()
             cdf = save_data(l3a_output)
