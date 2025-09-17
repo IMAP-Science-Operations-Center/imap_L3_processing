@@ -19,6 +19,10 @@ class GlowsL3BCDependencies:
     ancillary_files: dict[str, Path]
     repointing_file_path: Path
 
+    @property
+    def l3a_file_names(self):
+        return [l3a['filename'] for l3a in self.l3a_data]
+
     @classmethod
     def download_from_cr_to_process(cls, cr_to_process: CRToProcess, version: int,
                                     external_dependencies: ExternalDependencies, repointing_file_path: Path):

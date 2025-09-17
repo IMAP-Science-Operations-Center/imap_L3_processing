@@ -54,7 +54,6 @@ class TestGlowsL3DInitializer(unittest.TestCase):
             'imap_glows_photoion-2010a_19470301_v000.dat',
             'imap_glows_lya-2010a_19470301_v000.dat',
             'imap_glows_electron-density-2010a_19470301_v000.dat',
-            'imap_glows_pipeline-settings-l3bcde_19470301_v000.json',
             'lyman-alpha-composite.nc'
         }
 
@@ -156,9 +155,19 @@ class TestGlowsL3DInitializer(unittest.TestCase):
             'imap_glows_photoion-2010a_19470301_v000.dat',
             'imap_glows_lya-2010a_19470301_v000.dat',
             'imap_glows_electron-density-2010a_19470301_v000.dat',
-            'imap_glows_pipeline-settings-l3bcde_19470301_v000.json',
             'lyman-alpha-composite.nc'
         }
+
+        actual_l3d_deps = GlowsL3DInitializer.should_process_l3d(external_dependencies, l3bs, l3cs)
+        mock_fetch_l3d_deps.assert_not_called()
+        self.assertIsNone(actual_l3d_deps)
+
+    @patch('imap_l3_processing.glows.l3d.glows_l3d_initializer.GlowsL3DDependencies.fetch_dependencies')
+    def test_l3d_initializer_should_not_process_when_no_l3bs(self, mock_fetch_l3d_deps):
+        l3bs = []
+        l3cs = []
+
+        external_dependencies = Mock()
 
         actual_l3d_deps = GlowsL3DInitializer.should_process_l3d(external_dependencies, l3bs, l3cs)
         mock_fetch_l3d_deps.assert_not_called()

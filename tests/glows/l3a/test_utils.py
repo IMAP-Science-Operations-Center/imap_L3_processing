@@ -14,7 +14,7 @@ from tests.test_helpers import get_test_data_path
 
 class TestUtils(unittest.TestCase):
     def test_reading_l2_glows_data_into_models(self):
-        cdf = CDF(str(get_test_data_path('glows/imap_glows_l2_hist_20130908_v003.cdf')))
+        cdf = CDF(str(get_test_data_path('glows/imap_glows_l2_hist_20130908-repoint01000_v001.cdf')))
 
         glows_l2_data: GlowsL2Data = read_l2_glows_data(cdf)
 
@@ -38,7 +38,7 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(0.072, glows_l2_data["daily_lightcurve"]["spin_angle"][0])
 
         self.assertEqual((3600,), glows_l2_data["daily_lightcurve"]["histogram_flag_array"].shape)
-        self.assertEqual(np.uint8, glows_l2_data["daily_lightcurve"]["histogram_flag_array"].dtype)
+        self.assertEqual(np.float64, glows_l2_data["daily_lightcurve"]["histogram_flag_array"].dtype)
         self.assertEqual(np.uint8(4), glows_l2_data["daily_lightcurve"]["histogram_flag_array"][84])
 
         self.assertEqual((3600,), glows_l2_data["daily_lightcurve"]["ecliptic_lat"].shape)
@@ -50,7 +50,7 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(13677, glows_l2_data["daily_lightcurve"]["raw_histogram"][0])
 
         self.assertEqual({
-            "lon": 162.0919952392578,
+            "lon": 162.092,
             "lat": 0.000
         }, glows_l2_data["spin_axis_orientation_average"])
 
@@ -67,7 +67,7 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(cdf['pulse_length_std_dev'][0], glows_l2_data['pulse_length_std_dev'])
         self.assertEqual(cdf['position_angle_offset_average'][0], glows_l2_data['position_angle_offset_average'])
         self.assertEqual(cdf['position_angle_offset_std_dev'][0], glows_l2_data['position_angle_offset_std_dev'])
-        self.assertEqual("imap_glows_l2_hist_20130908_v003.cdf", glows_l2_data['l2_file_name'])
+        self.assertEqual("imap_glows_l2_hist_20130908-repoint01000_v001.cdf", glows_l2_data['l2_file_name'])
 
         self.assert_equal_xyz(cdf, "spacecraft_location_average", glows_l2_data)
         self.assert_equal_xyz(cdf, "spacecraft_location_std_dev", glows_l2_data)
@@ -75,27 +75,17 @@ class TestUtils(unittest.TestCase):
         self.assert_equal_xyz(cdf, "spacecraft_velocity_std_dev", glows_l2_data)
 
         expected_header = GlowsL2Header(
-            flight_software_version=131848,
-            pkts_file_name="data_l0/imap_l0_sci_glows_20241018_mockByGlowsTeam051_v00.pkts",
-            ancillary_data_files=[
-                "data_ancillary/imap_glows_conversion_table_for_anc_data_v002.json",
-                "data_ancillary/imap_glows_calibration_data_v002.dat",
-                "data_ancillary/imap_glows_pipeline_settings_v002.json",
-                "data_ancillary/imap_glows_map_of_uv_sources_v002.dat",
-                "data_ancillary/imap_glows_map_of_excluded_regions_v002.dat",
-                "data_ancillary/imap_glows_exclusions_by_instr_team_v002.dat",
-                "data_ancillary/imap_glows_suspected_transients_v002.dat",
-                "data_ancillary/imap_glows_map_of_extra_helio_bckgrd_v001.dat",
-                "data_ancillary/imap_glows_time_dep_bckgrd_v001.dat",
-                "data_ancillary/imap_l1_anc_sc_Merged_2010-2030_mockByGlowsTeam001.csv"],
+            flight_software_version=-1,
+            pkts_file_name="",
+            ancillary_data_files=[],
         )
         self.assertEqual(expected_header, glows_l2_data["header"])
 
     def assert_equal_xyz(self, cdf, variable_name, actual):
         expected_spacecraft_location_average = {
-            'x': cdf[f'{variable_name}_x'][0],
-            'y': cdf[f'{variable_name}_y'][0],
-            'z': cdf[f'{variable_name}_z'][0],
+            'x': cdf[variable_name][0, 0],
+            'y': cdf[variable_name][0, 1],
+            'z': cdf[variable_name][0, 2],
         }
         self.assertEqual(expected_spacecraft_location_average, actual[variable_name])
 

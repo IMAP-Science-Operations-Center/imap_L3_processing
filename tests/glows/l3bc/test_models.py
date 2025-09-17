@@ -239,10 +239,7 @@ class TestModels(CdfModelTestCase):
             'imap_glows_photoion-2010a_v003.dat',
             'imap_glows_lya-2010a_v003.dat',
             'imap_glows_electron-density-2010a_v003.dat',
-            'f107_fluxtable.txt',
-            'imap_glows_l3a_20100101000000_orbX_modX_p_v00.json',
-            'imap_glows_l3a_20100102000000_orbX_modX_p_v00.json',
-            'imap_glows_l3a_20100103000000_orbX_modX_p_v00.json',
+            'f107_fluxtable.txt'
         ], result.parent_file_names)
 
     def test_l3c_to_data_product_variables(self):
