@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import os
 import re
 import shutil
@@ -1017,6 +1018,7 @@ def create_codice_hi_l3b_pitch_angles_cdf():
 
 if __name__ == "__main__":
     furnish_local_spice()
+    logging.basicConfig(force=True, level=logging.INFO)
     if "codice-lo" in sys.argv:
         if "l3a" in sys.argv:
             if "partial-densities" in sys.argv:
