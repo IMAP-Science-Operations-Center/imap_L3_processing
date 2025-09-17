@@ -4,7 +4,6 @@ from pathlib import Path
 
 import imap_data_access
 import numpy as np
-import requests
 import spiceypy
 from astropy.time import Time
 from imap_processing.spice.repoint import set_global_repoint_table_paths, get_repoint_data
@@ -102,9 +101,11 @@ def determine_l3e_files_to_produce(first_cr_processed: int, last_processed_cr: i
     return GlowsL3eRepointings(pointing_numbers, *updated_pointings_per_instruments)
 
 
-def find_first_updated_cr(new_l3d, old_l3d) -> Optional[int]:
-    old_l3d_cdf = CDF(old_l3d)
-    new_l3d_cdf = CDF(new_l3d)
+def find_first_updated_cr(new_l3d: Path, old_l3d: str) -> Optional[int]:
+    downloaded_old_l3d = imap_data_access.download(old_l3d)
+
+    old_l3d_cdf = CDF(str(downloaded_old_l3d))
+    new_l3d_cdf = CDF(str(new_l3d))
 
     for i, cr in enumerate(old_l3d_cdf['cr_grid'][...]):
         lya_compare = old_l3d_cdf['lyman_alpha'][i] != new_l3d_cdf['lyman_alpha'][i]

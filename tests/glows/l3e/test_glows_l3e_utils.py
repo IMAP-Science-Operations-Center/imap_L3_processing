@@ -1,6 +1,6 @@
 import unittest
 from datetime import datetime
-from unittest.mock import patch, Mock, call
+from unittest.mock import patch, Mock, call, sentinel
 
 import numpy as np
 
@@ -129,9 +129,12 @@ class TestGlowsL3EUtils(unittest.TestCase):
         self.assertEqual(expected_ultra_repointing_to_version, repointings.ultra_repointings)
         self.assertEqual(expected_repointings, repointings.repointing_numbers)
 
+    @patch('imap_l3_processing.glows.l3e.glows_l3e_utils.imap_data_access.download')
     @patch('imap_l3_processing.glows.l3e.glows_l3e_utils.CDF')
-    def test_find_first_updated_cr(self, mock_CDF):
+    def test_find_first_updated_cr(self, mock_CDF, mock_download):
         num_crs = 10
+        mock_download.return_value = sentinel.download_old_l3d
+
         old_l3d = {
             'cr_grid': np.arange(num_crs) + 0.5,
             'lyman_alpha': np.arange(num_crs),
@@ -144,40 +147,61 @@ class TestGlowsL3EUtils(unittest.TestCase):
             'uv_anisotropy_flag': np.arange(num_crs),
         }
 
-        cases =['cr_grid',
-                'lyman_alpha',
-                'phion',
-                'plasma_speed',
-                'plasma_speed_flag',
-                'proton_density',
-                'proton_density_flag',
-                'uv_anisotropy',
-                'uv_anisotropy_flag',
-                'no_change']
+        new_lyman_alpha = np.arange(num_crs)
+        new_lyman_alpha[1] = 10
 
-        for i, case in enumerate(cases):
+        new_phion = np.arange(num_crs)
+        new_phion[2] = 10
+
+        new_plasma_speed_flag = np.arange(num_crs)
+        new_plasma_speed_flag[3] = 10
+
+        new_proton_density_flag = np.arange(num_crs)
+        new_proton_density_flag[4] = 10
+
+        new_uv_anisotropy_flag = np.arange(num_crs)
+        new_uv_anisotropy_flag[5] = 10
+
+        new_plasma_speed = np.arange(0,20).reshape((num_crs, 2))
+        new_plasma_speed[6, :] = 10
+
+        new_proton_density = np.arange(0,20).reshape((num_crs, 2))
+        new_proton_density[7, :] = 10
+
+        new_uv_anisotropy = np.arange(0,20).reshape((num_crs, 2))
+        new_uv_anisotropy[8, :] = 10
+
+        cases =[
+            ('cr_grid', np.append(old_l3d['cr_grid'], 10.5), 10),
+            ('lyman_alpha', new_lyman_alpha, 1),
+            ('phion', new_phion, 2),
+            ('plasma_speed_flag', new_plasma_speed_flag, 3),
+            ('proton_density_flag', new_proton_density_flag, 4),
+            ('uv_anisotropy_flag', new_uv_anisotropy_flag, 5),
+
+            ('plasma_speed', new_plasma_speed, 6),
+            ('proton_density', new_proton_density, 7),
+            ('uv_anisotropy', new_uv_anisotropy, 8),
+            ('no_change', None, None)
+        ]
+
+        for case, change, expected in cases:
             with self.subTest(case=case):
-                new_l3d = {
-                    'cr_grid': np.arange(num_crs),
-                    'lyman_alpha': np.arange(num_crs),
-                    'phion': np.arange(num_crs),
-                    'plasma_speed': np.arange(0, 20).reshape((num_crs, 2)),
-                    'plasma_speed_flag': np.arange(num_crs),
-                    'proton_density': np.arange(0, 20).reshape((num_crs, 2)),
-                    'proton_density_flag': np.arange(num_crs),
-                    'uv_anisotropy': np.arange(0, 20).reshape((num_crs, 2)),
-                    'uv_anisotropy_flag': np.arange(num_crs),
-                }
+                new_l3d = {**old_l3d}
+                if case != "no_change":
+                    new_l3d[case] = change
+
                 mock_CDF.side_effect = [old_l3d, new_l3d]
 
-                if case == "cr_grid":
-                    new_l3d['cr_grid'] = np.append(new_l3d['cr_grid'], 10)
-                    self.assertEqual(find_first_updated_cr(new_l3d, old_l3d), 10)
-                elif case == "no_change":
-                    self.assertIsNone(find_first_updated_cr(new_l3d, old_l3d))
-                elif case in ['plasma_speed', 'proton_density', 'uv_anisotropy']:
-                    new_l3d[case][i] = np.full_like(new_l3d[case][i], -1)
-                    self.assertEqual(i, find_first_updated_cr(new_l3d, old_l3d))
-                else:
-                    new_l3d[case][i] = i + 1
-                    self.assertEqual(i, find_first_updated_cr(new_l3d, old_l3d))
+                actual_cr = find_first_updated_cr(sentinel.new_l3d_path, sentinel.old_l3d_filename)
+
+                mock_download.assert_called_once_with(sentinel.old_l3d_filename)
+                mock_CDF.assert_has_calls([
+                    call(str(sentinel.download_old_l3d)),
+                    call(str(sentinel.new_l3d_path)),
+                ])
+
+                self.assertEqual(actual_cr, expected)
+
+                mock_download.reset_mock()
+                mock_CDF.reset_mock()
