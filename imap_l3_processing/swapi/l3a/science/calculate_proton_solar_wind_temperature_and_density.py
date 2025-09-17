@@ -55,20 +55,22 @@ def calculate_proton_solar_wind_temperature_and_density_for_one_sweep(coincident
     filtered_peak_count_rates = peak_count_rates[at_least_minimum]
     peak_energies_filtered = peak_energies[at_least_minimum]
 
-    initial_parameter_guess = [5, 1e5, nominal_values(initial_speed_guess)]
+    initial_parameter_guess = [5, 1e5]
+    def model(ev_per_q: ndarray, density: float, temperature: float):
+        return proton_count_rate_model(efficiency, ev_per_q, density, temperature,  nominal_values(initial_speed_guess))
 
-    values, covariance = scipy.optimize.curve_fit(lambda *args: proton_count_rate_model(efficiency, *args),
+    values, covariance = scipy.optimize.curve_fit(model,
                                                   peak_energies_filtered,
                                                   nominal_values(filtered_peak_count_rates),
                                                   sigma=std_devs(filtered_peak_count_rates),
                                                   absolute_sigma=True,
-                                                  bounds=[[0, 0, 0], [np.inf, np.inf, np.inf]],
+                                                  bounds=[[0, 0], [np.inf, np.inf]],
                                                   p0=initial_parameter_guess)
-    residual = abs(proton_count_rate_model(efficiency, peak_energies_filtered, *values) - nominal_values(filtered_peak_count_rates))
-    reduced_chisq = np.sum(np.square(residual / std_devs(filtered_peak_count_rates))) / (len(peak_energies_filtered) - 3) # change to -2 if we fix speed
+    residual = abs(model(peak_energies_filtered, *values) - nominal_values(filtered_peak_count_rates))
+    reduced_chisq = np.sum(np.square(residual / std_devs(filtered_peak_count_rates))) / (len(peak_energies_filtered) - 2)
     if reduced_chisq > 10:
         raise ValueError("Failed to fit - chi-squared too large", reduced_chisq)
-    density, temperature, speed = correlated_values(values, covariance)
+    density, temperature = correlated_values(values, covariance)
 
     return temperature, density
 
