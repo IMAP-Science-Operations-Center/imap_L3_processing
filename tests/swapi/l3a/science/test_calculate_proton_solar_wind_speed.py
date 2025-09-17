@@ -1,8 +1,8 @@
+import math
 from datetime import datetime
 from pathlib import Path
 from unittest.mock import patch
 
-import math
 import numpy as np
 import spiceypy
 from spacepy.pycdf import CDF
@@ -20,8 +20,12 @@ from tests.spice_test_case import SpiceTestCase
 
 class TestCalculateProtonSolarWindSpeed(SpiceTestCase):
     def test_calculate_solar_wind_speed(self):
-        energies = np.array([0, 1000, 750, 500])
-        count_rates = np.array([[0, 0, 10, 0], [0, 0, 10, 0], [0, 0, 10, 0], [0, 0, 10, 0], [0, 0, 10, 0]])
+        energies = np.array([0, 1000, 750, 500, 400, 300, 200, 100, 50])
+        count_rates = np.array([[0, 14, 15, 16, 17, 16, 15, 14, 0],
+                                [0, 14, 15, 16, 17, 16, 15, 14, 0],
+                                [0, 14, 15, 16, 17, 16, 15, 14, 0],
+                                [0, 14, 15, 16, 17, 16, 15, 14, 0],
+                               [0, 14, 15, 16, 17, 16, 15, 14, 0]])
         count_rates_with_uncertainties = uarray(count_rates, np.full_like(count_rates, 1.0))
 
         times = [datetime(2025, 6, 6, 12, i) for i in range(5)]
@@ -31,8 +35,24 @@ class TestCalculateProtonSolarWindSpeed(SpiceTestCase):
 
         proton_charge = 1.602176634e-19
         proton_mass = 1.67262192595e-27
-        expected_speed = math.sqrt(2 * 750 * proton_charge / proton_mass) / METERS_PER_KILOMETER
-        self.assertAlmostEqual(speed.n, expected_speed, 0)
+        expected_speed = math.sqrt(2 * 400 * proton_charge / proton_mass) / METERS_PER_KILOMETER
+        self.assertAlmostEqual(expected_speed, speed.n, 0)
+
+    def test_calculate_solar_wind_speed_throws_exception_with_too_few_count_rates(self):
+        energies = np.array([0, 1000, 750, 500, 400, 300, 200, 100, 50])
+        count_rates = np.array([[0, 14, 15, 16, 17, 16, 15, 14, 0],
+                                [0, 14, 15, 16, 17, 16, 15, 14, 0],
+                                [0, 14, 15, 16, 17, 16, 15, 14, 0],
+                                [0, 14, 14, 14, 0, 0, 0, 0, 0],
+                               [0, 14, 14, 14, 0, 0, 0, 0, 0]])
+        count_rates_with_uncertainties = uarray(count_rates, np.full_like(count_rates, 1.0))
+
+        times = [datetime(2025, 6, 6, 12, i) for i in range(5)]
+        epochs_in_terrestrial_time = spiceypy.datetime2et(times) * ONE_SECOND_IN_NANOSECONDS
+        with self.assertRaises(Exception):
+            calculate_proton_solar_wind_speed(count_rates_with_uncertainties, energies,
+                                                             epochs_in_terrestrial_time)
+
 
     def test_calculate_solar_wind_speed_from_model_data(self):
         file_path = Path(
@@ -45,12 +65,12 @@ class TestCalculateProtonSolarWindSpeed(SpiceTestCase):
         speed, a, phi, b = calculate_proton_solar_wind_speed(uarray(count_rate, count_rate_delta), energy,
                                                              epoch)
 
-        self.assertAlmostEqual(speed.n, 497.9135, 3)
-        self.assertAlmostEqual(speed.s, 0.4634, 3)
-        self.assertAlmostEqual(a.n, 32.2194, 3)
-        self.assertAlmostEqual(a.s, 3.4794, 2)
-        self.assertAlmostEqual(phi.n, 277.6, 1)
-        self.assertAlmostEqual(phi.s, 5.8556, 2)
+        self.assertAlmostEqual(speed.n, 497.930, 3)
+        self.assertAlmostEqual(speed.s, 0.4615, 3)
+        self.assertAlmostEqual(a.n, 32.033, 3)
+        self.assertAlmostEqual(a.s, 3.4696, 2)
+        self.assertAlmostEqual(phi.n, 278.63, 1)
+        self.assertAlmostEqual(phi.s, 5.862, 2)
         self.assertAlmostEqual(b.n, 1294, 0)
         self.assertAlmostEqual(b.s, 2.4, 1)
 
@@ -95,40 +115,65 @@ class TestCalculateProtonSolarWindSpeed(SpiceTestCase):
 
     def test_find_peak_center_of_mass_index(self):
         test_cases = [
-            ("symmetrical peak", [0, 0, 5, 10, 5, 0, 0], slice(2, 5), 3),
-            ("asymmetrical peak", [0, 0, 5, 15, 0, 0, 0], slice(2, 5), 2.75),
+            ("symmetrical peak", [0, 0, 5, 10, 5, 0, 0], slice(2, 5), 0, 3),
+            ("asymmetrical peak", [0, 0, 5, 15, 0, 0, 0], slice(2, 5), 0, 2.75),
+            ("excluding low rates", [0, 2, 5, 10, 5, 2, 1], slice(0, 7), 2, 3),
         ]
-        for name, count_rates, peak_slice, expected_peak_index in test_cases:
+        for name, count_rates, peak_slice, minimum_count_rate_inclusive, expected_peak_index in test_cases:
             with self.subTest(name):
                 self.assertEqual(expected_peak_index,
-                                 find_peak_center_of_mass_index(peak_slice, count_rates))
+                                 find_peak_center_of_mass_index(peak_slice, count_rates, minimum_count_rate_inclusive))
+
+    def test_find_peak_center_of_mass_index_filters_correctly_with_uncertain_count_rates(self):
+        test_cases = [
+            ("uses nominal values to filter", uarray([0, 2, 2, 2, 6, 0, 0], [1,1,1,1,1,1,1]), slice(0, 7), 2, 3),
+        ]
+        for name, count_rates, peak_slice, minimum_count_rate_inclusive, expected_peak_index in test_cases:
+            with self.subTest(name):
+                self.assertEqual(expected_peak_index,
+                                 find_peak_center_of_mass_index(peak_slice, count_rates, minimum_count_rate_inclusive).nominal_value)
 
     def test_uncertainty_calculation_in_find_peak_center_of_mass_index(self):
         test_cases = [
-            ("with uncertainties", uarray([0, 0, 3, 5, 0, 0, 0], [0, 0, 1, 1, 0, 0, 0]), slice(2, 5), 2.625),
-            ("with sqrt uncertainties", uarray([0, 0, 6, 600, 6, 0, 0], [0, 0, 6, 60, 6, 0, 0]), slice(2, 5), 3),
-
+            ("with uncertainties", uarray([0, 0, 3, 5, 0, 0, 0], [0, 0, 1, 1, 0, 0, 0]), slice(2, 5), 0, 2.625),
+            ("with sqrt uncertainties", uarray([0, 0, 6, 600, 6, 0, 0], [0, 0, 6, 60, 6, 0, 0]), slice(2, 5), 0, 3),
         ]
-        for name, count_rates, peak_slice, expected_peak_index in test_cases:
+        for name, count_rates, peak_slice, minimum_count_rate_inclusive, expected_peak_index in test_cases:
             with self.subTest(name):
                 count_rate_std_devs = std_devs(count_rates)
 
                 nominal_count_rates = nominal_values(count_rates)
-                base_result = find_peak_center_of_mass_index(peak_slice, nominal_count_rates)
+                base_result = find_peak_center_of_mass_index(peak_slice, nominal_count_rates, minimum_count_rate_inclusive)
                 deviations_for_single_inputs = []
                 for i in range(len(count_rate_std_devs)):
                     DELTA = 1e-8
                     modified_count_rates = nominal_count_rates.copy()
                     modified_count_rates[i] += DELTA
                     partial_derivative = (
-                                                 find_peak_center_of_mass_index(peak_slice, modified_count_rates)
+                                                 find_peak_center_of_mass_index(peak_slice, modified_count_rates, minimum_count_rate_inclusive)
                                                  - base_result) / DELTA
                     deviations_for_single_inputs.append(count_rate_std_devs[i] * partial_derivative)
                 final_uncertainty = math.sqrt(sum(n * n for n in deviations_for_single_inputs))
-                result_with_uncertainty = find_peak_center_of_mass_index(peak_slice, count_rates)
+                result_with_uncertainty = find_peak_center_of_mass_index(peak_slice, count_rates, minimum_count_rate_inclusive)
 
                 self.assertAlmostEqual(final_uncertainty, result_with_uncertainty.std_dev, 5)
                 self.assertEqual(base_result, result_with_uncertainty.n)
+
+
+    def test_find_peak_center_of_mass_index_raises_error_if_too_few_bins_remain(self):
+        test_cases = [
+            ("raises error", [0, 0, 5, 10, 1, 0, 0], slice(2, 5), 2, 3, True),
+            ("no error", [0, 0, 5, 15, 1, 0, 0], slice(2, 5), 2, 2, False),
+        ]
+        for name, count_rates, peak_slice, minimum_count_rate_inclusive, minimum_bin_count, expect_error in test_cases:
+            with self.subTest(name):
+                if expect_error:
+                    with self.assertRaises(Exception) as cm:
+                        find_peak_center_of_mass_index(peak_slice, count_rates, minimum_count_rate_inclusive, minimum_bin_count)
+                else:
+                    find_peak_center_of_mass_index(peak_slice, count_rates, minimum_count_rate_inclusive,
+                                                   minimum_bin_count)
+
 
     def test_interpolates_to_find_energy_at_center_of_mass(self):
         test_cases = [

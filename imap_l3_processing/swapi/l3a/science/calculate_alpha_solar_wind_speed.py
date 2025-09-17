@@ -30,7 +30,7 @@ def get_alpha_peak_indices(count_rates, energies) -> slice:
 
 def calculate_alpha_center_of_mass(coincidence_count_rates, energies):
     alpha_particle_peak_slice = get_alpha_peak_indices(coincidence_count_rates, energies)
-    center_of_mass_index = find_peak_center_of_mass_index(alpha_particle_peak_slice, coincidence_count_rates)
+    center_of_mass_index = find_peak_center_of_mass_index(alpha_particle_peak_slice, coincidence_count_rates, 0.001, 3)
     energy_at_center_of_mass = interpolate_energy(center_of_mass_index, energies)
 
     return energy_at_center_of_mass

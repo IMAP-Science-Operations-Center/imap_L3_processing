@@ -1,3 +1,4 @@
+import math
 from pathlib import Path
 from unittest import TestCase
 
@@ -7,6 +8,7 @@ from uncertainties import ufloat
 from uncertainties.unumpy import uarray, nominal_values, std_devs
 
 import imap_l3_processing
+from imap_l3_processing.constants import METERS_PER_KILOMETER, ALPHA_PARTICLE_CHARGE_COULOMBS, ALPHA_PARTICLE_MASS_KG
 from imap_l3_processing.swapi.l3a.science.calculate_alpha_solar_wind_speed import calculate_alpha_solar_wind_speed, \
     calculate_alpha_center_of_mass, get_alpha_peak_indices, calculate_sw_speed_alpha, calculate_combined_sweeps
 from imap_l3_processing.swapi.l3a.science.speed_calculation import extract_coarse_sweep
@@ -62,7 +64,7 @@ class TestCalculateAlphaSolarWindSpeed(TestCase):
                 self.assertAlmostEqual(expected_speed, alpha_sw_speed.n, 3)
                 self.assertAlmostEqual(expected_uncertainty, alpha_sw_speed.s, 3)
 
-    def test_calculate_alpha_solar_wind_speed(self):
+    def test_calculate_alpha_solar_wind_speed_from_file(self):
         file_path = Path(
             imap_l3_processing.__file__).parent.parent / 'tests' / 'test_data' / 'swapi' / 'imap_swapi_l2_fake-menlo-5-sweeps_20100101_v002.cdf'
         with CDF(str(file_path)) as cdf:
@@ -95,6 +97,38 @@ class TestCalculateAlphaSolarWindSpeed(TestCase):
                 self.assertAlmostEqual(modeled_alpha_particle_peak_energy, alpha_energy_center_of_mass.nominal_value,
                                        delta=5)
                 self.assertAlmostEqual(expected_uncertainty, alpha_energy_center_of_mass.std_dev, 0)
+
+    def test_calculate_alpha_solar_wind_speed_basic(self):
+        energies = np.array([0, 1000, 700, 600, 500, 400, 300, 200, 100, 50])
+        count_rates = np.array([[0, 13,  14, 15, 14, 13, 16, 18, 14, 0]])
+
+        count_rates_with_uncertainties = uarray(count_rates, np.full_like(count_rates, 1.0))
+
+        speed = calculate_alpha_solar_wind_speed(count_rates_with_uncertainties, energies)
+
+        expected_speed = math.sqrt(2 * 600 * ALPHA_PARTICLE_CHARGE_COULOMBS / ALPHA_PARTICLE_MASS_KG) / METERS_PER_KILOMETER
+        self.assertAlmostEqual(expected_speed, speed.n, 0)
+
+
+    def test_calculate_alpha_solar_wind_speed_excludes_zeros(self):
+        energies = np.array([0, 1000, 700, 650, 600, 550, 500, 450, 400, 300, 200, 100, 50])
+        count_rates = np.array([[0, 13,  0, 5, 10, 15, 0, 10, 8, 16, 18, 14, 0]])
+
+        count_rates_with_uncertainties = uarray(count_rates, np.full_like(count_rates, 1.0))
+
+        speed = calculate_alpha_solar_wind_speed(count_rates_with_uncertainties, energies)
+
+        expected_speed = math.sqrt(2 * 550 * ALPHA_PARTICLE_CHARGE_COULOMBS / ALPHA_PARTICLE_MASS_KG) / METERS_PER_KILOMETER
+        self.assertAlmostEqual(expected_speed, speed.n, 0)
+
+    def test_calculate_alpha_solar_wind_speed_raises_error_if_fewer_than_three_count_rates_nonzero(self):
+        energies = np.array([0, 1000, 700, 650, 600, 550, 500, 450, 400, 300, 200, 100, 50])
+        count_rates = np.array([[0, 0,  0, 0, 0, 21, 10, 0, 0, 0, 30, 0, 0]])
+
+        count_rates_with_uncertainties = uarray(count_rates, np.full_like(count_rates, 1.0))
+
+        with self.assertRaises(Exception):
+            calculate_alpha_solar_wind_speed(count_rates_with_uncertainties, energies)
 
     def test_calculate_combined_sweeps(self):
         file_path = Path(
