@@ -245,7 +245,7 @@ def create_swapi_l3b_cdf(geometric_calibration_file, efficiency_calibration_file
 def create_swapi_l3a_cdf(proton_temperature_density_calibration_file, alpha_temperature_density_calibration_file,
                          clock_angle_and_flow_deflection_calibration_file, geometric_factor_calibration_file,
                          instrument_response_calibration_file, density_of_neutral_helium_calibration_file,
-                         cdf_file, mock_spice):
+                         imap_swapi_efficiency_lut_file, cdf_file, mock_spice):
     ephemeris_time_for_epoch = 100000
     mock_spice.unitim.return_value = ephemeris_time_for_epoch
     mock_light_time = 122.0
@@ -273,6 +273,7 @@ def create_swapi_l3a_cdf(proton_temperature_density_calibration_file, alpha_temp
         alpha_temperature_density_calibration_file)
     clock_angle_and_flow_deflection_calibration_table = ClockAngleCalibrationTable.from_file(
         clock_angle_and_flow_deflection_calibration_file)
+    efficiency_calibration_table = EfficiencyCalibrationTable(imap_swapi_efficiency_lut_file)
     geometric_factor_calibration_table = GeometricFactorCalibrationTable.from_file(geometric_factor_calibration_file)
     instrument_response_calibration_table = InstrumentResponseLookupTableCollection.from_file(
         instrument_response_calibration_file)
@@ -283,6 +284,7 @@ def create_swapi_l3a_cdf(proton_temperature_density_calibration_file, alpha_temp
     swapi_l3_dependencies = SwapiL3ADependencies(swapi_data, proton_temperature_density_calibration_table,
                                                  alpha_temperature_density_calibration_table,
                                                  clock_angle_and_flow_deflection_calibration_table,
+                                                 efficiency_calibration_table,
                                                  geometric_factor_calibration_table,
                                                  instrument_response_calibration_table,
                                                  density_of_neutral_helium_calibration_table)
@@ -1047,7 +1049,8 @@ if __name__ == "__main__":
                 "tests/test_data/swapi/imap_swapi_energy-gf-pui-lut_20100101_v001.csv",
                 "tests/test_data/swapi/imap_swapi_instrument-response-lut_20241023_v000.zip",
                 "tests/test_data/swapi/imap_swapi_l2_density-of-neutral-helium-lut-text-not-cdf_20241023_v002.cdf",
-                str(get_test_data_path("swapi/imap_swapi_l2_50-sweeps_20250606_v003.cdf"))
+                "tests/test_data/swapi/imap_swapi_efficiency-lut_20241020_v000.dat",
+                str(get_test_data_path("swapi/imap_swapi_l2_50-sweeps_20250606_v003.cdf")),
             )
             print(paths)
         if "l3b" in sys.argv:
