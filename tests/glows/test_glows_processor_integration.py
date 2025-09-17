@@ -25,7 +25,7 @@ from imap_l3_processing.glows.l3a.utils import read_l2_glows_data, create_glows_
 from imap_l3_processing.glows.l3d.utils import PATH_TO_L3D_TOOLKIT
 from imap_l3_processing.models import InputMetadata
 from tests.test_helpers import get_run_local_data_path, get_test_data_path, get_test_instrument_team_data_path, \
-    with_tempdir, create_glows_mock_query_results
+    with_tempdir, create_glows_mock_query_results, run_periodically
 
 GLOWS_L3E_INTEGRATION_DATA_DIR = get_run_local_data_path("glows_l3bcde_integration_data_dir")
 
@@ -181,22 +181,22 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
         self._setup_integration_test()
 
         input_files = [
-            # "imap_glows_l3a_hist_20250428-repoint01013_v001.cdf",
-            # "imap_glows_l3a_hist_20250429-repoint01014_v001.cdf",
-            # "imap_glows_l3a_hist_20250510-repoint01025_v001.cdf",
-            # "imap_glows_l3a_hist_20250511-repoint01026_v001.cdf",
-            # "imap_glows_l3a_hist_20250525-repoint01040_v001.cdf",
-            # "imap_glows_l3a_hist_20250526-repoint01041_v001.cdf",
-            # "imap_glows_l3a_hist_20250606-repoint01053_v001.cdf",
-            # "imap_glows_l3a_hist_20250607-repoint01054_v001.cdf",
-            "reprocessing/imap_glows_l3a_hist_20250428-repoint01013_v001.cdf",
-            "reprocessing/imap_glows_l3a_hist_20250429-repoint01014_v001.cdf",
-            "reprocessing/imap_glows_l3a_hist_20250510-repoint01025_v001.cdf",
-            "reprocessing/imap_glows_l3a_hist_20250511-repoint01026_v001.cdf",
-            "reprocessing/imap_glows_l3a_hist_20250525-repoint01040_v001.cdf",
-            "reprocessing/imap_glows_l3a_hist_20250526-repoint01041_v001.cdf",
-            "reprocessing/imap_glows_l3a_hist_20250606-repoint01053_v001.cdf",
-            "reprocessing/imap_glows_l3a_hist_20250607-repoint01054_v001.cdf",
+            "imap_glows_l3a_hist_20250428-repoint01013_v001.cdf",
+            "imap_glows_l3a_hist_20250429-repoint01014_v001.cdf",
+            "imap_glows_l3a_hist_20250510-repoint01025_v001.cdf",
+            "imap_glows_l3a_hist_20250511-repoint01026_v001.cdf",
+            "imap_glows_l3a_hist_20250525-repoint01040_v001.cdf",
+            "imap_glows_l3a_hist_20250526-repoint01041_v001.cdf",
+            "imap_glows_l3a_hist_20250606-repoint01053_v001.cdf",
+            "imap_glows_l3a_hist_20250607-repoint01054_v001.cdf",
+            # "reprocessing/imap_glows_l3a_hist_20250428-repoint01013_v001.cdf",
+            # "reprocessing/imap_glows_l3a_hist_20250429-repoint01014_v001.cdf",
+            # "reprocessing/imap_glows_l3a_hist_20250510-repoint01025_v001.cdf",
+            # "reprocessing/imap_glows_l3a_hist_20250511-repoint01026_v001.cdf",
+            # "reprocessing/imap_glows_l3a_hist_20250525-repoint01040_v001.cdf",
+            # "reprocessing/imap_glows_l3a_hist_20250526-repoint01041_v001.cdf",
+            # "reprocessing/imap_glows_l3a_hist_20250606-repoint01053_v001.cdf",
+            # "reprocessing/imap_glows_l3a_hist_20250607-repoint01054_v001.cdf",
             "imap_glows_uv-anisotropy-1CR_20100101_v001.json",
             "imap_glows_WawHelioIonMP_20100101_v001.json",
             "imap_glows_bad-days-list_20100101_v001.dat",

@@ -64,9 +64,7 @@ class GlowsProcessor(Processor):
 
             l3bc_initializer_data: GlowsL3BCInitializerData = GlowsL3BCInitializer.get_crs_to_process(self.dependencies)
 
-            crs_to_process_infos = [f"{dep.carrington_rotation_number} with version {dep.version}" for dep in l3bc_initializer_data.l3bc_dependencies]
-
-            if len(crs_to_process_infos) > 0:
+            if len(l3bc_initializer_data.l3bc_dependencies) > 0:
                 logger.info("Found CRs to Process L3BC:")
                 for dep in l3bc_initializer_data.l3bc_dependencies:
                     l3a_file_names = [l3a_d["filename"] for l3a_d in dep.l3a_data]
@@ -87,24 +85,20 @@ class GlowsProcessor(Processor):
             version_number, glows_l3d_dependency, old_l3d = l3d_initializer_result
 
             logger.info(f"Processing L3d with version: {version_number}")
-
             process_l3d_result = process_l3d(glows_l3d_dependency, version_number)
-
-            if process_l3d_result is not None:
-                logger.info(f"Finished processing L3d up to CR: {process_l3d_result.last_processed_cr}")
-                products_list.extend([*process_l3d_result.l3d_text_file_paths, process_l3d_result.l3d_cdf_file_path])
-
-                logger.info(f"Saved L3d CDF output to: {process_l3d_result.l3d_cdf_file_path}")
-                for txt_file in process_l3d_result.l3d_text_file_paths:
-                    logger.info(f"Saved L3d text file output to: {txt_file}")
-            else:
+            if process_l3d_result is None:
                 return products_list
 
+            logger.info(f"Finished processing L3d up to CR: {process_l3d_result.last_processed_cr}")
+            logger.info(f"Saved L3d CDF output to: {process_l3d_result.l3d_cdf_file_path}")
+            for txt_file in process_l3d_result.l3d_text_file_paths:
+                logger.info(f"Saved L3d text file output to: {txt_file}")
+
             l3e_initializer_output = GlowsL3EInitializer.get_repointings_to_process(process_l3d_result, old_l3d, l3bc_initializer_data.repoint_file_path)
-
-            logger.info(f"Processing L3e for repointings: {l3e_initializer_output.repointings.repointing_numbers}")
-
-            products_list.extend(process_l3e(l3e_initializer_output))
+            if l3e_initializer_output is not None:
+                logger.info(f"Processing L3e for repointings: {l3e_initializer_output.repointings.repointing_numbers}")
+                products_list.extend([*process_l3d_result.l3d_text_file_paths, process_l3d_result.l3d_cdf_file_path])
+                products_list.extend(process_l3e(l3e_initializer_output))
 
             return products_list
 
@@ -178,7 +172,7 @@ def process_l3bc(processor, initializer_data: GlowsL3BCInitializerData):
         l3b_data_product = GlowsL3BIonizationRate.from_instrument_team_dictionary(l3b_data, l3b_metadata)
         l3c_data_product = GlowsL3CSolarWind.from_instrument_team_dictionary(l3c_data, l3c_metadata)
 
-        l3b_data_product.parent_file_names += processor.get_parent_file_names([zip_path])
+        l3b_data_product.parent_file_names += processor.get_parent_file_names([*dependency.l3a_file_names, zip_path])
         l3b_cdf = save_data(l3b_data_product, cr_number=dependency.carrington_rotation_number)
 
         l3c_data_product.parent_file_names += processor.get_parent_file_names([zip_path, Path(l3b_cdf)])

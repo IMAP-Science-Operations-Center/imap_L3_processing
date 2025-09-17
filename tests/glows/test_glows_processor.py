@@ -33,10 +33,10 @@ from imap_l3_processing.glows.l3d.utils import PATH_TO_L3D_TOOLKIT
 from imap_l3_processing.glows.l3e.glows_l3e_call_arguments import GlowsL3eCallArguments
 from imap_l3_processing.glows.l3e.glows_l3e_dependencies import GlowsL3EDependencies
 from imap_l3_processing.glows.l3e.glows_l3e_hi_model import GlowsL3EHiData
-from imap_l3_processing.glows.l3e.glows_l3e_initializer import GlowsL3EInitializer, GlowsL3EInitializerOutput
+from imap_l3_processing.glows.l3e.glows_l3e_initializer import GlowsL3EInitializerOutput
 from imap_l3_processing.glows.l3e.glows_l3e_lo_model import GlowsL3ELoData
 from imap_l3_processing.glows.l3e.glows_l3e_ultra_model import GlowsL3EUltraData
-from imap_l3_processing.glows.l3e.glows_l3e_utils import GlowsL3eRepointings, determine_call_args_for_l3e_executable
+from imap_l3_processing.glows.l3e.glows_l3e_utils import GlowsL3eRepointings
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.utils import save_data
 from tests.test_helpers import get_test_instrument_team_data_path, get_test_data_path, get_test_data_folder, \
@@ -240,7 +240,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
                                                  version=1,
                                                  start_date=Mock(),
                                                  end_date=Mock(),
-                                                 repointing_file_path=sentinel.repointing_file_path, )
+                                                 repointing_file_path=sentinel.repointing_file_path)
 
         l3a_data_2 = {"filename": "some_file"}
         second_dependency = GlowsL3BCDependencies(l3a_data=[l3a_data_2],
@@ -459,6 +459,60 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
         processor_output = process_l3bc(processor, initializer_data)
 
         self.assertEqual([], processor_output.data_products)
+
+    @patch('imap_l3_processing.glows.glows_processor.GlowsProcessor.archive_dependencies')
+    @patch("imap_l3_processing.glows.glows_processor.save_data")
+    def test_l3bc_uses_all_l3a_file_names_for_l3b_parents(self, mock_save_data, mock_archive_deps):
+        mock_archive_deps.return_value = Path("some/path/to/archive.zip")
+
+        l3a_data_folder_path = get_test_data_path('glows/l3a_products')
+
+        l3a_filenames = ['imap_glows_l3a_hist_20100104-repoint00004_v001.cdf', 'imap_glows_l3a_hist_20100119-repoint00019_v001.cdf']
+        l3a_data = [create_glows_l3a_dictionary_from_cdf(l3a_data_folder_path / file) for file in l3a_filenames]
+
+        l3bc_deps = GlowsL3BCDependencies(
+            l3a_data=l3a_data,
+            ancillary_files={
+                'uv_anisotropy': get_test_data_path('glows/imap_glows_uv-anisotropy-1CR_20100101_v001.json'),
+                'WawHelioIonMP_parameters': get_test_data_path('glows/imap_glows_WawHelioIonMP_20100101_v002.json'),
+                'bad_days_list': get_test_data_path('glows/imap_glows_bad-days-list_v001.dat'),
+                'pipeline_settings': get_test_instrument_team_data_path(
+                    'glows/imap_glows_pipeline-settings-L3bc_20250707_v002.json')
+            },
+            external_files={
+                'f107_raw_data': get_test_instrument_team_data_path('glows/f107_fluxtable.txt'),
+                'omni_raw_data': get_test_instrument_team_data_path('glows/omni2_all_years.dat'),
+            },
+            carrington_rotation_number=2092,
+            start_date=Mock(), end_date=Mock(), version=1,
+            repointing_file_path=sentinel.repointing_file_path,
+        )
+
+        initializer_data = GlowsL3BCInitializerData(
+            external_dependencies=sentinel.externel_deps,
+            l3bc_dependencies=[l3bc_deps],
+            l3bs_by_cr={},
+            l3cs_by_cr={},
+            repoint_file_path=sentinel.repoint_file_path
+        )
+
+        processor = GlowsProcessor(dependencies=Mock(), input_metadata=Mock())
+        _ = process_l3bc(processor, initializer_data)
+
+        self.assertEqual(2, mock_save_data.call_count)
+        [l3b_data_product] = mock_save_data.call_args_list[0].args
+
+        expected_parents = [
+            *l3a_filenames,
+            'archive.zip',
+            'f107_fluxtable.txt',
+            'imap_glows_uv-anisotropy-1CR_20100101_v001.json',
+            'imap_glows_WawHelioIonMP_20100101_v002.json',
+            'imap_glows_bad-days-list_v001.dat',
+            'imap_glows_pipeline-settings-L3bc_20250707_v002.json',
+        ]
+
+        self.assertEqual(set(expected_parents), set(l3b_data_product.parent_file_names))
 
 
     @patch("imap_l3_processing.glows.glows_processor.create_glows_l3b_json_file_from_cdf")
