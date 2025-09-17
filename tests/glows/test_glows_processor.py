@@ -116,15 +116,14 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
 
         mock_fetched_dependencies = mock_glows_dependencies_class.fetch_dependencies.return_value
         mock_fetched_dependencies.ancillary_files = {"settings": get_test_instrument_team_data_path(
-            "glows/imap_glows_pipeline-settings_20250707_v002.json")}
-        mock_fetched_dependencies.repointing = 5
+            "glows/imap_glows_pipeline-settings_20250101_v001.json")}
         l3a_json_path = get_test_data_folder() / "glows" / "imap_glows_l3a_20130908085214_orbX_modX_p_v00.json"
         with open(l3a_json_path) as f:
             mock_l3a_data.return_value.data = json.load(f)
         mock_cdf_path = mock_save_data.return_value
 
         input_metadata = InputMetadata(instrument, outgoing_data_level, start_date, end_date,
-                                       outgoing_version)
+                                       outgoing_version, repointing=5)
 
         mock_processing_input_collection = Mock()
         parent_file_path = Path("test/parent_path")
@@ -138,7 +137,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
         mock_glows_dependencies_class.fetch_dependencies.assert_called_with(mock_processing_input_collection)
         expected_data_to_save = create_glows_l3a_from_dictionary(
             mock_l3a_data.return_value.data, replace(input_metadata, descriptor=GLOWS_L3A_DESCRIPTOR))
-        expected_data_to_save.input_metadata.repointing = mock_fetched_dependencies.repointing
+
         expected_data_to_save.parent_file_names = expected_parent_file_names
         actual_data = mock_save_data.call_args.args[0]
         self.assertEqual(expected_parent_file_names, actual_data.parent_file_names)
@@ -184,7 +183,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
                 with tempfile.TemporaryDirectory() as tempdir:
                     temp_file_path = Path(tempdir) / "settings.json"
                     example_settings = get_test_instrument_team_data_path(
-                        "glows/imap_glows_pipeline-settings_20250707_v002.json")
+                        "glows/imap_glows_pipeline-settings_20250101_v001.json")
 
                     with open(example_settings) as file:
                         loaded_file = json.load(file)
