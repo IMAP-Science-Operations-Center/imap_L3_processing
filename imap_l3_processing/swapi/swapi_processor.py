@@ -75,7 +75,7 @@ class SwapiProcessor(Processor):
                 coincidence_count_rates_with_uncertainty = uarray(data_chunk.coincidence_count_rate,
                                                                   data_chunk.coincidence_count_rate_uncertainty)
                 proton_solar_wind_speed, a, phi, b = calculate_proton_solar_wind_speed(
-                    coincidence_count_rates_with_uncertainty, data_chunk.energy, data_chunk.sci_start_time)
+                    coincidence_count_rates_with_uncertainty, data_chunk.energy, data_chunk.sci_start_time, data_chunk.spin_angles)
                 clock_angle = calculate_clock_angle(dependencies.clock_angle_and_flow_deflection_calibration_table,
                                                     proton_solar_wind_speed, a, phi, b)
                 deflection_angle = calculate_deflection_angle(
@@ -209,7 +209,7 @@ class SwapiProcessor(Processor):
                 coincidence_count_rates_with_uncertainty = uarray(data_chunk.coincidence_count_rate,
                                                                   data_chunk.coincidence_count_rate_uncertainty)
                 proton_solar_wind_speed, a, phi, b = calculate_proton_solar_wind_speed(
-                    coincidence_count_rates_with_uncertainty, data_chunk.energy, data_chunk.sci_start_time)
+                    coincidence_count_rates_with_uncertainty, data_chunk.energy, data_chunk.sci_start_time, data_chunk.spin_angles)
 
                 clock_angle = calculate_clock_angle(dependencies.clock_angle_and_flow_deflection_calibration_table,
                                                     proton_solar_wind_speed, a, phi, b)

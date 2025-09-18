@@ -25,26 +25,26 @@ def read_l2_data_from_dat(file_path: str) -> SwapiL2Data:
     epochs = start_time + twelve_seconds_in_nanoseconds * np.arange(len(data))
 
     energy_for_first_sweep = data[0, :, 2]
-    spin_angles = data[..., 3]
     coarse_sweep_energies = data[:, 1:63, 2]
     assert np.all(coarse_sweep_energies == coarse_sweep_energies[0])
 
     coincident_count_rates = data[..., 7]
+    spin_angles_degrees = data[..., 3]
 
     fake_coincident_count_rate_uncertainties = np.sqrt(6 * coincident_count_rates)
     return SwapiL2Data(epochs,
+                       spin_angles_degrees,
                        energy_for_first_sweep,
                        coincident_count_rates,
-                       spin_angles,
                        fake_coincident_count_rate_uncertainties)
 
 
 def read_l2_data(cdf_path: str) -> SwapiL2Data:
     cdf = CDF(cdf_path)
     return SwapiL2Data(cdf.raw_var("epoch")[...],
+                       cdf["spin_angles"][...],
                        cdf["energy"][...],
                        cdf["swp_coin_rate"][...],
-                       cdf["spin_angles"][...],
                        cdf["swp_coin_unc"][...])
 
 

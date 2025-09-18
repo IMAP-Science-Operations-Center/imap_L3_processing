@@ -1,5 +1,4 @@
 import shutil
-from pathlib import Path
 
 import imap_data_access
 from imap_data_access.file_validation import generate_imap_file_path
@@ -23,7 +22,7 @@ for file in files_to_upload:
             write_path = generate_imap_file_path(file).construct_path()
             shutil.copy(get_test_data_path('swapi') / file, write_path)
         else:
-            imap_data_access.upload(Path(__file__).parent.parent / "swapi" / "test_data" / file)
+            imap_data_access.upload(get_test_data_path("swapi") / file)
             print("Successfully uploaded", file)
     except Exception as e:
         print(f'File "{file}" failed to upload with exception {e}')

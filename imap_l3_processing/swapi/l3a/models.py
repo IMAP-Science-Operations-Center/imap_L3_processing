@@ -127,6 +127,7 @@ class SwapiL3PickupIonData(DataProduct):
 @dataclass
 class SwapiL2Data:
     sci_start_time: np.ndarray[float]
+    spin_angles: np.ndarray[float]
     energy: np.ndarray[float]
     coincidence_count_rate: np.ndarray[float]
     coincidence_count_rate_uncertainty: np.ndarray[float]

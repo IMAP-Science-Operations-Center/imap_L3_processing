@@ -7,7 +7,6 @@ import numpy as np
 import scipy.optimize
 import spiceypy
 import uncertainties
-from imap_processing.swapi.l2 import swapi_l2
 from lmfit import Parameters
 from numpy import ndarray
 from uncertainties import ufloat
@@ -193,9 +192,11 @@ def build_forward_model(fitting_params: FittingParameters, ephemeris_time: float
                                                                            ephemeris_time,
                                                                            "IMAP_DPS",
                                                                            "ECLIPJ2000")
-    imap_position_eclip2000_frame_state = spiceypy.spkezr(
-        "IMAP", ephemeris_time, "ECLIPJ2000", "NONE", "SUN")[0][0:3]
-    distance_km, longitude, latitude = spiceypy.reclat(imap_position_eclip2000_frame_state)
+    # imap_position_eclip2000_frame_state = spiceypy.spkezr(
+    #     "IMAP", ephemeris_time, "ECLIPJ2000", "NONE", "SUN")[0][0:3]
+    # distance_km, longitude, latitude = spiceypy.reclat(imap_position_eclip2000_frame_state)
+    distance_km = 0.99 * ONE_AU_IN_KM
+    longitude = np.deg2rad(270)
     psi = np.rad2deg(longitude) - HELIUM_INFLOW_LONGITUDE_DEGREES_IN_ECLIPJ2000
 
     return ForwardModel(fitting_params, ephemeris_time,
@@ -270,8 +271,8 @@ def calc_chi_squared_lm_fit(params: Parameters, observed_count_rates: np.ndarray
     fit_params = FittingParameters(cooling_index, ionization_rate, cutoff_speed, background_count_rate)
     modeled_rates = calculator.model_count_rate(indices_and_energy_centers, fit_params, ephemeris_time)
 
-    modeled_counts = modeled_rates * sweep_count * swapi_l2.SWAPI_LIVETIME
-    observed_counts = observed_count_rates * sweep_count * swapi_l2.SWAPI_LIVETIME
+    modeled_counts = modeled_rates * sweep_count * 0.167
+    observed_counts = observed_count_rates * sweep_count * 0.167
     result = np.sqrt(2 * (modeled_counts - observed_counts + observed_counts * np.log(
         observed_counts / modeled_counts)))
     return result
@@ -288,8 +289,16 @@ def model_count_rate_integral(response_lookup_table: InstrumentResponseLookupTab
 
 def convert_velocity_to_reference_frame(velocity: ndarray, ephemeris_time: float, from_frame: str,
                                         to_frame: str) -> ndarray:
-    rotation_matrix = spiceypy.sxform(from_frame, to_frame, ephemeris_time)
+    # rotation_matrix = spiceypy.sxform(from_frame, to_frame, ephemeris_time)
 
+    rotation_matrix = np.eye(6) if from_frame == "IMAP_SWAPI" else np.array([
+        [0, 1, 0, 0, 0, 0],
+        [0, 0, 1, 0, 0, 0],
+        [1, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 1, 0],
+        [0, 0, 0, 0, 0, 1],
+        [0, 0, 0, 1, 0, 0],
+    ])
     state = velocity[..., np.newaxis]
 
     state_in_target_frame = np.matmul(rotation_matrix[3:6, 3:6], state)
@@ -299,7 +308,8 @@ def convert_velocity_to_reference_frame(velocity: ndarray, ephemeris_time: float
 def convert_velocity_relative_to_imap(velocity, ephemeris_time, from_frame, to_frame):
     velocity_in_target_frame_relative_to_imap = convert_velocity_to_reference_frame(velocity, ephemeris_time,
                                                                                     from_frame, to_frame)
-    imap_velocity = spiceypy.spkezr("IMAP", ephemeris_time, to_frame, "NONE", "SUN")[0][3:6]
+    # imap_velocity = spiceypy.spkezr("IMAP", ephemeris_time, to_frame, "NONE", "SUN")[0][3:6]
+    imap_velocity = np.array([0,0,0])
 
     return velocity_in_target_frame_relative_to_imap + imap_velocity
 
@@ -320,8 +330,9 @@ def calculate_pui_velocity_vector(speed: ndarray, elevation: ndarray, azimuth: n
 
 
 def calculate_pui_energy_cutoff(ephemeris_time: float, sw_velocity_in_imap_frame):
-    imap_velocity = spiceypy.spkezr("IMAP", ephemeris_time, "ECLIPJ2000", "NONE", "SUN")[0][
-                    3:6]
+    # imap_velocity = spiceypy.spkezr("IMAP", ephemeris_time, "ECLIPJ2000", "NONE", "SUN")[0][
+    #                 3:6]
+    imap_velocity = np.array([0,0,0])
     solar_wind_velocity = convert_velocity_relative_to_imap(
         sw_velocity_in_imap_frame, ephemeris_time, "IMAP_DPS", "ECLIPJ2000")
     hydrogen_velocity = spiceypy.latrec(-HYDROGEN_INFLOW_SPEED_IN_KM_PER_SECOND,

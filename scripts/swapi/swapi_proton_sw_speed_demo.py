@@ -36,10 +36,10 @@ def read_l2_data_from_dat(file_path: str) -> SwapiL2Data:
 
 def read_l2_data(cdf_path: str) -> SwapiL2Data:
     cdf = CDF(cdf_path)
-    return SwapiL2Data(cdf.raw_var("epoch")[...],
+    return SwapiL2Data(cdf.raw_var("sci_start_time")[...],
+                       cdf["spin_angles"][...],
                        cdf["energy"][...],
                        cdf["swp_coin_rate"][...],
-                       cdf["spin_angles"][...],
                        cdf["swp_coin_unc"][...])
 
 
