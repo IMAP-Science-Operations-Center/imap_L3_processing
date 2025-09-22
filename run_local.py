@@ -245,7 +245,6 @@ def create_swapi_l3a_cdf(proton_temperature_density_calibration_file, alpha_temp
                          clock_angle_and_flow_deflection_calibration_file, geometric_factor_calibration_file,
                          instrument_response_calibration_file, density_of_neutral_helium_calibration_file,
                          imap_swapi_efficiency_lut_file, cdf_file):
-
     proton_temperature_density_calibration_table = ProtonTemperatureAndDensityCalibrationTable.from_file(
         proton_temperature_density_calibration_file)
     alpha_temperature_density_calibration_table = AlphaTemperatureDensityCalibrationTable.from_file(
@@ -732,10 +731,13 @@ def run_glows_l3a(file_path):
         input_metadata.repointing = repoint_number
 
         dependencies = GlowsL3ADependencies(l2_glows_data, {
-            "calibration_data": get_test_instrument_team_data_path("glows/imap_glows_calibration-data_20250101_v002.dat"),
+            "calibration_data": get_test_instrument_team_data_path(
+                "glows/imap_glows_calibration-data_20250101_v002.dat"),
             "settings": get_test_instrument_team_data_path("glows/imap_glows_pipeline-settings_20250101_v001.json"),
-            "time_dependent_bckgrd": get_test_instrument_team_data_path("glows/imap_glows_time-dep-bckgrd_20250101_v001.dat"),
-            "extra_heliospheric_bckgrd": get_test_instrument_team_data_path("glows/imap_glows_map-of-extra-helio-bckgrd_20250101_v002.dat"),
+            "time_dependent_bckgrd": get_test_instrument_team_data_path(
+                "glows/imap_glows_time-dep-bckgrd_20250101_v001.dat"),
+            "extra_heliospheric_bckgrd": get_test_instrument_team_data_path(
+                "glows/imap_glows_map-of-extra-helio-bckgrd_20250101_v002.dat"),
         })
 
         processor = GlowsProcessor(ProcessingInputCollection(), input_metadata)
@@ -1022,8 +1024,10 @@ if __name__ == "__main__":
     if "swapi" in sys.argv:
         if "l3a" in sys.argv:
             paths = create_swapi_l3a_cdf(
+                # "tests/test_data/swapi/imap_swapi_proton-density-temperature-lut_20240905_v001.dat",
                 "tests/test_data/swapi/imap_swapi_proton-density-temperature-lut_20240905_v000.dat",
                 "tests/test_data/swapi/imap_swapi_alpha-density-temperature-lut_20240920_v000.dat",
+                # "tests/test_data/swapi/imap_swapi_clock-angle-and-flow-deflection-lut_20240918_v001.dat",
                 "tests/test_data/swapi/imap_swapi_clock-angle-and-flow-deflection-lut_20240918_v000.dat",
                 "tests/test_data/swapi/imap_swapi_energy-gf-pui-lut_20100101_v001.csv",
                 "tests/test_data/swapi/imap_swapi_instrument-response-lut_20241023_v000.zip",
