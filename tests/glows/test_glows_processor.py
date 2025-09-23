@@ -116,7 +116,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
 
         mock_fetched_dependencies = mock_glows_dependencies_class.fetch_dependencies.return_value
         mock_fetched_dependencies.ancillary_files = {"settings": get_test_instrument_team_data_path(
-            "glows/imap_glows_pipeline-settings_20100101_v001.json")}
+            "glows/imap_glows_pipeline-settings_20100101_v002.json")}
         l3a_json_path = get_test_data_folder() / "glows" / "imap_glows_l3a_20130908085214_orbX_modX_p_v00.json"
         with open(l3a_json_path) as f:
             mock_l3a_data.return_value.data = json.load(f)
@@ -183,7 +183,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
                 with tempfile.TemporaryDirectory() as tempdir:
                     temp_file_path = Path(tempdir) / "settings.json"
                     example_settings = get_test_instrument_team_data_path(
-                        "glows/imap_glows_pipeline-settings_20100101_v001.json")
+                        "glows/imap_glows_pipeline-settings_20100101_v002.json")
 
                     with open(example_settings) as file:
                         loaded_file = json.load(file)
@@ -453,6 +453,54 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
             l3cs_by_cr={},
             repoint_file_path=sentinel.repoint_file_path
         )
+
+        processor = GlowsProcessor(dependencies=Mock(), input_metadata=Mock())
+        processor_output = process_l3bc(processor, initializer_data)
+
+        self.assertEqual([], processor_output.data_products)
+
+    @patch('imap_l3_processing.glows.glows_processor.GlowsProcessor.archive_dependencies')
+    @patch('imap_l3_processing.glows.glows_processor.generate_l3bc')
+    def test_process_l3bc_catches_exceptions_from_science_code_and_continues(self, mock_generate_l3bc, _):
+        l3a_data_folder_path = get_test_data_path('glows/l3a_products')
+        l3a_data = [
+            create_glows_l3a_dictionary_from_cdf(
+                l3a_data_folder_path / 'imap_glows_l3a_hist_20100201-repoint00032_v001.cdf')]
+
+        external_dependencies = ExternalDependencies(
+            f107_index_file_path=get_test_instrument_team_data_path('glows/f107_fluxtable.txt'),
+            omni2_data_path=get_test_instrument_team_data_path('glows/omni_2010.dat'),
+            lyman_alpha_path=None
+        )
+
+        l3bc_deps = GlowsL3BCDependencies(
+            l3a_data=l3a_data,
+            ancillary_files={
+                'uv_anisotropy': get_test_data_path('glows/imap_glows_uv-anisotropy-1CR_20100101_v001.json'),
+                'WawHelioIonMP_parameters': get_test_data_path('glows/imap_glows_WawHelioIonMP_20100101_v002.json'),
+                'bad_days_list': get_test_data_path('glows/imap_glows_bad-days-list_v001.dat'),
+                'pipeline_settings': get_test_instrument_team_data_path(
+                    'glows/imap_glows_pipeline-settings-L3bc_20250707_v002.json')
+            },
+            external_files={
+                'f107_raw_data': get_test_instrument_team_data_path('glows/f107_fluxtable.txt'),
+                'omni_raw_data': get_test_instrument_team_data_path('glows/omni_2010.dat'),
+            },
+            carrington_rotation_number=1,
+            start_date=Mock(), end_date=Mock(), version=1,
+            repointing_file_path=sentinel.repointing_file_path
+        )
+
+        initializer_data = GlowsL3BCInitializerData(
+            external_dependencies=external_dependencies,
+            l3bc_dependencies=[l3bc_deps],
+            l3bs_by_cr={},
+            l3cs_by_cr={},
+            repoint_file_path=sentinel.repoint_file_path
+        )
+
+        mock_generate_l3bc.side_effect = Exception(
+            'L3c not generated: observed cx rate is smaller than min of the cx_grid')
 
         processor = GlowsProcessor(dependencies=Mock(), input_metadata=Mock())
         processor_output = process_l3bc(processor, initializer_data)
