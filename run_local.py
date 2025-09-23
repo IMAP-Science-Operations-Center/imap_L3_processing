@@ -753,10 +753,13 @@ def run_glows_l3a(file_path):
         input_metadata.repointing = repoint_number
 
         dependencies = GlowsL3ADependencies(l2_glows_data, {
-            "calibration_data": get_test_instrument_team_data_path("glows/imap_glows_calibration-data_20250101_v002.dat"),
+            "calibration_data": get_test_instrument_team_data_path(
+                "glows/imap_glows_calibration-data_20250101_v002.dat"),
             "settings": get_test_instrument_team_data_path("glows/imap_glows_pipeline-settings_20250101_v001.json"),
-            "time_dependent_bckgrd": get_test_instrument_team_data_path("glows/imap_glows_time-dep-bckgrd_20250101_v001.dat"),
-            "extra_heliospheric_bckgrd": get_test_instrument_team_data_path("glows/imap_glows_map-of-extra-helio-bckgrd_20250101_v002.dat"),
+            "time_dependent_bckgrd": get_test_instrument_team_data_path(
+                "glows/imap_glows_time-dep-bckgrd_20250101_v001.dat"),
+            "extra_heliospheric_bckgrd": get_test_instrument_team_data_path(
+                "glows/imap_glows_map-of-extra-helio-bckgrd_20250101_v002.dat"),
         })
 
         processor = GlowsProcessor(ProcessingInputCollection(), input_metadata)
@@ -1199,7 +1202,7 @@ if __name__ == "__main__":
         if do_all or "spectral-index" in sys.argv:
             dependencies = LoL3SpectralFitDependencies(
                 RectangularIntensityMapData.read_from_path(Path(
-                    '/data/imap/lo/l3/2025/04/imap_lo_l3_l090-ena-h-sf-sp-ram-hae-4deg-6mo_20250415_v002.cdf'))
+                    'data/imap/lo/l3/2025/04/imap_lo_l3_l090-ena-h-sf-sp-ram-hae-4deg-6mo_20250415_v002.cdf'))
             )
 
             print(create_lo_spectral_index_cdf(dependencies))
@@ -1210,8 +1213,8 @@ if __name__ == "__main__":
             glows_l3_paths = list(glows_l3e_folder.iterdir())
 
             missing_paths, run_local_paths = try_get_many_run_local_paths([
-                "hi/full_spin_deps/l1c",
-                "hi/full_spin_deps/imap_hi_l2_h90-ena-h-sf-nsp-ram-hae-4deg-6mo_20250415_v001.cdf",
+                "lo/l1c",
+                "lo/imap_lo_l2_ilo-ena-h-sf-nsp-anti-hae-4deg-6mo_20250415_v001.cdf",
             ])
 
             if missing_paths:
