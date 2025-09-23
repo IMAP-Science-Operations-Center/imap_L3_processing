@@ -74,7 +74,10 @@ if not "log_id" in vars(args):
         records.append({key: val for key, val in processing_job.items() if key in relevant_fields})
 
     pd.set_option('display.max_colwidth', None)
-    print(pd.DataFrame.from_records(records).sort_values('started_at').tail(50))
+    if len(records) > 0:
+        print(pd.DataFrame.from_records(records).sort_values('started_at', na_position='last').tail(50))
+    else:
+        print("Found no jobs that matched query params!")
 else:
     logs = requests.get(url=f"{imap_dev_url}/processing-logs/{args.log_id}", headers=headers)
     print(logs.text)
