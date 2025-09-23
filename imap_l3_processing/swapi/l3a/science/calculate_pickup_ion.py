@@ -8,6 +8,7 @@ import scipy.optimize
 import spiceypy
 import uncertainties
 from lmfit import Parameters
+from matplotlib import pyplot as plt
 from numpy import ndarray
 from uncertainties import ufloat
 from uncertainties.unumpy import uarray
@@ -51,7 +52,7 @@ def calculate_pickup_ion_values(instrument_response_lookup_table, geometric_fact
     def make_parameters(cooling_index, ionization_rate, cutoff_speed, background_count_rate) -> Parameters:
         params = Parameters()
         params.add('cooling_index', value=cooling_index, min=1.0, max=5.0)
-        params.add('ionization_rate', value=ionization_rate, min=0.6e-7, max=2.1e-7)
+        params.add('ionization_rate', value=ionization_rate, min=0.6e-9, max=2.1e-7)
         params.add('cutoff_speed', value=cutoff_speed, min=sw_velocity * .8, max=sw_velocity * 1.2)
         params.add('background_count_rate', value=background_count_rate, min=0, max=0.2)
         return params
@@ -258,6 +259,9 @@ class ModelCountRateCalculator:
         return (geometric_factor / 2) * integral + forward_model.fitting_params.background_count_rate
 
 
+image_index = 0
+
+
 def calc_chi_squared_lm_fit(params: Parameters, observed_count_rates: np.ndarray,
                             indices_and_energy_centers: list[tuple[int, float]], calculator: ModelCountRateCalculator,
                             ephemeris_time: float, sweep_count: int):
@@ -275,6 +279,15 @@ def calc_chi_squared_lm_fit(params: Parameters, observed_count_rates: np.ndarray
     observed_counts = observed_count_rates * sweep_count * 0.167
     result = np.sqrt(2 * (modeled_counts - observed_counts + observed_counts * np.log(
         observed_counts / modeled_counts)))
+    energies = [e for (i, e) in indices_and_energy_centers]
+    plt.loglog(energies, observed_count_rates, label="input data")
+    plt.loglog(energies, modeled_rates, label="fitting output")
+    plt.title(f"{cooling_index:.3e} {ionization_rate:.3e} {cutoff_speed:.3e} {background_count_rate:.3e}")
+    plt.legend()
+    global image_index
+    image_index += 1
+    # plt.savefig(f"output_{image_index:04}.png")
+    plt.clf()
     return result
 
 
@@ -309,7 +322,7 @@ def convert_velocity_relative_to_imap(velocity, ephemeris_time, from_frame, to_f
     velocity_in_target_frame_relative_to_imap = convert_velocity_to_reference_frame(velocity, ephemeris_time,
                                                                                     from_frame, to_frame)
     # imap_velocity = spiceypy.spkezr("IMAP", ephemeris_time, to_frame, "NONE", "SUN")[0][3:6]
-    imap_velocity = np.array([0,0,0])
+    imap_velocity = np.array([0, 0, 0])
 
     return velocity_in_target_frame_relative_to_imap + imap_velocity
 
@@ -332,7 +345,7 @@ def calculate_pui_velocity_vector(speed: ndarray, elevation: ndarray, azimuth: n
 def calculate_pui_energy_cutoff(ephemeris_time: float, sw_velocity_in_imap_frame):
     # imap_velocity = spiceypy.spkezr("IMAP", ephemeris_time, "ECLIPJ2000", "NONE", "SUN")[0][
     #                 3:6]
-    imap_velocity = np.array([0,0,0])
+    imap_velocity = np.array([0, 0, 0])
     solar_wind_velocity = convert_velocity_relative_to_imap(
         sw_velocity_in_imap_frame, ephemeris_time, "IMAP_DPS", "ECLIPJ2000")
     hydrogen_velocity = spiceypy.latrec(-HYDROGEN_INFLOW_SPEED_IN_KM_PER_SECOND,
