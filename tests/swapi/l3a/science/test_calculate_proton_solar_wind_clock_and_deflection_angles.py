@@ -58,5 +58,5 @@ class TestCalculateProtonSolarWindClockAndDeflectionAngles(TestCase):
 
         calibration_table = ClockAngleCalibrationTable.from_file(file_path)
 
-        self.assertEqual(6.105, calibration_table.lookup_clock_offset(proton_solar_wind_speed, a_over_b))
+        self.assertAlmostEqual(6.105, calibration_table.lookup_clock_offset(proton_solar_wind_speed, a_over_b))
         self.assertEqual(1.625, calibration_table.lookup_flow_deflection(proton_solar_wind_speed, a_over_b))
