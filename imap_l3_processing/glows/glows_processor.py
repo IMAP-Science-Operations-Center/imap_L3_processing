@@ -215,6 +215,7 @@ def process_l3d(dependencies: GlowsL3DDependencies, version: int) -> Optional[Gl
     last_processed_cr = None
     try:
         while True:
+            logger.info(f"Preparing to process CR: {cr_to_process}")
             output: subprocess.CompletedProcess = run(
                 [sys.executable, './generate_l3d.py', f'{cr_to_process}', json.dumps(file_manifest)],
                 cwd=str(PATH_TO_L3D_TOOLKIT),
