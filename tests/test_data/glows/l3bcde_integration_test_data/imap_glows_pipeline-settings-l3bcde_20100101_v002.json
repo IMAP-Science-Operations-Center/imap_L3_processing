@@ -957,7 +957,7 @@
   "no_vg_point_flag": -99,
   "hdr_txt_lines_number": 30,
   "WawHelioIonGlows_fill_value": -1,
-  "start_cr": 2297,
+  "start_cr": 2091,
   "l3d_source_flags": {
     "uv_anis_interpolated": 30001,
     "speed_GLOWS": 20000,

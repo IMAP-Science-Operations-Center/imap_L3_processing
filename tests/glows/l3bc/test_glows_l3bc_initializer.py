@@ -247,7 +247,7 @@ class TestGlowsL3BCInitializer(unittest.TestCase):
                     create_glows_mock_query_results(["imap_glows_uv-anisotropy-1CR_20100101_v001.dat"]),
                     create_glows_mock_query_results(["imap_glows_WawHelioIonMP_20100101_v001.dat"]),
                     create_glows_mock_query_results(["imap_glows_bad-days-list_20100101_v001.dat"]),
-                    create_glows_mock_query_results(["imap_glows_pipeline-settings-l3bcde_20100101_v001.json"])
+                    create_glows_mock_query_results(["imap_glows_pipeline-settings-l3bcde_20100101_v002.json"])
                 ]
 
                 actual_crs_to_process = GlowsL3BCInitializer.get_crs_to_process(ProcessingInputCollection(RepointInput("imap_2026_269_05.repoint.csv")))
