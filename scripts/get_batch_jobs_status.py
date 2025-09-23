@@ -1,9 +1,13 @@
 import enum
+import os
 from argparse import ArgumentParser
 from datetime import datetime
 
 import pandas as pd
 import requests
+from dotenv import load_dotenv
+
+load_dotenv()
 
 """
     "status": "SUCCEEDED",
@@ -27,7 +31,6 @@ class Command(enum.Enum):
     Logs = "logs"
 
 arg_parser = ArgumentParser()
-arg_parser.add_argument('--api_key', required=True, type=str)
 
 subparsers = arg_parser.add_subparsers()
 
@@ -45,16 +48,17 @@ log_parser.add_argument('log_id', type=str)
 args = arg_parser.parse_args()
 print(args)
 
-imap_dev_url = "https://api.dev.imap-mission.com/api-key"
-headers = {'x-api-key': args.api_key}
+imap_dev_url = os.getenv("IMAP_DATA_ACCESS_URL")
+headers = {'x-api-key': os.getenv("IMAP_API_KEY")}
 
 if not "log_id" in vars(args):
-    query_params = { key: val for key, val in vars(args).items() if val is not None and key not in ['api_key', 'command']}
+    query_params = { key: val for key, val in vars(args).items() if val is not None and key not in ['command']}
     response = requests.get(url=f"{imap_dev_url}/processing-jobs", headers=headers, params=query_params)
     processing_jobs = response.json()
     records = []
     for processing_job in processing_jobs:
-        processing_job["started_at"] = datetime.fromisoformat(processing_job["started_at"]).strftime("%Y-%m-%d %H:%M:%S")
+        if processing_job["started_at"] is not None:
+            processing_job["started_at"] = datetime.fromisoformat(processing_job["started_at"]).strftime("%Y-%m-%d %H:%M:%S")
 
         relevant_fields = [
             "status",
@@ -70,7 +74,7 @@ if not "log_id" in vars(args):
         records.append({key: val for key, val in processing_job.items() if key in relevant_fields})
 
     pd.set_option('display.max_colwidth', None)
-    print(pd.DataFrame.from_records(records).sort_values('started_at'))
+    print(pd.DataFrame.from_records(records).sort_values('started_at').tail(50))
 else:
     logs = requests.get(url=f"{imap_dev_url}/processing-logs/{args.log_id}", headers=headers)
     print(logs.text)
