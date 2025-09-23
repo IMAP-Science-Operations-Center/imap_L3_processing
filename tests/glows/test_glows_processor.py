@@ -116,7 +116,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
 
         mock_fetched_dependencies = mock_glows_dependencies_class.fetch_dependencies.return_value
         mock_fetched_dependencies.ancillary_files = {"settings": get_test_instrument_team_data_path(
-            "glows/imap_glows_pipeline-settings_20250101_v001.json")}
+            "glows/imap_glows_pipeline-settings_20100101_v001.json")}
         l3a_json_path = get_test_data_folder() / "glows" / "imap_glows_l3a_20130908085214_orbX_modX_p_v00.json"
         with open(l3a_json_path) as f:
             mock_l3a_data.return_value.data = json.load(f)
@@ -183,7 +183,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
                 with tempfile.TemporaryDirectory() as tempdir:
                     temp_file_path = Path(tempdir) / "settings.json"
                     example_settings = get_test_instrument_team_data_path(
-                        "glows/imap_glows_pipeline-settings_20250101_v001.json")
+                        "glows/imap_glows_pipeline-settings_20100101_v001.json")
 
                     with open(example_settings) as file:
                         loaded_file = json.load(file)

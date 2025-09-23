@@ -753,10 +753,10 @@ def run_glows_l3a(file_path):
         input_metadata.repointing = repoint_number
 
         dependencies = GlowsL3ADependencies(l2_glows_data, {
-            "calibration_data": get_test_instrument_team_data_path("glows/imap_glows_calibration-data_20250101_v002.dat"),
-            "settings": get_test_instrument_team_data_path("glows/imap_glows_pipeline-settings_20250101_v001.json"),
-            "time_dependent_bckgrd": get_test_instrument_team_data_path("glows/imap_glows_time-dep-bckgrd_20250101_v001.dat"),
-            "extra_heliospheric_bckgrd": get_test_instrument_team_data_path("glows/imap_glows_map-of-extra-helio-bckgrd_20250101_v002.dat"),
+            "calibration_data": get_test_instrument_team_data_path("glows/imap_glows_calibration-data_20100101_v002.dat"),
+            "settings": get_test_instrument_team_data_path("glows/imap_glows_pipeline-settings_20100101_v001.json"),
+            "time_dependent_bckgrd": get_test_instrument_team_data_path("glows/imap_glows_time-dep-bckgrd_20100101_v001.dat"),
+            "extra_heliospheric_bckgrd": get_test_instrument_team_data_path("glows/imap_glows_map-of-extra-helio-bckgrd_20100101_v002.dat"),
         })
 
         processor = GlowsProcessor(ProcessingInputCollection(), input_metadata)
@@ -1083,9 +1083,8 @@ if __name__ == "__main__":
             path = create_hit_direct_event_cdf()
             print(f"hit direct event data product: {path}")
         else:
-            mag_data = read_l1d_mag_data(get_test_data_path("mag/imap_mag_l1d_norm-mago_20250101_v001.cdf"))
-            hit_data = read_l2_hit_data(
-                get_test_data_path("hit/imap_hit_l2_macropixel-intensity_20250101_v003.cdf"))
+            mag_data = read_l1d_mag_data(r"C:\Users\Petty\Downloads\HIT Validation-20250922T131655Z-1-001\HIT Validation\imap_mag_l1d_norm-mago_20100106_v001.cdf")
+            hit_data = read_l2_hit_data(r"C:\Users\Petty\Downloads\HIT Validation-20250922T131655Z-1-001\HIT Validation\imap_hit_l2_macropixel-intensity_20100106_v001.cdf")
             dependencies = HITL3SectoredDependencies(mag_l1d_data=mag_data, data=hit_data)
             print(f"hit macropixel data product: {create_hit_sectored_cdf(dependencies)}")
 

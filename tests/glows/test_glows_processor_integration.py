@@ -76,10 +76,10 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
         input_metadata.repointing = l2_science_file_path.repointing
 
         dependencies = GlowsL3ADependencies(l2_glows_data, {
-            "calibration_data": get_test_instrument_team_data_path("glows/imap_glows_calibration-data_20250101_v002.dat"),
-            "settings": get_test_instrument_team_data_path("glows/imap_glows_pipeline-settings_20250101_v001.json"),
-            "time_dependent_bckgrd": get_test_instrument_team_data_path("glows/imap_glows_time-dep-bckgrd_20250101_v001.dat"),
-            "extra_heliospheric_bckgrd": get_test_instrument_team_data_path("glows/imap_glows_map-of-extra-helio-bckgrd_20250101_v002.dat"),
+            "calibration_data": get_test_instrument_team_data_path("glows/imap_glows_calibration-data_20100101_v002.dat"),
+            "settings": get_test_instrument_team_data_path("glows/imap_glows_pipeline-settings_20100101_v001.json"),
+            "time_dependent_bckgrd": get_test_instrument_team_data_path("glows/imap_glows_time-dep-bckgrd_20100101_v001.dat"),
+            "extra_heliospheric_bckgrd": get_test_instrument_team_data_path("glows/imap_glows_map-of-extra-helio-bckgrd_20100101_v002.dat"),
         })
 
         processor = GlowsProcessor(ProcessingInputCollection(), input_metadata)
@@ -343,12 +343,12 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
                     "spacecraft_velocity_average",
                     "spacecraft_velocity_std_dev",
                     "spin_axis_orientation_average",
-                    "spin_axis_orientation_std_dev",
-                    "bad_time_flag_occurrences"
+                    "spin_axis_orientation_std_dev"
                 ]
                 for var in vector_vars:
                     cdf[var][0] = np.array(list(instrument_data[var].values()))
 
+                cdf["bad_time_flag_occurrences"][0] = list(instrument_data["bad_time_flag_occurences"].values())
                 cdf["number_of_good_l1b_inputs"][0] = instrument_data["header"]["number_of_l1b_files_used"]
                 cdf["total_l1b_inputs"][0] = instrument_data["header"]["number_of_all_l1b_files"]
 
