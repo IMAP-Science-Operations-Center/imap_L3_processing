@@ -224,15 +224,16 @@ def create_example_ultra_l1c_pset(
 def _write_ultra_l1c_cdf_with_parents(
         out_path: Path = get_run_local_data_path("ultra/fake_l1c_psets/test_pset.cdf"),
         date: str = "2025-09-01T00:00:00"):
-    out_xarray = create_example_ultra_l1c_pset(nside=1, timestr=date)
+    out_xarray = create_example_ultra_l1c_pset(nside=1, timestr=date, energy_dependent_exposure=True)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.unlink(missing_ok=True)
 
     with CDF(str(out_path), readonly=False, masterpath="") as cdf:
         cdf.new("counts", out_xarray["counts"].values)
-        cdf.new("exposure_factor", out_xarray["exposure_time"].values)
+        cdf.new("exposure_factor", out_xarray["exposure_factor"].values)
         cdf.new("background_rates", np.full_like(out_xarray["counts"], 0.001))
         cdf.new("observation_time", np.full_like(out_xarray["counts"], 1))
+        cdf.new("quality_flags", out_xarray["quality_flags"].values)
         cdf.new("sensitivity", out_xarray["sensitivity"].values)
         cdf.new(CoordNames.ELEVATION_L1C.value, out_xarray[CoordNames.ELEVATION_L1C.value].values, recVary=False)
         cdf.new(CoordNames.AZIMUTH_L1C.value, out_xarray[CoordNames.AZIMUTH_L1C.value].values, recVary=False)
@@ -252,6 +253,7 @@ def _write_ultra_l1c_cdf_with_parents(
                      "epoch")
         _add_depends(cdf["observation_time"], [CoordNames.ENERGY_ULTRA_L1C.value, CoordNames.HEALPIX_INDEX.value],
                      "epoch")
+        _add_depends(cdf["quality_flags"], [CoordNames.ENERGY_ULTRA_L1C.value, CoordNames.HEALPIX_INDEX.value], "epoch")
         _add_depends(cdf["energy_bin_delta"], [CoordNames.ENERGY_ULTRA_L1C.value])
 
         for var in cdf:

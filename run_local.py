@@ -17,6 +17,7 @@ import spiceypy
 import xarray as xr
 from imap_data_access.processing_input import AncillaryInput, ProcessingInputCollection, ScienceInput, \
     RepointInput
+from imap_processing.spice.geometry import SpiceFrame
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.codice.l3.hi.codice_hi_processor import CodiceHiProcessor
@@ -1269,7 +1270,7 @@ if __name__ == "__main__":
                 l3e_glows_paths
             )
 
-            healpix_sp_corrected_data = processor._process_survival_probability(deps=dependencies)
+            healpix_sp_corrected_data = processor._process_survival_probability(deps=dependencies, spice_frame_name=SpiceFrame.IMAP_HAE)
             rectangular_sp_data_product = processor._process_healpix_intensity_to_rectangular(healpix_sp_corrected_data,
                                                                                               spacing_degree)
 
