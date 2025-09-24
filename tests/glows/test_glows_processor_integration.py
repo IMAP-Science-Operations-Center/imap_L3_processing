@@ -200,7 +200,7 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
             "imap_glows_uv-anisotropy-1CR_20100101_v001.json",
             "imap_glows_WawHelioIonMP_20100101_v001.json",
             "imap_glows_bad-days-list_20100101_v001.dat",
-            "imap_glows_pipeline-settings-l3bcde_20100101_v002.json",
+            "imap_glows_pipeline-settings-l3bcde_20100101_v003.json",
             "imap_glows_plasma-speed-2010a_20100101_v001.dat",
             "imap_glows_proton-density-2010a_20100101_v001.dat",
             "imap_glows_uv-anisotropy-2010a_20100101_v001.dat",
