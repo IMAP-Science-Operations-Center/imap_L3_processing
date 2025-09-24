@@ -29,6 +29,7 @@ class TestHitProcessor(TestCase):
             Processor
         )
 
+    @patch('imap_l3_processing.hit.l3.hit_processor.transform_to_10_minute_chunks')
     @patch("imap_l3_processing.utils.spiceypy")
     @patch('imap_l3_processing.hit.l3.hit_processor.save_data')
     @patch('imap_l3_processing.hit.l3.hit_processor.HITL3SectoredDependencies.fetch_dependencies')
@@ -45,7 +46,7 @@ class TestHitProcessor(TestCase):
                                          mock_get_sector_unit_vectors, mock_get_hit_bin_polar_coordinates,
                                          mock_calculate_unit_vector,
                                          mock_fetch_dependencies, mock_save_data,
-                                         mock_spiceypy):
+                                         mock_spiceypy, mock_transform_epochs):
         mock_spiceypy.ktotal.return_value = 0
 
         input_metadata = InputMetadata(
@@ -120,8 +121,10 @@ class TestHitProcessor(TestCase):
         mock_hit_data.delta_plus_nemgsi = np.array([delta_plus_NeMgSi_time1, delta_plus_NeMgSi_time2])
         mock_hit_data.delta_minus_nemgsi = np.array([delta_minus_NeMgSi_time1, delta_minus_NeMgSi_time2])
 
-        mock_dependencies.data = mock_hit_data
+        mock_dependencies.data = sentinel.pre_transform_hit_data
         mock_fetch_dependencies.return_value = mock_dependencies
+
+        mock_transform_epochs.return_value = mock_hit_data
 
         mock_calculate_unit_vector.side_effect = [sentinel.mag_unit_vector1, sentinel.mag_unit_vector2]
         mock_get_hit_bin_polar_coordinates.return_value = (
@@ -232,6 +235,8 @@ class TestHitProcessor(TestCase):
         processor = HitProcessor(mock_processing_input_collection, input_metadata)
         product = processor.process()
         mock_fetch_dependencies.assert_called_once_with(mock_processing_input_collection)
+
+        mock_transform_epochs.assert_called_once_with(sentinel.pre_transform_hit_data)
 
         mock_mag_data.rebin_to.assert_called_once_with(mock_hit_data.epoch, mock_hit_data.epoch_delta)
 

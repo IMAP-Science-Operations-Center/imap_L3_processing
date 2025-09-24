@@ -11,7 +11,7 @@ from imap_l3_processing.hit.l3.pha.pha_event_reader import PHAEventReader, RawPH
 from imap_l3_processing.hit.l3.pha.science.calculate_pha import process_pha_event
 from imap_l3_processing.hit.l3.sectored_products.models import HitPitchAngleDataProduct
 from imap_l3_processing.hit.l3.sectored_products.science.sectored_products_algorithms import get_sector_unit_vectors, \
-    get_hit_bin_polar_coordinates
+    get_hit_bin_polar_coordinates, transform_to_10_minute_chunks
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.pitch_angles import calculate_unit_vector, calculate_pitch_angle, calculate_gyrophase, \
     rotate_particle_vectors_from_hit_despun_to_imap_despun, rebin_by_pitch_angle_and_gyrophase
@@ -161,7 +161,8 @@ class HitProcessor(Processor):
         number_of_gyrophase_bins = 15
 
         mag_data = dependencies.mag_l1d_data
-        hit_data = dependencies.data
+
+        hit_data = transform_to_10_minute_chunks(dependencies.data)
 
         input_intensity_data_by_species = {
             "hydrogen": (hit_data.h, hit_data.delta_plus_h, hit_data.delta_minus_h),
