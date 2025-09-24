@@ -3,9 +3,9 @@ from pathlib import Path
 from typing import Optional
 
 import imap_data_access
-from imap_data_access import ProcessingInputCollection, ScienceInput, AncillaryInput
+from imap_data_access import ProcessingInputCollection, ScienceInput, AncillaryInput, ScienceFilePath
 
-from imap_l3_processing.glows.l3bc.models import ExternalDependencies
+from imap_l3_processing.glows.l3bc.models import ExternalDependencies, read_pipeline_settings
 from imap_l3_processing.glows.l3bc.utils import read_cdf_parents
 from imap_l3_processing.glows.l3d.glows_l3d_dependencies import GlowsL3DDependencies
 from imap_l3_processing.glows.l3d.utils import query_for_most_recent_l3d
@@ -31,6 +31,14 @@ class GlowsL3DInitializer:
         [electron_density_2010a] = imap_data_access.query(table='ancillary', instrument='glows', descriptor='electron-density-2010a', version='latest')
         [pipeline_settings_l3bcde] = imap_data_access.query(table='ancillary', instrument='glows', descriptor='pipeline-settings-l3bcde', version='latest')
         # @formatter:on
+
+        pipeline_settings = read_pipeline_settings(imap_data_access.download(pipeline_settings_l3bcde["file_path"]))
+
+        l3bs = [l3b for l3b in l3bs if ScienceFilePath(l3b).cr >= pipeline_settings["start_cr"]]
+        l3cs = [l3c for l3c in l3cs if ScienceFilePath(l3c).cr >= pipeline_settings["start_cr"]]
+
+        if len(l3bs) == 0 and len(l3cs) == 0:
+            return None
 
         processing_input_collection = ProcessingInputCollection(
             *[ScienceInput(science_file) for science_file in l3bs + l3cs],
