@@ -1,0 +1,72 @@
+import yaml
+
+from imap_l3_processing.maps.map_descriptors import parse_map_descriptor
+
+coordinate_systems = {
+    "hae": "ECLIPJ2000 (HAE)",
+    "hgi": "Heliographic Inertial (HGI)",
+    "hre": "Heliospheric Ram Ecliptic (HRE)",
+    "hnu": "Heliospheric Nose Upfield (HNU)",
+    "gcs": "Galactic (GCS)",
+    "rc": "Ribbon-centered (RC)",
+    "ccs": "custom (CCS)"
+}
+
+logical_source_description_parts = {
+    "u90": "Ultra-90 Sensor",
+    "u45": "Ultra-45 Sensor",
+    "ena": "ENA Intensity",
+    "spx": "Spectral Index",
+    'h': "Hydrogen",
+    'sf': "Spacecraft Frame",
+    'hf': "Heliospheric Frame",
+    'sp': "Survival Probability-Corrected",
+    'nsp': "Non-Survival Probability-Corrected",
+    'full': "Full Spin",
+    "hae": "HAE",
+    "2deg": "Rectangular 2 degree",
+    "4deg": "Rectangular 4 degree",
+    "6deg": "Rectangular 6 degree",
+    "3mo": "3 Month Map",
+    "6mo": "6 Month Map",
+    "12mo": "12 Month Map",
+}
+
+descriptors = [
+    "u90-ena-h-sf-sp-full-hae-2deg-6mo",
+    "u90-ena-h-sf-sp-full-hae-4deg-6mo",
+    "u90-ena-h-sf-sp-full-hae-6deg-6mo",
+    "u90-spx-h-sf-sp-full-hae-2deg-6mo",
+    "u90-spx-h-sf-sp-full-hae-4deg-6mo",
+    "u90-spx-h-sf-sp-full-hae-6deg-6mo",
+    "u90-ena-h-sf-sp-full-hae-2deg-3mo",
+    "u90-ena-h-sf-sp-full-hae-4deg-3mo",
+    "u90-ena-h-sf-sp-full-hae-6deg-3mo",
+    "u90-spx-h-sf-sp-full-hae-2deg-3mo",
+    "u90-spx-h-sf-sp-full-hae-4deg-3mo",
+    "u90-spx-h-sf-sp-full-hae-6deg-3mo",
+]
+
+for descriptor in descriptors:
+    descriptor_parts = descriptor.split('-')
+    instrument = descriptor_parts[0][0]
+    sensor = descriptor_parts[0][1:]
+    [quantity, species, frame, sp_corrected, spin_range, coordinate_system, pixelation, time_range] = descriptor_parts[1:]
+
+    products = {
+        descriptor: {
+            "Logical_source_description": "IMAP Ultra Instrument Level 3 " + ', '.join([logical_source_description_parts[part] for part in descriptor.split("-")]),
+            "Map_descriptor": descriptor,
+            "Map_duration": time_range,
+            "Instrument": f"Ultra {sensor}" if sensor in ["45", "90"] else "Ultra",
+            "Reference_frame": "Spacecraft" if frame == "sf" else "Heliospheric (CG)",
+            "Coordinate_system": coordinate_systems[coordinate_system],
+            "Tessellation_type": "lon, lat" if "deg" in pixelation else "pix index",
+            "Spin_range": "Full Spin",
+            "Survival_corrected": "True" if sp_corrected == "sp" else "False",
+            "Species": species.capitalize(),
+            "Principal_data_quantity": "ENA Intensity" if quantity == "ena" else "ENA Spectral Index",
+        }
+    }
+
+    print(yaml.dump(products))
