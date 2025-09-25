@@ -11,8 +11,8 @@ from imap_processing.spice.repoint import set_global_repoint_table_paths
 from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDependencies
 from imap_l3_processing.glows.l3bc.models import CRToProcess, ExternalDependencies
 from imap_l3_processing.glows.l3bc.utils import get_pointing_date_range, get_date_range_of_cr, get_best_ancillary, \
-    read_cdf_parents, \
     get_cr_for_date_time
+from imap_l3_processing.utils import read_cdf_parents
 
 logger = logging.getLogger(__name__)
 

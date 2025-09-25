@@ -8,6 +8,7 @@ from imap_data_access.file_validation import ScienceFilePath
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.models import InputMetadata
+from imap_l3_processing.utils import read_cdf_parents
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +33,7 @@ class HiL3Initializer:
         for map in possible_maps:
             start_time = map.input_metadata.start_date.strftime("%Y%m%d")
             if l3_result := already_made.get(start_time):
-                if map.input_files.issubset(get_parent_file_names(l3_result['file_path'])):
+                if map.input_files.issubset(read_cdf_parents(l3_result['file_path'])):
                     continue
                 map.input_metadata.version = f'v{int(l3_result['version'][1:]) + 1:03}'
             maps_to_make.append(map)
@@ -60,8 +61,7 @@ class HiL3Initializer:
 
         for l2_file_path in l2_file_paths:
             start_date = datetime.strptime(ScienceFilePath(l2_file_path).start_date, "%Y%m%d")
-            l1c_names = get_parent_file_names(l2_file_path)
-            # ASSUMING l1c have repointing in file names
+            l1c_names = read_cdf_parents(l2_file_path)
             l1c_repointings = set()
             for l1 in l1c_names:
                 try:
@@ -81,19 +81,9 @@ class HiL3Initializer:
                                              instrument='hi',
                                              data_level='l3',
                                              start_date=start_date,
-                                             end_date=None,
+                                             end_date=start_date,
                                              version='v001',
                                              descriptor=descriptor
                                          )
                                          ))
         return possible_maps
-
-
-def get_parent_file_names(l2_file: str) -> set[str]:
-    l2_path = imap_data_access.download(l2_file)
-    with CDF(str(l2_path)) as cdf:
-        parents = cdf.attrs.get("Parents")
-        if parents is None:
-            logger.info("Parents attribute was not found on the L2.")
-            return set()
-        return set(parents)

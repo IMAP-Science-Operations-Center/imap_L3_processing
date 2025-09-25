@@ -23,14 +23,6 @@ from imap_l3_processing.glows.l3a.models import GlowsL3LightCurve, PHOTON_FLUX_U
     SPACECRAFT_VELOCITY_AVERAGE_CDF_VAR_NAME, NUM_OF_BINS_CDF_VAR_NAME
 
 
-def read_cdf_parents(server_file_name: str) -> set[str]:
-    downloaded_path = imap_data_access.download(server_file_name)
-
-    with CDF(str(downloaded_path)) as cdf:
-        parents = set(cdf.attrs["Parents"])
-    return parents
-
-
 def get_best_ancillary(start_date: datetime, end_date: datetime, ancillary_query_results: list[dict]) -> Optional[str]:
     valid_ancillaries = []
     for ancillary_file in ancillary_query_results:

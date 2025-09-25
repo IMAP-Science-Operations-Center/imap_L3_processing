@@ -149,7 +149,7 @@ def environment_variables(env_vars: dict):
     return decorator
 
 
-def create_glows_mock_query_results(file_names: list[str], ingestion_dates: Optional[list[datetime]] = None) -> list[dict]:
+def create_mock_query_results(instrument: str, file_names: list[str], ingestion_dates: Optional[list[datetime]] = None) -> list[dict]:
     file_paths = []
 
     if ingestion_dates is None:
@@ -160,7 +160,7 @@ def create_glows_mock_query_results(file_names: list[str], ingestion_dates: Opti
         match imap_file_path:
             case ScienceFilePath():
                 file_paths.append({
-                    "instrument": "glows",
+                    "instrument": instrument,
                     "data_level": imap_file_path.data_level,
                     "descriptor": imap_file_path.descriptor,
                     "start_date": imap_file_path.start_date,
@@ -172,7 +172,7 @@ def create_glows_mock_query_results(file_names: list[str], ingestion_dates: Opti
                 })
             case AncillaryFilePath():
                 file_paths.append({
-                    "instrument": "glows",
+                    "instrument": instrument,
                     "descriptor": imap_file_path.descriptor,
                     "start_date": imap_file_path.start_date,
                     "end_date": imap_file_path.end_date,

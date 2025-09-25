@@ -8,7 +8,7 @@ from imap_data_access import RepointInput
 from imap_l3_processing.glows.l3d.models import GlowsL3DProcessorOutput
 from imap_l3_processing.glows.l3e.glows_l3e_initializer import GlowsL3EInitializer, GlowsL3EInitializerOutput
 from imap_l3_processing.glows.l3e.glows_l3e_utils import GlowsL3eRepointings
-from tests.test_helpers import create_glows_mock_query_results
+from tests.test_helpers import create_mock_query_results
 
 
 class TestGlowsL3EInitializer(unittest.TestCase):
@@ -21,7 +21,7 @@ class TestGlowsL3EInitializer(unittest.TestCase):
     def test_get_repointings_to_process(self, mock_query, mock_get_most_recently_uploaded_ancillary,
                                             mock_find_first_updated_cr, mock_determine_l3e_files_to_produce,
                                             mock_fetch_dependencies, mock_get_pointing_date_range):
-        mock_query.side_effect = create_glows_mock_query_results([
+        mock_query.side_effect = create_mock_query_results("glows", [
             'imap_glows_ionization-files_20200101_v000.cdf',
             'imap_glows_pipeline-settings-l3bcde_20200101_v000.cdf',
             'imap_glows_energy-grid-lo_20200101_v000.cdf',
@@ -33,14 +33,14 @@ class TestGlowsL3EInitializer(unittest.TestCase):
         ])
 
         mock_get_most_recently_uploaded_ancillary.side_effect = [
-            create_glows_mock_query_results(['imap_glows_ionization-files_20200101_v000.cdf'])[0],
-            create_glows_mock_query_results(['imap_glows_pipeline-settings-l3bcde_20200101_v000.cdf'])[0],
-            create_glows_mock_query_results(['imap_glows_energy-grid-lo_20200101_v000.cdf'])[0],
-            create_glows_mock_query_results(['imap_glows_tess-xyz-8_20200101_v000.cdf'])[0],
-            create_glows_mock_query_results(['imap_glows_elongation-data_20200101_v000.cdf'])[0],
-            create_glows_mock_query_results(['imap_glows_energy-grid-hi_20200101_v000.cdf'])[0],
-            create_glows_mock_query_results(['imap_glows_energy-grid-ultra_20200101_v000.cdf'])[0],
-            create_glows_mock_query_results(['imap_glows_tess-ang-16_20200101_v000.cdf'])[0],
+            create_mock_query_results("glows", ['imap_glows_ionization-files_20200101_v000.cdf'])[0],
+            create_mock_query_results("glows", ['imap_glows_pipeline-settings-l3bcde_20200101_v000.cdf'])[0],
+            create_mock_query_results("glows", ['imap_glows_energy-grid-lo_20200101_v000.cdf'])[0],
+            create_mock_query_results("glows", ['imap_glows_tess-xyz-8_20200101_v000.cdf'])[0],
+            create_mock_query_results("glows", ['imap_glows_elongation-data_20200101_v000.cdf'])[0],
+            create_mock_query_results("glows", ['imap_glows_energy-grid-hi_20200101_v000.cdf'])[0],
+            create_mock_query_results("glows", ['imap_glows_energy-grid-ultra_20200101_v000.cdf'])[0],
+            create_mock_query_results("glows", ['imap_glows_tess-ang-16_20200101_v000.cdf'])[0],
         ]
 
         updated_l3d = Path('path/to/imap_glows_l3d_solar-hist_19470303-cr02091_v000.cdf')
@@ -165,14 +165,14 @@ class TestGlowsL3EInitializer(unittest.TestCase):
                                                                 mock_get_most_recently_uploaded_ancillary,
                                                                 _,):
         mock_get_most_recently_uploaded_ancillary.side_effect = [
-            create_glows_mock_query_results(['imap_glows_ionization-files_20200101_v000.cdf'])[0],
-            create_glows_mock_query_results(['imap_glows_pipeline-settings-l3bcde_20200101_v000.cdf'])[0],
-            create_glows_mock_query_results(['imap_glows_energy-grid-lo_20200101_v000.cdf'])[0],
-            create_glows_mock_query_results(['imap_glows_tess-xyz-8_20200101_v000.cdf'])[0],
-            create_glows_mock_query_results(['imap_glows_elongation-data_20200101_v000.cdf'])[0],
-            create_glows_mock_query_results(['imap_glows_energy-grid-hi_20200101_v000.cdf'])[0],
-            create_glows_mock_query_results(['imap_glows_energy-grid-ultra_20200101_v000.cdf'])[0],
-            create_glows_mock_query_results(['imap_glows_tess-ang-16_20200101_v000.cdf'])[0],
+            create_mock_query_results("glows", ['imap_glows_ionization-files_20200101_v000.cdf'])[0],
+            create_mock_query_results("glows", ['imap_glows_pipeline-settings-l3bcde_20200101_v000.cdf'])[0],
+            create_mock_query_results("glows", ['imap_glows_energy-grid-lo_20200101_v000.cdf'])[0],
+            create_mock_query_results("glows", ['imap_glows_tess-xyz-8_20200101_v000.cdf'])[0],
+            create_mock_query_results("glows", ['imap_glows_elongation-data_20200101_v000.cdf'])[0],
+            create_mock_query_results("glows", ['imap_glows_energy-grid-hi_20200101_v000.cdf'])[0],
+            create_mock_query_results("glows", ['imap_glows_energy-grid-ultra_20200101_v000.cdf'])[0],
+            create_mock_query_results("glows", ['imap_glows_tess-ang-16_20200101_v000.cdf'])[0],
         ]
         mock_determine_l3e_files_to_produce.return_value = GlowsL3eRepointings(repointing_numbers=[], ultra_repointings={}, hi_45_repointings={}, lo_repointings={}, hi_90_repointings={})
 

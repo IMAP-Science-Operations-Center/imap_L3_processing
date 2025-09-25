@@ -9,7 +9,7 @@ from imap_data_access import ProcessingInputCollection, RepointInput
 
 from imap_l3_processing.glows.l3bc.glows_l3bc_initializer import GlowsL3BCInitializer, GlowsL3BCInitializerData
 from imap_l3_processing.glows.l3bc.models import CRToProcess, ExternalDependencies
-from tests.test_helpers import create_glows_mock_query_results
+from tests.test_helpers import create_mock_query_results
 
 
 class TestGlowsL3BCInitializer(unittest.TestCase):
@@ -45,15 +45,15 @@ class TestGlowsL3BCInitializer(unittest.TestCase):
                                 mock_l3bc_deps_from_cr, mock_set_global_repoint_table_paths, mock_download):
 
         mock_query.side_effect = [
-            create_glows_mock_query_results([
+            create_mock_query_results("glows", [
                 "imap_glows_l3a_hist_20100101_v001.cdf",
                 "imap_glows_l3a_hist_20100201_v001.cdf"
             ]),
-            create_glows_mock_query_results([
+            create_mock_query_results("glows", [
                 "imap_glows_l3b_ion-rate-profile_20100101-cr02091_v001.cdf",
                 "imap_glows_l3b_ion-rate-profile_20100201-cr02092_v001.cdf"
             ]),
-            create_glows_mock_query_results([
+            create_mock_query_results("glows", [
                 "imap_glows_l3c_sw-profile_20100101-cr02091_v001.cdf",
                 "imap_glows_l3c_sw-profile_20100201-cr02092_v001.cdf"
             ]),
@@ -241,13 +241,13 @@ class TestGlowsL3BCInitializer(unittest.TestCase):
                 mock_group_l3a_by_cr.return_value = {2091: {"glows_l3a_hist_20100101_v001.cdf"}}
 
                 mock_query.side_effect = [
-                    create_glows_mock_query_results(["imap_glows_l3a_hist_20100101_v001.cdf"]),
-                    create_glows_mock_query_results(["imap_glows_l3b_ion-rate-profile_20100101-cr00001_v001.cdf"]),
-                    create_glows_mock_query_results(["imap_glows_l3c_sw-profile_20100101-cr00001_v001.cdf"]),
-                    create_glows_mock_query_results(["imap_glows_uv-anisotropy-1CR_20100101_v001.dat"]),
-                    create_glows_mock_query_results(["imap_glows_WawHelioIonMP_20100101_v001.dat"]),
-                    create_glows_mock_query_results(["imap_glows_bad-days-list_20100101_v001.dat"]),
-                    create_glows_mock_query_results(["imap_glows_pipeline-settings-l3bcde_20100101_v003.json"])
+                    create_mock_query_results("glows", ["imap_glows_l3a_hist_20100101_v001.cdf"]),
+                    create_mock_query_results("glows", ["imap_glows_l3b_ion-rate-profile_20100101-cr00001_v001.cdf"]),
+                    create_mock_query_results("glows", ["imap_glows_l3c_sw-profile_20100101-cr00001_v001.cdf"]),
+                    create_mock_query_results("glows", ["imap_glows_uv-anisotropy-1CR_20100101_v001.dat"]),
+                    create_mock_query_results("glows", ["imap_glows_WawHelioIonMP_20100101_v001.dat"]),
+                    create_mock_query_results("glows", ["imap_glows_bad-days-list_20100101_v001.dat"]),
+                    create_mock_query_results("glows", ["imap_glows_pipeline-settings-l3bcde_20100101_v003.json"])
                 ]
 
                 actual_crs_to_process = GlowsL3BCInitializer.get_crs_to_process(ProcessingInputCollection(RepointInput("imap_2026_269_05.repoint.csv")))

@@ -25,7 +25,7 @@ from imap_l3_processing.glows.l3a.utils import read_l2_glows_data, create_glows_
 from imap_l3_processing.glows.l3d.utils import PATH_TO_L3D_TOOLKIT
 from imap_l3_processing.models import InputMetadata
 from tests.test_helpers import get_run_local_data_path, get_test_data_path, get_test_instrument_team_data_path, \
-    with_tempdir, create_glows_mock_query_results, run_periodically
+    with_tempdir, create_mock_query_results, run_periodically
 
 GLOWS_L3E_INTEGRATION_DATA_DIR = get_run_local_data_path("glows_l3bcde_integration_data_dir")
 
@@ -271,7 +271,7 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
                 if file_dict is not None:
                     keys = set(file_dict.items())
                     if set(kwargs.items()).issubset(keys):
-                        query_result.extend(create_glows_mock_query_results([file_path.filename.name]))
+                        query_result.extend(create_mock_query_results("glows", [file_path.filename.name]))
             return query_result
 
         return fake_query

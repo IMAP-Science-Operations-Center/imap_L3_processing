@@ -6,9 +6,9 @@ import imap_data_access
 from imap_data_access import ProcessingInputCollection, ScienceInput, AncillaryInput, ScienceFilePath
 
 from imap_l3_processing.glows.l3bc.models import ExternalDependencies, read_pipeline_settings
-from imap_l3_processing.glows.l3bc.utils import read_cdf_parents
 from imap_l3_processing.glows.l3d.glows_l3d_dependencies import GlowsL3DDependencies
 from imap_l3_processing.glows.l3d.utils import query_for_most_recent_l3d
+from imap_l3_processing.utils import read_cdf_parents
 
 logger = logging.getLogger(__name__)
 

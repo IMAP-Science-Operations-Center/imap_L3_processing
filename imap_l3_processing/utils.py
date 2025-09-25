@@ -303,3 +303,11 @@ def furnish_spice_metakernel(start_date: datetime, end_date: datetime, kernel_ty
     spiceypy.furnsh(str(metakernel_path))
 
     return FurnishMetakernelOutput(metakernel_path=metakernel_path, spice_kernel_paths=downloaded_paths)
+
+def read_cdf_parents(server_file_name: str) -> set[str]:
+    downloaded_path = imap_data_access.download(server_file_name)
+
+    with CDF(str(downloaded_path)) as cdf:
+        parents = set(cdf.attrs["Parents"])
+    return parents
+

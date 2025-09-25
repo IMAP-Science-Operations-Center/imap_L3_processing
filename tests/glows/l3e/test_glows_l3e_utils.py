@@ -7,7 +7,7 @@ import numpy as np
 from imap_l3_processing.glows.l3e.glows_l3e_call_arguments import GlowsL3eCallArguments
 from imap_l3_processing.glows.l3e.glows_l3e_utils import determine_call_args_for_l3e_executable, \
     determine_l3e_files_to_produce, find_first_updated_cr
-from tests.test_helpers import get_test_data_path, create_glows_mock_query_results
+from tests.test_helpers import get_test_data_path, create_mock_query_results
 
 
 class TestGlowsL3EUtils(unittest.TestCase):
@@ -85,28 +85,28 @@ class TestGlowsL3EUtils(unittest.TestCase):
         })
 
         mock_query.side_effect = [
-            create_glows_mock_query_results([
+            create_mock_query_results("glows", [
                 'imap_glows_l3e_survival-probability-hi-90_20250101-repoint03682_v001.cdf',
                 'imap_glows_l3e_survival-probability-hi-90_20250101-repoint03683_v002.cdf',
                 'imap_glows_l3e_survival-probability-hi-90_20250101-repoint03684_v003.cdf',
                 'imap_glows_l3e_survival-probability-hi-90_20250101-repoint03685_v004.cdf',
                 'imap_glows_l3e_survival-probability-hi-90_20250101-repoint03686_v005.cdf',
             ]),
-            create_glows_mock_query_results([
+            create_mock_query_results("glows", [
                 'imap_glows_l3e_survival-probability-hi-45_20250101-repoint03683_v002.cdf',
                 'imap_glows_l3e_survival-probability-hi-45_20250101-repoint03684_v003.cdf',
                 'imap_glows_l3e_survival-probability-hi-45_20250101-repoint03685_v004.cdf',
                 'imap_glows_l3e_survival-probability-hi-45_20250101-repoint03686_v005.cdf',
                 'imap_glows_l3e_survival-probability-hi-45_20250101-repoint03687_v006.cdf',
             ]),
-            create_glows_mock_query_results([
+            create_mock_query_results("glows", [
                 'imap_glows_l3e_survival-probability-lo_20250101-repoint03684_v003.cdf',
                 'imap_glows_l3e_survival-probability-lo_20250101-repoint03685_v004.cdf',
                 'imap_glows_l3e_survival-probability-lo_20250101-repoint03686_v005.cdf',
                 'imap_glows_l3e_survival-probability-lo_20250101-repoint03687_v006.cdf',
                 'imap_glows_l3e_survival-probability-lo_20250101-repoint03688_v007.cdf',
             ]),
-            create_glows_mock_query_results([
+            create_mock_query_results("glows", [
                 'imap_glows_l3e_survival-probability-ultra_20250101-repoint03685_v004.cdf',
                 'imap_glows_l3e_survival-probability-ultra_20250101-repoint03686_v005.cdf',
                 'imap_glows_l3e_survival-probability-ultra_20250101-repoint03687_v006.cdf',

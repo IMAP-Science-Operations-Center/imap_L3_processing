@@ -19,11 +19,11 @@ from imap_l3_processing.swapi.l3a.models import SwapiL3AlphaSolarWindData
 from imap_l3_processing.utils import format_time, download_dependency, read_l1d_mag_data, save_data, \
     find_glows_l3e_dependencies, download_external_dependency, download_dependency_with_repointing, \
     combine_glows_l3e_with_l1c_pointing, furnish_local_spice, get_spice_parent_file_names, furnish_spice_metakernel, \
-    SpiceKernelTypes, FurnishMetakernelOutput
+    SpiceKernelTypes, FurnishMetakernelOutput, read_cdf_parents
 from imap_l3_processing.version import VERSION
 from tests.cdf.test_cdf_utils import TestDataProduct
 from tests.maps.test_builders import create_rectangular_spectral_index_map_data, create_rectangular_intensity_map_data
-from tests.test_helpers import get_spice_data_path
+from tests.test_helpers import get_spice_data_path, with_tempdir
 
 
 class TestUtils(TestCase):
@@ -622,3 +622,19 @@ class TestUtils(TestCase):
 
                 self.assertEqual(expected_output, actual_output)
 
+    @patch("imap_l3_processing.glows.l3bc.utils.imap_data_access.download")
+    @with_tempdir
+    def test_read_cdf_parents(self, temp_dir, mock_download):
+        cdf_downloaded_path = temp_dir / "l3b.cdf"
+
+        with CDF(str(cdf_downloaded_path), masterpath='') as cdf:
+            cdf.attrs["Parents"] = ["l3a_1.cdf", "l3a_2.cdf"]
+
+        mock_download.return_value = cdf_downloaded_path
+
+        cdf_path = "l3b.cdf"
+        parents = read_cdf_parents(cdf_path)
+
+        mock_download.assert_called_once_with(cdf_path)
+
+        self.assertEqual({"l3a_1.cdf", "l3a_2.cdf"}, parents)

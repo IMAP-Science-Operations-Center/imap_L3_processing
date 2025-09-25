@@ -2,7 +2,7 @@ import unittest
 from unittest.mock import patch, call, Mock, sentinel
 
 from imap_l3_processing.glows.l3d.glows_l3d_initializer import GlowsL3DInitializer
-from tests.test_helpers import create_glows_mock_query_results
+from tests.test_helpers import create_mock_query_results
 
 
 class TestGlowsL3DInitializer(unittest.TestCase):
@@ -189,12 +189,12 @@ class TestGlowsL3DInitializer(unittest.TestCase):
 
     def _create_ancillary_query_results(self, l3d_query_result):
         return [
-            create_glows_mock_query_results(l3d_query_result),
-            create_glows_mock_query_results(['imap_glows_plasma-speed-2010a_19470301_v001.dat']),
-            create_glows_mock_query_results(['imap_glows_proton-density-2010a_19470301_v000.dat']),
-            create_glows_mock_query_results(['imap_glows_uv-anisotropy-2010a_19470301_v000.dat']),
-            create_glows_mock_query_results(['imap_glows_photoion-2010a_19470301_v000.dat']),
-            create_glows_mock_query_results(['imap_glows_lya-2010a_19470301_v000.dat']),
-            create_glows_mock_query_results(['imap_glows_electron-density-2010a_19470301_v000.dat']),
-            create_glows_mock_query_results(['imap_glows_pipeline-settings-l3bcde_19470301_v000.json']),
+            create_mock_query_results("glows", l3d_query_result),
+            create_mock_query_results("glows", ['imap_glows_plasma-speed-2010a_19470301_v001.dat']),
+            create_mock_query_results("glows", ['imap_glows_proton-density-2010a_19470301_v000.dat']),
+            create_mock_query_results("glows", ['imap_glows_uv-anisotropy-2010a_19470301_v000.dat']),
+            create_mock_query_results("glows", ['imap_glows_photoion-2010a_19470301_v000.dat']),
+            create_mock_query_results("glows", ['imap_glows_lya-2010a_19470301_v000.dat']),
+            create_mock_query_results("glows", ['imap_glows_electron-density-2010a_19470301_v000.dat']),
+            create_mock_query_results("glows", ['imap_glows_pipeline-settings-l3bcde_19470301_v000.json']),
         ]
