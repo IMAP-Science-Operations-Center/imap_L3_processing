@@ -2,6 +2,8 @@ import yaml
 
 from imap_l3_processing.maps.map_descriptors import parse_map_descriptor
 
+instrument = "ultra"
+
 coordinate_systems = {
     "hae": "ECLIPJ2000 (HAE)",
     "hgi": "Heliographic Inertial (HGI)",
@@ -49,12 +51,11 @@ descriptors = [
 
 for descriptor in descriptors:
     descriptor_parts = descriptor.split('-')
-    instrument = descriptor_parts[0][0]
     sensor = descriptor_parts[0][1:]
     [quantity, species, frame, sp_corrected, spin_range, coordinate_system, pixelation, time_range] = descriptor_parts[1:]
 
     products = {
-        descriptor: {
+        f"imap_{instrument}_l3_{descriptor}": {
             "Logical_source_description": "IMAP Ultra Instrument Level 3 " + ', '.join([logical_source_description_parts[part] for part in descriptor.split("-")]),
             "Map_descriptor": descriptor,
             "Map_duration": time_range,

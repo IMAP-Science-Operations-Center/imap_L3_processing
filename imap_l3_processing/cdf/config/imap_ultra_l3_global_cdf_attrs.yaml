@@ -1,73 +1,179 @@
 imap_ultra_l3_u90-ena-h-sf-sp-full-hae-2deg-6mo:
-  Data_level: "3"
-  Data_type: l3_u90-ena-h-sf-sp-full-hae-2deg-6mo>Level-3 Survival Corrected Full 2 degree
-  Logical_source: imap_ultra_l3_u90-ena-h-sf-sp-full-hae-2deg-6mo
-  Logical_source_description: IMAP-Ultra Instrument Level-3 ENA Intensity, Ultra-90 sensor, Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin, HAE, Rectangular 2 degree, 6 Month Map
+  Coordinate_system: ECLIPJ2000 (HAE)
+  Instrument: Ultra 90
+  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-90 Sensor, ENA Intensity,
+    Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin, HAE, Rectangular
+    2 degree, 6 Month Map
+  Map_descriptor: u90-ena-h-sf-sp-full-hae-2deg-6mo
+  Map_duration: 6mo
+  Principal_data_quantity: ENA Intensity
+  Reference_frame: Spacecraft
+  Species: H
+  Spin_range: Full Spin
+  Survival_corrected: 'True'
+  Tessellation_type: lon, lat
 
 imap_ultra_l3_u90-ena-h-sf-sp-full-hae-4deg-6mo:
-  Data_level: "3"
-  Data_type: l3_u90-ena-h-sf-sp-full-hae-4deg-6mo>Level-3 Survival Corrected Full 4 degree
-  Logical_source: imap_ultra_l3_u90-ena-h-sf-sp-full-hae-4deg-6mo
-  Logical_source_description: IMAP-Ultra Instrument Level-3 ENA Intensity, Ultra-90 sensor, Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin, HAE, Rectangular 4 degree, 6 Month Map
+  Coordinate_system: ECLIPJ2000 (HAE)
+  Instrument: Ultra 90
+  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-90 Sensor, ENA Intensity,
+    Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin, HAE, Rectangular
+    4 degree, 6 Month Map
+  Map_descriptor: u90-ena-h-sf-sp-full-hae-4deg-6mo
+  Map_duration: 6mo
+  Principal_data_quantity: ENA Intensity
+  Reference_frame: Spacecraft
+  Species: H
+  Spin_range: Full Spin
+  Survival_corrected: 'True'
+  Tessellation_type: lon, lat
 
 imap_ultra_l3_u90-ena-h-sf-sp-full-hae-6deg-6mo:
-  Data_level: "3"
-  Data_type: l3_u90-ena-h-sf-sp-full-hae-6deg-6mo>Level-3 Survival Corrected Full 6 degree
-  Logical_source: imap_ultra_l3_u90-ena-h-sf-sp-full-hae-6deg-6mo
-  Logical_source_description: IMAP-Ultra Instrument Level-3 ENA Intensity, Ultra-90 sensor, Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin, HAE, Rectangular 6 degree, 6 Month Map
+  Coordinate_system: ECLIPJ2000 (HAE)
+  Instrument: Ultra 90
+  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-90 Sensor, ENA Intensity,
+    Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin, HAE, Rectangular
+    6 degree, 6 Month Map
+  Map_descriptor: u90-ena-h-sf-sp-full-hae-6deg-6mo
+  Map_duration: 6mo
+  Principal_data_quantity: ENA Intensity
+  Reference_frame: Spacecraft
+  Species: H
+  Spin_range: Full Spin
+  Survival_corrected: 'True'
+  Tessellation_type: lon, lat
 
 imap_ultra_l3_u90-spx-h-sf-sp-full-hae-2deg-6mo:
-  Data_level: "3"
-  Data_type: l3_u90-spx-h-sf-sp-full-hae-2deg-6mo>Level-3 Survival Corrected Full 2 degree
-  Logical_source: imap_ultra_l3_u90-spx-h-sf-sp-full-hae-2deg-6mo
-  Logical_source_description: IMAP-Ultra Instrument Level-3 Spectral Index, Ultra-90 sensor, Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin, HAE, Rectangular 2 degree, 6 Month Map
+  Coordinate_system: ECLIPJ2000 (HAE)
+  Instrument: Ultra 90
+  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-90 Sensor, Spectral
+    Index, Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin,
+    HAE, Rectangular 2 degree, 6 Month Map
+  Map_descriptor: u90-spx-h-sf-sp-full-hae-2deg-6mo
+  Map_duration: 6mo
+  Principal_data_quantity: ENA Spectral Index
+  Reference_frame: Spacecraft
+  Species: H
+  Spin_range: Full Spin
+  Survival_corrected: 'True'
+  Tessellation_type: lon, lat
 
 imap_ultra_l3_u90-spx-h-sf-sp-full-hae-4deg-6mo:
-  Data_level: "3"
-  Data_type: l3_u90-spx-h-sf-sp-full-hae-4deg-6mo>Level-3 Survival Corrected Full 4 degree
-  Logical_source: imap_ultra_l3_u90-spx-h-sf-sp-full-hae-4deg-6mo
-  Logical_source_description: IMAP-Ultra Instrument Level-3 Spectral Index, Ultra-90 sensor, Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin, HAE, Rectangular 4 degree, 6 Month Map
+  Coordinate_system: ECLIPJ2000 (HAE)
+  Instrument: Ultra 90
+  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-90 Sensor, Spectral
+    Index, Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin,
+    HAE, Rectangular 4 degree, 6 Month Map
+  Map_descriptor: u90-spx-h-sf-sp-full-hae-4deg-6mo
+  Map_duration: 6mo
+  Principal_data_quantity: ENA Spectral Index
+  Reference_frame: Spacecraft
+  Species: H
+  Spin_range: Full Spin
+  Survival_corrected: 'True'
+  Tessellation_type: lon, lat
 
 imap_ultra_l3_u90-spx-h-sf-sp-full-hae-6deg-6mo:
-  Data_level: "3"
-  Data_type: l3_u90-spx-h-sf-sp-full-hae-6deg-6mo>Level-3 Survival Corrected Full 6 degree
-  Logical_source: imap_ultra_l3_u90-spx-h-sf-sp-full-hae-6deg-6mo
-  Logical_source_description: IMAP-Ultra Instrument Level-3 Spectral Index, Ultra-90 sensor, Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin, HAE, Rectangular 6 degree, 6 Month Map
-
+  Coordinate_system: ECLIPJ2000 (HAE)
+  Instrument: Ultra 90
+  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-90 Sensor, Spectral
+    Index, Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin,
+    HAE, Rectangular 6 degree, 6 Month Map
+  Map_descriptor: u90-spx-h-sf-sp-full-hae-6deg-6mo
+  Map_duration: 6mo
+  Principal_data_quantity: ENA Spectral Index
+  Reference_frame: Spacecraft
+  Species: H
+  Spin_range: Full Spin
+  Survival_corrected: 'True'
+  Tessellation_type: lon, lat
 
 imap_ultra_l3_u90-ena-h-sf-sp-full-hae-2deg-3mo:
-  Data_level: "3"
-  Data_type: l3_u90-ena-h-sf-sp-full-hae-2deg-3mo>Level-3 Survival Corrected Full 2 degree
-  Logical_source: imap_ultra_l3_u90-ena-h-sf-sp-full-hae-2deg-3mo
-  Logical_source_description: IMAP-Ultra Instrument Level-3 ENA Intensity, Ultra-90 sensor, Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin, HAE, Rectangular 2 degree, 3 Month Map
+  Coordinate_system: ECLIPJ2000 (HAE)
+  Instrument: Ultra 90
+  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-90 Sensor, ENA Intensity,
+    Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin, HAE, Rectangular
+    2 degree, 3 Month Map
+  Map_descriptor: u90-ena-h-sf-sp-full-hae-2deg-3mo
+  Map_duration: 3mo
+  Principal_data_quantity: ENA Intensity
+  Reference_frame: Spacecraft
+  Species: H
+  Spin_range: Full Spin
+  Survival_corrected: 'True'
+  Tessellation_type: lon, lat
 
 imap_ultra_l3_u90-ena-h-sf-sp-full-hae-4deg-3mo:
-  Data_level: "3"
-  Data_type: l3_u90-ena-h-sf-sp-full-hae-4deg-3mo>Level-3 Survival Corrected Full 4 degree
-  Logical_source: imap_ultra_l3_u90-ena-h-sf-sp-full-hae-4deg-3mo
-  Logical_source_description: IMAP-Ultra Instrument Level-3 ENA Intensity, Ultra-90 sensor, Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin, HAE, Rectangular 4 degree, 3 Month Map
+  Coordinate_system: ECLIPJ2000 (HAE)
+  Instrument: Ultra 90
+  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-90 Sensor, ENA Intensity,
+    Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin, HAE, Rectangular
+    4 degree, 3 Month Map
+  Map_descriptor: u90-ena-h-sf-sp-full-hae-4deg-3mo
+  Map_duration: 3mo
+  Principal_data_quantity: ENA Intensity
+  Reference_frame: Spacecraft
+  Species: H
+  Spin_range: Full Spin
+  Survival_corrected: 'True'
+  Tessellation_type: lon, lat
 
 imap_ultra_l3_u90-ena-h-sf-sp-full-hae-6deg-3mo:
-  Data_level: "3"
-  Data_type: l3_u90-ena-h-sf-sp-full-hae-6deg-3mo>Level-3 Survival Corrected Full 6 degree
-  Logical_source: imap_ultra_l3_u90-ena-h-sf-sp-full-hae-6deg-3mo
-  Logical_source_description: IMAP-Ultra Instrument Level-3 ENA Intensity, Ultra-90 sensor, Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin, HAE, Rectangular 6 degree, 3 Month Map
+  Coordinate_system: ECLIPJ2000 (HAE)
+  Instrument: Ultra 90
+  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-90 Sensor, ENA Intensity,
+    Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin, HAE, Rectangular
+    6 degree, 3 Month Map
+  Map_descriptor: u90-ena-h-sf-sp-full-hae-6deg-3mo
+  Map_duration: 3mo
+  Principal_data_quantity: ENA Intensity
+  Reference_frame: Spacecraft
+  Species: H
+  Spin_range: Full Spin
+  Survival_corrected: 'True'
+  Tessellation_type: lon, lat
 
 imap_ultra_l3_u90-spx-h-sf-sp-full-hae-2deg-3mo:
-  Data_level: "3"
-  Data_type: l3_u90-spx-h-sf-sp-full-hae-2deg-3mo>Level-3 Survival Corrected Full 2 degree
-  Logical_source: imap_ultra_l3_u90-spx-h-sf-sp-full-hae-2deg-3mo
-  Logical_source_description: IMAP-Ultra Instrument Level-3 Spectral Index, Ultra-90 sensor, Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin, HAE, Rectangular 2 degree, 3 Month Map
+  Coordinate_system: ECLIPJ2000 (HAE)
+  Instrument: Ultra 90
+  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-90 Sensor, Spectral
+    Index, Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin,
+    HAE, Rectangular 2 degree, 3 Month Map
+  Map_descriptor: u90-spx-h-sf-sp-full-hae-2deg-3mo
+  Map_duration: 3mo
+  Principal_data_quantity: ENA Spectral Index
+  Reference_frame: Spacecraft
+  Species: H
+  Spin_range: Full Spin
+  Survival_corrected: 'True'
+  Tessellation_type: lon, lat
 
 imap_ultra_l3_u90-spx-h-sf-sp-full-hae-4deg-3mo:
-  Data_level: "3"
-  Data_type: l3_u90-spx-h-sf-sp-full-hae-4deg-3mo>Level-3 Survival Corrected Full 4 degree
-  Logical_source: imap_ultra_l3_u90-spx-h-sf-sp-full-hae-4deg-3mo
-  Logical_source_description: IMAP-Ultra Instrument Level-3 Spectral Index, Ultra-90 sensor, Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin, HAE, Rectangular 4 degree, 3 Month Map
+  Coordinate_system: ECLIPJ2000 (HAE)
+  Instrument: Ultra 90
+  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-90 Sensor, Spectral
+    Index, Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin,
+    HAE, Rectangular 4 degree, 3 Month Map
+  Map_descriptor: u90-spx-h-sf-sp-full-hae-4deg-3mo
+  Map_duration: 3mo
+  Principal_data_quantity: ENA Spectral Index
+  Reference_frame: Spacecraft
+  Species: H
+  Spin_range: Full Spin
+  Survival_corrected: 'True'
+  Tessellation_type: lon, lat
 
 imap_ultra_l3_u90-spx-h-sf-sp-full-hae-6deg-3mo:
-  Data_level: "3"
-  Data_type: l3_u90-spx-h-sf-sp-full-hae-6deg-3mo>Level-3 Survival Corrected Full 6 degree
-  Logical_source: imap_ultra_l3_u90-spx-h-sf-sp-full-hae-6deg-3mo
-  Logical_source_description: IMAP-Ultra Instrument Level-3 Spectral Index, Ultra-90 sensor, Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin, HAE, Rectangular 6 degree, 3 Month Map
-
+  Coordinate_system: ECLIPJ2000 (HAE)
+  Instrument: Ultra 90
+  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-90 Sensor, Spectral
+    Index, Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin,
+    HAE, Rectangular 6 degree, 3 Month Map
+  Map_descriptor: u90-spx-h-sf-sp-full-hae-6deg-3mo
+  Map_duration: 3mo
+  Principal_data_quantity: ENA Spectral Index
+  Reference_frame: Spacecraft
+  Species: H
+  Spin_range: Full Spin
+  Survival_corrected: 'True'
+  Tessellation_type: lon, lat
