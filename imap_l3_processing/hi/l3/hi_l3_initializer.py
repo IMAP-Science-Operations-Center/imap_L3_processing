@@ -1,25 +1,72 @@
 import logging
-from dataclasses import dataclass
-from datetime import datetime
 
 import imap_data_access
-from fontTools.config import Config
-from imap_data_access.file_validation import ImapFilePath
-from imap_data_access.file_validation import ScienceFilePath
 
-from imap_l3_processing.models import InputMetadata
-from imap_l3_processing.utils import read_cdf_parents
+from imap_l3_processing.maps.map_initializer import MapInitializer
 
 logger = logging.getLogger(__name__)
 
+other_descriptors = [
+    "hic-ena-h-hf-nsp-full-hae-6deg-1yr",
+    "hic-ena-h-hf-sp-full-hae-6deg-1yr",
+    "hic-ena-h-hf-nsp-full-hae-4deg-1yr",
+    "hic-ena-h-hf-sp-full-hae-4deg-1yr",
 
-@dataclass
-class PossibleMapToProduce:
-    input_files: set[str]
-    input_metadata: InputMetadata
+]
 
+spectral_index = [
+    "h45-spx-h-hf-sp-ram-hae-6deg-1yr",
+    "h45-spx-h-hf-sp-anti-hae-6deg-1yr",
+    "h45-spx-h-hf-sp-full-hae-6deg-6mo",
+    "h90-spx-h-hf-sp-ram-hae-6deg-1yr",
+    "h90-spx-h-hf-sp-anti-hae-6deg-1yr",
+    "h90-spx-h-hf-sp-full-hae-6deg-6mo",
+    "h45-spx-h-hf-sp-ram-hae-4deg-1yr",
+    "h45-spx-h-hf-sp-anti-hae-4deg-1yr",
+    "h45-spx-h-hf-sp-full-hae-4deg-6mo",
+    "h90-spx-h-hf-sp-ram-hae-4deg-1yr",
+    "h90-spx-h-hf-sp-anti-hae-4deg-1yr",
+    "h90-spx-h-hf-sp-full-hae-4deg-6mo",
+    "hic-spx-h-hf-sp-full-hae-4deg-1yr",
+    "hic-spx-h-hf-sp-full-hae-6deg-1yr",
+]
 
-class HiL3Initializer:
+HI_SP_MAP_DESCRIPTORS = [
+    "h90-ena-h-sf-sp-ram-hae-6deg-1yr",
+    "h90-ena-h-hf-sp-ram-hae-6deg-1yr",
+    "h90-ena-h-sf-sp-anti-hae-6deg-1yr",
+    "h90-ena-h-hf-sp-anti-hae-6deg-1yr",
+
+    "h90-ena-h-sf-sp-full-hae-6deg-6mo",
+    "h90-ena-h-hf-sp-full-hae-6deg-6mo",
+
+    "h45-ena-h-sf-sp-ram-hae-6deg-1yr",
+    "h45-ena-h-hf-sp-ram-hae-6deg-1yr",
+    "h45-ena-h-sf-sp-anti-hae-6deg-1yr",
+    "h45-ena-h-hf-sp-anti-hae-6deg-1yr",
+
+    "h45-ena-h-sf-sp-full-hae-6deg-6mo",
+    "h45-ena-h-hf-sp-full-hae-6deg-6mo",
+
+    "h90-ena-h-sf-sp-ram-hae-4deg-1yr",
+    "h90-ena-h-hf-sp-ram-hae-4deg-1yr",
+    "h90-ena-h-sf-sp-anti-hae-4deg-1yr",
+    "h90-ena-h-hf-sp-anti-hae-4deg-1yr",
+
+    "h90-ena-h-sf-sp-full-hae-4deg-6mo",
+    "h90-ena-h-hf-sp-full-hae-4deg-6mo",
+
+    "h45-ena-h-sf-sp-ram-hae-4deg-1yr",
+    "h45-ena-h-hf-sp-ram-hae-4deg-1yr",
+    "h45-ena-h-sf-sp-anti-hae-4deg-1yr",
+    "h45-ena-h-hf-sp-anti-hae-4deg-1yr",
+
+    "h45-ena-h-sf-sp-full-hae-4deg-6mo",
+    "h45-ena-h-hf-sp-full-hae-4deg-6mo",
+
+]
+
+class HiL3Initializer(MapInitializer):
     def __init__(self):
         sp_hi45_query_result = imap_data_access.query(
             instrument='glows',
@@ -37,57 +84,22 @@ class HiL3Initializer:
         )
         self.glows_hi90_file_by_repoint = {r["repointing"]: r["file_path"] for r in sp_hi90_query_result}
 
-        self.hi_l2_query_result = imap_data_access.query(instrument='hi', data_level='l2', version='latest')
-
+        hi_l2_query_result = imap_data_access.query(instrument='hi', data_level='l2', version='latest')
         hi_l3_query_result = imap_data_access.query(instrument='hi', data_level='l3', version='latest')
-        self.existing_l3_maps = {(qr["descriptor"], qr["start_date"]): qr["file_path"] for qr in hi_l3_query_result}
+        super().__init__(hi_l2_query_result, hi_l3_query_result)
 
-    def get_maps_that_should_be_produced(self, descriptor: str) -> list[PossibleMapToProduce]:
-        possible_maps = self.get_maps_that_can_be_produced(descriptor)
+    @staticmethod
+    def get_dependencies(descriptor: str) -> list[str]:
+        nsp_descriptor = descriptor.replace('-sp-', '-nsp-')
+        if '-full-' in descriptor:
+            return [nsp_descriptor.replace('-full-', '-anti-'), nsp_descriptor.replace('-full-', '-ram-')]
+        else:
+            return [nsp_descriptor]
 
-        maps_to_make = []
-        for map in possible_maps:
-            start_time = map.input_metadata.start_date.strftime("%Y%m%d")
-            if l3_result := self.existing_l3_maps.get((descriptor, start_time)):
-                if map.input_files.issubset(read_cdf_parents(l3_result)):
-                    continue
-                new_version = int(ScienceFilePath(l3_result).version[1:]) + 1
-                map.input_metadata.version = f'v{new_version:03}'
-            maps_to_make.append(map)
-        return maps_to_make
-
-    def get_maps_that_can_be_produced(self, descriptor: str) -> list[PossibleMapToProduce]:
-        l2_descriptor = descriptor.replace('-sp-', '-nsp-')
-
+    def _collect_glows_psets_by_repoint(self, descriptor) -> dict[int, str]:
         if 'h45' in descriptor:
-            glows_file_by_repointing = self.glows_hi45_file_by_repoint
+            return self.glows_hi45_file_by_repoint
         elif 'h90' in descriptor:
-            glows_file_by_repointing = self.glows_hi90_file_by_repoint
+            return self.glows_hi90_file_by_repoint
         else:
             raise ValueError("Expected map to be produced to use a single sensor!")
-
-        l2_file_paths = [result['file_path'] for result in self.hi_l2_query_result if result["descriptor"] == l2_descriptor]
-        possible_maps = []
-        for l2_file_path in l2_file_paths:
-            start_date = datetime.strptime(ScienceFilePath(l2_file_path).start_date, "%Y%m%d")
-            l1c_names = read_cdf_parents(l2_file_path)
-
-            l1c_repointings = []
-            for l1 in l1c_names:
-                try:
-                    l1c_repointings.append(ScienceFilePath(l1).repointing)
-                except ImapFilePath.InvalidImapFileError:
-                    continue
-
-            glows_files = [glows_file_by_repointing[repoint] for repoint in l1c_repointings if repoint in glows_file_by_repointing]
-
-            if len(glows_files) > 0:
-                input_metadata = InputMetadata(instrument='hi', data_level='l3', start_date=start_date, end_date=start_date,
-                                         version='v001', descriptor=descriptor)
-
-                possible_map_to_produce = PossibleMapToProduce(
-                    input_files=set([l2_file_path] + glows_files),
-                    input_metadata=input_metadata
-                )
-                possible_maps.append(possible_map_to_produce)
-        return possible_maps

@@ -3,14 +3,14 @@ from datetime import datetime
 from typing import Callable
 from unittest.mock import patch, call
 
-from imap_l3_processing.hi.l3.hi_l3_initializer import (HiL3Initializer, PossibleMapToProduce,
-                                                        logger)
+from imap_l3_processing.hi.l3.hi_l3_initializer import HiL3Initializer
+from imap_l3_processing.maps.map_initializer import PossibleMapToProduce
 from imap_l3_processing.models import InputMetadata
 from tests.test_helpers import create_mock_query_results
 
 
 class TestHiL3Initializer(unittest.TestCase):
-    @patch('imap_l3_processing.hi.l3.hi_l3_initializer.read_cdf_parents')
+    @patch('imap_l3_processing.maps.map_initializer.read_cdf_parents')
     @patch('imap_l3_processing.hi.l3.hi_l3_initializer.imap_data_access.query')
     def test_get_maps_that_can_be_produced(self, mock_query, mock_read_cdf_parents):
         mock_query.side_effect = [
@@ -103,7 +103,7 @@ class TestHiL3Initializer(unittest.TestCase):
 
         self.assertEqual(expected_possible_maps, actual_possible_maps)
 
-    @patch('imap_l3_processing.hi.l3.hi_l3_initializer.read_cdf_parents')
+    @patch('imap_l3_processing.maps.map_initializer.read_cdf_parents')
     @patch('imap_l3_processing.hi.l3.hi_l3_initializer.imap_data_access.query')
     def test_get_maps_that_should_be_produced(self, mock_query, mock_read_cdf_parents):
         mock_query.side_effect = [
@@ -189,6 +189,20 @@ class TestHiL3Initializer(unittest.TestCase):
         ])
 
         self.assertEqual(expected_possible_maps, actual_possible_maps)
+
+    def test_get_dependencies(self):
+        cases = [
+            ("h90-ena-h-sf-sp-anti-hae-4deg-3mo", ["h90-ena-h-sf-nsp-anti-hae-4deg-3mo"]),
+            ("h45-ena-h-sf-sp-ram-hae-4deg-3mo", ["h45-ena-h-sf-nsp-ram-hae-4deg-3mo"]),
+            ("h45-ena-h-sf-sp-full-hae-4deg-3mo", ["h45-ena-h-sf-nsp-anti-hae-4deg-3mo", "h45-ena-h-sf-nsp-ram-hae-4deg-3mo"]),
+            ("h90-ena-h-sf-sp-full-hae-4deg-3mo", ["h90-ena-h-sf-nsp-anti-hae-4deg-3mo", "h90-ena-h-sf-nsp-ram-hae-4deg-3mo"]),
+        ]
+
+        for descriptor, dependencies in cases:
+            with self.subTest(descriptor):
+                actual_dependencies = HiL3Initializer.get_dependencies(descriptor)
+                self.assertEqual(dependencies, actual_dependencies)
+
 
     def create_fake_read_cdf_parents(self, sensor: str) -> Callable[[str], set[str]]:
         def fake_read_cdf_parents(file_name: str) -> set[str]:
