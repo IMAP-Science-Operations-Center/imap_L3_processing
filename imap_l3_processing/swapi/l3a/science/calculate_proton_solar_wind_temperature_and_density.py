@@ -3,6 +3,7 @@ import scipy
 import uncertainties
 from matplotlib import pyplot as plt
 from numpy import ndarray
+from scipy.interpolate import LinearNDInterpolator
 from scipy.special import erf
 from uncertainties import correlated_values
 from uncertainties.unumpy import uarray, nominal_values, std_devs
@@ -98,28 +99,18 @@ def calculate_proton_speed_from_one_sweep(coincident_count_rates, energy, proton
 
 class ProtonTemperatureAndDensityCalibrationTable:
     def __init__(self, lookup_table_array: ndarray):
-        solar_wind_speed = np.unique(lookup_table_array[:, 0])
-        deflection_angle = np.unique(lookup_table_array[:, 1])
-        clock_angle = np.unique(lookup_table_array[:, 2])
-        fit_density = np.unique(lookup_table_array[:, 3])
-        fit_temperature = np.unique(lookup_table_array[:, 5])
-        self.grid = (solar_wind_speed, deflection_angle, clock_angle, fit_density, fit_temperature)
-        values_shape = tuple(len(x) for x in self.grid)
+        coords = lookup_table_array[:, [0, 1, 2, 3, 5]]
+        values = lookup_table_array[:, [4, 6]]
 
-        self.density_grid = lookup_table_array[:, 4].reshape(values_shape)
-        self.temperature_grid = lookup_table_array[:, 6].reshape(values_shape)
+        self.interp = LinearNDInterpolator(coords, values)
 
     @uncertainties.wrap
     def calibrate_density(self, solar_wind_speed, deflection_angle, clock_angle, fit_density, fit_temperature):
-        return scipy.interpolate.interpn(self.grid, self.density_grid,
-                                         [solar_wind_speed, deflection_angle, clock_angle % 360, fit_density,
-                                          fit_temperature])[0]
+        return self.interp(solar_wind_speed, deflection_angle, clock_angle % 360, fit_density, fit_temperature)[0]
 
     @uncertainties.wrap
     def calibrate_temperature(self, solar_wind_speed, deflection_angle, clock_angle, fit_density, fit_temperature):
-        return scipy.interpolate.interpn(self.grid, self.temperature_grid,
-                                         [solar_wind_speed, deflection_angle, clock_angle % 360, fit_density,
-                                          fit_temperature])[0]
+        return self.interp(solar_wind_speed, deflection_angle, clock_angle % 360, fit_density, fit_temperature)[1]
 
     @classmethod
     def from_file(cls, file_path):

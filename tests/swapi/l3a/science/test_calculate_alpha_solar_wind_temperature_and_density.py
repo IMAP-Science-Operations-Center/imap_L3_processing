@@ -31,11 +31,6 @@ class TestCalculateAlphaSolarWindTemperatureAndDensity(TestCase):
 
         calibration_table = AlphaTemperatureDensityCalibrationTable.from_file(file_path)
 
-        self.assertEqual((15, 16, 23), (
-            len(calibration_table.grid[0]), len(calibration_table.grid[1]), len(calibration_table.grid[2])))
-        self.assertEqual((15, 16, 23), calibration_table.density_grid.shape)
-        self.assertEqual((15, 16, 23), calibration_table.temperature_grid.shape)
-
         sw_speed = ufloat(460, 10)
         density = ufloat(0.25, 0.03)
         temperature = ufloat(6.0000e+05, 100)
