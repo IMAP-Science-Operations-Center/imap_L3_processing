@@ -353,8 +353,8 @@ ena_spectral_index:
   LABL_PTR_2: longitude_label
   LABL_PTR_3: latitude_label
   SCALETYP: linear
-  DELTA_PLUS_VAR: ena_spectral_index_stat_unc
-  DELTA_MINUS_VAR: ena_spectral_index_stat_unc
+  DELTA_PLUS_VAR: ena_spectral_index_stat_uncert
+  DELTA_MINUS_VAR: ena_spectral_index_stat_uncert
 ena_spectral_index_stat_uncert:
   NAME: ena_spectral_index_stat_uncert
   DATA_TYPE: CDF_REAL4
