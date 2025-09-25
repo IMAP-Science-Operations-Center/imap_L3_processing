@@ -3,8 +3,7 @@ import tempfile
 from datetime import datetime, date
 from pathlib import Path
 from unittest import TestCase
-from unittest.mock import patch, call, Mock, sentinel, MagicMock
-from urllib.error import URLError
+from unittest.mock import patch, call, Mock, sentinel
 
 import imap_data_access
 import numpy as np
@@ -12,8 +11,9 @@ from imap_data_access import config
 from requests import RequestException
 from spacepy.pycdf import CDF
 
-from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
-from imap_l3_processing.maps.map_models import GlowsL3eRectangularMapInputData, InputRectangularPointingSet
+from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH, TT2000_EPOCH
+from imap_l3_processing.maps.map_models import GlowsL3eRectangularMapInputData, InputRectangularPointingSet, \
+    RectangularSpectralIndexDataProduct, RectangularIntensityDataProduct
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.swapi.l3a.models import SwapiL3AlphaSolarWindData
 from imap_l3_processing.utils import format_time, download_dependency, read_l1d_mag_data, save_data, \
@@ -22,6 +22,7 @@ from imap_l3_processing.utils import format_time, download_dependency, read_l1d_
     SpiceKernelTypes, FurnishMetakernelOutput
 from imap_l3_processing.version import VERSION
 from tests.cdf.test_cdf_utils import TestDataProduct
+from tests.maps.test_builders import create_rectangular_spectral_index_map_data, create_rectangular_intensity_map_data
 from tests.test_helpers import get_spice_data_path
 
 
@@ -214,9 +215,39 @@ class TestUtils(TestCase):
 
         self.assertEqual(expected_file_path, returned_file_path)
 
+    @patch("imap_l3_processing.utils.write_cdf")
+    @patch("imap_l3_processing.utils.ImapAttributeManager.add_global_attribute")
+    def test_save_data_procedurally_generates_map_global_metadata(self, mock_add_global_attr, _):
+        input_metadata = InputMetadata("ultra", "l3", datetime(2025, 1, 1), datetime(2025, 1, 1), "v001", "descriptor")
+
+        epoch_as_datetime = np.array([datetime(2025, 1, 1)])
+        epoch_as_int = np.array([(datetime(2025, 1, 1) - TT2000_EPOCH).total_seconds() * 1e9])
+        epoch_delta = np.array([86400 * 1e9])
+
+        cases = [
+            ("epoch_as_datetime", epoch_as_datetime),
+            ("epoch_as_int", epoch_as_int),
+        ]
+
+        for case, epoch in cases:
+            mock_add_global_attr.reset_mock()
+            with self.subTest(case=case):
+
+                rectangular_spectral_index_map_data = create_rectangular_spectral_index_map_data(epoch=epoch,
+                                                                                                 epoch_delta=epoch_delta)
+                data_product = RectangularSpectralIndexDataProduct(input_metadata=input_metadata,
+                                                                   data=rectangular_spectral_index_map_data)
+
+                save_data(data_product)
+
+                mock_add_global_attr.assert_has_calls([
+                    call("start_date", "2025-01-01T00:00:00"),
+                    call("end_date", "2025-01-02T00:00:00")
+                ])
+
     @patch("imap_l3_processing.utils.ImapAttributeManager.add_instrument_attrs", autospec=True)
     @patch("imap_l3_processing.utils.write_cdf")
-    def test_save_data_procedurally_generates_map_global_metadata_if_absent(self, mock_write_cdf,
+    def test_save_data_procedurally_generates_all_map_global_metadata_if_absent(self, mock_write_cdf,
                                                                             mock_add_instrument_attrs):
         non_map_input_metadata = InputMetadata("swapi", "l3", datetime(2024, 9, 17), datetime(2024, 9, 18), "v002",
                                                "descriptor")
@@ -253,7 +284,9 @@ class TestUtils(TestCase):
             with self.subTest(name=input_metadata.logical_source):
                 mock_write_cdf.reset_mock()
 
-                save_data(Mock(input_metadata=input_metadata), )
+                data_product = RectangularIntensityDataProduct(input_metadata=input_metadata,
+                                                          data=create_rectangular_intensity_map_data())
+                save_data(data_product)
 
                 mock_write_cdf.assert_called_once()
 

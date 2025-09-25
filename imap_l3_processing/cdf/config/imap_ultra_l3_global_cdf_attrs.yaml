@@ -1,5 +1,6 @@
 imap_ultra_l3_u90-ena-h-sf-sp-full-hae-2deg-6mo:
   Coordinate_system: ECLIPJ2000 (HAE)
+  Data_type: L3_6mo>Level-3 6mo
   Instrument: Ultra 90
   Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-90 Sensor, ENA Intensity,
     Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin, HAE, Rectangular
@@ -15,6 +16,7 @@ imap_ultra_l3_u90-ena-h-sf-sp-full-hae-2deg-6mo:
 
 imap_ultra_l3_u90-ena-h-sf-sp-full-hae-4deg-6mo:
   Coordinate_system: ECLIPJ2000 (HAE)
+  Data_type: L3_6mo>Level-3 6mo
   Instrument: Ultra 90
   Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-90 Sensor, ENA Intensity,
     Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin, HAE, Rectangular
@@ -30,6 +32,7 @@ imap_ultra_l3_u90-ena-h-sf-sp-full-hae-4deg-6mo:
 
 imap_ultra_l3_u90-ena-h-sf-sp-full-hae-6deg-6mo:
   Coordinate_system: ECLIPJ2000 (HAE)
+  Data_type: L3_6mo>Level-3 6mo
   Instrument: Ultra 90
   Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-90 Sensor, ENA Intensity,
     Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin, HAE, Rectangular
@@ -45,6 +48,7 @@ imap_ultra_l3_u90-ena-h-sf-sp-full-hae-6deg-6mo:
 
 imap_ultra_l3_u90-spx-h-sf-sp-full-hae-2deg-6mo:
   Coordinate_system: ECLIPJ2000 (HAE)
+  Data_type: L3_6mo>Level-3 6mo
   Instrument: Ultra 90
   Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-90 Sensor, Spectral
     Index, Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin,
@@ -60,6 +64,7 @@ imap_ultra_l3_u90-spx-h-sf-sp-full-hae-2deg-6mo:
 
 imap_ultra_l3_u90-spx-h-sf-sp-full-hae-4deg-6mo:
   Coordinate_system: ECLIPJ2000 (HAE)
+  Data_type: L3_6mo>Level-3 6mo
   Instrument: Ultra 90
   Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-90 Sensor, Spectral
     Index, Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin,
@@ -75,6 +80,7 @@ imap_ultra_l3_u90-spx-h-sf-sp-full-hae-4deg-6mo:
 
 imap_ultra_l3_u90-spx-h-sf-sp-full-hae-6deg-6mo:
   Coordinate_system: ECLIPJ2000 (HAE)
+  Data_type: L3_6mo>Level-3 6mo
   Instrument: Ultra 90
   Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-90 Sensor, Spectral
     Index, Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin,
@@ -90,6 +96,7 @@ imap_ultra_l3_u90-spx-h-sf-sp-full-hae-6deg-6mo:
 
 imap_ultra_l3_u90-ena-h-sf-sp-full-hae-2deg-3mo:
   Coordinate_system: ECLIPJ2000 (HAE)
+  Data_type: L3_3mo>Level-3 3mo
   Instrument: Ultra 90
   Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-90 Sensor, ENA Intensity,
     Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin, HAE, Rectangular
@@ -105,6 +112,7 @@ imap_ultra_l3_u90-ena-h-sf-sp-full-hae-2deg-3mo:
 
 imap_ultra_l3_u90-ena-h-sf-sp-full-hae-4deg-3mo:
   Coordinate_system: ECLIPJ2000 (HAE)
+  Data_type: L3_3mo>Level-3 3mo
   Instrument: Ultra 90
   Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-90 Sensor, ENA Intensity,
     Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin, HAE, Rectangular
@@ -120,6 +128,7 @@ imap_ultra_l3_u90-ena-h-sf-sp-full-hae-4deg-3mo:
 
 imap_ultra_l3_u90-ena-h-sf-sp-full-hae-6deg-3mo:
   Coordinate_system: ECLIPJ2000 (HAE)
+  Data_type: L3_3mo>Level-3 3mo
   Instrument: Ultra 90
   Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-90 Sensor, ENA Intensity,
     Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin, HAE, Rectangular
@@ -135,6 +144,7 @@ imap_ultra_l3_u90-ena-h-sf-sp-full-hae-6deg-3mo:
 
 imap_ultra_l3_u90-spx-h-sf-sp-full-hae-2deg-3mo:
   Coordinate_system: ECLIPJ2000 (HAE)
+  Data_type: L3_3mo>Level-3 3mo
   Instrument: Ultra 90
   Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-90 Sensor, Spectral
     Index, Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin,
@@ -150,6 +160,7 @@ imap_ultra_l3_u90-spx-h-sf-sp-full-hae-2deg-3mo:
 
 imap_ultra_l3_u90-spx-h-sf-sp-full-hae-4deg-3mo:
   Coordinate_system: ECLIPJ2000 (HAE)
+  Data_type: L3_3mo>Level-3 3mo
   Instrument: Ultra 90
   Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-90 Sensor, Spectral
     Index, Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin,
@@ -165,6 +176,7 @@ imap_ultra_l3_u90-spx-h-sf-sp-full-hae-4deg-3mo:
 
 imap_ultra_l3_u90-spx-h-sf-sp-full-hae-6deg-3mo:
   Coordinate_system: ECLIPJ2000 (HAE)
+  Data_type: L3_3mo>Level-3 3mo
   Instrument: Ultra 90
   Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-90 Sensor, Spectral
     Index, Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin,

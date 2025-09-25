@@ -3,3 +3,68 @@ ground_software_version:
     Version of ground software
   default: null
   required: false
+
+Map_descriptor:
+  description: Map_descriptor
+  default: null
+  required: false
+
+Map_duration:
+  description: Map_duration
+  default: null
+  required: false
+
+Instrument:
+  description: Instrument
+  default: null
+  required: false
+
+Reference_frame:
+  description: Reference_frame
+  default: null
+  required: false
+
+Coordinate_system:
+  description: Coordinate_system
+  default: null
+  required: false
+
+Tessellation_type:
+  description: Tessellation_type
+  default: null
+  required: false
+
+Spin_range:
+  description: Spin_range
+  default: null
+  required: false
+
+Survival_corrected:
+  description: Survival_corrected
+  default: null
+  required: false
+
+Species:
+  description: Species
+  default: null
+  required: false
+
+Principal_data_quantity:
+  description: Principal_data_quantity
+  default: null
+  required: false
+
+start_date:
+  description: Map start date
+  default: null
+  required: false
+
+end_date:
+  description: Map end date
+  default: null
+  required: false
+
+Ancillary_files:
+  description: List of ancillary files, only used by maps
+  default: null
+  required: false

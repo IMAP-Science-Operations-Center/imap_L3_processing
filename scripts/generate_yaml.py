@@ -57,6 +57,7 @@ for descriptor in descriptors:
     products = {
         f"imap_{instrument}_l3_{descriptor}": {
             "Logical_source_description": "IMAP Ultra Instrument Level 3 " + ', '.join([logical_source_description_parts[part] for part in descriptor.split("-")]),
+            "Data_type": f"L3_{time_range}>Level-3 {time_range}",
             "Map_descriptor": descriptor,
             "Map_duration": time_range,
             "Instrument": f"Ultra {sensor}" if sensor in ["45", "90"] else "Ultra",

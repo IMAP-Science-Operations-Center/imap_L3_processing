@@ -3,7 +3,7 @@ import json
 import logging
 import re
 from dataclasses import dataclass
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from pathlib import Path
 from typing import Optional, Union, TypeVar
 from urllib.parse import urlparse
@@ -11,15 +11,19 @@ from urllib.parse import urlparse
 import imap_data_access
 import requests
 import spiceypy
-from imap_data_access import ScienceFilePath, download
+from imap_data_access import ScienceFilePath
 from requests import RequestException
 from spacepy.pycdf import CDF
 
 import imap_l3_processing
 from imap_l3_processing.cdf.cdf_utils import write_cdf, read_numeric_variable
 from imap_l3_processing.cdf.imap_attribute_manager import ImapAttributeManager
-from imap_l3_processing.maps.map_models import GlowsL3eRectangularMapInputData, InputRectangularPointingSet
-from imap_l3_processing.models import UpstreamDataDependency, DataProduct, MagL1dData
+from imap_l3_processing.constants import TT2000_EPOCH
+from imap_l3_processing.maps.map_models import GlowsL3eRectangularMapInputData, InputRectangularPointingSet, \
+    RectangularSpectralIndexMapData, RectangularIntensityMapData, \
+    HealPixIntensityMapData, HealPixSpectralIndexMapData, RectangularSpectralIndexDataProduct, \
+    RectangularIntensityDataProduct, HealPixSpectralIndexDataProduct, HealPixIntensityDataProduct
+from imap_l3_processing.models import UpstreamDataDependency, DataProduct, MagL1dData, InputMetadata
 from imap_l3_processing.ultra.l3.models import UltraL1CPSet, UltraGlowsL3eData
 from imap_l3_processing.version import VERSION
 
@@ -72,30 +76,87 @@ def save_data(data: DataProduct, delete_if_present: bool = False, folder_path: P
     attribute_manager.add_global_attribute("ground_software_version", VERSION)
 
     map_instruments = ["hi", "lo", "ultra"]
-    if data.input_metadata.instrument in map_instruments and attribute_manager.try_load_global_metadata(
-            logical_source) is None:
-        level = data.input_metadata.data_level.replace('l', '')
-        data_type_string = f"Level-{level}"
-        if "spx" in data.input_metadata.descriptor:
-            data_type_string += f" Spectral Fit Index Map"
-        elif "ena" in data.input_metadata.descriptor and "-sp-" in data.input_metadata.descriptor:
-            data_type_string += f" Survival Corrected"
-        elif "ena" in data.input_metadata.descriptor:
-            data_type_string += f" ENA Intensity"
+    if data.input_metadata.instrument in map_instruments:
+        map_data_product_types = [
+            RectangularSpectralIndexDataProduct,
+            RectangularIntensityDataProduct,
+            HealPixSpectralIndexDataProduct,
+            HealPixIntensityDataProduct
+        ]
+        assert type(data) in map_data_product_types, f"Found an unsupported map data product of type: {type(data)}"
+        attrs = generate_map_global_metadata(data)
+        for key, value in attrs.items():
+            attribute_manager.add_global_attribute(key, value)
 
-        logical_source_global_attrs = {
-            "Data_level": level,
-            "Data_type": f"L{level}_{data.input_metadata.descriptor}>{data_type_string}",
-            "Logical_source_description": f"IMAP-{data.input_metadata.instrument} {data_type_string}",
-        }
-        attribute_manager.add_global_attribute(logical_source, logical_source_global_attrs)
-
-    if data.parent_file_names:
+        if attribute_manager.try_load_global_metadata(logical_source) is None:
+            logical_source_global_attrs = generate_global_metadata_for_undefined_logical_source(data.input_metadata)
+            attribute_manager.add_global_attribute(logical_source, logical_source_global_attrs)
+    elif data.parent_file_names:
         attribute_manager.add_global_attribute("Parents", data.parent_file_names)
+
     file_path_str = str(file_path)
     write_cdf(file_path_str, data, attribute_manager)
     return file_path
 
+type MapDataProduct = (RectangularSpectralIndexDataProduct
+                       | RectangularIntensityDataProduct
+                       | HealPixSpectralIndexDataProduct
+                       | HealPixIntensityDataProduct)
+
+def generate_map_global_metadata(data_product: MapDataProduct) -> dict:
+    attrs = {}
+
+    match data_product.data:
+        case (
+        RectangularSpectralIndexMapData(spectral_index_map_data=map_data) |
+        HealPixSpectralIndexMapData(spectral_index_map_data=map_data) |
+        RectangularIntensityMapData(intensity_map_data=map_data) |
+        HealPixIntensityMapData(intensity_map_data=map_data)
+        ):
+            [start_date] = map_data.epoch
+            [epoch_delta] = map_data.epoch_delta
+
+            if not isinstance(start_date, datetime):
+                start_date = TT2000_EPOCH + timedelta(seconds=start_date / 1e9)
+
+            end_date = start_date + timedelta(seconds=epoch_delta / 1e9)
+        case _:
+            raise ValueError(f"Found an unsupported map data product of type: {type(data_product.data)}")
+
+    attrs["start_date"] = start_date.isoformat()
+    attrs["end_date"] = end_date.isoformat()
+
+    if data_product.parent_file_names:
+        science_files = []
+        ancillary_files = []
+        for name in data_product.parent_file_names:
+            try:
+                ScienceFilePath(name)
+                science_files.append(name)
+            except ScienceFilePath.InvalidImapFileError:
+                ancillary_files.append(name)
+
+        attrs["Parents"] = science_files
+        attrs["Ancillary_files"] = ancillary_files
+
+    return attrs
+
+def generate_global_metadata_for_undefined_logical_source(input_metadata: InputMetadata) -> dict:
+    level = input_metadata.data_level.replace('l', '')
+    data_type_string = f"Level-{level}"
+    if "spx" in input_metadata.descriptor:
+        data_type_string += f" Spectral Fit Index Map"
+    elif "ena" in input_metadata.descriptor and "-sp-" in input_metadata.descriptor:
+        data_type_string += f" Survival Corrected"
+    elif "ena" in input_metadata.descriptor:
+        data_type_string += f" ENA Intensity"
+
+    logical_source_global_attrs = {
+        "Data_level": level,
+        "Data_type": f"L{level}_{input_metadata.descriptor}>{data_type_string}",
+        "Logical_source_description": f"IMAP-{input_metadata.instrument} {data_type_string}",
+    }
+    return logical_source_global_attrs
 
 def format_time(t: Optional[datetime]) -> Optional[str]:
     if t is not None:
