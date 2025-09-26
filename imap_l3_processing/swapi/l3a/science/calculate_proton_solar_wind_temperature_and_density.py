@@ -5,7 +5,7 @@ import scipy
 import uncertainties
 from matplotlib import pyplot as plt
 from numpy import ndarray
-from scipy.interpolate import LinearNDInterpolator
+from scipy.interpolate import LinearNDInterpolator, interp1d
 from scipy.special import erf
 from uncertainties import correlated_values
 from uncertainties.unumpy import uarray, nominal_values, std_devs
@@ -112,32 +112,25 @@ class ProtonTemperatureAndDensityCalibrationTable:
         values_shape = (len(self.proton_sw_speed), len(self.deflection_angle), len(self.clock_angle))
         self.reshaped_lookup = lookup_table_array.reshape(*values_shape, -1, 7)
 
-
     @uncertainties.wrap
     def calibrate_density(self, solar_wind_speed, deflection_angle, clock_angle, fit_density, fit_temperature):
-        interp = self.build_interpolator(solar_wind_speed, deflection_angle, clock_angle, 4)
-        return interp(solar_wind_speed, deflection_angle, clock_angle % 360, fit_density, fit_temperature)[0]
+        interp = self.build_interpolator(solar_wind_speed, deflection_angle, clock_angle % 360)
+        return interp(fit_density, fit_temperature)[0]
 
     @uncertainties.wrap
     def calibrate_temperature(self, solar_wind_speed, deflection_angle, clock_angle, fit_density, fit_temperature):
-        interp = self.build_interpolator(solar_wind_speed, deflection_angle, clock_angle, 6)
-        return interp(solar_wind_speed, deflection_angle, clock_angle % 360, fit_density, fit_temperature)[0]
+        interp = self.build_interpolator(solar_wind_speed, deflection_angle, clock_angle % 360)
+        return interp(fit_density, fit_temperature)[1]
 
-    def build_interpolator(self, solar_wind_speed, deflection_angle, clock_angle, output_col: int) -> Callable:
-        speed_i = np.searchsorted(self.proton_sw_speed, solar_wind_speed)
-        deflection_i = np.searchsorted(self.deflection_angle, deflection_angle)
-        clock_angle_i = np.searchsorted(self.clock_angle, clock_angle)
+    def build_interpolator(self, solar_wind_speed, deflection_angle, clock_angle) -> Callable:
+        v = self.reshaped_lookup
+        v1 = interp1d(self.proton_sw_speed, v, axis=0)(solar_wind_speed)
+        v2 = interp1d(self.deflection_angle, v1, axis=0)(deflection_angle)
+        v3 = interp1d(self.clock_angle, v2, axis=0)(clock_angle)
 
-        truncated_lookup = self.reshaped_lookup[
-                           (speed_i - 1):(speed_i + 1),
-                           (deflection_i - 1):(deflection_i + 1),
-                           (clock_angle_i - 1):(clock_angle_i + 1)
-                           ]
-
-        coords = truncated_lookup[:, :, :, :, [0, 1, 2, 3, 5]].reshape(-1, 5)
-        values = truncated_lookup[:, :, :, :, output_col].reshape(-1, 1)
-
-        return LinearNDInterpolator(coords, values)
+        coords = v3[:, [3, 5]]
+        values = v3[:, [4, 6]]
+        return LinearNDInterpolator(coords, values, rescale=True)
 
     @classmethod
     def from_file(cls, file_path):
