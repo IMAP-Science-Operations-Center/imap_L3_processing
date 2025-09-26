@@ -1,7 +1,3 @@
-# Description: calibration factor for the IMAP/GLOWS Instrument for ground-processing pipeline in the IMAP SDC
-# cps_per_R defines the number of cps=cts/s (instrument unit) corresponding to 1 Rayleigh (physical unit)
-# version: 0.2
-# columns: start_time_UTC, cps_per_R
-2010-01-01T00:00:00 1.0
-2014-01-01T00:00:00 2.5
-2015-01-01T00:00:00 0.5
+version https://git-lfs.github.com/spec/v1
+oid sha256:fd510a4c08efce72ee1f4161975492036f27709d9733d6602b2d62f6171bc49b
+size 348

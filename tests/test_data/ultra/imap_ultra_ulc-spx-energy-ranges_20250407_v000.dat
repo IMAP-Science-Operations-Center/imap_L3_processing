@@ -1,5 +1,3 @@
-# Energy Ranges for IMAP-Ultra spectral index fitting
-# Energies are specified in keV
-# Columns: lower-bound, upper-bound
-5   15
-15  50
+version https://git-lfs.github.com/spec/v1
+oid sha256:25f6f5397f11e19d3186870e1dd4a8588fd0681a871b94deee5682929503d148
+size 139
