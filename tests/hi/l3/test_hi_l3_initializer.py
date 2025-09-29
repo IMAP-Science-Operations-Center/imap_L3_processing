@@ -1,9 +1,9 @@
 import unittest
 from datetime import datetime
 from typing import Callable
-from unittest.mock import patch, call
+from unittest.mock import patch, call, Mock, sentinel
 
-from imap_l3_processing.hi.l3.hi_l3_initializer import HiL3Initializer
+from imap_l3_processing.hi.l3.hi_l3_initializer import HiL3Initializer, HI_SP_SPICE_KERNELS
 from imap_l3_processing.maps.map_initializer import PossibleMapToProduce
 from imap_l3_processing.models import InputMetadata
 from tests.test_helpers import create_mock_query_results
@@ -194,8 +194,10 @@ class TestHiL3Initializer(unittest.TestCase):
         cases = [
             ("h90-ena-h-sf-sp-anti-hae-4deg-3mo", ["h90-ena-h-sf-nsp-anti-hae-4deg-3mo"]),
             ("h45-ena-h-sf-sp-ram-hae-4deg-3mo", ["h45-ena-h-sf-nsp-ram-hae-4deg-3mo"]),
-            ("h45-ena-h-sf-sp-full-hae-4deg-3mo", ["h45-ena-h-sf-nsp-anti-hae-4deg-3mo", "h45-ena-h-sf-nsp-ram-hae-4deg-3mo"]),
-            ("h90-ena-h-sf-sp-full-hae-4deg-3mo", ["h90-ena-h-sf-nsp-anti-hae-4deg-3mo", "h90-ena-h-sf-nsp-ram-hae-4deg-3mo"]),
+            ("h45-ena-h-sf-sp-full-hae-4deg-3mo",
+             ["h45-ena-h-sf-nsp-anti-hae-4deg-3mo", "h45-ena-h-sf-nsp-ram-hae-4deg-3mo"]),
+            ("h90-ena-h-sf-sp-full-hae-4deg-3mo",
+             ["h90-ena-h-sf-nsp-anti-hae-4deg-3mo", "h90-ena-h-sf-nsp-ram-hae-4deg-3mo"]),
         ]
 
         for descriptor, dependencies in cases:
@@ -203,6 +205,43 @@ class TestHiL3Initializer(unittest.TestCase):
                 actual_dependencies = HiL3Initializer.get_dependencies(descriptor)
                 self.assertEqual(dependencies, actual_dependencies)
 
+    @patch('imap_l3_processing.hi.l3.hi_l3_initializer.furnish_spice_metakernel')
+    def test_furnish_spice_dependencies(self, mock_furnish_metakernel):
+        start_date = datetime(2025, 4, 15)
+        end_date = datetime(2025, 7, 15)
+
+        input_metadata = InputMetadata(
+            instrument="hi",
+            data_level="l2",
+            start_date=start_date,
+            end_date=end_date,
+            version="v000",
+            descriptor="h90-ena-h-sf-nsp-anti-hae-4deg-3mo",
+        )
+        map_to_produce = PossibleMapToProduce(set(), input_metadata)
+
+        hi_initializer = HiL3Initializer()
+        hi_initializer._furnish_spice_dependencies(map_to_produce)
+
+        mock_furnish_metakernel.assert_called_once_with(start_date=start_date, end_date=end_date,
+                                                        kernel_types=HI_SP_SPICE_KERNELS)
+
+    @patch("imap_l3_processing.maps.map_initializer.ScienceFilePath")
+    @patch("imap_l3_processing.maps.map_initializer.ProcessingInputCollection")
+    def test_possible_maps_to_produce_constructs_processing_input_collection(self, mock_collection, mock_science_file):
+        files = {
+            "imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-3mo_20100101_v000.cdf",
+            "imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-3mo_20100102_v000.cdf",
+            "imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-3mo_20100103_v000.cdf",
+        }
+
+        mock_science_file.side_effect = [sentinel.file1, sentinel.file2, sentinel.file3]
+
+        processing_input = PossibleMapToProduce(input_files=files, input_metadata=Mock()).processing_input_collection
+
+        mock_collection.assert_called_once_with(sentinel.file1, sentinel.file2, sentinel.file3)
+
+        self.assertEqual(mock_collection.return_value, processing_input)
 
     def create_fake_read_cdf_parents(self, sensor: str) -> Callable[[str], set[str]]:
         def fake_read_cdf_parents(file_name: str) -> set[str]:
@@ -250,4 +289,5 @@ class TestHiL3Initializer(unittest.TestCase):
                 },
             }
             return mapping[file_name]
+
         return fake_read_cdf_parents

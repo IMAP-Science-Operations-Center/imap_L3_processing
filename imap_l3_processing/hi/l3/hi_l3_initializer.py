@@ -2,9 +2,12 @@ import logging
 
 import imap_data_access
 
-from imap_l3_processing.maps.map_initializer import MapInitializer
+from imap_l3_processing.maps.map_initializer import MapInitializer, PossibleMapToProduce
+from imap_l3_processing.utils import SpiceKernelTypes, furnish_spice_metakernel
 
 logger = logging.getLogger(__name__)
+
+HI_SP_SPICE_KERNELS: list[SpiceKernelTypes] = []
 
 other_descriptors = [
     "hic-ena-h-hf-nsp-full-hae-6deg-1yr",
@@ -63,8 +66,8 @@ HI_SP_MAP_DESCRIPTORS = [
 
     "h45-ena-h-sf-sp-full-hae-4deg-6mo",
     "h45-ena-h-hf-sp-full-hae-4deg-6mo",
-
 ]
+
 
 class HiL3Initializer(MapInitializer):
     def __init__(self):
@@ -85,8 +88,14 @@ class HiL3Initializer(MapInitializer):
         self.glows_hi90_file_by_repoint = {r["repointing"]: r["file_path"] for r in sp_hi90_query_result}
 
         hi_l2_query_result = imap_data_access.query(instrument='hi', data_level='l2', version='latest')
+        logger.info(f"Found {len(hi_l2_query_result)} HI L2 maps")
         hi_l3_query_result = imap_data_access.query(instrument='hi', data_level='l3', version='latest')
+        logger.info(f"Found {len(hi_l3_query_result)} HI L3 maps")
         super().__init__(hi_l2_query_result, hi_l3_query_result)
+
+    def _furnish_spice_dependencies(self, map_to_produce: PossibleMapToProduce):
+        furnish_spice_metakernel(start_date=map_to_produce.input_metadata.start_date,
+                                 end_date=map_to_produce.input_metadata.end_date, kernel_types=HI_SP_SPICE_KERNELS)
 
     @staticmethod
     def get_dependencies(descriptor: str) -> list[str]:

@@ -194,8 +194,8 @@ ena_intensity:
   LABL_PTR_2: longitude_label
   LABL_PTR_3: latitude_label
   SCALETYP: linear
-ena_intensity_stat_unc:
-  NAME: ena_intensity_stat_unc
+ena_intensity_stat_uncert:
+  NAME: ena_intensity_stat_uncert
   DATA_TYPE: CDF_REAL4
   CATDESC: ENA intensity statistical uncertainty
   DEPEND_0: epoch
@@ -204,7 +204,7 @@ ena_intensity_stat_unc:
   DEPEND_3: latitude
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: Intensity Stat Unc
+  FIELDNAM: Intensity Stat Uncert
   FORMAT: F12.1
   LABLAXIS: Statistical unc.
   UNITS: cm -2 s -1 sr -1 keV -1
@@ -348,10 +348,10 @@ ena_spectral_index:
   LABL_PTR_2: longitude_label
   LABL_PTR_3: latitude_label
   SCALETYP: linear
-  DELTA_PLUS_VAR: ena_spectral_index_stat_unc
-  DELTA_MINUS_VAR: ena_spectral_index_stat_unc
-ena_spectral_index_stat_unc:
-  NAME: ena_spectral_index_stat_unc
+  DELTA_PLUS_VAR: ena_spectral_index_stat_uncert
+  DELTA_MINUS_VAR: ena_spectral_index_stat_uncert
+ena_spectral_index_stat_uncert:
+  NAME: ena_spectral_index_stat_uncert
   DATA_TYPE: CDF_REAL4
   CATDESC: ENA spectral index statistical uncertainty
   DEPEND_0: epoch
@@ -361,7 +361,7 @@ ena_spectral_index_stat_unc:
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: no_plot
-  FIELDNAM: Ena Spectral Index Stat Unc
+  FIELDNAM: Ena Spectral Index Stat Uncert
   VARIABLE_PURPOSE: ' '
   FORMAT: F12.6
   LABLAXIS: Statistical unc.

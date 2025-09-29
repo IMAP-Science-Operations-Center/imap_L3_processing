@@ -1,12 +1,15 @@
 import abc
+import logging
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime
 
-from imap_data_access import ScienceFilePath, ImapFilePath
+from imap_data_access import ScienceFilePath, ImapFilePath, ProcessingInputCollection, ScienceInput
 
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.utils import read_cdf_parents
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -14,11 +17,16 @@ class PossibleMapToProduce:
     input_files: set[str]
     input_metadata: InputMetadata
 
+    @property
+    def processing_input_collection(self) -> ProcessingInputCollection:
+        return ProcessingInputCollection(*[ScienceInput(file_path) for file_path in list(self.input_files)])
+
 
 class MapInitializer(abc.ABC):
     def __init__(self, l2_query_results: list[dict[str, str]], l3_query_results: list[dict[str, str]]):
         self.l2_file_paths_by_descriptor = defaultdict(list)
         for result in l2_query_results:
+            logger.info(f"l2 file in MapInitializer __init__: {result['file_path']}")
             self.l2_file_paths_by_descriptor[result['descriptor']].append(result['file_path'])
         self.existing_l3_maps = {(qr["descriptor"], qr["start_date"]): qr["file_path"] for qr in l3_query_results}
 
@@ -26,9 +34,8 @@ class MapInitializer(abc.ABC):
     def _collect_glows_psets_by_repoint(self, descriptor: str) -> dict[int, str]:
         raise NotImplementedError()
 
-    @staticmethod
     @abc.abstractmethod
-    def get_dependencies():
+    def _furnish_spice_dependencies(self, map_to_produce: PossibleMapToProduce):
         raise NotImplementedError()
 
     def get_maps_that_can_be_produced(self, l3_descriptor: str) -> list[PossibleMapToProduce]:
@@ -48,10 +55,12 @@ class MapInitializer(abc.ABC):
                 except ImapFilePath.InvalidImapFileError:
                     continue
 
-            glows_files = [glows_file_by_repointing[repoint] for repoint in l1c_repointings if repoint in glows_file_by_repointing]
+            glows_files = [glows_file_by_repointing[repoint] for repoint in l1c_repointings if
+                           repoint in glows_file_by_repointing]
 
             if len(glows_files) > 0:
-                input_metadata = InputMetadata(instrument='hi', data_level='l3', start_date=start_date, end_date=start_date,
+                input_metadata = InputMetadata(instrument='hi', data_level='l3', start_date=start_date,
+                                               end_date=start_date,
                                                version='v001', descriptor=l3_descriptor)
 
                 possible_map_to_produce = PossibleMapToProduce(
@@ -63,6 +72,7 @@ class MapInitializer(abc.ABC):
 
     def get_maps_that_should_be_produced(self, descriptor: str) -> list[PossibleMapToProduce]:
         possible_maps = self.get_maps_that_can_be_produced(descriptor)
+        logger.info(f"Found {len(possible_maps)} possible maps for {descriptor}")
 
         maps_to_make = []
         for map in possible_maps:
