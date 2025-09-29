@@ -21,6 +21,7 @@ from imap_l3_processing.swapi.l3a.science.calculate_alpha_solar_wind_speed impor
 from imap_l3_processing.swapi.l3a.science.calculate_proton_solar_wind_speed import calculate_sw_speed
 from imap_l3_processing.swapi.l3a.science.density_of_neutral_helium_lookup_table import \
     DensityOfNeutralHeliumLookupTable
+from imap_l3_processing.swapi.l3b.science.efficiency_calibration_table import EfficiencyCalibrationTable
 from imap_l3_processing.swapi.l3b.science.geometric_factor_calibration_table import GeometricFactorCalibrationTable
 from imap_l3_processing.swapi.l3b.science.instrument_response_lookup_table import InstrumentResponseLookupTable, \
     InstrumentResponseLookupTableCollection
@@ -30,7 +31,8 @@ def calculate_pickup_ion_values(instrument_response_lookup_table, geometric_fact
                                 energy: np.ndarray[float],
                                 count_rates: uarray, center_of_epoch: int,
                                 background_count_rate_cutoff: float, sw_velocity_vector: ndarray,
-                                density_of_neutral_helium_lookup_table: DensityOfNeutralHeliumLookupTable) -> FittingParameters:
+                                density_of_neutral_helium_lookup_table: DensityOfNeutralHeliumLookupTable,
+                                efficiency_table: EfficiencyCalibrationTable) -> FittingParameters:
     ephemeris_time = spiceypy.unitim(center_of_epoch / ONE_SECOND_IN_NANOSECONDS, "TT", "ET")
     sw_velocity = np.linalg.norm(sw_velocity_vector)
 
@@ -46,13 +48,13 @@ def calculate_pickup_ion_values(instrument_response_lookup_table, geometric_fact
                                                                                                  background_count_rate_cutoff)
     model_count_rate_calculator = ModelCountRateCalculator(instrument_response_lookup_table,
                                                            geometric_factor_calibration_table, sw_velocity_vector,
-                                                           density_of_neutral_helium_lookup_table)
+                                                           density_of_neutral_helium_lookup_table, efficiency_table)
     indices = list(zip(extracted_energy_labels, extracted_energies))
 
     def make_parameters(cooling_index, ionization_rate, cutoff_speed, background_count_rate) -> Parameters:
         params = Parameters()
         params.add('cooling_index', value=cooling_index, min=1.0, max=5.0)
-        params.add('ionization_rate', value=ionization_rate, min=0.6e-7, max=2.1e-7)
+        params.add('ionization_rate', value=ionization_rate, min=0.6e-9, max=2.1e-7)
         params.add('cutoff_speed', value=cutoff_speed, min=sw_velocity * .8, max=sw_velocity * 1.2)
         params.add('background_count_rate', value=background_count_rate, min=0, max=0.2)
         return params
@@ -82,6 +84,8 @@ def calculate_pickup_ion_values(instrument_response_lookup_table, geometric_fact
                                 map_param_values_to_internal_values(1.5, 1e-7, sw_velocity, 0.2),
                             ])))
 
+    # if result.redchi > 10:
+    #     raise Exception("Failed to fit - chi-squared too large", result.redchi)
     param_vals = result.uvars
     if result.uvars is None:
         param_vals = {k: ufloat(v, np.inf) for k, v in result.params.valuesdict().items()}
@@ -209,6 +213,7 @@ class ModelCountRateCalculator:
     geometric_table: GeometricFactorCalibrationTable
     solar_wind_vector: np.ndarray
     density_of_neutral_helium_lookup_table: DensityOfNeutralHeliumLookupTable
+    efficiency_table: EfficiencyCalibrationTable
     _speed_grid_cache: dict = field(default_factory=dict)
 
     def get_speed_grid(self, response_lookup_table: InstrumentResponseLookupTable, ephemeris_time: float):
@@ -252,9 +257,10 @@ class ModelCountRateCalculator:
         response_lookup_table = self.response_lookup_table_collection.get_table_for_energy_bin(energy_bin_index)
         speed_grid = self.get_speed_grid(response_lookup_table, forward_model.ephemeris_time)
         integral = model_count_rate_integral(response_lookup_table, forward_model, speed_grid)
-
+        np.savetxt
+        efficiency = self.efficiency_table.get_alpha_efficiency_for(forward_model.ephemeris_time)
         geometric_factor = self.geometric_table.lookup_geometric_factor(energy_bin_center)
-        return (geometric_factor / 2) * integral + forward_model.fitting_params.background_count_rate
+        return efficiency * (geometric_factor / 2) * integral + forward_model.fitting_params.background_count_rate
 
 
 def calc_chi_squared_lm_fit(params: Parameters, observed_count_rates: np.ndarray,
