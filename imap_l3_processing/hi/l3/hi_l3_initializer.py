@@ -100,8 +100,7 @@ class HiL3Initializer(MapInitializer):
         furnish_spice_metakernel(start_date=map_to_produce.input_metadata.start_date,
                                  end_date=map_to_produce.input_metadata.end_date, kernel_types=HI_SP_SPICE_KERNELS)
 
-    @staticmethod
-    def get_dependencies(descriptor: str) -> list[str]:
+    def get_l2_dependencies(self, descriptor: str) -> list[str]:
         nsp_descriptor = descriptor.replace('-sp-', '-nsp-')
         if '-full-' in descriptor:
             return [nsp_descriptor.replace('-full-', '-anti-'), nsp_descriptor.replace('-full-', '-ram-')]

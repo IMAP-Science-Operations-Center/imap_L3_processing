@@ -99,9 +99,75 @@ class TestHiL3Initializer(unittest.TestCase):
             call('imap_hi_l2_h45-ena-h-sf-nsp-anti-hae-4deg-3mo_20100101_v001.cdf'),
             call('imap_hi_l2_h45-ena-h-sf-nsp-anti-hae-4deg-3mo_20100401_v001.cdf'),
             call('imap_hi_l2_h45-ena-h-sf-nsp-anti-hae-4deg-3mo_20100701_v001.cdf'),
-        ])
+            call('imap_hi_l2_h45-ena-h-sf-nsp-anti-hae-4deg-3mo_20101001_v001.cdf'),
+        ], any_order=True)
 
         self.assertEqual(expected_possible_maps, actual_possible_maps)
+
+    @patch('imap_l3_processing.maps.map_initializer.read_cdf_parents')
+    @patch('imap_l3_processing.hi.l3.hi_l3_initializer.imap_data_access.query')
+    def test_get_maps_that_can_be_produced_full_spin_descriptor(self, mock_query, mock_read_cdf_parents):
+        mock_query.side_effect = [
+            create_mock_query_results("glows", []),
+            create_mock_query_results("glows", [
+                'imap_glows_l3e_survival-probability-hi-90_20100101-repoint00001_v001.cdf',
+                'imap_glows_l3e_survival-probability-hi-90_20100102-repoint00002_v001.cdf',
+                'imap_glows_l3e_survival-probability-hi-90_20100103-repoint00003_v001.cdf',
+                'imap_glows_l3e_survival-probability-hi-90_20100104-repoint00004_v001.cdf',
+            ]),
+            create_mock_query_results("hi", [
+                'imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-3mo_20100101_v001.cdf',
+                'imap_hi_l2_h90-ena-h-sf-nsp-ram-hae-4deg-3mo_20100101_v001.cdf',
+                'imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-3mo_20100401_v001.cdf',
+                'imap_hi_l2_h90-ena-h-sf-nsp-ram-hae-4deg-3mo_20100701_v001.cdf',
+            ]),
+            create_mock_query_results("hi", [])
+        ]
+
+        mock_read_cdf_parents.side_effect = [
+            [
+                f'imap_hi_l1c_90sensor-pset_20100101-repoint00001_v001.cdf',
+                f'imap_hi_l1c_90sensor-pset_20100102-repoint00002_v001.cdf',
+            ],
+            [
+                f'imap_hi_l1c_90sensor-pset_20100103-repoint00003_v001.cdf',
+            ]
+        ]
+
+        initializer = HiL3Initializer()
+        actual_possible_maps = initializer.get_maps_that_can_be_produced('h90-ena-h-sf-sp-full-hae-4deg-3mo')
+
+        mock_query.assert_has_calls([
+            call(instrument='glows', data_level='l3e', descriptor='survival-probability-hi-45', version="latest"),
+            call(instrument='glows', data_level='l3e', descriptor='survival-probability-hi-90', version="latest"),
+            call(instrument='hi', data_level='l2', version="latest"),
+            call(instrument='hi', data_level='l3', version="latest"),
+        ])
+
+        mock_read_cdf_parents.assert_has_calls([
+            call('imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-3mo_20100101_v001.cdf'),
+            call('imap_hi_l2_h90-ena-h-sf-nsp-ram-hae-4deg-3mo_20100101_v001.cdf'),
+        ])
+
+        expected_possible_map_to_produce = PossibleMapToProduce(
+            input_files={
+                'imap_glows_l3e_survival-probability-hi-90_20100101-repoint00001_v001.cdf',
+                'imap_glows_l3e_survival-probability-hi-90_20100102-repoint00002_v001.cdf',
+                'imap_glows_l3e_survival-probability-hi-90_20100103-repoint00003_v001.cdf',
+                'imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-3mo_20100101_v001.cdf',
+                'imap_hi_l2_h90-ena-h-sf-nsp-ram-hae-4deg-3mo_20100101_v001.cdf',
+            },
+            input_metadata=InputMetadata(
+                instrument="hi",
+                data_level="l3",
+                start_date=datetime(2010, 1, 1),
+                end_date=datetime(2010, 1, 1),
+                version="v001",
+                descriptor='h90-ena-h-sf-sp-full-hae-4deg-3mo',
+            )
+        )
+
+        self.assertEqual([expected_possible_map_to_produce], actual_possible_maps)
 
     @patch('imap_l3_processing.maps.map_initializer.read_cdf_parents')
     @patch('imap_l3_processing.hi.l3.hi_l3_initializer.imap_data_access.query')
@@ -190,7 +256,8 @@ class TestHiL3Initializer(unittest.TestCase):
 
         self.assertEqual(expected_possible_maps, actual_possible_maps)
 
-    def test_get_dependencies(self):
+    @patch('imap_l3_processing.hi.l3.hi_l3_initializer.imap_data_access.query', return_value=[])
+    def test_get_dependencies(self, _):
         cases = [
             ("h90-ena-h-sf-sp-anti-hae-4deg-3mo", ["h90-ena-h-sf-nsp-anti-hae-4deg-3mo"]),
             ("h45-ena-h-sf-sp-ram-hae-4deg-3mo", ["h45-ena-h-sf-nsp-ram-hae-4deg-3mo"]),
@@ -202,7 +269,8 @@ class TestHiL3Initializer(unittest.TestCase):
 
         for descriptor, dependencies in cases:
             with self.subTest(descriptor):
-                actual_dependencies = HiL3Initializer.get_dependencies(descriptor)
+                initializer = HiL3Initializer()
+                actual_dependencies = initializer.get_l2_dependencies(descriptor)
                 self.assertEqual(dependencies, actual_dependencies)
 
     @patch('imap_l3_processing.hi.l3.hi_l3_initializer.furnish_spice_metakernel')

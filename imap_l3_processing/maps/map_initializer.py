@@ -24,10 +24,11 @@ class PossibleMapToProduce:
 
 class MapInitializer(abc.ABC):
     def __init__(self, l2_query_results: list[dict[str, str]], l3_query_results: list[dict[str, str]]):
-        self.l2_file_paths_by_descriptor = defaultdict(list)
+        self.l2_file_paths_by_descriptor = defaultdict(dict)
         for result in l2_query_results:
             logger.info(f"l2 file in MapInitializer __init__: {result['file_path']}")
-            self.l2_file_paths_by_descriptor[result['descriptor']].append(result['file_path'])
+            self.l2_file_paths_by_descriptor[result['descriptor']][result["start_date"]] = result['file_path']
+
         self.existing_l3_maps = {(qr["descriptor"], qr["start_date"]): qr["file_path"] for qr in l3_query_results}
 
     @abc.abstractmethod
@@ -38,15 +39,30 @@ class MapInitializer(abc.ABC):
     def _furnish_spice_dependencies(self, map_to_produce: PossibleMapToProduce):
         raise NotImplementedError()
 
+    @abc.abstractmethod
+    def get_l2_dependencies(self, descriptor: str) -> list[str]:
+        raise NotImplementedError()
+
     def get_maps_that_can_be_produced(self, l3_descriptor: str) -> list[PossibleMapToProduce]:
-        l2_descriptor = l3_descriptor.replace('-sp-', '-nsp-')
+        l2_descriptors = self.get_l2_dependencies(l3_descriptor)
+        assert l2_descriptors, f"Expected at least one L2 dependency for l3 map: {l3_descriptor}"
 
         glows_file_by_repointing = self._collect_glows_psets_by_repoint(l3_descriptor)
 
+        possible_start_dates = set(self.l2_file_paths_by_descriptor[l2_descriptors[0]].keys())
+        for l2_descriptor in l2_descriptors[1:]:
+            possible_start_dates.intersection_update(self.l2_file_paths_by_descriptor[l2_descriptor].keys())
+
         possible_maps = []
-        for l2_file_path in self.l2_file_paths_by_descriptor[l2_descriptor]:
-            start_date = datetime.strptime(ScienceFilePath(l2_file_path).start_date, "%Y%m%d")
-            l1c_names = read_cdf_parents(l2_file_path)
+        for str_start_date in sorted(list(possible_start_dates)):
+            l2_files_paths = []
+            l1c_names = []
+            for l2_descriptor in l2_descriptors:
+                l2_file_path = self.l2_file_paths_by_descriptor[l2_descriptor][str_start_date]
+                l2_files_paths.append(l2_file_path)
+                l1c_names.extend(read_cdf_parents(l2_file_path))
+
+            start_date = datetime.strptime(str_start_date, "%Y%m%d")
 
             l1c_repointings = []
             for l1 in l1c_names:
@@ -64,7 +80,7 @@ class MapInitializer(abc.ABC):
                                                version='v001', descriptor=l3_descriptor)
 
                 possible_map_to_produce = PossibleMapToProduce(
-                    input_files=set([l2_file_path] + glows_files),
+                    input_files=set(l2_files_paths + glows_files),
                     input_metadata=input_metadata
                 )
                 possible_maps.append(possible_map_to_produce)
