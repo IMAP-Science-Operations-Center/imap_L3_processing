@@ -25,6 +25,7 @@ from imap_l3_processing.swapi.l3a.science.calculate_pickup_ion import calculate_
     calculate_helium_pui_temperature, calc_chi_squared_lm_fit
 from imap_l3_processing.swapi.l3a.science.density_of_neutral_helium_lookup_table import \
     DensityOfNeutralHeliumLookupTable
+from imap_l3_processing.swapi.l3b.science.efficiency_calibration_table import EfficiencyCalibrationTable
 from imap_l3_processing.swapi.l3b.science.geometric_factor_calibration_table import GeometricFactorCalibrationTable
 from imap_l3_processing.swapi.l3b.science.instrument_response_lookup_table import InstrumentResponseLookupTable, \
     InstrumentResponseLookupTableCollection
@@ -153,6 +154,8 @@ class TestCalculatePickupIon(SpiceTestCase):
 
         pui_velocity_instrument_frame = np.array([8, 6, 4])
         mock_calculate_pui_velocity_vector.return_value = pui_velocity_instrument_frame
+        efficiency_lut = EfficiencyCalibrationTable(
+            get_test_data_path("swapi/imap_swapi_efficiency-lut_20241020_v000.dat"))
 
         pui_velocity_eclipj2000 = np.array([5, 7, 9])
         sw_velocity_eclipj2000 = np.array([8, 10, 12])
@@ -171,7 +174,8 @@ class TestCalculatePickupIon(SpiceTestCase):
             response_lookup_table_collection=Mock(),
             geometric_table=Mock(),
             solar_wind_vector=solar_wind_vector,
-            density_of_neutral_helium_lookup_table=Mock()
+            density_of_neutral_helium_lookup_table=Mock(),
+            efficiency_table=efficiency_lut,
         )
 
         response_table = InstrumentResponseLookupTable(
@@ -223,7 +227,8 @@ class TestCalculatePickupIon(SpiceTestCase):
             response_lookup_table_collection=Mock(),
             geometric_table=Mock(),
             solar_wind_vector=solar_wind_vector,
-            density_of_neutral_helium_lookup_table=Mock()
+            density_of_neutral_helium_lookup_table=Mock(),
+            efficiency_table=Mock()
         )
 
         response_table = InstrumentResponseLookupTable(
@@ -377,15 +382,21 @@ class TestCalculatePickupIon(SpiceTestCase):
             background_count_rate_cutoff = 0.1
             input_epochs = 123456789000000000
             sw_velocity = np.array([300, 400, 0])
-            mock_minimize.return_value.uvars = {"cooling_index": 1, "ionization_rate": 2, "cutoff_speed": 3,
+
+            mock_minimize_result = Mock()
+            mock_minimize_result.uvars = {"cooling_index": 1, "ionization_rate": 2, "cutoff_speed": 3,
                                                 "background_count_rate": 4}
+            mock_minimize_result.redchi = 3
+            mock_minimize.return_value = mock_minimize_result
             energy_cutoff = 6000.0
             mock_calculate_pui_energy_cutoff.return_value = energy_cutoff
+
+            efficiency_lut = EfficiencyCalibrationTable(get_test_data_path("swapi/imap_swapi_efficiency-lut_20241020_v000.dat"))
 
             actual_fitting_parameters = calculate_pickup_ion_values(
                 self.get_response_lookup_table_collection(), geometric_factor_lut, energy,
                 count_rate, input_epochs, background_count_rate_cutoff, sw_velocity,
-                self.density_of_neutral_helium_lookup_table)
+                self.density_of_neutral_helium_lookup_table, efficiency_lut)
 
             mock_calculate_combined_sweeps.assert_called_once_with(count_rate, energy)
 
@@ -420,7 +431,7 @@ class TestCalculatePickupIon(SpiceTestCase):
             self.assertEqual(5.0, actual_params["cooling_index"].max)
 
             self.assertEqual(1e-7, actual_params["ionization_rate"].value)
-            self.assertEqual(0.6e-7, actual_params["ionization_rate"].min)
+            self.assertEqual(0.6e-9, actual_params["ionization_rate"].min)
             self.assertEqual(2.1e-7, actual_params["ionization_rate"].max)
 
             self.assertEqual(500, actual_params["cutoff_speed"].value)
@@ -442,6 +453,42 @@ class TestCalculatePickupIon(SpiceTestCase):
 
             expected_fitting_params = FittingParameters(1, 2, 3, 4)
             self.assertEqual(expected_fitting_params, actual_fitting_parameters)
+
+    @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.spiceypy")
+    @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.calculate_pui_energy_cutoff")
+    @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.extract_pui_energy_bins")
+    @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.lmfit.minimize")
+    @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.calculate_combined_sweeps")
+    def test_calculate_pickup_ion_bad_fit(self, mock_calculate_combined_sweeps, mock_minimize,
+                                                        mock_extract_pui_energy_bins, _, __):
+
+        mock_calculate_combined_sweeps.return_value = (np.array([1]), np.array([1]))
+        mock_extract_pui_energy_bins.return_value = (np.array([1]), np.array([1]), np.array([1]))
+
+        fit_params = {
+            "cooling_index": -1,
+            "ionization_rate": -1,
+            "cutoff_speed": -1,
+            "background_count_rate": -1,
+        }
+
+        mock_minimize_result = Mock(redchi=11, uvars=fit_params)
+        mock_minimize.return_value = mock_minimize_result
+
+        with self.assertRaises(Exception) as exc_ctx:
+            calculate_pickup_ion_values(
+                instrument_response_lookup_table=Mock(),
+                geometric_factor_calibration_table=Mock(),
+                energy=np.array([1]),
+                count_rates=np.array([1]),
+                center_of_epoch=1e9,
+                background_count_rate_cutoff=10,
+                sw_velocity_vector=np.array([1, 0, 0]),
+                density_of_neutral_helium_lookup_table=Mock(),
+                efficiency_table=Mock()
+            )
+
+        self.assertEqual("Failed to fit - chi-squared too large 11", str(exc_ctx.exception))
 
     def test_calculate_pui_density(self):
         epoch = spacepy.pycdf.lib.datetime_to_tt2000(datetime(2025, 6, 6, 12))
@@ -553,7 +600,7 @@ class TestCalculatePickupIon(SpiceTestCase):
     @skipIf(datetime.now() < LAST_SUCCESSFUL_RUN + ALLOWED_GAP_TIME, "expensive test already run in last week")
     @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.spiceypy")
     def test_calculate_pickup_ions_with_minimize(self, mock_spice):
-        ephemeris_time_for_epoch = 100000
+        ephemeris_time_for_epoch = int(100000 * 1e9)
         mock_spice.unitim.return_value = ephemeris_time_for_epoch
         mock_light_time = 122.0
         mock_spice.spkezr.return_value = (np.array([0, 0, 0, 0, 0, 0]), mock_light_time)
@@ -580,9 +627,10 @@ class TestCalculatePickupIon(SpiceTestCase):
             count_rate = cdf["swp_coin_rate"][...]
 
             geometric_factor_lut_path = get_test_data_path(
-                "swapi/imap_swapi_energy-gf-sw-lut_20100101_v001.csv")
+                "swapi/imap_swapi_energy-gf-sw-lut-divided-by-efficiency_20100101_v002.csv")
 
             geometric_factor_lut = GeometricFactorCalibrationTable.from_file(geometric_factor_lut_path)
+            efficiency_lut = EfficiencyCalibrationTable(get_test_data_path("swapi/imap_swapi_efficiency-lut_20241020_v000.dat"))
             background_count_rate_cutoff = 0.1
             epoch = 123_456_789_000_000_000
             sw_velocity_vector = np.array([0, 0, -500])
@@ -590,7 +638,7 @@ class TestCalculatePickupIon(SpiceTestCase):
             actual_fitting_parameters = calculate_pickup_ion_values(
                 self.get_response_lookup_table_collection(), geometric_factor_lut, energy,
                 count_rate, epoch, background_count_rate_cutoff, sw_velocity_vector,
-                self.density_of_neutral_helium_lookup_table)
+                self.density_of_neutral_helium_lookup_table, efficiency_lut)
 
             mock_spice.unitim.assert_called_with(epoch / ONE_SECOND_IN_NANOSECONDS,
                                                  "TT", "ET")
@@ -601,7 +649,9 @@ class TestCalculatePickupIon(SpiceTestCase):
             self.assertAlmostEqual(0.1, actual_fitting_parameters.background_count_rate, delta=0.05)
 
     def test_snapshot_model_count_rate_result(self):
-        geometric_factor_lut_path = get_test_data_path("swapi/imap_swapi_energy-gf-sw-lut_20100101_v001.csv")
+        geometric_factor_lut_path = get_test_data_path("swapi/imap_swapi_energy-gf-sw-lut-divided-by-efficiency_20100101_v002.csv")
+        efficiency_lut = EfficiencyCalibrationTable(
+            get_test_data_path("swapi/imap_swapi_efficiency-lut_20241020_v000.dat"))
 
         geometric_factor_lut = GeometricFactorCalibrationTable.from_file(geometric_factor_lut_path)
         sw_velocity_vector = np.array([0, 0, -500])
@@ -610,7 +660,8 @@ class TestCalculatePickupIon(SpiceTestCase):
             response_lookup_table_collection=self.get_response_lookup_table_collection(),
             geometric_table=geometric_factor_lut,
             solar_wind_vector=sw_velocity_vector,
-            density_of_neutral_helium_lookup_table=self.density_of_neutral_helium_lookup_table
+            density_of_neutral_helium_lookup_table=self.density_of_neutral_helium_lookup_table,
+            efficiency_table=efficiency_lut,
         )
         ephemeris_time = 800000000
 

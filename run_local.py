@@ -247,7 +247,7 @@ def create_swapi_l3a_cdf(proton_temperature_density_calibration_file, alpha_temp
                          clock_angle_and_flow_deflection_calibration_file, geometric_factor_calibration_file,
                          instrument_response_calibration_file, density_of_neutral_helium_calibration_file,
                          imap_swapi_efficiency_lut_file, cdf_file, mock_spice):
-    ephemeris_time_for_epoch = 100000
+    ephemeris_time_for_epoch = int(100000 * 1e9)
     mock_spice.unitim.return_value = ephemeris_time_for_epoch
     mock_light_time = 122.0
     mock_spice.spkezr.return_value = (np.array([0, 0, 0, 0, 0, 0]), mock_light_time)

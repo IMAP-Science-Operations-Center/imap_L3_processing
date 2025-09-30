@@ -14,7 +14,7 @@ class EfficiencyCalibrationTable:
 
     def _get_efficiency_for_index(self, name, time_as_tt2000) -> float:
         for d in reversed(self.data):
-            if d["time"] < np.datetime64(pycdf.lib.tt2000_to_datetime(time_as_tt2000), "ns"):
+            if d["time"] < np.datetime64(pycdf.lib.tt2000_to_datetime(int(time_as_tt2000)), "ns"):
                 return d[name]
 
         raise ValueError(f"No efficiency data for {pycdf.lib.tt2000_to_datetime(time_as_tt2000)}")
