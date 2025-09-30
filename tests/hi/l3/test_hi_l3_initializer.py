@@ -270,7 +270,7 @@ class TestHiL3Initializer(unittest.TestCase):
         for descriptor, dependencies in cases:
             with self.subTest(descriptor):
                 initializer = HiL3Initializer()
-                actual_dependencies = initializer.get_l2_dependencies(descriptor)
+                actual_dependencies = initializer._get_l2_dependencies(descriptor)
                 self.assertEqual(dependencies, actual_dependencies)
 
     @patch('imap_l3_processing.hi.l3.hi_l3_initializer.furnish_spice_metakernel')
@@ -289,7 +289,7 @@ class TestHiL3Initializer(unittest.TestCase):
         map_to_produce = PossibleMapToProduce(set(), input_metadata)
 
         hi_initializer = HiL3Initializer()
-        hi_initializer._furnish_spice_dependencies(map_to_produce)
+        hi_initializer.furnish_spice_dependencies(map_to_produce)
 
         mock_furnish_metakernel.assert_called_once_with(start_date=start_date, end_date=end_date,
                                                         kernel_types=HI_SP_SPICE_KERNELS)

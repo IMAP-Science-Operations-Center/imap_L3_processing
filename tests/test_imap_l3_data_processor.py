@@ -126,6 +126,10 @@ class TestImapL3DataProcessor(TestCase):
         ])
 
         self.assertEqual(len(HI_SP_MAP_DESCRIPTORS), mock_hi_processor.call_count)
+
+        self.assertEqual(len(HI_SP_MAP_DESCRIPTORS), mock_hi_initializer.furnish_spice_dependencies.call_count)
+        mock_hi_initializer.furnish_spice_dependencies.assert_called_with(possible_map_to_produce)
+        
         mock_hi_processor.assert_called_with(possible_map_to_produce.processing_input_collection,
                                              expected_input_metadata)
         self.assertEqual(len(HI_SP_MAP_DESCRIPTORS), mock_hi_processor.return_value.process.call_count)

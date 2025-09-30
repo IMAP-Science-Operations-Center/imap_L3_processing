@@ -96,7 +96,7 @@ def imap_l3_processor():
                 maps_to_produce: list[PossibleMapToProduce] = initializer.get_maps_that_should_be_produced(
                     map_descriptor)
                 for dependency in maps_to_produce:
-                    initializer._furnish_spice_dependencies(dependency)
+                    initializer.furnish_spice_dependencies(dependency)
                     processor = HiProcessor(dependency.processing_input_collection, dependency.input_metadata)
                     paths.extend(processor.process())
         else:

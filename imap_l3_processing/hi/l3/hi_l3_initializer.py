@@ -96,11 +96,11 @@ class HiL3Initializer(MapInitializer):
         hi_l3_query_result = imap_data_access.query(instrument='hi', data_level='l3', version='latest')
         super().__init__(hi_l2_query_result, hi_l3_query_result)
 
-    def _furnish_spice_dependencies(self, map_to_produce: PossibleMapToProduce):
+    def furnish_spice_dependencies(self, map_to_produce: PossibleMapToProduce):
         furnish_spice_metakernel(start_date=map_to_produce.input_metadata.start_date,
                                  end_date=map_to_produce.input_metadata.end_date, kernel_types=HI_SP_SPICE_KERNELS)
 
-    def get_l2_dependencies(self, descriptor: str) -> list[str]:
+    def _get_l2_dependencies(self, descriptor: str) -> list[str]:
         nsp_descriptor = descriptor.replace('-sp-', '-nsp-')
         if '-full-' in descriptor:
             return [nsp_descriptor.replace('-full-', '-anti-'), nsp_descriptor.replace('-full-', '-ram-')]

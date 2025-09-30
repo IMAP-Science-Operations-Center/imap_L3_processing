@@ -36,15 +36,11 @@ class MapInitializer(abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def _furnish_spice_dependencies(self, map_to_produce: PossibleMapToProduce):
-        raise NotImplementedError()
-
-    @abc.abstractmethod
-    def get_l2_dependencies(self, descriptor: str) -> list[str]:
+    def _get_l2_dependencies(self, descriptor: str) -> list[str]:
         raise NotImplementedError()
 
     def get_maps_that_can_be_produced(self, l3_descriptor: str) -> list[PossibleMapToProduce]:
-        l2_descriptors = self.get_l2_dependencies(l3_descriptor)
+        l2_descriptors = self._get_l2_dependencies(l3_descriptor)
         assert l2_descriptors, f"Expected at least one L2 dependency for l3 map: {l3_descriptor}"
 
         glows_file_by_repointing = self._collect_glows_psets_by_repoint(l3_descriptor)
