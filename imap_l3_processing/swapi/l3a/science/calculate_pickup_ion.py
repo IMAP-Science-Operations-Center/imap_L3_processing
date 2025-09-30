@@ -257,7 +257,6 @@ class ModelCountRateCalculator:
         response_lookup_table = self.response_lookup_table_collection.get_table_for_energy_bin(energy_bin_index)
         speed_grid = self.get_speed_grid(response_lookup_table, forward_model.ephemeris_time)
         integral = model_count_rate_integral(response_lookup_table, forward_model, speed_grid)
-        np.savetxt
         efficiency = self.efficiency_table.get_alpha_efficiency_for(forward_model.ephemeris_time)
         geometric_factor = self.geometric_table.lookup_geometric_factor(energy_bin_center)
         return efficiency * (geometric_factor / 2) * integral + forward_model.fitting_params.background_count_rate
