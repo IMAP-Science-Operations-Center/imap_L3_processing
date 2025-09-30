@@ -14,14 +14,12 @@ from imap_l3_processing.models import Instrument
 class TestHiLoL3SurvivalDependencies(unittest.TestCase):
 
     @patch("imap_l3_processing.maps.hilo_l3_survival_dependencies.parse_map_descriptor")
-    @patch("imap_l3_processing.maps.hilo_l3_survival_dependencies.find_glows_l3e_dependencies")
     @patch("imap_l3_processing.maps.hilo_l3_survival_dependencies.imap_data_access.download")
     @patch("imap_l3_processing.maps.hilo_l3_survival_dependencies.read_glows_l3e_data")
     @patch("imap_l3_processing.maps.hilo_l3_survival_dependencies.read_l1c_rectangular_pointing_set_data")
     @patch("imap_l3_processing.maps.hilo_l3_survival_dependencies.RectangularIntensityMapData.read_from_path")
     def test_fetch_dependencies(self, mock_read_from_path: Mock, mock_read_l1c, mock_read_glows_l3e,
-                                mock_imap_data_access_download, mock_find_glows_l3e_dependencies,
-                                mock_parse_map_descriptor):
+                                mock_imap_data_access_download, mock_parse_map_descriptor):
         for instrument in [Instrument.IMAP_HI, Instrument.IMAP_LO]:
             with self.subTest(instrument.value):
                 mock_read_from_path.reset_mock()
@@ -42,11 +40,12 @@ class TestHiLoL3SurvivalDependencies(unittest.TestCase):
                         l2_map.attrs["Parents"] = parents
                     l2_map_descriptor = f"{instrument.value}-ena-h-hf-nsp-ram-hae-6deg-1yr"
                     l2_filename = f"imap_{instrument.value}_l2_{l2_map_descriptor}_20250415_v001.cdf"
-                    glows_l3e_filename = "imap_glows_l3e_not-used_20250415_v001.cdf"
 
                     dependencies = ProcessingInputCollection(ScienceInput(l2_filename),
-                                                             ScienceInput(glows_l3e_filename))
-                    dependencies.get_file_paths = Mock(return_value=[Path(l2_filename)])
+                                                             *[ScienceInput(glows_l3e_file) for glows_l3e_file in
+                                                               glows_file_paths])
+                    dependencies.get_file_paths = Mock()
+                    dependencies.get_file_paths.side_effect = [[Path(l2_filename)], glows_file_paths]
 
                     downloaded_files = [l2_map_path, sentinel.l1c_file_path_1,
                                         sentinel.l1c_file_path_2,
@@ -56,14 +55,15 @@ class TestHiLoL3SurvivalDependencies(unittest.TestCase):
                     mock_imap_data_access_download.side_effect = downloaded_files
                     mock_read_l1c.side_effect = [sentinel.l1c_data_1, sentinel.l1c_data_2, sentinel.l1c_data_3]
 
-                    mock_find_glows_l3e_dependencies.return_value = glows_file_paths
                     mock_read_glows_l3e.side_effect = [sentinel.glows_data_1, sentinel.glows_data_2,
                                                        sentinel.glows_data_3]
 
                     actual = HiLoL3SurvivalDependencies.fetch_dependencies(dependencies, instrument)
 
-                    dependencies.get_file_paths.assert_called_once_with(source=instrument.value)
-                    mock_find_glows_l3e_dependencies.assert_called_with(l1c_file_paths, instrument.value)
+                    dependencies.get_file_paths.assert_has_calls([
+                        call(source=instrument.value),
+                        call(source="glows")
+                    ])
 
                     expected_imap_data_access_calls = [call(l2_filename)] + [call(path) for path in
                                                                              l1c_file_paths + glows_file_paths]
