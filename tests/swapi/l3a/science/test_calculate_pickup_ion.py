@@ -382,8 +382,12 @@ class TestCalculatePickupIon(SpiceTestCase):
             background_count_rate_cutoff = 0.1
             input_epochs = 123456789000000000
             sw_velocity = np.array([300, 400, 0])
-            mock_minimize.return_value.uvars = {"cooling_index": 1, "ionization_rate": 2, "cutoff_speed": 3,
+
+            mock_minimize_result = Mock()
+            mock_minimize_result.uvars = {"cooling_index": 1, "ionization_rate": 2, "cutoff_speed": 3,
                                                 "background_count_rate": 4}
+            mock_minimize_result.redchi = 3
+            mock_minimize.return_value = mock_minimize_result
             energy_cutoff = 6000.0
             mock_calculate_pui_energy_cutoff.return_value = energy_cutoff
 
@@ -449,6 +453,42 @@ class TestCalculatePickupIon(SpiceTestCase):
 
             expected_fitting_params = FittingParameters(1, 2, 3, 4)
             self.assertEqual(expected_fitting_params, actual_fitting_parameters)
+
+    @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.spiceypy")
+    @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.calculate_pui_energy_cutoff")
+    @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.extract_pui_energy_bins")
+    @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.lmfit.minimize")
+    @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.calculate_combined_sweeps")
+    def test_calculate_pickup_ion_bad_fit(self, mock_calculate_combined_sweeps, mock_minimize,
+                                                        mock_extract_pui_energy_bins, _, __):
+
+        mock_calculate_combined_sweeps.return_value = (np.array([1]), np.array([1]))
+        mock_extract_pui_energy_bins.return_value = (np.array([1]), np.array([1]), np.array([1]))
+
+        fit_params = {
+            "cooling_index": -1,
+            "ionization_rate": -1,
+            "cutoff_speed": -1,
+            "background_count_rate": -1,
+        }
+
+        mock_minimize_result = Mock(redchi=11, uvars=fit_params)
+        mock_minimize.return_value = mock_minimize_result
+
+        with self.assertRaises(Exception) as exc_ctx:
+            calculate_pickup_ion_values(
+                instrument_response_lookup_table=Mock(),
+                geometric_factor_calibration_table=Mock(),
+                energy=np.array([1]),
+                count_rates=np.array([1]),
+                center_of_epoch=1e9,
+                background_count_rate_cutoff=10,
+                sw_velocity_vector=np.array([1, 0, 0]),
+                density_of_neutral_helium_lookup_table=Mock(),
+                efficiency_table=Mock()
+            )
+
+        self.assertEqual("Failed to fit - chi-squared too large 11", str(exc_ctx.exception))
 
     def test_calculate_pui_density(self):
         epoch = spacepy.pycdf.lib.datetime_to_tt2000(datetime(2025, 6, 6, 12))

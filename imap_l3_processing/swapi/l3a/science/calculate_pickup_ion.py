@@ -84,8 +84,8 @@ def calculate_pickup_ion_values(instrument_response_lookup_table, geometric_fact
                                 map_param_values_to_internal_values(1.5, 1e-7, sw_velocity, 0.2),
                             ])))
 
-    # if result.redchi > 10:
-    #     raise Exception("Failed to fit - chi-squared too large", result.redchi)
+    if result.redchi > 10:
+        raise Exception(f"Failed to fit - chi-squared too large {result.redchi}")
     param_vals = result.uvars
     if result.uvars is None:
         param_vals = {k: ufloat(v, np.inf) for k, v in result.params.valuesdict().items()}
