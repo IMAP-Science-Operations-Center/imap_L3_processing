@@ -30,7 +30,8 @@ GLOWS_L3E_INTEGRATION_DATA_DIR = get_run_local_data_path("glows_l3bcde_integrati
 
 
 class TestGlowsProcessorIntegration(unittest.TestCase):
-    INPUT_DATA_DIR = Path(__file__).parent / "test_data" / "glows"
+    INTEGRATION_TEST_DATA = Path(__file__).parent / "test_data"
+    GLOWS_TEST_DATA = INTEGRATION_TEST_DATA / "glows"
 
     @with_tempdir
     def test_glows_l3a(self, tmp_dir):
@@ -182,40 +183,40 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
 
     @skipIf(os.getenv("IN_GLOWS_INTEGRATION_DOCKER") is None, "Only runs in a docker container!")
     @mock_imap_data_access(GLOWS_L3E_INTEGRATION_DATA_DIR, [
-        INPUT_DATA_DIR / "imap_glows_l3a_hist_20250428-repoint01013_v001.cdf",
-        INPUT_DATA_DIR / "imap_glows_l3a_hist_20250429-repoint01014_v001.cdf",
-        INPUT_DATA_DIR / "imap_glows_l3a_hist_20250510-repoint01025_v001.cdf",
-        INPUT_DATA_DIR / "imap_glows_l3a_hist_20250511-repoint01026_v001.cdf",
-        INPUT_DATA_DIR / "imap_glows_l3a_hist_20250525-repoint01040_v001.cdf",
-        INPUT_DATA_DIR / "imap_glows_l3a_hist_20250526-repoint01041_v001.cdf",
-        INPUT_DATA_DIR / "imap_glows_l3a_hist_20250606-repoint01053_v001.cdf",
-        INPUT_DATA_DIR / "imap_glows_l3a_hist_20250607-repoint01054_v001.cdf",
+        GLOWS_TEST_DATA / "imap_glows_l3a_hist_20250428-repoint01013_v001.cdf",
+        GLOWS_TEST_DATA / "imap_glows_l3a_hist_20250429-repoint01014_v001.cdf",
+        GLOWS_TEST_DATA / "imap_glows_l3a_hist_20250510-repoint01025_v001.cdf",
+        GLOWS_TEST_DATA / "imap_glows_l3a_hist_20250511-repoint01026_v001.cdf",
+        GLOWS_TEST_DATA / "imap_glows_l3a_hist_20250525-repoint01040_v001.cdf",
+        GLOWS_TEST_DATA / "imap_glows_l3a_hist_20250526-repoint01041_v001.cdf",
+        GLOWS_TEST_DATA / "imap_glows_l3a_hist_20250606-repoint01053_v001.cdf",
+        GLOWS_TEST_DATA / "imap_glows_l3a_hist_20250607-repoint01054_v001.cdf",
 
-        INPUT_DATA_DIR / "imap_glows_uv-anisotropy-1CR_20100101_v001.json",
-        INPUT_DATA_DIR / "imap_glows_WawHelioIonMP_20100101_v001.json",
-        INPUT_DATA_DIR / "imap_glows_bad-days-list_20100101_v001.dat",
-        INPUT_DATA_DIR / "imap_glows_pipeline-settings-l3bcde_20100101_v003.json",
-        INPUT_DATA_DIR / "imap_glows_plasma-speed-2010a_20100101_v001.dat",
-        INPUT_DATA_DIR / "imap_glows_proton-density-2010a_20100101_v001.dat",
-        INPUT_DATA_DIR / "imap_glows_uv-anisotropy-2010a_20100101_v001.dat",
-        INPUT_DATA_DIR / "imap_glows_photoion-2010a_20100101_v001.dat",
-        INPUT_DATA_DIR / "imap_glows_lya-2010a_20100101_v001.dat",
-        INPUT_DATA_DIR / "imap_glows_electron-density-2010a_20100101_v001.dat",
-        INPUT_DATA_DIR / "imap_glows_ionization-files_20100101_v001.dat",
-        INPUT_DATA_DIR / "imap_glows_energy-grid-lo_20100101_v001.dat",
-        INPUT_DATA_DIR / "imap_glows_tess-xyz-8_20100101_v001.dat",
-        INPUT_DATA_DIR / "imap_lo_elongation-data_20100101_v001.dat",
-        INPUT_DATA_DIR / "imap_glows_energy-grid-hi_20100101_v001.dat",
-        INPUT_DATA_DIR / "imap_glows_energy-grid-ultra_20100101_v001.dat",
-        INPUT_DATA_DIR / "imap_glows_tess-ang-16_20100101_v001.dat",
-        INPUT_DATA_DIR / "imap_2026_269_05.repoint.csv",
-        INPUT_DATA_DIR / "imap_2025_105_2026_105_01.ah.bc",
-        INPUT_DATA_DIR / "imap_dps_2025_105_2026_105_009.ah.bc",
-        INPUT_DATA_DIR / "imap_science_108.tf",
-        INPUT_DATA_DIR / "naif020.tls",
-        INPUT_DATA_DIR / "imap_sclk_008.tsc",
-        INPUT_DATA_DIR / "de440.bsp",
-        INPUT_DATA_DIR / "imap_recon_20250415_20260415_v01.bsp",
+        GLOWS_TEST_DATA / "imap_glows_uv-anisotropy-1CR_20100101_v001.json",
+        GLOWS_TEST_DATA / "imap_glows_WawHelioIonMP_20100101_v001.json",
+        GLOWS_TEST_DATA / "imap_glows_bad-days-list_20100101_v001.dat",
+        GLOWS_TEST_DATA / "imap_glows_pipeline-settings-l3bcde_20100101_v003.json",
+        GLOWS_TEST_DATA / "imap_glows_plasma-speed-2010a_20100101_v001.dat",
+        GLOWS_TEST_DATA / "imap_glows_proton-density-2010a_20100101_v001.dat",
+        GLOWS_TEST_DATA / "imap_glows_uv-anisotropy-2010a_20100101_v001.dat",
+        GLOWS_TEST_DATA / "imap_glows_photoion-2010a_20100101_v001.dat",
+        GLOWS_TEST_DATA / "imap_glows_lya-2010a_20100101_v001.dat",
+        GLOWS_TEST_DATA / "imap_glows_electron-density-2010a_20100101_v001.dat",
+        GLOWS_TEST_DATA / "imap_glows_ionization-files_20100101_v001.dat",
+        GLOWS_TEST_DATA / "imap_glows_energy-grid-lo_20100101_v001.dat",
+        GLOWS_TEST_DATA / "imap_glows_tess-xyz-8_20100101_v001.dat",
+        GLOWS_TEST_DATA / "imap_lo_elongation-data_20100101_v001.dat",
+        GLOWS_TEST_DATA / "imap_glows_energy-grid-hi_20100101_v001.dat",
+        GLOWS_TEST_DATA / "imap_glows_energy-grid-ultra_20100101_v001.dat",
+        GLOWS_TEST_DATA / "imap_glows_tess-ang-16_20100101_v001.dat",
+        INTEGRATION_TEST_DATA / "spice" / "imap_2026_269_05.repoint.csv",
+        INTEGRATION_TEST_DATA / "spice" / "imap_2025_105_2026_105_01.ah.bc",
+        INTEGRATION_TEST_DATA / "spice" / "imap_dps_2025_105_2026_105_009.ah.bc",
+        INTEGRATION_TEST_DATA / "spice" / "imap_science_108.tf",
+        INTEGRATION_TEST_DATA / "spice" / "naif020.tls",
+        INTEGRATION_TEST_DATA / "spice" / "imap_sclk_008.tsc",
+        INTEGRATION_TEST_DATA / "spice" / "de440.bsp",
+        INTEGRATION_TEST_DATA / "spice" / "imap_recon_20250415_20260415_v01.bsp",
     ])
     def test_l3bcde_first_time_processing(self):
         logging.basicConfig(force=True, level=logging.INFO,

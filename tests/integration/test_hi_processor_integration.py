@@ -12,13 +12,18 @@ from tests.test_helpers import get_run_local_data_path
 
 class TestMapIntegration(unittest.TestCase):
     INTEGRATION_DATA_DIR = get_run_local_data_path("hi/integration_data")
-    INPUT_DATA_DIR = Path(__file__).parent / "test_data" / "hi"
+    INTEGRATION_TEST_DATA = Path(__file__).parent / "test_data"
+    HI_TEST_DATA = INTEGRATION_TEST_DATA / "hi"
 
     @patch("imap_l3_data_processor._parse_cli_arguments")
     @mock_imap_data_access(INTEGRATION_DATA_DIR, [
-        INPUT_DATA_DIR / "imap_hi_l2_h45-ena-h-sf-nsp-ram-hae-4deg-1yr_20250415_v006.cdf",
-        INPUT_DATA_DIR / "imap_hi_l1c_90sensor-pset_20250415-repoint01000_v001.cdf",
-        INPUT_DATA_DIR / "imap_glows_l3e_survival-probability-hi-45_20250415-repoint01000_v001.cdf",
+        HI_TEST_DATA / "imap_hi_l2_h45-ena-h-sf-nsp-ram-hae-4deg-1yr_20250415_v006.cdf",
+        HI_TEST_DATA / "imap_hi_l1c_90sensor-pset_20250415-repoint01000_v001.cdf",
+        HI_TEST_DATA / "imap_glows_l3e_survival-probability-hi-45_20250415-repoint01000_v001.cdf",
+        INTEGRATION_TEST_DATA / "spice" / "naif020.tls",
+        INTEGRATION_TEST_DATA / "spice" / "imap_science_108.tf",
+        INTEGRATION_TEST_DATA / "spice" / "imap_sclk_008.tsc",
+        INTEGRATION_TEST_DATA / "spice" / "imap_dps_2025_105_2026_105_009.ah.bc"
     ])
     def test_all_sp_maps(self, mock_parse_cli_arguments):
         logging.basicConfig(force=True, level=logging.INFO,

@@ -93,14 +93,10 @@ def imap_l3_processor():
             initializer = HiL3Initializer()
             paths = []
             for map_descriptor in HI_SP_MAP_DESCRIPTORS:
-                logger.info(f"Considering HI {map_descriptor} maps for processing")
                 maps_to_produce: list[PossibleMapToProduce] = initializer.get_maps_that_should_be_produced(
                     map_descriptor)
-                logger.info(f"maps to produce: {maps_to_produce}")
                 for dependency in maps_to_produce:
                     initializer._furnish_spice_dependencies(dependency)
-                    logger.info(
-                        f"Processing HI {map_descriptor} map with input {[f.name for f in dependency.processing_input_collection.get_file_paths()]}")
                     processor = HiProcessor(dependency.processing_input_collection, dependency.input_metadata)
                     paths.extend(processor.process())
         else:

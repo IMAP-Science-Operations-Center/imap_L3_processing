@@ -72,7 +72,6 @@ class MapInitializer(abc.ABC):
 
     def get_maps_that_should_be_produced(self, descriptor: str) -> list[PossibleMapToProduce]:
         possible_maps = self.get_maps_that_can_be_produced(descriptor)
-        logger.info(f"Found {len(possible_maps)} possible maps for {descriptor}")
 
         maps_to_make = []
         for map in possible_maps:
