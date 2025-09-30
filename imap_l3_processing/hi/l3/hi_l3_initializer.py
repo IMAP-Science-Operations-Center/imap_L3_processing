@@ -7,7 +7,12 @@ from imap_l3_processing.utils import SpiceKernelTypes, furnish_spice_metakernel
 
 logger = logging.getLogger(__name__)
 
-HI_SP_SPICE_KERNELS: list[SpiceKernelTypes] = []
+HI_SP_SPICE_KERNELS: list[SpiceKernelTypes] = [
+    SpiceKernelTypes.Leapseconds,
+    SpiceKernelTypes.ScienceFrames,
+    SpiceKernelTypes.PointingAttitude,
+    SpiceKernelTypes.SpacecraftClock,
+]
 
 other_descriptors = [
     "hic-ena-h-hf-nsp-full-hae-6deg-1yr",

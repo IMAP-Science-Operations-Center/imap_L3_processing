@@ -98,6 +98,7 @@ def imap_l3_processor():
                     map_descriptor)
                 logger.info(f"maps to produce: {maps_to_produce}")
                 for dependency in maps_to_produce:
+                    initializer._furnish_spice_dependencies(dependency)
                     logger.info(
                         f"Processing HI {map_descriptor} map with input {[f.name for f in dependency.processing_input_collection.get_file_paths()]}")
                     processor = HiProcessor(dependency.processing_input_collection, dependency.input_metadata)
