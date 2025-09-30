@@ -22,4 +22,4 @@ RUN chmod +x survProbUltra
 COPY run_local.py .
 ENV IN_GLOWS_INTEGRATION_DOCKER = "set"
 ENV PYTHONPATH=$PYTHONPATH:/imap_l3_processing
-ENTRYPOINT ["python", "-m", "unittest", "tests.glows.test_glows_processor_integration.TestGlowsProcessorIntegration.test_l3bcde_first_time_processing"]
+ENTRYPOINT ["python", "-m", "unittest", "tests.integration.test_glows_processor_integration.TestGlowsProcessorIntegration.test_l3bcde_first_time_processing"]
