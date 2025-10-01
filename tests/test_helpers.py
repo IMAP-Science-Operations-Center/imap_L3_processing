@@ -73,7 +73,9 @@ def build_moment_fit_results(moments: Moments = None, chisq: float = 1, number_o
     return MomentFitResults(moments=moments, chisq=chisq, number_of_points=number_of_points,
                             regress_result=regress_result)
 
+
 T = TypeVar('T')
+
 
 def create_dataclass_mock(obj: Type[T], **kwargs) -> T:
     return Mock(spec=[field.name for field in fields(obj)], **kwargs)
@@ -149,7 +151,8 @@ def environment_variables(env_vars: dict):
     return decorator
 
 
-def create_mock_query_results(instrument: str, file_names: list[str], ingestion_dates: Optional[list[datetime]] = None) -> list[dict]:
+def create_mock_query_results(instrument: str, file_names: list[str],
+                              ingestion_dates: Optional[list[datetime]] = None) -> list[dict]:
     file_paths = []
 
     if ingestion_dates is None:
@@ -180,7 +183,10 @@ def create_mock_query_results(instrument: str, file_names: list[str], ingestion_
                     "version": imap_file_path.version,
                     "file_path": str(imap_file_path.filename),
                 })
+            case _:
+                raise NotImplementedError(f"Unexpected file path type {imap_file_path}")
     return file_paths
+
 
 @dataclass
 class PeriodicallyRunTest:
@@ -215,8 +221,10 @@ def run_periodically(frequency: timedelta):
 
     return run_periodically_decorator
 
+
 def with_tempdir(fn: Callable) -> Callable:
     def wrapped_fn(self, *args, **kwargs):
         with tempfile.TemporaryDirectory() as tmpdir:
             fn(self, Path(tmpdir), *args, **kwargs)
+
     return wrapped_fn

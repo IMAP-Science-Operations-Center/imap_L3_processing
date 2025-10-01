@@ -25,7 +25,8 @@ class PossibleMapToProduce:
 
 
 class MapInitializer(abc.ABC):
-    def __init__(self, l2_query_results: list[dict[str, str]], l3_query_results: list[dict[str, str]]):
+    def __init__(self, instrument: str, l2_query_results: list[dict[str, str]], l3_query_results: list[dict[str, str]]):
+        self.instrument = instrument
         self.l2_file_paths_by_descriptor = defaultdict(dict)
         for result in l2_query_results:
             logger.info(f"l2 file in MapInitializer __init__: {result['file_path']}")
@@ -34,7 +35,7 @@ class MapInitializer(abc.ABC):
         self.existing_l3_maps = {(qr["descriptor"], qr["start_date"]): qr["file_path"] for qr in l3_query_results}
 
     @abc.abstractmethod
-    def _collect_glows_psets_by_repoint(self, descriptor: str) -> dict[int, str]:
+    def _collect_glows_psets_by_repoint(self, descriptor: MapDescriptorParts) -> dict[int, str]:
         raise NotImplementedError()
 
     @abc.abstractmethod
@@ -50,7 +51,7 @@ class MapInitializer(abc.ABC):
                 return timedelta(days=365.25) / 4
             case MapDescriptorParts(duration="6mo"):
                 return timedelta(days=365.25) / 2
-            case MapDescriptorParts(duration="1yr"):
+            case MapDescriptorParts(duration="1yr" | "12mo"):
                 return timedelta(days=365.25)
             case _:
                 raise ValueError(f"Expected a duration in the map descriptor, got: {descriptor} (e.g., '1mo', '3mo')")
@@ -100,7 +101,7 @@ class MapInitializer(abc.ABC):
                            repoint in glows_file_by_repointing]
 
             if len(glows_files) > 0:
-                input_metadata = InputMetadata(instrument='hi', data_level='l3', start_date=start_date,
+                input_metadata = InputMetadata(instrument=self.instrument, data_level='l3', start_date=start_date,
                                                end_date=start_date,
                                                version='v001', descriptor=l3_descriptor)
 
@@ -115,12 +116,13 @@ class MapInitializer(abc.ABC):
         possible_maps = self.get_maps_that_can_be_produced(descriptor)
 
         maps_to_make = []
-        for map in possible_maps:
-            start_time = map.input_metadata.start_date.strftime("%Y%m%d")
+        for possible_map in possible_maps:
+            start_time = possible_map.input_metadata.start_date.strftime("%Y%m%d")
             if l3_result := self.existing_l3_maps.get((descriptor, start_time)):
-                if map.input_files.issubset(read_cdf_parents(l3_result)):
+                existing_parents = read_cdf_parents(l3_result)
+                if possible_map.input_files.issubset(existing_parents):
                     continue
                 new_version = int(ScienceFilePath(l3_result).version[1:]) + 1
-                map.input_metadata.version = f'v{new_version:03}'
-            maps_to_make.append(map)
+                possible_map.input_metadata.version = f'v{new_version:03}'
+            maps_to_make.append(possible_map)
         return maps_to_make
