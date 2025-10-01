@@ -35,6 +35,10 @@ class MapInitializer(abc.ABC):
         self.existing_l3_maps = {(qr["descriptor"], qr["start_date"]): qr["file_path"] for qr in l3_query_results}
 
     @abc.abstractmethod
+    def furnish_spice_dependencies(self, map_to_produce: PossibleMapToProduce):
+        raise NotImplementedError()
+
+    @abc.abstractmethod
     def _collect_glows_psets_by_repoint(self, descriptor: MapDescriptorParts) -> dict[int, str]:
         raise NotImplementedError()
 
