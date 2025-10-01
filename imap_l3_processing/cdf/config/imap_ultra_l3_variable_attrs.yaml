@@ -124,7 +124,7 @@ latitude_delta:
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
   FIELDNAM: Latitude Delta
-  FORMAT: I2
+  FORMAT: I3
   LABLAXIS: Latitude delta
   UNITS: degrees
   VALIDMIN: 0.0
