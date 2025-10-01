@@ -57,7 +57,7 @@ from imap_l3_processing.lo.lo_processor import perform_spectral_fit, LoProcessor
 from imap_l3_processing.maps.hilo_l3_survival_dependencies import HiLoL3SurvivalDependencies, \
     HiL3SingleSensorFullSpinDependencies
 from imap_l3_processing.maps.map_models import RectangularSpectralIndexDataProduct, RectangularIntensityDataProduct, \
-    combine_rectangular_intensity_map_data, HealPixIntensityMapData, RectangularIntensityMapData
+    combine_rectangular_intensity_map_data, RectangularIntensityMapData
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density import \
     AlphaTemperatureDensityCalibrationTable
@@ -1050,7 +1050,7 @@ if __name__ == "__main__":
                 str(get_test_data_path("swapi/imap_swapi_proton-density-temperature-lut_20240905_v001.dat")),
                 str(get_test_data_path("swapi/imap_swapi_alpha-density-temperature-lut_20240920_v000.dat")),
                 str(get_test_data_path("swapi/imap_swapi_clock-angle-and-flow-deflection-lut_20240918_v001.dat")),
-                str(get_test_data_path("swapi/imap_swapi_energy-gf-pui-lut_20100101_v001.csv")),
+                str(get_test_data_path("swapi/imap_swapi_energy-gf-pui-lut_20100101_v004.csv")),
                 str(get_test_data_path("swapi/imap_swapi_instrument-response-lut_20241023_v000.zip")),
                 str(get_test_data_path(
                     "swapi/imap_swapi_l2_density-of-neutral-helium-lut-text-not-cdf_20241023_v002.cdf")),
