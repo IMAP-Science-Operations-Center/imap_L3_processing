@@ -7,7 +7,8 @@ from imap_l3_processing.maps.map_models import RectangularIntensityMapData, Inte
     InputRectangularPointingSet, GlowsL3eRectangularMapInputData, RectangularSpectralIndexMapData, SpectralIndexMapData
 
 
-def create_rectangular_intensity_map_data(epoch=None, epoch_delta=None, lon=None, lat=None, energy=None, energy_delta=None, flux=None,
+def create_rectangular_intensity_map_data(epoch=None, epoch_delta=None, lon=None, lat=None, energy=None,
+                                          energy_delta=None, flux=None,
                                           intensity_stat_unc=None):
     lon = lon if lon is not None else np.array([1.0])
     lat = lat if lat is not None else np.array([1.0])
@@ -21,7 +22,9 @@ def create_rectangular_intensity_map_data(epoch=None, epoch_delta=None, lon=None
         fill_value=1)
 
     if isinstance(flux, np.ndarray):
+
         more_real_flux = flux
+
     else:
         more_real_flux = np.full((len(epoch), 9, len(lon), len(lat)), fill_value=1)
 
@@ -47,10 +50,14 @@ def create_rectangular_intensity_map_data(epoch=None, epoch_delta=None, lon=None
             latitude_label=lat.astype(str),
             longitude_delta=np.full_like(lon, 0),
             longitude_label=lon.astype(str),
+
         )
+
     )
 
-def create_rectangular_spectral_index_map_data(epoch=None, epoch_delta=None, lon=None, lat=None, energy=None, energy_delta=None, spectral_index=None,
+
+def create_rectangular_spectral_index_map_data(epoch=None, epoch_delta=None, lon=None, lat=None, energy=None,
+                                               energy_delta=None, spectral_index=None,
                                                spectral_index_stat_unc=None):
     lon = lon if lon is not None else np.array([1.0])
     lat = lat if lat is not None else np.array([1.0])
@@ -58,7 +65,8 @@ def create_rectangular_spectral_index_map_data(epoch=None, epoch_delta=None, lon
     energy_delta = energy_delta if energy_delta is not None else np.full((len(energy), 2), 1)
     epoch = epoch if epoch is not None else np.ma.array([datetime.now()])
     epoch_delta = epoch_delta if epoch_delta is not None else np.ma.array([86400 * 1e9])
-    spectral_index = spectral_index if spectral_index is not None else np.full((len(epoch), len(lon), len(lat)), fill_value=1)
+    spectral_index = spectral_index if spectral_index is not None else np.full((len(epoch), len(lon), len(lat)),
+                                                                               fill_value=1)
     spectral_index_stat_unc = spectral_index_stat_unc if spectral_index_stat_unc is not None else np.full(
         (len(epoch), len(energy), len(lon), len(lat)),
         fill_value=1)
@@ -92,6 +100,7 @@ def create_rectangular_spectral_index_map_data(epoch=None, epoch_delta=None, lon
             longitude_label=lon.astype(str),
         )
     )
+
 
 def create_l1c_pset(epoch: datetime) -> InputRectangularPointingSet:
     epoch_j2000 = np.array([spiceypy.datetime2et(epoch)]) * 1e9

@@ -4,6 +4,7 @@ from pathlib import Path
 from unittest.mock import patch, Mock
 
 from imap_data_access import ScienceFilePath
+from spacepy.pycdf import CDF
 
 import imap_l3_data_processor
 from tests.integration.integration_test_helpers import mock_imap_data_access
@@ -20,6 +21,7 @@ class TestMapIntegration(unittest.TestCase):
         HI_TEST_DATA / "imap_hi_l2_h45-ena-h-sf-nsp-ram-hae-4deg-1yr_20250415_v006.cdf",
         HI_TEST_DATA / "imap_hi_l1c_90sensor-pset_20250415-repoint01000_v001.cdf",
         HI_TEST_DATA / "imap_glows_l3e_survival-probability-hi-45_20250415-repoint01000_v001.cdf",
+        HI_TEST_DATA / "imap_glows_l3e_survival-probability-hi-45_20260418-repoint02000_v001.cdf",
         INTEGRATION_TEST_DATA / "spice" / "naif020.tls",
         INTEGRATION_TEST_DATA / "spice" / "imap_science_108.tf",
         INTEGRATION_TEST_DATA / "spice" / "imap_sclk_008.tsc",
@@ -44,9 +46,15 @@ class TestMapIntegration(unittest.TestCase):
 
         imap_l3_data_processor.imap_l3_processor()
 
-        expected_files = [
-            ScienceFilePath('imap_hi_l3_h45-ena-h-sf-sp-ram-hae-4deg-1yr_20250415_v001.cdf').construct_path()
-        ]
+        expected_map_path = ScienceFilePath(
+            'imap_hi_l3_h45-ena-h-sf-sp-ram-hae-4deg-1yr_20250415_v001.cdf').construct_path()
+        self.assertTrue(expected_map_path.exists(), f"Expected file {expected_map_path.name} not found")
 
-        for expected_file in expected_files:
-            self.assertTrue(expected_file.exists(), f"Expected file {expected_file} not found")
+        expected_parents = {
+            "imap_hi_l2_h45-ena-h-sf-nsp-ram-hae-4deg-1yr_20250415_v006.cdf",
+            "imap_hi_l1c_90sensor-pset_20250415-repoint01000_v001.cdf",
+            "imap_glows_l3e_survival-probability-hi-45_20250415-repoint01000_v001.cdf",
+        }
+
+        with CDF(str(expected_map_path)) as cdf:
+            self.assertEqual(expected_parents, set(cdf.attrs["Parents"]))

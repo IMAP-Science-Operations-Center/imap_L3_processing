@@ -15,7 +15,6 @@ from imap_l3_processing.hi.hi_processor import HiProcessor
 from imap_l3_processing.hi.l3.hi_l3_initializer import HiL3Initializer, HI_SP_MAP_DESCRIPTORS
 from imap_l3_processing.hit.l3.hit_processor import HitProcessor
 from imap_l3_processing.lo.lo_processor import LoProcessor
-from imap_l3_processing.maps.map_initializer import PossibleMapToProduce
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.swapi.swapi_processor import SwapiProcessor
 from imap_l3_processing.swe.swe_processor import SweProcessor
@@ -92,13 +91,16 @@ def imap_l3_processor():
         if args.descriptor == "all-maps":
             initializer = HiL3Initializer()
             paths = []
+            maps_to_produce = []
             for map_descriptor in HI_SP_MAP_DESCRIPTORS:
-                maps_to_produce: list[PossibleMapToProduce] = initializer.get_maps_that_should_be_produced(
-                    map_descriptor)
-                for dependency in maps_to_produce:
-                    initializer.furnish_spice_dependencies(dependency)
-                    processor = HiProcessor(dependency.processing_input_collection, dependency.input_metadata)
-                    paths.extend(processor.process())
+                maps_to_produce.extend(initializer.get_maps_that_should_be_produced(map_descriptor))
+
+            for map_to_produce in maps_to_produce:
+                logger.info(
+                    f"Processing map {map_to_produce.input_metadata.descriptor}, {map_to_produce.input_metadata.start_date}")
+                initializer.furnish_spice_dependencies(map_to_produce)
+                processor = HiProcessor(map_to_produce.processing_input_collection, map_to_produce.input_metadata)
+                paths.extend(processor.process())
         else:
             processor = HiProcessor(processing_input_collection, input_dependency)
             paths = processor.process()

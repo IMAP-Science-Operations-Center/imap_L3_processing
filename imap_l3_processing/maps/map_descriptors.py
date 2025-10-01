@@ -61,15 +61,59 @@ class MapDescriptorParts:
     reference_frame: ReferenceFrame
     survival_correction: SurvivalCorrection
     spin_phase: SpinPhase
+    coord: str
     grid: PixelSize
     duration: str
     quantity: MapQuantity
+    quantity_suffix: str
+
+
+sensor_mapping = [
+    ("hic", Sensor.HiCombined),
+    ("h45", Sensor.Hi45),
+    ("h90", Sensor.Hi90),
+    ("l090", Sensor.Lo90),
+    ("ilo", Sensor.Lo),
+    ("ulc", Sensor.UltraCombined),
+    ("u45", Sensor.Ultra45),
+    ("u90", Sensor.Ultra90)
+]
+
+quantity_mapping = [
+    ("spx", MapQuantity.SpectralIndex),
+    ("ena", MapQuantity.Intensity)
+]
+
+cg_correction_mapping = [
+    ("sf", ReferenceFrame.Spacecraft),
+    ("hf", ReferenceFrame.Heliospheric),
+    ("hk", ReferenceFrame.HeliosphericKinematic)
+]
+
+sp_correction_mapping = [
+    ("sp", SurvivalCorrection.SurvivalCorrected),
+    ("nsp", SurvivalCorrection.NotSurvivalCorrected)
+]
+
+spin_phase_mapping = [
+    ("ram", SpinPhase.RamOnly),
+    ("anti", SpinPhase.AntiRamOnly),
+    ("full", SpinPhase.FullSpin)
+]
+
+grid_size_mapping = [
+    ("2deg", PixelSize.TwoDegrees),
+    ("4deg", PixelSize.FourDegrees),
+    ("6deg", PixelSize.SixDegrees),
+    ("nside8", PixelSize.Nside8),
+    ("nside16", PixelSize.Nside16)
+]
 
 
 def parse_map_descriptor(descriptor: str) -> Optional[MapDescriptorParts]:
     descriptor_regex = """
         (?P<sensor>hic|h45|h90|l090|ulc|u45|u90|ilo)-
-        (?P<quantity>ena|spx)[a-zA-Z]*-
+        (?P<quantity>ena|spx)(?P<quantity_suffix>[a-zA-Z]*)-
         (?P<species>h)-
         (?P<frame>sf|hf|hk)-
         (?P<survival_corrected>sp|nsp)-
@@ -83,22 +127,42 @@ def parse_map_descriptor(descriptor: str) -> Optional[MapDescriptorParts]:
     if descriptor_part_match is None:
         return None
 
-    sensors = {"hic": Sensor.HiCombined, "h45": Sensor.Hi45, "h90": Sensor.Hi90, "l090": Sensor.Lo90, "ilo": Sensor.Lo,
-               "ulc": Sensor.UltraCombined, "u45": Sensor.Ultra45, "u90": Sensor.Ultra90}
-    cg_corrections = {"sf": ReferenceFrame.Spacecraft, "hf": ReferenceFrame.Heliospheric,
-                      "hk": ReferenceFrame.HeliosphericKinematic}
-    survival_corrections = {"sp": SurvivalCorrection.SurvivalCorrected, "nsp": SurvivalCorrection.NotSurvivalCorrected}
-    spin_phases = {"ram": SpinPhase.RamOnly, "anti": SpinPhase.AntiRamOnly, "full": SpinPhase.FullSpin}
-    grid_sizes = {"2deg": PixelSize.TwoDegrees, "4deg": PixelSize.FourDegrees, "6deg": PixelSize.SixDegrees,
-                  "nside8": PixelSize.Nside8, "nside16": PixelSize.Nside16}
-    quantities = {"spx": MapQuantity.SpectralIndex, "ena": MapQuantity.Intensity}
+    sensor_part_from_str = {desc: sensor_part for desc, sensor_part in sensor_mapping}
+    quantity_part_from_str = {desc: quantity_part for desc, quantity_part in quantity_mapping}
+    cg_correction_part_from_str = {desc: cg_correction_part for desc, cg_correction_part in cg_correction_mapping}
+    sp_correction_part_from_str = {desc: sp_correction_part for desc, sp_correction_part in sp_correction_mapping}
+    spin_phase_part_from_str = {desc: spin_phase_part for desc, spin_phase_part in spin_phase_mapping}
+    grid_size_part_from_str = {desc: grid_size_part for desc, grid_size_part in grid_size_mapping}
 
     return MapDescriptorParts(
-        sensor=sensors[descriptor_part_match["sensor"]],
-        quantity=quantities[descriptor_part_match["quantity"]],
-        reference_frame=cg_corrections[descriptor_part_match["frame"]],
-        survival_correction=survival_corrections[descriptor_part_match["survival_corrected"]],
-        spin_phase=spin_phases[descriptor_part_match["spin_phase"]],
-        grid=grid_sizes[descriptor_part_match["grid"]],
+        sensor=sensor_part_from_str[descriptor_part_match["sensor"]],
+        quantity=quantity_part_from_str[descriptor_part_match["quantity"]],
+        quantity_suffix=descriptor_part_match["quantity_suffix"],
+        reference_frame=cg_correction_part_from_str[descriptor_part_match["frame"]],
+        survival_correction=sp_correction_part_from_str[descriptor_part_match["survival_corrected"]],
+        spin_phase=spin_phase_part_from_str[descriptor_part_match["spin_phase"]],
+        coord=descriptor_part_match["coord"],
+        grid=grid_size_part_from_str[descriptor_part_match["grid"]],
         duration=descriptor_part_match["duration"],
     )
+
+
+def map_descriptor_parts_to_string(descriptor_parts: MapDescriptorParts) -> str:
+    sensor_part_to_str = {sensor_part: desc for desc, sensor_part in sensor_mapping}
+    quantity_part_to_str = {quantity_part: desc for desc, quantity_part in quantity_mapping}
+    cg_correction_part_to_str = {cg_correction_part: desc for desc, cg_correction_part in cg_correction_mapping}
+    sp_correction_part_to_str = {sp_correction_part: desc for desc, sp_correction_part in sp_correction_mapping}
+    spin_phase_part_to_str = {spin_phase_part: desc for desc, spin_phase_part in spin_phase_mapping}
+    grid_size_part_to_str = {grid_size_part: desc for desc, grid_size_part in grid_size_mapping}
+
+    return "-".join([
+        sensor_part_to_str[descriptor_parts.sensor],
+        quantity_part_to_str[descriptor_parts.quantity] + descriptor_parts.quantity_suffix,
+        "h",
+        cg_correction_part_to_str[descriptor_parts.reference_frame],
+        sp_correction_part_to_str[descriptor_parts.survival_correction],
+        spin_phase_part_to_str[descriptor_parts.spin_phase],
+        descriptor_parts.coord,
+        grid_size_part_to_str[descriptor_parts.grid],
+        descriptor_parts.duration,
+    ])

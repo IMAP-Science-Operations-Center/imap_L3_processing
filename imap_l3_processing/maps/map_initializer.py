@@ -2,10 +2,12 @@ import abc
 import logging
 from collections import defaultdict
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from imap_data_access import ScienceFilePath, ImapFilePath, ProcessingInputCollection, ScienceInput
 
+from imap_l3_processing.maps.map_descriptors import MapDescriptorParts, parse_map_descriptor, \
+    map_descriptor_parts_to_string
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.utils import read_cdf_parents
 
@@ -36,29 +38,56 @@ class MapInitializer(abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def _get_l2_dependencies(self, descriptor: str) -> list[str]:
+    def _get_l2_dependencies(self, descriptor: MapDescriptorParts) -> list[MapDescriptorParts]:
         raise NotImplementedError()
 
+    @staticmethod
+    def get_duration_from_map_descriptor(descriptor: MapDescriptorParts) -> timedelta:
+        match descriptor:
+            case MapDescriptorParts(duration="6mo"):
+                return timedelta(days=365.25) / 12
+            case MapDescriptorParts(duration="3mo"):
+                return timedelta(days=365.25) / 4
+            case MapDescriptorParts(duration="6mo"):
+                return timedelta(days=365.25) / 2
+            case MapDescriptorParts(duration="1yr"):
+                return timedelta(days=365.25)
+            case _:
+                raise ValueError(f"Expected a duration in the map descriptor, got: {descriptor} (e.g., '1mo', '3mo')")
+
     def get_maps_that_can_be_produced(self, l3_descriptor: str) -> list[PossibleMapToProduce]:
-        l2_descriptors = self._get_l2_dependencies(l3_descriptor)
-        assert l2_descriptors, f"Expected at least one L2 dependency for l3 map: {l3_descriptor}"
+        l3_descriptor_parts = parse_map_descriptor(l3_descriptor)
 
-        glows_file_by_repointing = self._collect_glows_psets_by_repoint(l3_descriptor)
+        glows_file_by_repointing = self._collect_glows_psets_by_repoint(l3_descriptor_parts)
+        map_duration = self.get_duration_from_map_descriptor(l3_descriptor_parts)
+        if len(glows_file_by_repointing) == 0:
+            logger.info(f"No GLOWS data available for descriptor {l3_descriptor}, no maps will be produced!")
+            return []
 
-        possible_start_dates = set(self.l2_file_paths_by_descriptor[l2_descriptors[0]].keys())
-        for l2_descriptor in l2_descriptors[1:]:
+        l2_descriptors = self._get_l2_dependencies(l3_descriptor_parts)
+        l2_descriptor_strs = [map_descriptor_parts_to_string(parts) for parts in l2_descriptors]
+        assert l2_descriptor_strs, f"Expected at least one L2 dependency for l3 map: {l3_descriptor}"
+
+        glows_start_dates = [ScienceFilePath(glows_path).start_date for glows_path in glows_file_by_repointing.values()]
+        glows_data_end_date = datetime.strptime(max(glows_start_dates), "%Y%m%d")
+
+        possible_start_dates = set(self.l2_file_paths_by_descriptor[l2_descriptor_strs[0]].keys())
+        for l2_descriptor in l2_descriptor_strs[1:]:
             possible_start_dates.intersection_update(self.l2_file_paths_by_descriptor[l2_descriptor].keys())
 
         possible_maps = []
         for str_start_date in sorted(list(possible_start_dates)):
+            start_date = datetime.strptime(str_start_date, "%Y%m%d")
+            if start_date + map_duration > glows_data_end_date:
+                logger.info(f"Not enough GLOWS data to produce map {l3_descriptor} {str_start_date}")
+                continue
+
             l2_files_paths = []
             l1c_names = []
-            for l2_descriptor in l2_descriptors:
+            for l2_descriptor in l2_descriptor_strs:
                 l2_file_path = self.l2_file_paths_by_descriptor[l2_descriptor][str_start_date]
                 l2_files_paths.append(l2_file_path)
                 l1c_names.extend(read_cdf_parents(l2_file_path))
-
-            start_date = datetime.strptime(str_start_date, "%Y%m%d")
 
             l1c_repointings = []
             for l1 in l1c_names:
