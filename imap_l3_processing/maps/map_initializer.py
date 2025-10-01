@@ -1,12 +1,17 @@
 import abc
+import logging
 from collections import defaultdict
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 
-from imap_data_access import ScienceFilePath, ImapFilePath
+from imap_data_access import ScienceFilePath, ImapFilePath, ProcessingInputCollection, ScienceInput
 
+from imap_l3_processing.maps.map_descriptors import MapDescriptorParts, parse_map_descriptor, \
+    map_descriptor_parts_to_string
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.utils import read_cdf_parents
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -14,32 +19,75 @@ class PossibleMapToProduce:
     input_files: set[str]
     input_metadata: InputMetadata
 
+    @property
+    def processing_input_collection(self) -> ProcessingInputCollection:
+        return ProcessingInputCollection(*[ScienceInput(file_path) for file_path in list(self.input_files)])
+
 
 class MapInitializer(abc.ABC):
     def __init__(self, l2_query_results: list[dict[str, str]], l3_query_results: list[dict[str, str]]):
-        self.l2_file_paths_by_descriptor = defaultdict(list)
+        self.l2_file_paths_by_descriptor = defaultdict(dict)
         for result in l2_query_results:
-            self.l2_file_paths_by_descriptor[result['descriptor']].append(result['file_path'])
+            logger.info(f"l2 file in MapInitializer __init__: {result['file_path']}")
+            self.l2_file_paths_by_descriptor[result['descriptor']][result["start_date"]] = result['file_path']
+
         self.existing_l3_maps = {(qr["descriptor"], qr["start_date"]): qr["file_path"] for qr in l3_query_results}
 
     @abc.abstractmethod
     def _collect_glows_psets_by_repoint(self, descriptor: str) -> dict[int, str]:
         raise NotImplementedError()
 
-    @staticmethod
     @abc.abstractmethod
-    def get_dependencies():
+    def _get_l2_dependencies(self, descriptor: MapDescriptorParts) -> list[MapDescriptorParts]:
         raise NotImplementedError()
 
-    def get_maps_that_can_be_produced(self, l3_descriptor: str) -> list[PossibleMapToProduce]:
-        l2_descriptor = l3_descriptor.replace('-sp-', '-nsp-')
+    @staticmethod
+    def get_duration_from_map_descriptor(descriptor: MapDescriptorParts) -> timedelta:
+        match descriptor:
+            case MapDescriptorParts(duration="6mo"):
+                return timedelta(days=365.25) / 12
+            case MapDescriptorParts(duration="3mo"):
+                return timedelta(days=365.25) / 4
+            case MapDescriptorParts(duration="6mo"):
+                return timedelta(days=365.25) / 2
+            case MapDescriptorParts(duration="1yr"):
+                return timedelta(days=365.25)
+            case _:
+                raise ValueError(f"Expected a duration in the map descriptor, got: {descriptor} (e.g., '1mo', '3mo')")
 
-        glows_file_by_repointing = self._collect_glows_psets_by_repoint(l3_descriptor)
+    def get_maps_that_can_be_produced(self, l3_descriptor: str) -> list[PossibleMapToProduce]:
+        l3_descriptor_parts = parse_map_descriptor(l3_descriptor)
+
+        glows_file_by_repointing = self._collect_glows_psets_by_repoint(l3_descriptor_parts)
+        map_duration = self.get_duration_from_map_descriptor(l3_descriptor_parts)
+        if len(glows_file_by_repointing) == 0:
+            logger.info(f"No GLOWS data available for descriptor {l3_descriptor}, no maps will be produced!")
+            return []
+
+        l2_descriptors = self._get_l2_dependencies(l3_descriptor_parts)
+        l2_descriptor_strs = [map_descriptor_parts_to_string(parts) for parts in l2_descriptors]
+        assert l2_descriptor_strs, f"Expected at least one L2 dependency for l3 map: {l3_descriptor}"
+
+        glows_start_dates = [ScienceFilePath(glows_path).start_date for glows_path in glows_file_by_repointing.values()]
+        glows_data_end_date = datetime.strptime(max(glows_start_dates), "%Y%m%d")
+
+        possible_start_dates = set(self.l2_file_paths_by_descriptor[l2_descriptor_strs[0]].keys())
+        for l2_descriptor in l2_descriptor_strs[1:]:
+            possible_start_dates.intersection_update(self.l2_file_paths_by_descriptor[l2_descriptor].keys())
 
         possible_maps = []
-        for l2_file_path in self.l2_file_paths_by_descriptor[l2_descriptor]:
-            start_date = datetime.strptime(ScienceFilePath(l2_file_path).start_date, "%Y%m%d")
-            l1c_names = read_cdf_parents(l2_file_path)
+        for str_start_date in sorted(list(possible_start_dates)):
+            start_date = datetime.strptime(str_start_date, "%Y%m%d")
+            if start_date + map_duration > glows_data_end_date:
+                logger.info(f"Not enough GLOWS data to produce map {l3_descriptor} {str_start_date}")
+                continue
+
+            l2_files_paths = []
+            l1c_names = []
+            for l2_descriptor in l2_descriptor_strs:
+                l2_file_path = self.l2_file_paths_by_descriptor[l2_descriptor][str_start_date]
+                l2_files_paths.append(l2_file_path)
+                l1c_names.extend(read_cdf_parents(l2_file_path))
 
             l1c_repointings = []
             for l1 in l1c_names:
@@ -48,14 +96,16 @@ class MapInitializer(abc.ABC):
                 except ImapFilePath.InvalidImapFileError:
                     continue
 
-            glows_files = [glows_file_by_repointing[repoint] for repoint in l1c_repointings if repoint in glows_file_by_repointing]
+            glows_files = [glows_file_by_repointing[repoint] for repoint in l1c_repointings if
+                           repoint in glows_file_by_repointing]
 
             if len(glows_files) > 0:
-                input_metadata = InputMetadata(instrument='hi', data_level='l3', start_date=start_date, end_date=start_date,
+                input_metadata = InputMetadata(instrument='hi', data_level='l3', start_date=start_date,
+                                               end_date=start_date,
                                                version='v001', descriptor=l3_descriptor)
 
                 possible_map_to_produce = PossibleMapToProduce(
-                    input_files=set([l2_file_path] + glows_files),
+                    input_files=set(l2_files_paths + glows_files),
                     input_metadata=input_metadata
                 )
                 possible_maps.append(possible_map_to_produce)

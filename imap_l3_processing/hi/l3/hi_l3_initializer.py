@@ -1,20 +1,29 @@
+import dataclasses
 import logging
 
 import imap_data_access
 
-from imap_l3_processing.maps.map_initializer import MapInitializer
+from imap_l3_processing.maps.map_descriptors import MapDescriptorParts, Sensor, SurvivalCorrection, SpinPhase
+from imap_l3_processing.maps.map_initializer import MapInitializer, PossibleMapToProduce
+from imap_l3_processing.utils import SpiceKernelTypes, furnish_spice_metakernel
 
 logger = logging.getLogger(__name__)
 
-other_descriptors = [
+HI_SP_SPICE_KERNELS: list[SpiceKernelTypes] = [
+    SpiceKernelTypes.Leapseconds,
+    SpiceKernelTypes.ScienceFrames,
+    SpiceKernelTypes.PointingAttitude,
+    SpiceKernelTypes.SpacecraftClock,
+]
+
+combined_descriptors = [
     "hic-ena-h-hf-nsp-full-hae-6deg-1yr",
     "hic-ena-h-hf-sp-full-hae-6deg-1yr",
     "hic-ena-h-hf-nsp-full-hae-4deg-1yr",
     "hic-ena-h-hf-sp-full-hae-4deg-1yr",
-
 ]
 
-spectral_index = [
+spectral_index_descriptors = [
     "h45-spx-h-hf-sp-ram-hae-6deg-1yr",
     "h45-spx-h-hf-sp-anti-hae-6deg-1yr",
     "h45-spx-h-hf-sp-full-hae-6deg-6mo",
@@ -63,8 +72,8 @@ HI_SP_MAP_DESCRIPTORS = [
 
     "h45-ena-h-sf-sp-full-hae-4deg-6mo",
     "h45-ena-h-hf-sp-full-hae-4deg-6mo",
-
 ]
+
 
 class HiL3Initializer(MapInitializer):
     def __init__(self):
@@ -88,18 +97,31 @@ class HiL3Initializer(MapInitializer):
         hi_l3_query_result = imap_data_access.query(instrument='hi', data_level='l3', version='latest')
         super().__init__(hi_l2_query_result, hi_l3_query_result)
 
-    @staticmethod
-    def get_dependencies(descriptor: str) -> list[str]:
-        nsp_descriptor = descriptor.replace('-sp-', '-nsp-')
-        if '-full-' in descriptor:
-            return [nsp_descriptor.replace('-full-', '-anti-'), nsp_descriptor.replace('-full-', '-ram-')]
-        else:
-            return [nsp_descriptor]
+    def furnish_spice_dependencies(self, map_to_produce: PossibleMapToProduce):
+        furnish_spice_metakernel(start_date=map_to_produce.input_metadata.start_date,
+                                 end_date=map_to_produce.input_metadata.end_date, kernel_types=HI_SP_SPICE_KERNELS)
 
-    def _collect_glows_psets_by_repoint(self, descriptor) -> dict[int, str]:
-        if 'h45' in descriptor:
-            return self.glows_hi45_file_by_repoint
-        elif 'h90' in descriptor:
-            return self.glows_hi90_file_by_repoint
-        else:
-            raise ValueError("Expected map to be produced to use a single sensor!")
+    def _get_l2_dependencies(self, descriptor: MapDescriptorParts) -> list[MapDescriptorParts]:
+        match descriptor:
+            case MapDescriptorParts(survival_correction=SurvivalCorrection.SurvivalCorrected,
+                                    spin_phase=SpinPhase.RamOnly | SpinPhase.AntiRamOnly):
+                return [dataclasses.replace(descriptor, survival_correction=SurvivalCorrection.NotSurvivalCorrected)]
+            case MapDescriptorParts(survival_correction=SurvivalCorrection.SurvivalCorrected,
+                                    spin_phase=SpinPhase.FullSpin):
+                return [
+                    dataclasses.replace(descriptor, survival_correction=SurvivalCorrection.NotSurvivalCorrected,
+                                        spin_phase=SpinPhase.AntiRamOnly),
+                    dataclasses.replace(descriptor, survival_correction=SurvivalCorrection.NotSurvivalCorrected,
+                                        spin_phase=SpinPhase.RamOnly),
+                ]
+            case _:
+                raise ValueError("Expected map to be produced to use a single sensor!")
+
+    def _collect_glows_psets_by_repoint(self, descriptor: MapDescriptorParts) -> dict[int, str]:
+        match descriptor:
+            case MapDescriptorParts(sensor=Sensor.Hi45):
+                return self.glows_hi45_file_by_repoint
+            case MapDescriptorParts(sensor=Sensor.Hi90):
+                return self.glows_hi90_file_by_repoint
+            case _:
+                raise ValueError("Expected map to be produced to use a single sensor!")

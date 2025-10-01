@@ -7,6 +7,8 @@ from imap_data_access.processing_input import ScienceInput, ProcessingInputColle
     AncillaryInput, SPICEInput
 
 from imap_l3_data_processor import imap_l3_processor
+from imap_l3_processing.hi.l3.hi_l3_initializer import HI_SP_MAP_DESCRIPTORS
+from imap_l3_processing.maps.map_initializer import PossibleMapToProduce
 from imap_l3_processing.models import InputMetadata
 
 
@@ -23,8 +25,9 @@ class TestImapL3DataProcessor(TestCase):
     @patch('imap_l3_data_processor.CodiceLoProcessor')
     @patch('imap_l3_data_processor.CodiceHiProcessor')
     @patch('imap_l3_data_processor.argparse')
-    def test_invokes_correct_processor(self, mock_argparse, mock_codice_hi, mock_codice_lo, mock_glows, mock_ultra,
-                                       mock_lo, mock_hi, mock_hit, mock_swe, mock_swapi, mock_upload,
+    def test_invokes_correct_processor(self, mock_argparse, mock_codice_hi, mock_codice_lo, mock_glows,
+                                       mock_ultra, mock_lo, mock_hi, mock_hit, mock_swe,
+                                       mock_swapi, mock_upload,
                                        mock_processing_input):
         cases = [
             ("swapi", "l3a", "proton", mock_swapi),
@@ -83,6 +86,56 @@ class TestImapL3DataProcessor(TestCase):
 
                 expected_processor.assert_called_once_with(mock_processing_input.return_value, expected_input_metadata)
                 mock_upload.assert_called_once_with(sentinel.cdf)
+
+    @patch('imap_l3_data_processor.ProcessingInputCollection')
+    @patch('imap_l3_data_processor.imap_data_access.upload')
+    @patch('imap_l3_data_processor.HiL3Initializer')
+    @patch('imap_l3_data_processor.HiProcessor')
+    @patch('imap_l3_data_processor.argparse')
+    def test_scheduled_ena_job_invokes_initializer(self, mock_argparse, mock_hi_processor, mock_hi_initializer_class,
+                                                   mock_upload, _):
+        instrument = "hi"
+        data_level = "l3"
+        descriptor = "all-maps"
+        mock_argument_parser = mock_argparse.ArgumentParser.return_value
+        mock_argument_parser.parse_args.return_value.instrument = instrument
+        mock_argument_parser.parse_args.return_value.data_level = data_level
+        mock_argument_parser.parse_args.return_value.dependency = "dependency_string"
+        mock_argument_parser.parse_args.return_value.start_date = "20250101"
+        mock_argument_parser.parse_args.return_value.end_date = None
+        mock_argument_parser.parse_args.return_value.repointing = "repoint00022"
+        mock_argument_parser.parse_args.return_value.version = sentinel.version
+        mock_argument_parser.parse_args.return_value.descriptor = descriptor
+
+        expected_input_metadata = InputMetadata(instrument, data_level, datetime(2025, 1, 1),
+                                                datetime(2025, 1, 1),
+                                                sentinel.version, descriptor=descriptor,
+                                                repointing=22)
+        mock_hi_initializer = Mock()
+        mock_hi_initializer_class.return_value = mock_hi_initializer
+        possible_map_to_produce = PossibleMapToProduce(set(), expected_input_metadata)
+        mock_hi_initializer.get_maps_that_should_be_produced.return_value = [possible_map_to_produce]
+
+        mock_hi_processor.return_value.process.return_value = [sentinel.cdf]
+
+        imap_l3_processor()
+
+        mock_hi_initializer_class.assert_called_once()
+        mock_hi_initializer.get_maps_that_should_be_produced.assert_has_calls([
+            call(descriptor) for descriptor in HI_SP_MAP_DESCRIPTORS
+        ])
+
+        self.assertEqual(len(HI_SP_MAP_DESCRIPTORS), mock_hi_processor.call_count)
+
+        self.assertEqual(len(HI_SP_MAP_DESCRIPTORS), mock_hi_initializer.furnish_spice_dependencies.call_count)
+        mock_hi_initializer.furnish_spice_dependencies.assert_called_with(possible_map_to_produce)
+        
+        mock_hi_processor.assert_called_with(possible_map_to_produce.processing_input_collection,
+                                             expected_input_metadata)
+        self.assertEqual(len(HI_SP_MAP_DESCRIPTORS), mock_hi_processor.return_value.process.call_count)
+
+        self.assertEqual(len(HI_SP_MAP_DESCRIPTORS), mock_upload.call_count)
+        mock_upload.assert_called_with(sentinel.cdf)
 
     @patch('imap_l3_data_processor.spiceypy')
     @patch('imap_l3_data_processor.argparse')

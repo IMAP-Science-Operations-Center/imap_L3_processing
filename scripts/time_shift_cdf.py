@@ -3,11 +3,12 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional, Any
 
-from imap_data_access.file_validation import generate_imap_file_path, ScienceFilePath, ImapFilePath
+from imap_data_access.file_validation import ScienceFilePath, ImapFilePath
 from spacepy.pycdf import CDF
 
 
-def convert_epoch_time(filename, target=datetime(2025, 6, 7, 12), new_science_file_parts: Optional[dict[str, Any]] = None) -> Optional[Path]:
+def convert_epoch_time(filename, target=datetime(2026, 4, 18, 12),
+                       new_science_file_parts: Optional[dict[str, Any]] = None) -> Optional[Path]:
     file_path = Path(filename)
     new_science_file_parts = new_science_file_parts or {}
 
@@ -39,6 +40,7 @@ def convert_epoch_time(filename, target=datetime(2025, 6, 7, 12), new_science_fi
         return None
 
     return new_path
+
 
 if __name__ == '__main__':
     convert_epoch_time(sys.argv[1])

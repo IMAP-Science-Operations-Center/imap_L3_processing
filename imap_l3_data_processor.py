@@ -12,6 +12,7 @@ from imap_l3_processing.codice.l3.hi.codice_hi_processor import CodiceHiProcesso
 from imap_l3_processing.codice.l3.lo.codice_lo_processor import CodiceLoProcessor
 from imap_l3_processing.glows.glows_processor import GlowsProcessor
 from imap_l3_processing.hi.hi_processor import HiProcessor
+from imap_l3_processing.hi.l3.hi_l3_initializer import HiL3Initializer, HI_SP_MAP_DESCRIPTORS
 from imap_l3_processing.hit.l3.hit_processor import HitProcessor
 from imap_l3_processing.lo.lo_processor import LoProcessor
 from imap_l3_processing.models import InputMetadata
@@ -20,6 +21,7 @@ from imap_l3_processing.swe.swe_processor import SweProcessor
 from imap_l3_processing.ultra.l3.ultra_processor import UltraProcessor
 
 logger = logging.getLogger(__name__)
+
 
 def _parse_cli_arguments():
     parser = argparse.ArgumentParser()
@@ -75,30 +77,52 @@ def imap_l3_processor():
                                      args.version, descriptor=args.descriptor, repointing=repointing_number)
     if args.instrument == 'swapi' and (args.data_level == 'l3a' or args.data_level == 'l3b'):
         processor = SwapiProcessor(processing_input_collection, input_dependency)
+        paths = processor.process()
     elif args.instrument == 'glows' and args.data_level in ['l3a', 'l3b']:
         processor = GlowsProcessor(processing_input_collection, input_dependency)
+        paths = processor.process()
     elif args.instrument == 'swe' and args.data_level == 'l3':
         processor = SweProcessor(processing_input_collection, input_dependency)
+        paths = processor.process()
     elif args.instrument == 'hit' and args.data_level == 'l3':
         processor = HitProcessor(processing_input_collection, input_dependency)
-    elif args.instrument == 'hi' and  args.data_level == 'l3':
-        processor = HiProcessor(processing_input_collection, input_dependency)
+        paths = processor.process()
+    elif args.instrument == 'hi' and args.data_level == 'l3':
+        if args.descriptor == "all-maps":
+            initializer = HiL3Initializer()
+            paths = []
+            maps_to_produce = []
+            for map_descriptor in HI_SP_MAP_DESCRIPTORS:
+                maps_to_produce.extend(initializer.get_maps_that_should_be_produced(map_descriptor))
+
+            for map_to_produce in maps_to_produce:
+                logger.info(
+                    f"Processing map {map_to_produce.input_metadata.descriptor}, {map_to_produce.input_metadata.start_date}")
+                initializer.furnish_spice_dependencies(map_to_produce)
+                processor = HiProcessor(map_to_produce.processing_input_collection, map_to_produce.input_metadata)
+                paths.extend(processor.process())
+        else:
+            processor = HiProcessor(processing_input_collection, input_dependency)
+            paths = processor.process()
     elif args.instrument == 'ultra' and args.data_level == 'l3':
         processor = UltraProcessor(processing_input_collection, input_dependency)
+        paths = processor.process()
     elif args.instrument == 'lo' and args.data_level == 'l3':
         processor = LoProcessor(processing_input_collection, input_dependency)
+        paths = processor.process()
     elif args.instrument == 'codice':
         if args.descriptor.startswith("hi") and args.data_level in ['l3a', 'l3b']:
             processor = CodiceHiProcessor(processing_input_collection, input_dependency)
+            paths = processor.process()
         elif args.descriptor.startswith("lo") and args.data_level == 'l3a':
             processor = CodiceLoProcessor(processing_input_collection, input_dependency)
+            paths = processor.process()
         else:
             raise NotImplementedError(f"Unknown descriptor '{args.descriptor}' for codice instrument")
     else:
         raise NotImplementedError(
             f'Level {args.data_level} data processing has not yet been implemented for {args.instrument}')
 
-    paths = processor.process()
     if args.upload_to_sdc:
         exceptions = []
         for path in paths:
@@ -108,6 +132,7 @@ def imap_l3_processor():
                 exceptions.append(e)
         if exceptions:
             raise IOError(f"Failed to upload some files: {exceptions}")
+
 
 def _furnish_spice_kernels(processing_input_collection):
     spice_kernel_paths = processing_input_collection.get_file_paths(data_type='spice')

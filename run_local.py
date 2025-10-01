@@ -754,10 +754,13 @@ def run_glows_l3a(file_path):
         input_metadata.repointing = repoint_number
 
         dependencies = GlowsL3ADependencies(l2_glows_data, {
-            "calibration_data": get_test_instrument_team_data_path("glows/imap_glows_calibration-data_20100101_v002.dat"),
+            "calibration_data": get_test_instrument_team_data_path(
+                "glows/imap_glows_calibration-data_20100101_v002.dat"),
             "settings": get_test_instrument_team_data_path("glows/imap_glows_pipeline-settings_20100101_v001.json"),
-            "time_dependent_bckgrd": get_test_instrument_team_data_path("glows/imap_glows_time-dep-bckgrd_20100101_v001.dat"),
-            "extra_heliospheric_bckgrd": get_test_instrument_team_data_path("glows/imap_glows_map-of-extra-helio-bckgrd_20100101_v002.dat"),
+            "time_dependent_bckgrd": get_test_instrument_team_data_path(
+                "glows/imap_glows_time-dep-bckgrd_20100101_v001.dat"),
+            "extra_heliospheric_bckgrd": get_test_instrument_team_data_path(
+                "glows/imap_glows_map-of-extra-helio-bckgrd_20100101_v002.dat"),
         })
 
         processor = GlowsProcessor(ProcessingInputCollection(), input_metadata)
@@ -1049,7 +1052,8 @@ if __name__ == "__main__":
                 str(get_test_data_path("swapi/imap_swapi_clock-angle-and-flow-deflection-lut_20240918_v001.dat")),
                 str(get_test_data_path("swapi/imap_swapi_energy-gf-pui-lut_20100101_v001.csv")),
                 str(get_test_data_path("swapi/imap_swapi_instrument-response-lut_20241023_v000.zip")),
-                str(get_test_data_path("swapi/imap_swapi_l2_density-of-neutral-helium-lut-text-not-cdf_20241023_v002.cdf")),
+                str(get_test_data_path(
+                    "swapi/imap_swapi_l2_density-of-neutral-helium-lut-text-not-cdf_20241023_v002.cdf")),
                 str(get_test_data_path("swapi/imap_swapi_efficiency-lut_20241020_v000.dat")),
                 str(get_test_data_path("swapi/imap_swapi_l2_50-sweeps_20250606_v003.cdf")),
             )
@@ -1084,8 +1088,10 @@ if __name__ == "__main__":
             path = create_hit_direct_event_cdf()
             print(f"hit direct event data product: {path}")
         else:
-            mag_data = read_l1d_mag_data(r"C:\Users\Petty\Downloads\HIT Validation-20250922T131655Z-1-001\HIT Validation\imap_mag_l1d_norm-mago_20100106_v001.cdf")
-            hit_data = read_l2_hit_data(r"C:\Users\Petty\Downloads\HIT Validation-20250922T131655Z-1-001\HIT Validation\imap_hit_l2_macropixel-intensity_20100106_v001.cdf")
+            mag_data = read_l1d_mag_data(
+                r"C:\Users\Petty\Downloads\HIT Validation-20250922T131655Z-1-001\HIT Validation\imap_mag_l1d_norm-mago_20100106_v001.cdf")
+            hit_data = read_l2_hit_data(
+                r"C:\Users\Petty\Downloads\HIT Validation-20250922T131655Z-1-001\HIT Validation\imap_hit_l2_macropixel-intensity_20100106_v001.cdf")
             dependencies = HITL3SectoredDependencies(mag_l1d_data=mag_data, data=hit_data)
             print(f"hit macropixel data product: {create_hit_sectored_cdf(dependencies)}")
 
@@ -1139,7 +1145,7 @@ if __name__ == "__main__":
                 l1c_paths=l1c_paths,
                 glows_l3e_paths=glows_l3_paths,
                 l2_descriptor="h90-ena-h-sf-nsp-ram-hae-4deg-6mo")
-            create_hi_l3_survival_corrected_cdf(survival_dependencies, spacing_degree=4)
+            create_hi_l3_survival_corrected_cdf(survival_dependencies, 4)
 
         if do_all or "spectral-index" in sys.argv:
             dependencies = HiL3SpectralIndexDependencies.from_file_paths(
@@ -1270,7 +1276,8 @@ if __name__ == "__main__":
                 l3e_glows_paths
             )
 
-            healpix_sp_corrected_data = processor._process_survival_probability(deps=dependencies, spice_frame_name=SpiceFrame.IMAP_HAE)
+            healpix_sp_corrected_data = processor._process_survival_probability(deps=dependencies,
+                                                                                spice_frame_name=SpiceFrame.IMAP_HAE)
             rectangular_sp_data_product = processor._process_healpix_intensity_to_rectangular(healpix_sp_corrected_data,
                                                                                               spacing_degree)
 

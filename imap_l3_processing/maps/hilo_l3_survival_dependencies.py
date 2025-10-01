@@ -14,7 +14,6 @@ from imap_l3_processing.maps.map_descriptors import MapDescriptorParts, parse_ma
 from imap_l3_processing.maps.map_models import RectangularIntensityMapData, GlowsL3eRectangularMapInputData, \
     InputRectangularPointingSet
 from imap_l3_processing.models import Instrument
-from imap_l3_processing.utils import find_glows_l3e_dependencies
 
 
 @dataclass
@@ -39,7 +38,8 @@ class HiLoL3SurvivalDependencies:
                               isinstance(map_input_file, ScienceFilePath) and map_input_file.data_level == "l1c"]
             for parent in l1c_file_names:
                 l1c_paths.append(imap_data_access.download(parent))
-        glows_l3e_file_names = find_glows_l3e_dependencies(l1c_file_names, instrument.value)
+
+        glows_l3e_file_names = dependencies.get_file_paths(source="glows")
         glows_file_paths = [imap_data_access.download(path) for path in glows_l3e_file_names]
         l2_descriptor = generate_imap_file_path(l2_map_paths[0].name).descriptor
         return cls.from_file_paths(map_file_path, l1c_paths, glows_file_paths, l2_descriptor)
