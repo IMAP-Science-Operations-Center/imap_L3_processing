@@ -304,14 +304,14 @@ class TestL3dUtils(unittest.TestCase):
             self.assertFalse(original_p_dens_path.exists())
 
     def test_get_most_recently_uploaded_ancillary(self):
-        query_result = create_mock_query_results("glows", [
+        query_result = create_mock_query_results([
             "imap_glows_l3d_solar-hist_20100101-cr02091_v001.cdf",
             "imap_glows_l3d_solar-hist_20100201-cr02092_v002.cdf",
             "imap_glows_l3d_solar-hist_20100301-cr02093_v001.cdf"
 
         ], ingestion_dates=[datetime(2010, 1, 2), datetime(2010, 5, 2), datetime(2010, 3, 2)])
 
-        [expected] = create_mock_query_results("glows", ["imap_glows_l3d_solar-hist_20100201-cr02092_v002.cdf"],
+        [expected] = create_mock_query_results(["imap_glows_l3d_solar-hist_20100201-cr02092_v002.cdf"],
                                                ingestion_dates=[datetime(2010, 5, 2)])
 
         self.assertEqual(expected, get_most_recently_uploaded_ancillary(query_result))

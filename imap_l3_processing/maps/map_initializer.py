@@ -62,19 +62,18 @@ class MapInitializer(abc.ABC):
 
     def get_maps_that_can_be_produced(self, l3_descriptor: str) -> list[PossibleMapToProduce]:
         l3_descriptor_parts = parse_map_descriptor(l3_descriptor)
+        map_duration = self.get_duration_from_map_descriptor(l3_descriptor_parts)
 
         glows_file_by_repointing = self._collect_glows_psets_by_repoint(l3_descriptor_parts)
-        map_duration = self.get_duration_from_map_descriptor(l3_descriptor_parts)
         if len(glows_file_by_repointing) == 0:
             logger.info(f"No GLOWS data available for descriptor {l3_descriptor}, no maps will be produced!")
             return []
+        glows_start_dates = [ScienceFilePath(glows_path).start_date for glows_path in glows_file_by_repointing.values()]
+        glows_data_end_date = datetime.strptime(max(glows_start_dates), "%Y%m%d")
 
         l2_descriptors = self._get_l2_dependencies(l3_descriptor_parts)
         l2_descriptor_strs = [map_descriptor_parts_to_string(parts) for parts in l2_descriptors]
         assert l2_descriptor_strs, f"Expected at least one L2 dependency for l3 map: {l3_descriptor}"
-
-        glows_start_dates = [ScienceFilePath(glows_path).start_date for glows_path in glows_file_by_repointing.values()]
-        glows_data_end_date = datetime.strptime(max(glows_start_dates), "%Y%m%d")
 
         possible_start_dates = set(self.l2_file_paths_by_descriptor[l2_descriptor_strs[0]].keys())
         for l2_descriptor in l2_descriptor_strs[1:]:

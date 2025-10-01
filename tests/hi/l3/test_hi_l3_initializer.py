@@ -15,7 +15,7 @@ class TestHiL3Initializer(unittest.TestCase):
     @patch('imap_l3_processing.hi.l3.hi_l3_initializer.imap_data_access.query')
     def test_get_maps_that_can_be_produced(self, mock_query, mock_read_cdf_parents):
         mock_query.side_effect = [
-            create_mock_query_results("glows", [
+            create_mock_query_results([
                 'imap_glows_l3e_survival-probability-hi-45_20100101-repoint00001_v001.cdf',
                 'imap_glows_l3e_survival-probability-hi-45_20100102-repoint00002_v001.cdf',
                 'imap_glows_l3e_survival-probability-hi-45_20100103-repoint00003_v001.cdf',
@@ -26,14 +26,14 @@ class TestHiL3Initializer(unittest.TestCase):
 
                 'imap_glows_l3e_survival-probability-hi-45_20100702-repoint00202_v001.cdf',
             ]),
-            create_mock_query_results("glows", []),
-            create_mock_query_results("hi", [
+            create_mock_query_results([]),
+            create_mock_query_results([
                 'imap_hi_l2_h45-ena-h-sf-nsp-anti-hae-4deg-3mo_20100101_v001.cdf',
                 'imap_hi_l2_h45-ena-h-sf-nsp-anti-hae-4deg-3mo_20100401_v001.cdf',
                 'imap_hi_l2_h45-ena-h-sf-nsp-anti-hae-4deg-3mo_20100701_v001.cdf',
                 'imap_hi_l2_h45-ena-h-sf-nsp-anti-hae-4deg-3mo_20101001_v001.cdf'
             ]),
-            create_mock_query_results("hi", [])
+            create_mock_query_results([])
         ]
 
         mock_read_cdf_parents.side_effect = self.create_fake_read_cdf_parents("45")
@@ -95,8 +95,8 @@ class TestHiL3Initializer(unittest.TestCase):
     @patch('imap_l3_processing.hi.l3.hi_l3_initializer.imap_data_access.query')
     def test_get_maps_that_can_be_produced_full_spin_descriptor(self, mock_query, mock_read_cdf_parents):
         mock_query.side_effect = [
-            create_mock_query_results("glows", []),
-            create_mock_query_results("glows", [
+            create_mock_query_results([]),
+            create_mock_query_results([
                 'imap_glows_l3e_survival-probability-hi-90_20100101-repoint00001_v001.cdf',
                 'imap_glows_l3e_survival-probability-hi-90_20100102-repoint00002_v001.cdf',
                 'imap_glows_l3e_survival-probability-hi-90_20100103-repoint00003_v001.cdf',
@@ -104,13 +104,13 @@ class TestHiL3Initializer(unittest.TestCase):
                 'imap_glows_l3e_survival-probability-hi-90_20100703-repoint00203_v001.cdf',
 
             ]),
-            create_mock_query_results("hi", [
+            create_mock_query_results([
                 'imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-6mo_20090101_v001.cdf',
                 'imap_hi_l2_h90-ena-h-sf-nsp-ram-hae-4deg-6mo_20090701_v001.cdf',
                 'imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-6mo_20100101_v001.cdf',
                 'imap_hi_l2_h90-ena-h-sf-nsp-ram-hae-4deg-6mo_20100101_v001.cdf',
             ]),
-            create_mock_query_results("hi", [])
+            create_mock_query_results([])
         ]
 
         mock_read_cdf_parents.side_effect = [
@@ -162,8 +162,8 @@ class TestHiL3Initializer(unittest.TestCase):
     @patch('imap_l3_processing.hi.l3.hi_l3_initializer.imap_data_access.query')
     def test_get_maps_that_should_be_produced(self, mock_query, mock_read_cdf_parents):
         mock_query.side_effect = [
-            create_mock_query_results("glows", []),
-            create_mock_query_results("glows", [
+            create_mock_query_results([]),
+            create_mock_query_results([
                 'imap_glows_l3e_survival-probability-hi-90_20100101-repoint00001_v001.cdf',
                 'imap_glows_l3e_survival-probability-hi-90_20100102-repoint00002_v001.cdf',
                 'imap_glows_l3e_survival-probability-hi-90_20100103-repoint00003_v001.cdf',
@@ -174,14 +174,14 @@ class TestHiL3Initializer(unittest.TestCase):
 
                 'imap_glows_l3e_survival-probability-hi-90_20100702-repoint00201_v001.cdf',
             ]),
-            create_mock_query_results("hi", [
+            create_mock_query_results([
                 'imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-3mo_20100101_v001.cdf',
                 'imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-3mo_20100401_v001.cdf',
                 'imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-3mo_20100701_v001.cdf',
                 'imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-3mo_20101001_v001.cdf'
 
             ]),
-            create_mock_query_results("hi", [
+            create_mock_query_results([
                 'imap_hi_l3_h90-ena-h-sf-sp-anti-hae-4deg-3mo_20100101_v001.cdf',
                 'imap_hi_l3_h90-ena-h-sf-sp-anti-hae-4deg-3mo_20100401_v001.cdf',
             ]),
