@@ -27,7 +27,7 @@ class TestMapIntegration(unittest.TestCase):
         INTEGRATION_TEST_DATA / "spice" / "imap_sclk_008.tsc",
         INTEGRATION_TEST_DATA / "spice" / "imap_dps_2025_105_2026_105_009.ah.bc"
     ])
-    def test_all_sp_maps(self, mock_parse_cli_arguments):
+    def test_hi_all_sp_maps(self, mock_parse_cli_arguments):
         logging.basicConfig(force=True, level=logging.INFO,
                             format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
