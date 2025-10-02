@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta
 from pathlib import Path
-from unittest import skipIf
 from unittest.mock import patch, Mock, MagicMock, call
 
 import numpy as np
@@ -30,7 +29,7 @@ from imap_l3_processing.swapi.l3b.science.geometric_factor_calibration_table imp
 from imap_l3_processing.swapi.l3b.science.instrument_response_lookup_table import InstrumentResponseLookupTable, \
     InstrumentResponseLookupTableCollection
 from tests.spice_test_case import SpiceTestCase
-from tests.test_helpers import get_test_data_path, NumpyArrayMatcher
+from tests.test_helpers import get_test_data_path, NumpyArrayMatcher, run_periodically
 
 FAKE_ROTATION_MATRIX_FROM_PSP = np.array(
     [[-8.03319036e-01, -5.95067395e-01, -2.39441182e-02, 0.00000000e+00, 0.00000000e+00, 0.00000000e+00],
@@ -385,13 +384,14 @@ class TestCalculatePickupIon(SpiceTestCase):
 
             mock_minimize_result = Mock()
             mock_minimize_result.uvars = {"cooling_index": 1, "ionization_rate": 2, "cutoff_speed": 3,
-                                                "background_count_rate": 4}
+                                          "background_count_rate": 4}
             mock_minimize_result.redchi = 3
             mock_minimize.return_value = mock_minimize_result
             energy_cutoff = 6000.0
             mock_calculate_pui_energy_cutoff.return_value = energy_cutoff
 
-            efficiency_lut = EfficiencyCalibrationTable(get_test_data_path("swapi/imap_swapi_efficiency-lut_20241020_v000.dat"))
+            efficiency_lut = EfficiencyCalibrationTable(
+                get_test_data_path("swapi/imap_swapi_efficiency-lut_20241020_v000.dat"))
 
             actual_fitting_parameters = calculate_pickup_ion_values(
                 self.get_response_lookup_table_collection(), geometric_factor_lut, energy,
@@ -460,7 +460,7 @@ class TestCalculatePickupIon(SpiceTestCase):
     @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.lmfit.minimize")
     @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.calculate_combined_sweeps")
     def test_calculate_pickup_ion_bad_fit(self, mock_calculate_combined_sweeps, mock_minimize,
-                                                        mock_extract_pui_energy_bins, _, __):
+                                          mock_extract_pui_energy_bins, _, __):
 
         mock_calculate_combined_sweeps.return_value = (np.array([1]), np.array([1]))
         mock_extract_pui_energy_bins.return_value = (np.array([1]), np.array([1]), np.array([1]))
@@ -594,10 +594,7 @@ class TestCalculatePickupIon(SpiceTestCase):
         np.testing.assert_allclose(24456817.05142866, result.n, rtol=1e-8)
         np.testing.assert_allclose(824377.0631439432, result.s, rtol=1e-8)
 
-    LAST_SUCCESSFUL_RUN = datetime(2025, 8, 28, 12, 00)
-    ALLOWED_GAP_TIME = timedelta(days=7)
-
-    @skipIf(datetime.now() < LAST_SUCCESSFUL_RUN + ALLOWED_GAP_TIME, "expensive test already run in last week")
+    @run_periodically(timedelta(days=7))
     @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.spiceypy")
     def test_calculate_pickup_ions_with_minimize(self, mock_spice):
         ephemeris_time_for_epoch = int(100000 * 1e9)
@@ -630,7 +627,8 @@ class TestCalculatePickupIon(SpiceTestCase):
                 "swapi/imap_swapi_energy-gf-sw-lut-divided-by-efficiency_20100101_v002.csv")
 
             geometric_factor_lut = GeometricFactorCalibrationTable.from_file(geometric_factor_lut_path)
-            efficiency_lut = EfficiencyCalibrationTable(get_test_data_path("swapi/imap_swapi_efficiency-lut_20241020_v000.dat"))
+            efficiency_lut = EfficiencyCalibrationTable(
+                get_test_data_path("swapi/imap_swapi_efficiency-lut_20241020_v000.dat"))
             background_count_rate_cutoff = 0.1
             epoch = 123_456_789_000_000_000
             sw_velocity_vector = np.array([0, 0, -500])
@@ -649,7 +647,8 @@ class TestCalculatePickupIon(SpiceTestCase):
             self.assertAlmostEqual(0.1, actual_fitting_parameters.background_count_rate, delta=0.05)
 
     def test_snapshot_model_count_rate_result(self):
-        geometric_factor_lut_path = get_test_data_path("swapi/imap_swapi_energy-gf-sw-lut-divided-by-efficiency_20100101_v002.csv")
+        geometric_factor_lut_path = get_test_data_path(
+            "swapi/imap_swapi_energy-gf-sw-lut-divided-by-efficiency_20100101_v002.csv")
         efficiency_lut = EfficiencyCalibrationTable(
             get_test_data_path("swapi/imap_swapi_efficiency-lut_20241020_v000.dat"))
 
