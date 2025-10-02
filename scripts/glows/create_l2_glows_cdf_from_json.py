@@ -19,12 +19,13 @@ def fill_official_l2_cdf_with_json_values(output_folder: Path, input_path: Path)
     with open(input_path) as f:
         instrument_data = json.load(f)
 
-        start_of_epoch_window = datetime.fromisoformat(instrument_data["start_time"])
-        end_of_epoch_window = datetime.fromisoformat(instrument_data["end_time"])
+        start_of_epoch_window = datetime.fromisoformat(instrument_data["start_time"]) + timedelta(days=5479)
+
+        end_of_epoch_window = datetime.fromisoformat(instrument_data["end_time"]) + timedelta(days=5479)
         epoch_window = end_of_epoch_window - start_of_epoch_window
         epoch = start_of_epoch_window + epoch_window / 2
 
-        repoint_id = 149 + math.floor((epoch - datetime(2010, 1, 1)) / timedelta(days=1))
+        repoint_id = 896 + math.floor((epoch - datetime(2025, 1, 1)) / timedelta(days=1))
 
         new_name = ScienceFilePath.generate_from_inputs(
             instrument="glows",
@@ -89,14 +90,16 @@ def fill_official_l2_cdf_with_json_values(output_folder: Path, input_path: Path)
             for var in vector_vars:
                 cdf[var][0] = np.array(list(instrument_data[var].values()))
 
-            cdf["bad_time_flag_occurrences"][0] = list(instrument_data["bad_time_flag_occurences"].values()) # for old instrument team data
+            cdf["bad_time_flag_occurrences"][0] = list(
+                instrument_data["bad_time_flag_occurences"].values())  # for old instrument team data
             cdf["number_of_good_l1b_inputs"][0] = instrument_data["header"]["number_of_l1b_files_used"]
             cdf["total_l1b_inputs"][0] = instrument_data["header"]["number_of_all_l1b_files"]
 
 
 if __name__ == "__main__":
-    json_directory = Path(r'C:\Users\Petty\Downloads\data_products_cbk_implementation_2024-12-31_1year\data_l2_histograms')
-    output_directory = Path(r'C:\Users\Petty\Downloads\l2_cdfs')
+    json_directory = Path(
+        r'/Users/harrison/Downloads/data_products_cbk_implementation_2024-12-31_1year/data_l2_histograms')
+    output_directory = Path(r'/Users/harrison/Downloads/l2_cdfs_pre_timeshifted')
     shutil.rmtree(output_directory, ignore_errors=True)
     output_directory.mkdir(parents=True, exist_ok=True)
     for file_path in json_directory.iterdir():
