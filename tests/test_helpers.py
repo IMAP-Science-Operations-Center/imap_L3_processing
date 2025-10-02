@@ -9,7 +9,7 @@ from unittest import SkipTest
 from unittest.mock import Mock
 
 import numpy as np
-from imap_data_access import ScienceFilePath, AncillaryFilePath
+from imap_data_access import ScienceFilePath, AncillaryFilePath, SPICEFilePath
 from imap_data_access.file_validation import generate_imap_file_path
 
 import tests
@@ -151,19 +151,19 @@ def environment_variables(env_vars: dict):
     return decorator
 
 
-def create_mock_query_results(instrument: str, file_names: list[str],
-                              ingestion_dates: Optional[list[datetime]] = None) -> list[dict]:
+def create_mock_query_results(file_names: list[Path | str], ingestion_dates: Optional[list[datetime]] = None) -> list[
+    dict]:
     file_paths = []
 
     if ingestion_dates is None:
         ingestion_dates = [datetime(2000, 1, 1)] * len(file_names)
 
     for fn, ingestion_date in zip(file_names, ingestion_dates):
-        imap_file_path = generate_imap_file_path(fn)
+        imap_file_path = generate_imap_file_path(Path(fn).name)
         match imap_file_path:
             case ScienceFilePath():
                 file_paths.append({
-                    "instrument": instrument,
+                    "instrument": imap_file_path.instrument,
                     "data_level": imap_file_path.data_level,
                     "descriptor": imap_file_path.descriptor,
                     "start_date": imap_file_path.start_date,
@@ -175,7 +175,7 @@ def create_mock_query_results(instrument: str, file_names: list[str],
                 })
             case AncillaryFilePath():
                 file_paths.append({
-                    "instrument": instrument,
+                    "instrument": imap_file_path.instrument,
                     "descriptor": imap_file_path.descriptor,
                     "start_date": imap_file_path.start_date,
                     "end_date": imap_file_path.end_date,
@@ -183,6 +183,8 @@ def create_mock_query_results(instrument: str, file_names: list[str],
                     "version": imap_file_path.version,
                     "file_path": str(imap_file_path.filename),
                 })
+            case SPICEFilePath():
+                continue
             case _:
                 raise NotImplementedError(f"Unexpected file path type {imap_file_path}")
     return file_paths

@@ -4,14 +4,13 @@ from typing import Callable
 from unittest.mock import patch
 
 import imap_data_access
-from imap_data_access.file_validation import generate_imap_file_path, ScienceFilePath, AncillaryFilePath
+from imap_data_access import AncillaryFilePath
+from imap_data_access.file_validation import generate_imap_file_path, ScienceFilePath
 
 from tests.test_helpers import create_mock_query_results
 
 
 def create_mock_query(input_files: list[Path | str], assert_uses_latest: bool = False) -> Callable:
-    file_paths = [generate_imap_file_path(Path(f).name) for f in input_files]
-
     def fake_query(**kwargs):
         table = kwargs.get("table") or "science"
         if "table" in kwargs:
@@ -22,22 +21,22 @@ def create_mock_query(input_files: list[Path | str], assert_uses_latest: bool = 
         if kwargs.get("version") == "latest":
             del kwargs["version"]
 
-        query_result = []
-        for file_path in file_paths:
-            if table == "science" and isinstance(file_path, ScienceFilePath):
-                file_dict = ScienceFilePath.extract_filename_components(file_path.filename)
-            elif table == "ancillary" and isinstance(file_path, AncillaryFilePath):
-                file_dict = AncillaryFilePath.extract_filename_components(file_path.filename)
-            elif table not in ["science", "ancillary"]:
-                raise NotImplementedError(f"Query for table: {table}")
-            else:
-                file_dict = None
+        desired_attributes = set(kwargs.items())
 
-            if file_dict is not None:
-                keys = set(file_dict.items())
-                if set(kwargs.items()).issubset(keys):
-                    query_result.extend(create_mock_query_results("glows", [file_path.filename.name]))
-        return query_result
+        filtered_by_type = []
+        for input_file in input_files:
+            match generate_imap_file_path(Path(input_file).name), table:
+                case ScienceFilePath(), "science":
+                    filtered_by_type.append(input_file)
+                case AncillaryFilePath(), "ancillary":
+                    filtered_by_type.append(input_file)
+                case _, "science" | "ancillary":
+                    continue
+                case _, _:
+                    raise ValueError(f"Unexpected file type: {input_file}")
+
+        query_results = create_mock_query_results(filtered_by_type)
+        return [qr for qr in query_results if desired_attributes.issubset(set(qr.items()))]
 
     return fake_query
 

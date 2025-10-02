@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import patch, call, Mock, sentinel
+from unittest.mock import patch, call, Mock
 
 from imap_l3_processing.glows.l3d.glows_l3d_initializer import GlowsL3DInitializer
 from tests.test_helpers import create_mock_query_results
@@ -55,7 +55,8 @@ class TestGlowsL3DInitializer(unittest.TestCase):
 
         mock_read_pipeline_settings.return_value = {"start_cr": 1}
 
-        actual_version, actual_l3d_deps, actual_old_l3d = GlowsL3DInitializer.should_process_l3d(external_dependencies, l3bs, l3cs)
+        actual_version, actual_l3d_deps, actual_old_l3d = GlowsL3DInitializer.should_process_l3d(external_dependencies,
+                                                                                                 l3bs, l3cs)
 
         most_recent_l3d = 'imap_glows_l3d_solar-hist_19470301-cr00002_v001.cdf'
         mock_read_cdf_parents.assert_called_once_with(most_recent_l3d)
@@ -107,7 +108,8 @@ class TestGlowsL3DInitializer(unittest.TestCase):
     @patch('imap_l3_processing.glows.l3d.glows_l3d_initializer.read_cdf_parents')
     @patch('imap_l3_processing.glows.l3d.glows_l3d_initializer.imap_data_access.query')
     @patch('imap_l3_processing.glows.l3d.glows_l3d_initializer.GlowsL3DDependencies.fetch_dependencies')
-    def test_l3d_initializer_returns_no_old_cdf_if_none_found(self, mock_fetch_l3d_deps, mock_query, mock_read_cdf_parents, _, __):
+    def test_l3d_initializer_returns_no_old_cdf_if_none_found(self, mock_fetch_l3d_deps, mock_query,
+                                                              mock_read_cdf_parents, _, __):
         l3bs = ['imap_glows_l3b_ion-rate-profile_20200101-cr00001_v000.cdf']
         l3cs = ['imap_glows_l3c_sw-profile_20200101-cr00001_v000.cdf']
 
@@ -138,7 +140,8 @@ class TestGlowsL3DInitializer(unittest.TestCase):
 
         external_dependencies = Mock()
 
-        mock_query.side_effect = self._create_ancillary_query_results(['imap_glows_l3d_solar-hist_19470301-cr00002_v001.cdf'])
+        mock_query.side_effect = self._create_ancillary_query_results(
+            ['imap_glows_l3d_solar-hist_19470301-cr00002_v001.cdf'])
 
         mock_read_cdf_parents.return_value = {
             'imap_glows_l3b_ion-rate-profile_20200101-cr00001_v000.cdf',
@@ -173,9 +176,10 @@ class TestGlowsL3DInitializer(unittest.TestCase):
     @patch('imap_l3_processing.glows.l3d.glows_l3d_initializer.imap_data_access.query')
     @patch('imap_l3_processing.glows.l3d.glows_l3d_initializer.read_pipeline_settings')
     @patch('imap_l3_processing.glows.l3d.glows_l3d_initializer.GlowsL3DDependencies.fetch_dependencies')
-    def test_l3d_initializer_does_not_process_when_no_l3bs_after_start_cr(self, mock_fetch_l3d_deps, mock_read_pipeline_settings, mock_query, __):
-        l3bs = ['imap_glows_l3b_ion-rate-profile_20200101-cr00000_v000.cdf',]
-        l3cs = ['imap_glows_l3c_sw-profile_20200101-cr00000_v000.cdf',]
+    def test_l3d_initializer_does_not_process_when_no_l3bs_after_start_cr(self, mock_fetch_l3d_deps,
+                                                                          mock_read_pipeline_settings, mock_query, __):
+        l3bs = ['imap_glows_l3b_ion-rate-profile_20200101-cr00000_v000.cdf', ]
+        l3cs = ['imap_glows_l3c_sw-profile_20200101-cr00000_v000.cdf', ]
 
         external_dependencies = Mock()
 
@@ -189,12 +193,12 @@ class TestGlowsL3DInitializer(unittest.TestCase):
 
     def _create_ancillary_query_results(self, l3d_query_result):
         return [
-            create_mock_query_results("glows", l3d_query_result),
-            create_mock_query_results("glows", ['imap_glows_plasma-speed-2010a_19470301_v001.dat']),
-            create_mock_query_results("glows", ['imap_glows_proton-density-2010a_19470301_v000.dat']),
-            create_mock_query_results("glows", ['imap_glows_uv-anisotropy-2010a_19470301_v000.dat']),
-            create_mock_query_results("glows", ['imap_glows_photoion-2010a_19470301_v000.dat']),
-            create_mock_query_results("glows", ['imap_glows_lya-2010a_19470301_v000.dat']),
-            create_mock_query_results("glows", ['imap_glows_electron-density-2010a_19470301_v000.dat']),
-            create_mock_query_results("glows", ['imap_glows_pipeline-settings-l3bcde_19470301_v000.json']),
+            create_mock_query_results(l3d_query_result),
+            create_mock_query_results(['imap_glows_plasma-speed-2010a_19470301_v001.dat']),
+            create_mock_query_results(['imap_glows_proton-density-2010a_19470301_v000.dat']),
+            create_mock_query_results(['imap_glows_uv-anisotropy-2010a_19470301_v000.dat']),
+            create_mock_query_results(['imap_glows_photoion-2010a_19470301_v000.dat']),
+            create_mock_query_results(['imap_glows_lya-2010a_19470301_v000.dat']),
+            create_mock_query_results(['imap_glows_electron-density-2010a_19470301_v000.dat']),
+            create_mock_query_results(['imap_glows_pipeline-settings-l3bcde_19470301_v000.json']),
         ]

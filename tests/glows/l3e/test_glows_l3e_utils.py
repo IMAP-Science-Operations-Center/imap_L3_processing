@@ -85,28 +85,28 @@ class TestGlowsL3EUtils(unittest.TestCase):
         })
 
         mock_query.side_effect = [
-            create_mock_query_results("glows", [
+            create_mock_query_results([
                 'imap_glows_l3e_survival-probability-hi-90_20250101-repoint03682_v001.cdf',
                 'imap_glows_l3e_survival-probability-hi-90_20250101-repoint03683_v002.cdf',
                 'imap_glows_l3e_survival-probability-hi-90_20250101-repoint03684_v003.cdf',
                 'imap_glows_l3e_survival-probability-hi-90_20250101-repoint03685_v004.cdf',
                 'imap_glows_l3e_survival-probability-hi-90_20250101-repoint03686_v005.cdf',
             ]),
-            create_mock_query_results("glows", [
+            create_mock_query_results([
                 'imap_glows_l3e_survival-probability-hi-45_20250101-repoint03683_v002.cdf',
                 'imap_glows_l3e_survival-probability-hi-45_20250101-repoint03684_v003.cdf',
                 'imap_glows_l3e_survival-probability-hi-45_20250101-repoint03685_v004.cdf',
                 'imap_glows_l3e_survival-probability-hi-45_20250101-repoint03686_v005.cdf',
                 'imap_glows_l3e_survival-probability-hi-45_20250101-repoint03687_v006.cdf',
             ]),
-            create_mock_query_results("glows", [
+            create_mock_query_results([
                 'imap_glows_l3e_survival-probability-lo_20250101-repoint03684_v003.cdf',
                 'imap_glows_l3e_survival-probability-lo_20250101-repoint03685_v004.cdf',
                 'imap_glows_l3e_survival-probability-lo_20250101-repoint03686_v005.cdf',
                 'imap_glows_l3e_survival-probability-lo_20250101-repoint03687_v006.cdf',
                 'imap_glows_l3e_survival-probability-lo_20250101-repoint03688_v007.cdf',
             ]),
-            create_mock_query_results("glows", [
+            create_mock_query_results([
                 'imap_glows_l3e_survival-probability-ultra_20250101-repoint03685_v004.cdf',
                 'imap_glows_l3e_survival-probability-ultra_20250101-repoint03686_v005.cdf',
                 'imap_glows_l3e_survival-probability-ultra_20250101-repoint03687_v006.cdf',
@@ -139,11 +139,11 @@ class TestGlowsL3EUtils(unittest.TestCase):
             'cr_grid': np.arange(num_crs) + 0.5,
             'lyman_alpha': np.arange(num_crs),
             'phion': np.arange(num_crs),
-            'plasma_speed': np.arange(0,20).reshape((num_crs, 2)),
+            'plasma_speed': np.arange(0, 20).reshape((num_crs, 2)),
             'plasma_speed_flag': np.arange(num_crs),
-            'proton_density': np.arange(0,20).reshape((num_crs, 2)),
+            'proton_density': np.arange(0, 20).reshape((num_crs, 2)),
             'proton_density_flag': np.arange(num_crs),
-            'uv_anisotropy': np.arange(0,20).reshape((num_crs, 2)),
+            'uv_anisotropy': np.arange(0, 20).reshape((num_crs, 2)),
             'uv_anisotropy_flag': np.arange(num_crs),
         }
 
@@ -162,16 +162,16 @@ class TestGlowsL3EUtils(unittest.TestCase):
         new_uv_anisotropy_flag = np.arange(num_crs)
         new_uv_anisotropy_flag[5] = 10
 
-        new_plasma_speed = np.arange(0,20).reshape((num_crs, 2))
+        new_plasma_speed = np.arange(0, 20).reshape((num_crs, 2))
         new_plasma_speed[6, :] = 10
 
-        new_proton_density = np.arange(0,20).reshape((num_crs, 2))
+        new_proton_density = np.arange(0, 20).reshape((num_crs, 2))
         new_proton_density[7, :] = 10
 
-        new_uv_anisotropy = np.arange(0,20).reshape((num_crs, 2))
+        new_uv_anisotropy = np.arange(0, 20).reshape((num_crs, 2))
         new_uv_anisotropy[8, :] = 10
 
-        cases =[
+        cases = [
             ('cr_grid', np.append(old_l3d['cr_grid'], 10.5), 10),
             ('lyman_alpha', new_lyman_alpha, 1),
             ('phion', new_phion, 2),
