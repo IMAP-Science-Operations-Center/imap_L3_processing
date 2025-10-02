@@ -19,6 +19,7 @@ from imap_l3_processing.lo.lo_processor import LoProcessor
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.swapi.swapi_processor import SwapiProcessor
 from imap_l3_processing.swe.swe_processor import SweProcessor
+from imap_l3_processing.ultra.l3.ultra_initializer import UltraInitializer, ULTRA_SP_MAP_DESCRIPTORS
 from imap_l3_processing.ultra.l3.ultra_processor import UltraProcessor
 
 logger = logging.getLogger(__name__)
@@ -80,7 +81,7 @@ def imap_l3_processor():
         initializer_class, processor_class, descriptors = {
             "hi": (HiL3Initializer, HiProcessor, HI_SP_MAP_DESCRIPTORS),
             "lo": (LoInitializer, LoProcessor, LO_SP_MAP_DESCRIPTORS),
-            # "ultra": (UltraProcessor, UltraProcessor)
+            "ultra": (UltraInitializer, UltraProcessor, ULTRA_SP_MAP_DESCRIPTORS)
         }[args.instrument]
 
         initializer = initializer_class()

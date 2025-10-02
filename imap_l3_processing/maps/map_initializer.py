@@ -49,7 +49,7 @@ class MapInitializer(abc.ABC):
     @staticmethod
     def get_duration_from_map_descriptor(descriptor: MapDescriptorParts) -> timedelta:
         match descriptor:
-            case MapDescriptorParts(duration="6mo"):
+            case MapDescriptorParts(duration="1mo"):
                 return timedelta(days=365.25) / 12
             case MapDescriptorParts(duration="3mo"):
                 return timedelta(days=365.25) / 4
