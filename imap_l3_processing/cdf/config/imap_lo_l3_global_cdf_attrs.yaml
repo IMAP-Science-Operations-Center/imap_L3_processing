@@ -10,7 +10,7 @@ imap_lo_l3_l090-ena-h-sf-sp-ram-hae-6deg-1yr:
   Principal_data_quantity: ENA Intensity
   Reference_frame: Spacecraft
   Species: H
-  Spin_range: Full Spin
+  Spin_range: Ram
   Survival_corrected: 'True'
   Tessellation_type: lon, lat
 imap_lo_l3_l090-ena-h-hf-sp-ram-hae-6deg-1yr:
@@ -25,7 +25,7 @@ imap_lo_l3_l090-ena-h-hf-sp-ram-hae-6deg-1yr:
   Principal_data_quantity: ENA Intensity
   Reference_frame: Heliospheric (CG)
   Species: H
-  Spin_range: Full Spin
+  Spin_range: Ram
   Survival_corrected: 'True'
   Tessellation_type: lon, lat
 imap_lo_l3_l090-spx-h-sf-nsp-ram-hae-6deg-1yr:
@@ -40,7 +40,7 @@ imap_lo_l3_l090-spx-h-sf-nsp-ram-hae-6deg-1yr:
   Principal_data_quantity: ENA Spectral Index
   Reference_frame: Spacecraft
   Species: H
-  Spin_range: Full Spin
+  Spin_range: Ram
   Survival_corrected: 'False'
   Tessellation_type: lon, lat
 imap_lo_l3_l090-spx-h-sf-sp-ram-hae-6deg-1yr:
@@ -55,7 +55,7 @@ imap_lo_l3_l090-spx-h-sf-sp-ram-hae-6deg-1yr:
   Principal_data_quantity: ENA Spectral Index
   Reference_frame: Spacecraft
   Species: H
-  Spin_range: Full Spin
+  Spin_range: Ram
   Survival_corrected: 'True'
   Tessellation_type: lon, lat
 imap_lo_l3_l090-spx-h-hf-nsp-ram-hae-6deg-1yr:
@@ -70,7 +70,7 @@ imap_lo_l3_l090-spx-h-hf-nsp-ram-hae-6deg-1yr:
   Principal_data_quantity: ENA Spectral Index
   Reference_frame: Heliospheric (CG)
   Species: H
-  Spin_range: Full Spin
+  Spin_range: Ram
   Survival_corrected: 'False'
   Tessellation_type: lon, lat
 imap_lo_l3_l090-spx-h-hf-sp-ram-hae-6deg-1yr:
@@ -85,51 +85,6 @@ imap_lo_l3_l090-spx-h-hf-sp-ram-hae-6deg-1yr:
   Principal_data_quantity: ENA Spectral Index
   Reference_frame: Heliospheric (CG)
   Species: H
-  Spin_range: Full Spin
-  Survival_corrected: 'True'
-  Tessellation_type: lon, lat
-imap_lo_l3_l090-ena-h-hk-sp-ram-hae-6deg-1yr:
-  Coordinate_system: ECLIPJ2000 (HAE)
-  Data_type: L3_1yr>Level-3 1yr
-  Instrument: Lo
-  Logical_source_description: IMAP Lo Instrument Level 3 Lo-90 Sensor, ENA Intensity,
-    Hydrogen, Heliospheric Kinematic Frame, Survival Probability-Corrected, Ram, HAE,
-    Rectangular 6 degree, 12 Month Map
-  Map_descriptor: l090-ena-h-hk-sp-ram-hae-6deg-1yr
-  Map_duration: 1yr
-  Principal_data_quantity: ENA Intensity
-  Reference_frame: Heliospheric Kinematic (HK)
-  Species: H
-  Spin_range: Full Spin
-  Survival_corrected: 'True'
-  Tessellation_type: lon, lat
-imap_lo_l3_l090-spx-h-hk-nsp-ram-hae-6deg-1yr:
-  Coordinate_system: ECLIPJ2000 (HAE)
-  Data_type: L3_1yr>Level-3 1yr
-  Instrument: Lo
-  Logical_source_description: IMAP Lo Instrument Level 3 Lo-90 Sensor, Spectral Index,
-    Hydrogen, Heliospheric Kinematic Frame, Non-Survival Probability-Corrected, Ram,
-    HAE, Rectangular 6 degree, 12 Month Map
-  Map_descriptor: l090-spx-h-hk-nsp-ram-hae-6deg-1yr
-  Map_duration: 1yr
-  Principal_data_quantity: ENA Spectral Index
-  Reference_frame: Heliospheric Kinematic (HK)
-  Species: H
-  Spin_range: Full Spin
-  Survival_corrected: 'False'
-  Tessellation_type: lon, lat
-imap_lo_l3_l090-spx-h-hk-sp-ram-hae-6deg-1yr:
-  Coordinate_system: ECLIPJ2000 (HAE)
-  Data_type: L3_1yr>Level-3 1yr
-  Instrument: Lo
-  Logical_source_description: IMAP Lo Instrument Level 3 Lo-90 Sensor, Spectral Index,
-    Hydrogen, Heliospheric Kinematic Frame, Survival Probability-Corrected, Ram, HAE,
-    Rectangular 6 degree, 12 Month Map
-  Map_descriptor: l090-spx-h-hk-sp-ram-hae-6deg-1yr
-  Map_duration: 1yr
-  Principal_data_quantity: ENA Spectral Index
-  Reference_frame: Heliospheric Kinematic (HK)
-  Species: H
-  Spin_range: Full Spin
+  Spin_range: Ram
   Survival_corrected: 'True'
   Tessellation_type: lon, lat

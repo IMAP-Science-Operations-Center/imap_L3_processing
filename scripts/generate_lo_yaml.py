@@ -42,9 +42,6 @@ descriptors = [
     "l090-spx-h-sf-sp-ram-hae-6deg-1yr",
     "l090-spx-h-hf-nsp-ram-hae-6deg-1yr",
     "l090-spx-h-hf-sp-ram-hae-6deg-1yr",
-    "l090-ena-h-hk-sp-ram-hae-6deg-1yr",
-    "l090-spx-h-hk-nsp-ram-hae-6deg-1yr",
-    "l090-spx-h-hk-sp-ram-hae-6deg-1yr",
 ]
 
 for descriptor in descriptors:
@@ -65,7 +62,7 @@ for descriptor in descriptors:
                 "Spacecraft" if frame == "sf" else "Heliospheric (CG)"),
             "Coordinate_system": coordinate_systems[coordinate_system],
             "Tessellation_type": "lon, lat" if "deg" in pixelation else "pix index",
-            "Spin_range": "Full Spin",
+            "Spin_range": "Ram",
             "Survival_corrected": "True" if sp_corrected == "sp" else "False",
             "Species": species.capitalize(),
             "Principal_data_quantity": "ENA Intensity" if quantity == "ena" else "ENA Spectral Index",
