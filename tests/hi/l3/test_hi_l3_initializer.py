@@ -5,7 +5,7 @@ from unittest.mock import patch, call, Mock, sentinel
 
 from imap_l3_processing.hi.l3.hi_l3_initializer import HiL3Initializer, HI_SP_SPICE_KERNELS
 from imap_l3_processing.maps.map_descriptors import parse_map_descriptor, map_descriptor_parts_to_string
-from imap_l3_processing.maps.map_initializer import PossibleMapToProduce
+from imap_l3_processing.maps.map_initializer import PossibleMapToProduce, logger
 from imap_l3_processing.models import InputMetadata
 from tests.test_helpers import create_mock_query_results
 
@@ -165,6 +165,60 @@ class TestHiL3Initializer(unittest.TestCase):
         )
 
         self.assertEqual([expected_possible_map_to_produce], actual_possible_maps)
+
+    @patch('imap_l3_processing.maps.map_initializer.read_cdf_parents')
+    @patch('imap_l3_processing.hi.l3.hi_l3_initializer.imap_data_access.query')
+    def test_get_maps_that_can_be_produced_full_spin_with_mismatched_parents(self, mock_query, mock_read_cdf_parents):
+        mock_query.side_effect = [
+            create_mock_query_results([]),
+            create_mock_query_results([
+                'imap_glows_l3e_survival-probability-hi-90_20100101-repoint00001_v001.cdf',
+                'imap_glows_l3e_survival-probability-hi-90_20100102-repoint00002_v001.cdf',
+                'imap_glows_l3e_survival-probability-hi-90_20100103-repoint00003_v001.cdf',
+                'imap_glows_l3e_survival-probability-hi-90_20100104-repoint00004_v001.cdf',
+                'imap_glows_l3e_survival-probability-hi-90_20100703-repoint00203_v001.cdf',
+
+            ]),
+            create_mock_query_results([
+                'imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-6mo_20100101_v001.cdf',
+                'imap_hi_l2_h90-ena-h-sf-nsp-ram-hae-4deg-6mo_20100101_v001.cdf',
+            ]),
+            create_mock_query_results([])
+        ]
+
+        mock_read_cdf_parents.side_effect = [
+            [
+                'imap_hi_l1c_90sensor-pset_20100101-repoint00001_v001.cdf',
+                'imap_hi_l1c_90sensor-pset_20100102-repoint00002_v001.cdf',
+            ],
+            [
+                'imap_hi_l1c_90sensor-pset_20100101-repoint00001_v001.cdf',
+            ]
+        ]
+
+        initializer = HiL3Initializer()
+
+        with self.assertLogs(logger=logger, level='WARNING') as log_context:
+            actual_possible_maps = initializer.get_maps_that_can_be_produced('h90-ena-h-sf-sp-full-hae-4deg-6mo')
+            expected_message = ('Expected all input maps to be created from the same pointing sets! l2_file_paths: '
+                                'imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-6mo_20100101_v001.cdf, '
+                                'imap_hi_l2_h90-ena-h-sf-nsp-ram-hae-4deg-6mo_20100101_v001.cdf')
+            self.assertIn(expected_message, log_context.output[0])
+
+
+        mock_query.assert_has_calls([
+            call(instrument='glows', data_level='l3e', descriptor='survival-probability-hi-45', version="latest"),
+            call(instrument='glows', data_level='l3e', descriptor='survival-probability-hi-90', version="latest"),
+            call(instrument='hi', data_level='l2', version="latest"),
+            call(instrument='hi', data_level='l3', version="latest"),
+        ])
+
+        mock_read_cdf_parents.assert_has_calls([
+            call('imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-6mo_20100101_v001.cdf'),
+            call('imap_hi_l2_h90-ena-h-sf-nsp-ram-hae-4deg-6mo_20100101_v001.cdf'),
+        ])
+
+        self.assertEqual([], actual_possible_maps)
 
     @patch('imap_l3_processing.maps.map_initializer.read_cdf_parents')
     @patch('imap_l3_processing.hi.l3.hi_l3_initializer.imap_data_access.query')

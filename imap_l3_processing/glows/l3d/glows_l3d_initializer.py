@@ -32,7 +32,8 @@ class GlowsL3DInitializer:
         [pipeline_settings_l3bcde] = imap_data_access.query(table='ancillary', instrument='glows', descriptor='pipeline-settings-l3bcde', version='latest')
         # @formatter:on
 
-        pipeline_settings = read_pipeline_settings(imap_data_access.download(pipeline_settings_l3bcde["file_path"]))
+        pipeline_settings_filename = Path(pipeline_settings_l3bcde["file_path"]).name
+        pipeline_settings = read_pipeline_settings(imap_data_access.download(pipeline_settings_filename))
 
         l3bs = [l3b for l3b in l3bs if ScienceFilePath(l3b).cr >= pipeline_settings["start_cr"]]
         l3cs = [l3c for l3c in l3cs if ScienceFilePath(l3c).cr >= pipeline_settings["start_cr"]]
@@ -63,8 +64,8 @@ class GlowsL3DInitializer:
         }
 
         if most_recent_l3d is not None:
-            l3d_parents = read_cdf_parents(most_recent_l3d["file_path"])
-            old_l3d = most_recent_l3d["file_path"]
+            l3d_parents = read_cdf_parents(Path(most_recent_l3d["file_path"]).name)
+            old_l3d = Path(most_recent_l3d["file_path"]).name
 
             logger.info(f"Old L3d parents: {l3d_parents}, new L3d deps: {updated_input_files}")
             if updated_input_files.issubset(l3d_parents):

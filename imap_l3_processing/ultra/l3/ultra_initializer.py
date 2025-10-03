@@ -1,4 +1,5 @@
 import dataclasses
+from pathlib import Path
 
 import imap_data_access
 
@@ -75,7 +76,7 @@ class UltraInitializer(MapInitializer):
     def __init__(self):
         sp_query_result = imap_data_access.query(instrument='glows', data_level='l3e',
                                                  descriptor="survival-probability-ul", version="latest")
-        self.glows_psets_by_repointing = {int(r["repointing"]): r["file_path"] for r in sp_query_result}
+        self.glows_psets_by_repointing = {int(r["repointing"]): Path(r["file_path"]).name for r in sp_query_result}
 
         l2_query_result = imap_data_access.query(instrument="ultra", data_level="l2", version="latest")
         l3_query_result = imap_data_access.query(instrument="ultra", data_level="l3", version="latest")

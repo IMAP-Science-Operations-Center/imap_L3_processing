@@ -98,6 +98,9 @@ class TestUltraInitializer(unittest.TestCase):
                         'imap_glows_l3e_survival-probability-ul_20100401-repoint00101_v002.cdf',
                         'imap_glows_l3e_survival-probability-ul_20100402-repoint00102_v002.cdf',
                         'imap_glows_l3e_survival-probability-ul_20100403-repoint00103_v002.cdf',
+                        f'imap_ultra_l1c_{sensor}sensor-spacecraftpset_20100401-repoint00101_v001.cdf',
+                        f'imap_ultra_l1c_{sensor}sensor-spacecraftpset_20100402-repoint00102_v001.cdf',
+                        f'imap_ultra_l1c_{sensor}sensor-spacecraftpset_20100403-repoint00103_v001.cdf',
                         f'imap_ultra_l2_u{sensor}-ena-h-sf-nsp-full-hae-4deg-3mo_20100401_v001.cdf',
                     }
                 )

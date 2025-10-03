@@ -9,15 +9,20 @@ from tests.integration.integration_test_helpers import create_mock_query
 
 
 class TestLoInitializer(unittest.TestCase):
+    def setUp(self):
+        self.query_patcher = patch('imap_l3_processing.lo.l3.lo_initializer.imap_data_access.query')
+        self.mock_query = self.query_patcher.start()
+
+    def tearDown(self):
+        self.query_patcher.stop()
 
     def test_is_a_map_initializer(self):
         initializer = LoInitializer()
         self.assertIsInstance(initializer, MapInitializer)
 
     @patch('imap_l3_processing.maps.map_initializer.read_cdf_parents')
-    @patch('imap_l3_processing.lo.l3.lo_initializer.imap_data_access.query')
-    def test_get_maps_that_should_be_produced(self, mock_query, mock_read_cdf_parents):
-        mock_query.side_effect = create_mock_query([
+    def test_get_maps_that_should_be_produced(self,  mock_read_cdf_parents):
+        self.mock_query.side_effect = create_mock_query([
             'imap_glows_l3e_survival-probability-lo_20100101-repoint00001_v001.cdf',
             'imap_glows_l3e_survival-probability-lo_20100102-repoint00002_v001.cdf',
             'imap_glows_l3e_survival-probability-lo_20100103-repoint00003_v001.cdf',
