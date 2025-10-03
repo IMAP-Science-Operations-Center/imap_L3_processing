@@ -1,5 +1,6 @@
 import logging
 import unittest
+from datetime import timedelta
 from pathlib import Path
 from unittest.mock import patch, Mock
 
@@ -8,7 +9,7 @@ from spacepy.pycdf import CDF
 
 import imap_l3_data_processor
 from tests.integration.integration_test_helpers import mock_imap_data_access
-from tests.test_helpers import get_run_local_data_path
+from tests.test_helpers import get_run_local_data_path, run_periodically
 
 INTEGRATION_TEST_DATA_PATH = Path(__file__).parent / "test_data"
 
@@ -115,6 +116,7 @@ class TestMapIntegration(unittest.TestCase):
             with CDF(str(expected_map_path)) as cdf:
                 self.assertEqual(expected_parents, set(cdf.attrs["Parents"]))
 
+    @run_periodically(timedelta(days=7))
     @patch("imap_l3_data_processor._parse_cli_arguments")
     def test_ultra_all_sp_maps(self, mock_parse_cli_arguments):
         ultra_test_data_dir = INTEGRATION_TEST_DATA_PATH / "ultra"

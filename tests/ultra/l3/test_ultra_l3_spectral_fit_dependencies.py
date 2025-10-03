@@ -10,7 +10,7 @@ from tests.test_helpers import get_test_data_path
 
 class TestUltraL3SpectralFitDependencies(unittest.TestCase):
     @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.RectangularIntensityMapData.read_from_path')
-    @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.download')
+    @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.imap_data_access.download')
     def test_fetch_dependencies(self, mock_download, mock_rectangular_read_from_path):
         map_file_name = 'imap_ultra_l3_ultra-cool-descriptor_20250601_v000.cdf'
         ancillary_file_name = 'imap_ultra_spx-energy-ranges_20250601_v000.cdf'
