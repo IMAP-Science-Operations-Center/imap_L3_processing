@@ -9,75 +9,72 @@ from imap_l3_processing.ultra.l3.ultra_l3_dependencies import UltraL3Dependencie
 
 
 class TestUltraL3Dependencies(unittest.TestCase):
-    @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.find_glows_l3e_dependencies')
     @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.UltraGlowsL3eData.read_from_path')
     @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.UltraL1CPSet.read_from_path')
     @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.HealPixIntensityMapData.read_from_xarray')
     @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.download')
     @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.ultra_l2')
     def test_fetch_dependencies(self, mock_ultra_l2, mock_download, mock_read_xarray, mock_read_ultra_l1c,
-                                mock_read_glows,
-                                mock_find_glows):
+                                mock_read_glows):
         l1c_input_paths = ["imap_ultra_l1c_pset_20251010_v001.cdf", "imap_ultra_l1c_pset_20251011_v001.cdf",
                            "imap_ultra_l1c_pset_20251012_v001.cdf"]
-
-        parents = l1c_input_paths + ["imap_hi_ancil-settings-dontuse_20100101_v001.json"]
 
         glows_file_paths = [
             "imap_glows_l3e_survival-probability-ultra-45_20201001_v001.cdf",
             "imap_glows_l3e_survival-probability-ultra-45_20201002_v002.cdf",
             "imap_glows_l3e_survival-probability-ultra-45_20201003_v003.cdf"]
 
-        with tempfile.TemporaryDirectory() as tmpdir:
-            l2_map_path = Path(tmpdir) / "l2_map.cdf"
-            with CDF(str(l2_map_path), masterpath='') as l2_map:
-                l2_map.attrs["Parents"] = parents
+        input_collection = Mock()
+        input_collection.get_file_paths.side_effect = [
+            [sentinel.l2_server_path],
+            l1c_input_paths,
+            glows_file_paths
+        ]
 
-            input_collection = Mock()
-            input_collection.get_file_paths.return_value = [sentinel.imap_l2_map_path]
+        returned_download_paths = [sentinel.l2_map_path, sentinel.l1c_path_1, sentinel.l1c_path_2, sentinel.l1c_path_3,
+                                   sentinel.glows_path_1, sentinel.glows_path_2, sentinel.glows_path_3]
 
-            returned_download_paths = [l2_map_path, sentinel.l1c_path_1, sentinel.l1c_path_2, sentinel.l1c_path_3,
-                                       sentinel.glows_path_1, sentinel.glows_path_2, sentinel.glows_path_3]
+        mock_download.side_effect = returned_download_paths
+        mock_read_xarray.return_value = sentinel.ultra_l2_data
 
-            mock_download.side_effect = returned_download_paths
-            mock_find_glows.return_value = glows_file_paths
-            mock_read_xarray.return_value = sentinel.ultra_l2_data
+        l1c_data = [sentinel.ultra_l1c_data_1, sentinel.ultra_l1c_data_2,
+                    sentinel.ultra_l1c_data_3]
+        mock_read_ultra_l1c.side_effect = l1c_data
 
-            l1c_data = [sentinel.ultra_l1c_data_1, sentinel.ultra_l1c_data_2,
-                        sentinel.ultra_l1c_data_3]
-            mock_read_ultra_l1c.side_effect = l1c_data
+        glows_l3e_data = [sentinel.glows_data_1, sentinel.glows_data_2, sentinel.glows_data_3]
+        mock_read_glows.side_effect = glows_l3e_data
+        mock_ultra_l2.return_value = [sentinel.ultra_l2_healpix_map]
 
-            glows_l3e_data = [sentinel.glows_data_1, sentinel.glows_data_2, sentinel.glows_data_3]
-            mock_read_glows.side_effect = glows_l3e_data
-            mock_ultra_l2.return_value = [sentinel.ultra_l2_healpix_map]
+        dependencies = UltraL3Dependencies.fetch_dependencies(input_collection)
 
-            dependencies = UltraL3Dependencies.fetch_dependencies(input_collection)
+        input_collection.get_file_paths.assert_has_calls([
+            call("ultra", data_type="l2"),
+            call("ultra", data_type="l1c"),
+            call("glows")
+        ])
+        expected_data_dictionary = {"l1c_path_1": sentinel.l1c_path_1,
+                                    "l1c_path_2": sentinel.l1c_path_2,
+                                    "l1c_path_3": sentinel.l1c_path_3, }
+        mock_ultra_l2.assert_has_calls([call(expected_data_dictionary)])
 
-            input_collection.get_file_paths.assert_called_once_with("ultra")
-            expected_data_dictionary = {"l1c_path_1": sentinel.l1c_path_1,
-                                        "l1c_path_2": sentinel.l1c_path_2,
-                                        "l1c_path_3": sentinel.l1c_path_3, }
-            mock_ultra_l2.assert_has_calls([call(expected_data_dictionary)])
+        expected_parent_file_paths = [sentinel.l2_server_path, *l1c_input_paths, *glows_file_paths]
+        mock_download.assert_has_calls([call(file_path) for file_path in
+                                        expected_parent_file_paths])
+        mock_read_xarray.assert_called_once_with(sentinel.ultra_l2_healpix_map)
 
-            mock_find_glows.assert_called_with(l1c_input_paths, "ultra")
-            expected_parent_file_paths = [sentinel.imap_l2_map_path, *l1c_input_paths, *glows_file_paths]
-            mock_download.assert_has_calls([call(file_path) for file_path in
-                                            expected_parent_file_paths])
-            mock_read_xarray.assert_called_once_with(sentinel.ultra_l2_healpix_map)
-
-            self.assertEqual(l1c_data, dependencies.ultra_l1c_pset)
-            self.assertEqual(glows_l3e_data, dependencies.glows_l3e_sp)
-            self.assertEqual(sentinel.ultra_l2_data, dependencies.ultra_l2_map)
-            self.assertEqual(returned_download_paths, dependencies.dependency_file_paths)
+        self.assertEqual(l1c_data, dependencies.ultra_l1c_pset)
+        self.assertEqual(glows_l3e_data, dependencies.glows_l3e_sp)
+        self.assertEqual(sentinel.ultra_l2_data, dependencies.ultra_l2_map)
+        self.assertEqual(returned_download_paths, dependencies.dependency_file_paths)
 
     def test_raise_error_for_more_than_one_input_files_paths(self):
         input_collection = Mock()
         input_collection.get_file_paths.return_value = [sentinel.imap_l2_map_path_1, sentinel.imap_l2_map_path_2]
 
-        with self.assertRaises(ValueError) as e:
+        with self.assertRaises(AssertionError) as e:
             UltraL3Dependencies.fetch_dependencies(input_collection)
 
-        self.assertEqual("Incorrect number of dependencies", str(e.exception))
+        self.assertEqual("Incorrect number of map dependencies: 2", str(e.exception))
 
     @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.HealPixIntensityMapData.read_from_xarray')
     @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.UltraGlowsL3eData.read_from_path')

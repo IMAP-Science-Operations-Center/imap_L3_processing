@@ -87,16 +87,20 @@ class MapInitializer(abc.ABC):
                 continue
 
             l2_files_paths = []
-            l1c_names = []
+            l2_parents = []
             for l2_descriptor in l2_descriptor_strs:
                 l2_file_path = self.l2_file_paths_by_descriptor[l2_descriptor][str_start_date]
                 l2_files_paths.append(l2_file_path)
-                l1c_names.extend(read_cdf_parents(l2_file_path))
+                l2_parents.extend(read_cdf_parents(l2_file_path))
 
+            l1c_names = []
             l1c_repointings = []
-            for l1 in l1c_names:
+            for l1 in l2_parents:
                 try:
-                    l1c_repointings.append(ScienceFilePath(l1).repointing)
+                    l1c_science_file_path = ScienceFilePath(l1)
+                    if l1c_science_file_path.data_level == 'l1c':
+                        l1c_repointings.append(l1c_science_file_path.repointing)
+                        l1c_names.append(l1c_science_file_path.filename.name)
                 except ImapFilePath.InvalidImapFileError:
                     continue
 
@@ -109,7 +113,7 @@ class MapInitializer(abc.ABC):
                                                version='v001', descriptor=l3_descriptor)
 
                 possible_map_to_produce = PossibleMapToProduce(
-                    input_files=set(l2_files_paths + glows_files),
+                    input_files=set(l2_files_paths + glows_files + l1c_names),
                     input_metadata=input_metadata
                 )
                 possible_maps.append(possible_map_to_produce)

@@ -92,6 +92,9 @@ class TestLoInitializer(unittest.TestCase):
                 'imap_glows_l3e_survival-probability-lo_20100401-repoint00101_v002.cdf',
                 'imap_glows_l3e_survival-probability-lo_20100402-repoint00102_v002.cdf',
                 'imap_glows_l3e_survival-probability-lo_20100403-repoint00103_v002.cdf',
+                'imap_lo_l1c_pset_20100401-repoint00101_v001.cdf',
+                'imap_lo_l1c_pset_20100402-repoint00102_v001.cdf',
+                'imap_lo_l1c_pset_20100403-repoint00103_v001.cdf',
                 'imap_lo_l2_l090-ena-h-sf-nsp-ram-hae-6deg-12mo_20100401_v001.cdf'
             }
         )

@@ -24,24 +24,18 @@ class UltraL3Dependencies:
 
     @classmethod
     def fetch_dependencies(cls, deps: ProcessingInputCollection) -> UltraL3Dependencies:
-        ultra_l2_file_paths = deps.get_file_paths("ultra")
+        ultra_l2_names = deps.get_file_paths("ultra", data_type="l2")
+        assert len(ultra_l2_names) == 1, f"Incorrect number of map dependencies: {len(ultra_l2_names)}"
+        ultra_l2_name = ultra_l2_names[0]
 
-        if len(ultra_l2_file_paths) != 1:
-            raise ValueError("Incorrect number of dependencies")
-        l2_map_path = download(ultra_l2_file_paths[0])
+        ultra_l1c_names = deps.get_file_paths("ultra", data_type="l1c")
+        glows_l3e_names = deps.get_file_paths("glows")
 
-        hi_l1c_paths = []
-        with CDF(str(l2_map_path)) as l2_map:
-            map_input_paths = [generate_imap_file_path(file) for file in l2_map.attrs["Parents"]]
-            l1c_file_names = [map_input_file.filename.name for map_input_file in map_input_paths if
-                              isinstance(map_input_file, ScienceFilePath) and map_input_file.data_level == "l1c"]
-            for parent in l1c_file_names:
-                hi_l1c_paths.append(download(parent))
+        l2_map_path = download(ultra_l2_name)
+        hi_l1c_downloaded_paths = [download(l1c) for l1c in ultra_l1c_names]
+        glows_l3e_download_paths = [download(path) for path in glows_l3e_names]
 
-        glows_l3e_file_names = find_glows_l3e_dependencies(l1c_file_names, "ultra")
-        glows_file_paths = [download(path) for path in glows_l3e_file_names]
-
-        return cls.from_file_paths(l2_map_path, hi_l1c_paths, glows_file_paths)
+        return cls.from_file_paths(l2_map_path, hi_l1c_downloaded_paths, glows_l3e_download_paths)
 
     @classmethod
     def from_file_paths(cls, l2_map_path: Path, l1c_file_paths: list[Path], glows_file_paths: list[Path]) -> UltraL3Dependencies:

@@ -45,6 +45,9 @@ class TestHiL3Initializer(unittest.TestCase):
                     'imap_glows_l3e_survival-probability-hi-45_20100101-repoint00001_v001.cdf',
                     'imap_glows_l3e_survival-probability-hi-45_20100102-repoint00002_v001.cdf',
                     'imap_glows_l3e_survival-probability-hi-45_20100103-repoint00003_v001.cdf',
+                    'imap_hi_l1c_45sensor-pset_20100101-repoint00001_v001.cdf',
+                    'imap_hi_l1c_45sensor-pset_20100102-repoint00002_v001.cdf',
+                    'imap_hi_l1c_45sensor-pset_20100103-repoint00003_v001.cdf',
                 },
                 input_metadata=InputMetadata(
                     instrument="hi",
@@ -61,6 +64,9 @@ class TestHiL3Initializer(unittest.TestCase):
                     'imap_glows_l3e_survival-probability-hi-45_20100401-repoint00101_v001.cdf',
                     'imap_glows_l3e_survival-probability-hi-45_20100402-repoint00102_v001.cdf',
                     'imap_glows_l3e_survival-probability-hi-45_20100403-repoint00103_v001.cdf',
+                    'imap_hi_l1c_45sensor-pset_20100401-repoint00101_v001.cdf',
+                    'imap_hi_l1c_45sensor-pset_20100402-repoint00102_v001.cdf',
+                    'imap_hi_l1c_45sensor-pset_20100403-repoint00103_v001.cdf',
                 },
                 input_metadata=InputMetadata(
                     instrument="hi",
@@ -115,11 +121,12 @@ class TestHiL3Initializer(unittest.TestCase):
 
         mock_read_cdf_parents.side_effect = [
             [
-                f'imap_hi_l1c_90sensor-pset_20100101-repoint00001_v001.cdf',
-                f'imap_hi_l1c_90sensor-pset_20100102-repoint00002_v001.cdf',
+                'imap_hi_l1c_90sensor-pset_20100101-repoint00001_v001.cdf',
+                'imap_hi_l1c_90sensor-pset_20100102-repoint00002_v001.cdf',
             ],
             [
-                f'imap_hi_l1c_90sensor-pset_20100103-repoint00003_v001.cdf',
+                'imap_hi_l1c_90sensor-pset_20100101-repoint00001_v001.cdf',
+                'imap_hi_l1c_90sensor-pset_20100102-repoint00002_v001.cdf',
             ]
         ]
 
@@ -142,7 +149,8 @@ class TestHiL3Initializer(unittest.TestCase):
             input_files={
                 'imap_glows_l3e_survival-probability-hi-90_20100101-repoint00001_v001.cdf',
                 'imap_glows_l3e_survival-probability-hi-90_20100102-repoint00002_v001.cdf',
-                'imap_glows_l3e_survival-probability-hi-90_20100103-repoint00003_v001.cdf',
+                'imap_hi_l1c_90sensor-pset_20100101-repoint00001_v001.cdf',
+                'imap_hi_l1c_90sensor-pset_20100102-repoint00002_v001.cdf',
                 'imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-6mo_20100101_v001.cdf',
                 'imap_hi_l2_h90-ena-h-sf-nsp-ram-hae-4deg-6mo_20100101_v001.cdf',
             },
@@ -192,10 +200,13 @@ class TestHiL3Initializer(unittest.TestCase):
         expected_possible_maps = [
             PossibleMapToProduce(
                 input_files={
-                    f'imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-3mo_20100401_v001.cdf',
-                    f'imap_glows_l3e_survival-probability-hi-90_20100401-repoint00101_v002.cdf',
-                    f'imap_glows_l3e_survival-probability-hi-90_20100402-repoint00102_v002.cdf',
-                    f'imap_glows_l3e_survival-probability-hi-90_20100403-repoint00103_v002.cdf',
+                    'imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-3mo_20100401_v001.cdf',
+                    'imap_glows_l3e_survival-probability-hi-90_20100401-repoint00101_v002.cdf',
+                    'imap_glows_l3e_survival-probability-hi-90_20100402-repoint00102_v002.cdf',
+                    'imap_glows_l3e_survival-probability-hi-90_20100403-repoint00103_v002.cdf',
+                    'imap_hi_l1c_90sensor-pset_20100401-repoint00101_v001.cdf',
+                    'imap_hi_l1c_90sensor-pset_20100402-repoint00102_v001.cdf',
+                    'imap_hi_l1c_90sensor-pset_20100403-repoint00103_v001.cdf',
                 },
                 input_metadata=InputMetadata(
                     instrument="hi",
@@ -246,8 +257,9 @@ class TestHiL3Initializer(unittest.TestCase):
                 actual_dependencies = initializer._get_l2_dependencies(parse_map_descriptor(descriptor))
                 self.assertEqual(dependencies, [map_descriptor_parts_to_string(d) for d in actual_dependencies])
 
+    @patch('imap_l3_processing.hi.l3.hi_l3_initializer.imap_data_access.query')
     @patch('imap_l3_processing.hi.l3.hi_l3_initializer.furnish_spice_metakernel')
-    def test_furnish_spice_dependencies(self, mock_furnish_metakernel):
+    def test_furnish_spice_dependencies(self, mock_furnish_metakernel, _):
         start_date = datetime(2025, 4, 15)
         end_date = datetime(2025, 7, 15)
 
