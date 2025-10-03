@@ -4,7 +4,7 @@ from unittest.mock import patch, call
 
 from imap_l3_processing.maps.map_initializer import MapInitializer, PossibleMapToProduce
 from imap_l3_processing.models import InputMetadata
-from imap_l3_processing.ultra.l3.ultra_initializer import UltraInitializer
+from imap_l3_processing.ultra.l3.ultra_initializer import UltraInitializer, ULTRA_SP_SPICE_KERNELS
 from tests.integration.integration_test_helpers import create_mock_query
 
 
@@ -106,3 +106,24 @@ class TestUltraInitializer(unittest.TestCase):
                 )
 
                 self.assertEqual([expected_possible_map_to_produce], actual_maps_to_produce)
+
+    @patch('imap_l3_processing.ultra.l3.ultra_initializer.furnish_spice_metakernel')
+    def test_furnish_spice_dependencies(self, mock_furnish_metakernel):
+        start_date = datetime(2025, 4, 15)
+        end_date = datetime(2025, 7, 15)
+
+        input_metadata = InputMetadata(
+            instrument="ultra",
+            data_level="l2",
+            start_date=start_date,
+            end_date=end_date,
+            version="v000",
+            descriptor="u90-ena-h-sf-sp-full-hae-4deg-3mo",
+        )
+        map_to_produce = PossibleMapToProduce(set(), input_metadata)
+
+        ultra_initializer = UltraInitializer()
+        ultra_initializer.furnish_spice_dependencies(map_to_produce)
+
+        mock_furnish_metakernel.assert_called_once_with(start_date=start_date, end_date=end_date,
+                                                        kernel_types=ULTRA_SP_SPICE_KERNELS)

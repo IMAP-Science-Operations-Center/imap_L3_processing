@@ -11,10 +11,16 @@ from tests.test_helpers import create_mock_query_results
 
 
 class TestHiL3Initializer(unittest.TestCase):
+    def setUp(self):
+        self.query_patcher = patch('imap_l3_processing.hi.l3.hi_l3_initializer.imap_data_access.query')
+        self.mock_query = self.query_patcher.start()
+
+    def tearDown(self):
+        self.query_patcher.stop()
+
     @patch('imap_l3_processing.maps.map_initializer.read_cdf_parents')
-    @patch('imap_l3_processing.hi.l3.hi_l3_initializer.imap_data_access.query')
-    def test_get_maps_that_can_be_produced(self, mock_query, mock_read_cdf_parents):
-        mock_query.side_effect = [
+    def test_get_maps_that_can_be_produced(self, mock_read_cdf_parents):
+        self.mock_query.side_effect = [
             create_mock_query_results([
                 'imap_glows_l3e_survival-probability-hi-45_20100101-repoint00001_v001.cdf',
                 'imap_glows_l3e_survival-probability-hi-45_20100102-repoint00002_v001.cdf',
@@ -81,7 +87,7 @@ class TestHiL3Initializer(unittest.TestCase):
 
         initializer = HiL3Initializer()
 
-        mock_query.assert_has_calls([
+        self.mock_query.assert_has_calls([
             call(instrument='glows', data_level='l3e', descriptor='survival-probability-hi-45', version="latest"),
             call(instrument='glows', data_level='l3e', descriptor='survival-probability-hi-90', version="latest"),
             call(instrument='hi', data_level='l2', version="latest"),
@@ -98,9 +104,8 @@ class TestHiL3Initializer(unittest.TestCase):
         self.assertEqual(expected_possible_maps, actual_possible_maps)
 
     @patch('imap_l3_processing.maps.map_initializer.read_cdf_parents')
-    @patch('imap_l3_processing.hi.l3.hi_l3_initializer.imap_data_access.query')
-    def test_get_maps_that_can_be_produced_full_spin_descriptor(self, mock_query, mock_read_cdf_parents):
-        mock_query.side_effect = [
+    def test_get_maps_that_can_be_produced_full_spin_descriptor(self, mock_read_cdf_parents):
+        self.mock_query.side_effect = [
             create_mock_query_results([]),
             create_mock_query_results([
                 'imap_glows_l3e_survival-probability-hi-90_20100101-repoint00001_v001.cdf',
@@ -133,7 +138,7 @@ class TestHiL3Initializer(unittest.TestCase):
         initializer = HiL3Initializer()
         actual_possible_maps = initializer.get_maps_that_can_be_produced('h90-ena-h-sf-sp-full-hae-4deg-6mo')
 
-        mock_query.assert_has_calls([
+        self.mock_query.assert_has_calls([
             call(instrument='glows', data_level='l3e', descriptor='survival-probability-hi-45', version="latest"),
             call(instrument='glows', data_level='l3e', descriptor='survival-probability-hi-90', version="latest"),
             call(instrument='hi', data_level='l2', version="latest"),
@@ -167,9 +172,8 @@ class TestHiL3Initializer(unittest.TestCase):
         self.assertEqual([expected_possible_map_to_produce], actual_possible_maps)
 
     @patch('imap_l3_processing.maps.map_initializer.read_cdf_parents')
-    @patch('imap_l3_processing.hi.l3.hi_l3_initializer.imap_data_access.query')
-    def test_get_maps_that_can_be_produced_full_spin_with_mismatched_parents(self, mock_query, mock_read_cdf_parents):
-        mock_query.side_effect = [
+    def test_get_maps_that_can_be_produced_full_spin_with_mismatched_parents(self, mock_read_cdf_parents):
+        self.mock_query.side_effect = [
             create_mock_query_results([]),
             create_mock_query_results([
                 'imap_glows_l3e_survival-probability-hi-90_20100101-repoint00001_v001.cdf',
@@ -206,7 +210,7 @@ class TestHiL3Initializer(unittest.TestCase):
             self.assertIn(expected_message, log_context.output[0])
 
 
-        mock_query.assert_has_calls([
+        self.mock_query.assert_has_calls([
             call(instrument='glows', data_level='l3e', descriptor='survival-probability-hi-45', version="latest"),
             call(instrument='glows', data_level='l3e', descriptor='survival-probability-hi-90', version="latest"),
             call(instrument='hi', data_level='l2', version="latest"),
@@ -221,9 +225,8 @@ class TestHiL3Initializer(unittest.TestCase):
         self.assertEqual([], actual_possible_maps)
 
     @patch('imap_l3_processing.maps.map_initializer.read_cdf_parents')
-    @patch('imap_l3_processing.hi.l3.hi_l3_initializer.imap_data_access.query')
-    def test_get_maps_that_should_be_produced(self, mock_query, mock_read_cdf_parents):
-        mock_query.side_effect = [
+    def test_get_maps_that_should_be_produced(self, mock_read_cdf_parents):
+        self.mock_query.side_effect = [
             create_mock_query_results([]),
             create_mock_query_results([
                 'imap_glows_l3e_survival-probability-hi-90_20100101-repoint00001_v001.cdf',
@@ -275,7 +278,7 @@ class TestHiL3Initializer(unittest.TestCase):
 
         initializer = HiL3Initializer()
 
-        mock_query.assert_has_calls([
+        self.mock_query.assert_has_calls([
             call(instrument='glows', data_level='l3e', descriptor='survival-probability-hi-45', version="latest"),
             call(instrument='glows', data_level='l3e', descriptor='survival-probability-hi-90', version="latest"),
             call(instrument='hi', data_level='l2', version="latest"),
@@ -294,8 +297,7 @@ class TestHiL3Initializer(unittest.TestCase):
 
         self.assertEqual(expected_possible_maps, actual_possible_maps)
 
-    @patch('imap_l3_processing.hi.l3.hi_l3_initializer.imap_data_access.query', return_value=[])
-    def test_get_dependencies(self, _):
+    def test_get_dependencies(self):
         cases = [
             ("h90-ena-h-sf-sp-anti-hae-4deg-3mo", ["h90-ena-h-sf-nsp-anti-hae-4deg-3mo"]),
             ("h45-ena-h-sf-sp-ram-hae-4deg-3mo", ["h45-ena-h-sf-nsp-ram-hae-4deg-3mo"]),
@@ -311,9 +313,8 @@ class TestHiL3Initializer(unittest.TestCase):
                 actual_dependencies = initializer._get_l2_dependencies(parse_map_descriptor(descriptor))
                 self.assertEqual(dependencies, [map_descriptor_parts_to_string(d) for d in actual_dependencies])
 
-    @patch('imap_l3_processing.hi.l3.hi_l3_initializer.imap_data_access.query')
     @patch('imap_l3_processing.hi.l3.hi_l3_initializer.furnish_spice_metakernel')
-    def test_furnish_spice_dependencies(self, mock_furnish_metakernel, _):
+    def test_furnish_spice_dependencies(self, mock_furnish_metakernel):
         start_date = datetime(2025, 4, 15)
         end_date = datetime(2025, 7, 15)
 

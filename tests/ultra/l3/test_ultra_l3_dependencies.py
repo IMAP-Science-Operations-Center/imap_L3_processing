@@ -12,7 +12,7 @@ class TestUltraL3Dependencies(unittest.TestCase):
     @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.UltraGlowsL3eData.read_from_path')
     @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.UltraL1CPSet.read_from_path')
     @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.HealPixIntensityMapData.read_from_xarray')
-    @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.download')
+    @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.imap_data_access.download')
     @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.ultra_l2')
     def test_fetch_dependencies(self, mock_ultra_l2, mock_download, mock_read_xarray, mock_read_ultra_l1c,
                                 mock_read_glows):

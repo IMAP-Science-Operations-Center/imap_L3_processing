@@ -2,17 +2,14 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from pathlib import Path
 
+import imap_data_access
 import numpy as np
-from imap_data_access import download
-from imap_data_access.file_validation import generate_imap_file_path, ScienceFilePath
 from imap_data_access.processing_input import ProcessingInputCollection
 from imap_processing.ultra.l2.ultra_l2 import ultra_l2
-from spacepy.pycdf import CDF
 
 from imap_l3_processing.maps.map_models import HealPixIntensityMapData, RectangularIntensityMapData, \
     SpectralIndexDependencies
 from imap_l3_processing.ultra.l3.models import UltraL1CPSet, UltraGlowsL3eData
-from imap_l3_processing.utils import find_glows_l3e_dependencies
 
 
 @dataclass
@@ -31,9 +28,9 @@ class UltraL3Dependencies:
         ultra_l1c_names = deps.get_file_paths("ultra", data_type="l1c")
         glows_l3e_names = deps.get_file_paths("glows")
 
-        l2_map_path = download(ultra_l2_name)
-        hi_l1c_downloaded_paths = [download(l1c) for l1c in ultra_l1c_names]
-        glows_l3e_download_paths = [download(path) for path in glows_l3e_names]
+        l2_map_path = imap_data_access.download(ultra_l2_name)
+        hi_l1c_downloaded_paths = [imap_data_access.download(l1c) for l1c in ultra_l1c_names]
+        glows_l3e_download_paths = [imap_data_access.download(path) for path in glows_l3e_names]
 
         return cls.from_file_paths(l2_map_path, hi_l1c_downloaded_paths, glows_l3e_download_paths)
 
@@ -70,8 +67,8 @@ class UltraL3SpectralIndexDependencies(SpectralIndexDependencies):
         if len(energy_fit_ranges_ancillary_file_path) != 1:
             raise ValueError("Missing fit energy ranges ancillary file")
 
-        map_file_path = download(ultra_map_file_paths[0].name)
-        energy_ranges_file_path = download(energy_fit_ranges_ancillary_file_path[0].name)
+        map_file_path = imap_data_access.download(ultra_map_file_paths[0].name)
+        energy_ranges_file_path = imap_data_access.download(energy_fit_ranges_ancillary_file_path[0].name)
 
         return cls.from_file_paths(map_file_path, energy_ranges_file_path)
 

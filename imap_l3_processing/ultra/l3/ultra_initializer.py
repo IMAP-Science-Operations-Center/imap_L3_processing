@@ -5,6 +5,14 @@ import imap_data_access
 
 from imap_l3_processing.maps.map_descriptors import MapDescriptorParts, SurvivalCorrection
 from imap_l3_processing.maps.map_initializer import MapInitializer, PossibleMapToProduce
+from imap_l3_processing.utils import furnish_spice_metakernel, SpiceKernelTypes
+
+ULTRA_SP_SPICE_KERNELS = [
+    SpiceKernelTypes.Leapseconds,
+    SpiceKernelTypes.ScienceFrames,
+    SpiceKernelTypes.PointingAttitude,
+    SpiceKernelTypes.SpacecraftClock,
+]
 
 ULTRA_SP_MAP_DESCRIPTORS = [
     "ulc-ena-h-hf-sp-full-hae-2deg-3mo",
@@ -83,7 +91,11 @@ class UltraInitializer(MapInitializer):
         super().__init__("ultra", l2_query_result, l3_query_result)
 
     def furnish_spice_dependencies(self, map_to_produce: PossibleMapToProduce):
-        pass
+        furnish_spice_metakernel(
+            start_date=map_to_produce.input_metadata.start_date,
+            end_date=map_to_produce.input_metadata.end_date,
+            kernel_types=ULTRA_SP_SPICE_KERNELS
+        )
 
     def _collect_glows_psets_by_repoint(self, descriptor: MapDescriptorParts) -> dict[int, str]:
         return self.glows_psets_by_repointing
