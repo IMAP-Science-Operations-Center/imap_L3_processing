@@ -354,8 +354,7 @@ def extract_pui_energy_bins(energy_bin_labels, energies, observed_count_rates, e
 
 def calculate_solar_wind_velocity_vector(speeds: ndarray, deflection_angle: ndarray, clock_angle: ndarray) -> ndarray:
     elevation_angle = 90 - deflection_angle
-    clock_angle_origin_in_despun_frame = -90
-    return calculate_velocity_vector(-speeds, elevation_angle, clock_angle + clock_angle_origin_in_despun_frame)
+    return calculate_velocity_vector(-speeds, elevation_angle, clock_angle)
 
 
 def calculate_ten_minute_velocities(speeds: ndarray, deflection_angle: ndarray, clock_angle: ndarray) -> ndarray:

@@ -4,6 +4,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import numpy as np
+from scipy.optimize import curve_fit
 import spiceypy
 from spacepy.pycdf import CDF
 from uncertainties import ufloat
@@ -68,7 +69,7 @@ class TestCalculateProtonSolarWindSpeed(SpiceTestCase):
         self.assertAlmostEqual(speed.s, 0.4615, 3)
         self.assertAlmostEqual(a.n, 32.033, 3)
         self.assertAlmostEqual(a.s, 3.4696, 2)
-        self.assertAlmostEqual(phi.n, 169.36, 1)
+        self.assertAlmostEqual(phi.n, 10.6, 1)
         self.assertAlmostEqual(phi.s, 5.862, 2)
         self.assertAlmostEqual(b.n, 1294, 0)
         self.assertAlmostEqual(b.s, 2.4, 1)
@@ -216,19 +217,16 @@ class TestCalculateProtonSolarWindSpeed(SpiceTestCase):
                 self.assertAlmostEqual(expected_interpolated_energy, result.n)
                 self.assertAlmostEqual(expected_uncertainty, result.std_dev, 3)
 
-    @patch('scipy.optimize.curve_fit')
+    @patch('imap_l3_processing.swapi.l3a.science.calculate_proton_solar_wind_speed.scipy.optimize.curve_fit')
     def test_curve_fit_is_initialized_correctly(self, mock_curve_fit):
         test_cases = [
-            ([30 + 180, 60 + 180, 90 + 180, 120 + 180], uarray([1319, 1328, 1329, 1323], 1), 5, 180, 1324.75, 10),
-            ([30 + 180, 60 + 180, 90 + 180, 120 + 180], uarray([975, 956, 950, 957], 1), 12.5, 240, 959.5, 180),
+            ([30, 60, 90, 120], uarray([1319, 1328, 1329, 1323], 1), 5, 180, 1324.75),
+            ([30, 60, 90, 120], uarray([975, 956, 950, 957], 1), 12.5, 120, 959.5),
         ]
 
-        mock_curve_fit.side_effect = [
-            [[30, 370, 1300], np.identity(3)],
-            [[50, 180, 1000], np.identity(3)]
-        ]
+        mock_curve_fit.side_effect = curve_fit
 
-        for angles, energies, expected_initial_a, expected_initial_phi, expected_initial_b, expected_phi in test_cases:
+        for angles, energies, expected_initial_a, expected_initial_phi, expected_initial_b in test_cases:
             with self.subTest():
                 a, phi, b = fit_energy_per_charge_peak_variations(energies, angles)
 
@@ -247,8 +245,6 @@ class TestCalculateProtonSolarWindSpeed(SpiceTestCase):
                 self.assertEqual(np.inf, a_upper_bound)
                 self.assertEqual(np.inf, phi_upper_bound)
                 self.assertEqual(np.inf, b_upper_bound)
-
-                self.assertEqual(expected_phi, phi.nominal_value)
 
     def test_throws_error_when_reduced_chi_squared_greater_than_10(self):
         test_cases = [
@@ -346,10 +342,8 @@ class TestCalculateProtonSolarWindSpeed(SpiceTestCase):
 
     @patch('imap_l3_processing.swapi.l3a.science.calculate_proton_solar_wind_speed.spiceypy.pxform')
     @patch('imap_l3_processing.swapi.l3a.science.calculate_proton_solar_wind_speed.spiceypy.unitim')
-    @patch('imap_l3_processing.swapi.l3a.science.calculate_proton_solar_wind_speed.spiceypy.reclat')
-    def test_get_angle(self, mock_reclat, mock_unitim, mock_pxform):
-        mock_reclat.return_value = (1, 3 * np.pi, 2 * np.pi)
-        mock_pxform.return_value = np.array([[1, 1, 1], [2, 2, 2], [3, 3, 3]])
+    def test_get_angle(self, mock_unitim, mock_pxform):
+        mock_pxform.return_value = [[1, 0, 0], [0, 0, -1], [0, -1, 0]]
 
         epoch = 123
 
@@ -357,17 +351,16 @@ class TestCalculateProtonSolarWindSpeed(SpiceTestCase):
 
         mock_unitim.assert_called_with((epoch / ONE_SECOND_IN_NANOSECONDS), "TT", "ET")
         mock_pxform.assert_called_with("IMAP_SWAPI", "IMAP_DPS", mock_unitim.return_value)
-        np.testing.assert_array_equal(np.array([-1, -2, -3]), mock_reclat.call_args.args[0])
 
         self.assertEqual(0, actual_angle)
 
     def test_get_spin_angle_from_swapi_axis_in_despun_frame(self):
         cases = [
-            ([1, 0, 0], 180),
-            ([0, 1, 0], 90),
-            ([0, -1, 0], 270),
-            ([-1, 0, 0], 0),
-            ([-1, 0, 50], 0),
+            ([1, 0, 0], 270),
+            ([0, 1, 0], 0),
+            ([0, -1, 0], 180),
+            ([-1, 0, 0], 90),
+            ([-1, 0, 50], 90),
         ]
         for swapi_axis, expected_angle in cases:
             with self.subTest(swapi_axis):

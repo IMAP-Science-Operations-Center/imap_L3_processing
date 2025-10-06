@@ -75,7 +75,7 @@ def calculate_proton_centers_of_mass(coincidence_count_rates, energies, epoch):
 
 def get_spin_angle_from_swapi_axis_in_despun_frame(instrument_axis: np.ndarray):
     x, y, _ = instrument_axis
-    return np.mod(np.rad2deg(np.atan2(x, y)), 360)
+    return np.mod(np.rad2deg(np.atan2(-1 * x, y)), 360)
 
 
 @wrap

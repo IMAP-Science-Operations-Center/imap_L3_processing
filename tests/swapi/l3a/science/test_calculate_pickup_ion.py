@@ -723,7 +723,7 @@ class TestCalculatePickupIon(SpiceTestCase):
     def test_calculate_solar_wind_velocity_vector(self):
         speed = np.array([400, 390, 400, 410, 400, 400])
         deflection_angle = np.array([90, 0, 180, 0, 90, 90])
-        clock_angle = np.array([-180, -90, 0, 90, 90, -90])
+        clock_angle = np.array([-270, -180, -90, 0, 0, -180])
 
         actual = calculate_solar_wind_velocity_vector(speed, deflection_angle, clock_angle)
 
