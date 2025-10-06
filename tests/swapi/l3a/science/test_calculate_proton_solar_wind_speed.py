@@ -25,7 +25,7 @@ class TestCalculateProtonSolarWindSpeed(SpiceTestCase):
                                 [0, 14, 15, 16, 17, 16, 15, 14, 0],
                                 [0, 14, 15, 16, 17, 16, 15, 14, 0],
                                 [0, 14, 15, 16, 17, 16, 15, 14, 0],
-                               [0, 14, 15, 16, 17, 16, 15, 14, 0]])
+                                [0, 14, 15, 16, 17, 16, 15, 14, 0]])
         count_rates_with_uncertainties = uarray(count_rates, np.full_like(count_rates, 1.0))
 
         times = [datetime(2025, 6, 6, 12, i) for i in range(5)]
@@ -44,15 +44,14 @@ class TestCalculateProtonSolarWindSpeed(SpiceTestCase):
                                 [0, 14, 15, 16, 17, 16, 15, 14, 0],
                                 [0, 14, 15, 16, 17, 16, 15, 14, 0],
                                 [0, 14, 14, 14, 0, 0, 0, 0, 0],
-                               [0, 14, 14, 14, 0, 0, 0, 0, 0]])
+                                [0, 14, 14, 14, 0, 0, 0, 0, 0]])
         count_rates_with_uncertainties = uarray(count_rates, np.full_like(count_rates, 1.0))
 
         times = [datetime(2025, 6, 6, 12, i) for i in range(5)]
         epochs_in_terrestrial_time = spiceypy.datetime2et(times) * ONE_SECOND_IN_NANOSECONDS
         with self.assertRaises(Exception):
             calculate_proton_solar_wind_speed(count_rates_with_uncertainties, energies,
-                                                             epochs_in_terrestrial_time)
-
+                                              epochs_in_terrestrial_time)
 
     def test_calculate_solar_wind_speed_from_model_data(self):
         file_path = Path(
@@ -69,7 +68,7 @@ class TestCalculateProtonSolarWindSpeed(SpiceTestCase):
         self.assertAlmostEqual(speed.s, 0.4615, 3)
         self.assertAlmostEqual(a.n, 32.033, 3)
         self.assertAlmostEqual(a.s, 3.4696, 2)
-        self.assertAlmostEqual(phi.n, 280.63, 1)
+        self.assertAlmostEqual(phi.n, 169.36, 1)
         self.assertAlmostEqual(phi.s, 5.862, 2)
         self.assertAlmostEqual(b.n, 1294, 0)
         self.assertAlmostEqual(b.s, 2.4, 1)
@@ -126,12 +125,13 @@ class TestCalculateProtonSolarWindSpeed(SpiceTestCase):
 
     def test_find_peak_center_of_mass_index_filters_correctly_with_uncertain_count_rates(self):
         test_cases = [
-            ("uses nominal values to filter", uarray([0, 2, 2, 2, 6, 0, 0], [1,1,1,1,1,1,1]), slice(0, 7), 2, 3),
+            ("uses nominal values to filter", uarray([0, 2, 2, 2, 6, 0, 0], [1, 1, 1, 1, 1, 1, 1]), slice(0, 7), 2, 3),
         ]
         for name, count_rates, peak_slice, minimum_count_rate_inclusive, expected_peak_index in test_cases:
             with self.subTest(name):
                 self.assertEqual(expected_peak_index,
-                                 find_peak_center_of_mass_index(peak_slice, count_rates, minimum_count_rate_inclusive).nominal_value)
+                                 find_peak_center_of_mass_index(peak_slice, count_rates,
+                                                                minimum_count_rate_inclusive).nominal_value)
 
     def test_uncertainty_calculation_in_find_peak_center_of_mass_index(self):
         test_cases = [
@@ -143,22 +143,24 @@ class TestCalculateProtonSolarWindSpeed(SpiceTestCase):
                 count_rate_std_devs = std_devs(count_rates)
 
                 nominal_count_rates = nominal_values(count_rates)
-                base_result = find_peak_center_of_mass_index(peak_slice, nominal_count_rates, minimum_count_rate_inclusive)
+                base_result = find_peak_center_of_mass_index(peak_slice, nominal_count_rates,
+                                                             minimum_count_rate_inclusive)
                 deviations_for_single_inputs = []
                 for i in range(len(count_rate_std_devs)):
                     DELTA = 1e-8
                     modified_count_rates = nominal_count_rates.copy()
                     modified_count_rates[i] += DELTA
                     partial_derivative = (
-                                                 find_peak_center_of_mass_index(peak_slice, modified_count_rates, minimum_count_rate_inclusive)
+                                                 find_peak_center_of_mass_index(peak_slice, modified_count_rates,
+                                                                                minimum_count_rate_inclusive)
                                                  - base_result) / DELTA
                     deviations_for_single_inputs.append(count_rate_std_devs[i] * partial_derivative)
                 final_uncertainty = math.sqrt(sum(n * n for n in deviations_for_single_inputs))
-                result_with_uncertainty = find_peak_center_of_mass_index(peak_slice, count_rates, minimum_count_rate_inclusive)
+                result_with_uncertainty = find_peak_center_of_mass_index(peak_slice, count_rates,
+                                                                         minimum_count_rate_inclusive)
 
                 self.assertAlmostEqual(final_uncertainty, result_with_uncertainty.std_dev, 5)
                 self.assertEqual(base_result, result_with_uncertainty.n)
-
 
     def test_find_peak_center_of_mass_index_raises_error_if_too_few_bins_remain(self):
         test_cases = [
@@ -169,11 +171,11 @@ class TestCalculateProtonSolarWindSpeed(SpiceTestCase):
             with self.subTest(name):
                 if expect_error:
                     with self.assertRaises(Exception) as cm:
-                        find_peak_center_of_mass_index(peak_slice, count_rates, minimum_count_rate_inclusive, minimum_bin_count)
+                        find_peak_center_of_mass_index(peak_slice, count_rates, minimum_count_rate_inclusive,
+                                                       minimum_bin_count)
                 else:
                     find_peak_center_of_mass_index(peak_slice, count_rates, minimum_count_rate_inclusive,
                                                    minimum_bin_count)
-
 
     def test_interpolates_to_find_energy_at_center_of_mass(self):
         test_cases = [
@@ -217,8 +219,8 @@ class TestCalculateProtonSolarWindSpeed(SpiceTestCase):
     @patch('scipy.optimize.curve_fit')
     def test_curve_fit_is_initialized_correctly(self, mock_curve_fit):
         test_cases = [
-            ([30, 60, 90, 120], uarray([1319, 1328, 1329, 1323], 1), 5, 0, 1324.75, 10),
-            ([30, 60, 90, 120], uarray([975, 956, 950, 957], 1), 12.5, 60, 959.5, 180),
+            ([30 + 180, 60 + 180, 90 + 180, 120 + 180], uarray([1319, 1328, 1329, 1323], 1), 5, 180, 1324.75, 10),
+            ([30 + 180, 60 + 180, 90 + 180, 120 + 180], uarray([975, 956, 950, 957], 1), 12.5, 240, 959.5, 180),
         ]
 
         mock_curve_fit.side_effect = [
@@ -276,7 +278,7 @@ class TestCalculateProtonSolarWindSpeed(SpiceTestCase):
         for a, b, phi, initial_angle in test_cases:
             with self.subTest():
                 angles = [initial_angle - 72 * i for i in range(5)]
-                centers_of_mass = [b + a * np.sin(np.deg2rad(phi + angle)) for angle in angles]
+                centers_of_mass = [b + a * np.sin(np.deg2rad(phi - angle)) for angle in angles]
                 center_of_mass_uncertainties = np.full_like(centers_of_mass, 1e-6)
                 centers_of_mass = uarray(centers_of_mass, center_of_mass_uncertainties)
                 result_a, result_phi, result_b = fit_energy_per_charge_peak_variations(centers_of_mass, angles)
