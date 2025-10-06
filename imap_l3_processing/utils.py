@@ -34,10 +34,10 @@ class SpiceKernelTypes(enum.Enum):
     Leapseconds = "leapseconds",
     IMAPFrames = "imap_frames",
     ScienceFrames = "science_frames",
-    EphemerisReconstructed  = "ephemeris_reconstructed",
+    EphemerisReconstructed = "ephemeris_reconstructed",
     AttitudeHistory = "attitude_history",
     PointingAttitude = "pointing_attitude",
-    PlanetaryEphemeris= "planetary_ephemeris",
+    PlanetaryEphemeris = "planetary_ephemeris",
     SpacecraftClock = "spacecraft_clock",
 
 
@@ -98,10 +98,12 @@ def save_data(data: DataProduct, delete_if_present: bool = False, folder_path: P
     write_cdf(file_path_str, data, attribute_manager)
     return file_path
 
+
 type MapDataProduct = (RectangularSpectralIndexDataProduct
                        | RectangularIntensityDataProduct
                        | HealPixSpectralIndexDataProduct
                        | HealPixIntensityDataProduct)
+
 
 def generate_map_global_metadata(data_product: MapDataProduct) -> dict:
     attrs = {}
@@ -141,6 +143,7 @@ def generate_map_global_metadata(data_product: MapDataProduct) -> dict:
 
     return attrs
 
+
 def generate_global_metadata_for_undefined_logical_source(input_metadata: InputMetadata) -> dict:
     level = input_metadata.data_level.replace('l', '')
     data_type_string = f"Level-{level}"
@@ -157,6 +160,7 @@ def generate_global_metadata_for_undefined_logical_source(input_metadata: InputM
         "Logical_source_description": f"IMAP-{input_metadata.instrument} {data_type_string}",
     }
     return logical_source_global_attrs
+
 
 def format_time(t: Optional[datetime]) -> Optional[str]:
     if t is not None:
@@ -207,6 +211,7 @@ def download_external_dependency(dependency_url: str, file_path: Path) -> Option
     except RequestException:
         logger.exception(f"Failed to download {dependency_url}")
     return None
+
 
 def read_l1d_mag_data(cdf_path: Union[str, Path]) -> MagL1dData:
     with CDF(str(cdf_path)) as cdf:
@@ -265,14 +270,17 @@ def furnish_local_spice():
         if file.name not in current_kernels:
             spiceypy.furnsh(str(file))
 
+
 def get_spice_parent_file_names() -> list[str]:
     count = spiceypy.ktotal('ALL')
     return [Path(spiceypy.kdata(i, 'ALL')[0]).name for i in range(0, count)]
+
 
 @dataclass
 class FurnishMetakernelOutput:
     metakernel_path: Path
     spice_kernel_paths: list[Path]
+
 
 def furnish_spice_metakernel(start_date: datetime, end_date: datetime, kernel_types: list[SpiceKernelTypes]):
     metakernel_path = imap_data_access.config.get("DATA_DIR") / "metakernel" / "metakernel.txt"
@@ -281,8 +289,8 @@ def furnish_spice_metakernel(start_date: datetime, end_date: datetime, kernel_ty
     parameters: dict = {
         'spice_path': kernel_path,
         'file_types': [kernel_type.value[0] for kernel_type in kernel_types],
-        'start_time': f"{int((start_date - datetime(2000, 1, 1)).total_seconds())}",
-        'end_time': f"{int((end_date - datetime(2000, 1, 1)).total_seconds())}",
+        'start_time': str(int((start_date - datetime(2000, 1, 1)).total_seconds())),
+        'end_time': str(int((end_date - datetime(2000, 1, 1)).total_seconds())),
     }
 
     metakernel_url = urlparse(imap_data_access.config['DATA_ACCESS_URL'])._replace(path="metakernel").geturl()
@@ -304,10 +312,10 @@ def furnish_spice_metakernel(start_date: datetime, end_date: datetime, kernel_ty
 
     return FurnishMetakernelOutput(metakernel_path=metakernel_path, spice_kernel_paths=downloaded_paths)
 
+
 def read_cdf_parents(server_file_name: str) -> set[str]:
     downloaded_path = imap_data_access.download(server_file_name)
 
     with CDF(str(downloaded_path)) as cdf:
         parents = set(cdf.attrs["Parents"])
     return parents
-

@@ -12,12 +12,14 @@ from imap_l3_processing.utils import read_cdf_parents
 
 logger = logging.getLogger(__name__)
 
+
 class GlowsL3DInitializer:
 
     @staticmethod
     def should_process_l3d(external_deps: ExternalDependencies, l3bs: list[str], l3cs: list[str]) -> Optional[
         tuple[int, GlowsL3DDependencies, Optional[Path]]]:
         if len(l3bs) == 0 and len(l3cs) == 0:
+            logger.info("Found no L3b and L3c files!")
             return None
 
         most_recent_l3d = query_for_most_recent_l3d("solar-hist")
@@ -38,6 +40,7 @@ class GlowsL3DInitializer:
         l3cs = [l3c for l3c in l3cs if ScienceFilePath(l3c).cr >= pipeline_settings["start_cr"]]
 
         if len(l3bs) == 0 and len(l3cs) == 0:
+            logger.info("Found no L3b and L3c files after start CR!")
             return None
 
         processing_input_collection = ProcessingInputCollection(
@@ -74,5 +77,6 @@ class GlowsL3DInitializer:
             old_l3d = None
             version_to_generate = 1
 
-        return (version_to_generate, GlowsL3DDependencies.fetch_dependencies(processing_input_collection, external_deps),
+        return (version_to_generate,
+                GlowsL3DDependencies.fetch_dependencies(processing_input_collection, external_deps),
                 old_l3d)
