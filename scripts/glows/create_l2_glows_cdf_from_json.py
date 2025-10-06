@@ -4,6 +4,7 @@ import shutil
 import traceback
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import Optional
 
 import numpy as np
 from imap_data_access import ScienceFilePath
@@ -13,26 +14,33 @@ from imap_l3_processing.constants import TTJ2000_EPOCH
 from tests.test_helpers import get_test_data_path
 
 
-def fill_official_l2_cdf_with_json_values(output_folder: Path, input_path: Path) -> Path:
+def fill_official_l2_cdf_with_json_values(output_folder: Path, input_path: Path,
+                                          timeshift: Optional[timedelta] = None) -> Path:
     official_l2_path = get_test_data_path("glows/imap_glows_l2_hist_20130908-repoint01000_v001.cdf")
 
     with open(input_path) as f:
         instrument_data = json.load(f)
 
-        start_of_epoch_window = datetime.fromisoformat(instrument_data["start_time"]) + timedelta(days=5479)
+        start_of_epoch_window = datetime.fromisoformat(instrument_data["start_time"])
+        end_of_epoch_window = datetime.fromisoformat(instrument_data["end_time"])
+        if timeshift is not None:
+            start_of_epoch_window += timeshift
+            end_of_epoch_window += timeshift
 
-        end_of_epoch_window = datetime.fromisoformat(instrument_data["end_time"]) + timedelta(days=5479)
         epoch_window = end_of_epoch_window - start_of_epoch_window
         epoch = start_of_epoch_window + epoch_window / 2
 
-        repoint_id = 896 + math.floor((epoch - datetime(2025, 1, 1)) / timedelta(days=1))
+        if timeshift is None:
+            repoint_id = math.floor(149 + (epoch - datetime(2010, 1, 1)) / timedelta(days=1))
+        else:
+            repoint_id = math.floor(896 + (epoch - datetime(2025, 1, 1)) / timedelta(days=1))
 
         new_name = ScienceFilePath.generate_from_inputs(
             instrument="glows",
             data_level="l2",
             descriptor="hist",
             start_time=start_of_epoch_window.strftime("%Y%m%d"),
-            version="v003",
+            version="v001",
             extension="cdf",
             repointing=repoint_id
         ).filename
@@ -99,7 +107,7 @@ def fill_official_l2_cdf_with_json_values(output_folder: Path, input_path: Path)
 if __name__ == "__main__":
     json_directory = Path(
         r'/Users/harrison/Downloads/data_products_cbk_implementation_2024-12-31_1year/data_l2_histograms')
-    output_directory = Path(r'/Users/harrison/Downloads/l2_cdfs_pre_timeshifted')
+    output_directory = Path(r'/Users/harrison/Downloads/l2_cdfs')
     shutil.rmtree(output_directory, ignore_errors=True)
     output_directory.mkdir(parents=True, exist_ok=True)
     for file_path in json_directory.iterdir():
