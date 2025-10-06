@@ -4,7 +4,7 @@ from unittest.mock import patch, call
 
 from imap_l3_processing.maps.map_initializer import MapInitializer, PossibleMapToProduce
 from imap_l3_processing.models import InputMetadata
-from imap_l3_processing.ultra.l3.ultra_initializer import UltraInitializer
+from imap_l3_processing.ultra.l3.ultra_initializer import UltraInitializer, ULTRA_SP_SPICE_KERNELS
 from tests.integration.integration_test_helpers import create_mock_query
 
 
@@ -98,8 +98,32 @@ class TestUltraInitializer(unittest.TestCase):
                         'imap_glows_l3e_survival-probability-ul_20100401-repoint00101_v002.cdf',
                         'imap_glows_l3e_survival-probability-ul_20100402-repoint00102_v002.cdf',
                         'imap_glows_l3e_survival-probability-ul_20100403-repoint00103_v002.cdf',
+                        f'imap_ultra_l1c_{sensor}sensor-spacecraftpset_20100401-repoint00101_v001.cdf',
+                        f'imap_ultra_l1c_{sensor}sensor-spacecraftpset_20100402-repoint00102_v001.cdf',
+                        f'imap_ultra_l1c_{sensor}sensor-spacecraftpset_20100403-repoint00103_v001.cdf',
                         f'imap_ultra_l2_u{sensor}-ena-h-sf-nsp-full-hae-4deg-3mo_20100401_v001.cdf',
                     }
                 )
 
                 self.assertEqual([expected_possible_map_to_produce], actual_maps_to_produce)
+
+    @patch('imap_l3_processing.ultra.l3.ultra_initializer.furnish_spice_metakernel')
+    def test_furnish_spice_dependencies(self, mock_furnish_metakernel):
+        start_date = datetime(2025, 4, 15)
+        end_date = datetime(2025, 7, 15)
+
+        input_metadata = InputMetadata(
+            instrument="ultra",
+            data_level="l2",
+            start_date=start_date,
+            end_date=end_date,
+            version="v000",
+            descriptor="u90-ena-h-sf-sp-full-hae-4deg-3mo",
+        )
+        map_to_produce = PossibleMapToProduce(set(), input_metadata)
+
+        ultra_initializer = UltraInitializer()
+        ultra_initializer.furnish_spice_dependencies(map_to_produce)
+
+        mock_furnish_metakernel.assert_called_once_with(start_date=start_date, end_date=end_date,
+                                                        kernel_types=ULTRA_SP_SPICE_KERNELS)

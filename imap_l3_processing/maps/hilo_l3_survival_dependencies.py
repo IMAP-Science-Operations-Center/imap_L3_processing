@@ -28,21 +28,17 @@ class HiLoL3SurvivalDependencies:
     @classmethod
     def fetch_dependencies(cls, dependencies: ProcessingInputCollection,
                            instrument: Instrument) -> HiLoL3SurvivalDependencies:
-        l2_map_paths = dependencies.get_file_paths(source=instrument.value)
-        assert len(l2_map_paths) == 1
-        map_file_path = imap_data_access.download(l2_map_paths[0].name)
-        l1c_paths = []
-        with CDF(str(map_file_path)) as l2_map:
-            map_input_paths = [generate_imap_file_path(file) for file in l2_map.attrs["Parents"]]
-            l1c_file_names = [map_input_file.filename.name for map_input_file in map_input_paths if
-                              isinstance(map_input_file, ScienceFilePath) and map_input_file.data_level == "l1c"]
-            for parent in l1c_file_names:
-                l1c_paths.append(imap_data_access.download(parent))
+        [l2_map_path] = dependencies.get_file_paths(source=instrument.value, data_type="l2")
+        l1c_paths = dependencies.get_file_paths(source=instrument.value, data_type="l1c")
+        glows_paths = dependencies.get_file_paths(source="glows")
 
-        glows_l3e_file_names = dependencies.get_file_paths(source="glows")
-        glows_file_paths = [imap_data_access.download(path) for path in glows_l3e_file_names]
-        l2_descriptor = generate_imap_file_path(l2_map_paths[0].name).descriptor
-        return cls.from_file_paths(map_file_path, l1c_paths, glows_file_paths, l2_descriptor)
+        map_file_path = imap_data_access.download(l2_map_path.name)
+        l1c_downloaded_paths = [imap_data_access.download(l1c.name) for l1c in l1c_paths]
+        glows_downloaded_paths = [imap_data_access.download(path.name) for path in glows_paths]
+
+        l2_descriptor = ScienceFilePath(l2_map_path).descriptor
+
+        return cls.from_file_paths(map_file_path, l1c_downloaded_paths, glows_downloaded_paths, l2_descriptor)
 
     @classmethod
     def from_file_paths(cls, map_file_path: Path, l1c_paths: list[Path],
@@ -68,6 +64,7 @@ class HiL3SingleSensorFullSpinDependencies:
 
         ram_dependencies = [pi for pi, descriptor in zip(dependencies.processing_input, parsed_descriptors) if
                             descriptor is None or descriptor.spin_phase == SpinPhase.RamOnly]
+
         antiram_dependencies = [pi for pi, descriptor in zip(dependencies.processing_input, parsed_descriptors) if
                                 descriptor is None or descriptor.spin_phase == SpinPhase.AntiRamOnly]
 

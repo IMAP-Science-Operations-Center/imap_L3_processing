@@ -8,6 +8,7 @@ from typing import Type, Optional, Callable, TypeVar
 from unittest import SkipTest
 from unittest.mock import Mock
 
+import imap_data_access
 import numpy as np
 from imap_data_access import ScienceFilePath, AncillaryFilePath, SPICEFilePath
 from imap_data_access.file_validation import generate_imap_file_path
@@ -160,6 +161,9 @@ def create_mock_query_results(file_names: list[Path | str], ingestion_dates: Opt
 
     for fn, ingestion_date in zip(file_names, ingestion_dates):
         imap_file_path = generate_imap_file_path(Path(fn).name)
+        file_path = (str(imap_file_path.construct_path().relative_to(imap_data_access.config["DATA_DIR"]))
+                     .replace('\\', '/'))
+
         match imap_file_path:
             case ScienceFilePath():
                 file_paths.append({
@@ -170,7 +174,7 @@ def create_mock_query_results(file_names: list[Path | str], ingestion_dates: Opt
                     "ingestion_date": ingestion_date.strftime("%Y%m%d %H:%M:%S"),
                     "version": imap_file_path.version,
                     "cr": imap_file_path.cr,
-                    "file_path": str(imap_file_path.filename),
+                    "file_path": file_path,
                     "repointing": imap_file_path.repointing
                 })
             case AncillaryFilePath():
@@ -181,7 +185,7 @@ def create_mock_query_results(file_names: list[Path | str], ingestion_dates: Opt
                     "end_date": imap_file_path.end_date,
                     "ingestion_date": ingestion_date.strftime("%Y%m%d %H:%M:%S"),
                     "version": imap_file_path.version,
-                    "file_path": str(imap_file_path.filename),
+                    "file_path": file_path,
                 })
             case SPICEFilePath():
                 continue

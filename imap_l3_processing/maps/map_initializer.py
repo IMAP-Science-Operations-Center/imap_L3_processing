@@ -3,6 +3,7 @@ import logging
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+from pathlib import Path
 
 from imap_data_access import ScienceFilePath, ImapFilePath, ProcessingInputCollection, ScienceInput
 
@@ -30,9 +31,9 @@ class MapInitializer(abc.ABC):
         self.l2_file_paths_by_descriptor = defaultdict(dict)
         for result in l2_query_results:
             logger.info(f"l2 file in MapInitializer __init__: {result['file_path']}")
-            self.l2_file_paths_by_descriptor[result['descriptor']][result["start_date"]] = result['file_path']
+            self.l2_file_paths_by_descriptor[result['descriptor']][result["start_date"]] = Path(result['file_path']).name
 
-        self.existing_l3_maps = {(qr["descriptor"], qr["start_date"]): qr["file_path"] for qr in l3_query_results}
+        self.existing_l3_maps = {(qr["descriptor"], qr["start_date"]): Path(qr["file_path"]).name for qr in l3_query_results}
 
     @abc.abstractmethod
     def furnish_spice_dependencies(self, map_to_produce: PossibleMapToProduce):
@@ -86,19 +87,25 @@ class MapInitializer(abc.ABC):
                 logger.info(f"Not enough GLOWS data to produce map {l3_descriptor} {str_start_date}")
                 continue
 
-            l2_files_paths = []
-            l1c_names = []
+            l2_file_paths = []
             for l2_descriptor in l2_descriptor_strs:
-                l2_file_path = self.l2_file_paths_by_descriptor[l2_descriptor][str_start_date]
-                l2_files_paths.append(l2_file_path)
-                l1c_names.extend(read_cdf_parents(l2_file_path))
+                l2_file_paths.append(self.l2_file_paths_by_descriptor[l2_descriptor][str_start_date])
 
-            l1c_repointings = []
-            for l1 in l1c_names:
-                try:
-                    l1c_repointings.append(ScienceFilePath(l1).repointing)
-                except ImapFilePath.InvalidImapFileError:
-                    continue
+            l1c_names = self.get_l1c_parents_from_map(l2_file_paths[0])
+            mismatch = False
+            for l2_path in l2_file_paths[1:]:
+                if set(self.get_l1c_parents_from_map(l2_path)) != set(l1c_names):
+                    mismatch = True
+                    break
+
+            if mismatch:
+                logger.warning(
+                    f"Expected all input maps to be created from the same pointing sets! l2_file_paths: "
+                    f"{', '.join(l2_file_paths)}"
+                )
+                continue
+
+            l1c_repointings = [ScienceFilePath(l1c).repointing for l1c in l1c_names]
 
             glows_files = [glows_file_by_repointing[repoint] for repoint in l1c_repointings if
                            repoint in glows_file_by_repointing]
@@ -109,11 +116,23 @@ class MapInitializer(abc.ABC):
                                                version='v001', descriptor=l3_descriptor)
 
                 possible_map_to_produce = PossibleMapToProduce(
-                    input_files=set(l2_files_paths + glows_files),
+                    input_files=set(l2_file_paths + glows_files + l1c_names),
                     input_metadata=input_metadata
                 )
                 possible_maps.append(possible_map_to_produce)
         return possible_maps
+
+    @staticmethod
+    def get_l1c_parents_from_map(map_file_path: str) -> list[str]:
+        l1c_names = []
+        for l1 in read_cdf_parents(map_file_path):
+            try:
+                l1c_science_file_path = ScienceFilePath(l1)
+                if l1c_science_file_path.data_level == 'l1c':
+                    l1c_names.append(l1c_science_file_path.filename.name)
+            except ImapFilePath.InvalidImapFileError:
+                continue
+        return l1c_names
 
     def get_maps_that_should_be_produced(self, descriptor: str) -> list[PossibleMapToProduce]:
         possible_maps = self.get_maps_that_can_be_produced(descriptor)
