@@ -26,24 +26,30 @@ class TestUtils(unittest.TestCase):
         rng = np.random.default_rng()
         pathname = "test_cdf"
 
-        with CDF(pathname, '') as cdf:
-            epoch = np.array([datetime(2000, 1, 2)])
-            exposure_times = rng.random((1, 9, 3600))
-            energy_step = rng.random((9))
+        cases = ['exposure_times', 'exposure_time']
 
-            cdf.new("epoch", epoch, type=pycdf.const.CDF_TIME_TT2000)
-            cdf["exposure_times"] = exposure_times
-            cdf["esa_energy_step"] = energy_step
-            for var in cdf:
-                cdf[var].attrs['FILLVAL'] = 1000000
+        for exposure_time_var_name in cases:
+            with CDF(pathname, '') as cdf:
+                epoch = np.array([datetime(2000, 1, 2)])
+                exposure_times = rng.random((1, 9, 3600))
+                energy_step = rng.random((9))
 
-        for path in [pathname, Path(pathname)]:
-            with self.subTest(path=path):
-                result = read_l1c_rectangular_pointing_set_data(path)
-                self.assertEqual(epoch[0], result.epoch)
-                self.assertEqual([43264184000000], result.epoch_j2000)
-                np.testing.assert_array_equal(exposure_times, result.exposure_times)
-                np.testing.assert_array_equal(energy_step, result.esa_energy_step)
+                cdf.new("epoch", epoch, type=pycdf.const.CDF_TIME_TT2000)
+                cdf[exposure_time_var_name] = exposure_times
+                cdf["esa_energy_step"] = energy_step
+                for var in cdf:
+                    cdf[var].attrs['FILLVAL'] = 1000000
+
+            for path in [pathname, Path(pathname)]:
+                with self.subTest(path=path, exposure_time_var_name=exposure_time_var_name):
+                    result = read_l1c_rectangular_pointing_set_data(path)
+                    self.assertEqual(epoch[0], result.epoch)
+                    self.assertEqual([43264184000000], result.epoch_j2000)
+                    np.testing.assert_array_equal(exposure_times, result.exposure_times)
+                    np.testing.assert_array_equal(energy_step, result.esa_energy_step)
+
+            self.tearDown()
+
 
     def test_read_hi_l1c_fill_values_create_nan_data(self):
         path = get_test_data_folder() / 'hi' / 'l1c_pointing_set_with_fill_values.cdf'

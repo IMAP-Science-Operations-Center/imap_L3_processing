@@ -11,8 +11,9 @@ from imap_l3_processing.maps.map_models import GlowsL3eRectangularMapInputData, 
 
 def read_l1c_rectangular_pointing_set_data(path: Union[Path, str]) -> InputRectangularPointingSet:
     with CDF(str(path)) as cdf:
+        exposure_time_variable = cdf['exposure_time'] if 'exposure_time' in cdf else cdf['exposure_times']
         return InputRectangularPointingSet(epoch=cdf["epoch"][0], epoch_j2000=cdf.raw_var("epoch")[...],
-                                           exposure_times=read_numeric_variable(cdf["exposure_times"]),
+                                           exposure_times=read_numeric_variable(exposure_time_variable),
                                            esa_energy_step=cdf["esa_energy_step"][...])
 
 
