@@ -9,7 +9,8 @@ from imap_processing.spice.geometry import SpiceFrame
 
 from imap_l3_processing.lo.lo_processor import LoProcessor
 from imap_l3_processing.maps.hilo_l3_survival_dependencies import HiLoL3SurvivalDependencies
-from imap_l3_processing.maps.map_models import RectangularSpectralIndexDataProduct, RectangularIntensityDataProduct
+from imap_l3_processing.maps.map_models import RectangularSpectralIndexDataProduct, RectangularIntensityDataProduct, \
+    InputRectangularPointingSet
 from imap_l3_processing.models import InputMetadata, Instrument
 
 
@@ -65,10 +66,6 @@ class TestLoProcessor(unittest.TestCase):
                                             mock_fetch_survival_dependencies, mock_get_parent_file_names):
         mock_get_parent_file_names.return_value = ["somewhere"]
 
-        mock_save_data.reset_mock()
-        mock_fetch_survival_dependencies.reset_mock()
-        mock_process_survival_prob.reset_mock()
-
         input_metadata = InputMetadata(instrument="lo",
                                        data_level="l3",
                                        start_date=datetime.now(),
@@ -77,8 +74,16 @@ class TestLoProcessor(unittest.TestCase):
                                        descriptor="l090-ena-h-sf-sp-ram-hae-4deg-6mo",
                                        )
 
-        dependencies: HiLoL3SurvivalDependencies = mock_fetch_survival_dependencies.return_value
-        dependencies.dependency_file_paths = [Path("folder/map"), Path("folder/l1c")]
+        dependencies = Mock(
+            l1c_data=[InputRectangularPointingSet(
+                epoch=datetime(2025, 1, 1),
+                epoch_j2000=np.array([10]),
+                exposure_times=np.full((1, 7, 3600, 40), 2),
+                esa_energy_step=np.arange(7)
+            )],
+            dependency_file_paths=[Path("folder/map"), Path("folder/l1c")]
+        )
+        mock_fetch_survival_dependencies.return_value = dependencies
 
         mock_process_survival_prob.return_value = sentinel.survival_probabilities
 
@@ -89,6 +94,8 @@ class TestLoProcessor(unittest.TestCase):
                                                                  Instrument.IMAP_LO)
 
         mock_process_survival_prob.assert_called_once_with(dependencies, SpiceFrame.IMAP_DPS)
+
+        np.testing.assert_array_equal(np.full((1, 7, 3600), 80), dependencies.l1c_data[0].exposure_times)
 
         mock_save_data.assert_called_once_with(RectangularIntensityDataProduct(
             input_metadata=input_metadata,
