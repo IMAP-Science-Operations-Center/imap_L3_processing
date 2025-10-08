@@ -431,6 +431,7 @@ def calculate_datetime_weighted_average(data: np.ndarray, weights: np.ndarray, a
 @dataclass
 class GlowsL3eRectangularMapInputData:
     epoch: datetime
+    repointing: int
     energy: np.ndarray
     spin_angle: np.ndarray
     probability_of_survival: np.ndarray
@@ -440,5 +441,6 @@ class GlowsL3eRectangularMapInputData:
 class InputRectangularPointingSet:
     epoch: datetime
     epoch_j2000: np.ndarray
+    repointing: int
     exposure_times: np.ndarray
     esa_energy_step: np.ndarray
