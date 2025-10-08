@@ -28,12 +28,8 @@ class PossibleMapToProduce:
 class MapInitializer(abc.ABC):
     def __init__(self, instrument: str, l2_query_results: list[dict[str, str]], l3_query_results: list[dict[str, str]]):
         self.instrument = instrument
-        self.l2_file_paths_by_descriptor = defaultdict(dict)
-        for result in l2_query_results:
-            logger.info(f"l2 file in MapInitializer __init__: {result['file_path']}")
-            self.l2_file_paths_by_descriptor[result['descriptor']][result["start_date"]] = Path(result['file_path']).name
-
-        self.existing_l3_maps = {(qr["descriptor"], qr["start_date"]): Path(qr["file_path"]).name for qr in l3_query_results}
+        self.l2_file_paths_by_descriptor = get_latest_version_by_descriptor_and_start_date(l2_query_results)
+        self.existing_l3_maps = get_latest_version_by_descriptor_and_start_date(l3_query_results)
 
     @abc.abstractmethod
     def furnish_spice_dependencies(self, map_to_produce: PossibleMapToProduce):
@@ -140,11 +136,24 @@ class MapInitializer(abc.ABC):
         maps_to_make = []
         for possible_map in possible_maps:
             start_time = possible_map.input_metadata.start_date.strftime("%Y%m%d")
-            if l3_result := self.existing_l3_maps.get((descriptor, start_time)):
-                existing_parents = read_cdf_parents(l3_result)
-                if possible_map.input_files.issubset(existing_parents):
-                    continue
-                new_version = int(ScienceFilePath(l3_result).version[1:]) + 1
-                possible_map.input_metadata.version = f'v{new_version:03}'
+            if start_dates_for_l3_descriptor := self.existing_l3_maps.get(descriptor):
+                if l3_result := start_dates_for_l3_descriptor.get(start_time):
+                    existing_parents = read_cdf_parents(l3_result)
+                    if possible_map.input_files.issubset(existing_parents):
+                        continue
+                    new_version = int(ScienceFilePath(l3_result).version[1:]) + 1
+                    possible_map.input_metadata.version = f'v{new_version:03}'
             maps_to_make.append(possible_map)
         return maps_to_make
+
+def get_latest_version_by_descriptor_and_start_date(query_results: list[dict]) -> defaultdict:
+    qr_by_descriptor_and_start_date = defaultdict(list)
+    for qr in query_results:
+        qr_by_descriptor_and_start_date[(qr['descriptor'], qr["start_date"])].append(qr)
+
+    file_paths_by_descriptor = defaultdict(dict)
+    for (descriptor, start_date), query_results in qr_by_descriptor_and_start_date.items():
+        highest_version_qr = max(query_results, key=lambda x: x['version'])
+        file_paths_by_descriptor[descriptor][start_date] = Path(highest_version_qr['file_path']).name
+
+    return file_paths_by_descriptor

@@ -35,12 +35,14 @@ class TestLoInitializer(unittest.TestCase):
 
             'imap_lo_l2_l090-ena-h-sf-nsp-ram-hae-6deg-12mo_20100101_v001.cdf',
             'imap_lo_l2_l090-ena-h-sf-nsp-ram-hae-6deg-12mo_20100401_v001.cdf',
+            'imap_lo_l2_l090-ena-h-sf-nsp-ram-hae-6deg-12mo_20100401_v000.cdf',
+
             'imap_lo_l2_l090-ena-h-sf-nsp-ram-hae-6deg-12mo_20100701_v001.cdf',
             'imap_lo_l2_l090-ena-h-sf-nsp-ram-hae-6deg-12mo_20101001_v001.cdf',
 
             'imap_lo_l3_l090-ena-h-sf-sp-ram-hae-6deg-12mo_20100101_v001.cdf',
             'imap_lo_l3_l090-ena-h-sf-sp-ram-hae-6deg-12mo_20100401_v001.cdf'
-        ], assert_uses_latest=True)
+        ])
 
         mock_read_cdf_parents.side_effect = [
             [
@@ -75,6 +77,12 @@ class TestLoInitializer(unittest.TestCase):
 
         initializer = LoInitializer()
         actual_maps_to_produce = initializer.get_maps_that_should_be_produced("l090-ena-h-sf-sp-ram-hae-6deg-12mo")
+
+        self.mock_query.assert_has_calls([
+            call(instrument='glows', data_level='l3e', descriptor='survival-probability-lo', version="latest"),
+            call(instrument='lo', data_level='l2'),
+            call(instrument='lo', data_level='l3'),
+        ])
 
         mock_read_cdf_parents.assert_has_calls([
             call('imap_lo_l2_l090-ena-h-sf-nsp-ram-hae-6deg-12mo_20100101_v001.cdf'),
