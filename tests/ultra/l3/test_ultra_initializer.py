@@ -5,7 +5,7 @@ from unittest.mock import patch, call
 from imap_l3_processing.maps.map_initializer import MapInitializer, PossibleMapToProduce
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.ultra.l3.ultra_initializer import UltraInitializer, ULTRA_SP_SPICE_KERNELS
-from tests.integration.integration_test_helpers import create_mock_query
+from tests.integration.integration_test_helpers import ImapQueryPatcher
 
 
 class TestUltraInitializer(unittest.TestCase):
@@ -22,7 +22,7 @@ class TestUltraInitializer(unittest.TestCase):
 
         for sensor in sensors:
             with self.subTest(sensor=sensor):
-                mock_query.side_effect = create_mock_query([
+                mock_query.side_effect = ImapQueryPatcher([
                     'imap_glows_l3e_survival-probability-ul_20100101-repoint00001_v001.cdf',
                     'imap_glows_l3e_survival-probability-ul_20100102-repoint00002_v001.cdf',
                     'imap_glows_l3e_survival-probability-ul_20100103-repoint00003_v001.cdf',
