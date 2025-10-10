@@ -220,42 +220,16 @@ def read_l1d_mag_data(cdf_path: Union[str, Path]) -> MagL1dData:
             mag_data=read_numeric_variable(cdf["vectors"])[:, :3])
 
 
-def find_glows_l3e_dependencies(l1c_filenames: list[str], instrument: str) -> list[str]:
-    dates = [datetime.strptime(ScienceFilePath(l1c_filename).start_date, "%Y%m%d") for l1c_filename in l1c_filenames]
-
-    start_date = min(dates).strftime("%Y%m%d")
-    end_date = max(dates).strftime("%Y%m%d")
-
-    match instrument:
-        case 'ultra':
-            descriptor = "survival-probability-ul"
-        case 'hi':
-            initial_descriptor = l1c_filenames[0].split("_")[3]
-            sensor = re.search(r"^(\d+)", initial_descriptor)
-            descriptor = f"survival-probability-{instrument}-{sensor.group(0)}"
-        case _:
-            descriptor = f"survival-probability-{instrument}"
-
-    survival_probabilities = [result["file_path"] for result in imap_data_access.query(instrument="glows",
-                                                                                       data_level="l3e",
-                                                                                       descriptor=descriptor,
-                                                                                       start_date=start_date,
-                                                                                       end_date=end_date,
-                                                                                       version="latest")]
-
-    return survival_probabilities
-
-
 L1CPointingSet = TypeVar("L1CPointingSet", bound=Union[InputRectangularPointingSet, UltraL1CPSet])
 GlowsL3eData = TypeVar("GlowsL3eData", bound=Union[GlowsL3eRectangularMapInputData, UltraGlowsL3eData])
 
 
 def combine_glows_l3e_with_l1c_pointing(glows_l3e_data: list[GlowsL3eData], l1c_data: list[L1CPointingSet]) -> list[
     tuple[L1CPointingSet, Optional[GlowsL3eData]]]:
-    l1c_by_epoch = {l1c.epoch: l1c for l1c in l1c_data}
-    glows_by_epoch = {l3e.epoch: l3e for l3e in glows_l3e_data}
+    l1c_by_repoint = {l1c.repointing: l1c for l1c in l1c_data}
+    glows_by_repoint = {l3e.repointing: l3e for l3e in glows_l3e_data}
 
-    return [(l1c_by_epoch[epoch], glows_by_epoch.get(epoch, None)) for epoch in l1c_by_epoch.keys()]
+    return [(l1c_by_repoint[repoint], glows_by_repoint.get(repoint, None)) for repoint in l1c_by_repoint.keys()]
 
 
 def furnish_local_spice():

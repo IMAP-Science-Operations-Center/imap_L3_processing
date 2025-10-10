@@ -1,3 +1,4 @@
+import dataclasses
 from pathlib import Path
 
 import numpy as np
@@ -8,7 +9,7 @@ from imap_l3_processing.maps.hilo_l3_survival_dependencies import HiLoL3Survival
 from imap_l3_processing.maps.map_descriptors import parse_map_descriptor, MapDescriptorParts, MapQuantity, \
     SurvivalCorrection, ReferenceFrame
 from imap_l3_processing.maps.map_models import RectangularIntensityMapData, RectangularSpectralIndexDataProduct, \
-    RectangularSpectralIndexMapData, RectangularIntensityDataProduct
+    RectangularSpectralIndexMapData, RectangularIntensityDataProduct, InputRectangularPointingSet
 from imap_l3_processing.maps.map_processor import MapProcessor
 from imap_l3_processing.maps.spectral_fit import calculate_spectral_index_for_multiple_ranges
 from imap_l3_processing.maps.survival_probability_processing import process_survival_probabilities
@@ -28,7 +29,9 @@ class LoProcessor(MapProcessor):
             case MapDescriptorParts(survival_correction=SurvivalCorrection.SurvivalCorrected,
                                     reference_frame=ReferenceFrame.Spacecraft):
                 deps = HiLoL3SurvivalDependencies.fetch_dependencies(self.dependencies, Instrument.IMAP_LO)
+                deps.l1c_data = list(map(self._collapse_pset_dimension, deps.l1c_data))
                 data = process_survival_probabilities(deps, spice_frame_name)
+
                 data_product = RectangularIntensityDataProduct(self.input_metadata, data)
                 set_of_parent_file_names.update(path.name for path in deps.dependency_file_paths)
             case None:
@@ -39,6 +42,9 @@ class LoProcessor(MapProcessor):
         data_product.parent_file_names = sorted(set_of_parent_file_names)
         return [save_data(data_product)]
 
+    @staticmethod
+    def _collapse_pset_dimension(pset: InputRectangularPointingSet) -> InputRectangularPointingSet:
+        return dataclasses.replace(pset, exposure_times=np.sum(pset.exposure_times, axis=3))
 
 def perform_spectral_fit(data: RectangularIntensityMapData) -> RectangularSpectralIndexMapData:
     esa_4_through_7_energy_range = (data.intensity_map_data.energy[3], np.inf)

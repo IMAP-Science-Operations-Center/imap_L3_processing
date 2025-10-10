@@ -114,8 +114,18 @@ class TestSurvivalProbabilityProcessing(SpiceTestCase):
         t2 = datetime(2025, 5, 7, 12)
         t3 = datetime(2025, 5, 8, 12)
         t4 = datetime(2025, 5, 15, 12)
-        l1c_psets = [create_l1c_pset(t1), create_l1c_pset(t2), create_l1c_pset(t3), create_l1c_pset(t4)]
-        l3e_psets = [create_l3e_pset(t1), create_l3e_pset(t3), create_l3e_pset(t4)]
+
+        l1c_psets = [
+            create_l1c_pset(epoch=t1, repointing=1),
+            create_l1c_pset(epoch=t2, repointing=2),
+            create_l1c_pset(epoch=t3, repointing=3),
+            create_l1c_pset(epoch=t4, repointing=4)
+        ]
+        l3e_psets = [
+            create_l3e_pset(epoch=t1, repointing=1),
+            create_l3e_pset(epoch=t3, repointing=3),
+            create_l3e_pset(epoch=t4, repointing=4)
+        ]
         l2_intensity_map = create_rectangular_intensity_map_data()
 
         descriptor = parse_map_descriptor("h90-ena-h-sf-nsp-ram-hae-4deg-3mo")

@@ -11,6 +11,7 @@ from imap_l3_processing.hi.l3.hi_l3_initializer import HI_SP_MAP_DESCRIPTORS
 from imap_l3_processing.lo.l3.lo_initializer import LO_SP_MAP_DESCRIPTORS
 from imap_l3_processing.maps.map_initializer import PossibleMapToProduce
 from imap_l3_processing.models import InputMetadata
+from imap_l3_processing.ultra.l3.ultra_initializer import ULTRA_SP_MAP_DESCRIPTORS
 
 
 class TestImapL3DataProcessor(TestCase):
@@ -88,108 +89,73 @@ class TestImapL3DataProcessor(TestCase):
                 expected_processor.assert_called_once_with(mock_processing_input.return_value, expected_input_metadata)
                 mock_upload.assert_called_once_with(sentinel.cdf)
 
-    @patch('imap_l3_data_processor.ProcessingInputCollection')
-    @patch('imap_l3_data_processor.imap_data_access.upload')
+    @patch('imap_l3_data_processor.UltraInitializer')
+    @patch('imap_l3_data_processor.UltraProcessor')
     @patch('imap_l3_data_processor.HiL3Initializer')
     @patch('imap_l3_data_processor.HiProcessor')
-    @patch('imap_l3_data_processor.argparse')
-    def test_scheduled_ena_job_invokes_initializer(self, mock_argparse, mock_hi_processor, mock_hi_initializer_class,
-                                                   mock_upload, _):
-        instrument = "hi"
-        data_level = "l3"
-        descriptor = "all-maps"
-        mock_argument_parser = mock_argparse.ArgumentParser.return_value
-        mock_argument_parser.parse_args.return_value.instrument = instrument
-        mock_argument_parser.parse_args.return_value.data_level = data_level
-        mock_argument_parser.parse_args.return_value.dependency = "dependency_string"
-        mock_argument_parser.parse_args.return_value.start_date = "20250101"
-        mock_argument_parser.parse_args.return_value.end_date = None
-        mock_argument_parser.parse_args.return_value.repointing = "repoint00022"
-        mock_argument_parser.parse_args.return_value.version = sentinel.version
-        mock_argument_parser.parse_args.return_value.descriptor = descriptor
-
-        expected_input_metadata = InputMetadata(instrument, data_level, datetime(2025, 1, 1),
-                                                datetime(2025, 1, 1),
-                                                sentinel.version, descriptor=descriptor,
-                                                repointing=22)
-        mock_hi_initializer = Mock()
-        mock_hi_initializer_class.return_value = mock_hi_initializer
-        possible_map_to_produce = PossibleMapToProduce(set(), expected_input_metadata)
-        mock_hi_initializer.get_maps_that_should_be_produced.return_value = [possible_map_to_produce]
-
-        mock_hi_processor.return_value.process.return_value = [sentinel.cdf]
-
-        imap_l3_processor()
-
-        mock_hi_initializer_class.assert_called_once()
-        mock_hi_initializer.get_maps_that_should_be_produced.assert_has_calls([
-            call(descriptor) for descriptor in HI_SP_MAP_DESCRIPTORS
-        ])
-
-        self.assertEqual(len(HI_SP_MAP_DESCRIPTORS), mock_hi_processor.call_count)
-
-        self.assertEqual(len(HI_SP_MAP_DESCRIPTORS), mock_hi_initializer.furnish_spice_dependencies.call_count)
-        mock_hi_initializer.furnish_spice_dependencies.assert_called_with(possible_map_to_produce)
-
-        mock_hi_processor.assert_called_with(possible_map_to_produce.processing_input_collection,
-                                             expected_input_metadata)
-        self.assertEqual(len(HI_SP_MAP_DESCRIPTORS), mock_hi_processor.return_value.process.call_count)
-
-        self.assertEqual(len(HI_SP_MAP_DESCRIPTORS), mock_upload.call_count)
-        mock_upload.assert_called_with(sentinel.cdf)
-
-    @patch('imap_l3_data_processor.ProcessingInputCollection')
-    @patch('imap_l3_data_processor.imap_data_access.upload')
     @patch('imap_l3_data_processor.LoInitializer')
     @patch('imap_l3_data_processor.LoProcessor')
+    @patch('imap_l3_data_processor.imap_data_access.upload')
     @patch('imap_l3_data_processor.argparse')
-    def test_scheduled_lo_job_invokes_initializer(self, mock_argparse, mock_lo_processor, mock_lo_initializer_class,
-                                                  mock_upload, _):
-        instrument = "lo"
-        data_level = "l3"
-        descriptor = "all-maps"
-        mock_argument_parser = mock_argparse.ArgumentParser.return_value
-        mock_argument_parser.parse_args.return_value.instrument = instrument
-        mock_argument_parser.parse_args.return_value.data_level = data_level
-        mock_argument_parser.parse_args.return_value.dependency = "dependency_string"
-        mock_argument_parser.parse_args.return_value.start_date = "20250101"
-        mock_argument_parser.parse_args.return_value.end_date = None
-        mock_argument_parser.parse_args.return_value.repointing = "repoint00022"
-        mock_argument_parser.parse_args.return_value.version = sentinel.version
-        mock_argument_parser.parse_args.return_value.descriptor = descriptor
+    def test_scheduled_lo_job_invokes_initializer(self, mock_argparse, mock_upload,
+                                                  mock_lo_processor_class, mock_lo_initializer_class,
+                                                  mock_hi_processor_class, mock_hi_initializer_class,
+                                                  mock_ultra_processor_class, mock_ultra_initializer_class,
+                                                  ):
 
-        mock_processing_input = Mock()
-        mock_processing_input.deserialize.return_value = "dependency_string"
-        expected_input_metadata = InputMetadata(instrument, data_level, datetime(2025, 1, 1),
-                                                datetime(2025, 1, 1),
-                                                sentinel.version, descriptor=descriptor,
-                                                )
+        test_cases = [
+            ("hi", mock_hi_initializer_class, mock_hi_processor_class, HI_SP_MAP_DESCRIPTORS),
+            ("lo", mock_lo_initializer_class, mock_lo_processor_class, LO_SP_MAP_DESCRIPTORS),
+            ("ultra", mock_ultra_initializer_class, mock_ultra_processor_class, ULTRA_SP_MAP_DESCRIPTORS),
+        ]
 
-        mock_lo_initializer = Mock()
-        mock_lo_initializer_class.return_value = mock_lo_initializer
-        possible_map_to_produce = PossibleMapToProduce(set(), expected_input_metadata)
-        mock_lo_initializer.get_maps_that_should_be_produced.return_value = [possible_map_to_produce]
+        for instrument, mock_initializer_class, mock_processor_class, expected_descriptors in test_cases:
+            mock_upload.reset_mock()
+            mock_argparse.reset_mock()
 
-        mock_lo_processor.return_value.process.return_value = [sentinel.cdf]
+            with self.subTest(instrument=instrument):
+                data_level = "l3"
+                descriptor = "all-maps"
+                mock_argument_parser = mock_argparse.ArgumentParser.return_value
+                mock_argument_parser.parse_args.return_value.instrument = instrument
+                mock_argument_parser.parse_args.return_value.data_level = data_level
+                mock_argument_parser.parse_args.return_value.dependency = "[]"
+                mock_argument_parser.parse_args.return_value.start_date = "20250101"
+                mock_argument_parser.parse_args.return_value.end_date = None
+                mock_argument_parser.parse_args.return_value.repointing = "repoint00022"
+                mock_argument_parser.parse_args.return_value.version = sentinel.version
+                mock_argument_parser.parse_args.return_value.descriptor = descriptor
 
-        imap_l3_processor()
+                expected_input_metadata = InputMetadata(instrument, data_level, datetime(2025, 1, 1),
+                                                        datetime(2025, 1, 1),
+                                                        sentinel.version, descriptor=descriptor,
+                                                        )
 
-        mock_lo_initializer_class.assert_called_once()
-        mock_lo_initializer.get_maps_that_should_be_produced.assert_has_calls([
-            call(descriptor) for descriptor in LO_SP_MAP_DESCRIPTORS
-        ])
+                mock_initializer = mock_initializer_class.return_value
+                mock_processor = mock_processor_class.return_value
 
-        self.assertEqual(len(LO_SP_MAP_DESCRIPTORS), mock_lo_processor.call_count)
+                possible_map_to_produce = PossibleMapToProduce(set(), expected_input_metadata)
+                mock_initializer.get_maps_that_should_be_produced.return_value = [possible_map_to_produce]
 
-        self.assertEqual(len(LO_SP_MAP_DESCRIPTORS), mock_lo_initializer.furnish_spice_dependencies.call_count)
-        mock_lo_initializer.furnish_spice_dependencies.assert_called_with(possible_map_to_produce)
+                mock_processor.process.return_value = [sentinel.cdf]
 
-        mock_lo_processor.assert_called_with(possible_map_to_produce.processing_input_collection,
-                                             expected_input_metadata)
-        self.assertEqual(len(LO_SP_MAP_DESCRIPTORS), mock_lo_processor.return_value.process.call_count)
+                imap_l3_processor()
 
-        self.assertEqual(len(LO_SP_MAP_DESCRIPTORS), mock_upload.call_count)
-        mock_upload.assert_called_with(sentinel.cdf)
+                mock_initializer.get_maps_that_should_be_produced.assert_has_calls([
+                    call(descriptor) for descriptor in expected_descriptors
+                ])
+
+                self.assertEqual(len(expected_descriptors), mock_processor_class.call_count)
+
+                self.assertEqual(len(expected_descriptors), mock_initializer.furnish_spice_dependencies.call_count)
+                mock_initializer.furnish_spice_dependencies.assert_called_with(possible_map_to_produce)
+
+                mock_processor_class.assert_called_with(possible_map_to_produce.processing_input_collection,
+                                                        expected_input_metadata)
+                self.assertEqual(len(expected_descriptors), mock_processor.process.call_count)
+
+                self.assertEqual(len(expected_descriptors), mock_upload.call_count)
+                mock_upload.assert_called_with(sentinel.cdf)
 
     @patch('imap_l3_data_processor.imap_data_access.upload')
     @patch('imap_l3_data_processor.LoInitializer')

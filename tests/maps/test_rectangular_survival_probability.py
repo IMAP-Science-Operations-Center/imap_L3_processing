@@ -24,6 +24,7 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
 
         self.l1c_hi_dataset = InputRectangularPointingSet(
             epoch=self.epoch,
+            repointing=1,
             epoch_j2000=np.array([43264184000000]),
             exposure_times=np.arange(self.num_energies * 3600).reshape((1, self.num_energies, 3600)) + 1.1,
             esa_energy_step=np.arange(self.num_energies),
@@ -31,6 +32,7 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
 
         self.glows_data = GlowsL3eRectangularMapInputData(
             epoch=self.epoch,
+            repointing=1,
             energy=np.geomspace(1, 10000, self.num_energies + 1),
             spin_angle=np.arange(0, 360, 1) + 0.5,
             probability_of_survival=np.arange((self.num_energies + 1) * 360).reshape(

@@ -39,10 +39,10 @@ class GlowsL3BCInitializer:
         repoint_downloaded_path = imap_data_access.download(repoint_file)
         set_global_repoint_table_paths([repoint_downloaded_path])
 
-        l3a_query_results = imap_data_access.query(instrument="glows", data_level="l3a", descriptor="hist", version="latest")
+        l3a_query_results = imap_data_access.query(instrument="glows", data_level="l3a", descriptor="hist",
+                                                   version="latest")
         l3a_files_names = [Path(l3a_query_result["file_path"]).name for l3a_query_result in l3a_query_results]
         cr_to_l3a_file_names = GlowsL3BCInitializer.group_l3a_by_cr(l3a_files_names)
-        print(cr_to_l3a_file_names)
 
         l3b_query_result = imap_data_access.query(instrument="glows", data_level="l3b",
                                                   descriptor="ion-rate-profile", version="latest")
@@ -88,7 +88,8 @@ class GlowsL3BCInitializer:
                 "uv-anisotropy-1CR": get_best_ancillary(cr_start_date, cr_end_date, uv_anisotropy_query_result),
                 "WawHelioIonMP": get_best_ancillary(cr_start_date, cr_end_date, waw_helio_ion_mp_query_result),
                 "bad-days-list": get_best_ancillary(cr_start_date, cr_end_date, bad_days_list_query_result),
-                "pipeline-settings-l3bcde": get_best_ancillary(cr_start_date, cr_end_date, pipeline_settings_query_result),
+                "pipeline-settings-l3bcde": get_best_ancillary(cr_start_date, cr_end_date,
+                                                               pipeline_settings_query_result),
             }
 
             if all(ancillaries.values()):

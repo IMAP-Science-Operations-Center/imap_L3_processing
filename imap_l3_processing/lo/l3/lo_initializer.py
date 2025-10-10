@@ -1,4 +1,5 @@
 import dataclasses
+from pathlib import Path
 
 import imap_data_access
 
@@ -45,19 +46,10 @@ class LoInitializer(MapInitializer):
             descriptor="survival-probability-lo",
             version="latest"
         )
-        self.glows_files_by_repointing = {int(r["repointing"]): r["file_path"] for r in glows_query_result}
+        self.glows_files_by_repointing = {int(r["repointing"]): Path(r["file_path"]).name for r in glows_query_result}
 
-        lo_l2_query_result = imap_data_access.query(
-            instrument="lo",
-            data_level="l2",
-            version="latest"
-        )
-
-        lo_l3_query_result = imap_data_access.query(
-            instrument="lo",
-            data_level="l3",
-            version="latest"
-        )
+        lo_l2_query_result = imap_data_access.query(instrument="lo", data_level="l2")
+        lo_l3_query_result = imap_data_access.query(instrument="lo", data_level="l3")
 
         super().__init__("lo", lo_l2_query_result, lo_l3_query_result)
 

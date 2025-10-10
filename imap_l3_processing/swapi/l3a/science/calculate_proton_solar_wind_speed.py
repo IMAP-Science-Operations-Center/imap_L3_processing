@@ -12,7 +12,7 @@ from imap_l3_processing.swapi.l3a.science.speed_calculation import get_peak_indi
 
 
 def sine_fit_function(spin_phase_angle, a, phi, b):
-    return a * np.sin(np.deg2rad(spin_phase_angle + phi)) + b
+    return a * np.sin(np.deg2rad(phi - spin_phase_angle)) + b
 
 
 def fit_energy_per_charge_peak_variations(centers_of_mass, spin_phase_angles):
@@ -21,7 +21,7 @@ def fit_energy_per_charge_peak_variations(centers_of_mass, spin_phase_angles):
     max_mass_energy = np.max(nominal_centers_of_mass)
     peak_angle = nominal_values(spin_phase_angles[np.argmax(centers_of_mass)])
 
-    initial_parameter_guess = [(max_mass_energy - min_mass_energy) / 2, 90 - peak_angle,
+    initial_parameter_guess = [(max_mass_energy - min_mass_energy) / 2, peak_angle + 90,
                                np.mean(nominal_centers_of_mass)]
 
     nominal_spin_phase_angles = nominal_values(spin_phase_angles)
@@ -64,7 +64,7 @@ def calculate_proton_centers_of_mass(coincidence_count_rates, energies, epoch):
 
         measurement_interval = 1 / 6 * ONE_SECOND_IN_NANOSECONDS
         index_into_full_sweep = (center_of_mass_index + 1)
-        time_at_center_of_mass = epoch[i] + measurement_interval * index_into_full_sweep + measurement_interval/2
+        time_at_center_of_mass = epoch[i] + measurement_interval * index_into_full_sweep + measurement_interval / 2
         spin_angle = get_angle(time_at_center_of_mass)
         energies_at_center_of_mass.append(energy_at_center_of_mass.nominal_value)
         energies_at_center_of_mass_uncertainties.append(energy_at_center_of_mass.std_dev)
@@ -74,8 +74,8 @@ def calculate_proton_centers_of_mass(coincidence_count_rates, energies, epoch):
 
 
 def get_spin_angle_from_swapi_axis_in_despun_frame(instrument_axis: np.ndarray):
-    r, lon, lat = spiceypy.reclat(instrument_axis)
-    return np.mod(180 - np.rad2deg(lon), 360)
+    x, y, _ = instrument_axis
+    return np.mod(np.rad2deg(np.atan2(-1 * x, y)), 360)
 
 
 @wrap

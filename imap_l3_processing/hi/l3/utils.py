@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import Union
 
+from imap_data_access import ScienceFilePath
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.cdf.cdf_utils import read_numeric_variable
@@ -10,15 +11,20 @@ from imap_l3_processing.maps.map_models import GlowsL3eRectangularMapInputData, 
 
 
 def read_l1c_rectangular_pointing_set_data(path: Union[Path, str]) -> InputRectangularPointingSet:
+    repointing = ScienceFilePath(path).repointing
     with CDF(str(path)) as cdf:
+        exposure_time_variable = cdf['exposure_time'] if 'exposure_time' in cdf else cdf['exposure_times']
         return InputRectangularPointingSet(epoch=cdf["epoch"][0], epoch_j2000=cdf.raw_var("epoch")[...],
-                                           exposure_times=read_numeric_variable(cdf["exposure_times"]),
+                                           repointing=repointing,
+                                           exposure_times=read_numeric_variable(exposure_time_variable),
                                            esa_energy_step=cdf["esa_energy_step"][...])
 
 
 def read_glows_l3e_data(cdf_path: Union[Path, str]) -> GlowsL3eRectangularMapInputData:
+    repointing = ScienceFilePath(cdf_path).repointing
     with CDF(str(cdf_path)) as cdf:
         return GlowsL3eRectangularMapInputData(epoch=cdf[EPOCH_CDF_VAR_NAME][0],
+                                               repointing=repointing,
                                                energy=read_numeric_variable(cdf[ENERGY_VAR_NAME]),
                                                spin_angle=read_numeric_variable(cdf[SPIN_ANGLE_VAR_NAME]),
                                                probability_of_survival=read_numeric_variable(
