@@ -238,6 +238,8 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
         original_datetime2et = spiceypy.datetime2et
         original_get = requests.get
         offset = (datetime(2025, 4, 15) - datetime(2010, 1, 1)).total_seconds()
+        jan_through_apr_offset = (datetime(2026, 1, 1) - datetime(2010, 1, 1)).total_seconds()
+        apr_through_dec_offset = (datetime(2025, 4, 15) - datetime(2010, 4, 15)).total_seconds()
 
         def hijack_metakernel_params(url: str, *, params: dict = {}):
             if 'start_time' in params and 'end_time' in params:
@@ -245,14 +247,20 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
                 params['end_time'] = str(int(int(params['end_time']) + offset))
             return original_get(url, params=params)
 
-        with (patch('spiceypy.datetime2et', side_effect=lambda x: original_datetime2et(x) + offset),
+        def determine_spice_offset(date: datetime):
+            if date.month < 4 or (date.month == 4 and date.day < 15):
+                return jan_through_apr_offset
+            else:
+                return apr_through_dec_offset
+
+        with (patch('spiceypy.datetime2et', side_effect=lambda x: original_datetime2et(x) + determine_spice_offset(x)),
               patch('requests.get', side_effect=hijack_metakernel_params)):
 
             ancillary_file_paths = [
-                get_test_instrument_team_data_path("glows/imap_glows_calibration-data_20100101_v002.dat"),
-                get_test_instrument_team_data_path("glows/imap_glows_pipeline-settings_20100101_v001.json"),
-                get_test_instrument_team_data_path("glows/imap_glows_time-dep-bckgrd_20100101_v001.dat"),
-                get_test_instrument_team_data_path("glows/imap_glows_map-of-extra-helio-bckgrd_20100101_v002.dat"),
+                GLOWS_TEST_DATA / "imap_glows_calibration-data_20000101_v003.dat",
+                GLOWS_TEST_DATA / "imap_glows_map-of-extra-helio-bckgrd_20100101_v001.dat",
+                GLOWS_TEST_DATA / "imap_glows_pipeline-settings_20100101_v003.json",
+                GLOWS_TEST_DATA / "imap_glows_time-dep-bckgrd_20100101_v001.dat"
             ]
             l2_paths = list(get_run_local_data_path("glows_l2_cdfs").iterdir())
             input_files = l2_paths + ancillary_file_paths
