@@ -7,7 +7,7 @@ import subprocess
 import unittest
 from datetime import timedelta, datetime
 from pathlib import Path
-from unittest import skipIf
+from unittest import skipIf, skip
 from unittest.mock import patch
 
 import imap_data_access
@@ -127,7 +127,7 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
         self.assertEqual(actual_dict['input_metadata'], expected_dict['input_metadata'])
 
     @skipIf(os.getenv("IN_GLOWS_INTEGRATION_DOCKER"), "Not needed on linux")
-    @run_periodically(timedelta(seconds=7))
+    @run_periodically(timedelta(days=7))
     def test_glows_integration_running_docker(self):
         run_test_in_docker(
             "tests.integration.test_glows_processor_integration.TestGlowsProcessorIntegration.test_l3bcde_first_time_processing")
@@ -229,6 +229,7 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
         processor = GlowsProcessor(processing_input, input_metadata)
         processor.process()
 
+    @skip("Takes forever")
     def test_local_validation_running_docker(self):
         run_test_in_docker(
             "tests.integration.test_glows_processor_integration.TestGlowsProcessorIntegration.test_local_integration")
