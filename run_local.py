@@ -733,12 +733,12 @@ def run_glows_l3a(file_path):
 
         dependencies = GlowsL3ADependencies(l2_glows_data, {
             "calibration_data": get_test_instrument_team_data_path(
-                "glows/imap_glows_calibration-data_20100101_v002.dat"),
-            "settings": get_test_instrument_team_data_path("glows/imap_glows_pipeline-settings_20100101_v001.json"),
+                "glows/imap_glows_calibration-data_20250101_v002.dat"),
+            "settings": get_test_instrument_team_data_path("glows/imap_glows_pipeline-settings_20250101_v001.json"),
             "time_dependent_bckgrd": get_test_instrument_team_data_path(
-                "glows/imap_glows_time-dep-bckgrd_20100101_v001.dat"),
+                "glows/imap_glows_time-dep-bckgrd_20250101_v001.dat"),
             "extra_heliospheric_bckgrd": get_test_instrument_team_data_path(
-                "glows/imap_glows_map-of-extra-helio-bckgrd_20100101_v002.dat"),
+                "glows/imap_glows_map-of-extra-helio-bckgrd_20250101_v002.dat"),
         })
 
         processor = GlowsProcessor(ProcessingInputCollection(), input_metadata)
@@ -1028,12 +1028,12 @@ if __name__ == "__main__":
                 str(get_test_data_path("swapi/imap_swapi_proton-density-temperature-lut_20240905_v001.dat")),
                 str(get_test_data_path("swapi/imap_swapi_alpha-density-temperature-lut_20240920_v000.dat")),
                 str(get_test_data_path("swapi/imap_swapi_clock-angle-and-flow-deflection-lut_20240918_v001.dat")),
-                str(get_test_data_path("swapi/imap_swapi_energy-gf-pui-lut_20100101_v004.csv")),
+                str(get_test_data_path("swapi/imap_swapi_energy-gf-pui-lut_20100101_v001.csv")),
                 str(get_test_data_path("swapi/imap_swapi_instrument-response-lut_20241023_v000.zip")),
                 str(get_test_data_path(
                     "swapi/imap_swapi_l2_density-of-neutral-helium-lut-text-not-cdf_20241023_v002.cdf")),
                 str(get_test_data_path("swapi/imap_swapi_efficiency-lut_20241020_v000.dat")),
-                str(get_test_data_path("swapi/imap_swapi_l2_50-sweeps_20250606_v003.cdf")),
+                str(get_test_data_path("swapi/imap_swapi_l2_sci_20100101_v001.cdf")),
             )
             print(paths)
         if "l3b" in sys.argv:
