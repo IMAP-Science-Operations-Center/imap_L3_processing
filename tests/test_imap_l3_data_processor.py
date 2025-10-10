@@ -7,7 +7,11 @@ from imap_data_access.processing_input import ScienceInput, ProcessingInputColle
     AncillaryInput, SPICEInput
 
 from imap_l3_data_processor import imap_l3_processor
+from imap_l3_processing.hi.l3.hi_l3_initializer import HI_SP_MAP_DESCRIPTORS
+from imap_l3_processing.lo.l3.lo_initializer import LO_SP_MAP_DESCRIPTORS
+from imap_l3_processing.maps.map_initializer import PossibleMapToProduce
 from imap_l3_processing.models import InputMetadata
+from imap_l3_processing.ultra.l3.ultra_initializer import ULTRA_SP_MAP_DESCRIPTORS
 
 
 class TestImapL3DataProcessor(TestCase):
@@ -23,8 +27,9 @@ class TestImapL3DataProcessor(TestCase):
     @patch('imap_l3_data_processor.CodiceLoProcessor')
     @patch('imap_l3_data_processor.CodiceHiProcessor')
     @patch('imap_l3_data_processor.argparse')
-    def test_invokes_correct_processor(self, mock_argparse, mock_codice_hi, mock_codice_lo, mock_glows, mock_ultra,
-                                       mock_lo, mock_hi, mock_hit, mock_swe, mock_swapi, mock_upload,
+    def test_invokes_correct_processor(self, mock_argparse, mock_codice_hi, mock_codice_lo, mock_glows,
+                                       mock_ultra, mock_lo, mock_hi, mock_hit, mock_swe,
+                                       mock_swapi, mock_upload,
                                        mock_processing_input):
         cases = [
             ("swapi", "l3a", "proton", mock_swapi),
@@ -83,6 +88,118 @@ class TestImapL3DataProcessor(TestCase):
 
                 expected_processor.assert_called_once_with(mock_processing_input.return_value, expected_input_metadata)
                 mock_upload.assert_called_once_with(sentinel.cdf)
+
+    @patch('imap_l3_data_processor.UltraInitializer')
+    @patch('imap_l3_data_processor.UltraProcessor')
+    @patch('imap_l3_data_processor.HiL3Initializer')
+    @patch('imap_l3_data_processor.HiProcessor')
+    @patch('imap_l3_data_processor.LoInitializer')
+    @patch('imap_l3_data_processor.LoProcessor')
+    @patch('imap_l3_data_processor.imap_data_access.upload')
+    @patch('imap_l3_data_processor.argparse')
+    def test_scheduled_lo_job_invokes_initializer(self, mock_argparse, mock_upload,
+                                                  mock_lo_processor_class, mock_lo_initializer_class,
+                                                  mock_hi_processor_class, mock_hi_initializer_class,
+                                                  mock_ultra_processor_class, mock_ultra_initializer_class,
+                                                  ):
+
+        test_cases = [
+            ("hi", mock_hi_initializer_class, mock_hi_processor_class, HI_SP_MAP_DESCRIPTORS),
+            ("lo", mock_lo_initializer_class, mock_lo_processor_class, LO_SP_MAP_DESCRIPTORS),
+            ("ultra", mock_ultra_initializer_class, mock_ultra_processor_class, ULTRA_SP_MAP_DESCRIPTORS),
+        ]
+
+        for instrument, mock_initializer_class, mock_processor_class, expected_descriptors in test_cases:
+            mock_upload.reset_mock()
+            mock_argparse.reset_mock()
+
+            with self.subTest(instrument=instrument):
+                data_level = "l3"
+                descriptor = "all-maps"
+                mock_argument_parser = mock_argparse.ArgumentParser.return_value
+                mock_argument_parser.parse_args.return_value.instrument = instrument
+                mock_argument_parser.parse_args.return_value.data_level = data_level
+                mock_argument_parser.parse_args.return_value.dependency = "[]"
+                mock_argument_parser.parse_args.return_value.start_date = "20250101"
+                mock_argument_parser.parse_args.return_value.end_date = None
+                mock_argument_parser.parse_args.return_value.repointing = "repoint00022"
+                mock_argument_parser.parse_args.return_value.version = sentinel.version
+                mock_argument_parser.parse_args.return_value.descriptor = descriptor
+
+                expected_input_metadata = InputMetadata(instrument, data_level, datetime(2025, 1, 1),
+                                                        datetime(2025, 1, 1),
+                                                        sentinel.version, descriptor=descriptor,
+                                                        )
+
+                mock_initializer = mock_initializer_class.return_value
+                mock_processor = mock_processor_class.return_value
+
+                possible_map_to_produce = PossibleMapToProduce(set(), expected_input_metadata)
+                mock_initializer.get_maps_that_should_be_produced.return_value = [possible_map_to_produce]
+
+                mock_processor.process.return_value = [sentinel.cdf]
+
+                imap_l3_processor()
+
+                mock_initializer.get_maps_that_should_be_produced.assert_has_calls([
+                    call(descriptor) for descriptor in expected_descriptors
+                ])
+
+                self.assertEqual(len(expected_descriptors), mock_processor_class.call_count)
+
+                self.assertEqual(len(expected_descriptors), mock_initializer.furnish_spice_dependencies.call_count)
+                mock_initializer.furnish_spice_dependencies.assert_called_with(possible_map_to_produce)
+
+                mock_processor_class.assert_called_with(possible_map_to_produce.processing_input_collection,
+                                                        expected_input_metadata)
+                self.assertEqual(len(expected_descriptors), mock_processor.process.call_count)
+
+                self.assertEqual(len(expected_descriptors), mock_upload.call_count)
+                mock_upload.assert_called_with(sentinel.cdf)
+
+    @patch('imap_l3_data_processor.imap_data_access.upload')
+    @patch('imap_l3_data_processor.LoInitializer')
+    @patch('imap_l3_data_processor.LoProcessor')
+    @patch('imap_l3_data_processor.argparse')
+    def test_failing_to_produce_an_sp_map_continues(self, mock_argparse, mock_lo_processor, mock_lo_initializer_class,
+                                                    mock_upload):
+        mock_lo_initializer = mock_lo_initializer_class.return_value
+
+        instrument = "lo"
+        data_level = "l3"
+        descriptor = "all-maps"
+        mock_argument_parser = mock_argparse.ArgumentParser.return_value
+        mock_argument_parser.parse_args.return_value.instrument = instrument
+        mock_argument_parser.parse_args.return_value.data_level = data_level
+        mock_argument_parser.parse_args.return_value.dependency = "[]"
+        mock_argument_parser.parse_args.return_value.start_date = "20250101"
+        mock_argument_parser.parse_args.return_value.end_date = None
+        mock_argument_parser.parse_args.return_value.repointing = "repoint00022"
+        mock_argument_parser.parse_args.return_value.version = sentinel.version
+        mock_argument_parser.parse_args.return_value.descriptor = descriptor
+
+        map_to_produce_1 = PossibleMapToProduce(set(), Mock())
+        map_to_produce_2 = PossibleMapToProduce(set(), Mock())
+        map_to_produce_3 = PossibleMapToProduce(set(), Mock())
+        mock_lo_initializer.get_maps_that_should_be_produced.side_effect = [
+            [map_to_produce_1, map_to_produce_2],
+            [map_to_produce_3],
+        ]
+
+        mock_lo_processor.return_value.process.side_effect = [
+            [Path("lo_sp_map_1.cdf")],
+            ValueError("something went wrong!"),
+            [Path("lo_sp_map_2.cdf")]
+        ]
+
+        imap_l3_processor()
+
+        self.assertEqual(3, mock_lo_processor.call_count)
+
+        mock_upload.assert_has_calls([
+            call(Path("lo_sp_map_1.cdf")),
+            call(Path("lo_sp_map_2.cdf")),
+        ])
 
     @patch('imap_l3_data_processor.spiceypy')
     @patch('imap_l3_data_processor.argparse')

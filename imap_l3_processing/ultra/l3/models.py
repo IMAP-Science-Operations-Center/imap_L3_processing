@@ -4,6 +4,7 @@ from datetime import datetime
 from pathlib import Path
 
 import xarray as xr
+from imap_data_access import ScienceFilePath
 from imap_processing.ena_maps.utils.coordinates import CoordNames
 from numpy import ndarray
 from spacepy.pycdf import CDF
@@ -18,20 +19,19 @@ from imap_l3_processing.glows.l3e.glows_l3e_ultra_model import HEALPIX_INDEX_VAR
 @dataclass
 class UltraGlowsL3eData:
     epoch: datetime
+    repointing: int
     energy: ndarray
-    latitude: ndarray
-    longitude: ndarray
     healpix_index: ndarray
     survival_probability: ndarray
 
     @classmethod
     def read_from_path(cls, path_to_cdf: Path) -> UltraGlowsL3eData:
+        repointing = ScienceFilePath(path_to_cdf).repointing
         with CDF(str(path_to_cdf)) as cdf:
             return UltraGlowsL3eData(
                 epoch=cdf[EPOCH_CDF_VAR_NAME][0],
+                repointing=repointing,
                 energy=read_numeric_variable(cdf[ENERGY_VAR_NAME]),
-                latitude=read_numeric_variable(cdf["latitude"]),
-                longitude=read_numeric_variable(cdf["longitude"]),
                 healpix_index=cdf[HEALPIX_INDEX_VAR_NAME][...],
                 survival_probability=read_numeric_variable(cdf[PROBABILITY_OF_SURVIVAL_VAR_NAME]),
             )
@@ -40,6 +40,7 @@ class UltraGlowsL3eData:
 @dataclass
 class UltraL1CPSet:
     epoch: datetime
+    repointing: int
     energy: ndarray
     counts: ndarray
     exposure: ndarray
@@ -50,8 +51,10 @@ class UltraL1CPSet:
 
     @classmethod
     def read_from_path(cls, path: Path) -> UltraL1CPSet:
+        repointing = ScienceFilePath(path).repointing
         with CDF(str(path)) as cdf:
             return UltraL1CPSet(
+                repointing=repointing,
                 counts=read_numeric_variable(cdf["counts"]),
                 epoch=cdf[CoordNames.TIME.value][0],
                 energy=read_numeric_variable(cdf[CoordNames.ENERGY_ULTRA_L1C.value]),

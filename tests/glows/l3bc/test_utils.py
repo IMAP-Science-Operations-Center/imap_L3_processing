@@ -10,7 +10,7 @@ from imap_processing.spice.repoint import set_global_repoint_table_paths
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.glows.l3bc.utils import read_glows_l3a_data, \
-    get_pointing_date_range, get_best_ancillary, read_cdf_parents
+    get_pointing_date_range, get_best_ancillary
 from tests.test_helpers import get_test_data_path
 
 
@@ -56,23 +56,6 @@ class TestUtils(unittest.TestCase):
                 actual_ancillary_name = get_best_ancillary(start_date, end_date, available_ancillaries)
 
                 self.assertEqual(expected_best_ancillary_file_name, actual_ancillary_name)
-
-    @patch("imap_l3_processing.glows.l3bc.utils.imap_data_access.download")
-    def test_read_cdf_parents(self, mock_download):
-        with (TemporaryDirectory() as temp_dir):
-            cdf_downloaded_path = Path(temp_dir) / "l3b.cdf"
-
-            with CDF(str(cdf_downloaded_path), masterpath='') as cdf:
-                cdf.attrs["Parents"] = ["l3a_1.cdf", "l3a_2.cdf"]
-
-            mock_download.return_value = cdf_downloaded_path
-
-            cdf_path = "l3b.cdf"
-            parents = read_cdf_parents(cdf_path)
-
-            mock_download.assert_called_once_with(cdf_path)
-
-            self.assertEqual({"l3a_1.cdf", "l3a_2.cdf"}, parents)
 
     def test_read_glows_l3a_data(self):
         cdf = CDF(str(get_test_data_path("glows/imap_glows_l3a_hist_20100101_v001.cdf")))

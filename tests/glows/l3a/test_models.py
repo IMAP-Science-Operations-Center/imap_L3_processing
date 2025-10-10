@@ -17,7 +17,8 @@ from imap_l3_processing.glows.l3a.models import GlowsL3LightCurve, PHOTON_FLUX_C
     POSITION_ANGLE_OFFSET_STD_DEV_CDF_VAR_NAME, SPIN_AXIS_ORIENTATION_AVERAGE_CDF_VAR_NAME, \
     SPIN_AXIS_ORIENTATION_STD_DEV_CDF_VAR_NAME, SPACECRAFT_LOCATION_AVERAGE_CDF_VAR_NAME, \
     SPACECRAFT_LOCATION_STD_DEV_CDF_VAR_NAME, SPACECRAFT_VELOCITY_AVERAGE_CDF_VAR_NAME, \
-    SPACECRAFT_VELOCITY_STD_DEV_CDF_VAR_NAME, RAW_HISTOGRAM_CDF_VAR_NAME, SPIN_ANGLE_DELTA_CDF_VAR_NAME
+    SPACECRAFT_VELOCITY_STD_DEV_CDF_VAR_NAME, RAW_HISTOGRAM_CDF_VAR_NAME, SPIN_ANGLE_DELTA_CDF_VAR_NAME, \
+    START_TIME_CDF_VAR_NAME, END_TIME_CDF_VAR_NAME, REPOINTING_CDF_VAR_NAME
 from tests.swapi.cdf_model_test_case import CdfModelTestCase
 
 
@@ -28,7 +29,9 @@ class TestModels(CdfModelTestCase):
         raw_histogram = Mock()
         exposure_times: ndarray = (np.arange(360) + 100).reshape(1, -1)
         epoch: ndarray = np.array(datetime(2024, 11, 18, 12))
-        epoch_delta = np.array(43200000000000)
+        epoch_delta = np.array(43200_000_000_000)
+        start_time = datetime(2024, 11, 18).isoformat()
+        end_time = datetime(2024, 11, 19).isoformat()
         spin_angle = photon_flux + 1.8
         spin_angle_delta = np.full((1, 360), 0.5)
         latitudes: ndarray = (np.arange(360) + 360).reshape(1, -1)
@@ -57,14 +60,17 @@ class TestModels(CdfModelTestCase):
         spacecraft_velocity_average = Mock()
         spacecraft_velocity_std_dev = Mock()
 
+        repointing = 11
         data = GlowsL3LightCurve(input_metadata=Mock(),
+                                 identifier=repointing,
                                  parent_file_names=Mock(),
                                  exposure_times=exposure_times,
                                  raw_histogram=raw_histogram,
                                  number_of_bins=number_of_bins,
-                                 photon_flux=photon_flux, epoch=epoch,
-                                 epoch_delta=epoch_delta, spin_angle=spin_angle,
-                                 spin_angle_delta=spin_angle_delta,
+                                 photon_flux=photon_flux,
+                                 epoch=epoch, epoch_delta=epoch_delta,
+                                 start_time=start_time, end_time=end_time,
+                                 spin_angle=spin_angle, spin_angle_delta=spin_angle_delta,
                                  photon_flux_uncertainty=photon_flux_uncertainty,
                                  latitude=latitudes,
                                  longitude=longitudes,
@@ -91,10 +97,11 @@ class TestModels(CdfModelTestCase):
                                  )
 
         variables = data.to_data_product_variables()
-        self.assertEqual(35, len(variables))
+        self.assertEqual(38, len(variables))
 
         variables = iter(variables)
         # @formatter:off
+        self.assert_variable_attributes(next(variables), [repointing], REPOINTING_CDF_VAR_NAME)
         self.assert_variable_attributes(next(variables), photon_flux, PHOTON_FLUX_CDF_VAR_NAME)
         self.assert_variable_attributes(next(variables), photon_flux_uncertainty, PHOTON_FLUX_UNCERTAINTY_CDF_VAR_NAME)
         self.assert_variable_attributes(next(variables), raw_histogram, RAW_HISTOGRAM_CDF_VAR_NAME)
@@ -102,6 +109,8 @@ class TestModels(CdfModelTestCase):
         self.assert_variable_attributes(next(variables), number_of_bins, NUM_OF_BINS_CDF_VAR_NAME)
         self.assert_variable_attributes(next(variables), epoch, EPOCH_CDF_VAR_NAME)
         self.assert_variable_attributes(next(variables), epoch_delta, EPOCH_DELTA_CDF_VAR_NAME)
+        self.assert_variable_attributes(next(variables), [start_time], START_TIME_CDF_VAR_NAME)
+        self.assert_variable_attributes(next(variables), [end_time], END_TIME_CDF_VAR_NAME)
         self.assert_variable_attributes(next(variables), spin_angle, SPIN_ANGLE_CDF_VAR_NAME)
         self.assert_variable_attributes(next(variables), spin_angle_delta, SPIN_ANGLE_DELTA_CDF_VAR_NAME)
         self.assert_variable_attributes(next(variables), latitudes, LATITUDE_CDF_VAR_NAME)

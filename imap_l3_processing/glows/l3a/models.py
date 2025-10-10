@@ -6,6 +6,7 @@ import numpy as np
 
 from imap_l3_processing.models import DataProduct, DataProductVariable
 
+REPOINTING_CDF_VAR_NAME = "identifier"
 PHOTON_FLUX_CDF_VAR_NAME = 'photon_flux'
 PHOTON_FLUX_UNCERTAINTY_CDF_VAR_NAME = 'photon_flux_uncertainty'
 RAW_HISTOGRAM_CDF_VAR_NAME = 'raw_histogram'
@@ -13,6 +14,8 @@ EXPOSURE_TIMES_CDF_VAR_NAME = 'exposure_times'
 NUM_OF_BINS_CDF_VAR_NAME = 'number_of_bins'
 EPOCH_CDF_VAR_NAME = "epoch"
 EPOCH_DELTA_CDF_VAR_NAME = "epoch_delta"
+START_TIME_CDF_VAR_NAME = "start_time"
+END_TIME_CDF_VAR_NAME = "end_time"
 SPIN_ANGLE_CDF_VAR_NAME = "spin_angle"
 SPIN_ANGLE_DELTA_CDF_VAR_NAME = "spin_angle_delta"
 LATITUDE_CDF_VAR_NAME = "ecliptic_lat"
@@ -98,6 +101,7 @@ class GlowsL2Data(TypedDict):
 
 @dataclass
 class GlowsL3LightCurve(DataProduct):
+    identifier: int
     photon_flux: np.ndarray[float]
     photon_flux_uncertainty: np.ndarray[float]
     raw_histogram: np.ndarray[float]
@@ -105,6 +109,8 @@ class GlowsL3LightCurve(DataProduct):
     number_of_bins: np.ndarray[int]
     epoch: np.ndarray[datetime]
     epoch_delta: np.ndarray[float]
+    start_time: str
+    end_time: str
     spin_angle: np.ndarray[float]
     spin_angle_delta: np.ndarray[float]
     latitude: np.ndarray[float]
@@ -134,6 +140,7 @@ class GlowsL3LightCurve(DataProduct):
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
+            DataProductVariable(REPOINTING_CDF_VAR_NAME, [self.identifier]),
             DataProductVariable(PHOTON_FLUX_CDF_VAR_NAME, self.photon_flux),
             DataProductVariable(PHOTON_FLUX_UNCERTAINTY_CDF_VAR_NAME, self.photon_flux_uncertainty),
             DataProductVariable(RAW_HISTOGRAM_CDF_VAR_NAME, self.raw_histogram),
@@ -141,6 +148,8 @@ class GlowsL3LightCurve(DataProduct):
             DataProductVariable(NUM_OF_BINS_CDF_VAR_NAME, self.number_of_bins),
             DataProductVariable(EPOCH_CDF_VAR_NAME, self.epoch),
             DataProductVariable(EPOCH_DELTA_CDF_VAR_NAME, self.epoch_delta),
+            DataProductVariable(START_TIME_CDF_VAR_NAME, [self.start_time]),
+            DataProductVariable(END_TIME_CDF_VAR_NAME, [self.end_time]),
             DataProductVariable(SPIN_ANGLE_CDF_VAR_NAME, self.spin_angle),
             DataProductVariable(SPIN_ANGLE_DELTA_CDF_VAR_NAME, self.spin_angle_delta),
             DataProductVariable(LATITUDE_CDF_VAR_NAME, self.latitude),

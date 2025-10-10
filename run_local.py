@@ -17,6 +17,7 @@ import spiceypy
 import xarray as xr
 from imap_data_access.processing_input import AncillaryInput, ProcessingInputCollection, ScienceInput, \
     RepointInput
+from imap_processing.spice.geometry import SpiceFrame
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.codice.l3.hi.codice_hi_processor import CodiceHiProcessor
@@ -56,7 +57,7 @@ from imap_l3_processing.lo.lo_processor import perform_spectral_fit, LoProcessor
 from imap_l3_processing.maps.hilo_l3_survival_dependencies import HiLoL3SurvivalDependencies, \
     HiL3SingleSensorFullSpinDependencies
 from imap_l3_processing.maps.map_models import RectangularSpectralIndexDataProduct, RectangularIntensityDataProduct, \
-    combine_rectangular_intensity_map_data, HealPixIntensityMapData, RectangularIntensityMapData
+    combine_rectangular_intensity_map_data, RectangularIntensityMapData
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density import \
     AlphaTemperatureDensityCalibrationTable
@@ -732,12 +733,12 @@ def run_glows_l3a(file_path):
 
         dependencies = GlowsL3ADependencies(l2_glows_data, {
             "calibration_data": get_test_instrument_team_data_path(
-                "glows/imap_glows_calibration-data_20250101_v002.dat"),
-            "settings": get_test_instrument_team_data_path("glows/imap_glows_pipeline-settings_20250101_v001.json"),
+                "glows/imap_glows_calibration-data_20100101_v002.dat"),
+            "settings": get_test_instrument_team_data_path("glows/imap_glows_pipeline-settings_20100101_v001.json"),
             "time_dependent_bckgrd": get_test_instrument_team_data_path(
-                "glows/imap_glows_time-dep-bckgrd_20250101_v001.dat"),
+                "glows/imap_glows_time-dep-bckgrd_20100101_v001.dat"),
             "extra_heliospheric_bckgrd": get_test_instrument_team_data_path(
-                "glows/imap_glows_map-of-extra-helio-bckgrd_20250101_v002.dat"),
+                "glows/imap_glows_map-of-extra-helio-bckgrd_20100101_v002.dat"),
         })
 
         processor = GlowsProcessor(ProcessingInputCollection(), input_metadata)
@@ -1024,14 +1025,15 @@ if __name__ == "__main__":
     if "swapi" in sys.argv:
         if "l3a" in sys.argv:
             paths = create_swapi_l3a_cdf(
-                "tests/test_data/swapi/imap_swapi_proton-density-temperature-lut_20240905_v001.dat",
-                "tests/test_data/swapi/imap_swapi_alpha-density-temperature-lut_20240920_v000.dat",
-                "tests/test_data/swapi/imap_swapi_clock-angle-and-flow-deflection-lut_20240918_v001.dat",
-                "tests/test_data/swapi/imap_swapi_energy-gf-pui-lut_20100101_v001.csv",
-                "tests/test_data/swapi/imap_swapi_instrument-response-lut_20241023_v000.zip",
-                "tests/test_data/swapi/imap_swapi_l2_density-of-neutral-helium-lut-text-not-cdf_20241023_v002.cdf",
-                "tests/test_data/swapi/imap_swapi_efficiency-lut_20241020_v000.dat",
-                str(get_test_data_path("swapi/imap_swapi_l2_sci_20100101_v001.cdf")),
+                str(get_test_data_path("swapi/imap_swapi_proton-density-temperature-lut_20240905_v001.dat")),
+                str(get_test_data_path("swapi/imap_swapi_alpha-density-temperature-lut_20240920_v000.dat")),
+                str(get_test_data_path("swapi/imap_swapi_clock-angle-and-flow-deflection-lut_20240918_v001.dat")),
+                str(get_test_data_path("swapi/imap_swapi_energy-gf-pui-lut_20100101_v004.csv")),
+                str(get_test_data_path("swapi/imap_swapi_instrument-response-lut_20241023_v000.zip")),
+                str(get_test_data_path(
+                    "swapi/imap_swapi_l2_density-of-neutral-helium-lut-text-not-cdf_20241023_v002.cdf")),
+                str(get_test_data_path("swapi/imap_swapi_efficiency-lut_20241020_v000.dat")),
+                str(get_test_data_path("swapi/imap_swapi_l2_50-sweeps_20250606_v003.cdf")),
             )
             print(paths)
         if "l3b" in sys.argv:
@@ -1064,9 +1066,10 @@ if __name__ == "__main__":
             path = create_hit_direct_event_cdf()
             print(f"hit direct event data product: {path}")
         else:
-            mag_data = read_l1d_mag_data(get_test_data_path("mag/imap_mag_l1d_norm-mago_20250101_v001.cdf"))
+            mag_data = read_l1d_mag_data(
+                r"C:\Users\Petty\Downloads\HIT Validation-20250922T131655Z-1-001\HIT Validation\imap_mag_l1d_norm-mago_20100106_v001.cdf")
             hit_data = read_l2_hit_data(
-                get_test_data_path("hit/imap_hit_l2_macropixel-intensity_20250101_v003.cdf"))
+                r"C:\Users\Petty\Downloads\HIT Validation-20250922T131655Z-1-001\HIT Validation\imap_hit_l2_macropixel-intensity_20100106_v001.cdf")
             dependencies = HITL3SectoredDependencies(mag_l1d_data=mag_data, data=hit_data)
             print(f"hit macropixel data product: {create_hit_sectored_cdf(dependencies)}")
 
@@ -1120,7 +1123,7 @@ if __name__ == "__main__":
                 l1c_paths=l1c_paths,
                 glows_l3e_paths=glows_l3_paths,
                 l2_descriptor="h90-ena-h-sf-nsp-ram-hae-4deg-6mo")
-            create_hi_l3_survival_corrected_cdf(survival_dependencies, spacing_degree=4)
+            create_hi_l3_survival_corrected_cdf(survival_dependencies, 4)
 
         if do_all or "spectral-index" in sys.argv:
             dependencies = HiL3SpectralIndexDependencies.from_file_paths(
@@ -1224,19 +1227,19 @@ if __name__ == "__main__":
 
             # @formatter:off
             missing_map_and_pset_paths, [l2_map_path, *l1c_dependency_paths] = try_get_many_run_local_paths([
-                "ultra/20250515-20250720/imap_ultra_l2_u90-ena-h-sf-nsp-full-hae-4deg-6mo_20250515_v011.cdf",
-                "ultra/l1c_from_nat/imap_ultra_l1c_90sensor-spacecraftpset_20250515-repoint00001_v001.cdf",
-                "ultra/l1c_from_nat/imap_ultra_l1c_90sensor-spacecraftpset_20250615-repoint00032_v001.cdf",
-                "ultra/l1c_from_nat/imap_ultra_l1c_90sensor-spacecraftpset_20250715-repoint00062_v001.cdf",
-                "ultra/l1c_from_nat/imap_ultra_l1c_90sensor-spacecraftpset_20250720-repoint00067_v001.cdf",
+                "ultra/20250415-20250419/imap_ultra_l2_u90-ena-h-sf-nsp-full-hae-4deg-6mo_20250415_v001.cdf",
+                "ultra/20250415-20250419/ultra_l1c/imap_ultra_l1c_45sensor-spacecraftpset_20250415-repoint00001_v001.cdf",
+                "ultra/20250415-20250419/ultra_l1c/imap_ultra_l1c_45sensor-spacecraftpset_20250416-repoint00002_v010.cdf",
+                "ultra/20250415-20250419/ultra_l1c/imap_ultra_l1c_45sensor-spacecraftpset_20250417-repoint00003_v010.cdf",
+                "ultra/20250415-20250419/ultra_l1c/imap_ultra_l1c_45sensor-spacecraftpset_20250418-repoint00004_v010.cdf",
             ])
             # @formatter:on
 
             missing_glows_paths, [*l3e_glows_paths] = try_get_many_run_local_paths([
-                "ultra/20250515-20250720/glows_l3e/imap_glows_l3e_survival-probability-ultra_20250515_v011.cdf",
-                "ultra/20250515-20250720/glows_l3e/imap_glows_l3e_survival-probability-ultra_20250615_v011.cdf",
-                "ultra/20250515-20250720/glows_l3e/imap_glows_l3e_survival-probability-ultra_20250715_v011.cdf",
-                "ultra/20250515-20250720/glows_l3e/imap_glows_l3e_survival-probability-ultra_20250720_v011.cdf",
+                "ultra/20250415-20250419/glows_l3e/imap_glows_l3e_survival-probability-ultra_20250415_v010.cdf",
+                "ultra/20250415-20250419/glows_l3e/imap_glows_l3e_survival-probability-ultra_20250416_v010.cdf",
+                "ultra/20250415-20250419/glows_l3e/imap_glows_l3e_survival-probability-ultra_20250417_v010.cdf",
+                "ultra/20250415-20250419/glows_l3e/imap_glows_l3e_survival-probability-ultra_20250418_v010.cdf",
             ])
             if missing_glows_paths or missing_map_and_pset_paths:
                 create_l1c_and_glows_with_matching_date_range(datetime(2025, 4, 15, 12), datetime(2025, 4, 19, 12))
@@ -1244,12 +1247,15 @@ if __name__ == "__main__":
             l1c_dependency = [UltraL1CPSet.read_from_path(l1c_dependency_path) for l1c_dependency_path in
                               l1c_dependency_paths]
             l3e_dependencies = [UltraGlowsL3eData.read_from_path(path) for path in l3e_glows_paths]
-            l2_map_dependency = HealPixIntensityMapData.read_from_path(l2_map_path)
 
-            dependencies = UltraL3Dependencies(ultra_l1c_pset=l1c_dependency, glows_l3e_sp=l3e_dependencies,
-                                               ultra_l2_map=l2_map_dependency)
+            dependencies = UltraL3Dependencies.from_file_paths(
+                l2_map_path,
+                l1c_dependency_paths,
+                l3e_glows_paths
+            )
 
-            healpix_sp_corrected_data = processor._process_survival_probability(deps=dependencies)
+            healpix_sp_corrected_data = processor._process_survival_probability(deps=dependencies,
+                                                                                spice_frame_name=SpiceFrame.IMAP_HAE)
             rectangular_sp_data_product = processor._process_healpix_intensity_to_rectangular(healpix_sp_corrected_data,
                                                                                               spacing_degree)
 

@@ -36,10 +36,10 @@ OBS_DATE_VAR_NAME = "obs_date"
 OBS_DATE_RANGE_VAR_NAME = "obs_date_range"
 SOLID_ANGLE_VAR_NAME = "solid_angle"
 ENA_SPECTRAL_INDEX_VAR_NAME = "ena_spectral_index"
-ENA_SPECTRAL_INDEX_STAT_UNC_VAR_NAME = "ena_spectral_index_stat_unc"
+ENA_SPECTRAL_INDEX_STAT_UNC_VAR_NAME = "ena_spectral_index_stat_uncert"
 
 ENA_INTENSITY_VAR_NAME = "ena_intensity"
-ENA_INTENSITY_STAT_UNC_VAR_NAME = "ena_intensity_stat_unc"
+ENA_INTENSITY_STAT_UNC_VAR_NAME = "ena_intensity_stat_uncert"
 ENA_INTENSITY_SYS_ERR_VAR_NAME = "ena_intensity_sys_err"
 
 PIXEL_INDEX_VAR_NAME = "pixel_index"
@@ -431,6 +431,7 @@ def calculate_datetime_weighted_average(data: np.ndarray, weights: np.ndarray, a
 @dataclass
 class GlowsL3eRectangularMapInputData:
     epoch: datetime
+    repointing: int
     energy: np.ndarray
     spin_angle: np.ndarray
     probability_of_survival: np.ndarray
@@ -440,5 +441,6 @@ class GlowsL3eRectangularMapInputData:
 class InputRectangularPointingSet:
     epoch: datetime
     epoch_j2000: np.ndarray
+    repointing: int
     exposure_times: np.ndarray
     esa_energy_step: np.ndarray

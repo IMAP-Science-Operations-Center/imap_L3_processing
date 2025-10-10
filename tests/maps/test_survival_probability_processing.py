@@ -10,7 +10,7 @@ from imap_l3_processing.maps.hilo_l3_survival_dependencies import HiLoL3Survival
 from imap_l3_processing.maps.map_descriptors import PixelSize, parse_map_descriptor
 from imap_l3_processing.maps.map_models import RectangularIntensityMapData
 from imap_l3_processing.maps.survival_probability_processing import process_survival_probabilities
-from tests.maps.test_builders import create_h1_l3_data, create_l1c_pset, create_l3e_pset
+from tests.maps.test_builders import create_rectangular_intensity_map_data, create_l1c_pset, create_l3e_pset
 from tests.spice_test_case import SpiceTestCase
 
 
@@ -24,7 +24,7 @@ class TestSurvivalProbabilityProcessing(SpiceTestCase):
         input_map_flux = rng.random((1, 9, 90, 45))
         epoch = datetime.now()
 
-        input_map: RectangularIntensityMapData = create_h1_l3_data(epoch=[epoch], flux=input_map_flux)
+        input_map: RectangularIntensityMapData = create_rectangular_intensity_map_data(epoch=[epoch], flux=input_map_flux)
 
         intensity_map_data = input_map.intensity_map_data
         input_map.intensity_map_data.energy = sentinel.hi_l2_energies
@@ -114,9 +114,19 @@ class TestSurvivalProbabilityProcessing(SpiceTestCase):
         t2 = datetime(2025, 5, 7, 12)
         t3 = datetime(2025, 5, 8, 12)
         t4 = datetime(2025, 5, 15, 12)
-        l1c_psets = [create_l1c_pset(t1), create_l1c_pset(t2), create_l1c_pset(t3), create_l1c_pset(t4)]
-        l3e_psets = [create_l3e_pset(t1), create_l3e_pset(t3), create_l3e_pset(t4)]
-        l2_intensity_map = create_h1_l3_data()
+
+        l1c_psets = [
+            create_l1c_pset(epoch=t1, repointing=1),
+            create_l1c_pset(epoch=t2, repointing=2),
+            create_l1c_pset(epoch=t3, repointing=3),
+            create_l1c_pset(epoch=t4, repointing=4)
+        ]
+        l3e_psets = [
+            create_l3e_pset(epoch=t1, repointing=1),
+            create_l3e_pset(epoch=t3, repointing=3),
+            create_l3e_pset(epoch=t4, repointing=4)
+        ]
+        l2_intensity_map = create_rectangular_intensity_map_data()
 
         descriptor = parse_map_descriptor("h90-ena-h-sf-nsp-ram-hae-4deg-3mo")
         survival_dependencies = HiLoL3SurvivalDependencies(l2_intensity_map, l1c_psets, l3e_psets, descriptor)

@@ -6,6 +6,7 @@ import numpy as np
 import spiceypy
 import xarray as xr
 from imap_processing.ena_maps.utils.coordinates import CoordNames
+from imap_processing.quality_flags import ImapPSETUltraFlags
 from imap_processing.spice.time import str_to_et
 from imap_processing.ultra.l1c.ultra_l1c_pset_bins import build_energy_bins
 from spacepy import pycdf
@@ -16,15 +17,17 @@ from tests.test_helpers import get_run_local_data_path
 DEFAULT_RECT_SPACING_DEG_L1C = 0.5
 DEFAULT_HEALPIX_NSIDE_L1C = 128
 
-
+# TODO: Add ability to mock with/without energy dim to exposure_factor
+# The Helio frame L1C will have the energy dimension, but the spacecraft frame will not.
 def create_example_ultra_l1c_pset(
-        nside: int = DEFAULT_HEALPIX_NSIDE_L1C,
-        stripe_center_lat: int = 0,
-        width_scale: float = 10.0,
-        counts_scaling_params: tuple[int, float] = (100, 0.01),
-        peak_exposure: float = 1000.0,
-        timestr: str = "2025-09-01T00:00:00",
-        head: str = "45",
+    nside: int = DEFAULT_HEALPIX_NSIDE_L1C,
+    stripe_center_lat: int = 0,
+    width_scale: float = 10.0,
+    counts_scaling_params: tuple[int, float] = (100, 0.01),
+    peak_exposure: float = 1000.0,
+    timestr: str = "2025-01-01T00:00:00",
+    head: str = "45",
+    energy_dependent_exposure: bool = False,
 ) -> xr.Dataset:
     """
     Mock the L1C PSET product with recognizable but unrealistic counts.
@@ -79,8 +82,13 @@ def create_example_ultra_l1c_pset(
         The time string for the epoch (default is "2025-01-01T00:00:00").
     head : str, optional
         The sensor head (either '45' or '90') (default is '45').
+    energy_dependent_exposure : bool, optional
+        Whether the exposure time is energy dependent (default is False).
+        If True, the exposure time will have an additional energy dimension.
+        All the exposure times will be the same for each energy bin.
     """
-    _, energy_bin_midpoints, _ = build_energy_bins()
+    energy_intervals, energy_bin_midpoints, _ = build_energy_bins()
+    energy_bin_delta = np.diff(energy_intervals, axis=1).squeeze()
     num_energy_bins = len(energy_bin_midpoints)
     npix = hp.nside2npix(nside)
     counts = np.zeros(npix)
@@ -95,7 +103,7 @@ def create_example_ultra_l1c_pset(
     # Calculate probability based on distance from target latitude
     lat_diff = np.abs(lat_pix - stripe_center_lat)
     prob_scaling_factor = counts_scaling_params[1] * np.exp(
-        -(lat_diff ** 2) / (2 * width_scale ** 2)
+        -(lat_diff**2) / (2 * width_scale**2)
     )
     # Generate counts using binomial distribution
     rng = np.random.default_rng(seed=42)
@@ -106,10 +114,31 @@ def create_example_ultra_l1c_pset(
         ]
     )
 
-    # Generate exposure times using gaussian distribution
-    exposure_time = peak_exposure * (prob_scaling_factor / prob_scaling_factor.max())
-    exposure_time = np.expand_dims(exposure_time, axis=(0, 1))
-    exposure_time = np.repeat(exposure_time, num_energy_bins, axis=1)
+    # Generate exposure times using gaussian distribution, but wider
+    prob_scaling_factor_exptime = counts_scaling_params[1] * np.exp(
+        -(lat_diff**2) / (2 * (3 * width_scale) ** 2)
+    )
+    exposure_time = (
+        peak_exposure
+        * (prob_scaling_factor_exptime / prob_scaling_factor_exptime.max())
+    )[np.newaxis, :]
+
+    # Exposure time/factor can optionally be energy dependent
+    if energy_dependent_exposure:
+        # Add energy dimension to exposure time as axis 1
+        exposure_time = np.repeat(
+            exposure_time[:, np.newaxis, :], num_energy_bins, axis=1
+        )
+        exposure_dims = [
+            CoordNames.TIME.value,
+            CoordNames.ENERGY_ULTRA_L1C.value,
+            CoordNames.HEALPIX_INDEX.value,
+        ]
+    else:
+        exposure_dims = [
+            CoordNames.TIME.value,
+            CoordNames.HEALPIX_INDEX.value,
+        ]
 
     # Ensure counts are integers
     counts = counts.astype(int)
@@ -121,6 +150,11 @@ def create_example_ultra_l1c_pset(
     tdb_et = str_to_et(timestr)
     tt_j2000ns = spiceypy.unitim(tdb_et, "ET", "TT") * 1e9
 
+    logical_source = f"imap_ultra_l1c_{head}sensor-spacecraftpset"
+    logical_file_id = (
+        f"{logical_source}_{timestr[:4]}{timestr[5:7]}{timestr[8:10]}-repointNNNNN_vNNN"
+    )
+
     pset_product = xr.Dataset(
         {
             "counts": (
@@ -131,12 +165,16 @@ def create_example_ultra_l1c_pset(
                 ],
                 counts,
             ),
-            "exposure_time": (
+            "background_rates": (
                 [
                     CoordNames.TIME.value,
                     CoordNames.ENERGY_ULTRA_L1C.value,
-                    CoordNames.HEALPIX_INDEX.value
+                    CoordNames.HEALPIX_INDEX.value,
                 ],
+                np.full_like(counts, 0.05, dtype=float),
+            ),
+            "exposure_factor": (
+                exposure_dims,  # special case: optionally energy dependent exposure
                 exposure_time,
             ),
             "sensitivity": (
@@ -155,33 +193,30 @@ def create_example_ultra_l1c_pset(
                 [CoordNames.HEALPIX_INDEX.value],
                 lat_pix,
             ),
+            "energy_bin_delta": (
+                [CoordNames.ENERGY_ULTRA_L1C.value],
+                energy_bin_delta,
+            ),
+            "quality_flags": (
+                [CoordNames.TIME.value, CoordNames.HEALPIX_INDEX.value],
+                np.full((1, npix), ImapPSETUltraFlags.NONE.value, dtype=np.uint16),
+            ),
         },
         coords={
             CoordNames.TIME.value: [
-                tt_j2000ns
+                tt_j2000ns,
             ],
-            CoordNames.ENERGY_ULTRA_L1C.value: energy_bin_midpoints,
+            CoordNames.ENERGY_ULTRA_L1C.value: xr.DataArray(
+                energy_bin_midpoints, dims=(CoordNames.ENERGY_ULTRA_L1C.value,)
+            ),
             CoordNames.HEALPIX_INDEX.value: pix_indices,
         },
         attrs={
-            "Logical_file_id": (
-                f"imap_ultra_l2_{head}sensor-map_{timestr[:4]}"
-                f"{timestr[5:7]}{timestr[8:10]}-repointNNNNN_vNNN"
-            ),
-            "Logical_source": f"imap_ultra_l2_{head}sensor-map",
-            "Data_version": "v001"
+            "Logical_file_id": logical_file_id,
+            "Logical_source": logical_source,
+            "Data_version": "001",
         },
     )
-
-    pset_product["counts"].attrs["VAR_TYPE"] = "data"
-    pset_product["exposure_time"].attrs["VAR_TYPE"] = "data"
-    pset_product["sensitivity"].attrs["VAR_TYPE"] = "data"
-    pset_product[CoordNames.AZIMUTH_L1C.value].attrs["VAR_TYPE"] = "data"
-    pset_product[CoordNames.ELEVATION_L1C.value].attrs["VAR_TYPE"] = "data"
-
-    pset_product.coords[CoordNames.TIME.value].attrs["VAR_TYPE"] = "support_data"
-    pset_product.coords[CoordNames.ENERGY_ULTRA_L1C.value].attrs["VAR_TYPE"] = "support_data"
-    pset_product.coords[CoordNames.HEALPIX_INDEX.value].attrs["VAR_TYPE"] = "support_data"
 
     return pset_product
 
@@ -189,15 +224,16 @@ def create_example_ultra_l1c_pset(
 def _write_ultra_l1c_cdf_with_parents(
         out_path: Path = get_run_local_data_path("ultra/fake_l1c_psets/test_pset.cdf"),
         date: str = "2025-09-01T00:00:00"):
-    out_xarray = create_example_ultra_l1c_pset(nside=1, timestr=date)
+    out_xarray = create_example_ultra_l1c_pset(nside=1, timestr=date, energy_dependent_exposure=True)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.unlink(missing_ok=True)
 
     with CDF(str(out_path), readonly=False, masterpath="") as cdf:
         cdf.new("counts", out_xarray["counts"].values)
-        cdf.new("exposure_factor", out_xarray["exposure_time"].values)
+        cdf.new("exposure_factor", out_xarray["exposure_factor"].values)
         cdf.new("background_rates", np.full_like(out_xarray["counts"], 0.001))
         cdf.new("observation_time", np.full_like(out_xarray["counts"], 1))
+        cdf.new("quality_flags", out_xarray["quality_flags"].values)
         cdf.new("sensitivity", out_xarray["sensitivity"].values)
         cdf.new(CoordNames.ELEVATION_L1C.value, out_xarray[CoordNames.ELEVATION_L1C.value].values, recVary=False)
         cdf.new(CoordNames.AZIMUTH_L1C.value, out_xarray[CoordNames.AZIMUTH_L1C.value].values, recVary=False)
@@ -217,6 +253,7 @@ def _write_ultra_l1c_cdf_with_parents(
                      "epoch")
         _add_depends(cdf["observation_time"], [CoordNames.ENERGY_ULTRA_L1C.value, CoordNames.HEALPIX_INDEX.value],
                      "epoch")
+        _add_depends(cdf["quality_flags"], [CoordNames.ENERGY_ULTRA_L1C.value, CoordNames.HEALPIX_INDEX.value], "epoch")
         _add_depends(cdf["energy_bin_delta"], [CoordNames.ENERGY_ULTRA_L1C.value])
 
         for var in cdf:

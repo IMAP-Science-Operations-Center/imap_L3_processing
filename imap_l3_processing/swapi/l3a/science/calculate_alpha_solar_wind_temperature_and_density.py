@@ -4,6 +4,7 @@ import numpy as np
 import scipy
 import uncertainties
 from numpy import ndarray
+from scipy.interpolate import LinearNDInterpolator
 from scipy.special import erf
 from uncertainties import correlated_values, ufloat
 from uncertainties.unumpy import uarray, nominal_values, std_devs
@@ -16,14 +17,10 @@ from imap_l3_processing.swapi.l3a.science.calculate_alpha_solar_wind_speed impor
 
 class AlphaTemperatureDensityCalibrationTable:
     def __init__(self, lookup_table_array: np.ndarray):
-        solar_wind_speed = np.unique(lookup_table_array[:, 0])
-        fit_density = np.unique(lookup_table_array[:, 1])
-        fit_temperature = np.unique(lookup_table_array[:, 3])
-        self.grid = (solar_wind_speed, fit_density, fit_temperature)
-        values_shape = tuple(len(x) for x in self.grid)
+        coords = lookup_table_array[:, [0, 1, 3]]
+        values = lookup_table_array[:, [2, 4]]
 
-        self.density_grid = lookup_table_array[:, 2].reshape(values_shape)
-        self.temperature_grid = lookup_table_array[:, 4].reshape(values_shape)
+        self.interp = LinearNDInterpolator(coords, values)
 
     @classmethod
     def from_file(cls, file_path: Path):
@@ -31,12 +28,12 @@ class AlphaTemperatureDensityCalibrationTable:
         return cls(lookup_table)
 
     @uncertainties.wrap
-    def lookup_temperature(self, sw_speed, density, temperature):
-        return scipy.interpolate.interpn(self.grid, self.temperature_grid, [sw_speed, density, temperature])[0]
+    def lookup_temperature(self, sw_speed, fit_density, fit_temperature):
+        return self.interp(sw_speed, fit_density, fit_temperature)[1]
 
     @uncertainties.wrap
-    def lookup_density(self, sw_speed, density, temperature):
-        return scipy.interpolate.interpn(self.grid, self.density_grid, [sw_speed, density, temperature])[0]
+    def lookup_density(self, sw_speed, fit_density, fit_temperature):
+        return self.interp(sw_speed, fit_density, fit_temperature)[0]
 
 
 def alpha_count_rate_model(efficiency, ev_per_q, density_per_cm3, temperature, bulk_flow_speed_km_per_s):

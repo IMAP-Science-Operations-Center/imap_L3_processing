@@ -46,7 +46,8 @@ def create_hi_full_spin_deps(
         glows_files,
         f"h{sensor}-ena-h-sf-nsp-anti-hae-4deg-6mo")
 
-    input_metadata = InputMetadata("hi", "l3", None, None, "v001", f"h90-ena-h-sf-sp-full-hae-4deg-6mo")
+    input_metadata = InputMetadata("hi", "l3", datetime(year=2025, month=4, day=15), None, "v001",
+                                   f"h90-ena-h-sf-sp-full-hae-4deg-6mo")
 
     ram_data = survival_probability_processing.process_survival_probabilities(ramified_map_deps, SpiceFrame.ECLIPJ2000)
     ram_exposure_is_zero = (np.isnan(ram_data.intensity_map_data.ena_intensity)
@@ -56,7 +57,7 @@ def create_hi_full_spin_deps(
         RectangularIntensityDataProduct(input_metadata, ram_data),
         delete_if_present=True, folder_path=output_dir)
     ram_logical_source = f"imap_hi_l2_h{sensor}-ena-h-sf-nsp-ram-hae-4deg-6mo_20250415_v001"
-    with CDF(ram_cdf_path, readonly=False) as ram:
+    with CDF(str(ram_cdf_path), readonly=False) as ram:
         ram["exposure_factor"] = np.where(ram_exposure_is_zero, 0, ram_data.intensity_map_data.exposure_factor)
         ram["ena_intensity"] = np.where(ram_exposure_is_zero, ram["ena_intensity"].attrs["FILLVAL"],
                                         original_intensity)
@@ -66,7 +67,8 @@ def create_hi_full_spin_deps(
 
     shutil.move(ram_cdf_path, output_dir / f"{ram_logical_source}.cdf")
 
-    antiram_data = survival_probability_processing.process_survival_probabilities(antiramified_map_deps, SpiceFrame.ECLIPJ2000)
+    antiram_data = survival_probability_processing.process_survival_probabilities(antiramified_map_deps,
+                                                                                  SpiceFrame.ECLIPJ2000)
     antiram_exposure_is_zero = (np.isnan(antiram_data.intensity_map_data.ena_intensity)
                                 | (antiram_data.intensity_map_data.ena_intensity == 0))
 
@@ -75,7 +77,7 @@ def create_hi_full_spin_deps(
         delete_if_present=True, folder_path=output_dir)
     antiram_logical_source = f"imap_hi_l2_h{sensor}-ena-h-sf-nsp-anti-hae-4deg-6mo_20250415_v001"
 
-    with CDF(antiram_cdf_path, readonly=False) as antiram:
+    with CDF(str(antiram_cdf_path), readonly=False) as antiram:
         antiram["exposure_factor"] = np.where(antiram_exposure_is_zero, 0,
                                               antiram_data.intensity_map_data.exposure_factor)
         antiram["ena_intensity"] = np.where(antiram_exposure_is_zero, antiram["ena_intensity"].attrs["FILLVAL"],

@@ -8,8 +8,9 @@ from typing import Type, Optional, Callable, TypeVar
 from unittest import SkipTest
 from unittest.mock import Mock
 
+import imap_data_access
 import numpy as np
-from imap_data_access import ScienceFilePath, AncillaryFilePath
+from imap_data_access import ScienceFilePath, AncillaryFilePath, SPICEFilePath
 from imap_data_access.file_validation import generate_imap_file_path
 
 import tests
@@ -73,7 +74,9 @@ def build_moment_fit_results(moments: Moments = None, chisq: float = 1, number_o
     return MomentFitResults(moments=moments, chisq=chisq, number_of_points=number_of_points,
                             regress_result=regress_result)
 
+
 T = TypeVar('T')
+
 
 def create_dataclass_mock(obj: Type[T], **kwargs) -> T:
     return Mock(spec=[field.name for field in fields(obj)], **kwargs)
@@ -149,38 +152,47 @@ def environment_variables(env_vars: dict):
     return decorator
 
 
-def create_glows_mock_query_results(file_names: list[str], ingestion_dates: Optional[list[datetime]] = None) -> list[dict]:
+def create_mock_query_results(file_names: list[Path | str], ingestion_dates: Optional[list[datetime]] = None) -> list[
+    dict]:
     file_paths = []
 
     if ingestion_dates is None:
         ingestion_dates = [datetime(2000, 1, 1)] * len(file_names)
 
     for fn, ingestion_date in zip(file_names, ingestion_dates):
-        imap_file_path = generate_imap_file_path(fn)
+        imap_file_path = generate_imap_file_path(Path(fn).name)
+        file_path = (str(imap_file_path.construct_path().relative_to(imap_data_access.config["DATA_DIR"]))
+                     .replace('\\', '/'))
+
         match imap_file_path:
             case ScienceFilePath():
                 file_paths.append({
-                    "instrument": "glows",
+                    "instrument": imap_file_path.instrument,
                     "data_level": imap_file_path.data_level,
                     "descriptor": imap_file_path.descriptor,
                     "start_date": imap_file_path.start_date,
                     "ingestion_date": ingestion_date.strftime("%Y%m%d %H:%M:%S"),
                     "version": imap_file_path.version,
                     "cr": imap_file_path.cr,
-                    "file_path": str(imap_file_path.filename),
+                    "file_path": file_path,
                     "repointing": imap_file_path.repointing
                 })
             case AncillaryFilePath():
                 file_paths.append({
-                    "instrument": "glows",
+                    "instrument": imap_file_path.instrument,
                     "descriptor": imap_file_path.descriptor,
                     "start_date": imap_file_path.start_date,
                     "end_date": imap_file_path.end_date,
                     "ingestion_date": ingestion_date.strftime("%Y%m%d %H:%M:%S"),
                     "version": imap_file_path.version,
-                    "file_path": str(imap_file_path.filename),
+                    "file_path": file_path,
                 })
+            case SPICEFilePath():
+                continue
+            case _:
+                raise NotImplementedError(f"Unexpected file path type {imap_file_path}")
     return file_paths
+
 
 @dataclass
 class PeriodicallyRunTest:
@@ -215,8 +227,10 @@ def run_periodically(frequency: timedelta):
 
     return run_periodically_decorator
 
+
 def with_tempdir(fn: Callable) -> Callable:
     def wrapped_fn(self, *args, **kwargs):
         with tempfile.TemporaryDirectory() as tmpdir:
             fn(self, Path(tmpdir), *args, **kwargs)
+
     return wrapped_fn

@@ -31,18 +31,14 @@ class TestCalculateAlphaSolarWindTemperatureAndDensity(TestCase):
 
         calibration_table = AlphaTemperatureDensityCalibrationTable.from_file(file_path)
 
-        self.assertEqual((15, 16, 23), (
-            len(calibration_table.grid[0]), len(calibration_table.grid[1]), len(calibration_table.grid[2])))
-        self.assertEqual((15, 16, 23), calibration_table.density_grid.shape)
-        self.assertEqual((15, 16, 23), calibration_table.temperature_grid.shape)
-
         sw_speed = ufloat(460, 10)
         density = ufloat(0.25, 0.03)
         temperature = ufloat(6.0000e+05, 100)
 
         self.assertAlmostEqual(0.39999999,
                                calibration_table.lookup_density(sw_speed, density, temperature).nominal_value)
-        self.assertEqual(7.2e+05, calibration_table.lookup_temperature(sw_speed, density, temperature).nominal_value)
+        self.assertAlmostEqual(7.2e+05,
+                               calibration_table.lookup_temperature(sw_speed, density, temperature).nominal_value)
 
     def test_calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps(self):
         speed = ufloat(496.490, 2.811)
@@ -97,16 +93,16 @@ class TestCalculateAlphaSolarWindTemperatureAndDensity(TestCase):
             ufloat(0, 5.585696017507577),
             ufloat(30.4, 4.298837052040936),
             ufloat(8.8, 2.638181191654584),
-        ])*10
+        ]) * 10
         efficiency = 0.7
 
         mock_calculate_combine_sweeps.return_value = peak_coincidence_rates, peak_energies
         mock_get_alpha_peak_indices.return_value = slice(0, 5)
         with assert_does_not_error():
             calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps(self.calibration_table, speed,
-                                                                               uarray(self.count_rate,
-                                                                                      self.count_rate_delta),
-                                                                               self.energy, efficiency)
+                                                                                   uarray(self.count_rate,
+                                                                                          self.count_rate_delta),
+                                                                                   self.energy, efficiency)
 
 
 @contextmanager

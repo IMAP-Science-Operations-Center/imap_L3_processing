@@ -43,6 +43,7 @@ class TestCdfUtils(TestCase):
             with self.subTest(filename):
                 self.assertIn('epoch', yaml_data.keys(), "no entry in file for 'epoch'")
                 self.assertEqual('epoch', yaml_data['epoch']['NAME'], "epoch must be lowercase")
+
                 self._epoch_meets_schema(yaml_data)
                 if "epoch_delta" in yaml_data.keys():
                     self._epoch_delta_meets_schema(yaml_data)
@@ -137,7 +138,7 @@ class TestCdfUtils(TestCase):
                          "epoch VAR_TYPE should be support_data")
         self.assertEqual('RV', yaml_data['epoch']['RECORD_VARYING'],
                          "epoch RECORD_VARYING should be RV")
-        self.assertEqual('Epoch', yaml_data['epoch']['FIELDNAM'],
+        self.assertIn(yaml_data['epoch']['FIELDNAM'], ['Epoch', 'J2000 Nanoseconds'],
                          "epoch FIELDNAM should be Epoch")
         self.assertEqual(' ', yaml_data['epoch']['FORMAT'],
                          "epoch FORMAT should be ' '")

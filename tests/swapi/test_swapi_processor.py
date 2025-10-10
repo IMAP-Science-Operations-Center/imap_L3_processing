@@ -141,6 +141,7 @@ class TestSwapiProcessor(TestCase):
 
         mock_instrument_response_calibration_table = mock_swapi_l3_dependencies_class.fetch_dependencies.return_value.instrument_response_calibration_table
         mock_geometric_factor_calibration_table = mock_swapi_l3_dependencies_class.fetch_dependencies.return_value.geometric_factor_calibration_table
+        mock_efficiency_lut = mock_swapi_l3_dependencies_class.fetch_dependencies.return_value.efficiency_calibration_table
         mock_density_of_neutral_helium_calibration_table = mock_swapi_l3_dependencies_class.fetch_dependencies.return_value.density_of_neutral_helium_calibration_table
 
         mock_chunk_l2_data.side_effect = []
@@ -149,9 +150,10 @@ class TestSwapiProcessor(TestCase):
                                              call(sentinel.swapi_l2_data, 50)])
 
         instrument_response_lut, geometric_factor_lut, energies, count_rates, pui_epoch, background_rate_cutoff, \
-            sw_velocity_vector, density_of_neutral_helium_lut = mock_calculate_pickup_ion.call_args.args
+            sw_velocity_vector, density_of_neutral_helium_lut, efficiency_lut = mock_calculate_pickup_ion.call_args.args
 
         self.assertEqual(mock_instrument_response_calibration_table, instrument_response_lut)
+        self.assertEqual(mock_efficiency_lut, efficiency_lut)
         self.assertEqual(mock_geometric_factor_calibration_table, geometric_factor_lut)
         self.assertEqual(mock_density_of_neutral_helium_calibration_table, density_of_neutral_helium_lut)
         np.testing.assert_array_equal(chunk_of_fifty.energy, energies)

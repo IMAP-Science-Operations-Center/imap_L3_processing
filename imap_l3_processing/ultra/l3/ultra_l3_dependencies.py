@@ -2,17 +2,14 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from pathlib import Path
 
+import imap_data_access
 import numpy as np
-from imap_data_access import download
-from imap_data_access.file_validation import generate_imap_file_path, ScienceFilePath
 from imap_data_access.processing_input import ProcessingInputCollection
 from imap_processing.ultra.l2.ultra_l2 import ultra_l2
-from spacepy.pycdf import CDF
 
 from imap_l3_processing.maps.map_models import HealPixIntensityMapData, RectangularIntensityMapData, \
     SpectralIndexDependencies
 from imap_l3_processing.ultra.l3.models import UltraL1CPSet, UltraGlowsL3eData
-from imap_l3_processing.utils import find_glows_l3e_dependencies
 
 
 @dataclass
@@ -24,24 +21,18 @@ class UltraL3Dependencies:
 
     @classmethod
     def fetch_dependencies(cls, deps: ProcessingInputCollection) -> UltraL3Dependencies:
-        ultra_l2_file_paths = deps.get_file_paths("ultra")
+        ultra_l2_names = deps.get_file_paths("ultra", data_type="l2")
+        assert len(ultra_l2_names) == 1, f"Incorrect number of map dependencies: {len(ultra_l2_names)}"
+        ultra_l2_name = ultra_l2_names[0]
 
-        if len(ultra_l2_file_paths) != 1:
-            raise ValueError("Incorrect number of dependencies")
-        l2_map_path = download(ultra_l2_file_paths[0])
+        ultra_l1c_names = deps.get_file_paths("ultra", data_type="l1c")
+        glows_l3e_names = deps.get_file_paths("glows")
 
-        hi_l1c_paths = []
-        with CDF(str(l2_map_path)) as l2_map:
-            map_input_paths = [generate_imap_file_path(file) for file in l2_map.attrs["Parents"]]
-            l1c_file_names = [map_input_file.filename.name for map_input_file in map_input_paths if
-                              isinstance(map_input_file, ScienceFilePath) and map_input_file.data_level == "l1c"]
-            for parent in l1c_file_names:
-                hi_l1c_paths.append(download(parent))
+        l2_map_path = imap_data_access.download(ultra_l2_name)
+        hi_l1c_downloaded_paths = [imap_data_access.download(l1c) for l1c in ultra_l1c_names]
+        glows_l3e_download_paths = [imap_data_access.download(path) for path in glows_l3e_names]
 
-        glows_l3e_file_names = find_glows_l3e_dependencies(l1c_file_names, "ultra")
-        glows_file_paths = [download(path) for path in glows_l3e_file_names]
-
-        return cls.from_file_paths(l2_map_path, hi_l1c_paths, glows_file_paths)
+        return cls.from_file_paths(l2_map_path, hi_l1c_downloaded_paths, glows_l3e_download_paths)
 
     @classmethod
     def from_file_paths(cls, l2_map_path: Path, l1c_file_paths: list[Path], glows_file_paths: list[Path]) -> UltraL3Dependencies:
@@ -76,8 +67,8 @@ class UltraL3SpectralIndexDependencies(SpectralIndexDependencies):
         if len(energy_fit_ranges_ancillary_file_path) != 1:
             raise ValueError("Missing fit energy ranges ancillary file")
 
-        map_file_path = download(ultra_map_file_paths[0].name)
-        energy_ranges_file_path = download(energy_fit_ranges_ancillary_file_path[0].name)
+        map_file_path = imap_data_access.download(ultra_map_file_paths[0].name)
+        energy_ranges_file_path = imap_data_access.download(energy_fit_ranges_ancillary_file_path[0].name)
 
         return cls.from_file_paths(map_file_path, energy_ranges_file_path)
 

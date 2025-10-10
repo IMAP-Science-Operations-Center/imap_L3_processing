@@ -168,11 +168,10 @@ def _build_glows_l3e_ultra(survival_probabilities: np.ndarray = None, energies: 
 
     return UltraGlowsL3eData(
         epoch=datetime.now(),
+        repointing=1,
         energy=energies,
         healpix_index=healpix_pixels,
         survival_probability=survival_probabilities,
-        latitude=np.rad2deg(lat.value),
-        longitude=np.rad2deg(lon.value)
     )
 
 

@@ -3,8 +3,7 @@ import tempfile
 from datetime import datetime, date
 from pathlib import Path
 from unittest import TestCase
-from unittest.mock import patch, call, Mock, sentinel, MagicMock
-from urllib.error import URLError
+from unittest.mock import patch, call, Mock, sentinel
 
 import imap_data_access
 import numpy as np
@@ -12,17 +11,19 @@ from imap_data_access import config
 from requests import RequestException
 from spacepy.pycdf import CDF
 
-from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
-from imap_l3_processing.maps.map_models import GlowsL3eRectangularMapInputData, InputRectangularPointingSet
+from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH, TT2000_EPOCH
+from imap_l3_processing.maps.map_models import GlowsL3eRectangularMapInputData, InputRectangularPointingSet, \
+    RectangularSpectralIndexDataProduct, RectangularIntensityDataProduct
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.swapi.l3a.models import SwapiL3AlphaSolarWindData
 from imap_l3_processing.utils import format_time, download_dependency, read_l1d_mag_data, save_data, \
-    find_glows_l3e_dependencies, download_external_dependency, download_dependency_with_repointing, \
+    download_external_dependency, download_dependency_with_repointing, \
     combine_glows_l3e_with_l1c_pointing, furnish_local_spice, get_spice_parent_file_names, furnish_spice_metakernel, \
-    SpiceKernelTypes, FurnishMetakernelOutput
+    SpiceKernelTypes, FurnishMetakernelOutput, read_cdf_parents
 from imap_l3_processing.version import VERSION
 from tests.cdf.test_cdf_utils import TestDataProduct
-from tests.test_helpers import get_spice_data_path
+from tests.maps.test_builders import create_rectangular_spectral_index_map_data, create_rectangular_intensity_map_data
+from tests.test_helpers import get_spice_data_path, with_tempdir, create_dataclass_mock
 
 
 class TestUtils(TestCase):
@@ -214,9 +215,39 @@ class TestUtils(TestCase):
 
         self.assertEqual(expected_file_path, returned_file_path)
 
+    @patch("imap_l3_processing.utils.write_cdf")
+    @patch("imap_l3_processing.utils.ImapAttributeManager.add_global_attribute")
+    def test_save_data_procedurally_generates_map_global_metadata(self, mock_add_global_attr, _):
+        input_metadata = InputMetadata("ultra", "l3", datetime(2025, 1, 1), datetime(2025, 1, 1), "v001", "descriptor")
+
+        epoch_as_datetime = np.array([datetime(2025, 1, 1)])
+        epoch_as_int = np.array([(datetime(2025, 1, 1) - TT2000_EPOCH).total_seconds() * 1e9])
+        epoch_delta = np.array([86400 * 1e9])
+
+        cases = [
+            ("epoch_as_datetime", epoch_as_datetime),
+            ("epoch_as_int", epoch_as_int),
+        ]
+
+        for case, epoch in cases:
+            mock_add_global_attr.reset_mock()
+            with self.subTest(case=case):
+
+                rectangular_spectral_index_map_data = create_rectangular_spectral_index_map_data(epoch=epoch,
+                                                                                                 epoch_delta=epoch_delta)
+                data_product = RectangularSpectralIndexDataProduct(input_metadata=input_metadata,
+                                                                   data=rectangular_spectral_index_map_data)
+
+                save_data(data_product)
+
+                mock_add_global_attr.assert_has_calls([
+                    call("start_date", "2025-01-01T00:00:00"),
+                    call("end_date", "2025-01-02T00:00:00")
+                ])
+
     @patch("imap_l3_processing.utils.ImapAttributeManager.add_instrument_attrs", autospec=True)
     @patch("imap_l3_processing.utils.write_cdf")
-    def test_save_data_procedurally_generates_map_global_metadata_if_absent(self, mock_write_cdf,
+    def test_save_data_procedurally_generates_all_map_global_metadata_if_absent(self, mock_write_cdf,
                                                                             mock_add_instrument_attrs):
         non_map_input_metadata = InputMetadata("swapi", "l3", datetime(2024, 9, 17), datetime(2024, 9, 18), "v002",
                                                "descriptor")
@@ -253,7 +284,9 @@ class TestUtils(TestCase):
             with self.subTest(name=input_metadata.logical_source):
                 mock_write_cdf.reset_mock()
 
-                save_data(Mock(input_metadata=input_metadata), )
+                data_product = RectangularIntensityDataProduct(input_metadata=input_metadata,
+                                                          data=create_rectangular_intensity_map_data())
+                save_data(data_product)
 
                 mock_write_cdf.assert_called_once()
 
@@ -405,78 +438,26 @@ class TestUtils(TestCase):
                 np.testing.assert_array_equal(epoch, results.epoch)
                 np.testing.assert_array_equal(trimmed_vectors, results.mag_data)
 
-    @patch('imap_l3_processing.utils.imap_data_access.query')
-    def test_find_glows_l3e_dependencies(self, mock_data_access_query):
-        l1c_hi_90sensor_file_paths = ["imap_hi_l1c_90sensor-pset_20201001_v001.cdf",
-                                      "imap_hi_l1c_90sensor-pset_20201002_v002.cdf",
-                                      "imap_hi_l1c_90sensor-pset_20201003_v001.cdf"]
-        l1c_hi_45sensor_file_paths = ["imap_hi_l1c_45sensor-pset_20210509_v001.cdf",
-                                      "imap_hi_l1c_45sensor-pset_20210508_v002.cdf",
-                                      "imap_hi_l1c_45sensor-pset_20210507_v001.cdf"]
-        l1c_lo_file_paths = ["imap_lo_l1c_pset_20210509_v001.cdf",
-                             "imap_lo_l1c_pset_20210508_v002.cdf",
-                             "imap_lo_l1c_pset_20210507_v001.cdf"]
-        l1c_ultra_file_paths = ["imap_ultra_l1c_pset_20201001_v001.cdf",
-                                "imap_ultra_l1c_pset_20201002_v002.cdf",
-                                "imap_ultra_l1c_pset_20201003_v001.cdf"]
-
-        test_cases = [
-            (l1c_hi_90sensor_file_paths, "survival-probability-hi-90", "20201001", "20201003", "hi"),
-            (l1c_hi_45sensor_file_paths, "survival-probability-hi-45", "20210507", "20210509", "hi"),
-            (l1c_ultra_file_paths, "survival-probability-ul", "20201001", "20201003", "ultra"),
-            (l1c_lo_file_paths, "survival-probability-lo", "20210507", "20210509", "lo"),
-        ]
-
-        mock_data_access_query.return_value = [{"file_path": "glows_1"},
-                                               {"file_path": "glows_2"},
-                                               {"file_path": "glows_3"}]
-
-        for l1c_file_paths, expected_descriptor, expected_start_date, expected_end_date, instrument in test_cases:
-            with self.subTest(instrument=instrument, descriptor=expected_descriptor):
-                glows_file_paths = find_glows_l3e_dependencies(l1c_file_paths, instrument)
-
-                mock_data_access_query.assert_called_with(instrument="glows",
-                                                          data_level="l3e",
-                                                          descriptor=expected_descriptor,
-                                                          start_date=expected_start_date,
-                                                          end_date=expected_end_date,
-                                                          version="latest")
-
-                self.assertEqual(["glows_1", "glows_2", "glows_3"],
-                                 glows_file_paths)
-
     def test_combine_glows_l3e_with_l1c_pointing(self):
         glows_l3e_data = [
-            GlowsL3eRectangularMapInputData(epoch=datetime.fromisoformat("2023-01-01T00:00:00+00:00"), spin_angle=None,
-                                            energy=None, probability_of_survival=None),
-            GlowsL3eRectangularMapInputData(epoch=datetime.fromisoformat("2023-01-02T00:00:00+00:00"), spin_angle=None,
-                                            energy=None, probability_of_survival=None),
-            GlowsL3eRectangularMapInputData(epoch=datetime.fromisoformat("2023-01-03T00:00:00+00:00"), spin_angle=None,
-                                            energy=None, probability_of_survival=None),
-            GlowsL3eRectangularMapInputData(epoch=datetime.fromisoformat("2023-01-05T00:00:00+00:00"), spin_angle=None,
-                                            energy=None, probability_of_survival=None),
+            create_dataclass_mock(GlowsL3eRectangularMapInputData, repointing=1),
+            create_dataclass_mock(GlowsL3eRectangularMapInputData, repointing=0),
+            create_dataclass_mock(GlowsL3eRectangularMapInputData, repointing=0),
+            create_dataclass_mock(GlowsL3eRectangularMapInputData, repointing=3),
         ]
 
         hi_l1c_data = [
-            InputRectangularPointingSet(epoch=datetime.fromisoformat("2023-01-02T00:00:00+00:00"), epoch_j2000=None,
-                                        exposure_times=None,
-                                        esa_energy_step=None),
-            InputRectangularPointingSet(epoch=datetime.fromisoformat("2023-01-04T00:00:00+00:00"), epoch_j2000=None,
-                                        exposure_times=None,
-                                        esa_energy_step=None),
-            InputRectangularPointingSet(epoch=datetime.fromisoformat("2023-01-05T00:00:00+00:00"), epoch_j2000=None,
-                                        exposure_times=None,
-                                        esa_energy_step=None),
-            InputRectangularPointingSet(epoch=datetime.fromisoformat("2023-01-06T00:00:00+00:00"), epoch_j2000=None,
-                                        exposure_times=None,
-                                        esa_energy_step=None),
+            create_dataclass_mock(InputRectangularPointingSet, repointing=1),
+            create_dataclass_mock(InputRectangularPointingSet, repointing=2),
+            create_dataclass_mock(InputRectangularPointingSet, repointing=3),
+            create_dataclass_mock(InputRectangularPointingSet, repointing=4)
         ]
 
         expected = [
-            (hi_l1c_data[0], glows_l3e_data[1],),
-            (hi_l1c_data[1], None,),
-            (hi_l1c_data[2], glows_l3e_data[3],),
-            (hi_l1c_data[3], None,),
+            (hi_l1c_data[0], glows_l3e_data[0]),
+            (hi_l1c_data[1], None),
+            (hi_l1c_data[2], glows_l3e_data[3]),
+            (hi_l1c_data[3], None),
         ]
 
         actual = combine_glows_l3e_with_l1c_pointing(glows_l3e_data, hi_l1c_data)
@@ -589,3 +570,19 @@ class TestUtils(TestCase):
 
                 self.assertEqual(expected_output, actual_output)
 
+    @patch("imap_l3_processing.glows.l3bc.utils.imap_data_access.download")
+    @with_tempdir
+    def test_read_cdf_parents(self, temp_dir, mock_download):
+        cdf_downloaded_path = temp_dir / "l3b.cdf"
+
+        with CDF(str(cdf_downloaded_path), masterpath='') as cdf:
+            cdf.attrs["Parents"] = ["l3a_1.cdf", "l3a_2.cdf"]
+
+        mock_download.return_value = cdf_downloaded_path
+
+        cdf_path = "l3b.cdf"
+        parents = read_cdf_parents(cdf_path)
+
+        mock_download.assert_called_once_with(cdf_path)
+
+        self.assertEqual({"l3a_1.cdf", "l3a_2.cdf"}, parents)

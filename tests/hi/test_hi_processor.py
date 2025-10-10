@@ -13,7 +13,7 @@ from imap_l3_processing.maps.hilo_l3_survival_dependencies import HiL3SingleSens
     HiLoL3SurvivalDependencies
 from imap_l3_processing.maps.map_models import RectangularSpectralIndexDataProduct, RectangularIntensityDataProduct
 from imap_l3_processing.models import InputMetadata, Instrument
-from tests.maps.test_builders import create_h1_l3_data
+from tests.maps.test_builders import create_rectangular_intensity_map_data
 from tests.test_helpers import get_test_data_path, run_periodically
 
 
@@ -34,9 +34,9 @@ class TestHiProcessor(unittest.TestCase):
         flux = np.full((1, 2, 3, 2), 1)
         intensity_stat_unc = 5
 
-        hi_l3_data = create_h1_l3_data(lat=lat, lon=long, energy=energy, epoch=epoch, flux=flux,
-                                       intensity_stat_unc=intensity_stat_unc,
-                                       energy_delta=energy_delta)
+        hi_l3_data = create_rectangular_intensity_map_data(lat=lat, lon=long, energy=energy, epoch=epoch, flux=flux,
+                                                           intensity_stat_unc=intensity_stat_unc,
+                                                           energy_delta=energy_delta)
         intensity_data = hi_l3_data.intensity_map_data
         intensity_data.exposure_factor = np.full_like(flux, 1)
         dependencies = HiL3SpectralIndexDependencies(map_data=hi_l3_data)
@@ -142,7 +142,7 @@ class TestHiProcessor(unittest.TestCase):
         lat = np.arange(-90, 90, 45)
         lon = np.arange(0, 360, 45)
 
-        input_map = create_h1_l3_data(energy=input_energies, energy_delta=input_deltas, lat=lat, lon=lon)
+        input_map = create_rectangular_intensity_map_data(energy=input_energies, energy_delta=input_deltas, lat=lat, lon=lon)
         intensity_data = input_map.intensity_map_data
         intensity_data.obs_date[0, 0] = datetime(2025, 1, 1)
         intensity_data.obs_date[0, 1] = datetime(2025, 1, 1)
@@ -181,7 +181,7 @@ class TestHiProcessor(unittest.TestCase):
         lat = np.arange(-90, 90, 45)
         lon = np.arange(0, 360, 45)
 
-        input_map = create_h1_l3_data(energy=input_energies, energy_delta=input_deltas, lat=lat, lon=lon)
+        input_map = create_rectangular_intensity_map_data(energy=input_energies, energy_delta=input_deltas, lat=lat, lon=lon)
         intensity_data = input_map.intensity_map_data
         intensity_data.obs_date[0, 0] = datetime(2025, 1, 1)
         intensity_data.obs_date[0, 1] = datetime(2025, 1, 1)
@@ -217,7 +217,7 @@ class TestHiProcessor(unittest.TestCase):
         lat = np.arange(-90, 90, 45)
         lon = np.arange(0, 360, 45)
 
-        input_map = create_h1_l3_data(energy=input_energies, energy_delta=input_deltas, lat=lat, lon=lon)
+        input_map = create_rectangular_intensity_map_data(energy=input_energies, energy_delta=input_deltas, lat=lat, lon=lon)
         intensity_data = input_map.intensity_map_data
         intensity_data.obs_date.mask = np.ma.getmaskarray(intensity_data.obs_date)
         intensity_data.obs_date.mask[:] = True

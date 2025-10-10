@@ -115,7 +115,8 @@ class SwapiProcessor(Processor):
                                                          data_chunk.coincidence_count_rate,
                                                          epoch, 0.1,
                                                          sw_velocity,
-                                                         dependencies.density_of_neutral_helium_calibration_table)
+                                                         dependencies.density_of_neutral_helium_calibration_table,
+                                                         dependencies.efficiency_calibration_table)
                 cooling_index = fit_params.cooling_index
                 ionization_rate = fit_params.ionization_rate
                 cutoff_speed = fit_params.cutoff_speed

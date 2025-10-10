@@ -1,8 +1,11 @@
+from typing import Callable
+
 import numpy as np
 import scipy
 import uncertainties
 from matplotlib import pyplot as plt
 from numpy import ndarray
+from scipy.interpolate import LinearNDInterpolator, interp1d
 from scipy.special import erf
 from uncertainties import correlated_values
 from uncertainties.unumpy import uarray, nominal_values, std_devs
@@ -98,28 +101,36 @@ def calculate_proton_speed_from_one_sweep(coincident_count_rates, energy, proton
 
 class ProtonTemperatureAndDensityCalibrationTable:
     def __init__(self, lookup_table_array: ndarray):
-        solar_wind_speed = np.unique(lookup_table_array[:, 0])
-        deflection_angle = np.unique(lookup_table_array[:, 1])
-        clock_angle = np.unique(lookup_table_array[:, 2])
-        fit_density = np.unique(lookup_table_array[:, 3])
-        fit_temperature = np.unique(lookup_table_array[:, 5])
-        self.grid = (solar_wind_speed, deflection_angle, clock_angle, fit_density, fit_temperature)
-        values_shape = tuple(len(x) for x in self.grid)
+        self.proton_sw_speed = np.unique(lookup_table_array[:, 0])
+        self.deflection_angle = np.unique(lookup_table_array[:, 1])
+        self.clock_angle = np.unique(lookup_table_array[:, 2])
 
-        self.density_grid = lookup_table_array[:, 4].reshape(values_shape)
-        self.temperature_grid = lookup_table_array[:, 6].reshape(values_shape)
+        assert np.all(np.sort(self.proton_sw_speed) == self.proton_sw_speed)
+        assert np.all(np.sort(self.deflection_angle) == self.deflection_angle)
+        assert np.all(np.sort(self.clock_angle) == self.clock_angle)
+
+        values_shape = (len(self.proton_sw_speed), len(self.deflection_angle), len(self.clock_angle))
+        self.reshaped_lookup = lookup_table_array.reshape(*values_shape, -1, 7)
 
     @uncertainties.wrap
     def calibrate_density(self, solar_wind_speed, deflection_angle, clock_angle, fit_density, fit_temperature):
-        return scipy.interpolate.interpn(self.grid, self.density_grid,
-                                         [solar_wind_speed, deflection_angle, clock_angle % 360, fit_density,
-                                          fit_temperature])[0]
+        interp = self.build_interpolator(solar_wind_speed, deflection_angle, clock_angle % 360)
+        return interp(fit_density, fit_temperature)[0]
 
     @uncertainties.wrap
     def calibrate_temperature(self, solar_wind_speed, deflection_angle, clock_angle, fit_density, fit_temperature):
-        return scipy.interpolate.interpn(self.grid, self.temperature_grid,
-                                         [solar_wind_speed, deflection_angle, clock_angle % 360, fit_density,
-                                          fit_temperature])[0]
+        interp = self.build_interpolator(solar_wind_speed, deflection_angle, clock_angle % 360)
+        return interp(fit_density, fit_temperature)[1]
+
+    def build_interpolator(self, solar_wind_speed, deflection_angle, clock_angle) -> Callable:
+        v = self.reshaped_lookup
+        v1 = interp1d(self.proton_sw_speed, v, axis=0)(solar_wind_speed)
+        v2 = interp1d(self.deflection_angle, v1, axis=0)(deflection_angle)
+        v3 = interp1d(self.clock_angle, v2, axis=0)(clock_angle)
+
+        coords = v3[:, [3, 5]]
+        values = v3[:, [4, 6]]
+        return LinearNDInterpolator(coords, values, rescale=True)
 
     @classmethod
     def from_file(cls, file_path):
