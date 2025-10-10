@@ -55,6 +55,37 @@ epoch_delta:
   DEPEND_0: epoch
   RECORD_VARYING: RV
   VAR_TYPE: support_data
+identifier:
+  <<: *support_data
+  NAME: identifier
+  CATDESC: Repointing number
+  FIELDNAM: Repointing Number
+  DATA_TYPE: CDF_INT8
+  FORMAT: I5
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 9999
+  FILLVAL: -9223372036854775808
+  SCALETYP: linear
+  LABLAXIS: Repointing
+start_time:
+  <<: *support_data
+  NAME: start_time
+  CATDESC: Start of observational day
+  FIELDNAM: Start Time
+  LABLAXIS: Start time
+  DATA_TYPE: CDF_CHAR
+  FORMAT: A26
+  FILLVAL: ' '
+end_time:
+  <<: *support_data
+  NAME: end_time
+  CATDESC: End of observational day
+  FIELDNAM: End Time
+  LABLAXIS: End time
+  DATA_TYPE: CDF_CHAR
+  FORMAT: A26
+  FILLVAL: ' '
 photon_flux:
   <<: *primary_data_variable
   NAME: photon_flux
@@ -62,7 +93,7 @@ photon_flux:
   DEPEND_1: spin_angle
   DISPLAY_TYPE: spectrogram
   FIELDNAM: Pointing-averaged Photon Flux
-  DATA_TYPE: CDF_FLOAT
+  DATA_TYPE: CDF_DOUBLE
   FORMAT: F8.2
   LABLAXIS: Flux
   UNITS: Rayleigh
@@ -81,7 +112,7 @@ photon_flux_uncertainty:
   CATDESC: Statistical uncertainties for photon flux
   DEPEND_1: spin_angle
   FIELDNAM: Photon Flux Uncertainties
-  DATA_TYPE: CDF_FLOAT
+  DATA_TYPE: CDF_DOUBLE
   FORMAT: F8.2
   LABLAXIS: Flux uncert
   UNITS: Rayleigh
@@ -114,7 +145,7 @@ extra_heliospheric_bckgrd:
   DEPEND_1: spin_angle
   DISPLAY_TYPE: spectrogram
   FIELDNAM: Extra-heliospheric Background
-  DATA_TYPE: CDF_FLOAT
+  DATA_TYPE: CDF_DOUBLE
   FORMAT: F8.2
   LABLAXIS: E-H bckgrd
   UNITS: Rayleigh
@@ -132,7 +163,7 @@ time_dependent_bckgrd:
   DEPEND_1: spin_angle
   DISPLAY_TYPE: spectrogram
   FIELDNAM: Time-dependent Background
-  DATA_TYPE: CDF_FLOAT
+  DATA_TYPE: CDF_DOUBLE
   FORMAT: F8.2
   LABLAXIS: T-D bckgrd
   UNITS: Rayleigh
@@ -164,7 +195,7 @@ exposure_times:
   DEPEND_1: spin_angle
   DISPLAY_TYPE: spectrogram
   FIELDNAM: Exposure Time Per Bin
-  DATA_TYPE: CDF_FLOAT
+  DATA_TYPE: CDF_DOUBLE
   FORMAT: F7.2
   LABLAXIS: Bin exposure
   UNITS: s
@@ -181,7 +212,7 @@ spin_angle:
   DISPLAY_TYPE: no_plot
   RECORD_VARYING: RV
   FIELDNAM: Spin Angle For Bin Centers
-  DATA_TYPE: CDF_FLOAT
+  DATA_TYPE: CDF_DOUBLE
   FORMAT: F7.3
   LABLAXIS: Spin angle
   UNITS: degrees
@@ -199,7 +230,7 @@ spin_angle_delta:
   DISPLAY_TYPE: no_plot
   RECORD_VARYING: RV
   FIELDNAM: Half Width Of Spin Angle Bin
-  DATA_TYPE: CDF_FLOAT
+  DATA_TYPE: CDF_DOUBLE
   FORMAT: F5.3
   LABLAXIS: Half-bin width
   UNITS: degrees
@@ -215,7 +246,7 @@ ecliptic_lat:
   DEPEND_1: spin_angle
   DISPLAY_TYPE: spectrogram
   FIELDNAM: Ecliptic Latitudes Of Bins
-  DATA_TYPE: CDF_FLOAT
+  DATA_TYPE: CDF_DOUBLE
   FORMAT: F7.3
   LABLAXIS: Bin lat
   UNITS: degrees
@@ -233,7 +264,7 @@ ecliptic_lon:
   DEPEND_1: spin_angle
   DISPLAY_TYPE: spectrogram
   FIELDNAM: Ecliptic Longitudes Of Bins
-  DATA_TYPE: CDF_FLOAT
+  DATA_TYPE: CDF_DOUBLE
   FORMAT: F7.3
   LABLAXIS: Bin lon
   UNITS: degrees
@@ -250,7 +281,7 @@ filter_temperature_average:
   CATDESC: Filter temperature averaged over observational day
   DISPLAY_TYPE: time_series
   FIELDNAM: Average Filter Temperature
-  DATA_TYPE: CDF_FLOAT
+  DATA_TYPE: CDF_DOUBLE
   FORMAT: F6.2
   LABLAXIS: Temp
   UNITS: Celsius
@@ -265,7 +296,7 @@ filter_temperature_std_dev:
   NAME: filter_temperature_std_dev
   CATDESC: Standard deviation of filter temperature
   FIELDNAM: Std Dev Of Filter Temperature
-  DATA_TYPE: CDF_FLOAT
+  DATA_TYPE: CDF_DOUBLE
   FORMAT: E9.3
   LABLAXIS: Temp std dev
   UNITS: Celsius
@@ -279,7 +310,7 @@ hv_voltage_average:
   CATDESC: CEM HV voltage averaged over observational day
   DISPLAY_TYPE: time_series
   FIELDNAM: Average HV Voltage
-  DATA_TYPE: CDF_FLOAT
+  DATA_TYPE: CDF_DOUBLE
   FORMAT: F7.2
   LABLAXIS: HV
   UNITS: V
@@ -294,7 +325,7 @@ hv_voltage_std_dev:
   NAME: hv_voltage_std_dev
   CATDESC: Standard deviation of CEM HV voltage
   FIELDNAM: Std Dev Of HV Voltage
-  DATA_TYPE: CDF_FLOAT
+  DATA_TYPE: CDF_DOUBLE
   FORMAT: E9.3
   LABLAXIS: HV std dev
   UNITS: V
@@ -308,7 +339,7 @@ spin_period_average:
   CATDESC: Spin period averaged over observational day
   DISPLAY_TYPE: time_series
   FIELDNAM: Average Spin Period
-  DATA_TYPE: CDF_FLOAT
+  DATA_TYPE: CDF_DOUBLE
   FORMAT: F9.6
   LABLAXIS: Period
   UNITS: s
@@ -323,7 +354,7 @@ spin_period_std_dev:
   NAME: spin_period_std_dev
   CATDESC: Standard deviation of spin period
   FIELDNAM: Std Dev Of Spin Period
-  DATA_TYPE: CDF_FLOAT
+  DATA_TYPE: CDF_DOUBLE
   FORMAT: E9.3
   LABLAXIS: Period std dev
   UNITS: s
@@ -337,7 +368,7 @@ spin_period_ground_average:
   CATDESC: Spin period (ground processing) averaged over observational day
   DISPLAY_TYPE: time_series
   FIELDNAM: Average Spin Period (Ground)
-  DATA_TYPE: CDF_FLOAT
+  DATA_TYPE: CDF_DOUBLE
   FORMAT: F9.6
   LABLAXIS: Period
   UNITS: s
@@ -352,7 +383,7 @@ spin_period_ground_std_dev:
   NAME: spin_period_ground_std_dev
   CATDESC: Standard deviation of spin period (ground processing)
   FIELDNAM: Std Dev Of Spin Period (Ground)
-  DATA_TYPE: CDF_FLOAT
+  DATA_TYPE: CDF_DOUBLE
   FORMAT: E9.3
   LABLAXIS: Period std dev
   UNITS: s
@@ -366,7 +397,7 @@ pulse_length_average:
   CATDESC: Pulse length averaged over observational day
   DISPLAY_TYPE: time_series
   FIELDNAM: Average Pulse Length
-  DATA_TYPE: CDF_FLOAT
+  DATA_TYPE: CDF_DOUBLE
   FORMAT: F5.2
   LABLAXIS: Pulse len
   UNITS: us
@@ -382,7 +413,7 @@ pulse_length_std_dev:
   NAME: pulse_length_std_dev
   CATDESC: Standard deviation of pulse length
   FIELDNAM: Std Dev Of Pulse Length
-  DATA_TYPE: CDF_FLOAT
+  DATA_TYPE: CDF_DOUBLE
   FORMAT: E9.3
   LABLAXIS: Pulse std dev
   UNITS: us
@@ -397,7 +428,7 @@ position_angle_offset_average:
   CATDESC: Position angle offset averaged over observational day
   DISPLAY_TYPE: time_series
   FIELDNAM: Average Position Angle Offset
-  DATA_TYPE: CDF_FLOAT
+  DATA_TYPE: CDF_DOUBLE
   FORMAT: F10.6
   LABLAXIS: Offset angle
   UNITS: degrees
@@ -413,7 +444,7 @@ position_angle_offset_std_dev:
   NAME: position_angle_offset_std_dev
   CATDESC: Standard deviation of position angle offset
   FIELDNAM: Std Dev Of Position Angle Offset
-  DATA_TYPE: CDF_FLOAT
+  DATA_TYPE: CDF_DOUBLE
   FORMAT: E9.3
   LABLAXIS: Offset std dev
   UNITS: degrees
@@ -451,7 +482,7 @@ spin_axis_orientation_average:
   DEPEND_1: lon_lat
   DISPLAY_TYPE: time_series
   FIELDNAM: Average Spin Axis Pointing
-  DATA_TYPE: CDF_FLOAT
+  DATA_TYPE: CDF_DOUBLE
   FORMAT: F7.3
   UNITS: degrees
   VALIDMIN: 0.0
@@ -469,7 +500,7 @@ spin_axis_orientation_std_dev:
   CATDESC: Standard deviation of spin axis pointing
   DEPEND_1: lon_lat
   FIELDNAM: Std Dev Of Spin Axis Pointing
-  DATA_TYPE: CDF_FLOAT
+  DATA_TYPE: CDF_DOUBLE
   FORMAT: E9.3
   UNITS: degrees
   VALIDMIN: 0.0
@@ -507,7 +538,7 @@ spacecraft_location_average:
   DEPEND_1: x_y_z
   DISPLAY_TYPE: time_series
   FIELDNAM: Average Spacecraft Location
-  DATA_TYPE: CDF_FLOAT
+  DATA_TYPE: CDF_DOUBLE
   FORMAT: E13.6
   UNITS: km
   VALIDMIN: -9.999999999E+8
@@ -525,7 +556,7 @@ spacecraft_location_std_dev:
   CATDESC: Standard deviation of spacecraft location
   DEPEND_1: x_y_z
   FIELDNAM: Std Dev Of Spacecraft Location
-  DATA_TYPE: CDF_FLOAT
+  DATA_TYPE: CDF_DOUBLE
   FORMAT: E9.3
   UNITS: km
   VALIDMIN: 0.0e+6
@@ -541,7 +572,7 @@ spacecraft_velocity_average:
   DEPEND_1: x_y_z
   DISPLAY_TYPE: time_series
   FIELDNAM: Average Spacecraft Velocity
-  DATA_TYPE: CDF_FLOAT
+  DATA_TYPE: CDF_DOUBLE
   FORMAT: E13.6
   UNITS: km/s
   VALIDMIN: -50.0
@@ -559,7 +590,7 @@ spacecraft_velocity_std_dev:
   CATDESC: Standard deviation of spacecraft velocity
   DEPEND_1: x_y_z
   FIELDNAM: Std Dev Of Spacecraft Velocity
-  DATA_TYPE: CDF_FLOAT
+  DATA_TYPE: CDF_DOUBLE
   FORMAT: E9.3
   UNITS: km/s
   VALIDMIN: 0.0

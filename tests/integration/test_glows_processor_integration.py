@@ -7,7 +7,7 @@ import subprocess
 import unittest
 from datetime import timedelta, datetime
 from pathlib import Path
-from unittest import skipIf, skip
+from unittest import skipIf
 from unittest.mock import patch
 
 import imap_data_access
@@ -26,6 +26,7 @@ from imap_l3_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependen
 from imap_l3_processing.glows.l3a.utils import read_l2_glows_data, create_glows_l3a_from_dictionary
 from imap_l3_processing.glows.l3d.utils import PATH_TO_L3D_TOOLKIT
 from imap_l3_processing.models import InputMetadata
+from imap_l3_processing.utils import save_data
 from tests.integration.integration_test_helpers import mock_imap_data_access
 from tests.test_helpers import get_test_data_path, get_test_instrument_team_data_path, \
     with_tempdir, run_periodically, get_run_local_data_path
@@ -53,7 +54,8 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
             descriptor='hist',
             start_date=start_date,
             end_date=end_date,
-            version='v001'
+            version='v001',
+            repointing=l2_science_file_path.repointing
         )
 
         expected_json_path = get_test_instrument_team_data_path(
@@ -64,8 +66,6 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
 
         with CDF(str(input_l2_cdf_path)) as cdf_data:
             l2_glows_data = read_l2_glows_data(cdf_data)
-
-        input_metadata.repointing = l2_science_file_path.repointing
 
         dependencies = GlowsL3ADependencies(l2_glows_data, {
             "calibration_data": get_test_instrument_team_data_path(
@@ -80,8 +80,12 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
         processor = GlowsProcessor(ProcessingInputCollection(), input_metadata)
         l3a_data = processor.process_l3a(dependencies)
 
+        print(save_data(l3a_data, delete_if_present=True))
+
         expected_dict = dataclasses.asdict(expected_output)
         actual_dict = dataclasses.asdict(l3a_data)
+
+        self.assertEqual(input_metadata.repointing, l3a_data.identifier)
 
         np.testing.assert_allclose(actual_dict['photon_flux'], expected_dict['photon_flux'], rtol=1e-3)
         np.testing.assert_allclose(actual_dict['photon_flux_uncertainty'], expected_dict['photon_flux_uncertainty'],
@@ -229,7 +233,6 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
         processor = GlowsProcessor(processing_input, input_metadata)
         processor.process()
 
-    @skip("Takes forever")
     def test_local_validation_running_docker(self):
         run_test_in_docker(
             "tests.integration.test_glows_processor_integration.TestGlowsProcessorIntegration.test_local_integration")

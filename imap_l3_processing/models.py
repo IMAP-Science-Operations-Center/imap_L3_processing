@@ -38,7 +38,7 @@ class UpstreamDataDependency(InputMetadata):
 @dataclass
 class DataProductVariable:
     name: str
-    value: Union[np.ndarray, int, float, list[str]]
+    value: Union[np.ndarray, int, float, list[str], list[int]]
     cdf_data_type: ctypes.c_long = None
     record_varying: bool = None
 
