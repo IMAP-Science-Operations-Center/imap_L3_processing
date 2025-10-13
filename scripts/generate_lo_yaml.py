@@ -32,16 +32,16 @@ logical_source_description_parts = {
     "6deg": "Rectangular 6 degree",
     "3mo": "3 Month Map",
     "6mo": "6 Month Map",
-    "1yr": "12 Month Map",
+    "12mo": "12 Month Map",
 }
 
 descriptors = [
-    "l090-ena-h-sf-sp-ram-hae-6deg-1yr",
-    "l090-ena-h-hf-sp-ram-hae-6deg-1yr",
-    "l090-spx-h-sf-nsp-ram-hae-6deg-1yr",
-    "l090-spx-h-sf-sp-ram-hae-6deg-1yr",
-    "l090-spx-h-hf-nsp-ram-hae-6deg-1yr",
-    "l090-spx-h-hf-sp-ram-hae-6deg-1yr",
+    "l090-ena-h-sf-sp-ram-hae-6deg-12mo",
+    "l090-ena-h-hf-sp-ram-hae-6deg-12mo",
+    "l090-spx-h-sf-nsp-ram-hae-6deg-12mo",
+    "l090-spx-h-sf-sp-ram-hae-6deg-12mo",
+    "l090-spx-h-hf-nsp-ram-hae-6deg-12mo",
+    "l090-spx-h-hf-sp-ram-hae-6deg-12mo",
 ]
 
 for descriptor in descriptors:
@@ -54,6 +54,7 @@ for descriptor in descriptors:
         f"imap_{instrument}_l3_{descriptor}": {
             "Logical_source_description": "IMAP Lo Instrument Level 3 " + ', '.join(
                 [logical_source_description_parts[part] for part in descriptor.split("-")]),
+            "Data_level": "3",
             "Data_type": f"L3_{time_range}>Level-3 {time_range}",
             "Map_descriptor": descriptor,
             "Map_duration": time_range,
