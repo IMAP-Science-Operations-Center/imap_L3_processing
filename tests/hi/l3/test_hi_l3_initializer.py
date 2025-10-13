@@ -90,8 +90,8 @@ class TestHiL3Initializer(unittest.TestCase):
         self.mock_query.assert_has_calls([
             call(instrument='glows', data_level='l3e', descriptor='survival-probability-hi-45', version="latest"),
             call(instrument='glows', data_level='l3e', descriptor='survival-probability-hi-90', version="latest"),
-            call(instrument='hi', data_level='l2', version="latest"),
-            call(instrument='hi', data_level='l3', version="latest"),
+            call(instrument='hi', data_level='l2'),
+            call(instrument='hi', data_level='l3'),
         ])
 
         actual_possible_maps = initializer.get_maps_that_can_be_produced('h45-ena-h-sf-sp-anti-hae-4deg-3mo')
@@ -141,8 +141,8 @@ class TestHiL3Initializer(unittest.TestCase):
         self.mock_query.assert_has_calls([
             call(instrument='glows', data_level='l3e', descriptor='survival-probability-hi-45', version="latest"),
             call(instrument='glows', data_level='l3e', descriptor='survival-probability-hi-90', version="latest"),
-            call(instrument='hi', data_level='l2', version="latest"),
-            call(instrument='hi', data_level='l3', version="latest"),
+            call(instrument='hi', data_level='l2'),
+            call(instrument='hi', data_level='l3'),
         ])
 
         mock_read_cdf_parents.assert_has_calls([
@@ -213,8 +213,8 @@ class TestHiL3Initializer(unittest.TestCase):
         self.mock_query.assert_has_calls([
             call(instrument='glows', data_level='l3e', descriptor='survival-probability-hi-45', version="latest"),
             call(instrument='glows', data_level='l3e', descriptor='survival-probability-hi-90', version="latest"),
-            call(instrument='hi', data_level='l2', version="latest"),
-            call(instrument='hi', data_level='l3', version="latest"),
+            call(instrument='hi', data_level='l2'),
+            call(instrument='hi', data_level='l3'),
         ])
 
         mock_read_cdf_parents.assert_has_calls([
@@ -241,6 +241,7 @@ class TestHiL3Initializer(unittest.TestCase):
             ]),
             create_mock_query_results([
                 'imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-3mo_20100101_v001.cdf',
+                'imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-3mo_20100101_v000.cdf',
                 'imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-3mo_20100401_v001.cdf',
                 'imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-3mo_20100701_v001.cdf',
                 'imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-3mo_20101001_v001.cdf'
@@ -248,6 +249,7 @@ class TestHiL3Initializer(unittest.TestCase):
             ]),
             create_mock_query_results([
                 'imap_hi_l3_h90-ena-h-sf-sp-anti-hae-4deg-3mo_20100101_v001.cdf',
+                'imap_hi_l3_h90-ena-h-sf-sp-anti-hae-4deg-3mo_20100101_v000.cdf',
                 'imap_hi_l3_h90-ena-h-sf-sp-anti-hae-4deg-3mo_20100401_v001.cdf',
             ]),
         ]
@@ -281,8 +283,8 @@ class TestHiL3Initializer(unittest.TestCase):
         self.mock_query.assert_has_calls([
             call(instrument='glows', data_level='l3e', descriptor='survival-probability-hi-45', version="latest"),
             call(instrument='glows', data_level='l3e', descriptor='survival-probability-hi-90', version="latest"),
-            call(instrument='hi', data_level='l2', version="latest"),
-            call(instrument='hi', data_level='l3', version="latest"),
+            call(instrument='hi', data_level='l2'),
+            call(instrument='hi', data_level='l3'),
         ])
 
         actual_possible_maps = initializer.get_maps_that_should_be_produced('h90-ena-h-sf-sp-anti-hae-4deg-3mo')

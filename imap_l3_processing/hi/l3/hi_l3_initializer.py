@@ -94,8 +94,8 @@ class HiL3Initializer(MapInitializer):
         )
         self.glows_hi90_file_by_repoint = {int(r["repointing"]): Path(r["file_path"]).name for r in sp_hi90_query_result}
 
-        hi_l2_query_result = imap_data_access.query(instrument='hi', data_level='l2', version='latest')
-        hi_l3_query_result = imap_data_access.query(instrument='hi', data_level='l3', version='latest')
+        hi_l2_query_result = imap_data_access.query(instrument='hi', data_level='l2')
+        hi_l3_query_result = imap_data_access.query(instrument='hi', data_level='l3')
         super().__init__("hi", hi_l2_query_result, hi_l3_query_result)
 
     def furnish_spice_dependencies(self, map_to_produce: PossibleMapToProduce):

@@ -21,7 +21,7 @@ class TestMapIntegration(unittest.TestCase):
         hi_imap_data_dir = get_run_local_data_path("hi/integration_data")
 
         input_files = [
-            hi_test_data_dir / "imap_hi_l2_h45-ena-h-sf-nsp-ram-hae-4deg-1yr_20250415_v006.cdf",
+            hi_test_data_dir / "imap_hi_l2_h45-ena-h-sf-nsp-ram-hae-4deg-1yr_20250415_v001.cdf",
             hi_test_data_dir / "imap_hi_l1c_90sensor-pset_20250415-repoint01000_v001.cdf",
             hi_test_data_dir / "imap_glows_l3e_survival-probability-hi-45_20250415-repoint01000_v001.cdf",
             hi_test_data_dir / "imap_glows_l3e_survival-probability-hi-45_20260418-repoint02000_v001.cdf",
@@ -55,7 +55,7 @@ class TestMapIntegration(unittest.TestCase):
             self.assertTrue(expected_map_path.exists(), f"Expected file {expected_map_path.name} not found")
 
             expected_parents = {
-                "imap_hi_l2_h45-ena-h-sf-nsp-ram-hae-4deg-1yr_20250415_v006.cdf",
+                "imap_hi_l2_h45-ena-h-sf-nsp-ram-hae-4deg-1yr_20250415_v001.cdf",
                 "imap_hi_l1c_90sensor-pset_20250415-repoint01000_v001.cdf",
                 "imap_glows_l3e_survival-probability-hi-45_20250415-repoint01000_v001.cdf",
             }
@@ -69,7 +69,7 @@ class TestMapIntegration(unittest.TestCase):
         lo_imap_data_dir = get_run_local_data_path("lo/integration_data")
 
         input_files = [
-            lo_test_data_dir / "imap_lo_l2_l090-ena-h-sf-nsp-ram-hae-6deg-12mo_20250415_v007.cdf",
+            lo_test_data_dir / "imap_lo_l2_l090-ena-h-sf-nsp-ram-hae-6deg-12mo_20250415_v001.cdf",
             lo_test_data_dir / "imap_lo_l1c_pset_20250415-repoint01000_v001.cdf",
 
             lo_test_data_dir / "imap_glows_l3e_survival-probability-lo_20250415-repoint01000_v001.cdf",
@@ -108,7 +108,7 @@ class TestMapIntegration(unittest.TestCase):
             self.assertTrue(expected_map_path.exists(), f"Expected file {expected_map_path.name} not found")
 
             expected_parents = {
-                "imap_lo_l2_l090-ena-h-sf-nsp-ram-hae-6deg-12mo_20250415_v007.cdf",
+                "imap_lo_l2_l090-ena-h-sf-nsp-ram-hae-6deg-12mo_20250415_v001.cdf",
                 "imap_lo_l1c_pset_20250415-repoint01000_v001.cdf",
                 "imap_glows_l3e_survival-probability-lo_20250415-repoint01000_v001.cdf",
             }
@@ -123,10 +123,10 @@ class TestMapIntegration(unittest.TestCase):
         ultra_imap_data_dir = get_run_local_data_path("ultra/integration_data")
 
         input_files = [
-            ultra_test_data_dir / 'imap_glows_l3e_survival-probability-ul_20250415-repoint00001_v010.cdf',
-            ultra_test_data_dir / 'imap_glows_l3e_survival-probability-ul_20261020-repoint00100_v010.cdf',
-            ultra_test_data_dir / 'imap_ultra_l1c_45sensor-spacecraftpset_20250415-repoint00001_v010.cdf',
-            ultra_test_data_dir / 'imap_ultra_l2_u90-ena-h-sf-nsp-full-hae-4deg-6mo_20250415_v010.cdf',
+            ultra_test_data_dir / "imap_glows_l3e_survival-probability-ul_20250415-repoint01000_v001.cdf",
+            ultra_test_data_dir / "imap_glows_l3e_survival-probability-ul_20261020-repoint02000_v001.cdf",
+            ultra_test_data_dir / "imap_ultra_l1c_45sensor-spacecraftpset_20250415-repoint01000_v001.cdf",
+            ultra_test_data_dir / "imap_ultra_l2_u90-ena-h-sf-nsp-full-hae-4deg-6mo_20250415_v001.cdf",
 
             INTEGRATION_TEST_DATA_PATH / "spice" / "naif020.tls",
             INTEGRATION_TEST_DATA_PATH / "spice" / "imap_science_108.tf",
@@ -155,15 +155,15 @@ class TestMapIntegration(unittest.TestCase):
 
             imap_l3_data_processor.imap_l3_processor()
 
-            # expected_map_path = ScienceFilePath(
-            #     "imap_lo_l3_l090-ena-h-sf-sp-ram-hae-6deg-12mo_20250415_v001.cdf").construct_path()
-            # self.assertTrue(expected_map_path.exists(), f"Expected file {expected_map_path.name} not found")
-            #
-            # expected_parents = {
-            #     "imap_lo_l2_l090-ena-h-sf-nsp-ram-hae-6deg-12mo_20250415_v006.cdf",
-            #     "imap_lo_l1c_pset_20250415-repoint01000_v001.cdf",
-            #     "imap_glows_l3e_survival-probability-lo_20250415-repoint01000_v001.cdf",
-            # }
-            #
-            # with CDF(str(expected_map_path)) as cdf:
-            #     self.assertEqual(expected_parents, set(cdf.attrs["Parents"]))
+            expected_map_path = ScienceFilePath(
+                "imap_ultra_l3_u90-ena-h-sf-sp-full-hae-4deg-6mo_20250415_v001.cdf").construct_path()
+            self.assertTrue(expected_map_path.exists(), f"Expected file {expected_map_path.name} not found")
+
+            expected_parents = {
+                "imap_glows_l3e_survival-probability-ul_20250415-repoint01000_v001.cdf",
+                "imap_ultra_l1c_45sensor-spacecraftpset_20250415-repoint01000_v001.cdf",
+                "imap_ultra_l2_u90-ena-h-sf-nsp-full-hae-4deg-6mo_20250415_v001.cdf"
+            }
+
+            with CDF(str(expected_map_path)) as cdf:
+                self.assertEqual(expected_parents, set(cdf.attrs["Parents"]))

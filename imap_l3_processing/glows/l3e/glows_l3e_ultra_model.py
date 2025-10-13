@@ -11,8 +11,6 @@ from imap_l3_processing.models import DataProduct, DataProductVariable, InputMet
 EPOCH_CDF_VAR_NAME = "epoch"
 ENERGY_VAR_NAME = "energy_grid"
 PROBABILITY_OF_SURVIVAL_VAR_NAME = "surv_prob"
-LATITUDE_VAR_NAME = "latitude"
-LONGITUDE_VAR_NAME = "longitude"
 HEALPIX_INDEX_VAR_NAME = "healpix_index"
 ENERGY_LABEL_VAR_NAME = "energy_label"
 SPIN_ANGLE_LABEL_VAR_NAME = "healpix_index_label"

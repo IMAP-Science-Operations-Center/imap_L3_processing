@@ -29,16 +29,16 @@ def read_l2_glows_data(cdf: CDF) -> GlowsL2Data:
                                     lat=cdf['spin_axis_orientation_std_dev'][0, 1])
     spacecraft_location_average = XYZ(x=cdf['spacecraft_location_average'][0, 0],
                                       y=cdf['spacecraft_location_average'][0, 1],
-                                      z=cdf['spacecraft_location_average'][0, 2],)
+                                      z=cdf['spacecraft_location_average'][0, 2], )
     spacecraft_location_std_dev = XYZ(x=cdf['spacecraft_location_std_dev'][0, 0],
                                       y=cdf['spacecraft_location_std_dev'][0, 1],
-                                      z=cdf['spacecraft_location_std_dev'][0, 2],)
+                                      z=cdf['spacecraft_location_std_dev'][0, 2], )
     spacecraft_velocity_average = XYZ(x=cdf['spacecraft_velocity_average'][0, 0],
                                       y=cdf['spacecraft_velocity_average'][0, 1],
-                                      z=cdf['spacecraft_velocity_average'][0, 2],)
+                                      z=cdf['spacecraft_velocity_average'][0, 2], )
     spacecraft_velocity_std_dev = XYZ(x=cdf['spacecraft_velocity_std_dev'][0, 0],
                                       y=cdf['spacecraft_velocity_std_dev'][0, 1],
-                                      z=cdf['spacecraft_velocity_std_dev'][0, 2],)
+                                      z=cdf['spacecraft_velocity_std_dev'][0, 2], )
 
     start_time = (TTJ2000_EPOCH + timedelta(seconds=cdf['start_time'][0] / 1e9))
     end_time = (TTJ2000_EPOCH + timedelta(seconds=cdf['end_time'][0] / 1e9))
@@ -86,8 +86,11 @@ def create_glows_l3a_from_dictionary(data: dict, input_metadata: InputMetadata) 
     epoch = start_time + total_time / 2
     return GlowsL3LightCurve(
         input_metadata=input_metadata,
+        identifier=input_metadata.repointing,
         epoch=np.array([epoch]),
         epoch_delta=np.array([total_time.total_seconds() / 2 * 1e9]),
+        start_time=data["start_time"],
+        end_time=data["end_time"],
         photon_flux=np.array(data["daily_lightcurve"]["photon_flux"]).reshape(1, -1),
         photon_flux_uncertainty=np.array(data["daily_lightcurve"]["flux_uncertainties"]).reshape(1, -1),
         raw_histogram=np.array(data["daily_lightcurve"]["raw_histogram"]).reshape(1, -1),

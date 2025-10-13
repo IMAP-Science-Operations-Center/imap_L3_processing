@@ -77,6 +77,7 @@ class TestLoProcessor(unittest.TestCase):
         dependencies = Mock(
             l1c_data=[InputRectangularPointingSet(
                 epoch=datetime(2025, 1, 1),
+                repointing=1,
                 epoch_j2000=np.array([10]),
                 exposure_times=np.full((1, 7, 3600, 40), 2),
                 esa_energy_step=np.arange(7)

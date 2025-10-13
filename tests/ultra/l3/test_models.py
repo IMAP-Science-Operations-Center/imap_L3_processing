@@ -5,26 +5,45 @@ from imap_processing.ena_maps.utils.coordinates import CoordNames
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.glows.l3e.glows_l3e_ultra_model import ENERGY_VAR_NAME, PROBABILITY_OF_SURVIVAL_VAR_NAME, \
-    LATITUDE_VAR_NAME, LONGITUDE_VAR_NAME, HEALPIX_INDEX_VAR_NAME
+    HEALPIX_INDEX_VAR_NAME, EPOCH_CDF_VAR_NAME
 from imap_l3_processing.ultra.l3.models import UltraGlowsL3eData, UltraL1CPSet
 from tests.spice_test_case import SpiceTestCase
-from tests.test_helpers import get_test_data_folder
+from tests.test_helpers import get_test_data_folder, with_tempdir
+
 
 class TestModels(SpiceTestCase):
 
-    def test_glows_l3e_read_from_file(self):
-        path_to_cdf = get_test_data_folder() / 'ultra' / 'fake_l3e_survival_probabilities' / 'imap_glows_l3e_survival-probabilities-ultra_20250416_v001.cdf'
+    @with_tempdir
+    def test_glows_l3e_read_from_file(self, temp_dir):
+        path_to_cdf = temp_dir / 'imap_glows_l3e_survival-probability-ul_20250415-repoint01000_v001.cdf'
+
+        rng = np.random.RandomState(42)
+        expected_epoch = datetime(2025, 4, 15, 12, 0, 0, 1)
+        expected_energy = np.arange(16)
+        expected_healpix_index = np.arange(3072)
+        expected_probability_of_survival = rng.random((1, 16, 3072))
+
+        with CDF(str(path_to_cdf), masterpath='') as cdf:
+            cdf[EPOCH_CDF_VAR_NAME] = [expected_epoch]
+            cdf[EPOCH_CDF_VAR_NAME].attrs["FILLVAL"] = -38470932875435
+
+            cdf[ENERGY_VAR_NAME] = expected_energy
+            cdf[ENERGY_VAR_NAME].attrs["FILLVAL"] = -1e31
+
+            cdf[HEALPIX_INDEX_VAR_NAME] = expected_healpix_index
+            cdf[HEALPIX_INDEX_VAR_NAME].attrs["FILLVAL"] = 7340981273470912
+
+            cdf[PROBABILITY_OF_SURVIVAL_VAR_NAME] = expected_probability_of_survival
+            cdf[PROBABILITY_OF_SURVIVAL_VAR_NAME].attrs["FILLVAL"] = -1e31
+
 
         actual = UltraGlowsL3eData.read_from_path(path_to_cdf)
 
-        with CDF(str(path_to_cdf)) as expected:
-            expected_epoch = datetime(2025, 4, 16, 12, 0)
-            self.assertEqual(expected_epoch, actual.epoch)
-            np.testing.assert_array_equal(expected[ENERGY_VAR_NAME][...], actual.energy)
-            np.testing.assert_array_equal(expected[LATITUDE_VAR_NAME][...], actual.latitude)
-            np.testing.assert_array_equal(expected[LONGITUDE_VAR_NAME][...], actual.longitude)
-            np.testing.assert_array_equal(expected[HEALPIX_INDEX_VAR_NAME][...], actual.healpix_index)
-            np.testing.assert_array_equal(expected[PROBABILITY_OF_SURVIVAL_VAR_NAME][...], actual.survival_probability)
+        self.assertEqual(expected_epoch, actual.epoch)
+        self.assertEqual(1000, actual.repointing)
+        np.testing.assert_array_equal(expected_energy, actual.energy)
+        np.testing.assert_array_equal(expected_healpix_index, actual.healpix_index)
+        np.testing.assert_array_equal(expected_probability_of_survival, actual.survival_probability)
 
     def test_ultra_l1c_read_from_file(self):
         expected_epoch = datetime(2025, 4, 15, 12)
@@ -35,6 +54,7 @@ class TestModels(SpiceTestCase):
 
         with CDF(str(run_local_path)) as expected:
             self.assertEqual(expected_epoch, actual.epoch)
+            self.assertEqual(1, actual.repointing)
             np.testing.assert_array_equal(expected["counts"][...], actual.counts)
             np.testing.assert_array_equal(expected[CoordNames.ENERGY_ULTRA_L1C.value][...], actual.energy)
             np.testing.assert_array_equal(expected["exposure_factor"][...], actual.exposure)

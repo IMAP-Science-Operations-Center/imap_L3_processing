@@ -1,6 +1,7 @@
 import json
 import unittest
 from datetime import datetime
+from unittest.mock import sentinel
 
 import numpy as np
 from spacepy.pycdf import CDF
@@ -104,12 +105,17 @@ class TestUtils(unittest.TestCase):
                                                                         expected_spin_delta)
             input_metadata = InputMetadata(instrument='glows', data_level='l3a',
                                            descriptor='hist', start_date=datetime(2013, 9, 8),
-                                           end_date=datetime(2013, 9, 9), version="v003")
+                                           end_date=datetime(2013, 9, 9), version="v003", repointing=sentinel.repoint)
 
             result = create_glows_l3a_from_dictionary(data, input_metadata)
 
+            self.assertEqual(sentinel.repoint, result.identifier)
+
             self.assertEqual(1, len(result.epoch))
             self.assertEqual(datetime(2013, 9, 8, 18, 55, 14), result.epoch[0])
+
+            self.assertEqual("2013-09-08 08:52:14", result.start_time)
+            self.assertEqual("2013-09-09 04:58:14", result.end_time)
 
             self.assertEqual((65,), result.spin_angle.shape)
             self.assertEqual(2.000, result.spin_angle[0])

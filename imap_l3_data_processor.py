@@ -90,6 +90,9 @@ def imap_l3_processor():
         for map_descriptor in descriptors:
             maps_to_produce.extend(initializer.get_maps_that_should_be_produced(map_descriptor))
 
+        if len(maps_to_produce) == 0:
+            logger.info(f"Did not find any maps to produce for instrument {args.instrument}")
+
         for map_to_produce in maps_to_produce:
             logger.info(
                 f"Processing map {map_to_produce.input_metadata.descriptor}, {map_to_produce.input_metadata.start_date}")

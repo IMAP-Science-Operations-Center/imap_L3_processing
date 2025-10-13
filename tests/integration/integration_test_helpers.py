@@ -1,5 +1,6 @@
 import json
 import shutil
+from collections import defaultdict
 from pathlib import Path
 from typing import Callable
 from unittest.mock import patch, Mock
@@ -15,9 +16,8 @@ from tests.test_helpers import create_mock_query_results
 
 
 class ImapQueryPatcher:
-    def __init__(self, input_files: list[Path | str], assert_uses_latest: bool = False):
+    def __init__(self, input_files: list[Path | str]):
         self.input_files = input_files
-        self.assert_uses_latest = assert_uses_latest
         self.patcher = patch.object(imap_data_access, 'query', new=self)
 
     def start(self):
@@ -31,8 +31,7 @@ class ImapQueryPatcher:
         if "table" in kwargs:
             del kwargs["table"]
 
-        if self.assert_uses_latest:
-            assert kwargs.get("version") == "latest"
+        use_latest = kwargs.get("version") == "latest"
         if kwargs.get("version") == "latest":
             del kwargs["version"]
 
@@ -51,8 +50,17 @@ class ImapQueryPatcher:
                     raise ValueError(f"Unexpected file type: {input_file}")
 
         query_results = create_mock_query_results(filtered_by_type)
-        return [qr for qr in query_results if desired_attributes.issubset(set(qr.items()))]
+        filtered_query_results = [qr for qr in query_results if desired_attributes.issubset(set(qr.items()))]
+        if use_latest:
+            filtered_query_results = self.filter_results_for_latest(filtered_query_results)
+        return filtered_query_results
 
+    @staticmethod
+    def filter_results_for_latest(query_results: list[dict]):
+        query_results_by_date = defaultdict(list)
+        for qr in query_results:
+            query_results_by_date[qr["start_date"]].append(qr)
+        return [max(qrs, key=lambda qr: qr["version"]) for qrs in query_results_by_date.values()]
 
 def fake_download(file: Path | str):
     filename = Path(file).name

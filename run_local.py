@@ -1249,8 +1249,8 @@ if __name__ == "__main__":
 
             # @formatter:off
             missing_map_and_pset_paths, [l2_map_path, *l1c_dependency_paths] = try_get_many_run_local_paths([
-                "ultra/20250415-20250419/imap_ultra_l2_u90-ena-h-sf-nsp-full-hae-4deg-6mo_20250415_v010.cdf",
-                "ultra/20250415-20250419/ultra_l1c/imap_ultra_l1c_45sensor-spacecraftpset_20250415-repoint00001_v010.cdf",
+                "ultra/20250415-20250419/imap_ultra_l2_u90-ena-h-sf-nsp-full-hae-4deg-6mo_20250415_v001.cdf",
+                "ultra/20250415-20250419/ultra_l1c/imap_ultra_l1c_45sensor-spacecraftpset_20250415-repoint00001_v001.cdf",
                 "ultra/20250415-20250419/ultra_l1c/imap_ultra_l1c_45sensor-spacecraftpset_20250416-repoint00002_v010.cdf",
                 "ultra/20250415-20250419/ultra_l1c/imap_ultra_l1c_45sensor-spacecraftpset_20250417-repoint00003_v010.cdf",
                 "ultra/20250415-20250419/ultra_l1c/imap_ultra_l1c_45sensor-spacecraftpset_20250418-repoint00004_v010.cdf",

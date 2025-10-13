@@ -86,8 +86,8 @@ class UltraInitializer(MapInitializer):
                                                  descriptor="survival-probability-ul", version="latest")
         self.glows_psets_by_repointing = {int(r["repointing"]): Path(r["file_path"]).name for r in sp_query_result}
 
-        l2_query_result = imap_data_access.query(instrument="ultra", data_level="l2", version="latest")
-        l3_query_result = imap_data_access.query(instrument="ultra", data_level="l3", version="latest")
+        l2_query_result = imap_data_access.query(instrument="ultra", data_level="l2")
+        l3_query_result = imap_data_access.query(instrument="ultra", data_level="l3")
         super().__init__("ultra", l2_query_result, l3_query_result)
 
     def furnish_spice_dependencies(self, map_to_produce: PossibleMapToProduce):

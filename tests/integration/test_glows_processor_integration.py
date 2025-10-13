@@ -8,10 +8,14 @@ import unittest
 from datetime import timedelta, datetime
 from pathlib import Path
 from unittest import skipIf
+from unittest.mock import patch
 
 import imap_data_access
 import numpy as np
+import requests
+import spiceypy
 from imap_data_access import ProcessingInputCollection, RepointInput
+from imap_data_access import ScienceInput, AncillaryInput
 from imap_data_access.file_validation import ScienceFilePath, AncillaryFilePath
 from spacepy.pycdf import CDF
 
@@ -22,17 +26,17 @@ from imap_l3_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependen
 from imap_l3_processing.glows.l3a.utils import read_l2_glows_data, create_glows_l3a_from_dictionary
 from imap_l3_processing.glows.l3d.utils import PATH_TO_L3D_TOOLKIT
 from imap_l3_processing.models import InputMetadata
+from imap_l3_processing.utils import save_data
 from tests.integration.integration_test_helpers import mock_imap_data_access
 from tests.test_helpers import get_test_data_path, get_test_instrument_team_data_path, \
     with_tempdir, run_periodically, get_run_local_data_path
 
 GLOWS_L3E_INTEGRATION_DATA_DIR = get_run_local_data_path("glows_l3bcde_integration_data_dir")
+INTEGRATION_TEST_DATA = Path(__file__).parent / "test_data"
+GLOWS_TEST_DATA = INTEGRATION_TEST_DATA / "glows"
 
 
 class TestGlowsProcessorIntegration(unittest.TestCase):
-    INTEGRATION_TEST_DATA = Path(__file__).parent / "test_data"
-    GLOWS_TEST_DATA = INTEGRATION_TEST_DATA / "glows"
-
     @with_tempdir
     def test_glows_l3a(self, tmp_dir):
         input_l2_cdf_path = self._fill_official_l2_cdf_with_json_values(tmp_dir)
@@ -50,7 +54,8 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
             descriptor='hist',
             start_date=start_date,
             end_date=end_date,
-            version='v001'
+            version='v001',
+            repointing=l2_science_file_path.repointing
         )
 
         expected_json_path = get_test_instrument_team_data_path(
@@ -61,8 +66,6 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
 
         with CDF(str(input_l2_cdf_path)) as cdf_data:
             l2_glows_data = read_l2_glows_data(cdf_data)
-
-        input_metadata.repointing = l2_science_file_path.repointing
 
         dependencies = GlowsL3ADependencies(l2_glows_data, {
             "calibration_data": get_test_instrument_team_data_path(
@@ -77,8 +80,12 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
         processor = GlowsProcessor(ProcessingInputCollection(), input_metadata)
         l3a_data = processor.process_l3a(dependencies)
 
+        print(save_data(l3a_data, delete_if_present=True))
+
         expected_dict = dataclasses.asdict(expected_output)
         actual_dict = dataclasses.asdict(l3a_data)
+
+        self.assertEqual(input_metadata.repointing, l3a_data.identifier)
 
         np.testing.assert_allclose(actual_dict['photon_flux'], expected_dict['photon_flux'], rtol=1e-3)
         np.testing.assert_allclose(actual_dict['photon_flux_uncertainty'], expected_dict['photon_flux_uncertainty'],
@@ -126,17 +133,8 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
     @skipIf(os.getenv("IN_GLOWS_INTEGRATION_DOCKER"), "Not needed on linux")
     @run_periodically(timedelta(days=7))
     def test_glows_integration_running_docker(self):
-        l3_processing_dir = Path(tests.__file__).parent.parent
-
-        docker_build = subprocess.run(["docker", "build", "-q", "-f", "Dockerfile_glows_integration", "."],
-                                      cwd=l3_processing_dir, capture_output=True)
-        image_hash = docker_build.stdout.strip().decode('utf-8')
-
-        print(f"Built docker container: {image_hash}")
-        subprocess.run(["docker", "run", "--rm",
-                        f"--mount", f'type=bind,src={l3_processing_dir}/temp_cdf_data,dst=/temp_cdf_data',
-                        "--mount", f'type=bind,src={l3_processing_dir}/run_local_input_data,dst=/run_local_input_data',
-                        image_hash], cwd=l3_processing_dir)
+        run_test_in_docker(
+            "tests.integration.test_glows_processor_integration.TestGlowsProcessorIntegration.test_l3bcde_first_time_processing")
 
         imap_data_access.config["DATA_DIR"] = GLOWS_L3E_INTEGRATION_DATA_DIR
 
@@ -235,6 +233,107 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
         processor = GlowsProcessor(processing_input, input_metadata)
         processor.process()
 
+    def test_local_validation_running_docker(self):
+        run_test_in_docker(
+            "tests.integration.test_glows_processor_integration.TestGlowsProcessorIntegration.test_local_integration")
+
+    @skipIf(os.getenv("IN_GLOWS_INTEGRATION_DOCKER") is None, "Only runs in a docker container!")
+    def test_local_integration(self):
+        original_datetime2et = spiceypy.datetime2et
+        original_get = requests.get
+        offset = (datetime(2025, 4, 15) - datetime(2010, 1, 1)).total_seconds()
+        jan_through_apr_offset = (datetime(2026, 1, 1) - datetime(2010, 1, 1)).total_seconds()
+        apr_through_dec_offset = (datetime(2025, 4, 15) - datetime(2010, 4, 15)).total_seconds()
+
+        def hijack_metakernel_params(url: str, *, params: dict = {}):
+            if 'start_time' in params and 'end_time' in params:
+                params['start_time'] = str(int(int(params['start_time']) + offset))
+                params['end_time'] = str(int(int(params['end_time']) + offset))
+            return original_get(url, params=params)
+
+        def determine_spice_offset(date: datetime):
+            if date.month < 4 or (date.month == 4 and date.day < 15):
+                return jan_through_apr_offset
+            else:
+                return apr_through_dec_offset
+
+        with (patch('spiceypy.datetime2et', side_effect=lambda x: original_datetime2et(x) + determine_spice_offset(x)),
+              patch('requests.get', side_effect=hijack_metakernel_params)):
+
+            ancillary_file_paths = [
+                GLOWS_TEST_DATA / "imap_glows_calibration-data_20000101_v003.dat",
+                GLOWS_TEST_DATA / "imap_glows_map-of-extra-helio-bckgrd_20100101_v001.dat",
+                GLOWS_TEST_DATA / "imap_glows_pipeline-settings_20100101_v003.json",
+                GLOWS_TEST_DATA / "imap_glows_time-dep-bckgrd_20100101_v001.dat"
+            ]
+            l2_paths = list(get_run_local_data_path("glows_l2_cdfs").iterdir())
+            input_files = l2_paths + ancillary_file_paths
+
+            l3a_integration_data_dir = get_run_local_data_path("glows_local_integration_l3a")
+
+            with (mock_imap_data_access(l3a_integration_data_dir, input_files)):
+                for i, l2_path in enumerate(l2_paths):
+                    l2_science_file_path = ScienceFilePath(l2_path)
+                    l2_science_input = ScienceInput(l2_path.name)
+                    input_files.extend(ancillary_file_paths)
+
+                    input_metadata = InputMetadata(
+                        instrument="glows",
+                        data_level="l3a",
+                        start_date=l2_science_input.get_time_range()[0],
+                        end_date=l2_science_input.get_time_range()[1],
+                        version="v001",
+                        descriptor="hist",
+                        repointing=l2_science_file_path.repointing,
+                    )
+
+                    processingInputs = [AncillaryInput(ancillary.name) for ancillary in ancillary_file_paths] + \
+                                       [l2_science_input]
+                    processor = GlowsProcessor(ProcessingInputCollection(*processingInputs), input_metadata)
+                    _ = processor.process()
+
+            l3bcde_input_files = [
+                GLOWS_TEST_DATA / "imap_glows_uv-anisotropy-1CR_20100101_v001.json",
+                GLOWS_TEST_DATA / "imap_glows_WawHelioIonMP_20100101_v001.json",
+                GLOWS_TEST_DATA / "imap_glows_bad-days-list_20100101_v001.dat",
+                GLOWS_TEST_DATA / "imap_glows_pipeline-settings-l3bcde_20100101_v003.json",
+                GLOWS_TEST_DATA / "imap_glows_plasma-speed-2010a_20100101_v001.dat",
+                GLOWS_TEST_DATA / "imap_glows_proton-density-2010a_20100101_v001.dat",
+                GLOWS_TEST_DATA / "imap_glows_uv-anisotropy-2010a_20100101_v001.dat",
+                GLOWS_TEST_DATA / "imap_glows_photoion-2010a_20100101_v001.dat",
+                GLOWS_TEST_DATA / "imap_glows_lya-2010a_20100101_v001.dat",
+                GLOWS_TEST_DATA / "imap_glows_electron-density-2010a_20100101_v001.dat",
+                GLOWS_TEST_DATA / "imap_glows_ionization-files_20100101_v001.dat",
+                GLOWS_TEST_DATA / "imap_glows_energy-grid-lo_20100101_v001.dat",
+                GLOWS_TEST_DATA / "imap_glows_tess-xyz-8_20100101_v001.dat",
+                GLOWS_TEST_DATA / "imap_lo_elongation-data_20100101_v001.dat",
+                GLOWS_TEST_DATA / "imap_glows_energy-grid-hi_20100101_v001.dat",
+                GLOWS_TEST_DATA / "imap_glows_energy-grid-ultra_20100101_v001.dat",
+                GLOWS_TEST_DATA / "imap_glows_tess-ang-16_20100101_v001.dat",
+                INTEGRATION_TEST_DATA / "spice" / "imap_2026_269_15.repoint",
+                INTEGRATION_TEST_DATA / "spice" / "imap_2025_105_2026_105_01.ah.bc",
+                INTEGRATION_TEST_DATA / "spice" / "imap_dps_2025_105_2026_105_009.ah.bc",
+                INTEGRATION_TEST_DATA / "spice" / "imap_science_108.tf",
+                INTEGRATION_TEST_DATA / "spice" / "naif020.tls",
+                INTEGRATION_TEST_DATA / "spice" / "imap_sclk_008.tsc",
+                INTEGRATION_TEST_DATA / "spice" / "de440.bsp",
+                INTEGRATION_TEST_DATA / "spice" / "imap_recon_20250415_20260415_v01.bsp",
+            ]
+            l3a_inputs = list((l3a_integration_data_dir / "imap/glows/l3a").rglob("*.cdf"))
+
+            logging.basicConfig(force=True, level=logging.INFO,
+                                format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+            with mock_imap_data_access(get_run_local_data_path("glows_local_integration_l3bcde"),
+                                       l3bcde_input_files + l3a_inputs):
+                processing_input = ProcessingInputCollection(RepointInput("imap_2026_269_15.repoint"))
+                input_metadata = InputMetadata(instrument="glows", data_level="l3b", descriptor="ion-rate-profile",
+                                               version="v001", start_date=datetime(2000, 1, 1),
+                                               end_date=datetime(2000, 1, 1))
+
+                processor = GlowsProcessor(processing_input, input_metadata)
+                processor.process()
+
     @staticmethod
     def _fill_official_l2_cdf_with_json_values(output_folder: Path) -> Path:
         official_l2_path = get_test_data_path("glows/imap_glows_l2_hist_20130908-repoint01000_v001.cdf")
@@ -305,6 +404,21 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
                 cdf["total_l1b_inputs"][0] = instrument_data["header"]["number_of_all_l1b_files"]
 
         return new_file_path
+
+
+def run_test_in_docker(test_to_run: str):
+    l3_processing_dir = Path(tests.__file__).parent.parent
+
+    docker_build = subprocess.run(["docker", "build", "-q", "-f", "Dockerfile_glows_integration", "."],
+                                  cwd=l3_processing_dir, capture_output=True)
+    image_hash = docker_build.stdout.strip().decode('utf-8')
+
+    print(f"Built docker container: {image_hash}")
+
+    subprocess.run(["docker", "run", "--rm",
+                    f"--mount", f'type=bind,src={l3_processing_dir}/temp_cdf_data,dst=/temp_cdf_data',
+                    "--mount", f'type=bind,src={l3_processing_dir}/run_local_input_data,dst=/run_local_input_data',
+                    image_hash, test_to_run], cwd=l3_processing_dir)
 
 
 if __name__ == '__main__':
