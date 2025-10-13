@@ -545,11 +545,10 @@ class TestUtils(TestCase):
                     "file_types": ["leapseconds", "imap_frames"],
                     "start_time": "315619200",
                     "end_time": "320716800",
-                    "spice_path": mock_data_dir / "imap" / "spice",
                 }
 
                 mock_requests.get.assert_has_calls([
-                    call("https://imap-mission.com/metakernel", params=expected_request_params),
+                    call("https://imap-mission.com/metakernel", params={**expected_request_params, "spice_path": mock_data_dir / "imap" / "spice"}),
                     call("https://imap-mission.com/metakernel", params={**expected_request_params, "list_files": "true"})
                 ])
 
