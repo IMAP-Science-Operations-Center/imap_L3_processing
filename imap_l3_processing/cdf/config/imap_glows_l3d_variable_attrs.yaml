@@ -34,8 +34,8 @@ epoch_delta:
   VALIDMAX: 2592000000000000
   FILLVAL: -9223372036854775808
   SCALETYP: linear
-latitude:
-  NAME: latitude
+lat_grid:
+  NAME: lat_grid
   DATA_TYPE: CDF_DOUBLE
   CATDESC: Latitudes from -90 to 90
   VAR_TYPE: support_data
@@ -80,8 +80,8 @@ plasma_speed:
   FILLVAL: -1.00E+31
   SCALETYP: linear
   DEPEND_0: epoch
-  DEPEND_1: latitude
-  LABL_PTR_1: latitude_label
+  DEPEND_1: lat_grid
+  LABL_PTR_1: lat_grid_label
 proton_density:
   NAME: proton_density
   DATA_TYPE: CDF_DOUBLE
@@ -99,8 +99,8 @@ proton_density:
   FILLVAL: -1.00E+31
   SCALETYP: linear
   DEPEND_0: epoch
-  DEPEND_1: latitude
-  LABL_PTR_1: latitude_label
+  DEPEND_1: lat_grid
+  LABL_PTR_1: lat_grid_label
 uv_anisotropy:
   NAME: uv_anisotropy
   DATA_TYPE: CDF_DOUBLE
@@ -118,8 +118,8 @@ uv_anisotropy:
   FILLVAL: -1.00E+31
   SCALETYP: linear
   DEPEND_0: epoch
-  DEPEND_1: latitude
-  LABL_PTR_1: latitude_label
+  DEPEND_1: lat_grid
+  LABL_PTR_1: lat_grid_label
 phion:
   NAME: phion
   DATA_TYPE: CDF_DOUBLE
@@ -171,11 +171,11 @@ electron_density:
   FILLVAL: -1.00E+31
   SCALETYP: linear
   DEPEND_0: epoch
-latitude_label:
-  NAME: latitude_label
+lat_grid_label:
+  NAME: lat_grid_label
   DATA_TYPE: CDF_CHAR
   CATDESC: Label variable for latitude coordinate
-  DEPEND_1: latitude
+  DEPEND_1: lat_grid
   VAR_TYPE: metadata
   FIELDNAM: Latitude Label
   FORMAT: A16

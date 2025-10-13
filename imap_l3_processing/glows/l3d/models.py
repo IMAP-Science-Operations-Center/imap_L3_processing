@@ -8,8 +8,8 @@ from imap_l3_processing.models import DataProduct, DataProductVariable
 
 EPOCH_CDF_VAR_NAME = 'epoch'
 EPOCH_DELTA_CDF_VAR_NAME = 'epoch_delta'
-LATITUDE_CDF_CDF_VAR_NAME = "latitude"
-LATITUDE_LABEL_CDF_VAR_NAME = "latitude_label"
+LATITUDE_CDF_CDF_VAR_NAME = "lat_grid"
+LATITUDE_LABEL_CDF_VAR_NAME = "lat_grid_label"
 CR_CDF_VAR_NAME = "cr_grid"
 SPEED_CDF_VAR_NAME = "plasma_speed"
 PROTON_DENSITY_CDF_VAR_NAME = "proton_density"
