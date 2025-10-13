@@ -274,6 +274,21 @@ class FurnishMetakernelOutput:
     metakernel_path: Path
     spice_kernel_paths: list[Path]
 
+def get_spice_kernels_file_names(start_date: datetime, end_date: datetime, kernel_types: list[SpiceKernelTypes]) -> list[str]:
+    metakernel_url = urlparse(imap_data_access.config['DATA_ACCESS_URL'])._replace(path="metakernel").geturl()
+
+    parameters: dict = {
+        'file_types': [kernel_type.value[0] for kernel_type in kernel_types],
+        'start_time': f"{int((start_date - datetime(2000, 1, 1)).total_seconds())}",
+        'end_time': f"{int((end_date - datetime(2000, 1, 1)).total_seconds())}",
+    }
+
+    kernels_res = requests.get(metakernel_url, params={**parameters, 'list_files': 'true'})
+    kernels = json.loads(kernels_res.text)
+
+    return kernels
+
+
 def furnish_spice_metakernel(start_date: datetime, end_date: datetime, kernel_types: list[SpiceKernelTypes]):
     metakernel_path = imap_data_access.config.get("DATA_DIR") / "metakernel" / "metakernel.txt"
     kernel_path = imap_data_access.config.get("DATA_DIR") / "imap" / "spice"
@@ -294,10 +309,9 @@ def furnish_spice_metakernel(start_date: datetime, end_date: datetime, kernel_ty
     metakernel_path.parent.mkdir(parents=True, exist_ok=True)
     metakernel_path.write_bytes(metakernel_res.content)
 
-    kernels_res = requests.get(metakernel_url, params={**parameters, 'list_files': 'true'})
-    logger.info(f"Metakernel API returned the following kernels: {kernels_res.text}")
+    kernels = get_spice_kernels_file_names(start_date, end_date, kernel_types)
+    logger.info(f"Metakernel API returned the following kernels: {kernels}")
 
-    kernels = json.loads(kernels_res.text)
     downloaded_paths = [imap_data_access.download(kernel) for kernel in kernels]
 
     spiceypy.furnsh(str(metakernel_path))
