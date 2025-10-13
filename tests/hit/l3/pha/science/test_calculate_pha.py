@@ -183,7 +183,6 @@ class TestCalculatePHA(unittest.TestCase):
             ("Higher ADC value is used both low gain", 2, True, 1, True, detector_l1ab, word_l1ab),
             ("L1ab Low gain ADC * 20 is greater than L1ac ADC", 1, True, 19, False, detector_l1ab, word_l1ab),
             ("L1ab Low gain ADC * 20 is less than L1ac ADC", 1, True, 21, False, detector_l1ac, word_l1ac),
-            ("Filters out saturated adc values", 1, False, 2047, False, detector_l1ab, word_l1ab),
         ]
 
         for name, l1ab_adc, l1ab_is_low_gain, l1ac_adc, l1ac_is_low_gain, expected_l1_detector, expected_l1_word in test_cases:

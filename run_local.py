@@ -450,8 +450,7 @@ def create_hit_direct_event_cdf():
     event_type_look = HitEventTypeLookup.from_csv(
         get_test_data_path("hit/pha_events/imap_hit_hit-event-type-lookup_20250228_v000.csv"))
 
-    hit_l1_data = HitL1Data.read_from_cdf(
-        get_test_data_path("hit/pha_events/imap_hit_l1a_direct-events_20100105_v009.cdf"))
+    hit_l1_data = HitL1Data.read_from_cdf("data/imap/hit/l1a/2010/01/imap_hit_l1a_direct-events_20100105_v001.cdf")
 
     direct_event_dependencies = HitL3PhaDependencies(hit_l1_data=hit_l1_data, cosine_correction_lookup=cosine_table,
 
