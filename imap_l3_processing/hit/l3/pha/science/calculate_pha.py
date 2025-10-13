@@ -39,8 +39,7 @@ def calculate_mev(word: PHAWord, gain_lookup_table: GainLookupTable) -> float:
     return word.adc_value * gain_coeffs.a + gain_coeffs.b
 
 
-def analyze_event(event: RawPHAEvent, rule_lookup: HitEventTypeLookup) -> Optional[
-    EventAnalysis]:
+def analyze_event(event: RawPHAEvent, rule_lookup: HitEventTypeLookup) -> Optional[EventAnalysis]:
 
     def get_adc_value(pha_word: PHAWord):
         return 20 * pha_word.adc_value if pha_word.is_low_gain else pha_word.adc_value
@@ -57,8 +56,10 @@ def analyze_event(event: RawPHAEvent, rule_lookup: HitEventTypeLookup) -> Option
     if rule is not None:
         highest_value_words_per_group = {}
         for include_group in rule.included_detector_groups:
-            highest_value_words_per_group[include_group] = max(groups_to_words[include_group],
-                                                               key=get_adc_value)
+            unsaturated_words = [word for word in groups_to_words[include_group] if word.adc_value < 2047]
+            if len(unsaturated_words) == 0:
+                return None
+            highest_value_words_per_group[include_group] = max(unsaturated_words, key=get_adc_value)
 
         l1_detector = [group for group in rule.included_detector_groups if group[0:3] == f"L1{rule.range.side.name}"][0]
         l2_detector = [group for group in rule.included_detector_groups if group[0:3] == f"L2{rule.range.side.name}"][0]

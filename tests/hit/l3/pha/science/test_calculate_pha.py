@@ -183,6 +183,7 @@ class TestCalculatePHA(unittest.TestCase):
             ("Higher ADC value is used both low gain", 2, True, 1, True, detector_l1ab, word_l1ab),
             ("L1ab Low gain ADC * 20 is greater than L1ac ADC", 1, True, 19, False, detector_l1ab, word_l1ab),
             ("L1ab Low gain ADC * 20 is less than L1ac ADC", 1, True, 21, False, detector_l1ac, word_l1ac),
+            ("Filters out saturated high gain words", 2047, False, 1, False, detector_l1ac, word_l1ac),
         ]
 
         for name, l1ab_adc, l1ab_is_low_gain, l1ac_adc, l1ac_is_low_gain, expected_l1_detector, expected_l1_word in test_cases:
@@ -217,6 +218,30 @@ class TestCalculatePHA(unittest.TestCase):
                 self.assertEqual(expected_event_analysis.e_prime_word, event_analysis.e_prime_word)
                 self.assertEqual(expected_event_analysis.words_with_highest_energy, event_analysis.words_with_highest_energy)
 
+    def test_analyze_event_filters_out_events_with_all_saturated_data(self):
+        detector_l1ab = Detector(layer=1, side="A", segment="b", address=10, group="L1A14")
+        detector_l1ac = Detector(layer=1, side="A", segment="c", address=11, group="L1A14")
+        detector_l2ac = Detector(layer=2, side="A", segment="c", address=15, group="L2A")
+
+        word_l1ab = PHAWord(adc_value=2047, detector=detector_l1ab, is_low_gain=False, adc_overflow=False,
+                            is_last_pha=False)
+        word_l1ac = PHAWord(adc_value=2047, detector=detector_l1ac, is_low_gain=False, adc_overflow=False,
+                            is_last_pha=False)
+        word_l2ac = PHAWord(adc_value=1, detector=detector_l2ac, is_low_gain=False, adc_overflow=False,
+                            is_last_pha=False)
+
+        raw_pha_event = create_raw_pha_event(pha_words=[word_l1ab, word_l1ac, word_l2ac])
+
+        rule_stub = Rule(range=DetectedRange(DetectorRange.R2, DetectorSide.A),
+                         included_detector_groups=["L1A14", "L2A"],
+                         excluded_detector_groups=["L1B"]
+                         )
+        range_lookup_table = Mock()
+        range_lookup_table.lookup_range.return_value = rule_stub
+
+        event_analysis = analyze_event(raw_pha_event, range_lookup_table)
+
+        self.assertIsNone(event_analysis)
 
     def test_analyze_event_handles_no_calc_rules(self):
         detector_1_in_group_1 = Detector(layer=1, side="A", segment="b", address=10, group="L1A14")
