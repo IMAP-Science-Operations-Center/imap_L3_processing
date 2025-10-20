@@ -48,7 +48,7 @@ epoch_delta:
   FORMAT: I19
   UNITS: ns
   VALIDMIN: 0
-  VALIDMAX: 86000000000000
+  VALIDMAX: 999999999999999
   FILLVAL: -9223372036854775808
   SCALETYP: linear
   LABLAXIS: Epoch delta
@@ -58,34 +58,36 @@ epoch_delta:
 identifier:
   <<: *support_data
   NAME: identifier
-  CATDESC: Repointing number
-  FIELDNAM: Repointing Number
+  CATDESC: Spin pointing number to identify observational day
+  FIELDNAM: Spin pointing number
   DATA_TYPE: CDF_INT8
   FORMAT: I5
   UNITS: ' '
   VALIDMIN: 0
-  VALIDMAX: 9999
+  VALIDMAX: 99999
   FILLVAL: -9223372036854775808
   SCALETYP: linear
-  LABLAXIS: Repointing
+  LABLAXIS: Pointing no.
 start_time:
   <<: *support_data
   NAME: start_time
-  CATDESC: Start of observational day
-  FIELDNAM: Start Time
+  CATDESC: Start time (UTC) of observational day
+  FIELDNAM: Observation Start Time UTC
   LABLAXIS: Start time
   DATA_TYPE: CDF_CHAR
   FORMAT: A26
   FILLVAL: ' '
+  UNITS: ''
 end_time:
   <<: *support_data
   NAME: end_time
-  CATDESC: End of observational day
-  FIELDNAM: End Time
+  CATDESC: End time (UTC) of observational day
+  FIELDNAM: Observation End Time UTC
   LABLAXIS: End time
   DATA_TYPE: CDF_CHAR
   FORMAT: A26
   FILLVAL: ' '
+  UNITS: ''
 photon_flux:
   <<: *primary_data_variable
   NAME: photon_flux
@@ -111,6 +113,7 @@ photon_flux_uncertainty:
   NAME: photon_flux_uncertainty
   CATDESC: Statistical uncertainties for photon flux
   DEPEND_1: spin_angle
+  DISPLAY_TYPE: time_series
   FIELDNAM: Photon Flux Uncertainties
   DATA_TYPE: CDF_DOUBLE
   FORMAT: F8.2
@@ -295,6 +298,7 @@ filter_temperature_std_dev:
   <<: *support_data
   NAME: filter_temperature_std_dev
   CATDESC: Standard deviation of filter temperature
+  DISPLAY_TYPE: time_series
   FIELDNAM: Std Dev Of Filter Temperature
   DATA_TYPE: CDF_DOUBLE
   FORMAT: E9.3
@@ -324,6 +328,7 @@ hv_voltage_std_dev:
   <<: *support_data
   NAME: hv_voltage_std_dev
   CATDESC: Standard deviation of CEM HV voltage
+  DISPLAY_TYPE: time_series
   FIELDNAM: Std Dev Of HV Voltage
   DATA_TYPE: CDF_DOUBLE
   FORMAT: E9.3
@@ -353,6 +358,7 @@ spin_period_std_dev:
   <<: *support_data
   NAME: spin_period_std_dev
   CATDESC: Standard deviation of spin period
+  DISPLAY_TYPE: time_series
   FIELDNAM: Std Dev Of Spin Period
   DATA_TYPE: CDF_DOUBLE
   FORMAT: E9.3
@@ -382,6 +388,7 @@ spin_period_ground_std_dev:
   <<: *support_data
   NAME: spin_period_ground_std_dev
   CATDESC: Standard deviation of spin period (ground processing)
+  DISPLAY_TYPE: time_series
   FIELDNAM: Std Dev Of Spin Period (Ground)
   DATA_TYPE: CDF_DOUBLE
   FORMAT: E9.3
@@ -412,6 +419,7 @@ pulse_length_std_dev:
   <<: *support_data
   NAME: pulse_length_std_dev
   CATDESC: Standard deviation of pulse length
+  DISPLAY_TYPE: time_series
   FIELDNAM: Std Dev Of Pulse Length
   DATA_TYPE: CDF_DOUBLE
   FORMAT: E9.3
@@ -443,6 +451,7 @@ position_angle_offset_std_dev:
   <<: *support_data
   NAME: position_angle_offset_std_dev
   CATDESC: Standard deviation of position angle offset
+  DISPLAY_TYPE: time_series
   FIELDNAM: Std Dev Of Position Angle Offset
   DATA_TYPE: CDF_DOUBLE
   FORMAT: E9.3
@@ -485,7 +494,7 @@ spin_axis_orientation_average:
   DATA_TYPE: CDF_DOUBLE
   FORMAT: F7.3
   UNITS: degrees
-  VALIDMIN: 0.0
+  VALIDMIN: -90.0
   VALIDMAX: 360.0
   FILLVAL: -1.00E+31
   LABL_PTR_1: lon_lat_labels
@@ -493,11 +502,12 @@ spin_axis_orientation_average:
   DELTA_PLUS_VAR: spin_axis_orientation_std_dev
   DELTA_MINUS_VAR: spin_axis_orientation_std_dev
   SI_CONVERSION: 1.745329e-2>radians
-  LABLAXIS: Spin axis orien. avg
+  LABLAXIS: Spin ax avg
 spin_axis_orientation_std_dev:
   <<: *support_data
   NAME: spin_axis_orientation_std_dev
   CATDESC: Standard deviation of spin axis pointing
+  DISPLAY_TYPE: time_series
   DEPEND_1: lon_lat
   FIELDNAM: Std Dev Of Spin Axis Pointing
   DATA_TYPE: CDF_DOUBLE
@@ -509,6 +519,7 @@ spin_axis_orientation_std_dev:
   LABL_PTR_1: lon_lat_labels
   SCALETYP: linear
   SI_CONVERSION: 1.745329e-2>radians
+  LABLAXIS: Spin ax std dev
 x_y_z:
   CATDESC: Component index for cartesian ecliptic coordinates
   NAME: x_y_z
@@ -549,12 +560,13 @@ spacecraft_location_average:
   DELTA_PLUS_VAR: spacecraft_location_std_dev
   DELTA_MINUS_VAR: spacecraft_location_std_dev
   SI_CONVERSION: 1.0e3>m
-  LABLAXIS: SPC loc avg
+  LABLAXIS: Loc
 spacecraft_location_std_dev:
   <<: *support_data
   NAME: spacecraft_location_std_dev
   CATDESC: Standard deviation of spacecraft location
   DEPEND_1: x_y_z
+  DISPLAY_TYPE: time_series
   FIELDNAM: Std Dev Of Spacecraft Location
   DATA_TYPE: CDF_DOUBLE
   FORMAT: E9.3
@@ -565,6 +577,7 @@ spacecraft_location_std_dev:
   LABL_PTR_1: x_y_z_labels
   SCALETYP: linear
   SI_CONVERSION: 1.0e3>m
+  LABLAXIS: Loc std dev
 spacecraft_velocity_average:
   <<: *support_data
   NAME: spacecraft_velocity_average
@@ -583,12 +596,13 @@ spacecraft_velocity_average:
   DELTA_PLUS_VAR: spacecraft_velocity_std_dev
   DELTA_MINUS_VAR: spacecraft_velocity_std_dev
   SI_CONVERSION: 1.0e3>m/s
-  LABLAXIS: SPC vel avg
+  LABLAXIS: Vsc
 spacecraft_velocity_std_dev:
   <<: *support_data
   NAME: spacecraft_velocity_std_dev
   CATDESC: Standard deviation of spacecraft velocity
   DEPEND_1: x_y_z
+  DISPLAY_TYPE: time_series
   FIELDNAM: Std Dev Of Spacecraft Velocity
   DATA_TYPE: CDF_DOUBLE
   FORMAT: E9.3
@@ -599,3 +613,4 @@ spacecraft_velocity_std_dev:
   LABL_PTR_1: x_y_z_labels
   SCALETYP: linear
   SI_CONVERSION: 1.0e3>m/s
+  LABLAXIS: Vsc std dev
