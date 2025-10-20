@@ -1,5 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
+from idlelib.debugger_r import close_subprocess_debugger
 from pathlib import Path
 
 import imap_data_access
@@ -80,3 +81,53 @@ class UltraL3SpectralIndexDependencies(SpectralIndexDependencies):
 
     def get_fit_energy_ranges(self) -> np.ndarray:
         return self.fit_energy_ranges
+
+@dataclass
+class UltraL3CombinedDependencies:
+    u45_l2_map: HealPixIntensityMapData
+    u90_l2_map: HealPixIntensityMapData
+    u45_l1c_pset: list[UltraL1CPSet]
+    u90_l1c_pset: list[UltraL1CPSet]
+    dependency_file_paths: list[Path] = field(default_factory=list)
+
+    @classmethod
+    def fetch_dependencies(cls, deps: ProcessingInputCollection) -> UltraL3CombinedDependencies:
+        science_inputs = deps.get_science_inputs()
+
+        u45_psets_filenames = list(filter(lambda science_input: "45sensor-spacecraftpset" in science_input.descriptor, science_inputs))
+        u90_psets_filenames = list(filter(lambda science_input: "90sensor-spacecraftpset" in science_input.descriptor, science_inputs))
+
+        u45_maps_filenames = list(filter(lambda science_input: "u45" in science_input.descriptor, science_inputs))
+        u90_maps_filenames = list(filter(lambda science_input: "u90" in science_input.descriptor, science_inputs))
+
+        u45_pset_paths = [imap_data_access.download(pset) for pset in u45_psets_filenames]
+        u90_pset_paths = [imap_data_access.download(pset) for pset in u90_psets_filenames]
+
+        u45_map_path = imap_data_access.download(u45_maps_filenames[0])
+        u90_map_path = imap_data_access.download(u90_maps_filenames[0])
+
+        return cls.from_file_paths(u45_pset_paths, u90_pset_paths, u45_map_path, u90_map_path)
+
+    @classmethod
+    def from_file_paths(cls, u45_pset_paths: list[Path], u90_pset_paths: list[Path], u45_map_path: Path, u90_map_path: Path) -> UltraL3CombinedDependencies:
+        u45_l1c_psets = []
+        u90_l1c_psets = []
+
+        for pset in u45_pset_paths:
+            u45_l1c_psets.append(UltraL1CPSet.read_from_path(pset))
+
+        for pset in u90_pset_paths:
+            u90_l1c_psets.append(UltraL1CPSet.read_from_path(pset))
+
+        l1c_u45_paths_dict = {f"l1c_path_{index + 1}": path for index, path in enumerate(u45_pset_paths)}
+        l2_u45_maps = ultra_l2(l1c_u45_paths_dict)
+        l2_u45_healpix_map_data = HealPixIntensityMapData.read_from_xarray(l2_u45_maps[0])
+
+
+        l1c_u90_paths_dict = {f"l1c_path_{index + 1}": path for index, path in enumerate(u90_pset_paths)}
+        l2_u90_maps = ultra_l2(l1c_u90_paths_dict)
+        l2_u90_healpix_map_data = HealPixIntensityMapData.read_from_xarray(l2_u90_maps[0])
+
+        return cls(u45_l2_map=l2_u45_healpix_map_data, u90_l2_map=l2_u90_healpix_map_data,
+                   u45_l1c_pset=u45_l1c_psets, u90_l1c_pset=u90_l1c_psets,
+                   dependency_file_paths=[*u45_pset_paths, *u90_pset_paths, u45_map_path, u90_map_path])
