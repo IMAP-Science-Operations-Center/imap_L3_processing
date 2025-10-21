@@ -358,19 +358,19 @@ def _healpix_coords_to_variables(coords: HealPixCoords) -> list[DataProductVaria
     ]
 
 
-def combine_rectangular_intensity_map_data(maps: list[RectangularIntensityMapData]) -> RectangularIntensityMapData:
+def combine_rectangular_intensity_map_data(maps: list[RectangularIntensityMapData], exposure_weighted: bool = True) -> RectangularIntensityMapData:
     for m in maps[1:]:
         assert np.array_equal(maps[0].coords.latitude_delta, m.coords.latitude_delta)
         assert np.array_equal(maps[0].coords.longitude_delta, m.coords.longitude_delta)
         assert np.array_equal(maps[0].coords.latitude_label, m.coords.latitude_label)
         assert np.array_equal(maps[0].coords.longitude_label, m.coords.longitude_label)
-    intensity_map_data = combine_intensity_map_data([m.intensity_map_data for m in maps])
+    intensity_map_data = combine_intensity_map_data([m.intensity_map_data for m in maps], exposure_weighted=exposure_weighted)
     return RectangularIntensityMapData(
         intensity_map_data=intensity_map_data,
         coords=maps[0].coords)
 
 
-def combine_intensity_map_data(maps: list[IntensityMapData]) -> IntensityMapData:
+def combine_intensity_map_data(maps: list[IntensityMapData], exposure_weighted: bool = True) -> IntensityMapData:
     first_map = maps[0]
 
     first_map_dict = dataclasses.asdict(first_map)
@@ -396,23 +396,28 @@ def combine_intensity_map_data(maps: list[IntensityMapData]) -> IntensityMapData
     intensity_sys_err = np.where(exposures == 0, 0, intensity_sys_err)
     intensity_stat_unc = np.where(exposures == 0, 0, intensity_stat_unc)
 
-    combined_intensity_stat_unc = np.sqrt(
-        safe_divide(np.sum(np.square(intensity_stat_unc * exposures), axis=0),
-                    np.square(np.sum(exposures, axis=0)))
-    )
+
     summed_exposures = np.sum(exposures, axis=0)
-    ena_intensity = np.ma.average(intensities, weights=exposures, axis=0).filled(np.nan)
-    ena_intensity_sys_err = np.ma.average(intensity_sys_err, weights=exposures, axis=0).filled(np.nan)
+    weights = exposures if exposure_weighted else np.full_like(exposures, 1)
+
+    combined_intensity_stat_unc = calculated_weighted_uncertainty(intensity_stat_unc, weights)
+    combined_intensity_sys_err = calculated_weighted_uncertainty(intensity_sys_err, weights)
+
+    ena_intensity = np.ma.average(intensities, weights=weights, axis=0).filled(np.nan)
 
     avg_obs_date = calculate_datetime_weighted_average(np.ma.array([m.obs_date for m in maps]), exposures, 0)
 
     return dataclasses.replace(first_map,
                                ena_intensity=ena_intensity,
                                exposure_factor=summed_exposures,
-                               ena_intensity_sys_err=ena_intensity_sys_err,
+                               ena_intensity_sys_err=combined_intensity_sys_err,
                                ena_intensity_stat_unc=combined_intensity_stat_unc,
                                obs_date=avg_obs_date
                                )
+
+def calculated_weighted_uncertainty(values: np.ndarray, weights: np.ndarray) -> np.ndarray:
+    do_nan_sum_where_values_is_not_all_nan = np.where(np.all(np.isnan(values), axis=0), np.nan, np.nansum(np.square(values * weights), axis=0))
+    return np.sqrt(safe_divide(do_nan_sum_where_values_is_not_all_nan, np.square(np.sum(weights, axis=0))))
 
 
 def calculate_datetime_weighted_average(data: np.ndarray, weights: np.ndarray, axis: int, **kwargs) -> np.ndarray:

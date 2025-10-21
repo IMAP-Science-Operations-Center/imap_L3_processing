@@ -335,7 +335,8 @@ class TestMapModels(unittest.TestCase):
 
         expected_combined_exposure = [4, 1, 10, 8, 0]
         expected_combined_intensity = [4, 6, 5, 5, np.nan]
-        expected_sys_err = [7, 4, 6, 75, np.nan]
+        expected_sys_err = [np.sqrt((1 * 1 + 3**2 * 9**2) / (3+1)**2), 4, np.sqrt((5**2 * 10**2 + 5**2 * 2**2) / (5+5)**2),
+                             np.sqrt((6**2 * 100**2 + 0) / (2+6)**2), np.nan]
         expected_stat_unc = [np.sqrt((1 * 100 + 9 * 1) / 16), 2, np.sqrt((25 * 100 + 25 * 9) / 100),
                              np.sqrt((36 * 100 + 16 * 4) / 64), np.nan]
         expected_obs_date = np.ma.array(
@@ -352,27 +353,66 @@ class TestMapModels(unittest.TestCase):
         np.testing.assert_equal(combine_two.obs_date.mask, expected_obs_date.mask)
         np.testing.assert_equal(combine_two.obs_date, expected_obs_date)
 
+    def test_combine_maps_does_not_weight_by_exposures_based_on_flag(self):
+        map_1 = self.construct_intensity_data_with_all_zero_fields()
+        map_1.ena_intensity = np.array([1, np.nan, 3, 4, np.nan])
+        map_1.exposure_factor = np.array([100, 0, 100, 100, 100])
+        map_1.ena_intensity_sys_err = np.array([3, 1, np.nan, 12, np.nan])
+        map_1.ena_intensity_stat_unc = np.array([6, 1, np.nan, 24, np.nan])
+        DATETIME_FILL = datetime(9999, 12, 31, 23, 59, 59, 999999)
+        map_1.obs_date = np.ma.masked_equal(
+            [datetime(2025, 5, 5),
+             DATETIME_FILL,
+             datetime(2025, 5, 7),
+             datetime(2025, 5, 8),
+             DATETIME_FILL],
+            DATETIME_FILL)
+
+        map_2 = self.construct_intensity_data_with_all_zero_fields()
+        map_2.ena_intensity = np.array([5, 6, 7, 8, np.nan])
+        map_2.exposure_factor = np.array([10, 0, 10, 10, 10])
+        map_2.ena_intensity_sys_err = np.array([4, 1, 4, 5, np.nan])
+        map_2.ena_intensity_stat_unc = np.array([8, 1, 8, 10, np.nan])
+        map_2.obs_date = np.ma.masked_equal(
+            [datetime(2025, 5, 9),
+             datetime(2025, 5, 10),
+             datetime(2025, 5, 11),
+             datetime(2025, 5, 12),
+             DATETIME_FILL],
+            DATETIME_FILL)
+
+        expected_combined_intensity = [3, 0, 5, 6, np.nan]
+        expected_sys_err = [2.5, 0, 2, 6.5, np.nan]
+        expected_stat_unc = [5, 0, 4, 13, np.nan]
+
+        combine_two = combine_intensity_map_data([map_1, map_2], exposure_weighted=False)
+        np.testing.assert_equal(combine_two.ena_intensity, expected_combined_intensity)
+        np.testing.assert_equal(combine_two.ena_intensity_sys_err, expected_sys_err)
+        np.testing.assert_equal(combine_two.ena_intensity_stat_unc, expected_stat_unc)
+
     @patch('imap_l3_processing.maps.map_models.combine_intensity_map_data')
     def test_combine_rectangular_intensity_map_data(self, mock_combine_intensity_map_data):
+        cases = [True, False]
+        for exposure_weighted in cases:
+            with self.subTest(f"exposure_weighted={exposure_weighted}"):
+                expected_coords = RectangularCoords(latitude_delta=np.array([1]), longitude_delta=np.array([1]),
+                                                    latitude_label=np.array(["one"]), longitude_label=np.array(["one"]), )
+                base_map = RectangularIntensityMapData(
+                    intensity_map_data=sentinel.data_1,
+                    coords=expected_coords
+                )
 
-        expected_coords = RectangularCoords(latitude_delta=np.array([1]), longitude_delta=np.array([1]),
-                                            latitude_label=np.array(["one"]), longitude_label=np.array(["one"]), )
-        base_map = RectangularIntensityMapData(
-            intensity_map_data=sentinel.data_1,
-            coords=expected_coords
-        )
+                second_map = RectangularIntensityMapData(
+                    intensity_map_data=sentinel.data_2,
+                    coords=expected_coords
+                )
 
-        second_map = RectangularIntensityMapData(
-            intensity_map_data=sentinel.data_2,
-            coords=expected_coords
-        )
+                maps = [base_map, second_map]
+                combined_map = combine_rectangular_intensity_map_data(maps, exposure_weighted)
+                mock_combine_intensity_map_data.assert_called_with([sentinel.data_1, sentinel.data_2], exposure_weighted=exposure_weighted)
 
-        maps = [base_map, second_map]
-        combined_map = combine_rectangular_intensity_map_data(maps)
-        mock_combine_intensity_map_data.assert_called_with([sentinel.data_1, sentinel.data_2])
-
-        self.assertEqual(combined_map.intensity_map_data, mock_combine_intensity_map_data.return_value)
-        self.assertEqual(combined_map.coords, expected_coords)
+                self.assertEqual(combined_map.intensity_map_data, mock_combine_intensity_map_data.return_value)
+                self.assertEqual(combined_map.coords, expected_coords)
 
     def test_combine_rectangular_intensity_map_data_errors_if_coords_not_matching(self):
         delta_array = np.array([1])
