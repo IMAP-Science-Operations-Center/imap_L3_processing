@@ -45,7 +45,7 @@ epoch_delta:
   CATDESC: Epoch delta
   FIELDNAM: Epoch Delta
   DATA_TYPE: CDF_INT8
-  FORMAT: I19
+  FORMAT: I15
   UNITS: ns
   VALIDMIN: 0
   VALIDMAX: 999999999999999
