@@ -15,7 +15,7 @@ dependencies = [
     "cycler==0.12.1",
     "fonttools==4.53.1",
     "idna==3.10",
-    "imap-data-access>=0.35.0",
+    "imap-data-access>=0.37.0",
     "importlib_resources==6.4.0",
     "joblib==1.4.2",
     "kiwisolver==1.4.5",
