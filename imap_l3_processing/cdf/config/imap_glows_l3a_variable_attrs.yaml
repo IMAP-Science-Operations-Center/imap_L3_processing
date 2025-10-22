@@ -113,7 +113,7 @@ photon_flux_uncertainty:
   NAME: photon_flux_uncertainty
   CATDESC: Statistical uncertainties for photon flux
   DEPEND_1: spin_angle
-  DISPLAY_TYPE: time_series
+  DISPLAY_TYPE: spectrogram
   FIELDNAM: Photon Flux Uncertainties
   DATA_TYPE: CDF_DOUBLE
   FORMAT: F8.2
