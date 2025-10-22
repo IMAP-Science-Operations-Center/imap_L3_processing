@@ -329,6 +329,10 @@ class CarringtonIonizationRate():
 
         output['uv_anisotropy_factor']=self.uv_anisotropy.tolist()
         output['uv_anisotropy_flag'] = self.uv_anisotropy_flag
+
+        # Check validity of the data
+        fun.check_nan(output['ion_rate_profile'])
+
         json_content = json.dumps(output, indent=3)
 
         output_fp = open(fn, 'w')
