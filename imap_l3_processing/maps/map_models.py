@@ -193,7 +193,7 @@ def _read_intensity_map_data_from_open_cdf(cdf: CDF) -> IntensityMapData:
         obs_date_range=read_variable_and_mask_fill_values(cdf["obs_date_range"]),
         solid_angle=read_numeric_variable(cdf["solid_angle"]),
         ena_intensity=read_numeric_variable(cdf["ena_intensity"]),
-        ena_intensity_stat_unc=read_numeric_variable(cdf["erna_intensity_stat_uncet"]),
+        ena_intensity_stat_unc=read_numeric_variable(cdf["ena_intensity_stat_uncert"]),
         ena_intensity_sys_err=read_numeric_variable(cdf["ena_intensity_sys_err"]),
     )
 
