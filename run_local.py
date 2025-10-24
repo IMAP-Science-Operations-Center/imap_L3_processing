@@ -1121,11 +1121,12 @@ if __name__ == "__main__":
 
         glows_l3e_folder = get_test_data_path("hi/fake_l3e_survival_probabilities/90")
         glows_l3_paths = list(glows_l3e_folder.iterdir())
+        glows_l3_paths = glows_l3_paths[:len(glows_l3_paths) // 4]
 
-        l2_antiram_90_map_path = get_test_data_path("hi/validation/l2_maps/imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-1yr_20250415_v920.cdf")
-        l2_ram_90_map_path = get_test_data_path("hi/validation/l2_maps/imap_hi_l2_h90-ena-h-sf-nsp-ram-hae-4deg-1yr_20250415_v920.cdf")
-        l2_antiram_45_map_path = get_test_data_path("hi/validation/l2_maps/imap_hi_l2_h45-ena-h-sf-nsp-anti-hae-4deg-1yr_20250415_v920.cdf")
-        l2_ram_45_map_path = get_test_data_path("hi/validation/l2_maps/imap_hi_l2_h45-ena-h-sf-nsp-ram-hae-4deg-1yr_20250415_v920.cdf")
+        l2_antiram_90_map_path = get_test_data_path("hi/validation/l2_maps/imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-1yr_20250415_v001.cdf")
+        l2_ram_90_map_path = get_test_data_path("hi/validation/l2_maps/imap_hi_l2_h90-ena-h-sf-nsp-ram-hae-4deg-1yr_20250415_v001.cdf")
+        l2_antiram_45_map_path = get_test_data_path("hi/validation/l2_maps/imap_hi_l2_h45-ena-h-sf-nsp-anti-hae-4deg-1yr_20250415_v001.cdf")
+        l2_ram_45_map_path = get_test_data_path("hi/validation/l2_maps/imap_hi_l2_h45-ena-h-sf-nsp-ram-hae-4deg-1yr_20250415_v001.cdf")
 
         l1c_paths = list((get_imap_data_dir_path() / "hi" / "l1c").rglob("*.cdf"))
 
