@@ -405,12 +405,13 @@ def combine_intensity_map_data(maps: list[IntensityMapData], exposure_weighted: 
     combined_intensity_stat_unc = calculated_weighted_uncertainty(intensity_stat_unc, weights)
     combined_intensity_sys_err = calculated_weighted_uncertainty(intensity_sys_err, weights)
 
-    ena_intensity = np.ma.average(intensities, weights=weights, axis=0).filled(np.nan)
+    summed_intensity = np.where(np.all(np.isnan(intensities), axis=0), np.nan, np.nansum(intensities * weights, axis=0))
+    exposure_weighted_summed_intensity = safe_divide(summed_intensity, np.sum(weights, axis=0))
 
     avg_obs_date = calculate_datetime_weighted_average(np.ma.array([m.obs_date for m in maps]), exposures, 0)
 
     return dataclasses.replace(first_map,
-                               ena_intensity=ena_intensity,
+                               ena_intensity=exposure_weighted_summed_intensity,
                                exposure_factor=summed_exposures,
                                ena_intensity_sys_err=combined_intensity_sys_err,
                                ena_intensity_stat_unc=combined_intensity_stat_unc,

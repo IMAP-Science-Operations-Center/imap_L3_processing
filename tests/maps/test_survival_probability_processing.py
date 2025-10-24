@@ -112,7 +112,7 @@ class TestSurvivalProbabilityProcessing(SpiceTestCase):
     def test_integration_uses_fill_values_for_missing_l3e_data(self):
         t1 = datetime(2025, 4, 29, 12)
         t2 = datetime(2025, 5, 7, 12)
-        t3 = datetime(2025, 5, 8, 12)
+        t3 = datetime(2025, 5, 11, 12)
         t4 = datetime(2025, 5, 15, 12)
 
         l1c_psets = [
@@ -123,7 +123,7 @@ class TestSurvivalProbabilityProcessing(SpiceTestCase):
         ]
         l3e_psets = [
             create_l3e_pset(epoch=t1, repointing=1),
-            create_l3e_pset(epoch=t3, repointing=3),
+            create_l3e_pset(epoch=t2, repointing=2),
             create_l3e_pset(epoch=t4, repointing=4)
         ]
         l2_intensity_map = create_rectangular_intensity_map_data()
@@ -133,5 +133,6 @@ class TestSurvivalProbabilityProcessing(SpiceTestCase):
 
         output_map = process_survival_probabilities(survival_dependencies, SpiceFrame.ECLIPJ2000)
         np.testing.assert_equal(output_map.intensity_map_data.ena_intensity[0, 0, 76, :], np.full(45, 2.0))
-        np.testing.assert_equal(output_map.intensity_map_data.ena_intensity[0, 0, 78, :], np.full(45, np.nan))
+        np.testing.assert_equal(output_map.intensity_map_data.ena_intensity[0, 0, 78, :], np.full(45, 2.0))
+        np.testing.assert_equal(output_map.intensity_map_data.ena_intensity[0, 0, 79, :], np.full(45, np.nan))
         np.testing.assert_equal(output_map.intensity_map_data.ena_intensity[0, 0, 80, :], np.full(45, 2.0))

@@ -229,7 +229,7 @@ def combine_glows_l3e_with_l1c_pointing(glows_l3e_data: list[GlowsL3eData], l1c_
     l1c_by_repoint = {l1c.repointing: l1c for l1c in l1c_data}
     glows_by_repoint = {l3e.repointing: l3e for l3e in glows_l3e_data}
 
-    return [(l1c_by_repoint[repoint], glows_by_repoint.get(repoint, None)) for repoint in l1c_by_repoint.keys()]
+    return [(l1c_by_repoint[repoint], glows_by_repoint[repoint]) for repoint in l1c_by_repoint.keys() if repoint in glows_by_repoint]
 
 
 def furnish_local_spice():
