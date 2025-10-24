@@ -86,7 +86,8 @@ from scripts.codice.create_more_accurate_l3a_direct_event_input import modify_l1
     modify_l2_direct_events
 from scripts.hi.create_hi_full_spin_deps import create_hi_full_spin_deps
 from scripts.ultra.create_l1c_l2_and_glows_with_matching_date_range import create_l1c_and_glows_with_matching_date_range
-from tests.test_helpers import get_test_data_path, get_test_instrument_team_data_path, try_get_many_run_local_paths
+from tests.test_helpers import get_test_data_path, get_test_instrument_team_data_path, try_get_many_run_local_paths, \
+    get_imap_data_dir_path
 
 
 def create_codice_lo_l3a_partial_densities_cdf():
@@ -371,10 +372,10 @@ def create_survival_corrected_full_spin_cdf(dependencies: HiL3SingleSensorFullSp
                                    start_date=datetime.now(),
                                    end_date=datetime.now() + timedelta(days=1),
                                    version="v000",
-                                   descriptor="h90-ena-h-sf-sp-full-hae-4deg-6mo",
+                                   descriptor="h90-ena-h-sf-sp-full-hae-4deg-1yr",
                                    )
     processor = HiProcessor(Mock(), input_metadata)
-    output_data = processor.process_full_spin_single_sensor(dependencies)
+    output_data = processor.process_full_spin_single_sensor(dependencies, SpiceFrame.ECLIPJ2000)
 
     data_product = RectangularIntensityDataProduct(data=output_data, input_metadata=input_metadata)
     cdf_path = save_data(data_product, delete_if_present=True)
@@ -1121,29 +1122,19 @@ if __name__ == "__main__":
         glows_l3e_folder = get_test_data_path("hi/fake_l3e_survival_probabilities/90")
         glows_l3_paths = list(glows_l3e_folder.iterdir())
 
-        missing_paths, run_local_paths = try_get_many_run_local_paths([
-            "hi/full_spin_deps/l1c",
-            "hi/full_spin_deps/imap_hi_l2_h90-ena-h-sf-nsp-ram-hae-4deg-6mo_20250415_v001.cdf",
-            "hi/full_spin_deps/imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-6mo_20250415_v001.cdf",
-            "hi/full_spin_deps/imap_hi_l2_h45-ena-h-sf-nsp-ram-hae-4deg-6mo_20250415_v001.cdf",
-            "hi/full_spin_deps/imap_hi_l2_h45-ena-h-sf-nsp-anti-hae-4deg-6mo_20250415_v001.cdf"
-        ])
+        l2_antiram_90_map_path = get_test_data_path("hi/validation/l2_maps/imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-1yr_20250415_v920.cdf")
+        l2_ram_90_map_path = get_test_data_path("hi/validation/l2_maps/imap_hi_l2_h90-ena-h-sf-nsp-ram-hae-4deg-1yr_20250415_v920.cdf")
+        l2_antiram_45_map_path = get_test_data_path("hi/validation/l2_maps/imap_hi_l2_h45-ena-h-sf-nsp-anti-hae-4deg-1yr_20250415_v920.cdf")
+        l2_ram_45_map_path = get_test_data_path("hi/validation/l2_maps/imap_hi_l2_h45-ena-h-sf-nsp-ram-hae-4deg-1yr_20250415_v920.cdf")
 
-        if missing_paths:
-            create_hi_full_spin_deps(sensor="90")
-            create_hi_full_spin_deps(sensor="45")
-
-        [hi_l1c_folder, *map_paths] = run_local_paths
-        [l2_ram_90_map_path, l2_antiram_90_map_path,
-         l2_ram_45_map_path, l2_antiram_45_map_path] = map_paths
-        l1c_paths = list(hi_l1c_folder.iterdir())
+        l1c_paths = list((get_imap_data_dir_path() / "hi" / "l1c").rglob("*.cdf"))
 
         if do_all or "survival-probability" in sys.argv:
             survival_dependencies = HiLoL3SurvivalDependencies.from_file_paths(
                 map_file_path=l2_ram_90_map_path,
                 l1c_paths=l1c_paths,
                 glows_l3e_paths=glows_l3_paths,
-                l2_descriptor="h90-ena-h-sf-nsp-ram-hae-4deg-6mo")
+                l2_descriptor="h90-ena-h-sf-nsp-ram-hae-4deg-1yr")
             create_hi_l3_survival_corrected_cdf(survival_dependencies, 4)
 
         if do_all or "spectral-index" in sys.argv:

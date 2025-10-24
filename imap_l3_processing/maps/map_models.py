@@ -170,11 +170,13 @@ class SpectralIndexDependencies(metaclass=abc.ABCMeta):
     def get_fit_energy_ranges(self) -> np.ndarray:
         raise NotImplementedError
 
+def convert_tt2000_time_to_datetime(time: np.ndarray) -> np.ndarray:
+    return time / 1e9 * timedelta(seconds=1) + TT2000_EPOCH
 
 def _read_intensity_map_data_from_open_cdf(cdf: CDF) -> IntensityMapData:
     masked_obs_date = read_variable_and_mask_fill_values(cdf["obs_date"])
     if np.issubdtype(cdf["obs_date"].dtype, np.number):
-        obs_date = masked_obs_date.filled(0) / 1e9 * timedelta(seconds=1) + TT2000_EPOCH
+        obs_date = convert_tt2000_time_to_datetime(masked_obs_date.filled(0))
         masked_obs_date = np.ma.masked_array(data=obs_date, mask=masked_obs_date.mask)
 
     return IntensityMapData(
@@ -191,7 +193,7 @@ def _read_intensity_map_data_from_open_cdf(cdf: CDF) -> IntensityMapData:
         obs_date_range=read_variable_and_mask_fill_values(cdf["obs_date_range"]),
         solid_angle=read_numeric_variable(cdf["solid_angle"]),
         ena_intensity=read_numeric_variable(cdf["ena_intensity"]),
-        ena_intensity_stat_unc=read_numeric_variable(cdf["ena_intensity_stat_unc"]),
+        ena_intensity_stat_unc=read_numeric_variable(cdf["erna_intensity_stat_uncet"]),
         ena_intensity_sys_err=read_numeric_variable(cdf["ena_intensity_sys_err"]),
     )
 
@@ -218,8 +220,8 @@ def _read_intensity_map_data_from_xarray(dataset: xarray.Dataset) -> IntensityMa
         obs_date_range=np.full_like(dataset["obs_date"].values, np.nan),
         solid_angle=np.full_like(dataset["latitude"].values, np.nan),
         ena_intensity=dataset["ena_intensity"].values,
-        ena_intensity_stat_unc=dataset["ena_intensity_stat_unc"].values,
-        ena_intensity_sys_err=np.full_like(dataset["ena_intensity_stat_unc"].values, np.nan)
+        ena_intensity_stat_unc=dataset["ena_intensity_stat_uncert"].values,
+        ena_intensity_sys_err=np.full_like(dataset["ena_intensity_sys_err"].values, np.nan)
     )
 
 

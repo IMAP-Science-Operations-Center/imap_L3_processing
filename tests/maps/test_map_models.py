@@ -21,7 +21,8 @@ from imap_l3_processing.maps import map_models
 from imap_l3_processing.maps.map_models import RectangularCoords, SpectralIndexMapData, RectangularSpectralIndexMapData, \
     RectangularSpectralIndexDataProduct, RectangularIntensityMapData, IntensityMapData, RectangularIntensityDataProduct, \
     combine_rectangular_intensity_map_data, combine_intensity_map_data, HealPixIntensityMapData, \
-    HealPixSpectralIndexMapData, HealPixCoords, HealPixSpectralIndexDataProduct, HealPixIntensityDataProduct
+    HealPixSpectralIndexMapData, HealPixCoords, HealPixSpectralIndexDataProduct, HealPixIntensityDataProduct, \
+    convert_tt2000_time_to_datetime
 from imap_l3_processing.models import DataProductVariable
 from tests.test_helpers import get_test_data_folder
 
@@ -450,36 +451,37 @@ class TestMapModels(unittest.TestCase):
         self.assertEqual(expected_nside, actual.coords.nside)
 
     def test_ultra_l2_map_read_from_file(self):
-        path_to_cdf = get_test_data_folder() / 'ultra' / 'fake_l2_maps' / 'ultra45-6months-copied-from-hi.cdf'
+        path_to_cdf = get_test_data_folder() / 'ultra' / 'imap_ultra_l2_u45-ena-h-sc-nsp-full-hae-2deg-6mo_20260926_v002.cdf'
 
-        map_data = HealPixIntensityMapData.read_from_path(path_to_cdf)
+        map_data = RectangularIntensityMapData.read_from_path(path_to_cdf)
         actual_intensity_data = map_data.intensity_map_data
         actual_coords = map_data.coords
 
-        expected_epoch = datetime(2025, 4, 18, 15, 51, 57, 171732)
         with CDF(str(path_to_cdf)) as expected:
             date_range_var = read_variable_and_mask_fill_values(expected["obs_date_range"])
-            obs_date = read_variable_and_mask_fill_values(expected["obs_date"])
+            obs_date = convert_tt2000_time_to_datetime(read_variable_and_mask_fill_values(expected["obs_date"]).filled(0))
 
-            self.assertEqual(expected_epoch, actual_intensity_data.epoch[0])
+            self.assertEqual(expected['epoch'][...], actual_intensity_data.epoch)
             np.testing.assert_array_equal(expected["epoch_delta"][...], actual_intensity_data.epoch_delta)
             np.testing.assert_array_equal(expected["energy"][...], actual_intensity_data.energy)
             np.testing.assert_array_equal(expected["energy_delta_plus"][...], actual_intensity_data.energy_delta_plus)
             np.testing.assert_array_equal(expected["energy_delta_minus"][...], actual_intensity_data.energy_delta_minus)
             np.testing.assert_array_equal(expected["energy_label"][...], actual_intensity_data.energy_label)
             np.testing.assert_array_equal(expected["latitude"][...], actual_intensity_data.latitude)
+            np.testing.assert_array_equal(expected["latitude_delta"][...], actual_coords.latitude_delta)
+            np.testing.assert_array_equal(expected["latitude_label"][...], actual_coords.latitude_label)
             np.testing.assert_array_equal(expected["longitude"][...], actual_intensity_data.longitude)
+            np.testing.assert_array_equal(expected["longitude_delta"][...], actual_coords.longitude_delta)
+            np.testing.assert_array_equal(expected["longitude_label"][...], actual_coords.longitude_label)
             np.testing.assert_array_equal(expected["exposure_factor"][...], actual_intensity_data.exposure_factor)
             np.testing.assert_array_equal(obs_date, actual_intensity_data.obs_date)
             np.testing.assert_array_equal(date_range_var, actual_intensity_data.obs_date_range)
             np.testing.assert_array_equal(expected["solid_angle"][...], actual_intensity_data.solid_angle)
             np.testing.assert_array_equal(expected["ena_intensity"][...], actual_intensity_data.ena_intensity)
-            np.testing.assert_array_equal(expected["ena_intensity_stat_unc"][...],
+            np.testing.assert_array_equal(expected["ena_intensity_stat_uncert"][...],
                                           actual_intensity_data.ena_intensity_stat_unc)
             np.testing.assert_array_equal(expected["ena_intensity_sys_err"][...],
                                           actual_intensity_data.ena_intensity_sys_err)
-            np.testing.assert_array_equal(expected["pixel_index"][...], actual_coords.pixel_index)
-            np.testing.assert_array_equal(expected["pixel_index_label"][...], actual_coords.pixel_index_label)
 
     def test_ultra_healpix_intensity_read_from_xarray(self):
         full_shape = [CoordNames.TIME.value, CoordNames.ENERGY_L2.value, CoordNames.HEALPIX_INDEX.value]
@@ -492,7 +494,7 @@ class TestMapModels(unittest.TestCase):
                 "obs_date": (full_shape, np.full((2, 15, 12), 8)),
                 "exposure_factor": (full_shape, np.full((2, 15, 12), 9)),
                 "ena_intensity": (full_shape, np.full((2, 15, 12), 10)),
-                "ena_intensity_stat_unc": (full_shape, np.full((2, 15, 12), 11)),
+                "ena_intensity_stat_uncert": (full_shape, np.full((2, 15, 12), 11)),
                 "ena_intensity_sys_err": (full_shape, np.full((2, 15, 12), 12)),
                 "epoch_delta": ([CoordNames.TIME.value], np.full((2,), 13)),
                 "energy_delta_minus": ([CoordNames.ENERGY_L2.value], np.full((15,), 14)),
@@ -518,7 +520,7 @@ class TestMapModels(unittest.TestCase):
                                       output.intensity_map_data.obs_date_range)
         np.testing.assert_array_equal(input_xarray["exposure_factor"], output.intensity_map_data.exposure_factor)
         np.testing.assert_array_equal(input_xarray["ena_intensity"], output.intensity_map_data.ena_intensity)
-        np.testing.assert_array_equal(input_xarray["ena_intensity_stat_unc"],
+        np.testing.assert_array_equal(input_xarray["ena_intensity_stat_uncert"],
                                       output.intensity_map_data.ena_intensity_stat_unc)
         np.testing.assert_array_equal(np.full_like(input_xarray["ena_intensity"], np.nan),
                                       output.intensity_map_data.ena_intensity_sys_err)
@@ -585,7 +587,7 @@ class TestMapModels(unittest.TestCase):
                     cdf.new("longitude_delta", lon_delta, recVary=False)
                     cdf.new("longitude_label", lon_label, recVary=False)
                     cdf.new("ena_intensity", ena_intensity, recVary=True)
-                    cdf.new("ena_intensity_stat_unc", ena_intensity_stat_unc, recVary=True)
+                    cdf.new("ena_intensity_stat_uncert", ena_intensity_stat_unc, recVary=True)
                     cdf.new("ena_intensity_sys_err", ena_intensity_sys_err, recVary=True)
                     cdf.new("exposure_factor", exposure, recVary=True)
                     cdf.new("obs_date", obs_date, recVary=True)
@@ -651,7 +653,7 @@ class TestMapModels(unittest.TestCase):
             np.testing.assert_array_equal(map_data.longitude, np.full_like(cdf["longitude"], np.nan))
             np.testing.assert_array_equal(map_data.ena_intensity, np.full_like(cdf["ena_intensity"], np.nan))
             np.testing.assert_array_equal(map_data.ena_intensity_stat_unc,
-                                          np.full_like(cdf["ena_intensity_stat_unc"], np.nan))
+                                          np.full_like(cdf["ena_intensity_stat_uncert"], np.nan))
             np.testing.assert_array_equal(map_data.ena_intensity_sys_err,
                                           np.full_like(cdf["ena_intensity_sys_err"], np.nan))
             np.testing.assert_array_equal(map_data.exposure_factor, np.full_like(cdf["exposure_factor"], np.nan))
