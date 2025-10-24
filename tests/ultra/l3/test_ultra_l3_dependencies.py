@@ -209,10 +209,10 @@ class TestUltraL3Dependencies(unittest.TestCase):
         combined_dependencies = UltraL3CombinedDependencies.fetch_dependencies(processing_input_collection)
 
         mock_download.assert_has_calls([
-            *[call(u45_pset_input) for u45_pset_input in u45_pset_inputs],
-            *[call(u90_pset_input) for u90_pset_input in u90_pset_inputs],
-            call(u45_map_input),
-            call(u90_map_input)
+            *[call(filename) for filename in u45_pset_file_name],
+            *[call(filename) for filename in u90_pset_file_name],
+            call(u45_map_file_name),
+            call(u90_map_file_name)
         ])
 
         mock_l1c_read_from_path.assert_has_calls([

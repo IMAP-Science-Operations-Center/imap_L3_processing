@@ -1,11 +1,11 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
-from idlelib.debugger_r import close_subprocess_debugger
 from pathlib import Path
 
 import imap_data_access
 import numpy as np
 from imap_data_access.processing_input import ProcessingInputCollection
+from imap_l3_processing.utils import get_dependency_paths_by_descriptor
 from imap_processing.ultra.l2.ultra_l2 import ultra_l2
 
 from imap_l3_processing.maps.map_models import HealPixIntensityMapData, RectangularIntensityMapData, \
@@ -92,19 +92,16 @@ class UltraL3CombinedDependencies:
 
     @classmethod
     def fetch_dependencies(cls, deps: ProcessingInputCollection) -> UltraL3CombinedDependencies:
-        science_inputs = deps.get_science_inputs()
 
-        u45_psets_filenames = list(filter(lambda science_input: "45sensor-spacecraftpset" in science_input.descriptor, science_inputs))
-        u90_psets_filenames = list(filter(lambda science_input: "90sensor-spacecraftpset" in science_input.descriptor, science_inputs))
+        file_paths = get_dependency_paths_by_descriptor(deps=deps, descriptors=["u45", "u90", "45sensor-spacecraftpset", "90sensor-spacecraftpset"])
 
-        u45_maps_filenames = list(filter(lambda science_input: "u45" in science_input.descriptor, science_inputs))
-        u90_maps_filenames = list(filter(lambda science_input: "u90" in science_input.descriptor, science_inputs))
+        u45_pset_paths = [imap_data_access.download(pset) for pset in file_paths['45sensor-spacecraftpset']]
+        u90_pset_paths = [imap_data_access.download(pset) for pset in file_paths['90sensor-spacecraftpset']]
 
-        u45_pset_paths = [imap_data_access.download(pset) for pset in u45_psets_filenames]
-        u90_pset_paths = [imap_data_access.download(pset) for pset in u90_psets_filenames]
-
-        u45_map_path = imap_data_access.download(u45_maps_filenames[0])
-        u90_map_path = imap_data_access.download(u90_maps_filenames[0])
+        assert len(file_paths['u45']) == 1
+        assert len(file_paths['u90']) == 1
+        u45_map_path = imap_data_access.download(file_paths['u45'][0])
+        u90_map_path = imap_data_access.download(file_paths['u90'][0])
 
         return cls.from_file_paths(u45_pset_paths, u90_pset_paths, u45_map_path, u90_map_path)
 

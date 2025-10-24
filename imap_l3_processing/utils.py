@@ -1,7 +1,6 @@
 import enum
 import json
 import logging
-import re
 from dataclasses import dataclass
 from datetime import datetime, date, timedelta
 from pathlib import Path
@@ -26,6 +25,7 @@ from imap_l3_processing.maps.map_models import GlowsL3eRectangularMapInputData, 
 from imap_l3_processing.models import UpstreamDataDependency, DataProduct, MagL1dData, InputMetadata
 from imap_l3_processing.ultra.l3.models import UltraL1CPSet, UltraGlowsL3eData
 from imap_l3_processing.version import VERSION
+from imap_data_access.processing_input import ProcessingInputCollection
 
 logger = logging.getLogger(__name__)
 
@@ -230,6 +230,17 @@ def combine_glows_l3e_with_l1c_pointing(glows_l3e_data: list[GlowsL3eData], l1c_
     glows_by_repoint = {l3e.repointing: l3e for l3e in glows_l3e_data}
 
     return [(l1c_by_repoint[repoint], glows_by_repoint[repoint]) for repoint in l1c_by_repoint.keys() if repoint in glows_by_repoint]
+
+
+def get_dependency_paths_by_descriptor(deps: ProcessingInputCollection, descriptors: list[str]) -> dict[str, list[Path]]:
+    descriptor_to_paths = {key: [] for key in descriptors}
+    for input_file in deps.get_science_inputs():
+        for descriptor in descriptors:
+            if descriptor in input_file.descriptor:
+                descriptor_to_paths[descriptor].append(input_file.filename_list[0])
+                continue
+
+    return descriptor_to_paths
 
 
 def furnish_local_spice():
