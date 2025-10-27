@@ -171,8 +171,10 @@ class SpectralIndexDependencies(metaclass=abc.ABCMeta):
     def get_fit_energy_ranges(self) -> np.ndarray:
         raise NotImplementedError
 
+
 def convert_tt2000_time_to_datetime(time: np.ndarray) -> np.ndarray:
     return time / 1e9 * timedelta(seconds=1) + TT2000_EPOCH
+
 
 def _read_intensity_map_data_from_open_cdf(cdf: CDF) -> IntensityMapData:
     masked_obs_date = read_variable_and_mask_fill_values(cdf["obs_date"])
@@ -361,21 +363,25 @@ def _healpix_coords_to_variables(coords: HealPixCoords) -> list[DataProductVaria
     ]
 
 
-def combine_rectangular_intensity_map_data(maps: list[RectangularIntensityMapData], exposure_weighted: bool = True) -> RectangularIntensityMapData:
+def combine_rectangular_intensity_map_data(maps: list[RectangularIntensityMapData],
+                                           exposure_weighted: bool = True) -> RectangularIntensityMapData:
     for m in maps[1:]:
         assert np.array_equal(maps[0].coords.latitude_delta, m.coords.latitude_delta)
         assert np.array_equal(maps[0].coords.longitude_delta, m.coords.longitude_delta)
         assert np.array_equal(maps[0].coords.latitude_label, m.coords.latitude_label)
         assert np.array_equal(maps[0].coords.longitude_label, m.coords.longitude_label)
-    intensity_map_data = combine_intensity_map_data([m.intensity_map_data for m in maps], exposure_weighted=exposure_weighted)
+    intensity_map_data = combine_intensity_map_data([m.intensity_map_data for m in maps],
+                                                    exposure_weighted=exposure_weighted)
     return RectangularIntensityMapData(intensity_map_data=intensity_map_data, coords=maps[0].coords)
 
 
-def combine_healpix_intensity_map_data(maps: list[HealPixIntensityMapData], exposure_weighted: bool = True) -> HealPixIntensityMapData:
+def combine_healpix_intensity_map_data(maps: list[HealPixIntensityMapData],
+                                       exposure_weighted: bool = True) -> HealPixIntensityMapData:
     for m in maps[1:]:
         assert np.array_equal(maps[0].coords.pixel_index, m.coords.pixel_index)
         assert np.array_equal(maps[0].coords.pixel_index_label, m.coords.pixel_index_label)
-    intensity_map_data = combine_intensity_map_data([m.intensity_map_data for m in maps], exposure_weighted=exposure_weighted)
+    intensity_map_data = combine_intensity_map_data([m.intensity_map_data for m in maps],
+                                                    exposure_weighted=exposure_weighted)
     return HealPixIntensityMapData(intensity_map_data=intensity_map_data, coords=maps[0].coords)
 
 
@@ -405,7 +411,6 @@ def combine_intensity_map_data(maps: list[IntensityMapData], exposure_weighted: 
     intensity_sys_err = np.where(exposures == 0, 0, intensity_sys_err)
     intensity_stat_unc = np.where(exposures == 0, 0, intensity_stat_unc)
 
-
     summed_exposures = np.sum(exposures, axis=0)
     weights = exposures if exposure_weighted else np.full_like(exposures, 1)
 
@@ -425,8 +430,10 @@ def combine_intensity_map_data(maps: list[IntensityMapData], exposure_weighted: 
                                obs_date=avg_obs_date
                                )
 
+
 def calculated_weighted_uncertainty(values: np.ndarray, weights: np.ndarray) -> np.ndarray:
-    do_nan_sum_where_values_is_not_all_nan = np.where(np.all(np.isnan(values), axis=0), np.nan, np.nansum(np.square(values * weights), axis=0))
+    do_nan_sum_where_values_is_not_all_nan = np.where(np.all(np.isnan(values), axis=0), np.nan,
+                                                      np.nansum(np.square(values * weights), axis=0))
     return np.sqrt(safe_divide(do_nan_sum_where_values_is_not_all_nan, np.square(np.sum(weights, axis=0))))
 
 

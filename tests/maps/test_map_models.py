@@ -336,8 +336,9 @@ class TestMapModels(unittest.TestCase):
 
         expected_combined_exposure = [4, 1, 10, 8, 0]
         expected_combined_intensity = [4, 6, 5, 5, np.nan]
-        expected_sys_err = [np.sqrt((1 * 1 + 3**2 * 9**2) / (3+1)**2), 4, np.sqrt((5**2 * 10**2 + 5**2 * 2**2) / (5+5)**2),
-                             np.sqrt((6**2 * 100**2 + 0) / (2+6)**2), np.nan]
+        expected_sys_err = [np.sqrt((1 * 1 + 3 ** 2 * 9 ** 2) / (3 + 1) ** 2), 4,
+                            np.sqrt((5 ** 2 * 10 ** 2 + 5 ** 2 * 2 ** 2) / (5 + 5) ** 2),
+                            np.sqrt((6 ** 2 * 100 ** 2 + 0) / (2 + 6) ** 2), np.nan]
         expected_stat_unc = [np.sqrt((1 * 100 + 9 * 1) / 16), 2, np.sqrt((25 * 100 + 25 * 9) / 100),
                              np.sqrt((36 * 100 + 16 * 4) / 64), np.nan]
         expected_obs_date = np.ma.array(
@@ -410,7 +411,8 @@ class TestMapModels(unittest.TestCase):
 
                 maps = [base_map, second_map]
                 combined_map = combine_rectangular_intensity_map_data(maps, exposure_weighted)
-                mock_combine_intensity_map_data.assert_called_with([sentinel.data_1, sentinel.data_2], exposure_weighted=exposure_weighted)
+                mock_combine_intensity_map_data.assert_called_with([sentinel.data_1, sentinel.data_2],
+                                                                   exposure_weighted=exposure_weighted)
 
                 self.assertEqual(combined_map.intensity_map_data, mock_combine_intensity_map_data.return_value)
                 self.assertEqual(combined_map.coords, expected_coords)
@@ -506,7 +508,8 @@ class TestMapModels(unittest.TestCase):
 
         with CDF(str(path_to_cdf)) as expected:
             date_range_var = read_variable_and_mask_fill_values(expected["obs_date_range"])
-            obs_date = convert_tt2000_time_to_datetime(read_variable_and_mask_fill_values(expected["obs_date"]).filled(0))
+            obs_date = convert_tt2000_time_to_datetime(
+                read_variable_and_mask_fill_values(expected["obs_date"]).filled(0))
 
             self.assertEqual(expected['epoch'][...], actual_intensity_data.epoch)
             np.testing.assert_array_equal(expected["epoch_delta"][...], actual_intensity_data.epoch_delta)
@@ -649,7 +652,6 @@ class TestMapModels(unittest.TestCase):
                         cdf[var].attrs['FILLVAL'] = 1000000
 
                     cdf["obs_date"].attrs["FILLVAL"] = obs_date_fillval
-
 
                 for path in [pathname, Path(pathname)]:
                     with self.subTest(name=test_name, path=path):
