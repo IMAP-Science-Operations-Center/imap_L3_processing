@@ -13,7 +13,8 @@ from imap_processing.spice.geometry import SpiceFrame
 
 from imap_l3_processing.maps.map_models import HealPixIntensityMapData, IntensityMapData, HealPixCoords, \
     HealPixSpectralIndexDataProduct, SpectralIndexMapData, RectangularIntensityDataProduct, \
-    RectangularSpectralIndexDataProduct, RectangularSpectralIndexMapData, RectangularIntensityMapData
+    RectangularSpectralIndexDataProduct, RectangularSpectralIndexMapData, RectangularIntensityMapData, \
+    HealPixIntensityDataProduct
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.ultra.l3.ultra_l3_dependencies import UltraL3Dependencies, UltraL3SpectralIndexDependencies
 from imap_l3_processing.ultra.l3.ultra_processor import UltraProcessor
@@ -31,6 +32,11 @@ class TestUltraProcessor(unittest.TestCase):
         for degree_spacing in [2, 4, 6]:
             with self.subTest(spacing=degree_spacing):
                 self._test_process_spectral_index(degree_spacing)
+
+    def test_process_combined_all_spacings(self):
+        for degree_spacing in [2, 4, 6]:
+            with self.subTest(spacing=degree_spacing):
+                self._test_process_combined_sensor(degree_spacing)
 
     @patch('imap_l3_processing.ultra.l3.ultra_processor.HealPixIntensityMapData')
     @patch('imap_l3_processing.utils.spiceypy')
@@ -232,6 +238,44 @@ class TestUltraProcessor(unittest.TestCase):
 
         self.assertEqual([mock_save_data.return_value], product)
 
+    @patch('imap_l3_processing.ultra.l3.MapProcessor.get_parent_file_names')
+    @patch("imap_l3_processing.ultra.l3.ultra_processor.combine_healpix_intensity_map_data")
+    @patch('imap_l3_processing.ultra.l3.ultra_processor.save_data')
+    @patch('imap_l3_processing.ultra.l3.ultra_processor.UltraL3CombinedDependencies.fetch_dependencies')
+    def _test_process_combined_sensor(self, degree_spacing, mock_fetch_dependencies, mock_save_data, mock_combine_maps,
+                                      mock_get_parent_file_names):
+        mock_get_parent_file_names.return_value = ["ram_map", "antiram_map"]
+        input_metadata = InputMetadata(instrument="ultra",
+                                       data_level="l3",
+                                       start_date=datetime.now(),
+                                       end_date=datetime.now() + timedelta(days=1),
+                                       version="",
+                                       descriptor=f"ulc-ena-h-sf-sp-full-hae-{degree_spacing}deg-6mo",
+                                       )
+
+        combined_dependencies = mock_fetch_dependencies.return_value
+        combined_dependencies.dependency_file_paths = [
+            Path("folder/u45_map", Path("folder/u90_map"), Path("folder/u45_l1c"), Path("folder/u90_l1c"))]
+
+        processor = UltraProcessor(sentinel.dependencies, input_metadata)
+        product = processor.process(spice_frame_name=sentinel.spice_frame)
+
+        mock_fetch_dependencies.assert_called_once_with(sentinel.dependencies)
+
+        mock_combine_maps.assert_called_once_with([
+            sentinel.survival_corrected_ram,
+            sentinel.survival_corrected_antiram,
+        ], exposure_weighted=False)
+
+        mock_save_data.assert_called_once_with(
+            HealPixIntensityDataProduct(
+                input_metadata=input_metadata,
+                parent_file_names=["u45_map", "u90_map", "u45_l1c", "u90_l1c"],
+                data=mock_combine_maps.return_value
+            )
+        )
+        self.assertEqual([mock_save_data.return_value], product)
+
     @patch('imap_l3_processing.ultra.l3.ultra_processor.HealPixIntensityMapData')
     @patch('imap_l3_processing.processor.spiceypy')
     @patch('imap_l3_processing.ultra.l3.ultra_processor.save_data')
@@ -240,10 +284,10 @@ class TestUltraProcessor(unittest.TestCase):
     @patch('imap_l3_processing.ultra.l3.ultra_processor.combine_glows_l3e_with_l1c_pointing')
     @patch('imap_l3_processing.ultra.l3.ultra_processor.UltraL3Dependencies.fetch_dependencies')
     def test_defaults_to_ECLIPJ2000_spice_frame(self, mock_fetch_dependencies,
-                                           mock_combine_glows_l3e_with_l1c_pointing,
-                                           mock_survival_probability_pointing_set, mock_survival_skymap,
-                                           mock_save_data, mock_spiceypy,
-                                           mock_healpix_intensity_map_data_class):
+                                                mock_combine_glows_l3e_with_l1c_pointing,
+                                                mock_survival_probability_pointing_set, mock_survival_skymap,
+                                                mock_save_data, mock_spiceypy,
+                                                mock_healpix_intensity_map_data_class):
         healpix_intensity_map_data = mock_healpix_intensity_map_data_class.return_value
 
         rng = np.random.default_rng()

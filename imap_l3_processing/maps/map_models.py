@@ -367,9 +367,15 @@ def combine_rectangular_intensity_map_data(maps: list[RectangularIntensityMapDat
         assert np.array_equal(maps[0].coords.latitude_label, m.coords.latitude_label)
         assert np.array_equal(maps[0].coords.longitude_label, m.coords.longitude_label)
     intensity_map_data = combine_intensity_map_data([m.intensity_map_data for m in maps], exposure_weighted=exposure_weighted)
-    return RectangularIntensityMapData(
-        intensity_map_data=intensity_map_data,
-        coords=maps[0].coords)
+    return RectangularIntensityMapData(intensity_map_data=intensity_map_data, coords=maps[0].coords)
+
+
+def combine_healpix_intensity_map_data(maps: list[HealPixIntensityMapData], exposure_weighted: bool = True) -> HealPixIntensityMapData:
+    for m in maps[1:]:
+        assert np.array_equal(maps[0].coords.pixel_index, m.coords.pixel_index)
+        assert np.array_equal(maps[0].coords.pixel_index_label, m.coords.pixel_index_label)
+    intensity_map_data = combine_intensity_map_data([m.intensity_map_data for m in maps], exposure_weighted=exposure_weighted)
+    return HealPixIntensityMapData(intensity_map_data=intensity_map_data, coords=maps[0].coords)
 
 
 def combine_intensity_map_data(maps: list[IntensityMapData], exposure_weighted: bool = True) -> IntensityMapData:

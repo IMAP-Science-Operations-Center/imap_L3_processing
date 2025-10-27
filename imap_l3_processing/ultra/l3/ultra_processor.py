@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from imap_processing.spice.geometry import SpiceFrame
 
 from imap_l3_processing.maps.map_descriptors import MapDescriptorParts, MapQuantity, SurvivalCorrection, \
-    parse_map_descriptor, PixelSize
+    parse_map_descriptor, PixelSize, Sensor
 from imap_l3_processing.maps.map_models import HealPixIntensityMapData, IntensityMapData, \
     HealPixCoords, HealPixSpectralIndexMapData, RectangularIntensityDataProduct, \
     RectangularIntensityMapData, RectangularCoords, RectangularSpectralIndexDataProduct, \
@@ -13,14 +13,18 @@ from imap_l3_processing.maps.map_processor import MapProcessor
 from imap_l3_processing.maps.spectral_fit import calculate_spectral_index_for_multiple_ranges
 from imap_l3_processing.ultra.l3.science.ultra_survival_probability import UltraSurvivalProbabilitySkyMap, \
     UltraSurvivalProbability
-from imap_l3_processing.ultra.l3.ultra_l3_dependencies import UltraL3Dependencies, UltraL3SpectralIndexDependencies
+from imap_l3_processing.ultra.l3.ultra_l3_dependencies import UltraL3Dependencies, UltraL3SpectralIndexDependencies, \
+    UltraL3CombinedDependencies
 from imap_l3_processing.utils import save_data, combine_glows_l3e_with_l1c_pointing
+
 
 
 class UltraProcessor(MapProcessor):
     def process(self, spice_frame_name: SpiceFrame = SpiceFrame.ECLIPJ2000):
         parsed_descriptor = parse_map_descriptor(self.input_metadata.descriptor)
         parent_file_names = self.get_parent_file_names()
+
+        UltraL3CombinedDependencies
 
         match parsed_descriptor:
             case MapDescriptorParts(quantity=MapQuantity.SpectralIndex,
@@ -192,6 +196,8 @@ class UltraProcessor(MapProcessor):
                 ),
             )
         )
+
+    def _process_combined_healpix_intensity(self, u90, ):
 
 
 @dataclass

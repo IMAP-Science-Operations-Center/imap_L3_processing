@@ -22,7 +22,7 @@ from imap_l3_processing.maps.map_models import RectangularCoords, SpectralIndexM
     RectangularSpectralIndexDataProduct, RectangularIntensityMapData, IntensityMapData, RectangularIntensityDataProduct, \
     combine_rectangular_intensity_map_data, combine_intensity_map_data, HealPixIntensityMapData, \
     HealPixSpectralIndexMapData, HealPixCoords, HealPixSpectralIndexDataProduct, HealPixIntensityDataProduct, \
-    convert_tt2000_time_to_datetime
+    convert_tt2000_time_to_datetime, combine_healpix_intensity_map_data
 from imap_l3_processing.models import DataProductVariable
 from tests.test_helpers import get_test_data_folder
 
@@ -397,7 +397,7 @@ class TestMapModels(unittest.TestCase):
         for exposure_weighted in cases:
             with self.subTest(f"exposure_weighted={exposure_weighted}"):
                 expected_coords = RectangularCoords(latitude_delta=np.array([1]), longitude_delta=np.array([1]),
-                                                    latitude_label=np.array(["one"]), longitude_label=np.array(["one"]), )
+                                                    latitude_label=np.array(["one"]), longitude_label=np.array(["one"]))
                 base_map = RectangularIntensityMapData(
                     intensity_map_data=sentinel.data_1,
                     coords=expected_coords
@@ -411,6 +411,30 @@ class TestMapModels(unittest.TestCase):
                 maps = [base_map, second_map]
                 combined_map = combine_rectangular_intensity_map_data(maps, exposure_weighted)
                 mock_combine_intensity_map_data.assert_called_with([sentinel.data_1, sentinel.data_2], exposure_weighted=exposure_weighted)
+
+                self.assertEqual(combined_map.intensity_map_data, mock_combine_intensity_map_data.return_value)
+                self.assertEqual(combined_map.coords, expected_coords)
+
+    @patch('imap_l3_processing.maps.map_models.combine_intensity_map_data')
+    def test_combine_healpix_intensity_map_data(self, mock_combine_intensity_map_data):
+        cases = [True, False]
+        for exposure_weighted in cases:
+            with self.subTest(f"exposure_weighted={exposure_weighted}"):
+                expected_coords = HealPixCoords(pixel_index=[1, 2, 3], pixel_index_label=["one", "two", "three"])
+                base_map = HealPixIntensityMapData(
+                    intensity_map_data=sentinel.data_1,
+                    coords=expected_coords
+                )
+
+                second_map = HealPixIntensityMapData(
+                    intensity_map_data=sentinel.data_2,
+                    coords=expected_coords
+                )
+
+                maps = [base_map, second_map]
+                combined_map = combine_healpix_intensity_map_data(maps, exposure_weighted)
+                mock_combine_intensity_map_data.assert_called_with([sentinel.data_1, sentinel.data_2],
+                                                                   exposure_weighted=exposure_weighted)
 
                 self.assertEqual(combined_map.intensity_map_data, mock_combine_intensity_map_data.return_value)
                 self.assertEqual(combined_map.coords, expected_coords)
@@ -441,6 +465,29 @@ class TestMapModels(unittest.TestCase):
             with self.subTest(name):
                 with self.assertRaises(AssertionError):
                     combine_rectangular_intensity_map_data([base_map, not_matching_map])
+
+    def test_combine_healpix_intensity_map_data_errors_if_coords_not_matching(self):
+        index_array = np.array([1])
+        label_array = np.array(["one"])
+
+        def make_data(pixel_index=index_array, pixel_index_label=label_array):
+            return HealPixIntensityMapData(
+                intensity_map_data=self.construct_intensity_data_with_all_zero_fields(),
+                coords=HealPixCoords(
+                    pixel_index=pixel_index,
+                    pixel_index_label=pixel_index_label,
+                )
+            )
+
+        base_map = make_data()
+        cases = [
+            ("pixel_index", make_data(pixel_index=np.array([2]), pixel_index_label=label_array)),
+            ("pixel_index_label", make_data(pixel_index=index_array, pixel_index_label=np.array(["diff label"]))),
+        ]
+        for name, not_matching_map in cases:
+            with self.subTest(name):
+                with self.assertRaises(AssertionError):
+                    combine_healpix_intensity_map_data([base_map, not_matching_map])
 
     def test_healpix_map_nside_property(self):
         path_to_cdf = get_test_data_folder() / 'ultra' / 'fake_l2_maps' / 'test_l2_map.cdf'
@@ -660,7 +707,6 @@ class TestMapModels(unittest.TestCase):
             np.testing.assert_array_equal(map_data.solid_angle, np.full_like(cdf["solid_angle"], np.nan))
 
     def test_healpix_intensity_map_data_to_skymap(self):
-
         expected_nside = 2
 
         num_epochs = 1
