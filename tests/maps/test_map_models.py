@@ -498,7 +498,7 @@ class TestMapModels(unittest.TestCase):
         self.assertEqual(expected_nside, actual.coords.nside)
 
     def test_ultra_l2_map_read_from_file(self):
-        path_to_cdf = get_test_data_folder() / 'ultra' / 'imap_ultra_l2_u45-ena-h-sc-nsp-full-hae-2deg-6mo_20260926_v002.cdf'
+        path_to_cdf = get_test_data_folder() / 'ultra' / 'imap_ultra_l2_u90-ena-h-sc-nsp-full-hae-2deg-6mo_20260926_v102.cdf'
 
         map_data = RectangularIntensityMapData.read_from_path(path_to_cdf)
         actual_intensity_data = map_data.intensity_map_data
@@ -541,7 +541,7 @@ class TestMapModels(unittest.TestCase):
                 "obs_date": (full_shape, np.full((2, 15, 12), 8)),
                 "exposure_factor": (full_shape, np.full((2, 15, 12), 9)),
                 "ena_intensity": (full_shape, np.full((2, 15, 12), 10)),
-                "ena_intensity_stat_uncert": (full_shape, np.full((2, 15, 12), 11)),
+                "ena_intensity_stat_unc": (full_shape, np.full((2, 15, 12), 11)),
                 "ena_intensity_sys_err": (full_shape, np.full((2, 15, 12), 12)),
                 "epoch_delta": ([CoordNames.TIME.value], np.full((2,), 13)),
                 "energy_delta_minus": ([CoordNames.ENERGY_L2.value], np.full((15,), 14)),
@@ -567,7 +567,7 @@ class TestMapModels(unittest.TestCase):
                                       output.intensity_map_data.obs_date_range)
         np.testing.assert_array_equal(input_xarray["exposure_factor"], output.intensity_map_data.exposure_factor)
         np.testing.assert_array_equal(input_xarray["ena_intensity"], output.intensity_map_data.ena_intensity)
-        np.testing.assert_array_equal(input_xarray["ena_intensity_stat_uncert"],
+        np.testing.assert_array_equal(input_xarray["ena_intensity_stat_unc"],
                                       output.intensity_map_data.ena_intensity_stat_unc)
         np.testing.assert_array_equal(np.full_like(input_xarray["ena_intensity"], np.nan),
                                       output.intensity_map_data.ena_intensity_sys_err)
