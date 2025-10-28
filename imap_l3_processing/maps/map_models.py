@@ -5,6 +5,7 @@ import dataclasses
 from dataclasses import dataclass
 from datetime import timedelta, datetime
 from pathlib import Path
+from typing import Generic
 
 import numpy as np
 import xarray
@@ -16,7 +17,7 @@ from spacepy.pycdf import CDF
 from imap_l3_processing.cdf.cdf_utils import read_variable_and_mask_fill_values, read_numeric_variable
 from imap_l3_processing.constants import TT2000_EPOCH
 from imap_l3_processing.data_utils import safe_divide
-from imap_l3_processing.models import DataProduct, DataProductVariable
+from imap_l3_processing.models import DataProduct, DataProductVariable, InputMetadata, D
 
 EPOCH_VAR_NAME = "epoch"
 EPOCH_DELTA_VAR_NAME = "epoch_delta"
@@ -277,9 +278,16 @@ class HealPixSpectralIndexMapData:
 
         return healpix_map
 
-
 @dataclass
-class HealPixSpectralIndexDataProduct(DataProduct):
+class MapDataProduct(DataProduct[D], Generic[D]):
+    data: D
+
+    @abc.abstractmethod
+    def to_data_product_variables(self) -> list[DataProductVariable]:
+        raise NotImplementedError
+
+
+class HealPixSpectralIndexDataProduct(MapDataProduct[HealPixSpectralIndexMapData]):
     data: HealPixSpectralIndexMapData
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
@@ -287,8 +295,7 @@ class HealPixSpectralIndexDataProduct(DataProduct):
             + _healpix_coords_to_variables(self.data.coords)
 
 
-@dataclass
-class HealPixIntensityDataProduct(DataProduct):
+class HealPixIntensityDataProduct(MapDataProduct[HealPixIntensityMapData]):
     data: HealPixIntensityMapData
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
@@ -296,8 +303,7 @@ class HealPixIntensityDataProduct(DataProduct):
             + _healpix_coords_to_variables(self.data.coords)
 
 
-@dataclass
-class RectangularSpectralIndexDataProduct(DataProduct):
+class RectangularSpectralIndexDataProduct(MapDataProduct[RectangularSpectralIndexMapData]):
     data: RectangularSpectralIndexMapData
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
@@ -305,8 +311,7 @@ class RectangularSpectralIndexDataProduct(DataProduct):
             + _rectangular_coords_to_variables(self.data.coords)
 
 
-@dataclass
-class RectangularIntensityDataProduct(DataProduct):
+class RectangularIntensityDataProduct(MapDataProduct[RectangularIntensityMapData]):
     data: RectangularIntensityMapData
 
     def to_data_product_variables(self) -> list[DataProductVariable]:

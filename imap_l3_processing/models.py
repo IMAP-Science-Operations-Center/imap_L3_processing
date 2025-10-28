@@ -4,7 +4,7 @@ import enum
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Union, Optional
+from typing import Union, Optional, TypeVar, Generic
 
 import numpy as np
 
@@ -43,8 +43,10 @@ class DataProductVariable:
     record_varying: bool = None
 
 
+D = TypeVar("D")
+
 @dataclass
-class DataProduct(metaclass=abc.ABCMeta):
+class DataProduct(abc.ABC, Generic[D]):
     input_metadata: InputMetadata
 
     parent_file_names: list[str] = field(default_factory=list, kw_only=True)

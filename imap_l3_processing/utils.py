@@ -21,7 +21,7 @@ from imap_l3_processing.constants import TT2000_EPOCH
 from imap_l3_processing.maps.map_models import GlowsL3eRectangularMapInputData, InputRectangularPointingSet, \
     RectangularSpectralIndexMapData, RectangularIntensityMapData, \
     HealPixIntensityMapData, HealPixSpectralIndexMapData, RectangularSpectralIndexDataProduct, \
-    RectangularIntensityDataProduct, HealPixSpectralIndexDataProduct, HealPixIntensityDataProduct
+    RectangularIntensityDataProduct, HealPixSpectralIndexDataProduct, HealPixIntensityDataProduct, MapDataProduct
 from imap_l3_processing.models import UpstreamDataDependency, DataProduct, MagL1dData, InputMetadata
 from imap_l3_processing.ultra.l3.models import UltraL1CPSet, UltraGlowsL3eData
 from imap_l3_processing.version import VERSION
@@ -77,20 +77,18 @@ def save_data(data: DataProduct, delete_if_present: bool = False, folder_path: P
 
     map_instruments = ["hi", "lo", "ultra"]
     if data.input_metadata.instrument in map_instruments:
-        map_data_product_types = [
-            RectangularSpectralIndexDataProduct,
-            RectangularIntensityDataProduct,
-            HealPixSpectralIndexDataProduct,
-            HealPixIntensityDataProduct
-        ]
-        assert type(data) in map_data_product_types, f"Found an unsupported map data product of type: {type(data)}"
-        attrs = generate_map_global_metadata(data)
-        for key, value in attrs.items():
-            attribute_manager.add_global_attribute(key, value)
 
-        if attribute_manager.try_load_global_metadata(logical_source) is None:
-            logical_source_global_attrs = generate_global_metadata_for_undefined_logical_source(data.input_metadata)
-            attribute_manager.add_global_attribute(logical_source, logical_source_global_attrs)
+        if isinstance(data, (RectangularSpectralIndexDataProduct, RectangularIntensityDataProduct,
+                             HealPixSpectralIndexDataProduct, HealPixIntensityDataProduct)):
+            attrs = generate_map_global_metadata(data)
+            for key, value in attrs.items():
+                attribute_manager.add_global_attribute(key, value)
+
+            if attribute_manager.try_load_global_metadata(logical_source) is None:
+                logical_source_global_attrs = generate_global_metadata_for_undefined_logical_source(data.input_metadata)
+                attribute_manager.add_global_attribute(logical_source, logical_source_global_attrs)
+        else:
+            raise AssertionError(f"Found an unsupported map data product of type: {type(data)}")
     elif data.parent_file_names:
         attribute_manager.add_global_attribute("Parents", data.parent_file_names)
 
@@ -98,11 +96,6 @@ def save_data(data: DataProduct, delete_if_present: bool = False, folder_path: P
     write_cdf(file_path_str, data, attribute_manager)
     return file_path
 
-
-type MapDataProduct = (RectangularSpectralIndexDataProduct
-                       | RectangularIntensityDataProduct
-                       | HealPixSpectralIndexDataProduct
-                       | HealPixIntensityDataProduct)
 
 
 def generate_map_global_metadata(data_product: MapDataProduct) -> dict:
