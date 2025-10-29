@@ -97,7 +97,7 @@ class TestLoInitializer(unittest.TestCase):
                 instrument="lo",
                 data_level="l3",
                 start_date=datetime(2010, 4, 1),
-                end_date=datetime(2010, 4, 1),
+                end_date=datetime(2011, 4, 1, 6, 0),
                 version="v002",
                 descriptor="l090-ena-h-sf-sp-ram-hae-6deg-12mo"
             ),
