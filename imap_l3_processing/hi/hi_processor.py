@@ -1,9 +1,7 @@
-from idlelib.multicall import expand_substates
 from pathlib import Path
 
 from imap_processing.spice.geometry import SpiceFrame
 
-from imap_l3_processing.hi.l3.hi_l3_combined_sensor_dependencies import HiL3CombinedMapDependencies
 from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3SpectralIndexDependencies
 from imap_l3_processing.maps.hilo_l3_survival_dependencies import HiLoL3SurvivalDependencies, \
     HiL3SingleSensorFullSpinDependencies
