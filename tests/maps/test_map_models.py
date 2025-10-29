@@ -500,7 +500,7 @@ class TestMapModels(unittest.TestCase):
         self.assertEqual(expected_nside, actual.coords.nside)
 
     def test_ultra_l2_map_read_from_file(self):
-        path_to_cdf = get_test_data_folder() / 'ultra' / 'imap_ultra_l2_u90-ena-h-sc-nsp-full-hae-2deg-6mo_20260926_v102.cdf'
+        path_to_cdf = get_test_data_folder() / 'ultra' / 'imap_ultra_l2_u90-ena-h-sf-nsp-full-hae-2deg-6mo_20250415_v102.cdf'
 
         map_data = RectangularIntensityMapData.read_from_path(path_to_cdf)
         actual_intensity_data = map_data.intensity_map_data

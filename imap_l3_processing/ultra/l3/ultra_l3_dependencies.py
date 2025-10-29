@@ -30,10 +30,10 @@ class UltraL3Dependencies:
         glows_l3e_names = deps.get_file_paths("glows")
 
         l2_map_path = imap_data_access.download(ultra_l2_name)
-        hi_l1c_downloaded_paths = [imap_data_access.download(l1c) for l1c in ultra_l1c_names]
+        ultra_l1c_downloaded_paths = [imap_data_access.download(l1c) for l1c in ultra_l1c_names]
         glows_l3e_download_paths = [imap_data_access.download(path) for path in glows_l3e_names]
 
-        return cls.from_file_paths(l2_map_path, hi_l1c_downloaded_paths, glows_l3e_download_paths)
+        return cls.from_file_paths(l2_map_path, ultra_l1c_downloaded_paths, glows_l3e_download_paths)
 
     @classmethod
     def from_file_paths(cls, l2_map_path: Path, l1c_file_paths: list[Path], glows_file_paths: list[Path]) -> UltraL3Dependencies:
