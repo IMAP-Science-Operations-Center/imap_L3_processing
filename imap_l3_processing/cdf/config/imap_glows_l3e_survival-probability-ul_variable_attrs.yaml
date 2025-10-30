@@ -185,3 +185,17 @@ spacecraft_velocity_z:
   UNITS: km/s
   VALIDMIN: -50
   VALIDMAX: 50
+elongation_excluded:
+  NAME: elongation_excluded
+  DATA_TYPE: CDF_UINT2
+  CATDESC: Region of excluded values from Ultra instrument
+  VAR_TYPE: support_data
+  FIELDNAM: Elongation Excluded
+  LABLAXIS: Elongation excluded
+  DEPEND_0: epoch
+  FORMAT: I3
+  UNITS: degree
+  FILLVAL: 65535
+  VALIDMAX: 0
+  VALIDMIN: 180
+  RECORD_VARYING: RV

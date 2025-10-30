@@ -4,7 +4,6 @@ import os
 import shutil
 import subprocess
 import sys
-import traceback
 from dataclasses import replace
 from datetime import datetime, timedelta
 from pathlib import Path

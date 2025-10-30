@@ -9,7 +9,7 @@ from unittest.mock import sentinel, patch, call
 import numpy as np
 from spacepy import pycdf
 
-from imap_l3_processing.constants import CARRINGTON_ROTATION_IN_NANOSECONDS, TEMP_CDF_FOLDER_PATH
+from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
 from imap_l3_processing.glows.l3bc.models import GlowsL3BIonizationRate, GlowsL3CSolarWind, CRToProcess, \
     ExternalDependencies, F107_FLUX_TABLE_URL, LYMAN_ALPHA_COMPOSITE_INDEX_URL, OMNI2_URL
 from tests.swapi.cdf_model_test_case import CdfModelTestCase
@@ -172,11 +172,12 @@ class TestModels(CdfModelTestCase):
                                       ph_uncert=sentinel.ph_uncert,
                                       cx_uncert=sentinel.cx_uncert,
                                       lat_grid_label=sentinel.lat_grid_label,
-                                      uv_anisotropy_flag=sentinel.uv_anisotropy_flag
+                                      uv_anisotropy_flag=sentinel.uv_anisotropy_flag,
+                                      used_l3a=sentinel.used_l3a,
                                       )
 
         variables = data.to_data_product_variables()
-        self.assertEqual(15, len(variables))
+        self.assertEqual(16, len(variables))
 
         variables = iter(variables)
         self.assert_variable_attributes(next(variables), sentinel.epoch, "epoch")
@@ -194,6 +195,7 @@ class TestModels(CdfModelTestCase):
         self.assert_variable_attributes(next(variables), sentinel.cx_uncert, "cx_uncert")
         self.assert_variable_attributes(next(variables), sentinel.lat_grid_label, "lat_grid_label")
         self.assert_variable_attributes(next(variables), sentinel.uv_anisotropy_flag, "uv_anisotropy_flag")
+        self.assert_variable_attributes(next(variables), sentinel.used_l3a, "used_l3a")
 
     def test_l3b_from_instrument_team_dictionary(self):
         glows_instrument_team_data_path = get_test_instrument_team_data_path('glows')
@@ -241,6 +243,10 @@ class TestModels(CdfModelTestCase):
             'imap_glows_electron-density-2010a_v003.dat',
             'f107_fluxtable.txt'
         ], result.parent_file_names)
+        np.testing.assert_equal(result.used_l3a, np.array([[
+            "imap_glows_l3a_20100101000000_orbX_modX_p_v00.json",
+            "imap_glows_l3a_20100102000000_orbX_modX_p_v00.json",
+            "imap_glows_l3a_20100103000000_orbX_modX_p_v00.json"]]))
 
     def test_l3c_to_data_product_variables(self):
         data = GlowsL3CSolarWind(input_metadata=sentinel.input_metadata,

@@ -23,6 +23,7 @@ SPACECRAFT_LATITUDE_VAR_NAME = "spacecraft_latitude"
 SPACECRAFT_VELOCITY_X_VAR_NAME = "spacecraft_velocity_x"
 SPACECRAFT_VELOCITY_Y_VAR_NAME = "spacecraft_velocity_y"
 SPACECRAFT_VELOCITY_Z_VAR_NAME = "spacecraft_velocity_z"
+ELONGATION_EXCLUDED_VAR_NAME = "elongation_excluded"
 
 
 @dataclass
@@ -40,6 +41,7 @@ class GlowsL3EUltraData(DataProduct):
     spacecraft_velocity_x: np.ndarray
     spacecraft_velocity_y: np.ndarray
     spacecraft_velocity_z: np.ndarray
+    elongation_excluded: np.ndarray
 
     @classmethod
     def convert_dat_to_glows_l3e_ul_product(cls, input_metadata: InputMetadata, file_path: Path,
@@ -52,7 +54,7 @@ class GlowsL3EUltraData(DataProduct):
             energies = np.array([float(i) for i in re.findall(r"\d+.\d+", energy_line[0])])
 
             code_version_line = [line for line in lines if line.startswith("# code version")]
-            code_version = np.array([code_version_line[0].split(',')[0][14:].strip()])
+            code_version = code_version_line[0].split(',')[0][14:].strip()
 
         data_table = np.loadtxt(file_path, skiprows=200, dtype=np.float64)
 
@@ -68,7 +70,8 @@ class GlowsL3EUltraData(DataProduct):
 
         transposed_prob_sur = np.array([probability_of_survival_to_return])
 
-        return cls(input_metadata,
+        return cls(
+            input_metadata,
             epoch=np.array([epoch]),
             energy=energies,
             healpix_index=healpix_indexes,
@@ -82,6 +85,7 @@ class GlowsL3EUltraData(DataProduct):
             spacecraft_velocity_x=np.array([args.spacecraft_velocity_x]),
             spacecraft_velocity_y=np.array([args.spacecraft_velocity_y]),
             spacecraft_velocity_z=np.array([args.spacecraft_velocity_z]),
+            elongation_excluded=np.array([args.elongation]),
         )
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
@@ -103,4 +107,5 @@ class GlowsL3EUltraData(DataProduct):
             DataProductVariable(SPACECRAFT_VELOCITY_X_VAR_NAME, self.spacecraft_velocity_x),
             DataProductVariable(SPACECRAFT_VELOCITY_Y_VAR_NAME, self.spacecraft_velocity_y),
             DataProductVariable(SPACECRAFT_VELOCITY_Z_VAR_NAME, self.spacecraft_velocity_z),
+            DataProductVariable(ELONGATION_EXCLUDED_VAR_NAME, self.elongation_excluded),
         ]

@@ -4,14 +4,16 @@ Carrington averaged ionization rate class
 '''
 
 import json
-import numpy as np
-from dataclasses import dataclass
-from astropy.time import Time
-from astropy import units as u
-from .constants import VERSION
-from . import funcs as fun
-
 import logging
+from dataclasses import dataclass
+
+import numpy as np
+from astropy import units as u
+from astropy.time import Time
+
+from . import funcs as fun
+from .constants import VERSION
+
 logging.basicConfig(level=logging.ERROR)
 
 @dataclass
@@ -163,7 +165,8 @@ class CarringtonIonizationRate():
         # Statistical uncertinity
         if len(self.daily_ion_rate['ion_rate'])>1:
             self.carr_ion_rate['ion_rate_uncert']=np.std(self.daily_ion_rate['ion_rate'],axis=0,ddof=1)
-        else: self.carr_ion_rate['ion_rate_uncert']=1.0E31*np.ones_like(self.carr_ion_rate['ion_rate'])
+        else:
+            self.carr_ion_rate['ion_rate_uncert'] = -1.0E31 * np.ones_like(self.carr_ion_rate['ion_rate'])
 
 
 
@@ -180,7 +183,7 @@ class CarringtonIonizationRate():
         if len(self.carr_ion_rate['cx_rate'])>1:
             self.carr_ion_rate['cx_rate_uncert']=self.carr_ion_rate['ion_rate_uncert']+self.carr_ion_rate['ph_rate_uncert']
         else:
-            self.carr_ion_rate['cx_rate_uncert']=1.0E31*np.ones_like(self.carr_ion_rate['cx_rate'])
+            self.carr_ion_rate['cx_rate_uncert'] = -1.0E31 * np.ones_like(self.carr_ion_rate['cx_rate'])
 
     def calculate_photoion(self, anc_input_from_instr_team,ext_dependencies):
         '''
@@ -243,7 +246,7 @@ class CarringtonIonizationRate():
         if len(photoion_daily)>1:
             self.carr_ion_rate['ph_rate_uncert']=photoion_std*np.ones_like(self.carr_ion_rate['ph_rate'])
         else:
-            self.carr_ion_rate['ph_rate_uncert']=1.0E31*np.ones_like(self.carr_ion_rate['ph_rate'])
+            self.carr_ion_rate['ph_rate_uncert'] = -1.0E31 * np.ones_like(self.carr_ion_rate['ph_rate'])
 
     def _calculate_photoion_from_f107(self,flux):
         '''
@@ -260,7 +263,6 @@ class CarringtonIonizationRate():
         '''
         photoion=-2.9819e-8+2.416e-8*flux**0.4017
         return photoion
-
     def _read_uv_anisotrpy(self,fn):
         '''
         Read file with UV latitudinal anisotrpy factor averaged over 1 Carrington rotation period.

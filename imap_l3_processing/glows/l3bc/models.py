@@ -145,6 +145,7 @@ class GlowsL3BIonizationRate(DataProduct):
     cx_uncert: np.ndarray[float]
     lat_grid_label: list[str]
     uv_anisotropy_flag: np.ndarray[int]
+    used_l3a: np.ndarray[str]
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [DataProductVariable("epoch", self.epoch),
@@ -162,6 +163,7 @@ class GlowsL3BIonizationRate(DataProduct):
                 DataProductVariable("cx_uncert", self.cx_uncert),
                 DataProductVariable("lat_grid_label", self.lat_grid_label),
                 DataProductVariable("uv_anisotropy_flag", self.uv_anisotropy_flag),
+                DataProductVariable("used_l3a", self.used_l3a),
                 ]
 
     @classmethod
@@ -173,6 +175,8 @@ class GlowsL3BIonizationRate(DataProduct):
         epoch = mean_time
         epoch_delta_plus = (end_of_cr - mean_time).total_seconds() * 1e9
         epoch_delta_minus = (mean_time - start_of_cr).total_seconds() * 1e9
+
+        l3a_file_names = [Path(f).name for f in model["header"]["l3a_input_files_name"]]
 
         parent_file_names = []
         parent_file_names += collect_file_names(model['header']['ancillary_data_files'])
@@ -194,7 +198,8 @@ class GlowsL3BIonizationRate(DataProduct):
             ph_uncert=np.array([model["ion_rate_profile"]["ph_uncert"]]),
             cx_uncert=np.array([model["ion_rate_profile"]["cx_uncert"]]),
             lat_grid_label=[f"{x}°" for x in latitude_grid],
-            uv_anisotropy_flag=np.array([model['uv_anisotropy_flag']])
+            uv_anisotropy_flag=np.array([model['uv_anisotropy_flag']]),
+            used_l3a=np.array([l3a_file_names]),
         )
 
 

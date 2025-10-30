@@ -156,9 +156,6 @@ class GlowsL3BCInitializer:
                 epoch = cdf['epoch'][0]
 
             cr_number = get_cr_for_date_time(epoch)
-            print("assigning", l3a_file_name, "to cr", cr_number)
-            logger.warning(f"assigning {l3a_file_name} to cr {cr_number}")
-
             grouped_l3a_by_cr[cr_number].add(l3a_file_name)
 
         return grouped_l3a_by_cr
