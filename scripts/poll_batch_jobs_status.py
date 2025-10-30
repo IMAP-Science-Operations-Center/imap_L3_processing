@@ -1,8 +1,7 @@
 import json
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 
-import pytz
 import requests
 from imap_data_access import ProcessingInputCollection
 
@@ -28,7 +27,7 @@ def format_job(job) -> str:
 INSTRUMENT = "codice"
 DATA_LEVEL = "l3a"
 
-AFTER_DATE = datetime.now(tz=pytz.UTC)
+AFTER_DATE = datetime.now(tz=timezone.utc)
 
 url = 'https://api.dev.imap-mission.com/batch-job'
 
@@ -37,7 +36,7 @@ while True:
     logs = json.loads(json.dumps(response.json()))
     relevant_logs = [log for log in logs if
                      log['started_at'] is not None and
-                     datetime.fromisoformat(log['started_at']).replace(tzinfo=pytz.UTC) > AFTER_DATE
+                     datetime.fromisoformat(log['started_at']).replace(tzinfo=timezone.utc) > AFTER_DATE
                      ]
 
     print("\n".join([format_job(job) for job in relevant_logs]))
