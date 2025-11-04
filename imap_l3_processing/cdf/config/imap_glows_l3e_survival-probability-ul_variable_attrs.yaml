@@ -50,7 +50,7 @@ surv_prob:
   VAR_TYPE: data
   RECORD_VARYING: RV
   DEPEND_0: epoch
-  DEPEND_1: energy
+  DEPEND_1: energy_grid
   DEPEND_2: healpix_index
   DISPLAY_TYPE: spectrogram
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
