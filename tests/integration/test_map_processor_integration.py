@@ -118,7 +118,7 @@ class TestMapIntegration(unittest.TestCase):
                 self.assertEqual(expected_parents, set(cdf.attrs["Parents"]))
 
     @run_periodically(timedelta(days=7))
-    @skip()
+    @skip("Missing valid ultra inputs")
     @patch("imap_l3_data_processor._parse_cli_arguments")
     def test_ultra_all_sp_maps(self, mock_parse_cli_arguments):
         ultra_test_data_dir = INTEGRATION_TEST_DATA_PATH / "ultra"
