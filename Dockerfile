@@ -15,4 +15,4 @@ RUN uv sync --locked --no-install-project
 COPY imap_l3_processing imap_l3_processing
 COPY imap_l3_data_processor.py .
 RUN uv sync --locked
-ENTRYPOINT ["uv" "run", "imap_l3_data_processor.py"]
+ENTRYPOINT ["uv", "run", "imap_l3_data_processor.py"]
