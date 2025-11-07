@@ -44,6 +44,7 @@ epoch_delta:
   <<: *support_data
   NAME: epoch_delta
   CATDESC: epoch_DELTA
+  RECORD_VARYING: RV
   FIELDNAM: epoch_delta
   DATA_TYPE: CDF_INT8
   FORMAT: I19
