@@ -1002,9 +1002,9 @@ def create_codice_hi_l3a_direct_events_cdf():
 
 def create_codice_hi_l3b_pitch_angles_cdf():
     codice_hi_pitch_angle_dependencies = CodicePitchAngleDependencies.from_file_paths(
-        mag_file_path=get_test_data_path("mag/imap_mag_l1d_norm-mago_20250101_v001.cdf"),
+        mag_file_path=get_test_data_path("mag/imap_mag_l1d_norm-mago_20250814_v002.cdf"),
         codice_l2_sectored_intensities_path=get_test_instrument_team_data_path(
-            "codice/hi/imap_codice_l2_hi-sectored_20241110_v002.cdf")
+            "codice/hi/imap_codice_l2_hi-sectored_20250814_v002.cdf")
     )
 
     input_metadata = InputMetadata(
@@ -1016,8 +1016,8 @@ def create_codice_hi_l3b_pitch_angles_cdf():
         descriptor='hi-pitch-angle'
     )
 
-    codice_lo_processor = CodiceHiProcessor(ProcessingInputCollection(), input_metadata)
-    pitch_angle_data = codice_lo_processor.process_l3b(codice_hi_pitch_angle_dependencies)
+    codice_hi_processor = CodiceHiProcessor(ProcessingInputCollection(), input_metadata)
+    pitch_angle_data = codice_hi_processor.process_l3b(codice_hi_pitch_angle_dependencies)
     cdf_path = save_data(pitch_angle_data, delete_if_present=True)
     return cdf_path
 
