@@ -28,5 +28,5 @@ def generate_cdf_from_dat(dat_file_path: str, output_filename: str):
 
 
 if __name__ == "__main__":
-    generate_cdf_from_dat(os.path.abspath("../../instrument_team_data/swapi/swapi_test_data_sept_2025.dat"),
+    generate_cdf_from_dat(os.path.abspath("../../instrument_team_data/swapi/swapi_test_data_nov_2025.dat"),
                           "imap_swapi_l2_sci_20100101_v001")
