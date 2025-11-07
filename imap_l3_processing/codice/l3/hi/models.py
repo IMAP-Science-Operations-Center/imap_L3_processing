@@ -83,13 +83,17 @@ EVENT_INDEX_LABEL_VAR_NAME = "event_index_label"
 
 EPOCH_DELTA_VAR_NAME = "epoch_delta"
 ENERGY_H_VAR_NAME = "energy_h"
-ENERGY_H_DELTA_VAR_NAME = "energy_h_delta"
+ENERGY_H_PLUS_VAR_NAME = "energy_h_plus"
+ENERGY_H_MINUS_VAR_NAME = "energy_h_minus"
 ENERGY_CNO_VAR_NAME = "energy_cno"
-ENERGY_CNO_DELTA_VAR_NAME = "energy_cno_delta"
+ENERGY_CNO_PLUS_VAR_NAME = "energy_cno_plus"
+ENERGY_CNO_MINUS_VAR_NAME = "energy_cno_minus"
 ENERGY_FE_VAR_NAME = "energy_fe"
-ENERGY_FE_DELTA_VAR_NAME = "energy_fe_delta"
+ENERGY_FE_PLUS_VAR_NAME = "energy_fe_plus"
+ENERGY_FE_MINUS_VAR_NAME = "energy_fe_minus"
 ENERGY_HE3HE4_VAR_NAME = "energy_he3he4"
-ENERGY_HE3HE4_DELTA_VAR_NAME = "energy_he3he4_delta"
+ENERGY_HE3HE4_PLUS_VAR_NAME = "energy_he3he4_plus"
+ENERGY_HE3HE4_MINUS_VAR_NAME = "energy_he3he4_minus"
 PITCH_ANGLE_VAR_NAME = "pitch_angle"
 PITCH_ANGLE_DELTA_VAR_NAME = "pitch_angle_delta"
 GYROPHASE_VAR_NAME = "gyrophase"
@@ -167,13 +171,17 @@ class CodiceHiL3PitchAngleDataProduct(DataProduct):
     epoch: ndarray
     epoch_delta: ndarray
     energy_h: ndarray
-    energy_h_delta: ndarray
+    energy_h_plus: ndarray
+    energy_h_minus: ndarray
     energy_cno: ndarray
-    energy_cno_delta: ndarray
+    energy_cno_plus: ndarray
+    energy_cno_minus: ndarray
     energy_fe: ndarray
-    energy_fe_delta: ndarray
+    energy_fe_plus: ndarray
+    energy_fe_minus: ndarray
     energy_he3he4: ndarray
-    energy_he3he4_delta: ndarray
+    energy_he3he4_plus: ndarray
+    energy_he3he4_minus: ndarray
     pitch_angle: ndarray
     pitch_angle_delta: ndarray
     gyrophase: ndarray
@@ -207,13 +215,17 @@ class CodiceHiL3PitchAngleDataProduct(DataProduct):
             DataProductVariable(EPOCH_VAR_NAME, self.epoch),
             DataProductVariable(EPOCH_DELTA_VAR_NAME, np.array([t.total_seconds() for t in self.epoch_delta]) * 1e9),
             DataProductVariable(ENERGY_H_VAR_NAME, self.energy_h),
-            DataProductVariable(ENERGY_H_DELTA_VAR_NAME, self.energy_h_delta),
+            DataProductVariable(ENERGY_H_PLUS_VAR_NAME, self.energy_h_plus),
+            DataProductVariable(ENERGY_H_MINUS_VAR_NAME, self.energy_h_minus),
             DataProductVariable(ENERGY_CNO_VAR_NAME, self.energy_cno),
-            DataProductVariable(ENERGY_CNO_DELTA_VAR_NAME, self.energy_cno_delta),
+            DataProductVariable(ENERGY_CNO_PLUS_VAR_NAME, self.energy_cno_plus),
+            DataProductVariable(ENERGY_CNO_MINUS_VAR_NAME, self.energy_cno_minus),
             DataProductVariable(ENERGY_FE_VAR_NAME, self.energy_fe),
-            DataProductVariable(ENERGY_FE_DELTA_VAR_NAME, self.energy_fe_delta),
+            DataProductVariable(ENERGY_FE_PLUS_VAR_NAME, self.energy_fe_plus),
+            DataProductVariable(ENERGY_FE_MINUS_VAR_NAME, self.energy_fe_minus),
             DataProductVariable(ENERGY_HE3HE4_VAR_NAME, self.energy_he3he4),
-            DataProductVariable(ENERGY_HE3HE4_DELTA_VAR_NAME, self.energy_he3he4_delta),
+            DataProductVariable(ENERGY_HE3HE4_PLUS_VAR_NAME, self.energy_he3he4_plus),
+            DataProductVariable(ENERGY_HE3HE4_MINUS_VAR_NAME, self.energy_he3he4_minus),
             DataProductVariable(PITCH_ANGLE_VAR_NAME, self.pitch_angle),
             DataProductVariable(PITCH_ANGLE_DELTA_VAR_NAME, self.pitch_angle_delta),
             DataProductVariable(GYROPHASE_VAR_NAME, self.gyrophase),
@@ -243,40 +255,48 @@ class CodiceHiL3PitchAngleDataProduct(DataProduct):
 class CodiceHiL2SectoredIntensitiesData:
     epoch: ndarray
     epoch_delta_plus: ndarray
-    spin_sector_index: ndarray
-    ssd_index: ndarray
+    spin_angles: ndarray
+    elevation_angle: ndarray
     data_quality: ndarray
     h_intensities: ndarray
     energy_h: ndarray
-    energy_h_delta: ndarray
+    energy_h_plus: ndarray
+    energy_h_minus: ndarray
     cno_intensities: ndarray
     energy_cno: ndarray
-    energy_cno_delta: ndarray
+    energy_cno_plus: ndarray
+    energy_cno_minus: ndarray
     fe_intensities: ndarray
     energy_fe: ndarray
-    energy_fe_delta: ndarray
+    energy_fe_plus: ndarray
+    energy_fe_minus: ndarray
     he3he4_intensities: ndarray
     energy_he3he4: ndarray
-    energy_he3he4_delta: ndarray
+    energy_he3he4_plus: ndarray
+    energy_he3he4_minus: ndarray
 
     @classmethod
     def read_from_cdf(cls, l2_sectored_intensities_cdf):
         with CDF(str(l2_sectored_intensities_cdf)) as cdf:
             return cls(epoch=cdf["epoch"][...],
                        epoch_delta_plus=np.array([timedelta(seconds=ns / 1e9) for ns in cdf["epoch_delta_plus"][...]]),
-                       spin_sector_index=cdf['spin_sector_index'][...],
-                       ssd_index=cdf['ssd_index'][...],
+                       spin_angles=cdf['spin_angles'][...],
+                       elevation_angle=cdf['elevation_angle'][...],
                        data_quality=cdf['data_quality'][...],
                        h_intensities=read_numeric_variable(cdf['h']),
                        energy_h=cdf['energy_h'][...],
-                       energy_h_delta=cdf['energy_h_delta'][...],
+                       energy_h_plus=cdf['energy_h_plus'][...],
+                       energy_h_minus=cdf['energy_h_minus'][...],
                        cno_intensities=read_numeric_variable(cdf['cno']),
                        energy_cno=cdf['energy_cno'][...],
-                       energy_cno_delta=cdf['energy_cno_delta'][...],
+                       energy_cno_plus=cdf['energy_cno_plus'][...],
+                       energy_cno_minus=cdf['energy_cno_minus'][...],
                        fe_intensities=read_numeric_variable(cdf['fe']),
                        energy_fe=cdf['energy_fe'][...],
-                       energy_fe_delta=cdf['energy_fe_delta'][...],
+                       energy_fe_plus=cdf['energy_fe_plus'][...],
+                       energy_fe_minus=cdf['energy_fe_minus'][...],
                        he3he4_intensities=read_numeric_variable(cdf['he3he4']),
                        energy_he3he4=cdf['energy_he3he4'][...],
-                       energy_he3he4_delta=cdf['energy_he3he4_delta'][...],
+                       energy_he3he4_plus=cdf['energy_he3he4_plus'][...],
+                       energy_he3he4_minus=cdf['energy_he3he4_minus'][...],
                        )

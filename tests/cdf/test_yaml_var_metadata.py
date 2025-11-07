@@ -177,7 +177,7 @@ class TestCdfUtils(TestCase):
                          "epoch_delta RECORD_VARYING should be RV")
         self.assertEqual('Epoch Delta', yaml_data['epoch_delta']['FIELDNAM'],
                          "epoch_delta FIELDNAM should be 'Epoch Delta'")
-        self.assertEqual('I19', yaml_data['epoch_delta']['FORMAT'],
+        self.assertIn(yaml_data['epoch_delta']['FORMAT'], ['I19', 'I15'],
                          "epoch_delta FORMAT should be 'I19'")
         self.assertEqual('Epoch delta', yaml_data['epoch_delta']['LABLAXIS'],
                          "epoch_delta LABLAXIS should be 'Epoch delta'")

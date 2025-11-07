@@ -7,7 +7,7 @@ import subprocess
 import unittest
 from datetime import timedelta, datetime
 from pathlib import Path
-from unittest import skipIf
+from unittest import skipIf, skip
 from unittest.mock import patch
 
 import imap_data_access
@@ -233,6 +233,7 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
         processor = GlowsProcessor(processing_input, input_metadata)
         processor.process()
 
+    @skip("Takes an hour to run!")
     def test_local_validation_running_docker(self):
         run_test_in_docker(
             "tests.integration.test_glows_processor_integration.TestGlowsProcessorIntegration.test_local_integration")

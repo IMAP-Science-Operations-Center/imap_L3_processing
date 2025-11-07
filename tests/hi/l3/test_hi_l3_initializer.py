@@ -59,7 +59,7 @@ class TestHiL3Initializer(unittest.TestCase):
                     instrument="hi",
                     data_level="l3",
                     start_date=datetime(2010, 1, 1),
-                    end_date=datetime(2010, 1, 1),
+                    end_date=datetime(2010, 4, 2, 7, 30),
                     version="v001",
                     descriptor='h45-ena-h-sf-sp-anti-hae-4deg-3mo',
                 )
@@ -78,7 +78,7 @@ class TestHiL3Initializer(unittest.TestCase):
                     instrument="hi",
                     data_level="l3",
                     start_date=datetime(2010, 4, 1),
-                    end_date=datetime(2010, 4, 1),
+                    end_date=datetime(2010, 7, 1, 7, 30),
                     version="v001",
                     descriptor='h45-ena-h-sf-sp-anti-hae-4deg-3mo',
                 )
@@ -163,7 +163,7 @@ class TestHiL3Initializer(unittest.TestCase):
                 instrument="hi",
                 data_level="l3",
                 start_date=datetime(2010, 1, 1),
-                end_date=datetime(2010, 1, 1),
+                end_date=datetime(2010, 7, 2, 15),
                 version="v001",
                 descriptor='h90-ena-h-sf-sp-full-hae-4deg-6mo',
             )
@@ -271,7 +271,7 @@ class TestHiL3Initializer(unittest.TestCase):
                     instrument="hi",
                     data_level="l3",
                     start_date=datetime(2010, 4, 1),
-                    end_date=datetime(2010, 4, 1),
+                    end_date=datetime(2010, 7, 1, 7, 30),
                     version="v002",
                     descriptor='h90-ena-h-sf-sp-anti-hae-4deg-3mo',
                 )

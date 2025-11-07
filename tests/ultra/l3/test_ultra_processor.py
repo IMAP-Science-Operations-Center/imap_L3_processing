@@ -32,6 +32,16 @@ class TestUltraProcessor(unittest.TestCase):
             with self.subTest(spacing=degree_spacing):
                 self._test_process_spectral_index(degree_spacing)
 
+    def test_process_combined_all_spacings(self):
+        for degree_spacing in [2, 4, 6]:
+            with self.subTest(spacing=degree_spacing):
+                self._test_process_combined_sensor(degree_spacing)
+
+    def test_process_combined_survival_corrected_all_spacings(self):
+        for degree_spacing in [2, 4, 6]:
+            with self.subTest(spacing=degree_spacing):
+                self._test_process_combined_sensor_survival_probability(degree_spacing)
+
     @patch('imap_l3_processing.ultra.l3.ultra_processor.HealPixIntensityMapData')
     @patch('imap_l3_processing.utils.spiceypy')
     @patch('imap_l3_processing.ultra.l3.ultra_processor.save_data')
@@ -232,6 +242,101 @@ class TestUltraProcessor(unittest.TestCase):
 
         self.assertEqual([mock_save_data.return_value], product)
 
+    @patch('imap_l3_processing.ultra.l3.ultra_processor.MapProcessor.get_parent_file_names')
+    @patch('imap_l3_processing.ultra.l3.ultra_processor.UltraProcessor._process_healpix_intensity_to_rectangular')
+    @patch("imap_l3_processing.ultra.l3.ultra_processor.combine_healpix_intensity_map_data")
+    @patch('imap_l3_processing.ultra.l3.ultra_processor.save_data')
+    @patch('imap_l3_processing.ultra.l3.ultra_processor.UltraL3CombinedDependencies.fetch_dependencies')
+    def _test_process_combined_sensor(self, degree_spacing, mock_fetch_dependencies, mock_save_data, mock_combine_maps,
+                                      mock_healpix_to_rectangular, _):
+        input_metadata = InputMetadata(instrument="ultra",
+                                       data_level="l3",
+                                       start_date=datetime.now(),
+                                       end_date=datetime.now() + timedelta(days=1),
+                                       version="",
+                                       descriptor=f"ulc-ena-h-sf-nsp-full-hae-{degree_spacing}deg-6mo",
+                                       )
+
+        combined_dependencies = mock_fetch_dependencies.return_value
+        combined_dependencies.u90_l2_map = sentinel.u90_l2_map
+        combined_dependencies.u45_l2_map = sentinel.u45_l2_map
+        combined_dependencies.dependency_file_paths = [
+            Path("folder/u45_map", Path("folder/u90_map"), Path("folder/u45_l1c"), Path("folder/u90_l1c"))]
+
+        processor = UltraProcessor(sentinel.dependencies, input_metadata)
+        product = processor.process(spice_frame_name=sentinel.spice_frame)
+
+        mock_fetch_dependencies.assert_called_once_with(sentinel.dependencies)
+
+        mock_combine_maps.assert_called_once_with([sentinel.u45_l2_map, sentinel.u90_l2_map])
+
+        mock_healpix_to_rectangular.assert_called_once_with(mock_combine_maps.return_value, degree_spacing)
+
+        mock_save_data.assert_called_once_with(mock_healpix_to_rectangular.return_value)
+        self.assertEqual([mock_save_data.return_value], product)
+
+    @patch('imap_l3_processing.ultra.l3.ultra_processor.UltraProcessor._process_survival_probability')
+    @patch('imap_l3_processing.ultra.l3.ultra_processor.UltraProcessor._process_healpix_intensity_to_rectangular')
+    @patch('imap_l3_processing.ultra.l3.ultra_processor.MapProcessor.get_parent_file_names')
+    @patch("imap_l3_processing.ultra.l3.ultra_processor.combine_healpix_intensity_map_data")
+    @patch('imap_l3_processing.ultra.l3.ultra_processor.save_data')
+    @patch('imap_l3_processing.ultra.l3.ultra_processor.UltraL3CombinedDependencies.fetch_dependencies')
+    def _test_process_combined_sensor_survival_probability(self, degree_spacing, mock_fetch_dependencies,
+                                                           mock_save_data, mock_combine_maps,
+                                                           mock_get_parent_file_names, mock_healpix_to_rectangular,
+                                                           mock_process_survival_probability):
+        mock_get_parent_file_names.return_value = ["ram_map", "antiram_map"]
+        input_metadata = InputMetadata(instrument="ultra",
+                                       data_level="l3",
+                                       start_date=datetime.now(),
+                                       end_date=datetime.now() + timedelta(days=1),
+                                       version="",
+                                       descriptor=f"ulc-ena-h-sf-sp-full-hae-{degree_spacing}deg-6mo",
+                                       )
+        mock_dependencies = Mock()
+        mock_dependencies.u45_l2_map = sentinel.u45_l2_map
+        mock_dependencies.u90_l2_map = sentinel.u90_l2_map
+        mock_dependencies.u45_l1c_psets = [sentinel.u45_l1c_1, sentinel.u45_l1c_2, sentinel.u45_l1c_3]
+        mock_dependencies.u90_l1c_psets = [sentinel.u90_l1c_1, sentinel.u90_l1c_2, sentinel.u90_l1c_3]
+        mock_dependencies.glows_l3e_psets = [sentinel.glows_pset_1, sentinel.glows_pset_2, sentinel.glows_pset_3]
+        mock_dependencies.dependency_file_paths = sentinel.dependency_file_paths
+        mock_fetch_dependencies.return_value = mock_dependencies
+
+        expected_u45_dependency = UltraL3Dependencies(
+            ultra_l2_map=mock_dependencies.u45_l2_map,
+            ultra_l1c_pset=mock_dependencies.u45_l1c_psets,
+            glows_l3e_sp=mock_dependencies.glows_l3e_psets,
+            dependency_file_paths=mock_dependencies.dependency_file_paths
+        )
+
+        expected_u90_dependency = UltraL3Dependencies(
+            ultra_l2_map=mock_dependencies.u90_l2_map,
+            ultra_l1c_pset=mock_dependencies.u90_l1c_psets,
+            glows_l3e_sp=mock_dependencies.glows_l3e_psets,
+            dependency_file_paths=mock_dependencies.dependency_file_paths
+        )
+
+        mock_process_survival_probability.side_effect = [sentinel.u45_l2_survival_corrected_map,
+                                                         sentinel.u90_l2_survival_corrected_map]
+
+        processor = UltraProcessor(sentinel.dependencies, input_metadata)
+        product = processor.process(spice_frame_name=sentinel.spice_frame)
+
+        mock_fetch_dependencies.assert_called_once_with(sentinel.dependencies)
+
+        mock_combine_maps.assert_called_once_with(
+            [sentinel.u45_l2_survival_corrected_map, sentinel.u90_l2_survival_corrected_map])
+
+        mock_healpix_to_rectangular.assert_called_once_with(mock_combine_maps.return_value, degree_spacing)
+
+        mock_save_data.assert_called_once_with(mock_healpix_to_rectangular.return_value)
+        self.assertEqual([mock_save_data.return_value], product)
+
+        mock_process_survival_probability.assert_has_calls([
+            call(expected_u45_dependency, sentinel.spice_frame),
+            call(expected_u90_dependency, sentinel.spice_frame)
+        ])
+
     @patch('imap_l3_processing.ultra.l3.ultra_processor.HealPixIntensityMapData')
     @patch('imap_l3_processing.processor.spiceypy')
     @patch('imap_l3_processing.ultra.l3.ultra_processor.save_data')
@@ -240,10 +345,10 @@ class TestUltraProcessor(unittest.TestCase):
     @patch('imap_l3_processing.ultra.l3.ultra_processor.combine_glows_l3e_with_l1c_pointing')
     @patch('imap_l3_processing.ultra.l3.ultra_processor.UltraL3Dependencies.fetch_dependencies')
     def test_defaults_to_ECLIPJ2000_spice_frame(self, mock_fetch_dependencies,
-                                           mock_combine_glows_l3e_with_l1c_pointing,
-                                           mock_survival_probability_pointing_set, mock_survival_skymap,
-                                           mock_save_data, mock_spiceypy,
-                                           mock_healpix_intensity_map_data_class):
+                                                mock_combine_glows_l3e_with_l1c_pointing,
+                                                mock_survival_probability_pointing_set, mock_survival_skymap,
+                                                mock_save_data, mock_spiceypy,
+                                                mock_healpix_intensity_map_data_class):
         healpix_intensity_map_data = mock_healpix_intensity_map_data_class.return_value
 
         rng = np.random.default_rng()

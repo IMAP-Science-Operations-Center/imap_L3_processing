@@ -157,23 +157,24 @@ class TestL3eLoModel(unittest.TestCase):
                                                                                             elongation_value,
                                                                                             args)
 
-        self.assertEqual([epoch], l3e_lo_product.epoch)
-        np.testing.assert_array_equal(l3e_lo_product.energy, expected_energy)
-        np.testing.assert_array_equal(l3e_lo_product.spin_angle, expected_spin_angle)
-        np.testing.assert_array_equal(l3e_lo_product.probability_of_survival.shape, expected_survival_probability_shape)
-        np.testing.assert_array_equal(l3e_lo_product.probability_of_survival[0][0],
-                                      expected_prob_of_survival_first_col_1)
-        np.testing.assert_array_equal(l3e_lo_product.elongation, np.array([elongation_value]), strict=True)
+        np.testing.assert_equal([epoch], l3e_lo_product.epoch, strict=True)
+        np.testing.assert_equal(l3e_lo_product.energy, expected_energy, strict=True)
+        np.testing.assert_equal(l3e_lo_product.spin_angle, expected_spin_angle, strict=True)
+        np.testing.assert_equal(l3e_lo_product.probability_of_survival.shape, expected_survival_probability_shape,
+                                strict=True)
+        np.testing.assert_equal(l3e_lo_product.probability_of_survival[0][0],
+                                expected_prob_of_survival_first_col_1, strict=True)
+        np.testing.assert_equal(l3e_lo_product.elongation, np.array([elongation_value]), strict=True)
 
-        np.testing.assert_array_equal(np.array([spin_axis_lat]), l3e_lo_product.spin_axis_lat, strict=True)
-        np.testing.assert_array_equal(np.array([spin_axis_lon]), l3e_lo_product.spin_axis_lon, strict=True)
+        np.testing.assert_equal(np.array([spin_axis_lat]), l3e_lo_product.spin_axis_lat, strict=True)
+        np.testing.assert_equal(np.array([spin_axis_lon]), l3e_lo_product.spin_axis_lon, strict=True)
 
-        self.assertEqual(expected_program_version, l3e_lo_product.program_version)
+        np.testing.assert_equal([expected_program_version], l3e_lo_product.program_version, strict=True)
 
-        np.testing.assert_array_equal(l3e_lo_product.spacecraft_radius, np.array([.5]), strict=True)
-        np.testing.assert_array_equal(l3e_lo_product.spacecraft_longitude, np.array([85.4]), strict=True)
-        np.testing.assert_array_equal(l3e_lo_product.spacecraft_latitude, np.array([45.1]), strict=True)
+        np.testing.assert_equal(l3e_lo_product.spacecraft_radius, np.array([.5]), strict=True)
+        np.testing.assert_equal(l3e_lo_product.spacecraft_longitude, np.array([85.4]), strict=True)
+        np.testing.assert_equal(l3e_lo_product.spacecraft_latitude, np.array([45.1]), strict=True)
 
-        np.testing.assert_array_equal(l3e_lo_product.spacecraft_velocity_x, np.array([2.1]), strict=True)
-        np.testing.assert_array_equal(l3e_lo_product.spacecraft_velocity_y, np.array([2.2]), strict=True)
-        np.testing.assert_array_equal(l3e_lo_product.spacecraft_velocity_z, np.array([2.3]), strict=True)
+        np.testing.assert_equal(l3e_lo_product.spacecraft_velocity_x, np.array([2.1]), strict=True)
+        np.testing.assert_equal(l3e_lo_product.spacecraft_velocity_y, np.array([2.2]), strict=True)
+        np.testing.assert_equal(l3e_lo_product.spacecraft_velocity_z, np.array([2.3]), strict=True)

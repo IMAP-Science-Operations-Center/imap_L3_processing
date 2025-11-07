@@ -68,7 +68,7 @@ class HitProcessor(Processor):
         stim_tag = np.full(shape=(len(raw_pha_events)), fill_value=False)
         long_event_flag = np.full(shape=(len(raw_pha_events)), fill_value=False)
         haz_tag = np.full(shape=(len(raw_pha_events)), fill_value=False)
-        a_b_side = np.full(shape=(len(raw_pha_events)), fill_value=False)
+        a_b_side = np.full(shape=(len(raw_pha_events)), fill_value=np.nan)
         has_unread_adcs = np.full(shape=(len(raw_pha_events)), fill_value=False)
         culling_flag = np.full(shape=(len(raw_pha_events)), fill_value=False)
 
@@ -102,6 +102,7 @@ class HitProcessor(Processor):
                 e_prime[i] = event_output.e_prime
             if event_output.detected_range is not None:
                 detected_range[i] = event_output.detected_range.range.value
+                a_b_side[i] = event_output.detected_range.side.value
 
             particle_id[i] = raw_event.particle_id
             priority_buffer_number[i] = raw_event.priority_buffer_num
@@ -109,7 +110,6 @@ class HitProcessor(Processor):
             stim_tag[i] = raw_event.stim_tag
             long_event_flag[i] = raw_event.long_event_flag
             haz_tag[i] = raw_event.haz_tag
-            a_b_side[i] = raw_event.a_b_side_flag
             has_unread_adcs[i] = raw_event.has_unread_adcs
             culling_flag[i] = raw_event.culling_flag
 

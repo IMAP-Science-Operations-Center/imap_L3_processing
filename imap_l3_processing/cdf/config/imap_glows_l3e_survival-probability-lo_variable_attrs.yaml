@@ -50,7 +50,7 @@ surv_prob:
   VAR_TYPE: data
   RECORD_VARYING: RV
   DEPEND_0: epoch
-  DEPEND_1: energy
+  DEPEND_1: energy_grid
   DEPEND_2: spin_angle
   DISPLAY_TYPE: spectrogram
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
@@ -93,6 +93,7 @@ energy_label:
   FILLVAL: ' '
   UNITS: ' '
   RECORD_VARYING: NRV
+  DEPEND_1: energy_grid
 spin_angle_label:
   NAME: spin_angle_label
   DATA_TYPE: CDF_CHAR

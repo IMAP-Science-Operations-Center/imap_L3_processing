@@ -19,11 +19,12 @@ from imap_l3_processing.swapi.l3a.models import SwapiL3AlphaSolarWindData
 from imap_l3_processing.utils import format_time, download_dependency, read_l1d_mag_data, save_data, \
     download_external_dependency, download_dependency_with_repointing, \
     combine_glows_l3e_with_l1c_pointing, furnish_local_spice, get_spice_parent_file_names, furnish_spice_metakernel, \
-    SpiceKernelTypes, FurnishMetakernelOutput, read_cdf_parents
+    SpiceKernelTypes, FurnishMetakernelOutput, read_cdf_parents, get_dependency_paths_by_descriptor
 from imap_l3_processing.version import VERSION
 from tests.cdf.test_cdf_utils import TestDataProduct
 from tests.maps.test_builders import create_rectangular_spectral_index_map_data, create_rectangular_intensity_map_data
 from tests.test_helpers import get_spice_data_path, with_tempdir, create_dataclass_mock
+from imap_data_access.processing_input import ScienceInput, ProcessingInputCollection
 
 
 class TestUtils(TestCase):
@@ -455,9 +456,7 @@ class TestUtils(TestCase):
 
         expected = [
             (hi_l1c_data[0], glows_l3e_data[0]),
-            (hi_l1c_data[1], None),
             (hi_l1c_data[2], glows_l3e_data[3]),
-            (hi_l1c_data[3], None),
         ]
 
         actual = combine_glows_l3e_with_l1c_pointing(glows_l3e_data, hi_l1c_data)
@@ -545,11 +544,10 @@ class TestUtils(TestCase):
                     "file_types": ["leapseconds", "imap_frames"],
                     "start_time": "315619200",
                     "end_time": "320716800",
-                    "spice_path": mock_data_dir / "imap" / "spice",
                 }
 
                 mock_requests.get.assert_has_calls([
-                    call("https://imap-mission.com/metakernel", params=expected_request_params),
+                    call("https://imap-mission.com/metakernel", params={**expected_request_params, "spice_path": mock_data_dir / "imap" / "spice"}),
                     call("https://imap-mission.com/metakernel", params={**expected_request_params, "list_files": "true"})
                 ])
 
@@ -569,6 +567,45 @@ class TestUtils(TestCase):
                 )
 
                 self.assertEqual(expected_output, actual_output)
+
+    def test_get_dependency_paths_by_descriptor(self):
+        filename1 = "imap_hi_l3_u90descriptor_20250501_v001.cdf"
+        filename2 = "imap_hi_l3_u45descriptor_20250601_v001.cdf"
+        filename3 = "imap_hi_l3_u90diffdescriptor_20250501_v001.cdf"
+        filename4 = "imap_hi_l3_verydifferentdescriptor_20250501_v001.cdf"
+
+        cases = [
+            (
+                "base case",
+                ProcessingInputCollection(ScienceInput(filename1),ScienceInput(filename2),ScienceInput(filename3)),
+                ["u90", "u45"],
+                {"u45": [filename2],"u90": [filename1, filename3]}
+            ),
+            (
+                "no matching filenames for a descriptor",
+                ProcessingInputCollection(ScienceInput(filename1), ScienceInput(filename3)),
+                ["u90", "u45"],
+                {"u45": [], "u90": [filename1, filename3]}
+            ),
+            (
+                "extra science file",
+                ProcessingInputCollection(ScienceInput(filename1), ScienceInput(filename4)),
+                ["u90", "u45"],
+                {"u45": [], "u90": [filename1]}
+            ),
+        ]
+        for (case_name, input_collection, descriptors, expected_output) in cases:
+            with self.subTest(case_name):
+                actual_output = get_dependency_paths_by_descriptor(input_collection, descriptors)
+
+                self.assertEqual(sorted(expected_output.keys()), sorted(actual_output.keys()))
+
+                for  i, output_key in enumerate(expected_output.keys()):
+                    self.assertEqual(sorted(expected_output[output_key]),
+                                     sorted(actual_output[output_key]), f"output not equal for key {output_key}" + \
+                        f", expected: {sorted(expected_output[output_key])} actual {sorted(actual_output[output_key])}")
+
+
 
     @patch("imap_l3_processing.glows.l3bc.utils.imap_data_access.download")
     @with_tempdir

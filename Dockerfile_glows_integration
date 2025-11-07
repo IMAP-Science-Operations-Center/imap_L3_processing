@@ -1,12 +1,13 @@
 FROM python:3.12-slim
 RUN apt-get update && apt-get install -y git libgfortran5
-RUN pip install --upgrade pip
+COPY --from=ghcr.io/astral-sh/uv:0.9.5 /uv /uvx /bin/
 RUN mkdir temp_cdf_data
 RUN mkdir -p /mnt/spice
 RUN mkdir -p /spice_kernels
 RUN mkdir -p /run_local_input_data
-COPY requirements.txt .
-RUN pip install -r requirements.txt
+COPY uv.lock uv.lock
+COPY pyproject.toml pyproject.toml
+RUN uv sync --locked --no-install-project
 COPY spice_kernels spice_kernels
 COPY imap_l3_processing imap_l3_processing
 COPY scripts scripts
@@ -20,6 +21,7 @@ RUN chmod +x survProbHi
 RUN chmod +x survProbLo
 RUN chmod +x survProbUltra
 COPY run_local.py .
+RUN uv sync --locked
 ENV IN_GLOWS_INTEGRATION_DOCKER = "set"
 ENV PYTHONPATH=$PYTHONPATH:/imap_l3_processing
-ENTRYPOINT ["python", "-m", "unittest"]
+ENTRYPOINT ["uv", "run", "-m", "unittest"]

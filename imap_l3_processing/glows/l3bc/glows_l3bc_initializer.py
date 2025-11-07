@@ -7,10 +7,11 @@ from typing import Optional
 import imap_data_access
 from imap_data_access import ScienceFilePath, ProcessingInputCollection, RepointInput
 from imap_processing.spice.repoint import set_global_repoint_table_paths
+from spacepy.pycdf import CDF
 
 from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDependencies
 from imap_l3_processing.glows.l3bc.models import CRToProcess, ExternalDependencies
-from imap_l3_processing.glows.l3bc.utils import get_pointing_date_range, get_date_range_of_cr, get_best_ancillary, \
+from imap_l3_processing.glows.l3bc.utils import get_date_range_of_cr, get_best_ancillary, \
     get_cr_for_date_time
 from imap_l3_processing.utils import read_cdf_parents
 
@@ -147,14 +148,14 @@ class GlowsL3BCInitializer:
         return None
 
     @staticmethod
-    def group_l3a_by_cr(l3a_file_paths: list[str]) -> dict[int, set[str]]:
+    def group_l3a_by_cr(l3a_file_names: list[str]) -> dict[int, set[str]]:
         grouped_l3a_by_cr = defaultdict(set)
-        for l3a_file_path in l3a_file_paths:
-            start, end = get_pointing_date_range(ScienceFilePath(l3a_file_path).repointing)
-            start_cr = get_cr_for_date_time(start)
-            end_cr = get_cr_for_date_time(end)
+        for l3a_file_name in l3a_file_names:
+            path = imap_data_access.download(l3a_file_name)
+            with CDF(str(path)) as cdf:
+                epoch = cdf['epoch'][0]
 
-            grouped_l3a_by_cr[start_cr].add(l3a_file_path)
-            grouped_l3a_by_cr[end_cr].add(l3a_file_path)
+            cr_number = get_cr_for_date_time(epoch)
+            grouped_l3a_by_cr[cr_number].add(l3a_file_name)
 
         return grouped_l3a_by_cr

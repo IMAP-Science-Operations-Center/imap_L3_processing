@@ -39,10 +39,10 @@ def calculate_mev(word: PHAWord, gain_lookup_table: GainLookupTable) -> float:
     return word.adc_value * gain_coeffs.a + gain_coeffs.b
 
 
-def analyze_event(event: RawPHAEvent, gain_lookup: GainLookupTable, rule_lookup: HitEventTypeLookup) -> Optional[
-    EventAnalysis]:
-    def calculate_mev_with_bound_lookup(pha_word: PHAWord) -> float:
-        return calculate_mev(pha_word, gain_lookup)
+def analyze_event(event: RawPHAEvent, rule_lookup: HitEventTypeLookup) -> Optional[EventAnalysis]:
+
+    def get_adc_value(pha_word: PHAWord):
+        return 20 * pha_word.adc_value if pha_word.is_low_gain else pha_word.adc_value
 
     words = [word for word in event.pha_words]
     groups_to_words = {}
@@ -56,8 +56,10 @@ def analyze_event(event: RawPHAEvent, gain_lookup: GainLookupTable, rule_lookup:
     if rule is not None:
         highest_value_words_per_group = {}
         for include_group in rule.included_detector_groups:
-            highest_value_words_per_group[include_group] = max(groups_to_words[include_group],
-                                                               key=calculate_mev_with_bound_lookup)
+            unsaturated_words = [word for word in groups_to_words[include_group] if word.adc_value < 2047]
+            if len(unsaturated_words) == 0:
+                return None
+            highest_value_words_per_group[include_group] = max(unsaturated_words, key=get_adc_value)
 
         l1_detector = [group for group in rule.included_detector_groups if group[0:3] == f"L1{rule.range.side.name}"][0]
         l2_detector = [group for group in rule.included_detector_groups if group[0:3] == f"L2{rule.range.side.name}"][0]
@@ -119,7 +121,7 @@ def compute_charge(detected_range: DetectedRange, delta_e: float, e_prime: float
 def process_pha_event(event: RawPHAEvent, cosine_table: CosineCorrectionLookupTable, gain_table: GainLookupTable,
                       range_fit_lookup: RangeFitLookup, rule_lookup: HitEventTypeLookup) -> \
         EventOutput:
-    event_analysis = analyze_event(event, gain_table, rule_lookup)
+    event_analysis = analyze_event(event, rule_lookup)
     if event_analysis:
         correction = cosine_table.get_cosine_correction(event_analysis.range, event_analysis.l1_detector,
                                                         event_analysis.l2_detector)

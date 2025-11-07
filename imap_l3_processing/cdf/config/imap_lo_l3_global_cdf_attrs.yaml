@@ -1,87 +1,94 @@
-imap_lo_l3_l090-ena-h-sf-sp-ram-hae-6deg-1yr:
+imap_lo_l3_l090-ena-h-sf-sp-ram-hae-6deg-12mo:
   Coordinate_system: ECLIPJ2000 (HAE)
-  Data_type: L3_1yr>Level-3 1yr
+  Data_level: '3'
+  Data_type: L3_12mo>Level-3 12mo
   Instrument: Lo
   Logical_source_description: IMAP Lo Instrument Level 3 Lo-90 Sensor, ENA Intensity,
     Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Ram, HAE, Rectangular
     6 degree, 12 Month Map
-  Map_descriptor: l090-ena-h-sf-sp-ram-hae-6deg-1yr
-  Map_duration: 1yr
+  Map_descriptor: l090-ena-h-sf-sp-ram-hae-6deg-12mo
+  Map_duration: 12mo
   Principal_data_quantity: ENA Intensity
   Reference_frame: Spacecraft
   Species: H
   Spin_range: Ram
   Survival_corrected: 'True'
   Tessellation_type: lon, lat
-imap_lo_l3_l090-ena-h-hf-sp-ram-hae-6deg-1yr:
+imap_lo_l3_l090-ena-h-hf-sp-ram-hae-6deg-12mo:
   Coordinate_system: ECLIPJ2000 (HAE)
-  Data_type: L3_1yr>Level-3 1yr
+  Data_level: '3'
+  Data_type: L3_12mo>Level-3 12mo
   Instrument: Lo
   Logical_source_description: IMAP Lo Instrument Level 3 Lo-90 Sensor, ENA Intensity,
     Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Ram, HAE, Rectangular
     6 degree, 12 Month Map
-  Map_descriptor: l090-ena-h-hf-sp-ram-hae-6deg-1yr
-  Map_duration: 1yr
+  Map_descriptor: l090-ena-h-hf-sp-ram-hae-6deg-12mo
+  Map_duration: 12mo
   Principal_data_quantity: ENA Intensity
   Reference_frame: Heliospheric (CG)
   Species: H
   Spin_range: Ram
   Survival_corrected: 'True'
   Tessellation_type: lon, lat
-imap_lo_l3_l090-spx-h-sf-nsp-ram-hae-6deg-1yr:
+
+imap_lo_l3_l090-spx-h-sf-nsp-ram-hae-6deg-12mo:
   Coordinate_system: ECLIPJ2000 (HAE)
-  Data_type: L3_1yr>Level-3 1yr
+  Data_level: '3'
+  Data_type: L3_12mo>Level-3 12mo
   Instrument: Lo
   Logical_source_description: IMAP Lo Instrument Level 3 Lo-90 Sensor, Spectral Index,
     Hydrogen, Spacecraft Frame, Non-Survival Probability-Corrected, Ram, HAE, Rectangular
     6 degree, 12 Month Map
-  Map_descriptor: l090-spx-h-sf-nsp-ram-hae-6deg-1yr
-  Map_duration: 1yr
+  Map_descriptor: l090-spx-h-sf-nsp-ram-hae-6deg-12mo
+  Map_duration: 12mo
   Principal_data_quantity: ENA Spectral Index
   Reference_frame: Spacecraft
   Species: H
   Spin_range: Ram
   Survival_corrected: 'False'
   Tessellation_type: lon, lat
-imap_lo_l3_l090-spx-h-sf-sp-ram-hae-6deg-1yr:
+imap_lo_l3_l090-spx-h-sf-sp-ram-hae-6deg-12mo:
   Coordinate_system: ECLIPJ2000 (HAE)
-  Data_type: L3_1yr>Level-3 1yr
+  Data_level: '3'
+  Data_type: L3_12mo>Level-3 12mo
   Instrument: Lo
   Logical_source_description: IMAP Lo Instrument Level 3 Lo-90 Sensor, Spectral Index,
     Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Ram, HAE, Rectangular
     6 degree, 12 Month Map
-  Map_descriptor: l090-spx-h-sf-sp-ram-hae-6deg-1yr
-  Map_duration: 1yr
+  Map_descriptor: l090-spx-h-sf-sp-ram-hae-6deg-12mo
+  Map_duration: 12mo
   Principal_data_quantity: ENA Spectral Index
   Reference_frame: Spacecraft
   Species: H
   Spin_range: Ram
   Survival_corrected: 'True'
   Tessellation_type: lon, lat
-imap_lo_l3_l090-spx-h-hf-nsp-ram-hae-6deg-1yr:
+imap_lo_l3_l090-spx-h-hf-nsp-ram-hae-6deg-12mo:
   Coordinate_system: ECLIPJ2000 (HAE)
-  Data_type: L3_1yr>Level-3 1yr
+  Data_level: '3'
+  Data_type: L3_12mo>Level-3 12mo
   Instrument: Lo
   Logical_source_description: IMAP Lo Instrument Level 3 Lo-90 Sensor, Spectral Index,
     Hydrogen, Heliospheric Frame, Non-Survival Probability-Corrected, Ram, HAE, Rectangular
     6 degree, 12 Month Map
-  Map_descriptor: l090-spx-h-hf-nsp-ram-hae-6deg-1yr
-  Map_duration: 1yr
+  Map_descriptor: l090-spx-h-hf-nsp-ram-hae-6deg-12mo
+  Map_duration: 12mo
   Principal_data_quantity: ENA Spectral Index
   Reference_frame: Heliospheric (CG)
   Species: H
   Spin_range: Ram
   Survival_corrected: 'False'
   Tessellation_type: lon, lat
-imap_lo_l3_l090-spx-h-hf-sp-ram-hae-6deg-1yr:
+imap_lo_l3_l090-spx-h-hf-sp-ram-hae-6deg-12mo:
   Coordinate_system: ECLIPJ2000 (HAE)
-  Data_type: L3_1yr>Level-3 1yr
+  Data_level: '3'
+  Data_type: L3_12mo>Level-3 12mo
   Instrument: Lo
   Logical_source_description: IMAP Lo Instrument Level 3 Lo-90 Sensor, Spectral Index,
     Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Ram, HAE, Rectangular
     6 degree, 12 Month Map
-  Map_descriptor: l090-spx-h-hf-sp-ram-hae-6deg-1yr
-  Map_duration: 1yr
+  Map_descriptor: l090-spx-h-hf-sp-ram-hae-6deg-12mo
+  Map_duration: 12mo
   Principal_data_quantity: ENA Spectral Index
   Reference_frame: Heliospheric (CG)
   Species: H

@@ -108,8 +108,8 @@ class MapInitializer(abc.ABC):
 
             if len(glows_files) > 0:
                 input_metadata = InputMetadata(instrument=self.instrument, data_level='l3', start_date=start_date,
-                                               end_date=start_date,
-                                               version='v001', descriptor=l3_descriptor)
+                                               end_date=start_date + map_duration, version='v001',
+                                               descriptor=l3_descriptor)
 
                 possible_map_to_produce = PossibleMapToProduce(
                     input_files=set(l2_file_paths + glows_files + l1c_names),

@@ -63,7 +63,11 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
 
         sensor_angle = Sensor.get_sensor_angle(sensor)
         self.elevations = np.repeat(sensor_angle, num_spin_angle_bins)
-        self.az_el_points = np.column_stack([self.azimuths, self.elevations])
+
+        self.az_el_points = xr.DataArray(
+            np.column_stack([self.azimuths, self.elevations]),
+            dims=[CoordNames.GENERIC_PIXEL.value, CoordNames.AZ_EL_VECTOR.value],
+        )
 
         self.spatial_coords = (CoordNames.AZIMUTH_L1C.value,)
 

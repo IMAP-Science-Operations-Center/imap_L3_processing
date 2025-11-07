@@ -1,96 +1,96 @@
 {
-  "header": {
-    "software_version": "3.0",
-    "filename": "data_l3c/imap_glows_l3c_cr_2091_v00.json",
-    "ancillary_data_files": {
-      "WawHelioIonMP_parameters": "data_ancillary/imap_glows_WawHelioIonMP_v002.json",
-      "bad_day_list": "data_ancillary/imap_glows_bad-days-list_v001.dat",
-      "pipeline_settings": "data_ancillary/imap_glows_pipeline-settings-L3bcd_v003.json",
-      "uv_anisotropy": "data_ancillary/imap_glows_uv-anisotropy-1CR_v002.json",
-      "WawHelioIon": {
-        "speed": "data_ancillary/imap_glows_plasma-speed-2010a_v003.dat",
-        "p-dens": "data_ancillary/imap_glows_proton-density-2010a_v003.dat",
-        "uv-anis": "data_ancillary/imap_glows_uv-anisotropy-2010a_v003.dat",
-        "phion": "data_ancillary/imap_glows_photoion-2010a_v003.dat",
-        "lya": "data_ancillary/imap_glows_lya-2010a_v003.dat",
-        "e-dens": "data_ancillary/imap_glows_electron-density-2010a_v003.dat"
-      }
-    },
-    "external_dependeciens": [
-      "external_dependencies/omni2_all_years.dat"
-    ],
-    "l3b_input_filename": "data_l3b/imap_glows_l3b_cr_2091_v00.json"
-  },
-  "date": "2010-01-02 03:43:28.667",
-  "CR": 2091,
-  "solar_wind_ecliptic": {
-    "plasma_speed": 322.32977099236643,
-    "proton_density": 6.485230490346382,
-    "alpha_abundance": 0.010973509933774835
-  },
-  "solar_wind_profile": {
-    "lat_grid": [
-      -90,
-      -80,
-      -70,
-      -60,
-      -50,
-      -40,
-      -30,
-      -20,
-      -10,
-      0,
-      10,
-      20,
-      30,
-      40,
-      50,
-      60,
-      70,
-      80,
-      90
-    ],
-    "plasma_speed": [
-      605.0,
-      606.0,
-      610.0,
-      591.0,
-      549.0,
-      491.0,
-      416.0,
-      365.0,
-      354.0,
-      358.0,
-      352.0,
-      362.0,
-      428.0,
-      508.0,
-      555.0,
-      586.0,
-      601.0,
-      604.0,
-      604.0
-    ],
-    "proton_density": [
-      2.4547181047349254,
-      2.4467038403148997,
-      2.4149720038860267,
-      2.570441359036487,
-      2.9610887036269116,
-      3.6316400602923613,
-      4.812154122520405,
-      5.9089294594522785,
-      6.187611857856551,
-      6.084287990327043,
-      6.2401531851527565,
-      5.9832497125614985,
-      4.59334774596852,
-      3.416904484347662,
-      2.9009393237821866,
-      2.613418752872842,
-      2.4871052155632594,
-      2.4627652119710146,
-      2.4627652119710146
-    ]
-  }
+   "header": {
+      "software_version": "3.1",
+      "filename": "data_l3c/imap_glows_l3c_cr_2091_v00.json",
+      "ancillary_data_files": {
+         "WawHelioIonMP_parameters": "data_ancillary/imap_glows_WawHelioIonMP_v002.json",
+         "bad_day_list": "data_ancillary/imap_glows_bad-days-list_v001.dat",
+         "pipeline_settings": "data_ancillary/imap_glows_pipeline-settings-L3bcd_v003.json",
+         "uv_anisotropy": "data_ancillary/imap_glows_uv-anisotropy-1CR_v002.json",
+         "WawHelioIon": {
+            "speed": "data_ancillary/imap_glows_plasma-speed-2010a_v003.dat",
+            "p-dens": "data_ancillary/imap_glows_proton-density-2010a_v003.dat",
+            "uv-anis": "data_ancillary/imap_glows_uv-anisotropy-2010a_v003.dat",
+            "phion": "data_ancillary/imap_glows_photoion-2010a_v003.dat",
+            "lya": "data_ancillary/imap_glows_lya-2010a_v003.dat",
+            "e-dens": "data_ancillary/imap_glows_electron-density-2010a_v003.dat"
+         }
+      },
+      "external_dependeciens": [
+         "external_dependencies/omni2_all_years.dat"
+      ],
+      "l3b_input_filename": "data_l3b/imap_glows_l3b_cr_2091_v00.json"
+   },
+   "date": "2010-01-02 03:43:28.667",
+   "CR": 2091,
+   "solar_wind_ecliptic": {
+      "plasma_speed": 322.32977099236643,
+      "proton_density": 6.485230490346382,
+      "alpha_abundance": 0.010973509933774835
+   },
+   "solar_wind_profile": {
+      "lat_grid": [
+         -90,
+         -80,
+         -70,
+         -60,
+         -50,
+         -40,
+         -30,
+         -20,
+         -10,
+         0,
+         10,
+         20,
+         30,
+         40,
+         50,
+         60,
+         70,
+         80,
+         90
+      ],
+      "plasma_speed": [
+         605.0,
+         606.0,
+         610.0,
+         591.0,
+         549.0,
+         491.0,
+         416.0,
+         365.0,
+         354.0,
+         358.0,
+         352.0,
+         362.0,
+         428.0,
+         507.0,
+         555.0,
+         586.0,
+         601.0,
+         603.0,
+         603.0
+      ],
+      "proton_density": [
+         2.4547181047349254,
+         2.4467038403148997,
+         2.4149720038860267,
+         2.570441359036487,
+         2.9610887036269116,
+         3.6316400602923613,
+         4.812154122520405,
+         5.9089294594522785,
+         6.187611857856551,
+         6.084287990327043,
+         6.2401531851527565,
+         5.9832497125614985,
+         4.59334774596852,
+         3.4290857765347567,
+         2.9009393237821866,
+         2.613418752872842,
+         2.4871052155632594,
+         2.470845324038462,
+         2.470845324038462
+      ]
+   }
 }

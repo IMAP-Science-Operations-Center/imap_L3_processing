@@ -9,9 +9,10 @@ import numpy as np
 from spacepy.pycdf import CDF
 
 import imap_l3_processing
-from imap_l3_processing.glows.l3bc.utils import get_date_range_of_cr, get_midpoint_of_cr
+from imap_l3_processing.glows.l3bc.utils import get_midpoint_of_cr
 from imap_l3_processing.glows.l3d.models import GlowsL3DSolarParamsHistory
 from imap_l3_processing.models import InputMetadata
+from imap_l3_processing.cdf.cdf_utils import read_numeric_variable
 
 PATH_TO_L3D_TOOLKIT = Path(imap_l3_processing.__file__).parent / 'glows' / 'l3d' / 'science'
 
@@ -25,12 +26,12 @@ def create_glows_l3c_json_file_from_cdf(cdf_file_path: Path):
                 'filename': cdf_file_path.name
             },
             'solar_wind_profile': {
-                'proton_density': cdf["proton_density_profile"][0].tolist(),
-                'plasma_speed': cdf["plasma_speed_profile"][0].tolist(),
+                'proton_density': read_numeric_variable(cdf["proton_density_profile"])[0].tolist(),
+                'plasma_speed': read_numeric_variable(cdf["plasma_speed_profile"])[0].tolist(),
             },
             'solar_wind_ecliptic': {
-                'proton_density': float(cdf["proton_density_ecliptic"][0]),
-                'alpha_abundance': float(cdf["alpha_abundance_ecliptic"][0]),
+                'proton_density': float(read_numeric_variable(cdf["proton_density_ecliptic"])[0]),
+                'alpha_abundance': float(read_numeric_variable(cdf["alpha_abundance_ecliptic"])[0]),
             },
             'CR': float(cr_number)
         }
@@ -52,10 +53,10 @@ def create_glows_l3b_json_file_from_cdf(cdf_file_path: Path):
             },
             'date': cdf['epoch'][0].isoformat(),
             'CR': cr_number,
-            'uv_anisotropy_factor': cdf['uv_anisotropy_factor'][0].tolist(),
+            'uv_anisotropy_factor': read_numeric_variable(cdf['uv_anisotropy_factor'])[0].tolist(),
             'ion_rate_profile': {
-                'lat_grid': cdf['lat_grid'][...].tolist(),
-                'ph_rate': cdf['ph_rate'][0].tolist()
+                'lat_grid': read_numeric_variable(cdf['lat_grid']).tolist(),
+                'ph_rate': read_numeric_variable(cdf['ph_rate'])[0].tolist()
             },
             'uv_anisotropy_flag': cdf['uv_anisotropy_flag'][0]
         }

@@ -1,15 +1,14 @@
 FROM python:3.12-slim
 RUN apt-get update && apt-get install -y git libgfortran5
-RUN pip install --upgrade pip
+COPY --from=ghcr.io/astral-sh/uv:0.9.5 /uv /uvx /bin/
 RUN mkdir temp_cdf_data
 RUN mkdir -p /mnt/spice
-COPY requirements.txt .
-RUN pip install -r requirements.txt
+COPY uv.lock uv.lock
+COPY pyproject.toml pyproject.toml
+RUN uv sync --locked --no-install-project
 COPY spice_kernels spice_kernels
-COPY imap_l3_processing imap_l3_processing
 COPY scripts scripts
 COPY imap_l3_data_processor.py .
-COPY tests tests
 COPY instrument_team_data instrument_team_data
 COPY imap_l3_processing/glows/l3e/l3e_toolkit/survProbHi survProbHi
 COPY imap_l3_processing/glows/l3e/l3e_toolkit/survProbLo survProbLo
@@ -18,4 +17,7 @@ RUN chmod +x survProbHi
 RUN chmod +x survProbLo
 RUN chmod +x survProbUltra
 COPY run_local.py .
-ENTRYPOINT ["python","run_local.py", "glows", "l3e"]
+COPY tests tests
+COPY imap_l3_processing imap_l3_processing
+RUN uv sync --locked
+ENTRYPOINT ["uv", "run", "run_local.py", "glows", "l3e"]

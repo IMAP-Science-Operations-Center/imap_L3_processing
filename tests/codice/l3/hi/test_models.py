@@ -160,13 +160,17 @@ class TestModels(unittest.TestCase):
             "epoch": epoch_data,
             "epoch_delta": np.array([timedelta(seconds=10)]),
             "energy_h": energy_h_data,
-            "energy_h_delta": np.array([101, 103]) + 1,
+            "energy_h_plus": np.array([101, 103]) + 1,
+            "energy_h_minus": np.array([101, 103]) + 11,
             "energy_cno": energy_cno_data,
-            "energy_cno_delta": np.array([101, 103]) + 3,
+            "energy_cno_plus": np.array([101, 103]) + 3,
+            "energy_cno_minus": np.array([101, 103]) + 33,
             "energy_fe": energy_fe_data,
-            "energy_fe_delta": np.array([101, 103]) + 5,
+            "energy_fe_plus": np.array([101, 103]) + 5,
+            "energy_fe_minus": np.array([101, 103]) + 55,
             "energy_he3he4": energy_he3he4_data,
-            "energy_he3he4_delta": np.array([101, 103]) + 7,
+            "energy_he3he4_plus": np.array([101, 103]) + 7,
+            "energy_he3he4_minus": np.array([101, 103]) + 77,
             "pitch_angle": pitch_angle,
             "pitch_angle_delta": np.array([100, 200]),
             "gyrophase": gyrophase,
@@ -215,39 +219,43 @@ class TestModels(unittest.TestCase):
             else:
                 np.testing.assert_array_equal(data_product_var.value, np.array([10 * 1e9]))
 
-    def test_l2_sectored_intensities_read_from_instrument_team_cdf(self):
+    def test_l2_sectored_intensities_read_from_sdc_cdf(self):
         l2_path = get_test_instrument_team_data_path(
-            "codice/hi/imap_codice_l2_hi-sectored_20241110_v002.cdf")
+            "codice/hi/imap_codice_l2_hi-sectored_20250814_v002.cdf")
         l2_sectored_data = CodiceHiL2SectoredIntensitiesData.read_from_cdf(l2_path)
 
         with CDF(str(l2_path)) as cdf:
             np.testing.assert_array_equal(l2_sectored_data.epoch, cdf["epoch"])
             expected_epoch_delta = np.array([timedelta(seconds=ns / 1e9) for ns in cdf["epoch_delta_plus"][...]])
             np.testing.assert_array_equal(l2_sectored_data.epoch_delta_plus, expected_epoch_delta)
-            np.testing.assert_array_equal(l2_sectored_data.spin_sector_index, cdf['spin_sector_index'])
-            np.testing.assert_array_equal(l2_sectored_data.ssd_index, cdf['ssd_index'])
+            np.testing.assert_array_equal(l2_sectored_data.spin_angles, cdf['spin_angles'][...])
+            np.testing.assert_array_equal(l2_sectored_data.elevation_angle, cdf['elevation_angle'])
 
             np.testing.assert_array_equal(l2_sectored_data.data_quality, cdf['data_quality'])
 
             np.testing.assert_array_equal(l2_sectored_data.h_intensities, cdf['h'])
             np.testing.assert_array_equal(l2_sectored_data.energy_h, cdf['energy_h'])
-            np.testing.assert_array_equal(l2_sectored_data.energy_h_delta, cdf['energy_h_delta'])
+            np.testing.assert_array_equal(l2_sectored_data.energy_h_plus, cdf['energy_h_plus'])
+            np.testing.assert_array_equal(l2_sectored_data.energy_h_minus, cdf['energy_h_minus'])
 
             np.testing.assert_array_equal(l2_sectored_data.cno_intensities, cdf['cno'])
             np.testing.assert_array_equal(l2_sectored_data.energy_cno, cdf['energy_cno'])
-            np.testing.assert_array_equal(l2_sectored_data.energy_cno_delta, cdf['energy_cno_delta'])
+            np.testing.assert_array_equal(l2_sectored_data.energy_cno_plus, cdf['energy_cno_plus'])
+            np.testing.assert_array_equal(l2_sectored_data.energy_cno_minus, cdf['energy_cno_minus'])
 
             np.testing.assert_array_equal(l2_sectored_data.fe_intensities, cdf['fe'])
             np.testing.assert_array_equal(l2_sectored_data.energy_fe, cdf['energy_fe'])
-            np.testing.assert_array_equal(l2_sectored_data.energy_fe_delta, cdf['energy_fe_delta'])
+            np.testing.assert_array_equal(l2_sectored_data.energy_fe_plus, cdf['energy_fe_plus'])
+            np.testing.assert_array_equal(l2_sectored_data.energy_fe_minus, cdf['energy_fe_minus'])
 
             np.testing.assert_array_equal(l2_sectored_data.he3he4_intensities, cdf['he3he4'])
             np.testing.assert_array_equal(l2_sectored_data.energy_he3he4, cdf['energy_he3he4'])
-            np.testing.assert_array_equal(l2_sectored_data.energy_he3he4_delta, cdf['energy_he3he4_delta'])
+            np.testing.assert_array_equal(l2_sectored_data.energy_he3he4_plus, cdf['energy_he3he4_plus'])
+            np.testing.assert_array_equal(l2_sectored_data.energy_he3he4_minus, cdf['energy_he3he4_minus'])
 
     def test_l2_sectored_intensities_read_from_instrument_team_cdf_handles_fill_values(self):
         all_fill_l2_sectored_intensities_path = \
-            get_test_data_path('codice/imap_codice_l2_hi-sectored_20241110_v002-all-fill.cdf')
+            get_test_data_path('codice/imap_codice_l2_hi-sectored_20250814_v002-all-fill.cdf')
         l2_sectored_intensities = CodiceHiL2SectoredIntensitiesData.read_from_cdf(all_fill_l2_sectored_intensities_path)
         with CDF(str(all_fill_l2_sectored_intensities_path)) as cdf:
             np.testing.assert_array_equal(l2_sectored_intensities.cno_intensities, np.full_like(cdf['cno'], np.nan))

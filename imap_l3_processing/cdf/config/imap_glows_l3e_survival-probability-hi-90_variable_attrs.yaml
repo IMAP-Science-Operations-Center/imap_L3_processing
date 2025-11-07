@@ -50,7 +50,7 @@ surv_prob:
   VAR_TYPE: data
   RECORD_VARYING: RV
   DEPEND_0: epoch
-  DEPEND_1: energy
+  DEPEND_1: energy_grid
   DEPEND_2: spin_angle
   DISPLAY_TYPE: spectrogram
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
@@ -183,3 +183,17 @@ spacecraft_velocity_z:
   UNITS: km/s
   VALIDMIN: -50
   VALIDMAX: 50
+elongation:
+  NAME: elongation
+  DATA_TYPE: CDF_UINT2
+  CATDESC: Position of Hi instrument
+  VAR_TYPE: support_data
+  FIELDNAM: Elongation
+  LABLAXIS: Elongation
+  DEPEND_0: epoch
+  FORMAT: I3
+  UNITS: degree
+  FILLVAL: 65535
+  VALIDMAX: 90
+  VALIDMIN: 90
+  RECORD_VARYING: RV

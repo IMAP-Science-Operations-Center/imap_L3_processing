@@ -223,7 +223,8 @@ def _create_ultra_l1c_pset(energy: np.ndarray,
         healpix_index=healpix_index,
         latitude=np.rad2deg(lat_pix.value),
         longitude=np.rad2deg(lon_pix.value),
-        sensitivity=sensitivity
+        sensitivity=sensitivity,
+        repointing=1,
     )
     return input_l1c_pset
 

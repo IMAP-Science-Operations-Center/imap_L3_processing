@@ -18,9 +18,6 @@ from tests.test_helpers import get_test_data_path
 
 
 class TestCalculatePHA(unittest.TestCase):
-    def setUp(self) -> None:
-        self.gain_lookup = defaultdict(lambda: defaultdict(lambda: Gain(a=-1, b=0)))
-
     def test_calculate_mev(self):
         low_gain_a_value = 10.3
         low_gain_b_value = -25.4
@@ -66,16 +63,16 @@ class TestCalculatePHA(unittest.TestCase):
         range_lookup_table = Mock()
         range_lookup_table.lookup_range.return_value = rule_stub
 
-        event_analysis = analyze_event(raw_pha_event, self.gain_lookup, range_lookup_table)
+        event_analysis = analyze_event(raw_pha_event, range_lookup_table)
 
         range_lookup_table.lookup_range.assert_called_with({"L1A14", "L2A", "L3A"})
 
-        expected_highest_words = [detector_to_word_tuples[str(detector_1_in_group_1)],
+        expected_highest_words = [detector_to_word_tuples[str(detector_2_in_group_1)],
                                   detector_to_word_tuples[str(detector_1_in_group_2)]]
         expected_event_analysis = EventAnalysis(range=rule_stub.range,
-                                                l1_detector=detector_1_in_group_1,
+                                                l1_detector=detector_2_in_group_1,
                                                 l2_detector=detector_1_in_group_2,
-                                                e_delta_word=detector_to_word_tuples[str(detector_1_in_group_1)],
+                                                e_delta_word=detector_to_word_tuples[str(detector_2_in_group_1)],
                                                 e_prime_word=detector_to_word_tuples[str(detector_1_in_group_2)],
                                                 words_with_highest_energy=expected_highest_words)
 
@@ -103,16 +100,14 @@ class TestCalculatePHA(unittest.TestCase):
         range_lookup_table = Mock()
         range_lookup_table.lookup_range.return_value = rule_stub
 
-        event_analysis = analyze_event(raw_pha_event, self.gain_lookup, range_lookup_table)
+        event_analysis = analyze_event(raw_pha_event, range_lookup_table)
 
         range_lookup_table.lookup_range.assert_called_with({"L2A", "L2B", "L1B14"})
 
         expected_highest_words = [
             detector_to_word_tuples[str(detector_1_in_L2B_group)],
-            detector_to_word_tuples[str(detector_1_in_L2A_group)],
-            detector_to_word_tuples[str(detector_1_in_L1B14_group)]
-            ,
-
+            detector_to_word_tuples[str(detector_2_in_L2A_group)],
+            detector_to_word_tuples[str(detector_1_in_L1B14_group)],
         ]
 
         expected_event_analysis = EventAnalysis(range=rule_stub.range,
@@ -151,24 +146,102 @@ class TestCalculatePHA(unittest.TestCase):
         range_lookup_table = Mock()
         range_lookup_table.lookup_range.return_value = rule_stub
 
-        event_analysis = analyze_event(raw_pha_event, self.gain_lookup, range_lookup_table)
+        event_analysis = analyze_event(raw_pha_event, range_lookup_table)
 
         range_lookup_table.lookup_range.assert_called_with({"L1A14", "L2A", "L3A", "L3B", "L2B"})
 
-        expected_highest_words = [detector_to_word_tuples[str(detector_1_in_group_1)],
+        expected_highest_words = [detector_to_word_tuples[str(detector_2_in_group_1)],
                                   detector_to_word_tuples[str(detector_1_in_group_2)],
                                   detector_to_word_tuples[str(detector_1_in_group_3)],
                                   detector_to_word_tuples[str(detector_1_in_group_4)],
                                   detector_to_word_tuples[str(detector_1_in_group_5)],
                                   ]
         expected_event_analysis = EventAnalysis(range=rule_stub.range,
-                                                l1_detector=detector_1_in_group_1,
+                                                l1_detector=detector_2_in_group_1,
                                                 l2_detector=detector_1_in_group_2,
                                                 e_delta_word=detector_to_word_tuples[str(detector_1_in_group_3)],
                                                 e_prime_word=detector_to_word_tuples[str(detector_1_in_group_4)],
                                                 words_with_highest_energy=expected_highest_words)
 
         self.assertEqual(expected_event_analysis, event_analysis)
+
+    def test_analyze_event_uses_detectors_with_highest_adc_values(self):
+
+        detector_l1ab = Detector(layer=1, side="A", segment="b", address=10, group="L1A14")
+        detector_l1ac = Detector(layer=1, side="A", segment="c", address=11, group="L1A14")
+        detector_l2ac = Detector(layer=2, side="A", segment="c", address=15, group="L2A")
+
+        word_l1ab = PHAWord(adc_value=1, detector=detector_l1ab, is_low_gain=False, adc_overflow=False,
+                            is_last_pha=False)
+        word_l1ac = PHAWord(adc_value=2, detector=detector_l1ac, is_low_gain=False, adc_overflow=False,
+                            is_last_pha=False)
+        word_l2ac = PHAWord(adc_value=3, detector=detector_l2ac, is_low_gain=False, adc_overflow=False,
+                            is_last_pha=False)
+
+        test_cases = [
+            ("Higher ADC value is used both high gain", 1, False, 2, False, detector_l1ac, word_l1ac),
+            ("Higher ADC value is used both low gain", 2, True, 1, True, detector_l1ab, word_l1ab),
+            ("L1ab Low gain ADC * 20 is greater than L1ac ADC", 1, True, 19, False, detector_l1ab, word_l1ab),
+            ("L1ab Low gain ADC * 20 is less than L1ac ADC", 1, True, 21, False, detector_l1ac, word_l1ac),
+            ("Filters out saturated high gain words", 2047, False, 1, False, detector_l1ac, word_l1ac),
+        ]
+
+        for name, l1ab_adc, l1ab_is_low_gain, l1ac_adc, l1ac_is_low_gain, expected_l1_detector, expected_l1_word in test_cases:
+            with self.subTest(name):
+                word_l1ab.adc_value = l1ab_adc
+                word_l1ab.is_low_gain = l1ab_is_low_gain
+                word_l1ac.adc_value = l1ac_adc
+                word_l1ac.is_low_gain = l1ac_is_low_gain
+
+                raw_pha_event = create_raw_pha_event(pha_words=[word_l1ab, word_l1ac, word_l2ac])
+
+                rule_stub = Rule(range=DetectedRange(DetectorRange.R2, DetectorSide.A),
+                                 included_detector_groups=["L1A14", "L2A"],
+                                 excluded_detector_groups=["L1B"]
+                                 )
+                range_lookup_table = Mock()
+                range_lookup_table.lookup_range.return_value = rule_stub
+
+                event_analysis = analyze_event(raw_pha_event, range_lookup_table)
+
+                expected_event_analysis = EventAnalysis(range=rule_stub.range,
+                                                        l1_detector=expected_l1_detector,
+                                                        l2_detector=detector_l2ac,
+                                                        e_delta_word=expected_l1_word,
+                                                        e_prime_word=word_l2ac,
+                                                        words_with_highest_energy=[expected_l1_word, word_l2ac])
+
+                self.assertEqual(expected_event_analysis.range, event_analysis.range)
+                self.assertEqual(expected_event_analysis.l1_detector, event_analysis.l1_detector)
+                self.assertEqual(expected_event_analysis.l2_detector, event_analysis.l2_detector)
+                self.assertEqual(expected_event_analysis.e_delta_word, event_analysis.e_delta_word)
+                self.assertEqual(expected_event_analysis.e_prime_word, event_analysis.e_prime_word)
+                self.assertEqual(expected_event_analysis.words_with_highest_energy, event_analysis.words_with_highest_energy)
+
+    def test_analyze_event_filters_out_events_with_all_saturated_data(self):
+        detector_l1ab = Detector(layer=1, side="A", segment="b", address=10, group="L1A14")
+        detector_l1ac = Detector(layer=1, side="A", segment="c", address=11, group="L1A14")
+        detector_l2ac = Detector(layer=2, side="A", segment="c", address=15, group="L2A")
+
+        word_l1ab = PHAWord(adc_value=2047, detector=detector_l1ab, is_low_gain=False, adc_overflow=False,
+                            is_last_pha=False)
+        word_l1ac = PHAWord(adc_value=2047, detector=detector_l1ac, is_low_gain=False, adc_overflow=False,
+                            is_last_pha=False)
+        word_l2ac = PHAWord(adc_value=1, detector=detector_l2ac, is_low_gain=False, adc_overflow=False,
+                            is_last_pha=False)
+
+        raw_pha_event = create_raw_pha_event(pha_words=[word_l1ab, word_l1ac, word_l2ac])
+
+        rule_stub = Rule(range=DetectedRange(DetectorRange.R2, DetectorSide.A),
+                         included_detector_groups=["L1A14", "L2A"],
+                         excluded_detector_groups=["L1B"]
+                         )
+        range_lookup_table = Mock()
+        range_lookup_table.lookup_range.return_value = rule_stub
+
+        event_analysis = analyze_event(raw_pha_event, range_lookup_table)
+
+        self.assertIsNone(event_analysis)
 
     def test_analyze_event_handles_no_calc_rules(self):
         detector_1_in_group_1 = Detector(layer=1, side="A", segment="b", address=10, group="L1A14")
@@ -188,7 +261,7 @@ class TestCalculatePHA(unittest.TestCase):
         range_lookup_table = Mock()
         range_lookup_table.lookup_range.return_value = None
 
-        event_analysis = analyze_event(raw_pha_event, self.gain_lookup, range_lookup_table)
+        event_analysis = analyze_event(raw_pha_event, range_lookup_table)
 
         range_lookup_table.lookup_range.assert_called_with({"L1A14", "L2A", "L3A"})
 
@@ -257,7 +330,7 @@ class TestCalculatePHA(unittest.TestCase):
         event_output = process_pha_event(raw_pha_event, mock_cosine_correction_table, gain_lookup_table,
                                          sentinel.range_fit_lookup, sentinel.rule_lookup)
 
-        mock_analyze_event.assert_called_once_with(raw_pha_event, gain_lookup_table, sentinel.rule_lookup)
+        mock_analyze_event.assert_called_once_with(raw_pha_event, sentinel.rule_lookup)
 
         mock_cosine_correction_table.get_cosine_correction.assert_called_once_with(sentinel.detected_range,
                                                                                    sentinel.l1_detector,

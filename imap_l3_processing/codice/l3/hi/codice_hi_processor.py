@@ -109,10 +109,10 @@ class CodiceHiProcessor(Processor):
         fe_energy_bins = dependencies.codice_sectored_intensities_data.energy_fe.shape[0]
         rebinned_mag_data = mag_data.rebin_to(sectored_intensities.epoch, sectored_intensities.epoch_delta_plus)
 
-        spin_angles_in_dps = (sectored_intensities.spin_sector_index + CODICE_SPIN_ANGLE_OFFSET_FROM_MAG_BOOM) % 360
+        spin_angles_in_dps = (sectored_intensities.spin_angles + CODICE_SPIN_ANGLE_OFFSET_FROM_MAG_BOOM) % 360
 
         mag_unit_vectors = calculate_unit_vector(rebinned_mag_data)
-        sector_unit = get_sector_unit_vectors(spin_angles_in_dps, sectored_intensities.ssd_index)
+        sector_unit = get_sector_unit_vectors(spin_angles_in_dps, sectored_intensities.elevation_angle)
         sector_unit_vectors = calculate_unit_vector(sector_unit)
         particle_unit_vectors = -1 * sector_unit_vectors
 
@@ -166,13 +166,17 @@ class CodiceHiProcessor(Processor):
             epoch=epochs,
             epoch_delta=sectored_intensities.epoch_delta_plus,
             energy_h=dependencies.codice_sectored_intensities_data.energy_h,
-            energy_h_delta=dependencies.codice_sectored_intensities_data.energy_h_delta,
+            energy_h_plus=dependencies.codice_sectored_intensities_data.energy_h_plus,
+            energy_h_minus=dependencies.codice_sectored_intensities_data.energy_h_minus,
             energy_cno=dependencies.codice_sectored_intensities_data.energy_cno,
-            energy_cno_delta=dependencies.codice_sectored_intensities_data.energy_cno_delta,
+            energy_cno_plus=dependencies.codice_sectored_intensities_data.energy_cno_plus,
+            energy_cno_minus=dependencies.codice_sectored_intensities_data.energy_cno_minus,
             energy_fe=dependencies.codice_sectored_intensities_data.energy_fe,
-            energy_fe_delta=dependencies.codice_sectored_intensities_data.energy_fe_delta,
+            energy_fe_plus=dependencies.codice_sectored_intensities_data.energy_fe_plus,
+            energy_fe_minus=dependencies.codice_sectored_intensities_data.energy_fe_minus,
             energy_he3he4=dependencies.codice_sectored_intensities_data.energy_he3he4,
-            energy_he3he4_delta=dependencies.codice_sectored_intensities_data.energy_he3he4_delta,
+            energy_he3he4_plus=dependencies.codice_sectored_intensities_data.energy_he3he4_plus,
+            energy_he3he4_minus=dependencies.codice_sectored_intensities_data.energy_he3he4_minus,
             pitch_angle=pitch_angle_bins,
             pitch_angle_delta=np.repeat(pitch_angle_delta_value, num_pitch_angle_bins),
             gyrophase=gyrophase_bins,

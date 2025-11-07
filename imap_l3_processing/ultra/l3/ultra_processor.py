@@ -4,16 +4,17 @@ from datetime import datetime, timedelta
 from imap_processing.spice.geometry import SpiceFrame
 
 from imap_l3_processing.maps.map_descriptors import MapDescriptorParts, MapQuantity, SurvivalCorrection, \
-    parse_map_descriptor, PixelSize
+    parse_map_descriptor, PixelSize, Sensor
 from imap_l3_processing.maps.map_models import HealPixIntensityMapData, IntensityMapData, \
     HealPixCoords, HealPixSpectralIndexMapData, RectangularIntensityDataProduct, \
     RectangularIntensityMapData, RectangularCoords, RectangularSpectralIndexDataProduct, \
-    RectangularSpectralIndexMapData, SpectralIndexMapData
+    RectangularSpectralIndexMapData, SpectralIndexMapData, combine_healpix_intensity_map_data
 from imap_l3_processing.maps.map_processor import MapProcessor
 from imap_l3_processing.maps.spectral_fit import calculate_spectral_index_for_multiple_ranges
 from imap_l3_processing.ultra.l3.science.ultra_survival_probability import UltraSurvivalProbabilitySkyMap, \
     UltraSurvivalProbability
-from imap_l3_processing.ultra.l3.ultra_l3_dependencies import UltraL3Dependencies, UltraL3SpectralIndexDependencies
+from imap_l3_processing.ultra.l3.ultra_l3_dependencies import UltraL3Dependencies, UltraL3SpectralIndexDependencies, \
+    UltraL3CombinedDependencies
 from imap_l3_processing.utils import save_data, combine_glows_l3e_with_l1c_pointing
 
 
@@ -31,9 +32,28 @@ class UltraProcessor(MapProcessor):
                 data_product = RectangularSpectralIndexDataProduct(input_metadata=self.input_metadata,
                                                                    data=healpix_spectral_index_map_data)
             case MapDescriptorParts(survival_correction=SurvivalCorrection.SurvivalCorrected,
+                                    sensor=Sensor.Ultra45 | Sensor.Ultra90,
                                     grid=PixelSize.TwoDegrees | PixelSize.FourDegrees | PixelSize.SixDegrees):
                 deps = UltraL3Dependencies.fetch_dependencies(self.dependencies)
                 healpix_intensity_map_data = self._process_survival_probability(deps, spice_frame_name)
+                data_product = self._process_healpix_intensity_to_rectangular(healpix_intensity_map_data,
+                                                                              parsed_descriptor.grid)
+                data_product.add_paths_to_parents(deps.dependency_file_paths)
+            case MapDescriptorParts(survival_correction=SurvivalCorrection.SurvivalCorrected,
+                                    sensor=Sensor.UltraCombined,
+                                    grid=PixelSize.TwoDegrees | PixelSize.FourDegrees | PixelSize.SixDegrees):
+
+                combined_deps = UltraL3CombinedDependencies.fetch_dependencies(self.dependencies)
+                combined_data = self._process_combined_survival_probability(combined_deps, spice_frame_name)
+
+                data_product = self._process_healpix_intensity_to_rectangular(combined_data, parsed_descriptor.grid)
+                data_product.add_paths_to_parents(combined_deps.dependency_file_paths)
+
+            case MapDescriptorParts(sensor=Sensor.UltraCombined,
+                                    survival_correction=SurvivalCorrection.NotSurvivalCorrected,
+                                    grid=PixelSize.TwoDegrees | PixelSize.FourDegrees | PixelSize.SixDegrees):
+                deps = UltraL3CombinedDependencies.fetch_dependencies(self.dependencies)
+                healpix_intensity_map_data = combine_healpix_intensity_map_data([deps.u45_l2_map, deps.u90_l2_map])
                 data_product = self._process_healpix_intensity_to_rectangular(healpix_intensity_map_data,
                                                                               parsed_descriptor.grid)
                 data_product.add_paths_to_parents(deps.dependency_file_paths)
@@ -42,6 +62,26 @@ class UltraProcessor(MapProcessor):
 
         data_product.add_filenames_to_parents(parent_file_names)
         return [save_data(data_product)]
+
+    def _process_combined_survival_probability(self, deps: UltraL3CombinedDependencies, spice_frame_name: SpiceFrame):
+        u45_dep = UltraL3Dependencies(
+            ultra_l2_map=deps.u45_l2_map,
+            ultra_l1c_pset=deps.u45_l1c_psets,
+            glows_l3e_sp=deps.glows_l3e_psets,
+            dependency_file_paths=deps.dependency_file_paths
+        )
+
+        u90_dep = UltraL3Dependencies(
+            ultra_l2_map=deps.u90_l2_map,
+            ultra_l1c_pset=deps.u90_l1c_psets,
+            glows_l3e_sp=deps.glows_l3e_psets,
+            dependency_file_paths=deps.dependency_file_paths
+        )
+
+        u45_survival_corrected = self._process_survival_probability(u45_dep, spice_frame_name)
+        u90_survival_corrected = self._process_survival_probability(u90_dep, spice_frame_name)
+
+        return combine_healpix_intensity_map_data([u45_survival_corrected, u90_survival_corrected])
 
     def _process_survival_probability(self, deps: UltraL3Dependencies, spice_frame_name: SpiceFrame) -> HealPixIntensityMapData:
         combined_psets = combine_glows_l3e_with_l1c_pointing(deps.glows_l3e_sp, deps.ultra_l1c_pset, )

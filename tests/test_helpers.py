@@ -13,6 +13,7 @@ import numpy as np
 from imap_data_access import ScienceFilePath, AncillaryFilePath, SPICEFilePath
 from imap_data_access.file_validation import generate_imap_file_path
 
+import imap_l3_processing
 import tests
 from imap_l3_processing.swe.l3.models import SweConfiguration
 from imap_l3_processing.swe.l3.science.moment_calculations import Moments, MomentFitResults
@@ -33,6 +34,8 @@ def try_get_many_run_local_paths(extensions: list[str]) -> tuple[bool, list[Path
             missing_path = True
     return missing_path, paths
 
+def get_imap_data_dir_path() -> Path:
+    return Path(imap_l3_processing.__file__).parent.parent / "data" / "imap"
 
 def get_test_data_path(filename: str) -> Path:
     return Path(tests.__file__).parent / "test_data" / filename

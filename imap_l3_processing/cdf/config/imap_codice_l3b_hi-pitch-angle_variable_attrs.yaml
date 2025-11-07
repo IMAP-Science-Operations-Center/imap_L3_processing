@@ -44,6 +44,7 @@ epoch_delta:
   <<: *support_data
   NAME: epoch_delta
   CATDESC: epoch_DELTA
+  RECORD_VARYING: RV
   FIELDNAM: epoch_delta
   DATA_TYPE: CDF_INT8
   FORMAT: I19
@@ -64,16 +65,25 @@ energy_h:
   FIELDNAM: H energy
   LABLAXIS: H energy
   UNITS: MeV/nuc
-  DELTA_PLUS_VAR: energy_h_delta
-  DELTA_MINUS_VAR: energy_h_delta
+  DELTA_PLUS_VAR: energy_h_plus
+  DELTA_MINUS_VAR: energy_h_minus
 
-energy_h_delta:
+energy_h_plus:
   <<: *support_data
   <<: *float_data
-  NAME: energy_h_delta
-  CATDESC: H energy bin deltas
-  FIELDNAM: H energy delta
-  LABLAXIS: H energy delta
+  NAME: energy_h_plus
+  CATDESC: H energy bin delta plus
+  FIELDNAM: H energy delta plus
+  LABLAXIS: H energy plus
+  UNITS: MeV/nuc
+
+energy_h_minus:
+  <<: *support_data
+  <<: *float_data
+  NAME: energy_h_minus
+  CATDESC: H energy bin delta minus
+  FIELDNAM: H energy delta minus
+  LABLAXIS: H energy minus
   UNITS: MeV/nuc
 
 energy_cno:
@@ -84,16 +94,25 @@ energy_cno:
   FIELDNAM: CNO energy
   LABLAXIS: CNO energy
   UNITS: MeV/nuc
-  DELTA_PLUS_VAR: energy_cno_delta
-  DELTA_MINUS_VAR: energy_cno_delta
+  DELTA_PLUS_VAR: energy_cno_plus
+  DELTA_MINUS_VAR: energy_cno_minus
 
-energy_cno_delta:
+energy_cno_plus:
   <<: *support_data
   <<: *float_data
-  NAME: energy_cno_delta
-  CATDESC: CNO energy bin deltas
-  FIELDNAM: CNO energy delta
-  LABLAXIS: CNO energy delta
+  NAME: energy_cno_plus
+  CATDESC: CNO energy bin delta plus
+  FIELDNAM: CNO energy delta plus
+  LABLAXIS: CNO energy plus
+  UNITS: MeV/nuc
+
+energy_cno_minus:
+  <<: *support_data
+  <<: *float_data
+  NAME: energy_cno_minus
+  CATDESC: CNO energy bin delta minus
+  FIELDNAM: CNO energy delta minus
+  LABLAXIS: CNO energy minus
   UNITS: MeV/nuc
 
 energy_fe:
@@ -104,16 +123,25 @@ energy_fe:
   FIELDNAM: Fe energy
   LABLAXIS: Fe energy
   UNITS: MeV/nuc
-  DELTA_PLUS_VAR: energy_fe_delta
-  DELTA_MINUS_VAR: energy_fe_delta
+  DELTA_PLUS_VAR: energy_fe_plus
+  DELTA_MINUS_VAR: energy_fe_minus
 
-energy_fe_delta:
+energy_fe_plus:
   <<: *support_data
   <<: *float_data
-  NAME: energy_fe_delta
-  CATDESC: Fe energy bin deltas
-  FIELDNAM: Fe energy delta
-  LABLAXIS: Fe energy delta
+  NAME: energy_fe_plus
+  CATDESC: Fe energy bin delta plus
+  FIELDNAM: Fe energy delta plus
+  LABLAXIS: Fe energy plus
+  UNITS: MeV/nuc
+
+energy_fe_minus:
+  <<: *support_data
+  <<: *float_data
+  NAME: energy_fe_minus
+  CATDESC: Fe energy bin delta minus
+  FIELDNAM: Fe energy delta minus
+  LABLAXIS: Fe energy minus
   UNITS: MeV/nuc
 
 energy_he3he4:
@@ -124,14 +152,25 @@ energy_he3he4:
   FIELDNAM: He3He4 energy
   LABLAXIS: He3He4 energy
   UNITS: MeV/nuc
+  DELTA_PLUS_VAR: energy_he3he4_plus
+  DELTA_MINUS_VAR: energy_he3he4_minus
 
-energy_he3he4_delta:
+energy_he3he4_plus:
   <<: *support_data
   <<: *float_data
-  NAME: energy_he3he4_delta
-  CATDESC: He3He4 energy bin deltas
-  FIELDNAM: He3He4 energy delta
-  LABLAXIS: He3He4 energy delta
+  NAME: energy_he3he4_plus
+  CATDESC: He3He4 energy bin delta plus
+  FIELDNAM: He3He4 energy delta plus
+  LABLAXIS: He3He4 energy plus
+  UNITS: MeV/nuc
+
+energy_he3he4_minus:
+  <<: *support_data
+  <<: *float_data
+  NAME: energy_he3he4_minus
+  CATDESC: He3He4 energy bin delta minus
+  FIELDNAM: He3He4 energy delta minus
+  LABLAXIS: He3He4 energy minus
   UNITS: MeV/nuc
 
 pitch_angle:

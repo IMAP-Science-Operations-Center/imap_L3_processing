@@ -23,6 +23,7 @@ SPACECRAFT_LATITUDE_VAR_NAME = "spacecraft_latitude"
 SPACECRAFT_VELOCITY_X_VAR_NAME = "spacecraft_velocity_x"
 SPACECRAFT_VELOCITY_Y_VAR_NAME = "spacecraft_velocity_y"
 SPACECRAFT_VELOCITY_Z_VAR_NAME = "spacecraft_velocity_z"
+ELONGATION = "elongation"
 
 
 @dataclass
@@ -40,6 +41,7 @@ class GlowsL3EHiData(DataProduct):
     spacecraft_velocity_x: np.ndarray
     spacecraft_velocity_y: np.ndarray
     spacecraft_velocity_z: np.ndarray
+    elongation: np.ndarray
 
     @classmethod
     def convert_dat_to_glows_l3e_hi_product(cls, input_metadata: InputMetadata, file_path: Path,
@@ -71,6 +73,7 @@ class GlowsL3EHiData(DataProduct):
                    spacecraft_velocity_x=np.array([args.spacecraft_velocity_x]),
                    spacecraft_velocity_y=np.array([args.spacecraft_velocity_y]),
                    spacecraft_velocity_z=np.array([args.spacecraft_velocity_z]),
+                   elongation=np.array([args.elongation])
                    )
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
@@ -92,4 +95,5 @@ class GlowsL3EHiData(DataProduct):
             DataProductVariable(SPACECRAFT_VELOCITY_X_VAR_NAME, self.spacecraft_velocity_x),
             DataProductVariable(SPACECRAFT_VELOCITY_Y_VAR_NAME, self.spacecraft_velocity_y),
             DataProductVariable(SPACECRAFT_VELOCITY_Z_VAR_NAME, self.spacecraft_velocity_z),
+            DataProductVariable(ELONGATION, self.elongation),
         ]

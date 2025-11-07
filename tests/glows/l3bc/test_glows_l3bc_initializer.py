@@ -8,7 +8,7 @@ from imap_data_access import ProcessingInputCollection, RepointInput
 
 from imap_l3_processing.glows.l3bc.glows_l3bc_initializer import GlowsL3BCInitializer, GlowsL3BCInitializerData
 from imap_l3_processing.glows.l3bc.models import CRToProcess, ExternalDependencies
-from tests.test_helpers import create_mock_query_results
+from tests.test_helpers import create_mock_query_results, get_test_data_path
 
 
 class TestGlowsL3BCInitializer(unittest.TestCase):
@@ -466,44 +466,31 @@ class TestGlowsL3BCInitializer(unittest.TestCase):
 
         cr_candidate.has_valid_external_dependencies.assert_called_once_with(external_dependencies)
 
-    @patch("imap_l3_processing.glows.l3bc.glows_l3bc_initializer.get_pointing_date_range")
-    def test_group_l3a_by_cr(self, mock_get_pointing_date_range):
-        mock_get_pointing_date_range.side_effect = [
-            (datetime(2010, 1, 1), datetime(2010, 1, 2)),
-            (datetime(2010, 1, 2), datetime(2010, 1, 3)),
-            (datetime(2010, 5, 1), datetime(2010, 5, 2)),
-            (datetime(2010, 5, 2), datetime(2010, 5, 3)),
-            (datetime(2010, 8, 1), datetime(2010, 8, 2)),
-            (datetime(2010, 8, 9), datetime(2010, 8, 10)),
+    @patch('imap_l3_processing.glows.l3bc.glows_l3bc_initializer.imap_data_access.download')
+    def test_group_l3a_by_cr(self, mock_download):
+        l3a_1 = 'imap_glows_l3a_hist_20100101-repoint00001_v001.cdf'
+        l3a_2 = 'imap_glows_l3a_hist_20100102-repoint00002_v001.cdf'
+        l3a_3 = 'imap_glows_l3a_hist_20100103-repoint00003_v001.cdf'
+        l3a_4 = 'imap_glows_l3a_hist_20100104-repoint00004_v001.cdf'
+
+        glows_l3a_files = [
+            get_test_data_path('glows/l3a_products') / l3a_1,
+            get_test_data_path('glows/l3a_products') / l3a_2,
+            get_test_data_path('glows/l3a_products') / l3a_3,
+            get_test_data_path('glows/l3a_products') / l3a_4,
         ]
 
-        l3a_files_and_parents = [
-            "imap_glows_l3a_hist_20100101-repoint00001_v001.cdf",
-            "imap_glows_l3a_hist_20100102-repoint00002_v001.cdf",
-            "imap_glows_l3a_hist_20100501-repoint00050_v001.cdf",
-            "imap_glows_l3a_hist_20100502-repoint00051_v002.cdf",
-            "imap_glows_l3a_hist_20100801-repoint00100_v001.cdf",
-            "imap_glows_l3a_hist_20100809-repoint00109_v001.cdf",
-        ]
+        mock_download.side_effect = glows_l3a_files
 
         expected = {
-            2091: {
-                "imap_glows_l3a_hist_20100101-repoint00001_v001.cdf",
-                "imap_glows_l3a_hist_20100102-repoint00002_v001.cdf",
-            },
-            2096: {
-                "imap_glows_l3a_hist_20100501-repoint00050_v001.cdf",
-                "imap_glows_l3a_hist_20100502-repoint00051_v002.cdf",
-            },
-            2099: {
-                "imap_glows_l3a_hist_20100801-repoint00100_v001.cdf",
-                "imap_glows_l3a_hist_20100809-repoint00109_v001.cdf",
-            },
-            2100: {
-                "imap_glows_l3a_hist_20100809-repoint00109_v001.cdf",
-            }
+            2091: {l3a_1, l3a_2, l3a_3},
+            2092: {l3a_4}
         }
 
-        grouped_l3a_files = GlowsL3BCInitializer.group_l3a_by_cr(l3a_files_and_parents)
+        grouped_l3a_files = GlowsL3BCInitializer.group_l3a_by_cr([l3a_1, l3a_2, l3a_3, l3a_4])
+
+        mock_download.assert_has_calls([
+            call(l3a_1), call(l3a_2), call(l3a_3), call(l3a_4)
+        ])
 
         self.assertEqual(expected, grouped_l3a_files)

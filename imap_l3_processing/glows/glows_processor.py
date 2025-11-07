@@ -4,7 +4,6 @@ import os
 import shutil
 import subprocess
 import sys
-import traceback
 from dataclasses import replace
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -22,7 +21,6 @@ from imap_l3_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependen
 from imap_l3_processing.glows.l3a.glows_toolkit.l3a_data import L3aData
 from imap_l3_processing.glows.l3a.models import GlowsL3LightCurve
 from imap_l3_processing.glows.l3a.utils import create_glows_l3a_from_dictionary
-from imap_l3_processing.glows.l3bc.cannot_process_carrington_rotation_error import CannotProcessCarringtonRotationError
 from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDependencies
 from imap_l3_processing.glows.l3bc.glows_l3bc_initializer import GlowsL3BCInitializer, GlowsL3BCInitializerData
 from imap_l3_processing.glows.l3bc.models import GlowsL3BIonizationRate, GlowsL3CSolarWind, GlowsL3BCProcessorOutput, \

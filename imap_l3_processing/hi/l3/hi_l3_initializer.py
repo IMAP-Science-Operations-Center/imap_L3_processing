@@ -55,7 +55,9 @@ HI_SP_MAP_DESCRIPTORS = [
     "h45-ena-h-sf-sp-anti-hae-6deg-1yr",
     "h45-ena-h-hf-sp-anti-hae-6deg-1yr",
 
-    "h45-ena-h-sf-sp-full-hae-6deg-6mo",
+    # not making the following because "it contains non-science values"
+    # "h45-ena-h-sf-sp-full-hae-6deg-6mo",
+
     "h45-ena-h-hf-sp-full-hae-6deg-6mo",
 
     "h90-ena-h-sf-sp-ram-hae-4deg-1yr",

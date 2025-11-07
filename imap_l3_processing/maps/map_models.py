@@ -1,9 +1,11 @@
 from __future__ import annotations
+
 import abc
 import dataclasses
 from dataclasses import dataclass
 from datetime import timedelta, datetime
 from pathlib import Path
+from typing import Generic
 
 import numpy as np
 import xarray
@@ -15,7 +17,7 @@ from spacepy.pycdf import CDF
 from imap_l3_processing.cdf.cdf_utils import read_variable_and_mask_fill_values, read_numeric_variable
 from imap_l3_processing.constants import TT2000_EPOCH
 from imap_l3_processing.data_utils import safe_divide
-from imap_l3_processing.models import DataProduct, DataProductVariable
+from imap_l3_processing.models import DataProduct, DataProductVariable, InputMetadata, D
 
 EPOCH_VAR_NAME = "epoch"
 EPOCH_DELTA_VAR_NAME = "epoch_delta"
@@ -171,10 +173,14 @@ class SpectralIndexDependencies(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
 
+def convert_tt2000_time_to_datetime(time: np.ndarray) -> np.ndarray:
+    return time / 1e9 * timedelta(seconds=1) + TT2000_EPOCH
+
+
 def _read_intensity_map_data_from_open_cdf(cdf: CDF) -> IntensityMapData:
     masked_obs_date = read_variable_and_mask_fill_values(cdf["obs_date"])
     if np.issubdtype(cdf["obs_date"].dtype, np.number):
-        obs_date = masked_obs_date.filled(0) / 1e9 * timedelta(seconds=1) + TT2000_EPOCH
+        obs_date = convert_tt2000_time_to_datetime(masked_obs_date.filled(0))
         masked_obs_date = np.ma.masked_array(data=obs_date, mask=masked_obs_date.mask)
 
     return IntensityMapData(
@@ -191,7 +197,7 @@ def _read_intensity_map_data_from_open_cdf(cdf: CDF) -> IntensityMapData:
         obs_date_range=read_variable_and_mask_fill_values(cdf["obs_date_range"]),
         solid_angle=read_numeric_variable(cdf["solid_angle"]),
         ena_intensity=read_numeric_variable(cdf["ena_intensity"]),
-        ena_intensity_stat_unc=read_numeric_variable(cdf["ena_intensity_stat_unc"]),
+        ena_intensity_stat_unc=read_numeric_variable(cdf["ena_intensity_stat_uncert"]),
         ena_intensity_sys_err=read_numeric_variable(cdf["ena_intensity_sys_err"]),
     )
 
@@ -219,7 +225,7 @@ def _read_intensity_map_data_from_xarray(dataset: xarray.Dataset) -> IntensityMa
         solid_angle=np.full_like(dataset["latitude"].values, np.nan),
         ena_intensity=dataset["ena_intensity"].values,
         ena_intensity_stat_unc=dataset["ena_intensity_stat_unc"].values,
-        ena_intensity_sys_err=np.full_like(dataset["ena_intensity_stat_unc"].values, np.nan)
+        ena_intensity_sys_err=np.full_like(dataset["ena_intensity_sys_err"].values, np.nan)
     )
 
 
@@ -272,9 +278,16 @@ class HealPixSpectralIndexMapData:
 
         return healpix_map
 
-
 @dataclass
-class HealPixSpectralIndexDataProduct(DataProduct):
+class MapDataProduct(DataProduct[D], Generic[D]):
+    data: D
+
+    @abc.abstractmethod
+    def to_data_product_variables(self) -> list[DataProductVariable]:
+        raise NotImplementedError
+
+
+class HealPixSpectralIndexDataProduct(MapDataProduct[HealPixSpectralIndexMapData]):
     data: HealPixSpectralIndexMapData
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
@@ -282,8 +295,7 @@ class HealPixSpectralIndexDataProduct(DataProduct):
             + _healpix_coords_to_variables(self.data.coords)
 
 
-@dataclass
-class HealPixIntensityDataProduct(DataProduct):
+class HealPixIntensityDataProduct(MapDataProduct[HealPixIntensityMapData]):
     data: HealPixIntensityMapData
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
@@ -291,8 +303,7 @@ class HealPixIntensityDataProduct(DataProduct):
             + _healpix_coords_to_variables(self.data.coords)
 
 
-@dataclass
-class RectangularSpectralIndexDataProduct(DataProduct):
+class RectangularSpectralIndexDataProduct(MapDataProduct[RectangularSpectralIndexMapData]):
     data: RectangularSpectralIndexMapData
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
@@ -300,8 +311,7 @@ class RectangularSpectralIndexDataProduct(DataProduct):
             + _rectangular_coords_to_variables(self.data.coords)
 
 
-@dataclass
-class RectangularIntensityDataProduct(DataProduct):
+class RectangularIntensityDataProduct(MapDataProduct[RectangularIntensityMapData]):
     data: RectangularIntensityMapData
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
@@ -358,19 +368,29 @@ def _healpix_coords_to_variables(coords: HealPixCoords) -> list[DataProductVaria
     ]
 
 
-def combine_rectangular_intensity_map_data(maps: list[RectangularIntensityMapData]) -> RectangularIntensityMapData:
+def combine_rectangular_intensity_map_data(maps: list[RectangularIntensityMapData],
+                                           exposure_weighted: bool = True) -> RectangularIntensityMapData:
     for m in maps[1:]:
         assert np.array_equal(maps[0].coords.latitude_delta, m.coords.latitude_delta)
         assert np.array_equal(maps[0].coords.longitude_delta, m.coords.longitude_delta)
         assert np.array_equal(maps[0].coords.latitude_label, m.coords.latitude_label)
         assert np.array_equal(maps[0].coords.longitude_label, m.coords.longitude_label)
-    intensity_map_data = combine_intensity_map_data([m.intensity_map_data for m in maps])
-    return RectangularIntensityMapData(
-        intensity_map_data=intensity_map_data,
-        coords=maps[0].coords)
+    intensity_map_data = combine_intensity_map_data([m.intensity_map_data for m in maps],
+                                                    exposure_weighted=exposure_weighted)
+    return RectangularIntensityMapData(intensity_map_data=intensity_map_data, coords=maps[0].coords)
 
 
-def combine_intensity_map_data(maps: list[IntensityMapData]) -> IntensityMapData:
+def combine_healpix_intensity_map_data(maps: list[HealPixIntensityMapData],
+                                       exposure_weighted: bool = True) -> HealPixIntensityMapData:
+    for m in maps[1:]:
+        assert np.array_equal(maps[0].coords.pixel_index, m.coords.pixel_index)
+        assert np.array_equal(maps[0].coords.pixel_index_label, m.coords.pixel_index_label)
+    intensity_map_data = combine_intensity_map_data([m.intensity_map_data for m in maps],
+                                                    exposure_weighted=exposure_weighted)
+    return HealPixIntensityMapData(intensity_map_data=intensity_map_data, coords=maps[0].coords)
+
+
+def combine_intensity_map_data(maps: list[IntensityMapData], exposure_weighted: bool = True) -> IntensityMapData:
     first_map = maps[0]
 
     first_map_dict = dataclasses.asdict(first_map)
@@ -396,23 +416,30 @@ def combine_intensity_map_data(maps: list[IntensityMapData]) -> IntensityMapData
     intensity_sys_err = np.where(exposures == 0, 0, intensity_sys_err)
     intensity_stat_unc = np.where(exposures == 0, 0, intensity_stat_unc)
 
-    combined_intensity_stat_unc = np.sqrt(
-        safe_divide(np.sum(np.square(intensity_stat_unc * exposures), axis=0),
-                    np.square(np.sum(exposures, axis=0)))
-    )
     summed_exposures = np.sum(exposures, axis=0)
-    ena_intensity = np.ma.average(intensities, weights=exposures, axis=0).filled(np.nan)
-    ena_intensity_sys_err = np.ma.average(intensity_sys_err, weights=exposures, axis=0).filled(np.nan)
+    weights = exposures if exposure_weighted else np.full_like(exposures, 1)
+
+    combined_intensity_stat_unc = calculated_weighted_uncertainty(intensity_stat_unc, weights)
+    combined_intensity_sys_err = calculated_weighted_uncertainty(intensity_sys_err, weights)
+
+    summed_intensity = np.where(np.all(np.isnan(intensities), axis=0), np.nan, np.nansum(intensities * weights, axis=0))
+    exposure_weighted_summed_intensity = safe_divide(summed_intensity, np.sum(weights, axis=0))
 
     avg_obs_date = calculate_datetime_weighted_average(np.ma.array([m.obs_date for m in maps]), exposures, 0)
 
     return dataclasses.replace(first_map,
-                               ena_intensity=ena_intensity,
+                               ena_intensity=exposure_weighted_summed_intensity,
                                exposure_factor=summed_exposures,
-                               ena_intensity_sys_err=ena_intensity_sys_err,
+                               ena_intensity_sys_err=combined_intensity_sys_err,
                                ena_intensity_stat_unc=combined_intensity_stat_unc,
                                obs_date=avg_obs_date
                                )
+
+
+def calculated_weighted_uncertainty(values: np.ndarray, weights: np.ndarray) -> np.ndarray:
+    do_nan_sum_where_values_is_not_all_nan = np.where(np.all(np.isnan(values), axis=0), np.nan,
+                                                      np.nansum(np.square(values * weights), axis=0))
+    return np.sqrt(safe_divide(do_nan_sum_where_values_is_not_all_nan, np.square(np.sum(weights, axis=0))))
 
 
 def calculate_datetime_weighted_average(data: np.ndarray, weights: np.ndarray, axis: int, **kwargs) -> np.ndarray:

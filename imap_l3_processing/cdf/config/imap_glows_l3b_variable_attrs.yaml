@@ -252,3 +252,16 @@ uv_anisotropy_flag:
   DISPLAY_TYPE: no_plot
   RECORD_VARYING: NRV
   UNITS: ' '
+used_l3a:
+  NAME: used_l3a
+  DATA_TYPE: CDF_CHAR
+  CATDESC: L3a files used
+  VAR_TYPE: metadata
+  FIELDNAM: Used L3a Files
+  FORMAT: a50
+  LABLAXIS: Used L3a
+  FILLVAL: ' '
+  DISPLAY_TYPE: no_plot
+  RECORD_VARYING: RV
+  UNITS: ' '
+  DEPEND_0: epoch

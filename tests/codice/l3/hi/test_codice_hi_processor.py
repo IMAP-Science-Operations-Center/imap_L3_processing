@@ -171,20 +171,24 @@ class TestCodiceHiProcessor(unittest.TestCase):
             epoch=epoch,
             epoch_delta_plus=epoch_delta,
             data_quality=sentinel.data_quality,
-            ssd_index=(np.array([270, 15])),
-            spin_sector_index=(np.array([15, 45, 75, 105, 135, 165])),
+            elevation_angle=(np.array([270, 15])),
+            spin_angles=(np.array([15, 45, 75, 105, 135, 165])),
             h_intensities=h_intensity,
             energy_h=(np.array([1.11, 1.17])),
-            energy_h_delta=(np.repeat(1.6, len(np.array([1.11, 1.17])))),
+            energy_h_plus=(np.repeat(1.6, len(np.array([1.11, 1.17])))),
+            energy_h_minus=(np.repeat(1.6, len(np.array([1.11, 1.17])))),
             cno_intensities=cno_intensity,
             energy_cno=(np.array([1.11, 1.17, 1.25])),
-            energy_cno_delta=(np.repeat(1.6, len(np.array([1.11, 1.17])))),
+            energy_cno_plus=(np.repeat(1.6, len(np.array([1.11, 1.17])))),
+            energy_cno_minus=(np.repeat(1.6, len(np.array([1.11, 1.17])))),
             fe_intensities=fe_intensity,
             energy_fe=(np.array([1.11, 1.17]) * 1.3),
-            energy_fe_delta=(np.repeat(1.6, len(np.array([1.11, 1.17])))),
+            energy_fe_plus=(np.repeat(1.6, len(np.array([1.11, 1.17])))),
+            energy_fe_minus=(np.repeat(1.6, len(np.array([1.11, 1.17])))),
             he3he4_intensities=he3he4_intensity,
             energy_he3he4=(np.array([1.11, 1.17]) * 1.4),
-            energy_he3he4_delta=(np.repeat(1.6, len(np.array([1.11, 1.17])))),
+            energy_he3he4_plus=(np.repeat(1.6, len(np.array([1.11, 1.17])))),
+            energy_he3he4_minus=(np.repeat(1.6, len(np.array([1.11, 1.17])))),
         )
 
         dependencies = CodicePitchAngleDependencies(mag_l1d_data=mag_l1d_data,
@@ -235,8 +239,8 @@ class TestCodiceHiProcessor(unittest.TestCase):
         codice_hi_data_product = codice_processor.process_l3b(dependencies=dependencies)
 
         mock_get_sector_unit_vectors.assert_called_once_with(
-            NumpyArrayMatcher((codice_l2_data.spin_sector_index + CODICE_SPIN_ANGLE_OFFSET_FROM_MAG_BOOM) % 360),
-            codice_l2_data.ssd_index)
+            NumpyArrayMatcher((codice_l2_data.spin_angles + CODICE_SPIN_ANGLE_OFFSET_FROM_MAG_BOOM) % 360),
+            codice_l2_data.elevation_angle)
         mock_calculate_unit_vector.assert_has_calls(
             [call(NumpyArrayMatcher(rebinned_mag_data)), call(mock_get_sector_unit_vectors.return_value)])
 
@@ -290,13 +294,17 @@ class TestCodiceHiProcessor(unittest.TestCase):
         np.testing.assert_array_equal(epoch_delta, codice_hi_data_product.epoch_delta)
 
         np.testing.assert_array_equal(codice_hi_data_product.energy_h, codice_l2_data.energy_h)
-        np.testing.assert_array_equal(codice_hi_data_product.energy_h_delta, codice_l2_data.energy_h_delta)
+        np.testing.assert_array_equal(codice_hi_data_product.energy_h_plus, codice_l2_data.energy_h_plus)
+        np.testing.assert_array_equal(codice_hi_data_product.energy_h_minus, codice_l2_data.energy_h_minus)
         np.testing.assert_array_equal(codice_hi_data_product.energy_cno, codice_l2_data.energy_cno)
-        np.testing.assert_array_equal(codice_hi_data_product.energy_cno_delta, codice_l2_data.energy_cno_delta)
+        np.testing.assert_array_equal(codice_hi_data_product.energy_cno_plus, codice_l2_data.energy_cno_plus)
+        np.testing.assert_array_equal(codice_hi_data_product.energy_cno_minus, codice_l2_data.energy_cno_minus)
         np.testing.assert_array_equal(codice_hi_data_product.energy_fe, codice_l2_data.energy_fe)
-        np.testing.assert_array_equal(codice_hi_data_product.energy_fe_delta, codice_l2_data.energy_fe_delta)
+        np.testing.assert_array_equal(codice_hi_data_product.energy_fe_plus, codice_l2_data.energy_fe_plus)
+        np.testing.assert_array_equal(codice_hi_data_product.energy_fe_minus, codice_l2_data.energy_fe_minus)
         np.testing.assert_array_equal(codice_hi_data_product.energy_he3he4, codice_l2_data.energy_he3he4)
-        np.testing.assert_array_equal(codice_hi_data_product.energy_he3he4_delta, codice_l2_data.energy_he3he4_delta)
+        np.testing.assert_array_equal(codice_hi_data_product.energy_he3he4_plus, codice_l2_data.energy_he3he4_plus)
+        np.testing.assert_array_equal(codice_hi_data_product.energy_he3he4_minus, codice_l2_data.energy_he3he4_minus)
 
         np.testing.assert_array_almost_equal(expected_pitch_angles, codice_hi_data_product.pitch_angle)
         np.testing.assert_array_equal(expected_pitch_angle_delta, codice_hi_data_product.pitch_angle_delta)

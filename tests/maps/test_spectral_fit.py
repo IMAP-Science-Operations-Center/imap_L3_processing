@@ -387,8 +387,8 @@ class TestSpectralFit(unittest.TestCase):
             ("hi45", RectangularIntensityMapData.read_from_path(
                 get_test_data_path("hi/fake_l2_maps/hi45-6months.cdf")
             ).intensity_map_data,
-             "hi/validation/IMAP-Hi45_6months_4.0x4.0_fit_gam.csv",
-             "hi/validation/IMAP-Hi45_6months_4.0x4.0_fit_gam_sig.csv")
+             "hi/validation/spectral_index/IMAP-Hi45_6months_4.0x4.0_fit_gam.csv",
+             "hi/validation/spectral_index/IMAP-Hi45_6months_4.0x4.0_fit_gam_sig.csv")
         ]
 
         for name, input_data, expected_gamma_path, expected_sigma_path, in test_cases:

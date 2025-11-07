@@ -104,7 +104,7 @@ class TestUltraInitializer(unittest.TestCase):
                         instrument="ultra",
                         data_level="l3",
                         start_date=datetime(2010, 4, 1),
-                        end_date=datetime(2010, 4, 1),
+                        end_date=datetime(2010, 7, 1, 7, 30),
                         version="v002",
                         descriptor=f"u{sensor}-ena-h-sf-sp-full-hae-4deg-3mo"
                     ),

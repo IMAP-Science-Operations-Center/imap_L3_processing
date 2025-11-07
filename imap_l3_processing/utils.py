@@ -1,7 +1,6 @@
 import enum
 import json
 import logging
-import re
 from dataclasses import dataclass
 from datetime import datetime, date, timedelta
 from pathlib import Path
@@ -22,10 +21,11 @@ from imap_l3_processing.constants import TT2000_EPOCH
 from imap_l3_processing.maps.map_models import GlowsL3eRectangularMapInputData, InputRectangularPointingSet, \
     RectangularSpectralIndexMapData, RectangularIntensityMapData, \
     HealPixIntensityMapData, HealPixSpectralIndexMapData, RectangularSpectralIndexDataProduct, \
-    RectangularIntensityDataProduct, HealPixSpectralIndexDataProduct, HealPixIntensityDataProduct
+    RectangularIntensityDataProduct, HealPixSpectralIndexDataProduct, HealPixIntensityDataProduct, MapDataProduct
 from imap_l3_processing.models import UpstreamDataDependency, DataProduct, MagL1dData, InputMetadata
 from imap_l3_processing.ultra.l3.models import UltraL1CPSet, UltraGlowsL3eData
 from imap_l3_processing.version import VERSION
+from imap_data_access.processing_input import ProcessingInputCollection
 
 logger = logging.getLogger(__name__)
 
@@ -77,20 +77,18 @@ def save_data(data: DataProduct, delete_if_present: bool = False, folder_path: P
 
     map_instruments = ["hi", "lo", "ultra"]
     if data.input_metadata.instrument in map_instruments:
-        map_data_product_types = [
-            RectangularSpectralIndexDataProduct,
-            RectangularIntensityDataProduct,
-            HealPixSpectralIndexDataProduct,
-            HealPixIntensityDataProduct
-        ]
-        assert type(data) in map_data_product_types, f"Found an unsupported map data product of type: {type(data)}"
-        attrs = generate_map_global_metadata(data)
-        for key, value in attrs.items():
-            attribute_manager.add_global_attribute(key, value)
 
-        if attribute_manager.try_load_global_metadata(logical_source) is None:
-            logical_source_global_attrs = generate_global_metadata_for_undefined_logical_source(data.input_metadata)
-            attribute_manager.add_global_attribute(logical_source, logical_source_global_attrs)
+        if isinstance(data, (RectangularSpectralIndexDataProduct, RectangularIntensityDataProduct,
+                             HealPixSpectralIndexDataProduct, HealPixIntensityDataProduct)):
+            attrs = generate_map_global_metadata(data)
+            for key, value in attrs.items():
+                attribute_manager.add_global_attribute(key, value)
+
+            if attribute_manager.try_load_global_metadata(logical_source) is None:
+                logical_source_global_attrs = generate_global_metadata_for_undefined_logical_source(data.input_metadata)
+                attribute_manager.add_global_attribute(logical_source, logical_source_global_attrs)
+        else:
+            raise AssertionError(f"Found an unsupported map data product of type: {type(data)}")
     elif data.parent_file_names:
         attribute_manager.add_global_attribute("Parents", data.parent_file_names)
 
@@ -98,11 +96,6 @@ def save_data(data: DataProduct, delete_if_present: bool = False, folder_path: P
     write_cdf(file_path_str, data, attribute_manager)
     return file_path
 
-
-type MapDataProduct = (RectangularSpectralIndexDataProduct
-                       | RectangularIntensityDataProduct
-                       | HealPixSpectralIndexDataProduct
-                       | HealPixIntensityDataProduct)
 
 
 def generate_map_global_metadata(data_product: MapDataProduct) -> dict:
@@ -229,7 +222,18 @@ def combine_glows_l3e_with_l1c_pointing(glows_l3e_data: list[GlowsL3eData], l1c_
     l1c_by_repoint = {l1c.repointing: l1c for l1c in l1c_data}
     glows_by_repoint = {l3e.repointing: l3e for l3e in glows_l3e_data}
 
-    return [(l1c_by_repoint[repoint], glows_by_repoint.get(repoint, None)) for repoint in l1c_by_repoint.keys()]
+    return [(l1c_by_repoint[repoint], glows_by_repoint[repoint]) for repoint in l1c_by_repoint.keys() if repoint in glows_by_repoint]
+
+
+def get_dependency_paths_by_descriptor(deps: ProcessingInputCollection, descriptors: list[str]) -> dict[str, list[Path]]:
+    descriptor_to_paths = {key: [] for key in descriptors}
+    for input_file in deps.get_science_inputs():
+        for descriptor in descriptors:
+            if descriptor in input_file.descriptor:
+                descriptor_to_paths[descriptor].append(input_file.filename_list[0])
+                continue
+
+    return descriptor_to_paths
 
 
 def furnish_local_spice():
@@ -255,6 +259,20 @@ class FurnishMetakernelOutput:
     metakernel_path: Path
     spice_kernel_paths: list[Path]
 
+def get_spice_kernels_file_names(start_date: datetime, end_date: datetime, kernel_types: list[SpiceKernelTypes]) -> list[str]:
+    metakernel_url = urlparse(imap_data_access.config['DATA_ACCESS_URL'])._replace(path="metakernel").geturl()
+
+    parameters: dict = {
+        'file_types': [kernel_type.value[0] for kernel_type in kernel_types],
+        'start_time': f"{int((start_date - datetime(2000, 1, 1)).total_seconds())}",
+        'end_time': f"{int((end_date - datetime(2000, 1, 1)).total_seconds())}",
+    }
+
+    kernels_res = requests.get(metakernel_url, params={**parameters, 'list_files': 'true'})
+    kernels = json.loads(kernels_res.text)
+
+    return kernels
+
 
 def furnish_spice_metakernel(start_date: datetime, end_date: datetime, kernel_types: list[SpiceKernelTypes]):
     metakernel_path = imap_data_access.config.get("DATA_DIR") / "metakernel" / "metakernel.txt"
@@ -276,10 +294,9 @@ def furnish_spice_metakernel(start_date: datetime, end_date: datetime, kernel_ty
     metakernel_path.parent.mkdir(parents=True, exist_ok=True)
     metakernel_path.write_bytes(metakernel_res.content)
 
-    kernels_res = requests.get(metakernel_url, params={**parameters, 'list_files': 'true'})
-    logger.info(f"Metakernel API returned the following kernels: {kernels_res.text}")
+    kernels = get_spice_kernels_file_names(start_date, end_date, kernel_types)
+    logger.info(f"Metakernel API returned the following kernels: {kernels}")
 
-    kernels = json.loads(kernels_res.text)
     downloaded_paths = [imap_data_access.download(kernel) for kernel in kernels]
 
     spiceypy.furnsh(str(metakernel_path))

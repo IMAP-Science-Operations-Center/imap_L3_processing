@@ -552,7 +552,7 @@ class TestHitProcessor(TestCase):
         np.testing.assert_array_equal(direct_event_product.stim_tag, np.array([False, False, True]))
         np.testing.assert_array_equal(direct_event_product.long_event_flag, np.array([False, False, True]))
         np.testing.assert_array_equal(direct_event_product.haz_tag, np.array([False, False, True]))
-        np.testing.assert_array_equal(direct_event_product.a_b_side, np.array([False, False, True]))
+        np.testing.assert_array_equal(direct_event_product.a_b_side, np.array([0, np.nan, 0]))
         np.testing.assert_array_equal(direct_event_product.has_unread_adcs, np.array([True, True, False]))
         np.testing.assert_array_equal(direct_event_product.culling_flag, np.array([True, True, False]))
 

@@ -88,7 +88,7 @@ class TestGenerateL3BC(TestCase):
             generate_l3bc(dependencies)
         self.assertTrue("All days for Carrington Rotation are in a bad season." in str(context.exception))
 
-    def test_generate_l3bc_appends_used_l3a_files_to_parent_attributes(self):
+    def test_generate_l3bc_appends_used_l3a_files_to_header(self):
         cr = 2096
         external_files = {
             'f107_raw_data': get_test_instrument_team_data_path('glows/f107_fluxtable.txt'),
