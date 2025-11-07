@@ -41,6 +41,11 @@ spectral_index_descriptors = [
     "hic-spx-h-hf-sp-full-hae-6deg-1yr",
 ]
 
+HI_SP_MAP_DESCRIPTORS_WITH_NON_SCIENTIFIC_VALUES = [
+    "h45-ena-h-sf-sp-full-hae-6deg-6mo",
+    "h45-ena-h-sf-sp-full-hae-4deg-6mo",
+]
+
 HI_SP_MAP_DESCRIPTORS = [
     "h90-ena-h-sf-sp-ram-hae-6deg-1yr",
     "h90-ena-h-hf-sp-ram-hae-6deg-1yr",
@@ -54,9 +59,6 @@ HI_SP_MAP_DESCRIPTORS = [
     "h45-ena-h-hf-sp-ram-hae-6deg-1yr",
     "h45-ena-h-sf-sp-anti-hae-6deg-1yr",
     "h45-ena-h-hf-sp-anti-hae-6deg-1yr",
-
-    # not making the following because "it contains non-science values"
-    # "h45-ena-h-sf-sp-full-hae-6deg-6mo",
 
     "h45-ena-h-hf-sp-full-hae-6deg-6mo",
 
@@ -73,7 +75,6 @@ HI_SP_MAP_DESCRIPTORS = [
     "h45-ena-h-sf-sp-anti-hae-4deg-1yr",
     "h45-ena-h-hf-sp-anti-hae-4deg-1yr",
 
-    "h45-ena-h-sf-sp-full-hae-4deg-6mo",
     "h45-ena-h-hf-sp-full-hae-4deg-6mo",
 ]
 
