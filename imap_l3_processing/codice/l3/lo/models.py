@@ -56,7 +56,6 @@ class CodiceLoL2SWSpeciesData:
     fe_loq: ndarray
     fe_hiq: ndarray
     data_quality: ndarray
-    spin_sector_index: ndarray
 
     @classmethod
     def read_from_cdf(cls, l2_sectored_intensities_cdf: Path):
@@ -83,7 +82,6 @@ class CodiceLoL2SWSpeciesData:
                 fe_loq=cdf["fe_loq"][...],
                 fe_hiq=cdf["fe_hiq"][...],
                 data_quality=cdf["data_quality"][...],
-                spin_sector_index=cdf["spin_sector_index"][...],
             )
 
 

@@ -74,7 +74,6 @@ class TestModels(CdfModelTestCase):
                 cdf_file['fe_loq'] = fe_loq
                 cdf_file['fe_hiq'] = fe_hiq
                 cdf_file['data_quality'] = data_quality
-                cdf_file['spin_sector_index'] = spin_sector_index
 
             result: CodiceLoL2SWSpeciesData = CodiceLoL2SWSpeciesData.read_from_cdf(cdf_file_path)
             np.testing.assert_array_equal(result.epoch, epoch)
@@ -98,7 +97,6 @@ class TestModels(CdfModelTestCase):
             np.testing.assert_array_equal(result.fe_loq, fe_loq)
             np.testing.assert_array_equal(result.fe_hiq, fe_hiq)
             np.testing.assert_array_equal(result.data_quality, data_quality)
-            np.testing.assert_array_equal(result.spin_sector_index, spin_sector_index)
 
     def test_codice_lo_l3a_partial_density_to_data_product(self):
         epoch_data = np.array([datetime.now()])
