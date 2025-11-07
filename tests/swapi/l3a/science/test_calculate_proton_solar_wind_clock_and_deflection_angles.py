@@ -19,7 +19,7 @@ class TestCalculateProtonSolarWindClockAndDeflectionAngles(TestCase):
             ufloat(405.00, .1), ufloat(15.0, .1), ufloat(33.3, .1),
             ufloat(1_000.0, .1))
         clock_angle = calculate_clock_angle(self.lookup_table, proton_solar_wind_speed, a, phi, b)
-        self.assertAlmostEqual(phi.n + 6.09, clock_angle.n, 4)
+        self.assertAlmostEqual(phi.n - 6.09, clock_angle.n, 4)
         self.assertAlmostEqual(0.1, clock_angle.s, 4)
 
     def test_calculate_clock_angle_with_interpolation(self):
@@ -28,16 +28,16 @@ class TestCalculateProtonSolarWindClockAndDeflectionAngles(TestCase):
                                               ufloat(33.3, .2),
                                               ufloat(1_000.0, .2))
         clock_angle = calculate_clock_angle(self.lookup_table, proton_solar_wind_speed, a, phi, b)
-        self.assertAlmostEqual(phi.n + 6.39, clock_angle.n, 4)
+        self.assertAlmostEqual(phi.n - 6.39, clock_angle.n, 4)
         self.assertAlmostEqual(phi.s, clock_angle.s, 3)
 
     def test_calculate_clock_angle_mods(self):
         proton_solar_wind_speed, a, phi, b = (ufloat(845.00, .1),
                                               ufloat(31.25, .2),
-                                              ufloat(358.3, .2),
+                                              ufloat(4.69, .2),
                                               ufloat(1_000.0, .2))
         clock_angle = calculate_clock_angle(self.lookup_table, proton_solar_wind_speed, a, phi, b)
-        self.assertAlmostEqual(4.69, clock_angle.n, 3)
+        self.assertAlmostEqual(358.3, clock_angle.n, 3)
         self.assertAlmostEqual(phi.s, clock_angle.s, 3)
 
     def test_calculate_deflection_angle_with_interpolation(self):
