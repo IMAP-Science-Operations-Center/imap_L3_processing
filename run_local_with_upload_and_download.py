@@ -55,7 +55,7 @@ if __name__ == "__main__":
                             '--start-date', '20100106', '--version', 'v001', '--descriptor',
                             'macropixel', '--dependency',
                             '[{"type": "science", "files": ["imap_hit_l2_macropixel-intensity_20100106_v001.cdf"]},' +
-                            '{"type": "science", "files": ["imap_mag_l1d_norm-mago_20100106_v001.cdf"]}]'
+                            '{"type": "science", "files": ["imap_mag_l1d_norm-dsrf_20100106_v001.cdf"]}]'
                             ])
         case "ultra", "survival":
             subprocess.run([sys.executable, 'imap_l3_data_processor.py', '--instrument', 'ultra', '--data-level', 'l3',
@@ -219,7 +219,7 @@ if __name__ == "__main__":
                  '--dependency',
                  '['
                  '{"type": "science", "files": ["imap_codice_l2_hi-sectored_20241110_v002.cdf"]},'
-                 '{"type": "science", "files": ["imap_mag_l1d_norm-mago_20250630_v001.cdf"]}'
+                 '{"type": "science", "files": ["imap_mag_l1d_norm-dsrf_20250630_v001.cdf"]}'
                  ']'
                  ])
         case "codice", descriptor if "3d-distribution" in descriptor:

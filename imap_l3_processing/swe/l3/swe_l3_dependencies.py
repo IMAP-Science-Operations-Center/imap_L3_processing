@@ -12,7 +12,7 @@ from imap_l3_processing.swe.l3.utils import read_l2_swe_data, read_l3a_swapi_pro
     read_l1b_swe_data
 from imap_l3_processing.utils import read_l1d_mag_data
 
-MAG_L1D_DESCRIPTOR = "norm-mago"
+MAG_DESPUN_L1D_DESCRIPTOR = "norm-dsrf"
 SWAPI_L3A_PROTON_DESCRIPTOR = "proton-sw"
 SWE_CONFIG_DESCRIPTOR = "config"
 
@@ -43,9 +43,9 @@ class SweL3Dependencies:
         try:
             mag_dependency = next(
                 d.imap_file_paths[0] for d in science_files if d.source == "mag"
-                and d.descriptor == MAG_L1D_DESCRIPTOR)
+                and d.descriptor == MAG_DESPUN_L1D_DESCRIPTOR)
         except StopIteration:
-            raise ValueError(f"Missing MAG {MAG_L1D_DESCRIPTOR} dependency.")
+            raise ValueError(f"Missing MAG {MAG_DESPUN_L1D_DESCRIPTOR} dependency.")
         try:
             swapi_dependency = next(
                 d.imap_file_paths[0] for d in science_files if d.source == "swapi"

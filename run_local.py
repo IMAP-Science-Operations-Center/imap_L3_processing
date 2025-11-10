@@ -1002,7 +1002,7 @@ def create_codice_hi_l3a_direct_events_cdf():
 
 def create_codice_hi_l3b_pitch_angles_cdf():
     codice_hi_pitch_angle_dependencies = CodicePitchAngleDependencies.from_file_paths(
-        mag_file_path=get_test_data_path("mag/imap_mag_l1d_norm-mago_20250814_v002.cdf"),
+        mag_file_path=get_test_data_path("mag/imap_mag_l1d_norm-dsrf_20250814_v002.cdf"),
         codice_l2_sectored_intensities_path=get_test_instrument_team_data_path(
             "codice/hi/imap_codice_l2_hi-sectored_20250814_v002.cdf")
     )
@@ -1089,7 +1089,7 @@ if __name__ == "__main__":
             print(f"hit direct event data product: {path}")
         else:
             mag_data = read_l1d_mag_data(
-                r"C:\Users\Petty\Downloads\HIT Validation-20250922T131655Z-1-001\HIT Validation\imap_mag_l1d_norm-mago_20100106_v001.cdf")
+                r"C:\Users\Petty\Downloads\HIT Validation-20250922T131655Z-1-001\HIT Validation\imap_mag_l1d_norm-dsrf_20100106_v001.cdf")
             hit_data = read_l2_hit_data(
                 r"C:\Users\Petty\Downloads\HIT Validation-20250922T131655Z-1-001\HIT Validation\imap_hit_l2_macropixel-intensity_20100106_v001.cdf")
             dependencies = HITL3SectoredDependencies(mag_l1d_data=mag_data, data=hit_data)
@@ -1099,7 +1099,7 @@ if __name__ == "__main__":
         dependencies = SweL3Dependencies.from_file_paths(
             get_test_data_path("swe/imap_swe_l2_sci_20250630_v002.cdf"),
             get_test_data_path("swe/imap_swe_l1b_sci_20250630_v003.cdf"),
-            get_test_data_path("swe/imap_mag_l1d_norm-mago_20250630_v001.cdf"),
+            get_test_data_path("swe/imap_mag_l1d_norm-dsrf_20250630_v001.cdf"),
             get_test_data_path("swe/imap_swapi_l3a_proton-sw_20250630_v001.cdf"),
             get_test_data_path("swe/example_swe_config.json"),
         )
@@ -1109,7 +1109,7 @@ if __name__ == "__main__":
         dependencies = SweL3Dependencies.from_file_paths(
             get_test_data_path("swe/imap_swe_l2_sci_20260924_v001.cdf"),
             get_test_data_path("swe/imap_swe_l1b_sci_20260924_v001.cdf"),
-            get_test_data_path("swe/imap_mag_l1d_norm-mago_20250630_v001.cdf"),
+            get_test_data_path("swe/imap_mag_l1d_norm-dsrf_20250630_v001.cdf"),
             get_test_data_path("swe/imap_swapi_l3a_proton-sw_20250630_v001.cdf"),
             get_test_data_path("swe/example_swe_config.json"),
         )

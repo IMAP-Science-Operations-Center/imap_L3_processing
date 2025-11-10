@@ -26,7 +26,7 @@ class TestSweProcessor(unittest.TestCase):
         input_file_names = [
             "imap_swe_l2_sci_20200101_v000.cdf",
             "imap_swe_l1b_sci_20200101_v000.cdf",
-            "imap_mag_l1d_norm-mago_20200101_v000.cdf",
+            "imap_mag_l1d_norm-dsrf_20200101_v000.cdf",
             "imap_swapi_l3_proton-sw_20200101_v000.cdf",
             "imap_swe_config-json-not-cdf_20200101_v000.cdf"
         ]

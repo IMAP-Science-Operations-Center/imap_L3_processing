@@ -41,7 +41,7 @@ class TestSweL3Dependencies(unittest.TestCase):
     def test_fetch_dependencies(self, mock_from_file_paths, mock_download_dependency):
         swe_l2_dependency = ScienceInput("imap_swe_l2_sci_20200101_v000.cdf")
         swe_l1b_dependency = ScienceInput("imap_swe_l1b_sci_20200101_v000.cdf")
-        mag_l1d_dependency = ScienceInput("imap_mag_l1d_norm-mago_20200101_v000.cdf")
+        mag_l1d_dependency = ScienceInput("imap_mag_l1d_norm-dsrf_20200101_v000.cdf")
         swapi_l3a_dependency = ScienceInput("imap_swapi_l3_proton-sw_20200101_v000.cdf")
         config_dependency = AncillaryInput("imap_swe_config_20250101_v000.json")
 

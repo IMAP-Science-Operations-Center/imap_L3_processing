@@ -11,7 +11,7 @@ from imap_l3_processing.models import MagL1dData
 from imap_l3_processing.utils import read_l1d_mag_data
 
 HIT_L2_DESCRIPTOR = "macropixel-intensity"
-MAG_L1D_DESCRIPTOR = "norm-mago"
+MAG_L1D_DESCRIPTOR = "norm-dsrf"
 
 
 @dataclass

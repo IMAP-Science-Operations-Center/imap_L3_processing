@@ -259,7 +259,7 @@ class TestImapL3DataProcessor(TestCase):
         version_argument = "v092"
         descriptor_argument = "pitch-angle"
         science_input_1 = ScienceInput("imap_swe_l1_sci_20250101_v112.cdf", "imap_swe_l1_sci_20250102_v112.cdf")
-        science_input_2 = ScienceInput("imap_mag_l1d_norm-mago_20250101_v112.cdf")
+        science_input_2 = ScienceInput("imap_mag_l1d_norm-dsrf_20250101_v112.cdf")
         ancillary_input = AncillaryInput("imap_swe_ancillary_20250101_v112.cdf")
         imap_data_access_dependency = ProcessingInputCollection(science_input_1, science_input_2, ancillary_input)
 

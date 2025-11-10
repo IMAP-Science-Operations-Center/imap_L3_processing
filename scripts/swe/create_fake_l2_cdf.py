@@ -260,7 +260,7 @@ if __name__ == "__main__":
 
     l2_swe_cdf_file_path = path.parent.parent.parent / "tests" / "test_data" / "swe" / "imap_swe_l2_sci-with-ace-data_20250630_v002.cdf"
     l1b_swe_cdf_file_path = path.parent.parent.parent / "tests" / "test_data" / "swe" / "imap_swe_l1b_sci-with-ace-data_20250630_v002.cdf"
-    mag_file_path = path.parent.parent.parent / "tests" / "test_data" / "swe" / "imap_mag_l1d_norm-mago_20250630_v001.cdf"
+    mag_file_path = path.parent.parent.parent / "tests" / "test_data" / "swe" / "imap_mag_l1d_norm-dsrf_20250630_v001.cdf"
     swapi_file_path = path.parent.parent.parent / "tests" / "test_data" / "swe" / "imap_swapi_l3a_proton-sw_20250630_v001.cdf"
 
     mag_file_path.unlink(missing_ok=True)

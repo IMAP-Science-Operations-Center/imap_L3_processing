@@ -16,8 +16,8 @@ class TestCodicePitchAngleDependencies(unittest.TestCase):
         expected_codice_science_file_download_path = "imap/codice/l2/2010/01/imap_codice_l2_hi-sectored_20100105_v010.cdf"
         codice_sectored_intensities_input_file_name = "imap_codice_l2_hi-sectored_20100105_v010.cdf"
 
-        expected_mag_download_path = "imap/mag/l1d/2010/01/imap_mag_l1d_norm-mago_20100105_v010.cdf"
-        mag_input_file_name = "imap_mag_l1d_norm-mago_20100105_v010.cdf"
+        expected_mag_download_path = "imap/mag/l1d/2010/01/imap_mag_l1d_norm-dsrf_20100105_v010.cdf"
+        mag_input_file_name = "imap_mag_l1d_norm-dsrf_20100105_v010.cdf"
 
         science_input_codice_l2 = ScienceInput(codice_sectored_intensities_input_file_name)
         science_input_mag_l1d = ScienceInput(mag_input_file_name)
