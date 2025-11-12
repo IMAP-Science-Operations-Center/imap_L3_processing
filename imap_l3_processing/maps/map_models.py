@@ -17,7 +17,7 @@ from spacepy.pycdf import CDF
 from imap_l3_processing.cdf.cdf_utils import read_variable_and_mask_fill_values, read_numeric_variable
 from imap_l3_processing.constants import TT2000_EPOCH
 from imap_l3_processing.data_utils import safe_divide
-from imap_l3_processing.models import DataProduct, DataProductVariable, InputMetadata, D
+from imap_l3_processing.models import DataProduct, DataProductVariable, D
 
 EPOCH_VAR_NAME = "epoch"
 EPOCH_DELTA_VAR_NAME = "epoch_delta"
@@ -458,6 +458,7 @@ def calculate_datetime_weighted_average(data: np.ndarray, weights: np.ndarray, a
 @dataclass
 class GlowsL3eRectangularMapInputData:
     epoch: datetime
+    epoch_j2000: np.ndarray
     repointing: int
     energy: np.ndarray
     spin_angle: np.ndarray

@@ -24,6 +24,7 @@ def read_glows_l3e_data(cdf_path: Union[Path, str]) -> GlowsL3eRectangularMapInp
     repointing = ScienceFilePath(cdf_path).repointing
     with CDF(str(cdf_path)) as cdf:
         return GlowsL3eRectangularMapInputData(epoch=cdf[EPOCH_CDF_VAR_NAME][0],
+                                               epoch_j2000=cdf.raw_var(EPOCH_CDF_VAR_NAME)[...],
                                                repointing=repointing,
                                                energy=read_numeric_variable(cdf[ENERGY_VAR_NAME]),
                                                spin_angle=read_numeric_variable(cdf[SPIN_ANGLE_VAR_NAME]),

@@ -70,7 +70,7 @@ class TestUtils(unittest.TestCase):
         pathname = str(temp_dir / "imap_glows_l3e_survival-probability-hi_20250415-repoint01000_v001.cdf")
 
         with CDF(pathname, '') as cdf:
-            epoch = np.array([datetime(2000, 1, 1)])
+            epoch = np.array([datetime(2000, 1, 2)])
             energy = rng.random((16,))
             spin_angle = rng.random(360)
             probability_of_survival = rng.random((1, 16, 360,))
@@ -87,6 +87,8 @@ class TestUtils(unittest.TestCase):
                 result = read_glows_l3e_data(path)
 
                 self.assertEqual(epoch[0], result.epoch)
+                self.assertEqual([43264184000000], result.epoch_j2000)
+
                 self.assertEqual(1000, result.repointing)
                 np.testing.assert_array_equal(energy, result.energy)
                 np.testing.assert_array_equal(spin_angle, result.spin_angle)
@@ -98,6 +100,8 @@ class TestUtils(unittest.TestCase):
 
         with CDF(str(path)) as cdf:
             self.assertEqual(cdf[EPOCH_CDF_VAR_NAME][0], result.epoch)
+            self.assertEqual(cdf.raw_var(EPOCH_CDF_VAR_NAME)[...], result.epoch_j2000)
+
             self.assertEqual(1111, result.repointing)
             np.testing.assert_array_equal(result.energy, np.full_like(cdf[ENERGY_VAR_NAME], np.nan))
             np.testing.assert_array_equal(result.spin_angle, np.full_like(cdf[SPIN_ANGLE_VAR_NAME], np.nan))

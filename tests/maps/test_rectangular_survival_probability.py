@@ -25,13 +25,14 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
         self.l1c_hi_dataset = InputRectangularPointingSet(
             epoch=self.epoch,
             repointing=1,
-            epoch_j2000=np.array([43264184000000]),
+            epoch_j2000=np.array([0]),
             exposure_times=np.arange(self.num_energies * 3600).reshape((1, self.num_energies, 3600)) + 1.1,
             esa_energy_step=np.arange(self.num_energies),
         )
 
         self.glows_data = GlowsL3eRectangularMapInputData(
             epoch=self.epoch,
+            epoch_j2000=np.array([43264184000000]),
             repointing=1,
             energy=np.geomspace(1, 10000, self.num_energies + 1),
             spin_angle=np.arange(0, 360, 1) + 0.5,
@@ -84,7 +85,7 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
                                               pointing_set.data[CoordNames.ENERGY_ULTRA_L1C.value].values)
 
                 self.assertIn(CoordNames.TIME.value, pointing_set.data.coords)
-                np.testing.assert_array_equal(self.l1c_hi_dataset.epoch_j2000,
+                np.testing.assert_array_equal(self.glows_data.epoch_j2000,
                                               pointing_set.data[CoordNames.TIME.value].values)
 
                 np.testing.assert_array_equal(pointing_set.az_el_points[:, 0],
@@ -167,31 +168,6 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
 
         np.testing.assert_array_almost_equal(pointing_set.data["survival_probability_times_exposure"].values,
                                              corresponding_glows_data * self.l1c_hi_dataset.exposure_times * self.ram_mask)
-
-    def test_survivals_are_nan_when_glows_data_is_none(self):
-        self.hi_energies = np.array([1, 100])
-        self.glows_data.energy = np.array([1, 100, 100_000])
-
-        pointing_set_no_glows = RectangularSurvivalProbabilityPointingSet(self.l1c_hi_dataset, Sensor.Hi90,
-                                                                          SpinPhase.RamOnly,
-                                                                          None,
-                                                                          self.hi_energies)
-        pointing_set_yes_glows = RectangularSurvivalProbabilityPointingSet(self.l1c_hi_dataset, Sensor.Hi90,
-                                                                           SpinPhase.RamOnly,
-                                                                           self.glows_data,
-                                                                           self.hi_energies)
-
-        np.testing.assert_array_almost_equal(pointing_set_no_glows.data["survival_probability_times_exposure"].values,
-                                             np.full_like(self.l1c_hi_dataset.exposure_times,
-                                                          np.nan))
-
-        np.testing.assert_array_almost_equal(pointing_set_no_glows.data["exposure"].values,
-                                             self.l1c_hi_dataset.exposure_times * self.ram_mask)
-
-        np.testing.assert_array_almost_equal(pointing_set_no_glows.azimuths, pointing_set_yes_glows.azimuths)
-        np.testing.assert_array_almost_equal(pointing_set_no_glows.elevations, pointing_set_yes_glows.elevations)
-        np.testing.assert_array_almost_equal(pointing_set_no_glows.az_el_points, pointing_set_yes_glows.az_el_points)
-        np.testing.assert_array_almost_equal(pointing_set_no_glows.num_points, pointing_set_yes_glows.num_points)
 
     def test_interpolate_angular_data_to_nearest_neighbor(self):
         input_cases = [
