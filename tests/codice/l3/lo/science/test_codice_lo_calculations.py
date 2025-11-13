@@ -158,7 +158,7 @@ class TestCodiceLoCalculations(unittest.TestCase):
         partial_densities = calculate_partial_densities(intensities, energy_steps, mass_per_charge)
 
         expected_partial_densities = np.sum(
-            (1 / np.sqrt(2)) * np.deg2rad(30) * np.deg2rad(30) * 100 * intensities * np.sqrt(
+            2.283e-8 * np.deg2rad(15) * np.deg2rad(15) * .4 * intensities * np.sqrt(
                 energy_steps[np.newaxis, :, np.newaxis]) * np.sqrt(mass_per_charge), axis=(1, 2))
 
         np.testing.assert_array_equal(expected_partial_densities, partial_densities)
