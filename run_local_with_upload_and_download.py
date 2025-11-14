@@ -194,10 +194,10 @@ if __name__ == "__main__":
                  '{"type": "science", "files": ["imap_codice_l3a_lo-partial-densities_20241110_v000.cdf"]}'
                  ']'
                  ])
-        case "codice", ("lo-sw-abundances" | "abundances"):
+        case "codice", ("lo-sw-charge-state-distributions"):
             subprocess.run(
                 [sys.executable, 'imap_l3_data_processor.py', '--instrument', 'codice', '--data-level', 'l3a',
-                 '--descriptor', 'lo-sw-abundances', '--start-date', '20241110', '--version', 'v000',
+                 '--descriptor', 'lo-sw-charge-state-distributions', '--start-date', '20241110', '--version', 'v000',
                  '--dependency',
                  '['
                  '{"type": "science", "files": ["imap_codice_l3a_lo-partial-densities_20241110_v000.cdf"]}'

@@ -96,7 +96,8 @@ class TestCodiceLoProcessor(unittest.TestCase):
 
     @patch(
         'imap_l3_processing.codice.l3.lo.codice_lo_processor.CodiceLoL3aRatiosDependencies.fetch_dependencies')
-    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.CodiceLoProcessor.process_l3a_abundances')
+    @patch(
+        'imap_l3_processing.codice.l3.lo.codice_lo_processor.CodiceLoProcessor.process_l3a_charge_state_distributions')
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.save_data')
     @patch('imap_l3_processing.processor.spiceypy')
     def test_process_abundances(self, mock_spiceypy, mock_save_data, mock_process_l3a_abundances,
@@ -108,7 +109,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
                                        start_date=Mock(spec=datetime),
                                        end_date=Mock(spec=datetime),
                                        version='v02',
-                                       descriptor='lo-sw-abundances')
+                                       descriptor='lo-sw-charge-state-distributions')
         mock_spiceypy.ktotal.return_value = 0
 
         processor = CodiceLoProcessor(dependencies=input_collection, input_metadata=input_metadata)
@@ -238,7 +239,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
         input_metadata = Mock()
         processor = CodiceLoProcessor(dependencies=Mock(), input_metadata=input_metadata)
 
-        abundances_data_product = processor.process_l3a_abundances(dependency)
+        abundances_data_product = processor.process_l3a_charge_state_distributions(dependency)
         self.assertIsInstance(abundances_data_product, CodiceLoL3ChargeStateDistributionsDataProduct)
         self.assertEqual(input_metadata, abundances_data_product.input_metadata)
         np.testing.assert_array_equal(abundances_data_product.epoch,
@@ -289,7 +290,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
         processor = CodiceLoProcessor(dependencies=Mock(), input_metadata=input_metadata)
 
         with warnings.catch_warnings(record=True) as w:
-            abundances_data_product = processor.process_l3a_abundances(dependency)
+            abundances_data_product = processor.process_l3a_charge_state_distributions(dependency)
         self.assertEqual(0, len(w))
 
         self.assertIsInstance(abundances_data_product, CodiceLoL3ChargeStateDistributionsDataProduct)

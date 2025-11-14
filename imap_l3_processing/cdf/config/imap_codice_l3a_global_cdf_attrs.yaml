@@ -13,10 +13,10 @@ imap_codice_l3a_lo-direct-events:
   Data_type: L3A_lo-direct-events>Level-3A direct events
   Logical_source_description: IMAP Mission CoDICE Lo Instrument Direct Events
 
-imap_codice_l3a_lo-sw-abundances:
+imap_codice_l3a_lo-sw-charge-state-distributions:
   Data_level: "3a"
-  Data_type: L3A_lo-sw-abundances>Level-3A charge state abundances
-  Logical_source_description: IMAP Mission CoDICE Instrument Charge State Relative Abundances
+  Data_type: L3A_lo-sw-charge-state-distributions>Level-3A charge state distributions
+  Logical_source_description: IMAP Mission CoDICE Instrument Charge State Distributions
 
 imap_codice_l3a_lo-hplus-3d-distribution:
   Data_level: "3a"

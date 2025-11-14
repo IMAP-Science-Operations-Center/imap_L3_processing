@@ -41,9 +41,9 @@ class CodiceLoProcessor(Processor):
         elif self.input_metadata.descriptor == "lo-sw-ratios":
             dependencies = CodiceLoL3aRatiosDependencies.fetch_dependencies(self.dependencies)
             data_product = self.process_l3a_ratios(dependencies)
-        elif self.input_metadata.descriptor == "lo-sw-abundances":
+        elif self.input_metadata.descriptor == "lo-sw-charge-state-distributions":
             dependencies = CodiceLoL3aRatiosDependencies.fetch_dependencies(self.dependencies)
-            data_product = self.process_l3a_abundances(dependencies)
+            data_product = self.process_l3a_charge_state_distributions(dependencies)
         elif "3d-distribution" in self.input_metadata.descriptor:
             species = self.input_metadata.descriptor.split('-')[1]
             dependencies = CodiceLoL3a3dDistributionsDependencies.fetch_dependencies(self.dependencies, species)
@@ -81,8 +81,8 @@ class CodiceLoProcessor(Processor):
             felo_to_fehi_ratio=safe_divide(feloq, fehiq),
         )
 
-    def process_l3a_abundances(self,
-                               dependencies: CodiceLoL3aRatiosDependencies) -> CodiceLoL3ChargeStateDistributionsDataProduct:
+    def process_l3a_charge_state_distributions(self,
+                                               dependencies: CodiceLoL3aRatiosDependencies) -> CodiceLoL3ChargeStateDistributionsDataProduct:
 
         o5 = dependencies.partial_density_data.oplus5_partial_density
         o6 = dependencies.partial_density_data.oplus6_partial_density

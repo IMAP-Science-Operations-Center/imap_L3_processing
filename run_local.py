@@ -178,11 +178,11 @@ def create_codice_lo_l3a_abundances_cdf():
         start_date=datetime(2024, 11, 10),
         end_date=datetime(2025, 1, 2),
         version='v000',
-        descriptor='lo-sw-abundances'
+        descriptor='lo-sw-charge-state-distributions'
     )
 
     codice_lo_processor = CodiceLoProcessor(Mock(), input_metadata)
-    ratios_data = codice_lo_processor.process_l3a_abundances(deps)
+    ratios_data = codice_lo_processor.process_l3a_charge_state_distributions(deps)
     return save_data(ratios_data, delete_if_present=True)
 
 
@@ -1002,7 +1002,7 @@ def create_codice_hi_l3a_direct_events_cdf():
 
 def create_codice_hi_l3b_pitch_angles_cdf():
     codice_hi_pitch_angle_dependencies = CodicePitchAngleDependencies.from_file_paths(
-        mag_file_path=get_test_data_path("mag/imap_mag_l1d_norm-dsrf_20250814_v002.cdf"),
+        mag_file_path=get_test_data_path("mag/imap_mag_l1d_norm-mago_20250814_v003.cdf"),
         codice_l2_sectored_intensities_path=get_test_instrument_team_data_path(
             "codice/hi/imap_codice_l2_hi-sectored_20250814_v002.cdf")
     )
