@@ -89,19 +89,21 @@ class TestHiProcessor(unittest.TestCase):
 
         self.assertEqual([mock_save_data.return_value], product)
 
-    @run_periodically(timedelta(days=7))
+    @run_periodically(timedelta(days=3))
     def test_spectral_fit_against_validation_data(self):
         test_cases = [
-            ("hi45", "hi/fake_l2_maps/hi45-6months.cdf", "hi/validation/IMAP-Hi45_6months_4.0x4.0_fit_gam.csv",
-             "hi/validation/IMAP-Hi45_6months_4.0x4.0_fit_gam_sig.csv"),
-            ("hi90", "hi/fake_l2_maps/hi90-6months.cdf", "hi/validation/IMAP-Hi90_6months_4.0x4.0_fit_gam.csv",
-             "hi/validation/IMAP-Hi90_6months_4.0x4.0_fit_gam_sig.csv"),
+            ("hi45", "hi/fake_l2_maps/hi45-6months.cdf",
+             "hi/validation/spectral_index/IMAP-Hi45_6months_4.0x4.0_fit_gam.csv",
+             "hi/validation/spectral_index/IMAP-Hi45_6months_4.0x4.0_fit_gam_sig.csv"),
+            ("hi90", "hi/fake_l2_maps/hi90-6months.cdf",
+             "hi/validation/spectral_index/IMAP-Hi90_6months_4.0x4.0_fit_gam.csv",
+             "hi/validation/spectral_index/IMAP-Hi90_6months_4.0x4.0_fit_gam_sig.csv"),
             ("hi45-zirnstein-mondel", "hi/fake_l2_maps/hi45-zirnstein-mondel-6months.cdf",
-             "hi/validation/IMAP-Hi45_gdf_Zirnstein_model_6months_4.0x4.0_fit_gam.csv",
-             "hi/validation/IMAP-Hi45_gdf_Zirnstein_model_6months_4.0x4.0_fit_gam_sig.csv"),
+             "hi/validation/spectral_index/IMAP-Hi45_gdf_Zirnstein_model_6months_4.0x4.0_fit_gam.csv",
+             "hi/validation/spectral_index/IMAP-Hi45_gdf_Zirnstein_model_6months_4.0x4.0_fit_gam_sig.csv"),
             ("hi90-zirnstein-mondel", "hi/fake_l2_maps/hi90-zirnstein-mondel-6months.cdf",
-             "hi/validation/IMAP-Hi90_gdf_Zirnstein_model_6months_4.0x4.0_fit_gam.csv",
-             "hi/validation/IMAP-Hi90_gdf_Zirnstein_model_6months_4.0x4.0_fit_gam_sig.csv"),
+             "hi/validation/spectral_index/IMAP-Hi90_gdf_Zirnstein_model_6months_4.0x4.0_fit_gam.csv",
+             "hi/validation/spectral_index/IMAP-Hi90_gdf_Zirnstein_model_6months_4.0x4.0_fit_gam_sig.csv"),
         ]
 
         for name, input_file_path, expected_gamma_path, expected_sigma_path in test_cases:
