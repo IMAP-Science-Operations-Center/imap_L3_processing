@@ -3,7 +3,6 @@ from unittest import TestCase
 
 import numpy as np
 
-from imap_l3_processing.constants import FIVE_MINUTES_IN_NANOSECONDS
 from imap_l3_processing.hit.l3.sectored_products.science.sectored_products_algorithms import get_sector_unit_vectors, \
     get_hit_bin_polar_coordinates, transform_to_10_minute_chunks
 from imap_l3_processing.hit.l3.utils import read_l2_hit_data
@@ -15,19 +14,19 @@ class TestSectoredProductsAlgorithms(TestCase):
     def test_get_sector_unit_vectors(self):
         test_cases = [
 
-            ([0], [0], [[[0, 0, 1]]]),
-            ([0], [90], [[[0, 0, 1]]]),
-            ([0], [180], [[[0, 0, 1]]]),
-            ([0], [270], [[[0, 0, 1]]]),
+            ([0], [[0], [270]], [[[0, 0, 1]], [[0, 0, 1]]]),
+            ([0], [[90], [180]], [[[0, 0, 1]], [[0, 0, 1]]]),
+            ([0], [[180], [90]], [[[0, 0, 1]], [[0, 0, 1]]]),
+            ([0], [[270], [0]], [[[0, 0, 1]], [[0, 0, 1]]]),
             # ([0], [360], [[[0, 0, 1]]]),
 
-            ([90], [0], [[[1, 0, 0]]]),
-            ([90], [90], [[[0, 1, 0]]]),
-            ([90], [180], [[[-1, 0, 0]]]),
-            ([90], [270], [[[0, -1, 0]]]),
+            ([90], [[0], [270]], [[[1, 0, 0]], [[0, -1, 0]]]),
+            ([90], [[90], [180]], [[[0, 1, 0]], [[-1, 0, 0]]]),
+            ([90], [[180], [90]], [[[-1, 0, 0]], [[0, 1, 0]]]),
+            ([90], [[270], [0]], [[[0, -1, 0]], [[1, 0, 0]]]),
 
-            ([180], [0], [[[0, 0, -1]]]),
-            ([180], [90], [[[0, 0, -1]]]),
+            ([180], [[0], [90]], [[[0, 0, -1]], [[0, 0, -1]]]),
+            ([180], [[90], [0]], [[[0, 0, -1]], [[0, 0, -1]]]),
 
         ]
 
