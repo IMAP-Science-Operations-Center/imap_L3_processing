@@ -79,9 +79,16 @@ def rebin_by_pitch_angle_and_gyrophase(intensity_data: np.array,
                 np.ravel(intensity_with_delta_plus[i]),
                 np.ravel(intensity_with_delta_minus[i])):
             if not (np.isnan(intensity_with_plus.nominal_value) or np.isnan(pitch_angle)):
-                pitch_angle_bin = np.floor(pitch_angle / (180 / number_of_pitch_angle_bins)).astype(int)
+                if pitch_angle == 180:
+                    pitch_angle_bin = number_of_pitch_angle_bins - 1
+                else:
+                    pitch_angle_bin = np.floor(pitch_angle / (180 / number_of_pitch_angle_bins)).astype(int)
+
                 if not np.isnan(gyrophase):
-                    gyrophase_bin = np.floor(gyrophase / (360 / number_of_gyrophase_bins)).astype(int)
+                    bin_size = (360 / number_of_gyrophase_bins)
+                    normalized_gyrophase = gyrophase % 360
+
+                    gyrophase_bin = int(normalized_gyrophase // bin_size)
 
                     rebinned_summed_by_pa_and_gyro_with_delta_plus[
                         i, pitch_angle_bin, gyrophase_bin] += intensity_with_plus

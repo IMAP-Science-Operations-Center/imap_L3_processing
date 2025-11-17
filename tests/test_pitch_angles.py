@@ -194,6 +194,11 @@ class TestPitchAngles(unittest.TestCase):
                  [[12, np.nan, 9, 13], [15, 11, 10, 14]]
              ],
              [[2.5, 4.5], [10.5, 12.5]]),
+
+            ('Gyrophase bin includes 360 bin', default_pitch_angles,
+             np.array([[360, 90, 180, 270], [360, 90, 180, 270]]),
+             2, 4, intensity,
+             np.array([[1.5, 5.5], [9.5, 13.5]]))
         ]
 
         for case, pitch_angles, gyrophases, number_of_pitch_angle_bins, number_of_gyrophase_bins, \
