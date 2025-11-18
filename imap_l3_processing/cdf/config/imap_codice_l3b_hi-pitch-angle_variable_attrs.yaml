@@ -241,10 +241,10 @@ h_intensity_by_pitch_angle_and_gyrophase:
   LABL_PTR_2: pitch_angle_label
   LABL_PTR_3: gyrophase_label
 
-he4_intensity_by_pitch_angle:
+he3he4_intensity_by_pitch_angle:
   <<: *primary_data_variable
   <<: *float_data
-  NAME: he4_intensity_by_pitch_angle
+  NAME: he3he4_intensity_by_pitch_angle
   DEPEND_1: energy_he3he4
   DEPEND_2: pitch_angle
   CATDESC: He3He4 intensity binned by pitch angle
@@ -254,10 +254,10 @@ he4_intensity_by_pitch_angle:
   LABL_PTR_1: energy_he3he4_label
   LABL_PTR_2: pitch_angle_label
 
-he4_intensity_by_pitch_angle_and_gyrophase:
+he3he4_intensity_by_pitch_angle_and_gyrophase:
   <<: *primary_data_variable
   <<: *float_data
-  NAME: he4_intensity_by_pitch_angle_and_gyrophase
+  NAME: he3he4_intensity_by_pitch_angle_and_gyrophase
   DEPEND_1: energy_he3he4
   DEPEND_2: pitch_angle
   DEPEND_3: gyrophase

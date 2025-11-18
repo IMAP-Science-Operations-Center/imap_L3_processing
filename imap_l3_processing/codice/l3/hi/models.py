@@ -100,8 +100,8 @@ GYROPHASE_VAR_NAME = "gyrophase"
 GYROPHASE_DELTA_VAR_NAME = "gyrophase_delta"
 H_INTENSITY_BY_PITCH_ANGLE_VAR_NAME = "h_intensity_by_pitch_angle"
 H_INTENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_VAR_NAME = "h_intensity_by_pitch_angle_and_gyrophase"
-HE4_INTENSITY_BY_PITCH_ANGLE_VAR_NAME = "he4_intensity_by_pitch_angle"
-HE4_INTENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_VAR_NAME = "he4_intensity_by_pitch_angle_and_gyrophase"
+HE3HE4_INTENSITY_BY_PITCH_ANGLE_VAR_NAME = "he3he4_intensity_by_pitch_angle"
+HE3HE4_INTENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_VAR_NAME = "he3he4_intensity_by_pitch_angle_and_gyrophase"
 CNO_INTENSITY_BY_PITCH_ANGLE_VAR_NAME = "cno_intensity_by_pitch_angle"
 CNO_INTENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_VAR_NAME = "cno_intensity_by_pitch_angle_and_gyrophase"
 FE_INTENSITY_BY_PITCH_ANGLE_VAR_NAME = "fe_intensity_by_pitch_angle"
@@ -188,8 +188,8 @@ class CodiceHiL3PitchAngleDataProduct(DataProduct):
     gyrophase_delta: ndarray
     h_intensity_by_pitch_angle: ndarray
     h_intensity_by_pitch_angle_and_gyrophase: ndarray
-    he4_intensity_by_pitch_angle: ndarray
-    he4_intensity_by_pitch_angle_and_gyrophase: ndarray
+    he3he4_intensity_by_pitch_angle: ndarray
+    he3he4_intensity_by_pitch_angle_and_gyrophase: ndarray
     cno_intensity_by_pitch_angle: ndarray
     cno_intensity_by_pitch_angle_and_gyrophase: ndarray
     fe_intensity_by_pitch_angle: ndarray
@@ -233,9 +233,9 @@ class CodiceHiL3PitchAngleDataProduct(DataProduct):
             DataProductVariable(H_INTENSITY_BY_PITCH_ANGLE_VAR_NAME, self.h_intensity_by_pitch_angle),
             DataProductVariable(H_INTENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_VAR_NAME,
                                 self.h_intensity_by_pitch_angle_and_gyrophase),
-            DataProductVariable(HE4_INTENSITY_BY_PITCH_ANGLE_VAR_NAME, self.he4_intensity_by_pitch_angle),
-            DataProductVariable(HE4_INTENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_VAR_NAME,
-                                self.he4_intensity_by_pitch_angle_and_gyrophase),
+            DataProductVariable(HE3HE4_INTENSITY_BY_PITCH_ANGLE_VAR_NAME, self.he3he4_intensity_by_pitch_angle),
+            DataProductVariable(HE3HE4_INTENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_VAR_NAME,
+                                self.he3he4_intensity_by_pitch_angle_and_gyrophase),
             DataProductVariable(CNO_INTENSITY_BY_PITCH_ANGLE_VAR_NAME, self.cno_intensity_by_pitch_angle),
             DataProductVariable(CNO_INTENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_VAR_NAME,
                                 self.cno_intensity_by_pitch_angle_and_gyrophase),
