@@ -179,9 +179,9 @@ class TestModels(unittest.TestCase):
                                                                               len(pitch_angle)) + 1,
             "h_intensity_by_pitch_angle_and_gyrophase": np.arange(pitch_angle_and_gyrophase_size).reshape(
                 len(epoch_data), len(energy_data), len(pitch_angle), len(gyrophase)) + 2,
-            "he4_intensity_by_pitch_angle": np.arange(pitch_angle_size).reshape(len(epoch_data), len(energy_data),
+            "he3he4_intensity_by_pitch_angle": np.arange(pitch_angle_size).reshape(len(epoch_data), len(energy_data),
                                                                                 len(pitch_angle)),
-            "he4_intensity_by_pitch_angle_and_gyrophase": np.arange(pitch_angle_and_gyrophase_size).reshape(
+            "he3he4_intensity_by_pitch_angle_and_gyrophase": np.arange(pitch_angle_and_gyrophase_size).reshape(
                 len(epoch_data), len(energy_data), len(pitch_angle), len(gyrophase)) + 3,
             "cno_intensity_by_pitch_angle": np.arange(pitch_angle_size).reshape(len(epoch_data), len(energy_data),
                                                                                 len(pitch_angle)) + 4,

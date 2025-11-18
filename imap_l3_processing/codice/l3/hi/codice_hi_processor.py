@@ -34,6 +34,7 @@ class CodiceHiProcessor(Processor):
         else:
             raise NotImplementedError(f"Unknown data level for CoDICE: {self.input_metadata.data_level}")
 
+        data_product.parent_file_names = self.get_parent_file_names()
         return [save_data(data_product)]
 
     def process_l3a_direct_event(self, dependencies: CodiceHiL3aDirectEventsDependencies) -> CodiceL3HiDirectEvents:
@@ -183,8 +184,8 @@ class CodiceHiProcessor(Processor):
             gyrophase_delta=np.repeat(gyrophase_delta_value, num_gyrophase_bins),
             h_intensity_by_pitch_angle=species_intensities['h'].intensity_by_pa,
             h_intensity_by_pitch_angle_and_gyrophase=species_intensities['h'].intensity_by_pa_and_gyro,
-            he4_intensity_by_pitch_angle=species_intensities['he4'].intensity_by_pa,
-            he4_intensity_by_pitch_angle_and_gyrophase=species_intensities['he4'].intensity_by_pa_and_gyro,
+            he3he4_intensity_by_pitch_angle=species_intensities['he4'].intensity_by_pa,
+            he3he4_intensity_by_pitch_angle_and_gyrophase=species_intensities['he4'].intensity_by_pa_and_gyro,
             cno_intensity_by_pitch_angle=species_intensities['o'].intensity_by_pa,
             cno_intensity_by_pitch_angle_and_gyrophase=species_intensities['o'].intensity_by_pa_and_gyro,
             fe_intensity_by_pitch_angle=species_intensities['fe'].intensity_by_pa,

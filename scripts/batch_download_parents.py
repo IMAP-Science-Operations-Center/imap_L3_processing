@@ -12,7 +12,7 @@ def download_parents(path: Path):
     try:
         files_to_download = set()
 
-        for file in path.rglob("*_l3_*.cdf"):
+        for file in path.rglob("*.cdf"):
             print(f"opening {path / file}")
             with CDF(str(path / file)) as cdf:
                 for parent in cdf.attrs['Parents']:
