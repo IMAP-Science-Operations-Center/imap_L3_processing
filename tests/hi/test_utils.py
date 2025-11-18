@@ -31,11 +31,13 @@ class TestUtils(unittest.TestCase):
         for exposure_time_var_name in cases:
             with CDF(pathname, '') as cdf:
                 epoch = np.array([datetime(2000, 1, 2)])
+                epoch_delta = np.array([1_000_000_000])
                 repointing = 1111
                 exposure_times = rng.random((1, 9, 3600))
                 energy_step = rng.random((9))
 
                 cdf.new("epoch", epoch, type=pycdf.const.CDF_TIME_TT2000)
+                cdf["epoch_delta"] = epoch_delta
                 cdf[exposure_time_var_name] = exposure_times
                 cdf["esa_energy_step"] = energy_step
                 for var in cdf:
@@ -45,6 +47,7 @@ class TestUtils(unittest.TestCase):
                 with self.subTest(path=path, exposure_time_var_name=exposure_time_var_name):
                     result = read_l1c_rectangular_pointing_set_data(path)
                     self.assertEqual(epoch[0], result.epoch)
+                    self.assertEqual(epoch_delta, result.epoch_delta)
                     self.assertEqual(repointing, result.repointing)
                     self.assertEqual([43264184000000], result.epoch_j2000)
                     np.testing.assert_array_equal(exposure_times, result.exposure_times)
@@ -52,13 +55,13 @@ class TestUtils(unittest.TestCase):
 
             self.tearDown()
 
-
     def test_read_hi_l1c_fill_values_create_nan_data(self):
         path = get_test_data_folder() / 'hi' / 'imap_hi_l1c_pset-with-fill-values_20250101-repoint00001_v000.cdf'
         result = read_l1c_rectangular_pointing_set_data(path)
 
         with CDF(str(path)) as cdf:
             self.assertEqual(cdf['epoch'][0], result.epoch)
+            self.assertEqual(cdf['epoch_delta'][0], result.epoch_delta)
             self.assertEqual(1, result.repointing)
             np.testing.assert_array_equal(result.esa_energy_step, cdf['esa_energy_step'])
             np.testing.assert_array_equal(result.exposure_times, np.full_like(cdf['exposure_times'], np.nan))

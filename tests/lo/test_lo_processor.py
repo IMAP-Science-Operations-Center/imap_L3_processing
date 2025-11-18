@@ -8,7 +8,6 @@ from imap_data_access.processing_input import ProcessingInputCollection
 from imap_processing.spice.geometry import SpiceFrame
 
 from imap_l3_processing.lo.lo_processor import LoProcessor
-from imap_l3_processing.maps.hilo_l3_survival_dependencies import HiLoL3SurvivalDependencies
 from imap_l3_processing.maps.map_models import RectangularSpectralIndexDataProduct, RectangularIntensityDataProduct, \
     InputRectangularPointingSet
 from imap_l3_processing.models import InputMetadata, Instrument
@@ -77,6 +76,7 @@ class TestLoProcessor(unittest.TestCase):
         dependencies = Mock(
             l1c_data=[InputRectangularPointingSet(
                 epoch=datetime(2025, 1, 1),
+                epoch_delta=np.array([43200_000_000_000]),
                 repointing=1,
                 epoch_j2000=np.array([10]),
                 exposure_times=np.full((1, 7, 3600, 40), 2),

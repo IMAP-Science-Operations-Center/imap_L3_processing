@@ -14,7 +14,9 @@ def read_l1c_rectangular_pointing_set_data(path: Union[Path, str]) -> InputRecta
     repointing = ScienceFilePath(path).repointing
     with CDF(str(path)) as cdf:
         exposure_time_variable = cdf['exposure_time'] if 'exposure_time' in cdf else cdf['exposure_times']
-        return InputRectangularPointingSet(epoch=cdf["epoch"][0], epoch_j2000=cdf.raw_var("epoch")[...],
+        return InputRectangularPointingSet(epoch=cdf["epoch"][0],
+                                           epoch_delta=cdf["epoch_delta"][...],
+                                           epoch_j2000=cdf.raw_var("epoch")[...],
                                            repointing=repointing,
                                            exposure_times=read_numeric_variable(exposure_time_variable),
                                            esa_energy_step=cdf["esa_energy_step"][...])
