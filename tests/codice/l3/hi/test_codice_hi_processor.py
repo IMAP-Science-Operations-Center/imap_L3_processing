@@ -1,6 +1,7 @@
 import unittest
 from datetime import datetime, timedelta
-from unittest.mock import patch, sentinel, Mock, call
+from pathlib import Path
+from unittest.mock import patch, sentinel, Mock, call, MagicMock
 
 import numpy as np
 
@@ -27,13 +28,17 @@ class TestCodiceHiProcessor(unittest.TestCase):
         mock_processed_direct_events = Mock()
         mock_process_l3a.return_value = mock_processed_direct_events
 
-        processor = CodiceHiProcessor(sentinel.processing_input_collection, input_metadata)
+        input_collection = MagicMock()
+        input_collection.get_file_paths.return_value = [Path('path/to/parent_file_1')]
+
+        processor = CodiceHiProcessor(input_collection, input_metadata)
         product = processor.process()
 
-        mock_fetch_dependencies.assert_called_with(sentinel.processing_input_collection)
+        mock_fetch_dependencies.assert_called_with(input_collection)
         mock_process_l3a.assert_called_with(mock_fetch_dependencies.return_value)
         mock_save_data.assert_called_with(mock_processed_direct_events)
         self.assertEqual([mock_save_data.return_value], product)
+        self.assertEqual(['parent_file_1'], mock_processed_direct_events.parent_file_names)
 
     @patch("imap_l3_processing.codice.l3.hi.codice_hi_processor.CodicePitchAngleDependencies.fetch_dependencies")
     @patch("imap_l3_processing.codice.l3.hi.codice_hi_processor.CodiceHiProcessor.process_l3b")
@@ -43,15 +48,21 @@ class TestCodiceHiProcessor(unittest.TestCase):
         start_date = datetime(2024, 10, 7, 10, 00, 00)
         end_date = datetime(2024, 10, 8, 10, 00, 00)
         input_metadata = InputMetadata('codice', "l3b", start_date, end_date, 'v02')
-        mock_process_l3b.return_value = sentinel.mock_processed_pitch_angles
 
-        processor = CodiceHiProcessor(sentinel.processing_input_collection, input_metadata)
+        mock_processed_pitch_angles = Mock()
+        mock_process_l3b.return_value = mock_processed_pitch_angles
+
+        input_collection = MagicMock()
+        input_collection.get_file_paths.return_value = [Path('path/to/parent_file_2')]
+
+        processor = CodiceHiProcessor(input_collection, input_metadata)
         product = processor.process()
 
-        mock_fetch_dependencies.assert_called_with(sentinel.processing_input_collection)
+        mock_fetch_dependencies.assert_called_with(input_collection)
         mock_process_l3b.assert_called_with(mock_fetch_dependencies.return_value)
-        mock_save_data.assert_called_with(sentinel.mock_processed_pitch_angles)
+        mock_save_data.assert_called_with(mock_processed_pitch_angles)
         self.assertEqual([mock_save_data.return_value], product)
+        self.assertEqual(['parent_file_2'], mock_processed_pitch_angles.parent_file_names)
 
     def test_raises_exception_on_non_l3_input_metadata(self):
         input_metadata = InputMetadata('codice', "L2a", Mock(), Mock(), 'v02')
@@ -224,6 +235,8 @@ class TestCodiceHiProcessor(unittest.TestCase):
         expected_cno_intensity_binned_by_pa_and_gyro = rng.random((2, 3, 6, 12))
         expected_fe_intensity_binned_by_pa_and_gyro = rng.random((2, 2, 6, 12))
 
+        expected_parents = []
+
         mock_rebin_by_pitch_angle_and_gyrophase.side_effect = [
             (expected_h_intensity_binned_by_pa_and_gyro[0], 0, 0, expected_h_intensity_binned_by_pa[0], 0, 0),
             (expected_he4_intensity_binned_by_pa_and_gyro[0], 0, 0, expected_he4_intensity_binned_by_pa[0], 0, 0),
@@ -328,6 +341,8 @@ class TestCodiceHiProcessor(unittest.TestCase):
                                       expected_cno_intensity_binned_by_pa_and_gyro)
         np.testing.assert_array_equal(codice_hi_data_product.fe_intensity_by_pitch_angle_and_gyrophase,
                                       expected_fe_intensity_binned_by_pa_and_gyro)
+
+        np.testing.assert_array_equal(codice_hi_data_product.parent_file_names, expected_parents)
 
     def test_integration_test(self):
         tof_lookup_path = get_test_instrument_team_data_path("codice/hi/imap_codice_tof-lookup_20241110_v002.csv")

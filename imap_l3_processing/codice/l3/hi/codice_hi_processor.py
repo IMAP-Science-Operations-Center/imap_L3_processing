@@ -34,6 +34,7 @@ class CodiceHiProcessor(Processor):
         else:
             raise NotImplementedError(f"Unknown data level for CoDICE: {self.input_metadata.data_level}")
 
+        data_product.parent_file_names = self.get_parent_file_names()
         return [save_data(data_product)]
 
     def process_l3a_direct_event(self, dependencies: CodiceHiL3aDirectEventsDependencies) -> CodiceL3HiDirectEvents:
