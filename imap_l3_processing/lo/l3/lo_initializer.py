@@ -15,26 +15,26 @@ LO_SP_MAP_KERNELS = [
 ]
 
 LO_SP_MAP_DESCRIPTORS = [
-    "l090-ena-h-sf-sp-ram-hae-6deg-12mo",
-    "l090-ena-h-hf-sp-ram-hae-6deg-12mo",
+    "l090-ena-h-sf-sp-ram-hae-6deg-1yr",
+    "l090-ena-h-hf-sp-ram-hae-6deg-1yr",
 ]
 
 LO_ISN_MAP_DESCRIPTORS = [
-    "l090-isn-h-sf-nsp-ram-hae-6deg-12mo",
-    "l090-isn-o-sf-nsp-ram-hae-6deg-12mo"
+    "l090-isn-h-sf-nsp-ram-hae-6deg-1yr",
+    "l090-isn-o-sf-nsp-ram-hae-6deg-1yr"
 ]
 
 LO_SPECTRAL_INDEX_MAP_DESCRIPTORS = [
-    "l090-spx-h-sf-nsp-ram-hae-6deg-12mo",
-    "l090-spx-h-sf-sp-ram-hae-6deg-12mo",
-    "l090-spx-h-hf-nsp-ram-hae-6deg-12mo",
-    "l090-spx-h-hf-sp-ram-hae-6deg-12mo",
-    "l090-spx-h-hk-nsp-ram-hae-6deg-12mo",
-    "l090-spx-h-hk-sp-ram-hae-6deg-12mo",
-    "l090-spxnbs-h-sf-nsp-ram-hae-6deg-12mo",
-    "l090-spxnbs-h-hk-nsp-ram-hae-6deg-12mo",
-    "lxxx-spxnbs-h-sf-sp-ram-hae-6deg-12mo",
-    "lxxx-spxnbs-h-hk-nsp-ram-hae-6deg-12mo",
+    "l090-spx-h-sf-nsp-ram-hae-6deg-1yr",
+    "l090-spx-h-sf-sp-ram-hae-6deg-1yr",
+    "l090-spx-h-hf-nsp-ram-hae-6deg-1yr",
+    "l090-spx-h-hf-sp-ram-hae-6deg-1yr",
+    "l090-spx-h-hk-nsp-ram-hae-6deg-1yr",
+    "l090-spx-h-hk-sp-ram-hae-6deg-1yr",
+    "l090-spxnbs-h-sf-nsp-ram-hae-6deg-1yr",
+    "l090-spxnbs-h-hk-nsp-ram-hae-6deg-1yr",
+    "lxxx-spxnbs-h-sf-sp-ram-hae-6deg-1yr",
+    "lxxx-spxnbs-h-hk-nsp-ram-hae-6deg-1yr",
 ]
 
 

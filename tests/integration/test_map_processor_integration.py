@@ -70,7 +70,9 @@ class TestMapIntegration(unittest.TestCase):
         lo_imap_data_dir = get_run_local_data_path("lo/integration_data")
 
         input_files = [
-            lo_test_data_dir / "imap_lo_l2_l090-ena-h-sf-nsp-ram-hae-6deg-12mo_20250415_v001.cdf",
+            lo_test_data_dir / "imap_lo_l2_l090-ena-h-sf-nsp-ram-hae-6deg-1yr_20250415_v900.cdf",
+            lo_test_data_dir / "imap_lo_l2_l090-ena-o-sf-nsp-ram-hae-6deg-1yr_20250415_v900.cdf",
+            lo_test_data_dir / "imap_lo_l2_l090-enanbs-h-sf-nsp-ram-hae-6deg-1yr_20250415_v900.cdf",
             lo_test_data_dir / "imap_lo_l1c_pset_20250415-repoint01000_v001.cdf",
 
             lo_test_data_dir / "imap_glows_l3e_survival-probability-lo_20250415-repoint01000_v001.cdf",
@@ -105,11 +107,11 @@ class TestMapIntegration(unittest.TestCase):
             imap_l3_data_processor.imap_l3_processor()
 
             expected_map_path = ScienceFilePath(
-                "imap_lo_l3_l090-ena-h-sf-sp-ram-hae-6deg-12mo_20250415_v001.cdf").construct_path()
+                "imap_lo_l3_l090-ena-h-sf-sp-ram-hae-6deg-1yr_20250415_v001.cdf").construct_path()
             self.assertTrue(expected_map_path.exists(), f"Expected file {expected_map_path.name} not found")
 
             expected_parents = {
-                "imap_lo_l2_l090-ena-h-sf-nsp-ram-hae-6deg-12mo_20250415_v001.cdf",
+                "imap_lo_l2_l090-ena-h-sf-nsp-ram-hae-6deg-1yr_20250415_v001.cdf",
                 "imap_lo_l1c_pset_20250415-repoint01000_v001.cdf",
                 "imap_glows_l3e_survival-probability-lo_20250415-repoint01000_v001.cdf",
             }
