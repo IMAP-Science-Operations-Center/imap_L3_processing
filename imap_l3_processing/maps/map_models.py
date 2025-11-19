@@ -291,6 +291,7 @@ class HealPixSpectralIndexMapData:
 
         return healpix_map
 
+
 @dataclass
 class MapDataProduct(DataProduct[D], Generic[D]):
     data: D
@@ -488,6 +489,7 @@ class GlowsL3eRectangularMapInputData:
 @dataclass
 class InputRectangularPointingSet:
     epoch: datetime
+    epoch_delta: np.ndarray
     epoch_j2000: np.ndarray
     repointing: int
     exposure_times: np.ndarray
