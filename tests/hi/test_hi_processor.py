@@ -35,7 +35,7 @@ class TestHiProcessor(unittest.TestCase):
         intensity_stat_unc = 5
 
         hi_l3_data = create_rectangular_intensity_map_data(lat=lat, lon=long, energy=energy, epoch=epoch, flux=flux,
-                                                           intensity_stat_unc=intensity_stat_unc,
+                                                           intensity_stat_uncert=intensity_stat_unc,
                                                            energy_delta=energy_delta)
         intensity_data = hi_l3_data.intensity_map_data
         intensity_data.exposure_factor = np.full_like(flux, 1)

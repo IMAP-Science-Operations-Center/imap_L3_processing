@@ -10,7 +10,7 @@ from imap_l3_processing.maps.map_models import RectangularIntensityMapData, Inte
 
 def create_rectangular_intensity_map_data(epoch=None, epoch_delta=None, lon=None, lat=None, energy=None,
                                           energy_delta=None, flux=None,
-                                          intensity_stat_unc=None):
+                                          intensity_stat_uncert=None):
     lon = lon if lon is not None else np.array([1.0])
     lat = lat if lat is not None else np.array([1.0])
     energy = energy if energy is not None else np.array([1.0])
@@ -18,7 +18,7 @@ def create_rectangular_intensity_map_data(epoch=None, epoch_delta=None, lon=None
     epoch = epoch if epoch is not None else np.ma.array([datetime.now()])
     epoch_delta = epoch_delta if epoch_delta is not None else np.ma.array([86400 * 1e9])
     flux = flux if flux is not None else np.full((len(epoch), len(energy), len(lon), len(lat)), fill_value=1)
-    intensity_stat_unc = intensity_stat_unc if intensity_stat_unc is not None else np.full(
+    intensity_stat_uncert = intensity_stat_uncert if intensity_stat_uncert is not None else np.full(
         (len(epoch), len(energy), len(lon), len(lat)),
         fill_value=1)
 
@@ -44,16 +44,18 @@ def create_rectangular_intensity_map_data(epoch=None, epoch_delta=None, lon=None
             obs_date_range=np.ma.array(np.full_like(more_real_flux, 0)),
             solid_angle=np.full_like(more_real_flux, 0),
             ena_intensity=flux,
-            ena_intensity_stat_unc=intensity_stat_unc,
-            ena_intensity_sys_err=np.full_like(flux, 0)),
+            ena_intensity_stat_unc=intensity_stat_uncert,
+            ena_intensity_sys_err=flux * .001,
+            bg_intensity=flux * .01,
+            bg_intensity_stat_uncert=intensity_stat_uncert * .01,
+            bg_intensity_sys_err=flux * .01 * .001
+        ),
         coords=RectangularCoords(
             latitude_delta=np.full_like(lat, 0),
             latitude_label=lat.astype(str),
             longitude_delta=np.full_like(lon, 0),
             longitude_label=lon.astype(str),
-
         )
-
     )
 
 

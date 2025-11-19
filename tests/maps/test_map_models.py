@@ -85,7 +85,7 @@ class TestMapModels(unittest.TestCase):
 
         self.assertEqual(expected_variables, actual_variables)
 
-    def test_rectangular_intensity_to_data_product_variables(self):
+    def test_rectangular_intensity_to_data_product_variables_no_bg(self):
         input_metadata = sentinel.input_metadata
 
         data_product = RectangularIntensityDataProduct(
@@ -143,6 +143,69 @@ class TestMapModels(unittest.TestCase):
 
         self.assertEqual(expected_variables, actual_variables)
 
+    def test_rectangular_intensity_to_data_product_variables_with_bg(self):
+        input_metadata = sentinel.input_metadata
+
+        data_product = RectangularIntensityDataProduct(
+            input_metadata=input_metadata,
+            data=RectangularIntensityMapData(
+                intensity_map_data=IntensityMapData(
+                    epoch=sentinel.epoch,
+                    epoch_delta=sentinel.epoch_delta,
+                    energy=sentinel.energy,
+                    energy_delta_plus=sentinel.energy_delta_plus,
+                    energy_delta_minus=sentinel.energy_delta_minus,
+                    energy_label=sentinel.energy_label,
+                    latitude=sentinel.latitude,
+                    longitude=sentinel.longitude,
+                    exposure_factor=sentinel.exposure_factor,
+                    obs_date=sentinel.obs_date,
+                    obs_date_range=sentinel.obs_date_range,
+                    solid_angle=sentinel.solid_angle,
+                    ena_intensity=sentinel.ena_intensity,
+                    ena_intensity_stat_unc=sentinel.ena_intensity_stat_unc,
+                    ena_intensity_sys_err=sentinel.ena_intensity_sys_err,
+                    bg_intensity=sentinel.bg_intensity,
+                    bg_intensity_sys_err=sentinel.bg_intensity_sys_err,
+                    bg_intensity_stat_uncert=sentinel.bg_intensity_stat_uncert
+                ),
+                coords=RectangularCoords(
+                    longitude_delta=sentinel.longitude_delta,
+                    longitude_label=sentinel.longitude_label,
+                    latitude_delta=sentinel.latitude_delta,
+                    latitude_label=sentinel.latitude_label,
+
+                )
+            ),
+        )
+        actual_variables = data_product.to_data_product_variables()
+
+        expected_variables = [
+            DataProductVariable(map_models.EPOCH_VAR_NAME, sentinel.epoch),
+            DataProductVariable(map_models.EPOCH_DELTA_VAR_NAME, sentinel.epoch_delta),
+            DataProductVariable(map_models.ENERGY_VAR_NAME, sentinel.energy),
+            DataProductVariable(map_models.ENERGY_DELTA_PLUS_VAR_NAME, sentinel.energy_delta_plus),
+            DataProductVariable(map_models.ENERGY_DELTA_MINUS_VAR_NAME, sentinel.energy_delta_minus),
+            DataProductVariable(map_models.ENERGY_LABEL_VAR_NAME, sentinel.energy_label),
+            DataProductVariable(map_models.LATITUDE_VAR_NAME, sentinel.latitude),
+            DataProductVariable(map_models.LONGITUDE_VAR_NAME, sentinel.longitude),
+            DataProductVariable(map_models.EXPOSURE_FACTOR_VAR_NAME, sentinel.exposure_factor),
+            DataProductVariable(map_models.OBS_DATE_VAR_NAME, sentinel.obs_date),
+            DataProductVariable(map_models.OBS_DATE_RANGE_VAR_NAME, sentinel.obs_date_range),
+            DataProductVariable(map_models.SOLID_ANGLE_VAR_NAME, sentinel.solid_angle),
+            DataProductVariable(map_models.ENA_INTENSITY_VAR_NAME, sentinel.ena_intensity),
+            DataProductVariable(map_models.ENA_INTENSITY_STAT_UNC_VAR_NAME, sentinel.ena_intensity_stat_unc),
+            DataProductVariable(map_models.ENA_INTENSITY_SYS_ERR_VAR_NAME, sentinel.ena_intensity_sys_err),
+            DataProductVariable(map_models.BG_INTENSITY_VAR_NAME, sentinel.bg_intensity),
+            DataProductVariable(map_models.BG_INTENSITY_STAT_UNC_VAR_NAME, sentinel.bg_intensity_stat_uncert),
+            DataProductVariable(map_models.BG_INTENSITY_SYS_ERR_VAR_NAME, sentinel.bg_intensity_sys_err),
+            DataProductVariable(map_models.LATITUDE_DELTA_VAR_NAME, sentinel.latitude_delta),
+            DataProductVariable(map_models.LATITUDE_LABEL_VAR_NAME, sentinel.latitude_label),
+            DataProductVariable(map_models.LONGITUDE_DELTA_VAR_NAME, sentinel.longitude_delta),
+            DataProductVariable(map_models.LONGITUDE_LABEL_VAR_NAME, sentinel.longitude_label),
+        ]
+
+        self.assertEqual(expected_variables, actual_variables)
     def test_healpix_spectral_index_to_data_product_variables(self):
         input_metadata = Mock()
 
@@ -267,6 +330,9 @@ class TestMapModels(unittest.TestCase):
             ena_intensity=np.array([0]),
             ena_intensity_stat_unc=np.array([0]),
             ena_intensity_sys_err=np.array([0]),
+            bg_intensity=np.array([0]),
+            bg_intensity_sys_err=np.array([0]),
+            bg_intensity_stat_uncert=np.array([0]),
         )
 
     def test_combine_maps_works_when_passed_all_nan_arrays(self):
@@ -592,26 +658,30 @@ class TestMapModels(unittest.TestCase):
         obs_date_datetime = np.full(map_data_shape, datetime.now())
         obs_date_fillval = -sys.maxsize - 1
         test_cases = [
-            ("obs date is datetime", obs_date_datetime, obs_date_datetime, np.full(map_data_shape, False)),
+            ("obs date is datetime", obs_date_datetime, obs_date_datetime, np.full(map_data_shape, False), False),
             ("obs date is int", np.full(map_data_shape, 1e9, dtype=int),
-             np.full(map_data_shape, TT2000_EPOCH) + timedelta(seconds=1), np.full(map_data_shape, False)),
+             np.full(map_data_shape, TT2000_EPOCH) + timedelta(seconds=1), np.full(map_data_shape, False), True),
             ("obs date is all fill", np.full(map_data_shape, obs_date_fillval, dtype=int),
-             np.full(map_data_shape, TT2000_EPOCH), np.full(map_data_shape, True)),
+             np.full(map_data_shape, TT2000_EPOCH), np.full(map_data_shape, True), True),
         ]
 
-        for test_name, obs_date_in_cdf, expected_obs_date, expected_obs_date_mask in test_cases:
+        for test_name, obs_date_in_cdf, expected_obs_date, expected_obs_date_mask, include_bg in test_cases:
             with tempfile.TemporaryDirectory() as temp_dir:
                 pathname = os.path.join(temp_dir, "test_cdf")
                 with CDF(pathname, '') as cdf:
                     cdf.col_major(True)
 
                     ena_intensity = rng.random(map_data_shape)
+                    bg_intensity = ena_intensity * .01
                     energy = rng.random(9)
                     energy_delta_plus = rng.random(9)
                     energy_delta_minus = rng.random(9)
                     energy_label = energy.astype(str)
                     ena_intensity_stat_unc = rng.random(map_data_shape)
                     ena_intensity_sys_err = rng.random(map_data_shape)
+
+                    bg_intensity_stat_unc = rng.random(map_data_shape)
+                    bg_intensity_sys_err = rng.random(map_data_shape)
 
                     epoch = np.array([datetime.now()])
                     epoch_delta = np.array([FIVE_MINUTES_IN_NANOSECONDS])
@@ -647,6 +717,10 @@ class TestMapModels(unittest.TestCase):
                     cdf.new("energy_delta_plus", energy_delta_plus, recVary=False)
                     cdf.new("energy_delta_minus", energy_delta_minus, recVary=False)
                     cdf.new("energy_label", energy_label, recVary=False)
+                    if include_bg:
+                        cdf.new("bg_intensity", bg_intensity, recVary=True)
+                        cdf.new("bg_intensity_stat_uncert", bg_intensity_stat_unc, recVary=True)
+                        cdf.new("bg_intensity_sys_err", bg_intensity_sys_err, recVary=True)
 
                     for var in cdf:
                         cdf[var].attrs['FILLVAL'] = 1000000
@@ -681,6 +755,14 @@ class TestMapModels(unittest.TestCase):
                         np.testing.assert_array_equal(expected_obs_date_mask, map_data.obs_date.mask)
                         np.testing.assert_array_equal(obs_date_range, map_data.obs_date_range)
                         np.testing.assert_array_equal(solid_angle, map_data.solid_angle)
+                        if include_bg:
+                            np.testing.assert_array_equal(bg_intensity, map_data.bg_intensity)
+                            np.testing.assert_array_equal(bg_intensity_sys_err, map_data.bg_intensity_sys_err)
+                            np.testing.assert_array_equal(bg_intensity_stat_unc, map_data.bg_intensity_stat_uncert)
+                        else:
+                            self.assertIsNone(map_data.bg_intensity)
+                            self.assertIsNone(map_data.bg_intensity_sys_err)
+                            self.assertIsNone(map_data.bg_intensity_stat_uncert)
 
     def test_fill_values_in_read_rectangular_intensity_map_data_from_cdf(self):
         path = get_test_data_folder() / 'hi' / 'fake_l2_maps' / 'l2_map_with_fill_values.cdf'
@@ -707,6 +789,11 @@ class TestMapModels(unittest.TestCase):
                                           np.full_like(cdf["ena_intensity_sys_err"], np.nan))
             np.testing.assert_array_equal(map_data.exposure_factor, np.full_like(cdf["exposure_factor"], np.nan))
             np.testing.assert_array_equal(map_data.solid_angle, np.full_like(cdf["solid_angle"], np.nan))
+            np.testing.assert_array_equal(map_data.bg_intensity, np.full_like(cdf["bg_intensity"], np.nan))
+            np.testing.assert_array_equal(map_data.bg_intensity_sys_err,
+                                          np.full_like(cdf["bg_intensity_sys_err"], np.nan))
+            np.testing.assert_array_equal(map_data.bg_intensity_stat_uncert,
+                                          np.full_like(cdf["bg_intensity_stat_uncert"], np.nan))
 
     def test_healpix_intensity_map_data_to_skymap(self):
         expected_nside = 2
@@ -735,7 +822,7 @@ class TestMapModels(unittest.TestCase):
             solid_angle=fake_data_per_pixel * 3.4,
             ena_intensity=fake_data_per_energy_per_pixel * 2.2,
             ena_intensity_stat_unc=fake_data_per_energy_per_pixel * 2.3,
-            ena_intensity_sys_err=fake_data_per_energy_per_pixel * 2.4,
+            ena_intensity_sys_err=fake_data_per_energy_per_pixel * 2.4
         )
 
         healpix_intensity_map_data = HealPixIntensityMapData(

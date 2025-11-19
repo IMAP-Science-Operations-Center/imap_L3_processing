@@ -32,12 +32,12 @@ def process_survival_probabilities(survival_probabilities_dependencies: HiLoL3Su
 
     survival_corrected_intensity = input_data.ena_intensity / survival_probabilities
     corrected_stat_unc = input_data.ena_intensity_stat_unc / survival_probabilities
-    corrected_sys_unc = input_data.ena_intensity_sys_err / survival_probabilities
+    corrected_sys_err = input_data.ena_intensity_sys_err / survival_probabilities
 
-    return RectangularIntensityMapData(
+    map_data = RectangularIntensityMapData(
         intensity_map_data=IntensityMapData(
             ena_intensity_stat_unc=corrected_stat_unc,
-            ena_intensity_sys_err=corrected_sys_unc,
+            ena_intensity_sys_err=corrected_sys_err,
             ena_intensity=survival_corrected_intensity,
             epoch=input_data.epoch,
             epoch_delta=input_data.epoch_delta,
@@ -51,6 +51,14 @@ def process_survival_probabilities(survival_probabilities_dependencies: HiLoL3Su
             obs_date=input_data.obs_date,
             obs_date_range=input_data.obs_date_range,
             solid_angle=input_data.solid_angle,
+
         ),
         coords=survival_probabilities_dependencies.l2_data.coords
     )
+
+    if input_data.bg_intensity is not None:
+        map_data.intensity_map_data.bg_intensity = input_data.bg_intensity / survival_probabilities
+        map_data.intensity_map_data.bg_intensity_sys_err = input_data.bg_intensity_sys_err / survival_probabilities
+        map_data.intensity_map_data.bg_intensity_stat_uncert = input_data.bg_intensity_stat_uncert / survival_probabilities
+
+    return map_data

@@ -5,7 +5,7 @@ import dataclasses
 from dataclasses import dataclass
 from datetime import timedelta, datetime
 from pathlib import Path
-from typing import Generic
+from typing import Generic, Optional
 
 import numpy as np
 import xarray
@@ -43,6 +43,10 @@ ENA_SPECTRAL_INDEX_STAT_UNC_VAR_NAME = "ena_spectral_index_stat_uncert"
 ENA_INTENSITY_VAR_NAME = "ena_intensity"
 ENA_INTENSITY_STAT_UNC_VAR_NAME = "ena_intensity_stat_uncert"
 ENA_INTENSITY_SYS_ERR_VAR_NAME = "ena_intensity_sys_err"
+
+BG_INTENSITY_VAR_NAME = "bg_intensity"
+BG_INTENSITY_STAT_UNC_VAR_NAME = "bg_intensity_stat_uncert"
+BG_INTENSITY_SYS_ERR_VAR_NAME = "bg_intensity_sys_err"
 
 PIXEL_INDEX_VAR_NAME = "pixel_index"
 PIXEL_INDEX_LABEL_VAR_NAME = "pixel_index_label"
@@ -87,6 +91,9 @@ class IntensityMapData(MapData):
     ena_intensity: np.ndarray
     ena_intensity_stat_unc: np.ndarray
     ena_intensity_sys_err: np.ndarray
+    bg_intensity: Optional[np.ndarray] = None
+    bg_intensity_stat_uncert: Optional[np.ndarray] = None
+    bg_intensity_sys_err: Optional[np.ndarray] = None
 
 
 @dataclass
@@ -183,23 +190,29 @@ def _read_intensity_map_data_from_open_cdf(cdf: CDF) -> IntensityMapData:
         obs_date = convert_tt2000_time_to_datetime(masked_obs_date.filled(0))
         masked_obs_date = np.ma.masked_array(data=obs_date, mask=masked_obs_date.mask)
 
-    return IntensityMapData(
-        epoch=cdf["epoch"][...],
-        epoch_delta=read_variable_and_mask_fill_values(cdf["epoch_delta"]),
-        energy=read_numeric_variable(cdf["energy"]),
-        energy_delta_plus=read_numeric_variable(cdf["energy_delta_plus"]),
-        energy_delta_minus=read_numeric_variable(cdf["energy_delta_minus"]),
-        energy_label=cdf["energy_label"][...],
-        latitude=read_numeric_variable(cdf["latitude"]),
-        longitude=read_numeric_variable(cdf["longitude"]),
-        exposure_factor=read_numeric_variable(cdf["exposure_factor"]),
-        obs_date=masked_obs_date,
-        obs_date_range=read_variable_and_mask_fill_values(cdf["obs_date_range"]),
-        solid_angle=read_numeric_variable(cdf["solid_angle"]),
-        ena_intensity=read_numeric_variable(cdf["ena_intensity"]),
-        ena_intensity_stat_unc=read_numeric_variable(cdf["ena_intensity_stat_uncert"]),
-        ena_intensity_sys_err=read_numeric_variable(cdf["ena_intensity_sys_err"]),
-    )
+    map_intensity_data = IntensityMapData(epoch=cdf["epoch"][...],
+                                          epoch_delta=read_variable_and_mask_fill_values(cdf["epoch_delta"]),
+                                          energy=read_numeric_variable(cdf["energy"]),
+                                          energy_delta_plus=read_numeric_variable(cdf["energy_delta_plus"]),
+                                          energy_delta_minus=read_numeric_variable(cdf["energy_delta_minus"]),
+                                          energy_label=cdf["energy_label"][...],
+                                          latitude=read_numeric_variable(cdf["latitude"]),
+                                          longitude=read_numeric_variable(cdf["longitude"]),
+                                          exposure_factor=read_numeric_variable(cdf["exposure_factor"]),
+                                          obs_date=masked_obs_date,
+                                          obs_date_range=read_variable_and_mask_fill_values(cdf["obs_date_range"]),
+                                          solid_angle=read_numeric_variable(cdf["solid_angle"]),
+                                          ena_intensity=read_numeric_variable(cdf["ena_intensity"]),
+                                          ena_intensity_stat_unc=read_numeric_variable(
+                                              cdf["ena_intensity_stat_uncert"]),
+                                          ena_intensity_sys_err=read_numeric_variable(cdf["ena_intensity_sys_err"]), )
+
+    if "bg_intensity" in cdf:
+        map_intensity_data.bg_intensity = read_numeric_variable(cdf["bg_intensity"])
+        map_intensity_data.bg_intensity_sys_err = read_numeric_variable(cdf["bg_intensity_sys_err"])
+        map_intensity_data.bg_intensity_stat_uncert = read_numeric_variable(cdf["bg_intensity_stat_uncert"])
+
+    return map_intensity_data
 
 
 def _read_healpix_coords_from_open_cdf(cdf: CDF) -> HealPixCoords:
@@ -349,6 +362,13 @@ def _intensity_data_variables(data: IntensityMapData) -> list[DataProductVariabl
         DataProductVariable(ENA_INTENSITY_STAT_UNC_VAR_NAME, data.ena_intensity_stat_unc),
         DataProductVariable(ENA_INTENSITY_SYS_ERR_VAR_NAME, data.ena_intensity_sys_err),
     ]
+    if data.bg_intensity:
+        intensity_variables.extend([
+            DataProductVariable(BG_INTENSITY_VAR_NAME, data.bg_intensity),
+            DataProductVariable(BG_INTENSITY_STAT_UNC_VAR_NAME, data.bg_intensity_stat_uncert),
+            DataProductVariable(BG_INTENSITY_SYS_ERR_VAR_NAME, data.bg_intensity_sys_err),
+        ])
+
     return _map_data_to_variables(data) + intensity_variables
 
 

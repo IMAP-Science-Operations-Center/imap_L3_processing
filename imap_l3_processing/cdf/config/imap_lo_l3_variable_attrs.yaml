@@ -378,3 +378,72 @@ ena_spectral_index_stat_uncert:
   LABL_PTR_2: longitude_label
   LABL_PTR_3: latitude_label
   SCALETYP: linear
+bg_intensity:
+  NAME: bg_intensity
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Background ENA intensity.
+  DEPEND_0: epoch
+  DEPEND_1: energy
+  DEPEND_2: longitude
+  DEPEND_3: latitude
+  VAR_TYPE: support_data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: map_image
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Background Intensity
+  FORMAT: F6.3
+  LABLAXIS: Intensity
+  UNITS: cm -2 s -1 sr -1 keV -1
+  VALIDMIN: 0.0
+  VALIDMAX: 1.00E+9
+  FILLVAL: -1.00E+31
+  LABL_PTR_1: energy_label
+  LABL_PTR_2: longitude_label
+  LABL_PTR_3: latitude_label
+  DELTA_PLUS_VAR: bg_intensity_stat_uncert
+  DELTA_MINUS_VAR: bg_intensity_stat_uncert
+  SCALETYP: linear
+bg_intensity_stat_uncert:
+  NAME: bg_intensity_stat_uncert
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Background ENA intensity statistical uncertainty.
+  DEPEND_0: epoch
+  DEPEND_1: energy
+  DEPEND_2: longitude
+  DEPEND_3: latitude
+  VAR_TYPE: support_data
+  DISPLAY_TYPE: map_image
+  RECORD_VARYING: RV
+  FIELDNAM: Background Intensity Unc
+  FORMAT: F6.3
+  LABLAXIS: Unc
+  UNITS: cm -2 s -1 sr -1 keV -1
+  VALIDMIN: 0.0
+  VALIDMAX: 1.00E+9
+  FILLVAL: -1.00E+31
+  LABL_PTR_1: energy_label
+  LABL_PTR_2: longitude_label
+  LABL_PTR_3: latitude_label
+  SCALETYP: linear
+bg_intensity_sys_err:
+  NAME: bg_intensity_sys_err
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Background ENA intensity systematic error.
+  DEPEND_0: epoch
+  DEPEND_1: energy
+  DEPEND_2: longitude
+  DEPEND_3: latitude
+  VAR_TYPE: support_data
+  DISPLAY_TYPE: map_image
+  RECORD_VARYING: RV
+  FIELDNAM: Background Intensity non-stat err
+  FORMAT: F6.3
+  LABLAXIS: Non-statistical Error
+  UNITS: cm -2 s -1 sr -1 keV -1
+  VALIDMIN: 0.0
+  VALIDMAX: 1.00E+9
+  FILLVAL: -1.00E+31
+  LABL_PTR_1: energy_label
+  LABL_PTR_2: longitude_label
+  LABL_PTR_3: latitude_label
+  SCALETYP: linear
