@@ -182,8 +182,7 @@ class TestImapL3DataProcessor(TestCase):
         map_to_produce_2 = PossibleMapToProduce(set(), Mock())
         map_to_produce_3 = PossibleMapToProduce(set(), Mock())
         mock_lo_initializer.get_maps_that_should_be_produced.side_effect = [
-            [map_to_produce_1, map_to_produce_2],
-            [map_to_produce_3],
+            [map_to_produce_1, map_to_produce_2, map_to_produce_3],
         ]
 
         mock_lo_processor.return_value.process.side_effect = [

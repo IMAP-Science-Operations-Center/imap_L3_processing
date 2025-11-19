@@ -16,7 +16,6 @@ LO_SP_MAP_KERNELS = [
 
 LO_SP_MAP_DESCRIPTORS = [
     "l090-ena-h-sf-sp-ram-hae-6deg-12mo",
-    "l090-ena-h-hf-sp-ram-hae-6deg-12mo",
 ]
 
 LO_ISN_MAP_DESCRIPTORS = [
