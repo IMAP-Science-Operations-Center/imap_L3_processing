@@ -73,7 +73,7 @@ class TestMapIntegration(unittest.TestCase):
             lo_test_data_dir / "imap_lo_l2_l090-ena-h-sf-nsp-ram-hae-6deg-1yr_20250415_v900.cdf",
             lo_test_data_dir / "imap_lo_l2_l090-ena-o-sf-nsp-ram-hae-6deg-1yr_20250415_v900.cdf",
             lo_test_data_dir / "imap_lo_l2_l090-enanbs-h-sf-nsp-ram-hae-6deg-1yr_20250415_v900.cdf",
-            lo_test_data_dir / "imap_lo_l1c_pset_20250415-repoint01000_v001.cdf",
+            lo_test_data_dir / "imap_lo_l1c_pset_20250415-repoint01000_v004.cdf",
 
             lo_test_data_dir / "imap_glows_l3e_survival-probability-lo_20250415-repoint01000_v001.cdf",
             lo_test_data_dir / "imap_glows_l3e_survival-probability-lo_20260418-repoint02003_v001.cdf",
@@ -84,7 +84,7 @@ class TestMapIntegration(unittest.TestCase):
             INTEGRATION_TEST_DATA_PATH / "spice" / "imap_dps_2025_105_2026_105_009.ah.bc"
         ]
 
-        with mock_imap_data_access(lo_imap_data_dir, input_files):
+        with (mock_imap_data_access(lo_imap_data_dir, input_files)):
             logging.basicConfig(
                 force=True,
                 level=logging.INFO,
@@ -106,18 +106,30 @@ class TestMapIntegration(unittest.TestCase):
 
             imap_l3_data_processor.imap_l3_processor()
 
-            expected_map_path = ScienceFilePath(
+            expected_ena_path = ScienceFilePath(
                 "imap_lo_l3_l090-ena-h-sf-sp-ram-hae-6deg-1yr_20250415_v001.cdf").construct_path()
-            self.assertTrue(expected_map_path.exists(), f"Expected file {expected_map_path.name} not found")
+            # expected_enanbs_path = ScienceFilePath(
+            #     "imap_lo_l3_l090-enanbs-h-sf-sp-ram-hae-6deg-1yr_20250415_v001.cdf").construct_path()
 
-            expected_parents = {
-                "imap_lo_l2_l090-ena-h-sf-nsp-ram-hae-6deg-1yr_20250415_v001.cdf",
-                "imap_lo_l1c_pset_20250415-repoint01000_v001.cdf",
+            self.assertTrue(expected_ena_path.exists(), f"Expected file {expected_ena_path.name} not found")
+            # self.assertTrue(expected_enanbs_path.exists(), f"Expected file {expected_enanbs_path.name} not found")
+
+            expected_ena_parents = {
+                "imap_lo_l2_l090-ena-h-sf-nsp-ram-hae-6deg-1yr_20250415_v900.cdf",
+                "imap_lo_l1c_pset_20250415-repoint01000_v004.cdf",
                 "imap_glows_l3e_survival-probability-lo_20250415-repoint01000_v001.cdf",
             }
 
-            with CDF(str(expected_map_path)) as cdf:
-                self.assertEqual(expected_parents, set(cdf.attrs["Parents"]))
+            # expected_enanbs_parents = {
+            #     "imap_lo_l2_l090-enanbs-h-sf-nsp-ram-hae-6deg-1yr_20250415_v900.cdf",
+            #     "imap_lo_l1c_pset_20250415-repoint01000_v004.cdf",
+            #     "imap_glows_l3e_survival-probability-lo_20250415-repoint01000_v001.cdf",
+            # }
+
+            with CDF(str(expected_ena_path)) as cdf:
+                self.assertEqual(expected_ena_parents, set(cdf.attrs["Parents"]))
+            # with CDF(str(expected_enanbs_path)) as cdf:
+            #     self.assertEqual(expected_enanbs_parents, set(cdf.attrs["Parents"]))
 
     @run_periodically(timedelta(days=7))
     @skip("Missing valid ultra inputs")
