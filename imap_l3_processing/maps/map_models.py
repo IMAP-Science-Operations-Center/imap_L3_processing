@@ -363,7 +363,7 @@ def _intensity_data_variables(data: IntensityMapData) -> list[DataProductVariabl
         DataProductVariable(ENA_INTENSITY_STAT_UNC_VAR_NAME, data.ena_intensity_stat_unc),
         DataProductVariable(ENA_INTENSITY_SYS_ERR_VAR_NAME, data.ena_intensity_sys_err),
     ]
-    if data.bg_intensity:
+    if data.bg_intensity is not None:
         intensity_variables.extend([
             DataProductVariable(BG_INTENSITY_VAR_NAME, data.bg_intensity),
             DataProductVariable(BG_INTENSITY_STAT_UNC_VAR_NAME, data.bg_intensity_stat_uncert),
