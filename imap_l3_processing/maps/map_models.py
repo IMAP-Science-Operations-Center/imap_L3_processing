@@ -417,6 +417,7 @@ def combine_intensity_map_data(maps: list[IntensityMapData], exposure_weighted: 
     first_map_dict = dataclasses.asdict(first_map)
 
     fields_which_may_differ = {"ena_intensity", "ena_intensity_stat_unc", "ena_intensity_sys_err",
+                               "bg_intensity", "bg_intensity_stat_uncert", "bg_intensity_sys_err",
                                "exposure_factor", "obs_date", "obs_date_range"}
 
     differing_fields = []

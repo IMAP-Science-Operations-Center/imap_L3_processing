@@ -352,10 +352,20 @@ class TestMapModels(unittest.TestCase):
         combine_one = combine_intensity_map_data([map_1])
         np.testing.assert_equal(dataclasses.asdict(combine_one), dataclasses.asdict(map_1))
 
+    def test_combine_maps_works_for_maps_with_no_background_data(self):
+        map_1 = self.construct_intensity_data_with_all_zero_fields()
+        map_1.bg_intensity = None
+        map_1.bg_intensity_sys_err = None
+        map_1.bg_intensity_stat_uncert = None
+
+        combine_one = combine_intensity_map_data([map_1])
+        np.testing.assert_equal(dataclasses.asdict(combine_one), dataclasses.asdict(map_1))
+
     def test_combine_maps_throws_exception_when_fields_vary_that_should_not(self):
         map_1 = self.construct_intensity_data_with_all_zero_fields()
 
         fields_which_may_differ = {"ena_intensity", "ena_intensity_stat_unc", "ena_intensity_sys_err",
+                                   "bg_intensity", "bg_intensity_stat_uncert", "bg_intensity_sys_err",
                                    "exposure_factor", "obs_date", "obs_date_range"}
 
         alternate_values_by_type = {datetime: datetime(2025, 5, 6), str: "label"}
