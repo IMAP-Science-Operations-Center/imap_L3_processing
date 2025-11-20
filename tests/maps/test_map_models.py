@@ -433,40 +433,52 @@ class TestMapModels(unittest.TestCase):
 
     def test_combine_maps_does_not_weight_by_exposures_based_on_flag(self):
         map_1 = self.construct_intensity_data_with_all_zero_fields()
-        map_1.ena_intensity = np.array([1, np.nan, 3, 4, np.nan])
-        map_1.exposure_factor = np.array([100, 0, 100, 100, 100])
-        map_1.ena_intensity_sys_err = np.array([3, 1, np.nan, 12, np.nan])
-        map_1.ena_intensity_stat_unc = np.array([6, 1, np.nan, 24, np.nan])
+        map_1.ena_intensity = np.array([1, np.nan, 3, 4, np.nan, np.nan, 0, 5, 13])
+        map_1.exposure_factor = np.array([100, 0, 100, 100, 100, 100, 100, 100, 90])
+        map_1.ena_intensity_sys_err = np.array([3, 1, np.nan, 12, np.nan, 1, np.nan, np.nan, np.nan])
+        map_1.ena_intensity_stat_unc = np.array([6, 1, np.nan, 24, np.nan, 1, np.nan, np.nan, np.nan])
         DATETIME_FILL = datetime(9999, 12, 31, 23, 59, 59, 999999)
         map_1.obs_date = np.ma.masked_equal(
             [datetime(2025, 5, 5),
              DATETIME_FILL,
              datetime(2025, 5, 7),
              datetime(2025, 5, 8),
-             DATETIME_FILL],
+             DATETIME_FILL,
+             DATETIME_FILL,
+             DATETIME_FILL,
+             DATETIME_FILL,
+             datetime(2025, 5, 9),
+             ],
             DATETIME_FILL)
 
         map_2 = self.construct_intensity_data_with_all_zero_fields()
-        map_2.ena_intensity = np.array([5, 6, 7, 8, np.nan])
-        map_2.exposure_factor = np.array([10, 0, 10, 10, 10])
-        map_2.ena_intensity_sys_err = np.array([4, 1, 4, 5, np.nan])
-        map_2.ena_intensity_stat_unc = np.array([8, 1, 8, 10, np.nan])
+        map_2.ena_intensity = np.array([5, 6, 7, 8, np.nan, 100, 9, 10, 11])
+        map_2.exposure_factor = np.array([10, 0, 10, 10, 10, 100, 100, np.nan, 30])
+        map_2.ena_intensity_sys_err = np.array([4, 1, 4, 5, np.nan, 1, np.nan, np.nan, np.nan])
+        map_2.ena_intensity_stat_unc = np.array([8, 1, 8, 10, np.nan, 1, np.nan, np.nan, np.nan])
         map_2.obs_date = np.ma.masked_equal(
             [datetime(2025, 5, 9),
              datetime(2025, 5, 10),
              datetime(2025, 5, 11),
              datetime(2025, 5, 12),
-             DATETIME_FILL],
+             DATETIME_FILL,
+             DATETIME_FILL,
+             DATETIME_FILL,
+             DATETIME_FILL,
+             datetime(2025, 5, 13),
+             ],
             DATETIME_FILL)
 
-        expected_combined_intensity = [3, 0, 5, 6, np.nan]
-        expected_sys_err = [2.5, 0, 2, 6.5, np.nan]
-        expected_stat_unc = [5, 0, 4, 13, np.nan]
+        expected_combined_intensity = [3, np.nan, 5, 6, np.nan, 100, 4.5, 5, 12]
+        expected_sys_err = [2.5, np.nan, np.nan, 6.5, np.nan, 1, np.nan, np.nan, np.nan]
+        expected_stat_unc = [5, np.nan, np.nan, 13, np.nan, 1, np.nan, np.nan, np.nan]
+        expected_obs_date = datetime(2025, 5, 11)
 
         combine_two = combine_intensity_map_data([map_1, map_2], exposure_weighted=False)
         np.testing.assert_equal(combine_two.ena_intensity, expected_combined_intensity)
         np.testing.assert_equal(combine_two.ena_intensity_sys_err, expected_sys_err)
         np.testing.assert_equal(combine_two.ena_intensity_stat_unc, expected_stat_unc)
+        np.testing.assert_equal(combine_two.obs_date[-1], expected_obs_date)
 
     @patch('imap_l3_processing.maps.map_models.combine_intensity_map_data')
     def test_combine_rectangular_intensity_map_data(self, mock_combine_intensity_map_data):

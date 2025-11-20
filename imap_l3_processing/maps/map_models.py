@@ -434,20 +434,24 @@ def combine_intensity_map_data(maps: list[IntensityMapData], exposure_weighted: 
     intensity_stat_unc = np.array([m.ena_intensity_stat_unc for m in maps])
     exposures = np.array([m.exposure_factor for m in maps])
 
-    intensities = np.where(exposures == 0, 0, intensities)
-    intensity_sys_err = np.where(exposures == 0, 0, intensity_sys_err)
-    intensity_stat_unc = np.where(exposures == 0, 0, intensity_stat_unc)
+    mask = np.isnan(intensities) | (exposures == 0) | np.isnan(exposures)
 
-    summed_exposures = np.sum(exposures, axis=0)
+    intensities = np.where(mask, 0, intensities)
+    intensity_sys_err = np.where(mask, 0, intensity_sys_err)
+    intensity_stat_unc = np.where(mask, 0, intensity_stat_unc)
+
+    masked_exposures = np.where(mask, 0, exposures)
+    summed_exposures = np.sum(masked_exposures, axis=0)
     weights = exposures if exposure_weighted else np.full_like(exposures, 1)
+    masked_weights = np.where(mask, 0, weights)
 
-    combined_intensity_stat_unc = calculated_weighted_uncertainty(intensity_stat_unc, weights)
-    combined_intensity_sys_err = calculated_weighted_uncertainty(intensity_sys_err, weights)
+    combined_intensity_stat_unc = calculated_weighted_uncertainty(intensity_stat_unc, masked_weights)
+    combined_intensity_sys_err = calculated_weighted_uncertainty(intensity_sys_err, masked_weights)
 
-    summed_intensity = np.where(np.all(np.isnan(intensities), axis=0), np.nan, np.nansum(intensities * weights, axis=0))
-    exposure_weighted_summed_intensity = safe_divide(summed_intensity, np.sum(weights, axis=0))
+    summed_intensity = np.sum(intensities * masked_weights, axis=0)
+    exposure_weighted_summed_intensity = safe_divide(summed_intensity, np.sum(masked_weights, axis=0))
 
-    avg_obs_date = calculate_datetime_weighted_average(np.ma.array([m.obs_date for m in maps]), exposures, 0)
+    avg_obs_date = calculate_datetime_weighted_average(np.ma.array([m.obs_date for m in maps]), masked_weights, 0)
 
     return dataclasses.replace(first_map,
                                ena_intensity=exposure_weighted_summed_intensity,
@@ -459,9 +463,9 @@ def combine_intensity_map_data(maps: list[IntensityMapData], exposure_weighted: 
 
 
 def calculated_weighted_uncertainty(values: np.ndarray, weights: np.ndarray) -> np.ndarray:
-    do_nan_sum_where_values_is_not_all_nan = np.where(np.all(np.isnan(values), axis=0), np.nan,
-                                                      np.nansum(np.square(values * weights), axis=0))
-    return np.sqrt(safe_divide(do_nan_sum_where_values_is_not_all_nan, np.square(np.sum(weights, axis=0))))
+    masked_values = np.where(weights == 0, 0, values)
+    numerator = np.sum(np.square(masked_values * weights), axis=0)
+    return np.sqrt(safe_divide(numerator, np.square(np.sum(weights, axis=0))))
 
 
 def calculate_datetime_weighted_average(data: np.ndarray, weights: np.ndarray, axis: int, **kwargs) -> np.ndarray:
