@@ -10,7 +10,7 @@ from imap_l3_processing.maps.map_models import RectangularIntensityMapData, Inte
 
 def create_rectangular_intensity_map_data(epoch=None, epoch_delta=None, lon=None, lat=None, energy=None,
                                           energy_delta=None, flux=None,
-                                          intensity_stat_uncert=None):
+                                          intensity_stat_uncert=None) -> RectangularIntensityMapData:
     lon = lon if lon is not None else np.array([1.0])
     lat = lat if lat is not None else np.array([1.0])
     energy = energy if energy is not None else np.array([1.0])
@@ -113,7 +113,7 @@ def create_l1c_pset(
         exposures: Optional[np.ndarray] = None,
 ) -> InputRectangularPointingSet:
     epoch_j2000 = np.array([spiceypy.datetime2et(epoch)]) * 1e9
-    exposures = exposures or np.full(shape=(1, energy_steps.shape[0], 3600), fill_value=1.)
+    exposures = exposures if exposures is not None else np.full(shape=(1, energy_steps.shape[0], 3600), fill_value=1.)
     return InputRectangularPointingSet(epoch, epoch_delta, epoch_j2000, repointing, exposures, energy_steps)
 
 

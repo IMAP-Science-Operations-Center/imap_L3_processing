@@ -26,6 +26,7 @@ class TestMapIntegration(unittest.TestCase):
             hi_test_data_dir / "imap_hi_l1c_90sensor-pset_20250415-repoint01000_v001.cdf",
             hi_test_data_dir / "imap_glows_l3e_survival-probability-hi-45_20250415-repoint01000_v001.cdf",
             hi_test_data_dir / "imap_glows_l3e_survival-probability-hi-45_20260418-repoint02000_v001.cdf",
+            hi_test_data_dir / "imap_hi_45sensor-esa-energies_20240101_v001.csv",
             INTEGRATION_TEST_DATA_PATH / "spice" / "naif020.tls",
             INTEGRATION_TEST_DATA_PATH / "spice" / "imap_science_108.tf",
             INTEGRATION_TEST_DATA_PATH / "spice" / "imap_sclk_008.tsc",
