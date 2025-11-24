@@ -16,72 +16,71 @@ class TestHiLoL3SurvivalDependencies(unittest.TestCase):
     @patch("imap_l3_processing.maps.hilo_l3_survival_dependencies.read_glows_l3e_data")
     @patch("imap_l3_processing.maps.hilo_l3_survival_dependencies.read_l1c_rectangular_pointing_set_data")
     @patch("imap_l3_processing.maps.hilo_l3_survival_dependencies.RectangularIntensityMapData.read_from_path")
-    def test_fetch_dependencies(self, mock_read_from_path: Mock, mock_read_l1c, mock_read_glows_l3e,
+    def test_fetch_dependencies(self, mock_read_from_path, mock_read_l1c, mock_read_glows_l3e,
                                 mock_imap_data_access_download, mock_parse_map_descriptor):
         for instrument in [Instrument.IMAP_HI, Instrument.IMAP_LO]:
-            with self.subTest(instrument.value):
-                mock_read_from_path.reset_mock()
-                mock_parse_map_descriptor.reset_mock()
+            mock_read_from_path.reset_mock()
+            mock_parse_map_descriptor.reset_mock()
 
-                l1c_file_names = [f"imap_{instrument.value}_l1c_45sensor-pset_20201001_v001.cdf",
-                                  f"imap_{instrument.value}_l1c_45sensor-pset_20201002_v002.cdf",
-                                  f"imap_{instrument.value}_l1c_45sensor-pset_20201003_v001.cdf"]
-                glows_file_names = [
-                    f"imap_glows_l3e_survival-probability-{instrument.value}_20201001_v001.cdf",
-                    f"imap_glows_l3e_survival-probability-{instrument.value}_20201002_v002.cdf",
-                    f"imap_glows_l3e_survival-probability-{instrument.value}_20201003_v003.cdf"]
+            l1c_file_names = [f"imap_{instrument.value}_l1c_45sensor-pset_20201001_v001.cdf",
+                              f"imap_{instrument.value}_l1c_45sensor-pset_20201002_v002.cdf",
+                              f"imap_{instrument.value}_l1c_45sensor-pset_20201003_v001.cdf"]
+            glows_file_names = [
+                f"imap_glows_l3e_survival-probability-{instrument.value}_20201001_v001.cdf",
+                f"imap_glows_l3e_survival-probability-{instrument.value}_20201002_v002.cdf",
+                f"imap_glows_l3e_survival-probability-{instrument.value}_20201003_v003.cdf"]
 
-                l2_map_descriptor = f"{instrument.value}-ena-h-hf-nsp-ram-hae-6deg-1yr"
-                l2_filename = f"imap_{instrument.value}_l2_{l2_map_descriptor}_20250415_v001.cdf"
+            l2_map_descriptor = f"ena-h-sf-nsp-ram-hae-6deg-1yr"
+            l2_filename = f"imap_{instrument.value}_l2_{l2_map_descriptor}_20250415_v001.cdf"
 
-                dependencies = ProcessingInputCollection(
-                    ScienceInput(l2_filename),
-                    *[ScienceInput(l1c) for l1c in l1c_file_names],
-                    *[ScienceInput(l3e) for l3e in glows_file_names]
-                )
+            dependencies = ProcessingInputCollection(
+                ScienceInput(l2_filename),
+                *[ScienceInput(l1c) for l1c in l1c_file_names],
+                *[ScienceInput(l3e) for l3e in glows_file_names]
+            )
 
-                downloaded_files = [sentinel.l2_file_path, sentinel.l1c_file_path_1,
-                                    sentinel.l1c_file_path_2,
-                                    sentinel.l1c_file_path_3, sentinel.glows_file_path_1,
-                                    sentinel.glows_file_path_2, sentinel.glows_file_path_3]
+            downloaded_files = [sentinel.l2_file_path, sentinel.l1c_file_path_1,
+                                sentinel.l1c_file_path_2,
+                                sentinel.l1c_file_path_3, sentinel.glows_file_path_1,
+                                sentinel.glows_file_path_2, sentinel.glows_file_path_3]
 
-                mock_imap_data_access_download.side_effect = downloaded_files
-                mock_read_l1c.side_effect = [sentinel.l1c_data_1, sentinel.l1c_data_2, sentinel.l1c_data_3]
+            mock_imap_data_access_download.side_effect = downloaded_files
+            mock_read_l1c.side_effect = [sentinel.l1c_data_1, sentinel.l1c_data_2, sentinel.l1c_data_3]
 
-                mock_read_glows_l3e.side_effect = [sentinel.glows_data_1, sentinel.glows_data_2,
-                                                   sentinel.glows_data_3]
+            mock_read_glows_l3e.side_effect = [sentinel.glows_data_1, sentinel.glows_data_2,
+                                               sentinel.glows_data_3]
 
-                actual = HiLoL3SurvivalDependencies.fetch_dependencies(dependencies, instrument)
+            actual = HiLoL3SurvivalDependencies.fetch_dependencies(dependencies, instrument)
 
-                expected_imap_data_access_calls = [call(l2_filename)] + [call(path) for path in
-                                                                         l1c_file_names + glows_file_names]
-                mock_imap_data_access_download.assert_has_calls(expected_imap_data_access_calls)
+            expected_imap_data_access_calls = [call(l2_filename)] + [call(path) for path in
+                                                                     l1c_file_names + glows_file_names]
+            mock_imap_data_access_download.assert_has_calls(expected_imap_data_access_calls)
 
-                mock_read_from_path.assert_called_once_with(sentinel.l2_file_path)
+            mock_read_from_path.assert_called_once_with(sentinel.l2_file_path)
 
-                mock_read_l1c.assert_has_calls([
-                    call(sentinel.l1c_file_path_1),
-                    call(sentinel.l1c_file_path_2),
-                    call(sentinel.l1c_file_path_3)
-                ])
+            mock_read_l1c.assert_has_calls([
+                call(sentinel.l1c_file_path_1),
+                call(sentinel.l1c_file_path_2),
+                call(sentinel.l1c_file_path_3)
+            ])
 
-                mock_read_glows_l3e.assert_has_calls([
-                    call(sentinel.glows_file_path_1),
-                    call(sentinel.glows_file_path_2),
-                    call(sentinel.glows_file_path_3)
-                ])
+            mock_read_glows_l3e.assert_has_calls([
+                call(sentinel.glows_file_path_1),
+                call(sentinel.glows_file_path_2),
+                call(sentinel.glows_file_path_3)
+            ])
 
-                mock_parse_map_descriptor.assert_called_once_with(l2_map_descriptor)
+            mock_parse_map_descriptor.assert_called_once_with(l2_map_descriptor)
 
-                self.assertEqual(actual.l2_data, mock_read_from_path.return_value)
-                self.assertEqual(actual.l1c_data, [sentinel.l1c_data_1,
-                                                   sentinel.l1c_data_2,
-                                                   sentinel.l1c_data_3])
-                self.assertEqual(actual.glows_l3e_data, [sentinel.glows_data_1,
-                                                         sentinel.glows_data_2,
-                                                         sentinel.glows_data_3, ])
-                self.assertEqual(actual.l2_map_descriptor_parts, mock_parse_map_descriptor.return_value)
-                self.assertEqual(actual.dependency_file_paths, downloaded_files)
+            self.assertEqual(actual.l2_data, mock_read_from_path.return_value)
+            self.assertEqual(actual.l1c_data, [sentinel.l1c_data_1,
+                                               sentinel.l1c_data_2,
+                                               sentinel.l1c_data_3])
+            self.assertEqual(actual.glows_l3e_data, [sentinel.glows_data_1,
+                                                     sentinel.glows_data_2,
+                                                     sentinel.glows_data_3, ])
+            self.assertEqual(actual.l2_map_descriptor_parts, mock_parse_map_descriptor.return_value)
+            self.assertEqual(actual.dependency_file_paths, downloaded_files)
 
     @patch("imap_l3_processing.maps.hilo_l3_survival_dependencies.HiLoL3SurvivalDependencies.fetch_dependencies")
     def test_fetch_single_sensor_full_spin_dependencies(self, mock_fetch_dependencies):

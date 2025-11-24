@@ -50,6 +50,17 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
                                          CoordNames.AZIMUTH_L1C.value: self.azimuths,
                                      })
 
+        exposure_mask = np.full(num_spin_angle_bins, False)
+
+        assert num_spin_angle_bins == 3600, "unexpected number of spin angles"
+        if spin_phase == SpinPhase.RamOnly:
+            exposure_mask[0:900] = True
+            exposure_mask[2700:3600] = True
+        elif spin_phase == SpinPhase.AntiRamOnly:
+            exposure_mask[900:2700] = True
+        else:
+            raise ValueError("Should not survival correct a full spin map!")
+
         if cg_corrected:
             et = ttj2000ns_to_et(repointing_midpoint)
 
@@ -72,16 +83,34 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
                 np.stack([dataset['hae_longitude'].values, dataset['hae_latitude'].values], axis=2),
                 dims=[CoordNames.ENERGY_L2.value, CoordNames.GENERIC_PIXEL.value, CoordNames.AZ_EL_VECTOR.value],
             )
+
+            exposures = np.full_like(l1c_dataset.exposure_times, np.nan)
+            for cg_energy_index, cg_energy in np.ndenumerate(dataset['energy_sc'].values):
+                best_guess = np.inf
+                best_guess_index = -1
+                for e_i, energy in enumerate(energies):
+                    guess = np.abs(energy - cg_energy)
+                    if guess < best_guess:
+                        best_guess = guess
+                        best_guess_index = e_i
+                    if guess > best_guess:
+                        break
+                exposures[0, cg_energy_index, :] = l1c_dataset.exposure_times[0, best_guess_index, :]
+
+            exposure = exposures * exposure_mask
+
         else:
             dataset = initial_dataset
             self.az_el_points = spacecraft_az_el_points
+            exposure = l1c_dataset.exposure_times * exposure_mask
 
         if glows_dataset is not None:
             glows_spin_bin_count = len(glows_dataset.spin_angle)
             sp_interpolated_to_hi_energies = np.empty(shape=(len(energies), glows_spin_bin_count))
             for spin_angle_index in range(glows_spin_bin_count):
+                energies_to_interpolate = dataset['energy_sc'].values if cg_corrected else energies
                 sp_interpolated_to_hi_energies[:, spin_angle_index] = np.interp(
-                    np.log10(energies),
+                    np.log10(energies_to_interpolate),
                     np.log10(glows_dataset.energy),
                     glows_dataset.probability_of_survival[0, :, spin_angle_index], )
 
@@ -91,19 +120,6 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
                     self.azimuths, glows_dataset.spin_angle, sp_interpolated_to_hi_energies[e_index])
         else:
             sp_interpolated_to_pset_angles = np.full((1, len(energies), 3600), np.nan)
-
-        exposure_mask = np.full(num_spin_angle_bins, False)
-
-        assert num_spin_angle_bins == 3600, "unexpected number of spin angles"
-        if spin_phase == SpinPhase.RamOnly:
-            exposure_mask[0:900] = True
-            exposure_mask[2700:3600] = True
-        elif spin_phase == SpinPhase.AntiRamOnly:
-            exposure_mask[900:2700] = True
-        else:
-            raise ValueError("Should not survival correct a full spin map!")
-
-        exposure = l1c_dataset.exposure_times * exposure_mask
 
         dataset["survival_probability_times_exposure"] = xr.DataArray(
             sp_interpolated_to_pset_angles * exposure,

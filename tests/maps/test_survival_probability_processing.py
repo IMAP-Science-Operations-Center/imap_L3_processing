@@ -8,7 +8,6 @@ from imap_processing.spice.geometry import SpiceFrame
 
 from imap_l3_processing.maps.hilo_l3_survival_dependencies import HiLoL3SurvivalDependencies
 from imap_l3_processing.maps.map_descriptors import PixelSize, parse_map_descriptor
-from imap_l3_processing.maps.map_models import RectangularIntensityMapData
 from imap_l3_processing.maps.survival_probability_processing import process_survival_probabilities
 from tests.maps.test_builders import create_rectangular_intensity_map_data, create_l1c_pset, create_l3e_pset
 from tests.spice_test_case import SpiceTestCase
@@ -24,7 +23,7 @@ class TestSurvivalProbabilityProcessing(SpiceTestCase):
         input_map_flux = rng.random((1, 9, 90, 45))
         epoch = datetime.now()
 
-        input_map: RectangularIntensityMapData = create_rectangular_intensity_map_data(epoch=[epoch], flux=input_map_flux)
+        input_map = create_rectangular_intensity_map_data(epoch=[epoch], flux=input_map_flux)
 
         intensity_map_data = input_map.intensity_map_data
         input_map.intensity_map_data.energy = sentinel.hi_l2_energies
@@ -35,7 +34,7 @@ class TestSurvivalProbabilityProcessing(SpiceTestCase):
                                                   l1c_data=sentinel.l1c_data,
                                                   glows_l3e_data=sentinel.glows_l3e_data,
                                                   l2_map_descriptor_parts=l2_descriptor_parts,
-                                                  dependency_file_paths=[], )
+                                                  dependency_file_paths=[])
 
         mock_combine_glows_l3e_with_l1c_pointing.return_value = [(sentinel.hi_l1c_1, sentinel.glows_l3e_1),
                                                                  (sentinel.hi_l1c_2, sentinel.glows_l3e_2),
@@ -115,7 +114,6 @@ class TestSurvivalProbabilityProcessing(SpiceTestCase):
                                       intensity_map_data.obs_date_range)
         np.testing.assert_array_equal(survival_data.intensity_map_data.solid_angle, intensity_map_data.solid_angle)
 
-
     def test_integration_uses_fill_values_for_missing_l3e_data(self):
         t1 = datetime(2025, 4, 29, 12)
         t2 = datetime(2025, 5, 7, 12)
@@ -136,7 +134,8 @@ class TestSurvivalProbabilityProcessing(SpiceTestCase):
         l2_intensity_map = create_rectangular_intensity_map_data()
 
         descriptor = parse_map_descriptor("h90-ena-h-sf-nsp-ram-hae-4deg-3mo")
-        survival_dependencies = HiLoL3SurvivalDependencies(l2_intensity_map, l1c_psets, l3e_psets, descriptor)
+        survival_dependencies = HiLoL3SurvivalDependencies(l2_intensity_map, l1c_psets, l3e_psets, descriptor,
+                                                           l2_intensity_map.intensity_map_data.energy)
 
         output_map = process_survival_probabilities(survival_dependencies, SpiceFrame.ECLIPJ2000)
         np.testing.assert_equal(output_map.intensity_map_data.ena_intensity[0, 0, 76, :], np.full(45, 2.0))

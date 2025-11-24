@@ -44,8 +44,11 @@ class HiLoL3SurvivalDependencies:
         glows_l3e_data = list(map(read_glows_l3e_data, glows_l3e_paths))
         l1c_data = list(map(read_l1c_rectangular_pointing_set_data, l1c_paths))
 
+        l2_data = RectangularIntensityMapData.read_from_path(map_file_path)
+
         paths = [map_file_path] + l1c_paths + glows_l3e_paths
-        return cls(l2_data=RectangularIntensityMapData.read_from_path(map_file_path), l1c_data=l1c_data,
+
+        return cls(l2_data, l1c_data=l1c_data,
                    glows_l3e_data=glows_l3e_data,
                    l2_map_descriptor_parts=parse_map_descriptor(l2_descriptor),
                    dependency_file_paths=paths)
