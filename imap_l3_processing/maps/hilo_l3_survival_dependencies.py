@@ -2,11 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional
 
 import imap_data_access
-import numpy as np
-import pandas as pd
 from imap_data_access import ScienceFilePath
 from imap_data_access.processing_input import ProcessingInputCollection
 
@@ -23,7 +20,6 @@ class HiLoL3SurvivalDependencies:
     l1c_data: list[InputRectangularPointingSet]
     glows_l3e_data: list[GlowsL3eRectangularMapInputData]
     l2_map_descriptor_parts: MapDescriptorParts
-    energies: np.ndarray
 
     dependency_file_paths: list[Path] = field(default_factory=list)
 
@@ -38,21 +34,13 @@ class HiLoL3SurvivalDependencies:
         l1c_downloaded_paths = [imap_data_access.download(l1c.name) for l1c in l1c_paths]
         glows_downloaded_paths = [imap_data_access.download(path.name) for path in glows_paths]
 
-        energy_downloaded_path = None
-        if instrument == Instrument.IMAP_HI:
-            sensor = "45sensor" if "45" in ScienceFilePath(l2_map_path).descriptor else "90sensor"
-            [energy_path] = dependencies.get_file_paths(descriptor=f"{sensor}-esa-energies")
-            energy_downloaded_path = imap_data_access.download(energy_path)
-
         l2_descriptor = ScienceFilePath(l2_map_path).descriptor
 
-        return cls.from_file_paths(map_file_path, l1c_downloaded_paths, glows_downloaded_paths, l2_descriptor,
-                                   energy_downloaded_path)
+        return cls.from_file_paths(map_file_path, l1c_downloaded_paths, glows_downloaded_paths, l2_descriptor)
 
     @classmethod
     def from_file_paths(cls, map_file_path: Path, l1c_paths: list[Path],
-                        glows_l3e_paths: list[Path], l2_descriptor: str,
-                        energy_path: Optional[Path]) -> HiLoL3SurvivalDependencies:
+                        glows_l3e_paths: list[Path], l2_descriptor: str) -> HiLoL3SurvivalDependencies:
         glows_l3e_data = list(map(read_glows_l3e_data, glows_l3e_paths))
         l1c_data = list(map(read_l1c_rectangular_pointing_set_data, l1c_paths))
 
@@ -60,17 +48,10 @@ class HiLoL3SurvivalDependencies:
 
         paths = [map_file_path] + l1c_paths + glows_l3e_paths
 
-        if energy_path is not None:
-            energies = pd.read_csv(energy_path, delimiter=",", comment="#")
-            energies = energies['nominal_central_energy'].dropna().to_numpy()
-            paths.append(energy_path)
-        else:
-            energies = l2_data.intensity_map_data.energy
-
         return cls(l2_data, l1c_data=l1c_data,
                    glows_l3e_data=glows_l3e_data,
                    l2_map_descriptor_parts=parse_map_descriptor(l2_descriptor),
-                   dependency_file_paths=paths, energies=energies)
+                   dependency_file_paths=paths)
 
 
 @dataclass

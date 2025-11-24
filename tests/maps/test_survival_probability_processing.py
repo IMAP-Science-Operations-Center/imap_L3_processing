@@ -34,8 +34,7 @@ class TestSurvivalProbabilityProcessing(SpiceTestCase):
                                                   l1c_data=sentinel.l1c_data,
                                                   glows_l3e_data=sentinel.glows_l3e_data,
                                                   l2_map_descriptor_parts=l2_descriptor_parts,
-                                                  dependency_file_paths=[],
-                                                  energies=sentinel.energies)
+                                                  dependency_file_paths=[])
 
         mock_combine_glows_l3e_with_l1c_pointing.return_value = [(sentinel.hi_l1c_1, sentinel.glows_l3e_1),
                                                                  (sentinel.hi_l1c_2, sentinel.glows_l3e_2),
@@ -68,10 +67,10 @@ class TestSurvivalProbabilityProcessing(SpiceTestCase):
 
         mock_survival_probability_pointing_set.assert_has_calls([
             call(sentinel.hi_l1c_1, sentinel.l2_sensor, sentinel.l2_spin, sentinel.glows_l3e_1,
-                 sentinel.energies),
+                 sentinel.hi_l2_energies),
             call(sentinel.hi_l1c_2, sentinel.l2_sensor, sentinel.l2_spin, sentinel.glows_l3e_2,
-                 sentinel.energies),
-            call(sentinel.hi_l1c_3, sentinel.l2_sensor, sentinel.l2_spin, sentinel.glows_l3e_3, sentinel.energies)
+                 sentinel.hi_l2_energies),
+            call(sentinel.hi_l1c_3, sentinel.l2_sensor, sentinel.l2_spin, sentinel.glows_l3e_3, sentinel.hi_l2_energies)
         ])
 
         mock_survival_skymap.assert_called_once_with([sentinel.pset_1, sentinel.pset_2, sentinel.pset_3],
