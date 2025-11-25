@@ -10,6 +10,7 @@ def combine_sensors(u45: HealPixIntensityMapData, u90: HealPixIntensityMapData) 
                  (u90.intensity_map_data.ena_intensity_sys_err * u90.intensity_map_data.exposure_factor)) /
                  (u45.intensity_map_data.exposure_factor + u90.intensity_map_data.exposure_factor))
 
-    intensity_static_error = (((u45.intensity_map_data.ena_intensity_stat_unc * u45.intensity_map_data.exposure_factor) +
-                 (u90.intensity_map_data.ena_intensity_stat_unc * u90.intensity_map_data.exposure_factor)) /
+    intensity_static_error = (
+                ((u45.intensity_map_data.ena_intensity_stat_uncert * u45.intensity_map_data.exposure_factor) +
+                 (u90.intensity_map_data.ena_intensity_stat_uncert * u90.intensity_map_data.exposure_factor)) /
                  (u45.intensity_map_data.exposure_factor + u90.intensity_map_data.exposure_factor))

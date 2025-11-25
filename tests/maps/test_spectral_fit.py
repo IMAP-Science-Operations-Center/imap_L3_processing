@@ -73,7 +73,7 @@ class TestSpectralFit(unittest.TestCase):
             solid_angle=np.full(full_shape, 1.23),
             ena_intensity=np.array(flux_data).reshape(full_shape),
             ena_intensity_sys_err=np.array([]),
-            ena_intensity_stat_unc=np.array(errors).reshape(full_shape)
+            ena_intensity_stat_uncert=np.array(errors).reshape(full_shape)
         )
 
         spectral_intensity_map = fit_spectral_index_map(data)
@@ -119,7 +119,7 @@ class TestSpectralFit(unittest.TestCase):
             solid_angle=np.full((len(longitude), len(latitude)), 0.1),
             ena_intensity=np.full(input_shape, 1),
             ena_intensity_sys_err=np.full(input_shape, 1),
-            ena_intensity_stat_unc=np.full(input_shape, 1)
+            ena_intensity_stat_uncert=np.full(input_shape, 1)
         )
 
         input_map.obs_date[0, 0] = datetime(2025, 1, 1)
@@ -306,7 +306,7 @@ class TestSpectralFit(unittest.TestCase):
             solid_angle=np.full(full_shape, 1.23),
             ena_intensity=flux,
             ena_intensity_sys_err=np.zeros_like(flux),
-            ena_intensity_stat_unc=np.array(variance).reshape(full_shape)
+            ena_intensity_stat_uncert=np.array(variance).reshape(full_shape)
         )
 
         output_energies = np.array([[1, 100.5], [100.5, 10000.5]])

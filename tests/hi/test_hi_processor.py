@@ -60,7 +60,8 @@ class TestHiProcessor(unittest.TestCase):
         product = processor.process()
 
         mock_fetch_dependencies.assert_called_with(upstream_dependencies)
-        mock_spectral_fit.assert_called_once_with(intensity_data.ena_intensity, intensity_data.ena_intensity_stat_unc,
+        mock_spectral_fit.assert_called_once_with(intensity_data.ena_intensity,
+                                                  intensity_data.ena_intensity_stat_uncert,
                                                   intensity_data.energy)
 
         mock_save_data.assert_called_once()

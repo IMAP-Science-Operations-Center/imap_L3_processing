@@ -41,7 +41,7 @@ def create_l2_map_from_instrument_team(folder: Path, output_dir: Path, pixel_siz
     intensity = np.array([data['flux'][key] for key in sorted(data['flux'].keys())])
     ena_intensity = intensity.reshape(1, *intensity.shape)
 
-    ena_intensity_stat_unc = np.array([data['sigma'][key] for key in sorted(data['sigma'].keys())])[np.newaxis, ...]
+    ena_intensity_stat_uncert = np.array([data['sigma'][key] for key in sorted(data['sigma'].keys())])[np.newaxis, ...]
 
     # interpolate the original grid onto a new spacing
     if not np.isclose(pixel_size, 4):
@@ -58,13 +58,13 @@ def create_l2_map_from_instrument_team(folder: Path, output_dir: Path, pixel_siz
             new_ena_intensity[0, energy_i] = interp(coords).T
 
             interp = scipy.interpolate.RegularGridInterpolator((lon_4_deg, lat_4_deg),
-                                                               ena_intensity_stat_unc[0, energy_i])
+                                                               ena_intensity_stat_uncert[0, energy_i])
             new_ena_intensity_stat_unc[0, energy_i] = interp(coords).T
 
         ena_intensity = new_ena_intensity
-        ena_intensity_stat_unc = new_ena_intensity_stat_unc
+        ena_intensity_stat_uncert = new_ena_intensity_stat_unc
 
-    ena_intensity_sys_err = ena_intensity_stat_unc / 2
+    ena_intensity_sys_err = ena_intensity_stat_uncert / 2
 
     solid_angle = build_solid_angle_map(pixel_size)
 
@@ -91,7 +91,7 @@ def create_l2_map_from_instrument_team(folder: Path, output_dir: Path, pixel_siz
         cdf.new("longitude_delta", lon_delta, recVary=False, type=pycdf.const.CDF_FLOAT)
         cdf.new("longitude_label", lon_label, recVary=False, type=pycdf.const.CDF_CHAR)
         cdf.new("ena_intensity", ena_intensity, recVary=True, type=pycdf.const.CDF_FLOAT)
-        cdf.new("ena_intensity_stat_unc", ena_intensity_stat_unc, recVary=True, type=pycdf.const.CDF_FLOAT)
+        cdf.new("ena_intensity_stat_uncert", ena_intensity_stat_uncert, recVary=True, type=pycdf.const.CDF_FLOAT)
         cdf.new("ena_intensity_sys_err", ena_intensity_sys_err, recVary=True, type=pycdf.const.CDF_FLOAT)
         cdf.new("exposure_factor", exposure_factor, recVary=True, type=pycdf.const.CDF_FLOAT)
         cdf.new("obs_date", obs_date, recVary=True, type=pycdf.const.CDF_TIME_TT2000)

@@ -46,13 +46,13 @@ def slice_energy_range(data: IntensityMapData, start: float, end: float) -> Inte
                                obs_date_range=data.obs_date_range[:, energy_mask],
                                ena_intensity=data.ena_intensity[:, energy_mask],
                                ena_intensity_sys_err=data.ena_intensity_sys_err[:, energy_mask],
-                               ena_intensity_stat_unc=data.ena_intensity_stat_unc[:, energy_mask]
+                               ena_intensity_stat_uncert=data.ena_intensity_stat_uncert[:, energy_mask]
                                )
 
 
 def fit_spectral_index_map(intensity_data: IntensityMapData) -> SpectralIndexMapData:
     fluxes = intensity_data.ena_intensity
-    uncertainty = intensity_data.ena_intensity_stat_unc
+    uncertainty = intensity_data.ena_intensity_stat_uncert
     energy = intensity_data.energy
 
     min_energy = intensity_data.energy[0] - intensity_data.energy_delta_minus[0]

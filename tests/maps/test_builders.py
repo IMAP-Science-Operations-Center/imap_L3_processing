@@ -44,7 +44,7 @@ def create_rectangular_intensity_map_data(epoch=None, epoch_delta=None, lon=None
             obs_date_range=np.ma.array(np.full_like(more_real_flux, 0)),
             solid_angle=np.full_like(more_real_flux, 0),
             ena_intensity=flux,
-            ena_intensity_stat_unc=intensity_stat_uncert,
+            ena_intensity_stat_uncert=intensity_stat_uncert,
             ena_intensity_sys_err=flux * .001,
             bg_intensity=flux * .01,
             bg_intensity_stat_uncert=intensity_stat_uncert * .01,

@@ -209,7 +209,7 @@ def _write_ultra_l2_cdf_with_parents(out_path=get_run_local_data_path("ultra/fak
                 type=pycdf.const.CDF_TIME_TT2000.value)
         cdf.new("obs_date_range", np.full_like(out_xarray["counts"].values, 1))
         cdf.new("solid_angle", np.full_like(out_xarray[CoordNames.HEALPIX_INDEX.value].values, 1))
-        cdf.new("ena_intensity_stat_unc", np.full_like(out_xarray["counts"].values, 1))
+        cdf.new("ena_intensity_stat_uncert", np.full_like(out_xarray["counts"].values, 1))
         cdf.new("ena_intensity_sys_err", np.full_like(out_xarray["counts"].values, 1))
         cdf.new("pixel_index_label", [str(val) for val in out_xarray[CoordNames.HEALPIX_INDEX.value].values])
 

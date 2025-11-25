@@ -52,7 +52,7 @@ def _create_example_ultra_l2_map_with_power_law(out_path: Path, parents: list[st
                 type=pycdf.const.CDF_TIME_TT2000.value)
         cdf.new("obs_date_range", np.full_like(ena_intensities, 1))
         cdf.new("solid_angle", np.full_like(ena_intensities, 1), recVary=False)
-        cdf.new("ena_intensity_stat_unc", ena_intensities_delta)
+        cdf.new("ena_intensity_stat_uncert", ena_intensities_delta)
         cdf.new("ena_intensity_sys_err", np.full_like(ena_intensities, 1))
         cdf.new("latitude_label", lat.astype(str), recVary=False)
         cdf.new("longitude_label", lon.astype(str), recVary=False)

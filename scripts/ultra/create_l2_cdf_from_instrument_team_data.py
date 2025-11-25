@@ -32,8 +32,8 @@ for folder in parent.iterdir():
     energy_delta_plus = np.full(energy.shape, 1.0)
     energy_delta_minus = np.full(energy.shape, 1.0)
     energy_label = energy.astype(str)
-    ena_intensity_stat_unc = np.array([data['sigma'][key] for key in sorted(data['sigma'].keys())])[np.newaxis, ...]
-    ena_intensity_sys_err = ena_intensity_stat_unc / 2
+    ena_intensity_stat_uncert = np.array([data['sigma'][key] for key in sorted(data['sigma'].keys())])[np.newaxis, ...]
+    ena_intensity_sys_err = ena_intensity_stat_uncert / 2
 
     epoch = np.array([datetime.now()])
     epoch_delta = np.array([FIVE_MINUTES_IN_NANOSECONDS])
@@ -58,7 +58,7 @@ for folder in parent.iterdir():
         cdf.new("latitude", lat, recVary=False, type=pycdf.const.CDF_FLOAT)
         cdf.new("longitude", lon, recVary=False, type=pycdf.const.CDF_FLOAT)
         cdf.new("ena_intensity", ena_intensity, recVary=True, type=pycdf.const.CDF_FLOAT)
-        cdf.new("ena_intensity_stat_unc", ena_intensity_stat_unc, recVary=True, type=pycdf.const.CDF_FLOAT)
+        cdf.new("ena_intensity_stat_uncert", ena_intensity_stat_uncert, recVary=True, type=pycdf.const.CDF_FLOAT)
         cdf.new("ena_intensity_sys_err", ena_intensity_sys_err, recVary=True, type=pycdf.const.CDF_FLOAT)
         cdf.new("exposure_factor", exposure_factor, recVary=True, type=pycdf.const.CDF_FLOAT)
         cdf.new("obs_date", obs_date, recVary=True, type=pycdf.const.CDF_TIME_TT2000)

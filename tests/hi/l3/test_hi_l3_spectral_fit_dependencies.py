@@ -63,7 +63,7 @@ class TestHiL3SpectralFitDependencies(unittest.TestCase):
 def _create_intensity_map_data(ena_intensity=None, energy=None, energy_delta_plus=None, energy_delta_minus=None):
     return IntensityMapData(
         ena_intensity=ena_intensity if ena_intensity is not None else np.full((1, 1, 8, 15), 1),
-        ena_intensity_stat_unc=None,
+        ena_intensity_stat_uncert=None,
         ena_intensity_sys_err=None,
         epoch=None,
         epoch_delta=None,

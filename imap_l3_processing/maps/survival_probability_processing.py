@@ -31,12 +31,12 @@ def process_survival_probabilities(survival_probabilities_dependencies: HiLoL3Su
     survival_probabilities = survival_dataset["exposure_weighted_survival_probabilities"].values
 
     survival_corrected_intensity = input_data.ena_intensity / survival_probabilities
-    corrected_stat_unc = input_data.ena_intensity_stat_unc / survival_probabilities
+    corrected_stat_uncert = input_data.ena_intensity_stat_uncert / survival_probabilities
     corrected_sys_err = input_data.ena_intensity_sys_err / survival_probabilities
 
     map_data = RectangularIntensityMapData(
         intensity_map_data=IntensityMapData(
-            ena_intensity_stat_unc=corrected_stat_unc,
+            ena_intensity_stat_uncert=corrected_stat_uncert,
             ena_intensity_sys_err=corrected_sys_err,
             ena_intensity=survival_corrected_intensity,
             epoch=input_data.epoch,

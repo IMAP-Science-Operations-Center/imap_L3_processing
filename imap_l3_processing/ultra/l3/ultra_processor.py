@@ -94,12 +94,12 @@ class UltraProcessor(MapProcessor):
         survival_probability_map = corrected_skymap.to_dataset()["exposure_weighted_survival_probabilities"].values
 
         corrected_intensity = intensity_data.ena_intensity / survival_probability_map
-        corrected_stat_unc = intensity_data.ena_intensity_stat_unc / survival_probability_map
+        corrected_stat_uncert = intensity_data.ena_intensity_stat_uncert / survival_probability_map
         corrected_sys_unc = intensity_data.ena_intensity_sys_err / survival_probability_map
 
         healpix_map_data = HealPixIntensityMapData(
             intensity_map_data=IntensityMapData(
-                ena_intensity_stat_unc=corrected_stat_unc,
+                ena_intensity_stat_uncert=corrected_stat_uncert,
                 ena_intensity_sys_err=corrected_sys_unc,
                 ena_intensity=corrected_intensity,
                 epoch=intensity_data.epoch,
@@ -138,7 +138,7 @@ class UltraProcessor(MapProcessor):
         variables_to_convert_to_rectangular = [
             "exposure_factor",
             "ena_intensity",
-            "ena_intensity_stat_unc",
+            "ena_intensity_stat_uncert",
             "ena_intensity_sys_err",
             "obs_date",
             "obs_date_range",
@@ -167,7 +167,7 @@ class UltraProcessor(MapProcessor):
             solid_angle=rectangular_map.solid_angle_grid.T,
             exposure_factor=rectangular_map_xarray_dataset["exposure_factor"].values,
             ena_intensity=rectangular_map_xarray_dataset["ena_intensity"].values,
-            ena_intensity_stat_unc=rectangular_map_xarray_dataset["ena_intensity_stat_unc"].values,
+            ena_intensity_stat_uncert=rectangular_map_xarray_dataset["ena_intensity_stat_uncert"].values,
             ena_intensity_sys_err=rectangular_map_xarray_dataset["ena_intensity_sys_err"].values,
         )
         rect_intensity_map_data = RectangularIntensityMapData(intensity_map_data, coords=RectangularCoords(

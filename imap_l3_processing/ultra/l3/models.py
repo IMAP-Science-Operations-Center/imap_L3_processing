@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -76,7 +77,7 @@ class UltraL1CPSet:
                     ],
                     self.counts,
                 ),
-                "exposure_time": (
+                "exposure_factor": (
                     [CoordNames.TIME.value,
                      CoordNames.ENERGY_ULTRA_L1C.value,
                      CoordNames.HEALPIX_INDEX.value],

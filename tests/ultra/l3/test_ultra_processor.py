@@ -128,7 +128,7 @@ class TestUltraProcessor(unittest.TestCase):
             "obs_date_range": Mock(values=sentinel.rectangular_obs_date_range),
             "exposure_factor": Mock(values=sentinel.rectangular_exposure_factor),
             "ena_intensity": Mock(values=sentinel.rectangular_ena_intensity),
-            "ena_intensity_stat_unc": Mock(values=sentinel.rectangular_ena_intensity_stat_unc),
+            "ena_intensity_stat_uncert": Mock(values=sentinel.rectangular_ena_intensity_stat_uncert),
             "ena_intensity_sys_err": Mock(values=sentinel.rectangular_ena_intensity_sys_err),
         }
 
@@ -166,8 +166,8 @@ class TestUltraProcessor(unittest.TestCase):
 
         np.testing.assert_array_equal(actual_intensity_map_data.ena_intensity,
                                       intensity_data.ena_intensity / computed_survival_probabilities)
-        np.testing.assert_array_equal(actual_intensity_map_data.ena_intensity_stat_unc,
-                                      intensity_data.ena_intensity_stat_unc / computed_survival_probabilities)
+        np.testing.assert_array_equal(actual_intensity_map_data.ena_intensity_stat_uncert,
+                                      intensity_data.ena_intensity_stat_uncert / computed_survival_probabilities)
         np.testing.assert_array_equal(actual_intensity_map_data.ena_intensity_sys_err,
                                       intensity_data.ena_intensity_sys_err / computed_survival_probabilities)
 
@@ -190,7 +190,7 @@ class TestUltraProcessor(unittest.TestCase):
         expected_value_keys = [
             "exposure_factor",
             "ena_intensity",
-            "ena_intensity_stat_unc",
+            "ena_intensity_stat_uncert",
             "ena_intensity_sys_err",
             "obs_date",
             "obs_date_range",
@@ -222,7 +222,7 @@ class TestUltraProcessor(unittest.TestCase):
 
         self.assertEqual(actual_rectangular_data.intensity_map_data.exposure_factor, sentinel.rectangular_exposure_factor)
         self.assertEqual(actual_rectangular_data.intensity_map_data.ena_intensity, sentinel.rectangular_ena_intensity)
-        self.assertEqual(actual_rectangular_data.intensity_map_data.ena_intensity_stat_unc, sentinel.rectangular_ena_intensity_stat_unc)
+        self.assertEqual(actual_rectangular_data.intensity_map_data.ena_intensity_stat_uncert, sentinel.rectangular_ena_intensity_stat_uncert)
         self.assertEqual(actual_rectangular_data.intensity_map_data.ena_intensity_sys_err, sentinel.rectangular_ena_intensity_sys_err)
         np.testing.assert_array_equal(actual_rectangular_data.intensity_map_data.obs_date, expected_converted_datetimes)
         self.assertEqual(actual_rectangular_data.intensity_map_data.obs_date_range, sentinel.rectangular_obs_date_range)
@@ -414,7 +414,7 @@ class TestUltraProcessor(unittest.TestCase):
             "obs_date_range": Mock(values=sentinel.rectangular_obs_date_range),
             "exposure_factor": Mock(values=sentinel.rectangular_exposure_factor),
             "ena_intensity": Mock(values=sentinel.rectangular_ena_intensity),
-            "ena_intensity_stat_unc": Mock(values=sentinel.rectangular_ena_intensity_stat_unc),
+            "ena_intensity_stat_uncert": Mock(values=sentinel.rectangular_ena_intensity_stat_unc),
             "ena_intensity_sys_err": Mock(values=sentinel.rectangular_ena_intensity_sys_err),
         }
 
@@ -531,7 +531,7 @@ def _create_ultra_l2_data(epoch=None, lon=None, lat=None, energy=None, energy_de
     energy = energy if energy is not None else np.array([1.0])
     energy_delta = energy_delta if energy_delta is not None else np.full((len(energy), 2), 1)
     flux = flux if flux is not None else np.full((len(epoch), len(energy), len(healpix_indices)), fill_value=1)
-    intensity_stat_unc = intensity_stat_unc if intensity_stat_unc is not None else np.full(
+    intensity_stat_uncert = intensity_stat_unc if intensity_stat_unc is not None else np.full(
         flux.shape,
         fill_value=1)
 
@@ -555,7 +555,7 @@ def _create_ultra_l2_data(epoch=None, lon=None, lat=None, energy=None, energy_de
             obs_date_range=np.full_like(more_real_flux, 0),
             solid_angle=np.full_like(more_real_flux, 0),
             ena_intensity=flux,
-            ena_intensity_stat_unc=intensity_stat_unc,
+            ena_intensity_stat_uncert=intensity_stat_uncert,
             ena_intensity_sys_err=np.full_like(flux, 0),
         ),
         HealPixCoords(

@@ -89,7 +89,7 @@ class RectangularCoords:
 @dataclass
 class IntensityMapData(MapData):
     ena_intensity: np.ndarray
-    ena_intensity_stat_unc: np.ndarray
+    ena_intensity_stat_uncert: np.ndarray
     ena_intensity_sys_err: np.ndarray
     bg_intensity: Optional[np.ndarray] = None
     bg_intensity_stat_uncert: Optional[np.ndarray] = None
@@ -148,7 +148,7 @@ class HealPixIntensityMapData:
                 "obs_date": (full_shape, self.intensity_map_data.obs_date),
                 "exposure_factor": (full_shape, self.intensity_map_data.exposure_factor),
                 "ena_intensity": (full_shape, self.intensity_map_data.ena_intensity),
-                "ena_intensity_stat_unc": (full_shape, self.intensity_map_data.ena_intensity_stat_unc),
+                "ena_intensity_stat_uncert": (full_shape, self.intensity_map_data.ena_intensity_stat_uncert),
                 "ena_intensity_sys_err": (full_shape, self.intensity_map_data.ena_intensity_sys_err),
             },
             coords={
@@ -203,7 +203,7 @@ def _read_intensity_map_data_from_open_cdf(cdf: CDF) -> IntensityMapData:
                                           obs_date_range=read_variable_and_mask_fill_values(cdf["obs_date_range"]),
                                           solid_angle=read_numeric_variable(cdf["solid_angle"]),
                                           ena_intensity=read_numeric_variable(cdf["ena_intensity"]),
-                                          ena_intensity_stat_unc=read_numeric_variable(
+                                          ena_intensity_stat_uncert=read_numeric_variable(
                                               cdf["ena_intensity_stat_uncert"]),
                                           ena_intensity_sys_err=read_numeric_variable(cdf["ena_intensity_sys_err"]), )
 
@@ -237,7 +237,7 @@ def _read_intensity_map_data_from_xarray(dataset: xarray.Dataset) -> IntensityMa
         obs_date_range=np.full_like(dataset["obs_date"].values, np.nan),
         solid_angle=np.full_like(dataset["latitude"].values, np.nan),
         ena_intensity=dataset["ena_intensity"].values,
-        ena_intensity_stat_unc=dataset["ena_intensity_stat_unc"].values,
+        ena_intensity_stat_uncert=dataset["ena_intensity_stat_uncert"].values,
         ena_intensity_sys_err=np.full_like(dataset["ena_intensity_sys_err"].values, np.nan)
     )
 
@@ -360,7 +360,7 @@ def _spectral_index_data_variables(data: SpectralIndexMapData) -> list[DataProdu
 def _intensity_data_variables(data: IntensityMapData) -> list[DataProductVariable]:
     intensity_variables = [
         DataProductVariable(ENA_INTENSITY_VAR_NAME, data.ena_intensity),
-        DataProductVariable(ENA_INTENSITY_STAT_UNC_VAR_NAME, data.ena_intensity_stat_unc),
+        DataProductVariable(ENA_INTENSITY_STAT_UNC_VAR_NAME, data.ena_intensity_stat_uncert),
         DataProductVariable(ENA_INTENSITY_SYS_ERR_VAR_NAME, data.ena_intensity_sys_err),
     ]
     if data.bg_intensity is not None:
@@ -416,7 +416,7 @@ def combine_intensity_map_data(maps: list[IntensityMapData], exposure_weighted: 
 
     first_map_dict = dataclasses.asdict(first_map)
 
-    fields_which_may_differ = {"ena_intensity", "ena_intensity_stat_unc", "ena_intensity_sys_err",
+    fields_which_may_differ = {"ena_intensity", "ena_intensity_stat_uncert", "ena_intensity_sys_err",
                                "bg_intensity", "bg_intensity_stat_uncert", "bg_intensity_sys_err",
                                "exposure_factor", "obs_date", "obs_date_range"}
 
@@ -431,7 +431,7 @@ def combine_intensity_map_data(maps: list[IntensityMapData], exposure_weighted: 
 
     intensities = np.array([m.ena_intensity for m in maps])
     intensity_sys_err = np.array([m.ena_intensity_sys_err for m in maps])
-    intensity_stat_unc = np.array([m.ena_intensity_stat_unc for m in maps])
+    intensity_stat_unc = np.array([m.ena_intensity_stat_uncert for m in maps])
     exposures = np.array([m.exposure_factor for m in maps])
 
     mask = np.isnan(intensities) | (exposures == 0) | np.isnan(exposures)
@@ -445,7 +445,7 @@ def combine_intensity_map_data(maps: list[IntensityMapData], exposure_weighted: 
     weights = exposures if exposure_weighted else np.full_like(exposures, 1)
     masked_weights = np.where(mask, 0, weights)
 
-    combined_intensity_stat_unc = calculated_weighted_uncertainty(intensity_stat_unc, masked_weights)
+    combined_intensity_stat_uncert = calculated_weighted_uncertainty(intensity_stat_unc, masked_weights)
     combined_intensity_sys_err = calculated_weighted_uncertainty(intensity_sys_err, masked_weights)
 
     summed_intensity = np.sum(intensities * masked_weights, axis=0)
@@ -457,7 +457,7 @@ def combine_intensity_map_data(maps: list[IntensityMapData], exposure_weighted: 
                                ena_intensity=exposure_weighted_summed_intensity,
                                exposure_factor=summed_exposures,
                                ena_intensity_sys_err=combined_intensity_sys_err,
-                               ena_intensity_stat_unc=combined_intensity_stat_unc,
+                               ena_intensity_stat_uncert=combined_intensity_stat_uncert,
                                obs_date=avg_obs_date
                                )
 

@@ -81,8 +81,8 @@ class TestSurvivalProbabilityProcessing(SpiceTestCase):
 
         np.testing.assert_array_equal(survival_data.intensity_map_data.ena_intensity,
                                       intensity_map_data.ena_intensity / computed_survival_probabilities)
-        np.testing.assert_array_equal(survival_data.intensity_map_data.ena_intensity_stat_unc,
-                                      intensity_map_data.ena_intensity_stat_unc / computed_survival_probabilities)
+        np.testing.assert_array_equal(survival_data.intensity_map_data.ena_intensity_stat_uncert,
+                                      intensity_map_data.ena_intensity_stat_uncert / computed_survival_probabilities)
         np.testing.assert_array_equal(survival_data.intensity_map_data.ena_intensity_sys_err,
                                       intensity_map_data.ena_intensity_sys_err / computed_survival_probabilities)
 
