@@ -1,5 +1,7 @@
+from datetime import datetime
 from typing import Iterable
 
+from spacepy import pycdf
 from spacepy.pycdf import CDF
 from uncertainties.unumpy import uarray
 
@@ -11,7 +13,9 @@ from imap_l3_processing.swapi.l3a.models import SwapiL2Data, SwapiL3AlphaSolarWi
 
 
 def read_l2_swapi_data(cdf: CDF) -> SwapiL2Data:
-    return SwapiL2Data(cdf.raw_var("sci_start_time")[...],
+    sci_start_times = pycdf.lib.v_datetime_to_tt2000(
+        [datetime.fromisoformat(x) for x in cdf["sci_start_time"][...]])
+    return SwapiL2Data(sci_start_times,
                        read_numeric_variable(cdf["swp_esa_energy"]),
                        read_numeric_variable(cdf["swp_coin_rate"]),
                        read_numeric_variable(cdf["swp_coin_rate_stat_uncert_plus"]))
