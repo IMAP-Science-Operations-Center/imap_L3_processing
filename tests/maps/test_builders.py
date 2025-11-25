@@ -94,7 +94,7 @@ def create_rectangular_spectral_index_map_data(epoch=None, epoch_delta=None, lon
             obs_date_range=np.ma.array(np.full_like(more_real_flux, 0)),
             solid_angle=np.full_like(more_real_flux, 0),
             ena_spectral_index=spectral_index,
-            ena_spectral_index_stat_unc=spectral_index_stat_unc
+            ena_spectral_index_stat_uncert=spectral_index_stat_unc
         ),
         coords=RectangularCoords(
             latitude_delta=np.full_like(lat, 0),

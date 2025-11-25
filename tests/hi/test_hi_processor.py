@@ -79,7 +79,7 @@ class TestHiProcessor(unittest.TestCase):
         np.testing.assert_array_equal(expected_energy_delta_plus, spectral_index_data.energy_delta_plus)
         np.testing.assert_array_equal(expected_index, spectral_index_data.ena_spectral_index)
         np.testing.assert_array_equal(expected_unc,
-                                      spectral_index_data.ena_spectral_index_stat_unc)
+                                      spectral_index_data.ena_spectral_index_stat_uncert)
         np.testing.assert_array_equal(spectral_index_data.energy, expected_energy)
         np.testing.assert_array_equal(spectral_index_data.latitude, intensity_data.latitude)
         np.testing.assert_array_equal(spectral_index_data.longitude, intensity_data.longitude)
@@ -136,7 +136,7 @@ class TestHiProcessor(unittest.TestCase):
 
                 np.testing.assert_allclose(output_data.spectral_index_map_data.ena_spectral_index[0, 0],
                                            expected_gamma, atol=1e-3)
-                np.testing.assert_allclose(output_data.spectral_index_map_data.ena_spectral_index_stat_unc[0, 0],
+                np.testing.assert_allclose(output_data.spectral_index_map_data.ena_spectral_index_stat_uncert[0, 0],
                                            expected_gamma_sigma, atol=1e-3)
 
     def test_spectral_fit_fields_other_than_fit_fields(self):

@@ -85,7 +85,7 @@ class TestSpectralFit(unittest.TestCase):
         np.testing.assert_array_equal(spectral_intensity_map.ena_spectral_index,
                                       np.array(true_gamma).reshape(1, 1, 1, 1))
 
-        np.testing.assert_array_almost_equal(spectral_intensity_map.ena_spectral_index_stat_unc,
+        np.testing.assert_array_almost_equal(spectral_intensity_map.ena_spectral_index_stat_uncert,
                                              np.array([0.060068]).reshape(1, 1, 1, 1))
         np.testing.assert_array_almost_equal(spectral_intensity_map.energy, [expected_energy_midpoint])
         np.testing.assert_array_almost_equal(spectral_intensity_map.energy_delta_minus, [expected_energy_minus])
@@ -314,9 +314,9 @@ class TestSpectralFit(unittest.TestCase):
         spectral_index_map_data = calculate_spectral_index_for_multiple_ranges(data, output_energies)
         np.testing.assert_array_equal(spectral_index_map_data.ena_spectral_index[0, 0, 0, 0], true_gamma_range_1)
         np.testing.assert_array_equal(spectral_index_map_data.ena_spectral_index[0, 1, 0, 0], true_gamma_range_2)
-        np.testing.assert_array_almost_equal(spectral_index_map_data.ena_spectral_index_stat_unc[0, 0, 0, 0],
+        np.testing.assert_array_almost_equal(spectral_index_map_data.ena_spectral_index_stat_uncert[0, 0, 0, 0],
                                              0.020704)
-        np.testing.assert_array_almost_equal(spectral_index_map_data.ena_spectral_index_stat_unc[0, 1, 0, 0],
+        np.testing.assert_array_almost_equal(spectral_index_map_data.ena_spectral_index_stat_uncert[0, 1, 0, 0],
                                              2.00179e-05)
 
         np.testing.assert_almost_equal(spectral_index_map_data.energy,
@@ -408,5 +408,5 @@ class TestSpectralFit(unittest.TestCase):
 
                 np.testing.assert_allclose(output_data.ena_spectral_index[0, 0],
                                            expected_gamma, atol=1e-3)
-                np.testing.assert_allclose(output_data.ena_spectral_index_stat_unc[0, 0],
+                np.testing.assert_allclose(output_data.ena_spectral_index_stat_uncert[0, 0],
                                            expected_gamma_sigma, atol=1e-3)

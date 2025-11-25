@@ -187,7 +187,7 @@ class UltraProcessor(MapProcessor):
         variables_to_project = [
             'exposure_factor',
             'ena_spectral_index',
-            'ena_spectral_index_stat_unc',
+            'ena_spectral_index_stat_uncert',
             'obs_date',
             'obs_date_range',
         ]
@@ -210,7 +210,7 @@ class UltraProcessor(MapProcessor):
             data=RectangularSpectralIndexMapData(
                 spectral_index_map_data=SpectralIndexMapData(
                     ena_spectral_index=rectangular_dataset["ena_spectral_index"].values,
-                    ena_spectral_index_stat_unc=rectangular_dataset["ena_spectral_index_stat_unc"].values,
+                    ena_spectral_index_stat_uncert=rectangular_dataset["ena_spectral_index_stat_uncert"].values,
                     epoch=healpix_spectral_index_map_data.epoch,
                     epoch_delta=healpix_spectral_index_map_data.epoch_delta,
                     energy=healpix_spectral_index_map_data.energy,

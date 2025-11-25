@@ -49,7 +49,7 @@ class TestMapModels(unittest.TestCase):
                     obs_date_range=sentinel.obs_date_range,
                     solid_angle=sentinel.solid_angle,
                     ena_spectral_index=sentinel.ena_spectral_index,
-                    ena_spectral_index_stat_unc=sentinel.ena_spectral_index_stat_unc
+                    ena_spectral_index_stat_uncert=sentinel.ena_spectral_index_stat_uncert
                 ),
                 coords=RectangularCoords(
                     latitude_delta=sentinel.latitude_delta,
@@ -76,7 +76,8 @@ class TestMapModels(unittest.TestCase):
             DataProductVariable(map_models.OBS_DATE_RANGE_VAR_NAME, sentinel.obs_date_range),
             DataProductVariable(map_models.SOLID_ANGLE_VAR_NAME, sentinel.solid_angle),
             DataProductVariable(map_models.ENA_SPECTRAL_INDEX_VAR_NAME, sentinel.ena_spectral_index),
-            DataProductVariable(map_models.ENA_SPECTRAL_INDEX_STAT_UNC_VAR_NAME, sentinel.ena_spectral_index_stat_unc),
+            DataProductVariable(map_models.ENA_SPECTRAL_INDEX_STAT_UNC_VAR_NAME,
+                                sentinel.ena_spectral_index_stat_uncert),
             DataProductVariable(map_models.LATITUDE_DELTA_VAR_NAME, sentinel.latitude_delta),
             DataProductVariable(map_models.LATITUDE_LABEL_VAR_NAME, sentinel.latitude_label),
             DataProductVariable(map_models.LONGITUDE_DELTA_VAR_NAME, sentinel.longitude_delta),
@@ -133,7 +134,7 @@ class TestMapModels(unittest.TestCase):
             DataProductVariable(map_models.OBS_DATE_RANGE_VAR_NAME, sentinel.obs_date_range),
             DataProductVariable(map_models.SOLID_ANGLE_VAR_NAME, sentinel.solid_angle),
             DataProductVariable(map_models.ENA_INTENSITY_VAR_NAME, sentinel.ena_intensity),
-            DataProductVariable(map_models.ENA_INTENSITY_STAT_UNC_VAR_NAME, sentinel.ena_intensity_stat_uncert),
+            DataProductVariable(map_models.ENA_INTENSITY_STAT_UNCERT_VAR_NAME, sentinel.ena_intensity_stat_uncert),
             DataProductVariable(map_models.ENA_INTENSITY_SYS_ERR_VAR_NAME, sentinel.ena_intensity_sys_err),
             DataProductVariable(map_models.LATITUDE_DELTA_VAR_NAME, sentinel.latitude_delta),
             DataProductVariable(map_models.LATITUDE_LABEL_VAR_NAME, sentinel.latitude_label),
@@ -194,7 +195,7 @@ class TestMapModels(unittest.TestCase):
             DataProductVariable(map_models.OBS_DATE_RANGE_VAR_NAME, sentinel.obs_date_range),
             DataProductVariable(map_models.SOLID_ANGLE_VAR_NAME, sentinel.solid_angle),
             DataProductVariable(map_models.ENA_INTENSITY_VAR_NAME, sentinel.ena_intensity),
-            DataProductVariable(map_models.ENA_INTENSITY_STAT_UNC_VAR_NAME, sentinel.ena_intensity_stat_uncert),
+            DataProductVariable(map_models.ENA_INTENSITY_STAT_UNCERT_VAR_NAME, sentinel.ena_intensity_stat_uncert),
             DataProductVariable(map_models.ENA_INTENSITY_SYS_ERR_VAR_NAME, sentinel.ena_intensity_sys_err),
             DataProductVariable(map_models.BG_INTENSITY_VAR_NAME, sentinel.bg_intensity),
             DataProductVariable(map_models.BG_INTENSITY_STAT_UNC_VAR_NAME, sentinel.bg_intensity_stat_uncert),
@@ -226,7 +227,7 @@ class TestMapModels(unittest.TestCase):
                     obs_date_range=sentinel.obs_date_range,
                     solid_angle=sentinel.solid_angle,
                     ena_spectral_index=sentinel.ena_spectral_index,
-                    ena_spectral_index_stat_unc=sentinel.ena_spectral_index_stat_unc
+                    ena_spectral_index_stat_uncert=sentinel.ena_spectral_index_stat_uncert
                 ),
                 coords=HealPixCoords(
                     pixel_index=sentinel.pixel_index,
@@ -251,7 +252,8 @@ class TestMapModels(unittest.TestCase):
             DataProductVariable(map_models.OBS_DATE_RANGE_VAR_NAME, sentinel.obs_date_range),
             DataProductVariable(map_models.SOLID_ANGLE_VAR_NAME, sentinel.solid_angle),
             DataProductVariable(map_models.ENA_SPECTRAL_INDEX_VAR_NAME, sentinel.ena_spectral_index),
-            DataProductVariable(map_models.ENA_SPECTRAL_INDEX_STAT_UNC_VAR_NAME, sentinel.ena_spectral_index_stat_unc),
+            DataProductVariable(map_models.ENA_SPECTRAL_INDEX_STAT_UNC_VAR_NAME,
+                                sentinel.ena_spectral_index_stat_uncert),
             DataProductVariable(map_models.PIXEL_INDEX_VAR_NAME, sentinel.pixel_index),
             DataProductVariable(map_models.PIXEL_INDEX_LABEL_VAR_NAME, sentinel.pixel_index_label),
         ]
@@ -304,7 +306,7 @@ class TestMapModels(unittest.TestCase):
             DataProductVariable(map_models.OBS_DATE_RANGE_VAR_NAME, sentinel.obs_date_range),
             DataProductVariable(map_models.SOLID_ANGLE_VAR_NAME, sentinel.solid_angle),
             DataProductVariable(map_models.ENA_INTENSITY_VAR_NAME, sentinel.ena_intensity),
-            DataProductVariable(map_models.ENA_INTENSITY_STAT_UNC_VAR_NAME, sentinel.ena_intensity_stat_uncert),
+            DataProductVariable(map_models.ENA_INTENSITY_STAT_UNCERT_VAR_NAME, sentinel.ena_intensity_stat_uncert),
             DataProductVariable(map_models.ENA_INTENSITY_SYS_ERR_VAR_NAME, sentinel.ena_intensity_sys_err),
             DataProductVariable(map_models.PIXEL_INDEX_VAR_NAME, sentinel.pixel_index),
             DataProductVariable(map_models.PIXEL_INDEX_LABEL_VAR_NAME, sentinel.pixel_index_label),
@@ -912,7 +914,7 @@ class TestMapModels(unittest.TestCase):
             obs_date_range=fake_data_per_energy_per_pixel * 3.2,
             solid_angle=fake_data_per_pixel * 3.4,
             ena_spectral_index=fake_data_per_energy_per_pixel * 2.2,
-            ena_spectral_index_stat_unc=fake_data_per_energy_per_pixel * 2.3,
+            ena_spectral_index_stat_uncert=fake_data_per_energy_per_pixel * 2.3,
         )
 
         healpix_spectral_index_map_data = HealPixSpectralIndexMapData(
@@ -944,9 +946,9 @@ class TestMapModels(unittest.TestCase):
 
         np.testing.assert_array_equal(actual_dataset.data_vars["exposure_factor"].values, spectral_index_map_data.exposure_factor)
         np.testing.assert_array_equal(actual_dataset.data_vars["ena_spectral_index"].values, spectral_index_map_data.ena_spectral_index)
-        np.testing.assert_array_equal(actual_dataset.data_vars["ena_spectral_index_stat_unc"].values, spectral_index_map_data.ena_spectral_index_stat_unc)
+        np.testing.assert_array_equal(actual_dataset.data_vars["ena_spectral_index_stat_uncert"].values, spectral_index_map_data.ena_spectral_index_stat_uncert)
 
-        for key in [ "obs_date", "obs_date_range", "exposure_factor", "ena_spectral_index", "ena_spectral_index_stat_unc" ]:
+        for key in [ "obs_date", "obs_date_range", "exposure_factor", "ena_spectral_index", "ena_spectral_index_stat_uncert" ]:
             self.assertEqual((CoordNames.TIME.value, CoordNames.ENERGY_L2.value, CoordNames.GENERIC_PIXEL.value), actual_dataset.data_vars[key].dims)
         for key in [ "latitude", "longitude", "solid_angle" ]:
             self.assertEqual((CoordNames.GENERIC_PIXEL.value,), actual_dataset.data_vars[key].dims)

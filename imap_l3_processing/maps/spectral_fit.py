@@ -30,7 +30,7 @@ def calculate_spectral_index_for_multiple_ranges(intensity_data: IntensityMapDat
         obs_date_range=np.concat([m.obs_date_range for m in spectral_maps], axis=1),
         solid_angle=intensity_data.solid_angle,
         ena_spectral_index=np.concat([m.ena_spectral_index for m in spectral_maps], axis=1),
-        ena_spectral_index_stat_unc=np.concat([m.ena_spectral_index_stat_unc for m in spectral_maps], axis=1),
+        ena_spectral_index_stat_uncert=np.concat([m.ena_spectral_index_stat_uncert for m in spectral_maps], axis=1),
     )
 
 
@@ -83,7 +83,7 @@ def fit_spectral_index_map(intensity_data: IntensityMapData) -> SpectralIndexMap
         obs_date_range=mean_obs_date_range,
         solid_angle=intensity_data.solid_angle,
         ena_spectral_index=output_gammas,
-        ena_spectral_index_stat_unc=output_gamma_errors,
+        ena_spectral_index_stat_uncert=output_gamma_errors,
     )
 
 

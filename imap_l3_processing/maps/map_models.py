@@ -41,7 +41,7 @@ ENA_SPECTRAL_INDEX_VAR_NAME = "ena_spectral_index"
 ENA_SPECTRAL_INDEX_STAT_UNC_VAR_NAME = "ena_spectral_index_stat_uncert"
 
 ENA_INTENSITY_VAR_NAME = "ena_intensity"
-ENA_INTENSITY_STAT_UNC_VAR_NAME = "ena_intensity_stat_uncert"
+ENA_INTENSITY_STAT_UNCERT_VAR_NAME = "ena_intensity_stat_uncert"
 ENA_INTENSITY_SYS_ERR_VAR_NAME = "ena_intensity_sys_err"
 
 BG_INTENSITY_VAR_NAME = "bg_intensity"
@@ -99,7 +99,7 @@ class IntensityMapData(MapData):
 @dataclass
 class SpectralIndexMapData(MapData):
     ena_spectral_index: np.ndarray
-    ena_spectral_index_stat_unc: np.ndarray
+    ena_spectral_index_stat_uncert: np.ndarray
 
 
 @dataclass
@@ -277,7 +277,8 @@ class HealPixSpectralIndexMapData:
                 "exposure_factor": (full_shape, self.spectral_index_map_data.exposure_factor),
 
                 "ena_spectral_index": (full_shape, self.spectral_index_map_data.ena_spectral_index),
-                "ena_spectral_index_stat_unc": (full_shape, self.spectral_index_map_data.ena_spectral_index_stat_unc),
+                "ena_spectral_index_stat_uncert": (
+                full_shape, self.spectral_index_map_data.ena_spectral_index_stat_uncert),
             },
             coords={
                 CoordNames.TIME.value: self.spectral_index_map_data.epoch,
@@ -353,14 +354,14 @@ def _map_data_to_variables(data: MapData) -> list[DataProductVariable]:
 def _spectral_index_data_variables(data: SpectralIndexMapData) -> list[DataProductVariable]:
     return _map_data_to_variables(data) + [
         DataProductVariable(ENA_SPECTRAL_INDEX_VAR_NAME, data.ena_spectral_index),
-        DataProductVariable(ENA_SPECTRAL_INDEX_STAT_UNC_VAR_NAME, data.ena_spectral_index_stat_unc),
+        DataProductVariable(ENA_SPECTRAL_INDEX_STAT_UNC_VAR_NAME, data.ena_spectral_index_stat_uncert),
     ]
 
 
 def _intensity_data_variables(data: IntensityMapData) -> list[DataProductVariable]:
     intensity_variables = [
         DataProductVariable(ENA_INTENSITY_VAR_NAME, data.ena_intensity),
-        DataProductVariable(ENA_INTENSITY_STAT_UNC_VAR_NAME, data.ena_intensity_stat_uncert),
+        DataProductVariable(ENA_INTENSITY_STAT_UNCERT_VAR_NAME, data.ena_intensity_stat_uncert),
         DataProductVariable(ENA_INTENSITY_SYS_ERR_VAR_NAME, data.ena_intensity_sys_err),
     ]
     if data.bg_intensity is not None:
