@@ -74,28 +74,34 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
 
             initial_dataset['epoch'] = l1c_dataset.epoch_j2000
             initial_dataset['epoch_delta'] = l1c_dataset.epoch_delta
-            initial_dataset['hae_longitude'] = hae_az_el[:, 0]
-            initial_dataset['hae_latitude'] = hae_az_el[:, 1]
+            initial_dataset['hae_longitude'] = xr.DataArray(
+                [hae_az_el[:, 0]],
+                dims=[CoordNames.TIME.value, "hae_longitude"],
+            )
+            initial_dataset['hae_latitude'] = xr.DataArray(
+                [hae_az_el[:, 1]],
+                dims=[CoordNames.TIME.value, "hae_latitude"],
+            )
 
             energy_in_eV = energies * 1000
             dataset = apply_compton_getting_correction(initial_dataset, xr.DataArray(energy_in_eV))
             self.az_el_points = xr.DataArray(
-                np.stack([dataset['hae_longitude'].values, dataset['hae_latitude'].values], axis=2),
+                np.stack([dataset['hae_longitude'].values[0], dataset['hae_latitude'].values[0]], axis=2),
                 dims=[CoordNames.ENERGY_L2.value, CoordNames.GENERIC_PIXEL.value, CoordNames.AZ_EL_VECTOR.value],
             )
 
             exposures = np.full_like(l1c_dataset.exposure_times, np.nan)
-            for cg_energy_index, cg_energy in np.ndenumerate(dataset['energy_sc'].values):
+            for cg_energy_index, cg_energy in np.ndenumerate(dataset['energy_sc'].values[0]):
                 best_guess = np.inf
                 best_guess_index = -1
-                for e_i, energy in enumerate(energies):
+                for e_i, energy in enumerate(energy_in_eV):
                     guess = np.abs(energy - cg_energy)
                     if guess < best_guess:
                         best_guess = guess
                         best_guess_index = e_i
                     if guess > best_guess:
                         break
-                exposures[0, cg_energy_index, :] = l1c_dataset.exposure_times[0, best_guess_index, :]
+                exposures[0, cg_energy_index] = l1c_dataset.exposure_times[0, best_guess_index, cg_energy_index[1]]
 
             exposure = exposures * exposure_mask
 

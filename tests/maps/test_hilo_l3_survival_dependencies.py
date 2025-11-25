@@ -84,41 +84,49 @@ class TestHiLoL3SurvivalDependencies(unittest.TestCase):
 
     @patch("imap_l3_processing.maps.hilo_l3_survival_dependencies.HiLoL3SurvivalDependencies.fetch_dependencies")
     def test_fetch_single_sensor_full_spin_dependencies(self, mock_fetch_dependencies):
-        ram_map_descriptor = "h90-ena-h-hf-nsp-ram-hae-6deg-1yr"
-        ram_l2_filename = f"imap_hi_l2_{ram_map_descriptor}_20250415_v001.cdf"
+        cases = [("sf", False), ("hf", True)]
+        for reference_frame, expected_cg_corrected in cases:
+            mock_fetch_dependencies.reset_mock()
+            with self.subTest(reference_frame=reference_frame):
+                ram_map_descriptor = f"h90-ena-h-{reference_frame}-nsp-ram-hae-6deg-1yr"
+                ram_l2_filename = f"imap_hi_l2_{ram_map_descriptor}_20250415_v001.cdf"
 
-        anti_map_descriptor = "h90-ena-h-hf-nsp-anti-hae-6deg-1yr"
-        anti_l2_filename = f"imap_hi_l2_{anti_map_descriptor}_20250415_v001.cdf"
-        glows_l3e_filename = "imap_glows_l3e_survival-probability_20250415_v001.cdf"
-        l1c_filename = "imap_hi_l1c_pset_20250415-repoint10000_v001.cdf"
+                anti_map_descriptor = f"h90-ena-h-{reference_frame}-nsp-anti-hae-6deg-1yr"
+                anti_l2_filename = f"imap_hi_l2_{anti_map_descriptor}_20250415_v001.cdf"
+                glows_l3e_filename = "imap_glows_l3e_survival-probability_20250415_v001.cdf"
+                l1c_filename = "imap_hi_l1c_pset_20250415-repoint10000_v001.cdf"
 
-        ram_input = ScienceInput(ram_l2_filename)
-        anti_input = ScienceInput(anti_l2_filename)
-        glows_input = ScienceInput(glows_l3e_filename)
-        l1c_input = ScienceInput(l1c_filename)
-        dependencies = ProcessingInputCollection(ram_input, anti_input, glows_input, l1c_input)
+                ram_input = ScienceInput(ram_l2_filename)
+                anti_input = ScienceInput(anti_l2_filename)
+                glows_input = ScienceInput(glows_l3e_filename)
+                l1c_input = ScienceInput(l1c_filename)
+                dependencies = ProcessingInputCollection(ram_input, anti_input, glows_input, l1c_input)
 
-        mock_ram_survival_dependencies = Mock(spec=HiLoL3SurvivalDependencies)
-        mock_ram_survival_dependencies.dependency_file_paths = [Path("ram_input1"), Path("ram_input2")]
-        mock_antiram_survival_dependencies = Mock(spec=HiLoL3SurvivalDependencies)
-        mock_antiram_survival_dependencies.dependency_file_paths = [Path("antiram_input1"), Path("antiram_input2")]
+                mock_ram_survival_dependencies = Mock(spec=HiLoL3SurvivalDependencies)
+                mock_ram_survival_dependencies.dependency_file_paths = [Path("ram_input1"), Path("ram_input2")]
+                mock_antiram_survival_dependencies = Mock(spec=HiLoL3SurvivalDependencies)
+                mock_antiram_survival_dependencies.dependency_file_paths = [Path("antiram_input1"),
+                                                                            Path("antiram_input2")]
 
-        mock_fetch_dependencies.side_effect = [mock_ram_survival_dependencies, mock_antiram_survival_dependencies]
+                mock_fetch_dependencies.side_effect = [mock_ram_survival_dependencies,
+                                                       mock_antiram_survival_dependencies]
 
-        result = HiL3SingleSensorFullSpinDependencies.fetch_dependencies(dependencies)
-        self.assertIsInstance(result, HiL3SingleSensorFullSpinDependencies)
-        self.assertEqual(result.ram_dependencies, mock_ram_survival_dependencies)
-        self.assertEqual(result.antiram_dependencies, mock_antiram_survival_dependencies)
+                result = HiL3SingleSensorFullSpinDependencies.fetch_dependencies(dependencies)
+                self.assertIsInstance(result, HiL3SingleSensorFullSpinDependencies)
+                self.assertEqual(result.ram_dependencies, mock_ram_survival_dependencies)
+                self.assertEqual(result.antiram_dependencies, mock_antiram_survival_dependencies)
+                self.assertEqual(expected_cg_corrected, result.cg_corrected)
 
-        [ram_dependencies, instrument] = mock_fetch_dependencies.call_args_list[0].args
-        self.assertIsInstance(ram_dependencies, ProcessingInputCollection)
-        self.assertEqual([ram_input, glows_input, l1c_input], ram_dependencies.processing_input)
-        self.assertEqual(Instrument.IMAP_HI, instrument)
+                [ram_dependencies, instrument] = mock_fetch_dependencies.call_args_list[0].args
+                self.assertIsInstance(ram_dependencies, ProcessingInputCollection)
+                self.assertEqual([ram_input, glows_input, l1c_input], ram_dependencies.processing_input)
+                self.assertEqual(Instrument.IMAP_HI, instrument)
 
-        [antiram_dependencies, instrument] = mock_fetch_dependencies.call_args_list[1].args
-        self.assertIsInstance(antiram_dependencies, ProcessingInputCollection)
-        self.assertEqual([anti_input, glows_input, l1c_input], antiram_dependencies.processing_input)
-        self.assertEqual(Instrument.IMAP_HI, instrument)
+                [antiram_dependencies, instrument] = mock_fetch_dependencies.call_args_list[1].args
+                self.assertIsInstance(antiram_dependencies, ProcessingInputCollection)
+                self.assertEqual([anti_input, glows_input, l1c_input], antiram_dependencies.processing_input)
+                self.assertEqual(Instrument.IMAP_HI, instrument)
 
-        self.assertEqual([Path("ram_input1"), Path("ram_input2"), Path("antiram_input1"), Path("antiram_input2")],
-                         result.dependency_file_paths)
+                self.assertEqual(
+                    [Path("ram_input1"), Path("ram_input2"), Path("antiram_input1"), Path("antiram_input2")],
+                    result.dependency_file_paths)

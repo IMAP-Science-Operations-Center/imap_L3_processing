@@ -22,7 +22,7 @@ from imap_l3_processing.maps.map_models import RectangularCoords, SpectralIndexM
     RectangularSpectralIndexDataProduct, RectangularIntensityMapData, IntensityMapData, RectangularIntensityDataProduct, \
     combine_rectangular_intensity_map_data, combine_intensity_map_data, HealPixIntensityMapData, \
     HealPixSpectralIndexMapData, HealPixCoords, HealPixSpectralIndexDataProduct, HealPixIntensityDataProduct, \
-    convert_tt2000_time_to_datetime, combine_healpix_intensity_map_data
+    convert_tt2000_time_to_datetime, combine_healpix_intensity_map_data, combine_exposure_weighted_map_data
 from imap_l3_processing.models import DataProductVariable
 from tests.test_helpers import get_test_data_folder
 
@@ -206,6 +206,7 @@ class TestMapModels(unittest.TestCase):
         ]
 
         self.assertEqual(expected_variables, actual_variables)
+
     def test_healpix_spectral_index_to_data_product_variables(self):
         input_metadata = Mock()
 
@@ -413,7 +414,7 @@ class TestMapModels(unittest.TestCase):
              datetime(2025, 5, 9),
              datetime(2025, 5, 9), np.ma.masked])
 
-        combine_two = combine_intensity_map_data([map_1, map_2])
+        combine_two = combine_exposure_weighted_map_data([map_1, map_2])
         np.testing.assert_equal(combine_two.ena_intensity, expected_combined_intensity)
         np.testing.assert_equal(combine_two.ena_intensity_sys_err, expected_sys_err)
         np.testing.assert_equal(combine_two.ena_intensity_stat_unc, expected_stat_unc)
@@ -421,7 +422,7 @@ class TestMapModels(unittest.TestCase):
         np.testing.assert_equal(combine_two.obs_date.mask, expected_obs_date.mask)
         np.testing.assert_equal(combine_two.obs_date, expected_obs_date)
 
-    def test_combine_maps_does_not_weight_by_exposures_based_on_flag(self):
+    def test_combine_maps_without_weighting(self):
         map_1 = self.construct_intensity_data_with_all_zero_fields()
         map_1.ena_intensity = np.array([1, np.nan, 3, 4, np.nan])
         map_1.exposure_factor = np.array([100, 0, 100, 100, 100])
@@ -453,16 +454,17 @@ class TestMapModels(unittest.TestCase):
         expected_sys_err = [2.5, 0, 2, 6.5, np.nan]
         expected_stat_unc = [5, 0, 4, 13, np.nan]
 
-        combine_two = combine_intensity_map_data([map_1, map_2], exposure_weighted=False)
+        combine_two = combine_intensity_map_data([map_1, map_2])
         np.testing.assert_equal(combine_two.ena_intensity, expected_combined_intensity)
         np.testing.assert_equal(combine_two.ena_intensity_sys_err, expected_sys_err)
         np.testing.assert_equal(combine_two.ena_intensity_stat_unc, expected_stat_unc)
 
+    @patch('imap_l3_processing.maps.map_models.combine_uncertainty_weighted_map_data')
     @patch('imap_l3_processing.maps.map_models.combine_intensity_map_data')
-    def test_combine_rectangular_intensity_map_data(self, mock_combine_intensity_map_data):
-        cases = [True, False]
-        for exposure_weighted in cases:
-            with self.subTest(f"exposure_weighted={exposure_weighted}"):
+    def test_combine_rectangular_intensity_map_data(self, mock_combine_unweighted, mock_combined_uncertainty_weighted):
+        cases = [mock_combine_unweighted, mock_combined_uncertainty_weighted]
+        for combination_method in cases:
+            with self.subTest(f"exposure_weighted={combination_method.name}"):
                 expected_coords = RectangularCoords(latitude_delta=np.array([1]), longitude_delta=np.array([1]),
                                                     latitude_label=np.array(["one"]), longitude_label=np.array(["one"]))
                 base_map = RectangularIntensityMapData(
@@ -476,11 +478,10 @@ class TestMapModels(unittest.TestCase):
                 )
 
                 maps = [base_map, second_map]
-                combined_map = combine_rectangular_intensity_map_data(maps, exposure_weighted)
-                mock_combine_intensity_map_data.assert_called_with([sentinel.data_1, sentinel.data_2],
-                                                                   exposure_weighted=exposure_weighted)
+                combined_map = combine_rectangular_intensity_map_data(maps, combination_method)
+                combination_method.assert_called_once_with([sentinel.data_1, sentinel.data_2])
 
-                self.assertEqual(combined_map.intensity_map_data, mock_combine_intensity_map_data.return_value)
+                self.assertEqual(combined_map.intensity_map_data, combination_method.return_value)
                 self.assertEqual(combined_map.coords, expected_coords)
 
     @patch('imap_l3_processing.maps.map_models.combine_intensity_map_data')

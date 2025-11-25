@@ -7,7 +7,7 @@ from imap_processing.ena_maps.utils.coordinates import CoordNames
 from imap_processing.spice.geometry import SpiceFrame
 
 from imap_l3_processing.maps.hilo_l3_survival_dependencies import HiLoL3SurvivalDependencies
-from imap_l3_processing.maps.map_descriptors import PixelSize, parse_map_descriptor
+from imap_l3_processing.maps.map_descriptors import PixelSize, parse_map_descriptor, ReferenceFrame
 from imap_l3_processing.maps.survival_probability_processing import process_survival_probabilities
 from tests.maps.test_builders import create_rectangular_intensity_map_data, create_l1c_pset, create_l3e_pset
 from tests.spice_test_case import SpiceTestCase
@@ -29,7 +29,8 @@ class TestSurvivalProbabilityProcessing(SpiceTestCase):
         input_map.intensity_map_data.energy = sentinel.hi_l2_energies
 
         l2_grid = PixelSize.FourDegrees
-        l2_descriptor_parts = Mock(sensor=sentinel.l2_sensor, spin_phase=sentinel.l2_spin, grid=l2_grid)
+        l2_descriptor_parts = Mock(sensor=sentinel.l2_sensor, spin_phase=sentinel.l2_spin, grid=l2_grid,
+                                   reference_frame=ReferenceFrame.Heliospheric)
         dependencies = HiLoL3SurvivalDependencies(l2_data=input_map,
                                                   l1c_data=sentinel.l1c_data,
                                                   glows_l3e_data=sentinel.glows_l3e_data,
@@ -67,10 +68,11 @@ class TestSurvivalProbabilityProcessing(SpiceTestCase):
 
         mock_survival_probability_pointing_set.assert_has_calls([
             call(sentinel.hi_l1c_1, sentinel.l2_sensor, sentinel.l2_spin, sentinel.glows_l3e_1,
-                 sentinel.hi_l2_energies),
+                 sentinel.hi_l2_energies, cg_corrected=True),
             call(sentinel.hi_l1c_2, sentinel.l2_sensor, sentinel.l2_spin, sentinel.glows_l3e_2,
-                 sentinel.hi_l2_energies),
-            call(sentinel.hi_l1c_3, sentinel.l2_sensor, sentinel.l2_spin, sentinel.glows_l3e_3, sentinel.hi_l2_energies)
+                 sentinel.hi_l2_energies, cg_corrected=True),
+            call(sentinel.hi_l1c_3, sentinel.l2_sensor, sentinel.l2_spin, sentinel.glows_l3e_3,
+                 sentinel.hi_l2_energies, cg_corrected=True)
         ])
 
         mock_survival_skymap.assert_called_once_with([sentinel.pset_1, sentinel.pset_2, sentinel.pset_3],

@@ -258,11 +258,11 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
     @patch("imap_l3_processing.maps.rectangular_survival_probability.apply_compton_getting_correction")
     def test_survivals_matched_with_corresponding_exposures_cg_corrected(self, mock_cg_correction, mock_interpolate,
                                                                          mock_frame_transform_az_el, _):
-        hf_energies = np.array([1, 100])
+        hf_energies = np.array([3600, 7200])
 
         self.glows_data.energy = np.array([1, 100, 100_000])
 
-        energy_sc = np.array([1, 100_000])
+        energy_sc = np.arange(7200).reshape((1, 2, 3600))
         corrected_hae_lon = np.ones((2, 3600))
         corrected_hae_lat = np.full((2, 3600), 2)
 
@@ -279,7 +279,7 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
                 ),
                 "energy_sc": xr.DataArray(
                     energy_sc,
-                    dims=[CoordNames.ENERGY_L2.value]
+                    dims=[CoordNames.TIME.value, CoordNames.ENERGY_L2.value, CoordNames.AZIMUTH_L2.value],
                 )
             },
             coords={

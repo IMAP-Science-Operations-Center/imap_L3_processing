@@ -8,7 +8,7 @@ from imap_data_access import ScienceFilePath
 from imap_data_access.processing_input import ProcessingInputCollection
 
 from imap_l3_processing.hi.l3.utils import read_l1c_rectangular_pointing_set_data, read_glows_l3e_data
-from imap_l3_processing.maps.map_descriptors import MapDescriptorParts, parse_map_descriptor, SpinPhase
+from imap_l3_processing.maps.map_descriptors import MapDescriptorParts, parse_map_descriptor, SpinPhase, ReferenceFrame
 from imap_l3_processing.maps.map_models import RectangularIntensityMapData, GlowsL3eRectangularMapInputData, \
     InputRectangularPointingSet
 from imap_l3_processing.models import Instrument
@@ -58,6 +58,7 @@ class HiLoL3SurvivalDependencies:
 class HiL3SingleSensorFullSpinDependencies:
     ram_dependencies: HiLoL3SurvivalDependencies
     antiram_dependencies: HiLoL3SurvivalDependencies
+    cg_corrected: bool
 
     @classmethod
     def fetch_dependencies(cls, dependencies: ProcessingInputCollection) -> HiL3SingleSensorFullSpinDependencies:
@@ -69,11 +70,14 @@ class HiL3SingleSensorFullSpinDependencies:
         antiram_dependencies = [pi for pi, descriptor in zip(dependencies.processing_input, parsed_descriptors) if
                                 descriptor is None or descriptor.spin_phase == SpinPhase.AntiRamOnly]
 
+        cg_corrected = parsed_descriptors[0].reference_frame == ReferenceFrame.Heliospheric
+
         return cls(
             ram_dependencies=HiLoL3SurvivalDependencies.fetch_dependencies(
                 ProcessingInputCollection(*ram_dependencies), Instrument.IMAP_HI),
             antiram_dependencies=HiLoL3SurvivalDependencies.fetch_dependencies(
-                ProcessingInputCollection(*antiram_dependencies), Instrument.IMAP_HI))
+                ProcessingInputCollection(*antiram_dependencies), Instrument.IMAP_HI),
+            cg_corrected=cg_corrected)
 
     @property
     def dependency_file_paths(self) -> list[Path]:

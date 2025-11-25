@@ -11,7 +11,8 @@ from imap_l3_processing.hi.hi_processor import HiProcessor
 from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3SpectralIndexDependencies
 from imap_l3_processing.maps.hilo_l3_survival_dependencies import HiL3SingleSensorFullSpinDependencies, \
     HiLoL3SurvivalDependencies
-from imap_l3_processing.maps.map_models import RectangularSpectralIndexDataProduct, RectangularIntensityDataProduct
+from imap_l3_processing.maps.map_models import RectangularSpectralIndexDataProduct, RectangularIntensityDataProduct, \
+    combine_intensity_map_data, combine_uncertainty_weighted_map_data
 from imap_l3_processing.models import InputMetadata, Instrument
 from tests.maps.test_builders import create_rectangular_intensity_map_data
 from tests.test_helpers import get_test_data_path, run_periodically
@@ -144,7 +145,8 @@ class TestHiProcessor(unittest.TestCase):
         lat = np.arange(-90, 90, 45)
         lon = np.arange(0, 360, 45)
 
-        input_map = create_rectangular_intensity_map_data(energy=input_energies, energy_delta=input_deltas, lat=lat, lon=lon)
+        input_map = create_rectangular_intensity_map_data(energy=input_energies, energy_delta=input_deltas, lat=lat,
+                                                          lon=lon)
         intensity_data = input_map.intensity_map_data
         intensity_data.obs_date[0, 0] = datetime(2025, 1, 1)
         intensity_data.obs_date[0, 1] = datetime(2025, 1, 1)
@@ -183,7 +185,8 @@ class TestHiProcessor(unittest.TestCase):
         lat = np.arange(-90, 90, 45)
         lon = np.arange(0, 360, 45)
 
-        input_map = create_rectangular_intensity_map_data(energy=input_energies, energy_delta=input_deltas, lat=lat, lon=lon)
+        input_map = create_rectangular_intensity_map_data(energy=input_energies, energy_delta=input_deltas, lat=lat,
+                                                          lon=lon)
         intensity_data = input_map.intensity_map_data
         intensity_data.obs_date[0, 0] = datetime(2025, 1, 1)
         intensity_data.obs_date[0, 1] = datetime(2025, 1, 1)
@@ -219,7 +222,8 @@ class TestHiProcessor(unittest.TestCase):
         lat = np.arange(-90, 90, 45)
         lon = np.arange(0, 360, 45)
 
-        input_map = create_rectangular_intensity_map_data(energy=input_energies, energy_delta=input_deltas, lat=lat, lon=lon)
+        input_map = create_rectangular_intensity_map_data(energy=input_energies, energy_delta=input_deltas, lat=lat,
+                                                          lon=lon)
         intensity_data = input_map.intensity_map_data
         intensity_data.obs_date.mask = np.ma.getmaskarray(intensity_data.obs_date)
         intensity_data.obs_date.mask[:] = True
@@ -255,7 +259,7 @@ class TestHiProcessor(unittest.TestCase):
         cases = [
             ("ram", "h90-ena-h-sf-sp-ram-hae-4deg-6mo", SpiceFrame.ECLIPJ2000),
             ("anti", "h90-ena-h-sf-sp-anti-hae-4deg-6mo", SpiceFrame.IMAP_GCS),
-            ("anti", "h90-ena-h-sf-sp-anti-hae-4deg-6mo", SpiceFrame.IMAP_HNU)
+            ("anti", "h90-ena-h-hf-sp-anti-hae-4deg-6mo", SpiceFrame.IMAP_HNU)
         ]
 
         for case, descriptor, spice_frame_name in cases:
@@ -301,51 +305,61 @@ class TestHiProcessor(unittest.TestCase):
                                                  mock_process_survival_prob,
                                                  mock_fetch_full_spin_single_sensor_dependencies,
                                                  mock_get_parent_file_names):
-        mock_get_parent_file_names.return_value = ["ram_map", "antiram_map"]
-        input_metadata = InputMetadata(instrument="hi",
-                                       data_level="l3",
-                                       start_date=datetime.now(),
-                                       end_date=datetime.now() + timedelta(days=1),
-                                       version="",
-                                       descriptor="h90-ena-h-sf-sp-full-hae-4deg-6mo",
-                                       )
-
-        full_spin_dependencies: HiL3SingleSensorFullSpinDependencies = mock_fetch_full_spin_single_sensor_dependencies.return_value
-        full_spin_dependencies.dependency_file_paths = [
-            Path("folder/ram_map", Path("folder/antiram_map"), Path("folder/l1c"))]
-
-        mock_process_survival_prob.side_effect = [
-            sentinel.survival_corrected_ram,
-            sentinel.survival_corrected_antiram,
+        test_cases = [
+            (True, combine_uncertainty_weighted_map_data),
+            (False, combine_intensity_map_data),
         ]
 
-        processor = HiProcessor(sentinel.dependencies, input_metadata)
-        product = processor.process(spice_frame_name=sentinel.spice_frame)
+        for expected_cg_corrected, combination_function in test_cases:
+            mock_fetch_full_spin_single_sensor_dependencies.reset_mock()
+            mock_process_survival_prob.reset_mock()
+            mock_combine_maps.reset_mock()
+            mock_save_data.reset_mock()
+            with self.subTest(case=expected_cg_corrected):
+                mock_get_parent_file_names.return_value = ["ram_map", "antiram_map"]
+                input_metadata = InputMetadata(instrument="hi",
+                                               data_level="l3",
+                                               start_date=datetime.now(),
+                                               end_date=datetime.now() + timedelta(days=1),
+                                               version="",
+                                               descriptor="h90-ena-h-sf-sp-full-hae-4deg-6mo",
+                                               )
 
-        mock_fetch_full_spin_single_sensor_dependencies.assert_called_once_with(sentinel.dependencies)
+                full_spin_dependencies: HiL3SingleSensorFullSpinDependencies = mock_fetch_full_spin_single_sensor_dependencies.return_value
+                full_spin_dependencies.dependency_file_paths = [
+                    Path("folder/ram_map", Path("folder/antiram_map"), Path("folder/l1c"))]
+                full_spin_dependencies.cg_corrected = expected_cg_corrected
 
-        mock_process_survival_prob.assert_has_calls([
-            call(full_spin_dependencies.ram_dependencies, sentinel.spice_frame),
-            call(full_spin_dependencies.antiram_dependencies, sentinel.spice_frame)
-        ])
+                mock_process_survival_prob.side_effect = [
+                    sentinel.survival_corrected_ram,
+                    sentinel.survival_corrected_antiram,
+                ]
 
-        mock_combine_maps.assert_called_once_with([
-            sentinel.survival_corrected_ram,
-            sentinel.survival_corrected_antiram,
-        ], exposure_weighted=False)
+                processor = HiProcessor(sentinel.dependencies, input_metadata)
+                product = processor.process(spice_frame_name=sentinel.spice_frame)
 
-        mock_save_data.assert_called_once_with(RectangularIntensityDataProduct(
-            input_metadata=input_metadata,
-            parent_file_names=["antiram_map", "l1c", "ram_map"],
-            data=mock_combine_maps.return_value))
-        self.assertEqual([mock_save_data.return_value], product)
+                mock_fetch_full_spin_single_sensor_dependencies.assert_called_once_with(sentinel.dependencies)
+
+                mock_process_survival_prob.assert_has_calls([
+                    call(full_spin_dependencies.ram_dependencies, sentinel.spice_frame),
+                    call(full_spin_dependencies.antiram_dependencies, sentinel.spice_frame)
+                ])
+
+                mock_combine_maps.assert_called_once_with([
+                    sentinel.survival_corrected_ram,
+                    sentinel.survival_corrected_antiram,
+                ], combination_function)
+
+                mock_save_data.assert_called_once_with(RectangularIntensityDataProduct(
+                    input_metadata=input_metadata,
+                    parent_file_names=["antiram_map", "l1c", "ram_map"],
+                    data=mock_combine_maps.return_value))
+                self.assertEqual([mock_save_data.return_value], product)
 
     def test_raises_error_for_currently_unimplemented_maps(self):
         cases = [
             "hic-ena-h-sf-sp-ram-hae-6deg-6mo",
             "h45-ena-h-hf-nsp-full-hae-6deg-6mo",
-            "h90-ena-h-hf-sp-ram-hae-6deg-6mo",
-            "h45-ena-h-hf-sp-anti-hae-6deg-6mo",
             "h90-ena-h-hf-sp-full-hae-6deg-6mo",
         ]
         for descriptor in cases:
