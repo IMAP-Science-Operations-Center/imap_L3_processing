@@ -19,6 +19,23 @@ if __name__ == "__main__":
             {{"type": "science", "files": ["imap_hi_l2_h45-ena-h-hf-nsp-ram-hae-4deg-1yr_20250415_{version}.cdf"]}},
             {{"type": "science", "files": ["imap_hi_l2_h90-ena-h-hf-nsp-anti-hae-4deg-1yr_20250415_{version}.cdf"]}},
             {{"type": "science", "files": ["imap_hi_l2_h90-ena-h-hf-nsp-ram-hae-4deg-1yr_20250415_{version}.cdf"]}}]"""])
+        case "lo", "spx":
+            version = "v902"
+            subprocess.run([sys.executable,
+                            'imap_l3_data_processor.py', '--instrument', 'lo', '--data-level', 'l3', '--start-date',
+                            '20260101', '--version', version, '--descriptor', 'l090-spx-h-sf-sp-ram-hae-6deg-1yr',
+                            '--dependency',
+                            '[{"type": "science", "files": ["imap_lo_l3_l090-ena-h-sf-sp-ram-hae-6deg-1yr_20260101_v001.cdf"]}]'])
+            subprocess.run([sys.executable,
+                            'imap_l3_data_processor.py', '--instrument', 'lo', '--data-level', 'l3', '--start-date',
+                            '20260101', '--version', version, '--descriptor', 'l090-spx-h-sf-nsp-ram-hae-6deg-1yr',
+                            '--dependency',
+                            '[{"type": "science", "files": ["imap_lo_l2_l090-ena-h-sf-nsp-ram-hae-6deg-1yr_20260101_v902.cdf"]}]'])
+            subprocess.run([sys.executable,
+                            'imap_l3_data_processor.py', '--instrument', 'lo', '--data-level', 'l3', '--start-date',
+                            '20260101', '--version', version, '--descriptor', 'l090-spxnbs-h-sf-nsp-ram-hae-6deg-1yr',
+                            '--dependency',
+                            '[{"type": "science", "files": ["imap_lo_l2_l090-enanbs-h-sf-nsp-ram-hae-6deg-1yr_20260101_v900.cdf"]}]'])
         case "hi", "spx":
             subprocess.run([sys.executable, 'imap_l3_data_processor.py', '--instrument', 'hi', '--data-level', 'l3',
                             '--start-date', '20250415', '--version', 'v002', '--descriptor',
