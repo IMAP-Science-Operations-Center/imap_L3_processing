@@ -13,12 +13,12 @@ from imap_l3_processing.maps.map_models import GlowsL3eRectangularMapInputData, 
 def interpolate_angular_data_to_nearest_neighbor(input_azimuths: np.array, glows_azimuths: np.array,
                                                  glows_data: np.array) -> np.array:
     expanded_az = np.concatenate([glows_azimuths - 360, glows_azimuths, glows_azimuths + 360])
-    expanded_glows_data = np.concatenate([glows_data, glows_data, glows_data])
+    expanded_glows_data = np.concatenate([glows_data, glows_data, glows_data], axis=1)
     sort = np.argsort(expanded_az)
     sorted_az = expanded_az[sort]
-    sorted_data = expanded_glows_data[sort]
+    sorted_data = expanded_glows_data[:, sort]
     bin_edges = sorted_az[:-1] + np.diff(sorted_az) / 2
-    return sorted_data[np.digitize(input_azimuths, bin_edges, right=True)]
+    return sorted_data[:, np.digitize(input_azimuths, bin_edges, right=True)]
 
 
 class RectangularSurvivalProbabilityPointingSet(PointingSet):
@@ -83,25 +83,29 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
                 dims=[CoordNames.TIME.value, "hae_latitude"],
             )
 
-            energy_in_eV = energies * 1000
-            dataset = apply_compton_getting_correction(initial_dataset, xr.DataArray(energy_in_eV))
+            energy_in_ev = energies * 1000
+
+            if sensor == Sensor.Hi90 or sensor == Sensor.Hi45:
+                initial_dataset.attrs['Logical_source'] = 'imap_hi'
+            dataset = apply_compton_getting_correction(initial_dataset, xr.DataArray(energy_in_ev))
             self.az_el_points = xr.DataArray(
                 np.stack([dataset['hae_longitude'].values[0], dataset['hae_latitude'].values[0]], axis=2),
-                dims=[CoordNames.ENERGY_L2.value, CoordNames.GENERIC_PIXEL.value, CoordNames.AZ_EL_VECTOR.value],
+                dims=[CoordNames.ENERGY_ULTRA_L1C.value, CoordNames.GENERIC_PIXEL.value, CoordNames.AZ_EL_VECTOR.value],
             )
 
             exposures = np.full_like(l1c_dataset.exposure_times, np.nan)
             for cg_energy_index, cg_energy in np.ndenumerate(dataset['energy_sc'].values[0]):
                 best_guess = np.inf
                 best_guess_index = -1
-                for e_i, energy in enumerate(energy_in_eV):
+                for e_i, energy in enumerate(energy_in_ev):
                     guess = np.abs(energy - cg_energy)
                     if guess < best_guess:
                         best_guess = guess
                         best_guess_index = e_i
                     if guess > best_guess:
                         break
-                exposures[0, cg_energy_index] = l1c_dataset.exposure_times[0, best_guess_index, cg_energy_index[1]]
+                exposures[0, cg_energy_index[0], cg_energy_index[1]] = l1c_dataset.exposure_times[
+                    0, best_guess_index, cg_energy_index[1]]
 
             exposure = exposures * exposure_mask
 
@@ -111,24 +115,37 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
             exposure = l1c_dataset.exposure_times * exposure_mask
 
         if glows_dataset is not None:
-            glows_spin_bin_count = len(glows_dataset.spin_angle)
-            sp_interpolated_to_hi_energies = np.empty(shape=(len(energies), glows_spin_bin_count))
-            for spin_angle_index in range(glows_spin_bin_count):
-                energies_to_interpolate = dataset['energy_sc'].values if cg_corrected else energies
-                sp_interpolated_to_hi_energies[:, spin_angle_index] = np.interp(
-                    np.log10(energies_to_interpolate),
-                    np.log10(glows_dataset.energy),
-                    glows_dataset.probability_of_survival[0, :, spin_angle_index], )
+            if cg_corrected:
+                sp_interpolated_to_pset_angles = interpolate_angular_data_to_nearest_neighbor(
+                    self.azimuths, glows_dataset.spin_angle, glows_dataset.probability_of_survival[0])
+                log_glows_energies_in_ev = np.log10(glows_dataset.energy * 1000)
+                log_sc_frame_energies = np.log10(dataset["energy_sc"].values[0])
 
-            sp_interpolated_to_pset_angles = np.zeros((1, len(energies), 3600))
-            for e_index in range(len(energies)):
-                sp_interpolated_to_pset_angles[0, e_index] = interpolate_angular_data_to_nearest_neighbor(
-                    self.azimuths, glows_dataset.spin_angle, sp_interpolated_to_hi_energies[e_index])
+                sp_final = np.empty((1, len(energies), len(self.azimuths)))
+                for spin_angle_index in range(len(self.azimuths)):
+                    sp_final[0, :, spin_angle_index] = np.interp(
+                        log_sc_frame_energies[:, spin_angle_index],
+                        log_glows_energies_in_ev,
+                        sp_interpolated_to_pset_angles[:, spin_angle_index]
+                    )
+            else:
+                glows_spin_bin_count = len(glows_dataset.spin_angle)
+                sp_interpolated_to_hi_energies = np.empty(shape=(len(energies), glows_spin_bin_count))
+                for spin_angle_index in range(glows_spin_bin_count):
+                    sp_interpolated_to_hi_energies[:, spin_angle_index] = np.interp(
+                        np.log10(energies),
+                        np.log10(glows_dataset.energy),
+                        glows_dataset.probability_of_survival[0, :, spin_angle_index])
+
+                sp_interpolated_to_pset_angles = np.zeros((1, len(energies), 3600))
+                sp_interpolated_to_pset_angles[0] = interpolate_angular_data_to_nearest_neighbor(
+                    self.azimuths, glows_dataset.spin_angle, sp_interpolated_to_hi_energies)
+                sp_final = sp_interpolated_to_pset_angles
         else:
-            sp_interpolated_to_pset_angles = np.full((1, len(energies), 3600), np.nan)
+            sp_final = np.full((1, len(energies), 3600), np.nan)
 
         dataset["survival_probability_times_exposure"] = xr.DataArray(
-            sp_interpolated_to_pset_angles * exposure,
+            sp_final * exposure,
             dims=[
                 CoordNames.TIME.value,
                 CoordNames.ENERGY_ULTRA_L1C.value,
@@ -145,7 +162,8 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
         )
         dataset["epoch"] = repointing_midpoint
 
-        super().__init__(dataset, SpiceFrame.IMAP_DPS)
+        frame = SpiceFrame.IMAP_HAE if cg_corrected else SpiceFrame.IMAP_DPS
+        super().__init__(dataset, frame)
 
 
 class RectangularSurvivalProbabilitySkyMap(RectangularSkyMap):
