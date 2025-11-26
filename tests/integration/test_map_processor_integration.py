@@ -2,7 +2,6 @@ import logging
 import unittest
 from datetime import timedelta
 from pathlib import Path
-from unittest import skip
 from unittest.mock import patch, Mock
 
 from imap_data_access import ScienceFilePath
@@ -117,18 +116,17 @@ class TestMapIntegration(unittest.TestCase):
             with CDF(str(expected_ena_path)) as cdf:
                 self.assertEqual(expected_ena_parents, set(cdf.attrs["Parents"]))
 
-    @run_periodically(timedelta(days=7))
-    @skip("Missing valid ultra inputs")
+    @run_periodically(timedelta(days=3))
     @patch("imap_l3_data_processor._parse_cli_arguments")
     def test_ultra_all_sp_maps(self, mock_parse_cli_arguments):
         ultra_test_data_dir = INTEGRATION_TEST_DATA_PATH / "ultra"
         ultra_imap_data_dir = get_run_local_data_path("ultra/integration_data")
 
         input_files = [
-            ultra_test_data_dir / "imap_glows_l3e_survival-probability-ul_20250415-repoint01000_v001.cdf",
+            ultra_test_data_dir / "imap_glows_l3e_survival-probability-ul_20250415-repoint00000_v001.cdf",
             ultra_test_data_dir / "imap_glows_l3e_survival-probability-ul_20261020-repoint02000_v001.cdf",
-            ultra_test_data_dir / "imap_ultra_l1c_45sensor-spacecraftpset_20250415-repoint01000_v001.cdf",
-            ultra_test_data_dir / "imap_ultra_l2_u45-ena-h-sf-nsp-full-hae-2deg-6mo_20250415_v000.cdf",
+            ultra_test_data_dir / "imap_ultra_l1c_45sensor-spacecraftpset_20250416-repoint00000_v000.cdf",
+            ultra_test_data_dir / "imap_ultra_l2_u45-ena-h-sf-nsp-full-hae-6deg-3mo_20250416_v001.cdf",
 
             INTEGRATION_TEST_DATA_PATH / "spice" / "naif020.tls",
             INTEGRATION_TEST_DATA_PATH / "spice" / "imap_science_108.tf",
@@ -158,13 +156,13 @@ class TestMapIntegration(unittest.TestCase):
             imap_l3_data_processor.imap_l3_processor()
 
             expected_map_path = ScienceFilePath(
-                "imap_ultra_l3_u45-ena-h-sf-sp-full-hae-2deg-6mo_20250415_v001.cdf").construct_path()
+                "imap_ultra_l3_u45-ena-h-sf-sp-full-hae-6deg-3mo_20250416_v001.cdf").construct_path()
             self.assertTrue(expected_map_path.exists(), f"Expected file {expected_map_path.name} not found")
 
             expected_parents = {
-                "imap_glows_l3e_survival-probability-ul_20250415-repoint01000_v001.cdf",
-                "imap_ultra_l1c_45sensor-spacecraftpset_20250415-repoint01000_v001.cdf",
-                "imap_ultra_l2_u45-ena-h-sf-nsp-full-hae-2deg-6mo_20250415_v000.cdf"
+                "imap_glows_l3e_survival-probability-ul_20250415-repoint00000_v001.cdf",
+                "imap_ultra_l1c_45sensor-spacecraftpset_20250416-repoint00000_v000.cdf",
+                "imap_ultra_l2_u45-ena-h-sf-nsp-full-hae-6deg-3mo_20250416_v001.cdf"
             }
 
             with CDF(str(expected_map_path)) as cdf:
