@@ -60,8 +60,8 @@ class UltraL1CPSet:
                 epoch=cdf[CoordNames.TIME.value][0],
                 energy=read_numeric_variable(cdf[CoordNames.ENERGY_ULTRA_L1C.value]),
                 exposure=read_numeric_variable(cdf["exposure_factor"]),
-                latitude=read_numeric_variable(cdf[CoordNames.ELEVATION_L1C.value]),
-                longitude=read_numeric_variable(cdf[CoordNames.AZIMUTH_L1C.value]),
+                latitude=read_numeric_variable(cdf[CoordNames.ELEVATION_L1C.value]).ravel(),
+                longitude=read_numeric_variable(cdf[CoordNames.AZIMUTH_L1C.value]).ravel(),
                 healpix_index=cdf[CoordNames.HEALPIX_INDEX.value][...],
                 sensitivity=read_numeric_variable(cdf["sensitivity"]),
             )

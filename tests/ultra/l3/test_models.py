@@ -8,7 +8,7 @@ from imap_l3_processing.glows.l3e.glows_l3e_ultra_model import ENERGY_VAR_NAME, 
     HEALPIX_INDEX_VAR_NAME, EPOCH_CDF_VAR_NAME
 from imap_l3_processing.ultra.l3.models import UltraGlowsL3eData, UltraL1CPSet
 from tests.spice_test_case import SpiceTestCase
-from tests.test_helpers import get_test_data_folder, with_tempdir
+from tests.test_helpers import get_test_data_folder, with_tempdir, get_integration_test_data_path
 
 
 class TestModels(SpiceTestCase):
@@ -62,3 +62,11 @@ class TestModels(SpiceTestCase):
             np.testing.assert_array_equal(expected[CoordNames.ELEVATION_L1C.value][...], actual.latitude)
             np.testing.assert_array_equal(expected[CoordNames.AZIMUTH_L1C.value][...], actual.longitude)
             np.testing.assert_array_equal(expected["sensitivity"][...], actual.sensitivity)
+
+    def test_ultra_l1c_read_from_file_handles_longitude_latitude_with_time_dimension(self):
+        l1c_path = get_integration_test_data_path(
+            "ultra/imap_ultra_l1c_45sensor-spacecraftpset_20250416-repoint00000_v000.cdf")
+
+        actual = UltraL1CPSet.read_from_path(l1c_path)
+        self.assertEqual(1, actual.longitude.ndim)
+        self.assertEqual(1, actual.latitude.ndim)
