@@ -336,16 +336,17 @@ class TestHiL3Initializer(unittest.TestCase):
         mock_furnish_metakernel.assert_called_once_with(start_date=start_date, end_date=end_date,
                                                         kernel_types=HI_SP_SPICE_KERNELS)
 
-    @patch("imap_l3_processing.maps.map_initializer.ScienceInput")
+    @patch("imap_l3_processing.maps.map_initializer.generate_imap_input")
     @patch("imap_l3_processing.maps.map_initializer.ProcessingInputCollection")
-    def test_possible_maps_to_produce_constructs_processing_input_collection(self, mock_collection, mock_science_input):
+    def test_possible_maps_to_produce_constructs_processing_input_collection(self, mock_collection,
+                                                                             mock_generate_imap_input):
         files = {
             "imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-3mo_20100101_v000.cdf",
             "imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-3mo_20100102_v000.cdf",
             "imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-3mo_20100103_v000.cdf",
         }
 
-        mock_science_input.side_effect = [sentinel.file1, sentinel.file2, sentinel.file3]
+        mock_generate_imap_input.side_effect = [sentinel.file1, sentinel.file2, sentinel.file3]
 
         processing_input = PossibleMapToProduce(input_files=files, input_metadata=Mock()).processing_input_collection
 

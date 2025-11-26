@@ -15,7 +15,7 @@ from imap_l3_processing.ultra.l3.models import UltraL1CPSet, UltraGlowsL3eData
 
 
 class UltraSurvivalProbability(UltraPointingSet):
-    def __init__(self, l1c_pset: UltraL1CPSet, l3e_glows: UltraGlowsL3eData, bin_groups: Optional[list[int]] = None):
+    def __init__(self, l1c_pset: UltraL1CPSet, l3e_glows: UltraGlowsL3eData, bin_groups: Optional[np.ndarray] = None):
         coarse_bins = bin_pset_energy_bins(l1c_pset.to_xarray(), bin_groups)
         super().__init__(coarse_bins, geometry.SpiceFrame.IMAP_DPS)
 

@@ -47,7 +47,8 @@ class TestUltraInitializer(unittest.TestCase):
                     f'imap_ultra_l2_u{sensor}-ena-h-sf-nsp-full-hae-4deg-3mo_20101001_v001.cdf',
 
                     f'imap_ultra_l3_u{sensor}-ena-h-sf-sp-full-hae-4deg-3mo_20100101_v001.cdf',
-                    f'imap_ultra_l3_u{sensor}-ena-h-sf-sp-full-hae-4deg-3mo_20100401_v001.cdf'
+                    f'imap_ultra_l3_u{sensor}-ena-h-sf-sp-full-hae-4deg-3mo_20100401_v001.cdf',
+                    'imap_ultra_l2-energy-bin-group-sizes_20250101_v000.csv'
                 ])
 
                 mock_read_cdf_parents.side_effect = [
@@ -68,7 +69,8 @@ class TestUltraInitializer(unittest.TestCase):
                         f"imap_ultra_l1c_{sensor}sensor-spacecraftpset_20100101-repoint00001_v001.cdf",
                         f"imap_ultra_l1c_{sensor}sensor-spacecraftpset_20100102-repoint00002_v001.cdf",
                         f"imap_ultra_l1c_{sensor}sensor-spacecraftpset_20100103-repoint00003_v001.cdf",
-                        f'imap_ultra_l2_u{sensor}-ena-h-sf-nsp-full-hae-4deg-3mo_20100101_v001.cdf'
+                        f'imap_ultra_l2_u{sensor}-ena-h-sf-nsp-full-hae-4deg-3mo_20100101_v001.cdf',
+                        'imap_ultra_l2-energy-bin-group-sizes_20250101_v000.csv',
                     ],
                     [
                         'imap_glows_l3e_survival-probability-ul_20100401-repoint00101_v001.cdf',
@@ -77,7 +79,8 @@ class TestUltraInitializer(unittest.TestCase):
                         f'imap_ultra_l1c_{sensor}sensor-spacecraftpset_20100401-repoint00101_v001.cdf',
                         f'imap_ultra_l1c_{sensor}sensor-spacecraftpset_20100402-repoint00102_v001.cdf',
                         f'imap_ultra_l1c_{sensor}sensor-spacecraftpset_20100403-repoint00103_v001.cdf',
-                        f'imap_ultra_l2_u{sensor}-ena-h-sf-nsp-full-hae-4deg-3mo_20100401_v001.cdf'
+                        f'imap_ultra_l2_u{sensor}-ena-h-sf-nsp-full-hae-4deg-3mo_20100401_v001.cdf',
+                        'imap_ultra_l2-energy-bin-group-sizes_20250101_v000.csv',
                     ]
                 ]
 
@@ -89,6 +92,8 @@ class TestUltraInitializer(unittest.TestCase):
                     call(instrument='glows', data_level='l3e', descriptor='survival-probability-ul', version="latest"),
                     call(instrument='ultra', data_level='l2'),
                     call(instrument='ultra', data_level='l3'),
+                    call(instrument="ultra", table='ancillary', descriptor='l2-energy-bin-group-sizes',
+                         version='latest')
                 ])
 
                 mock_read_cdf_parents.assert_has_calls([
@@ -116,9 +121,10 @@ class TestUltraInitializer(unittest.TestCase):
                         f'imap_ultra_l1c_{sensor}sensor-spacecraftpset_20100402-repoint00102_v001.cdf',
                         f'imap_ultra_l1c_{sensor}sensor-spacecraftpset_20100403-repoint00103_v001.cdf',
                         f'imap_ultra_l2_u{sensor}-ena-h-sf-nsp-full-hae-4deg-3mo_20100401_v001.cdf',
+                        f'imap_ultra_l2-energy-bin-group-sizes_20250101_v000.csv'
                     }
                 )
-
+                self.maxDiff = None
                 self.assertEqual([expected_possible_map_to_produce], actual_maps_to_produce)
 
     @patch('imap_l3_processing.ultra.l3.ultra_initializer.furnish_spice_metakernel')

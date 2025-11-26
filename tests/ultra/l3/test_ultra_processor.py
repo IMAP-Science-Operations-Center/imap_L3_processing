@@ -81,6 +81,7 @@ class TestUltraProcessor(unittest.TestCase):
             ultra_l1c_pset=sentinel.ultra_l1c_pset,
             glows_l3e_sp=sentinel.glows_l3e_sp,
             dependency_file_paths=[Path(input_l2_map_name), Path(input_l1c_pset_name), Path(input_glows_l3e_name)],
+            energy_bin_group_sizes=sentinel.bin_groups,
         )
 
         mock_combine_glows_l3e_with_l1c_pointing.return_value = [(sentinel.ultra_l1c_1, sentinel.glows_l3e_1),
@@ -149,9 +150,9 @@ class TestUltraProcessor(unittest.TestCase):
         mock_combine_glows_l3e_with_l1c_pointing.assert_called_once_with(sentinel.glows_l3e_sp, sentinel.ultra_l1c_pset)
 
         mock_survival_probability_pointing_set.assert_has_calls([
-            call(sentinel.ultra_l1c_1, sentinel.glows_l3e_1),
-            call(sentinel.ultra_l1c_2, sentinel.glows_l3e_2),
-            call(sentinel.ultra_l1c_3, sentinel.glows_l3e_3)
+            call(sentinel.ultra_l1c_1, sentinel.glows_l3e_1, bin_groups=sentinel.bin_groups),
+            call(sentinel.ultra_l1c_2, sentinel.glows_l3e_2, bin_groups=sentinel.bin_groups),
+            call(sentinel.ultra_l1c_3, sentinel.glows_l3e_3, bin_groups=sentinel.bin_groups)
         ])
         intensity_data = input_l2_map.intensity_map_data
         mock_survival_skymap.assert_called_once_with([sentinel.pset_1, sentinel.pset_2, sentinel.pset_3],
@@ -300,20 +301,23 @@ class TestUltraProcessor(unittest.TestCase):
         mock_dependencies.u90_l1c_psets = [sentinel.u90_l1c_1, sentinel.u90_l1c_2, sentinel.u90_l1c_3]
         mock_dependencies.glows_l3e_psets = [sentinel.glows_pset_1, sentinel.glows_pset_2, sentinel.glows_pset_3]
         mock_dependencies.dependency_file_paths = sentinel.dependency_file_paths
+        mock_dependencies.energy_bin_group_sizes = sentinel.energy_bin_sizes
         mock_fetch_dependencies.return_value = mock_dependencies
 
         expected_u45_dependency = UltraL3Dependencies(
             ultra_l2_map=mock_dependencies.u45_l2_map,
             ultra_l1c_pset=mock_dependencies.u45_l1c_psets,
             glows_l3e_sp=mock_dependencies.glows_l3e_psets,
-            dependency_file_paths=mock_dependencies.dependency_file_paths
+            dependency_file_paths=mock_dependencies.dependency_file_paths,
+            energy_bin_group_sizes=mock_dependencies.energy_bin_group_sizes,
         )
 
         expected_u90_dependency = UltraL3Dependencies(
             ultra_l2_map=mock_dependencies.u90_l2_map,
             ultra_l1c_pset=mock_dependencies.u90_l1c_psets,
             glows_l3e_sp=mock_dependencies.glows_l3e_psets,
-            dependency_file_paths=mock_dependencies.dependency_file_paths
+            dependency_file_paths=mock_dependencies.dependency_file_paths,
+            energy_bin_group_sizes=mock_dependencies.energy_bin_group_sizes,
         )
 
         mock_process_survival_probability.side_effect = [sentinel.u45_l2_survival_corrected_map,
@@ -376,6 +380,7 @@ class TestUltraProcessor(unittest.TestCase):
             ultra_l1c_pset=sentinel.ultra_l1c_pset,
             glows_l3e_sp=sentinel.glows_l3e_sp,
             dependency_file_paths=[Path(input_l2_map_name), Path(input_l1c_pset_name), Path(input_glows_l3e_name)],
+            energy_bin_group_sizes=None
         )
 
         input_metadata = InputMetadata(instrument="ultra",

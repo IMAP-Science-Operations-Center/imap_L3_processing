@@ -110,3 +110,6 @@ class HiL3Initializer(MapInitializer):
                 return self.glows_hi90_file_by_repoint
             case _:
                 raise ValueError("Expected map to be produced to use a single sensor!")
+
+    def _get_ancillary_files(self) -> list[str]:
+        return []

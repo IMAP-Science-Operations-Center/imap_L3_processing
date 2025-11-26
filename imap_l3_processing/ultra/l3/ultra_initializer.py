@@ -88,6 +88,11 @@ class UltraInitializer(MapInitializer):
 
         l2_query_result = imap_data_access.query(instrument="ultra", data_level="l2")
         l3_query_result = imap_data_access.query(instrument="ultra", data_level="l3")
+        self._energy_bin_group_sizes_files = imap_data_access.query(
+            table="ancillary",
+            instrument="ultra",
+            descriptor="l2-energy-bin-group-sizes",
+            version="latest")
         super().__init__("ultra", l2_query_result, l3_query_result)
 
     def furnish_spice_dependencies(self, map_to_produce: PossibleMapToProduce):
@@ -102,3 +107,6 @@ class UltraInitializer(MapInitializer):
 
     def _get_l2_dependencies(self, descriptor: MapDescriptorParts) -> list[MapDescriptorParts]:
         return [dataclasses.replace(descriptor, survival_correction=SurvivalCorrection.NotSurvivalCorrected)]
+
+    def _get_ancillary_files(self) -> list[str]:
+        return [Path(f["file_path"]).name for f in self._energy_bin_group_sizes_files]

@@ -61,3 +61,6 @@ class LoInitializer(MapInitializer):
     def furnish_spice_dependencies(self, map_to_produce: PossibleMapToProduce):
         furnish_spice_metakernel(start_date=map_to_produce.input_metadata.start_date,
                                  end_date=map_to_produce.input_metadata.end_date, kernel_types=LO_SP_MAP_KERNELS)
+
+    def _get_ancillary_files(self) -> list[str]:
+        return []

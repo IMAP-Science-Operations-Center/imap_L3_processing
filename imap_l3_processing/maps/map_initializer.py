@@ -5,7 +5,8 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from imap_data_access import ScienceFilePath, ImapFilePath, ProcessingInputCollection, ScienceInput
+from imap_data_access import ScienceFilePath, ImapFilePath, ProcessingInputCollection
+from imap_data_access.processing_input import generate_imap_input
 
 from imap_l3_processing.maps.map_descriptors import MapDescriptorParts, parse_map_descriptor, \
     map_descriptor_parts_to_string
@@ -22,7 +23,7 @@ class PossibleMapToProduce:
 
     @property
     def processing_input_collection(self) -> ProcessingInputCollection:
-        return ProcessingInputCollection(*[ScienceInput(file_path) for file_path in list(self.input_files)])
+        return ProcessingInputCollection(*[generate_imap_input(file_path) for file_path in self.input_files])
 
 
 class MapInitializer(abc.ABC):
@@ -30,6 +31,10 @@ class MapInitializer(abc.ABC):
         self.instrument = instrument
         self.l2_file_paths_by_descriptor = get_latest_version_by_descriptor_and_start_date(l2_query_results)
         self.existing_l3_maps = get_latest_version_by_descriptor_and_start_date(l3_query_results)
+
+    @abc.abstractmethod
+    def _get_ancillary_files(self) -> list[str]:
+        raise NotImplementedError()
 
     @abc.abstractmethod
     def furnish_spice_dependencies(self, map_to_produce: PossibleMapToProduce):
@@ -112,7 +117,7 @@ class MapInitializer(abc.ABC):
                                                descriptor=l3_descriptor)
 
                 possible_map_to_produce = PossibleMapToProduce(
-                    input_files=set(l2_file_paths + glows_files + l1c_names),
+                    input_files=set(l2_file_paths + glows_files + l1c_names + self._get_ancillary_files()),
                     input_metadata=input_metadata
                 )
                 possible_maps.append(possible_map_to_produce)

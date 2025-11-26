@@ -68,14 +68,15 @@ class UltraProcessor(MapProcessor):
             ultra_l2_map=deps.u45_l2_map,
             ultra_l1c_pset=deps.u45_l1c_psets,
             glows_l3e_sp=deps.glows_l3e_psets,
-            dependency_file_paths=deps.dependency_file_paths
+            dependency_file_paths=deps.dependency_file_paths,
+            energy_bin_group_sizes=deps.energy_bin_group_sizes,
         )
-
         u90_dep = UltraL3Dependencies(
             ultra_l2_map=deps.u90_l2_map,
             ultra_l1c_pset=deps.u90_l1c_psets,
             glows_l3e_sp=deps.glows_l3e_psets,
-            dependency_file_paths=deps.dependency_file_paths
+            dependency_file_paths=deps.dependency_file_paths,
+            energy_bin_group_sizes=deps.energy_bin_group_sizes,
         )
 
         u45_survival_corrected = self._process_survival_probability(u45_dep, spice_frame_name)
@@ -85,7 +86,8 @@ class UltraProcessor(MapProcessor):
 
     def _process_survival_probability(self, deps: UltraL3Dependencies, spice_frame_name: SpiceFrame) -> HealPixIntensityMapData:
         combined_psets = combine_glows_l3e_with_l1c_pointing(deps.glows_l3e_sp, deps.ultra_l1c_pset, )
-        survival_probability_psets = [UltraSurvivalProbability(_l1c, _l3e) for _l1c, _l3e in
+        survival_probability_psets = [UltraSurvivalProbability(_l1c, _l3e, bin_groups=deps.energy_bin_group_sizes) for
+                                      _l1c, _l3e in
                                       combined_psets]
 
         intensity_data = deps.ultra_l2_map.intensity_map_data

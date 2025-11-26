@@ -9,7 +9,7 @@ from spacepy.pycdf import CDF
 
 import imap_l3_data_processor
 from tests.integration.integration_test_helpers import mock_imap_data_access
-from tests.test_helpers import get_run_local_data_path, run_periodically
+from tests.test_helpers import get_run_local_data_path, run_periodically, get_test_data_path
 
 INTEGRATION_TEST_DATA_PATH = Path(__file__).parent / "test_data"
 
@@ -131,7 +131,9 @@ class TestMapIntegration(unittest.TestCase):
             INTEGRATION_TEST_DATA_PATH / "spice" / "naif020.tls",
             INTEGRATION_TEST_DATA_PATH / "spice" / "imap_science_108.tf",
             INTEGRATION_TEST_DATA_PATH / "spice" / "imap_sclk_008.tsc",
-            INTEGRATION_TEST_DATA_PATH / "spice" / "imap_dps_2025_105_2026_105_009.ah.bc"
+            INTEGRATION_TEST_DATA_PATH / "spice" / "imap_dps_2025_105_2026_105_009.ah.bc",
+
+            get_test_data_path("ultra/imap_ultra_l2-energy-bin-group-sizes_20250101_v000.csv"),
         ]
 
         with mock_imap_data_access(ultra_imap_data_dir, input_files):
