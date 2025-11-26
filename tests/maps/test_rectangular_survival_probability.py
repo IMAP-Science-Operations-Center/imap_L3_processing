@@ -15,6 +15,7 @@ from imap_l3_processing.maps.rectangular_survival_probability import Sensor, \
     RectangularSurvivalProbabilitySkyMap, RectangularSurvivalProbabilityPointingSet, \
     interpolate_angular_data_to_nearest_neighbor
 from tests.maps import test_builders
+from tests.maps.test_builders import create_l1c_pset
 from tests.spice_test_case import SpiceTestCase
 from tests.test_helpers import NumpyArrayMatcher
 
@@ -106,9 +107,9 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
     @patch("imap_l3_processing.maps.rectangular_survival_probability.ttj2000ns_to_et")
     def test_cg_corrected_survival_probability_pointing_set(self, mock_tt2000_to_et, mock_frame_transform,
                                                             mock_cg_correction):
-        corrected_hae_longitude = np.full((2, 3600), 2)
-        corrected_hae_latitude = np.full((2, 3600), 1)
-        corrected_az_el_pairs = np.stack([corrected_hae_longitude, corrected_hae_latitude], axis=2)
+        corrected_hae_longitude = np.full((1, 3, 3600), 2)
+        corrected_hae_latitude = np.full((1, 3, 3600), 1)
+        corrected_az_el_pairs = np.stack([corrected_hae_longitude[0], corrected_hae_latitude[0]], axis=2)
 
         l1c_dataset = test_builders.create_l1c_pset(
             epoch=self.l1c_hi_dataset.epoch,
@@ -116,32 +117,43 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
             exposures=np.array([[np.full((3600,), 1), np.full((3600,), 2), np.full((3600,), 3)]])
         )
 
-        energy_sc = [10, 26, 34]
-        hi_hf_energies = np.array([10, 20, 30])
+        energy_sc = np.ones((1, 3, 3600))
+        energy_sc[0, 0, :1800] = 10
+        energy_sc[0, 0, 1800:3600] = 100
+        energy_sc[0, 1, :1800] = 100
+        energy_sc[0, 1, 1800:3600] = 1000
+        energy_sc[0, 2, :1800] = 1000
+        energy_sc[0, 2, 1800:3600] = 2000
+
+        hi_hf_energies = np.array([.001, .1, 1])
         expected_exposures = np.array([
-            [l1c_dataset.exposure_times[0, 0], l1c_dataset.exposure_times[0, 2], l1c_dataset.exposure_times[0, 2]]
+            [np.concatenate((l1c_dataset.exposure_times[0, 0, :1800], l1c_dataset.exposure_times[0, 1, 1800:3600])),
+             np.concatenate((l1c_dataset.exposure_times[0, 1, :1800], l1c_dataset.exposure_times[0, 2, 1800:3600])),
+             l1c_dataset.exposure_times[0, 2, 0:3600]],
         ])
 
         mock_cg_correction.return_value = xr.Dataset({
             "energy_sc": (
-                ["energy"], energy_sc
+                [CoordNames.TIME.value, CoordNames.ENERGY_L2.value, CoordNames.AZIMUTH_L2.value], energy_sc
             ),
             "hae_latitude": (
-                [CoordNames.ENERGY_L2, "hae_latitude"], corrected_hae_latitude
+                [CoordNames.TIME.value, CoordNames.ENERGY_L2.value, CoordNames.AZIMUTH_L2.value], corrected_hae_latitude
             ),
             "hae_longitude": (
-                [CoordNames.ENERGY_L2, "hae_longitude"], corrected_hae_longitude
+                [CoordNames.TIME.value, CoordNames.ENERGY_L2.value, CoordNames.AZIMUTH_L2.value],
+                corrected_hae_longitude
             ),
         },
             coords={
-                "epoch": [1_000_000_000],
-                "energy": hi_hf_energies
+                CoordNames.TIME.value: [1_000_000_000],
+                CoordNames.ENERGY_L2.value: hi_hf_energies,
+                CoordNames.AZIMUTH_L1C.value: np.arange(3600),
             }
         )
 
-        uncorrected_hae_lon = np.ones(3600)
+        uncorrected_hae_lon = np.ones((3600,))
         uncorrected_hae_lat = np.full((3600,), 2)
-        mock_frame_transform.return_value = np.column_stack([uncorrected_hae_lon, uncorrected_hae_lat])
+        mock_frame_transform.return_value = np.stack([uncorrected_hae_lon, uncorrected_hae_lat], axis=1)
 
         cg_pointing_set = RectangularSurvivalProbabilityPointingSet(l1c_dataset, Sensor.Hi90, SpinPhase.RamOnly,
                                                                     self.glows_data, hi_hf_energies,
@@ -162,8 +174,8 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
 
         actual_uncorrected_pset, actual_hf_energies = mock_cg_correction.call_args[0]
 
-        np.testing.assert_array_equal(actual_uncorrected_pset['hae_longitude'].values, uncorrected_hae_lon)
-        np.testing.assert_array_equal(actual_uncorrected_pset['hae_latitude'].values, uncorrected_hae_lat)
+        np.testing.assert_array_equal(actual_uncorrected_pset['hae_longitude'].values[0], uncorrected_hae_lon)
+        np.testing.assert_array_equal(actual_uncorrected_pset['hae_latitude'].values[0], uncorrected_hae_lat)
 
         np.testing.assert_array_equal(actual_uncorrected_pset['epoch'].values, self.l1c_hi_dataset.epoch_j2000)
         np.testing.assert_array_equal(actual_uncorrected_pset['epoch_delta'].values, [self.l1c_hi_dataset.epoch_delta])
@@ -223,7 +235,7 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
         first_energy_corresponding_glows_data = np.linspace(0, 1, 3600)
         second_energy_corresponding_glows_data = np.linspace(0, 1, 3600) + 100.2
 
-        mock_interpolate.side_effect = [first_energy_corresponding_glows_data,
+        mock_interpolate.return_value = [first_energy_corresponding_glows_data,
                                         second_energy_corresponding_glows_data]
 
         pointing_set = RectangularSurvivalProbabilityPointingSet(self.l1c_hi_dataset, Sensor.Hi90, SpinPhase.RamOnly,
@@ -233,18 +245,13 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
         pset_spin_angles = np.linspace(0, 360, 3600, endpoint=False) + 0.05
         pset_azimuths = np.mod(pset_spin_angles + 90, 360)
 
-        self.assertEqual(2, mock_interpolate.call_count)
-        get_glows_data_for_first_energy_args = mock_interpolate.call_args_list[0].args
-        np.testing.assert_array_equal(pset_azimuths, get_glows_data_for_first_energy_args[0])
-        np.testing.assert_array_equal(self.glows_data.spin_angle, get_glows_data_for_first_energy_args[1])
-        np.testing.assert_array_equal(self.glows_data.probability_of_survival[0, 0],
-                                      get_glows_data_for_first_energy_args[2])
+        mock_interpolate.assert_called_once()
+        get_interpolated_glows_data_args = mock_interpolate.call_args_list[0].args
 
-        get_glows_data_for_second_energy_args = mock_interpolate.call_args_list[1].args
-        np.testing.assert_array_equal(pset_azimuths, get_glows_data_for_second_energy_args[0])
-        np.testing.assert_array_equal(self.glows_data.spin_angle, get_glows_data_for_second_energy_args[1])
-        np.testing.assert_array_equal(self.glows_data.probability_of_survival[0, 1],
-                                      get_glows_data_for_second_energy_args[2])
+        np.testing.assert_array_equal(pset_azimuths, get_interpolated_glows_data_args[0])
+        np.testing.assert_array_equal(self.glows_data.spin_angle, get_interpolated_glows_data_args[1])
+        np.testing.assert_array_equal(self.glows_data.probability_of_survival[0, :2],
+                                      get_interpolated_glows_data_args[2])
 
         corresponding_glows_data = np.array(
             [first_energy_corresponding_glows_data, second_energy_corresponding_glows_data])[np.newaxis, ...]
@@ -258,68 +265,68 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
     @patch("imap_l3_processing.maps.rectangular_survival_probability.apply_compton_getting_correction")
     def test_survivals_matched_with_corresponding_exposures_cg_corrected(self, mock_cg_correction, mock_interpolate,
                                                                          mock_frame_transform_az_el, _):
-        hf_energies = np.array([1, 100])
+        hf_energies = np.array([1, 2])
 
-        self.glows_data.energy = np.array([1, 100, 100_000])
+        self.glows_data.energy = np.array([1, 2, 3])
 
-        energy_sc = np.array([1, 100_000])
-        corrected_hae_lon = np.ones((2, 3600))
-        corrected_hae_lat = np.full((2, 3600), 2)
+        energy_sc = np.array([[np.full((3600,), 1000), np.full((3600,), 2000)]])
+        exposure_times = np.array([[np.full((3600,), 10), np.full((3600,), 100)]])
+        l1c_dataset = create_l1c_pset(exposures=exposure_times)
+        uncorrected_hae_lon = np.ones((3600,))
+        uncorrected_hae_lat = np.full((3600,), 2)
+        corrected_hae_lon = np.ones((1, 2, 3600))
+        corrected_hae_lat = np.full((1, 2, 3600), 2)
 
-        mock_frame_transform_az_el.return_value = np.column_stack([corrected_hae_lon, corrected_hae_lat])
+        mock_frame_transform_az_el.return_value = np.stack([uncorrected_hae_lon, uncorrected_hae_lat], axis=1)
         mock_cg_correction.return_value = xr.Dataset(
             {
                 "hae_latitude": xr.DataArray(
                     corrected_hae_lat,
-                    dims=[CoordNames.ENERGY_L2.value, CoordNames.AZIMUTH_L2.value],
+                    dims=[CoordNames.TIME.value, CoordNames.ENERGY_L2.value, CoordNames.AZIMUTH_L2.value],
                 ),
                 "hae_longitude": xr.DataArray(
                     corrected_hae_lon,
-                    dims=[CoordNames.ENERGY_L2.value, CoordNames.AZIMUTH_L2.value]
+                    dims=[CoordNames.TIME.value, CoordNames.ENERGY_L2.value, CoordNames.AZIMUTH_L2.value]
                 ),
                 "energy_sc": xr.DataArray(
                     energy_sc,
-                    dims=[CoordNames.ENERGY_L2.value]
+                    dims=[CoordNames.TIME.value, CoordNames.ENERGY_L2.value, CoordNames.AZIMUTH_L2.value],
                 )
             },
             coords={
                 CoordNames.ENERGY_L2.value: np.array([1, 2]),
                 CoordNames.TIME.value: np.array([0]),
-                CoordNames.AZIMUTH_L2.value: np.full((3600), 1),
+                CoordNames.AZIMUTH_L2.value: np.full((3600,), 1),
             }
         )
 
         first_energy_corresponding_glows_data = np.linspace(0, 1, 3600)
         second_energy_corresponding_glows_data = np.linspace(0, 1, 3600) + 100.2
+        extra_glows_data = np.linspace(0, 1, 3600) + 200.2
 
-        mock_interpolate.side_effect = [first_energy_corresponding_glows_data,
-                                        second_energy_corresponding_glows_data]
+        mock_interpolate.return_value = np.array([first_energy_corresponding_glows_data,
+                                                  second_energy_corresponding_glows_data,
+                                                  extra_glows_data])
 
-        pointing_set = RectangularSurvivalProbabilityPointingSet(self.l1c_hi_dataset, Sensor.Hi90, SpinPhase.RamOnly,
+        pointing_set = RectangularSurvivalProbabilityPointingSet(l1c_dataset, Sensor.Hi90, SpinPhase.RamOnly,
                                                                  self.glows_data, hf_energies,
                                                                  cg_corrected=True)
 
         pset_spin_angles = np.linspace(0, 360, 3600, endpoint=False) + 0.05
         pset_azimuths = np.mod(pset_spin_angles + 90, 360)
 
-        self.assertEqual(2, mock_interpolate.call_count)
-        get_glows_data_for_first_energy_args = mock_interpolate.call_args_list[0].args
-        np.testing.assert_array_equal(pset_azimuths, get_glows_data_for_first_energy_args[0])
-        np.testing.assert_array_equal(self.glows_data.spin_angle, get_glows_data_for_first_energy_args[1])
-        np.testing.assert_array_equal(self.glows_data.probability_of_survival[0, 0],
-                                      get_glows_data_for_first_energy_args[2])
-
-        get_glows_data_for_second_energy_args = mock_interpolate.call_args_list[1].args
-        np.testing.assert_array_equal(pset_azimuths, get_glows_data_for_second_energy_args[0])
-        np.testing.assert_array_equal(self.glows_data.spin_angle, get_glows_data_for_second_energy_args[1])
-        np.testing.assert_array_equal(self.glows_data.probability_of_survival[0, 2],
-                                      get_glows_data_for_second_energy_args[2])
+        self.assertEqual(1, mock_interpolate.call_count)
+        mock_interpolate_call_args = mock_interpolate.call_args_list[0].args
+        np.testing.assert_array_equal(pset_azimuths, mock_interpolate_call_args[0])
+        np.testing.assert_array_equal(self.glows_data.spin_angle, mock_interpolate_call_args[1])
+        np.testing.assert_array_equal(self.glows_data.probability_of_survival[0],
+                                      mock_interpolate_call_args[2])
 
         corresponding_glows_data = np.array(
             [first_energy_corresponding_glows_data, second_energy_corresponding_glows_data])[np.newaxis, ...]
 
         np.testing.assert_array_almost_equal(pointing_set.data["survival_probability_times_exposure"].values,
-                                             corresponding_glows_data * self.l1c_hi_dataset.exposure_times * self.ram_mask)
+                                             corresponding_glows_data * exposure_times * self.ram_mask)
 
     def test_interpolate_angular_data_to_nearest_neighbor(self):
         input_cases = [
@@ -334,7 +341,7 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
             (360, 360),
         ]
         basic_glows_spin_angles = np.linspace(1, 360, 360, endpoint=True)
-        basic_glows_data = np.linspace(1, 360, 360, endpoint=True) + 1000
+        basic_glows_data = np.array([np.linspace(1, 360, 360, endpoint=True) + 1000])
         glows_cases = [
             ("basic", basic_glows_spin_angles, basic_glows_data),
             ("0 instead of 360", np.mod(basic_glows_spin_angles, 360), basic_glows_data),
@@ -345,7 +352,7 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
             with self.subTest(name):
                 input_angles, expected_output = np.array(input_cases).T
                 result = interpolate_angular_data_to_nearest_neighbor(input_angles, glows_spin_angles, glows_data)
-                np.testing.assert_array_equal(expected_output + 1000, result)
+                np.testing.assert_array_equal(expected_output + 1000, result[0])
 
     @patch('imap_l3_processing.maps.rectangular_survival_probability.RectangularSkyMap.project_pset_values_to_map')
     @patch('imap_l3_processing.maps.rectangular_survival_probability.RectangularSkyMap.__init__')

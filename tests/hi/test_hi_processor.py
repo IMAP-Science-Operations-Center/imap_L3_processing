@@ -256,7 +256,7 @@ class TestHiProcessor(unittest.TestCase):
         cases = [
             ("ram", "h90-ena-h-sf-sp-ram-hae-4deg-6mo", SpiceFrame.ECLIPJ2000),
             ("anti", "h90-ena-h-sf-sp-anti-hae-4deg-6mo", SpiceFrame.IMAP_GCS),
-            ("anti", "h90-ena-h-sf-sp-anti-hae-4deg-6mo", SpiceFrame.IMAP_HNU)
+            ("anti", "h90-ena-h-hf-sp-anti-hae-4deg-6mo", SpiceFrame.IMAP_HNU)
         ]
 
         for case, descriptor, spice_frame_name in cases:
@@ -345,8 +345,6 @@ class TestHiProcessor(unittest.TestCase):
         cases = [
             "hic-ena-h-sf-sp-ram-hae-6deg-6mo",
             "h45-ena-h-hf-nsp-full-hae-6deg-6mo",
-            "h90-ena-h-hf-sp-ram-hae-6deg-6mo",
-            "h45-ena-h-hf-sp-anti-hae-6deg-6mo",
             "h90-ena-h-hf-sp-full-hae-6deg-6mo",
         ]
         for descriptor in cases:

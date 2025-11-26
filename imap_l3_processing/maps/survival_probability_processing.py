@@ -1,6 +1,7 @@
 from imap_processing.spice.geometry import SpiceFrame
 
 from imap_l3_processing.maps.hilo_l3_survival_dependencies import HiLoL3SurvivalDependencies
+from imap_l3_processing.maps.map_descriptors import ReferenceFrame
 from imap_l3_processing.maps.map_models import RectangularIntensityMapData, IntensityMapData
 from imap_l3_processing.maps.rectangular_survival_probability import RectangularSurvivalProbabilityPointingSet, \
     RectangularSurvivalProbabilitySkyMap
@@ -16,10 +17,11 @@ def process_survival_probabilities(survival_probabilities_dependencies: HiLoL3Su
                                                          survival_probabilities_dependencies.l1c_data)
     pointing_sets = []
 
+    cg_corrected = l2_descriptor_parts.reference_frame == ReferenceFrame.Heliospheric
     for l1c, glows_l3e in combined_glows:
         pointing_sets.append(RectangularSurvivalProbabilityPointingSet(
             l1c, l2_descriptor_parts.sensor, l2_descriptor_parts.spin_phase, glows_l3e,
-            survival_probabilities_dependencies.l2_data.intensity_map_data.energy))
+            survival_probabilities_dependencies.l2_data.intensity_map_data.energy, cg_corrected=cg_corrected))
     assert len(pointing_sets) > 0
 
     survival_sky_map = RectangularSurvivalProbabilitySkyMap(pointing_sets, int(l2_descriptor_parts.grid),

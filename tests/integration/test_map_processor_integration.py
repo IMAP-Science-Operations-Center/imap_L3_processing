@@ -22,13 +22,17 @@ class TestMapIntegration(unittest.TestCase):
 
         input_files = [
             hi_test_data_dir / "imap_hi_l2_h45-ena-h-sf-nsp-ram-hae-4deg-1yr_20250415_v001.cdf",
+            hi_test_data_dir / "imap_hi_l2_h45-ena-h-hf-nsp-ram-hae-6deg-1yr_20250415_v971.cdf",
             hi_test_data_dir / "imap_hi_l1c_90sensor-pset_20250415-repoint01000_v001.cdf",
+            hi_test_data_dir / "imap_hi_l1c_45sensor-pset_20250415-repoint01000_v971.cdf",
             hi_test_data_dir / "imap_glows_l3e_survival-probability-hi-45_20250415-repoint01000_v001.cdf",
             hi_test_data_dir / "imap_glows_l3e_survival-probability-hi-45_20260418-repoint02000_v001.cdf",
             INTEGRATION_TEST_DATA_PATH / "spice" / "naif020.tls",
             INTEGRATION_TEST_DATA_PATH / "spice" / "imap_science_108.tf",
             INTEGRATION_TEST_DATA_PATH / "spice" / "imap_sclk_008.tsc",
-            INTEGRATION_TEST_DATA_PATH / "spice" / "imap_dps_2025_105_2026_105_009.ah.bc"
+            INTEGRATION_TEST_DATA_PATH / "spice" / "imap_dps_2025_105_2026_105_009.ah.bc",
+            INTEGRATION_TEST_DATA_PATH / "spice" / "de440.bsp",
+            INTEGRATION_TEST_DATA_PATH / "spice" / "imap_recon_20250415_20260415_v01.bsp",
         ]
 
         with mock_imap_data_access(hi_imap_data_dir, input_files):
@@ -62,6 +66,10 @@ class TestMapIntegration(unittest.TestCase):
 
             with CDF(str(expected_map_path)) as cdf:
                 self.assertEqual(expected_parents, set(cdf.attrs["Parents"]))
+
+            expected_map_path = ScienceFilePath(
+                'imap_hi_l3_h45-ena-h-hf-sp-ram-hae-6deg-1yr_20250415_v001.cdf').construct_path()
+            self.assertTrue(expected_map_path.exists(), f"Expected file {expected_map_path.name} not found")
 
     @patch("imap_l3_data_processor._parse_cli_arguments")
     def test_lo_all_sp_maps(self, mock_parse_cli_arguments):

@@ -33,8 +33,7 @@ class HiProcessor(MapProcessor):
                 )
             case MapDescriptorParts(survival_correction=SurvivalCorrection.SurvivalCorrected,
                                     sensor=Sensor.Hi90 | Sensor.Hi45,
-                                    spin_phase=SpinPhase.RamOnly | SpinPhase.AntiRamOnly,
-                                    reference_frame=ReferenceFrame.Spacecraft):
+                                    spin_phase=SpinPhase.RamOnly | SpinPhase.AntiRamOnly):
                 hi_l3_survival_probabilities_dependencies = HiLoL3SurvivalDependencies.fetch_dependencies(
                     self.dependencies, Instrument.IMAP_HI)
                 data_product = RectangularIntensityDataProduct(
