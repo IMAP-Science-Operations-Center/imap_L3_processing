@@ -134,10 +134,10 @@ class TestUltraSurvivalProbabilitySkyMap(SpiceTestCase):
         l3e_sp_1 = np.full((1, 1, pointing_set_pixels), 0.5)
         l3e_sp_2 = np.full((1, 1, pointing_set_pixels), 0.25)
         glows_energies = np.array([1])
-        l1c_1 = _create_ultra_l1c_pset(energy=np.array([1]), exposure_time=l1c_exposure_1)
+        l1c_1 = _create_ultra_l1c_pset(energy=np.array([1]), exposure_factor=l1c_exposure_1)
         l3e_glows_1 = _build_glows_l3e_ultra(survival_probabilities=l3e_sp_1, energies=glows_energies,
                                              nside=pointing_set_nside)
-        l1c_2 = _create_ultra_l1c_pset(energy=np.array([1]), exposure_time=l1c_exposure_2)
+        l1c_2 = _create_ultra_l1c_pset(energy=np.array([1]), exposure_factor=l1c_exposure_2)
         l3e_glows_2 = _build_glows_l3e_ultra(survival_probabilities=l3e_sp_2, energies=glows_energies,
                                              nside=pointing_set_nside)
 
@@ -175,51 +175,24 @@ def _build_glows_l3e_ultra(survival_probabilities: np.ndarray = None, energies: 
     )
 
 
-def _create_ultra_l1c_pset_from_xarray(l1cdataset):
-    l1c_energies = l1cdataset.coords[CoordNames.ENERGY_ULTRA_L1C.value].values
-    l1c_exposure = np.repeat(l1cdataset["exposure_time"].values[np.newaxis, :], len(l1c_energies), 1)
-    l1c_exposure = np.reshape(l1c_exposure, (1, len(l1c_energies), -1))
-
-    l1cdataset["exposure_time"] = (
-        [
-            CoordNames.TIME.value,
-            CoordNames.ENERGY_ULTRA_L1C.value,
-            CoordNames.HEALPIX_INDEX.value
-        ],
-        l1c_exposure
-    )
-
-    input_l1c_pset = UltraL1CPSet(
-        epoch=l1cdataset.coords[CoordNames.TIME.value].values[0],
-        energy=l1cdataset.coords[CoordNames.ENERGY_ULTRA_L1C.value].values,
-        counts=l1cdataset["counts"].values,
-        exposure=l1cdataset["exposure_time"].values,
-        healpix_index=l1cdataset.coords[CoordNames.HEALPIX_INDEX.value].values,
-        latitude=l1cdataset[CoordNames.ELEVATION_L1C.value].values,
-        longitude=l1cdataset[CoordNames.AZIMUTH_L1C.value].values,
-        sensitivity=l1cdataset["sensitivity"].values
-    )
-    return input_l1c_pset
-
-
 def _create_ultra_l1c_pset(energy: np.ndarray,
-                           exposure_time: np.ndarray,
+                           exposure_factor: np.ndarray,
                            sensitivity: np.ndarray = None,
                            counts: np.ndarray = None,
                            latitude: np.ndarray = None,
                            longitude: np.ndarray = None,
                            epoch: datetime = None):
     epoch = datetime(2025, 10, 1, 12) if epoch is None else epoch
-    counts = counts or np.full_like(exposure_time, 1)
-    sensitivity = sensitivity or np.full_like(exposure_time, 1)
-    healpix_index = np.arange(exposure_time.shape[-1])
+    counts = counts or np.full_like(exposure_factor, 1)
+    sensitivity = sensitivity or np.full_like(exposure_factor[0], 1)
+    healpix_index = np.arange(exposure_factor.shape[-1])
     healpix = HEALPix(nside=int(np.sqrt(len(healpix_index) / 12)))
     lon_pix, lat_pix = healpix.healpix_to_lonlat(healpix_index)
     input_l1c_pset = UltraL1CPSet(
         epoch=epoch,
         energy=energy,
         counts=counts,
-        exposure=exposure_time,
+        exposure=exposure_factor,
         healpix_index=healpix_index,
         latitude=np.rad2deg(lat_pix.value),
         longitude=np.rad2deg(lon_pix.value),

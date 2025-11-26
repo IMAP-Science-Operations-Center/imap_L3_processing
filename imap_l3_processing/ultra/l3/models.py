@@ -85,7 +85,6 @@ class UltraL1CPSet:
                 ),
                 "sensitivity": (
                     [
-                        CoordNames.TIME.value,
                         CoordNames.ENERGY_ULTRA_L1C.value,
                         CoordNames.HEALPIX_INDEX.value,
                     ],
