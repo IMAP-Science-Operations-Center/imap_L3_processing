@@ -294,8 +294,10 @@ class TestUltraL3CombinedDependencies(unittest.TestCase):
         self.assertEqual(combined_dependencies.u45_l1c_psets, [sentinel.u45_l1c_1, sentinel.u45_l1c_2, sentinel.u45_l1c_3])
         self.assertEqual(combined_dependencies.u90_l1c_psets, [sentinel.u90_l1c_1, sentinel.u90_l1c_2, sentinel.u90_l1c_3])
         self.assertEqual(combined_dependencies.glows_l3e_psets, [])
-        np.testing.assert_array_equal(combined_dependencies.energy_bin_group_sizes,
-                                      np.array([0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 46]))
+
+        np.testing.assert_array_equal(np.array([0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 46], dtype=np.uint8),
+                                      combined_dependencies.energy_bin_group_sizes, strict=True)
+
         self.assertEqual(combined_dependencies.dependency_file_paths, expected_file_paths)
 
     @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.UltraL1CPSet.read_from_path')

@@ -470,16 +470,18 @@ def calculated_weighted_uncertainty(values: np.ndarray, weights: np.ndarray) -> 
 
 
 def calculate_datetime_weighted_average(data: np.ndarray, weights: np.ndarray, axis: int, **kwargs) -> np.ndarray:
-    epoch_based_dates = np.array((np.ma.getdata(data) - TT2000_EPOCH) / timedelta(seconds=1),
+    if isinstance(np.ravel(np.ma.getdata(data))[0], datetime):
+        epoch_based_dates = np.array((np.ma.getdata(data) - TT2000_EPOCH) / timedelta(seconds=1),
                                  dtype=float)
+        averaged_dates_as_seconds = np.ma.average(epoch_based_dates, weights=weights, axis=axis, **kwargs)
 
-    averaged_dates_as_seconds = np.ma.average(epoch_based_dates, weights=weights,
-                                              axis=axis, **kwargs)
+        return np.ma.array(
+            averaged_dates_as_seconds.data * timedelta(seconds=1) + TT2000_EPOCH,
+            mask=averaged_dates_as_seconds.mask,
+        )
 
-    return np.ma.array(
-        averaged_dates_as_seconds.data * timedelta(seconds=1) + TT2000_EPOCH,
-        mask=averaged_dates_as_seconds.mask,
-    )
+    else:
+        return np.ma.average(data, weights=weights, axis=axis, **kwargs)
 
 
 @dataclass

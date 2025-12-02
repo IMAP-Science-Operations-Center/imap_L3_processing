@@ -160,7 +160,7 @@ class UltraL3CombinedDependencies:
         dependency_paths = [*u45_pset_paths, *u90_pset_paths, *glows_l3e_pset_paths, u45_map_path,
                             u90_map_path]
         if energy_bin_group_sizes_path:
-            energy_bin_group_sizes = np.loadtxt(energy_bin_group_sizes_path, delimiter=",")
+            energy_bin_group_sizes = np.loadtxt(energy_bin_group_sizes_path, delimiter=",", dtype=np.uint8)
             dependency_paths.append(energy_bin_group_sizes_path)
         else:
             energy_bin_group_sizes = None

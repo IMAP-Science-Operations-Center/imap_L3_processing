@@ -9,7 +9,7 @@ from imap_data_access import ScienceFilePath, ImapFilePath, ProcessingInputColle
 from imap_data_access.processing_input import generate_imap_input
 
 from imap_l3_processing.maps.map_descriptors import MapDescriptorParts, parse_map_descriptor, \
-    map_descriptor_parts_to_string
+    map_descriptor_parts_to_string, Sensor
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.utils import read_cdf_parents
 
@@ -92,19 +92,24 @@ class MapInitializer(abc.ABC):
             for l2_descriptor in l2_descriptor_strs:
                 l2_file_paths.append(self.l2_file_paths_by_descriptor[l2_descriptor][str_start_date])
 
-            l1c_names = self.get_l1c_parents_from_map(l2_file_paths[0])
-            mismatch = False
-            for l2_path in l2_file_paths[1:]:
-                if set(self.get_l1c_parents_from_map(l2_path)) != set(l1c_names):
-                    mismatch = True
-                    break
+            if l3_descriptor_parts.sensor in [Sensor.UltraCombined, Sensor.HiCombined]:
+                l1c_names = [l1c for l2 in l2_file_paths for l1c in self.get_l1c_parents_from_map(l2)]
 
-            if mismatch:
-                logger.warning(
-                    f"Expected all input maps to be created from the same pointing sets! l2_file_paths: "
-                    f"{', '.join(l2_file_paths)}"
-                )
-                continue
+            else:
+                l1c_names = self.get_l1c_parents_from_map(l2_file_paths[0])
+
+                mismatch = False
+                for l2_path in l2_file_paths[1:]:
+                    if set(self.get_l1c_parents_from_map(l2_path)) != set(l1c_names):
+                        mismatch = True
+                        break
+
+                if mismatch:
+                    logger.warning(
+                        f"Expected all input maps to be created from the same pointing sets! l2_file_paths: "
+                        f"{', '.join(l2_file_paths)}"
+                    )
+                    continue
 
             l1c_repointings = [ScienceFilePath(l1c).repointing for l1c in l1c_names]
 

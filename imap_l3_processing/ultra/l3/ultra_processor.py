@@ -1,8 +1,10 @@
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
+import numpy as np
 from imap_processing.spice.geometry import SpiceFrame
 
+from imap_l3_processing.constants import TT2000_EPOCH
 from imap_l3_processing.maps.map_descriptors import MapDescriptorParts, MapQuantity, SurvivalCorrection, \
     parse_map_descriptor, PixelSize, Sensor
 from imap_l3_processing.maps.map_models import HealPixIntensityMapData, IntensityMapData, \
@@ -145,14 +147,14 @@ class UltraProcessor(MapProcessor):
             "obs_date",
             "obs_date_range",
         ]
-
         healpix_map = healpix_map_data.to_healpix_skymap()
-
         rectangular_map, _ = healpix_map.to_rectangular_skymap(spacing_deg, variables_to_convert_to_rectangular)
         rectangular_map_xarray_dataset = rectangular_map.to_dataset()
 
-        obs_date = datetime(year=1970, month=1, day=1) + timedelta(seconds=1) * (
-                rectangular_map_xarray_dataset["obs_date"].values / 1e9)
+        obs_date_seconds = np.ma.masked_invalid(
+            rectangular_map_xarray_dataset["obs_date"].values / 1e9)
+        obs_date_seconds.data[np.ma.getmask(obs_date_seconds)] = 0
+        obs_date = TT2000_EPOCH + timedelta(seconds=1) * obs_date_seconds
 
         input_map_intensity_data = healpix_map_data.intensity_map_data
         intensity_map_data = IntensityMapData(

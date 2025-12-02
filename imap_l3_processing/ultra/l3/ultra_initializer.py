@@ -3,7 +3,7 @@ from pathlib import Path
 
 import imap_data_access
 
-from imap_l3_processing.maps.map_descriptors import MapDescriptorParts, SurvivalCorrection
+from imap_l3_processing.maps.map_descriptors import MapDescriptorParts, SurvivalCorrection, Sensor
 from imap_l3_processing.maps.map_initializer import MapInitializer, PossibleMapToProduce
 from imap_l3_processing.utils import furnish_spice_metakernel, SpiceKernelTypes
 
@@ -15,12 +15,12 @@ ULTRA_SP_SPICE_KERNELS = [
 ]
 
 ULTRA_SP_MAP_DESCRIPTORS = [
+    "ulc-ena-h-hf-nsp-full-hae-2deg-3mo",
+    "ulc-ena-h-hf-nsp-full-hae-4deg-3mo",
+    "ulc-ena-h-hf-nsp-full-hae-6deg-3mo",
     "ulc-ena-h-hf-sp-full-hae-2deg-3mo",
-    "ulc-ena-h-sf-sp-full-hae-2deg-3mo",
     "ulc-ena-h-hf-sp-full-hae-4deg-3mo",
-    "ulc-ena-h-sf-sp-full-hae-4deg-3mo",
     "ulc-ena-h-hf-sp-full-hae-6deg-3mo",
-    "ulc-ena-h-sf-sp-full-hae-6deg-3mo",
 
     "u90-ena-h-hf-sp-full-hae-2deg-3mo",
     "u90-ena-h-sf-sp-full-hae-2deg-3mo",
@@ -36,12 +36,12 @@ ULTRA_SP_MAP_DESCRIPTORS = [
     "u45-ena-h-hf-sp-full-hae-6deg-3mo",
     "u45-ena-h-sf-sp-full-hae-6deg-3mo",
 
+    "ulc-ena-h-hf-nsp-full-hae-2deg-6mo",
+    "ulc-ena-h-hf-nsp-full-hae-4deg-6mo",
+    "ulc-ena-h-hf-nsp-full-hae-6deg-6mo",
     "ulc-ena-h-hf-sp-full-hae-2deg-6mo",
-    "ulc-ena-h-sf-sp-full-hae-2deg-6mo",
     "ulc-ena-h-hf-sp-full-hae-4deg-6mo",
-    "ulc-ena-h-sf-sp-full-hae-4deg-6mo",
     "ulc-ena-h-hf-sp-full-hae-6deg-6mo",
-    "ulc-ena-h-sf-sp-full-hae-6deg-6mo",
 
     "u90-ena-h-hf-sp-full-hae-2deg-6mo",
     "u90-ena-h-sf-sp-full-hae-2deg-6mo",
@@ -57,12 +57,12 @@ ULTRA_SP_MAP_DESCRIPTORS = [
     "u45-ena-h-hf-sp-full-hae-6deg-6mo",
     "u45-ena-h-sf-sp-full-hae-6deg-6mo",
 
+    "ulc-ena-h-hf-nsp-full-hae-2deg-1yr",
+    "ulc-ena-h-hf-nsp-full-hae-4deg-1yr",
+    "ulc-ena-h-hf-nsp-full-hae-6deg-1yr",
     "ulc-ena-h-hf-sp-full-hae-2deg-1yr",
-    "ulc-ena-h-sf-sp-full-hae-2deg-1yr",
     "ulc-ena-h-hf-sp-full-hae-4deg-1yr",
-    "ulc-ena-h-sf-sp-full-hae-4deg-1yr",
     "ulc-ena-h-hf-sp-full-hae-6deg-1yr",
-    "ulc-ena-h-sf-sp-full-hae-6deg-1yr",
     
     "u90-ena-h-hf-sp-full-hae-2deg-1yr",
     "u90-ena-h-sf-sp-full-hae-2deg-1yr",
@@ -106,6 +106,12 @@ class UltraInitializer(MapInitializer):
         return self.glows_psets_by_repointing
 
     def _get_l2_dependencies(self, descriptor: MapDescriptorParts) -> list[MapDescriptorParts]:
+        if descriptor.sensor == Sensor.UltraCombined:
+            return [dataclasses.replace(descriptor, survival_correction=SurvivalCorrection.NotSurvivalCorrected,
+                                        sensor=Sensor.Ultra45),
+                    dataclasses.replace(descriptor, survival_correction=SurvivalCorrection.NotSurvivalCorrected,
+                                        sensor=Sensor.Ultra90)]
+
         return [dataclasses.replace(descriptor, survival_correction=SurvivalCorrection.NotSurvivalCorrected)]
 
     def _get_ancillary_files(self) -> list[str]:

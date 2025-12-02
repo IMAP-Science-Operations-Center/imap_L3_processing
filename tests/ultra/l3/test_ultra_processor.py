@@ -11,6 +11,7 @@ from imap_processing.ena_maps.utils.coordinates import CoordNames
 from imap_processing.ena_maps.utils.spatial_utils import AzElSkyGrid
 from imap_processing.spice.geometry import SpiceFrame
 
+from imap_l3_processing.constants import TT2000_EPOCH
 from imap_l3_processing.maps.map_models import HealPixIntensityMapData, IntensityMapData, HealPixCoords, \
     HealPixSpectralIndexDataProduct, SpectralIndexMapData, RectangularIntensityDataProduct, \
     RectangularSpectralIndexDataProduct, RectangularSpectralIndexMapData, RectangularIntensityMapData
@@ -121,7 +122,7 @@ class TestUltraProcessor(unittest.TestCase):
 
         observation_date_as_float = np.arange(90 * 45).reshape(90, 45) * 3600 * 1e9
 
-        expected_converted_datetimes = datetime(year=1970, month=1, day=1) + timedelta(hours=1) * np.arange(
+        expected_converted_datetimes = TT2000_EPOCH + timedelta(hours=1) * np.arange(
             90 * 45).reshape(90, 45)
 
         mock_rectangular_map_dataset = {
@@ -225,7 +226,8 @@ class TestUltraProcessor(unittest.TestCase):
         self.assertEqual(actual_rectangular_data.intensity_map_data.ena_intensity, sentinel.rectangular_ena_intensity)
         self.assertEqual(actual_rectangular_data.intensity_map_data.ena_intensity_stat_uncert, sentinel.rectangular_ena_intensity_stat_uncert)
         self.assertEqual(actual_rectangular_data.intensity_map_data.ena_intensity_sys_err, sentinel.rectangular_ena_intensity_sys_err)
-        np.testing.assert_array_equal(actual_rectangular_data.intensity_map_data.obs_date, expected_converted_datetimes)
+        np.testing.assert_array_equal(actual_rectangular_data.intensity_map_data.obs_date.data, expected_converted_datetimes)
+        np.testing.assert_array_equal(actual_rectangular_data.intensity_map_data.obs_date.mask, np.ma.getmask(expected_converted_datetimes))
         self.assertEqual(actual_rectangular_data.intensity_map_data.obs_date_range, sentinel.rectangular_obs_date_range)
         np.testing.assert_array_equal(actual_rectangular_data.intensity_map_data.solid_angle, expected_output_solid_angle)
 

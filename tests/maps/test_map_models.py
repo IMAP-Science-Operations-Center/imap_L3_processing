@@ -433,6 +433,34 @@ class TestMapModels(unittest.TestCase):
         np.testing.assert_equal(combine_two.obs_date.mask, expected_obs_date.mask)
         np.testing.assert_equal(combine_two.obs_date, expected_obs_date)
 
+    def test_combine_maps_handles_integer_obs_date(self):
+        map_1 = self.construct_intensity_data_with_all_zero_fields()
+        map_1.exposure_factor = np.array([1, 0, 5, 6, 0])
+        DATETIME_FILL = -9223372036854775808
+        map_1.obs_date = np.ma.masked_equal(
+            [5,
+             DATETIME_FILL,
+             7,
+             8,
+             DATETIME_FILL],
+            DATETIME_FILL)
+
+        map_2 = self.construct_intensity_data_with_all_zero_fields()
+        map_2.exposure_factor = np.array([3, 1, 5, 2, 0])
+        map_2.obs_date = np.ma.masked_equal(
+            [9,
+             10,
+             11,
+             12,
+             DATETIME_FILL],
+            DATETIME_FILL)
+        expected_obs_date = np.ma.array(
+            [8, 10, 9, 9, np.ma.masked])
+
+        combine_two = combine_intensity_map_data([map_1, map_2])
+        np.testing.assert_equal(combine_two.obs_date.mask, expected_obs_date.mask)
+        np.testing.assert_equal(combine_two.obs_date, expected_obs_date)
+
     def test_combine_maps_does_not_weight_by_exposures_based_on_flag(self):
         map_1 = self.construct_intensity_data_with_all_zero_fields()
         map_1.ena_intensity = np.array([1, np.nan, 3, 4, np.nan, np.nan, 0, 5, 13])
