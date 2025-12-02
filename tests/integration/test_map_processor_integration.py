@@ -6,6 +6,7 @@ from unittest.mock import patch, Mock
 
 from imap_data_access import ScienceFilePath
 from spacepy.pycdf import CDF
+from spiceypy import spiceypy
 
 import imap_l3_data_processor
 from tests.integration.integration_test_helpers import mock_imap_data_access
@@ -178,6 +179,8 @@ class TestMapIntegration(unittest.TestCase):
             with CDF(str(expected_map_path)) as cdf:
                 self.assertEqual(expected_parents, set(cdf.attrs["Parents"]))
 
+        spiceypy.kclear()
+
     @patch("imap_l3_data_processor._parse_cli_arguments")
     def test_ultra_combined_maps(self, mock_parse_cli_arguments):
         ultra_test_data_dir = INTEGRATION_TEST_DATA_PATH / "ultra"
@@ -236,3 +239,5 @@ class TestMapIntegration(unittest.TestCase):
 
             with CDF(str(expected_map_path)) as cdf:
                 self.assertEqual(expected_parents, set(cdf.attrs["Parents"]))
+
+        spiceypy.kclear()
