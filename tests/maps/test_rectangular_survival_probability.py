@@ -102,11 +102,12 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
 
                 np.testing.assert_array_equal(pointing_set.az_el_points[:, 1], np.repeat(expected_sensor_angle, 3600))
 
+    @patch("imap_l3_processing.maps.rectangular_survival_probability.add_spacecraft_velocity_to_pset")
     @patch("imap_l3_processing.maps.rectangular_survival_probability.apply_compton_getting_correction")
     @patch("imap_l3_processing.maps.rectangular_survival_probability.frame_transform_az_el")
     @patch("imap_l3_processing.maps.rectangular_survival_probability.ttj2000ns_to_et")
     def test_cg_corrected_survival_probability_pointing_set(self, mock_tt2000_to_et, mock_frame_transform,
-                                                            mock_cg_correction):
+                                                            mock_cg_correction, mock_add_sc_velocity_to_pset):
         corrected_hae_longitude = np.full((1, 3, 3600), 2)
         corrected_hae_latitude = np.full((1, 3, 3600), 1)
         corrected_az_el_pairs = np.stack([corrected_hae_longitude[0], corrected_hae_latitude[0]], axis=2)
@@ -124,6 +125,8 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
         energy_sc[0, 1, 1800:3600] = 1000
         energy_sc[0, 2, :1800] = 1000
         energy_sc[0, 2, 1800:3600] = 2000
+
+        sc_velocity = np.arange(3) + 1000
 
         hi_hf_energies = np.array([.001, .1, 1])
         expected_exposures = np.array([
@@ -143,11 +146,16 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
                 [CoordNames.TIME.value, CoordNames.ENERGY_L2.value, CoordNames.AZIMUTH_L2.value],
                 corrected_hae_longitude
             ),
+            "sc_velocity": (
+                [CoordNames.CARTESIAN_VECTOR.value],
+                sc_velocity
+            )
         },
             coords={
                 CoordNames.TIME.value: [1_000_000_000],
                 CoordNames.ENERGY_L2.value: hi_hf_energies,
                 CoordNames.AZIMUTH_L1C.value: np.arange(3600),
+                CoordNames.CARTESIAN_VECTOR.value: np.arange(3)
             }
         )
 
@@ -172,13 +180,16 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
                                                      from_frame=SpiceFrame.IMAP_DPS, to_frame=SpiceFrame.IMAP_HAE,
                                                      degrees=True)
 
-        actual_uncorrected_pset, actual_hf_energies = mock_cg_correction.call_args[0]
+        [actual_uncorrected_pset] = mock_add_sc_velocity_to_pset.call_args[0]
 
         np.testing.assert_array_equal(actual_uncorrected_pset['hae_longitude'].values[0], uncorrected_hae_lon)
         np.testing.assert_array_equal(actual_uncorrected_pset['hae_latitude'].values[0], uncorrected_hae_lat)
 
         np.testing.assert_array_equal(actual_uncorrected_pset['epoch'].values, self.l1c_hi_dataset.epoch_j2000)
         np.testing.assert_array_equal(actual_uncorrected_pset['epoch_delta'].values, [self.l1c_hi_dataset.epoch_delta])
+
+        pset_with_sc_velocity, actual_hf_energies = mock_cg_correction.call_args[0]
+        self.assertEqual(pset_with_sc_velocity, mock_add_sc_velocity_to_pset.return_value)
 
         expected_energies_in_eV = hi_hf_energies * 1000
         np.testing.assert_array_equal(actual_hf_energies, expected_energies_in_eV)
