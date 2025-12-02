@@ -1,6 +1,6 @@
 [project]
 name = "imap_l3_processing"
-version = "2025.10.29"
+version = "2025.12.02"
 description = "This is a package for creating IMAP Level 3 data"
 requires-python = ">= 3.10"
 dependencies = [
