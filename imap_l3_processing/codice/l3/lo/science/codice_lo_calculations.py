@@ -18,7 +18,7 @@ from imap_l3_processing.constants import ONE_SECOND_IN_MICROSECONDS
 
 
 def calculate_partial_densities(intensities: np.ndarray, esa_steps: np.ndarray, mass_per_charge: float):
-    return np.sum(
+    return np.nansum(
         CONSTANT_C_FROM_INSTRUMENT_TEAM * AZIMUTH_STEP_SIZE * ELEVATION_STEP_SIZE * ENERGY_STEP_SIZE * intensities * np.sqrt(
         esa_steps[np.newaxis, :, np.newaxis]) * np.sqrt(mass_per_charge), axis=(1, 2))
 

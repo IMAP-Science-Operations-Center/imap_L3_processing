@@ -163,6 +163,23 @@ class TestCodiceLoCalculations(unittest.TestCase):
 
         np.testing.assert_array_equal(expected_partial_densities, partial_densities)
 
+    def test_calculate_partial_densities_ignores_nan_intensities(self):
+        energy_steps = np.array([1, 100, 10000])
+        intensities = np.array([
+            [[1], [2], [3]],
+            [[4], [5], [np.nan]]
+        ])
+        mass_per_charge = 10
+
+        partial_densities = calculate_partial_densities(intensities, energy_steps, mass_per_charge)
+
+        expected_partial_densities = 2.283e-8 * np.deg2rad(15) * np.deg2rad(15) * .4 * np.array([
+            1 + 2 * 10 + 3 * 100,
+            4 + 5 * 10
+        ]) * np.sqrt(mass_per_charge)
+
+        np.testing.assert_allclose(expected_partial_densities, partial_densities)
+
     def test_rebin_by_species(self):
         num_epochs = 2
         num_priorities = 2
