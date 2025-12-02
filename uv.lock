@@ -714,7 +714,7 @@ wheels = [
 
 [[package]]
 name = "imap-l3-processing"
-version = "2025.10.29"
+version = "2025.12.2"
 source = { editable = "." }
 dependencies = [
     { name = "astropy", version = "6.1.7", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
