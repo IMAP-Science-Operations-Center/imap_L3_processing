@@ -58,6 +58,7 @@ class TestModels(SpiceTestCase):
             np.testing.assert_array_equal(expected["counts"][...], actual.counts)
             np.testing.assert_array_equal(expected[CoordNames.ENERGY_ULTRA_L1C.value][...], actual.energy)
             np.testing.assert_array_equal(expected["exposure_factor"][...], actual.exposure)
+            np.testing.assert_array_equal(expected["epoch_delta"][...], actual.epoch_delta)
             np.testing.assert_array_equal(expected[CoordNames.HEALPIX_INDEX.value][...], actual.healpix_index)
             np.testing.assert_array_equal(expected[CoordNames.ELEVATION_L1C.value][...], actual.latitude)
             np.testing.assert_array_equal(expected[CoordNames.AZIMUTH_L1C.value][...], actual.longitude)

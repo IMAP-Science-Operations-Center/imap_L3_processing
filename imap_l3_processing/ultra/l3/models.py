@@ -41,6 +41,7 @@ class UltraGlowsL3eData:
 @dataclass
 class UltraL1CPSet:
     epoch: datetime
+    epoch_delta: int
     repointing: int
     energy: ndarray
     counts: ndarray
@@ -58,6 +59,7 @@ class UltraL1CPSet:
                 repointing=repointing,
                 counts=read_numeric_variable(cdf["counts"]),
                 epoch=cdf[CoordNames.TIME.value][0],
+                epoch_delta=cdf["epoch_delta"][0],
                 energy=read_numeric_variable(cdf[CoordNames.ENERGY_ULTRA_L1C.value]),
                 exposure=read_numeric_variable(cdf["exposure_factor"]),
                 latitude=read_numeric_variable(cdf[CoordNames.ELEVATION_L1C.value]).ravel(),
@@ -101,7 +103,7 @@ class UltraL1CPSet:
             },
             coords={
                 CoordNames.TIME.value: [
-                    (self.epoch - TT2000_EPOCH).total_seconds() * ONE_SECOND_IN_NANOSECONDS,
+                    ((self.epoch - TT2000_EPOCH).total_seconds()) * ONE_SECOND_IN_NANOSECONDS + self.epoch_delta / 2,
                 ],
                 CoordNames.ENERGY_ULTRA_L1C.value: self.energy,
                 CoordNames.HEALPIX_INDEX.value: self.healpix_index,

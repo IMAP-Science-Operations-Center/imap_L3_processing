@@ -8,7 +8,7 @@ from imap_processing.ena_maps.ena_maps import UltraPointingSet, HealpixSkyMap
 from imap_processing.spice import geometry
 from imap_processing.ultra.constants import UltraConstants
 
-from imap_l3_processing.constants import TT2000_EPOCH
+from imap_l3_processing.constants import TT2000_EPOCH, ONE_SECOND_IN_NANOSECONDS, SECONDS_PER_DAY
 from imap_l3_processing.ultra.l3.models import UltraL1CPSet, UltraGlowsL3eData
 from imap_l3_processing.ultra.l3.science.ultra_survival_probability import UltraSurvivalProbability, \
     UltraSurvivalProbabilitySkyMap
@@ -46,7 +46,7 @@ class TestUltraSurvivalProbability(unittest.TestCase):
 
         prod = UltraSurvivalProbability(input_l1c_pset, glows, bin_groups=[0, 1, 2])
 
-        expected_tt = (input_l1c_pset.epoch - TT2000_EPOCH).total_seconds()
+        expected_tt = (input_l1c_pset.epoch - TT2000_EPOCH).total_seconds() + 43200
         mock_unitim.assert_called_once_with(expected_tt, "TT", "ET")
 
         mock_frame_transform_az_el.assert_called_once_with(mock_unitim.return_value, prod.az_el_points,
@@ -205,8 +205,9 @@ def _create_ultra_l1c_pset(energy: np.ndarray,
                            counts: np.ndarray = None,
                            latitude: np.ndarray = None,
                            longitude: np.ndarray = None,
-                           epoch: datetime = None):
-    epoch = datetime(2025, 10, 1, 12) if epoch is None else epoch
+                           epoch: datetime = None,
+                           epoch_delta: int = ONE_SECOND_IN_NANOSECONDS * SECONDS_PER_DAY):
+    epoch = datetime(2025, 10, 1, 0) if epoch is None else epoch
     counts = counts or np.full_like(exposure_factor, 1)
     sensitivity = sensitivity or np.full_like(exposure_factor[0], 1)
     healpix_index = np.arange(exposure_factor.shape[-1])
@@ -214,6 +215,7 @@ def _create_ultra_l1c_pset(energy: np.ndarray,
     lon_pix, lat_pix = healpix.healpix_to_lonlat(healpix_index)
     input_l1c_pset = UltraL1CPSet(
         epoch=epoch,
+        epoch_delta=epoch_delta,
         energy=energy,
         counts=counts,
         exposure=exposure_factor,
