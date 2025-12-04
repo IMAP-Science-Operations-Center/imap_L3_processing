@@ -2,7 +2,7 @@ import numpy as np
 import xarray as xr
 from imap_processing.ena_maps.ena_maps import RectangularSkyMap, PointingSet
 from imap_processing.ena_maps.utils.coordinates import CoordNames
-from imap_processing.ena_maps.utils.corrections import apply_compton_getting_correction
+from imap_processing.ena_maps.utils.corrections import apply_compton_getting_correction, add_spacecraft_velocity_to_pset
 from imap_processing.spice.geometry import SpiceFrame, frame_transform_az_el
 from imap_processing.spice.time import ttj2000ns_to_et
 
@@ -87,7 +87,8 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
 
             if sensor == Sensor.Hi90 or sensor == Sensor.Hi45:
                 initial_dataset.attrs['Logical_source'] = 'imap_hi'
-            dataset = apply_compton_getting_correction(initial_dataset, xr.DataArray(energy_in_ev))
+            dataset = add_spacecraft_velocity_to_pset(initial_dataset)
+            dataset = apply_compton_getting_correction(dataset, xr.DataArray(energy_in_ev))
             self.az_el_points = xr.DataArray(
                 np.stack([dataset['hae_longitude'].values[0], dataset['hae_latitude'].values[0]], axis=2),
                 dims=[CoordNames.ENERGY_ULTRA_L1C.value, CoordNames.GENERIC_PIXEL.value, CoordNames.AZ_EL_VECTOR.value],
