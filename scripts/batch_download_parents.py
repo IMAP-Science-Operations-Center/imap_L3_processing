@@ -12,7 +12,7 @@ def download_parents(path: Path):
     try:
         files_to_download = set()
 
-        for file in path.rglob("*.cdf"):
+        for file in path.glob("*.cdf"):
             print(f"opening {path / file}")
             with CDF(str(path / file)) as cdf:
                 for parent in cdf.attrs['Parents']:
@@ -21,6 +21,7 @@ def download_parents(path: Path):
         print(f"Downloading {len(files_to_download)} files")
 
         for file in files_to_download:
+            print(f"downloading {file}")
             print(imap_data_access.download(file))
 
     except Exception as e:

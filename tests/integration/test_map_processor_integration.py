@@ -2,6 +2,7 @@ import logging
 import unittest
 from datetime import timedelta
 from pathlib import Path
+from unittest import skip
 from unittest.mock import patch, Mock
 
 from imap_data_access import ScienceFilePath
@@ -16,6 +17,12 @@ INTEGRATION_TEST_DATA_PATH = Path(__file__).parent / "test_data"
 
 
 class TestMapIntegration(unittest.TestCase):
+    def setUp(self):
+        spiceypy.kclear()
+
+    def tearDown(self):
+        spiceypy.kclear()
+
     @patch("imap_l3_data_processor._parse_cli_arguments")
     def test_hi_all_sp_maps(self, mock_parse_cli_arguments):
         hi_test_data_dir = INTEGRATION_TEST_DATA_PATH / "hi"
@@ -179,23 +186,15 @@ class TestMapIntegration(unittest.TestCase):
             with CDF(str(expected_map_path)) as cdf:
                 self.assertEqual(expected_parents, set(cdf.attrs["Parents"]))
 
-        spiceypy.kclear()
-
+    @skip(
+        "The map created has a descriptor is not in descriptor list since it is only for validation.")
     @patch("imap_l3_data_processor._parse_cli_arguments")
     def test_ultra_combined_maps(self, mock_parse_cli_arguments):
-        ultra_test_data_dir = INTEGRATION_TEST_DATA_PATH / "ultra"
         ultra_imap_data_dir = get_run_local_data_path("ultra/integration_data")
 
-        input_files = [
-            ultra_test_data_dir / "imap_glows_l3e_survival-probability-ul_20250415-repoint00000_v001.cdf",
-            ultra_test_data_dir / "imap_glows_l3e_survival-probability-ul_20261020-repoint02000_v001.cdf",
+        input_data = Path(r"C:\Users\Harrison\Downloads\ultra_combined_validation")
 
-            ultra_test_data_dir / "imap_ultra_l1c_45sensor-spacecraftpset_20250416-repoint00000_v000.cdf",
-            ultra_test_data_dir / "imap_ultra_l1c_90sensor-spacecraftpset_20250416-repoint00000_v000.cdf",
-
-            ultra_test_data_dir / "imap_ultra_l2_u45-ena-h-hf-nsp-full-hae-6deg-3mo_20250416_v001.cdf",
-            ultra_test_data_dir / "imap_ultra_l2_u90-ena-h-hf-nsp-full-hae-6deg-3mo_20250416_v001.cdf",
-
+        ancil_files = [
             INTEGRATION_TEST_DATA_PATH / "spice" / "naif020.tls",
             INTEGRATION_TEST_DATA_PATH / "spice" / "imap_science_108.tf",
             INTEGRATION_TEST_DATA_PATH / "spice" / "imap_sclk_008.tsc",
@@ -203,6 +202,7 @@ class TestMapIntegration(unittest.TestCase):
 
             get_test_data_path("ultra/imap_ultra_l2-energy-bin-group-sizes_20250101_v000.csv"),
         ]
+        input_files = list(input_data.glob("*.cdf")) + ancil_files
 
         with mock_imap_data_access(ultra_imap_data_dir, input_files):
             logging.basicConfig(
@@ -226,18 +226,19 @@ class TestMapIntegration(unittest.TestCase):
             imap_l3_data_processor.imap_l3_processor()
 
             expected_map_path = ScienceFilePath(
-                "imap_ultra_l3_ulc-ena-h-hf-sp-full-hae-6deg-3mo_20250416_v001.cdf").construct_path()
+                "imap_ultra_l3_ulc-ena-h-sf-sp-full-hae-2deg-6mo_20250416_v001.cdf").construct_path()
             self.assertTrue(expected_map_path.exists(), f"Expected file {expected_map_path.name} not found")
 
             expected_parents = {
-                "imap_glows_l3e_survival-probability-ul_20250415-repoint00000_v001.cdf",
+                "imap_glows_l3e_survival-probability-ul_20250416-repoint00000_v001.cdf",
+                "imap_glows_l3e_survival-probability-ul_20251017-repoint00184_v001.cdf",
                 "imap_ultra_l1c_45sensor-spacecraftpset_20250416-repoint00000_v000.cdf",
                 "imap_ultra_l1c_90sensor-spacecraftpset_20250416-repoint00000_v000.cdf",
-                "imap_ultra_l2_u45-ena-h-hf-nsp-full-hae-6deg-3mo_20250416_v001.cdf",
-                "imap_ultra_l2_u90-ena-h-hf-nsp-full-hae-6deg-3mo_20250416_v001.cdf",
+                "imap_ultra_l1c_45sensor-spacecraftpset_20251017-repoint00184_v000.cdf",
+                "imap_ultra_l1c_90sensor-spacecraftpset_20251017-repoint00184_v000.cdf",
+                "imap_ultra_l2_u45-ena-h-sf-nsp-full-hae-2deg-6mo_20250416_v001.cdf",
+                "imap_ultra_l2_u90-ena-h-sf-nsp-full-hae-2deg-6mo_20250416_v001.cdf",
             }
 
             with CDF(str(expected_map_path)) as cdf:
                 self.assertEqual(expected_parents, set(cdf.attrs["Parents"]))
-
-        spiceypy.kclear()

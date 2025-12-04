@@ -143,8 +143,12 @@ class UltraL3CombinedDependencies:
         for pset in u45_pset_paths:
             u45_l1c_psets.append(UltraL1CPSet.read_from_path(pset))
 
+        u45_pset_paths = sorted(u45_pset_paths, key=lambda pset: pset.name)
+
         for pset in u90_pset_paths:
             u90_l1c_psets.append(UltraL1CPSet.read_from_path(pset))
+
+        u90_pset_paths = sorted(u90_pset_paths, key=lambda pset: pset.name)
 
         for pset in glows_l3e_pset_paths:
             survival_probability_ul_pset.append(UltraGlowsL3eData.read_from_path(pset))
