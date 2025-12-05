@@ -179,6 +179,34 @@ class TestUltraSurvivalProbabilitySkyMap(SpiceTestCase):
         np.testing.assert_array_almost_equal(exposure_weighted_survival_probabilities,
                                              expected_exposure_weighted_survival_probabilities)
 
+    def test_ultra_survival_probability_skymap_ignores_nan_survival_probabilities(self):
+        pointing_set_nside = 2
+        pointing_set_pixels = 12 * pointing_set_nside ** 2
+        l1c_exposure_1 = np.full((1, 1, pointing_set_pixels), 0.5)
+        l1c_exposure_2 = np.full((1, 1, pointing_set_pixels), 1)
+        l3e_sp_1 = np.full((1, 1, pointing_set_pixels), 0.5)
+        l3e_sp_2 = np.full((1, 1, pointing_set_pixels), np.nan)
+        glows_energies = np.array([1])
+        l1c_1 = _create_ultra_l1c_pset(energy=np.array([1]), exposure_factor=l1c_exposure_1)
+        l3e_glows_1 = _build_glows_l3e_ultra(survival_probabilities=l3e_sp_1, energies=glows_energies,
+                                             nside=pointing_set_nside)
+        l1c_2 = _create_ultra_l1c_pset(energy=np.array([1]), exposure_factor=l1c_exposure_2)
+        l3e_glows_2 = _build_glows_l3e_ultra(survival_probabilities=l3e_sp_2, energies=glows_energies,
+                                             nside=pointing_set_nside)
+
+        pset_1 = UltraSurvivalProbability(l1c_1, l3e_glows_1, bin_groups=[0, 1])
+        pset_2 = UltraSurvivalProbability(l1c_2, l3e_glows_2, bin_groups=[0, 1])
+
+        output_nside = 1
+        prod = UltraSurvivalProbabilitySkyMap([pset_1, pset_2], geometry.SpiceFrame.IMAP_DPS, output_nside)
+
+        self.assertIsInstance(prod, HealpixSkyMap)
+        exposure_weighted_survival_probabilities = prod.data_1d["exposure_weighted_survival_probabilities"].values
+        expected_output_pixels = 12 * output_nside ** 2
+        expected_exposure_weighted_survival_probabilities = np.full((1, 1, expected_output_pixels), 0.5)
+        np.testing.assert_array_almost_equal(exposure_weighted_survival_probabilities,
+                                             expected_exposure_weighted_survival_probabilities)
+
 
 def _build_glows_l3e_ultra(survival_probabilities: np.ndarray = None, energies: np.ndarray = None, nside: int = 16):
     energies = np.arange(1, 21) if energies is None else energies

@@ -59,7 +59,9 @@ class UltraSurvivalProbabilitySkyMap(HealpixSkyMap):
     def __init__(self, sp: list[UltraSurvivalProbability], spice_frame: geometry.SpiceFrame, nside: int):
         super().__init__(nside, spice_frame)
         for sp_pset in sp:
-            self.project_pset_values_to_map(sp_pset, ["survival_probability_times_exposure", "exposure_factor"])
+            self.project_pset_values_to_map(sp_pset, ["survival_probability_times_exposure", "exposure_factor"],
+                                            pset_valid_mask=np.isfinite(
+                                                sp_pset.data["survival_probability_times_exposure"]))
 
         self.data_1d = Dataset({
             "exposure_weighted_survival_probabilities": self.data_1d["survival_probability_times_exposure"] /
