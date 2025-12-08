@@ -59,6 +59,28 @@ def create_rectangular_intensity_map_data(epoch=None, epoch_delta=None, lon=None
     )
 
 
+def construct_intensity_data_with_all_zero_fields() -> IntensityMapData:
+    return IntensityMapData(
+        epoch=np.array([0]),
+        epoch_delta=np.array([0]),
+        energy=np.array([0]),
+        energy_delta_plus=np.array([0]),
+        energy_delta_minus=np.array([0]),
+        energy_label=np.array([0]),
+        latitude=np.array([0]),
+        longitude=np.array([0]),
+        exposure_factor=np.array([1]),
+        obs_date=np.array([datetime(2025, 5, 6)]),
+        obs_date_range=np.array([0]),
+        solid_angle=np.array([0]),
+        ena_intensity=np.array([0]),
+        ena_intensity_stat_uncert=np.array([0]),
+        ena_intensity_sys_err=np.array([0]),
+        bg_intensity=np.array([0]),
+        bg_intensity_sys_err=np.array([0]),
+        bg_intensity_stat_uncert=np.array([0]),
+    )
+
 def create_rectangular_spectral_index_map_data(epoch=None, epoch_delta=None, lon=None, lat=None, energy=None,
                                                energy_delta=None, spectral_index=None,
                                                spectral_index_stat_unc=None):

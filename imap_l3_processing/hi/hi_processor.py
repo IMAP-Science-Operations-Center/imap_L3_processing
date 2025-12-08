@@ -67,7 +67,13 @@ class HiProcessor(MapProcessor):
         ram_data_product = process_survival_probabilities(hi_l3_full_spin_dependencies.ram_dependencies, spice_frame_name)
         antiram_data_product = process_survival_probabilities(hi_l3_full_spin_dependencies.antiram_dependencies, spice_frame_name)
 
-        return combine_rectangular_intensity_map_data([ram_data_product, antiram_data_product], exposure_weighted=False)
+        if cg_corrected:
+            callable = combine_uncertainty_weighted_map_data
+        else:
+            callable = combine_intensity_map_data
+
+        return strategy.combine_rectangular([ram_data_product, antiram_data_product])
+        return combine_rectangular_intensity_map_data([ram_data_product, antiram_data_product], callable)
 
     def process_spectral_fit_index(self, hi_l3_spectral_fit_dependencies: HiL3SpectralIndexDependencies) \
             -> RectangularSpectralIndexMapData:
