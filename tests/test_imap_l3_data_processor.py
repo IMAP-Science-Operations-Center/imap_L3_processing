@@ -178,11 +178,16 @@ class TestImapL3DataProcessor(TestCase):
         mock_argument_parser.parse_args.return_value.version = sentinel.version
         mock_argument_parser.parse_args.return_value.descriptor = descriptor
 
-        map_to_produce_1 = PossibleMapToProduce(set(), Mock())
-        map_to_produce_2 = PossibleMapToProduce(set(), Mock())
-        map_to_produce_3 = PossibleMapToProduce(set(), Mock())
         mock_lo_initializer.get_maps_that_should_be_produced.side_effect = [
-            [map_to_produce_1, map_to_produce_2, map_to_produce_3],
+            [PossibleMapToProduce(set(), Mock())],
+            [PossibleMapToProduce(set(), Mock())],
+            [PossibleMapToProduce(set(), Mock())],
+            [PossibleMapToProduce(set(), Mock())],
+            [PossibleMapToProduce(set(), Mock())],
+            [PossibleMapToProduce(set(), Mock())],
+            [PossibleMapToProduce(set(), Mock())],
+            [PossibleMapToProduce(set(), Mock())],
+            [PossibleMapToProduce(set(), Mock())]
         ]
 
         mock_lo_processor.return_value.process.side_effect = [
@@ -193,7 +198,7 @@ class TestImapL3DataProcessor(TestCase):
 
         imap_l3_processor()
 
-        self.assertEqual(3, mock_lo_processor.call_count)
+        self.assertEqual(9, mock_lo_processor.call_count)
 
         mock_upload.assert_has_calls([
             call(Path("lo_sp_map_1.cdf")),

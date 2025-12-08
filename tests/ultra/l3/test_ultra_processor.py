@@ -285,11 +285,11 @@ class TestUltraProcessor(unittest.TestCase):
     @patch('imap_l3_processing.ultra.l3.ultra_processor.UltraProcessor._process_survival_probability')
     @patch('imap_l3_processing.ultra.l3.ultra_processor.UltraProcessor._process_healpix_intensity_to_rectangular')
     @patch('imap_l3_processing.ultra.l3.ultra_processor.MapProcessor.get_parent_file_names')
-    @patch("imap_l3_processing.ultra.l3.ultra_processor.combine_healpix_intensity_map_data")
+    @patch("imap_l3_processing.ultra.l3.ultra_processor.UncertaintyWeightedCombination")
     @patch('imap_l3_processing.ultra.l3.ultra_processor.save_data')
     @patch('imap_l3_processing.ultra.l3.ultra_processor.UltraL3CombinedDependencies.fetch_dependencies')
     def _test_process_combined_sensor_survival_probability(self, degree_spacing, mock_fetch_dependencies,
-                                                           mock_save_data, mock_combine_maps,
+                                                           mock_save_data, mock_uncertainty_weighted_combination,
                                                            mock_get_parent_file_names, mock_healpix_to_rectangular,
                                                            mock_process_survival_probability):
         mock_get_parent_file_names.return_value = ["ram_map", "antiram_map"]
@@ -309,6 +309,9 @@ class TestUltraProcessor(unittest.TestCase):
         mock_dependencies.dependency_file_paths = sentinel.dependency_file_paths
         mock_dependencies.energy_bin_group_sizes = sentinel.energy_bin_sizes
         mock_fetch_dependencies.return_value = mock_dependencies
+
+        mock_combination_strategy = Mock()
+        mock_uncertainty_weighted_combination.return_value = mock_combination_strategy
 
         expected_u45_dependency = UltraL3Dependencies(
             ultra_l2_map=mock_dependencies.u45_l2_map,
@@ -334,10 +337,11 @@ class TestUltraProcessor(unittest.TestCase):
 
         mock_fetch_dependencies.assert_called_once_with(sentinel.dependencies)
 
-        mock_combine_maps.assert_called_once_with(
+        mock_combination_strategy.combine_healpix_intensity_map_data.assert_called_once_with(
             [sentinel.u45_l2_survival_corrected_map, sentinel.u90_l2_survival_corrected_map])
 
-        mock_healpix_to_rectangular.assert_called_once_with(mock_combine_maps.return_value, degree_spacing)
+        mock_healpix_to_rectangular.assert_called_once_with(
+            mock_combination_strategy.combine_healpix_intensity_map_data.return_value, degree_spacing)
 
         mock_save_data.assert_called_once_with(mock_healpix_to_rectangular.return_value)
         self.assertEqual([mock_save_data.return_value], product)

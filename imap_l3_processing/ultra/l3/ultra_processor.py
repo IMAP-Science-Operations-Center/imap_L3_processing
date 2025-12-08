@@ -5,7 +5,7 @@ import numpy as np
 from imap_processing.spice.geometry import SpiceFrame
 
 from imap_l3_processing.constants import TT2000_EPOCH
-from imap_l3_processing.maps.map_combination import ExposureWeightedCombination
+from imap_l3_processing.maps.map_combination import ExposureWeightedCombination, UncertaintyWeightedCombination
 from imap_l3_processing.maps.map_descriptors import MapDescriptorParts, MapQuantity, SurvivalCorrection, \
     parse_map_descriptor, PixelSize, Sensor
 from imap_l3_processing.maps.map_models import HealPixIntensityMapData, IntensityMapData, \
@@ -88,8 +88,9 @@ class UltraProcessor(MapProcessor):
 
         u45_survival_corrected = self._process_survival_probability(u45_dep, spice_frame_name)
         u90_survival_corrected = self._process_survival_probability(u90_dep, spice_frame_name)
+        combination_strategy = UncertaintyWeightedCombination()
 
-        return None  # combine_healpix_intensity_map_data([u45_survival_corrected, u90_survival_corrected])
+        return combination_strategy.combine_healpix_intensity_map_data([u45_survival_corrected, u90_survival_corrected])
 
     def _process_survival_probability(self, deps: UltraL3Dependencies,
                                       spice_frame_name: SpiceFrame) -> HealPixIntensityMapData:
