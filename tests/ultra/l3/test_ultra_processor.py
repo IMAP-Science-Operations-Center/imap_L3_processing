@@ -247,10 +247,11 @@ class TestUltraProcessor(unittest.TestCase):
 
     @patch('imap_l3_processing.ultra.l3.ultra_processor.MapProcessor.get_parent_file_names')
     @patch('imap_l3_processing.ultra.l3.ultra_processor.UltraProcessor._process_healpix_intensity_to_rectangular')
-    @patch("imap_l3_processing.ultra.l3.ultra_processor.combine_healpix_intensity_map_data")
+    @patch("imap_l3_processing.ultra.l3.ultra_processor.ExposureWeightedCombination")
     @patch('imap_l3_processing.ultra.l3.ultra_processor.save_data')
     @patch('imap_l3_processing.ultra.l3.ultra_processor.UltraL3CombinedDependencies.fetch_dependencies')
-    def _test_process_combined_sensor(self, degree_spacing, mock_fetch_dependencies, mock_save_data, mock_combine_maps,
+    def _test_process_combined_sensor(self, degree_spacing, mock_fetch_dependencies, mock_save_data,
+                                      mock_exposure_weighted_combination,
                                       mock_healpix_to_rectangular, _):
         input_metadata = InputMetadata(instrument="ultra",
                                        data_level="l3",
@@ -271,9 +272,12 @@ class TestUltraProcessor(unittest.TestCase):
 
         mock_fetch_dependencies.assert_called_once_with(sentinel.dependencies)
 
-        mock_combine_maps.assert_called_once_with([sentinel.u45_l2_map, sentinel.u90_l2_map])
+        mock_exposure_weighted_combination.return_value.combine_healpix_intensity_map_data.assert_called_once_with(
+            [sentinel.u45_l2_map, sentinel.u90_l2_map])
 
-        mock_healpix_to_rectangular.assert_called_once_with(mock_combine_maps.return_value, degree_spacing)
+        mock_combine_maps_return_value = mock_exposure_weighted_combination.return_value.combine_healpix_intensity_map_data.return_value
+
+        mock_healpix_to_rectangular.assert_called_once_with(mock_combine_maps_return_value, degree_spacing)
 
         mock_save_data.assert_called_once_with(mock_healpix_to_rectangular.return_value)
         self.assertEqual([mock_save_data.return_value], product)

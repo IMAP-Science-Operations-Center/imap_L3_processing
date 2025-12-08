@@ -276,7 +276,7 @@ class HealPixSpectralIndexMapData:
 
                 "ena_spectral_index": (full_shape, self.spectral_index_map_data.ena_spectral_index),
                 "ena_spectral_index_stat_uncert": (
-                full_shape, self.spectral_index_map_data.ena_spectral_index_stat_uncert),
+                    full_shape, self.spectral_index_map_data.ena_spectral_index_stat_uncert),
             },
             coords={
                 CoordNames.TIME.value: self.spectral_index_map_data.epoch,
@@ -389,16 +389,20 @@ def _healpix_coords_to_variables(coords: HealPixCoords) -> list[DataProductVaria
 
 
 def calculate_datetime_weighted_average(data: np.ndarray, weights: np.ndarray, axis: int, **kwargs) -> np.ndarray:
-    epoch_based_dates = np.array((np.ma.getdata(data) - TT2000_EPOCH) / timedelta(seconds=1),
-                                 dtype=float)
+    if isinstance(np.ravel(np.ma.getdata(data))[0], datetime):
 
-    averaged_dates_as_seconds = np.ma.average(epoch_based_dates, weights=weights,
-                                              axis=axis, **kwargs)
+        epoch_based_dates = np.array((np.ma.getdata(data) - TT2000_EPOCH) / timedelta(seconds=1),
+                                     dtype=float)
 
-    return np.ma.array(
-        averaged_dates_as_seconds.data * timedelta(seconds=1) + TT2000_EPOCH,
-        mask=averaged_dates_as_seconds.mask,
-    )
+        averaged_dates_as_seconds = np.ma.average(epoch_based_dates, weights=weights,
+                                                  axis=axis, **kwargs)
+
+        return np.ma.array(
+            averaged_dates_as_seconds.data * timedelta(seconds=1) + TT2000_EPOCH,
+            mask=averaged_dates_as_seconds.mask,
+        )
+    else:
+        return np.ma.average(data, weights=weights, axis=axis, **kwargs)
 
 
 @dataclass

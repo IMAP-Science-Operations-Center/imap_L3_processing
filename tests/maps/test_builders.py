@@ -8,6 +8,49 @@ from imap_l3_processing.maps.map_models import RectangularIntensityMapData, Inte
     InputRectangularPointingSet, GlowsL3eRectangularMapInputData, RectangularSpectralIndexMapData, SpectralIndexMapData
 
 
+def create_intensity_map_data(epoch=None, epoch_delta=None, lon=None, lat=None, energy=None,
+                              energy_delta=None, flux=None,
+                              intensity_stat_uncert=None) -> IntensityMapData:
+    lon = lon if lon is not None else np.array([1.0])
+    lat = lat if lat is not None else np.array([1.0])
+    energy = energy if energy is not None else np.array([1.0])
+    energy_delta = energy_delta if energy_delta is not None else np.full((len(energy), 2), 1)
+    epoch = epoch if epoch is not None else np.ma.array([datetime.now()])
+    epoch_delta = epoch_delta if epoch_delta is not None else np.ma.array([86400 * 1e9])
+    flux = flux if flux is not None else np.full((len(epoch), len(energy), len(lon), len(lat)), fill_value=1)
+    intensity_stat_uncert = intensity_stat_uncert if intensity_stat_uncert is not None else np.full(
+        (len(epoch), len(energy), len(lon), len(lat)),
+        fill_value=1)
+
+    if isinstance(flux, np.ndarray):
+
+        more_real_flux = flux
+
+    else:
+        more_real_flux = np.full((len(epoch), 9, len(lon), len(lat)), fill_value=1)
+
+    return IntensityMapData(
+        epoch=epoch,
+        epoch_delta=epoch_delta,
+        energy=energy,
+        energy_delta_plus=energy_delta,
+        energy_delta_minus=energy_delta,
+        energy_label=np.array(["energy"]),
+        latitude=lat,
+        longitude=lon,
+        exposure_factor=np.full_like(flux, 0),
+        obs_date=np.ma.array(np.full(more_real_flux.shape, datetime(year=2010, month=1, day=1))),
+        obs_date_range=np.ma.array(np.full_like(more_real_flux, 0)),
+        solid_angle=np.full_like(more_real_flux, 0),
+        ena_intensity=flux,
+        ena_intensity_stat_uncert=intensity_stat_uncert,
+        ena_intensity_sys_err=flux * .001,
+        bg_intensity=flux * .01,
+        bg_intensity_stat_uncert=intensity_stat_uncert * .01,
+        bg_intensity_sys_err=flux * .01 * .001
+    )
+
+
 def create_rectangular_intensity_map_data(epoch=None, epoch_delta=None, lon=None, lat=None, energy=None,
                                           energy_delta=None, flux=None,
                                           intensity_stat_uncert=None) -> RectangularIntensityMapData:
@@ -59,6 +102,23 @@ def create_rectangular_intensity_map_data(epoch=None, epoch_delta=None, lon=None
     )
 
 
+def create_rectangular_intensity_map(intensity_map_data: IntensityMapData = None,
+                                     coords: RectangularCoords = None) -> RectangularIntensityMapData:
+    intensity_map = intensity_map_data if intensity_map_data is not None else create_intensity_map_data()
+
+    if coords is None:
+        lon = np.array([1.0])
+        lat = np.array([1.0])
+        coords = RectangularCoords(
+            latitude_delta=np.full_like(lat, 0),
+            latitude_label=lat.astype(str),
+            longitude_delta=np.full_like(np.array([1.0]), 0),
+            longitude_label=lon.astype(str),
+        )
+
+    return RectangularIntensityMapData(intensity_map_data=intensity_map, coords=coords)
+
+
 def construct_intensity_data_with_all_zero_fields() -> IntensityMapData:
     return IntensityMapData(
         epoch=np.array([0]),
@@ -80,6 +140,7 @@ def construct_intensity_data_with_all_zero_fields() -> IntensityMapData:
         bg_intensity_sys_err=np.array([0]),
         bg_intensity_stat_uncert=np.array([0]),
     )
+
 
 def create_rectangular_spectral_index_map_data(epoch=None, epoch_delta=None, lon=None, lat=None, energy=None,
                                                energy_delta=None, spectral_index=None,
