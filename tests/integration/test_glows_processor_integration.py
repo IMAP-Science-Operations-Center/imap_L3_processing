@@ -41,8 +41,6 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
     def test_glows_l3a(self, tmp_dir):
         input_l2_cdf_path = self._fill_official_l2_cdf_with_json_values(tmp_dir)
 
-        shutil.copy(input_l2_cdf_path, get_test_data_path("glows") / input_l2_cdf_path.name)
-
         l2_science_file_path = ScienceFilePath(input_l2_cdf_path)
 
         date_in_path = l2_science_file_path.start_date
