@@ -139,8 +139,8 @@ class TestMapIntegration(unittest.TestCase):
         ultra_imap_data_dir = get_run_local_data_path("ultra/integration_data")
 
         input_files = [
-            ultra_test_data_dir / "imap_glows_l3e_survival-probability-ul_20250415-repoint00000_v001.cdf",
-            ultra_test_data_dir / "imap_glows_l3e_survival-probability-ul_20261020-repoint02000_v001.cdf",
+            ultra_test_data_dir / "imap_glows_l3e_survival-probability-ul-sf_20250415-repoint00000_v001.cdf",
+            ultra_test_data_dir / "imap_glows_l3e_survival-probability-ul-sf_20261020-repoint02000_v001.cdf",
             ultra_test_data_dir / "imap_ultra_l1c_45sensor-spacecraftpset_20250416-repoint00000_v000.cdf",
             ultra_test_data_dir / "imap_ultra_l2_u45-ena-h-sf-nsp-full-hae-6deg-3mo_20250416_v001.cdf",
 
@@ -178,7 +178,7 @@ class TestMapIntegration(unittest.TestCase):
             self.assertTrue(expected_map_path.exists(), f"Expected file {expected_map_path.name} not found")
 
             expected_parents = {
-                "imap_glows_l3e_survival-probability-ul_20250415-repoint00000_v001.cdf",
+                "imap_glows_l3e_survival-probability-ul-sf_20250415-repoint00000_v001.cdf",
                 "imap_ultra_l1c_45sensor-spacecraftpset_20250416-repoint00000_v000.cdf",
                 "imap_ultra_l2_u45-ena-h-sf-nsp-full-hae-6deg-3mo_20250416_v001.cdf"
             }
@@ -230,8 +230,8 @@ class TestMapIntegration(unittest.TestCase):
             self.assertTrue(expected_map_path.exists(), f"Expected file {expected_map_path.name} not found")
 
             expected_parents = {
-                "imap_glows_l3e_survival-probability-ul_20250416-repoint00000_v001.cdf",
-                "imap_glows_l3e_survival-probability-ul_20251017-repoint00184_v001.cdf",
+                "imap_glows_l3e_survival-probability-ul-sf_20250416-repoint00000_v001.cdf",
+                "imap_glows_l3e_survival-probability-ul-sf_20251017-repoint00184_v001.cdf",
                 "imap_ultra_l1c_45sensor-spacecraftpset_20250416-repoint00000_v000.cdf",
                 "imap_ultra_l1c_90sensor-spacecraftpset_20250416-repoint00000_v000.cdf",
                 "imap_ultra_l1c_45sensor-spacecraftpset_20251017-repoint00184_v000.cdf",

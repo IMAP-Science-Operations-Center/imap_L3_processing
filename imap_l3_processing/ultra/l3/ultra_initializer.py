@@ -3,7 +3,7 @@ from pathlib import Path
 
 import imap_data_access
 
-from imap_l3_processing.maps.map_descriptors import MapDescriptorParts, SurvivalCorrection, Sensor
+from imap_l3_processing.maps.map_descriptors import MapDescriptorParts, SurvivalCorrection, Sensor, ReferenceFrame
 from imap_l3_processing.maps.map_initializer import MapInitializer, PossibleMapToProduce
 from imap_l3_processing.utils import furnish_spice_metakernel, SpiceKernelTypes
 
@@ -82,9 +82,14 @@ ULTRA_SP_MAP_DESCRIPTORS = [
 
 class UltraInitializer(MapInitializer):
     def __init__(self):
-        sp_query_result = imap_data_access.query(instrument='glows', data_level='l3e',
-                                                 descriptor="survival-probability-ul", version="latest")
-        self.glows_psets_by_repointing = {int(r["repointing"]): Path(r["file_path"]).name for r in sp_query_result}
+        sf_sp_query_result = imap_data_access.query(instrument='glows', data_level='l3e',
+                                                    descriptor="survival-probability-ul-sf", version="latest")
+        self.sf_glows_psets_by_repointing = {int(r["repointing"]): Path(r["file_path"]).name for r in
+                                             sf_sp_query_result}
+        hf_sp_query_result = imap_data_access.query(instrument='glows', data_level='l3e',
+                                                    descriptor="survival-probability-ul-hf", version="latest")
+        self.hf_glows_psets_by_repointing = {int(r["repointing"]): Path(r["file_path"]).name for r in
+                                             hf_sp_query_result}
 
         l2_query_result = imap_data_access.query(instrument="ultra", data_level="l2")
         l3_query_result = imap_data_access.query(instrument="ultra", data_level="l3")
@@ -103,7 +108,12 @@ class UltraInitializer(MapInitializer):
         )
 
     def _collect_glows_psets_by_repoint(self, descriptor: MapDescriptorParts) -> dict[int, str]:
-        return self.glows_psets_by_repointing
+        if descriptor.reference_frame == ReferenceFrame.Heliospheric:
+            return self.hf_glows_psets_by_repointing
+        elif descriptor.reference_frame == ReferenceFrame.Spacecraft:
+            return self.sf_glows_psets_by_repointing
+        else:
+            raise NotImplementedError("Reference frame should be either Spacecraft or Heliospheric")
 
     def _get_l2_dependencies(self, descriptor: MapDescriptorParts) -> list[MapDescriptorParts]:
         if descriptor.sensor == Sensor.UltraCombined:
