@@ -346,111 +346,115 @@ class TestUltraL3CombinedDependencies(unittest.TestCase):
     @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.ultra_l2')
     def test_fetch_dependencies_with_glows_files(self, mock_ultra_l2, mock_download, mock_read_from_xarray,
                                                       mock_l1c_read_from_path, mock_l3e_read_from_path):
-        u45_map_file_name = 'imap_ultra_l2_u45-cool-descriptor_20250601_v000.cdf'
-        u90_map_file_name = 'imap_ultra_l2_u90-cool-descriptor_20250601_v000.cdf'
-        u45_pset_file_names = ["imap_ultra_l1c_45sensor-spacecraftpset_20251010_v001.cdf",
-                              "imap_ultra_l1c_45sensor-spacecraftpset_20251011_v001.cdf",
-                              "imap_ultra_l1c_45sensor-spacecraftpset_20251012_v001.cdf"]
-        u90_pset_file_names = ["imap_ultra_l1c_90sensor-spacecraftpset_20251010_v001.cdf",
-                              "imap_ultra_l1c_90sensor-spacecraftpset_20251011_v001.cdf",
-                              "imap_ultra_l1c_90sensor-spacecraftpset_20251012_v001.cdf"]
-        glows_file_names = ["imap_glows_l3e_survival-probability-ul_20251010_v001.cdf",
-                              "imap_glows_l3e_survival-probability-ul_20251011_v001.cdf",
-                              "imap_glows_l3e_survival-probability-ul_20251012_v001.cdf"]
+        cases = [["sf", "spacecraftpset"], ["hf", "heliopset"]]
+        for frame, pset in cases:
+            with self.subTest(frame):
+                u45_map_file_name = 'imap_ultra_l2_u45-cool-descriptor_20250601_v000.cdf'
+                u90_map_file_name = 'imap_ultra_l2_u90-cool-descriptor_20250601_v000.cdf'
+                u45_pset_file_names = [f"imap_ultra_l1c_45sensor-{pset}_20251010_v001.cdf",
+                                       f"imap_ultra_l1c_45sensor-{pset}_20251011_v001.cdf",
+                                       f"imap_ultra_l1c_45sensor-{pset}_20251012_v001.cdf"]
+                u90_pset_file_names = [f"imap_ultra_l1c_90sensor-{pset}_20251010_v001.cdf",
+                                       f"imap_ultra_l1c_90sensor-{pset}_20251011_v001.cdf",
+                                       f"imap_ultra_l1c_90sensor-{pset}_20251012_v001.cdf"]
+                glows_file_names = [f"imap_glows_l3e_survival-probability-ul-{frame}_20251010_v001.cdf",
+                                    f"imap_glows_l3e_survival-probability-ul-{frame}_20251011_v001.cdf",
+                                    f"imap_glows_l3e_survival-probability-ul-{frame}_20251012_v001.cdf"]
 
-        u45_map_input = ScienceInput(u45_map_file_name)
-        u90_map_input = ScienceInput(u90_map_file_name)
-        u45_pset_inputs = [ScienceInput(pset) for pset in u45_pset_file_names]
-        u90_pset_inputs = [ScienceInput(pset) for pset in u90_pset_file_names]
-        glows_inputs = [ScienceInput(pset) for pset in glows_file_names]
+                u45_map_input = ScienceInput(u45_map_file_name)
+                u90_map_input = ScienceInput(u90_map_file_name)
+                u45_pset_inputs = [ScienceInput(pset) for pset in u45_pset_file_names]
+                u90_pset_inputs = [ScienceInput(pset) for pset in u90_pset_file_names]
+                glows_inputs = [ScienceInput(pset) for pset in glows_file_names]
 
-        processing_input_collection = ProcessingInputCollection(u45_map_input, u90_map_input, *u45_pset_inputs,
-                                                                *u90_pset_inputs, *glows_inputs)
+                processing_input_collection = ProcessingInputCollection(u45_map_input, u90_map_input, *u45_pset_inputs,
+                                                                        *u90_pset_inputs, *glows_inputs)
 
-        expected_file_paths = [
-            Path("imap_ultra_l1c_u45-pset_20251010_v001.cdf"),
-            Path("imap_ultra_l1c_u45-pset_20251011_v001.cdf"),
-            Path("imap_ultra_l1c_u45-pset_20251012_v001.cdf"),
-            Path("imap_ultra_l1c_u90-pset_20251010_v001.cdf"),
-            Path("imap_ultra_l1c_u90-pset_20251011_v001.cdf"),
-            Path("imap_ultra_l1c_u90-pset_20251012_v001.cdf"),
-            Path("imap_glows_l3e_survival-probability-ul_20251010_v001.cdf"),
-            Path("imap_glows_l3e_survival-probability-ul_20251011_v001.cdf"),
-            Path("imap_glows_l3e_survival-probability-ul_20251012_v001.cdf"),
-            Path("imap_ultra_l2_u45-cool-descriptor_20250601_v000.cdf"),
-            Path("imap_ultra_l2_u90-cool-descriptor_20250601_v000.cdf"),
-        ]
+                expected_file_paths = [
+                    Path("imap_ultra_l1c_u45-pset_20251010_v001.cdf"),
+                    Path("imap_ultra_l1c_u45-pset_20251011_v001.cdf"),
+                    Path("imap_ultra_l1c_u45-pset_20251012_v001.cdf"),
+                    Path("imap_ultra_l1c_u90-pset_20251010_v001.cdf"),
+                    Path("imap_ultra_l1c_u90-pset_20251011_v001.cdf"),
+                    Path("imap_ultra_l1c_u90-pset_20251012_v001.cdf"),
+                    Path(f"imap_glows_l3e_survival-probability-ul-{frame}_20251010_v001.cdf"),
+                    Path(f"imap_glows_l3e_survival-probability-ul-{frame}_20251011_v001.cdf"),
+                    Path(f"imap_glows_l3e_survival-probability-ul-{frame}_20251012_v001.cdf"),
+                    Path("imap_ultra_l2_u45-cool-descriptor_20250601_v000.cdf"),
+                    Path("imap_ultra_l2_u90-cool-descriptor_20250601_v000.cdf"),
+                ]
 
-        mock_download.side_effect = expected_file_paths
+                mock_download.side_effect = expected_file_paths
 
-        mock_l1c_read_from_path.side_effect = [
-            sentinel.u45_l1c_1, sentinel.u45_l1c_2, sentinel.u45_l1c_3,
-            sentinel.u90_l1c_1, sentinel.u90_l1c_2, sentinel.u90_l1c_3,
-        ]
+                mock_l1c_read_from_path.side_effect = [
+                    sentinel.u45_l1c_1, sentinel.u45_l1c_2, sentinel.u45_l1c_3,
+                    sentinel.u90_l1c_1, sentinel.u90_l1c_2, sentinel.u90_l1c_3,
+                ]
 
-        mock_l3e_read_from_path.side_effect = [sentinel.glows_1, sentinel.glows_2, sentinel.glows_3]
+                mock_l3e_read_from_path.side_effect = [sentinel.glows_1, sentinel.glows_2, sentinel.glows_3]
 
-        mock_ultra_l2.side_effect = [
-            [sentinel.u45_l2_xarray],
-            [sentinel.u90_l2_xarray]
-        ]
+                mock_ultra_l2.side_effect = [
+                    [sentinel.u45_l2_xarray],
+                    [sentinel.u90_l2_xarray]
+                ]
 
-        mock_read_from_xarray.side_effect = [
-            sentinel.u45_healpix_dataset,
-            sentinel.u90_healpix_dataset
-        ]
+                mock_read_from_xarray.side_effect = [
+                    sentinel.u45_healpix_dataset,
+                    sentinel.u90_healpix_dataset
+                ]
 
-        combined_dependencies = UltraL3CombinedDependencies.fetch_dependencies(processing_input_collection)
+                combined_dependencies = UltraL3CombinedDependencies.fetch_dependencies(processing_input_collection)
 
-        mock_download.assert_has_calls([
-            *[call(filename) for filename in u45_pset_file_names],
-            *[call(filename) for filename in u90_pset_file_names],
-            *[call(filename) for filename in glows_file_names],
-            call(u45_map_file_name),
-            call(u90_map_file_name)
-        ])
+                mock_download.assert_has_calls([
+                    *[call(filename) for filename in u45_pset_file_names],
+                    *[call(filename) for filename in u90_pset_file_names],
+                    *[call(filename) for filename in glows_file_names],
+                    call(u45_map_file_name),
+                    call(u90_map_file_name)
+                ])
 
-        mock_l1c_read_from_path.assert_has_calls([
-            call(Path("imap_ultra_l1c_u45-pset_20251010_v001.cdf")),
-            call(Path("imap_ultra_l1c_u45-pset_20251011_v001.cdf")),
-            call(Path("imap_ultra_l1c_u45-pset_20251012_v001.cdf")),
-            call(Path("imap_ultra_l1c_u90-pset_20251010_v001.cdf")),
-            call(Path("imap_ultra_l1c_u90-pset_20251011_v001.cdf")),
-            call(Path("imap_ultra_l1c_u90-pset_20251012_v001.cdf")),
-        ])
+                mock_l1c_read_from_path.assert_has_calls([
+                    call(Path("imap_ultra_l1c_u45-pset_20251010_v001.cdf")),
+                    call(Path("imap_ultra_l1c_u45-pset_20251011_v001.cdf")),
+                    call(Path("imap_ultra_l1c_u45-pset_20251012_v001.cdf")),
+                    call(Path("imap_ultra_l1c_u90-pset_20251010_v001.cdf")),
+                    call(Path("imap_ultra_l1c_u90-pset_20251011_v001.cdf")),
+                    call(Path("imap_ultra_l1c_u90-pset_20251012_v001.cdf")),
+                ])
 
-        mock_l3e_read_from_path.assert_has_calls([
-            call(Path("imap_glows_l3e_survival-probability-ul_20251010_v001.cdf")),
-            call(Path("imap_glows_l3e_survival-probability-ul_20251011_v001.cdf")),
-            call(Path("imap_glows_l3e_survival-probability-ul_20251012_v001.cdf"))
-        ])
+                mock_l3e_read_from_path.assert_has_calls([
+                    call(Path(f"imap_glows_l3e_survival-probability-ul-{frame}_20251010_v001.cdf")),
+                    call(Path(f"imap_glows_l3e_survival-probability-ul-{frame}_20251011_v001.cdf")),
+                    call(Path(f"imap_glows_l3e_survival-probability-ul-{frame}_20251012_v001.cdf"))
+                ])
 
-        expected_u45_l1c_dictionary = {"l1c_path_1": Path('imap_ultra_l1c_u45-pset_20251010_v001.cdf'),
-                                       "l1c_path_2": Path("imap_ultra_l1c_u45-pset_20251011_v001.cdf"),
-                                       "l1c_path_3": Path("imap_ultra_l1c_u45-pset_20251012_v001.cdf"), }
+                expected_u45_l1c_dictionary = {"l1c_path_1": Path('imap_ultra_l1c_u45-pset_20251010_v001.cdf'),
+                                               "l1c_path_2": Path("imap_ultra_l1c_u45-pset_20251011_v001.cdf"),
+                                               "l1c_path_3": Path("imap_ultra_l1c_u45-pset_20251012_v001.cdf"), }
 
-        expected_u90_l1c_dictionary = {"l1c_path_1": Path("imap_ultra_l1c_u90-pset_20251010_v001.cdf"),
-                                       "l1c_path_2": Path("imap_ultra_l1c_u90-pset_20251011_v001.cdf"),
-                                       "l1c_path_3": Path("imap_ultra_l1c_u90-pset_20251012_v001.cdf")}
+                expected_u90_l1c_dictionary = {"l1c_path_1": Path("imap_ultra_l1c_u90-pset_20251010_v001.cdf"),
+                                               "l1c_path_2": Path("imap_ultra_l1c_u90-pset_20251011_v001.cdf"),
+                                               "l1c_path_3": Path("imap_ultra_l1c_u90-pset_20251012_v001.cdf")}
 
-        mock_ultra_l2.assert_has_calls([
-            call(expected_u45_l1c_dictionary),
-            call(expected_u90_l1c_dictionary),
-        ])
+                mock_ultra_l2.assert_has_calls([
+                    call(expected_u45_l1c_dictionary),
+                    call(expected_u90_l1c_dictionary),
+                ])
 
-        mock_read_from_xarray.assert_has_calls([
-            call(sentinel.u45_l2_xarray),
-            call(sentinel.u90_l2_xarray)
-        ])
+                mock_read_from_xarray.assert_has_calls([
+                    call(sentinel.u45_l2_xarray),
+                    call(sentinel.u90_l2_xarray)
+                ])
 
-        self.assertEqual(combined_dependencies.u45_l2_map, sentinel.u45_healpix_dataset)
-        self.assertEqual(combined_dependencies.u90_l2_map, sentinel.u90_healpix_dataset)
-        self.assertEqual(combined_dependencies.u45_l1c_psets,
-                         [sentinel.u45_l1c_1, sentinel.u45_l1c_2, sentinel.u45_l1c_3])
-        self.assertEqual(combined_dependencies.u90_l1c_psets,
-                         [sentinel.u90_l1c_1, sentinel.u90_l1c_2, sentinel.u90_l1c_3])
-        self.assertEqual(combined_dependencies.glows_l3e_psets, [sentinel.glows_1, sentinel.glows_2, sentinel.glows_3])
-        self.assertEqual(combined_dependencies.dependency_file_paths, expected_file_paths)
+                self.assertEqual(combined_dependencies.u45_l2_map, sentinel.u45_healpix_dataset)
+                self.assertEqual(combined_dependencies.u90_l2_map, sentinel.u90_healpix_dataset)
+                self.assertEqual(combined_dependencies.u45_l1c_psets,
+                                 [sentinel.u45_l1c_1, sentinel.u45_l1c_2, sentinel.u45_l1c_3])
+                self.assertEqual(combined_dependencies.u90_l1c_psets,
+                                 [sentinel.u90_l1c_1, sentinel.u90_l1c_2, sentinel.u90_l1c_3])
+                self.assertEqual(combined_dependencies.glows_l3e_psets,
+                                 [sentinel.glows_1, sentinel.glows_2, sentinel.glows_3])
+                self.assertEqual(combined_dependencies.dependency_file_paths, expected_file_paths)
 
     @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.HealPixIntensityMapData.read_from_xarray')
     @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.UltraGlowsL3eData.read_from_path')

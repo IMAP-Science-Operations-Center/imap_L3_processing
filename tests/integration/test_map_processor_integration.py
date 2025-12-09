@@ -242,3 +242,59 @@ class TestMapIntegration(unittest.TestCase):
 
             with CDF(str(expected_map_path)) as cdf:
                 self.assertEqual(expected_parents, set(cdf.attrs["Parents"]))
+
+    @skip("Uses local data, will need to be changed so that it can be periodically later down the line")
+    @patch("imap_l3_data_processor._parse_cli_arguments")
+    def test_ultra_combined_hf_maps(self, mock_parse_cli_arguments):
+        ultra_imap_data_dir = get_run_local_data_path("ultra/integration_data")
+
+        input_data = Path(r"C:\Users\Harrison\Downloads\ultra_combined_hf_validation")
+
+        ancil_files = [
+            INTEGRATION_TEST_DATA_PATH / "spice" / "naif020.tls",
+            INTEGRATION_TEST_DATA_PATH / "spice" / "imap_science_108.tf",
+            INTEGRATION_TEST_DATA_PATH / "spice" / "imap_sclk_008.tsc",
+            INTEGRATION_TEST_DATA_PATH / "spice" / "imap_dps_2025_105_2026_105_009.ah.bc",
+
+            get_test_data_path("ultra/imap_ultra_l2-energy-bin-group-sizes_20250101_v000.csv"),
+        ]
+        input_files = list(input_data.rglob("*.cdf")) + ancil_files
+
+        with mock_imap_data_access(ultra_imap_data_dir, input_files):
+            logging.basicConfig(
+                force=True,
+                level=logging.INFO,
+                format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+            )
+
+            mock_arguments = Mock()
+            mock_arguments.instrument = "ultra"
+            mock_arguments.data_level = "l3"
+            mock_arguments.descriptor = "all-maps"
+            mock_arguments.start_date = "20250415"
+            mock_arguments.end_date = None
+            mock_arguments.repointing = None
+            mock_arguments.version = "v001"
+            mock_arguments.dependency = "[]"
+            mock_arguments.upload_to_sdc = False
+            mock_parse_cli_arguments.return_value = mock_arguments
+
+            imap_l3_data_processor.imap_l3_processor()
+
+            expected_map_path = ScienceFilePath(
+                "imap_ultra_l3_ulc-ena-h-hf-sp-full-hae-4deg-6mo_20250416_v001.cdf").construct_path()
+            self.assertTrue(expected_map_path.exists(), f"Expected file {expected_map_path.name} not found")
+
+            expected_parents = {
+                "imap_glows_l3e_survival-probability-ul-hf_20250416-repoint00000_v001.cdf",
+                "imap_glows_l3e_survival-probability-ul-hf_20251017-repoint00184_v001.cdf",
+                "imap_ultra_l1c_45sensor-heliopset_20250416-repoint00000_v000.cdf",
+                "imap_ultra_l1c_90sensor-heliopset_20250416-repoint00000_v000.cdf",
+                "imap_ultra_l1c_45sensor-heliopset_20251017-repoint00184_v000.cdf",
+                "imap_ultra_l1c_90sensor-heliopset_20251017-repoint00184_v000.cdf",
+                "imap_ultra_l2_u45-ena-h-hf-nsp-full-hae-4deg-6mo_20250416_v001.cdf",
+                "imap_ultra_l2_u90-ena-h-hf-nsp-full-hae-4deg-6mo_20250416_v001.cdf",
+            }
+
+            with CDF(str(expected_map_path)) as cdf:
+                self.assertEqual(expected_parents, set(cdf.attrs["Parents"]))
