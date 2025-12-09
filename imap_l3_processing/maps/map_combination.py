@@ -153,7 +153,7 @@ class UncertaintyWeightedCombination(CombinationStrategy):
         summed_exposures = np.sum(masked_exposures, axis=0)
 
         squared_stat_unc = np.square(intensity_stat_unc)
-        inverse_squared_stat_unc = np.reciprocal(squared_stat_unc)
+        inverse_squared_stat_unc = safe_divide(np.ones_like(squared_stat_unc), squared_stat_unc)
         uncertainty_weighted_combined_intensity = safe_divide(
             np.sum(safe_divide(intensities, squared_stat_unc), axis=0),
             np.sum(inverse_squared_stat_unc, axis=0))
