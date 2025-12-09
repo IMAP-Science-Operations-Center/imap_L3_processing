@@ -5,7 +5,8 @@ from imap_processing.spice.geometry import SpiceFrame
 from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3SpectralIndexDependencies
 from imap_l3_processing.maps.hilo_l3_survival_dependencies import HiLoL3SurvivalDependencies, \
     HiL3SingleSensorFullSpinDependencies
-from imap_l3_processing.maps.map_combination import UncertaintyWeightedCombination, UnweightedCombination
+from imap_l3_processing.maps.map_combination import UncertaintyWeightedCombination, UnweightedCombination, \
+    CombinationStrategy
 from imap_l3_processing.maps.map_descriptors import parse_map_descriptor, MapQuantity, MapDescriptorParts, \
     SurvivalCorrection, \
     SpinPhase, Sensor, ReferenceFrame
@@ -82,7 +83,7 @@ class HiProcessor(MapProcessor):
         return [save_data(data_product)]
 
     def process_full_spin_single_sensor(self, hi_l3_full_spin_dependencies: HiL3SingleSensorFullSpinDependencies,
-                                        spice_frame_name: SpiceFrame, combination_strategy: UnweightedCombination) \
+                                        spice_frame_name: SpiceFrame, combination_strategy: CombinationStrategy) \
             -> RectangularIntensityMapData:
         ram_data_product = process_survival_probabilities(hi_l3_full_spin_dependencies.ram_dependencies,
                                                           spice_frame_name)
