@@ -345,11 +345,70 @@ class TestHiProcessor(unittest.TestCase):
             data=mock_unweighted_combination.combine_rectangular_intensity_map_data.return_value))
         self.assertEqual([mock_save_data.return_value], product)
 
+    @patch('imap_l3_processing.hi.hi_processor.MapProcessor.get_parent_file_names')
+    @patch('imap_l3_processing.hi.hi_processor.save_data')
+    @patch("imap_l3_processing.hi.hi_processor.process_survival_probabilities")
+    @patch("imap_l3_processing.hi.hi_processor.HiL3SingleSensorFullSpinDependencies.fetch_dependencies")
+    @patch("imap_l3_processing.hi.hi_processor.UncertaintyWeightedCombination")
+    def test_process_cg_corrected_full_spin_map(self, mock_uncertainty_weighted_combination,
+                                                mock_fetch_dependencies,
+                                                mock_process_survival_probabilities, mock_save_data,
+                                                mock_get_parent_file_names):
+
+        sensors = ["h45", "h90"]
+
+        for sensor in sensors:
+            with self.subTest(sensor=sensor):
+                mock_uncertainty_weighted_combination.reset_mock()
+                mock_fetch_dependencies.reset_mock()
+                mock_process_survival_probabilities.reset_mock()
+                mock_save_data.reset_mock()
+                mock_get_parent_file_names.reset_mock()
+                mock_get_parent_file_names.return_value = ["ram_map", "antiram_map", "l1c"]
+
+                mock_combination = Mock()
+                mock_uncertainty_weighted_combination.return_value = mock_combination
+
+                full_spin_dependencies: HiL3SingleSensorFullSpinDependencies = Mock()
+                full_spin_dependencies.dependency_file_paths = [
+                    Path("folder/ram_map", Path("folder/antiram_map"), Path("folder/l1c"))]
+                mock_fetch_dependencies.return_value = full_spin_dependencies
+
+                mock_process_survival_probabilities.side_effect = [
+                    sentinel.survival_corrected_ram,
+                    sentinel.survival_corrected_antiram,
+                ]
+
+                input_metadata = InputMetadata(instrument="hi",
+                                               data_level="l3",
+                                               start_date=datetime.now(),
+                                               end_date=datetime.now() + timedelta(days=1),
+                                               version="",
+                                               descriptor=f"{sensor}-ena-h-hf-sp-full-hae-4deg-6mo", )
+
+                processor = HiProcessor(sentinel.dependencies, input_metadata)
+                product = processor.process(spice_frame_name=sentinel.spice_frame)
+
+                mock_fetch_dependencies.assert_called_once_with(sentinel.dependencies)
+
+                mock_process_survival_probabilities.assert_has_calls([
+                    call(full_spin_dependencies.ram_dependencies, sentinel.spice_frame),
+                    call(full_spin_dependencies.antiram_dependencies, sentinel.spice_frame)
+                ])
+
+                mock_combination.combine_rectangular_intensity_map_data.assert_called_once_with([
+                    sentinel.survival_corrected_ram, sentinel.survival_corrected_antiram])
+
+                mock_save_data.assert_called_once_with(RectangularIntensityDataProduct(
+                    input_metadata=input_metadata,
+                    parent_file_names=["antiram_map", "l1c", "ram_map"],
+                    data=mock_combination.combine_rectangular_intensity_map_data.return_value))
+                self.assertEqual([mock_save_data.return_value], product)
+
     def test_raises_error_for_currently_unimplemented_maps(self):
         cases = [
             "hic-ena-h-sf-sp-ram-hae-6deg-6mo",
             "h45-ena-h-hf-nsp-full-hae-6deg-6mo",
-            "h90-ena-h-hf-sp-full-hae-6deg-6mo",
         ]
         for descriptor in cases:
             with self.subTest(descriptor):

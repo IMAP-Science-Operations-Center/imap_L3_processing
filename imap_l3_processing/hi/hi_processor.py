@@ -5,7 +5,7 @@ from imap_processing.spice.geometry import SpiceFrame
 from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3SpectralIndexDependencies
 from imap_l3_processing.maps.hilo_l3_survival_dependencies import HiLoL3SurvivalDependencies, \
     HiL3SingleSensorFullSpinDependencies
-from imap_l3_processing.maps.map_combination import UnweightedCombination
+from imap_l3_processing.maps.map_combination import UncertaintyWeightedCombination, UnweightedCombination
 from imap_l3_processing.maps.map_descriptors import parse_map_descriptor, MapQuantity, MapDescriptorParts, \
     SurvivalCorrection, \
     SpinPhase, Sensor, ReferenceFrame
@@ -48,12 +48,30 @@ class HiProcessor(MapProcessor):
                                     reference_frame=ReferenceFrame.Spacecraft):
                 hi_l3_full_spin_dependencies = HiL3SingleSensorFullSpinDependencies.fetch_dependencies(
                     self.dependencies)
-                combined_map = self.process_full_spin_single_sensor(hi_l3_full_spin_dependencies, spice_frame_name)
+                combination_strategy = UnweightedCombination()
+                combined_map = self.process_full_spin_single_sensor(hi_l3_full_spin_dependencies, spice_frame_name,
+                                                                    combination_strategy)
                 data_product = RectangularIntensityDataProduct(
                     data=combined_map,
                     input_metadata=self.input_metadata
                 )
                 set_of_parent_file_names.update(p.name for p in hi_l3_full_spin_dependencies.dependency_file_paths)
+            case MapDescriptorParts(survival_correction=SurvivalCorrection.SurvivalCorrected,
+                                    sensor=Sensor.Hi90 | Sensor.Hi45,
+                                    spin_phase=SpinPhase.FullSpin,
+                                    reference_frame=ReferenceFrame.Heliospheric):
+
+                hi_l3_full_spin_cg_corrected_dependencies = HiL3SingleSensorFullSpinDependencies.fetch_dependencies(
+                    self.dependencies)
+
+                combination_strategy = UncertaintyWeightedCombination()
+                combined_map = self.process_full_spin_single_sensor(hi_l3_full_spin_cg_corrected_dependencies,
+                                                                    spice_frame_name, combination_strategy)
+                data_product = RectangularIntensityDataProduct(
+                    data=combined_map,
+                    input_metadata=self.input_metadata
+                )
+
             case None:
                 raise ValueError(f"Could not parse descriptor {self.input_metadata.descriptor}")
             case _:
@@ -64,15 +82,14 @@ class HiProcessor(MapProcessor):
         return [save_data(data_product)]
 
     def process_full_spin_single_sensor(self, hi_l3_full_spin_dependencies: HiL3SingleSensorFullSpinDependencies,
-                                        spice_frame_name: SpiceFrame) \
+                                        spice_frame_name: SpiceFrame, combination_strategy: UnweightedCombination) \
             -> RectangularIntensityMapData:
         ram_data_product = process_survival_probabilities(hi_l3_full_spin_dependencies.ram_dependencies,
                                                           spice_frame_name)
         antiram_data_product = process_survival_probabilities(hi_l3_full_spin_dependencies.antiram_dependencies,
                                                               spice_frame_name)
-        strategy = UnweightedCombination()
 
-        return strategy.combine_rectangular_intensity_map_data([ram_data_product, antiram_data_product])
+        return combination_strategy.combine_rectangular_intensity_map_data([ram_data_product, antiram_data_product])
 
     def process_spectral_fit_index(self, hi_l3_spectral_fit_dependencies: HiL3SpectralIndexDependencies) \
             -> RectangularSpectralIndexMapData:
