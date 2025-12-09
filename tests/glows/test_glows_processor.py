@@ -37,6 +37,7 @@ from imap_l3_processing.glows.l3e.glows_l3e_initializer import GlowsL3EInitializ
 from imap_l3_processing.glows.l3e.glows_l3e_lo_model import GlowsL3ELoData
 from imap_l3_processing.glows.l3e.glows_l3e_ultra_model import GlowsL3EUltraData
 from imap_l3_processing.glows.l3e.glows_l3e_utils import GlowsL3eRepointings
+from imap_l3_processing.maps.map_descriptors import ReferenceFrame
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.utils import save_data
 from tests.test_helpers import get_test_instrument_team_data_path, get_test_data_path, get_test_data_folder, \
@@ -1083,7 +1084,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
     @patch("imap_l3_processing.glows.glows_processor.run")
     @patch("imap_l3_processing.glows.glows_processor.determine_call_args_for_l3e_executable")
     @patch("imap_l3_processing.glows.glows_processor.shutil")
-    def test_process_l3e_ultra(self, mock_shutil, mock_determine_call_args, mock_run,
+    def test_process_l3e_ultra_sf(self, mock_shutil, mock_determine_call_args, mock_run,
                                mock_convert_dat_to_glows_l3e_ul_product,
                                mock_save_data, mock_get_parent_file_names):
         mock_get_parent_file_names.return_value = ["l3d_file", "ancillary_1", "ancillary_2", "ancillary_3"]
@@ -1121,6 +1122,75 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
             input_metadata, output_data_path, expected_repointing_midpoint, call_args_object)
 
         expected_first_data_path = AncillaryFilePath("imap_glows_survival-probability-ul-raw_20241007_v012.dat").construct_path()
+
+        mock_shutil.move.assert_called_once_with(output_data_path, expected_first_data_path)
+
+        mock_save_data.assert_called_once_with(sentinel.ultra_data_1)
+        survival_data_product: GlowsL3EUltraData = mock_save_data.call_args_list[0].args[0]
+        self.assertEqual(["l3d_file", "ancillary_1", "ancillary_2", "ancillary_3"],
+                         survival_data_product.parent_file_names)
+
+        self.assertEqual(products, ["imap_glows_l3e_survival-probability-ul-sf_20241007-repoint00020_v012.cdf",
+                                    expected_first_data_path])
+
+    @patch('imap_l3_processing.glows.glows_processor.Processor.get_parent_file_names')
+    @patch('imap_l3_processing.glows.glows_processor.save_data')
+    @patch("imap_l3_processing.glows.glows_processor.GlowsL3EUltraData.convert_dat_to_glows_l3e_ul_product")
+    @patch("imap_l3_processing.glows.glows_processor.run")
+    @patch("imap_l3_processing.glows.glows_processor.determine_call_args_for_l3e_executable")
+    @patch("imap_l3_processing.glows.glows_processor.shutil")
+    def test_process_l3e_ultra_hf(self, mock_shutil, mock_determine_call_args, mock_run,
+                                  mock_convert_dat_to_glows_l3e_ul_product,
+                                  mock_save_data, mock_get_parent_file_names):
+        mock_get_parent_file_names.return_value = ["l3d_file", "ancillary_1", "ancillary_2", "ancillary_3"]
+
+        epoch_start_date = datetime(year=2024, month=10, day=7)
+        epoch_end_date = datetime(year=2024, month=10, day=7, hour=23)
+        epoch_delta = (epoch_end_date - epoch_start_date) / 2
+        repointing = 20
+        version = 12
+
+        input_metadata = InputMetadata('glows', "l3e", start_date=epoch_start_date, end_date=epoch_end_date,
+                                       version='v012', descriptor='survival-probability-ul-hf', repointing=repointing)
+
+        expected_call_args = ["20241007_000000", "date.001", "0.99", "180", "45", "0", "0", "0", "0", "5", "30.000"]
+
+        call_args_object = GlowsL3eCallArguments(
+            formatted_date="20241007_000000",
+            decimal_date="date.001",
+            spacecraft_radius=0.99,
+            spacecraft_longitude=180,
+            spacecraft_latitude=45,
+            spacecraft_velocity_x=30,
+            spacecraft_velocity_y=30,
+            spacecraft_velocity_z=30,
+            spin_axis_longitude=0,
+            spin_axis_latitude=5,
+            elongation=30,
+        )
+
+        mock_determine_call_args.return_value = call_args_object
+
+        mock_convert_dat_to_glows_l3e_ul_product.return_value = sentinel.ultra_data_1
+
+        mock_save_data.return_value = "imap_glows_l3e_survival-probability-ul-hf_20241007-repoint00020_v012.cdf"
+
+        parent_file_names = ["l3d_file", "ancillary_1", "ancillary_2", "ancillary_3"]
+        products = process_l3e_ul(parent_file_names, repointing, epoch_start_date, epoch_delta, version,
+                                  ReferenceFrame.Heliospheric)
+
+        expected_repointing_midpoint = epoch_start_date + epoch_delta
+        mock_determine_call_args.assert_called_once_with(epoch_start_date, expected_repointing_midpoint, 30)
+
+        mock_run.assert_called_once_with(["./survProbUltra"] + expected_call_args)
+
+        output_data_path = Path("probSur.Imap.Ul_20241007_000000_date.001.dat")
+
+        mock_convert_dat_to_glows_l3e_ul_product.assert_called_once_with(
+            input_metadata, output_data_path, expected_repointing_midpoint, call_args_object)
+
+        expected_first_data_path = AncillaryFilePath(
+            "imap_glows_survival-probability-ul-hf-raw_20241007_v012.dat").construct_path()
 
         mock_shutil.move.assert_called_once_with(output_data_path, expected_first_data_path)
 
