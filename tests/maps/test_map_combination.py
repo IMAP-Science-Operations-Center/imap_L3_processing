@@ -315,7 +315,7 @@ class TestMapCombination(unittest.TestCase):
         ])
 
         expected_exposures = np.array([20, 20, 20, 20])
-        expected_intensity_sys_err = np.array([0.707107, 0.707107, 0.707107, 0.707107])
+        expected_intensity_sys_err = np.array([1, 1, 1, 1])
 
         strategy = UncertaintyWeightedCombination()
         combined_map = strategy._combine([map_1, map_2])
@@ -324,4 +324,16 @@ class TestMapCombination(unittest.TestCase):
         np.testing.assert_array_equal(combined_map.ena_intensity_stat_uncert, expected_combined_stat_unc)
         np.testing.assert_array_equal(combined_map.obs_date, expected_datetime_weighted_average)
         np.testing.assert_array_equal(combined_map.exposure_factor, expected_exposures)
-        np.testing.assert_array_almost_equal(combined_map.ena_intensity_sys_err, expected_intensity_sys_err)
+        np.testing.assert_array_equal(combined_map.ena_intensity_sys_err, expected_intensity_sys_err)
+
+    def test_calculate_weighted_sys_err(self):
+        uncertainties_1 = np.array([10, 20, 30, 40])
+        uncertainties_2 = np.array([20, 40, 60, 80])
+
+        exposures_1 = np.array([4, 3, 2, 1])
+        exposures_2 = np.array([4, 3, 2, 1])
+
+        expected = np.array([15, 30, 45, 60])
+        actual = CombinationStrategy.calculate_weighted_sys_err(np.array([uncertainties_1, uncertainties_2]),
+                                                                np.array([exposures_1, exposures_2]))
+        np.testing.assert_array_equal(actual, expected)

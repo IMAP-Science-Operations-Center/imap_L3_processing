@@ -60,6 +60,13 @@ class CombinationStrategy(ABC):
         numerator = np.sum(np.square(masked_values * weights), axis=0)
         return np.sqrt(safe_divide(numerator, np.square(np.sum(weights, axis=0))))
 
+    @staticmethod
+    def calculate_weighted_sys_err(values: np.ndarray, weights: np.ndarray) -> np.ndarray:
+        numerator = np.sum(values * weights, axis=0)
+        denominator = np.sum(weights, axis=0)
+
+        return safe_divide(numerator, denominator)
+
 
 class UnweightedCombination(CombinationStrategy):
     def _combine(self, maps: list[IntensityMapData]) -> IntensityMapData:
@@ -151,7 +158,7 @@ class UncertaintyWeightedCombination(CombinationStrategy):
             np.sum(safe_divide(intensities, squared_stat_unc), axis=0),
             np.sum(inverse_squared_stat_unc, axis=0))
         combined_intensity_stat_unc = np.reciprocal(np.sum(inverse_squared_stat_unc, axis=0))
-        combined_intensity_sys_err = self.calculated_weighted_uncertainty(intensity_sys_err, masked_exposures)
+        combined_intensity_sys_err = self.calculate_weighted_sys_err(intensity_sys_err, masked_exposures)
 
         avg_obs_date = calculate_datetime_weighted_average(np.ma.array([m.obs_date for m in maps]), masked_exposures, 0)
 
