@@ -275,3 +275,53 @@ class TestMapCombination(unittest.TestCase):
                 with self.assertRaises(AssertionError):
                     strategy = UnweightedCombination()
                     strategy.combine_healpix_intensity_map_data([base_map, not_matching_map])
+
+    def test_combine_unweighted_combination_strategy(self):
+        DATETIME_FILL = datetime(9999, 12, 31, 23, 59, 59, 999999)
+
+        map_1 = construct_intensity_data_with_all_zero_fields()
+        map_1.ena_intensity = np.array([100, 200, 300, 400])
+        map_1.ena_intensity_stat_uncert = np.array([10.0, 10.0, 10.0, 10.0])
+        map_1.exposure_factor = np.array([10, 10, 10, 10])
+        map_1.ena_intensity_sys_err = np.array([1, 1, 1, 1])
+
+        map_1.obs_date = np.ma.masked_equal(
+            [datetime(2025, 5, 9),
+             datetime(2025, 5, 10),
+             datetime(2025, 5, 11),
+             datetime(2025, 5, 12)],
+            DATETIME_FILL)
+
+        map_2 = construct_intensity_data_with_all_zero_fields()
+        map_2.ena_intensity = np.array([200, 400, 600, 800])
+        map_2.ena_intensity_stat_uncert = np.array([10, 10, 10, 10])
+        map_2.exposure_factor = np.array([10.0, 10.0, 10.0, 10.0])
+        map_2.ena_intensity_sys_err = np.array([1, 1, 1, 1])
+
+        map_2.obs_date = np.ma.masked_equal(
+            [datetime(2025, 5, 9),
+             datetime(2025, 5, 10),
+             datetime(2025, 5, 11),
+             datetime(2025, 5, 12)],
+            DATETIME_FILL)
+
+        expected_combined_intensity = np.array([150, 300, 450, 600])
+        expected_combined_stat_unc = np.array([50, 50, 50, 50])
+        expected_datetime_weighted_average = np.array([
+            datetime(2025, 5, 9),
+            datetime(2025, 5, 10),
+            datetime(2025, 5, 11),
+            datetime(2025, 5, 12),
+        ])
+
+        expected_exposures = np.array([20, 20, 20, 20])
+        expected_intensity_sys_err = np.array([0.707107, 0.707107, 0.707107, 0.707107])
+
+        strategy = UncertaintyWeightedCombination()
+        combined_map = strategy._combine([map_1, map_2])
+
+        np.testing.assert_array_equal(combined_map.ena_intensity, expected_combined_intensity)
+        np.testing.assert_array_equal(combined_map.ena_intensity_stat_uncert, expected_combined_stat_unc)
+        np.testing.assert_array_equal(combined_map.obs_date, expected_datetime_weighted_average)
+        np.testing.assert_array_equal(combined_map.exposure_factor, expected_exposures)
+        np.testing.assert_array_almost_equal(combined_map.ena_intensity_sys_err, expected_intensity_sys_err)
