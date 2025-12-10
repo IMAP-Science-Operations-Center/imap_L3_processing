@@ -53,12 +53,12 @@ class TestUtils(TestCase):
 
         temp_cdf = CDF('temp_cdf', '')
         temp_cdf["sci_start_time"] = np.array(['2010-01-01T00:00:46.000'])
-        temp_cdf["swp_esa_energy"] = np.array([1, -1e31, 3, 4], dtype=float)
+        temp_cdf["esa_energy"] = np.array([1, -1e31, 3, 4], dtype=float)
         temp_cdf["swp_coin_rate"] = np.array([5, 6, 7, -1e31], dtype=float)
         temp_cdf["swp_coin_rate_stat_uncert_plus"] = np.array([2, 2, -1e31, 2, 2, 2, 2, 2], dtype=float)
 
         temp_cdf["sci_start_time"].attrs["FILLVAL"] = '0'
-        temp_cdf["swp_esa_energy"].attrs["FILLVAL"] = -1e31
+        temp_cdf["esa_energy"].attrs["FILLVAL"] = -1e31
         temp_cdf["swp_coin_rate"].attrs["FILLVAL"] = -1e31
         temp_cdf["swp_coin_rate_stat_uncert_plus"].attrs["FILLVAL"] = -1e31
 
