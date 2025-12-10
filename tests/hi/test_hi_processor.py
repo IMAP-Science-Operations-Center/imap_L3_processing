@@ -4,7 +4,7 @@ from pathlib import Path
 from unittest.mock import patch, call, sentinel, Mock
 
 import numpy as np
-from imap_data_access.processing_input import ProcessingInputCollection
+from imap_data_access.processing_input import ProcessingInputCollection, ScienceInput
 from imap_processing.spice.geometry import SpiceFrame
 
 from imap_l3_processing.hi.hi_processor import HiProcessor
@@ -384,7 +384,7 @@ class TestHiProcessor(unittest.TestCase):
                                                start_date=datetime.now(),
                                                end_date=datetime.now() + timedelta(days=1),
                                                version="",
-                                               descriptor=f"{sensor}-ena-h-hf-sp-full-hae-4deg-6mo", )
+                                               descriptor=f"{sensor}-ena-h-hf-sp-full-hae-4deg-6mo")
 
                 processor = HiProcessor(sentinel.dependencies, input_metadata)
                 product = processor.process(spice_frame_name=sentinel.spice_frame)
@@ -405,9 +405,48 @@ class TestHiProcessor(unittest.TestCase):
                     data=mock_combination.combine_rectangular_intensity_map_data.return_value))
                 self.assertEqual([mock_save_data.return_value], product)
 
+    @patch('imap_l3_processing.hi.hi_processor.MapProcessor.get_parent_file_names')
+    @patch('imap_l3_processing.hi.hi_processor.save_data')
+    @patch("imap_l3_processing.hi.hi_processor.HiL3CombinedMapDependencies.fetch_dependencies")
+    @patch("imap_l3_processing.hi.hi_processor.ExposureWeightedCombination")
+    def test_process_combined_sensor_map(self, mock_exposure_weighted_combination_class, mock_fetch_dependencies,
+                                         mock_save_data, mock_get_parent_file_names):
+        mock_combination = Mock()
+        mock_exposure_weighted_combination_class.return_value = mock_combination
+
+        parent_map_names = [
+            "imap_hi_l2_h45-ena-h-hf-sp-full-hae-4deg-6mo_20250101_v000.cdf",
+            "imap_hi_l2_h45-ena-h-hf-sp-full-hae-4deg-6mo_20250701_v000.cdf",
+            "imap_hi_l2_h90-ena-h-hf-sp-full-hae-4deg-6mo_20250101_v000.cdf",
+            "imap_hi_l2_h90-ena-h-hf-sp-full-hae-4deg-6mo_20250701_v000.cdf",
+        ]
+
+        mock_get_parent_file_names.return_value = parent_map_names
+
+        input_metadata = InputMetadata(instrument="hi",
+                                       data_level="l3",
+                                       start_date=datetime.now(),
+                                       end_date=datetime.now() + timedelta(days=1),
+                                       version="",
+                                       descriptor=f"hic-ena-h-hf-sp-full-hae-4deg-6mo")
+        dependencies = ProcessingInputCollection(*[ScienceInput(map_name) for map_name in parent_map_names])
+        data_product = HiProcessor(dependencies, input_metadata).process()
+
+        mock_fetch_dependencies.assert_called_once_with(dependencies)
+
+        mock_combination.combine_rectangular_intensity_map_data.assert_called_once_with(
+            mock_fetch_dependencies.return_value.maps
+        )
+
+        mock_save_data.assert_called_once_with(RectangularIntensityDataProduct(
+            input_metadata=input_metadata,
+            parent_file_names=parent_map_names,
+            data=mock_combination.combine_rectangular_intensity_map_data.return_value))
+
+        self.assertEqual([mock_save_data.return_value], data_product)
+
     def test_raises_error_for_currently_unimplemented_maps(self):
         cases = [
-            "hic-ena-h-sf-sp-ram-hae-6deg-6mo",
             "h45-ena-h-hf-nsp-full-hae-6deg-6mo",
         ]
         for descriptor in cases:

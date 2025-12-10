@@ -41,7 +41,6 @@ from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDepen
 from imap_l3_processing.glows.l3d.glows_l3d_dependencies import GlowsL3DDependencies
 from imap_l3_processing.glows.l3e.glows_l3e_dependencies import GlowsL3EDependencies
 from imap_l3_processing.hi.hi_processor import HiProcessor
-from imap_l3_processing.hi.l3.hi_l3_combined_sensor_dependencies import HiL3CombinedMapDependencies
 from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3SpectralIndexDependencies
 from imap_l3_processing.hit.l3.hit_l3_sectored_dependencies import HITL3SectoredDependencies
 from imap_l3_processing.hit.l3.hit_processor import HitProcessor
@@ -57,7 +56,7 @@ from imap_l3_processing.lo.lo_processor import perform_spectral_fit, LoProcessor
 from imap_l3_processing.maps.hilo_l3_survival_dependencies import HiLoL3SurvivalDependencies, \
     HiL3SingleSensorFullSpinDependencies
 from imap_l3_processing.maps.map_models import RectangularSpectralIndexDataProduct, RectangularIntensityDataProduct, \
-    combine_rectangular_intensity_map_data, RectangularIntensityMapData
+    RectangularIntensityMapData
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density import \
     AlphaTemperatureDensityCalibrationTable
@@ -963,22 +962,6 @@ def create_lo_l3_survival_corrected_cdf(survival_dependencies: HiLoL3SurvivalDep
     processor = LoProcessor(processing_input_collection, input_metadata)
     print(processor.process())
 
-
-def create_combined_sensor_cdf(combined_dependencies: HiL3CombinedMapDependencies) -> Path:
-    input_metadata = InputMetadata(
-        instrument="hi",
-        data_level="l3",
-        start_date=datetime(2025, 4, 9),
-        end_date=datetime(2025, 4, 10),
-        version="v001",
-        descriptor="hic-ena-h-hf-nsp-full-hae-4deg-1yr"
-    )
-    combined_map = combine_rectangular_intensity_map_data(combined_dependencies.maps)
-
-    data_product = RectangularIntensityDataProduct(data=combined_map, input_metadata=input_metadata)
-    return save_data(data_product, delete_if_present=True)
-
-
 def create_codice_hi_l3a_direct_events_cdf():
     codice_hi_de_dependencies = CodiceHiL3aDirectEventsDependencies.from_file_paths(
         tof_lookup_path=get_test_instrument_team_data_path("codice/hi/imap_codice_tof-lookup_20241110_v002.csv"),
@@ -1050,7 +1033,7 @@ if __name__ == "__main__":
                 str(get_test_data_path("swapi/imap_swapi_proton-density-temperature-lut_20240905_v001.dat")),
                 str(get_test_data_path("swapi/imap_swapi_alpha-density-temperature-lut_20240920_v000.dat")),
                 str(get_test_data_path("swapi/imap_swapi_clock-angle-and-flow-deflection-lut_20240918_v001.dat")),
-                str(get_test_data_path("swapi/imap_swapi_energy-gf-pui-lut_20100101_v004.csv")),
+                str(get_test_data_path("swapi/imap_swapi_energy-gf-pui-lut_20100101_v001.csv")),
                 str(get_test_data_path("swapi/imap_swapi_instrument-response-lut_20241023_v000.zip")),
                 str(get_test_data_path(
                     "swapi/imap_swapi_l2_density-of-neutral-helium-lut-text-not-cdf_20241023_v002.cdf")),
@@ -1163,31 +1146,6 @@ if __name__ == "__main__":
             )
 
             print(create_survival_corrected_full_spin_cdf(full_spin_dependencies))
-        if do_all or "combined-sensors" in sys.argv:
-
-            missing_paths, run_local_paths = try_get_many_run_local_paths([
-                "hi/full_spin_deps/hi90-6months.cdf",
-                "hi/full_spin_deps/hi45-6months.cdf",
-                "hi/full_spin_deps/imap_hi_l2_h90-ena-h-hf-nsp-ram-hae-4deg-1yr_20250415_v001.cdf",
-                "hi/full_spin_deps/imap_hi_l2_h90-ena-h-hf-nsp-anti-hae-4deg-1yr_20250415_v001.cdf",
-                "hi/full_spin_deps/imap_hi_l2_h45-ena-h-hf-nsp-ram-hae-4deg-1yr_20250415_v001.cdf",
-                "hi/full_spin_deps/imap_hi_l2_h45-ena-h-hf-nsp-anti-hae-4deg-1yr_20250415_v001.cdf"
-            ])
-            hi90_path, hi45_path, ram90_path, anti90_path, ram45_path, anti45_path = run_local_paths
-            if missing_paths:
-                shutil.copyfile(hi90_path, ram90_path)
-                shutil.copyfile(hi90_path, anti90_path)
-                shutil.copyfile(hi45_path, ram45_path)
-                shutil.copyfile(hi45_path, anti45_path)
-
-            combined_dependencies = HiL3CombinedMapDependencies.from_file_paths(
-                [
-                    ram90_path,
-                    anti90_path,
-                    ram45_path,
-                    anti45_path,
-                ])
-            print(create_combined_sensor_cdf(combined_dependencies))
 
     if "lo" in sys.argv:
         lo_targets = ['spectral-index', 'survival_probabilities']
