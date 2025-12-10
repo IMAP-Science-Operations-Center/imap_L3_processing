@@ -18,7 +18,16 @@ class GlowsL3eCallArguments:
     elongation: float
 
     def to_argument_list(self):
-        return (
-                f"{self.formatted_date} {self.decimal_date} {self.spacecraft_radius} {self.spacecraft_longitude:.4f} {self.spacecraft_latitude:.4f} {self.spacecraft_velocity_x:.4f} " +
-                f"{self.spacecraft_velocity_y:.4f} {self.spacecraft_velocity_z} {self.spin_axis_longitude:.4f} {self.spin_axis_latitude:.4f} {self.elongation:.3f}").split(
-            " ")
+        return [
+            self.formatted_date,
+            self.decimal_date,
+            str(self.spacecraft_radius),
+            f"{self.spacecraft_longitude:.4f}",
+            f"{self.spacecraft_latitude:.4f}",
+            f"{self.spacecraft_velocity_x:.4f}",
+            f"{self.spacecraft_velocity_y:.4f}",
+            f"{self.spacecraft_velocity_z}",
+            f"{self.spin_axis_longitude:.4f}",
+            f"{self.spin_axis_latitude:.4f}",
+            f"{self.elongation:.3f}"
+        ]

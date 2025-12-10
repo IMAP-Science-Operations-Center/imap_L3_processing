@@ -20,9 +20,10 @@ from spacepy.pycdf import CDF
 
 from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
 from imap_l3_processing.glows import l3d
-from imap_l3_processing.glows.descriptors import GLOWS_L3A_DESCRIPTOR
+from imap_l3_processing.glows.descriptors import GLOWS_L3A_DESCRIPTOR, GLOWS_L3E_ULTRA_SF_DESCRIPTOR, \
+    GLOWS_L3E_ULTRA_HF_DESCRIPTOR
 from imap_l3_processing.glows.glows_processor import GlowsProcessor, process_l3d, process_l3e, process_l3bc, \
-    process_l3e_ul, process_l3e_hi, process_l3e_lo
+    process_l3e_ul_sf, process_l3e_hi, process_l3e_lo, process_l3e_ul_hf
 from imap_l3_processing.glows.l3a.utils import create_glows_l3a_dictionary_from_cdf, create_glows_l3a_from_dictionary
 from imap_l3_processing.glows.l3bc.cannot_process_carrington_rotation_error import CannotProcessCarringtonRotationError
 from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDependencies
@@ -77,7 +78,8 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
         self.mock_l3d_initializer = self.l3d_initializer_patcher.start()
         self.mock_l3d_initializer.return_value = None
 
-        self.mock_l3e_initializer_patcher = patch("imap_l3_processing.glows.glows_processor.GlowsL3EInitializer.get_repointings_to_process")
+        self.mock_l3e_initializer_patcher = patch(
+            "imap_l3_processing.glows.glows_processor.GlowsL3EInitializer.get_repointings_to_process")
         self.mock_l3e_initializer = self.mock_l3e_initializer_patcher.start()
         self.mock_l3e_initializer.return_value = GlowsL3EInitializerOutput(
             dependencies=Mock(),
@@ -342,9 +344,9 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
     @patch('imap_l3_processing.glows.glows_processor.save_data')
     @patch("imap_l3_processing.glows.glows_processor.GlowsL3BCInitializer")
     def test_process_l3bc_catches_no_data_error_and_continues(self, mock_glows_initializer_class, mock_save_data,
-                                                           mock_archive_dependencies, mock_generate_l3bc,
-                                                           mock_l3c_from_instrument_team_dictionary,
-                                                           mock_l3b_from_instrument_team_dictionary, _):
+                                                              mock_archive_dependencies, mock_generate_l3bc,
+                                                              mock_l3c_from_instrument_team_dictionary,
+                                                              mock_l3b_from_instrument_team_dictionary, _):
         bc_dependencies_1 = GlowsL3BCDependencies(version=1,
                                                   carrington_rotation_number=2096,
                                                   start_date=datetime(year=2021, month=1, day=1),
@@ -514,7 +516,8 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
 
         l3a_data_folder_path = get_test_data_path('glows/l3a_products')
 
-        l3a_filenames = ['imap_glows_l3a_hist_20100104-repoint00004_v001.cdf', 'imap_glows_l3a_hist_20100119-repoint00019_v001.cdf']
+        l3a_filenames = ['imap_glows_l3a_hist_20100104-repoint00004_v001.cdf',
+                         'imap_glows_l3a_hist_20100119-repoint00019_v001.cdf']
         l3a_data = [create_glows_l3a_dictionary_from_cdf(l3a_data_folder_path / file) for file in l3a_filenames]
 
         l3bc_deps = GlowsL3BCDependencies(
@@ -560,7 +563,6 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
         ]
 
         self.assertEqual(set(expected_parents), set(l3b_data_product.parent_file_names))
-
 
     @patch("imap_l3_processing.glows.glows_processor.create_glows_l3b_json_file_from_cdf")
     @patch("imap_l3_processing.glows.glows_processor.create_glows_l3c_json_file_from_cdf")
@@ -642,7 +644,8 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
         self.assertEqual(2, mock_shutil.copy.call_count)
         mock_shutil.copy.assert_has_calls([
             call(Path("imap_glows_e-dens_19470303_20100101_v000.dat"),
-                 imap_data_access.config["DATA_DIR"] / "imap/ancillary/glows/imap_glows_e-dens_19470303_20100101_v000.dat"),
+                 imap_data_access.config[
+                     "DATA_DIR"] / "imap/ancillary/glows/imap_glows_e-dens_19470303_20100101_v000.dat"),
             call(Path("imap_glows_lya_19470303_20100101_v000.dat"),
                  imap_data_access.config["DATA_DIR"] / "imap/ancillary/glows/imap_glows_lya_19470303_20100101_v000.dat")
         ])
@@ -1028,19 +1031,23 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
     @patch('imap_l3_processing.glows.glows_processor.get_pointing_date_range')
     @patch('imap_l3_processing.glows.glows_processor.process_l3e_hi')
     @patch('imap_l3_processing.glows.glows_processor.process_l3e_lo')
-    @patch('imap_l3_processing.glows.glows_processor.process_l3e_ul')
-    def test_process_l3e(self, mock_process_ultra, mock_process_lo, mock_process_hi, mock_get_pointing_date_range):
+    @patch('imap_l3_processing.glows.glows_processor.process_l3e_ul_hf')
+    @patch('imap_l3_processing.glows.glows_processor.process_l3e_ul_sf')
+    def test_process_l3e(self, mock_process_ultra, mock_process_ultra_hf, mock_process_lo, mock_process_hi,
+                         mock_get_pointing_date_range):
         mock_process_hi.side_effect = [
             [Path('path/to/first_hi_l3e')],
             [Path('path/to/second_hi_l3e')],
         ]
         mock_process_lo.return_value = [Path('path/to/lo_l3e')]
         mock_process_ultra.return_value = [Path('path/to/ultra_l3e')]
+        mock_process_ultra_hf.return_value = [Path('path/to/ultra_l3e_hf')]
 
         expected_l3e_products = [
             Path('path/to/lo_l3e'),
             Path('path/to/first_hi_l3e'), Path('path/to/second_hi_l3e'),
-            Path('path/to/ultra_l3e')
+            Path('path/to/ultra_l3e'),
+            Path('path/to/ultra_l3e_hf')
         ]
 
         start_epoch = datetime(2020, 1, 1)
@@ -1072,8 +1079,10 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
             call(["hi_ancillary.dat"], 25, start_epoch, epoch_delta, 90, 1),
             call(["hi_ancillary.dat"], 25, start_epoch, epoch_delta, 135, 2)
         ])
-        mock_process_lo.assert_called_once_with(["lo_ancillary.dat"], 25, start_epoch, epoch_delta, sentinel.elongation, 3)
+        mock_process_lo.assert_called_once_with(["lo_ancillary.dat"], 25, start_epoch, epoch_delta, sentinel.elongation,
+                                                3)
         mock_process_ultra.assert_called_once_with(["ul_ancillary.dat"], 25, start_epoch, epoch_delta, 4)
+        mock_process_ultra_hf.assert_called_once_with(["ul_ancillary.dat"], 25, start_epoch, epoch_delta, 4)
 
         self.assertEqual(expected_l3e_products, actual_l3e_products)
 
@@ -1094,8 +1103,9 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
         repointing = 20
         version = 12
 
-        input_metadata = InputMetadata('glows', "l3e", start_date=epoch_start_date, end_date=epoch_end_date,
-                                       version='v012', descriptor='survival-probability-ul', repointing=repointing)
+        expected_input_metadata = InputMetadata('glows', "l3e", start_date=epoch_start_date, end_date=epoch_end_date,
+                                                version='v012', descriptor=GLOWS_L3E_ULTRA_SF_DESCRIPTOR,
+                                                repointing=repointing)
 
         ultra_args = ["20241007_000000", "date.001", "vx", "vy", "vz", "30.000"]
 
@@ -1105,10 +1115,10 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
 
         mock_convert_dat_to_glows_l3e_ul_product.return_value = sentinel.ultra_data_1
 
-        mock_save_data.return_value = "imap_glows_l3e_survival-probability-ul_20241007-repoint00020_v012.cdf"
+        mock_save_data.return_value = "imap_glows_l3e_survival-probability-ul-sf_20241007-repoint00020_v012.cdf"
 
         parent_file_names = ["l3d_file", "ancillary_1", "ancillary_2", "ancillary_3"]
-        products = process_l3e_ul(parent_file_names, repointing, epoch_start_date, epoch_delta, version)
+        products = process_l3e_ul_sf(parent_file_names, repointing, epoch_start_date, epoch_delta, version)
 
         expected_repointing_midpoint = epoch_start_date + epoch_delta
         mock_determine_call_args.assert_called_once_with(epoch_start_date, expected_repointing_midpoint, 30)
@@ -1118,9 +1128,10 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
         output_data_path = Path("probSur.Imap.Ul_20241007_000000_date.001.dat")
 
         mock_convert_dat_to_glows_l3e_ul_product.assert_called_once_with(
-            input_metadata, output_data_path, expected_repointing_midpoint, call_args_object)
+            expected_input_metadata, output_data_path, expected_repointing_midpoint, call_args_object)
 
-        expected_first_data_path = AncillaryFilePath("imap_glows_survival-probability-ul-raw_20241007_v012.dat").construct_path()
+        expected_first_data_path = AncillaryFilePath(
+            "imap_glows_survival-probability-ul-sf-raw_20241007_v012.dat").construct_path()
 
         mock_shutil.move.assert_called_once_with(output_data_path, expected_first_data_path)
 
@@ -1129,7 +1140,85 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
         self.assertEqual(["l3d_file", "ancillary_1", "ancillary_2", "ancillary_3"],
                          survival_data_product.parent_file_names)
 
-        self.assertEqual(products, ["imap_glows_l3e_survival-probability-ul_20241007-repoint00020_v012.cdf",
+        self.assertEqual(products, ["imap_glows_l3e_survival-probability-ul-sf_20241007-repoint00020_v012.cdf",
+                                    expected_first_data_path])
+
+    @patch('imap_l3_processing.glows.glows_processor.Processor.get_parent_file_names')
+    @patch('imap_l3_processing.glows.glows_processor.save_data')
+    @patch("imap_l3_processing.glows.glows_processor.GlowsL3EUltraData.convert_dat_to_glows_l3e_ul_product")
+    @patch("imap_l3_processing.glows.glows_processor.run")
+    @patch("imap_l3_processing.glows.glows_processor.determine_call_args_for_l3e_executable")
+    @patch("imap_l3_processing.glows.glows_processor.shutil")
+    def test_process_l3e_ultra_hf(self, mock_shutil, mock_determine_call_args, mock_run,
+                                  mock_convert_dat_to_glows_l3e_ul_product,
+                                  mock_save_data, mock_get_parent_file_names):
+        mock_get_parent_file_names.return_value = ["l3d_file", "ancillary_1", "ancillary_2", "ancillary_3"]
+
+        epoch_start_date = datetime(year=2024, month=10, day=7)
+        epoch_end_date = datetime(year=2024, month=10, day=7, hour=23)
+        epoch_delta = (epoch_end_date - epoch_start_date) / 2
+        repointing = 20
+        version = 12
+
+        input_metadata = InputMetadata('glows', "l3e", start_date=epoch_start_date, end_date=epoch_end_date,
+                                       version='v012', descriptor=GLOWS_L3E_ULTRA_HF_DESCRIPTOR, repointing=repointing)
+
+        mock_determine_call_args.return_value = GlowsL3eCallArguments(
+            formatted_date="20241007_000000",
+            decimal_date="date.001",
+            spacecraft_radius=500,
+            spacecraft_longitude=200,
+            spacecraft_latitude=65,
+            spacecraft_velocity_x=120,
+            spacecraft_velocity_y=240,
+            spacecraft_velocity_z=360,
+            spin_axis_longitude=240,
+            spin_axis_latitude=3,
+            elongation=30
+        )
+
+        expected_rest_frame_args = GlowsL3eCallArguments(
+            formatted_date="20241007_000000",
+            decimal_date="date.001",
+            spacecraft_radius=500,
+            spacecraft_longitude=200,
+            spacecraft_latitude=65,
+            spacecraft_velocity_x=0,
+            spacecraft_velocity_y=0,
+            spacecraft_velocity_z=0,
+            spin_axis_longitude=240,
+            spin_axis_latitude=3,
+            elongation=30
+        )
+
+        mock_convert_dat_to_glows_l3e_ul_product.return_value = sentinel.ultra_data_hf
+
+        mock_save_data.return_value = "imap_glows_l3e_survival-probability-ul-hf_20241007-repoint00020_v012.cdf"
+
+        parent_file_names = ["l3d_file", "ancillary_1", "ancillary_2", "ancillary_3"]
+        products = process_l3e_ul_hf(parent_file_names, repointing, epoch_start_date, epoch_delta, version)
+
+        expected_repointing_midpoint = epoch_start_date + epoch_delta
+        mock_determine_call_args.assert_called_once_with(epoch_start_date, expected_repointing_midpoint, 30)
+
+        mock_run.assert_called_once_with(["./survProbUltra"] + expected_rest_frame_args.to_argument_list())
+
+        output_data_path = Path("probSur.Imap.Ul.V0_20241007_000000_date.001.dat")
+
+        mock_convert_dat_to_glows_l3e_ul_product.assert_called_once_with(
+            input_metadata, output_data_path, expected_repointing_midpoint, expected_rest_frame_args)
+
+        expected_first_data_path = AncillaryFilePath(
+            "imap_glows_survival-probability-ul-hf-raw_20241007_v012.dat").construct_path()
+
+        mock_shutil.move.assert_called_once_with(output_data_path, expected_first_data_path)
+
+        mock_save_data.assert_called_once_with(sentinel.ultra_data_hf)
+        survival_data_product: GlowsL3EUltraData = mock_save_data.call_args_list[0].args[0]
+        self.assertEqual(["l3d_file", "ancillary_1", "ancillary_2", "ancillary_3"],
+                         survival_data_product.parent_file_names)
+
+        self.assertEqual(products, ["imap_glows_l3e_survival-probability-ul-hf_20241007-repoint00020_v012.cdf",
                                     expected_first_data_path])
 
     @patch('imap_l3_processing.glows.glows_processor.save_data')
@@ -1161,12 +1250,12 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
 
                 expected_input_metadata = InputMetadata(
                     instrument='glows', data_level="l3e", start_date=epoch_start_date, end_date=epoch_end_date,
-                    version='v012', descriptor=f'survival-probability-hi-{descriptor_elongation}', repointing=repointing)
+                    version='v012', descriptor=f'survival-probability-hi-{descriptor_elongation}',
+                    repointing=repointing)
 
                 l3e_dependencies = MagicMock(spec=GlowsL3EDependencies)
                 l3e_dependencies.pipeline_settings = {'start_cr': 2090}
                 l3e_dependencies.repointing_file = get_test_data_path("fake_2_day_repointing_on_may18_file.csv")
-
 
                 hi_args = ["20241007_000000", "date.001", "vx", "vy", "vz", descriptor_elongation]
 
@@ -1175,19 +1264,23 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
                 mock_determine_call_args.return_value = mock_call_args_object
                 mock_convert_dat_to_glows_l3e_hi_product.return_value = sentinel.hi_data_1
 
-                saved_cdf_path = Path(f"imap_glows_l3e_survival-probability-hi-{descriptor_elongation}_20241007-repoint00020_v001.cdf")
+                saved_cdf_path = Path(
+                    f"imap_glows_l3e_survival-probability-hi-{descriptor_elongation}_20241007-repoint00020_v001.cdf")
 
                 mock_save_data.return_value = saved_cdf_path
 
                 parent_file_names = ["some_l3e_hi_parent.dat", "some_repointing_file.repoint.csv"]
-                products = process_l3e_hi(parent_file_names, repointing, epoch_start_date, epoch_delta, elongation, version)
+                products = process_l3e_hi(parent_file_names, repointing, epoch_start_date, epoch_delta, elongation,
+                                          version)
 
                 expected_repointing_midpoint = epoch_start_date + epoch_delta
-                mock_determine_call_args.assert_called_once_with(epoch_start_date, expected_repointing_midpoint, float(elongation))
+                mock_determine_call_args.assert_called_once_with(epoch_start_date, expected_repointing_midpoint,
+                                                                 float(elongation))
 
                 mock_run.assert_called_once_with(["./survProbHi"] + hi_args)
 
-                first_output_data_path = Path(f"probSur.Imap.Hi_20241007_000000_date.001_{descriptor_elongation[:5]}.dat")
+                first_output_data_path = Path(
+                    f"probSur.Imap.Hi_20241007_000000_date.001_{descriptor_elongation[:5]}.dat")
 
                 mock_convert_dat_to_glows_l3e_hi_product.assert_called_once_with(
                     expected_input_metadata,
@@ -1201,8 +1294,9 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
                 survival_data_product: GlowsL3EHiData = mock_save_data.call_args_list[0].args[0]
                 self.assertEqual(parent_file_names, survival_data_product.parent_file_names)
 
-                expected_output_data_path = AncillaryFilePath(f"imap_glows_survival-probability-hi-{descriptor_elongation}-raw_20241007_v001.dat"
-                                                              ).construct_path()
+                expected_output_data_path = AncillaryFilePath(
+                    f"imap_glows_survival-probability-hi-{descriptor_elongation}-raw_20241007_v001.dat"
+                ).construct_path()
 
                 mock_shutil.move.assert_called_once_with(first_output_data_path, expected_output_data_path)
 
@@ -1211,7 +1305,6 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
                     expected_output_data_path
                 ]
                 self.assertEqual(expected_products, products)
-
 
     @patch('imap_l3_processing.glows.glows_processor.save_data')
     @patch("imap_l3_processing.glows.glows_processor.GlowsL3ELoData.convert_dat_to_glows_l3e_lo_product")
@@ -1222,7 +1315,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
                             mock_determine_call_args,
                             mock_run, mock_convert_dat_to_glows_l3e_lo_product, mock_save_data):
 
-        test_cases = [(75, "75.00"),(105, "105.0")]
+        test_cases = [(75, "75.00"), (105, "105.0")]
         for elongation, elongation_filename in test_cases:
             with (self.subTest(elongation)):
                 epoch_start_date = datetime(year=2024, month=10, day=7)
@@ -1261,20 +1354,25 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
 
                 parent_file_names = ["l3d_file", "ancillary_1", "ancillary_2", "ancillary_3"]
 
-                products = process_l3e_lo(parent_file_names, repointing, epoch_start_date, epoch_delta, elongation, version)
+                products = process_l3e_lo(parent_file_names, repointing, epoch_start_date, epoch_delta, elongation,
+                                          version)
 
                 expected_repointing_midpoint = epoch_start_date + epoch_delta
-                mock_determine_call_args.assert_called_once_with(epoch_start_date, expected_repointing_midpoint, elongation)
+                mock_determine_call_args.assert_called_once_with(epoch_start_date, expected_repointing_midpoint,
+                                                                 elongation)
 
                 mock_run.assert_called_once_with(["./survProbLo"] + lo_call_args)
 
                 first_output_file_path = Path(f"probSur.Imap.Lo_20241007_000000_date.100_{elongation_filename}.dat")
 
-                mock_convert_dat_to_glows_l3e_lo_product.assert_called_once_with(expected_input_metadata, first_output_file_path,
-                         expected_repointing_midpoint, elongation, l3e_args)
+                mock_convert_dat_to_glows_l3e_lo_product.assert_called_once_with(expected_input_metadata,
+                                                                                 first_output_file_path,
+                                                                                 expected_repointing_midpoint,
+                                                                                 elongation, l3e_args)
 
-                expected_first_output_file_path = AncillaryFilePath("imap_glows_survival-probability-lo-raw_20241007_v012.dat"
-                                                                    ).construct_path()
+                expected_first_output_file_path = AncillaryFilePath(
+                    "imap_glows_survival-probability-lo-raw_20241007_v012.dat"
+                ).construct_path()
 
                 mock_shutil.move.assert_called_once_with(first_output_file_path, expected_first_output_file_path)
 
@@ -1295,40 +1393,56 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
     @patch('imap_l3_processing.glows.glows_processor.get_pointing_date_range')
     @patch('imap_l3_processing.glows.glows_processor.process_l3e_hi')
     @patch('imap_l3_processing.glows.glows_processor.process_l3e_lo')
-    @patch('imap_l3_processing.glows.glows_processor.process_l3e_ul')
-    def test_process_l3e_skips_repointing_on_exception(self, mock_process_ultra, mock_process_lo,
+    @patch('imap_l3_processing.glows.glows_processor.process_l3e_ul_hf')
+    @patch('imap_l3_processing.glows.glows_processor.process_l3e_ul_sf')
+    def test_process_l3e_skips_repointing_on_exception(self, mock_process_ultra, mock_process_ultra_hf, mock_process_lo,
                                                        mock_process_hi, mock_get_pointing_date_range):
-
 
         mock_process_hi.side_effect = [
             ValueError("Failed to generate hi"), [Path('path/to/first_hi-45_l3e')],
             [Path('path/to/second_hi-90_l3e')], [Path('path/to/second_hi-45_l3e')],
             [Path('path/to/third_hi-90_l3e')], [Path('path/to/third_hi-45_l3e')],
+            [Path('path/to/fourth_hi-90_l3e')], [Path('path/to/fourth_hi-45_l3e')],
         ]
 
         mock_process_lo.side_effect = [
             [Path('path/to/first_lo_l3e')],
             ValueError("Failed to generate lo"),
             [Path('path/to/third_lo_l3e')],
+            [Path('path/to/fourth_lo_l3e')],
         ]
 
         mock_process_ultra.side_effect = [
             [Path('path/to/first_ultra_l3e')],
             [Path('path/to/second_ultra_l3e')],
-            ValueError("Failed to generate ultra!")
+            ValueError("Failed to generate ultra!"),
+            [Path('path/to/fourth_ultra_l3e')]
         ]
 
+        mock_process_ultra_hf.side_effect = [
+            [Path('path/to/first_ultra_l3e_hf')],
+            [Path('path/to/second_ultra_l3e_hf')],
+            [Path('path/to/third_ultra_l3e_hf')],
+            ValueError("Failed to generate ultra!")
+        ]
 
         expected_l3e_products = [
             Path('path/to/first_lo_l3e'),
             Path('path/to/first_hi-45_l3e'),
             Path('path/to/first_ultra_l3e'),
+            Path('path/to/first_ultra_l3e_hf'),
             Path('path/to/second_hi-90_l3e'),
             Path('path/to/second_hi-45_l3e'),
             Path('path/to/second_ultra_l3e'),
+            Path('path/to/second_ultra_l3e_hf'),
             Path('path/to/third_lo_l3e'),
             Path('path/to/third_hi-90_l3e'),
             Path('path/to/third_hi-45_l3e'),
+            Path('path/to/third_ultra_l3e_hf'),
+            Path('path/to/fourth_lo_l3e'),
+            Path('path/to/fourth_hi-90_l3e'),
+            Path('path/to/fourth_hi-45_l3e'),
+            Path('path/to/fourth_ultra_l3e'),
         ]
 
         start_epoch_1 = datetime(2020, 1, 1)
@@ -1343,14 +1457,19 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
         end_epoch_3 = datetime(2020, 1, 5)
         epoch_delta_3 = timedelta(hours=12)
 
+        start_epoch_4 = datetime(2020, 1, 5)
+        end_epoch_4 = datetime(2020, 1, 6)
+        epoch_delta_4 = timedelta(hours=12)
+
         mock_get_pointing_date_range.side_effect = [
             (start_epoch_1, end_epoch_1),
             (start_epoch_2, end_epoch_2),
             (start_epoch_3, end_epoch_3),
+            (start_epoch_4, end_epoch_4),
         ]
 
         mock_dependencies = Mock(elongation={"2020001": sentinel.elongation_1, "2020002": sentinel.elongation_2,
-                                             "2020004": sentinel.elongation_3})
+                                             "2020004": sentinel.elongation_3, "2020005": sentinel.elongation_4})
 
         hi_parents = ["imap_glows_hi-ancillary_20100101_v001.dat"]
         mock_dependencies.get_hi_parents.return_value = hi_parents
@@ -1362,17 +1481,17 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
         initializer_data = GlowsL3EInitializerOutput(
             dependencies=mock_dependencies,
             repointings=GlowsL3eRepointings(
-                repointing_numbers=[24 ,25, 26],
-                hi_90_repointings={24: 1, 25: 1, 26: 1},
-                hi_45_repointings={24: 2, 25: 2, 26: 2},
-                lo_repointings={24: 3, 25: 3, 26: 3},
-                ultra_repointings={24: 4, 25: 4, 26: 4}
+                repointing_numbers=[24, 25, 26, 27],
+                hi_90_repointings={24: 1, 25: 1, 26: 1, 27: 1},
+                hi_45_repointings={24: 2, 25: 2, 26: 2, 27: 2},
+                lo_repointings={24: 3, 25: 3, 26: 3, 27: 3},
+                ultra_repointings={24: 4, 25: 4, 26: 4, 27: 4},
             )
         )
 
         actual_l3e_products = process_l3e(initializer_data)
 
-        mock_get_pointing_date_range.assert_has_calls([call(24), call(25), call(26)])
+        mock_get_pointing_date_range.assert_has_calls([call(24), call(25), call(26), call(27)])
 
         mock_process_hi.assert_has_calls([
             call(hi_parents, 24, start_epoch_1, epoch_delta_1, 90, 1),
@@ -1380,18 +1499,29 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
             call(hi_parents, 25, start_epoch_2, epoch_delta_2, 90, 1),
             call(hi_parents, 25, start_epoch_2, epoch_delta_2, 135, 2),
             call(hi_parents, 26, start_epoch_3, epoch_delta_3, 90, 1),
-            call(hi_parents, 26, start_epoch_3, epoch_delta_3, 135, 2)
+            call(hi_parents, 26, start_epoch_3, epoch_delta_3, 135, 2),
+            call(hi_parents, 27, start_epoch_4, epoch_delta_4, 90, 1),
+            call(hi_parents, 27, start_epoch_4, epoch_delta_4, 135, 2)
         ])
         mock_process_lo.assert_has_calls([
             call(lo_parents, 24, start_epoch_1, epoch_delta_1, sentinel.elongation_1, 3),
             call(lo_parents, 25, start_epoch_2, epoch_delta_2, sentinel.elongation_2, 3),
             call(lo_parents, 26, start_epoch_3, epoch_delta_3, sentinel.elongation_3, 3),
+            call(lo_parents, 27, start_epoch_4, epoch_delta_4, sentinel.elongation_4, 3),
         ])
 
         mock_process_ultra.assert_has_calls([
             call(ultra_parents, 24, start_epoch_1, epoch_delta_1, 4),
             call(ultra_parents, 25, start_epoch_2, epoch_delta_2, 4),
             call(ultra_parents, 26, start_epoch_3, epoch_delta_3, 4),
+            call(ultra_parents, 27, start_epoch_4, epoch_delta_4, 4),
+        ])
+
+        mock_process_ultra_hf.assert_has_calls([
+            call(ultra_parents, 24, start_epoch_1, epoch_delta_1, 4),
+            call(ultra_parents, 25, start_epoch_2, epoch_delta_2, 4),
+            call(ultra_parents, 26, start_epoch_3, epoch_delta_3, 4),
+            call(ultra_parents, 27, start_epoch_4, epoch_delta_4, 4),
         ])
 
         self.assertEqual(expected_l3e_products, actual_l3e_products)
@@ -1399,7 +1529,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
     @patch('imap_l3_processing.glows.glows_processor.get_pointing_date_range')
     @patch('imap_l3_processing.glows.glows_processor.process_l3e_hi')
     @patch('imap_l3_processing.glows.glows_processor.process_l3e_lo')
-    @patch('imap_l3_processing.glows.glows_processor.process_l3e_ul')
+    @patch('imap_l3_processing.glows.glows_processor.process_l3e_ul_sf')
     def test_process_l3e_missing_lo_elongation_skips_processing(self, mock_process_ultra, mock_process_lo,
                                                                 mock_process_hi, mock_get_pointing_date_range):
         mock_process_hi.side_effect = [
@@ -1508,6 +1638,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
             call(Path("f107_index_file_path"), "f107_fluxtable.txt"),
         ])
         mock_zip_file.writestr.assert_called_once_with(expected_json_filename, mock_json.dumps.return_value)
+
 
 if __name__ == '__main__':
     unittest.main()

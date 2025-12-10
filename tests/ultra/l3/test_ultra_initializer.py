@@ -29,16 +29,16 @@ class TestUltraInitializer(unittest.TestCase):
         for sensor in sensors:
             with self.subTest(sensor=sensor):
                 self.mock_query.side_effect = ImapQueryPatcher([
-                    'imap_glows_l3e_survival-probability-ul_20100101-repoint00001_v001.cdf',
-                    'imap_glows_l3e_survival-probability-ul_20100102-repoint00002_v001.cdf',
-                    'imap_glows_l3e_survival-probability-ul_20100103-repoint00003_v001.cdf',
+                    'imap_glows_l3e_survival-probability-ul-sf_20100101-repoint00001_v001.cdf',
+                    'imap_glows_l3e_survival-probability-ul-sf_20100102-repoint00002_v001.cdf',
+                    'imap_glows_l3e_survival-probability-ul-sf_20100103-repoint00003_v001.cdf',
 
-                    'imap_glows_l3e_survival-probability-ul_20100401-repoint00101_v002.cdf',
-                    'imap_glows_l3e_survival-probability-ul_20100402-repoint00102_v002.cdf',
-                    'imap_glows_l3e_survival-probability-ul_20100403-repoint00103_v002.cdf',
-                    'imap_glows_l3e_survival-probability-ul_20100401-repoint00101_v001.cdf',
+                    'imap_glows_l3e_survival-probability-ul-sf_20100401-repoint00101_v002.cdf',
+                    'imap_glows_l3e_survival-probability-ul-sf_20100402-repoint00102_v002.cdf',
+                    'imap_glows_l3e_survival-probability-ul-sf_20100403-repoint00103_v002.cdf',
+                    'imap_glows_l3e_survival-probability-ul-sf_20100401-repoint00101_v001.cdf',
 
-                    'imap_glows_l3e_survival-probability-ul_20100703-repoint00201_v001.cdf',
+                    'imap_glows_l3e_survival-probability-ul-sf_20100703-repoint00201_v001.cdf',
 
                     f'imap_ultra_l2_u{sensor}-ena-h-sf-nsp-full-hae-4deg-3mo_20100101_v001.cdf',
                     f'imap_ultra_l2_u{sensor}-ena-h-sf-nsp-full-hae-4deg-3mo_20100401_v001.cdf',
@@ -63,9 +63,9 @@ class TestUltraInitializer(unittest.TestCase):
                         f'imap_ultra_l1c_{sensor}sensor-spacecraftpset_20100403-repoint00103_v001.cdf'
                     ],
                     [
-                        'imap_glows_l3e_survival-probability-ul_20100101-repoint00001_v001.cdf',
-                        'imap_glows_l3e_survival-probability-ul_20100102-repoint00002_v001.cdf',
-                        'imap_glows_l3e_survival-probability-ul_20100103-repoint00003_v001.cdf',
+                        'imap_glows_l3e_survival-probability-ul-sf_20100101-repoint00001_v001.cdf',
+                        'imap_glows_l3e_survival-probability-ul-sf_20100102-repoint00002_v001.cdf',
+                        'imap_glows_l3e_survival-probability-ul-sf_20100103-repoint00003_v001.cdf',
                         f"imap_ultra_l1c_{sensor}sensor-spacecraftpset_20100101-repoint00001_v001.cdf",
                         f"imap_ultra_l1c_{sensor}sensor-spacecraftpset_20100102-repoint00002_v001.cdf",
                         f"imap_ultra_l1c_{sensor}sensor-spacecraftpset_20100103-repoint00003_v001.cdf",
@@ -73,9 +73,9 @@ class TestUltraInitializer(unittest.TestCase):
                         'imap_ultra_l2-energy-bin-group-sizes_20250101_v000.csv',
                     ],
                     [
-                        'imap_glows_l3e_survival-probability-ul_20100401-repoint00101_v001.cdf',
-                        'imap_glows_l3e_survival-probability-ul_20100402-repoint00102_v001.cdf',
-                        'imap_glows_l3e_survival-probability-ul_20100403-repoint00103_v001.cdf',
+                        'imap_glows_l3e_survival-probability-ul-sf_20100401-repoint00101_v001.cdf',
+                        'imap_glows_l3e_survival-probability-ul-sf_20100402-repoint00102_v001.cdf',
+                        'imap_glows_l3e_survival-probability-ul-sf_20100403-repoint00103_v001.cdf',
                         f'imap_ultra_l1c_{sensor}sensor-spacecraftpset_20100401-repoint00101_v001.cdf',
                         f'imap_ultra_l1c_{sensor}sensor-spacecraftpset_20100402-repoint00102_v001.cdf',
                         f'imap_ultra_l1c_{sensor}sensor-spacecraftpset_20100403-repoint00103_v001.cdf',
@@ -89,7 +89,8 @@ class TestUltraInitializer(unittest.TestCase):
                     f"u{sensor}-ena-h-sf-sp-full-hae-4deg-3mo")
 
                 self.mock_query.assert_has_calls([
-                    call(instrument='glows', data_level='l3e', descriptor='survival-probability-ul', version="latest"),
+                    call(instrument='glows', data_level='l3e', descriptor='survival-probability-ul-sf',
+                         version="latest"),
                     call(instrument='ultra', data_level='l2'),
                     call(instrument='ultra', data_level='l3'),
                     call(instrument="ultra", table='ancillary', descriptor='l2-energy-bin-group-sizes',
@@ -114,9 +115,9 @@ class TestUltraInitializer(unittest.TestCase):
                         descriptor=f"u{sensor}-ena-h-sf-sp-full-hae-4deg-3mo"
                     ),
                     input_files={
-                        'imap_glows_l3e_survival-probability-ul_20100401-repoint00101_v002.cdf',
-                        'imap_glows_l3e_survival-probability-ul_20100402-repoint00102_v002.cdf',
-                        'imap_glows_l3e_survival-probability-ul_20100403-repoint00103_v002.cdf',
+                        'imap_glows_l3e_survival-probability-ul-sf_20100401-repoint00101_v002.cdf',
+                        'imap_glows_l3e_survival-probability-ul-sf_20100402-repoint00102_v002.cdf',
+                        'imap_glows_l3e_survival-probability-ul-sf_20100403-repoint00103_v002.cdf',
                         f'imap_ultra_l1c_{sensor}sensor-spacecraftpset_20100401-repoint00101_v001.cdf',
                         f'imap_ultra_l1c_{sensor}sensor-spacecraftpset_20100402-repoint00102_v001.cdf',
                         f'imap_ultra_l1c_{sensor}sensor-spacecraftpset_20100403-repoint00103_v001.cdf',
@@ -129,16 +130,16 @@ class TestUltraInitializer(unittest.TestCase):
     @patch('imap_l3_processing.maps.map_initializer.read_cdf_parents')
     def test_get_maps_that_should_be_produced_lists_combined_maps(self, mock_read_cdf_parents):
         self.mock_query.side_effect = ImapQueryPatcher([
-            'imap_glows_l3e_survival-probability-ul_20100101-repoint00001_v001.cdf',
-            'imap_glows_l3e_survival-probability-ul_20100102-repoint00002_v001.cdf',
-            'imap_glows_l3e_survival-probability-ul_20100103-repoint00003_v001.cdf',
+            'imap_glows_l3e_survival-probability-ul-sf_20100101-repoint00001_v001.cdf',
+            'imap_glows_l3e_survival-probability-ul-sf_20100102-repoint00002_v001.cdf',
+            'imap_glows_l3e_survival-probability-ul-sf_20100103-repoint00003_v001.cdf',
 
-            'imap_glows_l3e_survival-probability-ul_20100401-repoint00101_v002.cdf',
-            'imap_glows_l3e_survival-probability-ul_20100402-repoint00102_v002.cdf',
-            'imap_glows_l3e_survival-probability-ul_20100403-repoint00103_v002.cdf',
-            'imap_glows_l3e_survival-probability-ul_20100401-repoint00101_v001.cdf',
+            'imap_glows_l3e_survival-probability-ul-sf_20100401-repoint00101_v002.cdf',
+            'imap_glows_l3e_survival-probability-ul-sf_20100402-repoint00102_v002.cdf',
+            'imap_glows_l3e_survival-probability-ul-sf_20100403-repoint00103_v002.cdf',
+            'imap_glows_l3e_survival-probability-ul-sf_20100401-repoint00101_v001.cdf',
 
-            'imap_glows_l3e_survival-probability-ul_20100703-repoint00201_v001.cdf',
+            'imap_glows_l3e_survival-probability-ul-sf_20100703-repoint00201_v001.cdf',
 
             f'imap_ultra_l2_u45-ena-h-sf-nsp-full-hae-4deg-3mo_20100101_v001.cdf',
             f'imap_ultra_l2_u45-ena-h-sf-nsp-full-hae-4deg-3mo_20100401_v001.cdf',
@@ -179,9 +180,9 @@ class TestUltraInitializer(unittest.TestCase):
                 f'imap_ultra_l1c_90sensor-spacecraftpset_20100403-repoint00103_v001.cdf'
             ],
             [
-                'imap_glows_l3e_survival-probability-ul_20100101-repoint00001_v001.cdf',
-                'imap_glows_l3e_survival-probability-ul_20100102-repoint00002_v001.cdf',
-                'imap_glows_l3e_survival-probability-ul_20100103-repoint00003_v001.cdf',
+                'imap_glows_l3e_survival-probability-ul-sf_20100101-repoint00001_v001.cdf',
+                'imap_glows_l3e_survival-probability-ul-sf_20100102-repoint00002_v001.cdf',
+                'imap_glows_l3e_survival-probability-ul-sf_20100103-repoint00003_v001.cdf',
                 f"imap_ultra_l1c_45sensor-spacecraftpset_20100101-repoint00001_v001.cdf",
                 f"imap_ultra_l1c_45sensor-spacecraftpset_20100102-repoint00002_v001.cdf",
                 f"imap_ultra_l1c_45sensor-spacecraftpset_20100103-repoint00003_v001.cdf",
@@ -193,9 +194,9 @@ class TestUltraInitializer(unittest.TestCase):
                 'imap_ultra_l2-energy-bin-group-sizes_20250101_v000.csv',
             ],
             [
-                'imap_glows_l3e_survival-probability-ul_20100401-repoint00101_v001.cdf',
-                'imap_glows_l3e_survival-probability-ul_20100402-repoint00102_v001.cdf',
-                'imap_glows_l3e_survival-probability-ul_20100403-repoint00103_v001.cdf',
+                'imap_glows_l3e_survival-probability-ul-sf_20100401-repoint00101_v001.cdf',
+                'imap_glows_l3e_survival-probability-ul-sf_20100402-repoint00102_v001.cdf',
+                'imap_glows_l3e_survival-probability-ul-sf_20100403-repoint00103_v001.cdf',
                 f'imap_ultra_l1c_45sensor-spacecraftpset_20100401-repoint00101_v001.cdf',
                 f'imap_ultra_l1c_45sensor-spacecraftpset_20100402-repoint00102_v001.cdf',
                 f'imap_ultra_l1c_45sensor-spacecraftpset_20100403-repoint00103_v001.cdf',
@@ -213,7 +214,7 @@ class TestUltraInitializer(unittest.TestCase):
             f"ulc-ena-h-sf-sp-full-hae-4deg-3mo")
 
         self.mock_query.assert_has_calls([
-            call(instrument='glows', data_level='l3e', descriptor='survival-probability-ul', version="latest"),
+            call(instrument='glows', data_level='l3e', descriptor='survival-probability-ul-sf', version="latest"),
             call(instrument='ultra', data_level='l2'),
             call(instrument='ultra', data_level='l3'),
             call(instrument="ultra", table='ancillary', descriptor='l2-energy-bin-group-sizes',
@@ -240,9 +241,9 @@ class TestUltraInitializer(unittest.TestCase):
                 descriptor=f"ulc-ena-h-sf-sp-full-hae-4deg-3mo"
             ),
             input_files={
-                'imap_glows_l3e_survival-probability-ul_20100401-repoint00101_v002.cdf',
-                'imap_glows_l3e_survival-probability-ul_20100402-repoint00102_v002.cdf',
-                'imap_glows_l3e_survival-probability-ul_20100403-repoint00103_v002.cdf',
+                'imap_glows_l3e_survival-probability-ul-sf_20100401-repoint00101_v002.cdf',
+                'imap_glows_l3e_survival-probability-ul-sf_20100402-repoint00102_v002.cdf',
+                'imap_glows_l3e_survival-probability-ul-sf_20100403-repoint00103_v002.cdf',
                 f'imap_ultra_l1c_45sensor-spacecraftpset_20100401-repoint00101_v001.cdf',
                 f'imap_ultra_l1c_45sensor-spacecraftpset_20100402-repoint00102_v001.cdf',
                 f'imap_ultra_l1c_45sensor-spacecraftpset_20100403-repoint00103_v001.cdf',

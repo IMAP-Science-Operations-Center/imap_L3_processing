@@ -3,6 +3,7 @@ from pathlib import Path
 
 import imap_data_access
 
+from imap_l3_processing.glows.descriptors import GLOWS_L3E_ULTRA_SF_DESCRIPTOR
 from imap_l3_processing.maps.map_descriptors import MapDescriptorParts, SurvivalCorrection, Sensor
 from imap_l3_processing.maps.map_initializer import MapInitializer, PossibleMapToProduce
 from imap_l3_processing.utils import furnish_spice_metakernel, SpiceKernelTypes
@@ -83,7 +84,7 @@ ULTRA_SP_MAP_DESCRIPTORS = [
 class UltraInitializer(MapInitializer):
     def __init__(self):
         sp_query_result = imap_data_access.query(instrument='glows', data_level='l3e',
-                                                 descriptor="survival-probability-ul", version="latest")
+                                                 descriptor=GLOWS_L3E_ULTRA_SF_DESCRIPTOR, version="latest")
         self.glows_psets_by_repointing = {int(r["repointing"]): Path(r["file_path"]).name for r in sp_query_result}
 
         l2_query_result = imap_data_access.query(instrument="ultra", data_level="l2")
