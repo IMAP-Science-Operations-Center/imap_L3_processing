@@ -16,7 +16,8 @@ from imap_data_access.file_validation import generate_imap_file_path, ScienceFil
 from imap_data_access.processing_input import ProcessingInputCollection
 
 from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
-from imap_l3_processing.glows.descriptors import GLOWS_L3A_DESCRIPTOR
+from imap_l3_processing.glows.descriptors import GLOWS_L3A_DESCRIPTOR, GLOWS_L3E_ULTRA_SF_DESCRIPTOR, \
+    GLOWS_L3E_ULTRA_HF_DESCRIPTOR
 from imap_l3_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
 from imap_l3_processing.glows.l3a.glows_toolkit.l3a_data import L3aData
 from imap_l3_processing.glows.l3a.models import GlowsL3LightCurve
@@ -304,7 +305,9 @@ def process_l3e_lo(
 
     return [lo_cdf, new_dat_path]
 
-def process_l3e_ul(parent_file_names: list[str], repointing: int, repointing_start: datetime, epoch_delta: timedelta, version: int) -> list[Path]:
+
+def process_l3e_ul_sf(parent_file_names: list[str], repointing: int, repointing_start: datetime, epoch_delta: timedelta,
+                      version: int) -> list[Path]:
     repointing_midpoint = repointing_start + epoch_delta
     call_args_object = determine_call_args_for_l3e_executable(repointing_start, repointing_midpoint, 30)
     call_args = call_args_object.to_argument_list()
@@ -316,7 +319,7 @@ def process_l3e_ul(parent_file_names: list[str], repointing: int, repointing_sta
     input_metadata = InputMetadata(
         instrument="glows",
         data_level="l3e",
-        descriptor="survival-probability-ul",
+        descriptor=GLOWS_L3E_ULTRA_SF_DESCRIPTOR,
         start_date=repointing_start,
         end_date=repointing_start + epoch_delta * 2,
         version=f"v{version:03}",
@@ -324,6 +327,54 @@ def process_l3e_ul(parent_file_names: list[str], repointing: int, repointing_sta
     )
 
     output_path = Path(f'probSur.Imap.Ul_{call_args[0]}_{call_args[1][:8]}.dat')
+    ul_data = GlowsL3EUltraData.convert_dat_to_glows_l3e_ul_product(input_metadata, output_path,
+                                                                    repointing_midpoint, call_args_object)
+
+    ul_data.parent_file_names = parent_file_names
+
+    ul_cdf = save_data(ul_data)
+
+    cdf_science_file_path = ScienceFilePath(ul_cdf)
+
+    new_dat_path = AncillaryFilePath.generate_from_inputs(
+        instrument="glows",
+        descriptor=f"{cdf_science_file_path.descriptor}-raw",
+        start_time=cdf_science_file_path.start_date,
+        version=cdf_science_file_path.version,
+        extension="dat"
+    ).construct_path()
+
+    shutil.move(output_path, new_dat_path)
+
+    return [ul_cdf, new_dat_path]
+
+
+def process_l3e_ul_hf(parent_file_names: list[str], repointing: int, repointing_start: datetime, epoch_delta: timedelta,
+                      version: int) -> list[Path]:
+    repointing_midpoint = repointing_start + epoch_delta
+    call_args_object = determine_call_args_for_l3e_executable(repointing_start, repointing_midpoint, 30)
+
+    call_args_object = replace(call_args_object,
+                               spacecraft_velocity_x=0,
+                               spacecraft_velocity_y=0,
+                               spacecraft_velocity_z=0
+                               )
+
+    call_args = call_args_object.to_argument_list()
+    logger.info(f"Processing L3e Ultra, calling survProbUltra with {call_args}")
+    run(["./survProbUltra"] + call_args)
+
+    input_metadata = InputMetadata(
+        instrument="glows",
+        data_level="l3e",
+        descriptor=GLOWS_L3E_ULTRA_HF_DESCRIPTOR,
+        start_date=repointing_start,
+        end_date=repointing_start + epoch_delta * 2,
+        version=f"v{version:03}",
+        repointing=repointing,
+    )
+
+    output_path = Path(f'probSur.Imap.Ul.V0_{call_args[0]}_{call_args[1][:8]}.dat')
     ul_data = GlowsL3EUltraData.convert_dat_to_glows_l3e_ul_product(input_metadata, output_path,
                                                                     repointing_midpoint, call_args_object)
 
@@ -411,10 +462,18 @@ def process_l3e(initializer_data: GlowsL3EInitializerOutput):
                 hi_45_version = initializer_data.repointings.hi_45_repointings[repointing]
                 products_list.extend(process_l3e_hi(hi_parent_file_names, repointing, start_repointing, epoch_delta, 135, hi_45_version))
 
-            with SwallowExceptionAndLog(f"Exception encountered when processing L3e ultra for repointing {repointing}"):
-                ul_parent_file_names = initializer_data.dependencies.get_ul_parents()
-                ul_version = initializer_data.repointings.ultra_repointings[repointing]
-                products_list.extend(process_l3e_ul(ul_parent_file_names, repointing, start_repointing, epoch_delta, ul_version))
+            ul_parent_file_names = initializer_data.dependencies.get_ul_parents()
+            ul_version = initializer_data.repointings.ultra_repointings[repointing]
+
+            with SwallowExceptionAndLog(
+                    f"Exception encountered when processing L3e ultra SF for repointing {repointing}"):
+                products_list.extend(
+                    process_l3e_ul_sf(ul_parent_file_names, repointing, start_repointing, epoch_delta, ul_version))
+
+            with SwallowExceptionAndLog(
+                    f"Exception encountered when processing L3e ultra HF for repointing {repointing}"):
+                products_list.extend(
+                    process_l3e_ul_hf(ul_parent_file_names, repointing, start_repointing, epoch_delta, ul_version))
 
     return products_list
 

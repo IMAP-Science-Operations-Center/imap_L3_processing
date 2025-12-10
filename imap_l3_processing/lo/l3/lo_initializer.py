@@ -16,6 +16,14 @@ LO_SP_MAP_KERNELS = [
 
 LO_SP_MAP_DESCRIPTORS = [
     "l090-ena-h-sf-sp-ram-hae-6deg-1yr",
+    "l090-ena-h-sf-sp-ram-hae-6deg-1yr",
+    "l090-ena-h-hf-sp-ram-hae-6deg-1yr",
+    "l090-spx-h-sf-nsp-ram-hae-6deg-1yr",
+    "l090-spx-h-sf-sp-ram-hae-6deg-1yr",
+    "l090-spx-h-hf-nsp-ram-hae-6deg-1yr",
+    "l090-spx-h-hf-sp-ram-hae-6deg-1yr",
+    "l090-spxnbs-h-sf-nsp-ram-hae-6deg-1yr",
+    "l090-spxnbs-h-hk-nsp-ram-hae-6deg-1yr"
 ]
 
 LO_ISN_MAP_DESCRIPTORS = [

@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 2
 requires-python = ">=3.10"
 resolution-markers = [
     "python_full_version >= '3.12'",
@@ -82,11 +82,11 @@ wheels = [
 
 [[package]]
 name = "astropy-iers-data"
-version = "0.2025.12.1.0.45.12"
+version = "0.2025.12.8.0.38.44"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/38/7f/a80a7654dee673357f59fea8a58d358acfa2235d4644630bfd559d70180c/astropy_iers_data-0.2025.12.1.0.45.12.tar.gz", hash = "sha256:4897ee8ecf1b9505915e57ea8e9582b271765b6f64f0527c02d5ff7e7ca2a711", size = 1915049, upload-time = "2025-12-01T00:46:06.612Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/e8/58/59bd32ce1648d734a9a9b1961581ea75735bb625287799698aafd8e5683d/astropy_iers_data-0.2025.12.8.0.38.44.tar.gz", hash = "sha256:8009f8d2ee0c08e4029a1e12251847ea2b176e3caba02d8ab07b49469d3dec86", size = 1915641, upload-time = "2025-12-08T00:39:31.038Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/02/48/501f82ad7806e57bed6e2a4b3cca0897302f51ddfb7ac24891fe6a200360/astropy_iers_data-0.2025.12.1.0.45.12-py3-none-any.whl", hash = "sha256:c7c14bb3c2f421b705253a129649db949ac2f9bee3d71d32955e6a8e0888d882", size = 1971679, upload-time = "2025-12-01T00:46:04.723Z" },
+    { url = "https://files.pythonhosted.org/packages/1f/b0/83b8922518231da9fba69ef4c0daf600a20dc6f5eef1432fab6cb6fe2647/astropy_iers_data-0.2025.12.8.0.38.44-py3-none-any.whl", hash = "sha256:59b0616bf175482749fd1a50c512a248cd0841e433bf64900f4449d1880d5542", size = 1972279, upload-time = "2025-12-08T00:39:28.926Z" },
 ]
 
 [[package]]
@@ -721,8 +721,8 @@ dev = [{ name = "dotenv", specifier = ">=0.9.9" }]
 
 [[package]]
 name = "imap-processing"
-version = "1.0.6.post11.dev0+08c5e3ca"
-source = { git = "https://github.com/IMAP-Science-Operations-Center/imap_processing#08c5e3ca724d0d8137a3077617d1449df4e89664" }
+version = "1.0.6.post15.dev0+5fb8254c"
+source = { git = "https://github.com/IMAP-Science-Operations-Center/imap_processing#5fb8254c7a7fccb04f0d5519916611157fae9786" }
 dependencies = [
     { name = "astropy-healpix" },
     { name = "cdflib" },
@@ -1870,11 +1870,11 @@ wheels = [
 
 [[package]]
 name = "urllib3"
-version = "2.5.0"
+version = "2.6.1"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/15/22/9ee70a2574a4f4599c47dd506532914ce044817c7752a79b6a51286319bc/urllib3-2.5.0.tar.gz", hash = "sha256:3fc47733c7e419d4bc3f6b3dc2b4f890bb743906a30d56ba4a5bfa4bbff92760", size = 393185, upload-time = "2025-06-18T14:07:41.644Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/5e/1d/0f3a93cca1ac5e8287842ed4eebbd0f7a991315089b1a0b01c7788aa7b63/urllib3-2.6.1.tar.gz", hash = "sha256:5379eb6e1aba4088bae84f8242960017ec8d8e3decf30480b3a1abdaa9671a3f", size = 432678, upload-time = "2025-12-08T15:25:26.773Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a7/c2/fe1e52489ae3122415c51f387e221dd0773709bad6c6cdaa599e8a2c5185/urllib3-2.5.0-py3-none-any.whl", hash = "sha256:e6b01673c0fa6a13e374b50871808eb3bf7046c4b125b216f6bf1cc604cff0dc", size = 129795, upload-time = "2025-06-18T14:07:40.39Z" },
+    { url = "https://files.pythonhosted.org/packages/bc/56/190ceb8cb10511b730b564fb1e0293fa468363dbad26145c34928a60cb0c/urllib3-2.6.1-py3-none-any.whl", hash = "sha256:e67d06fe947c36a7ca39f4994b08d73922d40e6cca949907be05efa6fd75110b", size = 131138, upload-time = "2025-12-08T15:25:25.51Z" },
 ]
 
 [[package]]
