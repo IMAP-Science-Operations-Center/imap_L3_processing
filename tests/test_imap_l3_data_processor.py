@@ -158,14 +158,14 @@ class TestImapL3DataProcessor(TestCase):
                 mock_upload.assert_called_with(sentinel.cdf)
 
     @patch('imap_l3_data_processor.imap_data_access.upload')
-    @patch('imap_l3_data_processor.LoInitializer')
-    @patch('imap_l3_data_processor.LoProcessor')
+    @patch('imap_l3_data_processor.HiL3Initializer')
+    @patch('imap_l3_data_processor.HiProcessor')
     @patch('imap_l3_data_processor.argparse')
-    def test_failing_to_produce_an_sp_map_continues(self, mock_argparse, mock_lo_processor, mock_lo_initializer_class,
+    def test_failing_to_produce_an_sp_map_continues(self, mock_argparse, mock_hi_processor, mock_hi_initializer_class,
                                                     mock_upload):
-        mock_lo_initializer = mock_lo_initializer_class.return_value
+        mock_hi_initializer = mock_hi_initializer_class.return_value
 
-        instrument = "lo"
+        instrument = "hi"
         data_level = "l3"
         descriptor = "all-maps"
         mock_argument_parser = mock_argparse.ArgumentParser.return_value
@@ -178,31 +178,24 @@ class TestImapL3DataProcessor(TestCase):
         mock_argument_parser.parse_args.return_value.version = sentinel.version
         mock_argument_parser.parse_args.return_value.descriptor = descriptor
 
-        mock_lo_initializer.get_maps_that_should_be_produced.side_effect = [
-            [PossibleMapToProduce(set(), Mock())],
-            [PossibleMapToProduce(set(), Mock())],
-            [PossibleMapToProduce(set(), Mock())],
-            [PossibleMapToProduce(set(), Mock())],
-            [PossibleMapToProduce(set(), Mock())],
-            [PossibleMapToProduce(set(), Mock())],
-            [PossibleMapToProduce(set(), Mock())],
-            [PossibleMapToProduce(set(), Mock())],
-            [PossibleMapToProduce(set(), Mock())]
+        mock_hi_initializer.get_maps_that_should_be_produced.side_effect = [
+            [PossibleMapToProduce(set(), Mock())] for _ in range(len(HI_SP_MAP_DESCRIPTORS))
         ]
 
-        mock_lo_processor.return_value.process.side_effect = [
-            [Path("lo_sp_map_1.cdf")],
+        mock_hi_processor.return_value.process.side_effect = [
+            [Path("hi_sp_map_1.cdf")],
             ValueError("something went wrong!"),
-            [Path("lo_sp_map_2.cdf")]
+            [Path("hi_sp_map_2.cdf")]
         ]
 
-        imap_l3_processor()
+        with self.assertLogs():
+            imap_l3_processor()
 
-        self.assertEqual(9, mock_lo_processor.call_count)
+        self.assertEqual(len(HI_SP_MAP_DESCRIPTORS), mock_hi_processor.call_count)
 
         mock_upload.assert_has_calls([
-            call(Path("lo_sp_map_1.cdf")),
-            call(Path("lo_sp_map_2.cdf")),
+            call(Path("hi_sp_map_1.cdf")),
+            call(Path("hi_sp_map_2.cdf")),
         ])
 
     @patch('imap_l3_data_processor.spiceypy')
