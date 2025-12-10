@@ -2,6 +2,7 @@ import unittest
 from datetime import datetime
 from unittest.mock import patch, call
 
+from imap_l3_processing.glows.descriptors import GLOWS_L3E_ULTRA_SF_DESCRIPTOR, GLOWS_L3E_ULTRA_HF_DESCRIPTOR
 from imap_l3_processing.maps.map_initializer import MapInitializer, PossibleMapToProduce
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.ultra.l3.ultra_initializer import UltraInitializer, ULTRA_SP_SPICE_KERNELS
@@ -95,9 +96,9 @@ class TestUltraInitializer(unittest.TestCase):
 
                 self.mock_query.assert_has_calls([
 
-                    call(instrument='glows', data_level='l3e', descriptor='survival-probability-ul-sf',
+                    call(instrument='glows', data_level='l3e', descriptor=GLOWS_L3E_ULTRA_SF_DESCRIPTOR,
                          version="latest"),
-                    call(instrument='glows', data_level='l3e', descriptor='survival-probability-ul-hf',
+                    call(instrument='glows', data_level='l3e', descriptor=GLOWS_L3E_ULTRA_HF_DESCRIPTOR,
                          version="latest"),
                     call(instrument='ultra', data_level='l2'),
                     call(instrument='ultra', data_level='l3'),
@@ -222,8 +223,8 @@ class TestUltraInitializer(unittest.TestCase):
             f"ulc-ena-h-sf-sp-full-hae-4deg-3mo")
 
         self.mock_query.assert_has_calls([
-            call(instrument='glows', data_level='l3e', descriptor='survival-probability-ul-sf', version="latest"),
-            call(instrument='glows', data_level='l3e', descriptor='survival-probability-ul-hf', version="latest"),
+            call(instrument='glows', data_level='l3e', descriptor=GLOWS_L3E_ULTRA_SF_DESCRIPTOR, version="latest"),
+            call(instrument='glows', data_level='l3e', descriptor=GLOWS_L3E_ULTRA_HF_DESCRIPTOR, version="latest"),
             call(instrument='ultra', data_level='l2'),
             call(instrument='ultra', data_level='l3'),
             call(instrument="ultra", table='ancillary', descriptor='l2-energy-bin-group-sizes',
@@ -353,8 +354,8 @@ class TestUltraInitializer(unittest.TestCase):
             f"ulc-ena-h-hf-sp-full-hae-4deg-3mo")
 
         self.mock_query.assert_has_calls([
-            call(instrument='glows', data_level='l3e', descriptor='survival-probability-ul-sf', version="latest"),
-            call(instrument='glows', data_level='l3e', descriptor='survival-probability-ul-hf', version="latest"),
+            call(instrument='glows', data_level='l3e', descriptor=GLOWS_L3E_ULTRA_SF_DESCRIPTOR, version="latest"),
+            call(instrument='glows', data_level='l3e', descriptor=GLOWS_L3E_ULTRA_HF_DESCRIPTOR, version="latest"),
             call(instrument='ultra', data_level='l2'),
             call(instrument='ultra', data_level='l3'),
             call(instrument="ultra", table='ancillary', descriptor='l2-energy-bin-group-sizes',
