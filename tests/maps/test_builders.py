@@ -194,10 +194,13 @@ def create_l1c_pset(
         repointing: int = 1,
         energy_steps: np.ndarray = np.array([1]),
         exposures: Optional[np.ndarray] = None,
+        pointing_start_met=None,
+        pointing_end_met=None
 ) -> InputRectangularPointingSet:
     epoch_j2000 = np.array([spiceypy.datetime2et(epoch)]) * 1e9
     exposures = exposures if exposures is not None else np.full(shape=(1, energy_steps.shape[0], 3600), fill_value=1.)
-    return InputRectangularPointingSet(epoch, epoch_delta, epoch_j2000, repointing, exposures, energy_steps)
+    return InputRectangularPointingSet(epoch, epoch_delta, epoch_j2000, repointing, exposures, energy_steps,
+                                       pointing_start_met, pointing_end_met, )
 
 
 def create_l3e_pset(

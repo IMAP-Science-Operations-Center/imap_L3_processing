@@ -66,6 +66,19 @@ class TestUtils(unittest.TestCase):
             np.testing.assert_array_equal(result.esa_energy_step, cdf['esa_energy_step'])
             np.testing.assert_array_equal(result.exposure_times, np.full_like(cdf['exposure_times'], np.nan))
 
+    def test_read_lo_l1c(self):
+        path = get_test_data_folder() / 'lo' / 'imap_lo_l1c_pset_20260101-repoint01261_v001.cdf'
+        result = read_l1c_rectangular_pointing_set_data(path)
+
+        with CDF(str(path)) as cdf:
+            self.assertEqual(cdf['epoch'][0], result.epoch)
+            self.assertEqual(None, result.epoch_delta)
+            self.assertEqual(1261, result.repointing)
+            np.testing.assert_array_equal(result.esa_energy_step, cdf['esa_energy_step'])
+            np.testing.assert_array_equal(result.exposure_times, cdf['exposure_time'][...])
+            self.assertEqual(cdf['pointing_start_met'][0], result.pointing_start_met)
+            self.assertEqual(cdf['pointing_end_met'][0], result.pointing_end_met)
+
     @with_tempdir
     def test_read_glows_l3e_data(self, temp_dir: Path):
         rng = np.random.default_rng()

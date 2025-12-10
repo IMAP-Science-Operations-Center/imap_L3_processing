@@ -41,7 +41,11 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
 
         self.spatial_coords = (CoordNames.AZIMUTH_L1C.value,)
 
-        repointing_midpoint = l1c_dataset.epoch_j2000 + l1c_dataset.epoch_delta / 2
+        if l1c_dataset.epoch_delta is not None:
+            repointing_midpoint = l1c_dataset.epoch_j2000 + l1c_dataset.epoch_delta / 2
+        elif l1c_dataset.pointing_start_met is not None and l1c_dataset.pointing_end_met is not None:
+            pointing_duration = l1c_dataset.pointing_end_met - l1c_dataset.pointing_start_met
+            repointing_midpoint = l1c_dataset.epoch_j2000 + (1e9 * pointing_duration / 2)
 
         initial_dataset = xr.Dataset({},
                                      coords={
@@ -82,11 +86,16 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
                 [hae_az_el[:, 1]],
                 dims=[CoordNames.TIME.value, "hae_latitude"],
             )
+            initial_dataset['pointing_start_met'] = l1c_dataset.pointing_start_met
+            initial_dataset['pointing_end_met'] = l1c_dataset.pointing_end_met
 
             energy_in_ev = energies * 1000
 
             if sensor == Sensor.Hi90 or sensor == Sensor.Hi45:
                 initial_dataset.attrs['Logical_source'] = 'imap_hi'
+            elif sensor in (Sensor.Lo90, Sensor.Lo):
+                initial_dataset.attrs['Logical_source'] = 'imap_lo'
+
             dataset = add_spacecraft_velocity_to_pset(initial_dataset)
             dataset = apply_compton_getting_correction(dataset, xr.DataArray(energy_in_ev))
             self.az_el_points = xr.DataArray(
