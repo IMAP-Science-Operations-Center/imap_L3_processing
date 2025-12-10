@@ -22,9 +22,9 @@ class TestUltraL3Dependencies(unittest.TestCase):
                            "imap_ultra_l1c_pset_20251012_v001.cdf"]
 
         glows_file_paths = [
-            "imap_glows_l3e_survival-probability-ultra-45_20201001_v001.cdf",
-            "imap_glows_l3e_survival-probability-ultra-45_20201002_v002.cdf",
-            "imap_glows_l3e_survival-probability-ultra-45_20201003_v003.cdf"]
+            "imap_glows_l3e_survival-probability-ul-sf_20201001_v001.cdf",
+            "imap_glows_l3e_survival-probability-ul-sf_20201002_v002.cdf",
+            "imap_glows_l3e_survival-probability-ul-sf_20201003_v003.cdf"]
 
         l2_energy_bin_group_sizes = 'imap_ultra_l2-energy-bin-group-sizes_20250101_v000.csv'
         l2_energy_bin_group_sizes_path = get_test_data_path(
@@ -92,9 +92,9 @@ class TestUltraL3Dependencies(unittest.TestCase):
                            "imap_ultra_l1c_pset_20251012_v001.cdf"]
 
         glows_file_paths = [
-            "imap_glows_l3e_survival-probability-ultra-45_20201001_v001.cdf",
-            "imap_glows_l3e_survival-probability-ultra-45_20201002_v002.cdf",
-            "imap_glows_l3e_survival-probability-ultra-45_20201003_v003.cdf"]
+            "imap_glows_l3e_survival-probability-ul-sf_20201001_v001.cdf",
+            "imap_glows_l3e_survival-probability-ul-sf_20201002_v002.cdf",
+            "imap_glows_l3e_survival-probability-ul-sf_20201003_v003.cdf"]
 
         input_collection = Mock()
         input_collection.get_file_paths.side_effect = [
@@ -354,9 +354,9 @@ class TestUltraL3CombinedDependencies(unittest.TestCase):
         u90_pset_file_names = ["imap_ultra_l1c_90sensor-spacecraftpset_20251010_v001.cdf",
                               "imap_ultra_l1c_90sensor-spacecraftpset_20251011_v001.cdf",
                               "imap_ultra_l1c_90sensor-spacecraftpset_20251012_v001.cdf"]
-        glows_file_names = ["imap_glows_l3e_survival-probability-ul_20251010_v001.cdf",
-                              "imap_glows_l3e_survival-probability-ul_20251011_v001.cdf",
-                              "imap_glows_l3e_survival-probability-ul_20251012_v001.cdf"]
+        glows_file_names = ["imap_glows_l3e_survival-probability-ul-sf_20251010_v001.cdf",
+                            "imap_glows_l3e_survival-probability-ul-sf_20251011_v001.cdf",
+                            "imap_glows_l3e_survival-probability-ul-sf_20251012_v001.cdf"]
 
         u45_map_input = ScienceInput(u45_map_file_name)
         u90_map_input = ScienceInput(u90_map_file_name)

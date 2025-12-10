@@ -3,6 +3,7 @@ import os
 import tempfile
 from dataclasses import fields, dataclass
 from datetime import timedelta, datetime
+from functools import wraps
 from pathlib import Path
 from typing import Type, Optional, Callable, TypeVar
 from unittest import SkipTest
@@ -214,6 +215,7 @@ def run_periodically(frequency: timedelta):
 
         last_run = periodically_run_tests.get(test_item.__name__)
 
+        @wraps(test_item)
         def test_thing(*args):
             if last_run is not None:
                 last_run_time = datetime.fromisoformat(last_run) + frequency
