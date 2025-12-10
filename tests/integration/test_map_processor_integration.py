@@ -24,19 +24,32 @@ class TestMapIntegration(unittest.TestCase):
         spiceypy.kclear()
 
     @patch("imap_l3_data_processor._parse_cli_arguments")
-    def test_hi_all_sp_maps(self, mock_parse_cli_arguments):
+    def test_hi_all_sp_maps_single_sensor(self, mock_parse_cli_arguments):
         hi_test_data_dir = INTEGRATION_TEST_DATA_PATH / "hi"
         hi_imap_data_dir = get_run_local_data_path("hi/integration_data")
 
         input_files = [
-            hi_test_data_dir / "imap_hi_l2_h45-ena-h-sf-nsp-ram-hae-4deg-1yr_20250415_v001.cdf",
-            hi_test_data_dir / "imap_hi_l2_h45-ena-h-hf-nsp-ram-hae-6deg-1yr_20250415_v971.cdf",
-            hi_test_data_dir / "imap_hi_l1c_90sensor-pset_20250415-repoint01000_v001.cdf",
-            hi_test_data_dir / "imap_hi_l1c_45sensor-pset_20250415-repoint01000_v971.cdf",
-            hi_test_data_dir / "imap_glows_l3e_survival-probability-hi-45_20250415-repoint01000_v001.cdf",
-            hi_test_data_dir / "imap_glows_l3e_survival-probability-hi-45_20260418-repoint02000_v001.cdf",
-            hi_test_data_dir / "imap_hi_l2_h45-ena-h-hf-nsp-anti-hae-4deg-6mo_20250415_v000.cdf",
-            hi_test_data_dir / "imap_hi_l2_h45-ena-h-hf-nsp-ram-hae-4deg-6mo_20250415_v000.cdf",
+            hi_test_data_dir / 'single-sensor' / "imap_hi_l2_h45-ena-h-sf-nsp-ram-hae-4deg-1yr_20250415_v001.cdf",
+            hi_test_data_dir / 'single-sensor' / "imap_hi_l2_h45-ena-h-hf-nsp-ram-hae-6deg-1yr_20250415_v971.cdf",
+            hi_test_data_dir / 'single-sensor' / "imap_hi_l1c_90sensor-pset_20250415-repoint01000_v001.cdf",
+            hi_test_data_dir / 'single-sensor' / "imap_hi_l1c_45sensor-pset_20250415-repoint01000_v971.cdf",
+            hi_test_data_dir / 'single-sensor' / "imap_hi_l1c_45sensor-pset_20251015-repoint01183_v971.cdf",
+            hi_test_data_dir / 'single-sensor' / "imap_hi_l1c_90sensor-pset_20251015-repoint01183_v971.cdf",
+            hi_test_data_dir / 'single-sensor' / "imap_glows_l3e_survival-probability-hi-45_20250415-repoint01000_v001.cdf",
+            hi_test_data_dir / 'single-sensor' / "imap_glows_l3e_survival-probability-hi-45_20260418-repoint02000_v001.cdf",
+            hi_test_data_dir / 'single-sensor' / "imap_glows_l3e_survival-probability-hi-90_20250415-repoint01000_v001.cdf",
+            hi_test_data_dir / 'single-sensor' / "imap_glows_l3e_survival-probability-hi-90_20260418-repoint02000_v001.cdf",
+            hi_test_data_dir / 'single-sensor' / "imap_glows_l3e_survival-probability-hi-90_20251015-repoint01183_v001.cdf",
+            hi_test_data_dir / 'single-sensor' / "imap_glows_l3e_survival-probability-hi-45_20251015-repoint01183_v001.cdf",
+            hi_test_data_dir / 'single-sensor' / "imap_hi_l2_h45-ena-h-hf-nsp-ram-hae-4deg-6mo_20250415_v000.cdf",
+            hi_test_data_dir / 'single-sensor' / "imap_hi_l2_h45-ena-h-hf-nsp-anti-hae-4deg-6mo_20250415_v000.cdf",
+            hi_test_data_dir / 'single-sensor' / "imap_hi_l2_h45-ena-h-hf-nsp-ram-hae-4deg-6mo_20251015_v000.cdf",
+            hi_test_data_dir / 'single-sensor' / "imap_hi_l2_h45-ena-h-hf-nsp-anti-hae-4deg-6mo_20251015_v000.cdf",
+            hi_test_data_dir / 'single-sensor' / "imap_hi_l2_h90-ena-h-hf-nsp-ram-hae-4deg-6mo_20250415_v000.cdf",
+            hi_test_data_dir / 'single-sensor' / "imap_hi_l2_h90-ena-h-hf-nsp-anti-hae-4deg-6mo_20250415_v000.cdf",
+            hi_test_data_dir / 'single-sensor' / "imap_hi_l2_h90-ena-h-hf-nsp-ram-hae-4deg-6mo_20251015_v000.cdf",
+            hi_test_data_dir / 'single-sensor' / "imap_hi_l2_h90-ena-h-hf-nsp-anti-hae-4deg-6mo_20251015_v000.cdf",
+
             INTEGRATION_TEST_DATA_PATH / "spice" / "naif020.tls",
             INTEGRATION_TEST_DATA_PATH / "spice" / "imap_science_108.tf",
             INTEGRATION_TEST_DATA_PATH / "spice" / "imap_sclk_008.tsc",
@@ -90,6 +103,45 @@ class TestMapIntegration(unittest.TestCase):
                                 'imap_hi_l2_h45-ena-h-hf-nsp-anti-hae-4deg-6mo_20250415_v000.cdf',
                                 'imap_hi_l2_h45-ena-h-hf-nsp-ram-hae-4deg-6mo_20250415_v000.cdf',
                                 'imap_glows_l3e_survival-probability-hi-45_20250415-repoint01000_v001.cdf',
+                                }
+
+            with CDF(str(expected_map_path)) as cdf:
+                self.assertEqual(expected_parents, set(cdf.attrs["Parents"]))
+
+            expected_map_path = ScienceFilePath(
+                'imap_hi_l3_h45-ena-h-hf-sp-full-hae-4deg-6mo_20251015_v001.cdf').construct_path()
+            self.assertTrue(expected_map_path.exists(), f"Expected file {expected_map_path.name} not found")
+
+            expected_parents = {'imap_hi_l1c_45sensor-pset_20251015-repoint01183_v971.cdf',
+                                'imap_hi_l2_h45-ena-h-hf-nsp-anti-hae-4deg-6mo_20251015_v000.cdf',
+                                'imap_hi_l2_h45-ena-h-hf-nsp-ram-hae-4deg-6mo_20251015_v000.cdf',
+                                'imap_glows_l3e_survival-probability-hi-45_20251015-repoint01183_v001.cdf',
+                                }
+
+            with CDF(str(expected_map_path)) as cdf:
+                self.assertEqual(expected_parents, set(cdf.attrs["Parents"]))
+
+            expected_map_path = ScienceFilePath(
+                'imap_hi_l3_h90-ena-h-hf-sp-full-hae-4deg-6mo_20250415_v001.cdf').construct_path()
+            self.assertTrue(expected_map_path.exists(), f"Expected file {expected_map_path.name} not found")
+
+            expected_parents = {'imap_hi_l1c_90sensor-pset_20250415-repoint01000_v001.cdf',
+                                'imap_hi_l2_h90-ena-h-hf-nsp-anti-hae-4deg-6mo_20250415_v000.cdf',
+                                'imap_hi_l2_h90-ena-h-hf-nsp-ram-hae-4deg-6mo_20250415_v000.cdf',
+                                'imap_glows_l3e_survival-probability-hi-90_20250415-repoint01000_v001.cdf',
+                                }
+
+            with CDF(str(expected_map_path)) as cdf:
+                self.assertEqual(expected_parents, set(cdf.attrs["Parents"]))
+
+            expected_map_path = ScienceFilePath(
+                'imap_hi_l3_h90-ena-h-hf-sp-full-hae-4deg-6mo_20251015_v001.cdf').construct_path()
+            self.assertTrue(expected_map_path.exists(), f"Expected file {expected_map_path.name} not found")
+
+            expected_parents = {'imap_hi_l1c_90sensor-pset_20251015-repoint01183_v971.cdf',
+                                'imap_hi_l2_h90-ena-h-hf-nsp-anti-hae-4deg-6mo_20251015_v000.cdf',
+                                'imap_hi_l2_h90-ena-h-hf-nsp-ram-hae-4deg-6mo_20251015_v000.cdf',
+                                'imap_glows_l3e_survival-probability-hi-90_20251015-repoint01183_v001.cdf',
                                 }
 
             with CDF(str(expected_map_path)) as cdf:
