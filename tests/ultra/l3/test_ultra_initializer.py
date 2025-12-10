@@ -2,6 +2,7 @@ import unittest
 from datetime import datetime
 from unittest.mock import patch, call
 
+from imap_l3_processing.glows.descriptors import GLOWS_L3E_ULTRA_SF_DESCRIPTOR, GLOWS_L3E_ULTRA_HF_DESCRIPTOR
 from imap_l3_processing.maps.map_initializer import MapInitializer, PossibleMapToProduce
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.ultra.l3.ultra_initializer import UltraInitializer, ULTRA_SP_SPICE_KERNELS
@@ -88,8 +89,16 @@ class TestUltraInitializer(unittest.TestCase):
                 actual_maps_to_produce = initializer.get_maps_that_should_be_produced(
                     f"u{sensor}-ena-h-sf-sp-full-hae-4deg-3mo")
 
+                with self.assertRaises(NotImplementedError) as e:
+                    initializer.get_maps_that_should_be_produced(
+                        f"u{sensor}-ena-h-hk-sp-full-hae-4deg-3mo")
+                self.assertEqual(e.exception.args, ("Reference frame should be either Spacecraft or Heliospheric",))
+
                 self.mock_query.assert_has_calls([
-                    call(instrument='glows', data_level='l3e', descriptor='survival-probability-ul-sf',
+
+                    call(instrument='glows', data_level='l3e', descriptor=GLOWS_L3E_ULTRA_SF_DESCRIPTOR,
+                         version="latest"),
+                    call(instrument='glows', data_level='l3e', descriptor=GLOWS_L3E_ULTRA_HF_DESCRIPTOR,
                          version="latest"),
                     call(instrument='ultra', data_level='l2'),
                     call(instrument='ultra', data_level='l3'),
@@ -214,7 +223,8 @@ class TestUltraInitializer(unittest.TestCase):
             f"ulc-ena-h-sf-sp-full-hae-4deg-3mo")
 
         self.mock_query.assert_has_calls([
-            call(instrument='glows', data_level='l3e', descriptor='survival-probability-ul-sf', version="latest"),
+            call(instrument='glows', data_level='l3e', descriptor=GLOWS_L3E_ULTRA_SF_DESCRIPTOR, version="latest"),
+            call(instrument='glows', data_level='l3e', descriptor=GLOWS_L3E_ULTRA_HF_DESCRIPTOR, version="latest"),
             call(instrument='ultra', data_level='l2'),
             call(instrument='ultra', data_level='l3'),
             call(instrument="ultra", table='ancillary', descriptor='l2-energy-bin-group-sizes',
@@ -252,6 +262,137 @@ class TestUltraInitializer(unittest.TestCase):
                 f'imap_ultra_l1c_90sensor-spacecraftpset_20100403-repoint00103_v001.cdf',
                 f'imap_ultra_l2_u45-ena-h-sf-nsp-full-hae-4deg-3mo_20100401_v001.cdf',
                 f'imap_ultra_l2_u90-ena-h-sf-nsp-full-hae-4deg-3mo_20100401_v001.cdf',
+                f'imap_ultra_l2-energy-bin-group-sizes_20250101_v000.csv'
+            }
+        )
+        self.assertEqual([expected_possible_map_to_produce], actual_maps_to_produce)
+
+    @patch('imap_l3_processing.maps.map_initializer.read_cdf_parents')
+    def test_get_maps_that_should_be_produced_lists_cg_corrected_maps(self, mock_read_cdf_parents):
+        self.mock_query.side_effect = ImapQueryPatcher([
+            'imap_glows_l3e_survival-probability-ul-hf_20100101-repoint00001_v001.cdf',
+            'imap_glows_l3e_survival-probability-ul-hf_20100102-repoint00002_v001.cdf',
+            'imap_glows_l3e_survival-probability-ul-hf_20100103-repoint00003_v001.cdf',
+
+            'imap_glows_l3e_survival-probability-ul-hf_20100401-repoint00101_v002.cdf',
+            'imap_glows_l3e_survival-probability-ul-hf_20100402-repoint00102_v002.cdf',
+            'imap_glows_l3e_survival-probability-ul-hf_20100403-repoint00103_v002.cdf',
+            'imap_glows_l3e_survival-probability-ul-hf_20100401-repoint00101_v001.cdf',
+
+            'imap_glows_l3e_survival-probability-ul-hf_20100703-repoint00201_v001.cdf',
+
+            f'imap_ultra_l2_u45-ena-h-hf-nsp-full-hae-4deg-3mo_20100101_v001.cdf',
+            f'imap_ultra_l2_u45-ena-h-hf-nsp-full-hae-4deg-3mo_20100401_v001.cdf',
+            f'imap_ultra_l2_u45-ena-h-hf-nsp-full-hae-4deg-3mo_20100401_v000.cdf',
+            f'imap_ultra_l2_u45-ena-h-hf-nsp-full-hae-4deg-3mo_20100701_v001.cdf',
+            f'imap_ultra_l2_u45-ena-h-hf-nsp-full-hae-4deg-3mo_20101001_v001.cdf',
+
+            f'imap_ultra_l2_u90-ena-h-hf-nsp-full-hae-4deg-3mo_20100101_v001.cdf',
+            f'imap_ultra_l2_u90-ena-h-hf-nsp-full-hae-4deg-3mo_20100401_v001.cdf',
+            f'imap_ultra_l2_u90-ena-h-hf-nsp-full-hae-4deg-3mo_20100401_v000.cdf',
+            f'imap_ultra_l2_u90-ena-h-hf-nsp-full-hae-4deg-3mo_20100701_v001.cdf',
+            f'imap_ultra_l2_u90-ena-h-hf-nsp-full-hae-4deg-3mo_20101001_v001.cdf',
+
+            f'imap_ultra_l3_ulc-ena-h-hf-sp-full-hae-4deg-3mo_20100101_v001.cdf',
+            f'imap_ultra_l3_ulc-ena-h-hf-sp-full-hae-4deg-3mo_20100401_v001.cdf',
+            'imap_ultra_l2-energy-bin-group-sizes_20250101_v000.csv'
+        ])
+
+        mock_read_cdf_parents.side_effect = [
+            [
+                f"imap_ultra_l1c_45sensor-heliopset_20100101-repoint00001_v001.cdf",
+                f"imap_ultra_l1c_45sensor-heliopset_20100102-repoint00002_v001.cdf",
+                f"imap_ultra_l1c_45sensor-heliopset_20100103-repoint00003_v001.cdf"
+            ],
+            [
+                f"imap_ultra_l1c_90sensor-heliopset_20100101-repoint00001_v001.cdf",
+                f"imap_ultra_l1c_90sensor-heliopset_20100102-repoint00002_v001.cdf",
+                f"imap_ultra_l1c_90sensor-heliopset_20100103-repoint00003_v001.cdf"
+            ],
+            [
+                f'imap_ultra_l1c_45sensor-heliopset_20100401-repoint00101_v001.cdf',
+                f'imap_ultra_l1c_45sensor-heliopset_20100402-repoint00102_v001.cdf',
+                f'imap_ultra_l1c_45sensor-heliopset_20100403-repoint00103_v001.cdf'
+            ],
+            [
+                f'imap_ultra_l1c_90sensor-heliopset_20100401-repoint00101_v001.cdf',
+                f'imap_ultra_l1c_90sensor-heliopset_20100402-repoint00102_v001.cdf',
+                f'imap_ultra_l1c_90sensor-heliopset_20100403-repoint00103_v001.cdf'
+            ],
+            [
+                'imap_glows_l3e_survival-probability-ul-hf_20100101-repoint00001_v001.cdf',
+                'imap_glows_l3e_survival-probability-ul-hf_20100102-repoint00002_v001.cdf',
+                'imap_glows_l3e_survival-probability-ul-hf_20100103-repoint00003_v001.cdf',
+                f"imap_ultra_l1c_45sensor-heliopset_20100101-repoint00001_v001.cdf",
+                f"imap_ultra_l1c_45sensor-heliopset_20100102-repoint00002_v001.cdf",
+                f"imap_ultra_l1c_45sensor-heliopset_20100103-repoint00003_v001.cdf",
+                f"imap_ultra_l1c_90sensor-heliopset_20100101-repoint00001_v001.cdf",
+                f"imap_ultra_l1c_90sensor-heliopset_20100102-repoint00002_v001.cdf",
+                f"imap_ultra_l1c_90sensor-heliopset_20100103-repoint00003_v001.cdf",
+                f'imap_ultra_l2_u45-ena-h-hf-nsp-full-hae-4deg-3mo_20100101_v001.cdf',
+                f'imap_ultra_l2_u90-ena-h-hf-nsp-full-hae-4deg-3mo_20100101_v001.cdf',
+                'imap_ultra_l2-energy-bin-group-sizes_20250101_v000.csv',
+            ],
+            [
+                'imap_glows_l3e_survival-probability-ul-hf_20100401-repoint00101_v001.cdf',
+                'imap_glows_l3e_survival-probability-ul-hf_20100402-repoint00102_v001.cdf',
+                'imap_glows_l3e_survival-probability-ul-hf_20100403-repoint00103_v001.cdf',
+                f'imap_ultra_l1c_45sensor-heliopset_20100401-repoint00101_v001.cdf',
+                f'imap_ultra_l1c_45sensor-heliopset_20100402-repoint00102_v001.cdf',
+                f'imap_ultra_l1c_45sensor-heliopset_20100403-repoint00103_v001.cdf',
+                f'imap_ultra_l1c_90sensor-heliopset_20100401-repoint00101_v001.cdf',
+                f'imap_ultra_l1c_90sensor-heliopset_20100402-repoint00102_v001.cdf',
+                f'imap_ultra_l1c_90sensor-heliopset_20100403-repoint00103_v001.cdf',
+                f'imap_ultra_l2_u45-ena-h-hf-nsp-full-hae-4deg-3mo_20100401_v001.cdf',
+                f'imap_ultra_l2_u90-ena-h-hf-nsp-full-hae-4deg-3mo_20100401_v001.cdf',
+                'imap_ultra_l2-energy-bin-group-sizes_20250101_v000.csv',
+            ]
+        ]
+
+        initializer = UltraInitializer()
+        actual_maps_to_produce = initializer.get_maps_that_should_be_produced(
+            f"ulc-ena-h-hf-sp-full-hae-4deg-3mo")
+
+        self.mock_query.assert_has_calls([
+            call(instrument='glows', data_level='l3e', descriptor=GLOWS_L3E_ULTRA_SF_DESCRIPTOR, version="latest"),
+            call(instrument='glows', data_level='l3e', descriptor=GLOWS_L3E_ULTRA_HF_DESCRIPTOR, version="latest"),
+            call(instrument='ultra', data_level='l2'),
+            call(instrument='ultra', data_level='l3'),
+            call(instrument="ultra", table='ancillary', descriptor='l2-energy-bin-group-sizes',
+                 version='latest')
+        ])
+
+        mock_read_cdf_parents.assert_has_calls([
+            call(f'imap_ultra_l2_u45-ena-h-hf-nsp-full-hae-4deg-3mo_20100101_v001.cdf'),
+            call(f'imap_ultra_l2_u90-ena-h-hf-nsp-full-hae-4deg-3mo_20100101_v001.cdf'),
+            call(f'imap_ultra_l2_u45-ena-h-hf-nsp-full-hae-4deg-3mo_20100401_v001.cdf'),
+            call(f'imap_ultra_l2_u90-ena-h-hf-nsp-full-hae-4deg-3mo_20100401_v001.cdf'),
+
+            call(f'imap_ultra_l3_ulc-ena-h-hf-sp-full-hae-4deg-3mo_20100101_v001.cdf'),
+            call(f'imap_ultra_l3_ulc-ena-h-hf-sp-full-hae-4deg-3mo_20100401_v001.cdf'),
+        ])
+
+        expected_possible_map_to_produce = PossibleMapToProduce(
+            input_metadata=InputMetadata(
+                instrument="ultra",
+                data_level="l3",
+                start_date=datetime(2010, 4, 1),
+                end_date=datetime(2010, 7, 1, 7, 30),
+                version="v002",
+                descriptor=f"ulc-ena-h-hf-sp-full-hae-4deg-3mo"
+            ),
+            input_files={
+                'imap_glows_l3e_survival-probability-ul-hf_20100401-repoint00101_v002.cdf',
+                'imap_glows_l3e_survival-probability-ul-hf_20100402-repoint00102_v002.cdf',
+                'imap_glows_l3e_survival-probability-ul-hf_20100403-repoint00103_v002.cdf',
+                f'imap_ultra_l1c_45sensor-heliopset_20100401-repoint00101_v001.cdf',
+                f'imap_ultra_l1c_45sensor-heliopset_20100402-repoint00102_v001.cdf',
+                f'imap_ultra_l1c_45sensor-heliopset_20100403-repoint00103_v001.cdf',
+                f'imap_ultra_l1c_90sensor-heliopset_20100401-repoint00101_v001.cdf',
+                f'imap_ultra_l1c_90sensor-heliopset_20100402-repoint00102_v001.cdf',
+                f'imap_ultra_l1c_90sensor-heliopset_20100403-repoint00103_v001.cdf',
+                f'imap_ultra_l2_u45-ena-h-hf-nsp-full-hae-4deg-3mo_20100401_v001.cdf',
+                f'imap_ultra_l2_u90-ena-h-hf-nsp-full-hae-4deg-3mo_20100401_v001.cdf',
                 f'imap_ultra_l2-energy-bin-group-sizes_20250101_v000.csv'
             }
         )

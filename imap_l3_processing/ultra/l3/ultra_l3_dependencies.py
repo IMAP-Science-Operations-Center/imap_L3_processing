@@ -9,7 +9,6 @@ import numpy as np
 from imap_data_access.processing_input import ProcessingInputCollection
 from imap_processing.ultra.l2.ultra_l2 import ultra_l2
 
-from imap_l3_processing.glows.descriptors import GLOWS_L3E_ULTRA_SF_DESCRIPTOR
 from imap_l3_processing.maps.map_models import HealPixIntensityMapData, RectangularIntensityMapData, \
     SpectralIndexDependencies
 from imap_l3_processing.ultra.l3.models import UltraL1CPSet, UltraGlowsL3eData
@@ -111,16 +110,15 @@ class UltraL3CombinedDependencies:
 
     @classmethod
     def fetch_dependencies(cls, deps: ProcessingInputCollection) -> UltraL3CombinedDependencies:
-        descriptors = ["u45", "u90", "45sensor-spacecraftpset", "90sensor-spacecraftpset",
-                       GLOWS_L3E_ULTRA_SF_DESCRIPTOR]
+        descriptors = ["u45", "u90", "45sensor", "90sensor", "survival-probability-ul"]
         file_paths = get_dependency_paths_by_descriptor(deps=deps, descriptors=descriptors)
 
         assert len(file_paths['u45']) == 1
         assert len(file_paths['u90']) == 1
 
-        u45_pset_paths = [imap_data_access.download(pset) for pset in file_paths['45sensor-spacecraftpset']]
-        u90_pset_paths = [imap_data_access.download(pset) for pset in file_paths['90sensor-spacecraftpset']]
-        glows_l3e_pset_paths = [imap_data_access.download(pset) for pset in file_paths[GLOWS_L3E_ULTRA_SF_DESCRIPTOR]]
+        u45_pset_paths = [imap_data_access.download(pset) for pset in file_paths['45sensor']]
+        u90_pset_paths = [imap_data_access.download(pset) for pset in file_paths['90sensor']]
+        glows_l3e_pset_paths = [imap_data_access.download(pset) for pset in file_paths['survival-probability-ul']]
         u45_map_path = imap_data_access.download(file_paths['u45'][0])
         u90_map_path = imap_data_access.download(file_paths['u90'][0])
 
