@@ -81,8 +81,9 @@ def calculate_proton_solar_wind_temperature_and_density_for_one_sweep(coincident
 def calculate_uncalibrated_proton_solar_wind_temperature_and_density(coincident_count_rates: uarray, energy: ndarray, efficiency: float):
     temperatures_per_sweep = []
     densities_per_sweep = []
-    for sweep in coincident_count_rates:
-        temperature, density = calculate_proton_solar_wind_temperature_and_density_for_one_sweep(sweep, energy, efficiency)
+    for sweep, single_energy in zip(coincident_count_rates, energy):
+        temperature, density = calculate_proton_solar_wind_temperature_and_density_for_one_sweep(sweep, single_energy,
+                                                                                                 efficiency)
         temperatures_per_sweep.append(temperature)
         densities_per_sweep.append(density)
 

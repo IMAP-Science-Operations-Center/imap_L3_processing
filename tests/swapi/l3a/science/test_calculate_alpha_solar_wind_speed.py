@@ -68,7 +68,7 @@ class TestCalculateAlphaSolarWindSpeed(TestCase):
         file_path = Path(
             imap_l3_processing.__file__).parent.parent / 'tests' / 'test_data' / 'swapi' / 'imap_swapi_l2_fake-menlo-5-sweeps_20100101_v002.cdf'
         with CDF(str(file_path)) as cdf:
-            energy = cdf["energy"][...]
+            energy = cdf["esa_energy"][...]
             count_rate = cdf["swp_coin_rate"][...]
             count_rate_delta = cdf["swp_coin_unc"][...]
 
@@ -99,7 +99,8 @@ class TestCalculateAlphaSolarWindSpeed(TestCase):
                 self.assertAlmostEqual(expected_uncertainty, alpha_energy_center_of_mass.std_dev, 0)
 
     def test_calculate_alpha_solar_wind_speed_basic(self):
-        energies = np.array([0, 1000, 700, 600, 500, 400, 300, 200, 100, 50])
+        energies = np.array([[0, 1000, 700, 600, 500, 400, 300, 200, 100, 50]])
+
         count_rates = np.array([[0, 13,  14, 15, 14, 13, 16, 18, 14, 0]])
 
         count_rates_with_uncertainties = uarray(count_rates, np.full_like(count_rates, 1.0))
@@ -111,7 +112,7 @@ class TestCalculateAlphaSolarWindSpeed(TestCase):
 
 
     def test_calculate_alpha_solar_wind_speed_excludes_zeros(self):
-        energies = np.array([0, 1000, 700, 650, 600, 550, 500, 450, 400, 300, 200, 100, 50])
+        energies = np.array([[0, 1000, 700, 650, 600, 550, 500, 450, 400, 300, 200, 100, 50]])
         count_rates = np.array([[0, 13,  0, 5, 10, 15, 0, 10, 8, 16, 18, 14, 0]])
 
         count_rates_with_uncertainties = uarray(count_rates, np.full_like(count_rates, 1.0))
@@ -122,7 +123,7 @@ class TestCalculateAlphaSolarWindSpeed(TestCase):
         self.assertAlmostEqual(expected_speed, speed.n, 0)
 
     def test_calculate_alpha_solar_wind_speed_raises_error_if_fewer_than_three_count_rates_nonzero(self):
-        energies = np.array([0, 1000, 700, 650, 600, 550, 500, 450, 400, 300, 200, 100, 50])
+        energies = np.array([[0, 1000, 700, 650, 600, 550, 500, 450, 400, 300, 200, 100, 50]])
         count_rates = np.array([[0, 0,  0, 0, 0, 21, 10, 0, 0, 0, 30, 0, 0]])
 
         count_rates_with_uncertainties = uarray(count_rates, np.full_like(count_rates, 1.0))
@@ -134,7 +135,7 @@ class TestCalculateAlphaSolarWindSpeed(TestCase):
         file_path = Path(
             imap_l3_processing.__file__).parent.parent / 'tests' / 'test_data' / 'swapi' / 'imap_swapi_l2_fake-menlo-5-sweeps_20100101_v002.cdf'
         with CDF(str(file_path)) as cdf:
-            energy = cdf["energy"][...]
+            energy = cdf["esa_energy"][...]
             count_rate = cdf["swp_coin_rate"][...]
             count_rate_delta = cdf["swp_coin_unc"][...]
 
