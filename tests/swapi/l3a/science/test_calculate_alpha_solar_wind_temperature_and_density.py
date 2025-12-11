@@ -18,7 +18,7 @@ class TestCalculateAlphaSolarWindTemperatureAndDensity(TestCase):
     def setUp(self) -> None:
         data_file_path = get_test_data_path("swapi/imap_swapi_l2_fake-menlo-5-sweeps_20100101_v002.cdf")
         with CDF(str(data_file_path)) as cdf:
-            self.energy = cdf["energy"][...]
+            self.energy = cdf["esa_energy"][...]
             self.count_rate = cdf["swp_coin_rate"][...]
             self.count_rate_delta = cdf["swp_coin_unc"][...]
 

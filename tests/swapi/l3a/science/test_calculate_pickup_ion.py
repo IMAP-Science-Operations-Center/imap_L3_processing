@@ -363,7 +363,7 @@ class TestCalculatePickupIon(SpiceTestCase):
         data_file_path = Path(
             imap_l3_processing.__file__).parent.parent / 'tests' / 'test_data' / 'swapi' / "imap_swapi_l2_50-sweeps_20100101_v002.cdf"
         with CDF(str(data_file_path)) as cdf:
-            energy = cdf["energy"][...]
+            energy = cdf["esa_energy"][...]
             count_rate = cdf["swp_coin_rate"][...]
 
             combined_counts, combined_energies = calculate_combined_sweeps(count_rate, energy)
@@ -620,7 +620,7 @@ class TestCalculatePickupIon(SpiceTestCase):
 
         data_file_path = get_test_data_path("swapi/imap_swapi_l2_50-sweeps_20100101_v002.cdf")
         with CDF(str(data_file_path)) as cdf:
-            energy = cdf["energy"][...]
+            energy = cdf["esa_energy"][...]
             count_rate = cdf["swp_coin_rate"][...]
 
             geometric_factor_lut_path = get_test_data_path(

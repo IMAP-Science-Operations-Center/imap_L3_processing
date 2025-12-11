@@ -49,7 +49,7 @@ def calculate_alpha_solar_wind_speed(coincidence_count_rates, energies):
 
 
 def calculate_combined_sweeps(coincidence_count_rates, energies):
-    energies = extract_coarse_sweep(energies)
+    energies = np.mean(extract_coarse_sweep(energies), axis=0)
     coincidence_count_rates = extract_coarse_sweep(coincidence_count_rates)
     average_coin_rates = np.sum(coincidence_count_rates, axis=0) / len(coincidence_count_rates)
     return average_coin_rates, energies

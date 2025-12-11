@@ -18,7 +18,11 @@ class TestUtils(TestCase):
 
     def test_chunk_l2_data(self):
         epoch = np.array([0, 1, 2, 3])
-        energy = np.array([15000, 16000, 17000, 18000, 19000])
+        energy = np.array([[15000, 16000, 17000, 18000, 19000],
+                           [25000, 26000, 27000, 28000, 29000],
+                           [35000, 36000, 37000, 38000, 39000],
+                           [45000, 46000, 47000, 48000, 49000], ]
+                          )
         coincidence_count_rate = np.array(
             [[4, 5, 6, 7, 8], [9, 10, 11, 12, 13], [14, 15, 16, 17, 18], [19, 20, 21, 22, 23]])
         coincidence_count_rate_uncertainty = np.array(
@@ -28,11 +32,17 @@ class TestUtils(TestCase):
         data = SwapiL2Data(epoch, energy, coincidence_count_rate, coincidence_count_rate_uncertainty)
         chunks = list(chunk_l2_data(data, 2))
 
+        expected_energy_chunk_1 = np.array([[15000, 16000, 17000, 18000, 19000],
+                                            [25000, 26000, 27000, 28000, 29000]])
+        expected_energy_chunk_2 = np.array([[35000, 36000, 37000, 38000, 39000],
+                                            [45000, 46000, 47000, 48000, 49000]])
+
         expected_count_rate_chunk_1 = np.array([[4, 5, 6, 7, 8], [9, 10, 11, 12, 13]])
         expected_count_rate_uncertainty_chunk_1 = np.array([[0.1, 0.2, 0.3, 0.4, 0.5], [0.1, 0.2, 0.3, 0.4, 0.5]])
         first_chunk = chunks[0]
+
         np.testing.assert_array_equal(first_chunk.sci_start_time, np.array([0, 1]))
-        np.testing.assert_array_equal(energy, first_chunk.energy)
+        np.testing.assert_array_equal(expected_energy_chunk_1, first_chunk.energy)
         np.testing.assert_array_equal(expected_count_rate_chunk_1, first_chunk.coincidence_count_rate)
         np.testing.assert_array_equal(expected_count_rate_uncertainty_chunk_1,
                                       first_chunk.coincidence_count_rate_uncertainty)
@@ -41,7 +51,7 @@ class TestUtils(TestCase):
         expected_count_rate_uncertainty_chunk_2 = np.array([[0.1, 0.2, 0.3, 0.4, 0.5], [0.1, 0.2, 0.3, 0.4, 0.5]])
         second_chunk = chunks[1]
         np.testing.assert_array_equal(np.array([2, 3]), second_chunk.sci_start_time)
-        np.testing.assert_array_equal(energy, second_chunk.energy)
+        np.testing.assert_array_equal(expected_energy_chunk_2, second_chunk.energy)
         np.testing.assert_array_equal(expected_count_rate_chunk_2, second_chunk.coincidence_count_rate)
         np.testing.assert_array_equal(expected_count_rate_uncertainty_chunk_2,
                                       second_chunk.coincidence_count_rate_uncertainty)

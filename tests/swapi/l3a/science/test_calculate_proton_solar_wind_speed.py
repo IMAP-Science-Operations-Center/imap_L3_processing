@@ -4,8 +4,8 @@ from pathlib import Path
 from unittest.mock import patch
 
 import numpy as np
-from scipy.optimize import curve_fit
 import spiceypy
+from scipy.optimize import curve_fit
 from spacepy.pycdf import CDF
 from uncertainties import ufloat
 from uncertainties.unumpy import uarray, std_devs, nominal_values
@@ -21,7 +21,7 @@ from tests.spice_test_case import SpiceTestCase
 
 class TestCalculateProtonSolarWindSpeed(SpiceTestCase):
     def test_calculate_solar_wind_speed(self):
-        energies = np.array([0, 1000, 750, 500, 400, 300, 200, 100, 50])
+        energies = np.array([[0, 1000, 750, 500, 400, 300, 200, 100, 50]] * 5)
         count_rates = np.array([[0, 14, 15, 16, 17, 16, 15, 14, 0],
                                 [0, 14, 15, 16, 17, 16, 15, 14, 0],
                                 [0, 14, 15, 16, 17, 16, 15, 14, 0],
@@ -40,7 +40,7 @@ class TestCalculateProtonSolarWindSpeed(SpiceTestCase):
         self.assertAlmostEqual(expected_speed, speed.n, 0)
 
     def test_calculate_solar_wind_speed_throws_exception_with_too_few_count_rates(self):
-        energies = np.array([0, 1000, 750, 500, 400, 300, 200, 100, 50])
+        energies = np.array([[0, 1000, 750, 500, 400, 300, 200, 100, 50]] * 5)
         count_rates = np.array([[0, 14, 15, 16, 17, 16, 15, 14, 0],
                                 [0, 14, 15, 16, 17, 16, 15, 14, 0],
                                 [0, 14, 15, 16, 17, 16, 15, 14, 0],
@@ -59,7 +59,7 @@ class TestCalculateProtonSolarWindSpeed(SpiceTestCase):
             imap_l3_processing.__file__).parent.parent / 'tests' / 'test_data' / 'swapi' / 'imap_swapi_l2_fake-menlo-5-sweeps_20250606_v001.cdf'
         with CDF(str(file_path)) as cdf:
             epoch = cdf.raw_var("epoch")[...]
-            energy = cdf["energy"][...]
+            energy = cdf["esa_energy"][...]
             count_rate = cdf["swp_coin_rate"][...]
             count_rate_delta = cdf["swp_coin_unc"][...]
         speed, a, phi, b = calculate_proton_solar_wind_speed(uarray(count_rate, count_rate_delta), energy,
