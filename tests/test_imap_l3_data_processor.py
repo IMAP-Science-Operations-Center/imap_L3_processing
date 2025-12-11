@@ -175,7 +175,7 @@ class TestImapL3DataProcessor(TestCase):
 
         instrument = "hi"
         data_level = "l3"
-        descriptor = "all-maps"
+        descriptor = "sp-maps"
         mock_argument_parser = mock_argparse.ArgumentParser.return_value
         mock_argument_parser.parse_args.return_value.instrument = instrument
         mock_argument_parser.parse_args.return_value.data_level = data_level
