@@ -2,11 +2,12 @@ from pathlib import Path
 
 from imap_processing.spice.geometry import SpiceFrame
 
+from imap_l3_processing.hi.l3.hi_l3_combined_sensor_dependencies import HiL3CombinedMapDependencies
 from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3SpectralIndexDependencies
 from imap_l3_processing.maps.hilo_l3_survival_dependencies import HiLoL3SurvivalDependencies, \
     HiL3SingleSensorFullSpinDependencies
 from imap_l3_processing.maps.map_combination import UncertaintyWeightedCombination, UnweightedCombination, \
-    CombinationStrategy
+    CombinationStrategy, ExposureWeightedCombination
 from imap_l3_processing.maps.map_descriptors import parse_map_descriptor, MapQuantity, MapDescriptorParts, \
     SurvivalCorrection, \
     SpinPhase, Sensor, ReferenceFrame
@@ -72,7 +73,15 @@ class HiProcessor(MapProcessor):
                     data=combined_map,
                     input_metadata=self.input_metadata
                 )
+            case MapDescriptorParts(sensor=Sensor.HiCombined):
+                dependencies = HiL3CombinedMapDependencies.fetch_dependencies(self.dependencies)
+                combined_map_data = ExposureWeightedCombination().combine_rectangular_intensity_map_data(
+                    dependencies.maps)
 
+                data_product = RectangularIntensityDataProduct(
+                    data=combined_map_data,
+                    input_metadata=self.input_metadata
+                )
             case None:
                 raise ValueError(f"Could not parse descriptor {self.input_metadata.descriptor}")
             case _:

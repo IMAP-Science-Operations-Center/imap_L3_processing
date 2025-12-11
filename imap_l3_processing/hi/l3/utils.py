@@ -14,12 +14,18 @@ def read_l1c_rectangular_pointing_set_data(path: Union[Path, str]) -> InputRecta
     repointing = ScienceFilePath(path).repointing
     with CDF(str(path)) as cdf:
         exposure_time_variable = cdf['exposure_time'] if 'exposure_time' in cdf else cdf['exposure_times']
+        epoch_delta = cdf["epoch_delta"][...] if "epoch_delta" in cdf else None
+        pointing_start_met = cdf["pointing_start_met"][...] if "pointing_start_met" in cdf else None
+        pointing_end_met = cdf["pointing_end_met"][...] if "pointing_end_met" in cdf else None
         return InputRectangularPointingSet(epoch=cdf["epoch"][0],
-                                           epoch_delta=cdf["epoch_delta"][...],
+                                           epoch_delta=epoch_delta,
                                            epoch_j2000=cdf.raw_var("epoch")[...],
                                            repointing=repointing,
                                            exposure_times=read_numeric_variable(exposure_time_variable),
-                                           esa_energy_step=cdf["esa_energy_step"][...])
+                                           esa_energy_step=cdf["esa_energy_step"][...],
+                                           pointing_start_met=pointing_start_met,
+                                           pointing_end_met=pointing_end_met,
+                                           )
 
 
 def read_glows_l3e_data(cdf_path: Union[Path, str]) -> GlowsL3eRectangularMapInputData:

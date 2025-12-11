@@ -23,7 +23,7 @@ class PossibleMapToProduce:
 
     @property
     def processing_input_collection(self) -> ProcessingInputCollection:
-        return ProcessingInputCollection(*[generate_imap_input(file_path) for file_path in self.input_files])
+        return ProcessingInputCollection(*[generate_imap_input(file_path) for file_path in sorted(self.input_files)])
 
 
 class MapInitializer(abc.ABC):

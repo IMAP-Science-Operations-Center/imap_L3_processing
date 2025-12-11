@@ -124,7 +124,7 @@ felo_to_fehi_ratio:
   <<: *primary_data_variable
   <<: *float_data
   NAME: felo_to_fehi_ratio
-  CATDESC: Charge State Ratio Fe(lo) to Fe(hi)
+  CATDESC: Charge State Ratio Fe Low (+6 - +12) to Fe High (+13 - +17)
   FIELDNAM: Ratio FeLo to FeHi
   DATA_TYPE: CDF_REAL4
   LABLAXIS: FeLo/FeHi

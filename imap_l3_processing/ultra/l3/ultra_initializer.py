@@ -3,7 +3,8 @@ from pathlib import Path
 
 import imap_data_access
 
-from imap_l3_processing.maps.map_descriptors import MapDescriptorParts, SurvivalCorrection, Sensor
+from imap_l3_processing.glows.descriptors import GLOWS_L3E_ULTRA_HF_DESCRIPTOR, GLOWS_L3E_ULTRA_SF_DESCRIPTOR
+from imap_l3_processing.maps.map_descriptors import MapDescriptorParts, SurvivalCorrection, Sensor, ReferenceFrame
 from imap_l3_processing.maps.map_initializer import MapInitializer, PossibleMapToProduce
 from imap_l3_processing.utils import furnish_spice_metakernel, SpiceKernelTypes
 
@@ -14,21 +15,7 @@ ULTRA_SP_SPICE_KERNELS = [
     SpiceKernelTypes.SpacecraftClock,
 ]
 
-ULTRA_SP_MAP_DESCRIPTORS = [
-    "ulc-ena-h-hf-nsp-full-hae-2deg-3mo",
-    "ulc-ena-h-hf-nsp-full-hae-4deg-3mo",
-    "ulc-ena-h-hf-nsp-full-hae-6deg-3mo",
-    "ulc-ena-h-hf-sp-full-hae-2deg-3mo",
-    "ulc-ena-h-hf-sp-full-hae-4deg-3mo",
-    "ulc-ena-h-hf-sp-full-hae-6deg-3mo",
-
-    "u90-ena-h-hf-sp-full-hae-2deg-3mo",
-    "u90-ena-h-sf-sp-full-hae-2deg-3mo",
-    "u90-ena-h-hf-sp-full-hae-4deg-3mo",
-    "u90-ena-h-sf-sp-full-hae-4deg-3mo",
-    "u90-ena-h-hf-sp-full-hae-6deg-3mo",
-    "u90-ena-h-sf-sp-full-hae-6deg-3mo",
-
+ULTRA_45_DESCRIPTORS = [
     "u45-ena-h-hf-sp-full-hae-2deg-3mo",
     "u45-ena-h-sf-sp-full-hae-2deg-3mo",
     "u45-ena-h-hf-sp-full-hae-4deg-3mo",
@@ -36,40 +23,12 @@ ULTRA_SP_MAP_DESCRIPTORS = [
     "u45-ena-h-hf-sp-full-hae-6deg-3mo",
     "u45-ena-h-sf-sp-full-hae-6deg-3mo",
 
-    "ulc-ena-h-hf-nsp-full-hae-2deg-6mo",
-    "ulc-ena-h-hf-nsp-full-hae-4deg-6mo",
-    "ulc-ena-h-hf-nsp-full-hae-6deg-6mo",
-    "ulc-ena-h-hf-sp-full-hae-2deg-6mo",
-    "ulc-ena-h-hf-sp-full-hae-4deg-6mo",
-    "ulc-ena-h-hf-sp-full-hae-6deg-6mo",
-
-    "u90-ena-h-hf-sp-full-hae-2deg-6mo",
-    "u90-ena-h-sf-sp-full-hae-2deg-6mo",
-    "u90-ena-h-hf-sp-full-hae-4deg-6mo",
-    "u90-ena-h-sf-sp-full-hae-4deg-6mo",
-    "u90-ena-h-hf-sp-full-hae-6deg-6mo",
-    "u90-ena-h-sf-sp-full-hae-6deg-6mo",
-
     "u45-ena-h-hf-sp-full-hae-2deg-6mo",
     "u45-ena-h-sf-sp-full-hae-2deg-6mo",
     "u45-ena-h-hf-sp-full-hae-4deg-6mo",
     "u45-ena-h-sf-sp-full-hae-4deg-6mo",
     "u45-ena-h-hf-sp-full-hae-6deg-6mo",
     "u45-ena-h-sf-sp-full-hae-6deg-6mo",
-
-    "ulc-ena-h-hf-nsp-full-hae-2deg-1yr",
-    "ulc-ena-h-hf-nsp-full-hae-4deg-1yr",
-    "ulc-ena-h-hf-nsp-full-hae-6deg-1yr",
-    "ulc-ena-h-hf-sp-full-hae-2deg-1yr",
-    "ulc-ena-h-hf-sp-full-hae-4deg-1yr",
-    "ulc-ena-h-hf-sp-full-hae-6deg-1yr",
-    
-    "u90-ena-h-hf-sp-full-hae-2deg-1yr",
-    "u90-ena-h-sf-sp-full-hae-2deg-1yr",
-    "u90-ena-h-hf-sp-full-hae-4deg-1yr",
-    "u90-ena-h-sf-sp-full-hae-4deg-1yr",
-    "u90-ena-h-hf-sp-full-hae-6deg-1yr",
-    "u90-ena-h-sf-sp-full-hae-6deg-1yr",
 
     "u45-ena-h-hf-sp-full-hae-2deg-1yr",
     "u45-ena-h-sf-sp-full-hae-2deg-1yr",
@@ -79,12 +38,68 @@ ULTRA_SP_MAP_DESCRIPTORS = [
     "u45-ena-h-sf-sp-full-hae-6deg-1yr",
 ]
 
+ULTRA_90_DESCRIPTORS = [
+    "u90-ena-h-hf-sp-full-hae-2deg-3mo",
+    "u90-ena-h-sf-sp-full-hae-2deg-3mo",
+    "u90-ena-h-hf-sp-full-hae-4deg-3mo",
+    "u90-ena-h-sf-sp-full-hae-4deg-3mo",
+    "u90-ena-h-hf-sp-full-hae-6deg-3mo",
+    "u90-ena-h-sf-sp-full-hae-6deg-3mo",
+
+    "u90-ena-h-hf-sp-full-hae-2deg-6mo",
+    "u90-ena-h-sf-sp-full-hae-2deg-6mo",
+    "u90-ena-h-hf-sp-full-hae-4deg-6mo",
+    "u90-ena-h-sf-sp-full-hae-4deg-6mo",
+    "u90-ena-h-hf-sp-full-hae-6deg-6mo",
+    "u90-ena-h-sf-sp-full-hae-6deg-6mo",
+
+    "u90-ena-h-hf-sp-full-hae-2deg-1yr",
+    "u90-ena-h-sf-sp-full-hae-2deg-1yr",
+    "u90-ena-h-hf-sp-full-hae-4deg-1yr",
+    "u90-ena-h-sf-sp-full-hae-4deg-1yr",
+    "u90-ena-h-hf-sp-full-hae-6deg-1yr",
+    "u90-ena-h-sf-sp-full-hae-6deg-1yr",
+]
+
+ULTRA_COMBINED_SP_DESCRIPTORS = [
+    "ulc-ena-h-hf-sp-full-hae-2deg-3mo",
+    "ulc-ena-h-hf-sp-full-hae-4deg-3mo",
+    "ulc-ena-h-hf-sp-full-hae-6deg-3mo",
+
+    "ulc-ena-h-hf-sp-full-hae-2deg-6mo",
+    "ulc-ena-h-hf-sp-full-hae-4deg-6mo",
+    "ulc-ena-h-hf-sp-full-hae-6deg-6mo",
+
+    "ulc-ena-h-hf-sp-full-hae-2deg-1yr",
+    "ulc-ena-h-hf-sp-full-hae-4deg-1yr",
+    "ulc-ena-h-hf-sp-full-hae-6deg-1yr",
+]
+
+ULTRA_COMBINED_NSP_DESCRIPTORS = [
+    "ulc-ena-h-hf-nsp-full-hae-2deg-3mo",
+    "ulc-ena-h-hf-nsp-full-hae-4deg-3mo",
+    "ulc-ena-h-hf-nsp-full-hae-6deg-3mo",
+
+    "ulc-ena-h-hf-nsp-full-hae-2deg-6mo",
+    "ulc-ena-h-hf-nsp-full-hae-4deg-6mo",
+    "ulc-ena-h-hf-nsp-full-hae-6deg-6mo",
+
+    "ulc-ena-h-hf-nsp-full-hae-2deg-1yr",
+    "ulc-ena-h-hf-nsp-full-hae-4deg-1yr",
+    "ulc-ena-h-hf-nsp-full-hae-6deg-1yr",
+]
+
 
 class UltraInitializer(MapInitializer):
     def __init__(self):
-        sp_query_result = imap_data_access.query(instrument='glows', data_level='l3e',
-                                                 descriptor="survival-probability-ul", version="latest")
-        self.glows_psets_by_repointing = {int(r["repointing"]): Path(r["file_path"]).name for r in sp_query_result}
+        sf_sp_query_result = imap_data_access.query(instrument='glows', data_level='l3e',
+                                                    descriptor=GLOWS_L3E_ULTRA_SF_DESCRIPTOR, version="latest")
+        self.sf_glows_psets_by_repointing = {int(r["repointing"]): Path(r["file_path"]).name for r in
+                                             sf_sp_query_result}
+        hf_sp_query_result = imap_data_access.query(instrument='glows', data_level='l3e',
+                                                    descriptor=GLOWS_L3E_ULTRA_HF_DESCRIPTOR, version="latest")
+        self.hf_glows_psets_by_repointing = {int(r["repointing"]): Path(r["file_path"]).name for r in
+                                             hf_sp_query_result}
 
         l2_query_result = imap_data_access.query(instrument="ultra", data_level="l2")
         l3_query_result = imap_data_access.query(instrument="ultra", data_level="l3")
@@ -103,7 +118,12 @@ class UltraInitializer(MapInitializer):
         )
 
     def _collect_glows_psets_by_repoint(self, descriptor: MapDescriptorParts) -> dict[int, str]:
-        return self.glows_psets_by_repointing
+        if descriptor.reference_frame == ReferenceFrame.Heliospheric:
+            return self.hf_glows_psets_by_repointing
+        elif descriptor.reference_frame == ReferenceFrame.Spacecraft:
+            return self.sf_glows_psets_by_repointing
+        else:
+            raise NotImplementedError("Reference frame should be either Spacecraft or Heliospheric")
 
     def _get_l2_dependencies(self, descriptor: MapDescriptorParts) -> list[MapDescriptorParts]:
         if descriptor.sensor == Sensor.UltraCombined:

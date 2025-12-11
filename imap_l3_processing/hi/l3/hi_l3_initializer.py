@@ -17,7 +17,7 @@ HI_SP_SPICE_KERNELS: list[SpiceKernelTypes] = [
     SpiceKernelTypes.SpacecraftClock,
 ]
 
-combined_descriptors = [
+HI_COMBINED_DESCRIPTORS = [
     "hic-ena-h-hf-nsp-full-hae-6deg-1yr",
     "hic-ena-h-hf-sp-full-hae-6deg-1yr",
     "hic-ena-h-hf-nsp-full-hae-4deg-1yr",

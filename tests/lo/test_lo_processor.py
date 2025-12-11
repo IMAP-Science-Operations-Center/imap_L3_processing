@@ -76,11 +76,13 @@ class TestLoProcessor(unittest.TestCase):
         dependencies = Mock(
             l1c_data=[InputRectangularPointingSet(
                 epoch=datetime(2025, 1, 1),
-                epoch_delta=np.array([43200_000_000_000]),
+                epoch_delta=None,
                 repointing=1,
                 epoch_j2000=np.array([10]),
                 exposure_times=np.full((1, 7, 3600, 40), 2),
-                esa_energy_step=np.arange(7)
+                esa_energy_step=np.arange(7),
+                pointing_start_met=np.array([43200_000_000_000]),
+                pointing_end_met=np.array([43200_000_100_000]),
             )],
             dependency_file_paths=[Path("folder/map"), Path("folder/l1c")]
         )

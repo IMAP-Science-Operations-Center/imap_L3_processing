@@ -6,3 +6,6 @@ GLOWS_PIPELINE_SETTINGS_DESCRIPTOR = "pipeline-settings"
 
 GLOWS_L3A_DESCRIPTOR = "hist"
 GLOWS_L3D_DESCRIPTOR = 'solar-hist'
+
+GLOWS_L3E_ULTRA_SF_DESCRIPTOR = 'survival-probability-ul-sf'
+GLOWS_L3E_ULTRA_HF_DESCRIPTOR = 'survival-probability-ul-hf'

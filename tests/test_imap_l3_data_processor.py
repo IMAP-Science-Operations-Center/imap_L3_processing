@@ -7,11 +7,12 @@ from imap_data_access.processing_input import ScienceInput, ProcessingInputColle
     AncillaryInput, SPICEInput
 
 from imap_l3_data_processor import imap_l3_processor
-from imap_l3_processing.hi.l3.hi_l3_initializer import HI_SP_MAP_DESCRIPTORS
+from imap_l3_processing.hi.l3.hi_l3_initializer import HI_SP_MAP_DESCRIPTORS, HI_COMBINED_DESCRIPTORS
 from imap_l3_processing.lo.l3.lo_initializer import LO_SP_MAP_DESCRIPTORS
 from imap_l3_processing.maps.map_initializer import PossibleMapToProduce
 from imap_l3_processing.models import InputMetadata
-from imap_l3_processing.ultra.l3.ultra_initializer import ULTRA_SP_MAP_DESCRIPTORS
+from imap_l3_processing.ultra.l3.ultra_initializer import ULTRA_45_DESCRIPTORS, ULTRA_90_DESCRIPTORS, \
+    ULTRA_COMBINED_SP_DESCRIPTORS, ULTRA_COMBINED_NSP_DESCRIPTORS
 
 
 class TestImapL3DataProcessor(TestCase):
@@ -38,9 +39,9 @@ class TestImapL3DataProcessor(TestCase):
             ("glows", "l3b", "ion-rate-profile", mock_glows),
             ("swe", "l3", "sci", mock_swe),
             ("hit", "l3", "macropixel", mock_hit),
-            ("hi", "l3", "hi-descriptor", mock_hi),
-            ("ultra", "l3", "ultra-descriptor", mock_ultra),
-            ("lo", "l3", "lo-descriptor", mock_lo),
+            ("hi", "l3", "h45-ena-h-hf-sp-full-hae-2deg-6mo", mock_hi),
+            ("ultra", "l3", "u45-spx-h-hf-sp-full-hae-2deg-6mo", mock_ultra),
+            ("lo", "l3", "l090-spx-h-hf-sp-ram-hae-2deg-6mo", mock_lo),
             ("codice", "l3a", "hi-direct-events", mock_codice_hi),
             ("codice", "l3b", "hi-pitch-angle", mock_codice_hi),
             ("codice", "l3a", "lo-direct-events", mock_codice_lo),
@@ -102,20 +103,27 @@ class TestImapL3DataProcessor(TestCase):
                                                   mock_hi_processor_class, mock_hi_initializer_class,
                                                   mock_ultra_processor_class, mock_ultra_initializer_class,
                                                   ):
-
         test_cases = [
-            ("hi", mock_hi_initializer_class, mock_hi_processor_class, HI_SP_MAP_DESCRIPTORS),
-            ("lo", mock_lo_initializer_class, mock_lo_processor_class, LO_SP_MAP_DESCRIPTORS),
-            ("ultra", mock_ultra_initializer_class, mock_ultra_processor_class, ULTRA_SP_MAP_DESCRIPTORS),
+            ("hi", "sp-maps", mock_hi_initializer_class, mock_hi_processor_class, HI_SP_MAP_DESCRIPTORS),
+            ("hi", "hic-maps", mock_hi_initializer_class, mock_hi_processor_class, HI_COMBINED_DESCRIPTORS),
+            ("lo", "all-maps", mock_lo_initializer_class, mock_lo_processor_class, LO_SP_MAP_DESCRIPTORS),
+            ("ultra", "u45-maps", mock_ultra_initializer_class, mock_ultra_processor_class, ULTRA_45_DESCRIPTORS),
+            ("ultra", "u90-maps", mock_ultra_initializer_class, mock_ultra_processor_class, ULTRA_90_DESCRIPTORS),
+            (
+                "ultra", "ulc-sp-maps", mock_ultra_initializer_class, mock_ultra_processor_class,
+                ULTRA_COMBINED_SP_DESCRIPTORS),
+            ("ultra", "ulc-nsp-maps", mock_ultra_initializer_class, mock_ultra_processor_class,
+             ULTRA_COMBINED_NSP_DESCRIPTORS),
         ]
 
-        for instrument, mock_initializer_class, mock_processor_class, expected_descriptors in test_cases:
+        for instrument, descriptor, mock_initializer_class, mock_processor_class, expected_descriptors in test_cases:
             mock_upload.reset_mock()
             mock_argparse.reset_mock()
+            mock_initializer_class.reset_mock()
+            mock_processor_class.reset_mock()
 
             with self.subTest(instrument=instrument):
                 data_level = "l3"
-                descriptor = "all-maps"
                 mock_argument_parser = mock_argparse.ArgumentParser.return_value
                 mock_argument_parser.parse_args.return_value.instrument = instrument
                 mock_argument_parser.parse_args.return_value.data_level = data_level
@@ -158,14 +166,14 @@ class TestImapL3DataProcessor(TestCase):
                 mock_upload.assert_called_with(sentinel.cdf)
 
     @patch('imap_l3_data_processor.imap_data_access.upload')
-    @patch('imap_l3_data_processor.LoInitializer')
-    @patch('imap_l3_data_processor.LoProcessor')
+    @patch('imap_l3_data_processor.HiL3Initializer')
+    @patch('imap_l3_data_processor.HiProcessor')
     @patch('imap_l3_data_processor.argparse')
-    def test_failing_to_produce_an_sp_map_continues(self, mock_argparse, mock_lo_processor, mock_lo_initializer_class,
+    def test_failing_to_produce_an_sp_map_continues(self, mock_argparse, mock_hi_processor, mock_hi_initializer_class,
                                                     mock_upload):
-        mock_lo_initializer = mock_lo_initializer_class.return_value
+        mock_hi_initializer = mock_hi_initializer_class.return_value
 
-        instrument = "lo"
+        instrument = "hi"
         data_level = "l3"
         descriptor = "all-maps"
         mock_argument_parser = mock_argparse.ArgumentParser.return_value
@@ -178,31 +186,24 @@ class TestImapL3DataProcessor(TestCase):
         mock_argument_parser.parse_args.return_value.version = sentinel.version
         mock_argument_parser.parse_args.return_value.descriptor = descriptor
 
-        mock_lo_initializer.get_maps_that_should_be_produced.side_effect = [
-            [PossibleMapToProduce(set(), Mock())],
-            [PossibleMapToProduce(set(), Mock())],
-            [PossibleMapToProduce(set(), Mock())],
-            [PossibleMapToProduce(set(), Mock())],
-            [PossibleMapToProduce(set(), Mock())],
-            [PossibleMapToProduce(set(), Mock())],
-            [PossibleMapToProduce(set(), Mock())],
-            [PossibleMapToProduce(set(), Mock())],
-            [PossibleMapToProduce(set(), Mock())]
+        mock_hi_initializer.get_maps_that_should_be_produced.side_effect = [
+            [PossibleMapToProduce(set(), Mock())] for _ in range(len(HI_SP_MAP_DESCRIPTORS))
         ]
 
-        mock_lo_processor.return_value.process.side_effect = [
-            [Path("lo_sp_map_1.cdf")],
+        mock_hi_processor.return_value.process.side_effect = [
+            [Path("hi_sp_map_1.cdf")],
             ValueError("something went wrong!"),
-            [Path("lo_sp_map_2.cdf")]
+            [Path("hi_sp_map_2.cdf")]
         ]
 
-        imap_l3_processor()
+        with self.assertLogs():
+            imap_l3_processor()
 
-        self.assertEqual(9, mock_lo_processor.call_count)
+        self.assertEqual(len(HI_SP_MAP_DESCRIPTORS), mock_hi_processor.call_count)
 
         mock_upload.assert_has_calls([
-            call(Path("lo_sp_map_1.cdf")),
-            call(Path("lo_sp_map_2.cdf")),
+            call(Path("hi_sp_map_1.cdf")),
+            call(Path("hi_sp_map_2.cdf")),
         ])
 
     @patch('imap_l3_data_processor.spiceypy')

@@ -110,14 +110,14 @@ class UltraL3CombinedDependencies:
 
     @classmethod
     def fetch_dependencies(cls, deps: ProcessingInputCollection) -> UltraL3CombinedDependencies:
-        descriptors = ["u45", "u90", "45sensor-spacecraftpset", "90sensor-spacecraftpset", "survival-probability-ul"]
+        descriptors = ["u45", "u90", "45sensor", "90sensor", "survival-probability-ul"]
         file_paths = get_dependency_paths_by_descriptor(deps=deps, descriptors=descriptors)
 
         assert len(file_paths['u45']) == 1
         assert len(file_paths['u90']) == 1
 
-        u45_pset_paths = [imap_data_access.download(pset) for pset in file_paths['45sensor-spacecraftpset']]
-        u90_pset_paths = [imap_data_access.download(pset) for pset in file_paths['90sensor-spacecraftpset']]
+        u45_pset_paths = [imap_data_access.download(pset) for pset in file_paths['45sensor']]
+        u90_pset_paths = [imap_data_access.download(pset) for pset in file_paths['90sensor']]
         glows_l3e_pset_paths = [imap_data_access.download(pset) for pset in file_paths['survival-probability-ul']]
         u45_map_path = imap_data_access.download(file_paths['u45'][0])
         u90_map_path = imap_data_access.download(file_paths['u90'][0])
