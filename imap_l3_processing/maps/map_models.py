@@ -418,8 +418,10 @@ class GlowsL3eRectangularMapInputData:
 @dataclass
 class InputRectangularPointingSet:
     epoch: datetime
-    epoch_delta: np.ndarray
+    epoch_delta: Optional[np.ndarray]
     epoch_j2000: np.ndarray
     repointing: int
     exposure_times: np.ndarray
     esa_energy_step: np.ndarray
+    pointing_start_met: Optional[float]
+    pointing_end_met: Optional[float]
