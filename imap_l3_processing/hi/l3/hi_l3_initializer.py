@@ -15,6 +15,8 @@ HI_SP_SPICE_KERNELS: list[SpiceKernelTypes] = [
     SpiceKernelTypes.ScienceFrames,
     SpiceKernelTypes.PointingAttitude,
     SpiceKernelTypes.SpacecraftClock,
+    SpiceKernelTypes.EphemerisReconstructed,
+    SpiceKernelTypes.PlanetaryEphemeris,
 ]
 
 HI_COMBINED_DESCRIPTORS = [
