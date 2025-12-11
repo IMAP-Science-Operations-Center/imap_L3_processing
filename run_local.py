@@ -1038,7 +1038,7 @@ if __name__ == "__main__":
                 str(get_test_data_path(
                     "swapi/imap_swapi_l2_density-of-neutral-helium-lut-text-not-cdf_20241023_v002.cdf")),
                 str(get_test_data_path("swapi/imap_swapi_efficiency-lut_20241020_v000.dat")),
-                str(get_test_data_path("swapi/imap_swapi_l2_50-sweeps_20250606_v003.cdf")),
+                str((r"C:\Users\Harrison\Downloads\imap_swapi_l2_sci_20251208_v006.cdf")),
             )
             print(paths)
         if "l3b" in sys.argv:

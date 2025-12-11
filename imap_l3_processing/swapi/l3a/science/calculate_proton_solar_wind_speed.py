@@ -2,6 +2,7 @@ import numpy as np
 import scipy
 import spiceypy
 import uncertainties
+from matplotlib import pyplot as plt
 from uncertainties import correlated_values, unumpy, umath, wrap
 from uncertainties.unumpy import uarray, nominal_values, std_devs
 
@@ -39,7 +40,7 @@ def fit_energy_per_charge_peak_variations(centers_of_mass, spin_phase_angles):
         raise ValueError("Failed to fit - chi-squared too large", reduced_chisq)
     phi = np.mod(phi, 360)
 
-    return correlated_values((a, phi, b), pcov)
+    return correlated_values((a, phi, b), pcov), reduced_chisq
 
 
 def get_proton_peak_indices(count_rates):
@@ -102,14 +103,29 @@ def calculate_sw_speed_h_plus(energy):
     return calculate_sw_speed(PROTON_MASS_KG, PROTON_CHARGE_COULOMBS, energy)
 
 
+iter2 = 0
 def calculate_proton_solar_wind_speed(coincidence_count_rates, energies, epoch):
+    global iter2
     energies = extract_coarse_sweep(energies)
     coincidence_count_rates = extract_coarse_sweep(coincidence_count_rates)
 
     energies_at_center_of_mass, spin_angles_at_center_of_mass = calculate_proton_centers_of_mass(
         coincidence_count_rates, energies, epoch)
 
-    a, phi, b = fit_energy_per_charge_peak_variations(energies_at_center_of_mass, spin_angles_at_center_of_mass)
-
+    (a, phi, b), chisq = fit_energy_per_charge_peak_variations(energies_at_center_of_mass,
+                                                               spin_angles_at_center_of_mass)
+    if False:
+        fig, (ax1, ax2) = plt.subplots(2, 1)
+        ax1.loglog(energies.T, nominal_values(coincidence_count_rates).T)
+        ax2.errorbar(x=nominal_values(spin_angles_at_center_of_mass), xerr=std_devs(spin_angles_at_center_of_mass),
+                     y=nominal_values(energies_at_center_of_mass), yerr=std_devs(energies_at_center_of_mass), fmt='o')
+        ax2.plot(np.linspace(0, 360, 120), sine_fit_function(np.array(np.linspace(0, 360, 120)), a.n, phi.n, b.n))
+        ax2.text(0.8, 0.8, f"reduced_chisq={chisq:.4g}", transform=ax2.transAxes, horizontalalignment='center',
+                 verticalalignment='center')
+        # plt.title(f"{a=},{phi=},{b=}")
+        plt.savefig(f"{iter2:03}.png")
+        iter2 += 1
+        if iter2 > 100:
+            exit()
     proton_sw_speed = calculate_sw_speed_h_plus(b)
     return proton_sw_speed, a, phi, b
