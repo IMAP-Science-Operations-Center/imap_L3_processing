@@ -15,41 +15,13 @@ ULTRA_SP_SPICE_KERNELS = [
     SpiceKernelTypes.SpacecraftClock,
 ]
 
-ULTRA_SP_MAP_DESCRIPTORS = [
-    "ulc-ena-h-hf-nsp-full-hae-2deg-3mo",
-    "ulc-ena-h-hf-nsp-full-hae-4deg-3mo",
-    "ulc-ena-h-hf-nsp-full-hae-6deg-3mo",
-    "ulc-ena-h-hf-sp-full-hae-2deg-3mo",
-    "ulc-ena-h-hf-sp-full-hae-4deg-3mo",
-    "ulc-ena-h-hf-sp-full-hae-6deg-3mo",
-
-    "u90-ena-h-hf-sp-full-hae-2deg-3mo",
-    "u90-ena-h-sf-sp-full-hae-2deg-3mo",
-    "u90-ena-h-hf-sp-full-hae-4deg-3mo",
-    "u90-ena-h-sf-sp-full-hae-4deg-3mo",
-    "u90-ena-h-hf-sp-full-hae-6deg-3mo",
-    "u90-ena-h-sf-sp-full-hae-6deg-3mo",
-
+ULTRA_45_DESCRIPTORS = [
     "u45-ena-h-hf-sp-full-hae-2deg-3mo",
     "u45-ena-h-sf-sp-full-hae-2deg-3mo",
     "u45-ena-h-hf-sp-full-hae-4deg-3mo",
     "u45-ena-h-sf-sp-full-hae-4deg-3mo",
     "u45-ena-h-hf-sp-full-hae-6deg-3mo",
     "u45-ena-h-sf-sp-full-hae-6deg-3mo",
-
-    "ulc-ena-h-hf-nsp-full-hae-2deg-6mo",
-    "ulc-ena-h-hf-nsp-full-hae-4deg-6mo",
-    "ulc-ena-h-hf-nsp-full-hae-6deg-6mo",
-    "ulc-ena-h-hf-sp-full-hae-2deg-6mo",
-    "ulc-ena-h-hf-sp-full-hae-4deg-6mo",
-    "ulc-ena-h-hf-sp-full-hae-6deg-6mo",
-
-    "u90-ena-h-hf-sp-full-hae-2deg-6mo",
-    "u90-ena-h-sf-sp-full-hae-2deg-6mo",
-    "u90-ena-h-hf-sp-full-hae-4deg-6mo",
-    "u90-ena-h-sf-sp-full-hae-4deg-6mo",
-    "u90-ena-h-hf-sp-full-hae-6deg-6mo",
-    "u90-ena-h-sf-sp-full-hae-6deg-6mo",
 
     "u45-ena-h-hf-sp-full-hae-2deg-6mo",
     "u45-ena-h-sf-sp-full-hae-2deg-6mo",
@@ -58,26 +30,63 @@ ULTRA_SP_MAP_DESCRIPTORS = [
     "u45-ena-h-hf-sp-full-hae-6deg-6mo",
     "u45-ena-h-sf-sp-full-hae-6deg-6mo",
 
-    "ulc-ena-h-hf-nsp-full-hae-2deg-1yr",
-    "ulc-ena-h-hf-nsp-full-hae-4deg-1yr",
-    "ulc-ena-h-hf-nsp-full-hae-6deg-1yr",
-    "ulc-ena-h-hf-sp-full-hae-2deg-1yr",
-    "ulc-ena-h-hf-sp-full-hae-4deg-1yr",
-    "ulc-ena-h-hf-sp-full-hae-6deg-1yr",
-    
-    "u90-ena-h-hf-sp-full-hae-2deg-1yr",
-    "u90-ena-h-sf-sp-full-hae-2deg-1yr",
-    "u90-ena-h-hf-sp-full-hae-4deg-1yr",
-    "u90-ena-h-sf-sp-full-hae-4deg-1yr",
-    "u90-ena-h-hf-sp-full-hae-6deg-1yr",
-    "u90-ena-h-sf-sp-full-hae-6deg-1yr",
-
     "u45-ena-h-hf-sp-full-hae-2deg-1yr",
     "u45-ena-h-sf-sp-full-hae-2deg-1yr",
     "u45-ena-h-hf-sp-full-hae-4deg-1yr",
     "u45-ena-h-sf-sp-full-hae-4deg-1yr",
     "u45-ena-h-hf-sp-full-hae-6deg-1yr",
     "u45-ena-h-sf-sp-full-hae-6deg-1yr",
+]
+
+ULTRA_90_DESCRIPTORS = [
+    "u90-ena-h-hf-sp-full-hae-2deg-3mo",
+    "u90-ena-h-sf-sp-full-hae-2deg-3mo",
+    "u90-ena-h-hf-sp-full-hae-4deg-3mo",
+    "u90-ena-h-sf-sp-full-hae-4deg-3mo",
+    "u90-ena-h-hf-sp-full-hae-6deg-3mo",
+    "u90-ena-h-sf-sp-full-hae-6deg-3mo",
+
+    "u90-ena-h-hf-sp-full-hae-2deg-6mo",
+    "u90-ena-h-sf-sp-full-hae-2deg-6mo",
+    "u90-ena-h-hf-sp-full-hae-4deg-6mo",
+    "u90-ena-h-sf-sp-full-hae-4deg-6mo",
+    "u90-ena-h-hf-sp-full-hae-6deg-6mo",
+    "u90-ena-h-sf-sp-full-hae-6deg-6mo",
+
+    "u90-ena-h-hf-sp-full-hae-2deg-1yr",
+    "u90-ena-h-sf-sp-full-hae-2deg-1yr",
+    "u90-ena-h-hf-sp-full-hae-4deg-1yr",
+    "u90-ena-h-sf-sp-full-hae-4deg-1yr",
+    "u90-ena-h-hf-sp-full-hae-6deg-1yr",
+    "u90-ena-h-sf-sp-full-hae-6deg-1yr",
+]
+
+ULTRA_COMBINED_SP_DESCRIPTORS = [
+    "ulc-ena-h-hf-sp-full-hae-2deg-3mo",
+    "ulc-ena-h-hf-sp-full-hae-4deg-3mo",
+    "ulc-ena-h-hf-sp-full-hae-6deg-3mo",
+
+    "ulc-ena-h-hf-sp-full-hae-2deg-6mo",
+    "ulc-ena-h-hf-sp-full-hae-4deg-6mo",
+    "ulc-ena-h-hf-sp-full-hae-6deg-6mo",
+
+    "ulc-ena-h-hf-sp-full-hae-2deg-1yr",
+    "ulc-ena-h-hf-sp-full-hae-4deg-1yr",
+    "ulc-ena-h-hf-sp-full-hae-6deg-1yr",
+]
+
+ULTRA_COMBINED_NSP_DESCRIPTORS = [
+    "ulc-ena-h-hf-nsp-full-hae-2deg-3mo",
+    "ulc-ena-h-hf-nsp-full-hae-4deg-3mo",
+    "ulc-ena-h-hf-nsp-full-hae-6deg-3mo",
+
+    "ulc-ena-h-hf-nsp-full-hae-2deg-6mo",
+    "ulc-ena-h-hf-nsp-full-hae-4deg-6mo",
+    "ulc-ena-h-hf-nsp-full-hae-6deg-6mo",
+
+    "ulc-ena-h-hf-nsp-full-hae-2deg-1yr",
+    "ulc-ena-h-hf-nsp-full-hae-4deg-1yr",
+    "ulc-ena-h-hf-nsp-full-hae-6deg-1yr",
 ]
 
 

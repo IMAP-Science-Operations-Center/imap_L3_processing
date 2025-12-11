@@ -52,7 +52,7 @@ class TestMapIntegration(unittest.TestCase):
             mock_arguments = Mock()
             mock_arguments.instrument = "hi"
             mock_arguments.data_level = "l3"
-            mock_arguments.descriptor = "all-maps"
+            mock_arguments.descriptor = "sp-maps"
             mock_arguments.start_date = "20250415"
             mock_arguments.end_date = None
             mock_arguments.repointing = None
