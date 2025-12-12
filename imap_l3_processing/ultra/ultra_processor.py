@@ -14,9 +14,9 @@ from imap_l3_processing.maps.map_models import HealPixIntensityMapData, Intensit
     RectangularSpectralIndexMapData, SpectralIndexMapData
 from imap_l3_processing.maps.map_processor import MapProcessor
 from imap_l3_processing.maps.spectral_fit import calculate_spectral_index_for_multiple_ranges
-from imap_l3_processing.ultra.l3.science.ultra_survival_probability import UltraSurvivalProbabilitySkyMap, \
+from imap_l3_processing.ultra.science.ultra_survival_probability import UltraSurvivalProbabilitySkyMap, \
     UltraSurvivalProbability
-from imap_l3_processing.ultra.l3.ultra_l3_dependencies import UltraL3Dependencies, UltraL3SpectralIndexDependencies, \
+from imap_l3_processing.ultra.ultra_l3_dependencies import UltraL3Dependencies, UltraL3SpectralIndexDependencies, \
     UltraL3CombinedDependencies
 from imap_l3_processing.utils import save_data, combine_glows_l3e_with_l1c_pointing
 

@@ -20,10 +20,9 @@ from imap_l3_processing.maps.map_descriptors import parse_map_descriptor
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.swapi.swapi_processor import SwapiProcessor
 from imap_l3_processing.swe.swe_processor import SweProcessor
-from imap_l3_processing.ultra.l3.ultra_processor import UltraProcessor
-from imap_l3_processing.ultra.l3.ultra_sp_initializer import UltraSPInitializer, ULTRA_45_DESCRIPTORS, \
-    ULTRA_90_DESCRIPTORS, \
-    ULTRA_COMBINED_SP_DESCRIPTORS, ULTRA_COMBINED_NSP_DESCRIPTORS
+from imap_l3_processing.ultra.ultra_processor import UltraProcessor
+from imap_l3_processing.ultra.ultra_sp_initializer import UltraSPInitializer, ULTRA_45_DESCRIPTORS, \
+    ULTRA_90_DESCRIPTORS, ULTRA_COMBINED_SP_DESCRIPTORS, ULTRA_COMBINED_NSP_DESCRIPTORS
 
 logger = logging.getLogger(__name__)
 

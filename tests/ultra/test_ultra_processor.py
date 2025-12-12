@@ -16,8 +16,8 @@ from imap_l3_processing.maps.map_models import HealPixIntensityMapData, Intensit
     HealPixSpectralIndexDataProduct, SpectralIndexMapData, RectangularIntensityDataProduct, \
     RectangularSpectralIndexDataProduct, RectangularSpectralIndexMapData, RectangularIntensityMapData
 from imap_l3_processing.models import InputMetadata
-from imap_l3_processing.ultra.l3.ultra_l3_dependencies import UltraL3Dependencies, UltraL3SpectralIndexDependencies
-from imap_l3_processing.ultra.l3.ultra_processor import UltraProcessor
+from imap_l3_processing.ultra.ultra_l3_dependencies import UltraL3Dependencies, UltraL3SpectralIndexDependencies
+from imap_l3_processing.ultra.ultra_processor import UltraProcessor
 from tests.test_helpers import get_test_data_path
 
 
@@ -43,13 +43,13 @@ class TestUltraProcessor(unittest.TestCase):
             with self.subTest(spacing=degree_spacing):
                 self._test_process_combined_sensor_survival_probability(degree_spacing)
 
-    @patch('imap_l3_processing.ultra.l3.ultra_processor.HealPixIntensityMapData')
+    @patch('imap_l3_processing.ultra.ultra_processor.HealPixIntensityMapData')
     @patch('imap_l3_processing.utils.spiceypy')
-    @patch('imap_l3_processing.ultra.l3.ultra_processor.save_data')
-    @patch('imap_l3_processing.ultra.l3.ultra_processor.UltraSurvivalProbabilitySkyMap')
-    @patch('imap_l3_processing.ultra.l3.ultra_processor.UltraSurvivalProbability')
-    @patch('imap_l3_processing.ultra.l3.ultra_processor.combine_glows_l3e_with_l1c_pointing')
-    @patch('imap_l3_processing.ultra.l3.ultra_processor.UltraL3Dependencies.fetch_dependencies')
+    @patch('imap_l3_processing.ultra.ultra_processor.save_data')
+    @patch('imap_l3_processing.ultra.ultra_processor.UltraSurvivalProbabilitySkyMap')
+    @patch('imap_l3_processing.ultra.ultra_processor.UltraSurvivalProbability')
+    @patch('imap_l3_processing.ultra.ultra_processor.combine_glows_l3e_with_l1c_pointing')
+    @patch('imap_l3_processing.ultra.ultra_processor.UltraL3Dependencies.fetch_dependencies')
     def _test_process_survival_probability(self, degree_spacing, mock_fetch_dependencies,
                                            mock_combine_glows_l3e_with_l1c_pointing,
                                            mock_survival_probability_pointing_set, mock_survival_skymap,
@@ -245,11 +245,11 @@ class TestUltraProcessor(unittest.TestCase):
 
         self.assertEqual([mock_save_data.return_value], product)
 
-    @patch('imap_l3_processing.ultra.l3.ultra_processor.MapProcessor.get_parent_file_names')
-    @patch('imap_l3_processing.ultra.l3.ultra_processor.UltraProcessor._process_healpix_intensity_to_rectangular')
-    @patch("imap_l3_processing.ultra.l3.ultra_processor.ExposureWeightedCombination")
-    @patch('imap_l3_processing.ultra.l3.ultra_processor.save_data')
-    @patch('imap_l3_processing.ultra.l3.ultra_processor.UltraL3CombinedDependencies.fetch_dependencies')
+    @patch('imap_l3_processing.ultra.ultra_processor.MapProcessor.get_parent_file_names')
+    @patch('imap_l3_processing.ultra.ultra_processor.UltraProcessor._process_healpix_intensity_to_rectangular')
+    @patch("imap_l3_processing.ultra.ultra_processor.ExposureWeightedCombination")
+    @patch('imap_l3_processing.ultra.ultra_processor.save_data')
+    @patch('imap_l3_processing.ultra.ultra_processor.UltraL3CombinedDependencies.fetch_dependencies')
     def _test_process_combined_sensor(self, degree_spacing, mock_fetch_dependencies, mock_save_data,
                                       mock_exposure_weighted_combination,
                                       mock_healpix_to_rectangular, _):
@@ -282,12 +282,12 @@ class TestUltraProcessor(unittest.TestCase):
         mock_save_data.assert_called_once_with(mock_healpix_to_rectangular.return_value)
         self.assertEqual([mock_save_data.return_value], product)
 
-    @patch('imap_l3_processing.ultra.l3.ultra_processor.UltraProcessor._process_survival_probability')
-    @patch('imap_l3_processing.ultra.l3.ultra_processor.UltraProcessor._process_healpix_intensity_to_rectangular')
-    @patch('imap_l3_processing.ultra.l3.ultra_processor.MapProcessor.get_parent_file_names')
-    @patch("imap_l3_processing.ultra.l3.ultra_processor.UncertaintyWeightedCombination")
-    @patch('imap_l3_processing.ultra.l3.ultra_processor.save_data')
-    @patch('imap_l3_processing.ultra.l3.ultra_processor.UltraL3CombinedDependencies.fetch_dependencies')
+    @patch('imap_l3_processing.ultra.ultra_processor.UltraProcessor._process_survival_probability')
+    @patch('imap_l3_processing.ultra.ultra_processor.UltraProcessor._process_healpix_intensity_to_rectangular')
+    @patch('imap_l3_processing.ultra.ultra_processor.MapProcessor.get_parent_file_names')
+    @patch("imap_l3_processing.ultra.ultra_processor.UncertaintyWeightedCombination")
+    @patch('imap_l3_processing.ultra.ultra_processor.save_data')
+    @patch('imap_l3_processing.ultra.ultra_processor.UltraL3CombinedDependencies.fetch_dependencies')
     def _test_process_combined_sensor_survival_probability(self, degree_spacing, mock_fetch_dependencies,
                                                            mock_save_data, mock_uncertainty_weighted_combination,
                                                            mock_get_parent_file_names, mock_healpix_to_rectangular,
@@ -351,13 +351,13 @@ class TestUltraProcessor(unittest.TestCase):
             call(expected_u90_dependency, sentinel.spice_frame)
         ])
 
-    @patch('imap_l3_processing.ultra.l3.ultra_processor.HealPixIntensityMapData')
+    @patch('imap_l3_processing.ultra.ultra_processor.HealPixIntensityMapData')
     @patch('imap_l3_processing.processor.spiceypy')
-    @patch('imap_l3_processing.ultra.l3.ultra_processor.save_data')
-    @patch('imap_l3_processing.ultra.l3.ultra_processor.UltraSurvivalProbabilitySkyMap')
-    @patch('imap_l3_processing.ultra.l3.ultra_processor.UltraSurvivalProbability')
-    @patch('imap_l3_processing.ultra.l3.ultra_processor.combine_glows_l3e_with_l1c_pointing')
-    @patch('imap_l3_processing.ultra.l3.ultra_processor.UltraL3Dependencies.fetch_dependencies')
+    @patch('imap_l3_processing.ultra.ultra_processor.save_data')
+    @patch('imap_l3_processing.ultra.ultra_processor.UltraSurvivalProbabilitySkyMap')
+    @patch('imap_l3_processing.ultra.ultra_processor.UltraSurvivalProbability')
+    @patch('imap_l3_processing.ultra.ultra_processor.combine_glows_l3e_with_l1c_pointing')
+    @patch('imap_l3_processing.ultra.ultra_processor.UltraL3Dependencies.fetch_dependencies')
     def test_defaults_to_ECLIPJ2000_spice_frame(self, mock_fetch_dependencies,
                                                 mock_combine_glows_l3e_with_l1c_pointing,
                                                 mock_survival_probability_pointing_set, mock_survival_skymap,
@@ -447,9 +447,9 @@ class TestUltraProcessor(unittest.TestCase):
         mock_survival_skymap.assert_called_once_with([], SpiceFrame.ECLIPJ2000, input_l2_map.coords.nside)
 
     @patch('imap_l3_processing.processor.spiceypy')
-    @patch('imap_l3_processing.ultra.l3.ultra_processor.save_data')
-    @patch('imap_l3_processing.ultra.l3.ultra_processor.calculate_spectral_index_for_multiple_ranges')
-    @patch('imap_l3_processing.ultra.l3.ultra_processor.UltraL3SpectralIndexDependencies.fetch_dependencies')
+    @patch('imap_l3_processing.ultra.ultra_processor.save_data')
+    @patch('imap_l3_processing.ultra.ultra_processor.calculate_spectral_index_for_multiple_ranges')
+    @patch('imap_l3_processing.ultra.ultra_processor.UltraL3SpectralIndexDependencies.fetch_dependencies')
     def _test_process_spectral_index(self, degree_spacing,
                                      mock_fetch_dependencies,
                                      mock_calculate_spectral_index, mock_save_data,
@@ -510,8 +510,8 @@ class TestUltraProcessor(unittest.TestCase):
         with self.assertRaises(NotImplementedError):
             processor.process()
 
-    @patch('imap_l3_processing.ultra.l3.ultra_processor.save_data')
-    @patch('imap_l3_processing.ultra.l3.ultra_processor.UltraL3SpectralIndexDependencies.fetch_dependencies')
+    @patch('imap_l3_processing.ultra.ultra_processor.save_data')
+    @patch('imap_l3_processing.ultra.ultra_processor.UltraL3SpectralIndexDependencies.fetch_dependencies')
     def test_process_spectral_index_validating_output_values(self, mock_fetch_dependencies, mock_save_data):
         input_metadata = InputMetadata(instrument="ultra",
                                        data_level="l3",

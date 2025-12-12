@@ -5,7 +5,7 @@ from unittest.mock import patch, call
 from imap_l3_processing.glows.descriptors import GLOWS_L3E_ULTRA_SF_DESCRIPTOR, GLOWS_L3E_ULTRA_HF_DESCRIPTOR
 from imap_l3_processing.maps.map_initializer import MapInitializer, PossibleMapToProduce
 from imap_l3_processing.models import InputMetadata
-from imap_l3_processing.ultra.l3.ultra_sp_initializer import UltraSPInitializer, ULTRA_SP_SPICE_KERNELS
+from imap_l3_processing.ultra.ultra_sp_initializer import UltraSPInitializer, ULTRA_SP_SPICE_KERNELS
 from tests.integration.integration_test_helpers import ImapQueryPatcher
 
 
@@ -14,7 +14,7 @@ class TestUltraSPInitializer(unittest.TestCase):
         self.assertIsInstance(UltraSPInitializer(), MapInitializer)
 
     def setUp(self):
-        self.mock_query_patcher = patch('imap_l3_processing.ultra.l3.ultra_sp_initializer.imap_data_access.query')
+        self.mock_query_patcher = patch('imap_l3_processing.ultra.ultra_sp_initializer.imap_data_access.query')
         self.mock_query = self.mock_query_patcher.start()
 
     def tearDown(self):
@@ -398,7 +398,7 @@ class TestUltraSPInitializer(unittest.TestCase):
         )
         self.assertEqual([expected_possible_map_to_produce], actual_maps_to_produce)
 
-    @patch('imap_l3_processing.ultra.l3.ultra_sp_initializer.furnish_spice_metakernel')
+    @patch('imap_l3_processing.ultra.ultra_sp_initializer.furnish_spice_metakernel')
     def test_furnish_spice_dependencies(self, mock_furnish_metakernel):
         start_date = datetime(2025, 4, 15)
         end_date = datetime(2025, 7, 15)

@@ -11,7 +11,7 @@ from imap_processing.ultra.l2.ultra_l2 import bin_pset_energy_bins
 from xarray import Dataset
 
 from imap_l3_processing.constants import ONE_SECOND_IN_NANOSECONDS
-from imap_l3_processing.ultra.l3.models import UltraL1CPSet, UltraGlowsL3eData
+from imap_l3_processing.ultra.models import UltraL1CPSet, UltraGlowsL3eData
 
 
 class UltraSurvivalProbability(UltraPointingSet):

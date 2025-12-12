@@ -11,7 +11,7 @@ from imap_l3_processing.hi.hi_sp_initializer import HI_SP_MAP_DESCRIPTORS, HI_CO
 from imap_l3_processing.lo.l3.lo_sp_initializer import LO_SP_MAP_DESCRIPTORS
 from imap_l3_processing.maps.map_initializer import PossibleMapToProduce
 from imap_l3_processing.models import InputMetadata
-from imap_l3_processing.ultra.l3.ultra_sp_initializer import ULTRA_45_DESCRIPTORS, ULTRA_90_DESCRIPTORS, \
+from imap_l3_processing.ultra.ultra_sp_initializer import ULTRA_45_DESCRIPTORS, ULTRA_90_DESCRIPTORS, \
     ULTRA_COMBINED_SP_DESCRIPTORS, ULTRA_COMBINED_NSP_DESCRIPTORS
 
 

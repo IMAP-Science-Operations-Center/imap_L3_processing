@@ -11,7 +11,7 @@ from imap_processing.ultra.l2.ultra_l2 import ultra_l2
 
 from imap_l3_processing.maps.map_models import HealPixIntensityMapData, RectangularIntensityMapData, \
     SpectralIndexDependencies
-from imap_l3_processing.ultra.l3.models import UltraL1CPSet, UltraGlowsL3eData
+from imap_l3_processing.ultra.models import UltraL1CPSet, UltraGlowsL3eData
 from imap_l3_processing.utils import get_dependency_paths_by_descriptor
 
 

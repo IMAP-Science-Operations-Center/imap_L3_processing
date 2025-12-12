@@ -9,16 +9,16 @@ from imap_processing.spice import geometry
 from imap_processing.ultra.constants import UltraConstants
 
 from imap_l3_processing.constants import TT2000_EPOCH, ONE_SECOND_IN_NANOSECONDS, SECONDS_PER_DAY
-from imap_l3_processing.ultra.l3.models import UltraL1CPSet, UltraGlowsL3eData
-from imap_l3_processing.ultra.l3.science.ultra_survival_probability import UltraSurvivalProbability, \
+from imap_l3_processing.ultra.models import UltraL1CPSet, UltraGlowsL3eData
+from imap_l3_processing.ultra.science.ultra_survival_probability import UltraSurvivalProbability, \
     UltraSurvivalProbabilitySkyMap
 from tests.spice_test_case import SpiceTestCase
 
 
 class TestUltraSurvivalProbability(unittest.TestCase):
 
-    @patch('imap_l3_processing.ultra.l3.science.ultra_survival_probability.geometry.frame_transform_az_el')
-    @patch('imap_l3_processing.ultra.l3.science.ultra_survival_probability.spiceypy.unitim')
+    @patch('imap_l3_processing.ultra.science.ultra_survival_probability.geometry.frame_transform_az_el')
+    @patch('imap_l3_processing.ultra.science.ultra_survival_probability.spiceypy.unitim')
     def test_ultra_survival_probability_pset_calls_super(self, _, mock_frame_transform_az_el):
         input_l1c_pset = _create_ultra_l1c_pset(np.array([2]), np.full((1, 1, 12), 1))
         glows = _build_glows_l3e_ultra()
@@ -31,8 +31,8 @@ class TestUltraSurvivalProbability(unittest.TestCase):
         self.assertEqual(input_l1c_pset.to_xarray(), prod.data)
         self.assertEqual(geometry.SpiceFrame.IMAP_DPS, prod.spice_reference_frame)
 
-    @patch('imap_l3_processing.ultra.l3.science.ultra_survival_probability.geometry.frame_transform_az_el')
-    @patch('imap_l3_processing.ultra.l3.science.ultra_survival_probability.spiceypy.unitim')
+    @patch('imap_l3_processing.ultra.science.ultra_survival_probability.geometry.frame_transform_az_el')
+    @patch('imap_l3_processing.ultra.science.ultra_survival_probability.spiceypy.unitim')
     @patch.object(UltraConstants, 'PSET_ENERGY_BIN_EDGES', new=[0.5, 1.5, 4])
     def test_ultra_survival_probability_rotates_to_glows_frame(self, mock_unitim, mock_frame_transform_az_el):
         glows_energies = np.array([1, 2])
@@ -59,8 +59,8 @@ class TestUltraSurvivalProbability(unittest.TestCase):
                                       expected_survival_probabilities_values)
         np.testing.assert_array_equal(survival_probability_times_exposure.coords, prod.data['counts'].coords)
 
-    @patch('imap_l3_processing.ultra.l3.science.ultra_survival_probability.spiceypy.unitim')
-    @patch('imap_l3_processing.ultra.l3.science.ultra_survival_probability.geometry.frame_transform_az_el')
+    @patch('imap_l3_processing.ultra.science.ultra_survival_probability.spiceypy.unitim')
+    @patch('imap_l3_processing.ultra.science.ultra_survival_probability.geometry.frame_transform_az_el')
     @patch.object(UltraConstants, 'PSET_ENERGY_BIN_EDGES', new=[.1, 10])
     def test_ultra_survival_probability_is_multiplied_by_exposure(self, mock_frame_transform_az_el, _):
         glows_energies = np.array([1])
@@ -78,8 +78,8 @@ class TestUltraSurvivalProbability(unittest.TestCase):
         np.testing.assert_array_equal(survival_probability_times_exposure.values,
                                       expected_survival_probabilities_values)
 
-    @patch('imap_l3_processing.ultra.l3.science.ultra_survival_probability.spiceypy.unitim')
-    @patch('imap_l3_processing.ultra.l3.science.ultra_survival_probability.geometry.frame_transform_az_el')
+    @patch('imap_l3_processing.ultra.science.ultra_survival_probability.spiceypy.unitim')
+    @patch('imap_l3_processing.ultra.science.ultra_survival_probability.geometry.frame_transform_az_el')
     @patch.object(UltraConstants, 'PSET_ENERGY_BIN_EDGES', new=[1, 100, 10000])
     def test_ultra_survival_probability_interpolates_over_energy(self, mock_frame_transform_az_el, _):
         glows_energies = np.array([1, 100, 10000])
@@ -98,11 +98,10 @@ class TestUltraSurvivalProbability(unittest.TestCase):
         np.testing.assert_array_equal(survival_probability_times_exposure.values,
                                       expected_survival_probabilities_values)
 
-    @patch('imap_l3_processing.ultra.l3.science.ultra_survival_probability.spiceypy.unitim')
-    @patch('imap_l3_processing.ultra.l3.science.ultra_survival_probability.geometry.frame_transform_az_el')
+    @patch('imap_l3_processing.ultra.science.ultra_survival_probability.spiceypy.unitim')
+    @patch('imap_l3_processing.ultra.science.ultra_survival_probability.geometry.frame_transform_az_el')
     @patch.object(UltraConstants, 'PSET_ENERGY_BIN_EDGES', new=[1, 1, 1, 1, 100, 100, 100, 100, 10000])
-    def test_ultra_survival_probability_combines_fine_energy_bins(self,
-                                                                  mock_frame_transform_az_el, _):
+    def test_ultra_survival_probability_combines_fine_energy_bins(self, mock_frame_transform_az_el, _):
         glows_energies = np.array([1, 100, 10000])
         ultra_energies = np.array([10, 10, 10, 10, 1000, 1000, 1000, 1000])
         input_l1c_pset = _create_ultra_l1c_pset(ultra_energies, np.full((1, 2 * 4, 12), 1))
@@ -119,8 +118,8 @@ class TestUltraSurvivalProbability(unittest.TestCase):
         np.testing.assert_array_equal(survival_probability_times_exposure.values,
                                       expected_survival_probabilities_values)
 
-    @patch('imap_l3_processing.ultra.l3.science.ultra_survival_probability.spiceypy.unitim')
-    @patch('imap_l3_processing.ultra.l3.science.ultra_survival_probability.geometry.frame_transform_az_el')
+    @patch('imap_l3_processing.ultra.science.ultra_survival_probability.spiceypy.unitim')
+    @patch('imap_l3_processing.ultra.science.ultra_survival_probability.geometry.frame_transform_az_el')
     def test_ultra_survival_probability_handles_different_resolutions(self, mock_frame_transform_az_el, _):
         glows_energies = np.array([1])
         ultra_energies = np.array([10])
